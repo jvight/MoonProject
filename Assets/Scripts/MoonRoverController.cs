@@ -9,11 +9,13 @@ public class MoonRoverController : MonoBehaviour
     [SerializeField] private Transform visualBody;
 
     [Header("Movement Settings")]
-    [SerializeField] private float moveSpeed = 15f;
-    [SerializeField] private float maxSpeed = 10f;
+    [SerializeField] private float moveSpeed = 8f;
+    [SerializeField] private float maxSpeed = 5f;
     [SerializeField] private float deceleration = 5f;
     [SerializeField] private float turnSpeed = 90f;
     [SerializeField] private float gravityMultiplier = 0.5f; // Less than 1 for low gravity feel
+    [SerializeField] private float fallGravityMultiplier = 2.0f; // Increased gravity when falling
+    [SerializeField] private float downForce = 20f; // Force to stick to ground when going over hills
 
     [Header("Alignment Settings")]
     [SerializeField] private float alignSpeed = 5f;
@@ -113,22 +115,29 @@ public class MoonRoverController : MonoBehaviour
             sphereRigidbody.linearVelocity = new Vector3(limitedVel.x, currentVel.y, limitedVel.z);
         }
 
-        // Custom Moon Gravity (Base gravity * multiplier)
-        // Unity's default gravity is -9.81. We add extra force to adjust the feel.
-        Vector3 extraGravity = Physics.gravity * (gravityMultiplier - 1f);
-        sphereRigidbody.AddForce(extraGravity, ForceMode.Acceleration);
-
         // Raycast to find the ground normal for alignment
         RaycastHit hit;
-        // Shoot ray downwards from the sphere
-        if (Physics.Raycast(sphereRigidbody.position, Vector3.down, out hit, raycastDistance, groundLayer))
+        bool isGrounded = Physics.Raycast(sphereRigidbody.position, Vector3.down, out hit, raycastDistance, groundLayer);
+        
+        if (isGrounded)
         {
             targetNormal = hit.normal;
+            
+            // Custom Moon Gravity when grounded
+            Vector3 extraGravity = Physics.gravity * (gravityMultiplier - 1f);
+            sphereRigidbody.AddForce(extraGravity, ForceMode.Acceleration);
+
+            // Apply downforce along the negative normal to stick to slopes and avoid flying up
+            sphereRigidbody.AddForce(-hit.normal * downForce, ForceMode.Acceleration);
         }
         else
         {
             // If floating/falling, slowly return to upright position
             targetNormal = Vector3.up;
+
+            // Apply heavier gravity when falling to prevent floaty feeling and fall faster
+            Vector3 extraGravity = Physics.gravity * (fallGravityMultiplier - 1f);
+            sphereRigidbody.AddForce(extraGravity, ForceMode.Acceleration);
         }
     }
 }

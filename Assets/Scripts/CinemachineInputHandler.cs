@@ -1,12 +1,12 @@
 using UnityEngine;
-using Cinemachine;
+//using Cinemachine;
 
 public class CinemachineInputHandler : MonoBehaviour
 {
     void Start()
     {
         // Override Cinemachine's input to use the New Input System directly
-        CinemachineCore.GetInputAxis = GetAxisCustom;
+        // CinemachineCore.GetInputAxis = GetAxisCustom; // Deprecated in Cinemachine 3
     }
 
     private float GetAxisCustom(string axisName)
