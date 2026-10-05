@@ -35,7 +35,7 @@ namespace MoonProject.Art
 
         public static Matrix4x4 At(Vector3 position, Vector3 eulerDegrees)
         {
-            return At(position, Quaternion.Euler(eulerDegrees));
+            return At(position, Rotation(eulerDegrees));
         }
 
         public static Matrix4x4 At(Vector3 position, Quaternion rotation, Vector3 scale)
@@ -45,7 +45,24 @@ namespace MoonProject.Art
 
         public static Matrix4x4 At(Vector3 position, Vector3 eulerDegrees, Vector3 scale)
         {
-            return At(position, Quaternion.Euler(eulerDegrees), scale);
+            return At(position, Rotation(eulerDegrees), scale);
+        }
+
+        /// <summary>
+        /// Same rotation as <c>Quaternion.Euler</c> (Z, then X, then Y), composed in managed code so recipe math makes
+        /// no native engine calls and is bit-identical wherever it runs.
+        /// </summary>
+        public static Quaternion Rotation(Vector3 eulerDegrees)
+        {
+            return AxisAngle(Vector3.up, eulerDegrees.y) * AxisAngle(Vector3.right, eulerDegrees.x)
+                * AxisAngle(Vector3.forward, eulerDegrees.z);
+        }
+
+        private static Quaternion AxisAngle(Vector3 unitAxis, float degrees)
+        {
+            float half = degrees * Mathf.Deg2Rad * 0.5f;
+            float sin = Mathf.Sin(half);
+            return new Quaternion(unitAxis.x * sin, unitAxis.y * sin, unitAxis.z * sin, Mathf.Cos(half));
         }
     }
 }
