@@ -8,8 +8,8 @@ namespace MoonProject.Rover
     /// <summary>
     /// 07's procedural body language on the RoverModel's Neck, Head, Eyelid, SolarWing, Eye and AntennaTip:
     /// the head looks at whatever it interacts with (<see cref="IRoverGaze"/>) or along its way with a lagging glance
-    /// into turns; left alone it drifts into a daydream (<see cref="RoverMood"/>) and looks up toward Earth. Soft landings
-    /// and driving off from a daydream make it perk up; hard landings get a small "oof".
+    /// into turns; left alone it drifts into a daydream (<see cref="RoverMood"/>) and looks up toward Earth.
+    /// Soft landings and driving off from a daydream make it perk up; hard landings get a small "oof".
     /// Needs <see cref="IWorldLayout"/>, so it must be initialised after the World systems.
     /// </summary>
     [DefaultExecutionOrder(10)]

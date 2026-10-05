@@ -10,7 +10,7 @@ namespace MoonProject.Rover
     [Serializable]
     public sealed class DriveSettings
     {
-        /// <summary>atanh(0.9): the speed curve v = top * tanh(t * accel / top) reaches 90% at this many time constants.</summary>
+        /// <summary>atanh(0.9): v = top * tanh(t * accel / top) reaches 90% after this many time constants.</summary>
         private const float NinetyPercentTimeConstants = 1.4722195f;
 
         [Tooltip("Forward top speed on flat ground, m/s.")]
@@ -87,13 +87,13 @@ namespace MoonProject.Rover
 
         public float ReverseEngageSpeed => _reverseEngageSpeed;
 
-        /// <summary>Peak forward acceleration (m/s^2) at standstill, derived from <see cref="AccelerationTime"/>.</summary>
+        /// <summary>Peak forward acceleration (m/s^2) at standstill, from <see cref="AccelerationTime"/>.</summary>
         public float ForwardAcceleration => NinetyPercentTimeConstants * _topSpeed / _accelerationTime;
 
         /// <summary>Peak reverse acceleration (m/s^2), derived from <see cref="ReverseAccelerationTime"/>.</summary>
         public float ReverseAcceleration => NinetyPercentTimeConstants * _reverseTopSpeed / _reverseAccelerationTime;
 
-        /// <summary>Coast deceleration (m/s^2) at top speed; stopping time from top speed is CoastStopTime exactly.</summary>
+        /// <summary>Coast deceleration (m/s^2) at top speed; it stops from top speed in exactly CoastStopTime.</summary>
         public float CoastDeceleration => _topSpeed / (_coastStopTime * (1f - _coastEase));
 
         /// <summary>Full-input brake deceleration (m/s^2) at top speed.</summary>

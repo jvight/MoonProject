@@ -15,7 +15,7 @@ namespace MoonProject.Rover
     [DisallowMultipleComponent]
     public sealed class RoverController : MonoBehaviour, IGameSystem, IRoverState
     {
-        /// <summary>Probe starts this fraction of the sphere radius above the centre so slight sinking still hits.</summary>
+        /// <summary>The probe starts this fraction of the radius above the centre so slight sinking still hits.</summary>
         private const float ProbeLiftFraction = 0.5f;
 
         [Tooltip("Drive, steering, ground and landing tuning (Assets/_Project/Data/Tuning/RoverTuning.asset).")]
@@ -151,7 +151,7 @@ namespace MoonProject.Rover
 
             if (_sphere != null)
             {
-                ok &= Require(_sphere.sharedMaterial != null, "Physics sphere needs the frictionless physics material.");
+                ok &= Require(_sphere.sharedMaterial != null, "Physics sphere needs its frictionless material.");
             }
 
             return ok;
@@ -224,7 +224,8 @@ namespace MoonProject.Rover
         private void ReadInput(float dt)
         {
             Vector2 raw = _input.Drive;
-            _throttle = Ease(_throttle, raw.y, _tuning.Drive.ThrottleRiseHalfLife, _tuning.Drive.ThrottleFallHalfLife, dt);
+            DriveSettings drive = _tuning.Drive;
+            _throttle = Ease(_throttle, raw.y, drive.ThrottleRiseHalfLife, drive.ThrottleFallHalfLife, dt);
             _steer = Ease(_steer, raw.x, _tuning.Steering.SteerRiseHalfLife, _tuning.Steering.SteerReturnHalfLife, dt);
         }
 

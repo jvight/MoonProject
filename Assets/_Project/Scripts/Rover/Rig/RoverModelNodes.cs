@@ -4,7 +4,8 @@ namespace MoonProject.Rover
 {
     /// <summary>
     /// Node names of the art box's RoverModel prefab for "07" (docs/ARCHITECTURE.md, "Contract: rover model rig").
-    /// Units in metres, +Z forward, +Y up, origin at the centre of the ground contact patch, wheels roll around local X.
+    /// Units in metres, +Z forward, +Y up, origin at the centre of the ground contact patch; wheels roll around
+    /// local X.
     /// Neck yaws around local Y, Head pitches around local X, Eyelid closes and SolarWing opens with + local X.
     /// </summary>
     public static class RoverModelNodes

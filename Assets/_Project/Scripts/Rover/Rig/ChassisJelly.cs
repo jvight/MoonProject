@@ -25,7 +25,7 @@ namespace MoonProject.Rover
         /// <summary>Nose-up lean in degrees.</summary>
         public float Pitch => _pitch.Value;
 
-        /// <summary>Right-side-up lean in degrees (positive in right turns: the body rolls outward, left side down).</summary>
+        /// <summary>Right-side-up lean in degrees (positive in right turns: rolls outward, left side down).</summary>
         public float Roll => _roll.Value;
 
         /// <summary>Vertical offset in metres (negative = squashed down).</summary>
@@ -58,7 +58,7 @@ namespace MoonProject.Rover
             _heave.AddVelocity(metresPerSecond);
         }
 
-        /// <summary>Advances all springs. <paramref name="localAcceleration"/>: x right, y up, z forward (m/s^2).</summary>
+        /// <summary>Advances all springs. <paramref name="localAcceleration"/>: x right, y up, z forward.</summary>
         public void Step(Vector3 localAcceleration, float deltaTime)
         {
             Vector3 a = Vector3.ClampMagnitude(localAcceleration, _tuning.AccelerationLimit);

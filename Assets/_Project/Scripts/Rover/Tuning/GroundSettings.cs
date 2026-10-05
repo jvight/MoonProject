@@ -41,7 +41,8 @@ namespace MoonProject.Rover
         [Range(0.5f, 40f)]
         [SerializeField] private float _gripRate = 9f;
 
-        [Tooltip("Slopes up to this angle (deg) are fully assisted: gravity does not slow you uphill or drag you down.")]
+        [Tooltip("Slopes up to this angle (deg) are fully assisted: gravity neither slows you uphill nor drags "
+            + "you down.")]
         [Range(0f, 60f)]
         [SerializeField] private float _slopeAssistFullAngle = 32f;
 

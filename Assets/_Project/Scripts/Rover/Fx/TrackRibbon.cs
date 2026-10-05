@@ -5,8 +5,8 @@ namespace MoonProject.Rover
     /// <summary>
     /// Geometry of one tire track: a ring buffer of ground samples turned into a flat ribbon. Unlike a TrailRenderer
     /// (which orients every point by the emitter's current rotation and therefore twists), each point stores its own
-    /// ground normal and a side vector = normal x travel direction, so the ribbon always lies flat on the surface it was
-    /// laid on. A reversal of travel direction starts a new strip instead of folding the ribbon into a bow tie.
+    /// ground normal and a side vector = normal x travel direction, so the ribbon always lies flat on the surface it
+    /// was laid on. A reversal of travel direction starts a new strip instead of folding the ribbon into a bow tie.
     /// Fixed capacity, no allocations after construction.
     /// </summary>
     public sealed class TrackRibbon

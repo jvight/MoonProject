@@ -121,13 +121,13 @@ namespace MoonProject.Rover
             Swell(ref _oof, strength, _tuning.OofFrequency);
         }
 
-        /// <summary>Kicks a critically damped spring at rest so it swells to <paramref name="peak"/> and fades.</summary>
+        /// <summary>Kicks a critically damped spring so it swells to <paramref name="peak"/> and fades.</summary>
         private static void Swell(ref DampedSpring spring, float peak, float frequency)
         {
             spring.AddVelocity(Mathf.Clamp01(peak) * 2f * Mathf.PI * frequency * PeakToKick);
         }
 
-        /// <summary>"Oof" strength for a landing: 0 below the hard-landing threshold, then OofMinStrength .. 1.</summary>
+        /// <summary>"Oof" strength for a landing: 0 below the hard-landing threshold, else OofMinStrength..1.</summary>
         public float OofStrength(float impactSpeed)
         {
             if (impactSpeed < _tuning.OofImpactSpeed)

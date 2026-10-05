@@ -7,8 +7,8 @@ namespace MoonProject.Rover
     /// Moves the art box's RoverModel on top of the physics sphere. Hierarchy (built by the Rover builder):
     /// <c>Visual (this: follows the sphere, heading + ground alignment) / Chassis (jelly lean + bob) / RoverModel</c>.
     /// Wheels ray-cast the ground every frame from the leaned chassis, so they stay planted while the body squashes,
-    /// leans and bobs above them, and the rocker-bogie arms follow the wheels. Neck, Head, Eyelid and SolarWing belong to
-    /// <see cref="RoverBodyLanguage"/>. Ticked by <see cref="RoverController"/>.
+    /// leans and bobs above them, and the rocker-bogie arms follow the wheels. Neck, Head, Eyelid and SolarWing
+    /// belong to <see cref="RoverBodyLanguage"/>. Ticked by <see cref="RoverController"/>.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class RoverVisualRig : MonoBehaviour
@@ -55,7 +55,7 @@ namespace MoonProject.Rover
 
         public Quaternion RootRotation => transform.rotation;
 
-        /// <summary>Validates the wiring and snaps the model onto the sphere. Returns false (and logs) when broken.</summary>
+        /// <summary>Validates the wiring and snaps the model onto the sphere; false (and logged) when broken.</summary>
         public bool Initialize(RoverController rover)
         {
             _rover = rover;
@@ -213,7 +213,8 @@ namespace MoonProject.Rover
             StepSuspension(deltaTime);
             ApplyWheels(travelled, deltaTime);
             ApplyBogies();
-            _antenna.localRotation = GroundPlaneFit.Tilt(_jelly.AntennaPitch, _jelly.AntennaRoll) * _antennaRestRotation;
+            _antenna.localRotation =
+                GroundPlaneFit.Tilt(_jelly.AntennaPitch, _jelly.AntennaRoll) * _antennaRestRotation;
         }
 
         private int CastWheels(Quaternion heading)

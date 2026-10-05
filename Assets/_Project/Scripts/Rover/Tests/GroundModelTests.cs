@@ -53,7 +53,8 @@ namespace MoonProject.Rover.Tests
         public void Grip_PreservesSpeed_AndTurnsVelocityTowardHeading()
         {
             Vector3 velocity = Quaternion.Euler(0f, 30f, 0f) * Vector3.forward * 6f;
-            Vector3 change = GroundModel.GripVelocityChange(velocity, Vector3.up, Vector3.forward, _ground.GripRate, 0.02f);
+            Vector3 change =
+                GroundModel.GripVelocityChange(velocity, Vector3.up, Vector3.forward, _ground.GripRate, 0.02f);
             Vector3 after = velocity + change;
             Assert.AreEqual(velocity.magnitude, after.magnitude, 1e-3f);
             Assert.Less(Vector3.Angle(after, Vector3.forward), 30f);

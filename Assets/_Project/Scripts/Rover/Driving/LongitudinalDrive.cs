@@ -9,13 +9,13 @@ namespace MoonProject.Rover
     /// target = |throttle| * topSpeed; the time to 90% is the same for any stick deflection.</item>
     /// <item>Coasting (no throttle, or faster than the throttle asks for): decel = C * (excess / top)^ease, which
     /// stops in exactly CoastStopTime from top speed and tapers to zero so the last metres roll out softly.</item>
-    /// <item>Braking (input against the motion): same shape as coasting, scaled by input, until ReverseEngageSpeed.</item>
+    /// <item>Braking (input against the motion): coast-shaped, scaled by input, until ReverseEngageSpeed.</item>
     /// </list>
     /// Decelerations are clamped so one step never pushes the speed through zero (no jitter at rest).
     /// </summary>
     public static class LongitudinalDrive
     {
-        /// <summary>Acceleration (m/s^2, + = forward) for the current signed forward speed and eased throttle.</summary>
+        /// <summary>Acceleration (m/s^2, + = forward) for the signed forward speed and eased throttle.</summary>
         public static float Acceleration(DriveSettings settings, float forwardSpeed, float throttle, float deltaTime)
         {
             float speed = Mathf.Abs(forwardSpeed);
@@ -55,8 +55,9 @@ namespace MoonProject.Rover
                 settings.TopSpeed, deltaTime);
         }
 
-        /// <summary>Power-law deceleration magnitude, clamped so it removes at most <paramref name="limit"/> this step.</summary>
-        private static float Decelerate(float peak, float ease, float amount, float limit, float topSpeed, float deltaTime)
+        /// <summary>Power-law deceleration, clamped so it removes at most <paramref name="limit"/> this step.</summary>
+        private static float Decelerate(float peak, float ease, float amount, float limit, float topSpeed,
+            float deltaTime)
         {
             if (amount <= 0f)
             {

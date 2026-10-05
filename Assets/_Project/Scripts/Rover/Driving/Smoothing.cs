@@ -8,7 +8,7 @@ namespace MoonProject.Rover
     /// </summary>
     public static class Smoothing
     {
-        /// <summary>Fraction of the remaining gap closed during <paramref name="deltaTime"/>; 1 when halfLife is 0.</summary>
+        /// <summary>Fraction of the gap closed during <paramref name="deltaTime"/>; 1 when halfLife is 0.</summary>
         public static float Factor(float halfLife, float deltaTime)
         {
             if (halfLife <= 0f)
@@ -37,7 +37,7 @@ namespace MoonProject.Rover
             return current + (target - current) * Factor(halfLife, deltaTime);
         }
 
-        /// <summary>Hermite ease between <paramref name="edge0"/> and <paramref name="edge1"/>, clamped to 0..1.</summary>
+        /// <summary>Hermite ease from <paramref name="edge0"/> to <paramref name="edge1"/>, clamped to 0..1.</summary>
         public static float SmoothStep(float edge0, float edge1, float x)
         {
             if (Mathf.Approximately(edge0, edge1))

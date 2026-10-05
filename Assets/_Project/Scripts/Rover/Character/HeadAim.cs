@@ -19,7 +19,8 @@ namespace MoonProject.Rover
 
             float yaw = horizontal < 1e-5f ? 0f : Mathf.Atan2(localDirection.x, localDirection.z) * Mathf.Rad2Deg;
             float pitch = Mathf.Atan2(localDirection.y, horizontal) * Mathf.Rad2Deg;
-            return new Vector2(Mathf.Clamp(yaw, -yawLimit, yawLimit), Mathf.Clamp(pitch, -pitchDownLimit, pitchUpLimit));
+            return new Vector2(Mathf.Clamp(yaw, -yawLimit, yawLimit),
+                Mathf.Clamp(pitch, -pitchDownLimit, pitchUpLimit));
         }
     }
 }
