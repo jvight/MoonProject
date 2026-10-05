@@ -34,8 +34,8 @@ class DrumStyle:
     name: str
     kicks: tuple
     snares: tuple
-    hat_steps: tuple
     hat_velocity: tuple
+    odd_hat_rate: float
     ghost_steps: tuple
     snare_lag_ms: float
     shaker_in_full: bool
@@ -43,16 +43,16 @@ class DrumStyle:
 
 STYLES = {s.name: s for s in (
     DrumStyle("boombap", kicks=((0, 10), (0, 7, 10), (0, 10, 13), (0, 3, 10)), snares=((4, 12),),
-              hat_steps=(0, 2, 4, 6, 8, 10, 12, 14), hat_velocity=(0.5, 0.0, 0.72, 0.0),
+              hat_velocity=(0.5, 0.24, 0.72, 0.28), odd_hat_rate=0.35,
               ghost_steps=(7, 9, 15), snare_lag_ms=10.0, shaker_in_full=False),
     DrumStyle("laidback", kicks=((0, 9), (0, 6, 9), (0, 10), (0, 9, 14)), snares=((4, 12),),
-              hat_steps=tuple(range(16)), hat_velocity=(0.5, 0.22, 0.66, 0.28),
+              hat_velocity=(0.5, 0.22, 0.66, 0.28), odd_hat_rate=1.0,
               ghost_steps=(3, 7, 15), snare_lag_ms=16.0, shaker_in_full=True),
     DrumStyle("halftime", kicks=((0, 7), (0, 10, 11), (0, 3, 7)), snares=((8,),),
-              hat_steps=(0, 2, 4, 6, 8, 10, 12, 14), hat_velocity=(0.55, 0.0, 0.7, 0.0),
+              hat_velocity=(0.55, 0.22, 0.7, 0.26), odd_hat_rate=0.5,
               ghost_steps=(5, 13, 15), snare_lag_ms=14.0, shaker_in_full=True),
     DrumStyle("brushy", kicks=((0, 10), (0, 7, 10)), snares=((4, 12),),
-              hat_steps=(2, 6, 10, 14), hat_velocity=(0.0, 0.0, 0.55, 0.0),
+              hat_velocity=(0.0, 0.0, 0.55, 0.0), odd_hat_rate=0.0,
               ghost_steps=(3, 7, 11, 15), snare_lag_ms=18.0, shaker_in_full=True),
 )}
 
@@ -82,9 +82,10 @@ def bar_pattern(style, intensity, fill, rng):
         hits.extend((s, "kick", 1.0 if s == 0 else 0.78) for s in kick)
         backbeat = "snare" if intensity == "full" else "rim"
         hits.extend((s, backbeat, 0.9 if backbeat == "snare" else 0.6) for s in snare)
-        for step in style.hat_steps:
+        for step in range(STEPS_PER_BAR):
             velocity = style.hat_velocity[step % 4]
-            if velocity > 0.0 and rng.random() > 0.06:
+            plays = rng.random() < style.odd_hat_rate if step % 2 else rng.random() > 0.06
+            if velocity > 0.0 and plays:
                 hits.append((step, "hat", velocity))
         if intensity == "full":
             hits.extend((s, "snare", 0.18 + 0.08 * rng.random()) for s in style.ghost_steps if rng.random() < 0.35)

@@ -5,7 +5,8 @@ Vocabulary: D major pentatonic only (D E F# A B), so every lead note also fits t
 Rules, checked again by tests and the theory report:
   * strong notes (beats 1 and 3, anything a quarter or longer, every phrase ending) land on a chord tone or an
     in-key tension of the chord sounding under them;
-  * notes an eighth or longer never sit a semitone from a pitch class the keys are voicing (no m2/m9 rubs);
+  * notes an eighth or longer never sit a semitone from a pitch class the keys or the pad voice, in any chord
+    they sound over (no m2/m9 rubs);
   * over a borrowed chord every note follows the strong rule (the borrowed tone makes the scale's neighbours rub).
 A two-bar call is answered by the same rhythm moved along the pentatonic ladder to fit the next chords; whole
 two-bar slots are left empty on purpose - silence is part of the tune.
@@ -18,6 +19,7 @@ from .groove import STEPS_PER_BAR, swung_beat
 from .score import NoteEvent
 
 FRAME_STEPS = 2 * STEPS_PER_BAR
+# Two-bar rhythm cells: (start, length) in 16th steps of the frame, from sparse sighs to busier lines.
 RHYTHMS = (
     ((0, 6), (6, 2), (8, 8)),
     ((2, 2), (4, 2), (6, 2), (8, 4), (12, 4), (16, 10)),
