@@ -9,7 +9,7 @@ namespace MoonProject.Art.Tests
     internal static class MeshChecks
     {
         private const float NormalTolerance = 1e-4f;
-        private const float MinCrossSqr = 1e-16f;
+        private const float MinCrossSqr = 1e-14f;
         private const float WeldScale = 1e4f;
 
         /// <summary>Flat-shading invariants: unit normals matching the winding, one palette cell per face.</summary>
@@ -29,7 +29,8 @@ namespace MoonProject.Art.Tests
 
                 Vector3 normal = builder.Normals[v];
                 Assert.AreEqual(1f, normal.magnitude, NormalTolerance, $"normal of triangle {v / 3} is not unit");
-                Assert.Greater(Vector3.Dot(normal, cross.normalized), 1f - NormalTolerance,
+                Vector3 windingNormal = cross / Mathf.Sqrt(cross.sqrMagnitude);
+                Assert.Greater(Vector3.Dot(normal, windingNormal), 1f - NormalTolerance,
                     $"normal of triangle {v / 3} disagrees with its winding");
                 Assert.AreEqual(normal, builder.Normals[v + 1]);
                 Assert.AreEqual(normal, builder.Normals[v + 2]);

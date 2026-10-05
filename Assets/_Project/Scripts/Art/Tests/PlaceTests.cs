@@ -35,6 +35,20 @@ namespace MoonProject.Art.Tests
             AssertDirection(new Vector3(1f, 2f, 1f), m.MultiplyPoint3x4(Vector3.right));
         }
 
+        [Test]
+        public void Along_CentresOnTheSegment_AndPointsZAlongIt()
+        {
+            var from = new Vector3(1f, 2f, 0.5f);
+            var to = new Vector3(-0.5f, 0.2f, 2f);
+
+            Matrix4x4 m = Place.Along(from, to);
+
+            AssertDirection((from + to) * 0.5f, m.MultiplyPoint3x4(Vector3.zero));
+            AssertDirection((to - from).normalized, m.MultiplyVector(Vector3.forward));
+            Assert.Greater(m.MultiplyVector(Vector3.up).y, 0f);
+            Assert.Throws<System.ArgumentException>(() => Place.Along(from, from));
+        }
+
         private static void AssertDirection(Vector3 expected, Vector3 actual)
         {
             Assert.AreEqual(expected.x, actual.x, 1e-5f);

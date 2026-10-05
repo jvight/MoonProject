@@ -28,5 +28,6 @@ namespace MoonProject.Art
         Sage = 18,
         Honey = 19,
         PilotLight = 20,
+        Enamel = 21,
     }
 }
