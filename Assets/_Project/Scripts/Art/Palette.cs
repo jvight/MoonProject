@@ -34,6 +34,8 @@ namespace MoonProject.Art
             new Color32(0x86, 0xAE, 0x9C, 0xFF), // Sage: mismatched replacement parts (old-appliance teal)
             new Color32(0xFF, 0xD2, 0x7A, 0xFF), // Honey: warm non-glowing yellow for relics and details
             new Color32(0xFF, 0xC9, 0x8A, 0xFF), // PilotLight: pale, soft warm glow for small indicator lamps
+            new Color32(0xF6, 0xD7, 0xA7, 0xFF), // Enamel: warm cream for the rover's big panels (stays warm
+                                                 // under cool moonlight, where Cream greys out)
         };
 
         private static readonly bool[] Emissive =
@@ -49,6 +51,7 @@ namespace MoonProject.Art
             true,  // AlertSoft
             false, false, false, false,
             true,  // PilotLight
+            false,
         };
 
         public static int Count => Colors.Length;
