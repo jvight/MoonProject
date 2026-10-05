@@ -1,0 +1,4 @@
+# Python dependencies for tools/ (audio + music synthesis). Install: python -m pip install -r tools/requirements.txt
+numpy==2.4.4
+scipy==1.18.0
+soundfile==0.14.0
