@@ -2,7 +2,11 @@
     "name": "MoonProject.Editor.Tests",
     "rootNamespace": "MoonProject.Editor.Tests",
     "references": [
+        "MoonProject.Core",
+        "MoonProject.App",
         "MoonProject.Editor",
+        "MoonProject.Testing",
+        "Unity.InputSystem",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],
