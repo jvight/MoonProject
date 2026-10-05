@@ -1,0 +1,16 @@
+{
+    "name": "MoonProject.Audio",
+    "rootNamespace": "MoonProject.Audio",
+    "references": [
+        "MoonProject.Core"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
