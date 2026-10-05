@@ -8,12 +8,17 @@ Usage:
   python tools/unity_mcp.py call <tool> '<json-args>'     # call a tool, print text result
   python tools/unity_mcp.py call <tool> @args.json        # args from file
 
+Image results (screenshots) are saved under Logs/mcp/ and their paths printed.
+
 Only the Director should drive the main editor (see CLAUDE.md).
 """
+import base64
 import json
 import sys
+import time
 import urllib.error
 import urllib.request
+from pathlib import Path
 
 DEFAULT_URL = "http://localhost:25906"
 ENDPOINTS = ("/mcp", "/")
@@ -82,6 +87,16 @@ class McpClient:
         return self.request("tools/call", {"name": name, "arguments": arguments})
 
 
+def save_image(tool, index, item):
+    """Writes an MCP image result to Logs/mcp/ (git-ignored) and returns the path."""
+    ext = {"image/png": "png", "image/jpeg": "jpg"}.get(item.get("mimeType"), "bin")
+    out_dir = Path(__file__).resolve().parent.parent / "Logs" / "mcp"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    path = out_dir / f"{time.strftime('%Y%m%d-%H%M%S')}-{tool}-{index}.{ext}"
+    path.write_bytes(base64.b64decode(item["data"]))
+    return path
+
+
 def main():
     if len(sys.argv) < 2 or sys.argv[1] not in ("list", "call"):
         sys.exit(__doc__)
@@ -96,9 +111,11 @@ def main():
         with open(raw[1:], encoding="utf-8") as f:
             raw = f.read()
     result = client.call(name, json.loads(raw))
-    for item in result.get("content", []):
+    for index, item in enumerate(result.get("content", [])):
         if item.get("type") == "text":
             print(item["text"])
+        elif item.get("type") == "image":
+            print(f"image saved: {save_image(name, index, item)}")
         else:
             print(f"<{item.get('type')} content omitted>")
     if result.get("isError"):
