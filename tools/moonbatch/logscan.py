@@ -132,12 +132,14 @@ def analyse(log_text, root, max_items=40):
 
 
 def _message_before(lines, index):
-    """The message text of a Debug.LogError: the non-stack lines right above its first stack frame."""
-    message = []
+    """The message text of a Debug.LogError: the non-stack lines right above its stack frames."""
     j = index - 1
-    while j >= 0 and len(message) < 4:
+    while j >= 0 and lines[j].strip() and STACK_FRAME.match(lines[j].strip()):
+        j -= 1
+    message = []
+    while j >= 0 and len(message) < 3:
         text = lines[j].strip()
-        if not text:
+        if not text or STACK_FRAME.match(text):
             break
         message.insert(0, text)
         j -= 1
