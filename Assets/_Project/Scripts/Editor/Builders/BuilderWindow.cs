@@ -32,7 +32,17 @@ namespace MoonProject.Editor.Builders
         [MenuItem(BuildMenuRoot + "Build All", priority = 0)]
         private static void BuildAll()
         {
-            BuilderRegistry.DiscoverAndRun(string.Empty);
+            RunFromMenu(string.Empty);
+        }
+
+        /// <summary>Menu entry point: asks to save modified scenes if needed, then runs the matching builders.</summary>
+        public static void RunFromMenu(string pattern)
+        {
+            IReadOnlyList<BuilderInfo> builders = BuilderRegistry.Filter(BuilderRegistry.Discover(out _), pattern);
+            if (BuilderRegistry.ConfirmInteractiveRun(builders))
+            {
+                BuilderRegistry.DiscoverAndRun(pattern);
+            }
         }
 
         private void CreateGUI()
@@ -151,6 +161,11 @@ namespace MoonProject.Editor.Builders
             foreach (string problem in problems)
             {
                 Debug.LogError(problem);
+            }
+
+            if (!BuilderRegistry.ConfirmInteractiveRun(current))
+            {
+                return;
             }
 
             foreach (BuilderResult result in BuilderRegistry.Run(current))

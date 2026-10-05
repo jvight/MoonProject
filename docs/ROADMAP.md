@@ -31,10 +31,10 @@
 | M0-03 | Khung `_Project` + asmdef Core/App/Art/Tests, EventBus, GameContext, InputReader + Controls, Layers, contracts `IRoverState`/`ITerrainQuery`, Palette | Director | 🟩 |
 | M0-04 | `tools/compile_check.py` (compile ngoài Unity, editor + player, 0 warning) và `tools/unity_mcp.py` | Director | 🟩 |
 | M0-05 | CLAUDE.md, VISION, ARCHITECTURE, ROADMAP | Director | 🟩 |
-| M0-06 | ProjectSettings: layer 6–11 + ma trận va chạm, gravity −1.62, chỉ Input System, chất lượng PC | foundation | 🟦 |
-| M0-07 | `tools/unity_batch.py` (Unity headless trên worktree, có lock) + entry points: chạy builder, chụp ảnh, chạy test | foundation | 🟦 |
-| M0-08 | Khung SceneBuild: `ISceneContributor` theo domain → dựng `Main.unity` tất định | foundation | 🟦 |
-| M0-09 | Test PlayMode asmdef + smoke test GameBootstrap; AssetPostprocessor import rules; .editorconfig | foundation | 🟦 |
+| M0-06 | ProjectSettings: layer 6–11 + ma trận va chạm, gravity −1.62, chỉ Input System, chất lượng PC | foundation | 🟩 |
+| M0-07 | `tools/unity_batch.py` (Unity headless trên worktree, có lock) + entry points: chạy builder, chụp ảnh, chạy test | foundation | 🟩 |
+| M0-08 | Khung SceneBuild: `ISceneContributor` theo domain → dựng `Main.unity` tất định | foundation | 🟩 |
+| M0-09 | Test PlayMode asmdef + smoke test GameBootstrap; AssetPostprocessor import rules; .editorconfig | foundation | 🟩 |
 
 ## M1 — "First Drive": chỉ lái xe thôi cũng đã thấy dễ chịu
 | ID | Việc | Box | TT |
@@ -51,9 +51,9 @@
 | M1-10 | Camera Cinemachine 3: drone lơ lửng, auto-recenter, FOV theo tốc độ, chống xuyên địa hình | rover | 🟦 |
 | M1-11 | Vệt bánh xe + bụi + bụi khi tiếp đất | rover | 🟦 |
 | M1-12 | Feel metrics PlayMode (tăng tốc, quãng phanh, bán kính quay, airtime, settle time) | rover | 🟦 |
-| M1-13 | Thư viện synth Python (stdlib) + bộ SFX M1 đúng tông D pentatonic | audio | 🟦 |
-| M1-14 | AudioDirector (pool), tiếng rover (hum + lạo xạo bụi + kẽo kẹt treo + tiếp đất) | audio | 🟦 |
-| M1-15 | Radio: độ rõ theo khoảng cách tới base (low-pass + static + wow/flutter) | audio | 🟦 |
+| M1-13 | Thư viện synth Python (stdlib) + bộ SFX M1 đúng tông D pentatonic | audio | 🟩 |
+| M1-14 | AudioDirector (pool), tiếng rover (hum + lạo xạo bụi + kẽo kẹt treo + tiếp đất) | audio | 🟩 |
+| M1-15 | Radio: độ rõ theo khoảng cách tới base (low-pass + static + wow/flutter) | audio | 🟩 |
 | M1-17 | Engine sáng tác lofi (hoà âm, voicing jazz, groove swing, cấu trúc bài) + nhạc cụ (Rhodes FM, trống, bass, pad, vinyl) | music | 🟦 |
 | M1-18 | Playlist radio 5–6 bài OGG (68–84 BPM), mix/master nhất quán, có báo cáo đo loudness | music | 🟦 |
 | M1-16 | Tích hợp M1 vào `Main.unity`, playtest, đánh giá feeling, xoá prototype rover/WALL-E | Director | ⬜ |
@@ -61,14 +61,14 @@
 ## M2 — Vòng lặp lõi (vertical slice)
 | ID | Việc | Box | TT |
 |---|---|---|---|
-| M2-01 | Scrap: rải theo cụm, hút từ tính, combo nốt nhạc leo thang, tiền tệ | gameplay | ⬜ |
-| M2-02 | Sonar ping [Space]: vòng sóng trên mặt đất, relic đáp lại, nhịp nhanh dần khi lại gần | gameplay | ⬜ |
-| M2-03 | Đào relic [giữ E]: tia kéo, relic trồi lên giữa bụi xoáy, camera blend nhẹ | gameplay | ⬜ |
-| M2-04 | Tether [giữ RMB]: lò xo PD, cuộn dây bằng scroll, đứt mềm khi quá xa | gameplay | ⬜ |
-| M2-05 | Base: lander, kệ bảo tàng snap-point, nộp relic, hiệu ứng "về nhà" | gameplay + art | ⬜ |
-| M2-06 | Tháp radio 3 cấp: nâng cấp bằng scrap → mở rộng vùng tín hiệu (ánh sáng + nhạc rõ) | gameplay + audio + art | ⬜ |
+| M2-01 | Scrap: rải theo cụm, hút từ tính, combo nốt nhạc leo thang, tiền tệ | gameplay | 🟦 |
+| M2-02 | Sonar ping [Space]: vòng sóng trên mặt đất, relic đáp lại, nhịp nhanh dần khi lại gần | gameplay | 🟦 |
+| M2-03 | Đào relic [giữ E]: tia kéo, relic trồi lên giữa bụi xoáy, camera blend nhẹ | gameplay | 🟦 |
+| M2-04 | Tether [giữ RMB]: lò xo PD, cuộn dây bằng scroll, đứt mềm khi quá xa | gameplay | 🟦 |
+| M2-05 | Base: lander, kệ bảo tàng snap-point, nộp relic, hiệu ứng "về nhà" | gameplay + art | 🟦 |
+| M2-06 | Tháp radio 3 cấp: nâng cấp bằng scrap → mở rộng vùng tín hiệu (ánh sáng + nhạc rõ) | gameplay + audio + art | 🟦 |
 | M2-07 | 6 relic có cá tính (model + tên + câu chuyện ngắn) | art + gameplay | ⬜ |
-| M2-08 | Save/Load tự động | gameplay | ⬜ |
+| M2-08 | Save/Load tự động | gameplay | 🟦 |
 | M2-09 | HUD tối giản (diegetic ưu tiên), prompt ngữ cảnh, menu tạm dừng + cài đặt âm lượng/độ nhạy | ui | ⬜ |
 | M2-10 | Tích hợp + playtest slice 15 phút, sửa feeling | Director | ⬜ |
 

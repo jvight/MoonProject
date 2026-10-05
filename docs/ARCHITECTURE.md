@@ -137,6 +137,22 @@ comes from the palette emission map; the material's `_EmissionColor` is authored
 rover scales glow per renderer with a `MaterialPropertyBlock` setting `_EmissionColor` = white × intensity
 (1 = authored, 0 = dark, > 1 brighter, HDR). Any custom palette shader must keep the URP `_EmissionColor` name.
 
+## Contract: M2 content (Art -> Gameplay)
+Meshes-only prefabs on `M_LowPoly` (no colliders, no scripts; gameplay adds physics), pivot at the centre of mass,
++Y up, +Z front. Gameplay references them by path; art may refine their looks freely without renaming.
+```
+Generated/Art/Scrap/Scrap_Bolt|Scrap_Gear|Scrap_Panel|Scrap_Coil.prefab     0.3–0.5 m, TechGlow accents
+Generated/Art/Relics/Relic_<Id>.prefab                                       0.5–1.2 m, one per relic id:
+    cassette_player, rubber_duck, golden_record, astronaut_boot, teapot, garden_gnome
+Generated/Art/Base/Lander.prefab        the abandoned lander (base origin = its pivot on the ground)
+    ShelfAnchor, TowerAnchor          empties where gameplay places the museum shelf and radio tower
+    LampSocket_0..3                   empties for warm base lights
+Generated/Art/Base/MuseumShelf.prefab
+    Slot_0..Slot_5                    empties, +Y up, where deposited relics rest
+Generated/Art/Base/RadioTower_L1|L2|L3.prefab   three upgrade stages, same footprint
+    BeaconSocket                      empty at the top (signal light / beam)
+```
+
 ## Verification ladder
 1. `python tools/compile_check.py` — editor + player configs, zero warnings. Mandatory before every commit.
 2. EditMode tests (`Assets/_Project/Tests/EditMode`) for pure logic: mesh kit, event bus, economy, save, curves.

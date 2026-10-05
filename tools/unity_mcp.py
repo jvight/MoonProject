@@ -7,15 +7,26 @@ Usage:
   python tools/unity_mcp.py list                          # list tool names
   python tools/unity_mcp.py call <tool> '<json-args>'     # call a tool, print text result
   python tools/unity_mcp.py call <tool> @args.json        # args from file
+  python tools/unity_mcp.py build [--filter REGEX]        # run [MoonBuilder] builders in the editor (all by default)
+  python tools/unity_mcp.py scene                         # rebuild Assets/_Project/Scenes/Main.unity in the editor
+  python tools/unity_mcp.py builders                      # list registered builders
+  (build/scene/builders accept --timeout SECONDS, default 1800; exit code 0 = RESULT: PASS)
+
+build/scene/builders call MoonProject.Editor.Automation.EditorCommands in the running editor: no dialogs, no
+EditorApplication.Exit. The editor writes the report to Logs/editor-commands/ when done, so a build that outlasts the
+MCP request timeout is still collected (the client waits for the report file).
 
 Image results (screenshots) are saved under Logs/mcp/ and their paths printed.
 
 Only the Director should drive the main editor (see CLAUDE.md).
 """
+import argparse
 import base64
 import json
+import socket
 import sys
 import time
+import uuid
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -97,7 +108,67 @@ def save_image(tool, index, item):
     return path
 
 
+EDITOR_COMMANDS = {
+    "build": "Build",
+    "scene": "BuildMainScene",
+    "builders": "ListBuilders",
+}
+
+
+def run_editor_command(command, filter_pattern, timeout):
+    """Calls EditorCommands.<method> via reflection-method-call and returns (report text or None, error text)."""
+    method = EDITOR_COMMANDS[command]
+    out_dir = Path(__file__).resolve().parent.parent / "Logs" / "editor-commands"
+    report = out_dir / f"{time.strftime('%Y%m%d-%H%M%S')}-{command}-{uuid.uuid4().hex[:8]}.txt"
+    parameters = []
+    if command == "build":
+        parameters.append({"typeName": "System.String", "name": "filter", "value": filter_pattern or ""})
+    parameters.append({"typeName": "System.String", "name": "reportPath", "value": str(report)})
+    arguments = {
+        "filter": {
+            "namespace": "MoonProject.Editor.Automation",
+            "typeName": "EditorCommands",
+            "methodName": method,
+            "inputParameters": [{"typeName": p["typeName"], "name": p["name"]} for p in parameters],
+        },
+        "knownNamespace": True,
+        "typeNameMatchLevel": 6,
+        "methodNameMatchLevel": 6,
+        "parametersMatchLevel": 2,
+        "inputParameters": parameters,
+        "executeInMainThread": True,
+    }
+    started = time.monotonic()
+    error = ""
+    try:
+        result = McpClient(timeout=timeout).connect().call("reflection-method-call", arguments)
+        if result.get("isError"):
+            texts = [i.get("text", "") for i in result.get("content", []) if i.get("type") == "text"]
+            error = " | ".join(texts) or "tool error"
+    except (urllib.error.URLError, socket.timeout, TimeoutError, RuntimeError, ConnectionError) as exc:
+        error = str(exc)
+    if error and not report.exists() and "time" not in error.lower():
+        return None, error
+    while not report.exists():
+        if time.monotonic() - started > timeout:
+            return None, f"no report from the editor after {timeout}s ({error or 'request returned'}): {report}"
+        time.sleep(1.0)
+    return report.read_text(encoding="utf-8"), error
+
+
 def main():
+    if len(sys.argv) >= 2 and sys.argv[1] in EDITOR_COMMANDS:
+        ap = argparse.ArgumentParser(prog="unity_mcp.py " + sys.argv[1])
+        if sys.argv[1] == "build":
+            ap.add_argument("--filter", default="", help="regex matched against builder paths (default: all)")
+        ap.add_argument("--timeout", type=int, default=1800, help="seconds to wait for the editor's report")
+        args = ap.parse_args(sys.argv[2:])
+        text, error = run_editor_command(sys.argv[1], getattr(args, "filter", ""), args.timeout)
+        if text is None:
+            print(f"ERROR: {error}")
+            sys.exit(1)
+        print(text)
+        sys.exit(0 if text.rstrip().endswith("RESULT: PASS") else 1)
     if len(sys.argv) < 2 or sys.argv[1] not in ("list", "call"):
         sys.exit(__doc__)
     client = McpClient().connect()

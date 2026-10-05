@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using MoonProject.Editor.Automation;
 using Debug = UnityEngine.Debug;
@@ -44,7 +45,7 @@ namespace MoonProject.Editor.Builders
                 }
 
                 paths.Add(path, name);
-                found.Add(new BuilderInfo(path, attribute.Order, method));
+                found.Add(new BuilderInfo(path, attribute.Order, attribute.ReplacesOpenScene, method));
             }
 
             found.Sort(CompareBuilders);
@@ -103,6 +104,40 @@ namespace MoonProject.Editor.Builders
             }
 
             return results;
+        }
+
+        /// <summary>True if any of <paramref name="builders"/> replaces the open scene.</summary>
+        public static bool AnyReplacesOpenScene(IReadOnlyList<BuilderInfo> builders)
+        {
+            foreach (BuilderInfo builder in builders)
+            {
+                if (builder.ReplacesOpenScene)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// For menu and window runs: if a selected builder replaces the open scene, asks the user to save modified
+        /// scenes first. Returns false if the user cancelled (nothing must run then).
+        /// </summary>
+        public static bool ConfirmInteractiveRun(IReadOnlyList<BuilderInfo> builders)
+        {
+            if (Application.isBatchMode || !AnyReplacesOpenScene(builders))
+            {
+                return true;
+            }
+
+            if (EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
+            {
+                return true;
+            }
+
+            Debug.LogWarning("Build cancelled: the open scene has unsaved changes and a selected builder replaces it.");
+            return false;
         }
 
         /// <summary>Discovers, logs discovery problems, filters and runs. Returns true if everything succeeded.</summary>
