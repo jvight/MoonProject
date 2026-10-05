@@ -28,5 +28,11 @@ namespace MoonProject.Editor.Builders
 
         /// <summary>Lower runs first; builders that consume other builders' output use a higher order.</summary>
         public int Order { get; }
+
+        /// <summary>
+        /// Set for builders that replace the open scene (scene builders). Interactive runs then ask the user to save
+        /// modified scenes first, and editor commands refuse to run while a scene has unsaved changes.
+        /// </summary>
+        public bool ReplacesOpenScene { get; set; }
     }
 }
