@@ -1,0 +1,17 @@
+{
+    "name": "MoonProject.App",
+    "rootNamespace": "MoonProject.App",
+    "references": [
+        "MoonProject.Core",
+        "Unity.InputSystem"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
