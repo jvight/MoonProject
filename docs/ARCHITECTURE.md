@@ -28,10 +28,11 @@ Assets/_Project/
     PlayMode/   MoonProject.Tests.PlayMode  - shared PlayMode harness + bootstrap smoke tests (foundation)
   Shaders/<Domain>/   hand-written URP shaders, owned by that domain (kept small)
   Generated/<Domain>/ builder output (meshes, prefabs, materials, textures) - never hand-edited
-  Audio/        SFX/, Music/, Ambience/ (WAV/OGG produced by tools/audio or provided)
+  Audio/        SFX/ + Ambience/ (WAV from tools/audio), Music/ (OGG Vorbis from tools/music)
   Data/         ScriptableObject tuning & content assets, Input/Controls.inputactions
   Scenes/       Main.unity (built by the scene builder), test scenes
-tools/          python tooling (compile_check, unity_batch, unity_mcp, audio synth) - stdlib only
+tools/          python tooling (compile_check, unity_batch, unity_mcp, audio + music synthesis);
+                deps pinned in tools/requirements.txt (numpy, scipy, soundfile)
 docs/           VISION, ARCHITECTURE, ROADMAP
 ```
 
@@ -100,24 +101,32 @@ Assembly references use **names**, not GUIDs (tools/compile_check.py relies on i
   (tether beam, sonar ring, sky). Palette texture is generated from `PaletteSwatch` definitions.
 - **Scene**: `Assets/_Project/Scenes/Main.unity` is produced by the scene builder from prefabs + world data.
   Only the Director runs it in the main project and commits the result. Nobody hand-edits scenes.
-- **Audio**: `tools/audio/*.py` (stdlib only) synthesises SFX into `Assets/_Project/Audio/SFX` deterministically.
+- **Audio**: `tools/audio` (shared DSP core `tools/audio/synth` + SFX recipes) renders SFX/ambience WAVs;
+  `tools/music` (instruments, composition, mixing on top of the same DSP core) renders the radio tracks as OGG.
+  Both are deterministic (seeded) and re-runnable.
 - **Import settings** are enforced by an `AssetPostprocessor` per folder convention, not by hand-edited `.meta`.
 
 ## Contract: rover model rig (Art -> Rover)
 Art's builder produces `Assets/_Project/Generated/Art/Rover/RoverModel.prefab` (meshes only, no colliders, no
 scripts). Rover's builder wraps it into the playable `Rover.prefab`. Units in metres, +Z forward, +Y up,
 origin at the centre of the ground contact patch. Overall ~2.2 m long, ~1.6 m wide, ~1.4 m tall, wheel radius 0.35 m.
+The character brief is "07" in docs/VISION.md.
 ```
 RoverModel
-  Body                 chassis, cabin, lamp housing (pivot at origin)
+  Body                 chassis + cabin (pivot at origin)
+  Bogie_L, Bogie_R     rocker-bogie arms (pivot at the body-side hinge, pitch = local X); visual only
   Wheel_FL, Wheel_FR   front wheels   (pivot at wheel centre, roll axis = local X)
-  Wheel_ML, Wheel_MR   middle wheels
+  Wheel_ML, Wheel_MR   middle wheels  (direct children of RoverModel, NOT of the bogies)
   Wheel_RL, Wheel_RR   rear wheels
-  Mast                 pivot at mast base (yaw)
-    Dish               pivot at dish hinge (pitch)
-      TetherOrigin     empty, tip of the emitter, +Z out of the dish
+  Neck                 pivot at neck base on the body (yaw = local Y)
+    Head               pivot at head hinge (pitch = local X); hooded sensor head
+      Eye              the round lens (emissive WarmLamp); +Z = gaze direction
+        TetherOrigin   empty at the lens centre, +Z = gaze (sonar/tether beams leave from here)
+      Eyelid           brow/shutter, pivot on the eye's horizontal axis; local X rotation 0 = open, + = closing
+  SolarWing            folded panel on the back, pivot at its hinge (local X rotation 0 = folded, + = opening)
   Antenna              pivot at antenna base (spring wobble)
-  HeadlampSocket       empty, +Z = light direction
+    AntennaTip         small emissive tip (blinks)
+  HeadlampSocket       empty, low on the body front, +Z = road light direction
   CargoSocket          empty, where the cargo bed upgrade attaches
   DustSocket_L/_R      empties at the rear wheel contact points
 ```

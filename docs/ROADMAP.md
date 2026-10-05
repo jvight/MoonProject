@@ -18,7 +18,8 @@
 | 🎨 art | `Scripts/Art`, `Editor/Art`, `Generated/Art`, `Shaders/` | mesh kit low-poly, palette, mọi model |
 | 🌙 world | `Scripts/World`, `Editor/World` | địa hình miệng núi lửa, bầu trời, ánh sáng, post, scatter |
 | 🚙 rover | `Scripts/Rover`, `Editor/Rover` | điều khiển, treo, camera, FX bánh xe |
-| 🎵 audio | `Scripts/Audio`, `Editor/Audio`, `tools/audio`, `Audio/` | synth SFX đúng tông, radio, ASMR |
+| 🎵 audio | `Scripts/Audio/**`, `tools/audio/**` (lõi DSP dùng chung), `Audio/SFX`, `Audio/Ambience` | synth SFX đúng tông, radio, ASMR |
+| 🎼 music | `tools/music/**`, `Audio/Music/**` | tự sáng tác + render nhạc lofi cho radio (D trưởng / Si thứ) |
 | ⚙️ gameplay | `Scripts/Gameplay`, `Editor/Gameplay`, `Data/Content` | (wave 2) scrap, sonar, đào, tether, base, nâng cấp, save |
 | 🖥️ ui | `Scripts/UI`, `UI/` (UXML/USS) | (wave 2) HUD tối giản, menu, cài đặt |
 
@@ -53,6 +54,8 @@
 | M1-13 | Thư viện synth Python (stdlib) + bộ SFX M1 đúng tông D pentatonic | audio | 🟦 |
 | M1-14 | AudioDirector (pool), tiếng rover (hum + lạo xạo bụi + kẽo kẹt treo + tiếp đất) | audio | 🟦 |
 | M1-15 | Radio: độ rõ theo khoảng cách tới base (low-pass + static + wow/flutter) | audio | 🟦 |
+| M1-17 | Engine sáng tác lofi (hoà âm, voicing jazz, groove swing, cấu trúc bài) + nhạc cụ (Rhodes FM, trống, bass, pad, vinyl) | music | 🟦 |
+| M1-18 | Playlist radio 5–6 bài OGG (68–84 BPM), mix/master nhất quán, có báo cáo đo loudness | music | 🟦 |
 | M1-16 | Tích hợp M1 vào `Main.unity`, playtest, đánh giá feeling, xoá prototype rover/WALL-E | Director | ⬜ |
 
 ## M2 — Vòng lặp lõi (vertical slice)
@@ -80,6 +83,7 @@ sửa chảo vệ tinh, cảnh phát sóng cuối + credits.
 ## M5 — Đánh bóng & phát hành
 Tối ưu hiệu năng, tay cầm hoàn chỉnh, accessibility, build pipeline, bug bash.
 
-## Câu hỏi mở cho chủ dự án
-- `Assets/Sounds/Music/music_1.mp3`: nguồn gốc/bản quyền? Có thêm track lofi nào để làm radio không?
-- `Assets/Models/wall-e`: model WALL-E là IP của Disney/Pixar → sẽ thay bằng rover low-poly tự dựng (M1-16).
+## Quyết định của chủ dự án (2026-10-05)
+- Nhạc: tự sáng tác & render bằng code (box music) — không dùng `music_1.mp3` trong bản phát hành.
+- Rover: KHÔNG dùng WALL-E. Nhân vật mới "07": rover cũ kỹ, máy móc u buồn (xem `docs/VISION.md`).
+- Git: push `main` lên `origin` khi có mốc hoàn chỉnh.
