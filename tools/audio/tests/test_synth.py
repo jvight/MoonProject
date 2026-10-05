@@ -3,6 +3,7 @@ import hashlib
 import math
 import sys
 import tempfile
+import threading
 import unittest
 from pathlib import Path
 
@@ -227,6 +228,18 @@ class IoTests(unittest.TestCase):
             back, rate = io.read_audio(a)
             self.assertEqual(rate, SAMPLE_RATE)
             self.assertLess(float(np.max(np.abs(back - x))), 2.0 / 32767.0)
+
+    def test_long_stereo_ogg_writes_from_a_worker_thread(self):
+        # Regression: one-shot encoding of long buffers overflowed worker-thread stacks (process exit 127).
+        x = np.stack([osc.sine(SAMPLE_RATE * 30, 440.0, amp=0.3), osc.sine(SAMPLE_RATE * 30, 660.0, amp=0.3)], 1)
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "long.ogg"
+            worker = threading.Thread(target=io.write_ogg, args=(path, x))
+            worker.start()
+            worker.join()
+            back, rate = io.read_audio(path)
+            self.assertEqual(rate, SAMPLE_RATE)
+            self.assertEqual(back.shape, x.shape)
 
     def test_ogg_decoded_digest_is_stable(self):
         x = osc.sine(SAMPLE_RATE, 440.0, amp=0.3)
