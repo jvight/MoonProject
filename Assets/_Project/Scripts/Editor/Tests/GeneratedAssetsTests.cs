@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -9,12 +10,23 @@ namespace MoonProject.Editor.Tests
 {
     public sealed class GeneratedAssetsTests
     {
-        private const string Folder = GeneratedAssets.Root + "/__EditorTests__";
+        /// <summary>Dedicated top-level temp folder: nothing else under Assets is created or touched.</summary>
+        private const string Folder = "Assets/__MoonEditorTests__";
+
+        [SetUp]
+        public void SetUp()
+        {
+            Assert.IsFalse(AssetDatabase.IsValidFolder(Folder), $"{Folder} is left over from an earlier run.");
+        }
 
         [TearDown]
         public void TearDown()
         {
             AssetDatabase.DeleteAsset(Folder);
+
+            Assert.IsFalse(AssetDatabase.IsValidFolder(Folder), $"{Folder} was not removed.");
+            Assert.IsFalse(Directory.Exists(Folder), $"{Folder} still exists on disk.");
+            Assert.IsFalse(File.Exists(Folder + ".meta"), $"{Folder}.meta still exists on disk.");
         }
 
         [Test]
