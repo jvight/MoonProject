@@ -93,7 +93,8 @@ namespace MoonProject.Rover
         [Range(0.05f, 2f)]
         [SerializeField] private float _nearClip = 0.3f;
 
-        [Tooltip("Far clip plane (m). The rim backdrop and fog reach ~2.8 km and Earth sits at the far plane: >= 3000.")]
+        [Tooltip("Far clip plane (m). The rim backdrop and fog reach ~2.8 km and Earth sits at the far plane, "
+            + "so keep it >= 3000.")]
         [Range(3000f, 10000f)]
         [SerializeField] private float _farClip = 3200f;
 

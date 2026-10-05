@@ -30,7 +30,7 @@ namespace MoonProject.Rover.Editor
         private const float LandingDrag = 1.6f;
         private const float HeadlampShadowStrength = 0.7f;
 
-        /// <summary>Kicks rolling dust up and back from the rear wheel contact (cone axis pitched over local +Z).</summary>
+        /// <summary>Kicks rolling dust up and back from the rear wheel contact (cone axis tipped back).</summary>
         private static readonly Vector3 DustConeRotation = new Vector3(-120f, 0f, 0f);
 
         [MoonBuilder("Rover/Rover", 310)]
@@ -200,7 +200,7 @@ namespace MoonProject.Rover.Editor
             return dust;
         }
 
-        /// <summary>Landing ring: puffs pushed outward in the ground plane and lifted gently; emitted on demand.</summary>
+        /// <summary>Landing ring: puffs pushed outward along the ground, lifted gently; emitted on demand.</summary>
         private static ParticleSystem LandingRing(Transform parent, Material material, Mesh mesh)
         {
             ParticleSystem ring = CreateSystem("LandingDust", parent, material, mesh, LandingMaxParticles, false);

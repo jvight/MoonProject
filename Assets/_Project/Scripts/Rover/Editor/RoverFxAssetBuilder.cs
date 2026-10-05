@@ -12,7 +12,7 @@ namespace MoonProject.Rover.Editor
     /// </summary>
     public static class RoverFxAssetBuilder
     {
-        /// <summary>A fresh track darkens the ground toward this share of the dust shadow swatch at full opacity.</summary>
+        /// <summary>How far a fresh, fully opaque track darkens the ground toward the dust shadow swatch.</summary>
         private const float TrackTintStrength = 1f;
 
         private const float DustPuffRadius = 0.5f;

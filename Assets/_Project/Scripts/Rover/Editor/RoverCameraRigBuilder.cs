@@ -11,7 +11,8 @@ namespace MoonProject.Rover.Editor
     /// RoverCameraRig   RoverCameraRig (IGameSystem; initialise after the rover)
     ///   FollowTarget   moved above 07 every frame
     ///   MainCamera     Camera (tag MainCamera, URP post-processing on) + CinemachineBrain + AudioListener
-    ///   DroneCamera    CinemachineCamera + OrbitalFollow + RotationComposer + RoverCameraBump + Decollider + Deoccluder
+    ///   DroneCamera    CinemachineCamera + OrbitalFollow + RotationComposer + RoverCameraBump
+    ///                  + Decollider + Deoccluder
     /// </code>
     /// The bump extension is added before the terrain extensions so they still correct its offset.
     /// </summary>
@@ -19,7 +20,7 @@ namespace MoonProject.Rover.Editor
     {
         private const string MainCameraTag = "MainCamera";
 
-        /// <summary>Slow, eased blends for future cinematic cameras (relic surfacing, tower upgrade): never cuts.</summary>
+        /// <summary>Slow, eased blends for future cinematic cameras (relic surfacing, upgrades): no cuts.</summary>
         private const float DefaultBlendSeconds = 2f;
 
         [MoonBuilder("Rover/CameraRig", 320)]

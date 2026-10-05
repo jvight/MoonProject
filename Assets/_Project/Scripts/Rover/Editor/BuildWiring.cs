@@ -49,14 +49,15 @@ namespace MoonProject.Rover.Editor
             return property;
         }
 
-        /// <summary>The descendant of <paramref name="root"/> called <paramref name="name"/>; throws if absent.</summary>
+        /// <summary>The descendant of <paramref name="root"/> named <paramref name="name"/>; throws if absent.</summary>
         public static Transform Node(Transform root, string name)
         {
             Transform found = Search(root, name);
             if (found == null)
             {
                 throw new InvalidOperationException(
-                    $"RoverModel has no node '{name}' (rig contract, docs/ARCHITECTURE.md). Ask the art box to add it.");
+                    $"RoverModel has no node '{name}' (rig contract, docs/ARCHITECTURE.md); "
+                    + "ask the art box to add it.");
             }
 
             return found;
