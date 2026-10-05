@@ -1,3 +1,5 @@
+using System;
+using System.Text.RegularExpressions;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -10,18 +12,19 @@ namespace MoonProject.Editor.Tests
         [Test]
         public void CountsErrorsOnlyWhileAlive()
         {
-            LogAssert.ignoreFailingMessages = true;
             var capture = new LogCapture();
-            Debug.Log("info is ignored");
-            Debug.LogWarning("warnings are ignored");
-            Debug.LogError("first error");
-            Debug.LogException(new System.InvalidOperationException("boom"));
+            LogAssert.Expect(LogType.Error, "LogCaptureTests: expected error");
+            LogAssert.Expect(LogType.Exception, new Regex("InvalidOperationException: LogCaptureTests: expected exception"));
+            Debug.LogWarning("LogCaptureTests: warnings are not counted");
+            Debug.LogError("LogCaptureTests: expected error");
+            Debug.LogException(new InvalidOperationException("LogCaptureTests: expected exception"));
             capture.Dispose();
-            Debug.LogError("after dispose");
-            LogAssert.ignoreFailingMessages = false;
+            LogAssert.Expect(LogType.Error, "LogCaptureTests: error after dispose");
+            Debug.LogError("LogCaptureTests: error after dispose");
 
             Assert.AreEqual(2, capture.ErrorCount);
-            Assert.AreEqual("first error", capture.FirstMessage);
+            Assert.AreEqual("LogCaptureTests: expected error", capture.FirstMessage);
+            Assert.AreEqual(2, capture.Messages.Count);
         }
     }
 }
