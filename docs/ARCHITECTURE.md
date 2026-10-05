@@ -132,6 +132,11 @@ RoverModel
 ```
 Renaming or re-pivoting any node is a contract change: coordinate through the Director.
 
+Glow modulation: `Eye` and `AntennaTip` are their own MeshRenderers on the shared palette material. Their glow
+comes from the palette emission map; the material's `_EmissionColor` is authored as white (1,1,1). At runtime the
+rover scales glow per renderer with a `MaterialPropertyBlock` setting `_EmissionColor` = white × intensity
+(1 = authored, 0 = dark, > 1 brighter, HDR). Any custom palette shader must keep the URP `_EmissionColor` name.
+
 ## Verification ladder
 1. `python tools/compile_check.py` — editor + player configs, zero warnings. Mandatory before every commit.
 2. EditMode tests (`Assets/_Project/Tests/EditMode`) for pure logic: mesh kit, event bus, economy, save, curves.
