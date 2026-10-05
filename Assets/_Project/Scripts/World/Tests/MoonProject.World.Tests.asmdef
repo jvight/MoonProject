@@ -5,6 +5,8 @@
         "MoonProject.Core",
         "MoonProject.Art",
         "MoonProject.World",
+        "MoonProject.World.Editor",
+        "MoonProject.Art.Editor",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],
