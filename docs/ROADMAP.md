@@ -31,10 +31,10 @@
 | M0-03 | Khung `_Project` + asmdef Core/App/Art/Tests, EventBus, GameContext, InputReader + Controls, Layers, contracts `IRoverState`/`ITerrainQuery`, Palette | Director | 🟩 |
 | M0-04 | `tools/compile_check.py` (compile ngoài Unity, editor + player, 0 warning) và `tools/unity_mcp.py` | Director | 🟩 |
 | M0-05 | CLAUDE.md, VISION, ARCHITECTURE, ROADMAP | Director | 🟩 |
-| M0-06 | ProjectSettings: layer 6–11 + ma trận va chạm, gravity −1.62, chỉ Input System, chất lượng PC | foundation | 🟦 |
-| M0-07 | `tools/unity_batch.py` (Unity headless trên worktree, có lock) + entry points: chạy builder, chụp ảnh, chạy test | foundation | 🟦 |
-| M0-08 | Khung SceneBuild: `ISceneContributor` theo domain → dựng `Main.unity` tất định | foundation | 🟦 |
-| M0-09 | Test PlayMode asmdef + smoke test GameBootstrap; AssetPostprocessor import rules; .editorconfig | foundation | 🟦 |
+| M0-06 | ProjectSettings: layer 6–11 + ma trận va chạm, gravity −1.62, chỉ Input System, chất lượng PC | foundation | 🟩 |
+| M0-07 | `tools/unity_batch.py` (Unity headless trên worktree, có lock) + entry points: chạy builder, chụp ảnh, chạy test | foundation | 🟩 |
+| M0-08 | Khung SceneBuild: `ISceneContributor` theo domain → dựng `Main.unity` tất định | foundation | 🟩 |
+| M0-09 | Test PlayMode asmdef + smoke test GameBootstrap; AssetPostprocessor import rules; .editorconfig | foundation | 🟩 |
 
 ## M1 — "First Drive": chỉ lái xe thôi cũng đã thấy dễ chịu
 | ID | Việc | Box | TT |
