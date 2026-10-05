@@ -2,9 +2,10 @@
 The station's instrument voices, built on the shared DSP core (tools/audio/synth). Each note function returns a
 mono float64 array that starts from silence and ends at silence; nothing has a hard attack or a whistling top.
 
-  rhodes_note   two FM stacks: a 1:1 "bark" pair whose index decays with velocity (the growl of a hard hit) and a
-                14:1 tine pair that only rings for the first milliseconds (the bell of the tine); two-stage decay,
-                felt-damper release.
+  rhodes_note   two FM stacks: a 1:1 body pair whose index jumps with velocity and decays (the bark of a hard hit)
+                over a steady warm index, and a 14:1 tine pair that rings only for the first tens of milliseconds
+                (the bell of the tine, thinned out for high notes so it never reaches past ~6 kHz); two-stage
+                decay, felt-damper release.
   pad_note      three detuned band-limited saws under a slow swell (the pad bus low-passes them).
   bass_line     one continuous monophonic oscillator for the whole track (sine + soft octave), so slides are
                 real glides and legato notes never re-attack.
@@ -23,6 +24,8 @@ RHODES_RELEASE_S = 0.35
 PAD_ATTACK_S = 0.9
 PAD_RELEASE_S = 1.6
 LEAD_RING_S = 1.8
+TINE_RATIO = 14.0
+TINE_CEILING_HZ = 6000.0
 KICK_BOTTOM_HZ = 50.0
 
 
@@ -36,17 +39,18 @@ def rhodes_note(pitch, velocity, gate_s, gen):
     n = samples(gate_s + RHODES_RELEASE_S)
     t = np.arange(n) / SAMPLE_RATE
     register = min(1.0, max(0.25, (84 - pitch) / 30.0))
-    bark = (0.35 + 1.6 * velocity ** 2) * register * np.exp(-t / 0.22) + 0.12
+    bark = (0.6 + 2.2 * velocity ** 2) * register * np.exp(-t / 0.25) + 0.7
     body = fm.two_op(n, freq, 1.0, bark)
-    tine_index = 1.0 * velocity * min(1.0, 2600.0 / freq) * np.exp(-t / 0.018)
-    tine = fm.two_op(n, freq, 14.0, tine_index) * np.exp(-t / 0.5)
+    tine_reach = min(1.0, TINE_CEILING_HZ / (TINE_RATIO * freq)) ** 2
+    tine_index = 1.2 * velocity * tine_reach * np.exp(-t / 0.03)
+    tine = fm.two_op(n, freq, TINE_RATIO, tine_index) * np.exp(-t / 0.8)
     sustain_t = 2.8 * 2.0 ** (-(pitch - 60) / 24.0)
     amp = 0.35 * np.exp(-t / 0.18) + 0.65 * np.exp(-t / sustain_t)
     attack = envelope.curve(min(n, samples(0.003)), "smooth")
     amp[:attack.shape[0]] *= attack
     gate_n = min(n, samples(gate_s))
     amp[gate_n:] *= np.exp(-(t[gate_n:] - t[gate_n]) / 0.07)
-    note = (0.85 * body + 0.3 * tine) * amp * (0.3 + 0.7 * velocity ** 1.4)
+    note = (0.85 * body + 0.4 * tine) * amp * (0.3 + 0.7 * velocity ** 1.4)
     return envelope.fade_out(note, 0.02)
 
 
@@ -102,7 +106,7 @@ def bass_line(notes, start_s, n, seconds_of, glide_s=0.07):
 
 
 def kalimba_note(pitch, velocity, gen):
-    return instruments.kalimba(midi_to_freq(pitch), LEAD_RING_S, gen, decay=1.5, tine=0.07, warmth=0.06) * velocity
+    return instruments.kalimba(midi_to_freq(pitch), LEAD_RING_S, gen, decay=1.5, tine=0.07, warmth=0.15) * velocity
 
 
 def musicbox_note(pitch, velocity, gen):
@@ -127,7 +131,7 @@ def flute_note(pitch, velocity, gate_s, gen):
     depth = 11.0 * np.clip((t - 0.25) / 0.4, 0.0, 1.0)
     freq = base * 2.0 ** (depth * np.sin(2.0 * math.pi * (5.1 * t + float(gen.random()))) / 1200.0)
     env = envelope.adsr(n, 0.09, 0.5, 0.82, release / 3.0, gate=gate_s, shape="exp")
-    index = 0.32 + 0.25 * np.exp(-t / 0.08)
+    index = 0.45 + 0.25 * np.exp(-t / 0.08)
     tone = fm.two_op(n, freq, 1.0, index)
     breath = filters.bandpass(noise.white(n, gen), 2.0 * base, 1.6) * 0.18
     return envelope.fade_out((tone + breath) * env * velocity * 0.7, 0.02)

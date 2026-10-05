@@ -83,7 +83,7 @@ class Renderer:
 
     def pad(self):
         dry = self._notes(self.score.parts["pad"], "pad", self.rng("pad-notes"))
-        dry = filters.butter(dry, "lowpass", 1700.0, order=2)
+        dry = filters.butter(dry, "lowpass", 2600.0, order=2)
         wide = effects.chorus(dry, voices=3, rate=0.23, depth=0.004, delay=0.016, mix=0.6, spread=1.0)
         return filters.butter(wide, "highpass", 150.0, order=2)
 
