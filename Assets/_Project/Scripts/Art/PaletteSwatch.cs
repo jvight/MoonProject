@@ -25,5 +25,8 @@ namespace MoonProject.Art
         AlertSoft = 15,
         Charcoal = 16,
         Metal = 17,
+        Sage = 18,
+        Honey = 19,
+        PilotLight = 20,
     }
 }
