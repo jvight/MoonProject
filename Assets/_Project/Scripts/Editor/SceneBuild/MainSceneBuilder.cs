@@ -16,7 +16,8 @@ namespace MoonProject.Editor.SceneBuild
     /// Builds <c>Assets/_Project/Scenes/Main.unity</c> from an empty scene on every run: creates the
     /// <see cref="GameBootstrap"/>, runs every <see cref="ISceneContributor"/> in order, wires the bootstrap's Controls
     /// asset and ordered system list, saves with structural file IDs (<see cref="SceneFileIds"/>: same content, same
-    /// bytes), and makes the scene build index 0. Nothing is saved if any contributor fails. Entry points: menu MoonProject/Build/Main Scene, Build All (it runs last), and batch:
+    /// bytes), and makes the scene build index 0. Nothing is saved if any contributor fails.
+    /// Entry points: menu MoonProject/Build/Main Scene, Build All (it runs last), <see cref="EditorCommands"/>, and batch:
     /// <code>python tools/unity_batch.py exec --method MoonProject.Editor.SceneBuild.MainSceneBuilder.BuildMainScene</code>
     /// </summary>
     public static class MainSceneBuilder
@@ -24,11 +25,11 @@ namespace MoonProject.Editor.SceneBuild
         public const string ScenePath = "Assets/_Project/Scenes/Main.unity";
         public const string ControlsPath = "Assets/_Project/Data/Input/Controls.inputactions";
         public const string BuilderPath = "Main Scene";
+        public const string BuilderPattern = "^" + BuilderPath + "$";
         public const int BuilderOrder = 1000;
 
         private const string InputActionsField = "_inputActions";
         private const string SystemsField = "_systems";
-        private const string BuilderPattern = "^" + BuilderPath + "$";
 
         public static void BuildMainScene()
         {
@@ -38,18 +39,12 @@ namespace MoonProject.Editor.SceneBuild
         [MenuItem(BuilderWindow.BuildMenuRoot + BuilderPath, priority = 20)]
         private static void BuildFromMenu()
         {
-            BuilderRegistry.DiscoverAndRun(BuilderPattern);
+            BuilderWindow.RunFromMenu(BuilderPattern);
         }
 
-        [MoonBuilder(BuilderPath, BuilderOrder)]
+        [MoonBuilder(BuilderPath, BuilderOrder, ReplacesOpenScene = true)]
         private static void Build()
         {
-            if (!Application.isBatchMode && !EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
-            {
-                Debug.LogWarning("Main scene build skipped: unsaved changes in the open scene were not resolved.");
-                return;
-            }
-
             // Load after NewScene: opening a scene in Single mode unloads unreferenced assets loaded before it.
             Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             var controls = AssetDatabase.LoadAssetAtPath<InputActionAsset>(ControlsPath);
