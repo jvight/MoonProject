@@ -1,0 +1,127 @@
+# Lofi Lunar — Technical Architecture
+
+> Owner: Director box. Changes to this document go through the Director.
+
+## Engine baseline
+- **Unity 6000.0.78f1 (LTS)**, URP 17.0, Windows standalone (PC first; gamepad + keyboard/mouse).
+- **Input System only** (`activeInputHandler` = Input System Package). No `UnityEngine.Input`, no `OnGUI`.
+- **Cinemachine 3.x** (`Unity.Cinemachine` namespace) for every camera.
+- **UI Toolkit** for UI (UXML/USS are text — reviewable and merge-friendly). No uGUI canvases.
+- Physics: PhysX, fixed timestep 0.02 s, global gravity **(0, -1.62, 0)** (lunar). Systems needing a
+  different feel (rover downforce, scrap magnet) add their own forces explicitly from tuning values.
+
+## Folder layout
+```
+Assets/_Project/
+  Scripts/
+    Core/       MoonProject.Core       - context, event bus, input, layers, shared event contracts, math
+    Art/        MoonProject.Art        - low-poly mesh kit, palette (runtime-safe, used by builders & procedural runtime)
+    World/      MoonProject.World      - terrain generation & queries, sky, lighting/atmosphere, scatter
+    Rover/      MoonProject.Rover      - rover physics controller, suspension visuals, camera rig, rover VFX
+    Gameplay/   MoonProject.Gameplay   - scrap, sonar, excavation, tether, cargo, base, upgrades, progression, save
+    Audio/      MoonProject.Audio      - audio director, radio/music, SFX players driven by events
+    UI/         MoonProject.UI         - UI Toolkit screens & HUD
+    App/        MoonProject.App        - composition root (GameBootstrap), scene flow
+    Editor/     MoonProject.Editor     - builders (meshes, prefabs, scenes), import rules, batch automation
+  Tests/
+    EditMode/   MoonProject.Tests.EditMode
+  Generated/    builder output (meshes, prefabs, materials, textures) - never hand-edited
+  Audio/        SFX/, Music/, Ambience/ (WAV/OGG produced by tools/audio or provided)
+  Data/         ScriptableObject tuning & content assets
+  Scenes/       Main.unity (built by the scene builder), test scenes
+  Shaders/      hand-written URP shaders (kept small)
+tools/          python tooling (compile_check, unity_batch, audio synth) - stdlib only
+docs/           VISION, ARCHITECTURE, ROADMAP
+```
+`Assets/Scripts`, `Assets/Moon`, `Assets/Models`, `Assets/TutorialInfo`, `Assets/Materials` are the **legacy
+prototype**. They are reference material only and are deleted by the Director once their replacement is
+integrated (tracked in ROADMAP). Do not add to them.
+
+## Assembly dependency graph (enforced by asmdefs)
+```
+Core  <- Art <- World
+Core  <- Rover
+Core, Art, World, Rover <- Gameplay
+Core  <- Audio
+Core, Gameplay(read-only queries) <- UI
+everything <- App
+everything <- Editor (editor only)
+```
+Domains talk **through Core**: shared event structs in `Core/Events`, shared interfaces in `Core`.
+Never add an asmdef reference that creates a sideways dependency (e.g. Audio -> Gameplay); publish an event instead.
+Assembly references use **names**, not GUIDs (tools/compile_check.py relies on it).
+
+## Composition & lifetime
+- `GameBootstrap` (App) is the **only** composition root. It owns a `GameContext`:
+  `Events` (EventBus), `Input` (InputReader), plus services registered by domains.
+- Scene systems implement `IGameSystem.Initialize(GameContext)`. The bootstrap holds an explicit, ordered,
+  serialized list of systems (filled by the scene builder) and initialises them in that order. No `FindObjectOfType`,
+  no `GameObject.Find`, no singletons, no static mutable state.
+- Objects spawned at runtime receive the context from their spawner (`Initialize(context)` or constructor args).
+- Services are plain C# classes where possible (testable in EditMode); MonoBehaviours are thin adapters.
+
+## Events
+- `EventBus` is a typed publish/subscribe hub owned by the context (not static).
+- Events are `readonly struct`s in `Core/Events/<Domain>Events.cs` — data only, past-tense names
+  (`ScrapCollected`, `RoverLanded`, `RelicSurfaced`).
+- `Subscribe` returns an `IDisposable`; subscribers dispose in `OnDestroy`/`OnDisable`.
+- Publishing is allocation-free for struct events.
+
+## Tuning & content data
+- Every gameplay/feel number lives in a ScriptableObject tuning asset (`RoverTuning`, `TetherTuning`, ...)
+  under `Assets/_Project/Data/Tuning`, with `[Tooltip]` and `[Range]`/`[Min]`. Runtime code never writes to them.
+- Content (relic definitions, upgrade definitions) is ScriptableObject data under `Assets/_Project/Data/Content`.
+- Persistent progress: a versioned plain C# `SaveData` serialised with `JsonUtility` to `Application.persistentDataPath`.
+
+## Physics layers (`MoonProject.Core.Layers`)
+| # | Name | Used by |
+|---|---|---|
+| 6 | Ground | terrain chunks, base floors |
+| 7 | Rover | rover physics sphere + body colliders |
+| 8 | Relic | excavated/tetherable relics |
+| 9 | Pickup | scrap (trigger-only interactions) |
+| 10 | Prop | rocks, structures |
+| 11 | Trigger | volumes (snap points, signal radius, zones) |
+
+## Content pipeline: everything is built by code
+- **Meshes**: `MoonProject.Art` low-poly kit (primitives, flat shading, palette UVs, combine, seeded noise).
+  Editor builders in `Editor/Builders` turn recipes into mesh assets + prefabs under `Generated/`.
+  Re-running a builder is deterministic (seeded) and idempotent.
+- **Materials**: one shared palette material for nearly everything (`M_LowPoly`), plus a few special ones
+  (tether beam, sonar ring, sky). Palette texture is generated from `PaletteSwatch` definitions.
+- **Scene**: `Assets/_Project/Scenes/Main.unity` is produced by the scene builder from prefabs + world data.
+  Only the Director runs it in the main project and commits the result. Nobody hand-edits scenes.
+- **Audio**: `tools/audio/*.py` (stdlib only) synthesises SFX into `Assets/_Project/Audio/SFX` deterministically.
+- **Import settings** are enforced by an `AssetPostprocessor` per folder convention, not by hand-edited `.meta`.
+
+## Contract: rover model rig (Art -> Rover)
+Art's builder produces `Assets/_Project/Generated/Art/Rover/RoverModel.prefab` (meshes only, no colliders, no
+scripts). Rover's builder wraps it into the playable `Rover.prefab`. Units in metres, +Z forward, +Y up,
+origin at the centre of the ground contact patch. Overall ~2.2 m long, ~1.6 m wide, ~1.4 m tall, wheel radius 0.35 m.
+```
+RoverModel
+  Body                 chassis, cabin, lamp housing (pivot at origin)
+  Wheel_FL, Wheel_FR   front wheels   (pivot at wheel centre, roll axis = local X)
+  Wheel_ML, Wheel_MR   middle wheels
+  Wheel_RL, Wheel_RR   rear wheels
+  Mast                 pivot at mast base (yaw)
+    Dish               pivot at dish hinge (pitch)
+      TetherOrigin     empty, tip of the emitter, +Z out of the dish
+  Antenna              pivot at antenna base (spring wobble)
+  HeadlampSocket       empty, +Z = light direction
+  CargoSocket          empty, where the cargo bed upgrade attaches
+  DustSocket_L/_R      empties at the rear wheel contact points
+```
+Renaming or re-pivoting any node is a contract change: coordinate through the Director.
+
+## Verification ladder
+1. `python tools/compile_check.py` — editor + player configs, zero warnings. Mandatory before every commit.
+2. EditMode tests (`Assets/_Project/Tests/EditMode`) for pure logic: mesh kit, event bus, economy, save, curves.
+3. `python tools/unity_batch.py` — headless Unity run on a worktree: run builders, capture screenshots,
+   run scripted play sessions and print metrics (once Foundation lands it).
+4. Director integration in the main editor: real play mode, feel review against `docs/VISION.md` checklist.
+
+## Performance budget (PC target, 1080p)
+- 60 fps on mid-range GPU; < 1.5 ms CPU per gameplay system per frame.
+- Zero GC allocations per frame in steady state (no LINQ, no closures, no `GetComponent` in Update).
+- Terrain: chunked meshes, <= 300k triangles visible; props GPU-instanced / SRP-batched via the shared material.

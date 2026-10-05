@@ -1,0 +1,85 @@
+# Lofi Lunar — Roadmap & bảng việc
+
+> Chủ sở hữu: **Director box** (session chính). Chỉ Director cập nhật file này.
+> Trạng thái: ⬜ chưa làm · 🟦 đang làm · 🟩 xong (đã merge + kiểm chứng) · 🟥 bị chặn
+
+## Đích đến
+1. **Vertical slice (M1 + M2)**: 15–20 phút gameplay hoàn chỉnh, feeling đạt checklist trong `docs/VISION.md`:
+   lái xe → nhặt scrap → sonar → đào relic → kéo tether về base → đặt lên kệ bảo tàng → nâng cấp tháp radio →
+   nhạc rõ dần.
+2. **Full game (M3 → M5)**: nâng cấp rover, mở rộng thế giới, sự kiện Nhật thực / Bão mặt trời, Biodome,
+   sửa chảo vệ tinh trên đỉnh núi, phát bản nhạc cuối về Trái Đất.
+
+## Các box (agent) và vùng sở hữu
+| Box | Sở hữu | Ghi chú |
+|---|---|---|
+| 🎬 Director | `docs/`, `Core` contracts, `App`, scene `Main.unity`, Unity editor chính, merge `main` | session này |
+| 🧱 foundation | ProjectSettings, `tools/unity_batch.py`, `Editor/Automation`, `Editor/SceneBuild`, import rules, test infra | |
+| 🎨 art | `Scripts/Art`, `Editor/Art`, `Generated/Art`, `Shaders/` | mesh kit low-poly, palette, mọi model |
+| 🌙 world | `Scripts/World`, `Editor/World` | địa hình miệng núi lửa, bầu trời, ánh sáng, post, scatter |
+| 🚙 rover | `Scripts/Rover`, `Editor/Rover` | điều khiển, treo, camera, FX bánh xe |
+| 🎵 audio | `Scripts/Audio`, `Editor/Audio`, `tools/audio`, `Audio/` | synth SFX đúng tông, radio, ASMR |
+| ⚙️ gameplay | `Scripts/Gameplay`, `Editor/Gameplay`, `Data/Content` | (wave 2) scrap, sonar, đào, tether, base, nâng cấp, save |
+| 🖥️ ui | `Scripts/UI`, `UI/` (UXML/USS) | (wave 2) HUD tối giản, menu, cài đặt |
+
+## M0 — Nền móng kỹ thuật
+| ID | Việc | Box | TT |
+|---|---|---|---|
+| M0-01 | Chuẩn hoá Unity 6000.0.78f1 LTS, sửa manifest (bỏ module không tồn tại, URP 17.0.4) | Director | 🟩 |
+| M0-02 | Xoá rác legacy hỏng: ImageEffects Built-in, TutorialInfo, demo scene Moon pack | Director | 🟩 |
+| M0-03 | Khung `_Project` + asmdef Core/App/Art/Tests, EventBus, GameContext, InputReader + Controls, Layers, contracts `IRoverState`/`ITerrainQuery`, Palette | Director | 🟩 |
+| M0-04 | `tools/compile_check.py` (compile ngoài Unity, editor + player, 0 warning) và `tools/unity_mcp.py` | Director | 🟩 |
+| M0-05 | CLAUDE.md, VISION, ARCHITECTURE, ROADMAP | Director | 🟩 |
+| M0-06 | ProjectSettings: layer 6–11 + ma trận va chạm, gravity −1.62, chỉ Input System, chất lượng PC | foundation | ⬜ |
+| M0-07 | `tools/unity_batch.py` (Unity headless trên worktree, có lock) + entry points: chạy builder, chụp ảnh, chạy test | foundation | ⬜ |
+| M0-08 | Khung SceneBuild: `ISceneContributor` theo domain → dựng `Main.unity` tất định | foundation | ⬜ |
+| M0-09 | Test PlayMode asmdef + smoke test GameBootstrap; AssetPostprocessor import rules; .editorconfig | foundation | ⬜ |
+
+## M1 — "First Drive": chỉ lái xe thôi cũng đã thấy dễ chịu
+| ID | Việc | Box | TT |
+|---|---|---|---|
+| M1-01 | Mesh kit low-poly (primitive, flat shading, palette UV, noise có seed) + test | art | ⬜ |
+| M1-02 | Palette texture + material dùng chung (quyết định URP Lit vs shader riêng, có bằng chứng ảnh chụp) | art | ⬜ |
+| M1-03 | Model rover theo hợp đồng rig (ARCHITECTURE), đá/tảng (6+), scrap (4) | art | ⬜ |
+| M1-04 | Hàm độ cao miệng núi lửa (bowl + rim + đụn cát + crater + The Peak + bãi base) → `ITerrainQuery` + test | world | ⬜ |
+| M1-05 | Mesh địa hình chia chunk, flat-shaded, tô palette theo độ dốc/độ cao, collider layer Ground | world | ⬜ |
+| M1-06 | Bầu trời (gradient + sao + dải ngân hà + Trái Đất + sao băng), sương, ánh sáng, Volume post | world | ⬜ |
+| M1-07 | Rải đá/tảng theo Poisson, tránh bãi base | world | ⬜ |
+| M1-08 | Rover controller (sphere physics), `IRoverState`, `RoverLanded`, tuning SO | rover | ⬜ |
+| M1-09 | Visual rig: bám mặt đất, treo từng bánh, nghiêng thân, quay bánh, ăng-ten lò xo, đèn pha | rover | ⬜ |
+| M1-10 | Camera Cinemachine 3: drone lơ lửng, auto-recenter, FOV theo tốc độ, chống xuyên địa hình | rover | ⬜ |
+| M1-11 | Vệt bánh xe + bụi + bụi khi tiếp đất | rover | ⬜ |
+| M1-12 | Feel metrics PlayMode (tăng tốc, quãng phanh, bán kính quay, airtime, settle time) | rover | ⬜ |
+| M1-13 | Thư viện synth Python (stdlib) + bộ SFX M1 đúng tông D pentatonic | audio | ⬜ |
+| M1-14 | AudioDirector (pool), tiếng rover (hum + lạo xạo bụi + kẽo kẹt treo + tiếp đất) | audio | ⬜ |
+| M1-15 | Radio: độ rõ theo khoảng cách tới base (low-pass + static + wow/flutter) | audio | ⬜ |
+| M1-16 | Tích hợp M1 vào `Main.unity`, playtest, đánh giá feeling, xoá prototype rover/WALL-E | Director | ⬜ |
+
+## M2 — Vòng lặp lõi (vertical slice)
+| ID | Việc | Box | TT |
+|---|---|---|---|
+| M2-01 | Scrap: rải theo cụm, hút từ tính, combo nốt nhạc leo thang, tiền tệ | gameplay | ⬜ |
+| M2-02 | Sonar ping [Space]: vòng sóng trên mặt đất, relic đáp lại, nhịp nhanh dần khi lại gần | gameplay | ⬜ |
+| M2-03 | Đào relic [giữ E]: tia kéo, relic trồi lên giữa bụi xoáy, camera blend nhẹ | gameplay | ⬜ |
+| M2-04 | Tether [giữ RMB]: lò xo PD, cuộn dây bằng scroll, đứt mềm khi quá xa | gameplay | ⬜ |
+| M2-05 | Base: lander, kệ bảo tàng snap-point, nộp relic, hiệu ứng "về nhà" | gameplay + art | ⬜ |
+| M2-06 | Tháp radio 3 cấp: nâng cấp bằng scrap → mở rộng vùng tín hiệu (ánh sáng + nhạc rõ) | gameplay + audio + art | ⬜ |
+| M2-07 | 6 relic có cá tính (model + tên + câu chuyện ngắn) | art + gameplay | ⬜ |
+| M2-08 | Save/Load tự động | gameplay | ⬜ |
+| M2-09 | HUD tối giản (diegetic ưu tiên), prompt ngữ cảnh, menu tạm dừng + cài đặt âm lượng/độ nhạy | ui | ⬜ |
+| M2-10 | Tích hợp + playtest slice 15 phút, sửa feeling | Director | ⬜ |
+
+## M3 — Tiến trình
+Hover-Jump, Magnetic Treads, Cargo Bed, vùng mới mở theo khả năng di chuyển, cassette/nhật ký âm thanh,
+menu chính, cài đặt đồ hoạ.
+
+## M4 — Sự kiện & kết thúc
+Nhật thực (đường phát quang), Bão mặt trời (tăng tốc), Biodome cây phát sáng lớn dần, leo The Peak,
+sửa chảo vệ tinh, cảnh phát sóng cuối + credits.
+
+## M5 — Đánh bóng & phát hành
+Tối ưu hiệu năng, tay cầm hoàn chỉnh, accessibility, build pipeline, bug bash.
+
+## Câu hỏi mở cho chủ dự án
+- `Assets/Sounds/Music/music_1.mp3`: nguồn gốc/bản quyền? Có thêm track lofi nào để làm radio không?
+- `Assets/Models/wall-e`: model WALL-E là IP của Disney/Pixar → sẽ thay bằng rover low-poly tự dựng (M1-16).
