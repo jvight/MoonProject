@@ -185,7 +185,8 @@ public class GravTether : MonoBehaviour
         if (Physics.Raycast(ray, out RaycastHit hit, maxAimDistance, tetherableLayer))
         {
             Rigidbody targetRb = hit.collider.attachedRigidbody;
-            if (targetRb != null && targetRb != roverRigidbody)
+            // Skip kinematic bodies (e.g. relics still buried/surfacing) — only loose physics objects can be reeled in.
+            if (targetRb != null && targetRb != roverRigidbody && !targetRb.isKinematic)
             {
                 // Start tethering
                 isTethering = true;
@@ -226,7 +227,8 @@ public class GravTether : MonoBehaviour
         if (Physics.Raycast(ray, out RaycastHit hit, maxAimDistance, tetherableLayer))
         {
             Rigidbody targetRb = hit.collider.attachedRigidbody;
-            if (targetRb != null && targetRb != roverRigidbody)
+            // Only highlight loose (non-kinematic) targets the tether can actually grab.
+            if (targetRb != null && targetRb != roverRigidbody && !targetRb.isKinematic)
             {
                 ApplyHighlight(targetRb.GetComponentInChildren<Renderer>());
                 lookTarget = targetRb.position;

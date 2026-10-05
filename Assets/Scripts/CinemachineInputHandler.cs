@@ -1,28 +1,36 @@
 using UnityEngine;
-//using Cinemachine;
+using UnityEngine.InputSystem;
+using Unity.Cinemachine;
 
+/// <summary>
+/// Drives a Cinemachine 3.x OrbitalFollow rig with raw mouse delta (New Input System),
+/// giving the old FreeLook-style "look around the rover" feel without needing
+/// InputActionReferences wired up. Put this on the CinemachineCamera GameObject.
+/// </summary>
+[RequireComponent(typeof(CinemachineOrbitalFollow))]
 public class CinemachineInputHandler : MonoBehaviour
 {
-    void Start()
+    [Tooltip("Horizontal (orbit) look sensitivity, in degrees per mouse-delta unit.")]
+    [SerializeField] private float horizontalSensitivity = 0.05f;
+    [Tooltip("Vertical (pitch) look sensitivity, in degrees per mouse-delta unit.")]
+    [SerializeField] private float verticalSensitivity = 0.04f;
+    [Tooltip("Invert the vertical look axis.")]
+    [SerializeField] private bool invertY = false;
+
+    private CinemachineOrbitalFollow orbital;
+
+    void Awake()
     {
-        // Override Cinemachine's input to use the New Input System directly
-        // CinemachineCore.GetInputAxis = GetAxisCustom; // Deprecated in Cinemachine 3
+        orbital = GetComponent<CinemachineOrbitalFollow>();
     }
 
-    private float GetAxisCustom(string axisName)
+    void Update()
     {
-        if (UnityEngine.InputSystem.Mouse.current == null)
-            return 0f;
+        if (orbital == null || Mouse.current == null) return;
 
-        if (axisName == "Mouse X")
-        {
-            return UnityEngine.InputSystem.Mouse.current.delta.x.ReadValue() * 0.026f; // Scale down raw delta further for lower sensitivity
-        }
-        else if (axisName == "Mouse Y")
-        {
-            return UnityEngine.InputSystem.Mouse.current.delta.y.ReadValue() * 0.026f; // Scale down raw delta further
-        }
+        Vector2 delta = Mouse.current.delta.ReadValue();
 
-        return 0f;
+        orbital.HorizontalAxis.Value += delta.x * horizontalSensitivity;
+        orbital.VerticalAxis.Value += delta.y * verticalSensitivity * (invertY ? 1f : -1f);
     }
 }
