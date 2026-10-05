@@ -30,29 +30,29 @@
 | M0-03 | Khung `_Project` + asmdef Core/App/Art/Tests, EventBus, GameContext, InputReader + Controls, Layers, contracts `IRoverState`/`ITerrainQuery`, Palette | Director | 🟩 |
 | M0-04 | `tools/compile_check.py` (compile ngoài Unity, editor + player, 0 warning) và `tools/unity_mcp.py` | Director | 🟩 |
 | M0-05 | CLAUDE.md, VISION, ARCHITECTURE, ROADMAP | Director | 🟩 |
-| M0-06 | ProjectSettings: layer 6–11 + ma trận va chạm, gravity −1.62, chỉ Input System, chất lượng PC | foundation | ⬜ |
-| M0-07 | `tools/unity_batch.py` (Unity headless trên worktree, có lock) + entry points: chạy builder, chụp ảnh, chạy test | foundation | ⬜ |
-| M0-08 | Khung SceneBuild: `ISceneContributor` theo domain → dựng `Main.unity` tất định | foundation | ⬜ |
-| M0-09 | Test PlayMode asmdef + smoke test GameBootstrap; AssetPostprocessor import rules; .editorconfig | foundation | ⬜ |
+| M0-06 | ProjectSettings: layer 6–11 + ma trận va chạm, gravity −1.62, chỉ Input System, chất lượng PC | foundation | 🟦 |
+| M0-07 | `tools/unity_batch.py` (Unity headless trên worktree, có lock) + entry points: chạy builder, chụp ảnh, chạy test | foundation | 🟦 |
+| M0-08 | Khung SceneBuild: `ISceneContributor` theo domain → dựng `Main.unity` tất định | foundation | 🟦 |
+| M0-09 | Test PlayMode asmdef + smoke test GameBootstrap; AssetPostprocessor import rules; .editorconfig | foundation | 🟦 |
 
 ## M1 — "First Drive": chỉ lái xe thôi cũng đã thấy dễ chịu
 | ID | Việc | Box | TT |
 |---|---|---|---|
-| M1-01 | Mesh kit low-poly (primitive, flat shading, palette UV, noise có seed) + test | art | ⬜ |
-| M1-02 | Palette texture + material dùng chung (quyết định URP Lit vs shader riêng, có bằng chứng ảnh chụp) | art | ⬜ |
-| M1-03 | Model rover theo hợp đồng rig (ARCHITECTURE), đá/tảng (6+), scrap (4) | art | ⬜ |
-| M1-04 | Hàm độ cao miệng núi lửa (bowl + rim + đụn cát + crater + The Peak + bãi base) → `ITerrainQuery` + test | world | ⬜ |
-| M1-05 | Mesh địa hình chia chunk, flat-shaded, tô palette theo độ dốc/độ cao, collider layer Ground | world | ⬜ |
-| M1-06 | Bầu trời (gradient + sao + dải ngân hà + Trái Đất + sao băng), sương, ánh sáng, Volume post | world | ⬜ |
-| M1-07 | Rải đá/tảng theo Poisson, tránh bãi base | world | ⬜ |
-| M1-08 | Rover controller (sphere physics), `IRoverState`, `RoverLanded`, tuning SO | rover | ⬜ |
-| M1-09 | Visual rig: bám mặt đất, treo từng bánh, nghiêng thân, quay bánh, ăng-ten lò xo, đèn pha | rover | ⬜ |
-| M1-10 | Camera Cinemachine 3: drone lơ lửng, auto-recenter, FOV theo tốc độ, chống xuyên địa hình | rover | ⬜ |
-| M1-11 | Vệt bánh xe + bụi + bụi khi tiếp đất | rover | ⬜ |
-| M1-12 | Feel metrics PlayMode (tăng tốc, quãng phanh, bán kính quay, airtime, settle time) | rover | ⬜ |
-| M1-13 | Thư viện synth Python (stdlib) + bộ SFX M1 đúng tông D pentatonic | audio | ⬜ |
-| M1-14 | AudioDirector (pool), tiếng rover (hum + lạo xạo bụi + kẽo kẹt treo + tiếp đất) | audio | ⬜ |
-| M1-15 | Radio: độ rõ theo khoảng cách tới base (low-pass + static + wow/flutter) | audio | ⬜ |
+| M1-01 | Mesh kit low-poly (primitive, flat shading, palette UV, noise có seed) + test | art | 🟦 |
+| M1-02 | Palette texture + material dùng chung (quyết định URP Lit vs shader riêng, có bằng chứng ảnh chụp) | art | 🟦 |
+| M1-03 | Model rover theo hợp đồng rig (ARCHITECTURE), đá/tảng (6+), scrap (4) | art | 🟦 |
+| M1-04 | Hàm độ cao miệng núi lửa (bowl + rim + đụn cát + crater + The Peak + bãi base) → `ITerrainQuery` + test | world | 🟦 |
+| M1-05 | Mesh địa hình chia chunk, flat-shaded, tô palette theo độ dốc/độ cao, collider layer Ground | world | 🟦 |
+| M1-06 | Bầu trời (gradient + sao + dải ngân hà + Trái Đất + sao băng), sương, ánh sáng, Volume post | world | 🟦 |
+| M1-07 | Rải đá/tảng theo Poisson, tránh bãi base | world | 🟦 |
+| M1-08 | Rover controller (sphere physics), `IRoverState`, `RoverLanded`, tuning SO | rover | 🟦 |
+| M1-09 | Visual rig: bám mặt đất, treo từng bánh, nghiêng thân, quay bánh, ăng-ten lò xo, đèn pha | rover | 🟦 |
+| M1-10 | Camera Cinemachine 3: drone lơ lửng, auto-recenter, FOV theo tốc độ, chống xuyên địa hình | rover | 🟦 |
+| M1-11 | Vệt bánh xe + bụi + bụi khi tiếp đất | rover | 🟦 |
+| M1-12 | Feel metrics PlayMode (tăng tốc, quãng phanh, bán kính quay, airtime, settle time) | rover | 🟦 |
+| M1-13 | Thư viện synth Python (stdlib) + bộ SFX M1 đúng tông D pentatonic | audio | 🟦 |
+| M1-14 | AudioDirector (pool), tiếng rover (hum + lạo xạo bụi + kẽo kẹt treo + tiếp đất) | audio | 🟦 |
+| M1-15 | Radio: độ rõ theo khoảng cách tới base (low-pass + static + wow/flutter) | audio | 🟦 |
 | M1-16 | Tích hợp M1 vào `Main.unity`, playtest, đánh giá feeling, xoá prototype rover/WALL-E | Director | ⬜ |
 
 ## M2 — Vòng lặp lõi (vertical slice)
