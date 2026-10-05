@@ -46,6 +46,18 @@ namespace MoonProject.Rover
             _antennaRoll.Reset(0f);
         }
 
+        /// <summary>Kicks the antenna sideways (deg/s): a quick wiggle that rings out on its own.</summary>
+        public void KickAntenna(float degreesPerSecond)
+        {
+            _antennaRoll.AddVelocity(degreesPerSecond);
+        }
+
+        /// <summary>Kicks the chassis bob (m/s, negative = down): an extra squash on top of the physics.</summary>
+        public void KickHeave(float metresPerSecond)
+        {
+            _heave.AddVelocity(metresPerSecond);
+        }
+
         /// <summary>Advances all springs. <paramref name="localAcceleration"/>: x right, y up, z forward (m/s^2).</summary>
         public void Step(Vector3 localAcceleration, float deltaTime)
         {

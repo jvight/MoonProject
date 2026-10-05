@@ -7,7 +7,8 @@ namespace MoonProject.Rover
     /// Moves the art box's RoverModel on top of the physics sphere. Hierarchy (built by the Rover builder):
     /// <c>Visual (this: follows the sphere, heading + ground alignment) / Chassis (jelly lean + bob) / RoverModel</c>.
     /// Wheels ray-cast the ground every frame from the leaned chassis, so they stay planted while the body squashes,
-    /// leans and bobs above them. Mast and Dish are left untouched for the tether. Ticked by <see cref="RoverController"/>.
+    /// leans and bobs above them, and the rocker-bogie arms follow the wheels. Neck, Head, Eyelid and SolarWing belong to
+    /// <see cref="RoverBodyLanguage"/>. Ticked by <see cref="RoverController"/>.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class RoverVisualRig : MonoBehaviour
@@ -20,6 +21,12 @@ namespace MoonProject.Rover
 
         [Tooltip("RoverModel wheels in rig order: Wheel_FL, Wheel_FR, Wheel_ML, Wheel_MR, Wheel_RL, Wheel_RR.")]
         [SerializeField] private Transform[] _wheels = new Transform[RoverModelNodes.WheelCount];
+
+        [Tooltip("RoverModel 'Bogie_L' rocker arm (pitch = local X).")]
+        [SerializeField] private Transform _bogieLeft;
+
+        [Tooltip("RoverModel 'Bogie_R' rocker arm (pitch = local X).")]
+        [SerializeField] private Transform _bogieRight;
 
         [Tooltip("RoverModel 'Antenna' node (pivot at its base).")]
         [SerializeField] private Transform _antenna;
@@ -40,6 +47,8 @@ namespace MoonProject.Rover
         private Vector3 _chassisRestPosition;
         private Quaternion _chassisRestRotation;
         private Quaternion _antennaRestRotation;
+        private Quaternion _bogieLeftRestRotation;
+        private Quaternion _bogieRightRestRotation;
         private Vector3 _lastPosition;
 
         public Vector3 RootPosition => transform.position;
@@ -69,6 +78,7 @@ namespace MoonProject.Rover
             bool ok = Require(_tuning != null, "RoverRigTuning is not assigned.")
                 & Require(_chassis != null, "Chassis transform is not assigned.")
                 & Require(_antenna != null, "Antenna node is not assigned.")
+                & Require(_bogieLeft != null && _bogieRight != null, "Bogie_L/Bogie_R nodes are not assigned.")
                 & Require(_headlamp != null, "Headlamp light is not assigned.")
                 & Require(_wheels != null && _wheels.Length == RoverModelNodes.WheelCount,
                     $"Exactly {RoverModelNodes.WheelCount} wheels are required.");
@@ -119,6 +129,8 @@ namespace MoonProject.Rover
             _chassisRestPosition = _chassis.localPosition;
             _chassisRestRotation = _chassis.localRotation;
             _antennaRestRotation = _antenna.localRotation;
+            _bogieLeftRestRotation = _bogieLeft.localRotation;
+            _bogieRightRestRotation = _bogieRight.localRotation;
         }
 
         private void ApplyHeadlamp()
@@ -147,6 +159,19 @@ namespace MoonProject.Rover
 
             ApplyChassis();
             ApplyWheels(0f, 0f);
+            ApplyBogies();
+        }
+
+        /// <summary>A quick antenna wiggle (deg/s), e.g. when 07 perks up.</summary>
+        public void KickAntenna(float degreesPerSecond)
+        {
+            _jelly.KickAntenna(degreesPerSecond);
+        }
+
+        /// <summary>An extra chassis squash (m/s downward when negative), e.g. a hard-landing "oof".</summary>
+        public void KickHeave(float metresPerSecond)
+        {
+            _jelly.KickHeave(metresPerSecond);
         }
 
         public void Tick(float deltaTime)
@@ -187,6 +212,7 @@ namespace MoonProject.Rover
             ApplyChassis();
             StepSuspension(deltaTime);
             ApplyWheels(travelled, deltaTime);
+            ApplyBogies();
             _antenna.localRotation = GroundPlaneFit.Tilt(_jelly.AntennaPitch, _jelly.AntennaRoll) * _antennaRestRotation;
         }
 
@@ -236,6 +262,23 @@ namespace MoonProject.Rover
             Quaternion lean = GroundPlaneFit.Tilt(_jelly.Pitch, _jelly.Roll);
             _chassis.localPosition = _chassisRestPosition + pivot - lean * pivot + Vector3.up * _jelly.Heave;
             _chassis.localRotation = lean * _chassisRestRotation;
+        }
+
+        /// <summary>Each rocker arm pitches to the line between its front and rear wheel (visual only).</summary>
+        private void ApplyBogies()
+        {
+            _bogieLeft.localRotation = _bogieLeftRestRotation * Quaternion.AngleAxis(
+                -BogiePitch(RoverModelNodes.FrontLeftIndex, RoverModelNodes.RearLeftIndex), Vector3.right);
+            _bogieRight.localRotation = _bogieRightRestRotation * Quaternion.AngleAxis(
+                -BogiePitch(RoverModelNodes.FrontRightIndex, RoverModelNodes.RearRightIndex), Vector3.right);
+        }
+
+        /// <summary>Nose-up pitch (deg) of the line from the rear to the front wheel of one side.</summary>
+        private float BogiePitch(int front, int rear)
+        {
+            float rise = _wheelSuspension[front].Value - _wheelSuspension[rear].Value;
+            float run = _wheelRestPositions[front].z - _wheelRestPositions[rear].z;
+            return Mathf.Atan2(rise, Mathf.Max(run, 0.01f)) * Mathf.Rad2Deg;
         }
 
         private void ApplyWheels(float travelled, float deltaTime)
