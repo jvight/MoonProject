@@ -9,6 +9,7 @@ namespace MoonProject.Rover
     /// The player rover: a hidden, rotation-locked physics sphere pushed by accelerations along a steered heading, with
     /// the visual model following the interpolated sphere. Registers itself as <see cref="IRoverState"/>, publishes
     /// <see cref="RoverLanded"/>, and ticks its visual rig and wheel effects in a fixed order every frame.
+    /// Needs the World's <see cref="ITerrainQuery"/> (spawn height), so it initialises after the World systems.
     /// The maths lives in plain classes (<see cref="LongitudinalDrive"/>, <see cref="SteeringModel"/>,
     /// <see cref="GroundModel"/>, <see cref="LandingDetector"/>); this component only wires them to physics.
     /// </summary>
@@ -124,6 +125,7 @@ namespace MoonProject.Rover
             _input = context.Input;
             _events = context.Events;
             _landing = new LandingDetector(_tuning.Landing);
+            PlaceOnTerrain(context.Get<ITerrainQuery>());
             ConfigureBody();
             _heading = transform.eulerAngles.y;
             _previousHeading = _heading;
@@ -165,6 +167,17 @@ namespace MoonProject.Rover
             }
 
             return condition;
+        }
+
+        /// <summary>
+        /// The scene places 07 on the base pad in x/z; its height comes from the world's terrain query so it spawns
+        /// resting on the ground (no frame-one drop and landing) whatever height the pad ends up at.
+        /// </summary>
+        private void PlaceOnTerrain(ITerrainQuery terrain)
+        {
+            Vector3 spawn = transform.position;
+            spawn.y = terrain.SampleHeight(spawn.x, spawn.z);
+            transform.position = spawn;
         }
 
         private void ConfigureBody()

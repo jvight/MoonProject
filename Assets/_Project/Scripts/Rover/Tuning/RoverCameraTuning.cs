@@ -89,6 +89,14 @@ namespace MoonProject.Rover
         [Range(0.05f, 5f)]
         [SerializeField] private float _fovHalfLife = 0.6f;
 
+        [Tooltip("Near clip plane (m). As large as comfortable for depth precision across the huge far range.")]
+        [Range(0.05f, 2f)]
+        [SerializeField] private float _nearClip = 0.3f;
+
+        [Tooltip("Far clip plane (m). The rim backdrop and fog reach ~2.8 km and Earth sits at the far plane: >= 3000.")]
+        [Range(3000f, 10000f)]
+        [SerializeField] private float _farClip = 3200f;
+
         [Header("Landing bump")]
         [Tooltip("Camera dip speed (m/s) per m/s of landing impact.")]
         [Range(0f, 1f)]
@@ -178,6 +186,10 @@ namespace MoonProject.Rover
         public float SpeedFovBoost => _speedFovBoost;
 
         public float FovHalfLife => _fovHalfLife;
+
+        public float NearClip => _nearClip;
+
+        public float FarClip => _farClip;
 
         public float BumpPerImpact => _bumpPerImpact;
 

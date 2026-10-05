@@ -77,6 +77,8 @@ namespace MoonProject.Rover
         {
             _camera.Follow = _target;
             _camera.LookAt = _target;
+            _camera.Lens.NearClipPlane = _tuning.NearClip;
+            _camera.Lens.FarClipPlane = _tuning.FarClip;
 
             _orbit.OrbitStyle = CinemachineOrbitalFollow.OrbitStyles.Sphere;
             _orbit.Radius = _tuning.Distance;
