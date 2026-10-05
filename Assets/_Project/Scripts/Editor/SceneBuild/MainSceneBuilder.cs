@@ -15,8 +15,8 @@ namespace MoonProject.Editor.SceneBuild
     /// <summary>
     /// Builds <c>Assets/_Project/Scenes/Main.unity</c> from an empty scene on every run: creates the
     /// <see cref="GameBootstrap"/>, runs every <see cref="ISceneContributor"/> in order, wires the bootstrap's Controls
-    /// asset and ordered system list, saves, and makes the scene build index 0. Nothing is saved if any contributor
-    /// fails. Entry points: menu MoonProject/Build/Main Scene, Build All (it runs last), and batch:
+    /// asset and ordered system list, saves with structural file IDs (<see cref="SceneFileIds"/>: same content, same
+    /// bytes), and makes the scene build index 0. Nothing is saved if any contributor fails. Entry points: menu MoonProject/Build/Main Scene, Build All (it runs last), and batch:
     /// <code>python tools/unity_batch.py exec --method MoonProject.Editor.SceneBuild.MainSceneBuilder.BuildMainScene</code>
     /// </summary>
     public static class MainSceneBuilder
@@ -99,6 +99,12 @@ namespace MoonProject.Editor.SceneBuild
             {
                 throw new InvalidOperationException($"Saving {ScenePath} failed.");
             }
+
+            // Unity allocates random file IDs; derive them from the scene structure so identical builds are
+            // byte-identical, then reload so the open scene carries the normalised IDs.
+            SceneFileIds.NormalizeFile(ScenePath);
+            AssetDatabase.ImportAsset(ScenePath, ImportAssetOptions.ForceUpdate);
+            EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
 
             MakeFirstBuildScene();
             BatchRunner.Log($"scene: saved {ScenePath} with {contributors.Count} contributor(s), " +
