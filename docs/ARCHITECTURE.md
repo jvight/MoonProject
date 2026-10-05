@@ -14,7 +14,7 @@
 ```
 Assets/_Project/
   Scripts/
-    Core/       MoonProject.Core       - context, event bus, input, layers, shared event contracts, math
+    Core/       MoonProject.Core       - context, event bus, input, layers, shared event contracts
     Art/        MoonProject.Art        - low-poly mesh kit, palette (runtime-safe, used by builders & procedural runtime)
     World/      MoonProject.World      - terrain generation & queries, sky, lighting/atmosphere, scatter
     Rover/      MoonProject.Rover      - rover physics controller, suspension visuals, camera rig, rover VFX
@@ -22,16 +22,25 @@ Assets/_Project/
     Audio/      MoonProject.Audio      - audio director, radio/music, SFX players driven by events
     UI/         MoonProject.UI         - UI Toolkit screens & HUD
     App/        MoonProject.App        - composition root (GameBootstrap), scene flow
-    Editor/     MoonProject.Editor     - builders (meshes, prefabs, scenes), import rules, batch automation
+    Editor/     MoonProject.Editor     - shared editor framework: scene build, builder registry, batch automation, import rules
   Tests/
-    EditMode/   MoonProject.Tests.EditMode
-  Generated/    builder output (meshes, prefabs, materials, textures) - never hand-edited
+    EditMode/   MoonProject.Tests.EditMode  - Core/App/Art-contract tests (Director)
+    PlayMode/   MoonProject.Tests.PlayMode  - shared PlayMode harness + bootstrap smoke tests (foundation)
+  Shaders/<Domain>/   hand-written URP shaders, owned by that domain (kept small)
+  Generated/<Domain>/ builder output (meshes, prefabs, materials, textures) - never hand-edited
   Audio/        SFX/, Music/, Ambience/ (WAV/OGG produced by tools/audio or provided)
-  Data/         ScriptableObject tuning & content assets
+  Data/         ScriptableObject tuning & content assets, Input/Controls.inputactions
   Scenes/       Main.unity (built by the scene builder), test scenes
-  Shaders/      hand-written URP shaders (kept small)
-tools/          python tooling (compile_check, unity_batch, audio synth) - stdlib only
+tools/          python tooling (compile_check, unity_batch, unity_mcp, audio synth) - stdlib only
 docs/           VISION, ARCHITECTURE, ROADMAP
+```
+
+Each domain owns one folder and everything in it, so boxes never collide:
+```
+Scripts/<Domain>/                  MoonProject.<Domain>.asmdef            runtime
+Scripts/<Domain>/Editor/           MoonProject.<Domain>.Editor.asmdef     builders, scene contributor, inspectors (Editor only)
+Scripts/<Domain>/Tests/            MoonProject.<Domain>.Tests.asmdef      EditMode tests (Editor only, UNITY_INCLUDE_TESTS)
+Scripts/<Domain>/Tests/PlayMode/   MoonProject.<Domain>.PlayModeTests.asmdef  scripted play sessions & feel metrics
 ```
 `Assets/Scripts`, `Assets/Moon`, `Assets/Models`, `Assets/TutorialInfo`, `Assets/Materials` are the **legacy
 prototype**. They are reference material only and are deleted by the Director once their replacement is
