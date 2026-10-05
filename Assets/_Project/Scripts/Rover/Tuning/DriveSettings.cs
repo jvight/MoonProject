@@ -24,7 +24,7 @@ namespace MoonProject.Rover
         [Tooltip("Seconds from standstill to 90% of top speed at full throttle. The speed curve eases out as it "
             + "approaches top speed; the throttle easing below adds a soft start.")]
         [Range(0.3f, 8f)]
-        [SerializeField] private float _accelerationTime = 2.2f;
+        [SerializeField] private float _accelerationTime = 2.4f;
 
         [Tooltip("Seconds from standstill to 90% of reverse top speed.")]
         [Range(0.3f, 8f)]
@@ -93,7 +93,7 @@ namespace MoonProject.Rover
         /// <summary>Peak reverse acceleration (m/s^2), derived from <see cref="ReverseAccelerationTime"/>.</summary>
         public float ReverseAcceleration => NinetyPercentTimeConstants * _reverseTopSpeed / _reverseAccelerationTime;
 
-        /// <summary>Coast deceleration (m/s^2) at top speed; it stops from top speed in exactly CoastStopTime.</summary>
+        /// <summary>Coast deceleration (m/s^2) at top speed; stops from top speed in exactly CoastStopTime.</summary>
         public float CoastDeceleration => _topSpeed / (_coastStopTime * (1f - _coastEase));
 
         /// <summary>Full-input brake deceleration (m/s^2) at top speed.</summary>

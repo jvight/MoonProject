@@ -191,7 +191,7 @@ namespace MoonProject.Rover
         [Header("Oof (hard landing)")]
         [Tooltip("Impact speed (m/s) from which a landing gets an 'oof' instead of a perk-up.")]
         [Range(0.5f, 10f)]
-        [SerializeField] private float _oofImpactSpeed = 2.4f;
+        [SerializeField] private float _oofImpactSpeed = 3.2f;
 
         [Tooltip("Impact speed (m/s) of the strongest 'oof'.")]
         [Range(1f, 15f)]

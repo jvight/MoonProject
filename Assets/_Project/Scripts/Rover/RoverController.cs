@@ -16,7 +16,7 @@ namespace MoonProject.Rover
     [DisallowMultipleComponent]
     public sealed class RoverController : MonoBehaviour, IGameSystem, IRoverState
     {
-        /// <summary>The probe starts this fraction of the radius above the centre so slight sinking still hits.</summary>
+        /// <summary>The probe starts this fraction of the radius above the centre, so slight sinking hits.</summary>
         private const float ProbeLiftFraction = 0.5f;
 
         [Tooltip("Drive, steering, ground and landing tuning (Assets/_Project/Data/Tuning/RoverTuning.asset).")]
@@ -52,6 +52,7 @@ namespace MoonProject.Rover
         private Vector3 _groundNormal = Vector3.up;
         private Vector3 _lastVelocity;
         private Vector3 _localAcceleration;
+        private Vector3 _spawnNormal = Vector3.up;
 
         public RoverTuning Tuning => _tuning;
 
@@ -178,6 +179,7 @@ namespace MoonProject.Rover
             Vector3 spawn = transform.position;
             spawn.y = terrain.SampleHeight(spawn.x, spawn.z);
             transform.position = spawn;
+            _spawnNormal = terrain.SampleNormal(spawn.x, spawn.z);
         }
 
         private void ConfigureBody()
@@ -192,7 +194,7 @@ namespace MoonProject.Rover
             _body.interpolation = RigidbodyInterpolation.Interpolate;
             _body.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
             _body.constraints = RigidbodyConstraints.FreezeRotation;
-            Vector3 spawn = transform.position + transform.up * ground.SphereRadius;
+            Vector3 spawn = transform.position + _spawnNormal * ground.SphereRadius;
             _body.transform.SetPositionAndRotation(spawn, Quaternion.identity);
             _body.position = spawn;
             _body.rotation = Quaternion.identity;
@@ -236,7 +238,7 @@ namespace MoonProject.Rover
 
         private void ReadInput(float dt)
         {
-            Vector2 raw = _input.Drive;
+            Vector2 raw = DriveInputShaping.CircleToSquare(_input.Drive);
             DriveSettings drive = _tuning.Drive;
             _throttle = Ease(_throttle, raw.y, drive.ThrottleRiseHalfLife, drive.ThrottleFallHalfLife, dt);
             _steer = Ease(_steer, raw.x, _tuning.Steering.SteerRiseHalfLife, _tuning.Steering.SteerReturnHalfLife, dt);
