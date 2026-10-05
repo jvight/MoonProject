@@ -1,0 +1,28 @@
+{
+    "name": "MoonProject.Rover.PlayModeTests",
+    "rootNamespace": "MoonProject.Rover.PlayModeTests",
+    "references": [
+        "MoonProject.Core",
+        "MoonProject.Rover",
+        "MoonProject.Testing",
+        "Unity.Cinemachine",
+        "Unity.InputSystem",
+        "Unity.InputSystem.TestFramework",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS",
+        "UNITY_EDITOR"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
