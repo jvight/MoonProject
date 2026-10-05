@@ -339,6 +339,55 @@ namespace MoonProject.Art.Tests
         }
 
         [Test]
+        public void Shave_FlattensBeyondThePlane_AndKeepsTheShapeClosed()
+        {
+            var builder = new LowPolyMeshBuilder();
+            MeshRange sphere = builder.Icosphere(Matrix4x4.identity, 1f, 2, PaletteSwatch.RockLight);
+            float before = MeshChecks.SignedVolume(builder);
+            Vector3 normal = new Vector3(0.3f, 1f, -0.2f).normalized;
+
+            MeshRange shaved = builder.Shave(sphere, normal, 0.6f);
+
+            Assert.AreEqual(0, shaved.FirstTriangle);
+            for (int v = 0; v < builder.VertexCount; v++)
+            {
+                Assert.LessOrEqual(Vector3.Dot(builder.Positions[v], normal), 0.6f + 1e-5f);
+            }
+
+            bool flatFace = false;
+            for (int t = 0; t < builder.TriangleCount; t++)
+            {
+                flatFace |= Vector3.Dot(MeshChecks.FaceNormal(builder, t), normal) > 0.9999f;
+            }
+
+            Assert.IsTrue(flatFace, "no face lies on the cut plane");
+            Assert.Less(MeshChecks.SignedVolume(builder), before);
+            MeshChecks.AssertWellFormed(builder);
+            MeshChecks.AssertClosedAndOutward(builder);
+        }
+
+        [Test]
+        public void Support_IsTheFurthestReachAlongADirection()
+        {
+            var builder = new LowPolyMeshBuilder();
+            MeshRange box = builder.Box(Place.At(1f, 2f, 3f), new Vector3(2f, 4f, 6f), PaletteSwatch.Cream);
+
+            Assert.AreEqual(4f, builder.Support(box, Vector3.up), 1e-5f);
+            Assert.AreEqual(0f, builder.Support(box, Vector3.left), 1e-5f);
+            Assert.AreEqual((2f + 4f + 6f) / Mathf.Sqrt(3f), builder.Support(box, Vector3.one.normalized), 1e-4f);
+        }
+
+        [Test]
+        public void Shave_RejectsAnEarlierRange()
+        {
+            var builder = new LowPolyMeshBuilder();
+            MeshRange first = builder.Box(Matrix4x4.identity, Vector3.one, PaletteSwatch.Cream);
+            builder.Box(Place.At(3f, 0f, 0f), Vector3.one, PaletteSwatch.Cream);
+
+            Assert.Throws<ArgumentException>(() => builder.Shave(first, Vector3.up, 0.1f));
+        }
+
+        [Test]
         public void Bounds_EncloseEveryVertexTightly()
         {
             var builder = new LowPolyMeshBuilder();

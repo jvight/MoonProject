@@ -19,7 +19,7 @@ namespace MoonProject.Art
         public const int MaxIcosphereSubdivisions = 3;
         public const int MinSides = 3;
 
-        private const float DegenerateCrossSqr = 1e-16f;
+        private const float DegenerateCrossSqr = 1e-14f;
         private const int MaxUInt16Vertices = 65535;
 
         private readonly List<Vector3> _positions;
@@ -305,6 +305,83 @@ namespace MoonProject.Art
             RecalculateBounds();
         }
 
+        /// <summary>
+        /// Slices the shape flat: every vertex of <paramref name="range"/> beyond the plane
+        /// dot(<paramref name="planeNormal"/>, p) = <paramref name="planeDistance"/> is projected back onto it (chipped
+        /// rock facets, worn edges). Shared positions move identically, so closed shapes stay closed; triangles that
+        /// collapse are dropped, so the range must be the last one in the builder. Returns the updated range.
+        /// Colours are kept; repaint afterwards if they depend on the new normals.
+        /// </summary>
+        public MeshRange Shave(MeshRange range, Vector3 planeNormal, float planeDistance)
+        {
+            RequireRange(range);
+            if (range.EndTriangle != TriangleCount)
+            {
+                throw new ArgumentException("Only the last range of a builder can be shaved.", nameof(range));
+            }
+
+            if (planeNormal.sqrMagnitude < 1e-12f)
+            {
+                throw new ArgumentException("Plane normal must be non-zero.", nameof(planeNormal));
+            }
+
+            Vector3 axis = planeNormal.normalized;
+            int write = range.FirstTriangle * 3;
+            for (int v = write; v < VertexCount; v += 3)
+            {
+                Vector3 a = ShaveVertex(_positions[v], axis, planeDistance);
+                Vector3 b = ShaveVertex(_positions[v + 1], axis, planeDistance);
+                Vector3 c = ShaveVertex(_positions[v + 2], axis, planeDistance);
+                Vector3 cross = Vector3.Cross(b - a, c - a);
+                float sqr = cross.sqrMagnitude;
+                if (sqr <= DegenerateCrossSqr)
+                {
+                    continue;
+                }
+
+                Vector3 normal = cross / Mathf.Sqrt(sqr);
+                Vector2 uv = _uvs[v];
+                _positions[write] = a;
+                _positions[write + 1] = b;
+                _positions[write + 2] = c;
+                _normals[write] = normal;
+                _normals[write + 1] = normal;
+                _normals[write + 2] = normal;
+                _uvs[write] = uv;
+                _uvs[write + 1] = uv;
+                _uvs[write + 2] = uv;
+                write += 3;
+            }
+
+            int removed = VertexCount - write;
+            _positions.RemoveRange(write, removed);
+            _normals.RemoveRange(write, removed);
+            _uvs.RemoveRange(write, removed);
+            RecalculateBounds();
+            return new MeshRange(range.FirstTriangle, TriangleCount - range.FirstTriangle);
+        }
+
+        /// <summary>
+        /// Largest dot(p, <paramref name="direction"/>) over the range's vertices: how far the shape reaches along a
+        /// direction (pair with <see cref="Shave"/> to cut a fixed depth into a shape).
+        /// </summary>
+        public float Support(MeshRange range, Vector3 direction)
+        {
+            RequireRange(range);
+            if (range.TriangleCount == 0)
+            {
+                throw new ArgumentException("Range is empty.", nameof(range));
+            }
+
+            float support = float.MinValue;
+            for (int v = range.FirstTriangle * 3; v < range.EndTriangle * 3; v++)
+            {
+                support = Mathf.Max(support, Vector3.Dot(_positions[v], direction));
+            }
+
+            return support;
+        }
+
         /// <summary>Axis-aligned bounds of the triangles in <paramref name="range"/>.</summary>
         public Bounds GetBounds(MeshRange range)
         {
@@ -463,6 +540,12 @@ namespace MoonProject.Art
             _uvs.Add(uv);
             _uvs.Add(uv);
             _uvs.Add(uv);
+        }
+
+        private static Vector3 ShaveVertex(Vector3 position, Vector3 axis, float distance)
+        {
+            float beyond = Vector3.Dot(position, axis) - distance;
+            return beyond > 0f ? position - axis * beyond : position;
         }
 
         private void RecalculateBounds()
