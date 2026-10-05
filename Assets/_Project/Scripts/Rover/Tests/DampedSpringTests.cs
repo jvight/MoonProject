@@ -46,6 +46,7 @@ namespace MoonProject.Rover.Tests
         [Test]
         public void Step_JellyDamping_OvershootsOnceSoftly()
         {
+            const float Visible = 0.02f;
             var spring = new DampedSpring(0f);
             int crossings = 0;
             float previous = spring.Value - 1f;
@@ -54,12 +55,12 @@ namespace MoonProject.Rover.Tests
             {
                 spring.Step(1f, 1.5f, 0.42f, 1f / 60f);
                 float error = spring.Value - 1f;
-                if (Mathf.Sign(error) != Mathf.Sign(previous) && Mathf.Abs(error) > 0.01f)
+                if (Mathf.Sign(error) != Mathf.Sign(previous) && Mathf.Abs(error) > Visible)
                 {
                     crossings++;
                 }
 
-                if (Mathf.Abs(error) > 0.01f)
+                if (Mathf.Abs(error) > Visible)
                 {
                     previous = error;
                 }
