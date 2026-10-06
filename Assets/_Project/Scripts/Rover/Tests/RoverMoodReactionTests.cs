@@ -13,7 +13,7 @@ namespace MoonProject.Rover.Tests
         public void SetUp()
         {
             _tuning = ScriptableObject.CreateInstance<RoverCharacterTuning>();
-            _mood = new RoverMood(_tuning, 7u);
+            _mood = new RoverMood(_tuning, 7u, false);
         }
 
         [TearDown]

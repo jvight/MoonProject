@@ -13,7 +13,7 @@ namespace MoonProject.Rover.Tests
         public void SetUp()
         {
             _tuning = ScriptableObject.CreateInstance<RoverCharacterTuning>();
-            _mood = new RoverMood(_tuning, 7u);
+            _mood = new RoverMood(_tuning, 7u, false);
         }
 
         [TearDown]
@@ -27,7 +27,7 @@ namespace MoonProject.Rover.Tests
             bool woke = false;
             for (float t = 0f; t < seconds; t += Frame)
             {
-                woke |= _mood.Step(speed, input, Frame);
+                woke |= _mood.Step(speed, input, Frame) == MoodTransition.WokeFromDaydream;
             }
 
             return woke;
@@ -98,7 +98,7 @@ namespace MoonProject.Rover.Tests
         public void DrivingOffFromADeepDaydream_WakesOnce()
         {
             Run(15f, 0f, 0f);
-            Assert.IsTrue(_mood.Step(0f, 1f, Frame));
+            Assert.AreEqual(MoodTransition.WokeFromDaydream, _mood.Step(0f, 1f, Frame));
             Assert.IsFalse(Run(2f, 3f, 1f));
             Assert.Less(_mood.Idle, 0.05f);
         }
@@ -107,7 +107,7 @@ namespace MoonProject.Rover.Tests
         public void BriefPause_DoesNotWake()
         {
             Run(_tuning.IdleDelay + 0.05f, 0f, 0f);
-            Assert.IsFalse(_mood.Step(0f, 1f, Frame), "Barely asleep: no perk-up.");
+            Assert.AreEqual(MoodTransition.None, _mood.Step(0f, 1f, Frame), "Barely asleep: no perk-up.");
         }
 
         [Test]
@@ -184,7 +184,7 @@ namespace MoonProject.Rover.Tests
         [Test]
         public void SameSeed_SameBlinks()
         {
-            var twin = new RoverMood(_tuning, 7u);
+            var twin = new RoverMood(_tuning, 7u, false);
             for (float t = 0f; t < 30f; t += Frame)
             {
                 _mood.Step(1f, 1f, Frame);
