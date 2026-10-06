@@ -53,23 +53,31 @@ namespace MoonProject.Rover
 
         [Tooltip("Dust puffs per second per side at full rate.")]
         [Range(0f, 100f)]
-        [SerializeField] private float _dustMaxRate = 18f;
+        [SerializeField] private float _dustMaxRate = 26f;
 
-        [Tooltip("Seconds each dust puff lingers.")]
+        [Tooltip("Seconds each dust puff lingers before it has faded away.")]
         [Range(0.2f, 6f)]
-        [SerializeField] private float _dustLifetime = 1.6f;
+        [SerializeField] private float _dustLifetime = 1.0f;
 
-        [Tooltip("Size (m) of a dust puff when it appears.")]
+        [Tooltip("Size (m) of a dust puff when it appears; it swells to about twice that as it fades.")]
         [Range(0.02f, 1f)]
-        [SerializeField] private float _dustSize = 0.22f;
+        [SerializeField] private float _dustSize = 0.2f;
 
-        [Tooltip("Initial speed (m/s) of a dust puff.")]
+        [Tooltip("Initial speed (m/s) of a dust puff kicked up by the wheel.")]
         [Range(0f, 5f)]
-        [SerializeField] private float _dustSpeed = 0.6f;
+        [SerializeField] private float _dustSpeed = 1.3f;
+
+        [Tooltip("Drag on dust (1/s): high, so a puff pops up quickly and then settles into a slow drift.")]
+        [Range(0f, 10f)]
+        [SerializeField] private float _dustDrag = 3f;
+
+        [Tooltip("Peak opacity of a dust puff (lunar dust is fine and thin).")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _dustOpacity = 0.5f;
 
         [Tooltip("Fraction of world (lunar) gravity acting on dust. Low: it hangs in the air dreamily.")]
         [Range(0f, 2f)]
-        [SerializeField] private float _dustGravity = 0.2f;
+        [SerializeField] private float _dustGravity = 0.3f;
 
         [Header("Landing ring")]
         [Tooltip("Impact speed (m/s) of the softest landing that still raises a ring.")]
@@ -90,19 +98,31 @@ namespace MoonProject.Rover
 
         [Tooltip("Outward speed (m/s) of the softest ring.")]
         [Range(0f, 10f)]
-        [SerializeField] private float _landingMinSpeed = 0.9f;
+        [SerializeField] private float _landingMinSpeed = 1.2f;
 
         [Tooltip("Outward speed (m/s) of the biggest ring.")]
         [Range(0f, 10f)]
-        [SerializeField] private float _landingMaxSpeed = 3.2f;
+        [SerializeField] private float _landingMaxSpeed = 3f;
 
         [Tooltip("Puff size (m) in the softest ring.")]
         [Range(0.02f, 2f)]
-        [SerializeField] private float _landingMinSize = 0.18f;
+        [SerializeField] private float _landingMinSize = 0.2f;
 
         [Tooltip("Puff size (m) in the biggest ring.")]
         [Range(0.02f, 2f)]
-        [SerializeField] private float _landingMaxSize = 0.4f;
+        [SerializeField] private float _landingMaxSize = 0.42f;
+
+        [Tooltip("Seconds a landing puff lingers.")]
+        [Range(0.2f, 6f)]
+        [SerializeField] private float _landingLifetime = 1.3f;
+
+        [Tooltip("Drag on the landing ring (1/s): it bursts out, then slows and hangs.")]
+        [Range(0f, 10f)]
+        [SerializeField] private float _landingDrag = 2.2f;
+
+        [Tooltip("Peak opacity of a landing puff.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _landingOpacity = 0.6f;
 
         public float TrackWidth => _trackWidth;
 
@@ -132,6 +152,10 @@ namespace MoonProject.Rover
 
         public float DustSpeed => _dustSpeed;
 
+        public float DustDrag => _dustDrag;
+
+        public float DustOpacity => _dustOpacity;
+
         public float DustGravity => _dustGravity;
 
         public float LandingMinImpact => _landingMinImpact;
@@ -149,5 +173,11 @@ namespace MoonProject.Rover
         public float LandingMinSize => _landingMinSize;
 
         public float LandingMaxSize => _landingMaxSize;
+
+        public float LandingLifetime => _landingLifetime;
+
+        public float LandingDrag => _landingDrag;
+
+        public float LandingOpacity => _landingOpacity;
     }
 }
