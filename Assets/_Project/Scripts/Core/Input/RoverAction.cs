@@ -1,6 +1,8 @@
 namespace MoonProject.Core.Input
 {
-    /// <summary>Rover actions the UI names in context prompts (see <see cref="InputReader.GetBindingLabel"/>).</summary>
+    /// <summary>
+    /// Rover actions the UI names in context prompts (see <see cref="InputReader.GetBindingLabel"/>).
+    /// </summary>
     public enum RoverAction
     {
         Ping = 0,
