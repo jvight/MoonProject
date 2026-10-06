@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c99275a7f80ecad4fa925ddf8d5718b1, type: 3}
+  m_Name: BaseTuning
+  m_EditorClassIdentifier: 
+  _landerOffset: {x: -10, y: 0, z: 8}
+  _depositRadius: 7
+  _depositHeight: 6
+  _depositDuration: 1.9
+  _depositLift: 0.9
+  _depositHover: 0.25
+  _settleOvershoot: 1.4
+  _depositGift: 10
+  _slotHintRadius: 0.2
+  _slotHintIntensity: 0.55
+  _slotHintEase: 0.25
+  _lampColor: {r: 1, g: 0.70980394, b: 0.2784314, a: 1}
+  _lampIntensity: 2
+  _lampRange: 9
+  _warmNear: 25
+  _warmFar: 90
+  _farWarmth: 0.35
+  _warmEase: 1.5
+  _windowGlow: 1.4
+  _shelfGlow: 1.2
