@@ -74,6 +74,7 @@
 | M2-08 | Save/Load tự động | gameplay | 🟩 |
 | M2-09 | HUD tối giản (diegetic ưu tiên), prompt ngữ cảnh chỉ vài lần đầu, menu tạm dừng + cài đặt âm lượng/độ nhạy/đảo trục, thẻ "ký ức" khi đặt relic | ui | 🟦 |
 | M2-10 | Tích hợp + playtest slice 15 phút, sửa feeling | Director | 🟦 |
+| M2-11 | Quy trình build Windows (zip) để chủ dự án chơi thử ngoài Unity | foundation | ⬜ |
 
 ## Backlog (đã ghi nhận, chưa giao)
 - Bụi bánh xe trông như "đá trong suốt" bay lơ lửng → nhỏ hơn, mềm hơn, trong hơn, tan nhanh hơn (rover).
@@ -81,13 +82,23 @@
 - Camera blend chậm khi relic trồi lên / khi nâng cấp tháp (rover).
 - World chuyển đá cuội sang `RockStyle.Grit` (16–20 tam giác) của art.
 
-## M3 — Tiến trình
-Hover-Jump, Magnetic Treads, Cargo Bed, vùng mới mở theo khả năng di chuyển, cassette/nhật ký âm thanh,
-menu chính, cài đặt đồ hoạ.
+## M3 — "Trạm thức giấc": chiều sâu phần 1 (xem `docs/DESIGN.md`)
+| ID | Việc | Box | TT |
+|---|---|---|---|
+| M3-01 | Kinh thánh câu chuyện: 4 thành viên phi hành đoàn, bộ relic của từng người, nhật ký, mẩu tin radio (en + vi) | Director | ⬜ |
+| M3-02 | Khung "bạn bè máy móc" + **Tilly** (drone nhỏ): tìm, sửa, sống ở căn cứ, chào 07, tự phát hiện tín hiệu | gameplay + art + audio | ⬜ |
+| M3-03 | Xưởng nâng cấp rover (khung chung) + **Hover-Jump** | gameplay + rover | ⬜ |
+| M3-04 | Vùng **Whispering Canyon** (mở bằng Hover-Jump) + bí mật nhìn thấy được từ căn cứ | world + art | ⬜ |
+| M3-05 | **Bell** + núm dò đài (chọn đài/playlist) + băng cassette (bài mới) | gameplay + music + ui | ⬜ |
+| M3-06 | Căn cứ ấm dần + trang trí trên snap point | gameplay + art | ⬜ |
+| M3-07 | Bản đồ vẽ tay ghim trong lander | ui | ⬜ |
+| M3-08 | "Mặt Trăng trôi khi bạn vắng mặt": mưa sao băng (scrap mới), tín hiệu mới — không FOMO | gameplay | ⬜ |
+| M3-09 | Màn hình tiêu đề (Continue/Settings), bộ sưu tập hiển thị ở căn cứ | ui | ⬜ |
 
-## M4 — Sự kiện & kết thúc
-Nhật thực (đường phát quang), Bão mặt trời (tăng tốc), Biodome cây phát sáng lớn dần, leo The Peak,
-sửa chảo vệ tinh, cảnh phát sóng cuối + credits.
+## M4 — Thế giới mở rộng, sự kiện & kết thúc
+Magnetic Treads + **Rim Terraces** + **Atlas**; Warm Headlamp + **Shadowed Crater** + **Moss** + Biodome; sự kiện
+Nhật thực / Bão mặt trời / Earthrise; tuỳ biến 07 + chế độ chụp ảnh; 24 relic (4 bộ), 8 cassette; leo The Peak,
+sửa chảo vệ tinh lớn, phát sóng cuối, Trái Đất đáp lại, credits, chơi tự do sau kết thúc.
 
 ## M5 — Đánh bóng & phát hành
 Tối ưu hiệu năng, tay cầm hoàn chỉnh, accessibility, build pipeline, bug bash.
