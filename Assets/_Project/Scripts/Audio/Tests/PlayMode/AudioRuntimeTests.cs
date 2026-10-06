@@ -133,6 +133,7 @@ namespace MoonProject.Audio.PlayModeTests
             {
                 AudioTestRig.UpdateOf(_rig.Director), AudioTestRig.UpdateOf(_rig.RoverAudio),
                 AudioTestRig.UpdateOf(_rig.Gameplay), AudioTestRig.UpdateOf(_rig.Ui), AudioTestRig.UpdateOf(_rig.Radio),
+                AudioTestRig.UpdateOf(_rig.Friends),
                 AudioTestRig.UpdateOf(_rig.Ambience),
             };
 
@@ -156,6 +157,10 @@ namespace MoonProject.Audio.PlayModeTests
                 _rig.Rover.DriveInput = new Vector2(0f, 1f);
                 _rig.Rover.IsGrounded = frame % 40 < 30;
                 _rig.Rover.GroundNormal = Quaternion.Euler(frame % 20 == 0 ? 12f : 0f, 0f, 0f) * Vector3.up;
+                _rig.Rover.Tilly.Position = new Vector3(3f * Mathf.Cos(t), 3f, 3f * Mathf.Sin(t));
+                _rig.Rover.Tilly.Activity = (FriendActivity)(frame / 50 % 6);
+                _rig.Rover.Tilly.RotorSpeed = frame / 50 % 6 >= 2 ? 0.5f + 0.5f * Mathf.Sin(t) : 0f;
+                _rig.Rover.Tilly.RepairProgress = Mathf.Repeat(t * 0.2f, 1f);
                 PublishSome(events, settings, frame);
                 for (int i = 0; i < updates.Length; i++)
                 {
@@ -176,6 +181,10 @@ namespace MoonProject.Audio.PlayModeTests
                     break;
                 case 2:
                     events.Publish(new SonarPinged(Vector3.zero, 80f));
+                    events.Publish(new FriendAnswered("tilly", Vector3.one));
+                    events.Publish(new FriendSpotted("tilly", Vector3.forward));
+                    events.Publish(new FriendPartCollected("tilly", 0, frame % 36 == 2 ? 3 : 1, 3));
+                    events.Publish(new FriendGreeted("tilly"));
                     break;
                 case 3:
                     string relic = frame % 24 == 3 ? "teapot" : "rubber_duck";

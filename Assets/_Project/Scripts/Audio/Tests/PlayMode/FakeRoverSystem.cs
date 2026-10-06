@@ -4,12 +4,23 @@ using MoonProject.Core;
 namespace MoonProject.Audio.PlayModeTests
 {
     /// <summary>
-    /// Stands in for the Rover and World systems: registers <see cref="IRoverState"/>, <see cref="IRoverRig"/> and
-    /// <see cref="IWorldLayout"/> with values the test sets directly.
+    /// Stands in for the Rover, World and Gameplay systems: registers <see cref="IRoverState"/>,
+    /// <see cref="IRoverRig"/>, <see cref="IWorldLayout"/> and a one-friend <see cref="IFriendRoster"/> (Tilly) with
+    /// values the test sets directly.
     /// </summary>
-    public sealed class FakeRoverSystem : MonoBehaviour, IGameSystem, IRoverState, IRoverRig, IWorldLayout
+    public sealed class FakeRoverSystem : MonoBehaviour, IGameSystem, IRoverState, IRoverRig, IWorldLayout,
+        IFriendRoster
     {
         private Transform _tetherOrigin;
+
+        public FakeFriend Tilly { get; } = new FakeFriend("tilly");
+
+        public int Count => 1;
+
+        public IFriendState Get(int index)
+        {
+            return Tilly;
+        }
 
         public Vector3 Position { get; set; }
 
@@ -60,6 +71,7 @@ namespace MoonProject.Audio.PlayModeTests
             context.Register<IRoverState>(this);
             context.Register<IRoverRig>(this);
             context.Register<IWorldLayout>(this);
+            context.Register<IFriendRoster>(this);
         }
     }
 }

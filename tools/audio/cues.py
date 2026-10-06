@@ -14,7 +14,7 @@ from pathlib import Path
 import numpy as np
 from synth import effects, envelope, filters, instruments, noise, osc
 from synth.core import SAMPLE_RATE, loop_freq, note_freq, pan, pentatonic, place, samples, to_mono
-from synth.fm import operator
+from synth.fm import operator, two_op
 from synth.loop import periodic
 from synth.pluck import karplus_strong
 
@@ -614,6 +614,260 @@ def upgrade_arpeggio(_variant, gen):
     return dry + wet + 0.12 * filters.lowpass(pad, 2000.0)[:, None]
 
 
+# --------------------------------------------------------------------------------------------------- friends: Tilly
+
+def _blip(duration: float, start: str, end: str, glide: float, gen, amp: float = 1.0, index: float = 0.7,
+          vibrato_cents: float = 0.0, vibrato_rate: float = 9.0, formant=(900.0, 1700.0)) -> np.ndarray:
+    """One bird-like blip: a soft 2-operator FM tone that glides from ``start`` into ``end`` (time constant
+    ``glide`` seconds) and holds it, with a gently moving formant ('oo' -> 'ee') and an optional flutter."""
+    n = samples(duration)
+    freq = osc.glide(n, note_freq(start), note_freq(end), time_constant=glide)
+    if vibrato_cents:
+        freq = freq * 2.0 ** (vibrato_cents * np.sin(2.0 * math.pi * vibrato_rate * np.arange(n) / SAMPLE_RATE)
+                              / 1200.0)
+    tone = two_op(n, freq, 2.0, index * envelope.exp_decay(n, max(duration, 0.05) * 1.5))
+    shaped = filters.swept(tone, "bandpass", osc.glide(n, formant[0], formant[1]), q=2.0)
+    env = envelope.segments(n, [(0.0, 0.0), (0.008, 1.0), (0.65 * duration, 0.75), (duration, 0.0)],
+                            shape="smooth")
+    return amp * (0.6 * tone + 0.8 * shaped) * env
+
+
+def _phrase(parts, gen, tail: float = 0.25) -> np.ndarray:
+    """Places blips ``[(time_s, blip_array), ...]`` in a buffer with a short tail."""
+    length = max(t + b.shape[0] / SAMPLE_RATE for t, b in parts) + tail
+    out = np.zeros(samples(length))
+    for t, b in parts:
+        place(out, b, samples(t))
+    return out
+
+
+def _chirp_finish(x: np.ndarray, cutoff: float = 5000.0, room: float = 0.35, wet: float = 0.12) -> np.ndarray:
+    return _mono_reverb(filters.lowpass(filters.highpass(x, 300.0), cutoff), room=room, damping=0.6, wet=wet,
+                        dry=1.0)
+
+
+TILLY_CURIOUS = (("D5", "A5"), ("E5", "B5"), ("F#5", "D6"))
+
+
+def tilly_curious(variant, gen):
+    """Curious 'hm?': a short blip, then a slower slide up a fourth/fifth that holds like a question."""
+    low, high = TILLY_CURIOUS[variant]
+    return _chirp_finish(_phrase([
+        (0.0, _blip(0.07, high, low, 0.008, gen, amp=0.6)),
+        (0.12, _blip(0.26, low, high, 0.022, gen, vibrato_cents=8.0)),
+    ], gen))
+
+
+TILLY_HAPPY = (("A5", "B5", "D6", "E6"), ("D6", "B5", "D6", "E6"), ("F#5", "A5", "B5", "D6"))
+
+
+def tilly_happy(variant, gen):
+    """Happy bouncing trill climbing the pentatonic."""
+    notes = TILLY_HAPPY[variant]
+    parts = []
+    for k, note in enumerate(notes):
+        last = k == len(notes) - 1
+        prev = notes[k - 1] if k else note
+        parts.append((0.075 * k, _blip(0.16 if last else 0.06, prev, note, 0.008, gen, amp=0.7 + 0.08 * k,
+                                       vibrato_cents=18.0 if last else 0.0)))
+    return _chirp_finish(_phrase(parts, gen))
+
+
+TILLY_SLEEPY = (("A5", "F#5"), ("D5", "A4"))
+
+
+def tilly_sleepy(variant, gen):
+    """Sleepy coo on the perch: a slow falling note with a breath, then a smaller, lower echo."""
+    high, low = TILLY_SLEEPY[variant]
+    coo = _blip(0.5, high, low, 0.12, gen, amp=0.8, index=0.4, vibrato_cents=10.0, vibrato_rate=4.0,
+                formant=(1400.0, 800.0))
+    echo = _blip(0.3, low, low, 0.02, gen, amp=0.35, index=0.3, formant=(1000.0, 700.0))
+    n = samples(0.5)
+    breath = filters.bandpass(noise.pink(n, gen), 900.0, 0.8) * envelope.segments(
+        n, [(0.0, 0.0), (0.15, 1.0), (0.5, 0.0)], shape="smooth")
+    breath = 0.25 * breath / max(float(np.std(breath)), 1e-9) * 0.1
+    phrase = _phrase([(0.0, coo + breath), (0.55, echo)], gen, tail=0.3)
+    return _chirp_finish(phrase, cutoff=3500.0, wet=0.16)
+
+
+TILLY_GREETING = (("D5", "A5", "B5", "D6"), ("E5", "B5", "A5", "D6"), ("A4", "D5", "F#5", "A5"))
+
+
+def tilly_greeting(variant, gen):
+    """'Hello!' when she flies out to meet 07: a rising swoop, then a quick little trill landing high."""
+    a, b, c, d = TILLY_GREETING[variant]
+    return _chirp_finish(_phrase([
+        (0.0, _blip(0.17, a, b, 0.025, gen, amp=0.9)),
+        (0.2, _blip(0.06, b, c, 0.008, gen, amp=0.6)),
+        (0.27, _blip(0.06, c, b, 0.008, gen, amp=0.6)),
+        (0.34, _blip(0.24, b, d, 0.012, gen, amp=0.85, vibrato_cents=10.0)),
+    ], gen))
+
+
+TILLY_EXCITED = (("D5", "F#5", "A5", "D6", "E6", "D6"), ("A5", "B5", "D6", "B5", "D6", "E6"),
+                 ("F#5", "A5", "B5", "D6", "F#6", "E6"))
+
+
+def tilly_excited(variant, gen):
+    """Excited (a relic is home): a fast fluttering arpeggio that skips upward and lands with a flutter."""
+    notes = TILLY_EXCITED[variant]
+    parts = []
+    for k, note in enumerate(notes):
+        last = k == len(notes) - 1
+        prev = notes[k - 1] if k else note
+        parts.append((0.055 * k, _blip(0.22 if last else 0.05, prev, note, 0.006, gen, amp=0.65 + 0.05 * k,
+                                       vibrato_cents=14.0 if last else 0.0, vibrato_rate=11.0)))
+    return _chirp_finish(_phrase(parts, gen))
+
+
+TILLY_BROKEN = (("A5", "D5"), ("B5", "E5"), ("D6", "A5"))
+
+
+def tilly_broken(variant, gen):
+    """A broken, hopeful answer from the crater floor: a curious chirp that stutters, sags an octave mid-way and
+    tries again, faint and muffled under the dust, with a whisper of crackle."""
+    high, low = TILLY_BROKEN[variant]
+    first = _blip(0.18, low, high, 0.02, gen, amp=0.8)
+    sag = _blip(0.12, high, low, 0.015, gen, amp=0.4, index=0.3)
+    retry = _blip(0.26, low, high, 0.025, gen, amp=0.7, vibrato_cents=10.0)
+    phrase = _phrase([(0.0, first), (0.2, sag), (0.36, retry)], gen, tail=0.3)
+    n = phrase.shape[0]
+    gate = np.ones(n)
+    t = samples(0.03)
+    while t < n:
+        if gen.random() < 0.35:
+            width = samples(gen.uniform(0.012, 0.03))
+            ramp = samples(0.002)
+            dip = np.concatenate((np.linspace(1.0, 0.1, ramp), np.full(max(0, width - 2 * ramp), 0.1),
+                                  np.linspace(0.1, 1.0, ramp)))
+            gate[t:t + dip.shape[0]] *= dip[:max(0, n - t)]
+        t += samples(gen.uniform(0.03, 0.07))
+    crackle = _grains(n, gen, 14.0, (0.0006, 0.0015), (0.0002, 0.0002), (0.0005, 0.001), 0.04, 0.6)
+    crackle = filters.lowpass(filters.bandpass(crackle, 1500.0, 0.9), 3000.0)
+    return _chirp_finish(phrase * gate + crackle, cutoff=3000.0, wet=0.2)
+
+
+TILLY_FOUND = (("A5", "D6"), ("B5", "E6"), ("F#5", "A5"))
+
+
+def tilly_found(variant, gen):
+    """'Found it!' as Tilly hovers over something: a quick hop up that lands bright with a little flutter, and a
+    tiny echo of the landing note."""
+    low, high = TILLY_FOUND[variant]
+    return _chirp_finish(_phrase([
+        (0.0, _blip(0.06, low, low, 0.006, gen, amp=0.6)),
+        (0.08, _blip(0.2, low, high, 0.012, gen, amp=0.9, vibrato_cents=10.0, vibrato_rate=10.0)),
+        (0.32, _blip(0.07, high, high, 0.006, gen, amp=0.4)),
+    ], gen))
+
+
+def friend_spot_ping(_variant, gen):
+    """The soft ping marking what a friend spotted: a round A5 bell with its octave shimmering a moment later,
+    gentler and higher than 07's kalimba sonar."""
+    n = samples(1.8)
+    bell = instruments.soft_bell(note_freq("A5"), 1.8, decay=1.3, attack=0.012)
+    place(bell, instruments.soft_bell(note_freq("A6"), 1.8, decay=0.9, attack=0.012)[:n - samples(0.07)],
+          samples(0.07), 0.25)
+    bell = filters.lowpass(effects.tremolo(bell, 6.0, 0.18), 5500.0)
+    return _mono_reverb(bell, room=0.55, damping=0.6, wet=0.25, dry=1.0)
+
+
+TILLY_ROTOR_LOOP_S = 4.0
+
+
+def tilly_rotor(_variant, gen):
+    """Tiny four-rotor hum: blade-pass tones around A3 that beat slowly against each other, a soft whirr of air
+    pulsing at the blade rate. Whole cycles in the loop; nothing above ~3.5 kHz so it pitches up cleanly."""
+    n = samples(TILLY_ROTOR_LOOP_S)
+    step = SAMPLE_RATE / n
+    base = loop_freq(note_freq("A3"), n)
+    buzz = np.zeros(n)
+    for offset, amp, phase in ((0.0, 1.0, 0.0), (step, 0.8, 0.31), (2.0 * step, 0.7, 0.57), (-step, 0.75, 0.83)):
+        buzz += amp * osc.additive(n, base + offset, [(1, 1.0), (2, 0.45), (3, 0.2), (4, 0.08), (6, 0.03)],
+                                   phase=phase)
+    whirr = periodic(noise.white(n, gen), lambda x: filters.bandpass(noise.pink_filter(x), 950.0, 0.9))
+    whirr *= envelope.lfo(n, base, 0.45, 0.55)
+    mix = 0.22 * buzz + 1.6 * whirr / max(float(np.std(whirr)), 1e-9) * 0.1
+    return periodic(mix, lambda x: filters.highpass(filters.lowpass(filters.lowpass(x, 3500.0), 3500.0), 90.0))
+
+
+STITCH_LOOP_S = 4.0
+STITCH_NOTES = ("D6", "E6", "F#6", "A6")
+
+
+def friend_stitch(_variant, gen):
+    """Repair 'stitching': a warm D/A shimmer, a soft sewing-machine pulse on D3, and tiny needle-like pentatonic
+    ticks and thread pulls scattered over it, in a little room. Seamless; the runtime lifts it over the repair."""
+    n = samples(STITCH_LOOP_S)
+    step = SAMPLE_RATE / n
+    pad = np.zeros(n)
+    for note, amp in (("D4", 1.0), ("A4", 0.7), ("D5", 0.4)):
+        f = loop_freq(note_freq(note), n)
+        pad += amp * (osc.sine(n, f) + 0.6 * osc.sine(n, f + step, phase=0.4))
+    pad *= envelope.lfo(n, 12.0 / STITCH_LOOP_S, 0.15, 0.85)
+    pulse = osc.additive(n, loop_freq(note_freq("D3"), n), [(1, 1.0), (2, 0.3)])
+    pulse *= envelope.lfo(n, 24.0 / STITCH_LOOP_S, 0.5, 0.5) ** 2
+    ticks = np.zeros(n)
+    for pos in noise.event_times(n, gen, 13.0):
+        note = STITCH_NOTES[int(gen.integers(0, len(STITCH_NOTES)))]
+        tick = instruments.partial(samples(0.05), note_freq(note), gen.uniform(0.4, 1.0), 0.0015, 0.04)
+        place(ticks, tick, int(pos), wrap=True)
+    pulls = _grains(n, gen, 5.0, (0.02, 0.04), (0.006, 0.01), (0.015, 0.03), 0.3, 0.4)
+    pulls = periodic(pulls, lambda x: filters.lowpass(filters.bandpass(x, 1800.0, 1.4), 4000.0))
+    dry = 0.22 * pad + 0.18 * pulse + 0.5 * ticks + 0.5 * pulls
+    wet = periodic(dry, lambda x: to_mono(effects.reverb(x, room=0.55, damping=0.6, wet=0.35, dry=1.0)),
+                   warmup=samples(3.0))
+    return periodic(wet, lambda x: filters.lowpass(x, 6000.0))
+
+
+def friend_boot(_variant, gen):
+    """The repaired friend boots: three soft electric flickers (the eye), a little power-up glide on D3, then a
+    music-box startup jingle D5 F#5 A5 D6."""
+    n = samples(2.4)
+    mix = np.zeros(n)
+    for when, gain in ((0.0, 0.5), (0.11, 0.35), (0.18, 0.6)):
+        flick = instruments.partial(samples(0.03), note_freq("A6"), gain, 0.001, 0.02)
+        click = filters.bandpass(noise.white(samples(0.004), gen), 2000.0, 1.0) * 0.1
+        place(mix, flick, samples(when))
+        place(mix, click, samples(when))
+    rise_n = samples(0.5)
+    rise = osc.sine(rise_n, osc.glide(rise_n, note_freq("D2"), note_freq("D3")))
+    rise *= envelope.segments(rise_n, [(0.0, 0.0), (0.3, 1.0), (0.5, 0.0)], shape="smooth")
+    place(mix, rise, samples(0.12), 0.35)
+    for k, note in enumerate(("D5", "F#5", "A5", "D6")):
+        last = k == 3
+        place(mix, instruments.music_box(note_freq(note), 1.6 if last else 0.9, decay=1.3 if last else 0.7),
+              samples(0.48 + 0.12 * k), 0.7 if last else 0.55)
+    return _mono_reverb(filters.lowpass(mix, 5500.0), room=0.45, damping=0.6, wet=0.2, dry=1.0)
+
+
+FRIEND_PART_STEPS = ("D5", "F#5", "A5", "B5")
+
+
+def _amber_bar(freq: float, duration: float) -> np.ndarray:
+    """Warm vibraphone-like bar (the 'amber' of friend parts, unlike the glassy scrap chime): fundamental,
+    the bar's 4x mode dying fast, and a slow motor tremolo."""
+    n = samples(duration)
+    bar = (instruments.partial(n, freq, 1.0, 0.002, 1.6)
+           + instruments.partial(n, 4.0 * freq, 0.22, 0.0015, 0.25)
+           + instruments.partial(n, 2.0 * freq, 0.06, 0.002, 0.6))
+    return effects.tremolo(bar, 5.2, 0.3)
+
+
+def friend_part(variant, _gen):
+    """A friend part collected: a warm amber bar climbing D5 F#5 A5 B5 per part, and on the last part a resolved
+    A5 -> D6 figure over a soft D5."""
+    if variant < len(FRIEND_PART_STEPS):
+        mix = _amber_bar(note_freq(FRIEND_PART_STEPS[variant]), 1.6)
+        mix += 0.25 * _amber_bar(note_freq("D4"), 1.6)
+    else:
+        mix = np.zeros(samples(2.2))
+        place(mix, _amber_bar(note_freq("D5"), 2.0), 0, 0.35)
+        place(mix, _amber_bar(note_freq("A5"), 2.0), 0, 0.8)
+        place(mix, _amber_bar(note_freq("D6"), 2.0), samples(0.14), 0.9)
+    return _mono_reverb(filters.lowpass(mix, 6000.0), room=0.5, damping=0.55, wet=0.22, dry=1.0)
+
+
 # --------------------------------------------------------------------------------------------------- registry
 
 CUES = (
@@ -683,6 +937,36 @@ CUES = (
         notes="UiCue CardShown: music-box phrase A5 F#5 A5 -> D6 over D5."),
     Cue("ui_confirm", "ui_2d", ui_confirm, volume=(0.7, 0.7), fade_out=0.08, tonal=True, notes="Rising D5 -> A5."),
     Cue("ui_back", "ui_2d", ui_back, volume=(0.65, 0.65), fade_out=0.08, tonal=True, notes="Falling A4 -> D4."),
+    Cue("tilly_broken", "oneshot_3d", tilly_broken, variants=len(TILLY_BROKEN), volume=(0.45, 0.5), fade_out=0.1,
+        milestone="M3", tonal=True,
+        notes="Tilly dormant answering a ping: faint, glitchy, hopeful chirp (stutters, sags, retries)."),
+    Cue("tilly_curious", "oneshot_3d", tilly_curious, variants=len(TILLY_CURIOUS), volume=(0.5, 0.55),
+        fade_out=0.08, milestone="M3", tonal=True, notes="Tilly curious 'hm?': short blip + rising question slide."),
+    Cue("tilly_happy", "oneshot_3d", tilly_happy, variants=len(TILLY_HAPPY), volume=(0.55, 0.6), fade_out=0.08,
+        milestone="M3", tonal=True, notes="Tilly happy: bouncing pentatonic trill."),
+    Cue("tilly_sleepy", "oneshot_3d", tilly_sleepy, variants=len(TILLY_SLEEPY), volume=(0.35, 0.4),
+        fade_out=0.12, milestone="M3", tonal=True, notes="Tilly napping on her perch: slow falling coo + echo."),
+    Cue("tilly_greeting", "oneshot_3d", tilly_greeting, variants=len(TILLY_GREETING), volume=(0.6, 0.65),
+        fade_out=0.08, milestone="M3", tonal=True,
+        notes="Tilly flying out to meet 07: rising swoop + trill landing high."),
+    Cue("tilly_excited", "oneshot_3d", tilly_excited, variants=len(TILLY_EXCITED), volume=(0.6, 0.65),
+        fade_out=0.08, milestone="M3", tonal=True, notes="Tilly when a relic comes home: fluttering arpeggio."),
+    Cue("tilly_found", "oneshot_3d", tilly_found, variants=len(TILLY_FOUND), volume=(0.55, 0.6), fade_out=0.08,
+        milestone="M3", tonal=True, notes="Tilly spotting something: 'found it!' hop up with a bright landing."),
+    Cue("friend_spot_ping", "oneshot_3d", friend_spot_ping, volume=(0.5, 0.5), fade_out=0.2, milestone="M3",
+        tonal=True, notes="Soft A5 bell + A6 shimmer marking what a friend spotted (relic, part, scrap)."),
+    Cue("tilly_rotor", "loop_3d", tilly_rotor, loop=True, file_stem="tilly_rotor_loop", volume=(0.35, 0.35),
+        hf_cutoff=6000.0, hf_max_db=-40.0, milestone="M3", tonal=True,
+        notes="Tilly's tiny four-rotor hum around A3, 4 s seamless; < 3.5 kHz so speed can pitch it up."),
+    Cue("friend_stitch", "loop_3d", friend_stitch, loop=True, file_stem="friend_stitch_loop", volume=(0.6, 0.6),
+        milestone="M3", tonal=True,
+        notes="Repair stitching: D/A shimmer + D3 sewing pulse + pentatonic needle ticks, 4 s seamless."),
+    Cue("friend_boot", "oneshot_3d", friend_boot, volume=(0.7, 0.7), fade_out=0.2, milestone="M3", tonal=True,
+        notes="Repaired friend boots: eye flickers, power-up glide, music-box jingle D5 F#5 A5 D6."),
+    Cue("friend_part", "oneshot_3d", friend_part, variants=len(FRIEND_PART_STEPS) + 1, volume=(0.65, 0.65),
+        variant_labels=("step1", "step2", "step3", "step4", "complete"), fade_out=0.2, milestone="M3",
+        tonal=True, notes="Friend part collected: amber vibraphone bar climbing D5 F#5 A5 B5; 'complete' on the last "
+                          "part resolves A5 -> D6."),
     Cue("upgrade_arpeggio", "stinger_2d", upgrade_arpeggio, volume=(0.8, 0.8), fade_out=0.3, milestone="M2",
         tonal=True, notes="Soft kalimba D4 A4 D5 F#5 A5, stereo, over a quiet D/A pad."),
 )
