@@ -155,7 +155,7 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual("Senior Debugging Consultant", _rig.Ui.Layout.MemoryCardName.text);
             StringAssert.StartsWith("Kenji explained", _rig.Ui.Layout.MemoryCardText.text);
             Assert.AreEqual("Memory 2 of 6", _rig.Ui.Layout.MemoryCardCaption.text);
-            Assert.AreEqual("Escape", _rig.Ui.Layout.MemoryCardGlyphLabel.text);
+            Assert.AreEqual("Esc", _rig.Ui.Layout.MemoryCardGlyphLabel.text);
             Assert.IsTrue(_rig.Bootstrap.Context.Input.Enabled, "the card never blocks driving");
 
             Press(keyboard.escapeKey, queueEventOnly: true);

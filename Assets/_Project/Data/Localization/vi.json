@@ -201,6 +201,74 @@
         {
             "key": "relic.garden_gnome.memory",
             "text": "Theo lén mang chú lên tàu cho vui rồi giao chú canh vườn ươm. Suốt nhiệm kỳ, chưa một cây non nào bị mất."
+        },
+        {
+            "key": "glyph.keyboard.escape",
+            "text": "Esc"
+        },
+        {
+            "key": "glyph.keyboard.space",
+            "text": "Phím cách"
+        },
+        {
+            "key": "glyph.mouse.leftbutton",
+            "text": "Chuột trái"
+        },
+        {
+            "key": "glyph.mouse.rightbutton",
+            "text": "Chuột phải"
+        },
+        {
+            "key": "glyph.mouse.scroll",
+            "text": "Con lăn"
+        },
+        {
+            "key": "glyph.gamepad.buttonsouth",
+            "text": "A"
+        },
+        {
+            "key": "glyph.gamepad.buttoneast",
+            "text": "B"
+        },
+        {
+            "key": "glyph.gamepad.buttonwest",
+            "text": "X"
+        },
+        {
+            "key": "glyph.gamepad.buttonnorth",
+            "text": "Y"
+        },
+        {
+            "key": "glyph.gamepad.leftshoulder",
+            "text": "LB"
+        },
+        {
+            "key": "glyph.gamepad.rightshoulder",
+            "text": "RB"
+        },
+        {
+            "key": "glyph.gamepad.lefttrigger",
+            "text": "LT"
+        },
+        {
+            "key": "glyph.gamepad.righttrigger",
+            "text": "RT"
+        },
+        {
+            "key": "glyph.gamepad.leftstick",
+            "text": "LS"
+        },
+        {
+            "key": "glyph.gamepad.rightstick",
+            "text": "RS"
+        },
+        {
+            "key": "glyph.gamepad.dpad",
+            "text": "D-Pad"
+        },
+        {
+            "key": "glyph.gamepad.start",
+            "text": "Start"
         }
     ]
 }

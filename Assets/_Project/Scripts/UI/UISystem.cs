@@ -162,7 +162,7 @@ namespace MoonProject.UI
             _director = new PromptDirector(_tuning.Prompts, _ledger);
             _player = new PlayerSettings(services.Audio, services.Look, _localization, _tuning.Pause);
             _cursor = new CursorPolicy();
-            _glyphs = new GlyphLabels(services.Input);
+            _glyphs = new GlyphLabels(services.Input, _localization);
 
             ISaveService save = services.Save;
             _tokens.Add(save.Register(new SaveSection<SettingsSaveData>(UiSaveKeys.Settings,
@@ -360,6 +360,7 @@ namespace MoonProject.UI
                 return;
             }
 
+            _glyphs.Clear();
             _staticText.Apply();
             _prompt.Relocalize();
             _card.Relocalize();
