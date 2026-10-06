@@ -53,6 +53,17 @@ namespace MoonProject.Editor.Tests
         }
 
         [Test]
+        public void SfxLoopWav_IsImportedAsPcm()
+        {
+            string path = ImportFile(ImportRuleSet.SfxFolder + TempName + "/hum_loop.wav", StereoWav());
+
+            var importer = (AudioImporter)AssetImporter.GetAtPath(path);
+
+            Assert.AreEqual(AudioCompressionFormat.PCM, importer.defaultSampleSettings.compressionFormat);
+            Assert.AreEqual(2205, AssetDatabase.LoadAssetAtPath<AudioClip>(path).samples, "no padding added");
+        }
+
+        [Test]
         public void MusicWav_Streams()
         {
             string path = ImportFile(ImportRuleSet.MusicFolder + TempName + "/loop.wav", StereoWav());
