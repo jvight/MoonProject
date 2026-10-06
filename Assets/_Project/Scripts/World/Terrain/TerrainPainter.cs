@@ -5,22 +5,21 @@ using MoonProject.Art;
 namespace MoonProject.World
 {
     /// <summary>
-    /// Picks the palette swatch of one terrain triangle. Rock on steep faces and the rim, two-toned by steepness,
-    /// height, patches and facing; shaded crater walls and lit crater rims; and floor dust toned by large seeded
-    /// patches plus the facet's tilt toward the earthlight, so lit and lee facets differ by a whole swatch and the
-    /// low-poly relief reads even on gentle ground. A small per-triangle dither frays every border. Immutable and
-    /// thread-safe.
+    /// Picks the palette swatch of one terrain triangle. Rock on steep faces and the rim, two-toned per face by
+    /// steepness, height, patches and facing; shaded crater walls and lit crater rims; and floor dust toned only by
+    /// low-frequency patches and the smoothed tilt of the ground toward the earthlight, so colour changes come in
+    /// patches and dune sides, never as isolated facets (design ruling 9). Immutable and thread-safe.
     /// </summary>
     public sealed class TerrainPainter
     {
         private const uint PatchSalt = 0x632BE59Bu;
-
-        // Rock uses a fraction of the dust dither: enough to interleave the two rock tones along their border.
-        private const float RockDitherScale = 1.4f;
+        private const uint DetailPatchSalt = 0x9E6C63D0u;
 
         private readonly TerrainPaintSettings _settings;
         private readonly GradientNoise _patchNoise;
+        private readonly GradientNoise _detailPatchNoise;
         private readonly float _invPatchWavelength;
+        private readonly float _invDetailPatchWavelength;
         private readonly float _rockCos;
         private readonly float _rimRockCos;
         private readonly float _lightX;
@@ -32,7 +31,9 @@ namespace MoonProject.World
         {
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _patchNoise = new GradientNoise(Hashing.Mix((uint)seed ^ PatchSalt));
+            _detailPatchNoise = new GradientNoise(Hashing.Mix((uint)seed ^ DetailPatchSalt));
             _invPatchWavelength = 1f / settings.PatchWavelength;
+            _invDetailPatchWavelength = 1f / settings.DetailPatchWavelength;
             _rockCos = Mathf.Cos(settings.RockSlope * Mathf.Deg2Rad);
             _rimRockCos = Mathf.Cos(settings.RimRockSlope * Mathf.Deg2Rad);
             Vector2 horizontal = new Vector2(lightDirection.x, lightDirection.z);
@@ -42,28 +43,33 @@ namespace MoonProject.World
             }
 
             horizontal.Normalize();
-            _leeFacing = -Mathf.Sin(settings.LeeTilt * Mathf.Deg2Rad);
             _lightX = horizontal.x;
             _lightZ = horizontal.y;
+            _leeFacing = -Mathf.Sin(settings.LeeTilt * Mathf.Deg2Rad);
         }
 
-        /// <param name="normal">Unit face normal.</param>
+        /// <summary>Distance (metres) over which the ground normal given to <see cref="Pick"/> is smoothed.</summary>
+        public float TiltSmoothing => _settings.TiltSmoothing;
+
+        /// <param name="faceNormal">Unit normal of the triangle itself.</param>
+        /// <param name="groundNormal">Ground normal around it, smoothed over <see cref="TiltSmoothing"/>.</param>
         /// <param name="center">World-space triangle centre.</param>
         /// <param name="region">Averaged region weights of the triangle's corners (height unused).</param>
         /// <param name="hash">Per-triangle seeded hash.</param>
-        public PaletteSwatch Pick(Vector3 normal, Vector3 center, SurfaceSample region, uint hash)
+        public PaletteSwatch Pick(Vector3 faceNormal, Vector3 groundNormal, Vector3 center, SurfaceSample region,
+            uint hash)
         {
-            float dither = Hashing.ToSigned(hash) * _settings.Dither;
+            float nudge = Hashing.ToSigned(hash);
             float patch = _patchNoise.Fractal(center.x * _invPatchWavelength, center.z * _invPatchWavelength, 2, 2f,
                 0.5f);
-            float facing = normal.x * _lightX + normal.z * _lightZ;
             bool onRim = region.RimZone >= _settings.RimZoneStart;
-            if (normal.y <= _rockCos || (onRim && normal.y <= _rimRockCos))
+            if (faceNormal.y <= _rockCos || (onRim && faceNormal.y <= _rimRockCos))
             {
-                float slope = Mathf.Acos(Mathf.Clamp(normal.y, -1f, 1f)) * Mathf.Rad2Deg;
+                float slope = Mathf.Acos(Mathf.Clamp(faceNormal.y, -1f, 1f)) * Mathf.Rad2Deg;
+                float faceFacing = faceNormal.x * _lightX + faceNormal.z * _lightZ;
                 float rock = (_settings.RockLightSlope - slope) / _settings.RockSlopeBlend
                     + (center.y - _settings.RockLightHeight) / _settings.RockHeightBlend
-                    + patch * _settings.RockMottle + facing * _settings.RockFacing + dither * RockDitherScale;
+                    + patch * _settings.RockMottle + faceFacing * _settings.RockFacing + nudge * _settings.RockDither;
                 return rock > 0f ? PaletteSwatch.RockLight : PaletteSwatch.RockDark;
             }
 
@@ -82,7 +88,11 @@ namespace MoonProject.World
                 return PaletteSwatch.DustShadow;
             }
 
-            float tone = patch * _settings.PatchStrength + facing * _settings.FacingStrength + dither;
+            float detail = _detailPatchNoise.Fractal(center.x * _invDetailPatchWavelength,
+                center.z * _invDetailPatchWavelength, 2, 2f, 0.5f);
+            float facing = groundNormal.x * _lightX + groundNormal.z * _lightZ;
+            float tone = patch * _settings.PatchStrength + detail * _settings.DetailPatchStrength
+                + facing * _settings.FacingStrength + nudge * _settings.Dither;
             if (tone > _settings.LightTone)
             {
                 return PaletteSwatch.DustLight;

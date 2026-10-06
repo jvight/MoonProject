@@ -11,6 +11,8 @@
     {"name": "low_dramatic", "position": [60, 3.9, 120], "lookAt": [91.5, 150, 430.4], "fov": 55},
     {"name": "earth", "position": [0, 3, -8], "lookAt": [-72, 58.1, 170.3], "fov": 30},
     {"name": "ramp", "position": [82.2, 6, 56.3], "lookAt": [58.5, 2, 74.9], "fov": 60},
+    {"name": "beacon_zoom", "position": [0, 3, -8], "lookAt": [91.5, 155, 430.4], "fov": 5},
+    {"name": "beacon_close", "position": [78, 153, 417], "lookAt": [91.5, 154.5, 430.4], "fov": 50},
     {"name": "from_summit", "position": [91.5, 156, 430.4], "lookAt": [174.7, 40, 821.6], "fov": 60}
   ]
 }

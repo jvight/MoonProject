@@ -4,9 +4,10 @@ using UnityEngine;
 namespace MoonProject.World
 {
     /// <summary>
-    /// Rules that give every terrain triangle one palette swatch. Floor dust is painted by facet orientation to the
-    /// earthlight (lit facets light, lee facets in shadow tone) on top of large soft patches, so facets and dunes
-    /// read even where the ground is gentle; crater walls are shaded, crater rims lit, steep faces and the rim rock.
+    /// Rules that give every terrain triangle one palette swatch. Floor dust follows low-frequency patches and the
+    /// smoothed tilt of the ground toward the earthlight (lit dune sides light, lee sides in shadow tone), never
+    /// per-facet randomness (design ruling 9: patchy, never confetti). Crater walls are shaded, crater rims lit,
+    /// steep faces and the rim are rock.
     /// </summary>
     [Serializable]
     public sealed class TerrainPaintSettings
@@ -49,38 +50,54 @@ namespace MoonProject.World
         [Range(0f, 10f)]
         [SerializeField] private float _rockFacing = 2.5f;
 
+        [Tooltip("Per-face nudge of the rock tone: interleaves the two rock swatches along their border.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _rockDither = 0.2f;
+
         [Header("Dust")]
-        [Tooltip("Size of the light and mid dust patches on the floor, metres.")]
+        [Tooltip("Size of the broad light and mid dust patches on the floor, metres.")]
         [Range(10f, 500f)]
         [SerializeField] private float _patchWavelength = 140f;
 
-        [Tooltip("Strength of the large patches in the dust tone.")]
+        [Tooltip("Strength of the broad patches in the dust tone.")]
         [Range(0f, 2f)]
         [SerializeField] private float _patchStrength = 0.45f;
 
-        [Tooltip("Tone gained per unit of facet tilt toward the earthlight (sine of the tilt). 5 = a 5 degree tilt " +
-            "shifts a facet by almost half a step: gentle dunes show their lit and lee sides.")]
+        [Tooltip("Size of the small dust patches, metres: several metres across, never a single facet.")]
+        [Range(4f, 100f)]
+        [SerializeField] private float _detailPatchWavelength = 15f;
+
+        [Tooltip("Strength of the small patches in the dust tone.")]
+        [Range(0f, 2f)]
+        [SerializeField] private float _detailPatchStrength = 0.7f;
+
+        [Tooltip("Ground tilt toward the earthlight is measured over this distance (metres), so the fine grain of " +
+            "single facets never changes their colour: only dunes, hills and crater walls do.")]
+        [Range(1f, 30f)]
+        [SerializeField] private float _tiltSmoothing = 7f;
+
+        [Tooltip("Tone gained per unit of smoothed tilt toward the earthlight (sine of the tilt). Lit dune sides " +
+            "turn light dust, lee sides shadow dust.")]
         [Range(0f, 20f)]
         [SerializeField] private float _facingStrength = 5f;
 
         [Tooltip("Dust tone above which a face is light dust.")]
         [Range(-1f, 1f)]
-        [SerializeField] private float _lightTone = 0.25f;
+        [SerializeField] private float _lightTone = 0.22f;
 
-        [Tooltip("Dust tone below which a lee facet (see lee tilt) is shadow dust.")]
+        [Tooltip("Dust tone below which a lee face (see lee tilt) is shadow dust.")]
         [Range(-2f, 1f)]
         [SerializeField] private float _shadowTone = -0.3f;
 
-        [Tooltip("Only facets tilted at least this far away from the earthlight (degrees) can be shadow dust: dune " +
-            "lee sides and crater outer walls darken, flat ground never shows dark speckles.")]
+        [Tooltip("Only ground tilted at least this far away from the earthlight (smoothed, degrees) can be shadow " +
+            "dust: dune lee sides darken, flat ground never shows dark stains.")]
         [Range(0f, 30f)]
         [SerializeField] private float _leeTilt = 6f;
 
-        [Tooltip("Per-triangle random nudge of the tone (uniform +-). A little wider than the light threshold on " +
-            "purpose: about 8% of flat facets (more in light patches) turn light dust, a hand-painted mosaic that " +
-            "shows the facets; tilting toward the earthlight raises the odds, so lit dune sides turn mostly light.")]
-        [Range(0f, 1f)]
-        [SerializeField] private float _dither = 0.3f;
+        [Tooltip("Per-face nudge of the dust tone. Keep it tiny: it only frays patch borders by a facet or so " +
+            "(design ruling 9 forbids isolated bright facets).")]
+        [Range(0f, 0.2f)]
+        [SerializeField] private float _dither = 0.02f;
 
         [Header("Craters and highlands")]
         [Tooltip("Crater bowl weight (0 = edge, 1 = centre) where the shaded crater wall starts.")]
@@ -108,8 +125,12 @@ namespace MoonProject.World
         public float RockHeightBlend => _rockHeightBlend;
         public float RockMottle => _rockMottle;
         public float RockFacing => _rockFacing;
+        public float RockDither => _rockDither;
         public float PatchWavelength => _patchWavelength;
         public float PatchStrength => _patchStrength;
+        public float DetailPatchWavelength => _detailPatchWavelength;
+        public float DetailPatchStrength => _detailPatchStrength;
+        public float TiltSmoothing => _tiltSmoothing;
         public float FacingStrength => _facingStrength;
         public float LightTone => _lightTone;
         public float ShadowTone => _shadowTone;

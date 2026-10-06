@@ -117,13 +117,17 @@ MonoBehaviour:
     _rockHeightBlend: 80
     _rockMottle: 0.6
     _rockFacing: 2.5
+    _rockDither: 0.2
     _patchWavelength: 140
     _patchStrength: 0.45
+    _detailPatchWavelength: 15
+    _detailPatchStrength: 0.7
+    _tiltSmoothing: 7
     _facingStrength: 5
-    _lightTone: 0.25
+    _lightTone: 0.22
     _shadowTone: -0.3
     _leeTilt: 6
-    _dither: 0.3
+    _dither: 0.02
     _craterShadow: 0.12
     _craterFloor: 0.7
     _craterHighlight: 0.6
@@ -141,7 +145,7 @@ MonoBehaviour:
     _clusterWavelength: 75
     _clusterContrast: 0.75
     _pebbleSpacing: 5
-    _pebbleSize: {x: 0.2, y: 0.55}
+    _pebbleSize: {x: 0.2, y: 0.4}
     _pebbleDensity: 0.34
     _pebbleMaxSlope: 28
     _pebbleCullDistance: 150
@@ -183,6 +187,16 @@ MonoBehaviour:
     _shootingStarPeriod: 38
     _shootingStarDuration: 2.4
     _shootingStarBrightness: 3
+  _beacon:
+    _period: 3.2
+    _sharpness: 1.6
+    _lampMinIntensity: 0.35
+    _lampMaxIntensity: 1.9
+    _haloColor: {r: 1, g: 0.3529412, b: 0.43137255, a: 1}
+    _haloMinIntensity: 0.04
+    _haloMaxIntensity: 1.8
+    _haloRadius: 2.2
+    _haloMinAngle: 0.55
   _atmosphere:
     _lightColor: {r: 0.78, g: 0.8, b: 1, a: 1}
     _lightIntensity: 1.7

@@ -4,7 +4,8 @@ namespace MoonProject.World
 {
     /// <summary>
     /// Tuning root of the World domain: the world seed plus every number for the surface shape, the terrain mesh and
-    /// its colours, the rock scatter, the sky, the atmosphere and the post-processing look. Read-only at runtime.
+    /// its colours, the rock scatter, the sky, The Peak's beacon, the atmosphere and the post-processing look.
+    /// Read-only at runtime.
     /// </summary>
     [CreateAssetMenu(menuName = "MoonProject/World Settings", fileName = "WorldSettings")]
     public sealed class WorldSettings : ScriptableObject
@@ -30,6 +31,9 @@ namespace MoonProject.World
         [Tooltip("The night sky: gradient, stars, milky way, shooting stars and Earth.")]
         [SerializeField] private SkySettings _sky = new SkySettings();
 
+        [Tooltip("The slow red beacon on The Peak.")]
+        [SerializeField] private BeaconSettings _beacon = new BeaconSettings();
+
         [Tooltip("Earthlight, ambient and fog.")]
         [SerializeField] private AtmosphereSettings _atmosphere = new AtmosphereSettings();
 
@@ -47,6 +51,8 @@ namespace MoonProject.World
         public ScatterSettings Scatter => _scatter;
 
         public SkySettings Sky => _sky;
+
+        public BeaconSettings Beacon => _beacon;
 
         public AtmosphereSettings Atmosphere => _atmosphere;
 
