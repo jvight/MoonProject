@@ -13,7 +13,7 @@ namespace MoonProject.Rover.PlayModeTests
 {
     /// <summary>
     /// The real built Rover.prefab (wrapping the art box's RoverModel) and camera rig: they initialise without errors,
-    /// register their Core contracts, only the headlamp may cast shadows, and 07 drives (scripted stick, no devices).
+    /// register their Core contracts, no rover light casts shadows, and 07 drives (scripted stick, no devices).
     /// Under a single directional
     /// light at the world's Earthlight angle it captures frames with and without the head, to tell a second light's
     /// shadow apart from the head's own shadow.
@@ -76,9 +76,8 @@ namespace MoonProject.Rover.PlayModeTests
             TestRover.IsolateCamera(_cameraRig);
             foreach (Light light in _rover.GetComponentsInChildren<Light>(true))
             {
-                bool headlamp = light.type == LightType.Spot;
-                Assert.IsTrue(headlamp || light.shadows == LightShadows.None,
-                    $"Rover light '{light.name}' casts shadows; only the world light and the headlamp may.");
+                Assert.AreEqual(LightShadows.None, light.shadows,
+                    $"Rover light '{light.name}' casts shadows; only the world light may.");
             }
 
             _input = new InputReader(_actions);

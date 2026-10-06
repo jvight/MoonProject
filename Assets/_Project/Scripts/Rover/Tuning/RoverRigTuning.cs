@@ -139,13 +139,14 @@ namespace MoonProject.Rover
         [SerializeField] private float _antennaMaxAngle = 22f;
 
         [Header("Headlamp")]
-        [Tooltip("Headlamp intensity (warm spot light at HeadlampSocket).")]
-        [Range(0f, 50f)]
-        [SerializeField] private float _headlampIntensity = 6f;
+        [Tooltip("Headlamp intensity (warm spot light at HeadlampSocket). URP lights fall off with the square of the "
+            + "distance: ~35 warms rocks 5-10 m ahead without a hot halo around 07.")]
+        [Range(0f, 200f)]
+        [SerializeField] private float _headlampIntensity = 35f;
 
         [Tooltip("Headlamp range (m).")]
         [Range(1f, 60f)]
-        [SerializeField] private float _headlampRange = 18f;
+        [SerializeField] private float _headlampRange = 20f;
 
         [Tooltip("Headlamp outer cone angle (deg).")]
         [Range(10f, 150f)]
