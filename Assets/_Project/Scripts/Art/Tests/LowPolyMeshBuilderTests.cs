@@ -489,6 +489,17 @@ namespace MoonProject.Art.Tests
         }
 
         [Test]
+        public void Transform_KeepsUnitNormals_OnTinyFaces()
+        {
+            var builder = new LowPolyMeshBuilder();
+            MeshRange speck = builder.Icosphere(Matrix4x4.identity, 0.004f, 1, PaletteSwatch.Metal);
+
+            builder.Transform(speck, Matrix4x4.Scale(Vector3.one * 0.5f));
+
+            MeshChecks.AssertWellFormed(builder);
+        }
+
+        [Test]
         public void Clear_EmptiesTheBuilder()
         {
             var builder = new LowPolyMeshBuilder();

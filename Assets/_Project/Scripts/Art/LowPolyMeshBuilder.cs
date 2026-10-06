@@ -293,7 +293,10 @@ namespace MoonProject.Art
                     (b, c) = (c, b);
                 }
 
-                Vector3 normal = Vector3.Cross(b - a, c - a).normalized;
+                // Manual normalisation: Vector3.normalized returns zero below a 1e-5 length, which tiny faces reach.
+                Vector3 cross = Vector3.Cross(b - a, c - a);
+                float sqr = cross.sqrMagnitude;
+                Vector3 normal = sqr > 0f ? cross / Mathf.Sqrt(sqr) : matrix.MultiplyVector(_normals[v]).normalized;
                 _positions[v] = a;
                 _positions[v + 1] = b;
                 _positions[v + 2] = c;
