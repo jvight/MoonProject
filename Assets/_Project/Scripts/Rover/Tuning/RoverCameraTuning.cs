@@ -130,17 +130,26 @@ namespace MoonProject.Rover
         [SerializeField] private float _bumpDamping = 0.8f;
 
         [Header("Camera moments")]
+        [Tooltip("Digging: while the excavation beam is on, ease to the side and up so the beam and the rising "
+            + "relic are seen beside 07, not hidden behind it. Flows into the relic moment when it surfaces.")]
+        [SerializeField] private CameraMomentSettings _digMoment =
+            new CameraMomentSettings(1.2f, 0f, 1f, 0.5f, 3f, 0.6f, 35f, 70f, 14f, 0.25f, 15f);
+
         [Tooltip("A relic finishing surfacing: ease round to frame 07 and the floating relic, then back (~3 s).")]
         [SerializeField] private CameraMomentSettings _relicMoment =
-            new CameraMomentSettings(0.9f, 1f, 1.1f, 0.35f, 2.5f, 0.85f, 60f, 6f, 0.35f, 25f);
+            new CameraMomentSettings(0.9f, 1f, 1.1f, 0.35f, 2.5f, 0.85f, 25f, 60f, 8f, 0.35f, 25f);
 
         [Tooltip("An upgrade bought at the base: lift and pull back to take in the base, its tower and warm ring.")]
         [SerializeField] private CameraMomentSettings _upgradeMoment =
-            new CameraMomentSettings(1.3f, 1.8f, 1.5f, 0.5f, 6f, 0.6f, 45f, 14f, 0.5f, 40f);
+            new CameraMomentSettings(1.3f, 1.8f, 1.5f, 0.5f, 6f, 0.6f, 0f, 45f, 14f, 0.5f, 40f);
 
         [Tooltip("Seconds a camera moment takes to ease away when the player looks around (always skippable).")]
         [Range(0.1f, 3f)]
         [SerializeField] private float _momentCancelEaseOut = 0.6f;
+
+        [Tooltip("Half-life (s) smoothing a moment's framing, so one moment flowing into the next never jumps.")]
+        [Range(0.02f, 1f)]
+        [SerializeField] private float _momentBlendHalfLife = 0.3f;
 
         [Header("Cinemachine damping")]
         [Tooltip("Orbital follow position damping (x, y, z): high = floaty drone.")]
@@ -233,11 +242,15 @@ namespace MoonProject.Rover
 
         public float BumpDamping => _bumpDamping;
 
+        public CameraMomentSettings DigMoment => _digMoment;
+
         public CameraMomentSettings RelicMoment => _relicMoment;
 
         public CameraMomentSettings UpgradeMoment => _upgradeMoment;
 
         public float MomentCancelEaseOut => _momentCancelEaseOut;
+
+        public float MomentBlendHalfLife => _momentBlendHalfLife;
 
         public Vector3 PositionDamping => _positionDamping;
 

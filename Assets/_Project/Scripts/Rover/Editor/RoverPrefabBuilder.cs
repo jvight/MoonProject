@@ -1,4 +1,3 @@
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 using MoonProject.Art;
@@ -50,13 +49,13 @@ namespace MoonProject.Rover.Editor
             var trackMaterial = BuildWiring.Require<Material>(RoverAssetPaths.TrackMaterial, "Rover/Materials");
             var dustMaterial = BuildWiring.Require<Material>(RoverAssetPaths.DustMaterial, "Rover/Materials");
 
-            var root = new GameObject("Rover");
-            try
+            using (var scratch = new BuilderScratchScene())
             {
+                GameObject root = scratch.Create("Rover");
                 var controller = root.AddComponent<RoverController>();
                 var bodyLanguage = root.AddComponent<RoverBodyLanguage>();
 
-                GameObject sphere = Child("PhysicsSphere", root.transform);
+                GameObject sphere = Child(scratch, "PhysicsSphere", root.transform);
                 sphere.layer = Layers.Rover;
                 sphere.transform.localPosition = Vector3.up * tuning.Ground.SphereRadius;
                 var body = sphere.AddComponent<Rigidbody>();
@@ -68,14 +67,14 @@ namespace MoonProject.Rover.Editor
                 collider.radius = tuning.Ground.SphereRadius;
                 collider.sharedMaterial = sphereMaterial;
 
-                GameObject visual = Child("Visual", root.transform);
+                GameObject visual = Child(scratch, "Visual", root.transform);
                 var rig = visual.AddComponent<RoverVisualRig>();
-                GameObject chassis = Child("Chassis", visual.transform);
-                var instance = (GameObject)PrefabUtility.InstantiatePrefab(model, chassis.transform);
+                GameObject chassis = Child(scratch, "Chassis", visual.transform);
+                GameObject instance = scratch.Instantiate(model, chassis.transform);
                 Transform m = instance.transform;
 
-                Light headlamp = AddHeadlamp(BuildWiring.Node(m, RoverModelNodes.HeadlampSocket), rigTuning);
-                Light eyeLight = AddEyeLight(BuildWiring.Node(m, RoverModelNodes.Eye), characterTuning);
+                Light headlamp = AddHeadlamp(scratch, BuildWiring.Node(m, RoverModelNodes.HeadlampSocket), rigTuning);
+                Light eyeLight = AddEyeLight(scratch, BuildWiring.Node(m, RoverModelNodes.Eye), characterTuning);
 
                 var wheels = new Object[RoverModelNodes.WheelCount];
                 for (int i = 0; i < wheels.Length; i++)
@@ -92,7 +91,7 @@ namespace MoonProject.Rover.Editor
                     ("_headlamp", headlamp));
                 BuildWiring.AssignArray(rig, "_wheels", wheels);
 
-                RoverWheelFx wheelFx = BuildWheelFx(root.transform, m, fxTuning, trackMaterial, dustMaterial);
+                RoverWheelFx wheelFx = BuildWheelFx(scratch, root.transform, m, fxTuning, trackMaterial, dustMaterial);
 
                 BuildWiring.Assign(controller,
                     ("_tuning", tuning),
@@ -114,26 +113,19 @@ namespace MoonProject.Rover.Editor
                     ("_eyeRenderer", BuildWiring.NodeComponent<MeshRenderer>(m, RoverModelNodes.Eye)),
                     ("_antennaTipRenderer", BuildWiring.NodeComponent<MeshRenderer>(m, RoverModelNodes.AntennaTip)),
                     ("_eyeLight", eyeLight));
-            }
-            catch
-            {
-                Object.DestroyImmediate(root);
-                throw;
-            }
 
-            GeneratedAssets.SavePrefab(root, RoverAssetPaths.RoverPrefab);
+                GeneratedAssets.SavePrefab(root, RoverAssetPaths.RoverPrefab);
+            }
         }
 
-        private static GameObject Child(string name, Transform parent)
+        private static GameObject Child(BuilderScratchScene scratch, string name, Transform parent)
         {
-            var child = new GameObject(name);
-            child.transform.SetParent(parent, false);
-            return child;
+            return scratch.Create(name, parent);
         }
 
-        private static Light AddHeadlamp(Transform socket, RoverRigTuning tuning)
+        private static Light AddHeadlamp(BuilderScratchScene scratch, Transform socket, RoverRigTuning tuning)
         {
-            var light = Child("Headlamp", socket).AddComponent<Light>();
+            var light = Child(scratch, "Headlamp", socket).AddComponent<Light>();
             light.type = LightType.Spot;
             light.color = Palette.Get(PaletteSwatch.WarmLamp);
             light.intensity = tuning.HeadlampIntensity;
@@ -145,9 +137,9 @@ namespace MoonProject.Rover.Editor
             return light;
         }
 
-        private static Light AddEyeLight(Transform eye, RoverCharacterTuning tuning)
+        private static Light AddEyeLight(BuilderScratchScene scratch, Transform eye, RoverCharacterTuning tuning)
         {
-            var light = Child("EyeGlow", eye).AddComponent<Light>();
+            var light = Child(scratch, "EyeGlow", eye).AddComponent<Light>();
             light.type = LightType.Point;
             light.color = Palette.Get(PaletteSwatch.WarmLamp);
             light.intensity = tuning.EyeLightIntensity;
@@ -156,26 +148,27 @@ namespace MoonProject.Rover.Editor
             return light;
         }
 
-        private static RoverWheelFx BuildWheelFx(Transform root, Transform model, RoverFxTuning tuning,
-            Material trackMaterial, Material dustMaterial)
+        private static RoverWheelFx BuildWheelFx(BuilderScratchScene scratch, Transform root, Transform model,
+            RoverFxTuning tuning, Material trackMaterial, Material dustMaterial)
         {
-            GameObject host = Child("WheelFx", root);
+            GameObject host = Child(scratch, "WheelFx", root);
             var wheelFx = host.AddComponent<RoverWheelFx>();
             BuildWiring.Assign(wheelFx,
                 ("_tuning", tuning),
                 ("_dustSocketLeft", BuildWiring.Node(model, RoverModelNodes.DustSocketLeft)),
                 ("_dustSocketRight", BuildWiring.Node(model, RoverModelNodes.DustSocketRight)),
-                ("_trackLeft", Track("TrackLeft", host.transform, trackMaterial)),
-                ("_trackRight", Track("TrackRight", host.transform, trackMaterial)),
-                ("_dustLeft", Dust("DustLeft", host.transform, dustMaterial)),
-                ("_dustRight", Dust("DustRight", host.transform, dustMaterial)),
-                ("_landingDust", LandingRing(host.transform, dustMaterial)));
+                ("_trackLeft", Track(scratch, "TrackLeft", host.transform, trackMaterial)),
+                ("_trackRight", Track(scratch, "TrackRight", host.transform, trackMaterial)),
+                ("_dustLeft", Dust(scratch, "DustLeft", host.transform, dustMaterial)),
+                ("_dustRight", Dust(scratch, "DustRight", host.transform, dustMaterial)),
+                ("_landingDust", LandingRing(scratch, host.transform, dustMaterial)));
             return wheelFx;
         }
 
-        private static RoverTrackRenderer Track(string name, Transform parent, Material material)
+        private static RoverTrackRenderer Track(BuilderScratchScene scratch, string name, Transform parent,
+            Material material)
         {
-            GameObject track = Child(name, parent);
+            GameObject track = Child(scratch, name, parent);
             track.AddComponent<MeshFilter>();
             var renderer = track.AddComponent<MeshRenderer>();
             renderer.sharedMaterial = material;
@@ -187,9 +180,10 @@ namespace MoonProject.Rover.Editor
         }
 
         /// <summary>Rolling dust: soft puffs kicked up and back that pop, settle and drift (rate at runtime).</summary>
-        private static ParticleSystem Dust(string name, Transform parent, Material material)
+        private static ParticleSystem Dust(BuilderScratchScene scratch, string name, Transform parent,
+            Material material)
         {
-            ParticleSystem dust = CreateSystem(name, parent, material, DustMaxParticles, true);
+            ParticleSystem dust = CreateSystem(scratch, name, parent, material, DustMaxParticles, true);
 
             ParticleSystem.ShapeModule shape = dust.shape;
             shape.enabled = true;
@@ -205,9 +199,9 @@ namespace MoonProject.Rover.Editor
         }
 
         /// <summary>Landing ring: puffs pushed outward along the ground, lifted gently; emitted on demand.</summary>
-        private static ParticleSystem LandingRing(Transform parent, Material material)
+        private static ParticleSystem LandingRing(BuilderScratchScene scratch, Transform parent, Material material)
         {
-            ParticleSystem ring = CreateSystem("LandingDust", parent, material, LandingMaxParticles, false);
+            ParticleSystem ring = CreateSystem(scratch, "LandingDust", parent, material, LandingMaxParticles, false);
 
             ParticleSystem.ShapeModule shape = ring.shape;
             shape.enabled = true;
@@ -233,10 +227,10 @@ namespace MoonProject.Rover.Editor
         /// Shared particle setup. Start values are normalised ranges around 1; <see cref="RoverWheelFx"/> scales them
         /// with the tuned lifetime, size, speed and gravity multipliers.
         /// </summary>
-        private static ParticleSystem CreateSystem(string name, Transform parent, Material material, int maxParticles,
-            bool looping)
+        private static ParticleSystem CreateSystem(BuilderScratchScene scratch, string name, Transform parent,
+            Material material, int maxParticles, bool looping)
         {
-            GameObject host = Child(name, parent);
+            GameObject host = Child(scratch, name, parent);
             var system = host.AddComponent<ParticleSystem>();
             system.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
 

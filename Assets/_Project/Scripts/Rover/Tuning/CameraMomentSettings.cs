@@ -15,7 +15,7 @@ namespace MoonProject.Rover
         [Range(0.1f, 5f)]
         [SerializeField] private float _easeIn = 1f;
 
-        [Tooltip("Seconds it holds the framing.")]
+        [Tooltip("Seconds it holds the framing (after release, for moments gameplay holds open).")]
         [Range(0f, 10f)]
         [SerializeField] private float _hold = 1f;
 
@@ -34,6 +34,10 @@ namespace MoonProject.Rover
         [Tooltip("Farthest (m) the look point may move toward the subject, so 07 always stays in frame.")]
         [Range(0f, 30f)]
         [SerializeField] private float _maxLookShift = 4f;
+
+        [Tooltip("Smallest swing (deg) round 07, so a subject straight ahead is seen from the side, not hidden.")]
+        [Range(0f, 90f)]
+        [SerializeField] private float _minYawSwing;
 
         [Tooltip("Largest swing (deg) round 07, so subjects behind it never whip the camera about.")]
         [Range(0f, 180f)]
@@ -56,8 +60,9 @@ namespace MoonProject.Rover
         }
 
         public CameraMomentSettings(float easeIn, float hold, float easeOut, float lookShare, float maxLookShift,
-            float yawShare, float maxYawSwing, float lift, float pullBack, float maxFocusDistance)
+            float yawShare, float minYawSwing, float maxYawSwing, float lift, float pullBack, float maxFocusDistance)
         {
+            _minYawSwing = minYawSwing;
             _maxLookShift = maxLookShift;
             _easeIn = easeIn;
             _hold = hold;
@@ -81,6 +86,8 @@ namespace MoonProject.Rover
         public float MaxLookShift => _maxLookShift;
 
         public float YawShare => _yawShare;
+
+        public float MinYawSwing => Mathf.Min(_minYawSwing, _maxYawSwing);
 
         public float MaxYawSwing => _maxYawSwing;
 

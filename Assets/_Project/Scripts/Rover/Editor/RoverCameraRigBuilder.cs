@@ -27,53 +27,54 @@ namespace MoonProject.Rover.Editor
         public static void Build()
         {
             var tuning = BuildWiring.Require<RoverCameraTuning>(RoverAssetPaths.CameraTuning, "Rover/Tuning");
-            var root = new GameObject("RoverCameraRig");
-            var rig = root.AddComponent<RoverCameraRig>();
+            using (var scratch = new BuilderScratchScene())
+            {
+                GameObject root = scratch.Create("RoverCameraRig");
+                var rig = root.AddComponent<RoverCameraRig>();
 
-            var target = new GameObject("FollowTarget");
-            target.transform.SetParent(root.transform, false);
+                GameObject target = scratch.Create("FollowTarget", root.transform);
 
-            var cameraHost = new GameObject("MainCamera") { tag = MainCameraTag };
-            cameraHost.transform.SetParent(root.transform, false);
-            var camera = cameraHost.AddComponent<Camera>();
-            camera.fieldOfView = tuning.BaseFov;
-            camera.nearClipPlane = tuning.NearClip;
-            camera.farClipPlane = tuning.FarClip;
-            var cameraData = cameraHost.AddComponent<UniversalAdditionalCameraData>();
-            cameraData.renderPostProcessing = true;
-            var brain = cameraHost.AddComponent<CinemachineBrain>();
-            brain.DefaultBlend = new CinemachineBlendDefinition(CinemachineBlendDefinition.Styles.EaseInOut,
-                DefaultBlendSeconds);
-            cameraHost.AddComponent<AudioListener>();
+                GameObject cameraHost = scratch.Create("MainCamera", root.transform);
+                cameraHost.tag = MainCameraTag;
+                var camera = cameraHost.AddComponent<Camera>();
+                camera.fieldOfView = tuning.BaseFov;
+                camera.nearClipPlane = tuning.NearClip;
+                camera.farClipPlane = tuning.FarClip;
+                var cameraData = cameraHost.AddComponent<UniversalAdditionalCameraData>();
+                cameraData.renderPostProcessing = true;
+                var brain = cameraHost.AddComponent<CinemachineBrain>();
+                brain.DefaultBlend = new CinemachineBlendDefinition(CinemachineBlendDefinition.Styles.EaseInOut,
+                    DefaultBlendSeconds);
+                cameraHost.AddComponent<AudioListener>();
 
-            var drone = new GameObject("DroneCamera");
-            drone.transform.SetParent(root.transform, false);
-            var virtualCamera = drone.AddComponent<CinemachineCamera>();
-            virtualCamera.Follow = target.transform;
-            virtualCamera.LookAt = target.transform;
-            virtualCamera.Lens.FieldOfView = tuning.BaseFov;
-            virtualCamera.Lens.NearClipPlane = tuning.NearClip;
-            virtualCamera.Lens.FarClipPlane = tuning.FarClip;
-            var orbit = drone.AddComponent<CinemachineOrbitalFollow>();
-            orbit.OrbitStyle = CinemachineOrbitalFollow.OrbitStyles.Sphere;
-            orbit.Radius = tuning.Distance;
-            var composer = drone.AddComponent<CinemachineRotationComposer>();
-            var bump = drone.AddComponent<RoverCameraBump>();
-            var decollider = drone.AddComponent<CinemachineDecollider>();
-            var deoccluder = drone.AddComponent<CinemachineDeoccluder>();
+                GameObject drone = scratch.Create("DroneCamera", root.transform);
+                var virtualCamera = drone.AddComponent<CinemachineCamera>();
+                virtualCamera.Follow = target.transform;
+                virtualCamera.LookAt = target.transform;
+                virtualCamera.Lens.FieldOfView = tuning.BaseFov;
+                virtualCamera.Lens.NearClipPlane = tuning.NearClip;
+                virtualCamera.Lens.FarClipPlane = tuning.FarClip;
+                var orbit = drone.AddComponent<CinemachineOrbitalFollow>();
+                orbit.OrbitStyle = CinemachineOrbitalFollow.OrbitStyles.Sphere;
+                orbit.Radius = tuning.Distance;
+                var composer = drone.AddComponent<CinemachineRotationComposer>();
+                var bump = drone.AddComponent<RoverCameraBump>();
+                var decollider = drone.AddComponent<CinemachineDecollider>();
+                var deoccluder = drone.AddComponent<CinemachineDeoccluder>();
 
-            BuildWiring.Assign(rig,
-                ("_tuning", tuning),
-                ("_target", target.transform),
-                ("_viewCamera", camera),
-                ("_camera", virtualCamera),
-                ("_orbit", orbit),
-                ("_composer", composer),
-                ("_decollider", decollider),
-                ("_deoccluder", deoccluder),
-                ("_bump", bump));
+                BuildWiring.Assign(rig,
+                    ("_tuning", tuning),
+                    ("_target", target.transform),
+                    ("_viewCamera", camera),
+                    ("_camera", virtualCamera),
+                    ("_orbit", orbit),
+                    ("_composer", composer),
+                    ("_decollider", decollider),
+                    ("_deoccluder", deoccluder),
+                    ("_bump", bump));
 
-            GeneratedAssets.SavePrefab(root, RoverAssetPaths.CameraRigPrefab);
+                GeneratedAssets.SavePrefab(root, RoverAssetPaths.CameraRigPrefab);
+            }
         }
     }
 }

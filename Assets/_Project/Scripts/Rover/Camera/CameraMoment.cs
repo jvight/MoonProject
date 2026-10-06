@@ -7,7 +7,8 @@ namespace MoonProject.Rover
     /// <list type="bullet">
     /// <item>Idle -> EasingIn on <see cref="Start"/>: <see cref="Weight"/> eases from wherever it is up to 1, so
     /// starting a new moment during another never jumps.</item>
-    /// <item>EasingIn -> Holding -> EasingOut -> Idle on its own timeline.</item>
+    /// <item>EasingIn -> Holding -> EasingOut -> Idle on its own timeline. A held moment stays in Holding until
+    /// <see cref="Release"/> (e.g. while the excavation beam is on).</item>
     /// <item><see cref="Cancel"/> (any look input) eases out from the current weight over the cancel time.</item>
     /// </list>
     /// The camera rig blends its framing by <see cref="Weight"/>; at 0 it is exactly the normal chase camera.
@@ -28,6 +29,7 @@ namespace MoonProject.Rover
         private float _elapsed;
         private float _from;
         private float _outDuration;
+        private bool _held;
 
         public float Weight { get; private set; }
 
@@ -37,18 +39,40 @@ namespace MoonProject.Rover
 
         public CameraMomentSettings Settings { get; private set; }
 
-        public void Start(CameraMomentSettings settings, Vector3 subject)
+        /// <param name="holdUntilReleased">Keep the framing until <see cref="Release"/>, then the timed hold.</param>
+        public void Start(CameraMomentSettings settings, Vector3 subject, bool holdUntilReleased)
         {
             Settings = settings;
             Subject = subject;
+            _held = holdUntilReleased;
             _from = Weight;
             _elapsed = 0f;
             _phase = Phase.EasingIn;
         }
 
+        /// <summary>Lets a held moment go: it eases out after its hold. Does nothing to timed moments.</summary>
+        public void Release()
+        {
+            if (!_held)
+            {
+                return;
+            }
+
+            _held = false;
+            if (_phase == Phase.EasingIn)
+            {
+                BeginEaseOut(Settings.EaseOut);
+            }
+            else if (_phase == Phase.Holding)
+            {
+                _elapsed = 0f;
+            }
+        }
+
         /// <summary>Ends the moment early, easing out from the current weight over the given seconds.</summary>
         public void Cancel(float easeOut)
         {
+            _held = false;
             if (_phase == Phase.Idle || (_phase == Phase.EasingOut && _outDuration <= easeOut))
             {
                 return;
@@ -80,7 +104,7 @@ namespace MoonProject.Rover
 
                 case Phase.Holding:
                     Weight = 1f;
-                    if (_elapsed >= Settings.Hold)
+                    if (!_held && _elapsed >= Settings.Hold)
                     {
                         BeginEaseOut(Settings.EaseOut);
                     }
@@ -130,11 +154,18 @@ namespace MoonProject.Rover
 
         /// <summary>
         /// Camera target yaw (deg) for 07 at <paramref name="roverYaw"/> looking toward a subject at bearing
-        /// <paramref name="subjectYaw"/>: the swing is a share of the way, capped at the settings' maximum.
+        /// <paramref name="subjectYaw"/>: the swing is a share of the way, at least the settings' minimum (toward the
+        /// subject's side, so it is not hidden behind 07) and at most their maximum.
         /// </summary>
         public static float BlendYaw(CameraMomentSettings settings, float roverYaw, float subjectYaw, float amount)
         {
-            float swing = Mathf.DeltaAngle(roverYaw, subjectYaw) * settings.YawShare;
+            float delta = Mathf.DeltaAngle(roverYaw, subjectYaw);
+            float swing = delta * settings.YawShare;
+            if (Mathf.Abs(swing) < settings.MinYawSwing)
+            {
+                swing = delta < 0f ? -settings.MinYawSwing : settings.MinYawSwing;
+            }
+
             swing = Mathf.Clamp(swing, -settings.MaxYawSwing, settings.MaxYawSwing);
             return roverYaw + swing * Mathf.Clamp01(amount);
         }

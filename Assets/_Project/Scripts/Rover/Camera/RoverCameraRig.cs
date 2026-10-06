@@ -13,7 +13,8 @@ namespace MoonProject.Rover
     /// <see cref="CameraOrbit"/> into a Cinemachine 3 rig (OrbitalFollow locked to the target's yaw + RotationComposer,
     /// with Decollider and Deoccluder keeping it out of the terrain), widens the FOV with speed and dips softly on
     /// landings. Reads the rover only through <see cref="IRoverState"/>, so it must initialise after the rover.
-    /// Slow, skippable camera moments frame 07 with a surfacing relic or the base after an upgrade (needs
+    /// Slow, skippable camera moments frame 07 with the beam while digging, a surfacing relic, or the base after an
+    /// upgrade (needs
     /// <see cref="IWorldLayout"/>). Registers itself as <see cref="IViewCamera"/> (gameplay aims from its centre ray,
     /// UI projects with it) and <see cref="ILookSettings"/> (the UI applies the player's sensitivity and invert-Y).
     /// </summary>
@@ -47,6 +48,10 @@ namespace MoonProject.Rover
         [SerializeField] private RoverCameraBump _bump;
 
         private readonly CameraMoment _moment = new CameraMoment();
+        private float _momentYaw;
+        private float _momentLift;
+        private float _momentPullBack;
+        private Vector3 _momentShift;
         private IRoverState _rover;
         private IWorldLayout _world;
         private InputReader _input;
@@ -89,6 +94,8 @@ namespace MoonProject.Rover
             _subscriptions = new[]
             {
                 context.Events.Subscribe<RoverLanded>(OnLanded),
+                context.Events.Subscribe<ExcavationStarted>(OnExcavationStarted),
+                context.Events.Subscribe<ExcavationStopped>(OnExcavationStopped),
                 context.Events.Subscribe<RelicSurfaced>(OnRelicSurfaced),
                 context.Events.Subscribe<UpgradePurchased>(OnUpgradePurchased),
             };
@@ -190,6 +197,7 @@ namespace MoonProject.Rover
             }
 
             _moment.Step(deltaTime);
+            StepMomentFraming(deltaTime);
             PlaceTarget();
 
             Vector3 velocity = _rover.Velocity;
@@ -203,33 +211,55 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// Follow point above 07, facing its heading; during a camera moment it eases toward the subject and the yaw
-        /// swings partly round to look from 07 toward it, so both share the frame.
+        /// The current moment's framing as offsets from the normal chase camera (yaw swing, look shift, lift,
+        /// pull-back), eased by the moment's weight and smoothed again so one moment flowing into the next (dig into
+        /// relic) never jumps. With no moment they all settle to zero.
         /// </summary>
-        private void PlaceTarget()
+        private void StepMomentFraming(float deltaTime)
         {
-            Vector3 rover = _rover.Position;
-            Vector3 forward = _rover.Rotation * Vector3.forward;
-            float yaw = Mathf.Atan2(forward.x, forward.z) * Mathf.Rad2Deg;
-            Vector3 point = rover + Vector3.up * _tuning.TargetHeight;
-
+            float yaw = 0f;
+            float lift = 0f;
+            float pullBack = 0f;
+            Vector3 shift = Vector3.zero;
             float weight = _moment.Weight;
             if (weight > 0f)
             {
                 CameraMomentSettings moment = _moment.Settings;
+                Vector3 rover = _rover.Position;
                 Vector3 toSubject = _moment.Subject - rover;
                 float distance = Mathf.Sqrt(toSubject.x * toSubject.x + toSubject.z * toSubject.z);
                 float reach = weight * CameraMoment.FocusReach(moment, distance);
                 if (distance > MinSubjectDistance)
                 {
+                    float roverYaw = RoverYaw();
                     float subjectYaw = Mathf.Atan2(toSubject.x, toSubject.z) * Mathf.Rad2Deg;
-                    yaw = CameraMoment.BlendYaw(moment, yaw, subjectYaw, reach);
+                    yaw = Mathf.DeltaAngle(roverYaw, CameraMoment.BlendYaw(moment, roverYaw, subjectYaw, reach));
                 }
 
-                point = CameraMoment.LookPoint(moment, point, _moment.Subject, reach);
+                Vector3 follow = rover + Vector3.up * _tuning.TargetHeight;
+                shift = CameraMoment.LookPoint(moment, follow, _moment.Subject, reach) - follow;
+                lift = moment.Lift * weight;
+                pullBack = moment.PullBack * weight;
             }
 
-            _target.SetPositionAndRotation(point, Quaternion.Euler(0f, yaw, 0f));
+            float halfLife = _tuning.MomentBlendHalfLife;
+            _momentYaw = Smoothing.Damp(_momentYaw, yaw, halfLife, deltaTime);
+            _momentShift = Smoothing.Damp(_momentShift, shift, halfLife, deltaTime);
+            _momentLift = Smoothing.Damp(_momentLift, lift, halfLife, deltaTime);
+            _momentPullBack = Smoothing.Damp(_momentPullBack, pullBack, halfLife, deltaTime);
+        }
+
+        private float RoverYaw()
+        {
+            Vector3 forward = _rover.Rotation * Vector3.forward;
+            return Mathf.Atan2(forward.x, forward.z) * Mathf.Rad2Deg;
+        }
+
+        /// <summary>Follow point above 07 facing its heading, offset by the current moment's framing.</summary>
+        private void PlaceTarget()
+        {
+            Vector3 point = _rover.Position + Vector3.up * _tuning.TargetHeight + _momentShift;
+            _target.SetPositionAndRotation(point, Quaternion.Euler(0f, RoverYaw() + _momentYaw, 0f));
         }
 
         private Vector2 ReadLook(float deltaTime)
@@ -239,24 +269,36 @@ namespace MoonProject.Rover
 
         private void ApplyOrbit()
         {
-            float weight = _moment.Weight;
-            float lift = weight > 0f ? _moment.Settings.Lift * weight : 0f;
-            float pullBack = weight > 0f ? _moment.Settings.PullBack * weight : 0f;
-            _orbit.HorizontalAxis.Value = _orbitState.YawOffset * (1f - weight);
-            _orbit.VerticalAxis.Value = Mathf.Min(_orbitState.Elevation + lift, _tuning.MaxPitch);
-            _orbit.Radius = _tuning.Distance * (1f + pullBack);
+            _orbit.HorizontalAxis.Value = _orbitState.YawOffset * (1f - _moment.Weight);
+            _orbit.VerticalAxis.Value = Mathf.Min(_orbitState.Elevation + _momentLift, _tuning.MaxPitch);
+            _orbit.Radius = _tuning.Distance * (1f + _momentPullBack);
             _camera.Lens.FieldOfView = _orbitState.FieldOfView;
             _bump.Offset = Vector3.up * _bumpSpring.Value;
         }
 
+        private void OnExcavationStarted(ExcavationStarted excavation)
+        {
+            Vector3 rising = excavation.Position + Vector3.up * _tuning.TargetHeight;
+            _moment.Start(_tuning.DigMoment, rising, true);
+        }
+
+        /// <summary>
+        /// The beam stopped: a held dig moment eases back. When the relic completed, RelicSurfaced follows in the same
+        /// frame and its moment continues from the dig's framing.
+        /// </summary>
+        private void OnExcavationStopped(ExcavationStopped excavation)
+        {
+            _moment.Release();
+        }
+
         private void OnRelicSurfaced(RelicSurfaced relic)
         {
-            _moment.Start(_tuning.RelicMoment, relic.Position);
+            _moment.Start(_tuning.RelicMoment, relic.Position, false);
         }
 
         private void OnUpgradePurchased(UpgradePurchased upgrade)
         {
-            _moment.Start(_tuning.UpgradeMoment, _world.BasePosition + Vector3.up * _tuning.TargetHeight);
+            _moment.Start(_tuning.UpgradeMoment, _world.BasePosition + Vector3.up * _tuning.TargetHeight, false);
         }
 
         private void OnLanded(RoverLanded landed)
