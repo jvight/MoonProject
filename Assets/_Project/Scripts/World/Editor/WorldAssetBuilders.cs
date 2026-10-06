@@ -3,6 +3,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using MoonProject.Editor.Automation;
 using MoonProject.Editor.Builders;
 
 namespace MoonProject.World.Editor
@@ -24,6 +25,32 @@ namespace MoonProject.World.Editor
 
             GeneratedAssets.CreateOrReplace(ScriptableObject.CreateInstance<WorldSettings>(), WorldPaths.Settings);
             AssetDatabase.SaveAssets();
+        }
+
+        /// <summary>
+        /// Overwrites the tuning asset with the code defaults, keeping its GUID so scene references survive. Discards
+        /// any hand tuning: use it only to pick up new defaults. Batch:
+        /// <c>python tools/unity_batch.py exec --method MoonProject.World.Editor.WorldAssetBuilders.ResetSettings</c>
+        /// </summary>
+        public static void ResetSettings()
+        {
+            BatchRunner.Run(nameof(ResetSettings), args =>
+            {
+                GeneratedAssets.CreateOrReplace(ScriptableObject.CreateInstance<WorldSettings>(), WorldPaths.Settings);
+                AssetDatabase.SaveAssets();
+                return true;
+            });
+        }
+
+        [MenuItem("MoonProject/World/Reset Settings To Code Defaults")]
+        private static void ResetSettingsFromMenu()
+        {
+            if (EditorUtility.DisplayDialog("Reset World Settings",
+                    "Overwrite WorldSettings.asset with the code defaults? Hand tuning in it is lost.", "Reset",
+                    "Cancel"))
+            {
+                ResetSettings();
+            }
         }
 
         [MoonBuilder("World/Sky Materials", 210)]
