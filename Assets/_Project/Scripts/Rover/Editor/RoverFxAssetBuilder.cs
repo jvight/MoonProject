@@ -47,6 +47,7 @@ namespace MoonProject.Rover.Editor
             tint.a = TrackTintStrength;
             var material = new Material(shader) { enableInstancing = false };
             material.SetColor("_Color", tint);
+            MaterialValidation.Validate(material);
             GeneratedAssets.CreateOrReplace(material, RoverAssetPaths.TrackMaterial);
         }
 
@@ -67,6 +68,7 @@ namespace MoonProject.Rover.Editor
             material.SetFloat("_Surface", (float)BaseShaderGUI.SurfaceType.Transparent);
             material.SetFloat("_Blend", (float)BaseShaderGUI.BlendMode.Alpha);
             BaseShaderGUI.SetupMaterialBlendMode(material);
+            MaterialValidation.Validate(material);
             GeneratedAssets.CreateOrReplace(material, RoverAssetPaths.DustMaterial);
         }
     }

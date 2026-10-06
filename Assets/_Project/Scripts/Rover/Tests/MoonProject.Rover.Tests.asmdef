@@ -4,6 +4,7 @@
     "references": [
         "MoonProject.Core",
         "MoonProject.Rover",
+        "MoonProject.Rover.Editor",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],
