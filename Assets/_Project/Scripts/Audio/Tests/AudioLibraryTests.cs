@@ -27,7 +27,13 @@ namespace MoonProject.Audio.Tests
 
         private AudioCue Cue(string id, params AudioClip[] clips)
         {
-            return new AudioCue(id, clips, AudioBus.Sfx, true, false, 0.8f, 1f, 1f, 1f);
+            var labels = new string[clips.Length];
+            for (int i = 0; i < labels.Length; i++)
+            {
+                labels[i] = $"{id}_{i}";
+            }
+
+            return new AudioCue(id, clips, labels, AudioBus.Sfx, true, false, 0.8f, 1f, 1f, 1f);
         }
 
         [Test]
@@ -57,6 +63,21 @@ namespace MoonProject.Audio.Tests
         }
 
         [Test]
+        public void VariantLabels_FollowTheClips_AndMustMatchTheirCount()
+        {
+            _library.Populate(new[] { Cue("answer", _clip, _clip) });
+            Assert.IsTrue(_library.TryResolve("answer", out CueHandle handle));
+            Assert.AreEqual("answer_1", _library.GetCue(handle).GetVariantLabel(1));
+
+            _library.Populate(new[]
+            {
+                new AudioCue("answer", new[] { _clip, _clip }, new[] { "only_one" }, AudioBus.Sfx, true, false,
+                    1f, 1f, 1f, 1f),
+            });
+            StringAssert.Contains("variant label", _library.FindProblem());
+        }
+
+        [Test]
         public void EveryCueId_ExistsInTheSfxManifest()
         {
             string manifestPath = Path.Combine(Application.dataPath, "..", "tools", "audio", "sfx_manifest.json");
@@ -79,7 +100,10 @@ namespace MoonProject.Audio.Tests
             try
             {
                 StringAssert.Contains("empty", playlist.FindProblem());
-                playlist.Populate(new[] { new RadioTrack("01", "One", _clip, 76f), new RadioTrack("02", "Two", null, 80f) });
+                playlist.Populate(new[]
+                {
+                    new RadioTrack("01", "One", _clip, 76f), new RadioTrack("02", "Two", null, 80f),
+                });
                 StringAssert.Contains("track 1", playlist.FindProblem());
                 playlist.Populate(new[] { new RadioTrack("01", "One", _clip, 76f) });
                 Assert.IsNull(playlist.FindProblem());

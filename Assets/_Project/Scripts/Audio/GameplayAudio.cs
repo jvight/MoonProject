@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using MoonProject.Core;
 using MoonProject.Core.Events;
@@ -6,7 +7,8 @@ using MoonProject.Core.Events;
 namespace MoonProject.Audio
 {
     /// <summary>
-    /// Gives every gameplay event its sound: sonar ping, relic answers (softer and darker with distance), scrap chimes
+    /// Gives every gameplay event its sound: sonar ping, relic answers (each relic on its own note, softer and darker
+    /// with distance), scrap chimes
     /// climbing the pentatonic by combo step, tether pluck / hum (follows the beam emitter while attached) / release
     /// or sighing snap, excavation rumble while the beam lifts plus the surfacing sparkle, the shelf "placed" cue and
     /// the upgrade arpeggio. Loops fade with <see cref="LoopFader"/> and stop when silent. Initialised by
@@ -23,6 +25,7 @@ namespace MoonProject.Audio
         private readonly IDisposable[] _subscriptions = new IDisposable[SubscriptionCount];
         private readonly LoopFader _tetherFader = new LoopFader();
         private readonly LoopFader _rumbleFader = new LoopFader();
+        private readonly Dictionary<string, int> _relicVoices = new Dictionary<string, int>(StringComparer.Ordinal);
         private AudioDirector _director;
         private Transform _tetherOrigin;
         private CueHandle _sonarPing;
@@ -88,6 +91,12 @@ namespace MoonProject.Audio
             }
 
             _scrapNotes = director.Library.GetCue(_scrapChime).ClipCount;
+            AudioCue answers = director.Library.GetCue(_relicAnswer);
+            for (int i = 0; i < answers.ClipCount; i++)
+            {
+                _relicVoices[answers.GetVariantLabel(i)] = i;
+            }
+
             _tetherHumCueVolume = director.Library.GetCue(hum).VolumeMax;
             _rumbleCueVolume = director.Library.GetCue(rumble).VolumeMax;
             _tetherHum = director.CreateLoopSource(transform, "TetherHum", hum, _tuning.TetherHumSpatialBlend);
@@ -153,8 +162,16 @@ namespace MoonProject.Audio
 
         private void OnRelicAnswered(RelicAnswered answer)
         {
+            if (answer.RelicId == null || !_relicVoices.TryGetValue(answer.RelicId, out int voice))
+            {
+                Debug.LogError($"{nameof(GameplayAudio)}: no answer voice for relic '{answer.RelicId}'. Re-run " +
+                               "tools/audio/build_sfx.py (it reads Data/Content/Relics) and the Audio/Library builder.",
+                    this);
+                return;
+            }
+
             RelicAnswerTone tone = RelicAnswerTone.ForDistance(answer.Distance, _tuning);
-            _director.PlayFilteredAt(_relicAnswer, answer.Position, tone.Volume, tone.CutoffHz,
+            _director.PlayFilteredAt(_relicAnswer, voice, answer.Position, tone.Volume, tone.CutoffHz,
                 _tuning.AnswerMinDistance);
         }
 

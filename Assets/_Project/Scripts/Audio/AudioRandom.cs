@@ -44,7 +44,8 @@ namespace MoonProject.Audio
             return span <= 0 ? minInclusive : minInclusive + (int)(NextUInt() % (uint)span);
         }
 
-        /// <summary>A uniform index in [0, count) that differs from <paramref name="avoid"/> whenever count > 1.</summary>
+        /// <summary>A uniform index in [0, count) that differs from <paramref name="avoid"/> whenever
+        /// count > 1.</summary>
         public int PickAvoiding(int count, int avoid)
         {
             if (count <= 1)

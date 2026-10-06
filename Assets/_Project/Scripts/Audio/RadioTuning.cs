@@ -81,8 +81,24 @@ namespace MoonProject.Audio
         [Tooltip("Volume scale of the dial-tuning swish.")]
         [Range(0f, 1f)] [SerializeField] private float _tuneSwishVolume = 0.8f;
 
-        [Tooltip("Seconds the radio takes to fade in when the game starts.")]
-        [Min(0f)] [SerializeField] private float _startFadeIn = 3f;
+        [Header("Wake-up (the radio crackles on when 07 wakes)")]
+        [Tooltip("Seconds of static after 07 starts waking on its own before the music begins.")]
+        [Min(0f)] [SerializeField] private float _wakeMusicDelay = 1.6f;
+
+        [Tooltip("Seconds over which the music then resolves out of the static.")]
+        [Min(0.01f)] [SerializeField] private float _wakeMusicFade = 4f;
+
+        [Tooltip("Static before the music when the player woke 07 by driving (quicker wake-up).")]
+        [Min(0f)] [SerializeField] private float _playerWakeMusicDelay = 0.6f;
+
+        [Tooltip("Music resolve time when the player woke 07 by driving.")]
+        [Min(0.01f)] [SerializeField] private float _playerWakeMusicFade = 1.8f;
+
+        [Tooltip("Seconds for the set to power on (static and swish swell in instead of switching on).")]
+        [Min(0.01f)] [SerializeField] private float _wakePowerTime = 0.3f;
+
+        [Tooltip("Extra static while the radio is still finding the station (melts away as the music resolves).")]
+        [Range(0f, 1f)] [SerializeField] private float _wakeStaticBoost = 0.55f;
 
         public float SignalRadius => _signalRadius;
         public float FalloffWidth => _falloffWidth;
@@ -107,6 +123,11 @@ namespace MoonProject.Audio
         public float IncomingStart => _incomingStart;
         public float TuneStaticBoost => _tuneStaticBoost;
         public float TuneSwishVolume => _tuneSwishVolume;
-        public float StartFadeIn => _startFadeIn;
+        public float WakeMusicDelay => _wakeMusicDelay;
+        public float WakeMusicFade => _wakeMusicFade;
+        public float PlayerWakeMusicDelay => _playerWakeMusicDelay;
+        public float PlayerWakeMusicFade => _playerWakeMusicFade;
+        public float WakePowerTime => _wakePowerTime;
+        public float WakeStaticBoost => _wakeStaticBoost;
     }
 }

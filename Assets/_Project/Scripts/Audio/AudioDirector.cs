@@ -92,7 +92,8 @@ namespace MoonProject.Audio
             _ambience.Initialize(this, _mixTuning.AmbienceFadeIn);
         }
 
-        /// <summary>Resolves a cue id once (call at initialisation); logs and returns an invalid handle if unknown.</summary>
+        /// <summary>Resolves a cue id once (call at initialisation); logs and returns an invalid handle if
+        /// unknown.</summary>
         public CueHandle Resolve(string id)
         {
             if (!_library.TryResolve(id, out CueHandle handle))
@@ -104,7 +105,8 @@ namespace MoonProject.Audio
             return handle;
         }
 
-        /// <summary>Plays a random variant of <paramref name="cue"/> as a 3D sound at <paramref name="position"/>.</summary>
+        /// <summary>Plays a random variant of <paramref name="cue"/> as a 3D sound at
+        /// <paramref name="position"/>.</summary>
         public void PlayAt(CueHandle cue, Vector3 position, float volumeScale = 1f, float pitchScale = 1f)
         {
             Play(cue, _spatial, position, volumeScale, pitchScale, -1, 0f, 0f);
@@ -117,11 +119,13 @@ namespace MoonProject.Audio
             Play(cue, _spatial, position, volumeScale, 1f, Mathf.Max(0, variant), 0f, 0f);
         }
 
-        /// <summary>Plays <paramref name="cue"/> in 3D through a low-pass at <paramref name="lowpassHz"/>, at full
-        /// volume up to <paramref name="minDistance"/> metres (distant, softened sounds such as relic answers).</summary>
-        public void PlayFilteredAt(CueHandle cue, Vector3 position, float volumeScale, float lowpassHz, float minDistance)
+        /// <summary>Plays variant <paramref name="variant"/> of <paramref name="cue"/> in 3D through a low-pass at
+        /// <paramref name="lowpassHz"/>, at full volume up to <paramref name="minDistance"/> metres (distant, softened
+        /// sounds such as relic answers).</summary>
+        public void PlayFilteredAt(CueHandle cue, int variant, Vector3 position, float volumeScale, float lowpassHz,
+            float minDistance)
         {
-            Play(cue, _spatial, position, volumeScale, 1f, -1, lowpassHz, minDistance);
+            Play(cue, _spatial, position, volumeScale, 1f, Mathf.Max(0, variant), lowpassHz, minDistance);
         }
 
         /// <summary>Plays a random variant of <paramref name="cue"/> flat (UI, stingers).</summary>
@@ -165,8 +169,8 @@ namespace MoonProject.Audio
             source.spread = _mixTuning.Spread;
         }
 
-        internal void Wire(AudioLibrary library, AudioMixTuning mixTuning, RoverAudio roverAudio, GameplayAudio gameplay,
-            RadioStation radio, AmbienceBed ambience)
+        internal void Wire(AudioLibrary library, AudioMixTuning mixTuning, RoverAudio roverAudio,
+            GameplayAudio gameplay, RadioStation radio, AmbienceBed ambience)
         {
             _library = library;
             _mixTuning = mixTuning;

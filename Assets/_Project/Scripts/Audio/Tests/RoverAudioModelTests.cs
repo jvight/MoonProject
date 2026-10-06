@@ -40,6 +40,7 @@ namespace MoonProject.Audio.Tests
         {
             var model = new RoverAudioModel(_tuning);
             Assert.AreEqual(0f, model.HumVolume);
+            model.NotifyAwoke();
 
             Run(model, new RoverAudioInput(0f, 0f, true, Vector3.up), 300);
             Assert.AreEqual(_tuning.IdlePitch, model.HumPitch, 1e-3f);
@@ -54,6 +55,7 @@ namespace MoonProject.Audio.Tests
         public void Hum_EasesInsteadOfSnapping()
         {
             var model = new RoverAudioModel(_tuning);
+            model.NotifyAwoke();
             Run(model, new RoverAudioInput(0f, 0f, true, Vector3.up), 300);
 
             model.Step(Frame, new RoverAudioInput(1f, 1f, true, Vector3.up));

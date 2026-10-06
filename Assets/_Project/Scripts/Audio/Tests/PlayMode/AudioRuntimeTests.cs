@@ -18,6 +18,14 @@ namespace MoonProject.Audio.PlayModeTests
         {
             _rig = new AudioTestRig();
             yield return null;
+            _rig.Wake(true);
+            float deadline = Time.realtimeSinceStartup + 3f;
+            while (!_rig.Radio.MusicStarted && Time.realtimeSinceStartup < deadline)
+            {
+                yield return null;
+            }
+
+            Assert.IsTrue(_rig.Radio.MusicStarted, "the radio finds the music after 07 wakes");
         }
 
         [TearDown]
@@ -87,7 +95,8 @@ namespace MoonProject.Audio.PlayModeTests
         [UnityTest]
         public IEnumerator Radio_ClosesTheLowPassAndRaisesStatic_AwayFromBase()
         {
-            yield return new WaitForSecondsRealtime(0.5f);
+            // Let the wake-up crackle melt away first: the baseline is the settled, clear station.
+            yield return new WaitForSecondsRealtime(2f);
             AudioLowPassFilter filter = _rig.Radio.GetComponentInChildren<AudioLowPassFilter>();
             AudioSource staticLoop = AudioTestRig.FindChildSource(_rig.Radio.transform, "Static");
             Assert.Greater(_rig.Radio.Clarity, 0.99f);
@@ -114,26 +123,6 @@ namespace MoonProject.Audio.PlayModeTests
             yield return new WaitForSecondsRealtime(6f);
 
             Assert.Greater(_rig.Radio.Clarity, 0.95f, "a wider signal radius blooms the music back in");
-        }
-
-        [UnityTest]
-        public IEnumerator Radio_TunesToTheOtherTrack_WhenOneEnds()
-        {
-            AudioClip first = LoudestDeckClip();
-            AudioSource swish = AudioTestRig.FindChildSource(_rig.Radio.transform, "TuningSwish");
-            Assert.IsNotNull(first);
-            bool swishPlayed = false;
-            AudioClip next = first;
-            float deadline = Time.realtimeSinceStartup + AudioTestRig.TestTrackSeconds + 4f;
-            while (next == first && Time.realtimeSinceStartup < deadline)
-            {
-                swishPlayed |= swish.isPlaying;
-                yield return null;
-                next = LoudestDeckClip();
-            }
-
-            Assert.AreNotSame(first, next, "the station moves on to the other track (no immediate repeat)");
-            Assert.IsTrue(swishPlayed, "the dial-tuning swish plays during the change");
         }
 
         [UnityTest]
@@ -186,7 +175,15 @@ namespace MoonProject.Audio.PlayModeTests
                     events.Publish(new SonarPinged(Vector3.zero, 80f));
                     break;
                 case 3:
-                    events.Publish(new RelicAnswered(Vector3.forward * 40f, 40f, "teapot"));
+                    string relic = frame % 24 == 3 ? "teapot" : "rubber_duck";
+                    events.Publish(new RelicAnswered(Vector3.forward * 40f, 40f, relic));
+                    break;
+                case 4:
+                    if (frame % 48 == 4)
+                    {
+                        events.Publish(new RoverRecovering(Vector3.zero, Vector3.one, 0.5f));
+                    }
+
                     break;
                 case 5:
                     events.Publish(new TetherAttached(Vector3.right, 5f));
@@ -203,13 +200,6 @@ namespace MoonProject.Audio.PlayModeTests
                     settings.SetVolume(AudioBus.Sfx, frame % 24 == 11 ? 0.9f : 1f);
                     break;
             }
-        }
-
-        private AudioClip LoudestDeckClip()
-        {
-            AudioSource a = AudioTestRig.FindChildSource(_rig.Radio.transform, "DeckA");
-            AudioSource b = AudioTestRig.FindChildSource(_rig.Radio.transform, "DeckB");
-            return (a.volume >= b.volume ? a : b).clip;
         }
     }
 }

@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Text.RegularExpressions;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -45,18 +46,46 @@ namespace MoonProject.Audio.PlayModeTests
         }
 
         [Test]
+        public void RelicAnswered_EachRelicSingsItsOwnNote()
+        {
+            string[] relics =
+            {
+                "astronaut_boot", "cassette_player", "garden_gnome", "golden_record", "rubber_duck", "teapot",
+            };
+            foreach (string relic in relics)
+            {
+                var at = new Vector3(relic.Length, 0f, 3f);
+                _rig.Events.Publish(new RelicAnswered(at, 20f, relic));
+                AssertLastPlayed("relic_answer_" + relic, at);
+                Assert.AreEqual(1f, Last.pitch, 1e-6f, "answers stay in key: no pitch variance");
+            }
+        }
+
+        [Test]
+        public void RelicAnswered_UnknownRelic_IsReportedAndSilent()
+        {
+            _rig.Events.Publish(new SonarPinged(Vector3.zero, 80f));
+            AudioSource before = Last;
+            LogAssert.Expect(LogType.Error, new Regex("no answer voice for relic 'mystery_box'"));
+
+            _rig.Events.Publish(new RelicAnswered(Vector3.zero, 10f, "mystery_box"));
+
+            Assert.AreSame(before, Last);
+        }
+
+        [Test]
         public void RelicAnswered_PlaysAtTheRelic_SofterAndDarkerWhenFar()
         {
             var near = new Vector3(5f, 0f, 0f);
             _rig.Events.Publish(new RelicAnswered(near, 5f, "teapot"));
-            AssertLastPlayed("relic_answer", near);
+            AssertLastPlayed("relic_answer_teapot", near);
             AudioSource nearVoice = Last;
             float nearVolume = nearVoice.volume;
             float nearCutoff = nearVoice.GetComponent<AudioLowPassFilter>().cutoffFrequency;
 
             var far = new Vector3(120f, 0f, 0f);
             _rig.Events.Publish(new RelicAnswered(far, 120f, "teapot"));
-            AssertLastPlayed("relic_answer", far);
+            AssertLastPlayed("relic_answer_teapot", far);
             Assert.AreNotSame(nearVoice, Last);
             Assert.Less(Last.volume, nearVolume);
             Assert.Less(Last.GetComponent<AudioLowPassFilter>().cutoffFrequency, nearCutoff * 0.5f);

@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using MoonProject.App;
 using MoonProject.Core;
+using MoonProject.Core.Events;
 using MoonProject.Testing;
 using Object = UnityEngine.Object;
 #if UNITY_EDITOR
@@ -16,19 +17,23 @@ namespace MoonProject.Audio.PlayModeTests
 {
     /// <summary>
     /// The real Audio domain (library and tuning assets from Assets/_Project/Data/Audio, built by the Audio builders)
-    /// booted through GameBootstrap behind a fake rover, wired the way AudioSceneContributor wires Main.unity. The radio
-    /// gets a test playlist of short generated tones so track changes happen within seconds.
+    /// booted through GameBootstrap behind a fake rover, wired the way AudioSceneContributor wires Main.unity.
+    /// The radio gets a test playlist of short generated tones so track changes happen within seconds.
     /// </summary>
     public sealed class AudioTestRig : IDisposable
     {
-        public const int TestTrackSeconds = 3;
+        /// <summary>Short tracks: the station changes track within seconds (playlist tests).</summary>
+        public const int ShortTrackSeconds = 3;
+
+        /// <summary>Long tracks: no track change (and its crossfade static) during a test.</summary>
+        public const int LongTrackSeconds = 30;
 
         private const string DataFolder = "Assets/_Project/Data/Audio/";
         private const int SampleRate = 48000;
 
         private readonly List<Object> _created = new List<Object>();
 
-        public AudioTestRig()
+        public AudioTestRig(int trackSeconds = LongTrackSeconds)
         {
             InputActionAsset controls = Track(BootstrapHarness.LoadControlsCopy());
             Track(new GameObject("Listener", typeof(AudioListener)));
@@ -37,8 +42,8 @@ namespace MoonProject.Audio.PlayModeTests
             var playlist = Track(ScriptableObject.CreateInstance<RadioPlaylist>());
             playlist.Populate(new[]
             {
-                new RadioTrack("t1", "Tone One", Track(Tone("t1", 293.66f)), 76f),
-                new RadioTrack("t2", "Tone Two", Track(Tone("t2", 440f)), 80f),
+                new RadioTrack("t1", "Tone One", Track(Tone("t1", 293.66f, trackSeconds)), 76f),
+                new RadioTrack("t2", "Tone Two", Track(Tone("t2", 440f, trackSeconds)), 80f),
             });
 
             GameObject audioRoot = Track(new GameObject("[Audio]"));
@@ -74,7 +79,14 @@ namespace MoonProject.Audio.PlayModeTests
 
         public EventBus Events => Bootstrap.Context.Events;
 
-        /// <summary>True if a director voice whose clip name starts with <paramref name="clipPrefix"/> is playing.</summary>
+        /// <summary>Publishes <see cref="RoverAwoke"/> (07 starts waking: the radio and motor come on).</summary>
+        public void Wake(bool byPlayer)
+        {
+            Events.Publish(new RoverAwoke(Rover.Position, byPlayer));
+        }
+
+        /// <summary>True if a director voice whose clip name starts with <paramref name="clipPrefix"/> is
+        /// playing.</summary>
         public bool VoicePlaying(string clipPrefix)
         {
             return FindPlayingVoice(clipPrefix) != null;
@@ -121,9 +133,9 @@ namespace MoonProject.Audio.PlayModeTests
             _created.Clear();
         }
 
-        private static AudioClip Tone(string name, float frequency)
+        private static AudioClip Tone(string name, float frequency, int seconds)
         {
-            int count = TestTrackSeconds * SampleRate;
+            int count = seconds * SampleRate;
             var data = new float[count];
             for (int i = 0; i < count; i++)
             {

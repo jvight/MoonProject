@@ -38,7 +38,8 @@ namespace MoonProject.Audio
             _targetRadius = Mathf.Max(0f, radius);
         }
 
-        /// <summary>Jumps straight to the clarity at <paramref name="distance"/> (first frame, no fade from 1).</summary>
+        /// <summary>Jumps straight to the clarity at <paramref name="distance"/> (first frame, no fade from
+        /// 1).</summary>
         public void Snap(float distance)
         {
             _radius.Snap(_targetRadius);

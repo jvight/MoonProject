@@ -2,7 +2,9 @@ using UnityEngine;
 
 namespace MoonProject.Audio
 {
-    /// <summary>One frame of rover telemetry as the audio model needs it (built from IRoverState, no allocation).</summary>
+    /// <summary>
+    /// One frame of rover telemetry as the audio model needs it (built from IRoverState, no allocation).
+    /// </summary>
     public readonly struct RoverAudioInput
     {
         public RoverAudioInput(float normalizedSpeed, float throttle, bool isGrounded, Vector3 groundNormal)
