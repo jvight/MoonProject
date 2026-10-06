@@ -43,6 +43,7 @@ namespace MoonProject.Rover
 
         private InputReader _input;
         private IRoverDriveSource _driveSource;
+        private readonly HoldRequests _holds = new HoldRequests();
         private EventBus _events;
         private LandingDetector _landing;
         private bool _initialized;
@@ -142,6 +143,14 @@ namespace MoonProject.Rover
         {
             Gaze.Clear(owner);
         }
+
+        public void SetHoldStill(object owner, bool hold)
+        {
+            _holds.Set(owner, hold);
+        }
+
+        /// <summary>True while any owner asks 07 to stay parked.</summary>
+        public bool IsHeldStill => _holds.IsHeld;
 
         public void Initialize(GameContext context)
         {
@@ -279,6 +288,12 @@ namespace MoonProject.Rover
         {
             Vector2 held = _driveSource != null ? _driveSource.Drive : _input.Drive;
             Vector2 raw = DriveInputShaping.CircleToSquare(held);
+            if (_holds.IsHeld)
+            {
+                // Ignored, not queued: the eased throttle settles to zero, so releasing eases in from rest.
+                raw.y = 0f;
+            }
+
             DriveSettings drive = _tuning.Drive;
             _throttle = Ease(_throttle, raw.y, drive.ThrottleRiseHalfLife, drive.ThrottleFallHalfLife, dt);
             _steer = Ease(_steer, raw.x, _tuning.Steering.SteerRiseHalfLife, _tuning.Steering.SteerReturnHalfLife, dt);
@@ -324,7 +339,9 @@ namespace MoonProject.Rover
         private void Drive(Vector3 velocity, Vector3 normal, Vector3 forward, float dt)
         {
             GroundSettings ground = _tuning.Ground;
-            float drive = LongitudinalDrive.Acceleration(_tuning.Drive, _forwardSpeed, _throttle, dt);
+            float drive = _holds.IsHeld
+                ? LongitudinalDrive.HoldAcceleration(_tuning.Drive, _forwardSpeed, dt)
+                : LongitudinalDrive.Acceleration(_tuning.Drive, _forwardSpeed, _throttle, dt);
 
             if (_hasContact)
             {

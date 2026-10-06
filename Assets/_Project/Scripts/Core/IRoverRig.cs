@@ -26,5 +26,11 @@ namespace MoonProject.Core
 
         /// <summary>Withdraws <paramref name="owner"/>'s gaze request (no-op if it has none).</summary>
         void ClearGazeTarget(object owner);
+
+        /// <summary>
+        /// Asks 07 to ease to a gentle stop and stay parked while any owner holds the request (e.g. the excavation
+        /// beam). Throttle is ignored (not queued) while held; releasing hands control back with the normal easing.
+        /// </summary>
+        void SetHoldStill(object owner, bool hold);
     }
 }

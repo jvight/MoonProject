@@ -47,6 +47,14 @@ namespace MoonProject.Rover
         [Range(0f, 0.9f)]
         [SerializeField] private float _brakeEase = 0.35f;
 
+        [Tooltip("Seconds to ease to a stop from top speed when gameplay asks 07 to hold still (excavation beam).")]
+        [Range(0.3f, 5f)]
+        [SerializeField] private float _holdStopTime = 1.8f;
+
+        [Tooltip("Shape of the hold-still stop, same meaning as Coast Ease (higher = softer final metres).")]
+        [Range(0f, 0.9f)]
+        [SerializeField] private float _holdEase = 0.35f;
+
         [Tooltip("Half-life (s) of the throttle easing in when pressed. Removes frame-one jolts on keyboards.")]
         [Range(0f, 0.5f)]
         [SerializeField] private float _throttleRiseHalfLife = 0.08f;
@@ -79,6 +87,10 @@ namespace MoonProject.Rover
 
         public float BrakeEase => _brakeEase;
 
+        public float HoldStopTime => _holdStopTime;
+
+        public float HoldEase => _holdEase;
+
         public float ThrottleRiseHalfLife => _throttleRiseHalfLife;
 
         public float ThrottleFallHalfLife => _throttleFallHalfLife;
@@ -95,6 +107,9 @@ namespace MoonProject.Rover
 
         /// <summary>Coast deceleration (m/s^2) at top speed; stops from top speed in exactly CoastStopTime.</summary>
         public float CoastDeceleration => _topSpeed / (_coastStopTime * (1f - _coastEase));
+
+        /// <summary>Hold-still deceleration (m/s^2) at top speed; stops from top speed in HoldStopTime.</summary>
+        public float HoldDeceleration => _topSpeed / (_holdStopTime * (1f - _holdEase));
 
         /// <summary>Full-input brake deceleration (m/s^2) at top speed.</summary>
         public float BrakeDeceleration => _topSpeed / (_brakeStopTime * (1f - _brakeEase));
