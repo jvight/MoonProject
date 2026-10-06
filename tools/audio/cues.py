@@ -7,7 +7,9 @@ material is in D major pentatonic (D E F# A B). Loops are periodic by constructi
 pink/brown colouring of white noise - run through ``synth.loop.periodic``.
 """
 import math
+import re
 from dataclasses import dataclass
+from pathlib import Path
 
 import numpy as np
 from synth import effects, envelope, filters, instruments, noise, osc
@@ -59,14 +61,19 @@ class Cue:
     variant_labels: tuple = ()
     tonal: bool = False  # the dominant pitch must be D major pentatonic (checked by analyze_audio)
 
+    def labels(self) -> list:
+        """One label per variant: the given labels, else 01, 02... (a single variant is labelled with the id)."""
+        if self.variants == 1:
+            return [self.id]
+        return list(self.variant_labels or tuple(f"{i + 1:02d}" for i in range(self.variants)))
+
     def files(self) -> list:
         """Paths relative to Assets/_Project/Audio."""
         stem = self.file_stem or self.id
         folder = CATEGORIES[self.category].folder
         if self.variants == 1:
             return [f"{folder}/{stem}.wav"]
-        labels = self.variant_labels or tuple(f"{i + 1:02d}" for i in range(self.variants))
-        return [f"{folder}/{stem}_{label}.wav" for label in labels]
+        return [f"{folder}/{stem}_{label}.wav" for label in self.labels()]
 
 
 def _mono_reverb(x: np.ndarray, **kwargs) -> np.ndarray:
@@ -268,14 +275,74 @@ def sonar_ping(_variant, gen):
     return _mono_reverb(dry, room=0.45, damping=0.55, wet=0.22, dry=1.0)
 
 
-def relic_answer(_variant, _gen):
-    """The relic's reply: a higher, shimmering A5 + D6 pair (slow attack, tremolo, detuned twins, more air)."""
-    a5 = instruments.soft_bell(note_freq("A5"), 2.9, decay=1.9, attack=0.03)
-    d6 = instruments.soft_bell(note_freq("D6"), 2.9, decay=1.7, attack=0.03)
-    mix = a5.copy()
-    place(mix, d6, samples(0.11), 0.75)
+RELIC_CONTENT = Path(__file__).resolve().parents[2] / "Assets" / "_Project" / "Data" / "Content" / "Relics"
+RELIC_LADDER_NOTES = 10
+_RELIC_FIELD = re.compile(r"^  _(id|answerNote): *(.*?)\s*$", re.MULTILINE)
+
+
+def read_relic_notes(folder: Path = RELIC_CONTENT) -> tuple:
+    """``((relic_id, ladder_index), ...)`` sorted by id, read from Gameplay's relic content assets
+    (``Relic_<id>.asset``: ``_id`` and ``_answerNote``, an index into the D major pentatonic ladder from D5).
+    Gameplay owns the notes; re-rendering after a content change keeps every relic singing its own note."""
+    notes = []
+    for asset in sorted(folder.glob("Relic_*.asset")):
+        fields = dict(_RELIC_FIELD.findall(asset.read_text(encoding="utf-8")))
+        if "id" not in fields or "answerNote" not in fields:
+            raise ValueError(f"{asset}: missing _id or _answerNote (RelicDefinition layout changed?)")
+        index = int(fields["answerNote"])
+        if not 0 <= index < RELIC_LADDER_NOTES:
+            raise ValueError(f"{asset}: _answerNote {index} outside the ladder 0..{RELIC_LADDER_NOTES - 1}")
+        notes.append((fields["id"], index))
+    if not notes:
+        raise ValueError(f"no relic content assets in {folder}")
+    return tuple(sorted(notes))
+
+
+RELIC_NOTES = read_relic_notes()
+
+
+def relic_answer(variant, _gen):
+    """A relic's reply on its own note (D major pentatonic ladder from D5): a slow-attack shimmering bell with a
+    softer octave answering 110 ms later, tremolo, detuned twins and air. Same voice for every relic, so they are
+    told apart by their note."""
+    freq = pentatonic(5, RELIC_NOTES[variant][1])
+    root = instruments.soft_bell(freq, 2.9, decay=1.9, attack=0.03)
+    octave = instruments.soft_bell(2.0 * freq, 2.9, decay=1.5, attack=0.03)
+    mix = root.copy()
+    place(mix, octave, samples(0.11), 0.45)
     mix = filters.lowpass(effects.tremolo(mix, 6.5, 0.22), 6000.0)
     return _mono_reverb(mix, room=0.7, damping=0.6, wet=0.32, dry=1.0)
+
+
+RECOVERY_LOOP_S = 4.0
+
+
+def recovery_lift(_variant, gen):
+    """07 being lifted to safety: a soft servo whir on D3/A3 (triangle-like partials, gentle 6 Hz motor flutter)
+    with a breath of air under it. Seamless 4 s loop; the runtime glides its pitch up a whole tone (D to E) over the
+    lift."""
+    n = samples(RECOVERY_LOOP_S)
+    whir = np.zeros(n)
+    for note, amp in (("D3", 1.0), ("A3", 0.5), ("D4", 0.22)):
+        f = loop_freq(note_freq(note), n)
+        whir += amp * osc.additive(n, f, [(1, 1.0), (3, 0.11), (5, 0.04)], phase=0.17 * amp)
+    whir *= envelope.lfo(n, 24.0 / RECOVERY_LOOP_S, 0.12, 0.88)
+    air = periodic(noise.white(n, gen), lambda s: filters.bandpass(noise.pink_filter(s), 1400.0, 0.8))
+    air *= envelope.lfo(n, 2.0 / RECOVERY_LOOP_S, 0.25, 0.75)
+    mix = 0.6 * whir + 1.4 * air
+    return periodic(mix, lambda s: filters.highpass(filters.lowpass(s, 3200.0), 60.0))
+
+
+def recovery_settle(_variant, gen):
+    """The lift sets 07 down: a soft air release falling away and a gentle A3 -> D3 servo settle."""
+    n = samples(1.4)
+    sigh = filters.swept(noise.pink(n, gen), "bandpass", osc.glide(n, 1500.0, 300.0), q=1.2)
+    sigh *= envelope.segments(n, [(0.0, 0.0), (0.05, 1.0), (0.5, 0.35), (1.4, 0.0)], shape="smooth")
+    servo = osc.additive(n, osc.glide(n, note_freq("A3"), note_freq("D3"), time_constant=0.12),
+                         [(1, 1.0), (2, 0.2), (3, 0.08)])
+    servo *= envelope.ar(n, 0.02, 0.7)
+    body = osc.sine(n, note_freq("D2")) * envelope.ar(n, 0.01, 0.25)
+    return filters.lowpass(1.8 * sigh + 0.35 * servo + 0.3 * body, 4000.0)
 
 
 SCRAP_CHIME_NOTES = 8
@@ -475,8 +542,15 @@ CUES = (
         notes="72 s seamless stereo lunar hush with 10 sparse distant pentatonic tones in a long reverb."),
     Cue("sonar_ping", "oneshot_3d", sonar_ping, volume=(0.8, 0.8), fade_out=0.15, milestone="M2",
         tonal=True, notes="Kalimba D5 (tine partial 6.27x, felt-pick transient)."),
-    Cue("relic_answer", "oneshot_3d", relic_answer, volume=(0.8, 0.8), fade_out=0.2, milestone="M2",
-        tonal=True, notes="A5 + D6 shimmering soft bells, tremolo 6.5 Hz, detuned twins."),
+    Cue("relic_answer", "oneshot_3d", relic_answer, variants=len(RELIC_NOTES), volume=(0.8, 0.8), fade_out=0.2,
+        variant_labels=tuple(relic_id for relic_id, _ in RELIC_NOTES), milestone="M2", tonal=True,
+        notes="One variant per relic (label = relic id) on its answer note from Data/Content/Relics: shimmering "
+              "soft bell + octave, tremolo 6.5 Hz."),
+    Cue("recovery_lift", "loop_3d", recovery_lift, loop=True, file_stem="recovery_lift_loop", volume=(0.6, 0.6),
+        milestone="M2", tonal=True, hf_cutoff=6000.0, hf_max_db=-40.0,
+        notes="Servo whir D3/A3 + air while 07 is lifted to safety; content < 3.2 kHz for the pitch glide."),
+    Cue("recovery_settle", "oneshot_3d", recovery_settle, volume=(0.7, 0.7), fade_out=0.15, milestone="M2",
+        notes="Air release + A3 -> D3 servo settle when the recovery lift sets 07 down."),
     Cue("scrap_chime", "oneshot_3d", scrap_chime, variants=SCRAP_CHIME_NOTES, volume=(0.7, 0.7), fade_out=0.1,
         variant_labels=("D5", "E5", "Fs5", "A5", "B5", "D6", "E6", "Fs6"), milestone="M2", tonal=True,
         notes="Glassy chime per pentatonic degree D5..F#6, ascending; the runtime picks the clip from the combo "

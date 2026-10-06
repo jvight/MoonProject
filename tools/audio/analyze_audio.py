@@ -101,7 +101,7 @@ def _db(value: float) -> str:
     return "  -inf" if value <= -199.0 else f"{value:6.1f}"
 
 
-HEADER = (f"{'file':<30} {'ch':>2} {'dur s':>6} {'peak':>6} {'TP':>6} {'rms':>6} {'LUFS-I':>6} {'LUFS-M':>6} "
+HEADER = (f"{'file':<36} {'ch':>2} {'dur s':>6} {'peak':>6} {'TP':>6} {'rms':>6} {'LUFS-I':>6} {'LUFS-M':>6} "
           f"{'DC':>8} {'edge':>6} {'seam':>11} {'centroid':>8} {'HF dB':>11} {'pitch':>9}  verdict")
 
 
@@ -110,7 +110,7 @@ def format_row(m: dict, failures: list) -> str:
     hf = f"{_db(m['hf_db'])}@{m['hf_cutoff'] / 1000:.0f}k"
     pitch = f"{m['pitch']}{m['pitch_cents']:+.0f}c" if m["tonal"] else "-"
     verdict = "ok" if not failures else "FAIL: " + "; ".join(failures)
-    return (f"{m['file']:<30} {m['channels']:>2} {m['duration']:6.2f} {_db(m['peak_db'])} {_db(m['true_peak_db'])} "
+    return (f"{m['file']:<36} {m['channels']:>2} {m['duration']:6.2f} {_db(m['peak_db'])} {_db(m['true_peak_db'])} "
             f"{_db(m['rms_db'])} {_db(m['lufs_integrated'])} {_db(m['lufs_momentary_max'])} {m['dc']:8.1e} "
             f"{_db(m['edge_db'])} {seam:>11} {m['centroid_hz']:6.0f}Hz {hf:>11} {pitch:>9}  {verdict}")
 

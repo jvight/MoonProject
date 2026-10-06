@@ -14,6 +14,9 @@
       "files": [
         "Assets/_Project/Audio/SFX/rover_hum_loop.wav"
       ],
+      "variantLabels": [
+        "rover_hum"
+      ],
       "sha256": [
         "c4491e9414b592a55b32381afd7fbcfc38d26f26bac6d0842649137904d0e9f7"
       ],
@@ -37,6 +40,9 @@
       "loop": true,
       "files": [
         "Assets/_Project/Audio/SFX/dust_crunch_loop.wav"
+      ],
+      "variantLabels": [
+        "dust_crunch"
       ],
       "sha256": [
         "db100c498cca018f2c6439327cf9d757c85614d32deade67785d1d72f6de205d"
@@ -63,6 +69,11 @@
         "Assets/_Project/Audio/SFX/suspension_creak_01.wav",
         "Assets/_Project/Audio/SFX/suspension_creak_02.wav",
         "Assets/_Project/Audio/SFX/suspension_creak_03.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02",
+        "03"
       ],
       "sha256": [
         "f3380add88d8b499fc25e1e0bbc7e25479c71941c1c252815317cc85b736620c",
@@ -92,6 +103,11 @@
         "Assets/_Project/Audio/SFX/landing_thump_02.wav",
         "Assets/_Project/Audio/SFX/landing_thump_03.wav"
       ],
+      "variantLabels": [
+        "01",
+        "02",
+        "03"
+      ],
       "sha256": [
         "1789779e89e1367ef41ba161eab230dba8eb609684596443a5c84fa9c0e290e8",
         "c351bbf988e108faf14cb2b5d46591e36e3cc1a315c374486ba54763897eee6f",
@@ -118,6 +134,9 @@
       "files": [
         "Assets/_Project/Audio/SFX/2D/radio_static_loop.wav"
       ],
+      "variantLabels": [
+        "radio_static"
+      ],
       "sha256": [
         "4a31c224f7992429eda2462ac08ac284f4ef01a9053acef32547d60d135f0eb4"
       ],
@@ -141,6 +160,9 @@
       "loop": false,
       "files": [
         "Assets/_Project/Audio/SFX/2D/radio_tune.wav"
+      ],
+      "variantLabels": [
+        "radio_tune"
       ],
       "sha256": [
         "9e3b229988b41622e16d66de77b642ac9ff6523dab4c3a588d9cdceb3b3a4bab"
@@ -166,6 +188,9 @@
       "files": [
         "Assets/_Project/Audio/Ambience/ambience_bed_loop.wav"
       ],
+      "variantLabels": [
+        "ambience_bed"
+      ],
       "sha256": [
         "86b076bc5d91395f5607ae365879833d44acc9c5fb8faf0ee64e06cc641ee813"
       ],
@@ -190,6 +215,9 @@
       "files": [
         "Assets/_Project/Audio/SFX/sonar_ping.wav"
       ],
+      "variantLabels": [
+        "sonar_ping"
+      ],
       "sha256": [
         "6a239a2b0521493a145651c8886ec510fd85bbe8ab23728f577ae5bf597e9c2b"
       ],
@@ -212,10 +240,28 @@
       "spatial": true,
       "loop": false,
       "files": [
-        "Assets/_Project/Audio/SFX/relic_answer.wav"
+        "Assets/_Project/Audio/SFX/relic_answer_astronaut_boot.wav",
+        "Assets/_Project/Audio/SFX/relic_answer_cassette_player.wav",
+        "Assets/_Project/Audio/SFX/relic_answer_garden_gnome.wav",
+        "Assets/_Project/Audio/SFX/relic_answer_golden_record.wav",
+        "Assets/_Project/Audio/SFX/relic_answer_rubber_duck.wav",
+        "Assets/_Project/Audio/SFX/relic_answer_teapot.wav"
+      ],
+      "variantLabels": [
+        "astronaut_boot",
+        "cassette_player",
+        "garden_gnome",
+        "golden_record",
+        "rubber_duck",
+        "teapot"
       ],
       "sha256": [
-        "ed692a94b92775a29090fc607efe79a85043dd6893b82498132f81ea88541ca1"
+        "ea8dd1c12f0879076632fb29fba8d2e09e8498fdf49e1ca07c0525dda6b098b2",
+        "710f4e1d8335acbccbf5c44ac61ea8c79cf392439e3bee86c73fe7c772169209",
+        "ba0501fa5df9bb27a3f939cd11870ffc556a16e2455182db43ffd64492b9cc36",
+        "4092f650706e4a0fc837a0c73a01f0c28e3700dbec80429433198128e749c736",
+        "d2b3da6b196698e684933a0d52c8492a11b0106595d5ab56205e9a4ebb25c688",
+        "dfa52d8aa5d7ed1f16828222b212bf968373d261cefb3f0ebdb5f70883968ac9"
       ],
       "volumeMin": 0.8,
       "volumeMax": 0.8,
@@ -226,7 +272,61 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": true,
-      "notes": "A5 + D6 shimmering soft bells, tremolo 6.5 Hz, detuned twins."
+      "notes": "One variant per relic (label = relic id) on its answer note from Data/Content/Relics: shimmering soft bell + octave, tremolo 6.5 Hz."
+    },
+    {
+      "id": "recovery_lift",
+      "category": "loop_3d",
+      "milestone": "M2",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/SFX/recovery_lift_loop.wav"
+      ],
+      "variantLabels": [
+        "recovery_lift"
+      ],
+      "sha256": [
+        "1a66fda8a49a70fc2fa9eb7c1cfabe67f0900ea33949023bd3bab9ac363e89d0"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 6000.0,
+      "hfMaxDb": -40.0,
+      "tonal": true,
+      "notes": "Servo whir D3/A3 + air while 07 is lifted to safety; content < 3.2 kHz for the pitch glide."
+    },
+    {
+      "id": "recovery_settle",
+      "category": "oneshot_3d",
+      "milestone": "M2",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/recovery_settle.wav"
+      ],
+      "variantLabels": [
+        "recovery_settle"
+      ],
+      "sha256": [
+        "773baeeb50f7504d25f9eb7bc7ac9ebcc4cd9c8930578e38fd6a916ec909fffd"
+      ],
+      "volumeMin": 0.7,
+      "volumeMax": 0.7,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "Air release + A3 -> D3 servo settle when the recovery lift sets 07 down."
     },
     {
       "id": "scrap_chime",
@@ -244,6 +344,16 @@
         "Assets/_Project/Audio/SFX/scrap_chime_D6.wav",
         "Assets/_Project/Audio/SFX/scrap_chime_E6.wav",
         "Assets/_Project/Audio/SFX/scrap_chime_Fs6.wav"
+      ],
+      "variantLabels": [
+        "D5",
+        "E5",
+        "Fs5",
+        "A5",
+        "B5",
+        "D6",
+        "E6",
+        "Fs6"
       ],
       "sha256": [
         "f7cd1f4d45d40b57dd97093d22db9242f4187e01b3ae62ff57aa604d16a47434",
@@ -276,6 +386,9 @@
       "files": [
         "Assets/_Project/Audio/SFX/tether_attach.wav"
       ],
+      "variantLabels": [
+        "tether_attach"
+      ],
       "sha256": [
         "e726b06986244af35f2e931b8ed7cc0c73aa4c026ed2156153e18c95be19c841"
       ],
@@ -299,6 +412,9 @@
       "loop": true,
       "files": [
         "Assets/_Project/Audio/SFX/tether_hum_loop.wav"
+      ],
+      "variantLabels": [
+        "tether_hum"
       ],
       "sha256": [
         "68a343b87bcc14cbe16ecbb976ee237f46d79f1b0a02739540c2ceccbfdae82e"
@@ -324,6 +440,9 @@
       "files": [
         "Assets/_Project/Audio/SFX/tether_release.wav"
       ],
+      "variantLabels": [
+        "tether_release"
+      ],
       "sha256": [
         "5dee4d10666072b6ebf24cfe1697b107d4641e479ef0e1b1268c2378daa1934a"
       ],
@@ -347,6 +466,9 @@
       "loop": false,
       "files": [
         "Assets/_Project/Audio/SFX/tether_snap.wav"
+      ],
+      "variantLabels": [
+        "tether_snap"
       ],
       "sha256": [
         "acc851e56dd127e23ff9e017796c49cde0e77a3bca45666433aa65009a4063b4"
@@ -372,6 +494,9 @@
       "files": [
         "Assets/_Project/Audio/SFX/relic_placed.wav"
       ],
+      "variantLabels": [
+        "relic_placed"
+      ],
       "sha256": [
         "776f1a1603f52dc7ddb191e326cd1662e2f3f53e4c2e509e2eb40e5b67ad7953"
       ],
@@ -395,6 +520,9 @@
       "loop": true,
       "files": [
         "Assets/_Project/Audio/SFX/excavation_rumble_loop.wav"
+      ],
+      "variantLabels": [
+        "excavation_rumble"
       ],
       "sha256": [
         "85b2d465d774518b30708877f47015eb6c613d5e4e1e10e4f0bb528c96ddd9b6"
@@ -420,6 +548,9 @@
       "files": [
         "Assets/_Project/Audio/SFX/surfacing_sparkle.wav"
       ],
+      "variantLabels": [
+        "surfacing_sparkle"
+      ],
       "sha256": [
         "07047c8bdc9777fd5fc8a67c7b25761d75ac228cc19dd6f5af71ebb59f3b4730"
       ],
@@ -443,6 +574,9 @@
       "loop": false,
       "files": [
         "Assets/_Project/Audio/SFX/2D/ui_click.wav"
+      ],
+      "variantLabels": [
+        "ui_click"
       ],
       "sha256": [
         "29d5a9e80eecef7dfdf71f3aefdeba26dcab66006ea3a68d6a827495c36ed583"
@@ -468,6 +602,9 @@
       "files": [
         "Assets/_Project/Audio/SFX/2D/ui_confirm.wav"
       ],
+      "variantLabels": [
+        "ui_confirm"
+      ],
       "sha256": [
         "1c4d3144ffd066b4d3ebc73114a620471aeacfe4f6b45eaafd40b098c26c328d"
       ],
@@ -492,6 +629,9 @@
       "files": [
         "Assets/_Project/Audio/SFX/2D/ui_back.wav"
       ],
+      "variantLabels": [
+        "ui_back"
+      ],
       "sha256": [
         "09d2558b090a562ff7e6f17baba41a4207af9622196cf4e1b97fa3c007ca4f49"
       ],
@@ -515,6 +655,9 @@
       "loop": false,
       "files": [
         "Assets/_Project/Audio/SFX/2D/upgrade_arpeggio.wav"
+      ],
+      "variantLabels": [
+        "upgrade_arpeggio"
       ],
       "sha256": [
         "a889e0f1899d59487ad9922041180ad2f6c4f2b9022d5e6b0cefc5340b3d0e17"
