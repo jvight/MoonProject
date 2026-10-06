@@ -39,24 +39,27 @@
 ## M1 — "First Drive": chỉ lái xe thôi cũng đã thấy dễ chịu
 | ID | Việc | Box | TT |
 |---|---|---|---|
-| M1-01 | Mesh kit low-poly (primitive, flat shading, palette UV, noise có seed) + test | art | 🟦 |
-| M1-02 | Palette texture + material dùng chung (quyết định URP Lit vs shader riêng, có bằng chứng ảnh chụp) | art | 🟦 |
-| M1-03 | Model rover theo hợp đồng rig (ARCHITECTURE), đá/tảng (6+), scrap (4) | art | 🟦 |
-| M1-04 | Hàm độ cao miệng núi lửa (bowl + rim + đụn cát + crater + The Peak + bãi base) → `ITerrainQuery` + test | world | 🟦 |
-| M1-05 | Mesh địa hình chia chunk, flat-shaded, tô palette theo độ dốc/độ cao, collider layer Ground | world | 🟦 |
-| M1-06 | Bầu trời (gradient + sao + dải ngân hà + Trái Đất + sao băng), sương, ánh sáng, Volume post | world | 🟦 |
-| M1-07 | Rải đá/tảng theo Poisson, tránh bãi base | world | 🟦 |
-| M1-08 | Rover controller (sphere physics), `IRoverState`, `RoverLanded`, tuning SO | rover | 🟦 |
-| M1-09 | Visual rig: bám mặt đất, treo từng bánh, nghiêng thân, quay bánh, ăng-ten lò xo, đèn pha | rover | 🟦 |
-| M1-10 | Camera Cinemachine 3: drone lơ lửng, auto-recenter, FOV theo tốc độ, chống xuyên địa hình | rover | 🟦 |
-| M1-11 | Vệt bánh xe + bụi + bụi khi tiếp đất | rover | 🟦 |
-| M1-12 | Feel metrics PlayMode (tăng tốc, quãng phanh, bán kính quay, airtime, settle time) | rover | 🟦 |
+| M1-01 | Mesh kit low-poly (primitive, flat shading, palette UV, noise có seed) + test | art | 🟩 |
+| M1-02 | Palette texture + material dùng chung (quyết định URP Lit vs shader riêng, có bằng chứng ảnh chụp) | art | 🟩 |
+| M1-03 | Model rover theo hợp đồng rig (ARCHITECTURE), đá/tảng (6+), scrap (4) | art | 🟩 |
+| M1-04 | Hàm độ cao miệng núi lửa (bowl + rim + đụn cát + crater + The Peak + bãi base) → `ITerrainQuery` + test | world | 🟩 |
+| M1-05 | Mesh địa hình chia chunk, flat-shaded, tô palette theo độ dốc/độ cao, collider layer Ground | world | 🟩 |
+| M1-06 | Bầu trời (gradient + sao + dải ngân hà + Trái Đất + sao băng), sương, ánh sáng, Volume post | world | 🟩 |
+| M1-07 | Rải đá/tảng theo Poisson, tránh bãi base | world | 🟩 |
+| M1-08 | Rover controller (sphere physics), `IRoverState`, `RoverLanded`, tuning SO | rover | 🟩 |
+| M1-09 | Visual rig: bám mặt đất, treo từng bánh, nghiêng thân, quay bánh, ăng-ten lò xo, đèn pha | rover | 🟩 |
+| M1-10 | Camera Cinemachine 3: drone lơ lửng, auto-recenter, FOV theo tốc độ, chống xuyên địa hình | rover | 🟩 |
+| M1-11 | Vệt bánh xe + bụi + bụi khi tiếp đất | rover | 🟩 |
+| M1-12 | Feel metrics PlayMode (tăng tốc, quãng phanh, bán kính quay, airtime, settle time) | rover | 🟩 |
 | M1-13 | Thư viện synth Python (stdlib) + bộ SFX M1 đúng tông D pentatonic | audio | 🟩 |
 | M1-14 | AudioDirector (pool), tiếng rover (hum + lạo xạo bụi + kẽo kẹt treo + tiếp đất) | audio | 🟩 |
 | M1-15 | Radio: độ rõ theo khoảng cách tới base (low-pass + static + wow/flutter) | audio | 🟩 |
-| M1-17 | Engine sáng tác lofi (hoà âm, voicing jazz, groove swing, cấu trúc bài) + nhạc cụ (Rhodes FM, trống, bass, pad, vinyl) | music | 🟦 |
-| M1-18 | Playlist radio 5–6 bài OGG (68–84 BPM), mix/master nhất quán, có báo cáo đo loudness | music | 🟦 |
-| M1-16 | Tích hợp M1 vào `Main.unity`, playtest, đánh giá feeling, xoá prototype rover/WALL-E | Director | ⬜ |
+| M1-17 | Engine sáng tác lofi (hoà âm, voicing jazz, groove swing, cấu trúc bài) + nhạc cụ (Rhodes FM, trống, bass, pad, vinyl) | music | 🟩 |
+| M1-18 | Playlist radio 5–6 bài OGG (68–84 BPM), mix/master nhất quán, có báo cáo đo loudness | music | 🟩 |
+| M1-19 | "Đánh thức 07": mở màn mắt nhắm → radio rè bật → 07 mở mắt; spawn hướng 355°, camera ≤ 6° | rover + audio | 🟦 |
+| M1-20 | Đèn hiệu đỏ nhấp nháy chậm trên đỉnh The Peak (landmark từ khung hình đầu) | world | 🟩 |
+| M1-21 | Gỡ kẹt nhẹ nhàng (nhấc + đặt lại với fade, không phạt) | rover | 🟦 |
+| M1-16 | Tích hợp M1 vào `Main.unity`, playtest, đánh giá feeling, xoá prototype rover/WALL-E | Director | 🟩 |
 
 ## M2 — Vòng lặp lõi (vertical slice)
 | ID | Việc | Box | TT |
@@ -69,7 +72,7 @@
 | M2-06 | Tháp radio 3 cấp: nâng cấp bằng scrap → mở rộng vùng tín hiệu (ánh sáng + nhạc rõ) | gameplay + audio + art | 🟦 |
 | M2-07 | 6 relic có cá tính (model + tên + câu chuyện ngắn) | art + gameplay | ⬜ |
 | M2-08 | Save/Load tự động | gameplay | 🟦 |
-| M2-09 | HUD tối giản (diegetic ưu tiên), prompt ngữ cảnh, menu tạm dừng + cài đặt âm lượng/độ nhạy | ui | ⬜ |
+| M2-09 | HUD tối giản (diegetic ưu tiên), prompt ngữ cảnh chỉ vài lần đầu, menu tạm dừng + cài đặt âm lượng/độ nhạy/đảo trục, thẻ "ký ức" khi đặt relic | ui | ⬜ |
 | M2-10 | Tích hợp + playtest slice 15 phút, sửa feeling | Director | ⬜ |
 
 ## M3 — Tiến trình

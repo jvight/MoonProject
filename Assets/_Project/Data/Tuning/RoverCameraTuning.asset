@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f96879b7f908fa49936d227422e5b4a, type: 3}
+  m_Name: RoverCameraTuning
+  m_EditorClassIdentifier: 
+  _mouseSensitivity: 0.08
+  _stickRate: 110
+  _invertY: 0
+  _lookHalfLife: 0.05
+  _distance: 7.5
+  _targetHeight: 1.1
+  _defaultPitch: 16
+  _minPitch: 3
+  _maxPitch: 60
+  _recenterDelay: 3
+  _recenterRampTime: 1.5
+  _recenterHalfLife: 0.9
+  _recenterMinSpeed: 0.5
+  _downhillLift: 10
+  _downhillFullAngle: 20
+  _liftHalfLife: 0.7
+  _baseFov: 52
+  _speedFovBoost: 6
+  _fovHalfLife: 0.6
+  _nearClip: 0.3
+  _farClip: 3200
+  _bumpPerImpact: 0.18
+  _maxBumpKick: 0.9
+  _bumpFrequency: 1.4
+  _bumpDamping: 0.8
+  _positionDamping: {x: 1.1, y: 0.9, z: 1.3}
+  _yawDamping: 1.8
+  _aimDamping: {x: 0.6, y: 0.5}
+  _screenPosition: {x: 0, y: 0.1}
+  _cameraRadius: 0.45
+  _avoidanceDamping: 0.8
+  _occlusionDamping: 0.15
+  _occlusionSmoothing: 0.3
+  _terrainProbe: 12

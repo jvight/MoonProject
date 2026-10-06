@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "tracks": [
+    {
+      "id": "01_earthrise_static",
+      "file": "Assets/_Project/Audio/Music/Radio/01_earthrise_static.ogg",
+      "title": "Earthrise Static",
+      "bpm": 76.0,
+      "key": "D major",
+      "duration": 139.7474,
+      "loudnessLufs": -15.9845,
+      "truePeakDbtp": -1.4028,
+      "pcmSha256": "a34d2db7dd08d39286c1a814a6dca567e5fcb3403799fbfca218234d5cd264c5"
+    },
+    {
+      "id": "02_sevens_lullaby",
+      "file": "Assets/_Project/Audio/Music/Radio/02_sevens_lullaby.ogg",
+      "title": "Seven's Lullaby",
+      "bpm": 70.0,
+      "key": "D major",
+      "duration": 137.9286,
+      "loudnessLufs": -15.9794,
+      "truePeakDbtp": -1.3515,
+      "pcmSha256": "13913483e90610cc7593314dc4f6e9745c910db71ed6952f7ce0de2a989e14bd"
+    },
+    {
+      "id": "03_dust_on_the_dial",
+      "file": "Assets/_Project/Audio/Music/Radio/03_dust_on_the_dial.ogg",
+      "title": "Dust on the Dial",
+      "bpm": 82.0,
+      "key": "D major",
+      "duration": 129.8171,
+      "loudnessLufs": -15.9784,
+      "truePeakDbtp": -1.4374,
+      "pcmSha256": "989899102d2363dd21fc5420156515501f18927e0122db7e93be77471bdd2bbd"
+    },
+    {
+      "id": "04_long_way_home",
+      "file": "Assets/_Project/Audio/Music/Radio/04_long_way_home.ogg",
+      "title": "Long Way Home",
+      "bpm": 74.0,
+      "key": "B minor",
+      "duration": 143.5027,
+      "loudnessLufs": -15.9818,
+      "truePeakDbtp": -1.3278,
+      "pcmSha256": "0ae81336269528a899bf6afb7ca36be2990c3f2efc0a27a07b0e73e657c967cb"
+    },
+    {
+      "id": "05_low_orbit_tea",
+      "file": "Assets/_Project/Audio/Music/Radio/05_low_orbit_tea.ogg",
+      "title": "Low Orbit Tea",
+      "bpm": 80.0,
+      "key": "D major",
+      "duration": 144.8,
+      "loudnessLufs": -15.9849,
+      "truePeakDbtp": -1.3485,
+      "pcmSha256": "49bdd6aacfa83255a493fa7438f52efd69697508bc1d04f4a6abcc673b94c320"
+    },
+    {
+      "id": "06_signal_through_craters",
+      "file": "Assets/_Project/Audio/Music/Radio/06_signal_through_craters.ogg",
+      "title": "Signal Through Craters",
+      "bpm": 68.0,
+      "key": "B minor",
+      "duration": 127.8588,
+      "loudnessLufs": -15.9772,
+      "truePeakDbtp": -1.4417,
+      "pcmSha256": "4045c0c9e69b1b2066a99bf3b9cdeb24425a2a0e1c7b65c054eb514de013a58e"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+    "name": "MoonProject.Rover",
+    "rootNamespace": "MoonProject.Rover",
+    "references": [
+        "MoonProject.Core",
+        "Unity.Cinemachine"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

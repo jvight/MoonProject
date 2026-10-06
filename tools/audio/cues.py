@@ -278,10 +278,36 @@ def relic_answer(_variant, _gen):
     return _mono_reverb(mix, room=0.7, damping=0.6, wet=0.32, dry=1.0)
 
 
+SCRAP_CHIME_NOTES = 8
+CHIME_BRIGHT_LIMIT_HZ = 1000.0
+
+
 def scrap_chime(variant, _gen):
-    """Glassy chime on degree ``variant`` of D major pentatonic in octave 5: consecutive pickups climb."""
-    dry = instruments.glass_chime(pentatonic(5, variant), 1.4, decay=1.15)
+    """Glassy chime on degree ``variant`` of D major pentatonic from D5 (D5 E5 F#5 A5 B5 D6 E6 F#6): consecutive
+    pickups climb. Above ~1 kHz the bell partials are tapered so the top notes stay as soft as the low ones."""
+    freq = pentatonic(5, variant)
+    n = samples(1.4)
+    if freq <= CHIME_BRIGHT_LIMIT_HZ:
+        dry = instruments.glass_chime(freq, 1.4, decay=1.15)
+    else:
+        taper = CHIME_BRIGHT_LIMIT_HZ / freq
+        dry = (instruments.partial(n, freq, 1.0, 0.0012, 1.15)
+               + instruments.partial(n, freq, 0.25, 0.0012, 0.92, detune_cents=2.0)
+               + instruments.partial(n, 2.76 * freq, 0.20 * taper, 0.0012, 0.32)
+               + instruments.partial(n, 5.40 * freq, 0.06 * taper * taper, 0.0012, 0.1))
     return _mono_reverb(dry, room=0.5, damping=0.55, wet=0.2, dry=1.0)
+
+
+def relic_placed(_variant, gen):
+    """A relic settles on the museum shelf: a soft felt 'tock' on D3 and a quiet A4 -> D5 kalimba resolve."""
+    n = samples(1.8)
+    tock = osc.sine(n, osc.glide(n, 1.25 * note_freq("D3"), note_freq("D3"), time_constant=0.015))
+    tock *= envelope.ar(n, 0.002, 0.16)
+    felt = filters.lowpass(filters.lowpass(noise.white(n, gen), 900.0), 900.0) * envelope.ar(n, 0.001, 0.035)
+    mix = tock + 0.5 * felt
+    place(mix, instruments.kalimba(note_freq("A4"), 1.6, gen, decay=1.1), samples(0.05), 0.35)
+    place(mix, instruments.kalimba(note_freq("D5"), 1.6, gen, decay=1.4), samples(0.16), 0.45)
+    return _mono_reverb(filters.lowpass(mix, 5000.0), room=0.45, damping=0.6, wet=0.2, dry=1.0)
 
 
 EXCAVATION_LOOP_S = 6.0
@@ -351,6 +377,19 @@ def tether_hum(_variant, gen):
     mix = tone * wobble + 0.035 * fizz
     return periodic(mix, lambda s: filters.lowpass(to_mono(effects.chorus(
         s, voices=1, rate=2.0 / TETHER_LOOP_S, depth=0.0015, delay=0.008, mix=0.35, spread=0.0)), 2600.0))
+
+
+def tether_snap(_variant, gen):
+    """The tether lets go on its own (anti-frustration snap): a softer, longer, falling sigh - a band-passed
+    breath sweeping down with a slow A4 -> D4 fall. Never a crack or a twang."""
+    n = samples(0.9)
+    centre = osc.glide(n, 1800.0, 380.0)
+    sigh = filters.swept(noise.pink(n, gen), "bandpass", centre, q=1.6)
+    breath = filters.lowpass(noise.white(n, gen), 900.0)
+    env = envelope.segments(n, [(0.0, 0.0), (0.09, 1.0), (0.35, 0.6), (0.9, 0.0)], shape="smooth")
+    hint = osc.sine(n, osc.glide(n, note_freq("A4"), note_freq("D4"), time_constant=0.22))
+    hint *= envelope.ar(n, 0.03, 0.5)
+    return filters.lowpass((2.6 * sigh + 0.1 * breath) * env + 0.04 * hint, 4500.0)
 
 
 def tether_release(_variant, gen):
@@ -438,15 +477,20 @@ CUES = (
         tonal=True, notes="Kalimba D5 (tine partial 6.27x, felt-pick transient)."),
     Cue("relic_answer", "oneshot_3d", relic_answer, volume=(0.8, 0.8), fade_out=0.2, milestone="M2",
         tonal=True, notes="A5 + D6 shimmering soft bells, tremolo 6.5 Hz, detuned twins."),
-    Cue("scrap_chime", "oneshot_3d", scrap_chime, variants=5, volume=(0.7, 0.7), fade_out=0.1,
-        variant_labels=("D5", "E5", "Fs5", "A5", "B5"), milestone="M2", tonal=True,
-        notes="Glassy chime per pentatonic degree; clip index = combo step (pitch 2.0 for the next octave)."),
+    Cue("scrap_chime", "oneshot_3d", scrap_chime, variants=SCRAP_CHIME_NOTES, volume=(0.7, 0.7), fade_out=0.1,
+        variant_labels=("D5", "E5", "Fs5", "A5", "B5", "D6", "E6", "Fs6"), milestone="M2", tonal=True,
+        notes="Glassy chime per pentatonic degree D5..F#6, ascending; the runtime picks the clip from the combo "
+              "step (climbs, then weaves over the top notes)."),
     Cue("tether_attach", "oneshot_3d", tether_attach, volume=(0.7, 0.7), fade_out=0.15, milestone="M2",
         tonal=True, notes="Karplus-Strong felt pluck D4 + A2 body."),
     Cue("tether_hum", "loop_3d", tether_hum, loop=True, file_stem="tether_hum_loop", volume=(0.5, 0.5),
         milestone="M2", tonal=True, notes="D3/A3/D4 hum, vibrato 4.5 Hz, wobble 0.75 Hz, 4 s seamless."),
     Cue("tether_release", "oneshot_3d", tether_release, volume=(0.6, 0.6), pitch=(0.95, 1.05), fade_out=0.06,
         milestone="M2", notes="Breathy band-passed noise sweep 450->2200 Hz + falling A4->D4 hint."),
+    Cue("tether_snap", "oneshot_3d", tether_snap, volume=(0.45, 0.45), pitch=(0.97, 1.03), fade_out=0.1,
+        milestone="M2", notes="Softer sighing release when the tether snaps itself: falling breath 1800->380 Hz."),
+    Cue("relic_placed", "oneshot_3d", relic_placed, volume=(0.7, 0.7), fade_out=0.2, milestone="M2", tonal=True,
+        notes="Relic placed on the museum shelf: soft D3 felt tock + A4 -> D5 kalimba resolve."),
     Cue("excavation_rumble", "loop_3d", excavation_rumble, loop=True, file_stem="excavation_rumble_loop",
         volume=(0.6, 0.6), milestone="M2", notes="Low brown-noise rumble + grit + D2/A2 drone, 6 s seamless."),
     Cue("surfacing_sparkle", "oneshot_3d", surfacing_sparkle, volume=(0.8, 0.8), fade_out=0.25, milestone="M2",

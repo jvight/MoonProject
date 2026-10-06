@@ -10,7 +10,7 @@ namespace MoonProject.Editor.Import
     /// </summary>
     public sealed class ImportRules : AssetPostprocessor
     {
-        public const uint Version = 1;
+        public const uint Version = 2;
 
         public override uint GetVersion()
         {
@@ -27,7 +27,7 @@ namespace MoonProject.Editor.Import
             var importer = (AudioImporter)assetImporter;
             AudioImporterSampleSettings settings = importer.defaultSampleSettings;
             settings.loadType = rule.LoadType;
-            settings.compressionFormat = AudioCompressionFormat.Vorbis;
+            settings.compressionFormat = rule.CompressionFormat;
             settings.quality = rule.Quality;
             settings.preloadAudioData = rule.Preload;
             settings.sampleRateSetting = AudioSampleRateSetting.PreserveSampleRate;

@@ -4,11 +4,13 @@ using MoonProject.Core;
 namespace MoonProject.Audio.PlayModeTests
 {
     /// <summary>
-    /// Stands in for the Rover and World systems: registers <see cref="IRoverState"/> and <see cref="IWorldLayout"/>
-    /// with telemetry the test sets directly.
+    /// Stands in for the Rover and World systems: registers <see cref="IRoverState"/>, <see cref="IRoverRig"/> and
+    /// <see cref="IWorldLayout"/> with values the test sets directly.
     /// </summary>
-    public sealed class FakeRoverSystem : MonoBehaviour, IGameSystem, IRoverState, IWorldLayout
+    public sealed class FakeRoverSystem : MonoBehaviour, IGameSystem, IRoverState, IRoverRig, IWorldLayout
     {
+        private Transform _tetherOrigin;
+
         public Vector3 Position { get; set; }
 
         public Quaternion Rotation { get; set; } = Quaternion.identity;
@@ -27,15 +29,32 @@ namespace MoonProject.Audio.PlayModeTests
 
         public Vector3 GroundNormal { get; set; } = Vector3.up;
 
+        public Transform TetherOrigin => _tetherOrigin;
+
+        public Transform CargoSocket => transform;
+
+        public Rigidbody PhysicsBody => null;
+
         public Vector3 BasePosition { get; set; }
 
         public Vector3 PeakPosition { get; set; } = new Vector3(0f, 120f, 280f);
 
         public Vector3 EarthDirection { get; set; } = Vector3.up;
 
+        public void SetGazeTarget(object owner, Vector3 worldPosition, int priority)
+        {
+        }
+
+        public void ClearGazeTarget(object owner)
+        {
+        }
+
         public void Initialize(GameContext context)
         {
+            _tetherOrigin = new GameObject("TetherOrigin").transform;
+            _tetherOrigin.SetParent(transform, false);
             context.Register<IRoverState>(this);
+            context.Register<IRoverRig>(this);
             context.Register<IWorldLayout>(this);
         }
     }

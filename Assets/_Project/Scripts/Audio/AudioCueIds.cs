@@ -18,6 +18,8 @@ namespace MoonProject.Audio
         public const string TetherAttach = "tether_attach";
         public const string TetherHum = "tether_hum";
         public const string TetherRelease = "tether_release";
+        public const string TetherSnap = "tether_snap";
+        public const string RelicPlaced = "relic_placed";
         public const string ExcavationRumble = "excavation_rumble";
         public const string SurfacingSparkle = "surfacing_sparkle";
         public const string UiClick = "ui_click";

@@ -114,6 +114,9 @@ MonoBehaviour:
     - {fileID: 8300000, guid: f2525b88a89da9d43ba67299c6801102, type: 3}
     - {fileID: 8300000, guid: 5da7cf1978ca0e344b55ef02cedb0159, type: 3}
     - {fileID: 8300000, guid: 5a17f18acc19fd54c99642505658cc2d, type: 3}
+    - {fileID: 8300000, guid: c233c37a004a1ec4ba2e5f70cee7885d, type: 3}
+    - {fileID: 8300000, guid: f2b0de51124878944b74771b06edaee5, type: 3}
+    - {fileID: 8300000, guid: 555718e840dee3041a59ce7f962b0a3e, type: 3}
     _bus: 2
     _spatial: 1
     _loop: 0
@@ -151,6 +154,26 @@ MonoBehaviour:
     _volumeMax: 0.6
     _pitchMin: 0.95
     _pitchMax: 1.05
+  - _id: tether_snap
+    _clips:
+    - {fileID: 8300000, guid: 8d2c8cb786dd9f8419a3053e4a7d796a, type: 3}
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.45
+    _volumeMax: 0.45
+    _pitchMin: 0.97
+    _pitchMax: 1.03
+  - _id: relic_placed
+    _clips:
+    - {fileID: 8300000, guid: ed56bb414cbb06947888d4a14172fe21, type: 3}
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.7
+    _volumeMax: 0.7
+    _pitchMin: 1
+    _pitchMax: 1
   - _id: excavation_rumble
     _clips:
     - {fileID: 8300000, guid: aa6d91ae24246194f8fb6ca3e308537b, type: 3}

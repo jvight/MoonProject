@@ -100,10 +100,10 @@ namespace MoonProject.Art.Editor
             var pivot = new Vector3(0f, 0.6f - hinge.y, -0.4f - hinge.z);
             var armSize = new Vector2(0.04f, 0.055f);
 
-            Strut(b, Vector3.zero, front, armSize, PaletteSwatch.Charcoal);
-            Strut(b, Vector3.zero, pivot, armSize, PaletteSwatch.Charcoal);
-            Strut(b, pivot, middle, armSize, PaletteSwatch.Charcoal);
-            Strut(b, pivot, rear, armSize, PaletteSwatch.Charcoal);
+            RecipeKit.Strut(b, Vector3.zero, front, armSize, PaletteSwatch.Charcoal);
+            RecipeKit.Strut(b, Vector3.zero, pivot, armSize, PaletteSwatch.Charcoal);
+            RecipeKit.Strut(b, pivot, middle, armSize, PaletteSwatch.Charcoal);
+            RecipeKit.Strut(b, pivot, rear, armSize, PaletteSwatch.Charcoal);
 
             b.Prism(At(new Vector3(-0.005f, 0f, 0f), AlongX), 0.05f, 0.07f, 10, PaletteSwatch.Metal);
             b.Prism(At(pivot, AlongX), 0.04f, 0.06f, 8, PaletteSwatch.Metal);
@@ -160,14 +160,15 @@ namespace MoonProject.Art.Editor
         {
             var b = new LowPolyMeshBuilder(220);
             b.Prism(At(0f, 0.02f, 0f), 0.08f, 0.04f, 8, PaletteSwatch.Charcoal);
-            Rod(b, new Vector3(0f, 0.03f, 0f), HeadHinge - new Vector3(0f, 0.03f, 0f), 0.022f, 6, PaletteSwatch.Metal);
+            var poleBase = new Vector3(0f, 0.03f, 0f);
+            RecipeKit.Rod(b, poleBase, HeadHinge - poleBase, 0.022f, 6, PaletteSwatch.Metal);
             var cable0 = new Vector3(0.025f, 0.04f, -0.06f);
             var cable1 = new Vector3(0.035f, 0.12f, -0.115f);
             var cable2 = new Vector3(0.03f, 0.22f, -0.1f);
             Vector3 cable3 = HeadHinge + new Vector3(0.03f, 0.03f, -0.12f);
-            Rod(b, cable0, cable1, 0.014f, 6, PaletteSwatch.WarmAccent);
-            Rod(b, cable1, cable2, 0.014f, 6, PaletteSwatch.WarmAccent);
-            Rod(b, cable2, cable3, 0.014f, 6, PaletteSwatch.WarmAccent);
+            RecipeKit.Rod(b, cable0, cable1, 0.014f, 6, PaletteSwatch.WarmAccent);
+            RecipeKit.Rod(b, cable1, cable2, 0.014f, 6, PaletteSwatch.WarmAccent);
+            RecipeKit.Rod(b, cable2, cable3, 0.014f, 6, PaletteSwatch.WarmAccent);
             b.Icosphere(At(cable1), 0.015f, 0, PaletteSwatch.WarmAccent);
             b.Icosphere(At(cable2), 0.015f, 0, PaletteSwatch.WarmAccent);
             b.Box(At(HeadHinge - new Vector3(0f, 0.025f, 0f)), new Vector3(0.14f, 0.04f, 0.06f),
@@ -279,8 +280,8 @@ namespace MoonProject.Art.Editor
             var b = new LowPolyMeshBuilder(100);
             var kink = new Vector3(0f, 0.33f, 0.01f);
             b.Prism(At(0f, 0.02f, 0f), 0.032f, 0.04f, 8, PaletteSwatch.Charcoal);
-            Rod(b, new Vector3(0f, 0.04f, 0f), kink, 0.0085f, 5, PaletteSwatch.Metal);
-            Rod(b, kink, AntennaTipPosition, 0.0075f, 5, PaletteSwatch.Metal);
+            RecipeKit.Rod(b, new Vector3(0f, 0.04f, 0f), kink, 0.0085f, 5, PaletteSwatch.Metal);
+            RecipeKit.Rod(b, kink, AntennaTipPosition, 0.0075f, 5, PaletteSwatch.Metal);
             b.Icosphere(At(kink), 0.012f, 0, PaletteSwatch.Metal);
             return b;
         }
@@ -313,17 +314,10 @@ namespace MoonProject.Art.Editor
                 polygon[i] = new Vector2(-radius * Mathf.Cos(angle), radius * Mathf.Sin(angle));
             }
 
-            polygon[steps + 1] = Polar(highDegrees, 0.12f);
-            polygon[steps + 2] = Polar(lowDegrees + 8f, BrowInner);
+            polygon[steps + 1] = RecipeKit.Polar(highDegrees, 0.12f);
+            polygon[steps + 2] = RecipeKit.Polar(lowDegrees + 8f, BrowInner);
             return b.Extrude(At(EyeCentre) * Matrix4x4.Rotate(Rotation(new Vector3(0f, 90f, 0f))), polygon, 0.62f,
                 PaletteSwatch.Enamel);
-        }
-
-        /// <summary>Point of the brow/eyelid profile plane at an angle from +Z towards +Y.</summary>
-        private static Vector2 Polar(float degrees, float radius)
-        {
-            float angle = degrees * Mathf.Deg2Rad;
-            return new Vector2(-radius * Mathf.Cos(angle), radius * Mathf.Sin(angle));
         }
 
         /// <summary>
@@ -512,20 +506,6 @@ namespace MoonProject.Art.Editor
         {
             Vector3 hinge = RoverModelBuilder.BogieHinge;
             return new Vector3(0f, RoverModelBuilder.WheelRadius - hinge.y, wheelZ - hinge.z);
-        }
-
-        private static void Strut(LowPolyMeshBuilder b, Vector3 from, Vector3 to, Vector2 section,
-            PaletteSwatch swatch)
-        {
-            float length = Vector3.Distance(from, to) + section.y;
-            b.Box(Along(from, to), new Vector3(section.x, section.y, length), swatch, 0.008f);
-        }
-
-        private static void Rod(LowPolyMeshBuilder b, Vector3 from, Vector3 to, float radius, int sides,
-            PaletteSwatch swatch)
-        {
-            b.Prism(Along(from, to) * Matrix4x4.Rotate(Rotation(AlongZ)), radius, Vector3.Distance(from, to), sides,
-                swatch);
         }
 
         /// <summary>
