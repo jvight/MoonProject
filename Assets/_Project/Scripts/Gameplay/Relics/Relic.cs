@@ -58,6 +58,9 @@ namespace MoonProject.Gameplay
 
         public BoxCollider Collider { get; private set; }
 
+        /// <summary>Current halo brightness (aim highlight, surfacing or display glow).</summary>
+        public float HaloLevel => _halo;
+
         /// <summary>Half of the largest dimension of the relic's bounds (m).</summary>
         public float Radius { get; private set; }
 
@@ -94,6 +97,9 @@ namespace MoonProject.Gameplay
             {
                 GameObject visual = Instantiate(definition.Prefab, transform, false);
                 visual.name = VisualName;
+
+                // The prefab's pivot is the relic's centre of mass (content contract): it sits exactly on this body.
+                visual.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
                 bounds = LocalBounds(visual.transform);
                 SetLayer(visual.transform, Layers.Relic);
                 BuildHalos(visual.transform, haloMaterial);

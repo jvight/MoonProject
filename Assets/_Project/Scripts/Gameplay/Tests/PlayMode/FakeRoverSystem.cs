@@ -75,6 +75,12 @@ namespace MoonProject.Gameplay.PlayModeTests
             Velocity = Vector3.zero;
         }
 
+        /// <summary>Drives 07 to <paramref name="position"/> (velocity follows from the motion each frame).</summary>
+        public void MoveTo(Vector3 position, float yaw)
+        {
+            transform.SetPositionAndRotation(position, Quaternion.Euler(0f, yaw, 0f));
+        }
+
         /// <summary>Points the view camera from <paramref name="from"/> at <paramref name="target"/>.</summary>
         public void Aim(Vector3 from, Vector3 target)
         {
