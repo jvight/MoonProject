@@ -30,6 +30,7 @@ namespace MoonProject.Rover.PlayModeTests
         private LunarTestPhysics _physics;
         private TestWorld _world;
         private int _cameraViolations;
+        private int _recoveries;
         private float _cameraLowestClearance;
 
         public override void Setup()
@@ -37,6 +38,7 @@ namespace MoonProject.Rover.PlayModeTests
             base.Setup();
             _physics = new LunarTestPhysics();
             _cameraViolations = 0;
+            _recoveries = 0;
             _cameraLowestClearance = float.MaxValue;
         }
 
@@ -59,6 +61,7 @@ namespace MoonProject.Rover.PlayModeTests
             yield return SlopeSession(report);
 
             report.Add("Camera frames inside terrain", _cameraViolations, "frames", 0f, 0f, "0");
+            report.Add("Stuck recoveries in normal driving", _recoveries, "", 0f, 0f, "0 (never while fine)");
             report.Note("Camera lowest clearance above terrain", _cameraLowestClearance, "m");
             report.Write(Path.Combine(OutputFolder, "feel-metrics.md"));
             Assert.IsEmpty(report.Failures, report.Table);
@@ -67,6 +70,7 @@ namespace MoonProject.Rover.PlayModeTests
         private IEnumerator FlatSession(FeelReport report)
         {
             TestRover rover = TestRover.Spawn(_world, TestWorld.Point(0f, -200f), 0f);
+            Count(rover);
             RoverController controller = rover.Controller;
             DriveSettings drive = rover.Tuning.Drive;
             yield return Hold(rover, Vector2.zero, 0.5f);
@@ -158,6 +162,7 @@ namespace MoonProject.Rover.PlayModeTests
         private IEnumerator BumpSession(FeelReport report)
         {
             TestRover rover = TestRover.Spawn(_world, TestWorld.Point(TestWorld.BumpX, -50f), 0f);
+            Count(rover);
             RoverController controller = rover.Controller;
             var landings = new List<RoverLanded>();
             var landingTimes = new List<float>();
@@ -247,6 +252,7 @@ namespace MoonProject.Rover.PlayModeTests
         private IEnumerator SlopeSession(FeelReport report)
         {
             TestRover rover = TestRover.Spawn(_world, TestWorld.Point(TestWorld.SlopeX - 15f, 0f), 0f);
+            Count(rover);
             RoverController controller = rover.Controller;
             yield return Hold(rover, Vector2.zero, 1f);
 
@@ -291,6 +297,17 @@ namespace MoonProject.Rover.PlayModeTests
             Steer(rover, Vector2.zero);
             rover.Dispose();
             yield return null;
+        }
+
+        /// <summary>Counts stuck recoveries: driving, parking and the 30 degree climb must never need one.</summary>
+        private void Count(TestRover rover)
+        {
+            rover.Context.Events.Subscribe<RoverRecovering>(OnRecovering);
+        }
+
+        private void OnRecovering(RoverRecovering recovering)
+        {
+            _recoveries++;
         }
 
         private IEnumerator Hold(TestRover rover, Vector2 stick, float seconds)

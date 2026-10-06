@@ -105,6 +105,7 @@ namespace MoonProject.Rover
                 events.Subscribe<RelicSurfaced>(OnRelicSurfaced),
                 events.Subscribe<RelicDeposited>(OnRelicDeposited),
                 events.Subscribe<TetherReleased>(OnTetherReleased),
+                events.Subscribe<RoverRecovering>(OnRecovering),
             };
             _initialized = true;
             Apply();
@@ -164,6 +165,11 @@ namespace MoonProject.Rover
         private void OnRelicDeposited(RelicDeposited deposit)
         {
             _mood.NodContentedly(_tuning.DepositNod);
+        }
+
+        private void OnRecovering(RoverRecovering recovering)
+        {
+            PerkUp(_tuning.RecoveryPerk);
         }
 
         private void OnTetherReleased(TetherReleased release)
