@@ -35,7 +35,8 @@ namespace MoonProject.Gameplay
         [Tooltip("Ring segments (more hug dunes better at full range).")]
         [Range(16, 512)] [SerializeField] private int _ringSegments = 192;
 
-        [Tooltip("Ring brightness at the start. Keep it at or below 1 so the ring stays cyan instead of blooming white.")]
+        [Tooltip("Ring brightness at the start. Keep it at or below 1 so the ring stays cyan instead of " +
+                 "blooming white.")]
         [Range(0f, 4f)] [SerializeField] private float _ringIntensity = 0.85f;
 
         [Tooltip("How the ring fades as it travels: brightness = (1 - progress) ^ this. Above 1 fades early and long.")]
@@ -139,7 +140,9 @@ namespace MoonProject.Gameplay
         public float GlanceInterval => _glanceInterval;
         public float GlanceDuration => _glanceDuration;
 
-        /// <summary>Answer brightness for a relic <paramref name="distance"/> metres away: closer is brighter.</summary>
+        /// <summary>
+        /// Answer brightness for a relic <paramref name="distance"/> metres away: closer is brighter.
+        /// </summary>
         public float BrightnessAt(float distance)
         {
             return Mathf.Lerp(_nearBrightness, _farBrightness, Mathf.Clamp01(distance / _range));

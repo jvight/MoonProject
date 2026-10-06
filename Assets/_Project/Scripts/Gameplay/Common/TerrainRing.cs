@@ -64,7 +64,9 @@ namespace MoonProject.Gameplay
 
         public Mesh Mesh { get; }
 
-        /// <summary>World-space vertex positions after the last <see cref="Rebuild"/> (inner row, then outer row).</summary>
+        /// <summary>
+        /// World-space vertex positions after the last <see cref="Rebuild"/> (inner row, then outer row).
+        /// </summary>
         public Vector3[] Vertices => _vertices;
 
         /// <summary>

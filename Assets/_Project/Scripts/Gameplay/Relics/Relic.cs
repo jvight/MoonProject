@@ -73,7 +73,9 @@ namespace MoonProject.Gameplay
         /// <summary>A loose relic nobody holds: the only kind the tether may grab.</summary>
         public bool IsTetherable => State == RelicState.Loose && !IsTethered;
 
-        /// <summary>Still somewhere in the world (not on its way to, or on, the shelf), so it answers the sonar.</summary>
+        /// <summary>
+        /// Still somewhere in the world (not on its way to, or on, the shelf), so it answers the sonar.
+        /// </summary>
         public bool AnswersSonar => State != RelicState.Depositing && State != RelicState.Displayed && !IsTethered;
 
         /// <summary>The ground point a sonar answer or marker refers to.</summary>
@@ -119,7 +121,9 @@ namespace MoonProject.Gameplay
             Bury();
         }
 
-        /// <summary>How strongly the tether's aim highlights this relic (0 = not aimed at, 1 = the hovered target).</summary>
+        /// <summary>
+        /// How strongly the tether's aim highlights this relic (0 = not aimed at, 1 = the hovered target).
+        /// </summary>
         internal void SetAimHighlight(float level)
         {
             _aimHighlight = Mathf.Max(0f, level);

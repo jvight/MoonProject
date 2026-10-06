@@ -4,7 +4,9 @@ using Object = UnityEngine.Object;
 
 namespace MoonProject.Gameplay
 {
-    /// <summary>The procedural glow meshes every effect shares, created once and destroyed with the gameplay root.</summary>
+    /// <summary>
+    /// The procedural glow meshes every effect shares, created once and destroyed with the gameplay root.
+    /// </summary>
     public sealed class GlowMeshSet : IDisposable
     {
         private const int ConeSides = 24;

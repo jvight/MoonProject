@@ -19,7 +19,9 @@ namespace MoonProject.Gameplay
             return 1f - u * u;
         }
 
-        /// <summary>Inverse of <see cref="OutQuad"/>: the t at which OutQuad reaches <paramref name="value"/>.</summary>
+        /// <summary>
+        /// Inverse of <see cref="OutQuad"/>: the t at which OutQuad reaches <paramref name="value"/>.
+        /// </summary>
         public static float InverseOutQuad(float value)
         {
             return 1f - Mathf.Sqrt(1f - Mathf.Clamp01(value));

@@ -15,7 +15,9 @@ namespace MoonProject.Gameplay
     [DisallowMultipleComponent]
     public sealed class HomeBase : MonoBehaviour
     {
-        /// <summary>Height (m) above a slot where the slot hint floats (just above where the relic's base sits).</summary>
+        /// <summary>
+        /// Height (m) above a slot where the slot hint floats (just above where the relic's base sits).
+        /// </summary>
         private const float HintLift = 0.15f;
 
         [Tooltip("Base tuning (Assets/_Project/Data/Tuning/Gameplay/BaseTuning.asset).")]

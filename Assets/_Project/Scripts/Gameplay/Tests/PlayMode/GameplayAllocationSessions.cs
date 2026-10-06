@@ -11,7 +11,9 @@ using Object = UnityEngine.Object;
 
 namespace MoonProject.Gameplay.PlayModeTests
 {
-    /// <summary>The feel checklist's last line: a busy steady state of every gameplay system allocates nothing.</summary>
+    /// <summary>
+    /// The feel checklist's last line: a busy steady state of every gameplay system allocates nothing.
+    /// </summary>
     public sealed class GameplayAllocationSessions : InputTestFixture
     {
         private InputActionAsset _controls;
@@ -87,7 +89,9 @@ namespace MoonProject.Gameplay.PlayModeTests
                 "bytes allocated by 300 frames of relics, scrap, sonar, excavation, tether, home, tower and hints");
         }
 
-        /// <summary>Runs the frames and returns how many had no hint at all (asserted outside the measurement).</summary>
+        /// <summary>
+        /// Runs the frames and returns how many had no hint at all (asserted outside the measurement).
+        /// </summary>
         private int Run(List<Action> updates, IInteractionHints hints, int frames)
         {
             int silent = 0;

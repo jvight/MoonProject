@@ -90,7 +90,9 @@ namespace MoonProject.Gameplay
 
         public Vector3 Position => _particles.transform.position;
 
-        /// <summary>Moves the swirl to <paramref name="ground"/> and emits at <paramref name="amount"/> (0..1).</summary>
+        /// <summary>
+        /// Moves the swirl to <paramref name="ground"/> and emits at <paramref name="amount"/> (0..1).
+        /// </summary>
         public void Emit(Vector3 ground, float amount)
         {
             if (amount > 0f)
