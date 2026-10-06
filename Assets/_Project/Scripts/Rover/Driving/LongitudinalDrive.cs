@@ -55,6 +55,18 @@ namespace MoonProject.Rover
                 settings.TopSpeed, deltaTime);
         }
 
+        /// <summary>
+        /// Acceleration that eases 07 to a stop and keeps it there while gameplay holds it still: the coast-shaped
+        /// curve with its own stop time, clamped so it never pushes through zero (no rebound).
+        /// </summary>
+        public static float HoldAcceleration(DriveSettings settings, float forwardSpeed, float deltaTime)
+        {
+            float speed = Mathf.Abs(forwardSpeed);
+            float motion = forwardSpeed >= 0f ? 1f : -1f;
+            return -motion * Decelerate(settings.HoldDeceleration, settings.HoldEase, speed, speed, settings.TopSpeed,
+                deltaTime);
+        }
+
         /// <summary>Power-law deceleration, clamped so it removes at most <paramref name="limit"/> this step.</summary>
         private static float Decelerate(float peak, float ease, float amount, float limit, float topSpeed,
             float deltaTime)

@@ -20,4 +20,21 @@ namespace MoonProject.Core.Events
         /// <summary>Seconds spent airborne before this landing.</summary>
         public float AirTime { get; }
     }
+
+    /// <summary>
+    /// 07 began waking up at the start of the session (eye opening, design ruling 8): the moment the radio crackles on.
+    /// </summary>
+    public readonly struct RoverAwoke
+    {
+        public RoverAwoke(Vector3 position, bool wokenByPlayer)
+        {
+            Position = position;
+            WokenByPlayer = wokenByPlayer;
+        }
+
+        public Vector3 Position { get; }
+
+        /// <summary>True when the player drove before 07 woke on its own (the wake-up is quick, not slow).</summary>
+        public bool WokenByPlayer { get; }
+    }
 }

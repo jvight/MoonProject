@@ -47,6 +47,42 @@ namespace MoonProject.Rover
         [Range(0.3f, 2f)]
         [SerializeField] private float _gazeDamping = 0.92f;
 
+        [Header("Waking (first boot of a session)")]
+        [Tooltip("Start each session with 07 asleep: lid shut, eye dark, head bowed (design ruling 8).")]
+        [SerializeField] private bool _sleepOnBoot = true;
+
+        [Tooltip("Seconds after the scene settles before 07 starts waking on its own.")]
+        [Range(0f, 10f)]
+        [SerializeField] private float _wakeDelay = 1.5f;
+
+        [Tooltip("Seconds the slow wake-up takes, from the first glow to settling into normal behaviour.")]
+        [Range(0.5f, 15f)]
+        [SerializeField] private float _wakeDuration = 5f;
+
+        [Tooltip("Fraction of the wake-up by which the eye is fully open and glowing.")]
+        [Range(0.05f, 1f)]
+        [SerializeField] private float _wakeEyesOpenBy = 0.55f;
+
+        [Tooltip("Fraction of the wake-up at which the head starts lifting toward Earth.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _wakeGlanceFrom = 0.25f;
+
+        [Tooltip("Fraction of the wake-up after which the head turns back to normal behaviour.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _wakeGlanceUntil = 0.8f;
+
+        [Tooltip("Half-life (s) of waking up when the player drives during the intro: quick, but eased.")]
+        [Range(0.02f, 1f)]
+        [SerializeField] private float _hurriedWakeHalfLife = 0.12f;
+
+        [Tooltip("How far (deg) the head is bowed while asleep.")]
+        [Range(0f, 40f)]
+        [SerializeField] private float _sleepHeadBow = 14f;
+
+        [Tooltip("Perk-up strength once 07 has woken up on its own (a small 'hello').")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _awakenedPerk = 0.35f;
+
         [Header("Idle (left alone)")]
         [Tooltip("Below this speed (m/s), with no drive input, 07 counts as standing still.")]
         [Range(0f, 2f)]
@@ -301,6 +337,24 @@ namespace MoonProject.Rover
         public float IdleGazeFrequency => _idleGazeFrequency;
 
         public float GazeDamping => _gazeDamping;
+
+        public bool SleepOnBoot => _sleepOnBoot;
+
+        public float WakeDelay => _wakeDelay;
+
+        public float WakeDuration => _wakeDuration;
+
+        public float WakeEyesOpenBy => _wakeEyesOpenBy;
+
+        public float WakeGlanceFrom => Mathf.Min(_wakeGlanceFrom, _wakeEyesOpenBy);
+
+        public float WakeGlanceUntil => Mathf.Max(_wakeGlanceUntil, _wakeEyesOpenBy);
+
+        public float HurriedWakeHalfLife => _hurriedWakeHalfLife;
+
+        public float SleepHeadBow => _sleepHeadBow;
+
+        public float AwakenedPerk => _awakenedPerk;
 
         public float StillSpeed => _stillSpeed;
 
