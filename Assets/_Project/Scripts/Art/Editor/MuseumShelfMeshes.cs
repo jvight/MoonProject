@@ -96,13 +96,16 @@ namespace MoonProject.Art.Editor
             float stripeWidth = width / stripes;
             float depth = Depth + overhang;
             Matrix4x4 awning = At(new Vector3(0f, Top + 0.13f, 0.12f), new Vector3(10f, 0f, 0f));
+            Vector3 awningUp = awning.MultiplyVector(Vector3.up);
             for (int i = 0; i < stripes; i++)
             {
                 float x = -width * 0.5f + (i + 0.5f) * stripeWidth;
                 PaletteSwatch swatch = i % 2 == 0 ? PaletteSwatch.Honey : PaletteSwatch.Enamel;
                 b.Box(awning * At(x, 0f, 0f), new Vector3(stripeWidth, 0.07f, depth), swatch);
-                b.Prism(awning * At(new Vector3(x, -0.06f, depth * 0.5f), AlongZ, new Vector3(1f, 1f, 1f)),
-                    stripeWidth * 0.48f, 0.03f, 8, swatch);
+                Vector3 hem = awning.MultiplyPoint3x4(new Vector3(x, -0.03f, depth * 0.5f));
+                MeshRange scallop = b.Prism(awning * At(new Vector3(x, -0.03f, depth * 0.5f), AlongZ),
+                    stripeWidth * 0.46f, 0.03f, 10, swatch);
+                b.Shave(scallop, awningUp, Vector3.Dot(awningUp, hem));
             }
 
             b.Box(awning * At(0f, -0.005f, depth * 0.5f), new Vector3(width, 0.06f, 0.035f), PaletteSwatch.WarmAccent);
