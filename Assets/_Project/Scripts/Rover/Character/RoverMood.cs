@@ -37,6 +37,7 @@ namespace MoonProject.Rover
         private DampedSpring _wing;
         private DampedSpring _sigh;
         private DampedSpring _nod;
+        private float _effortTarget;
 
         /// <param name="startAsleep">Open the session with 07 asleep (first boot).</param>
         public RoverMood(RoverCharacterTuning tuning, uint seed, bool startAsleep)
@@ -84,6 +85,9 @@ namespace MoonProject.Rover
         /// <summary>Antenna tip brightness multiplier.</summary>
         public float TipGlow { get; private set; }
 
+        /// <summary>Effort while charging a Hover-Jump, 0..1 (eased): a squint and a gathered head.</summary>
+        public float Effort { get; private set; }
+
         /// <summary>Contented-nod swell, 0 .. ~1.</summary>
         public float Nodding => Mathf.Clamp(_nod.Value, 0f, MaxSwell);
 
@@ -95,7 +99,8 @@ namespace MoonProject.Rover
             - _tuning.OofHeadDip * Oof
             - _tuning.NodDepth * Nodding
             - _tuning.SighHeadDrop * Sighing
-            - _tuning.SleepHeadBow * _wake.Sleep;
+            - _tuning.SleepHeadBow * _wake.Sleep
+            - _tuning.EffortHeadDip * Effort;
 
         /// <summary>
         /// Advances the mood. <paramref name="driveInput"/> is the magnitude of the drive stick/keys (0..1).
@@ -132,6 +137,7 @@ namespace MoonProject.Rover
             _perk.Step(0f, _tuning.PerkFrequency, 1f, deltaTime);
             _oof.Step(0f, _tuning.OofFrequency, 1f, deltaTime);
 
+            Effort = Smoothing.Damp(Effort, _effortTarget, _tuning.EffortHalfLife, deltaTime);
             StepBreath(deltaTime);
             StepBlink(deltaTime);
             StepTip(deltaTime);
@@ -144,6 +150,19 @@ namespace MoonProject.Rover
 
             bool wokeFromDaydream = wasDaydreaming && !daydreaming && idleBefore >= _tuning.WakeThreshold;
             return wokeFromDaydream ? MoodTransition.WokeFromDaydream : MoodTransition.None;
+        }
+
+        /// <summary>How hard 07 is gathering itself for a Hover-Jump right now (the charge, 0..1).</summary>
+        public void SetEffort(float effort)
+        {
+            _effortTarget = Mathf.Clamp01(effort);
+        }
+
+        /// <summary>Joy (perk strength) for touching down after <paramref name="airTime"/> s in the air.</summary>
+        public float LandingJoy(float airTime)
+        {
+            float flight = Mathf.InverseLerp(_tuning.JoyAirTimeFrom, _tuning.JoyAirTimeFull, airTime);
+            return _tuning.FlightLandingJoy * flight;
         }
 
         /// <summary>Starts a perk-up swell peaking at <paramref name="strength"/> (0..1).</summary>
@@ -239,7 +258,8 @@ namespace MoonProject.Rover
             float lid = Mathf.Lerp(_tuning.ActiveLid, _tuning.IdleLid, Idle)
                 - _tuning.PerkWiden * Perk
                 + _tuning.OofSquint * Oof
-                + _tuning.SighLidDroop * Sighing;
+                + _tuning.SighLidDroop * Sighing
+                + _tuning.EffortSquint * Effort;
             lid = Mathf.Lerp(Mathf.Clamp01(lid), 1f, _wake.Sleep);
             LidClosure = lid + (1f - lid) * Blink;
 

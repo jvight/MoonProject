@@ -88,6 +88,14 @@ namespace MoonProject.Rover
         [Range(0.5f, 15f)]
         [SerializeField] private float _landingFullImpact = 4f;
 
+        [Tooltip("Air time (s) from which a landing ring grows with the flight, even when the touchdown is soft.")]
+        [Range(0f, 10f)]
+        [SerializeField] private float _landingRingAirTimeFrom = 1f;
+
+        [Tooltip("Air time (s) that earns the biggest ring (a cushioned Hover-Jump still lands in a fine cloud).")]
+        [Range(0.5f, 15f)]
+        [SerializeField] private float _landingRingAirTimeFull = 3.5f;
+
         [Tooltip("Puffs in the softest ring.")]
         [Range(1, 200)]
         [SerializeField] private int _landingMinCount = 10;
@@ -161,6 +169,10 @@ namespace MoonProject.Rover
         public float LandingMinImpact => _landingMinImpact;
 
         public float LandingFullImpact => _landingFullImpact;
+
+        public float LandingRingAirTimeFrom => _landingRingAirTimeFrom;
+
+        public float LandingRingAirTimeFull => Mathf.Max(_landingRingAirTimeFrom + 0.01f, _landingRingAirTimeFull);
 
         public int LandingMinCount => _landingMinCount;
 

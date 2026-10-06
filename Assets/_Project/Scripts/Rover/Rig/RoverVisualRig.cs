@@ -208,7 +208,7 @@ namespace MoonProject.Rover
             _lastPosition = position;
             transform.SetPositionAndRotation(position, rotation);
 
-            _jelly.Step(_rover.LocalAcceleration, deltaTime);
+            _jelly.Step(_rover.LocalAcceleration, _rover.JumpCharge, deltaTime);
             ApplyChassis();
             StepSuspension(deltaTime);
             ApplyWheels(travelled, deltaTime);
