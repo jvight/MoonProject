@@ -49,6 +49,26 @@ namespace MoonProject.Art
         }
 
         /// <summary>
+        /// Placement at the midpoint of a segment with local +Z pointing from <paramref name="from"/> to
+        /// <paramref name="to"/> (local +Y stays as close to world up as possible). Size a box's Z by the segment
+        /// length for struts and arms; compose with <see cref="AlongZ"/> for prisms.
+        /// </summary>
+        public static Matrix4x4 Along(Vector3 from, Vector3 to)
+        {
+            Vector3 direction = to - from;
+            float length = direction.magnitude;
+            if (length < 1e-6f)
+            {
+                throw new System.ArgumentException("Segment endpoints coincide.", nameof(to));
+            }
+
+            direction /= length;
+            float pitch = Mathf.Asin(Mathf.Clamp(-direction.y, -1f, 1f)) * Mathf.Rad2Deg;
+            float yaw = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg;
+            return At((from + to) * 0.5f, new Vector3(pitch, yaw, 0f));
+        }
+
+        /// <summary>
         /// Same rotation as <c>Quaternion.Euler</c> (Z, then X, then Y), composed in managed code so recipe math makes
         /// no native engine calls and is bit-identical wherever it runs.
         /// </summary>

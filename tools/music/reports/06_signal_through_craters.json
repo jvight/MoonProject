@@ -1,0 +1,142 @@
+{
+  "id": "06_signal_through_craters",
+  "title": "Signal Through Craters",
+  "bpm": 68.0,
+  "swing": 0.57,
+  "key": "B minor",
+  "family": "i-VI-III-VII",
+  "drums": "halftime",
+  "ending": "fade",
+  "form": [
+    "Intro x4",
+    "A x8",
+    "B x8",
+    "Break x4",
+    "A' x8",
+    "Outro x4"
+  ],
+  "pcm_sha256": "4045c0c9e69b1b2066a99bf3b9cdeb24425a2a0e1c7b65c054eb514de013a58e",
+  "measured": {
+    "duration_s": 127.8588,
+    "loudness_lufs": -15.9772,
+    "true_peak_dbtp": -1.4417,
+    "sample_peak_db": -1.4472,
+    "rms_db": -17.3551,
+    "crest_db": 15.9078,
+    "centroid_hz": 1373.4812,
+    "above_8k_db": -36.9721,
+    "bands": {
+      "low": 0.6819,
+      "mid": 0.3168,
+      "high": 0.0013
+    },
+    "correlation": 0.8977,
+    "correlation_below_150hz": 0.9972,
+    "clipped_samples": 0,
+    "silent_gaps": [],
+    "dc": 0.0,
+    "chroma_out_of_key": 0.0232,
+    "beat_clarity": 1.7869
+  },
+  "theory": {
+    "chord_chart": {
+      "Intro": [
+        "| Bm9 | Gmaj7 | Dmaj9 | A6/9 |"
+      ],
+      "A": [
+        "| Bm9 | Gmaj9 | Dmaj9 | A6/9 |",
+        "| Bm9 | G6/9 | Dmaj9 | A13sus4 |"
+      ],
+      "B": [
+        "| Em9 | F#m7 | Gmaj9 | A6/9 |",
+        "| Em9 | Dmaj9 | Gmaj9 | F#7sus4 |"
+      ],
+      "Break": [
+        "| Bm11 | Gmaj7 | Dmaj9 | A6/9 |"
+      ],
+      "A'": [
+        "| Bm11 | Gmaj9#11 | Dmaj9 | A13 A13 |",
+        "| Bm9 | Gmaj9 | Dmaj9 | A13sus4 |"
+      ],
+      "Outro": [
+        "| Bm9 | Gmaj9 | Dmaj9 | Bm11 |"
+      ]
+    },
+    "out_of_key_notes": 0,
+    "borrowed_chords": [],
+    "lead_notes": 33,
+    "lead_non_pentatonic": 0,
+    "lead_strong_off_chord": 0,
+    "lead_clashes": 0,
+    "parts": {
+      "keys": 308,
+      "pad": 54,
+      "bass": 82,
+      "lead.musicbox": 21,
+      "lead.flute": 12
+    },
+    "drum_hits": 867
+  },
+  "gates": {
+    "loudness_lufs": {
+      "value": -15.9772,
+      "pass": true
+    },
+    "true_peak_dbtp": {
+      "value": -1.4417,
+      "pass": true
+    },
+    "duration_s": {
+      "value": 127.8588,
+      "pass": true
+    },
+    "clipped_samples": {
+      "value": 0,
+      "pass": true
+    },
+    "silent_gaps": {
+      "value": 0,
+      "pass": true
+    },
+    "correlation_below_150hz": {
+      "value": 0.9972,
+      "pass": true
+    },
+    "correlation": {
+      "value": 0.8977,
+      "pass": true
+    },
+    "high_band_share": {
+      "value": 0.0013,
+      "pass": true
+    },
+    "above_8k_db": {
+      "value": -36.9721,
+      "pass": true
+    },
+    "chroma_out_of_key": {
+      "value": 0.0232,
+      "pass": true
+    },
+    "beat_clarity": {
+      "value": 1.7869,
+      "pass": true
+    },
+    "out_of_key_notes": {
+      "value": 0,
+      "pass": true
+    },
+    "lead_non_pentatonic": {
+      "value": 0,
+      "pass": true
+    },
+    "lead_strong_off_chord": {
+      "value": 0,
+      "pass": true
+    },
+    "lead_clashes": {
+      "value": 0,
+      "pass": true
+    }
+  }
+}
