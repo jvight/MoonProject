@@ -97,7 +97,9 @@ namespace MoonProject.Rover.Editor
                     ("_body", body),
                     ("_sphere", collider),
                     ("_visualRig", rig),
-                    ("_wheelFx", wheelFx));
+                    ("_wheelFx", wheelFx),
+                    ("_tetherOrigin", BuildWiring.Node(m, RoverModelNodes.TetherOrigin)),
+                    ("_cargoSocket", BuildWiring.Node(m, RoverModelNodes.CargoSocket)));
 
                 BuildWiring.Assign(bodyLanguage,
                     ("_tuning", characterTuning),

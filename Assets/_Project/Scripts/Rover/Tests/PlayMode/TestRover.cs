@@ -48,6 +48,12 @@ namespace MoonProject.Rover.PlayModeTests
 
         public Transform Chassis { get; private set; }
 
+        public Transform Neck { get; private set; }
+
+        public Transform Head { get; private set; }
+
+        public Transform SolarWing { get; private set; }
+
         public RoverTuning Tuning => (RoverTuning)_tunings[0];
 
         /// <summary>Builds, wires and initialises a rover at <paramref name="position"/>, yaw in degrees.</summary>
@@ -105,7 +111,7 @@ namespace MoonProject.Rover.PlayModeTests
             Transform eye = Shape(PrimitiveType.Sphere, head, new Vector3(0f, 0f, 0.18f), Vector3.one * 0.22f,
                 material);
             eye.name = RoverModelNodes.Eye;
-            Node(RoverModelNodes.TetherOrigin, eye, Vector3.zero);
+            Transform tetherOrigin = Node(RoverModelNodes.TetherOrigin, eye, Vector3.zero);
             Transform eyelid = Node(RoverModelNodes.Eyelid, head, new Vector3(0f, 0f, 0.15f));
             Transform wing = Node(RoverModelNodes.SolarWing, model, new Vector3(0f, 1.08f, -0.5f));
             Transform antenna = Node(RoverModelNodes.Antenna, model, new Vector3(0.45f, 1.05f, -0.75f));
@@ -113,7 +119,7 @@ namespace MoonProject.Rover.PlayModeTests
                 material);
             tip.name = RoverModelNodes.AntennaTip;
             Transform lampSocket = Node(RoverModelNodes.HeadlampSocket, model, new Vector3(0f, 0.55f, 1f));
-            Node(RoverModelNodes.CargoSocket, model, new Vector3(0f, 1.05f, -0.4f));
+            Transform cargo = Node(RoverModelNodes.CargoSocket, model, new Vector3(0f, 1.05f, -0.4f));
             Transform dustLeft = Node(RoverModelNodes.DustSocketLeft, model, new Vector3(-HalfTrack, 0f, -AxleSpacing));
             Transform dustRight =
                 Node(RoverModelNodes.DustSocketRight, model, new Vector3(HalfTrack, 0f, -AxleSpacing));
@@ -134,7 +140,7 @@ namespace MoonProject.Rover.PlayModeTests
                 ("_dustRight", Particles("DustRight", fxHost, material)),
                 ("_landingDust", Particles("LandingDust", fxHost, material)));
             Assign(controller, ("_tuning", tuning), ("_body", rigidbody), ("_sphere", collider), ("_visualRig", rig),
-                ("_wheelFx", fx));
+                ("_wheelFx", fx), ("_tetherOrigin", tetherOrigin), ("_cargoSocket", cargo));
             Assign(body, ("_tuning", characterTuning), ("_rover", controller), ("_rig", rig), ("_neck", neck),
                 ("_head", head), ("_eyelid", eyelid), ("_solarWing", wing),
                 ("_eyeRenderer", eye.GetComponent<MeshRenderer>()),
@@ -153,6 +159,9 @@ namespace MoonProject.Rover.PlayModeTests
                 CameraRig = cameraRig,
                 Camera = camera,
                 Chassis = chassis,
+                Neck = neck,
+                Head = head,
+                SolarWing = wing,
             };
 
             var context = new GameContext(new EventBus(), input);
@@ -180,7 +189,8 @@ namespace MoonProject.Rover.PlayModeTests
             var bump = drone.gameObject.AddComponent<RoverCameraBump>();
             var decollider = drone.gameObject.AddComponent<CinemachineDecollider>();
             var deoccluder = drone.gameObject.AddComponent<CinemachineDeoccluder>();
-            Assign(rig, ("_tuning", tuning), ("_target", target), ("_camera", virtualCamera), ("_orbit", orbit),
+            Assign(rig, ("_tuning", tuning), ("_target", target), ("_viewCamera", camera), ("_camera", virtualCamera),
+                ("_orbit", orbit),
                 ("_composer", composer), ("_decollider", decollider), ("_deoccluder", deoccluder), ("_bump", bump));
             return root;
         }

@@ -43,10 +43,10 @@ namespace MoonProject.Rover.PlayModeTests
             plain.transform.localPosition = Vector3.down;
             Material = plain.GetComponent<MeshRenderer>().sharedMaterial;
 
-            var sun = new GameObject("Sun").AddComponent<Light>();
-            sun.type = LightType.Directional;
-            sun.transform.SetParent(_root.transform, false);
-            sun.transform.rotation = Quaternion.Euler(SunPitch, SunYaw, 0f);
+            Sun = new GameObject("Sun").AddComponent<Light>();
+            Sun.type = LightType.Directional;
+            Sun.transform.SetParent(_root.transform, false);
+            Sun.transform.rotation = Quaternion.Euler(SunPitch, SunYaw, 0f);
 
             BuildBump();
             BuildSlope();
@@ -56,6 +56,9 @@ namespace MoonProject.Rover.PlayModeTests
         public Material Material { get; }
 
         public ITerrainQuery Terrain { get; } = new TestTerrain(Height);
+
+        /// <summary>The single directional light (no shadows unless a test turns them on).</summary>
+        public Light Sun { get; }
 
         public static float Height(float x, float z)
         {

@@ -1,3 +1,4 @@
+using System;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -5,6 +6,10 @@ namespace MoonProject.Rover.Tests
 {
     public sealed class GazeTests
     {
+        private readonly object _sonar = new object();
+        private readonly object _tether = new object();
+        private readonly object _scrap = new object();
+
         [Test]
         public void Angles_StraightAhead_IsZero()
         {
@@ -37,24 +42,81 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void Requests_HighestPriorityWins_AndNullClears()
+        public void Requests_Empty_HasNoTarget()
+        {
+            Assert.IsFalse(new GazeRequests().TryGetTop(out _));
+        }
+
+        [Test]
+        public void Requests_HighestPriorityWins()
         {
             var requests = new GazeRequests();
-            Assert.IsFalse(requests.TryGetTop(out _, out _));
-
-            requests.Set(GazePriority.Glance, new Vector3(1f, 0f, 0f));
-            requests.Set(GazePriority.Focus, new Vector3(3f, 0f, 0f));
-            requests.Set(GazePriority.Interest, new Vector3(2f, 0f, 0f));
-            Assert.IsTrue(requests.TryGetTop(out Vector3 point, out GazePriority priority));
-            Assert.AreEqual(GazePriority.Focus, priority);
+            requests.Set(_scrap, new Vector3(1f, 0f, 0f), 0);
+            requests.Set(_tether, new Vector3(3f, 0f, 0f), 2);
+            requests.Set(_sonar, new Vector3(2f, 0f, 0f), 1);
+            Assert.IsTrue(requests.TryGetTop(out Vector3 point));
             Assert.AreEqual(3f, point.x);
+        }
 
-            requests.Set(GazePriority.Focus, null);
-            requests.TryGetTop(out point, out priority);
-            Assert.AreEqual(GazePriority.Interest, priority);
+        [Test]
+        public void Requests_TiesGoToTheMostRecent_AndUpdatesKeepTheirPlace()
+        {
+            var requests = new GazeRequests();
+            requests.Set(_sonar, new Vector3(1f, 0f, 0f), 1);
+            requests.Set(_scrap, new Vector3(2f, 0f, 0f), 1);
+            requests.TryGetTop(out Vector3 point);
+            Assert.AreEqual(2f, point.x);
 
-            requests.Clear();
-            Assert.IsFalse(requests.TryGetTop(out _, out _));
+            requests.Set(_sonar, new Vector3(5f, 0f, 0f), 1);
+            requests.TryGetTop(out point);
+            Assert.AreEqual(2f, point.x, "Refreshing an older request does not steal the tie.");
+        }
+
+        [Test]
+        public void Requests_SameOwnerUpdatesTargetAndPriority()
+        {
+            var requests = new GazeRequests();
+            requests.Set(_tether, new Vector3(1f, 0f, 0f), 0);
+            requests.Set(_sonar, new Vector3(2f, 0f, 0f), 1);
+            requests.Set(_tether, new Vector3(4f, 0f, 0f), 5);
+            Assert.AreEqual(2, requests.Count);
+            requests.TryGetTop(out Vector3 point);
+            Assert.AreEqual(4f, point.x);
+        }
+
+        [Test]
+        public void Requests_ClearWithdrawsOnlyThatOwner()
+        {
+            var requests = new GazeRequests();
+            requests.Set(_tether, new Vector3(1f, 0f, 0f), 5);
+            requests.Set(_sonar, new Vector3(2f, 0f, 0f), 1);
+            requests.Clear(_tether);
+            requests.Clear(_scrap);
+            requests.TryGetTop(out Vector3 point);
+            Assert.AreEqual(2f, point.x);
+            requests.Clear(_sonar);
+            Assert.IsFalse(requests.TryGetTop(out _));
+        }
+
+        [Test]
+        public void Requests_NullOwner_Throws()
+        {
+            Assert.Throws<ArgumentNullException>(() => new GazeRequests().Set(null, Vector3.zero, 0));
+        }
+
+        [Test]
+        public void Requests_UpdatingEveryFrame_KeepsOneEntryPerOwner()
+        {
+            var requests = new GazeRequests();
+            requests.Set(_tether, Vector3.one, 2);
+            requests.Set(_sonar, Vector3.one, 1);
+            for (int i = 0; i < 10; i++)
+            {
+                requests.Set(_tether, new Vector3(i, 0f, 0f), 2);
+                requests.TryGetTop(out _);
+            }
+
+            Assert.AreEqual(2, requests.Count);
         }
     }
 }

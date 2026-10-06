@@ -1,46 +1,109 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace MoonProject.Rover
 {
-    /// <summary>One gaze target slot per <see cref="GazePriority"/>; the highest occupied slot wins.</summary>
+    /// <summary>
+    /// The gaze requests behind <c>IRoverRig.SetGazeTarget</c>: one per owner; the highest priority wins and ties go
+    /// to the request that started most recently. Updating an owner's target keeps its place in that order, so two
+    /// equal requests refreshed every frame never flip-flop. No allocations while within the initial capacity.
+    /// </summary>
     public sealed class GazeRequests
     {
-        private const int SlotCount = (int)GazePriority.Focus + 1;
+        private const int DefaultCapacity = 8;
 
-        private readonly Vector3[] _points = new Vector3[SlotCount];
-        private readonly bool[] _active = new bool[SlotCount];
+        private readonly List<Request> _requests;
+        private long _nextSequence;
 
-        public void Set(GazePriority priority, Vector3? worldPoint)
+        public GazeRequests(int capacity = DefaultCapacity)
         {
-            int slot = (int)priority;
-            _active[slot] = worldPoint.HasValue;
-            _points[slot] = worldPoint.GetValueOrDefault();
+            _requests = new List<Request>(capacity);
         }
 
-        public void Clear()
+        /// <summary>Active requests.</summary>
+        public int Count => _requests.Count;
+
+        /// <summary>Adds or updates <paramref name="owner"/>'s request.</summary>
+        public void Set(object owner, Vector3 worldPoint, int priority)
         {
-            for (int i = 0; i < SlotCount; i++)
+            if (owner == null)
             {
-                _active[i] = false;
+                throw new ArgumentNullException(nameof(owner));
+            }
+
+            int index = IndexOf(owner);
+            if (index >= 0)
+            {
+                _requests[index] = new Request(owner, worldPoint, priority, _requests[index].Sequence);
+                return;
+            }
+
+            _requests.Add(new Request(owner, worldPoint, priority, _nextSequence++));
+        }
+
+        /// <summary>Withdraws <paramref name="owner"/>'s request; no-op when it has none.</summary>
+        public void Clear(object owner)
+        {
+            int index = IndexOf(owner);
+            if (index >= 0)
+            {
+                _requests.RemoveAt(index);
             }
         }
 
-        /// <summary>The highest-priority active target, if any.</summary>
-        public bool TryGetTop(out Vector3 worldPoint, out GazePriority priority)
+        /// <summary>The winning request's target, if any request is active.</summary>
+        public bool TryGetTop(out Vector3 worldPoint)
         {
-            for (int i = SlotCount - 1; i >= 0; i--)
+            int best = -1;
+            for (int i = 0; i < _requests.Count; i++)
             {
-                if (_active[i])
+                if (best < 0 || Outranks(_requests[i], _requests[best]))
                 {
-                    worldPoint = _points[i];
-                    priority = (GazePriority)i;
-                    return true;
+                    best = i;
                 }
             }
 
-            worldPoint = Vector3.zero;
-            priority = GazePriority.Glance;
-            return false;
+            worldPoint = best >= 0 ? _requests[best].Point : Vector3.zero;
+            return best >= 0;
+        }
+
+        private static bool Outranks(Request candidate, Request current)
+        {
+            return candidate.Priority > current.Priority
+                || (candidate.Priority == current.Priority && candidate.Sequence > current.Sequence);
+        }
+
+        private int IndexOf(object owner)
+        {
+            for (int i = 0; i < _requests.Count; i++)
+            {
+                if (ReferenceEquals(_requests[i].Owner, owner))
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        private readonly struct Request
+        {
+            public Request(object owner, Vector3 point, int priority, long sequence)
+            {
+                Owner = owner;
+                Point = point;
+                Priority = priority;
+                Sequence = sequence;
+            }
+
+            public object Owner { get; }
+
+            public Vector3 Point { get; }
+
+            public int Priority { get; }
+
+            public long Sequence { get; }
         }
     }
 }
