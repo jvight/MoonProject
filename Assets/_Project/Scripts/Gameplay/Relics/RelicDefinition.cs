@@ -23,7 +23,8 @@ namespace MoonProject.Gameplay
         [Tooltip("Physics mass (kg). Heavier relics surface slower and trail more lazily on the tether.")]
         [Range(1f, 40f)] [SerializeField] private float _mass = 6f;
 
-        [Tooltip("Art prefab (Generated/Art/Relics/Relic_<id>.prefab): meshes only, pivot at the centre of mass.")]
+        [Tooltip("Art prefab (Generated/Art/Relics/Relic_<id>.prefab): meshes only, pivot at the centre of mass. " +
+                 "Empty until Art delivers it: such a relic stays a buried site that answers the sonar.")]
         [SerializeField] private GameObject _prefab;
 
         [Tooltip("Note this relic answers the sonar with: index into the D major pentatonic ladder starting at D5 " +
@@ -43,6 +44,9 @@ namespace MoonProject.Gameplay
 
         public GameObject Prefab => _prefab;
 
+        /// <summary>True once Art's model exists; without it the relic answers the sonar but stays buried.</summary>
+        public bool HasModel => _prefab != null;
+
         public int AnswerNote => _answerNote;
 
         public RelicPlacementBand Placement => _placement;
@@ -60,12 +64,7 @@ namespace MoonProject.Gameplay
                 return $"'{_id}' has no display name";
             }
 
-            if (string.IsNullOrWhiteSpace(_memory))
-            {
-                return $"'{_id}' has no memory text";
-            }
-
-            return _prefab == null ? $"'{_id}' has no prefab (Generated/Art/Relics/Relic_{_id}.prefab)" : null;
+            return string.IsNullOrWhiteSpace(_memory) ? $"'{_id}' has no memory text" : null;
         }
 
         internal void Populate(string id, string displayName, string memory, float mass, GameObject prefab,

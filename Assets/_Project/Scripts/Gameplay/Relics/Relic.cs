@@ -17,6 +17,9 @@ namespace MoonProject.Gameplay
         private const string VisualName = "Visual";
         private const string HaloName = "Halo";
 
+        /// <summary>Collider size (m) of a relic whose Art model has not landed yet (it never leaves the ground).</summary>
+        private const float ModelPendingSize = 0.5f;
+
         private readonly List<GlowRenderer> _halos = new List<GlowRenderer>();
         private RelicTuning _tuning;
         private float _aimHighlight;
@@ -61,6 +64,12 @@ namespace MoonProject.Gameplay
         /// <summary>Where the relic rests when fully buried (top just below the surface).</summary>
         public Vector3 BuriedPosition { get; private set; }
 
+        /// <summary>
+        /// Can the beam lift it? Only a relic whose Art model exists (the others stay buried sites for now) and that
+        /// is still in the ground.
+        /// </summary>
+        public bool CanBeLifted => Definition.HasModel && (State == RelicState.Buried || State == RelicState.Surfacing);
+
         /// <summary>A loose relic nobody holds: the only kind the tether may grab.</summary>
         public bool IsTetherable => State == RelicState.Loose && !IsTethered;
 
@@ -80,12 +89,17 @@ namespace MoonProject.Gameplay
             Site = site;
             gameObject.layer = Layers.Relic;
 
-            GameObject visual = Instantiate(definition.Prefab, transform, false);
-            visual.name = VisualName;
-            Bounds bounds = LocalBounds(visual.transform);
+            var bounds = new Bounds(Vector3.zero, Vector3.one * ModelPendingSize);
+            if (definition.HasModel)
+            {
+                GameObject visual = Instantiate(definition.Prefab, transform, false);
+                visual.name = VisualName;
+                bounds = LocalBounds(visual.transform);
+                SetLayer(visual.transform, Layers.Relic);
+                BuildHalos(visual.transform, haloMaterial);
+            }
+
             Radius = Mathf.Max(0.05f, bounds.extents.magnitude);
-            SetLayer(visual.transform, Layers.Relic);
-            BuildHalos(visual.transform, haloMaterial);
 
             Collider = gameObject.AddComponent<BoxCollider>();
             Collider.center = bounds.center;
