@@ -15,8 +15,8 @@ namespace MoonProject.World
     {
         private const uint PatchSalt = 0x632BE59Bu;
 
-        // Dither is scaled up for rock so the two rock tones interleave along their border.
-        private const float RockDitherScale = 4f;
+        // Rock uses a fraction of the dust dither: enough to interleave the two rock tones along their border.
+        private const float RockDitherScale = 1.4f;
 
         private readonly TerrainPaintSettings _settings;
         private readonly GradientNoise _patchNoise;
@@ -25,6 +25,7 @@ namespace MoonProject.World
         private readonly float _rimRockCos;
         private readonly float _lightX;
         private readonly float _lightZ;
+        private readonly float _leeFacing;
 
         /// <param name="lightDirection">Direction toward the earthlight (only its horizontal part is used).</param>
         public TerrainPainter(TerrainPaintSettings settings, int seed, Vector3 lightDirection)
@@ -41,6 +42,7 @@ namespace MoonProject.World
             }
 
             horizontal.Normalize();
+            _leeFacing = -Mathf.Sin(settings.LeeTilt * Mathf.Deg2Rad);
             _lightX = horizontal.x;
             _lightZ = horizontal.y;
         }
@@ -86,7 +88,8 @@ namespace MoonProject.World
                 return PaletteSwatch.DustLight;
             }
 
-            return tone < _settings.ShadowTone ? PaletteSwatch.DustShadow : PaletteSwatch.DustMid;
+            bool leeShade = facing < _leeFacing && tone < _settings.ShadowTone;
+            return leeShade ? PaletteSwatch.DustShadow : PaletteSwatch.DustMid;
         }
     }
 }

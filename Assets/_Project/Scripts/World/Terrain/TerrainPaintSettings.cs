@@ -65,15 +65,22 @@ namespace MoonProject.World
 
         [Tooltip("Dust tone above which a face is light dust.")]
         [Range(-1f, 1f)]
-        [SerializeField] private float _lightTone = 0.35f;
+        [SerializeField] private float _lightTone = 0.25f;
 
-        [Tooltip("Dust tone below which a face is shadow dust.")]
+        [Tooltip("Dust tone below which a lee facet (see lee tilt) is shadow dust.")]
         [Range(-2f, 1f)]
-        [SerializeField] private float _shadowTone = -0.45f;
+        [SerializeField] private float _shadowTone = -0.3f;
 
-        [Tooltip("Per-triangle random nudge of the tone: neighbouring facets differ a little, like hand painting.")]
-        [Range(0f, 0.5f)]
-        [SerializeField] private float _dither = 0.14f;
+        [Tooltip("Only facets tilted at least this far away from the earthlight (degrees) can be shadow dust: dune " +
+            "lee sides and crater outer walls darken, flat ground never shows dark speckles.")]
+        [Range(0f, 30f)]
+        [SerializeField] private float _leeTilt = 6f;
+
+        [Tooltip("Per-triangle random nudge of the tone (uniform +-). A little wider than the light threshold on " +
+            "purpose: about 8% of flat facets (more in light patches) turn light dust, a hand-painted mosaic that " +
+            "shows the facets; tilting toward the earthlight raises the odds, so lit dune sides turn mostly light.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _dither = 0.3f;
 
         [Header("Craters and highlands")]
         [Tooltip("Crater bowl weight (0 = edge, 1 = centre) where the shaded crater wall starts.")]
@@ -106,6 +113,7 @@ namespace MoonProject.World
         public float FacingStrength => _facingStrength;
         public float LightTone => _lightTone;
         public float ShadowTone => _shadowTone;
+        public float LeeTilt => _leeTilt;
         public float Dither => _dither;
         public float CraterShadow => _craterShadow;
         public float CraterFloor => _craterFloor;

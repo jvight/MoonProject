@@ -17,7 +17,7 @@ namespace MoonProject.World
 
         [Tooltip("Distance beyond the pad over which dunes and the bowl fade in. Larger = softer pad edge.")]
         [Range(5f, 120f)]
-        [SerializeField] private float _padBlend = 45f;
+        [SerializeField] private float _padBlend = 30f;
 
         [Header("Basin floor")]
         [Tooltip("Radius where the drivable floor ends and the rim foothills begin (before the rim warp).")]
@@ -172,6 +172,15 @@ namespace MoonProject.World
         [Range(40f, 800f)]
         [SerializeField] private float _duneCoverageWavelength = 230f;
 
+        [Tooltip("Height of the fine grain undulation that gives every floor facet its own tilt, so the low-poly " +
+            "facets read even on gentle ground. It is driven over: keep it small.")]
+        [Range(0f, 0.5f)]
+        [SerializeField] private float _grainHeight = 0.12f;
+
+        [Tooltip("Wavelength of the grain undulation, metres (a few terrain cells).")]
+        [Range(2f, 40f)]
+        [SerializeField] private float _grainWavelength = 7f;
+
         [Header("Craters")]
         [Tooltip("Number of seeded small and medium craters on the floor.")]
         [Range(0, 80)]
@@ -188,7 +197,7 @@ namespace MoonProject.World
         [SerializeField] private Vector2 _mediumCraterRadius = new Vector2(16f, 34f);
 
         [Tooltip("Crater depth as a fraction of its radius (x = min, y = max). Keep low: walls must stay drivable.")]
-        [SerializeField] private Vector2 _craterDepthRatio = new Vector2(0.06f, 0.1f);
+        [SerializeField] private Vector2 _craterDepthRatio = new Vector2(0.06f, 0.095f);
 
         [Tooltip("Raised rim height as a fraction of the crater radius (x = min, y = max). Low = old, soft crater.")]
         [SerializeField] private Vector2 _craterRimRatio = new Vector2(0.02f, 0.045f);
@@ -272,6 +281,8 @@ namespace MoonProject.World
         public float DuneMeanderWavelength => _duneMeanderWavelength;
         public float DuneCoverageMin => _duneCoverageMin;
         public float DuneCoverageWavelength => _duneCoverageWavelength;
+        public float GrainHeight => _grainHeight;
+        public float GrainWavelength => _grainWavelength;
         public int CraterCount => _craterCount;
         public float SmallCraterFraction => _smallCraterFraction;
         public Vector2 SmallCraterRadius => _smallCraterRadius;

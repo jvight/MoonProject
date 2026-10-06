@@ -42,6 +42,7 @@ namespace MoonProject.World
         private const uint CragSalt = 0xFD7046C5u;
         private const uint FarRangeSalt = 0xB55A4F09u;
         private const uint GullySalt = 0x94D049BBu;
+        private const uint GrainSalt = 0x3243F6A9u;
 
         // The gullies rib the wall between this fraction of the foothills and the crest.
         private const float GullyStartInFoothills = 0.4f;
@@ -59,6 +60,7 @@ namespace MoonProject.World
         private readonly GradientNoise _cragNoise;
         private readonly GradientNoise _farRangeNoise;
         private readonly GradientNoise _gullyNoise;
+        private readonly GradientNoise _grainNoise;
 
         private readonly float _padRadius;
         private readonly float _padRadiusSq;
@@ -107,6 +109,8 @@ namespace MoonProject.World
         private readonly float _invDuneMeanderWavelength;
         private readonly float _duneCoverageMin;
         private readonly float _invDuneCoverageWavelength;
+        private readonly float _grainHeight;
+        private readonly float _invGrainWavelength;
         private readonly float _farRangeStart;
         private readonly float _farRangeFull;
         private readonly float _farRangeHeight;
@@ -150,6 +154,7 @@ namespace MoonProject.World
             _cragNoise = new GradientNoise(Hashing.Mix(baseSeed ^ CragSalt));
             _farRangeNoise = new GradientNoise(Hashing.Mix(baseSeed ^ FarRangeSalt));
             _gullyNoise = new GradientNoise(Hashing.Mix(baseSeed ^ GullySalt));
+            _grainNoise = new GradientNoise(Hashing.Mix(baseSeed ^ GrainSalt));
 
             _padRadius = settings.PadRadius;
             _padRadiusSq = _padRadius * _padRadius;
@@ -207,6 +212,8 @@ namespace MoonProject.World
             _invDuneMeanderWavelength = 1f / settings.DuneMeanderWavelength;
             _duneCoverageMin = settings.DuneCoverageMin;
             _invDuneCoverageWavelength = 1f / settings.DuneCoverageWavelength;
+            _grainHeight = settings.GrainHeight;
+            _invGrainWavelength = 1f / settings.GrainWavelength;
 
             _farRangeStart = settings.FarRangeStart;
             _farRangeFull = settings.FarRangeFull;
@@ -366,7 +373,8 @@ namespace MoonProject.World
                 float floorDetail = floorWeight * SmoothMath.Smootherstep(_padRadius, _padBlendEnd, r);
                 if (floorDetail > 0f)
                 {
-                    height += floorDetail * (Hills(x, z) + calm * Dunes(x, z));
+                    height += floorDetail * (Hills(x, z) + calm * Dunes(x, z)
+                        + _grainHeight * _grainNoise.Sample(x * _invGrainWavelength, z * _invGrainWavelength));
                 }
             }
 
