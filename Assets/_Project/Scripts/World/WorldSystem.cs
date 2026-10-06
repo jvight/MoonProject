@@ -32,6 +32,9 @@ namespace MoonProject.World
         [Tooltip("Material drawing Earth (Generated/World/M_Earth.mat, shader MoonProject/World/LofiEarth).")]
         [SerializeField] private Material _earthMaterial;
 
+        [Tooltip("The beacon on The Peak; placed on the summit and breathed by the beacon settings.")]
+        [SerializeField] private PeakBeacon _peakBeacon;
+
         [Tooltip("The directional earthlight; its colour, intensity and angle come from the atmosphere settings.")]
         [SerializeField] private Light _earthlight;
 
@@ -114,6 +117,8 @@ namespace MoonProject.World
             LastScatter = _scatterBuilder.Build(_generatedRoot.transform, scatterPlan.GetAwaiter().GetResult(),
                 scatterSettings, _settings.Mesh.ChunkSize, _pebbleRocks, _boulderRocks, _terrainMaterial, hideFlags);
             BuildEarth(hideFlags);
+            _peakBeacon.transform.position = Layout.PeakPosition;
+            _peakBeacon.Configure(_settings.Beacon);
         }
 
         private void BuildEarth(HideFlags hideFlags)
@@ -212,6 +217,11 @@ namespace MoonProject.World
             if (rocks != null)
             {
                 return rocks;
+            }
+
+            if (_peakBeacon == null)
+            {
+                return "Peak Beacon is not assigned.";
             }
 
             if (_earthlight == null || _earthlight.transform.IsChildOf(transform))

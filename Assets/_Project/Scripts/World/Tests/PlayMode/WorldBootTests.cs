@@ -35,6 +35,7 @@ namespace MoonProject.World.PlayModeTests
 
         private GameObject _host;
         private GameObject _lightHost;
+        private PeakBeacon _beacon;
         private InputReader _input;
 
         [UnityTest]
@@ -52,6 +53,8 @@ namespace MoonProject.World.PlayModeTests
             serialized.FindProperty("_terrainMaterial").objectReferenceValue = Load<Material>(TerrainMaterialPath);
             serialized.FindProperty("_earthMaterial").objectReferenceValue = Load<Material>(EarthMaterialPath);
             serialized.FindProperty("_earthlight").objectReferenceValue = light;
+            _beacon = CreateBeaconHost("PeakBeacon");
+            serialized.FindProperty("_peakBeacon").objectReferenceValue = _beacon;
             AssignRocks(serialized.FindProperty("_pebbleRocks"), PebbleRocks);
             AssignRocks(serialized.FindProperty("_boulderRocks"), BoulderRocks);
             serialized.ApplyModifiedPropertiesWithoutUndo();
@@ -88,6 +91,8 @@ namespace MoonProject.World.PlayModeTests
 
             ScatterBuildReport scatter = world.LastScatter;
             Assert.Greater(scatter.Pebbles, 0);
+            Assert.AreEqual(layout.PeakPosition, _beacon.transform.position, "the beacon stands on the summit");
+
             int boulderColliders = Physics.OverlapSphere(Vector3.zero, ScatterProbeRadius, Layers.PropMask).Length;
             Assert.AreEqual(scatter.Boulders, boulderColliders, "every boulder needs one collider on Layers.Prop");
 
@@ -115,10 +120,30 @@ namespace MoonProject.World.PlayModeTests
                 Object.Destroy(_lightHost);
             }
 
+            if (_beacon != null)
+            {
+                Object.Destroy(_beacon.gameObject);
+            }
+
             _input?.Dispose();
         }
 
 #if UNITY_EDITOR
+        private static PeakBeacon CreateBeaconHost(string name)
+        {
+            var host = new GameObject(name);
+            var lamp = new GameObject("Lamp").AddComponent<MeshRenderer>();
+            lamp.transform.SetParent(host.transform, false);
+            var halo = new GameObject("Halo").AddComponent<MeshRenderer>();
+            halo.transform.SetParent(host.transform, false);
+            var beacon = host.AddComponent<PeakBeacon>();
+            var serialized = new SerializedObject(beacon);
+            serialized.FindProperty("_lamp").objectReferenceValue = lamp;
+            serialized.FindProperty("_halo").objectReferenceValue = halo;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            return beacon;
+        }
+
         private static void AssignRocks(SerializedProperty property, string[] names)
         {
             property.arraySize = names.Length;
