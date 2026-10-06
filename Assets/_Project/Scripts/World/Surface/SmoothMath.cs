@@ -8,7 +8,7 @@ namespace MoonProject.World
     /// </summary>
     public static class SmoothMath
     {
-        /// <summary>Ken Perlin's C2 smootherstep: 0 below <paramref name="edge0"/>, 1 above <paramref name="edge1"/>.</summary>
+        /// <summary>C2 smootherstep: 0 below <paramref name="edge0"/>, 1 above <paramref name="edge1"/>.</summary>
         public static float Smootherstep(float edge0, float edge1, float x)
         {
             float t = (x - edge0) / (edge1 - edge0);
@@ -32,7 +32,7 @@ namespace MoonProject.World
             return s > 0f ? s * s : 0f;
         }
 
-        /// <summary>C-infinity approximation of |x| that is rounded within roughly <paramref name="softness"/> of 0.</summary>
+        /// <summary>C-infinity approximation of |x|, rounded within about <paramref name="softness"/> of 0.</summary>
         public static float SmoothAbs(float x, float softness)
         {
             return (float)Math.Sqrt(x * x + softness * softness) - softness;
@@ -43,7 +43,7 @@ namespace MoonProject.World
             return a + (b - a) * t;
         }
 
-        /// <summary>Floor to int without the Math.Floor double round trip (the noise hot path calls this a lot).</summary>
+        /// <summary>Floor to int without the Math.Floor double round trip (hot path of the noise).</summary>
         public static int FastFloor(float x)
         {
             int i = (int)x;

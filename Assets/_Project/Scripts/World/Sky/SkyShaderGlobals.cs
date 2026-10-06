@@ -9,7 +9,7 @@ namespace MoonProject.World
     /// </summary>
     public static class SkyShaderGlobals
     {
-        /// <summary>Earth's axial tilt, degrees: its spin axis leans this much from "up" as seen from the moon.</summary>
+        /// <summary>Earth's axial tilt, degrees: its spin axis leans this much from "up" seen from the moon.</summary>
         public const float EarthAxialTilt = 23.4f;
 
         private const float EarthRimExponent = 2.6f;

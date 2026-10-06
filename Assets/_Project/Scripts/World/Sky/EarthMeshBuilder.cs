@@ -44,8 +44,8 @@ namespace MoonProject.World
             var cloudNoise = new GradientNoise(Hashing.Mix((uint)seed ^ CloudSalt));
             for (int f = 0; f < faces; f++)
             {
-                Vector3 c = (vertices[triangles[f * 3]] + vertices[triangles[f * 3 + 1]] + vertices[triangles[f * 3 + 2]])
-                    .normalized;
+                Vector3 c = (vertices[triangles[f * 3]] + vertices[triangles[f * 3 + 1]]
+                    + vertices[triangles[f * 3 + 2]]).normalized;
                 centers[f] = c;
                 land[f] = SphereNoise(landNoise, c * LandScale);
                 cloud[f] = SphereNoise(cloudNoise, c * CloudScale);
@@ -88,7 +88,7 @@ namespace MoonProject.World
             return mesh;
         }
 
-        /// <summary>Continuous noise on the sphere: three orthogonal planar samples summed (no seams, no poles).</summary>
+        /// <summary>Seamless noise on the sphere: three orthogonal planar samples summed.</summary>
         private static float SphereNoise(GradientNoise noise, Vector3 p)
         {
             return noise.Fractal(p.x, p.y, 3, 2f, 0.5f) + noise.Fractal(p.y + 17.3f, p.z, 3, 2f, 0.5f)

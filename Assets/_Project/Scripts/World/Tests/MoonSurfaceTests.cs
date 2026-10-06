@@ -213,7 +213,8 @@ namespace MoonProject.World.Tests
                 float distance = crater.Center.magnitude;
                 Assert.Greater(distance - crater.OuterRadius, _settings.PadRadius + _settings.PadBlend * 0.5f,
                     $"crater {i} intrudes on the base");
-                Assert.Less(distance + crater.OuterRadius, _surface.DrivableRadius + 1f, $"crater {i} leaves the floor");
+                Assert.Less(distance + crater.OuterRadius, _surface.DrivableRadius + 1f,
+                    $"crater {i} leaves the floor");
                 Assert.Less(_surface.SampleHeight(crater.Center.x, crater.Center.y),
                     _surface.SampleHeight(crater.Center.x + crater.Radius, crater.Center.y), $"crater {i} has no dip");
                 if (crater.IsPlayBowl)
