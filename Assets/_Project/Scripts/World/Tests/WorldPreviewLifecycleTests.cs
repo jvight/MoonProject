@@ -51,7 +51,8 @@ namespace MoonProject.World.Tests
                 Object.DestroyImmediate(host);
             }
 
-            foreach (Light light in Object.FindObjectsByType<Light>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            foreach (Light light in Object.FindObjectsByType<Light>(FindObjectsInactive.Include,
+                         FindObjectsSortMode.None))
             {
                 if (light.gameObject.name == LightName)
                 {
@@ -71,8 +72,20 @@ namespace MoonProject.World.Tests
             serialized.FindProperty("_terrainMaterial").objectReferenceValue = Load<Material>(ArtPaths.LowPolyMaterial);
             serialized.FindProperty("_earthMaterial").objectReferenceValue = Load<Material>(WorldPaths.EarthMaterial);
             serialized.FindProperty("_earthlight").objectReferenceValue = light;
+            AssignRocks(serialized.FindProperty("_pebbleRocks"), WorldPaths.PebbleRocks);
+            AssignRocks(serialized.FindProperty("_boulderRocks"), WorldPaths.BoulderRocks);
             serialized.ApplyModifiedPropertiesWithoutUndo();
             host.SetActive(true);
+        }
+
+        private static void AssignRocks(SerializedProperty property, string[] names)
+        {
+            property.arraySize = names.Length;
+            for (int i = 0; i < names.Length; i++)
+            {
+                property.GetArrayElementAtIndex(i).objectReferenceValue =
+                    Load<Mesh>($"{ArtPaths.RockFolder}/{names[i]}.asset");
+            }
         }
 
         private static GameObject FindHost()
@@ -119,7 +132,8 @@ namespace MoonProject.World.Tests
             int count = 0;
             foreach (Mesh mesh in Resources.FindObjectsOfTypeAll<Mesh>())
             {
-                if (mesh.name.StartsWith(ChunkPrefix) || mesh.name.StartsWith("TerrainBackdrop") || mesh.name == "Earth")
+                if (mesh.name.StartsWith(ChunkPrefix) || mesh.name.StartsWith("TerrainBackdrop") || mesh.name == "Earth"
+                    || mesh.name.StartsWith("Pebbles_") || mesh.name.StartsWith("Boulders_"))
                 {
                     count++;
                 }

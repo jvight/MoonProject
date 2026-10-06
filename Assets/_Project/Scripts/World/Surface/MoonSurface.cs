@@ -298,6 +298,15 @@ namespace MoonProject.World
             return WarpedRadius(x, z, r) < _floorRadius && dx * dx + dz * dz > _peakFootprintSq;
         }
 
+        /// <summary>
+        /// Signed distance from (x, z) to the warped floor edge where the rim foothills begin: positive on the floor,
+        /// negative on the rim.
+        /// </summary>
+        public float FloorEdgeDistance(float x, float z)
+        {
+            return _floorRadius - WarpedRadius(x, z, Mathf.Sqrt(x * x + z * z));
+        }
+
         /// <summary>Height plus region weights at world XZ.</summary>
         public SurfaceSample Sample(float x, float z)
         {

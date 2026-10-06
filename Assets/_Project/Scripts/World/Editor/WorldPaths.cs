@@ -10,6 +10,12 @@ namespace MoonProject.World.Editor
         public const string VolumeProfile = GeneratedRoot + "/WorldVolumeProfile.asset";
         public const string SkyShader = "MoonProject/World/LofiSky";
         public const string EarthShader = "MoonProject/World/LofiEarth";
+        /// <summary>Art rocks (Generated/Art/Rocks) used as pebbles: the pebble, rounded and slab shapes.</summary>
+        public static readonly string[] PebbleRocks = { "Rock_00", "Rock_01", "Rock_03" };
+
+        /// <summary>Art rocks used as boulders: the jagged, big rounded and boulder shapes.</summary>
+        public static readonly string[] BoulderRocks = { "Rock_02", "Rock_04", "Rock_05" };
+
         public const string CapturePoses = "Assets/_Project/Scripts/World/Editor/Captures/world_views.json";
     }
 }

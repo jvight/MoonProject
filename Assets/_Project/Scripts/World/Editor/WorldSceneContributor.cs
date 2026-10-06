@@ -37,21 +37,41 @@ namespace MoonProject.World.Editor
             Assign(serialized, "_settings", settings);
             Assign(serialized, "_terrainMaterial", terrainMaterial);
             Assign(serialized, "_earthMaterial", earthMaterial);
+            AssignRocks(context, serialized, "_pebbleRocks", WorldPaths.PebbleRocks);
+            AssignRocks(context, serialized, "_boulderRocks", WorldPaths.BoulderRocks);
             Assign(serialized, "_earthlight", earthlight);
             serialized.ApplyModifiedPropertiesWithoutUndo();
             context.AddSystem(world);
         }
 
+        private static void AssignRocks(SceneBuildContext context, SerializedObject serialized, string field,
+            string[] names)
+        {
+            SerializedProperty property = Require(serialized, field);
+            property.arraySize = names.Length;
+            for (int i = 0; i < names.Length; i++)
+            {
+                property.GetArrayElementAtIndex(i).objectReferenceValue =
+                    context.LoadAsset<Mesh>($"{ArtPaths.RockFolder}/{names[i]}.asset");
+            }
+        }
+
         private static void Assign(SerializedObject serialized, string field, Object value)
+        {
+            Require(serialized, field).objectReferenceValue = value;
+        }
+
+        private static SerializedProperty Require(SerializedObject serialized, string field)
         {
             SerializedProperty property = serialized.FindProperty(field);
             if (property == null)
             {
                 throw new System.InvalidOperationException(
-                    $"{nameof(WorldSystem)} has no serialized field '{field}'; update {nameof(WorldSceneContributor)}.");
+                    $"{nameof(WorldSystem)} has no serialized field '{field}'; " +
+                    $"update {nameof(WorldSceneContributor)}.");
             }
 
-            property.objectReferenceValue = value;
+            return property;
         }
     }
 }
