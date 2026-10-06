@@ -10,12 +10,13 @@ namespace MoonProject.Rover.PlayModeTests
         private const float NormalStep = 0.05f;
         private readonly Func<float, float, float> _height;
 
-        public TestTerrain(Func<float, float, float> height)
+        public TestTerrain(Func<float, float, float> height, Rect playableArea)
         {
             _height = height ?? throw new ArgumentNullException(nameof(height));
+            PlayableArea = playableArea;
         }
 
-        public Rect PlayableArea => new Rect(-500f, -500f, 1000f, 1000f);
+        public Rect PlayableArea { get; }
 
         public bool IsDrivable(float x, float z)
         {

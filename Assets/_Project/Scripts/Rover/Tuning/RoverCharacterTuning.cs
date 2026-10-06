@@ -249,6 +249,10 @@ namespace MoonProject.Rover
             + "recent).")]
         [SerializeField] private int _reactionGazePriority = -1;
 
+        [Tooltip("Perk-up strength when 07 is lifted out of a stuck spot (a little 'whee', never a scold).")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _recoveryPerk = 0.5f;
+
         [Tooltip("Nod strength (0..1) when a relic is placed on a museum shelf.")]
         [Range(0f, 1f)]
         [SerializeField] private float _depositNod = 1f;
@@ -435,6 +439,8 @@ namespace MoonProject.Rover
         public float RelicGlanceSeconds => _relicGlanceSeconds;
 
         public int ReactionGazePriority => _reactionGazePriority;
+
+        public float RecoveryPerk => _recoveryPerk;
 
         public float DepositNod => _depositNod;
 

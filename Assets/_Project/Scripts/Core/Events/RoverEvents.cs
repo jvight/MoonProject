@@ -37,4 +37,24 @@ namespace MoonProject.Core.Events
         /// <summary>True when the player drove before 07 woke on its own (the wake-up is quick, not slow).</summary>
         public bool WokenByPlayer { get; }
     }
+
+    /// <summary>
+    /// 07 got stuck and is being lifted gently to a nearby open spot (design ruling 7). The lift is a continuous arc
+    /// from <see cref="From"/> to <see cref="To"/> lasting <see cref="Duration"/> seconds; audio or UI may soften it.
+    /// </summary>
+    public readonly struct RoverRecovering
+    {
+        public RoverRecovering(Vector3 from, Vector3 to, float duration)
+        {
+            From = from;
+            To = to;
+            Duration = duration;
+        }
+
+        public Vector3 From { get; }
+
+        public Vector3 To { get; }
+
+        public float Duration { get; }
+    }
 }
