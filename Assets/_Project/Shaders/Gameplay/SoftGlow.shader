@@ -1,7 +1,8 @@
 // Soft, unlit light for gameplay effects: sonar rings, site beacons, the tractor beam, the tether, scrap flashes,
 // relic halos and dust. One shader, configured per material:
 //   uv.x runs ALONG an effect (beam length, ring circumference), uv.y runs ACROSS it (beam width, ring band).
-//   _EdgeSoftness fades both sides of uv.y, _LengthFade fades both ends of uv.x, bands scroll along uv.x,
+//   _AcrossIn / _AcrossOut fade uv.y in from 0 and out toward 1 (unequal widths give a wave a soft leading edge
+//   and a longer tail), _LengthFade fades both ends of uv.x, bands scroll along uv.x,
 //   _FresnelMix brightens silhouettes (halos, flashes), _CoreMix softens them away (light columns, beam cones),
 //   _RadialMask turns a quad into a soft round sprite (dust).
 // Output is premultiplied: SrcBlend One with DstBlend One is additive light, DstBlend OneMinusSrcAlpha is soft matter.
@@ -13,7 +14,8 @@ Shader "MoonProject/Gameplay/SoftGlow"
     {
         [HDR] _Color ("Color", Color) = (0.37, 0.95, 1, 1)
         _Intensity ("Intensity", Float) = 1
-        _EdgeSoftness ("Across Softness (uv.y)", Range(0, 0.5)) = 0.5
+        _AcrossIn ("Across Fade From uv.y 0", Range(0, 1)) = 0.5
+        _AcrossOut ("Across Fade Toward uv.y 1", Range(0, 1)) = 0.5
         _LengthFade ("Along Fade (uv.x ends)", Range(0, 0.5)) = 0
         _BandCount ("Band Count (along)", Float) = 0
         _BandSpeed ("Band Speed", Float) = 0
@@ -59,7 +61,8 @@ Shader "MoonProject/Gameplay/SoftGlow"
             CBUFFER_START(UnityPerMaterial)
                 half4 _Color;
                 half _Intensity;
-                half _EdgeSoftness;
+                half _AcrossIn;
+                half _AcrossOut;
                 half _LengthFade;
                 half _BandCount;
                 half _BandSpeed;
@@ -107,18 +110,21 @@ Shader "MoonProject/Gameplay/SoftGlow"
                 return output;
             }
 
-            // 0 at both edges of a 0..1 coordinate, 1 inside; softness 0 disables the fade.
-            half EdgeMask(half coordinate, half softness)
+            // 0 at both edges of a 0..1 coordinate, 1 inside: fades in over fadeIn from 0 and out over fadeOut toward
+            // 1, each with a smooth step; a width of 0 disables that side's fade.
+            half EdgeMask(half coordinate, half fadeIn, half fadeOut)
             {
-                half width = max(softness, 1e-4);
-                half mask = saturate(coordinate / width) * saturate((1.0 - coordinate) / width);
-                return mask * mask * (3.0 - 2.0 * mask);
+                half rise = saturate(coordinate / max(fadeIn, 1e-4));
+                half fall = saturate((1.0 - coordinate) / max(fadeOut, 1e-4));
+                rise = rise * rise * (3.0 - 2.0 * rise);
+                fall = fall * fall * (3.0 - 2.0 * fall);
+                return rise * fall;
             }
 
             half4 Frag(Varyings input) : SV_Target
             {
-                half across = EdgeMask(input.uv.y, _EdgeSoftness);
-                half along = EdgeMask(input.uv.x, _LengthFade);
+                half across = EdgeMask(input.uv.y, _AcrossIn, _AcrossOut);
+                half along = EdgeMask(input.uv.x, _LengthFade, _LengthFade);
 
                 half wave = 0.5 + 0.5 * sin((input.uv.x * _BandCount - _Time.y * _BandSpeed) * TWO_PI);
                 half bands = 1.0 - _BandStrength * wave;

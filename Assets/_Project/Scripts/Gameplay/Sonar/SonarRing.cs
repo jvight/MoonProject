@@ -64,7 +64,7 @@ namespace MoonProject.Gameplay
             Vector2 widths = _tuning.RingWidth;
             float width = Mathf.Lerp(widths.x, widths.y, Ease.OutQuad(t));
             float fadeIn = _tuning.RingFadeIn <= 0f ? 1f : Mathf.Clamp01(elapsed / _tuning.RingFadeIn);
-            float fadeOut = 1f - Ease.InOutSine(t);
+            float fadeOut = Mathf.Pow(1f - t, _tuning.RingFadeCurve);
             _ring.Rebuild(_terrain, _origin, Radius - width * 0.5f, Radius + width * 0.5f, _tuning.RingLift);
             _glow.Apply(_tuning.RingIntensity * Ease.OutCubic(fadeIn) * fadeOut);
         }

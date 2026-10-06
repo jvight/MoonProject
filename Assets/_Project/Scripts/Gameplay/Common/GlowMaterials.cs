@@ -17,7 +17,8 @@ namespace MoonProject.Gameplay
 
         private static readonly int ColorId = Shader.PropertyToID("_Color");
         private static readonly int IntensityId = Shader.PropertyToID("_Intensity");
-        private static readonly int EdgeSoftnessId = Shader.PropertyToID("_EdgeSoftness");
+        private static readonly int AcrossInId = Shader.PropertyToID("_AcrossIn");
+        private static readonly int AcrossOutId = Shader.PropertyToID("_AcrossOut");
         private static readonly int LengthFadeId = Shader.PropertyToID("_LengthFade");
         private static readonly int BandCountId = Shader.PropertyToID("_BandCount");
         private static readonly int BandSpeedId = Shader.PropertyToID("_BandSpeed");
@@ -59,8 +60,13 @@ namespace MoonProject.Gameplay
             switch (role)
             {
                 case GlowRole.SonarRing:
+                    // A calm wave: a soft leading edge (outside) and a long, fading tail behind it (inside).
+                    material.SetFloat(AcrossInId, 0.8f);
+                    material.SetFloat(AcrossOutId, 0.2f);
+                    break;
                 case GlowRole.SiteRing:
-                    material.SetFloat(EdgeSoftnessId, 0.5f);
+                    material.SetFloat(AcrossInId, 0.5f);
+                    material.SetFloat(AcrossOutId, 0.5f);
                     break;
                 case GlowRole.SitePillar:
                     Set(material, tech, edge: 0f, length: 0.4f, bands: 3f, speed: 0.25f, strength: 0.35f,
@@ -94,7 +100,8 @@ namespace MoonProject.Gameplay
                     break;
                 case GlowRole.WarmRing:
                     material.SetColor(ColorId, warm);
-                    material.SetFloat(EdgeSoftnessId, 0.5f);
+                    material.SetFloat(AcrossInId, 0.5f);
+                    material.SetFloat(AcrossOutId, 0.5f);
                     break;
                 case GlowRole.WarmGlow:
                     material.SetColor(ColorId, warm);
@@ -112,7 +119,8 @@ namespace MoonProject.Gameplay
         {
             material.SetColor(ColorId, color);
             material.SetFloat(IntensityId, 1f);
-            material.SetFloat(EdgeSoftnessId, edge);
+            material.SetFloat(AcrossInId, edge);
+            material.SetFloat(AcrossOutId, edge);
             material.SetFloat(LengthFadeId, length);
             material.SetFloat(BandCountId, bands);
             material.SetFloat(BandSpeedId, speed);

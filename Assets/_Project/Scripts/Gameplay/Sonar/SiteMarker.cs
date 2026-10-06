@@ -101,8 +101,10 @@ namespace MoonProject.Gameplay
             }
 
             float age = now - _answerTime;
-            float pillar = _brightness * MarkerEnvelope.Pillar(age, _tuning.PillarLifetime, _tuning.PillarRise,
-                _tuning.PillarFade);
+            float breath = 1f - _tuning.PillarBreathDepth *
+                (1f - MarkerEnvelope.Breath(age, _tuning.PillarBreathPeriod));
+            float pillar = _brightness * breath * MarkerEnvelope.Pillar(age, _tuning.PillarLifetime,
+                _tuning.PillarRise, _tuning.PillarFade);
             if (now >= _dismissTime)
             {
                 pillar *= 1f - Ease.InOutSine((now - _dismissTime) / DismissFade);
@@ -112,10 +114,10 @@ namespace MoonProject.Gameplay
 
             float pulse = _brightness / Mathf.Max(0.01f, _tuning.NearBrightness) * _tuning.SiteRingPulse *
                           MarkerEnvelope.Pulse(age, _tuning.SiteRingPulseDuration);
-            float breath = inGround && relic.Discovered && !moved
+            float glow = inGround && relic.Discovered && !moved
                 ? _tuning.DiscoveredGlow * (0.6f + 0.4f * MarkerEnvelope.Breath(now, _tuning.BreathPeriod))
                 : 0f;
-            _ringGlow.Apply(Mathf.Max(pulse, breath));
+            _ringGlow.Apply(Mathf.Max(pulse, glow));
         }
 
         public void Dispose()

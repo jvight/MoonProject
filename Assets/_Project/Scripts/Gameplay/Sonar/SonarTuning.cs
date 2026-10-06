@@ -23,8 +23,8 @@ namespace MoonProject.Gameplay
         [Tooltip("Seconds the ring takes to reach full range (it slows as it spreads: ease-out).")]
         [Range(0.5f, 15f)] [SerializeField] private float _ringDuration = 5f;
 
-        [Tooltip("Ring band width (m) at the start and at full range.")]
-        [SerializeField] private Vector2 _ringWidth = new Vector2(1.2f, 6f);
+        [Tooltip("Ring band width (m) at the start and at full range: a thin, calm wave.")]
+        [SerializeField] private Vector2 _ringWidth = new Vector2(0.6f, 2.8f);
 
         [Tooltip("Seconds the ring takes to fade in.")]
         [Range(0f, 1f)] [SerializeField] private float _ringFadeIn = 0.15f;
@@ -35,8 +35,11 @@ namespace MoonProject.Gameplay
         [Tooltip("Ring segments (more hug dunes better at full range).")]
         [Range(16, 512)] [SerializeField] private int _ringSegments = 192;
 
-        [Tooltip("Ring brightness at the start (HDR); it fades as it spreads.")]
-        [Range(0f, 10f)] [SerializeField] private float _ringIntensity = 2.2f;
+        [Tooltip("Ring brightness at the start. Keep it at or below 1 so the ring stays cyan instead of blooming white.")]
+        [Range(0f, 4f)] [SerializeField] private float _ringIntensity = 0.85f;
+
+        [Tooltip("How the ring fades as it travels: brightness = (1 - progress) ^ this. Above 1 fades early and long.")]
+        [Range(0.5f, 4f)] [SerializeField] private float _ringFadeCurve = 1.6f;
 
         [Tooltip("Rings that can be on screen at once.")]
         [Range(1, 4)] [SerializeField] private int _ringPoolSize = 2;
@@ -46,20 +49,26 @@ namespace MoonProject.Gameplay
         [Range(0f, 2f)] [SerializeField] private float _answerLag = 0.3f;
 
         [Tooltip("Pillar brightness of an answer right next to 07 (closer answers glow brighter).")]
-        [Range(0f, 10f)] [SerializeField] private float _nearBrightness = 3f;
+        [Range(0f, 10f)] [SerializeField] private float _nearBrightness = 1.6f;
 
         [Tooltip("Pillar brightness of an answer at the edge of the range.")]
-        [Range(0f, 10f)] [SerializeField] private float _farBrightness = 1.2f;
+        [Range(0f, 10f)] [SerializeField] private float _farBrightness = 1f;
 
         [Header("Markers")]
         [Tooltip("Seconds an answer's light pillar stays on the horizon.")]
         [Range(1f, 120f)] [SerializeField] private float _pillarLifetime = 20f;
 
-        [Tooltip("Seconds the pillar takes to rise to full brightness.")]
-        [Range(0.05f, 3f)] [SerializeField] private float _pillarRise = 0.6f;
+        [Tooltip("Seconds the pillar takes to fade in.")]
+        [Range(0.05f, 6f)] [SerializeField] private float _pillarRise = 1.5f;
 
         [Tooltip("Seconds over which the pillar fades out at the end of its life.")]
-        [Range(0.5f, 30f)] [SerializeField] private float _pillarFade = 6f;
+        [Range(0.5f, 30f)] [SerializeField] private float _pillarFade = 8f;
+
+        [Tooltip("How deeply a standing pillar breathes (0 = steady, 0.5 = dims to half).")]
+        [Range(0f, 0.8f)] [SerializeField] private float _pillarBreathDepth = 0.25f;
+
+        [Tooltip("Seconds per breath of a standing pillar.")]
+        [Range(0.5f, 15f)] [SerializeField] private float _pillarBreathPeriod = 3.5f;
 
         [Tooltip("Pillar height (m): tall enough to read over dunes from far away.")]
         [Range(2f, 100f)] [SerializeField] private float _pillarHeight = 32f;
@@ -104,6 +113,7 @@ namespace MoonProject.Gameplay
         public float RingLift => _ringLift;
         public int RingSegments => _ringSegments;
         public float RingIntensity => _ringIntensity;
+        public float RingFadeCurve => _ringFadeCurve;
         public int RingPoolSize => _ringPoolSize;
         public float AnswerLag => _answerLag;
         public float NearBrightness => _nearBrightness;
@@ -111,6 +121,8 @@ namespace MoonProject.Gameplay
         public float PillarLifetime => _pillarLifetime;
         public float PillarRise => _pillarRise;
         public float PillarFade => _pillarFade;
+        public float PillarBreathDepth => _pillarBreathDepth;
+        public float PillarBreathPeriod => _pillarBreathPeriod;
         public float PillarHeight => _pillarHeight;
         public float PillarRadius => _pillarRadius;
         public Vector2 SiteRing => _siteRing;

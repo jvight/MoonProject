@@ -6,8 +6,9 @@ namespace MoonProject.Gameplay
     public static class MarkerEnvelope
     {
         /// <summary>
-        /// A light pillar <paramref name="age"/> seconds after its answer: eases up over <paramref name="rise"/>,
-        /// holds, then fades out over the last <paramref name="fade"/> seconds of <paramref name="lifetime"/>.
+        /// A light pillar <paramref name="age"/> seconds after its answer: fades in softly over
+        /// <paramref name="rise"/>, holds, then fades out over the last <paramref name="fade"/> seconds of
+        /// <paramref name="lifetime"/>.
         /// </summary>
         public static float Pillar(float age, float lifetime, float rise, float fade)
         {
@@ -16,7 +17,7 @@ namespace MoonProject.Gameplay
                 return 0f;
             }
 
-            float up = rise <= 0f ? 1f : Ease.OutCubic(age / rise);
+            float up = rise <= 0f ? 1f : Ease.InOutSine(age / rise);
             float remaining = lifetime - age;
             float down = fade <= 0f ? 1f : Ease.InOutSine(remaining / Mathf.Min(fade, lifetime));
             return Mathf.Min(up, down);
