@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fcab53864b8c7474da840bd02ea76db3, type: 3}
+  m_Name: RadioTuning
+  m_EditorClassIdentifier: 
+  _signalRadius: 60
+  _falloffWidth: 140
+  _radiusEaseTime: 3
+  _claritySmoothing: 0.8
+  _minCutoff: 800
+  _maxCutoff: 22000
+  _cutoffCurve: 1.2
+  _lowpassResonance: 1.1
+  _staticMaxVolume: 0.75
+  _staticFloorVolume: 0.05
+  _staticCurve: 1.3
+  _musicVolumeAtNoSignal: 0.45
+  _maxWobbleCents: 18
+  _baseWobbleCents: 1
+  _wowRate: 0.55
+  _flutterRate: 6.3
+  _flutterShare: 0.3
+  _crossfadeDuration: 2.4
+  _crossfadeLead: 1.4
+  _outgoingFadeEnd: 0.55
+  _incomingStart: 0.45
+  _tuneStaticBoost: 0.35
+  _tuneSwishVolume: 0.8
+  _startFadeIn: 3

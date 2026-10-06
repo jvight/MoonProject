@@ -12,7 +12,7 @@ namespace MoonProject.Art.Editor
     /// </summary>
     public static class PaletteAssetBuilder
     {
-        /// <summary>Pixels per palette cell; cells are flat, so any size works with point filtering and no mips.</summary>
+        /// <summary>Pixels per palette cell (cells are flat: any size works with point filtering, no mips).</summary>
         public const int CellPixels = 8;
 
         private static readonly Color32 UnusedCell = new Color32(0, 0, 0, 255);

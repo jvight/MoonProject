@@ -145,6 +145,15 @@ def prune_old_runs(batch_dir):
             shutil.rmtree(run_dir, ignore_errors=True)
 
 
+def remove_test_runner_leftovers(root):
+    """The test runner can leave Assets/InitTestScene<guid>.unity behind when a run is interrupted."""
+    for scene in sorted((root / "Assets").glob("InitTestScene*.unity")):
+        for path in (scene, scene.with_name(scene.name + ".meta")):
+            if path.exists():
+                path.unlink()
+        say(f"removed test-runner leftover {scene.relative_to(root).as_posix()}")
+
+
 def format_duration(seconds):
     minutes, secs = divmod(int(seconds), 60)
     return f"{minutes}m{secs:02d}s" if minutes else f"{secs}s"
@@ -328,6 +337,8 @@ def main():
     else:
         ok = ok and code == 0 and not report.compile_errors and not report.method_failures
 
+    if args.cmd == "tests":
+        remove_test_runner_leftovers(root)
     prune_old_runs(batch_dir)
     say(f"log: {log_path}")
     say(f"outputs: {out_dir}")

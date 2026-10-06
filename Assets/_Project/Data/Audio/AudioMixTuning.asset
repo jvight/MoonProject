@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8749e4c133f744040900c5f9c309e1c9, type: 3}
+  m_Name: AudioMixTuning
+  m_EditorClassIdentifier: 
+  _masterVolume: 1
+  _musicVolume: 0.8
+  _sfxVolume: 1
+  _ambienceVolume: 0.8
+  _spatialVoices: 16
+  _flatVoices: 8
+  _rolloffMode: 0
+  _minDistance: 6
+  _maxDistance: 120
+  _dopplerLevel: 0
+  _spread: 30
+  _thumpMinImpact: 0.6
+  _thumpFullImpact: 4
+  _thumpSoftVolume: 0.3
+  _thumpHardVolume: 1
+  _thumpSoftPitch: 1.05
+  _thumpHardPitch: 0.9
+  _ambienceFadeIn: 4

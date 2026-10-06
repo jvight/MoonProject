@@ -1,0 +1,213 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 50de3fa9890fec145a1ee5677b9e5010, type: 3}
+  m_Name: AudioLibrary
+  m_EditorClassIdentifier: 
+  _cues:
+  - _id: rover_hum
+    _clips:
+    - {fileID: 8300000, guid: d85af7b668f8a9f47bc6b8c952bb7c1b, type: 3}
+    _bus: 2
+    _spatial: 1
+    _loop: 1
+    _volumeMin: 0.55
+    _volumeMax: 0.55
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: dust_crunch
+    _clips:
+    - {fileID: 8300000, guid: 79b28b91568473a4db956156a99d92b0, type: 3}
+    _bus: 2
+    _spatial: 1
+    _loop: 1
+    _volumeMin: 0.5
+    _volumeMax: 0.5
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: suspension_creak
+    _clips:
+    - {fileID: 8300000, guid: 4ff7c8d637f51da42b3d47e77cf7c1db, type: 3}
+    - {fileID: 8300000, guid: 19a54a3119023464c9d866afdf6db173, type: 3}
+    - {fileID: 8300000, guid: 26cef1adf8c634e4fa237f823b4824e4, type: 3}
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.35
+    _volumeMax: 0.5
+    _pitchMin: 0.94
+    _pitchMax: 1.06
+  - _id: landing_thump
+    _clips:
+    - {fileID: 8300000, guid: 09977128d30f51f46be34c3c2ce3fad8, type: 3}
+    - {fileID: 8300000, guid: ba3707d407a624e4eba3ecc0ce05c320, type: 3}
+    - {fileID: 8300000, guid: 300e078fe564c04408005d681b6bcae5, type: 3}
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.85
+    _volumeMax: 1
+    _pitchMin: 0.95
+    _pitchMax: 1.05
+  - _id: radio_static
+    _clips:
+    - {fileID: 8300000, guid: 131dc70b3741d01488e18a408db6c172, type: 3}
+    _bus: 1
+    _spatial: 0
+    _loop: 1
+    _volumeMin: 1
+    _volumeMax: 1
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: radio_tune
+    _clips:
+    - {fileID: 8300000, guid: 5db00e3e622252a4094b11d12be21538, type: 3}
+    _bus: 1
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 1
+    _volumeMax: 1
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: ambience_bed
+    _clips:
+    - {fileID: 8300000, guid: d77d8a1570c2f4a43a3cfb960fc5aaf9, type: 3}
+    _bus: 3
+    _spatial: 0
+    _loop: 1
+    _volumeMin: 0.8
+    _volumeMax: 0.8
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: sonar_ping
+    _clips:
+    - {fileID: 8300000, guid: 29bc568b9d2fbcd4baf0d38400a7af07, type: 3}
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.8
+    _volumeMax: 0.8
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: relic_answer
+    _clips:
+    - {fileID: 8300000, guid: d72c06dadaa3b874284e89bf119b8c38, type: 3}
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.8
+    _volumeMax: 0.8
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: scrap_chime
+    _clips:
+    - {fileID: 8300000, guid: 679bde49b07968146b88a0d89378712a, type: 3}
+    - {fileID: 8300000, guid: f127d984f6e53414bb668a533fe83c7e, type: 3}
+    - {fileID: 8300000, guid: f2525b88a89da9d43ba67299c6801102, type: 3}
+    - {fileID: 8300000, guid: 5da7cf1978ca0e344b55ef02cedb0159, type: 3}
+    - {fileID: 8300000, guid: 5a17f18acc19fd54c99642505658cc2d, type: 3}
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.7
+    _volumeMax: 0.7
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: tether_attach
+    _clips:
+    - {fileID: 8300000, guid: aaf2d1b334565a34eb06691ebf329f1c, type: 3}
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.7
+    _volumeMax: 0.7
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: tether_hum
+    _clips:
+    - {fileID: 8300000, guid: 36096785345430447abd61a6ba83fe32, type: 3}
+    _bus: 2
+    _spatial: 1
+    _loop: 1
+    _volumeMin: 0.5
+    _volumeMax: 0.5
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: tether_release
+    _clips:
+    - {fileID: 8300000, guid: 3afe6791f1fbfab44948342827b2a9b6, type: 3}
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.6
+    _volumeMax: 0.6
+    _pitchMin: 0.95
+    _pitchMax: 1.05
+  - _id: excavation_rumble
+    _clips:
+    - {fileID: 8300000, guid: aa6d91ae24246194f8fb6ca3e308537b, type: 3}
+    _bus: 2
+    _spatial: 1
+    _loop: 1
+    _volumeMin: 0.6
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: surfacing_sparkle
+    _clips:
+    - {fileID: 8300000, guid: 05c8697c6b868d84c97870a1b7db7ab2, type: 3}
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.8
+    _volumeMax: 0.8
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: ui_click
+    _clips:
+    - {fileID: 8300000, guid: 28d80e4792180924f946c8e01fa3288d, type: 3}
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.6
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: ui_confirm
+    _clips:
+    - {fileID: 8300000, guid: a4d1a786fecf4744a80ca00929cecf18, type: 3}
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.7
+    _volumeMax: 0.7
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: ui_back
+    _clips:
+    - {fileID: 8300000, guid: cbfd4532561266c4eaf26a52e196b08a, type: 3}
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.65
+    _volumeMax: 0.65
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: upgrade_arpeggio
+    _clips:
+    - {fileID: 8300000, guid: b62b3bb7da385dc4fbc9474cd20b68c4, type: 3}
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.8
+    _volumeMax: 0.8
+    _pitchMin: 1
+    _pitchMax: 1

@@ -1,0 +1,480 @@
+{
+  "version": 1,
+  "generator": "tools/audio/build_sfx.py",
+  "sampleRate": 48000,
+  "audioRoot": "Assets/_Project/Audio",
+  "cues": [
+    {
+      "id": "rover_hum",
+      "category": "loop_3d",
+      "milestone": "M1",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/SFX/rover_hum_loop.wav"
+      ],
+      "sha256": [
+        "c4491e9414b592a55b32381afd7fbcfc38d26f26bac6d0842649137904d0e9f7"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 6000.0,
+      "hfMaxDb": -45.0,
+      "tonal": true,
+      "notes": "D2 electric hum, 4 s seamless; content < 3 kHz so AudioSource.pitch 0.5..2 stays clean."
+    },
+    {
+      "id": "dust_crunch",
+      "category": "loop_3d",
+      "milestone": "M1",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/SFX/dust_crunch_loop.wav"
+      ],
+      "sha256": [
+        "db100c498cca018f2c6439327cf9d757c85614d32deade67785d1d72f6de205d"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "Granular regolith crunch under wheels, 4 s seamless; volume follows speed x grounded."
+    },
+    {
+      "id": "suspension_creak",
+      "category": "oneshot_3d",
+      "milestone": "M1",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/suspension_creak_01.wav",
+        "Assets/_Project/Audio/SFX/suspension_creak_02.wav",
+        "Assets/_Project/Audio/SFX/suspension_creak_03.wav"
+      ],
+      "sha256": [
+        "f3380add88d8b499fc25e1e0bbc7e25479c71941c1c252815317cc85b736620c",
+        "489bc6dbf810dfd9b7a0d4d63c9bd2702cf0e26b16f1ec7f853d3802d611ebc5",
+        "74ebf96fb6298940d231a0e1b54d01aa800fe0c109dc5f86f6d54f340f43b978"
+      ],
+      "volumeMin": 0.35,
+      "volumeMax": 0.5,
+      "pitchMin": 0.94,
+      "pitchMax": 1.06,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "Soft rubbery stick-slip creak + quiet spring tone; no resonance above ~1.2 kHz (never squeaky)."
+    },
+    {
+      "id": "landing_thump",
+      "category": "oneshot_3d",
+      "milestone": "M1",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/landing_thump_01.wav",
+        "Assets/_Project/Audio/SFX/landing_thump_02.wav",
+        "Assets/_Project/Audio/SFX/landing_thump_03.wav"
+      ],
+      "sha256": [
+        "1789779e89e1367ef41ba161eab230dba8eb609684596443a5c84fa9c0e290e8",
+        "c351bbf988e108faf14cb2b5d46591e36e3cc1a315c374486ba54763897eee6f",
+        "3fd17673e5cd137aa3bf0249c1f2a59ff42e1a79567258a657e25d8a0acc943d"
+      ],
+      "volumeMin": 0.85,
+      "volumeMax": 1.0,
+      "pitchMin": 0.95,
+      "pitchMax": 1.05,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "Soft whump (98->47 Hz glide) + body + slow dust hiss; runtime scales by impact."
+    },
+    {
+      "id": "radio_static",
+      "category": "radio_2d",
+      "milestone": "M1",
+      "bus": "Music",
+      "spatial": false,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/radio_static_loop.wav"
+      ],
+      "sha256": [
+        "4a31c224f7992429eda2462ac08ac284f4ef01a9053acef32547d60d135f0eb4"
+      ],
+      "volumeMin": 1.0,
+      "volumeMax": 1.0,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -24.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "Warm AM/vinyl static, 6 s seamless stereo; volume rises as radio clarity falls."
+    },
+    {
+      "id": "radio_tune",
+      "category": "radio_fx_2d",
+      "milestone": "M1",
+      "bus": "Music",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/radio_tune.wav"
+      ],
+      "sha256": [
+        "9e3b229988b41622e16d66de77b642ac9ff6523dab4c3a588d9cdceb3b3a4bab"
+      ],
+      "volumeMin": 1.0,
+      "volumeMax": 1.0,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -24.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "Dial-tuning swish (static swell + sweeping resonant band) under the crossfade between tracks."
+    },
+    {
+      "id": "ambience_bed",
+      "category": "ambience_2d",
+      "milestone": "M1",
+      "bus": "Ambience",
+      "spatial": false,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/Ambience/ambience_bed_loop.wav"
+      ],
+      "sha256": [
+        "86b076bc5d91395f5607ae365879833d44acc9c5fb8faf0ee64e06cc641ee813"
+      ],
+      "volumeMin": 0.8,
+      "volumeMax": 0.8,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -30.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "72 s seamless stereo lunar hush with 10 sparse distant pentatonic tones in a long reverb."
+    },
+    {
+      "id": "sonar_ping",
+      "category": "oneshot_3d",
+      "milestone": "M2",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/sonar_ping.wav"
+      ],
+      "sha256": [
+        "6a239a2b0521493a145651c8886ec510fd85bbe8ab23728f577ae5bf597e9c2b"
+      ],
+      "volumeMin": 0.8,
+      "volumeMax": 0.8,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Kalimba D5 (tine partial 6.27x, felt-pick transient)."
+    },
+    {
+      "id": "relic_answer",
+      "category": "oneshot_3d",
+      "milestone": "M2",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/relic_answer.wav"
+      ],
+      "sha256": [
+        "ed692a94b92775a29090fc607efe79a85043dd6893b82498132f81ea88541ca1"
+      ],
+      "volumeMin": 0.8,
+      "volumeMax": 0.8,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "A5 + D6 shimmering soft bells, tremolo 6.5 Hz, detuned twins."
+    },
+    {
+      "id": "scrap_chime",
+      "category": "oneshot_3d",
+      "milestone": "M2",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/scrap_chime_D5.wav",
+        "Assets/_Project/Audio/SFX/scrap_chime_E5.wav",
+        "Assets/_Project/Audio/SFX/scrap_chime_Fs5.wav",
+        "Assets/_Project/Audio/SFX/scrap_chime_A5.wav",
+        "Assets/_Project/Audio/SFX/scrap_chime_B5.wav"
+      ],
+      "sha256": [
+        "f7cd1f4d45d40b57dd97093d22db9242f4187e01b3ae62ff57aa604d16a47434",
+        "c87047ba82c5020b85ec1e23ca50c83e69a486d02564b5fe36fd18f7b45d049f",
+        "0749641a2e4ec5f7bb29afa0363a1cc4979ab6bf78db3defe2e5f847a86f59d3",
+        "8423e4f0c89712218431feb3308f41225054d0fb4f212e8416e0d9191bc0e5af",
+        "86d21032683107a4399cb7497705d97e3e390f8269d2f413be99401d0cc498c3"
+      ],
+      "volumeMin": 0.7,
+      "volumeMax": 0.7,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Glassy chime per pentatonic degree; clip index = combo step (pitch 2.0 for the next octave)."
+    },
+    {
+      "id": "tether_attach",
+      "category": "oneshot_3d",
+      "milestone": "M2",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/tether_attach.wav"
+      ],
+      "sha256": [
+        "e726b06986244af35f2e931b8ed7cc0c73aa4c026ed2156153e18c95be19c841"
+      ],
+      "volumeMin": 0.7,
+      "volumeMax": 0.7,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Karplus-Strong felt pluck D4 + A2 body."
+    },
+    {
+      "id": "tether_hum",
+      "category": "loop_3d",
+      "milestone": "M2",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/SFX/tether_hum_loop.wav"
+      ],
+      "sha256": [
+        "68a343b87bcc14cbe16ecbb976ee237f46d79f1b0a02739540c2ceccbfdae82e"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "D3/A3/D4 hum, vibrato 4.5 Hz, wobble 0.75 Hz, 4 s seamless."
+    },
+    {
+      "id": "tether_release",
+      "category": "oneshot_3d",
+      "milestone": "M2",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/tether_release.wav"
+      ],
+      "sha256": [
+        "5dee4d10666072b6ebf24cfe1697b107d4641e479ef0e1b1268c2378daa1934a"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 0.95,
+      "pitchMax": 1.05,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "Breathy band-passed noise sweep 450->2200 Hz + falling A4->D4 hint."
+    },
+    {
+      "id": "excavation_rumble",
+      "category": "loop_3d",
+      "milestone": "M2",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/SFX/excavation_rumble_loop.wav"
+      ],
+      "sha256": [
+        "85b2d465d774518b30708877f47015eb6c613d5e4e1e10e4f0bb528c96ddd9b6"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "Low brown-noise rumble + grit + D2/A2 drone, 6 s seamless."
+    },
+    {
+      "id": "surfacing_sparkle",
+      "category": "oneshot_3d",
+      "milestone": "M2",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/surfacing_sparkle.wav"
+      ],
+      "sha256": [
+        "07047c8bdc9777fd5fc8a67c7b25761d75ac228cc19dd6f5af71ebb59f3b4730"
+      ],
+      "volumeMin": 0.8,
+      "volumeMax": 0.8,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Rising glassy run D5..D6 over an upward whoosh."
+    },
+    {
+      "id": "ui_click",
+      "category": "ui_2d",
+      "milestone": "M1",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/ui_click.wav"
+      ],
+      "sha256": [
+        "29d5a9e80eecef7dfdf71f3aefdeba26dcab66006ea3a68d6a827495c36ed583"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Soft A5 tick."
+    },
+    {
+      "id": "ui_confirm",
+      "category": "ui_2d",
+      "milestone": "M1",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/ui_confirm.wav"
+      ],
+      "sha256": [
+        "1c4d3144ffd066b4d3ebc73114a620471aeacfe4f6b45eaafd40b098c26c328d"
+      ],
+      "volumeMin": 0.7,
+      "volumeMax": 0.7,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Rising D5 -> A5."
+    },
+    {
+      "id": "ui_back",
+      "category": "ui_2d",
+      "milestone": "M1",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/ui_back.wav"
+      ],
+      "sha256": [
+        "09d2558b090a562ff7e6f17baba41a4207af9622196cf4e1b97fa3c007ca4f49"
+      ],
+      "volumeMin": 0.65,
+      "volumeMax": 0.65,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Falling A4 -> D4."
+    },
+    {
+      "id": "upgrade_arpeggio",
+      "category": "stinger_2d",
+      "milestone": "M2",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/upgrade_arpeggio.wav"
+      ],
+      "sha256": [
+        "a889e0f1899d59487ad9922041180ad2f6c4f2b9022d5e6b0cefc5340b3d0e17"
+      ],
+      "volumeMin": 0.8,
+      "volumeMax": 0.8,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -20.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Soft kalimba D4 A4 D5 F#5 A5, stereo, over a quiet D/A pad."
+    }
+  ]
+}
