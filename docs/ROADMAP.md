@@ -75,6 +75,13 @@
 | M2-09 | HUD tối giản (diegetic ưu tiên), prompt ngữ cảnh chỉ vài lần đầu, menu tạm dừng + cài đặt âm lượng/độ nhạy/đảo trục, thẻ "ký ức" khi đặt relic | ui | ⬜ |
 | M2-10 | Tích hợp + playtest slice 15 phút, sửa feeling | Director | ⬜ |
 
+## Backlog (đã ghi nhận, chưa giao)
+- Bụi bánh xe trông như "đá trong suốt" bay lơ lửng → nhỏ hơn, mềm hơn, trong hơn, tan nhanh hơn (rover).
+- Audio: radio rè bật lúc `RoverAwoke`; âm "nhấc bổng" nhẹ khi `RoverRecovering` (audio).
+- Scrap phát lấp lánh nhìn thấy từ 40–60 m (gameplay — đã giao).
+- Đá cuội ~20 tam giác để giảm 190k tam giác scatter (art → world).
+- Cổ 07 dày hơn để bóng đầu không bị tách (art — đã giao).
+
 ## M3 — Tiến trình
 Hover-Jump, Magnetic Treads, Cargo Bed, vùng mới mở theo khả năng di chuyển, cassette/nhật ký âm thanh,
 menu chính, cài đặt đồ hoạ.
