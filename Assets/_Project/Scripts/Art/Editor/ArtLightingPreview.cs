@@ -17,7 +17,7 @@ namespace MoonProject.Art.Editor
     /// turntables: this is where emission, spot and point light response and far readability are judged.
     /// <code>
     /// python tools/unity_batch.py exec --method MoonProject.Art.Editor.ArtLightingPreview.Capture
-    ///     [--arg scene=rover|base|towers|relics|shadow|grit|friends]   (default rover)
+    ///     [--arg scene=rover|base|towers|relics|shadow|grit|friends|workshop]   (default rover)
     /// </code>
     /// rover: 07 at rest (half-lidded, head lowered, wing ajar) with its headlamp. base: the lander with the shelf
     /// and the L3 tower on their anchors, its lamp sockets lit, 07 coming home. towers: L1-L3 side by side seen
@@ -25,7 +25,8 @@ namespace MoonProject.Art.Editor
     /// shadow under a low (30 degree) earthlight from its side, seen from the gameplay camera's height. grit: a
     /// dense field of <see cref="RockStyle.Grit"/> pebbles batched into one mesh around 07. friends: Tilly
     /// hovering beside 07 (3/3 part lamps lit), and broken on the dust among her amber parts (1/3 lit), near and
-    /// from 30 m. The base scene also seats Tilly on her lander perch.
+    /// from 30 m. The base scene also seats Tilly on her lander perch. workshop: Kenji's bench on the lander's
+    /// WorkshopAnchor with its lamp lit, 07 on the bench pad wearing the Hover-Jump coils glowing as if charging.
     /// </summary>
     public static class ArtLightingPreview
     {
@@ -73,6 +74,10 @@ namespace MoonProject.Art.Editor
                             NightSetting(material, temporary, 50f, 12f);
                             poses = FriendsScene(temporary);
                             break;
+                        case "workshop":
+                            NightSetting(material, temporary, 70f, 16f);
+                            poses = WorkshopScene(temporary);
+                            break;
                         case "grit":
                             NightSetting(material, temporary, 40f, 9f);
                             poses = GritScene(material, temporary);
@@ -80,7 +85,7 @@ namespace MoonProject.Art.Editor
                         default:
                             Debug.LogError(
                                 $"ArtLightingPreview: unknown scene '{scene}' " +
-                                "(rover|base|towers|relics|shadow|grit|friends).");
+                                "(rover|base|towers|relics|shadow|grit|friends|workshop).");
                             return false;
                     }
 
@@ -254,6 +259,50 @@ namespace MoonProject.Art.Editor
                 Pose("close", new[] { 2.4f, 0.9f, 2.6f }, new[] { 1.6f, 0.1f, 4.2f }, 45f));
         }
 
+        private static CameraPoseSet WorkshopScene(TemporaryObjects temporary)
+        {
+            GameObject lander = Instantiate(BaseModelBuilder.LanderName, temporary);
+            Instantiate(BaseModelBuilder.ShelfName, temporary).transform.position = BaseModelBuilder.ShelfAnchor;
+            Instantiate(BaseModelBuilder.TowerPrefix + "2", temporary).transform.position = BaseModelBuilder.TowerAnchor;
+            Transform anchor = Descendant(lander.transform, "WorkshopAnchor");
+            GameObject bench = Instantiate(BaseModelBuilder.WorkbenchName, temporary);
+            bench.transform.SetPositionAndRotation(anchor.position, anchor.rotation);
+            Transform bulb = Descendant(bench.transform, "Lights");
+            Light lamp = NewLight("WorkLamp", LightType.Point, Palette.Get(PaletteSwatch.WarmLamp), 3f);
+            lamp.transform.position = bulb.position - Vector3.up * 0.1f;
+            lamp.range = 6f;
+            lamp.shadows = LightShadows.Soft;
+            temporary.Add(lamp.gameObject);
+            for (int i = 0; i < 4; i++)
+            {
+                Light baseLamp = NewLight("BaseLamp", LightType.Point, Palette.Get(PaletteSwatch.WarmLamp),
+                    BaseLampIntensity);
+                baseLamp.transform.position = Descendant(lander.transform, "LampSocket_" + i).position;
+                baseLamp.range = BaseLampRange;
+                temporary.Add(baseLamp.gameObject);
+            }
+
+            Vector3 pad = anchor.position + anchor.rotation * new Vector3(0f, 0f, 3.2f);
+            Vector3 parked = pad + new Vector3(1.9f, 0f, 0.4f);
+            Transform rover = Rover(temporary, parked, 200f);
+            temporary.Add(rover.gameObject);
+            GameObject coils = Instantiate(RoverModelBuilder.HoverCoilsName, temporary, ArtPaths.RoverFolder);
+            Transform socket = Descendant(rover, "CoilSocket");
+            coils.transform.SetParent(socket, false);
+            SetGlow(coils.transform, "Glow_", new[] { "FL", "FR", "RL", "RR" }, 1.5f);
+            for (int i = 0; i < 4; i++)
+            {
+                coils.transform.GetChild(i).localScale = new Vector3(1f, 0.75f, 1f);
+            }
+
+            return Poses(
+                Pose("bench", new[] { 12.1f, 1.9f, 2.8f }, new[] { 12.5f, 1.3f, -1.9f }, 50f),
+                Pose("coils", new[] { parked.x + 0.75f, 0.24f, parked.z + 2.1f },
+                    new[] { parked.x, 0.2f, parked.z }, 45f),
+                Pose("homecoming", new[] { 4.5f, 3.6f, 14.5f }, new[] { 4f, 1.8f, 0f }, 55f),
+                Pose("far40m", new[] { 32f, 12f, 30f }, new[] { 10f, 1.2f, -1f }, 35f));
+        }
+
         private static CameraPoseSet FriendsScene(TemporaryObjects temporary)
         {
             temporary.Add(Rover(temporary, Vector3.zero, 20f).gameObject);
@@ -285,11 +334,23 @@ namespace MoonProject.Art.Editor
         /// <summary>Lights the first <paramref name="count"/> glow renderers named prefix0, prefix1, ...</summary>
         private static void SetGlow(Transform root, string prefix, int count, float intensity)
         {
-            var block = new MaterialPropertyBlock();
-            block.SetColor("_EmissionColor", Color.white * intensity);
+            var suffixes = new string[count];
             for (int i = 0; i < count; i++)
             {
-                Descendant(root, prefix + i).GetComponent<Renderer>().SetPropertyBlock(block);
+                suffixes[i] = i.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            }
+
+            SetGlow(root, prefix, suffixes, intensity);
+        }
+
+        /// <summary>Lights the glow renderers named prefix + each suffix (MaterialPropertyBlock _EmissionColor).</summary>
+        private static void SetGlow(Transform root, string prefix, string[] suffixes, float intensity)
+        {
+            var block = new MaterialPropertyBlock();
+            block.SetColor("_EmissionColor", Color.white * intensity);
+            foreach (string suffix in suffixes)
+            {
+                Descendant(root, prefix + suffix).GetComponent<Renderer>().SetPropertyBlock(block);
             }
         }
 
