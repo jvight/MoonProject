@@ -17,13 +17,17 @@ namespace MoonProject.Art.Editor
 
         private static readonly Color32 UnusedCell = new Color32(0, 0, 0, 255);
 
-        /// <summary>Writes both palette textures and the shared material (first Art builder: others use it).</summary>
+        /// <summary>Writes both palette textures and the shared materials (the first Art builder).</summary>
         [MoonBuilder("Art/Palette", 100)]
         public static void Build()
         {
             Texture2D baseMap = WritePaletteTexture(ArtPaths.PaletteTexture, false);
             Texture2D emissionMap = WritePaletteTexture(ArtPaths.PaletteEmissionTexture, true);
-            WriteMaterial(baseMap, emissionMap);
+            Shader shader = LoadShader();
+            GeneratedAssets.CreateOrReplace(CreateMaterial(shader, baseMap, emissionMap, false),
+                ArtPaths.LowPolyMaterial);
+            GeneratedAssets.CreateOrReplace(CreateMaterial(shader, baseMap, emissionMap, true),
+                ArtPaths.LowPolyGlowOffMaterial);
             AssetDatabase.SaveAssets();
         }
 
@@ -38,6 +42,60 @@ namespace MoonProject.Art.Editor
             }
 
             return material;
+        }
+
+        /// <summary>The glow-off sibling of <see cref="LoadMaterial"/> (see ArtPaths.LowPolyGlowOffMaterial).</summary>
+        public static Material LoadGlowOffMaterial()
+        {
+            var material = AssetDatabase.LoadAssetAtPath<Material>(ArtPaths.LowPolyGlowOffMaterial);
+            if (material == null)
+            {
+                throw new InvalidOperationException(
+                    $"{ArtPaths.LowPolyGlowOffMaterial} is missing: run the Art/Palette builder first.");
+            }
+
+            return material;
+        }
+
+        /// <summary>
+        /// A palette material (not saved). Glow-off authors _EmissionColor black but keeps _EMISSION enabled
+        /// (realtime-emissive GI flags stop URP from stripping it for a black colour), so a MaterialPropertyBlock
+        /// can still light it.
+        /// </summary>
+        public static Material CreateMaterial(Shader shader, Texture baseMap, Texture emissionMap, bool glowOff)
+        {
+            var material = new Material(shader);
+            material.SetTexture("_BaseMap", baseMap);
+            material.SetTextureScale("_BaseMap", Vector2.one);
+            material.SetTextureOffset("_BaseMap", Vector2.zero);
+            material.SetColor("_BaseColor", Color.white);
+            material.SetTexture("_EmissionMap", emissionMap);
+            // Authored white: the emission map alone sets each swatch's glow, and renderers scale it at runtime with a
+            // MaterialPropertyBlock _EmissionColor (ARCHITECTURE.md, "Glow modulation").
+            material.SetColor("_EmissionColor", glowOff ? Color.black : Color.white);
+            material.SetFloat("_SpecularHighlights", (float)SimpleLitGUI.SpecularSource.NoSpecular);
+            material.SetFloat("_Surface", 0f);
+            material.SetFloat("_AlphaClip", 0f);
+            material.SetFloat("_ReceiveShadows", 1f);
+            material.SetFloat("_Cull", 2f);
+            material.globalIlluminationFlags = glowOff
+                ? MaterialGlobalIlluminationFlags.RealtimeEmissive
+                : MaterialGlobalIlluminationFlags.BakedEmissive;
+            material.enableInstancing = true;
+            BaseShaderGUI.SetMaterialKeywords(material, SimpleLitGUI.SetMaterialKeywords);
+            return material;
+        }
+
+        /// <summary>The URP Simple Lit shader every palette material uses.</summary>
+        public static Shader LoadShader()
+        {
+            var shader = AssetDatabase.LoadAssetAtPath<Shader>(ArtPaths.LowPolyShader);
+            if (shader == null)
+            {
+                throw new InvalidOperationException($"URP Simple Lit shader not found at {ArtPaths.LowPolyShader}.");
+            }
+
+            return shader;
         }
 
         /// <summary>Palette pixels, row 0 at the bottom; emission-only maps keep non-glowing swatches black.</summary>
@@ -55,10 +113,7 @@ namespace MoonProject.Art.Editor
                     if (index < Palette.Count)
                     {
                         var swatch = (PaletteSwatch)index;
-                        if (!emissionOnly || Palette.IsEmissive(swatch))
-                        {
-                            colour = Palette.Get(swatch);
-                        }
+                        colour = emissionOnly ? Palette.GetEmission(swatch) : Palette.Get(swatch);
                     }
 
                     pixels[y * width + x] = colour;
@@ -125,34 +180,6 @@ namespace MoonProject.Art.Editor
             importer.alphaSource = TextureImporterAlphaSource.None;
             importer.isReadable = false;
             importer.SaveAndReimport();
-        }
-
-        private static Material WriteMaterial(Texture2D baseMap, Texture2D emissionMap)
-        {
-            var shader = AssetDatabase.LoadAssetAtPath<Shader>(ArtPaths.LowPolyShader);
-            if (shader == null)
-            {
-                throw new InvalidOperationException($"URP Simple Lit shader not found at {ArtPaths.LowPolyShader}.");
-            }
-
-            var material = new Material(shader);
-            material.SetTexture("_BaseMap", baseMap);
-            material.SetTextureScale("_BaseMap", Vector2.one);
-            material.SetTextureOffset("_BaseMap", Vector2.zero);
-            material.SetColor("_BaseColor", Color.white);
-            material.SetTexture("_EmissionMap", emissionMap);
-            // Authored white: the emission map alone sets each swatch's glow, and renderers scale it at runtime with a
-            // MaterialPropertyBlock _EmissionColor (ARCHITECTURE.md, "Glow modulation").
-            material.SetColor("_EmissionColor", Color.white);
-            material.SetFloat("_SpecularHighlights", (float)SimpleLitGUI.SpecularSource.NoSpecular);
-            material.SetFloat("_Surface", 0f);
-            material.SetFloat("_AlphaClip", 0f);
-            material.SetFloat("_ReceiveShadows", 1f);
-            material.SetFloat("_Cull", 2f);
-            material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.BakedEmissive;
-            material.enableInstancing = true;
-            BaseShaderGUI.SetMaterialKeywords(material, SimpleLitGUI.SetMaterialKeywords);
-            return GeneratedAssets.CreateOrReplace(material, ArtPaths.LowPolyMaterial);
         }
     }
 }

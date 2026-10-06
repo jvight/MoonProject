@@ -29,5 +29,7 @@ namespace MoonProject.Art
         Honey = 19,
         PilotLight = 20,
         Enamel = 21,
+        LampGlass = 22,
+        EyeGlass = 23,
     }
 }

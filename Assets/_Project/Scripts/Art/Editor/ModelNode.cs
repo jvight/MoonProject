@@ -12,7 +12,8 @@ namespace MoonProject.Art.Editor
     {
         private readonly List<ModelNode> _children = new List<ModelNode>();
 
-        public ModelNode(string name, Vector3 localPosition, Quaternion localRotation, ModelMesh mesh = null)
+        public ModelNode(string name, Vector3 localPosition, Quaternion localRotation, ModelMesh mesh = null,
+            ModelMaterial material = ModelMaterial.Palette)
         {
             if (string.IsNullOrEmpty(name))
             {
@@ -23,6 +24,7 @@ namespace MoonProject.Art.Editor
             LocalPosition = localPosition;
             LocalRotation = localRotation;
             Mesh = mesh;
+            Material = material;
         }
 
         public ModelNode(string name, Vector3 localPosition, ModelMesh mesh = null)
@@ -38,6 +40,9 @@ namespace MoonProject.Art.Editor
 
         /// <summary>Mesh rendered by this node with the shared palette material, or null for an empty pivot.</summary>
         public ModelMesh Mesh { get; }
+
+        /// <summary>Material the node's mesh renders with (ignored for empty pivots).</summary>
+        public ModelMaterial Material { get; }
 
         public IReadOnlyList<ModelNode> Children => _children;
 

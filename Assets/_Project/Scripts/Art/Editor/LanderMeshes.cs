@@ -17,6 +17,12 @@ namespace MoonProject.Art.Editor
 
         public const int LampCount = 4;
 
+        /// <summary>
+        /// Top of the cushion on Tilly's perch (the lander's FriendSocket_tilly): a little landing pad on a post at
+        /// the left edge of the porch, beside the window and under the left wall lamp.
+        /// </summary>
+        public static readonly Vector3 TillyPerch = new Vector3(-1.62f, StageTop + 0.52f, 0.95f);
+
         private const float StageRadius = 2.1f;
         private const float CabinRadius = 1.45f;
         private const float CabinBottom = StageTop + 0.04f;
@@ -62,6 +68,7 @@ namespace MoonProject.Art.Editor
 
             HomeSign(b);
             MissionPatch(b);
+            Perch(b);
             return b;
         }
 
@@ -281,6 +288,25 @@ namespace MoonProject.Art.Editor
             RecipeKit.Rod(b, wall, lamp + Vector3.up * 0.14f, 0.025f, 5, PaletteSwatch.Charcoal);
         }
 
+        /// <summary>Tilly's perch: a padded landing disc on a post, its rim painted in 07's orange.</summary>
+        private static void Perch(LowPolyMeshBuilder b)
+        {
+            var foot = new Vector3(TillyPerch.x, StageTop + 0.02f, TillyPerch.z);
+            RecipeKit.Rod(b, foot, foot + Vector3.up * 0.44f, 0.035f, 8, PaletteSwatch.Metal);
+            b.Prism(At(foot + Vector3.up * 0.02f), 0.08f, 0.04f, 8, PaletteSwatch.Charcoal);
+            Vector3 pad = TillyPerch - Vector3.up * 0.06f;
+            b.Prism(At(pad - Vector3.up * 0.02f), 0.3f, 0.04f, 12, PaletteSwatch.Metal);
+            b.Torus(At(pad), 0.3f, 0.02f, 12, 4, PaletteSwatch.WarmAccent);
+            Vector2[] cushion =
+            {
+                new Vector2(0f, 0f), new Vector2(0.21f, 0.004f), new Vector2(0.235f, 0.03f), new Vector2(0.2f, 0.056f),
+                new Vector2(0f, 0.06f),
+            };
+            b.Lathe(At(pad), cushion, 12, PaletteSwatch.Honey);
+            RecipeKit.Rod(b, foot + Vector3.up * 0.12f, foot + new Vector3(0.18f, 0.02f, -0.1f), 0.018f, 6,
+                PaletteSwatch.Metal);
+        }
+
         /// <summary>A little hand-painted "HOME" sign planted in the dust beside the ladder, a touch crooked.</summary>
         private static void HomeSign(LowPolyMeshBuilder b)
         {
@@ -291,11 +317,11 @@ namespace MoonProject.Art.Editor
             const float face = 0.06f;
             const float baseline = 0.85f;
             Matrix4x4 reading = Matrix4x4.Rotate(Rotation(new Vector3(0f, 180f, 0f)));
-            b.Extrude(sign * At(0.36f, baseline, face) * reading, LetterH(), 0.012f, PaletteSwatch.WarmAccent);
+            b.Extrude(sign * At(0.36f, baseline, face) * reading, Glyphs.H(), 0.012f, PaletteSwatch.WarmAccent);
             b.Torus(sign * At(new Vector3(0.11f, baseline + 0.1f, face), AlongZ, new Vector3(1f, 1f, 1.45f)),
                 0.05f, 0.02f, 10, 4, PaletteSwatch.WarmAccent);
-            b.Extrude(sign * At(0f, baseline, face) * reading, LetterM(), 0.012f, PaletteSwatch.WarmAccent);
-            b.Extrude(sign * At(-0.18f, baseline, face) * reading, LetterE(), 0.012f, PaletteSwatch.WarmAccent);
+            b.Extrude(sign * At(0f, baseline, face) * reading, Glyphs.M(), 0.012f, PaletteSwatch.WarmAccent);
+            b.Extrude(sign * At(-0.18f, baseline, face) * reading, Glyphs.E(), 0.012f, PaletteSwatch.WarmAccent);
         }
 
         /// <summary>A faded round mission patch on the right wall: a sage field, a cream moon, a star.</summary>
@@ -305,51 +331,7 @@ namespace MoonProject.Art.Editor
             b.Prism(patch * Matrix4x4.Rotate(Rotation(AlongZ)), 0.34f, 0.025f, 14, PaletteSwatch.Sage);
             b.Torus(patch * At(new Vector3(0f, 0f, 0.012f), AlongZ), 0.34f, 0.025f, 14, 3, PaletteSwatch.Honey);
             b.Prism(patch * At(new Vector3(-0.09f, 0.08f, 0.02f), AlongZ), 0.12f, 0.02f, 10, PaletteSwatch.Cream);
-            b.Extrude(patch * At(0.12f, -0.1f, 0.022f), Star(0.08f, 0.035f), 0.01f, PaletteSwatch.Honey);
-        }
-
-        private static Vector2[] Star(float outer, float inner)
-        {
-            var star = new Vector2[10];
-            for (int i = 0; i < star.Length; i++)
-            {
-                float radius = i % 2 == 0 ? outer : inner;
-                float angle = i * Mathf.PI / 5f;
-                star[i] = new Vector2(radius * Mathf.Sin(angle), radius * Mathf.Cos(angle));
-            }
-
-            return star;
-        }
-
-        private static Vector2[] LetterH()
-        {
-            return new[]
-            {
-                new Vector2(0f, 0f), new Vector2(0.04f, 0f), new Vector2(0.04f, 0.08f), new Vector2(0.1f, 0.08f),
-                new Vector2(0.1f, 0f), new Vector2(0.14f, 0f), new Vector2(0.14f, 0.2f), new Vector2(0.1f, 0.2f),
-                new Vector2(0.1f, 0.12f), new Vector2(0.04f, 0.12f), new Vector2(0.04f, 0.2f), new Vector2(0f, 0.2f),
-            };
-        }
-
-        private static Vector2[] LetterM()
-        {
-            return new[]
-            {
-                new Vector2(0f, 0f), new Vector2(0.04f, 0f), new Vector2(0.04f, 0.12f), new Vector2(0.07f, 0.07f),
-                new Vector2(0.1f, 0.12f), new Vector2(0.1f, 0f), new Vector2(0.14f, 0f), new Vector2(0.14f, 0.2f),
-                new Vector2(0.1f, 0.2f), new Vector2(0.07f, 0.13f), new Vector2(0.04f, 0.2f), new Vector2(0f, 0.2f),
-            };
-        }
-
-        private static Vector2[] LetterE()
-        {
-            return new[]
-            {
-                new Vector2(0f, 0f), new Vector2(0.13f, 0f), new Vector2(0.13f, 0.04f), new Vector2(0.04f, 0.04f),
-                new Vector2(0.04f, 0.08f), new Vector2(0.11f, 0.08f), new Vector2(0.11f, 0.12f),
-                new Vector2(0.04f, 0.12f), new Vector2(0.04f, 0.16f), new Vector2(0.13f, 0.16f),
-                new Vector2(0.13f, 0.2f), new Vector2(0f, 0.2f),
-            };
+            b.Extrude(patch * At(0.12f, -0.1f, 0.022f), Glyphs.Star(0.08f, 0.035f), 0.01f, PaletteSwatch.Honey);
         }
     }
 }

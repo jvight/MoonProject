@@ -9,10 +9,20 @@ namespace MoonProject.Art.Editor
     /// Turns a <see cref="ModelNode"/> tree into assets through <see cref="GeneratedAssets"/> (GUIDs survive
     /// re-runs): one '&lt;folder&gt;/&lt;mesh name&gt;.asset' per distinct <see cref="ModelMesh"/> and
     /// '&lt;folder&gt;/&lt;root name&gt;.prefab' with a MeshFilter + MeshRenderer on every node that has a mesh.
+    /// The prefab is assembled in a <see cref="BuilderScratchScene"/>, so the open scene is never touched.
     /// </summary>
     public static class ModelPrefabWriter
     {
         public static GameObject Write(ModelNode root, string folder, Material material)
+        {
+            return Write(root, folder, material, null);
+        }
+
+        /// <summary>
+        /// As <see cref="Write(ModelNode, string, Material)"/>; nodes marked <see cref="ModelMaterial.PaletteGlowOff"/>
+        /// render with <paramref name="glowOffMaterial"/>.
+        /// </summary>
+        public static GameObject Write(ModelNode root, string folder, Material material, Material glowOffMaterial)
         {
             if (root == null)
             {
@@ -27,8 +37,11 @@ namespace MoonProject.Art.Editor
             GeneratedAssets.EnsureFolder(folder);
             var meshes = new Dictionary<ModelMesh, Mesh>();
             WriteMeshes(root, folder, meshes);
-            GameObject instance = Instantiate(root, null, meshes, material);
-            return GeneratedAssets.SavePrefab(instance, $"{folder}/{root.Name}.prefab");
+            using (var scratch = new BuilderScratchScene())
+            {
+                GameObject instance = Instantiate(scratch, root, null, meshes, material, glowOffMaterial);
+                return GeneratedAssets.SavePrefab(instance, $"{folder}/{root.Name}.prefab");
+            }
         }
 
         private static void WriteMeshes(ModelNode node, string folder, Dictionary<ModelMesh, Mesh> meshes)
@@ -53,23 +66,38 @@ namespace MoonProject.Art.Editor
             }
         }
 
-        private static GameObject Instantiate(ModelNode node, Transform parent, Dictionary<ModelMesh, Mesh> meshes,
-            Material material)
+        private static Material MaterialFor(ModelNode node, Material material, Material glowOffMaterial)
         {
-            var gameObject = new GameObject(node.Name);
+            if (node.Material != ModelMaterial.PaletteGlowOff)
+            {
+                return material;
+            }
+
+            if (glowOffMaterial == null)
+            {
+                throw new InvalidOperationException(
+                    $"'{node.Name}' renders glow-off but no glow-off material was given.");
+            }
+
+            return glowOffMaterial;
+        }
+
+        private static GameObject Instantiate(BuilderScratchScene scratch, ModelNode node, Transform parent,
+            Dictionary<ModelMesh, Mesh> meshes, Material material, Material glowOffMaterial)
+        {
+            GameObject gameObject = scratch.Create(node.Name, parent);
             Transform transform = gameObject.transform;
-            transform.SetParent(parent, false);
             transform.localPosition = node.LocalPosition;
             transform.localRotation = node.LocalRotation;
             if (node.Mesh != null)
             {
                 gameObject.AddComponent<MeshFilter>().sharedMesh = meshes[node.Mesh];
-                gameObject.AddComponent<MeshRenderer>().sharedMaterial = material;
+                gameObject.AddComponent<MeshRenderer>().sharedMaterial = MaterialFor(node, material, glowOffMaterial);
             }
 
             for (int i = 0; i < node.Children.Count; i++)
             {
-                Instantiate(node.Children[i], transform, meshes, material);
+                Instantiate(scratch, node.Children[i], transform, meshes, material, glowOffMaterial);
             }
 
             return gameObject;

@@ -8,11 +8,18 @@ namespace MoonProject.Art.Editor
         public const string PaletteTexture = PaletteFolder + "/T_Palette.png";
         public const string PaletteEmissionTexture = PaletteFolder + "/T_PaletteEmission.png";
         public const string LowPolyMaterial = PaletteFolder + "/M_LowPoly.mat";
+
+        /// <summary>
+        /// M_LowPoly with its glow authored off (_EmissionColor black, emission still enabled): for glow renderers
+        /// that start dark and are lit at runtime through a MaterialPropertyBlock (part lamps, a dormant eye).
+        /// </summary>
+        public const string LowPolyGlowOffMaterial = PaletteFolder + "/M_LowPolyGlowOff.mat";
         public const string RoverFolder = Root + "/Rover";
         public const string RockFolder = Root + "/Rocks";
         public const string ScrapFolder = Root + "/Scrap";
         public const string BaseFolder = Root + "/Base";
         public const string RelicFolder = Root + "/Relics";
+        public const string FriendFolder = Root + "/Friends";
 
         /// <summary>
         /// URP Simple Lit: Lambert diffuse (no specular sheen on flat palette faces) plus an emission map, with every

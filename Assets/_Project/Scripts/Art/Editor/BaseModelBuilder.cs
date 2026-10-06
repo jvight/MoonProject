@@ -8,8 +8,9 @@ namespace MoonProject.Art.Editor
     /// <summary>
     /// 07's home base per the M2 content contract (docs/ARCHITECTURE.md): <c>Lander</c>, <c>MuseumShelf</c> and
     /// <c>RadioTower_L1..L3</c> in Generated/Art/Base. Meshes only, each pivoted at its ground-contact centre so it
-    /// stands on an anchor. Glowing parts (windows, shelf lights, tower lamps) are separate renderers so gameplay
-    /// can brighten the base as it comes back to life.
+    /// stands on an anchor. The lander also carries friend perches (<c>FriendSocket_&lt;id&gt;</c>: an empty on
+    /// top of the perch, +Y up, +Z = the hatch side). Glowing parts (windows, shelf lights, tower lamps) are
+    /// separate renderers so gameplay can brighten the base as it comes back to life.
     /// </summary>
     public static class BaseModelBuilder
     {
@@ -58,6 +59,7 @@ namespace MoonProject.Art.Editor
                     LanderMeshes.LampPosition(i)));
             }
 
+            lander.Add(new ModelNode("FriendSocket_tilly", LanderMeshes.TillyPerch));
             return lander;
         }
 
