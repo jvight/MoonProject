@@ -6,7 +6,10 @@ using MoonProject.Core.Events;
 
 namespace MoonProject.Gameplay.PlayModeTests
 {
-    /// <summary>Records every gameplay event with the time it was published, for order and timing assertions.</summary>
+    /// <summary>
+    /// Records every gameplay event (and the rover's Hover-Jump events) with the time it was published, for order and
+    /// timing assertions.
+    /// </summary>
     public sealed class EventRecorder : IDisposable
     {
         private readonly List<IDisposable> _subscriptions = new List<IDisposable>();
@@ -31,6 +34,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             Listen(events, FriendRepaired);
             Listen(events, FriendGreeted);
             Listen(events, FriendSpotted);
+            Listen(events, RoverJumpCharged);
+            Listen(events, RoverJumped);
         }
 
         /// <summary>Event type names in publish order.</summary>
@@ -62,6 +67,8 @@ namespace MoonProject.Gameplay.PlayModeTests
         public List<Timed<FriendRepaired>> FriendRepaired { get; } = new List<Timed<FriendRepaired>>();
         public List<Timed<FriendGreeted>> FriendGreeted { get; } = new List<Timed<FriendGreeted>>();
         public List<Timed<FriendSpotted>> FriendSpotted { get; } = new List<Timed<FriendSpotted>>();
+        public List<Timed<RoverJumpCharged>> RoverJumpCharged { get; } = new List<Timed<RoverJumpCharged>>();
+        public List<Timed<RoverJumped>> RoverJumped { get; } = new List<Timed<RoverJumped>>();
 
         public void Dispose()
         {

@@ -27,7 +27,9 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// Drive to the nearest onboarding relic picking up scrap on the way, ping, dig it up, tow it home (round by the
     /// base pad, since the lander is solid), put it on the shelf, pick up scrap until the tower is affordable, park on
     /// the tower pad and buy level 1 through the UI's hold. Then Tilly (M3-02): find her with a ping, gather her three
-    /// parts, repair her, drive home with her, be greeted, and let her spot a relic on the next trip.
+    /// parts, repair her, drive home with her, be greeted, and let her spot a relic on the next trip. Then the
+    /// workshop (M3-03): gather scrap for Hover-Jump, find that holding Jump does nothing yet, buy it at Kenji's
+    /// workbench through the same hold, and take the first full-charge leap on the base pad.
     /// Every step is timed (Logs/gameplay-captures/playthrough.md) and captured; any error or exception in the log
     /// fails it. Slow: run on demand with --category Playthrough.
     /// </summary>
@@ -36,7 +38,14 @@ namespace MoonProject.Gameplay.PlayModeTests
     public sealed class GoldenPathPlaythrough : InputTestFixture
     {
         private const string Tower = "radio_tower";
+        private const string HoverJump = "rover.hover_jump";
         private const string TillyId = "tilly";
+
+        /// <summary>Hold Jump this much longer than the rover's full charge time (s), as a player would.</summary>
+        private const float ChargeMargin = 0.25f;
+
+        /// <summary>A full-charge leap rises at least this high (m); the rover spec asks for ~6-8 m.</summary>
+        private const float MinLeapApex = 5f;
 
         /// <summary>Close enough (m) to ping Tilly's crater, and the stand-off 07 repairs her from.</summary>
         private const float TillyPingDistance = 35f;
@@ -121,13 +130,16 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return LatchTether(relic);
             yield return TowHome(relic);
             yield return Deposit(relic);
-            yield return GatherScrapForTheTower();
+            yield return GatherScrapFor(Tower, "the tower", 120f);
             yield return BuyTowerLevel();
             yield return FindTilly();
             yield return GatherTillyParts();
             yield return RepairTilly();
             yield return DriveHomeWithTilly();
             yield return TillySpotsOnTheNextTrip();
+            yield return GatherScrapFor(HoverJump, "Hover-Jump", 300f);
+            yield return BuyHoverJumpAtTheBench();
+            yield return FirstLeap();
 
             float total = Time.time - started;
             WriteReport(total);
@@ -336,12 +348,13 @@ namespace MoonProject.Gameplay.PlayModeTests
             End("Deposit on the shelf", $"+{gift} scrap gift, wallet {_gameplay.Wallet.Balance}");
         }
 
-        private IEnumerator GatherScrapForTheTower()
+        private IEnumerator GatherScrapFor(string upgradeId, string what, float timeout)
         {
             Begin();
-            int cost = _gameplay.Upgrades.Find(Tower).Levels[0].Cost;
+            int cost = _gameplay.Upgrades.Find(upgradeId).Levels[0].Cost;
+            int start = _gameplay.Wallet.Balance;
             int detours = 0;
-            float deadline = Time.time + 120f;
+            float deadline = Time.time + timeout;
             while (_gameplay.Wallet.Balance < cost && Time.time < deadline)
             {
                 Vector3 piece = NearestRestingScrap();
@@ -350,8 +363,9 @@ namespace MoonProject.Gameplay.PlayModeTests
                 detours++;
             }
 
-            Assert.GreaterOrEqual(_gameplay.Wallet.Balance, cost, "enough scrap for the first tower level");
-            End("Gather scrap for the tower", $"{detours} detour(s), wallet {_gameplay.Wallet.Balance} / {cost}");
+            Assert.GreaterOrEqual(_gameplay.Wallet.Balance, cost, "enough scrap for " + what);
+            End("Gather scrap for " + what, $"{detours} detour(s), wallet {start} -> {_gameplay.Wallet.Balance} / " +
+                                            $"{cost}, {_gameplay.Scrap.RemainingValue} left in the basin");
         }
 
         private IEnumerator BuyTowerLevel()
@@ -520,6 +534,84 @@ namespace MoonProject.Gameplay.PlayModeTests
             Capture("12-tilly-spots");
             End($"Next trip: Tilly spots '{undiscovered.Definition.Id}'",
                 $"{_events.FriendSpotted.Count} spot(s) on the way");
+        }
+
+        private IEnumerator BuyHoverJumpAtTheBench()
+        {
+            Begin();
+            Workshop bench = _gameplay.Workshop;
+            var abilities = _context.Get<IRoverAbilities>();
+            Assert.IsFalse(abilities.Has(RoverAbility.HoverJump), "07 cannot leap before the workbench");
+            yield return DriveTo(_context.Get<IWorldLayout>().BasePosition, PadArrival, 0.8f, 90f,
+                "the base pad, clear of the lander");
+            yield return DriveTo(bench.PadCentre, 1f, 0.6f, 60f, "the workbench pad");
+            yield return Until(() => bench.Occupied, 3f, "07 is parked on the bench's pad");
+            Assert.AreSame(bench.Definition, _gameplay.Shop.StationUpgrade, "the bench offers Hover-Jump");
+            Assert.AreEqual(UpgradeStationKind.Workshop, _gameplay.Shop.StationUpgrade.Station);
+
+            int charges = _events.RoverJumpCharged.Count;
+            _pilot.JumpHeld = true;
+            yield return new WaitForSeconds(_rover.Tuning.HoverJump.ChargeTime + ChargeMargin);
+            _pilot.JumpHeld = false;
+            yield return new WaitForSeconds(0.5f);
+            Assert.AreEqual(charges, _events.RoverJumpCharged.Count, "holding Jump does nothing before the bench");
+            Assert.AreEqual(0, _events.RoverJumped.Count);
+
+            Assert.IsTrue(_gameplay.Hints.TryGet(InteractionKind.Upgrade, out InteractionHint hint));
+            Assert.IsTrue(hint.Ready, "Hover-Jump is affordable");
+            int purchases = _events.UpgradePurchased.Count;
+            Press(_keyboard.eKey);
+            yield return Until(() => _events.UpgradePurchased.Count > purchases, 15f, "holding confirm buys it");
+            Release(_keyboard.eKey);
+            UpgradePurchased purchase = _events.UpgradePurchased[_events.UpgradePurchased.Count - 1].Value;
+            Assert.AreEqual(HoverJump, purchase.UpgradeId);
+            Assert.AreEqual(1, purchase.Level);
+            Assert.IsTrue(abilities.Has(RoverAbility.HoverJump), "07 can leap now");
+            Assert.IsFalse(_gameplay.Hints.TryGet(InteractionKind.Upgrade, out _), "the bench has nothing left");
+            yield return new WaitForSeconds(1.5f);
+            Capture("13-workbench-hover-jump");
+            End("Park at the workbench and buy Hover-Jump", $"wallet {_gameplay.Wallet.Balance} after " +
+                                                            $"{_gameplay.Upgrades.Find(HoverJump).Levels[0].Cost}");
+        }
+
+        private IEnumerator FirstLeap()
+        {
+            Begin();
+            yield return DriveTo(_context.Get<IWorldLayout>().BasePosition, PadArrival, 0.6f, 60f,
+                "the open base pad");
+            float ground = _rover.Position.y;
+            int charges = _events.RoverJumpCharged.Count;
+            _pilot.JumpHeld = true;
+            yield return new WaitForSeconds(_rover.Tuning.HoverJump.ChargeTime + ChargeMargin);
+            Assert.Greater(_events.RoverJumpCharged.Count, charges, "07 crouches and charges");
+            Assert.AreEqual(0, _events.RoverJumped.Count, "nothing leaps while Jump is held");
+            _pilot.JumpHeld = false;
+            yield return Until(() => _events.RoverJumped.Count > 0, 1f, "releasing Jump leaps");
+            float strength = _events.RoverJumped[0].Value.Strength;
+            float takeOff = Time.time;
+            yield return Until(() => !_rover.IsGrounded, 1f, "07 leaves the ground");
+            float apex = 0f;
+            bool captured = false;
+            while (!_rover.IsGrounded && Time.time < takeOff + 15f)
+            {
+                apex = Mathf.Max(apex, _rover.Position.y - ground);
+                if (!captured && _rover.Velocity.y < 0f)
+                {
+                    Capture("14-first-leap-apex");
+                    captured = true;
+                }
+
+                yield return null;
+            }
+
+            float hang = Time.time - takeOff;
+            Assert.IsTrue(_rover.IsGrounded, "07 lands softly");
+            Assert.Greater(strength, 0.95f, "a full charge");
+            Assert.Greater(apex, MinLeapApex, "a big, floaty leap");
+            yield return Until(() => _rover.Speed < StopSpeed, 6f, "07 settles after landing");
+            yield return new WaitForSeconds(1f);
+            Capture("15-after-the-leap");
+            End("First Hover-Jump on the base pad", $"strength {strength:F2}, apex {apex:F1} m, hang {hang:F1} s");
         }
 
         private bool Spotted(Relic relic)
