@@ -3,7 +3,9 @@ using MoonProject.Core;
 
 namespace MoonProject.Gameplay
 {
-    /// <summary><see cref="IInteractionHints"/> read straight from the gameplay systems' state (nothing cached).</summary>
+    /// <summary>
+    /// <see cref="IInteractionHints"/> read straight from the gameplay systems' state (nothing cached).
+    /// </summary>
     public sealed class InteractionHints : IInteractionHints
     {
         private static readonly InteractionKind[] Priority =

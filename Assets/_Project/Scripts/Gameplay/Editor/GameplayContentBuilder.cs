@@ -87,7 +87,8 @@ namespace MoonProject.Gameplay.Editor
                 if (prefab == null)
                 {
                     throw new InvalidOperationException(
-                        $"{BuilderPath}: Art prefab {prefabPath} is missing (M2 content contract). Run the Art builders.");
+                        $"{BuilderPath}: Art prefab {prefabPath} is missing (M2 content contract). " +
+                        "Run the Art builders.");
                 }
 
                 var definition = ScriptableObject.CreateInstance<RelicDefinition>();

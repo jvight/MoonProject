@@ -94,7 +94,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             return relic;
         }
 
-        /// <summary>Saves a capture of the rover camera to Logs/gameplay-captures/<paramref name="name"/>.png.</summary>
+        /// <summary>
+        /// Saves a capture of the rover camera to Logs/gameplay-captures/<paramref name="name"/>.png.
+        /// </summary>
         public void Capture(string name)
         {
             FrameCapture.SavePng(Rover.Camera, 960, 540, Path.Combine(CaptureFolder, name + ".png"));

@@ -1,6 +1,8 @@
 namespace MoonProject.Gameplay
 {
-    /// <summary>Things the player can do, for context prompts (design ruling 6: a glyph and one word, near the thing).</summary>
+    /// <summary>
+    /// Things the player can do, for context prompts (design ruling 6: a glyph and one word, near the thing).
+    /// </summary>
     public enum InteractionKind
     {
         None = 0,

@@ -38,6 +38,7 @@ namespace MoonProject.Gameplay
         private Relic _hovered;
         private Relic _towed;
         private bool _armed;
+        private bool _wasHeld;
         private float _reach;
         private bool _retracting;
         private Vector3 _beamEnd;
@@ -124,12 +125,15 @@ namespace MoonProject.Gameplay
                 return;
             }
 
-            if (_input.TetherPressed)
+            // Arm on the held edge rather than the one-frame "pressed" signal, so a hitch never eats a press.
+            bool held = _input.TetherHeld;
+            if (held && !_wasHeld)
             {
                 _armed = true;
             }
 
-            if (!_input.TetherHeld)
+            _wasHeld = held;
+            if (!held)
             {
                 _armed = false;
                 if (_towed != null)

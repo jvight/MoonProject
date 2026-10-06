@@ -13,7 +13,9 @@ namespace MoonProject.Gameplay
             return new Vector3(Mathf.Sin(radians), 0f, Mathf.Cos(radians));
         }
 
-        /// <summary>Bearing in degrees (from +Z toward +X) of the horizontal vector <paramref name="direction"/>.</summary>
+        /// <summary>
+        /// Bearing in degrees (from +Z toward +X) of the horizontal vector <paramref name="direction"/>.
+        /// </summary>
         public static float Bearing(Vector3 direction)
         {
             return Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg;

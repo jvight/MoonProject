@@ -71,7 +71,9 @@ namespace MoonProject.Gameplay
         /// <summary>Wallet value of all pieces not yet collected.</summary>
         public int RemainingValue { get; private set; }
 
-        /// <summary>Identifies this exact field (seed, world and tuning); saved indices only apply to the same one.</summary>
+        /// <summary>
+        /// Identifies this exact field (seed, world and tuning); saved indices only apply to the same one.
+        /// </summary>
         public int LayoutSignature { get; private set; }
 
         /// <summary>The horizon glints (tests read how many were drawn and how bright).</summary>
