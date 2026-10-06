@@ -12,7 +12,7 @@ namespace MoonProject.Rover.PlayModeTests
     /// <summary>Design ruling 7 (real wiring): wedged against a wall, 07 is lifted gently onto open ground.</summary>
     public sealed class RoverStuckRecoveryTests : InputTestFixture
     {
-        /// <summary>07 counts as at the wall once its contact point is this close to the wall's centre line (m).</summary>
+        /// <summary>07 counts as at the wall once its contact point is this close to the wall line (m).</summary>
         private const float WallReach = 2f;
 
         private LunarTestPhysics _physics;
