@@ -17,9 +17,6 @@ namespace MoonProject.Gameplay
         private const string VisualName = "Visual";
         private const string HaloName = "Halo";
 
-        /// <summary>Collider size (m) of a relic whose Art model has not landed yet (it never leaves the ground).</summary>
-        private const float ModelPendingSize = 0.5f;
-
         private readonly List<GlowRenderer> _halos = new List<GlowRenderer>();
         private RelicTuning _tuning;
         private float _aimHighlight;
@@ -61,17 +58,17 @@ namespace MoonProject.Gameplay
         /// <summary>Current halo brightness (aim highlight, surfacing or display glow).</summary>
         public float HaloLevel => _halo;
 
+        /// <summary>Metres from the pivot down to the bottom of the relic: how high it sits above a surface.</summary>
+        public float RestHeight { get; private set; }
+
         /// <summary>Half of the largest dimension of the relic's bounds (m).</summary>
         public float Radius { get; private set; }
 
         /// <summary>Where the relic rests when fully buried (top just below the surface).</summary>
         public Vector3 BuriedPosition { get; private set; }
 
-        /// <summary>
-        /// Can the beam lift it? Only a relic whose Art model exists (the others stay buried sites for now) and that
-        /// is still in the ground.
-        /// </summary>
-        public bool CanBeLifted => Definition.HasModel && (State == RelicState.Buried || State == RelicState.Surfacing);
+        /// <summary>Can the beam lift it? Only while it is still in the ground.</summary>
+        public bool CanBeLifted => State == RelicState.Buried || State == RelicState.Surfacing;
 
         /// <summary>A loose relic nobody holds: the only kind the tether may grab.</summary>
         public bool IsTetherable => State == RelicState.Loose && !IsTethered;
@@ -92,20 +89,17 @@ namespace MoonProject.Gameplay
             Site = site;
             gameObject.layer = Layers.Relic;
 
-            var bounds = new Bounds(Vector3.zero, Vector3.one * ModelPendingSize);
-            if (definition.HasModel)
-            {
-                GameObject visual = Instantiate(definition.Prefab, transform, false);
-                visual.name = VisualName;
+            GameObject visual = Instantiate(definition.Prefab, transform, false);
+            visual.name = VisualName;
 
-                // The prefab's pivot is the relic's centre of mass (content contract): it sits exactly on this body.
-                visual.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
-                bounds = LocalBounds(visual.transform);
-                SetLayer(visual.transform, Layers.Relic);
-                BuildHalos(visual.transform, haloMaterial);
-            }
+            // The prefab's pivot is the relic's centre of mass (content contract): it sits exactly on this body.
+            visual.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+            Bounds bounds = LocalBounds(visual.transform);
+            SetLayer(visual.transform, Layers.Relic);
+            BuildHalos(visual.transform, haloMaterial);
 
             Radius = Mathf.Max(0.05f, bounds.extents.magnitude);
+            RestHeight = Mathf.Max(0f, -bounds.min.y);
 
             Collider = gameObject.AddComponent<BoxCollider>();
             Collider.center = bounds.center;
@@ -263,6 +257,11 @@ namespace MoonProject.Gameplay
         private void Place(Vector3 position, Quaternion rotation)
         {
             transform.SetPositionAndRotation(position, rotation);
+
+            // Keep the body in step too: transforms only reach physics at the next step, and a relic freed in the
+            // same frame would otherwise wake up at its old pose (e.g. inside the ground) and be pushed out hard.
+            Body.position = position;
+            Body.rotation = rotation;
             _knownPosition = position;
             _knownRotation = rotation;
         }
