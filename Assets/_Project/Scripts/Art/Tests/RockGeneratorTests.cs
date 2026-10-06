@@ -70,6 +70,19 @@ namespace MoonProject.Art.Tests
         }
 
         [Test]
+        public void Grit_StaysAtMostTwentyTriangles_ForEverySeed()
+        {
+            var builder = new LowPolyMeshBuilder();
+            for (int seed = 0; seed < 50; seed++)
+            {
+                builder.Clear();
+                MeshRange grit = RockGenerator.Build(builder, seed, 0.2f, RockStyle.Grit, Matrix4x4.identity);
+                Assert.That(grit.TriangleCount, Is.InRange(16, 20), $"seed {seed}");
+                MeshChecks.AssertClosedAndOutward(builder);
+            }
+        }
+
+        [Test]
         public void InvalidSize_Throws()
         {
             var builder = new LowPolyMeshBuilder();
