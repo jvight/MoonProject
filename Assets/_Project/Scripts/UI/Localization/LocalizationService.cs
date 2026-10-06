@@ -82,6 +82,17 @@ namespace MoonProject.UI
             return key ?? string.Empty;
         }
 
+        public bool TryGet(string key, out string text)
+        {
+            if (key == null)
+            {
+                text = null;
+                return false;
+            }
+
+            return _current.TryGet(key, out text) || _tables[0].TryGet(key, out text);
+        }
+
         public void SetLanguage(string language)
         {
             StringTable table = Find(language);

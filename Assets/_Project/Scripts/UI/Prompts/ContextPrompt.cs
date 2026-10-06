@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.UIElements;
 using MoonProject.Core;
+using MoonProject.Core.Events;
 using MoonProject.Core.Input;
 using MoonProject.Gameplay;
 
@@ -10,7 +11,8 @@ namespace MoonProject.UI
     /// <summary>
     /// Shows the <see cref="PromptDirector"/>'s prompt: a glyph and one word (the localized "hint.&lt;kind&gt;" string)
     /// floating above the relevant world point, projected through the player's camera and softly following it on
-    /// screen. It hides while its point is behind the camera.
+    /// screen. It hides while its point is behind the camera. Each appearance is published as a
+    /// <see cref="UiCue"/>.
     /// </summary>
     internal sealed class ContextPrompt
     {
@@ -21,6 +23,7 @@ namespace MoonProject.UI
         private readonly IViewCamera _view;
         private readonly GlyphLabels _labels;
         private readonly ILocalization _localization;
+        private readonly EventBus _events;
         private readonly string[] _wordKeys;
         private readonly Reveal _reveal;
         private readonly VisualElement _anchor;
@@ -30,7 +33,7 @@ namespace MoonProject.UI
         private Vector2 _written = new Vector2(float.NaN, float.NaN);
 
         public ContextPrompt(UiLayout layout, PromptSettings settings, PromptDirector director, IViewCamera view,
-            GlyphLabels labels, ILocalization localization)
+            GlyphLabels labels, ILocalization localization, EventBus events)
         {
             if (layout == null)
             {
@@ -42,6 +45,7 @@ namespace MoonProject.UI
             _view = view ?? throw new ArgumentNullException(nameof(view));
             _labels = labels ?? throw new ArgumentNullException(nameof(labels));
             _localization = localization ?? throw new ArgumentNullException(nameof(localization));
+            _events = events ?? throw new ArgumentNullException(nameof(events));
             int kinds = 0;
             foreach (InteractionKind kind in Enum.GetValues(typeof(InteractionKind)))
             {
@@ -85,7 +89,13 @@ namespace MoonProject.UI
             }
 
             bool onScreen = entry != null && Project(_director.WorldPoint, panelSize, deltaTime, _director.Started);
+            bool wasHidden = _reveal.IsHidden;
             _reveal.Set(_director.WantsShown && onScreen);
+            if (wasHidden && _reveal.Target)
+            {
+                _events.Publish(new UiCue(UiCueKind.PromptShown));
+            }
+
             _reveal.Tick(deltaTime);
         }
 

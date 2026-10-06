@@ -58,6 +58,23 @@ namespace MoonProject.UI.Tests
             Assert.AreEqual(expected, _reader.Menu.GetCancelLabel(device));
         }
 
+        [TestCase(RoverAction.Ping, InputDeviceKind.KeyboardMouse, "keyboard.space")]
+        [TestCase(RoverAction.Tether, InputDeviceKind.KeyboardMouse, "mouse.rightbutton")]
+        [TestCase(RoverAction.Winch, InputDeviceKind.KeyboardMouse, "mouse.scroll")]
+        [TestCase(RoverAction.Ping, InputDeviceKind.Gamepad, "gamepad.buttonsouth")]
+        [TestCase(RoverAction.Winch, InputDeviceKind.Gamepad, "gamepad.dpad")]
+        public void Controls_HaveStableIds(RoverAction action, InputDeviceKind device, string expected)
+        {
+            Assert.AreEqual(expected, _reader.GetBindingControl(action, device));
+        }
+
+        [TestCase(InputDeviceKind.KeyboardMouse, "keyboard.escape")]
+        [TestCase(InputDeviceKind.Gamepad, "gamepad.buttoneast")]
+        public void Cancel_HasAStableId(InputDeviceKind device, string expected)
+        {
+            Assert.AreEqual(expected, _reader.Menu.GetCancelControl(device));
+        }
+
         [Test]
         public void MenuMap_IsSeparateFromTheRoverControls()
         {

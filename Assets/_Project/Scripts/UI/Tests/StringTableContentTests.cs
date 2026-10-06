@@ -179,6 +179,11 @@ namespace MoonProject.UI.Tests
                 return text;
             }
 
+            public bool TryGet(string key, out string text)
+            {
+                return _table.TryGet(key, out text);
+            }
+
             public void SetLanguage(string language)
             {
                 Assert.AreEqual(_table.Language, language);

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 using MoonProject.Core;
+using MoonProject.Core.Events;
 using MoonProject.Core.Input;
 using MoonProject.Gameplay;
 
@@ -19,6 +20,7 @@ namespace MoonProject.UI
     {
         private readonly MemoryCardSettings _settings;
         private readonly ILocalization _localization;
+        private readonly EventBus _events;
         private readonly RelicCatalog _catalog;
         private readonly Reveal _reveal;
         private readonly Label _caption;
@@ -32,7 +34,7 @@ namespace MoonProject.UI
         private float _readSeconds;
         private Memory _shown;
 
-        public MemoryCard(UiLayout layout, MemoryCardSettings settings, ILocalization localization,
+        public MemoryCard(UiLayout layout, MemoryCardSettings settings, ILocalization localization, EventBus events,
             RelicCatalog catalog)
         {
             if (layout == null)
@@ -42,6 +44,7 @@ namespace MoonProject.UI
 
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _localization = localization ?? throw new ArgumentNullException(nameof(localization));
+            _events = events ?? throw new ArgumentNullException(nameof(events));
             _catalog = catalog != null ? catalog : throw new ArgumentNullException(nameof(catalog));
             _reveal = new Reveal(layout.MemoryCard, settings.Reveal);
             _reveal.Snap(false);
@@ -85,11 +88,12 @@ namespace MoonProject.UI
             _pending.Enqueue(new Memory(relicId, displayedCount));
         }
 
-        /// <summary>Closes the card early (the cancel button).</summary>
+        /// <summary>Closes the card early (the cancel or pause button).</summary>
         public void Dismiss()
         {
             if (_phase == Phase.Reading)
             {
+                _events.Publish(new UiCue(UiCueKind.Back));
                 Leave();
             }
         }
@@ -161,6 +165,7 @@ namespace MoonProject.UI
             _timer = 0f;
             _phase = Phase.Reading;
             _reveal.Show();
+            _events.Publish(new UiCue(UiCueKind.CardShown));
         }
 
         private void Write(Memory memory)

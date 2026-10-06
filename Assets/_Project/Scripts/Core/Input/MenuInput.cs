@@ -51,6 +51,15 @@ namespace MoonProject.Core.Input
             return BindingLabels.For(_cancel, device);
         }
 
+        /// <summary>
+        /// Stable id of the control that backs out ("keyboard.escape", "gamepad.buttoneast") on
+        /// <paramref name="device"/>, for a localized keycap word. Allocates a string: cache it.
+        /// </summary>
+        public string GetCancelControl(InputDeviceKind device)
+        {
+            return BindingLabels.ControlId(_cancel, device);
+        }
+
         internal InputActionMap Map => _map;
 
         public void Enable()

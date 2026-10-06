@@ -201,6 +201,74 @@
         {
             "key": "relic.garden_gnome.memory",
             "text": "Theo smuggled him aboard as a joke and put him in charge of the seedlings. Nothing was ever stolen on his watch."
+        },
+        {
+            "key": "glyph.keyboard.escape",
+            "text": "Esc"
+        },
+        {
+            "key": "glyph.keyboard.space",
+            "text": "Space"
+        },
+        {
+            "key": "glyph.mouse.leftbutton",
+            "text": "LMB"
+        },
+        {
+            "key": "glyph.mouse.rightbutton",
+            "text": "RMB"
+        },
+        {
+            "key": "glyph.mouse.scroll",
+            "text": "Scroll"
+        },
+        {
+            "key": "glyph.gamepad.buttonsouth",
+            "text": "A"
+        },
+        {
+            "key": "glyph.gamepad.buttoneast",
+            "text": "B"
+        },
+        {
+            "key": "glyph.gamepad.buttonwest",
+            "text": "X"
+        },
+        {
+            "key": "glyph.gamepad.buttonnorth",
+            "text": "Y"
+        },
+        {
+            "key": "glyph.gamepad.leftshoulder",
+            "text": "LB"
+        },
+        {
+            "key": "glyph.gamepad.rightshoulder",
+            "text": "RB"
+        },
+        {
+            "key": "glyph.gamepad.lefttrigger",
+            "text": "LT"
+        },
+        {
+            "key": "glyph.gamepad.righttrigger",
+            "text": "RT"
+        },
+        {
+            "key": "glyph.gamepad.leftstick",
+            "text": "LS"
+        },
+        {
+            "key": "glyph.gamepad.rightstick",
+            "text": "RS"
+        },
+        {
+            "key": "glyph.gamepad.dpad",
+            "text": "D-Pad"
+        },
+        {
+            "key": "glyph.gamepad.start",
+            "text": "Start"
         }
     ]
 }
