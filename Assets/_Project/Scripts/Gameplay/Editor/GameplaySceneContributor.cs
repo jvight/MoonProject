@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using MoonProject.Core;
 using MoonProject.Editor.SceneBuild;
 
 namespace MoonProject.Gameplay.Editor
@@ -8,9 +9,11 @@ namespace MoonProject.Gameplay.Editor
     /// The Gameplay domain's part of Main.unity: under [Gameplay], the <see cref="GameplaySystem"/> (one system,
     /// initialised after World, Rover and Audio) and its parts, wired to the tuning, content and material assets, plus
     /// the home base built from Art's prefabs (lander, museum shelf on its ShelfAnchor, the three radio tower stages on
-    /// its TowerAnchor). The base is stood beside the pad here for the editor view and re-seated on the real ground
-    /// at boot; relic sites and the scrap field are planned from the World's surface at boot. Fails loudly when a
-    /// required asset or prefab node is missing.
+    /// its TowerAnchor). Art's base prefabs are meshes only, so gameplay makes them solid here: a static mesh
+    /// collider on each body, on the Prop layer, so 07 drives around them and the camera never slips inside. The base
+    /// is stood beside the pad here for the editor view and re-seated on the real ground at boot; relic sites and the
+    /// scrap field are planned from the World's surface at boot. Fails loudly when a required asset or prefab node is
+    /// missing.
     /// </summary>
     public sealed class GameplaySceneContributor : ISceneContributor
     {
@@ -57,6 +60,8 @@ namespace MoonProject.Gameplay.Editor
             Transform lander = context.InstantiatePrefab(GameplayAssetPaths.Lander, baseRoot.transform).transform;
             Transform shelf = context.InstantiatePrefab(GameplayAssetPaths.MuseumShelf,
                 Child(lander, "ShelfAnchor")).transform;
+            MakeSolid(lander);
+            MakeSolid(shelf);
             Transform towerAnchor = Child(lander, "TowerAnchor");
             var stages = new GameObject[TowerStages];
             var stageLights = new Renderer[TowerStages];
@@ -64,6 +69,7 @@ namespace MoonProject.Gameplay.Editor
             for (int i = 0; i < TowerStages; i++)
             {
                 stages[i] = context.InstantiatePrefab(GameplayAssetPaths.RadioTowerStage(i + 1), towerAnchor);
+                MakeSolid(stages[i].transform);
                 stageLights[i] = Glow(stages[i].transform);
                 beacons[i] = Child(stages[i].transform, "BeaconSocket");
             }
@@ -78,6 +84,19 @@ namespace MoonProject.Gameplay.Editor
             tower.Wire(towerTuning, radioTower, towerAnchor, stages, stageLights, beacons);
             gameplay.Wire(visuals, new[] { radioTower }, relics, scrap, sonar, excavation, tether, home, tower);
             context.AddSystem(gameplay);
+        }
+
+        /// <summary>A static collider of the prefab's own body mesh, on the Prop layer (props are solid).</summary>
+        private static void MakeSolid(Transform prefab)
+        {
+            if (!prefab.TryGetComponent(out MeshFilter body) || body.sharedMesh == null)
+            {
+                throw new InvalidOperationException($"Gameplay scene build: {prefab.name} has no body mesh on its " +
+                                                    "root (M2 content contract).");
+            }
+
+            prefab.gameObject.layer = Layers.Prop;
+            prefab.gameObject.AddComponent<MeshCollider>().sharedMesh = body.sharedMesh;
         }
 
         private static T Part<T>(SceneBuildContext context, GameObject host, string name) where T : Component
