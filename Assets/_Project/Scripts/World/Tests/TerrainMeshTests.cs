@@ -72,7 +72,7 @@ namespace MoonProject.World.Tests
             {
                 for (float x = -400f; x <= 400f; x += 4f)
                 {
-                    if (_surface.IsDrivableFloor(x, z))
+                    if (_surface.IsDrivable(x, z))
                     {
                         Assert.AreEqual(_settings.FineCellSize, PlanAt(x, z).CellSize, $"({x}, {z}) is not fine");
                     }
