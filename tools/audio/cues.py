@@ -476,13 +476,106 @@ def tether_release(_variant, gen):
 
 # --------------------------------------------------------------------------------------------------- UI
 
-def ui_click(_variant, gen):
-    """Tiny soft tick: a very short A5 + A4 blip with a whisper of noise."""
-    n = samples(0.09)
-    tone = osc.sine(n, note_freq("A5")) * envelope.ar(n, 0.0008, 0.035)
-    low = osc.sine(n, note_freq("A4")) * envelope.ar(n, 0.001, 0.025)
-    tick = filters.bandpass(noise.white(n, gen), 2500.0, 1.0) * envelope.ar(n, 0.0003, 0.006)
-    return filters.lowpass(tone + 0.4 * low + 0.15 * tick, 6000.0)
+def _rolled(notes, gap: float, duration: float, gen, decay: float, brightness: float, gains=None) -> np.ndarray:
+    """Felt-piano notes rolled upward by ``gap`` seconds each (a soft, unhurried chord)."""
+    n = samples(duration)
+    mix = np.zeros(n)
+    for k, note in enumerate(notes):
+        tone = instruments.felt_piano(note_freq(note), duration, gen, decay=decay, brightness=brightness)
+        place(mix, tone, samples(gap * k), gains[k] if gains else 1.0)
+    return mix
+
+
+def ui_menu_open(_variant, gen):
+    """The pause menu opens: a soft felt-piano D4 A4 D5 rolled upward, like settling into the cabin."""
+    mix = _rolled(("D4", "A4", "D5"), 0.045, 1.1, gen, decay=1.3, brightness=0.45, gains=(0.8, 0.7, 0.6))
+    return _mono_reverb(filters.lowpass(mix, 4500.0), room=0.4, damping=0.6, wet=0.14, dry=1.0)
+
+
+def ui_menu_close(_variant, gen):
+    """The menu closes: the same felt piano, A4 then D4, a little softer and shorter."""
+    mix = _rolled(("A4", "D4"), 0.06, 0.85, gen, decay=0.9, brightness=0.4, gains=(0.65, 0.8))
+    return _mono_reverb(filters.lowpass(mix, 4500.0), room=0.4, damping=0.6, wet=0.12, dry=1.0)
+
+
+UI_FOCUS_NOTES = ("A4", "B4", "D5")
+
+
+def ui_focus(variant, gen):
+    """Focus moves: a tiny soft wooden tick (three pentatonic pitches, picked without repeats)."""
+    tick = instruments.wood_tick(note_freq(UI_FOCUS_NOTES[variant]), 0.12, gen, decay=0.045)
+    return filters.lowpass(tick, 4000.0)
+
+
+UI_SLIDER_NOTES = ("D5", "E5")
+
+
+def ui_slider(variant, gen):
+    """A slider step: an even smaller muted kalimba tap."""
+    tap = instruments.kalimba(note_freq(UI_SLIDER_NOTES[variant]), 0.16, gen, decay=0.07, tine=0.03, warmth=0.0)
+    return filters.lowpass(tap, 3500.0)
+
+
+def ui_prompt(_variant, gen):
+    """A context prompt appears: a soft E5 grace note into A5 on the felt piano, barely there."""
+    mix = _rolled(("E5", "A5"), 0.035, 0.7, gen, decay=0.6, brightness=0.35, gains=(0.45, 0.8))
+    return _mono_reverb(filters.lowpass(mix, 4000.0), room=0.35, damping=0.6, wet=0.12, dry=1.0)
+
+
+UI_HOLD_RISE_S = 0.6
+
+
+def ui_hold_fill(_variant, gen):
+    """Holding to buy: a gentle swell (D5 + A5 shimmer with a breath of air) rising over the UI's 0.6 s hold
+    and gliding the last few cents into tune exactly as the ring fills. The runtime stops it on release."""
+    n = samples(UI_HOLD_RISE_S + 0.3)
+    rise = samples(UI_HOLD_RISE_S)
+    curve = np.minimum(1.0, np.arange(n) / rise)
+    env = curve ** 2.2 * envelope.segments(n, [(0.0, 1.0), (UI_HOLD_RISE_S, 1.0), (UI_HOLD_RISE_S + 0.3, 0.0)],
+                                           shape="smooth")
+    cents = -25.0 * (1.0 - curve)
+    tone = np.zeros(n)
+    for note, amp in (("D5", 1.0), ("A5", 0.55), ("D6", 0.18)):
+        tone += amp * osc.sine(n, note_freq(note) * 2.0 ** (cents / 1200.0))
+    air = filters.swept(noise.pink(n, gen), "bandpass", osc.glide(n, 700.0, 2400.0), q=1.2)
+    mix = (tone + 0.9 * air / max(float(np.std(air)), 1e-9) * 0.05) * env
+    return filters.lowpass(effects.tremolo(mix, 7.0, 0.12), 5000.0)
+
+
+def ui_hold_complete(_variant, gen):
+    """The ring fills: a soft resolved D major chord (felt piano D4 F#4 A4 D5, rolled quickly) with a faint
+    music-box D6 on top, in a small warm room. The upgrade's own arpeggio rides over it."""
+    n = samples(1.8)
+    mix = _rolled(("D4", "F#4", "A4", "D5"), 0.018, 1.8, gen, decay=1.5, brightness=0.45,
+                  gains=(0.75, 0.6, 0.6, 0.55))
+    place(mix, instruments.music_box(note_freq("D6"), 1.5, decay=1.0), samples(0.06), 0.18)
+    wet = effects.reverb(filters.lowpass(mix, 4500.0)[:n], room=0.5, damping=0.6, wet=0.2, dry=0.0, width=0.8)
+    return filters.lowpass(mix, 4500.0)[:, None] * np.array([[1.0, 1.0]]) + wet
+
+
+UI_CARD_PHRASE = (
+    # time (s), note, gain
+    (0.00, "A5", 0.8),
+    (0.19, "F#5", 0.65),
+    (0.38, "A5", 0.7),
+    (0.57, "D6", 0.85),
+    (0.57, "D5", 0.35),
+)
+
+
+def ui_card(_variant, _gen):
+    """A memory card appears: a delicate music-box phrase A5 F#5 A5 resolving to D6 over a low D5 tine,
+    stereo, in a small room."""
+    n = samples(2.6)
+    dry = np.zeros((n, 2))
+    mono = np.zeros(n)
+    for when, note, gain in UI_CARD_PHRASE:
+        tone = instruments.music_box(note_freq(note), 1.9, decay=1.3 if note.endswith("6") else 0.9)
+        position = 0.25 if note == "D6" else (-0.2 if note == "D5" else -0.05)
+        place(dry, pan(tone, position), samples(when), gain)
+        place(mono, tone, samples(when), gain)
+    wet = effects.reverb(mono, room=0.55, damping=0.55, wet=0.28, dry=0.0, width=0.9)
+    return dry + wet
 
 
 def _ui_two_notes(first: str, second: str, gap: float, duration: float, amps=(0.8, 1.0)) -> np.ndarray:
@@ -569,7 +662,25 @@ CUES = (
         volume=(0.6, 0.6), milestone="M2", notes="Low brown-noise rumble + grit + D2/A2 drone, 6 s seamless."),
     Cue("surfacing_sparkle", "oneshot_3d", surfacing_sparkle, volume=(0.8, 0.8), fade_out=0.25, milestone="M2",
         tonal=True, notes="Rising glassy run D5..D6 over an upward whoosh."),
-    Cue("ui_click", "ui_2d", ui_click, volume=(0.6, 0.6), fade_out=0.01, tonal=True, notes="Soft A5 tick."),
+    Cue("ui_menu_open", "ui_2d", ui_menu_open, volume=(0.6, 0.6), fade_out=0.15, tonal=True,
+        notes="UiCue MenuOpen: felt piano D4 A4 D5 rolled upward."),
+    Cue("ui_menu_close", "ui_2d", ui_menu_close, volume=(0.5, 0.5), fade_out=0.12, tonal=True,
+        notes="UiCue MenuClose: felt piano A4 -> D4."),
+    Cue("ui_focus", "ui_2d", ui_focus, variants=len(UI_FOCUS_NOTES), variant_labels=("A4", "B4", "D5"),
+        volume=(0.26, 0.3), pitch=(0.985, 1.015), fade_out=0.02, tonal=True,
+        notes="UiCue FocusMove: tiny wooden tick; the runtime rate-limits and softens rapid repeats."),
+    Cue("ui_slider", "ui_2d", ui_slider, variants=len(UI_SLIDER_NOTES), variant_labels=("D5", "E5"),
+        volume=(0.22, 0.26), pitch=(0.985, 1.015), fade_out=0.02, tonal=True,
+        notes="UiCue SliderStep: muted kalimba tap; rate-limited and softened under repeats."),
+    Cue("ui_prompt", "ui_2d", ui_prompt, volume=(0.4, 0.4), fade_out=0.1, tonal=True,
+        notes="UiCue PromptShown: barely-there E5 -> A5 felt-piano grace note."),
+    Cue("ui_hold_fill", "ui_2d", ui_hold_fill, volume=(0.45, 0.45), fade_out=0.05,
+        notes="UiCue HoldFill: D5/A5 swell rising over the 0.6 s hold (UI TowerPanelSettings.HoldSeconds); "
+              "stopped on release/complete."),
+    Cue("ui_hold_complete", "ui_2d", ui_hold_complete, volume=(0.55, 0.55), fade_out=0.2, tonal=True,
+        notes="UiCue HoldComplete: soft resolved D major felt-piano chord + music-box D6."),
+    Cue("ui_card", "ui_2d", ui_card, volume=(0.5, 0.5), fade_out=0.25, tonal=True,
+        notes="UiCue CardShown: music-box phrase A5 F#5 A5 -> D6 over D5."),
     Cue("ui_confirm", "ui_2d", ui_confirm, volume=(0.7, 0.7), fade_out=0.08, tonal=True, notes="Rising D5 -> A5."),
     Cue("ui_back", "ui_2d", ui_back, volume=(0.65, 0.65), fade_out=0.08, tonal=True, notes="Falling A4 -> D4."),
     Cue("upgrade_arpeggio", "stinger_2d", upgrade_arpeggio, volume=(0.8, 0.8), fade_out=0.3, milestone="M2",
