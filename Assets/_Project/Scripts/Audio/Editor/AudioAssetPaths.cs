@@ -12,6 +12,7 @@ namespace MoonProject.Audio.Editor
         public const string MixTuning = DataFolder + "/AudioMixTuning.asset";
         public const string RoverTuning = DataFolder + "/RoverAudioTuning.asset";
         public const string RadioTuning = DataFolder + "/RadioTuning.asset";
+        public const string GameplayTuning = DataFolder + "/GameplayAudioTuning.asset";
 
         /// <summary>Written by tools/audio/build_sfx.py (project-relative).</summary>
         public const string SfxManifest = "tools/audio/sfx_manifest.json";

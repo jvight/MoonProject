@@ -56,6 +56,8 @@ namespace MoonProject.World
                 }
             }
 
+            Vector3[] groundNormals = GroundNormals(positions, cells, plan.CellSize);
+
             var origin = new Vector3(plan.Origin.x, 0f, plan.Origin.y);
             var vertices = new TerrainVertex[cells * cells * 6];
             var indices = new int[cells * cells * 6];
@@ -88,14 +90,18 @@ namespace MoonProject.World
 
                     if (mainDiagonal)
                     {
-                        Emit(positions, regions, a, c, d, origin, paintHash, vertices, indices, ref written);
-                        Emit(positions, regions, a, d, b, origin, Hashing.Mix(paintHash), vertices, indices,
+                        Emit(positions, regions, groundNormals, a, c, d, origin, paintHash, vertices, indices,
+                            ref written);
+                        Emit(positions, regions, groundNormals, a, d, b, origin, Hashing.Mix(paintHash), vertices,
+                            indices,
                             ref written);
                     }
                     else
                     {
-                        Emit(positions, regions, a, c, b, origin, paintHash, vertices, indices, ref written);
-                        Emit(positions, regions, b, c, d, origin, Hashing.Mix(paintHash), vertices, indices,
+                        Emit(positions, regions, groundNormals, a, c, b, origin, paintHash, vertices, indices,
+                            ref written);
+                        Emit(positions, regions, groundNormals, b, c, d, origin, Hashing.Mix(paintHash), vertices,
+                            indices,
                             ref written);
                     }
                 }
@@ -118,8 +124,8 @@ namespace MoonProject.World
                 indices, bounds);
         }
 
-        private void Emit(Vector3[] positions, SurfaceSample[] regions, int i0, int i1, int i2, Vector3 origin,
-            uint hash, TerrainVertex[] vertices, int[] indices, ref int written)
+        private void Emit(Vector3[] positions, SurfaceSample[] regions, Vector3[] groundNormals, int i0, int i1,
+            int i2, Vector3 origin, uint hash, TerrainVertex[] vertices, int[] indices, ref int written)
         {
             Vector3 p0 = positions[i0];
             Vector3 p1 = positions[i1];
@@ -130,7 +136,8 @@ namespace MoonProject.World
             SurfaceSample r2 = regions[i2];
             var region = new SurfaceSample(0f, (r0.CraterBowl + r1.CraterBowl + r2.CraterBowl) / 3f,
                 (r0.CraterRim + r1.CraterRim + r2.CraterRim) / 3f, (r0.RimZone + r1.RimZone + r2.RimZone) / 3f);
-            Vector2 uv = Palette.Uv(_painter.Pick(normal, (p0 + p1 + p2) / 3f, region, hash));
+            Vector3 ground = (groundNormals[i0] + groundNormals[i1] + groundNormals[i2]).normalized;
+            Vector2 uv = Palette.Uv(_painter.Pick(normal, ground, (p0 + p1 + p2) / 3f, region, hash));
 
             indices[written] = i0;
             vertices[written++] = new TerrainVertex(p0 - origin, normal, uv);
@@ -140,7 +147,33 @@ namespace MoonProject.World
             vertices[written++] = new TerrainVertex(p2 - origin, normal, uv);
         }
 
-        /// <summary>True when the triangle's projection on XZ keeps the upward winding (it is not folded over).</summary>
+        /// <summary>
+        /// Per-vertex ground normal from a central difference spanning about the painter's tilt-smoothing distance,
+        /// so the paint follows dunes and hills but ignores the facet-scale grain. Clamped at the chunk border,
+        /// which only shortens the stencil there.
+        /// </summary>
+        private Vector3[] GroundNormals(Vector3[] positions, int cells, float cellSize)
+        {
+            int reach = Mathf.Max(1, Mathf.RoundToInt(_painter.TiltSmoothing * 0.5f / cellSize));
+            int stride = cells + 1;
+            var normals = new Vector3[positions.Length];
+            for (int j = 0; j <= cells; j++)
+            {
+                int j0 = Mathf.Max(0, j - reach) * stride;
+                int j1 = Mathf.Min(cells, j + reach) * stride;
+                for (int i = 0; i <= cells; i++)
+                {
+                    Vector3 alongX = positions[j * stride + Mathf.Min(cells, i + reach)]
+                        - positions[j * stride + Mathf.Max(0, i - reach)];
+                    Vector3 alongZ = positions[j1 + i] - positions[j0 + i];
+                    normals[j * stride + i] = Vector3.Cross(alongZ, alongX).normalized;
+                }
+            }
+
+            return normals;
+        }
+
+        /// <summary>True when the triangle's XZ projection keeps the upward winding (it is not folded).</summary>
         private static bool FacesUp(Vector3[] positions, int i0, int i1, int i2)
         {
             Vector3 p0 = positions[i0];

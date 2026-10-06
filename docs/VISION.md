@@ -54,6 +54,32 @@ tape wow/flutter — melancholic but warm. Everything is in **D major / B minor*
 (D major pentatonic) always harmonise with whatever is playing. A final, special track is reserved for the
 endgame broadcast to Earth.
 
+## Design rulings (Director as game designer — these override GDD.md where they differ)
+Each ruling removes friction the original pitch would have caused. Boxes implement them as written.
+1. **No loss, ever.** Relics never break, vanish or fall out of reach. Towing is the slice's transport; the M3
+   Cargo Bed is a magnetic cradle carrying up to 3 relics that jiggle cosmetically but never fall out (the GDD's
+   "bumps make relics bounce out" is cut — it punishes the joyful hops the rover is tuned for).
+2. **Generous aim.** The tether picks the best target inside a soft aim cone (~8°) with sticky hover and a visible
+   highlight before you press; pixel-precise aiming is never required. Excavation works anywhere within ~5 m of a
+   site, and the rover eases to a stop by itself when you hold the beam.
+3. **Pings leave a trail.** A sonar answer leaves a soft light pillar on the horizon for ~20 s and 07 keeps glancing
+   toward the nearest one, so players navigate by sight and never need to spam the ping.
+4. **Progress is kept.** Releasing excavation early keeps progress; a snapped tether leaves the relic right where it
+   was; nothing resets.
+5. **No grind.** The basin holds at least 2× the scrap the slice's upgrades cost, and each deposited relic also
+   gives a scrap gift, so exploring for memories funds the radio tower. Target: all three tower levels in 15–20 min.
+6. **Teach by doing.** No tutorial screens. Context prompts (key/button glyph + one word) fade in only near a usable
+   thing, only the first few times (remembered in the save), then never again. A pause menu offers resume,
+   volumes, look sensitivity, invert Y and quit.
+7. **Never stuck.** If 07 is wedged or not progressing for a few seconds while the player is trying to move, it is
+   automatically lifted on a soft arc to the nearest open, drivable spot and set down — no prompt, no penalty, no
+   teleport flash.
+8. **The first frame is the hook.** 07 spawns at the base facing bearing 355° so Earth and The Peak (with its slow
+   red beacon) share the opening frame; the camera pitches down no more than ~6°. 07 starts with its eye closed and
+   wakes as the radio crackles on — the first five seconds should make people say "aww".
+9. **Ground variation is patchy, never confetti.** Colour changes on the floor follow low-frequency patches and
+   facet tilt; isolated bright triangles on flat ground read as paper scraps and are not allowed.
+
 ## World concept
 The playable space is the floor of a **vast ancient crater basin** (~600 m across for the vertical slice).
 The crater rim is a natural, beautiful boundary: rolling lavender dunes rise into jagged rim mountains.

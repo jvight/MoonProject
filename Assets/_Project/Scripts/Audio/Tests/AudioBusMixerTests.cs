@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using MoonProject.Core;
 
 namespace MoonProject.Audio.Tests
 {
@@ -14,6 +15,14 @@ namespace MoonProject.Audio.Tests
             Assert.AreEqual(0.4f, mixer.Effective(AudioBus.Music), 1e-6f);
             Assert.AreEqual(0.5f, mixer.Effective(AudioBus.Sfx), 1e-6f);
             Assert.AreEqual(0.5f, mixer.Effective(AudioBus.Master), 1e-6f);
+        }
+
+        [Test]
+        public void Mixer_IsTheAudioSettingsService()
+        {
+            IAudioSettings settings = new AudioBusMixer();
+            settings.SetVolume(AudioBus.Music, 0.25f);
+            Assert.AreEqual(0.25f, settings.GetVolume(AudioBus.Music));
         }
 
         [Test]

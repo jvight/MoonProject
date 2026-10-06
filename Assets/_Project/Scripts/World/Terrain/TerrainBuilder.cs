@@ -29,11 +29,12 @@ namespace MoonProject.World
 
         private readonly List<Mesh> _meshes = new List<Mesh>();
 
-        /// <summary>Every mesh this builder created; the owner destroys them with <see cref="DestroyMeshes"/>.</summary>
+        /// <summary>Every mesh this builder created; released by <see cref="DestroyMeshes"/>.</summary>
         public IReadOnlyList<Mesh> Meshes => _meshes;
 
+        /// <param name="lightDirection">Direction toward the earthlight: facets are painted by their tilt.</param>
         public TerrainBuildReport Build(Transform parent, MoonSurface surface, TerrainMeshSettings meshSettings,
-            TerrainPaintSettings paintSettings, Material material, HideFlags hideFlags)
+            TerrainPaintSettings paintSettings, Vector3 lightDirection, Material material, HideFlags hideFlags)
         {
             if (parent == null || surface == null || meshSettings == null || paintSettings == null || material == null)
             {
@@ -51,7 +52,7 @@ namespace MoonProject.World
 
             var total = Stopwatch.StartNew();
             TerrainChunkPlan[] plans = TerrainChunkPlanner.Plan(meshSettings);
-            var painter = new TerrainPainter(paintSettings, surface.Seed);
+            var painter = new TerrainPainter(paintSettings, surface.Seed, lightDirection);
             var mesher = new TerrainChunkMesher(surface, painter, meshSettings);
             var pieces = new TerrainMeshData[plans.Length + 1];
             Parallel.For(0, pieces.Length, i =>
@@ -171,7 +172,8 @@ namespace MoonProject.World
         {
             if (count > ushort.MaxValue + 1)
             {
-                throw new InvalidOperationException($"A terrain piece has {count} vertices; 16-bit indices hold 65536.");
+                throw new InvalidOperationException(
+                    $"A terrain piece has {count} vertices; 16-bit indices hold 65536.");
             }
 
             var sequence = new ushort[count];

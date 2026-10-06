@@ -46,13 +46,17 @@ namespace MoonProject.Rover
         /// <summary>Final elevation for the orbital follow's vertical axis.</summary>
         public float Elevation => Mathf.Clamp(Pitch + Lift, _tuning.MinPitch, _tuning.MaxPitch);
 
+        /// <summary>
+        /// The opening shot: straight behind 07 at the low opening elevation. Recentering later eases it to the
+        /// resting elevation once 07 drives.
+        /// </summary>
         public void Reset()
         {
             _lookVelocity = Vector2.zero;
             _idleTime = 0f;
             _recenterWeight = 0f;
             YawOffset = 0f;
-            Pitch = _tuning.DefaultPitch;
+            Pitch = _tuning.OpeningPitch;
             Lift = 0f;
             FieldOfView = _tuning.BaseFov;
         }

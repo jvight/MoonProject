@@ -14,8 +14,9 @@ using UnityEditor;
 namespace MoonProject.World.PlayModeTests
 {
     /// <summary>
-    /// Boots <see cref="WorldSystem"/> through its only play-mode path (<see cref="IGameSystem.Initialize"/>) and checks
-    /// the services it registers, that the baked chunk colliders match the analytic surface, and the boot budget.
+    /// Boots <see cref="WorldSystem"/> through its only play-mode path (<see cref="IGameSystem.Initialize"/>) and
+    /// checks the services it registers, that the baked chunk colliders match the analytic surface, and the boot
+    /// budget.
     /// </summary>
     public sealed class WorldBootTests
     {
@@ -24,12 +25,17 @@ namespace MoonProject.World.PlayModeTests
         private const string TerrainMaterialPath = "Assets/_Project/Generated/Art/Palette/M_LowPoly.mat";
         private const string EarthMaterialPath = "Assets/_Project/Generated/World/M_Earth.mat";
         private const string ControlsPath = "Assets/_Project/Data/Input/Controls.inputactions";
+        private const string RockFolder = "Assets/_Project/Generated/Art/Rocks/";
+        private static readonly string[] PebbleRocks = { "Rock_00", "Rock_01", "Rock_03" };
+        private static readonly string[] BoulderRocks = { "Rock_02", "Rock_04", "Rock_05" };
 
         private const double BootBudgetMs = 1500.0;
         private const float ColliderTolerance = 0.25f;
+        private const float ScatterProbeRadius = 1000f;
 
         private GameObject _host;
         private GameObject _lightHost;
+        private PeakBeacon _beacon;
         private InputReader _input;
 
         [UnityTest]
@@ -47,6 +53,10 @@ namespace MoonProject.World.PlayModeTests
             serialized.FindProperty("_terrainMaterial").objectReferenceValue = Load<Material>(TerrainMaterialPath);
             serialized.FindProperty("_earthMaterial").objectReferenceValue = Load<Material>(EarthMaterialPath);
             serialized.FindProperty("_earthlight").objectReferenceValue = light;
+            _beacon = CreateBeaconHost("PeakBeacon");
+            serialized.FindProperty("_peakBeacon").objectReferenceValue = _beacon;
+            AssignRocks(serialized.FindProperty("_pebbleRocks"), PebbleRocks);
+            AssignRocks(serialized.FindProperty("_boulderRocks"), BoulderRocks);
             serialized.ApplyModifiedPropertiesWithoutUndo();
             _host.SetActive(true);
             Assert.IsFalse(world.HasGeneratedWorld, "play mode must not build anything before Initialize");
@@ -79,9 +89,17 @@ namespace MoonProject.World.PlayModeTests
                     $"collider and surface disagree at {probe}");
             }
 
-            TerrainBuildReport report = world.LastBuild;
-            TestContext.WriteLine($"World boot: Initialize {watch.Elapsed.TotalMilliseconds:0} ms; terrain {report}");
-            UnityEngine.Debug.Log($"[moon] world boot: Initialize {watch.Elapsed.TotalMilliseconds:0} ms; {report}");
+            ScatterBuildReport scatter = world.LastScatter;
+            Assert.Greater(scatter.Pebbles, 0);
+            Assert.AreEqual(layout.PeakPosition, _beacon.transform.position, "the beacon stands on the summit");
+
+            int boulderColliders = Physics.OverlapSphere(Vector3.zero, ScatterProbeRadius, Layers.PropMask).Length;
+            Assert.AreEqual(scatter.Boulders, boulderColliders, "every boulder needs one collider on Layers.Prop");
+
+            string summary = $"Initialize {watch.Elapsed.TotalMilliseconds:0} ms; terrain {world.LastBuild}; " +
+                $"scatter {scatter}";
+            TestContext.WriteLine("World boot: " + summary);
+            UnityEngine.Debug.Log("[moon] world boot: " + summary);
             Assert.Less(watch.Elapsed.TotalMilliseconds, BootBudgetMs, "world boot exceeds its budget");
 #else
             Assert.Ignore("Needs editor asset access to wire the WorldSystem.");
@@ -102,10 +120,39 @@ namespace MoonProject.World.PlayModeTests
                 Object.Destroy(_lightHost);
             }
 
+            if (_beacon != null)
+            {
+                Object.Destroy(_beacon.gameObject);
+            }
+
             _input?.Dispose();
         }
 
 #if UNITY_EDITOR
+        private static PeakBeacon CreateBeaconHost(string name)
+        {
+            var host = new GameObject(name);
+            var lamp = new GameObject("Lamp").AddComponent<MeshRenderer>();
+            lamp.transform.SetParent(host.transform, false);
+            var halo = new GameObject("Halo").AddComponent<MeshRenderer>();
+            halo.transform.SetParent(host.transform, false);
+            var beacon = host.AddComponent<PeakBeacon>();
+            var serialized = new SerializedObject(beacon);
+            serialized.FindProperty("_lamp").objectReferenceValue = lamp;
+            serialized.FindProperty("_halo").objectReferenceValue = halo;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            return beacon;
+        }
+
+        private static void AssignRocks(SerializedProperty property, string[] names)
+        {
+            property.arraySize = names.Length;
+            for (int i = 0; i < names.Length; i++)
+            {
+                property.GetArrayElementAtIndex(i).objectReferenceValue = Load<Mesh>(RockFolder + names[i] + ".asset");
+            }
+        }
+
         private static T Load<T>(string path) where T : Object
         {
             var asset = AssetDatabase.LoadAssetAtPath<T>(path);

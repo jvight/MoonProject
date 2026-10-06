@@ -1,0 +1,57 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 70bf78937b7af0a418f52e1af6dd2017, type: 3}
+  m_Name: RoverTuning
+  m_EditorClassIdentifier: 
+  _drive:
+    _topSpeed: 8
+    _reverseTopSpeed: 3.5
+    _accelerationTime: 2.4
+    _reverseAccelerationTime: 1.5
+    _coastStopTime: 2
+    _coastEase: 0.5
+    _brakeStopTime: 1.1
+    _brakeEase: 0.35
+    _throttleRiseHalfLife: 0.08
+    _throttleFallHalfLife: 0.1
+    _inputDeadZone: 0.05
+    _reverseEngageSpeed: 0.25
+  _steering:
+    _steerRiseHalfLife: 0.07
+    _steerReturnHalfLife: 0.06
+    _pivotTurnRate: 70
+    _peakTurnRate: 105
+    _peakTurnSpeed: 2.5
+    _topSpeedTurnRate: 62
+    _reverseSteerSpeed: 0.3
+    _steerDirectionHalfLife: 0.12
+    _airTurnFactor: 0.3
+  _ground:
+    _mass: 250
+    _sphereRadius: 0.5
+    _probeRadiusFactor: 0.9
+    _groundSnapDistance: 0.12
+    _maxGroundAngle: 60
+    _downforce: 4
+    _gripRate: 9
+    _slopeAssistFullAngle: 32
+    _slopeAssistZeroAngle: 45
+    _slopeInfluence: 0.3
+    _slopeRollSpeed: 0.8
+    _airRiseGravity: 2.6
+    _airFallGravity: 3.6
+    _airThrottleFactor: 0.1
+    _groundNormalHalfLife: 0.06
+  _landing:
+    _coyoteTime: 0.1
+    _minAirTime: 0.25
+    _minImpactSpeed: 0.5

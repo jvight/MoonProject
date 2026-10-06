@@ -28,7 +28,6 @@ namespace MoonProject.Rover.Editor
         private const float LandingRingRadius = 0.7f;
         private const float DustDrag = 1.2f;
         private const float LandingDrag = 1.6f;
-        private const float HeadlampShadowStrength = 0.7f;
 
         /// <summary>Kicks rolling dust up and back from the rear wheel contact (cone axis tipped back).</summary>
         private static readonly Vector3 DustConeRotation = new Vector3(-120f, 0f, 0f);
@@ -97,7 +96,9 @@ namespace MoonProject.Rover.Editor
                     ("_body", body),
                     ("_sphere", collider),
                     ("_visualRig", rig),
-                    ("_wheelFx", wheelFx));
+                    ("_wheelFx", wheelFx),
+                    ("_tetherOrigin", BuildWiring.Node(m, RoverModelNodes.TetherOrigin)),
+                    ("_cargoSocket", BuildWiring.Node(m, RoverModelNodes.CargoSocket)));
 
                 BuildWiring.Assign(bodyLanguage,
                     ("_tuning", characterTuning),
@@ -136,8 +137,8 @@ namespace MoonProject.Rover.Editor
             light.range = tuning.HeadlampRange;
             light.spotAngle = tuning.HeadlampSpotAngle;
             light.innerSpotAngle = tuning.HeadlampInnerSpotAngle;
-            light.shadows = LightShadows.Soft;
-            light.shadowStrength = HeadlampShadowStrength;
+            // Its shadows fall behind what it lights, away from the chase camera: an extra shadow map for nothing seen.
+            light.shadows = LightShadows.None;
             return light;
         }
 

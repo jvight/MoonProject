@@ -20,4 +20,41 @@ namespace MoonProject.Core.Events
         /// <summary>Seconds spent airborne before this landing.</summary>
         public float AirTime { get; }
     }
+
+    /// <summary>
+    /// 07 began waking up at the start of the session (eye opening, design ruling 8): the moment the radio crackles on.
+    /// </summary>
+    public readonly struct RoverAwoke
+    {
+        public RoverAwoke(Vector3 position, bool wokenByPlayer)
+        {
+            Position = position;
+            WokenByPlayer = wokenByPlayer;
+        }
+
+        public Vector3 Position { get; }
+
+        /// <summary>True when the player drove before 07 woke on its own (the wake-up is quick, not slow).</summary>
+        public bool WokenByPlayer { get; }
+    }
+
+    /// <summary>
+    /// 07 got stuck and is being lifted gently to a nearby open spot (design ruling 7). The lift is a continuous arc
+    /// from <see cref="From"/> to <see cref="To"/> lasting <see cref="Duration"/> seconds; audio or UI may soften it.
+    /// </summary>
+    public readonly struct RoverRecovering
+    {
+        public RoverRecovering(Vector3 from, Vector3 to, float duration)
+        {
+            From = from;
+            To = to;
+            Duration = duration;
+        }
+
+        public Vector3 From { get; }
+
+        public Vector3 To { get; }
+
+        public float Duration { get; }
+    }
 }

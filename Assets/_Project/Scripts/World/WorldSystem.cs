@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Rendering;
 using MoonProject.Core;
@@ -5,9 +7,9 @@ using MoonProject.Core;
 namespace MoonProject.World
 {
     /// <summary>
-    /// Owns the moon: builds the analytic surface, the terrain meshes and Earth, applies the atmosphere and sky, and
-    /// registers <see cref="ITerrainQuery"/> and <see cref="IWorldLayout"/> in the context. In edit mode it also
-    /// builds a preview (HideFlags.DontSave: never saved into the scene, destroyed in OnDisable) so the scene view
+    /// Owns the moon: builds the analytic surface, the terrain, the rock scatter and Earth, applies the atmosphere and
+    /// sky, and registers <see cref="ITerrainQuery"/> and <see cref="IWorldLayout"/> in the context. In edit mode it
+    /// also builds a preview (HideFlags.DontSave: never saved into the scene, destroyed in OnDisable) so the scene view
     /// and scene captures show the world; <see cref="Initialize"/> is the only play-mode path.
     /// </summary>
     [ExecuteAlways]
@@ -21,8 +23,17 @@ namespace MoonProject.World
         [Tooltip("Shared low-poly palette material (Generated/Art/Palette/M_LowPoly.mat).")]
         [SerializeField] private Material _terrainMaterial;
 
+        [Tooltip("Art rock meshes the pebbles are made of (Generated/Art/Rocks, CPU-readable).")]
+        [SerializeField] private Mesh[] _pebbleRocks = new Mesh[0];
+
+        [Tooltip("Art rock meshes the boulders are made of; also their convex colliders.")]
+        [SerializeField] private Mesh[] _boulderRocks = new Mesh[0];
+
         [Tooltip("Material drawing Earth (Generated/World/M_Earth.mat, shader MoonProject/World/LofiEarth).")]
         [SerializeField] private Material _earthMaterial;
+
+        [Tooltip("The beacon on The Peak; placed on the summit and breathed by the beacon settings.")]
+        [SerializeField] private PeakBeacon _peakBeacon;
 
         [Tooltip("The directional earthlight; its colour, intensity and angle come from the atmosphere settings.")]
         [SerializeField] private Light _earthlight;
@@ -31,6 +42,7 @@ namespace MoonProject.World
         [SerializeField] private bool _previewInEditMode = true;
 
         private readonly TerrainBuilder _terrainBuilder = new TerrainBuilder();
+        private readonly ScatterBuilder _scatterBuilder = new ScatterBuilder();
         private GameObject _generatedRoot;
         private Mesh _earthMesh;
 
@@ -39,6 +51,8 @@ namespace MoonProject.World
         public WorldLayout Layout { get; private set; }
 
         public TerrainBuildReport LastBuild { get; private set; }
+
+        public ScatterBuildReport LastScatter { get; private set; }
 
         /// <summary>True while generated world objects exist (play mode or the edit-mode preview).</summary>
         public bool HasGeneratedWorld => _generatedRoot != null;
@@ -54,7 +68,7 @@ namespace MoonProject.World
             Generate(HideFlags.None);
             context.Register<ITerrainQuery>(Surface);
             context.Register<IWorldLayout>(Layout);
-            Debug.Log($"{nameof(WorldSystem)}: terrain {LastBuild}", this);
+            Debug.Log($"{nameof(WorldSystem)}: terrain {LastBuild}; scatter {LastScatter}", this);
         }
 
         /// <summary>Rebuilds the edit-mode preview, e.g. after tuning the settings asset.</summary>
@@ -84,16 +98,27 @@ namespace MoonProject.World
         private void Generate(HideFlags hideFlags)
         {
             DestroyGenerated();
-            Surface = _settings.CreateSurface();
-            Layout = new WorldLayout(Surface, _settings.Sky);
+            MoonSurface surface = _settings.CreateSurface();
+            Surface = surface;
+            Layout = new WorldLayout(surface, _settings.Sky);
+
+            // Scatter planning only reads the analytic surface: it runs on a worker while the terrain is meshed.
+            ScatterSettings scatterSettings = _settings.Scatter;
+            Task<List<ScatterInstance>> scatterPlan =
+                Task.Run(() => new ScatterPlanner(surface, scatterSettings).Plan());
             WorldAtmosphere.Apply(_settings.Atmosphere, _settings.Sky, _earthlight);
             SkyShaderGlobals.Apply(_settings.Sky);
 
             _generatedRoot = new GameObject(GeneratedRootName) { hideFlags = hideFlags };
             _generatedRoot.transform.SetParent(transform, false);
+            Vector3 toLight = WorldAtmosphere.LightSourceDirection(_settings.Atmosphere, _settings.Sky);
             LastBuild = _terrainBuilder.Build(_generatedRoot.transform, Surface, _settings.Mesh, _settings.Paint,
-                _terrainMaterial, hideFlags);
+                toLight, _terrainMaterial, hideFlags);
+            LastScatter = _scatterBuilder.Build(_generatedRoot.transform, scatterPlan.GetAwaiter().GetResult(),
+                scatterSettings, _settings.Mesh.ChunkSize, _pebbleRocks, _boulderRocks, _terrainMaterial, hideFlags);
             BuildEarth(hideFlags);
+            _peakBeacon.transform.position = Layout.PeakPosition;
+            _peakBeacon.Configure(_settings.Beacon);
         }
 
         private void BuildEarth(HideFlags hideFlags)
@@ -126,6 +151,7 @@ namespace MoonProject.World
             _generatedRoot = null;
             _earthMesh = null;
             _terrainBuilder.DestroyMeshes();
+            _scatterBuilder.DestroyMeshes();
         }
 
         private static void Release(Object target)
@@ -140,6 +166,24 @@ namespace MoonProject.World
             }
         }
 
+        private static string RockProblem(Mesh[] rocks, string label)
+        {
+            if (rocks == null || rocks.Length == 0)
+            {
+                return label + " has no meshes.";
+            }
+
+            foreach (Mesh rock in rocks)
+            {
+                if (rock == null || !rock.isReadable)
+                {
+                    return label + " has a missing or non-readable mesh.";
+                }
+            }
+
+            return null;
+        }
+
         private static bool IsWorldAligned(Transform target)
         {
             return target.position == Vector3.zero && target.rotation == Quaternion.identity
@@ -148,21 +192,50 @@ namespace MoonProject.World
 
         private bool HasValidSetup(bool report)
         {
-            string problem = _settings == null ? "World Settings is not assigned."
-                : _terrainMaterial == null ? "Terrain Material is not assigned."
-                : _earthMaterial == null ? "Earth Material is not assigned."
-                : _earthlight == null ? "Earthlight is not assigned."
-                : _earthlight.transform.IsChildOf(transform) ? "The earthlight must not be this object or its child: " +
-                    "the atmosphere rotates it."
-                : !IsWorldAligned(transform) ? "WorldSystem must sit at the origin with no rotation or scale: the " +
-                    "terrain is generated in world space to match ITerrainQuery."
-                : _settings.Validate();
+            string problem = SetupProblem();
             if (problem != null && report)
             {
                 Debug.LogError($"{nameof(WorldSystem)}: {problem}", this);
             }
 
             return problem == null;
+        }
+
+        private string SetupProblem()
+        {
+            if (_settings == null)
+            {
+                return "World Settings is not assigned.";
+            }
+
+            if (_terrainMaterial == null || _earthMaterial == null)
+            {
+                return "Terrain Material and Earth Material must be assigned.";
+            }
+
+            string rocks = RockProblem(_pebbleRocks, "Pebble Rocks") ?? RockProblem(_boulderRocks, "Boulder Rocks");
+            if (rocks != null)
+            {
+                return rocks;
+            }
+
+            if (_peakBeacon == null)
+            {
+                return "Peak Beacon is not assigned.";
+            }
+
+            if (_earthlight == null || _earthlight.transform.IsChildOf(transform))
+            {
+                return "Earthlight must be assigned and must not be this object or its child (it gets rotated).";
+            }
+
+            if (!IsWorldAligned(transform))
+            {
+                return "WorldSystem must sit at the origin with no rotation or scale: the terrain is generated in " +
+                    "world space to match ITerrainQuery.";
+            }
+
+            return _settings.Validate();
         }
     }
 }

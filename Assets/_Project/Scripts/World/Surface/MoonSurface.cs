@@ -41,6 +41,14 @@ namespace MoonProject.World
         private const uint SaddleSalt = 0xD3A2646Cu;
         private const uint CragSalt = 0xFD7046C5u;
         private const uint FarRangeSalt = 0xB55A4F09u;
+        private const uint GullySalt = 0x94D049BBu;
+        private const uint GrainSalt = 0x3243F6A9u;
+
+        // The gullies rib the wall between this fraction of the foothills and the crest.
+        private const float GullyStartInFoothills = 0.4f;
+
+        // Gullies drift sideways once per this many gully spacings down the wall, so they are not perfectly radial.
+        private const float GullyRadialDrift = 2f;
         private const uint CraterSalt = 0x7FEB352Du;
 
         private readonly GradientNoise _hillNoise;
@@ -51,6 +59,8 @@ namespace MoonProject.World
         private readonly GradientNoise _saddleNoise;
         private readonly GradientNoise _cragNoise;
         private readonly GradientNoise _farRangeNoise;
+        private readonly GradientNoise _gullyNoise;
+        private readonly GradientNoise _grainNoise;
 
         private readonly float _padRadius;
         private readonly float _padRadiusSq;
@@ -73,6 +83,11 @@ namespace MoonProject.World
         private readonly float _ridgeSoftness;
         private readonly float _saddleDepth;
         private readonly float _invSaddleWavelength;
+        private readonly float _gullyHeight;
+        private readonly float _gullyCenter;
+        private readonly float _gullyHalfWidth;
+        private readonly float _gullyAngularScale;
+        private readonly float _invGullyRadial;
         private readonly float _peakX;
         private readonly float _peakZ;
         private readonly float _peakHeight;
@@ -94,6 +109,8 @@ namespace MoonProject.World
         private readonly float _invDuneMeanderWavelength;
         private readonly float _duneCoverageMin;
         private readonly float _invDuneCoverageWavelength;
+        private readonly float _grainHeight;
+        private readonly float _invGrainWavelength;
         private readonly float _farRangeStart;
         private readonly float _farRangeFull;
         private readonly float _farRangeHeight;
@@ -136,6 +153,8 @@ namespace MoonProject.World
             _saddleNoise = new GradientNoise(Hashing.Mix(baseSeed ^ SaddleSalt));
             _cragNoise = new GradientNoise(Hashing.Mix(baseSeed ^ CragSalt));
             _farRangeNoise = new GradientNoise(Hashing.Mix(baseSeed ^ FarRangeSalt));
+            _gullyNoise = new GradientNoise(Hashing.Mix(baseSeed ^ GullySalt));
+            _grainNoise = new GradientNoise(Hashing.Mix(baseSeed ^ GrainSalt));
 
             _padRadius = settings.PadRadius;
             _padRadiusSq = _padRadius * _padRadius;
@@ -160,6 +179,12 @@ namespace MoonProject.World
             _ridgeSoftness = settings.RidgeSoftness;
             _saddleDepth = settings.SaddleDepth;
             _invSaddleWavelength = 1f / settings.SaddleWavelength;
+            _gullyHeight = settings.WallGullyHeight;
+            float gullyStart = _floorRadius + settings.FoothillWidth * GullyStartInFoothills;
+            _gullyCenter = (gullyStart + _crestRadius) * 0.5f;
+            _gullyHalfWidth = (_crestRadius - gullyStart) * 0.5f;
+            _gullyAngularScale = settings.WallGullyCount / TwoPi;
+            _invGullyRadial = settings.WallGullyCount / (TwoPi * _crestRadius * GullyRadialDrift);
 
             Vector2 peakDirection = BearingToDirection(settings.PeakBearing);
             _peakX = peakDirection.x * settings.PeakDistance;
@@ -187,6 +212,8 @@ namespace MoonProject.World
             _invDuneMeanderWavelength = 1f / settings.DuneMeanderWavelength;
             _duneCoverageMin = settings.DuneCoverageMin;
             _invDuneCoverageWavelength = 1f / settings.DuneCoverageWavelength;
+            _grainHeight = settings.GrainHeight;
+            _invGrainWavelength = 1f / settings.GrainWavelength;
 
             _farRangeStart = settings.FarRangeStart;
             _farRangeFull = settings.FarRangeFull;
@@ -285,7 +312,7 @@ namespace MoonProject.World
         }
 
         /// <summary>True on the basin floor inside the (warped) rim and away from The Peak's flanks.</summary>
-        public bool IsDrivableFloor(float x, float z)
+        public bool IsDrivable(float x, float z)
         {
             float r = Mathf.Sqrt(x * x + z * z);
             if (r <= _rimWarpStart)
@@ -296,6 +323,15 @@ namespace MoonProject.World
             float dx = x - _peakX;
             float dz = z - _peakZ;
             return WarpedRadius(x, z, r) < _floorRadius && dx * dx + dz * dz > _peakFootprintSq;
+        }
+
+        /// <summary>
+        /// Signed distance from (x, z) to the warped floor edge where the rim foothills begin: positive on the floor,
+        /// negative on the rim.
+        /// </summary>
+        public float FloorEdgeDistance(float x, float z)
+        {
+            return _floorRadius - WarpedRadius(x, z, Mathf.Sqrt(x * x + z * z));
         }
 
         /// <summary>Height plus region weights at world XZ.</summary>
@@ -316,6 +352,7 @@ namespace MoonProject.World
             {
                 height += RimProfile(rw);
                 height += Mountains(x, z, rw);
+                height += WallGullies(x, z, r, rw);
             }
 
             if (r > _farRangeStart)
@@ -336,7 +373,8 @@ namespace MoonProject.World
                 float floorDetail = floorWeight * SmoothMath.Smootherstep(_padRadius, _padBlendEnd, r);
                 if (floorDetail > 0f)
                 {
-                    height += floorDetail * (Hills(x, z) + calm * Dunes(x, z));
+                    height += floorDetail * (Hills(x, z) + calm * Dunes(x, z)
+                        + _grainHeight * _grainNoise.Sample(x * _invGrainWavelength, z * _invGrainWavelength));
                 }
             }
 
@@ -384,6 +422,24 @@ namespace MoonProject.World
             float ridges = _mountainNoise.Ridged(x * _invMountainWavelength, z * _invMountainWavelength,
                 _mountainOctaves, 2f, 0.5f, _ridgeSoftness);
             return _mountainHeight * envelope * saddle * ridges;
+        }
+
+        /// <summary>
+        /// Radial gullies and buttresses ribbing the inner wall. Sampled on the direction from the base (like The
+        /// Peak's crags) so they run down the wall; zero on the floor, so the drivable area is untouched.
+        /// </summary>
+        private float WallGullies(float x, float z, float r, float rw)
+        {
+            float mask = SmoothMath.Bump((rw - _gullyCenter) / _gullyHalfWidth);
+            if (mask <= 0f)
+            {
+                return 0f;
+            }
+
+            float inverse = 1f / r;
+            float ridges = _gullyNoise.Ridged(x * inverse * _gullyAngularScale + rw * _invGullyRadial,
+                z * inverse * _gullyAngularScale, 2, 2f, 0.5f, _ridgeSoftness);
+            return _gullyHeight * mask * (2f * ridges - 1f);
         }
 
         private float CraterHeights(float x, float z, ref float calm, ref float bowl, ref float rim)

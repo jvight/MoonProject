@@ -29,7 +29,8 @@ namespace MoonProject.World.Tests
         {
             _surface = new MoonSurface(new SurfaceSettings(), WorldSettings.DefaultSeed);
             _settings = new TerrainMeshSettings();
-            _painter = new TerrainPainter(new TerrainPaintSettings(), WorldSettings.DefaultSeed);
+            Vector3 toLight = WorldAtmosphere.LightSourceDirection(new AtmosphereSettings(), new SkySettings());
+            _painter = new TerrainPainter(new TerrainPaintSettings(), WorldSettings.DefaultSeed, toLight);
             var mesher = new TerrainChunkMesher(_surface, _painter, _settings);
             _plans = TerrainChunkPlanner.Plan(_settings);
             _chunks = new TerrainMeshData[_plans.Length];
@@ -71,7 +72,7 @@ namespace MoonProject.World.Tests
             {
                 for (float x = -400f; x <= 400f; x += 4f)
                 {
-                    if (_surface.IsDrivableFloor(x, z))
+                    if (_surface.IsDrivable(x, z))
                     {
                         Assert.AreEqual(_settings.FineCellSize, PlanAt(x, z).CellSize, $"({x}, {z}) is not fine");
                     }
@@ -106,6 +107,71 @@ namespace MoonProject.World.Tests
             }
 
             Assert.IsNull(firstProblem);
+        }
+
+        [Test]
+        public void FloorDust_ComesInPatches_NeverConfetti()
+        {
+            // Design ruling 9: a bright facet with no bright neighbour reads as a paper scrap on the ground.
+            const float floorRadius = 280f;
+            const float maxIsolatedShare = 0.02f;
+            Vector2 light = Palette.Uv(PaletteSwatch.DustLight);
+            int lightFacets = 0;
+            int isolated = 0;
+            for (int c = 0; c < _chunks.Length; c++)
+            {
+                TerrainMeshData chunk = _chunks[c];
+                if (_plans[c].CellSize != _settings.FineCellSize)
+                {
+                    continue;
+                }
+
+                var byEdge = new Dictionary<long, List<int>>();
+                int triangles = chunk.TriangleCount;
+                for (int t = 0; t < triangles; t++)
+                {
+                    for (int k = 0; k < 3; k++)
+                    {
+                        long key = Edge(chunk, t, k);
+                        if (!byEdge.TryGetValue(key, out List<int> owners))
+                        {
+                            owners = new List<int>(2);
+                            byEdge.Add(key, owners);
+                        }
+
+                        owners.Add(t);
+                    }
+                }
+
+                for (int t = 0; t < triangles; t++)
+                {
+                    Vector3 world = chunk.Vertices[t * 3].Position + chunk.Origin;
+                    if (chunk.Vertices[t * 3].Uv != light || new Vector2(world.x, world.z).magnitude > floorRadius)
+                    {
+                        continue;
+                    }
+
+                    lightFacets++;
+                    bool hasLightNeighbour = false;
+                    for (int k = 0; k < 3 && !hasLightNeighbour; k++)
+                    {
+                        long key = Edge(chunk, t, k);
+                        foreach (int other in byEdge[key])
+                        {
+                            hasLightNeighbour |= other != t && chunk.Vertices[other * 3].Uv == light;
+                        }
+                    }
+
+                    if (!hasLightNeighbour)
+                    {
+                        isolated++;
+                    }
+                }
+            }
+
+            TestContext.WriteLine($"Floor DustLight facets: {lightFacets}, isolated: {isolated}");
+            Assert.Greater(lightFacets, 1000, "the floor should still carry light dust patches");
+            Assert.LessOrEqual(isolated, lightFacets * maxIsolatedShare, "isolated bright facets (confetti)");
         }
 
         [Test]
@@ -206,6 +272,14 @@ namespace MoonProject.World.Tests
             TestContext.WriteLine($"Meshed {_chunks.Length} chunks, {triangles} triangles in {_meshingMs:0} ms");
             Assert.LessOrEqual(triangles, 300000, "terrain triangle budget");
             Assert.Less(_meshingMs, 1000.0, "parallel chunk meshing is too slow for boot-time generation");
+        }
+
+        /// <summary>Key of edge <paramref name="k"/> of triangle <paramref name="t"/>, equal from both sides.</summary>
+        private static long Edge(TerrainMeshData chunk, int t, int k)
+        {
+            int a = chunk.ColliderIndices[t * 3 + k];
+            int b = chunk.ColliderIndices[t * 3 + (k + 1) % 3];
+            return a < b ? ((long)a << 32) | (uint)b : ((long)b << 32) | (uint)a;
         }
 
         private TerrainChunkPlan PlanAt(float x, float z)

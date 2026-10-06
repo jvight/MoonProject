@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using MoonProject.Core;
+using MoonProject.Core.Events;
 
 namespace MoonProject.Audio
 {
@@ -8,8 +9,9 @@ namespace MoonProject.Audio
     /// The base's lofi radio. Plays the <see cref="RadioPlaylist"/> in shuffled order (no immediate repeats), moving
     /// between tracks with a short "turning the dial" crossfade full of static. Its clarity follows the rover's
     /// distance from the base (<see cref="IWorldLayout.BasePosition"/>) through <see cref="RadioSignal"/>: low clarity
-    /// closes a low-pass filter, raises the static and deepens a tape wow/flutter. Radio tower upgrades call
-    /// <see cref="SetSignalRadius"/>. Initialised by <see cref="AudioDirector"/>.
+    /// closes a low-pass filter, raises the static and deepens a tape wow/flutter. <see cref="SignalRadiusChanged"/>
+    /// (radio tower upgrades, loading a save) widens the clear zone through <see cref="SetSignalRadius"/>.
+    /// Initialised by <see cref="AudioDirector"/>.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class RadioStation : MonoBehaviour
@@ -38,12 +40,16 @@ namespace MoonProject.Audio
         private float _staticCueVolume;
         private float _swishCueVolume;
         private int _live;
+        private IDisposable _radiusSubscription;
 
         /// <summary>Smoothed signal clarity the player hears, 0 (lost) .. 1 (clear).</summary>
         public float Clarity => _signal != null ? _signal.Clarity : 0f;
 
-        /// <summary>The clear-signal radius currently in effect (metres).</summary>
+        /// <summary>The clear-signal radius currently in effect (metres, easing towards the target).</summary>
         public float SignalRadius => _signal != null ? _signal.Radius : 0f;
+
+        /// <summary>The clear-signal radius the station is easing towards (metres).</summary>
+        public float TargetSignalRadius => _signal != null ? _signal.TargetRadius : 0f;
 
         /// <summary>Sets a new clear-signal radius (e.g. after a radio tower upgrade); it blooms in smoothly.</summary>
         public void SetSignalRadius(float radius)
@@ -100,6 +106,7 @@ namespace MoonProject.Audio
             // A single track simply loops; the crossfade needs a different track to move to.
             _decks[_live].loop = _playlist.Count == 1;
             _static.Play();
+            _radiusSubscription = context.Events.Subscribe<SignalRadiusChanged>(OnSignalRadiusChanged);
         }
 
         internal void Wire(RadioTuning tuning, RadioPlaylist playlist)
@@ -148,6 +155,17 @@ namespace MoonProject.Audio
             float staticVolume = mix.StaticVolume + _tuning.TuneStaticBoost * _crossfade.StaticSwell;
             _static.volume = Mathf.Clamp01(staticVolume) * _staticCueVolume * level;
             _swish.volume = _tuning.TuneSwishVolume * _swishCueVolume * level;
+        }
+
+        private void OnSignalRadiusChanged(SignalRadiusChanged changed)
+        {
+            SetSignalRadius(changed.Radius);
+        }
+
+        private void OnDestroy()
+        {
+            _radiusSubscription?.Dispose();
+            _radiusSubscription = null;
         }
 
         private void AdvancePlaylist(float dt, float pitch)

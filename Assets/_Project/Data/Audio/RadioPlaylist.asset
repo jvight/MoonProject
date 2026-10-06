@@ -12,4 +12,28 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: de435ea461c6baf4392e0d67422a32a8, type: 3}
   m_Name: RadioPlaylist
   m_EditorClassIdentifier: 
-  _tracks: []
+  _tracks:
+  - _id: 01_earthrise_static
+    _title: Earthrise Static
+    _clip: {fileID: 8300000, guid: c918eff31d0646f488d8fddb0af21992, type: 3}
+    _bpm: 76
+  - _id: 02_sevens_lullaby
+    _title: Seven's Lullaby
+    _clip: {fileID: 8300000, guid: f699177e5f6b1aa4492031c12810de1f, type: 3}
+    _bpm: 70
+  - _id: 03_dust_on_the_dial
+    _title: Dust on the Dial
+    _clip: {fileID: 8300000, guid: 0dfec23f7f51f39448a84ce4c52202f1, type: 3}
+    _bpm: 82
+  - _id: 04_long_way_home
+    _title: Long Way Home
+    _clip: {fileID: 8300000, guid: 0220cf28424ddc641bda30915f974bcb, type: 3}
+    _bpm: 74
+  - _id: 05_low_orbit_tea
+    _title: Low Orbit Tea
+    _clip: {fileID: 8300000, guid: 7068f09e420784d428e5161e1d61f72a, type: 3}
+    _bpm: 80
+  - _id: 06_signal_through_craters
+    _title: Signal Through Craters
+    _clip: {fileID: 8300000, guid: ac9d112dbbb1841458e53761ece25822, type: 3}
+    _bpm: 68

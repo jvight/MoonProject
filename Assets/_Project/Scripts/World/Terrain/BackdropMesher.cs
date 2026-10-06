@@ -98,7 +98,7 @@ namespace MoonProject.World
             Vector3 normal = Vector3.Cross(p1 - p0, p2 - p0).normalized;
             var region = new SurfaceSample(0f, 0f, 0f,
                 (regions[i0].RimZone + regions[i1].RimZone + regions[i2].RimZone) / 3f);
-            Vector2 uv = Palette.Uv(painter.Pick(normal, (p0 + p1 + p2) / 3f, region, hash));
+            Vector2 uv = Palette.Uv(painter.Pick(normal, normal, (p0 + p1 + p2) / 3f, region, hash));
             vertices[written++] = new TerrainVertex(p0, normal, uv);
             vertices[written++] = new TerrainVertex(p1, normal, uv);
             vertices[written++] = new TerrainVertex(p2, normal, uv);

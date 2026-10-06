@@ -1,13 +1,15 @@
 using System;
 using UnityEngine;
+using MoonProject.Core;
 
 namespace MoonProject.Audio
 {
     /// <summary>
-    /// Plain C# volume buses. <see cref="Effective"/> multiplies Master with the bus, so players read one number per
-    /// frame. <see cref="Version"/> changes whenever a volume changes.
+    /// Plain C# volume buses (no AudioMixer asset), registered as <see cref="IAudioSettings"/> so UI can drive them.
+    /// <see cref="Effective"/> multiplies Master with the bus, so players read one number per frame;
+    /// <see cref="Version"/> changes whenever a volume changes, so playing one-shots can be re-levelled at once.
     /// </summary>
-    public sealed class AudioBusMixer
+    public sealed class AudioBusMixer : IAudioSettings
     {
         public const int BusCount = 4;
 

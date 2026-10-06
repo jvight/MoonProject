@@ -13,10 +13,11 @@ namespace MoonProject.Rover
     /// <see cref="CameraOrbit"/> into a Cinemachine 3 rig (OrbitalFollow locked to the target's yaw + RotationComposer,
     /// with Decollider and Deoccluder keeping it out of the terrain), widens the FOV with speed and dips softly on
     /// landings. Reads the rover only through <see cref="IRoverState"/>, so it must initialise after the rover.
+    /// Registers itself as <see cref="IViewCamera"/> (gameplay aims from its centre ray, UI projects with it).
     /// </summary>
     [DefaultExecutionOrder(100)]
     [DisallowMultipleComponent]
-    public sealed class RoverCameraRig : MonoBehaviour, IGameSystem
+    public sealed class RoverCameraRig : MonoBehaviour, IGameSystem, IViewCamera
     {
         /// <summary>Below this horizontal speed (m/s) the travel direction is too noisy to judge slopes.</summary>
         private const float DescentMinSpeed = 0.5f;
@@ -26,6 +27,9 @@ namespace MoonProject.Rover
 
         [Tooltip("Follow/look-at target this rig moves above the rover each frame.")]
         [SerializeField] private Transform _target;
+
+        [Tooltip("The Unity camera driven by the CinemachineBrain (what the player sees).")]
+        [SerializeField] private Camera _viewCamera;
 
         [SerializeField] private CinemachineCamera _camera;
         [SerializeField] private CinemachineOrbitalFollow _orbit;
@@ -43,6 +47,8 @@ namespace MoonProject.Rover
 
         public CameraOrbit Orbit => _orbitState;
 
+        public Camera Camera => _viewCamera;
+
         public void Initialize(GameContext context)
         {
             if (!ValidateWiring())
@@ -56,17 +62,19 @@ namespace MoonProject.Rover
             _orbitState = new CameraOrbit(_tuning);
             ApplyCinemachineSettings();
             _landedSubscription = context.Events.Subscribe<RoverLanded>(OnLanded);
+            context.Register<IViewCamera>(this);
             _initialized = true;
             Snap();
         }
 
         private bool ValidateWiring()
         {
-            bool ok = _tuning != null && _target != null && _camera != null && _orbit != null && _composer != null
-                && _decollider != null && _deoccluder != null && _bump != null;
+            bool ok = _tuning != null && _target != null && _viewCamera != null && _camera != null && _orbit != null
+                && _composer != null && _decollider != null && _deoccluder != null && _bump != null;
             if (!ok)
             {
-                Debug.LogError($"{nameof(RoverCameraRig)}: tuning, target or a Cinemachine component is not assigned.",
+                Debug.LogError(
+                    $"{nameof(RoverCameraRig)}: tuning, target, view camera or a Cinemachine component is missing.",
                     this);
             }
 
@@ -99,6 +107,7 @@ namespace MoonProject.Rover
             _orbit.RadialAxis.Recentering.Enabled = false;
 
             _composer.Damping = _tuning.AimDamping;
+            _composer.CenterOnActivate = false;
             ScreenComposerSettings composition = _composer.Composition;
             composition.ScreenPosition = _tuning.ScreenPosition;
             _composer.Composition = composition;

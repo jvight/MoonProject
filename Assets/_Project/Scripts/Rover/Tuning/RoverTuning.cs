@@ -13,6 +13,8 @@ namespace MoonProject.Rover
         [SerializeField] private SteeringSettings _steering = new SteeringSettings();
         [SerializeField] private GroundSettings _ground = new GroundSettings();
         [SerializeField] private LandingSettings _landing = new LandingSettings();
+        [SerializeField] private SpawnSettings _spawn = new SpawnSettings();
+        [SerializeField] private RecoverySettings _recovery = new RecoverySettings();
 
         public DriveSettings Drive => _drive;
 
@@ -21,5 +23,9 @@ namespace MoonProject.Rover
         public GroundSettings Ground => _ground;
 
         public LandingSettings Landing => _landing;
+
+        public SpawnSettings Spawn => _spawn;
+
+        public RecoverySettings Recovery => _recovery;
     }
 }

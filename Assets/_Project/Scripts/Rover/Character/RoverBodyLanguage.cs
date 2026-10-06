@@ -7,14 +7,17 @@ namespace MoonProject.Rover
 {
     /// <summary>
     /// 07's procedural body language on the RoverModel's Neck, Head, Eyelid, SolarWing, Eye and AntennaTip:
-    /// the head looks at whatever it interacts with (<see cref="IRoverGaze"/>) or along its way with a lagging glance
-    /// into turns; left alone it drifts into a daydream (<see cref="RoverMood"/>) and looks up toward Earth.
-    /// Soft landings and driving off from a daydream make it perk up; hard landings get a small "oof".
+    /// the head looks at whatever it interacts with (gaze requests made through <see cref="IRoverRig"/>) or along its
+    /// way with a lagging glance into turns; left alone it drifts into a daydream (<see cref="RoverMood"/>) and looks
+    /// up toward Earth. Each session opens with 07 asleep; it wakes on its own (or as soon as the player drives),
+    /// publishing <see cref="RoverAwoke"/>. It reacts to the game: soft landings, waking up, scrap (happier as a
+    /// combo climbs), a relic answering or surfacing (a glance and a perk-up), a deposit (a contented nod), a snapped
+    /// tether (a sigh), and hard landings (a small "oof").
     /// Needs <see cref="IWorldLayout"/>, so it must be initialised after the World systems.
     /// </summary>
     [DefaultExecutionOrder(10)]
     [DisallowMultipleComponent]
-    public sealed class RoverBodyLanguage : MonoBehaviour, IGameSystem, IRoverGaze
+    public sealed class RoverBodyLanguage : MonoBehaviour, IGameSystem
     {
         /// <summary>07's blinks are deterministic; the seed is its serial number.</summary>
         private const uint MoodSeed = 7u;
@@ -51,10 +54,14 @@ namespace MoonProject.Rover
         [Tooltip("Small warm point light inside the eye; breathes with the glow.")]
         [SerializeField] private Light _eyeLight;
 
-        private readonly GazeRequests _requests = new GazeRequests();
+        /// <summary>Owner of 07's own glances in the shared gaze requests.</summary>
+        private readonly object _glanceOwner = new object();
+
         private RoverMood _mood;
         private IWorldLayout _world;
-        private IDisposable _landedSubscription;
+        private EventBus _events;
+        private IDisposable[] _subscriptions;
+        private float _glanceEnds = -1f;
         private MaterialPropertyBlock _glowBlock;
         private DampedSpring _yaw;
         private DampedSpring _pitch;
@@ -76,7 +83,7 @@ namespace MoonProject.Rover
             }
 
             _world = context.Get<IWorldLayout>();
-            _mood = new RoverMood(_tuning, MoodSeed);
+            _mood = new RoverMood(_tuning, MoodSeed, _tuning.SleepOnBoot);
             _glowBlock = new MaterialPropertyBlock();
             _neckRest = _neck.localRotation;
             _headRest = _head.localRotation;
@@ -88,8 +95,18 @@ namespace MoonProject.Rover
             _eyeLight.range = _tuning.EyeLightRange;
             _eyeLight.shadows = LightShadows.None;
 
-            _landedSubscription = context.Events.Subscribe<RoverLanded>(OnLanded);
-            context.Register<IRoverGaze>(this);
+            EventBus events = context.Events;
+            _events = events;
+            _subscriptions = new[]
+            {
+                events.Subscribe<RoverLanded>(OnLanded),
+                events.Subscribe<ScrapCollected>(OnScrapCollected),
+                events.Subscribe<RelicAnswered>(OnRelicAnswered),
+                events.Subscribe<RelicSurfaced>(OnRelicSurfaced),
+                events.Subscribe<RelicDeposited>(OnRelicDeposited),
+                events.Subscribe<TetherReleased>(OnTetherReleased),
+                events.Subscribe<RoverRecovering>(OnRecovering),
+            };
             _initialized = true;
             Apply();
         }
@@ -114,20 +131,53 @@ namespace MoonProject.Rover
             return condition;
         }
 
-        public void SetGazeTarget(GazePriority priority, Vector3? worldPoint)
+        private void PerkUp(float strength)
         {
-            _requests.Set(priority, worldPoint);
-        }
-
-        public void PerkUp(float strength)
-        {
-            if (!_initialized)
-            {
-                return;
-            }
-
             _mood.PerkUp(strength);
             _rig.KickAntenna(Mathf.Clamp01(strength) * _tuning.PerkAntennaKick);
+        }
+
+        /// <summary>07 glances at <paramref name="point"/> for a moment (gameplay requests can override it).</summary>
+        private void Glance(Vector3 point)
+        {
+            _rover.Gaze.Set(_glanceOwner, point, _tuning.ReactionGazePriority);
+            _glanceEnds = Time.time + _tuning.RelicGlanceSeconds;
+        }
+
+        private void OnScrapCollected(ScrapCollected scrap)
+        {
+            float strength = _tuning.ScrapPerk + _tuning.ScrapComboPerk * scrap.ComboStep;
+            PerkUp(Mathf.Min(strength, _tuning.ScrapPerkMax));
+        }
+
+        private void OnRelicAnswered(RelicAnswered answer)
+        {
+            Glance(answer.Position);
+            PerkUp(_tuning.RelicAnsweredPerk);
+        }
+
+        private void OnRelicSurfaced(RelicSurfaced relic)
+        {
+            Glance(relic.Position);
+            PerkUp(_tuning.RelicSurfacedPerk);
+        }
+
+        private void OnRelicDeposited(RelicDeposited deposit)
+        {
+            _mood.NodContentedly(_tuning.DepositNod);
+        }
+
+        private void OnRecovering(RoverRecovering recovering)
+        {
+            PerkUp(_tuning.RecoveryPerk);
+        }
+
+        private void OnTetherReleased(TetherReleased release)
+        {
+            if (release.Snapped)
+            {
+                _mood.Sigh(_tuning.SnapSigh);
+            }
         }
 
         private void OnLanded(RoverLanded landed)
@@ -152,9 +202,23 @@ namespace MoonProject.Rover
                 return;
             }
 
-            if (_mood.Step(_rover.Speed, _rover.DriveInput.magnitude, deltaTime))
+            switch (_mood.Step(_rover.Speed, _rover.DriveInput.magnitude, deltaTime))
             {
-                PerkUp(_tuning.WakePerk);
+                case MoodTransition.BeganWaking:
+                    _events.Publish(new RoverAwoke(_rover.Position, _mood.Wake.WokenByPlayer));
+                    break;
+                case MoodTransition.FinishedWaking:
+                    PerkUp(_mood.Wake.WokenByPlayer ? 0f : _tuning.AwakenedPerk);
+                    break;
+                case MoodTransition.WokeFromDaydream:
+                    PerkUp(_tuning.WakePerk);
+                    break;
+            }
+
+            if (_glanceEnds >= 0f && Time.time >= _glanceEnds)
+            {
+                _rover.Gaze.Clear(_glanceOwner);
+                _glanceEnds = -1f;
             }
 
             StepGaze(deltaTime);
@@ -167,7 +231,7 @@ namespace MoonProject.Rover
             Vector2 aim;
             float frequency;
 
-            if (_requests.TryGetTop(out Vector3 target, out _))
+            if (_rover.Gaze.TryGetTop(out Vector3 target))
             {
                 aim = Aim(frame.InverseTransformDirection(target - _head.position));
                 frequency = _tuning.TargetGazeFrequency;
@@ -175,7 +239,7 @@ namespace MoonProject.Rover
             else
             {
                 var travel = new Vector2(_rover.SteerInput * _tuning.LookIntoTurn, _tuning.TravelHeadPitch);
-                float idle = _mood.Idle;
+                float idle = _mood.EarthGaze;
                 Vector2 earth = Aim(frame.InverseTransformDirection(_world.EarthDirection));
                 aim = Vector2.Lerp(travel, earth, idle);
                 frequency = Mathf.Lerp(_tuning.TravelGazeFrequency, _tuning.IdleGazeFrequency, idle);
@@ -216,7 +280,15 @@ namespace MoonProject.Rover
 
         private void OnDestroy()
         {
-            _landedSubscription?.Dispose();
+            if (_subscriptions == null)
+            {
+                return;
+            }
+
+            foreach (IDisposable subscription in _subscriptions)
+            {
+                subscription.Dispose();
+            }
         }
     }
 }

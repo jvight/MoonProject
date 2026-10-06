@@ -47,6 +47,42 @@ namespace MoonProject.Rover
         [Range(0.3f, 2f)]
         [SerializeField] private float _gazeDamping = 0.92f;
 
+        [Header("Waking (first boot of a session)")]
+        [Tooltip("Start each session with 07 asleep: lid shut, eye dark, head bowed (design ruling 8).")]
+        [SerializeField] private bool _sleepOnBoot = true;
+
+        [Tooltip("Seconds after the scene settles before 07 starts waking on its own.")]
+        [Range(0f, 10f)]
+        [SerializeField] private float _wakeDelay = 1.5f;
+
+        [Tooltip("Seconds the slow wake-up takes, from the first glow to settling into normal behaviour.")]
+        [Range(0.5f, 15f)]
+        [SerializeField] private float _wakeDuration = 5f;
+
+        [Tooltip("Fraction of the wake-up by which the eye is fully open and glowing.")]
+        [Range(0.05f, 1f)]
+        [SerializeField] private float _wakeEyesOpenBy = 0.55f;
+
+        [Tooltip("Fraction of the wake-up at which the head starts lifting toward Earth.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _wakeGlanceFrom = 0.25f;
+
+        [Tooltip("Fraction of the wake-up after which the head turns back to normal behaviour.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _wakeGlanceUntil = 0.8f;
+
+        [Tooltip("Half-life (s) of waking up when the player drives during the intro: quick, but eased.")]
+        [Range(0.02f, 1f)]
+        [SerializeField] private float _hurriedWakeHalfLife = 0.12f;
+
+        [Tooltip("How far (deg) the head is bowed while asleep.")]
+        [Range(0f, 40f)]
+        [SerializeField] private float _sleepHeadBow = 14f;
+
+        [Tooltip("Perk-up strength once 07 has woken up on its own (a small 'hello').")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _awakenedPerk = 0.35f;
+
         [Header("Idle (left alone)")]
         [Tooltip("Below this speed (m/s), with no drive input, 07 counts as standing still.")]
         [Range(0f, 2f)]
@@ -159,13 +195,75 @@ namespace MoonProject.Rover
         [Range(0.1f, 2f)]
         [SerializeField] private float _wingDamping = 0.6f;
 
-        [Tooltip("Extra opening (0..1) at the height of the sigh when the daydream begins.")]
+        [Tooltip("Extra wing opening (0..1) at the height of a full sigh.")]
         [Range(0f, 1f)]
         [SerializeField] private float _wingSighAmount = 0.14f;
 
-        [Tooltip("Spring frequency (Hz) of the sigh swell: slow in, slower out.")]
+        [Header("Sigh (drifting into a daydream, a snapped tether)")]
+        [Tooltip("Spring frequency (Hz) of a sigh swell: slow in, slower out.")]
         [Range(0.05f, 2f)]
-        [SerializeField] private float _wingSighFrequency = 0.2f;
+        [SerializeField] private float _sighFrequency = 0.2f;
+
+        [Tooltip("Head droop (deg) at the height of a full sigh.")]
+        [Range(0f, 30f)]
+        [SerializeField] private float _sighHeadDrop = 7f;
+
+        [Tooltip("Extra lid closure (0..1) at the height of a full sigh.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _sighLidDroop = 0.2f;
+
+        [Tooltip("Sigh strength (0..1) when 07 drifts into a daydream.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _daydreamSigh = 1f;
+
+        [Tooltip("Sigh strength (0..1) when the tether snaps (gentle disappointment, never frustration).")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _snapSigh = 0.8f;
+
+        [Header("Gameplay reactions")]
+        [Tooltip("Perk-up strength for a single scrap pickup.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _scrapPerk = 0.18f;
+
+        [Tooltip("Extra perk-up strength per combo step, so chained pickups feel happier.")]
+        [Range(0f, 0.5f)]
+        [SerializeField] private float _scrapComboPerk = 0.07f;
+
+        [Tooltip("Strongest perk-up a scrap chain can give.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _scrapPerkMax = 0.6f;
+
+        [Tooltip("Perk-up strength when a buried relic answers the sonar.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _relicAnsweredPerk = 0.5f;
+
+        [Tooltip("Perk-up strength when a relic finishes surfacing: delight.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _relicSurfacedPerk = 1f;
+
+        [Tooltip("Seconds 07 keeps glancing at an answering or surfacing relic on its own.")]
+        [Range(0f, 10f)]
+        [SerializeField] private float _relicGlanceSeconds = 2.5f;
+
+        [Tooltip("Gaze priority of those glances; gameplay requests at this priority or above win (ties: most "
+            + "recent).")]
+        [SerializeField] private int _reactionGazePriority = -1;
+
+        [Tooltip("Perk-up strength when 07 is lifted out of a stuck spot (a little 'whee', never a scold).")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _recoveryPerk = 0.5f;
+
+        [Tooltip("Nod strength (0..1) when a relic is placed on a museum shelf.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _depositNod = 1f;
+
+        [Tooltip("Spring frequency (Hz) of the contented nod.")]
+        [Range(0.1f, 4f)]
+        [SerializeField] private float _nodFrequency = 0.9f;
+
+        [Tooltip("Head dip (deg) at the bottom of a full nod.")]
+        [Range(0f, 30f)]
+        [SerializeField] private float _nodDepth = 9f;
 
         [Header("Perk-up")]
         [Tooltip("Spring frequency (Hz) of the perk-up swell: peaks after ~1/(2*pi*f) s and fades softly.")]
@@ -244,6 +342,24 @@ namespace MoonProject.Rover
 
         public float GazeDamping => _gazeDamping;
 
+        public bool SleepOnBoot => _sleepOnBoot;
+
+        public float WakeDelay => _wakeDelay;
+
+        public float WakeDuration => _wakeDuration;
+
+        public float WakeEyesOpenBy => _wakeEyesOpenBy;
+
+        public float WakeGlanceFrom => Mathf.Min(_wakeGlanceFrom, _wakeEyesOpenBy);
+
+        public float WakeGlanceUntil => Mathf.Max(_wakeGlanceUntil, _wakeEyesOpenBy);
+
+        public float HurriedWakeHalfLife => _hurriedWakeHalfLife;
+
+        public float SleepHeadBow => _sleepHeadBow;
+
+        public float AwakenedPerk => _awakenedPerk;
+
         public float StillSpeed => _stillSpeed;
 
         public float ActivityInput => _activityInput;
@@ -300,7 +416,37 @@ namespace MoonProject.Rover
 
         public float WingSighAmount => _wingSighAmount;
 
-        public float WingSighFrequency => _wingSighFrequency;
+        public float SighFrequency => _sighFrequency;
+
+        public float SighHeadDrop => _sighHeadDrop;
+
+        public float SighLidDroop => _sighLidDroop;
+
+        public float DaydreamSigh => _daydreamSigh;
+
+        public float SnapSigh => _snapSigh;
+
+        public float ScrapPerk => _scrapPerk;
+
+        public float ScrapComboPerk => _scrapComboPerk;
+
+        public float ScrapPerkMax => _scrapPerkMax;
+
+        public float RelicAnsweredPerk => _relicAnsweredPerk;
+
+        public float RelicSurfacedPerk => _relicSurfacedPerk;
+
+        public float RelicGlanceSeconds => _relicGlanceSeconds;
+
+        public int ReactionGazePriority => _reactionGazePriority;
+
+        public float RecoveryPerk => _recoveryPerk;
+
+        public float DepositNod => _depositNod;
+
+        public float NodFrequency => _nodFrequency;
+
+        public float NodDepth => _nodDepth;
 
         public float PerkFrequency => _perkFrequency;
 

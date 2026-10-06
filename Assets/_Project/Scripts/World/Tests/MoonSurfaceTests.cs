@@ -88,7 +88,7 @@ namespace MoonProject.World.Tests
             {
                 for (float x = -extent; x <= extent; x += 2f)
                 {
-                    if (!_surface.IsDrivableFloor(x, z))
+                    if (!_surface.IsDrivable(x, z))
                     {
                         continue;
                     }
@@ -117,7 +117,7 @@ namespace MoonProject.World.Tests
             {
                 for (float x = area.xMin; x <= area.xMax; x += 4f)
                 {
-                    Assert.IsTrue(_surface.IsDrivableFloor(x, z), $"({x}, {z}) is outside the drivable floor");
+                    Assert.IsTrue(_surface.IsDrivable(x, z), $"({x}, {z}) is outside the drivable floor");
                 }
             }
         }
@@ -213,9 +213,10 @@ namespace MoonProject.World.Tests
                 float distance = crater.Center.magnitude;
                 Assert.Greater(distance - crater.OuterRadius, _settings.PadRadius + _settings.PadBlend * 0.5f,
                     $"crater {i} intrudes on the base");
-                Assert.Less(distance + crater.OuterRadius, _surface.DrivableRadius + 1f, $"crater {i} leaves the floor");
-                Assert.Less(_surface.SampleHeight(crater.Center.x, crater.Center.y),
-                    _surface.SampleHeight(crater.Center.x + crater.Radius, crater.Center.y), $"crater {i} has no dip");
+                Assert.Less(distance + crater.OuterRadius, _surface.DrivableRadius + 1f,
+                    $"crater {i} leaves the floor");
+                Assert.Less(_surface.SampleHeight(crater.Center.x, crater.Center.y), MeanRimHeight(crater),
+                    $"crater {i} has no dip");
                 if (crater.IsPlayBowl)
                 {
                     bowls++;
@@ -234,7 +235,7 @@ namespace MoonProject.World.Tests
                 Vector2 before = ramp.Crest - ramp.Direction * (ramp.RiseLength + 2f);
                 float crest = _surface.SampleHeight(ramp.Crest.x, ramp.Crest.y);
                 Assert.Greater(crest - _surface.SampleHeight(before.x, before.y), ramp.Height * 0.5f);
-                Assert.IsTrue(_surface.IsDrivableFloor(ramp.Crest.x, ramp.Crest.y));
+                Assert.IsTrue(_surface.IsDrivable(ramp.Crest.x, ramp.Crest.y));
             }
         }
 
@@ -254,7 +255,7 @@ namespace MoonProject.World.Tests
             {
                 float x = random.Range(-320f, 320f);
                 float z = random.Range(-320f, 320f);
-                if (!_surface.IsDrivableFloor(x, z))
+                if (!_surface.IsDrivable(x, z))
                 {
                     continue;
                 }
@@ -284,6 +285,20 @@ namespace MoonProject.World.Tests
             double microseconds = watch.Elapsed.TotalMilliseconds * 1000.0 / count;
             TestContext.WriteLine($"MoonSurface.SampleHeight: {microseconds:F3} us/sample (checksum {sink:F1})");
             Assert.Less(microseconds, 2.0, "height sampling is too slow for boot-time terrain generation");
+        }
+
+        /// <summary>Mean height around a crater's rim: robust to the hill the crater sits on.</summary>
+        private float MeanRimHeight(Crater crater)
+        {
+            const int samples = 16;
+            float sum = 0f;
+            for (int k = 0; k < samples; k++)
+            {
+                Vector2 p = crater.Center + MoonSurface.BearingToDirection(k * 360f / samples) * crater.Radius;
+                sum += _surface.SampleHeight(p.x, p.y);
+            }
+
+            return sum / samples;
         }
 
         private float SlopeDegrees(float x, float z)

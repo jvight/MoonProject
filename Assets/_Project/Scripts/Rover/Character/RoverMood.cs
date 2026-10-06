@@ -6,6 +6,8 @@ namespace MoonProject.Rover
     /// <summary>
     /// 07's inner state, stepped once per frame:
     /// <list type="bullet">
+    /// <item>A session can open with 07 asleep (<see cref="WakeUpSequence"/>): lid shut, eye dark, head bowed, until
+    /// it wakes on its own or the player drives. Daydreaming only starts once it is awake.</item>
     /// <item>Active -> Daydreaming after standing still for IdleDelay: <see cref="Idle"/> eases 0 -> 1 (head drifts up
     /// to Earth, lid droops, the wing sighs open further than its rest and settles back, the eye breathes deeper and
     /// dimmer).</item>
@@ -23,6 +25,7 @@ namespace MoonProject.Rover
         private const float MaxSwell = 1.5f;
 
         private readonly RoverCharacterTuning _tuning;
+        private readonly WakeUpSequence _wake;
         private uint _random;
         private float _stillTime;
         private float _breathPhase;
@@ -33,13 +36,23 @@ namespace MoonProject.Rover
         private DampedSpring _oof;
         private DampedSpring _wing;
         private DampedSpring _sigh;
+        private DampedSpring _nod;
 
-        public RoverMood(RoverCharacterTuning tuning, uint seed)
+        /// <param name="startAsleep">Open the session with 07 asleep (first boot).</param>
+        public RoverMood(RoverCharacterTuning tuning, uint seed, bool startAsleep)
         {
             _tuning = tuning != null ? tuning : throw new ArgumentNullException(nameof(tuning));
+            _wake = new WakeUpSequence(tuning, startAsleep);
             _random = seed == 0u ? 1u : seed;
             _blinkCountdown = NextBlinkInterval();
+            ComposeFace();
         }
+
+        /// <summary>The first-boot wake-up (phase, sleep and Earth-glance weights).</summary>
+        public WakeUpSequence Wake => _wake;
+
+        /// <summary>How much 07 looks up toward Earth right now: daydreaming or the waking glance, 0..1.</summary>
+        public float EarthGaze => Mathf.Max(Idle, _wake.EarthLook);
 
         /// <summary>Daydream weight, 0 (active) .. 1 (fully daydreaming).</summary>
         public float Idle { get; private set; }
@@ -71,18 +84,35 @@ namespace MoonProject.Rover
         /// <summary>Antenna tip brightness multiplier.</summary>
         public float TipGlow { get; private set; }
 
-        /// <summary>Extra head pitch (deg, + = up) from perk-up and "oof".</summary>
-        public float HeadPitchOffset => _tuning.PerkHeadLift * Perk - _tuning.OofHeadDip * Oof;
+        /// <summary>Contented-nod swell, 0 .. ~1.</summary>
+        public float Nodding => Mathf.Clamp(_nod.Value, 0f, MaxSwell);
+
+        /// <summary>Sigh swell (head droops, lid lowers, wing opens a little), 0 .. ~1.</summary>
+        public float Sighing => Mathf.Clamp(_sigh.Value, 0f, MaxSwell);
+
+        /// <summary>Extra head pitch (deg, + = up) from perk-up, "oof", nods, sighs and sleep.</summary>
+        public float HeadPitchOffset => _tuning.PerkHeadLift * Perk
+            - _tuning.OofHeadDip * Oof
+            - _tuning.NodDepth * Nodding
+            - _tuning.SighHeadDrop * Sighing
+            - _tuning.SleepHeadBow * _wake.Sleep;
 
         /// <summary>
         /// Advances the mood. <paramref name="driveInput"/> is the magnitude of the drive stick/keys (0..1).
-        /// Returns true when 07 was woken from a deep daydream this frame.
+        /// Returns what changed this frame: the first-boot wake starting or finishing, or a wake from a daydream.
         /// </summary>
-        public bool Step(float speed, float driveInput, float deltaTime)
+        public MoodTransition Step(float speed, float driveInput, float deltaTime)
         {
+            bool active = driveInput >= _tuning.ActivityInput;
+            MoodTransition waking = _wake.Step(active, deltaTime);
+            if (waking == MoodTransition.FinishedWaking)
+            {
+                BlinkNow();
+            }
+
             bool wasDaydreaming = IsDaydreaming;
             float idleBefore = Idle;
-            bool still = speed < _tuning.StillSpeed && driveInput < _tuning.ActivityInput;
+            bool still = speed < _tuning.StillSpeed && !active && _wake.Phase == WakePhase.Awake;
             _stillTime = still ? _stillTime + deltaTime : 0f;
             bool daydreaming = IsDaydreaming;
 
@@ -91,11 +121,12 @@ namespace MoonProject.Rover
 
             if (daydreaming && !wasDaydreaming)
             {
-                Swell(ref _sigh, _tuning.WingSighAmount, _tuning.WingSighFrequency);
+                Sigh(_tuning.DaydreamSigh);
             }
 
-            _sigh.Step(0f, _tuning.WingSighFrequency, 1f, deltaTime);
-            float wingTarget = Idle * _tuning.WingIdleOpen + Mathf.Max(0f, _sigh.Value);
+            _sigh.Step(0f, _tuning.SighFrequency, 1f, deltaTime);
+            _nod.Step(0f, _tuning.NodFrequency, 1f, deltaTime);
+            float wingTarget = Idle * _tuning.WingIdleOpen + _tuning.WingSighAmount * Sighing;
             _wing.Step(wingTarget, _tuning.WingFrequency, _tuning.WingDamping, deltaTime);
             _wing.Clamp(0f, 1f);
             _perk.Step(0f, _tuning.PerkFrequency, 1f, deltaTime);
@@ -106,7 +137,13 @@ namespace MoonProject.Rover
             StepTip(deltaTime);
             ComposeFace();
 
-            return wasDaydreaming && !daydreaming && idleBefore >= _tuning.WakeThreshold;
+            if (waking != MoodTransition.None)
+            {
+                return waking;
+            }
+
+            bool wokeFromDaydream = wasDaydreaming && !daydreaming && idleBefore >= _tuning.WakeThreshold;
+            return wokeFromDaydream ? MoodTransition.WokeFromDaydream : MoodTransition.None;
         }
 
         /// <summary>Starts a perk-up swell peaking at <paramref name="strength"/> (0..1).</summary>
@@ -119,6 +156,28 @@ namespace MoonProject.Rover
         public void FeelImpact(float strength)
         {
             Swell(ref _oof, strength, _tuning.OofFrequency);
+        }
+
+        /// <summary>A slow, contented nod peaking at <paramref name="strength"/> (0..1), with a soft blink.</summary>
+        public void NodContentedly(float strength)
+        {
+            Swell(ref _nod, strength, _tuning.NodFrequency);
+            BlinkNow();
+        }
+
+        /// <summary>A whole-body sigh peaking at <paramref name="strength"/> (0..1).</summary>
+        public void Sigh(float strength)
+        {
+            Swell(ref _sigh, strength, _tuning.SighFrequency);
+        }
+
+        /// <summary>Starts a slow blink now unless one is already running.</summary>
+        public void BlinkNow()
+        {
+            if (_blinkElapsed < 0f)
+            {
+                _blinkElapsed = 0f;
+            }
         }
 
         /// <summary>Kicks a critically damped spring so it swells to <paramref name="peak"/> and fades.</summary>
@@ -179,15 +238,16 @@ namespace MoonProject.Rover
         {
             float lid = Mathf.Lerp(_tuning.ActiveLid, _tuning.IdleLid, Idle)
                 - _tuning.PerkWiden * Perk
-                + _tuning.OofSquint * Oof;
-            lid = Mathf.Clamp01(lid);
+                + _tuning.OofSquint * Oof
+                + _tuning.SighLidDroop * Sighing;
+            lid = Mathf.Lerp(Mathf.Clamp01(lid), 1f, _wake.Sleep);
             LidClosure = lid + (1f - lid) * Blink;
 
-            float depth = Mathf.Lerp(_tuning.ActiveBreathDepth, _tuning.IdleBreathDepth, Idle);
+            float depth = Mathf.Lerp(_tuning.ActiveBreathDepth, _tuning.IdleBreathDepth, EarthGaze);
             float glow = 1f + depth * (2f * Breath - 1f) - _tuning.IdleGlowDim * Idle + _tuning.PerkGlowBoost * Perk;
             float lidDim = 1f - _tuning.LidGlowDim * LidClosure;
             float restingLidDim = 1f - _tuning.LidGlowDim * _tuning.ActiveLid;
-            EyeGlow = Mathf.Max(0f, glow * lidDim / restingLidDim);
+            EyeGlow = Mathf.Max(0f, glow * lidDim / restingLidDim) * (1f - _wake.Sleep);
         }
 
         /// <summary>Smooth 0 -> 1 -> 0 over t = 0..1 (sin squared): slow at both ends, never a pop.</summary>

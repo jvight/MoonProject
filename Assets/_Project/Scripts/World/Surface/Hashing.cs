@@ -6,7 +6,7 @@ namespace MoonProject.World
     /// </summary>
     public static class Hashing
     {
-        /// <summary>Lowbias32 integer finaliser (Chris Wellons): excellent avalanche for a single multiply pair.</summary>
+        /// <summary>Lowbias32 integer finaliser (Chris Wellons): excellent avalanche for two multiplies.</summary>
         public static uint Mix(uint x)
         {
             x ^= x >> 16;

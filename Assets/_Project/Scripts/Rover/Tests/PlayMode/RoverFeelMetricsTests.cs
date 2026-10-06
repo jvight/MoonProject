@@ -7,19 +7,18 @@ using UnityEngine.InputSystem;
 using UnityEngine.TestTools;
 using MoonProject.Core;
 using MoonProject.Core.Events;
-using MoonProject.Core.Input;
 using MoonProject.Testing;
 
 namespace MoonProject.Rover.PlayModeTests
 {
     /// <summary>
-    /// Scripted play sessions with a virtual gamepad through the real InputReader, on test ground built in code.
+    /// Scripted play sessions on test ground built in code: a <see cref="ScriptedDrive"/> holds the stick (no virtual
+    /// devices, so nothing in the input system can drop or reset it), InputTestFixture keeps real devices out.
     /// Measures the feel targets of the rover brief, prints a metrics table (Logs/rover-metrics/feel-metrics.md) and
-    /// captures a few frames. Lunar gravity is set for the session (ProjectSettings may not have it yet) and restored.
+    /// captures a few frames. Physics runs in the game's lunar configuration for the session and is restored.
     /// </summary>
     public sealed class RoverFeelMetricsTests : InputTestFixture
     {
-        private const float LunarGravity = -1.62f;
         private const float StopSpeed = 0.05f;
         private const float SettleAngle = 0.5f;
         private const int CaptureWidth = 960;
@@ -28,29 +27,26 @@ namespace MoonProject.Rover.PlayModeTests
         private static readonly string OutputFolder =
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "rover-metrics"));
 
-        private Gamepad _pad;
-        private InputActionAsset _actions;
+        private LunarTestPhysics _physics;
         private TestWorld _world;
-        private Vector3 _savedGravity;
         private int _cameraViolations;
+        private int _recoveries;
         private float _cameraLowestClearance;
 
         public override void Setup()
         {
             base.Setup();
-            _pad = InputSystem.AddDevice<Gamepad>();
-            _actions = CreateActions();
-            _savedGravity = Physics.gravity;
-            Physics.gravity = new Vector3(0f, LunarGravity, 0f);
+            _physics = new LunarTestPhysics();
             _cameraViolations = 0;
+            _recoveries = 0;
             _cameraLowestClearance = float.MaxValue;
         }
 
         public override void TearDown()
         {
-            Physics.gravity = _savedGravity;
             _world?.Dispose();
-            Object.Destroy(_actions);
+            _world = null;
+            _physics.Dispose();
             base.TearDown();
         }
 
@@ -65,6 +61,7 @@ namespace MoonProject.Rover.PlayModeTests
             yield return SlopeSession(report);
 
             report.Add("Camera frames inside terrain", _cameraViolations, "frames", 0f, 0f, "0");
+            report.Add("Stuck recoveries in normal driving", _recoveries, "", 0f, 0f, "0 (never while fine)");
             report.Note("Camera lowest clearance above terrain", _cameraLowestClearance, "m");
             report.Write(Path.Combine(OutputFolder, "feel-metrics.md"));
             Assert.IsEmpty(report.Failures, report.Table);
@@ -72,12 +69,13 @@ namespace MoonProject.Rover.PlayModeTests
 
         private IEnumerator FlatSession(FeelReport report)
         {
-            TestRover rover = TestRover.Spawn(_actions, _world, new Vector3(0f, 0f, -200f), 0f);
+            TestRover rover = TestRover.Spawn(_world, TestWorld.Point(0f, -200f), 0f);
+            Count(rover);
             RoverController controller = rover.Controller;
             DriveSettings drive = rover.Tuning.Drive;
             yield return Hold(rover, Vector2.zero, 0.5f);
 
-            Drive(new Vector2(0f, 1f));
+            Steer(rover, new Vector2(0f, 1f));
             float start = -1f;
             float t90 = float.NaN;
             float t0 = Time.fixedTime;
@@ -99,8 +97,7 @@ namespace MoonProject.Rover.PlayModeTests
             report.Add("Top speed (flat)", controller.Speed, "m/s", 7.6f, 8.4f, "~8 m/s");
             CaptureFrame(rover, "01-cruising");
 
-            yield return null;
-            Drive(Vector2.zero);
+            Steer(rover, Vector2.zero);
             float coastStart = Time.fixedTime;
             float coastTop = controller.Speed;
             var speeds = new List<float>();
@@ -120,7 +117,7 @@ namespace MoonProject.Rover.PlayModeTests
             report.Add("Reverse top speed", controller.Speed, "m/s", 3f, 4f, "slower than forward (~3.5)");
 
             yield return Hold(rover, new Vector2(0f, 1f), 7f);
-            Drive(new Vector2(0f, -1f));
+            Steer(rover, new Vector2(0f, -1f));
             float brakeStart = Time.fixedTime;
             while (controller.ForwardSpeed > drive.ReverseEngageSpeed && Time.fixedTime - brakeStart < 5f)
             {
@@ -157,14 +154,15 @@ namespace MoonProject.Rover.PlayModeTests
             report.Add("Pivot turn drift", Vector3.Distance(pivotFrom, controller.Position), "m", 0f, 0.4f,
                 "stays in place");
 
-            Drive(Vector2.zero);
+            Steer(rover, Vector2.zero);
             rover.Dispose();
             yield return null;
         }
 
         private IEnumerator BumpSession(FeelReport report)
         {
-            TestRover rover = TestRover.Spawn(_actions, _world, new Vector3(TestWorld.BumpX, 0f, -50f), 0f);
+            TestRover rover = TestRover.Spawn(_world, TestWorld.Point(TestWorld.BumpX, -50f), 0f);
+            Count(rover);
             RoverController controller = rover.Controller;
             var landings = new List<RoverLanded>();
             var landingTimes = new List<float>();
@@ -175,7 +173,7 @@ namespace MoonProject.Rover.PlayModeTests
                    }))
             {
                 yield return Hold(rover, Vector2.zero, 0.5f);
-                Drive(new Vector2(0f, 1f));
+                Steer(rover, new Vector2(0f, 1f));
 
                 float approachSpeed = 0f;
                 float apex = 0f;
@@ -187,12 +185,13 @@ namespace MoonProject.Rover.PlayModeTests
                     yield return null;
                     CheckCamera(rover);
                     Vector3 p = controller.Position;
-                    if (p.z < TestWorld.BumpStartZ)
+                    Vector3 local = TestWorld.Local(p);
+                    if (local.z < TestWorld.BumpStartZ)
                     {
                         approachSpeed = controller.Speed;
                     }
 
-                    if (p.z > TestWorld.BumpStartZ && !controller.IsGrounded)
+                    if (local.z > TestWorld.BumpStartZ && !controller.IsGrounded)
                     {
                         takeoff = takeoff < 0f ? Time.time : takeoff;
                         apex = Mathf.Max(apex, p.y - TestWorld.Height(p.x, p.z));
@@ -245,15 +244,15 @@ namespace MoonProject.Rover.PlayModeTests
                 report.Note("Peak body pitch after landing", peak, "deg");
             }
 
-            Drive(Vector2.zero);
+            Steer(rover, Vector2.zero);
             rover.Dispose();
             yield return null;
         }
 
         private IEnumerator SlopeSession(FeelReport report)
         {
-            Vector3 spawn = new Vector3(TestWorld.SlopeX - 15f, 0f, 0f);
-            TestRover rover = TestRover.Spawn(_actions, _world, spawn, 0f);
+            TestRover rover = TestRover.Spawn(_world, TestWorld.Point(TestWorld.SlopeX - 15f, 0f), 0f);
+            Count(rover);
             RoverController controller = rover.Controller;
             yield return Hold(rover, Vector2.zero, 1f);
 
@@ -274,7 +273,7 @@ namespace MoonProject.Rover.PlayModeTests
             };
             foreach ((Vector2 stick, float seconds) in plan)
             {
-                Drive(stick);
+                Steer(rover, stick);
                 float until = Time.time + seconds;
                 while (Time.time < until)
                 {
@@ -295,15 +294,25 @@ namespace MoonProject.Rover.PlayModeTests
             report.Add("Worst chassis tilt incl. jelly lean", worstChassis, "deg", 0f, 50f, "no flip (<= 50)");
             report.Note("Airborne time on the slope", airborne, "s");
 
-            Drive(Vector2.zero);
+            Steer(rover, Vector2.zero);
             rover.Dispose();
             yield return null;
         }
 
+        /// <summary>Counts stuck recoveries: driving, parking and the 30 degree climb must never need one.</summary>
+        private void Count(TestRover rover)
+        {
+            rover.Context.Events.Subscribe<RoverRecovering>(OnRecovering);
+        }
+
+        private void OnRecovering(RoverRecovering recovering)
+        {
+            _recoveries++;
+        }
+
         private IEnumerator Hold(TestRover rover, Vector2 stick, float seconds)
         {
-            yield return null;
-            Drive(stick);
+            Steer(rover, stick);
             float until = Time.time + seconds;
             while (Time.time < until)
             {
@@ -312,10 +321,10 @@ namespace MoonProject.Rover.PlayModeTests
             }
         }
 
-        /// <summary>Queues stick input; call it from the Update phase (no device state in FixedUpdate).</summary>
-        private void Drive(Vector2 stick)
+        /// <summary>Holds the scripted stick at <paramref name="stick"/> from the next physics step on.</summary>
+        private static void Steer(TestRover rover, Vector2 stick)
         {
-            Set(_pad.leftStick, stick);
+            rover.Drive.Drive = stick;
         }
 
         private void CheckCamera(TestRover rover)
@@ -331,21 +340,6 @@ namespace MoonProject.Rover.PlayModeTests
         private static void CaptureFrame(TestRover rover, string name)
         {
             FrameCapture.SavePng(rover.Camera, CaptureWidth, CaptureHeight, Path.Combine(OutputFolder, name + ".png"));
-        }
-
-        private static InputActionAsset CreateActions()
-        {
-            var asset = ScriptableObject.CreateInstance<InputActionAsset>();
-            InputActionMap map = asset.AddActionMap(InputReader.RoverMapName);
-            map.AddAction("Drive", InputActionType.Value, "<Gamepad>/leftStick", expectedControlLayout: "Vector2");
-            map.AddAction("LookDelta", InputActionType.PassThrough, "<Mouse>/delta", expectedControlLayout: "Vector2");
-            map.AddAction("LookRate", InputActionType.Value, "<Gamepad>/rightStick", expectedControlLayout: "Vector2");
-            map.AddAction("Ping", InputActionType.Button, "<Gamepad>/buttonSouth");
-            map.AddAction("Excavate", InputActionType.Button, "<Gamepad>/buttonWest");
-            map.AddAction("Tether", InputActionType.Button, "<Gamepad>/leftTrigger");
-            map.AddAction("Winch", InputActionType.Value, "<Gamepad>/rightTrigger", expectedControlLayout: "Axis");
-            map.AddAction("Pause", InputActionType.Button, "<Gamepad>/start");
-            return asset;
         }
     }
 }

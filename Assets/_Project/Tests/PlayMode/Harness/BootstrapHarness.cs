@@ -1,7 +1,9 @@
 using System;
+using System.IO;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using MoonProject.App;
+using MoonProject.Core.Save;
 using Object = UnityEngine.Object;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -11,8 +13,9 @@ namespace MoonProject.Testing
 {
     /// <summary>
     /// Builds a <see cref="GameBootstrap"/> at runtime the way MainSceneBuilder wires it in Main.unity (Controls asset +
-    /// ordered system list through the serialized fields), then activates it so Awake initialises the systems.
-    /// For PlayMode tests running in the editor.
+    /// ordered system list through the serialized fields), then activates it so Awake initialises the systems and
+    /// loads the save. Every bootstrap gets its own save slot (never the player's "main"), so tests cannot touch real
+    /// progress; delete the slot's files with <see cref="DeleteSaveFiles"/>. For PlayMode tests running in the editor.
     /// </summary>
     public static class BootstrapHarness
     {
@@ -37,11 +40,24 @@ namespace MoonProject.Testing
 #endif
         }
 
-        /// <summary>
-        /// Creates "[Bootstrap]" with <paramref name="controls"/> and <paramref name="systems"/> (in that order) wired
-        /// into its serialized fields, then activates it: GameBootstrap.Awake runs before this returns.
-        /// </summary>
+        /// <summary>A fresh save slot name for one test ("test-&lt;guid&gt;").</summary>
+        public static string NewTestSlot()
+        {
+            return "test-" + Guid.NewGuid().ToString("N");
+        }
+
+        /// <summary>Like <see cref="Create(InputActionAsset, string, MonoBehaviour[])"/> with a fresh test slot.</summary>
         public static GameBootstrap Create(InputActionAsset controls, params MonoBehaviour[] systems)
+        {
+            return Create(controls, NewTestSlot(), systems);
+        }
+
+        /// <summary>
+        /// Creates "[Bootstrap]" with <paramref name="controls"/>, save slot <paramref name="saveSlot"/> and
+        /// <paramref name="systems"/> (in that order) wired into its serialized fields, then activates it:
+        /// GameBootstrap.Awake (initialise systems, load the save) runs before this returns.
+        /// </summary>
+        public static GameBootstrap Create(InputActionAsset controls, string saveSlot, params MonoBehaviour[] systems)
         {
 #if UNITY_EDITOR
             var host = new GameObject("[Bootstrap]");
@@ -49,6 +65,7 @@ namespace MoonProject.Testing
             var bootstrap = host.AddComponent<GameBootstrap>();
             var serialized = new SerializedObject(bootstrap);
             serialized.FindProperty("_inputActions").objectReferenceValue = controls;
+            serialized.FindProperty("_saveSlot").stringValue = saveSlot;
             SerializedProperty list = serialized.FindProperty("_systems");
             list.arraySize = systems.Length;
             for (int i = 0; i < systems.Length; i++)
@@ -62,6 +79,21 @@ namespace MoonProject.Testing
 #else
             throw new NotSupportedException("BootstrapHarness wires GameBootstrap through the editor's SerializedObject.");
 #endif
+        }
+
+        /// <summary>Deletes every file of <paramref name="saveSlot"/> (save, backup, temp, set-aside corrupt files).</summary>
+        public static void DeleteSaveFiles(string saveSlot)
+        {
+            string directory = SaveService.DefaultDirectory;
+            if (!Directory.Exists(directory))
+            {
+                return;
+            }
+
+            foreach (string file in Directory.GetFiles(directory, saveSlot + SaveService.Extension + "*"))
+            {
+                File.Delete(file);
+            }
         }
     }
 }

@@ -17,7 +17,7 @@ namespace MoonProject.World
 
         [Tooltip("Distance beyond the pad over which dunes and the bowl fade in. Larger = softer pad edge.")]
         [Range(5f, 120f)]
-        [SerializeField] private float _padBlend = 45f;
+        [SerializeField] private float _padBlend = 30f;
 
         [Header("Basin floor")]
         [Tooltip("Radius where the drivable floor ends and the rim foothills begin (before the rim warp).")]
@@ -89,6 +89,14 @@ namespace MoonProject.World
         [Tooltip("Wavelength of the summit/saddle rhythm along the rim, metres.")]
         [Range(50f, 1500f)]
         [SerializeField] private float _saddleWavelength = 330f;
+
+        [Tooltip("Depth of the gullies and buttresses ribbing the inner rim wall, metres.")]
+        [Range(0f, 30f)]
+        [SerializeField] private float _wallGullyHeight = 9f;
+
+        [Tooltip("Approximate number of gullies around the whole rim.")]
+        [Range(8f, 200f)]
+        [SerializeField] private float _wallGullyCount = 70f;
 
         [Header("The Peak")]
         [Tooltip("Bearing of The Peak from the base, degrees clockwise from +Z. The rover starts facing +Z.")]
@@ -164,6 +172,15 @@ namespace MoonProject.World
         [Range(40f, 800f)]
         [SerializeField] private float _duneCoverageWavelength = 230f;
 
+        [Tooltip("Height of the fine grain undulation that gives every floor facet its own tilt, so the low-poly " +
+            "facets read even on gentle ground. It is driven over: keep it small.")]
+        [Range(0f, 0.5f)]
+        [SerializeField] private float _grainHeight = 0.12f;
+
+        [Tooltip("Wavelength of the grain undulation, metres (a few terrain cells).")]
+        [Range(2f, 40f)]
+        [SerializeField] private float _grainWavelength = 7f;
+
         [Header("Craters")]
         [Tooltip("Number of seeded small and medium craters on the floor.")]
         [Range(0, 80)]
@@ -180,9 +197,9 @@ namespace MoonProject.World
         [SerializeField] private Vector2 _mediumCraterRadius = new Vector2(16f, 34f);
 
         [Tooltip("Crater depth as a fraction of its radius (x = min, y = max). Keep low: walls must stay drivable.")]
-        [SerializeField] private Vector2 _craterDepthRatio = new Vector2(0.06f, 0.1f);
+        [SerializeField] private Vector2 _craterDepthRatio = new Vector2(0.06f, 0.095f);
 
-        [Tooltip("Raised rim height as a fraction of the crater radius (x = min, y = max). Low = old, softened crater.")]
+        [Tooltip("Raised rim height as a fraction of the crater radius (x = min, y = max). Low = old, soft crater.")]
         [SerializeField] private Vector2 _craterRimRatio = new Vector2(0.02f, 0.045f);
 
         [Tooltip("Width of the raised rim as a fraction of the crater radius.")]
@@ -244,6 +261,8 @@ namespace MoonProject.World
         public float RidgeSoftness => _ridgeSoftness;
         public float SaddleDepth => _saddleDepth;
         public float SaddleWavelength => _saddleWavelength;
+        public float WallGullyHeight => _wallGullyHeight;
+        public float WallGullyCount => _wallGullyCount;
         public float PeakBearing => _peakBearing;
         public float PeakDistance => _peakDistance;
         public float PeakHeight => _peakHeight;
@@ -262,6 +281,8 @@ namespace MoonProject.World
         public float DuneMeanderWavelength => _duneMeanderWavelength;
         public float DuneCoverageMin => _duneCoverageMin;
         public float DuneCoverageWavelength => _duneCoverageWavelength;
+        public float GrainHeight => _grainHeight;
+        public float GrainWavelength => _grainWavelength;
         public int CraterCount => _craterCount;
         public float SmallCraterFraction => _smallCraterFraction;
         public Vector2 SmallCraterRadius => _smallCraterRadius;
@@ -277,7 +298,7 @@ namespace MoonProject.World
         public float FarRangeHeight => _farRangeHeight;
         public float FarRangeWavelength => _farRangeWavelength;
 
-        /// <summary>Returns null when the settings describe a valid surface, otherwise a description of the problem.</summary>
+        /// <summary>Returns null when the settings describe a valid surface, otherwise the problem.</summary>
         public string Validate()
         {
             if (_padRadius + _padBlend >= _floorRadius)
@@ -322,10 +343,10 @@ namespace MoonProject.World
                 return "Crater depth and rim ratio ranges need 0 <= min <= max.";
             }
 
-            float highestRim = _bowlRise + _crestHeight + _mountainHeight + _peakCragHeight;
+            float highestRim = _bowlRise + _crestHeight + _mountainHeight + _peakCragHeight + _wallGullyHeight;
             if (highestRim >= _peakHeight || _outerPlainHeight + _farRangeHeight >= _peakHeight)
             {
-                return "Rim mountains, crags or far ranges could rise above The Peak; lower them or raise the peak.";
+                return "Rim mountains, gullies, crags or far ranges could rise above The Peak; lower them or raise it.";
             }
 
             return null;

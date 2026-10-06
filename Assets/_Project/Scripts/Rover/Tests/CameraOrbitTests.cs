@@ -31,11 +31,24 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void StartsBehindAtTheDefaultElevation()
+        public void StartsBehindAtTheLowOpeningElevation()
         {
             Assert.AreEqual(0f, _orbit.YawOffset);
-            Assert.AreEqual(_tuning.DefaultPitch, _orbit.Elevation);
+            Assert.AreEqual(_tuning.OpeningPitch, _orbit.Elevation);
+            Assert.Less(_tuning.OpeningPitch, _tuning.DefaultPitch);
             Assert.AreEqual(_tuning.BaseFov, _orbit.FieldOfView);
+        }
+
+        [Test]
+        public void OpeningShot_HoldsWhileParked_AndEasesToRestingElevationOnceDriving()
+        {
+            Run(10f, Vector2.zero, 0f);
+            Assert.AreEqual(_tuning.OpeningPitch, _orbit.Elevation, 1e-3f, "The opening shot holds while 07 waits.");
+
+            _orbit.Step(Vector2.zero, 3f, 0.4f, 0f, true, Frame);
+            Assert.Less(_orbit.Elevation, _tuning.OpeningPitch + 0.5f, "No jump when driving starts.");
+            Run(10f, Vector2.zero, 3f);
+            Assert.AreEqual(_tuning.DefaultPitch, _orbit.Elevation, 0.5f);
         }
 
         [Test]

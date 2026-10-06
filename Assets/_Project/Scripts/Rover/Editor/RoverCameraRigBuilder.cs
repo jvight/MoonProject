@@ -65,6 +65,7 @@ namespace MoonProject.Rover.Editor
             BuildWiring.Assign(rig,
                 ("_tuning", tuning),
                 ("_target", target.transform),
+                ("_viewCamera", camera),
                 ("_camera", virtualCamera),
                 ("_orbit", orbit),
                 ("_composer", composer),

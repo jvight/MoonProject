@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 69749e603a28fda4dbbbf55ea7b63cbf, type: 3}
+  m_Name: GameplayVisuals
+  m_EditorClassIdentifier: 
+  _sonarRing: {fileID: 2100000, guid: ae2673c0628f7e14a9901ddbf06ded53, type: 2}
+  _siteRing: {fileID: 2100000, guid: a18dda9a92f3c6c48a5f00d4ccc49acd, type: 2}
+  _sitePillar: {fileID: 2100000, guid: a30a4f7963d8a4e4a9779d07c9bfc25b, type: 2}
+  _tractorBeam: {fileID: 2100000, guid: 8bec620e68df94d4986d37792d577f0a, type: 2}
+  _tetherBeam: {fileID: 2100000, guid: a7d2f94ed03fe5a4896d87b2b72bfa24, type: 2}
+  _flash: {fileID: 2100000, guid: b55e930411d2ac844a0c0a36d52e9b70, type: 2}
+  _relicHalo: {fileID: 2100000, guid: fee181144544b59408f732d7fdccc14e, type: 2}
+  _dust: {fileID: 2100000, guid: bf0fcce95db7ca4409587657ae467f27, type: 2}
+  _warmRing: {fileID: 2100000, guid: 907d78bb092e4334f9c5b9e00c4bdaa6, type: 2}
+  _warmGlow: {fileID: 2100000, guid: 22d91cd391e82d84eb5fbc2b16e6a8e0, type: 2}

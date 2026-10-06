@@ -130,5 +130,38 @@ namespace MoonProject.Rover.Tests
             Assert.That(Mathf.Approximately(_drive.CoastDeceleration,
                 _drive.TopSpeed / (_drive.CoastStopTime * (1f - _drive.CoastEase))));
         }
+
+        [Test]
+        public void HoldStill_EasesToAStopInHoldStopTime_WithoutRebound()
+        {
+            float speed = _drive.TopSpeed;
+            float elapsed = 0f;
+            float previousDecel = float.MaxValue;
+            while (speed > 0f && elapsed < 10f)
+            {
+                float accel = LongitudinalDrive.HoldAcceleration(_drive, speed, Step);
+                Assert.LessOrEqual(-accel, previousDecel + 1e-4f, "The brake only ever softens.");
+                previousDecel = -accel;
+                speed += accel * Step;
+                elapsed += Step;
+                Assert.GreaterOrEqual(speed, -1e-5f, "Never rebounds backwards.");
+            }
+
+            Assert.AreEqual(_drive.HoldStopTime, elapsed, 0.06f);
+            Assert.AreEqual(0f, LongitudinalDrive.HoldAcceleration(_drive, 0f, Step), "Parked stays parked.");
+        }
+
+        [Test]
+        public void HoldStill_WhileReversing_StopsToo()
+        {
+            float speed = -_drive.ReverseTopSpeed;
+            for (int i = 0; i < 200; i++)
+            {
+                speed += LongitudinalDrive.HoldAcceleration(_drive, speed, Step) * Step;
+                Assert.LessOrEqual(speed, 1e-5f);
+            }
+
+            Assert.AreEqual(0f, speed, 1e-5f);
+        }
     }
 }
