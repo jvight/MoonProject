@@ -94,7 +94,8 @@ namespace MoonProject.Gameplay
                 context.Get<IViewCamera>(), save, Wallet, _visuals, _meshes);
             Upgrades = new UpgradeService(context.Events, Wallet, _upgradeDefinitions);
 
-            if (!_relics.Initialize(services) || !_scrap.Initialize(services, _relics.Sites) ||
+            Vector3 lander = HomeBase.LanderSpot(services.Terrain, services.Layout.BasePosition, _home.Tuning);
+            if (!_relics.Initialize(services) || !_scrap.Initialize(services, _relics.Sites, lander) ||
                 !_sonar.Initialize(services, _relics) || !_excavation.Initialize(services, _relics) ||
                 !_tether.Initialize(services, _relics) || !_home.Initialize(services, _relics, _tether, Upgrades) ||
                 !_tower.Initialize(services, Upgrades))
@@ -158,6 +159,7 @@ namespace MoonProject.Gameplay
                 : _excavation == null ? "ExcavationSystem is not assigned."
                 : _tether == null ? "TetherSystem is not assigned."
                 : _home == null ? "HomeBase is not assigned."
+                : _home.Tuning == null ? "HomeBase has no BaseTuning."
                 : _tower == null ? "RadioTower is not assigned."
                 : null;
         }

@@ -55,21 +55,15 @@ namespace MoonProject.Gameplay.Editor
         /// <summary>
         /// The radio tower: before any purchase the old mast is dark and the clear signal reaches 60 m; three levels
         /// (15, 40, 80 scrap) widen it to 110, 170 and 260 m and warm the base up. Twice the total cost lies in the
-        /// basin as scrap, and every relic brought home adds a gift (design ruling 5).
+        /// basin as scrap, and every relic brought home adds a gift (design ruling 5). Its name and level texts live in
+        /// the localization tables (upgrade.radio_tower.*).
         /// </summary>
         private static void BuildRadioTower()
         {
             var upgrade = ScriptableObject.CreateInstance<UpgradeDefinition>();
-            upgrade.Populate("radio_tower", "Radio Tower", 60f, new[]
+            upgrade.Populate("radio_tower", 60f, new[]
             {
-                new UpgradeLevel("Wake the old mast",
-                    "Power the tired antenna: its beacon glows again and the music reaches farther.", 15, 110f,
-                    1.25f),
-                new UpgradeLevel("Raise the mast",
-                    "A taller mast and a warmer lamp: the radio stays clear deep into the dunes.", 40, 170f, 1.5f),
-                new UpgradeLevel("Light the whole basin",
-                    "The tower sings across the crater; home glows like a lantern on a winter night.", 80, 260f,
-                    1.8f),
+                new UpgradeLevel(15, 110f, 1.25f), new UpgradeLevel(40, 170f, 1.5f), new UpgradeLevel(80, 260f, 1.8f),
             });
             GeneratedAssets.CreateOrReplace(upgrade, GameplayAssetPaths.RadioTowerUpgrade);
             Debug.Log($"{BuilderPath}: wrote {GameplayAssetPaths.RadioTowerUpgrade}");
@@ -92,8 +86,7 @@ namespace MoonProject.Gameplay.Editor
                 }
 
                 var definition = ScriptableObject.CreateInstance<RelicDefinition>();
-                definition.Populate(recipe.Id, recipe.DisplayName, recipe.Memory, recipe.Mass, prefab,
-                    recipe.AnswerNote, recipe.Placement);
+                definition.Populate(recipe.Id, recipe.Mass, prefab, recipe.AnswerNote, recipe.Placement);
                 definitions[i] = GeneratedAssets.CreateOrReplace(definition,
                     GameplayAssetPaths.RelicDefinition(recipe.Id));
             }

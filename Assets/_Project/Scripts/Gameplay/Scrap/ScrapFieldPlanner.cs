@@ -9,7 +9,7 @@ namespace MoonProject.Gameplay
     /// Scatters the scrap field, deterministically from the tuning seed: a welcome ring of clusters around home,
     /// trails of clusters along the gentle paths from home toward every relic site and The Peak, clusters around
     /// each site, then lone clusters over the basin, topped up until the field holds the minimum total value.
-    /// Pieces lie only on drivable, gentle ground, away from the lander yard and the dig spots. Runs once at
+    /// Pieces lie only on drivable, gentle ground, away from the base pad, the lander and the dig spots. Runs once at
     /// initialisation (allocates); throws when the world leaves no room for the minimum value (broken tuning).
     /// </summary>
     public static class ScrapFieldPlanner
@@ -23,8 +23,9 @@ namespace MoonProject.Gameplay
         /// <summary>Metres per step when marching toward the drivable edge for The Peak's trail.</summary>
         private const float ReachStep = 2f;
 
+        /// <param name="lander">Where the lander stands; scrap keeps the lander clear radius from it.</param>
         public static List<ScrapSpawn> Plan(ITerrainQuery terrain, IWorldLayout layout, ScrapTuning tuning,
-            IReadOnlyList<RelicSite> sites, IReadOnlyList<ScrapVariant> variants)
+            IReadOnlyList<RelicSite> sites, IReadOnlyList<ScrapVariant> variants, Vector3 lander)
         {
             if (terrain == null)
             {
@@ -51,7 +52,7 @@ namespace MoonProject.Gameplay
                 throw new ArgumentException("At least one scrap variant is needed.", nameof(variants));
             }
 
-            var field = new Field(terrain, layout, tuning, sites, variants);
+            var field = new Field(terrain, layout, tuning, sites, variants, lander);
             field.PlaceBaseRing();
             field.PlaceTrails();
             field.PlacePointsOfInterest();
@@ -79,6 +80,7 @@ namespace MoonProject.Gameplay
             private readonly ScrapTuning _tuning;
             private readonly IReadOnlyList<RelicSite> _sites;
             private readonly IReadOnlyList<ScrapVariant> _variants;
+            private readonly Vector3 _lander;
             private readonly List<Vector3> _clusters = new List<Vector3>();
             private readonly float _minNormalY;
             private readonly float _totalWeight;
@@ -86,9 +88,10 @@ namespace MoonProject.Gameplay
             private DeterministicRandom _random;
 
             public Field(ITerrainQuery terrain, IWorldLayout layout, ScrapTuning tuning,
-                IReadOnlyList<RelicSite> sites, IReadOnlyList<ScrapVariant> variants)
+                IReadOnlyList<RelicSite> sites, IReadOnlyList<ScrapVariant> variants, Vector3 lander)
             {
                 _terrain = terrain;
+                _lander = lander;
                 _layout = layout;
                 _tuning = tuning;
                 _sites = sites;
@@ -284,6 +287,12 @@ namespace MoonProject.Gameplay
             {
                 float home = _tuning.BaseClearRadius + padding;
                 if (SurfaceRules.HorizontalDistanceSquared(point, _layout.BasePosition) < home * home)
+                {
+                    return false;
+                }
+
+                float lander = _tuning.LanderClearRadius + padding;
+                if (SurfaceRules.HorizontalDistanceSquared(point, _lander) < lander * lander)
                 {
                     return false;
                 }
