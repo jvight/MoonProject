@@ -128,7 +128,7 @@ namespace MoonProject.Audio
             }
 
             float dt = Time.deltaTime;
-            float sfx = _director.Buses.Effective(AudioBus.Sfx);
+            float sfx = _director.Buses.Effective(AudioBus.Sfx) * _director.WorldGain;
             if (_tetherFader.IsAudible || _tetherFader.IsOn)
             {
                 _tetherHum.transform.position = _tetherOrigin.position;

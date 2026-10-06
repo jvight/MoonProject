@@ -132,7 +132,7 @@ namespace MoonProject.Audio.PlayModeTests
             Action[] updates =
             {
                 AudioTestRig.UpdateOf(_rig.Director), AudioTestRig.UpdateOf(_rig.RoverAudio),
-                AudioTestRig.UpdateOf(_rig.Gameplay), AudioTestRig.UpdateOf(_rig.Radio),
+                AudioTestRig.UpdateOf(_rig.Gameplay), AudioTestRig.UpdateOf(_rig.Ui), AudioTestRig.UpdateOf(_rig.Radio),
                 AudioTestRig.UpdateOf(_rig.Ambience),
             };
 
@@ -171,6 +171,9 @@ namespace MoonProject.Audio.PlayModeTests
                 case 0:
                     events.Publish(new ScrapCollected(Vector3.one, 1, frame / 12));
                     break;
+                case 1:
+                    events.Publish(new UiCue(frame % 24 == 1 ? UiCueKind.FocusMove : UiCueKind.SliderStep));
+                    break;
                 case 2:
                     events.Publish(new SonarPinged(Vector3.zero, 80f));
                     break;
@@ -188,8 +191,17 @@ namespace MoonProject.Audio.PlayModeTests
                 case 5:
                     events.Publish(new TetherAttached(Vector3.right, 5f));
                     break;
+                case 6:
+                    events.Publish(new UiCue(frame % 24 == 6 ? UiCueKind.HoldFill : UiCueKind.HoldRelease));
+                    break;
                 case 7:
                     events.Publish(new ExcavationStarted(Vector3.left));
+                    break;
+                case 8:
+                    events.Publish(new UiCue(frame % 24 == 8 ? UiCueKind.CardShown : UiCueKind.PromptShown));
+                    break;
+                case 10:
+                    events.Publish(new PauseChanged(frame % 24 == 10));
                     break;
                 case 9:
                     events.Publish(new TetherReleased(Vector3.right, frame % 24 == 9));

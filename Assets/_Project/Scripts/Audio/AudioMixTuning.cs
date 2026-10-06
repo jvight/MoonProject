@@ -66,6 +66,16 @@ namespace MoonProject.Audio
         [Tooltip("Pitch scale of a full-impact thump (heavier = lower).")]
         [Range(0.5f, 1.5f)] [SerializeField] private float _thumpHardPitch = 0.9f;
 
+        [Header("Pause")]
+        [Tooltip("Seconds for the world loops (motor, dust, lift, tether, rumble) to duck when the game pauses.")]
+        [Range(0.01f, 2f)] [SerializeField] private float _pauseDuckTime = 0.4f;
+
+        [Tooltip("Seconds for the world loops to come back on resume.")]
+        [Range(0.01f, 3f)] [SerializeField] private float _resumeTime = 0.8f;
+
+        [Tooltip("World-loop volume while paused (they are on game time and would otherwise hang frozen).")]
+        [Range(0f, 1f)] [SerializeField] private float _pausedWorldGain;
+
         [Header("Ambience")]
         [Tooltip("Seconds the ambience bed takes to fade in at start.")]
         [Min(0f)] [SerializeField] private float _ambienceFadeIn = 4f;
@@ -88,5 +98,8 @@ namespace MoonProject.Audio
         public float ThumpSoftPitch => _thumpSoftPitch;
         public float ThumpHardPitch => _thumpHardPitch;
         public float AmbienceFadeIn => _ambienceFadeIn;
+        public float PauseDuckTime => _pauseDuckTime;
+        public float ResumeTime => _resumeTime;
+        public float PausedWorldGain => _pausedWorldGain;
     }
 }
