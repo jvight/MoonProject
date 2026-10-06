@@ -89,6 +89,9 @@ namespace MoonProject.Editor.SceneBuild
 
             context.SortRoots();
             WireBootstrap(bootstrap, controls, context.Systems);
+            // Describe before saving: the reload below destroys the objects the context still references.
+            string systemsSummary = DescribeSystems(context.Systems);
+            int systemCount = context.Systems.Count;
             GeneratedAssets.EnsureFolder(Path.GetDirectoryName(ScenePath)?.Replace('\\', '/'));
             if (!EditorSceneManager.SaveScene(scene, ScenePath))
             {
@@ -103,7 +106,7 @@ namespace MoonProject.Editor.SceneBuild
 
             MakeFirstBuildScene();
             BatchRunner.Log($"scene: saved {ScenePath} with {contributors.Count} contributor(s), " +
-                            $"{context.Systems.Count} system(s): {DescribeSystems(context.Systems)}");
+                            $"{systemCount} system(s): {systemsSummary}");
         }
 
         /// <summary>
