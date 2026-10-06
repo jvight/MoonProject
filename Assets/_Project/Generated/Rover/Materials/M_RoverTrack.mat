@@ -24,8 +24,11 @@ Material:
     serializedVersion: 3
     m_TexEnvs: []
     m_Ints: []
-    m_Floats: []
+    m_Floats:
+    - _EdgeSoftness: 0.5
+    - _FadeFar: 55
+    - _FadeNear: 20
     m_Colors:
-    - _Color: {r: 0.27058825, g: 0.2784314, b: 0.47843137, a: 1}
+    - _Color: {r: 0.4862745, g: 0.49803922, b: 0.68235296, a: 0.95}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
