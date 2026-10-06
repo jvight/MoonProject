@@ -135,7 +135,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.Greater(duck.HaloLevel, 0.5f, "a visible highlight before pressing");
             _fixture.Capture("06-tether-hover");
 
-            Press(_mouse.rightButton);
+            Press(_mouse.rightButton, queueEventOnly: true);
             yield return null;
             yield return null;
             Assert.AreEqual(1, _fixture.Events.TetherAttached.Count);
@@ -182,7 +182,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Vector3 camera = _fixture.Rover.Camera.transform.position;
             _fixture.Rover.Aim(camera, duck.transform.position);
             yield return null;
-            Press(_mouse.rightButton);
+            Press(_mouse.rightButton, queueEventOnly: true);
             yield return null;
             yield return null;
             Assert.AreEqual(1, _fixture.Events.TetherAttached.Count);
