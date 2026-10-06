@@ -6,6 +6,9 @@ namespace MoonProject.Rover.Editor
         /// <summary>The art box's model (rig contract in docs/ARCHITECTURE.md). Required; never substituted.</summary>
         public const string RoverModel = "Assets/_Project/Generated/Art/Rover/RoverModel.prefab";
 
+        /// <summary>The art box's Hover-Jump coils, mounted on RoverModel 'CoilSocket'. Required.</summary>
+        public const string HoverCoils = "Assets/_Project/Generated/Art/Rover/HoverCoils.prefab";
+
         public const string GeneratedRoot = "Assets/_Project/Generated/Rover";
         public const string RoverPrefab = GeneratedRoot + "/Rover.prefab";
         public const string CameraRigPrefab = GeneratedRoot + "/RoverCameraRig.prefab";
