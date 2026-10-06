@@ -5,7 +5,7 @@ namespace MoonProject.Art.Editor
     /// <summary>Small composite shapes shared by the model recipes (rods, struts, pivot placement).</summary>
     internal static class RecipeKit
     {
-        /// <summary>A thin prism from <paramref name="from"/> to <paramref name="to"/> (cables, whips, axles).</summary>
+        /// <summary>Thin prism from <paramref name="from"/> to <paramref name="to"/> (cables, whips, axles).</summary>
         public static MeshRange Rod(LowPolyMeshBuilder b, Vector3 from, Vector3 to, float radius, int sides,
             PaletteSwatch swatch)
         {
@@ -29,7 +29,7 @@ namespace MoonProject.Art.Editor
             return b;
         }
 
-        /// <summary>Point of a profile drawn in a plane at an angle measured from +Z towards +Y (see ShellArc).</summary>
+        /// <summary>Point of a profile plane at an angle measured from +Z towards +Y, at a radius.</summary>
         public static Vector2 Polar(float degrees, float radius)
         {
             float angle = degrees * Mathf.Deg2Rad;

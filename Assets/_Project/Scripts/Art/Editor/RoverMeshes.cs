@@ -160,7 +160,8 @@ namespace MoonProject.Art.Editor
         {
             var b = new LowPolyMeshBuilder(220);
             b.Prism(At(0f, 0.02f, 0f), 0.08f, 0.04f, 8, PaletteSwatch.Charcoal);
-            RecipeKit.Rod(b, new Vector3(0f, 0.03f, 0f), HeadHinge - new Vector3(0f, 0.03f, 0f), 0.022f, 6, PaletteSwatch.Metal);
+            var poleBase = new Vector3(0f, 0.03f, 0f);
+            RecipeKit.Rod(b, poleBase, HeadHinge - poleBase, 0.022f, 6, PaletteSwatch.Metal);
             var cable0 = new Vector3(0.025f, 0.04f, -0.06f);
             var cable1 = new Vector3(0.035f, 0.12f, -0.115f);
             var cable2 = new Vector3(0.03f, 0.22f, -0.1f);

@@ -103,7 +103,7 @@ namespace MoonProject.Art.Editor
             return b;
         }
 
-        /// <summary>A broken, slightly bent shard of a solar panel: violet cells, a glowing wire on the break.</summary>
+        /// <summary>A broken shard of a solar panel: violet cells, a glowing wire torn at the break.</summary>
         private static LowPolyMeshBuilder Panel()
         {
             var b = new LowPolyMeshBuilder(200);
