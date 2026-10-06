@@ -3,13 +3,14 @@
   "height": 900,
   "postProcessing": true,
   "poses": [
-    { "name": "base_peak_earth", "position": [0, 3, -8], "euler": [-9, -12, 0], "fov": 60 },
-    { "name": "overview", "position": [0, 950, -700], "lookAt": [0, 0, 40], "fov": 50 },
-    { "name": "crater_closeup", "position": [138, 14, 50], "lookAt": [183, 0.8, 74.8], "fov": 55 },
-    { "name": "rim", "position": [230, 11, 60], "lookAt": [380, 60, 140], "fov": 60 },
-    { "name": "low_dramatic", "position": [60, 3.9, 120], "lookAt": [91.5, 150, 430.4], "fov": 55 },
-    { "name": "earth", "position": [0, 3, -8], "lookAt": [-53.5, 38.8, 68.5], "fov": 30 },
-    { "name": "ramp", "position": [82.2, 6, 56.3], "lookAt": [58.5, 2, 74.9], "fov": 60 },
-    { "name": "from_summit", "position": [91.5, 156, 430.4], "lookAt": [174.7, 40, 821.6], "fov": 60 }
+    {"name": "spawn_chase", "position": [0.78, 4, -8.97], "euler": [6, -5, 0], "fov": 60},
+    {"name": "floor_near", "position": [-20, 2.2, -40], "euler": [8, 30, 0], "fov": 60},
+    {"name": "overview", "position": [0, 640, -470], "lookAt": [0, 0, 30], "fov": 50},
+    {"name": "crater_closeup", "position": [138, 14, 50], "lookAt": [183, 0.8, 74.8], "fov": 55},
+    {"name": "rim", "position": [230, 11, 60], "lookAt": [380, 60, 140], "fov": 60},
+    {"name": "low_dramatic", "position": [60, 3.9, 120], "lookAt": [91.5, 150, 430.4], "fov": 55},
+    {"name": "earth", "position": [0, 3, -8], "lookAt": [-72, 58.1, 170.3], "fov": 30},
+    {"name": "ramp", "position": [82.2, 6, 56.3], "lookAt": [58.5, 2, 74.9], "fov": 60},
+    {"name": "from_summit", "position": [91.5, 156, 430.4], "lookAt": [174.7, 40, 821.6], "fov": 60}
   ]
 }

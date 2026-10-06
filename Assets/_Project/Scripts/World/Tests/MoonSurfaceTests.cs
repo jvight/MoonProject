@@ -213,9 +213,10 @@ namespace MoonProject.World.Tests
                 float distance = crater.Center.magnitude;
                 Assert.Greater(distance - crater.OuterRadius, _settings.PadRadius + _settings.PadBlend * 0.5f,
                     $"crater {i} intrudes on the base");
-                Assert.Less(distance + crater.OuterRadius, _surface.DrivableRadius + 1f, $"crater {i} leaves the floor");
-                Assert.Less(_surface.SampleHeight(crater.Center.x, crater.Center.y),
-                    _surface.SampleHeight(crater.Center.x + crater.Radius, crater.Center.y), $"crater {i} has no dip");
+                Assert.Less(distance + crater.OuterRadius, _surface.DrivableRadius + 1f,
+                    $"crater {i} leaves the floor");
+                Assert.Less(_surface.SampleHeight(crater.Center.x, crater.Center.y), MeanRimHeight(crater),
+                    $"crater {i} has no dip");
                 if (crater.IsPlayBowl)
                 {
                     bowls++;
@@ -284,6 +285,20 @@ namespace MoonProject.World.Tests
             double microseconds = watch.Elapsed.TotalMilliseconds * 1000.0 / count;
             TestContext.WriteLine($"MoonSurface.SampleHeight: {microseconds:F3} us/sample (checksum {sink:F1})");
             Assert.Less(microseconds, 2.0, "height sampling is too slow for boot-time terrain generation");
+        }
+
+        /// <summary>Mean height around a crater's rim: robust to the hill the crater sits on.</summary>
+        private float MeanRimHeight(Crater crater)
+        {
+            const int samples = 16;
+            float sum = 0f;
+            for (int k = 0; k < samples; k++)
+            {
+                Vector2 p = crater.Center + MoonSurface.BearingToDirection(k * 360f / samples) * crater.Radius;
+                sum += _surface.SampleHeight(p.x, p.y);
+            }
+
+            return sum / samples;
         }
 
         private float SlopeDegrees(float x, float z)

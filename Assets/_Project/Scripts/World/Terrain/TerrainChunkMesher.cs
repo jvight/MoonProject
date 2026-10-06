@@ -140,7 +140,7 @@ namespace MoonProject.World
             vertices[written++] = new TerrainVertex(p2 - origin, normal, uv);
         }
 
-        /// <summary>True when the triangle's projection on XZ keeps the upward winding (it is not folded over).</summary>
+        /// <summary>True when the triangle's XZ projection keeps the upward winding (it is not folded).</summary>
         private static bool FacesUp(Vector3[] positions, int i0, int i1, int i2)
         {
             Vector3 p0 = positions[i0];

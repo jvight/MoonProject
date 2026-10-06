@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace MoonProject.World
 {
-    /// <summary>Designer placement of a play ramp: a smooth asymmetric hump that launches the rover into a floaty hop.</summary>
+    /// <summary>Designer placement of a play ramp: a smooth asymmetric hump that launches a floaty hop.</summary>
     [Serializable]
     public struct RampPlacement
     {

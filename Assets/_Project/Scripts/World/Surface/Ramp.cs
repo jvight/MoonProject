@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace MoonProject.World
 {
-    /// <summary>A resolved play ramp in world space (see <see cref="RampPlacement"/> for the designer inputs).</summary>
+    /// <summary>A resolved play ramp in world space (<see cref="RampPlacement"/> holds the designer inputs).</summary>
     public readonly struct Ramp
     {
         public Ramp(Vector2 crest, Vector2 direction, float riseLength, float fallLength, float halfWidth, float height)

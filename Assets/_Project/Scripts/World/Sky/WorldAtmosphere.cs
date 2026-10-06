@@ -5,9 +5,9 @@ using UnityEngine.Rendering;
 namespace MoonProject.World
 {
     /// <summary>
-    /// Applies <see cref="AtmosphereSettings"/> to the scene: trilight ambient, exponential-squared fog and the directional
-    /// earthlight shining from Earth's side of the sky. Used by the scene build (saved into the scene) and by
-    /// <see cref="WorldSystem"/> (so play mode always matches the tuning asset).
+    /// Applies <see cref="AtmosphereSettings"/> to the scene: trilight ambient, exponential-squared fog and the
+    /// directional earthlight shining from Earth's side of the sky. Used by the scene build (saved into the scene)
+    /// and by <see cref="WorldSystem"/> (so play mode always matches the tuning asset).
     /// </summary>
     public static class WorldAtmosphere
     {

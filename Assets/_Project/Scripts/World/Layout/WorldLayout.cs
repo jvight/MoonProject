@@ -4,7 +4,8 @@ using MoonProject.Core;
 
 namespace MoonProject.World
 {
-    /// <summary>The world's fixed landmarks, derived from the surface and sky settings (registered as IWorldLayout).</summary>
+    /// <summary>The world's fixed landmarks, derived from the surface and sky settings (registered as
+    /// IWorldLayout).</summary>
     public sealed class WorldLayout : IWorldLayout
     {
         public WorldLayout(MoonSurface surface, SkySettings sky)
