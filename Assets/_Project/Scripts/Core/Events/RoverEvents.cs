@@ -57,4 +57,31 @@ namespace MoonProject.Core.Events
 
         public float Duration { get; }
     }
+
+    /// <summary>
+    /// The Hover-Jump charge grew: published as charging starts (strength 0) and at each equal step up to a full charge
+    /// (1); with the default four steps that is five notes, ready for a pentatonic climb. Drives the charge hum.
+    /// </summary>
+    public readonly struct RoverJumpCharged
+    {
+        public RoverJumpCharged(float strength)
+        {
+            Strength = strength;
+        }
+
+        /// <summary>Charge so far, 0..1.</summary>
+        public float Strength { get; }
+    }
+
+    /// <summary>07 leapt with the Hover-Jump. Its landing is announced by <see cref="RoverLanded"/> as usual.</summary>
+    public readonly struct RoverJumped
+    {
+        public RoverJumped(float strength)
+        {
+            Strength = strength;
+        }
+
+        /// <summary>0 for a tap (small hop) .. 1 for a full charge (the big leap).</summary>
+        public float Strength { get; }
+    }
 }
