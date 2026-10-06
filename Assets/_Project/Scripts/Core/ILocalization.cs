@@ -26,6 +26,12 @@ namespace MoonProject.Core
         /// </summary>
         string Get(string key);
 
+        /// <summary>
+        /// The text of <paramref name="key"/> in the current language when the tables define it (in that language or
+        /// the primary one); false, silently, for an optional key that is simply not there.
+        /// </summary>
+        bool TryGet(string key, out string text);
+
         /// <summary>Switches every string to <paramref name="language"/> (one of <see cref="Languages"/>).</summary>
         void SetLanguage(string language);
     }

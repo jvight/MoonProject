@@ -104,6 +104,17 @@ namespace MoonProject.Core.Input
             return BindingLabels.For(Resolve(action), device);
         }
 
+        /// <summary>
+        /// Stable id of the physical control bound to <paramref name="action"/> for <paramref name="device"/>, e.g.
+        /// "keyboard.space", "mouse.rightbutton", "gamepad.buttonsouth", for a localized keycap word ("Space", "RMB",
+        /// "A"). Follows rebinding overrides. Empty when nothing is bound for that device. Allocates a string: cache
+        /// it.
+        /// </summary>
+        public string GetBindingControl(RoverAction action, InputDeviceKind device)
+        {
+            return BindingLabels.ControlId(Resolve(action), device);
+        }
+
         public void Dispose()
         {
             Track(_roverMap, false);
