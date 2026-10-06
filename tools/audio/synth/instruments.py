@@ -66,6 +66,43 @@ def soft_pad(freq: float, duration: float, attack: float, release_t60: float, ho
     return envelope.fade_out(0.5 * voices * env, min(0.5, duration * 0.1))
 
 
+def felt_piano(freq: float, duration: float, gen: np.random.Generator, decay: float = 1.6,
+               brightness: float = 0.5, attack: float = 0.004) -> np.ndarray:
+    """Soft felt-hammer piano note: slightly stretched harmonic partials (piano-string inharmonicity) whose
+    upper partials die faster, a felt-softened top (``brightness`` 0..1 scales the upper partials), and a quiet
+    low-passed hammer thump."""
+    n = samples(duration)
+    stretch = 0.0004
+    out = np.zeros(n)
+    for k in range(1, 9):
+        amp = (1.0 / k ** 1.4) * (brightness ** (0.5 * (k - 1)))
+        out += partial(n, freq * k * np.sqrt(1.0 + stretch * k * k), amp, attack, decay / (0.7 + 0.3 * k))
+    thump_n = min(n, samples(0.012))
+    thump = filters.lowpass(noise.white(thump_n, gen), 700.0) * envelope.ar(thump_n, 0.001, 0.01)
+    out[:thump_n] += 0.05 * thump
+    return out
+
+
+def music_box(freq: float, duration: float, decay: float = 1.1) -> np.ndarray:
+    """Music-box comb tine: a pure fundamental, a faint octave and a very short inharmonic tine mode for the
+    'tink' (skipped where it would get harsh), with a crisp but not clicky attack."""
+    n = samples(duration)
+    tine = partial(n, 5.93 * freq, 0.05, 0.0006, 0.03) if 5.93 * freq < 7000.0 else np.zeros(n)
+    return (partial(n, freq, 1.0, 0.0012, decay)
+            + partial(n, 2.0 * freq, 0.12, 0.0012, decay * 0.4)
+            + tine)
+
+
+def wood_tick(freq: float, duration: float, gen: np.random.Generator, decay: float = 0.05) -> np.ndarray:
+    """Tiny soft wooden tick: a damped tone with the wood-block inharmonic mode (2.71 x) and a felt click."""
+    n = samples(duration)
+    out = partial(n, freq, 1.0, 0.0008, decay) + partial(n, 2.71 * freq, 0.18, 0.0006, decay * 0.4)
+    click_n = min(n, samples(0.004))
+    click = filters.bandpass(noise.white(click_n, gen), 1500.0, 0.9) * envelope.ar(click_n, 0.0003, 0.003)
+    out[:click_n] += 0.06 * click
+    return out
+
+
 def grain(gen: np.random.Generator, length: float, attack: float, t60: float) -> np.ndarray:
     """One noise grain: white noise under a short smooth-attack exponential envelope."""
     n = max(2, samples(length))

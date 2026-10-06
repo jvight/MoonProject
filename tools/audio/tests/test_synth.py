@@ -11,7 +11,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from synth import analysis, core, effects, envelope, filters, fm, io, loop, noise, osc, pluck  # noqa: E402
+from synth import analysis, core, effects, envelope, filters, fm, instruments, io, loop, noise, osc, pluck  # noqa: E402
 from synth.core import SAMPLE_RATE  # noqa: E402
 
 
@@ -215,6 +215,32 @@ class LoopTests(unittest.TestCase):
         y = loop.crossfade_loop(x, SAMPLE_RATE * 2, SAMPLE_RATE // 4)
         self.assertEqual(y.shape[0], SAMPLE_RATE * 2)
         self.assertAlmostEqual(y[0], x[SAMPLE_RATE * 2], places=12)
+
+
+class InstrumentTests(unittest.TestCase):
+    def test_soft_instruments_start_silent_decay_and_stay_gentle(self):
+        gen = core.rng("instruments")
+        voices = {
+            "felt_piano": instruments.felt_piano(core.note_freq("D4"), 1.5, gen),
+            "music_box": instruments.music_box(core.note_freq("A5"), 1.5),
+            "wood_tick": instruments.wood_tick(core.note_freq("B4"), 0.2, gen),
+        }
+        for name, x in voices.items():
+            self.assertTrue(np.all(np.isfinite(x)), name)
+            self.assertEqual(x[0], 0.0, name)
+            head = analysis.rms_db(x[: x.shape[0] // 4])
+            tail = analysis.rms_db(x[-x.shape[0] // 4:])
+            self.assertLess(tail, head - 20.0, f"{name} decays")
+            _, hf_db = analysis.spectral_stats(x, 8000.0)
+            self.assertLess(hf_db, -40.0, f"{name} has no harsh highs")
+
+    def test_felt_piano_fundamental_is_in_tune(self):
+        f = core.note_freq("A4")
+        x = instruments.felt_piano(f, 2.0, core.rng("piano"))
+        spectrum = np.abs(np.fft.rfft(x * np.hanning(x.shape[0]), 1 << 20))
+        freqs = np.fft.rfftfreq(1 << 20, 1.0 / SAMPLE_RATE)
+        band = (freqs > 0.9 * f) & (freqs < 1.1 * f)
+        self.assertLess(abs(1200.0 * math.log2(freqs[band][np.argmax(spectrum[band])] / f)), 2.0)
 
 
 class IoTests(unittest.TestCase):
