@@ -49,7 +49,7 @@ namespace MoonProject.Rover.Editor
             return property;
         }
 
-        /// <summary>The descendant of <paramref name="root"/> named <paramref name="name"/>; throws if absent.</summary>
+        /// <summary>Descendant of <paramref name="root"/> named <paramref name="name"/>; throws if absent.</summary>
         public static Transform Node(Transform root, string name)
         {
             Transform found = Search(root, name);
