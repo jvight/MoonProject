@@ -58,7 +58,7 @@ namespace MoonProject.Gameplay
 
             for (int i = 0; i < _stations.Length; i++)
             {
-                if (_stations[i].Definition == definition && !_stations[i].Occupied)
+                if (_stations[i].Sells(definition) && !_stations[i].Occupied)
                 {
                     return PurchaseResult.NotAtStation;
                 }

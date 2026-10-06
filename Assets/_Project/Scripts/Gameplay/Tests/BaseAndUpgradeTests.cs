@@ -17,7 +17,9 @@ namespace MoonProject.Gameplay.Tests
         private List<float> _radii;
         private List<UpgradePurchased> _purchases;
         private ScrapWallet _wallet;
+        private TestAbilities _abilities;
         private UpgradeDefinition _tower;
+        private UpgradeDefinition _hoverJump;
 
         [SetUp]
         public void SetUp()
@@ -38,10 +40,16 @@ namespace MoonProject.Gameplay.Tests
                 _radii.Add(evt.Radius);
             });
             _wallet = new ScrapWallet(_events);
+            _abilities = new TestAbilities();
             _tower = Create<UpgradeDefinition>();
-            _tower.Populate("radio_tower", 60f, new[]
+            _tower.Populate("radio_tower", UpgradeStationKind.RadioTower, 60f, new[]
             {
                 new UpgradeLevel(15, 110f, 1.25f), new UpgradeLevel(40, 170f, 1.5f), new UpgradeLevel(80, 260f, 1.8f),
+            });
+            _hoverJump = Create<UpgradeDefinition>();
+            _hoverJump.Populate("rover.hover_jump", UpgradeStationKind.Workshop, 0f, new[]
+            {
+                new UpgradeLevel(150, RoverAbility.HoverJump),
             });
         }
 
@@ -59,7 +67,7 @@ namespace MoonProject.Gameplay.Tests
         [Test]
         public void Purchase_SpendsScrap_RaisesTheLevel_AndWidensTheSignal()
         {
-            var service = new UpgradeService(_events, _wallet, new[] { _tower });
+            var service = Service(_tower);
             Assert.AreEqual(PurchaseResult.CannotAfford, service.Purchase("radio_tower"));
             Assert.AreEqual(0, service.LevelOf("radio_tower"));
             Assert.IsEmpty(_order, "nothing happens without the scrap");
@@ -81,7 +89,7 @@ namespace MoonProject.Gameplay.Tests
         [Test]
         public void Purchase_StopsAtTheLastLevel_AndRejectsUnknownIds()
         {
-            var service = new UpgradeService(_events, _wallet, new[] { _tower });
+            var service = Service(_tower);
             _wallet.Add(135);
             Assert.AreEqual(PurchaseResult.Purchased, service.Purchase("radio_tower"));
             Assert.AreEqual(PurchaseResult.Purchased, service.Purchase("radio_tower"));
@@ -98,7 +106,7 @@ namespace MoonProject.Gameplay.Tests
         [Test]
         public void Offer_ShowsTheNextLevel_AndWhetherItIsAffordable()
         {
-            var service = new UpgradeService(_events, _wallet, new[] { _tower });
+            var service = Service(_tower);
             _wallet.Add(14);
             Assert.IsTrue(service.TryGetOffer("radio_tower", out UpgradeOffer offer));
             Assert.AreEqual(0, offer.CurrentLevel);
@@ -115,7 +123,7 @@ namespace MoonProject.Gameplay.Tests
         [Test]
         public void Restore_AppliesLevelsSilently_AndAnnouncesTheSignal()
         {
-            var service = new UpgradeService(_events, _wallet, new[] { _tower });
+            var service = Service(_tower);
             service.PublishSignals();
             Assert.AreEqual(60f, _radii[0], "before any purchase the old mast reaches 60 m");
             service.Restore(new UpgradesSaveData
@@ -136,7 +144,7 @@ namespace MoonProject.Gameplay.Tests
         [Test]
         public void Shop_SellsTheTowerOnlyOnItsPad_AndSavesEachPurchase()
         {
-            var service = new UpgradeService(_events, _wallet, new[] { _tower });
+            var service = Service(_tower);
             var station = new TestStation { Definition = _tower };
             var save = new CountingSave();
             var shop = new UpgradeShop(service, new IUpgradeStation[] { station }, save);
@@ -158,6 +166,114 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
+        public void AbilityUpgrade_GrantsItsAbilityBeforeTheEvent_AndLeavesTheSignalAlone()
+        {
+            var service = Service(_tower, _hoverJump);
+            bool grantedWhenAnnounced = false;
+            _events.Subscribe<UpgradePurchased>(_ => grantedWhenAnnounced = _abilities.Has(RoverAbility.HoverJump));
+            _wallet.Add(149);
+            Assert.AreEqual(PurchaseResult.CannotAfford, service.Purchase("rover.hover_jump"));
+            Assert.AreEqual(0, _abilities.Grants);
+
+            _wallet.Add(1);
+            _order.Clear();
+            Assert.AreEqual(PurchaseResult.Purchased, service.Purchase("rover.hover_jump"));
+            Assert.AreEqual(0, _wallet.Balance);
+            Assert.AreEqual(1, service.LevelOf("rover.hover_jump"));
+            Assert.IsTrue(_abilities.Has(RoverAbility.HoverJump));
+            Assert.IsTrue(grantedWhenAnnounced, "listeners of the purchase already see the ability");
+            CollectionAssert.AreEqual(new[] { nameof(CurrencyChanged), nameof(UpgradePurchased) }, _order,
+                "not a radio upgrade: no signal change");
+            Assert.AreEqual("rover.hover_jump", _purchases[0].UpgradeId);
+            Assert.AreEqual(1, _purchases[0].Level);
+            Assert.AreEqual(PurchaseResult.Maxed, service.Purchase("rover.hover_jump"));
+            Assert.AreEqual(1f, service.LightBoost, 1e-5f);
+        }
+
+        [Test]
+        public void TowerLevels_GrantNoAbility()
+        {
+            var service = Service(_tower, _hoverJump);
+            _wallet.Add(135);
+            for (int i = 0; i < 3; i++)
+            {
+                Assert.AreEqual(PurchaseResult.Purchased, service.Purchase("radio_tower"));
+            }
+
+            Assert.AreEqual(0, _abilities.Grants);
+        }
+
+        [Test]
+        public void Restore_RegrantsBoughtAbilitiesSilently()
+        {
+            var service = Service(_tower, _hoverJump);
+            service.Restore(new UpgradesSaveData
+            {
+                upgrades = new[] { new UpgradeSaveData { id = "radio_tower", level = 1 } },
+            });
+            Assert.IsFalse(_abilities.Has(RoverAbility.HoverJump), "an older save without the workshop grants nothing");
+
+            service.Restore(new UpgradesSaveData
+            {
+                upgrades = new[]
+                {
+                    new UpgradeSaveData { id = "radio_tower", level = 1 },
+                    new UpgradeSaveData { id = "rover.hover_jump", level = 1 },
+                },
+            });
+            Assert.IsTrue(_abilities.Has(RoverAbility.HoverJump));
+            Assert.AreEqual(1, service.LevelOf("rover.hover_jump"));
+            Assert.IsEmpty(_purchases, "a load is not a purchase");
+            UpgradesSaveData saved = service.Capture();
+            Assert.AreEqual("rover.hover_jump", saved.upgrades[1].id);
+            Assert.AreEqual(1, saved.upgrades[1].level);
+        }
+
+        [Test]
+        public void Shop_SellsEachUpgradeOnlyAtItsOwnStation()
+        {
+            var service = Service(_tower, _hoverJump);
+            var tower = new TestStation { Definition = _tower };
+            var bench = new TestStation { Definition = _hoverJump };
+            var shop = new UpgradeShop(service, new IUpgradeStation[] { tower, bench }, new CountingSave());
+            _wallet.Add(200);
+
+            tower.Occupied = true;
+            Assert.AreSame(_tower, shop.StationUpgrade);
+            Assert.AreEqual(PurchaseResult.NotAtStation, shop.Purchase("rover.hover_jump"));
+            Assert.IsFalse(_abilities.Has(RoverAbility.HoverJump));
+
+            tower.Occupied = false;
+            bench.Occupied = true;
+            Assert.AreSame(_hoverJump, shop.StationUpgrade);
+            Assert.AreEqual(UpgradeStationKind.Workshop, shop.StationUpgrade.Station, "the panel knows where it is");
+            Assert.AreEqual(PurchaseResult.NotAtStation, shop.Purchase("radio_tower"));
+            Assert.AreEqual(PurchaseResult.Purchased, shop.Purchase("rover.hover_jump"));
+            Assert.IsTrue(_abilities.Has(RoverAbility.HoverJump));
+            Assert.AreEqual(50, _wallet.Balance);
+        }
+
+        [Test]
+        public void Workshop_OffersItsFirstAbilityNotYetBought_ThenRestsOnTheLast()
+        {
+            var cradle = Create<UpgradeDefinition>();
+            cradle.Populate("rover.cargo_cradle", UpgradeStationKind.Workshop, 0f, new[]
+            {
+                new UpgradeLevel(60, RoverAbility.CargoCradle),
+            });
+            var service = Service(_hoverJump, cradle);
+            var sold = new[] { _hoverJump, cradle };
+            Assert.AreEqual(0, Workshop.OfferIndex(sold, service));
+
+            _wallet.Add(210);
+            service.Purchase("rover.hover_jump");
+            Assert.AreEqual(1, Workshop.OfferIndex(sold, service));
+            service.Purchase("rover.cargo_cradle");
+            Assert.AreEqual(1, Workshop.OfferIndex(sold, service), "everything bought: it rests on the last");
+            Assert.IsTrue(_abilities.Has(RoverAbility.CargoCradle));
+        }
+
+        [Test]
         public void Definition_ReportsEffectsPerLevel_AndValidates()
         {
             Assert.AreEqual(60f, _tower.SignalRadiusAt(0));
@@ -167,7 +283,13 @@ namespace MoonProject.Gameplay.Tests
             Assert.IsNull(_tower.Validate());
             var empty = Create<UpgradeDefinition>();
             Assert.IsNotNull(empty.Validate());
-            Assert.Throws<ArgumentException>(() => new UpgradeService(_events, _wallet, new[] { empty }));
+            Assert.Throws<ArgumentException>(() => Service(empty));
+            Assert.IsNull(_hoverJump.Validate());
+            Assert.AreEqual(UpgradeStationKind.Workshop, _hoverJump.Station);
+            Assert.AreEqual(0f, _hoverJump.SignalRadiusAt(1), "not a radio upgrade");
+            Assert.IsTrue(_hoverJump.Levels[0].GrantsAbility);
+            Assert.AreEqual(RoverAbility.HoverJump, _hoverJump.Levels[0].Ability);
+            Assert.IsFalse(_tower.Levels[0].GrantsAbility);
         }
 
         [Test]
@@ -224,6 +346,11 @@ namespace MoonProject.Gameplay.Tests
             Assert.Greater(tuning.DepositGift, 0, "each memory brought home gives a scrap gift");
         }
 
+        private UpgradeService Service(params UpgradeDefinition[] definitions)
+        {
+            return new UpgradeService(_events, _wallet, _abilities, definitions);
+        }
+
         private T Create<T>() where T : ScriptableObject
         {
             var asset = ScriptableObject.CreateInstance<T>();
@@ -236,6 +363,31 @@ namespace MoonProject.Gameplay.Tests
             public UpgradeDefinition Definition { get; set; }
 
             public bool Occupied { get; set; }
+
+            public Vector3 PadCentre => Vector3.zero;
+
+            public bool Sells(UpgradeDefinition definition)
+            {
+                return definition == Definition;
+            }
+        }
+
+        private sealed class TestAbilities : IRoverAbilities
+        {
+            private readonly HashSet<RoverAbility> _granted = new HashSet<RoverAbility>();
+
+            public int Grants { get; private set; }
+
+            public bool Has(RoverAbility ability)
+            {
+                return _granted.Contains(ability);
+            }
+
+            public void Grant(RoverAbility ability)
+            {
+                Grants++;
+                _granted.Add(ability);
+            }
         }
 
         private sealed class CountingSave : ISaveService

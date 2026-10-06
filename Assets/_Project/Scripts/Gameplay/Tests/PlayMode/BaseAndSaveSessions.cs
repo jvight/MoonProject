@@ -3,6 +3,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.TestTools;
+using MoonProject.Core;
 using MoonProject.Core.Events;
 using MoonProject.Core.Save;
 using MoonProject.Testing;
@@ -10,12 +11,15 @@ using Object = UnityEngine.Object;
 
 namespace MoonProject.Gameplay.PlayModeTests
 {
-    /// <summary>Scripted sessions for the museum deposit, the radio tower shop, the hint query and save/load.</summary>
+    /// <summary>
+    /// Scripted sessions for the museum deposit, the radio tower shop, Kenji's workbench, the hint query and save/load.
+    /// </summary>
     public sealed class BaseAndSaveSessions : InputTestFixture
     {
         private const string Duck = "rubber_duck";
         private const string Teapot = "teapot";
         private const string Tower = "radio_tower";
+        private const string HoverJump = "rover.hover_jump";
 
         private InputActionAsset _controls;
         private GameplayFixture _fixture;
@@ -151,6 +155,67 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             Assert.AreEqual(60 - 15 - 40 + picked, _fixture.Gameplay.Wallet.Balance, "exactly the costs were spent");
             _fixture.Capture("11-tower-level-2");
+        }
+
+        [UnityTest]
+        public IEnumerator Workshop_SellsHoverJumpOnItsOwnPad_GrantsIt_AndGrantsItAgainOnLoad()
+        {
+            string slot = BootstrapHarness.NewTestSlot();
+            _fixture = GameplayFixture.Boot(_controls, slot);
+            yield return null;
+            Workshop workshop = _fixture.Gameplay.Workshop;
+            RadioTower tower = _fixture.Gameplay.Tower;
+            IUpgradeShop shop = _fixture.Bootstrap.Context.Get<IUpgradeShop>();
+            PadLook look = _fixture.WorkshopTuning.PadLook;
+            Assert.AreSame(_fixture.HoverJumpUpgrade, workshop.Definition, "the bench's first offer");
+            Assert.IsFalse(_fixture.Rover.Has(RoverAbility.HoverJump));
+            Assert.Greater(SurfaceRules.HorizontalDistance(workshop.PadCentre, tower.PadCentre),
+                look.Radius + _fixture.TowerTuning.PadRadius, "the two pads never overlap");
+
+            _fixture.Gameplay.Wallet.Add(150);
+            Assert.AreEqual(PurchaseResult.NotAtStation, shop.Purchase(HoverJump), "bought at the bench, not anywhere");
+            _fixture.Rover.Place(tower.PadCentre, 0f);
+            yield return null;
+            yield return null;
+            Assert.AreSame(_fixture.RadioTowerUpgrade, shop.StationUpgrade);
+            Assert.AreEqual(PurchaseResult.NotAtStation, shop.Purchase(HoverJump), "not at the tower either");
+
+            _fixture.Rover.Place(workshop.PadCentre, 0f);
+            yield return null;
+            yield return null;
+            Assert.IsTrue(workshop.Occupied);
+            Assert.AreSame(_fixture.HoverJumpUpgrade, shop.StationUpgrade);
+            Assert.AreEqual(UpgradeStationKind.Workshop, shop.StationUpgrade.Station);
+            Assert.IsTrue(_fixture.Gameplay.Hints.TryGet(InteractionKind.Upgrade, out InteractionHint hint));
+            Assert.IsTrue(hint.Ready, "affordable");
+            Assert.AreEqual(workshop.PadCentre, hint.Position);
+            yield return new WaitForSeconds(1.5f);
+            Assert.Greater(workshop.PadLevel, 0.8f * look.Occupied, "the pad glows under 07");
+
+            int before = _fixture.Events.Order.Count;
+            Assert.AreEqual(PurchaseResult.Purchased, shop.Purchase(HoverJump));
+            CollectionAssert.AreEqual(new[] { nameof(CurrencyChanged), nameof(UpgradePurchased) },
+                _fixture.Events.Order.GetRange(before, _fixture.Events.Order.Count - before));
+            Assert.AreEqual(HoverJump, _fixture.Events.UpgradePurchased[0].Value.UpgradeId);
+            Assert.AreEqual(1, _fixture.Events.UpgradePurchased[0].Value.Level);
+            Assert.IsTrue(_fixture.Rover.Has(RoverAbility.HoverJump), "07 can leap now");
+            Assert.Greater(workshop.PadLevel, look.Occupied, "the purchase flares the pad");
+            Assert.IsFalse(_fixture.Gameplay.Hints.TryGet(InteractionKind.Upgrade, out _), "nothing left to buy");
+            Assert.AreEqual(PurchaseResult.Maxed, shop.Purchase(HoverJump));
+            Vector3 pad = workshop.PadCentre;
+            _fixture.Rover.Aim(pad + new Vector3(-7f, 5f, -7f), pad + Vector3.up);
+            _fixture.Capture("13-workshop-hover-jump");
+            yield return new WaitForSeconds(2f);
+            Assert.Less(workshop.PadLevel, look.Occupied * 0.5f, "an empty bench's pad rests dim");
+
+            _fixture.Dispose(true);
+            yield return null;
+            _fixture = GameplayFixture.Boot(_controls, slot);
+            yield return null;
+            Assert.AreEqual(1, _fixture.Gameplay.Upgrades.LevelOf(HoverJump), "the purchase was a checkpoint");
+            Assert.IsTrue(_fixture.Rover.Has(RoverAbility.HoverJump), "granted again on load");
+            Assert.AreEqual(0, _fixture.Events.UpgradePurchased.Count, "a load is never a purchase");
+            Assert.AreEqual(0, _fixture.Gameplay.Wallet.Balance);
         }
 
         [UnityTest]

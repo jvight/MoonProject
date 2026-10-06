@@ -19,7 +19,9 @@ namespace MoonProject.Gameplay
         /// <summary>Let go here: the towed relic will float onto the museum shelf.</summary>
         Deposit = 4,
 
-        /// <summary>Parked on the tower pad: buy the next level (Ready when affordable).</summary>
+        /// <summary>
+        /// Parked on a station's pad (the tower or the workbench): buy what it offers (Ready when affordable).
+        /// </summary>
         Upgrade = 5,
 
         /// <summary>Towing: the winch reels the relic in or out.</summary>

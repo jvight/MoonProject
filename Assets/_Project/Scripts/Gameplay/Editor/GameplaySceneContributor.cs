@@ -9,11 +9,12 @@ namespace MoonProject.Gameplay.Editor
     /// The Gameplay domain's part of Main.unity: under [Gameplay], the <see cref="GameplaySystem"/> (one system,
     /// initialised after World, Rover and Audio) and its parts, wired to the tuning, content and material assets, plus
     /// the home base built from Art's prefabs (lander, museum shelf on its ShelfAnchor, the three radio tower stages on
-    /// its TowerAnchor). Art's base prefabs are meshes only, so gameplay makes them solid here: a static mesh
-    /// collider on each body, on the Prop layer, so 07 drives around them and the camera never slips inside. The base
-    /// is stood beside the pad here for the editor view and re-seated on the real ground at boot; relic sites and the
-    /// scrap field are planned from the World's surface at boot. Fails loudly when a required asset or prefab node is
-    /// missing.
+    /// its TowerAnchor) and Kenji's workbench station on a WorkshopAnchor placed beside the lander from the workshop
+    /// tuning (only its pad of light shows). Art's base prefabs are meshes only, so gameplay makes them solid here: a
+    /// static mesh collider on each body, on the Prop layer, so 07 drives around them and the camera never slips
+    /// inside. The base is stood beside the pad here for the editor view and re-seated on the real ground at boot;
+    /// relic sites and the scrap field are planned from the World's surface at boot. Fails loudly when a required asset
+    /// or prefab node is missing.
     /// </summary>
     public sealed class GameplaySceneContributor : ISceneContributor
     {
@@ -34,15 +35,18 @@ namespace MoonProject.Gameplay.Editor
             var tetherTuning = context.LoadAsset<TetherTuning>(GameplayAssetPaths.TetherTuning);
             var baseTuning = context.LoadAsset<BaseTuning>(GameplayAssetPaths.BaseTuning);
             var towerTuning = context.LoadAsset<RadioTowerTuning>(GameplayAssetPaths.RadioTowerTuning);
+            var workshopTuning = context.LoadAsset<WorkshopTuning>(GameplayAssetPaths.WorkshopTuning);
             var scrapCatalog = context.LoadAsset<ScrapCatalog>(GameplayAssetPaths.ScrapCatalog);
             var relicCatalog = context.LoadAsset<RelicCatalog>(GameplayAssetPaths.RelicCatalog);
             var radioTower = context.LoadAsset<UpgradeDefinition>(GameplayAssetPaths.RadioTowerUpgrade);
+            var hoverJump = context.LoadAsset<UpgradeDefinition>(GameplayAssetPaths.HoverJumpUpgrade);
             var friendTuning = context.LoadAsset<FriendTuning>(GameplayAssetPaths.FriendTuning);
             var friendCatalog = context.LoadAsset<FriendCatalog>(GameplayAssetPaths.FriendCatalog);
             Require(visuals.Validate(), nameof(GameplayVisuals));
             Require(scrapCatalog.Validate(), nameof(ScrapCatalog));
             Require(relicCatalog.Validate(), nameof(RelicCatalog));
             Require(radioTower.Validate(), nameof(UpgradeDefinition));
+            Require(hoverJump.Validate(), nameof(UpgradeDefinition));
             Require(friendCatalog.Validate(), nameof(FriendCatalog));
 
             Transform root = context.GameplayRoot.transform;
@@ -55,6 +59,7 @@ namespace MoonProject.Gameplay.Editor
             var tether = Part<TetherSystem>(context, host, "Tether");
             var home = Part<HomeBase>(context, host, "Home");
             var tower = Part<RadioTower>(context, host, "RadioTower");
+            var workshop = Part<Workshop>(context, host, "Workshop");
             var friends = Part<FriendField>(context, host, "Friends");
 
             GameObject baseRoot = context.CreateChild("Base", host.transform);
@@ -78,6 +83,9 @@ namespace MoonProject.Gameplay.Editor
                 beacons[i] = Child(stages[i].transform, "BeaconSocket");
             }
 
+            Transform workshopAnchor = context.CreateChild("WorkshopAnchor", lander).transform;
+            workshopAnchor.localPosition = workshopTuning.BenchOffset;
+
             relics.Wire(relicCatalog, placement, relicTuning);
             scrap.Wire(scrapTuning, scrapCatalog);
             sonar.Wire(sonarTuning);
@@ -86,6 +94,7 @@ namespace MoonProject.Gameplay.Editor
             home.Wire(baseTuning, baseRoot.transform, Renderer(Child(lander, "Windows")),
                 Children(lander, "LampSocket_", LampSockets), shelf, Glow(shelf), Children(shelf, "Slot_", ShelfSlots));
             tower.Wire(towerTuning, radioTower, towerAnchor, stages, stageLights, beacons);
+            workshop.Wire(workshopTuning, new[] { hoverJump }, workshopAnchor);
             var perches = new Transform[friendCatalog.Friends.Count];
             for (int i = 0; i < perches.Length; i++)
             {
@@ -93,8 +102,8 @@ namespace MoonProject.Gameplay.Editor
             }
 
             friends.Wire(friendCatalog, friendTuning, perches);
-            gameplay.Wire(visuals, new[] { radioTower }, relics, scrap, sonar, excavation, tether, home, tower,
-                friends);
+            gameplay.Wire(visuals, new[] { radioTower, hoverJump }, relics, scrap, sonar, excavation, tether, home,
+                tower, workshop, friends);
             context.AddSystem(gameplay);
         }
 

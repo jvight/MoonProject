@@ -18,6 +18,7 @@ namespace MoonProject.Gameplay.Editor
         public const string TetherTuning = TuningFolder + "/TetherTuning.asset";
         public const string BaseTuning = TuningFolder + "/BaseTuning.asset";
         public const string RadioTowerTuning = TuningFolder + "/RadioTowerTuning.asset";
+        public const string WorkshopTuning = TuningFolder + "/WorkshopTuning.asset";
         public const string FriendTuning = TuningFolder + "/FriendTuning.asset";
 
         public const string ContentFolder = "Assets/_Project/Data/Content";
@@ -26,6 +27,7 @@ namespace MoonProject.Gameplay.Editor
         public const string ScrapCatalog = ContentFolder + "/ScrapCatalog.asset";
         public const string UpgradeFolder = ContentFolder + "/Upgrades";
         public const string RadioTowerUpgrade = UpgradeFolder + "/Upgrade_radio_tower.asset";
+        public const string HoverJumpUpgrade = UpgradeFolder + "/Upgrade_rover_hover_jump.asset";
         public const string FriendFolder = ContentFolder + "/Friends";
         public const string FriendCatalog = ContentFolder + "/FriendCatalog.asset";
 
