@@ -48,7 +48,9 @@ namespace MoonProject.Gameplay
             return t >= flareDuration + growDuration;
         }
 
-        /// <summary>Stage shown at <paramref name="level"/>: the first stage until level 1, then one per level.</summary>
+        /// <summary>
+        /// Stage shown at <paramref name="level"/>: the first stage until level 1, then one per level.
+        /// </summary>
         public static int StageFor(int level, int stageCount)
         {
             return Mathf.Clamp(level - 1, 0, stageCount - 1);

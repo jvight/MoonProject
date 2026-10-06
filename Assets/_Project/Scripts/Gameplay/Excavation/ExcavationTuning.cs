@@ -12,7 +12,8 @@ namespace MoonProject.Gameplay
         [Tooltip("07 can lift a relic anywhere within this many metres (horizontal) of its site.")]
         [Range(1f, 15f)] [SerializeField] private float _reachRadius = 5f;
 
-        [Tooltip("Once lifting, the beam holds on until 07 is this many times the reach away (no flicker at the edge).")]
+        [Tooltip("Once lifting, the beam holds on until 07 is this many times the reach away " +
+                 "(no flicker at the edge).")]
         [Range(1f, 2f)] [SerializeField] private float _reachHysteresis = 1.3f;
 
         [Tooltip("Holding the beam asks 07 to ease to a stop; the beam takes hold below this speed (m/s).")]

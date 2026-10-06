@@ -23,11 +23,15 @@ namespace MoonProject.Rover.Editor
     {
         private const int DustMaxParticles = 160;
         private const int LandingMaxParticles = 240;
-        private const float DustConeAngle = 35f;
-        private const float DustConeRadius = 0.12f;
+        private const float DustConeAngle = 30f;
+        private const float DustConeRadius = 0.15f;
         private const float LandingRingRadius = 0.7f;
-        private const float DustDrag = 1.2f;
-        private const float LandingDrag = 1.6f;
+
+        /// <summary>Dust drifts on the tuned drag; the builder sets a unit curve for it to scale.</summary>
+        private const float UnitDrag = 1f;
+
+        /// <summary>How far the lighter half of the puffs is lifted from the dust swatch toward white.</summary>
+        private const float DustHighlight = 0.2f;
 
         /// <summary>Kicks rolling dust up and back from the rear wheel contact (cone axis tipped back).</summary>
         private static readonly Vector3 DustConeRotation = new Vector3(-120f, 0f, 0f);
@@ -45,7 +49,6 @@ namespace MoonProject.Rover.Editor
                 BuildWiring.Require<PhysicsMaterial>(RoverAssetPaths.SpherePhysicsMaterial, "Rover/Materials");
             var trackMaterial = BuildWiring.Require<Material>(RoverAssetPaths.TrackMaterial, "Rover/Materials");
             var dustMaterial = BuildWiring.Require<Material>(RoverAssetPaths.DustMaterial, "Rover/Materials");
-            var dustMesh = BuildWiring.Require<Mesh>(RoverAssetPaths.DustMesh, "Rover/Materials");
 
             var root = new GameObject("Rover");
             try
@@ -89,7 +92,7 @@ namespace MoonProject.Rover.Editor
                     ("_headlamp", headlamp));
                 BuildWiring.AssignArray(rig, "_wheels", wheels);
 
-                RoverWheelFx wheelFx = BuildWheelFx(root.transform, m, fxTuning, trackMaterial, dustMaterial, dustMesh);
+                RoverWheelFx wheelFx = BuildWheelFx(root.transform, m, fxTuning, trackMaterial, dustMaterial);
 
                 BuildWiring.Assign(controller,
                     ("_tuning", tuning),
@@ -154,7 +157,7 @@ namespace MoonProject.Rover.Editor
         }
 
         private static RoverWheelFx BuildWheelFx(Transform root, Transform model, RoverFxTuning tuning,
-            Material trackMaterial, Material dustMaterial, Mesh dustMesh)
+            Material trackMaterial, Material dustMaterial)
         {
             GameObject host = Child("WheelFx", root);
             var wheelFx = host.AddComponent<RoverWheelFx>();
@@ -164,9 +167,9 @@ namespace MoonProject.Rover.Editor
                 ("_dustSocketRight", BuildWiring.Node(model, RoverModelNodes.DustSocketRight)),
                 ("_trackLeft", Track("TrackLeft", host.transform, trackMaterial)),
                 ("_trackRight", Track("TrackRight", host.transform, trackMaterial)),
-                ("_dustLeft", Dust("DustLeft", host.transform, dustMaterial, dustMesh)),
-                ("_dustRight", Dust("DustRight", host.transform, dustMaterial, dustMesh)),
-                ("_landingDust", LandingRing(host.transform, dustMaterial, dustMesh)));
+                ("_dustLeft", Dust("DustLeft", host.transform, dustMaterial)),
+                ("_dustRight", Dust("DustRight", host.transform, dustMaterial)),
+                ("_landingDust", LandingRing(host.transform, dustMaterial)));
             return wheelFx;
         }
 
@@ -183,10 +186,10 @@ namespace MoonProject.Rover.Editor
             return track.AddComponent<RoverTrackRenderer>();
         }
 
-        /// <summary>Rolling dust: soft puffs kicked up and back, drifting and fading. Rate is set at runtime.</summary>
-        private static ParticleSystem Dust(string name, Transform parent, Material material, Mesh mesh)
+        /// <summary>Rolling dust: soft puffs kicked up and back that pop, settle and drift (rate at runtime).</summary>
+        private static ParticleSystem Dust(string name, Transform parent, Material material)
         {
-            ParticleSystem dust = CreateSystem(name, parent, material, mesh, DustMaxParticles, true);
+            ParticleSystem dust = CreateSystem(name, parent, material, DustMaxParticles, true);
 
             ParticleSystem.ShapeModule shape = dust.shape;
             shape.enabled = true;
@@ -197,14 +200,14 @@ namespace MoonProject.Rover.Editor
 
             ParticleSystem.LimitVelocityOverLifetimeModule drag = dust.limitVelocityOverLifetime;
             drag.enabled = true;
-            drag.drag = DustDrag;
+            drag.drag = UnitDrag;
             return dust;
         }
 
         /// <summary>Landing ring: puffs pushed outward along the ground, lifted gently; emitted on demand.</summary>
-        private static ParticleSystem LandingRing(Transform parent, Material material, Mesh mesh)
+        private static ParticleSystem LandingRing(Transform parent, Material material)
         {
-            ParticleSystem ring = CreateSystem("LandingDust", parent, material, mesh, LandingMaxParticles, false);
+            ParticleSystem ring = CreateSystem("LandingDust", parent, material, LandingMaxParticles, false);
 
             ParticleSystem.ShapeModule shape = ring.shape;
             shape.enabled = true;
@@ -222,7 +225,7 @@ namespace MoonProject.Rover.Editor
 
             ParticleSystem.LimitVelocityOverLifetimeModule drag = ring.limitVelocityOverLifetime;
             drag.enabled = true;
-            drag.drag = LandingDrag;
+            drag.drag = UnitDrag;
             return ring;
         }
 
@@ -230,8 +233,8 @@ namespace MoonProject.Rover.Editor
         /// Shared particle setup. Start values are normalised ranges around 1; <see cref="RoverWheelFx"/> scales them
         /// with the tuned lifetime, size, speed and gravity multipliers.
         /// </summary>
-        private static ParticleSystem CreateSystem(string name, Transform parent, Material material, Mesh mesh,
-            int maxParticles, bool looping)
+        private static ParticleSystem CreateSystem(string name, Transform parent, Material material, int maxParticles,
+            bool looping)
         {
             GameObject host = Child(name, parent);
             var system = host.AddComponent<ParticleSystem>();
@@ -246,12 +249,9 @@ namespace MoonProject.Rover.Editor
             main.startLifetime = new ParticleSystem.MinMaxCurve(0.75f, 1.25f);
             main.startSpeed = new ParticleSystem.MinMaxCurve(0.6f, 1.4f);
             main.startSize = new ParticleSystem.MinMaxCurve(0.65f, 1.35f);
-            main.startRotation3D = true;
-            main.startRotationX = new ParticleSystem.MinMaxCurve(0f, 2f * Mathf.PI);
-            main.startRotationY = new ParticleSystem.MinMaxCurve(0f, 2f * Mathf.PI);
-            main.startRotationZ = new ParticleSystem.MinMaxCurve(0f, 2f * Mathf.PI);
-            main.startColor = new ParticleSystem.MinMaxGradient(
-                Palette.Get(PaletteSwatch.DustLight), Palette.Get(PaletteSwatch.DustMid));
+            main.startRotation = new ParticleSystem.MinMaxCurve(0f, 2f * Mathf.PI);
+            Color dust = Palette.Get(PaletteSwatch.DustLight);
+            main.startColor = new ParticleSystem.MinMaxGradient(dust, Color.Lerp(dust, Color.white, DustHighlight));
             main.gravityModifier = 1f;
 
             ParticleSystem.EmissionModule emission = system.emission;
@@ -262,7 +262,7 @@ namespace MoonProject.Rover.Editor
             ParticleSystem.SizeOverLifetimeModule size = system.sizeOverLifetime;
             size.enabled = true;
             size.size = new ParticleSystem.MinMaxCurve(1f,
-                new AnimationCurve(new Keyframe(0f, 0.5f), new Keyframe(0.35f, 1f), new Keyframe(1f, 1.3f)));
+                new AnimationCurve(new Keyframe(0f, 0.6f), new Keyframe(0.3f, 1.2f), new Keyframe(1f, 2f)));
 
             ParticleSystem.ColorOverLifetimeModule color = system.colorOverLifetime;
             color.enabled = true;
@@ -271,21 +271,22 @@ namespace MoonProject.Rover.Editor
                 new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
                 new[]
                 {
-                    new GradientAlphaKey(0f, 0f), new GradientAlphaKey(0.75f, 0.12f), new GradientAlphaKey(0f, 1f),
+                    new GradientAlphaKey(0f, 0f), new GradientAlphaKey(1f, 0.08f), new GradientAlphaKey(0.55f, 0.45f),
+                    new GradientAlphaKey(0f, 1f),
                 });
             color.color = new ParticleSystem.MinMaxGradient(fade);
 
             ParticleSystem.RotationOverLifetimeModule tumble = system.rotationOverLifetime;
             tumble.enabled = true;
-            tumble.z = new ParticleSystem.MinMaxCurve(-0.6f, 0.6f);
+            tumble.z = new ParticleSystem.MinMaxCurve(-0.5f, 0.5f);
 
             var renderer = host.GetComponent<ParticleSystemRenderer>();
-            renderer.renderMode = ParticleSystemRenderMode.Mesh;
-            renderer.mesh = mesh;
+            renderer.renderMode = ParticleSystemRenderMode.Billboard;
+            renderer.alignment = ParticleSystemRenderSpace.View;
+            renderer.sortMode = ParticleSystemSortMode.Distance;
             renderer.sharedMaterial = material;
             renderer.shadowCastingMode = ShadowCastingMode.Off;
             renderer.receiveShadows = false;
-            renderer.alignment = ParticleSystemRenderSpace.Local;
             return system;
         }
     }

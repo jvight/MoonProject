@@ -43,7 +43,9 @@ namespace MoonProject.Gameplay
         private bool _gazing;
         private bool _initialized;
 
-        /// <summary>The relic close enough to lift right now (null when none): what the Excavate prompt points at.</summary>
+        /// <summary>
+        /// The relic close enough to lift right now (null when none): what the Excavate prompt points at.
+        /// </summary>
         public Relic Candidate { get; private set; }
 
         /// <summary>The relic currently rising under the beam, or null.</summary>

@@ -22,16 +22,16 @@ MonoBehaviour:
   _trackGroundProbe: 0.6
   _dustMinSpeed: 0.6
   _dustFullSpeed: 7
-  _dustMaxRate: 18
-  _dustLifetime: 1.6
-  _dustSize: 0.22
-  _dustSpeed: 0.6
-  _dustGravity: 0.2
+  _dustMaxRate: 26
+  _dustLifetime: 1
+  _dustSize: 0.2
+  _dustSpeed: 1.3
+  _dustGravity: 0.3
   _landingMinImpact: 0.5
   _landingFullImpact: 4
   _landingMinCount: 10
   _landingMaxCount: 36
-  _landingMinSpeed: 0.9
-  _landingMaxSpeed: 3.2
-  _landingMinSize: 0.18
-  _landingMaxSize: 0.4
+  _landingMinSpeed: 1.2
+  _landingMaxSpeed: 3
+  _landingMinSize: 0.2
+  _landingMaxSize: 0.42

@@ -32,7 +32,9 @@ namespace MoonProject.Gameplay
             return best;
         }
 
-        /// <summary>True when <paramref name="point"/> is inside the deposit zone around <paramref name="shelf"/>.</summary>
+        /// <summary>
+        /// True when <paramref name="point"/> is inside the deposit zone around <paramref name="shelf"/>.
+        /// </summary>
         public static bool InZone(Vector3 point, Vector3 shelf, float radius, float height)
         {
             float dy = point.y - shelf.y;

@@ -28,7 +28,9 @@ namespace MoonProject.Gameplay.Tests
             return new TestWorld((x, z) => 0f);
         }
 
-        /// <summary>Bowl rising 6 m to the rim, 1 m dunes, and a 12 m steep mound at <see cref="MoundCentre"/>.</summary>
+        /// <summary>
+        /// Bowl rising 6 m to the rim, 1 m dunes, and a 12 m steep mound at <see cref="MoundCentre"/>.
+        /// </summary>
         public static TestWorld Basin()
         {
             return new TestWorld((x, z) =>

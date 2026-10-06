@@ -49,8 +49,15 @@ namespace MoonProject.Rover
             _rover = rover;
             _trackLeft.Initialize(_tuning);
             _trackRight.Initialize(_tuning);
-            ConfigureDust(_dustLeft);
-            ConfigureDust(_dustRight);
+            Configure(_dustLeft, _tuning.DustLifetime, _tuning.DustDrag, _tuning.DustOpacity);
+            Configure(_dustRight, _tuning.DustLifetime, _tuning.DustDrag, _tuning.DustOpacity);
+            Configure(_landingDust, _tuning.LandingLifetime, _tuning.LandingDrag, _tuning.LandingOpacity);
+            ParticleSystem.MainModule dustLeft = _dustLeft.main;
+            dustLeft.startSizeMultiplier = _tuning.DustSize;
+            dustLeft.startSpeedMultiplier = _tuning.DustSpeed;
+            ParticleSystem.MainModule dustRight = _dustRight.main;
+            dustRight.startSizeMultiplier = _tuning.DustSize;
+            dustRight.startSpeedMultiplier = _tuning.DustSpeed;
             _landedSubscription = context.Events.Subscribe<RoverLanded>(OnLanded);
             return true;
         }
@@ -74,15 +81,26 @@ namespace MoonProject.Rover
             return condition;
         }
 
-        private void ConfigureDust(ParticleSystem dust)
+        /// <summary>Applies the tuned lifetime, drag, opacity and gravity (once, at start-up).</summary>
+        private void Configure(ParticleSystem system, float lifetime, float drag, float opacity)
         {
-            ParticleSystem.MainModule main = dust.main;
-            main.startLifetimeMultiplier = _tuning.DustLifetime;
-            main.startSizeMultiplier = _tuning.DustSize;
-            main.startSpeedMultiplier = _tuning.DustSpeed;
+            ParticleSystem.MainModule main = system.main;
+            main.startLifetimeMultiplier = lifetime;
             main.gravityModifierMultiplier = _tuning.DustGravity;
-            ParticleSystem.EmissionModule emission = dust.emission;
+            ParticleSystem.MinMaxGradient color = main.startColor;
+            color.colorMin = WithAlpha(color.colorMin, opacity);
+            color.colorMax = WithAlpha(color.colorMax, opacity);
+            main.startColor = color;
+            ParticleSystem.LimitVelocityOverLifetimeModule limit = system.limitVelocityOverLifetime;
+            limit.dragMultiplier = drag;
+            ParticleSystem.EmissionModule emission = system.emission;
             emission.rateOverTimeMultiplier = 0f;
+        }
+
+        private static Color WithAlpha(Color color, float alpha)
+        {
+            color.a = alpha;
+            return color;
         }
 
         public void Tick()
@@ -139,8 +157,6 @@ namespace MoonProject.Rover
             ParticleSystem.MainModule main = _landingDust.main;
             main.startSpeedMultiplier = Mathf.Lerp(_tuning.LandingMinSpeed, _tuning.LandingMaxSpeed, strength);
             main.startSizeMultiplier = Mathf.Lerp(_tuning.LandingMinSize, _tuning.LandingMaxSize, strength);
-            main.startLifetimeMultiplier = _tuning.DustLifetime;
-            main.gravityModifierMultiplier = _tuning.DustGravity;
             int count = Mathf.RoundToInt(Mathf.Lerp(_tuning.LandingMinCount, _tuning.LandingMaxCount, strength));
             _landingDust.Emit(count);
         }

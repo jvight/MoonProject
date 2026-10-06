@@ -118,7 +118,8 @@ namespace MoonProject.Gameplay
                 }
 
                 throw new InvalidOperationException(
-                    $"{nameof(RelicSitePlanner)}: no flat, free, drivable spot for {band} relic {ordinal + 1}/{count}. " +
+                    $"{nameof(RelicSitePlanner)}: no flat, free, drivable spot for {band} relic " +
+                    $"{ordinal + 1}/{count}. " +
                     $"Check the world surface or {nameof(RelicPlacementTuning)}.");
             }
 
