@@ -845,6 +845,321 @@
       "notes": "Falling A4 -> D4."
     },
     {
+      "id": "tilly_broken",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/tilly_broken_01.wav",
+        "Assets/_Project/Audio/SFX/tilly_broken_02.wav",
+        "Assets/_Project/Audio/SFX/tilly_broken_03.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02",
+        "03"
+      ],
+      "sha256": [
+        "b04019623e3653e82cf600683e848780844a0b64172d138449e496bb4bdc2a7a",
+        "91ffb3102529b560181fa299c8ff1dbb1375352e68fe580322b872796e458735",
+        "fa757efc707b283fa5af99af9924b4370f9695f25147c1f77d6ac5b99ac8a5e3"
+      ],
+      "volumeMin": 0.45,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Tilly dormant answering a ping: faint, glitchy, hopeful chirp (stutters, sags, retries)."
+    },
+    {
+      "id": "tilly_curious",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/tilly_curious_01.wav",
+        "Assets/_Project/Audio/SFX/tilly_curious_02.wav",
+        "Assets/_Project/Audio/SFX/tilly_curious_03.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02",
+        "03"
+      ],
+      "sha256": [
+        "b623435163895bff1a9cdaaa3ec41f473e4ef25eb45abe2856ec6226edc39095",
+        "e414cacb4be3accf3f88cb5a274001561910bb37a4ff21bda3a4ee002da7cdd2",
+        "d485b756570c8df51af58e219885351f52ca0c082e9054a2615b547305de8554"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Tilly curious 'hm?': short blip + rising question slide."
+    },
+    {
+      "id": "tilly_happy",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/tilly_happy_01.wav",
+        "Assets/_Project/Audio/SFX/tilly_happy_02.wav",
+        "Assets/_Project/Audio/SFX/tilly_happy_03.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02",
+        "03"
+      ],
+      "sha256": [
+        "fccfd7e1ea1f71904cee5f26f2bbd6c7962be95cc4d8913a2d68588ea9333018",
+        "0aeb92900e46d13f984c1cd1a24848e1ff53948b641221f4d46d6b09a12b3a24",
+        "647edb396c2ae007a9a06ddf834ac814bf9f615f7f82f942202302d6e43ea6b0"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Tilly happy: bouncing pentatonic trill."
+    },
+    {
+      "id": "tilly_sleepy",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/tilly_sleepy_01.wav",
+        "Assets/_Project/Audio/SFX/tilly_sleepy_02.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02"
+      ],
+      "sha256": [
+        "67ae27238b255cbea100d348859a476165f22d810ec087d3eb2167a12fc28fbc",
+        "59c48907e8db40ffb0255dfa0f59c14c83d3eba161c0337d7b9b7b07ce6518d9"
+      ],
+      "volumeMin": 0.35,
+      "volumeMax": 0.4,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Tilly napping on her perch: slow falling coo + echo."
+    },
+    {
+      "id": "tilly_greeting",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/tilly_greeting_01.wav",
+        "Assets/_Project/Audio/SFX/tilly_greeting_02.wav",
+        "Assets/_Project/Audio/SFX/tilly_greeting_03.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02",
+        "03"
+      ],
+      "sha256": [
+        "b04822ba4c14ff1ea1cabcb1d49abc1a18e8ea7553955a78ae82cfe525adddf4",
+        "a5448b8ae13bf42c1358fb9414f61cd4a5925b82b09dc4e893d5e89c63a22eea",
+        "65885d7f12bd4d2a4f614eaf29920b410a2c95621484b600fd79d51d9cdc131e"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.65,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Tilly flying out to meet 07: rising swoop + trill landing high."
+    },
+    {
+      "id": "tilly_excited",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/tilly_excited_01.wav",
+        "Assets/_Project/Audio/SFX/tilly_excited_02.wav",
+        "Assets/_Project/Audio/SFX/tilly_excited_03.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02",
+        "03"
+      ],
+      "sha256": [
+        "974fc7c3dc6af3c71f32212dc46e376931532fd57309a896efdc679a3e2011d8",
+        "cb3d5b35df86fcedb7037d5995818becd3af1cc01d055490f05a528eab14cecf",
+        "bedd816d82ae74c3aaea2ba695f723151207ffbbec2cc81387507939dbce0bd7"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.65,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Tilly when a relic comes home: fluttering arpeggio."
+    },
+    {
+      "id": "tilly_rotor",
+      "category": "loop_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/SFX/tilly_rotor_loop.wav"
+      ],
+      "variantLabels": [
+        "tilly_rotor"
+      ],
+      "sha256": [
+        "f2e27d37d6cedd6c8ff551f5956f84157e24a80bf6202b3392f01c4ac1b19cb6"
+      ],
+      "volumeMin": 0.35,
+      "volumeMax": 0.35,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 6000.0,
+      "hfMaxDb": -40.0,
+      "tonal": true,
+      "notes": "Tilly's tiny four-rotor hum around A3, 4 s seamless; < 3.5 kHz so speed can pitch it up."
+    },
+    {
+      "id": "friend_stitch",
+      "category": "loop_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/SFX/friend_stitch_loop.wav"
+      ],
+      "variantLabels": [
+        "friend_stitch"
+      ],
+      "sha256": [
+        "1f97a04d69abd38ebc60896293663324bb46096b8fd0e384d2df5851f7751b9b"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Repair stitching: D/A shimmer + D3 sewing pulse + pentatonic needle ticks, 4 s seamless."
+    },
+    {
+      "id": "friend_boot",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/friend_boot.wav"
+      ],
+      "variantLabels": [
+        "friend_boot"
+      ],
+      "sha256": [
+        "e9b060d3593d5818442d3ed3a821c6777bfd5b698b1020dd3b67964896fdd57f"
+      ],
+      "volumeMin": 0.7,
+      "volumeMax": 0.7,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Repaired friend boots: eye flickers, power-up glide, music-box jingle D5 F#5 A5 D6."
+    },
+    {
+      "id": "friend_part",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/friend_part_step1.wav",
+        "Assets/_Project/Audio/SFX/friend_part_step2.wav",
+        "Assets/_Project/Audio/SFX/friend_part_step3.wav",
+        "Assets/_Project/Audio/SFX/friend_part_step4.wav",
+        "Assets/_Project/Audio/SFX/friend_part_complete.wav"
+      ],
+      "variantLabels": [
+        "step1",
+        "step2",
+        "step3",
+        "step4",
+        "complete"
+      ],
+      "sha256": [
+        "ca2eaaef499fc3e969faf8faa7b250b40b5c65ea865848048789163a896f6570",
+        "5d96b0987f3fa84d22b86302d5d88cb0e3cf2bbe5417b996efff7f8ccedf26fe",
+        "8a8936717a114be1603c45841cb443c90240fe2a84b0b3c8e915a3a2b9dc2428",
+        "ec0d62f1ccc36b6e4252984f90a2f7fd1cbec97e65ee597b7e33c94a59c46883",
+        "989768d23e093ada6cefb71a052743f3d9168616e74070b398592ea658e3fcec"
+      ],
+      "volumeMin": 0.65,
+      "volumeMax": 0.65,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Friend part collected: amber vibraphone bar climbing D5 F#5 A5 B5; 'complete' on the last part resolves A5 -> D6."
+    },
+    {
       "id": "upgrade_arpeggio",
       "category": "stinger_2d",
       "milestone": "M2",
