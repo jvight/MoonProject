@@ -8,7 +8,8 @@ namespace MoonProject.Editor.Import
     /// Which import settings apply to which project path (pure, EditMode-tested). Conventions:
     /// <list type="bullet">
     /// <item>Audio/SFX: decompress on load, preloaded, Vorbis 0.8; forced mono (3D one-shots) unless the path
-    /// contains <c>/2D/</c> (UI and other non-spatial sounds keep their channels).</item>
+    /// contains <c>/2D/</c> (UI and other non-spatial sounds keep their channels). Short loops (file name ending in
+    /// <c>_loop</c>) are PCM instead: Vorbis frame padding would break their sample-exact loop seam.</item>
     /// <item>Audio/Music: streamed from disk in the background, Vorbis 0.7, not preloaded.</item>
     /// <item>Audio/Ambience: compressed in memory, preloaded, Vorbis 0.6 (long loops).</item>
     /// <item>Generated/** textures: point filter, no mipmaps, uncompressed, sRGB unless the file name ends in
@@ -23,6 +24,7 @@ namespace MoonProject.Editor.Import
         public const string GeneratedFolder = "Assets/_Project/Generated/";
         public const string NonSpatialMarker = "/2D/";
         public const string LinearSuffix = "_Linear";
+        public const string LoopSuffix = "_loop";
 
         private const float SfxQuality = 0.8f;
         private const float MusicQuality = 0.7f;
@@ -34,19 +36,23 @@ namespace MoonProject.Editor.Import
             if (path.StartsWith(SfxFolder, StringComparison.Ordinal))
             {
                 bool spatial = path.IndexOf(NonSpatialMarker, SfxFolder.Length - 1, StringComparison.Ordinal) < 0;
-                rule = new AudioImportRule(AudioClipLoadType.DecompressOnLoad, SfxQuality, true, spatial, false);
+                bool loop = Path.GetFileNameWithoutExtension(path).EndsWith(LoopSuffix, StringComparison.Ordinal);
+                rule = new AudioImportRule(AudioClipLoadType.DecompressOnLoad,
+                    loop ? AudioCompressionFormat.PCM : AudioCompressionFormat.Vorbis, SfxQuality, true, spatial, false);
                 return true;
             }
 
             if (path.StartsWith(MusicFolder, StringComparison.Ordinal))
             {
-                rule = new AudioImportRule(AudioClipLoadType.Streaming, MusicQuality, false, false, true);
+                rule = new AudioImportRule(AudioClipLoadType.Streaming, AudioCompressionFormat.Vorbis, MusicQuality,
+                    false, false, true);
                 return true;
             }
 
             if (path.StartsWith(AmbienceFolder, StringComparison.Ordinal))
             {
-                rule = new AudioImportRule(AudioClipLoadType.CompressedInMemory, AmbienceQuality, true, false, false);
+                rule = new AudioImportRule(AudioClipLoadType.CompressedInMemory, AudioCompressionFormat.Vorbis,
+                    AmbienceQuality, true, false, false);
                 return true;
             }
 
