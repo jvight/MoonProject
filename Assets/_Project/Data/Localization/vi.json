@@ -269,6 +269,22 @@
         {
             "key": "glyph.gamepad.start",
             "text": "Start"
+        },
+        {
+            "key": "hint.repair",
+            "text": "Sửa chữa"
+        },
+        {
+            "key": "ui.card.log_caption",
+            "text": "Từ ký ức của {0}"
+        },
+        {
+            "key": "friend.tilly.name",
+            "text": "Tilly"
+        },
+        {
+            "key": "friend.tilly.repair_log",
+            "text": "Sáng nay lại đi dọc vành núi lúc bình minh, Tilly ríu rít bên vai. Mặt Trăng vẫn còn đây, Trái Đất vẫn treo trên trời, cà phê vẫn dở tệ: mọi chuyện vẫn ổn. — Ines"
         }
     ]
 }
