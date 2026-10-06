@@ -42,6 +42,7 @@ namespace MoonProject.Rover
         [SerializeField] private Transform _cargoSocket;
 
         private InputReader _input;
+        private IRoverDriveSource _driveSource;
         private EventBus _events;
         private LandingDetector _landing;
         private bool _initialized;
@@ -167,6 +168,15 @@ namespace MoonProject.Rover
             enabled = _initialized;
         }
 
+        /// <summary>
+        /// Hands the wheel to <paramref name="source"/> (a cinematic autopilot, a scripted feel session) instead of
+        /// the player's input; null gives it back to the player.
+        /// </summary>
+        public void SetDriveSource(IRoverDriveSource source)
+        {
+            _driveSource = source;
+        }
+
         private bool ValidateWiring()
         {
             bool ok = true;
@@ -267,7 +277,8 @@ namespace MoonProject.Rover
 
         private void ReadInput(float dt)
         {
-            Vector2 raw = DriveInputShaping.CircleToSquare(_input.Drive);
+            Vector2 held = _driveSource != null ? _driveSource.Drive : _input.Drive;
+            Vector2 raw = DriveInputShaping.CircleToSquare(held);
             DriveSettings drive = _tuning.Drive;
             _throttle = Ease(_throttle, raw.y, drive.ThrottleRiseHalfLife, drive.ThrottleFallHalfLife, dt);
             _steer = Ease(_steer, raw.x, _tuning.Steering.SteerRiseHalfLife, _tuning.Steering.SteerReturnHalfLife, dt);
