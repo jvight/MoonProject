@@ -52,6 +52,8 @@ namespace MoonProject.Rover
         private float _momentLift;
         private float _momentPullBack;
         private Vector3 _momentShift;
+        private bool _leapHeld;
+        private bool _leapAirborne;
         private IRoverState _rover;
         private IWorldLayout _world;
         private InputReader _input;
@@ -98,6 +100,7 @@ namespace MoonProject.Rover
                 context.Events.Subscribe<ExcavationStopped>(OnExcavationStopped),
                 context.Events.Subscribe<RelicSurfaced>(OnRelicSurfaced),
                 context.Events.Subscribe<UpgradePurchased>(OnUpgradePurchased),
+                context.Events.Subscribe<RoverJumped>(OnJumped),
             };
             context.Register<IViewCamera>(this);
             context.Register<ILookSettings>(this);
@@ -196,6 +199,7 @@ namespace MoonProject.Rover
                 _moment.Cancel(_tuning.MomentCancelEaseOut);
             }
 
+            ReleaseLeapOnTouchdown();
             _moment.Step(deltaTime);
             StepMomentFraming(deltaTime);
             PlaceTarget();
@@ -294,6 +298,36 @@ namespace MoonProject.Rover
         private void OnRelicSurfaced(RelicSurfaced relic)
         {
             _moment.Start(_tuning.RelicMoment, relic.Position, false);
+        }
+
+        /// <summary>A real leap (not a hop) lifts the camera and looks ahead to the landing until 07 is down.</summary>
+        private void OnJumped(RoverJumped jumped)
+        {
+            if (jumped.Strength < _tuning.LeapMomentMinStrength)
+            {
+                return;
+            }
+
+            Vector3 velocity = _rover.Velocity;
+            Vector3 ahead = new Vector3(velocity.x, 0f, velocity.z) * _tuning.LeapLookAhead;
+            _moment.Start(_tuning.LeapMoment, _rover.Position + ahead, true);
+            _leapHeld = true;
+            _leapAirborne = false;
+        }
+
+        private void ReleaseLeapOnTouchdown()
+        {
+            if (!_leapHeld)
+            {
+                return;
+            }
+
+            _leapAirborne |= !_rover.IsGrounded;
+            if (_leapAirborne && _rover.IsGrounded)
+            {
+                _moment.Release();
+                _leapHeld = false;
+            }
         }
 
         private void OnUpgradePurchased(UpgradePurchased upgrade)

@@ -121,6 +121,15 @@ namespace MoonProject.Rover
         [Range(10f, 500f)]
         [SerializeField] private float _accelerationLimit = 200f;
 
+        [Header("Hover-Jump crouch")]
+        [Tooltip("How far (m) the chassis sinks onto its springs at a full Hover-Jump charge.")]
+        [Range(0f, 0.4f)]
+        [SerializeField] private float _crouchDepth = 0.12f;
+
+        [Tooltip("Nose-up squat (deg) at a full charge: 07 braces like a spring about to let go.")]
+        [Range(0f, 15f)]
+        [SerializeField] private float _crouchLean = 4f;
+
         [Header("Antenna")]
         [Tooltip("Spring frequency (Hz) of the antenna wobble.")]
         [Range(0.2f, 10f)]
@@ -209,6 +218,10 @@ namespace MoonProject.Rover
         public float MaxHeave => _maxHeave;
 
         public float AccelerationLimit => _accelerationLimit;
+
+        public float CrouchDepth => _crouchDepth;
+
+        public float CrouchLean => _crouchLean;
 
         public float AntennaFrequency => _antennaFrequency;
 

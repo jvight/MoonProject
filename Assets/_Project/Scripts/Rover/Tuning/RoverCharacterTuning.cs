@@ -286,6 +286,39 @@ namespace MoonProject.Rover
         [Range(0f, 1f)]
         [SerializeField] private float _softLandingPerk = 0.45f;
 
+        [Header("Hover-Jump")]
+        [Tooltip("Lid squint (0..1) at a full Hover-Jump charge: effort.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _effortSquint = 0.35f;
+
+        [Tooltip("Head dip (deg) at a full charge: 07 gathers itself.")]
+        [Range(0f, 30f)]
+        [SerializeField] private float _effortHeadDip = 6f;
+
+        [Tooltip("Half-life (s) of the effort face following the charge.")]
+        [Range(0.01f, 1f)]
+        [SerializeField] private float _effortHalfLife = 0.08f;
+
+        [Tooltip("Perk-up strength at take-off for a tap (a full charge gets Leap Perk).")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _hopPerk = 0.3f;
+
+        [Tooltip("Perk-up strength at take-off for a full charge.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _leapPerk = 0.9f;
+
+        [Tooltip("Perk-up strength on touching down after a long flight: joy.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _flightLandingJoy = 0.9f;
+
+        [Tooltip("Seconds of air time from which a landing starts to feel joyful.")]
+        [Range(0f, 5f)]
+        [SerializeField] private float _joyAirTimeFrom = 1f;
+
+        [Tooltip("Seconds of air time that earn the full landing joy.")]
+        [Range(0.5f, 10f)]
+        [SerializeField] private float _joyAirTimeFull = 3f;
+
         [Header("Oof (hard landing)")]
         [Tooltip("Impact speed (m/s) from which a landing gets an 'oof' instead of a perk-up.")]
         [Range(0.5f, 10f)]
@@ -457,6 +490,22 @@ namespace MoonProject.Rover
         public float WakePerk => _wakePerk;
 
         public float SoftLandingPerk => _softLandingPerk;
+
+        public float EffortSquint => _effortSquint;
+
+        public float EffortHeadDip => _effortHeadDip;
+
+        public float EffortHalfLife => _effortHalfLife;
+
+        public float HopPerk => _hopPerk;
+
+        public float LeapPerk => _leapPerk;
+
+        public float FlightLandingJoy => _flightLandingJoy;
+
+        public float JoyAirTimeFrom => _joyAirTimeFrom;
+
+        public float JoyAirTimeFull => Mathf.Max(_joyAirTimeFrom + 0.01f, _joyAirTimeFull);
 
         public float OofImpactSpeed => _oofImpactSpeed;
 
