@@ -7,7 +7,6 @@ using UnityEngine.InputSystem;
 using UnityEngine.TestTools;
 using MoonProject.Core;
 using MoonProject.Core.Events;
-using MoonProject.Core.Input;
 using MoonProject.Testing;
 
 namespace MoonProject.Rover.PlayModeTests
@@ -24,6 +23,7 @@ namespace MoonProject.Rover.PlayModeTests
         private const float SettleAngle = 0.5f;
         private const int CaptureWidth = 960;
         private const int CaptureHeight = 540;
+        private const int MaxInputAttempts = 5;
 
         private static readonly string OutputFolder =
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "rover-metrics"));
@@ -39,7 +39,7 @@ namespace MoonProject.Rover.PlayModeTests
         {
             base.Setup();
             _pad = InputSystem.AddDevice<Gamepad>();
-            _actions = CreateActions();
+            _actions = TestControls.Create();
             _savedGravity = Physics.gravity;
             Physics.gravity = new Vector3(0f, LunarGravity, 0f);
             _cameraViolations = 0;
@@ -77,7 +77,7 @@ namespace MoonProject.Rover.PlayModeTests
             DriveSettings drive = rover.Tuning.Drive;
             yield return Hold(rover, Vector2.zero, 0.5f);
 
-            Drive(new Vector2(0f, 1f));
+            yield return Drive(new Vector2(0f, 1f));
             float start = -1f;
             float t90 = float.NaN;
             float t0 = Time.fixedTime;
@@ -99,8 +99,7 @@ namespace MoonProject.Rover.PlayModeTests
             report.Add("Top speed (flat)", controller.Speed, "m/s", 7.6f, 8.4f, "~8 m/s");
             CaptureFrame(rover, "01-cruising");
 
-            yield return null;
-            Drive(Vector2.zero);
+            yield return Drive(Vector2.zero);
             float coastStart = Time.fixedTime;
             float coastTop = controller.Speed;
             var speeds = new List<float>();
@@ -120,7 +119,7 @@ namespace MoonProject.Rover.PlayModeTests
             report.Add("Reverse top speed", controller.Speed, "m/s", 3f, 4f, "slower than forward (~3.5)");
 
             yield return Hold(rover, new Vector2(0f, 1f), 7f);
-            Drive(new Vector2(0f, -1f));
+            yield return Drive(new Vector2(0f, -1f));
             float brakeStart = Time.fixedTime;
             while (controller.ForwardSpeed > drive.ReverseEngageSpeed && Time.fixedTime - brakeStart < 5f)
             {
@@ -157,7 +156,7 @@ namespace MoonProject.Rover.PlayModeTests
             report.Add("Pivot turn drift", Vector3.Distance(pivotFrom, controller.Position), "m", 0f, 0.4f,
                 "stays in place");
 
-            Drive(Vector2.zero);
+            yield return Drive(Vector2.zero);
             rover.Dispose();
             yield return null;
         }
@@ -175,7 +174,7 @@ namespace MoonProject.Rover.PlayModeTests
                    }))
             {
                 yield return Hold(rover, Vector2.zero, 0.5f);
-                Drive(new Vector2(0f, 1f));
+                yield return Drive(new Vector2(0f, 1f));
 
                 float approachSpeed = 0f;
                 float apex = 0f;
@@ -245,7 +244,7 @@ namespace MoonProject.Rover.PlayModeTests
                 report.Note("Peak body pitch after landing", peak, "deg");
             }
 
-            Drive(Vector2.zero);
+            yield return Drive(Vector2.zero);
             rover.Dispose();
             yield return null;
         }
@@ -274,7 +273,7 @@ namespace MoonProject.Rover.PlayModeTests
             };
             foreach ((Vector2 stick, float seconds) in plan)
             {
-                Drive(stick);
+                yield return Drive(stick);
                 float until = Time.time + seconds;
                 while (Time.time < until)
                 {
@@ -295,15 +294,14 @@ namespace MoonProject.Rover.PlayModeTests
             report.Add("Worst chassis tilt incl. jelly lean", worstChassis, "deg", 0f, 50f, "no flip (<= 50)");
             report.Note("Airborne time on the slope", airborne, "s");
 
-            Drive(Vector2.zero);
+            yield return Drive(Vector2.zero);
             rover.Dispose();
             yield return null;
         }
 
         private IEnumerator Hold(TestRover rover, Vector2 stick, float seconds)
         {
-            yield return null;
-            Drive(stick);
+            yield return Drive(stick);
             float until = Time.time + seconds;
             while (Time.time < until)
             {
@@ -312,10 +310,25 @@ namespace MoonProject.Rover.PlayModeTests
             }
         }
 
-        /// <summary>Queues stick input; call it from the Update phase (no device state in FixedUpdate).</summary>
-        private void Drive(Vector2 stick)
+        /// <summary>
+        /// Queues stick input from the Update phase (device state is not addressable in FixedUpdate) and waits until
+        /// the device reports it (the stick's deadzone processor clamps it to the unit circle), re-queuing if the
+        /// input runtime dropped the event.
+        /// </summary>
+        private IEnumerator Drive(Vector2 stick)
         {
-            Set(_pad.leftStick, stick);
+            yield return null;
+            for (int attempt = 0; attempt < MaxInputAttempts; attempt++)
+            {
+                Set(_pad.leftStick, stick);
+                yield return null;
+                if ((_pad.leftStick.ReadValue() - Vector2.ClampMagnitude(stick, 1f)).sqrMagnitude < 1e-4f)
+                {
+                    yield break;
+                }
+            }
+
+            Assert.Fail($"The virtual gamepad never reported stick {stick}.");
         }
 
         private void CheckCamera(TestRover rover)
@@ -331,21 +344,6 @@ namespace MoonProject.Rover.PlayModeTests
         private static void CaptureFrame(TestRover rover, string name)
         {
             FrameCapture.SavePng(rover.Camera, CaptureWidth, CaptureHeight, Path.Combine(OutputFolder, name + ".png"));
-        }
-
-        private static InputActionAsset CreateActions()
-        {
-            var asset = ScriptableObject.CreateInstance<InputActionAsset>();
-            InputActionMap map = asset.AddActionMap(InputReader.RoverMapName);
-            map.AddAction("Drive", InputActionType.Value, "<Gamepad>/leftStick", expectedControlLayout: "Vector2");
-            map.AddAction("LookDelta", InputActionType.PassThrough, "<Mouse>/delta", expectedControlLayout: "Vector2");
-            map.AddAction("LookRate", InputActionType.Value, "<Gamepad>/rightStick", expectedControlLayout: "Vector2");
-            map.AddAction("Ping", InputActionType.Button, "<Gamepad>/buttonSouth");
-            map.AddAction("Excavate", InputActionType.Button, "<Gamepad>/buttonWest");
-            map.AddAction("Tether", InputActionType.Button, "<Gamepad>/leftTrigger");
-            map.AddAction("Winch", InputActionType.Value, "<Gamepad>/rightTrigger", expectedControlLayout: "Axis");
-            map.AddAction("Pause", InputActionType.Button, "<Gamepad>/start");
-            return asset;
         }
     }
 }
