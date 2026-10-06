@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using MoonProject.Core;
@@ -21,7 +22,8 @@ namespace MoonProject.App
         [Tooltip("Scene systems implementing IGameSystem, initialised top to bottom.")]
         [SerializeField] private MonoBehaviour[] _systems = new MonoBehaviour[0];
 
-        [Tooltip("Save file name (letters, digits, '-', '_') under Application.persistentDataPath/Saves.")]
+        [Tooltip("Save file name (letters, digits, '-', '_') under Application.persistentDataPath/Saves. " +
+                 "The -saveSlot <name> command-line argument overrides it (playtests, smoke runs).")]
         [SerializeField] private string _saveSlot = "main";
 
         private InputReader _input;
@@ -38,17 +40,21 @@ namespace MoonProject.App
                 return;
             }
 
-            if (!SaveService.IsValidSlot(_saveSlot))
+            bool overridden = SaveSlotArgument.TryRead(Environment.GetCommandLineArgs(), out string requestedSlot);
+            string slot = overridden ? requestedSlot : _saveSlot;
+            string slotSource = overridden ? SaveSlotArgument.Flag + " argument" : "scene";
+            if (!SaveService.IsValidSlot(slot))
             {
-                Debug.LogError($"{nameof(GameBootstrap)}: save slot '{_saveSlot}' is invalid.", this);
+                Debug.LogError($"{nameof(GameBootstrap)}: save slot '{slot}' from the {slotSource} is invalid.", this);
                 enabled = false;
                 return;
             }
 
             _input = new InputReader(_inputActions);
             Context = new GameContext(new EventBus(), _input);
-            _save = new SaveService(SaveService.DefaultDirectory, _saveSlot);
+            _save = new SaveService(SaveService.DefaultDirectory, slot);
             Context.Register<ISaveService>(_save);
+            Debug.Log($"{nameof(GameBootstrap)}: save slot '{slot}' (from the {slotSource}): {_save.FilePath}", this);
             _input.Enable();
 
             for (int i = 0; i < _systems.Length; i++)
