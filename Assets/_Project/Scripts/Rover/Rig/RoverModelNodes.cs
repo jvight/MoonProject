@@ -39,6 +39,34 @@ namespace MoonProject.Rover
         public const string CargoSocket = "CargoSocket";
         public const string DustSocketLeft = "DustSocket_L";
         public const string DustSocketRight = "DustSocket_R";
+        public const string CoilSocket = "CoilSocket";
+
+        /// <summary>Springs of art's HoverCoils prefab (mounted on <see cref="CoilSocket"/>).</summary>
+        public const int CoilCount = 4;
+
+        /// <summary>Hover-Jump spring node name by index: 0 FL, 1 FR, 2 RL, 3 RR (pivot at its top).</summary>
+        public static string Coil(int index)
+        {
+            return "Coil_" + CoilCorner(index);
+        }
+
+        /// <summary>Glow ring under spring <paramref name="index"/> (its own renderer on M_LowPolyGlowOff).</summary>
+        public static string CoilGlow(int index)
+        {
+            return "Glow_" + CoilCorner(index);
+        }
+
+        private static string CoilCorner(int index)
+        {
+            switch (index)
+            {
+                case 0: return "FL";
+                case 1: return "FR";
+                case 2: return "RL";
+                case 3: return "RR";
+                default: throw new ArgumentOutOfRangeException(nameof(index), index, "Coil index is 0..3.");
+            }
+        }
 
         /// <summary>Wheel node name by rig index: 0 FL, 1 FR, 2 ML, 3 MR, 4 RL, 5 RR.</summary>
         public static string Wheel(int index)
