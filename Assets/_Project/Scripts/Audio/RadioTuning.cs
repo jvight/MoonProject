@@ -81,6 +81,16 @@ namespace MoonProject.Audio
         [Tooltip("Volume scale of the dial-tuning swish.")]
         [Range(0f, 1f)] [SerializeField] private float _tuneSwishVolume = 0.8f;
 
+        [Header("Paused: listening in the cabin")]
+        [Tooltip("Low-pass (Hz) the radio eases to while paused: a subtly closer, warmer set (22 kHz = unchanged).")]
+        [Range(2000f, 22000f)] [SerializeField] private float _cabinCutoff = 7000f;
+
+        [Tooltip("Music volume scale while paused (a touch closer; 1.12 is about +1 dB).")]
+        [Range(1f, 1.5f)] [SerializeField] private float _cabinMusicGain = 1.12f;
+
+        [Tooltip("Static volume scale while paused (the cabin shelters the set a little).")]
+        [Range(0f, 1f)] [SerializeField] private float _cabinStaticGain = 0.7f;
+
         [Header("Wake-up (the radio crackles on when 07 wakes)")]
         [Tooltip("Seconds of static after 07 starts waking on its own before the music begins.")]
         [Min(0f)] [SerializeField] private float _wakeMusicDelay = 1.6f;
@@ -123,6 +133,9 @@ namespace MoonProject.Audio
         public float IncomingStart => _incomingStart;
         public float TuneStaticBoost => _tuneStaticBoost;
         public float TuneSwishVolume => _tuneSwishVolume;
+        public float CabinCutoff => _cabinCutoff;
+        public float CabinMusicGain => _cabinMusicGain;
+        public float CabinStaticGain => _cabinStaticGain;
         public float WakeMusicDelay => _wakeMusicDelay;
         public float WakeMusicFade => _wakeMusicFade;
         public float PlayerWakeMusicDelay => _playerWakeMusicDelay;

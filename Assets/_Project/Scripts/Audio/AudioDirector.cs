@@ -7,8 +7,9 @@ namespace MoonProject.Audio
 {
     /// <summary>
     /// The Audio domain's game system. Owns the volume buses (registered as <see cref="IAudioSettings"/>), pooled
-    /// 3D/2D one-shot voices and the cue library, plays the landing thump on <see cref="RoverLanded"/>, and initialises
-    /// the rover sounds, gameplay sounds, radio and ambience bed. Initialise it after the World and Rover systems (it
+    /// 3D/2D one-shot voices and the cue library, plays the landing thump on <see cref="RoverLanded"/>, eases the
+    /// pause mix on <see cref="PauseChanged"/> (world loops duck, the radio moves into the cabin), and initialises
+    /// the rover, gameplay and UI sounds, radio and ambience bed. Initialise it after the World and Rover systems (it
     /// reads <see cref="IRoverState"/>, <see cref="IRoverRig"/> and <see cref="IWorldLayout"/>).
     /// </summary>
     [DisallowMultipleComponent]
@@ -29,6 +30,9 @@ namespace MoonProject.Audio
         [Tooltip("Sonar, relics, scrap, tether, excavation, shelf and upgrade sounds.")]
         [SerializeField] private GameplayAudio _gameplay;
 
+        [Tooltip("UI touches (menus, focus, sliders, cards, prompts, hold-to-buy).")]
+        [SerializeField] private UiAudio _ui;
+
         [Tooltip("The radio station (music, static, clarity).")]
         [SerializeField] private RadioStation _radio;
 
@@ -36,6 +40,7 @@ namespace MoonProject.Audio
         [SerializeField] private AmbienceBed _ambience;
 
         private readonly AudioBusMixer _buses = new AudioBusMixer();
+        private readonly LoopFader _pause = new LoopFader();
         private AudioRandom _random;
         private VoiceBank _spatial;
         private VoiceBank _flat;
@@ -43,12 +48,22 @@ namespace MoonProject.Audio
         private int _appliedBusVersion;
         private CueHandle _landingThump;
         private IDisposable _landedSubscription;
+        private IDisposable _pauseSubscription;
 
         public AudioBusMixer Buses => _buses;
 
         public AudioLibrary Library => _library;
 
         public bool IsInitialized { get; private set; }
+
+        /// <summary>True between PauseChanged(true) and PauseChanged(false).</summary>
+        public bool IsPaused => _pause.IsOn;
+
+        /// <summary>Volume scale for loops that run on game time (1 playing, ducked while paused, eased).</summary>
+        public float WorldGain => Mathf.Lerp(1f, _mixTuning.PausedWorldGain, _pause.Gain);
+
+        /// <summary>0..1 eased "listening in the cabin" amount while paused (the radio uses it).</summary>
+        public float CabinBlend => _pause.Gain;
 
         /// <summary>The voice that started most recently (diagnostics and tests).</summary>
         internal AudioSource LastVoice { get; private set; }
@@ -84,10 +99,12 @@ namespace MoonProject.Audio
             _flat = new VoiceBank(CreateVoices("Voice2D", _mixTuning.FlatVoices, false), false);
             _landingThump = Resolve(AudioCueIds.LandingThump);
             _landedSubscription = context.Events.Subscribe<RoverLanded>(OnRoverLanded);
+            _pauseSubscription = context.Events.Subscribe<PauseChanged>(OnPauseChanged);
             IsInitialized = true;
 
             _roverAudio.Initialize(context, this);
             _gameplay.Initialize(context, this);
+            _ui.Initialize(context, this);
             _radio.Initialize(context, this);
             _ambience.Initialize(this, _mixTuning.AmbienceFadeIn);
         }
@@ -170,8 +187,9 @@ namespace MoonProject.Audio
         }
 
         internal void Wire(AudioLibrary library, AudioMixTuning mixTuning, RoverAudio roverAudio,
-            GameplayAudio gameplay, RadioStation radio, AmbienceBed ambience)
+            GameplayAudio gameplay, UiAudio ui, RadioStation radio, AmbienceBed ambience)
         {
+            _ui = ui;
             _library = library;
             _mixTuning = mixTuning;
             _roverAudio = roverAudio;
@@ -182,7 +200,13 @@ namespace MoonProject.Audio
 
         private void Update()
         {
-            if (!IsInitialized || _buses.Version == _appliedBusVersion)
+            if (!IsInitialized)
+            {
+                return;
+            }
+
+            _pause.Step(Time.unscaledDeltaTime, _mixTuning.PauseDuckTime, _mixTuning.ResumeTime);
+            if (_buses.Version == _appliedBusVersion)
             {
                 return;
             }
@@ -248,6 +272,18 @@ namespace MoonProject.Audio
             }
         }
 
+        private void OnPauseChanged(PauseChanged changed)
+        {
+            if (changed.Paused)
+            {
+                _pause.FadeIn();
+            }
+            else
+            {
+                _pause.FadeOut();
+            }
+        }
+
         private AudioSource[] CreateVoices(string prefix, int count, bool spatial)
         {
             var voices = new AudioSource[count];
@@ -273,6 +309,7 @@ namespace MoonProject.Audio
             ok &= Require(_mixTuning, nameof(_mixTuning));
             ok &= Require(_roverAudio, nameof(_roverAudio));
             ok &= Require(_gameplay, nameof(_gameplay));
+            ok &= Require(_ui, nameof(_ui));
             ok &= Require(_radio, nameof(_radio));
             ok &= Require(_ambience, nameof(_ambience));
             if (_library != null)
@@ -303,6 +340,8 @@ namespace MoonProject.Audio
         {
             _landedSubscription?.Dispose();
             _landedSubscription = null;
+            _pauseSubscription?.Dispose();
+            _pauseSubscription = null;
         }
 
         /// <summary>One pool of one-shot voices with the per-voice state needed to re-level them.</summary>

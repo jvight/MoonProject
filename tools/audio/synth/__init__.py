@@ -31,7 +31,7 @@ loop        periodic (steady-state processing of loops), crossfade_loop, seam_er
 analysis    peak_db, true_peak_db, rms_db, dc_offset, loudness_integrated (BS.1770-4 gated),
             loudness_momentary_max, spectral_stats, seam_stats, analyze
 io          write_wav (deterministic PCM 16/24), write_ogg (Vorbis), read_audio, audio_digest, quantize
-instruments kalimba, glass_chime, soft_bell, soft_pad, partial, grain, scatter
+instruments kalimba, glass_chime, soft_bell, soft_pad, felt_piano, music_box, wood_tick, partial, grain, scatter
 
 Determinism: the same code, numpy/scipy versions and CPU produce bit-identical float output; WAV files are then
 byte-identical. Ogg files differ in their random stream serial only - compare them with ``io.audio_digest``.

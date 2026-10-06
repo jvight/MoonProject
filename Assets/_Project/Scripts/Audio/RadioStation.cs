@@ -139,12 +139,15 @@ namespace MoonProject.Audio
                 _decks[_live].loop = _playlist.Count == 1;
             }
 
+            float cabin = _director.CabinBlend;
             float level = _director.Buses.Effective(AudioBus.Music) * _wake.Power;
             AdvancePlaylist(dt, pitch);
 
             AudioSource live = _decks[_live];
             AudioSource other = _decks[1 - _live];
-            float music = mix.MusicVolume * level * _wake.MusicGain;
+            float music = mix.MusicVolume * level * _wake.MusicGain * Mathf.Lerp(1f, _tuning.CabinMusicGain, cabin);
+            float cabinCutoff = _tuning.MaxCutoff * Mathf.Pow(_tuning.CabinCutoff / _tuning.MaxCutoff, cabin);
+            float cutoff = Mathf.Min(mix.CutoffHz, cabinCutoff);
             if (_crossfade.Active)
             {
                 live.volume = music * _crossfade.OutgoingGain;
@@ -159,13 +162,14 @@ namespace MoonProject.Audio
             for (int i = 0; i < DeckCount; i++)
             {
                 _decks[i].pitch = pitch;
-                _filters[i].cutoffFrequency = mix.CutoffHz;
+                _filters[i].cutoffFrequency = cutoff;
                 _filters[i].lowpassResonanceQ = _tuning.LowpassResonance;
             }
 
             float staticVolume = mix.StaticVolume + _tuning.TuneStaticBoost * _crossfade.StaticSwell
                                  + _tuning.WakeStaticBoost * _wake.CrackleBoost;
-            _static.volume = Mathf.Clamp01(staticVolume) * _staticCueVolume * level;
+            _static.volume = Mathf.Clamp01(staticVolume) * _staticCueVolume * level *
+                             Mathf.Lerp(1f, _tuning.CabinStaticGain, cabin);
             _swish.volume = _tuning.TuneSwishVolume * _swishCueVolume * level;
         }
 

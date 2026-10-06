@@ -24,9 +24,16 @@ namespace MoonProject.Audio
         public const string RecoverySettle = "recovery_settle";
         public const string ExcavationRumble = "excavation_rumble";
         public const string SurfacingSparkle = "surfacing_sparkle";
-        public const string UiClick = "ui_click";
         public const string UiConfirm = "ui_confirm";
         public const string UiBack = "ui_back";
+        public const string UiMenuOpen = "ui_menu_open";
+        public const string UiMenuClose = "ui_menu_close";
+        public const string UiFocus = "ui_focus";
+        public const string UiSlider = "ui_slider";
+        public const string UiPrompt = "ui_prompt";
+        public const string UiHoldFill = "ui_hold_fill";
+        public const string UiHoldComplete = "ui_hold_complete";
+        public const string UiCard = "ui_card";
         public const string UpgradeArpeggio = "upgrade_arpeggio";
     }
 }

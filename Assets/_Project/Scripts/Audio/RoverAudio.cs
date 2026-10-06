@@ -99,7 +99,8 @@ namespace MoonProject.Audio
             var input = new RoverAudioInput(_rover.NormalizedSpeed, Mathf.Abs(_rover.DriveInput.y), _rover.IsGrounded,
                 _rover.GroundNormal);
             float creak = _model.Step(Time.deltaTime, input);
-            float sfx = _director.Buses.Effective(AudioBus.Sfx);
+            // Game-time loops would hang frozen while paused: the director's world gain ducks them on real time.
+            float sfx = _director.Buses.Effective(AudioBus.Sfx) * _director.WorldGain;
             _hum.pitch = _model.HumPitch;
             _hum.volume = _model.HumVolume * _humCueVolume * sfx;
             _crunch.pitch = _model.CrunchPitch;

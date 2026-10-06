@@ -566,20 +566,20 @@
       "notes": "Rising glassy run D5..D6 over an upward whoosh."
     },
     {
-      "id": "ui_click",
+      "id": "ui_menu_open",
       "category": "ui_2d",
       "milestone": "M1",
       "bus": "Sfx",
       "spatial": false,
       "loop": false,
       "files": [
-        "Assets/_Project/Audio/SFX/2D/ui_click.wav"
+        "Assets/_Project/Audio/SFX/2D/ui_menu_open.wav"
       ],
       "variantLabels": [
-        "ui_click"
+        "ui_menu_open"
       ],
       "sha256": [
-        "29d5a9e80eecef7dfdf71f3aefdeba26dcab66006ea3a68d6a827495c36ed583"
+        "b50b3b0e0b118bc03a2f0e380efbf4cf48a2f47015f32f6804278140112201cf"
       ],
       "volumeMin": 0.6,
       "volumeMax": 0.6,
@@ -590,7 +590,205 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": true,
-      "notes": "Soft A5 tick."
+      "notes": "UiCue MenuOpen: felt piano D4 A4 D5 rolled upward."
+    },
+    {
+      "id": "ui_menu_close",
+      "category": "ui_2d",
+      "milestone": "M1",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/ui_menu_close.wav"
+      ],
+      "variantLabels": [
+        "ui_menu_close"
+      ],
+      "sha256": [
+        "192846e1270218a954dc9239a908388a876c61e2041a085438ba889da073f859"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "UiCue MenuClose: felt piano A4 -> D4."
+    },
+    {
+      "id": "ui_focus",
+      "category": "ui_2d",
+      "milestone": "M1",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/ui_focus_A4.wav",
+        "Assets/_Project/Audio/SFX/2D/ui_focus_B4.wav",
+        "Assets/_Project/Audio/SFX/2D/ui_focus_D5.wav"
+      ],
+      "variantLabels": [
+        "A4",
+        "B4",
+        "D5"
+      ],
+      "sha256": [
+        "a7fb31dd21e7f936cd13a85406c2d372a2ed1ea7e53ea70b2e588742e76e87fc",
+        "2e26f72351566d45ee012cee120b513dd18397843a63be55a9a5aad396850945",
+        "5fd415ec1c914cd267d1eb9a9bc57c824c2867415ddd0250a889a687b5443f99"
+      ],
+      "volumeMin": 0.26,
+      "volumeMax": 0.3,
+      "pitchMin": 0.985,
+      "pitchMax": 1.015,
+      "targetLufs": -22.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "UiCue FocusMove: tiny wooden tick; the runtime rate-limits and softens rapid repeats."
+    },
+    {
+      "id": "ui_slider",
+      "category": "ui_2d",
+      "milestone": "M1",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/ui_slider_D5.wav",
+        "Assets/_Project/Audio/SFX/2D/ui_slider_E5.wav"
+      ],
+      "variantLabels": [
+        "D5",
+        "E5"
+      ],
+      "sha256": [
+        "0cb33dcecff86559f57b2d08fca11b1edbca353ee545dfc93433195bae8b93a4",
+        "4484bb76b213c39dd93159f9c11f84b85eb3fe9d21dfaf008eab25917c816180"
+      ],
+      "volumeMin": 0.22,
+      "volumeMax": 0.26,
+      "pitchMin": 0.985,
+      "pitchMax": 1.015,
+      "targetLufs": -22.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "UiCue SliderStep: muted kalimba tap; rate-limited and softened under repeats."
+    },
+    {
+      "id": "ui_prompt",
+      "category": "ui_2d",
+      "milestone": "M1",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/ui_prompt.wav"
+      ],
+      "variantLabels": [
+        "ui_prompt"
+      ],
+      "sha256": [
+        "67f575fdcec06028f70dc73ec549b6c24b7434b7e9d03b5421c8e4b1a9ae3845"
+      ],
+      "volumeMin": 0.4,
+      "volumeMax": 0.4,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "UiCue PromptShown: barely-there E5 -> A5 felt-piano grace note."
+    },
+    {
+      "id": "ui_hold_fill",
+      "category": "ui_2d",
+      "milestone": "M1",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/ui_hold_fill.wav"
+      ],
+      "variantLabels": [
+        "ui_hold_fill"
+      ],
+      "sha256": [
+        "a82681ef49ba5dd8749853eaa2c25c8aa4fd69b658262f0ae87cee74d950a1fc"
+      ],
+      "volumeMin": 0.45,
+      "volumeMax": 0.45,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "UiCue HoldFill: D5/A5 swell rising over the 0.6 s hold (UI TowerPanelSettings.HoldSeconds); stopped on release/complete."
+    },
+    {
+      "id": "ui_hold_complete",
+      "category": "ui_2d",
+      "milestone": "M1",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/ui_hold_complete.wav"
+      ],
+      "variantLabels": [
+        "ui_hold_complete"
+      ],
+      "sha256": [
+        "cac65f0636af00446926592149b9990cd06c2570a1f036efe642d99c0b828ba4"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "UiCue HoldComplete: soft resolved D major felt-piano chord + music-box D6."
+    },
+    {
+      "id": "ui_card",
+      "category": "ui_2d",
+      "milestone": "M1",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/ui_card.wav"
+      ],
+      "variantLabels": [
+        "ui_card"
+      ],
+      "sha256": [
+        "4fe3a4a261395f544b6c446b61d9efad8e3b27228893d0a7a002f42c84151f7b"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "UiCue CardShown: music-box phrase A5 F#5 A5 -> D6 over D5."
     },
     {
       "id": "ui_confirm",
