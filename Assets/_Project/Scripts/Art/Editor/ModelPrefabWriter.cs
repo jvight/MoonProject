@@ -9,6 +9,7 @@ namespace MoonProject.Art.Editor
     /// Turns a <see cref="ModelNode"/> tree into assets through <see cref="GeneratedAssets"/> (GUIDs survive
     /// re-runs): one '&lt;folder&gt;/&lt;mesh name&gt;.asset' per distinct <see cref="ModelMesh"/> and
     /// '&lt;folder&gt;/&lt;root name&gt;.prefab' with a MeshFilter + MeshRenderer on every node that has a mesh.
+    /// The prefab is assembled in a <see cref="BuilderScratchScene"/>, so the open scene is never touched.
     /// </summary>
     public static class ModelPrefabWriter
     {
@@ -27,8 +28,11 @@ namespace MoonProject.Art.Editor
             GeneratedAssets.EnsureFolder(folder);
             var meshes = new Dictionary<ModelMesh, Mesh>();
             WriteMeshes(root, folder, meshes);
-            GameObject instance = Instantiate(root, null, meshes, material);
-            return GeneratedAssets.SavePrefab(instance, $"{folder}/{root.Name}.prefab");
+            using (var scratch = new BuilderScratchScene())
+            {
+                GameObject instance = Instantiate(scratch, root, null, meshes, material);
+                return GeneratedAssets.SavePrefab(instance, $"{folder}/{root.Name}.prefab");
+            }
         }
 
         private static void WriteMeshes(ModelNode node, string folder, Dictionary<ModelMesh, Mesh> meshes)
@@ -53,12 +57,11 @@ namespace MoonProject.Art.Editor
             }
         }
 
-        private static GameObject Instantiate(ModelNode node, Transform parent, Dictionary<ModelMesh, Mesh> meshes,
-            Material material)
+        private static GameObject Instantiate(BuilderScratchScene scratch, ModelNode node, Transform parent,
+            Dictionary<ModelMesh, Mesh> meshes, Material material)
         {
-            var gameObject = new GameObject(node.Name);
+            GameObject gameObject = scratch.Create(node.Name, parent);
             Transform transform = gameObject.transform;
-            transform.SetParent(parent, false);
             transform.localPosition = node.LocalPosition;
             transform.localRotation = node.LocalRotation;
             if (node.Mesh != null)
@@ -69,7 +72,7 @@ namespace MoonProject.Art.Editor
 
             for (int i = 0; i < node.Children.Count; i++)
             {
-                Instantiate(node.Children[i], transform, meshes, material);
+                Instantiate(scratch, node.Children[i], transform, meshes, material);
             }
 
             return gameObject;
