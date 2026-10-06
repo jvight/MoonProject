@@ -6,15 +6,16 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.TestTools;
 using Unity.Profiling;
+using MoonProject.Core;
 using Object = UnityEngine.Object;
 
 namespace MoonProject.Rover.PlayModeTests
 {
     /// <summary>
-    /// Steady-state zero-GC check: while 07 drives (tracks, dust, jelly, gaze all live), one frame additionally runs
-    /// every per-frame method of the rover, rig, effects, body language and camera 600 times. Unity's "GC Allocated
-    /// In Frame" counter for the quietest of three such frames must stay at the level of plain frames; a control frame
-    /// proves the counter sees allocations at all.
+    /// Steady-state zero-GC check: while 07 drives (tracks, dust, jelly, gaze all live) charging a Hover-Jump (coils
+    /// squashing and glowing), one frame additionally runs every per-frame method of the rover, rig, effects, body
+    /// language and camera 600 times. Unity's "GC Allocated In Frame" counter for the quietest of three such frames
+    /// must stay at the level of plain frames; a control frame proves the counter sees allocations at all.
     /// </summary>
     public sealed class RoverAllocationTests : InputTestFixture
     {
@@ -57,6 +58,7 @@ namespace MoonProject.Rover.PlayModeTests
             _world = new TestWorld();
             _rover = TestRover.Spawn(_world, TestWorld.Point(0f, -100f), 0f);
             TestRover rover = _rover;
+            rover.Context.Get<IRoverAbilities>().Grant(RoverAbility.HoverJump);
             rover.Drive.Drive = new Vector2(0.4f, 1f);
             float until = Time.time + 3f;
             while (Time.time < until)
@@ -65,6 +67,7 @@ namespace MoonProject.Rover.PlayModeTests
             }
 
             Assert.Greater(rover.Controller.Speed, 1f, "Measure while driving, laying tracks and raising dust.");
+            rover.Drive.JumpHeld = true;
 
             Action[] frame =
             {

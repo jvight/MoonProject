@@ -22,6 +22,12 @@ namespace MoonProject.Rover.PlayModeTests
         private const float HalfTrack = 0.7f;
         private const float AxleSpacing = 0.8f;
 
+        /// <summary>HoverCoils contract dimensions (art's CoilSocket height, spring spacing and length).</summary>
+        private const float CoilSocketHeight = 0.28f;
+        private const float CoilHalfTrack = 0.19f;
+        private const float CoilHalfBase = 0.3f;
+        private const float CoilLength = 0.1f;
+
         /// <summary>Cinemachine channel for rover tests: their brains and cameras only see each other.</summary>
         private const OutputChannels TestChannel = OutputChannels.Channel15;
 
@@ -71,7 +77,20 @@ namespace MoonProject.Rover.PlayModeTests
 
         public Light EyeLight { get; private set; }
 
+        public RoverHoverCoils HoverCoils { get; private set; }
+
+        /// <summary>The stand-in HoverCoils mount under CoilSocket.</summary>
+        public Transform CoilMount { get; private set; }
+
+        public Transform[] Coils { get; private set; }
+
+        public Renderer[] CoilGlows { get; private set; }
+
+        public Light CoilLight { get; private set; }
+
         public RoverTuning Tuning => (RoverTuning)_tunings[0];
+
+        public RoverRigTuning RigTuning => (RoverRigTuning)_tunings[1];
 
         /// <summary>
         /// Builds, wires and initialises a rover at <paramref name="position"/>, yaw in degrees. It starts awake
@@ -151,12 +170,35 @@ namespace MoonProject.Rover.PlayModeTests
             var headlamp = Node("Headlamp", lampSocket, Vector3.zero).gameObject.AddComponent<Light>();
             var eyeLight = Node("EyeGlow", eye, Vector3.zero).gameObject.AddComponent<Light>();
 
+            Transform coilSocket = Node(RoverModelNodes.CoilSocket, model, Vector3.up * CoilSocketHeight);
+            Transform coilMount = Node("HoverCoils", coilSocket, Vector3.zero);
+            var coils = new Transform[RoverModelNodes.CoilCount];
+            var coilGlows = new Renderer[RoverModelNodes.CoilCount];
+            for (int i = 0; i < coils.Length; i++)
+            {
+                var top = new Vector3(i % 2 == 0 ? -CoilHalfTrack : CoilHalfTrack, 0f,
+                    i < 2 ? CoilHalfBase : -CoilHalfBase);
+                coils[i] = Node(RoverModelNodes.Coil(i), coilMount, top);
+                Shape(PrimitiveType.Cylinder, coils[i], Vector3.down * (CoilLength * 0.5f),
+                    new Vector3(0.12f, CoilLength * 0.5f, 0.12f), material);
+                Transform ring = Shape(PrimitiveType.Sphere, coils[i], Vector3.down * CoilLength,
+                    new Vector3(0.15f, 0.02f, 0.15f), material);
+                ring.name = RoverModelNodes.CoilGlow(i);
+                coilGlows[i] = ring.GetComponent<MeshRenderer>();
+            }
+
+            var coilLight = Node("CoilGlow", coilSocket, Vector3.zero).gameObject.AddComponent<Light>();
+            var hoverCoils = visual.gameObject.AddComponent<RoverHoverCoils>();
+
             Transform fxHost = Node("WheelFx", root.transform, Vector3.zero);
             var fx = fxHost.gameObject.AddComponent<RoverWheelFx>();
 
             Assign(rig, ("_tuning", rigTuning), ("_chassis", chassis), ("_bogieLeft", bogieLeft),
                 ("_bogieRight", bogieRight), ("_antenna", antenna), ("_headlamp", headlamp));
             AssignArray(rig, "_wheels", wheels);
+            Assign(hoverCoils, ("_tuning", rigTuning), ("_mount", coilMount), ("_light", coilLight));
+            AssignArray(hoverCoils, "_coils", coils);
+            AssignArray(hoverCoils, "_glows", coilGlows);
             Assign(fx, ("_tuning", fxTuning), ("_dustSocketLeft", dustLeft), ("_dustSocketRight", dustRight),
                 ("_trackLeft", Track("TrackLeft", fxHost, material)),
                 ("_trackRight", Track("TrackRight", fxHost, material)),
@@ -164,7 +206,8 @@ namespace MoonProject.Rover.PlayModeTests
                 ("_dustRight", Particles("DustRight", fxHost, material)),
                 ("_landingDust", Particles("LandingDust", fxHost, material)));
             Assign(controller, ("_tuning", tuning), ("_body", rigidbody), ("_sphere", collider), ("_visualRig", rig),
-                ("_wheelFx", fx), ("_tetherOrigin", tetherOrigin), ("_cargoSocket", cargo));
+                ("_wheelFx", fx), ("_hoverCoils", hoverCoils), ("_tetherOrigin", tetherOrigin),
+                ("_cargoSocket", cargo));
             Assign(body, ("_tuning", characterTuning), ("_rover", controller), ("_rig", rig), ("_neck", neck),
                 ("_head", head), ("_eyelid", eyelid), ("_solarWing", wing),
                 ("_eyeRenderer", eye.GetComponent<MeshRenderer>()),
@@ -189,6 +232,11 @@ namespace MoonProject.Rover.PlayModeTests
                 SolarWing = wing,
                 Eyelid = eyelid,
                 EyeLight = eyeLight,
+                HoverCoils = hoverCoils,
+                CoilMount = coilMount,
+                Coils = coils,
+                CoilGlows = coilGlows,
+                CoilLight = coilLight,
             };
 
             var context = new GameContext(new EventBus(), input);

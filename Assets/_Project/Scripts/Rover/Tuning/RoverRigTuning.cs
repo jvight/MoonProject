@@ -130,6 +130,10 @@ namespace MoonProject.Rover
         [Range(0f, 15f)]
         [SerializeField] private float _crouchLean = 4f;
 
+        [Header("Hover-Jump coils")]
+        [Tooltip("Coils under the belly: pop-in when bought, squash and glow while charging, spring-out on the leap.")]
+        [SerializeField] private HoverCoilSettings _hoverCoils = new HoverCoilSettings();
+
         [Header("Antenna")]
         [Tooltip("Spring frequency (Hz) of the antenna wobble.")]
         [Range(0.2f, 10f)]
@@ -222,6 +226,8 @@ namespace MoonProject.Rover
         public float CrouchDepth => _crouchDepth;
 
         public float CrouchLean => _crouchLean;
+
+        public HoverCoilSettings HoverCoils => _hoverCoils;
 
         public float AntennaFrequency => _antennaFrequency;
 

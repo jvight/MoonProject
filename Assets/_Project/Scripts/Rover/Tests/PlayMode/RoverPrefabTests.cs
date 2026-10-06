@@ -14,7 +14,8 @@ namespace MoonProject.Rover.PlayModeTests
     /// <summary>
     /// The real built Rover.prefab (wrapping the art box's RoverModel) and camera rig: they initialise without errors,
     /// register their Core contracts (incl. ILookSettings), no rover light casts shadows, and 07 drives (scripted
-    /// stick, no devices).
+    /// stick, no devices). Art's HoverCoils are mounted but hidden until the Hover-Jump is bought; then they appear and
+    /// a charge lights the ground under 07 (captured idle and charging, as the chase camera sees it).
     /// Under a single directional
     /// light at the world's Earthlight angle it captures frames with and without the head, to tell a second light's
     /// shadow apart from the head's own shadow.
@@ -117,16 +118,19 @@ namespace MoonProject.Rover.PlayModeTests
             yield return null;
             FrameCapture.SavePng(camera, 960, 540, Path.Combine(OutputFolder, "11-prefab-sun-shadow-no-head.png"));
             SetHeadVisible(true);
-            foreach (Light light in _rover.GetComponentsInChildren<Light>(true))
+            Light[] lights = _rover.GetComponentsInChildren<Light>(true);
+            var lit = new bool[lights.Length];
+            for (int i = 0; i < lights.Length; i++)
             {
-                light.enabled = false;
+                lit[i] = lights[i].enabled;
+                lights[i].enabled = false;
             }
 
             yield return null;
             FrameCapture.SavePng(camera, 960, 540, Path.Combine(OutputFolder, "12-prefab-no-rover-lights.png"));
-            foreach (Light light in _rover.GetComponentsInChildren<Light>(true))
+            for (int i = 0; i < lights.Length; i++)
             {
-                light.enabled = true;
+                lights[i].enabled = lit[i];
             }
 
             _drive.Drive = new Vector2(0.3f, 1f);
@@ -134,6 +138,26 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.Greater(controller.Speed, 4f, "The built rover drives.");
             FrameCapture.SavePng(camera, 960, 540, Path.Combine(OutputFolder, "13-prefab-driving.png"));
             _drive.Drive = Vector2.zero;
+            yield return Settle(3f);
+
+            Transform socket = Find(_rover.transform, RoverModelNodes.CoilSocket);
+            Assert.IsNotNull(socket, "RoverModel has no CoilSocket.");
+            Transform coils = socket.Find("HoverCoils");
+            Transform glow = socket.Find("CoilGlow");
+            Assert.IsNotNull(coils, "Rover.prefab mounts art's HoverCoils on CoilSocket.");
+            Assert.IsNotNull(glow, "Rover.prefab has the charge light at CoilSocket.");
+            var coilLight = glow.GetComponent<Light>();
+            Assert.IsFalse(coils.gameObject.activeSelf, "The coils stay hidden until the Hover-Jump is bought.");
+            context.Get<IRoverAbilities>().Grant(RoverAbility.HoverJump);
+            yield return Settle(1.5f);
+            Assert.IsTrue(coils.gameObject.activeSelf, "Bought: the coils appear.");
+            Assert.IsFalse(coilLight.enabled, "The charge light is off until 07 charges.");
+            FrameCapture.SavePng(camera, 960, 540, Path.Combine(OutputFolder, "14-prefab-coils-idle.png"));
+            _drive.JumpHeld = true;
+            yield return Settle(0.95f);
+            Assert.IsTrue(coilLight.enabled, "Charging lights the ground under 07.");
+            FrameCapture.SavePng(camera, 960, 540, Path.Combine(OutputFolder, "15-prefab-coils-charging.png"));
+            _drive.JumpHeld = false;
         }
 
         private static Vector3 EarthlightSource()

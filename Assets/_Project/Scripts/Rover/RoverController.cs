@@ -36,6 +36,9 @@ namespace MoonProject.Rover
         [Tooltip("Tire tracks and dust.")]
         [SerializeField] private RoverWheelFx _wheelFx;
 
+        [Tooltip("The Hover-Jump coils under the belly (shown only while 07 owns the ability).")]
+        [SerializeField] private RoverHoverCoils _hoverCoils;
+
         [Tooltip("RoverModel 'TetherOrigin' (lens centre of 07's eye, +Z = gaze).")]
         [SerializeField] private Transform _tetherOrigin;
 
@@ -211,7 +214,8 @@ namespace MoonProject.Rover
 
             bool visualsReady = _visualRig.Initialize(this);
             bool effectsReady = _wheelFx.Initialize(context, this);
-            _initialized = visualsReady && effectsReady;
+            bool coilsReady = _hoverCoils.Initialize(context, this, _visualRig);
+            _initialized = visualsReady && effectsReady && coilsReady;
             enabled = _initialized;
         }
 
@@ -232,6 +236,7 @@ namespace MoonProject.Rover
             ok &= Require(_sphere != null, "Physics sphere SphereCollider is not assigned.");
             ok &= Require(_visualRig != null, "RoverVisualRig is not assigned.");
             ok &= Require(_wheelFx != null, "RoverWheelFx is not assigned.");
+            ok &= Require(_hoverCoils != null, "RoverHoverCoils is not assigned.");
             ok &= Require(_tetherOrigin != null && _cargoSocket != null, "TetherOrigin/CargoSocket are not assigned.");
             if (_body != null)
             {
@@ -572,6 +577,7 @@ namespace MoonProject.Rover
 
             _visualRig.Tick(Time.deltaTime);
             _wheelFx.Tick();
+            _hoverCoils.Tick(Time.deltaTime);
         }
     }
 }

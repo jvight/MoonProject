@@ -11,9 +11,12 @@ namespace MoonProject.Rover.Editor
     /// <code>
     /// Rover            RoverController, RoverBodyLanguage (both IGameSystems)
     ///   PhysicsSphere  Rigidbody + SphereCollider (layer Rover, frictionless)
-    ///   Visual         RoverVisualRig
+    ///   Visual         RoverVisualRig, RoverHoverCoils
     ///     Chassis      jelly lean / bob
     ///       RoverModel (nested prefab; adds Headlamp spot under HeadlampSocket and EyeGlow point under Eye)
+    ///         CoilSocket
+    ///           HoverCoils (nested prefab, inactive until 07 owns the Hover-Jump)
+    ///           CoilGlow   soft cyan point light, off until the jump charges
     ///   WheelFx        RoverWheelFx: TrackLeft/Right ribbons, DustLeft/Right, LandingDust
     /// </code>
     /// Fails with a clear error when RoverModel.prefab does not exist yet: there is no placeholder model.
@@ -39,6 +42,7 @@ namespace MoonProject.Rover.Editor
         public static void Build()
         {
             var model = BuildWiring.Require<GameObject>(RoverAssetPaths.RoverModel, "the Art box's rover builder");
+            var coils = BuildWiring.Require<GameObject>(RoverAssetPaths.HoverCoils, "the Art box's rover builder");
             var tuning = BuildWiring.Require<RoverTuning>(RoverAssetPaths.RoverTuning, "Rover/Tuning");
             var rigTuning = BuildWiring.Require<RoverRigTuning>(RoverAssetPaths.RigTuning, "Rover/Tuning");
             var fxTuning = BuildWiring.Require<RoverFxTuning>(RoverAssetPaths.FxTuning, "Rover/Tuning");
@@ -90,6 +94,8 @@ namespace MoonProject.Rover.Editor
                     ("_antenna", BuildWiring.Node(m, RoverModelNodes.Antenna)),
                     ("_headlamp", headlamp));
                 BuildWiring.AssignArray(rig, "_wheels", wheels);
+                Transform coilSocket = BuildWiring.Node(m, RoverModelNodes.CoilSocket);
+                RoverHoverCoils hoverCoils = BuildHoverCoils(scratch, visual, coilSocket, coils, rigTuning);
 
                 RoverWheelFx wheelFx = BuildWheelFx(scratch, root.transform, m, fxTuning, trackMaterial, dustMaterial);
 
@@ -99,6 +105,7 @@ namespace MoonProject.Rover.Editor
                     ("_sphere", collider),
                     ("_visualRig", rig),
                     ("_wheelFx", wheelFx),
+                    ("_hoverCoils", hoverCoils),
                     ("_tetherOrigin", BuildWiring.Node(m, RoverModelNodes.TetherOrigin)),
                     ("_cargoSocket", BuildWiring.Node(m, RoverModelNodes.CargoSocket)));
 
@@ -146,6 +153,41 @@ namespace MoonProject.Rover.Editor
             light.range = tuning.EyeLightRange;
             light.shadows = LightShadows.None;
             return light;
+        }
+
+        /// <summary>
+        /// Mounts art's HoverCoils on CoilSocket with identity, hidden (RoverHoverCoils shows it once 07 owns the
+        /// Hover-Jump), plus the charge light beside it.
+        /// </summary>
+        private static RoverHoverCoils BuildHoverCoils(BuilderScratchScene scratch, GameObject host, Transform socket,
+            GameObject prefab, RoverRigTuning tuning)
+        {
+            Transform mount = scratch.Instantiate(prefab, socket).transform;
+            mount.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+            mount.localScale = Vector3.one;
+            var springs = new Object[RoverModelNodes.CoilCount];
+            var glows = new Object[RoverModelNodes.CoilCount];
+            for (int i = 0; i < springs.Length; i++)
+            {
+                springs[i] = BuildWiring.Node(mount, RoverModelNodes.Coil(i));
+                glows[i] = BuildWiring.NodeComponent<MeshRenderer>(mount, RoverModelNodes.CoilGlow(i));
+            }
+
+            mount.gameObject.SetActive(false);
+
+            var light = Child(scratch, "CoilGlow", socket).AddComponent<Light>();
+            light.type = LightType.Point;
+            light.color = Palette.Get(PaletteSwatch.TechGlow);
+            light.range = tuning.HoverCoils.LightRange;
+            light.intensity = 0f;
+            light.shadows = LightShadows.None;
+            light.enabled = false;
+
+            var hoverCoils = host.AddComponent<RoverHoverCoils>();
+            BuildWiring.Assign(hoverCoils, ("_tuning", tuning), ("_mount", mount), ("_light", light));
+            BuildWiring.AssignArray(hoverCoils, "_coils", springs);
+            BuildWiring.AssignArray(hoverCoils, "_glows", glows);
+            return hoverCoils;
         }
 
         private static RoverWheelFx BuildWheelFx(BuilderScratchScene scratch, Transform root, Transform model,
