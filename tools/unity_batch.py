@@ -159,13 +159,36 @@ def format_duration(seconds):
     return f"{minutes}m{secs:02d}s" if minutes else f"{secs}s"
 
 
+class LogEcho:
+    """Reads what Unity appended to its log since the last call; echoes complete [moon] lines, feeds the scanner."""
+
+    def __init__(self, log_path):
+        self._path = log_path
+        self._offset = 0
+        self._partial = ""
+
+    def drain(self, scanner):
+        if not self._path.exists():
+            return
+        with open(self._path, "rb") as f:
+            f.seek(self._offset)
+            chunk = f.read()
+        self._offset += len(chunk)
+        text = chunk.decode("utf-8", errors="replace")
+        scanner.feed(text)
+        lines = (self._partial + text).split("\n")
+        self._partial = lines.pop()
+        for line in lines:
+            if line.startswith("[moon] "):
+                print(line.rstrip(), flush=True)
+
+
 def run_unity(cmdline, env, log_path, timeout, slot, first_run):
     guard = procutil.ProcessTreeGuard()
     scanner = logscan.Scanner()
     started = time.monotonic()
     last_heartbeat = started
     last_phase = None
-    offset = 0
     timed_out = False
     proc = subprocess.Popen(cmdline, env=env, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
                             stderr=subprocess.DEVNULL)
@@ -173,23 +196,16 @@ def run_unity(cmdline, env, log_path, timeout, slot, first_run):
         say("warning: could not put Unity in a job object; a killed unity_batch may leave Unity running")
     slot.update(unity_pid=proc.pid)
     say(f"Unity started (pid {proc.pid}); log: {log_path}")
+    echo = LogEcho(log_path)
     try:
         while True:
             try:
                 code = proc.wait(timeout=1.0)
+                echo.drain(scanner)
                 break
             except subprocess.TimeoutExpired:
                 code = None
-            if log_path.exists():
-                with open(log_path, "rb") as f:
-                    f.seek(offset)
-                    chunk = f.read()
-                offset += len(chunk)
-                text = chunk.decode("utf-8", errors="replace")
-                for line in text.splitlines():
-                    if line.startswith("[moon] "):
-                        print(line, flush=True)
-                scanner.feed(text)
+            echo.drain(scanner)
             now = time.monotonic()
             if scanner.phase != last_phase and (first_run or now - started > 10):
                 say(f"{format_duration(now - started)}: {scanner.describe()}")
