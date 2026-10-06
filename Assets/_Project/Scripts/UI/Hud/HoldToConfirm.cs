@@ -36,7 +36,7 @@ namespace MoonProject.UI
         /// <param name="deltaTime">Unscaled seconds since the last step.</param>
         /// <returns>
         /// <see cref="HoldStep.Started"/> on the step a press starts filling the ring, <see cref="HoldStep.Confirmed"/>
-        /// exactly once, on the step it fills.
+        /// exactly once, on the step it fills, <see cref="HoldStep.Released"/> on the step a filling ring stops early.
         /// </returns>
         public HoldStep Step(bool available, bool held, float deltaTime)
         {
@@ -68,6 +68,7 @@ namespace MoonProject.UI
                 return started ? HoldStep.Started : HoldStep.None;
             }
 
+            bool released = _filling;
             _filling = false;
             if (!(held && _confirmed))
             {
@@ -76,7 +77,7 @@ namespace MoonProject.UI
                     : Mathf.Max(0f, Progress - deltaTime / _settings.DrainSeconds);
             }
 
-            return HoldStep.None;
+            return released ? HoldStep.Released : HoldStep.None;
         }
 
         /// <summary>Empties the ring and disarms it (the offer went away).</summary>

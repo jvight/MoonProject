@@ -12,6 +12,7 @@ namespace MoonProject.UI.Tests
         private TowerPanelSettings _settings;
         private HoldToConfirm _hold;
         private int _starts;
+        private int _releases;
 
         [SetUp]
         public void SetUp()
@@ -19,6 +20,7 @@ namespace MoonProject.UI.Tests
             _settings = new TowerPanelSettings();
             _hold = new HoldToConfirm(_settings);
             _starts = 0;
+            _releases = 0;
         }
 
         [Test]
@@ -80,6 +82,24 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
+        public void StoppingEarly_ReportsOneRelease_PerPress()
+        {
+            Run(true, false, Frame);
+            Run(true, true, _settings.HoldSeconds * 0.5f);
+            Run(true, false, 0.2f);
+            Assert.AreEqual(1, _releases, "letting go early reports one release");
+
+            Run(true, true, _settings.HoldSeconds * 0.5f);
+            Run(false, true, 0.2f);
+            Assert.AreEqual(2, _releases, "the offer going away mid-fill reports one release");
+
+            Run(true, false, Frame);
+            Run(true, true, _settings.HoldSeconds + 0.1f);
+            Run(true, false, 0.2f);
+            Assert.AreEqual(2, _releases, "a completed hold is not a release");
+        }
+
+        [Test]
         public void AnUnaffordableOffer_NeverFills()
         {
             Run(false, false, Frame);
@@ -100,6 +120,10 @@ namespace MoonProject.UI.Tests
                 else if (step == HoldStep.Started)
                 {
                     _starts++;
+                }
+                else if (step == HoldStep.Released)
+                {
+                    _releases++;
                 }
             }
 

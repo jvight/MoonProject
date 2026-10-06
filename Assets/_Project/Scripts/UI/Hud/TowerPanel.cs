@@ -108,6 +108,10 @@ namespace MoonProject.UI
             {
                 Buy(upgrade);
             }
+            else if (step == HoldStep.Released)
+            {
+                _events.Publish(new UiCue(UiCueKind.HoldRelease));
+            }
 
             if (_reveal.IsHidden && !IsCelebrating)
             {

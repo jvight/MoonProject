@@ -11,5 +11,8 @@ namespace MoonProject.UI
 
         /// <summary>The ring just filled: confirm now (exactly once per hold).</summary>
         Confirmed = 2,
+
+        /// <summary>A filling ring stopped before it filled (let go, or the offer went away).</summary>
+        Released = 3,
     }
 }

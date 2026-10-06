@@ -62,6 +62,11 @@ namespace MoonProject.Core.Events
 
         /// <summary>A settings slider moved one step.</summary>
         SliderStep = 9,
+
+        /// <summary>
+        /// The hold ended before the ring filled: the button was let go, or the offer disappeared (once per press).
+        /// </summary>
+        HoldRelease = 10,
     }
 
     /// <summary>
