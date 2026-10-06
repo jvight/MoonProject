@@ -4,14 +4,16 @@ using MoonProject.Editor.SceneBuild;
 namespace MoonProject.Audio.Editor
 {
     /// <summary>
-    /// Adds the Audio domain to Main.unity: under [Audio], an AudioDirector (the system, initialised after World and
-    /// Rover) wired to the library and tuning assets, plus its RoverAudio, GameplayAudio, UiAudio, RadioStation and
-    /// AmbienceBed parts.
+    /// Adds the Audio domain to Main.unity: under [Audio], an AudioDirector (the system, initialised after World, Rover
+    /// and Gameplay) wired to the library and tuning assets, plus its RoverAudio, GameplayAudio, UiAudio,
+    /// RadioStation and AmbienceBed parts.
     /// Voices and loop sources are created by the components at initialisation, not baked into the scene.
     /// </summary>
     public sealed class AudioSceneContributor : ISceneContributor
     {
-        public int Order => 400;
+        /// <summary>After Gameplay (500), whose systems Audio may read at initialisation; before UI (600), which
+        /// uses <see cref="MoonProject.Core.IAudioSettings"/>.</summary>
+        public int Order => 550;
 
         public void Contribute(SceneBuildContext context)
         {
