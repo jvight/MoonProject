@@ -48,6 +48,20 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
+        public void AChargeThatEndsWithoutALeap_ReportsOneCancel()
+        {
+            _jump.Step(true, false, true, Step);
+            Assert.AreEqual(HoverJumpEvent.ChargeProgress, _jump.Step(true, true, true, Step));
+            Assert.AreEqual(HoverJumpEvent.Cancelled, _jump.Step(true, true, false, Step), "leaving the ground");
+            Assert.AreEqual(HoverJumpEvent.None, _jump.Step(true, true, false, Step), "reported once");
+
+            _jump.Step(true, false, true, Step);
+            Assert.AreEqual(HoverJumpEvent.ChargeProgress, _jump.Step(true, true, true, Step));
+            Assert.AreEqual(HoverJumpEvent.Cancelled, _jump.Step(false, true, true, Step), "ability or hold gone");
+            Assert.IsFalse(_jump.IsCharging);
+        }
+
+        [Test]
         public void Tap_IsASmallHop()
         {
             float strength = Hold(0f);

@@ -472,6 +472,9 @@ namespace MoonProject.Rover
                     _hasContact = false;
                     _events.Publish(new RoverJumped(strength));
                     break;
+                case HoverJumpEvent.Cancelled:
+                    _events.Publish(new RoverJumpCancelled());
+                    break;
             }
         }
 

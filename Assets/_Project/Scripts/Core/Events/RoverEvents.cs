@@ -84,4 +84,11 @@ namespace MoonProject.Core.Events
         /// <summary>0 for a tap (small hop) .. 1 for a full charge (the big leap).</summary>
         public float Strength { get; }
     }
+
+    /// <summary>
+    /// A Hover-Jump charge ended without a leap: 07 left the ground, the ability went away or gameplay held it still.
+    /// </summary>
+    public readonly struct RoverJumpCancelled
+    {
+    }
 }

@@ -78,8 +78,9 @@ namespace MoonProject.Rover
 
             if (!enabled || !grounded)
             {
+                bool wasCharging = IsCharging;
                 IsCharging = false;
-                return HoverJumpEvent.None;
+                return wasCharging ? HoverJumpEvent.Cancelled : HoverJumpEvent.None;
             }
 
             _cooldown = Mathf.Max(0f, _cooldown - deltaTime);

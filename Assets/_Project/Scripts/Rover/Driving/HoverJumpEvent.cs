@@ -10,5 +10,8 @@ namespace MoonProject.Rover
 
         /// <summary>Jump was released: leap with the eased strength.</summary>
         Leap = 2,
+
+        /// <summary>A charge ended without a leap: 07 left the ground, the ability went away or 07 was held still.</summary>
+        Cancelled = 3,
     }
 }
