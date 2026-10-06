@@ -1,148 +1,130 @@
 using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Reflection;
 using NUnit.Framework;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.TestTools;
-using MoonProject.App;
+using MoonProject.Core;
 using MoonProject.Core.Events;
-using MoonProject.Testing;
-using Object = UnityEngine.Object;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 
 namespace MoonProject.Audio.PlayModeTests
 {
-    /// <summary>
-    /// Boots the real AudioDirector (library + tuning assets from Assets/_Project/Data/Audio, built by the Audio
-    /// builders) behind a fake rover, the way Main.unity wires it, and checks the sounds it actually schedules.
-    /// The radio gets a test playlist of short generated tones so a track change happens within seconds.
-    /// </summary>
+    /// <summary>Director, rover audio, radio and ambience running for real behind a fake rover.</summary>
     public sealed class AudioRuntimeTests
     {
-        private const string DataFolder = "Assets/_Project/Data/Audio/";
-        private const int TestTrackSeconds = 3;
-        private const int SampleRate = 48000;
-
-        private readonly List<Object> _created = new List<Object>();
-        private InputActionAsset _controls;
-        private FakeRoverSystem _rover;
-        private AudioDirector _director;
-        private RadioStation _radio;
-        private RoverAudio _roverAudio;
-        private AmbienceBed _ambience;
-        private GameBootstrap _bootstrap;
+        private AudioTestRig _rig;
 
         [UnitySetUp]
         public IEnumerator SetUp()
         {
-            _controls = Track(BootstrapHarness.LoadControlsCopy());
-            Track(new GameObject("Listener", typeof(AudioListener)));
-            _rover = Track(new GameObject("FakeRover")).AddComponent<FakeRoverSystem>();
-
-            var playlist = Track(ScriptableObject.CreateInstance<RadioPlaylist>());
-            playlist.Populate(new[]
-            {
-                new RadioTrack("t1", "Tone One", Track(Tone("t1", 293.66f)), 76f),
-                new RadioTrack("t2", "Tone Two", Track(Tone("t2", 440f)), 80f),
-            });
-
-            GameObject audioRoot = Track(new GameObject("[Audio]"));
-            audioRoot.SetActive(false);
-            _director = Child(audioRoot, "AudioDirector").AddComponent<AudioDirector>();
-            _roverAudio = Child(audioRoot, "RoverAudio").AddComponent<RoverAudio>();
-            _radio = Child(audioRoot, "RadioStation").AddComponent<RadioStation>();
-            _ambience = Child(audioRoot, "AmbienceBed").AddComponent<AmbienceBed>();
-            _roverAudio.Wire(Load<RoverAudioTuning>("RoverAudioTuning.asset"));
-            _radio.Wire(Load<RadioTuning>("RadioTuning.asset"), playlist);
-            _director.Wire(Load<AudioLibrary>("AudioLibrary.asset"), Load<AudioMixTuning>("AudioMixTuning.asset"),
-                _roverAudio, _radio, _ambience);
-            audioRoot.SetActive(true);
-
-            _bootstrap = Track(BootstrapHarness.Create(_controls, _rover, _director));
+            _rig = new AudioTestRig();
             yield return null;
         }
 
         [TearDown]
         public void TearDown()
         {
-            for (int i = _created.Count - 1; i >= 0; i--)
-            {
-                if (_created[i] != null)
-                {
-                    Object.Destroy(_created[i]);
-                }
-            }
-
-            _created.Clear();
+            _rig.Dispose();
         }
 
         [Test]
         public void Director_Initialises_WithAllPartsRunning()
         {
-            Assert.IsTrue(_director.IsInitialized);
-            Assert.IsTrue(_roverAudio.enabled);
-            Assert.IsTrue(_radio.enabled);
-            Assert.IsTrue(_ambience.enabled);
-            Assert.AreEqual(2, _bootstrap.Context.Events.SubscriberCount<RoverLanded>(),
+            Assert.IsTrue(_rig.Director.IsInitialized);
+            Assert.IsTrue(_rig.RoverAudio.enabled);
+            Assert.IsTrue(_rig.Gameplay.enabled);
+            Assert.IsTrue(_rig.Radio.enabled);
+            Assert.IsTrue(_rig.Ambience.enabled);
+            Assert.AreEqual(2, _rig.Events.SubscriberCount<RoverLanded>(),
                 "director (thump) and rover audio (creak) both listen to landings");
+        }
+
+        [Test]
+        public void AudioSettings_AreRegistered_AndDriveTheBuses()
+        {
+            var settings = _rig.Bootstrap.Context.Get<IAudioSettings>();
+            settings.SetVolume(AudioBus.Sfx, 0.25f);
+
+            Assert.AreEqual(0.25f, settings.GetVolume(AudioBus.Sfx));
+            Assert.AreEqual(0.25f * _rig.Director.Buses.GetVolume(AudioBus.Master),
+                _rig.Director.Buses.Effective(AudioBus.Sfx), 1e-6f);
+        }
+
+        [UnityTest]
+        public IEnumerator AudioSettings_ReLevelRingingOneShots_Immediately()
+        {
+            _rig.Events.Publish(new RelicSurfaced(Vector3.zero, "relic_test"));
+            AudioSource voice = _rig.Director.LastVoice;
+            float before = voice.volume;
+
+            _rig.Bootstrap.Context.Get<IAudioSettings>().SetVolume(AudioBus.Sfx, 0.5f);
+            yield return null;
+
+            Assert.IsTrue(voice.isPlaying);
+            Assert.AreEqual(before * 0.5f, voice.volume, 1e-4f);
         }
 
         [UnityTest]
         public IEnumerator Landing_PlaysAThumpAtOnce_AndACreakShortlyAfter()
         {
-            _bootstrap.Context.Events.Publish(new RoverLanded(new Vector3(3f, 0f, 4f), 3f, 1.2f));
-            Assert.IsTrue(VoicePlaying("landing_thump"), "thump voice");
-            Assert.IsFalse(VoicePlaying("suspension_creak"), "creak waits for the springs to settle");
+            _rig.Events.Publish(new RoverLanded(new Vector3(3f, 0f, 4f), 3f, 1.2f));
+            Assert.IsTrue(_rig.VoicePlaying("landing_thump"), "thump voice");
+            Assert.IsFalse(_rig.VoicePlaying("suspension_creak"), "creak waits for the springs to settle");
 
             yield return new WaitForSecondsRealtime(0.4f);
 
-            Assert.IsTrue(VoicePlaying("suspension_creak"), "creak voice");
+            Assert.IsTrue(_rig.VoicePlaying("suspension_creak"), "creak voice");
         }
 
         [UnityTest]
         public IEnumerator SoftLanding_IsSilent()
         {
-            _bootstrap.Context.Events.Publish(new RoverLanded(Vector3.zero, 0.1f, 0.2f));
+            _rig.Events.Publish(new RoverLanded(Vector3.zero, 0.1f, 0.2f));
             yield return new WaitForSecondsRealtime(0.4f);
-            Assert.IsFalse(VoicePlaying("landing_thump"));
-            Assert.IsFalse(VoicePlaying("suspension_creak"));
+            Assert.IsFalse(_rig.VoicePlaying("landing_thump"));
+            Assert.IsFalse(_rig.VoicePlaying("suspension_creak"));
         }
 
         [UnityTest]
         public IEnumerator Radio_ClosesTheLowPassAndRaisesStatic_AwayFromBase()
         {
             yield return new WaitForSecondsRealtime(0.5f);
-            AudioLowPassFilter filter = _radio.GetComponentInChildren<AudioLowPassFilter>();
-            AudioSource staticLoop = FindChildSource(_radio.transform, "Static");
-            Assert.Greater(_radio.Clarity, 0.99f);
+            AudioLowPassFilter filter = _rig.Radio.GetComponentInChildren<AudioLowPassFilter>();
+            AudioSource staticLoop = AudioTestRig.FindChildSource(_rig.Radio.transform, "Static");
+            Assert.Greater(_rig.Radio.Clarity, 0.99f);
             Assert.Greater(filter.cutoffFrequency, 20000f);
             float nearStatic = staticLoop.volume;
 
-            _rover.Position = new Vector3(600f, 0f, 0f);
+            _rig.Rover.Position = new Vector3(600f, 0f, 0f);
             yield return new WaitForSecondsRealtime(4f);
 
-            Assert.Less(_radio.Clarity, 0.05f);
+            Assert.Less(_rig.Radio.Clarity, 0.05f);
             Assert.Less(filter.cutoffFrequency, 1200f);
             Assert.Greater(staticLoop.volume, nearStatic * 5f);
+        }
 
-            _radio.SetSignalRadius(1000f);
+        [UnityTest]
+        public IEnumerator SignalRadiusChanged_BringsTheMusicBack()
+        {
+            _rig.Rover.Position = new Vector3(600f, 0f, 0f);
+            yield return new WaitForSecondsRealtime(3f);
+            Assert.Less(_rig.Radio.Clarity, 0.05f);
+
+            _rig.Events.Publish(new SignalRadiusChanged(1000f));
+            Assert.AreEqual(1000f, _rig.Radio.TargetSignalRadius);
             yield return new WaitForSecondsRealtime(6f);
-            Assert.Greater(_radio.Clarity, 0.95f, "a wider signal radius brings the music back");
+
+            Assert.Greater(_rig.Radio.Clarity, 0.95f, "a wider signal radius blooms the music back in");
         }
 
         [UnityTest]
         public IEnumerator Radio_TunesToTheOtherTrack_WhenOneEnds()
         {
             AudioClip first = LoudestDeckClip();
-            AudioSource swish = FindChildSource(_radio.transform, "TuningSwish");
+            AudioSource swish = AudioTestRig.FindChildSource(_rig.Radio.transform, "TuningSwish");
             Assert.IsNotNull(first);
             bool swishPlayed = false;
             AudioClip next = first;
-            float deadline = Time.realtimeSinceStartup + TestTrackSeconds + 4f;
+            float deadline = Time.realtimeSinceStartup + AudioTestRig.TestTrackSeconds + 4f;
             while (next == first && Time.realtimeSinceStartup < deadline)
             {
                 swishPlayed |= swish.isPlaying;
@@ -155,32 +137,37 @@ namespace MoonProject.Audio.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator SteadyState_Updates_AllocateNothing()
+        public IEnumerator SteadyState_UpdatesAndEvents_AllocateNothing()
         {
             yield return new WaitForSecondsRealtime(0.2f);
             Action[] updates =
             {
-                UpdateOf(_roverAudio), UpdateOf(_radio), UpdateOf(_ambience),
+                AudioTestRig.UpdateOf(_rig.Director), AudioTestRig.UpdateOf(_rig.RoverAudio),
+                AudioTestRig.UpdateOf(_rig.Gameplay), AudioTestRig.UpdateOf(_rig.Radio),
+                AudioTestRig.UpdateOf(_rig.Ambience),
             };
 
-            RunFrames(updates, 30);
+            RunFrames(updates, 60);
             long before = GC.GetAllocatedBytesForCurrentThread();
             RunFrames(updates, 300);
             long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
 
-            Assert.AreEqual(0L, allocated, "bytes allocated by 300 frames of rover audio, radio and ambience");
+            Assert.AreEqual(0L, allocated, "bytes allocated by 300 frames of audio updates and gameplay events");
         }
 
         private void RunFrames(Action[] updates, int frames)
         {
+            EventBus events = _rig.Events;
+            IAudioSettings settings = _rig.Bootstrap.Context.Get<IAudioSettings>();
             for (int frame = 0; frame < frames; frame++)
             {
                 float t = frame * 0.05f;
-                _rover.Position = new Vector3(200f * Mathf.Sin(t), 0f, 0f);
-                _rover.NormalizedSpeed = 0.5f + 0.5f * Mathf.Sin(t * 3f);
-                _rover.DriveInput = new Vector2(0f, 1f);
-                _rover.IsGrounded = frame % 40 < 30;
-                _rover.GroundNormal = Quaternion.Euler(frame % 20 == 0 ? 12f : 0f, 0f, 0f) * Vector3.up;
+                _rig.Rover.Position = new Vector3(200f * Mathf.Sin(t), 0f, 0f);
+                _rig.Rover.NormalizedSpeed = 0.5f + 0.5f * Mathf.Sin(t * 3f);
+                _rig.Rover.DriveInput = new Vector2(0f, 1f);
+                _rig.Rover.IsGrounded = frame % 40 < 30;
+                _rig.Rover.GroundNormal = Quaternion.Euler(frame % 20 == 0 ? 12f : 0f, 0f, 0f) * Vector3.up;
+                PublishSome(events, settings, frame);
                 for (int i = 0; i < updates.Length; i++)
                 {
                     updates[i]();
@@ -188,78 +175,41 @@ namespace MoonProject.Audio.PlayModeTests
             }
         }
 
-        private static Action UpdateOf(MonoBehaviour component)
+        private static void PublishSome(EventBus events, IAudioSettings settings, int frame)
         {
-            MethodInfo method = component.GetType().GetMethod("Update", BindingFlags.Instance | BindingFlags.NonPublic);
-            Assert.IsNotNull(method, $"{component.GetType().Name}.Update");
-            return (Action)Delegate.CreateDelegate(typeof(Action), component, method);
-        }
-
-        private bool VoicePlaying(string clipPrefix)
-        {
-            foreach (AudioSource voice in _director.GetComponentsInChildren<AudioSource>())
+            switch (frame % 12)
             {
-                if (voice.clip != null && voice.clip.name.StartsWith(clipPrefix, StringComparison.Ordinal) &&
-                    voice.isPlaying && voice.volume > 0f)
-                {
-                    return true;
-                }
+                case 0:
+                    events.Publish(new ScrapCollected(Vector3.one, 1, frame / 12));
+                    break;
+                case 2:
+                    events.Publish(new SonarPinged(Vector3.zero, 80f));
+                    break;
+                case 3:
+                    events.Publish(new RelicAnswered(Vector3.forward * 40f, 40f));
+                    break;
+                case 5:
+                    events.Publish(new TetherAttached(Vector3.right, 5f));
+                    break;
+                case 7:
+                    events.Publish(new ExcavationStarted(Vector3.left));
+                    break;
+                case 9:
+                    events.Publish(new TetherReleased(Vector3.right, frame % 24 == 9));
+                    events.Publish(new ExcavationStopped(Vector3.left, true));
+                    break;
+                case 11:
+                    events.Publish(new RoverLanded(Vector3.zero, 2.5f, 1f));
+                    settings.SetVolume(AudioBus.Sfx, frame % 24 == 11 ? 0.9f : 1f);
+                    break;
             }
-
-            return false;
         }
 
         private AudioClip LoudestDeckClip()
         {
-            AudioSource a = FindChildSource(_radio.transform, "DeckA");
-            AudioSource b = FindChildSource(_radio.transform, "DeckB");
-            AudioSource loud = a.volume >= b.volume ? a : b;
-            return loud.clip;
-        }
-
-        private static AudioSource FindChildSource(Transform parent, string name)
-        {
-            Transform child = parent.Find(name);
-            Assert.IsNotNull(child, name);
-            return child.GetComponent<AudioSource>();
-        }
-
-        private static AudioClip Tone(string name, float frequency)
-        {
-            int count = TestTrackSeconds * SampleRate;
-            var data = new float[count];
-            for (int i = 0; i < count; i++)
-            {
-                data[i] = 0.2f * Mathf.Sin(2f * Mathf.PI * frequency * i / SampleRate);
-            }
-
-            AudioClip clip = AudioClip.Create(name, count, 1, SampleRate, false);
-            clip.SetData(data, 0);
-            return clip;
-        }
-
-        private static GameObject Child(GameObject parent, string name)
-        {
-            var child = new GameObject(name);
-            child.transform.SetParent(parent.transform, false);
-            return child;
-        }
-
-        private static T Load<T>(string file) where T : Object
-        {
-#if UNITY_EDITOR
-            var asset = AssetDatabase.LoadAssetAtPath<T>(DataFolder + file);
-            Assert.IsNotNull(asset, $"{DataFolder}{file} missing: run the Audio builders first");
-            return asset;
-#else
-            throw new NotSupportedException("These tests load builder output through the editor's AssetDatabase.");
-#endif
-        }
-
-        private T Track<T>(T created) where T : Object
-        {
-            _created.Add(created);
-            return created;
+            AudioSource a = AudioTestRig.FindChildSource(_rig.Radio.transform, "DeckA");
+            AudioSource b = AudioTestRig.FindChildSource(_rig.Radio.transform, "DeckB");
+            return (a.volume >= b.volume ? a : b).clip;
         }
     }
 }
