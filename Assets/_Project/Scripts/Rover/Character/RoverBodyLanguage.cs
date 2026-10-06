@@ -106,6 +106,7 @@ namespace MoonProject.Rover
                 events.Subscribe<RelicDeposited>(OnRelicDeposited),
                 events.Subscribe<TetherReleased>(OnTetherReleased),
                 events.Subscribe<RoverRecovering>(OnRecovering),
+                events.Subscribe<RoverJumped>(OnJumped),
             };
             _initialized = true;
             Apply();
@@ -167,6 +168,11 @@ namespace MoonProject.Rover
             _mood.NodContentedly(_tuning.DepositNod);
         }
 
+        private void OnJumped(RoverJumped jumped)
+        {
+            PerkUp(Mathf.Lerp(_tuning.HopPerk, _tuning.LeapPerk, jumped.Strength));
+        }
+
         private void OnRecovering(RoverRecovering recovering)
         {
             PerkUp(_tuning.RecoveryPerk);
@@ -190,7 +196,7 @@ namespace MoonProject.Rover
             }
             else
             {
-                PerkUp(_tuning.SoftLandingPerk);
+                PerkUp(Mathf.Max(_tuning.SoftLandingPerk, _mood.LandingJoy(landed.AirTime)));
             }
         }
 
@@ -202,6 +208,7 @@ namespace MoonProject.Rover
                 return;
             }
 
+            _mood.SetEffort(_rover.JumpCharge);
             switch (_mood.Step(_rover.Speed, _rover.DriveInput.magnitude, deltaTime))
             {
                 case MoodTransition.BeganWaking:

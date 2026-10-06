@@ -149,7 +149,10 @@ namespace MoonProject.Rover
                 return;
             }
 
-            float strength = Mathf.InverseLerp(_tuning.LandingMinImpact, _tuning.LandingFullImpact, landed.ImpactSpeed);
+            float impact = Mathf.InverseLerp(_tuning.LandingMinImpact, _tuning.LandingFullImpact, landed.ImpactSpeed);
+            float flight = Mathf.InverseLerp(_tuning.LandingRingAirTimeFrom, _tuning.LandingRingAirTimeFull,
+                landed.AirTime);
+            float strength = Mathf.Max(impact, flight);
             Vector3 normal = _rover.GroundNormal;
             _landingDust.transform.SetPositionAndRotation(landed.Position,
                 Quaternion.FromToRotation(Vector3.forward, normal));

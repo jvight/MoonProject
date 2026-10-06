@@ -58,16 +58,22 @@ namespace MoonProject.Rover
             _heave.AddVelocity(metresPerSecond);
         }
 
-        /// <summary>Advances all springs. <paramref name="localAcceleration"/>: x right, y up, z forward.</summary>
-        public void Step(Vector3 localAcceleration, float deltaTime)
+        /// <summary>
+        /// Advances all springs. <paramref name="localAcceleration"/>: x right, y up, z forward.
+        /// <paramref name="crouch"/> (0..1, the Hover-Jump charge) sinks and squats the chassis onto its springs.
+        /// </summary>
+        public void Step(Vector3 localAcceleration, float crouch, float deltaTime)
         {
             Vector3 a = Vector3.ClampMagnitude(localAcceleration, _tuning.AccelerationLimit);
+            crouch = Mathf.Clamp01(crouch);
 
-            _pitch.Step(a.z * _tuning.PitchPerAcceleration, _tuning.LeanFrequency, _tuning.LeanDamping, deltaTime);
+            _pitch.Step(a.z * _tuning.PitchPerAcceleration + crouch * _tuning.CrouchLean, _tuning.LeanFrequency,
+                _tuning.LeanDamping, deltaTime);
             _pitch.Clamp(-_tuning.MaxLean, _tuning.MaxLean);
             _roll.Step(a.x * _tuning.RollPerAcceleration, _tuning.LeanFrequency, _tuning.LeanDamping, deltaTime);
             _roll.Clamp(-_tuning.MaxLean, _tuning.MaxLean);
-            _heave.Step(-a.y * _tuning.HeavePerAcceleration, _tuning.HeaveFrequency, _tuning.HeaveDamping, deltaTime);
+            _heave.Step(-a.y * _tuning.HeavePerAcceleration - crouch * _tuning.CrouchDepth, _tuning.HeaveFrequency,
+                _tuning.HeaveDamping, deltaTime);
             _heave.Clamp(-_tuning.MaxHeave, _tuning.MaxHeave);
 
             float antenna = _tuning.AntennaDegreesPerAcceleration;

@@ -27,7 +27,7 @@ namespace MoonProject.Rover.Tests
         {
             for (int i = 0; i < 120; i++)
             {
-                _jelly.Step(new Vector3(0f, 0f, 4f), Frame);
+                _jelly.Step(new Vector3(0f, 0f, 4f), 0f, Frame);
             }
 
             Assert.Greater(_jelly.Pitch, 1f);
@@ -35,7 +35,7 @@ namespace MoonProject.Rover.Tests
 
             for (int i = 0; i < 120; i++)
             {
-                _jelly.Step(new Vector3(0f, 0f, -4f), Frame);
+                _jelly.Step(new Vector3(0f, 0f, -4f), 0f, Frame);
             }
 
             Assert.Less(_jelly.Pitch, -1f);
@@ -46,7 +46,7 @@ namespace MoonProject.Rover.Tests
         {
             for (int i = 0; i < 120; i++)
             {
-                _jelly.Step(new Vector3(5f, 0f, 0f), Frame);
+                _jelly.Step(new Vector3(5f, 0f, 0f), 0f, Frame);
             }
 
             Assert.Greater(_jelly.Roll, 1f, "Right-side-up = leaning left, away from a right turn.");
@@ -57,7 +57,7 @@ namespace MoonProject.Rover.Tests
         {
             for (int i = 0; i < 180; i++)
             {
-                _jelly.Step(new Vector3(0f, 0f, 4.5f), Frame);
+                _jelly.Step(new Vector3(0f, 0f, 4.5f), 0f, Frame);
             }
 
             float start = _jelly.Pitch;
@@ -66,7 +66,7 @@ namespace MoonProject.Rover.Tests
             float settledAt = -1f;
             for (int i = 1; i <= 240; i++)
             {
-                _jelly.Step(Vector3.zero, Frame);
+                _jelly.Step(Vector3.zero, 0f, Frame);
                 float pitch = _jelly.Pitch;
                 if (Mathf.Abs(pitch) > 0.05f * Mathf.Abs(start) && Mathf.Sign(pitch) != Mathf.Sign(previous))
                 {
@@ -92,11 +92,11 @@ namespace MoonProject.Rover.Tests
         [Test]
         public void HardLanding_SquashesThenRecovers()
         {
-            _jelly.Step(new Vector3(0f, 150f, 0f), 0.02f);
+            _jelly.Step(new Vector3(0f, 150f, 0f), 0f, 0.02f);
             float lowest = 0f;
             for (int i = 0; i < 30; i++)
             {
-                _jelly.Step(Vector3.zero, Frame);
+                _jelly.Step(Vector3.zero, 0f, Frame);
                 lowest = Mathf.Min(lowest, _jelly.Heave);
             }
 
@@ -104,10 +104,24 @@ namespace MoonProject.Rover.Tests
             Assert.GreaterOrEqual(lowest, -_tuning.MaxHeave);
             for (int i = 0; i < 180; i++)
             {
-                _jelly.Step(Vector3.zero, Frame);
+                _jelly.Step(Vector3.zero, 0f, Frame);
             }
 
             Assert.AreEqual(0f, _jelly.Heave, 0.005f);
+        }
+
+        [Test]
+        public void ChargingAJump_SinksAndSquatsTheChassisSoftly()
+        {
+            _jelly.Step(Vector3.zero, 1f, Frame);
+            Assert.Greater(_jelly.Heave, -0.02f, "The crouch eases in.");
+            for (int i = 0; i < 120; i++)
+            {
+                _jelly.Step(Vector3.zero, 1f, Frame);
+            }
+
+            Assert.AreEqual(-_tuning.CrouchDepth, _jelly.Heave, 0.01f);
+            Assert.AreEqual(_tuning.CrouchLean, _jelly.Pitch, 0.2f);
         }
 
         [Test]
@@ -115,7 +129,7 @@ namespace MoonProject.Rover.Tests
         {
             for (int i = 0; i < 10; i++)
             {
-                _jelly.Step(new Vector3(800f, -900f, 700f), Frame);
+                _jelly.Step(new Vector3(800f, -900f, 700f), 0f, Frame);
                 Assert.LessOrEqual(Mathf.Abs(_jelly.Pitch), _tuning.MaxLean);
                 Assert.LessOrEqual(Mathf.Abs(_jelly.Roll), _tuning.MaxLean);
                 Assert.LessOrEqual(Mathf.Abs(_jelly.Heave), _tuning.MaxHeave);

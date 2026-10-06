@@ -16,7 +16,7 @@ namespace MoonProject.Rover
     /// <see cref="GroundModel"/>, <see cref="LandingDetector"/>); this component only wires them to physics.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class RoverController : MonoBehaviour, IGameSystem, IRoverState, IRoverRig
+    public sealed class RoverController : MonoBehaviour, IGameSystem, IRoverState, IRoverRig, IRoverAbilities
     {
         /// <summary>The probe starts this fraction of the radius above the centre, so slight sinking hits.</summary>
         private const float ProbeLiftFraction = 0.5f;
@@ -48,6 +48,11 @@ namespace MoonProject.Rover
         private EventBus _events;
         private LandingDetector _landing;
         private StuckDetector _stuck;
+        private HoverJump _jump;
+        private int _abilities;
+        private bool _jumpHeld;
+        private bool _leaping;
+        private float _liftoff;
         private ITerrainQuery _terrain;
         private bool _initialized;
         private bool _recovering;
@@ -159,6 +164,28 @@ namespace MoonProject.Rover
         /// <summary>True while any owner asks 07 to stay parked.</summary>
         public bool IsHeldStill => _holds.IsHeld;
 
+        // IRoverAbilities
+        public bool Has(RoverAbility ability)
+        {
+            return (_abilities & AbilityBit(ability)) != 0;
+        }
+
+        public void Grant(RoverAbility ability)
+        {
+            _abilities |= AbilityBit(ability);
+        }
+
+        private static int AbilityBit(RoverAbility ability)
+        {
+            return 1 << (int)ability;
+        }
+
+        /// <summary>Hover-Jump charge, 0..1 (0 when not charging): drives the crouch and the effort squint.</summary>
+        public float JumpCharge => _jump.Charge;
+
+        /// <summary>True from a Hover-Jump take-off until touchdown.</summary>
+        public bool IsLeaping => _leaping;
+
         public void Initialize(GameContext context)
         {
             if (!ValidateWiring())
@@ -171,6 +198,7 @@ namespace MoonProject.Rover
             _events = context.Events;
             _landing = new LandingDetector(_tuning.Landing);
             _stuck = new StuckDetector(_tuning.Recovery);
+            _jump = new HoverJump(_tuning.HoverJump);
             _terrain = context.Get<ITerrainQuery>();
             PlaceOnTerrain(_terrain);
             ConfigureBody();
@@ -179,6 +207,7 @@ namespace MoonProject.Rover
             _visualHeading = _heading;
             context.Register<IRoverState>(this);
             context.Register<IRoverRig>(this);
+            context.Register<IRoverAbilities>(this);
 
             bool visualsReady = _visualRig.Initialize(this);
             bool effectsReady = _wheelFx.Initialize(context, this);
@@ -280,12 +309,27 @@ namespace MoonProject.Rover
 
             ReadInput(dt);
             ProbeGround(out float speedIntoGround, velocity);
+            if (_liftoff > 0f)
+            {
+                // Leaving the ground after a Hover-Jump: no downforce or grip pulling 07 back for a moment.
+                _liftoff -= dt;
+                _hasContact = false;
+            }
 
+            bool wasGrounded = _landing.IsGrounded;
             if (_landing.Step(_hasContact, speedIntoGround, dt))
             {
                 Vector3 contact = _body.position - _contactNormal * _tuning.Ground.SphereRadius;
                 _events.Publish(new RoverLanded(contact, _landing.LastImpactSpeed, _landing.LastAirTime));
             }
+
+            if (!wasGrounded && _landing.IsGrounded)
+            {
+                _leaping = false;
+                _jump.NotifyLanded();
+            }
+
+            StepHoverJump(velocity, dt);
 
             Vector3 normal = _hasContact ? _contactNormal : Vector3.up;
             Vector3 forward = Vector3.ProjectOnPlane(yaw * Vector3.forward, normal).normalized;
@@ -354,6 +398,9 @@ namespace MoonProject.Rover
             _body.isKinematic = true;
             _localAcceleration = Vector3.zero;
             _yawRate = 0f;
+            _leaping = false;
+            _liftoff = 0f;
+            _jump.Reset();
             _events.Publish(new RoverRecovering(from, to, _tuning.Recovery.LiftDuration));
         }
 
@@ -391,6 +438,36 @@ namespace MoonProject.Rover
             DriveSettings drive = _tuning.Drive;
             _throttle = Ease(_throttle, raw.y, drive.ThrottleRiseHalfLife, drive.ThrottleFallHalfLife, dt);
             _steer = Ease(_steer, raw.x, _tuning.Steering.SteerRiseHalfLife, _tuning.Steering.SteerReturnHalfLife, dt);
+            _jumpHeld = _driveSource != null
+                ? _driveSource is IRoverJumpSource jumpSource && jumpSource.JumpHeld
+                : _input.JumpHeld;
+        }
+
+        /// <summary>
+        /// Hover-Jump (M3-03): ignored unless 07 owns it, only on the ground and never while gameplay holds it still.
+        /// A leap sets the take-off speed for the charged height, keeps the forward speed and leaves the ground
+        /// cleanly.
+        /// </summary>
+        private void StepHoverJump(Vector3 velocity, float dt)
+        {
+            bool enabled = Has(RoverAbility.HoverJump) && !_holds.IsHeld;
+            bool grounded = _landing.IsGrounded && !_leaping && _liftoff <= 0f;
+            switch (_jump.Step(enabled, _jumpHeld, grounded, dt))
+            {
+                case HoverJumpEvent.ChargeProgress:
+                    _events.Publish(new RoverJumpCharged(_jump.LastStrength));
+                    break;
+                case HoverJumpEvent.Leap:
+                    float strength = _jump.LastStrength;
+                    float takeOff = _jump.TakeOffSpeed(strength, _tuning.Ground.AirRiseGravity);
+                    float rise = Mathf.Max(velocity.y, 0f) + takeOff;
+                    _body.AddForce(Vector3.up * (rise - velocity.y), ForceMode.VelocityChange);
+                    _leaping = true;
+                    _liftoff = _tuning.HoverJump.LiftoffTime;
+                    _hasContact = false;
+                    _events.Publish(new RoverJumped(strength));
+                    break;
+            }
         }
 
         /// <summary>Eases toward a held input with one half-life and back toward zero with another.</summary>
@@ -423,8 +500,9 @@ namespace MoonProject.Rover
             float direction = SteeringModel.SteerDirection(steering, _forwardSpeed, _throttle,
                 _tuning.Drive.InputDeadZone);
             _steerDirection = Smoothing.Damp(_steerDirection, direction, steering.SteerDirectionHalfLife, dt);
+            float airSteer = _leaping ? _tuning.HoverJump.AirSteer : steering.AirTurnFactor;
             _yawRate = SteeringModel.YawRate(steering, _steer, _steerDirection, _forwardSpeed,
-                _tuning.Drive.TopSpeed, _hasContact);
+                _tuning.Drive.TopSpeed, true) * (_hasContact ? 1f : airSteer);
 
             _previousHeading = _heading;
             _heading = Mathf.Repeat(_heading + _yawRate * dt, 360f);
@@ -451,7 +529,34 @@ namespace MoonProject.Rover
                 float extraGravity = GroundModel.ExtraAirGravity(ground, velocity.y, Physics.gravity.y);
                 Vector3 acceleration = forward * (drive * ground.AirThrottleFactor) + Vector3.down * extraGravity;
                 _body.AddForce(acceleration, ForceMode.Acceleration);
+                if (_leaping)
+                {
+                    SteerAndCushionLeap(velocity, forward, dt);
+                }
             }
+        }
+
+        /// <summary>
+        /// During a leap the gentle air-steer also bends the flight path (a share of the ground grip), and near the
+        /// ground the cushion slows the descent so every landing is soft.
+        /// </summary>
+        private void SteerAndCushionLeap(Vector3 velocity, Vector3 forward, float dt)
+        {
+            GroundSettings ground = _tuning.Ground;
+            HoverJumpSettings jump = _tuning.HoverJump;
+            Vector3 bend = GroundModel.GripVelocityChange(velocity, Vector3.up, forward,
+                ground.GripRate * jump.AirSteer, dt);
+            float radius = ground.SphereRadius;
+            float cushion = 0f;
+            if (Physics.Raycast(_body.position, Vector3.down, out RaycastHit hit, jump.CushionProbe + radius,
+                    Layers.DriveableMask, QueryTriggerInteraction.Ignore))
+            {
+                // Aim for the landing speed where the ground probe reports touchdown, a little above the surface.
+                float touchdownGap = ground.GroundSnapDistance + radius * (1f - ground.ProbeRadiusFactor);
+                cushion = _jump.CushionVelocityChange(velocity.y, hit.distance - radius - touchdownGap);
+            }
+
+            _body.AddForce(bend + Vector3.up * cushion, ForceMode.VelocityChange);
         }
 
         private void Update()
