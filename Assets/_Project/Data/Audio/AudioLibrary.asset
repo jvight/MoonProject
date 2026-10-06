@@ -273,16 +273,106 @@ MonoBehaviour:
     _volumeMax: 0.8
     _pitchMin: 1
     _pitchMax: 1
-  - _id: ui_click
+  - _id: ui_menu_open
     _clips:
-    - {fileID: 8300000, guid: 28d80e4792180924f946c8e01fa3288d, type: 3}
+    - {fileID: 8300000, guid: 1890742ae58d7a94b865065cb3d8e78c, type: 3}
     _variantLabels:
-    - ui_click
+    - ui_menu_open
     _bus: 2
     _spatial: 0
     _loop: 0
     _volumeMin: 0.6
     _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: ui_menu_close
+    _clips:
+    - {fileID: 8300000, guid: 1d404c18c850ad34aa3c10542b0f922d, type: 3}
+    _variantLabels:
+    - ui_menu_close
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.5
+    _volumeMax: 0.5
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: ui_focus
+    _clips:
+    - {fileID: 8300000, guid: 5700c7846b5fce6448e236d3c6eb7555, type: 3}
+    - {fileID: 8300000, guid: 9bcb881525e713147b195e14f01938ff, type: 3}
+    - {fileID: 8300000, guid: 12a40ff9495cf6e41935d0cd8e48799d, type: 3}
+    _variantLabels:
+    - A4
+    - B4
+    - D5
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.26
+    _volumeMax: 0.3
+    _pitchMin: 0.985
+    _pitchMax: 1.015
+  - _id: ui_slider
+    _clips:
+    - {fileID: 8300000, guid: eb8fb2aab49bfc942aa9154adf59e68f, type: 3}
+    - {fileID: 8300000, guid: 34df7299665efcf4483df18f1e88f0f2, type: 3}
+    _variantLabels:
+    - D5
+    - E5
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.22
+    _volumeMax: 0.26
+    _pitchMin: 0.985
+    _pitchMax: 1.015
+  - _id: ui_prompt
+    _clips:
+    - {fileID: 8300000, guid: 5d730efb8e4978f439db5d88713497a5, type: 3}
+    _variantLabels:
+    - ui_prompt
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.4
+    _volumeMax: 0.4
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: ui_hold_fill
+    _clips:
+    - {fileID: 8300000, guid: 7a2fbfea14ab40442ad52715f325203c, type: 3}
+    _variantLabels:
+    - ui_hold_fill
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.45
+    _volumeMax: 0.45
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: ui_hold_complete
+    _clips:
+    - {fileID: 8300000, guid: c7d7b6b63954ae7468353b47edad4f40, type: 3}
+    _variantLabels:
+    - ui_hold_complete
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.55
+    _volumeMax: 0.55
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: ui_card
+    _clips:
+    - {fileID: 8300000, guid: fa81f0d2e4b95d342a507a66a8f3f010, type: 3}
+    _variantLabels:
+    - ui_card
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.5
+    _volumeMax: 0.5
     _pitchMin: 1
     _pitchMax: 1
   - _id: ui_confirm
