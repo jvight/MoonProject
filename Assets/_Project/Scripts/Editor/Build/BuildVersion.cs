@@ -30,7 +30,7 @@ namespace MoonProject.Editor.Build
         /// <summary>Commit date of HEAD, UTC, yyyyMMdd.</summary>
         public string CommitDate { get; }
 
-        /// <summary>True if tracked or untracked files differed from HEAD when the stamp was taken.</summary>
+        /// <summary>True if source files differed from HEAD when the stamp was taken.</summary>
         public bool Dirty { get; }
 
         public string Stamp => $"{BundleVersion}-{CommitDate}-{Commit}{(Dirty ? "-dirty" : string.Empty)}";
@@ -42,8 +42,33 @@ namespace MoonProject.Editor.Build
             string epoch = Git(repositoryRoot, "log -1 --format=%ct HEAD");
             string date = DateTimeOffset.FromUnixTimeSeconds(long.Parse(epoch, CultureInfo.InvariantCulture))
                 .UtcDateTime.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
-            bool dirty = Git(repositoryRoot, "status --porcelain").Length > 0;
+            bool dirty = HasSourceChanges(Git(repositoryRoot, "status --porcelain"));
             return new BuildVersion(PlayerSettings.bundleVersion, commit, date, dirty);
+        }
+
+        /// <summary>
+        /// True if <c>git status --porcelain</c> lists anything except untracked .meta files, which Unity generates
+        /// for new files in every worktree and the Director commits from the main editor.
+        /// </summary>
+        public static bool HasSourceChanges(string porcelain)
+        {
+            foreach (string line in porcelain.Split('\n'))
+            {
+                string entry = line.Trim();
+                if (entry.Length == 0)
+                {
+                    continue;
+                }
+
+                bool untrackedMeta = entry.StartsWith("?? ", StringComparison.Ordinal) &&
+                                     entry.TrimEnd('"', '/').EndsWith(".meta", StringComparison.Ordinal);
+                if (!untrackedMeta)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static string Git(string workingDirectory, string arguments)
