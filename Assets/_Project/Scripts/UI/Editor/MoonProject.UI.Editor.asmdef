@@ -1,0 +1,22 @@
+{
+    "name": "MoonProject.UI.Editor",
+    "rootNamespace": "MoonProject.UI.Editor",
+    "references": [
+        "MoonProject.UI",
+        "MoonProject.Core",
+        "MoonProject.Art",
+        "MoonProject.Gameplay",
+        "MoonProject.Editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
