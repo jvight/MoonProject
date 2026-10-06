@@ -20,8 +20,8 @@
 | 🚙 rover | `Scripts/Rover`, `Editor/Rover` | điều khiển, treo, camera, FX bánh xe |
 | 🎵 audio | `Scripts/Audio/**`, `tools/audio/**` (lõi DSP dùng chung), `Audio/SFX`, `Audio/Ambience` | synth SFX đúng tông, radio, ASMR |
 | 🎼 music | `tools/music/**`, `Audio/Music/**` | tự sáng tác + render nhạc lofi cho radio (D trưởng / Si thứ) |
-| ⚙️ gameplay | `Scripts/Gameplay`, `Editor/Gameplay`, `Data/Content` | (wave 2) scrap, sonar, đào, tether, base, nâng cấp, save |
-| 🖥️ ui | `Scripts/UI`, `UI/` (UXML/USS) | (wave 2) HUD tối giản, menu, cài đặt |
+| ⚙️ gameplay | `Scripts/Gameplay/**`, `Data/Content` | scrap, sonar, đào, tether, base, nâng cấp, save |
+| 🖥️ ui | `Scripts/UI/**`, `UI/` (UXML/USS) | HUD tối giản, gợi ý, menu tạm dừng, cài đặt, thẻ ký ức |
 
 ## M0 — Nền móng kỹ thuật
 | ID | Việc | Box | TT |
@@ -70,17 +70,16 @@
 | M2-04 | Tether [giữ RMB]: lò xo PD, cuộn dây bằng scroll, đứt mềm khi quá xa | gameplay | 🟦 |
 | M2-05 | Base: lander, kệ bảo tàng snap-point, nộp relic, hiệu ứng "về nhà" | gameplay + art | 🟦 |
 | M2-06 | Tháp radio 3 cấp: nâng cấp bằng scrap → mở rộng vùng tín hiệu (ánh sáng + nhạc rõ) | gameplay + audio + art | 🟦 |
-| M2-07 | 6 relic có cá tính (model + tên + câu chuyện ngắn) | art + gameplay | ⬜ |
+| M2-07 | 6 relic có cá tính (model + tên + câu chuyện ngắn) | art + gameplay | 🟦 |
 | M2-08 | Save/Load tự động | gameplay | 🟦 |
-| M2-09 | HUD tối giản (diegetic ưu tiên), prompt ngữ cảnh chỉ vài lần đầu, menu tạm dừng + cài đặt âm lượng/độ nhạy/đảo trục, thẻ "ký ức" khi đặt relic | ui | ⬜ |
+| M2-09 | HUD tối giản (diegetic ưu tiên), prompt ngữ cảnh chỉ vài lần đầu, menu tạm dừng + cài đặt âm lượng/độ nhạy/đảo trục, thẻ "ký ức" khi đặt relic | ui | 🟦 |
 | M2-10 | Tích hợp + playtest slice 15 phút, sửa feeling | Director | ⬜ |
 
 ## Backlog (đã ghi nhận, chưa giao)
 - Bụi bánh xe trông như "đá trong suốt" bay lơ lửng → nhỏ hơn, mềm hơn, trong hơn, tan nhanh hơn (rover).
 - Audio: radio rè bật lúc `RoverAwoke`; âm "nhấc bổng" nhẹ khi `RoverRecovering` (audio).
 - Scrap phát lấp lánh nhìn thấy từ 40–60 m (gameplay — đã giao).
-- Đá cuội ~20 tam giác để giảm 190k tam giác scatter (art → world).
-- Cổ 07 dày hơn để bóng đầu không bị tách (art — đã giao).
+- World chuyển đá cuội sang `RockStyle.Grit` (16–20 tam giác) của art.
 
 ## M3 — Tiến trình
 Hover-Jump, Magnetic Treads, Cargo Bed, vùng mới mở theo khả năng di chuyển, cassette/nhật ký âm thanh,
