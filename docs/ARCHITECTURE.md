@@ -163,6 +163,25 @@ Generated/Art/Base/RadioTower_L1|L2|L3.prefab   three upgrade stages, same footp
     BeaconSocket                      empty at the top (signal light / beam)
 ```
 
+## Contract: friend Tilly (Art -> Gameplay)
+```
+Generated/Art/Friends/Tilly.prefab  (meshes only; root on the ground between the feet, +Z = gaze, +Y up)
+  Body                 body, legs, arms, rotor ducts (static)
+  Eye                  the lens, its own glow renderer (EyeGlass glows cyan); pivot = lens centre, +Z = gaze
+  Rotor_FL/FR/RL/RR    blades + hub, pivot at the hub, spin about local Y (identity rotation)
+  Antenna              whip with ball tip, pivot at its base (spring wobble)
+  PartLamp_0..2        own glow renderers on M_LowPolyGlowOff: dark until lit via MaterialPropertyBlock
+                       _EmissionColor = white x intensity (the 0/3 parts readout, amber)
+  TetherPoint          empty under the belly (tether / repair beam attach point)
+Generated/Art/Friends/Tilly_Broken.prefab  same node names, posed lying on her side (pose baked into the nodes' local
+  transforms), Rotor_FR bent, antenna kinked, Eye on M_LowPolyGlowOff (dark; a property block can flicker it on)
+Generated/Art/Friends/Part_TillyRotor|Part_TillyLens|Part_TillyCell.prefab  0.27-0.36 m pickups, centre-of-mass
+  pivot, warm amber accents (never cyan)
+Lander.prefab  FriendSocket_<id>: empty on top of the friend's perch, +Y up, +Z = hatch side
+```
+`M_LowPolyGlowOff` is `M_LowPoly` with `_EmissionColor` authored black and `_EMISSION` on: its glow renderers start
+dark and are lit per renderer with the same MaterialPropertyBlock contract as 07's eye.
+
 ## Verification ladder
 1. `python tools/compile_check.py` — editor + player configs, zero warnings. Mandatory before every commit.
 2. EditMode tests (`Assets/_Project/Tests/EditMode`) for pure logic: mesh kit, event bus, economy, save, curves.
