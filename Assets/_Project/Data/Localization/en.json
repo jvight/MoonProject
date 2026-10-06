@@ -155,6 +155,18 @@
             "text": "The tower sings across the crater; home glows like a lantern on a winter night."
         },
         {
+            "key": "upgrade.rover.hover_jump.name",
+            "text": "Hover-Jump"
+        },
+        {
+            "key": "upgrade.rover.hover_jump.1.title",
+            "text": "Kenji's spring coils"
+        },
+        {
+            "key": "upgrade.rover.hover_jump.1.effect",
+            "text": "Coil up and let go: 07 leaps over gaps and floats across the dunes."
+        },
+        {
             "key": "relic.cassette_player.name",
             "text": "Ro's Mixtape"
         },

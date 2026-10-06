@@ -155,6 +155,18 @@
             "text": "Tháp ngân nga khắp miệng núi lửa; căn nhà nhỏ rực sáng như chiếc đèn lồng giữa đêm đông."
         },
         {
+            "key": "upgrade.rover.hover_jump.name",
+            "text": "Bật nhảy"
+        },
+        {
+            "key": "upgrade.rover.hover_jump.1.title",
+            "text": "Bộ lò xo của Kenji"
+        },
+        {
+            "key": "upgrade.rover.hover_jump.1.effect",
+            "text": "Nhún xuống rồi buông: 07 bật qua khe vực và bay bồng bềnh trên những đụn cát."
+        },
+        {
             "key": "relic.cassette_player.name",
             "text": "Cuộn băng của Ro"
         },
