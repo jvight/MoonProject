@@ -13,5 +13,6 @@ namespace MoonProject.Gameplay
         Dust = 7,
         WarmRing = 8,
         WarmGlow = 9,
+        FriendPillar = 10,
     }
 }

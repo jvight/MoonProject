@@ -9,10 +9,10 @@ namespace MoonProject.Gameplay
     /// <summary>
     /// The Gameplay domain's single entry in the bootstrap's system list (after World, Rover and Audio). Resolves the
     /// world, rover and camera services, creates the wallet and the upgrade service, initialises the gameplay parts in
-    /// dependency order (relics, scrap, sonar, excavation, tether, home, radio tower), registers the read-only
+    /// dependency order (relics, scrap, excavation, tether, home, radio tower, friends, sonar), registers the read-only
     /// services the UI uses (<see cref="IScrapWallet"/>, <see cref="ITetherAim"/>, <see cref="IUpgradeShop"/>,
-    /// <see cref="IInteractionHints"/>) and the save sections, announces the radio's signal radius, and owns the
-    /// shared glow meshes.
+    /// <see cref="IInteractionHints"/>, <see cref="IFriendRoster"/>, <see cref="IFriendStatuses"/>) and the save
+    /// sections, announces the radio's signal radius, and owns the shared glow meshes.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class GameplaySystem : MonoBehaviour, IGameSystem
@@ -30,6 +30,7 @@ namespace MoonProject.Gameplay
         [SerializeField] private TetherSystem _tether;
         [SerializeField] private HomeBase _home;
         [SerializeField] private RadioTower _tower;
+        [SerializeField] private FriendField _friends;
 
         private readonly List<IDisposable> _saveTokens = new List<IDisposable>();
         private GlowMeshSet _meshes;
@@ -56,9 +57,11 @@ namespace MoonProject.Gameplay
 
         public RadioTower Tower => _tower;
 
+        public FriendField Friends => _friends;
+
         internal void Wire(GameplayVisuals visuals, UpgradeDefinition[] upgradeDefinitions, RelicField relics,
             ScrapField scrap, SonarSystem sonar, ExcavationSystem excavation, TetherSystem tether, HomeBase home,
-            RadioTower tower)
+            RadioTower tower, FriendField friends)
         {
             _visuals = visuals;
             _upgradeDefinitions = upgradeDefinitions;
@@ -69,6 +72,7 @@ namespace MoonProject.Gameplay
             _tether = tether;
             _home = home;
             _tower = tower;
+            _friends = friends;
         }
 
         public void Initialize(GameContext context)
@@ -96,20 +100,26 @@ namespace MoonProject.Gameplay
 
             Vector3 lander = HomeBase.LanderSpot(services.Terrain, services.Layout.BasePosition, _home.Tuning);
             if (!_relics.Initialize(services) || !_scrap.Initialize(services, _relics.Sites, lander) ||
-                !_sonar.Initialize(services, _relics) || !_excavation.Initialize(services, _relics) ||
-                !_tether.Initialize(services, _relics) || !_home.Initialize(services, _relics, _tether, Upgrades) ||
-                !_tower.Initialize(services, Upgrades))
+                !_excavation.Initialize(services, _relics) || !_tether.Initialize(services, _relics) ||
+                !_home.Initialize(services, _relics, _tether, Upgrades) || !_tower.Initialize(services, Upgrades) ||
+                !_friends.Initialize(services, _relics, _scrap, _home) ||
+                !_sonar.Initialize(services, _relics, _friends))
             {
                 enabled = false;
                 return;
             }
 
+            _friends.Connect(_sonar);
+
             Shop = new UpgradeShop(Upgrades, new IUpgradeStation[] { _tower }, save);
-            Hints = new InteractionHints(services.Rover, _sonar, _excavation, _tether, _home, _tower, Upgrades);
+            Hints = new InteractionHints(services.Rover, _sonar, _excavation, _tether, _home, _tower, Upgrades,
+                _friends);
             context.Register<IScrapWallet>(Wallet);
             context.Register<ITetherAim>(_tether);
             context.Register<IUpgradeShop>(Shop);
             context.Register<IInteractionHints>(Hints);
+            context.Register<IFriendRoster>(_friends);
+            context.Register<IFriendStatuses>(_friends);
             Upgrades.PublishSignals();
             RegisterSaveSections(save);
         }
@@ -124,6 +134,8 @@ namespace MoonProject.Gameplay
                 GameplaySaveKeys.RelicsVersion, _relics.Capture, RestoreRelics)));
             _saveTokens.Add(save.Register(new SaveSection<UpgradesSaveData>(GameplaySaveKeys.Upgrades,
                 GameplaySaveKeys.UpgradesVersion, Upgrades.Capture, RestoreUpgrades)));
+            _saveTokens.Add(save.Register(new SaveSection<FriendsSaveData>(GameplaySaveKeys.Friends,
+                GameplaySaveKeys.FriendsVersion, _friends.Capture, _friends.Restore)));
         }
 
         private void RestoreRelics(RelicsSaveData data)
@@ -161,6 +173,7 @@ namespace MoonProject.Gameplay
                 : _home == null ? "HomeBase is not assigned."
                 : _home.Tuning == null ? "HomeBase has no BaseTuning."
                 : _tower == null ? "RadioTower is not assigned."
+                : _friends == null ? "FriendField is not assigned."
                 : null;
         }
 

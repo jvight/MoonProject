@@ -25,6 +25,12 @@ namespace MoonProject.Gameplay.PlayModeTests
             Listen(events, RelicDeposited);
             Listen(events, UpgradePurchased);
             Listen(events, SignalRadiusChanged);
+            Listen(events, FriendAnswered);
+            Listen(events, FriendPartCollected);
+            Listen(events, FriendRepairStarted);
+            Listen(events, FriendRepaired);
+            Listen(events, FriendGreeted);
+            Listen(events, FriendSpotted);
         }
 
         /// <summary>Event type names in publish order.</summary>
@@ -44,6 +50,18 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         public List<Timed<SignalRadiusChanged>> SignalRadiusChanged { get; } =
             new List<Timed<SignalRadiusChanged>>();
+
+        public List<Timed<FriendAnswered>> FriendAnswered { get; } = new List<Timed<FriendAnswered>>();
+
+        public List<Timed<FriendPartCollected>> FriendPartCollected { get; } =
+            new List<Timed<FriendPartCollected>>();
+
+        public List<Timed<FriendRepairStarted>> FriendRepairStarted { get; } =
+            new List<Timed<FriendRepairStarted>>();
+
+        public List<Timed<FriendRepaired>> FriendRepaired { get; } = new List<Timed<FriendRepaired>>();
+        public List<Timed<FriendGreeted>> FriendGreeted { get; } = new List<Timed<FriendGreeted>>();
+        public List<Timed<FriendSpotted>> FriendSpotted { get; } = new List<Timed<FriendSpotted>>();
 
         public void Dispose()
         {

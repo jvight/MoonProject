@@ -46,6 +46,25 @@ namespace MoonProject.Gameplay.Tests
 
         public static Vector3 MoundCentre => new Vector3(60f, 0f, 80f);
 
+        /// <summary>A shallow, smooth crater east of home (centre, radius 15 m, 1.2 m deep).</summary>
+        public static Vector3 CraterCentre => new Vector3(85f, 0f, 12f);
+
+        private const float CraterRadius = 15f;
+        private const float CraterDepth = 1.2f;
+
+        /// <summary>A gentle floor (0.3 m dunes) with one shallow crater at <see cref="CraterCentre"/>.</summary>
+        public static TestWorld WithCrater()
+        {
+            return new TestWorld((x, z) =>
+            {
+                float dunes = 0.3f * Mathf.Sin(x / 31f) * Mathf.Cos(z / 27f);
+                float d = Vector2.Distance(new Vector2(x, z), new Vector2(CraterCentre.x, CraterCentre.z)) /
+                          CraterRadius;
+                float crater = d < 1f ? -CraterDepth * (1f - d * d) * (1f - d * d) : 0f;
+                return dunes + crater;
+            });
+        }
+
         public Rect PlayableArea { get; }
 
         public Vector3 BasePosition => new Vector3(0f, _height(0f, 0f), 0f);

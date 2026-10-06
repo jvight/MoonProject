@@ -37,10 +37,13 @@ namespace MoonProject.Gameplay.Editor
             var scrapCatalog = context.LoadAsset<ScrapCatalog>(GameplayAssetPaths.ScrapCatalog);
             var relicCatalog = context.LoadAsset<RelicCatalog>(GameplayAssetPaths.RelicCatalog);
             var radioTower = context.LoadAsset<UpgradeDefinition>(GameplayAssetPaths.RadioTowerUpgrade);
+            var friendTuning = context.LoadAsset<FriendTuning>(GameplayAssetPaths.FriendTuning);
+            var friendCatalog = context.LoadAsset<FriendCatalog>(GameplayAssetPaths.FriendCatalog);
             Require(visuals.Validate(), nameof(GameplayVisuals));
             Require(scrapCatalog.Validate(), nameof(ScrapCatalog));
             Require(relicCatalog.Validate(), nameof(RelicCatalog));
             Require(radioTower.Validate(), nameof(UpgradeDefinition));
+            Require(friendCatalog.Validate(), nameof(FriendCatalog));
 
             Transform root = context.GameplayRoot.transform;
             GameObject host = context.CreateChild("GameplaySystem", root);
@@ -52,6 +55,7 @@ namespace MoonProject.Gameplay.Editor
             var tether = Part<TetherSystem>(context, host, "Tether");
             var home = Part<HomeBase>(context, host, "Home");
             var tower = Part<RadioTower>(context, host, "RadioTower");
+            var friends = Part<FriendField>(context, host, "Friends");
 
             GameObject baseRoot = context.CreateChild("Base", host.transform);
             Vector3 offset = baseTuning.LanderOffset;
@@ -82,7 +86,15 @@ namespace MoonProject.Gameplay.Editor
             home.Wire(baseTuning, baseRoot.transform, Renderer(Child(lander, "Windows")),
                 Children(lander, "LampSocket_", LampSockets), shelf, Glow(shelf), Children(shelf, "Slot_", ShelfSlots));
             tower.Wire(towerTuning, radioTower, towerAnchor, stages, stageLights, beacons);
-            gameplay.Wire(visuals, new[] { radioTower }, relics, scrap, sonar, excavation, tether, home, tower);
+            var perches = new Transform[friendCatalog.Friends.Count];
+            for (int i = 0; i < perches.Length; i++)
+            {
+                perches[i] = Child(lander, friendCatalog.Friends[i].HomeSocket);
+            }
+
+            friends.Wire(friendCatalog, friendTuning, perches);
+            gameplay.Wire(visuals, new[] { radioTower }, relics, scrap, sonar, excavation, tether, home, tower,
+                friends);
             context.AddSystem(gameplay);
         }
 

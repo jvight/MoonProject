@@ -6,13 +6,13 @@ using Object = UnityEngine.Object;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// The light a relic leaves when it answers: a tall soft pillar that stands on the horizon for a while (so the
-    /// player can navigate by sight instead of pinging again) and a ring on the ground at the spot, which keeps
-    /// breathing faintly over a discovered relic that is still in the ground.
+    /// The light a relic (or a broken friend) leaves when it answers: a tall soft pillar that stands on the horizon for
+    /// a while (so the player can navigate by sight instead of pinging again) and a ring on the ground at the spot,
+    /// which keeps breathing faintly over a discovered find that is still waiting there.
     /// </summary>
     public sealed class SiteMarker : IDisposable
     {
-        /// <summary>If the relic moves this far (m) from where it answered, the pillar bows out early.</summary>
+        /// <summary>If the find moves this far (m) from where it answered, the pillar bows out early.</summary>
         private const float MovedDistance = 3f;
 
         /// <summary>Seconds a dismissed pillar takes to fade.</summary>
@@ -27,22 +27,25 @@ namespace MoonProject.Gameplay
         private Vector3 _position;
         private float _answerTime = float.NegativeInfinity;
         private float _dismissTime = float.PositiveInfinity;
+        private readonly float _scale;
         private float _brightness;
         private bool _hasPosition;
 
+        /// <param name="scale">Brightness scale of every glow of this marker (warm markers read brighter).</param>
         public SiteMarker(string name, Transform parent, SonarTuning tuning, ITerrainQuery terrain,
-            GameplayVisuals visuals, Mesh pillarMesh)
+            Material pillarMaterial, Material ringMaterial, Mesh pillarMesh, float scale)
         {
+            _scale = scale;
             _tuning = tuning ?? throw new ArgumentNullException(nameof(tuning));
             _terrain = terrain ?? throw new ArgumentNullException(nameof(terrain));
             var root = new GameObject(name);
             root.transform.SetParent(parent, false);
-            MeshRenderer pillar = GlowObject.Create("Pillar", root.transform, pillarMesh, visuals.SitePillar);
+            MeshRenderer pillar = GlowObject.Create("Pillar", root.transform, pillarMesh, pillarMaterial);
             _pillar = pillar.transform;
             _pillar.localScale = new Vector3(tuning.PillarRadius, tuning.PillarHeight, tuning.PillarRadius);
             _pillarGlow = new GlowRenderer(pillar);
             _ring = new TerrainRing(tuning.SiteRingSegments);
-            _ringGlow = new GlowRenderer(GlowObject.Create("Ring", root.transform, _ring.Mesh, visuals.SiteRing));
+            _ringGlow = new GlowRenderer(GlowObject.Create("Ring", root.transform, _ring.Mesh, ringMaterial));
         }
 
         /// <summary>Where the marker stands (valid after the first answer).</summary>
@@ -76,7 +79,7 @@ namespace MoonProject.Gameplay
             _hasPosition = true;
         }
 
-        /// <summary>The relic answered from <paramref name="groundPosition"/> with this brightness.</summary>
+        /// <summary>The find answered from <paramref name="groundPosition"/> with this brightness.</summary>
         public void Answer(Vector3 groundPosition, float brightness, float now)
         {
             Place(groundPosition);
@@ -85,17 +88,20 @@ namespace MoonProject.Gameplay
             _brightness = brightness;
         }
 
-        /// <summary>Updates the glows for <paramref name="relic"/> at <paramref name="now"/>.</summary>
-        public void Tick(Relic relic, float now)
+        /// <summary>
+        /// Updates the glows at <paramref name="now"/> for a find now at <paramref name="position"/> that still
+        /// answers the sonar (<paramref name="answers"/>) and, if <paramref name="waiting"/> (discovered and still in
+        /// place), keeps a breathing ring.
+        /// </summary>
+        public void Tick(Vector3 position, bool answers, bool waiting, float now)
         {
             if (!_hasPosition)
             {
                 return;
             }
 
-            bool inGround = relic.State == RelicState.Buried || relic.State == RelicState.Surfacing;
-            bool moved = SurfaceRules.HorizontalDistance(relic.SonarPosition, _position) > MovedDistance;
-            if ((moved || !relic.AnswersSonar) && float.IsPositiveInfinity(_dismissTime))
+            bool moved = SurfaceRules.HorizontalDistance(position, _position) > MovedDistance;
+            if ((moved || !answers) && float.IsPositiveInfinity(_dismissTime))
             {
                 _dismissTime = now;
             }
@@ -110,15 +116,15 @@ namespace MoonProject.Gameplay
                 pillar *= 1f - Ease.InOutSine((now - _dismissTime) / DismissFade);
             }
 
-            _pillarGlow.Apply(pillar);
+            _pillarGlow.Apply(pillar * _scale);
 
             float pulse = _brightness / Mathf.Max(0.01f, _tuning.NearBrightness) * _tuning.SiteRingPulse *
                           MarkerEnvelope.Pulse(age, _tuning.SiteRingPulseDuration);
-            float glow = inGround && relic.Discovered && !moved
+            float glow = waiting && !moved
                 ? _tuning.DiscoveredGlow *
                   (1f - _tuning.DiscoveredBreathDepth * (1f - MarkerEnvelope.Breath(now, _tuning.BreathPeriod)))
                 : 0f;
-            _ringGlow.Apply(Mathf.Max(pulse, glow));
+            _ringGlow.Apply(Mathf.Max(pulse, glow) * _scale);
         }
 
         public void Dispose()

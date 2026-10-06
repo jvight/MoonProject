@@ -17,5 +17,8 @@ namespace MoonProject.Gameplay
 
         public const string Upgrades = "gameplay.upgrades";
         public const int UpgradesVersion = 1;
+
+        public const string Friends = "gameplay.friends";
+        public const int FriendsVersion = 1;
     }
 }

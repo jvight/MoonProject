@@ -5,8 +5,8 @@ using MoonProject.Art;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// Recipe of the scrap glint material (Glint shader, TechGlow). The Gameplay/Materials builder writes it
-    /// as an asset; tests build the same material in memory.
+    /// Recipe of the glint materials (Glint shader): TechGlow over scrap, WarmLamp amber over friend parts. The
+    /// Gameplay/Materials builder writes them as assets; tests build the same materials in memory.
     /// </summary>
     public static class GlintMaterials
     {
@@ -18,6 +18,17 @@ namespace MoonProject.Gameplay
 
         public static Material Create(Shader shader)
         {
+            return Create(shader, "M_ScrapGlint", PaletteSwatch.TechGlow);
+        }
+
+        /// <summary>The amber glint over a friend's missing parts (not cyan like scrap).</summary>
+        public static Material CreatePart(Shader shader)
+        {
+            return Create(shader, "M_PartGlint", PaletteSwatch.WarmLamp);
+        }
+
+        private static Material Create(Shader shader, string name, PaletteSwatch swatch)
+        {
             if (shader == null)
             {
                 throw new ArgumentNullException(nameof(shader));
@@ -25,10 +36,10 @@ namespace MoonProject.Gameplay
 
             var material = new Material(shader)
             {
-                name = "M_ScrapGlint",
+                name = name,
                 renderQueue = TransparentQueue,
             };
-            material.SetColor(ColorId, Palette.Get(PaletteSwatch.TechGlow));
+            material.SetColor(ColorId, Palette.Get(swatch));
             return material;
         }
     }
