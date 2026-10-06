@@ -7,10 +7,11 @@ using MoonProject.Core.Save;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// The Gameplay domain's single entry in the bootstrap's system list (after World, Rover and Audio). Resolves the
-    /// world, rover and camera services, creates the wallet and the upgrade service, initialises the gameplay parts in
-    /// dependency order (relics, scrap, excavation, tether, home, radio tower, friends, sonar), registers the read-only
-    /// services the UI uses (<see cref="IScrapWallet"/>, <see cref="ITetherAim"/>, <see cref="IUpgradeShop"/>,
+    /// The Gameplay domain's single entry in the bootstrap's system list (after World and Rover). Resolves the world,
+    /// rover and camera services, creates the wallet and the upgrade service (which grants rover abilities through
+    /// <see cref="IRoverAbilities"/>), initialises the gameplay parts in dependency order (relics, scrap, excavation,
+    /// tether, home, radio tower, workshop, friends, sonar), registers the read-only services the UI uses
+    /// (<see cref="IScrapWallet"/>, <see cref="ITetherAim"/>, <see cref="IUpgradeShop"/>,
     /// <see cref="IInteractionHints"/>, <see cref="IFriendRoster"/>, <see cref="IFriendStatuses"/>) and the save
     /// sections, announces the radio's signal radius, and owns the shared glow meshes.
     /// </summary>
@@ -30,6 +31,7 @@ namespace MoonProject.Gameplay
         [SerializeField] private TetherSystem _tether;
         [SerializeField] private HomeBase _home;
         [SerializeField] private RadioTower _tower;
+        [SerializeField] private Workshop _workshop;
         [SerializeField] private FriendField _friends;
 
         private readonly List<IDisposable> _saveTokens = new List<IDisposable>();
@@ -57,11 +59,13 @@ namespace MoonProject.Gameplay
 
         public RadioTower Tower => _tower;
 
+        public Workshop Workshop => _workshop;
+
         public FriendField Friends => _friends;
 
         internal void Wire(GameplayVisuals visuals, UpgradeDefinition[] upgradeDefinitions, RelicField relics,
             ScrapField scrap, SonarSystem sonar, ExcavationSystem excavation, TetherSystem tether, HomeBase home,
-            RadioTower tower, FriendField friends)
+            RadioTower tower, Workshop workshop, FriendField friends)
         {
             _visuals = visuals;
             _upgradeDefinitions = upgradeDefinitions;
@@ -72,6 +76,7 @@ namespace MoonProject.Gameplay
             _tether = tether;
             _home = home;
             _tower = tower;
+            _workshop = workshop;
             _friends = friends;
         }
 
@@ -96,23 +101,33 @@ namespace MoonProject.Gameplay
             var services = new GameplayServices(context.Events, context.Input, context.Get<ITerrainQuery>(),
                 context.Get<IWorldLayout>(), context.Get<IRoverState>(), context.Get<IRoverRig>(),
                 context.Get<IViewCamera>(), save, Wallet, _visuals, _meshes);
-            Upgrades = new UpgradeService(context.Events, Wallet, _upgradeDefinitions);
+            Upgrades = new UpgradeService(context.Events, Wallet, context.Get<IRoverAbilities>(),
+                _upgradeDefinitions);
 
             Vector3 lander = HomeBase.LanderSpot(services.Terrain, services.Layout.BasePosition, _home.Tuning);
             if (!_relics.Initialize(services) || !_scrap.Initialize(services, _relics.Sites, lander) ||
                 !_excavation.Initialize(services, _relics) || !_tether.Initialize(services, _relics) ||
                 !_home.Initialize(services, _relics, _tether, Upgrades) || !_tower.Initialize(services, Upgrades) ||
-                !_friends.Initialize(services, _relics, _scrap, _home) ||
+                !_workshop.Initialize(services, Upgrades) || !_friends.Initialize(services, _relics, _scrap, _home) ||
                 !_sonar.Initialize(services, _relics, _friends))
             {
                 enabled = false;
                 return;
             }
 
+            var stations = new IUpgradeStation[] { _tower, _workshop };
+            string unsold = UnsoldUpgrade(stations);
+            if (unsold != null)
+            {
+                Debug.LogError($"{nameof(GameplaySystem)}: no station sells upgrade '{unsold}'.", this);
+                enabled = false;
+                return;
+            }
+
             _friends.Connect(_sonar);
 
-            Shop = new UpgradeShop(Upgrades, new IUpgradeStation[] { _tower }, save);
-            Hints = new InteractionHints(services.Rover, _sonar, _excavation, _tether, _home, _tower, Upgrades,
+            Shop = new UpgradeShop(Upgrades, stations, save);
+            Hints = new InteractionHints(services.Rover, _sonar, _excavation, _tether, _home, stations, Upgrades,
                 _friends);
             context.Register<IScrapWallet>(Wallet);
             context.Register<ITetherAim>(_tether);
@@ -151,6 +166,26 @@ namespace MoonProject.Gameplay
             _tower.ShowLevel(Upgrades.LevelOf(_tower.Definition.Id));
         }
 
+        /// <summary>The id of an upgrade no station sells (it could never be bought), or null.</summary>
+        private string UnsoldUpgrade(IUpgradeStation[] stations)
+        {
+            foreach (UpgradeDefinition definition in _upgradeDefinitions)
+            {
+                bool sold = false;
+                foreach (IUpgradeStation station in stations)
+                {
+                    sold |= station.Sells(definition);
+                }
+
+                if (!sold)
+                {
+                    return definition.Id;
+                }
+            }
+
+            return null;
+        }
+
         private string WiringProblem()
         {
             if (_visuals == null)
@@ -173,6 +208,7 @@ namespace MoonProject.Gameplay
                 : _home == null ? "HomeBase is not assigned."
                 : _home.Tuning == null ? "HomeBase has no BaseTuning."
                 : _tower == null ? "RadioTower is not assigned."
+                : _workshop == null ? "Workshop is not assigned."
                 : _friends == null ? "FriendField is not assigned."
                 : null;
         }

@@ -6,13 +6,15 @@ namespace MoonProject.Gameplay.PlayModeTests
 {
     /// <summary>
     /// Stands in for the Rover domain: a kinematic body the test moves directly, with an eye (TetherOrigin), a cargo
-    /// socket and a following camera. Registers IRoverState, IRoverRig and IViewCamera, and records every gaze and
-    /// hold-still request so tests can assert 07's attention.
+    /// socket and a following camera. Registers IRoverState, IRoverRig, IViewCamera and IRoverAbilities, and records
+    /// every gaze and hold-still request and every ability granted so tests can assert 07's attention and upgrades.
     /// </summary>
-    public sealed class FakeRoverSystem : MonoBehaviour, IGameSystem, IRoverState, IRoverRig, IViewCamera
+    public sealed class FakeRoverSystem : MonoBehaviour, IGameSystem, IRoverState, IRoverRig, IViewCamera,
+        IRoverAbilities
     {
         private readonly Dictionary<object, GazeRequest> _gaze = new Dictionary<object, GazeRequest>();
         private readonly HashSet<object> _holders = new HashSet<object>();
+        private readonly HashSet<RoverAbility> _abilities = new HashSet<RoverAbility>();
         private Vector3 _lastPosition;
         private Transform _eye;
         private Transform _cargo;
@@ -51,6 +53,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>Gaze requests ever made, in order (owner type name, priority).</summary>
         public List<string> GazeLog { get; } = new List<string>();
 
+        /// <summary>Grant calls received (idempotent grants still count).</summary>
+        public int AbilityGrants { get; private set; }
+
         public static FakeRoverSystem Create(Vector3 position, float yaw)
         {
             var host = new GameObject("FakeRover");
@@ -65,6 +70,18 @@ namespace MoonProject.Gameplay.PlayModeTests
             context.Register<IRoverState>(this);
             context.Register<IRoverRig>(this);
             context.Register<IViewCamera>(this);
+            context.Register<IRoverAbilities>(this);
+        }
+
+        public bool Has(RoverAbility ability)
+        {
+            return _abilities.Contains(ability);
+        }
+
+        public void Grant(RoverAbility ability)
+        {
+            AbilityGrants++;
+            _abilities.Add(ability);
         }
 
         /// <summary>Teleports 07 (velocity reads zero afterwards).</summary>

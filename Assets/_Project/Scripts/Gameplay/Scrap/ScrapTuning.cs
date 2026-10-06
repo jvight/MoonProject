@@ -63,9 +63,9 @@ namespace MoonProject.Gameplay
         [Tooltip("Pieces per cluster (min, max).")]
         [SerializeField] private Vector2Int _piecesPerCluster = new Vector2Int(3, 5);
 
-        [Tooltip("The basin always holds at least this much scrap value (no grind: at least twice what the slice's " +
-                 "upgrades cost); lone clusters are added until it does.")]
-        [Range(0, 5000)] [SerializeField] private int _minTotalValue = 300;
+        [Tooltip("The basin always holds at least this much scrap value (no grind: at least twice what everything on " +
+                 "sale costs, the tower's 135 and Hover-Jump's 150); lone clusters are added until it does.")]
+        [Range(0, 5000)] [SerializeField] private int _minTotalValue = 580;
 
         [Tooltip("Extra lone-cluster attempts allowed to reach the minimum total value.")]
         [Range(0, 5000)] [SerializeField] private int _topUpAttempts = 600;

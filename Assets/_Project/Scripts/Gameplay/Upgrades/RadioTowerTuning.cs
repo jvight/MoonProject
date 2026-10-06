@@ -108,17 +108,10 @@ namespace MoonProject.Gameplay
 
         public Vector3 PadOffset => _padOffset;
         public float PadRadius => _padRadius;
-        public float PadRingWidth => _padRingWidth;
-        public float PadIdle => _padIdle;
-        public float PadInviting => _padInviting;
         public float PadOccupied => _padOccupied;
-        public float PadDone => _padDone;
         public float BreathPeriod => _breathPeriod;
-        public float PadBreathDepth => _padBreathDepth;
         public float BeaconBreathDepth => _beaconBreathDepth;
         public float BloomFadeCurve => _bloomFadeCurve;
-        public float PadEase => _padEase;
-        public int PadSegments => _padSegments;
         public Color BeaconColor => _beaconColor;
         public float BeaconRadius => _beaconRadius;
         public float BeaconGlow => _beaconGlow;
@@ -137,6 +130,9 @@ namespace MoonProject.Gameplay
         public float BloomWidth => _bloomWidth;
         public float BloomGlow => _bloomGlow;
         public int BloomSegments => _bloomSegments;
+
+        public PadLook PadLook => new PadLook(_padRadius, _padRingWidth, _padSegments, _padIdle, _padInviting,
+            _padOccupied, _padDone, _breathPeriod, _padBreathDepth, _padEase);
 
         /// <summary>Beacon brightness at <paramref name="level"/> (dark before the first purchase).</summary>
         public float BeaconGlowAt(int level)

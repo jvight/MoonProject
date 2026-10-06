@@ -7,20 +7,25 @@ namespace MoonProject.Gameplay
 {
     /// <summary>
     /// Upgrade levels and their effects. A purchase spends scrap through the wallet, raises the level and publishes
-    /// <see cref="UpgradePurchased"/>; a radio upgrade also publishes <see cref="SignalRadiusChanged"/>. Restoring a
-    /// save applies levels silently (no purchase event) and republishes the signal radius.
+    /// <see cref="UpgradePurchased"/>; a radio upgrade also publishes <see cref="SignalRadiusChanged"/>, and a level
+    /// that unlocks a rover ability grants it through <see cref="IRoverAbilities"/> (before the event, so listeners
+    /// already see it). Restoring a save applies levels silently (no purchase event), re-grants their abilities and
+    /// republishes the signal radius.
     /// </summary>
     public sealed class UpgradeService
     {
         private readonly EventBus _events;
         private readonly ScrapWallet _wallet;
+        private readonly IRoverAbilities _abilities;
         private readonly UpgradeDefinition[] _definitions;
         private readonly int[] _levels;
 
-        public UpgradeService(EventBus events, ScrapWallet wallet, IReadOnlyList<UpgradeDefinition> definitions)
+        public UpgradeService(EventBus events, ScrapWallet wallet, IRoverAbilities abilities,
+            IReadOnlyList<UpgradeDefinition> definitions)
         {
             _events = events ?? throw new ArgumentNullException(nameof(events));
             _wallet = wallet ?? throw new ArgumentNullException(nameof(wallet));
+            _abilities = abilities ?? throw new ArgumentNullException(nameof(abilities));
             if (definitions == null)
             {
                 throw new ArgumentNullException(nameof(definitions));
@@ -108,6 +113,7 @@ namespace MoonProject.Gameplay
             }
 
             _levels[index] = level + 1;
+            GrantAbilities(index);
             _events.Publish(new UpgradePurchased(definition.Id, level + 1));
             PublishSignal(index);
             return PurchaseResult.Purchased;
@@ -147,10 +153,25 @@ namespace MoonProject.Gameplay
                 if (index >= 0)
                 {
                     _levels[index] = Math.Max(0, Math.Min(saved.level, _definitions[index].MaxLevel));
+                    GrantAbilities(index);
                 }
             }
 
             PublishSignals();
+        }
+
+        /// <summary>Grants every ability unlocked by the bought levels of upgrade <paramref name="index"/>.</summary>
+        private void GrantAbilities(int index)
+        {
+            UpgradeDefinition definition = _definitions[index];
+            for (int level = 0; level < _levels[index]; level++)
+            {
+                UpgradeLevel bought = definition.Levels[level];
+                if (bought.GrantsAbility)
+                {
+                    _abilities.Grant(bought.Ability);
+                }
+            }
         }
 
         private void PublishSignal(int index)

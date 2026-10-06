@@ -28,7 +28,8 @@ namespace MoonProject.Gameplay.Editor
                 Write(shader, GlowRole.Dust), Write(shader, GlowRole.WarmRing), Write(shader, GlowRole.WarmGlow),
                 GeneratedAssets.CreateOrReplace(GlintMaterials.Create(glint), GameplayAssetPaths.GlintMaterial),
                 GeneratedAssets.CreateOrReplace(GlintMaterials.CreatePart(glint),
-                    GameplayAssetPaths.PartGlintMaterial), Write(shader, GlowRole.FriendPillar));
+                    GameplayAssetPaths.PartGlintMaterial), Write(shader, GlowRole.FriendPillar),
+                Write(shader, GlowRole.Spark));
             GeneratedAssets.CreateOrReplace(visuals, GameplayAssetPaths.Visuals);
             AssetDatabase.SaveAssets();
             Debug.Log($"{BuilderPath}: wrote {Enum.GetValues(typeof(GlowRole)).Length + 2} materials and " +
