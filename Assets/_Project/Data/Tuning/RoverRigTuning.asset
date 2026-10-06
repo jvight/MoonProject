@@ -43,7 +43,7 @@ MonoBehaviour:
   _antennaDamping: 0.15
   _antennaDegreesPerAcceleration: 2.2
   _antennaMaxAngle: 22
-  _headlampIntensity: 6
-  _headlampRange: 18
+  _headlampIntensity: 35
+  _headlampRange: 20
   _headlampSpotAngle: 62
   _headlampInnerSpotAngle: 30
