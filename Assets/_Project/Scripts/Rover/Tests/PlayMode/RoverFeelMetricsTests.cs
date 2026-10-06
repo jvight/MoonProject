@@ -12,45 +12,39 @@ using MoonProject.Testing;
 namespace MoonProject.Rover.PlayModeTests
 {
     /// <summary>
-    /// Scripted play sessions with a virtual gamepad through the real InputReader, on test ground built in code.
+    /// Scripted play sessions on test ground built in code: a <see cref="ScriptedDrive"/> holds the stick (no virtual
+    /// devices, so nothing in the input system can drop or reset it), InputTestFixture keeps real devices out.
     /// Measures the feel targets of the rover brief, prints a metrics table (Logs/rover-metrics/feel-metrics.md) and
-    /// captures a few frames. Lunar gravity is set for the session (ProjectSettings may not have it yet) and restored.
+    /// captures a few frames. Physics runs in the game's lunar configuration for the session and is restored.
     /// </summary>
     public sealed class RoverFeelMetricsTests : InputTestFixture
     {
-        private const float LunarGravity = -1.62f;
         private const float StopSpeed = 0.05f;
         private const float SettleAngle = 0.5f;
         private const int CaptureWidth = 960;
         private const int CaptureHeight = 540;
-        private const int MaxInputAttempts = 5;
 
         private static readonly string OutputFolder =
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "rover-metrics"));
 
-        private Gamepad _pad;
-        private InputActionAsset _actions;
+        private LunarTestPhysics _physics;
         private TestWorld _world;
-        private Vector3 _savedGravity;
         private int _cameraViolations;
         private float _cameraLowestClearance;
 
         public override void Setup()
         {
             base.Setup();
-            _pad = InputSystem.AddDevice<Gamepad>();
-            _actions = TestControls.Create();
-            _savedGravity = Physics.gravity;
-            Physics.gravity = new Vector3(0f, LunarGravity, 0f);
+            _physics = new LunarTestPhysics();
             _cameraViolations = 0;
             _cameraLowestClearance = float.MaxValue;
         }
 
         public override void TearDown()
         {
-            Physics.gravity = _savedGravity;
             _world?.Dispose();
-            Object.Destroy(_actions);
+            _world = null;
+            _physics.Dispose();
             base.TearDown();
         }
 
@@ -72,12 +66,12 @@ namespace MoonProject.Rover.PlayModeTests
 
         private IEnumerator FlatSession(FeelReport report)
         {
-            TestRover rover = TestRover.Spawn(_actions, _world, new Vector3(0f, 0f, -200f), 0f);
+            TestRover rover = TestRover.Spawn(_world, TestWorld.Point(0f, -200f), 0f);
             RoverController controller = rover.Controller;
             DriveSettings drive = rover.Tuning.Drive;
             yield return Hold(rover, Vector2.zero, 0.5f);
 
-            yield return Drive(new Vector2(0f, 1f));
+            Steer(rover, new Vector2(0f, 1f));
             float start = -1f;
             float t90 = float.NaN;
             float t0 = Time.fixedTime;
@@ -99,7 +93,7 @@ namespace MoonProject.Rover.PlayModeTests
             report.Add("Top speed (flat)", controller.Speed, "m/s", 7.6f, 8.4f, "~8 m/s");
             CaptureFrame(rover, "01-cruising");
 
-            yield return Drive(Vector2.zero);
+            Steer(rover, Vector2.zero);
             float coastStart = Time.fixedTime;
             float coastTop = controller.Speed;
             var speeds = new List<float>();
@@ -119,7 +113,7 @@ namespace MoonProject.Rover.PlayModeTests
             report.Add("Reverse top speed", controller.Speed, "m/s", 3f, 4f, "slower than forward (~3.5)");
 
             yield return Hold(rover, new Vector2(0f, 1f), 7f);
-            yield return Drive(new Vector2(0f, -1f));
+            Steer(rover, new Vector2(0f, -1f));
             float brakeStart = Time.fixedTime;
             while (controller.ForwardSpeed > drive.ReverseEngageSpeed && Time.fixedTime - brakeStart < 5f)
             {
@@ -156,14 +150,14 @@ namespace MoonProject.Rover.PlayModeTests
             report.Add("Pivot turn drift", Vector3.Distance(pivotFrom, controller.Position), "m", 0f, 0.4f,
                 "stays in place");
 
-            yield return Drive(Vector2.zero);
+            Steer(rover, Vector2.zero);
             rover.Dispose();
             yield return null;
         }
 
         private IEnumerator BumpSession(FeelReport report)
         {
-            TestRover rover = TestRover.Spawn(_actions, _world, new Vector3(TestWorld.BumpX, 0f, -50f), 0f);
+            TestRover rover = TestRover.Spawn(_world, TestWorld.Point(TestWorld.BumpX, -50f), 0f);
             RoverController controller = rover.Controller;
             var landings = new List<RoverLanded>();
             var landingTimes = new List<float>();
@@ -174,7 +168,7 @@ namespace MoonProject.Rover.PlayModeTests
                    }))
             {
                 yield return Hold(rover, Vector2.zero, 0.5f);
-                yield return Drive(new Vector2(0f, 1f));
+                Steer(rover, new Vector2(0f, 1f));
 
                 float approachSpeed = 0f;
                 float apex = 0f;
@@ -186,12 +180,13 @@ namespace MoonProject.Rover.PlayModeTests
                     yield return null;
                     CheckCamera(rover);
                     Vector3 p = controller.Position;
-                    if (p.z < TestWorld.BumpStartZ)
+                    Vector3 local = TestWorld.Local(p);
+                    if (local.z < TestWorld.BumpStartZ)
                     {
                         approachSpeed = controller.Speed;
                     }
 
-                    if (p.z > TestWorld.BumpStartZ && !controller.IsGrounded)
+                    if (local.z > TestWorld.BumpStartZ && !controller.IsGrounded)
                     {
                         takeoff = takeoff < 0f ? Time.time : takeoff;
                         apex = Mathf.Max(apex, p.y - TestWorld.Height(p.x, p.z));
@@ -244,15 +239,14 @@ namespace MoonProject.Rover.PlayModeTests
                 report.Note("Peak body pitch after landing", peak, "deg");
             }
 
-            yield return Drive(Vector2.zero);
+            Steer(rover, Vector2.zero);
             rover.Dispose();
             yield return null;
         }
 
         private IEnumerator SlopeSession(FeelReport report)
         {
-            Vector3 spawn = new Vector3(TestWorld.SlopeX - 15f, 0f, 0f);
-            TestRover rover = TestRover.Spawn(_actions, _world, spawn, 0f);
+            TestRover rover = TestRover.Spawn(_world, TestWorld.Point(TestWorld.SlopeX - 15f, 0f), 0f);
             RoverController controller = rover.Controller;
             yield return Hold(rover, Vector2.zero, 1f);
 
@@ -273,7 +267,7 @@ namespace MoonProject.Rover.PlayModeTests
             };
             foreach ((Vector2 stick, float seconds) in plan)
             {
-                yield return Drive(stick);
+                Steer(rover, stick);
                 float until = Time.time + seconds;
                 while (Time.time < until)
                 {
@@ -294,14 +288,14 @@ namespace MoonProject.Rover.PlayModeTests
             report.Add("Worst chassis tilt incl. jelly lean", worstChassis, "deg", 0f, 50f, "no flip (<= 50)");
             report.Note("Airborne time on the slope", airborne, "s");
 
-            yield return Drive(Vector2.zero);
+            Steer(rover, Vector2.zero);
             rover.Dispose();
             yield return null;
         }
 
         private IEnumerator Hold(TestRover rover, Vector2 stick, float seconds)
         {
-            yield return Drive(stick);
+            Steer(rover, stick);
             float until = Time.time + seconds;
             while (Time.time < until)
             {
@@ -310,25 +304,10 @@ namespace MoonProject.Rover.PlayModeTests
             }
         }
 
-        /// <summary>
-        /// Queues stick input from the Update phase (device state is not addressable in FixedUpdate) and waits until
-        /// the device reports it (the stick's deadzone processor clamps it to the unit circle), re-queuing if the
-        /// input runtime dropped the event.
-        /// </summary>
-        private IEnumerator Drive(Vector2 stick)
+        /// <summary>Holds the scripted stick at <paramref name="stick"/> from the next physics step on.</summary>
+        private static void Steer(TestRover rover, Vector2 stick)
         {
-            yield return null;
-            for (int attempt = 0; attempt < MaxInputAttempts; attempt++)
-            {
-                Set(_pad.leftStick, stick);
-                yield return null;
-                if ((_pad.leftStick.ReadValue() - Vector2.ClampMagnitude(stick, 1f)).sqrMagnitude < 1e-4f)
-                {
-                    yield break;
-                }
-            }
-
-            Assert.Fail($"The virtual gamepad never reported stick {stick}.");
+            rover.Drive.Drive = stick;
         }
 
         private void CheckCamera(TestRover rover)

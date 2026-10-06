@@ -6,10 +6,11 @@ using Object = UnityEngine.Object;
 namespace MoonProject.Rover.PlayModeTests
 {
     /// <summary>
-    /// Feel-metric test ground built in code (no assets): a large flat plain at y = 0, a 1 m high, 10 m long cosine
-    /// crest on a strip at x = <see cref="BumpX"/>, and a 30 degree slope rising toward -x from
-    /// x = <see cref="SlopeX"/>.
-    /// <see cref="Height"/> is the analytic surface matching the colliders.
+    /// Feel-metric test ground built in code (no assets), far from the world origin so nothing another test left
+    /// behind (a crater, a bootstrap scene) can touch it. In local coordinates (see <see cref="Point"/> and
+    /// <see cref="Local"/>): a large flat plain at y = 0, a 1 m high, 10 m long cosine crest on a strip at
+    /// x = <see cref="BumpX"/>, and a 30 degree slope rising toward -x from x = <see cref="SlopeX"/>.
+    /// <see cref="Height"/> is the analytic surface matching the colliders (world coordinates).
     /// </summary>
     public sealed class TestWorld : IDisposable
     {
@@ -19,6 +20,10 @@ namespace MoonProject.Rover.PlayModeTests
         public const float BumpHeight = 1f;
         public const float SlopeX = -60f;
         public const float SlopeAngle = 30f;
+
+        /// <summary>Far beyond the game world's ~2.8 km extent, still precise for physics (sub-millimetre).</summary>
+        private const float OriginX = 6000f;
+        private const float OriginZ = 6000f;
 
         private const float BumpHalfWidth = 8f;
         private const float BumpStripStart = -70f;
@@ -31,10 +36,12 @@ namespace MoonProject.Rover.PlayModeTests
         private const float SunYaw = -35f;
 
         private readonly GameObject _root;
+        private readonly Mesh _bumpMesh;
 
         public TestWorld()
         {
-            _root = new GameObject("TestWorld");
+            _root = new GameObject("RoverTestWorld");
+            _root.transform.position = new Vector3(OriginX, 0f, OriginZ);
             GameObject plain = GameObject.CreatePrimitive(PrimitiveType.Cube);
             plain.name = "Plain";
             plain.layer = Layers.Ground;
@@ -48,7 +55,7 @@ namespace MoonProject.Rover.PlayModeTests
             Sun.transform.SetParent(_root.transform, false);
             Sun.transform.rotation = Quaternion.Euler(SunPitch, SunYaw, 0f);
 
-            BuildBump();
+            _bumpMesh = BuildBump();
             BuildSlope();
         }
 
@@ -60,14 +67,29 @@ namespace MoonProject.Rover.PlayModeTests
         /// <summary>The single directional light (no shadows unless a test turns them on).</summary>
         public Light Sun { get; }
 
+        /// <summary>World position of local ground coordinates (x, z) at y = 0.</summary>
+        public static Vector3 Point(float x, float z)
+        {
+            return new Vector3(OriginX + x, 0f, OriginZ + z);
+        }
+
+        /// <summary>Local coordinates of a world position.</summary>
+        public static Vector3 Local(Vector3 world)
+        {
+            return new Vector3(world.x - OriginX, world.y, world.z - OriginZ);
+        }
+
+        /// <summary>Ground height at world (x, z).</summary>
         public static float Height(float x, float z)
         {
-            if (x <= SlopeX)
+            float localX = x - OriginX;
+            float localZ = z - OriginZ;
+            if (localX <= SlopeX)
             {
-                return (SlopeX - x) * Mathf.Tan(SlopeAngle * Mathf.Deg2Rad);
+                return (SlopeX - localX) * Mathf.Tan(SlopeAngle * Mathf.Deg2Rad);
             }
 
-            return Mathf.Abs(x - BumpX) <= BumpHalfWidth ? Bump(z) : 0f;
+            return Mathf.Abs(localX - BumpX) <= BumpHalfWidth ? Bump(localZ) : 0f;
         }
 
         private static float Bump(float z)
@@ -76,7 +98,7 @@ namespace MoonProject.Rover.PlayModeTests
             return t <= 0f || t >= 1f ? 0f : BumpHeight * 0.5f * (1f - Mathf.Cos(2f * Mathf.PI * t));
         }
 
-        private void BuildBump()
+        private Mesh BuildBump()
         {
             int rows = Mathf.RoundToInt((BumpStripEnd - BumpStripStart) / BumpStep) + 1;
             var vertices = new Vector3[rows * 2];
@@ -111,6 +133,7 @@ namespace MoonProject.Rover.PlayModeTests
             strip.AddComponent<MeshFilter>().sharedMesh = mesh;
             strip.AddComponent<MeshRenderer>().sharedMaterial = Material;
             strip.AddComponent<MeshCollider>().sharedMesh = mesh;
+            return mesh;
         }
 
         private void BuildSlope()
@@ -122,12 +145,15 @@ namespace MoonProject.Rover.PlayModeTests
             slope.transform.localScale = new Vector3(SlopeRun, 1f, SlopeDepth);
             Quaternion tilt = Quaternion.Euler(0f, 0f, -SlopeAngle);
             Vector3 lowTopEdge = tilt * new Vector3(SlopeRun * 0.5f, 0.5f, 0f);
-            slope.transform.SetPositionAndRotation(new Vector3(SlopeX, 0f, 0f) - lowTopEdge, tilt);
+            slope.transform.localPosition = new Vector3(SlopeX, 0f, 0f) - lowTopEdge;
+            slope.transform.localRotation = tilt;
         }
 
+        /// <summary>Destroys everything immediately, so the next test never overlaps this one's colliders.</summary>
         public void Dispose()
         {
-            Object.Destroy(_root);
+            Object.DestroyImmediate(_root);
+            Object.DestroyImmediate(_bumpMesh);
         }
     }
 }
