@@ -20,6 +20,7 @@ namespace MoonProject.Gameplay.PlayModeTests
     public sealed class GameplayFixture : IDisposable
     {
         public const string ShaderPath = "Assets/_Project/Shaders/Gameplay/SoftGlow.shader";
+        public const string GlintShaderPath = "Assets/_Project/Shaders/Gameplay/Glint.shader";
 
         public static readonly string CaptureFolder =
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "gameplay-captures"));
@@ -63,6 +64,10 @@ namespace MoonProject.Gameplay.PlayModeTests
         public SonarTuning SonarTuning { get; private set; }
 
         public RelicTuning RelicTuning { get; private set; }
+
+        public ExcavationTuning ExcavationTuning { get; private set; }
+
+        public TetherTuning TetherTuning { get; private set; }
 
         /// <summary>Builds and boots everything; 07 starts at the base facing +Z.</summary>
         public static GameplayFixture Boot(InputActionAsset controls, string saveSlot = null)
@@ -127,6 +132,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             ScrapTuning = Asset<ScrapTuning>();
             SonarTuning = Asset<SonarTuning>();
             RelicTuning = Asset<RelicTuning>();
+            ExcavationTuning = Asset<ExcavationTuning>();
+            TetherTuning = Asset<TetherTuning>();
             var placement = Asset<RelicPlacementTuning>();
 
             var relicCatalog = Asset<RelicCatalog>();
@@ -148,12 +155,13 @@ namespace MoonProject.Gameplay.PlayModeTests
             });
 
             var visuals = Asset<GameplayVisuals>();
-            Shader shader = LoadShader();
+            Shader shader = LoadShader(ShaderPath);
             visuals.Populate(GlowMaterial(shader, GlowRole.SonarRing), GlowMaterial(shader, GlowRole.SiteRing),
                 GlowMaterial(shader, GlowRole.SitePillar), GlowMaterial(shader, GlowRole.TractorBeam),
                 GlowMaterial(shader, GlowRole.TetherBeam), GlowMaterial(shader, GlowRole.Flash),
                 GlowMaterial(shader, GlowRole.RelicHalo), GlowMaterial(shader, GlowRole.Dust),
-                GlowMaterial(shader, GlowRole.WarmRing), GlowMaterial(shader, GlowRole.WarmGlow));
+                GlowMaterial(shader, GlowRole.WarmRing), GlowMaterial(shader, GlowRole.WarmGlow),
+                Track(GlintMaterials.Create(LoadShader(GlintShaderPath))));
 
             var root = new GameObject("[Gameplay]");
             root.SetActive(false);
@@ -161,10 +169,14 @@ namespace MoonProject.Gameplay.PlayModeTests
             var relics = Child<RelicField>(root, "Relics");
             var scrap = Child<ScrapField>(root, "Scrap");
             var sonar = Child<SonarSystem>(root, "Sonar");
+            var excavation = Child<ExcavationSystem>(root, "Excavation");
+            var tether = Child<TetherSystem>(root, "Tether");
             relics.Wire(relicCatalog, placement, RelicTuning);
             scrap.Wire(ScrapTuning, scrapCatalog);
             sonar.Wire(SonarTuning);
-            Gameplay.Wire(visuals, relics, scrap, sonar);
+            excavation.Wire(ExcavationTuning);
+            tether.Wire(TetherTuning);
+            Gameplay.Wire(visuals, relics, scrap, sonar, excavation, tether);
             root.SetActive(true);
 
             Bootstrap = BootstrapHarness.Create(_controls, SaveSlot, World, Rover, Gameplay);
@@ -208,13 +220,13 @@ namespace MoonProject.Gameplay.PlayModeTests
             return created;
         }
 
-        private static Shader LoadShader()
+        private static Shader LoadShader(string path)
         {
 #if UNITY_EDITOR
-            var shader = AssetDatabase.LoadAssetAtPath<Shader>(ShaderPath);
+            var shader = AssetDatabase.LoadAssetAtPath<Shader>(path);
             if (shader == null)
             {
-                throw new InvalidOperationException($"SoftGlow shader missing at {ShaderPath}.");
+                throw new InvalidOperationException($"Shader missing at {path}.");
             }
 
             return shader;

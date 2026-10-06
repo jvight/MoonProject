@@ -1,11 +1,14 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.TestTools;
 using MoonProject.Core.Events;
 using MoonProject.Testing;
+using Object = UnityEngine.Object;
 
 namespace MoonProject.Gameplay.PlayModeTests
 {
@@ -121,6 +124,56 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator OpeningView_ScrapGlintsSparkleOnTheHorizon()
+        {
+            _fixture = GameplayFixture.Boot(_controls);
+            yield return null;
+            yield return null;
+            ScrapField field = _fixture.Gameplay.Scrap;
+            ScrapTuning tuning = _fixture.ScrapTuning;
+            int expected = 0;
+            Vector3 camera = _fixture.Rover.Camera.transform.position;
+            for (int i = 0; i < field.Count; i++)
+            {
+                float distance = Vector3.Distance(field.RestPosition(i) + Vector3.up * tuning.GlintLift, camera);
+                if (distance > tuning.GlintFadeNear && distance < tuning.GlintMaxDistance)
+                {
+                    expected++;
+                }
+            }
+
+            Assert.Greater(expected, 20);
+            Assert.AreEqual(expected, field.Glints.Drawn, "every resting piece in range glints, in one instanced draw");
+            Assert.Greater(field.Glints.Brightest, 0.3f);
+            _fixture.Capture("00-opening-scrap-glints");
+        }
+
+        [UnityTest]
+        public IEnumerator ScrapField_SteadyState_AllocatesNothing()
+        {
+            _fixture = GameplayFixture.Boot(_controls);
+            yield return null;
+            ScrapField field = _fixture.Gameplay.Scrap;
+            int seed = NearestPiece(field, Vector3.zero);
+            Vector3 piece = field.RestPosition(seed);
+            _fixture.Rover.Place(new Vector3(piece.x, 0f, piece.z) + new Vector3(0f, 0f, -8f), 0f);
+            Action update = UpdateOf(field);
+            for (int frame = 0; frame < 30; frame++)
+            {
+                update();
+            }
+
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            for (int frame = 0; frame < 300; frame++)
+            {
+                update();
+            }
+
+            Assert.AreEqual(0L, GC.GetAllocatedBytesForCurrentThread() - before,
+                "bytes allocated by 300 frames of scrap idle, glints and glance");
+        }
+
+        [UnityTest]
         public IEnumerator Ping_RollsARing_AndRelicsAnswerNearestFirst()
         {
             _fixture = GameplayFixture.Boot(_controls);
@@ -221,6 +274,13 @@ namespace MoonProject.Gameplay.PlayModeTests
             Press(_keyboard.spaceKey, queueEventOnly: true);
             yield return null;
             Release(_keyboard.spaceKey);
+        }
+
+        private static Action UpdateOf(MonoBehaviour component)
+        {
+            MethodInfo method = component.GetType().GetMethod("Update", BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.IsNotNull(method, $"{component.GetType().Name}.Update");
+            return (Action)Delegate.CreateDelegate(typeof(Action), component, method);
         }
 
         private static int NearestPiece(ScrapField field, Vector3 point)

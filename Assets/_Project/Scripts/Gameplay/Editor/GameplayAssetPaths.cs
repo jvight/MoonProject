@@ -15,6 +15,7 @@ namespace MoonProject.Gameplay.Editor
         public const string RelicTuning = TuningFolder + "/RelicTuning.asset";
         public const string RelicPlacement = TuningFolder + "/RelicPlacementTuning.asset";
         public const string ExcavationTuning = TuningFolder + "/ExcavationTuning.asset";
+        public const string TetherTuning = TuningFolder + "/TetherTuning.asset";
 
         public const string ContentFolder = "Assets/_Project/Data/Content";
         public const string RelicFolder = ContentFolder + "/Relics";
@@ -26,6 +27,8 @@ namespace MoonProject.Gameplay.Editor
         public const string Visuals = GeneratedFolder + "/GameplayVisuals.asset";
 
         public const string Shader = "Assets/_Project/Shaders/Gameplay/SoftGlow.shader";
+        public const string GlintShader = "Assets/_Project/Shaders/Gameplay/Glint.shader";
+        public const string GlintMaterial = MaterialFolder + "/M_ScrapGlint.mat";
 
         public const string ArtRelicFolder = ArtPaths.Root + "/Relics";
 

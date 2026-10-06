@@ -6,8 +6,9 @@ using MoonProject.Editor.Builders;
 namespace MoonProject.Gameplay.Editor
 {
     /// <summary>
-    /// Writes one SoftGlow material per <see cref="GlowRole"/> (recipes in <see cref="GlowMaterials"/>) and the
-    /// <see cref="GameplayVisuals"/> asset that hands them to the runtime. Rewritten in place on every run.
+    /// Writes one SoftGlow material per <see cref="GlowRole"/> (recipes in <see cref="GlowMaterials"/>), the instanced
+    /// scrap glint material, and the <see cref="GameplayVisuals"/> asset that hands them to the runtime. Rewritten in
+    /// place on every run.
     /// </summary>
     internal static class GameplayMaterialBuilder
     {
@@ -17,22 +18,30 @@ namespace MoonProject.Gameplay.Editor
         [MoonBuilder(BuilderPath, BuilderOrder)]
         private static void Build()
         {
-            var shader = AssetDatabase.LoadAssetAtPath<Shader>(GameplayAssetPaths.Shader);
-            if (shader == null)
-            {
-                throw new InvalidOperationException($"{BuilderPath}: SoftGlow shader missing at " +
-                                                    $"{GameplayAssetPaths.Shader}.");
-            }
+            Shader shader = LoadShader(GameplayAssetPaths.Shader);
+            Shader glint = LoadShader(GameplayAssetPaths.GlintShader);
 
             var visuals = ScriptableObject.CreateInstance<GameplayVisuals>();
             visuals.Populate(Write(shader, GlowRole.SonarRing), Write(shader, GlowRole.SiteRing),
                 Write(shader, GlowRole.SitePillar), Write(shader, GlowRole.TractorBeam),
                 Write(shader, GlowRole.TetherBeam), Write(shader, GlowRole.Flash), Write(shader, GlowRole.RelicHalo),
-                Write(shader, GlowRole.Dust), Write(shader, GlowRole.WarmRing), Write(shader, GlowRole.WarmGlow));
+                Write(shader, GlowRole.Dust), Write(shader, GlowRole.WarmRing), Write(shader, GlowRole.WarmGlow),
+                GeneratedAssets.CreateOrReplace(GlintMaterials.Create(glint), GameplayAssetPaths.GlintMaterial));
             GeneratedAssets.CreateOrReplace(visuals, GameplayAssetPaths.Visuals);
             AssetDatabase.SaveAssets();
-            Debug.Log($"{BuilderPath}: wrote {Enum.GetValues(typeof(GlowRole)).Length} materials and " +
+            Debug.Log($"{BuilderPath}: wrote {Enum.GetValues(typeof(GlowRole)).Length + 1} materials and " +
                       GameplayAssetPaths.Visuals);
+        }
+
+        private static Shader LoadShader(string path)
+        {
+            var shader = AssetDatabase.LoadAssetAtPath<Shader>(path);
+            if (shader == null)
+            {
+                throw new InvalidOperationException($"{BuilderPath}: shader missing at {path}.");
+            }
+
+            return shader;
         }
 
         private static Material Write(Shader shader, GlowRole role)

@@ -1,6 +1,7 @@
 using System;
 using MoonProject.Core;
 using MoonProject.Core.Input;
+using MoonProject.Core.Save;
 
 namespace MoonProject.Gameplay
 {
@@ -11,8 +12,8 @@ namespace MoonProject.Gameplay
     public sealed class GameplayServices
     {
         public GameplayServices(EventBus events, InputReader input, ITerrainQuery terrain, IWorldLayout layout,
-            IRoverState rover, IRoverRig rig, IViewCamera view, ScrapWallet wallet, GameplayVisuals visuals,
-            GlowMeshSet meshes)
+            IRoverState rover, IRoverRig rig, IViewCamera view, ISaveService save, ScrapWallet wallet,
+            GameplayVisuals visuals, GlowMeshSet meshes)
         {
             Events = events ?? throw new ArgumentNullException(nameof(events));
             Input = input ?? throw new ArgumentNullException(nameof(input));
@@ -21,6 +22,7 @@ namespace MoonProject.Gameplay
             Rover = rover ?? throw new ArgumentNullException(nameof(rover));
             Rig = rig ?? throw new ArgumentNullException(nameof(rig));
             View = view ?? throw new ArgumentNullException(nameof(view));
+            Save = save ?? throw new ArgumentNullException(nameof(save));
             Wallet = wallet ?? throw new ArgumentNullException(nameof(wallet));
             Visuals = visuals != null ? visuals : throw new ArgumentNullException(nameof(visuals));
             Meshes = meshes ?? throw new ArgumentNullException(nameof(meshes));
@@ -39,6 +41,9 @@ namespace MoonProject.Gameplay
         public IRoverRig Rig { get; }
 
         public IViewCamera View { get; }
+
+        /// <summary>Progress checkpoints (relic surfaced or deposited, upgrade bought) call SaveNow.</summary>
+        public ISaveService Save { get; }
 
         public ScrapWallet Wallet { get; }
 

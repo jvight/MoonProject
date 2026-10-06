@@ -7,7 +7,8 @@ using MoonProject.Core.Events;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// The glowing scrap scattered over the basin. Pieces near 07 bob and turn; within the magnet radius they lift
+    /// The glowing scrap scattered over the basin. Every resting piece carries a twinkling glint that reads from far
+    /// away (see <see cref="ScrapGlints"/>). Pieces near 07 bob and turn; within the magnet radius they lift
     /// off and spiral into the cargo socket, where each one flashes, adds its value to the wallet and publishes
     /// <see cref="ScrapCollected"/> with the climbing melody step. 07 glances at the nearest piece. Every piece is
     /// instantiated once at initialisation; the frame loop walks plain arrays and allocates nothing.
@@ -34,6 +35,8 @@ namespace MoonProject.Gameplay
         private ScrapWallet _wallet;
         private IRoverState _rover;
         private IRoverRig _rig;
+        private IViewCamera _view;
+        private ScrapGlints _glints;
         private ComboCounter _combo;
         private PickupCadence _cadence;
         private GlowFlashPool _flashes;
@@ -70,6 +73,9 @@ namespace MoonProject.Gameplay
 
         /// <summary>Identifies this exact field (seed, world and tuning); saved indices only apply to the same one.</summary>
         public int LayoutSignature { get; private set; }
+
+        /// <summary>The horizon glints (tests read how many were drawn and how bright).</summary>
+        public ScrapGlints Glints => _glints;
 
         /// <summary>Where piece <paramref name="index"/> floats when at rest.</summary>
         internal Vector3 RestPosition(int index)
@@ -110,6 +116,7 @@ namespace MoonProject.Gameplay
             _wallet = services.Wallet;
             _rover = services.Rover;
             _rig = services.Rig;
+            _view = services.View;
             _combo = new ComboCounter(_tuning.ComboWindow);
             _cadence = new PickupCadence(_tuning.MinPickupInterval);
             _flashes = new GlowFlashPool(transform, services.Meshes.Sphere, services.Visuals.Flash,
@@ -118,6 +125,7 @@ namespace MoonProject.Gameplay
             List<ScrapSpawn> spawns = ScrapFieldPlanner.Plan(services.Terrain, services.Layout, _tuning, sites,
                 _catalog.Variants);
             Spawn(spawns);
+            _glints = new ScrapGlints(transform, services.Visuals.ScrapGlint, _tuning, spawns.Count, Layers.Pickup);
             _initialized = true;
             return true;
         }
@@ -216,6 +224,7 @@ namespace MoonProject.Gameplay
             float nearestSq = _tuning.GlanceRadius * _tuning.GlanceRadius;
             float bobOmega = 2f * Mathf.PI * _tuning.BobFrequency;
             int nearest = -1;
+            _glints.Begin(_view.Camera.transform.position, now);
 
             for (int i = 0; i < _pieces.Length; i++)
             {
@@ -223,6 +232,7 @@ namespace MoonProject.Gameplay
                 {
                     case PieceState.Resting:
                     {
+                        _glints.Add(_rest[i], _phase[i]);
                         float distanceSq = (_rest[i] - rover).sqrMagnitude;
                         if (distanceSq > animateSq)
                         {
@@ -254,6 +264,7 @@ namespace MoonProject.Gameplay
                 }
             }
 
+            _glints.End();
             _flashes.Tick(deltaTime);
             UpdateGlance(nearest);
         }
@@ -315,6 +326,11 @@ namespace MoonProject.Gameplay
                 _rig.ClearGazeTarget(this);
                 _glancing = false;
             }
+        }
+
+        private void OnDestroy()
+        {
+            _glints?.Dispose();
         }
 
         private void OnDisable()

@@ -9,8 +9,8 @@ namespace MoonProject.Gameplay
     /// <summary>
     /// The Gameplay domain's single entry in the bootstrap's system list (after World, Rover and Audio). Resolves the
     /// world, rover and camera services, creates the wallet, initialises the gameplay parts in dependency order
-    /// (relics, scrap, sonar), registers the read-only services UI uses and the save sections, and owns the shared
-    /// glow meshes.
+    /// (relics, scrap, sonar, excavation, tether), registers the read-only services UI uses and the save sections,
+    /// and owns the shared glow meshes.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class GameplaySystem : MonoBehaviour, IGameSystem
@@ -21,6 +21,8 @@ namespace MoonProject.Gameplay
         [SerializeField] private RelicField _relics;
         [SerializeField] private ScrapField _scrap;
         [SerializeField] private SonarSystem _sonar;
+        [SerializeField] private ExcavationSystem _excavation;
+        [SerializeField] private TetherSystem _tether;
 
         private readonly List<IDisposable> _saveTokens = new List<IDisposable>();
         private GlowMeshSet _meshes;
@@ -33,12 +35,19 @@ namespace MoonProject.Gameplay
 
         public SonarSystem Sonar => _sonar;
 
-        internal void Wire(GameplayVisuals visuals, RelicField relics, ScrapField scrap, SonarSystem sonar)
+        public ExcavationSystem Excavation => _excavation;
+
+        public TetherSystem Tether => _tether;
+
+        internal void Wire(GameplayVisuals visuals, RelicField relics, ScrapField scrap, SonarSystem sonar,
+            ExcavationSystem excavation, TetherSystem tether)
         {
             _visuals = visuals;
             _relics = relics;
             _scrap = scrap;
             _sonar = sonar;
+            _excavation = excavation;
+            _tether = tether;
         }
 
         public void Initialize(GameContext context)
@@ -60,15 +69,18 @@ namespace MoonProject.Gameplay
             Wallet = new ScrapWallet(context.Events);
             var services = new GameplayServices(context.Events, context.Input, context.Get<ITerrainQuery>(),
                 context.Get<IWorldLayout>(), context.Get<IRoverState>(), context.Get<IRoverRig>(),
-                context.Get<IViewCamera>(), Wallet, _visuals, _meshes);
+                context.Get<IViewCamera>(), context.Get<ISaveService>(), Wallet, _visuals, _meshes);
             context.Register<IScrapWallet>(Wallet);
 
             if (!_relics.Initialize(services) || !_scrap.Initialize(services, _relics.Sites) ||
-                !_sonar.Initialize(services, _relics))
+                !_sonar.Initialize(services, _relics) || !_excavation.Initialize(services, _relics) ||
+                !_tether.Initialize(services, _relics))
             {
                 enabled = false;
                 return;
             }
+
+            context.Register<ITetherAim>(_tether);
 
             RegisterSaveSections(context.Get<ISaveService>());
         }
@@ -105,6 +117,8 @@ namespace MoonProject.Gameplay
             return _relics == null ? "RelicField is not assigned."
                 : _scrap == null ? "ScrapField is not assigned."
                 : _sonar == null ? "SonarSystem is not assigned."
+                : _excavation == null ? "ExcavationSystem is not assigned."
+                : _tether == null ? "TetherSystem is not assigned."
                 : null;
         }
 

@@ -38,6 +38,9 @@ namespace MoonProject.Gameplay
         [Tooltip("Warm glow ball: radio tower beacon (WarmLamp, additive, fresnel).")]
         [SerializeField] private Material _warmGlow;
 
+        [Tooltip("Camera-facing glints over distant scrap (Glint shader, TechGlow).")]
+        [SerializeField] private Material _scrapGlint;
+
         public Material SonarRing => _sonarRing;
         public Material SiteRing => _siteRing;
         public Material SitePillar => _sitePillar;
@@ -48,6 +51,7 @@ namespace MoonProject.Gameplay
         public Material Dust => _dust;
         public Material WarmRing => _warmRing;
         public Material WarmGlow => _warmGlow;
+        public Material ScrapGlint => _scrapGlint;
 
         /// <summary>Null when every material is assigned, else the first missing one.</summary>
         public string Validate()
@@ -62,12 +66,13 @@ namespace MoonProject.Gameplay
                 : _dust == null ? "dust material is missing"
                 : _warmRing == null ? "warm ring material is missing"
                 : _warmGlow == null ? "warm glow material is missing"
+                : _scrapGlint == null ? "scrap glint material is missing"
                 : null;
         }
 
         internal void Populate(Material sonarRing, Material siteRing, Material sitePillar, Material tractorBeam,
             Material tetherBeam, Material flash, Material relicHalo, Material dust, Material warmRing,
-            Material warmGlow)
+            Material warmGlow, Material scrapGlint)
         {
             _sonarRing = sonarRing;
             _siteRing = siteRing;
@@ -79,6 +84,7 @@ namespace MoonProject.Gameplay
             _dust = dust;
             _warmRing = warmRing;
             _warmGlow = warmGlow;
+            _scrapGlint = scrapGlint;
         }
     }
 }
