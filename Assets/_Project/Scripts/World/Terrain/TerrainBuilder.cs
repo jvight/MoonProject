@@ -71,7 +71,7 @@ namespace MoonProject.World
 
             ushort[] sequence = Sequence(largest);
             var colliderMeshes = new Mesh[plans.Length];
-            var colliderOwners = new GameObject[plans.Length];
+            var colliderComponents = new MeshCollider[plans.Length];
             int triangles = 0;
             int colliderTriangles = 0;
             int colliders = 0;
@@ -85,6 +85,13 @@ namespace MoonProject.World
                 };
                 gameObject.transform.SetParent(parent, false);
                 gameObject.transform.localPosition = piece.Origin;
+                if (piece.HasCollider)
+                {
+                    // Added before the MeshFilter so Unity doesn't auto-assign the non-readable render mesh to it,
+                    // which fails PhysX cooking in players.
+                    colliderComponents[colliders] = gameObject.AddComponent<MeshCollider>();
+                }
+
                 gameObject.AddComponent<MeshFilter>().sharedMesh = CreateRenderMesh(piece, sequence, hideFlags);
                 var meshRenderer = gameObject.AddComponent<MeshRenderer>();
                 meshRenderer.sharedMaterial = material;
@@ -94,7 +101,6 @@ namespace MoonProject.World
                 if (piece.HasCollider)
                 {
                     colliderMeshes[colliders] = CreateColliderMesh(piece, hideFlags);
-                    colliderOwners[colliders] = gameObject;
                     colliderTriangles += piece.ColliderIndices.Length / 3;
                     colliders++;
                 }
@@ -111,7 +117,7 @@ namespace MoonProject.World
             meshIds.Dispose();
             for (int i = 0; i < colliders; i++)
             {
-                colliderOwners[i].AddComponent<MeshCollider>().sharedMesh = colliderMeshes[i];
+                colliderComponents[i].sharedMesh = colliderMeshes[i];
             }
 
             double colliderMs = total.Elapsed.TotalMilliseconds - meshingMs - uploadMs;
