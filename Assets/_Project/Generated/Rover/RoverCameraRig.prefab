@@ -472,6 +472,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _tuning: {fileID: 11400000, guid: 4405d0ed64e7a75489929f53b5720dba, type: 2}
   _target: {fileID: 9063725668820921766}
+  _viewCamera: {fileID: 7590707040535931860}
   _camera: {fileID: 7181602924069395432}
   _orbit: {fileID: 576690828459376173}
   _composer: {fileID: 8466054017904409946}

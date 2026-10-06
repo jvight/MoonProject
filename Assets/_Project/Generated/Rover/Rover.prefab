@@ -10104,6 +10104,8 @@ MonoBehaviour:
   _sphere: {fileID: 6402415406953522593}
   _visualRig: {fileID: 6631098553578937384}
   _wheelFx: {fileID: 4084894810302086688}
+  _tetherOrigin: {fileID: 5599798288981590752}
+  _cargoSocket: {fileID: 6493999663911907320}
 --- !u!114 &2569486542426885151
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -15354,6 +15356,11 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 1406932952078256409, guid: 6c81c221efa0d3a46b80a864668dcb02, type: 3}
   m_PrefabInstance: {fileID: 6898874241504782136}
   m_PrefabAsset: {fileID: 0}
+--- !u!4 &5599798288981590752 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1300347656503731672, guid: 6c81c221efa0d3a46b80a864668dcb02, type: 3}
+  m_PrefabInstance: {fileID: 6898874241504782136}
+  m_PrefabAsset: {fileID: 0}
 --- !u!23 &5981106570502009586 stripped
 MeshRenderer:
   m_CorrespondingSourceObject: {fileID: 917768053792101834, guid: 6c81c221efa0d3a46b80a864668dcb02, type: 3}
@@ -15362,6 +15369,11 @@ MeshRenderer:
 --- !u!4 &6383934818707622947 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 515085423768038171, guid: 6c81c221efa0d3a46b80a864668dcb02, type: 3}
+  m_PrefabInstance: {fileID: 6898874241504782136}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &6493999663911907320 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 406146244394977472, guid: 6c81c221efa0d3a46b80a864668dcb02, type: 3}
   m_PrefabInstance: {fileID: 6898874241504782136}
   m_PrefabAsset: {fileID: 0}
 --- !u!4 &8470759678352206528 stripped

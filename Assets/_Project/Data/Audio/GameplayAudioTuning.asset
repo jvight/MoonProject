@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 78db6072fd21cb54a99d9384327db3cf, type: 3}
+  m_Name: GameplayAudioTuning
+  m_EditorClassIdentifier: 
+  _answerNearDistance: 10
+  _answerFarDistance: 90
+  _answerNearVolume: 1
+  _answerFarVolume: 0.55
+  _answerNearCutoff: 16000
+  _answerFarCutoff: 2200
+  _answerMinDistance: 25
+  _scrapTopWindow: 4
+  _tetherHumFadeIn: 0.3
+  _tetherHumFadeOut: 0.5
+  _tetherHumVolume: 1
+  _tetherHumSpatialBlend: 0.85
+  _tetherLightMass: 1
+  _tetherHeavyMass: 25
+  _tetherLightVolume: 0.75
+  _tetherHeavyVolume: 1
+  _rumbleFadeIn: 0.8
+  _rumbleFadeOut: 1
+  _rumbleVolume: 1
