@@ -11,12 +11,14 @@ namespace MoonProject.UI.Tests
 
         private TowerPanelSettings _settings;
         private HoldToConfirm _hold;
+        private int _starts;
 
         [SetUp]
         public void SetUp()
         {
             _settings = new TowerPanelSettings();
             _hold = new HoldToConfirm(_settings);
+            _starts = 0;
         }
 
         [Test]
@@ -28,6 +30,21 @@ namespace MoonProject.UI.Tests
             Assert.AreEqual(1, Run(true, true, 0.1f), "it confirms when full");
             Assert.AreEqual(0, Run(true, true, 3f), "holding on does not buy again");
             Assert.AreEqual(1f, _hold.Progress, "the ring stays full while still held");
+        }
+
+        [Test]
+        public void EachArmedPress_ReportsOneStart()
+        {
+            Run(true, false, Frame);
+            Run(true, true, _settings.HoldSeconds * 0.3f);
+            Assert.AreEqual(1, _starts, "the ring starting is reported once");
+            Run(true, false, Frame);
+            Run(true, true, _settings.HoldSeconds + 0.1f);
+            Assert.AreEqual(2, _starts, "a fresh press after letting go starts again");
+            Run(true, true, 1f);
+            Assert.AreEqual(2, _starts, "holding a full ring starts nothing new");
+            Run(false, true, 1f);
+            Assert.AreEqual(2, _starts, "an unavailable offer never starts");
         }
 
         [Test]
@@ -75,9 +92,14 @@ namespace MoonProject.UI.Tests
             int confirmations = 0;
             for (float t = 0f; t < seconds - 1e-6f; t += Frame)
             {
-                if (_hold.Step(available, held, Frame))
+                HoldStep step = _hold.Step(available, held, Frame);
+                if (step == HoldStep.Confirmed)
                 {
                     confirmations++;
+                }
+                else if (step == HoldStep.Started)
+                {
+                    _starts++;
                 }
             }
 

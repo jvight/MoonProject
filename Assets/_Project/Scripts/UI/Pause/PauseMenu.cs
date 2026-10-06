@@ -13,7 +13,8 @@ namespace MoonProject.UI
     /// The pause menu (Esc / gamepad Start). Opening it eases game time to a stop (the radio keeps playing on unscaled
     /// time), turns the rover controls off and frees the cursor; resuming reverses all three. Resume, Settings
     /// (volumes, look speed, invert look, language; persisted) and Quit (asks once). Keyboard, mouse and gamepad all
-    /// work: UI Toolkit moves focus between the buttons and sliders; Esc / B steps back one level.
+    /// work: UI Toolkit moves focus between the buttons and sliders; Esc / B steps back one level. Every touch is
+    /// published as a <see cref="UiCue"/> (open, close, focus move, confirm, back, slider step) for Audio.
     /// </summary>
     internal sealed class PauseMenu
     {
@@ -38,6 +39,8 @@ namespace MoonProject.UI
         private readonly Reveal _quitPage;
         private readonly string[] _lookTexts;
         private Focusable _pendingFocus;
+        private bool _focusingByCode;
+        private bool _pointerPressed;
         private bool _onQuitPage;
         private float _resumeScale = 1f;
         private float _writtenShift = float.NaN;
@@ -120,6 +123,7 @@ namespace MoonProject.UI
             _main.Show();
             _pendingFocus = _layout.ResumeButton;
             _events.Publish(new PauseChanged(true));
+            Cue(UiCueKind.MenuOpen);
         }
 
         public void Resume()
@@ -140,6 +144,7 @@ namespace MoonProject.UI
             _input.Enable();
             _cursor.Drive();
             _events.Publish(new PauseChanged(false));
+            Cue(UiCueKind.MenuClose);
         }
 
         /// <summary>Esc / B: one level back (quit question or settings to the menu, the menu to the game).</summary>
@@ -153,10 +158,12 @@ namespace MoonProject.UI
             if (_onQuitPage)
             {
                 ShowMainPage(_layout.QuitButton);
+                Cue(UiCueKind.Back);
             }
             else if (_settingsPanel.Target)
             {
                 CloseSettings();
+                Cue(UiCueKind.Back);
             }
             else
             {
@@ -196,21 +203,23 @@ namespace MoonProject.UI
             _quitPage.Tick(unscaledDeltaTime);
             ShiftForSettings();
 
-            if (!IsOpen)
+            if (IsOpen)
             {
-                return;
+                if (_pendingFocus == null && _input.Menu.NavigatePressed && FocusedElement() == null)
+                {
+                    _pendingFocus = DefaultFocus();
+                }
+
+                if (_pendingFocus is VisualElement target && IsDisplayed(target) && target.canGrabFocus)
+                {
+                    _focusingByCode = true;
+                    target.Focus();
+                    _focusingByCode = false;
+                    _pendingFocus = null;
+                }
             }
 
-            if (_pendingFocus == null && _input.Menu.NavigatePressed && FocusedElement() == null)
-            {
-                _pendingFocus = DefaultFocus();
-            }
-
-            if (_pendingFocus is VisualElement target && IsDisplayed(target) && target.canGrabFocus)
-            {
-                target.Focus();
-                _pendingFocus = null;
-            }
+            _pointerPressed = false;
         }
 
         /// <summary>Shows the current language's name on the language selector.</summary>
@@ -234,6 +243,8 @@ namespace MoonProject.UI
             _layout.QuitConfirmButton.clicked += OnQuitConfirmed;
             _layout.SettingsBackButton.clicked += OnSettingsBackClicked;
             _layout.LanguageButton.clicked += OnLanguageClicked;
+            _layout.Pause.RegisterCallback<FocusInEvent>(OnFocusIn);
+            _layout.Pause.RegisterCallback<PointerDownEvent>(OnPointerDown, TrickleDown.TrickleDown);
 
             BindVolume(_layout.MasterSlider, AudioBus.Master);
             BindVolume(_layout.MusicSlider, AudioBus.Music);
@@ -253,7 +264,11 @@ namespace MoonProject.UI
             slider.lowValue = 0;
             slider.highValue = _player.VolumeSteps;
             slider.fill = true;
-            slider.RegisterValueChangedCallback(evt => _player.SetVolumeStep(bus, evt.newValue));
+            slider.RegisterValueChangedCallback(evt =>
+            {
+                _player.SetVolumeStep(bus, evt.newValue);
+                Cue(UiCueKind.SliderStep);
+            });
         }
 
         private void OpenSettings()
@@ -343,6 +358,27 @@ namespace MoonProject.UI
             FocusedElement()?.Blur();
         }
 
+        private void Cue(UiCueKind kind)
+        {
+            _events.Publish(new UiCue(kind));
+        }
+
+        /// <summary>
+        /// Focus moved by the player's keyboard or gamepad (not the menu placing it, not a mouse click): a soft tick.
+        /// </summary>
+        private void OnFocusIn(FocusInEvent evt)
+        {
+            if (IsOpen && !_focusingByCode && !_pointerPressed)
+            {
+                Cue(UiCueKind.FocusMove);
+            }
+        }
+
+        private void OnPointerDown(PointerDownEvent evt)
+        {
+            _pointerPressed = true;
+        }
+
         private void OnResumeClicked()
         {
             if (IsOpen && !_onQuitPage)
@@ -356,6 +392,7 @@ namespace MoonProject.UI
             if (IsOpen && !_onQuitPage)
             {
                 OpenSettings();
+                Cue(UiCueKind.Confirm);
             }
         }
 
@@ -370,6 +407,7 @@ namespace MoonProject.UI
 
                 _onQuitPage = true;
                 _pendingFocus = _layout.QuitStayButton;
+                Cue(UiCueKind.Confirm);
             }
         }
 
@@ -378,6 +416,7 @@ namespace MoonProject.UI
             if (IsOpen && _onQuitPage)
             {
                 ShowMainPage(_layout.QuitButton);
+                Cue(UiCueKind.Back);
             }
         }
 
@@ -386,6 +425,7 @@ namespace MoonProject.UI
             if (IsOpen && _onQuitPage)
             {
                 SaveIfChanged();
+                Cue(UiCueKind.Confirm);
                 _quit();
             }
         }
@@ -395,6 +435,7 @@ namespace MoonProject.UI
             if (IsOpen && _settingsPanel.Target)
             {
                 CloseSettings();
+                Cue(UiCueKind.Back);
             }
         }
 
@@ -403,6 +444,7 @@ namespace MoonProject.UI
             if (IsOpen && _settingsPanel.Target)
             {
                 _player.NextLanguage();
+                Cue(UiCueKind.Confirm);
             }
         }
 
@@ -411,11 +453,13 @@ namespace MoonProject.UI
             _player.SetLookStep(evt.newValue);
             int step = _player.GetLookStep();
             _layout.LookValue.text = _lookTexts[step];
+            Cue(UiCueKind.SliderStep);
         }
 
         private void OnInvertChanged(ChangeEvent<bool> evt)
         {
             _player.InvertY = evt.newValue;
+            Cue(UiCueKind.Confirm);
         }
     }
 }

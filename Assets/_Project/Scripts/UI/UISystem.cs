@@ -217,13 +217,14 @@ namespace MoonProject.UI
             _hud.Snap(true);
             _title = new TitleCard(_layout.Title, _tuning.Title);
             _reticle = new TetherReticle(_layout.Reticle, _layout.ReticleRest, _layout.ReticleHover, _tuning.Reticle);
-            _prompt = new ContextPrompt(_layout, _tuning.Prompts, _director, services.View, _glyphs, _localization);
+            _prompt = new ContextPrompt(_layout, _tuning.Prompts, _director, services.View, _glyphs, _localization,
+                services.Events);
             _chip = new ScrapChip(_layout.ScrapChip, _layout.ScrapChipShadow, _layout.ScrapChipIcon,
                 _layout.ScrapChipCount, _tuning.ScrapChip, _numbers);
             _chip.Snap(services.Wallet.Balance);
-            _card = new MemoryCard(_layout, _tuning.MemoryCard, _localization, _relics);
-            _tower = new TowerPanel(_layout, _tuning.TowerPanel, _localization, services.Shop, services.Wallet,
-                services.Hints, _numbers);
+            _card = new MemoryCard(_layout, _tuning.MemoryCard, _localization, services.Events, _relics);
+            _tower = new TowerPanel(_layout, _tuning.TowerPanel, _localization, services.Events, services.Shop,
+                services.Wallet, services.Hints, _numbers);
             _pause = new PauseMenu(_layout, _tuning.Pause, _player, _localization, services.Input, services.Events,
                 services.Save, services.Wallet, _numbers, _cursor, Quit);
             _bound = true;
@@ -254,7 +255,7 @@ namespace MoonProject.UI
                     _pause.Back();
                 }
             }
-            else if (cancelPressed && _card.CanDismiss)
+            else if ((pausePressed || cancelPressed) && _card.CanDismiss)
             {
                 _card.Dismiss();
             }

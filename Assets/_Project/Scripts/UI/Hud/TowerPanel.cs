@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.UIElements;
 using MoonProject.Core;
+using MoonProject.Core.Events;
 using MoonProject.Gameplay;
 
 namespace MoonProject.UI
@@ -12,7 +13,7 @@ namespace MoonProject.UI
     /// balance stays in view in the pinned scrap chip; a shortfall is said in words), and a ring that fills while the
     /// confirm button is held (<see cref="HoldToConfirm"/>: no accidental purchases). Buying goes through
     /// <see cref="IUpgradeShop"/>; the panel glows a moment, then shows the next level or bows out when all are
-    /// bought.
+    /// bought. The ring starting and completing are published as <see cref="UiCue"/>s.
     /// </summary>
     internal sealed class TowerPanel
     {
@@ -21,6 +22,7 @@ namespace MoonProject.UI
 
         private readonly TowerPanelSettings _settings;
         private readonly ILocalization _localization;
+        private readonly EventBus _events;
         private readonly IUpgradeShop _shop;
         private readonly IScrapWallet _wallet;
         private readonly IInteractionHints _hints;
@@ -35,12 +37,13 @@ namespace MoonProject.UI
         private string _shownGlyph;
         private float _celebrateTimer;
 
-        public TowerPanel(UiLayout layout, TowerPanelSettings settings, ILocalization localization,
+        public TowerPanel(UiLayout layout, TowerPanelSettings settings, ILocalization localization, EventBus events,
             IUpgradeShop shop, IScrapWallet wallet, IInteractionHints hints, IntText numbers)
         {
             _layout = layout ?? throw new ArgumentNullException(nameof(layout));
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _localization = localization ?? throw new ArgumentNullException(nameof(localization));
+            _events = events ?? throw new ArgumentNullException(nameof(events));
             _shop = shop ?? throw new ArgumentNullException(nameof(shop));
             _wallet = wallet ?? throw new ArgumentNullException(nameof(wallet));
             _hints = hints ?? throw new ArgumentNullException(nameof(hints));
@@ -96,7 +99,12 @@ namespace MoonProject.UI
             _reveal.Set(gateOpen && (offered || IsCelebrating));
             bool available = offered && offer.CanAfford && !IsCelebrating &&
                              _reveal.Target && _reveal.Visibility >= _settings.ArmVisibility;
-            if (_hold.Step(available, confirmHeld, deltaTime))
+            HoldStep step = _hold.Step(available, confirmHeld, deltaTime);
+            if (step == HoldStep.Started)
+            {
+                _events.Publish(new UiCue(UiCueKind.HoldFill));
+            }
+            else if (step == HoldStep.Confirmed)
             {
                 Buy(upgrade);
             }
@@ -127,6 +135,7 @@ namespace MoonProject.UI
                 return;
             }
 
+            _events.Publish(new UiCue(UiCueKind.HoldComplete));
             _celebrateTimer = _settings.CelebrateSeconds;
             _layout.TowerPanel.AddToClassList(CelebrateClass);
             _layout.TowerHoldWord.text = _localization.Get(UiKeys.TowerPurchased);

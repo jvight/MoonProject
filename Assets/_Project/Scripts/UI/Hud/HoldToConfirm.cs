@@ -18,6 +18,7 @@ namespace MoonProject.UI
         private readonly TowerPanelSettings _settings;
         private bool _armed;
         private bool _confirmed;
+        private bool _filling;
 
         public HoldToConfirm(TowerPanelSettings settings)
         {
@@ -33,8 +34,11 @@ namespace MoonProject.UI
         /// <param name="available">The offer can be confirmed right now (visible and affordable).</param>
         /// <param name="held">The confirm button is down.</param>
         /// <param name="deltaTime">Unscaled seconds since the last step.</param>
-        /// <returns>True exactly once, on the step the ring fills.</returns>
-        public bool Step(bool available, bool held, float deltaTime)
+        /// <returns>
+        /// <see cref="HoldStep.Started"/> on the step a press starts filling the ring, <see cref="HoldStep.Confirmed"/>
+        /// exactly once, on the step it fills.
+        /// </returns>
+        public HoldStep Step(bool available, bool held, float deltaTime)
         {
             if (!held)
             {
@@ -48,6 +52,8 @@ namespace MoonProject.UI
 
             if (held && _armed && !_confirmed)
             {
+                bool started = !_filling;
+                _filling = true;
                 Progress = _settings.HoldSeconds <= 0f
                     ? 1f
                     : Mathf.Min(1f, Progress + deltaTime / _settings.HoldSeconds);
@@ -55,12 +61,14 @@ namespace MoonProject.UI
                 {
                     _confirmed = true;
                     _armed = false;
-                    return true;
+                    _filling = false;
+                    return HoldStep.Confirmed;
                 }
 
-                return false;
+                return started ? HoldStep.Started : HoldStep.None;
             }
 
+            _filling = false;
             if (!(held && _confirmed))
             {
                 Progress = _settings.DrainSeconds <= 0f
@@ -68,7 +76,7 @@ namespace MoonProject.UI
                     : Mathf.Max(0f, Progress - deltaTime / _settings.DrainSeconds);
             }
 
-            return false;
+            return HoldStep.None;
         }
 
         /// <summary>Empties the ring and disarms it (the offer went away).</summary>
@@ -77,6 +85,7 @@ namespace MoonProject.UI
             Progress = 0f;
             _armed = false;
             _confirmed = false;
+            _filling = false;
         }
     }
 }
