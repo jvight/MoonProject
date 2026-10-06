@@ -313,15 +313,7 @@ namespace MoonProject.Art.Editor
             Matrix4x4 sign = At(new Vector3(1.25f, 0f, 3.15f), new Vector3(0f, -12f, 4f));
             b.Box(sign * At(0f, 0.46f, 0f), new Vector3(0.06f, 0.9f, 0.05f), PaletteSwatch.Metal);
             b.Box(sign * At(0f, 0.95f, 0.035f), new Vector3(0.92f, 0.36f, 0.04f), PaletteSwatch.Enamel, 0.012f);
-            // Someone at +Z sees +X on their left, so the text runs towards -X with each glyph turned to match.
-            const float face = 0.06f;
-            const float baseline = 0.85f;
-            Matrix4x4 reading = Matrix4x4.Rotate(Rotation(new Vector3(0f, 180f, 0f)));
-            b.Extrude(sign * At(0.36f, baseline, face) * reading, Glyphs.H(), 0.012f, PaletteSwatch.WarmAccent);
-            b.Torus(sign * At(new Vector3(0.11f, baseline + 0.1f, face), AlongZ, new Vector3(1f, 1f, 1.45f)),
-                0.05f, 0.02f, 10, 4, PaletteSwatch.WarmAccent);
-            b.Extrude(sign * At(0f, baseline, face) * reading, Glyphs.M(), 0.012f, PaletteSwatch.WarmAccent);
-            b.Extrude(sign * At(-0.18f, baseline, face) * reading, Glyphs.E(), 0.012f, PaletteSwatch.WarmAccent);
+            Glyphs.Write(b, sign * At(0f, 0.95f, 0.055f), "HOME", 0.2f, PaletteSwatch.WarmAccent, PaletteSwatch.Enamel);
         }
 
         /// <summary>A faded round mission patch on the right wall: a sage field, a cream moon, a star.</summary>

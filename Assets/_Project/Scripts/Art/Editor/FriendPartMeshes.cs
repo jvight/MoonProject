@@ -51,8 +51,8 @@ namespace MoonProject.Art.Editor
             var b = new LowPolyMeshBuilder(400);
             Vector2[] glass =
             {
-                new Vector2(0f, -0.006f), new Vector2(0.105f, -0.006f), new Vector2(0.09f, 0.016f), new Vector2(0.052f, 0.03f),
-                new Vector2(0f, 0.035f),
+                new Vector2(0f, -0.006f), new Vector2(0.105f, -0.006f), new Vector2(0.09f, 0.016f),
+                new Vector2(0.052f, 0.03f), new Vector2(0f, 0.035f),
             };
             Matrix4x4 frame = At(new Vector3(0f, 0.13f, 0f), new Vector3(-20f, 0f, 0f));
             b.Prism(frame * At(new Vector3(0f, 0f, -0.06f), AlongZ), 0.125f, 0.11f, 16, PaletteSwatch.Charcoal);

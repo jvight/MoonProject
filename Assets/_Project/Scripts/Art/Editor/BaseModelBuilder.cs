@@ -32,12 +32,21 @@ namespace MoonProject.Art.Editor
         /// <summary>Where gameplay stands the radio tower: left of the lander, slightly behind.</summary>
         public static readonly Vector3 TowerAnchor = new Vector3(-6f, 0f, -1f);
 
+        /// <summary>
+        /// Where gameplay stands Kenji's workbench: right of the museum shelf, slightly behind it, far enough that
+        /// its shop pad (3.2 m in front, +Z, radius 2.4 m) stays clear of the shelf.
+        /// </summary>
+        public static readonly Vector3 WorkshopAnchor = new Vector3(12.5f, 0f, -2f);
+
+        public const string WorkbenchName = "Workbench";
+
         [MoonBuilder("Art/Base", 140)]
         public static void Build()
         {
             Material material = PaletteAssetBuilder.LoadMaterial();
             ModelPrefabWriter.Write(CreateLander(), ArtPaths.BaseFolder, material);
             ModelPrefabWriter.Write(CreateShelf(), ArtPaths.BaseFolder, material);
+            ModelPrefabWriter.Write(CreateWorkbench(), ArtPaths.BaseFolder, material);
             for (int level = RadioTowerMeshes.MinLevel; level <= RadioTowerMeshes.MaxLevel; level++)
             {
                 ModelPrefabWriter.Write(CreateTower(level), ArtPaths.BaseFolder, material);
@@ -60,6 +69,7 @@ namespace MoonProject.Art.Editor
             }
 
             lander.Add(new ModelNode("FriendSocket_tilly", LanderMeshes.TillyPerch));
+            lander.Add(new ModelNode("WorkshopAnchor", WorkshopAnchor));
             return lander;
         }
 
@@ -75,6 +85,20 @@ namespace MoonProject.Art.Editor
             }
 
             return shelf;
+        }
+
+        /// <summary>
+        /// Kenji's workbench: root on the ground at the bench centre (+Z = the front where 07 parks), a Lights glow
+        /// child (the hanging work lamp's bulb) and an empty SparkSocket between the vice jaws.
+        /// </summary>
+        public static ModelNode CreateWorkbench()
+        {
+            var bench = new ModelNode(WorkbenchName, Vector3.zero,
+                new ModelMesh(WorkbenchName, WorkbenchMeshes.Bench()));
+            bench.Add(new ModelNode("Lights", WorkbenchMeshes.LampBulb,
+                new ModelMesh(WorkbenchName + "_Lights", WorkbenchMeshes.LampBulbMesh())));
+            bench.Add(new ModelNode("SparkSocket", WorkbenchMeshes.Sparks));
+            return bench;
         }
 
         /// <summary>Radio tower stage <paramref name="level"/> (1..3).</summary>
