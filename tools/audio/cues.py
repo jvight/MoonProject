@@ -747,6 +747,31 @@ def tilly_broken(variant, gen):
     return _chirp_finish(phrase * gate + crackle, cutoff=3000.0, wet=0.2)
 
 
+TILLY_FOUND = (("A5", "D6"), ("B5", "E6"), ("F#5", "A5"))
+
+
+def tilly_found(variant, gen):
+    """'Found it!' as Tilly hovers over something: a quick hop up that lands bright with a little flutter, and a
+    tiny echo of the landing note."""
+    low, high = TILLY_FOUND[variant]
+    return _chirp_finish(_phrase([
+        (0.0, _blip(0.06, low, low, 0.006, gen, amp=0.6)),
+        (0.08, _blip(0.2, low, high, 0.012, gen, amp=0.9, vibrato_cents=10.0, vibrato_rate=10.0)),
+        (0.32, _blip(0.07, high, high, 0.006, gen, amp=0.4)),
+    ], gen))
+
+
+def friend_spot_ping(_variant, gen):
+    """The soft ping marking what a friend spotted: a round A5 bell with its octave shimmering a moment later,
+    gentler and higher than 07's kalimba sonar."""
+    n = samples(1.8)
+    bell = instruments.soft_bell(note_freq("A5"), 1.8, decay=1.3, attack=0.012)
+    place(bell, instruments.soft_bell(note_freq("A6"), 1.8, decay=0.9, attack=0.012)[:n - samples(0.07)],
+          samples(0.07), 0.25)
+    bell = filters.lowpass(effects.tremolo(bell, 6.0, 0.18), 5500.0)
+    return _mono_reverb(bell, room=0.55, damping=0.6, wet=0.25, dry=1.0)
+
+
 TILLY_ROTOR_LOOP_S = 4.0
 
 
@@ -926,6 +951,10 @@ CUES = (
         notes="Tilly flying out to meet 07: rising swoop + trill landing high."),
     Cue("tilly_excited", "oneshot_3d", tilly_excited, variants=len(TILLY_EXCITED), volume=(0.6, 0.65),
         fade_out=0.08, milestone="M3", tonal=True, notes="Tilly when a relic comes home: fluttering arpeggio."),
+    Cue("tilly_found", "oneshot_3d", tilly_found, variants=len(TILLY_FOUND), volume=(0.55, 0.6), fade_out=0.08,
+        milestone="M3", tonal=True, notes="Tilly spotting something: 'found it!' hop up with a bright landing."),
+    Cue("friend_spot_ping", "oneshot_3d", friend_spot_ping, volume=(0.5, 0.5), fade_out=0.2, milestone="M3",
+        tonal=True, notes="Soft A5 bell + A6 shimmer marking what a friend spotted (relic, part, scrap)."),
     Cue("tilly_rotor", "loop_3d", tilly_rotor, loop=True, file_stem="tilly_rotor_loop", volume=(0.35, 0.35),
         hf_cutoff=6000.0, hf_max_db=-40.0, milestone="M3", tonal=True,
         notes="Tilly's tiny four-rotor hum around A3, 4 s seamless; < 3.5 kHz so speed can pitch it up."),

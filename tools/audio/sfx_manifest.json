@@ -1040,6 +1040,66 @@
       "notes": "Tilly when a relic comes home: fluttering arpeggio."
     },
     {
+      "id": "tilly_found",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/tilly_found_01.wav",
+        "Assets/_Project/Audio/SFX/tilly_found_02.wav",
+        "Assets/_Project/Audio/SFX/tilly_found_03.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02",
+        "03"
+      ],
+      "sha256": [
+        "fb89bc48cc2f4403fb4baab6937fe5c4b670b3cfe9c1795b60d602cb9c1c9101",
+        "63fd96650fb12bb0e7ef5c8afd273db6222ecec7b5815f0650642a734d26b014",
+        "cd60d5077ffebbff50fd395a45e43d8f08a3f38e7eedf3cb3368fee7682120d2"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Tilly spotting something: 'found it!' hop up with a bright landing."
+    },
+    {
+      "id": "friend_spot_ping",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/friend_spot_ping.wav"
+      ],
+      "variantLabels": [
+        "friend_spot_ping"
+      ],
+      "sha256": [
+        "66c98cd7ee9268ac9c0f2599770aa48615dd423e5ef23397309f162e9f0904ce"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Soft A5 bell + A6 shimmer marking what a friend spotted (relic, part, scrap)."
+    },
+    {
       "id": "tilly_rotor",
       "category": "loop_3d",
       "milestone": "M3",
