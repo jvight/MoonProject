@@ -193,7 +193,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.Greater(workshop.PadLevel, 0.8f * look.Occupied, "the pad glows under 07");
 
             int before = _fixture.Events.Order.Count;
+            int funds = _fixture.Gameplay.Wallet.Balance;
             Assert.AreEqual(PurchaseResult.Purchased, shop.Purchase(HoverJump));
+            int balance = _fixture.Gameplay.Wallet.Balance;
+            Assert.AreEqual(funds - 150, balance, "Hover-Jump costs 150");
             CollectionAssert.AreEqual(new[] { nameof(CurrencyChanged), nameof(UpgradePurchased) },
                 _fixture.Events.Order.GetRange(before, _fixture.Events.Order.Count - before));
             Assert.AreEqual(HoverJump, _fixture.Events.UpgradePurchased[0].Value.UpgradeId);
@@ -204,7 +207,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(PurchaseResult.Maxed, shop.Purchase(HoverJump));
             Vector3 pad = workshop.PadCentre;
             _fixture.Rover.Aim(pad + new Vector3(-7f, 5f, -7f), pad + Vector3.up);
-            _fixture.Capture("13-workshop-hover-jump");
+            _fixture.Capture("18-workshop-hover-jump");
             yield return new WaitForSeconds(2f);
             Assert.Less(workshop.PadLevel, look.Occupied * 0.5f, "an empty bench's pad rests dim");
 
@@ -215,7 +218,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(1, _fixture.Gameplay.Upgrades.LevelOf(HoverJump), "the purchase was a checkpoint");
             Assert.IsTrue(_fixture.Rover.Has(RoverAbility.HoverJump), "granted again on load");
             Assert.AreEqual(0, _fixture.Events.UpgradePurchased.Count, "a load is never a purchase");
-            Assert.AreEqual(0, _fixture.Gameplay.Wallet.Balance);
+            Assert.AreEqual(balance, _fixture.Gameplay.Wallet.Balance, "the checkpoint kept the change");
         }
 
         [UnityTest]
