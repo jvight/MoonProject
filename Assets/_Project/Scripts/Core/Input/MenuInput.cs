@@ -42,6 +42,15 @@ namespace MoonProject.Core.Input
 
         public bool Enabled => _map.enabled;
 
+        /// <summary>
+        /// Short name of the control that backs out ("Esc", "B") on <paramref name="device"/>, for the glyph on a
+        /// dismissable card. Allocates a string: cache it.
+        /// </summary>
+        public string GetCancelLabel(InputDeviceKind device)
+        {
+            return BindingLabels.For(_cancel, device);
+        }
+
         internal InputActionMap Map => _map;
 
         public void Enable()

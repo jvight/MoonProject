@@ -5,19 +5,13 @@ using UnityEngine.InputSystem;
 namespace MoonProject.Core.Input
 {
     /// <summary>
-    /// Typed, allocation-free view over the Controls input asset: the "Rover" map (driving and tools) and the "UI" map
-    /// (<see cref="Menu"/>). Systems poll it from Update; nothing else in the game touches InputSystem devices directly,
-    /// so rebinding and gamepad support live here.
+    /// Typed, allocation-free view over the Controls input asset: the "Rover" map (driving and tools) and the "UI"
+    /// map (<see cref="Menu"/>). Systems poll it from Update; nothing else in the game touches InputSystem devices
+    /// directly, so rebinding and gamepad support live here.
     /// </summary>
     public sealed class InputReader : IDisposable
     {
         public const string RoverMapName = "Rover";
-
-        /// <summary>Binding group of keyboard and mouse bindings in the Controls asset.</summary>
-        public const string KeyboardMouseGroup = "Keyboard&Mouse";
-
-        /// <summary>Binding group of gamepad bindings in the Controls asset.</summary>
-        public const string GamepadGroup = "Gamepad";
 
         private readonly InputActionMap _roverMap;
         private readonly InputAction _drive;
@@ -74,7 +68,9 @@ namespace MoonProject.Core.Input
         /// <summary>Reel in (+) / out (-), -1..1 per frame (scroll notch or held d-pad).</summary>
         public float Winch => _winch.ReadValue<float>();
 
-        /// <summary>The "UI" map: pause, back, menu focus and cursor recapture. Enabled and disabled by the UI.</summary>
+        /// <summary>
+        /// The "UI" map: pause, back, menu focus and cursor recapture. Enabled and disabled by the UI.
+        /// </summary>
         public MenuInput Menu { get; }
 
         /// <summary>The device behind the last actuated action of either map (keyboard and mouse until then).</summary>
@@ -83,7 +79,9 @@ namespace MoonProject.Core.Input
         /// <summary>True while the rover controls are live (false while the game is paused).</summary>
         public bool Enabled => _roverMap.enabled;
 
-        /// <summary>Turns the rover controls on (the bootstrap does this once; the pause menu after resuming).</summary>
+        /// <summary>
+        /// Turns the rover controls on (the bootstrap does this once; the pause menu after resuming).
+        /// </summary>
         public void Enable()
         {
             _roverMap.Enable();
@@ -103,21 +101,7 @@ namespace MoonProject.Core.Input
         /// </summary>
         public string GetBindingLabel(RoverAction action, InputDeviceKind device)
         {
-            InputBinding mask = InputBinding.MaskByGroup(
-                device == InputDeviceKind.Gamepad ? GamepadGroup : KeyboardMouseGroup);
-            foreach (InputBinding binding in Resolve(action).bindings)
-            {
-                if (binding.isComposite || !mask.Matches(binding))
-                {
-                    continue;
-                }
-
-                return InputControlPath.ToHumanReadableString(PhysicalControlPath(binding.effectivePath),
-                    InputControlPath.HumanReadableStringOptions.OmitDevice |
-                    InputControlPath.HumanReadableStringOptions.UseShortNames);
-            }
-
-            return string.Empty;
+            return BindingLabels.For(Resolve(action), device);
         }
 
         public void Dispose()
@@ -143,14 +127,6 @@ namespace MoonProject.Core.Input
                 default:
                     throw new ArgumentOutOfRangeException(nameof(action), action, "Unknown rover action.");
             }
-        }
-
-        /// <summary>"&lt;Mouse&gt;/scroll/y" -> "&lt;Mouse&gt;/scroll": the device plus its first control.</summary>
-        private static string PhysicalControlPath(string path)
-        {
-            int device = path.IndexOf('/');
-            int control = device < 0 ? -1 : path.IndexOf('/', device + 1);
-            return control < 0 ? path : path.Substring(0, control);
         }
 
         private void Track(InputActionMap map, bool track)
