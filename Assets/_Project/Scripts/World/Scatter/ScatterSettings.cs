@@ -47,7 +47,7 @@ namespace MoonProject.World
         [SerializeField] private float _pebbleSpacing = 5f;
 
         [Tooltip("Pebble size range (x = min, y = max), metres.")]
-        [SerializeField] private Vector2 _pebbleSize = new Vector2(0.2f, 0.55f);
+        [SerializeField] private Vector2 _pebbleSize = new Vector2(0.2f, 0.4f);
 
         [Tooltip("Average fraction of pebble sites that get a pebble.")]
         [Range(0f, 1f)]
