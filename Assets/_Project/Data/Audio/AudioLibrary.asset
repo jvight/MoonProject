@@ -399,6 +399,184 @@ MonoBehaviour:
     _volumeMax: 0.65
     _pitchMin: 1
     _pitchMax: 1
+  - _id: tilly_broken
+    _clips:
+    - {fileID: 8300000, guid: 3e551124e2d76544a8466a503d0c04d8, type: 3}
+    - {fileID: 8300000, guid: e76fb7240c299434e9029346a5d21ba0, type: 3}
+    - {fileID: 8300000, guid: b295340f9879f8f49b91c2f7d9933cda, type: 3}
+    _variantLabels:
+    - 01
+    - 02
+    - 03
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.45
+    _volumeMax: 0.5
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: tilly_curious
+    _clips:
+    - {fileID: 8300000, guid: 9270fe30e09c000469f949b42b3d5c45, type: 3}
+    - {fileID: 8300000, guid: b678a22004542894d8cbc16cb223c3e8, type: 3}
+    - {fileID: 8300000, guid: 367678c588298ae4fad4b44f9808e38c, type: 3}
+    _variantLabels:
+    - 01
+    - 02
+    - 03
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.5
+    _volumeMax: 0.55
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: tilly_happy
+    _clips:
+    - {fileID: 8300000, guid: c9120d52fee3fba42804567249ccfcd8, type: 3}
+    - {fileID: 8300000, guid: 60a946c7417b9074b9f135d161084fa3, type: 3}
+    - {fileID: 8300000, guid: 3611d49342a60494194a08cd1ce08872, type: 3}
+    _variantLabels:
+    - 01
+    - 02
+    - 03
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.55
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: tilly_sleepy
+    _clips:
+    - {fileID: 8300000, guid: e1df2ed4c19b42042a90da104078e581, type: 3}
+    - {fileID: 8300000, guid: 2ed06b7ff7f0d8c4fbf4f928c7ad6c50, type: 3}
+    _variantLabels:
+    - 01
+    - 02
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.35
+    _volumeMax: 0.4
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: tilly_greeting
+    _clips:
+    - {fileID: 8300000, guid: 316796b5fb5ade54e8f0530f762f9fb2, type: 3}
+    - {fileID: 8300000, guid: 88a51081829320e468bd85c9a0255586, type: 3}
+    - {fileID: 8300000, guid: 0ce09bb1672eaca4e940d65087cebf26, type: 3}
+    _variantLabels:
+    - 01
+    - 02
+    - 03
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.6
+    _volumeMax: 0.65
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: tilly_excited
+    _clips:
+    - {fileID: 8300000, guid: 8206b8d34572bff42b87ce04e31a9e25, type: 3}
+    - {fileID: 8300000, guid: d4884e9ed340701449a04ae6345d8be6, type: 3}
+    - {fileID: 8300000, guid: 5c68f8aefd29d9647bf6fa9068b31092, type: 3}
+    _variantLabels:
+    - 01
+    - 02
+    - 03
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.6
+    _volumeMax: 0.65
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: tilly_found
+    _clips:
+    - {fileID: 8300000, guid: c027dd174cf921843abb0a0ab318242a, type: 3}
+    - {fileID: 8300000, guid: 418583150a382ca4792315c8d250d335, type: 3}
+    - {fileID: 8300000, guid: a4e5e1ca53931bc419d8f87536afe39a, type: 3}
+    _variantLabels:
+    - 01
+    - 02
+    - 03
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.55
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: friend_spot_ping
+    _clips:
+    - {fileID: 8300000, guid: c9c552ed3f86fd549a0a44f48e4aa259, type: 3}
+    _variantLabels:
+    - friend_spot_ping
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.5
+    _volumeMax: 0.5
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: tilly_rotor
+    _clips:
+    - {fileID: 8300000, guid: 391c5fd3f2db1bf4d88fff627841feaf, type: 3}
+    _variantLabels:
+    - tilly_rotor
+    _bus: 2
+    _spatial: 1
+    _loop: 1
+    _volumeMin: 0.35
+    _volumeMax: 0.35
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: friend_stitch
+    _clips:
+    - {fileID: 8300000, guid: 4cf64c1cdfd264e46aad6ec5913cdc1a, type: 3}
+    _variantLabels:
+    - friend_stitch
+    _bus: 2
+    _spatial: 1
+    _loop: 1
+    _volumeMin: 0.6
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: friend_boot
+    _clips:
+    - {fileID: 8300000, guid: 5866b6536c4d23d489e9f2a3b80f37e3, type: 3}
+    _variantLabels:
+    - friend_boot
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.7
+    _volumeMax: 0.7
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: friend_part
+    _clips:
+    - {fileID: 8300000, guid: e6712dbc96742f745a8e1773124ca698, type: 3}
+    - {fileID: 8300000, guid: 5d7278b4100ebb646a15870fe00fb2ed, type: 3}
+    - {fileID: 8300000, guid: 3f189cd9409a2934fbd958d80ce88ddd, type: 3}
+    - {fileID: 8300000, guid: c4b08287210c9494e8eca91a5f37ca96, type: 3}
+    - {fileID: 8300000, guid: 0dd0d0ee74a8d594dbf5ee730f1c1718, type: 3}
+    _variantLabels:
+    - step1
+    - step2
+    - step3
+    - step4
+    - complete
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.65
+    _volumeMax: 0.65
+    _pitchMin: 1
+    _pitchMax: 1
   - _id: upgrade_arpeggio
     _clips:
     - {fileID: 8300000, guid: b62b3bb7da385dc4fbc9474cd20b68c4, type: 3}

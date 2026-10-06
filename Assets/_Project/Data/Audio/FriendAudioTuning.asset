@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae8cbddaa73ffff4abf56a6bcb7499f3, type: 3}
+  m_Name: FriendAudioTuning
+  m_EditorClassIdentifier: 
+  _rotorIdlePitch: 0.85
+  _rotorDashPitch: 1.45
+  _rotorLowVolume: 0.5
+  _rotorHighVolume: 1
+  _rotorSpinUpTime: 0.6
+  _rotorSpinDownTime: 0.4
+  _stitchFadeIn: 0.5
+  _stitchFadeOut: 0.6
+  _stitchStartGain: 0.55
+  _stitchRiseSemitones: 7
+  _stitchRiseTime: 3.5
+  _followingChirpMin: 9
+  _followingChirpMax: 22
+  _homeChirpMin: 12
+  _homeChirpMax: 30
+  _nappingChirpMin: 6
+  _nappingChirpMax: 15
