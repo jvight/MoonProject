@@ -9,5 +9,6 @@ namespace MoonProject.Core.Input
         Excavate = 1,
         Tether = 2,
         Winch = 3,
+        Jump = 4,
     }
 }
