@@ -57,6 +57,12 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>Where the review camera stands relative to Tilly (m away from 07, m up).</summary>
         private const float WitnessDistance = 4f;
         private const float WitnessHeight = 1.5f;
+
+        /// <summary>Where the review camera stands to watch the bench's sparks (m out in front of it, m up).</summary>
+        private const float BenchViewDistance = 6.5f;
+        private const float BenchViewHeight = 2.2f;
+        private const float BenchViewSide = 2.5f;
+        private const float SparkDelay = 0.3f;
         private const float StopSpeed = 0.4f;
         private const float ApproachOffset = 3f;
         private const float RetreatDistance = 16f;
@@ -568,6 +574,13 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(1, purchase.Level);
             Assert.IsTrue(abilities.Has(RoverAbility.HoverJump), "07 can leap now");
             Assert.IsFalse(_gameplay.Hints.TryGet(InteractionKind.Upgrade, out _), "the bench has nothing left");
+            yield return new WaitForSeconds(SparkDelay);
+            Assert.Greater(bench.SparkCount, 0, "sparks fly from between the vice jaws");
+            Vector3 front = bench.PadCentre - bench.BenchPosition;
+            front.y = 0f;
+            Vector3 side = Vector3.Cross(Vector3.up, front.normalized);
+            Review(bench.BenchPosition + front.normalized * BenchViewDistance + side * BenchViewSide +
+                   Vector3.up * BenchViewHeight, bench.BenchPosition + Vector3.up, "13b-workbench-sparks");
             yield return new WaitForSeconds(1.5f);
             Capture("13-workbench-hover-jump");
             End("Park at the workbench and buy Hover-Jump", $"wallet {_gameplay.Wallet.Balance} after " +
@@ -732,18 +745,23 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// </summary>
         private void Witness(Vector3 subject, string name)
         {
+            Vector3 toRover = _rover.Position - subject;
+            toRover.y = 0f;
+            Review(subject - toRover.normalized * WitnessDistance + Vector3.up * WitnessHeight, subject, name);
+        }
+
+        /// <summary>A review capture from a second camera (same lens as the game's) at <paramref name="eye"/>.</summary>
+        private void Review(Vector3 eye, Vector3 target, string name)
+        {
             Camera view = _context.Get<IViewCamera>().Camera;
-            var host = new GameObject("WitnessCamera");
+            var host = new GameObject("ReviewCamera");
             try
             {
-                var witness = host.AddComponent<Camera>();
-                witness.CopyFrom(view);
-                witness.enabled = false;
-                Vector3 toRover = _rover.Position - subject;
-                toRover.y = 0f;
-                Vector3 eye = subject - toRover.normalized * WitnessDistance + Vector3.up * WitnessHeight;
-                host.transform.SetPositionAndRotation(eye, Quaternion.LookRotation(subject - eye));
-                FrameCapture.SavePng(witness, 1280, 720,
+                var review = host.AddComponent<Camera>();
+                review.CopyFrom(view);
+                review.enabled = false;
+                host.transform.SetPositionAndRotation(eye, Quaternion.LookRotation(target - eye));
+                FrameCapture.SavePng(review, 1280, 720,
                     Path.Combine(GameplayFixture.CaptureFolder, "playthrough-" + name + ".png"));
             }
             finally
