@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -5,17 +7,21 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using MoonProject.Editor.Automation;
+using Object = UnityEngine.Object;
 
 namespace MoonProject.Art.Editor
 {
     /// <summary>
-    /// Night-time look check for the palette material and the rover "07": a moonlit dust floor with rocks, the
-    /// rover posed at rest (half-lidded eye, head lowered, wing ajar), its headlamp as a warm spot light and a warm
-    /// point light standing in for a base lamp, rendered through <see cref="CaptureAutomation.CapturePoses"/> with
-    /// bloom. Complements the neutral turntables: this is where emission, spot and point light response are judged.
+    /// Night-time look checks for the art under the game's kind of light (moonlight, indigo ambient, warm spot and
+    /// point lights, bloom), rendered through <see cref="CaptureAutomation.CapturePoses"/>. Complements the neutral
+    /// turntables: this is where emission, spot and point light response and far readability are judged.
     /// <code>
     /// python tools/unity_batch.py exec --method MoonProject.Art.Editor.ArtLightingPreview.Capture
+    ///     [--arg scene=rover|base|towers]   (default rover)
     /// </code>
+    /// rover: 07 at rest (half-lidded, head lowered, wing ajar) with its headlamp. base: the lander with the shelf
+    /// and the L3 tower on their anchors, its lamp sockets lit, 07 coming home. towers: L1-L3 side by side seen
+    /// from 15 m and 55 m.
     /// </summary>
     public static class ArtLightingPreview
     {
@@ -23,27 +29,41 @@ namespace MoonProject.Art.Editor
         private const float RestingHeadPitchDegrees = 9f;
         private const float RestingNeckYawDegrees = -12f;
         private const float RestingWingDegrees = 10f;
+        private const float BaseLampIntensity = 3f;
+        private const float BaseLampRange = 7f;
 
         public static void Capture()
         {
             BatchRunner.Run(nameof(ArtLightingPreview), args =>
             {
-                string roverPath = $"{ArtPaths.RoverFolder}/{RoverModelBuilder.ModelName}.prefab";
-                var rover = AssetDatabase.LoadAssetAtPath<GameObject>(roverPath);
-                if (rover == null)
-                {
-                    Debug.LogError("ArtLightingPreview: build Art/Rover first.");
-                    return false;
-                }
-
+                string scene = args.GetString("scene", "rover");
                 Material material = PaletteAssetBuilder.LoadMaterial();
                 EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
                 var temporary = new TemporaryObjects();
                 try
                 {
-                    BuildScene(rover, material, temporary);
+                    CameraPoseSet poses;
+                    switch (scene)
+                    {
+                        case "rover":
+                            NightSetting(material, temporary, 40f, 3.5f);
+                            poses = RoverScene(temporary);
+                            break;
+                        case "base":
+                            NightSetting(material, temporary, 70f, 10f);
+                            poses = BaseScene(temporary);
+                            break;
+                        case "towers":
+                            NightSetting(material, temporary, 90f, 12f);
+                            poses = TowersScene(temporary);
+                            break;
+                        default:
+                            Debug.LogError($"ArtLightingPreview: unknown scene '{scene}' (rover|base|towers).");
+                            return false;
+                    }
+
                     string output = Path.Combine(args.OutputDirectory, "art_preview");
-                    return CaptureAutomation.CapturePoses(Poses(), output, "night") > 0;
+                    return CaptureAutomation.CapturePoses(poses, output, "night_" + scene) > 0;
                 }
                 finally
                 {
@@ -52,7 +72,9 @@ namespace MoonProject.Art.Editor
             });
         }
 
-        private static void BuildScene(GameObject roverPrefab, Material material, TemporaryObjects temporary)
+        /// <summary>Dust floor, rocks from <paramref name="clearRadius"/> outwards, moonlight, bloom.</summary>
+        private static void NightSetting(Material material, TemporaryObjects temporary, float floorRadius,
+            float clearRadius)
         {
             RenderSettings.skybox = null;
             RenderSettings.fog = false;
@@ -62,11 +84,11 @@ namespace MoonProject.Art.Editor
             RenderSettings.ambientGroundColor = Palette.Get(PaletteSwatch.SkyTop);
 
             var ground = new LowPolyMeshBuilder(64);
-            ground.Prism(Place.At(0f, -0.1f, 0f), 40f, 0.2f, 24, PaletteSwatch.DustMid);
-            for (int i = 0; i < 9; i++)
+            ground.Prism(Place.At(0f, -0.1f, 0f), floorRadius, 0.2f, 24, PaletteSwatch.DustMid);
+            for (int i = 0; i < 12; i++)
             {
                 float angle = i * 2.4f;
-                float distance = 3.5f + i * 0.9f;
+                float distance = clearRadius + i * 0.9f;
                 var at = new Vector3(Mathf.Sin(angle) * distance, 0f, Mathf.Cos(angle) * distance);
                 RockGenerator.Build(ground, 100 + i, 0.4f + (i % 4) * 0.45f, (RockStyle)(i % 5), Place.At(at));
             }
@@ -78,10 +100,78 @@ namespace MoonProject.Art.Editor
             moon.shadows = LightShadows.Soft;
             RenderSettings.sun = moon;
             temporary.Add(moon.gameObject);
+            temporary.Add(NewVolume(temporary));
+        }
 
-            var rover = (GameObject)PrefabUtility.InstantiatePrefab(roverPrefab);
-            temporary.Add(rover);
-            PoseAtRest(rover.transform);
+        private static CameraPoseSet RoverScene(TemporaryObjects temporary)
+        {
+            Transform rover = Rover(temporary, Vector3.zero, 0f);
+            Light baseLamp = NewLight("BaseLamp", LightType.Point, Palette.Get(PaletteSwatch.WarmLamp), 4f);
+            baseLamp.transform.position = new Vector3(-2.4f, 1.7f, -1.2f);
+            baseLamp.range = BaseLampRange;
+            baseLamp.shadows = LightShadows.Soft;
+            temporary.Add(baseLamp.gameObject);
+            temporary.Add(rover.gameObject);
+            return Poses(
+                Pose("hero", new[] { 2.6f, 1.25f, 3.4f }, new[] { 0f, 0.85f, 0.2f }, 40f),
+                Pose("face", new[] { 0.55f, 1.3f, 1.75f }, new[] { 0f, 1.25f, 0.6f }, 35f),
+                Pose("chase", new[] { 1.2f, 3.2f, -6.2f }, new[] { 0f, 0.8f, 1.5f }, 50f),
+                Pose("side", new[] { -5f, 1.1f, 0.4f }, new[] { 0f, 0.7f, 0.2f }, 35f),
+                Pose("far30m", new[] { 6f, 9f, -28f }, new[] { 0f, 0.7f, 0f }, 50f));
+        }
+
+        private static CameraPoseSet BaseScene(TemporaryObjects temporary)
+        {
+            GameObject lander = Instantiate(BaseModelBuilder.LanderName, temporary);
+            Instantiate(BaseModelBuilder.ShelfName, temporary).transform.position = BaseModelBuilder.ShelfAnchor;
+            Instantiate(BaseModelBuilder.TowerPrefix + "3", temporary).transform.position =
+                BaseModelBuilder.TowerAnchor;
+            for (int i = 0; i < 4; i++)
+            {
+                Transform socket = Descendant(lander.transform, "LampSocket_" + i);
+                Light lamp = NewLight("BaseLamp", LightType.Point, Palette.Get(PaletteSwatch.WarmLamp),
+                    BaseLampIntensity);
+                lamp.transform.position = socket.position;
+                lamp.range = BaseLampRange;
+                lamp.shadows = i == 0 ? LightShadows.Soft : LightShadows.None;
+                temporary.Add(lamp.gameObject);
+            }
+
+            temporary.Add(Rover(temporary, new Vector3(2.4f, 0f, 9f), 195f).gameObject);
+            return Poses(
+                Pose("approach", new[] { 4f, 5f, 26f }, new[] { 0f, 2.5f, 0f }, 45f),
+                Pose("homecoming", new[] { 4.5f, 3.6f, 14.5f }, new[] { 1.5f, 1.8f, 4f }, 50f),
+                Pose("porch", new[] { -2.5f, 2.2f, 6.5f }, new[] { 0.2f, 2.6f, 1.5f }, 45f),
+                Pose("shelf", new[] { 6f, 2.4f, 6.5f }, new[] { 6f, 1.5f, 1.2f }, 45f),
+                Pose("far55m", new[] { -18f, 9f, 52f }, new[] { -2f, 4f, 0f }, 40f));
+        }
+
+        private static CameraPoseSet TowersScene(TemporaryObjects temporary)
+        {
+            for (int level = 1; level <= 3; level++)
+            {
+                Instantiate(BaseModelBuilder.TowerPrefix + level, temporary).transform.position =
+                    new Vector3((level - 2) * 6f, 0f, 0f);
+                Light lamp = NewLight("TowerLamp", LightType.Point, Palette.Get(PaletteSwatch.WarmLamp), 2f);
+                lamp.transform.position = new Vector3((level - 2) * 6f + 1.2f, 1.6f, 1.6f);
+                lamp.range = 6f;
+                temporary.Add(lamp.gameObject);
+            }
+
+            return Poses(
+                Pose("near15m", new[] { 0f, 4f, 15f }, new[] { 0f, 4.5f, 0f }, 50f),
+                Pose("far55m", new[] { 8f, 8f, 55f }, new[] { 0f, 4f, 0f }, 30f));
+        }
+
+        /// <summary>07 at rest at a spot with its headlamp on as a warm spot light.</summary>
+        private static Transform Rover(TemporaryObjects temporary, Vector3 position, float yaw)
+        {
+            GameObject rover = Instantiate(RoverModelBuilder.ModelName, temporary, ArtPaths.RoverFolder);
+            rover.transform.SetPositionAndRotation(position, Quaternion.Euler(0f, yaw, 0f));
+            Descendant(rover.transform, "Neck").localRotation = Quaternion.Euler(0f, RestingNeckYawDegrees, 0f);
+            Descendant(rover.transform, "Head").localRotation = Quaternion.Euler(RestingHeadPitchDegrees, 0f, 0f);
+            Descendant(rover.transform, "Eyelid").localRotation = Quaternion.Euler(RestingEyelidDegrees, 0f, 0f);
+            Descendant(rover.transform, "SolarWing").localRotation = Quaternion.Euler(RestingWingDegrees, 0f, 0f);
 
             Transform socket = Descendant(rover.transform, "HeadlampSocket");
             Light headlamp = NewLight("Headlamp", LightType.Spot, Palette.Get(PaletteSwatch.WarmLamp), 9f);
@@ -91,40 +181,27 @@ namespace MoonProject.Art.Editor
             headlamp.innerSpotAngle = 35f;
             headlamp.shadows = LightShadows.Soft;
             temporary.Add(headlamp.gameObject);
-
-            Light baseLamp = NewLight("BaseLamp", LightType.Point, Palette.Get(PaletteSwatch.WarmLamp), 4f);
-            baseLamp.transform.position = new Vector3(-2.4f, 1.7f, -1.2f);
-            baseLamp.range = 7f;
-            baseLamp.shadows = LightShadows.Soft;
-            temporary.Add(baseLamp.gameObject);
-
-            temporary.Add(NewVolume(temporary));
+            return rover.transform;
         }
 
-        private static void PoseAtRest(Transform rover)
+        private static GameObject Instantiate(string prefabName, TemporaryObjects temporary,
+            string folder = ArtPaths.BaseFolder)
         {
-            Descendant(rover, "Neck").localRotation = Quaternion.Euler(0f, RestingNeckYawDegrees, 0f);
-            Descendant(rover, "Head").localRotation = Quaternion.Euler(RestingHeadPitchDegrees, 0f, 0f);
-            Descendant(rover, "Eyelid").localRotation = Quaternion.Euler(RestingEyelidDegrees, 0f, 0f);
-            Descendant(rover, "SolarWing").localRotation = Quaternion.Euler(RestingWingDegrees, 0f, 0f);
-        }
-
-        private static CameraPoseSet Poses()
-        {
-            return new CameraPoseSet
+            string path = $"{folder}/{prefabName}.prefab";
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            if (prefab == null)
             {
-                width = 1280,
-                height = 720,
-                postProcessing = true,
-                poses = new[]
-                {
-                    Pose("hero", new[] { 2.6f, 1.25f, 3.4f }, new[] { 0f, 0.85f, 0.2f }, 40f),
-                    Pose("face", new[] { 0.55f, 1.3f, 1.75f }, new[] { 0f, 1.25f, 0.6f }, 35f),
-                    Pose("chase", new[] { 1.2f, 3.2f, -6.2f }, new[] { 0f, 0.8f, 1.5f }, 50f),
-                    Pose("side", new[] { -5f, 1.1f, 0.4f }, new[] { 0f, 0.7f, 0.2f }, 35f),
-                    Pose("far30m", new[] { 6f, 9f, -28f }, new[] { 0f, 0.7f, 0f }, 50f),
-                },
-            };
+                throw new InvalidOperationException($"ArtLightingPreview: {path} is missing; run the Art builders.");
+            }
+
+            var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+            temporary.Add(instance);
+            return instance;
+        }
+
+        private static CameraPoseSet Poses(params CameraPose[] poses)
+        {
+            return new CameraPoseSet { width = 1280, height = 720, postProcessing = true, poses = poses };
         }
 
         private static CameraPose Pose(string name, float[] position, float[] lookAt, float fov)
@@ -172,7 +249,7 @@ namespace MoonProject.Art.Editor
             Transform hit = Search(root, name);
             if (hit == null)
             {
-                throw new System.InvalidOperationException($"RoverModel has no node named {name}.");
+                throw new InvalidOperationException($"{root.name} has no node named {name}.");
             }
 
             return hit;
@@ -198,10 +275,9 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>Everything the preview creates, destroyed afterwards so no state outlives the capture.</summary>
-        private sealed class TemporaryObjects : System.IDisposable
+        private sealed class TemporaryObjects : IDisposable
         {
-            private readonly System.Collections.Generic.List<Object> _objects =
-                new System.Collections.Generic.List<Object>();
+            private readonly List<Object> _objects = new List<Object>();
 
             public void Add(Object item)
             {
