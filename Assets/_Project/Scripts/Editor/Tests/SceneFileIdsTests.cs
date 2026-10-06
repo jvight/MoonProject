@@ -46,11 +46,12 @@ namespace MoonProject.Editor.Tests
         }
 
         [Test]
-        public void BuildingTwice_GivesIdenticalFiles_WhereUnityAloneDoesNot()
+        public void BuildingTwice_GivesIdenticalFiles()
         {
-            string rawA = BuildAndSave(Folder + "/A.unity");
-            string rawB = BuildAndSave(Folder + "/B.unity");
-            Assert.AreNotEqual(rawA, rawB, "Unity's own file IDs differ between identical builds");
+            // Unity usually, but not always, assigns different random file IDs to identical builds, so only the
+            // normalised result is asserted.
+            BuildAndSave(Folder + "/A.unity");
+            BuildAndSave(Folder + "/B.unity");
 
             SceneFileIds.NormalizeFile(Folder + "/A.unity");
             SceneFileIds.NormalizeFile(Folder + "/B.unity");
