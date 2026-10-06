@@ -188,10 +188,19 @@ namespace MoonProject.Gameplay
             }
         }
 
+        /// <summary>
+        /// Where the lander stands (on the surface) for a base pad centred on <paramref name="basePosition"/>.
+        /// </summary>
+        public static Vector3 LanderSpot(ITerrainQuery terrain, Vector3 basePosition, BaseTuning tuning)
+        {
+            Vector3 spot = basePosition + tuning.LanderOffset;
+            spot.y = terrain.SampleHeight(spot.x, spot.z);
+            return spot;
+        }
+
         private void PlaceLander(Vector3 basePosition)
         {
-            Vector3 spot = basePosition + _tuning.LanderOffset;
-            spot.y = _terrain.SampleHeight(spot.x, spot.z);
+            Vector3 spot = LanderSpot(_terrain, basePosition, _tuning);
             Vector3 facing = basePosition - spot;
             facing.y = 0f;
             Quaternion rotation = facing.sqrMagnitude > 1e-4f ? Quaternion.LookRotation(facing) : Quaternion.identity;
