@@ -17,11 +17,12 @@ namespace MoonProject.Art.Editor
     /// turntables: this is where emission, spot and point light response and far readability are judged.
     /// <code>
     /// python tools/unity_batch.py exec --method MoonProject.Art.Editor.ArtLightingPreview.Capture
-    ///     [--arg scene=rover|base|towers|relics]   (default rover)
+    ///     [--arg scene=rover|base|towers|relics|shadow]   (default rover)
     /// </code>
     /// rover: 07 at rest (half-lidded, head lowered, wing ajar) with its headlamp. base: the lander with the shelf
     /// and the L3 tower on their anchors, its lamp sockets lit, 07 coming home. towers: L1-L3 side by side seen
-    /// from 15 m and 55 m. relics: the six relics on the lit museum shelf, and seen from 15 m.
+    /// from 15 m and 55 m. relics: the six relics on the lit museum shelf, and seen from 15 m. shadow: 07's cast
+    /// shadow under a low (30 degree) earthlight from its side, seen from the gameplay camera's height.
     /// </summary>
     public static class ArtLightingPreview
     {
@@ -61,9 +62,13 @@ namespace MoonProject.Art.Editor
                             NightSetting(material, temporary, 40f, 8f);
                             poses = RelicsScene(temporary);
                             break;
+                        case "shadow":
+                            NightSetting(material, temporary, 40f, 8f);
+                            poses = ShadowScene(temporary);
+                            break;
                         default:
                             Debug.LogError(
-                                $"ArtLightingPreview: unknown scene '{scene}' (rover|base|towers|relics).");
+                                $"ArtLightingPreview: unknown scene '{scene}' (rover|base|towers|relics|shadow).");
                             return false;
                     }
 
@@ -197,6 +202,19 @@ namespace MoonProject.Art.Editor
                 Pose("shelf", new[] { 0.6f, 1.9f, 6.2f }, new[] { 0f, 1.45f, 0f }, 45f),
                 Pose("row", new[] { 0.5f, 1.6f, 7.5f }, new[] { 0f, 0.4f, 4f }, 50f),
                 Pose("far15m", new[] { 3f, 4f, 19f }, new[] { 0f, 0.6f, 4f }, 40f));
+        }
+
+        private static CameraPoseSet ShadowScene(TemporaryObjects temporary)
+        {
+            Light moon = RenderSettings.sun;
+            moon.transform.rotation = Quaternion.Euler(30f, -90f, 0f);
+            moon.intensity = 0.9f;
+            Transform rover = Rover(temporary, Vector3.zero, 0f);
+            temporary.Add(rover.gameObject);
+            return Poses(
+                Pose("side", new[] { -2.2f, 6.5f, -5.5f }, new[] { -2.2f, 0f, 0f }, 50f),
+                Pose("above", new[] { -1.4f, 5.5f, -0.6f }, new[] { -1.4f, 0f, 0.2f }, 45f),
+                Pose("chase", new[] { 0.5f, 4f, -7f }, new[] { -1.5f, 0.3f, 0.5f }, 50f));
         }
 
         /// <summary>07 at rest at a spot with its headlamp on as a warm spot light.</summary>
