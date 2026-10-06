@@ -2,7 +2,8 @@
 // relic halos and dust. One shader, configured per material:
 //   uv.x runs ALONG an effect (beam length, ring circumference), uv.y runs ACROSS it (beam width, ring band).
 //   _EdgeSoftness fades both sides of uv.y, _LengthFade fades both ends of uv.x, bands scroll along uv.x,
-//   _FresnelMix brightens silhouettes (halos, flashes), _RadialMask turns a quad into a soft round sprite (dust).
+//   _FresnelMix brightens silhouettes (halos, flashes), _CoreMix softens them away (light columns, beam cones),
+//   _RadialMask turns a quad into a soft round sprite (dust).
 // Output is premultiplied: SrcBlend One with DstBlend One is additive light, DstBlend OneMinusSrcAlpha is soft matter.
 // _Intensity is the per-renderer brightness gameplay eases through a MaterialPropertyBlock; vertex colour multiplies
 // colour and alpha (LineRenderer and particle colours).
@@ -19,6 +20,8 @@ Shader "MoonProject/Gameplay/SoftGlow"
         _BandStrength ("Band Strength", Range(0, 1)) = 0
         _FresnelMix ("Fresnel Mix", Range(0, 1)) = 0
         _FresnelPower ("Fresnel Power", Range(0.5, 8)) = 2
+        _CoreMix ("Soft Core Mix", Range(0, 1)) = 0
+        _CorePower ("Soft Core Power", Range(0.5, 8)) = 1.5
         _RadialMask ("Radial Mask", Range(0, 1)) = 0
         [Enum(UnityEngine.Rendering.BlendMode)] _SrcBlend ("Src Blend", Float) = 1
         [Enum(UnityEngine.Rendering.BlendMode)] _DstBlend ("Dst Blend", Float) = 1
@@ -63,6 +66,8 @@ Shader "MoonProject/Gameplay/SoftGlow"
                 half _BandStrength;
                 half _FresnelMix;
                 half _FresnelPower;
+                half _CoreMix;
+                half _CorePower;
                 half _RadialMask;
             CBUFFER_END
 
@@ -120,12 +125,13 @@ Shader "MoonProject/Gameplay/SoftGlow"
 
                 half facing = saturate(abs(dot(normalize(input.normalWS), normalize(input.viewDirWS))));
                 half rim = lerp(1.0, pow(1.0 - facing, _FresnelPower), _FresnelMix);
+                half core = lerp(1.0, pow(facing, _CorePower), _CoreMix);
 
                 float2 centred = input.uv * 2.0 - 1.0;
                 half radial = saturate(1.0 - dot(centred, centred));
                 half round = lerp(1.0, radial * radial, _RadialMask);
 
-                half alpha = saturate(across * along * bands * rim * round * input.color.a * _Color.a);
+                half alpha = saturate(across * along * bands * rim * core * round * input.color.a * _Color.a);
                 half3 rgb = _Color.rgb * input.color.rgb * _Intensity * alpha;
                 rgb = MixFogColor(rgb, half3(0.0, 0.0, 0.0), input.fogFactor);
                 return half4(rgb, alpha * saturate(_Intensity));
