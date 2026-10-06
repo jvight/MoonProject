@@ -14,4 +14,19 @@ namespace MoonProject.Core.Events
 
         public bool Paused { get; }
     }
+
+    /// <summary>
+    /// The player chose another language: every string read through <see cref="ILocalization"/> should be read
+    /// again.
+    /// </summary>
+    public readonly struct LanguageChanged
+    {
+        public LanguageChanged(string language)
+        {
+            Language = language;
+        }
+
+        /// <summary>Code of the new language, e.g. "vi".</summary>
+        public string Language { get; }
+    }
 }
