@@ -13,24 +13,14 @@ MonoBehaviour:
   m_Name: Upgrade_radio_tower
   m_EditorClassIdentifier: 
   _id: radio_tower
-  _displayName: Radio Tower
   _baseSignalRadius: 60
   _levels:
-  - _title: Wake the old mast
-    _description: 'Power the tired antenna: its beacon glows again and the music
-      reaches farther.'
-    _cost: 15
+  - _cost: 15
     _signalRadius: 110
     _lightBoost: 1.25
-  - _title: Raise the mast
-    _description: 'A taller mast and a warmer lamp: the radio stays clear deep into
-      the dunes.'
-    _cost: 40
+  - _cost: 40
     _signalRadius: 170
     _lightBoost: 1.5
-  - _title: Light the whole basin
-    _description: The tower sings across the crater; home glows like a lantern on
-      a winter night.
-    _cost: 80
+  - _cost: 80
     _signalRadius: 260
     _lightBoost: 1.8

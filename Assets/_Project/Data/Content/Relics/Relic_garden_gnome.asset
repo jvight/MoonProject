@@ -13,9 +13,6 @@ MonoBehaviour:
   m_Name: Relic_garden_gnome
   m_EditorClassIdentifier: 
   _id: garden_gnome
-  _displayName: Wandering Gnome
-  _memory: A garden gnome with a chipped red hat, once borrowed as a joke and photographed
-    all over the world. This is the farthest anyone ever took him.
   _mass: 14
   _prefab: {fileID: 376253268612102607, guid: fa31f0137eab6134ab5c58dbbbfeba81, type: 3}
   _answerNote: 2

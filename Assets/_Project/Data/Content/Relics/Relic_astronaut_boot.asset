@@ -13,9 +13,6 @@ MonoBehaviour:
   m_Name: Relic_astronaut_boot
   m_EditorClassIdentifier: 
   _id: astronaut_boot
-  _displayName: Moonwalker's Boot
-  _memory: One boot, left behind, its tread still sharp with dust. Whoever wore it
-    stood here once and looked up at home, just like you.
   _mass: 9
   _prefab: {fileID: 8161168620540788631, guid: cd7c79d8333072543a41ba62af6dc33f, type: 3}
   _answerNote: 1

@@ -13,9 +13,6 @@ MonoBehaviour:
   m_Name: Relic_cassette_player
   m_EditorClassIdentifier: 
   _id: cassette_player
-  _displayName: Mixtape Walkman
-  _memory: A walkman with a mixtape still inside, labelled "for the long drive" in
-    careful pen. Someone made this for someone they loved.
   _mass: 6
   _prefab: {fileID: 5725939882801279510, guid: 3b2b56b08a265fa46ae671be2e1445c8, type: 3}
   _answerNote: 3
