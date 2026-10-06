@@ -9,19 +9,18 @@ Steps:
      last) so the build reflects source, then builds Main.unity for StandaloneWindows64 (Mono, release) and writes
      build_info.txt (version = <bundleVersion>-<commit date>-<short hash>[-dirty]) next to the exe.
   2. Zips the build to Builds/LofiLunar-<version>.zip (Builds/ is git-ignored) and prints its size and path.
-  3. Smoke check: launches the exe windowed (1280x720) with -logFile for --smoke-seconds, requires the WorldSystem
-     boot line and no exceptions/errors in the player log, then closes it and reports boot time and sizes. The
-     player's real save folder is snapshotted before and restored after, so a smoke run never touches progress.
+  3. Smoke check: launches the exe windowed (1280x720) with -logFile and -saveSlot smoke for --smoke-seconds,
+     requires the bootstrap to confirm the smoke slot and the WorldSystem boot line, and no exceptions/errors in the
+     player log, then closes it and reports boot time and sizes. The smoke slot's files are deleted before and
+     after the run, so a smoke run never reads or writes the player's progress.
 
 Exit code 0 = build, zip and smoke check all passed.
 """
 import argparse
 import os
 import re
-import shutil
 import subprocess
 import sys
-import tempfile
 import time
 import zipfile
 from pathlib import Path
@@ -37,6 +36,8 @@ BOOT_MARKER = re.compile(r"^WorldSystem: terrain")
 PLAYER_PROBLEM = re.compile(r"(?i)\b(couldn't|could not|cannot|can't|failed|failure|error|invalid|missing|"
                             r"exception|crash)\b")
 BUILD_TIMEOUT = 5400
+SMOKE_SLOT = "smoke"
+SLOT_MARKER = re.compile(r"^GameBootstrap: save slot '(?P<slot>[^']*)'")
 
 
 def say(message):
@@ -96,43 +97,11 @@ def make_zip(root, out_dir, version):
     return archive
 
 
-class SaveFolderGuard:
-    """
-    Snapshots <persistentDataPath>/Saves before the smoke run and restores it file by file afterwards (the folder
-    itself is never deleted: Windows can keep a just-deleted folder name busy). If restoring fails the snapshot is
-    kept and its path printed, so progress can always be recovered by hand.
-    """
-
-    def __init__(self, company, product):
-        self.saves = Path(os.environ["USERPROFILE"]) / "AppData" / "LocalLow" / company / product / "Saves"
-        self._snapshot = Path(tempfile.mkdtemp(prefix="moon-smoke-saves-"))
-        self._existed = False
-
-    def __enter__(self):
-        self._existed = self.saves.is_dir()
-        if self._existed:
-            for file in self.saves.iterdir():
-                if file.is_file():
-                    shutil.copy2(file, self._snapshot / file.name)
-        return self
-
-    def __exit__(self, *exc):
-        try:
-            if self.saves.is_dir():
-                for file in self.saves.iterdir():
-                    if file.is_file() and not (self._snapshot / file.name).exists():
-                        file.unlink()
-            if self._existed:
-                self.saves.mkdir(parents=True, exist_ok=True)
-                for file in self._snapshot.iterdir():
-                    shutil.copy2(file, self.saves / file.name)
-            elif self.saves.is_dir() and not any(self.saves.iterdir()):
-                self.saves.rmdir()
-        except OSError as error:
-            say(f"WARNING: could not restore {self.saves} ({error}); the pre-smoke files are in {self._snapshot}")
-            return False
-        shutil.rmtree(self._snapshot, ignore_errors=True)
-        return False
+def delete_slot_files(saves_dir, slot):
+    """Removes every file of a save slot (save, backup, temp, set-aside corrupt copies)."""
+    if saves_dir.is_dir():
+        for file in saves_dir.glob(f"{slot}.json*"):
+            file.unlink()
 
 
 def smoke(root, out_dir, info, seconds):
@@ -140,44 +109,54 @@ def smoke(root, out_dir, info, seconds):
     log_path = root / "Logs" / "batch" / f"{time.strftime('%Y%m%d-%H%M%S')}-smoke-player.log"
     log_path.parent.mkdir(parents=True, exist_ok=True)
     company, product = player_identity(root)
-    say(f"smoke: launching {exe.name} windowed 1280x720 for {seconds}s (log {log_path})")
+    saves_dir = Path(os.environ["USERPROFILE"]) / "AppData" / "LocalLow" / company / product / "Saves"
+    delete_slot_files(saves_dir, SMOKE_SLOT)
+    say(f"smoke: launching {exe.name} windowed 1280x720, save slot '{SMOKE_SLOT}', for {seconds}s (log {log_path})")
     boot_seconds = None
     exited_early = None
     boot_line = ""
-    with SaveFolderGuard(company, product):
-        guard = procutil.ProcessTreeGuard()
-        started = time.monotonic()
-        proc = subprocess.Popen([str(exe), "-screen-width", "1280", "-screen-height", "720",
-                                 "-screen-fullscreen", "0", "-logFile", str(log_path)], cwd=str(out_dir))
-        guard.attach(proc)
-        try:
-            while time.monotonic() - started < seconds:
-                code = proc.poll()
-                if code is not None:
-                    exited_early = code
+    slot_in_use = None
+    guard = procutil.ProcessTreeGuard()
+    started = time.monotonic()
+    proc = subprocess.Popen([str(exe), "-screen-width", "1280", "-screen-height", "720", "-screen-fullscreen", "0",
+                             "-saveSlot", SMOKE_SLOT, "-logFile", str(log_path)], cwd=str(out_dir))
+    guard.attach(proc)
+    try:
+        while time.monotonic() - started < seconds:
+            code = proc.poll()
+            if code is not None:
+                exited_early = code
+                break
+            if boot_seconds is None and log_path.exists():
+                for line in log_path.read_text(encoding="utf-8", errors="replace").splitlines():
+                    slot_match = SLOT_MARKER.match(line)
+                    if slot_match:
+                        slot_in_use = slot_match.group("slot")
+                    if BOOT_MARKER.match(line):
+                        boot_seconds = time.monotonic() - started
+                        boot_line = line
+                        break
+                if boot_seconds is not None and slot_in_use != SMOKE_SLOT:
                     break
-                if boot_seconds is None and log_path.exists():
-                    for line in log_path.read_text(encoding="utf-8", errors="replace").splitlines():
-                        if BOOT_MARKER.match(line):
-                            boot_seconds = time.monotonic() - started
-                            boot_line = line
-                            break
-                time.sleep(0.25)
-        finally:
-            guard.kill()
-            proc.wait()
-            guard.close()
+            time.sleep(0.25)
+    finally:
+        guard.kill()
+        proc.wait()
+        guard.close()
+        delete_slot_files(saves_dir, SMOKE_SLOT)
     text = log_path.read_text(encoding="utf-8", errors="replace") if log_path.exists() else ""
-    if boot_seconds is None:
-        for line in text.splitlines():
-            if BOOT_MARKER.match(line):
-                boot_line = line
     report = logscan.analyse(text, out_dir)
     logscan.print_report(report)
     native = player_problems(text)
     for line, count in native:
         say(f"smoke: player log problem x{count}: {line}")
     ok = True
+    if slot_in_use != SMOKE_SLOT:
+        say(f"smoke: FAIL - the player did not confirm save slot '{SMOKE_SLOT}' (got {slot_in_use!r}); "
+            "the build predates -saveSlot or ignored it, so it was stopped as soon as it booted")
+        ok = False
+    else:
+        say(f"smoke: the player used save slot '{SMOKE_SLOT}' (deleted again)")
     if exited_early is not None:
         say(f"smoke: FAIL - the player exited by itself after {time.monotonic() - started:.1f}s (code {exited_early})")
         ok = False
