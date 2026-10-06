@@ -108,6 +108,11 @@ namespace MoonProject.Gameplay
                     material.SetFloat(AcrossInId, 0.5f);
                     material.SetFloat(AcrossOutId, 0.5f);
                     break;
+                case GlowRole.Spark:
+                    Set(material, warm, edge: 0f, length: 0f, bands: 0f, speed: 0f, strength: 0f, fresnel: 0f,
+                        fresnelPower: 2f, core: 0f, corePower: 1.5f, radial: 1f, additive: true,
+                        cull: CullMode.Off);
+                    break;
                 case GlowRole.WarmGlow:
                     material.SetColor(ColorId, warm);
                     material.SetFloat(FresnelMixId, 0.4f);

@@ -167,7 +167,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             RadioTower tower = _fixture.Gameplay.Tower;
             IUpgradeShop shop = _fixture.Bootstrap.Context.Get<IUpgradeShop>();
             PadLook look = _fixture.WorkshopTuning.PadLook;
+            WorkshopTuning tuning = _fixture.WorkshopTuning;
             Assert.AreSame(_fixture.HoverJumpUpgrade, workshop.Definition, "the bench's first offer");
+            Assert.AreEqual(tuning.LampIdle, workshop.LampLevel, 1e-3f, "Kenji's lamp is left on");
+            Assert.AreEqual(0, workshop.SparkCount, "no sparks before a purchase");
             Assert.IsFalse(_fixture.Rover.Has(RoverAbility.HoverJump));
             Assert.Greater(SurfaceRules.HorizontalDistance(workshop.PadCentre, tower.PadCentre),
                 look.Radius + _fixture.TowerTuning.PadRadius, "the two pads never overlap");
@@ -191,6 +194,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(workshop.PadCentre, hint.Position);
             yield return new WaitForSeconds(1.5f);
             Assert.Greater(workshop.PadLevel, 0.8f * look.Occupied, "the pad glows under 07");
+            Assert.Greater(workshop.LampLevel, 0.9f * tuning.LampOccupied, "the lamp leans in");
 
             int before = _fixture.Events.Order.Count;
             int funds = _fixture.Gameplay.Wallet.Balance;
@@ -203,13 +207,18 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(1, _fixture.Events.UpgradePurchased[0].Value.Level);
             Assert.IsTrue(_fixture.Rover.Has(RoverAbility.HoverJump), "07 can leap now");
             Assert.Greater(workshop.PadLevel, look.Occupied, "the purchase flares the pad");
+            Assert.AreEqual(tuning.LampFlare, workshop.LampLevel, 1e-3f, "and the lamp");
             Assert.IsFalse(_fixture.Gameplay.Hints.TryGet(InteractionKind.Upgrade, out _), "nothing left to buy");
             Assert.AreEqual(PurchaseResult.Maxed, shop.Purchase(HoverJump));
             Vector3 pad = workshop.PadCentre;
             _fixture.Rover.Aim(pad + new Vector3(-7f, 5f, -7f), pad + Vector3.up);
+            yield return new WaitForSeconds(tuning.SparkInterval * 1.5f);
+            Assert.Greater(workshop.SparkCount, tuning.SparkCount, "sparks fly from between the vice jaws");
             _fixture.Capture("18-workshop-hover-jump");
-            yield return new WaitForSeconds(2f);
+            yield return new WaitForSeconds(tuning.SparkInterval * tuning.SparkBursts + tuning.SparkLifetime.y + 0.5f);
+            Assert.AreEqual(0, workshop.SparkCount, "the sparks die out (an idle bench costs nothing)");
             Assert.Less(workshop.PadLevel, look.Occupied * 0.5f, "an empty bench's pad rests dim");
+            Assert.AreEqual(tuning.LampOccupied, workshop.LampLevel, 0.05f, "the lamp settles back");
 
             _fixture.Dispose(true);
             yield return null;

@@ -7,14 +7,13 @@ namespace MoonProject.Gameplay.Editor
 {
     /// <summary>
     /// The Gameplay domain's part of Main.unity: under [Gameplay], the <see cref="GameplaySystem"/> (one system,
-    /// initialised after World, Rover and Audio) and its parts, wired to the tuning, content and material assets, plus
-    /// the home base built from Art's prefabs (lander, museum shelf on its ShelfAnchor, the three radio tower stages on
-    /// its TowerAnchor) and Kenji's workbench station on a WorkshopAnchor placed beside the lander from the workshop
-    /// tuning (only its pad of light shows). Art's base prefabs are meshes only, so gameplay makes them solid here: a
-    /// static mesh collider on each body, on the Prop layer, so 07 drives around them and the camera never slips
-    /// inside. The base is stood beside the pad here for the editor view and re-seated on the real ground at boot;
-    /// relic sites and the scrap field are planned from the World's surface at boot. Fails loudly when a required asset
-    /// or prefab node is missing.
+    /// initialised after World and Rover) and its parts, wired to the tuning, content and material assets, plus the
+    /// home base built from Art's prefabs (lander, museum shelf on its ShelfAnchor, the three radio tower stages on its
+    /// TowerAnchor, Kenji's workbench on its WorkshopAnchor). Art's base prefabs are meshes only, so gameplay makes
+    /// them solid here: a static mesh collider on each body, on the Prop layer, so 07 drives around them and the camera
+    /// never slips inside. The base is stood beside the pad here for the editor view and re-seated on the real ground
+    /// at boot; relic sites and the scrap field are planned from the World's surface at boot. Fails loudly when a
+    /// required asset or prefab node is missing.
     /// </summary>
     public sealed class GameplaySceneContributor : ISceneContributor
     {
@@ -83,8 +82,9 @@ namespace MoonProject.Gameplay.Editor
                 beacons[i] = Child(stages[i].transform, "BeaconSocket");
             }
 
-            Transform workshopAnchor = context.CreateChild("WorkshopAnchor", lander).transform;
-            workshopAnchor.localPosition = workshopTuning.BenchOffset;
+            Transform workshopAnchor = Child(lander, "WorkshopAnchor");
+            Transform workbench = context.InstantiatePrefab(GameplayAssetPaths.Workbench, workshopAnchor).transform;
+            MakeSolid(workbench);
 
             relics.Wire(relicCatalog, placement, relicTuning);
             scrap.Wire(scrapTuning, scrapCatalog);
@@ -94,7 +94,8 @@ namespace MoonProject.Gameplay.Editor
             home.Wire(baseTuning, baseRoot.transform, Renderer(Child(lander, "Windows")),
                 Children(lander, "LampSocket_", LampSockets), shelf, Glow(shelf), Children(shelf, "Slot_", ShelfSlots));
             tower.Wire(towerTuning, radioTower, towerAnchor, stages, stageLights, beacons);
-            workshop.Wire(workshopTuning, new[] { hoverJump }, workshopAnchor);
+            workshop.Wire(workshopTuning, new[] { hoverJump }, workshopAnchor, Glow(workbench),
+                Child(workbench, "SparkSocket"));
             var perches = new Transform[friendCatalog.Friends.Count];
             for (int i = 0; i < perches.Length; i++)
             {

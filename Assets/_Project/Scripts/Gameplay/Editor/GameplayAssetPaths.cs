@@ -44,6 +44,7 @@ namespace MoonProject.Gameplay.Editor
         public const string ArtBaseFolder = ArtPaths.Root + "/Base";
         public const string Lander = ArtBaseFolder + "/Lander.prefab";
         public const string MuseumShelf = ArtBaseFolder + "/MuseumShelf.prefab";
+        public const string Workbench = ArtBaseFolder + "/Workbench.prefab";
         public const string ArtFriendFolder = ArtPaths.Root + "/Friends";
 
         public static string FriendDefinition(string id)

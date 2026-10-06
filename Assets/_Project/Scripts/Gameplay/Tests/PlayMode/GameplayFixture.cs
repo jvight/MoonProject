@@ -195,7 +195,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 GlowMaterial(shader, GlowRole.WarmRing), GlowMaterial(shader, GlowRole.WarmGlow),
                 Track(GlintMaterials.Create(LoadShader(GlintShaderPath))),
                 Track(GlintMaterials.CreatePart(LoadShader(GlintShaderPath))),
-                GlowMaterial(shader, GlowRole.FriendPillar));
+                GlowMaterial(shader, GlowRole.FriendPillar), GlowMaterial(shader, GlowRole.Spark));
 
             var root = new GameObject("[Gameplay]");
             root.SetActive(false);
@@ -226,7 +226,7 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         /// <summary>
         /// A stand-in for Art's lander, shelf and tower stages with the contract's node names and positions, wired the
-        /// way the scene contributor wires the real prefabs (the workbench anchor placed from the workshop tuning).
+        /// way the scene contributor wires the real prefabs.
         /// </summary>
         private void BuildBase(Transform parent, HomeBase home, RadioTower tower, Workshop workshop)
         {
@@ -269,8 +269,12 @@ namespace MoonProject.Gameplay.PlayModeTests
             home.Wire(BaseTuning, baseRoot, windows.GetComponent<Renderer>(), sockets, shelf,
                 shelfLights.GetComponent<Renderer>(), slots);
             tower.Wire(TowerTuning, RadioTowerUpgrade, anchor, stages, lights, beacons);
-            workshop.Wire(WorkshopTuning, new[] { HoverJumpUpgrade },
-                Node("WorkshopAnchor", lander, WorkshopTuning.BenchOffset));
+            Transform workbench = Node("Workbench", Node("WorkshopAnchor", lander, new Vector3(12.5f, 0f, -2f)),
+                Vector3.zero);
+            Block(workbench, new Vector3(0f, 0.47f, 0f), new Vector3(2.3f, 0.95f, 0.9f));
+            Transform lamp = Block(workbench, new Vector3(0.55f, 2.02f, 0.18f), Vector3.one * 0.12f);
+            workshop.Wire(WorkshopTuning, new[] { HoverJumpUpgrade }, workbench.parent, lamp.GetComponent<Renderer>(),
+                Node("SparkSocket", workbench, new Vector3(-0.82f, 1.14f, 0.32f)));
             TillyPerch = Node("FriendSocket_tilly", lander, new Vector3(-1.6f, 3.3f, 0.9f));
         }
 

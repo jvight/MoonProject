@@ -8,7 +8,9 @@ namespace MoonProject.Gameplay
     /// <summary>
     /// Kenji's workbench by the lander: the station that sells rover abilities. Its pad of light is the shop, like the
     /// radio tower's: it offers the first ability not yet bought, breathes softly, glows inviting when that is
-    /// affordable, brightly while 07 is parked on it, flares on a purchase and dims once the bench has nothing left.
+    /// affordable, brightly while 07 is parked on it and dims once the bench has nothing left. The work lamp stays on
+    /// as a warm welcome and leans brighter while 07 is parked; a purchase flares the pad and the lamp and throws
+    /// sparks from between the vice jaws.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class Workshop : MonoBehaviour, IUpgradeStation
@@ -23,10 +25,19 @@ namespace MoonProject.Gameplay
         [Tooltip("The lander's WorkshopAnchor: where the bench stands (the pad is placed from it).")]
         [SerializeField] private Transform _anchor;
 
+        [Tooltip("The Workbench's 'Lights' glow renderer (the work lamp's bulb).")]
+        [SerializeField] private Renderer _lamp;
+
+        [Tooltip("The Workbench's SparkSocket (between the vice jaws).")]
+        [SerializeField] private Transform _sparkSocket;
+
         private IRoverState _rover;
         private UpgradeService _upgrades;
         private IDisposable _purchases;
         private StationPad _pad;
+        private EmissionGlow _lampGlow;
+        private BenchSparks _sparks;
+        private float _lampLevel;
         private bool _initialized;
 
         /// <summary>What the bench offers now: its first ability not yet bought (its last once all are).</summary>
@@ -38,8 +49,17 @@ namespace MoonProject.Gameplay
 
         public Vector3 PadCentre => _pad != null ? _pad.Centre : Vector3.zero;
 
+        /// <summary>Where the bench stands (its anchor on the ground).</summary>
+        public Vector3 BenchPosition => _anchor != null ? _anchor.position : Vector3.zero;
+
         /// <summary>Current pad brightness (tests and debugging views).</summary>
         public float PadLevel => _pad != null ? _pad.Level : 0f;
+
+        /// <summary>Current work lamp brightness (tests and debugging views).</summary>
+        public float LampLevel => _lampLevel;
+
+        /// <summary>Upgrade sparks in the air (tests and debugging views).</summary>
+        public int SparkCount => _sparks != null ? _sparks.ParticleCount : 0;
 
         public WorkshopTuning Tuning => _tuning;
 
@@ -48,11 +68,14 @@ namespace MoonProject.Gameplay
             return definition != null && Sells(definition.Id);
         }
 
-        internal void Wire(WorkshopTuning tuning, UpgradeDefinition[] definitions, Transform anchor)
+        internal void Wire(WorkshopTuning tuning, UpgradeDefinition[] definitions, Transform anchor, Renderer lamp,
+            Transform sparkSocket)
         {
             _tuning = tuning;
             _definitions = definitions;
             _anchor = anchor;
+            _lamp = lamp;
+            _sparkSocket = sparkSocket;
         }
 
         internal bool Initialize(GameplayServices services, UpgradeService upgrades)
@@ -74,6 +97,10 @@ namespace MoonProject.Gameplay
             _upgrades = upgrades;
             _pad = new StationPad("WorkshopPad", transform, services.Terrain,
                 _anchor.TransformPoint(_tuning.PadOffset), _tuning.PadLook, services.Visuals.WarmRing);
+            _lampGlow = new EmissionGlow(_lamp);
+            _lampLevel = _tuning.LampIdle;
+            _lampGlow.Apply(_lampLevel);
+            _sparks = new BenchSparks(_sparkSocket, _tuning, services.Visuals.Spark);
             _purchases = services.Events.Subscribe<UpgradePurchased>(OnPurchased);
             _initialized = true;
             return true;
@@ -89,6 +116,16 @@ namespace MoonProject.Gameplay
             if (_anchor == null)
             {
                 return "the workshop anchor is not assigned.";
+            }
+
+            if (_lamp == null)
+            {
+                return "the workbench's lamp ('Lights') is not assigned.";
+            }
+
+            if (_sparkSocket == null)
+            {
+                return "the workbench's SparkSocket is not assigned.";
             }
 
             if (_definitions == null || _definitions.Length == 0)
@@ -150,10 +187,15 @@ namespace MoonProject.Gameplay
 
         private void OnPurchased(UpgradePurchased purchase)
         {
-            if (Sells(purchase.UpgradeId))
+            if (!Sells(purchase.UpgradeId))
             {
-                _pad.Flare(_tuning.PurchaseFlare);
+                return;
             }
+
+            _pad.Flare(_tuning.PadFlare);
+            _lampLevel = Mathf.Max(_lampLevel, _tuning.LampFlare);
+            _lampGlow.Apply(_lampLevel);
+            _sparks.Burst();
         }
 
         private void Update()
@@ -163,9 +205,13 @@ namespace MoonProject.Gameplay
                 return;
             }
 
+            float deltaTime = Time.deltaTime;
             UpgradeDefinition offer = Definition;
             _upgrades.TryGetOffer(offer.Id, out UpgradeOffer current);
-            _pad.Tick(_rover.Position, current.IsMaxed, current.CanAfford, Time.time, Time.deltaTime);
+            _pad.Tick(_rover.Position, current.IsMaxed, current.CanAfford, Time.time, deltaTime);
+            float lamp = _pad.Occupied ? _tuning.LampOccupied : _tuning.LampIdle;
+            _lampLevel = Damp.Toward(_lampLevel, lamp, _tuning.LampEase, deltaTime);
+            _lampGlow.Apply(_lampLevel);
         }
 
         private void OnDestroy()
