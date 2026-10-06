@@ -1,0 +1,148 @@
+{
+  "id": "05_low_orbit_tea",
+  "title": "Low Orbit Tea",
+  "bpm": 80.0,
+  "swing": 0.62,
+  "key": "D major",
+  "family": "ii-V-I",
+  "drums": "laidback",
+  "ending": "fade",
+  "form": [
+    "Intro x4",
+    "A x8",
+    "B x8",
+    "A' x8",
+    "B' x8",
+    "A'' x8",
+    "Outro x4"
+  ],
+  "pcm_sha256": "49bdd6aacfa83255a493fa7438f52efd69697508bc1d04f4a6abcc673b94c320",
+  "measured": {
+    "duration_s": 144.8,
+    "loudness_lufs": -15.9849,
+    "true_peak_dbtp": -1.3485,
+    "sample_peak_db": -1.3541,
+    "rms_db": -17.5758,
+    "crest_db": 16.2217,
+    "centroid_hz": 1617.7825,
+    "above_8k_db": -33.6647,
+    "bands": {
+      "low": 0.7139,
+      "mid": 0.2834,
+      "high": 0.0027
+    },
+    "correlation": 0.9159,
+    "correlation_below_150hz": 0.9967,
+    "clipped_samples": 0,
+    "silent_gaps": [],
+    "dc": 0.0,
+    "chroma_out_of_key": 0.049,
+    "beat_clarity": 2.4481
+  },
+  "theory": {
+    "chord_chart": {
+      "Intro": [
+        "| Em9 | A9sus4 | Dmaj9 | Bm7 |"
+      ],
+      "A": [
+        "| Em9 | A13 | Dmaj9 | Bm11 |",
+        "| Em9 | A13sus4 A13 | Dmaj9 | D6/9 |"
+      ],
+      "B": [
+        "| G6/9 | A13sus4 | F#m7 | Bm9 |",
+        "| Em7 | F#m7 | Gmaj9 | A9sus4 A13sus4 |"
+      ],
+      "A'": [
+        "| Em9 | A9sus4 | Dmaj9 | Bm11 |",
+        "| Em9 | A13sus4 A13sus4 | Dmaj9 | D6/9 |"
+      ],
+      "B'": [
+        "| G6/9 | A13sus4 | F#m7 | Bm9 |",
+        "| Em9 | F#m7 | Gmaj9 | A13 A13 |"
+      ],
+      "A''": [
+        "| Em7 | A13 | Dmaj9 | Bm9 |",
+        "| Em7 | A13sus4 A9sus4 | Dmaj9 | Dmaj9 |"
+      ],
+      "Outro": [
+        "| Em7 | A13sus4 | Dmaj9 | D6/9 |"
+      ]
+    },
+    "out_of_key_notes": 0,
+    "borrowed_chords": [],
+    "lead_notes": 74,
+    "lead_non_pentatonic": 0,
+    "lead_strong_off_chord": 0,
+    "lead_clashes": 0,
+    "parts": {
+      "keys": 440,
+      "pad": 64,
+      "bass": 116,
+      "lead.kalimba": 44,
+      "lead.musicbox": 30
+    },
+    "drum_hits": 1427
+  },
+  "gates": {
+    "loudness_lufs": {
+      "value": -15.9849,
+      "pass": true
+    },
+    "true_peak_dbtp": {
+      "value": -1.3485,
+      "pass": true
+    },
+    "duration_s": {
+      "value": 144.8,
+      "pass": true
+    },
+    "clipped_samples": {
+      "value": 0,
+      "pass": true
+    },
+    "silent_gaps": {
+      "value": 0,
+      "pass": true
+    },
+    "correlation_below_150hz": {
+      "value": 0.9967,
+      "pass": true
+    },
+    "correlation": {
+      "value": 0.9159,
+      "pass": true
+    },
+    "high_band_share": {
+      "value": 0.0027,
+      "pass": true
+    },
+    "above_8k_db": {
+      "value": -33.6647,
+      "pass": true
+    },
+    "chroma_out_of_key": {
+      "value": 0.049,
+      "pass": true
+    },
+    "beat_clarity": {
+      "value": 2.4481,
+      "pass": true
+    },
+    "out_of_key_notes": {
+      "value": 0,
+      "pass": true
+    },
+    "lead_non_pentatonic": {
+      "value": 0,
+      "pass": true
+    },
+    "lead_strong_off_chord": {
+      "value": 0,
+      "pass": true
+    },
+    "lead_clashes": {
+      "value": 0,
+      "pass": true
+    }
+  }
+}

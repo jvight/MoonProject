@@ -1,0 +1,147 @@
+{
+  "id": "04_long_way_home",
+  "title": "Long Way Home",
+  "bpm": 74.0,
+  "swing": 0.6,
+  "key": "B minor",
+  "family": "i-iv-VI-v",
+  "drums": "laidback",
+  "ending": "fade",
+  "form": [
+    "Intro x4",
+    "A x8",
+    "B x8",
+    "A' x8",
+    "Break x4",
+    "B' x8",
+    "Outro x4"
+  ],
+  "pcm_sha256": "0ae81336269528a899bf6afb7ca36be2990c3f2efc0a27a07b0e73e657c967cb",
+  "measured": {
+    "duration_s": 143.5027,
+    "loudness_lufs": -15.9818,
+    "true_peak_dbtp": -1.3278,
+    "sample_peak_db": -1.3333,
+    "rms_db": -17.5065,
+    "crest_db": 16.1732,
+    "centroid_hz": 1519.7382,
+    "above_8k_db": -35.3667,
+    "bands": {
+      "low": 0.6661,
+      "mid": 0.3316,
+      "high": 0.0023
+    },
+    "correlation": 0.9079,
+    "correlation_below_150hz": 0.9987,
+    "clipped_samples": 0,
+    "silent_gaps": [],
+    "dc": 0.0,
+    "chroma_out_of_key": 0.0394,
+    "beat_clarity": 2.2196
+  },
+  "theory": {
+    "chord_chart": {
+      "Intro": [
+        "| Bm9 | Em9 | Gmaj9 | F#m7 |"
+      ],
+      "A": [
+        "| Bm9 | Em7 | Gmaj9 | F#m7 |",
+        "| Bm9 | Em7 | Gmaj9 | F#7sus4 |"
+      ],
+      "B": [
+        "| Dmaj9 | A6/9 | Gmaj9 | Em9 |",
+        "| Dmaj7 | A9sus4 | G6/9 | F#7sus4 |"
+      ],
+      "A'": [
+        "| Bm11 | Em9 | Gmaj7 | F#m7 A9sus4 |",
+        "| Bm7 | Em11 | Gmaj9#11 | F#7sus4 |"
+      ],
+      "Break": [
+        "| D6/9 | A6/9 | Gmaj9 | Em9 |"
+      ],
+      "B'": [
+        "| D6/9 | A6/9 | G6/9 | Em7 |",
+        "| Dmaj9 | A13sus4 | G6/9 | F#7sus4 |"
+      ],
+      "Outro": [
+        "| Bm11 | Gmaj7 | Em7 | Bm11 |"
+      ]
+    },
+    "out_of_key_notes": 0,
+    "borrowed_chords": [],
+    "lead_notes": 52,
+    "lead_non_pentatonic": 0,
+    "lead_strong_off_chord": 0,
+    "lead_clashes": 0,
+    "parts": {
+      "keys": 376,
+      "pad": 69,
+      "bass": 96,
+      "lead.flute": 35,
+      "lead.kalimba": 17
+    },
+    "drum_hits": 1212
+  },
+  "gates": {
+    "loudness_lufs": {
+      "value": -15.9818,
+      "pass": true
+    },
+    "true_peak_dbtp": {
+      "value": -1.3278,
+      "pass": true
+    },
+    "duration_s": {
+      "value": 143.5027,
+      "pass": true
+    },
+    "clipped_samples": {
+      "value": 0,
+      "pass": true
+    },
+    "silent_gaps": {
+      "value": 0,
+      "pass": true
+    },
+    "correlation_below_150hz": {
+      "value": 0.9987,
+      "pass": true
+    },
+    "correlation": {
+      "value": 0.9079,
+      "pass": true
+    },
+    "high_band_share": {
+      "value": 0.0023,
+      "pass": true
+    },
+    "above_8k_db": {
+      "value": -35.3667,
+      "pass": true
+    },
+    "chroma_out_of_key": {
+      "value": 0.0394,
+      "pass": true
+    },
+    "beat_clarity": {
+      "value": 2.2196,
+      "pass": true
+    },
+    "out_of_key_notes": {
+      "value": 0,
+      "pass": true
+    },
+    "lead_non_pentatonic": {
+      "value": 0,
+      "pass": true
+    },
+    "lead_strong_off_chord": {
+      "value": 0,
+      "pass": true
+    },
+    "lead_clashes": {
+      "value": 0,
+      "pass": true
+    }
+  }
+}

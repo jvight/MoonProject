@@ -1,0 +1,145 @@
+{
+  "id": "02_sevens_lullaby",
+  "title": "Seven's Lullaby",
+  "bpm": 70.0,
+  "swing": 0.6,
+  "key": "D major",
+  "family": "IV-iv-I",
+  "drums": "brushy",
+  "ending": "tapestop",
+  "form": [
+    "Intro x4",
+    "A x8",
+    "B x8",
+    "A' x8",
+    "B' x8",
+    "Outro x4"
+  ],
+  "pcm_sha256": "13913483e90610cc7593314dc4f6e9745c910db71ed6952f7ce0de2a989e14bd",
+  "measured": {
+    "duration_s": 137.9286,
+    "loudness_lufs": -15.9794,
+    "true_peak_dbtp": -1.3515,
+    "sample_peak_db": -1.357,
+    "rms_db": -17.44,
+    "crest_db": 16.083,
+    "centroid_hz": 1409.7382,
+    "above_8k_db": -37.5351,
+    "bands": {
+      "low": 0.6808,
+      "mid": 0.3178,
+      "high": 0.0014
+    },
+    "correlation": 0.8976,
+    "correlation_below_150hz": 0.9974,
+    "clipped_samples": 0,
+    "silent_gaps": [],
+    "dc": 0.0,
+    "chroma_out_of_key": 0.0667,
+    "beat_clarity": 1.8468
+  },
+  "theory": {
+    "chord_chart": {
+      "Intro": [
+        "| D6/9 | Gmaj9 | Gm6 | Dmaj9/F# |"
+      ],
+      "A": [
+        "| Dmaj9 | Gmaj9 | Gm6 | Dmaj9/F# |",
+        "| Em9 | A13sus4 | D6/9 | Bm7 |"
+      ],
+      "B": [
+        "| Bm9 | F#m7 | Gmaj9 | A13 |",
+        "| Bm9 | F#m7 | Em11 | Gm6 |"
+      ],
+      "A'": [
+        "| Dmaj7 | Gmaj9#11 | Gm6 | D6/9/F# |",
+        "| Em9 | A13sus4 | Dmaj9 | Bm9 |"
+      ],
+      "B'": [
+        "| Bm9 | F#m7 | Gmaj9 | A13sus4 |",
+        "| Bm9 | F#m7 | Em9 | Gm6 |"
+      ],
+      "Outro": [
+        "| Dmaj9 | Gmaj9 | Gm6 | D6/9 |"
+      ]
+    },
+    "out_of_key_notes": 0,
+    "borrowed_chords": [
+      "Gm6"
+    ],
+    "lead_notes": 28,
+    "lead_non_pentatonic": 0,
+    "lead_strong_off_chord": 0,
+    "lead_clashes": 0,
+    "parts": {
+      "keys": 328,
+      "pad": 56,
+      "bass": 91,
+      "lead.musicbox": 16,
+      "lead.kalimba": 12
+    },
+    "drum_hits": 537
+  },
+  "gates": {
+    "loudness_lufs": {
+      "value": -15.9794,
+      "pass": true
+    },
+    "true_peak_dbtp": {
+      "value": -1.3515,
+      "pass": true
+    },
+    "duration_s": {
+      "value": 137.9286,
+      "pass": true
+    },
+    "clipped_samples": {
+      "value": 0,
+      "pass": true
+    },
+    "silent_gaps": {
+      "value": 0,
+      "pass": true
+    },
+    "correlation_below_150hz": {
+      "value": 0.9974,
+      "pass": true
+    },
+    "correlation": {
+      "value": 0.8976,
+      "pass": true
+    },
+    "high_band_share": {
+      "value": 0.0014,
+      "pass": true
+    },
+    "above_8k_db": {
+      "value": -37.5351,
+      "pass": true
+    },
+    "chroma_out_of_key": {
+      "value": 0.0667,
+      "pass": true
+    },
+    "beat_clarity": {
+      "value": 1.8468,
+      "pass": true
+    },
+    "out_of_key_notes": {
+      "value": 0,
+      "pass": true
+    },
+    "lead_non_pentatonic": {
+      "value": 0,
+      "pass": true
+    },
+    "lead_strong_off_chord": {
+      "value": 0,
+      "pass": true
+    },
+    "lead_clashes": {
+      "value": 0,
+      "pass": true
+    }
+  }
+}

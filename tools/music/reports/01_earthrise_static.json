@@ -1,0 +1,147 @@
+{
+  "id": "01_earthrise_static",
+  "title": "Earthrise Static",
+  "bpm": 76.0,
+  "swing": 0.58,
+  "key": "D major",
+  "family": "I-vi-ii-V",
+  "drums": "boombap",
+  "ending": "fade",
+  "form": [
+    "Intro x4",
+    "A x8",
+    "B x8",
+    "A' x8",
+    "Break x4",
+    "B' x8",
+    "Outro x4"
+  ],
+  "pcm_sha256": "a34d2db7dd08d39286c1a814a6dca567e5fcb3403799fbfca218234d5cd264c5",
+  "measured": {
+    "duration_s": 139.7474,
+    "loudness_lufs": -15.9845,
+    "true_peak_dbtp": -1.4028,
+    "sample_peak_db": -1.4083,
+    "rms_db": -17.6678,
+    "crest_db": 16.2595,
+    "centroid_hz": 1517.3298,
+    "above_8k_db": -35.2683,
+    "bands": {
+      "low": 0.6963,
+      "mid": 0.3016,
+      "high": 0.0022
+    },
+    "correlation": 0.9067,
+    "correlation_below_150hz": 0.9976,
+    "clipped_samples": 0,
+    "silent_gaps": [],
+    "dc": 0.0,
+    "chroma_out_of_key": 0.058,
+    "beat_clarity": 2.2915
+  },
+  "theory": {
+    "chord_chart": {
+      "Intro": [
+        "| Dmaj9 | Bm9 | Em9 | A13 |"
+      ],
+      "A": [
+        "| Dmaj9 | Bm9 | Em9 | A13sus4 |",
+        "| Dmaj9 | Bm9 | Em9 | A13sus4 A13 |"
+      ],
+      "B": [
+        "| Gmaj7 | F#m7 | Bm7 | A13sus4 |",
+        "| Gmaj9 | F#m7 | Em9 | A13sus4 A13sus4 |"
+      ],
+      "A'": [
+        "| D6/9 | Bm11 | Em9 | A13sus4 |",
+        "| Dmaj9 | Bm9 | Em9 | A13sus4 A9sus4 |"
+      ],
+      "Break": [
+        "| Gmaj9 | F#m7 | Bm9 | A13sus4 |"
+      ],
+      "B'": [
+        "| Gmaj9 | F#m7 | Bm9 | A13sus4 |",
+        "| Gmaj7 | F#m7 | Em9 | A9sus4 A13sus4 |"
+      ],
+      "Outro": [
+        "| D6/9 | Bm9 | Gmaj9 | D6/9 |"
+      ]
+    },
+    "out_of_key_notes": 0,
+    "borrowed_chords": [],
+    "lead_notes": 54,
+    "lead_non_pentatonic": 0,
+    "lead_strong_off_chord": 0,
+    "lead_clashes": 0,
+    "parts": {
+      "keys": 376,
+      "pad": 63,
+      "bass": 108,
+      "lead.kalimba": 19,
+      "lead.flute": 35
+    },
+    "drum_hits": 656
+  },
+  "gates": {
+    "loudness_lufs": {
+      "value": -15.9845,
+      "pass": true
+    },
+    "true_peak_dbtp": {
+      "value": -1.4028,
+      "pass": true
+    },
+    "duration_s": {
+      "value": 139.7474,
+      "pass": true
+    },
+    "clipped_samples": {
+      "value": 0,
+      "pass": true
+    },
+    "silent_gaps": {
+      "value": 0,
+      "pass": true
+    },
+    "correlation_below_150hz": {
+      "value": 0.9976,
+      "pass": true
+    },
+    "correlation": {
+      "value": 0.9067,
+      "pass": true
+    },
+    "high_band_share": {
+      "value": 0.0022,
+      "pass": true
+    },
+    "above_8k_db": {
+      "value": -35.2683,
+      "pass": true
+    },
+    "chroma_out_of_key": {
+      "value": 0.058,
+      "pass": true
+    },
+    "beat_clarity": {
+      "value": 2.2915,
+      "pass": true
+    },
+    "out_of_key_notes": {
+      "value": 0,
+      "pass": true
+    },
+    "lead_non_pentatonic": {
+      "value": 0,
+      "pass": true
+    },
+    "lead_strong_off_chord": {
+      "value": 0,
+      "pass": true
+    },
+    "lead_clashes": {
+      "value": 0,
+      "pass": true
+    }
+  }
+}
