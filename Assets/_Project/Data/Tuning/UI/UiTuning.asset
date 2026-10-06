@@ -1,0 +1,151 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 779f49d95afafba4488f833b3e685ebf, type: 3}
+  m_Name: UiTuning
+  m_EditorClassIdentifier: 
+  _pause:
+    _menu:
+      _fadeIn: 0.35
+      _fadeOut: 0.3
+      _slide: 12
+      _scaleFrom: 0.96
+      _springFrequency: 1.6
+      _springDamping: 0.65
+    _settingsPanel:
+      _fadeIn: 0.3
+      _fadeOut: 0.25
+      _slide: 10
+      _scaleFrom: 0.97
+      _springFrequency: 1.8
+      _springDamping: 0.7
+    _page:
+      _fadeIn: 0.18
+      _fadeOut: 0.14
+      _slide: 6
+      _scaleFrom: 1
+      _springFrequency: 2
+      _springDamping: 1
+    _veil:
+      _fadeIn: 0.35
+      _fadeOut: 0.35
+      _slide: 0
+      _scaleFrom: 1
+      _springFrequency: 1
+      _springDamping: 1
+    _hud:
+      _fadeIn: 0.25
+      _fadeOut: 0.4
+      _slide: 0
+      _scaleFrom: 1
+      _springFrequency: 1.6
+      _springDamping: 1
+    _freezeSeconds: 0.3
+    _resumeSeconds: 0.45
+    _volumeSteps: 10
+    _lookStep: 0.25
+    _lookMin: 0.25
+    _lookMax: 3
+  _title:
+    _reveal:
+      _fadeIn: 2.2
+      _fadeOut: 2.8
+      _slide: 14
+      _scaleFrom: 0.985
+      _springFrequency: 0.6
+      _springDamping: 0.8
+    _delay: 1.6
+    _hold: 3.8
+  _prompts:
+    _reveal:
+      _fadeIn: 0.35
+      _fadeOut: 0.3
+      _slide: 10
+      _scaleFrom: 0.88
+      _springFrequency: 1.6
+      _springDamping: 0.55
+    _entries:
+    - _kind: 1
+      _action: 0
+      _dwellSeconds: 6
+      _liftMetres: 1.9
+    - _kind: 2
+      _action: 1
+      _dwellSeconds: 0.5
+      _liftMetres: 0.9
+    - _kind: 3
+      _action: 2
+      _dwellSeconds: 0.4
+      _liftMetres: 0.9
+    - _kind: 4
+      _action: 2
+      _dwellSeconds: 0.25
+      _liftMetres: 1.4
+    - _kind: 6
+      _action: 3
+      _dwellSeconds: 2.5
+      _liftMetres: 0.9
+    _startDelay: 9
+    _maxShowSeconds: 7
+    _repeatCooldown: 25
+    _showingsToRetire: 3
+    _usesToRetire: 2
+    _followHalfLife: 0.08
+    _screenMargin: 72
+  _reticle:
+    _reveal:
+      _fadeIn: 0.25
+      _fadeOut: 0.3
+      _slide: 0
+      _scaleFrom: 0.7
+      _springFrequency: 1.4
+      _springDamping: 0.6
+    _hoverScale: 1.35
+    _hoverFadeSeconds: 0.25
+    _hoverSpringFrequency: 1.6
+    _hoverSpringDamping: 0.55
+  _scrapChip:
+    _reveal:
+      _fadeIn: 0.35
+      _fadeOut: 0.7
+      _slide: -10
+      _scaleFrom: 0.92
+      _springFrequency: 1.8
+      _springDamping: 0.6
+    _secondsPerScrap: 0.06
+    _minCountSeconds: 0.35
+    _maxCountSeconds: 1.4
+    _lingerSeconds: 3
+  _memoryCard:
+    _reveal:
+      _fadeIn: 1
+      _fadeOut: 0.9
+      _slide: 16
+      _scaleFrom: 0.97
+      _springFrequency: 0.9
+      _springDamping: 0.75
+    _appearDelay: 1.1
+    _readBaseSeconds: 4
+    _readSecondsPerCharacter: 0.06
+    _minReadSeconds: 6
+    _maxReadSeconds: 16
+  _towerPanel:
+    _reveal:
+      _fadeIn: 0.45
+      _fadeOut: 0.35
+      _slide: 14
+      _scaleFrom: 0.96
+      _springFrequency: 1.3
+      _springDamping: 0.65
+    _holdSeconds: 0.6
+    _drainSeconds: 0.35
+    _armVisibility: 0.9
+    _celebrateSeconds: 1.4
