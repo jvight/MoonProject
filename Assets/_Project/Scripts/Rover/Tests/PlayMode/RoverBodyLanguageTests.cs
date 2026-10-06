@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -26,15 +27,73 @@ namespace MoonProject.Rover.PlayModeTests
             base.Setup();
             _physics = new LunarTestPhysics();
             _world = new TestWorld();
-            _rover = TestRover.Spawn(_world, TestWorld.Point(0f, -300f), 0f);
         }
 
         public override void TearDown()
         {
-            _rover.Dispose();
+            _rover?.Dispose();
+            _rover = null;
             _world.Dispose();
             _physics.Dispose();
             base.TearDown();
+        }
+
+        private float EyelidAngle => Mathf.DeltaAngle(0f, _rover.Eyelid.localEulerAngles.x);
+
+        private void Spawn(bool asleep)
+        {
+            _rover = TestRover.Spawn(_world, TestWorld.Point(0f, -300f), 0f, asleep);
+        }
+
+        [UnityTest]
+        public IEnumerator FirstBoot_SleepsThenWakesSlowlyTowardEarth()
+        {
+            Spawn(true);
+            var awoke = new List<RoverAwoke>();
+            using (_rover.Context.Events.Subscribe<RoverAwoke>(awoke.Add))
+            {
+                yield return Wait(0.5f);
+                Assert.AreEqual(0f, _rover.EyeLight.intensity, 1e-3f, "Asleep: the eye is dark.");
+                float shutLid = EyelidAngle;
+                Assert.Greater(HeadDip, 5f, "Asleep: the head is bowed.");
+                Assert.IsEmpty(awoke);
+
+                yield return Wait(1.5f);
+                Assert.AreEqual(1, awoke.Count, "RoverAwoke as 07 starts waking (the radio crackles on).");
+                Assert.IsFalse(awoke[0].WokenByPlayer);
+
+                float highestLook = float.MaxValue;
+                float until = Time.time + 6f;
+                while (Time.time < until)
+                {
+                    yield return null;
+                    highestLook = Mathf.Min(highestLook, HeadDip);
+                }
+
+                Assert.Less(highestLook, -10f, "Waking, 07 looks up toward Earth.");
+                Assert.Less(EyelidAngle, shutLid - 10f, "The lid opens to its resting half-lid.");
+                Assert.Greater(_rover.EyeLight.intensity, 0.3f, "The eye glows.");
+                Assert.AreEqual(1, awoke.Count);
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator FirstBoot_DrivingWakes07AtOnce()
+        {
+            Spawn(true);
+            var awoke = new List<RoverAwoke>();
+            using (_rover.Context.Events.Subscribe<RoverAwoke>(awoke.Add))
+            {
+                yield return Wait(0.3f);
+                _rover.Drive.Drive = new Vector2(0f, 1f);
+                yield return Wait(0.3f);
+                Assert.AreEqual(1, awoke.Count);
+                Assert.IsTrue(awoke[0].WokenByPlayer);
+                Assert.Greater(_rover.Controller.Speed, 0.3f, "Control is never blocked by the intro.");
+                yield return Wait(1f);
+                Assert.Greater(_rover.EyeLight.intensity, 0.3f, "Awake within a second of driving.");
+                _rover.Drive.Drive = Vector2.zero;
+            }
         }
 
         private float NeckYaw => Mathf.DeltaAngle(0f, _rover.Neck.localEulerAngles.y);
@@ -55,6 +114,7 @@ namespace MoonProject.Rover.PlayModeTests
         [UnityTest]
         public IEnumerator RelicAnswer_TurnsTheHead_AndGameplayGazeOverridesIt()
         {
+            Spawn(false);
             yield return Wait(1f);
             Vector3 right = _rover.Controller.Position + Vector3.right * 10f + Vector3.forward * 4f;
             _rover.Context.Events.Publish(new RelicAnswered(right, 10f));
@@ -75,6 +135,7 @@ namespace MoonProject.Rover.PlayModeTests
         [UnityTest]
         public IEnumerator LeftAlone_DaydreamsUpTowardEarth()
         {
+            Spawn(false);
             yield return Wait(1f);
             float activeLid = _rover.BodyLanguage.Mood.LidClosure;
             yield return Wait(11f);
@@ -87,6 +148,7 @@ namespace MoonProject.Rover.PlayModeTests
         [UnityTest]
         public IEnumerator SnappedTether_Sighs_AndDeposit_Nods()
         {
+            Spawn(false);
             yield return Wait(0.5f);
             float restWing = WingOpening;
             _rover.Context.Events.Publish(new TetherReleased(Vector3.zero, true));
@@ -116,6 +178,7 @@ namespace MoonProject.Rover.PlayModeTests
         [UnityTest]
         public IEnumerator ChainedScrap_PerksUpMoreAsTheComboClimbs()
         {
+            Spawn(false);
             yield return Wait(1f);
             yield return PeakPerkAfter(new ScrapCollected(Vector3.zero, 1, 0));
             float first = _peakPerk;

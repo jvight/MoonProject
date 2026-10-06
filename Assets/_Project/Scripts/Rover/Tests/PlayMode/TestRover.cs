@@ -67,10 +67,17 @@ namespace MoonProject.Rover.PlayModeTests
 
         public Transform SolarWing { get; private set; }
 
+        public Transform Eyelid { get; private set; }
+
+        public Light EyeLight { get; private set; }
+
         public RoverTuning Tuning => (RoverTuning)_tunings[0];
 
-        /// <summary>Builds, wires and initialises a rover at <paramref name="position"/>, yaw in degrees.</summary>
-        public static TestRover Spawn(TestWorld world, Vector3 position, float yaw)
+        /// <summary>
+        /// Builds, wires and initialises a rover at <paramref name="position"/>, yaw in degrees. It starts awake
+        /// unless <paramref name="asleep"/> asks for the game's first-boot wake-up.
+        /// </summary>
+        public static TestRover Spawn(TestWorld world, Vector3 position, float yaw, bool asleep = false)
         {
             var tuning = ScriptableObject.CreateInstance<RoverTuning>();
             var rigTuning = ScriptableObject.CreateInstance<RoverRigTuning>();
@@ -78,6 +85,9 @@ namespace MoonProject.Rover.PlayModeTests
             var cameraTuning = ScriptableObject.CreateInstance<RoverCameraTuning>();
             var characterTuning = ScriptableObject.CreateInstance<RoverCharacterTuning>();
             var tunings = new ScriptableObject[] { tuning, rigTuning, fxTuning, cameraTuning, characterTuning };
+            var character = new SerializedObject(characterTuning);
+            character.FindProperty("_sleepOnBoot").boolValue = asleep;
+            character.ApplyModifiedPropertiesWithoutUndo();
 
             var root = new GameObject("TestRover");
             root.transform.SetPositionAndRotation(position, Quaternion.Euler(0f, yaw, 0f));
@@ -177,6 +187,8 @@ namespace MoonProject.Rover.PlayModeTests
                 Neck = neck,
                 Head = head,
                 SolarWing = wing,
+                Eyelid = eyelid,
+                EyeLight = eyeLight,
             };
 
             var context = new GameContext(new EventBus(), input);

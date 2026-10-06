@@ -9,9 +9,10 @@ namespace MoonProject.Rover
     /// 07's procedural body language on the RoverModel's Neck, Head, Eyelid, SolarWing, Eye and AntennaTip:
     /// the head looks at whatever it interacts with (gaze requests made through <see cref="IRoverRig"/>) or along its
     /// way with a lagging glance into turns; left alone it drifts into a daydream (<see cref="RoverMood"/>) and looks
-    /// up toward Earth. It reacts to the game: soft landings, waking up, scrap (happier as a combo climbs), a relic
-    /// answering or surfacing (a glance and a perk-up), a deposit (a contented nod), a snapped tether (a sigh), and
-    /// hard landings (a small "oof").
+    /// up toward Earth. Each session opens with 07 asleep; it wakes on its own (or as soon as the player drives),
+    /// publishing <see cref="RoverAwoke"/>. It reacts to the game: soft landings, waking up, scrap (happier as a
+    /// combo climbs), a relic answering or surfacing (a glance and a perk-up), a deposit (a contented nod), a snapped
+    /// tether (a sigh), and hard landings (a small "oof").
     /// Needs <see cref="IWorldLayout"/>, so it must be initialised after the World systems.
     /// </summary>
     [DefaultExecutionOrder(10)]
@@ -58,6 +59,7 @@ namespace MoonProject.Rover
 
         private RoverMood _mood;
         private IWorldLayout _world;
+        private EventBus _events;
         private IDisposable[] _subscriptions;
         private float _glanceEnds = -1f;
         private MaterialPropertyBlock _glowBlock;
@@ -81,7 +83,7 @@ namespace MoonProject.Rover
             }
 
             _world = context.Get<IWorldLayout>();
-            _mood = new RoverMood(_tuning, MoodSeed);
+            _mood = new RoverMood(_tuning, MoodSeed, _tuning.SleepOnBoot);
             _glowBlock = new MaterialPropertyBlock();
             _neckRest = _neck.localRotation;
             _headRest = _head.localRotation;
@@ -94,6 +96,7 @@ namespace MoonProject.Rover
             _eyeLight.shadows = LightShadows.None;
 
             EventBus events = context.Events;
+            _events = events;
             _subscriptions = new[]
             {
                 events.Subscribe<RoverLanded>(OnLanded),
@@ -193,9 +196,17 @@ namespace MoonProject.Rover
                 return;
             }
 
-            if (_mood.Step(_rover.Speed, _rover.DriveInput.magnitude, deltaTime))
+            switch (_mood.Step(_rover.Speed, _rover.DriveInput.magnitude, deltaTime))
             {
-                PerkUp(_tuning.WakePerk);
+                case MoodTransition.BeganWaking:
+                    _events.Publish(new RoverAwoke(_rover.Position, _mood.Wake.WokenByPlayer));
+                    break;
+                case MoodTransition.FinishedWaking:
+                    PerkUp(_mood.Wake.WokenByPlayer ? 0f : _tuning.AwakenedPerk);
+                    break;
+                case MoodTransition.WokeFromDaydream:
+                    PerkUp(_tuning.WakePerk);
+                    break;
             }
 
             if (_glanceEnds >= 0f && Time.time >= _glanceEnds)
@@ -222,7 +233,7 @@ namespace MoonProject.Rover
             else
             {
                 var travel = new Vector2(_rover.SteerInput * _tuning.LookIntoTurn, _tuning.TravelHeadPitch);
-                float idle = _mood.Idle;
+                float idle = _mood.EarthGaze;
                 Vector2 earth = Aim(frame.InverseTransformDirection(_world.EarthDirection));
                 aim = Vector2.Lerp(travel, earth, idle);
                 frequency = Mathf.Lerp(_tuning.TravelGazeFrequency, _tuning.IdleGazeFrequency, idle);
