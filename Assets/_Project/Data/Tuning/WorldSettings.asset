@@ -15,7 +15,7 @@ MonoBehaviour:
   _seed: 1337
   _surface:
     _padRadius: 25
-    _padBlend: 45
+    _padBlend: 30
     _floorRadius: 320
     _bowlRise: 6
     _rimWarpAmplitude: 18
@@ -33,6 +33,8 @@ MonoBehaviour:
     _ridgeSoftness: 0.08
     _saddleDepth: 0.6
     _saddleWavelength: 330
+    _wallGullyHeight: 9
+    _wallGullyCount: 70
     _peakBearing: 12
     _peakDistance: 440
     _peakHeight: 150
@@ -51,11 +53,13 @@ MonoBehaviour:
     _duneMeanderWavelength: 140
     _duneCoverageMin: 0.25
     _duneCoverageWavelength: 230
+    _grainHeight: 0.12
+    _grainWavelength: 7
     _craterCount: 25
     _smallCraterFraction: 0.6
     _smallCraterRadius: {x: 6, y: 13}
     _mediumCraterRadius: {x: 16, y: 34}
-    _craterDepthRatio: {x: 0.06, y: 0.1}
+    _craterDepthRatio: {x: 0.06, y: 0.095}
     _craterRimRatio: {x: 0.02, y: 0.045}
     _craterRimWidth: 0.65
     _craterClearance: 6
@@ -107,18 +111,49 @@ MonoBehaviour:
     _rockSlope: 32
     _rimRockSlope: 22
     _rimZoneStart: 0.3
+    _rockLightSlope: 42
+    _rockSlopeBlend: 14
     _rockLightHeight: 70
-    _rockHeightBlend: 60
+    _rockHeightBlend: 80
+    _rockMottle: 0.6
+    _rockFacing: 2.5
     _patchWavelength: 140
-    _lightPatch: 0.42
-    _shadowPatch: -1
-    _dither: 0.03
-    _darkenSlope: 11
-    _darkenRange: 16
-    _craterShadow: 0.1
-    _craterWallSlope: 7
+    _patchStrength: 0.45
+    _facingStrength: 5
+    _lightTone: 0.25
+    _shadowTone: -0.3
+    _leeTilt: 6
+    _dither: 0.3
+    _craterShadow: 0.12
+    _craterFloor: 0.7
     _craterHighlight: 0.6
     _highlandZone: 0.65
+  _scatter:
+    _extentRadius: 370
+    _padClearance: 12
+    _laneHalfWidth: 13
+    _laneBearings:
+    - 325
+    - 95
+    - 165
+    - 250
+    _laneKeptPebbles: 0.5
+    _clusterWavelength: 75
+    _clusterContrast: 0.75
+    _pebbleSpacing: 5
+    _pebbleSize: {x: 0.2, y: 0.55}
+    _pebbleDensity: 0.34
+    _pebbleMaxSlope: 28
+    _pebbleCullDistance: 150
+    _boulderSpacing: 15
+    _boulderSize: {x: 1.4, y: 3.8}
+    _boulderDensity: 0.11
+    _craterRimBoulders: 0.55
+    _talusBoulders: 0.8
+    _talusOffset: 8
+    _talusHalfWidth: 26
+    _boulderMaxSlope: 24
+    _featureClearance: 8
   _sky:
     _skyTop: {r: 0.043137256, g: 0.05490196, b: 0.16470589, a: 1}
     _horizonGlow: {r: 0.32, g: 0.2, b: 0.52, a: 1}
@@ -133,8 +168,8 @@ MonoBehaviour:
     _milkyWayColor: {r: 0.36, g: 0.3, b: 0.6, a: 1}
     _milkyWayWidth: 0.17
     _milkyWayIntensity: 0.45
-    _earthBearing: 325
-    _earthElevation: 21
+    _earthBearing: 338
+    _earthElevation: 16
     _earthDiameter: 13
     _earthSubdivisions: 2
     _earthLandFraction: 0.36
@@ -150,13 +185,13 @@ MonoBehaviour:
     _shootingStarBrightness: 3
   _atmosphere:
     _lightColor: {r: 0.78, g: 0.8, b: 1, a: 1}
-    _lightIntensity: 1.45
-    _lightElevation: 24
+    _lightIntensity: 1.7
+    _lightElevation: 30
     _lightBearingOffset: -60
     _shadowStrength: 0.8
-    _ambientSky: {r: 0.25, g: 0.23, b: 0.47, a: 1}
-    _ambientEquator: {r: 0.19, g: 0.16, b: 0.35, a: 1}
-    _ambientGround: {r: 0.1, g: 0.09, b: 0.19, a: 1}
+    _ambientSky: {r: 0.19, g: 0.17, b: 0.37, a: 1}
+    _ambientEquator: {r: 0.14, g: 0.12, b: 0.27, a: 1}
+    _ambientGround: {r: 0.08, g: 0.07, b: 0.15, a: 1}
     _fogColor: {r: 0.25, g: 0.18, b: 0.44, a: 1}
     _fogDensity: 0.00085
   _postProcessing:

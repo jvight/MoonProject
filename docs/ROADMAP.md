@@ -56,6 +56,9 @@
 | M1-15 | Radio: độ rõ theo khoảng cách tới base (low-pass + static + wow/flutter) | audio | 🟩 |
 | M1-17 | Engine sáng tác lofi (hoà âm, voicing jazz, groove swing, cấu trúc bài) + nhạc cụ (Rhodes FM, trống, bass, pad, vinyl) | music | 🟩 |
 | M1-18 | Playlist radio 5–6 bài OGG (68–84 BPM), mix/master nhất quán, có báo cáo đo loudness | music | 🟩 |
+| M1-19 | "Đánh thức 07": mở màn mắt nhắm → radio rè bật → 07 mở mắt; spawn hướng 355°, camera ≤ 6° | rover + audio | ⬜ |
+| M1-20 | Đèn hiệu đỏ nhấp nháy chậm trên đỉnh The Peak (landmark từ khung hình đầu) | world | ⬜ |
+| M1-21 | Gỡ kẹt nhẹ nhàng (nhấc + đặt lại với fade, không phạt) | rover | ⬜ |
 | M1-16 | Tích hợp M1 vào `Main.unity`, playtest, đánh giá feeling, xoá prototype rover/WALL-E | Director | ⬜ |
 
 ## M2 — Vòng lặp lõi (vertical slice)
@@ -69,7 +72,7 @@
 | M2-06 | Tháp radio 3 cấp: nâng cấp bằng scrap → mở rộng vùng tín hiệu (ánh sáng + nhạc rõ) | gameplay + audio + art | 🟦 |
 | M2-07 | 6 relic có cá tính (model + tên + câu chuyện ngắn) | art + gameplay | ⬜ |
 | M2-08 | Save/Load tự động | gameplay | 🟦 |
-| M2-09 | HUD tối giản (diegetic ưu tiên), prompt ngữ cảnh, menu tạm dừng + cài đặt âm lượng/độ nhạy | ui | ⬜ |
+| M2-09 | HUD tối giản (diegetic ưu tiên), prompt ngữ cảnh chỉ vài lần đầu, menu tạm dừng + cài đặt âm lượng/độ nhạy/đảo trục, thẻ "ký ức" khi đặt relic | ui | ⬜ |
 | M2-10 | Tích hợp + playtest slice 15 phút, sửa feeling | Director | ⬜ |
 
 ## M3 — Tiến trình

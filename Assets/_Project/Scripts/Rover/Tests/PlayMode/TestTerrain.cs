@@ -17,6 +17,11 @@ namespace MoonProject.Rover.PlayModeTests
 
         public Rect PlayableArea => new Rect(-500f, -500f, 1000f, 1000f);
 
+        public bool IsDrivable(float x, float z)
+        {
+            return PlayableArea.Contains(new Vector2(x, z));
+        }
+
         public float SampleHeight(float x, float z)
         {
             return _height(x, z);

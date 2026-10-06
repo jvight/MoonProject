@@ -20,9 +20,9 @@ RenderSettings:
   m_FogDensity: 0.00085
   m_LinearFogStart: 0
   m_LinearFogEnd: 300
-  m_AmbientSkyColor: {r: 0.25, g: 0.23, b: 0.47, a: 1}
-  m_AmbientEquatorColor: {r: 0.19, g: 0.16, b: 0.35, a: 1}
-  m_AmbientGroundColor: {r: 0.1, g: 0.09, b: 0.19, a: 1}
+  m_AmbientSkyColor: {r: 0.19, g: 0.17, b: 0.37, a: 1}
+  m_AmbientEquatorColor: {r: 0.14, g: 0.12, b: 0.27, a: 1}
+  m_AmbientGroundColor: {r: 0.08, g: 0.07, b: 0.15, a: 1}
   m_AmbientIntensity: 1
   m_AmbientMode: 1
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
@@ -679,7 +679,7 @@ Light:
   serializedVersion: 11
   m_Type: 1
   m_Color: {r: 0.78, g: 0.8, b: 1, a: 1}
-  m_Intensity: 1.45
+  m_Intensity: 1.7
   m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -805,6 +805,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _settings: {fileID: 11400000, guid: 3c7a28d294b9986468e4aeb35b23d7c1, type: 2}
   _terrainMaterial: {fileID: 2100000, guid: c8e5e8b4a749cfc4ba334cc3e2101057, type: 2}
+  _pebbleRocks:
+  - {fileID: 4300000, guid: f63dedcc84641bf41a6a5c791ced931e, type: 2}
+  - {fileID: 4300000, guid: d879aeebc62c8084cab6772ad746cbe6, type: 2}
+  - {fileID: 4300000, guid: acd54035f4a11ec4b91d315ef476def7, type: 2}
+  _boulderRocks:
+  - {fileID: 4300000, guid: a8dc442427d4d14429991034d94681b5, type: 2}
+  - {fileID: 4300000, guid: f2177cacc654cf94289eab73cd65ccce, type: 2}
+  - {fileID: 4300000, guid: 6264186ccf67ab24dbdb460f221962fc, type: 2}
   _earthMaterial: {fileID: 2100000, guid: e693f9521e4513348aba7c17b670757b, type: 2}
   _earthlight: {fileID: 3339212068541551884}
   _previewInEditMode: 1
@@ -848,7 +856,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3061783394672310112}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.15328859, y: 0.660827, z: -0.14046313, w: 0.721166}
+  m_LocalRotation: {x: 0.16980055, y: 0.72899354, z: -0.19533323, w: 0.6337043}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0

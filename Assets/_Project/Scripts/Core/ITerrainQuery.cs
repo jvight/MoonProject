@@ -9,8 +9,14 @@ namespace MoonProject.Core
     /// </summary>
     public interface ITerrainQuery
     {
-        /// <summary>World-space XZ rectangle the player can drive in (inside the crater rim).</summary>
+        /// <summary>
+        /// World-space XZ rectangle that lies entirely on drivable ground (inscribed in the crater floor). Use
+        /// <see cref="IsDrivable"/> for the exact floor shape.
+        /// </summary>
         Rect PlayableArea { get; }
+
+        /// <summary>True where the rover can drive comfortably (the basin floor, not the rim or The Peak's flanks).</summary>
+        bool IsDrivable(float x, float z);
 
         /// <summary>Surface height at world XZ.</summary>
         float SampleHeight(float x, float z);

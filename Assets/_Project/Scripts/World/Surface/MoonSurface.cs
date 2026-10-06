@@ -312,7 +312,7 @@ namespace MoonProject.World
         }
 
         /// <summary>True on the basin floor inside the (warped) rim and away from The Peak's flanks.</summary>
-        public bool IsDrivableFloor(float x, float z)
+        public bool IsDrivable(float x, float z)
         {
             float r = Mathf.Sqrt(x * x + z * z);
             if (r <= _rimWarpStart)
