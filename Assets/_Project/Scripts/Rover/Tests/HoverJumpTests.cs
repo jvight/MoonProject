@@ -111,12 +111,12 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void LeavingTheGroundWhileCharging_CancelsQuietly()
+        public void LeavingTheGroundWhileCharging_CancelsWithoutALeap()
         {
             _jump.Step(true, false, true, Step);
             _jump.Step(true, true, true, Step);
             Assert.IsTrue(_jump.IsCharging);
-            Assert.AreEqual(HoverJumpEvent.None, _jump.Step(true, true, false, Step));
+            Assert.AreEqual(HoverJumpEvent.Cancelled, _jump.Step(true, true, false, Step));
             Assert.IsFalse(_jump.IsCharging);
             Assert.AreEqual(HoverJumpEvent.None, _jump.Step(true, false, true, Step), "No leap after the cancel.");
         }
