@@ -12,13 +12,14 @@ namespace MoonProject.UI
     /// </summary>
     internal sealed class UiServices
     {
-        public UiServices(EventBus events, InputReader input, IViewCamera view, IAudioSettings audio,
+        public UiServices(EventBus events, InputReader input, IViewCamera view, IRoverState rover, IAudioSettings audio,
             ILookSettings look, ISaveService save, IScrapWallet wallet, ITetherAim tether, IInteractionHints hints,
-            IUpgradeShop shop)
+            IUpgradeShop shop, IFriendStatuses friends)
         {
             Events = events ?? throw new ArgumentNullException(nameof(events));
             Input = input ?? throw new ArgumentNullException(nameof(input));
             View = view ?? throw new ArgumentNullException(nameof(view));
+            Rover = rover ?? throw new ArgumentNullException(nameof(rover));
             Audio = audio ?? throw new ArgumentNullException(nameof(audio));
             Look = look ?? throw new ArgumentNullException(nameof(look));
             Save = save ?? throw new ArgumentNullException(nameof(save));
@@ -26,6 +27,7 @@ namespace MoonProject.UI
             Tether = tether ?? throw new ArgumentNullException(nameof(tether));
             Hints = hints ?? throw new ArgumentNullException(nameof(hints));
             Shop = shop ?? throw new ArgumentNullException(nameof(shop));
+            Friends = friends ?? throw new ArgumentNullException(nameof(friends));
         }
 
         public EventBus Events { get; }
@@ -33,6 +35,8 @@ namespace MoonProject.UI
         public InputReader Input { get; }
 
         public IViewCamera View { get; }
+
+        public IRoverState Rover { get; }
 
         public IAudioSettings Audio { get; }
 
@@ -48,6 +52,8 @@ namespace MoonProject.UI
 
         public IUpgradeShop Shop { get; }
 
+        public IFriendStatuses Friends { get; }
+
         /// <summary>
         /// Resolves every service; a missing one throws (a system is missing from the bootstrap order).
         /// </summary>
@@ -58,10 +64,10 @@ namespace MoonProject.UI
                 throw new ArgumentNullException(nameof(context));
             }
 
-            return new UiServices(context.Events, context.Input, context.Get<IViewCamera>(),
+            return new UiServices(context.Events, context.Input, context.Get<IViewCamera>(), context.Get<IRoverState>(),
                 context.Get<IAudioSettings>(), context.Get<ILookSettings>(), context.Get<ISaveService>(),
                 context.Get<IScrapWallet>(), context.Get<ITetherAim>(), context.Get<IInteractionHints>(),
-                context.Get<IUpgradeShop>());
+                context.Get<IUpgradeShop>(), context.Get<IFriendStatuses>());
         }
     }
 }

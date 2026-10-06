@@ -10,13 +10,38 @@ namespace MoonProject.UI.PlayModeTests
     /// (initialised before the UI). Tests set the tether state, the gameplay hint, the wallet and the tower offer.
     /// </summary>
     public sealed class FakeGameServices : MonoBehaviour, IGameSystem, IViewCamera, IAudioSettings, ILookSettings,
-        IScrapWallet, ITetherAim, IInteractionHints, IUpgradeShop
+        IScrapWallet, ITetherAim, IInteractionHints, IUpgradeShop, IRoverState, IFriendStatuses
     {
         private readonly float[] _volumes = { 1f, 1f, 1f, 1f };
         private float _sensitivity = 1f;
         private EventBus _events;
 
         public Camera Camera { get; set; }
+
+        /// <summary>The one friend in this world (Tilly's definition), its state set by the test.</summary>
+        public FriendDefinition Friend { get; set; }
+
+        public FriendStatus TillyStatus { get; set; }
+
+        public Vector3 Position { get; set; }
+
+        public Quaternion Rotation => Quaternion.identity;
+
+        public Vector3 Velocity => Vector3.zero;
+
+        public float Speed => 0f;
+
+        public float NormalizedSpeed => 0f;
+
+        public Vector2 DriveInput => Vector2.zero;
+
+        public bool IsGrounded => true;
+
+        public float AirTime => 0f;
+
+        public Vector3 GroundNormal => Vector3.up;
+
+        public int Count => Friend != null ? 1 : 0;
 
         public UpgradeDefinition Upgrade { get; set; }
 
@@ -64,6 +89,18 @@ namespace MoonProject.UI.PlayModeTests
             context.Register<ITetherAim>(this);
             context.Register<IInteractionHints>(this);
             context.Register<IUpgradeShop>(this);
+            context.Register<IRoverState>(this);
+            context.Register<IFriendStatuses>(this);
+        }
+
+        public FriendDefinition Definition(int index)
+        {
+            return Friend;
+        }
+
+        public FriendStatus Status(int index)
+        {
+            return TillyStatus;
         }
 
         /// <summary>Sets the balance and publishes the change like the real wallet.</summary>

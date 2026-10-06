@@ -10,11 +10,12 @@ using MoonProject.Gameplay;
 namespace MoonProject.UI
 {
     /// <summary>
-    /// When a relic settles on the museum shelf, a gentle card tells its memory of Earth (the localized
-    /// "relic.&lt;id&gt;.name" and "relic.&lt;id&gt;.memory" strings): it fades in a moment later,
+    /// The story card. When a relic settles on the museum shelf it tells its memory of Earth (the localized
+    /// "relic.&lt;id&gt;.name" and "relic.&lt;id&gt;.memory" strings); when a friend wakes it shows the crew log the
+    /// friend remembers ("friend.&lt;id&gt;.name" and "friend.&lt;id&gt;.repair_log"). It fades in a moment later,
     /// stays long enough to read at a calm pace (longer texts stay longer), then fades away. It never takes input
-    /// focus, so driving is never blocked; the cancel button (shown on the card) closes it early. Deposits that arrive
-    /// while a card is up wait their turn.
+    /// focus, so driving is never blocked; the cancel button (shown on the card) closes it early. Cards that arrive
+    /// while one is up wait their turn.
     /// </summary>
     internal sealed class MemoryCard
     {
@@ -22,6 +23,7 @@ namespace MoonProject.UI
         private readonly ILocalization _localization;
         private readonly EventBus _events;
         private readonly RelicCatalog _catalog;
+        private readonly IFriendStatuses _friends;
         private readonly Reveal _reveal;
         private readonly Label _caption;
         private readonly Label _name;
@@ -35,7 +37,7 @@ namespace MoonProject.UI
         private Memory _shown;
 
         public MemoryCard(UiLayout layout, MemoryCardSettings settings, ILocalization localization, EventBus events,
-            RelicCatalog catalog)
+            RelicCatalog catalog, IFriendStatuses friends)
         {
             if (layout == null)
             {
@@ -46,6 +48,7 @@ namespace MoonProject.UI
             _localization = localization ?? throw new ArgumentNullException(nameof(localization));
             _events = events ?? throw new ArgumentNullException(nameof(events));
             _catalog = catalog != null ? catalog : throw new ArgumentNullException(nameof(catalog));
+            _friends = friends ?? throw new ArgumentNullException(nameof(friends));
             _reveal = new Reveal(layout.MemoryCard, settings.Reveal);
             _reveal.Snap(false);
             _caption = layout.MemoryCardCaption;
@@ -71,8 +74,8 @@ namespace MoonProject.UI
         /// <summary>True while a card is up and can be closed with the cancel button.</summary>
         public bool CanDismiss => _phase == Phase.Reading;
 
-        /// <summary>The id of the relic whose memory is on the card (null when none).</summary>
-        public string Current => _shown.RelicId;
+        /// <summary>The id of the relic or friend whose card is up (null when none).</summary>
+        public string Current => _shown.Id;
 
         /// <summary>
         /// Queues the memory of <paramref name="relicId"/>; an unknown id is a content bug and is logged.
@@ -85,7 +88,22 @@ namespace MoonProject.UI
                 return;
             }
 
-            _pending.Enqueue(new Memory(relicId, displayedCount));
+            _pending.Enqueue(Memory.Relic(relicId, displayedCount));
+        }
+
+        /// <summary>
+        /// Queues the log friend <paramref name="friendId"/> remembers on waking; an unknown id is a wiring bug and is
+        /// logged.
+        /// </summary>
+        public void EnqueueLog(string friendId)
+        {
+            if (!IsFriend(friendId))
+            {
+                Debug.LogError($"{nameof(MemoryCard)}: friend '{friendId}' is not in the friend roster; no card.");
+                return;
+            }
+
+            _pending.Enqueue(Memory.Log(friendId));
         }
 
         /// <summary>Closes the card early (the cancel or pause button).</summary>
@@ -151,7 +169,7 @@ namespace MoonProject.UI
         public void Relocalize()
         {
             _close.text = _localization.Get(UiKeys.CardClose);
-            if (_shown.RelicId != null)
+            if (_shown.Id != null)
             {
                 Write(_shown);
             }
@@ -170,10 +188,12 @@ namespace MoonProject.UI
 
         private void Write(Memory memory)
         {
-            _caption.text = string.Format(_localization.Get(UiKeys.CardCaption), memory.DisplayedCount,
-                _catalog.Relics.Count);
-            _name.text = _localization.Get(memory.NameKey);
-            _memory.text = _localization.Get(memory.MemoryKey);
+            string name = _localization.Get(memory.NameKey);
+            _caption.text = memory.IsLog
+                ? string.Format(_localization.Get(UiKeys.LogCaption), name)
+                : string.Format(_localization.Get(UiKeys.CardCaption), memory.DisplayedCount, _catalog.Relics.Count);
+            _name.text = name;
+            _memory.text = _localization.Get(memory.BodyKey);
         }
 
         private void Leave()
@@ -196,23 +216,51 @@ namespace MoonProject.UI
             return false;
         }
 
-        private readonly struct Memory
+        private bool IsFriend(string friendId)
         {
-            public Memory(string relicId, int displayedCount)
+            for (int i = 0; i < _friends.Count; i++)
             {
-                RelicId = relicId;
-                DisplayedCount = displayedCount;
-                NameKey = UiKeys.RelicName(relicId);
-                MemoryKey = UiKeys.RelicMemory(relicId);
+                if (string.Equals(_friends.Definition(i).Id, friendId, StringComparison.Ordinal))
+                {
+                    return true;
+                }
             }
 
-            public string RelicId { get; }
+            return false;
+        }
+
+        private readonly struct Memory
+        {
+            private Memory(string id, bool isLog, int displayedCount, string nameKey, string bodyKey)
+            {
+                Id = id;
+                IsLog = isLog;
+                DisplayedCount = displayedCount;
+                NameKey = nameKey;
+                BodyKey = bodyKey;
+            }
+
+            public string Id { get; }
+
+            /// <summary>A friend's crew log rather than a relic's memory.</summary>
+            public bool IsLog { get; }
 
             public int DisplayedCount { get; }
 
             public string NameKey { get; }
 
-            public string MemoryKey { get; }
+            public string BodyKey { get; }
+
+            public static Memory Relic(string relicId, int displayedCount)
+            {
+                return new Memory(relicId, false, displayedCount, UiKeys.RelicName(relicId),
+                    UiKeys.RelicMemory(relicId));
+            }
+
+            public static Memory Log(string friendId)
+            {
+                return new Memory(friendId, true, 0, UiKeys.FriendName(friendId), UiKeys.FriendRepairLog(friendId));
+            }
         }
     }
 }

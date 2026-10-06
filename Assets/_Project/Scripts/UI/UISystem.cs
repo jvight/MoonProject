@@ -13,8 +13,9 @@ namespace MoonProject.UI
     /// <summary>
     /// The UI domain's game system (initialised last, after Gameplay). As little UI as possible, as calm as possible:
     /// a title while 07 wakes, context prompts only the first few times, a reticle only while aiming, a scrap chip
-    /// only when the balance changes, a memory card per relic brought home, the tower upgrade panel on its pad, and
-    /// the pause menu with settings. It registers <see cref="ILocalization"/> and owns the cursor and the UI's save
+    /// only when the balance changes, a memory card per relic brought home, the tower upgrade panel on its pad, a few
+    /// warm pips over a broken friend while 07 is near, its name and its crew log when it wakes, and the pause menu
+    /// with settings. It registers <see cref="ILocalization"/> and owns the cursor and the UI's save
     /// sections. Everything animates on unscaled time so the menu stays alive while the game is paused.
     /// </summary>
     [DisallowMultipleComponent]
@@ -52,6 +53,8 @@ namespace MoonProject.UI
         private ScrapChip _chip;
         private MemoryCard _card;
         private TowerPanel _tower;
+        private FriendReadout _friendReadout;
+        private FriendNameTag _friendName;
         private PauseMenu _pause;
         private bool _composed;
         private bool _bound;
@@ -78,6 +81,10 @@ namespace MoonProject.UI
         internal TowerPanel Tower => _tower;
 
         internal TitleCard Title => _title;
+
+        internal FriendReadout FriendReadout => _friendReadout;
+
+        internal FriendNameTag FriendName => _friendName;
 
         internal UiLayout Layout => _layout;
 
@@ -178,6 +185,8 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<ExcavationStarted>(OnExcavationStarted));
             _tokens.Add(events.Subscribe<TetherAttached>(OnTetherAttached));
             _tokens.Add(events.Subscribe<LanguageChanged>(OnLanguageChanged));
+            _tokens.Add(events.Subscribe<FriendRepairStarted>(OnFriendRepairStarted));
+            _tokens.Add(events.Subscribe<FriendRepaired>(OnFriendRepaired));
 
             services.Input.Menu.Enable();
             _cursor.Drive();
@@ -222,7 +231,12 @@ namespace MoonProject.UI
             _chip = new ScrapChip(_layout.ScrapChip, _layout.ScrapChipShadow, _layout.ScrapChipIcon,
                 _layout.ScrapChipCount, _tuning.ScrapChip, _numbers);
             _chip.Snap(services.Wallet.Balance);
-            _card = new MemoryCard(_layout, _tuning.MemoryCard, _localization, services.Events, _relics);
+            _card = new MemoryCard(_layout, _tuning.MemoryCard, _localization, services.Events, _relics,
+                services.Friends);
+            _friendReadout = new FriendReadout(_layout, _tuning.Friends, _tuning.Prompts, services.Friends,
+                services.Rover, services.View);
+            _friendName = new FriendNameTag(_layout, _tuning.Friends, _tuning.Prompts, services.Friends,
+                _localization, services.View);
             _tower = new TowerPanel(_layout, _tuning.TowerPanel, _localization, services.Events, services.Shop,
                 services.Wallet, services.Hints, _numbers);
             _pause = new PauseMenu(_layout, _tuning.Pause, _player, _localization, services.Input, services.Events,
@@ -295,8 +309,11 @@ namespace MoonProject.UI
             bool promptsOpen = !paused && _awake && _sinceAwake >= _tuning.Prompts.StartDelay && !_title.IsPlaying &&
                                !_card.IsVisible && !_tower.IsVisible;
             Rect panel = _layout.Root.layout;
-            _prompt.Tick(deltaTime, promptsOpen, _services.Hints.Primary, device,
-                float.IsNaN(panel.width) ? Vector2.zero : panel.size);
+            Vector2 panelSize = float.IsNaN(panel.width) ? Vector2.zero : panel.size;
+            _friendReadout.Tick(deltaTime, !paused, panelSize,
+                _prompt.StackHeight(InteractionKind.Repair, _tuning.Friends.StackGap));
+            _friendName.Tick(hudTime, panelSize);
+            _prompt.Tick(deltaTime, promptsOpen, _services.Hints.Primary, device, panelSize);
         }
 
         private void Quit()
@@ -354,6 +371,31 @@ namespace MoonProject.UI
             _director.NotifyUsed(InteractionKind.Tether);
         }
 
+        private void OnFriendRepairStarted(FriendRepairStarted started)
+        {
+            _director.NotifyUsed(InteractionKind.Repair);
+        }
+
+        private void OnFriendRepaired(FriendRepaired repaired)
+        {
+            if (!_bound)
+            {
+                return;
+            }
+
+            IFriendStatuses friends = _services.Friends;
+            for (int i = 0; i < friends.Count; i++)
+            {
+                if (string.Equals(friends.Definition(i).Id, repaired.FriendId, StringComparison.Ordinal))
+                {
+                    _friendName.Show(i);
+                    break;
+                }
+            }
+
+            _card.EnqueueLog(repaired.FriendId);
+        }
+
         private void OnLanguageChanged(LanguageChanged changed)
         {
             if (!_bound)
@@ -365,6 +407,7 @@ namespace MoonProject.UI
             _staticText.Apply();
             _prompt.Relocalize();
             _card.Relocalize();
+            _friendName.Relocalize();
             _tower.Relocalize();
             _pause.Relocalize();
         }

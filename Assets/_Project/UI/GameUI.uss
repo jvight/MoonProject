@@ -28,6 +28,7 @@
 .caption,
 .section-label,
 .chip__number,
+.friend-name,
 .glyph__label,
 .hold__glyph,
 .cost__price {
@@ -245,7 +246,7 @@ Label {
 
 /* Context prompt: anchored to a projected world point, centred above it */
 
-.prompt-anchor {
+.world-anchor {
     position: absolute;
     left: 0;
     top: 0;
@@ -253,11 +254,50 @@ Label {
     height: 0;
 }
 
-.prompt-center {
+.world-anchor__center {
     position: absolute;
     left: 0;
     top: 0;
     translate: -50% -100%;
+}
+
+/* Friend parts readout: warm pips over a broken friend, no glyphs, no numbers */
+
+.friend-pips {
+    padding: 9px 12px;
+}
+
+.pip {
+    width: 14px;
+    height: 14px;
+    margin: 0 4px;
+    border-width: 1.5px;
+    border-radius: 7px;
+    border-color: var(--moon-text-faint);
+    justify-content: center;
+    align-items: center;
+}
+
+.pip--full {
+    border-color: var(--moon-warm-lamp);
+    background-color: var(--moon-amber-soft);
+}
+
+.pip__fill {
+    width: 8px;
+    height: 8px;
+    border-radius: 4px;
+    background-color: var(--moon-warm-lamp);
+}
+
+/* A friend's name, the first time it wakes */
+
+.friend-name {
+    font-size: 30px;
+    letter-spacing: 4px;
+    color: var(--moon-cream);
+    -unity-text-align: middle-center;
+    text-shadow: 0 2px 14px var(--moon-shadow);
 }
 
 /* Scrap chip */

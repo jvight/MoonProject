@@ -7,6 +7,7 @@
         "MoonProject.App",
         "MoonProject.Gameplay",
         "MoonProject.Testing",
+        "Unity.RenderPipelines.Universal.Runtime",
         "Unity.InputSystem",
         "Unity.InputSystem.TestFramework",
         "UnityEngine.TestRunner"

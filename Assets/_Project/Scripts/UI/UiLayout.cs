@@ -27,6 +27,13 @@ namespace MoonProject.UI
             PromptGlyphLabel = Require<Label>("prompt-glyph-label");
             PromptWord = Require<Label>("prompt-word");
 
+            FriendAnchor = Require<VisualElement>("friend-anchor");
+            FriendReadout = Require<VisualElement>("friend-readout");
+            FriendReadoutShadow = Require<VisualElement>("friend-readout-shadow");
+            FriendPips = Require<VisualElement>("friend-pips");
+            FriendNameAnchor = Require<VisualElement>("friend-name-anchor");
+            FriendName = Require<Label>("friend-name");
+
             ScrapChip = Require<VisualElement>("scrap-chip");
             ScrapChipShadow = Require<VisualElement>("scrap-chip-shadow");
             ScrapChipIcon = Require<VisualElement>("scrap-chip-icon");
@@ -106,6 +113,18 @@ namespace MoonProject.UI
         public Label PromptGlyphLabel { get; }
 
         public Label PromptWord { get; }
+
+        public VisualElement FriendAnchor { get; }
+
+        public VisualElement FriendReadout { get; }
+
+        public VisualElement FriendReadoutShadow { get; }
+
+        public VisualElement FriendPips { get; }
+
+        public VisualElement FriendNameAnchor { get; }
+
+        public Label FriendName { get; }
 
         public VisualElement ScrapChip { get; }
 

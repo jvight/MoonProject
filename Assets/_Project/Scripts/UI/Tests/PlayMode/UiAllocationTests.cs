@@ -58,8 +58,11 @@ namespace MoonProject.UI.PlayModeTests
             _rig.Bootstrap.Context.Events.Publish(new RoverAwoke(Vector3.zero, false));
             _rig.Fakes.TetherState = TetherAimState.Hovering;
             _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Excavate, new Vector3(0f, 0f, 10f), true);
+            _rig.Fakes.Position = new Vector3(0f, 0f, 2f);
+            _rig.Fakes.TillyStatus = new FriendStatus(FriendState.PartsGathering, 1, 3, true, false,
+                new Vector3(-3f, 0f, 12f));
             yield return new WaitForSecondsRealtime(2f);
-            Assert.IsTrue(_rig.Ui.Prompt.IsVisible && _rig.Ui.Reticle.IsVisible);
+            Assert.IsTrue(_rig.Ui.Prompt.IsVisible && _rig.Ui.Reticle.IsVisible && _rig.Ui.FriendReadout.IsVisible);
 
             Action update = Bind(_rig.Ui, "Update");
             Action frame = () =>
@@ -67,9 +70,11 @@ namespace MoonProject.UI.PlayModeTests
                 _step++;
                 _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Excavate,
                     new Vector3(Mathf.Sin(_step * 0.01f) * 3f, 0f, 10f), true);
+                _rig.Fakes.TillyStatus = new FriendStatus(FriendState.PartsGathering, 1 + (_step / 200) % 3, 3, true,
+                    false, new Vector3(-3f + Mathf.Cos(_step * 0.01f), 0f, 12f));
                 update();
             };
-            yield return Measure(frame, "prompt following a moving point, reticle up");
+            yield return Measure(frame, "prompt and parts readout following moving points, reticle up");
         }
 
         [UnityTest]

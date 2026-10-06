@@ -5,6 +5,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
+using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using UnityEngine.UIElements;
@@ -38,6 +39,9 @@ namespace MoonProject.UI.PlayModeTests
         private const int Width = 1600;
         private const int Height = 900;
         private const string OutputFolder = "Logs/ui-captures";
+        private const float FriendShotDistance = 7f;
+        private const float FriendShotHeight = 2.4f;
+        private const float FriendShotFov = 50f;
 
         private string _slot;
         private GameObject _uiHost;
@@ -45,9 +49,11 @@ namespace MoonProject.UI.PlayModeTests
         private PanelSettings _panel;
         private RenderTexture _target;
         private UiTuning _tuning;
+        private GameObject _friendCamera;
 
         public override void TearDown()
         {
+            Object.DestroyImmediate(_friendCamera);
             Object.DestroyImmediate(_uiHost);
             Object.DestroyImmediate(_fakesHost);
             Object.DestroyImmediate(_panel);
@@ -141,19 +147,45 @@ namespace MoonProject.UI.PlayModeTests
             fakes.AtStation = false;
             yield return new WaitForSecondsRealtime(1f);
 
+            Vector3 tilly = context.Get<IFriendStatuses>().Status(0).Position;
+            Camera friendCamera = FriendCamera(tilly, context.Get<ITerrainQuery>(), camera);
+            fakes.Camera = friendCamera;
+            fakes.Position = tilly + (friendCamera.transform.position - tilly).normalized * 5f;
+            fakes.TillyStatus = new FriendStatus(FriendState.Dormant, 0, 3, true, false, tilly);
+            yield return new WaitForSecondsRealtime(1.5f);
+            yield return Capture(friendCamera, folder, "08_tilly_parts_0of3");
+            fakes.TillyStatus = new FriendStatus(FriendState.PartsGathering, 2, 3, true, false, tilly);
+            yield return new WaitForSecondsRealtime(_tuning.Friends.PipFillSeconds * 0.5f);
+            yield return Capture(friendCamera, folder, "09_tilly_parts_filling");
+            yield return new WaitForSecondsRealtime(_tuning.Friends.PipFillSeconds * 2f);
+            fakes.TillyStatus = new FriendStatus(FriendState.PartsGathering, 3, 3, true, true, tilly);
+            fakes.PrimaryHint = new InteractionHint(InteractionKind.Repair, tilly, true);
+            yield return new WaitForSecondsRealtime(_tuning.Friends.PipFillSeconds + 1.5f);
+            yield return Capture(friendCamera, folder, "10_tilly_repair_prompt");
+            fakes.PrimaryHint = InteractionHint.None;
+            context.Events.Publish(new FriendRepairStarted("tilly"));
+            fakes.TillyStatus = new FriendStatus(FriendState.Awake, 3, 3, true, false, tilly + Vector3.up * 1.5f);
+            context.Events.Publish(new FriendRepaired("tilly"));
+            yield return new WaitForSecondsRealtime(_tuning.MemoryCard.AppearDelay +
+                                                    _tuning.MemoryCard.Reveal.FadeIn + 0.5f);
+            yield return Capture(friendCamera, folder, "11_tilly_awake_log");
+            ui.Card.Dismiss();
+            fakes.Camera = camera;
+            yield return new WaitForSecondsRealtime(_tuning.Friends.NameHoldSeconds + 2f);
+
             yield return Tap(keyboard.escapeKey);
             yield return new WaitForSecondsRealtime(1.2f);
-            yield return Capture(camera, folder, "08_pause");
+            yield return Capture(camera, folder, "12_pause");
             Submit(ui.Layout.SettingsButton);
             yield return new WaitForSecondsRealtime(1f);
-            yield return Capture(camera, folder, "09_pause_settings");
+            yield return Capture(camera, folder, "13_pause_settings");
             Submit(ui.Layout.LanguageButton);
             yield return new WaitForSecondsRealtime(0.5f);
-            yield return Capture(camera, folder, "10_pause_settings_vi");
+            yield return Capture(camera, folder, "14_pause_settings_vi");
             yield return Tap(keyboard.escapeKey);
             Submit(ui.Layout.QuitButton);
             yield return new WaitForSecondsRealtime(1f);
-            yield return Capture(camera, folder, "11_pause_quit_vi");
+            yield return Capture(camera, folder, "15_pause_quit_vi");
             yield return Tap(keyboard.escapeKey);
             yield return Tap(keyboard.escapeKey);
             yield return new WaitForSecondsRealtime(1f);
@@ -161,7 +193,13 @@ namespace MoonProject.UI.PlayModeTests
             context.Events.Publish(new RelicDeposited("rubber_duck", Vector3.zero, 4));
             yield return new WaitForSecondsRealtime(_tuning.MemoryCard.AppearDelay +
                                                     _tuning.MemoryCard.Reveal.FadeIn + 0.5f);
-            yield return Capture(camera, folder, "12_memory_card_vi");
+            yield return Capture(camera, folder, "16_memory_card_vi");
+            ui.Card.Dismiss();
+            yield return new WaitForSecondsRealtime(1.5f);
+            context.Events.Publish(new FriendRepaired("tilly"));
+            yield return new WaitForSecondsRealtime(_tuning.MemoryCard.AppearDelay +
+                                                    _tuning.MemoryCard.Reveal.FadeIn + 0.5f);
+            yield return Capture(camera, folder, "17_tilly_log_vi");
             Assert.IsTrue(save.SaveNow(), "the UI saved to its test slot");
 #else
             Assert.Ignore("Captures need the editor.");
@@ -184,11 +222,31 @@ namespace MoonProject.UI.PlayModeTests
             throw new InvalidOperationException($"{MainScene} has no initialised GameBootstrap at its root.");
         }
 
+        /// <summary>A camera a few metres from Tilly, on the side of the base, looking at her broken body.</summary>
+        private Camera FriendCamera(Vector3 tilly, ITerrainQuery terrain, Camera reference)
+        {
+            Vector3 toBase = Vector3.ProjectOnPlane(-tilly, Vector3.up).normalized;
+            Vector3 position = tilly + toBase * FriendShotDistance;
+            position.y = Mathf.Max(terrain.SampleHeight(position.x, position.z), tilly.y) + FriendShotHeight;
+            _friendCamera = new GameObject("TillyCaptureCamera");
+            var camera = _friendCamera.AddComponent<Camera>();
+            camera.CopyFrom(reference);
+            camera.fieldOfView = FriendShotFov;
+            camera.GetUniversalAdditionalCameraData().renderPostProcessing = true;
+            _friendCamera.transform.SetPositionAndRotation(position,
+                Quaternion.LookRotation(tilly + Vector3.up * 0.4f - position, Vector3.up));
+            return camera;
+        }
+
         private UISystem BuildUi(GameContext context, out FakeGameServices fakes, out SaveService save)
         {
             _fakesHost = new GameObject("CaptureFakes");
             fakes = _fakesHost.AddComponent<FakeGameServices>();
             fakes.Upgrade = AssetDatabase.LoadAssetAtPath<UpgradeDefinition>(UiTestRig.UpgradePath);
+            fakes.Friend = AssetDatabase.LoadAssetAtPath<FriendDefinition>(UiTestRig.TillyPath);
+            fakes.Camera = context.Get<IViewCamera>().Camera;
+            fakes.Position = context.Get<IRoverState>().Position;
+            fakes.TillyStatus = new FriendStatus(FriendState.Dormant, 0, 3, false, false, new Vector3(0f, 0f, 500f));
             fakes.Initialize(new GameContext(context.Events, context.Input));
 
             _target = new RenderTexture(Width, Height, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
@@ -216,8 +274,8 @@ namespace MoonProject.UI.PlayModeTests
 
             _slot = BootstrapHarness.NewTestSlot();
             save = new SaveService(SaveService.DefaultDirectory, _slot);
-            ui.Initialize(new UiServices(context.Events, context.Input, context.Get<IViewCamera>(),
-                context.Get<IAudioSettings>(), context.Get<ILookSettings>(), save, fakes, fakes, fakes, fakes));
+            ui.Initialize(new UiServices(context.Events, context.Input, fakes, fakes, context.Get<IAudioSettings>(),
+                context.Get<ILookSettings>(), save, fakes, fakes, fakes, fakes, fakes));
             save.Load();
             return ui;
         }

@@ -16,21 +16,16 @@ namespace MoonProject.UI
     /// </summary>
     internal sealed class ContextPrompt
     {
-        private const float MoveEpsilon = 0.1f;
-
-        private readonly PromptSettings _settings;
         private readonly PromptDirector _director;
-        private readonly IViewCamera _view;
         private readonly GlyphLabels _labels;
         private readonly ILocalization _localization;
         private readonly EventBus _events;
         private readonly string[] _wordKeys;
         private readonly Reveal _reveal;
-        private readonly VisualElement _anchor;
+        private readonly WorldAnchor _anchor;
         private readonly Label _word;
+        private readonly VisualElement _chip;
         private readonly GlyphView _glyph;
-        private Vector2 _screen;
-        private Vector2 _written = new Vector2(float.NaN, float.NaN);
 
         public ContextPrompt(UiLayout layout, PromptSettings settings, PromptDirector director, IViewCamera view,
             GlyphLabels labels, ILocalization localization, EventBus events)
@@ -40,9 +35,12 @@ namespace MoonProject.UI
                 throw new ArgumentNullException(nameof(layout));
             }
 
-            _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+            if (settings == null)
+            {
+                throw new ArgumentNullException(nameof(settings));
+            }
+
             _director = director ?? throw new ArgumentNullException(nameof(director));
-            _view = view ?? throw new ArgumentNullException(nameof(view));
             _labels = labels ?? throw new ArgumentNullException(nameof(labels));
             _localization = localization ?? throw new ArgumentNullException(nameof(localization));
             _events = events ?? throw new ArgumentNullException(nameof(events));
@@ -58,8 +56,10 @@ namespace MoonProject.UI
                 _wordKeys[(int)entry.Kind] = UiKeys.Hint(entry.Kind);
             }
 
-            _anchor = layout.PromptAnchor;
+            _anchor = new WorldAnchor(layout.PromptAnchor, view, settings.ScreenMargin, settings.FollowHalfLife,
+                true);
             _word = layout.PromptWord;
+            _chip = layout.Prompt;
             _glyph = new GlyphView(layout.PromptGlyph, layout.PromptGlyphLabel);
             _reveal = new Reveal(layout.Prompt, settings.Reveal);
             _reveal.Snap(false);
@@ -67,6 +67,22 @@ namespace MoonProject.UI
         }
 
         public bool IsVisible => !_reveal.IsHidden;
+
+        /// <summary>
+        /// Pixels something anchored at the same point must rise to rest on top of the prompt for
+        /// <paramref name="kind"/>, <paramref name="gap"/> included, eased with the prompt's fade (0 when another
+        /// prompt or none is shown).
+        /// </summary>
+        public float StackHeight(InteractionKind kind, float gap)
+        {
+            if (_director.Displayed != kind || _reveal.IsHidden)
+            {
+                return 0f;
+            }
+
+            float height = _chip.resolvedStyle.height;
+            return float.IsNaN(height) ? 0f : (height + gap) * _reveal.Visibility;
+        }
 
         /// <param name="deltaTime">Unscaled seconds since the last tick.</param>
         /// <param name="gateOpen">False while something else has the player's attention.</param>
@@ -88,7 +104,8 @@ namespace MoonProject.UI
                 _glyph.Set(_labels.For(entry.Action, device), device);
             }
 
-            bool onScreen = entry != null && Project(_director.WorldPoint, panelSize, deltaTime, _director.Started);
+            bool onScreen = entry != null && _anchor.Track(_director.WorldPoint, panelSize, deltaTime,
+                _director.Started || _reveal.IsHidden);
             bool wasHidden = _reveal.IsHidden;
             _reveal.Set(_director.WantsShown && onScreen);
             if (wasHidden && _reveal.Target)
@@ -107,28 +124,6 @@ namespace MoonProject.UI
             {
                 _word.text = _localization.Get(_wordKeys[(int)entry.Kind]);
             }
-        }
-
-        private bool Project(Vector3 worldPoint, Vector2 panelSize, float deltaTime, bool snap)
-        {
-            Camera camera = _view.Camera;
-            if (camera == null || panelSize.x <= 0f || panelSize.y <= 0f ||
-                !ScreenAnchor.TryToPanel(camera.WorldToViewportPoint(worldPoint), panelSize, _settings.ScreenMargin,
-                    out Vector2 target))
-            {
-                return false;
-            }
-
-            _screen = snap || _reveal.IsHidden
-                ? target
-                : ScreenAnchor.Follow(_screen, target, _settings.FollowHalfLife, deltaTime);
-            if (float.IsNaN(_written.x) || (_screen - _written).sqrMagnitude > MoveEpsilon * MoveEpsilon)
-            {
-                _anchor.style.translate = new StyleTranslate(new Translate(_screen.x, _screen.y));
-                _written = _screen;
-            }
-
-            return true;
         }
     }
 }
