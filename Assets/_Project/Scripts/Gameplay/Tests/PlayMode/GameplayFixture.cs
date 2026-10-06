@@ -69,6 +69,12 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         public TetherTuning TetherTuning { get; private set; }
 
+        public BaseTuning BaseTuning { get; private set; }
+
+        public RadioTowerTuning TowerTuning { get; private set; }
+
+        public UpgradeDefinition RadioTowerUpgrade { get; private set; }
+
         /// <summary>Builds and boots everything; 07 starts at the base facing +Z.</summary>
         public static GameplayFixture Boot(InputActionAsset controls, string saveSlot = null)
         {
@@ -134,6 +140,15 @@ namespace MoonProject.Gameplay.PlayModeTests
             RelicTuning = Asset<RelicTuning>();
             ExcavationTuning = Asset<ExcavationTuning>();
             TetherTuning = Asset<TetherTuning>();
+            BaseTuning = Asset<BaseTuning>();
+            TowerTuning = Asset<RadioTowerTuning>();
+            RadioTowerUpgrade = Asset<UpgradeDefinition>();
+            RadioTowerUpgrade.Populate("radio_tower", "Radio Tower", 60f, new[]
+            {
+                new UpgradeLevel("Wake", "Wake the mast.", 15, 110f, 1.25f),
+                new UpgradeLevel("Raise", "Raise the mast.", 40, 170f, 1.5f),
+                new UpgradeLevel("Light", "Light the basin.", 80, 260f, 1.8f),
+            });
             var placement = Asset<RelicPlacementTuning>();
 
             var relicCatalog = Asset<RelicCatalog>();
@@ -171,16 +186,84 @@ namespace MoonProject.Gameplay.PlayModeTests
             var sonar = Child<SonarSystem>(root, "Sonar");
             var excavation = Child<ExcavationSystem>(root, "Excavation");
             var tether = Child<TetherSystem>(root, "Tether");
+            var home = Child<HomeBase>(root, "Home");
+            var tower = Child<RadioTower>(root, "RadioTower");
+            BuildBase(root.transform, home, tower);
             relics.Wire(relicCatalog, placement, RelicTuning);
             scrap.Wire(ScrapTuning, scrapCatalog);
             sonar.Wire(SonarTuning);
             excavation.Wire(ExcavationTuning);
             tether.Wire(TetherTuning);
-            Gameplay.Wire(visuals, relics, scrap, sonar, excavation, tether);
+            Gameplay.Wire(visuals, new[] { RadioTowerUpgrade }, relics, scrap, sonar, excavation, tether, home, tower);
             root.SetActive(true);
 
             Bootstrap = BootstrapHarness.Create(_controls, SaveSlot, World, Rover, Gameplay);
             Events = new EventRecorder(Bootstrap.Context.Events);
+        }
+
+        /// <summary>
+        /// A stand-in for Art's lander, shelf and tower stages with the contract's node names and positions, wired the
+        /// way the scene contributor wires the real prefabs.
+        /// </summary>
+        private void BuildBase(Transform parent, HomeBase home, RadioTower tower)
+        {
+            var baseRoot = new GameObject("Base").transform;
+            baseRoot.SetParent(parent, false);
+            Transform lander = Node("Lander", baseRoot, Vector3.zero);
+            Block(lander, new Vector3(0f, 1.6f, 0f), new Vector3(4f, 3.2f, 4f));
+            Transform windows = Block(lander, new Vector3(0f, 2f, 2.05f), new Vector3(2.5f, 0.6f, 0.1f));
+            var sockets = new Transform[4];
+            for (int i = 0; i < sockets.Length; i++)
+            {
+                sockets[i] = Node("LampSocket_" + i, lander, new Vector3(-1.5f + i, 3.4f, 1.6f));
+            }
+
+            Transform shelf = Node("MuseumShelf", Node("ShelfAnchor", lander, new Vector3(6f, 0f, 1.2f)),
+                Vector3.zero);
+            Transform shelfLights = Block(shelf, new Vector3(0f, 2.4f, 0f), new Vector3(4.2f, 0.1f, 0.6f));
+            var slots = new Transform[6];
+            for (int i = 0; i < slots.Length; i++)
+            {
+                slots[i] = Node("Slot_" + i, shelf, new Vector3(-1.37f + 1.37f * (i % 3), i < 3 ? 0.38f : 1.78f,
+                    0.04f));
+            }
+
+            Transform anchor = Node("TowerAnchor", lander, new Vector3(-6f, 0f, -1f));
+            float[] heights = { 3.78f, 6.55f, 10f };
+            var stages = new GameObject[3];
+            var lights = new Renderer[3];
+            var beacons = new Transform[3];
+            for (int i = 0; i < 3; i++)
+            {
+                Transform stage = Node("RadioTower_L" + (i + 1), anchor, Vector3.zero);
+                Block(stage, new Vector3(0f, heights[i] * 0.5f, 0f), new Vector3(0.6f, heights[i], 0.6f));
+                lights[i] = Block(stage, new Vector3(0f, heights[i] * 0.8f, 0.35f), new Vector3(0.3f, 0.3f, 0.05f))
+                    .GetComponent<Renderer>();
+                beacons[i] = Node("BeaconSocket", stage, new Vector3(0f, heights[i], 0f));
+                stages[i] = stage.gameObject;
+            }
+
+            home.Wire(BaseTuning, baseRoot, windows.GetComponent<Renderer>(), sockets, shelf,
+                shelfLights.GetComponent<Renderer>(), slots);
+            tower.Wire(TowerTuning, RadioTowerUpgrade, anchor, stages, lights, beacons);
+        }
+
+        private static Transform Node(string name, Transform parent, Vector3 localPosition)
+        {
+            var node = new GameObject(name).transform;
+            node.SetParent(parent, false);
+            node.localPosition = localPosition;
+            return node;
+        }
+
+        private static Transform Block(Transform parent, Vector3 localPosition, Vector3 size)
+        {
+            GameObject block = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            Object.DestroyImmediate(block.GetComponent<Collider>());
+            block.transform.SetParent(parent, false);
+            block.transform.localPosition = localPosition;
+            block.transform.localScale = size;
+            return block.transform;
         }
 
         private GameObject Template(string name, Vector3 size)
