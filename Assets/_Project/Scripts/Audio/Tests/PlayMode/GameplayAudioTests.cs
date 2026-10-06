@@ -48,14 +48,14 @@ namespace MoonProject.Audio.PlayModeTests
         public void RelicAnswered_PlaysAtTheRelic_SofterAndDarkerWhenFar()
         {
             var near = new Vector3(5f, 0f, 0f);
-            _rig.Events.Publish(new RelicAnswered(near, 5f));
+            _rig.Events.Publish(new RelicAnswered(near, 5f, "teapot"));
             AssertLastPlayed("relic_answer", near);
             AudioSource nearVoice = Last;
             float nearVolume = nearVoice.volume;
             float nearCutoff = nearVoice.GetComponent<AudioLowPassFilter>().cutoffFrequency;
 
             var far = new Vector3(120f, 0f, 0f);
-            _rig.Events.Publish(new RelicAnswered(far, 120f));
+            _rig.Events.Publish(new RelicAnswered(far, 120f, "teapot"));
             AssertLastPlayed("relic_answer", far);
             Assert.AreNotSame(nearVoice, Last);
             Assert.Less(Last.volume, nearVolume);

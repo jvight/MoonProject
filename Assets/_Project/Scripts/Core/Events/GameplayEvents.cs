@@ -51,15 +51,19 @@ namespace MoonProject.Core.Events
     /// <summary>A buried relic answered a ping (published at the moment the answer is heard).</summary>
     public readonly struct RelicAnswered
     {
-        public RelicAnswered(Vector3 position, float distance)
+        public RelicAnswered(Vector3 position, float distance, string relicId)
         {
             Position = position;
             Distance = distance;
+            RelicId = relicId;
         }
 
         public Vector3 Position { get; }
 
         public float Distance { get; }
+
+        /// <summary>Which relic answered (lets each relic answer with its own note).</summary>
+        public string RelicId { get; }
     }
 
     /// <summary>The tractor beam started lifting a buried relic.</summary>

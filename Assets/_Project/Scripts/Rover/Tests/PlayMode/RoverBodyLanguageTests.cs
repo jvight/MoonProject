@@ -117,7 +117,7 @@ namespace MoonProject.Rover.PlayModeTests
             Spawn(false);
             yield return Wait(1f);
             Vector3 right = _rover.Controller.Position + Vector3.right * 10f + Vector3.forward * 4f;
-            _rover.Context.Events.Publish(new RelicAnswered(right, 10f));
+            _rover.Context.Events.Publish(new RelicAnswered(right, 10f, "teapot"));
             yield return Wait(1.5f);
             Assert.Greater(NeckYaw, TurnedHead, "07 glances toward the relic that answered.");
 

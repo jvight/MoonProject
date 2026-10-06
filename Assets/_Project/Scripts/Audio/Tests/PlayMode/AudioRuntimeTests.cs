@@ -186,7 +186,7 @@ namespace MoonProject.Audio.PlayModeTests
                     events.Publish(new SonarPinged(Vector3.zero, 80f));
                     break;
                 case 3:
-                    events.Publish(new RelicAnswered(Vector3.forward * 40f, 40f));
+                    events.Publish(new RelicAnswered(Vector3.forward * 40f, 40f, "teapot"));
                     break;
                 case 5:
                     events.Publish(new TetherAttached(Vector3.right, 5f));
