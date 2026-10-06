@@ -1,0 +1,147 @@
+{
+  "id": "03_dust_on_the_dial",
+  "title": "Dust on the Dial",
+  "bpm": 82.0,
+  "swing": 0.56,
+  "key": "D major",
+  "family": "IV-iii-ii-I",
+  "drums": "boombap",
+  "ending": "tapestop",
+  "form": [
+    "Intro x4",
+    "A x8",
+    "B x8",
+    "A' x8",
+    "Break x4",
+    "A'' x8",
+    "Outro x4"
+  ],
+  "pcm_sha256": "989899102d2363dd21fc5420156515501f18927e0122db7e93be77471bdd2bbd",
+  "measured": {
+    "duration_s": 129.8171,
+    "loudness_lufs": -15.9784,
+    "true_peak_dbtp": -1.4374,
+    "sample_peak_db": -1.4462,
+    "rms_db": -17.4546,
+    "crest_db": 16.0084,
+    "centroid_hz": 1549.631,
+    "above_8k_db": -35.0828,
+    "bands": {
+      "low": 0.7054,
+      "mid": 0.2925,
+      "high": 0.0021
+    },
+    "correlation": 0.916,
+    "correlation_below_150hz": 0.9974,
+    "clipped_samples": 0,
+    "silent_gaps": [],
+    "dc": 0.0,
+    "chroma_out_of_key": 0.0648,
+    "beat_clarity": 2.3113
+  },
+  "theory": {
+    "chord_chart": {
+      "Intro": [
+        "| Gmaj9 | F#m7 | Em9 | Dmaj7 |"
+      ],
+      "A": [
+        "| Gmaj9 | F#m7 | Em7 | Dmaj9 |",
+        "| Gmaj7 | F#m7 | Em9 A13sus4 | D6/9 |"
+      ],
+      "B": [
+        "| Bm9 | A13sus4 | Gmaj9 | F#m7 |",
+        "| Em9 | F#m7 | Gmaj7 | A13sus4 A13sus4 |"
+      ],
+      "A'": [
+        "| Gmaj9 | F#m7 | Em11 | Dmaj9 |",
+        "| Gmaj9 | F#m7 | Em9 A13sus4 | D6/9 |"
+      ],
+      "Break": [
+        "| Gmaj9 | F#m7 | Em9 | Dmaj9 |"
+      ],
+      "A''": [
+        "| Gmaj9 | F#m7 | Em9 | Dmaj7 |",
+        "| Gmaj9 | F#m7 | Em11 | Dmaj7 |"
+      ],
+      "Outro": [
+        "| Gmaj9 | F#m7 | Em11 | Dmaj9 |"
+      ]
+    },
+    "out_of_key_notes": 0,
+    "borrowed_chords": [],
+    "lead_notes": 70,
+    "lead_non_pentatonic": 0,
+    "lead_strong_off_chord": 0,
+    "lead_clashes": 0,
+    "parts": {
+      "keys": 344,
+      "pad": 48,
+      "bass": 106,
+      "lead.kalimba": 34,
+      "lead.flute": 36
+    },
+    "drum_hits": 640
+  },
+  "gates": {
+    "loudness_lufs": {
+      "value": -15.9784,
+      "pass": true
+    },
+    "true_peak_dbtp": {
+      "value": -1.4374,
+      "pass": true
+    },
+    "duration_s": {
+      "value": 129.8171,
+      "pass": true
+    },
+    "clipped_samples": {
+      "value": 0,
+      "pass": true
+    },
+    "silent_gaps": {
+      "value": 0,
+      "pass": true
+    },
+    "correlation_below_150hz": {
+      "value": 0.9974,
+      "pass": true
+    },
+    "correlation": {
+      "value": 0.916,
+      "pass": true
+    },
+    "high_band_share": {
+      "value": 0.0021,
+      "pass": true
+    },
+    "above_8k_db": {
+      "value": -35.0828,
+      "pass": true
+    },
+    "chroma_out_of_key": {
+      "value": 0.0648,
+      "pass": true
+    },
+    "beat_clarity": {
+      "value": 2.3113,
+      "pass": true
+    },
+    "out_of_key_notes": {
+      "value": 0,
+      "pass": true
+    },
+    "lead_non_pentatonic": {
+      "value": 0,
+      "pass": true
+    },
+    "lead_strong_off_chord": {
+      "value": 0,
+      "pass": true
+    },
+    "lead_clashes": {
+      "value": 0,
+      "pass": true
+    }
+  }
+}

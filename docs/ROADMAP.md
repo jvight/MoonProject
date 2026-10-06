@@ -39,8 +39,8 @@
 ## M1 — "First Drive": chỉ lái xe thôi cũng đã thấy dễ chịu
 | ID | Việc | Box | TT |
 |---|---|---|---|
-| M1-01 | Mesh kit low-poly (primitive, flat shading, palette UV, noise có seed) + test | art | 🟦 |
-| M1-02 | Palette texture + material dùng chung (quyết định URP Lit vs shader riêng, có bằng chứng ảnh chụp) | art | 🟦 |
+| M1-01 | Mesh kit low-poly (primitive, flat shading, palette UV, noise có seed) + test | art | 🟩 |
+| M1-02 | Palette texture + material dùng chung (quyết định URP Lit vs shader riêng, có bằng chứng ảnh chụp) | art | 🟩 |
 | M1-03 | Model rover theo hợp đồng rig (ARCHITECTURE), đá/tảng (6+), scrap (4) | art | 🟦 |
 | M1-04 | Hàm độ cao miệng núi lửa (bowl + rim + đụn cát + crater + The Peak + bãi base) → `ITerrainQuery` + test | world | 🟦 |
 | M1-05 | Mesh địa hình chia chunk, flat-shaded, tô palette theo độ dốc/độ cao, collider layer Ground | world | 🟦 |
@@ -54,8 +54,8 @@
 | M1-13 | Thư viện synth Python (stdlib) + bộ SFX M1 đúng tông D pentatonic | audio | 🟩 |
 | M1-14 | AudioDirector (pool), tiếng rover (hum + lạo xạo bụi + kẽo kẹt treo + tiếp đất) | audio | 🟩 |
 | M1-15 | Radio: độ rõ theo khoảng cách tới base (low-pass + static + wow/flutter) | audio | 🟩 |
-| M1-17 | Engine sáng tác lofi (hoà âm, voicing jazz, groove swing, cấu trúc bài) + nhạc cụ (Rhodes FM, trống, bass, pad, vinyl) | music | 🟦 |
-| M1-18 | Playlist radio 5–6 bài OGG (68–84 BPM), mix/master nhất quán, có báo cáo đo loudness | music | 🟦 |
+| M1-17 | Engine sáng tác lofi (hoà âm, voicing jazz, groove swing, cấu trúc bài) + nhạc cụ (Rhodes FM, trống, bass, pad, vinyl) | music | 🟩 |
+| M1-18 | Playlist radio 5–6 bài OGG (68–84 BPM), mix/master nhất quán, có báo cáo đo loudness | music | 🟩 |
 | M1-16 | Tích hợp M1 vào `Main.unity`, playtest, đánh giá feeling, xoá prototype rover/WALL-E | Director | ⬜ |
 
 ## M2 — Vòng lặp lõi (vertical slice)

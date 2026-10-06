@@ -138,8 +138,9 @@ rover scales glow per renderer with a `MaterialPropertyBlock` setting `_Emission
 (1 = authored, 0 = dark, > 1 brighter, HDR). Any custom palette shader must keep the URP `_EmissionColor` name.
 
 ## Contract: M2 content (Art -> Gameplay)
-Meshes-only prefabs on `M_LowPoly` (no colliders, no scripts; gameplay adds physics), pivot at the centre of mass,
-+Y up, +Z front. Gameplay references them by path; art may refine their looks freely without renaming.
+Meshes-only prefabs on `M_LowPoly` (no colliders, no scripts; gameplay adds physics), +Y up, +Z front. Pivots: scrap and
+relics at the centre of mass (they are physics bodies); Lander, MuseumShelf and RadioTower at their ground-contact centre
+(they stand on anchors). Gameplay references them by path; art may refine their looks freely without renaming.
 ```
 Generated/Art/Scrap/Scrap_Bolt|Scrap_Gear|Scrap_Panel|Scrap_Coil.prefab     0.3–0.5 m, TechGlow accents
 Generated/Art/Relics/Relic_<Id>.prefab                                       0.5–1.2 m, one per relic id:

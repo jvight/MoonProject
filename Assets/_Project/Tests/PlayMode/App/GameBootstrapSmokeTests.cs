@@ -7,6 +7,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.TestTools;
 using MoonProject.App;
 using MoonProject.Core.Input;
+using MoonProject.Core.Save;
 using MoonProject.Testing;
 
 namespace MoonProject.Tests.PlayMode.App
@@ -57,6 +58,8 @@ namespace MoonProject.Tests.PlayMode.App
             }
 
             Assert.IsNotNull(bootstrap.Context.Events);
+            Assert.AreEqual(SaveLoadResult.NoSave, bootstrap.Context.Get<ISaveService>().LoadResult,
+                "the save is loaded (each harness bootstrap has its own empty test slot)");
             Assert.IsTrue(bootstrap.Context.Input.Enabled, "the Rover map is enabled before systems run");
             Assert.AreEqual(Vector2.zero, bootstrap.Context.Input.Drive);
         }

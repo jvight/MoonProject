@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bedfb9c3927d2114b8051a1716cbc47a, type: 3}
+  m_Name: RoverRigTuning
+  m_EditorClassIdentifier: 
+  _alignFrequency: 2.2
+  _alignDamping: 0.75
+  _airAlignFrequency: 0.9
+  _airAlignDamping: 0.85
+  _airPitchFollow: 0.3
+  _airPitchFullSpeed: 3
+  _maxAirPitch: 14
+  _maxTilt: 35
+  _wheelRadius: 0.35
+  _suspensionCompression: 0.16
+  _suspensionDroop: 0.22
+  _suspensionCastHeight: 0.6
+  _suspensionFrequency: 5.5
+  _suspensionDamping: 0.5
+  _frontSteerAngle: 24
+  _rearSteerFactor: 0.4
+  _leanFrequency: 1.5
+  _leanDamping: 0.42
+  _pitchPerAcceleration: 1.1
+  _rollPerAcceleration: 0.9
+  _maxLean: 9
+  _leanPivotHeight: 0.55
+  _heaveFrequency: 2.3
+  _heaveDamping: 0.45
+  _heavePerAcceleration: 0.0025
+  _maxHeave: 0.14
+  _accelerationLimit: 200
+  _antennaFrequency: 2.4
+  _antennaDamping: 0.15
+  _antennaDegreesPerAcceleration: 2.2
+  _antennaMaxAngle: 22
+  _headlampIntensity: 6
+  _headlampRange: 18
+  _headlampSpotAngle: 62
+  _headlampInnerSpotAngle: 30

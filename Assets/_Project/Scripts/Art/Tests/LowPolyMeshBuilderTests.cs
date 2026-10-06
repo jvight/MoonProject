@@ -378,6 +378,19 @@ namespace MoonProject.Art.Tests
         }
 
         [Test]
+        public void VolumeCentroid_IsTheCentreOfMass()
+        {
+            var box = new LowPolyMeshBuilder();
+            box.Box(Place.At(1f, 2f, 3f), new Vector3(1f, 2f, 3f), PaletteSwatch.Cream);
+            var cone = new LowPolyMeshBuilder();
+            cone.Cone(Matrix4x4.identity, 1f, 2f, 24, PaletteSwatch.Cream);
+
+            AssertVector(new Vector3(1f, 2f, 3f), box.VolumeCentroid());
+            Assert.AreEqual(-0.5f, cone.VolumeCentroid().y, 0.01f, "a cone's centroid sits a quarter up its height");
+            Assert.AreEqual(0f, new LowPolyMeshBuilder().VolumeCentroid().magnitude, 1e-6f);
+        }
+
+        [Test]
         public void Shave_RejectsAnEarlierRange()
         {
             var builder = new LowPolyMeshBuilder();
