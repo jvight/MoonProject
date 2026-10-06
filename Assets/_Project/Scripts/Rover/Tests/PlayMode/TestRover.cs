@@ -12,7 +12,9 @@ namespace MoonProject.Rover.PlayModeTests
     /// <summary>
     /// A complete, playable 07 built in test code only: the real Rover components and default tuning on a minimal
     /// primitive stand-in for the art box's RoverModel (same node names and contract dimensions), plus the real camera
-    /// rig. Nothing here ships: the game's prefab always wraps the art model.
+    /// rig. A <see cref="ScriptedDrive"/> holds the wheel, and the camera listens on its own Cinemachine channel, so
+    /// devices and cameras left by other tests cannot interfere. Nothing here ships: the game's prefab always wraps the
+    /// art model.
     /// </summary>
     public sealed class TestRover : IDisposable
     {
@@ -20,17 +22,28 @@ namespace MoonProject.Rover.PlayModeTests
         private const float HalfTrack = 0.7f;
         private const float AxleSpacing = 0.8f;
 
+        /// <summary>Cinemachine channel for rover tests: their brains and cameras only see each other.</summary>
+        private const OutputChannels TestChannel = OutputChannels.Channel15;
+
         private readonly GameObject _cameraRoot;
+        private readonly InputActionAsset _actions;
         private readonly InputReader _input;
+        private readonly PhysicsMaterial _sphereMaterial;
         private readonly ScriptableObject[] _tunings;
 
-        private TestRover(GameObject root, GameObject cameraRoot, InputReader input, ScriptableObject[] tunings)
+        private TestRover(GameObject root, GameObject cameraRoot, InputActionAsset actions, InputReader input,
+            PhysicsMaterial sphereMaterial, ScriptableObject[] tunings)
         {
             Root = root;
             _cameraRoot = cameraRoot;
+            _actions = actions;
             _input = input;
+            _sphereMaterial = sphereMaterial;
             _tunings = tunings;
         }
+
+        /// <summary>The scripted stick holding 07's wheel (x = steer, y = throttle).</summary>
+        public ScriptedDrive Drive { get; } = new ScriptedDrive();
 
         public GameObject Root { get; }
 
@@ -57,7 +70,7 @@ namespace MoonProject.Rover.PlayModeTests
         public RoverTuning Tuning => (RoverTuning)_tunings[0];
 
         /// <summary>Builds, wires and initialises a rover at <paramref name="position"/>, yaw in degrees.</summary>
-        public static TestRover Spawn(InputActionAsset actions, TestWorld world, Vector3 position, float yaw)
+        public static TestRover Spawn(TestWorld world, Vector3 position, float yaw)
         {
             var tuning = ScriptableObject.CreateInstance<RoverTuning>();
             var rigTuning = ScriptableObject.CreateInstance<RoverRigTuning>();
@@ -75,7 +88,7 @@ namespace MoonProject.Rover.PlayModeTests
             sphere.transform.SetParent(root.transform, false);
             var rigidbody = sphere.AddComponent<Rigidbody>();
             var collider = sphere.AddComponent<SphereCollider>();
-            collider.sharedMaterial = new PhysicsMaterial("Frictionless")
+            var sphereMaterial = new PhysicsMaterial("Frictionless")
             {
                 dynamicFriction = 0f,
                 staticFriction = 0f,
@@ -83,6 +96,7 @@ namespace MoonProject.Rover.PlayModeTests
                 frictionCombine = PhysicsMaterialCombine.Minimum,
                 bounceCombine = PhysicsMaterialCombine.Minimum,
             };
+            collider.sharedMaterial = sphereMaterial;
 
             Transform visual = Node("Visual", root.transform, Vector3.zero);
             var rig = visual.gameObject.AddComponent<RoverVisualRig>();
@@ -149,9 +163,10 @@ namespace MoonProject.Rover.PlayModeTests
 
             GameObject cameraRoot = BuildCamera(cameraTuning, out RoverCameraRig cameraRig, out Camera camera);
 
+            InputActionAsset actions = TestControls.Create();
             var input = new InputReader(actions);
             input.Enable();
-            var rover = new TestRover(root, cameraRoot, input, tunings)
+            var rover = new TestRover(root, cameraRoot, actions, input, sphereMaterial, tunings)
             {
                 Controller = controller,
                 Rig = rig,
@@ -169,9 +184,24 @@ namespace MoonProject.Rover.PlayModeTests
             context.Register<IWorldLayout>(new TestWorldLayout());
             rover.Context = context;
             controller.Initialize(context);
+            controller.SetDriveSource(rover.Drive);
             body.Initialize(context);
             cameraRig.Initialize(context);
             return rover;
+        }
+
+        /// <summary>Puts the Cinemachine brains and cameras of a rig on the rover test channel.</summary>
+        public static void IsolateCamera(GameObject cameraRig)
+        {
+            foreach (CinemachineBrain brain in cameraRig.GetComponentsInChildren<CinemachineBrain>(true))
+            {
+                brain.ChannelMask = TestChannel;
+            }
+
+            foreach (CinemachineCamera virtualCamera in cameraRig.GetComponentsInChildren<CinemachineCamera>(true))
+            {
+                virtualCamera.OutputChannel = TestChannel;
+            }
         }
 
         private static GameObject BuildCamera(RoverCameraTuning tuning, out RoverCameraRig rig, out Camera camera)
@@ -192,6 +222,7 @@ namespace MoonProject.Rover.PlayModeTests
             Assign(rig, ("_tuning", tuning), ("_target", target), ("_viewCamera", camera), ("_camera", virtualCamera),
                 ("_orbit", orbit),
                 ("_composer", composer), ("_decollider", decollider), ("_deoccluder", deoccluder), ("_bump", bump));
+            IsolateCamera(root);
             return root;
         }
 
@@ -260,14 +291,18 @@ namespace MoonProject.Rover.PlayModeTests
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 
+        /// <summary>Destroys everything immediately, so the next test never meets this rover or its camera.</summary>
         public void Dispose()
         {
+            Controller.SetDriveSource(null);
             _input.Dispose();
-            Object.Destroy(Root);
-            Object.Destroy(_cameraRoot);
+            Object.DestroyImmediate(Root);
+            Object.DestroyImmediate(_cameraRoot);
+            Object.DestroyImmediate(_sphereMaterial);
+            Object.DestroyImmediate(_actions);
             foreach (ScriptableObject tuning in _tunings)
             {
-                Object.Destroy(tuning);
+                Object.DestroyImmediate(tuning);
             }
         }
     }

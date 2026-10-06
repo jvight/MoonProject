@@ -8,30 +8,33 @@ using MoonProject.Core.Events;
 
 namespace MoonProject.Rover.PlayModeTests
 {
-    /// <summary>07, parked on flat ground, reacts to gameplay events and IRoverRig gaze requests.</summary>
-    public sealed class RoverBodyLanguageTests
+    /// <summary>
+    /// 07, parked on flat ground, reacts to gameplay events and IRoverRig gaze requests. InputTestFixture keeps real
+    /// devices (a mouse moving the camera in the interactive editor) out of the session.
+    /// </summary>
+    public sealed class RoverBodyLanguageTests : InputTestFixture
     {
         private const float TurnedHead = 20f;
 
-        private InputActionAsset _actions;
+        private LunarTestPhysics _physics;
         private TestWorld _world;
         private TestRover _rover;
         private float _peakPerk;
 
-        [SetUp]
-        public void SetUp()
+        public override void Setup()
         {
-            _actions = TestControls.Create();
+            base.Setup();
+            _physics = new LunarTestPhysics();
             _world = new TestWorld();
-            _rover = TestRover.Spawn(_actions, _world, new Vector3(0f, 0f, -300f), 0f);
+            _rover = TestRover.Spawn(_world, TestWorld.Point(0f, -300f), 0f);
         }
 
-        [TearDown]
-        public void TearDown()
+        public override void TearDown()
         {
             _rover.Dispose();
             _world.Dispose();
-            Object.Destroy(_actions);
+            _physics.Dispose();
+            base.TearDown();
         }
 
         private float NeckYaw => Mathf.DeltaAngle(0f, _rover.Neck.localEulerAngles.y);

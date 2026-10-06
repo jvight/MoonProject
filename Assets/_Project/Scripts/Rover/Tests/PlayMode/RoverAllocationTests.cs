@@ -21,7 +21,6 @@ namespace MoonProject.Rover.PlayModeTests
         private const int WarmUpCalls = 120;
         private const int MeasuredCalls = 600;
         private const int BaselineFrames = 5;
-        private const int MaxInputAttempts = 5;
 
         /// <summary>A real per-update allocation shows in every loaded frame; one-off engine noise does not.</summary>
         private const int MeasuredFrames = 3;
@@ -32,25 +31,23 @@ namespace MoonProject.Rover.PlayModeTests
 
         private const string AllocatedInFrame = "GC Allocated In Frame";
 
-        private Gamepad _pad;
-        private InputActionAsset _actions;
+        private LunarTestPhysics _physics;
         private TestWorld _world;
-        private Vector3 _savedGravity;
+        private TestRover _rover;
 
         public override void Setup()
         {
             base.Setup();
-            _pad = InputSystem.AddDevice<Gamepad>();
-            _actions = TestControls.Create();
-            _savedGravity = Physics.gravity;
-            Physics.gravity = new Vector3(0f, -1.62f, 0f);
+            _physics = new LunarTestPhysics();
         }
 
         public override void TearDown()
         {
-            Physics.gravity = _savedGravity;
+            _rover?.Dispose();
+            _rover = null;
             _world?.Dispose();
-            Object.Destroy(_actions);
+            _world = null;
+            _physics.Dispose();
             base.TearDown();
         }
 
@@ -58,17 +55,9 @@ namespace MoonProject.Rover.PlayModeTests
         public IEnumerator PerFrameMethods_DoNotAllocate()
         {
             _world = new TestWorld();
-            TestRover rover = TestRover.Spawn(_actions, _world, new Vector3(0f, 0f, -100f), 0f);
-            var stick = new Vector2(0.4f, 1f);
-            Vector2 expected = Vector2.ClampMagnitude(stick, 1f);
-            for (int attempt = 0;
-                 attempt < MaxInputAttempts && (_pad.leftStick.ReadValue() - expected).sqrMagnitude > 1e-4f;
-                 attempt++)
-            {
-                Set(_pad.leftStick, stick);
-                yield return null;
-            }
-
+            _rover = TestRover.Spawn(_world, TestWorld.Point(0f, -100f), 0f);
+            TestRover rover = _rover;
+            rover.Drive.Drive = new Vector2(0.4f, 1f);
             float until = Time.time + 3f;
             while (Time.time < until)
             {
@@ -113,7 +102,6 @@ namespace MoonProject.Rover.PlayModeTests
                 yield return null;
                 long withControl = recorder.LastValue;
                 GC.KeepAlive(control);
-                rover.Dispose();
                 Debug.Log($"[rover-gc] plain frames <= {noise} B; quietest frame with {MeasuredCalls} extra updates: "
                     + $"{withRover} B; control frame: {withControl} B");
 

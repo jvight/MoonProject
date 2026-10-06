@@ -13,7 +13,8 @@ namespace MoonProject.Rover.PlayModeTests
 {
     /// <summary>
     /// The real built Rover.prefab (wrapping the art box's RoverModel) and camera rig: they initialise without errors,
-    /// register their Core contracts, only the headlamp may cast shadows, and 07 drives. Under a single directional
+    /// register their Core contracts, only the headlamp may cast shadows, and 07 drives (scripted stick, no devices).
+    /// Under a single directional
     /// light at the world's Earthlight angle it captures frames with and without the head, to tell a second light's
     /// shadow apart from the head's own shadow.
     /// </summary>
@@ -23,36 +24,34 @@ namespace MoonProject.Rover.PlayModeTests
         private const string CameraRigPrefab = "Assets/_Project/Generated/Rover/RoverCameraRig.prefab";
         private const float EarthlightElevation = 24f;
         private const float EarthlightBearing = 265f;
-        private const int MaxInputAttempts = 5;
 
         private static readonly string OutputFolder =
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "rover-metrics"));
 
-        private Gamepad _pad;
+        private readonly ScriptedDrive _drive = new ScriptedDrive();
+        private LunarTestPhysics _physics;
         private InputActionAsset _actions;
         private InputReader _input;
         private TestWorld _world;
         private GameObject _rover;
         private GameObject _cameraRig;
-        private Vector3 _savedGravity;
 
         public override void Setup()
         {
             base.Setup();
-            _pad = InputSystem.AddDevice<Gamepad>();
+            _physics = new LunarTestPhysics();
             _actions = TestControls.Create();
-            _savedGravity = Physics.gravity;
-            Physics.gravity = new Vector3(0f, -1.62f, 0f);
         }
 
         public override void TearDown()
         {
-            Physics.gravity = _savedGravity;
-            Object.Destroy(_rover);
-            Object.Destroy(_cameraRig);
+            Object.DestroyImmediate(_rover);
+            Object.DestroyImmediate(_cameraRig);
             _input?.Dispose();
             _world?.Dispose();
-            Object.Destroy(_actions);
+            _world = null;
+            Object.DestroyImmediate(_actions);
+            _physics.Dispose();
             base.TearDown();
         }
 
@@ -69,8 +68,9 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.IsNotNull(roverAsset, $"{RoverPrefab} missing: run the Rover builders.");
             Assert.IsNotNull(cameraAsset, $"{CameraRigPrefab} missing: run the Rover builders.");
 
-            _rover = Object.Instantiate(roverAsset, new Vector3(0f, 0f, -300f), Quaternion.identity);
+            _rover = Object.Instantiate(roverAsset, TestWorld.Point(0f, -300f), Quaternion.identity);
             _cameraRig = Object.Instantiate(cameraAsset);
+            TestRover.IsolateCamera(_cameraRig);
             foreach (Light light in _rover.GetComponentsInChildren<Light>(true))
             {
                 bool headlamp = light.type == LightType.Spot;
@@ -85,6 +85,7 @@ namespace MoonProject.Rover.PlayModeTests
             context.Register<IWorldLayout>(new TestWorldLayout());
             var controller = _rover.GetComponent<RoverController>();
             controller.Initialize(context);
+            controller.SetDriveSource(_drive);
             _rover.GetComponent<RoverBodyLanguage>().Initialize(context);
             var cameraRig = _cameraRig.GetComponent<RoverCameraRig>();
             cameraRig.Initialize(context);
@@ -114,11 +115,11 @@ namespace MoonProject.Rover.PlayModeTests
                 light.enabled = true;
             }
 
-            yield return Drive(new Vector2(0.3f, 1f));
+            _drive.Drive = new Vector2(0.3f, 1f);
             yield return Settle(4f);
             Assert.Greater(controller.Speed, 4f, "The built rover drives.");
             FrameCapture.SavePng(camera, 960, 540, Path.Combine(OutputFolder, "13-prefab-driving.png"));
-            yield return Drive(Vector2.zero);
+            _drive.Drive = Vector2.zero;
         }
 
         private static Vector3 EarthlightSource()
@@ -161,23 +162,6 @@ namespace MoonProject.Rover.PlayModeTests
             {
                 yield return null;
             }
-        }
-
-        private IEnumerator Drive(Vector2 stick)
-        {
-            yield return null;
-            Vector2 expected = Vector2.ClampMagnitude(stick, 1f);
-            for (int attempt = 0; attempt < MaxInputAttempts; attempt++)
-            {
-                Set(_pad.leftStick, stick);
-                yield return null;
-                if ((_pad.leftStick.ReadValue() - expected).sqrMagnitude < 1e-4f)
-                {
-                    yield break;
-                }
-            }
-
-            Assert.Fail($"The virtual gamepad never reported stick {stick}.");
         }
     }
 }
