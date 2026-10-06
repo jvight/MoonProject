@@ -71,8 +71,9 @@ Each ruling removes friction the original pitch would have caused. Boxes impleme
 6. **Teach by doing.** No tutorial screens. Context prompts (key/button glyph + one word) fade in only near a usable
    thing, only the first few times (remembered in the save), then never again. A pause menu offers resume,
    volumes, look sensitivity, invert Y and quit.
-7. **Never stuck.** If 07 is wedged or not progressing for a few seconds while the player is trying to move, a soft
-   prompt offers a gentle lift-and-set-down with a short fade — no penalty, no teleport flash.
+7. **Never stuck.** If 07 is wedged or not progressing for a few seconds while the player is trying to move, it is
+   automatically lifted on a soft arc to the nearest open, drivable spot and set down — no prompt, no penalty, no
+   teleport flash.
 8. **The first frame is the hook.** 07 spawns at the base facing bearing 355° so Earth and The Peak (with its slow
    red beacon) share the opening frame; the camera pitches down no more than ~6°. 07 starts with its eye closed and
    wakes as the radio crackles on — the first five seconds should make people say "aww".
