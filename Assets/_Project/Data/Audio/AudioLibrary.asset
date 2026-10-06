@@ -16,6 +16,8 @@ MonoBehaviour:
   - _id: rover_hum
     _clips:
     - {fileID: 8300000, guid: d85af7b668f8a9f47bc6b8c952bb7c1b, type: 3}
+    _variantLabels:
+    - rover_hum
     _bus: 2
     _spatial: 1
     _loop: 1
@@ -26,6 +28,8 @@ MonoBehaviour:
   - _id: dust_crunch
     _clips:
     - {fileID: 8300000, guid: 79b28b91568473a4db956156a99d92b0, type: 3}
+    _variantLabels:
+    - dust_crunch
     _bus: 2
     _spatial: 1
     _loop: 1
@@ -38,6 +42,10 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 4ff7c8d637f51da42b3d47e77cf7c1db, type: 3}
     - {fileID: 8300000, guid: 19a54a3119023464c9d866afdf6db173, type: 3}
     - {fileID: 8300000, guid: 26cef1adf8c634e4fa237f823b4824e4, type: 3}
+    _variantLabels:
+    - 01
+    - 02
+    - 03
     _bus: 2
     _spatial: 1
     _loop: 0
@@ -50,6 +58,10 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 09977128d30f51f46be34c3c2ce3fad8, type: 3}
     - {fileID: 8300000, guid: ba3707d407a624e4eba3ecc0ce05c320, type: 3}
     - {fileID: 8300000, guid: 300e078fe564c04408005d681b6bcae5, type: 3}
+    _variantLabels:
+    - 01
+    - 02
+    - 03
     _bus: 2
     _spatial: 1
     _loop: 0
@@ -60,6 +72,8 @@ MonoBehaviour:
   - _id: radio_static
     _clips:
     - {fileID: 8300000, guid: 131dc70b3741d01488e18a408db6c172, type: 3}
+    _variantLabels:
+    - radio_static
     _bus: 1
     _spatial: 0
     _loop: 1
@@ -70,6 +84,8 @@ MonoBehaviour:
   - _id: radio_tune
     _clips:
     - {fileID: 8300000, guid: 5db00e3e622252a4094b11d12be21538, type: 3}
+    _variantLabels:
+    - radio_tune
     _bus: 1
     _spatial: 0
     _loop: 0
@@ -80,6 +96,8 @@ MonoBehaviour:
   - _id: ambience_bed
     _clips:
     - {fileID: 8300000, guid: d77d8a1570c2f4a43a3cfb960fc5aaf9, type: 3}
+    _variantLabels:
+    - ambience_bed
     _bus: 3
     _spatial: 0
     _loop: 1
@@ -90,6 +108,8 @@ MonoBehaviour:
   - _id: sonar_ping
     _clips:
     - {fileID: 8300000, guid: 29bc568b9d2fbcd4baf0d38400a7af07, type: 3}
+    _variantLabels:
+    - sonar_ping
     _bus: 2
     _spatial: 1
     _loop: 0
@@ -99,12 +119,48 @@ MonoBehaviour:
     _pitchMax: 1
   - _id: relic_answer
     _clips:
-    - {fileID: 8300000, guid: d72c06dadaa3b874284e89bf119b8c38, type: 3}
+    - {fileID: 8300000, guid: f124a9fedff76e445838e12b2db90f00, type: 3}
+    - {fileID: 8300000, guid: abc62af520228ae419c2b36839cf93e1, type: 3}
+    - {fileID: 8300000, guid: 3337d533ce2196c4ca6d652efc7960cb, type: 3}
+    - {fileID: 8300000, guid: 87c99e29ef04b5e4ea8ca9b1b2522b30, type: 3}
+    - {fileID: 8300000, guid: 106eeb3a40f9b1045b91ac89de59f7f7, type: 3}
+    - {fileID: 8300000, guid: 85c11b70b7e9ef748841b8139abe8bf9, type: 3}
+    _variantLabels:
+    - astronaut_boot
+    - cassette_player
+    - garden_gnome
+    - golden_record
+    - rubber_duck
+    - teapot
     _bus: 2
     _spatial: 1
     _loop: 0
     _volumeMin: 0.8
     _volumeMax: 0.8
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: recovery_lift
+    _clips:
+    - {fileID: 8300000, guid: 931fb45093a67334785ae92294d67f7c, type: 3}
+    _variantLabels:
+    - recovery_lift
+    _bus: 2
+    _spatial: 1
+    _loop: 1
+    _volumeMin: 0.6
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: recovery_settle
+    _clips:
+    - {fileID: 8300000, guid: fb596f5c9f1ddfe4b825c9d6b651b2b7, type: 3}
+    _variantLabels:
+    - recovery_settle
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.7
+    _volumeMax: 0.7
     _pitchMin: 1
     _pitchMax: 1
   - _id: scrap_chime
@@ -117,6 +173,15 @@ MonoBehaviour:
     - {fileID: 8300000, guid: c233c37a004a1ec4ba2e5f70cee7885d, type: 3}
     - {fileID: 8300000, guid: f2b0de51124878944b74771b06edaee5, type: 3}
     - {fileID: 8300000, guid: 555718e840dee3041a59ce7f962b0a3e, type: 3}
+    _variantLabels:
+    - D5
+    - E5
+    - Fs5
+    - A5
+    - B5
+    - D6
+    - E6
+    - Fs6
     _bus: 2
     _spatial: 1
     _loop: 0
@@ -127,6 +192,8 @@ MonoBehaviour:
   - _id: tether_attach
     _clips:
     - {fileID: 8300000, guid: aaf2d1b334565a34eb06691ebf329f1c, type: 3}
+    _variantLabels:
+    - tether_attach
     _bus: 2
     _spatial: 1
     _loop: 0
@@ -137,6 +204,8 @@ MonoBehaviour:
   - _id: tether_hum
     _clips:
     - {fileID: 8300000, guid: 36096785345430447abd61a6ba83fe32, type: 3}
+    _variantLabels:
+    - tether_hum
     _bus: 2
     _spatial: 1
     _loop: 1
@@ -147,6 +216,8 @@ MonoBehaviour:
   - _id: tether_release
     _clips:
     - {fileID: 8300000, guid: 3afe6791f1fbfab44948342827b2a9b6, type: 3}
+    _variantLabels:
+    - tether_release
     _bus: 2
     _spatial: 1
     _loop: 0
@@ -157,6 +228,8 @@ MonoBehaviour:
   - _id: tether_snap
     _clips:
     - {fileID: 8300000, guid: 8d2c8cb786dd9f8419a3053e4a7d796a, type: 3}
+    _variantLabels:
+    - tether_snap
     _bus: 2
     _spatial: 1
     _loop: 0
@@ -167,6 +240,8 @@ MonoBehaviour:
   - _id: relic_placed
     _clips:
     - {fileID: 8300000, guid: ed56bb414cbb06947888d4a14172fe21, type: 3}
+    _variantLabels:
+    - relic_placed
     _bus: 2
     _spatial: 1
     _loop: 0
@@ -177,6 +252,8 @@ MonoBehaviour:
   - _id: excavation_rumble
     _clips:
     - {fileID: 8300000, guid: aa6d91ae24246194f8fb6ca3e308537b, type: 3}
+    _variantLabels:
+    - excavation_rumble
     _bus: 2
     _spatial: 1
     _loop: 1
@@ -187,6 +264,8 @@ MonoBehaviour:
   - _id: surfacing_sparkle
     _clips:
     - {fileID: 8300000, guid: 05c8697c6b868d84c97870a1b7db7ab2, type: 3}
+    _variantLabels:
+    - surfacing_sparkle
     _bus: 2
     _spatial: 1
     _loop: 0
@@ -197,6 +276,8 @@ MonoBehaviour:
   - _id: ui_click
     _clips:
     - {fileID: 8300000, guid: 28d80e4792180924f946c8e01fa3288d, type: 3}
+    _variantLabels:
+    - ui_click
     _bus: 2
     _spatial: 0
     _loop: 0
@@ -207,6 +288,8 @@ MonoBehaviour:
   - _id: ui_confirm
     _clips:
     - {fileID: 8300000, guid: a4d1a786fecf4744a80ca00929cecf18, type: 3}
+    _variantLabels:
+    - ui_confirm
     _bus: 2
     _spatial: 0
     _loop: 0
@@ -217,6 +300,8 @@ MonoBehaviour:
   - _id: ui_back
     _clips:
     - {fileID: 8300000, guid: cbfd4532561266c4eaf26a52e196b08a, type: 3}
+    _variantLabels:
+    - ui_back
     _bus: 2
     _spatial: 0
     _loop: 0
@@ -227,6 +312,8 @@ MonoBehaviour:
   - _id: upgrade_arpeggio
     _clips:
     - {fileID: 8300000, guid: b62b3bb7da385dc4fbc9474cd20b68c4, type: 3}
+    _variantLabels:
+    - upgrade_arpeggio
     _bus: 2
     _spatial: 0
     _loop: 0
