@@ -72,9 +72,9 @@
 | M2-06 | Tháp radio 3 cấp: nâng cấp bằng scrap → mở rộng vùng tín hiệu (ánh sáng + nhạc rõ) | gameplay + audio + art | 🟩 |
 | M2-07 | 6 relic có cá tính (model + tên + câu chuyện ngắn) | art + gameplay | 🟩 |
 | M2-08 | Save/Load tự động | gameplay | 🟩 |
-| M2-09 | HUD tối giản (diegetic ưu tiên), prompt ngữ cảnh chỉ vài lần đầu, menu tạm dừng + cài đặt âm lượng/độ nhạy/đảo trục, thẻ "ký ức" khi đặt relic | ui | 🟦 |
+| M2-09 | HUD tối giản (diegetic ưu tiên), prompt ngữ cảnh chỉ vài lần đầu, menu tạm dừng + cài đặt âm lượng/độ nhạy/đảo trục, thẻ "ký ức" khi đặt relic | ui | 🟩 |
 | M2-10 | Tích hợp + playtest slice 15 phút, sửa feeling | Director | 🟦 |
-| M2-11 | Quy trình build Windows (zip) để chủ dự án chơi thử ngoài Unity | foundation | ⬜ |
+| M2-11 | Quy trình build Windows (zip) để chủ dự án chơi thử ngoài Unity | foundation | 🟩 |
 
 ## Backlog (đã ghi nhận, chưa giao)
 - Bụi bánh xe trông như "đá trong suốt" bay lơ lửng → nhỏ hơn, mềm hơn, trong hơn, tan nhanh hơn (rover).
