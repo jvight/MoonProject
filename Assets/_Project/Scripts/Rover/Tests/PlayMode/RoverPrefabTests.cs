@@ -13,7 +13,8 @@ namespace MoonProject.Rover.PlayModeTests
 {
     /// <summary>
     /// The real built Rover.prefab (wrapping the art box's RoverModel) and camera rig: they initialise without errors,
-    /// register their Core contracts, no rover light casts shadows, and 07 drives (scripted stick, no devices).
+    /// register their Core contracts (incl. ILookSettings), no rover light casts shadows, and 07 drives (scripted
+    /// stick, no devices).
     /// Under a single directional
     /// light at the world's Earthlight angle it captures frames with and without the head, to tell a second light's
     /// shadow apart from the head's own shadow.
@@ -97,6 +98,7 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.AreSame(controller, context.Get<IRoverRig>());
             Assert.IsNotNull(context.Get<IRoverRig>().TetherOrigin);
             Assert.AreSame(cameraRig.Camera, context.Get<IViewCamera>().Camera);
+            Assert.AreSame(cameraRig, context.Get<ILookSettings>());
 
             yield return null;
             yield return null;

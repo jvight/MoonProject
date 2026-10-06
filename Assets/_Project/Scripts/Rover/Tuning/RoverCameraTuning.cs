@@ -18,8 +18,16 @@ namespace MoonProject.Rover
         [Range(10f, 400f)]
         [SerializeField] private float _stickRate = 110f;
 
-        [Tooltip("Invert vertical look.")]
+        [Tooltip("Invert vertical look by default (the player's setting replaces it at runtime).")]
         [SerializeField] private bool _invertY;
+
+        [Tooltip("Lowest look sensitivity multiplier the settings menu can choose.")]
+        [Range(0.05f, 1f)]
+        [SerializeField] private float _minSensitivity = 0.25f;
+
+        [Tooltip("Highest look sensitivity multiplier the settings menu can choose.")]
+        [Range(1f, 10f)]
+        [SerializeField] private float _maxSensitivity = 3f;
 
         [Tooltip("Half-life (s) smoothing the look speed, so the orbit glides instead of stepping.")]
         [Range(0f, 0.5f)]
@@ -161,6 +169,10 @@ namespace MoonProject.Rover
         public float StickRate => _stickRate;
 
         public bool InvertY => _invertY;
+
+        public float MinSensitivity => _minSensitivity;
+
+        public float MaxSensitivity => Mathf.Max(_minSensitivity, _maxSensitivity);
 
         public float LookHalfLife => _lookHalfLife;
 

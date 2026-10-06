@@ -13,11 +13,12 @@ namespace MoonProject.Rover
     /// <see cref="CameraOrbit"/> into a Cinemachine 3 rig (OrbitalFollow locked to the target's yaw + RotationComposer,
     /// with Decollider and Deoccluder keeping it out of the terrain), widens the FOV with speed and dips softly on
     /// landings. Reads the rover only through <see cref="IRoverState"/>, so it must initialise after the rover.
-    /// Registers itself as <see cref="IViewCamera"/> (gameplay aims from its centre ray, UI projects with it).
+    /// Registers itself as <see cref="IViewCamera"/> (gameplay aims from its centre ray, UI projects with it) and
+    /// <see cref="ILookSettings"/> (the UI applies the player's sensitivity and invert-Y).
     /// </summary>
     [DefaultExecutionOrder(100)]
     [DisallowMultipleComponent]
-    public sealed class RoverCameraRig : MonoBehaviour, IGameSystem, IViewCamera
+    public sealed class RoverCameraRig : MonoBehaviour, IGameSystem, IViewCamera, ILookSettings
     {
         /// <summary>Below this horizontal speed (m/s) the travel direction is too noisy to judge slopes.</summary>
         private const float DescentMinSpeed = 0.5f;
@@ -41,6 +42,7 @@ namespace MoonProject.Rover
         private IRoverState _rover;
         private InputReader _input;
         private CameraOrbit _orbitState;
+        private LookSettings _look;
         private DampedSpring _bumpSpring;
         private IDisposable _landedSubscription;
         private bool _initialized;
@@ -48,6 +50,18 @@ namespace MoonProject.Rover
         public CameraOrbit Orbit => _orbitState;
 
         public Camera Camera => _viewCamera;
+
+        public float Sensitivity
+        {
+            get => _look.Sensitivity;
+            set => _look.Sensitivity = value;
+        }
+
+        public bool InvertY
+        {
+            get => _look.InvertY;
+            set => _look.InvertY = value;
+        }
 
         public void Initialize(GameContext context)
         {
@@ -60,9 +74,11 @@ namespace MoonProject.Rover
             _rover = context.Get<IRoverState>();
             _input = context.Input;
             _orbitState = new CameraOrbit(_tuning);
+            _look = new LookSettings(_tuning);
             ApplyCinemachineSettings();
             _landedSubscription = context.Events.Subscribe<RoverLanded>(OnLanded);
             context.Register<IViewCamera>(this);
+            context.Register<ILookSettings>(this);
             _initialized = true;
             Snap();
         }
@@ -172,13 +188,9 @@ namespace MoonProject.Rover
                 Quaternion.Euler(0f, yaw, 0f));
         }
 
-        /// <summary>Mouse pixels are already per-frame; the stick is a rate. Up tilts the view up.</summary>
         private Vector2 ReadLook(float deltaTime)
         {
-            Vector2 look = _input.LookDelta * _tuning.MouseSensitivity
-                + _input.LookRate * (_tuning.StickRate * deltaTime);
-            float vertical = _tuning.InvertY ? look.y : -look.y;
-            return new Vector2(look.x, vertical);
+            return _look.OrbitDegrees(_input.LookDelta, _input.LookRate, deltaTime);
         }
 
         private void ApplyOrbit()
