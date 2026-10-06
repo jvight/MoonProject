@@ -169,7 +169,7 @@ namespace MoonProject.Gameplay
 
             Vector3 position = relic.SonarPosition;
             relic.MarkDiscovered();
-            _events.Publish(new RelicAnswered(position, distance));
+            _events.Publish(new RelicAnswered(position, distance, relic.Definition.Id));
             _markers[index].Answer(position, _tuning.BrightnessAt(distance), now);
             if (_firstAnswerPending)
             {
