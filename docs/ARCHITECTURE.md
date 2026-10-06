@@ -83,6 +83,15 @@ Assembly references use **names**, not GUIDs (tools/compile_check.py relies on i
 - Content (relic definitions, upgrade definitions) is ScriptableObject data under `Assets/_Project/Data/Content`.
 - Persistent progress: a versioned plain C# `SaveData` serialised with `JsonUtility` to `Application.persistentDataPath`.
 
+## Localization
+- Contract `Core/ILocalization` (current language, `Get(key)`, a language-changed event), implemented and registered
+  by the UI domain. String tables per language live in `Assets/_Project/Data/Localization/` (one source of truth;
+  `en` is the source, `vi` must cover every key — a test enforces parity).
+- Keys are stable, dotted and lower-case: `ui.pause.resume`, `hint.excavate`, `relic.<id>.name`,
+  `relic.<id>.memory`, `upgrade.<id>.<level>.effect`. Content assets reference ids, never prose.
+- English (`en`) is the primary and default language; Vietnamese (`vi`) is secondary and chosen by the player in the
+  pause menu settings; the choice is saved.
+
 ## Physics layers (`MoonProject.Core.Layers`)
 | # | Name | Used by |
 |---|---|---|
