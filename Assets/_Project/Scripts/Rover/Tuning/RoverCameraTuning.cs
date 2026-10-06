@@ -139,6 +139,18 @@ namespace MoonProject.Rover
         [SerializeField] private CameraMomentSettings _relicMoment =
             new CameraMomentSettings(0.9f, 1f, 1.1f, 0.35f, 2.5f, 0.85f, 25f, 60f, 8f, 0.35f, 25f);
 
+        [Tooltip("A Hover-Jump leap: lift and pull back, looking ahead to where 07 will land; held until it lands.")]
+        [SerializeField] private CameraMomentSettings _leapMoment =
+            new CameraMomentSettings(0.8f, 0.3f, 1.4f, 0.35f, 6f, 0f, 0f, 0f, 10f, 0.35f, 60f);
+
+        [Tooltip("Leaps weaker than this (0..1) are hops: the camera just follows.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _leapMomentMinStrength = 0.3f;
+
+        [Tooltip("Seconds of travel ahead the leap camera looks, toward the landing.")]
+        [Range(0f, 6f)]
+        [SerializeField] private float _leapLookAhead = 2f;
+
         [Tooltip("An upgrade bought at the base: lift and pull back to take in the base, its tower and warm ring.")]
         [SerializeField] private CameraMomentSettings _upgradeMoment =
             new CameraMomentSettings(1.3f, 1.8f, 1.5f, 0.5f, 6f, 0.6f, 0f, 45f, 14f, 0.5f, 40f);
@@ -247,6 +259,12 @@ namespace MoonProject.Rover
         public CameraMomentSettings RelicMoment => _relicMoment;
 
         public CameraMomentSettings UpgradeMoment => _upgradeMoment;
+
+        public CameraMomentSettings LeapMoment => _leapMoment;
+
+        public float LeapMomentMinStrength => _leapMomentMinStrength;
+
+        public float LeapLookAhead => _leapLookAhead;
 
         public float MomentCancelEaseOut => _momentCancelEaseOut;
 
