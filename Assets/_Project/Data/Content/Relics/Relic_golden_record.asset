@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d10b5cd1d6153c3468f44425b00f5e37, type: 3}
+  m_Name: Relic_golden_record
+  m_EditorClassIdentifier: 
+  _id: golden_record
+  _displayName: Golden Record
+  _memory: A golden disc of greetings in many languages, sent outward to anyone listening.
+    It came to rest on the moon instead, still waiting to be heard.
+  _mass: 5
+  _prefab: {fileID: 0}
+  _answerNote: 0
+  _placement: 2

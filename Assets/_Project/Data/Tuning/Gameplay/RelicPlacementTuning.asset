@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dbf2e91031cd62c47a6ad20bc9aa2c2e, type: 3}
+  m_Name: RelicPlacementTuning
+  m_EditorClassIdentifier: 
+  _seed: 23
+  _attemptsPerSite: 128
+  _maxSlopeDegrees: 11
+  _flatnessProbeRadius: 3
+  _edgeMargin: 12
+  _baseClearance: 32
+  _minSiteSpacing: 55
+  _onboardingDistance: {x: 38, y: 68}
+  _onboardingBearing: 0
+  _onboardingSpread: 70
+  _wandererDistance: {x: 95, y: 190}
+  _rimBearingSpread: 35
+  _rimReach: {x: 0.78, y: 1}
+  _rimEyeHeight: 1.6
+  _rimSightReach: 0.9
+  _rimSightSamples: 64
