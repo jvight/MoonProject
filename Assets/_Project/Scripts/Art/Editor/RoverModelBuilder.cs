@@ -37,13 +37,21 @@ namespace MoonProject.Art.Editor
 
         public const float HeadlampPitchDegrees = 6f;
 
+        /// <summary>Under the chassis at the bottom of the belly plate, where the Hover-Jump coils mount.</summary>
+        public static readonly Vector3 CoilSocket = new Vector3(0f, 0.28f, 0.03f);
+
+        public const string HoverCoilsName = "HoverCoils";
+
         public static readonly Vector3 CargoPosition = new Vector3(0f, 0.48f, -0.64f);
 
         /// <summary>Writes the rover meshes and prefab (the palette material must exist).</summary>
         [MoonBuilder("Art/Rover", 120)]
         public static void Build()
         {
-            ModelPrefabWriter.Write(CreateModel(), ArtPaths.RoverFolder, PaletteAssetBuilder.LoadMaterial());
+            Material material = PaletteAssetBuilder.LoadMaterial();
+            ModelPrefabWriter.Write(CreateModel(), ArtPaths.RoverFolder, material);
+            ModelPrefabWriter.Write(CreateHoverCoils(), ArtPaths.RoverFolder, material,
+                PaletteAssetBuilder.LoadGlowOffMaterial());
             AssetDatabase.SaveAssets();
         }
 
@@ -89,6 +97,29 @@ namespace MoonProject.Art.Editor
             root.Add(new ModelNode("CargoSocket", CargoPosition));
             root.Add(new ModelNode("DustSocket_L", new Vector3(-WheelTrack, 0f, -WheelBase)));
             root.Add(new ModelNode("DustSocket_R", new Vector3(WheelTrack, 0f, -WheelBase)));
+            root.Add(new ModelNode("CoilSocket", CoilSocket));
+            return root;
+        }
+
+        /// <summary>
+        /// The Hover-Jump coils (HoverCoils.prefab), mounted on CoilSocket with identity: a plate, Coil_FL/FR/RL/RR
+        /// springs pivoted at their tops (squash them by local Y while charging) and a Glow_* ring under each, on
+        /// the glow-off material so it lights only when gameplay raises its _EmissionColor.
+        /// </summary>
+        public static ModelNode CreateHoverCoils()
+        {
+            var root = new ModelNode(HoverCoilsName, Vector3.zero,
+                new ModelMesh(HoverCoilsName + "_Mount", HoverCoilMeshes.Mount()));
+            var coil = new ModelMesh(HoverCoilsName + "_Coil", HoverCoilMeshes.Coil());
+            var glow = new ModelMesh(HoverCoilsName + "_Glow", HoverCoilMeshes.GlowRing());
+            string[] corners = { "FL", "FR", "RL", "RR" };
+            for (int i = 0; i < HoverCoilMeshes.CoilCount; i++)
+            {
+                ModelNode spring = root.Add(new ModelNode("Coil_" + corners[i], HoverCoilMeshes.CoilTop(i), coil));
+                spring.Add(new ModelNode("Glow_" + corners[i], HoverCoilMeshes.GlowCentre, Quaternion.identity, glow,
+                    ModelMaterial.PaletteGlowOff));
+            }
+
             return root;
         }
 
