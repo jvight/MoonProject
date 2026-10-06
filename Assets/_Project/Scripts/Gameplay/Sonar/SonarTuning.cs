@@ -88,6 +88,9 @@ namespace MoonProject.Gameplay
         [Tooltip("Faint breathing brightness of the ring over a discovered, still-buried site.")]
         [Range(0f, 2f)] [SerializeField] private float _discoveredGlow = 0.22f;
 
+        [Tooltip("How deeply a discovered site's ring breathes (0 = steady).")]
+        [Range(0f, 1f)] [SerializeField] private float _discoveredBreathDepth = 0.4f;
+
         [Tooltip("Seconds per breath of a discovered site's ring.")]
         [Range(0.5f, 15f)] [SerializeField] private float _breathPeriod = 4f;
 
@@ -129,6 +132,7 @@ namespace MoonProject.Gameplay
         public float SiteRingPulse => _siteRingPulse;
         public float SiteRingPulseDuration => _siteRingPulseDuration;
         public float DiscoveredGlow => _discoveredGlow;
+        public float DiscoveredBreathDepth => _discoveredBreathDepth;
         public float BreathPeriod => _breathPeriod;
         public int SiteRingSegments => _siteRingSegments;
         public float AnswerGaze => _answerGaze;
