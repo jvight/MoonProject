@@ -157,10 +157,10 @@ namespace MoonProject.Gameplay
         [Range(0.05f, 2f)] [SerializeField] private float _flashDuration = 0.4f;
 
         [Tooltip("Flash radius (m) at its start and end.")]
-        [SerializeField] private Vector2 _flashRadius = new Vector2(0.12f, 0.55f);
+        [SerializeField] private Vector2 _flashRadius = new Vector2(0.1f, 0.4f);
 
-        [Tooltip("Peak brightness of a flash (HDR, feeds bloom).")]
-        [Range(0f, 10f)] [SerializeField] private float _flashIntensity = 2.5f;
+        [Tooltip("Peak brightness of a flash (around 1 stays cyan; higher blooms white).")]
+        [Range(0f, 10f)] [SerializeField] private float _flashIntensity = 1.2f;
 
         public int Seed => _seed;
         public float MaxSlopeDegrees => _maxSlopeDegrees;

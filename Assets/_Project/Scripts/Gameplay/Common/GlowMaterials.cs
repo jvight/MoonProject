@@ -93,7 +93,7 @@ namespace MoonProject.Gameplay
                         cull: CullMode.Front);
                     break;
                 case GlowRole.Dust:
-                    dust.a = 0.55f;
+                    dust.a = 0.4f;
                     Set(material, dust, edge: 0f, length: 0f, bands: 0f, speed: 0f, strength: 0f, fresnel: 0f,
                         fresnelPower: 2f, core: 0f, corePower: 1.5f, radial: 1f, additive: false,
                         cull: CullMode.Off);

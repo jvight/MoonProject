@@ -64,7 +64,7 @@ namespace MoonProject.Gameplay
         [SerializeField] private Vector2 _dustLifetime = new Vector2(1.2f, 2.2f);
 
         [Tooltip("Mote size in metres (min, max).")]
-        [SerializeField] private Vector2 _dustSize = new Vector2(0.25f, 0.6f);
+        [SerializeField] private Vector2 _dustSize = new Vector2(0.2f, 0.45f);
 
         [Tooltip("Radius (m) of the ring the dust rises from.")]
         [Range(0.1f, 5f)] [SerializeField] private float _dustRadius = 1.3f;
