@@ -36,6 +36,8 @@ namespace MoonProject.Art
             new Color32(0xFF, 0xC9, 0x8A, 0xFF), // PilotLight: pale, soft warm glow for small indicator lamps
             new Color32(0xF6, 0xD7, 0xA7, 0xFF), // Enamel: warm cream for the rover's big panels (stays warm
                                                  // under cool moonlight, where Cream greys out)
+            new Color32(0x3B, 0x30, 0x2E, 0xFF), // LampGlass: dark glass of an indicator lamp; glows WarmLamp
+            new Color32(0x24, 0x2C, 0x3A, 0xFF), // EyeGlass: dark glass of a young sensor eye; glows TechGlow
         };
 
         private static readonly bool[] Emissive =
@@ -52,6 +54,8 @@ namespace MoonProject.Art
             false, false, false, false,
             true,  // PilotLight
             false,
+            true,  // LampGlass
+            true,  // EyeGlass
         };
 
         public static int Count => Colors.Length;
@@ -64,6 +68,24 @@ namespace MoonProject.Art
         public static bool IsEmissive(PaletteSwatch swatch)
         {
             return Emissive[(int)swatch];
+        }
+
+        /// <summary>
+        /// Colour the swatch glows with (its cell in the emission map). Usually its own colour; the glass swatches
+        /// are dark when unlit and glow another swatch's colour, so a renderer whose glow is turned down to zero
+        /// reads as an off lamp instead of a pale lit one.
+        /// </summary>
+        public static Color32 GetEmission(PaletteSwatch swatch)
+        {
+            switch (swatch)
+            {
+                case PaletteSwatch.LampGlass:
+                    return Get(PaletteSwatch.WarmLamp);
+                case PaletteSwatch.EyeGlass:
+                    return Get(PaletteSwatch.TechGlow);
+                default:
+                    return IsEmissive(swatch) ? Get(swatch) : new Color32(0, 0, 0, 0xFF);
+            }
         }
 
         /// <summary>UV at the centre of the swatch's cell; every vertex of a face using the swatch gets this UV.</summary>

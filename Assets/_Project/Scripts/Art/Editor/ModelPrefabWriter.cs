@@ -15,6 +15,15 @@ namespace MoonProject.Art.Editor
     {
         public static GameObject Write(ModelNode root, string folder, Material material)
         {
+            return Write(root, folder, material, null);
+        }
+
+        /// <summary>
+        /// As <see cref="Write(ModelNode, string, Material)"/>; nodes marked <see cref="ModelMaterial.PaletteGlowOff"/>
+        /// render with <paramref name="glowOffMaterial"/>.
+        /// </summary>
+        public static GameObject Write(ModelNode root, string folder, Material material, Material glowOffMaterial)
+        {
             if (root == null)
             {
                 throw new ArgumentNullException(nameof(root));
@@ -30,7 +39,7 @@ namespace MoonProject.Art.Editor
             WriteMeshes(root, folder, meshes);
             using (var scratch = new BuilderScratchScene())
             {
-                GameObject instance = Instantiate(scratch, root, null, meshes, material);
+                GameObject instance = Instantiate(scratch, root, null, meshes, material, glowOffMaterial);
                 return GeneratedAssets.SavePrefab(instance, $"{folder}/{root.Name}.prefab");
             }
         }
@@ -57,8 +66,24 @@ namespace MoonProject.Art.Editor
             }
         }
 
+        private static Material MaterialFor(ModelNode node, Material material, Material glowOffMaterial)
+        {
+            if (node.Material != ModelMaterial.PaletteGlowOff)
+            {
+                return material;
+            }
+
+            if (glowOffMaterial == null)
+            {
+                throw new InvalidOperationException(
+                    $"'{node.Name}' renders glow-off but no glow-off material was given.");
+            }
+
+            return glowOffMaterial;
+        }
+
         private static GameObject Instantiate(BuilderScratchScene scratch, ModelNode node, Transform parent,
-            Dictionary<ModelMesh, Mesh> meshes, Material material)
+            Dictionary<ModelMesh, Mesh> meshes, Material material, Material glowOffMaterial)
         {
             GameObject gameObject = scratch.Create(node.Name, parent);
             Transform transform = gameObject.transform;
@@ -67,12 +92,12 @@ namespace MoonProject.Art.Editor
             if (node.Mesh != null)
             {
                 gameObject.AddComponent<MeshFilter>().sharedMesh = meshes[node.Mesh];
-                gameObject.AddComponent<MeshRenderer>().sharedMaterial = material;
+                gameObject.AddComponent<MeshRenderer>().sharedMaterial = MaterialFor(node, material, glowOffMaterial);
             }
 
             for (int i = 0; i < node.Children.Count; i++)
             {
-                Instantiate(scratch, node.Children[i], transform, meshes, material);
+                Instantiate(scratch, node.Children[i], transform, meshes, material, glowOffMaterial);
             }
 
             return gameObject;
