@@ -21,6 +21,8 @@ namespace MoonProject.Gameplay.Editor
             var sonarTuning = context.LoadAsset<SonarTuning>(GameplayAssetPaths.SonarTuning);
             var relicTuning = context.LoadAsset<RelicTuning>(GameplayAssetPaths.RelicTuning);
             var placement = context.LoadAsset<RelicPlacementTuning>(GameplayAssetPaths.RelicPlacement);
+            var excavationTuning = context.LoadAsset<ExcavationTuning>(GameplayAssetPaths.ExcavationTuning);
+            var tetherTuning = context.LoadAsset<TetherTuning>(GameplayAssetPaths.TetherTuning);
             var scrapCatalog = context.LoadAsset<ScrapCatalog>(GameplayAssetPaths.ScrapCatalog);
             var relicCatalog = context.LoadAsset<RelicCatalog>(GameplayAssetPaths.RelicCatalog);
             Require(visuals.Validate(), nameof(GameplayVisuals));
@@ -33,11 +35,15 @@ namespace MoonProject.Gameplay.Editor
             var relics = context.CreateChild("Relics", host.transform).AddComponent<RelicField>();
             var scrap = context.CreateChild("Scrap", host.transform).AddComponent<ScrapField>();
             var sonar = context.CreateChild("Sonar", host.transform).AddComponent<SonarSystem>();
+            var excavation = context.CreateChild("Excavation", host.transform).AddComponent<ExcavationSystem>();
+            var tether = context.CreateChild("Tether", host.transform).AddComponent<TetherSystem>();
 
             relics.Wire(relicCatalog, placement, relicTuning);
             scrap.Wire(scrapTuning, scrapCatalog);
             sonar.Wire(sonarTuning);
-            gameplay.Wire(visuals, relics, scrap, sonar);
+            excavation.Wire(excavationTuning);
+            tether.Wire(tetherTuning);
+            gameplay.Wire(visuals, relics, scrap, sonar, excavation, tether);
             context.AddSystem(gameplay);
         }
 

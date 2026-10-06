@@ -64,6 +64,10 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         public RelicTuning RelicTuning { get; private set; }
 
+        public ExcavationTuning ExcavationTuning { get; private set; }
+
+        public TetherTuning TetherTuning { get; private set; }
+
         /// <summary>Builds and boots everything; 07 starts at the base facing +Z.</summary>
         public static GameplayFixture Boot(InputActionAsset controls, string saveSlot = null)
         {
@@ -127,6 +131,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             ScrapTuning = Asset<ScrapTuning>();
             SonarTuning = Asset<SonarTuning>();
             RelicTuning = Asset<RelicTuning>();
+            ExcavationTuning = Asset<ExcavationTuning>();
+            TetherTuning = Asset<TetherTuning>();
             var placement = Asset<RelicPlacementTuning>();
 
             var relicCatalog = Asset<RelicCatalog>();
@@ -161,10 +167,14 @@ namespace MoonProject.Gameplay.PlayModeTests
             var relics = Child<RelicField>(root, "Relics");
             var scrap = Child<ScrapField>(root, "Scrap");
             var sonar = Child<SonarSystem>(root, "Sonar");
+            var excavation = Child<ExcavationSystem>(root, "Excavation");
+            var tether = Child<TetherSystem>(root, "Tether");
             relics.Wire(relicCatalog, placement, RelicTuning);
             scrap.Wire(ScrapTuning, scrapCatalog);
             sonar.Wire(SonarTuning);
-            Gameplay.Wire(visuals, relics, scrap, sonar);
+            excavation.Wire(ExcavationTuning);
+            tether.Wire(TetherTuning);
+            Gameplay.Wire(visuals, relics, scrap, sonar, excavation, tether);
             root.SetActive(true);
 
             Bootstrap = BootstrapHarness.Create(_controls, SaveSlot, World, Rover, Gameplay);
