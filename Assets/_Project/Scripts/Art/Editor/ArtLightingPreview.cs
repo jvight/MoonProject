@@ -17,13 +17,15 @@ namespace MoonProject.Art.Editor
     /// turntables: this is where emission, spot and point light response and far readability are judged.
     /// <code>
     /// python tools/unity_batch.py exec --method MoonProject.Art.Editor.ArtLightingPreview.Capture
-    ///     [--arg scene=rover|base|towers|relics|shadow|grit]   (default rover)
+    ///     [--arg scene=rover|base|towers|relics|shadow|grit|friends]   (default rover)
     /// </code>
     /// rover: 07 at rest (half-lidded, head lowered, wing ajar) with its headlamp. base: the lander with the shelf
     /// and the L3 tower on their anchors, its lamp sockets lit, 07 coming home. towers: L1-L3 side by side seen
     /// from 15 m and 55 m. relics: the six relics on the lit museum shelf, and seen from 15 m. shadow: 07's cast
     /// shadow under a low (30 degree) earthlight from its side, seen from the gameplay camera's height. grit: a
-    /// dense field of <see cref="RockStyle.Grit"/> pebbles batched into one mesh around 07.
+    /// dense field of <see cref="RockStyle.Grit"/> pebbles batched into one mesh around 07. friends: Tilly
+    /// hovering beside 07 (3/3 part lamps lit), and broken on the dust among her amber parts (1/3 lit), near and
+    /// from 30 m. The base scene also seats Tilly on her lander perch.
     /// </summary>
     public static class ArtLightingPreview
     {
@@ -67,13 +69,18 @@ namespace MoonProject.Art.Editor
                             NightSetting(material, temporary, 40f, 8f);
                             poses = ShadowScene(temporary);
                             break;
+                        case "friends":
+                            NightSetting(material, temporary, 50f, 12f);
+                            poses = FriendsScene(temporary);
+                            break;
                         case "grit":
                             NightSetting(material, temporary, 40f, 9f);
                             poses = GritScene(material, temporary);
                             break;
                         default:
                             Debug.LogError(
-                                $"ArtLightingPreview: unknown scene '{scene}' (rover|base|towers|relics|shadow|grit).");
+                                $"ArtLightingPreview: unknown scene '{scene}' " +
+                                "(rover|base|towers|relics|shadow|grit|friends).");
                             return false;
                     }
 
@@ -153,7 +160,11 @@ namespace MoonProject.Art.Editor
             }
 
             temporary.Add(Rover(temporary, new Vector3(2.4f, 0f, 9f), 195f).gameObject);
+            Transform perch = Descendant(lander.transform, "FriendSocket_tilly");
+            GameObject tilly = Instantiate(FriendModelBuilder.TillyName, temporary, ArtPaths.FriendFolder);
+            tilly.transform.SetPositionAndRotation(perch.position, perch.rotation * Quaternion.Euler(0f, -30f, 0f));
             return Poses(
+                Pose("perch", new[] { -3.6f, 3.6f, 3.6f }, new[] { -1.6f, 3.2f, 0.9f }, 40f),
                 Pose("approach", new[] { 4f, 5f, 26f }, new[] { 0f, 2.5f, 0f }, 45f),
                 Pose("homecoming", new[] { 4.5f, 3.6f, 14.5f }, new[] { 1.5f, 1.8f, 4f }, 50f),
                 Pose("porch", new[] { -2.5f, 2.2f, 6.5f }, new[] { 0.2f, 2.6f, 1.5f }, 45f),
@@ -241,6 +252,45 @@ namespace MoonProject.Art.Editor
             return Poses(
                 Pose("chase", new[] { 1.2f, 3.2f, -6.2f }, new[] { 0f, 0.8f, 1.5f }, 50f),
                 Pose("close", new[] { 2.4f, 0.9f, 2.6f }, new[] { 1.6f, 0.1f, 4.2f }, 45f));
+        }
+
+        private static CameraPoseSet FriendsScene(TemporaryObjects temporary)
+        {
+            temporary.Add(Rover(temporary, Vector3.zero, 20f).gameObject);
+            GameObject tilly = Instantiate(FriendModelBuilder.TillyName, temporary, ArtPaths.FriendFolder);
+            tilly.transform.SetPositionAndRotation(new Vector3(1.4f, 1.15f, 1.5f), Quaternion.Euler(0f, 20f, 0f));
+            SetGlow(tilly.transform, "PartLamp_", 3, 1f);
+
+            var site = new Vector3(-5f, 0f, 7f);
+            GameObject broken = Instantiate(FriendModelBuilder.TillyBrokenName, temporary, ArtPaths.FriendFolder);
+            broken.transform.SetPositionAndRotation(site, Quaternion.Euler(0f, -20f, 0f));
+            SetGlow(broken.transform, "PartLamp_", 1, 1f);
+            IReadOnlyList<string> parts = FriendModelBuilder.PartNames;
+            for (int i = 0; i < parts.Count; i++)
+            {
+                GameObject part = Instantiate(parts[i], temporary, ArtPaths.FriendFolder);
+                float angle = i * 2.1f + 0.4f;
+                var offset = new Vector3(Mathf.Sin(angle), 0f, Mathf.Cos(angle)) * (2.2f + i * 0.9f);
+                float lift = part.transform.position.y - RendererBounds(part).min.y;
+                part.transform.SetPositionAndRotation(site + offset + Vector3.up * lift,
+                    Quaternion.Euler(0f, i * 70f, 0f));
+            }
+
+            return Poses(
+                Pose("pair", new[] { 2.4f, 1.6f, 4.2f }, new[] { 0.7f, 1.1f, 0.8f }, 40f),
+                Pose("broken", new[] { -3.2f, 1.2f, 9.6f }, new[] { -5f, 0.2f, 7f }, 40f),
+                Pose("broken30m", new[] { -24f, 9f, 27f }, new[] { -5f, 0f, 7f }, 35f));
+        }
+
+        /// <summary>Lights the first <paramref name="count"/> glow renderers named prefix0, prefix1, ...</summary>
+        private static void SetGlow(Transform root, string prefix, int count, float intensity)
+        {
+            var block = new MaterialPropertyBlock();
+            block.SetColor("_EmissionColor", Color.white * intensity);
+            for (int i = 0; i < count; i++)
+            {
+                Descendant(root, prefix + i).GetComponent<Renderer>().SetPropertyBlock(block);
+            }
         }
 
         /// <summary>07 at rest at a spot with its headlamp on as a warm spot light.</summary>
