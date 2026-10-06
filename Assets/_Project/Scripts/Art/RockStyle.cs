@@ -17,5 +17,11 @@ namespace MoonProject.Art
 
         /// <summary>Big landmark rock with more facets (four times the triangles), 2 m and up.</summary>
         Boulder = 4,
+
+        /// <summary>
+        /// Cheapest pebble for dense scatter: one chipped, displaced icosahedron of at most 20 triangles,
+        /// 0.1-0.4 m. Reads as grit at a glance; use Pebble when the camera gets close.
+        /// </summary>
+        Grit = 5,
     }
 }

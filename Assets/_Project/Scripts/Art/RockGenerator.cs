@@ -108,6 +108,9 @@ namespace MoonProject.Art
                 case RockStyle.Jagged:
                     return new StyleRecipe(1, new Vector3(0.8f, 0.9f, 0.8f), new Vector3(1f, 1.3f, 1f),
                         0.1f, 2.4f, 2, 0.15f, 5, 0.6f, 0.85f);
+                case RockStyle.Grit:
+                    return new StyleRecipe(0, new Vector3(1f, 0.55f, 0.85f), new Vector3(1.3f, 0.8f, 1.15f),
+                        0.05f, 2f, 1, 0.2f, 1, 0.75f, 0.9f);
                 case RockStyle.Boulder:
                     return new StyleRecipe(2, new Vector3(1f, 0.7f, 1f), new Vector3(1.25f, 0.9f, 1.25f),
                         0.1f, 1.5f, 3, 0.25f, 6, 0.68f, 0.9f);

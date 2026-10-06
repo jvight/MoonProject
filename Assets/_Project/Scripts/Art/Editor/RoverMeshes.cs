@@ -155,26 +155,61 @@ namespace MoonProject.Art.Editor
             return b;
         }
 
-        /// <summary>Collar, a thin forward-leaning pole, a loose warm cable behind it and the head yoke.</summary>
+        /// <summary>
+        /// Collar, a ribbed bellows boot, a slim forward-leaning pole with a two-cable bundle clamped along its back
+        /// over a thin cable-guide fin, and the head yoke. The fin is edge-on (slim) from behind but casts a solid
+        /// band under a low side light, so the neck's shadow still ties the head's shadow to the body's while the
+        /// silhouette keeps its tired desk-lamp posture.
+        /// </summary>
         public static LowPolyMeshBuilder Neck()
         {
-            var b = new LowPolyMeshBuilder(220);
-            b.Prism(At(0f, 0.02f, 0f), 0.08f, 0.04f, 8, PaletteSwatch.Charcoal);
+            var b = new LowPolyMeshBuilder(400);
+            b.Prism(At(0f, 0.02f, 0f), 0.085f, 0.04f, 8, PaletteSwatch.Charcoal);
+            for (int i = 0; i < 5; i++)
+            {
+                float radius = i % 2 == 0 ? 0.062f : 0.05f;
+                b.Prism(At(0f, 0.052f + i * 0.024f, 0f), radius - i * 0.002f, 0.024f, 8, PaletteSwatch.Charcoal);
+            }
+
             var poleBase = new Vector3(0f, 0.03f, 0f);
-            RecipeKit.Rod(b, poleBase, HeadHinge - poleBase, 0.022f, 6, PaletteSwatch.Metal);
-            var cable0 = new Vector3(0.025f, 0.04f, -0.06f);
-            var cable1 = new Vector3(0.035f, 0.12f, -0.115f);
-            var cable2 = new Vector3(0.03f, 0.22f, -0.1f);
-            Vector3 cable3 = HeadHinge + new Vector3(0.03f, 0.03f, -0.12f);
-            RecipeKit.Rod(b, cable0, cable1, 0.014f, 6, PaletteSwatch.WarmAccent);
-            RecipeKit.Rod(b, cable1, cable2, 0.014f, 6, PaletteSwatch.WarmAccent);
-            RecipeKit.Rod(b, cable2, cable3, 0.014f, 6, PaletteSwatch.WarmAccent);
-            b.Icosphere(At(cable1), 0.015f, 0, PaletteSwatch.WarmAccent);
-            b.Icosphere(At(cable2), 0.015f, 0, PaletteSwatch.WarmAccent);
+            Vector3 poleTop = HeadHinge - new Vector3(0f, 0.03f, 0f);
+            RecipeKit.Rod(b, poleBase, poleTop, 0.038f, 8, PaletteSwatch.Metal);
+            Vector3 lean = poleTop - poleBase;
+            float leanDegrees = Mathf.Atan2(lean.z, lean.y) * Mathf.Rad2Deg;
+            Matrix4x4 fin = At((poleBase + poleTop) * 0.5f, new Vector3(leanDegrees, 0f, 0f)) * At(0f, 0.01f, -0.05f);
+            b.Box(fin, new Vector3(0.014f, lean.magnitude - 0.06f, 0.08f), PaletteSwatch.Charcoal);
+
+            Vector3 into = HeadHinge + new Vector3(0f, 0.04f, -0.12f);
+            Cable(b, 0.026f, -0.06f, -0.095f, into + new Vector3(0.026f, 0f, 0f), PaletteSwatch.WarmAccent);
+            Cable(b, -0.024f, -0.055f, -0.085f, into + new Vector3(-0.024f, -0.01f, 0.01f), PaletteSwatch.Charcoal);
+            foreach (float t in new[] { 0.38f, 0.7f })
+            {
+                Vector3 onPole = Vector3.Lerp(poleBase, poleTop, t);
+                b.Box(At(onPole + new Vector3(0f, 0f, -0.038f)), new Vector3(0.11f, 0.022f, 0.1f),
+                    PaletteSwatch.Metal, 0.008f);
+            }
+
             b.Box(At(HeadHinge - new Vector3(0f, 0.025f, 0f)), new Vector3(0.14f, 0.04f, 0.06f),
                 PaletteSwatch.Charcoal, 0.01f);
             b.Prism(At(HeadHinge, AlongX), 0.032f, 0.18f, 8, PaletteSwatch.Charcoal);
             return b;
+        }
+
+        /// <summary>
+        /// One cable of the neck bundle: up the back of the pole at <paramref name="x"/>, sagging back to
+        /// <paramref name="sagZ"/> halfway, then over into the back of the head at <paramref name="end"/>.
+        /// </summary>
+        private static void Cable(LowPolyMeshBuilder b, float x, float startZ, float sagZ, Vector3 end,
+            PaletteSwatch swatch)
+        {
+            var start = new Vector3(x, 0.05f, startZ);
+            var low = new Vector3(x, 0.13f, sagZ);
+            var high = new Vector3(x, 0.22f, sagZ + 0.02f);
+            RecipeKit.Rod(b, start, low, 0.017f, 6, swatch);
+            RecipeKit.Rod(b, low, high, 0.017f, 6, swatch);
+            RecipeKit.Rod(b, high, end, 0.017f, 6, swatch);
+            b.Icosphere(At(low), 0.018f, 0, swatch);
+            b.Icosphere(At(high), 0.018f, 0, swatch);
         }
 
         /// <summary>
