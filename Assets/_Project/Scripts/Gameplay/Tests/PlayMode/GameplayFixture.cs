@@ -75,6 +75,13 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         public UpgradeDefinition RadioTowerUpgrade { get; private set; }
 
+        public FriendTuning FriendTuning { get; private set; }
+
+        public FriendDefinition Tilly { get; private set; }
+
+        /// <summary>The lander's FriendSocket_tilly stand-in.</summary>
+        public Transform TillyPerch { get; private set; }
+
         /// <summary>Builds and boots everything; 07 starts at the base facing +Z.</summary>
         public static GameplayFixture Boot(InputActionAsset controls, string saveSlot = null)
         {
@@ -175,7 +182,9 @@ namespace MoonProject.Gameplay.PlayModeTests
                 GlowMaterial(shader, GlowRole.TetherBeam), GlowMaterial(shader, GlowRole.Flash),
                 GlowMaterial(shader, GlowRole.RelicHalo), GlowMaterial(shader, GlowRole.Dust),
                 GlowMaterial(shader, GlowRole.WarmRing), GlowMaterial(shader, GlowRole.WarmGlow),
-                Track(GlintMaterials.Create(LoadShader(GlintShaderPath))));
+                Track(GlintMaterials.Create(LoadShader(GlintShaderPath))),
+                Track(GlintMaterials.CreatePart(LoadShader(GlintShaderPath))),
+                GlowMaterial(shader, GlowRole.FriendPillar));
 
             var root = new GameObject("[Gameplay]");
             root.SetActive(false);
@@ -187,13 +196,16 @@ namespace MoonProject.Gameplay.PlayModeTests
             var tether = Child<TetherSystem>(root, "Tether");
             var home = Child<HomeBase>(root, "Home");
             var tower = Child<RadioTower>(root, "RadioTower");
+            var friends = Child<FriendField>(root, "Friends");
             BuildBase(root.transform, home, tower);
+            BuildTilly(friends);
             relics.Wire(relicCatalog, placement, RelicTuning);
             scrap.Wire(ScrapTuning, scrapCatalog);
             sonar.Wire(SonarTuning);
             excavation.Wire(ExcavationTuning);
             tether.Wire(TetherTuning);
-            Gameplay.Wire(visuals, new[] { RadioTowerUpgrade }, relics, scrap, sonar, excavation, tether, home, tower);
+            Gameplay.Wire(visuals, new[] { RadioTowerUpgrade }, relics, scrap, sonar, excavation, tether, home, tower,
+                friends);
             root.SetActive(true);
 
             Bootstrap = BootstrapHarness.Create(_controls, SaveSlot, World, Rover, Gameplay);
@@ -245,6 +257,60 @@ namespace MoonProject.Gameplay.PlayModeTests
             home.Wire(BaseTuning, baseRoot, windows.GetComponent<Renderer>(), sockets, shelf,
                 shelfLights.GetComponent<Renderer>(), slots);
             tower.Wire(TowerTuning, RadioTowerUpgrade, anchor, stages, lights, beacons);
+            TillyPerch = Node("FriendSocket_tilly", lander, new Vector3(-1.6f, 3.3f, 0.9f));
+        }
+
+        /// <summary>
+        /// A stand-in Tilly with the friend rig contract's nodes (broken and repaired), her three parts and her
+        /// definition, placed east of home in the flat world (which has no craters, so the crater preference allows a
+        /// flat floor).
+        /// </summary>
+        private void BuildTilly(FriendField friends)
+        {
+            FriendTuning = Asset<FriendTuning>();
+            Tilly = Asset<FriendDefinition>();
+            Tilly.Populate("tilly", FriendModel("Tilly_Broken", true), FriendModel("Tilly", false), new[]
+                {
+                    new FriendPart("rotor", Template("Part_TillyRotor", Vector3.one * 0.3f)),
+                    new FriendPart("lens", Template("Part_TillyLens", Vector3.one * 0.3f)),
+                    new FriendPart("cell", Template("Part_TillyCell", Vector3.one * 0.3f)),
+                }, "FriendSocket_tilly", FriendDefinition.SpotterAbility, 2f, "tilly",
+                new FriendPlacement(41, new Vector2(60f, 110f), 90f, 55f, new Vector2(0f, 4f), 10f, true,
+                    new Vector2(30f, 60f)));
+            var catalog = Asset<FriendCatalog>();
+            catalog.Populate(new[] { Tilly });
+            friends.Wire(catalog, FriendTuning, new[] { TillyPerch });
+        }
+
+        private GameObject FriendModel(string name, bool broken)
+        {
+            var root = new GameObject(name);
+            root.transform.position = new Vector3(0f, -500f, 0f);
+            _created.Add(root);
+            Transform body = Block(root.transform, new Vector3(0f, 0.25f, 0f), new Vector3(0.45f, 0.3f, 0.45f));
+            body.name = FriendRig.BodyNode;
+            Block(root.transform, new Vector3(0f, 0.3f, 0.24f), Vector3.one * 0.12f).name = FriendRig.EyeNode;
+            for (int i = 0; i < FriendRig.RotorNodes.Length; i++)
+            {
+                var corner = new Vector3((i & 1) == 0 ? -0.27f : 0.27f, 0.3f, i < 2 ? 0.27f : -0.27f);
+                Block(root.transform, corner, new Vector3(0.16f, 0.02f, 0.04f)).name = FriendRig.RotorNodes[i];
+            }
+
+            Block(root.transform, new Vector3(0f, 0.5f, -0.1f), new Vector3(0.02f, 0.3f, 0.02f)).name =
+                FriendRig.AntennaNode;
+            for (int i = 0; i < 3; i++)
+            {
+                Block(root.transform, new Vector3(-0.1f + 0.1f * i, 0.42f, 0f), Vector3.one * 0.05f).name =
+                    FriendRig.PartLampPrefix + i;
+            }
+
+            Node(FriendRig.TetherPointNode, root.transform, new Vector3(0f, 0.1f, 0f));
+            if (broken)
+            {
+                root.transform.GetChild(0).localRotation = Quaternion.Euler(14f, 25f, 78f);
+            }
+
+            return root;
         }
 
         private static Transform Node(string name, Transform parent, Vector3 localPosition)

@@ -1,0 +1,91 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8ccac8e4e91132f44a292288260d28f1, type: 3}
+  m_Name: FriendTuning
+  m_EditorClassIdentifier: 
+  _siteAttempts: 600
+  _siteEdgeMargin: 12
+  _siteMaxSlope: 12
+  _siteFlatProbe: 2.5
+  _siteClearOfRelics: 30
+  _baseEdge: 25
+  _viewerEyeHeight: 1.6
+  _siteViewHeight: 0.5
+  _sightSamples: 64
+  _partAttempts: 96
+  _partMaxSlope: 14
+  _partEdgeMargin: 8
+  _partSpacing: 15
+  _partClearance: 12
+  _partHover: 0.55
+  _partBob: 0.1
+  _partBobFrequency: 0.3
+  _partSpin: 30
+  _partMagnetRadius: 4.5
+  _partFlightDuration: 1
+  _partFlightPerMetre: 0.08
+  _partFlightLift: 1.3
+  _partSpiralRadius: 0.4
+  _partSpiralTurns: 0.9
+  _partArrivalScale: 0.5
+  _partLampGlow: 1.6
+  _partLampEase: 0.4
+  _repairRadius: 5
+  _repairHold: 0.5
+  _stitchRate: 2.5
+  _stitchSpread: 0.25
+  _shiver: 4
+  _eyeFlicker: 1
+  _rotorSpinUp: 1.2
+  _liftOff: 1.8
+  _lookAt07: 0.9
+  _liftWobble: 12
+  _hoverHeight: 1.6
+  _minClearance: 0.8
+  _cruiseSpeed: 9
+  _catchUpSpeed: 18
+  _smoothTime: 0.55
+  _turnEase: 0.3
+  _leanPerAcceleration: 2.5
+  _maxLean: 16
+  _bob: 0.08
+  _bobFrequency: 0.5
+  _rotorSpeed: 1500
+  _rotorEase: 0.4
+  _followBehind: 4
+  _followHeight: 3
+  _followSide: 2.5
+  _cameraClearAngle: 12
+  _catchUpDistance: 25
+  _reappearDistance: 150
+  _reappearFade: 0.6
+  _homeRadius: 30
+  _leaveRadius: 40
+  _awayRadius: 45
+  _greetRadius: 2.6
+  _greetHeight: 2.2
+  _greetDuration: 2.8
+  _napDuration: {x: 8, y: 14}
+  _flitDuration: {x: 6, y: 10}
+  _flitRadius: {x: 3, y: 8}
+  _flitHeight: {x: 1.5, y: 3.5}
+  _flitHop: 2.5
+  _inspectDuration: 4
+  _inspectDistance: 1.6
+  _spotRadius: 40
+  _spotHover: 2.5
+  _spotDuration: 3.5
+  _spotCooldown: 6
+  _spotLeash: 50
+  _spotConeRadius: 1.1
+  _spotConeGlow: 0.8
+  _spotPillar: 0.7

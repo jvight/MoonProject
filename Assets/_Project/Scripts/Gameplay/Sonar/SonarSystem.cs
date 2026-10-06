@@ -10,8 +10,9 @@ namespace MoonProject.Gameplay
     /// The sonar ping. A press (remembered briefly if the calm cooldown is still running) publishes
     /// <see cref="SonarPinged"/> and rolls a ring over the ground; every relic still out in the world within range
     /// answers when the ring has touched it (closer ones sooner and brighter), publishing <see cref="RelicAnswered"/>
-    /// and raising a light pillar on the horizon that stands for a while. 07 turns to the nearest answer, then keeps
-    /// glancing at the nearest standing pillar now and then.
+    /// and raising a light pillar on the horizon that stands for a while. A broken friend answers too, with its own
+    /// broken chirp (<see cref="FriendAnswered"/>) and a warm pillar. 07 turns to the nearest answer, then keeps
+    /// glancing at the nearest standing pillar now and then. A spotter friend can also reveal a relic softly.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class SonarSystem : MonoBehaviour
@@ -24,6 +25,7 @@ namespace MoonProject.Gameplay
         private IRoverState _rover;
         private IRoverRig _rig;
         private RelicField _relics;
+        private FriendField _friends;
         private SonarSchedule _schedule;
         private SonarRing[] _rings = Array.Empty<SonarRing>();
         private SiteMarker[] _markers = Array.Empty<SiteMarker>();
@@ -46,7 +48,7 @@ namespace MoonProject.Gameplay
         /// <summary>The ring pool (tests and debug views read ring radius and brightness).</summary>
         internal SonarRing[] Rings => _rings;
 
-        /// <summary>One marker per relic, by relic index.</summary>
+        /// <summary>One marker per relic (by relic index), then one per friend.</summary>
         internal SiteMarker[] Markers => _markers;
 
         internal void Wire(SonarTuning tuning)
@@ -54,7 +56,7 @@ namespace MoonProject.Gameplay
             _tuning = tuning;
         }
 
-        internal bool Initialize(GameplayServices services, RelicField relics)
+        internal bool Initialize(GameplayServices services, RelicField relics, FriendField friends)
         {
             if (_tuning == null)
             {
@@ -68,18 +70,24 @@ namespace MoonProject.Gameplay
             _rover = services.Rover;
             _rig = services.Rig;
             _relics = relics ?? throw new ArgumentNullException(nameof(relics));
-            _schedule = new SonarSchedule(relics.Relics.Count);
+            _friends = friends != null ? friends : throw new ArgumentNullException(nameof(friends));
+            int relicCount = relics.Relics.Count;
+            _schedule = new SonarSchedule(relicCount + friends.Count);
             _rings = new SonarRing[_tuning.RingPoolSize];
             for (int i = 0; i < _rings.Length; i++)
             {
                 _rings[i] = new SonarRing(transform, _tuning, services.Terrain, services.Visuals.SonarRing);
             }
 
-            _markers = new SiteMarker[relics.Relics.Count];
+            _markers = new SiteMarker[relicCount + friends.Count];
             for (int i = 0; i < _markers.Length; i++)
             {
-                _markers[i] = new SiteMarker("Marker_" + relics.Relics[i].Definition.Id, transform, _tuning,
-                    services.Terrain, services.Visuals, services.Meshes.Pillar);
+                bool relic = i < relicCount;
+                string id = relic ? relics.Relics[i].Definition.Id : friends.Friends[i - relicCount].Definition.Id;
+                _markers[i] = new SiteMarker("Marker_" + id, transform, _tuning, services.Terrain,
+                    relic ? services.Visuals.SitePillar : services.Visuals.FriendPillar,
+                    relic ? services.Visuals.SiteRing : services.Visuals.WarmRing, services.Meshes.Pillar,
+                    relic ? 1f : _tuning.FriendGlowScale);
             }
 
             _initialized = true;
@@ -89,7 +97,7 @@ namespace MoonProject.Gameplay
         /// <summary>After a load: discovered relics still in the ground show their breathing ring again.</summary>
         internal void RefreshDiscoveredSites()
         {
-            for (int i = 0; i < _markers.Length; i++)
+            for (int i = 0; i < _relics.Relics.Count; i++)
             {
                 Relic relic = _relics.Relics[i];
                 if (relic.Discovered && (relic.State == RelicState.Buried || relic.State == RelicState.Surfacing))
@@ -128,9 +136,19 @@ namespace MoonProject.Gameplay
                 _rings[i].Tick(now);
             }
 
-            for (int i = 0; i < _markers.Length; i++)
+            int relicCount = _relics.Relics.Count;
+            for (int i = 0; i < relicCount; i++)
             {
-                _markers[i].Tick(_relics.Relics[i], now);
+                Relic relic = _relics.Relics[i];
+                bool inGround = relic.State == RelicState.Buried || relic.State == RelicState.Surfacing;
+                _markers[i].Tick(relic.SonarPosition, relic.AnswersSonar, inGround && relic.Discovered, now);
+            }
+
+            for (int i = 0; i < _friends.Count; i++)
+            {
+                FriendProgress progress = _friends.Friends[i].Progress;
+                _markers[relicCount + i].Tick(_friends.Friends[i].Site.Position, progress.AnswersSonar,
+                    progress.AnswersSonar && progress.Discovered, now);
             }
 
             UpdateGaze(now);
@@ -157,19 +175,62 @@ namespace MoonProject.Gameplay
                 _firstAnswerPending |= _schedule.Add(i, distance, now, _tuning.Range, _tuning.RingDuration,
                     _tuning.AnswerLag);
             }
+
+            int relicCount = _relics.Relics.Count;
+            for (int i = 0; i < _friends.Count; i++)
+            {
+                Friend friend = _friends.Friends[i];
+                if (!friend.Progress.AnswersSonar)
+                {
+                    continue;
+                }
+
+                float distance = SurfaceRules.HorizontalDistance(origin, friend.Site.Position);
+                _firstAnswerPending |= _schedule.Add(relicCount + i, distance, now, _tuning.Range,
+                    _tuning.RingDuration, _tuning.AnswerLag);
+            }
+        }
+
+        /// <summary>
+        /// A spotter friend found relic <paramref name="relicIndex"/>: it shows on the sonar (a softer pillar and its
+        /// breathing ring) without a ping.
+        /// </summary>
+        internal void Reveal(int relicIndex, float brightness)
+        {
+            Relic relic = _relics.Relics[relicIndex];
+            relic.MarkDiscovered();
+            _markers[relicIndex].Answer(relic.SonarPosition, brightness, Time.time);
         }
 
         private void Answer(int index, float distance, float now)
         {
-            Relic relic = _relics.Relics[index];
-            if (!relic.AnswersSonar)
+            Vector3 position;
+            int relicCount = _relics.Relics.Count;
+            if (index >= relicCount)
             {
-                return;
+                Friend friend = _friends.Friends[index - relicCount];
+                if (!friend.Progress.AnswersSonar)
+                {
+                    return;
+                }
+
+                position = friend.Site.Position;
+                friend.Progress.MarkDiscovered();
+                _events.Publish(new FriendAnswered(friend.Definition.Id, position));
+            }
+            else
+            {
+                Relic relic = _relics.Relics[index];
+                if (!relic.AnswersSonar)
+                {
+                    return;
+                }
+
+                position = relic.SonarPosition;
+                relic.MarkDiscovered();
+                _events.Publish(new RelicAnswered(position, distance, relic.Definition.Id));
             }
 
-            Vector3 position = relic.SonarPosition;
-            relic.MarkDiscovered();
-            _events.Publish(new RelicAnswered(position, distance, relic.Definition.Id));
             _markers[index].Answer(position, _tuning.BrightnessAt(distance), now);
             if (_firstAnswerPending)
             {

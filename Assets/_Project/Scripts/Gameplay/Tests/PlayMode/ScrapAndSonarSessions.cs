@@ -221,16 +221,27 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             Assert.IsTrue(_fixture.Rover.GazeLog.Contains(nameof(SonarSystem) + ":" + GazePriorities.Interest),
                 "07 turns toward the nearest answer");
+            int relicCount = _fixture.Gameplay.Relics.Relics.Count;
             int standing = 0;
-            foreach (SiteMarker marker in sonar.Markers)
+            for (int i = 0; i < relicCount; i++)
             {
-                if (marker.PillarIntensity > 0.1f)
+                if (sonar.Markers[i].PillarIntensity > 0.1f)
                 {
                     standing++;
                 }
             }
 
             Assert.AreEqual(answers.Count, standing, "each answer leaves a light pillar on the horizon");
+            Friend tilly = _fixture.Gameplay.Friends.Find("tilly");
+            bool tillyInRange = SurfaceRules.HorizontalDistance(tilly.Site.Position, Vector3.zero) <= tuning.Range;
+            Assert.AreEqual(tillyInRange ? 1 : 0, _fixture.Events.FriendAnswered.Count,
+                "a broken friend answers with its own chirp, not as a relic");
+            if (tillyInRange)
+            {
+                Assert.AreEqual("tilly", _fixture.Events.FriendAnswered[0].Value.FriendId);
+                Assert.Greater(sonar.Markers[relicCount].PillarIntensity, 0.1f, "and leaves a warm pillar");
+                Assert.IsTrue(tilly.Progress.Discovered);
+            }
             foreach (Relic relic in _fixture.Gameplay.Relics.Relics)
             {
                 bool answered = SurfaceRules.HorizontalDistance(relic.SonarPosition, Vector3.zero) <= tuning.Range;

@@ -7,8 +7,8 @@ namespace MoonProject.Gameplay.Editor
 {
     /// <summary>
     /// Writes the gameplay content from code recipes: one RelicDefinition per <see cref="RelicRecipes"/> entry, the
-    /// relic catalog, the scrap catalog over Art's scrap prefabs, and the radio tower upgrade. Rewritten in place on
-    /// every run (GUIDs kept).
+    /// relic catalog, the scrap catalog over Art's scrap prefabs, the radio tower upgrade, and the friends (Tilly) and
+    /// their catalog. Rewritten in place on every run (GUIDs kept).
     /// Every Art prefab it references (M2 content contract) is required: a missing one fails the build loudly.
     /// </summary>
     internal static class GameplayContentBuilder
@@ -27,6 +27,7 @@ namespace MoonProject.Gameplay.Editor
             BuildScrapCatalog();
             BuildRelics();
             BuildRadioTower();
+            BuildFriends();
             AssetDatabase.SaveAssets();
         }
 
@@ -67,6 +68,52 @@ namespace MoonProject.Gameplay.Editor
             });
             GeneratedAssets.CreateOrReplace(upgrade, GameplayAssetPaths.RadioTowerUpgrade);
             Debug.Log($"{BuilderPath}: wrote {GameplayAssetPaths.RadioTowerUpgrade}");
+        }
+
+        /// <summary>
+        /// Tilly, Ines's survey drone (docs/features/M3-02-friends-tilly.md): she lies in a shallow crater 60-110 m
+        /// east of home, in view from the base edge, her rotor, lens and cell scattered 30-60 m around her; repaired,
+        /// she perches on the lander and spots for 07. Her texts live in the localization tables (friend.tilly.*).
+        /// </summary>
+        private static void BuildFriends()
+        {
+            var tilly = ScriptableObject.CreateInstance<FriendDefinition>();
+            tilly.Populate("tilly", LoadArt(GameplayAssetPaths.FriendPrefab("Tilly_Broken")),
+                LoadArt(GameplayAssetPaths.FriendPrefab("Tilly")), new[]
+                {
+                    new FriendPart("rotor", LoadArt(GameplayAssetPaths.FriendPrefab("Part_TillyRotor"))),
+                    new FriendPart("lens", LoadArt(GameplayAssetPaths.FriendPrefab("Part_TillyLens"))),
+                    new FriendPart("cell", LoadArt(GameplayAssetPaths.FriendPrefab("Part_TillyCell"))),
+                }, "FriendSocket_tilly", FriendDefinition.SpotterAbility, 3.5f, "tilly",
+                new FriendPlacement(41, new Vector2(60f, 110f), 90f, 55f, new Vector2(0.3f, 2.5f), 10f, true,
+                    new Vector2(30f, 60f)));
+            var friends = new[]
+            {
+                GeneratedAssets.CreateOrReplace(tilly, GameplayAssetPaths.FriendDefinition("tilly")),
+            };
+
+            var catalog = ScriptableObject.CreateInstance<FriendCatalog>();
+            catalog.Populate(friends);
+            catalog = GeneratedAssets.CreateOrReplace(catalog, GameplayAssetPaths.FriendCatalog);
+            string problem = catalog.Validate();
+            if (problem != null)
+            {
+                throw new InvalidOperationException($"{BuilderPath}: friend catalog {problem}.");
+            }
+
+            Debug.Log($"{BuilderPath}: wrote {friends.Length} friend(s) and {GameplayAssetPaths.FriendCatalog}");
+        }
+
+        private static GameObject LoadArt(string path)
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            if (prefab == null)
+            {
+                throw new InvalidOperationException(
+                    $"{BuilderPath}: Art prefab {path} is missing (friend Tilly contract). Run the Art builders.");
+            }
+
+            return prefab;
         }
 
         private static void BuildRelics()

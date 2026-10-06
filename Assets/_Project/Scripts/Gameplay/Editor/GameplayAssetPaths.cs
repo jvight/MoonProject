@@ -18,6 +18,7 @@ namespace MoonProject.Gameplay.Editor
         public const string TetherTuning = TuningFolder + "/TetherTuning.asset";
         public const string BaseTuning = TuningFolder + "/BaseTuning.asset";
         public const string RadioTowerTuning = TuningFolder + "/RadioTowerTuning.asset";
+        public const string FriendTuning = TuningFolder + "/FriendTuning.asset";
 
         public const string ContentFolder = "Assets/_Project/Data/Content";
         public const string RelicFolder = ContentFolder + "/Relics";
@@ -25,6 +26,8 @@ namespace MoonProject.Gameplay.Editor
         public const string ScrapCatalog = ContentFolder + "/ScrapCatalog.asset";
         public const string UpgradeFolder = ContentFolder + "/Upgrades";
         public const string RadioTowerUpgrade = UpgradeFolder + "/Upgrade_radio_tower.asset";
+        public const string FriendFolder = ContentFolder + "/Friends";
+        public const string FriendCatalog = ContentFolder + "/FriendCatalog.asset";
 
         public const string GeneratedFolder = GeneratedAssets.Root + "/Gameplay";
         public const string MaterialFolder = GeneratedFolder + "/Materials";
@@ -33,11 +36,24 @@ namespace MoonProject.Gameplay.Editor
         public const string Shader = "Assets/_Project/Shaders/Gameplay/SoftGlow.shader";
         public const string GlintShader = "Assets/_Project/Shaders/Gameplay/Glint.shader";
         public const string GlintMaterial = MaterialFolder + "/M_ScrapGlint.mat";
+        public const string PartGlintMaterial = MaterialFolder + "/M_PartGlint.mat";
 
         public const string ArtRelicFolder = ArtPaths.Root + "/Relics";
         public const string ArtBaseFolder = ArtPaths.Root + "/Base";
         public const string Lander = ArtBaseFolder + "/Lander.prefab";
         public const string MuseumShelf = ArtBaseFolder + "/MuseumShelf.prefab";
+        public const string ArtFriendFolder = ArtPaths.Root + "/Friends";
+
+        public static string FriendDefinition(string id)
+        {
+            return FriendFolder + "/Friend_" + id + ".asset";
+        }
+
+        /// <summary>A friend model or part pickup prefab (e.g. Tilly, Tilly_Broken, Part_TillyRotor).</summary>
+        public static string FriendPrefab(string name)
+        {
+            return ArtFriendFolder + "/" + name + ".prefab";
+        }
 
         public static string RadioTowerStage(int level)
         {

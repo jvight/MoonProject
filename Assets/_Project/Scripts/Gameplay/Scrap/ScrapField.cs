@@ -76,6 +76,8 @@ namespace MoonProject.Gameplay
         /// </summary>
         public int LayoutSignature { get; private set; }
 
+        public ScrapTuning Tuning => _tuning;
+
         /// <summary>The horizon glints (tests read how many were drawn and how bright).</summary>
         public ScrapGlints Glints => _glints;
 
@@ -88,6 +90,12 @@ namespace MoonProject.Gameplay
         internal bool IsCollected(int index)
         {
             return _state[index] == PieceState.Collected;
+        }
+
+        /// <summary>Piece <paramref name="index"/> is still floating where it was placed.</summary>
+        internal bool IsResting(int index)
+        {
+            return _state[index] == PieceState.Resting;
         }
 
         internal int ValueOf(int index)

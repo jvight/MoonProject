@@ -24,6 +24,7 @@ namespace MoonProject.Gameplay.Editor
             EnsureExists<TetherTuning>(GameplayAssetPaths.TetherTuning);
             EnsureExists<BaseTuning>(GameplayAssetPaths.BaseTuning);
             EnsureExists<RadioTowerTuning>(GameplayAssetPaths.RadioTowerTuning);
+            EnsureExists<FriendTuning>(GameplayAssetPaths.FriendTuning);
         }
 
         private static void EnsureExists<T>(string path) where T : ScriptableObject

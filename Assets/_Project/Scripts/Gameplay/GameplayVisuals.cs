@@ -41,6 +41,12 @@ namespace MoonProject.Gameplay
         [Tooltip("Camera-facing glints over distant scrap (Glint shader, TechGlow).")]
         [SerializeField] private Material _scrapGlint;
 
+        [Tooltip("Camera-facing glints over a friend's missing parts (Glint shader, WarmLamp amber).")]
+        [SerializeField] private Material _partGlint;
+
+        [Tooltip("Light pillar over a broken friend that answered (WarmLamp, additive, rising bands).")]
+        [SerializeField] private Material _friendPillar;
+
         public Material SonarRing => _sonarRing;
         public Material SiteRing => _siteRing;
         public Material SitePillar => _sitePillar;
@@ -52,6 +58,8 @@ namespace MoonProject.Gameplay
         public Material WarmRing => _warmRing;
         public Material WarmGlow => _warmGlow;
         public Material ScrapGlint => _scrapGlint;
+        public Material PartGlint => _partGlint;
+        public Material FriendPillar => _friendPillar;
 
         /// <summary>Null when every material is assigned, else the first missing one.</summary>
         public string Validate()
@@ -67,12 +75,14 @@ namespace MoonProject.Gameplay
                 : _warmRing == null ? "warm ring material is missing"
                 : _warmGlow == null ? "warm glow material is missing"
                 : _scrapGlint == null ? "scrap glint material is missing"
+                : _partGlint == null ? "part glint material is missing"
+                : _friendPillar == null ? "friend pillar material is missing"
                 : null;
         }
 
         internal void Populate(Material sonarRing, Material siteRing, Material sitePillar, Material tractorBeam,
             Material tetherBeam, Material flash, Material relicHalo, Material dust, Material warmRing,
-            Material warmGlow, Material scrapGlint)
+            Material warmGlow, Material scrapGlint, Material partGlint, Material friendPillar)
         {
             _sonarRing = sonarRing;
             _siteRing = siteRing;
@@ -85,6 +95,8 @@ namespace MoonProject.Gameplay
             _warmRing = warmRing;
             _warmGlow = warmGlow;
             _scrapGlint = scrapGlint;
+            _partGlint = partGlint;
+            _friendPillar = friendPillar;
         }
     }
 }

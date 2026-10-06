@@ -95,6 +95,9 @@ namespace MoonProject.Gameplay
         [Tooltip("Seconds per breath of a discovered site's ring.")]
         [Range(0.5f, 15f)] [SerializeField] private float _breathPeriod = 4f;
 
+        [Tooltip("Warm (friend) markers read brighter than cyan ones at the same value: their glow is scaled by this.")]
+        [Range(0.1f, 1f)] [SerializeField] private float _friendGlowScale = 0.55f;
+
         [Tooltip("Segments of a site ring.")]
         [Range(8, 128)] [SerializeField] private int _siteRingSegments = 40;
 
@@ -136,6 +139,7 @@ namespace MoonProject.Gameplay
         public float DiscoveredBreathDepth => _discoveredBreathDepth;
         public float BreathPeriod => _breathPeriod;
         public int SiteRingSegments => _siteRingSegments;
+        public float FriendGlowScale => _friendGlowScale;
         public float AnswerGaze => _answerGaze;
         public float GlanceInterval => _glanceInterval;
         public float GlanceDuration => _glanceDuration;

@@ -23,3 +23,5 @@ MonoBehaviour:
   _warmRing: {fileID: 2100000, guid: 907d78bb092e4334f9c5b9e00c4bdaa6, type: 2}
   _warmGlow: {fileID: 2100000, guid: 22d91cd391e82d84eb5fbc2b16e6a8e0, type: 2}
   _scrapGlint: {fileID: 2100000, guid: 0e130eb3156164549810ca69d79397ef, type: 2}
+  _partGlint: {fileID: 2100000, guid: 4a700287616a19e49a3c4e0f7633e8b7, type: 2}
+  _friendPillar: {fileID: 2100000, guid: 4a6726da4e6d9a34eb677a62fa140b19, type: 2}
