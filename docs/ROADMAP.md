@@ -85,7 +85,7 @@
 ## M3 — "Trạm thức giấc": chiều sâu phần 1 (xem `docs/DESIGN.md`)
 | ID | Việc | Box | TT |
 |---|---|---|---|
-| M3-01 | Kinh thánh câu chuyện: 4 thành viên phi hành đoàn, bộ relic của từng người, nhật ký, mẩu tin radio (en + vi) | Director | ⬜ |
+| M3-01 | Kinh thánh câu chuyện: 4 thành viên phi hành đoàn, bộ relic của từng người, nhật ký, mẩu tin radio (en + vi) | Director | 🟦 |
 | M3-02 | Khung "bạn bè máy móc" + **Tilly** (drone nhỏ): tìm, sửa, sống ở căn cứ, chào 07, tự phát hiện tín hiệu | gameplay + art + audio | ⬜ |
 | M3-03 | Xưởng nâng cấp rover (khung chung) + **Hover-Jump** | gameplay + rover | ⬜ |
 | M3-04 | Vùng **Whispering Canyon** (mở bằng Hover-Jump) + bí mật nhìn thấy được từ căn cứ | world + art | ⬜ |
