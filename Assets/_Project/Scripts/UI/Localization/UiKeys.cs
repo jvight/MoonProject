@@ -14,6 +14,7 @@ namespace MoonProject.UI
         public const string TowerHold = "ui.tower.hold";
         public const string TowerNeed = "ui.tower.need";
         public const string TowerPurchased = "ui.tower.purchased";
+        public const string LogCaption = "ui.card.log_caption";
 
         /// <summary>"hint.excavate": the one word of the prompt teaching <paramref name="kind"/>.</summary>
         public static string Hint(InteractionKind kind)
@@ -29,6 +30,17 @@ namespace MoonProject.UI
         public static string RelicMemory(string relicId)
         {
             return "relic." + relicId + ".memory";
+        }
+
+        public static string FriendName(string friendId)
+        {
+            return "friend." + friendId + ".name";
+        }
+
+        /// <summary>"friend.tilly.repair_log": the crew log a friend remembers when it wakes.</summary>
+        public static string FriendRepairLog(string friendId)
+        {
+            return "friend." + friendId + ".repair_log";
         }
 
         public static string UpgradeName(string upgradeId)

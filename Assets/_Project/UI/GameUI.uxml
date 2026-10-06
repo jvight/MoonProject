@@ -10,8 +10,21 @@
                 <ui:VisualElement name="reticle-rest" class="reticle__ring reticle__ring--rest" />
                 <ui:VisualElement name="reticle-hover" class="reticle__ring reticle__ring--hover" />
             </ui:VisualElement>
-            <ui:VisualElement name="prompt-anchor" class="prompt-anchor" picking-mode="Ignore">
-                <ui:VisualElement name="prompt-center" class="prompt-center" picking-mode="Ignore">
+            <ui:VisualElement name="friend-anchor" class="world-anchor" picking-mode="Ignore">
+                <ui:VisualElement name="friend-center" class="world-anchor__center" picking-mode="Ignore">
+                    <ui:VisualElement name="friend-readout" class="friend-readout" picking-mode="Ignore">
+                        <ui:VisualElement name="friend-readout-shadow" class="soft-shadow soft-shadow--chip" />
+                        <ui:VisualElement name="friend-pips" class="chip friend-pips" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="friend-name-anchor" class="world-anchor" picking-mode="Ignore">
+                <ui:VisualElement name="friend-name-center" class="world-anchor__center" picking-mode="Ignore">
+                    <ui:Label name="friend-name" class="friend-name" picking-mode="Ignore" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="prompt-anchor" class="world-anchor" picking-mode="Ignore">
+                <ui:VisualElement name="prompt-center" class="world-anchor__center" picking-mode="Ignore">
                     <ui:VisualElement name="prompt" class="prompt" picking-mode="Ignore">
                         <ui:VisualElement name="prompt-shadow" class="soft-shadow soft-shadow--chip" />
                         <ui:VisualElement name="prompt-body" class="chip">

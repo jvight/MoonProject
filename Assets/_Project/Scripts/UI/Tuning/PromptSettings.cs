@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using MoonProject.Core.Input;
 using MoonProject.Gameplay;
@@ -23,6 +24,7 @@ namespace MoonProject.UI
             new PromptEntry(InteractionKind.Tether, RoverAction.Tether, 0.4f, 0.9f),
             new PromptEntry(InteractionKind.Deposit, RoverAction.Tether, 0.25f, 1.4f),
             new PromptEntry(InteractionKind.Reel, RoverAction.Winch, 2.5f, 0.9f),
+            new PromptEntry(InteractionKind.Repair, RoverAction.Excavate, 0.5f, 0.8f),
         };
 
         [Tooltip("Seconds after 07 starts waking before any prompt may appear (the opening belongs to the moon).")]
@@ -83,6 +85,27 @@ namespace MoonProject.UI
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Appends the code's default entry for every kind the table lacks (a kind added after the tuning asset was
+        /// created), keeping every hand-tuned entry as it is. Returns how many were added.
+        /// </summary>
+        internal int AddMissingDefaults()
+        {
+            var defaults = new PromptSettings();
+            var merged = new List<PromptEntry>(_entries);
+            foreach (PromptEntry entry in defaults._entries)
+            {
+                if (Find(entry.Kind) == null)
+                {
+                    merged.Add(entry);
+                }
+            }
+
+            int added = merged.Count - _entries.Length;
+            _entries = merged.ToArray();
+            return added;
         }
 
         /// <summary>Null when the table is usable, else the first problem.</summary>

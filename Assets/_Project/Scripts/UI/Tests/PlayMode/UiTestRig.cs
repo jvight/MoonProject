@@ -25,6 +25,7 @@ namespace MoonProject.UI.PlayModeTests
         public const string TuningPath = "Assets/_Project/Data/Tuning/UI/UiTuning.asset";
         public const string CatalogPath = "Assets/_Project/Data/Content/RelicCatalog.asset";
         public const string UpgradePath = "Assets/_Project/Data/Content/Upgrades/Upgrade_radio_tower.asset";
+        public const string TillyPath = "Assets/_Project/Data/Content/Friends/Friend_tilly.asset";
         public const string EnglishPath = "Assets/_Project/Data/Localization/en.json";
         public const string VietnamesePath = "Assets/_Project/Data/Localization/vi.json";
 
@@ -67,6 +68,9 @@ namespace MoonProject.UI.PlayModeTests
             var fakes = services.AddComponent<FakeGameServices>();
             fakes.Camera = camera.GetComponent<Camera>();
             fakes.Upgrade = Load<UpgradeDefinition>(UpgradePath);
+            fakes.Friend = Load<FriendDefinition>(TillyPath);
+            fakes.Position = new Vector3(0f, 0f, -500f);
+            fakes.TillyStatus = new FriendStatus(FriendState.Dormant, 0, 3, false, false, new Vector3(0f, 0f, 500f));
 
             UiTuning tuning = QuickTuning();
             var ui = new GameObject("GameUI");

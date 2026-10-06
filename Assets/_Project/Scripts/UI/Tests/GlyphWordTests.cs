@@ -55,6 +55,8 @@ namespace MoonProject.UI.Tests
         [TestCase(RoverAction.Excavate, InputDeviceKind.Gamepad, "X")]
         [TestCase(RoverAction.Tether, InputDeviceKind.Gamepad, "LT")]
         [TestCase(RoverAction.Winch, InputDeviceKind.Gamepad, "D-Pad")]
+        [TestCase(RoverAction.Jump, InputDeviceKind.KeyboardMouse, "Shift")]
+        [TestCase(RoverAction.Jump, InputDeviceKind.Gamepad, "RB")]
         public void English_Keycaps(RoverAction action, InputDeviceKind device, string expected)
         {
             Assert.AreEqual(expected, _glyphs.For(action, device));

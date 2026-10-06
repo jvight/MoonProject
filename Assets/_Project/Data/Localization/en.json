@@ -211,6 +211,10 @@
             "text": "Space"
         },
         {
+            "key": "glyph.keyboard.leftshift",
+            "text": "Shift"
+        },
+        {
             "key": "glyph.mouse.leftbutton",
             "text": "LMB"
         },
@@ -269,6 +273,22 @@
         {
             "key": "glyph.gamepad.start",
             "text": "Start"
+        },
+        {
+            "key": "hint.repair",
+            "text": "Repair"
+        },
+        {
+            "key": "ui.card.log_caption",
+            "text": "From {0}'s memory"
+        },
+        {
+            "key": "friend.tilly.name",
+            "text": "Tilly"
+        },
+        {
+            "key": "friend.tilly.repair_log",
+            "text": "Walked the rim at sunrise with Tilly chirping at my shoulder. The Moon is still here, Earth is still up, the coffee is still terrible: all is well. — Ines"
         }
     ]
 }
