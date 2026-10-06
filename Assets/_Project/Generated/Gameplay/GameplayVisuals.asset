@@ -22,3 +22,4 @@ MonoBehaviour:
   _dust: {fileID: 2100000, guid: bf0fcce95db7ca4409587657ae467f27, type: 2}
   _warmRing: {fileID: 2100000, guid: 907d78bb092e4334f9c5b9e00c4bdaa6, type: 2}
   _warmGlow: {fileID: 2100000, guid: 22d91cd391e82d84eb5fbc2b16e6a8e0, type: 2}
+  _scrapGlint: {fileID: 2100000, guid: 0e130eb3156164549810ca69d79397ef, type: 2}

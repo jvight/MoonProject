@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0cd2e61ab8f1c6c4596ace86ed847e57, type: 3}
+  m_Name: TetherTuning
+  m_EditorClassIdentifier: 
+  _aimCone: 8
+  _stickyCone: 12
+  _aimRange: 32
+  _distanceWeight: 0.08
+  _hoverHighlight: 1
+  _towHighlight: 0.6
+  _minLength: 2.5
+  _maxLength: 12
+  _winchStep: 0.9
+  _reelSpeed: 4
+  _winchLead: 1.5
+  _naturalFrequency: 3.2
+  _referenceMass: 6
+  _massExponent: 0.35
+  _dampingRatio: 1.15
+  _maxAcceleration: 12
+  _maxForce: 160
+  _liftMultiplier: 2.2
+  _hoverHeight: 0.8
+  _maxLiftHeight: 4
+  _towLinearDamping: 0.2
+  _towAngularDamping: 1.5
+  _snapStretch: 5
+  _snapGrace: 0.8
+  _snapDistance: 24
+  _snapCarry: 0.15
+  _beamPoints: 24
+  _beamArc: 0.12
+  _wobble: 0.1
+  _wobbleFrequency: 1.3
+  _strainWobble: 0.25
+  _beamWidth: {x: 0.09, y: 0.05}
+  _beamExtend: 0.18
+  _beamRetract: 0.28
+  _beamIntensity: 1.1
