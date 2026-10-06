@@ -138,6 +138,16 @@ RoverModel
   HeadlampSocket       empty, low on the body front, +Z = road light direction
   CargoSocket          empty, where the cargo bed upgrade attaches
   DustSocket_L/_R      empties at the rear wheel contact points
+  CoilSocket           empty under the chassis at the bottom of the belly plate, +Y up; HoverCoils mounts here
+```
+
+Hover-Jump coils:
+```
+Generated/Art/Rover/HoverCoils.prefab  (meshes only; parent it to RoverModel's CoilSocket with identity)
+  HoverCoils           mounting plate (static)
+    Coil_FL/FR/RL/RR   one spring each, pivot at the spring's top, hanging down ~0.13 m: squash local Y while charging
+      Glow_<corner>    ring around the foot pad, own glow renderer on M_LowPolyGlowOff (dark glass, glows cyan):
+                       light it with MaterialPropertyBlock _EmissionColor = white x charge
 ```
 Renaming or re-pivoting any node is a contract change: coordinate through the Director.
 
@@ -161,6 +171,11 @@ Generated/Art/Base/MuseumShelf.prefab
     Slot_0..Slot_5                    empties, +Y up, where deposited relics rest
 Generated/Art/Base/RadioTower_L1|L2|L3.prefab   three upgrade stages, same footprint
     BeaconSocket                      empty at the top (signal light / beam)
+Generated/Art/Base/Workbench.prefab  Kenji's bench (root on the ground at the bench centre, +Z = front, 2.3 m wide)
+    Lights                            the work lamp's bulb, own glow renderer (WarmLamp)
+    SparkSocket                       empty between the vice jaws (+Z out of the front): upgrade sparks
+Lander.prefab  WorkshopAnchor        empty at lander-local (12.5, 0, -2), identity; the bench stands on it and its
+                                      shop pad is centred 3.2 m in front (+Z), radius 2.4, nothing tall on it
 ```
 
 ## Contract: friend Tilly (Art -> Gameplay)
