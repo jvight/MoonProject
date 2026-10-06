@@ -3,22 +3,17 @@ using UnityEngine;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// One lost memory of Earth: identity, the text the museum shows, how heavy it is to tow, its look (an Art
-    /// prefab from the M2 content contract) and the note it sings when it answers the sonar. Written by the
-    /// Gameplay/Content builder; runtime code only reads it.
+    /// One lost memory of Earth: its id, how heavy it is to tow, its look (an Art prefab from the M2 content contract)
+    /// and the note it sings when it answers the sonar. Its name and memory text are player-facing prose and live in
+    /// the localization tables under "relic.&lt;id&gt;.*". Written by the Gameplay/Content builder; runtime code only
+    /// reads it.
     /// </summary>
     [CreateAssetMenu(menuName = "MoonProject/Gameplay/Relic Definition", fileName = "Relic")]
     public sealed class RelicDefinition : ScriptableObject
     {
-        [Tooltip("Stable id from the content contract (e.g. rubber_duck). Saves and art prefab names use it.")]
+        [Tooltip("Stable id from the content contract (e.g. rubber_duck). Saves, Art prefab names and the " +
+                 "localization keys relic.<id>.name / relic.<id>.memory use it.")]
         [SerializeField] private string _id = string.Empty;
-
-        [Tooltip("Name shown in the museum.")]
-        [SerializeField] private string _displayName = string.Empty;
-
-        [Tooltip("One or two warm, melancholic sentences: the memory of Earth this object carries.")]
-        [TextArea(2, 5)]
-        [SerializeField] private string _memory = string.Empty;
 
         [Tooltip("Physics mass (kg). Heavier relics surface slower and trail more lazily on the tether.")]
         [Range(1f, 40f)] [SerializeField] private float _mass = 6f;
@@ -34,10 +29,6 @@ namespace MoonProject.Gameplay
         [SerializeField] private RelicPlacementBand _placement = RelicPlacementBand.Wanderer;
 
         public string Id => _id;
-
-        public string DisplayName => _displayName;
-
-        public string Memory => _memory;
 
         public float Mass => _mass;
 
@@ -55,25 +46,12 @@ namespace MoonProject.Gameplay
                 return "has no id";
             }
 
-            if (string.IsNullOrWhiteSpace(_displayName))
-            {
-                return $"'{_id}' has no display name";
-            }
-
-            if (string.IsNullOrWhiteSpace(_memory))
-            {
-                return $"'{_id}' has no memory text";
-            }
-
             return _prefab == null ? $"'{_id}' has no prefab (Generated/Art/Relics/Relic_{_id}.prefab)" : null;
         }
 
-        internal void Populate(string id, string displayName, string memory, float mass, GameObject prefab,
-            int answerNote, RelicPlacementBand placement)
+        internal void Populate(string id, float mass, GameObject prefab, int answerNote, RelicPlacementBand placement)
         {
             _id = id;
-            _displayName = displayName;
-            _memory = memory;
             _mass = mass;
             _prefab = prefab;
             _answerNote = answerNote;

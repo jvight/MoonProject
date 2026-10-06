@@ -39,10 +39,9 @@ namespace MoonProject.Gameplay.Tests
             });
             _wallet = new ScrapWallet(_events);
             _tower = Create<UpgradeDefinition>();
-            _tower.Populate("radio_tower", "Radio Tower", 60f, new[]
+            _tower.Populate("radio_tower", 60f, new[]
             {
-                new UpgradeLevel("Wake", "", 15, 110f, 1.25f), new UpgradeLevel("Raise", "", 40, 170f, 1.5f),
-                new UpgradeLevel("Light", "", 80, 260f, 1.8f),
+                new UpgradeLevel(15, 110f, 1.25f), new UpgradeLevel(40, 170f, 1.5f), new UpgradeLevel(80, 260f, 1.8f),
             });
         }
 
@@ -105,7 +104,7 @@ namespace MoonProject.Gameplay.Tests
             Assert.AreEqual(0, offer.CurrentLevel);
             Assert.AreEqual(3, offer.MaxLevel);
             Assert.AreEqual(15, offer.NextCost);
-            Assert.AreEqual("Wake", offer.Next.Title);
+            Assert.AreSame(_tower.Levels[0], offer.Next);
             Assert.IsFalse(offer.CanAfford);
             _wallet.Add(1);
             Assert.IsTrue(service.TryGetOffer("radio_tower", out offer));
