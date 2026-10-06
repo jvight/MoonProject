@@ -30,7 +30,7 @@
 .chip__number,
 .glyph__label,
 .hold__glyph,
-.cost__balance {
+.cost__price {
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/BeVietnamPro-SemiBold.asset");
 }
 
@@ -184,7 +184,7 @@ Label {
     position: absolute;
     left: 0;
     right: 0;
-    bottom: 14%;
+    bottom: 8%;
     align-items: center;
 }
 
@@ -388,25 +388,14 @@ Label {
     align-items: center;
 }
 
-.cost__balance {
-    font-size: 18px;
-    margin-left: 7px;
-}
-
-.cost__separator {
-    font-size: 18px;
-    color: var(--moon-text-faint);
-    margin-left: 5px;
-    margin-right: 5px;
-}
-
 .cost__price {
-    font-size: 18px;
-    color: var(--moon-text-dim);
+    font-size: 20px;
+    margin-left: 7px;
+    color: var(--moon-text);
 }
 
-.cost--short .cost__balance {
-    color: var(--moon-text-dim);
+.cost--short .cost__price {
+    color: var(--moon-text-faint);
 }
 
 /* Pause menu */
@@ -492,12 +481,19 @@ Label {
 
 .pause .menu-button--compact {
     flex-grow: 1;
-    height: 40px;
+    height: 38px;
     margin: 0 8px;
     padding: 0 14px;
     font-size: 18px;
     border-radius: 12px;
+    border-color: var(--moon-glass-edge);
+    background-color: var(--moon-cream-glow);
     -unity-text-align: middle-center;
+}
+
+.pause__panel--settings .menu-button--quiet {
+    margin-top: 12px;
+    padding-left: 4px;
 }
 
 .pause .menu-button:hover {
@@ -519,9 +515,13 @@ Label {
     font-size: 14px;
     letter-spacing: 2px;
     color: var(--moon-warm-lamp);
-    margin-top: 6px;
+    margin-top: 16px;
     margin-bottom: 4px;
     padding-left: 4px;
+}
+
+.section-label--first {
+    margin-top: 0;
 }
 
 .setting-row {

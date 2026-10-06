@@ -63,8 +63,6 @@
                         <ui:Label name="tower-need" class="tower-panel__need" />
                         <ui:VisualElement name="tower-cost-row" class="cost">
                             <ui:VisualElement name="tower-cost-icon" class="scrap-icon scrap-icon--small" />
-                            <ui:Label name="tower-balance" class="cost__balance" />
-                            <ui:Label class="cost__separator" text="/" />
                             <ui:Label name="tower-cost" class="cost__price" />
                         </ui:VisualElement>
                     </ui:VisualElement>
@@ -109,7 +107,7 @@
                     <ui:VisualElement name="pause-settings" class="pause__settings" picking-mode="Ignore">
                         <ui:VisualElement name="pause-settings-shadow" class="soft-shadow soft-shadow--panel" />
                         <ui:VisualElement name="pause-settings-body" class="panel pause__panel pause__panel--settings">
-                            <ui:Label class="section-label loc" text="ui.settings.sound" />
+                            <ui:Label class="section-label section-label--first loc" text="ui.settings.sound" />
                             <ui:VisualElement class="setting-row">
                                 <ui:Label class="setting-row__label loc" text="ui.settings.master" />
                                 <ui:SliderInt name="slider-master" class="setting-row__slider" />

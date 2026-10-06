@@ -8,10 +8,11 @@ namespace MoonProject.UI
 {
     /// <summary>
     /// While 07 is parked on the radio tower's pad and a level is left to buy, a compact panel offers it: the next
-    /// level, what it does in plain words (the localized "upgrade.&lt;id&gt;.&lt;level&gt;.*" strings), its cost
-    /// against the balance, and a ring that fills while the confirm button is held (<see cref="HoldToConfirm"/>: no
-    /// accidental purchases). Buying goes through <see cref="IUpgradeShop"/>; the panel glows a moment, then shows
-    /// the next level or bows out when all are bought.
+    /// level, what it does in plain words (the localized "upgrade.&lt;id&gt;.&lt;level&gt;.*" strings), its cost (the
+    /// balance stays in view in the pinned scrap chip; a shortfall is said in words), and a ring that fills while the
+    /// confirm button is held (<see cref="HoldToConfirm"/>: no accidental purchases). Buying goes through
+    /// <see cref="IUpgradeShop"/>; the panel glows a moment, then shows the next level or bows out when all are
+    /// bought.
     /// </summary>
     internal sealed class TowerPanel
     {
@@ -160,7 +161,6 @@ namespace MoonProject.UI
                 _layout.TowerCost.text = _numbers.Get(offer.NextCost);
             }
 
-            _layout.TowerBalance.text = _numbers.Get(balance);
             bool affordable = balance >= offer.NextCost;
             _layout.TowerConfirm.style.display = affordable ? DisplayStyle.Flex : DisplayStyle.None;
             _layout.TowerNeed.style.display = affordable ? DisplayStyle.None : DisplayStyle.Flex;

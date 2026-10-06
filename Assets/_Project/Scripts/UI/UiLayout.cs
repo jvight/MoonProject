@@ -54,7 +54,6 @@ namespace MoonProject.UI
             TowerNeed = Require<Label>("tower-need");
             TowerCostRow = Require<VisualElement>("tower-cost-row");
             TowerCostIcon = Require<VisualElement>("tower-cost-icon");
-            TowerBalance = Require<Label>("tower-balance");
             TowerCost = Require<Label>("tower-cost");
 
             Pause = Require<VisualElement>("pause");
@@ -157,8 +156,6 @@ namespace MoonProject.UI
         public VisualElement TowerCostRow { get; }
 
         public VisualElement TowerCostIcon { get; }
-
-        public Label TowerBalance { get; }
 
         public Label TowerCost { get; }
 
