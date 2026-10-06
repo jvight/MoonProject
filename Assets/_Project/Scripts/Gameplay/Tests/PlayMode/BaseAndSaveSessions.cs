@@ -3,6 +3,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.TestTools;
+using MoonProject.Core;
 using MoonProject.Core.Events;
 using MoonProject.Core.Save;
 using MoonProject.Testing;
@@ -10,12 +11,15 @@ using Object = UnityEngine.Object;
 
 namespace MoonProject.Gameplay.PlayModeTests
 {
-    /// <summary>Scripted sessions for the museum deposit, the radio tower shop, the hint query and save/load.</summary>
+    /// <summary>
+    /// Scripted sessions for the museum deposit, the radio tower shop, Kenji's workbench, the hint query and save/load.
+    /// </summary>
     public sealed class BaseAndSaveSessions : InputTestFixture
     {
         private const string Duck = "rubber_duck";
         private const string Teapot = "teapot";
         private const string Tower = "radio_tower";
+        private const string HoverJump = "rover.hover_jump";
 
         private InputActionAsset _controls;
         private GameplayFixture _fixture;
@@ -151,6 +155,79 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             Assert.AreEqual(60 - 15 - 40 + picked, _fixture.Gameplay.Wallet.Balance, "exactly the costs were spent");
             _fixture.Capture("11-tower-level-2");
+        }
+
+        [UnityTest]
+        public IEnumerator Workshop_SellsHoverJumpOnItsOwnPad_GrantsIt_AndGrantsItAgainOnLoad()
+        {
+            string slot = BootstrapHarness.NewTestSlot();
+            _fixture = GameplayFixture.Boot(_controls, slot);
+            yield return null;
+            Workshop workshop = _fixture.Gameplay.Workshop;
+            RadioTower tower = _fixture.Gameplay.Tower;
+            IUpgradeShop shop = _fixture.Bootstrap.Context.Get<IUpgradeShop>();
+            PadLook look = _fixture.WorkshopTuning.PadLook;
+            WorkshopTuning tuning = _fixture.WorkshopTuning;
+            Assert.AreSame(_fixture.HoverJumpUpgrade, workshop.Definition, "the bench's first offer");
+            Assert.AreEqual(tuning.LampIdle, workshop.LampLevel, 1e-3f, "Kenji's lamp is left on");
+            Assert.AreEqual(0, workshop.SparkCount, "no sparks before a purchase");
+            Assert.IsFalse(_fixture.Rover.Has(RoverAbility.HoverJump));
+            Assert.Greater(SurfaceRules.HorizontalDistance(workshop.PadCentre, tower.PadCentre),
+                look.Radius + _fixture.TowerTuning.PadRadius, "the two pads never overlap");
+
+            _fixture.Gameplay.Wallet.Add(150);
+            Assert.AreEqual(PurchaseResult.NotAtStation, shop.Purchase(HoverJump), "bought at the bench, not anywhere");
+            _fixture.Rover.Place(tower.PadCentre, 0f);
+            yield return null;
+            yield return null;
+            Assert.AreSame(_fixture.RadioTowerUpgrade, shop.StationUpgrade);
+            Assert.AreEqual(PurchaseResult.NotAtStation, shop.Purchase(HoverJump), "not at the tower either");
+
+            _fixture.Rover.Place(workshop.PadCentre, 0f);
+            yield return null;
+            yield return null;
+            Assert.IsTrue(workshop.Occupied);
+            Assert.AreSame(_fixture.HoverJumpUpgrade, shop.StationUpgrade);
+            Assert.AreEqual(UpgradeStationKind.Workshop, shop.StationUpgrade.Station);
+            Assert.IsTrue(_fixture.Gameplay.Hints.TryGet(InteractionKind.Upgrade, out InteractionHint hint));
+            Assert.IsTrue(hint.Ready, "affordable");
+            Assert.AreEqual(workshop.PadCentre, hint.Position);
+            yield return new WaitForSeconds(1.5f);
+            Assert.Greater(workshop.PadLevel, 0.8f * look.Occupied, "the pad glows under 07");
+            Assert.Greater(workshop.LampLevel, 0.9f * tuning.LampOccupied, "the lamp leans in");
+
+            int before = _fixture.Events.Order.Count;
+            int funds = _fixture.Gameplay.Wallet.Balance;
+            Assert.AreEqual(PurchaseResult.Purchased, shop.Purchase(HoverJump));
+            int balance = _fixture.Gameplay.Wallet.Balance;
+            Assert.AreEqual(funds - 150, balance, "Hover-Jump costs 150");
+            CollectionAssert.AreEqual(new[] { nameof(CurrencyChanged), nameof(UpgradePurchased) },
+                _fixture.Events.Order.GetRange(before, _fixture.Events.Order.Count - before));
+            Assert.AreEqual(HoverJump, _fixture.Events.UpgradePurchased[0].Value.UpgradeId);
+            Assert.AreEqual(1, _fixture.Events.UpgradePurchased[0].Value.Level);
+            Assert.IsTrue(_fixture.Rover.Has(RoverAbility.HoverJump), "07 can leap now");
+            Assert.Greater(workshop.PadLevel, look.Occupied, "the purchase flares the pad");
+            Assert.AreEqual(tuning.LampFlare, workshop.LampLevel, 1e-3f, "and the lamp");
+            Assert.IsFalse(_fixture.Gameplay.Hints.TryGet(InteractionKind.Upgrade, out _), "nothing left to buy");
+            Assert.AreEqual(PurchaseResult.Maxed, shop.Purchase(HoverJump));
+            Vector3 pad = workshop.PadCentre;
+            _fixture.Rover.Aim(pad + new Vector3(-7f, 5f, -7f), pad + Vector3.up);
+            yield return new WaitForSeconds(tuning.SparkInterval * 1.5f);
+            Assert.Greater(workshop.SparkCount, tuning.SparkCount, "sparks fly from between the vice jaws");
+            _fixture.Capture("18-workshop-hover-jump");
+            yield return new WaitForSeconds(tuning.SparkInterval * tuning.SparkBursts + tuning.SparkLifetime.y + 0.5f);
+            Assert.AreEqual(0, workshop.SparkCount, "the sparks die out (an idle bench costs nothing)");
+            Assert.Less(workshop.PadLevel, look.Occupied * 0.5f, "an empty bench's pad rests dim");
+            Assert.AreEqual(tuning.LampOccupied, workshop.LampLevel, 0.05f, "the lamp settles back");
+
+            _fixture.Dispose(true);
+            yield return null;
+            _fixture = GameplayFixture.Boot(_controls, slot);
+            yield return null;
+            Assert.AreEqual(1, _fixture.Gameplay.Upgrades.LevelOf(HoverJump), "the purchase was a checkpoint");
+            Assert.IsTrue(_fixture.Rover.Has(RoverAbility.HoverJump), "granted again on load");
+            Assert.AreEqual(0, _fixture.Events.UpgradePurchased.Count, "a load is never a purchase");
+            Assert.AreEqual(balance, _fixture.Gameplay.Wallet.Balance, "the checkpoint kept the change");
         }
 
         [UnityTest]

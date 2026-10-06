@@ -86,9 +86,9 @@
 | ID | Việc | Box | TT |
 |---|---|---|---|
 | M3-01 | Kinh thánh câu chuyện: 4 thành viên phi hành đoàn, bộ relic của từng người, nhật ký, mẩu tin radio (en + vi) | Director | 🟦 |
-| M3-02 | Khung "bạn bè máy móc" + **Tilly** (drone nhỏ): tìm, sửa, sống ở căn cứ, chào 07, tự phát hiện tín hiệu | gameplay + art + audio | 🟦 |
-| M3-03 | Xưởng nâng cấp rover (khung chung) + **Hover-Jump** | gameplay + rover | 🟦 |
-| M3-04 | Vùng **Whispering Canyon** (mở bằng Hover-Jump) + bí mật nhìn thấy được từ căn cứ | world + art | ⬜ |
+| M3-02 | Khung "bạn bè máy móc" + **Tilly** (drone nhỏ): tìm, sửa, sống ở căn cứ, chào 07, tự phát hiện tín hiệu | gameplay + art + audio | 🟩 |
+| M3-03 | Xưởng nâng cấp rover (khung chung) + **Hover-Jump** | gameplay + rover | 🟩 |
+| M3-04 | Vùng **Whispering Canyon** (mở bằng Hover-Jump) + bí mật nhìn thấy được từ căn cứ | world + art | 🟦 |
 | M3-05 | **Bell** + núm dò đài (chọn đài/playlist) + băng cassette (bài mới) | gameplay + music + ui | ⬜ |
 | M3-06 | Căn cứ ấm dần + trang trí trên snap point | gameplay + art | ⬜ |
 | M3-07 | Bản đồ vẽ tay ghim trong lander | ui | ⬜ |

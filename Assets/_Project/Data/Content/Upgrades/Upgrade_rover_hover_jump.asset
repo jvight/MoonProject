@@ -10,24 +10,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cfdec2a58e26680429557a55d28ff212, type: 3}
-  m_Name: Upgrade_radio_tower
+  m_Name: Upgrade_rover_hover_jump
   m_EditorClassIdentifier: 
-  _id: radio_tower
-  _station: 0
-  _baseSignalRadius: 60
+  _id: rover.hover_jump
+  _station: 1
+  _baseSignalRadius: 0
   _levels:
-  - _cost: 15
-    _signalRadius: 110
-    _lightBoost: 1.25
-    _grantsAbility: 0
-    _ability: 0
-  - _cost: 40
-    _signalRadius: 170
-    _lightBoost: 1.5
-    _grantsAbility: 0
-    _ability: 0
-  - _cost: 80
-    _signalRadius: 260
-    _lightBoost: 1.8
-    _grantsAbility: 0
+  - _cost: 150
+    _signalRadius: 0
+    _lightBoost: 1
+    _grantsAbility: 1
     _ability: 0

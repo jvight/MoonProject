@@ -1,15 +1,16 @@
 using System;
 using UnityEditor;
 using UnityEngine;
+using MoonProject.Core;
 using MoonProject.Editor.Builders;
 
 namespace MoonProject.Gameplay.Editor
 {
     /// <summary>
     /// Writes the gameplay content from code recipes: one RelicDefinition per <see cref="RelicRecipes"/> entry, the
-    /// relic catalog, the scrap catalog over Art's scrap prefabs, the radio tower upgrade, and the friends (Tilly) and
-    /// their catalog. Rewritten in place on every run (GUIDs kept).
-    /// Every Art prefab it references (M2 content contract) is required: a missing one fails the build loudly.
+    /// relic catalog, the scrap catalog over Art's scrap prefabs, the radio tower and workshop upgrades, and the
+    /// friends (Tilly) and their catalog. Rewritten in place on every run (GUIDs kept). Every Art prefab it references
+    /// (M2 content contract) is required: a missing one fails the build loudly.
     /// </summary>
     internal static class GameplayContentBuilder
     {
@@ -27,6 +28,7 @@ namespace MoonProject.Gameplay.Editor
             BuildScrapCatalog();
             BuildRelics();
             BuildRadioTower();
+            BuildHoverJump();
             BuildFriends();
             AssetDatabase.SaveAssets();
         }
@@ -55,19 +57,35 @@ namespace MoonProject.Gameplay.Editor
 
         /// <summary>
         /// The radio tower: before any purchase the old mast is dark and the clear signal reaches 60 m; three levels
-        /// (15, 40, 80 scrap) widen it to 110, 170 and 260 m and warm the base up. Twice the total cost lies in the
-        /// basin as scrap, and every relic brought home adds a gift (design ruling 5). Its name and level texts live in
-        /// the localization tables (upgrade.radio_tower.*).
+        /// (15, 40, 80 scrap) widen it to 110, 170 and 260 m and warm the base up. The basin's scrap covers twice
+        /// everything on sale (tower and workshop), and every relic brought home adds a gift (design ruling 5). Its
+        /// name and level texts live in the localization tables (upgrade.radio_tower.*).
         /// </summary>
         private static void BuildRadioTower()
         {
             var upgrade = ScriptableObject.CreateInstance<UpgradeDefinition>();
-            upgrade.Populate("radio_tower", 60f, new[]
+            upgrade.Populate("radio_tower", UpgradeStationKind.RadioTower, 60f, new[]
             {
                 new UpgradeLevel(15, 110f, 1.25f), new UpgradeLevel(40, 170f, 1.5f), new UpgradeLevel(80, 260f, 1.8f),
             });
             GeneratedAssets.CreateOrReplace(upgrade, GameplayAssetPaths.RadioTowerUpgrade);
             Debug.Log($"{BuilderPath}: wrote {GameplayAssetPaths.RadioTowerUpgrade}");
+        }
+
+        /// <summary>
+        /// Hover-Jump, the workshop's first rover ability (docs/features/M3-03-workshop-hoverjump.md): one level for
+        /// 150 scrap, the slice's big scrap sink once the tower is done. Its texts live in the localization tables
+        /// (upgrade.rover.hover_jump.*).
+        /// </summary>
+        private static void BuildHoverJump()
+        {
+            var upgrade = ScriptableObject.CreateInstance<UpgradeDefinition>();
+            upgrade.Populate("rover.hover_jump", UpgradeStationKind.Workshop, 0f, new[]
+            {
+                new UpgradeLevel(150, RoverAbility.HoverJump),
+            });
+            GeneratedAssets.CreateOrReplace(upgrade, GameplayAssetPaths.HoverJumpUpgrade);
+            Debug.Log($"{BuilderPath}: wrote {GameplayAssetPaths.HoverJumpUpgrade}");
         }
 
         /// <summary>

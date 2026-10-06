@@ -8,17 +8,15 @@ using Object = UnityEngine.Object;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// The base's radio tower and its upgrade station. A ring of warm light on the ground in front of it is the shop:
-    /// it breathes softly, glows inviting when the next level is affordable and brightly while 07 is parked on it.
+    /// The base's radio tower and its upgrade station. A ring of warm light on the ground in front of it is the shop
+    /// (<see cref="StationPad"/>): it breathes softly, glows inviting when the next level is affordable and brightly
+    /// while 07 is parked on it.
     /// Before the first purchase the old mast stands dark; each level lights the beacon brighter, and buying one
     /// flares the beacon, grows the next stage in and rolls a warm ring out to the new clear-signal radius.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class RadioTower : MonoBehaviour, IUpgradeStation
     {
-        /// <summary>Metres the pad and bloom rings float above the dust.</summary>
-        private const float RingLift = 0.06f;
-
         [Tooltip("Tower tuning (Assets/_Project/Data/Tuning/Gameplay/RadioTowerTuning.asset).")]
         [SerializeField] private RadioTowerTuning _tuning;
 
@@ -45,8 +43,7 @@ namespace MoonProject.Gameplay
         private Transform _beacon;
         private GlowRenderer _beaconGlow;
         private Light _beaconLight;
-        private TerrainRing _padRing;
-        private GlowRenderer _padGlow;
+        private StationPad _pad;
         private TerrainRing _bloomRing;
         private GlowRenderer _bloomGlow;
         private Vector3 _bloomCentre;
@@ -55,15 +52,14 @@ namespace MoonProject.Gameplay
         private float _swapStart = float.NegativeInfinity;
         private int _fromStage;
         private int _toStage;
-        private float _padLevel;
         private bool _initialized;
 
         public UpgradeDefinition Definition => _definition;
 
         /// <summary>True while 07 is parked on the pad.</summary>
-        public bool Occupied { get; private set; }
+        public bool Occupied => _pad != null && _pad.Occupied;
 
-        public Vector3 PadCentre { get; private set; }
+        public Vector3 PadCentre => _pad != null ? _pad.Centre : Vector3.zero;
 
         /// <summary>The level the tower shows (follows purchases and loads).</summary>
         public int ShownLevel { get; private set; }
@@ -71,7 +67,7 @@ namespace MoonProject.Gameplay
         /// <summary>Current beacon brightness (tests and debugging views).</summary>
         public float BeaconLevel => _beaconGlow != null ? _beaconGlow.Intensity : 0f;
 
-        public float PadLevel => _padLevel;
+        public float PadLevel => _pad != null ? _pad.Level : 0f;
 
         /// <summary>The stage currently standing (tests and debugging views).</summary>
         public int ActiveStage
@@ -92,6 +88,11 @@ namespace MoonProject.Gameplay
 
         public RadioTowerTuning Tuning => _tuning;
 
+        public bool Sells(UpgradeDefinition definition)
+        {
+            return definition == _definition;
+        }
+
         internal void Wire(RadioTowerTuning tuning, UpgradeDefinition definition, Transform anchor,
             GameObject[] stages, Renderer[] stageLights, Transform[] beaconSockets)
         {
@@ -107,6 +108,9 @@ namespace MoonProject.Gameplay
         {
             string problem = _tuning == null ? "RadioTowerTuning is not assigned."
                 : _definition == null ? "the radio tower UpgradeDefinition is not assigned."
+                : _definition.Station != UpgradeStationKind.RadioTower ? $"'{_definition.Id}' is not sold at the tower."
+                : upgrades == null || upgrades.Find(_definition.Id) == null
+                    ? $"'{_definition.Id}' is not one of the GameplaySystem's upgrades."
                 : _anchor == null ? "the tower anchor is not assigned."
                 : _stages.Length == 0 || _stages.Length != _stageLights.Length ||
                   _stages.Length != _beaconSockets.Length ? "stages, their lights and beacon sockets must match."
@@ -120,7 +124,7 @@ namespace MoonProject.Gameplay
 
             _rover = services.Rover;
             _terrain = services.Terrain;
-            _upgrades = upgrades ?? throw new ArgumentNullException(nameof(upgrades));
+            _upgrades = upgrades;
             _lights = new EmissionGlow[_stageLights.Length];
             for (int i = 0; i < _lights.Length; i++)
             {
@@ -128,13 +132,8 @@ namespace MoonProject.Gameplay
             }
 
             BuildBeacon(services);
-            Vector3 pad = _anchor.TransformPoint(_tuning.PadOffset);
-            PadCentre = SurfaceRules.OnSurface(_terrain, pad.x, pad.z);
-            _padRing = new TerrainRing(_tuning.PadSegments);
-            _padRing.Rebuild(_terrain, PadCentre, _tuning.PadRadius - _tuning.PadRingWidth * 0.5f,
-                _tuning.PadRadius + _tuning.PadRingWidth * 0.5f, RingLift);
-            _padGlow = new GlowRenderer(GlowObject.Create("TowerPad", transform, _padRing.Mesh,
-                services.Visuals.WarmRing));
+            _pad = new StationPad("TowerPad", transform, _terrain, _anchor.TransformPoint(_tuning.PadOffset),
+                _tuning.PadLook, services.Visuals.WarmRing);
             _bloomRing = new TerrainRing(_tuning.BloomSegments);
             _bloomGlow = new GlowRenderer(GlowObject.Create("SignalBloom", transform, _bloomRing.Mesh,
                 services.Visuals.WarmRing));
@@ -202,10 +201,10 @@ namespace MoonProject.Gameplay
 
             float now = Time.time;
             float deltaTime = Time.deltaTime;
-            Occupied = SurfaceRules.HorizontalDistance(_rover.Position, PadCentre) <= _tuning.PadRadius;
             float flare = StepSwap(now - _swapStart);
             UpdateBeacon(now, flare);
-            UpdatePad(now, deltaTime);
+            bool affordable = _upgrades.TryGetOffer(_definition.Id, out UpgradeOffer offer) && offer.CanAfford;
+            _pad.Tick(_rover.Position, ShownLevel >= _definition.MaxLevel, affordable, now, deltaTime);
             UpdateBloom(now);
         }
 
@@ -258,30 +257,6 @@ namespace MoonProject.Gameplay
             _lights[stage].Apply(lights + flare);
         }
 
-        private void UpdatePad(float now, float deltaTime)
-        {
-            float target;
-            if (ShownLevel >= _definition.MaxLevel)
-            {
-                target = _tuning.PadDone;
-            }
-            else if (Occupied)
-            {
-                target = _tuning.PadOccupied;
-            }
-            else if (_upgrades.TryGetOffer(_definition.Id, out UpgradeOffer offer) && offer.CanAfford)
-            {
-                target = _tuning.PadInviting * Breathing(now, _tuning.PadBreathDepth);
-            }
-            else
-            {
-                target = _tuning.PadIdle * Breathing(now, _tuning.PadBreathDepth);
-            }
-
-            _padLevel = Damp.Toward(_padLevel, target, _tuning.PadEase, deltaTime);
-            _padGlow.Apply(_padLevel);
-        }
-
         private void UpdateBloom(float now)
         {
             float t = now - _bloomStart;
@@ -294,7 +269,7 @@ namespace MoonProject.Gameplay
             float progress = t / _tuning.BloomDuration;
             float radius = _bloomRadius * Ease.OutQuad(progress);
             float half = _tuning.BloomWidth * 0.5f;
-            _bloomRing.Rebuild(_terrain, _bloomCentre, radius - half, radius + half, RingLift);
+            _bloomRing.Rebuild(_terrain, _bloomCentre, radius - half, radius + half, StationPad.RingLift);
             _bloomGlow.Apply(_tuning.BloomGlow * Mathf.Pow(1f - progress, _tuning.BloomFadeCurve));
         }
 
@@ -307,10 +282,7 @@ namespace MoonProject.Gameplay
         private void OnDestroy()
         {
             _purchases?.Dispose();
-            if (_padRing != null)
-            {
-                Object.Destroy(_padRing.Mesh);
-            }
+            _pad?.Dispose();
 
             if (_bloomRing != null)
             {

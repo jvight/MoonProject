@@ -19,19 +19,19 @@ namespace MoonProject.Gameplay
         private readonly ExcavationSystem _excavation;
         private readonly TetherSystem _tether;
         private readonly HomeBase _home;
-        private readonly RadioTower _tower;
+        private readonly IUpgradeStation[] _stations;
         private readonly UpgradeService _upgrades;
         private readonly FriendField _friends;
 
         public InteractionHints(IRoverState rover, SonarSystem sonar, ExcavationSystem excavation, TetherSystem tether,
-            HomeBase home, RadioTower tower, UpgradeService upgrades, FriendField friends)
+            HomeBase home, IUpgradeStation[] stations, UpgradeService upgrades, FriendField friends)
         {
             _rover = rover ?? throw new ArgumentNullException(nameof(rover));
             _sonar = sonar != null ? sonar : throw new ArgumentNullException(nameof(sonar));
             _excavation = excavation != null ? excavation : throw new ArgumentNullException(nameof(excavation));
             _tether = tether != null ? tether : throw new ArgumentNullException(nameof(tether));
             _home = home != null ? home : throw new ArgumentNullException(nameof(home));
-            _tower = tower != null ? tower : throw new ArgumentNullException(nameof(tower));
+            _stations = stations ?? throw new ArgumentNullException(nameof(stations));
             _upgrades = upgrades ?? throw new ArgumentNullException(nameof(upgrades));
             _friends = friends != null ? friends : throw new ArgumentNullException(nameof(friends));
         }
@@ -88,11 +88,15 @@ namespace MoonProject.Gameplay
                         : InteractionHint.None;
                     return towed != null;
                 case InteractionKind.Upgrade:
-                    if (_tower.Occupied && _upgrades.TryGetOffer(_tower.Definition.Id, out UpgradeOffer offer) &&
-                        !offer.IsMaxed)
+                    for (int i = 0; i < _stations.Length; i++)
                     {
-                        hint = new InteractionHint(kind, _tower.PadCentre, offer.CanAfford);
-                        return true;
+                        IUpgradeStation station = _stations[i];
+                        if (station.Occupied && _upgrades.TryGetOffer(station.Definition.Id, out UpgradeOffer offer) &&
+                            !offer.IsMaxed)
+                        {
+                            hint = new InteractionHint(kind, station.PadCentre, offer.CanAfford);
+                            return true;
+                        }
                     }
 
                     hint = InteractionHint.None;

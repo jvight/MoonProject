@@ -4,6 +4,7 @@ using System.IO;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using MoonProject.App;
+using MoonProject.Core;
 using MoonProject.Testing;
 using Object = UnityEngine.Object;
 #if UNITY_EDITOR
@@ -74,6 +75,10 @@ namespace MoonProject.Gameplay.PlayModeTests
         public RadioTowerTuning TowerTuning { get; private set; }
 
         public UpgradeDefinition RadioTowerUpgrade { get; private set; }
+
+        public WorkshopTuning WorkshopTuning { get; private set; }
+
+        public UpgradeDefinition HoverJumpUpgrade { get; private set; }
 
         public FriendTuning FriendTuning { get; private set; }
 
@@ -152,9 +157,15 @@ namespace MoonProject.Gameplay.PlayModeTests
             BaseTuning = Asset<BaseTuning>();
             TowerTuning = Asset<RadioTowerTuning>();
             RadioTowerUpgrade = Asset<UpgradeDefinition>();
-            RadioTowerUpgrade.Populate("radio_tower", 60f, new[]
+            RadioTowerUpgrade.Populate("radio_tower", UpgradeStationKind.RadioTower, 60f, new[]
             {
                 new UpgradeLevel(15, 110f, 1.25f), new UpgradeLevel(40, 170f, 1.5f), new UpgradeLevel(80, 260f, 1.8f),
+            });
+            WorkshopTuning = Asset<WorkshopTuning>();
+            HoverJumpUpgrade = Asset<UpgradeDefinition>();
+            HoverJumpUpgrade.Populate("rover.hover_jump", UpgradeStationKind.Workshop, 0f, new[]
+            {
+                new UpgradeLevel(150, RoverAbility.HoverJump),
             });
             var placement = Asset<RelicPlacementTuning>();
 
@@ -184,7 +195,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 GlowMaterial(shader, GlowRole.WarmRing), GlowMaterial(shader, GlowRole.WarmGlow),
                 Track(GlintMaterials.Create(LoadShader(GlintShaderPath))),
                 Track(GlintMaterials.CreatePart(LoadShader(GlintShaderPath))),
-                GlowMaterial(shader, GlowRole.FriendPillar));
+                GlowMaterial(shader, GlowRole.FriendPillar), GlowMaterial(shader, GlowRole.Spark));
 
             var root = new GameObject("[Gameplay]");
             root.SetActive(false);
@@ -196,16 +207,17 @@ namespace MoonProject.Gameplay.PlayModeTests
             var tether = Child<TetherSystem>(root, "Tether");
             var home = Child<HomeBase>(root, "Home");
             var tower = Child<RadioTower>(root, "RadioTower");
+            var workshop = Child<Workshop>(root, "Workshop");
             var friends = Child<FriendField>(root, "Friends");
-            BuildBase(root.transform, home, tower);
+            BuildBase(root.transform, home, tower, workshop);
             BuildTilly(friends);
             relics.Wire(relicCatalog, placement, RelicTuning);
             scrap.Wire(ScrapTuning, scrapCatalog);
             sonar.Wire(SonarTuning);
             excavation.Wire(ExcavationTuning);
             tether.Wire(TetherTuning);
-            Gameplay.Wire(visuals, new[] { RadioTowerUpgrade }, relics, scrap, sonar, excavation, tether, home, tower,
-                friends);
+            Gameplay.Wire(visuals, new[] { RadioTowerUpgrade, HoverJumpUpgrade }, relics, scrap, sonar, excavation,
+                tether, home, tower, workshop, friends);
             root.SetActive(true);
 
             Bootstrap = BootstrapHarness.Create(_controls, SaveSlot, World, Rover, Gameplay);
@@ -216,7 +228,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// A stand-in for Art's lander, shelf and tower stages with the contract's node names and positions, wired the
         /// way the scene contributor wires the real prefabs.
         /// </summary>
-        private void BuildBase(Transform parent, HomeBase home, RadioTower tower)
+        private void BuildBase(Transform parent, HomeBase home, RadioTower tower, Workshop workshop)
         {
             var baseRoot = new GameObject("Base").transform;
             baseRoot.SetParent(parent, false);
@@ -257,6 +269,12 @@ namespace MoonProject.Gameplay.PlayModeTests
             home.Wire(BaseTuning, baseRoot, windows.GetComponent<Renderer>(), sockets, shelf,
                 shelfLights.GetComponent<Renderer>(), slots);
             tower.Wire(TowerTuning, RadioTowerUpgrade, anchor, stages, lights, beacons);
+            Transform workbench = Node("Workbench", Node("WorkshopAnchor", lander, new Vector3(12.5f, 0f, -2f)),
+                Vector3.zero);
+            Block(workbench, new Vector3(0f, 0.47f, 0f), new Vector3(2.3f, 0.95f, 0.9f));
+            Transform lamp = Block(workbench, new Vector3(0.55f, 2.02f, 0.18f), Vector3.one * 0.12f);
+            workshop.Wire(WorkshopTuning, new[] { HoverJumpUpgrade }, workbench.parent, lamp.GetComponent<Renderer>(),
+                Node("SparkSocket", workbench, new Vector3(-0.82f, 1.14f, 0.32f)));
             TillyPerch = Node("FriendSocket_tilly", lander, new Vector3(-1.6f, 3.3f, 0.9f));
         }
 

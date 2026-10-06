@@ -6,10 +6,11 @@ namespace MoonProject.Gameplay.PlayModeTests
 {
     /// <summary>
     /// Holds 07's wheel in the playthrough like a calm player would: it steers toward a target, eases off as it gets
-    /// close, slows down for sharp turns and lets go of the throttle once it has arrived. Read by the real
-    /// RoverController through <see cref="IRoverDriveSource"/>, so drive easing, steering and physics are the game's.
+    /// close, slows down for sharp turns and lets go of the throttle once it has arrived, and holds the Hover-Jump
+    /// button when told to. Read by the real RoverController through <see cref="IRoverDriveSource"/> and
+    /// <see cref="IRoverJumpSource"/>, so drive easing, steering, jumping and physics are the game's.
     /// </summary>
-    public sealed class Autopilot : IRoverDriveSource
+    public sealed class Autopilot : IRoverDriveSource, IRoverJumpSource
     {
         /// <summary>Degrees of heading error that ask for full steering lock.</summary>
         private const float FullLockAngle = 35f;
@@ -37,6 +38,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         public float SlowRadius { get; set; } = 10f;
 
         public float MaxThrottle { get; set; } = 1f;
+
+        /// <summary>Holding the Hover-Jump button.</summary>
+        public bool JumpHeld { get; set; }
 
         public bool Arrived => Target == null || Distance <= ArriveRadius;
 

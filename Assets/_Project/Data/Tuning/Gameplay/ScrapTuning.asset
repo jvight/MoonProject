@@ -29,7 +29,7 @@ MonoBehaviour:
   _siteClearRadius: 4
   _clusterRadius: {x: 1.2, y: 2.6}
   _piecesPerCluster: {x: 3, y: 5}
-  _minTotalValue: 300
+  _minTotalValue: 580
   _topUpAttempts: 600
   _minPieceSpacing: 0.75
   _hoverHeight: 0.45
