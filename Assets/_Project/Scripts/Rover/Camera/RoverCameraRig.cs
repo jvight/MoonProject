@@ -13,13 +13,20 @@ namespace MoonProject.Rover
     /// <see cref="CameraOrbit"/> into a Cinemachine 3 rig (OrbitalFollow locked to the target's yaw + RotationComposer,
     /// with Decollider and Deoccluder keeping it out of the terrain), widens the FOV with speed and dips softly on
     /// landings. Reads the rover only through <see cref="IRoverState"/>, so it must initialise after the rover.
-    /// Registers itself as <see cref="IViewCamera"/> (gameplay aims from its centre ray, UI projects with it) and
-    /// <see cref="ILookSettings"/> (the UI applies the player's sensitivity and invert-Y).
+    /// Slow, skippable camera moments frame 07 with a surfacing relic or the base after an upgrade (needs
+    /// <see cref="IWorldLayout"/>). Registers itself as <see cref="IViewCamera"/> (gameplay aims from its centre ray,
+    /// UI projects with it) and <see cref="ILookSettings"/> (the UI applies the player's sensitivity and invert-Y).
     /// </summary>
     [DefaultExecutionOrder(100)]
     [DisallowMultipleComponent]
     public sealed class RoverCameraRig : MonoBehaviour, IGameSystem, IViewCamera, ILookSettings
     {
+        /// <summary>Look input below this (deg per frame) is sensor noise, not the player looking around.</summary>
+        private const float LookEpsilon = 1e-4f;
+
+        /// <summary>Subjects nearer than this (m, ground plane) have no meaningful direction to turn to.</summary>
+        private const float MinSubjectDistance = 0.5f;
+
         /// <summary>Below this horizontal speed (m/s) the travel direction is too noisy to judge slopes.</summary>
         private const float DescentMinSpeed = 0.5f;
 
@@ -39,12 +46,14 @@ namespace MoonProject.Rover
         [SerializeField] private CinemachineDeoccluder _deoccluder;
         [SerializeField] private RoverCameraBump _bump;
 
+        private readonly CameraMoment _moment = new CameraMoment();
         private IRoverState _rover;
+        private IWorldLayout _world;
         private InputReader _input;
         private CameraOrbit _orbitState;
         private LookSettings _look;
         private DampedSpring _bumpSpring;
-        private IDisposable _landedSubscription;
+        private IDisposable[] _subscriptions;
         private bool _initialized;
 
         public CameraOrbit Orbit => _orbitState;
@@ -72,11 +81,17 @@ namespace MoonProject.Rover
             }
 
             _rover = context.Get<IRoverState>();
+            _world = context.Get<IWorldLayout>();
             _input = context.Input;
             _orbitState = new CameraOrbit(_tuning);
             _look = new LookSettings(_tuning);
             ApplyCinemachineSettings();
-            _landedSubscription = context.Events.Subscribe<RoverLanded>(OnLanded);
+            _subscriptions = new[]
+            {
+                context.Events.Subscribe<RoverLanded>(OnLanded),
+                context.Events.Subscribe<RelicSurfaced>(OnRelicSurfaced),
+                context.Events.Subscribe<UpgradePurchased>(OnUpgradePurchased),
+            };
             context.Register<IViewCamera>(this);
             context.Register<ILookSettings>(this);
             _initialized = true;
@@ -168,24 +183,53 @@ namespace MoonProject.Rover
                 return;
             }
 
+            Vector2 look = ReadLook(deltaTime);
+            if (look.sqrMagnitude > LookEpsilon * LookEpsilon)
+            {
+                _moment.Cancel(_tuning.MomentCancelEaseOut);
+            }
+
+            _moment.Step(deltaTime);
             PlaceTarget();
 
             Vector3 velocity = _rover.Velocity;
             float horizontal = Mathf.Sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
             float descent = horizontal > DescentMinSpeed ? Mathf.Atan2(-velocity.y, horizontal) * Mathf.Rad2Deg : 0f;
-            _orbitState.Step(ReadLook(deltaTime), _rover.Speed, _rover.NormalizedSpeed, descent, _rover.IsGrounded,
+            _orbitState.Step(look, _rover.Speed, _rover.NormalizedSpeed, descent, _rover.IsGrounded,
                 deltaTime);
 
             _bumpSpring.Step(0f, _tuning.BumpFrequency, _tuning.BumpDamping, deltaTime);
             ApplyOrbit();
         }
 
+        /// <summary>
+        /// Follow point above 07, facing its heading; during a camera moment it eases toward the subject and the yaw
+        /// swings partly round to look from 07 toward it, so both share the frame.
+        /// </summary>
         private void PlaceTarget()
         {
+            Vector3 rover = _rover.Position;
             Vector3 forward = _rover.Rotation * Vector3.forward;
             float yaw = Mathf.Atan2(forward.x, forward.z) * Mathf.Rad2Deg;
-            _target.SetPositionAndRotation(_rover.Position + Vector3.up * _tuning.TargetHeight,
-                Quaternion.Euler(0f, yaw, 0f));
+            Vector3 point = rover + Vector3.up * _tuning.TargetHeight;
+
+            float weight = _moment.Weight;
+            if (weight > 0f)
+            {
+                CameraMomentSettings moment = _moment.Settings;
+                Vector3 toSubject = _moment.Subject - rover;
+                float distance = Mathf.Sqrt(toSubject.x * toSubject.x + toSubject.z * toSubject.z);
+                float reach = weight * CameraMoment.FocusReach(moment, distance);
+                if (distance > MinSubjectDistance)
+                {
+                    float subjectYaw = Mathf.Atan2(toSubject.x, toSubject.z) * Mathf.Rad2Deg;
+                    yaw = CameraMoment.BlendYaw(moment, yaw, subjectYaw, reach);
+                }
+
+                point = CameraMoment.LookPoint(moment, point, _moment.Subject, reach);
+            }
+
+            _target.SetPositionAndRotation(point, Quaternion.Euler(0f, yaw, 0f));
         }
 
         private Vector2 ReadLook(float deltaTime)
@@ -195,10 +239,24 @@ namespace MoonProject.Rover
 
         private void ApplyOrbit()
         {
-            _orbit.HorizontalAxis.Value = _orbitState.YawOffset;
-            _orbit.VerticalAxis.Value = _orbitState.Elevation;
+            float weight = _moment.Weight;
+            float lift = weight > 0f ? _moment.Settings.Lift * weight : 0f;
+            float pullBack = weight > 0f ? _moment.Settings.PullBack * weight : 0f;
+            _orbit.HorizontalAxis.Value = _orbitState.YawOffset * (1f - weight);
+            _orbit.VerticalAxis.Value = Mathf.Min(_orbitState.Elevation + lift, _tuning.MaxPitch);
+            _orbit.Radius = _tuning.Distance * (1f + pullBack);
             _camera.Lens.FieldOfView = _orbitState.FieldOfView;
             _bump.Offset = Vector3.up * _bumpSpring.Value;
+        }
+
+        private void OnRelicSurfaced(RelicSurfaced relic)
+        {
+            _moment.Start(_tuning.RelicMoment, relic.Position);
+        }
+
+        private void OnUpgradePurchased(UpgradePurchased upgrade)
+        {
+            _moment.Start(_tuning.UpgradeMoment, _world.BasePosition + Vector3.up * _tuning.TargetHeight);
         }
 
         private void OnLanded(RoverLanded landed)
@@ -208,7 +266,15 @@ namespace MoonProject.Rover
 
         private void OnDestroy()
         {
-            _landedSubscription?.Dispose();
+            if (_subscriptions == null)
+            {
+                return;
+            }
+
+            foreach (IDisposable subscription in _subscriptions)
+            {
+                subscription.Dispose();
+            }
         }
     }
 }
