@@ -1,33 +1,48 @@
+using System;
 using UnityEngine;
 using MoonProject.Art;
 
 namespace MoonProject.World
 {
     /// <summary>
-    /// Picks the palette swatch of one terrain triangle from its slope, height and region weights: rock on steep
-    /// faces, shadow dust on crater walls, light dust on crater rims, and large soft seeded patches of light and mid
-    /// dust on the floor (a small per-triangle dither frays their borders). Immutable and thread-safe.
+    /// Picks the palette swatch of one terrain triangle. Rock on steep faces and the rim, two-toned by steepness,
+    /// height, patches and facing; shaded crater walls and lit crater rims; and floor dust toned by large seeded
+    /// patches plus the facet's tilt toward the earthlight, so lit and lee facets differ by a whole swatch and the
+    /// low-poly relief reads even on gentle ground. A small per-triangle dither frays every border. Immutable and
+    /// thread-safe.
     /// </summary>
     public sealed class TerrainPainter
     {
         private const uint PatchSalt = 0x632BE59Bu;
 
-        // Tone lost per unit of steepness: one full step from light to mid dust.
-        private const float PatchStep = 1f;
+        // Dither is scaled up for rock so the two rock tones interleave along their border.
+        private const float RockDitherScale = 4f;
 
         private readonly TerrainPaintSettings _settings;
         private readonly GradientNoise _patchNoise;
         private readonly float _invPatchWavelength;
         private readonly float _rockCos;
         private readonly float _rimRockCos;
+        private readonly float _lightX;
+        private readonly float _lightZ;
 
-        public TerrainPainter(TerrainPaintSettings settings, int seed)
+        /// <param name="lightDirection">Direction toward the earthlight (only its horizontal part is used).</param>
+        public TerrainPainter(TerrainPaintSettings settings, int seed, Vector3 lightDirection)
         {
-            _settings = settings ?? throw new System.ArgumentNullException(nameof(settings));
+            _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _patchNoise = new GradientNoise(Hashing.Mix((uint)seed ^ PatchSalt));
             _invPatchWavelength = 1f / settings.PatchWavelength;
             _rockCos = Mathf.Cos(settings.RockSlope * Mathf.Deg2Rad);
             _rimRockCos = Mathf.Cos(settings.RimRockSlope * Mathf.Deg2Rad);
+            Vector2 horizontal = new Vector2(lightDirection.x, lightDirection.z);
+            if (horizontal.sqrMagnitude < 1e-6f)
+            {
+                throw new ArgumentException("The earthlight must not shine straight down.", nameof(lightDirection));
+            }
+
+            horizontal.Normalize();
+            _lightX = horizontal.x;
+            _lightZ = horizontal.y;
         }
 
         /// <param name="normal">Unit face normal.</param>
@@ -37,15 +52,20 @@ namespace MoonProject.World
         public PaletteSwatch Pick(Vector3 normal, Vector3 center, SurfaceSample region, uint hash)
         {
             float dither = Hashing.ToSigned(hash) * _settings.Dither;
+            float patch = _patchNoise.Fractal(center.x * _invPatchWavelength, center.z * _invPatchWavelength, 2, 2f,
+                0.5f);
+            float facing = normal.x * _lightX + normal.z * _lightZ;
             bool onRim = region.RimZone >= _settings.RimZoneStart;
             if (normal.y <= _rockCos || (onRim && normal.y <= _rimRockCos))
             {
-                float lift = (center.y - _settings.RockLightHeight) / _settings.RockHeightBlend;
-                return lift + dither * 4f > 0f ? PaletteSwatch.RockLight : PaletteSwatch.RockDark;
+                float slope = Mathf.Acos(Mathf.Clamp(normal.y, -1f, 1f)) * Mathf.Rad2Deg;
+                float rock = (_settings.RockLightSlope - slope) / _settings.RockSlopeBlend
+                    + (center.y - _settings.RockLightHeight) / _settings.RockHeightBlend
+                    + patch * _settings.RockMottle + facing * _settings.RockFacing + dither * RockDitherScale;
+                return rock > 0f ? PaletteSwatch.RockLight : PaletteSwatch.RockDark;
             }
 
-            float slope = Mathf.Acos(Mathf.Clamp(normal.y, -1f, 1f)) * Mathf.Rad2Deg;
-            if (region.CraterBowl > _settings.CraterShadow && slope > _settings.CraterWallSlope)
+            if (region.CraterBowl > _settings.CraterShadow && region.CraterBowl < _settings.CraterFloor)
             {
                 return PaletteSwatch.DustShadow;
             }
@@ -60,18 +80,13 @@ namespace MoonProject.World
                 return PaletteSwatch.DustShadow;
             }
 
-            float steepness = Mathf.Max(0f, slope - _settings.DarkenSlope) / _settings.DarkenRange;
-            float patch = _patchNoise.Fractal(center.x * _invPatchWavelength, center.z * _invPatchWavelength, 2, 2f,
-                0.5f);
-            float tone = patch + dither - steepness * PatchStep;
-            if (tone > _settings.LightPatch)
+            float tone = patch * _settings.PatchStrength + facing * _settings.FacingStrength + dither;
+            if (tone > _settings.LightTone)
             {
                 return PaletteSwatch.DustLight;
             }
 
-            return _settings.ShadowPatch > -1f && tone < _settings.ShadowPatch
-                ? PaletteSwatch.DustShadow
-                : PaletteSwatch.DustMid;
+            return tone < _settings.ShadowTone ? PaletteSwatch.DustShadow : PaletteSwatch.DustMid;
         }
     }
 }

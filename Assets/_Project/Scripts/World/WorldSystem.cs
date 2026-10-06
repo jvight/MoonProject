@@ -108,8 +108,9 @@ namespace MoonProject.World
 
             _generatedRoot = new GameObject(GeneratedRootName) { hideFlags = hideFlags };
             _generatedRoot.transform.SetParent(transform, false);
+            Vector3 toLight = WorldAtmosphere.LightSourceDirection(_settings.Atmosphere, _settings.Sky);
             LastBuild = _terrainBuilder.Build(_generatedRoot.transform, Surface, _settings.Mesh, _settings.Paint,
-                _terrainMaterial, hideFlags);
+                toLight, _terrainMaterial, hideFlags);
             LastScatter = _scatterBuilder.Build(_generatedRoot.transform, scatterPlan.GetAwaiter().GetResult(),
                 scatterSettings, _settings.Mesh.ChunkSize, _pebbleRocks, _boulderRocks, _terrainMaterial, hideFlags);
             BuildEarth(hideFlags);

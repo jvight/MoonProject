@@ -4,8 +4,9 @@ using UnityEngine;
 namespace MoonProject.World
 {
     /// <summary>
-    /// Rules that give every terrain triangle one palette swatch: dust shades on the floor in large soft patches,
-    /// shade in craters, light on crater rims, rock on steep faces and the rim mountains.
+    /// Rules that give every terrain triangle one palette swatch. Floor dust is painted by facet orientation to the
+    /// earthlight (lit facets light, lee facets in shadow tone) on top of large soft patches, so facets and dunes
+    /// read even where the ground is gentle; crater walls are shaded, crater rims lit, steep faces and the rim rock.
     /// </summary>
     [Serializable]
     public sealed class TerrainPaintSettings
@@ -23,48 +24,65 @@ namespace MoonProject.World
         [Range(0f, 1f)]
         [SerializeField] private float _rimZoneStart = 0.3f;
 
+        [Tooltip("Rock faces gentler than this (degrees) lean to the light rock swatch, steeper ones to the dark " +
+            "one, like the two-tone rocks of the art kit.")]
+        [Range(10f, 80f)]
+        [SerializeField] private float _rockLightSlope = 42f;
+
+        [Tooltip("Slope range (degrees) over which rock fades from light to dark.")]
+        [Range(1f, 60f)]
+        [SerializeField] private float _rockSlopeBlend = 14f;
+
         [Tooltip("Rock above this height (metres) leans to the light rock swatch, below it to the dark one.")]
         [Range(0f, 200f)]
         [SerializeField] private float _rockLightHeight = 70f;
 
         [Tooltip("Height range (metres) over which rock fades from dark to light.")]
         [Range(1f, 200f)]
-        [SerializeField] private float _rockHeightBlend = 60f;
+        [SerializeField] private float _rockHeightBlend = 80f;
+
+        [Tooltip("How much the large patches mottle the rock between light and dark.")]
+        [Range(0f, 2f)]
+        [SerializeField] private float _rockMottle = 0.6f;
+
+        [Tooltip("How much facing the earthlight lightens rock faces.")]
+        [Range(0f, 10f)]
+        [SerializeField] private float _rockFacing = 2.5f;
 
         [Header("Dust")]
-        [Tooltip("Size of the light/mid/shadow dust patches on the floor, metres.")]
+        [Tooltip("Size of the light and mid dust patches on the floor, metres.")]
         [Range(10f, 500f)]
         [SerializeField] private float _patchWavelength = 140f;
 
-        [Tooltip("Patch value above which floor dust is light.")]
-        [Range(-1f, 1f)]
-        [SerializeField] private float _lightPatch = 0.42f;
+        [Tooltip("Strength of the large patches in the dust tone.")]
+        [Range(0f, 2f)]
+        [SerializeField] private float _patchStrength = 0.45f;
 
-        [Tooltip("Patch value below which floor dust is in shadow tone. -1 disables shadow patches: shadow dust then " +
-            "belongs to crater walls and the highlands only, so the floor never shows dark stains.")]
-        [Range(-1f, 1f)]
-        [SerializeField] private float _shadowPatch = -1f;
+        [Tooltip("Tone gained per unit of facet tilt toward the earthlight (sine of the tilt). 5 = a 5 degree tilt " +
+            "shifts a facet by almost half a step: gentle dunes show their lit and lee sides.")]
+        [Range(0f, 20f)]
+        [SerializeField] private float _facingStrength = 5f;
 
-        [Tooltip("Per-triangle random nudge of the patch value: frays the patch edges like hand painting.")]
+        [Tooltip("Dust tone above which a face is light dust.")]
+        [Range(-1f, 1f)]
+        [SerializeField] private float _lightTone = 0.35f;
+
+        [Tooltip("Dust tone below which a face is shadow dust.")]
+        [Range(-2f, 1f)]
+        [SerializeField] private float _shadowTone = -0.45f;
+
+        [Tooltip("Per-triangle random nudge of the tone: neighbouring facets differ a little, like hand painting.")]
         [Range(0f, 0.5f)]
-        [SerializeField] private float _dither = 0.03f;
-
-        [Tooltip("Faces steeper than this (degrees) start leaning towards darker dust.")]
-        [Range(0f, 45f)]
-        [SerializeField] private float _darkenSlope = 11f;
-
-        [Tooltip("Extra steepness (degrees) over which dust darkens by one full patch step.")]
-        [Range(1f, 60f)]
-        [SerializeField] private float _darkenRange = 16f;
+        [SerializeField] private float _dither = 0.14f;
 
         [Header("Craters and highlands")]
-        [Tooltip("Crater bowl weight (0 = edge, 1 = centre) above which steep faces are shadow dust.")]
+        [Tooltip("Crater bowl weight (0 = edge, 1 = centre) where the shaded crater wall starts.")]
         [Range(0f, 1f)]
-        [SerializeField] private float _craterShadow = 0.1f;
+        [SerializeField] private float _craterShadow = 0.12f;
 
-        [Tooltip("Inside a crater, faces steeper than this (degrees) are its walls and get shadow dust.")]
-        [Range(0f, 45f)]
-        [SerializeField] private float _craterWallSlope = 7f;
+        [Tooltip("Crater bowl weight where the wall ends and the crater floor (painted like the open floor) begins.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _craterFloor = 0.7f;
 
         [Tooltip("Crater rim weight above which faces are light dust (raised rims catch the light).")]
         [Range(0f, 1f)]
@@ -77,16 +95,20 @@ namespace MoonProject.World
         public float RockSlope => _rockSlope;
         public float RimRockSlope => _rimRockSlope;
         public float RimZoneStart => _rimZoneStart;
+        public float RockLightSlope => _rockLightSlope;
+        public float RockSlopeBlend => _rockSlopeBlend;
         public float RockLightHeight => _rockLightHeight;
         public float RockHeightBlend => _rockHeightBlend;
+        public float RockMottle => _rockMottle;
+        public float RockFacing => _rockFacing;
         public float PatchWavelength => _patchWavelength;
-        public float LightPatch => _lightPatch;
-        public float ShadowPatch => _shadowPatch;
+        public float PatchStrength => _patchStrength;
+        public float FacingStrength => _facingStrength;
+        public float LightTone => _lightTone;
+        public float ShadowTone => _shadowTone;
         public float Dither => _dither;
-        public float DarkenSlope => _darkenSlope;
-        public float DarkenRange => _darkenRange;
         public float CraterShadow => _craterShadow;
-        public float CraterWallSlope => _craterWallSlope;
+        public float CraterFloor => _craterFloor;
         public float CraterHighlight => _craterHighlight;
         public float HighlandZone => _highlandZone;
     }

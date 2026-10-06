@@ -17,11 +17,11 @@ namespace MoonProject.World
 
         [Tooltip("Intensity of the earthlight.")]
         [Range(0f, 4f)]
-        [SerializeField] private float _lightIntensity = 1.45f;
+        [SerializeField] private float _lightIntensity = 1.7f;
 
         [Tooltip("Elevation the earthlight shines from, degrees. Low light makes gentle dunes and facets read.")]
         [Range(5f, 89f)]
-        [SerializeField] private float _lightElevation = 24f;
+        [SerializeField] private float _lightElevation = 30f;
 
         [Tooltip("Bearing offset of the earthlight from Earth's bearing, degrees. Swung west so the view from the " +
             "base toward The Peak is side-lit (best relief) while the light still comes from Earth's side of the sky.")]
@@ -34,13 +34,13 @@ namespace MoonProject.World
 
         [Header("Ambient (trilight)")]
         [Tooltip("Ambient from above: the violet glow of the sky.")]
-        [SerializeField] private Color _ambientSky = new Color(0.25f, 0.23f, 0.47f);
+        [SerializeField] private Color _ambientSky = new Color(0.19f, 0.17f, 0.37f);
 
         [Tooltip("Ambient from the horizon.")]
-        [SerializeField] private Color _ambientEquator = new Color(0.19f, 0.16f, 0.35f);
+        [SerializeField] private Color _ambientEquator = new Color(0.14f, 0.12f, 0.27f);
 
         [Tooltip("Ambient from below: bounce off the dust.")]
-        [SerializeField] private Color _ambientGround = new Color(0.1f, 0.09f, 0.19f);
+        [SerializeField] private Color _ambientGround = new Color(0.08f, 0.07f, 0.15f);
 
         [Header("Fog")]
         [Tooltip("Fog colour: matches the sky's horizon glow so distant hills melt into the sky.")]

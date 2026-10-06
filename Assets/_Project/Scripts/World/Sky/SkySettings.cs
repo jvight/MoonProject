@@ -65,11 +65,11 @@ namespace MoonProject.World
         [Header("Earth")]
         [Tooltip("Bearing of Earth from the base, degrees clockwise from +Z. The rover starts facing +Z.")]
         [Range(0f, 360f)]
-        [SerializeField] private float _earthBearing = 325f;
+        [SerializeField] private float _earthBearing = 338f;
 
         [Tooltip("Elevation of Earth's centre above the horizon, degrees. Low and huge reads as a dreamy anchor.")]
         [Range(5f, 80f)]
-        [SerializeField] private float _earthElevation = 21f;
+        [SerializeField] private float _earthElevation = 16f;
 
         [Tooltip("Apparent diameter of Earth, degrees (the real one is ~2; dreams are bigger).")]
         [Range(1f, 40f)]
@@ -87,8 +87,8 @@ namespace MoonProject.World
         [Range(0f, 0.5f)]
         [SerializeField] private float _earthCloudFraction = 0.1f;
 
-        [Tooltip("Direction of the sun lighting Earth, relative to the viewer: x = right, y = up, z = toward the viewer. " +
-            "Sets Earth's phase.")]
+        [Tooltip("Direction of the sun lighting Earth, relative to the viewer: x = right, y = up, " +
+            "z = toward the viewer. Sets Earth's phase.")]
         [SerializeField] private Vector3 _earthSunDirection = new Vector3(-0.75f, 0.35f, 0.55f);
 
         [Tooltip("Brightness of Earth's night side (0 = black).")]

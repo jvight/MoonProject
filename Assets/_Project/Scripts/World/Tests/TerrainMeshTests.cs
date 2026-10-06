@@ -29,7 +29,8 @@ namespace MoonProject.World.Tests
         {
             _surface = new MoonSurface(new SurfaceSettings(), WorldSettings.DefaultSeed);
             _settings = new TerrainMeshSettings();
-            _painter = new TerrainPainter(new TerrainPaintSettings(), WorldSettings.DefaultSeed);
+            Vector3 toLight = WorldAtmosphere.LightSourceDirection(new AtmosphereSettings(), new SkySettings());
+            _painter = new TerrainPainter(new TerrainPaintSettings(), WorldSettings.DefaultSeed, toLight);
             var mesher = new TerrainChunkMesher(_surface, _painter, _settings);
             _plans = TerrainChunkPlanner.Plan(_settings);
             _chunks = new TerrainMeshData[_plans.Length];
