@@ -107,6 +107,7 @@ namespace MoonProject.Rover
             _orbit.RadialAxis.Recentering.Enabled = false;
 
             _composer.Damping = _tuning.AimDamping;
+            _composer.CenterOnActivate = false;
             ScreenComposerSettings composition = _composer.Composition;
             composition.ScreenPosition = _tuning.ScreenPosition;
             _composer.Composition = composition;

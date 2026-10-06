@@ -42,6 +42,12 @@ namespace MoonProject.Rover
         [Range(-20f, 60f)]
         [SerializeField] private float _minPitch = 3f;
 
+        [Tooltip("Orbit elevation (deg) of the opening shot: low, so the camera looks almost level across the basin "
+            + "at Earth and The Peak (design ruling 8: at most ~6 deg down). It eases to the resting elevation once 07 "
+            + "starts driving.")]
+        [Range(-10f, 80f)]
+        [SerializeField] private float _openingPitch = 6f;
+
         [Tooltip("Highest orbit elevation (deg).")]
         [Range(10f, 89f)]
         [SerializeField] private float _maxPitch = 60f;
@@ -163,6 +169,8 @@ namespace MoonProject.Rover
         public float TargetHeight => _targetHeight;
 
         public float DefaultPitch => Mathf.Clamp(_defaultPitch, MinPitch, MaxPitch);
+
+        public float OpeningPitch => Mathf.Clamp(_openingPitch, MinPitch, MaxPitch);
 
         public float MinPitch => Mathf.Min(_minPitch, _maxPitch);
 

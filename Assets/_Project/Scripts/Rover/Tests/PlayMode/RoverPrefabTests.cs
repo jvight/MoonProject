@@ -25,6 +25,9 @@ namespace MoonProject.Rover.PlayModeTests
         private const float EarthlightElevation = 24f;
         private const float EarthlightBearing = 265f;
 
+        /// <summary>Design ruling 8: the opening shot pitches down at most ~6 degrees.</summary>
+        private const float MaxOpeningPitch = 6f;
+
         private static readonly string OutputFolder =
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "rover-metrics"));
 
@@ -96,8 +99,18 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.IsNotNull(context.Get<IRoverRig>().TetherOrigin);
             Assert.AreSame(cameraRig.Camera, context.Get<IViewCamera>().Camera);
 
-            yield return Settle(1.5f);
+            yield return null;
+            yield return null;
             Camera camera = cameraRig.Camera;
+            float openingPitch = Mathf.Asin(-camera.transform.forward.y) * Mathf.Rad2Deg;
+            Vector3 roverOnScreen = camera.WorldToViewportPoint(controller.Position);
+            Debug.Log($"[rover-opening] camera pitch {openingPitch:0.0} deg down, 07 at viewport {roverOnScreen}");
+            Assert.LessOrEqual(openingPitch, MaxOpeningPitch, "Opening shot looks across the basin (ruling 8).");
+            Assert.That(roverOnScreen.x, Is.InRange(0.3f, 0.7f), "07 is in the opening frame.");
+            Assert.That(roverOnScreen.y, Is.InRange(0.1f, 0.5f), "07 sits in the lower half of the opening frame.");
+            FrameCapture.SavePng(camera, 960, 540, Path.Combine(OutputFolder, "09-prefab-opening-shot.png"));
+
+            yield return Settle(1.5f);
             FrameCapture.SavePng(camera, 960, 540, Path.Combine(OutputFolder, "10-prefab-sun-shadow.png"));
             SetHeadVisible(false);
             yield return null;
