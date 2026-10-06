@@ -10,7 +10,8 @@ namespace MoonProject.Rover
     /// the visual model following the interpolated sphere. Registers itself as <see cref="IRoverState"/> and
     /// <see cref="IRoverRig"/> (interaction points and gaze requests for gameplay), publishes
     /// <see cref="RoverLanded"/>, and ticks its visual rig and wheel effects in a fixed order every frame.
-    /// Needs the World's <see cref="ITerrainQuery"/> (spawn height), so it initialises after the World systems.
+    /// Needs the World's <see cref="ITerrainQuery"/> (spawn height, stuck recovery), so it initialises after the World
+    /// systems. If 07 is trying to drive but stuck for a few seconds, it is lifted gently to a nearby open spot.
     /// The maths lives in plain classes (<see cref="LongitudinalDrive"/>, <see cref="SteeringModel"/>,
     /// <see cref="GroundModel"/>, <see cref="LandingDetector"/>); this component only wires them to physics.
     /// </summary>
@@ -46,7 +47,13 @@ namespace MoonProject.Rover
         private readonly HoldRequests _holds = new HoldRequests();
         private EventBus _events;
         private LandingDetector _landing;
+        private StuckDetector _stuck;
+        private ITerrainQuery _terrain;
         private bool _initialized;
+        private bool _recovering;
+        private float _recoveryElapsed;
+        private Vector3 _recoveryFrom;
+        private Vector3 _recoveryTo;
 
         private float _throttle;
         private float _steer;
@@ -163,7 +170,9 @@ namespace MoonProject.Rover
             _input = context.Input;
             _events = context.Events;
             _landing = new LandingDetector(_tuning.Landing);
-            PlaceOnTerrain(context.Get<ITerrainQuery>());
+            _stuck = new StuckDetector(_tuning.Recovery);
+            _terrain = context.Get<ITerrainQuery>();
+            PlaceOnTerrain(_terrain);
             ConfigureBody();
             _heading = transform.eulerAngles.y;
             _previousHeading = _heading;
@@ -258,6 +267,13 @@ namespace MoonProject.Rover
             }
 
             float dt = Time.fixedDeltaTime;
+            if (_recovering)
+            {
+                ReadInput(dt);
+                StepRecovery(dt);
+                return;
+            }
+
             Vector3 velocity = _body.linearVelocity;
             Quaternion yaw = Quaternion.Euler(0f, _heading, 0f);
             _localAcceleration = Quaternion.Inverse(yaw) * ((velocity - _lastVelocity) / dt);
@@ -277,11 +293,89 @@ namespace MoonProject.Rover
 
             Steer(dt);
             Drive(velocity, normal, forward, dt);
+            if (_stuck.Step(_throttle, _body.position, dt))
+            {
+                TryStartRecovery();
+            }
 
             float smoothing = Smoothing.Factor(_tuning.Ground.GroundNormalHalfLife, dt);
             Vector3 targetNormal = _landing.IsGrounded ? normal : Vector3.up;
             _groundNormal = Vector3.Slerp(_groundNormal, targetNormal, smoothing);
             _lastVelocity = velocity;
+        }
+
+        /// <summary>True while 07 is being lifted out of a stuck spot.</summary>
+        public bool IsRecovering => _recovering;
+
+        /// <summary>
+        /// Looks for the nearest comfortable spot (drivable, gentle, clear of rocks) and starts the lift there. If none
+        /// is in reach nothing happens; the detector re-arms and tries again later.
+        /// </summary>
+        private void TryStartRecovery()
+        {
+            RecoverySettings recovery = _tuning.Recovery;
+            float radius = _tuning.Ground.SphereRadius;
+            Vector3 from = _body.position;
+            for (int i = 0; i < recovery.SearchCandidates; i++)
+            {
+                Vector2 offset = RecoveryPlanner.CandidateOffset(recovery, _heading, i);
+                float x = from.x + offset.x;
+                float z = from.z + offset.y;
+                if (!_terrain.IsDrivable(x, z))
+                {
+                    continue;
+                }
+
+                Vector3 normal = _terrain.SampleNormal(x, z);
+                if (Vector3.Angle(normal, Vector3.up) > recovery.MaxSetDownSlope)
+                {
+                    continue;
+                }
+
+                Vector3 rest = new Vector3(x, _terrain.SampleHeight(x, z), z) + normal * radius;
+                if (Physics.CheckSphere(rest + Vector3.up * recovery.Clearance, recovery.Clearance, Layers.PropMask,
+                        QueryTriggerInteraction.Ignore))
+                {
+                    continue;
+                }
+
+                StartRecovery(from, rest);
+                return;
+            }
+        }
+
+        private void StartRecovery(Vector3 from, Vector3 to)
+        {
+            _recovering = true;
+            _recoveryElapsed = 0f;
+            _recoveryFrom = from;
+            _recoveryTo = to;
+            _body.linearVelocity = Vector3.zero;
+            _body.isKinematic = true;
+            _localAcceleration = Vector3.zero;
+            _yawRate = 0f;
+            _events.Publish(new RoverRecovering(from, to, _tuning.Recovery.LiftDuration));
+        }
+
+        private void StepRecovery(float dt)
+        {
+            RecoverySettings recovery = _tuning.Recovery;
+            _recoveryElapsed += dt;
+            float t = _recoveryElapsed / recovery.LiftDuration;
+            _body.MovePosition(RecoveryPlanner.LiftPosition(_recoveryFrom, _recoveryTo, recovery.LiftHeight, t));
+            _previousHeading = _heading;
+            if (t < 1f)
+            {
+                return;
+            }
+
+            _recovering = false;
+            _body.isKinematic = false;
+            _body.linearVelocity = Vector3.zero;
+            _lastVelocity = Vector3.zero;
+            _forwardSpeed = 0f;
+            _landing.Reset();
+            _stuck.Reset();
         }
 
         private void ReadInput(float dt)

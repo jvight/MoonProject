@@ -1,0 +1,53 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b63fff05ea6abee4e8635c5e2ab4fbf2, type: 3}
+  m_Name: ScrapTuning
+  m_EditorClassIdentifier: 
+  _seed: 7
+  _maxSlopeDegrees: 14
+  _edgeMargin: 8
+  _baseClearRadius: 11
+  _baseRing: {x: 15, y: 24}
+  _baseRingClusters: 5
+  _trailStart: 34
+  _trailSpacing: 16
+  _trailJitter: 4
+  _poiRing: {x: 7, y: 15}
+  _poiClusters: 2
+  _fillClusters: 18
+  _fillAttempts: 24
+  _minClusterSpacing: 7
+  _siteClearRadius: 4
+  _clusterRadius: {x: 1.2, y: 2.6}
+  _piecesPerCluster: {x: 3, y: 5}
+  _minTotalValue: 300
+  _topUpAttempts: 600
+  _minPieceSpacing: 0.75
+  _hoverHeight: 0.45
+  _bobAmplitude: 0.08
+  _bobFrequency: 0.35
+  _spinSpeed: 25
+  _animateRadius: 70
+  _glanceRadius: 9
+  _magnetRadius: 5.5
+  _flightBaseDuration: 0.6
+  _flightSecondsPerMetre: 0.06
+  _flightLift: 0.9
+  _spiralRadius: 0.6
+  _spiralTurns: 1.25
+  _arrivalScale: 0.35
+  _comboWindow: 2
+  _minPickupInterval: 0.11
+  _flashPoolSize: 8
+  _flashDuration: 0.4
+  _flashRadius: {x: 0.12, y: 0.55}
+  _flashIntensity: 2.5

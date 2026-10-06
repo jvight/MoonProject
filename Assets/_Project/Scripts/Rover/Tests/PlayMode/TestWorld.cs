@@ -9,7 +9,8 @@ namespace MoonProject.Rover.PlayModeTests
     /// Feel-metric test ground built in code (no assets), far from the world origin so nothing another test left
     /// behind (a crater, a bootstrap scene) can touch it. In local coordinates (see <see cref="Point"/> and
     /// <see cref="Local"/>): a large flat plain at y = 0, a 1 m high, 10 m long cosine crest on a strip at
-    /// x = <see cref="BumpX"/>, and a 30 degree slope rising toward -x from x = <see cref="SlopeX"/>.
+    /// x = <see cref="BumpX"/>, a 30 degree slope rising toward -x from x = <see cref="SlopeX"/>, and a rock wall
+    /// to get stuck against at (<see cref="WallX"/>, <see cref="WallZ"/>).
     /// <see cref="Height"/> is the analytic surface matching the colliders (world coordinates).
     /// </summary>
     public sealed class TestWorld : IDisposable
@@ -20,6 +21,8 @@ namespace MoonProject.Rover.PlayModeTests
         public const float BumpHeight = 1f;
         public const float SlopeX = -60f;
         public const float SlopeAngle = 30f;
+        public const float WallX = 120f;
+        public const float WallZ = 20f;
 
         /// <summary>Far beyond the game world's ~2.8 km extent, still precise for physics (sub-millimetre).</summary>
         private const float OriginX = 6000f;
@@ -32,6 +35,10 @@ namespace MoonProject.Rover.PlayModeTests
         private const float SlopeRun = 60f;
         private const float SlopeDepth = 300f;
         private const float PlainSize = 1200f;
+        private const float PlayableHalfSize = 500f;
+        private const float WallWidth = 6f;
+        private const float WallHeight = 3f;
+        private const float WallThickness = 1f;
         private const float SunPitch = 40f;
         private const float SunYaw = -35f;
 
@@ -57,12 +64,14 @@ namespace MoonProject.Rover.PlayModeTests
 
             _bumpMesh = BuildBump();
             BuildSlope();
+            BuildWall();
         }
 
         /// <summary>The default material of the plain, reused for every test mesh.</summary>
         public Material Material { get; }
 
-        public ITerrainQuery Terrain { get; } = new TestTerrain(Height);
+        public ITerrainQuery Terrain { get; } = new TestTerrain(Height, new Rect(OriginX - PlayableHalfSize,
+            OriginZ - PlayableHalfSize, 2f * PlayableHalfSize, 2f * PlayableHalfSize));
 
         /// <summary>The single directional light (no shadows unless a test turns them on).</summary>
         public Light Sun { get; }
@@ -147,6 +156,17 @@ namespace MoonProject.Rover.PlayModeTests
             Vector3 lowTopEdge = tilt * new Vector3(SlopeRun * 0.5f, 0.5f, 0f);
             slope.transform.localPosition = new Vector3(SlopeX, 0f, 0f) - lowTopEdge;
             slope.transform.localRotation = tilt;
+        }
+
+        /// <summary>A rock wall (Prop layer) across the way at (<see cref="WallX"/>, <see cref="WallZ"/>).</summary>
+        private void BuildWall()
+        {
+            GameObject wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            wall.name = "Wall";
+            wall.layer = Layers.Prop;
+            wall.transform.SetParent(_root.transform, false);
+            wall.transform.localScale = new Vector3(WallWidth, WallHeight, WallThickness);
+            wall.transform.localPosition = new Vector3(WallX, WallHeight * 0.5f, WallZ);
         }
 
         /// <summary>Destroys everything immediately, so the next test never overlaps this one's colliders.</summary>
