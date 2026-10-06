@@ -5,6 +5,10 @@ namespace MoonProject.Audio
     /// </summary>
     public static class AudioCueIds
     {
+        public const string FriendStitch = "friend_stitch";
+        public const string FriendBoot = "friend_boot";
+        public const string FriendPart = "friend_part";
+        public const string FriendSpotPing = "friend_spot_ping";
         public const string RoverHum = "rover_hum";
         public const string DustCrunch = "dust_crunch";
         public const string SuspensionCreak = "suspension_creak";
@@ -34,6 +38,42 @@ namespace MoonProject.Audio
         public const string UiHoldFill = "ui_hold_fill";
         public const string UiHoldComplete = "ui_hold_complete";
         public const string UiCard = "ui_card";
+
+        /// <summary>A friend's chirp cue, <c>&lt;friendId&gt;_&lt;mood&gt;</c> (e.g. tilly_curious). Builds a string:
+        /// call at initialisation only.</summary>
+        public static string FriendChirp(string friendId, FriendMood mood)
+        {
+            return $"{friendId}_{MoodSuffix(mood)}";
+        }
+
+        /// <summary>A friend's rotor/motor loop cue, <c>&lt;friendId&gt;_rotor</c>. Initialisation only.</summary>
+        public static string FriendRotor(string friendId)
+        {
+            return $"{friendId}_rotor";
+        }
+
+        private static string MoodSuffix(FriendMood mood)
+        {
+            switch (mood)
+            {
+                case FriendMood.Broken:
+                    return "broken";
+                case FriendMood.Curious:
+                    return "curious";
+                case FriendMood.Happy:
+                    return "happy";
+                case FriendMood.Sleepy:
+                    return "sleepy";
+                case FriendMood.Greeting:
+                    return "greeting";
+                case FriendMood.Excited:
+                    return "excited";
+                case FriendMood.Found:
+                    return "found";
+                default:
+                    throw new System.ArgumentOutOfRangeException(nameof(mood), mood, "Unknown friend mood.");
+            }
+        }
         public const string UpgradeArpeggio = "upgrade_arpeggio";
     }
 }
