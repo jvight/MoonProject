@@ -14,8 +14,16 @@ namespace MoonProject.Rover.Editor
     /// </summary>
     public static class RoverFxAssetBuilder
     {
-        /// <summary>How far a fresh, fully opaque track darkens the ground toward the dust shadow swatch.</summary>
-        private const float TrackTintStrength = 1f;
+        /// <summary>How far a fresh, fully opaque track darkens the ground toward the dust swatch.</summary>
+        private const float TrackTintStrength = 0.95f;
+
+        /// <summary>Fraction of the track's half width that feathers out to nothing at each edge.</summary>
+        private const float TrackEdgeSoftness = 0.5f;
+
+        /// <summary>Tracks start fading at this camera distance (m) and are gone by the far one.</summary>
+        private const float TrackFadeNear = 20f;
+
+        private const float TrackFadeFar = 55f;
 
         private const int DustTextureSize = 64;
 
@@ -56,10 +64,13 @@ namespace MoonProject.Rover.Editor
         private static void BuildTrackMaterial()
         {
             var shader = BuildWiring.Require<Shader>(RoverAssetPaths.TrackShader, "the Rover shaders folder");
-            Color tint = Palette.Get(PaletteSwatch.DustShadow);
+            Color tint = Palette.Get(PaletteSwatch.DustMid);
             tint.a = TrackTintStrength;
             var material = new Material(shader) { enableInstancing = false };
             material.SetColor("_Color", tint);
+            material.SetFloat("_EdgeSoftness", TrackEdgeSoftness);
+            material.SetFloat("_FadeNear", TrackFadeNear);
+            material.SetFloat("_FadeFar", TrackFadeFar);
             MaterialValidation.Validate(material);
             GeneratedAssets.CreateOrReplace(material, RoverAssetPaths.TrackMaterial);
         }
