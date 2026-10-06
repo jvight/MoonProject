@@ -19,10 +19,19 @@ namespace MoonProject.Gameplay
             return Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg;
         }
 
-        public static bool Inside(Rect area, float x, float z, float margin)
+        /// <summary>
+        /// True when (x, z) is drivable floor and so are four points <paramref name="margin"/> metres around it, so
+        /// whatever stands there keeps a margin from the rim.
+        /// </summary>
+        public static bool InsideDrivable(ITerrainQuery terrain, float x, float z, float margin)
         {
-            return x >= area.xMin + margin && x <= area.xMax - margin && z >= area.yMin + margin &&
-                   z <= area.yMax - margin;
+            if (!terrain.IsDrivable(x, z))
+            {
+                return false;
+            }
+
+            return margin <= 0f || (terrain.IsDrivable(x + margin, z) && terrain.IsDrivable(x - margin, z) &&
+                                    terrain.IsDrivable(x, z + margin) && terrain.IsDrivable(x, z - margin));
         }
 
         /// <summary>
@@ -45,31 +54,31 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// Distance from <paramref name="origin"/> (inside <paramref name="area"/>) along the horizontal unit
-        /// <paramref name="direction"/> to the area's edge.
+        /// How far (m) one can travel from <paramref name="origin"/> along the horizontal unit
+        /// <paramref name="direction"/> while staying on drivable floor <paramref name="margin"/> metres from its
+        /// edge, marching in <paramref name="step"/> metre steps up to <paramref name="maxDistance"/>.
         /// </summary>
-        public static float DistanceToEdge(Rect area, Vector3 origin, Vector3 direction)
+        public static float DrivableReach(ITerrainQuery terrain, Vector3 origin, Vector3 direction, float margin,
+            float step, float maxDistance)
         {
-            float distance = float.MaxValue;
-            if (direction.x > 1e-5f)
+            if (step <= 0f)
             {
-                distance = Mathf.Min(distance, (area.xMax - origin.x) / direction.x);
-            }
-            else if (direction.x < -1e-5f)
-            {
-                distance = Mathf.Min(distance, (area.xMin - origin.x) / direction.x);
+                throw new System.ArgumentOutOfRangeException(nameof(step), step, "The march step must be positive.");
             }
 
-            if (direction.z > 1e-5f)
+            float reach = 0f;
+            for (float distance = step; distance <= maxDistance; distance += step)
             {
-                distance = Mathf.Min(distance, (area.yMax - origin.z) / direction.z);
-            }
-            else if (direction.z < -1e-5f)
-            {
-                distance = Mathf.Min(distance, (area.yMin - origin.z) / direction.z);
+                if (!InsideDrivable(terrain, origin.x + direction.x * distance, origin.z + direction.z * distance,
+                        margin))
+                {
+                    break;
+                }
+
+                reach = distance;
             }
 
-            return Mathf.Max(0f, distance);
+            return reach;
         }
 
         public static float HorizontalDistance(Vector3 a, Vector3 b)

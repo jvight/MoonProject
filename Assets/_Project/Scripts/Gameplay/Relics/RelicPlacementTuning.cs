@@ -22,7 +22,7 @@ namespace MoonProject.Gameplay
         [Tooltip("Radius (m) around a site that must also be that flat (where 07 parks).")]
         [Range(0.5f, 10f)] [SerializeField] private float _flatnessProbeRadius = 3f;
 
-        [Tooltip("Metres kept between sites and the playable edge.")]
+        [Tooltip("Metres kept between sites and the edge of the drivable floor.")]
         [Range(0f, 60f)] [SerializeField] private float _edgeMargin = 12f;
 
         [Tooltip("No relic closer to the base centre than this (m): home stays tidy.")]
@@ -49,7 +49,7 @@ namespace MoonProject.Gameplay
         [Tooltip("Half-width (degrees) of the fan around the bearing of The Peak searched for the rim site.")]
         [Range(5f, 90f)] [SerializeField] private float _rimBearingSpread = 35f;
 
-        [Tooltip("Fraction of the way from the base to the playable edge the rim site may sit (min, max).")]
+        [Tooltip("Fraction of the way from the base to the drivable edge the rim site may sit (min, max).")]
         [SerializeField] private Vector2 _rimReach = new Vector2(0.78f, 1f);
 
         [Tooltip("Height (m) of 07's eye above the rim site, for the line-of-sight check to The Peak.")]

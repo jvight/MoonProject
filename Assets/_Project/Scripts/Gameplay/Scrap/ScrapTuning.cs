@@ -15,7 +15,7 @@ namespace MoonProject.Gameplay
         [Tooltip("Steepest ground (degrees) scrap may lie on.")]
         [Range(2f, 30f)] [SerializeField] private float _maxSlopeDegrees = 14f;
 
-        [Tooltip("Metres kept between scrap and the playable edge.")]
+        [Tooltip("Metres kept between scrap and the edge of the drivable floor.")]
         [Range(0f, 60f)] [SerializeField] private float _edgeMargin = 8f;
 
         [Tooltip("No scrap closer to the base centre than this (m): the lander's yard stays clean.")]
@@ -31,7 +31,7 @@ namespace MoonProject.Gameplay
         [Range(10f, 120f)] [SerializeField] private float _trailStart = 34f;
 
         [Tooltip("Metres between clusters along a trail (short enough that driving it chains the melody).")]
-        [Range(6f, 60f)] [SerializeField] private float _trailSpacing = 15f;
+        [Range(6f, 60f)] [SerializeField] private float _trailSpacing = 16f;
 
         [Tooltip("Sideways wander (m) of trail clusters, so trails read as paths, not lines.")]
         [Range(0f, 20f)] [SerializeField] private float _trailJitter = 4f;
@@ -43,7 +43,7 @@ namespace MoonProject.Gameplay
         [Range(0, 8)] [SerializeField] private int _poiClusters = 2;
 
         [Tooltip("Lone clusters scattered over the rest of the basin.")]
-        [Range(0, 200)] [SerializeField] private int _fillClusters = 26;
+        [Range(0, 200)] [SerializeField] private int _fillClusters = 18;
 
         [Tooltip("Attempts per lone cluster before giving up on it.")]
         [Range(1, 200)] [SerializeField] private int _fillAttempts = 24;
@@ -58,7 +58,14 @@ namespace MoonProject.Gameplay
         [SerializeField] private Vector2 _clusterRadius = new Vector2(1.2f, 2.6f);
 
         [Tooltip("Pieces per cluster (min, max).")]
-        [SerializeField] private Vector2Int _piecesPerCluster = new Vector2Int(3, 6);
+        [SerializeField] private Vector2Int _piecesPerCluster = new Vector2Int(3, 5);
+
+        [Tooltip("The basin always holds at least this much scrap value (no grind: at least twice what the slice's " +
+                 "upgrades cost); lone clusters are added until it does.")]
+        [Range(0, 5000)] [SerializeField] private int _minTotalValue = 300;
+
+        [Tooltip("Extra lone-cluster attempts allowed to reach the minimum total value.")]
+        [Range(0, 5000)] [SerializeField] private int _topUpAttempts = 600;
 
         [Tooltip("Minimum metres between pieces of a cluster.")]
         [Range(0.2f, 3f)] [SerializeField] private float _minPieceSpacing = 0.75f;
@@ -144,6 +151,8 @@ namespace MoonProject.Gameplay
         public Vector2Int PiecesPerCluster => new Vector2Int(Mathf.Max(1, Mathf.Min(_piecesPerCluster.x,
             _piecesPerCluster.y)), Mathf.Max(1, Mathf.Max(_piecesPerCluster.x, _piecesPerCluster.y)));
 
+        public int MinTotalValue => _minTotalValue;
+        public int TopUpAttempts => _topUpAttempts;
         public float MinPieceSpacing => _minPieceSpacing;
         public float HoverHeight => _hoverHeight;
         public float BobAmplitude => _bobAmplitude;

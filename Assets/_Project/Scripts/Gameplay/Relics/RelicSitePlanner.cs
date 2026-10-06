@@ -9,13 +9,17 @@ namespace MoonProject.Gameplay
     /// Chooses where each relic is buried, deterministically from the tuning seed and the analytic surface:
     /// onboarding relics in a fan ahead of 07's spawn heading close to home, wanderers spread evenly around the basin
     /// at mid range, and the rim relic near the playable edge toward The Peak on the spot with the clearest view of
-    /// it. Every site is flat enough to park over, inside the playable area, away from home and from the others.
+    /// it. Every site is flat enough to park over, on drivable floor away from its edge, away from home and from the
+    /// others.
     /// Runs once at initialisation (allocates); throws if the surface leaves no valid spot (broken world tuning).
     /// </summary>
     public static class RelicSitePlanner
     {
         /// <summary>Spacing is relaxed by this factor when no spot satisfies it (a crowded or rugged world).</summary>
         private const float RelaxedSpacingFactor = 0.6f;
+
+        /// <summary>Metres per step when marching out to the drivable edge.</summary>
+        private const float ReachStep = 2f;
 
         public static RelicSite[] Plan(ITerrainQuery terrain, IWorldLayout layout, RelicPlacementTuning tuning,
             IReadOnlyList<RelicPlacementBand> bands)
@@ -84,6 +88,7 @@ namespace MoonProject.Gameplay
             private readonly List<Vector3> _placed = new List<Vector3>();
             private readonly float _minNormalY;
             private readonly float _wandererOffset;
+            private readonly float _maxReach;
             private DeterministicRandom _random;
 
             public Planner(ITerrainQuery terrain, IWorldLayout layout, RelicPlacementTuning tuning)
@@ -94,6 +99,8 @@ namespace MoonProject.Gameplay
                 _random = new DeterministicRandom(tuning.Seed);
                 _minNormalY = SurfaceRules.MinNormalY(tuning.MaxSlopeDegrees);
                 _wandererOffset = _random.Range(0f, 360f);
+                Rect area = terrain.PlayableArea;
+                _maxReach = 2f * Mathf.Max(area.width, area.height);
             }
 
             public RelicSite Place(RelicPlacementBand band, int ordinal, int count)
@@ -111,8 +118,8 @@ namespace MoonProject.Gameplay
                 }
 
                 throw new InvalidOperationException(
-                    $"{nameof(RelicSitePlanner)}: no flat, free spot for {band} relic {ordinal + 1}/{count} in the " +
-                    $"playable area {_terrain.PlayableArea}. Check the world surface or {nameof(RelicPlacementTuning)}.");
+                    $"{nameof(RelicSitePlanner)}: no flat, free, drivable spot for {band} relic {ordinal + 1}/{count}. " +
+                    $"Check the world surface or {nameof(RelicPlacementTuning)}.");
             }
 
             private bool TryPlace(RelicPlacementBand band, int ordinal, int count, float spacing, out RelicSite site)
@@ -145,8 +152,8 @@ namespace MoonProject.Gameplay
                             float bearing = SurfaceRules.Bearing(toPeak) +
                                             _random.Range(-_tuning.RimBearingSpread, _tuning.RimBearingSpread);
                             direction = SurfaceRules.BearingDirection(bearing);
-                            float reach = SurfaceRules.DistanceToEdge(_terrain.PlayableArea, basePosition, direction) -
-                                          _tuning.EdgeMargin;
+                            float reach = SurfaceRules.DrivableReach(_terrain, basePosition, direction,
+                                _tuning.EdgeMargin, ReachStep, _maxReach);
                             Vector2 fraction = _tuning.RimReach;
                             distance = reach * _random.Range(fraction.x, fraction.y);
                             break;
@@ -192,7 +199,7 @@ namespace MoonProject.Gameplay
 
             private bool IsValid(float x, float z, float spacing)
             {
-                if (!SurfaceRules.Inside(_terrain.PlayableArea, x, z, _tuning.EdgeMargin))
+                if (!SurfaceRules.InsideDrivable(_terrain, x, z, _tuning.EdgeMargin))
                 {
                     return false;
                 }
