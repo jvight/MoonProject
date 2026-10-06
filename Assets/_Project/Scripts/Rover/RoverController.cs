@@ -7,14 +7,15 @@ namespace MoonProject.Rover
 {
     /// <summary>
     /// The player rover: a hidden, rotation-locked physics sphere pushed by accelerations along a steered heading, with
-    /// the visual model following the interpolated sphere. Registers itself as <see cref="IRoverState"/>, publishes
+    /// the visual model following the interpolated sphere. Registers itself as <see cref="IRoverState"/> and
+    /// <see cref="IRoverRig"/> (interaction points and gaze requests for gameplay), publishes
     /// <see cref="RoverLanded"/>, and ticks its visual rig and wheel effects in a fixed order every frame.
     /// Needs the World's <see cref="ITerrainQuery"/> (spawn height), so it initialises after the World systems.
     /// The maths lives in plain classes (<see cref="LongitudinalDrive"/>, <see cref="SteeringModel"/>,
     /// <see cref="GroundModel"/>, <see cref="LandingDetector"/>); this component only wires them to physics.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class RoverController : MonoBehaviour, IGameSystem, IRoverState
+    public sealed class RoverController : MonoBehaviour, IGameSystem, IRoverState, IRoverRig
     {
         /// <summary>The probe starts this fraction of the radius above the centre, so slight sinking hits.</summary>
         private const float ProbeLiftFraction = 0.5f;
@@ -33,6 +34,12 @@ namespace MoonProject.Rover
 
         [Tooltip("Tire tracks and dust.")]
         [SerializeField] private RoverWheelFx _wheelFx;
+
+        [Tooltip("RoverModel 'TetherOrigin' (lens centre of 07's eye, +Z = gaze).")]
+        [SerializeField] private Transform _tetherOrigin;
+
+        [Tooltip("RoverModel 'CargoSocket'.")]
+        [SerializeField] private Transform _cargoSocket;
 
         private InputReader _input;
         private EventBus _events;
@@ -55,6 +62,9 @@ namespace MoonProject.Rover
         private Vector3 _spawnNormal = Vector3.up;
 
         public RoverTuning Tuning => _tuning;
+
+        /// <summary>Gaze requests made via <see cref="IRoverRig"/>; <see cref="RoverBodyLanguage"/> follows.</summary>
+        public GazeRequests Gaze { get; } = new GazeRequests();
 
         /// <summary>Interpolated centre of the physics sphere (render-frame accurate).</summary>
         public Vector3 SpherePosition => _body.transform.position;
@@ -115,6 +125,23 @@ namespace MoonProject.Rover
 
         public Vector3 GroundNormal => _groundNormal;
 
+        // IRoverRig
+        public Transform TetherOrigin => _tetherOrigin;
+
+        public Transform CargoSocket => _cargoSocket;
+
+        public Rigidbody PhysicsBody => _body;
+
+        public void SetGazeTarget(object owner, Vector3 worldPosition, int priority)
+        {
+            Gaze.Set(owner, worldPosition, priority);
+        }
+
+        public void ClearGazeTarget(object owner)
+        {
+            Gaze.Clear(owner);
+        }
+
         public void Initialize(GameContext context)
         {
             if (!ValidateWiring())
@@ -132,6 +159,7 @@ namespace MoonProject.Rover
             _previousHeading = _heading;
             _visualHeading = _heading;
             context.Register<IRoverState>(this);
+            context.Register<IRoverRig>(this);
 
             bool visualsReady = _visualRig.Initialize(this);
             bool effectsReady = _wheelFx.Initialize(context, this);
@@ -147,6 +175,7 @@ namespace MoonProject.Rover
             ok &= Require(_sphere != null, "Physics sphere SphereCollider is not assigned.");
             ok &= Require(_visualRig != null, "RoverVisualRig is not assigned.");
             ok &= Require(_wheelFx != null, "RoverWheelFx is not assigned.");
+            ok &= Require(_tetherOrigin != null && _cargoSocket != null, "TetherOrigin/CargoSocket are not assigned.");
             if (_body != null)
             {
                 ok &= Require(_body.gameObject.layer == Layers.Rover, "Physics sphere must be on the Rover layer.");

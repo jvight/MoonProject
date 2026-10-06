@@ -33,6 +33,7 @@ namespace MoonProject.Rover
         private DampedSpring _oof;
         private DampedSpring _wing;
         private DampedSpring _sigh;
+        private DampedSpring _nod;
 
         public RoverMood(RoverCharacterTuning tuning, uint seed)
         {
@@ -71,8 +72,17 @@ namespace MoonProject.Rover
         /// <summary>Antenna tip brightness multiplier.</summary>
         public float TipGlow { get; private set; }
 
-        /// <summary>Extra head pitch (deg, + = up) from perk-up and "oof".</summary>
-        public float HeadPitchOffset => _tuning.PerkHeadLift * Perk - _tuning.OofHeadDip * Oof;
+        /// <summary>Contented-nod swell, 0 .. ~1.</summary>
+        public float Nodding => Mathf.Clamp(_nod.Value, 0f, MaxSwell);
+
+        /// <summary>Sigh swell (head droops, lid lowers, wing opens a little), 0 .. ~1.</summary>
+        public float Sighing => Mathf.Clamp(_sigh.Value, 0f, MaxSwell);
+
+        /// <summary>Extra head pitch (deg, + = up) from perk-up, "oof", nods and sighs.</summary>
+        public float HeadPitchOffset => _tuning.PerkHeadLift * Perk
+            - _tuning.OofHeadDip * Oof
+            - _tuning.NodDepth * Nodding
+            - _tuning.SighHeadDrop * Sighing;
 
         /// <summary>
         /// Advances the mood. <paramref name="driveInput"/> is the magnitude of the drive stick/keys (0..1).
@@ -91,11 +101,12 @@ namespace MoonProject.Rover
 
             if (daydreaming && !wasDaydreaming)
             {
-                Swell(ref _sigh, _tuning.WingSighAmount, _tuning.WingSighFrequency);
+                Sigh(_tuning.DaydreamSigh);
             }
 
-            _sigh.Step(0f, _tuning.WingSighFrequency, 1f, deltaTime);
-            float wingTarget = Idle * _tuning.WingIdleOpen + Mathf.Max(0f, _sigh.Value);
+            _sigh.Step(0f, _tuning.SighFrequency, 1f, deltaTime);
+            _nod.Step(0f, _tuning.NodFrequency, 1f, deltaTime);
+            float wingTarget = Idle * _tuning.WingIdleOpen + _tuning.WingSighAmount * Sighing;
             _wing.Step(wingTarget, _tuning.WingFrequency, _tuning.WingDamping, deltaTime);
             _wing.Clamp(0f, 1f);
             _perk.Step(0f, _tuning.PerkFrequency, 1f, deltaTime);
@@ -119,6 +130,28 @@ namespace MoonProject.Rover
         public void FeelImpact(float strength)
         {
             Swell(ref _oof, strength, _tuning.OofFrequency);
+        }
+
+        /// <summary>A slow, contented nod peaking at <paramref name="strength"/> (0..1), with a soft blink.</summary>
+        public void NodContentedly(float strength)
+        {
+            Swell(ref _nod, strength, _tuning.NodFrequency);
+            BlinkNow();
+        }
+
+        /// <summary>A whole-body sigh peaking at <paramref name="strength"/> (0..1).</summary>
+        public void Sigh(float strength)
+        {
+            Swell(ref _sigh, strength, _tuning.SighFrequency);
+        }
+
+        /// <summary>Starts a slow blink now unless one is already running.</summary>
+        public void BlinkNow()
+        {
+            if (_blinkElapsed < 0f)
+            {
+                _blinkElapsed = 0f;
+            }
         }
 
         /// <summary>Kicks a critically damped spring so it swells to <paramref name="peak"/> and fades.</summary>
@@ -179,7 +212,8 @@ namespace MoonProject.Rover
         {
             float lid = Mathf.Lerp(_tuning.ActiveLid, _tuning.IdleLid, Idle)
                 - _tuning.PerkWiden * Perk
-                + _tuning.OofSquint * Oof;
+                + _tuning.OofSquint * Oof
+                + _tuning.SighLidDroop * Sighing;
             lid = Mathf.Clamp01(lid);
             LidClosure = lid + (1f - lid) * Blink;
 

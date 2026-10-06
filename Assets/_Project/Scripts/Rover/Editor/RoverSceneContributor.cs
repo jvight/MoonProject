@@ -8,8 +8,8 @@ namespace MoonProject.Rover.Editor
     /// Puts 07 and its camera into Main.unity. The rover stands on the base pad at the world origin facing +Z; its
     /// height is taken from the World's <c>ITerrainQuery</c> when it initialises, so it always spawns resting on the
     /// ground (no drop, no landing event, no guessing the pad height at build time).
-    /// Systems, in initialisation order (after World): RoverController (registers IRoverState),
-    /// RoverBodyLanguage (needs IWorldLayout, registers IRoverGaze), RoverCameraRig (needs IRoverState).
+    /// Systems, in initialisation order (after World): RoverController (registers IRoverState and IRoverRig),
+    /// RoverBodyLanguage (needs IWorldLayout), RoverCameraRig (needs IRoverState, registers IViewCamera).
     /// </summary>
     public sealed class RoverSceneContributor : ISceneContributor
     {
