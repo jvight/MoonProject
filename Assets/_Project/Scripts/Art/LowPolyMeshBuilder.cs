@@ -382,6 +382,37 @@ namespace MoonProject.Art
             return support;
         }
 
+        /// <summary>
+        /// Centre of mass of the enclosed volume (uniform density), from signed tetrahedra against the origin.
+        /// Exact for one closed shape; for overlapping closed parts the overlaps count twice, which is close
+        /// enough for a pivot. Falls back to the bounds centre when the shape encloses no volume.
+        /// </summary>
+        public Vector3 VolumeCentroid()
+        {
+            double volume = 0d;
+            double x = 0d;
+            double y = 0d;
+            double z = 0d;
+            for (int v = 0; v < VertexCount; v += 3)
+            {
+                Vector3 a = _positions[v];
+                Vector3 b = _positions[v + 1];
+                Vector3 c = _positions[v + 2];
+                double tetrahedron = Vector3.Dot(a, Vector3.Cross(b, c)) / 6d;
+                volume += tetrahedron;
+                x += tetrahedron * (a.x + b.x + c.x) / 4d;
+                y += tetrahedron * (a.y + b.y + c.y) / 4d;
+                z += tetrahedron * (a.z + b.z + c.z) / 4d;
+            }
+
+            if (Math.Abs(volume) < 1e-12d)
+            {
+                return Bounds.center;
+            }
+
+            return new Vector3((float)(x / volume), (float)(y / volume), (float)(z / volume));
+        }
+
         /// <summary>Axis-aligned bounds of the triangles in <paramref name="range"/>.</summary>
         public Bounds GetBounds(MeshRange range)
         {

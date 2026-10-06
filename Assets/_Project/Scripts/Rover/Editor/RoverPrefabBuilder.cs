@@ -1,0 +1,291 @@
+using UnityEditor;
+using UnityEngine;
+using UnityEngine.Rendering;
+using MoonProject.Art;
+using MoonProject.Core;
+using MoonProject.Editor.Builders;
+
+namespace MoonProject.Rover.Editor
+{
+    /// <summary>
+    /// Wraps the art box's RoverModel into the playable Rover.prefab:
+    /// <code>
+    /// Rover            RoverController, RoverBodyLanguage (both IGameSystems)
+    ///   PhysicsSphere  Rigidbody + SphereCollider (layer Rover, frictionless)
+    ///   Visual         RoverVisualRig
+    ///     Chassis      jelly lean / bob
+    ///       RoverModel (nested prefab; adds Headlamp spot under HeadlampSocket and EyeGlow point under Eye)
+    ///   WheelFx        RoverWheelFx: TrackLeft/Right ribbons, DustLeft/Right, LandingDust
+    /// </code>
+    /// Fails with a clear error when RoverModel.prefab does not exist yet: there is no placeholder model.
+    /// </summary>
+    public static class RoverPrefabBuilder
+    {
+        private const int DustMaxParticles = 160;
+        private const int LandingMaxParticles = 240;
+        private const float DustConeAngle = 35f;
+        private const float DustConeRadius = 0.12f;
+        private const float LandingRingRadius = 0.7f;
+        private const float DustDrag = 1.2f;
+        private const float LandingDrag = 1.6f;
+        private const float HeadlampShadowStrength = 0.7f;
+
+        /// <summary>Kicks rolling dust up and back from the rear wheel contact (cone axis tipped back).</summary>
+        private static readonly Vector3 DustConeRotation = new Vector3(-120f, 0f, 0f);
+
+        [MoonBuilder("Rover/Rover", 310)]
+        public static void Build()
+        {
+            var model = BuildWiring.Require<GameObject>(RoverAssetPaths.RoverModel, "the Art box's rover builder");
+            var tuning = BuildWiring.Require<RoverTuning>(RoverAssetPaths.RoverTuning, "Rover/Tuning");
+            var rigTuning = BuildWiring.Require<RoverRigTuning>(RoverAssetPaths.RigTuning, "Rover/Tuning");
+            var fxTuning = BuildWiring.Require<RoverFxTuning>(RoverAssetPaths.FxTuning, "Rover/Tuning");
+            var characterTuning =
+                BuildWiring.Require<RoverCharacterTuning>(RoverAssetPaths.CharacterTuning, "Rover/Tuning");
+            var sphereMaterial =
+                BuildWiring.Require<PhysicsMaterial>(RoverAssetPaths.SpherePhysicsMaterial, "Rover/Materials");
+            var trackMaterial = BuildWiring.Require<Material>(RoverAssetPaths.TrackMaterial, "Rover/Materials");
+            var dustMaterial = BuildWiring.Require<Material>(RoverAssetPaths.DustMaterial, "Rover/Materials");
+            var dustMesh = BuildWiring.Require<Mesh>(RoverAssetPaths.DustMesh, "Rover/Materials");
+
+            var root = new GameObject("Rover");
+            try
+            {
+                var controller = root.AddComponent<RoverController>();
+                var bodyLanguage = root.AddComponent<RoverBodyLanguage>();
+
+                GameObject sphere = Child("PhysicsSphere", root.transform);
+                sphere.layer = Layers.Rover;
+                sphere.transform.localPosition = Vector3.up * tuning.Ground.SphereRadius;
+                var body = sphere.AddComponent<Rigidbody>();
+                body.mass = tuning.Ground.Mass;
+                body.interpolation = RigidbodyInterpolation.Interpolate;
+                body.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+                body.constraints = RigidbodyConstraints.FreezeRotation;
+                var collider = sphere.AddComponent<SphereCollider>();
+                collider.radius = tuning.Ground.SphereRadius;
+                collider.sharedMaterial = sphereMaterial;
+
+                GameObject visual = Child("Visual", root.transform);
+                var rig = visual.AddComponent<RoverVisualRig>();
+                GameObject chassis = Child("Chassis", visual.transform);
+                var instance = (GameObject)PrefabUtility.InstantiatePrefab(model, chassis.transform);
+                Transform m = instance.transform;
+
+                Light headlamp = AddHeadlamp(BuildWiring.Node(m, RoverModelNodes.HeadlampSocket), rigTuning);
+                Light eyeLight = AddEyeLight(BuildWiring.Node(m, RoverModelNodes.Eye), characterTuning);
+
+                var wheels = new Object[RoverModelNodes.WheelCount];
+                for (int i = 0; i < wheels.Length; i++)
+                {
+                    wheels[i] = BuildWiring.Node(m, RoverModelNodes.Wheel(i));
+                }
+
+                BuildWiring.Assign(rig,
+                    ("_tuning", rigTuning),
+                    ("_chassis", chassis.transform),
+                    ("_bogieLeft", BuildWiring.Node(m, RoverModelNodes.BogieLeft)),
+                    ("_bogieRight", BuildWiring.Node(m, RoverModelNodes.BogieRight)),
+                    ("_antenna", BuildWiring.Node(m, RoverModelNodes.Antenna)),
+                    ("_headlamp", headlamp));
+                BuildWiring.AssignArray(rig, "_wheels", wheels);
+
+                RoverWheelFx wheelFx = BuildWheelFx(root.transform, m, fxTuning, trackMaterial, dustMaterial, dustMesh);
+
+                BuildWiring.Assign(controller,
+                    ("_tuning", tuning),
+                    ("_body", body),
+                    ("_sphere", collider),
+                    ("_visualRig", rig),
+                    ("_wheelFx", wheelFx));
+
+                BuildWiring.Assign(bodyLanguage,
+                    ("_tuning", characterTuning),
+                    ("_rover", controller),
+                    ("_rig", rig),
+                    ("_neck", BuildWiring.Node(m, RoverModelNodes.Neck)),
+                    ("_head", BuildWiring.Node(m, RoverModelNodes.Head)),
+                    ("_eyelid", BuildWiring.Node(m, RoverModelNodes.Eyelid)),
+                    ("_solarWing", BuildWiring.Node(m, RoverModelNodes.SolarWing)),
+                    ("_eyeRenderer", BuildWiring.NodeComponent<MeshRenderer>(m, RoverModelNodes.Eye)),
+                    ("_antennaTipRenderer", BuildWiring.NodeComponent<MeshRenderer>(m, RoverModelNodes.AntennaTip)),
+                    ("_eyeLight", eyeLight));
+            }
+            catch
+            {
+                Object.DestroyImmediate(root);
+                throw;
+            }
+
+            GeneratedAssets.SavePrefab(root, RoverAssetPaths.RoverPrefab);
+        }
+
+        private static GameObject Child(string name, Transform parent)
+        {
+            var child = new GameObject(name);
+            child.transform.SetParent(parent, false);
+            return child;
+        }
+
+        private static Light AddHeadlamp(Transform socket, RoverRigTuning tuning)
+        {
+            var light = Child("Headlamp", socket).AddComponent<Light>();
+            light.type = LightType.Spot;
+            light.color = Palette.Get(PaletteSwatch.WarmLamp);
+            light.intensity = tuning.HeadlampIntensity;
+            light.range = tuning.HeadlampRange;
+            light.spotAngle = tuning.HeadlampSpotAngle;
+            light.innerSpotAngle = tuning.HeadlampInnerSpotAngle;
+            light.shadows = LightShadows.Soft;
+            light.shadowStrength = HeadlampShadowStrength;
+            return light;
+        }
+
+        private static Light AddEyeLight(Transform eye, RoverCharacterTuning tuning)
+        {
+            var light = Child("EyeGlow", eye).AddComponent<Light>();
+            light.type = LightType.Point;
+            light.color = Palette.Get(PaletteSwatch.WarmLamp);
+            light.intensity = tuning.EyeLightIntensity;
+            light.range = tuning.EyeLightRange;
+            light.shadows = LightShadows.None;
+            return light;
+        }
+
+        private static RoverWheelFx BuildWheelFx(Transform root, Transform model, RoverFxTuning tuning,
+            Material trackMaterial, Material dustMaterial, Mesh dustMesh)
+        {
+            GameObject host = Child("WheelFx", root);
+            var wheelFx = host.AddComponent<RoverWheelFx>();
+            BuildWiring.Assign(wheelFx,
+                ("_tuning", tuning),
+                ("_dustSocketLeft", BuildWiring.Node(model, RoverModelNodes.DustSocketLeft)),
+                ("_dustSocketRight", BuildWiring.Node(model, RoverModelNodes.DustSocketRight)),
+                ("_trackLeft", Track("TrackLeft", host.transform, trackMaterial)),
+                ("_trackRight", Track("TrackRight", host.transform, trackMaterial)),
+                ("_dustLeft", Dust("DustLeft", host.transform, dustMaterial, dustMesh)),
+                ("_dustRight", Dust("DustRight", host.transform, dustMaterial, dustMesh)),
+                ("_landingDust", LandingRing(host.transform, dustMaterial, dustMesh)));
+            return wheelFx;
+        }
+
+        private static RoverTrackRenderer Track(string name, Transform parent, Material material)
+        {
+            GameObject track = Child(name, parent);
+            track.AddComponent<MeshFilter>();
+            var renderer = track.AddComponent<MeshRenderer>();
+            renderer.sharedMaterial = material;
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+            renderer.lightProbeUsage = LightProbeUsage.Off;
+            renderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+            return track.AddComponent<RoverTrackRenderer>();
+        }
+
+        /// <summary>Rolling dust: soft puffs kicked up and back, drifting and fading. Rate is set at runtime.</summary>
+        private static ParticleSystem Dust(string name, Transform parent, Material material, Mesh mesh)
+        {
+            ParticleSystem dust = CreateSystem(name, parent, material, mesh, DustMaxParticles, true);
+
+            ParticleSystem.ShapeModule shape = dust.shape;
+            shape.enabled = true;
+            shape.shapeType = ParticleSystemShapeType.Cone;
+            shape.angle = DustConeAngle;
+            shape.radius = DustConeRadius;
+            shape.rotation = DustConeRotation;
+
+            ParticleSystem.LimitVelocityOverLifetimeModule drag = dust.limitVelocityOverLifetime;
+            drag.enabled = true;
+            drag.drag = DustDrag;
+            return dust;
+        }
+
+        /// <summary>Landing ring: puffs pushed outward along the ground, lifted gently; emitted on demand.</summary>
+        private static ParticleSystem LandingRing(Transform parent, Material material, Mesh mesh)
+        {
+            ParticleSystem ring = CreateSystem("LandingDust", parent, material, mesh, LandingMaxParticles, false);
+
+            ParticleSystem.ShapeModule shape = ring.shape;
+            shape.enabled = true;
+            shape.shapeType = ParticleSystemShapeType.Circle;
+            shape.radius = LandingRingRadius;
+            shape.radiusThickness = 0f;
+            shape.arc = 360f;
+
+            ParticleSystem.VelocityOverLifetimeModule lift = ring.velocityOverLifetime;
+            lift.enabled = true;
+            lift.space = ParticleSystemSimulationSpace.Local;
+            lift.x = new ParticleSystem.MinMaxCurve(0f, 0f);
+            lift.y = new ParticleSystem.MinMaxCurve(0f, 0f);
+            lift.z = new ParticleSystem.MinMaxCurve(0.2f, 0.6f);
+
+            ParticleSystem.LimitVelocityOverLifetimeModule drag = ring.limitVelocityOverLifetime;
+            drag.enabled = true;
+            drag.drag = LandingDrag;
+            return ring;
+        }
+
+        /// <summary>
+        /// Shared particle setup. Start values are normalised ranges around 1; <see cref="RoverWheelFx"/> scales them
+        /// with the tuned lifetime, size, speed and gravity multipliers.
+        /// </summary>
+        private static ParticleSystem CreateSystem(string name, Transform parent, Material material, Mesh mesh,
+            int maxParticles, bool looping)
+        {
+            GameObject host = Child(name, parent);
+            var system = host.AddComponent<ParticleSystem>();
+            system.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+
+            ParticleSystem.MainModule main = system.main;
+            main.loop = looping;
+            main.playOnAwake = looping;
+            main.duration = 1f;
+            main.maxParticles = maxParticles;
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(0.75f, 1.25f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(0.6f, 1.4f);
+            main.startSize = new ParticleSystem.MinMaxCurve(0.65f, 1.35f);
+            main.startRotation3D = true;
+            main.startRotationX = new ParticleSystem.MinMaxCurve(0f, 2f * Mathf.PI);
+            main.startRotationY = new ParticleSystem.MinMaxCurve(0f, 2f * Mathf.PI);
+            main.startRotationZ = new ParticleSystem.MinMaxCurve(0f, 2f * Mathf.PI);
+            main.startColor = new ParticleSystem.MinMaxGradient(
+                Palette.Get(PaletteSwatch.DustLight), Palette.Get(PaletteSwatch.DustMid));
+            main.gravityModifier = 1f;
+
+            ParticleSystem.EmissionModule emission = system.emission;
+            emission.enabled = true;
+            emission.rateOverTime = 0f;
+            emission.rateOverDistance = 0f;
+
+            ParticleSystem.SizeOverLifetimeModule size = system.sizeOverLifetime;
+            size.enabled = true;
+            size.size = new ParticleSystem.MinMaxCurve(1f,
+                new AnimationCurve(new Keyframe(0f, 0.5f), new Keyframe(0.35f, 1f), new Keyframe(1f, 1.3f)));
+
+            ParticleSystem.ColorOverLifetimeModule color = system.colorOverLifetime;
+            color.enabled = true;
+            var fade = new Gradient();
+            fade.SetKeys(
+                new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
+                new[]
+                {
+                    new GradientAlphaKey(0f, 0f), new GradientAlphaKey(0.75f, 0.12f), new GradientAlphaKey(0f, 1f),
+                });
+            color.color = new ParticleSystem.MinMaxGradient(fade);
+
+            ParticleSystem.RotationOverLifetimeModule tumble = system.rotationOverLifetime;
+            tumble.enabled = true;
+            tumble.z = new ParticleSystem.MinMaxCurve(-0.6f, 0.6f);
+
+            var renderer = host.GetComponent<ParticleSystemRenderer>();
+            renderer.renderMode = ParticleSystemRenderMode.Mesh;
+            renderer.mesh = mesh;
+            renderer.sharedMaterial = material;
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+            renderer.alignment = ParticleSystemRenderSpace.Local;
+            return system;
+        }
+    }
+}
