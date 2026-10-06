@@ -77,7 +77,8 @@
 
 ## Backlog (đã ghi nhận, chưa giao)
 - Bụi bánh xe trông như "đá trong suốt" bay lơ lửng → nhỏ hơn, mềm hơn, trong hơn, tan nhanh hơn (rover).
-- Audio: radio rè bật lúc `RoverAwoke`; âm "nhấc bổng" nhẹ khi `RoverRecovering` (audio).
+- Audio đợt 3: radio rè bật lúc `RoverAwoke`; âm "nhấc bổng" khi `RoverRecovering`; hạ tiếng động cơ khi `PauseChanged`; mỗi relic đáp sonar bằng nốt riêng (cần thêm `RelicId` vào `RelicAnswered`).
+- Camera blend chậm khi relic trồi lên / khi nâng cấp tháp (rover).
 - World chuyển đá cuội sang `RockStyle.Grit` (16–20 tam giác) của art.
 
 ## M3 — Tiến trình
