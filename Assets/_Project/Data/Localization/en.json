@@ -211,6 +211,10 @@
             "text": "Space"
         },
         {
+            "key": "glyph.keyboard.leftshift",
+            "text": "Shift"
+        },
+        {
             "key": "glyph.mouse.leftbutton",
             "text": "LMB"
         },

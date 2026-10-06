@@ -211,6 +211,10 @@
             "text": "Phím cách"
         },
         {
+            "key": "glyph.keyboard.leftshift",
+            "text": "Shift"
+        },
+        {
             "key": "glyph.mouse.leftbutton",
             "text": "Chuột trái"
         },
