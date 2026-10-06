@@ -129,6 +129,19 @@ namespace MoonProject.Rover
         [Range(0.2f, 2f)]
         [SerializeField] private float _bumpDamping = 0.8f;
 
+        [Header("Camera moments")]
+        [Tooltip("A relic finishing surfacing: ease round to frame 07 and the floating relic, then back (~3 s).")]
+        [SerializeField] private CameraMomentSettings _relicMoment =
+            new CameraMomentSettings(0.9f, 1f, 1.1f, 0.35f, 2.5f, 0.85f, 60f, 6f, 0.35f, 25f);
+
+        [Tooltip("An upgrade bought at the base: lift and pull back to take in the base, its tower and warm ring.")]
+        [SerializeField] private CameraMomentSettings _upgradeMoment =
+            new CameraMomentSettings(1.3f, 1.8f, 1.5f, 0.5f, 6f, 0.6f, 45f, 14f, 0.5f, 40f);
+
+        [Tooltip("Seconds a camera moment takes to ease away when the player looks around (always skippable).")]
+        [Range(0.1f, 3f)]
+        [SerializeField] private float _momentCancelEaseOut = 0.6f;
+
         [Header("Cinemachine damping")]
         [Tooltip("Orbital follow position damping (x, y, z): high = floaty drone.")]
         [SerializeField] private Vector3 _positionDamping = new Vector3(1.1f, 0.9f, 1.3f);
@@ -219,6 +232,12 @@ namespace MoonProject.Rover
         public float BumpFrequency => _bumpFrequency;
 
         public float BumpDamping => _bumpDamping;
+
+        public CameraMomentSettings RelicMoment => _relicMoment;
+
+        public CameraMomentSettings UpgradeMoment => _upgradeMoment;
+
+        public float MomentCancelEaseOut => _momentCancelEaseOut;
 
         public Vector3 PositionDamping => _positionDamping;
 
