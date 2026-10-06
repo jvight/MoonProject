@@ -8,9 +8,11 @@ namespace MoonProject.Gameplay
 {
     /// <summary>
     /// The Gameplay domain's single entry in the bootstrap's system list (after World, Rover and Audio). Resolves the
-    /// world, rover and camera services, creates the wallet, initialises the gameplay parts in dependency order
-    /// (relics, scrap, sonar, excavation, tether), registers the read-only services UI uses and the save sections,
-    /// and owns the shared glow meshes.
+    /// world, rover and camera services, creates the wallet and the upgrade service, initialises the gameplay parts in
+    /// dependency order (relics, scrap, sonar, excavation, tether, home, radio tower), registers the read-only
+    /// services the UI uses (<see cref="IScrapWallet"/>, <see cref="ITetherAim"/>, <see cref="IUpgradeShop"/>,
+    /// <see cref="IInteractionHints"/>) and the save sections, announces the radio's signal radius, and owns the
+    /// shared glow meshes.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class GameplaySystem : MonoBehaviour, IGameSystem
@@ -18,16 +20,27 @@ namespace MoonProject.Gameplay
         [Tooltip("SoftGlow materials (Generated/Gameplay/GameplayVisuals.asset).")]
         [SerializeField] private GameplayVisuals _visuals;
 
+        [Tooltip("Every upgrade bought with scrap (Assets/_Project/Data/Content/Upgrades).")]
+        [SerializeField] private UpgradeDefinition[] _upgradeDefinitions = Array.Empty<UpgradeDefinition>();
+
         [SerializeField] private RelicField _relics;
         [SerializeField] private ScrapField _scrap;
         [SerializeField] private SonarSystem _sonar;
         [SerializeField] private ExcavationSystem _excavation;
         [SerializeField] private TetherSystem _tether;
+        [SerializeField] private HomeBase _home;
+        [SerializeField] private RadioTower _tower;
 
         private readonly List<IDisposable> _saveTokens = new List<IDisposable>();
         private GlowMeshSet _meshes;
 
         public ScrapWallet Wallet { get; private set; }
+
+        public UpgradeService Upgrades { get; private set; }
+
+        public IUpgradeShop Shop { get; private set; }
+
+        public IInteractionHints Hints { get; private set; }
 
         public RelicField Relics => _relics;
 
@@ -39,15 +52,23 @@ namespace MoonProject.Gameplay
 
         public TetherSystem Tether => _tether;
 
-        internal void Wire(GameplayVisuals visuals, RelicField relics, ScrapField scrap, SonarSystem sonar,
-            ExcavationSystem excavation, TetherSystem tether)
+        public HomeBase Home => _home;
+
+        public RadioTower Tower => _tower;
+
+        internal void Wire(GameplayVisuals visuals, UpgradeDefinition[] upgradeDefinitions, RelicField relics,
+            ScrapField scrap, SonarSystem sonar, ExcavationSystem excavation, TetherSystem tether, HomeBase home,
+            RadioTower tower)
         {
             _visuals = visuals;
+            _upgradeDefinitions = upgradeDefinitions;
             _relics = relics;
             _scrap = scrap;
             _sonar = sonar;
             _excavation = excavation;
             _tether = tether;
+            _home = home;
+            _tower = tower;
         }
 
         public void Initialize(GameContext context)
@@ -67,22 +88,29 @@ namespace MoonProject.Gameplay
 
             _meshes = new GlowMeshSet();
             Wallet = new ScrapWallet(context.Events);
+            var save = context.Get<ISaveService>();
             var services = new GameplayServices(context.Events, context.Input, context.Get<ITerrainQuery>(),
                 context.Get<IWorldLayout>(), context.Get<IRoverState>(), context.Get<IRoverRig>(),
-                context.Get<IViewCamera>(), context.Get<ISaveService>(), Wallet, _visuals, _meshes);
-            context.Register<IScrapWallet>(Wallet);
+                context.Get<IViewCamera>(), save, Wallet, _visuals, _meshes);
+            Upgrades = new UpgradeService(context.Events, Wallet, _upgradeDefinitions);
 
             if (!_relics.Initialize(services) || !_scrap.Initialize(services, _relics.Sites) ||
                 !_sonar.Initialize(services, _relics) || !_excavation.Initialize(services, _relics) ||
-                !_tether.Initialize(services, _relics))
+                !_tether.Initialize(services, _relics) || !_home.Initialize(services, _relics, _tether, Upgrades) ||
+                !_tower.Initialize(services, Upgrades))
             {
                 enabled = false;
                 return;
             }
 
+            Shop = new UpgradeShop(Upgrades, new IUpgradeStation[] { _tower }, save);
+            Hints = new InteractionHints(services.Rover, _sonar, _excavation, _tether, _home, _tower, Upgrades);
+            context.Register<IScrapWallet>(Wallet);
             context.Register<ITetherAim>(_tether);
-
-            RegisterSaveSections(context.Get<ISaveService>());
+            context.Register<IUpgradeShop>(Shop);
+            context.Register<IInteractionHints>(Hints);
+            Upgrades.PublishSignals();
+            RegisterSaveSections(save);
         }
 
         private void RegisterSaveSections(ISaveService save)
@@ -93,12 +121,21 @@ namespace MoonProject.Gameplay
                 GameplaySaveKeys.ScrapVersion, _scrap.Capture, _scrap.Restore)));
             _saveTokens.Add(save.Register(new SaveSection<RelicsSaveData>(GameplaySaveKeys.Relics,
                 GameplaySaveKeys.RelicsVersion, _relics.Capture, RestoreRelics)));
+            _saveTokens.Add(save.Register(new SaveSection<UpgradesSaveData>(GameplaySaveKeys.Upgrades,
+                GameplaySaveKeys.UpgradesVersion, Upgrades.Capture, RestoreUpgrades)));
         }
 
         private void RestoreRelics(RelicsSaveData data)
         {
             _relics.Restore(data);
+            _home.SyncDisplays();
             _sonar.RefreshDiscoveredSites();
+        }
+
+        private void RestoreUpgrades(UpgradesSaveData data)
+        {
+            Upgrades.Restore(data);
+            _tower.ShowLevel(Upgrades.LevelOf(_tower.Definition.Id));
         }
 
         private string WiringProblem()
@@ -114,11 +151,14 @@ namespace MoonProject.Gameplay
                 return "GameplayVisuals: " + visuals;
             }
 
-            return _relics == null ? "RelicField is not assigned."
+            return _upgradeDefinitions == null || _upgradeDefinitions.Length == 0 ? "no upgrade definitions."
+                : _relics == null ? "RelicField is not assigned."
                 : _scrap == null ? "ScrapField is not assigned."
                 : _sonar == null ? "SonarSystem is not assigned."
                 : _excavation == null ? "ExcavationSystem is not assigned."
                 : _tether == null ? "TetherSystem is not assigned."
+                : _home == null ? "HomeBase is not assigned."
+                : _tower == null ? "RadioTower is not assigned."
                 : null;
         }
 

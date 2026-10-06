@@ -1,0 +1,234 @@
+using System.Collections;
+using NUnit.Framework;
+using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.TestTools;
+using MoonProject.Core.Events;
+using MoonProject.Core.Save;
+using MoonProject.Testing;
+using Object = UnityEngine.Object;
+
+namespace MoonProject.Gameplay.PlayModeTests
+{
+    /// <summary>Scripted sessions for the museum deposit, the radio tower shop, the hint query and save/load.</summary>
+    public sealed class BaseAndSaveSessions : InputTestFixture
+    {
+        private const string Duck = "rubber_duck";
+        private const string Teapot = "teapot";
+        private const string Tower = "radio_tower";
+
+        private InputActionAsset _controls;
+        private GameplayFixture _fixture;
+        private Mouse _mouse;
+
+        public override void Setup()
+        {
+            base.Setup();
+            InputSystem.AddDevice<Keyboard>();
+            _mouse = InputSystem.AddDevice<Mouse>();
+            _controls = BootstrapHarness.LoadControlsCopy();
+        }
+
+        public override void TearDown()
+        {
+            _fixture?.Dispose();
+            Object.Destroy(_controls);
+            base.TearDown();
+        }
+
+        [UnityTest]
+        public IEnumerator Deposit_TowedRelicShowsItsSlot_ThenFloatsOntoTheShelfWithAGift()
+        {
+            _fixture = GameplayFixture.Boot(_controls);
+            yield return null;
+            HomeBase home = _fixture.Gameplay.Home;
+            Relic duck = Loose(Duck, new Vector3(12f, 0.6f, 0f));
+            _fixture.Rover.Place(new Vector3(6f, 0f, 0f), 90f);
+            yield return new WaitForSeconds(0.8f);
+            Vector3 camera = _fixture.Rover.Camera.transform.position;
+            _fixture.Rover.Aim(camera, duck.transform.position);
+            yield return null;
+            yield return null;
+            Assert.AreSame(duck, _fixture.Gameplay.Tether.Hovered,
+                $"duck {duck.State} at {duck.transform.position}, camera {camera}");
+            Press(_mouse.rightButton, queueEventOnly: true);
+            yield return null;
+            yield return null;
+            Assert.AreEqual(1, _fixture.Events.TetherAttached.Count);
+
+            Vector3 from = _fixture.Rover.Position;
+            Vector3 to = new Vector3(-14f, 0f, 6f);
+            float began = Time.time;
+            while (Time.time - began < 5f)
+            {
+                _fixture.Rover.MoveTo(Vector3.Lerp(from, to, Ease.InOutSine((Time.time - began) / 4.5f)), -90f);
+                yield return null;
+            }
+
+            Assert.IsTrue(home.InDepositZone(duck.transform.position), "towed into reach of the shelf");
+            Assert.GreaterOrEqual(home.HintedSlot, 0, "a warm glow shows which slot it will take");
+            Assert.Greater(home.HintLevel, 0.3f);
+            Assert.IsTrue(_fixture.Gameplay.Hints.TryGet(InteractionKind.Deposit, out InteractionHint hint));
+            Assert.AreEqual(InteractionKind.Deposit, _fixture.Gameplay.Hints.Primary.Kind);
+            Assert.IsTrue(hint.Ready);
+            int slot = home.HintedSlot;
+            AimAtShelf(home);
+            _fixture.Capture("08-deposit-hint");
+
+            int before = _fixture.Events.Order.Count;
+            Release(_mouse.rightButton);
+            yield return new WaitForSeconds(_fixture.BaseTuning.DepositDuration + 0.4f);
+            Assert.AreEqual(1, _fixture.Events.RelicDeposited.Count, "it floats onto the shelf");
+            RelicDeposited deposited = _fixture.Events.RelicDeposited[0].Value;
+            Assert.AreEqual(Duck, deposited.RelicId);
+            Assert.AreEqual(1, deposited.DisplayedCount);
+            Assert.AreEqual(RelicState.Displayed, duck.State);
+            Assert.AreEqual(slot, duck.Slot, "it took the slot that was shown");
+            Assert.AreEqual(1, home.DisplayedCount);
+            Assert.AreEqual(nameof(TetherReleased), _fixture.Events.Order[before]);
+            int depositedAt = _fixture.Events.Order.IndexOf(nameof(RelicDeposited));
+            Assert.AreEqual(nameof(CurrencyChanged), _fixture.Events.Order[depositedAt + 1], "then the scrap gift");
+            CurrencyChanged gift = _fixture.Events.CurrencyChanged[_fixture.Events.CurrencyChanged.Count - 1].Value;
+            Assert.AreEqual(_fixture.BaseTuning.DepositGift, gift.Delta);
+            Assert.Less(Vector3.Distance(duck.transform.position, deposited.Position), 0.05f, "settled on its slot");
+            Assert.IsTrue(System.IO.File.Exists(_fixture.Bootstrap.Context.Get<ISaveService>().FilePath),
+                "a deposit is a save checkpoint");
+            _fixture.Capture("09-deposited");
+        }
+
+        [UnityTest]
+        public IEnumerator Tower_BuysALevelOnItsPad_AndGrowsTheNextStage()
+        {
+            _fixture = GameplayFixture.Boot(_controls);
+            yield return null;
+            RadioTower tower = _fixture.Gameplay.Tower;
+            IUpgradeShop shop = _fixture.Bootstrap.Context.Get<IUpgradeShop>();
+            Assert.AreEqual(0, tower.ShownLevel);
+            Assert.AreEqual(0, tower.ActiveStage);
+            Assert.Less(tower.BeaconLevel, 0.01f, "the old mast stands dark");
+
+            _fixture.Gameplay.Wallet.Add(60);
+            Assert.AreEqual(PurchaseResult.NotAtStation, shop.Purchase(Tower), "bought on the pad, not anywhere");
+            _fixture.Rover.Place(tower.PadCentre, 0f);
+            yield return null;
+            yield return null;
+            Assert.IsTrue(shop.IsAtStation);
+            Assert.AreSame(_fixture.RadioTowerUpgrade, shop.StationUpgrade);
+            Assert.IsTrue(_fixture.Gameplay.Hints.TryGet(InteractionKind.Upgrade, out InteractionHint hint));
+            Assert.IsTrue(hint.Ready, "affordable");
+            yield return new WaitForSeconds(1.5f);
+            Assert.Greater(tower.PadLevel, 0.8f * _fixture.TowerTuning.PadOccupied, "the pad glows under 07");
+
+            int before = _fixture.Events.Order.Count;
+            Assert.AreEqual(PurchaseResult.Purchased, shop.Purchase(Tower));
+            CollectionAssert.AreEqual(new[]
+            {
+                nameof(CurrencyChanged), nameof(UpgradePurchased), nameof(SignalRadiusChanged),
+            }, _fixture.Events.Order.GetRange(before, 3));
+            Assert.AreEqual(1, _fixture.Events.UpgradePurchased[0].Value.Level);
+            Assert.AreEqual(110f, _fixture.Events.SignalRadiusChanged[0].Value.Radius);
+            yield return new WaitForSeconds(2f);
+            Assert.AreEqual(1, tower.ShownLevel);
+            Assert.AreEqual(0, tower.ActiveStage, "level 1 wakes the old mast");
+            Assert.Greater(tower.BeaconLevel, 0.5f, "its beacon glows again");
+
+            Assert.AreEqual(PurchaseResult.Purchased, shop.Purchase(Tower));
+            yield return new WaitForSeconds(_fixture.TowerTuning.FlareDuration * 0.5f);
+            Assert.AreEqual(0, tower.ActiveStage, "the old stage stays while the beacon flares");
+            yield return new WaitForSeconds(_fixture.TowerTuning.FlareDuration * 0.5f + 0.3f);
+            Assert.AreEqual(1, tower.ActiveStage, "then the next stage grows in");
+            Vector3 pad = tower.PadCentre;
+            _fixture.Rover.Aim(pad + new Vector3(9f, 6f, -9f), pad + Vector3.up * 3f);
+            _fixture.Capture("10-tower-upgrade");
+            yield return new WaitForSeconds(2.5f);
+            Assert.AreEqual(1, tower.ActiveStage);
+            Assert.AreEqual(170f, _fixture.Events.SignalRadiusChanged[1].Value.Radius);
+            int picked = 0;
+            foreach (EventRecorder.Timed<ScrapCollected> piece in _fixture.Events.ScrapCollected)
+            {
+                picked += piece.Value.Value;
+            }
+
+            Assert.AreEqual(60 - 15 - 40 + picked, _fixture.Gameplay.Wallet.Balance, "exactly the costs were spent");
+            _fixture.Capture("11-tower-level-2");
+        }
+
+        [UnityTest]
+        public IEnumerator SaveAndReload_BringsBackEveryPieceOfProgress()
+        {
+            string slot = BootstrapHarness.NewTestSlot();
+            _fixture = GameplayFixture.Boot(_controls, slot);
+            yield return null;
+            GameplaySystem gameplay = _fixture.Gameplay;
+            gameplay.Wallet.Add(30);
+
+            ScrapField scrap = gameplay.Scrap;
+            Vector3 cluster = scrap.RestPosition(0);
+            _fixture.Rover.Place(new Vector3(cluster.x, 0f, cluster.z), 0f);
+            yield return new WaitForSeconds(2.5f);
+            Assert.Less(scrap.Remaining, scrap.Count);
+
+            HomeBase home = gameplay.Home;
+            Vector3 towardPad = (Vector3.zero - home.ShelfPosition).normalized;
+            Relic duck = Loose(Duck, home.ShelfPosition + towardPad * 3f + Vector3.up * 0.6f);
+            yield return new WaitForSeconds(_fixture.BaseTuning.DepositDuration + 0.5f);
+            Assert.AreEqual(RelicState.Displayed, duck.State, "a relic resting by the shelf is taken in too");
+            int duckSlot = duck.Slot;
+
+            Relic teapot = _fixture.FindRelic(Teapot);
+            teapot.MarkDiscovered();
+            teapot.BeginLift();
+            Vector3 halfway = teapot.Site.Position + Vector3.up * 0.4f;
+            teapot.SetLiftPose(halfway, Quaternion.identity, 0.4f);
+            teapot.PauseLift();
+
+            _fixture.Rover.Place(gameplay.Tower.PadCentre, 0f);
+            yield return null;
+            yield return null;
+            Assert.AreEqual(PurchaseResult.Purchased, _fixture.Bootstrap.Context.Get<IUpgradeShop>().Purchase(Tower));
+            int balance = gameplay.Wallet.Balance;
+            int remaining = scrap.Remaining;
+            Assert.IsTrue(_fixture.Bootstrap.Context.Get<ISaveService>().SaveNow());
+            _fixture.Dispose(true);
+            yield return null;
+
+            _fixture = GameplayFixture.Boot(_controls, slot);
+            yield return null;
+            gameplay = _fixture.Gameplay;
+            Assert.AreEqual(balance, gameplay.Wallet.Balance, "wallet");
+            Assert.AreEqual(remaining, gameplay.Scrap.Remaining, "collected scrap stays collected");
+            Relic duckAgain = _fixture.FindRelic(Duck);
+            Assert.AreEqual(RelicState.Displayed, duckAgain.State, "the museum keeps its relics");
+            Assert.AreEqual(duckSlot, duckAgain.Slot);
+            Assert.AreEqual(1, gameplay.Home.DisplayedCount);
+            Relic teapotAgain = _fixture.FindRelic(Teapot);
+            Assert.AreEqual(RelicState.Surfacing, teapotAgain.State, "a half-lifted relic waits where it was");
+            Assert.AreEqual(0.4f, teapotAgain.Progress, 1e-4f);
+            Assert.IsTrue(teapotAgain.Discovered);
+            Assert.Less(Vector3.Distance(teapotAgain.transform.position, halfway), 0.1f);
+            Assert.AreEqual(1, gameplay.Upgrades.LevelOf(Tower));
+            Assert.AreEqual(1, gameplay.Tower.ShownLevel);
+            Assert.AreEqual(0, _fixture.Events.UpgradePurchased.Count, "a load is never a purchase");
+            yield return new WaitForSeconds(0.5f);
+            Assert.Greater(gameplay.Tower.BeaconLevel, 0.5f, "the beacon is lit straight away");
+            AimAtShelf(gameplay.Home);
+            _fixture.Capture("12-reloaded-museum");
+        }
+
+        private void AimAtShelf(HomeBase home)
+        {
+            Vector3 shelf = home.ShelfPosition;
+            Vector3 front = (Vector3.zero - shelf).normalized;
+            _fixture.Rover.Aim(shelf + front * 6f + Vector3.up * 2.5f, shelf + Vector3.up);
+        }
+
+        private Relic Loose(string id, Vector3 position)
+        {
+            Relic relic = _fixture.FindRelic(id);
+            relic.BeginLift();
+            relic.SetLiftPose(position, Quaternion.identity, 1f);
+            relic.Surface(Vector3.zero, Vector3.zero);
+            return relic;
+        }
+    }
+}

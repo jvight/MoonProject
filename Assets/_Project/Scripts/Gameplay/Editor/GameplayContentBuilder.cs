@@ -7,9 +7,9 @@ namespace MoonProject.Gameplay.Editor
 {
     /// <summary>
     /// Writes the gameplay content from code recipes: one RelicDefinition per <see cref="RelicRecipes"/> entry, the
-    /// relic catalog, and the scrap catalog over Art's scrap prefabs. Rewritten in place on every run (GUIDs kept).
-    /// Scrap prefabs are required (fails loudly). Relic prefabs are picked up when Art delivers them; until then a
-    /// relic is written without a model and stays a buried site in game (a warning names each one).
+    /// relic catalog, the scrap catalog over Art's scrap prefabs, and the radio tower upgrade. Rewritten in place on
+    /// every run (GUIDs kept).
+    /// Every Art prefab it references (M2 content contract) is required: a missing one fails the build loudly.
     /// </summary>
     internal static class GameplayContentBuilder
     {
@@ -26,6 +26,7 @@ namespace MoonProject.Gameplay.Editor
         {
             BuildScrapCatalog();
             BuildRelics();
+            BuildRadioTower();
             AssetDatabase.SaveAssets();
         }
 
@@ -51,6 +52,29 @@ namespace MoonProject.Gameplay.Editor
             Debug.Log($"{BuilderPath}: wrote {GameplayAssetPaths.ScrapCatalog} ({variants.Length} variants)");
         }
 
+        /// <summary>
+        /// The radio tower: before any purchase the old mast is dark and the clear signal reaches 60 m; three levels
+        /// (15, 40, 80 scrap) widen it to 110, 170 and 260 m and warm the base up. Twice the total cost lies in the
+        /// basin as scrap, and every relic brought home adds a gift (design ruling 5).
+        /// </summary>
+        private static void BuildRadioTower()
+        {
+            var upgrade = ScriptableObject.CreateInstance<UpgradeDefinition>();
+            upgrade.Populate("radio_tower", "Radio Tower", 60f, new[]
+            {
+                new UpgradeLevel("Wake the old mast",
+                    "Power the tired antenna: its beacon glows again and the music reaches farther.", 15, 110f,
+                    1.25f),
+                new UpgradeLevel("Raise the mast",
+                    "A taller mast and a warmer lamp: the radio stays clear deep into the dunes.", 40, 170f, 1.5f),
+                new UpgradeLevel("Light the whole basin",
+                    "The tower sings across the crater; home glows like a lantern on a winter night.", 80, 260f,
+                    1.8f),
+            });
+            GeneratedAssets.CreateOrReplace(upgrade, GameplayAssetPaths.RadioTowerUpgrade);
+            Debug.Log($"{BuilderPath}: wrote {GameplayAssetPaths.RadioTowerUpgrade}");
+        }
+
         private static void BuildRelics()
         {
             RelicRecipe[] recipes = RelicRecipes.All;
@@ -62,8 +86,8 @@ namespace MoonProject.Gameplay.Editor
                 var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
                 if (prefab == null)
                 {
-                    Debug.LogWarning($"{BuilderPath}: {prefabPath} not delivered yet; '{recipe.Id}' stays a buried " +
-                                     "site until it lands and this builder runs again.");
+                    throw new InvalidOperationException(
+                        $"{BuilderPath}: Art prefab {prefabPath} is missing (M2 content contract). Run the Art builders.");
                 }
 
                 var definition = ScriptableObject.CreateInstance<RelicDefinition>();

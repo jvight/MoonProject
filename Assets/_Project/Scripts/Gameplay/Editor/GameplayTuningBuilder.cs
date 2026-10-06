@@ -22,6 +22,8 @@ namespace MoonProject.Gameplay.Editor
             EnsureExists<RelicPlacementTuning>(GameplayAssetPaths.RelicPlacement);
             EnsureExists<ExcavationTuning>(GameplayAssetPaths.ExcavationTuning);
             EnsureExists<TetherTuning>(GameplayAssetPaths.TetherTuning);
+            EnsureExists<BaseTuning>(GameplayAssetPaths.BaseTuning);
+            EnsureExists<RadioTowerTuning>(GameplayAssetPaths.RadioTowerTuning);
         }
 
         private static void EnsureExists<T>(string path) where T : ScriptableObject

@@ -101,7 +101,6 @@ namespace MoonProject.Gameplay
                     services.Visuals.RelicHalo);
             }
 
-            WarnAboutPendingModels(definitions);
             _initialized = true;
             return true;
         }
@@ -275,25 +274,6 @@ namespace MoonProject.Gameplay
             }
 
             return home;
-        }
-
-        private void WarnAboutPendingModels(IReadOnlyList<RelicDefinition> definitions)
-        {
-            string pending = null;
-            for (int i = 0; i < definitions.Count; i++)
-            {
-                if (!definitions[i].HasModel)
-                {
-                    pending = pending == null ? definitions[i].Id : pending + ", " + definitions[i].Id;
-                }
-            }
-
-            if (pending != null)
-            {
-                Debug.LogWarning($"{nameof(RelicField)}: no Art model yet for {pending}. These relics answer the " +
-                                 "sonar but stay buried until Generated/Art/Relics/Relic_<id>.prefab exists and " +
-                                 "Gameplay/Content is rebuilt.", this);
-            }
         }
 
         private void OnDestroy()

@@ -115,7 +115,8 @@ namespace MoonProject.Gameplay
             float pulse = _brightness / Mathf.Max(0.01f, _tuning.NearBrightness) * _tuning.SiteRingPulse *
                           MarkerEnvelope.Pulse(age, _tuning.SiteRingPulseDuration);
             float glow = inGround && relic.Discovered && !moved
-                ? _tuning.DiscoveredGlow * (0.6f + 0.4f * MarkerEnvelope.Breath(now, _tuning.BreathPeriod))
+                ? _tuning.DiscoveredGlow *
+                  (1f - _tuning.DiscoveredBreathDepth * (1f - MarkerEnvelope.Breath(now, _tuning.BreathPeriod)))
                 : 0f;
             _ringGlow.Apply(Mathf.Max(pulse, glow));
         }
