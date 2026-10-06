@@ -1,0 +1,17 @@
+{
+    "name": "MoonProject.UI",
+    "rootNamespace": "MoonProject.UI",
+    "references": [
+        "MoonProject.Core",
+        "MoonProject.Gameplay"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

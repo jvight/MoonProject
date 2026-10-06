@@ -4,7 +4,7 @@ using MoonProject.Core.Input;
 
 namespace MoonProject.Rover.PlayModeTests
 {
-    /// <summary>A code-built stand-in for the Controls asset: the "Rover" map bound to a gamepad.</summary>
+    /// <summary>A code-built stand-in for the Controls asset: the "Rover" and "UI" maps bound to a gamepad.</summary>
     public static class TestControls
     {
         public static InputActionAsset Create()
@@ -18,7 +18,11 @@ namespace MoonProject.Rover.PlayModeTests
             map.AddAction("Excavate", InputActionType.Button, "<Gamepad>/buttonWest");
             map.AddAction("Tether", InputActionType.Button, "<Gamepad>/leftTrigger");
             map.AddAction("Winch", InputActionType.Value, "<Gamepad>/rightTrigger", expectedControlLayout: "Axis");
-            map.AddAction("Pause", InputActionType.Button, "<Gamepad>/start");
+            InputActionMap menu = asset.AddActionMap(MenuInput.MapName);
+            menu.AddAction("Navigate", InputActionType.Value, "<Gamepad>/dpad", expectedControlLayout: "Vector2");
+            menu.AddAction("Cancel", InputActionType.Button, "<Gamepad>/buttonEast");
+            menu.AddAction("Pause", InputActionType.Button, "<Gamepad>/start");
+            menu.AddAction("Click", InputActionType.Button, "<Mouse>/leftButton");
             return asset;
         }
     }

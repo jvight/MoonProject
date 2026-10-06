@@ -1,0 +1,46 @@
+using UnityEngine;
+
+namespace MoonProject.UI
+{
+    /// <summary>
+    /// Every timing and motion choice of the UI (Assets/_Project/Data/Tuning/UI/UiTuning.asset, created by
+    /// the UI/Tuning builder). Runtime code only reads it, so values can be tuned live in play mode.
+    /// </summary>
+    [CreateAssetMenu(fileName = "UiTuning", menuName = "MoonProject/UI/UI Tuning")]
+    public sealed class UiTuning : ScriptableObject
+    {
+        [SerializeField] private PauseSettings _pause = new PauseSettings();
+        [SerializeField] private TitleSettings _title = new TitleSettings();
+        [SerializeField] private PromptSettings _prompts = new PromptSettings();
+        [SerializeField] private ReticleSettings _reticle = new ReticleSettings();
+        [SerializeField] private ScrapChipSettings _scrapChip = new ScrapChipSettings();
+        [SerializeField] private MemoryCardSettings _memoryCard = new MemoryCardSettings();
+        [SerializeField] private TowerPanelSettings _towerPanel = new TowerPanelSettings();
+
+        public PauseSettings Pause => _pause;
+
+        public TitleSettings Title => _title;
+
+        public PromptSettings Prompts => _prompts;
+
+        public ReticleSettings Reticle => _reticle;
+
+        public ScrapChipSettings ScrapChip => _scrapChip;
+
+        public MemoryCardSettings MemoryCard => _memoryCard;
+
+        public TowerPanelSettings TowerPanel => _towerPanel;
+
+        /// <summary>Null when the tuning is usable, else the first problem.</summary>
+        public string Validate()
+        {
+            if (_pause == null || _title == null || _prompts == null || _reticle == null || _scrapChip == null ||
+                _memoryCard == null || _towerPanel == null)
+            {
+                return "a settings section is missing";
+            }
+
+            return _prompts.Validate();
+        }
+    }
+}

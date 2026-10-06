@@ -1,0 +1,601 @@
+/*
+ * Lofi Lunar UI. Colours come from the palette tokens (--moon-*) that the UI/Theme builder generates from
+ * MoonProject.Art.Palette into the theme stylesheet. Indigo glass, cream text, warm amber for what can be done.
+ * Type is Be Vietnam Pro (font assets built by the UI/Fonts builder): Regular for text, Medium for things you press,
+ * SemiBold for names and headings. Motion is code-driven (Reveal), so nothing here transitions.
+ */
+
+.moon-root,
+.hud,
+.pause,
+.pause__veil,
+.pause__frame {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.moon-root {
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/BeVietnamPro-Regular.asset");
+}
+
+.title__wordmark,
+.pause__heading,
+.memory-card__name,
+.tower-panel__title,
+.caption,
+.section-label,
+.chip__number,
+.glyph__label,
+.hold__glyph,
+.cost__price {
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/BeVietnamPro-SemiBold.asset");
+}
+
+.chip__word,
+.hold__word,
+.pause .menu-button {
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/BeVietnamPro-Medium.asset");
+}
+
+Label {
+    color: var(--moon-text);
+    margin: 0;
+    padding: 0;
+}
+
+/* Soft shadows (painted, see ShadowPainter): an absolutely positioned layer behind each panel. */
+
+.soft-shadow {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    --shadow-color: var(--moon-shadow);
+    --shadow-offset: 6;
+    --shadow-layers: 8;
+    --shadow-radius: 22;
+    --shadow-spread: 18;
+}
+
+.soft-shadow--panel {
+    --shadow-radius: 20;
+    --shadow-spread: 34;
+    --shadow-offset: 12;
+}
+
+/* Glass panels and chips */
+
+.panel {
+    background-color: var(--moon-glass);
+    border-radius: 20px;
+    border-width: 1px;
+    border-color: var(--moon-glass-edge);
+    padding: 22px 26px 20px 26px;
+}
+
+.chip {
+    flex-direction: row;
+    align-items: center;
+    padding: 7px 18px 7px 8px;
+    border-radius: 24px;
+    background-color: var(--moon-glass);
+    border-width: 1px;
+    border-color: var(--moon-glass-edge);
+}
+
+.chip__word {
+    font-size: 20px;
+    color: var(--moon-text);
+}
+
+.chip__number {
+    font-size: 20px;
+    margin-left: 8px;
+    min-width: 24px;
+}
+
+.chip--inline {
+    background-color: var(--moon-cream-glow);
+    border-width: 0;
+    padding: 6px 14px 6px 10px;
+}
+
+.caption {
+    font-size: 14px;
+    letter-spacing: 2px;
+    color: var(--moon-warm-lamp);
+}
+
+.caption--quiet {
+    color: var(--moon-text-faint);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/BeVietnamPro-Regular.asset");
+}
+
+/* Glyphs: a key cap for keys and mouse buttons, a round button for gamepads */
+
+.glyph {
+    min-width: 34px;
+    height: 34px;
+    padding: 0 9px;
+    margin-right: 10px;
+    border-radius: 9px;
+    border-width: 1px;
+    border-color: var(--moon-amber-edge);
+    background-color: var(--moon-amber-soft);
+    justify-content: center;
+    align-items: center;
+}
+
+.glyph--pad {
+    min-width: 34px;
+    width: 34px;
+    padding: 0;
+    border-radius: 17px;
+}
+
+.glyph__label {
+    font-size: 15px;
+    color: var(--moon-warm-lamp);
+    -unity-text-align: middle-center;
+}
+
+.glyph--small {
+    min-width: 26px;
+    height: 26px;
+    padding: 0 7px;
+    margin-right: 8px;
+    border-radius: 7px;
+}
+
+.glyph--small.glyph--pad {
+    min-width: 26px;
+    width: 26px;
+    padding: 0;
+    border-radius: 13px;
+}
+
+.glyph--small .glyph__label {
+    font-size: 12px;
+}
+
+/* The scrap icon (painted, see ScrapIconPainter) */
+
+.scrap-icon {
+    width: 22px;
+    height: 22px;
+    margin-left: 4px;
+    --icon-color: var(--moon-tech-glow);
+    --icon-hole-color: var(--moon-sky-top);
+}
+
+.scrap-icon--small {
+    width: 16px;
+    height: 16px;
+    margin-left: 0;
+}
+
+/* Opening title */
+
+.title {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 8%;
+    align-items: center;
+}
+
+.title__wordmark {
+    font-size: 76px;
+    letter-spacing: 16px;
+    color: var(--moon-cream);
+    -unity-text-align: middle-center;
+    text-shadow: 0 4px 22px var(--moon-shadow);
+}
+
+.title__rule {
+    width: 132px;
+    height: 2px;
+    margin-top: 16px;
+    border-radius: 1px;
+    background-color: var(--moon-amber-edge);
+}
+
+/* Tether reticle (painted, see ReticlePainter) */
+
+.reticle {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 44px;
+    height: 44px;
+    margin-left: -22px;
+    margin-top: -22px;
+}
+
+.reticle__ring {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.reticle__ring--rest {
+    --ring-color: var(--moon-text-faint);
+    --ring-width: 1.5;
+    --glow-color: var(--moon-cream-glow);
+    --glow-width: 7;
+    --dot-color: var(--moon-text-faint);
+    --dot-radius: 1.5;
+}
+
+.reticle__ring--hover {
+    opacity: 0;
+    --ring-color: var(--moon-tech-glow);
+    --ring-width: 2;
+    --glow-color: var(--moon-glow-soft);
+    --glow-width: 9;
+    --dot-color: var(--moon-tech-glow);
+    --dot-radius: 2;
+}
+
+/* Context prompt: anchored to a projected world point, centred above it */
+
+.prompt-anchor {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 0;
+    height: 0;
+}
+
+.prompt-center {
+    position: absolute;
+    left: 0;
+    top: 0;
+    translate: -50% -100%;
+}
+
+/* Scrap chip */
+
+.scrap-chip {
+    position: absolute;
+    top: 44px;
+    right: 56px;
+}
+
+/* Memory card */
+
+.memory-card {
+    position: absolute;
+    left: 72px;
+    bottom: 104px;
+    width: 540px;
+}
+
+.memory-card__body {
+    padding: 24px 30px 20px 30px;
+}
+
+.memory-card__name {
+    font-size: 32px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    white-space: normal;
+}
+
+.memory-card__text {
+    font-size: 21px;
+    color: var(--moon-text-dim);
+    white-space: normal;
+}
+
+.hint-row {
+    flex-direction: row;
+    align-items: center;
+    margin-top: 20px;
+}
+
+.hint-row__word {
+    font-size: 15px;
+    color: var(--moon-text-faint);
+}
+
+/* Tower upgrade panel */
+
+.tower-panel {
+    position: absolute;
+    right: 72px;
+    bottom: 104px;
+    width: 430px;
+}
+
+.tower-panel__heading {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.tower-panel__title {
+    font-size: 27px;
+    margin-top: 10px;
+    margin-bottom: 6px;
+    white-space: normal;
+}
+
+.tower-panel__text {
+    font-size: 18px;
+    color: var(--moon-text-dim);
+    white-space: normal;
+}
+
+.tower-panel__footer {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 20px;
+    min-height: 48px;
+}
+
+.tower-panel__need {
+    flex-shrink: 1;
+    font-size: 16px;
+    color: var(--moon-text-dim);
+    white-space: normal;
+    margin-right: 12px;
+}
+
+.hold {
+    flex-direction: row;
+    align-items: center;
+}
+
+.hold__ring {
+    width: 48px;
+    height: 48px;
+    justify-content: center;
+    align-items: center;
+    --track-color: var(--moon-track);
+    --fill-color: var(--moon-warm-lamp);
+    --ring-width: 3;
+}
+
+.hold__glyph {
+    font-size: 15px;
+    color: var(--moon-warm-lamp);
+    -unity-text-align: middle-center;
+}
+
+.hold__word {
+    font-size: 18px;
+    margin-left: 12px;
+}
+
+.tower-panel--celebrate .hold__ring {
+    --fill-color: var(--moon-honey);
+}
+
+.tower-panel--celebrate .hold__word {
+    color: var(--moon-honey);
+}
+
+.cost {
+    flex-direction: row;
+    align-items: center;
+}
+
+.cost__price {
+    font-size: 20px;
+    margin-left: 7px;
+    color: var(--moon-text);
+}
+
+.cost--short .cost__price {
+    color: var(--moon-text-faint);
+}
+
+/* Pause menu */
+
+.pause__veil {
+    background-color: var(--moon-veil);
+}
+
+.pause__frame {
+    justify-content: center;
+    align-items: center;
+}
+
+.pause__stack {
+    width: 410px;
+}
+
+.pause__settings {
+    position: absolute;
+    left: 100%;
+    top: 0;
+    width: 480px;
+    margin-left: 26px;
+}
+
+.pause__panel {
+    padding: 28px 28px 22px 28px;
+}
+
+.pause__header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    padding-left: 8px;
+}
+
+.pause__heading {
+    font-size: 36px;
+}
+
+.pause__subheading {
+    font-size: 16px;
+    color: var(--moon-text-faint);
+    margin-top: 4px;
+}
+
+.pause__pages {
+    min-height: 196px;
+}
+
+.pause__question {
+    font-size: 23px;
+    margin-top: 6px;
+    padding-left: 8px;
+}
+
+.pause__aside {
+    font-size: 16px;
+    color: var(--moon-text-dim);
+    margin-top: 4px;
+    margin-bottom: 14px;
+    padding-left: 8px;
+    white-space: normal;
+}
+
+.pause .menu-button {
+    height: 54px;
+    margin: 4px 0;
+    padding: 0 18px;
+    border-radius: 15px;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0);
+    background-color: rgba(0, 0, 0, 0);
+    color: var(--moon-text);
+    font-size: 22px;
+    -unity-text-align: middle-left;
+}
+
+.pause .menu-button--quiet {
+    color: var(--moon-text-dim);
+}
+
+.pause .menu-button--compact {
+    flex-grow: 1;
+    height: 38px;
+    margin: 0 8px;
+    padding: 0 14px;
+    font-size: 18px;
+    border-radius: 12px;
+    border-color: var(--moon-glass-edge);
+    background-color: var(--moon-cream-glow);
+    -unity-text-align: middle-center;
+}
+
+.pause__panel--settings .menu-button--quiet {
+    margin-top: 12px;
+    padding-left: 4px;
+}
+
+.pause .menu-button:hover {
+    background-color: var(--moon-cream-glow);
+}
+
+.pause .menu-button:focus {
+    background-color: var(--moon-amber-soft);
+    border-color: var(--moon-amber-edge);
+    color: var(--moon-warm-lamp);
+}
+
+.pause .menu-button:active {
+    background-color: var(--moon-amber-edge);
+    color: var(--moon-cream);
+}
+
+.section-label {
+    font-size: 14px;
+    letter-spacing: 2px;
+    color: var(--moon-warm-lamp);
+    margin-top: 16px;
+    margin-bottom: 4px;
+    padding-left: 4px;
+}
+
+.section-label--first {
+    margin-top: 0;
+}
+
+.setting-row {
+    flex-direction: row;
+    align-items: center;
+    height: 46px;
+    padding-left: 4px;
+}
+
+.setting-row__label {
+    width: 130px;
+    font-size: 18px;
+    color: var(--moon-text-dim);
+}
+
+.setting-row__slider {
+    flex-grow: 1;
+    margin: 0 8px;
+}
+
+.setting-row__value {
+    width: 52px;
+    font-size: 16px;
+    color: var(--moon-text-faint);
+    -unity-text-align: middle-right;
+}
+
+.pause .unity-base-slider__tracker {
+    height: 6px;
+    margin-top: -3px;
+    border-width: 0;
+    border-radius: 3px;
+    background-color: var(--moon-track);
+}
+
+.pause .unity-base-slider__fill {
+    border-radius: 3px;
+    background-color: var(--moon-amber-edge);
+}
+
+.pause .unity-base-slider__dragger {
+    width: 20px;
+    height: 20px;
+    margin-top: -10px;
+    border-width: 0;
+    border-radius: 10px;
+    background-color: var(--moon-cream);
+}
+
+.pause .unity-base-slider__dragger-border {
+    display: none;
+}
+
+.pause .unity-base-slider:focus .unity-base-slider__dragger {
+    background-color: var(--moon-warm-lamp);
+}
+
+.pause .unity-base-slider:focus .unity-base-slider__fill {
+    background-color: var(--moon-warm-lamp);
+}
+
+.pause .unity-toggle__checkmark {
+    width: 24px;
+    height: 24px;
+    border-width: 1px;
+    border-radius: 7px;
+    border-color: var(--moon-glass-edge);
+    background-color: var(--moon-track);
+}
+
+.pause .unity-toggle:focus .unity-toggle__checkmark {
+    border-color: var(--moon-amber-edge);
+}
+
+.pause .unity-toggle:checked .unity-toggle__checkmark {
+    background-color: var(--moon-warm-lamp);
+}

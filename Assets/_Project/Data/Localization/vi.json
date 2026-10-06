@@ -1,0 +1,206 @@
+{
+    "language": "vi",
+    "name": "Tiếng Việt",
+    "entries": [
+        {
+            "key": "ui.title.wordmark",
+            "text": "Lofi Lunar"
+        },
+        {
+            "key": "ui.pause.heading",
+            "text": "Tạm dừng"
+        },
+        {
+            "key": "ui.pause.subheading",
+            "text": "Radio vẫn khẽ ngân nga."
+        },
+        {
+            "key": "ui.pause.resume",
+            "text": "Tiếp tục"
+        },
+        {
+            "key": "ui.pause.settings",
+            "text": "Cài đặt"
+        },
+        {
+            "key": "ui.pause.quit",
+            "text": "Thoát"
+        },
+        {
+            "key": "ui.pause.quit_question",
+            "text": "Nghỉ chân ở đây nhé?"
+        },
+        {
+            "key": "ui.pause.quit_aside",
+            "text": "07 sẽ ngồi đợi ở đây cho đến khi bạn trở lại."
+        },
+        {
+            "key": "ui.pause.quit_stay",
+            "text": "Ở lại"
+        },
+        {
+            "key": "ui.pause.quit_confirm",
+            "text": "Thoát"
+        },
+        {
+            "key": "ui.settings.sound",
+            "text": "Âm thanh"
+        },
+        {
+            "key": "ui.settings.master",
+            "text": "Tất cả"
+        },
+        {
+            "key": "ui.settings.music",
+            "text": "Radio"
+        },
+        {
+            "key": "ui.settings.sfx",
+            "text": "Hiệu ứng"
+        },
+        {
+            "key": "ui.settings.ambience",
+            "text": "Âm nền"
+        },
+        {
+            "key": "ui.settings.camera",
+            "text": "Góc nhìn"
+        },
+        {
+            "key": "ui.settings.look_speed",
+            "text": "Tốc độ xoay"
+        },
+        {
+            "key": "ui.settings.invert_look",
+            "text": "Đảo trục dọc"
+        },
+        {
+            "key": "ui.settings.language",
+            "text": "Ngôn ngữ"
+        },
+        {
+            "key": "ui.settings.back",
+            "text": "Quay lại"
+        },
+        {
+            "key": "ui.card.caption",
+            "text": "Ký ức thứ {0} trong {1}"
+        },
+        {
+            "key": "ui.card.close",
+            "text": "Đóng"
+        },
+        {
+            "key": "ui.tower.level",
+            "text": "Cấp {0} trên {1}"
+        },
+        {
+            "key": "ui.tower.hold",
+            "text": "Giữ"
+        },
+        {
+            "key": "ui.tower.need",
+            "text": "Cần nhặt thêm {0} mảnh phế liệu"
+        },
+        {
+            "key": "ui.tower.purchased",
+            "text": "Sóng radio đã vươn xa hơn"
+        },
+        {
+            "key": "hint.ping",
+            "text": "Dò tìm"
+        },
+        {
+            "key": "hint.excavate",
+            "text": "Đào"
+        },
+        {
+            "key": "hint.tether",
+            "text": "Kéo"
+        },
+        {
+            "key": "hint.deposit",
+            "text": "Thả ra"
+        },
+        {
+            "key": "hint.reel",
+            "text": "Cuộn dây"
+        },
+        {
+            "key": "upgrade.radio_tower.name",
+            "text": "Tháp Radio"
+        },
+        {
+            "key": "upgrade.radio_tower.1.title",
+            "text": "Đánh thức cột anten cũ"
+        },
+        {
+            "key": "upgrade.radio_tower.1.effect",
+            "text": "Cấp điện cho chiếc anten mỏi mệt: đèn hiệu sáng trở lại và tiếng nhạc vang xa hơn."
+        },
+        {
+            "key": "upgrade.radio_tower.2.title",
+            "text": "Nâng cao cột anten"
+        },
+        {
+            "key": "upgrade.radio_tower.2.effect",
+            "text": "Cột cao hơn, đèn ấm hơn: radio vẫn trong trẻo dù bạn đi sâu vào những đụn cát."
+        },
+        {
+            "key": "upgrade.radio_tower.3.title",
+            "text": "Thắp sáng cả lòng chảo"
+        },
+        {
+            "key": "upgrade.radio_tower.3.effect",
+            "text": "Tháp ngân nga khắp miệng núi lửa; căn nhà nhỏ rực sáng như chiếc đèn lồng giữa đêm đông."
+        },
+        {
+            "key": "relic.cassette_player.name",
+            "text": "Cuộn băng của Ro"
+        },
+        {
+            "key": "relic.cassette_player.memory",
+            "text": "Chiếc walkman vẫn còn cuộn băng bên trong, nét chữ của Ro ghi: \"cho chuyến đi dài\". Mặt B chỉ ghi: \"cho ngày mình về nhà\"."
+        },
+        {
+            "key": "relic.rubber_duck.name",
+            "text": "Cố vấn gỡ lỗi cấp cao"
+        },
+        {
+            "key": "relic.rubber_duck.memory",
+            "text": "Kenji giải thích mọi bộ phận hỏng cho chú vịt này nghe trước khi sửa. Chú chẳng nói câu nào, mà thường thì chú đúng."
+        },
+        {
+            "key": "relic.golden_record.name",
+            "text": "Đĩa vàng Lumen"
+        },
+        {
+            "key": "relic.golden_record.memory",
+            "text": "Chiếc đĩa vàng Ro tự làm: lời chào từ bốn con người, một chiếc rover và một chậu húng quế rất đỗi tự hào, sẵn sàng gửi tới bất kỳ ai đang lắng nghe."
+        },
+        {
+            "key": "relic.astronaut_boot.name",
+            "text": "Đôi ủng của Ines"
+        },
+        {
+            "key": "relic.astronaut_boot.memory",
+            "text": "Sáng nào Ines cũng đi dọc vành núi \"để chắc rằng Mặt Trăng vẫn còn đó\". Gai đế vẫn còn đầy bụi của ngọn đồi chị yêu nhất."
+        },
+        {
+            "key": "relic.teapot.name",
+            "text": "Ấm trà thật sự đầu tiên"
+        },
+        {
+            "key": "relic.teapot.memory",
+            "text": "Theo pha bạc hà trồng trong đất Mặt Trăng bằng chiếc ấm móp này. \"Ấm trà đầu tiên trên Mặt Trăng có vị thật sự\", Ro viết trên nắp."
+        },
+        {
+            "key": "relic.garden_gnome.name",
+            "text": "Trưởng ban An ninh"
+        },
+        {
+            "key": "relic.garden_gnome.memory",
+            "text": "Theo lén mang chú lên tàu cho vui rồi giao chú canh vườn ươm. Suốt nhiệm kỳ, chưa một cây non nào bị mất."
+        }
+    ]
+}

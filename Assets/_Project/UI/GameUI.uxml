@@ -1,0 +1,149 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="GameUI.uss" />
+    <ui:VisualElement name="moon-root" class="moon-root" picking-mode="Ignore">
+        <ui:VisualElement name="hud" class="hud" picking-mode="Ignore">
+            <ui:VisualElement name="title" class="title" picking-mode="Ignore">
+                <ui:Label name="title-wordmark" class="title__wordmark loc" text="ui.title.wordmark" />
+                <ui:VisualElement name="title-rule" class="title__rule" />
+            </ui:VisualElement>
+            <ui:VisualElement name="reticle" class="reticle" picking-mode="Ignore">
+                <ui:VisualElement name="reticle-rest" class="reticle__ring reticle__ring--rest" />
+                <ui:VisualElement name="reticle-hover" class="reticle__ring reticle__ring--hover" />
+            </ui:VisualElement>
+            <ui:VisualElement name="prompt-anchor" class="prompt-anchor" picking-mode="Ignore">
+                <ui:VisualElement name="prompt-center" class="prompt-center" picking-mode="Ignore">
+                    <ui:VisualElement name="prompt" class="prompt" picking-mode="Ignore">
+                        <ui:VisualElement name="prompt-shadow" class="soft-shadow soft-shadow--chip" />
+                        <ui:VisualElement name="prompt-body" class="chip">
+                            <ui:VisualElement name="prompt-glyph" class="glyph">
+                                <ui:Label name="prompt-glyph-label" class="glyph__label" />
+                            </ui:VisualElement>
+                            <ui:Label name="prompt-word" class="chip__word" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="scrap-chip" class="scrap-chip" picking-mode="Ignore">
+                <ui:VisualElement name="scrap-chip-shadow" class="soft-shadow soft-shadow--chip" />
+                <ui:VisualElement name="scrap-chip-body" class="chip">
+                    <ui:VisualElement name="scrap-chip-icon" class="scrap-icon" />
+                    <ui:Label name="scrap-chip-count" class="chip__number" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="memory-card" class="memory-card" picking-mode="Ignore">
+                <ui:VisualElement name="memory-card-shadow" class="soft-shadow soft-shadow--panel" />
+                <ui:VisualElement name="memory-card-body" class="panel memory-card__body">
+                    <ui:Label name="memory-card-caption" class="caption" />
+                    <ui:Label name="memory-card-name" class="memory-card__name" />
+                    <ui:Label name="memory-card-text" class="memory-card__text" />
+                    <ui:VisualElement name="memory-card-footer" class="hint-row">
+                        <ui:VisualElement name="memory-card-glyph" class="glyph glyph--small">
+                            <ui:Label name="memory-card-glyph-label" class="glyph__label" />
+                        </ui:VisualElement>
+                        <ui:Label name="memory-card-close" class="hint-row__word" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="tower-panel" class="tower-panel" picking-mode="Ignore">
+                <ui:VisualElement name="tower-panel-shadow" class="soft-shadow soft-shadow--panel" />
+                <ui:VisualElement name="tower-panel-body" class="panel tower-panel__body">
+                    <ui:VisualElement class="tower-panel__heading">
+                        <ui:Label name="tower-name" class="caption" />
+                        <ui:Label name="tower-level" class="caption caption--quiet" />
+                    </ui:VisualElement>
+                    <ui:Label name="tower-title" class="tower-panel__title" />
+                    <ui:Label name="tower-description" class="tower-panel__text" />
+                    <ui:VisualElement class="tower-panel__footer">
+                        <ui:VisualElement name="tower-confirm" class="hold">
+                            <ui:VisualElement name="tower-ring" class="hold__ring">
+                                <ui:Label name="tower-ring-glyph" class="hold__glyph" />
+                            </ui:VisualElement>
+                            <ui:Label name="tower-hold-word" class="hold__word" />
+                        </ui:VisualElement>
+                        <ui:Label name="tower-need" class="tower-panel__need" />
+                        <ui:VisualElement name="tower-cost-row" class="cost">
+                            <ui:VisualElement name="tower-cost-icon" class="scrap-icon scrap-icon--small" />
+                            <ui:Label name="tower-cost" class="cost__price" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="pause" class="pause" picking-mode="Ignore">
+            <ui:VisualElement name="pause-veil" class="pause__veil" />
+            <ui:VisualElement name="pause-frame" class="pause__frame" picking-mode="Ignore">
+                <ui:VisualElement name="pause-stack" class="pause__stack" picking-mode="Ignore">
+                    <ui:VisualElement name="pause-main" class="pause__main" picking-mode="Ignore">
+                        <ui:VisualElement name="pause-main-shadow" class="soft-shadow soft-shadow--panel" />
+                        <ui:VisualElement name="pause-main-body" class="panel pause__panel">
+                            <ui:VisualElement class="pause__header">
+                                <ui:VisualElement class="pause__titles">
+                                    <ui:Label class="pause__heading loc" text="ui.pause.heading" />
+                                    <ui:Label class="pause__subheading loc" text="ui.pause.subheading" />
+                                </ui:VisualElement>
+                                <ui:VisualElement name="pause-scrap" class="chip chip--inline">
+                                    <ui:VisualElement name="pause-scrap-icon" class="scrap-icon" />
+                                    <ui:Label name="pause-scrap-count" class="chip__number" />
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="pause__pages">
+                                <ui:VisualElement name="page-main" class="pause__page">
+                                    <ui:Button name="button-resume" class="menu-button loc" text="ui.pause.resume" />
+                                    <ui:Button name="button-settings" class="menu-button loc"
+                                               text="ui.pause.settings" />
+                                    <ui:Button name="button-quit" class="menu-button loc" text="ui.pause.quit" />
+                                </ui:VisualElement>
+                                <ui:VisualElement name="page-quit" class="pause__page">
+                                    <ui:Label class="pause__question loc" text="ui.pause.quit_question" />
+                                    <ui:Label class="pause__aside loc" text="ui.pause.quit_aside" />
+                                    <ui:Button name="button-quit-stay" class="menu-button loc"
+                                               text="ui.pause.quit_stay" />
+                                    <ui:Button name="button-quit-confirm" class="menu-button menu-button--quiet loc"
+                                               text="ui.pause.quit_confirm" />
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="pause-settings" class="pause__settings" picking-mode="Ignore">
+                        <ui:VisualElement name="pause-settings-shadow" class="soft-shadow soft-shadow--panel" />
+                        <ui:VisualElement name="pause-settings-body" class="panel pause__panel pause__panel--settings">
+                            <ui:Label class="section-label section-label--first loc" text="ui.settings.sound" />
+                            <ui:VisualElement class="setting-row">
+                                <ui:Label class="setting-row__label loc" text="ui.settings.master" />
+                                <ui:SliderInt name="slider-master" class="setting-row__slider" />
+                            </ui:VisualElement>
+                            <ui:VisualElement class="setting-row">
+                                <ui:Label class="setting-row__label loc" text="ui.settings.music" />
+                                <ui:SliderInt name="slider-music" class="setting-row__slider" />
+                            </ui:VisualElement>
+                            <ui:VisualElement class="setting-row">
+                                <ui:Label class="setting-row__label loc" text="ui.settings.sfx" />
+                                <ui:SliderInt name="slider-sfx" class="setting-row__slider" />
+                            </ui:VisualElement>
+                            <ui:VisualElement class="setting-row">
+                                <ui:Label class="setting-row__label loc" text="ui.settings.ambience" />
+                                <ui:SliderInt name="slider-ambience" class="setting-row__slider" />
+                            </ui:VisualElement>
+                            <ui:Label class="section-label loc" text="ui.settings.camera" />
+                            <ui:VisualElement class="setting-row">
+                                <ui:Label class="setting-row__label loc" text="ui.settings.look_speed" />
+                                <ui:SliderInt name="slider-look" class="setting-row__slider" />
+                                <ui:Label name="look-value" class="setting-row__value" />
+                            </ui:VisualElement>
+                            <ui:VisualElement class="setting-row">
+                                <ui:Label class="setting-row__label loc" text="ui.settings.invert_look" />
+                                <ui:Toggle name="toggle-invert" class="setting-row__toggle" />
+                            </ui:VisualElement>
+                            <ui:VisualElement class="setting-row">
+                                <ui:Label class="setting-row__label loc" text="ui.settings.language" />
+                                <ui:Button name="button-language" class="menu-button menu-button--compact" />
+                            </ui:VisualElement>
+                            <ui:Button name="button-settings-back" class="menu-button menu-button--quiet loc"
+                                       text="ui.settings.back" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

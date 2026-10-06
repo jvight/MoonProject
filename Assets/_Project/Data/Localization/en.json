@@ -1,0 +1,206 @@
+{
+    "language": "en",
+    "name": "English",
+    "entries": [
+        {
+            "key": "ui.title.wordmark",
+            "text": "Lofi Lunar"
+        },
+        {
+            "key": "ui.pause.heading",
+            "text": "Paused"
+        },
+        {
+            "key": "ui.pause.subheading",
+            "text": "The radio keeps playing."
+        },
+        {
+            "key": "ui.pause.resume",
+            "text": "Resume"
+        },
+        {
+            "key": "ui.pause.settings",
+            "text": "Settings"
+        },
+        {
+            "key": "ui.pause.quit",
+            "text": "Quit"
+        },
+        {
+            "key": "ui.pause.quit_question",
+            "text": "Rest here for now?"
+        },
+        {
+            "key": "ui.pause.quit_aside",
+            "text": "07 will keep watch until you return."
+        },
+        {
+            "key": "ui.pause.quit_stay",
+            "text": "Stay"
+        },
+        {
+            "key": "ui.pause.quit_confirm",
+            "text": "Quit"
+        },
+        {
+            "key": "ui.settings.sound",
+            "text": "Sound"
+        },
+        {
+            "key": "ui.settings.master",
+            "text": "Everything"
+        },
+        {
+            "key": "ui.settings.music",
+            "text": "Radio"
+        },
+        {
+            "key": "ui.settings.sfx",
+            "text": "Effects"
+        },
+        {
+            "key": "ui.settings.ambience",
+            "text": "Ambience"
+        },
+        {
+            "key": "ui.settings.camera",
+            "text": "Camera"
+        },
+        {
+            "key": "ui.settings.look_speed",
+            "text": "Look speed"
+        },
+        {
+            "key": "ui.settings.invert_look",
+            "text": "Invert look"
+        },
+        {
+            "key": "ui.settings.language",
+            "text": "Language"
+        },
+        {
+            "key": "ui.settings.back",
+            "text": "Back"
+        },
+        {
+            "key": "ui.card.caption",
+            "text": "Memory {0} of {1}"
+        },
+        {
+            "key": "ui.card.close",
+            "text": "Close"
+        },
+        {
+            "key": "ui.tower.level",
+            "text": "Level {0} of {1}"
+        },
+        {
+            "key": "ui.tower.hold",
+            "text": "Hold"
+        },
+        {
+            "key": "ui.tower.need",
+            "text": "{0} more scrap to gather"
+        },
+        {
+            "key": "ui.tower.purchased",
+            "text": "The signal grows"
+        },
+        {
+            "key": "hint.ping",
+            "text": "Ping"
+        },
+        {
+            "key": "hint.excavate",
+            "text": "Dig"
+        },
+        {
+            "key": "hint.tether",
+            "text": "Tow"
+        },
+        {
+            "key": "hint.deposit",
+            "text": "Release"
+        },
+        {
+            "key": "hint.reel",
+            "text": "Reel"
+        },
+        {
+            "key": "upgrade.radio_tower.name",
+            "text": "Radio Tower"
+        },
+        {
+            "key": "upgrade.radio_tower.1.title",
+            "text": "Wake the old mast"
+        },
+        {
+            "key": "upgrade.radio_tower.1.effect",
+            "text": "Power the tired antenna: its beacon glows again and the music reaches farther."
+        },
+        {
+            "key": "upgrade.radio_tower.2.title",
+            "text": "Raise the mast"
+        },
+        {
+            "key": "upgrade.radio_tower.2.effect",
+            "text": "A taller mast and a warmer lamp: the radio stays clear deep into the dunes."
+        },
+        {
+            "key": "upgrade.radio_tower.3.title",
+            "text": "Light the whole basin"
+        },
+        {
+            "key": "upgrade.radio_tower.3.effect",
+            "text": "The tower sings across the crater; home glows like a lantern on a winter night."
+        },
+        {
+            "key": "relic.cassette_player.name",
+            "text": "Ro's Mixtape"
+        },
+        {
+            "key": "relic.cassette_player.memory",
+            "text": "A walkman with a tape still inside, labelled in Ro's handwriting: \"for the long drive\". Side B just says \"for when we come home\"."
+        },
+        {
+            "key": "relic.rubber_duck.name",
+            "text": "Senior Debugging Consultant"
+        },
+        {
+            "key": "relic.rubber_duck.memory",
+            "text": "Kenji explained every broken part to this duck before fixing it. The duck never said a word, and it was usually right."
+        },
+        {
+            "key": "relic.golden_record.name",
+            "text": "The Lumen Record"
+        },
+        {
+            "key": "relic.golden_record.memory",
+            "text": "Ro's homemade golden record: greetings from four people, one rover and a very proud basil plant, ready for anyone listening."
+        },
+        {
+            "key": "relic.astronaut_boot.name",
+            "text": "Ines's Field Boot"
+        },
+        {
+            "key": "relic.astronaut_boot.memory",
+            "text": "Ines walked the rim every morning \"to check the Moon was still there\". The tread is still packed with dust from her favourite ridge."
+        },
+        {
+            "key": "relic.teapot.name",
+            "text": "The First Real Tea"
+        },
+        {
+            "key": "relic.teapot.memory",
+            "text": "Theo brewed mint grown in lunar soil in this dented pot. \"The first tea on the Moon that tasted like anything,\" Ro wrote on the lid."
+        },
+        {
+            "key": "relic.garden_gnome.name",
+            "text": "Chief Security Officer"
+        },
+        {
+            "key": "relic.garden_gnome.memory",
+            "text": "Theo smuggled him aboard as a joke and put him in charge of the seedlings. Nothing was ever stolen on his watch."
+        }
+    ]
+}
