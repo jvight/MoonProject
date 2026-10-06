@@ -15,6 +15,7 @@ namespace MoonProject.Rover
         [SerializeField] private LandingSettings _landing = new LandingSettings();
         [SerializeField] private SpawnSettings _spawn = new SpawnSettings();
         [SerializeField] private RecoverySettings _recovery = new RecoverySettings();
+        [SerializeField] private HoverJumpSettings _hoverJump = new HoverJumpSettings();
 
         public DriveSettings Drive => _drive;
 
@@ -27,5 +28,7 @@ namespace MoonProject.Rover
         public SpawnSettings Spawn => _spawn;
 
         public RecoverySettings Recovery => _recovery;
+
+        public HoverJumpSettings HoverJump => _hoverJump;
     }
 }
