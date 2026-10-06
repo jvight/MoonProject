@@ -240,14 +240,20 @@
         "Assets/_Project/Audio/SFX/scrap_chime_E5.wav",
         "Assets/_Project/Audio/SFX/scrap_chime_Fs5.wav",
         "Assets/_Project/Audio/SFX/scrap_chime_A5.wav",
-        "Assets/_Project/Audio/SFX/scrap_chime_B5.wav"
+        "Assets/_Project/Audio/SFX/scrap_chime_B5.wav",
+        "Assets/_Project/Audio/SFX/scrap_chime_D6.wav",
+        "Assets/_Project/Audio/SFX/scrap_chime_E6.wav",
+        "Assets/_Project/Audio/SFX/scrap_chime_Fs6.wav"
       ],
       "sha256": [
         "f7cd1f4d45d40b57dd97093d22db9242f4187e01b3ae62ff57aa604d16a47434",
         "c87047ba82c5020b85ec1e23ca50c83e69a486d02564b5fe36fd18f7b45d049f",
         "0749641a2e4ec5f7bb29afa0363a1cc4979ab6bf78db3defe2e5f847a86f59d3",
         "8423e4f0c89712218431feb3308f41225054d0fb4f212e8416e0d9191bc0e5af",
-        "86d21032683107a4399cb7497705d97e3e390f8269d2f413be99401d0cc498c3"
+        "86d21032683107a4399cb7497705d97e3e390f8269d2f413be99401d0cc498c3",
+        "5a73be259723b3e2e13716b76bbf14d6f27d43bb3c2714433c4ea676a3dd7e1f",
+        "e4546850f112057dcb538793e3ce6440722e20f8ab57f47ac31a835666b4b376",
+        "133bcc0abfe5961ac20ab42dc6556ec930415f1724eb7dba30b68f944dd62d13"
       ],
       "volumeMin": 0.7,
       "volumeMax": 0.7,
@@ -258,7 +264,7 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": true,
-      "notes": "Glassy chime per pentatonic degree; clip index = combo step (pitch 2.0 for the next octave)."
+      "notes": "Glassy chime per pentatonic degree D5..F#6, ascending; the runtime picks the clip from the combo step (climbs, then weaves over the top notes)."
     },
     {
       "id": "tether_attach",
@@ -331,6 +337,54 @@
       "hfMaxDb": -30.0,
       "tonal": false,
       "notes": "Breathy band-passed noise sweep 450->2200 Hz + falling A4->D4 hint."
+    },
+    {
+      "id": "tether_snap",
+      "category": "oneshot_3d",
+      "milestone": "M2",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/tether_snap.wav"
+      ],
+      "sha256": [
+        "acc851e56dd127e23ff9e017796c49cde0e77a3bca45666433aa65009a4063b4"
+      ],
+      "volumeMin": 0.45,
+      "volumeMax": 0.45,
+      "pitchMin": 0.97,
+      "pitchMax": 1.03,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "Softer sighing release when the tether snaps itself: falling breath 1800->380 Hz."
+    },
+    {
+      "id": "relic_placed",
+      "category": "oneshot_3d",
+      "milestone": "M2",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/relic_placed.wav"
+      ],
+      "sha256": [
+        "776f1a1603f52dc7ddb191e326cd1662e2f3f53e4c2e509e2eb40e5b67ad7953"
+      ],
+      "volumeMin": 0.7,
+      "volumeMax": 0.7,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Relic placed on the museum shelf: soft D3 felt tock + A4 -> D5 kalimba resolve."
     },
     {
       "id": "excavation_rumble",

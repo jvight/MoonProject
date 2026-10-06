@@ -3,6 +3,7 @@ using System.IO;
 using System.Security.Cryptography;
 using UnityEditor;
 using UnityEngine;
+using MoonProject.Core;
 using MoonProject.Editor.Builders;
 
 namespace MoonProject.Audio.Editor

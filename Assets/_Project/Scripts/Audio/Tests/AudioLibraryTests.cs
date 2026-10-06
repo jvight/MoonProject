@@ -2,6 +2,7 @@ using System.IO;
 using System.Reflection;
 using NUnit.Framework;
 using UnityEngine;
+using MoonProject.Core;
 
 namespace MoonProject.Audio.Tests
 {
