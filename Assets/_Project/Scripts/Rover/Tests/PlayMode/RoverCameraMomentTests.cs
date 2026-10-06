@@ -10,6 +10,9 @@ namespace MoonProject.Rover.PlayModeTests
     /// <summary>Camera moments (real wiring): eased in and out, framing the subject, then back to normal.</summary>
     public sealed class RoverCameraMomentTests : InputTestFixture
     {
+        /// <summary>Height (m) of the middle of 07's body above its ground contact.</summary>
+        private const float BodyHeight = 0.8f;
+
         private LunarTestPhysics _physics;
         private TestWorld _world;
         private TestRover _rover;
@@ -105,6 +108,64 @@ namespace MoonProject.Rover.PlayModeTests
 
             yield return Wait(4f);
             Assert.AreEqual(restingHeight, _rover.Camera.transform.position.y, 0.3f, "Returns to the chase framing.");
+        }
+
+        /// <summary>Angle (deg) between 07 and a point as the camera sees them: near 0 means 07 hides it.</summary>
+        private float SeparationFrom07(Vector3 point)
+        {
+            Transform camera = _rover.Camera.transform;
+            Vector3 body = _rover.Controller.Position + Vector3.up * BodyHeight;
+            return Vector3.Angle(body - camera.position, point - camera.position);
+        }
+
+        [UnityTest]
+        public IEnumerator Digging_ShowsTheSiteBeside07_HoldsWhileTheBeamIsOn_AndEasesBackWhenStopped()
+        {
+            yield return Wait(2f);
+            RoverController controller = _rover.Controller;
+            Vector3 site = controller.Position + controller.Rotation * new Vector3(0f, 0f, 3f);
+            Vector3 rising = site + Vector3.up * 0.8f;
+            float hidden = SeparationFrom07(rising);
+            Vector3 resting = _rover.Camera.transform.position;
+
+            _rover.Context.Events.Publish(new ExcavationStarted(site));
+            yield return Wait(6f);
+            float shown = SeparationFrom07(rising);
+            Debug.Log($"[rover-moment] dig: site {hidden:0.0} deg from 07's body before, {shown:0.0} deg digging");
+            Assert.Greater(shown, hidden + 8f, "The rising relic is seen beside 07, not behind it.");
+            Assert.Less(_rover.Camera.WorldToViewportPoint(rising).y, 0.95f, "The relic stays in frame.");
+
+            _rover.Context.Events.Publish(new ExcavationStopped(site, false));
+            yield return Wait(3f);
+            Assert.Less(Vector3.Distance(resting, _rover.Camera.transform.position), 0.5f, "Eased back afterwards.");
+        }
+
+        [UnityTest]
+        public IEnumerator CompletingTheDig_FlowsStraightIntoTheRelicMoment()
+        {
+            yield return Wait(2f);
+            RoverController controller = _rover.Controller;
+            Vector3 site = controller.Position + controller.Rotation * new Vector3(1f, 0f, 3f);
+            Vector3 resting = _rover.Camera.transform.position;
+            _rover.Context.Events.Publish(new ExcavationStarted(site));
+            yield return Wait(4f);
+
+            _rover.Context.Events.Publish(new ExcavationStopped(site, true));
+            _rover.Context.Events.Publish(new RelicSurfaced(site + Vector3.up * 1.6f, "test"));
+            Vector3 previous = _rover.Camera.transform.position;
+            float largestJump = 0f;
+            float until = Time.time + 1.5f;
+            while (Time.time < until)
+            {
+                yield return null;
+                Vector3 position = _rover.Camera.transform.position;
+                largestJump = Mathf.Max(largestJump, Vector3.Distance(previous, position));
+                previous = position;
+            }
+
+            Assert.Less(largestJump, 0.3f, "The hand-over from dig to relic framing never jumps.");
+            yield return Wait(4f);
+            Assert.Less(Vector3.Distance(resting, _rover.Camera.transform.position), 0.5f, "Back to the chase view.");
         }
     }
 }
