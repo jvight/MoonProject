@@ -119,13 +119,13 @@ namespace MoonProject.Art.Tests
         }
 
         [Test]
-        public void Lander_GainsTillysPerch_AndKeepsEveryExistingNode()
+        public void Lander_GainsTillysPerch_AndKeepsEveryExistingNodeInOrder()
         {
             ModelNode lander = BaseModelBuilder.CreateLander();
             string[] expected =
             {
                 "Windows", "ShelfAnchor", "TowerAnchor", "LampSocket_0", "LampSocket_1", "LampSocket_2",
-                "LampSocket_3", "FriendSocket_tilly",
+                "LampSocket_3", "FriendSocket_tilly", "WorkshopAnchor",
             };
 
             CollectionAssert.AreEqual(expected, lander.Children.Select(child => child.Name).ToArray());

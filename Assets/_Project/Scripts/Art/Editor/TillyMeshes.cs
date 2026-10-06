@@ -205,17 +205,9 @@ namespace MoonProject.Art.Editor
         /// <summary>A tiny cream sticker on her right side with "INES" in charcoal block letters.</summary>
         private static void InesSticker(LowPolyMeshBuilder b)
         {
-            // Yaw -90 turns the sticker's +X towards +Z: read from her right side, the letters run front-wards.
-            Matrix4x4 sticker = At(new Vector3(0.186f, 0.29f, -0.02f), new Vector3(0f, -90f, -8f));
+            Matrix4x4 sticker = At(new Vector3(0.186f, 0.29f, -0.02f), new Vector3(-8f, 90f, 0f));
             b.Box(sticker, new Vector3(0.1f, 0.034f, 0.004f), PaletteSwatch.Cream);
-            const float scale = 0.11f;
-            Vector2[][] letters = { Glyphs.I(), Glyphs.N(), Glyphs.E(), Glyphs.S() };
-            for (int i = 0; i < letters.Length; i++)
-            {
-                float x = -0.04f + i * Glyphs.Advance * scale;
-                b.Extrude(sticker * At(new Vector3(x, -0.011f, -0.0035f), Vector3.zero, Vector3.one * scale),
-                    letters[i], 0.003f, PaletteSwatch.Charcoal);
-            }
+            Glyphs.Write(b, sticker * At(0f, 0f, 0.002f), "INES", 0.022f, PaletteSwatch.Charcoal, PaletteSwatch.Cream);
         }
 
         private static Vector3 ArmDirection(int index)

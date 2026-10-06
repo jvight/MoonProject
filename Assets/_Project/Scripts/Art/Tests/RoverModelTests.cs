@@ -14,12 +14,12 @@ namespace MoonProject.Art.Tests
             "Wheel_FL", "Wheel_FR", "Wheel_ML", "Wheel_MR", "Wheel_RL", "Wheel_RR",
             "Neck", "Neck/Head", "Neck/Head/Eye", "Neck/Head/Eye/TetherOrigin", "Neck/Head/Eyelid",
             "SolarWing", "Antenna", "Antenna/AntennaTip",
-            "HeadlampSocket", "CargoSocket", "DustSocket_L", "DustSocket_R",
+            "HeadlampSocket", "CargoSocket", "DustSocket_L", "DustSocket_R", "CoilSocket",
         };
 
         private static readonly string[] EmptyNodes =
         {
-            "TetherOrigin", "HeadlampSocket", "CargoSocket", "DustSocket_L", "DustSocket_R",
+            "TetherOrigin", "HeadlampSocket", "CargoSocket", "DustSocket_L", "DustSocket_R", "CoilSocket",
         };
 
         private ModelNode _rover;
