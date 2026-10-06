@@ -24,5 +24,8 @@ namespace MoonProject.Gameplay
 
         /// <summary>Towing: the winch reels the relic in or out.</summary>
         Reel = 6,
+
+        /// <summary>Next to a broken friend with every part gathered: hold to repair it.</summary>
+        Repair = 7,
     }
 }

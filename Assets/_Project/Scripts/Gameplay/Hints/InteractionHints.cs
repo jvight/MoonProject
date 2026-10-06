@@ -10,8 +10,8 @@ namespace MoonProject.Gameplay
     {
         private static readonly InteractionKind[] Priority =
         {
-            InteractionKind.Deposit, InteractionKind.Upgrade, InteractionKind.Excavate, InteractionKind.Tether,
-            InteractionKind.Reel, InteractionKind.Ping,
+            InteractionKind.Deposit, InteractionKind.Repair, InteractionKind.Upgrade, InteractionKind.Excavate,
+            InteractionKind.Tether, InteractionKind.Reel, InteractionKind.Ping,
         };
 
         private readonly IRoverState _rover;
@@ -21,9 +21,10 @@ namespace MoonProject.Gameplay
         private readonly HomeBase _home;
         private readonly RadioTower _tower;
         private readonly UpgradeService _upgrades;
+        private readonly FriendField _friends;
 
         public InteractionHints(IRoverState rover, SonarSystem sonar, ExcavationSystem excavation, TetherSystem tether,
-            HomeBase home, RadioTower tower, UpgradeService upgrades)
+            HomeBase home, RadioTower tower, UpgradeService upgrades, FriendField friends)
         {
             _rover = rover ?? throw new ArgumentNullException(nameof(rover));
             _sonar = sonar != null ? sonar : throw new ArgumentNullException(nameof(sonar));
@@ -32,6 +33,7 @@ namespace MoonProject.Gameplay
             _home = home != null ? home : throw new ArgumentNullException(nameof(home));
             _tower = tower != null ? tower : throw new ArgumentNullException(nameof(tower));
             _upgrades = upgrades ?? throw new ArgumentNullException(nameof(upgrades));
+            _friends = friends != null ? friends : throw new ArgumentNullException(nameof(friends));
         }
 
         public InteractionHint Primary
@@ -74,6 +76,12 @@ namespace MoonProject.Gameplay
                     bool deposit = towed != null && _home.InDepositZone(towed.transform.position);
                     hint = deposit ? new InteractionHint(kind, _home.ShelfPosition, true) : InteractionHint.None;
                     return deposit;
+                case InteractionKind.Repair:
+                    Friend broken = _friends.RepairCandidate;
+                    hint = broken != null
+                        ? new InteractionHint(kind, broken.Site.Position, true)
+                        : InteractionHint.None;
+                    return broken != null;
                 case InteractionKind.Reel:
                     hint = towed != null
                         ? new InteractionHint(kind, towed.transform.position, true)

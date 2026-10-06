@@ -42,6 +42,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             _fixture = GameplayFixture.Boot(_controls);
             yield return null;
             GameplaySystem gameplay = _fixture.Gameplay;
+            gameplay.Friends.Restore(new FriendsSaveData
+            {
+                friends = new[] { new FriendSaveData { id = "tilly", state = (int)FriendState.Awake } },
+            });
             Relic duck = gameplay.Relics.Find("rubber_duck");
             duck.BeginLift();
             duck.SetLiftPose(new Vector3(0f, 0.6f, 8f), Quaternion.identity, 1f);
@@ -66,7 +70,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             foreach (MonoBehaviour part in new MonoBehaviour[]
                      {
                          gameplay.Relics, gameplay.Scrap, gameplay.Sonar, gameplay.Excavation, gameplay.Tether,
-                         gameplay.Home, gameplay.Tower,
+                         gameplay.Home, gameplay.Tower, gameplay.Friends,
                      })
             {
                 updates.Add(Method(part, "Update"));
@@ -86,7 +90,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             Release(_mouse.rightButton);
             Assert.AreEqual(0, silent, "a hint (reel) is always available while towing");
             Assert.AreEqual(0L, allocated,
-                "bytes allocated by 300 frames of relics, scrap, sonar, excavation, tether, home, tower and hints");
+                "bytes allocated by 300 frames of relics, scrap, sonar, excavation, tether, home, tower, friends " +
+                "and hints");
         }
 
         /// <summary>

@@ -72,6 +72,9 @@ namespace MoonProject.Gameplay
 
         public Vector3 ShelfPosition => _shelf.position;
 
+        /// <summary>Which way the shelf's front faces.</summary>
+        public Vector3 ShelfForward => _shelf.forward;
+
         public Vector3 LanderPosition => _root.position;
 
         /// <summary>The slot the towed relic would take if let go now, or -1.</summary>

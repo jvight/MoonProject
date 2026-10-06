@@ -73,6 +73,11 @@ namespace MoonProject.Gameplay
                         fresnel: 0f, fresnelPower: 2f, core: 1f, corePower: 1.2f, radial: 0f, additive: true,
                         cull: CullMode.Off);
                     break;
+                case GlowRole.FriendPillar:
+                    Set(material, warm, edge: 0f, length: 0.4f, bands: 3f, speed: 0.18f, strength: 0.35f,
+                        fresnel: 0f, fresnelPower: 2f, core: 1f, corePower: 1.2f, radial: 0f, additive: true,
+                        cull: CullMode.Off);
+                    break;
                 case GlowRole.TractorBeam:
                     Set(material, tech, edge: 0f, length: 0.18f, bands: 5f, speed: 0.8f, strength: 0.45f,
                         fresnel: 0f, fresnelPower: 2f, core: 0.8f, corePower: 1f, radial: 0f, additive: true,

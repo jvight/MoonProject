@@ -6,9 +6,9 @@ using MoonProject.Editor.Builders;
 namespace MoonProject.Gameplay.Editor
 {
     /// <summary>
-    /// Writes one SoftGlow material per <see cref="GlowRole"/> (recipes in <see cref="GlowMaterials"/>), the instanced
-    /// scrap glint material, and the <see cref="GameplayVisuals"/> asset that hands them to the runtime. Rewritten in
-    /// place on every run.
+    /// Writes one SoftGlow material per <see cref="GlowRole"/> (recipes in <see cref="GlowMaterials"/>), the scrap and
+    /// friend-part glint materials, and the <see cref="GameplayVisuals"/> asset that hands them to the runtime.
+    /// Rewritten in place on every run.
     /// </summary>
     internal static class GameplayMaterialBuilder
     {
@@ -26,10 +26,12 @@ namespace MoonProject.Gameplay.Editor
                 Write(shader, GlowRole.SitePillar), Write(shader, GlowRole.TractorBeam),
                 Write(shader, GlowRole.TetherBeam), Write(shader, GlowRole.Flash), Write(shader, GlowRole.RelicHalo),
                 Write(shader, GlowRole.Dust), Write(shader, GlowRole.WarmRing), Write(shader, GlowRole.WarmGlow),
-                GeneratedAssets.CreateOrReplace(GlintMaterials.Create(glint), GameplayAssetPaths.GlintMaterial));
+                GeneratedAssets.CreateOrReplace(GlintMaterials.Create(glint), GameplayAssetPaths.GlintMaterial),
+                GeneratedAssets.CreateOrReplace(GlintMaterials.CreatePart(glint),
+                    GameplayAssetPaths.PartGlintMaterial), Write(shader, GlowRole.FriendPillar));
             GeneratedAssets.CreateOrReplace(visuals, GameplayAssetPaths.Visuals);
             AssetDatabase.SaveAssets();
-            Debug.Log($"{BuilderPath}: wrote {Enum.GetValues(typeof(GlowRole)).Length + 1} materials and " +
+            Debug.Log($"{BuilderPath}: wrote {Enum.GetValues(typeof(GlowRole)).Length + 2} materials and " +
                       GameplayAssetPaths.Visuals);
         }
 
