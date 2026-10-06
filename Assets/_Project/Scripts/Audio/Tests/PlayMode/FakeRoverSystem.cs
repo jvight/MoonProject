@@ -49,6 +49,10 @@ namespace MoonProject.Audio.PlayModeTests
         {
         }
 
+        public void SetHoldStill(object owner, bool hold)
+        {
+        }
+
         public void Initialize(GameContext context)
         {
             _tetherOrigin = new GameObject("TetherOrigin").transform;
