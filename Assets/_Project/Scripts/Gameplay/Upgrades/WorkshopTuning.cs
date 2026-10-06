@@ -9,9 +9,9 @@ namespace MoonProject.Gameplay
     public sealed class WorkshopTuning : ScriptableObject
     {
         [Header("Placement")]
-        [Tooltip("Where the workbench stands relative to the lander, in lander space (m): right of the museum shelf, " +
-                 "slightly behind it, mirroring the radio tower on the left.")]
-        [SerializeField] private Vector3 _benchOffset = new Vector3(10.5f, 0f, -2.5f);
+        [Tooltip("Where the workbench stands relative to the lander, in lander space (m): right of the museum shelf " +
+                 "and slightly behind it, so its pad keeps a clear gap from the shelf's end.")]
+        [SerializeField] private Vector3 _benchOffset = new Vector3(12.5f, 0f, -2f);
 
         [Tooltip("Pad centre relative to the workbench, in lander space (m): in front of the bench.")]
         [SerializeField] private Vector3 _padOffset = new Vector3(0f, 0f, 3.2f);
