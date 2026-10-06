@@ -145,11 +145,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             BaseTuning = Asset<BaseTuning>();
             TowerTuning = Asset<RadioTowerTuning>();
             RadioTowerUpgrade = Asset<UpgradeDefinition>();
-            RadioTowerUpgrade.Populate("radio_tower", "Radio Tower", 60f, new[]
+            RadioTowerUpgrade.Populate("radio_tower", 60f, new[]
             {
-                new UpgradeLevel("Wake", "Wake the mast.", 15, 110f, 1.25f),
-                new UpgradeLevel("Raise", "Raise the mast.", 40, 170f, 1.5f),
-                new UpgradeLevel("Light", "Light the basin.", 80, 260f, 1.8f),
+                new UpgradeLevel(15, 110f, 1.25f), new UpgradeLevel(40, 170f, 1.5f), new UpgradeLevel(80, 260f, 1.8f),
             });
             var placement = Asset<RelicPlacementTuning>();
 
@@ -158,9 +156,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             for (int i = 0; i < definitions.Length; i++)
             {
                 definitions[i] = Asset<RelicDefinition>();
-                definitions[i].Populate(RelicIds[i], "Test " + RelicIds[i], "A test memory of Earth.",
-                    RelicMasses[i], Template("Relic_" + RelicIds[i], new Vector3(0.7f, 0.6f, 0.5f)), i,
-                    RelicBands[i]);
+                definitions[i].Populate(RelicIds[i], RelicMasses[i],
+                    Template("Relic_" + RelicIds[i], new Vector3(0.7f, 0.6f, 0.5f)), i, RelicBands[i]);
             }
 
             relicCatalog.Populate(definitions);

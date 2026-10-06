@@ -21,6 +21,9 @@ namespace MoonProject.Gameplay
         [Tooltip("No scrap closer to the base centre than this (m): the lander's yard stays clean.")]
         [Range(0f, 40f)] [SerializeField] private float _baseClearRadius = 11f;
 
+        [Tooltip("No scrap within this many metres of the lander: its shelf, tower and lamps stand there.")]
+        [Range(0f, 40f)] [SerializeField] private float _landerClearRadius = 12f;
+
         [Tooltip("Ring (m from the base centre) of the welcome clusters around home.")]
         [SerializeField] private Vector2 _baseRing = new Vector2(15f, 24f);
 
@@ -166,6 +169,7 @@ namespace MoonProject.Gameplay
         public float MaxSlopeDegrees => _maxSlopeDegrees;
         public float EdgeMargin => _edgeMargin;
         public float BaseClearRadius => _baseClearRadius;
+        public float LanderClearRadius => _landerClearRadius;
         public Vector2 BaseRing => Ordered(_baseRing);
         public int BaseRingClusters => _baseRingClusters;
         public float TrailStart => _trailStart;

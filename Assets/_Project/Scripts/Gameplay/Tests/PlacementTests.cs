@@ -13,6 +13,8 @@ namespace MoonProject.Gameplay.Tests
             RelicPlacementBand.Wanderer, RelicPlacementBand.Wanderer, RelicPlacementBand.RimView,
         };
 
+        private static readonly Vector3 Lander = new Vector3(-10f, 0f, 8f);
+
         private readonly List<Object> _created = new List<Object>();
 
         [TearDown]
@@ -107,8 +109,8 @@ namespace MoonProject.Gameplay.Tests
             RelicSite[] sites = RelicSitePlanner.Plan(world, world, placement, Bands);
             ScrapVariant[] variants = Variants();
 
-            List<ScrapSpawn> a = ScrapFieldPlanner.Plan(world, world, tuning, sites, variants);
-            List<ScrapSpawn> b = ScrapFieldPlanner.Plan(world, world, tuning, sites, variants);
+            List<ScrapSpawn> a = ScrapFieldPlanner.Plan(world, world, tuning, sites, variants, Lander);
+            List<ScrapSpawn> b = ScrapFieldPlanner.Plan(world, world, tuning, sites, variants, Lander);
             Assert.AreEqual(a.Count, b.Count);
             for (int i = 0; i < a.Count; i++)
             {
@@ -122,13 +124,13 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void ScrapPieces_LieOnGentleDrivableFloor_AwayFromHomeAndDigSpots()
+        public void ScrapPieces_LieOnGentleDrivableFloor_AwayFromHomeTheLanderAndDigSpots()
         {
             TestWorld world = TestWorld.Basin();
             var placement = Create<RelicPlacementTuning>();
             var tuning = Create<ScrapTuning>();
             RelicSite[] sites = RelicSitePlanner.Plan(world, world, placement, Bands);
-            List<ScrapSpawn> spawns = ScrapFieldPlanner.Plan(world, world, tuning, sites, Variants());
+            List<ScrapSpawn> spawns = ScrapFieldPlanner.Plan(world, world, tuning, sites, Variants(), Lander);
             float minNormalY = SurfaceRules.MinNormalY(tuning.MaxSlopeDegrees);
 
             foreach (ScrapSpawn spawn in spawns)
@@ -139,6 +141,8 @@ namespace MoonProject.Gameplay.Tests
                 Assert.AreEqual(world.SampleHeight(p.x, p.z) + tuning.HoverHeight, p.y, 1e-4f);
                 Assert.GreaterOrEqual(SurfaceRules.HorizontalDistance(p, world.BasePosition),
                     tuning.BaseClearRadius);
+                Assert.GreaterOrEqual(SurfaceRules.HorizontalDistance(p, Lander), tuning.LanderClearRadius,
+                    "nothing under the lander, its shelf or its tower");
                 foreach (RelicSite site in sites)
                 {
                     Assert.GreaterOrEqual(SurfaceRules.HorizontalDistance(p, site.Position), tuning.SiteClearRadius);
@@ -153,7 +157,7 @@ namespace MoonProject.Gameplay.Tests
             var placement = Create<RelicPlacementTuning>();
             var tuning = Create<ScrapTuning>();
             RelicSite[] sites = RelicSitePlanner.Plan(world, world, placement, Bands);
-            List<ScrapSpawn> spawns = ScrapFieldPlanner.Plan(world, world, tuning, sites, Variants());
+            List<ScrapSpawn> spawns = ScrapFieldPlanner.Plan(world, world, tuning, sites, Variants(), Lander);
 
             foreach (RelicSite site in sites)
             {

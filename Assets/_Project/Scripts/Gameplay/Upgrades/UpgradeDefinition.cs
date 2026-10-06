@@ -5,16 +5,14 @@ using UnityEngine;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// An upgrade bought with scrap: identity, its state before any purchase (level 0) and its levels in order.
-    /// Written by the Gameplay/Content builder; runtime code only reads it.
+    /// An upgrade bought with scrap: its id, its state before any purchase (level 0) and its levels in order. Its name
+    /// lives in the localization tables under "upgrade.&lt;id&gt;.name". Written by the Gameplay/Content builder;
+    /// runtime code only reads it.
     /// </summary>
     public sealed class UpgradeDefinition : ScriptableObject
     {
-        [Tooltip("Stable id (saves and UI use it), e.g. radio_tower.")]
+        [Tooltip("Stable id (saves and the localization keys upgrade.<id>.* use it), e.g. radio_tower.")]
         [SerializeField] private string _id = string.Empty;
-
-        [Tooltip("Name shown in the shop.")]
-        [SerializeField] private string _displayName = string.Empty;
 
         [Tooltip("Clear radio signal radius (m) before any level is bought; 0 = not a radio upgrade.")]
         [Range(0f, 1000f)] [SerializeField] private float _baseSignalRadius;
@@ -23,8 +21,6 @@ namespace MoonProject.Gameplay
         [SerializeField] private UpgradeLevel[] _levels = Array.Empty<UpgradeLevel>();
 
         public string Id => _id;
-
-        public string DisplayName => _displayName;
 
         public float BaseSignalRadius => _baseSignalRadius;
 
@@ -68,10 +64,9 @@ namespace MoonProject.Gameplay
             return null;
         }
 
-        internal void Populate(string id, string displayName, float baseSignalRadius, UpgradeLevel[] levels)
+        internal void Populate(string id, float baseSignalRadius, UpgradeLevel[] levels)
         {
             _id = id;
-            _displayName = displayName;
             _baseSignalRadius = baseSignalRadius;
             _levels = levels ?? throw new ArgumentNullException(nameof(levels));
         }

@@ -4,6 +4,7 @@
     "references": [
         "MoonProject.Gameplay",
         "MoonProject.Core",
+        "MoonProject.Rover",
         "MoonProject.App",
         "MoonProject.Testing",
         "Unity.InputSystem",

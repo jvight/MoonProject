@@ -101,8 +101,11 @@ namespace MoonProject.Gameplay
             _catalog = catalog;
         }
 
-        /// <summary>Plans the field around the relic <paramref name="sites"/> and spawns every piece.</summary>
-        internal bool Initialize(GameplayServices services, IReadOnlyList<RelicSite> sites)
+        /// <summary>
+        /// Plans the field around the relic <paramref name="sites"/>, clear of the <paramref name="lander"/>, and
+        /// spawns every piece.
+        /// </summary>
+        internal bool Initialize(GameplayServices services, IReadOnlyList<RelicSite> sites, Vector3 lander)
         {
             string problem = _tuning == null ? "ScrapTuning is not assigned."
                 : _catalog == null ? "ScrapCatalog is not assigned."
@@ -125,7 +128,7 @@ namespace MoonProject.Gameplay
                 _tuning.FlashPoolSize, _tuning.FlashDuration, _tuning.FlashRadius, _tuning.FlashIntensity);
 
             List<ScrapSpawn> spawns = ScrapFieldPlanner.Plan(services.Terrain, services.Layout, _tuning, sites,
-                _catalog.Variants);
+                _catalog.Variants, lander);
             Spawn(spawns);
             _glints = new ScrapGlints(transform, services.Visuals.ScrapGlint, _tuning, spawns.Count, Layers.Pickup);
             _initialized = true;

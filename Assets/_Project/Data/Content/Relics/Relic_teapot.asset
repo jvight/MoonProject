@@ -13,9 +13,6 @@ MonoBehaviour:
   m_Name: Relic_teapot
   m_EditorClassIdentifier: 
   _id: teapot
-  _displayName: Enamel Teapot
-  _memory: A dented enamel teapot that still smells faintly of bergamot. Somewhere,
-    a kitchen is missing its slow Sunday afternoons.
   _mass: 7
   _prefab: {fileID: 5845494108400313456, guid: dfa7a5e460ae8dc48bee0300826820c1, type: 3}
   _answerNote: 4
