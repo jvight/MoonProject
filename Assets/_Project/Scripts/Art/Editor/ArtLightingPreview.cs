@@ -17,11 +17,11 @@ namespace MoonProject.Art.Editor
     /// turntables: this is where emission, spot and point light response and far readability are judged.
     /// <code>
     /// python tools/unity_batch.py exec --method MoonProject.Art.Editor.ArtLightingPreview.Capture
-    ///     [--arg scene=rover|base|towers]   (default rover)
+    ///     [--arg scene=rover|base|towers|relics]   (default rover)
     /// </code>
     /// rover: 07 at rest (half-lidded, head lowered, wing ajar) with its headlamp. base: the lander with the shelf
     /// and the L3 tower on their anchors, its lamp sockets lit, 07 coming home. towers: L1-L3 side by side seen
-    /// from 15 m and 55 m.
+    /// from 15 m and 55 m. relics: the six relics on the lit museum shelf, and seen from 15 m.
     /// </summary>
     public static class ArtLightingPreview
     {
@@ -57,8 +57,13 @@ namespace MoonProject.Art.Editor
                             NightSetting(material, temporary, 90f, 12f);
                             poses = TowersScene(temporary);
                             break;
+                        case "relics":
+                            NightSetting(material, temporary, 40f, 8f);
+                            poses = RelicsScene(temporary);
+                            break;
                         default:
-                            Debug.LogError($"ArtLightingPreview: unknown scene '{scene}' (rover|base|towers).");
+                            Debug.LogError(
+                                $"ArtLightingPreview: unknown scene '{scene}' (rover|base|towers|relics).");
                             return false;
                     }
 
@@ -163,6 +168,37 @@ namespace MoonProject.Art.Editor
                 Pose("far55m", new[] { 8f, 8f, 55f }, new[] { 0f, 4f, 0f }, 30f));
         }
 
+        private static CameraPoseSet RelicsScene(TemporaryObjects temporary)
+        {
+            GameObject shelf = Instantiate(BaseModelBuilder.ShelfName, temporary);
+            IReadOnlyList<string> ids = RelicModelBuilder.Ids;
+            for (int i = 0; i < ids.Count; i++)
+            {
+                Transform slot = Descendant(shelf.transform, "Slot_" + i);
+                GameObject relic = Instantiate(RelicModelBuilder.PrefabName(ids[i]), temporary, ArtPaths.RelicFolder);
+                float lift = relic.transform.position.y - RendererBounds(relic).min.y;
+                relic.transform.position = slot.position + Vector3.up * lift;
+            }
+
+            for (int i = 0; i < ids.Count; i++)
+            {
+                GameObject relic = Instantiate(RelicModelBuilder.PrefabName(ids[i]), temporary, ArtPaths.RelicFolder);
+                float lift = relic.transform.position.y - RendererBounds(relic).min.y;
+                relic.transform.SetPositionAndRotation(new Vector3((i - 2.5f) * 1.4f, lift, 4f),
+                    Quaternion.Euler(0f, 20f, 0f));
+            }
+
+            Light lamp = NewLight("ShelfLamp", LightType.Point, Palette.Get(PaletteSwatch.WarmLamp), 3f);
+            lamp.transform.position = new Vector3(0f, 2.6f, 2.6f);
+            lamp.range = BaseLampRange;
+            lamp.shadows = LightShadows.Soft;
+            temporary.Add(lamp.gameObject);
+            return Poses(
+                Pose("shelf", new[] { 0.6f, 1.9f, 6.2f }, new[] { 0f, 1.45f, 0f }, 45f),
+                Pose("row", new[] { 0.5f, 1.6f, 7.5f }, new[] { 0f, 0.4f, 4f }, 50f),
+                Pose("far15m", new[] { 3f, 4f, 19f }, new[] { 0f, 0.6f, 4f }, 40f));
+        }
+
         /// <summary>07 at rest at a spot with its headlamp on as a warm spot light.</summary>
         private static Transform Rover(TemporaryObjects temporary, Vector3 position, float yaw)
         {
@@ -197,6 +233,18 @@ namespace MoonProject.Art.Editor
             var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
             temporary.Add(instance);
             return instance;
+        }
+
+        private static Bounds RendererBounds(GameObject instance)
+        {
+            Renderer[] renderers = instance.GetComponentsInChildren<Renderer>();
+            Bounds bounds = renderers[0].bounds;
+            for (int i = 1; i < renderers.Length; i++)
+            {
+                bounds.Encapsulate(renderers[i].bounds);
+            }
+
+            return bounds;
         }
 
         private static CameraPoseSet Poses(params CameraPose[] poses)
