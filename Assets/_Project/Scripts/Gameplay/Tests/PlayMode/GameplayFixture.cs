@@ -20,6 +20,7 @@ namespace MoonProject.Gameplay.PlayModeTests
     public sealed class GameplayFixture : IDisposable
     {
         public const string ShaderPath = "Assets/_Project/Shaders/Gameplay/SoftGlow.shader";
+        public const string GlintShaderPath = "Assets/_Project/Shaders/Gameplay/Glint.shader";
 
         public static readonly string CaptureFolder =
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "gameplay-captures"));
@@ -154,12 +155,13 @@ namespace MoonProject.Gameplay.PlayModeTests
             });
 
             var visuals = Asset<GameplayVisuals>();
-            Shader shader = LoadShader();
+            Shader shader = LoadShader(ShaderPath);
             visuals.Populate(GlowMaterial(shader, GlowRole.SonarRing), GlowMaterial(shader, GlowRole.SiteRing),
                 GlowMaterial(shader, GlowRole.SitePillar), GlowMaterial(shader, GlowRole.TractorBeam),
                 GlowMaterial(shader, GlowRole.TetherBeam), GlowMaterial(shader, GlowRole.Flash),
                 GlowMaterial(shader, GlowRole.RelicHalo), GlowMaterial(shader, GlowRole.Dust),
-                GlowMaterial(shader, GlowRole.WarmRing), GlowMaterial(shader, GlowRole.WarmGlow));
+                GlowMaterial(shader, GlowRole.WarmRing), GlowMaterial(shader, GlowRole.WarmGlow),
+                Track(GlintMaterials.Create(LoadShader(GlintShaderPath))));
 
             var root = new GameObject("[Gameplay]");
             root.SetActive(false);
@@ -218,13 +220,13 @@ namespace MoonProject.Gameplay.PlayModeTests
             return created;
         }
 
-        private static Shader LoadShader()
+        private static Shader LoadShader(string path)
         {
 #if UNITY_EDITOR
-            var shader = AssetDatabase.LoadAssetAtPath<Shader>(ShaderPath);
+            var shader = AssetDatabase.LoadAssetAtPath<Shader>(path);
             if (shader == null)
             {
-                throw new InvalidOperationException($"SoftGlow shader missing at {ShaderPath}.");
+                throw new InvalidOperationException($"Shader missing at {path}.");
             }
 
             return shader;
