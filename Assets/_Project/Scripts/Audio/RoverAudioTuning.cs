@@ -87,6 +87,30 @@ namespace MoonProject.Audio
         [Tooltip("Impact speed (m/s) that gives the strongest landing creak.")]
         [Min(0.1f)] [SerializeField] private float _landingCreakFullImpact = 3.5f;
 
+        [Header("Wake-up")]
+        [Tooltip("Hum pitch the motor powers up from when 07 wakes (it glides up to the idle pitch).")]
+        [Range(0.25f, 2f)] [SerializeField] private float _wakeStartPitch = 0.55f;
+
+        [Tooltip("Seconds (time constant) for the hum to swell in when 07 wakes; silent while asleep.")]
+        [Range(0.01f, 5f)] [SerializeField] private float _wakeHumTime = 0.8f;
+
+        [Header("Recovery lift")]
+        [Tooltip("Semitones the lift servo glides up over the lift; stay in D major pentatonic from D: " +
+                 "2, 4, 7, 9 or 12.")]
+        [Range(0f, 12f)] [SerializeField] private float _liftRiseSemitones = 2f;
+
+        [Tooltip("Seconds for the lift sound to swell in (capped at half the lift).")]
+        [Min(0.01f)] [SerializeField] private float _liftFadeIn = 0.4f;
+
+        [Tooltip("Seconds for the lift sound to ease out before touchdown (capped at half the lift).")]
+        [Min(0.01f)] [SerializeField] private float _liftFadeOut = 0.35f;
+
+        [Tooltip("Volume scale of the lift loop (times the cue volume).")]
+        [Range(0f, 1f)] [SerializeField] private float _liftVolume = 1f;
+
+        [Tooltip("Volume scale of the settle when the lift sets 07 down.")]
+        [Range(0f, 1f)] [SerializeField] private float _settleVolume = 1f;
+
         [Header("Placement")]
         [Tooltip("3D amount of the hum/crunch loops (1 = fully positional, lower keeps them centred and close).")]
         [Range(0f, 1f)] [SerializeField] private float _loopSpatialBlend = 0.75f;
@@ -116,5 +140,12 @@ namespace MoonProject.Audio
         public float LandingCreakMinImpact => _landingCreakMinImpact;
         public float LandingCreakFullImpact => Mathf.Max(_landingCreakFullImpact, _landingCreakMinImpact + MinSpan);
         public float LoopSpatialBlend => _loopSpatialBlend;
+        public float WakeStartPitch => _wakeStartPitch;
+        public float WakeHumTime => _wakeHumTime;
+        public float LiftRiseSemitones => _liftRiseSemitones;
+        public float LiftFadeIn => _liftFadeIn;
+        public float LiftFadeOut => _liftFadeOut;
+        public float LiftVolume => _liftVolume;
+        public float SettleVolume => _settleVolume;
     }
 }

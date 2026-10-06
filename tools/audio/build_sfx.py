@@ -105,6 +105,7 @@ def manifest_entry(cue, file_results) -> dict:
         "spatial": category.spatial,
         "loop": cue.loop,
         "files": [f"{AUDIO_ROOT_ASSET}/{r['rel']}" for r in file_results],
+        "variantLabels": cue.labels(),
         "sha256": [r["sha256"] for r in file_results],
         "volumeMin": cue.volume[0],
         "volumeMax": cue.volume[1],

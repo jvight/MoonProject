@@ -23,7 +23,8 @@ namespace MoonProject.Audio
             return (1f - share) * Mathf.Sin(TwoPi * _wowPhase) + share * Mathf.Sin(TwoPi * _flutterPhase);
         }
 
-        /// <summary>Pitch multiplier for a wobble <paramref name="value"/> scaled to <paramref name="depthCents"/>.</summary>
+        /// <summary>Pitch multiplier for a wobble <paramref name="value"/> scaled to
+        /// <paramref name="depthCents"/>.</summary>
         public static float PitchFactor(float value, float depthCents)
         {
             return Mathf.Pow(2f, value * depthCents / CentsPerOctave);

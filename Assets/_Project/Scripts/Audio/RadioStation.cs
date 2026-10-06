@@ -6,7 +6,9 @@ using MoonProject.Core.Events;
 namespace MoonProject.Audio
 {
     /// <summary>
-    /// The base's lofi radio. Plays the <see cref="RadioPlaylist"/> in shuffled order (no immediate repeats), moving
+    /// The base's lofi radio. Silent until <see cref="RoverAwoke"/>: then it crackles on with a dial-tuning swish and
+    /// static that resolves into the music (quicker when the player woke 07). Plays the <see cref="RadioPlaylist"/>
+    /// in shuffled order (no immediate repeats), moving
     /// between tracks with a short "turning the dial" crossfade full of static. Its clarity follows the rover's
     /// distance from the base (<see cref="IWorldLayout.BasePosition"/>) through <see cref="RadioSignal"/>: low clarity
     /// closes a low-pass filter, raises the static and deepens a tape wow/flutter. <see cref="SignalRadiusChanged"/>
@@ -29,18 +31,25 @@ namespace MoonProject.Audio
         private readonly AudioLowPassFilter[] _filters = new AudioLowPassFilter[DeckCount];
         private readonly RadioCrossfade _crossfade = new RadioCrossfade();
         private readonly WowFlutter _wowFlutter = new WowFlutter();
+        private readonly RadioWakeUp _wake = new RadioWakeUp();
         private IRoverState _listener;
         private Vector3 _basePosition;
         private AudioDirector _director;
         private RadioSignal _signal;
         private PlaylistShuffler _shuffler;
-        private EasedValue _startFade;
         private AudioSource _static;
         private AudioSource _swish;
         private float _staticCueVolume;
         private float _swishCueVolume;
         private int _live;
         private IDisposable _radiusSubscription;
+        private IDisposable _awokeSubscription;
+
+        /// <summary>True once 07 has started waking and the radio has come on.</summary>
+        public bool IsOn => _wake.IsAwake;
+
+        /// <summary>True once the music itself has started (after the wake-up static).</summary>
+        public bool MusicStarted => _decks[_live] != null && _decks[_live].isPlaying;
 
         /// <summary>Smoothed signal clarity the player hears, 0 (lost) .. 1 (clear).</summary>
         public float Clarity => _signal != null ? _signal.Clarity : 0f;
@@ -86,7 +95,6 @@ namespace MoonProject.Audio
             _signal = new RadioSignal(_tuning);
             _signal.Snap(SignalField.HorizontalDistance(_listener.Position, _basePosition));
             _shuffler = new PlaylistShuffler(_playlist.Count, new AudioRandom(unchecked((uint)Environment.TickCount)));
-            _startFade = new EasedValue(0f);
 
             for (int i = 0; i < DeckCount; i++)
             {
@@ -102,11 +110,8 @@ namespace MoonProject.Audio
             _swishCueVolume = director.Library.GetCue(swishCue).VolumeMax;
 
             _live = 0;
-            StartTrack(_decks[_live], _shuffler.Next());
-            // A single track simply loops; the crossfade needs a different track to move to.
-            _decks[_live].loop = _playlist.Count == 1;
-            _static.Play();
             _radiusSubscription = context.Events.Subscribe<SignalRadiusChanged>(OnSignalRadiusChanged);
+            _awokeSubscription = context.Events.Subscribe<RoverAwoke>(OnRoverAwoke);
         }
 
         internal void Wire(RadioTuning tuning, RadioPlaylist playlist)
@@ -117,7 +122,7 @@ namespace MoonProject.Audio
 
         private void Update()
         {
-            if (_signal == null)
+            if (_signal == null || !_wake.IsAwake)
             {
                 return;
             }
@@ -127,13 +132,19 @@ namespace MoonProject.Audio
             RadioMix mix = _signal.Mix;
             float wobble = _wowFlutter.Step(dt, _tuning.WowRate, _tuning.FlutterRate, _tuning.FlutterShare);
             float pitch = Mathf.Max(MinPitch, WowFlutter.PitchFactor(wobble, mix.WobbleCents));
-            float level = _director.Buses.Effective(AudioBus.Music) * _startFade.Step(1f, dt, _tuning.StartFadeIn);
+            if (_wake.Step(dt))
+            {
+                StartTrack(_decks[_live], _shuffler.Next());
+                // A single track simply loops; the crossfade needs a different track to move to.
+                _decks[_live].loop = _playlist.Count == 1;
+            }
 
+            float level = _director.Buses.Effective(AudioBus.Music) * _wake.Power;
             AdvancePlaylist(dt, pitch);
 
             AudioSource live = _decks[_live];
             AudioSource other = _decks[1 - _live];
-            float music = mix.MusicVolume * level;
+            float music = mix.MusicVolume * level * _wake.MusicGain;
             if (_crossfade.Active)
             {
                 live.volume = music * _crossfade.OutgoingGain;
@@ -152,7 +163,8 @@ namespace MoonProject.Audio
                 _filters[i].lowpassResonanceQ = _tuning.LowpassResonance;
             }
 
-            float staticVolume = mix.StaticVolume + _tuning.TuneStaticBoost * _crossfade.StaticSwell;
+            float staticVolume = mix.StaticVolume + _tuning.TuneStaticBoost * _crossfade.StaticSwell
+                                 + _tuning.WakeStaticBoost * _wake.CrackleBoost;
             _static.volume = Mathf.Clamp01(staticVolume) * _staticCueVolume * level;
             _swish.volume = _tuning.TuneSwishVolume * _swishCueVolume * level;
         }
@@ -162,15 +174,31 @@ namespace MoonProject.Audio
             SetSignalRadius(changed.Radius);
         }
 
+        private void OnRoverAwoke(RoverAwoke awoke)
+        {
+            if (_wake.IsAwake)
+            {
+                return;
+            }
+
+            _wake.Begin(awoke.WokenByPlayer ? _tuning.PlayerWakeMusicDelay : _tuning.WakeMusicDelay,
+                awoke.WokenByPlayer ? _tuning.PlayerWakeMusicFade : _tuning.WakeMusicFade, _tuning.WakePowerTime);
+            _static.volume = 0f;
+            _static.Play();
+            _swish.Play();
+        }
+
         private void OnDestroy()
         {
             _radiusSubscription?.Dispose();
             _radiusSubscription = null;
+            _awokeSubscription?.Dispose();
+            _awokeSubscription = null;
         }
 
         private void AdvancePlaylist(float dt, float pitch)
         {
-            if (_playlist.Count < 2)
+            if (_playlist.Count < 2 || !_decks[_live].isPlaying)
             {
                 return;
             }

@@ -24,6 +24,7 @@ namespace MoonProject.Audio.Editor
             public bool spatial;
             public bool loop;
             public string[] files;
+            public string[] variantLabels;
             public string[] sha256;
             public float volumeMin;
             public float volumeMax;

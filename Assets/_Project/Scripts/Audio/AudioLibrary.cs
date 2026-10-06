@@ -7,6 +7,7 @@ namespace MoonProject.Audio
     /// <summary>
     /// Every sound cue of the game, generated from tools/audio/sfx_manifest.json by the Audio/Library builder.
     /// Systems resolve ids to <see cref="CueHandle"/>s once at initialisation; playback then indexes an array.
+    /// <see cref="AudioDirector"/> validates it (<see cref="FindProblem"/>) when the game initialises.
     /// </summary>
     public sealed class AudioLibrary : ScriptableObject
     {
@@ -86,17 +87,6 @@ namespace MoonProject.Audio
         {
             _cues = cues ?? throw new ArgumentNullException(nameof(cues));
             _index = null;
-        }
-
-        private void OnValidate()
-        {
-            _index = null;
-            string problem = FindProblem();
-            if (problem != null)
-            {
-                Debug.LogError($"{nameof(AudioLibrary)} '{name}': {problem}. Re-run MoonProject/Build/Audio/Library.",
-                    this);
-            }
         }
     }
 }

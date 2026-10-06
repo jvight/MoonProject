@@ -26,7 +26,8 @@ namespace MoonProject.Audio
 
         public int Capacity => _endTimes.Length;
 
-        /// <summary>Claims a voice for <paramref name="duration"/> seconds starting at <paramref name="now"/>.</summary>
+        /// <summary>Claims a voice for <paramref name="duration"/> seconds starting at
+        /// <paramref name="now"/>.</summary>
         public int Acquire(float now, float duration)
         {
             int chosen = 0;

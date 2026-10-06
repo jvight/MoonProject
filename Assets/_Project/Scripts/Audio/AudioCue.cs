@@ -17,6 +17,9 @@ namespace MoonProject.Audio
         [Tooltip("Variants; a random one plays each time (never the same one twice in a row).")]
         [SerializeField] private AudioClip[] _clips = Array.Empty<AudioClip>();
 
+        [Tooltip("One label per clip (e.g. the relic id of a relic answer, the note of a chime).")]
+        [SerializeField] private string[] _variantLabels = Array.Empty<string>();
+
         [SerializeField] private AudioBus _bus = AudioBus.Sfx;
 
         [Tooltip("3D cues play at a world position; 2D cues play flat (UI, radio, ambience).")]
@@ -29,11 +32,12 @@ namespace MoonProject.Audio
         [Range(0.25f, 4f)] [SerializeField] private float _pitchMin = 1f;
         [Range(0.25f, 4f)] [SerializeField] private float _pitchMax = 1f;
 
-        internal AudioCue(string id, AudioClip[] clips, AudioBus bus, bool spatial, bool loop, float volumeMin,
-            float volumeMax, float pitchMin, float pitchMax)
+        internal AudioCue(string id, AudioClip[] clips, string[] variantLabels, AudioBus bus, bool spatial, bool loop,
+            float volumeMin, float volumeMax, float pitchMin, float pitchMax)
         {
             _id = id;
             _clips = clips;
+            _variantLabels = variantLabels;
             _bus = bus;
             _spatial = spatial;
             _loop = loop;
@@ -66,6 +70,12 @@ namespace MoonProject.Audio
             return _clips[index];
         }
 
+        /// <summary>Label of variant <paramref name="index"/> (same order as the clips).</summary>
+        public string GetVariantLabel(int index)
+        {
+            return _variantLabels[index];
+        }
+
         /// <summary>First wiring problem of this cue, or null when it is playable.</summary>
         public string FindProblem()
         {
@@ -85,6 +95,11 @@ namespace MoonProject.Audio
                 {
                     return $"cue '{_id}' clip {i} is missing";
                 }
+            }
+
+            if (_variantLabels == null || _variantLabels.Length != _clips.Length)
+            {
+                return $"cue '{_id}' needs one variant label per clip";
             }
 
             if (_volumeMin > _volumeMax || _pitchMin > _pitchMax)

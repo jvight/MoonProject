@@ -41,7 +41,8 @@ namespace MoonProject.Audio.Editor
         private static RadioTrack[] ReadTracks(string manifestFile)
         {
             var manifest = JsonUtility.FromJson<MusicPlaylistManifest>(File.ReadAllText(manifestFile));
-            if (manifest == null || manifest.version != MusicPlaylistManifest.SupportedVersion || manifest.tracks == null)
+            if (manifest == null || manifest.tracks == null ||
+                manifest.version != MusicPlaylistManifest.SupportedVersion)
             {
                 throw new InvalidOperationException($"{BuilderPath}: unsupported {AudioAssetPaths.MusicPlaylist} " +
                                                     $"(expected version {MusicPlaylistManifest.SupportedVersion}).");

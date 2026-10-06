@@ -25,7 +25,8 @@ namespace MoonProject.Audio
             return Step(target, deltaTime, timeConstant, timeConstant);
         }
 
-        /// <summary>Moves towards <paramref name="target"/>; a non-positive time constant jumps straight there.</summary>
+        /// <summary>Moves towards <paramref name="target"/>; a non-positive time constant jumps straight
+        /// there.</summary>
         public float Step(float target, float deltaTime, float riseTime, float fallTime)
         {
             float tau = target > Value ? riseTime : fallTime;

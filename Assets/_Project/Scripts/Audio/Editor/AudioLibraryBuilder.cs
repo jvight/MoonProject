@@ -59,9 +59,11 @@ namespace MoonProject.Audio.Editor
                 throw new InvalidOperationException($"{BuilderPath}: cue '{entry.id}' has unknown bus '{entry.bus}'.");
             }
 
-            if (entry.files == null || entry.sha256 == null || entry.files.Length != entry.sha256.Length)
+            if (entry.files == null || entry.sha256 == null || entry.variantLabels == null ||
+                entry.files.Length != entry.sha256.Length || entry.files.Length != entry.variantLabels.Length)
             {
-                throw new InvalidOperationException($"{BuilderPath}: cue '{entry.id}' has mismatched files/hashes.");
+                throw new InvalidOperationException(
+                    $"{BuilderPath}: cue '{entry.id}' has mismatched files/hashes/variant labels.");
             }
 
             var clips = new AudioClip[entry.files.Length];
@@ -82,8 +84,8 @@ namespace MoonProject.Audio.Editor
                 }
             }
 
-            return new AudioCue(entry.id, clips, bus, entry.spatial, entry.loop, entry.volumeMin, entry.volumeMax,
-                entry.pitchMin, entry.pitchMax);
+            return new AudioCue(entry.id, clips, entry.variantLabels, bus, entry.spatial, entry.loop,
+                entry.volumeMin, entry.volumeMax, entry.pitchMin, entry.pitchMax);
         }
 
         private static string Sha256Of(string file)
