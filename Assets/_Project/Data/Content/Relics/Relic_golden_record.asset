@@ -17,6 +17,6 @@ MonoBehaviour:
   _memory: A golden disc of greetings in many languages, sent outward to anyone listening.
     It came to rest on the moon instead, still waiting to be heard.
   _mass: 5
-  _prefab: {fileID: 0}
+  _prefab: {fileID: 5592195012531211553, guid: 7db3a58f2dc18c74f9668da203018e85, type: 3}
   _answerNote: 0
   _placement: 2

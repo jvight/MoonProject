@@ -17,6 +17,6 @@ MonoBehaviour:
   _memory: A yellow bath duck, sun-faded on one side. It bobbed through a thousand
     bedtime baths before it floated all the way up here.
   _mass: 3
-  _prefab: {fileID: 0}
+  _prefab: {fileID: 3931811454091852072, guid: b52f6fef4293fd648b4fc3bf814bcffd, type: 3}
   _answerNote: 5
   _placement: 0
