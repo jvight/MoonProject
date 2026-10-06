@@ -66,6 +66,11 @@
 
 # Code
 *.cs text diff=csharp
+
+# UI Toolkit text assets: builders write LF, so check them out as LF everywhere (no phantom diffs)
+*.uss text eol=lf
+*.tss text eol=lf
+*.uxml text eol=lf
 *.cginc text
 *.shader text
 
