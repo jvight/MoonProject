@@ -26,7 +26,8 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// own save slot) boots, 07 wakes, and a calm autopilot holds the wheel while the real input actions do the rest.
     /// Drive to the nearest onboarding relic picking up scrap on the way, ping, dig it up, tow it home (round by the
     /// base pad, since the lander is solid), put it on the shelf, pick up scrap until the tower is affordable, park on
-    /// the tower pad and buy level 1 through the UI's hold.
+    /// the tower pad and buy level 1 through the UI's hold. Then Tilly (M3-02): find her with a ping, gather her three
+    /// parts, repair her, drive home with her, be greeted, and let her spot a relic on the next trip.
     /// Every step is timed (Logs/gameplay-captures/playthrough.md) and captured; any error or exception in the log
     /// fails it. Slow: run on demand with --category Playthrough.
     /// </summary>
@@ -35,6 +36,18 @@ namespace MoonProject.Gameplay.PlayModeTests
     public sealed class GoldenPathPlaythrough : InputTestFixture
     {
         private const string Tower = "radio_tower";
+        private const string TillyId = "tilly";
+
+        /// <summary>Close enough (m) to ping Tilly's crater, and the stand-off 07 repairs her from.</summary>
+        private const float TillyPingDistance = 35f;
+        private const float RepairStandOff = 3f;
+
+        /// <summary>07 waits this far (m) short of an undiscovered relic for Tilly to spot it.</summary>
+        private const float SpotStandOff = 25f;
+
+        /// <summary>Where the review camera stands relative to Tilly (m away from 07, m up).</summary>
+        private const float WitnessDistance = 4f;
+        private const float WitnessHeight = 1.5f;
         private const float StopSpeed = 0.4f;
         private const float ApproachOffset = 3f;
         private const float RetreatDistance = 16f;
@@ -43,7 +56,7 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         /// <summary>Close enough (m) to the base pad centre to turn toward the shelf or the tower.</summary>
         private const float PadArrival = 5f;
-        private const float TotalBudget = 300f;
+        private const float TotalBudget = 600f;
 
         private static readonly string ReportPath = Path.Combine(GameplayFixture.CaptureFolder, "playthrough.md");
 
@@ -110,6 +123,11 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return Deposit(relic);
             yield return GatherScrapForTheTower();
             yield return BuyTowerLevel();
+            yield return FindTilly();
+            yield return GatherTillyParts();
+            yield return RepairTilly();
+            yield return DriveHomeWithTilly();
+            yield return TillySpotsOnTheNextTrip();
 
             float total = Time.time - started;
             WriteReport(total);
@@ -362,6 +380,178 @@ namespace MoonProject.Gameplay.PlayModeTests
                                                         $"{_gameplay.Wallet.Balance}");
         }
 
+        private IEnumerator FindTilly()
+        {
+            Begin();
+            Friend tilly = _gameplay.Friends.Find(TillyId);
+            Assert.IsNotNull(tilly, "Tilly lies somewhere in the basin");
+            Vector3 site = tilly.Site.Position;
+            float fromHome = SurfaceRules.HorizontalDistance(site, _context.Get<IWorldLayout>().BasePosition);
+            Assert.That(fromHome, Is.InRange(60f, 110f), "Tilly lies 60-110 m from home");
+            yield return DriveTo(_context.Get<IWorldLayout>().BasePosition, PadArrival, 0.8f, 60f, "the base pad");
+            Vector3 toSite = site - _rover.Position;
+            toSite.y = 0f;
+            Vector3 near = site - toSite.normalized * TillyPingDistance;
+            yield return DriveTo(near, 3f, 1f, 60f, "the rim of Tilly's crater");
+            int answersBefore = _events.FriendAnswered.Count;
+            yield return Until(() => _gameplay.Sonar.IsReady, 6f, "the sonar is ready");
+            Press(_keyboard.spaceKey, queueEventOnly: true);
+            yield return null;
+            Release(_keyboard.spaceKey);
+            yield return Until(() => _events.FriendAnswered.Count > answersBefore, 6f,
+                "a broken chirp answers from the crater");
+            Assert.AreEqual(TillyId, _events.FriendAnswered[_events.FriendAnswered.Count - 1].Value.FriendId);
+            yield return new WaitForSeconds(1f);
+            Capture("08-tilly-answers");
+            End($"Find Tilly ({fromHome:F0} m from home)", "her broken chirp answered the ping");
+        }
+
+        private IEnumerator GatherTillyParts()
+        {
+            Begin();
+            Friend tilly = _gameplay.Friends.Find(TillyId);
+            int total = tilly.Progress.PartCount;
+            float travelled = 0f;
+            while (tilly.Progress.Collected < total)
+            {
+                int next = NearestMissingPart(tilly);
+                Vector3 part = tilly.PartRest[next];
+                travelled += SurfaceRules.HorizontalDistance(_rover.Position, part);
+                int before = tilly.Progress.Collected;
+                yield return DriveTo(new Vector3(part.x, 0f, part.z), 1.5f, 0.8f, 60f, "one of Tilly's parts");
+                yield return Until(() => tilly.Progress.Collected > before, 6f, "the part drifts into 07");
+            }
+
+            Assert.AreEqual(total, _events.FriendPartCollected.Count);
+            FriendPartCollected last = _events.FriendPartCollected[total - 1].Value;
+            Assert.AreEqual(total, last.Collected);
+            Assert.AreEqual(total, last.Total);
+            Assert.IsTrue(tilly.Progress.CanRepair);
+            End("Gather Tilly's parts", $"{total} parts over {travelled:F0} m of driving");
+        }
+
+        private IEnumerator RepairTilly()
+        {
+            Begin();
+            Friend tilly = _gameplay.Friends.Find(TillyId);
+            Vector3 site = tilly.Site.Position;
+            Vector3 fromSite = _rover.Position - site;
+            fromSite.y = 0f;
+            yield return DriveTo(site + fromSite.normalized * RepairStandOff, 1.5f, 0.5f, 60f, "Tilly");
+            yield return Until(() => _gameplay.Hints.TryGet(InteractionKind.Repair, out _), 3f,
+                "the Repair prompt is offered next to her");
+            Press(_keyboard.eKey);
+            yield return Until(() => _events.FriendRepairStarted.Count > 0, 3f, "holding Interact starts the repair");
+            Release(_keyboard.eKey);
+            Assert.IsTrue(_rover.IsHeldStill, "07 holds still while its beam stitches her");
+            yield return new WaitForSeconds(tilly.Definition.RepairDuration * 0.5f);
+            Capture("09-tilly-stitching");
+            Witness(tilly.Position, "09b-tilly-stitching-closeup");
+            RepairSequence sequence = RepairSequence.For(tilly.Definition, _gameplay.Friends.Tuning);
+            yield return Until(() => _events.FriendRepaired.Count > 0, sequence.Duration + 3f,
+                "she boots up and looks at 07");
+            Assert.IsFalse(_rover.IsHeldStill, "07 is free again");
+            Assert.AreEqual(FriendState.Awake, tilly.Progress.State);
+            yield return new WaitForSeconds(0.5f);
+            Capture("10-tilly-awake");
+            Witness(tilly.Position, "10b-tilly-awake-closeup");
+            End("Repair Tilly", $"stitching {tilly.Definition.RepairDuration:F1} s, boot-up " +
+                                $"{sequence.Duration - sequence.StitchEnd:F1} s");
+        }
+
+        private IEnumerator DriveHomeWithTilly()
+        {
+            Begin();
+            Friend tilly = _gameplay.Friends.Find(TillyId);
+            Vector3 home = _context.Get<IWorldLayout>().BasePosition;
+            float distance = SurfaceRules.HorizontalDistance(_rover.Position, home);
+            float farthest = 0f;
+            _pilot.GoTo(home, PadArrival, 0.8f);
+            float deadline = Time.time + 60f;
+            while (!_pilot.Arrived && Time.time < deadline)
+            {
+                farthest = Mathf.Max(farthest, Vector3.Distance(tilly.Position, _rover.Position));
+                yield return null;
+            }
+
+            _pilot.Target = null;
+            Assert.IsTrue(_pilot.Arrived, "07 reaches home");
+            Assert.Less(farthest, _gameplay.Friends.Tuning.ReappearDistance,
+                "she comes along all the way home (never lost, even when she stops to spot something)");
+            yield return Until(() => _events.FriendGreeted.Count > 0, 10f, "she greets 07 coming home");
+            Capture("11-tilly-greets");
+            Witness(tilly.Position, "11b-tilly-greets-closeup");
+            yield return Until(() => tilly.Activity == FriendActivity.Home || tilly.Activity == FriendActivity.Napping,
+                20f, "she settles into her home life");
+            End($"Drive home with Tilly ({distance:F0} m)", $"she stayed within {farthest:F0} m of 07, then greeted");
+        }
+
+        private IEnumerator TillySpotsOnTheNextTrip()
+        {
+            Begin();
+            Relic undiscovered = null;
+            Vector3 home = _context.Get<IWorldLayout>().BasePosition;
+            foreach (Relic relic in _gameplay.Relics.Relics)
+            {
+                bool hidden = relic.State == RelicState.Buried && !relic.Discovered;
+                if (hidden && (undiscovered == null ||
+                               SurfaceRules.HorizontalDistance(relic.Site.Position, home) <
+                               SurfaceRules.HorizontalDistance(undiscovered.Site.Position, home)))
+                {
+                    undiscovered = relic;
+                }
+            }
+
+            Assert.IsNotNull(undiscovered, "a relic is still waiting to be found");
+            Vector3 toRelic = undiscovered.Site.Position - home;
+            toRelic.y = 0f;
+            Vector3 stand = undiscovered.Site.Position - toRelic.normalized * SpotStandOff;
+            _pilot.GoTo(stand, 3f, 1f);
+            float deadline = Time.time + 120f;
+            while (!Spotted(undiscovered) && Time.time < deadline)
+            {
+                yield return null;
+            }
+
+            _pilot.Target = null;
+            Assert.IsTrue(Spotted(undiscovered), $"Tilly spots '{undiscovered.Definition.Id}' on the next trip");
+            Assert.IsTrue(undiscovered.Discovered, "it shows on 07's sonar without a ping");
+            yield return new WaitForSeconds(1.5f);
+            Capture("12-tilly-spots");
+            End($"Next trip: Tilly spots '{undiscovered.Definition.Id}'",
+                $"{_events.FriendSpotted.Count} spot(s) on the way");
+        }
+
+        private bool Spotted(Relic relic)
+        {
+            foreach (EventRecorder.Timed<FriendSpotted> spotted in _events.FriendSpotted)
+            {
+                if (SurfaceRules.HorizontalDistance(spotted.Value.Position, relic.Site.Position) < 0.1f)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private int NearestMissingPart(Friend friend)
+        {
+            int nearest = -1;
+            float best = float.MaxValue;
+            for (int i = 0; i < friend.Progress.PartCount; i++)
+            {
+                float distance = SurfaceRules.HorizontalDistance(friend.PartRest[i], _rover.Position);
+                if (!friend.Progress.IsCollected(i) && distance < best)
+                {
+                    best = distance;
+                    nearest = i;
+                }
+            }
+
+            return nearest;
+        }
+
         private IEnumerator DriveTo(Vector3 target, float arriveRadius, float maxThrottle, float timeout, string what)
         {
             _pilot.GoTo(target, arriveRadius, maxThrottle);
@@ -442,6 +632,32 @@ namespace MoonProject.Gameplay.PlayModeTests
         {
             FrameCapture.SavePng(_context.Get<IViewCamera>().Camera, 1280, 720,
                 Path.Combine(GameplayFixture.CaptureFolder, "playthrough-" + name + ".png"));
+        }
+
+        /// <summary>
+        /// A review capture of <paramref name="subject"/> from a second camera (same lens as the game's) set a few
+        /// metres beyond it, looking back toward 07, so moments the follow camera faces away from still get a frame.
+        /// </summary>
+        private void Witness(Vector3 subject, string name)
+        {
+            Camera view = _context.Get<IViewCamera>().Camera;
+            var host = new GameObject("WitnessCamera");
+            try
+            {
+                var witness = host.AddComponent<Camera>();
+                witness.CopyFrom(view);
+                witness.enabled = false;
+                Vector3 toRover = _rover.Position - subject;
+                toRover.y = 0f;
+                Vector3 eye = subject - toRover.normalized * WitnessDistance + Vector3.up * WitnessHeight;
+                host.transform.SetPositionAndRotation(eye, Quaternion.LookRotation(subject - eye));
+                FrameCapture.SavePng(witness, 1280, 720,
+                    Path.Combine(GameplayFixture.CaptureFolder, "playthrough-" + name + ".png"));
+            }
+            finally
+            {
+                Object.Destroy(host);
+            }
         }
 
         private void WriteReport(float total)
