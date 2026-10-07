@@ -6,15 +6,17 @@ using MoonProject.Core.Events;
 namespace MoonProject.Audio
 {
     /// <summary>
-    /// The friend machines' voices. Every friend in the <see cref="IFriendRoster"/> gets a 3D voice that follows it:
-    /// chirps from its own vocabulary (<c>&lt;id&gt;_&lt;mood&gt;</c> cues), a rotor loop following its effort, and the
-    /// repair stitching, then the boot jingle as its eye flickers on; the logic is in <see cref="FriendVoiceModel"/>.
-    /// The friend events play their moments: <see cref="FriendAnswered"/> (broken chirp),
-    /// <see cref="FriendPartCollected"/> (amber part tone), <see cref="FriendRepaired"/> (happy chirp),
-    /// <see cref="FriendGreeted"/> (greeting),
-    /// <see cref="FriendSpotted"/> ("found it" chirp plus a soft ping at the spot) and <see cref="RelicDeposited"/>
-    /// (excited, for friends at home). Game-time loops duck while paused through the director's world gain.
-    /// Initialised by <see cref="AudioDirector"/>.
+    /// The friend machines' voices. Every friend in the <see cref="IFriendRoster"/> gets a 3D voice that follows it,
+    /// built from cues named after it (<c>&lt;id&gt;_&lt;part&gt;</c>). Only <c>&lt;id&gt;_broken</c> (its answer to a
+    /// ping) is required; every other part is optional and simply absent when not rendered: mood chirps (curious,
+    /// happy, sleepy, greeting, excited, found), a rotor loop following its effort (Tilly), foot taps from the distance
+    /// it walks (Bell), a doze loop while napping and a wake as it stirs, a crackle when the radio changes station, its
+    /// own boot, and music-box jingles that replace the happy chirp at repair and the greeting at homecoming. Shared:
+    /// the repair stitching and boot (logic in <see cref="FriendVoiceModel"/>), the amber part tone and the spotter
+    /// ping. Events: <see cref="FriendAnswered"/>, <see cref="FriendPartCollected"/>, <see cref="FriendRepaired"/>,
+    /// <see cref="FriendGreeted"/>, <see cref="FriendSpotted"/>, <see cref="RelicDeposited"/> (excited, for friends at
+    /// home). Game-time loops duck while paused through the director's world gain. Initialised by <see
+    /// cref="AudioDirector"/>.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class FriendAudio : MonoBehaviour
@@ -26,14 +28,14 @@ namespace MoonProject.Audio
         [Tooltip("Assets/_Project/Data/Audio/FriendAudioTuning.asset.")]
         [SerializeField] private FriendAudioTuning _tuning;
 
+        private readonly IDisposable[] _subscriptions = new IDisposable[SubscriptionCount];
         private AudioDirector _director;
         private IRoverState _rover;
         private Voice[] _voices = Array.Empty<Voice>();
-        private CueHandle _boot;
+        private CueHandle _sharedBoot;
         private CueHandle _part;
         private CueHandle _spotPing;
         private int _completePart;
-        private readonly IDisposable[] _subscriptions = new IDisposable[SubscriptionCount];
 
         public int VoiceCount => _voices.Length;
 
@@ -50,10 +52,10 @@ namespace MoonProject.Audio
             _rover = context.Get<IRoverState>();
             IFriendRoster roster = context.Get<IFriendRoster>();
             CueHandle stitch = director.Resolve(AudioCueIds.FriendStitch);
-            _boot = director.Resolve(AudioCueIds.FriendBoot);
+            _sharedBoot = director.Resolve(AudioCueIds.FriendBoot);
             _part = director.Resolve(AudioCueIds.FriendPart);
             _spotPing = director.Resolve(AudioCueIds.FriendSpotPing);
-            if (!stitch.IsValid || !_boot.IsValid || !_part.IsValid || !_spotPing.IsValid ||
+            if (!stitch.IsValid || !_sharedBoot.IsValid || !_part.IsValid || !_spotPing.IsValid ||
                 !TryFindCompletePart(out _completePart))
             {
                 enabled = false;
@@ -101,6 +103,26 @@ namespace MoonProject.Audio
 
         internal AudioSource StitchSource(int index) => _voices[index].Stitch;
 
+        internal AudioSource DozeSource(int index) => _voices[index].Doze;
+
+        internal AudioSource JingleSource(int index) => _voices[index].Jingles;
+
+        internal AudioSource FeetSource(int index) => _voices[index].Feet;
+
+        /// <summary>The radio changed station: friends with a tune crackle (Bell) voice it, unless still
+        /// dormant.</summary>
+        internal void OnStationSwitched()
+        {
+            for (int i = 0; i < _voices.Length; i++)
+            {
+                Voice voice = _voices[i];
+                if (voice.Tune.IsValid && voice.Friend.Activity != FriendActivity.Dormant)
+                {
+                    _director.PlayOn(voice.Chirps, voice.Tune, 1f);
+                }
+            }
+        }
+
         private void OnFriendAnswered(FriendAnswered answered)
         {
             ChirpFrom(answered.FriendId, FriendMood.Broken);
@@ -121,12 +143,38 @@ namespace MoonProject.Audio
 
         private void OnRepaired(FriendRepaired repaired)
         {
-            ChirpFrom(repaired.FriendId, FriendMood.Happy);
+            Voice voice = Find(repaired.FriendId);
+            if (voice == null)
+            {
+                return;
+            }
+
+            if (voice.JingleShort.IsValid)
+            {
+                _director.PlayOn(voice.Jingles, voice.JingleShort, 1f);
+            }
+            else
+            {
+                Chirp(voice, FriendMood.Happy);
+            }
         }
 
         private void OnGreeted(FriendGreeted greeted)
         {
-            ChirpFrom(greeted.FriendId, FriendMood.Greeting);
+            Voice voice = Find(greeted.FriendId);
+            if (voice == null)
+            {
+                return;
+            }
+
+            if (voice.JingleFull.IsValid)
+            {
+                _director.PlayOn(voice.Jingles, voice.JingleFull, 1f);
+            }
+            else
+            {
+                Chirp(voice, FriendMood.Greeting);
+            }
         }
 
         private void OnSpotted(FriendSpotted spotted)
@@ -140,12 +188,32 @@ namespace MoonProject.Audio
             _director.PlayAt(_spotPing, spotted.Position);
         }
 
+        private void OnRelicDeposited(RelicDeposited deposited)
+        {
+            for (int i = 0; i < _voices.Length; i++)
+            {
+                if (_voices[i].Friend.Activity == FriendActivity.Home)
+                {
+                    Chirp(_voices[i], FriendMood.Excited);
+                }
+            }
+        }
+
         private void ChirpFrom(string friendId, FriendMood mood)
         {
             Voice voice = Find(friendId);
             if (voice != null)
             {
                 Chirp(voice, mood);
+            }
+        }
+
+        private void Chirp(Voice voice, FriendMood mood)
+        {
+            CueHandle cue = voice.Moods[(int)mood];
+            if (cue.IsValid)
+            {
+                _director.PlayOn(voice.Chirps, cue, 1f);
             }
         }
 
@@ -160,22 +228,60 @@ namespace MoonProject.Audio
             float sfx = _director.Buses.Effective(AudioBus.Sfx) * _director.WorldGain;
             for (int i = 0; i < _voices.Length; i++)
             {
-                Voice voice = _voices[i];
-                IFriendState friend = voice.Friend;
-                voice.Host.position = friend.Position;
-                if (voice.Model.Step(dt, friend.Activity, friend.RotorSpeed, out FriendMood mood))
-                {
-                    Chirp(voice, mood);
-                }
-
-                if (voice.Model.TakeBoot())
-                {
-                    _director.PlayOn(voice.Chirps, _boot, 1f);
-                }
-
-                Drive(voice.Rotor, voice.Model.RotorVolume * voice.RotorCueVolume * sfx, voice.Model.RotorPitch);
-                Drive(voice.Stitch, voice.Model.StitchGain * voice.StitchCueVolume * sfx, voice.Model.StitchPitch);
+                StepVoice(_voices[i], dt, sfx);
             }
+        }
+
+        private void StepVoice(Voice voice, float dt, float sfx)
+        {
+            IFriendState friend = voice.Friend;
+            FriendActivity activity = friend.Activity;
+            voice.Host.position = friend.Position;
+            if (voice.Model.Step(dt, activity, friend.RotorSpeed, out FriendMood mood))
+            {
+                Chirp(voice, mood);
+            }
+
+            if (voice.Model.TakeBoot())
+            {
+                _director.PlayOn(voice.Chirps, voice.Boot, 1f);
+            }
+
+            if (voice.Rotor != null)
+            {
+                Drive(voice.Rotor, voice.Model.RotorVolume * voice.RotorCueVolume * sfx, voice.Model.RotorPitch);
+            }
+
+            Drive(voice.Stitch, voice.Model.StitchGain * voice.StitchCueVolume * sfx, voice.Model.StitchPitch);
+            bool napping = activity == FriendActivity.Napping;
+            bool walking = activity != FriendActivity.Dormant && !napping;
+            if (voice.StepCue.IsValid &&
+                voice.Steps.Step(friend.Position, _tuning.StepStride, _tuning.StepTeleportDistance) && walking)
+            {
+                _director.PlayOn(voice.Feet, voice.StepCue, 1f);
+            }
+
+            if (voice.Doze != null)
+            {
+                if (napping)
+                {
+                    voice.DozeFader.FadeIn();
+                }
+                else
+                {
+                    voice.DozeFader.FadeOut();
+                }
+
+                voice.DozeFader.Step(dt, _tuning.DozeFadeIn, _tuning.DozeFadeOut);
+                Drive(voice.Doze, voice.DozeFader.Gain * voice.DozeCueVolume * sfx, 1f);
+            }
+
+            if (voice.WasNapping && !napping && activity != FriendActivity.Dormant && voice.Wake.IsValid)
+            {
+                _director.PlayOn(voice.Chirps, voice.Wake, 1f);
+            }
+
+            voice.WasNapping = napping;
         }
 
         private static void Drive(AudioSource loop, float volume, float pitch)
@@ -190,22 +296,6 @@ namespace MoonProject.Audio
             {
                 loop.Stop();
             }
-        }
-
-        private void OnRelicDeposited(RelicDeposited deposited)
-        {
-            for (int i = 0; i < _voices.Length; i++)
-            {
-                if (_voices[i].Friend.Activity == FriendActivity.Home)
-                {
-                    Chirp(_voices[i], FriendMood.Excited);
-                }
-            }
-        }
-
-        private void Chirp(Voice voice, FriendMood mood)
-        {
-            _director.PlayOn(voice.Chirps, voice.Moods[(int)mood], 1f);
         }
 
         private Voice Find(string friendId)
@@ -238,34 +328,72 @@ namespace MoonProject.Audio
             return false;
         }
 
+        private CueHandle Optional(string friendId, string part)
+        {
+            _director.Library.TryResolve(AudioCueIds.FriendCue(friendId, part), out CueHandle cue);
+            return cue;
+        }
+
         private Voice CreateVoice(IFriendState friend, CueHandle stitch, AudioRandom random)
         {
-            var moods = new CueHandle[MoodCount];
-            for (int m = 0; m < MoodCount; m++)
-            {
-                moods[m] = _director.Resolve(AudioCueIds.FriendChirp(friend.Id, (FriendMood)m));
-                if (!moods[m].IsValid)
-                {
-                    return null;
-                }
-            }
-
-            CueHandle rotor = _director.Resolve(AudioCueIds.FriendRotor(friend.Id));
-            if (!rotor.IsValid)
+            string id = friend.Id;
+            if (!_director.Resolve(AudioCueIds.FriendChirp(id, FriendMood.Broken)).IsValid)
             {
                 return null;
             }
 
-            Transform host = new GameObject($"Friend_{friend.Id}").transform;
-            host.SetParent(transform, false);
-            host.position = friend.Position;
-            AudioSource chirps = _director.CreateLoopSource(host, "Chirps", default, 1f);
-            chirps.loop = false;
-            return new Voice(friend, host, moods, chirps,
-                _director.CreateLoopSource(host, "Rotor", rotor, 1f),
-                _director.CreateLoopSource(host, "Stitch", stitch, 1f),
-                _director.Library.GetCue(rotor).VolumeMax, _director.Library.GetCue(stitch).VolumeMax,
-                new FriendVoiceModel(_tuning, random));
+            var voice = new Voice(friend, new FriendVoiceModel(_tuning, random));
+            for (int m = 0; m < MoodCount; m++)
+            {
+                _director.Library.TryResolve(AudioCueIds.FriendChirp(id, (FriendMood)m), out voice.Moods[m]);
+            }
+
+            voice.Host = new GameObject($"Friend_{id}").transform;
+            voice.Host.SetParent(transform, false);
+            voice.Host.position = friend.Position;
+            voice.Chirps = CreateOneShotSource(voice.Host, "Chirps");
+            voice.Stitch = _director.CreateLoopSource(voice.Host, "Stitch", stitch, 1f);
+            voice.StitchCueVolume = _director.Library.GetCue(stitch).VolumeMax;
+            CueHandle rotor = Optional(id, FriendCueParts.Rotor);
+            if (rotor.IsValid)
+            {
+                voice.Rotor = _director.CreateLoopSource(voice.Host, "Rotor", rotor, 1f);
+                voice.RotorCueVolume = _director.Library.GetCue(rotor).VolumeMax;
+            }
+
+            CueHandle doze = Optional(id, FriendCueParts.Doze);
+            if (doze.IsValid)
+            {
+                voice.Doze = _director.CreateLoopSource(voice.Host, "Doze", doze, 1f);
+                voice.DozeCueVolume = _director.Library.GetCue(doze).VolumeMax;
+            }
+
+            CueHandle boot = Optional(id, FriendCueParts.Boot);
+            voice.Boot = boot.IsValid ? boot : _sharedBoot;
+            voice.StepCue = Optional(id, FriendCueParts.Step);
+            voice.Wake = Optional(id, FriendCueParts.Wake);
+            voice.Tune = Optional(id, FriendCueParts.Tune);
+            voice.JingleShort = Optional(id, FriendCueParts.JingleShort);
+            voice.JingleFull = Optional(id, FriendCueParts.JingleFull);
+            if (voice.StepCue.IsValid)
+            {
+                voice.Feet = CreateOneShotSource(voice.Host, "Feet");
+            }
+
+            if (voice.JingleShort.IsValid || voice.JingleFull.IsValid)
+            {
+                // Its own source: a chirp's pitch variance on the shared one would bend a melody already ringing.
+                voice.Jingles = CreateOneShotSource(voice.Host, "Jingles");
+            }
+
+            return voice;
+        }
+
+        private AudioSource CreateOneShotSource(Transform host, string objectName)
+        {
+            AudioSource source = _director.CreateLoopSource(host, objectName, default, 1f);
+            source.loop = false;
+            return source;
         }
 
         private void OnDestroy()
@@ -277,40 +405,61 @@ namespace MoonProject.Audio
             }
         }
 
-        /// <summary>One friend's sources, cues and sound state.</summary>
+        /// <summary>One friend's sources, cues (invalid = not rendered for it) and sound state.</summary>
         private sealed class Voice
         {
-            public Voice(IFriendState friend, Transform host, CueHandle[] moods, AudioSource chirps, AudioSource rotor,
-                AudioSource stitch, float rotorCueVolume, float stitchCueVolume, FriendVoiceModel model)
+            public Voice(IFriendState friend, FriendVoiceModel model)
             {
                 Friend = friend;
-                Host = host;
-                Moods = moods;
-                Chirps = chirps;
-                Rotor = rotor;
-                Stitch = stitch;
-                RotorCueVolume = rotorCueVolume;
-                StitchCueVolume = stitchCueVolume;
                 Model = model;
             }
 
             public IFriendState Friend { get; }
 
-            public Transform Host { get; }
-
-            public CueHandle[] Moods { get; }
-
-            public AudioSource Chirps { get; }
-
-            public AudioSource Rotor { get; }
-
-            public AudioSource Stitch { get; }
-
-            public float RotorCueVolume { get; }
-
-            public float StitchCueVolume { get; }
-
             public FriendVoiceModel Model { get; }
+
+            /// <summary>Per-mood chirps, filled by TryResolve at creation (written in place).</summary>
+            public CueHandle[] Moods { get; } = new CueHandle[MoodCount];
+
+            public FootstepCadence Steps { get; } = new FootstepCadence();
+
+            public LoopFader DozeFader { get; } = new LoopFader();
+
+            public Transform Host { get; set; }
+
+            public AudioSource Chirps { get; set; }
+
+            public AudioSource Stitch { get; set; }
+
+            public AudioSource Rotor { get; set; }
+
+            public AudioSource Doze { get; set; }
+
+            /// <summary>Foot taps (only when the friend has a step cue).</summary>
+            public AudioSource Feet { get; set; }
+
+            /// <summary>Jingles (only when the friend has one).</summary>
+            public AudioSource Jingles { get; set; }
+
+            public float StitchCueVolume { get; set; }
+
+            public float RotorCueVolume { get; set; }
+
+            public float DozeCueVolume { get; set; }
+
+            public CueHandle Boot { get; set; }
+
+            public CueHandle StepCue { get; set; }
+
+            public CueHandle Wake { get; set; }
+
+            public CueHandle Tune { get; set; }
+
+            public CueHandle JingleShort { get; set; }
+
+            public CueHandle JingleFull { get; set; }
+
+            public bool WasNapping { get; set; }
         }
     }
 }

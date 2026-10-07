@@ -47,6 +47,19 @@ namespace MoonProject.Audio
                  "is 3.5 s). It holds at the top if the stitching lasts longer.")]
         [Min(0.1f)] [SerializeField] private float _stitchRiseTime = 3.5f;
 
+        [Header("Walking and dozing (friends with step / doze cues, e.g. Bell)")]
+        [Tooltip("Metres of walking per foot tap.")]
+        [Range(0.1f, 2f)] [SerializeField] private float _stepStride = 0.45f;
+
+        [Tooltip("A move longer than this in one frame (metres) is a placement, not walking: no steps.")]
+        [Min(0.5f)] [SerializeField] private float _stepTeleportDistance = 3f;
+
+        [Tooltip("Seconds for the doze hum to fade in once napping starts.")]
+        [Min(0.01f)] [SerializeField] private float _dozeFadeIn = 2.5f;
+
+        [Tooltip("Seconds for the doze hum to fade out on waking.")]
+        [Min(0.01f)] [SerializeField] private float _dozeFadeOut = 0.8f;
+
         [Header("Ambient chirps (seconds between, random in range)")]
         [Tooltip("Shortest gap between curious chirps while following or spotting.")]
         [Min(0.5f)] [SerializeField] private float _followingChirpMin = 9f;
@@ -77,6 +90,10 @@ namespace MoonProject.Audio
         public float StitchStartGain => _stitchStartGain;
         public float StitchRiseSemitones => _stitchRiseSemitones;
         public float StitchRiseTime => _stitchRiseTime;
+        public float StepStride => _stepStride;
+        public float StepTeleportDistance => _stepTeleportDistance;
+        public float DozeFadeIn => _dozeFadeIn;
+        public float DozeFadeOut => _dozeFadeOut;
         public float FollowingChirpMin => _followingChirpMin;
         public float FollowingChirpMax => Mathf.Max(_followingChirpMax, _followingChirpMin + MinSpan);
         public float HomeChirpMin => _homeChirpMin;

@@ -22,6 +22,7 @@ namespace MoonProject.Audio
         public const string LandingThump = "landing_thump";
         public const string RadioStatic = "radio_static";
         public const string RadioTune = "radio_tune";
+        public const string RadioDialClick = "radio_dial_click";
         public const string AmbienceBed = "ambience_bed";
         public const string SonarPing = "sonar_ping";
         public const string RelicAnswer = "relic_answer";
@@ -45,6 +46,13 @@ namespace MoonProject.Audio
         public const string UiHoldFill = "ui_hold_fill";
         public const string UiHoldComplete = "ui_hold_complete";
         public const string UiCard = "ui_card";
+        public const string UpgradeArpeggio = "upgrade_arpeggio";
+        public const string CassettePickup = "cassette_pickup";
+        public const string CrewLogFound = "crew_log_found";
+        public const string BellSignalPick = "bell_signal_pick";
+        public const string BellSignalFound = "bell_signal_found";
+        public const string CanyonWhisper = "canyon_whisper";
+        public const string CanyonTrough = "canyon_trough";
 
         /// <summary>A friend's chirp cue, <c>&lt;friendId&gt;_&lt;mood&gt;</c> (e.g. tilly_curious). Builds a string:
         /// call at initialisation only.</summary>
@@ -53,10 +61,11 @@ namespace MoonProject.Audio
             return $"{friendId}_{MoodSuffix(mood)}";
         }
 
-        /// <summary>A friend's rotor/motor loop cue, <c>&lt;friendId&gt;_rotor</c>. Initialisation only.</summary>
-        public static string FriendRotor(string friendId)
+        /// <summary>A friend's own cue <c>&lt;friendId&gt;_&lt;part&gt;</c> for one of the
+        /// <see cref="FriendCueParts"/>. Builds a string: initialisation only.</summary>
+        public static string FriendCue(string friendId, string part)
         {
-            return $"{friendId}_rotor";
+            return $"{friendId}_{part}";
         }
 
         private static string MoodSuffix(FriendMood mood)
@@ -81,6 +90,5 @@ namespace MoonProject.Audio
                     throw new System.ArgumentOutOfRangeException(nameof(mood), mood, "Unknown friend mood.");
             }
         }
-        public const string UpgradeArpeggio = "upgrade_arpeggio";
     }
 }

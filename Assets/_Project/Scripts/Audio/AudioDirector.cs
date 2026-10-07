@@ -207,6 +207,12 @@ namespace MoonProject.Audio
             Play(cue, _flat, Vector3.zero, volumeScale, pitchScale, -1, 0f, 0f);
         }
 
+        /// <summary>Bell's dial turned to another station: friends with a station-switch crackle voice it.</summary>
+        internal void NotifyStationSwitched()
+        {
+            _friends.OnStationSwitched();
+        }
+
         public void SetBusVolume(AudioBus bus, float volume)
         {
             _buses.SetVolume(bus, volume);

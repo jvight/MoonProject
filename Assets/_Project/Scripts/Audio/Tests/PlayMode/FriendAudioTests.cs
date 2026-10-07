@@ -33,7 +33,7 @@ namespace MoonProject.Audio.PlayModeTests
         [Test]
         public void EveryRosterFriend_GetsAVoice()
         {
-            Assert.AreEqual(1, _rig.Friends.VoiceCount);
+            Assert.AreEqual(2, _rig.Friends.VoiceCount, "Tilly and Bell");
             Assert.IsTrue(_rig.Friends.enabled);
         }
 
