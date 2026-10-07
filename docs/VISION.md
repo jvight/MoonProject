@@ -22,6 +22,24 @@ The player should exhale in the first 10 seconds and still be smiling after an h
    Silhouette first. If it reads at 50 m, it is right.
 5. **Gentle curiosity.** The world invites, never demands. Glints on the horizon, the sonar's rising pitch,
    a blinking light on the distant peak. No timers, no quest log, no fail states, no punishment.
+6. **Alone, and at peace (the owner's first priority for look and sound).** The player must *feel* how small 07
+   is and how far everything else is, and find that quiet beautiful rather than sad. Every frame and every mix is
+   judged against it.
+   - **Scale and distance.** The horizon is far and soft: atmospheric falloff fades distant rock toward the sky's
+     colour, and a faint glow sits along the horizon line. Near things have contrast; far things dissolve.
+   - **Value, not just hue.** The moon is mostly deep, cool shadow with soft-lit planes. A low sun throws long
+     shadows that give the ground rhythm. Pastel flatness reads as a toy; contrast reads as a place.
+   - **Warm points in a cold field.** 07's lamp, the base windows, a lit relay or Bell's dial are the only warm
+     lights. From far away the base is a small amber cluster: home, visible and distant.
+   - **A living sky.** Stars vary in size and brightness, a few twinkle slowly, the Milky Way is a soft band, and
+     Earth glows with a faint rim. The sky is the most beautiful thing on screen.
+   - **Stillness is a reward.** When the player stops, the world gets quieter and wider. The camera slowly drifts
+     out to a wide shot with 07 small against the landscape and Earth. Dust motes hang in 07's lamp light.
+   - **Sound of solitude.** Near the base the radio is warm and full. Farther out it thins to static, then to
+     near-silence: a wide, very soft room tone and 07's own small sounds (servo whirs, ticking metal, the hum of
+     its lamp). Distance takes things away gently; coming home gives them back.
+   - **Filmic, never noisy.** Gentle colour grading (cool shadows, warm highlights), soft bloom on warm lights, a
+     light vignette and very fine grain. Nothing sharp, nothing harsh, nothing busy.
 
 ## Anti-goals (never ship these)
 - Health, oxygen, fuel, damage, enemies, failure screens, timers.
