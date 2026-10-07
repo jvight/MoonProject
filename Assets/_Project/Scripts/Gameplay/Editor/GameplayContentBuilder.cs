@@ -9,9 +9,9 @@ namespace MoonProject.Gameplay.Editor
     /// <summary>
     /// Writes the gameplay content from code recipes: one RelicDefinition per <see cref="RelicRecipes"/> entry, the
     /// relic catalog, the scrap catalog over Art's scrap prefabs, the radio tower and workshop upgrades, the friends
-    /// (Tilly) and their catalog, and Ro's cassettes and their catalog. Rewritten in place on every run (GUIDs
-    /// kept). Every Art prefab it references (the content contracts) is required: a missing one fails the build
-    /// loudly.
+    /// (Tilly) and their catalog, Ro's cassettes and their catalog, and the crew log caches and their catalog.
+    /// Rewritten in place on every run (GUIDs kept). Every Art prefab it references (the content contracts) is
+    /// required: a missing one fails the build loudly.
     /// </summary>
     internal static class GameplayContentBuilder
     {
@@ -32,6 +32,7 @@ namespace MoonProject.Gameplay.Editor
             BuildHoverJump();
             BuildFriends();
             BuildCassettes();
+            BuildLogCaches();
             AssetDatabase.SaveAssets();
         }
 
@@ -162,6 +163,33 @@ namespace MoonProject.Gameplay.Editor
             var cassette = ScriptableObject.CreateInstance<CassetteDefinition>();
             cassette.Populate(id, LoadArt(GameplayAssetPaths.CassettePrefab(id)), site, anchor, plannerSeed, gate);
             return GeneratedAssets.CreateOrReplace(cassette, GameplayAssetPaths.CassetteDefinition(id));
+        }
+
+        /// <summary>
+        /// Ro's battered tin box at the canyon terminus beside Bell, holding her first log (log.ro_1) and the first
+        /// tape; past the chasm, so it needs Hover-Jump.
+        /// </summary>
+        private static void BuildLogCaches()
+        {
+            var ro = ScriptableObject.CreateInstance<LogCacheDefinition>();
+            ro.Populate("ro_1", LoadArt(GameplayAssetPaths.LogCache),
+                new AnchorSpot(WorldAnchorIds.CanyonTerminus, new Vector2(2.2f, 0.3f)),
+                new AbilityGate(true, RoverAbility.HoverJump));
+            var caches = new[]
+            {
+                GeneratedAssets.CreateOrReplace(ro, GameplayAssetPaths.LogCacheDefinition("ro_1")),
+            };
+
+            var catalog = ScriptableObject.CreateInstance<LogCacheCatalog>();
+            catalog.Populate(caches);
+            catalog = GeneratedAssets.CreateOrReplace(catalog, GameplayAssetPaths.LogCacheCatalog);
+            string problem = catalog.Validate();
+            if (problem != null)
+            {
+                throw new InvalidOperationException($"{BuilderPath}: log cache catalog {problem}.");
+            }
+
+            Debug.Log($"{BuilderPath}: wrote {caches.Length} log cache(s) and {GameplayAssetPaths.LogCacheCatalog}");
         }
 
         private static GameObject LoadArt(string path)

@@ -22,6 +22,7 @@ namespace MoonProject.Gameplay.Editor
         public const string WorkshopTuning = TuningFolder + "/WorkshopTuning.asset";
         public const string FriendTuning = TuningFolder + "/FriendTuning.asset";
         public const string CassetteTuning = TuningFolder + "/CassetteTuning.asset";
+        public const string LogCacheTuning = TuningFolder + "/LogCacheTuning.asset";
 
         public const string ContentFolder = "Assets/_Project/Data/Content";
         public const string RelicFolder = ContentFolder + "/Relics";
@@ -34,6 +35,8 @@ namespace MoonProject.Gameplay.Editor
         public const string FriendCatalog = ContentFolder + "/FriendCatalog.asset";
         public const string CassetteFolder = ContentFolder + "/Cassettes";
         public const string CassetteCatalog = ContentFolder + "/CassetteCatalog.asset";
+        public const string LogCacheFolder = ContentFolder + "/LogCaches";
+        public const string LogCacheCatalog = ContentFolder + "/LogCacheCatalog.asset";
 
         public const string GeneratedFolder = GeneratedAssets.Root + "/Gameplay";
         public const string MaterialFolder = GeneratedFolder + "/Materials";
@@ -51,6 +54,7 @@ namespace MoonProject.Gameplay.Editor
         public const string Workbench = ArtBaseFolder + "/Workbench.prefab";
         public const string ArtFriendFolder = ArtPaths.Root + "/Friends";
         public const string ArtPickupFolder = ArtPaths.Root + "/Pickups";
+        public const string LogCache = ArtPaths.Root + "/Props/LogCache.prefab";
 
         public static string CassetteDefinition(string id)
         {
@@ -60,6 +64,11 @@ namespace MoonProject.Gameplay.Editor
         public static string CassettePrefab(string id)
         {
             return ArtPickupFolder + "/Cassette_" + id + ".prefab";
+        }
+
+        public static string LogCacheDefinition(string logId)
+        {
+            return LogCacheFolder + "/LogCache_" + logId + ".asset";
         }
 
         public static string FriendDefinition(string id)

@@ -10,8 +10,8 @@ namespace MoonProject.Gameplay
     /// The Gameplay domain's single entry in the bootstrap's system list (after World and Rover). Resolves the world
     /// (surface, layout, anchors), rover and camera services, creates the wallet, the upgrade service (which grants
     /// rover abilities through <see cref="IRoverAbilities"/>) and the radio program, initialises the gameplay parts in
-    /// dependency order (relics, scrap, excavation, tether, home, radio tower, workshop, friends, cassettes, sonar),
-    /// registers the services other domains read (<see cref="IScrapWallet"/>, <see cref="ITetherAim"/>,
+    /// dependency order (relics, scrap, excavation, tether, home, radio tower, workshop, friends, cassettes, log
+    /// caches, sonar), registers the services other domains read (<see cref="IScrapWallet"/>, <see cref="ITetherAim"/>,
     /// <see cref="IUpgradeShop"/>, <see cref="IInteractionHints"/>, <see cref="IFriendRoster"/>,
     /// <see cref="IFriendStatuses"/>, <see cref="IRadioProgram"/>) and the save sections, announces the radio's signal
     /// radius and, once the save is loaded, the radio program, and owns the shared glow meshes.
@@ -35,6 +35,7 @@ namespace MoonProject.Gameplay
         [SerializeField] private Workshop _workshop;
         [SerializeField] private FriendField _friends;
         [SerializeField] private CassetteField _cassettes;
+        [SerializeField] private LogCacheField _logs;
 
         private readonly List<IDisposable> _saveTokens = new List<IDisposable>();
         private GlowMeshSet _meshes;
@@ -69,9 +70,11 @@ namespace MoonProject.Gameplay
 
         public CassetteField Cassettes => _cassettes;
 
+        public LogCacheField Logs => _logs;
+
         internal void Wire(GameplayVisuals visuals, UpgradeDefinition[] upgradeDefinitions, RelicField relics,
             ScrapField scrap, SonarSystem sonar, ExcavationSystem excavation, TetherSystem tether, HomeBase home,
-            RadioTower tower, Workshop workshop, FriendField friends, CassetteField cassettes)
+            RadioTower tower, Workshop workshop, FriendField friends, CassetteField cassettes, LogCacheField logs)
         {
             _visuals = visuals;
             _upgradeDefinitions = upgradeDefinitions;
@@ -85,6 +88,7 @@ namespace MoonProject.Gameplay
             _workshop = workshop;
             _friends = friends;
             _cassettes = cassettes;
+            _logs = logs;
         }
 
         public void Initialize(GameContext context)
@@ -119,7 +123,7 @@ namespace MoonProject.Gameplay
                 !_workshop.Initialize(services, Upgrades) ||
                 !_friends.Initialize(services, _relics, _scrap, _home) ||
                 !_cassettes.Initialize(services, Radio, _scrap.Tuning, KeepClearOfCassettes()) ||
-                !_sonar.Initialize(services, _relics, _friends))
+                !_logs.Initialize(services, _scrap.Tuning) || !_sonar.Initialize(services, _relics, _friends))
             {
                 enabled = false;
                 return;
@@ -164,6 +168,8 @@ namespace MoonProject.Gameplay
                 GameplaySaveKeys.FriendsVersion, _friends.Capture, _friends.Restore)));
             _saveTokens.Add(save.Register(new SaveSection<RadioSaveData>(GameplaySaveKeys.Radio,
                 GameplaySaveKeys.RadioVersion, Radio.Capture, RestoreRadio)));
+            _saveTokens.Add(save.Register(new SaveSection<LogsSaveData>(GameplaySaveKeys.Logs,
+                GameplaySaveKeys.LogsVersion, _logs.Capture, _logs.Restore)));
         }
 
         /// <summary>The save is loaded (Start runs after it): Audio and UI start from the real radio program.</summary>
@@ -256,6 +262,7 @@ namespace MoonProject.Gameplay
                 : _cassettes == null ? "CassetteField is not assigned."
                 : _cassettes.Catalog == null ? "CassetteField has no CassetteCatalog."
                 : _cassettes.Catalog.Validate() != null ? "CassetteCatalog " + _cassettes.Catalog.Validate() + "."
+                : _logs == null ? "LogCacheField is not assigned."
                 : null;
         }
 

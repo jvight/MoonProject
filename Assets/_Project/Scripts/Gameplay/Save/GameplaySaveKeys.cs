@@ -23,5 +23,8 @@ namespace MoonProject.Gameplay
 
         public const string Radio = "gameplay.radio";
         public const int RadioVersion = 1;
+
+        public const string Logs = "gameplay.logs";
+        public const int LogsVersion = 1;
     }
 }

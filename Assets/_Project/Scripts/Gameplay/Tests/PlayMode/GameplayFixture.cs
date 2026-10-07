@@ -15,7 +15,7 @@ namespace MoonProject.Gameplay.PlayModeTests
 {
     /// <summary>
     /// A complete gameplay stack built in test code: a flat world with canyon anchors, a fake 07, test content (relic,
-    /// scrap, friend and cassette stand-in meshes in place of the Art prefabs, default tuning, SoftGlow
+    /// scrap, friend, cassette and log cache stand-in meshes in place of the Art prefabs, default tuning, SoftGlow
     /// materials) and the real gameplay components, wired the way the scene contributor wires them and booted through
     /// GameBootstrap with a private save slot.
     /// </summary>
@@ -88,6 +88,8 @@ namespace MoonProject.Gameplay.PlayModeTests
         public CassetteTuning CassetteTuning { get; private set; }
 
         public CassetteCatalog Cassettes { get; private set; }
+
+        public LogCacheTuning LogCacheTuning { get; private set; }
 
         /// <summary>The lander's FriendSocket_tilly stand-in.</summary>
         public Transform TillyPerch { get; private set; }
@@ -215,16 +217,18 @@ namespace MoonProject.Gameplay.PlayModeTests
             var workshop = Child<Workshop>(root, "Workshop");
             var friends = Child<FriendField>(root, "Friends");
             var cassettes = Child<CassetteField>(root, "Cassettes");
+            var logs = Child<LogCacheField>(root, "LogCaches");
             BuildBase(root.transform, home, tower, workshop);
             BuildTilly(friends);
             BuildCassettes(cassettes);
+            BuildLogCaches(logs);
             relics.Wire(relicCatalog, placement, RelicTuning);
             scrap.Wire(ScrapTuning, scrapCatalog);
             sonar.Wire(SonarTuning);
             excavation.Wire(ExcavationTuning);
             tether.Wire(TetherTuning);
             Gameplay.Wire(visuals, new[] { RadioTowerUpgrade, HoverJumpUpgrade }, relics, scrap, sonar, excavation,
-                tether, home, tower, workshop, friends, cassettes);
+                tether, home, tower, workshop, friends, cassettes, logs);
             root.SetActive(true);
 
             Bootstrap = BootstrapHarness.Create(_controls, SaveSlot, World, Rover, Gameplay);
@@ -334,6 +338,19 @@ namespace MoonProject.Gameplay.PlayModeTests
             cassette.Populate(id, Template("Cassette_" + id, new Vector3(0.35f, 0.22f, 0.07f)), site, anchor, 73,
                 gate);
             return cassette;
+        }
+
+        /// <summary>Ro's tin box beside the terminus, as in the content builder.</summary>
+        private void BuildLogCaches(LogCacheField field)
+        {
+            LogCacheTuning = Asset<LogCacheTuning>();
+            var ro = Asset<LogCacheDefinition>();
+            ro.Populate("ro_1", Template("LogCache", new Vector3(0.5f, 0.3f, 0.35f)),
+                new AnchorSpot(WorldAnchorIds.CanyonTerminus, new Vector2(2.2f, 0.3f)),
+                new AbilityGate(true, RoverAbility.HoverJump));
+            var catalog = Asset<LogCacheCatalog>();
+            catalog.Populate(new[] { ro });
+            field.Wire(catalog, LogCacheTuning);
         }
 
         private GameObject FriendModel(string name, bool broken)
