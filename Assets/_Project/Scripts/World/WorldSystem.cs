@@ -8,10 +8,10 @@ namespace MoonProject.World
 {
     /// <summary>
     /// Owns the moon: builds the analytic surface, the terrain (with Whispering Canyon's gate slabs), the rock scatter
-    /// and Earth, applies the atmosphere and sky, and registers <see cref="ITerrainQuery"/> and
-    /// <see cref="IWorldLayout"/> in the context. In edit mode it also builds a preview (HideFlags.DontSave: never
-    /// saved into the scene, destroyed in OnDisable) so the scene view and scene captures show the world;
-    /// <see cref="Initialize"/> is the only play-mode path.
+    /// and Earth, applies the atmosphere and sky, and registers <see cref="ITerrainQuery"/>,
+    /// <see cref="IWorldLayout"/> and <see cref="IWorldAnchors"/> in the context. In edit mode it also builds a
+    /// preview (HideFlags.DontSave: never saved into the scene, destroyed in OnDisable) so the scene view and scene
+    /// captures show the world; <see cref="Initialize"/> is the only play-mode path.
     /// </summary>
     [ExecuteAlways]
     public sealed class WorldSystem : MonoBehaviour, IGameSystem
@@ -52,6 +52,8 @@ namespace MoonProject.World
 
         public WorldLayout Layout { get; private set; }
 
+        public WorldAnchors Anchors { get; private set; }
+
         public TerrainBuildReport LastBuild { get; private set; }
 
         public ScatterBuildReport LastScatter { get; private set; }
@@ -70,6 +72,7 @@ namespace MoonProject.World
             Generate(HideFlags.None);
             context.Register<ITerrainQuery>(Surface);
             context.Register<IWorldLayout>(Layout);
+            context.Register<IWorldAnchors>(Anchors);
             Debug.Log($"{nameof(WorldSystem)}: terrain {LastBuild}; scatter {LastScatter}", this);
         }
 
@@ -103,6 +106,7 @@ namespace MoonProject.World
             MoonSurface surface = _settings.CreateSurface();
             Surface = surface;
             Layout = new WorldLayout(surface, _settings.Sky);
+            Anchors = new WorldAnchors(surface, _settings.Surface.Canyon);
 
             // Scatter planning only reads the analytic surface: it runs on a worker while the terrain is meshed.
             ScatterSettings scatterSettings = _settings.Scatter;
