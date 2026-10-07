@@ -62,7 +62,7 @@ namespace MoonProject.World
 
         [Tooltip("Strength of the broad patches in the dust tone.")]
         [Range(0f, 2f)]
-        [SerializeField] private float _patchStrength = 0.9f;
+        [SerializeField] private float _patchStrength = 1.1f;
 
         [Tooltip("Size of the small dust patches, metres: several metres across, never a single facet.")]
         [Range(4f, 100f)]
@@ -92,7 +92,7 @@ namespace MoonProject.World
         [Tooltip("How far the canyon floor's dust may go from the shadow dust toward the mid dust (0..1): the " +
             "canyon is cooler and darker than the basin, with no light dust inside.")]
         [Range(0f, 1f)]
-        [SerializeField] private float _canyonMidShare = 0.6f;
+        [SerializeField] private float _canyonMidShare = 0.85f;
 
         [Tooltip("Chasm weight at which the trough has turned fully charcoal: it reads deep through darkness.")]
         [Range(0.05f, 1f)]
