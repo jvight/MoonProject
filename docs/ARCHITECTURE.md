@@ -197,6 +197,37 @@ Lander.prefab  FriendSocket_<id>: empty on top of the friend's perch, +Y up, +Z 
 `M_LowPolyGlowOff` is `M_LowPoly` with `_EmissionColor` authored black and `_EMISSION` on: its glow renderers start
 dark and are lit per renderer with the same MaterialPropertyBlock contract as 07's eye.
 
+## Contract: friend Bell, cassettes (Art -> Gameplay), M3-05
+Bell is Ro's radio cabinet on four spindly camera-tripod legs: ~1.6 m tall overall (cabinet ~0.9 × 0.5 × 0.8 m on
+~0.75 m legs), slender, a little taller than 07, warm wood-and-enamel body, amber dial. Meshes only, `M_LowPoly`.
+```
+Generated/Art/Friends/Bell.prefab  (root on the ground between the feet, +Z = dial face, +Y up; standing rest pose)
+  Body                 the cabinet, pivot at the centre of its underside (sway / bob / dance)
+    Lid                pivot on the top-back hinge; local X rotation 0 = closed, negative = opening
+    DialFace           the dial plate on the front, +Z out
+      Needle           pivot at the needle hub; rotates about local Z, 0 = left end of the band, + = sweeping right
+      DialLamp         own glow renderer on M_LowPolyGlowOff behind the dial glass (amber)
+    Speaker            grille + cone, pivot at the cone centre (pulse along local Z)
+    TapeSlot           empty at the cassette door on the front, +Z out (07's beam slides the tape in here)
+    Antenna            telescopic whip, pivot at its base (spring wobble)
+    PartLamp_0..3      own glow renderers on M_LowPolyGlowOff: 0..2 = parts, 3 = the tape (amber)
+  Leg_FL/FR/RL/RR      pivot at the hip under Body; swing about local X, splay about local Z
+    Shin_<corner>      pivot at the knee; bend about local X; the foot is the shin's bottom end
+Generated/Art/Friends/Bell_Broken.prefab  same node names, posed tipped back against a wall (pose baked into local
+  transforms), lid open, one leg folded under, DialLamp and PartLamps dark
+Generated/Art/Friends/Part_BellKnob|Part_BellCone|Part_BellValve.prefab  0.27-0.36 m pickups, centre-of-mass pivot,
+  warm amber accents (never cyan)
+Generated/Art/Pickups/Cassette_<id>.prefab  chunky readable tape ~0.35 m wide, centre-of-mass pivot, label colour per
+  id: after_dark_1, dust_and_honey, slow_orbit (more ids later, same recipe)
+Generated/Art/Props/LogCache.prefab  Ro's battered tin box (~0.5 m), root on the ground, +Z = lid front, lid ajar
+Generated/Art/Base/CassetteShelf.prefab  small standing rack, root on the ground, +Z = front
+  Slot_0..Slot_7       empties, +Y up, +Z = label facing; a tape stands upright on each
+RadioTower_L1|L2|L3.prefab  (same on all three stages)
+  BellCorner           empty on the ground beside the tower foot, +Z = facing the lander; Bell stands here
+  CassetteShelfAnchor  empty on the ground next to BellCorner, +Z = facing the lander; the shelf stands here
+```
+The sockets must leave a clear 2.5 m radius for Bell's dance and 07 parking in front of the dial (Interact range).
+
 ## Contract: world anchors (World -> Gameplay, Audio)
 World registers `Core/IWorldAnchors` (Count / Get(index) / TryGet(id)): named `WorldAnchor`s (id, surface position,
 horizontal forward, radius of clear drivable ground), deterministic for the world seed and fixed after initialisation.
