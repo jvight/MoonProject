@@ -88,6 +88,11 @@ Each ruling removes friction the original pitch would have caused. Boxes impleme
    wakes as the radio crackles on — the first five seconds should make people say "aww".
 9. **Ground variation is patchy, never confetti.** Colour changes on the floor follow low-frequency patches and
    facet tilt; isolated bright triangles on flat ground read as paper scraps and are not allowed.
+10. **Gates are real, exits are one-way.** An ability gate must actually need the ability, not just shortcut a
+    drivable path. Every gated region has a way back that needs no ability: a one-way step down of at most 2.5 m,
+    landing more gently than the basin's play ramps. It is visible from the basin side as a promise, and it is never
+    climbable as a way in. Trying the gate without the ability may fail, but it never traps: any trough or pit 07
+    can fall into has a ≤ 20° side to drive out.
 
 ## World concept
 The playable space is the floor of a **vast ancient crater basin** (~600 m across for the vertical slice).
@@ -119,7 +124,7 @@ Driving back towards its glow should feel like coming home on a winter night.
 | Biolum (eclipse) | `#3CFFC2` / `#FF5FD2` | late-game magic only |
 | Alert-soft | `#FF5A6E` | the peak's blinking light only |
 
-Rules: max 4 swatches per object, emissive only for things that are *alive* (lamps, scrap, tether, sonar, Earth).
+Rules: max 4 swatches per object (the terrain is the exception: up to 6, the dust family plus Charcoal, which is kept for depth such as the chasm trough), emissive only for things that are *alive* (lamps, scrap, tether, sonar, Earth).
 
 ## Audio direction
 - **The radio** plays lofi. Near base the signal is clear; far away it drifts into warm static and low-pass haze.
