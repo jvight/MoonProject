@@ -21,7 +21,10 @@ namespace MoonProject.Core
         /// <summary>On the surface (y = terrain height), so content can stand on it directly.</summary>
         public Vector3 Position { get; }
 
-        /// <summary>Horizontal unit vector: the way the space "faces" (into the canyon, out of an alcove).</summary>
+        /// <summary>
+        /// Horizontal unit vector: the way 07 travels when arriving into the space (into the canyon, across the chasm,
+        /// into an alcove or the terminus chamber, down the exit). Content meant to greet 07 faces -Forward.
+        /// </summary>
         public Vector3 Forward { get; }
 
         /// <summary>Radius in metres of flat, drivable, uncluttered ground around <see cref="Position"/>.</summary>

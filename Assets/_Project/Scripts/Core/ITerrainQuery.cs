@@ -15,7 +15,10 @@ namespace MoonProject.Core
         /// </summary>
         Rect PlayableArea { get; }
 
-        /// <summary>True where the rover can drive comfortably (the basin floor, not the rim or The Peak's flanks).</summary>
+        /// <summary>
+        /// True where the rover can drive comfortably: the basin floor and the floors of carved regions (the canyon,
+        /// its landing apron, exit corridor and chasm trough), not the rim walls or The Peak's flanks.
+        /// </summary>
         bool IsDrivable(float x, float z);
 
         /// <summary>Surface height at world XZ.</summary>
