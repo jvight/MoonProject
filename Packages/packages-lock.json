@@ -12,41 +12,41 @@
       "url": "https://package.openupm.com"
     },
     "com.ivanmurzak.unity.mcp.animation": {
-      "version": "1.2.19",
+      "version": "1.2.34",
       "depth": 0,
       "source": "registry",
       "dependencies": {
-        "com.ivanmurzak.unity.mcp": "0.81.0",
+        "com.ivanmurzak.unity.mcp": "0.93.2",
         "com.unity.modules.animation": "1.0.0"
       },
       "url": "https://package.openupm.com"
     },
     "com.ivanmurzak.unity.mcp.cinemachine": {
-      "version": "1.0.5",
+      "version": "1.0.19",
       "depth": 0,
       "source": "registry",
       "dependencies": {
-        "com.ivanmurzak.unity.mcp": "0.81.0",
+        "com.ivanmurzak.unity.mcp": "0.93.2",
         "com.unity.cinemachine": "3.1.6"
       },
       "url": "https://package.openupm.com"
     },
     "com.ivanmurzak.unity.mcp.inputsystem": {
-      "version": "1.0.5",
+      "version": "1.0.19",
       "depth": 0,
       "source": "registry",
       "dependencies": {
-        "com.ivanmurzak.unity.mcp": "0.81.0",
+        "com.ivanmurzak.unity.mcp": "0.93.2",
         "com.unity.inputsystem": "1.7.0"
       },
       "url": "https://package.openupm.com"
     },
     "com.ivanmurzak.unity.mcp.navigation": {
-      "version": "1.0.5",
+      "version": "1.0.19",
       "depth": 0,
       "source": "registry",
       "dependencies": {
-        "com.ivanmurzak.unity.mcp": "0.81.0",
+        "com.ivanmurzak.unity.mcp": "0.93.2",
         "com.unity.ai.navigation": "1.1.7"
       },
       "url": "https://package.openupm.com"
@@ -62,11 +62,11 @@
       "url": "https://package.openupm.com"
     },
     "com.ivanmurzak.unity.mcp.terrain": {
-      "version": "1.0.5",
+      "version": "1.0.19",
       "depth": 0,
       "source": "registry",
       "dependencies": {
-        "com.ivanmurzak.unity.mcp": "0.81.0",
+        "com.ivanmurzak.unity.mcp": "0.93.2",
         "com.unity.modules.terrain": "1.0.0",
         "com.unity.modules.terrainphysics": "1.0.0"
       },
