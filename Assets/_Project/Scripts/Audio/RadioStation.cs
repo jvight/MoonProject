@@ -215,8 +215,8 @@ namespace MoonProject.Audio
             }
 
             float presence = _staticPresence.Step(StaticPresenceTarget(), dt, _tuning.QuietStaticFade);
-            float staticVolume = mix.StaticVolume * presence + _tuning.TuneStaticBoost * _mixer.Swell
-                                 + _tuning.WakeStaticBoost * _wake.CrackleBoost;
+            float staticVolume = (mix.StaticVolume + _tuning.WakeStaticBoost * _wake.CrackleBoost) * presence
+                                 + _tuning.TuneStaticBoost * _mixer.Swell;
             _static.volume = Mathf.Clamp01(staticVolume) * _staticCueVolume * level *
                              Mathf.Lerp(1f, _tuning.CabinStaticGain, cabin);
             _swish.volume = _tuning.TuneSwishVolume * _swishCueVolume * level;
@@ -254,8 +254,15 @@ namespace MoonProject.Audio
                 RebuildPool();
             }
 
-            if ((update & RadioProgramUpdate.Station) == 0 || !_wake.MusicStarted)
+            if ((update & RadioProgramUpdate.Station) == 0)
             {
+                return;
+            }
+
+            if (!_wake.MusicStarted)
+            {
+                // Set before the radio comes on (a loaded save): the static starts where the station wants it.
+                _staticPresence.Snap(StaticPresenceTarget());
                 return;
             }
 
@@ -418,7 +425,11 @@ namespace MoonProject.Audio
                 awoke.WokenByPlayer ? _tuning.PlayerWakeMusicFade : _tuning.WakeMusicFade, _tuning.WakePowerTime);
             _static.volume = 0f;
             _static.Play();
-            _swish.Play();
+            if (_model.Station != RadioChannel.QuietHours)
+            {
+                // Waking on Quiet Hours stays quiet: no dial swish, and the wake crackle is held down with the static.
+                _swish.Play();
+            }
         }
 
         private void OnDestroy()

@@ -116,6 +116,27 @@ namespace MoonProject.Audio.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator WakingOnQuietHours_StaysQuiet()
+        {
+            AudioSource staticSource = AudioTestRig.FindChildSource(_rig.Radio.transform, "Static");
+            Program.DialUnlocked = true;
+            Program.Channel = RadioChannel.QuietHours;
+            _rig.ProgramChanged();
+            _rig.Wake(true);
+            float loudest = 0f;
+            float end = Time.realtimeSinceStartup + 3f;
+            while (Time.realtimeSinceStartup < end)
+            {
+                yield return null;
+                loudest = Mathf.Max(loudest, staticSource.volume);
+                Assert.IsFalse(Swish.isPlaying, "no dial swish when the moon is all there is");
+            }
+
+            Assert.AreEqual(0f, loudest, "no wake crackle either");
+            Assert.IsFalse(_rig.Radio.MusicStarted);
+        }
+
+        [UnityTest]
         public IEnumerator AnUnknownTape_IsReported_AndTheDeckFallsSilent()
         {
             yield return WakeAndWaitForMusic();
