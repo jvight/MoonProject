@@ -1595,23 +1595,206 @@
       "notes": "Bell waking: the hum warms up, a crackle, a sleepy E5 -> A5 hello."
     },
     {
-      "id": "bell_boot",
+      "id": "bell_curious",
       "category": "oneshot_3d",
       "milestone": "M3",
       "bus": "Sfx",
       "spatial": true,
       "loop": false,
       "files": [
-        "Assets/_Project/Audio/SFX/bell_boot.wav"
+        "Assets/_Project/Audio/SFX/bell_curious_01.wav",
+        "Assets/_Project/Audio/SFX/bell_curious_02.wav",
+        "Assets/_Project/Audio/SFX/bell_curious_03.wav"
       ],
       "variantLabels": [
-        "bell_boot"
+        "01",
+        "02",
+        "03"
       ],
       "sha256": [
-        "3302ce7fcd13778a1778754fb090fa48789b800a7013313449ec5e825b80e7f4"
+        "4b036bfbb83d888bd5d6236016cf4fb5cb72fbcc81dfa8eaf81efd411ffdfac3",
+        "86aaf81e8764513c876b25f63dbfd300a9d35c46adb9a7c925845cd21daf38da",
+        "e197851adcf21ba7d1b2457ffb190af5a89c817a325c97d787ff208536af04b3"
       ],
-      "volumeMin": 0.65,
-      "volumeMax": 0.65,
+      "volumeMin": 0.45,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bell 'hm?': a tuning squeak settling onto a note, then the whistle sliding up like a question."
+    },
+    {
+      "id": "bell_happy",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/bell_happy_01.wav",
+        "Assets/_Project/Audio/SFX/bell_happy_02.wav",
+        "Assets/_Project/Audio/SFX/bell_happy_03.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02",
+        "03"
+      ],
+      "sha256": [
+        "bca719163f1df0c609b2c70c015d509766083edd7f7d8eb23821a280fdfca4ef",
+        "2ba74add63357575140f22b59d19faceb06e16885899ddbf01d416350842f780",
+        "8f843eb3c0ebac17cf008e13258b89c2ffa8809764c49a6f0bd0ce14a6c499a7"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bell happy at home: a gliding dial-whistle run up the pentatonic."
+    },
+    {
+      "id": "bell_sleepy",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/bell_sleepy_01.wav",
+        "Assets/_Project/Audio/SFX/bell_sleepy_02.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02"
+      ],
+      "sha256": [
+        "e64cbba2bb774d1519f726d98242f8fb45ecfc86f8774e9bf18012a6778baa06",
+        "4d455889a3205020ac6b969a32dca88e04359a55fa1f03fcfe144a19c6c79dd2"
+      ],
+      "volumeMin": 0.35,
+      "volumeMax": 0.4,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bell sleepy: a slow whistle sagging down like a tape winding down."
+    },
+    {
+      "id": "bell_greeting",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/bell_greeting_01.wav",
+        "Assets/_Project/Audio/SFX/bell_greeting_02.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02"
+      ],
+      "sha256": [
+        "c6f6778c0aea1148fe5076e67ce2641fcbc202821d4ad0ea265e34df440282fb",
+        "da056ca79edb7f760e7e053f6b770f945786c08e244ce71849c506ad77b56dc9"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bell 'hello!': upward tuning squeak + a station-ident whistle (her jingle replaces it at home)."
+    },
+    {
+      "id": "bell_found",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/bell_found_01.wav",
+        "Assets/_Project/Audio/SFX/bell_found_02.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02"
+      ],
+      "sha256": [
+        "496f52edb1b1406099b8f99f4fd63d90ad4953d588efef90fc08a1f39c70ebf1",
+        "e718cb07f18ad2b6faf47b0612816c0c86c1c8e3bb8a33ae9d349dee7f582b2b"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bell 'got it!': a squeak locking onto a clean tone, then up a fourth."
+    },
+    {
+      "id": "bell_rotor",
+      "category": "loop_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/SFX/bell_rotor_loop.wav"
+      ],
+      "variantLabels": [
+        "bell_rotor"
+      ],
+      "sha256": [
+        "92da0cc7b2c3b94ffc113299fea5a1e5c3d9dedc9eb8c26cb197b19225c4fb0b"
+      ],
+      "volumeMin": 0.3,
+      "volumeMax": 0.3,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 6000.0,
+      "hfMaxDb": -40.0,
+      "tonal": false,
+      "notes": "Bell's walking effort: soft clockwork tick-tock of her legs + spring whirr + creak, 4 s seamless."
+    },
+    {
+      "id": "bell_tape_slot",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/bell_tape_slot.wav"
+      ],
+      "variantLabels": [
+        "bell_tape_slot"
+      ],
+      "sha256": [
+        "8bee6329bdd63f59a75bebfe83c2e4d5be49ed2eabb3c86cad24d2df07467d24"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
       "pitchMin": 1.0,
       "pitchMax": 1.0,
       "targetLufs": -18.0,
@@ -1619,7 +1802,34 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": false,
-      "notes": "Bell's repair: tape slides in (clack), the needle sweeps up the band past three faint stations."
+      "notes": "BellCued.TapeSlotted: the tape slides into her slot, clacks home and the capstan motor catches."
+    },
+    {
+      "id": "bell_needle_sweep",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/bell_needle_sweep.wav"
+      ],
+      "variantLabels": [
+        "bell_needle_sweep"
+      ],
+      "sha256": [
+        "b4ff8e93e4874f6741db3af3b67a574683e4c4c6cb97c7c72ed3ccc8186b265d"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "BellCued.NeedleSwept: lamp hum warms, the needle sweeps up the band past three faint stations."
     },
     {
       "id": "radio_dial_click",

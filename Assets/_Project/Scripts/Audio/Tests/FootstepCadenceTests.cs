@@ -43,7 +43,7 @@ namespace MoonProject.Audio.Tests
             var steps = new FootstepCadence();
             steps.Step(Vector3.zero, Stride, Teleport);
             steps.Step(new Vector3(0.4f, 0f, 0f), Stride, Teleport);
-            Assert.IsFalse(steps.Step(new Vector3(80f, 0f, 60f), Stride, Teleport), "a jump past the teleport distance");
+            Assert.IsFalse(steps.Step(new Vector3(80f, 0f, 60f), Stride, Teleport), "a jump past the teleport range");
             Assert.IsFalse(steps.Step(new Vector3(80.2f, 0f, 60f), Stride, Teleport),
                 "travel before the jump was forgotten");
             Assert.IsTrue(steps.Step(new Vector3(80.6f, 0f, 60f), Stride, Teleport));

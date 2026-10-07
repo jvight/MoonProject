@@ -53,6 +53,8 @@ namespace MoonProject.Audio
         public const string BellSignalFound = "bell_signal_found";
         public const string CanyonWhisper = "canyon_whisper";
         public const string CanyonTrough = "canyon_trough";
+        public const string BellTapeSlot = "bell_tape_slot";
+        public const string BellNeedleSweep = "bell_needle_sweep";
 
         /// <summary>A friend's chirp cue, <c>&lt;friendId&gt;_&lt;mood&gt;</c> (e.g. tilly_curious). Builds a string:
         /// call at initialisation only.</summary>

@@ -8,7 +8,10 @@ using MoonProject.Core.Events;
 
 namespace MoonProject.Audio.PlayModeTests
 {
-    /// <summary>Bell's voice: her own boot, jingles on their own source, leg taps from walking, doze and wake.</summary>
+    /// <summary>
+    /// Bell's voice: her moods and clockwork legs, her cues (tape, needle, foot taps, crackle, dial), jingles on
+    /// their own source, leg taps from walking, doze and wake.
+    /// </summary>
     public sealed class BellAudioTests
     {
         private const int BellIndex = 1;
@@ -32,11 +35,48 @@ namespace MoonProject.Audio.PlayModeTests
 
         private string LastClip => _rig.Director.LastClip != null ? _rig.Director.LastClip.name : string.Empty;
 
+        [Test]
+        public void HerWholeVoice_IsInTheLibrary()
+        {
+            string[] parts =
+            {
+                "broken", "curious", "happy", "sleepy", "greeting", "excited", "found", "rotor", "step", "doze",
+                "wake", "tune", "jingle_short", "jingle_full", "tape_slot", "needle_sweep",
+            };
+            foreach (string part in parts)
+            {
+                Assert.IsTrue(_rig.Director.Library.TryResolve($"bell_{part}", out _), $"bell_{part}");
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator Repair_TheTapeSlotsIn_EndingTheStitching_ThenTheNeedleSweeps()
+        {
+            Bell.Position = new Vector3(12f, 2f, -8f);
+            Bell.Activity = FriendActivity.Repairing;
+            Bell.RotorSpeed = 0f;
+            yield return new WaitForSeconds(0.6f);
+            AudioSource stitch = _rig.Friends.StitchSource(BellIndex);
+            Assert.IsTrue(stitch.isPlaying, "07's beam stitches her");
+
+            var slot = new Vector3(12f, 2.6f, -8f);
+            _rig.Events.Publish(new BellCued(BellCue.TapeSlotted, slot));
+            Assert.AreEqual("bell_tape_slot", LastClip);
+            Assert.Less(Vector3.Distance(_rig.Director.LastVoice.transform.position, slot), 1e-4f);
+            yield return new WaitForSeconds(1.5f);
+            Assert.IsFalse(stitch.isPlaying, "the stitching ends as the tape goes in");
+
+            _rig.Events.Publish(new BellCued(BellCue.NeedleSwept, Bell.Position));
+            Assert.AreEqual("bell_needle_sweep", LastClip);
+            yield return null;
+            Assert.AreEqual("bell_needle_sweep", LastClip, "her tape and needle are her boot: no shared one");
+        }
+
         [UnityTest]
         public IEnumerator Jingles_PlayAtBell_OnTheirOwnSource()
         {
             Bell.Position = new Vector3(-30f, 1f, 42f);
-            Bell.Activity = FriendActivity.Following;
+            Bell.Activity = FriendActivity.Home;
             yield return null;
 
             _rig.Events.Publish(new FriendRepaired("bell"));
@@ -48,21 +88,52 @@ namespace MoonProject.Audio.PlayModeTests
             Assert.Less(Vector3.Distance(jingles.transform.position, Bell.Position), 1e-4f);
             Assert.AreNotSame(_rig.Friends.ChirpSource(BellIndex), jingles);
 
-            Bell.Activity = FriendActivity.Home;
             _rig.Events.Publish(new FriendGreeted("bell"));
             Assert.AreEqual("bell_jingle_full", LastClip, "the whole jingle in greeting");
         }
 
         [UnityTest]
-        public IEnumerator Boot_IsHerTapeAndNeedle()
+        public IEnumerator HerCues_FootTap_Crackle_AndTheDialsDetent()
         {
-            Bell.Activity = FriendActivity.Repairing;
+            Bell.Position = new Vector3(4f, 0f, 9f);
+            Bell.Activity = FriendActivity.Home;
+            yield return null;
+
+            _rig.Events.Publish(new BellCued(BellCue.FootTapped, Bell.Position));
+            StringAssert.StartsWith("bell_step_", LastClip, "a soft leg tap to the music");
+            Assert.IsTrue(_rig.Friends.FeetSource(BellIndex).isPlaying);
+
+            _rig.Events.Publish(new BellCued(BellCue.Crackled, Bell.Position));
+            StringAssert.StartsWith("bell_excited_", LastClip, "her happy crackle at a new relic");
+            Assert.IsTrue(_rig.Friends.ChirpSource(BellIndex).isPlaying);
+
+            _rig.Events.Publish(new BellCued(BellCue.DialTurned, Bell.Position));
+            Assert.AreEqual("radio_dial_click", LastClip);
+            Assert.AreEqual(0f, _rig.Director.LastVoice.spatialBlend, "the detent is right under 07's nose");
+        }
+
+        [Test]
+        public void ANewRelicOnTheShelf_IsHerCrackleCue_NotAChirpOfOurOwn()
+        {
+            Bell.Activity = FriendActivity.Home;
+            _rig.Events.Publish(new RelicDeposited("lamp", Vector3.zero, 2));
+            StringAssert.StartsWith("relic_placed", LastClip, "she crackles only when she saw it (BellCued.Crackled)");
+        }
+
+        [UnityTest]
+        public IEnumerator HerLegs_TickLikeClockwork_WhileSheWaddles()
+        {
+            Bell.Activity = FriendActivity.Home;
+            Bell.RotorSpeed = 0.5f;
+            yield return new WaitForSeconds(1.5f);
+            AudioSource legs = _rig.Friends.RotorSource(BellIndex);
+            Assert.IsNotNull(legs);
+            Assert.IsTrue(legs.isPlaying);
+            StringAssert.StartsWith("bell_rotor", legs.clip.name);
+
             Bell.RotorSpeed = 0f;
-            yield return new WaitForSeconds(0.3f);
-            Bell.RotorSpeed = 0.1f;
-            yield return null;
-            yield return null;
-            Assert.AreEqual("bell_boot", LastClip);
+            yield return new WaitForSeconds(3f);
+            Assert.IsFalse(legs.isPlaying, "still when she stands still");
         }
 
         [UnityTest]
@@ -97,18 +168,6 @@ namespace MoonProject.Audio.PlayModeTests
             Assert.AreEqual("bell_wake", LastClip);
             yield return new WaitForSeconds(1.5f);
             Assert.IsFalse(doze.isPlaying, "the hum has faded out");
-        }
-
-        [Test]
-        public void ANewRelicOnTheShelf_GetsHerHappyCrackle_OnlyWhenHome()
-        {
-            Bell.Activity = FriendActivity.Napping;
-            _rig.Events.Publish(new RelicDeposited("teapot", Vector3.zero, 1));
-            StringAssert.StartsWith("relic_placed", LastClip);
-
-            Bell.Activity = FriendActivity.Home;
-            _rig.Events.Publish(new RelicDeposited("lamp", Vector3.zero, 2));
-            StringAssert.StartsWith("bell_excited_", LastClip);
         }
 
         private IEnumerator Walk(float metres)

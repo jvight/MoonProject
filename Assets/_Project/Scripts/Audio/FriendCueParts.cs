@@ -21,10 +21,6 @@ namespace MoonProject.Audio
         /// <summary>One-shot when the radio dial turns to another station (Bell's crackle).</summary>
         public const string Tune = "tune";
 
-        /// <summary>Its own boot at the end of the repair, instead of the shared friend_boot (Bell's tape and
-        /// needle).</summary>
-        public const string Boot = "boot";
-
         /// <summary>Music-box jingle when it stands up repaired, instead of the happy chirp (Bell).</summary>
         public const string JingleShort = "jingle_short";
 

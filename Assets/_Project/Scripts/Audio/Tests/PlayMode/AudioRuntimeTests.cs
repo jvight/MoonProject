@@ -192,6 +192,13 @@ namespace MoonProject.Audio.PlayModeTests
                     events.Publish(new FriendSpotted("tilly", Vector3.forward));
                     events.Publish(new FriendPartCollected("tilly", 0, frame % 36 == 2 ? 3 : 1, 3));
                     events.Publish(new FriendGreeted("tilly"));
+                    events.Publish(new BellCued((BellCue)(frame / 12 % 5), Vector3.one));
+                    if (frame % 48 == 2)
+                    {
+                        events.Publish(new FriendRepaired("bell"));
+                        events.Publish(new FriendGreeted("bell"));
+                    }
+
                     break;
                 case 3:
                     string relic = frame % 24 == 3 ? "teapot" : "rubber_duck";

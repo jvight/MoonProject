@@ -9,21 +9,26 @@ namespace MoonProject.Audio
     /// The friend machines' voices. Every friend in the <see cref="IFriendRoster"/> gets a 3D voice that follows it,
     /// built from cues named after it (<c>&lt;id&gt;_&lt;part&gt;</c>). Only <c>&lt;id&gt;_broken</c> (its answer to a
     /// ping) is required; every other part is optional and simply absent when not rendered: mood chirps (curious,
-    /// happy, sleepy, greeting, excited, found), a rotor loop following its effort (Tilly), foot taps from the distance
-    /// it walks (Bell), a doze loop while napping and a wake as it stirs, a crackle when the radio changes station, its
-    /// own boot, and music-box jingles that replace the happy chirp at repair and the greeting at homecoming. Shared:
-    /// the repair stitching and boot (logic in <see cref="FriendVoiceModel"/>), the amber part tone and the spotter
-    /// ping. Events: <see cref="FriendAnswered"/>, <see cref="FriendPartCollected"/>, <see cref="FriendRepaired"/>,
-    /// <see cref="FriendGreeted"/>, <see cref="FriendSpotted"/>, <see cref="RelicDeposited"/> (excited, for friends at
-    /// home). Game-time loops duck while paused through the director's world gain. Initialised by <see
-    /// cref="AudioDirector"/>.
+    /// happy, sleepy, greeting, excited, found), a rotor loop following its effort (Tilly's rotors, Bell's clockwork
+    /// legs), foot taps from the distance it walks, a doze loop while napping and a wake as it stirs, a crackle when
+    /// the radio changes station, and music-box jingles that replace the happy chirp at repair and the greeting at
+    /// homecoming. Shared: the repair stitching and boot (logic in <see cref="FriendVoiceModel"/>), the amber part
+    /// tone and the spotter ping. Bell's own moments arrive as <see cref="BellCued"/>: the tape slotting in (which
+    /// ends her stitching instead of a boot), the needle sweep, foot taps to the music, her happy crackle at a new
+    /// relic and the dial's detent click. Events: <see cref="FriendAnswered"/>, <see cref="FriendPartCollected"/>,
+    /// <see cref="FriendRepaired"/>, <see cref="FriendGreeted"/>, <see cref="FriendSpotted"/>,
+    /// <see cref="RelicDeposited"/> (excited, for friends at home other than Bell). Game-time loops duck while paused
+    /// through the director's world gain. Initialised by <see cref="AudioDirector"/>.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class FriendAudio : MonoBehaviour
     {
         private const string CompletePartLabel = "complete";
         private const int MoodCount = 7;
-        private const int SubscriptionCount = 6;
+        private const int SubscriptionCount = 7;
+
+        // BellCued carries no friend id: it is always Bell's (her roster id).
+        private const string BellId = "bell";
 
         [Tooltip("Assets/_Project/Data/Audio/FriendAudioTuning.asset.")]
         [SerializeField] private FriendAudioTuning _tuning;
@@ -35,6 +40,10 @@ namespace MoonProject.Audio
         private CueHandle _sharedBoot;
         private CueHandle _part;
         private CueHandle _spotPing;
+        private CueHandle _tapeSlot;
+        private CueHandle _needleSweep;
+        private CueHandle _dialClick;
+        private Voice _bell;
         private int _completePart;
 
         public int VoiceCount => _voices.Length;
@@ -55,8 +64,11 @@ namespace MoonProject.Audio
             _sharedBoot = director.Resolve(AudioCueIds.FriendBoot);
             _part = director.Resolve(AudioCueIds.FriendPart);
             _spotPing = director.Resolve(AudioCueIds.FriendSpotPing);
-            if (!stitch.IsValid || !_sharedBoot.IsValid || !_part.IsValid || !_spotPing.IsValid ||
-                !TryFindCompletePart(out _completePart))
+            _tapeSlot = director.Resolve(AudioCueIds.BellTapeSlot);
+            _needleSweep = director.Resolve(AudioCueIds.BellNeedleSweep);
+            _dialClick = director.Resolve(AudioCueIds.RadioDialClick);
+            if (!stitch.IsValid || !_sharedBoot.IsValid || !_part.IsValid || !_spotPing.IsValid || !_tapeSlot.IsValid ||
+                !_needleSweep.IsValid || !_dialClick.IsValid || !TryFindCompletePart(out _completePart))
             {
                 enabled = false;
                 return;
@@ -82,6 +94,7 @@ namespace MoonProject.Audio
                 }
             }
 
+            _bell = FindVoice(BellId);
             EventBus events = context.Events;
             _subscriptions[0] = events.Subscribe<FriendAnswered>(OnFriendAnswered);
             _subscriptions[1] = events.Subscribe<FriendPartCollected>(OnPartCollected);
@@ -89,6 +102,7 @@ namespace MoonProject.Audio
             _subscriptions[3] = events.Subscribe<FriendGreeted>(OnGreeted);
             _subscriptions[4] = events.Subscribe<FriendSpotted>(OnSpotted);
             _subscriptions[5] = events.Subscribe<RelicDeposited>(OnRelicDeposited);
+            _subscriptions[6] = events.Subscribe<BellCued>(OnBellCued);
         }
 
         internal void Wire(FriendAudioTuning tuning)
@@ -192,10 +206,47 @@ namespace MoonProject.Audio
         {
             for (int i = 0; i < _voices.Length; i++)
             {
-                if (_voices[i].Friend.Activity == FriendActivity.Home)
+                // Bell reacts only when she sees it: her crackle comes as BellCued.Crackled.
+                if (_voices[i] != _bell && _voices[i].Friend.Activity == FriendActivity.Home)
                 {
                     Chirp(_voices[i], FriendMood.Excited);
                 }
+            }
+        }
+
+        private void OnBellCued(BellCued cued)
+        {
+            Voice bell = Find(BellId);
+            if (bell == null)
+            {
+                return;
+            }
+
+            switch (cued.Cue)
+            {
+                case BellCue.TapeSlotted:
+                    bell.Model.FinishStitching();
+                    _director.PlayAt(_tapeSlot, cued.Position);
+                    break;
+                case BellCue.NeedleSwept:
+                    _director.PlayAt(_needleSweep, cued.Position);
+                    break;
+                case BellCue.FootTapped:
+                    if (bell.StepCue.IsValid)
+                    {
+                        _director.PlayOn(bell.Feet, bell.StepCue, 1f);
+                    }
+
+                    break;
+                case BellCue.Crackled:
+                    Chirp(bell, FriendMood.Excited);
+                    break;
+                case BellCue.DialTurned:
+                    _director.Play2D(_dialClick);
+                    break;
+                default:
+                    Debug.LogError($"{nameof(FriendAudio)}: no sound for Bell's cue {cued.Cue}.", this);
+                    break;
             }
         }
 
@@ -244,7 +295,7 @@ namespace MoonProject.Audio
 
             if (voice.Model.TakeBoot())
             {
-                _director.PlayOn(voice.Chirps, voice.Boot, 1f);
+                _director.PlayOn(voice.Chirps, _sharedBoot, 1f);
             }
 
             if (voice.Rotor != null)
@@ -300,6 +351,17 @@ namespace MoonProject.Audio
 
         private Voice Find(string friendId)
         {
+            Voice voice = FindVoice(friendId);
+            if (voice == null)
+            {
+                Debug.LogError($"{nameof(FriendAudio)}: no friend '{friendId}' in the roster.", this);
+            }
+
+            return voice;
+        }
+
+        private Voice FindVoice(string friendId)
+        {
             for (int i = 0; i < _voices.Length; i++)
             {
                 if (string.Equals(_voices[i].Friend.Id, friendId, StringComparison.Ordinal))
@@ -308,7 +370,6 @@ namespace MoonProject.Audio
                 }
             }
 
-            Debug.LogError($"{nameof(FriendAudio)}: no friend '{friendId}' in the roster.", this);
             return null;
         }
 
@@ -368,8 +429,6 @@ namespace MoonProject.Audio
                 voice.DozeCueVolume = _director.Library.GetCue(doze).VolumeMax;
             }
 
-            CueHandle boot = Optional(id, FriendCueParts.Boot);
-            voice.Boot = boot.IsValid ? boot : _sharedBoot;
             voice.StepCue = Optional(id, FriendCueParts.Step);
             voice.Wake = Optional(id, FriendCueParts.Wake);
             voice.Tune = Optional(id, FriendCueParts.Tune);
@@ -446,8 +505,6 @@ namespace MoonProject.Audio
             public float RotorCueVolume { get; set; }
 
             public float DozeCueVolume { get; set; }
-
-            public CueHandle Boot { get; set; }
 
             public CueHandle StepCue { get; set; }
 

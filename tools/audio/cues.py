@@ -1129,28 +1129,183 @@ def bell_wake(_variant, gen):
     return _old_radio(mix, 1.3)
 
 
-BELL_BOOT_STATIONS = ((0.55, "A4"), (0.78, "D5"), (1.02, "F#5"))
+def _whistle(notes, durations, gen, glide: float = 0.018, vibrato_cents: float = 0.0, vibrato_rate: float = 5.5,
+             start_cents: float = 0.0, amp: float = 1.0) -> np.ndarray:
+    """A heterodyne whistle as an old receiver makes it between stations: one continuous tone that slides from
+    note to note (portamento ``glide`` seconds) instead of Tilly's separate bird-like blips. ``start_cents``
+    makes it tune in from off-pitch, like a squeak settling onto a station."""
+    total = float(sum(durations))
+    n = samples(total)
+    cents = np.zeros(n)
+    t0 = 0
+    target = np.zeros(n)
+    for note, duration in zip(notes, durations):
+        t1 = min(n, t0 + samples(duration))
+        target[t0:t1] = 1200.0 * math.log2(note_freq(note) / note_freq(notes[0]))
+        t0 = t1
+    target[t0:] = target[t0 - 1] if t0 else 0.0
+    alpha = 1.0 - math.exp(-1.0 / (glide * SAMPLE_RATE))
+    value = start_cents
+    for i in range(n):
+        value += (target[i] - value) * alpha
+        cents[i] = value
+    t = np.arange(n) / SAMPLE_RATE
+    if vibrato_cents:
+        cents = cents + vibrato_cents * np.sin(2.0 * math.pi * vibrato_rate * t) * np.clip(t / 0.15, 0.0, 1.0)
+    freq = note_freq(notes[0]) * 2.0 ** (cents / 1200.0)
+    tone = osc.additive(n, freq, [(1, 1.0), (2, 0.18), (3, 0.08)])
+    gates = np.zeros(n)
+    t0 = 0
+    for k, duration in enumerate(durations):
+        seg = samples(duration)
+        last = k == len(durations) - 1
+        env = envelope.segments(seg, [(0.0, 0.35 if k else 0.0), (0.012, 1.0), (0.7 * duration, 0.85),
+                                      (duration, 0.0 if last else 0.45)], shape="smooth")
+        gates[t0:t0 + seg] = env[:max(0, min(seg, n - t0))]
+        t0 += seg
+    return amp * tone * gates
 
 
-def bell_boot(_variant, gen):
-    """Bell's repair moment: 07 slides the tape in (a plastic clack and the door's slide), the dial lamp warms, and
-    the needle sweeps up the band past three faint stations before settling."""
-    n = samples(1.9)
-    clack_n = samples(0.2)
+def _fading_station(x: np.ndarray, gen, depth: float = 0.25, rate: float = 3.0) -> np.ndarray:
+    """Slow AM 'fading' of a distant station riding on the signal."""
+    n = x.shape[0]
+    phase = gen.uniform(0.0, 2.0 * math.pi)
+    t = np.arange(n) / SAMPLE_RATE
+    return x * (1.0 - depth * 0.5 * (1.0 + np.sin(2.0 * math.pi * rate * t + phase)))
+
+
+def _bell_voice(phrase: np.ndarray, gen, crackle: float = 0.12, drive: float = 1.4) -> np.ndarray:
+    """Bell's speaker: a little static riding under the whistle, then the old receiver's band and warmth."""
+    bed = _static(phrase.shape[0], gen, 1500.0, 0.9)
+    env = envelope.segments(phrase.shape[0], [(0.0, 0.0), (0.02, 1.0),
+                                               (phrase.shape[0] / SAMPLE_RATE, 0.3)], shape="smooth")
+    return _old_radio(phrase + crackle * bed * env, drive)
+
+
+BELL_CURIOUS = (("A4", "D5"), ("D5", "E5"), ("E5", "A5"))
+
+
+def bell_curious(variant, gen):
+    """'Hm?': a tuning squeak settling onto a note, then the whistle sliding up like a question, fading as a
+    distant station does."""
+    low, high = BELL_CURIOUS[variant]
+    phrase = _whistle((low, high), (0.16, 0.34), gen, glide=0.025, vibrato_cents=12.0, start_cents=-450.0)
+    return _bell_voice(_fading_station(_pad(phrase, 0.12), gen), gen)
+
+
+BELL_HAPPY = (("D5", "E5", "F#5", "A5"), ("A4", "D5", "E5", "A5"), ("F#5", "A5", "B5", "D6"))
+
+
+def bell_happy(variant, gen):
+    """Happy at home: the dial whistles up a little pentatonic run, gliding note to note, landing with a wobble."""
+    notes = BELL_HAPPY[variant]
+    phrase = _whistle(notes, (0.09, 0.09, 0.09, 0.3), gen, glide=0.012, vibrato_cents=10.0, start_cents=-200.0)
+    return _bell_voice(_pad(phrase, 0.15), gen, crackle=0.1)
+
+
+BELL_SLEEPY = (("A4", "F#4"), ("D5", "B4"))
+
+
+def bell_sleepy(variant, gen):
+    """Sleepy: a slow whistle sagging down like a tape winding down, under a soft hiss."""
+    high, low = BELL_SLEEPY[variant]
+    phrase = _whistle((high, low), (0.3, 0.7), gen, glide=0.06, vibrato_cents=12.0, vibrato_rate=3.5, amp=0.8)
+    n = phrase.shape[0]
+    hiss = filters.bandpass(noise.pink(n, gen), 1200.0, 0.7)
+    hiss = hiss / max(float(np.std(hiss)), 1e-9) * 0.05 * envelope.segments(
+        n, [(0.0, 0.0), (0.2, 1.0), (n / SAMPLE_RATE, 0.0)], shape="smooth")
+    return _bell_voice(_pad(phrase + hiss, 0.2), gen, crackle=0.06, drive=1.2)
+
+
+BELL_GREETING = (("D5", "F#5", "A5", "D6"), ("A4", "D5", "F#5", "A5"))
+
+
+def bell_greeting(variant, gen):
+    """'Hello!': a quick upward tuning squeak, then a bright station-ident whistle that holds its last note."""
+    notes = BELL_GREETING[variant]
+    phrase = _whistle(notes, (0.12, 0.1, 0.1, 0.42), gen, glide=0.014, vibrato_cents=14.0, start_cents=-700.0)
+    return _bell_voice(_pad(phrase, 0.18), gen, crackle=0.14)
+
+
+BELL_FOUND = (("A5", "D6"), ("E5", "A5"))
+
+
+def bell_found(variant, gen):
+    """'Got it!': a squeak sweeping down and locking onto a clean tone, then hopping up a fourth."""
+    lock, hop = BELL_FOUND[variant]
+    phrase = _whistle((lock, hop), (0.24, 0.3), gen, glide=0.02, vibrato_cents=8.0, start_cents=800.0)
+    return _bell_voice(_pad(phrase, 0.15), gen, crackle=0.1)
+
+
+def _pad(x: np.ndarray, tail: float) -> np.ndarray:
+    return np.concatenate((x, np.zeros(samples(tail))))
+
+
+BELL_WALK_LOOP_S = 4.0
+BELL_WALK_TICKS = 24
+
+
+def bell_rotor(_variant, gen):
+    """Bell's walking effort (her 'rotor' loop): the soft clockwork of her four camera legs - an escapement's
+    tick and tock, a tiny spring whirr and a faint cabinet creak. Seamless; nothing above ~3.5 kHz so it speeds up
+    cleanly with her waddle."""
+    n = samples(BELL_WALK_LOOP_S)
+    ticks = np.zeros(n)
+    tick_n = samples(0.05)
+    for k in range(BELL_WALK_TICKS):
+        freq = 1900.0 if k % 2 == 0 else 1350.0
+        body = filters.bandpass(noise.white(tick_n, gen), freq, 2.0) * envelope.ar(tick_n, 0.0008, 0.012)
+        body = body / max(float(np.max(np.abs(body))), 1e-9)
+        knock = osc.sine(tick_n, 0.32 * freq) * envelope.ar(tick_n, 0.001, 0.02)
+        place(ticks, 0.5 * body + 0.35 * knock, k * n // BELL_WALK_TICKS, 1.0 if k % 2 == 0 else 0.8, wrap=True)
+    whirr = periodic(noise.white(n, gen), lambda x: filters.bandpass(noise.pink_filter(x), 700.0, 1.2))
+    whirr = whirr / max(float(np.std(whirr)), 1e-9) * 0.05 * envelope.lfo(n, 6.0 / BELL_WALK_LOOP_S, 0.2, 0.8)
+    creak = periodic(noise.white(n, gen), lambda x: filters.swept(
+        x, "bandpass", 560.0 + 80.0 * np.sin(2.0 * math.pi * 2.0 * np.arange(x.shape[0]) / n), q=8.0))
+    creak = creak / max(float(np.std(creak)), 1e-9) * 0.04 * envelope.lfo(n, 2.0 / BELL_WALK_LOOP_S, 0.5, 0.5) ** 3
+    mix = 0.5 * ticks + whirr + creak
+    return periodic(mix, lambda x: filters.highpass(filters.lowpass(filters.lowpass(x, 3500.0), 3500.0), 120.0))
+
+
+def bell_tape_slot(_variant, gen):
+    """07's beam slides Bell's tape into her slot: a plastic slide, the clack of it seating and the little
+    capstan motor catching."""
+    n = samples(0.75)
+    slide_n = samples(0.2)
+    slide = filters.bandpass(noise.pink(slide_n, gen), 900.0, 1.0) * envelope.segments(
+        slide_n, [(0.0, 0.0), (0.05, 1.0), (0.18, 0.0)], shape="smooth")
+    clack_n = samples(0.08)
     clack = filters.bandpass(noise.white(clack_n, gen), 1700.0, 1.6) * envelope.ar(clack_n, 0.0006, 0.02)
-    slide = filters.bandpass(noise.pink(clack_n, gen), 900.0, 1.0) * envelope.segments(
-        clack_n, [(0.0, 0.0), (0.03, 1.0), (0.12, 0.0)], shape="smooth")
-    door = np.zeros(clack_n)
-    place(door, slide / max(float(np.std(slide)), 1e-9) * 0.08, 0)
-    place(door, clack / max(float(np.max(np.abs(clack))), 1e-9) * 0.35, samples(0.11))
+    seat = osc.sine(clack_n, osc.glide(clack_n, 260.0, 190.0, time_constant=0.01)) * envelope.ar(clack_n, 0.001,
+                                                                                                  0.03)
+    motor_n = samples(0.45)
+    motor = osc.additive(motor_n, osc.glide(motor_n, 70.0, note_freq("D3"), time_constant=0.12),
+                         [(1, 0.5), (2, 1.0), (3, 0.4), (5, 0.15)])
+    motor *= envelope.segments(motor_n, [(0.0, 0.0), (0.1, 1.0), (0.3, 0.6), (0.45, 0.0)], shape="smooth")
+    mix = np.zeros(n)
+    place(mix, slide / max(float(np.std(slide)), 1e-9) * 0.06, 0)
+    place(mix, clack / max(float(np.max(np.abs(clack))), 1e-9) * 0.3 + 0.25 * seat, samples(0.17))
+    place(mix, 0.06 * motor, samples(0.24))
+    return filters.lowpass(filters.lowpass(mix, 4500.0), 4500.0)
+
+
+BELL_SWEEP_STATIONS = ((0.25, "A4"), (0.48, "D5"), (0.72, "F#5"))
+
+
+def bell_needle_sweep(_variant, gen):
+    """Bell waking from her repair: the dial lamp's hum warms up and the needle sweeps up the band past three
+    faint stations before it settles."""
+    n = samples(1.6)
     sweep_n = samples(1.3)
     sweep = filters.swept(noise.white(sweep_n, gen), "bandpass", osc.glide(sweep_n, 450.0, 2200.0), q=2.5)
     sweep = sweep / max(float(np.std(sweep)), 1e-9) * 0.12 * envelope.segments(
         sweep_n, [(0.0, 0.0), (0.15, 1.0), (1.0, 0.7), (1.3, 0.0)], shape="smooth")
-    mix = np.zeros(n)
-    place(mix, door, 0)
-    place(mix, sweep, samples(0.35))
-    for when, note in BELL_BOOT_STATIONS:
+    hum = osc.additive(n, osc.glide(n, note_freq("D2") * 0.8, note_freq("D2"), time_constant=0.3),
+                       [(1, 0.6), (2, 1.0), (3, 0.3)])
+    hum *= envelope.segments(n, [(0.0, 0.0), (0.4, 1.0), (1.2, 0.8), (1.6, 0.0)], shape="smooth")
+    mix = 0.08 * hum
+    place(mix, sweep, samples(0.05))
+    for when, note in BELL_SWEEP_STATIONS:
         place(mix, _radio_blip(note, 0.16, gen, 0.35), samples(when))
     return _old_radio(mix, 1.3)
 
@@ -1400,8 +1555,25 @@ CUES = (
         tonal=True, notes="Bell dozing: dial ember hum on D2/D3 + faint A3 glow + rare valve tick, 6 s seamless."),
     Cue("bell_wake", "oneshot_3d", bell_wake, volume=(0.5, 0.5), fade_out=0.12, milestone="M3", tonal=True,
         notes="Bell waking: the hum warms up, a crackle, a sleepy E5 -> A5 hello."),
-    Cue("bell_boot", "oneshot_3d", bell_boot, volume=(0.65, 0.65), fade_out=0.15, milestone="M3",
-        notes="Bell's repair: tape slides in (clack), the needle sweeps up the band past three faint stations."),
+    Cue("bell_curious", "oneshot_3d", bell_curious, variants=len(BELL_CURIOUS), volume=(0.45, 0.5), fade_out=0.08,
+        milestone="M3", tonal=True,
+        notes="Bell 'hm?': a tuning squeak settling onto a note, then the whistle sliding up like a question."),
+    Cue("bell_happy", "oneshot_3d", bell_happy, variants=len(BELL_HAPPY), volume=(0.5, 0.55), fade_out=0.08,
+        milestone="M3", tonal=True, notes="Bell happy at home: a gliding dial-whistle run up the pentatonic."),
+    Cue("bell_sleepy", "oneshot_3d", bell_sleepy, variants=len(BELL_SLEEPY), volume=(0.35, 0.4), fade_out=0.15,
+        milestone="M3", tonal=True, notes="Bell sleepy: a slow whistle sagging down like a tape winding down."),
+    Cue("bell_greeting", "oneshot_3d", bell_greeting, variants=len(BELL_GREETING), volume=(0.55, 0.6),
+        fade_out=0.1, milestone="M3", tonal=True,
+        notes="Bell 'hello!': upward tuning squeak + a station-ident whistle (her jingle replaces it at home)."),
+    Cue("bell_found", "oneshot_3d", bell_found, variants=len(BELL_FOUND), volume=(0.5, 0.55), fade_out=0.08,
+        milestone="M3", tonal=True, notes="Bell 'got it!': a squeak locking onto a clean tone, then up a fourth."),
+    Cue("bell_rotor", "loop_3d", bell_rotor, loop=True, file_stem="bell_rotor_loop", volume=(0.3, 0.3),
+        hf_cutoff=6000.0, hf_max_db=-40.0, milestone="M3",
+        notes="Bell's walking effort: soft clockwork tick-tock of her legs + spring whirr + creak, 4 s seamless."),
+    Cue("bell_tape_slot", "oneshot_3d", bell_tape_slot, volume=(0.6, 0.6), fade_out=0.08, milestone="M3",
+        notes="BellCued.TapeSlotted: the tape slides into her slot, clacks home and the capstan motor catches."),
+    Cue("bell_needle_sweep", "oneshot_3d", bell_needle_sweep, volume=(0.6, 0.6), fade_out=0.15, milestone="M3",
+        notes="BellCued.NeedleSwept: lamp hum warms, the needle sweeps up the band past three faint stations."),
     Cue("radio_dial_click", "tick_2d", radio_dial_click, volume=(0.7, 0.7), fade_out=0.02, milestone="M3",
         notes="One detent of Bell's radio dial (2D, at the dial)."),
     Cue("cassette_pickup", "oneshot_3d", cassette_pickup, volume=(0.7, 0.7), fade_out=0.1, milestone="M3",
