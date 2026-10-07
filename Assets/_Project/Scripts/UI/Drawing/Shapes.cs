@@ -88,6 +88,30 @@ namespace MoonProject.UI
             painter.Fill();
         }
 
+        /// <summary>
+        /// A cassette tape filling <paramref name="rect"/>: a rounded shell with a window showing its two reels.
+        /// </summary>
+        public static void Cassette(Painter2D painter, Rect rect, Color shell, Color window)
+        {
+            float height = rect.height;
+            painter.fillColor = shell;
+            painter.BeginPath();
+            RoundedRect(painter, rect, height * 0.2f);
+            painter.Fill();
+
+            var glass = new Rect(rect.x + rect.width * 0.17f, rect.y + height * 0.24f, rect.width * 0.66f,
+                height * 0.4f);
+            painter.fillColor = window;
+            painter.BeginPath();
+            RoundedRect(painter, glass, glass.height * 0.5f);
+            painter.Fill();
+
+            float reel = glass.height * 0.3f;
+            float offset = glass.width * 0.27f;
+            Disc(painter, new Vector2(glass.center.x - offset, glass.center.y), reel, shell);
+            Disc(painter, new Vector2(glass.center.x + offset, glass.center.y), reel, shell);
+        }
+
         /// <summary>A hexagonal nut (the scrap icon): six flat sides with a round hole.</summary>
         public static void Nut(Painter2D painter, Vector2 center, float radius, Color body, Color hole)
         {

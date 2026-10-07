@@ -15,9 +15,9 @@ namespace MoonProject.UI.PlayModeTests
 {
     /// <summary>
     /// Steady-state zero-GC check of the UI: with a prompt following a moving point under the reticle, with the tower
-    /// panel and its pinned chip, and with the pause menu open, one frame additionally runs the UI's Update 600
-    /// times. Unity's "GC Allocated In Frame" for the quietest of three such frames must stay at the level of plain
-    /// frames; a control frame proves the counter sees allocations at all.
+    /// panel and its pinned chip, with a ticker line resting, and with the pause menu open, one frame additionally
+    /// runs the UI's Update 600 times. Unity's "GC Allocated In Frame" for the quietest of three such frames must stay
+    /// at the level of plain frames; a control frame proves the counter sees allocations at all.
     /// </summary>
     public sealed class UiAllocationTests : InputTestFixture
     {
@@ -28,6 +28,7 @@ namespace MoonProject.UI.PlayModeTests
         private const int ControlBytes = 64;
         private const long Tolerance = 2048L;
         private const string AllocatedInFrame = "GC Allocated In Frame";
+        private const float LongHoldSeconds = 1000f;
 
         private string _slot;
         private InputActionAsset _controls;
@@ -101,6 +102,21 @@ namespace MoonProject.UI.PlayModeTests
             yield return new WaitForSecondsRealtime(1f);
             Assert.IsTrue(_rig.Ui.Pause.IsOpen && _rig.Ui.Pause.IsSettled);
             yield return Measure(Bind(_rig.Ui, "Update"), "open pause menu");
+        }
+
+        [UnityTest]
+        public IEnumerator TickerLineResting_DoesNotAllocate()
+        {
+            InputSystem.AddDevice<Keyboard>();
+            _rig = UiTestRig.Boot(_controls, _slot);
+            _rig.Tune("_ticker._minHoldSeconds", LongHoldSeconds);
+            _rig.Tune("_ticker._maxHoldSeconds", LongHoldSeconds);
+            _rig.Bootstrap.Context.Events.Publish(new RoverAwoke(Vector3.zero, false));
+            _rig.Bootstrap.Context.Events.Publish(new TickerLine(UiTestRig.SignalLine, "140"));
+            yield return new WaitForSecondsRealtime(1.5f);
+            Assert.IsTrue(_rig.Ui.Ticker.IsShown);
+            yield return Measure(Bind(_rig.Ui, "Update"), "ticker line resting, its lamp breathing");
+            Assert.IsTrue(_rig.Ui.Ticker.IsShown, "the line rested through the whole measurement");
         }
 
         private static IEnumerator Measure(Action frame, string label)

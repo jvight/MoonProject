@@ -1,3 +1,5 @@
+using System;
+using MoonProject.Core;
 using MoonProject.Gameplay;
 
 namespace MoonProject.UI
@@ -15,6 +17,10 @@ namespace MoonProject.UI
         public const string TowerNeed = "ui.tower.need";
         public const string TowerPurchased = "ui.tower.purchased";
         public const string LogCaption = "ui.card.log_caption";
+        public const string CrewLogCaption = "ui.card.crew_log";
+        public const string LinerCaption = "ui.card.liner_caption";
+        public const string TapeCount = "ui.card.tape_count";
+        public const string PauseCassettes = "ui.pause.cassettes";
 
         /// <summary>"hint.excavate": the one word of the prompt teaching <paramref name="kind"/>.</summary>
         public static string Hint(InteractionKind kind)
@@ -41,6 +47,53 @@ namespace MoonProject.UI
         public static string FriendRepairLog(string friendId)
         {
             return "friend." + friendId + ".repair_log";
+        }
+
+        /// <summary>"log.ro_1": a crew log's text.</summary>
+        public static string CrewLog(string logId)
+        {
+            return "log." + logId;
+        }
+
+        public static string CassetteTitle(string cassetteId)
+        {
+            return "cassette." + cassetteId + ".title";
+        }
+
+        /// <summary>"cassette.after_dark_1.note": Ro's liner note for a tape.</summary>
+        public static string CassetteNote(string cassetteId)
+        {
+            return "cassette." + cassetteId + ".note";
+        }
+
+        /// <summary>"radio.channel.tape_deck": the name of a station on Bell's dial.</summary>
+        public static string RadioChannelName(RadioChannel channel)
+        {
+            switch (channel)
+            {
+                case RadioChannel.LumenAfterDark:
+                    return "radio.channel.lumen_after_dark";
+                case RadioChannel.TapeDeck:
+                    return "radio.channel.tape_deck";
+                case RadioChannel.QuietHours:
+                    return "radio.channel.quiet_hours";
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(channel), channel, "This station has no name key.");
+            }
+        }
+
+        /// <summary>"ui.station.workshop": the name of the place an upgrade is sold.</summary>
+        public static string StationName(UpgradeStationKind station)
+        {
+            switch (station)
+            {
+                case UpgradeStationKind.RadioTower:
+                    return "ui.station.radio_tower";
+                case UpgradeStationKind.Workshop:
+                    return "ui.station.workshop";
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(station), station, "This station has no name key.");
+            }
         }
 
         public static string UpgradeName(string upgradeId)

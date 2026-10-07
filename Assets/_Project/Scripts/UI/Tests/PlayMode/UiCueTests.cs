@@ -63,6 +63,7 @@ namespace MoonProject.UI.PlayModeTests
             yield return Tap(keyboard.escapeKey);
             yield return new WaitForSecondsRealtime(Settle);
             yield return Tap(keyboard.escapeKey);
+            yield return new WaitForSecondsRealtime(Settle);
 
             CollectionAssert.AreEqual(new[]
             {

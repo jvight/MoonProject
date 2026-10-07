@@ -43,10 +43,30 @@
                     <ui:Label name="scrap-chip-count" class="chip__number" />
                 </ui:VisualElement>
             </ui:VisualElement>
+            <ui:VisualElement name="ticker" class="ticker" picking-mode="Ignore">
+                <ui:VisualElement name="ticker-line" class="ticker__line" picking-mode="Ignore">
+                    <ui:VisualElement name="ticker-lamp" class="ticker__lamp" />
+                    <ui:Label name="ticker-text" class="ticker__text" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="dial-readout" class="dial-readout" picking-mode="Ignore">
+                <ui:VisualElement name="dial-readout-frame" class="dial-readout__frame" picking-mode="Ignore">
+                    <ui:VisualElement name="dial-readout-shadow" class="soft-shadow soft-shadow--chip" />
+                    <ui:VisualElement name="dial-readout-body" class="dial-readout__body" picking-mode="Ignore">
+                        <ui:VisualElement name="dial-detents" class="dial-readout__detents" />
+                        <ui:Label name="dial-station" class="dial-readout__station" />
+                        <ui:Label name="dial-tape" class="dial-readout__tape" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
             <ui:VisualElement name="memory-card" class="memory-card" picking-mode="Ignore">
                 <ui:VisualElement name="memory-card-shadow" class="soft-shadow soft-shadow--panel" />
                 <ui:VisualElement name="memory-card-body" class="panel memory-card__body">
-                    <ui:Label name="memory-card-caption" class="caption" />
+                    <ui:VisualElement name="memory-card-heading" class="memory-card__heading">
+                        <ui:VisualElement name="memory-card-icon" class="cassette-icon memory-card__icon" />
+                        <ui:Label name="memory-card-caption" class="caption memory-card__caption" />
+                        <ui:Label name="memory-card-count" class="caption caption--quiet memory-card__count" />
+                    </ui:VisualElement>
                     <ui:Label name="memory-card-name" class="memory-card__name" />
                     <ui:Label name="memory-card-text" class="memory-card__text" />
                     <ui:VisualElement name="memory-card-footer" class="hint-row">
@@ -61,7 +81,10 @@
                 <ui:VisualElement name="tower-panel-shadow" class="soft-shadow soft-shadow--panel" />
                 <ui:VisualElement name="tower-panel-body" class="panel tower-panel__body">
                     <ui:VisualElement class="tower-panel__heading">
-                        <ui:Label name="tower-name" class="caption" />
+                        <ui:VisualElement class="tower-panel__station">
+                            <ui:VisualElement class="tower-panel__lamp" />
+                            <ui:Label name="tower-name" class="caption tower-panel__name" />
+                        </ui:VisualElement>
                         <ui:Label name="tower-level" class="caption caption--quiet" />
                     </ui:VisualElement>
                     <ui:Label name="tower-title" class="tower-panel__title" />
@@ -93,6 +116,11 @@
                                 <ui:VisualElement class="pause__titles">
                                     <ui:Label class="pause__heading loc" text="ui.pause.heading" />
                                     <ui:Label class="pause__subheading loc" text="ui.pause.subheading" />
+                                    <ui:VisualElement name="pause-cassettes" class="pause__cassettes">
+                                        <ui:VisualElement name="pause-cassette-icon"
+                                                          class="cassette-icon cassette-icon--quiet" />
+                                        <ui:Label name="pause-cassettes-count" class="pause__cassettes-count" />
+                                    </ui:VisualElement>
                                 </ui:VisualElement>
                                 <ui:VisualElement name="pause-scrap" class="chip chip--inline">
                                     <ui:VisualElement name="pause-scrap-icon" class="scrap-icon" />
