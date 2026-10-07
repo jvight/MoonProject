@@ -5,16 +5,23 @@ using MoonProject.Art;
 namespace MoonProject.World
 {
     /// <summary>
-    /// Picks the palette swatch of one terrain triangle. Rock on steep faces and the rim, two-toned per face by
-    /// steepness, height, patches and facing; a charcoal chasm and cooler, darker Whispering Canyon floors; shaded
-    /// crater walls and lit crater rims; and floor dust toned only by
-    /// low-frequency patches and the smoothed tilt of the ground toward the earthlight, so colour changes come in
-    /// patches and dune sides, never as isolated facets (design ruling 9). Immutable and thread-safe.
+    /// Colours the terrain (sRGB vertex colours for the LofiTerrain shader). Rock on steep faces and the rim gets
+    /// one flat palette tone per facet, two-toned by steepness, height, patches and facing. The dust is toned
+    /// continuously from the palette's dust swatches by low-frequency patches, then shaded on crater walls and the
+    /// highlands, lit on crater rims, cooled and darkened in Whispering Canyon and turned charcoal in its chasm; the
+    /// light and shadow sides of dunes come from the earthlight itself. The dust tone depends only on the position
+    /// (and the smooth region weights there), so every vertex shared by several triangles gets one colour: patches
+    /// change value gently, never as paper-cut shapes or isolated facets (design ruling 9). Immutable and
+    /// thread-safe.
     /// </summary>
     public sealed class TerrainPainter
     {
         private const uint PatchSalt = 0x632BE59Bu;
         private const uint DetailPatchSalt = 0x9E6C63D0u;
+
+        // Half-widths of the soft bands around the crater and highland thresholds (in their 0..1 weights).
+        private const float CraterBand = 0.15f;
+        private const float HighlandBand = 0.15f;
 
         private readonly TerrainPaintSettings _settings;
         private readonly GradientNoise _patchNoise;
@@ -25,7 +32,12 @@ namespace MoonProject.World
         private readonly float _rimRockCos;
         private readonly float _lightX;
         private readonly float _lightZ;
-        private readonly float _leeFacing;
+        private readonly Color _shadowDust;
+        private readonly Color _midDust;
+        private readonly Color _lightDust;
+        private readonly Color _charcoal;
+        private readonly Color32 _rockLight;
+        private readonly Color32 _rockDark;
 
         /// <param name="lightDirection">Direction toward the earthlight (only its horizontal part is used).</param>
         public TerrainPainter(TerrainPaintSettings settings, int seed, Vector3 lightDirection)
@@ -46,73 +58,74 @@ namespace MoonProject.World
             horizontal.Normalize();
             _lightX = horizontal.x;
             _lightZ = horizontal.y;
-            _leeFacing = -Mathf.Sin(settings.LeeTilt * Mathf.Deg2Rad);
+            _shadowDust = Palette.Get(PaletteSwatch.DustShadow);
+            _midDust = Palette.Get(PaletteSwatch.DustMid);
+            _lightDust = Palette.Get(PaletteSwatch.DustLight);
+            _charcoal = Palette.Get(PaletteSwatch.Charcoal);
+            _rockLight = Palette.Get(PaletteSwatch.RockLight);
+            _rockDark = Palette.Get(PaletteSwatch.RockDark);
         }
 
-        /// <summary>Distance (metres) over which the ground normal given to <see cref="Pick"/> is smoothed.</summary>
-        public float TiltSmoothing => _settings.TiltSmoothing;
-
+        /// <summary>True when a face is rock (steep, or moderately steep on the rim): see <see cref="Rock"/>.</summary>
         /// <param name="faceNormal">Unit normal of the triangle itself.</param>
-        /// <param name="groundNormal">Ground normal around it, smoothed over <see cref="TiltSmoothing"/>.</param>
-        /// <param name="center">World-space triangle centre.</param>
-        /// <param name="region">Averaged region weights of the triangle's corners (height unused).</param>
-        /// <param name="hash">Per-triangle seeded hash.</param>
-        public PaletteSwatch Pick(Vector3 faceNormal, Vector3 groundNormal, Vector3 center, SurfaceSample region,
-            uint hash)
+        /// <param name="region">Averaged region weights of the triangle's corners.</param>
+        public bool IsRock(Vector3 faceNormal, SurfaceSample region)
         {
-            float nudge = Hashing.ToSigned(hash);
-            float patch = _patchNoise.Fractal(center.x * _invPatchWavelength, center.z * _invPatchWavelength, 2, 2f,
-                0.5f);
             bool onRim = region.RimZone >= _settings.RimZoneStart;
-            if (faceNormal.y <= _rockCos || (onRim && faceNormal.y <= _rimRockCos))
-            {
-                float slope = Mathf.Acos(Mathf.Clamp(faceNormal.y, -1f, 1f)) * Mathf.Rad2Deg;
-                float faceFacing = faceNormal.x * _lightX + faceNormal.z * _lightZ;
-                float rock = (_settings.RockLightSlope - slope) / _settings.RockSlopeBlend
-                    + (center.y - _settings.RockLightHeight) / _settings.RockHeightBlend
-                    + patch * _settings.RockMottle + faceFacing * _settings.RockFacing + nudge * _settings.RockDither;
-                return rock > 0f ? PaletteSwatch.RockLight : PaletteSwatch.RockDark;
-            }
+            return faceNormal.y <= _rockCos || (onRim && faceNormal.y <= _rimRockCos);
+        }
 
-            float detail = _detailPatchNoise.Fractal(center.x * _invDetailPatchWavelength,
-                center.z * _invDetailPatchWavelength, 2, 2f, 0.5f);
-            float facing = groundNormal.x * _lightX + groundNormal.z * _lightZ;
-            float smoothTone = patch * _settings.PatchStrength + detail * _settings.DetailPatchStrength
-                + facing * _settings.FacingStrength;
-            float tone = smoothTone + nudge * _settings.Dither;
-            if (region.Chasm > _settings.ChasmDark)
-            {
-                return PaletteSwatch.Charcoal;
-            }
+        /// <summary>The one flat tone of a rock facet.</summary>
+        /// <param name="faceNormal">Unit normal of the triangle itself.</param>
+        /// <param name="center">World-space triangle centre.</param>
+        /// <param name="hash">Per-triangle seeded hash.</param>
+        public Color32 Rock(Vector3 faceNormal, Vector3 center, uint hash)
+        {
+            float slope = Mathf.Acos(Mathf.Clamp(faceNormal.y, -1f, 1f)) * Mathf.Rad2Deg;
+            float faceFacing = faceNormal.x * _lightX + faceNormal.z * _lightZ;
+            float rock = (_settings.RockLightSlope - slope) / _settings.RockSlopeBlend
+                + (center.y - _settings.RockLightHeight) / _settings.RockHeightBlend
+                + Patch(center) * _settings.RockMottle + faceFacing * _settings.RockFacing
+                + Hashing.ToSigned(hash) * _settings.RockDither;
+            return rock > 0f ? _rockLight : _rockDark;
+        }
 
-            // Two swatches only a step apart: dithering them would checker the big canyon triangles.
-            if (region.CanyonFloor > 0.5f)
-            {
-                return smoothTone > _settings.CanyonMidTone ? PaletteSwatch.DustMid : PaletteSwatch.DustShadow;
-            }
+        /// <summary>The dust colour at a vertex.</summary>
+        /// <param name="position">World-space vertex position.</param>
+        /// <param name="region">Region weights there (height unused).</param>
+        public Color32 Ground(Vector3 position, SurfaceSample region)
+        {
+            float detail = _detailPatchNoise.Fractal(position.x * _invDetailPatchWavelength,
+                position.z * _invDetailPatchWavelength, 2, 2f, 0.5f);
+            float tone = Patch(position) * _settings.PatchStrength + detail * _settings.DetailPatchStrength
+                + _settings.ToneBias;
 
-            if (region.CraterBowl > _settings.CraterShadow && region.CraterBowl < _settings.CraterFloor)
-            {
-                return PaletteSwatch.DustShadow;
-            }
+            Color dust = tone < 0f
+                ? Color.Lerp(_midDust, _shadowDust, SmoothMath.Smootherstep(0f, _settings.ShadowReach, -tone))
+                : Color.Lerp(_midDust, _lightDust,
+                    _settings.LightShare * SmoothMath.Smootherstep(0f, _settings.LightReach, tone));
 
-            if (region.CraterRim > _settings.CraterHighlight)
-            {
-                return PaletteSwatch.DustLight;
-            }
+            float wall = SmoothMath.Smootherstep(_settings.CraterShadow - CraterBand,
+                    _settings.CraterShadow + CraterBand, region.CraterBowl)
+                * (1f - SmoothMath.Smootherstep(_settings.CraterFloor - CraterBand, _settings.CraterFloor + CraterBand,
+                    region.CraterBowl));
+            dust = Color.Lerp(dust, _shadowDust, wall * _settings.CraterWallShade);
+            dust = Color.Lerp(dust, _lightDust, SmoothMath.Smootherstep(0f, 1f, region.CraterRim)
+                * _settings.CraterRimLight);
+            float highland = SmoothMath.Smootherstep(_settings.HighlandZone - HighlandBand,
+                _settings.HighlandZone + HighlandBand, region.RimZone);
+            dust = Color.Lerp(dust, _shadowDust, highland * _settings.HighlandShade);
 
-            if (region.RimZone > _settings.HighlandZone)
-            {
-                return PaletteSwatch.DustShadow;
-            }
+            float canyonTone = _settings.CanyonMidShare * Mathf.Clamp01(0.5f + tone * 0.5f);
+            Color canyon = Color.Lerp(_shadowDust, _midDust, canyonTone);
+            dust = Color.Lerp(dust, canyon, region.CanyonFloor);
+            dust = Color.Lerp(dust, _charcoal, SmoothMath.Smootherstep(0f, _settings.ChasmDark, region.Chasm));
+            return dust;
+        }
 
-            if (tone > _settings.LightTone)
-            {
-                return PaletteSwatch.DustLight;
-            }
-
-            bool leeShade = facing < _leeFacing && tone < _settings.ShadowTone;
-            return leeShade ? PaletteSwatch.DustShadow : PaletteSwatch.DustMid;
+        private float Patch(Vector3 position)
+        {
+            return _patchNoise.Fractal(position.x * _invPatchWavelength, position.z * _invPatchWavelength, 2, 2f, 0.5f);
         }
     }
 }

@@ -21,8 +21,12 @@ namespace MoonProject.World
         [Tooltip("World tuning (Assets/_Project/Data/Tuning/WorldSettings.asset).")]
         [SerializeField] private WorldSettings _settings;
 
-        [Tooltip("Shared low-poly palette material (Generated/Art/Palette/M_LowPoly.mat).")]
-        [SerializeField] private Material _terrainMaterial;
+        [Tooltip("Material drawing the terrain (Generated/World/M_Ground.mat, shader MoonProject/World/LofiTerrain).")]
+        [SerializeField] private Material _groundMaterial;
+
+        [Tooltip("Shared low-poly palette material for the scatter rocks and gate slabs " +
+            "(Generated/Art/Palette/M_LowPoly.mat).")]
+        [SerializeField] private Material _paletteMaterial;
 
         [Tooltip("Art rock meshes the pebbles are made of (Generated/Art/Rocks, CPU-readable).")]
         [SerializeField] private Mesh[] _pebbleRocks = new Mesh[0];
@@ -119,10 +123,10 @@ namespace MoonProject.World
             _generatedRoot.transform.SetParent(transform, false);
             Vector3 toLight = WorldAtmosphere.LightSourceDirection(_settings.Atmosphere, _settings.Sky);
             LastBuild = _terrainBuilder.Build(_generatedRoot.transform, Surface, _settings.Mesh, _settings.Paint,
-                toLight, _terrainMaterial, hideFlags);
-            _gateBuilder.Build(_generatedRoot.transform, surface.Canyon.Slabs, _terrainMaterial, hideFlags);
+                toLight, _groundMaterial, hideFlags);
+            _gateBuilder.Build(_generatedRoot.transform, surface.Canyon.Slabs, _paletteMaterial, hideFlags);
             LastScatter = _scatterBuilder.Build(_generatedRoot.transform, scatterPlan.GetAwaiter().GetResult(),
-                scatterSettings, _settings.Mesh.ChunkSize, _pebbleRocks, _boulderRocks, _terrainMaterial, hideFlags);
+                scatterSettings, _settings.Mesh.ChunkSize, _pebbleRocks, _boulderRocks, _paletteMaterial, hideFlags);
             BuildEarth(hideFlags);
             _peakBeacon.transform.position = Layout.PeakPosition;
             _peakBeacon.Configure(_settings.Beacon);
@@ -216,9 +220,9 @@ namespace MoonProject.World
                 return "World Settings is not assigned.";
             }
 
-            if (_terrainMaterial == null || _earthMaterial == null)
+            if (_groundMaterial == null || _paletteMaterial == null || _earthMaterial == null)
             {
-                return "Terrain Material and Earth Material must be assigned.";
+                return "Ground Material, Palette Material and Earth Material must be assigned.";
             }
 
             string rocks = RockProblem(_pebbleRocks, "Pebble Rocks") ?? RockProblem(_boulderRocks, "Boulder Rocks");
