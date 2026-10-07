@@ -3,6 +3,7 @@ using System.Collections;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
+using MoonProject.Core.Events;
 
 namespace MoonProject.Audio.PlayModeTests
 {
@@ -43,6 +44,7 @@ namespace MoonProject.Audio.PlayModeTests
             _rig.Rover.Speed = speed;
             _rig.Rover.NormalizedSpeed = Mathf.Clamp01(speed / 6f);
             _rig.Rover.DriveInput = speed > 0f ? Vector2.up : Vector2.zero;
+            _rig.Rover.Resting = speed <= 0f;
         }
 
         [UnityTest]
@@ -80,6 +82,28 @@ namespace MoonProject.Audio.PlayModeTests
             yield return new WaitForSeconds(1f);
             Assert.Less(Mix.Stillness, 0.05f);
             Assert.AreEqual(1f, Mix.RadioGain, 0.03f);
+        }
+
+        [UnityTest]
+        public IEnumerator TheWideShot_BreathesOutWithTheFrame_AndBackInWithTheHandBack()
+        {
+            Drive(0f);
+            yield return new WaitForSecondsRealtime(7f);
+            float radio = SoundscapeModel.ToDb(Mix.RadioGain);
+            float room = Mix.RoomToneSource.volume;
+
+            _rig.Events.Publish(new RoverWideShotChanged(true));
+            yield return new WaitForSecondsRealtime(2f);
+            Assert.Greater(Mix.Wide, 0f, "breathing out with the frame");
+            Assert.Less(Mix.Wide, 0.5f, "over the frame's ~8 s opening, not at once");
+            yield return new WaitForSecondsRealtime(7f);
+            Assert.AreEqual(1f, Mix.Wide, 1e-3f);
+            Assert.Less(SoundscapeModel.ToDb(Mix.RadioGain), radio - 2f, "the radio and beds a little further away");
+            Assert.Greater(Mix.RoomToneSource.volume, room, "the space opens up");
+
+            _rig.Events.Publish(new RoverWideShotChanged(false));
+            yield return new WaitForSecondsRealtime(1.2f);
+            Assert.AreEqual(0f, Mix.Wide, 1e-3f, "back in with the hand-back");
         }
 
         [UnityTest]

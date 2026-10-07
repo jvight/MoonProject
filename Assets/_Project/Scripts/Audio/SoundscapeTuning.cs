@@ -5,8 +5,9 @@ namespace MoonProject.Audio
     /// <summary>
     /// The sound of solitude (feel pillar 6, M3-10): how the radio fades out past its signal, how the room tone and
     /// 07's own small sounds come forward as everything else recedes, what counts as being alone, how stillness pulls
-    /// the world back, and 07's lamp, servos and cooling ticks. Levels are in dB relative to each layer's own level at
-    /// home. Created by the Audio/Tuning builder; runtime code only reads it.
+    /// the world back, how the mix breathes out with the camera's wide shot, and 07's lamp, servos and cooling ticks.
+    /// Levels are in dB relative to each layer's own level at home. Created by the Audio/Tuning builder; runtime code
+    /// only reads it.
     /// </summary>
     public sealed class SoundscapeTuning : ScriptableObject
     {
@@ -53,13 +54,7 @@ namespace MoonProject.Audio
         [Tooltip("Seconds (time constant) for the mix to settle into or out of Quiet Hours.")]
         [Range(0.1f, 10f)] [SerializeField] private float _quietHoursEase = 3f;
 
-        [Header("Stillness (07 parked, no input)")]
-        [Tooltip("Below this speed (m/s), grounded and without drive input, 07 counts as still.")]
-        [Range(0.01f, 2f)] [SerializeField] private float _stillSpeed = 0.2f;
-
-        [Tooltip("Drive input (steer or throttle, 0..1) at or below which the player counts as not driving.")]
-        [Range(0f, 0.5f)] [SerializeField] private float _stillInput = 0.05f;
-
+        [Header("Stillness (the Rover's IRoverStillness)")]
         [Tooltip("Seconds of stillness before the world starts to pull back (a short stop is not stillness).")]
         [Range(0f, 10f)] [SerializeField] private float _stillDelay = 1.5f;
 
@@ -72,6 +67,19 @@ namespace MoonProject.Audio
         [Tooltip("How far (dB) the world - radio, static, basin and canyon beds - pulls back when 07 is still. The " +
                  "room tone and 07's own sounds stay, so the space feels wider.")]
         [Range(-12f, 0f)] [SerializeField] private float _stillDuckDb = -4f;
+
+        [Header("The camera's wide shot (RoverWideShotChanged)")]
+        [Tooltip("How much further (dB) the radio and beds breathe out as the lonely wide shot opens.")]
+        [Range(-6f, 0f)] [SerializeField] private float _wideDuckDb = -2.5f;
+
+        [Tooltip("How much (dB) the room tone comes up with the wide shot: the space opens with the frame.")]
+        [Range(0f, 6f)] [SerializeField] private float _wideRoomToneDb = 1.5f;
+
+        [Tooltip("Seconds to breathe out, matching the frame's opening.")]
+        [Range(0.5f, 20f)] [SerializeField] private float _wideOpenTime = 8f;
+
+        [Tooltip("Seconds to breathe back in when the view is handed back.")]
+        [Range(0.1f, 5f)] [SerializeField] private float _wideReleaseTime = 1f;
 
         [Header("07's lamp")]
         [Tooltip("Lamp hum volume scale (very soft).")]
@@ -112,6 +120,9 @@ namespace MoonProject.Audio
         [Range(0.01f, 2f)] [SerializeField] private float _servoRelease = 0.15f;
 
         [Header("Cooling ticks after a drive")]
+        [Tooltip("Below this speed (m/s) 07's motor counts as stopped: its metal starts to cool and tick.")]
+        [Range(0.01f, 2f)] [SerializeField] private float _stillSpeed = 0.2f;
+
         [Tooltip("Seconds (time constant) for 07's metal to warm up at full effort.")]
         [Range(1f, 120f)] [SerializeField] private float _heatTime = 20f;
 
@@ -148,11 +159,14 @@ namespace MoonProject.Audio
         public float QuietHoursBasinDb => _quietHoursBasinDb;
         public float QuietHoursEase => _quietHoursEase;
         public float StillSpeed => _stillSpeed;
-        public float StillInput => _stillInput;
         public float StillDelay => _stillDelay;
         public float StillRiseTime => _stillRiseTime;
         public float StillReleaseTime => _stillReleaseTime;
         public float StillDuckDb => _stillDuckDb;
+        public float WideDuckDb => _wideDuckDb;
+        public float WideRoomToneDb => _wideRoomToneDb;
+        public float WideOpenTime => _wideOpenTime;
+        public float WideReleaseTime => _wideReleaseTime;
         public float LampVolume => _lampVolume;
         public float LampFadeIn => _lampFadeIn;
         public float SteerDeadRate => _steerDeadRate;

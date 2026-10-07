@@ -22,11 +22,12 @@ namespace MoonProject.Audio.Tests
             Object.DestroyImmediate(_tuning);
         }
 
-        private static void Run(StillnessTracker tracker, float seconds, float speed, Vector2 input, bool grounded)
+        /// <summary>Feeds the tracker as the Rover would: seconds of rest counting up, or 0 while 07 moves.</summary>
+        private static void Run(StillnessTracker tracker, float seconds, bool resting)
         {
             for (float t = 0f; t < seconds; t += Frame)
             {
-                tracker.Step(speed, input, grounded, Frame);
+                tracker.Step(resting ? tracker.StillSeconds + Frame : 0f, Frame);
             }
         }
 
@@ -34,37 +35,31 @@ namespace MoonProject.Audio.Tests
         public void Stillness_WaitsOutAShortStop_ThenSettlesOverAboutSixSeconds()
         {
             var still = new StillnessTracker(_tuning);
-            Run(still, _tuning.StillDelay - 0.1f, 0f, Vector2.zero, true);
+            Run(still, _tuning.StillDelay - 0.1f, true);
             Assert.AreEqual(0f, still.Amount, "a short stop is not stillness");
 
-            Run(still, 6f - _tuning.StillDelay + 0.1f, 0f, Vector2.zero, true);
+            Run(still, 6f - _tuning.StillDelay + 0.1f, true);
             Assert.Greater(still.Amount, 0.9f, "settled about six seconds after stopping");
             Assert.AreEqual(6f, still.StillSeconds, 0.05f);
         }
 
         [Test]
-        public void Stillness_FallsBackQuickly_WhenDriving_Steering_OrInTheAir()
+        public void Stillness_FallsBackWithinASecond_WhenTheRoverSaysItMoved()
         {
             var still = new StillnessTracker(_tuning);
-            Run(still, 10f, 0f, Vector2.zero, true);
-            Run(still, 1f, 1f, Vector2.up, true);
+            Run(still, 10f, true);
+            Run(still, 1f, false);
             Assert.Less(still.Amount, 0.05f, "moving restores the world within a second");
             Assert.AreEqual(0f, still.StillSeconds);
-
-            Run(still, 10f, 0f, Vector2.zero, true);
-            Run(still, 1f, 0f, new Vector2(0.5f, 0f), true);
-            Assert.Less(still.Amount, 0.05f, "turning the wheels on the spot is not stillness");
-
-            Run(still, 10f, 0f, Vector2.zero, true);
-            Run(still, 1f, 0f, Vector2.zero, false);
-            Assert.Less(still.Amount, 0.05f, "nor is hanging in the air");
         }
 
         [Test]
-        public void Stillness_IgnoresTheLastDriftOfInputAndSpeed()
+        public void Stillness_AlreadyLong_SettlesSmoothly_NeverJumps()
         {
             var still = new StillnessTracker(_tuning);
-            Run(still, 8f, _tuning.StillSpeed * 0.5f, new Vector2(_tuning.StillInput, 0f), true);
+            still.Step(30f, Frame);
+            Assert.Less(still.Amount, 0.05f, "waking after a long rest eases in");
+            Run(still, 6f, true);
             Assert.Greater(still.Amount, 0.9f);
         }
 

@@ -167,6 +167,8 @@ namespace MoonProject.Audio.PlayModeTests
                 _rig.Rover.NormalizedSpeed = 0.5f + 0.5f * Mathf.Sin(t * 3f);
                 bool driving = frame % 60 < 40;
                 _rig.Rover.Speed = driving ? 4f : 0f;
+                _rig.Rover.Resting = !driving;
+                _rig.Rover.StillSeconds = driving ? 0f : (frame % 60 - 40) * 0.5f;
                 _rig.Rover.DriveInput = driving ? new Vector2(Mathf.Sin(t * 4f), 1f) : Vector2.zero;
                 _rig.Rover.TetherOrigin.localRotation = Quaternion.Euler(0f, 60f * Mathf.Sin(t * 2f), 0f);
                 _rig.Rover.IsGrounded = frame % 40 < 30;
@@ -254,6 +256,7 @@ namespace MoonProject.Audio.PlayModeTests
                     break;
                 case 10:
                     events.Publish(new PauseChanged(frame % 24 == 10));
+                    events.Publish(new RoverWideShotChanged(frame % 36 == 10));
                     break;
                 case 9:
                     events.Publish(new TetherReleased(Vector3.right, frame % 24 == 9));

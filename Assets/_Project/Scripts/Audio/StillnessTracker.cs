@@ -4,10 +4,10 @@ using UnityEngine;
 namespace MoonProject.Audio
 {
     /// <summary>
-    /// "Stillness is a reward" (feel pillar 6): 07 is still while grounded, slower than the still speed and without
-    /// drive input. <see cref="StillSeconds"/> counts how long; <see cref="Amount"/> eases 0 -> 1 once the stillness
-    /// has lasted the still delay (over ~6 s in all) and falls back quickly the moment 07 moves. This is the shared
-    /// definition the camera's wide shot should use too (proposed as a Core contract owned by Rover). Allocation-free.
+    /// The soundscape's response to 07 resting (feel pillar 6), on top of the Rover's shared
+    /// <see cref="MoonProject.Core.IRoverStillness"/>: <see cref="Amount"/> eases 0 -> 1 once 07 has been still for
+    /// the still delay (settling ~6 s after it stopped) and falls back within about a second the moment it moves.
+    /// Allocation-free.
     /// </summary>
     public sealed class StillnessTracker
     {
@@ -19,21 +19,18 @@ namespace MoonProject.Audio
             _tuning = tuning != null ? tuning : throw new ArgumentNullException(nameof(tuning));
         }
 
-        /// <summary>Seconds 07 has been still (0 while moving).</summary>
+        /// <summary>Seconds 07 has been still, as last fed (0 while moving).</summary>
         public float StillSeconds { get; private set; }
 
         /// <summary>0 moving .. 1 settled into stillness (eased).</summary>
         public float Amount => _amount.Value;
 
-        /// <summary>Feeds one frame of 07's motion; returns <see cref="Amount"/>.</summary>
-        public float Step(float speed, Vector2 driveInput, bool grounded, float deltaTime)
+        /// <summary>Feeds the Rover's seconds of stillness for one frame; returns <see cref="Amount"/>.</summary>
+        public float Step(float stillSeconds, float deltaTime)
         {
-            float dt = Mathf.Max(0f, deltaTime);
-            float input = Mathf.Max(Mathf.Abs(driveInput.x), Mathf.Abs(driveInput.y));
-            bool still = grounded && speed < _tuning.StillSpeed && input <= _tuning.StillInput;
-            StillSeconds = still ? StillSeconds + dt : 0f;
-            float target = still && StillSeconds >= _tuning.StillDelay ? 1f : 0f;
-            return _amount.Step(target, dt, _tuning.StillRiseTime, _tuning.StillReleaseTime);
+            StillSeconds = Mathf.Max(0f, stillSeconds);
+            float target = StillSeconds > 0f && StillSeconds >= _tuning.StillDelay ? 1f : 0f;
+            return _amount.Step(target, Mathf.Max(0f, deltaTime), _tuning.StillRiseTime, _tuning.StillReleaseTime);
         }
     }
 }
