@@ -301,6 +301,102 @@
         {
             "key": "friend.tilly.repair_log",
             "text": "Sáng nay lại đi dọc vành núi lúc bình minh, Tilly ríu rít bên vai. Mặt Trăng vẫn còn đây, Trái Đất vẫn treo trên trời, cà phê vẫn dở tệ: mọi chuyện vẫn ổn. — Ines"
+        },
+        {
+            "key": "friend.bell.name",
+            "text": "Bell"
+        },
+        {
+            "key": "friend.bell.repair_log",
+            "text": "Mình lắp Bell từ một máy thu hỏng và bốn cái chân máy quay, để đài vẫn phát khi mình ngủ. Cô ấy biết nhảy. Phần đó mình không hề lắp. — Ro"
+        },
+        {
+            "key": "log.ro_1",
+            "text": "Đêm đầu tiên của Lumen After Dark. Ba thính giả và một chiếc rover cứ lăn lại gần mỗi khi mình mở bài chậm. Khán giả tuyệt nhất mình từng có. — Ro"
+        },
+        {
+            "key": "cassette.after_dark_1.title",
+            "text": "Lumen After Dark, Tập 1"
+        },
+        {
+            "key": "cassette.after_dark_1.note",
+            "text": "Buổi phát sóng đêm đầu tiên. Khán giả: ba người, một chiếc rover, một chậu húng quế. Chậu húng quế còn xin bài."
+        },
+        {
+            "key": "cassette.dust_and_honey.title",
+            "text": "Bụi & Mật ong"
+        },
+        {
+            "key": "cassette.dust_and_honey.note",
+            "text": "Thu với cái micro dán băng keo lên cửa khoang. Nghe tiếng thịch thì đó là Kenji."
+        },
+        {
+            "key": "cassette.slow_orbit.title",
+            "text": "Quỹ đạo chậm"
+        },
+        {
+            "key": "cassette.slow_orbit.note",
+            "text": "Cho những đêm Trái Đất trông gần như đi bộ tới được. Không đâu. Mình thử rồi."
+        },
+        {
+            "key": "ticker.bell.home",
+            "text": "Bell về nhà trước bạn. Cô ấy bảo đèn hiên vẫn sáng."
+        },
+        {
+            "key": "ticker.bell.signal",
+            "text": "Bell đang bắt được gì đó… hướng {0}°."
+        },
+        {
+            "key": "ticker.bell.found_0",
+            "text": "Bell bảo: thấy chưa, đã bảo mà."
+        },
+        {
+            "key": "ticker.bell.found_1",
+            "text": "Bell bảo: cái đó đợi bạn lâu lắm rồi."
+        },
+        {
+            "key": "ticker.bell.found_2",
+            "text": "Bell bảo: Ro hẳn sẽ thích lắm."
+        },
+        {
+            "key": "hint.tune",
+            "text": "Dò đài"
+        },
+        {
+            "key": "radio.channel.lumen_after_dark",
+            "text": "Lumen After Dark"
+        },
+        {
+            "key": "radio.channel.tape_deck",
+            "text": "Đầu băng"
+        },
+        {
+            "key": "radio.channel.quiet_hours",
+            "text": "Giờ tĩnh lặng"
+        },
+        {
+            "key": "ui.pause.cassettes",
+            "text": "Băng cassette {0}/{1}"
+        },
+        {
+            "key": "ui.card.crew_log",
+            "text": "Nhật ký phi hành đoàn"
+        },
+        {
+            "key": "ui.card.liner_caption",
+            "text": "Lời Ro ghi trên vỏ băng"
+        },
+        {
+            "key": "ui.card.tape_count",
+            "text": "{0}/{1}"
+        },
+        {
+            "key": "ui.station.radio_tower",
+            "text": "Tháp radio"
+        },
+        {
+            "key": "ui.station.workshop",
+            "text": "Bàn thợ của Kenji"
         }
     ]
 }
