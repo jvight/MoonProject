@@ -117,6 +117,11 @@ namespace MoonProject.World.Editor
             liftGammaGain.gamma.Override(post.Gamma);
             liftGammaGain.gain.Override(post.Gain);
 
+            var split = Override<SplitToning>(profile);
+            split.shadows.Override(post.SplitShadows);
+            split.highlights.Override(post.SplitHighlights);
+            split.balance.Override(post.SplitBalance);
+
             var vignette = Override<Vignette>(profile);
             vignette.intensity.Override(post.VignetteIntensity);
             vignette.smoothness.Override(post.VignetteSmoothness);

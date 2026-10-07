@@ -4,24 +4,27 @@ using UnityEngine;
 namespace MoonProject.World
 {
     /// <summary>
-    /// The cool night light of the moon: the earthlight (a directional light from Earth's side of the sky), the
-    /// violet trilight ambient and the horizon-coloured exponential fog that hides the world's edge. Warm lights
-    /// belong to the rover and the base; everything here stays cool so they glow.
+    /// The cool night light of the moon (pillar 6, "Alone, and at peace"): a low earthlight from Earth's side of the
+    /// sky that rakes long shadows across the dunes, a deep violet trilight ambient so the moon is mostly cool
+    /// shadow with soft-lit planes, and the horizon-coloured exponential fog that keeps near ground crisp while far
+    /// rock dissolves toward the sky band. Warm lights belong to the rover and the base; everything here stays cool
+    /// so they glow.
     /// </summary>
     [Serializable]
     public sealed class AtmosphereSettings
     {
         [Header("Earthlight")]
         [Tooltip("Colour of the directional earthlight.")]
-        [SerializeField] private Color _lightColor = new Color(0.78f, 0.80f, 1f);
+        [SerializeField] private Color _lightColor = new Color(0.86f, 0.85f, 1f);
 
         [Tooltip("Intensity of the earthlight.")]
         [Range(0f, 4f)]
-        [SerializeField] private float _lightIntensity = 1.7f;
+        [SerializeField] private float _lightIntensity = 1.75f;
 
-        [Tooltip("Elevation the earthlight shines from, degrees. Low light makes gentle dunes and facets read.")]
+        [Tooltip("Elevation the earthlight shines from, degrees. Low light rakes long shadows across the dunes and " +
+            "craters and makes the facets read.")]
         [Range(5f, 89f)]
-        [SerializeField] private float _lightElevation = 30f;
+        [SerializeField] private float _lightElevation = 19f;
 
         [Tooltip("Bearing offset of the earthlight from Earth's bearing, degrees. Swung west so the view from the " +
             "base toward The Peak is side-lit (best relief) while the light still comes from Earth's side of the sky.")]
@@ -30,26 +33,26 @@ namespace MoonProject.World
 
         [Tooltip("Darkness of the earthlight's shadows (1 = fully dark before ambient).")]
         [Range(0f, 1f)]
-        [SerializeField] private float _shadowStrength = 0.8f;
+        [SerializeField] private float _shadowStrength = 0.88f;
 
         [Header("Ambient (trilight)")]
         [Tooltip("Ambient from above: the violet glow of the sky.")]
-        [SerializeField] private Color _ambientSky = new Color(0.19f, 0.17f, 0.37f);
+        [SerializeField] private Color _ambientSky = new Color(0.15f, 0.135f, 0.3f);
 
         [Tooltip("Ambient from the horizon.")]
-        [SerializeField] private Color _ambientEquator = new Color(0.14f, 0.12f, 0.27f);
+        [SerializeField] private Color _ambientEquator = new Color(0.115f, 0.1f, 0.23f);
 
         [Tooltip("Ambient from below: bounce off the dust.")]
-        [SerializeField] private Color _ambientGround = new Color(0.08f, 0.07f, 0.15f);
+        [SerializeField] private Color _ambientGround = new Color(0.06f, 0.055f, 0.12f);
 
         [Header("Fog")]
         [Tooltip("Fog colour: matches the sky's horizon glow so distant hills melt into the sky.")]
-        [SerializeField] private Color _fogColor = new Color(0.25f, 0.18f, 0.44f);
+        [SerializeField] private Color _fogColor = new Color(0.27f, 0.21f, 0.45f);
 
-        [Tooltip("Exponential-squared fog density: keeps the crater crisp and hides the world's edge. 0.00085 " +
-            "fogs ~11% at 400 m, ~51% at 1 km and >99% at 2.8 km.")]
+        [Tooltip("Exponential-squared fog density: near ground keeps its contrast, far rock dissolves toward the " +
+            "horizon. 0.002 fogs ~9% at 150 m, ~30% at 300 m, ~63% at 500 m and ~98% at 1 km.")]
         [Range(0f, 0.01f)]
-        [SerializeField] private float _fogDensity = 0.00085f;
+        [SerializeField] private float _fogDensity = 0.002f;
 
         public Color LightColor => _lightColor;
         public float LightIntensity => _lightIntensity;
