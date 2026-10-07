@@ -301,6 +301,66 @@
         {
             "key": "friend.tilly.repair_log",
             "text": "Walked the rim at sunrise with Tilly chirping at my shoulder. The Moon is still here, Earth is still up, the coffee is still terrible: all is well. — Ines"
+        },
+        {
+            "key": "friend.bell.name",
+            "text": "Bell"
+        },
+        {
+            "key": "friend.bell.repair_log",
+            "text": "Built Bell out of a dead receiver and four camera legs so the station keeps playing while I sleep. She dances. I didn't build that part. — Ro"
+        },
+        {
+            "key": "log.ro_1",
+            "text": "Night one of Lumen After Dark. Three listeners and a rover who rolls closer when I play the slow ones. Best audience I've ever had. — Ro"
+        },
+        {
+            "key": "cassette.after_dark_1.title",
+            "text": "Lumen After Dark, Vol. 1"
+        },
+        {
+            "key": "cassette.after_dark_1.note",
+            "text": "First night show. Audience: three crew, one rover, one basil plant. The basil had requests."
+        },
+        {
+            "key": "cassette.dust_and_honey.title",
+            "text": "Dust & Honey"
+        },
+        {
+            "key": "cassette.dust_and_honey.note",
+            "text": "Recorded with the mic taped to the airlock. If you hear a thump, that's Kenji."
+        },
+        {
+            "key": "cassette.slow_orbit.title",
+            "text": "Slow Orbit"
+        },
+        {
+            "key": "cassette.slow_orbit.note",
+            "text": "For the nights Earth looks close enough to walk to. It isn't. I checked."
+        },
+        {
+            "key": "ticker.bell.home",
+            "text": "Bell got home before you. She says the porch light was on."
+        },
+        {
+            "key": "ticker.bell.signal",
+            "text": "Bell's picking something up… bearing {0}°."
+        },
+        {
+            "key": "ticker.bell.found_0",
+            "text": "Bell says: told you so."
+        },
+        {
+            "key": "ticker.bell.found_1",
+            "text": "Bell says: that one's been waiting for you."
+        },
+        {
+            "key": "ticker.bell.found_2",
+            "text": "Bell says: Ro would have liked that."
+        },
+        {
+            "key": "hint.tune",
+            "text": "Tune"
         }
     ]
 }
