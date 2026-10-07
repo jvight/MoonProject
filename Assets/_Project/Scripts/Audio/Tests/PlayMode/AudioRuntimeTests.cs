@@ -232,6 +232,10 @@ namespace MoonProject.Audio.PlayModeTests
                     break;
                 case 7:
                     events.Publish(new ExcavationStarted(Vector3.left));
+                    events.Publish(new CassetteCollected("slow_orbit", Vector3.up, 1, 3));
+                    events.Publish(new CrewLogFound("ro_1", Vector3.right));
+                    events.Publish(new BellSignalPicked(BellSignalTarget.Relic, Vector3.forward * 200f));
+                    events.Publish(new BellSignalFound(BellSignalTarget.Cassette, Vector3.back));
                     break;
                 case 8:
                     events.Publish(new UiCue(frame % 24 == 8 ? UiCueKind.CardShown : UiCueKind.PromptShown));

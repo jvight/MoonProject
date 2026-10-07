@@ -62,6 +62,14 @@ namespace MoonProject.Audio
         [Tooltip("Attach pluck volume scale for heavy objects.")]
         [Range(0f, 1f)] [SerializeField] private float _tetherHeavyVolume = 1f;
 
+        [Header("Bell's signals")]
+        [Tooltip("Spatial blend of the shimmer from a new signal's pillar: mostly flat so a pillar far across the " +
+                 "basin is still heard, faintly, with a hint of its direction (0 = flat, 1 = fully 3D).")]
+        [Range(0f, 1f)] [SerializeField] private float _signalSpatialBlend = 0.3f;
+
+        [Tooltip("Volume scale of the pillar's shimmer (very soft: a suggestion, never a call).")]
+        [Range(0f, 1f)] [SerializeField] private float _signalPickVolume = 0.8f;
+
         [Header("Excavation")]
         [Tooltip("Seconds for the excavation rumble to swell in.")]
         [Min(0f)] [SerializeField] private float _rumbleFadeIn = 0.8f;
@@ -84,6 +92,8 @@ namespace MoonProject.Audio
         public float TetherHumFadeOut => _tetherHumFadeOut;
         public float TetherHumVolume => _tetherHumVolume;
         public float TetherHumSpatialBlend => _tetherHumSpatialBlend;
+        public float SignalSpatialBlend => _signalSpatialBlend;
+        public float SignalPickVolume => _signalPickVolume;
         public float TetherLightMass => _tetherLightMass;
         public float TetherHeavyMass => Mathf.Max(_tetherHeavyMass, _tetherLightMass + MinSpan);
         public float TetherLightVolume => _tetherLightVolume;
