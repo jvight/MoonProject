@@ -12,6 +12,11 @@ mono float64 array that starts from silence and ends at silence; nothing has a h
   kalimba_note  the core kalimba tine.
   musicbox_note a tuned comb tooth: fundamental, faint detuned octave, a short high partial, a tiny mechanism tick.
   flute_note    soft FM flute: low index, delayed vibrato, breath noise around the second harmonic.
+  vibes_note    vibraphone bar: fundamental, the bar's 4x mode dying fast, a faint 10x mode where it stays soft and
+                a yarn-mallet thump; the motor tremolo is applied on the stem so every bar shares one rotor.
+  felt_note     felt-hammer piano (the core's felt_piano) held for its gate, then softly damped.
+  theremin_line one continuous sine voice for a whole lead part: notes that follow each other closely glide, the
+                level breathes between notes and the vibrato blooms late in every note, like a gentle theremin.
   DrumKit       round-robin, velocity-layered one-shots per drummer style.
 """
 import math
@@ -27,6 +32,18 @@ LEAD_RING_S = 1.8
 TINE_RATIO = 14.0
 TINE_CEILING_HZ = 6000.0
 KICK_BOTTOM_HZ = 50.0
+VIBES_RING_S = 0.6
+VIBES_DAMP_S = 0.12
+FELT_RELEASE_S = 0.6
+SOFT_PARTIAL_CEILING_HZ = 6000.0
+THEREMIN_GLIDE_S = 0.12
+THEREMIN_BREATH = 0.3
+THEREMIN_ATTACK_S = 0.14
+THEREMIN_RELEASE_S = 0.45
+THEREMIN_VIBRATO_HZ = 4.6
+THEREMIN_VIBRATO_CENTS = 10.0
+THEREMIN_VIBRATO_DELAY_S = 0.25
+THEREMIN_VIBRATO_BLOOM_S = 0.4
 
 
 def _detuned(freq, cents):
@@ -137,6 +154,87 @@ def flute_note(pitch, velocity, gate_s, gen):
     return envelope.fade_out((tone + breath) * env * velocity * 0.7, 0.02)
 
 
+def vibes_note(pitch, velocity, gate_s, gen):
+    """Vibraphone bar struck with a soft yarn mallet, ringing for `gate_s` plus a short ring-out, then damped."""
+    n = samples(gate_s + VIBES_RING_S)
+    freq = _detuned(midi_to_freq(pitch), float(gen.normal(0.0, 1.0)))
+    sustain_t60 = 3.2 * 2.0 ** (-(pitch - 72) / 24.0)
+    brightness = 0.35 + 0.65 * velocity
+    tone = (instruments.partial(n, freq, 1.0, 0.002, sustain_t60)
+            + instruments.partial(n, 4.0 * freq, 0.16 * brightness, 0.0015, 0.32))
+    if 10.0 * freq < SOFT_PARTIAL_CEILING_HZ:
+        tone += instruments.partial(n, 10.0 * freq, 0.025 * brightness, 0.001, 0.06)
+    mallet_n = samples(0.006)
+    mallet = filters.lowpass(noise.white(mallet_n, gen), 1600.0) * envelope.ar(mallet_n, 0.0005, 0.005)
+    tone[:mallet_n] += 0.03 * velocity * mallet
+    gate_n = min(n, samples(gate_s + VIBES_RING_S / 2.0))
+    t = np.arange(n - gate_n) / SAMPLE_RATE
+    tone[gate_n:] *= np.exp(-t / VIBES_DAMP_S)
+    return envelope.fade_out(tone * velocity * 0.75, 0.02)
+
+
+def felt_note(pitch, velocity, gate_s, gen):
+    """Felt piano held by the damper for `gate_s` seconds; soft hits are darker, the dampers fall gently."""
+    n = samples(gate_s + FELT_RELEASE_S)
+    decay = 3.2 * 2.0 ** (-(pitch - 60) / 24.0)
+    note = instruments.felt_piano(midi_to_freq(pitch), n / SAMPLE_RATE, gen, decay=decay,
+                                  brightness=0.3 + 0.3 * velocity, attack=0.005)
+    gate_n = min(n, samples(gate_s))
+    t = np.arange(n - gate_n) / SAMPLE_RATE
+    note[gate_n:] *= np.exp(-t / (FELT_RELEASE_S / 4.0))
+    return envelope.fade_out(note * (0.25 + 0.75 * velocity ** 1.3), 0.03)
+
+
+def theremin_line(notes, start_s, n, seconds_of):
+    """
+    Render a lead part as one continuous voice into `n` samples (`seconds_of(beat)` maps beats to seconds,
+    `start_s` is the pre-roll). Notes whose gap is shorter than the release share one breath: the pitch glides
+    into each note over THEREMIN_GLIDE_S and the level dips to THEREMIN_BREATH between them. Each note's vibrato
+    starts late and blooms slowly.
+    """
+    spans = []
+    for note in notes:
+        start = min(n, samples(start_s + seconds_of(note.beat) + note.offset_s))
+        stop = min(n, samples(start_s + seconds_of(note.end) + note.offset_s))
+        spans.append((start, max(start + 1, stop), midi_to_freq(note.pitch), note.velocity))
+    release_n = samples(THEREMIN_RELEASE_S)
+    groups = []
+    for span in spans:
+        if groups and span[0] - groups[-1][-1][1] < release_n:
+            groups[-1].append(span)
+        else:
+            groups.append([span])
+    freq = np.full(n, spans[0][2] if spans else 220.0)
+    level = np.zeros(n)
+    bloom = np.zeros(n)
+    gate = np.zeros(n)
+    glide_n = samples(THEREMIN_GLIDE_S)
+    delay_n = samples(THEREMIN_VIBRATO_DELAY_S)
+    bloom_n = samples(THEREMIN_VIBRATO_BLOOM_S)
+    for group in groups:
+        for index, (start, stop, target, velocity) in enumerate(group):
+            following = group[index + 1][0] if index + 1 < len(group) else min(n, stop + release_n)
+            freq[start:following] = target
+            if index > 0:
+                count = min(glide_n, following - start)
+                freq[start:start + count] = osc.glide(count, group[index - 1][2], target)
+            level[start:stop] = velocity
+            level[stop:following] = velocity * (THEREMIN_BREATH if index + 1 < len(group) else 1.0)
+            ramp = np.clip(np.arange(max(0, stop - start - delay_n)) / bloom_n, 0.0, 1.0)
+            bloom[start + delay_n:stop] = ramp * ramp * (3.0 - 2.0 * ramp)
+        first, last = group[0][0], group[-1][1]
+        body = envelope.adsr(last - first + release_n, THEREMIN_ATTACK_S, 0.0, 1.0, THEREMIN_RELEASE_S / 3.0,
+                             gate=(last - first) / SAMPLE_RATE, shape="exp")
+        end = min(n, first + body.shape[0])
+        gate[first:end] = body[:end - first]
+    level = filters.onepole_lp(level, 10.0) * gate
+    bloom = filters.onepole_lp(bloom, 6.0)
+    cents = THEREMIN_VIBRATO_CENTS * bloom * np.sin(2.0 * math.pi * THEREMIN_VIBRATO_HZ * np.arange(n) / SAMPLE_RATE)
+    sung = freq * 2.0 ** (cents / 1200.0)
+    tone = osc.sine(n, sung) + 0.14 * osc.sine(n, 2.0 * sung, phase=0.25) + 0.035 * osc.sine(n, 3.0 * sung)
+    return tone * level * 0.6
+
+
 class DrumKit:
     """
     One drummer's sounds: `variants` round-robin takes in three velocity layers per voice, so repeated hits are
@@ -147,7 +245,7 @@ class DrumKit:
     def __init__(self, style, gen, variants=4):
         params = KIT_PARAMS[style]
         self._takes = {}
-        for voice in ("kick", "snare", "rim", "hat", "ohat", "shaker"):
+        for voice in _DRUMS:
             for layer, hardness in enumerate((0.35, 0.65, 1.0)):
                 self._takes[(voice, layer)] = [envelope.fade_out(_DRUMS[voice](params, hardness, gen), 0.01)
                                                for _ in range(variants)]
@@ -170,6 +268,12 @@ KIT_PARAMS = {
                  "snare_attack": 0.002, "snare_lp": 4800.0},
     "brushy": {"kick_top": 115.0, "kick_t60": 0.5, "click": 0.03, "snare_tone": 0.25, "snare_t60": 0.32,
                "snare_attack": 0.009, "snare_lp": 4200.0},
+    "bounce": {"kick_top": 130.0, "kick_t60": 0.45, "click": 0.05, "snare_tone": 0.9, "snare_t60": 0.18,
+               "snare_attack": 0.001, "snare_lp": 6200.0},
+    "jam": {"kick_top": 105.0, "kick_t60": 0.55, "click": 0.02, "snare_tone": 0.2, "snare_t60": 0.36,
+            "snare_attack": 0.011, "snare_lp": 3900.0},
+    "pulse": {"kick_top": 95.0, "kick_t60": 0.8, "click": 0.01, "snare_tone": 0.15, "snare_t60": 0.4,
+              "snare_attack": 0.014, "snare_lp": 3400.0},
 }
 
 
@@ -227,4 +331,34 @@ def _shaker(params, hardness, gen):
     return grains * envelope.ar(n, 0.007, 0.07) * (0.6 + 0.4 * hardness)
 
 
-_DRUMS = {"kick": _kick, "snare": _snare, "rim": _rim, "hat": _hat, "ohat": _ohat, "shaker": _shaker}
+def _snap(params, hardness, gen):
+    """Finger snap: a short, rounded click with a little skin tone under it."""
+    n = samples(0.12)
+    click = filters.bandpass(noise.white(n, gen), 2300.0, 1.3) * envelope.ar(n, 0.0004, 0.045)
+    skin = osc.sine(n, 1180.0) * envelope.ar(n, 0.0005, 0.02)
+    return filters.lowpass(click + 0.25 * skin, 5200.0 + 800.0 * hardness)
+
+
+def _swish(params, hardness, gen):
+    """A brush stirring across the snare head: soft band-limited noise that swells in and fades."""
+    n = samples(0.5)
+    sweep = filters.butter(noise.white(n, gen), "bandpass", (1400.0, 6000.0), order=2)
+    return filters.lowpass(sweep, 5500.0) * envelope.ar(n, 0.16, 0.3) * (0.5 + 0.5 * hardness)
+
+
+def _thump(params, hardness, gen):
+    """Someone bumping the airlock hatch: a deep muffled thud, the hatch ringing faintly on D3 and A3."""
+    n = samples(1.2)
+    t = np.arange(n) / SAMPLE_RATE
+    body = osc.sine(n, 52.0 + 40.0 * np.exp(-t / 0.05)) * envelope.ar(n, 0.003, 0.35)
+    knock_n = samples(0.03)
+    knock = filters.bandpass(noise.white(knock_n, gen), 260.0, 1.1) * envelope.ar(knock_n, 0.001, 0.02)
+    body[:knock_n] += 1.2 * knock
+    ring = (instruments.partial(n, midi_to_freq(50), 0.1, 0.004, 0.7)
+            + instruments.partial(n, midi_to_freq(57), 0.05, 0.004, 0.5))
+    return filters.lowpass(body + ring, 900.0) * (0.6 + 0.4 * hardness)
+
+
+# Insertion order is the kit's rendering order: new voices go last so earlier voices keep their seeded takes.
+_DRUMS = {"kick": _kick, "snare": _snare, "rim": _rim, "hat": _hat, "ohat": _ohat, "shaker": _shaker,
+          "snap": _snap, "swish": _swish, "thump": _thump}

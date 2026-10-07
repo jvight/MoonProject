@@ -51,6 +51,10 @@ LEADS = {v.name: v for v in (
     LeadVoice("kalimba", 66, 86),
     LeadVoice("musicbox", 74, 90),
     LeadVoice("flute", 66, 83),
+    LeadVoice("vibes", 65, 88),
+    LeadVoice("rhodes", 62, 81),
+    LeadVoice("theremin", 62, 79),
+    LeadVoice("felt", 69, 88),
 )}
 
 
@@ -240,6 +244,11 @@ def _events(notes, frame, rng, velocity_scale):
         offset = 0.004 + 0.006 * float(rng.standard_normal())
         events.append(NoteEvent(start, end - start, pitch, velocity, offset))
     return events
+
+
+def quote_events(start_beat, swing, timeline, notes, rng):
+    """A fixed phrase [(step, length, pitch)] played verbatim over the two-bar frame starting at `start_beat`."""
+    return _events(notes, _Frame(start_beat, swing, timeline), rng, 1.0)
 
 
 def section_melody(start_beat, bars, swing, timeline, key, voice, density, rng, motif=None):
