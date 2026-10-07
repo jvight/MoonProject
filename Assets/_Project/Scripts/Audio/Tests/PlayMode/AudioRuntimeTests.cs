@@ -103,12 +103,19 @@ namespace MoonProject.Audio.PlayModeTests
             Assert.Greater(filter.cutoffFrequency, 20000f);
             float nearStatic = staticLoop.volume;
 
-            _rig.Rover.Position = new Vector3(600f, 0f, 0f);
+            // Just inside the signal's edge: all static, before the soundscape fades the set out past it.
+            _rig.Rover.Position = new Vector3(_rig.Radio.SignalEdge - 5f, 0f, 0f);
             yield return new WaitForSecondsRealtime(4f);
 
             Assert.Less(_rig.Radio.Clarity, 0.05f);
             Assert.Less(filter.cutoffFrequency, 1200f);
-            Assert.Greater(staticLoop.volume, nearStatic * 5f);
+            float edgeStatic = staticLoop.volume;
+            Assert.Greater(edgeStatic, nearStatic * 5f);
+
+            _rig.Rover.Position = new Vector3(600f, 0f, 0f);
+            yield return null;
+            yield return null;
+            Assert.Less(staticLoop.volume, edgeStatic * 0.05f, "far past the signal even the static falls quiet");
         }
 
         [UnityTest]
@@ -135,6 +142,7 @@ namespace MoonProject.Audio.PlayModeTests
                 AudioTestRig.UpdateOf(_rig.Gameplay), AudioTestRig.UpdateOf(_rig.Ui), AudioTestRig.UpdateOf(_rig.Radio),
                 AudioTestRig.UpdateOf(_rig.Friends), AudioTestRig.UpdateOf(_rig.Jump),
                 AudioTestRig.UpdateOf(_rig.Ambience), AudioTestRig.UpdateOf(_rig.Canyon),
+                AudioTestRig.UpdateOf(_rig.Soundscape), AudioTestRig.UpdateOf(_rig.SmallSounds),
             };
 
             _rig.Program.Own(AudioTestRig.TapeA);
@@ -157,7 +165,10 @@ namespace MoonProject.Audio.PlayModeTests
                 _rig.Rover.Position = new Vector3(20f * Mathf.Sin(t), 2f - 4f * Mathf.Sin(t * 2f),
                     260f + 120f * Mathf.Sin(t * 0.3f));
                 _rig.Rover.NormalizedSpeed = 0.5f + 0.5f * Mathf.Sin(t * 3f);
-                _rig.Rover.DriveInput = new Vector2(0f, 1f);
+                bool driving = frame % 60 < 40;
+                _rig.Rover.Speed = driving ? 4f : 0f;
+                _rig.Rover.DriveInput = driving ? new Vector2(Mathf.Sin(t * 4f), 1f) : Vector2.zero;
+                _rig.Rover.TetherOrigin.localRotation = Quaternion.Euler(0f, 60f * Mathf.Sin(t * 2f), 0f);
                 _rig.Rover.IsGrounded = frame % 40 < 30;
                 _rig.Rover.AirTime = frame % 40 < 30 ? 0f : (frame % 40 - 30) * 0.1f;
                 _rig.Rover.Velocity = new Vector3(6f * Mathf.Sin(t), 2f, 0f);

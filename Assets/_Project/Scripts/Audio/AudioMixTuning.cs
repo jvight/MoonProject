@@ -80,12 +80,6 @@ namespace MoonProject.Audio
         [Tooltip("Seconds the ambience bed takes to fade in at start.")]
         [Min(0f)] [SerializeField] private float _ambienceFadeIn = 4f;
 
-        [Tooltip("Ambience bed gain on Quiet Hours, when the moon's own sound is all there is (1 = unchanged).")]
-        [Range(1f, 2f)] [SerializeField] private float _quietHoursAmbienceGain = 1.35f;
-
-        [Tooltip("Seconds (time constant) for the ambience to swell into Quiet Hours and settle back out of it.")]
-        [Range(0.1f, 10f)] [SerializeField] private float _quietHoursAmbienceEase = 3f;
-
         public float MasterVolume => _masterVolume;
         public float MusicVolume => _musicVolume;
         public float SfxVolume => _sfxVolume;
@@ -104,8 +98,6 @@ namespace MoonProject.Audio
         public float ThumpSoftPitch => _thumpSoftPitch;
         public float ThumpHardPitch => _thumpHardPitch;
         public float AmbienceFadeIn => _ambienceFadeIn;
-        public float QuietHoursAmbienceGain => _quietHoursAmbienceGain;
-        public float QuietHoursAmbienceEase => _quietHoursAmbienceEase;
         public float PauseDuckTime => _pauseDuckTime;
         public float ResumeTime => _resumeTime;
         public float PausedWorldGain => _pausedWorldGain;

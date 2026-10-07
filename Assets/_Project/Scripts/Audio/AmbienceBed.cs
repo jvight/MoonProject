@@ -4,27 +4,23 @@ using MoonProject.Core;
 namespace MoonProject.Audio
 {
     /// <summary>
-    /// The 72 s seamless lunar ambience loop on the Ambience bus, fading in gently at start. On Quiet Hours, when the
-    /// radio leaves the moon to itself, the bed swells a little so the silence is full rather than empty; inside
-    /// Whispering Canyon it recedes under the canyon's own air. Initialised by <see cref="AudioDirector"/>.
+    /// The 72 s seamless lunar ambience loop on the Ambience bus, fading in gently at start. Its level follows the
+    /// <see cref="Soundscape"/>: it recedes far from home and inside Whispering Canyon, swells a little on Quiet Hours
+    /// and pulls back when 07 is still. Initialised by <see cref="AudioDirector"/>.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class AmbienceBed : MonoBehaviour
     {
         private readonly EasedValue _fade = new EasedValue(0f);
-        private readonly EasedValue _quietLift = new EasedValue(1f);
         private AudioDirector _director;
-        private RadioStation _radio;
-        private CanyonAmbience _canyon;
-        private AudioMixTuning _tuning;
+        private Soundscape _soundscape;
         private AudioSource _source;
+        private float _fadeTime;
         private float _cueVolume;
 
-        /// <summary>The Quiet Hours swell currently applied (1 = none; diagnostics and tests).</summary>
-        internal float QuietLift => _quietLift.Value;
+        internal AudioSource Source => _source;
 
-        internal void Initialize(AudioDirector director, RadioStation radio, CanyonAmbience canyon,
-            AudioMixTuning tuning)
+        internal void Initialize(AudioDirector director, Soundscape soundscape, float fadeInSeconds)
         {
             CueHandle bed = director.Resolve(AudioCueIds.AmbienceBed);
             if (!bed.IsValid)
@@ -34,9 +30,8 @@ namespace MoonProject.Audio
             }
 
             _director = director;
-            _radio = radio;
-            _canyon = canyon;
-            _tuning = tuning;
+            _soundscape = soundscape;
+            _fadeTime = fadeInSeconds;
             _cueVolume = director.Library.GetCue(bed).VolumeMax;
             _source = director.CreateLoopSource(transform, "AmbienceLoop", bed, 0f);
             _source.Play();
@@ -49,11 +44,8 @@ namespace MoonProject.Audio
                 return;
             }
 
-            float dt = Time.unscaledDeltaTime;
-            float fade = _fade.Step(1f, dt, _tuning.AmbienceFadeIn);
-            float quiet = _radio.Station == RadioChannel.QuietHours ? _tuning.QuietHoursAmbienceGain : 1f;
-            float lift = _quietLift.Step(quiet, dt, _tuning.QuietHoursAmbienceEase);
-            float level = fade * lift * _canyon.BasinGain * _cueVolume;
+            float fade = _fade.Step(1f, Time.unscaledDeltaTime, _fadeTime);
+            float level = fade * _soundscape.BasinBedGain * _cueVolume;
             _source.volume = Mathf.Clamp01(level) * _director.Buses.Effective(AudioBus.Ambience);
         }
     }
