@@ -54,7 +54,7 @@ namespace MoonProject.Rover.PlayModeTests
         private float RingGlow()
         {
             _rover.CoilGlows[0].GetPropertyBlock(_block);
-            return _block.GetColor(EmissionColorId).r;
+            return _block.GetVector(EmissionColorId).x;
         }
 
         [UnityTest]
@@ -109,7 +109,7 @@ namespace MoonProject.Rover.PlayModeTests
             report.Add("Full charge: coil length", _rover.Coils[0].localScale.y, "x",
                 1f - settings.ChargeSquash - 0.02f, 1f - settings.ChargeSquash + 0.02f, "squashed");
             report.Add("Full charge: ring glow", RingGlow(), "", settings.GlowPeak * 0.95f, settings.GlowPeak * 1.01f,
-                "white x peak");
+                "peak");
             report.Add("Full charge: light on", _rover.CoilLight.enabled ? 1f : 0f, "", 1f, 1f, "lit");
             report.Add("Full charge: light intensity", _rover.CoilLight.intensity, "",
                 settings.LightIntensity * 0.95f, settings.LightIntensity * 1.01f, "tuned");

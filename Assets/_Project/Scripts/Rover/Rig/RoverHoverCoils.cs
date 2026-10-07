@@ -8,7 +8,7 @@ namespace MoonProject.Rover
     /// <summary>
     /// Shows art's HoverCoils (mounted on RoverModel 'CoilSocket') only while 07 owns the Hover-Jump, popping them in
     /// when it is bought (<see cref="HoverCoilMotion"/>). While the jump charges, Coil_FL/FR/RL/RR squash along local
-    /// Y and their Glow_ rings light up (MaterialPropertyBlock _EmissionColor = white x glow), and a soft cyan point
+    /// Y and their Glow_ rings light up (MaterialPropertyBlock _EmissionColor = linear glow, set as a vector), and a soft cyan point
     /// light at CoilSocket pools on the ground so the charge reads from the chase camera; on the leap the springs kick
     /// out. Ticked by <see cref="RoverController"/>.
     /// </summary>
@@ -151,7 +151,8 @@ namespace MoonProject.Rover
             }
 
             HoverCoilSettings settings = _tuning.HoverCoils;
-            _glowBlock.SetColor(EmissionColorId, Color.white * (settings.GlowPeak * glow));
+            float emission = settings.GlowPeak * Mathf.Pow(glow, settings.GlowCurve);
+            _glowBlock.SetVector(EmissionColorId, new Vector4(emission, emission, emission, 1f));
             for (int i = 0; i < _glows.Length; i++)
             {
                 _glows[i].SetPropertyBlock(_glowBlock);

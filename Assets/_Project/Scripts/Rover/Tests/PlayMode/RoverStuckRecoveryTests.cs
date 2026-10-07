@@ -95,5 +95,42 @@ namespace MoonProject.Rover.PlayModeTests
                 _rover.Drive.Drive = Vector2.zero;
             }
         }
+
+        [UnityTest]
+        public IEnumerator TheRecoveryLift_NeverCountsAsStillness()
+        {
+            RoverController controller = _rover.Controller;
+            IRoverStillness stillness = _rover.Context.Get<IRoverStillness>();
+            _rover.Drive.Drive = new Vector2(0f, 1f);
+            float timeout = Time.time + 20f;
+            while (!controller.IsRecovering && Time.time < timeout)
+            {
+                yield return null;
+            }
+
+            Assert.IsTrue(controller.IsRecovering, "07 pushed into the wall is lifted out.");
+            _rover.Drive.Drive = Vector2.zero;
+            int frames = 0;
+            while (controller.IsRecovering)
+            {
+                yield return null;
+                if (!controller.IsRecovering)
+                {
+                    break;
+                }
+
+                frames++;
+                Assert.AreEqual(0f, stillness.StillSeconds, "Hands off the stick, but 07 is being lifted: not still.");
+            }
+
+            Assert.Greater(frames, 10, "The lift was observed.");
+            float until = Time.time + 3f;
+            while (Time.time < until)
+            {
+                yield return null;
+            }
+
+            Assert.Greater(stillness.StillSeconds, 1f, "Set down and left alone, 07 rests again.");
+        }
     }
 }

@@ -14,9 +14,12 @@ namespace MoonProject.Rover
     /// with Decollider and Deoccluder keeping it out of the terrain), widens the FOV with speed and dips softly on
     /// landings. Reads the rover only through <see cref="IRoverState"/>, so it must initialise after the rover.
     /// Slow, skippable camera moments frame 07 with the beam while digging, a surfacing relic, or the base after an
-    /// upgrade (needs
-    /// <see cref="IWorldLayout"/>). Registers itself as <see cref="IViewCamera"/> (gameplay aims from its centre ray,
-    /// UI projects with it) and <see cref="ILookSettings"/> (the UI applies the player's sensitivity and invert-Y).
+    /// upgrade (needs <see cref="IWorldLayout"/>). When 07 has rested a while (<see cref="IRoverStillness"/>) with
+    /// nothing going on, the camera drifts out to the lonely <see cref="WideShot"/>, composed against the analytic
+    /// terrain (<see cref="ITerrainQuery"/>), and publishes <see cref="RoverWideShotChanged"/> as it opens and hands
+    /// back. Camera moments, a leap, the tether and interactions take precedence over it. Registers itself as
+    /// <see cref="IViewCamera"/> (gameplay aims from its centre ray, UI projects with it) and
+    /// <see cref="ILookSettings"/> (the UI applies the player's sensitivity and invert-Y).
     /// </summary>
     [DefaultExecutionOrder(100)]
     [DisallowMultipleComponent]
@@ -30,6 +33,9 @@ namespace MoonProject.Rover
 
         /// <summary>Below this horizontal speed (m/s) the travel direction is too noisy to judge slopes.</summary>
         private const float DescentMinSpeed = 0.5f;
+
+        /// <summary>Smallest share of the orbit a moment leaves, so adopting the wide yaw never divides by 0.</summary>
+        private const float MinOrbitShare = 0.05f;
 
         [Tooltip("Camera tuning (Assets/_Project/Data/Tuning/RoverCameraTuning.asset).")]
         [SerializeField] private RoverCameraTuning _tuning;
@@ -48,6 +54,10 @@ namespace MoonProject.Rover
         [SerializeField] private RoverCameraBump _bump;
 
         private readonly CameraMoment _moment = new CameraMoment();
+        private WideShot _wide;
+        private bool _wideSteersYaw;
+        private bool _tethered;
+        private bool _paused;
         private float _momentYaw;
         private float _momentLift;
         private float _momentPullBack;
@@ -56,6 +66,9 @@ namespace MoonProject.Rover
         private bool _leapAirborne;
         private IRoverState _rover;
         private IWorldLayout _world;
+        private IRoverStillness _stillness;
+        private ITerrainQuery _terrain;
+        private EventBus _events;
         private InputReader _input;
         private CameraOrbit _orbitState;
         private LookSettings _look;
@@ -64,6 +77,9 @@ namespace MoonProject.Rover
         private bool _initialized;
 
         public CameraOrbit Orbit => _orbitState;
+
+        /// <summary>The lonely wide shot's state (quiet time, weight, frame), for tests and tooling.</summary>
+        public WideShot WideShot => _wide;
 
         public Camera Camera => _viewCamera;
 
@@ -89,8 +105,12 @@ namespace MoonProject.Rover
 
             _rover = context.Get<IRoverState>();
             _world = context.Get<IWorldLayout>();
+            _stillness = context.Get<IRoverStillness>();
+            _terrain = context.Get<ITerrainQuery>();
+            _events = context.Events;
             _input = context.Input;
             _orbitState = new CameraOrbit(_tuning);
+            _wide = new WideShot(_tuning.WideShot);
             _look = new LookSettings(_tuning);
             ApplyCinemachineSettings();
             _subscriptions = new[]
@@ -101,6 +121,11 @@ namespace MoonProject.Rover
                 context.Events.Subscribe<RelicSurfaced>(OnRelicSurfaced),
                 context.Events.Subscribe<UpgradePurchased>(OnUpgradePurchased),
                 context.Events.Subscribe<RoverJumped>(OnJumped),
+                context.Events.Subscribe<TetherAttached>(OnTetherAttached),
+                context.Events.Subscribe<TetherReleased>(OnTetherReleased),
+                context.Events.Subscribe<PauseChanged>(OnPauseChanged),
+                context.Events.Subscribe<UiCue>(OnUiCue),
+                context.Events.Subscribe<BellCued>(OnBellCued),
             };
             context.Register<IViewCamera>(this);
             context.Register<ILookSettings>(this);
@@ -201,6 +226,7 @@ namespace MoonProject.Rover
 
             ReleaseLeapOnTouchdown();
             _moment.Step(deltaTime);
+            StepWideShot(deltaTime);
             StepMomentFraming(deltaTime);
             PlaceTarget();
 
@@ -271,13 +297,146 @@ namespace MoonProject.Rover
             return _look.OrbitDegrees(_input.LookDelta, _input.LookRate, deltaTime);
         }
 
+        /// <summary>
+        /// The chase orbit (player look, recentering, moments) blended toward the wide shot's frame and its breathing
+        /// by the wide shot's weight; at weight 0 it is exactly the chase camera.
+        /// </summary>
         private void ApplyOrbit()
         {
-            _orbit.HorizontalAxis.Value = _orbitState.YawOffset * (1f - _moment.Weight);
-            _orbit.VerticalAxis.Value = Mathf.Min(_orbitState.Elevation + _momentLift, _tuning.MaxPitch);
-            _orbit.Radius = _tuning.Distance * (1f + _momentPullBack);
-            _camera.Lens.FieldOfView = _orbitState.FieldOfView;
+            float yaw = _orbitState.YawOffset * (1f - _moment.Weight);
+            float elevation = _orbitState.Elevation + _momentLift;
+            float radius = _tuning.Distance * (1f + _momentPullBack);
+            float fov = _orbitState.FieldOfView;
+            Vector2 screen = _tuning.ScreenPosition;
+            float wide = _wide.Weight;
+            if (wide > 0f)
+            {
+                WideShotSettings settings = _tuning.WideShot;
+                WideShotFrame frame = _wide.Frame;
+                float time = _wide.BreathSeconds;
+                if (_wideSteersYaw)
+                {
+                    float sway = WideShotComposer.Breath(settings.BreathYaw, settings.BreathYawPeriod, time);
+                    float wideYaw = Mathf.DeltaAngle(RoverYaw() + _momentYaw, frame.Yaw + sway);
+                    yaw += Mathf.DeltaAngle(yaw, wideYaw) * wide;
+                }
+
+                float rise = WideShotComposer.Breath(settings.BreathElevation, settings.BreathElevationPeriod, time);
+                float drift = WideShotComposer.Breath(settings.BreathDistance, settings.BreathDistancePeriod, time);
+                elevation = Mathf.Lerp(elevation, frame.Elevation + rise, wide);
+                radius = Mathf.Lerp(radius, frame.Distance * (1f + drift), wide);
+                fov = Mathf.Lerp(fov, _tuning.BaseFov + settings.FovWiden, wide);
+                screen.y = Mathf.Lerp(screen.y, frame.ScreenY, wide);
+            }
+
+            _orbit.HorizontalAxis.Value = yaw;
+            _orbit.VerticalAxis.Value = Mathf.Min(elevation, _tuning.MaxPitch);
+            _orbit.Radius = radius;
+            _camera.Lens.FieldOfView = fov;
+            ScreenComposerSettings composition = _composer.Composition;
+            composition.ScreenPosition = screen;
+            _composer.Composition = composition;
             _bump.Offset = Vector3.up * _bumpSpring.Value;
+        }
+
+        /// <summary>
+        /// Counts 07's rest toward the wide shot (a moment, a leap or the tether keep it closed; the pause menu only
+        /// delays it) and opens or hands it back when it says so.
+        /// </summary>
+        private void StepWideShot(float deltaTime)
+        {
+            bool busy = _moment.IsActive || _leapHeld || _tethered;
+            switch (_wide.Step(_stillness.StillSeconds, busy, _paused, deltaTime))
+            {
+                case WideShotCue.Open:
+                    OpenWideShot();
+                    break;
+                case WideShotCue.HandBack:
+                    HandBackWideShot();
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Composes the wide frame from where the camera looks now, turned gently toward Earth or The Peak (or, shut in
+        /// by a canyon, closer and looking along the way) and fitted to the terrain. 07 is resting, so the frame is
+        /// solved once and holds.
+        /// </summary>
+        private void OpenWideShot()
+        {
+            WideShotSettings settings = _tuning.WideShot;
+            Vector3 follow = _rover.Position + Vector3.up * _tuning.TargetHeight;
+            float viewYaw = WideShotComposer.Bearing(_viewCamera.transform.forward);
+            float earthYaw = WideShotComposer.Bearing(_world.EarthDirection);
+            float peakYaw = WideShotComposer.Bearing(_world.PeakPosition - follow);
+            float swing = WideShotComposer.SubjectSwing(settings, viewYaw, earthYaw, peakYaw);
+            float shutIn = WideShotComposer.ShutIn(settings, _terrain, follow);
+            _wide.Open(WideShotComposer.Solve(settings, _terrain, follow, viewYaw, swing, shutIn));
+            _wideSteersYaw = true;
+            _events.Publish(new RoverWideShotChanged(true));
+        }
+
+        /// <summary>
+        /// Eases back to the chase camera. The view keeps the yaw the wide shot turned to (the orbit adopts it), so
+        /// only distance, height and lens come back: the quickest return that never swings the world round.
+        /// </summary>
+        private void HandBackWideShot()
+        {
+            if (_wideSteersYaw)
+            {
+                float share = Mathf.Max(1f - _moment.Weight, MinOrbitShare);
+                _orbitState.AdoptYaw(_orbit.HorizontalAxis.Value / share);
+                _wideSteersYaw = false;
+            }
+
+            _wide.HandBack();
+            _events.Publish(new RoverWideShotChanged(false));
+        }
+
+        private void OnTetherAttached(TetherAttached attached)
+        {
+            _tethered = true;
+        }
+
+        private void OnTetherReleased(TetherReleased released)
+        {
+            _tethered = false;
+        }
+
+        private void OnPauseChanged(PauseChanged pause)
+        {
+            _paused = pause.Paused;
+        }
+
+        /// <summary>A card to read holds the wide shot back; holding an upgrade's confirm is an interaction.</summary>
+        private void OnUiCue(UiCue cue)
+        {
+            if (cue.Kind == UiCueKind.CardShown)
+            {
+                _wide.HoldBack(_tuning.WideShot.CardQuietSeconds);
+            }
+            else if (cue.Kind == UiCueKind.HoldFill)
+            {
+                Interact();
+            }
+        }
+
+        private void OnBellCued(BellCued cue)
+        {
+            if (cue.Cue == BellCue.DialTurned)
+            {
+                Interact();
+            }
+        }
+
+        /// <summary>The player did something at a station or at Bell: hand back and stay close for a while.</summary>
+        private void Interact()
+        {
+            _wide.HoldBack(_tuning.WideShot.InteractionQuietSeconds);
+            if (_wide.IsOpen)
+            {
+                HandBackWideShot();
+            }
         }
 
         private void OnExcavationStarted(ExcavationStarted excavation)

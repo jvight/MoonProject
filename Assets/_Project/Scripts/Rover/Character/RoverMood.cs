@@ -9,8 +9,10 @@ namespace MoonProject.Rover
     /// <item>A session can open with 07 asleep (<see cref="WakeUpSequence"/>): lid shut, eye dark, head bowed, until
     /// it wakes on its own or the player drives. Daydreaming only starts once it is awake.</item>
     /// <item>Active -> Daydreaming after standing still for IdleDelay: <see cref="Idle"/> eases 0 -> 1 (head drifts up
-    /// to Earth, lid droops, the wing sighs open further than its rest and settles back, the eye breathes deeper and
-    /// dimmer).</item>
+    /// to Earth, lid droops, the wing opens a little, the eye breathes deeper and dimmer).</item>
+    /// <item>The sigh waits for the camera: once 07 is daydreaming and the lonely wide shot is opening
+    /// (<see cref="SetWideShot"/>), whichever comes last, 07 sighs (the wing opens further than its rest and settles
+    /// back) as the frame breathes out. Once per opening.</item>
     /// <item>Daydreaming -> Active as soon as it drives: Idle eases back quickly, and if it was deep in the daydream
     /// <see cref="Step"/> reports a wake-up so the caller can perk up.</item>
     /// </list>
@@ -38,6 +40,8 @@ namespace MoonProject.Rover
         private DampedSpring _sigh;
         private DampedSpring _nod;
         private float _effortTarget;
+        private bool _wideShot;
+        private bool _sighedIntoWideShot;
 
         /// <param name="startAsleep">Open the session with 07 asleep (first boot).</param>
         public RoverMood(RoverCharacterTuning tuning, uint seed, bool startAsleep)
@@ -76,13 +80,13 @@ namespace MoonProject.Rover
         /// <summary>Eyelid closure 0 (open) .. 1 (closed), all influences combined.</summary>
         public float LidClosure { get; private set; }
 
-        /// <summary>Eye brightness multiplier (1 = authored glow while active and calm).</summary>
+        /// <summary>Eye emission as a linear multiplier (1 = authored glow while active and calm).</summary>
         public float EyeGlow { get; private set; } = 1f;
 
         /// <summary>Solar wing opening, 0 (folded) .. 1 (fully open).</summary>
         public float WingOpen => Mathf.Clamp01(_wing.Value);
 
-        /// <summary>Antenna tip brightness multiplier.</summary>
+        /// <summary>Antenna tip emission as a linear multiplier.</summary>
         public float TipGlow { get; private set; }
 
         /// <summary>Effort while charging a Hover-Jump, 0..1 (eased): a squint and a gathered head.</summary>
@@ -124,9 +128,10 @@ namespace MoonProject.Rover
             float halfLife = daydreaming ? _tuning.IdleRiseHalfLife : _tuning.IdleFallHalfLife;
             Idle = Smoothing.Damp(Idle, daydreaming ? 1f : 0f, halfLife, deltaTime);
 
-            if (daydreaming && !wasDaydreaming)
+            if (daydreaming && _wideShot && !_sighedIntoWideShot)
             {
                 Sigh(_tuning.DaydreamSigh);
+                _sighedIntoWideShot = true;
             }
 
             _sigh.Step(0f, _tuning.SighFrequency, 1f, deltaTime);
@@ -150,6 +155,16 @@ namespace MoonProject.Rover
 
             bool wokeFromDaydream = wasDaydreaming && !daydreaming && idleBefore >= _tuning.WakeThreshold;
             return wokeFromDaydream ? MoodTransition.WokeFromDaydream : MoodTransition.None;
+        }
+
+        /// <summary>
+        /// The camera began opening to the lonely wide shot (true) or handed back (false): 07's daydream sigh lands as
+        /// the frame opens.
+        /// </summary>
+        public void SetWideShot(bool open)
+        {
+            _wideShot = open;
+            _sighedIntoWideShot &= open;
         }
 
         /// <summary>How hard 07 is gathering itself for a Hover-Jump right now (the charge, 0..1).</summary>
@@ -250,7 +265,7 @@ namespace MoonProject.Rover
         {
             _tipTime = Mathf.Repeat(_tipTime + deltaTime, _tuning.TipBlinkPeriod);
             float pulse = _tipTime < _tuning.TipBlinkDuration ? Pulse(_tipTime / _tuning.TipBlinkDuration) : 0f;
-            TipGlow = Mathf.Lerp(_tuning.TipRestGlow, 1f, pulse);
+            TipGlow = Mathf.Lerp(_tuning.TipRestGlow, _tuning.TipPeakGlow, pulse);
         }
 
         private void ComposeFace()
