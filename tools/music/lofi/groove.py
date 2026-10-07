@@ -9,7 +9,7 @@ from dataclasses import dataclass
 
 STEPS_PER_BAR = 16
 STEPS_PER_BEAT = 4
-VOICES = ("kick", "snare", "rim", "hat", "ohat", "shaker")
+VOICES = ("kick", "snare", "rim", "hat", "ohat", "shaker", "snap", "swish", "thump")
 
 
 def swung_beat(step, swing):
@@ -30,7 +30,12 @@ class DrumHit:
 
 @dataclass(frozen=True)
 class DrumStyle:
-    """Pattern vocabulary of one track's drummer."""
+    """
+    Pattern vocabulary of one track's drummer. `extras` are (voice, steps, velocity) layers added to every light or
+    full bar (finger snaps on the backbeat, a brush stirring on the beats); `looseness` scales the humanisation
+    spread (1 = the station's tight-but-human feel, higher = a looser jam); `fills` are the phrase-end fills the
+    drummer chooses from.
+    """
     name: str
     kicks: tuple
     snares: tuple
@@ -39,6 +44,9 @@ class DrumStyle:
     ghost_steps: tuple
     snare_lag_ms: float
     shaker_in_full: bool
+    extras: tuple = ()
+    looseness: float = 1.0
+    fills: tuple = ("roll", "drop", "skip")
 
 
 STYLES = {s.name: s for s in (
@@ -54,10 +62,22 @@ STYLES = {s.name: s for s in (
     DrumStyle("brushy", kicks=((0, 10), (0, 7, 10)), snares=((4, 12),),
               hat_velocity=(0.0, 0.0, 0.55, 0.0), odd_hat_rate=0.0,
               ghost_steps=(3, 7, 11, 15), snare_lag_ms=18.0, shaker_in_full=True),
+    DrumStyle("bounce", kicks=((0, 7, 10), (0, 6, 10), (0, 10, 14), (0, 3, 7, 10)), snares=((4, 12),),
+              hat_velocity=(0.55, 0.2, 0.75, 0.3), odd_hat_rate=0.5,
+              ghost_steps=(7, 11, 15), snare_lag_ms=6.0, shaker_in_full=True,
+              extras=(("snap", (4, 12), 0.62),)),
+    DrumStyle("jam", kicks=((0, 10), (0, 7, 10), (0, 9), (0, 10, 15)), snares=((4, 12),),
+              hat_velocity=(0.0, 0.0, 0.0, 0.0), odd_hat_rate=0.0,
+              ghost_steps=(2, 7, 10, 15), snare_lag_ms=22.0, shaker_in_full=False,
+              extras=(("swish", (0, 4, 8, 12), 0.4),), looseness=1.8),
+    DrumStyle("pulse", kicks=((0,), (0, 10)), snares=((8,),),
+              hat_velocity=(0.0, 0.0, 0.0, 0.0), odd_hat_rate=0.0,
+              ghost_steps=(), snare_lag_ms=20.0, shaker_in_full=False,
+              extras=(("swish", (0, 8), 0.4),), looseness=1.4, fills=("roll", "drop")),
 )}
 
 _FEEL_MS = {"kick": (0.0, 3.0), "snare": (None, 4.0), "rim": (None, 4.0), "hat": (2.0, 5.0),
-            "ohat": (2.0, 5.0), "shaker": (4.0, 6.0)}
+            "ohat": (2.0, 5.0), "shaker": (4.0, 6.0), "snap": (None, 3.0), "swish": (-12.0, 8.0)}
 
 
 def style_named(name):
@@ -93,6 +113,8 @@ def bar_pattern(style, intensity, fill, rng):
                 hits = [h for h in hits if not (h[0] == 14 and h[1] == "hat")] + [(14, "ohat", 0.5)]
             if style.shaker_in_full:
                 hits.extend((s, "shaker", (0.26, 0.12, 0.32, 0.14)[s % 4]) for s in range(STEPS_PER_BAR))
+        for voice, steps, velocity in style.extras:
+            hits.extend((s, voice, velocity) for s in steps)
     return _apply_fill(hits, fill, intensity)
 
 
@@ -115,7 +137,7 @@ def humanise(bar_start_beat, pattern, style, swing, rng):
     for step, voice, velocity in sorted(pattern, key=lambda h: (h[0], VOICES.index(h[1]))):
         mean_ms, sigma_ms = _FEEL_MS[voice]
         mean = style.snare_lag_ms if mean_ms is None else mean_ms
-        offset = (mean + sigma_ms * float(rng.standard_normal())) / 1000.0
+        offset = (mean + sigma_ms * style.looseness * float(rng.standard_normal())) / 1000.0
         level = min(1.0, max(0.05, velocity * (1.0 + 0.08 * float(rng.standard_normal()))))
         hits.append(DrumHit(bar_start_beat + swung_beat(step, swing), offset, voice, level))
     return hits

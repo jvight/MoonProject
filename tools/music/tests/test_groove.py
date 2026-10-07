@@ -35,6 +35,26 @@ class PatternTests(unittest.TestCase):
                 self.assertEqual(snares, set(style.snares[0]), style.name)
                 self.assertIn((0, "kick", 1.0), pattern)
 
+    def test_extra_layers_join_light_and_full_bars_only(self):
+        gen = np.random.default_rng(4711)
+        snaps = {s for s, v, _ in bar_pattern(STYLES["bounce"], "full", None, gen) if v == "snap"}
+        self.assertEqual(snaps, {4, 12})
+        swishes = {s for s, v, _ in bar_pattern(STYLES["jam"], "light", None, gen) if v == "swish"}
+        self.assertEqual(swishes, {0, 4, 8, 12})
+        sparse = bar_pattern(STYLES["jam"], "sparse", None, gen)
+        self.assertFalse([h for h in sparse if h[1] == "swish"])
+
+    def test_a_looser_drummer_spreads_wider(self):
+        def spread(style_name):
+            style = STYLES[style_name]
+            gen = np.random.default_rng(2718)
+            offsets = []
+            for bar in range(64):
+                hits = humanise(4.0 * bar, bar_pattern(style, "light", None, gen), style, 0.6, gen)
+                offsets.extend(h.offset_s for h in hits if h.voice == "kick")
+            return float(np.std(offsets))
+        self.assertGreater(spread("jam"), 1.5 * spread("laidback"))
+
     def test_drop_fill_empties_the_second_half(self):
         pattern = bar_pattern(STYLES["boombap"], "full", "drop", np.random.default_rng(78539))
         late = [(s, v) for s, v, _ in pattern if s >= 8]

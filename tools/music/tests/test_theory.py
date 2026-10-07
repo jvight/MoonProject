@@ -46,6 +46,15 @@ class ChordTests(unittest.TestCase):
         self.assertEqual(chord.bass, F_SHARP)
         self.assertEqual(chord.tones, {D, F_SHARP, A, B, E})
 
+    def test_fixed_chords_keep_their_colour_and_draw_nothing(self):
+        chord = parse_chord("I:6/9=", D_MAJOR)
+        self.assertTrue(chord.fixed)
+        self.assertEqual(chord.symbol, "D6/9")
+        gen = np.random.default_rng(1618)
+        for _ in range(16):
+            self.assertIs(substitute(chord, D_MAJOR, gen, 1.0), chord)
+        self.assertEqual(gen.random(), np.random.default_rng(1618).random())
+
     def test_borrowed_flag_must_match_the_notes(self):
         borrowed = parse_chord("iv:m6!", D_MAJOR)
         self.assertEqual(borrowed.out_of_key(D_MAJOR), {B_FLAT})
