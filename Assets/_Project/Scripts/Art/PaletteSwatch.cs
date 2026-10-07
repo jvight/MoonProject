@@ -31,5 +31,6 @@ namespace MoonProject.Art
         Enamel = 21,
         LampGlass = 22,
         EyeGlass = 23,
+        Wood = 24,
     }
 }
