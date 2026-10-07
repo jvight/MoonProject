@@ -6,7 +6,8 @@ namespace MoonProject.Gameplay
 {
     /// <summary>
     /// Bell once she is awake (docs/features/M3-05 beats 4-6), as a pure state machine: senses in, a pose out. Right
-    /// after her repair she does a little two-step, then waddles off home on her own. At home she listens: she sways
+    /// after her repair she does a little two-step, then waddles off home on her own (tucking her legs as she hops
+    /// down a step). At home she listens: she sways
     /// and now and then taps a foot while music plays, turns her dial to watch 07 park, and her needle rests on the
     /// station's detent. While 07 is away, or after 07 has sat still near home for a long while, she dozes: her dial
     /// dims to a low ember, the needle rests and her knees give a little. Any movement of 07 near home, a new relic or
@@ -161,6 +162,12 @@ namespace MoonProject.Gameplay
             }
 
             Waddle(ref pose);
+            float tuck = _bell.HopTuck * Ease.Hump(senses.Hop);
+            for (int leg = 0; leg < BellPose.Legs; leg++)
+            {
+                pose.AddLeg(leg, 0f, tuck);
+            }
+
             if (IsHome)
             {
                 PoseAtHome(senses, ref pose);

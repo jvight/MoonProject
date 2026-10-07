@@ -77,6 +77,12 @@ namespace MoonProject.Gameplay.Tests
             return new TestWorld((x, z) => Mathf.Abs(x) < 1.25f && z > -150f && z < WallGap ? 10f : 0f);
         }
 
+        /// <summary>Flat floor 2.5 m high west of x = 10 with a sheer step down to 0 east of it.</summary>
+        public static TestWorld WithStep()
+        {
+            return new TestWorld((x, z) => x < 10f ? 2.5f : 0f);
+        }
+
         public Rect PlayableArea { get; }
 
         public Vector3 BasePosition => new Vector3(0f, _height(0f, 0f), 0f);

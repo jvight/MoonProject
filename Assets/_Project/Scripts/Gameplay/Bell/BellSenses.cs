@@ -24,6 +24,9 @@ namespace MoonProject.Gameplay
         /// <summary>Metres she walked this frame on her way home.</summary>
         public float Walked { get; set; }
 
+        /// <summary>0..1 through a hop down a step on her way (0 while walking).</summary>
+        public float Hop { get; set; }
+
         public Vector3 Rover { get; set; }
 
         /// <summary>07's horizontal speed (m/s).</summary>

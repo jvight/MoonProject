@@ -70,6 +70,9 @@ namespace MoonProject.Gameplay
         [Tooltip("Seconds (time constant) to turn toward where she walks or looks.")]
         [Range(0.05f, 3f)] [SerializeField] private float _turnEase = 0.45f;
 
+        [Tooltip("Knee tuck (degrees) at the top of a hop down a step.")]
+        [Range(0f, 60f)] [SerializeField] private float _hopTuck = 28f;
+
         [Tooltip("Motor effort (Core RotorSpeed scale) while walking, for her leg taps.")]
         [Range(0f, 1f)] [SerializeField] private float _walkMotor = 0.6f;
 
@@ -263,6 +266,7 @@ namespace MoonProject.Gameplay
         public float WaddleRoll => _waddleRoll;
         public float WaddleBob => _waddleBob;
         public float TurnEase => _turnEase;
+        public float HopTuck => _hopTuck;
         public float WalkMotor => _walkMotor;
         public float BelowStep => _belowStep;
         public float SwayRate => _swayRate;

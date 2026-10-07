@@ -222,6 +222,7 @@ namespace MoonProject.Gameplay
                 HomeYaw = _home.eulerAngles.y,
                 AtHome = home,
                 Walked = walked,
+                Hop = _walk != null ? _walk.Hop : 0f,
                 Rover = _rover.Position,
                 RoverSpeed = _rover.Speed,
                 Channel = _radio.Channel,

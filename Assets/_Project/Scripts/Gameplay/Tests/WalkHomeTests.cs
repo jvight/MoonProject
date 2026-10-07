@@ -113,6 +113,49 @@ namespace MoonProject.Gameplay.Tests
             Assert.Less(seen.Position.z, 100f, "it walks on");
         }
 
+        [Test]
+        public void WalkHome_IsSetDownWhenTheTerrainHidesItAndItsHome()
+        {
+            TestWorld world = TestWorld.WithWall();
+            var rover = new Vector3(-15f, 0f, 0f);
+            var camera = new Vector3(-20f, 3f, 0f);
+            var view = new ViewFrustum(camera, Quaternion.LookRotation(Vector3.right), 60f, 16f / 9f);
+            Assert.IsTrue(view.Sees(new Vector3(60f, 1.2f, 0f), 1.2f), "on screen, but behind the wall");
+
+            var hidden = new WalkHome(new Vector3(60f, 0f, 0f), new[] { new Vector3(80f, 0f, -50f) });
+            hidden.Step(Frame, world, view, rover, _tuning);
+            Assert.IsTrue(hidden.PlacedUnseen, "the wall hides her and her home");
+
+            var homeInSight = new WalkHome(new Vector3(60f, 0f, 0f), new[] { new Vector3(-5f, 0f, 5f) });
+            homeInSight.Step(Frame, world, view, rover, _tuning);
+            Assert.IsFalse(homeInSight.IsHome, "her home is in plain sight on this side of the wall");
+        }
+
+        [Test]
+        public void WalkHome_HopsGentlyDownAStep_NeverDroppingInAFrame()
+        {
+            TestWorld world = TestWorld.WithStep();
+            var route = new[] { new Vector3(20f, 0f, 0f) };
+            var walk = new WalkHome(new Vector3(0f, 2.5f, 0f), route);
+            var rover = new Vector3(5f, 0f, -6f);
+            ViewFrustum view = Watching(rover);
+            float previous = walk.Position.y;
+            float steepest = 0f;
+            bool hopped = false;
+            for (int frame = 0; frame < 2000 && !walk.IsHome; frame++)
+            {
+                walk.Step(Frame, world, view, rover, _tuning);
+                steepest = Mathf.Max(steepest, Mathf.Abs(walk.Position.y - previous));
+                hopped |= walk.Hop > 0f;
+                previous = walk.Position.y;
+            }
+
+            Assert.IsTrue(walk.IsHome, "watched, she walks all the way");
+            Assert.IsFalse(walk.PlacedUnseen);
+            Assert.IsTrue(hopped, "a step too steep to walk is hopped");
+            Assert.Less(steepest, 0.15f, "an eased hop: no frame drops her far");
+        }
+
         private static ViewFrustum Watching(Vector3 rover)
         {
             Vector3 camera = rover + new Vector3(0f, 3f, -8f);
