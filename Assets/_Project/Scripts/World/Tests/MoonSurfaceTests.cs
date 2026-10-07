@@ -130,7 +130,7 @@ namespace MoonProject.World.Tests
             {
                 for (float x = -_surface.DrivableRadius; x <= _surface.DrivableRadius; x += 5f)
                 {
-                    if (x * x + z * z <= _surface.DrivableRadius * _surface.DrivableRadius)
+                    if (x * x + z * z <= _surface.DrivableRadius * _surface.DrivableRadius && _surface.IsDrivable(x, z))
                     {
                         highestFloor = Mathf.Max(highestFloor, _surface.SampleHeight(x, z));
                     }

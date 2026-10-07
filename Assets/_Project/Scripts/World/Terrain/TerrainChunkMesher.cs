@@ -135,7 +135,8 @@ namespace MoonProject.World
             SurfaceSample r1 = regions[i1];
             SurfaceSample r2 = regions[i2];
             var region = new SurfaceSample(0f, (r0.CraterBowl + r1.CraterBowl + r2.CraterBowl) / 3f,
-                (r0.CraterRim + r1.CraterRim + r2.CraterRim) / 3f, (r0.RimZone + r1.RimZone + r2.RimZone) / 3f);
+                (r0.CraterRim + r1.CraterRim + r2.CraterRim) / 3f, (r0.RimZone + r1.RimZone + r2.RimZone) / 3f,
+                (r0.CanyonFloor + r1.CanyonFloor + r2.CanyonFloor) / 3f, (r0.Chasm + r1.Chasm + r2.Chasm) / 3f);
             Vector3 ground = (groundNormals[i0] + groundNormals[i1] + groundNormals[i2]).normalized;
             Vector2 uv = Palette.Uv(_painter.Pick(normal, ground, (p0 + p1 + p2) / 3f, region, hash));
 
@@ -240,7 +241,9 @@ namespace MoonProject.World
             region = new SurfaceSample(position.y,
                 Mathf.Lerp(region.CraterBowl, nextRegion.CraterBowl, t),
                 Mathf.Lerp(region.CraterRim, nextRegion.CraterRim, t),
-                Mathf.Lerp(region.RimZone, nextRegion.RimZone, t));
+                Mathf.Lerp(region.RimZone, nextRegion.RimZone, t),
+                Mathf.Lerp(region.CanyonFloor, nextRegion.CanyonFloor, t),
+                Mathf.Lerp(region.Chasm, nextRegion.Chasm, t));
         }
 
         private void Anchor(float line, int k, float anchorCell, float fineCell, bool vertical, out Vector3 position,

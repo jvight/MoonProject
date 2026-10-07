@@ -99,6 +99,16 @@ namespace MoonProject.World
         [Range(0f, 0.2f)]
         [SerializeField] private float _dither = 0.02f;
 
+        [Header("Whispering Canyon")]
+        [Tooltip("Canyon floor tone above which a face is mid dust instead of shadow dust. The canyon is cooler and " +
+            "darker than the basin: no light dust inside.")]
+        [Range(-1f, 1f)]
+        [SerializeField] private float _canyonMidTone = 0.05f;
+
+        [Tooltip("Chasm weight above which the trough is charcoal: it reads deep through darkness, not depth.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _chasmDark = 0.5f;
+
         [Header("Craters and highlands")]
         [Tooltip("Crater bowl weight (0 = edge, 1 = centre) where the shaded crater wall starts.")]
         [Range(0f, 1f)]
@@ -136,6 +146,8 @@ namespace MoonProject.World
         public float ShadowTone => _shadowTone;
         public float LeeTilt => _leeTilt;
         public float Dither => _dither;
+        public float CanyonMidTone => _canyonMidTone;
+        public float ChasmDark => _chasmDark;
         public float CraterShadow => _craterShadow;
         public float CraterFloor => _craterFloor;
         public float CraterHighlight => _craterHighlight;

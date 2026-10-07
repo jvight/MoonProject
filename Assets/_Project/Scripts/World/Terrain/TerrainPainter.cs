@@ -6,7 +6,8 @@ namespace MoonProject.World
 {
     /// <summary>
     /// Picks the palette swatch of one terrain triangle. Rock on steep faces and the rim, two-toned per face by
-    /// steepness, height, patches and facing; shaded crater walls and lit crater rims; and floor dust toned only by
+    /// steepness, height, patches and facing; a charcoal chasm and cooler, darker Whispering Canyon floors; shaded
+    /// crater walls and lit crater rims; and floor dust toned only by
     /// low-frequency patches and the smoothed tilt of the ground toward the earthlight, so colour changes come in
     /// patches and dune sides, never as isolated facets (design ruling 9). Immutable and thread-safe.
     /// </summary>
@@ -73,6 +74,23 @@ namespace MoonProject.World
                 return rock > 0f ? PaletteSwatch.RockLight : PaletteSwatch.RockDark;
             }
 
+            float detail = _detailPatchNoise.Fractal(center.x * _invDetailPatchWavelength,
+                center.z * _invDetailPatchWavelength, 2, 2f, 0.5f);
+            float facing = groundNormal.x * _lightX + groundNormal.z * _lightZ;
+            float smoothTone = patch * _settings.PatchStrength + detail * _settings.DetailPatchStrength
+                + facing * _settings.FacingStrength;
+            float tone = smoothTone + nudge * _settings.Dither;
+            if (region.Chasm > _settings.ChasmDark)
+            {
+                return PaletteSwatch.Charcoal;
+            }
+
+            // Two swatches only a step apart: dithering them would checker the big canyon triangles.
+            if (region.CanyonFloor > 0.5f)
+            {
+                return smoothTone > _settings.CanyonMidTone ? PaletteSwatch.DustMid : PaletteSwatch.DustShadow;
+            }
+
             if (region.CraterBowl > _settings.CraterShadow && region.CraterBowl < _settings.CraterFloor)
             {
                 return PaletteSwatch.DustShadow;
@@ -88,11 +106,6 @@ namespace MoonProject.World
                 return PaletteSwatch.DustShadow;
             }
 
-            float detail = _detailPatchNoise.Fractal(center.x * _invDetailPatchWavelength,
-                center.z * _invDetailPatchWavelength, 2, 2f, 0.5f);
-            float facing = groundNormal.x * _lightX + groundNormal.z * _lightZ;
-            float tone = patch * _settings.PatchStrength + detail * _settings.DetailPatchStrength
-                + facing * _settings.FacingStrength + nudge * _settings.Dither;
             if (tone > _settings.LightTone)
             {
                 return PaletteSwatch.DustLight;
