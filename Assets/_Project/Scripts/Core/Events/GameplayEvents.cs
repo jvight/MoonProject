@@ -175,4 +175,77 @@ namespace MoonProject.Core.Events
 
         public float Radius { get; }
     }
+
+    /// <summary>07 picked up a cassette tape (a new radio track and Ro's liner note).</summary>
+    public readonly struct CassetteCollected
+    {
+        public CassetteCollected(string cassetteId, Vector3 position, int collected, int total)
+        {
+            CassetteId = cassetteId;
+            Position = position;
+            Collected = collected;
+            Total = total;
+        }
+
+        public string CassetteId { get; }
+
+        public Vector3 Position { get; }
+
+        /// <summary>Tapes owned after this one.</summary>
+        public int Collected { get; }
+
+        /// <summary>Tapes in the whole game.</summary>
+        public int Total { get; }
+    }
+
+    /// <summary>
+    /// Something <see cref="IRadioProgram"/> reports changed (dial turned, tape chosen or collected, dial unlocked,
+    /// save loaded). Listeners re-read the program; the event carries no data so it can never disagree with it.
+    /// </summary>
+    public readonly struct RadioProgramChanged
+    {
+    }
+
+    /// <summary>07 opened a crew log (a cache or a friend's repair): the UI shows its card.</summary>
+    public readonly struct CrewLogFound
+    {
+        public CrewLogFound(string logId, Vector3 position)
+        {
+            LogId = logId;
+            Position = position;
+        }
+
+        /// <summary>Localization key suffix: the card reads <c>log.&lt;id&gt;</c>.</summary>
+        public string LogId { get; }
+
+        public Vector3 Position { get; }
+    }
+
+    /// <summary>Bell started pointing at something undiscovered (a warm pillar stands at the target).</summary>
+    public readonly struct BellSignalPicked
+    {
+        public BellSignalPicked(BellSignalTarget target, Vector3 position)
+        {
+            Target = target;
+            Position = position;
+        }
+
+        public BellSignalTarget Target { get; }
+
+        public Vector3 Position { get; }
+    }
+
+    /// <summary>The thing Bell pointed at was found; its pillar fades.</summary>
+    public readonly struct BellSignalFound
+    {
+        public BellSignalFound(BellSignalTarget target, Vector3 position)
+        {
+            Target = target;
+            Position = position;
+        }
+
+        public BellSignalTarget Target { get; }
+
+        public Vector3 Position { get; }
+    }
 }

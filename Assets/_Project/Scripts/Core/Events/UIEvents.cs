@@ -70,6 +70,29 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
+    /// A line for the radio ticker along the bottom of the HUD (docs/features/M3-05 "The ticker"). Any domain may
+    /// publish it; the UI localizes <see cref="Key"/>, formats <see cref="Argument"/> into its {0} and queues it.
+    /// </summary>
+    public readonly struct TickerLine
+    {
+        public TickerLine(string key, string argument)
+        {
+            Key = key;
+            Argument = argument;
+        }
+
+        public TickerLine(string key)
+            : this(key, string.Empty)
+        {
+        }
+
+        public string Key { get; }
+
+        /// <summary>Text for the line's {0} placeholder (e.g. a bearing); empty when the line has none.</summary>
+        public string Argument { get; }
+    }
+
+    /// <summary>
     /// A UI moment worth a sound. Published by the UI at the moment it happens; carries no position (2D).
     /// </summary>
     public readonly struct UiCue
