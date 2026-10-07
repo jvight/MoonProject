@@ -10,38 +10,31 @@ using MoonProject.Core.Save;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// The outpost's lost machines (docs/features/M3-02-friends-tilly.md). Each friend lies broken at a planned site
-    /// with its missing parts scattered around, glinting amber. Driving through a part draws it in like scrap (softer)
-    /// and lights a lamp on the friend (<see cref="FriendPartCollected"/>). With every part gathered, holding Interact
-    /// near it starts a calm repair that always plays out: 07 holds still while its beam stitches the friend, which
-    /// shivers, flickers awake, spins up its rotors, wobbles into the air and looks at 07
-    /// (<see cref="FriendRepairStarted"/>, then <see cref="FriendRepaired"/>, then a save). Awake friends live at the
-    /// base, come along on trips, greet 07 coming home and use their gift (the spotter). Also the spotter's view of the
-    /// world (<see cref="ISpotTargets"/>), Core's <see cref="IFriendRoster"/> (live state for audio, UI and rover) and
-    /// the UI's <see cref="IFriendStatuses"/> (parts and repair readiness).
+    /// The outpost's lost machines (docs/features/M3-02-friends-tilly.md, M3-05). Each friend lies broken at its site
+    /// (planned on the basin floor, or at the World's anchors) with its missing parts around it, glinting amber.
+    /// Driving through a part draws it in like scrap (softer) and lights a lamp on the friend
+    /// (<see cref="FriendPartCollected"/>); an item its repair also needs (Bell's cassette) lights the next lamp as
+    /// soon as 07 holds it (<see cref="IHeldItems"/>). With everything gathered, holding Interact near it starts a
+    /// calm repair that always plays out: 07 holds still while its beam reaches the friend
+    /// (<see cref="FriendRepairStarted"/>), the friend's body plays its own beat, and once it is up
+    /// <see cref="FriendRepaired"/>, its gift and a save follow. Awake friends live at the base and greet 07 coming
+    /// home (the first homecoming of a friend that announces it also puts a <see cref="TickerLine"/> on the radio).
+    /// How each one looks and moves is its body's (<see cref="IFriendBody"/>: Tilly a <see cref="DroneBody"/>, Bell a
+    /// <see cref="RadioCabinetBody"/>). Gifts: Tilly's spotter (this is its <see cref="ISpotTargets"/>), and Bell's
+    /// radio dial (parked in front of her at home, Interact turns it one detent; a new relic makes her crackle). Also
+    /// Core's <see cref="IFriendRoster"/> and the UI's <see cref="IFriendStatuses"/>.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class FriendField : MonoBehaviour, ISpotTargets, IFriendRoster, IFriendStatuses
     {
-        /// <summary>Rotor effort while hovering in place (Core's IFriendState.RotorSpeed scale).</summary>
-        private const float HoverEffort = 0.4f;
-
         /// <summary>Points along the stitching beam.</summary>
         private const int BeamPoints = 16;
 
         /// <summary>Scrap pieces this close (m) to a spotted one count as the same cluster.</summary>
         private const float ScrapClusterRadius = 4f;
 
-        // Shiver frequencies (radians per second) on two axes: unrelated, so it reads as a shudder, not a wobble.
-        private const float ShiverPitchRate = 37f;
-        private const float ShiverRollRate = 29f;
-        private const float WobbleRate = 9f;
-
         /// <summary>Seconds (time constant) for the stitching beam to brighten and fade.</summary>
         private const float BeamEase = 0.15f;
-
-        /// <summary>Visibility below which a fading friend is hidden instead of scaled to a speck.</summary>
-        private const float MinVisible = 0.01f;
 
         private const float BeamWidth = 0.06f;
 
@@ -54,11 +47,11 @@ namespace MoonProject.Gameplay
         /// <summary>A part spins this many times faster in flight than at rest.</summary>
         private const float PartFlightSpin = 4f;
 
-        /// <summary>The roll of the lift-off wobble is this share of its pitch.</summary>
-        private const float WobbleRoll = 0.5f;
-
         /// <summary>The stitch's up-and-down sweep is this share of its sideways sweep, at twice the rate.</summary>
         private const float StitchLift = 0.5f;
+
+        /// <summary>Seeds a radio cabinet's life (foot tap timing) apart from its friend index.</summary>
+        private const int CabinetSeed = 0x6E11;
 
         [Tooltip("Every friend (Assets/_Project/Data/Content/FriendCatalog.asset).")]
         [SerializeField] private FriendCatalog _catalog;
@@ -66,8 +59,11 @@ namespace MoonProject.Gameplay
         [Tooltip("Friend tuning (Assets/_Project/Data/Tuning/Gameplay/FriendTuning.asset).")]
         [SerializeField] private FriendTuning _tuning;
 
-        [Tooltip("Each friend's home socket on the lander (FriendSocket_<id>), in catalog order.")]
-        [SerializeField] private Transform[] _perches = Array.Empty<Transform>();
+        [Tooltip("Bell's tuning (Assets/_Project/Data/Tuning/Gameplay/BellTuning.asset), for radio cabinets.")]
+        [SerializeField] private BellTuning _bellTuning;
+
+        [Tooltip("Each friend's home socket at the base (FriendSocket_<id>, BellCorner), in catalog order.")]
+        [SerializeField] private Transform[] _homes = Array.Empty<Transform>();
 
         private readonly List<Friend> _friends = new List<Friend>();
         private EventBus _events;
@@ -77,21 +73,24 @@ namespace MoonProject.Gameplay
         private IViewCamera _view;
         private ITerrainQuery _terrain;
         private ISaveService _save;
+        private RadioProgram _radio;
+        private IHeldItems _items;
         private RelicField _relics;
         private ScrapField _scrap;
-        private HomeBase _home;
         private SonarSystem _sonar;
         private ScrapGlints _glints;
         private LineRenderer _beam;
         private GlowRenderer _beamGlow;
+        private IDisposable _relicSubscription;
+        private RadioCabinetBody _cabinet;
         private Vector3[] _beamPoints = Array.Empty<Vector3>();
-        private GlowRenderer[] _cones = Array.Empty<GlowRenderer>();
         private bool[] _spottedRelics = Array.Empty<bool>();
         private bool[] _spottedScrap = Array.Empty<bool>();
         private float _holdTime;
         private float _beamLevel;
         private bool _holding;
         private bool _gazing;
+        private bool _interactHeld;
         private bool _initialized;
 
         public int Count => _friends.Count;
@@ -102,17 +101,26 @@ namespace MoonProject.Gameplay
         /// <summary>0..1 how far Interact has been held toward starting a repair.</summary>
         public float RepairHold => _tuning != null && _tuning.RepairHold > 0f ? _holdTime / _tuning.RepairHold : 0f;
 
+        /// <summary>07 is parked in front of Bell's dial at home and could turn it now.</summary>
+        public bool CanTune { get; private set; }
+
         public FriendTuning Tuning => _tuning;
+
+        public BellTuning BellTuning => _bellTuning;
+
+        /// <summary>The friend whose gift is the radio dial (Bell), or null.</summary>
+        public Friend DialFriend { get; private set; }
 
         internal IReadOnlyList<Friend> Friends => _friends;
 
         internal ScrapGlints Glints => _glints;
 
-        internal void Wire(FriendCatalog catalog, FriendTuning tuning, Transform[] perches)
+        internal void Wire(FriendCatalog catalog, FriendTuning tuning, BellTuning bellTuning, Transform[] homes)
         {
             _catalog = catalog;
             _tuning = tuning;
-            _perches = perches;
+            _bellTuning = bellTuning;
+            _homes = homes;
         }
 
         public Friend Find(string id)
@@ -142,15 +150,23 @@ namespace MoonProject.Gameplay
         {
             Friend friend = _friends[index];
             FriendProgress progress = friend.Progress;
-            return new FriendStatus(progress.State, progress.Collected, progress.PartCount, progress.Discovered,
-                progress.CanRepair, friend.Position);
+            return new FriendStatus(progress.State, progress.Collected, progress.PartCount, progress.ItemsCollected,
+                progress.ItemCount, progress.Discovered, progress.CanRepair, friend.Position);
         }
 
-        internal bool Initialize(GameplayServices services, RelicField relics, ScrapField scrap, HomeBase home)
+        /// <summary>Where Bell's dial is when 07 could turn it now (the Tune prompt).</summary>
+        public bool TryGetDial(out Vector3 position)
+        {
+            position = CanTune ? _cabinet.Position : Vector3.zero;
+            return CanTune;
+        }
+
+        internal bool Initialize(GameplayServices services, RadioProgram radio, CassetteCatalog cassettes,
+            RelicField relics, ScrapField scrap, HomeBase home)
         {
             string problem = _catalog == null ? "FriendCatalog is not assigned."
                 : _tuning == null ? "FriendTuning is not assigned."
-                : _catalog.Validate() ?? PerchProblem();
+                : _catalog.Validate() ?? HomeProblem() ?? CabinetProblem(cassettes);
             if (problem != null)
             {
                 Debug.LogError($"{nameof(FriendField)}: {problem}", this);
@@ -165,28 +181,30 @@ namespace MoonProject.Gameplay
             _view = services.View;
             _terrain = services.Terrain;
             _save = services.Save;
+            _radio = radio ?? throw new ArgumentNullException(nameof(radio));
+            _items = radio;
             _relics = relics ?? throw new ArgumentNullException(nameof(relics));
             _scrap = scrap != null ? scrap : throw new ArgumentNullException(nameof(scrap));
-            _home = home != null ? home : throw new ArgumentNullException(nameof(home));
+            if (home == null)
+            {
+                throw new ArgumentNullException(nameof(home));
+            }
+
             _spottedRelics = new bool[relics.Relics.Count];
             _spottedScrap = new bool[scrap.Count];
 
             int partCount = 0;
             IReadOnlyList<FriendDefinition> definitions = _catalog.Friends;
-            _cones = new GlowRenderer[definitions.Count];
             for (int i = 0; i < definitions.Count; i++)
             {
-                FriendSite site = FriendSitePlanner.Plan(_terrain, services.Layout, definitions[i].Placement, _tuning,
-                    relics.Sites, definitions[i].Parts.Count);
-                if (!site.InCrater || !site.Visible)
+                Friend friend = Spawn(definitions[i], i, services, cassettes, home);
+                if (friend == null)
                 {
-                    Debug.LogWarning($"{nameof(FriendField)}: '{definitions[i].Id}' lies at the best spot found " +
-                                     $"(in a crater: {site.InCrater}, seen from the base: {site.Visible}).", this);
+                    enabled = false;
+                    return false;
                 }
 
-                _friends.Add(Spawn(definitions[i], i, site, services));
-                _cones[i] = new GlowRenderer(GlowObject.Create("SpotLight_" + definitions[i].Id, transform,
-                    services.Meshes.Cone, services.Visuals.TractorBeam));
+                _friends.Add(friend);
                 partCount += definitions[i].Parts.Count;
             }
 
@@ -195,6 +213,11 @@ namespace MoonProject.Gameplay
             _beamPoints = new Vector3[BeamPoints];
             _beam = CreateBeam(services.Visuals.TetherBeam);
             _beamGlow = new GlowRenderer(_beam);
+            if (_cabinet != null)
+            {
+                _relicSubscription = _events.Subscribe<RelicDeposited>(OnRelicDeposited);
+            }
+
             _initialized = true;
             return true;
         }
@@ -216,7 +239,7 @@ namespace MoonProject.Gameplay
             return data;
         }
 
-        /// <summary>Applies saved progress by id; awake friends come back on their perches.</summary>
+        /// <summary>Applies saved progress by id; awake friends come back at home, their gifts with them.</summary>
         internal void Restore(FriendsSaveData data)
         {
             if (data == null)
@@ -239,14 +262,16 @@ namespace MoonProject.Gameplay
                     friend.Parts[part].gameObject.SetActive(!friend.Progress.IsCollected(part));
                 }
 
-                if (friend.Progress.State == FriendState.Awake)
+                bool awake = friend.Progress.State == FriendState.Awake;
+                if (awake)
                 {
-                    SettleAtHome(friend);
+                    friend.Body.SettleAtHome(Time.time);
+                    Gift(friend);
                 }
 
-                friend.Activity = friend.Progress.State == FriendState.Awake ? FriendActivity.Home
-                    : FriendActivity.Dormant;
-                friend.RepairProgress = friend.Progress.State == FriendState.Awake ? 1f : 0f;
+                friend.Activity = friend.Body.Activity;
+                friend.RotorSpeed = friend.Body.Motor;
+                friend.RepairProgress = awake ? 1f : 0f;
             }
         }
 
@@ -341,39 +366,97 @@ namespace MoonProject.Gameplay
             }
         }
 
-        private string PerchProblem()
+        private string HomeProblem()
         {
             IReadOnlyList<FriendDefinition> friends = _catalog.Friends;
-            if (_perches.Length != friends.Count)
+            if (_homes.Length != friends.Count)
             {
-                return $"{_perches.Length} perches wired for {friends.Count} friends.";
+                return $"{_homes.Length} home sockets wired for {friends.Count} friends.";
             }
 
             for (int i = 0; i < friends.Count; i++)
             {
-                if (_perches[i] == null)
+                if (_homes[i] == null)
                 {
-                    return $"'{friends[i].Id}' has no perch ({friends[i].HomeSocket} on the lander).";
+                    return $"'{friends[i].Id}' has no home socket ({friends[i].HomeSocket}).";
                 }
             }
 
             return null;
         }
 
-        private Friend Spawn(FriendDefinition definition, int index, FriendSite site, GameplayServices services)
+        /// <summary>
+        /// The radio dial lives on a radio cabinet (and only there), which needs Bell's tuning and its tape among the
+        /// cassettes; there is one radio; a drone is placed by the planner.
+        /// </summary>
+        private string CabinetProblem(CassetteCatalog cassettes)
         {
+            if (cassettes == null)
+            {
+                return "no CassetteCatalog was handed over.";
+            }
+
+            int dials = 0;
+            foreach (FriendDefinition friend in _catalog.Friends)
+            {
+                bool dial = friend.AbilityId == FriendDefinition.RadioDialAbility;
+                bool cabinet = friend.Body == FriendBodyKind.RadioCabinet;
+                if (dial != cabinet)
+                {
+                    return $"'{friend.Id}': the radio dial and the radio cabinet body go together.";
+                }
+
+                if (!cabinet && friend.SiteRule != FriendSiteRule.Planner)
+                {
+                    return $"'{friend.Id}': a drone lies where the basin planner puts it (its seed drives its life).";
+                }
+
+                if (!cabinet)
+                {
+                    continue;
+                }
+
+                dials++;
+
+                if (_bellTuning == null)
+                {
+                    return $"'{friend.Id}' is a radio cabinet but BellTuning is not assigned.";
+                }
+
+                if (Tape(cassettes, friend.Items[0]) == null)
+                {
+                    return $"'{friend.Id}' slides in tape '{friend.Items[0]}', which is not in the cassette catalog.";
+                }
+            }
+
+            return dials > 1 ? $"{dials} friends bring the radio dial; there is one radio." : null;
+        }
+
+        private static GameObject Tape(CassetteCatalog cassettes, string id)
+        {
+            foreach (CassetteDefinition cassette in cassettes.Cassettes)
+            {
+                if (string.Equals(cassette.Id, id, StringComparison.Ordinal))
+                {
+                    return cassette.Prefab;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>Its site, parts and body; null (logged) when the World lacks an anchor it needs.</summary>
+        private Friend Spawn(FriendDefinition definition, int index, GameplayServices services,
+            CassetteCatalog cassettes, HomeBase home)
+        {
+            FriendSite site = PlanSite(definition, services);
+            if (site == null)
+            {
+                return null;
+            }
+
             var root = new GameObject("Friend_" + definition.Id).transform;
             root.SetParent(transform, false);
-            Vector3 toHome = services.Layout.BasePosition - site.Position;
-            float yaw = Mathf.Atan2(toHome.x, toHome.z) * Mathf.Rad2Deg;
-            GameObject broken = Instantiate(definition.BrokenPrefab, site.Position, Quaternion.Euler(0f, yaw, 0f),
-                root);
-            GameObject repaired = Instantiate(definition.RepairedPrefab, site.Position, Quaternion.Euler(0f, yaw, 0f),
-                root);
-            int lamps = definition.Parts.Count;
-            var brokenRig = new FriendRig(broken, lamps);
-            var repairedRig = new FriendRig(repaired, lamps) { Visible = false };
-
             var parts = new Transform[definition.Parts.Count];
             for (int p = 0; p < parts.Length; p++)
             {
@@ -383,9 +466,98 @@ namespace MoonProject.Gameplay
                 parts[p] = piece.transform;
             }
 
+            var progress = new FriendProgress(definition.Id, definition.Parts.Count, definition.Items.Count);
+            IFriendBody body;
+            if (definition.Body == FriendBodyKind.Drone)
+            {
+                body = SpawnDrone(definition, index, site, root, services, home);
+            }
+            else
+            {
+                body = SpawnCabinet(definition, index, site, root, services, progress, cassettes);
+                if (body == null)
+                {
+                    return null;
+                }
+            }
+
+            var friend = new Friend(definition, index, site, progress, parts, _homes[index], body);
+            if (definition.AbilityId == FriendDefinition.RadioDialAbility)
+            {
+                DialFriend = friend;
+            }
+
+            return friend;
+        }
+
+        private FriendSite PlanSite(FriendDefinition definition, GameplayServices services)
+        {
+            if (definition.SiteRule == FriendSiteRule.Anchors)
+            {
+                FriendSite anchored = FriendAnchorPlanner.Plan(services.Anchors, _terrain, definition.Anchors,
+                    definition.Parts.Count, out string problem);
+                if (anchored == null)
+                {
+                    Debug.LogError($"{nameof(FriendField)}: '{definition.Id}' cannot be placed: {problem} " +
+                                   "(world anchors contract).", this);
+                }
+
+                return anchored;
+            }
+
+            FriendSite site = FriendSitePlanner.Plan(_terrain, services.Layout, definition.Placement, _tuning,
+                _relics.Sites, definition.Parts.Count);
+            if (!site.InCrater || !site.Visible)
+            {
+                Debug.LogWarning($"{nameof(FriendField)}: '{definition.Id}' lies at the best spot found " +
+                                 $"(in a crater: {site.InCrater}, seen from the base: {site.Visible}).", this);
+            }
+
+            return site;
+        }
+
+        private DroneBody SpawnDrone(FriendDefinition definition, int index, FriendSite site, Transform root,
+            GameplayServices services, HomeBase home)
+        {
+            Quaternion facing = Quaternion.LookRotation(site.Facing);
+            GameObject broken = Instantiate(definition.BrokenPrefab, site.Position, facing, root);
+            GameObject repaired = Instantiate(definition.RepairedPrefab, site.Position, facing, root);
+            int lamps = definition.Parts.Count + definition.Items.Count;
+            var brokenRig = new FriendRig(broken, lamps);
+            var repairedRig = new FriendRig(repaired, lamps) { Visible = false };
+            var cone = new GlowRenderer(GlowObject.Create("SpotLight_" + definition.Id, transform,
+                services.Meshes.Cone, services.Visuals.TractorBeam));
             var behaviour = new FriendBehaviour(_tuning, _terrain, this, definition.Placement.Seed + index);
-            return new Friend(definition, index, site, brokenRig, repairedRig, parts, _perches[index], behaviour,
-                RepairSequence.For(definition, _tuning));
+            return new DroneBody(_tuning, _terrain, _rover, _view, home, _homes[index], brokenRig, repairedRig,
+                behaviour, RepairSequence.For(definition, _tuning), cone, site.Position, index);
+        }
+
+        private RadioCabinetBody SpawnCabinet(FriendDefinition definition, int index, FriendSite site,
+            Transform root, GameplayServices services, FriendProgress progress, CassetteCatalog cassettes)
+        {
+            Vector3[] wayHome = { _homes[index].position };
+            if (definition.SiteRule == FriendSiteRule.Anchors)
+            {
+                wayHome = FriendAnchorPlanner.WayHome(services.Anchors, _terrain, definition.Anchors,
+                    _homes[index].position, _bellTuning.BelowStep, out string problem);
+                if (wayHome == null)
+                {
+                    Debug.LogError($"{nameof(FriendField)}: '{definition.Id}' has no way home: {problem} " +
+                                   "(world anchors contract).", this);
+                    return null;
+                }
+            }
+
+            int lamps = definition.Parts.Count + definition.Items.Count;
+            var broken = new BellRig(Instantiate(definition.BrokenPrefab, root), lamps);
+            var repaired = new BellRig(Instantiate(definition.RepairedPrefab, root), lamps);
+            GameObject tape = Instantiate(Tape(cassettes, definition.Items[0]), root);
+            tape.name = "Tape_" + definition.Items[0];
+            var life = new BellLife(_bellTuning, _tuning, CabinetSeed + index);
+            _cabinet = new RadioCabinetBody(_tuning, _bellTuning, _terrain, _rover, _rig, _view, _radio, _events,
+                progress, _homes[index], broken, repaired, tape.transform,
+                BellRepairSequence.For(definition, _bellTuning), life, site, wayHome);
+            return _cabinet;
         }
 
         private LineRenderer CreateBeam(Material material)
@@ -431,12 +603,11 @@ namespace MoonProject.Gameplay
                         StepBroken(friend, now, deltaTime);
                         break;
                 }
-
-                StepCone(friend, deltaTime);
             }
 
             _glints.End();
             StepRepairInput(deltaTime);
+            StepTune(now);
             StepBeam(repairing, now, deltaTime);
             StepGaze(repairing);
         }
@@ -489,9 +660,11 @@ namespace MoonProject.Gameplay
                                    Mathf.Lerp(1f, _tuning.PartArrivalScale, Ease.InOutSine(progress));
             }
 
-            StepLamps(friend.Broken, friend, deltaTime);
-            friend.Activity = FriendActivity.Dormant;
-            friend.RotorSpeed = 0f;
+            CollectHeldItems(friend);
+            friend.Body.StepBroken(now, deltaTime);
+            StepLamps(friend, deltaTime);
+            friend.Activity = friend.Body.Activity;
+            friend.RotorSpeed = friend.Body.Motor;
             friend.RepairProgress = 0f;
             if (friend.Progress.CanRepair &&
                 SurfaceRules.HorizontalDistance(_rover.Position, friend.Site.Position) <= _tuning.RepairRadius)
@@ -511,15 +684,32 @@ namespace MoonProject.Gameplay
             }
         }
 
-        private void StepLamps(FriendRig rig, Friend friend, float deltaTime)
+        /// <summary>A required item counts as soon as 07 holds it, wherever it was found.</summary>
+        private void CollectHeldItems(Friend friend)
         {
-            int lit = friend.Progress.Collected;
-            for (int lamp = 0; lamp < friend.Progress.PartCount; lamp++)
+            IReadOnlyList<string> items = friend.Definition.Items;
+            for (int item = 0; item < items.Count; item++)
             {
-                float target = lamp < lit ? _tuning.PartLampGlow : 0f;
+                if (!friend.Progress.IsItemCollected(item) && _items.Holds(items[item]))
+                {
+                    friend.Progress.CollectItem(item);
+                }
+            }
+        }
+
+        /// <summary>Part lamps fill in order as parts arrive; each item's lamp follows its own item.</summary>
+        private void StepLamps(Friend friend, float deltaTime)
+        {
+            FriendProgress progress = friend.Progress;
+            int lit = progress.Collected;
+            int lamps = progress.PartCount + progress.ItemCount;
+            for (int lamp = 0; lamp < lamps; lamp++)
+            {
+                bool on = lamp < progress.PartCount ? lamp < lit : progress.IsItemCollected(lamp - progress.PartCount);
+                float target = on ? _tuning.PartLampGlow : 0f;
                 friend.LampLevels[lamp] = Damp.Toward(friend.LampLevels[lamp], target, _tuning.PartLampEase,
                     deltaTime);
-                rig.SetLamp(lamp, friend.LampLevels[lamp]);
+                friend.Body.SetLamp(lamp, friend.LampLevels[lamp]);
             }
         }
 
@@ -544,152 +734,97 @@ namespace MoonProject.Gameplay
             friend.Progress.MarkDiscovered();
             friend.Progress.BeginRepair();
             friend.RepairStart = Time.time;
-            friend.Swapped = false;
             SetHold(true);
             _events.Publish(new FriendRepairStarted(friend.Definition.Id));
         }
 
         private void StepRepair(Friend friend, float now, float deltaTime)
         {
-            RepairSequence sequence = friend.Sequence;
+            IFriendBody body = friend.Body;
             float t = now - friend.RepairStart;
-            friend.Activity = FriendActivity.Repairing;
-            friend.RepairProgress = Mathf.Clamp01(t / sequence.Duration);
-            friend.RotorSpeed = HoverEffort * sequence.Rotors(t);
-            if (sequence.Stitching(t))
+            body.StepRepair(t, now, deltaTime);
+            if (!body.Beaming(t))
             {
-                float shiver = _tuning.Shiver * Ease.InOutSine(sequence.StitchProgress(t));
-                friend.Broken.Root.rotation = friend.BrokenRotation * Quaternion.Euler(
-                    Mathf.Sin(now * ShiverPitchRate) * shiver, 0f, Mathf.Sin(now * ShiverRollRate) * shiver);
-                StepLamps(friend.Broken, friend, deltaTime);
-                return;
-            }
-
-            if (!friend.Swapped)
-            {
-                Swap(friend);
                 SetHold(false);
             }
 
-            float lift = sequence.Lift(t);
-            Vector3 toRover = _rover.Position - friend.Site.Position;
-            float roverYaw = Mathf.Atan2(toRover.x, toRover.z) * Mathf.Rad2Deg;
-            float yaw = Mathf.LerpAngle(friend.BrokenRotation.eulerAngles.y, roverYaw, sequence.Look(t));
-            float wobble = _tuning.LiftWobble * Ease.Hump(lift) * Mathf.Sin(now * WobbleRate);
-            Vector3 position = friend.Site.Position + Vector3.up * (_tuning.HoverHeight * lift);
-            friend.Repaired.Root.SetPositionAndRotation(position,
-                Quaternion.Euler(wobble, yaw, wobble * WobbleRoll));
-            friend.Repaired.BlendPose(lift);
-            friend.Repaired.SetEye(sequence.Eye(t));
-            friend.Repaired.SpinRotors(_tuning.RotorSpeed * sequence.Rotors(t) * deltaTime);
-            StepLamps(friend.Repaired, friend, deltaTime);
-            if (!sequence.Done(t))
+            StepLamps(friend, deltaTime);
+            friend.Activity = body.Activity;
+            friend.RotorSpeed = body.Motor;
+            friend.RepairProgress = Mathf.Clamp01(t / body.RepairDuration);
+            if (t < body.RepairDuration)
             {
                 return;
             }
 
             friend.Progress.FinishRepair();
             friend.RepairProgress = 1f;
-            friend.Repaired.BlendPose(1f);
-            friend.Motion.Teleport(position, yaw);
-            friend.RotorLevel = 1f;
-            friend.EyeLevel = 1f;
-            friend.Behaviour.Wake(Senses(friend, now));
+            body.Wake(now);
+            Gift(friend);
             _events.Publish(new FriendRepaired(friend.Definition.Id));
             _save.SaveNow();
         }
 
-        private void Swap(Friend friend)
+        /// <summary>An awake friend's gift: the radio dial appears once Bell is awake.</summary>
+        private void Gift(Friend friend)
         {
-            friend.Swapped = true;
-            friend.Repaired.Root.SetPositionAndRotation(friend.Site.Position, friend.BrokenRotation);
-            friend.Repaired.CapturePoseFrom(friend.Broken);
-            friend.Repaired.BlendPose(0f);
-            friend.Repaired.Visible = true;
-            friend.Broken.Visible = false;
-        }
-
-        private void SettleAtHome(Friend friend)
-        {
-            friend.Swapped = true;
-            friend.Broken.Visible = false;
-            friend.Repaired.Visible = true;
-            friend.Repaired.BlendPose(1f);
-            Vector3 perch = friend.Perch.position;
-            friend.Motion.Teleport(perch, friend.Perch.eulerAngles.y);
-            friend.Repaired.Root.SetPositionAndRotation(perch, friend.Motion.Rotation);
-            friend.RotorLevel = 0f;
-            friend.EyeLevel = 1f;
-            friend.Behaviour.Settle(Senses(friend, Time.time));
+            if (friend.Definition.AbilityId == FriendDefinition.RadioDialAbility)
+            {
+                _radio.UnlockDial();
+            }
         }
 
         private void StepAwake(Friend friend, float now, float deltaTime)
         {
-            FriendIntent intent = friend.Behaviour.Step(Senses(friend, now), deltaTime);
-            if (intent.Teleport)
-            {
-                friend.Motion.Teleport(intent.Target, friend.Motion.Yaw);
-            }
-
-            Vector3 target = intent.Target;
-            float floor = intent.Rotors > 0f ? _terrain.SampleHeight(target.x, target.z) + _tuning.MinClearance
-                : float.MinValue;
-            friend.Motion.Step(target, intent.Look, intent.Speed, floor, _tuning, deltaTime);
-            friend.RotorLevel = Damp.Toward(friend.RotorLevel, intent.Rotors, _tuning.RotorEase, deltaTime);
-            friend.EyeLevel = Damp.Toward(friend.EyeLevel, intent.Eye, _tuning.RotorEase, deltaTime);
-            friend.ConeLevel = Damp.Toward(friend.ConeLevel, intent.Cone, _tuning.RotorEase, deltaTime);
-            float bob = Mathf.Sin(now * 2f * Mathf.PI * _tuning.BobFrequency + friend.Index) * _tuning.Bob *
-                        friend.RotorLevel;
-            Transform root = friend.Repaired.Root;
-            root.SetPositionAndRotation(friend.Motion.Position + Vector3.up * bob, friend.Motion.Rotation);
-            bool visible = intent.Visibility > MinVisible;
-            friend.Repaired.Visible = visible;
-            root.localScale = Vector3.one * Mathf.Max(MinVisible, intent.Visibility);
-            friend.Repaired.SpinRotors(_tuning.RotorSpeed * friend.RotorLevel * deltaTime);
-            friend.Repaired.SetEye(friend.EyeLevel);
-            StepLamps(friend.Repaired, friend, deltaTime);
-
-            friend.Activity = Activity(friend.Behaviour, friend.RotorLevel);
-            float dash = Mathf.Clamp01(friend.Motion.Velocity.magnitude / Mathf.Max(0.01f, _tuning.CatchUpSpeed));
-            friend.RotorSpeed = friend.RotorLevel * Mathf.Lerp(HoverEffort, 1f, dash);
-            if (intent.Greeted)
+            FriendBeat beat = friend.Body.StepAwake(now, deltaTime);
+            StepLamps(friend, deltaTime);
+            friend.Activity = friend.Body.Activity;
+            friend.RotorSpeed = friend.Body.Motor;
+            if (beat.Greeted)
             {
                 _events.Publish(new FriendGreeted(friend.Definition.Id));
+                if (friend.Progress.Welcome())
+                {
+                    if (friend.Definition.AnnouncesHomecoming)
+                    {
+                        _events.Publish(new TickerLine(friend.HomecomingLine));
+                    }
+
+                    _save.SaveNow();
+                }
             }
 
-            if (intent.Spotted)
+            if (beat.Spotted)
             {
-                MarkSpotted(intent.Spot);
-                _events.Publish(new FriendSpotted(friend.Definition.Id, intent.Spot.Position));
+                MarkSpotted(beat.Spot);
+                _events.Publish(new FriendSpotted(friend.Definition.Id, beat.Spot.Position));
             }
         }
 
-        private void StepCone(Friend friend, float deltaTime)
+        /// <summary>Parked in front of Bell at home with her dial: a press of Interact turns it one detent.</summary>
+        private void StepTune(float now)
         {
-            GlowRenderer cone = _cones[friend.Index];
-            if (friend.Progress.State != FriendState.Awake)
+            bool held = _input.ExcavateHeld;
+            bool pressed = held && !_interactHeld;
+            _interactHeld = held;
+            CanTune = _cabinet != null && _radio.DialUnlocked && _cabinet.IsHome && RepairCandidate == null &&
+                      _rover.Speed <= _bellTuning.TuneMaxSpeed &&
+                      SurfaceRules.HorizontalDistance(_rover.Position, _cabinet.DialFront) <= _bellTuning.TuneRadius;
+            if (CanTune && pressed && _radio.TurnDial())
             {
-                friend.ConeLevel = Damp.Toward(friend.ConeLevel, 0f, _tuning.RotorEase, deltaTime);
+                _cabinet.DialTurned(now);
             }
+        }
 
-            cone.Apply(friend.ConeLevel * _tuning.SpotConeGlow);
-            if (!cone.Renderer.enabled)
-            {
-                return;
-            }
-
-            Vector3 from = friend.Repaired.Root.position;
-            float ground = _terrain.SampleHeight(from.x, from.z);
-            float length = Mathf.Max(0.1f, from.y - ground);
-            Transform host = cone.Renderer.transform;
-            host.SetPositionAndRotation(from, Quaternion.LookRotation(Vector3.down, Vector3.forward));
-            host.localScale = new Vector3(_tuning.SpotConeRadius, _tuning.SpotConeRadius, length);
+        private void OnRelicDeposited(RelicDeposited deposited)
+        {
+            _cabinet.NoticeNewRelic(Time.time);
         }
 
         private void StepBeam(Friend repairing, float now, float deltaTime)
         {
-            bool stitching = repairing != null && repairing.Sequence.Stitching(now - repairing.RepairStart);
-            _beamLevel = Damp.Toward(_beamLevel, stitching ? 1f : 0f, BeamEase, deltaTime);
+            bool beaming = repairing != null && repairing.Body.Beaming(now - repairing.RepairStart);
+            _beamLevel = Damp.Toward(_beamLevel, beaming ? 1f : 0f, BeamEase, deltaTime);
             _beamGlow.Apply(_beamLevel);
             if (!_beam.enabled || repairing == null)
             {
@@ -697,10 +832,10 @@ namespace MoonProject.Gameplay
             }
 
             Vector3 start = _rig.TetherOrigin.position;
-            Transform body = repairing.Broken.Visible ? repairing.Broken.TetherPoint : repairing.Repaired.TetherPoint;
+            Vector3 target = repairing.Body.BeamTarget;
             float phase = now * _tuning.StitchRate * 2f * Mathf.PI;
-            Vector3 across = Vector3.Cross(Vector3.up, body.position - start).normalized;
-            Vector3 end = body.position + across * (Mathf.Sin(phase) * _tuning.StitchSpread) +
+            Vector3 across = Vector3.Cross(Vector3.up, target - start).normalized;
+            Vector3 end = target + across * (Mathf.Sin(phase) * _tuning.StitchSpread) +
                           Vector3.up * (Mathf.Sin(phase * 2f) * _tuning.StitchSpread * StitchLift);
             for (int i = 0; i < BeamPoints; i++)
             {
@@ -728,39 +863,6 @@ namespace MoonProject.Gameplay
                 _rig.ClearGazeTarget(this);
                 _gazing = false;
             }
-        }
-
-        private static FriendActivity Activity(FriendBehaviour behaviour, float rotorLevel)
-        {
-            switch (behaviour.Current)
-            {
-                case FriendBehaviour.Mode.Following:
-                case FriendBehaviour.Mode.Greeting:
-                    return FriendActivity.Following;
-                case FriendBehaviour.Mode.Spotting:
-                    return FriendActivity.Spotting;
-                case FriendBehaviour.Mode.Perched:
-                    return rotorLevel < GlowRenderer.VisibleThreshold ? FriendActivity.Napping : FriendActivity.Home;
-                default:
-                    return FriendActivity.Home;
-            }
-        }
-
-        private FriendSenses Senses(Friend friend, float now)
-        {
-            return new FriendSenses
-            {
-                Now = now,
-                Position = friend.Motion.Position,
-                Rover = _rover.Position,
-                RoverForward = _rover.Rotation * Vector3.forward,
-                Camera = _view.Camera.transform.position,
-                Home = _home.LanderPosition,
-                Perch = friend.Perch.position,
-                PerchForward = friend.Perch.forward,
-                Shelf = _home.ShelfPosition,
-                ShelfForward = _home.ShelfForward,
-            };
         }
 
         private void SetHold(bool hold)
@@ -791,6 +893,7 @@ namespace MoonProject.Gameplay
 
         private void OnDestroy()
         {
+            _relicSubscription?.Dispose();
             _glints?.Dispose();
         }
 

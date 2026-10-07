@@ -31,7 +31,7 @@ namespace MoonProject.Gameplay
         private float _rotorAngle;
 
         /// <param name="root">The prefab instance.</param>
-        /// <param name="partLamps">How many PartLamp_i nodes the friend needs (its part count).</param>
+        /// <param name="partLamps">How many PartLamp_i nodes the friend needs (parts, then required items).</param>
         public FriendRig(GameObject root, int partLamps)
         {
             Root = root != null ? root.transform : throw new ArgumentNullException(nameof(root));

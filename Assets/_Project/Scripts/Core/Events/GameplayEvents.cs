@@ -248,4 +248,42 @@ namespace MoonProject.Core.Events
 
         public Vector3 Position { get; }
     }
+
+    /// <summary>
+    /// A moment of Bell's that Audio voices (other domains may react too): see <see cref="BellCued"/>.
+    /// </summary>
+    public enum BellCue
+    {
+        /// <summary>07's beam slid the tape into her slot during her repair (a tape click).</summary>
+        TapeSlotted = 0,
+
+        /// <summary>Her needle starts sweeping the band as she wakes from her repair (a station sweep).</summary>
+        NeedleSwept = 1,
+
+        /// <summary>She taps a foot to the music at home (a soft leg tap).</summary>
+        FootTapped = 2,
+
+        /// <summary>A new relic reached the shelf: her happy station-switch crackle.</summary>
+        Crackled = 3,
+
+        /// <summary>07 turned her dial one detent (a detented click; RadioProgramChanged follows).</summary>
+        DialTurned = 4,
+    }
+
+    /// <summary>
+    /// Bell did something worth a sound (docs/features/M3-05). Her jingle needs no cue of its own: its first three
+    /// notes play on FriendRepaired("bell") as she stands up, the whole jingle on FriendGreeted("bell").
+    /// </summary>
+    public readonly struct BellCued
+    {
+        public BellCued(BellCue cue, Vector3 position)
+        {
+            Cue = cue;
+            Position = position;
+        }
+
+        public BellCue Cue { get; }
+
+        public Vector3 Position { get; }
+    }
 }

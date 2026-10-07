@@ -4,25 +4,23 @@ using MoonProject.Core;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// One friend in the world (owned by <see cref="FriendField"/>): its progress and site, its broken and repaired
-    /// rigs, its part pickups, and its flight and behaviour once awake. Its live state is Core's
-    /// <see cref="IFriendState"/>, updated by the field every frame.
+    /// One friend in the world (owned by <see cref="FriendField"/>): its progress and site, its part pickups, its home
+    /// socket and its body (rigs, repair beat, awake life). Its live state is Core's <see cref="IFriendState"/>,
+    /// updated by the field every frame.
     /// </summary>
     public sealed class Friend : IFriendState
     {
-        internal Friend(FriendDefinition definition, int index, FriendSite site, FriendRig broken, FriendRig repaired,
-            Transform[] parts, Transform perch, FriendBehaviour behaviour, RepairSequence sequence)
+        internal Friend(FriendDefinition definition, int index, FriendSite site, FriendProgress progress,
+            Transform[] parts, Transform home, IFriendBody body)
         {
             Definition = definition;
             Index = index;
             Site = site;
-            Progress = new FriendProgress(definition.Id, definition.Parts.Count);
-            Broken = broken;
-            Repaired = repaired;
+            Progress = progress;
             Parts = parts;
-            Perch = perch;
-            Behaviour = behaviour;
-            Sequence = sequence;
+            Home = home;
+            Body = body;
+            HomecomingLine = "ticker." + definition.Id + ".home";
             int count = parts.Length;
             PartRest = new Vector3[count];
             PartStart = new Vector3[count];
@@ -36,8 +34,6 @@ namespace MoonProject.Gameplay
                 PartRest[i] = parts[i].position;
                 PartScale[i] = parts[i].localScale;
             }
-
-            BrokenRotation = broken.Root.rotation;
         }
 
         public FriendDefinition Definition { get; }
@@ -56,12 +52,19 @@ namespace MoonProject.Gameplay
 
         public FriendProgress Progress { get; }
 
-        /// <summary>Where it is now: its site while broken, its flight once awake.</summary>
-        public Vector3 Position => Swapped ? Repaired.Root.position : Site.Position;
+        /// <summary>Where it is now: its site while broken, its body once it is up.</summary>
+        public Vector3 Position => Body.Position;
 
-        internal FriendRig Broken { get; }
+        /// <summary>It lives at the base right now.</summary>
+        public bool IsHome => Progress.State == FriendState.Awake && Body.IsHome;
 
-        internal FriendRig Repaired { get; }
+        /// <summary>Its first-homecoming ticker key (when its definition announces one).</summary>
+        internal string HomecomingLine { get; }
+
+        internal IFriendBody Body { get; }
+
+        /// <summary>Its home socket at the base (FriendSocket_tilly on the lander, BellCorner by the tower).</summary>
+        internal Transform Home { get; }
 
         internal Transform[] Parts { get; }
 
@@ -79,28 +82,10 @@ namespace MoonProject.Gameplay
 
         internal bool[] PartSpotted { get; }
 
-        internal Transform Perch { get; }
-
-        internal FriendBehaviour Behaviour { get; }
-
-        internal FriendMotion Motion { get; } = new FriendMotion();
-
-        internal RepairSequence Sequence { get; }
-
-        internal Quaternion BrokenRotation { get; }
-
         /// <summary>Game time the repair began (meaningful while Repairing).</summary>
         internal float RepairStart { get; set; }
 
-        /// <summary>The broken rig has been swapped for the repaired one (boot-up under way or done).</summary>
-        internal bool Swapped { get; set; }
-
-        internal float RotorLevel { get; set; }
-
-        internal float EyeLevel { get; set; }
-
-        internal float ConeLevel { get; set; }
-
-        internal float[] LampLevels { get; } = new float[FriendProgress.MaxParts];
+        /// <summary>Part lamps first, then one lamp per required item.</summary>
+        internal float[] LampLevels { get; } = new float[FriendProgress.MaxParts + FriendProgress.MaxItems];
     }
 }

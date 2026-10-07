@@ -40,7 +40,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return null;
             Friend tilly = _fixture.Gameplay.Friends.Find(TillyId);
             IFriendRoster roster = _fixture.Bootstrap.Context.Get<IFriendRoster>();
-            Assert.AreEqual(1, roster.Count);
+            Assert.AreEqual(2, roster.Count, "Tilly and Bell");
             Assert.AreSame(tilly, roster.Get(0));
             Assert.AreEqual(FriendActivity.Dormant, tilly.Activity);
             float fromHome = SurfaceRules.HorizontalDistance(tilly.Site.Position, Vector3.zero);
