@@ -38,6 +38,50 @@ namespace MoonProject.World
             return (float)Math.Sqrt(x * x + softness * softness) - softness;
         }
 
+        /// <summary>
+        /// C1 ramp from 0 to 1 over [0, <paramref name="length"/>]: quadratic ease-in and ease-out of
+        /// <paramref name="ease"/> metres around a straight middle, so its steepest slope is 1 / (length - ease).
+        /// </summary>
+        public static float SmoothRamp(float x, float length, float ease)
+        {
+            if (x <= 0f)
+            {
+                return 0f;
+            }
+
+            if (x >= length)
+            {
+                return 1f;
+            }
+
+            float slope = 1f / (length - ease);
+            if (x < ease)
+            {
+                return slope * x * x / (2f * ease);
+            }
+
+            if (x > length - ease)
+            {
+                float rest = length - x;
+                return 1f - slope * rest * rest / (2f * ease);
+            }
+
+            return slope * (x - ease * 0.5f);
+        }
+
+        /// <summary>Polynomial smooth minimum (C1): rounds the crease where a and b cross within ~k.</summary>
+        public static float SmoothMin(float a, float b, float k)
+        {
+            float h = Math.Max(k - Math.Abs(a - b), 0f) / k;
+            return Math.Min(a, b) - h * h * k * 0.25f;
+        }
+
+        /// <summary>Polynomial smooth maximum (C1), the mirror of <see cref="SmoothMin"/>.</summary>
+        public static float SmoothMax(float a, float b, float k)
+        {
+            return -SmoothMin(-a, -b, k);
+        }
+
         public static float Lerp(float a, float b, float t)
         {
             return a + (b - a) * t;

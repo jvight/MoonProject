@@ -1,0 +1,220 @@
+{
+  "id": "slow_orbit",
+  "title": "Slow Orbit",
+  "bpm": 64.0,
+  "swing": 0.54,
+  "key": "D major",
+  "family": "I-vi-IV#11",
+  "drums": "pulse",
+  "ending": "loop",
+  "form": [
+    "Intro x4",
+    "A x8",
+    "B x8",
+    "A' x8",
+    "B' x8",
+    "Outro x4"
+  ],
+  "pcm_sha256": "4f89916eb19b11c973db5ad06b28dae13b82baf829183d602a7d0799238c0a3d",
+  "measured": {
+    "duration_s": 150.0,
+    "loudness_lufs": -15.9628,
+    "true_peak_dbtp": -1.3475,
+    "sample_peak_db": -1.353,
+    "rms_db": -17.378,
+    "crest_db": 16.025,
+    "centroid_hz": 897.6991,
+    "above_8k_db": -49.7803,
+    "bands": {
+      "low": 0.6031,
+      "mid": 0.3964,
+      "high": 0.0005
+    },
+    "correlation": 0.8771,
+    "correlation_below_150hz": 0.9966,
+    "clipped_samples": 0,
+    "silent_gaps": [],
+    "dc": 0.0,
+    "chroma_out_of_key": 0.0231,
+    "beat_clarity": 1.5068
+  },
+  "theory": {
+    "chord_chart": {
+      "Intro": [
+        "| Dmaj9 | Dmaj9 | Bm9 | Bm11 |"
+      ],
+      "A": [
+        "| Dmaj7 | Dmaj9 | Bm9 | Bm9 |",
+        "| Gmaj9#11 | Gmaj9#11 | Dmaj9/F# | A13 |"
+      ],
+      "B": [
+        "| Em9 | Em9 | Gmaj9 | Gmaj9 |",
+        "| Bm11 | F#m7 | Gmaj9#11 | A13sus4 |"
+      ],
+      "A'": [
+        "| D6/9 | Dmaj9 | Bm11 | Bm9 |",
+        "| Gmaj9#11 | Gmaj9#11 | Dmaj9/F# | A9sus4 |"
+      ],
+      "B'": [
+        "| Em9 | Em9 | Gmaj9 | Gmaj9 |",
+        "| Bm9 | F#m7 | Gmaj9#11 | A13sus4 |"
+      ],
+      "Outro": [
+        "| Dmaj9 | Bm9 | Gmaj9#11 | A13sus4 |"
+      ]
+    },
+    "out_of_key_notes": 0,
+    "borrowed_chords": [],
+    "lead_notes": 41,
+    "lead_non_pentatonic": 0,
+    "lead_strong_off_chord": 0,
+    "lead_clashes": 0,
+    "parts": {
+      "keys": 320,
+      "pad": 34,
+      "bass": 36,
+      "lead.theremin": 16,
+      "lead.felt": 25
+    },
+    "drum_hits": 105
+  },
+  "gates": {
+    "loudness_lufs": {
+      "value": -15.9628,
+      "pass": true
+    },
+    "true_peak_dbtp": {
+      "value": -1.3475,
+      "pass": true
+    },
+    "duration_s": {
+      "value": 150.0,
+      "pass": true
+    },
+    "clipped_samples": {
+      "value": 0,
+      "pass": true
+    },
+    "silent_gaps": {
+      "value": 0,
+      "pass": true
+    },
+    "correlation_below_150hz": {
+      "value": 0.9966,
+      "pass": true
+    },
+    "correlation": {
+      "value": 0.8771,
+      "pass": true
+    },
+    "high_band_share": {
+      "value": 0.0005,
+      "pass": true
+    },
+    "above_8k_db": {
+      "value": -49.7803,
+      "pass": true
+    },
+    "chroma_out_of_key": {
+      "value": 0.0231,
+      "pass": true
+    },
+    "beat_clarity": {
+      "value": 1.5068,
+      "pass": true
+    },
+    "tempo_error": {
+      "value": 0.0,
+      "pass": true
+    },
+    "out_of_key_notes": {
+      "value": 0,
+      "pass": true
+    },
+    "lead_non_pentatonic": {
+      "value": 0,
+      "pass": true
+    },
+    "lead_strong_off_chord": {
+      "value": 0,
+      "pass": true
+    },
+    "lead_clashes": {
+      "value": 0,
+      "pass": true
+    },
+    "seam_ratio": {
+      "value": 0.1443,
+      "pass": true
+    },
+    "seam_loudness_step_lu": {
+      "value": 0.7806,
+      "pass": true
+    }
+  },
+  "tape": "slow_orbit",
+  "notes": "The slowest tape, a lullaby: felt-piano broken chords instead of Rhodes, long chords that hold for two bars, a Lydian G (maj9#11) for the floating feel, and a wide pad that drifts left and right once every four bars like something in orbit. The A theme is sung by a soft theremin-like voice that glides between notes; the B theme by a high felt piano. The only drums are a heartbeat kick, a rim on 3 and a brush stir, and only in the middle of the tape.",
+  "instruments": {
+    "keys": "felt (rock)",
+    "leads": [
+      "theremin",
+      "felt"
+    ],
+    "drums": "pulse (+ swish)",
+    "bass": [
+      "hold"
+    ],
+    "texture": "cassette",
+    "events": []
+  },
+  "listening": {
+    "tempo_detected_bpm": 64.0,
+    "tempo_detected_clarity": 1.5068,
+    "scale": {
+      "scale": "D major",
+      "share": 0.9769,
+      "runner_up": "A major",
+      "runner_up_share": 0.947
+    },
+    "loudness": {
+      "range_lu": 2.5689,
+      "min_lufs": -18.5425,
+      "max_lufs": -14.6074,
+      "every_10s_lufs": [
+        -18.0059,
+        -17.9596,
+        -16.3342,
+        -16.54,
+        -15.4598,
+        -15.7281,
+        -15.2057,
+        -15.214,
+        -16.1389,
+        -16.699,
+        -15.4115,
+        -16.2426,
+        -14.6596,
+        -15.8487,
+        -16.75
+      ]
+    },
+    "octaves_db": {
+      "31.5": -20.2994,
+      "63": 0.0,
+      "125": -2.9019,
+      "250": -2.3121,
+      "500": -2.8572,
+      "1000": -9.7184,
+      "2000": -18.5567,
+      "4000": -25.3794,
+      "8000": -35.7081,
+      "16000": -53.726
+    },
+    "width_db": -8.209,
+    "seam": {
+      "ratio": 0.1443,
+      "jump_db": 8.1465,
+      "loudness_step_lu": 0.7806
+    }
+  }
+}

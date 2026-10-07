@@ -28,17 +28,26 @@ namespace MoonProject.World
         [Range(1f, 16f)]
         [SerializeField] private float _midCellSize = 4f;
 
-        [Tooltip("Cell size on the crest and beyond, metres: big chunky mountain facets.")]
+        [Tooltip("Cell size on the crest and just beyond, metres: big chunky mountain facets.")]
         [Range(2f, 32f)]
         [SerializeField] private float _coarseCellSize = 8f;
 
+        [Tooltip("Cell size far behind the crest, metres: never seen up close from inside the crater.")]
+        [Range(4f, 64f)]
+        [SerializeField] private float _farCellSize = 16f;
+
         [Tooltip("Chunks whose nearest point lies within this radius use fine cells. Cover everything drivable.")]
         [Range(50f, 2000f)]
-        [SerializeField] private float _fineRadius = 360f;
+        [SerializeField] private float _fineRadius = 345f;
 
         [Tooltip("Chunks whose nearest point lies within this radius (and beyond the fine radius) use mid cells.")]
         [Range(50f, 2000f)]
         [SerializeField] private float _midRadius = 420f;
+
+        [Tooltip("Chunks whose nearest point lies within this radius (and beyond the mid radius) use coarse cells; " +
+            "farther ones use far cells.")]
+        [Range(50f, 2000f)]
+        [SerializeField] private float _coarseRadius = 470f;
 
         [Tooltip("Seeded sideways wobble of every vertex, as a fraction of its cell. Gives the handmade look.")]
         [Range(0f, 0.4f)]
@@ -70,8 +79,10 @@ namespace MoonProject.World
         public float FineCellSize => _fineCellSize;
         public float MidCellSize => _midCellSize;
         public float CoarseCellSize => _coarseCellSize;
+        public float FarCellSize => _farCellSize;
         public float FineRadius => _fineRadius;
         public float MidRadius => _midRadius;
+        public float CoarseRadius => _coarseRadius;
         public float Jitter => _jitter;
         public float BackdropInnerRadius => _backdropInnerRadius;
         public float BackdropOuterRadius => _backdropOuterRadius;
@@ -87,10 +98,10 @@ namespace MoonProject.World
                 return "Grid half extent must be a whole number of chunks.";
             }
 
-            if (!IsMultiple(_chunkSize, _coarseCellSize) || !IsMultiple(_coarseCellSize, _midCellSize)
-                || !IsMultiple(_midCellSize, _fineCellSize))
+            if (!IsMultiple(_chunkSize, _farCellSize) || !IsMultiple(_farCellSize, _coarseCellSize)
+                || !IsMultiple(_coarseCellSize, _midCellSize) || !IsMultiple(_midCellSize, _fineCellSize))
             {
-                return "Cell sizes must nest: fine divides mid, mid divides coarse, coarse divides the chunk size.";
+                return "Cell sizes must nest: each tier divides the next, and the far tier divides the chunk size.";
             }
 
             if (_chunkSize / _fineCellSize > 90f)
@@ -98,9 +109,9 @@ namespace MoonProject.World
                 return "Too many fine cells per chunk: one chunk mesh must stay under 65k vertices.";
             }
 
-            if (_fineRadius > _midRadius)
+            if (_fineRadius > _midRadius || _midRadius > _coarseRadius)
             {
-                return "The fine radius must not exceed the mid radius.";
+                return "Tier radii must grow outward: fine, then mid, then coarse.";
             }
 
             if (_backdropInnerRadius > _gridHalfExtent || _backdropInnerRadius >= _backdropOuterRadius)

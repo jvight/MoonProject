@@ -7,8 +7,9 @@ namespace MoonProject.World
     /// <summary>
     /// Decides where every rock lies. Poisson-disk sites per class are thinned by a density field: seeded clusters
     /// for pebbles; for boulders a sparse scatter on the open floor, ejecta on raised crater rims and a talus band
-    /// at the foot of the rim. The base pad, the ramps and bowls, crater interiors, steep faces and the driving
-    /// lanes (base to The Peak, each play feature and a few extra bearings) are kept clear of boulders.
+    /// at the foot of the rim. The base pad, the ramps and bowls, crater interiors, steep faces, Whispering Canyon's
+    /// floors and the driving lanes (base to The Peak, each play feature, the canyon's mouth and exit, and a few extra
+    /// bearings) are kept clear of boulders; inside the canyon pebbles keep off the chasm and the centre line.
     /// Pure and deterministic for (surface, settings, seed).
     /// </summary>
     public sealed class ScatterPlanner
@@ -62,6 +63,8 @@ namespace MoonProject.World
                 }
             }
 
+            ends.Add(surface.Canyon.MainPath.PointAt(0f));
+            ends.Add(surface.Canyon.ExitFoot);
             foreach (float bearing in settings.LaneBearings ?? Array.Empty<float>())
             {
                 ends.Add(MoonSurface.BearingToDirection(bearing) * settings.ExtentRadius);
@@ -89,6 +92,13 @@ namespace MoonProject.World
                 return 0f;
             }
 
+            if (_surface.Canyon.Bounds.Contains(new Vector2(x, z))
+                && (_surface.Sample(x, z).Chasm > 0f || (_surface.Canyon.TryFloor(x, z, out bool _, out float _,
+                    out float centre) && centre < _settings.CanyonPebbleClear)))
+            {
+                return 0f;
+            }
+
             float chance = _settings.PebbleDensity * 2f * Cluster(x, z);
             if (DistanceToLanes(new Vector2(x, z)) < _settings.LaneHalfWidth)
             {
@@ -109,7 +119,7 @@ namespace MoonProject.World
             }
 
             SurfaceSample sample = _surface.Sample(x, z);
-            if (sample.CraterBowl > 0f)
+            if (sample.CraterBowl > 0f || sample.CanyonFloor > 0f)
             {
                 return 0f;
             }

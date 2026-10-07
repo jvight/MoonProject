@@ -3,12 +3,15 @@ namespace MoonProject.World
     /// <summary>Height plus the region weights the terrain painter and scatter use to tell places apart.</summary>
     public readonly struct SurfaceSample
     {
-        public SurfaceSample(float height, float craterBowl, float craterRim, float rimZone)
+        public SurfaceSample(float height, float craterBowl, float craterRim, float rimZone, float canyonFloor = 0f,
+            float chasm = 0f)
         {
             Height = height;
             CraterBowl = craterBowl;
             CraterRim = craterRim;
             RimZone = rimZone;
+            CanyonFloor = canyonFloor;
+            Chasm = chasm;
         }
 
         public float Height { get; }
@@ -21,5 +24,11 @@ namespace MoonProject.World
 
         /// <summary>0 on the basin floor, 1 on the rim crest and beyond.</summary>
         public float RimZone { get; }
+
+        /// <summary>1 on Whispering Canyon's floor (its corridors), 0 elsewhere.</summary>
+        public float CanyonFloor { get; }
+
+        /// <summary>1 in the canyon's chasm trough, 0 elsewhere.</summary>
+        public float Chasm { get; }
     }
 }

@@ -117,6 +117,28 @@ namespace MoonProject.World.Tests
         }
 
         [Test]
+        public void Canyon_KeepsItsFloorsClearOfBoulders_AndItsDrivingLineClearOfPebbles()
+        {
+            Canyon canyon = _surface.Canyon;
+            foreach (ScatterInstance rock in _plan)
+            {
+                SurfaceSample sample = _surface.Sample(rock.Position.x, rock.Position.z);
+                if (rock.Kind == ScatterKind.Boulder)
+                {
+                    Assert.AreEqual(0f, sample.CanyonFloor, $"boulder on a canyon floor at {rock.Position}");
+                    continue;
+                }
+
+                Assert.AreEqual(0f, sample.Chasm, $"pebble in the chasm at {rock.Position}");
+                if (canyon.TryFloor(rock.Position.x, rock.Position.z, out bool _, out float _, out float centre))
+                {
+                    Assert.GreaterOrEqual(centre, _settings.CanyonPebbleClear,
+                        $"pebble on the canyon's driving line at {rock.Position}");
+                }
+            }
+        }
+
+        [Test]
         public void SameClassRocks_KeepTheirPoissonSpacing()
         {
             AssertSpacing(ScatterKind.Boulder, _settings.BoulderSpacing);

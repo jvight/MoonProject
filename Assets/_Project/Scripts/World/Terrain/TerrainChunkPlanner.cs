@@ -4,11 +4,13 @@ namespace MoonProject.World
 {
     /// <summary>
     /// Lays the square chunk grid over [-extent, extent]^2 and gives each chunk a cell tier by the distance of its
-    /// nearest point to the base: fine on the drivable floor, mid on the rim wall, coarse on the crest and beyond.
+    /// nearest point to the base (fine on the drivable floor, mid on the rim wall, coarse on the crest, far beyond it),
+    /// and fine cells wherever the surface asks for them (Whispering Canyon).
     /// </summary>
     public static class TerrainChunkPlanner
     {
-        public static TerrainChunkPlan[] Plan(TerrainMeshSettings settings)
+        /// <param name="needsFine">True for chunk rectangles that must use fine cells whatever their distance.</param>
+        public static TerrainChunkPlan[] Plan(TerrainMeshSettings settings, System.Func<Rect, bool> needsFine)
         {
             float size = settings.ChunkSize;
             int count = Mathf.RoundToInt(settings.GridHalfExtent * 2f / size);
@@ -18,7 +20,11 @@ namespace MoonProject.World
             {
                 for (int column = 0; column < count; column++)
                 {
-                    cells[column, row] = CellSizeFor(start + column * size, start + row * size, size, settings);
+                    float minX = start + column * size;
+                    float minZ = start + row * size;
+                    cells[column, row] = needsFine(new Rect(minX, minZ, size, size))
+                        ? settings.FineCellSize
+                        : CellSizeFor(minX, minZ, size, settings);
                 }
             }
 
@@ -50,7 +56,12 @@ namespace MoonProject.World
                 return settings.FineCellSize;
             }
 
-            return distance < settings.MidRadius ? settings.MidCellSize : settings.CoarseCellSize;
+            if (distance < settings.MidRadius)
+            {
+                return settings.MidCellSize;
+            }
+
+            return distance < settings.CoarseRadius ? settings.CoarseCellSize : settings.FarCellSize;
         }
     }
 }

@@ -361,6 +361,42 @@
         {
             "key": "hint.tune",
             "text": "Tune"
+        },
+        {
+            "key": "radio.channel.lumen_after_dark",
+            "text": "Lumen After Dark"
+        },
+        {
+            "key": "radio.channel.tape_deck",
+            "text": "Tape Deck"
+        },
+        {
+            "key": "radio.channel.quiet_hours",
+            "text": "Quiet Hours"
+        },
+        {
+            "key": "ui.pause.cassettes",
+            "text": "Cassettes {0}/{1}"
+        },
+        {
+            "key": "ui.card.crew_log",
+            "text": "Crew log"
+        },
+        {
+            "key": "ui.card.liner_caption",
+            "text": "Ro's liner notes"
+        },
+        {
+            "key": "ui.card.tape_count",
+            "text": "{0}/{1}"
+        },
+        {
+            "key": "ui.station.radio_tower",
+            "text": "Radio Tower"
+        },
+        {
+            "key": "ui.station.workshop",
+            "text": "Kenji's Workbench"
         }
     ]
 }

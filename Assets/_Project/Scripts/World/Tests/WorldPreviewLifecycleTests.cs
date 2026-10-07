@@ -159,7 +159,8 @@ namespace MoonProject.World.Tests
             foreach (Mesh mesh in Resources.FindObjectsOfTypeAll<Mesh>())
             {
                 if (mesh.name.StartsWith(ChunkPrefix) || mesh.name.StartsWith("TerrainBackdrop") || mesh.name == "Earth"
-                    || mesh.name.StartsWith("Pebbles_") || mesh.name.StartsWith("Boulders_"))
+                    || mesh.name.StartsWith("Pebbles_") || mesh.name.StartsWith("Boulders_")
+                    || mesh.name.StartsWith("CanyonGate_"))
                 {
                     count++;
                 }
@@ -170,7 +171,8 @@ namespace MoonProject.World.Tests
 
         private static int ExpectedChunks()
         {
-            return TerrainChunkPlanner.Plan(LoadSettings().Mesh).Length;
+            WorldSettings settings = LoadSettings();
+            return TerrainChunkPlanner.Plan(settings.Mesh, settings.CreateSurface().Canyon.Touches).Length;
         }
 
         private static WorldSettings LoadSettings()

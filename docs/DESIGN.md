@@ -61,6 +61,9 @@ Each friend: a small set of idle behaviours, a greeting when 07 returns, a react
 Hover-Jump (charged leap over chasms) · Magnetic Treads (climb steep crater walls) · Cargo Cradle (carry 3 relics,
 never fall out) · Wider Sonar · Warm Headlamp (lights the shadowed crater) · Boost Coils (faster on flats, joyful).
 Every traversal upgrade must open at least one region and one visible secret near the base.
+Gates hold only while each upgrade stays inside its lane. Today 07 climbs at most ~45°. The crater rim (and so the
+canyon gate) becomes climbable at ~50°, with a ~27 m drop into the canyon terminus. So Magnetic Treads must climb
+only surfaces marked as climbable walls (the rim terraces), never raise the general slope limit.
 
 ### Station reach — the relay network (the second progression axis)
 Lumen Station was a radio-relay outpost, and the storm left its chain of relay masts dark across the moon. Restoring

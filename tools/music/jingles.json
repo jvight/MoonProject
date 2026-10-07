@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "sampleRate": 44100,
+  "jingles": [
+    {
+      "id": "bell_jingle_short",
+      "file": "Assets/_Project/Audio/Music/Jingles/bell_jingle_short.wav",
+      "notes": [
+        "D5",
+        "E5",
+        "A5"
+      ],
+      "onsets": [
+        0.0,
+        0.18,
+        0.36
+      ],
+      "duration": 1.9,
+      "loudnessLufsMomentary": -17.9934,
+      "truePeakDbtp": -12.973,
+      "sha256": "3ca39ec22ca954b91228f2391fde78a7b41fe5d9354dc8c32cec9241b3b23e72"
+    },
+    {
+      "id": "bell_jingle_full",
+      "file": "Assets/_Project/Audio/Music/Jingles/bell_jingle_full.wav",
+      "notes": [
+        "D5",
+        "E5",
+        "A5",
+        "B5",
+        "A5",
+        "F#5",
+        "D5"
+      ],
+      "onsets": [
+        0.0,
+        0.18,
+        0.36,
+        0.9,
+        1.08,
+        1.26,
+        1.44
+      ],
+      "duration": 2.95,
+      "loudnessLufsMomentary": -17.9924,
+      "truePeakDbtp": -13.3718,
+      "sha256": "63d5f14c1924a1ff8ea376cd8384f71192f64beccc6134d7604e2e9f014433fb"
+    }
+  ]
+}

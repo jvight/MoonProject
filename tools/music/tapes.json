@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "tracks": [
+    {
+      "id": "after_dark_1",
+      "tape": "after_dark_1",
+      "file": "Assets/_Project/Audio/Music/Tapes/after_dark_1.ogg",
+      "title": "Lumen After Dark, Vol. 1",
+      "bpm": 84.0,
+      "key": "D major",
+      "duration": 137.1429,
+      "loudnessLufs": -15.9805,
+      "truePeakDbtp": -1.4085,
+      "pcmSha256": "51a145a8cd2da5378e827adcc8f3f573274cefefdbc478f88d0b2c24238b99e0"
+    },
+    {
+      "id": "dust_and_honey",
+      "tape": "dust_and_honey",
+      "file": "Assets/_Project/Audio/Music/Tapes/dust_and_honey.ogg",
+      "title": "Dust & Honey",
+      "bpm": 72.0,
+      "key": "D major",
+      "duration": 146.6667,
+      "loudnessLufs": -16.0211,
+      "truePeakDbtp": -1.3426,
+      "pcmSha256": "9a03adaa6c05fec68b9a1a6d45094ca68a0d666f5d4c2a491a63670acc965201"
+    },
+    {
+      "id": "slow_orbit",
+      "tape": "slow_orbit",
+      "file": "Assets/_Project/Audio/Music/Tapes/slow_orbit.ogg",
+      "title": "Slow Orbit",
+      "bpm": 64.0,
+      "key": "D major",
+      "duration": 150.0,
+      "loudnessLufs": -15.9628,
+      "truePeakDbtp": -1.3475,
+      "pcmSha256": "4f89916eb19b11c973db5ad06b28dae13b82baf829183d602a7d0799238c0a3d"
+    }
+  ]
+}

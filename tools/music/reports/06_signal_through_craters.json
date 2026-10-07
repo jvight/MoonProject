@@ -122,6 +122,10 @@
       "value": 1.7869,
       "pass": true
     },
+    "tempo_error": {
+      "value": 0.0,
+      "pass": true
+    },
     "out_of_key_notes": {
       "value": 0,
       "pass": true
@@ -138,5 +142,62 @@
       "value": 0,
       "pass": true
     }
+  },
+  "instruments": {
+    "keys": "rhodes (arp, comp)",
+    "leads": [
+      "musicbox",
+      "flute"
+    ],
+    "drums": "halftime",
+    "bass": [
+      "groove",
+      "hold"
+    ],
+    "texture": "vinyl",
+    "events": []
+  },
+  "listening": {
+    "tempo_detected_bpm": 68.0,
+    "tempo_detected_clarity": 1.828,
+    "scale": {
+      "scale": "D major",
+      "share": 0.9768,
+      "runner_up": "A major",
+      "runner_up_share": 0.9505
+    },
+    "loudness": {
+      "range_lu": 3.7866,
+      "min_lufs": -41.6409,
+      "max_lufs": -14.6036,
+      "every_10s_lufs": [
+        -20.5684,
+        -18.8492,
+        -16.056,
+        -16.306,
+        -15.7046,
+        -14.9829,
+        -16.1652,
+        -15.9092,
+        -16.7739,
+        -15.5429,
+        -16.1713,
+        -15.4522,
+        -18.1259
+      ]
+    },
+    "octaves_db": {
+      "31.5": -20.7907,
+      "63": 0.0,
+      "125": -5.5711,
+      "250": -5.6792,
+      "500": -5.3189,
+      "1000": -7.2792,
+      "2000": -19.1495,
+      "4000": -25.3407,
+      "8000": -28.8995,
+      "16000": -43.6885
+    },
+    "width_db": -8.6772
   }
 }

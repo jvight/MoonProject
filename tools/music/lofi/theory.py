@@ -90,11 +90,15 @@ QUALITIES = {q.suffix: q for q in (
 
 @dataclass(frozen=True)
 class Chord:
-    """A chord: root pitch class, quality, optional different bass pitch class, and the borrowed flag."""
+    """
+    A chord: root pitch class, quality, optional different bass pitch class, the borrowed flag, and `fixed`, which
+    keeps the written colour out of the seeded substitutions (a quoted melody may rely on exactly these notes).
+    """
     root: int
     quality: Quality
     bass: int
     borrowed: bool = False
+    fixed: bool = False
 
     @property
     def symbol(self):
@@ -128,11 +132,14 @@ class Chord:
 
 def parse_chord(token, key):
     """
-    Parse "numeral:quality[/bass_numeral][!]" relative to `key`, e.g. "ii:m9", "I:maj9/iii", "iv:m6!".
+    Parse "numeral:quality[/bass_numeral][=][!]" relative to `key`, e.g. "ii:m9", "I:maj9/iii", "iv:m6!", "I:6/9=".
     "!" marks a borrowed chord; the parser refuses chords that leave the key without it (and vice versa).
+    "=" fixes the colour: substitutions never touch the chord.
     """
     borrowed = token.endswith("!")
     body = token.rstrip("!")
+    fixed = body.endswith("=")
+    body = body.rstrip("=")
     numeral, _, suffix = body.partition(":")
     bass_numeral = ""
     head, _, tail = suffix.rpartition("/")
@@ -142,7 +149,7 @@ def parse_chord(token, key):
         raise ValueError(f"unknown chord quality {suffix!r} in {token!r}")
     root = key.degree_root(numeral)
     bass = key.degree_root(bass_numeral) if bass_numeral else root
-    chord = Chord(root, QUALITIES[suffix], bass, borrowed)
+    chord = Chord(root, QUALITIES[suffix], bass, borrowed, fixed)
     if bool(chord.out_of_key(key)) != borrowed:
         raise ValueError(f"{token!r} -> {chord.symbol}: borrowed flag does not match its notes in {key.name}")
     return chord
