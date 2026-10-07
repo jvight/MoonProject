@@ -6,7 +6,11 @@ namespace MoonProject.Art.Editor
         public const string Root = MoonProject.Editor.Builders.GeneratedAssets.Root + "/Art";
         public const string PaletteFolder = Root + "/Palette";
         public const string PaletteTexture = PaletteFolder + "/T_Palette.png";
-        public const string PaletteEmissionTexture = PaletteFolder + "/T_PaletteEmission.png";
+        /// <summary>
+        /// The glow of every swatch in linear HDR (half-float EXR, so the living lights can glow above the bloom
+        /// threshold at intensity 1); the _Linear suffix keeps the import rules from treating it as sRGB.
+        /// </summary>
+        public const string PaletteEmissionTexture = PaletteFolder + "/T_PaletteEmission_Linear.exr";
         public const string LowPolyMaterial = PaletteFolder + "/M_LowPoly.mat";
 
         /// <summary>
