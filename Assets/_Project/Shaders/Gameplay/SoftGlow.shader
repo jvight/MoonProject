@@ -4,7 +4,8 @@
 //   _AcrossIn / _AcrossOut fade uv.y in from 0 and out toward 1 (unequal widths give a wave a soft leading edge
 //   and a longer tail), _LengthFade fades both ends of uv.x, bands scroll along uv.x,
 //   _FresnelMix brightens silhouettes (halos, flashes), _CoreMix softens them away (light columns, beam cones),
-//   _RadialMask turns a quad into a soft round sprite (dust).
+//   _RadialMask turns a quad into a soft round sprite (dust, sparks, the home halo); _RadialPower sharpens its core
+//   ((1 - r^2) ^ power: 2 is a soft ball, higher a bright core with a long faint tail and no visible rim).
 // Output is premultiplied: SrcBlend One with DstBlend One is additive light, DstBlend OneMinusSrcAlpha is soft matter.
 // _Intensity is the per-renderer brightness gameplay eases through a MaterialPropertyBlock; vertex colour multiplies
 // colour and alpha (LineRenderer and particle colours).
@@ -25,6 +26,7 @@ Shader "MoonProject/Gameplay/SoftGlow"
         _CoreMix ("Soft Core Mix", Range(0, 1)) = 0
         _CorePower ("Soft Core Power", Range(0.5, 8)) = 1.5
         _RadialMask ("Radial Mask", Range(0, 1)) = 0
+        _RadialPower ("Radial Mask Power", Range(1, 8)) = 2
         [Enum(UnityEngine.Rendering.BlendMode)] _SrcBlend ("Src Blend", Float) = 1
         [Enum(UnityEngine.Rendering.BlendMode)] _DstBlend ("Dst Blend", Float) = 1
         [Enum(UnityEngine.Rendering.CullMode)] _Cull ("Cull", Float) = 0
@@ -72,6 +74,7 @@ Shader "MoonProject/Gameplay/SoftGlow"
                 half _CoreMix;
                 half _CorePower;
                 half _RadialMask;
+                half _RadialPower;
             CBUFFER_END
 
             struct Attributes
@@ -135,7 +138,7 @@ Shader "MoonProject/Gameplay/SoftGlow"
 
                 float2 centred = input.uv * 2.0 - 1.0;
                 half radial = saturate(1.0 - dot(centred, centred));
-                half round = lerp(1.0, radial * radial, _RadialMask);
+                half round = lerp(1.0, pow(radial, _RadialPower), _RadialMask);
 
                 half alpha = saturate(across * along * bands * rim * core * round * input.color.a * _Color.a);
                 half3 rgb = _Color.rgb * input.color.rgb * _Intensity * alpha;

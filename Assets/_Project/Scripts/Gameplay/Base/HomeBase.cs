@@ -7,10 +7,13 @@ using MoonProject.Core.Save;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// Home: stands the lander beside the base pad facing it, lights its lamps and windows warmer as 07 comes home,
-    /// and keeps the museum. A relic let go near the shelf (or one that rolls there and rests) floats onto the nearest
-    /// free slot and settles with a soft overshoot: <see cref="RelicDeposited"/>, a scrap gift, a save. While a towed
-    /// relic is in reach of the shelf, a warm glow marks the slot it will take. Displayed relics turn slowly.
+    /// Home: stands the lander beside the base pad facing it and keeps it carrying across the basin (pillar 6): its
+    /// lamps light the ground as 07 comes home and dim to a light left on while it is away, but the windows never dim
+    /// (a little brighter far away) and a soft amber <see cref="HomeHalo"/> over the lander grows in with distance, so
+    /// from far away home is a small amber cluster. It keeps the museum: a relic let go near the shelf (or one that
+    /// rolls there and rests) floats onto the nearest free slot and settles with a soft overshoot:
+    /// <see cref="RelicDeposited"/>, a scrap gift, a save. While a towed relic is in reach of the shelf, a warm glow
+    /// marks the slot it will take. Displayed relics turn slowly.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class HomeBase : MonoBehaviour
@@ -53,6 +56,7 @@ namespace MoonProject.Gameplay
         private Light[] _lamps = Array.Empty<Light>();
         private EmissionGlow _windowGlow;
         private EmissionGlow _shelfGlow;
+        private HomeHalo _halo;
         private Transform _hint;
         private GlowRenderer _hintGlow;
         private Vector3[] _slotPositions = Array.Empty<Vector3>();
@@ -61,14 +65,21 @@ namespace MoonProject.Gameplay
         private Vector3[] _carryFrom = Array.Empty<Vector3>();
         private Quaternion[] _carryFromRotation = Array.Empty<Quaternion>();
         private float[] _displayAngle = Array.Empty<float>();
-        private float _warmth;
+        private float _farness;
         private bool _initialized;
 
         /// <summary>Relics on the shelf (settled ones).</summary>
         public int DisplayedCount { get; private set; }
 
-        /// <summary>0..1 how warm home is right now (07's distance, eased).</summary>
-        public float Warmth => _warmth;
+        /// <summary>0..1 share of the lamps' light right now (07's distance, eased): 1 home, a light left on far away.
+        /// </summary>
+        public float Warmth => _tuning.LampWarmth(_farness);
+
+        /// <summary>Window glow right now (linear emission multiplier).</summary>
+        public float WindowLevel => _windowGlow != null ? _windowGlow.Intensity : 0f;
+
+        /// <summary>The halo over home (tests and debugging views).</summary>
+        internal HomeHalo Halo => _halo;
 
         public Vector3 ShelfPosition => _shelf.position;
 
@@ -130,6 +141,7 @@ namespace MoonProject.Gameplay
 
             _windowGlow = new EmissionGlow(_windows);
             _shelfGlow = new EmissionGlow(_shelfLights);
+            _halo = new HomeHalo(transform, services.Meshes.Quad, services.Visuals.HomeHalo, _tuning, _root);
             _lamps = new Light[_lampSockets.Length];
             for (int i = 0; i < _lamps.Length; i++)
             {
@@ -154,7 +166,7 @@ namespace MoonProject.Gameplay
             _carryFrom = new Vector3[count];
             _carryFromRotation = new Quaternion[count];
             _displayAngle = new float[count];
-            _warmth = _tuning.WarmthAt(Vector3.Distance(_rover.Position, _root.position));
+            _farness = _tuning.FarnessAt(Vector3.Distance(_rover.Position, _root.position));
             _initialized = true;
             return true;
         }
@@ -255,17 +267,19 @@ namespace MoonProject.Gameplay
 
         private void UpdateWarmth(float deltaTime)
         {
-            float target = _tuning.WarmthAt(Vector3.Distance(_rover.Position, _root.position));
-            _warmth = Damp.Toward(_warmth, target, _tuning.WarmEase, deltaTime);
+            float target = _tuning.FarnessAt(Vector3.Distance(_rover.Position, _root.position));
+            _farness = Damp.Toward(_farness, target, _tuning.WarmEase, deltaTime);
             float boost = _upgrades.LightBoost;
-            float lamp = _tuning.LampIntensity * _warmth * boost;
+            float warmth = _tuning.LampWarmth(_farness);
+            float lamp = _tuning.LampIntensity * warmth * boost;
             for (int i = 0; i < _lamps.Length; i++)
             {
                 _lamps[i].intensity = lamp;
             }
 
-            _windowGlow.Apply(_tuning.WindowGlow * _warmth * boost);
-            _shelfGlow.Apply(_tuning.ShelfGlow * _warmth * boost);
+            _windowGlow.Apply(_tuning.WindowGlowAt(_farness) * boost);
+            _shelfGlow.Apply(_tuning.ShelfGlow * warmth * boost);
+            _halo.Boost = boost;
         }
 
         private void BeginDeposit(Relic relic)
@@ -340,6 +354,11 @@ namespace MoonProject.Gameplay
         private Vector3 SlotPose(Relic relic, int slot)
         {
             return _slots[slot].position + _slots[slot].up * relic.RestHeight;
+        }
+
+        private void OnDestroy()
+        {
+            _halo?.Dispose();
         }
     }
 }

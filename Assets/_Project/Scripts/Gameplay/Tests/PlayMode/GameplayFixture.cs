@@ -212,7 +212,8 @@ namespace MoonProject.Gameplay.PlayModeTests
                 GlowMaterial(shader, GlowRole.WarmRing), GlowMaterial(shader, GlowRole.WarmGlow),
                 Track(GlintMaterials.Create(LoadShader(GlintShaderPath))),
                 Track(GlintMaterials.CreatePart(LoadShader(GlintShaderPath))),
-                GlowMaterial(shader, GlowRole.FriendPillar), GlowMaterial(shader, GlowRole.Spark));
+                GlowMaterial(shader, GlowRole.FriendPillar), GlowMaterial(shader, GlowRole.Spark),
+                GlowMaterial(shader, GlowRole.HomeHalo));
 
             var root = new GameObject("[Gameplay]");
             root.SetActive(false);

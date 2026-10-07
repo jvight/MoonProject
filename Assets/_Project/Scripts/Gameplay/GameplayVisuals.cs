@@ -50,6 +50,9 @@ namespace MoonProject.Gameplay
         [Tooltip("Workbench upgrade sparks (WarmLamp, additive, soft round sprites).")]
         [SerializeField] private Material _spark;
 
+        [Tooltip("The soft amber halo over home seen from across the basin (WarmLamp, additive, round sprite).")]
+        [SerializeField] private Material _homeHalo;
+
         public Material SonarRing => _sonarRing;
         public Material SiteRing => _siteRing;
         public Material SitePillar => _sitePillar;
@@ -64,6 +67,7 @@ namespace MoonProject.Gameplay
         public Material PartGlint => _partGlint;
         public Material FriendPillar => _friendPillar;
         public Material Spark => _spark;
+        public Material HomeHalo => _homeHalo;
 
         /// <summary>Null when every material is assigned, else the first missing one.</summary>
         public string Validate()
@@ -82,12 +86,14 @@ namespace MoonProject.Gameplay
                 : _partGlint == null ? "part glint material is missing"
                 : _friendPillar == null ? "friend pillar material is missing"
                 : _spark == null ? "spark material is missing"
+                : _homeHalo == null ? "home halo material is missing"
                 : null;
         }
 
         internal void Populate(Material sonarRing, Material siteRing, Material sitePillar, Material tractorBeam,
             Material tetherBeam, Material flash, Material relicHalo, Material dust, Material warmRing,
-            Material warmGlow, Material scrapGlint, Material partGlint, Material friendPillar, Material spark)
+            Material warmGlow, Material scrapGlint, Material partGlint, Material friendPillar, Material spark,
+            Material homeHalo)
         {
             _sonarRing = sonarRing;
             _siteRing = siteRing;
@@ -103,6 +109,7 @@ namespace MoonProject.Gameplay
             _partGlint = partGlint;
             _friendPillar = friendPillar;
             _spark = spark;
+            _homeHalo = homeHalo;
         }
     }
 }

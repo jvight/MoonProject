@@ -15,6 +15,12 @@ namespace MoonProject.Gameplay
 
         private const int TransparentQueue = 3000;
 
+        /// <summary>Radial falloff of round sprites: (1 - r^2)^2, a soft ball (dust, sparks).</summary>
+        private const float SoftRadialPower = 2f;
+
+        /// <summary>Radial falloff of the home halo: a bright core with a long faint tail and no visible rim.</summary>
+        private const float HaloRadialPower = 5f;
+
         private static readonly int ColorId = Shader.PropertyToID("_Color");
         private static readonly int IntensityId = Shader.PropertyToID("_Intensity");
         private static readonly int AcrossInId = Shader.PropertyToID("_AcrossIn");
@@ -28,6 +34,7 @@ namespace MoonProject.Gameplay
         private static readonly int CoreMixId = Shader.PropertyToID("_CoreMix");
         private static readonly int CorePowerId = Shader.PropertyToID("_CorePower");
         private static readonly int RadialMaskId = Shader.PropertyToID("_RadialMask");
+        private static readonly int RadialPowerId = Shader.PropertyToID("_RadialPower");
         private static readonly int SrcBlendId = Shader.PropertyToID("_SrcBlend");
         private static readonly int DstBlendId = Shader.PropertyToID("_DstBlend");
         private static readonly int CullId = Shader.PropertyToID("_Cull");
@@ -113,6 +120,15 @@ namespace MoonProject.Gameplay
                         fresnelPower: 2f, core: 0f, corePower: 1.5f, radial: 1f, additive: true,
                         cull: CullMode.Off);
                     break;
+                case GlowRole.HomeHalo:
+                    // The lamps' own amber (the palette's warm glow, which keeps less green and blue so it stays
+                    // amber once graded), passed as gamma so the shader receives it linear; a bright core with a
+                    // long faint tail, so from afar it reads as glow around the windows, not as a disc.
+                    Set(material, (Palette.GetGlow(PaletteSwatch.WarmLamp) / Palette.WarmLampGlow).gamma, edge: 0f,
+                        length: 0f, bands: 0f, speed: 0f, strength: 0f, fresnel: 0f, fresnelPower: 2f, core: 0f,
+                        corePower: 1.5f, radial: 1f, additive: true, cull: CullMode.Off);
+                    material.SetFloat(RadialPowerId, HaloRadialPower);
+                    break;
                 case GlowRole.WarmGlow:
                     material.SetColor(ColorId, warm);
                     material.SetFloat(FresnelMixId, 0.4f);
@@ -140,6 +156,7 @@ namespace MoonProject.Gameplay
             material.SetFloat(CoreMixId, core);
             material.SetFloat(CorePowerId, corePower);
             material.SetFloat(RadialMaskId, radial);
+            material.SetFloat(RadialPowerId, SoftRadialPower);
             material.SetFloat(SrcBlendId, (float)BlendMode.One);
             material.SetFloat(DstBlendId, (float)(additive ? BlendMode.One : BlendMode.OneMinusSrcAlpha));
             material.SetFloat(CullId, (float)cull);
