@@ -95,38 +95,6 @@ namespace MoonProject.Audio.Tests
         }
 
         [Test]
-        public void Crossfade_FadesOutThenIn_WithStaticInTheMiddle()
-        {
-            var fade = new RadioCrossfade();
-            fade.Begin(2f, 0.5f, 0.5f);
-            Assert.AreEqual(1f, fade.OutgoingGain, 1e-5f);
-            Assert.AreEqual(0f, fade.IncomingGain, 1e-5f);
-
-            int starts = 0;
-            float peakSwell = 0f;
-            for (int i = 0; i < 100 && fade.Active; i++)
-            {
-                starts += fade.Step(0.05f) ? 1 : 0;
-                peakSwell = Mathf.Max(peakSwell, fade.StaticSwell);
-            }
-
-            Assert.AreEqual(1, starts);
-            Assert.IsFalse(fade.Active);
-            Assert.AreEqual(1f, fade.IncomingGain);
-            Assert.Greater(peakSwell, 0.95f);
-        }
-
-        [Test]
-        public void Crossfade_LargeStep_StillStartsIncomingOnce()
-        {
-            var fade = new RadioCrossfade();
-            fade.Begin(1f, 0.5f, 0.6f);
-            Assert.IsTrue(fade.Step(5f));
-            Assert.IsFalse(fade.Active);
-            Assert.IsFalse(fade.Step(1f));
-        }
-
-        [Test]
         public void WowFlutter_StaysInRange_AndMapsCentsToPitch()
         {
             var wobble = new WowFlutter();

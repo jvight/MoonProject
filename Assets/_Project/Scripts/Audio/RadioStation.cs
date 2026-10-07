@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using MoonProject.Core;
 using MoonProject.Core.Events;
@@ -7,19 +8,21 @@ namespace MoonProject.Audio
 {
     /// <summary>
     /// The base's lofi radio. Silent until <see cref="RoverAwoke"/>: then it crackles on with a dial-tuning swish and
-    /// static that resolves into the music (quicker when the player woke 07). Plays the <see cref="RadioPlaylist"/>
-    /// in shuffled order (no immediate repeats), moving
-    /// between tracks with a short "turning the dial" crossfade full of static. Its clarity follows the rover's
-    /// distance from the base (<see cref="IWorldLayout.BasePosition"/>) through <see cref="RadioSignal"/>: low clarity
-    /// closes a low-pass filter, raises the static and deepens a tape wow/flutter. <see cref="SignalRadiusChanged"/>
-    /// (radio tower upgrades, loading a save) widens the clear zone through <see cref="SetSignalRadius"/>.
-    /// Initialised by <see cref="AudioDirector"/>.
+    /// static that resolves into the music (quicker when the player woke 07). What it plays comes from
+    /// <see cref="IRadioProgram"/> (re-read on <see cref="RadioProgramChanged"/>): Lumen After Dark shuffles the base
+    /// tracks plus every owned tape (no immediate repeats, a swish-and-static crossfade between tracks), Tape Deck
+    /// loops the chosen cassette, Quiet Hours lets the music and static go and leaves the moon's ambience. Turning
+    /// Bell's dial while the radio is on crossfades through a short static swish (Bell crackles along; the detent
+    /// click is hers); changes at load or before the radio comes on just set the state, without a sound. New tracks
+    /// on Lumen After Dark go to the ticker as "now playing", once per track per session. Clarity follows the rover's
+    /// distance from the base through <see cref="RadioSignal"/> (low-pass, static, wow/flutter);
+    /// <see cref="SignalRadiusChanged"/> widens the clear zone. Initialised by <see cref="AudioDirector"/>.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class RadioStation : MonoBehaviour
     {
-        private const int DeckCount = 2;
         private const float MinPitch = 0.01f;
+        private const int SubscriptionCount = 3;
 
         [Tooltip("Assets/_Project/Data/Audio/RadioTuning.asset.")]
         [SerializeField] private RadioTuning _tuning;
@@ -27,29 +30,63 @@ namespace MoonProject.Audio
         [Tooltip("Assets/_Project/Data/Audio/RadioPlaylist.asset (built from tools/music/playlist.json).")]
         [SerializeField] private RadioPlaylist _playlist;
 
-        private readonly AudioSource[] _decks = new AudioSource[DeckCount];
-        private readonly AudioLowPassFilter[] _filters = new AudioLowPassFilter[DeckCount];
-        private readonly RadioCrossfade _crossfade = new RadioCrossfade();
+        [Tooltip("Assets/_Project/Data/Audio/RadioTapes.asset (built from tools/music/tapes.json).")]
+        [SerializeField] private RadioTapeLibrary _tapes;
+
+        private readonly AudioSource[] _decks = new AudioSource[RadioDeckMixer.DeckCount];
+        private readonly AudioLowPassFilter[] _filters = new AudioLowPassFilter[RadioDeckMixer.DeckCount];
+        private readonly RadioTrack[] _deckTracks = new RadioTrack[RadioDeckMixer.DeckCount];
+        private readonly RadioDeckMixer _mixer = new RadioDeckMixer();
         private readonly WowFlutter _wowFlutter = new WowFlutter();
         private readonly RadioWakeUp _wake = new RadioWakeUp();
+        private readonly NowPlayingLog _nowPlaying = new NowPlayingLog();
+        private readonly EasedValue _staticPresence = new EasedValue(1f);
+        private readonly IDisposable[] _subscriptions = new IDisposable[SubscriptionCount];
+        private readonly Dictionary<string, RadioTrack> _tapeTracks = new Dictionary<string, RadioTrack>(
+            StringComparer.Ordinal);
         private IRoverState _listener;
+        private IRadioProgram _program;
+        private EventBus _events;
         private Vector3 _basePosition;
         private AudioDirector _director;
         private RadioSignal _signal;
+        private RadioProgramModel _model;
         private PlaylistShuffler _shuffler;
+        private RadioTrack[] _pool = Array.Empty<RadioTrack>();
+        private int _poolCount;
         private AudioSource _static;
         private AudioSource _swish;
         private float _staticCueVolume;
         private float _swishCueVolume;
-        private int _live;
-        private IDisposable _radiusSubscription;
-        private IDisposable _awokeSubscription;
 
         /// <summary>True once 07 has started waking and the radio has come on.</summary>
         public bool IsOn => _wake.IsAwake;
 
-        /// <summary>True once the music itself has started (after the wake-up static).</summary>
-        public bool MusicStarted => _decks[_live] != null && _decks[_live].isPlaying;
+        /// <summary>True while any music plays (after the wake-up static; false on Quiet Hours).</summary>
+        public bool MusicStarted
+        {
+            get
+            {
+                for (int i = 0; i < _decks.Length; i++)
+                {
+                    if (_decks[i] != null && _decks[i].isPlaying)
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+        }
+
+        /// <summary>The station heard (Lumen After Dark until Bell's dial is unlocked).</summary>
+        public RadioChannel Station => _model != null ? _model.Station : RadioChannel.LumenAfterDark;
+
+        /// <summary>The track on the live deck (null when no music plays).</summary>
+        public RadioTrack CurrentTrack => _mixer.Live >= 0 ? _deckTracks[_mixer.Live] : null;
+
+        /// <summary>Tracks in the Lumen After Dark shuffle (base tracks plus owned tapes).</summary>
+        public int ShufflePoolCount => _poolCount;
 
         /// <summary>Smoothed signal clarity the player hears, 0 (lost) .. 1 (clear).</summary>
         public float Clarity => _signal != null ? _signal.Clarity : 0f;
@@ -59,6 +96,10 @@ namespace MoonProject.Audio
 
         /// <summary>The clear-signal radius the station is easing towards (metres).</summary>
         public float TargetSignalRadius => _signal != null ? _signal.TargetRadius : 0f;
+
+        internal AudioSource GetDeck(int index) => _decks[index];
+
+        internal RadioDeckMixer Mixer => _mixer;
 
         /// <summary>Sets a new clear-signal radius (e.g. after a radio tower upgrade); it blooms in smoothly.</summary>
         public void SetSignalRadius(float radius)
@@ -90,15 +131,17 @@ namespace MoonProject.Audio
             }
 
             _director = director;
+            _events = context.Events;
             _listener = context.Get<IRoverState>();
+            _program = context.Get<IRadioProgram>();
             _basePosition = context.Get<IWorldLayout>().BasePosition;
             _signal = new RadioSignal(_tuning);
             _signal.Snap(SignalField.HorizontalDistance(_listener.Position, _basePosition));
-            _shuffler = new PlaylistShuffler(_playlist.Count, new AudioRandom(unchecked((uint)Environment.TickCount)));
+            BuildTrackTables();
 
-            for (int i = 0; i < DeckCount; i++)
+            for (int i = 0; i < _decks.Length; i++)
             {
-                _decks[i] = director.CreateLoopSource(transform, i == 0 ? "DeckA" : "DeckB", default, 0f);
+                _decks[i] = director.CreateLoopSource(transform, $"Deck{i}", default, 0f);
                 _decks[i].loop = false;
                 _filters[i] = _decks[i].gameObject.AddComponent<AudioLowPassFilter>();
             }
@@ -109,15 +152,20 @@ namespace MoonProject.Audio
             _swish.loop = false;
             _swishCueVolume = director.Library.GetCue(swishCue).VolumeMax;
 
-            _live = 0;
-            _radiusSubscription = context.Events.Subscribe<SignalRadiusChanged>(OnSignalRadiusChanged);
-            _awokeSubscription = context.Events.Subscribe<RoverAwoke>(OnRoverAwoke);
+            _model = new RadioProgramModel(_program.TotalTapeCount);
+            _model.Apply(_program, false, out _);
+            RebuildPool();
+            _staticPresence.Snap(StaticPresenceTarget());
+            _subscriptions[0] = context.Events.Subscribe<SignalRadiusChanged>(OnSignalRadiusChanged);
+            _subscriptions[1] = context.Events.Subscribe<RoverAwoke>(OnRoverAwoke);
+            _subscriptions[2] = context.Events.Subscribe<RadioProgramChanged>(OnRadioProgramChanged);
         }
 
-        internal void Wire(RadioTuning tuning, RadioPlaylist playlist)
+        internal void Wire(RadioTuning tuning, RadioPlaylist playlist, RadioTapeLibrary tapes)
         {
             _tuning = tuning;
             _playlist = playlist;
+            _tapes = tapes;
         }
 
         private void Update()
@@ -134,43 +182,220 @@ namespace MoonProject.Audio
             float pitch = Mathf.Max(MinPitch, WowFlutter.PitchFactor(wobble, mix.WobbleCents));
             if (_wake.Step(dt))
             {
-                StartTrack(_decks[_live], _shuffler.Next());
-                // A single track simply loops; the crossfade needs a different track to move to.
-                _decks[_live].loop = _playlist.Count == 1;
+                StartStationNow();
+            }
+
+            AdvanceShow(pitch);
+            if (_mixer.Step(dt, out int startDeck))
+            {
+                StartOn(startDeck);
             }
 
             float cabin = _director.CabinBlend;
             float level = _director.Buses.Effective(AudioBus.Music) * _wake.Power;
-            AdvancePlaylist(dt, pitch);
-
-            AudioSource live = _decks[_live];
-            AudioSource other = _decks[1 - _live];
             float music = mix.MusicVolume * level * _wake.MusicGain * Mathf.Lerp(1f, _tuning.CabinMusicGain, cabin);
             float cabinCutoff = _tuning.MaxCutoff * Mathf.Pow(_tuning.CabinCutoff / _tuning.MaxCutoff, cabin);
             float cutoff = Mathf.Min(mix.CutoffHz, cabinCutoff);
-            if (_crossfade.Active)
+            for (int i = 0; i < _decks.Length; i++)
             {
-                live.volume = music * _crossfade.OutgoingGain;
-                other.volume = music * _crossfade.IncomingGain;
-            }
-            else
-            {
-                live.volume = music;
-                other.volume = 0f;
-            }
-
-            for (int i = 0; i < DeckCount; i++)
-            {
-                _decks[i].pitch = pitch;
+                AudioSource deck = _decks[i];
+                deck.volume = music * _mixer.Level(i);
+                deck.pitch = pitch;
                 _filters[i].cutoffFrequency = cutoff;
                 _filters[i].lowpassResonanceQ = _tuning.LowpassResonance;
+                if (deck.isPlaying && _mixer.IsIdle(i))
+                {
+                    deck.Stop();
+                    _deckTracks[i] = null;
+                }
             }
 
-            float staticVolume = mix.StaticVolume + _tuning.TuneStaticBoost * _crossfade.StaticSwell
+            float presence = _staticPresence.Step(StaticPresenceTarget(), dt, _tuning.QuietStaticFade);
+            float staticVolume = mix.StaticVolume * presence + _tuning.TuneStaticBoost * _mixer.Swell
                                  + _tuning.WakeStaticBoost * _wake.CrackleBoost;
             _static.volume = Mathf.Clamp01(staticVolume) * _staticCueVolume * level *
                              Mathf.Lerp(1f, _tuning.CabinStaticGain, cabin);
             _swish.volume = _tuning.TuneSwishVolume * _swishCueVolume * level;
+        }
+
+        private float StaticPresenceTarget()
+        {
+            return _model.Station == RadioChannel.QuietHours ? _tuning.QuietStaticGain : 1f;
+        }
+
+        /// <summary>On Lumen After Dark, moves to the next track a moment before this one ends.</summary>
+        private void AdvanceShow(float pitch)
+        {
+            int live = _mixer.Live;
+            if (live < 0 || _mixer.StartPending || _model.Station != RadioChannel.LumenAfterDark ||
+                _decks[live].loop || !_decks[live].isPlaying)
+            {
+                return;
+            }
+
+            if (SecondsLeft(_decks[live], pitch) <= _tuning.CrossfadeLead)
+            {
+                float duration = _tuning.CrossfadeDuration;
+                _mixer.Change(true, duration * _tuning.OutgoingFadeEnd, duration * _tuning.IncomingStart,
+                    duration * (1f - _tuning.IncomingStart), duration);
+                PlaySwish();
+            }
+        }
+
+        private void OnRadioProgramChanged(RadioProgramChanged changed)
+        {
+            RadioProgramUpdate update = _model.Apply(_program, _wake.MusicStarted, out bool announce);
+            if ((update & RadioProgramUpdate.Pool) != 0)
+            {
+                RebuildPool();
+            }
+
+            if ((update & RadioProgramUpdate.Station) == 0 || !_wake.MusicStarted)
+            {
+                return;
+            }
+
+            if (announce)
+            {
+                float duration = _tuning.StationSwitchDuration;
+                _mixer.Change(HasMusic(), duration * _tuning.OutgoingFadeEnd, duration * _tuning.IncomingStart,
+                    duration * (1f - _tuning.IncomingStart), duration);
+                PlaySwish();
+                _director.NotifyStationSwitched();
+                return;
+            }
+
+            float fade = _tuning.SilentSwitchFade;
+            _mixer.Change(HasMusic(), fade, 0f, fade, 0f);
+        }
+
+        private void StartStationNow()
+        {
+            if (HasMusic())
+            {
+                StartOn(_mixer.StartNow(0f));
+            }
+        }
+
+        private bool HasMusic()
+        {
+            switch (_model.Station)
+            {
+                case RadioChannel.LumenAfterDark:
+                    return _poolCount > 0;
+                case RadioChannel.TapeDeck:
+                    return FindTape(_model.SelectedTape) != null;
+                default:
+                    return false;
+            }
+        }
+
+        /// <summary>Starts the station's next music on <paramref name="deck"/> (it is the live deck now).</summary>
+        private void StartOn(int deck)
+        {
+            RadioTrack track;
+            bool loop;
+            if (_model.Station == RadioChannel.TapeDeck)
+            {
+                track = FindTape(_model.SelectedTape);
+                loop = true;
+            }
+            else if (_model.Station == RadioChannel.LumenAfterDark && _poolCount > 0)
+            {
+                track = _pool[_shuffler.Next()];
+                loop = _poolCount == 1;
+            }
+            else
+            {
+                return;
+            }
+
+            if (track == null)
+            {
+                return;
+            }
+
+            AudioSource source = _decks[deck];
+            source.Stop();
+            source.clip = track.Clip;
+            source.loop = loop;
+            source.timeSamples = 0;
+            source.volume = 0f;
+            source.Play();
+            _deckTracks[deck] = track;
+            if (_model.Station == RadioChannel.LumenAfterDark && _nowPlaying.TryAnnounce(track.Id, out string titleKey))
+            {
+                _events.Publish(new TickerLine(NowPlayingLog.TickerKey, titleKey, true));
+            }
+        }
+
+        private RadioTrack FindTape(string cassetteId)
+        {
+            if (string.IsNullOrEmpty(cassetteId))
+            {
+                return null;
+            }
+
+            if (_tapeTracks.TryGetValue(cassetteId, out RadioTrack track))
+            {
+                return track;
+            }
+
+            Debug.LogError($"{nameof(RadioStation)}: no radio track for cassette '{cassetteId}'. Render the music " +
+                           "(tools/music) and run MoonProject/Build/Audio/Radio Tapes.", this);
+            return null;
+        }
+
+        /// <summary>Lumen After Dark's shuffle: the base tracks, then owned tapes in collection order.</summary>
+        private void RebuildPool()
+        {
+            _poolCount = 0;
+            for (int i = 0; i < _playlist.Count; i++)
+            {
+                _pool[_poolCount++] = _playlist.GetTrack(i);
+            }
+
+            for (int i = 0; i < _model.OwnedCount; i++)
+            {
+                RadioTrack tape = FindTape(_model.GetOwned(i));
+                if (tape != null && _poolCount < _pool.Length)
+                {
+                    _pool[_poolCount++] = tape;
+                }
+            }
+
+            _shuffler.Resize(_poolCount);
+            int live = _mixer.Live;
+            if (live >= 0 && _model.Station == RadioChannel.LumenAfterDark && _decks[live] != null)
+            {
+                // A lone track loops; once a tape joins the show it moves on to the next track again.
+                _decks[live].loop = _poolCount == 1;
+            }
+        }
+
+        private void BuildTrackTables()
+        {
+            int capacity = _playlist.Count + _tapes.Count;
+            _pool = new RadioTrack[capacity];
+            _shuffler = new PlaylistShuffler(capacity, new AudioRandom(unchecked((uint)Environment.TickCount)));
+            for (int i = 0; i < _playlist.Count; i++)
+            {
+                string id = _playlist.GetTrack(i).Id;
+                _nowPlaying.Register(id, NowPlayingLog.TrackTitleKey(id));
+            }
+
+            for (int i = 0; i < _tapes.Count; i++)
+            {
+                RadioTrack tape = _tapes.GetTrack(i);
+                _tapeTracks[tape.TapeId] = tape;
+                _nowPlaying.Register(tape.Id, NowPlayingLog.CassetteTitleKey(tape.TapeId));
+            }
+        }
+
+        private void PlaySwish()
+        {
+            _swish.Stop();
+            _swish.Play();
         }
 
         private void OnSignalRadiusChanged(SignalRadiusChanged changed)
@@ -194,49 +419,11 @@ namespace MoonProject.Audio
 
         private void OnDestroy()
         {
-            _radiusSubscription?.Dispose();
-            _radiusSubscription = null;
-            _awokeSubscription?.Dispose();
-            _awokeSubscription = null;
-        }
-
-        private void AdvancePlaylist(float dt, float pitch)
-        {
-            if (_playlist.Count < 2 || !_decks[_live].isPlaying)
+            for (int i = 0; i < _subscriptions.Length; i++)
             {
-                return;
+                _subscriptions[i]?.Dispose();
+                _subscriptions[i] = null;
             }
-
-            if (!_crossfade.Active && SecondsLeft(_decks[_live], pitch) <= _tuning.CrossfadeLead)
-            {
-                _crossfade.Begin(_tuning.CrossfadeDuration, _tuning.OutgoingFadeEnd, _tuning.IncomingStart);
-                _swish.Stop();
-                _swish.Play();
-            }
-
-            if (!_crossfade.Active)
-            {
-                return;
-            }
-
-            if (_crossfade.Step(dt))
-            {
-                StartTrack(_decks[1 - _live], _shuffler.Next());
-            }
-
-            if (!_crossfade.Active)
-            {
-                _decks[_live].Stop();
-                _live = 1 - _live;
-            }
-        }
-
-        private void StartTrack(AudioSource deck, int track)
-        {
-            deck.clip = _playlist.GetTrack(track).Clip;
-            deck.timeSamples = 0;
-            deck.volume = 0f;
-            deck.Play();
         }
 
         private static float SecondsLeft(AudioSource deck, float pitch)
@@ -259,16 +446,16 @@ namespace MoonProject.Audio
                 ok = false;
             }
 
-            if (_playlist == null)
+            if (_playlist == null || _tapes == null)
             {
-                Debug.LogError($"{nameof(RadioStation)}: {nameof(_playlist)} is not assigned.", this);
+                Debug.LogError($"{nameof(RadioStation)}: the playlist or the tape library is not assigned.", this);
                 return false;
             }
 
-            string problem = _playlist.FindProblem();
+            string problem = _playlist.FindProblem() ?? _tapes.FindProblem();
             if (problem != null)
             {
-                Debug.LogError($"{nameof(RadioStation)}: {problem}.", _playlist);
+                Debug.LogError($"{nameof(RadioStation)}: {problem}.", this);
                 ok = false;
             }
 

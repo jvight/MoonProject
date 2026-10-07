@@ -19,6 +19,7 @@ namespace MoonProject.Audio.Editor
         {
             var library = context.LoadAsset<AudioLibrary>(AudioAssetPaths.Library);
             var playlist = context.LoadAsset<RadioPlaylist>(AudioAssetPaths.Playlist);
+            var tapes = context.LoadAsset<RadioTapeLibrary>(AudioAssetPaths.Tapes);
             var mixTuning = context.LoadAsset<AudioMixTuning>(AudioAssetPaths.MixTuning);
             var roverTuning = context.LoadAsset<RoverAudioTuning>(AudioAssetPaths.RoverTuning);
             var radioTuning = context.LoadAsset<RadioTuning>(AudioAssetPaths.RadioTuning);
@@ -42,7 +43,7 @@ namespace MoonProject.Audio.Editor
             ui.Wire(uiTuning);
             friends.Wire(friendTuning);
             jump.Wire(jumpTuning);
-            radio.Wire(radioTuning, playlist);
+            radio.Wire(radioTuning, playlist, tapes);
             director.Wire(library, mixTuning, rover, jump, gameplay, friends, ui, radio, ambience);
             context.AddSystem(director);
         }

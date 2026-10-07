@@ -81,6 +81,20 @@ namespace MoonProject.Audio
         [Tooltip("Volume scale of the dial-tuning swish.")]
         [Range(0f, 1f)] [SerializeField] private float _tuneSwishVolume = 0.8f;
 
+        [Header("Bell's dial (stations)")]
+        [Tooltip("Seconds of the static-swish crossfade when the dial turns to another station.")]
+        [Range(0.3f, 4f)] [SerializeField] private float _stationSwitchDuration = 1.2f;
+
+        [Tooltip("Seconds of the quiet, swish-free crossfade when the station changes without a dial turn (the dial " +
+                 "locked again).")]
+        [Range(0.05f, 3f)] [SerializeField] private float _silentSwitchFade = 0.6f;
+
+        [Tooltip("Static level on Quiet Hours (scales the clarity static; 0 = off, only the moon's ambience).")]
+        [Range(0f, 1f)] [SerializeField] private float _quietStaticGain;
+
+        [Tooltip("Seconds (time constant) for the static to settle into or out of Quiet Hours.")]
+        [Range(0.05f, 5f)] [SerializeField] private float _quietStaticFade = 1.2f;
+
         [Header("Paused: listening in the cabin")]
         [Tooltip("Low-pass (Hz) the radio eases to while paused: a subtly closer, warmer set (22 kHz = unchanged).")]
         [Range(2000f, 22000f)] [SerializeField] private float _cabinCutoff = 7000f;
@@ -133,6 +147,10 @@ namespace MoonProject.Audio
         public float IncomingStart => _incomingStart;
         public float TuneStaticBoost => _tuneStaticBoost;
         public float TuneSwishVolume => _tuneSwishVolume;
+        public float StationSwitchDuration => _stationSwitchDuration;
+        public float SilentSwitchFade => _silentSwitchFade;
+        public float QuietStaticGain => _quietStaticGain;
+        public float QuietStaticFade => _quietStaticFade;
         public float CabinCutoff => _cabinCutoff;
         public float CabinMusicGain => _cabinMusicGain;
         public float CabinStaticGain => _cabinStaticGain;

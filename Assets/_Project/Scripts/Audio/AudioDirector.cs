@@ -137,7 +137,7 @@ namespace MoonProject.Audio
             _friends.Initialize(context, this);
             _ui.Initialize(context, this);
             _radio.Initialize(context, this);
-            _ambience.Initialize(this, _mixTuning.AmbienceFadeIn);
+            _ambience.Initialize(this, _radio, _mixTuning);
         }
 
         /// <summary>Resolves a cue id once (call at initialisation); logs and returns an invalid handle if

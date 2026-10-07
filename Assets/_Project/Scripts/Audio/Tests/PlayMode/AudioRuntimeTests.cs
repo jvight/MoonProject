@@ -137,6 +137,8 @@ namespace MoonProject.Audio.PlayModeTests
                 AudioTestRig.UpdateOf(_rig.Ambience),
             };
 
+            _rig.Program.Own(AudioTestRig.TapeA);
+            _rig.Program.SelectedTape = AudioTestRig.TapeA;
             RunFrames(updates, 60);
             long before = GC.GetAllocatedBytesForCurrentThread();
             RunFrames(updates, 300);
@@ -163,7 +165,10 @@ namespace MoonProject.Audio.PlayModeTests
                 _rig.Rover.Tilly.Activity = (FriendActivity)(frame / 50 % 6);
                 _rig.Rover.Tilly.RotorSpeed = frame / 50 % 6 >= 2 ? 0.5f + 0.5f * Mathf.Sin(t) : 0f;
                 _rig.Rover.Tilly.RepairProgress = Mathf.Repeat(t * 0.2f, 1f);
-                PublishSome(events, settings, frame);
+                _rig.Rover.Bell.Position = new Vector3(-6f + 2f * Mathf.Sin(t), 0f, 4f);
+                _rig.Rover.Bell.Activity = (FriendActivity)(frame / 40 % 6);
+                _rig.Rover.Bell.RotorSpeed = frame / 40 % 6 >= 2 ? 0.4f : 0f;
+                PublishSome(events, settings, _rig.Program, frame);
                 for (int i = 0; i < updates.Length; i++)
                 {
                     updates[i]();
@@ -171,7 +176,7 @@ namespace MoonProject.Audio.PlayModeTests
             }
         }
 
-        private static void PublishSome(EventBus events, IAudioSettings settings, int frame)
+        private static void PublishSome(EventBus events, IAudioSettings settings, FakeRadioProgram program, int frame)
         {
             switch (frame % 12)
             {
@@ -207,6 +212,13 @@ namespace MoonProject.Audio.PlayModeTests
                     break;
                 case 5:
                     events.Publish(new TetherAttached(Vector3.right, 5f));
+                    if (frame % 36 == 5)
+                    {
+                        program.DialUnlocked = frame >= 36;
+                        program.Channel = (RadioChannel)(frame / 36 % 3);
+                        events.Publish(new RadioProgramChanged());
+                    }
+
                     break;
                 case 6:
                     events.Publish(new UiCue(frame % 24 == 6 ? UiCueKind.HoldFill : UiCueKind.HoldRelease));

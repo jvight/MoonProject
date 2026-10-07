@@ -5,8 +5,8 @@ namespace MoonProject.Audio.PlayModeTests
 {
     /// <summary>
     /// Stands in for the Rover, World and Gameplay systems: registers <see cref="IRoverState"/>,
-    /// <see cref="IRoverRig"/>, <see cref="IWorldLayout"/> and a two-friend <see cref="IFriendRoster"/> (Tilly, then
-    /// Bell) with values the test sets directly.
+    /// <see cref="IRoverRig"/>, <see cref="IWorldLayout"/>, a two-friend <see cref="IFriendRoster"/> (Tilly, then
+    /// Bell) and Bell's <see cref="IRadioProgram"/> with values the test sets directly.
     /// </summary>
     public sealed class FakeRoverSystem : MonoBehaviour, IGameSystem, IRoverState, IRoverRig, IWorldLayout,
         IFriendRoster
@@ -16,6 +16,9 @@ namespace MoonProject.Audio.PlayModeTests
         public FakeFriend Tilly { get; } = new FakeFriend("tilly");
 
         public FakeFriend Bell { get; } = new FakeFriend("bell");
+
+        /// <summary>The radio program: the dial locked on Lumen After Dark, no tapes owned (3 exist).</summary>
+        public FakeRadioProgram Program { get; } = new FakeRadioProgram(3);
 
         public int Count => 2;
 
@@ -74,6 +77,7 @@ namespace MoonProject.Audio.PlayModeTests
             context.Register<IRoverRig>(this);
             context.Register<IWorldLayout>(this);
             context.Register<IFriendRoster>(this);
+            context.Register<IRadioProgram>(Program);
         }
     }
 }
