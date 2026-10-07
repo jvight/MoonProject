@@ -27,7 +27,8 @@ namespace MoonProject.UI.PlayModeTests
     /// Screenshots of every UI state over the real Main scene (world, rover, sky, real camera), for taste review. The
     /// UI renders into its own target and is composited over the camera's frame. Gameplay state is staged through
     /// <see cref="FakeGameServices"/>; the scene's own save slot is never written (the UI saves to a test slot and the
-    /// scene is torn down before play mode ends). Needs a GPU, takes a minute: run explicitly with
+    /// scene is torn down before play mode ends). The last shots are taken at a narrow 5:4 frame. Needs a GPU, takes a
+    /// few minutes: run explicitly with
     /// <c>python tools/unity_batch.py tests --platform playmode --category UiCapture</c>. PNGs land in
     /// Logs/ui-captures.
     /// </summary>
@@ -38,10 +39,20 @@ namespace MoonProject.UI.PlayModeTests
         private const string MainScene = "Assets/_Project/Scenes/Main.unity";
         private const int Width = 1600;
         private const int Height = 900;
+        private const int NarrowWidth = 1200;
+        private const int NarrowHeight = 960;
         private const string OutputFolder = "Logs/ui-captures";
         private const float FriendShotDistance = 7f;
         private const float FriendShotHeight = 2.4f;
         private const float FriendShotFov = 50f;
+        private const string BellId = "bell";
+        private const string BellCornerNode = "BellCorner";
+        private const string BellPrefabPath = "Assets/_Project/Generated/Art/Friends/Bell.prefab";
+        private const float BellHomeTolerance = 1.5f;
+        private const float BellShotFront = 4.2f;
+        private const float BellShotSide = 1.6f;
+        private const float BellShotHeight = 2f;
+        private const float BellLookHeight = 1.1f;
 
         private string _slot;
         private GameObject _uiHost;
@@ -50,10 +61,14 @@ namespace MoonProject.UI.PlayModeTests
         private RenderTexture _target;
         private UiTuning _tuning;
         private GameObject _friendCamera;
+        private GameObject _bellCamera;
+        private GameObject _bellStandIn;
 
         public override void TearDown()
         {
             Object.DestroyImmediate(_friendCamera);
+            Object.DestroyImmediate(_bellCamera);
+            Object.DestroyImmediate(_bellStandIn);
             Object.DestroyImmediate(_uiHost);
             Object.DestroyImmediate(_fakesHost);
             Object.DestroyImmediate(_panel);
@@ -173,6 +188,55 @@ namespace MoonProject.UI.PlayModeTests
             fakes.Camera = camera;
             yield return new WaitForSecondsRealtime(_tuning.Friends.NameHoldSeconds + 2f);
 
+            context.Events.Publish(new TickerLine(UiTestRig.SignalLine, "140"));
+            yield return new WaitForSecondsRealtime(TickerEntrance());
+            yield return Capture(camera, folder, "18_ticker");
+            context.Events.Publish(new CrewLogFound(UiTestRig.FirstLog, Vector3.zero));
+            yield return new WaitForSecondsRealtime(CardEntrance());
+            yield return Capture(camera, folder, "19_crew_log_card");
+            ui.Card.Dismiss();
+            yield return new WaitForSecondsRealtime(_tuning.MemoryCard.Reveal.FadeOut + 0.3f);
+
+            fakes.AddTape(UiTestRig.FirstTape);
+            context.Events.Publish(new CassetteCollected(UiTestRig.FirstTape, Vector3.zero, fakes.OwnedTapeCount,
+                fakes.TotalTapeCount));
+            yield return new WaitForSecondsRealtime(CardEntrance());
+            yield return Capture(camera, folder, "20_liner_card");
+            ui.Card.Dismiss();
+            yield return new WaitForSecondsRealtime(_tuning.MemoryCard.Reveal.FadeOut + 0.3f);
+
+            fakes.DialUnlocked = true;
+            Transform corner = BellAtHome(context);
+            Camera bellCamera = BellCamera(corner, camera);
+            fakes.Camera = bellCamera;
+            fakes.PrimaryHint = new InteractionHint(InteractionKind.Tune, corner.position, true);
+            yield return new WaitForSecondsRealtime(_tuning.Prompts.Find(InteractionKind.Tune).DwellSeconds +
+                                                    _tuning.Prompts.Reveal.FadeIn + 0.6f);
+            yield return Capture(bellCamera, folder, "30_bell_home_tune_prompt");
+            fakes.Tune(RadioChannel.QuietHours, UiTestRig.FirstTape);
+            yield return new WaitForSecondsRealtime(_tuning.Prompts.Reveal.FadeOut + _tuning.DialReadout.Reveal.FadeIn +
+                                                    0.5f);
+            yield return Capture(bellCamera, folder, "31_bell_home_dial_readout");
+            fakes.PrimaryHint = InteractionHint.None;
+            fakes.Camera = camera;
+            yield return new WaitForSecondsRealtime(ReadoutExit());
+
+            fakes.Tune(RadioChannel.TapeDeck, UiTestRig.FirstTape);
+            yield return new WaitForSecondsRealtime(_tuning.DialReadout.Reveal.FadeIn + 0.4f);
+            yield return Capture(camera, folder, "21_dial_readout");
+            yield return new WaitForSecondsRealtime(ReadoutExit());
+
+            UpgradeDefinition tower = fakes.Upgrade;
+            fakes.Upgrade = AssetDatabase.LoadAssetAtPath<UpgradeDefinition>(UiTestRig.WorkbenchUpgradePath);
+            fakes.SetBalance(200);
+            fakes.AtStation = true;
+            yield return new WaitForSecondsRealtime(1.8f);
+            yield return Capture(camera, folder, "22_workbench_panel_and_ticker");
+            fakes.AtStation = false;
+            fakes.Upgrade = tower;
+            yield return new WaitForSecondsRealtime(1f);
+
+
             yield return Tap(keyboard.escapeKey);
             yield return new WaitForSecondsRealtime(1.2f);
             yield return Capture(camera, folder, "12_pause");
@@ -200,6 +264,42 @@ namespace MoonProject.UI.PlayModeTests
             yield return new WaitForSecondsRealtime(_tuning.MemoryCard.AppearDelay +
                                                     _tuning.MemoryCard.Reveal.FadeIn + 0.5f);
             yield return Capture(camera, folder, "17_tilly_log_vi");
+            ui.Card.Dismiss();
+            yield return new WaitForSecondsRealtime(_tuning.MemoryCard.Reveal.FadeOut + 0.3f);
+
+            context.Events.Publish(new TickerLine(UiTestRig.HomeLine));
+            yield return new WaitForSecondsRealtime(TickerEntrance());
+            yield return Capture(camera, folder, "23_ticker_vi");
+            fakes.AddTape(UiTestRig.SecondTape);
+            context.Events.Publish(new CassetteCollected(UiTestRig.SecondTape, Vector3.zero, fakes.OwnedTapeCount,
+                fakes.TotalTapeCount));
+            yield return new WaitForSecondsRealtime(CardEntrance());
+            yield return Capture(camera, folder, "24_liner_card_vi");
+            ui.Card.Dismiss();
+            yield return new WaitForSecondsRealtime(_tuning.MemoryCard.Reveal.FadeOut + 0.3f);
+            fakes.Tune(RadioChannel.TapeDeck, UiTestRig.SecondTape);
+            yield return new WaitForSecondsRealtime(_tuning.DialReadout.Reveal.FadeIn + 0.4f);
+            yield return Capture(camera, folder, "25_dial_readout_vi");
+            yield return new WaitForSecondsRealtime(ReadoutExit());
+            yield return Tap(keyboard.escapeKey);
+            yield return new WaitForSecondsRealtime(1.2f);
+            yield return Capture(camera, folder, "26_pause_cassettes_vi");
+            yield return Tap(keyboard.escapeKey);
+            yield return new WaitForSecondsRealtime(1f);
+
+            Reframe(NarrowWidth, NarrowHeight);
+            context.Events.Publish(new TickerLine(UiTestRig.SignalLine, "205"));
+            fakes.AtStation = true;
+            yield return new WaitForSecondsRealtime(TickerEntrance() + 0.5f);
+            yield return Capture(camera, folder, "27_narrow_ticker_and_tower_vi");
+            fakes.AtStation = false;
+            fakes.Tune(RadioChannel.QuietHours, UiTestRig.SecondTape);
+            yield return new WaitForSecondsRealtime(_tuning.DialReadout.Reveal.FadeIn + 0.4f);
+            yield return Capture(camera, folder, "28_narrow_dial_readout_vi");
+            yield return new WaitForSecondsRealtime(ReadoutExit());
+            context.Events.Publish(new CrewLogFound(UiTestRig.FirstLog, Vector3.zero));
+            yield return new WaitForSecondsRealtime(CardEntrance());
+            yield return Capture(camera, folder, "29_narrow_crew_log_card_vi");
             Assert.IsTrue(save.SaveNow(), "the UI saved to its test slot");
 #else
             Assert.Ignore("Captures need the editor.");
@@ -220,6 +320,120 @@ namespace MoonProject.UI.PlayModeTests
             }
 
             throw new InvalidOperationException($"{MainScene} has no initialised GameBootstrap at its root.");
+        }
+
+        /// <summary>Seconds for a queued ticker line to drift fully in once nothing is in its way.</summary>
+        private float TickerEntrance()
+        {
+            return _tuning.Ticker.GapSeconds + _tuning.Ticker.Reveal.FadeIn + 0.6f;
+        }
+
+        /// <summary>Seconds for a card to appear in full: the ticker makes way first, then the card eases in.</summary>
+        private float CardEntrance()
+        {
+            return Mathf.Max(_tuning.MemoryCard.AppearDelay, _tuning.Ticker.Reveal.FadeOut) +
+                   _tuning.MemoryCard.Reveal.FadeIn + 0.6f;
+        }
+
+        /// <summary>Seconds for the dial readout to rest and fade away.</summary>
+        private float ReadoutExit()
+        {
+            return _tuning.DialReadout.HoldSeconds + _tuning.DialReadout.Reveal.FadeOut + 0.3f;
+        }
+
+        /// <summary>
+        /// Bell's corner by the radio tower, with Bell standing in it: the scene's own Bell when the loaded save has
+        /// her home, else her art model placed there for the shot.
+        /// </summary>
+        private Transform BellAtHome(GameContext context)
+        {
+            Transform corner = ActiveSceneNode(BellCornerNode);
+            IFriendRoster roster = context.Get<IFriendRoster>();
+            for (int i = 0; i < roster.Count; i++)
+            {
+                IFriendState friend = roster.Get(i);
+                if (friend.Id != BellId)
+                {
+                    continue;
+                }
+
+                if (Vector3.ProjectOnPlane(friend.Position - corner.position, Vector3.up).magnitude >
+                    BellHomeTolerance)
+                {
+                    _bellStandIn = (GameObject)PrefabUtility.InstantiatePrefab(
+                        AssetDatabase.LoadAssetAtPath<GameObject>(BellPrefabPath));
+                    _bellStandIn.transform.SetPositionAndRotation(corner.position, corner.rotation);
+                }
+
+                return corner;
+            }
+
+            throw new InvalidOperationException($"The friend roster has no '{BellId}'.");
+        }
+
+        /// <summary>A camera beside the spot where 07 parks to tune, looking at Bell and her dial.</summary>
+        private Camera BellCamera(Transform corner, Camera reference)
+        {
+            Vector3 position = corner.position + corner.forward * BellShotFront + corner.right * BellShotSide +
+                               Vector3.up * BellShotHeight;
+            _bellCamera = new GameObject("BellCaptureCamera");
+            var camera = _bellCamera.AddComponent<Camera>();
+            camera.CopyFrom(reference);
+            camera.fieldOfView = FriendShotFov;
+            camera.GetUniversalAdditionalCameraData().renderPostProcessing = true;
+            _bellCamera.transform.SetPositionAndRotation(position,
+                Quaternion.LookRotation(corner.position + Vector3.up * BellLookHeight - position, Vector3.up));
+            return camera;
+        }
+
+        /// <summary>The active node called <paramref name="name"/> in Main (only one tower stage is live).</summary>
+        private static Transform ActiveSceneNode(string name)
+        {
+            foreach (GameObject root in SceneManager.GetSceneByPath(MainScene).GetRootGameObjects())
+            {
+                Transform hit = ActiveDescendant(root.transform, name);
+                if (hit != null)
+                {
+                    return hit;
+                }
+            }
+
+            throw new InvalidOperationException($"{MainScene} has no active node named {name}.");
+        }
+
+        private static Transform ActiveDescendant(Transform node, string name)
+        {
+            if (!node.gameObject.activeInHierarchy)
+            {
+                return null;
+            }
+
+            if (node.name == name)
+            {
+                return node;
+            }
+
+            for (int i = 0; i < node.childCount; i++)
+            {
+                Transform hit = ActiveDescendant(node.GetChild(i), name);
+                if (hit != null)
+                {
+                    return hit;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>Renders the UI at another frame size from now on (the panel lays itself out for it).</summary>
+        private void Reframe(int width, int height)
+        {
+            RenderTexture previous = _target;
+            _target = new RenderTexture(width, height, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
+            _target.Create();
+            _panel.targetTexture = _target;
+            previous.Release();
+            Object.DestroyImmediate(previous);
         }
 
         /// <summary>A camera a few metres from Tilly, on the side of the base, looking at her broken body.</summary>
@@ -256,6 +470,7 @@ namespace MoonProject.UI.PlayModeTests
             _panel.clearColor = true;
             _panel.colorClearValue = Color.clear;
             _tuning = Object.Instantiate(AssetDatabase.LoadAssetAtPath<UiTuning>(UiTestRig.TuningPath));
+            _tuning.Prompts.AddMissingDefaults();
 
             _uiHost = new GameObject("CaptureUI");
             _uiHost.SetActive(false);
@@ -275,7 +490,7 @@ namespace MoonProject.UI.PlayModeTests
             _slot = BootstrapHarness.NewTestSlot();
             save = new SaveService(SaveService.DefaultDirectory, _slot);
             ui.Initialize(new UiServices(context.Events, context.Input, fakes, fakes, context.Get<IAudioSettings>(),
-                context.Get<ILookSettings>(), save, fakes, fakes, fakes, fakes, fakes));
+                context.Get<ILookSettings>(), save, fakes, fakes, fakes, fakes, fakes, fakes));
             save.Load();
             return ui;
         }
@@ -283,11 +498,13 @@ namespace MoonProject.UI.PlayModeTests
         private IEnumerator Capture(Camera camera, string folder, string name)
         {
             yield return null;
-            Texture2D world = FrameCapture.Render(camera, Width, Height);
-            var ui = new Texture2D(Width, Height, TextureFormat.RGBA32, false, false);
+            int width = _target.width;
+            int height = _target.height;
+            Texture2D world = FrameCapture.Render(camera, width, height);
+            var ui = new Texture2D(width, height, TextureFormat.RGBA32, false, false);
             RenderTexture previous = RenderTexture.active;
             RenderTexture.active = _target;
-            ui.ReadPixels(new Rect(0, 0, Width, Height), 0, 0, false);
+            ui.ReadPixels(new Rect(0, 0, width, height), 0, 0, false);
             ui.Apply(false);
             RenderTexture.active = previous;
             try

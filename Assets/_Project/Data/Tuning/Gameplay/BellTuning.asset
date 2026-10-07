@@ -1,0 +1,94 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e68a9554d0a482b43a28ef25341faedb, type: 3}
+  m_Name: BellTuning
+  m_EditorClassIdentifier: 
+  _tapeSlide: 1.4
+  _tapeArc: 0.35
+  _tapeArrivalScale: 0.7
+  _dialWarm: 1.1
+  _needleSweep: 1.6
+  _standUp: 2.2
+  _standWobble: 5
+  _brokenBackReach: 1.03
+  _wallProbeHeight: 1
+  _wallProbe: 3
+  _wallGap: 0.05
+  _danceDuration: 3.2
+  _danceRate: 1.5
+  _danceRoll: 6
+  _danceStep: 16
+  _danceHop: 0.05
+  _danceMotor: 0.4
+  _waddlePerMetre: 0.7
+  _waddleSwing: 15
+  _waddleKnee: 18
+  _waddleRoll: 4
+  _waddleBob: 0.025
+  _turnEase: 0.45
+  _hopTuck: 28
+  _walkMotor: 0.6
+  _belowStep: 14
+  _swayRate: 0.55
+  _swayRoll: 3.5
+  _swayBob: 0.012
+  _speakerPulse: 0.006
+  _speakerRate: 1.2
+  _footTapInterval: {x: 5, y: 10}
+  _footTapDuration: 0.5
+  _footTapLeg: -20
+  _footTapKnee: 30
+  _breathBob: 0.006
+  _breathPeriod: 4.5
+  _watchRadius: 14
+  _watchMaxTurn: 55
+  _dialGlow: 1
+  _dialEase: 0.4
+  _brokenFlicker: 0.55
+  _brokenFlickerRate: 2.3
+  _dozeAfter: 90
+  _stillSpeed: 0.3
+  _emberGlow: 0.16
+  _dozeEase: 2.5
+  _dozeSink: 0.035
+  _dozeKnee: 7
+  _wakeDial: 0.9
+  _wakeNeedle: 0.9
+  _wakeStretch: 1.2
+  _stretchLeg: 12
+  _stretchLift: 0.04
+  _greetDuration: 2.6
+  _greetBounces: 2
+  _greetHop: 0.06
+  _greetLid: -25
+  _crackleDuration: 1.1
+  _crackleNeedle: 12
+  _crackleRate: 9
+  _crackleFlash: 0.15
+  _lumenDetent: 0
+  _tapeDeckDetent: 70
+  _quietDetent: 140
+  _needleEase: 0.3
+  _clickKick: 7
+  _clickDuration: 0.35
+  _tuneFront: 2
+  _tuneRadius: 1.6
+  _tuneMaxSpeed: 0.8
+  _pillarGlow: 0.9
+  _pillarRingGlow: 0.5
+  _pillarRise: 2.5
+  _pillarFade: 2.2
+  _pillarBreathDepth: 0.25
+  _pillarBreathPeriod: 5
+  _shelfLift: 0.11
+  _shelfSettle: 0.9
+  _shelfOvershoot: 1.6

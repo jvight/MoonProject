@@ -1,0 +1,51 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2b3845f2e1e6be346b71388a6ddf0329, type: 3}
+  m_Name: Friend_bell
+  m_EditorClassIdentifier: 
+  _id: bell
+  _brokenPrefab: {fileID: 2593063932607355190, guid: 022e62283c715c24295b168934e1d15a, type: 3}
+  _repairedPrefab: {fileID: 165546329092429338, guid: 43071c6e05570094480b163a057d7a8b, type: 3}
+  _body: 1
+  _parts:
+  - _id: knob
+    _prefab: {fileID: 343816069030198167, guid: 423a903907528184b8af94aaa68a9714, type: 3}
+  - _id: cone
+    _prefab: {fileID: 6280342953660186453, guid: 724d11fa3ebc2c14984a9643de16ccb7, type: 3}
+  - _id: valve
+    _prefab: {fileID: 3010941922448701548, guid: 2926176805d666e42aea1696a4b21360, type: 3}
+  _items:
+  - after_dark_1
+  _home: 1
+  _homeSocket: BellCorner
+  _announcesHomecoming: 1
+  _abilityId: radio_dial
+  _repairDuration: 4
+  _chirpSet: bell
+  _siteRule: 1
+  _placement:
+    _seed: 0
+    _siteDistance: {x: 0, y: 0}
+    _siteBearing: 0
+    _siteBearingSpread: 0
+    _craterDepth: {x: 0, y: 0}
+    _craterRadius: 0
+    _visibleFromBase: 0
+    _partDistance: {x: 0, y: 0}
+  _anchors:
+    _site:
+      _anchorId: canyon.terminus
+      _offset: {x: 0, y: 4.85}
+    _partAnchorPrefix: canyon.alcove_
+    _lineStart: canyon.landing
+    _lineSpacing: 40
+    _exit: canyon.exit

@@ -346,7 +346,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                     new FriendPart("valve", Template("Part_BellValve", Vector3.one * 0.3f)),
                 }, new[] { "after_dark_1" }, FriendHome.RadioTower, "BellCorner", true,
                 FriendDefinition.RadioDialAbility, 2.5f, "bell",
-                new FriendAnchorPlacement(new AnchorSpot(WorldAnchorIds.CanyonTerminus, new Vector2(0f, 2f)),
+                new FriendAnchorPlacement(new AnchorSpot(WorldAnchorIds.CanyonTerminus, new Vector2(0f, 4.85f)),
                     WorldAnchorIds.CanyonAlcovePrefix, WorldAnchorIds.CanyonLanding, 40f, WorldAnchorIds.CanyonExit));
             var catalog = Asset<FriendCatalog>();
             catalog.Populate(new[] { Tilly, Bell });
@@ -423,7 +423,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Cassettes.Populate(new[]
             {
                 Cassette("after_dark_1", CassetteSiteRule.Anchor,
-                    new AnchorSpot(WorldAnchorIds.CanyonTerminus, new Vector2(1.3f, 0.5f)), hoverJump),
+                    new AnchorSpot(WorldAnchorIds.CanyonTerminus, new Vector2(1.2f, 1.9f)), hoverJump),
                 Cassette("dust_and_honey", CassetteSiteRule.BasinPlanner, new AnchorSpot(string.Empty, Vector2.zero),
                     AbilityGate.Open),
                 Cassette("slow_orbit", CassetteSiteRule.Anchor,
@@ -446,7 +446,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             LogCacheTuning = Asset<LogCacheTuning>();
             var ro = Asset<LogCacheDefinition>();
             ro.Populate("ro_1", Template("LogCache", new Vector3(0.5f, 0.3f, 0.35f)),
-                new AnchorSpot(WorldAnchorIds.CanyonTerminus, new Vector2(1.6f, 1.5f)),
+                new AnchorSpot(WorldAnchorIds.CanyonTerminus, new Vector2(1.7f, 3f)),
                 new AbilityGate(true, RoverAbility.HoverJump));
             var catalog = Asset<LogCacheCatalog>();
             catalog.Populate(new[] { ro });

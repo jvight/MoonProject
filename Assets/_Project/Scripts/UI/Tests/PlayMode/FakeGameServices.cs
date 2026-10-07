@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using MoonProject.Core;
 using MoonProject.Core.Events;
@@ -7,12 +8,14 @@ namespace MoonProject.UI.PlayModeTests
 {
     /// <summary>
     /// Everything the UI reads from the World, Rover, Audio and Gameplay domains, as one scriptable stand-in system
-    /// (initialised before the UI). Tests set the tether state, the gameplay hint, the wallet and the tower offer.
+    /// (initialised before the UI). Tests set the tether state, the gameplay hint, the wallet, the tower offer and the
+    /// radio program.
     /// </summary>
     public sealed class FakeGameServices : MonoBehaviour, IGameSystem, IViewCamera, IAudioSettings, ILookSettings,
-        IScrapWallet, ITetherAim, IInteractionHints, IUpgradeShop, IRoverState, IFriendStatuses
+        IScrapWallet, ITetherAim, IInteractionHints, IUpgradeShop, IRoverState, IFriendStatuses, IRadioProgram
     {
         private readonly float[] _volumes = { 1f, 1f, 1f, 1f };
+        private readonly List<string> _tapes = new List<string>();
         private float _sensitivity = 1f;
         private EventBus _events;
 
@@ -79,6 +82,16 @@ namespace MoonProject.UI.PlayModeTests
 
         public InteractionHint Primary => IsUpgradeOffered(out InteractionHint upgrade) ? upgrade : PrimaryHint;
 
+        public bool DialUnlocked { get; set; }
+
+        public RadioChannel Channel { get; set; }
+
+        public string SelectedTape { get; set; } = string.Empty;
+
+        public int OwnedTapeCount => _tapes.Count;
+
+        public int TotalTapeCount { get; set; } = 3;
+
         public void Initialize(GameContext context)
         {
             _events = context.Events;
@@ -91,6 +104,27 @@ namespace MoonProject.UI.PlayModeTests
             context.Register<IUpgradeShop>(this);
             context.Register<IRoverState>(this);
             context.Register<IFriendStatuses>(this);
+            context.Register<IRadioProgram>(this);
+        }
+
+        public string GetOwnedTape(int index)
+        {
+            return _tapes[index];
+        }
+
+        /// <summary>07 owns one more tape: the program changes (its card comes from the test's own event).</summary>
+        public void AddTape(string cassetteId)
+        {
+            _tapes.Add(cassetteId);
+            _events.Publish(new RadioProgramChanged());
+        }
+
+        /// <summary>Bell's dial was turned (or the program otherwise changed): publishes the change.</summary>
+        public void Tune(RadioChannel channel, string tape)
+        {
+            Channel = channel;
+            SelectedTape = tape;
+            _events.Publish(new RadioProgramChanged());
         }
 
         public FriendDefinition Definition(int index)

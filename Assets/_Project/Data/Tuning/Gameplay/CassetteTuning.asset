@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a5d33786ce6bed0459ce2c2257fffc4d, type: 3}
+  m_Name: CassetteTuning
+  m_EditorClassIdentifier: 
+  _attempts: 2000
+  _distance: {x: 60, y: 170}
+  _edgeMargin: 10
+  _maxSlope: 14
+  _flatProbe: 2
+  _clearance: 25
+  _rimProbe: 4
+  _rimRise: {x: 0.25, y: 2.5}
+  _rimDirections: 16
+  _restHeight: 0.07
+  _restLean: 35
+  _glanceRadius: 16
+  _magnetRadius: 4.5
+  _flightDuration: 1.1
+  _flightPerMetre: 0.08
+  _flightLift: 1.5
+  _spiralRadius: 0.35
+  _spiralTurns: 0.75
+  _flightSpin: 420
+  _arrivalScale: 0.45
+  _flashDuration: 0.6
+  _flashRadius: {x: 0.15, y: 0.6}
+  _flashIntensity: 1.2

@@ -14,9 +14,10 @@ namespace MoonProject.UI.PlayModeTests
 {
     /// <summary>
     /// The UI booted through GameBootstrap the way UISceneContributor wires Main.unity (UIDocument on the generated
-    /// PanelSettings, GameUI.uxml, the real tuning, catalog and string tables), behind <see cref="FakeGameServices"/>.
-    /// The tuning is a copy with a short title and no prompt start delay, so tests reach the interesting states
-    /// quickly. Editor-only (assets come through the AssetDatabase).
+    /// PanelSettings, GameUI.uxml, the real tuning, catalog and string tables), behind
+    /// <see cref="FakeGameServices"/>. The tuning is a copy with a short title, no prompt start delay and quick
+    /// ticker fades, so tests reach the interesting states quickly; it also gains the prompt entries the UI/Tuning
+    /// builder adds for interaction kinds newer than the asset. Editor-only (assets come through the AssetDatabase).
     /// </summary>
     internal sealed class UiTestRig : IDisposable
     {
@@ -25,9 +26,22 @@ namespace MoonProject.UI.PlayModeTests
         public const string TuningPath = "Assets/_Project/Data/Tuning/UI/UiTuning.asset";
         public const string CatalogPath = "Assets/_Project/Data/Content/RelicCatalog.asset";
         public const string UpgradePath = "Assets/_Project/Data/Content/Upgrades/Upgrade_radio_tower.asset";
+        public const string WorkbenchUpgradePath =
+            "Assets/_Project/Data/Content/Upgrades/Upgrade_rover_hover_jump.asset";
         public const string TillyPath = "Assets/_Project/Data/Content/Friends/Friend_tilly.asset";
         public const string EnglishPath = "Assets/_Project/Data/Localization/en.json";
         public const string VietnamesePath = "Assets/_Project/Data/Localization/vi.json";
+
+        /// <summary>Bell's signal ticker line; its {0} is a bearing.</summary>
+        public const string SignalLine = "ticker.bell.signal";
+
+        /// <summary>Bell's first homecoming ticker line (no argument).</summary>
+        public const string HomeLine = "ticker.bell.home";
+
+        /// <summary>M3-05 content with text in the shipped tables: Ro's first crew log and two of her tapes.</summary>
+        public const string FirstLog = "ro_1";
+        public const string FirstTape = "after_dark_1";
+        public const string SecondTape = "dust_and_honey";
 
         private readonly GameObject _camera;
         private readonly GameObject _services;
@@ -91,6 +105,34 @@ namespace MoonProject.UI.PlayModeTests
 #endif
         }
 
+        /// <summary>Kenji's workbench offer (Hover-Jump) in place of the radio tower's.</summary>
+        public static UpgradeDefinition WorkbenchUpgrade()
+        {
+#if UNITY_EDITOR
+            return Load<UpgradeDefinition>(WorkbenchUpgradePath);
+#else
+            throw new NotSupportedException("UiTestRig loads assets through the editor's AssetDatabase.");
+#endif
+        }
+
+        /// <summary>Overrides one number of this rig's tuning copy (a serialized property path).</summary>
+        public void Tune(string propertyPath, float value)
+        {
+#if UNITY_EDITOR
+            var serialized = new SerializedObject(Tuning);
+            SerializedProperty property = serialized.FindProperty(propertyPath);
+            if (property == null)
+            {
+                throw new ArgumentException($"UiTuning has no '{propertyPath}'.", nameof(propertyPath));
+            }
+
+            property.floatValue = value;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+#else
+            throw new NotSupportedException("Tuning overrides go through the editor's SerializedObject.");
+#endif
+        }
+
         public void Dispose()
         {
             Object.DestroyImmediate(_ui);
@@ -116,6 +158,7 @@ namespace MoonProject.UI.PlayModeTests
         private static UiTuning QuickTuning()
         {
             UiTuning tuning = Object.Instantiate(Load<UiTuning>(TuningPath));
+            tuning.Prompts.AddMissingDefaults();
             var serialized = new SerializedObject(tuning);
             serialized.FindProperty("_title._delay").floatValue = 0f;
             serialized.FindProperty("_title._hold").floatValue = 0.1f;
@@ -124,6 +167,9 @@ namespace MoonProject.UI.PlayModeTests
             serialized.FindProperty("_prompts._startDelay").floatValue = 0f;
             serialized.FindProperty("_memoryCard._appearDelay").floatValue = 0.1f;
             serialized.FindProperty("_memoryCard._reveal._fadeIn").floatValue = 0.2f;
+            serialized.FindProperty("_ticker._gapSeconds").floatValue = 0.2f;
+            serialized.FindProperty("_ticker._reveal._fadeIn").floatValue = 0.2f;
+            serialized.FindProperty("_ticker._reveal._fadeOut").floatValue = 0.2f;
             serialized.ApplyModifiedPropertiesWithoutUndo();
             return tuning;
         }

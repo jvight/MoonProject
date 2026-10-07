@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6476c85d63619c4fb54d6e7f340628a, type: 3}
+  m_Name: CanyonAudioTuning
+  m_EditorClassIdentifier: 
+  _halfWidth: 16
+  _edge: 12
+  _entry: 30
+  _ease: 2.5
+  _troughDepthStart: 2
+  _troughDepthRange: 6
+  _whisperGain: 1
+  _troughGain: 1
+  _basinBedInside: 0.55
+  _radioMusicInside: 0.6
+  _radioCutoffInside: 2400
+  _roomDb: -9
+  _roomHfDb: -8
+  _decayTime: 2.6
+  _decayHfRatio: 0.5
+  _reflectionsDb: -12
+  _reflectionsDelay: 0.06
+  _reverbDb: -4
+  _reverbDelay: 0.08
+  _diffusion: 60
+  _density: 70

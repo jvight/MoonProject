@@ -207,7 +207,186 @@ namespace MoonProject.UI.PlayModeTests
             Assert.IsFalse(_rig.Ui.Tower.IsVisible);
         }
 
+        [UnityTest]
+        public IEnumerator ACrewLogAndATape_EachGetTheirCard_OneAfterTheOther()
+        {
+            Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
+            Boot();
+            yield return null;
+            Events.Publish(new CrewLogFound(UiTestRig.FirstLog, Vector3.zero));
+            Events.Publish(new CassetteCollected(UiTestRig.FirstTape, Vector3.zero, 1, 3));
+            yield return Seconds(1f);
+            Assert.AreEqual(UiTestRig.FirstLog, _rig.Ui.Card.Current);
+            Assert.AreEqual(Text(UiKeys.CrewLog(UiTestRig.FirstLog)), _rig.Ui.Layout.MemoryCardText.text);
+            Assert.IsTrue(_rig.Ui.Layout.MemoryCard.ClassListContains(MemoryCard.UntitledClass));
+
+            yield return Tap(keyboard.escapeKey);
+            yield return Seconds(_rig.Tuning.MemoryCard.Reveal.FadeOut + 0.6f);
+            Assert.AreEqual(UiTestRig.FirstTape, _rig.Ui.Card.Current, "the liner card waited its turn");
+            Assert.AreEqual(Text(UiKeys.CassetteTitle(UiTestRig.FirstTape)), _rig.Ui.Layout.MemoryCardName.text);
+            Assert.AreEqual(string.Format(Text(UiKeys.TapeCount), 1, 3), _rig.Ui.Layout.MemoryCardCount.text);
+            Assert.IsTrue(_rig.Ui.Layout.MemoryCard.ClassListContains(MemoryCard.LinerClass));
+        }
+
+        [UnityTest]
+        public IEnumerator UpgradePanel_IsDressedForItsStation()
+        {
+            Boot();
+            yield return null;
+            _rig.Fakes.SetBalance(500);
+            _rig.Fakes.AtStation = true;
+            yield return Seconds(1f);
+            UiLayout layout = _rig.Ui.Layout;
+            Assert.AreEqual(Text(UiKeys.StationName(UpgradeStationKind.RadioTower)), layout.TowerName.text);
+            Assert.AreEqual("Level 1 of 3", layout.TowerLevel.text, "the tower counts its levels");
+            Assert.IsTrue(layout.TowerPanel.ClassListContains(TowerPanel.StationClass(UpgradeStationKind.RadioTower)));
+
+            _rig.Fakes.AtStation = false;
+            yield return Seconds(1f);
+            _rig.Fakes.Upgrade = UiTestRig.WorkbenchUpgrade();
+            _rig.Fakes.AtStation = true;
+            yield return Seconds(1f);
+            Assert.AreEqual(Text(UiKeys.StationName(UpgradeStationKind.Workshop)), layout.TowerName.text);
+            Assert.AreEqual(Text(UiKeys.UpgradeName(_rig.Fakes.Upgrade.Id)), layout.TowerLevel.text,
+                "a single-level offer names the ability instead of counting to one");
+            Assert.AreEqual(Text(UiKeys.UpgradeTitle(_rig.Fakes.Upgrade.Id, 1)), layout.TowerTitle.text);
+            Assert.IsTrue(layout.TowerPanel.ClassListContains(TowerPanel.StationClass(UpgradeStationKind.Workshop)));
+            Assert.IsFalse(layout.TowerPanel.ClassListContains(
+                TowerPanel.StationClass(UpgradeStationKind.RadioTower)), "one station's look at a time");
+        }
+
+        [UnityTest]
+        public IEnumerator TunePrompt_TeachesBellsDial_MakesWayForTheReadout_AndRetiresAfterOneTurn()
+        {
+            InputSystem.AddDevice<Keyboard>();
+            Boot();
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            _rig.Fakes.DialUnlocked = true;
+            yield return Seconds(0.5f);
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Tune, new Vector3(0f, 0f, 8f), true);
+            yield return Seconds(1.5f);
+            Assert.IsTrue(_rig.Ui.Prompt.IsVisible, "parked in front of Bell at home: the dial is taught");
+            Assert.AreEqual(Text(UiKeys.Hint(InteractionKind.Tune)), _rig.Ui.Layout.PromptWord.text);
+            Assert.AreEqual("E", _rig.Ui.Layout.PromptGlyphLabel.text, "Interact turns the dial");
+
+            _rig.Fakes.Tune(RadioChannel.QuietHours, string.Empty);
+            bool shared = false;
+            bool answered = false;
+            for (float t = 0f; t < 3f; t += Time.unscaledDeltaTime)
+            {
+                yield return null;
+                shared |= _rig.Ui.Prompt.IsVisible && _rig.Ui.Dial.IsVisible;
+                answered |= _rig.Ui.Dial.IsVisible;
+            }
+
+            Assert.IsFalse(shared, "the prompt fades before the readout eases in: never both on screen");
+            Assert.IsTrue(answered, "the turn is answered");
+            Assert.AreEqual(1, _rig.Ui.Ledger.Used(InteractionKind.Tune));
+            Assert.IsFalse(_rig.Ui.Ledger.ShouldTeach(InteractionKind.Tune), "one turn and the dial is known");
+
+            yield return Seconds(_rig.Tuning.DialReadout.HoldSeconds + _rig.Tuning.DialReadout.Reveal.FadeOut + 2f);
+            Assert.IsFalse(_rig.Ui.Dial.IsVisible);
+            Assert.IsFalse(_rig.Ui.Prompt.IsVisible, "still parked at the dial, but never taught again");
+        }
+
+        [UnityTest]
+        public IEnumerator DialReadout_AnswersATurnOfTheDial_NeverTheLoad()
+        {
+            Boot();
+            _rig.Fakes.DialUnlocked = true;
+            _rig.Fakes.Tune(RadioChannel.TapeDeck, UiTestRig.SecondTape);
+            yield return Seconds(1f);
+            Assert.IsFalse(_rig.Ui.Dial.IsVisible, "a program loaded with the save is not a turn of the dial");
+
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            yield return Seconds(1f);
+            _rig.Fakes.AddTape(UiTestRig.FirstTape);
+            yield return Seconds(0.5f);
+            Assert.IsFalse(_rig.Ui.Dial.IsVisible, "a collected tape is not a turn either");
+
+            _rig.Fakes.Tune(RadioChannel.QuietHours, UiTestRig.SecondTape);
+            yield return Seconds(0.5f);
+            Assert.IsTrue(_rig.Ui.Dial.IsVisible);
+            Assert.AreEqual(Text(UiKeys.RadioChannelName(RadioChannel.QuietHours)), _rig.Ui.Layout.DialStation.text);
+            Assert.AreEqual(DisplayStyle.None, _rig.Ui.Layout.DialTape.resolvedStyle.display);
+
+            _rig.Fakes.Tune(RadioChannel.TapeDeck, UiTestRig.FirstTape);
+            Events.Publish(new TickerLine(UiTestRig.HomeLine));
+            yield return Seconds(0.5f);
+            Assert.AreEqual(Text(UiKeys.RadioChannelName(RadioChannel.TapeDeck)), _rig.Ui.Layout.DialStation.text,
+                "turning again rewrites it in place");
+            Assert.AreEqual(Text(UiKeys.CassetteTitle(UiTestRig.FirstTape)), _rig.Ui.Layout.DialTape.text);
+            Assert.IsFalse(_rig.Ui.Ticker.IsVisible, "the ticker waits for the readout");
+
+            yield return Seconds(_rig.Tuning.DialReadout.HoldSeconds + _rig.Tuning.DialReadout.Reveal.FadeOut);
+            Assert.IsFalse(_rig.Ui.Dial.IsVisible, "it fades after a moment");
+            yield return Seconds(1f);
+            Assert.IsTrue(_rig.Ui.Ticker.IsVisible, "then the ticker has its turn");
+        }
+
+        [UnityTest]
+        public IEnumerator Ticker_SpeaksOnceAwake_MakesWayForACard_AndComesBack()
+        {
+            Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
+            Boot();
+            yield return null;
+            Events.Publish(new TickerLine(UiTestRig.SignalLine, "140"));
+            yield return Seconds(1.5f);
+            Assert.IsFalse(_rig.Ui.Ticker.IsVisible, "the radio waits for 07 to wake");
+
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            yield return Seconds(1.5f);
+            Assert.IsTrue(_rig.Ui.Ticker.IsVisible, "then the line drifts in");
+            Assert.AreEqual(string.Format(Text(UiTestRig.SignalLine), "140"), _rig.Ui.Layout.TickerText.text);
+            Assert.IsTrue(_rig.Bootstrap.Context.Input.Enabled, "the ticker never blocks driving");
+
+            Events.Publish(new RelicDeposited("rubber_duck", Vector3.zero, 2));
+            Events.Publish(new TickerLine(UiTestRig.HomeLine));
+            yield return Seconds(0.6f);
+            Assert.IsFalse(_rig.Ui.Ticker.IsVisible, "a card is coming: the ticker makes way");
+            yield return Seconds(0.6f);
+            Assert.IsTrue(_rig.Ui.Card.IsVisible);
+            Assert.IsFalse(_rig.Ui.Ticker.IsVisible, "never under a card");
+
+            yield return Tap(keyboard.escapeKey);
+            yield return Seconds(1.5f);
+            Assert.IsFalse(_rig.Ui.Card.IsVisible);
+            Assert.IsTrue(_rig.Ui.Ticker.IsVisible, "the line comes back after the card");
+            Assert.AreEqual(string.Format(Text(UiTestRig.SignalLine), "140"), _rig.Ui.Layout.TickerText.text,
+                "the interrupted line first, then the next");
+            Assert.AreEqual(1, _rig.Ui.TickerLines.Waiting);
+        }
+
+        [UnityTest]
+        public IEnumerator Ticker_WaitsDuringADig_AndWhilePaused()
+        {
+            Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
+            Boot();
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            yield return Seconds(1f);
+            Events.Publish(new ExcavationStarted(new Vector3(0f, 0f, 12f)));
+            Events.Publish(new TickerLine(UiTestRig.HomeLine));
+            yield return Seconds(2f);
+            Assert.IsFalse(_rig.Ui.Ticker.IsVisible, "never during a dig");
+
+            Events.Publish(new ExcavationStopped(new Vector3(0f, 0f, 12f), true));
+            yield return Seconds(1f);
+            Assert.IsTrue(_rig.Ui.Ticker.IsShown);
+
+            yield return Tap(keyboard.escapeKey);
+            yield return Seconds(_rig.Ui.TickerLines.HoldSeconds + 1f);
+            yield return Tap(keyboard.escapeKey);
+            yield return Seconds(0.6f);
+            Assert.IsTrue(_rig.Ui.Ticker.IsShown, "the pause held the line where it was");
+        }
+
         private EventBus Events => _rig.Bootstrap.Context.Events;
+
+        /// <summary>The tables' own words for <paramref name="key"/>, so a test never guesses copy.</summary>
+        private string Text(string key)
+        {
+            return _rig.Ui.Localization.Get(key);
+        }
 
         private void Boot()
         {

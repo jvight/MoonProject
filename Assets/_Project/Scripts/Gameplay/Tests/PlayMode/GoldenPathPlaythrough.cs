@@ -29,9 +29,14 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// the tower pad and buy level 1 through the UI's hold. Then Tilly (M3-02): find her with a ping, gather her three
     /// parts, repair her, drive home with her, be greeted, and let her spot a relic on the next trip. Then the
     /// workshop (M3-03): gather scrap for Hover-Jump, find that holding Jump does nothing yet, buy it at Kenji's
-    /// workbench through the same hold, and take the first full-charge leap on the base pad.
-    /// Every step is timed (Logs/gameplay-captures/playthrough.md) and captured; any error or exception in the log
-    /// fails it. Slow: run on demand with --category Playthrough.
+    /// workbench through the same hold, and take the first full-charge leap on the base pad. Then Bell (M3-04/05):
+    /// follow the scrap trail up the mouth lane, leap the chasm, find her lying at the terminus with Ro's log cache
+    /// and her tape, gather her three parts from the alcoves, repair her (the tape slides in, her dial wakes, she
+    /// stands), drive home by the one-way exit while she makes her own way, be greeted by her, turn her dial through
+    /// every station, and follow her first signal to the basin tape onto her rack. Inside the canyon 07 drives a line
+    /// found over drivable ground (the same planner Bell walks by). Every step is timed
+    /// (Logs/gameplay-captures/playthrough.md) and captured, with review frames of every M3-05 placement; any error or
+    /// exception in the log fails it. Slow: run on demand with --category Playthrough.
     /// </summary>
     [Explicit("Slow end-to-end playthrough of the real Main scene; run on demand with --category Playthrough.")]
     [Category("Playthrough")]
@@ -40,6 +45,34 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const string Tower = "radio_tower";
         private const string HoverJump = "rover.hover_jump";
         private const string TillyId = "tilly";
+        private const string BellId = "bell";
+        private const string AfterDark = "after_dark_1";
+        private const string DustAndHoney = "dust_and_honey";
+        private const string SlowOrbit = "slow_orbit";
+
+        /// <summary>The run at the chasm starts this far (m) back from the lip on the mouth lane.</summary>
+        private const float RunUp = 45f;
+
+        /// <summary>A full charge for the chasm: its charge time and a little more, as a player holds it.</summary>
+        private const float ChasmCharge = 1.2f;
+
+        /// <summary>Jump is let go this far (m) before the lip.</summary>
+        private const float ReleaseLead = 0.5f;
+
+        /// <summary>The chasm is 18.5 m from the lip to the far face; a crossing lands past it, up on the apron.
+        /// </summary>
+        private const float ChasmWidth = 18.5f;
+        private const float ApronRise = 1f;
+
+        /// <summary>Canyon waypoints count as reached this close (m); the last one is driven to a stop.</summary>
+        private const float WaypointArrive = 3f;
+        private const float CanyonThrottle = 0.7f;
+
+        /// <summary>Metres past the exit anchor, down its step, onto the basin floor.</summary>
+        private const float BelowExit = 14f;
+
+        /// <summary>Seconds between two turns of Bell's dial (the needle settles in between).</summary>
+        private const float DialPause = 1.5f;
 
         /// <summary>Hold Jump this much longer than the rover's full charge time (s), as a player would.</summary>
         private const float ChargeMargin = 0.25f;
@@ -71,7 +104,7 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         /// <summary>Close enough (m) to the base pad centre to turn toward the shelf or the tower.</summary>
         private const float PadArrival = 5f;
-        private const float TotalBudget = 600f;
+        private const float TotalBudget = 1100f;
 
         private static readonly string ReportPath = Path.Combine(GameplayFixture.CaptureFolder, "playthrough.md");
 
@@ -120,7 +153,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         [UnityTest]
-        [Timeout(600000)]
+        [Timeout(1200000)]
         [PrebuildSetup(typeof(PlaythroughScene))]
         [PostBuildCleanup(typeof(PlaythroughScene))]
         public IEnumerator FreshGame_FirstRelicHome_AndTheTowerAwake()
@@ -146,6 +179,14 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return GatherScrapFor(HoverJump, "Hover-Jump", 300f);
             yield return BuyHoverJumpAtTheBench();
             yield return FirstLeap();
+            yield return FollowTheTrailToTheCanyon();
+            yield return LeapTheChasm();
+            yield return FindBell();
+            yield return GatherBellsParts();
+            yield return RepairBell();
+            yield return HomeByTheExit();
+            yield return TurnBellsDial();
+            yield return FollowBellsSignal();
 
             float total = Time.time - started;
             WriteReport(total);
@@ -625,6 +666,382 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return new WaitForSeconds(1f);
             Capture("15-after-the-leap");
             End("First Hover-Jump on the base pad", $"strength {strength:F2}, apex {apex:F1} m, hang {hang:F1} s");
+        }
+
+        private IEnumerator FollowTheTrailToTheCanyon()
+        {
+            Begin();
+            WorldAnchor lip = Anchor(WorldAnchorIds.CanyonLip);
+            Vector3 runStart = lip.Position - lip.Forward * RunUp;
+            List<int> trail = TrailPieces();
+            Assert.AreEqual(_gameplay.Scrap.Tuning.CanyonTrailPieces, trail.Count, "the whole trail lies on the lane");
+            int earlier = CollectedOf(trail);
+            yield return DriveTo(_context.Get<IWorldLayout>().BasePosition, PadArrival, 0.8f, 60f, "the base pad");
+            Review(_context.Get<IWorldLayout>().BasePosition + Vector3.up * 3f, lip.Position + Vector3.up * 2f,
+                "16-trail-to-the-canyon");
+            float distance = SurfaceRules.HorizontalDistance(_rover.Position, runStart);
+            yield return DriveTo(runStart, 2f, 1f, 90f, "the run-up on the mouth lane");
+            Capture("16b-at-the-run-up");
+            End($"Follow the scrap trail to the canyon ({distance:F0} m)",
+                $"{earlier} trail piece(s) already gathered for the workshop, {CollectedOf(trail) - earlier} on the " +
+                $"way, {trail.Count - CollectedOf(trail)} left up to the lip");
+        }
+
+        private IEnumerator LeapTheChasm()
+        {
+            Begin();
+            WorldAnchor lip = Anchor(WorldAnchorIds.CanyonLip);
+            int leaps = _events.RoverJumped.Count;
+            _pilot.GoTo(lip.Position + lip.Forward * (ChasmWidth * 2f), 1f, 1f);
+            float fixedStep = Time.fixedDeltaTime;
+            int holdSteps = Mathf.RoundToInt(ChasmCharge * _rover.Tuning.HoverJump.ChargeTime / fixedStep) + 1;
+            float deadline = Time.time + 30f;
+            while (Along(lip) < -(ReleaseLead + _rover.Speed * holdSteps * fixedStep) && Time.time < deadline)
+            {
+                yield return new WaitForFixedUpdate();
+            }
+
+            float speed = _rover.Speed;
+            _pilot.JumpHeld = true;
+            for (int i = 0; i < holdSteps; i++)
+            {
+                yield return new WaitForFixedUpdate();
+            }
+
+            _pilot.JumpHeld = false;
+            yield return Until(() => _events.RoverJumped.Count > leaps, 1f, "07 leaps off the lip");
+            yield return Until(() => !_rover.IsGrounded, 1f, "07 is in the air");
+            bool captured = false;
+            float takeOff = Time.time;
+            while (!_rover.IsGrounded && Time.time < takeOff + 15f)
+            {
+                if (!captured && _rover.Velocity.y < 0f)
+                {
+                    Capture("17-leaping-the-chasm");
+                    captured = true;
+                }
+
+                yield return null;
+            }
+
+            _pilot.Target = null;
+            List<int> trail = TrailPieces();
+            yield return Until(() => CollectedOf(trail) == trail.Count, 3f,
+                "the scrap trail is gathered all the way up to the lip");
+            float landed = Along(lip);
+            Assert.Greater(landed, ChasmWidth, "07 comes down past the chasm's far face");
+            Assert.Greater(_rover.Position.y, lip.Position.y + ApronRise, "up on the landing apron");
+            yield return Until(() => _rover.Speed < StopSpeed, 8f, "07 settles on the apron");
+            End("Leap the chasm", $"{speed:F1} m/s at the lip, strength " +
+                                  $"{_events.RoverJumped[_events.RoverJumped.Count - 1].Value.Strength:F2}, " +
+                                  $"touchdown {landed:F1} m out");
+        }
+
+        private IEnumerator FindBell()
+        {
+            Begin();
+            Friend bell = _gameplay.Friends.Find(BellId);
+            Assert.IsNotNull(bell, "Bell lies somewhere in the canyon");
+            WorldAnchor terminus = Anchor(WorldAnchorIds.CanyonTerminus);
+            Assert.Less(SurfaceRules.HorizontalDistance(bell.Site.Position, terminus.Position), terminus.Radius + 1f,
+                "at the terminus");
+            WorldAnchor ledge = Anchor(WorldAnchorIds.CanyonLedge);
+            CassetteSite ledgeTape = _gameplay.Cassettes.Site(CassetteIndex(SlowOrbit));
+            Review(ledge.Position - ledge.Forward * 8f + Vector3.up * 2.5f, ledgeTape.Position, "18-ledge-tape");
+            Vector3 site = bell.Site.Position;
+            Vector3 aside = Vector3.Cross(Vector3.up, bell.Site.Facing);
+            Review(site + bell.Site.Facing * 5.5f + Vector3.up * 2.2f, site + Vector3.up * 0.5f,
+                "19-bell-at-the-terminus");
+            Review(site + aside * 4f + bell.Site.Facing * 1.5f + Vector3.up * 1.2f, site + Vector3.up * 0.5f,
+                "19c-bell-against-the-wall");
+            float travelled = 0f;
+            yield return DriveAlong(terminus.Position, "the terminus", value => travelled = value);
+            yield return Until(() => _events.CrewLogFound.Count > 0, 3f, "Ro's log cache opens beside her");
+            Assert.AreEqual("ro_1", _events.CrewLogFound[0].Value.LogId);
+            yield return Until(() => Collected(AfterDark), 6f, "Lumen After Dark, Vol. 1 drifts into 07");
+            yield return Until(() => bell.Progress.ItemsCollected == 1, 1f,
+                "her tape lights her fourth lamp: it is the fourth thing she needs");
+            Capture("19b-terminus");
+            End($"Find Bell at the terminus ({travelled:F0} m in)", "Ro's first log and her tape picked up");
+        }
+
+        private IEnumerator GatherBellsParts()
+        {
+            Begin();
+            Friend bell = _gameplay.Friends.Find(BellId);
+            int total = bell.Progress.PartCount;
+            float travelled = 0f;
+            bool reviewed = false;
+            while (bell.Progress.Collected < total)
+            {
+                int next = NearestMissingPart(bell);
+                Vector3 part = bell.PartRest[next];
+                if (!reviewed)
+                {
+                    WorldAnchor alcove = Anchor(WorldAnchorIds.CanyonAlcovePrefix + next);
+                    Review(alcove.Position - alcove.Forward * 7f + Vector3.up * 2.5f, part, "20-bell-part-alcove");
+                    reviewed = true;
+                }
+
+                int before = bell.Progress.Collected;
+                yield return DriveAlong(part, "one of Bell's parts", value => travelled += value);
+                yield return Until(() => bell.Progress.Collected > before, 6f, "the part drifts into 07");
+            }
+
+            Assert.IsTrue(bell.Progress.CanRepair, "three parts and the tape: she can be repaired");
+            End("Gather Bell's parts from the alcoves", $"{total} parts over {travelled:F0} m of canyon");
+        }
+
+        private IEnumerator RepairBell()
+        {
+            Begin();
+            Friend bell = _gameplay.Friends.Find(BellId);
+            Vector3 site = bell.Site.Position;
+            yield return DriveAlong(site + bell.Site.Facing * RepairStandOff, "Bell", null);
+            yield return Until(() => _gameplay.Hints.TryGet(InteractionKind.Repair, out _), 3f,
+                "the Repair prompt is offered in front of her");
+            Press(_keyboard.eKey);
+            yield return Until(() => _events.FriendRepairStarted.Count > 1, 3f, "holding Interact starts her repair");
+            Release(_keyboard.eKey);
+            Assert.IsTrue(_rover.IsHeldStill, "07 holds still while its beam stitches her");
+            BellRepairSequence sequence = BellRepairSequence.For(bell.Definition, _gameplay.Friends.BellTuning);
+            float began = _events.FriendRepairStarted[_events.FriendRepairStarted.Count - 1].Time;
+            Vector3 eye = site + bell.Site.Facing * 4.5f + Vector3.Cross(Vector3.up, bell.Site.Facing) * 2.5f +
+                          Vector3.up * 1.8f;
+            yield return new WaitForSeconds(began + sequence.StitchEnd * 0.5f - Time.time);
+            Review(eye, site + Vector3.up * 0.5f, "21-bell-stitching");
+            yield return new WaitForSeconds(began + (sequence.StitchEnd + sequence.TapeIn) * 0.5f - Time.time);
+            Review(eye, site + Vector3.up * 0.5f, "22-bell-tape-slides-in");
+            yield return Until(() => _events.FriendRepaired.Count > 1, sequence.Duration + 3f, "she stands up");
+            Assert.AreEqual(BellId, _events.FriendRepaired[_events.FriendRepaired.Count - 1].Value.FriendId);
+            Assert.IsFalse(_rover.IsHeldStill, "07 is free again");
+            Assert.IsTrue(_context.Get<IRadioProgram>().DialUnlocked, "her gift: the radio dial");
+            Assert.IsTrue(HasCue(BellCue.TapeSlotted) && HasCue(BellCue.NeedleSwept),
+                "the tape clicks, the needle sweeps");
+            Review(eye, site + Vector3.up * 0.8f, "23-bell-standing");
+            yield return new WaitForSeconds(_gameplay.Friends.BellTuning.DanceDuration * 0.5f);
+            Review(eye, site + Vector3.up * 0.8f, "24-bell-two-step");
+            End("Repair Bell", $"stitching {bell.Definition.RepairDuration:F1} s, tape, dial and standing up " +
+                               $"{sequence.Duration - sequence.StitchEnd:F1} s");
+        }
+
+        private IEnumerator HomeByTheExit()
+        {
+            Begin();
+            Friend bell = _gameplay.Friends.Find(BellId);
+            WorldAnchor exit = Anchor(WorldAnchorIds.CanyonExit);
+            float travelled = 0f;
+            yield return DriveAlong(exit.Position, "the top of the way out", value => travelled = value);
+            Vector3 below = exit.Position + exit.Forward * BelowExit;
+            yield return DriveTo(new Vector3(below.x, 0f, below.z), 2f, 0.6f, 30f, "the basin, down the exit step");
+            Vector3 home = _context.Get<IWorldLayout>().BasePosition;
+            travelled += SurfaceRules.HorizontalDistance(_rover.Position, home);
+            int greetings = CountGreetings(BellId);
+            yield return DriveTo(home, PadArrival, 1f, 120f, "home");
+            Assert.IsTrue(bell.IsHome, "Bell got home before 07, unseen");
+            Assert.Less(Vector3.Distance(bell.Position, _gameplay.Friends.Find(BellId).Home.position), 0.01f,
+                "in her corner by the radio tower");
+            yield return Until(() => CountGreetings(BellId) > greetings, _gameplay.Friends.BellTuning.WakeDuration + 6f,
+                "she wakes and greets 07 home");
+            Assert.IsTrue(Ticker("ticker.bell.home"), "Bell got home before you");
+            Transform corner = bell.Home;
+            Review(corner.position + corner.forward * 4.5f + corner.right * 1.5f + Vector3.up * 1.8f,
+                corner.position + Vector3.up * 0.8f, "25-bell-home");
+            End($"Drive home by the exit ({travelled:F0} m)", "Bell was already home, and greeted 07");
+        }
+
+        private IEnumerator TurnBellsDial()
+        {
+            Begin();
+            Friend bell = _gameplay.Friends.Find(BellId);
+            var cabinet = (RadioCabinetBody)bell.Body;
+            IRadioProgram radio = _context.Get<IRadioProgram>();
+            yield return DriveTo(cabinet.DialFront, 1f, 0.5f, 60f, "the spot in front of Bell's dial");
+            yield return Until(() => _gameplay.Hints.Primary.Kind == InteractionKind.Tune, 3f,
+                "the Tune prompt is offered in front of her");
+            var heard = new List<string>();
+            for (int turn = 0; turn < 3; turn++)
+            {
+                Press(_keyboard.eKey, queueEventOnly: true);
+                yield return null;
+                yield return null;
+                Release(_keyboard.eKey);
+                yield return new WaitForSeconds(DialPause);
+                heard.Add(radio.Channel == RadioChannel.TapeDeck ? radio.Channel + " (" + radio.SelectedTape + ")"
+                    : radio.Channel.ToString());
+                Assert.AreEqual(_gameplay.Friends.BellTuning.Detent(radio.Channel), cabinet.Life.Needle, 2f,
+                    "the needle eases onto the station's detent");
+                if (turn == 0)
+                {
+                    Transform corner = bell.Home;
+                    Review(corner.position + corner.forward * 1.6f + Vector3.up * 1.4f,
+                        corner.position + Vector3.up * 1.2f, "26-dial-tape-deck");
+                }
+            }
+
+            CollectionAssert.AreEqual(new[] { "TapeDeck (" + AfterDark + ")", "QuietHours", "LumenAfterDark" }, heard,
+                "one click per detent, round again to Ro's show");
+            End("Turn Bell's dial through every station", string.Join(" -> ", heard));
+        }
+
+        private IEnumerator FollowBellsSignal()
+        {
+            Begin();
+            Assert.Greater(_events.BellSignalPicked.Count, 0, "home and listening, Bell picks up a signal");
+            BellSignalPicked picked = _events.BellSignalPicked[_events.BellSignalPicked.Count - 1].Value;
+            Assert.AreEqual(BellSignalTarget.Cassette, picked.Target, "the nearest reachable tape");
+            CassetteSite tape = _gameplay.Cassettes.Site(CassetteIndex(DustAndHoney));
+            Assert.Less(SurfaceRules.HorizontalDistance(picked.Position, tape.Position), 0.01f, "Dust & Honey");
+            Assert.IsTrue(Ticker("ticker.bell.signal"), "Bell's picking something up... bearing");
+            Vector3 home = _context.Get<IWorldLayout>().BasePosition;
+            Review(home + Vector3.up * 3f, tape.Position + Vector3.up * 12f, "27-bell-signal-pillar");
+            float distance = SurfaceRules.HorizontalDistance(_rover.Position, tape.Position);
+            Vector3 stand = tape.Position + tape.Facing * 6f;
+            yield return DriveTo(new Vector3(stand.x, 0f, stand.z), 2f, 0.8f, 90f, "Bell's signal");
+            Review(tape.Position + tape.Facing * 3f + Vector3.up * 1.4f, tape.Position, "28-basin-tape-tucked");
+            yield return DriveTo(new Vector3(tape.Position.x, 0f, tape.Position.z), 1f, 0.5f, 30f, "the tape");
+            yield return Until(() => Collected(DustAndHoney), 6f, "the tape pops out of the dust into 07");
+            yield return Until(() => _events.BellSignalFound.Count > 0, 2f, "Bell says so");
+            Assert.IsTrue(Ticker(BellSignals.FoundLine0), "Bell says: told you so");
+            Assert.AreEqual(2, _gameplay.Shelf.Shown, "both tapes stand on her rack");
+            Transform corner = _gameplay.Friends.Find(BellId).Home;
+            Review(_gameplay.Shelf.transform.position + _gameplay.Shelf.transform.forward * 2.2f + Vector3.up * 1.3f,
+                _gameplay.Shelf.transform.position + Vector3.up * 0.6f, "29-tape-rack");
+            End($"Follow Bell's signal to the basin tape ({distance:F0} m)",
+                $"Dust & Honey on the rack next to Vol. 1 by {corner.name}");
+        }
+
+        /// <summary>
+        /// Drives a line over drivable ground to <paramref name="target"/> (the planner Bell walks by), easing
+        /// through the waypoints and to a stop at the end; reports the metres travelled.
+        /// </summary>
+        private IEnumerator DriveAlong(Vector3 target, string what, Action<float> travelled)
+        {
+            Vector3[] path = WalkPathPlanner.Plan(_context.Get<ITerrainQuery>(), _rover.Position, target,
+                _gameplay.Friends.Tuning);
+            Assert.IsNotNull(path, $"a drivable line to {what}");
+            float length = 0f;
+            for (int i = 1; i < path.Length; i++)
+            {
+                length += SurfaceRules.HorizontalDistance(path[i - 1], path[i]);
+                bool last = i == path.Length - 1;
+                _pilot.GoTo(path[i], last ? 1.5f : WaypointArrive, CanyonThrottle);
+                yield return Until(() => _pilot.Arrived, 60f, $"07 reaches waypoint {i} toward {what}");
+            }
+
+            _pilot.Target = null;
+            yield return Until(() => _rover.Speed < StopSpeed, 6f, "07 comes to rest at " + what);
+            travelled?.Invoke(length);
+        }
+
+        /// <summary>The scrap pieces of the trail to the canyon (planned again from the same world, tuning).</summary>
+        private List<int> TrailPieces()
+        {
+            ScrapField scrap = _gameplay.Scrap;
+            List<ScrapSpawn> planned = ScrapTrailPlanner.Plan(_context.Get<ITerrainQuery>(),
+                _context.Get<IWorldLayout>(), _context.Get<IWorldAnchors>(), scrap.Tuning, scrap.Catalog.Variants,
+                out string problem);
+            Assert.IsNotNull(planned, problem);
+            var pieces = new List<int>();
+            foreach (ScrapSpawn spawn in planned)
+            {
+                for (int i = 0; i < scrap.Count; i++)
+                {
+                    if (Vector3.Distance(scrap.RestPosition(i), spawn.Position) < 0.01f)
+                    {
+                        pieces.Add(i);
+                    }
+                }
+            }
+
+            return pieces;
+        }
+
+        private int CollectedOf(List<int> pieces)
+        {
+            int collected = 0;
+            foreach (int piece in pieces)
+            {
+                collected += _gameplay.Scrap.IsCollected(piece) ? 1 : 0;
+            }
+
+            return collected;
+        }
+
+        private float Along(WorldAnchor anchor)
+        {
+            Vector3 offset = _rover.Position - anchor.Position;
+            return offset.x * anchor.Forward.x + offset.z * anchor.Forward.z;
+        }
+
+        private WorldAnchor Anchor(string id)
+        {
+            Assert.IsTrue(_context.Get<IWorldAnchors>().TryGet(id, out WorldAnchor anchor), $"the World has {id}");
+            return anchor;
+        }
+
+        private int CassetteIndex(string id)
+        {
+            for (int i = 0; i < _gameplay.Cassettes.Count; i++)
+            {
+                if (_gameplay.Cassettes.Definition(i).Id == id)
+                {
+                    return i;
+                }
+            }
+
+            Assert.Fail($"No cassette '{id}'.");
+            return -1;
+        }
+
+        private bool Collected(string cassette)
+        {
+            foreach (EventRecorder.Timed<CassetteCollected> collected in _events.CassetteCollected)
+            {
+                if (collected.Value.CassetteId == cassette)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private int CountGreetings(string friend)
+        {
+            int count = 0;
+            foreach (EventRecorder.Timed<FriendGreeted> greeted in _events.FriendGreeted)
+            {
+                count += greeted.Value.FriendId == friend ? 1 : 0;
+            }
+
+            return count;
+        }
+
+        private bool Ticker(string key)
+        {
+            foreach (EventRecorder.Timed<TickerLine> line in _events.TickerLine)
+            {
+                if (line.Value.Key == key)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private bool HasCue(BellCue cue)
+        {
+            foreach (EventRecorder.Timed<BellCued> cued in _events.BellCued)
+            {
+                if (cued.Value.Cue == cue)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private bool Spotted(Relic relic)

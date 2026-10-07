@@ -5,7 +5,7 @@ namespace MoonProject.Gameplay
     /// <summary>
     /// The player's view as pure maths (a perspective camera's pose, vertical field of view and aspect), so "could the
     /// player see this?" can be answered and tested without a Camera. Ignores occlusion: anything it says is unseen
-    /// really is off screen.
+    /// really is off screen (callers add their own line-of-sight test from <see cref="Position"/>).
     /// </summary>
     public readonly struct ViewFrustum
     {
@@ -29,6 +29,9 @@ namespace MoonProject.Gameplay
             _cosHorizontal = Mathf.Cos(horizontal);
             _sinHorizontal = Mathf.Sin(horizontal);
         }
+
+        /// <summary>Where the eye is.</summary>
+        public Vector3 Position => _position;
 
         public static ViewFrustum Of(Camera camera)
         {

@@ -32,6 +32,19 @@ namespace MoonProject.Gameplay
         [Tooltip("Wobble (degrees) while she stands up, settling as she finds her feet.")]
         [Range(0f, 20f)] [SerializeField] private float _standWobble = 5f;
 
+        [Header("Lying broken against the wall")]
+        [Tooltip("How far (m) her broken pose reaches back behind her root (art: 1.03, the open lid).")]
+        [Range(0f, 3f)] [SerializeField] private float _brokenBackReach = 1.03f;
+
+        [Tooltip("Height (m) of that farthest-back point, where the wall behind her is felt for.")]
+        [Range(0f, 3f)] [SerializeField] private float _wallProbeHeight = 1f;
+
+        [Tooltip("The wall is felt for from this many metres in front of her placed spot, out to twice as far behind.")]
+        [Range(0.5f, 10f)] [SerializeField] private float _wallProbe = 3f;
+
+        [Tooltip("Gap (m) left between her back and the wall's surface.")]
+        [Range(0f, 0.5f)] [SerializeField] private float _wallGap = 0.05f;
+
         [Header("Two-step (after her repair)")]
         [Tooltip("Seconds of her little dance before she sets off home.")]
         [Range(0.5f, 10f)] [SerializeField] private float _danceDuration = 3.2f;
@@ -70,11 +83,14 @@ namespace MoonProject.Gameplay
         [Tooltip("Seconds (time constant) to turn toward where she walks or looks.")]
         [Range(0.05f, 3f)] [SerializeField] private float _turnEase = 0.45f;
 
+        [Tooltip("Knee tuck (degrees) at the top of a hop down a step.")]
+        [Range(0f, 60f)] [SerializeField] private float _hopTuck = 28f;
+
         [Tooltip("Motor effort (Core RotorSpeed scale) while walking, for her leg taps.")]
         [Range(0f, 1f)] [SerializeField] private float _walkMotor = 0.6f;
 
-        [Tooltip("Metres past the canyon exit's step down she aims for before heading home.")]
-        [Range(0f, 30f)] [SerializeField] private float _belowStep = 5f;
+        [Tooltip("Metres from the canyon exit's anchor, on past its step, to the basin floor she heads for first.")]
+        [Range(0f, 40f)] [SerializeField] private float _belowStep = 14f;
 
         [Header("At home")]
         [Tooltip("Sway cycles per second while music plays.")]
@@ -251,6 +267,10 @@ namespace MoonProject.Gameplay
         public float NeedleSweep => _needleSweep;
         public float StandUp => _standUp;
         public float StandWobble => _standWobble;
+        public float BrokenBackReach => _brokenBackReach;
+        public float WallProbeHeight => _wallProbeHeight;
+        public float WallProbe => _wallProbe;
+        public float WallGap => _wallGap;
         public float DanceDuration => _danceDuration;
         public float DanceRate => _danceRate;
         public float DanceRoll => _danceRoll;
@@ -263,6 +283,7 @@ namespace MoonProject.Gameplay
         public float WaddleRoll => _waddleRoll;
         public float WaddleBob => _waddleBob;
         public float TurnEase => _turnEase;
+        public float HopTuck => _hopTuck;
         public float WalkMotor => _walkMotor;
         public float BelowStep => _belowStep;
         public float SwayRate => _swayRate;

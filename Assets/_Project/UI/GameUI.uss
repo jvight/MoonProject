@@ -29,6 +29,8 @@
 .section-label,
 .chip__number,
 .friend-name,
+.dial-readout__station,
+.dial-readout__tape,
 .glyph__label,
 .hold__glyph,
 .cost__price {
@@ -179,6 +181,21 @@ Label {
     margin-left: 0;
 }
 
+/* The cassette icon (painted, see CassetteIconPainter) */
+
+.cassette-icon {
+    width: 24px;
+    height: 16px;
+    --icon-color: var(--moon-warm-lamp);
+    --icon-hole-color: var(--moon-sky-top);
+}
+
+.cassette-icon--quiet {
+    width: 20px;
+    height: 13px;
+    --icon-color: var(--moon-amber-edge);
+}
+
 /* Opening title */
 
 .title {
@@ -308,6 +325,96 @@ Label {
     right: 56px;
 }
 
+/* Radio ticker: one soft line in the bottom band, below every panel and below the prompts' screen margin */
+
+.ticker {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 26px;
+    align-items: center;
+}
+
+.ticker__line {
+    flex-direction: row;
+    align-items: center;
+    max-width: 72%;
+    padding: 7px 20px 7px 16px;
+    border-radius: 18px;
+    background-color: var(--moon-shadow);
+}
+
+.ticker__lamp {
+    flex-shrink: 0;
+    width: 7px;
+    height: 7px;
+    margin-right: 12px;
+    border-radius: 4px;
+    background-color: var(--moon-warm-lamp);
+}
+
+.ticker__text {
+    flex-shrink: 1;
+    font-size: 19px;
+    letter-spacing: 0.4px;
+    color: var(--moon-text-dim);
+    white-space: normal;
+    -unity-text-align: middle-center;
+}
+
+/* Dial readout: the station Bell's dial was just turned to, just above the ticker's band */
+
+.dial-readout {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 84px;
+    align-items: center;
+}
+
+.dial-readout__body {
+    min-width: 230px;
+    align-items: center;
+    padding: 12px 28px 13px 28px;
+    border-radius: 20px;
+    border-width: 1px;
+    border-color: var(--moon-glass-edge);
+    background-color: var(--moon-glass);
+}
+
+.dial-readout__detents {
+    flex-direction: row;
+    margin-bottom: 9px;
+}
+
+.dial-readout__detent {
+    width: 9px;
+    height: 9px;
+    margin: 0 5px;
+    border-width: 1.5px;
+    border-radius: 5px;
+    border-color: var(--moon-text-faint);
+}
+
+.dial-readout__detent--lit {
+    border-color: var(--moon-warm-lamp);
+    background-color: var(--moon-warm-lamp);
+}
+
+.dial-readout__station {
+    font-size: 15px;
+    letter-spacing: 3px;
+    color: var(--moon-warm-lamp);
+    -unity-text-align: middle-center;
+}
+
+.dial-readout__tape {
+    margin-top: 5px;
+    font-size: 23px;
+    color: var(--moon-cream);
+    -unity-text-align: middle-center;
+}
+
 /* Memory card */
 
 .memory-card {
@@ -319,6 +426,60 @@ Label {
 
 .memory-card__body {
     padding: 24px 30px 20px 30px;
+}
+
+.memory-card__heading {
+    flex-direction: row;
+    align-items: center;
+}
+
+.memory-card__caption {
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.memory-card__icon,
+.memory-card__count {
+    display: none;
+}
+
+/* A crew log: its caption says what it is, so it has no name line */
+
+.memory-card--untitled .memory-card__name {
+    display: none;
+}
+
+.memory-card--untitled .memory-card__text {
+    margin-top: 14px;
+}
+
+/* Liner notes: a smaller card, warm in its amber frame, honey title and cassette icon, with the tape count */
+
+.memory-card--liner {
+    width: 440px;
+}
+
+.memory-card--liner .memory-card__body {
+    border-color: var(--moon-amber-edge);
+}
+
+.memory-card--liner .memory-card__icon {
+    display: flex;
+    margin-right: 10px;
+}
+
+.memory-card--liner .memory-card__count {
+    display: flex;
+    margin-left: 12px;
+}
+
+.memory-card--liner .memory-card__name {
+    font-size: 26px;
+    color: var(--moon-honey);
+}
+
+.memory-card--liner .memory-card__text {
+    font-size: 19px;
 }
 
 .memory-card__name {
@@ -358,6 +519,37 @@ Label {
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
+}
+
+.tower-panel__station {
+    flex-direction: row;
+    align-items: center;
+}
+
+.tower-panel__lamp {
+    width: 8px;
+    height: 8px;
+    margin-right: 9px;
+    border-radius: 4px;
+}
+
+/* Each station's accent: the radio tower's amber lamp, Kenji's workbench in the rover's warm orange paint */
+
+.tower-panel--radio-tower .tower-panel__lamp {
+    background-color: var(--moon-warm-lamp);
+}
+
+.tower-panel--workshop .tower-panel__lamp {
+    background-color: var(--moon-warm-accent);
+}
+
+.tower-panel--workshop .tower-panel__name,
+.tower-panel--workshop .hold__glyph {
+    color: var(--moon-warm-accent);
+}
+
+.tower-panel--workshop .hold__ring {
+    --fill-color: var(--moon-warm-accent);
 }
 
 .tower-panel__title {
@@ -481,6 +673,18 @@ Label {
     font-size: 16px;
     color: var(--moon-text-faint);
     margin-top: 4px;
+}
+
+.pause__cassettes {
+    flex-direction: row;
+    align-items: center;
+    margin-top: 12px;
+}
+
+.pause__cassettes-count {
+    margin-left: 9px;
+    font-size: 15px;
+    color: var(--moon-text-dim);
 }
 
 .pause__pages {

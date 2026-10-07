@@ -235,6 +235,40 @@ namespace MoonProject.Gameplay
         [Tooltip("Radius (m) of the sphere standing on the ground (its whole body) that must be off screen.")]
         [Range(0.1f, 5f)] [SerializeField] private float _unseenMargin = 1.2f;
 
+        [Tooltip("Terrain samples along the camera's line of sight to check whether a hill or canyon wall hides it.")]
+        [Range(4, 128)] [SerializeField] private int _unseenSightSamples = 24;
+
+        [Tooltip("Seconds between two checks of whether nobody could see it go home (they sample the terrain).")]
+        [Range(0f, 2f)] [SerializeField] private float _unseenCheckInterval = 0.25f;
+
+        [Tooltip("Ground ahead (m) checked for a step down to hop.")]
+        [Range(0.2f, 5f)] [SerializeField] private float _hopProbe = 1.2f;
+
+        [Tooltip("A drop (m) over that distance steeper than any walkable slope: a step to hop down.")]
+        [Range(0.2f, 5f)] [SerializeField] private float _hopDrop = 0.6f;
+
+        [Tooltip("How far (m) a hop down carries it.")]
+        [Range(0.5f, 8f)] [SerializeField] private float _hopLength = 2.6f;
+
+        [Tooltip("Height (m) of the little arc over the edge.")]
+        [Range(0f, 2f)] [SerializeField] private float _hopArc = 0.35f;
+
+        [Tooltip("Seconds of a hop down: gentle, never a drop.")]
+        [Range(0.2f, 4f)] [SerializeField] private float _hopDuration = 1.1f;
+
+        [Header("Finding its way")]
+        [Tooltip("Cell size (m) of the grid a walking friend's way is searched on.")]
+        [Range(0.5f, 10f)] [SerializeField] private float _pathCell = 2.5f;
+
+        [Tooltip("Metres the search box reaches beyond both ends of the way.")]
+        [Range(0f, 200f)] [SerializeField] private float _pathMargin = 30f;
+
+        [Tooltip("Largest height change (m) between neighbouring cells it walks (a gentle slope, never a wall).")]
+        [Range(0.05f, 5f)] [SerializeField] private float _pathMaxClimb = 1f;
+
+        [Tooltip("Most cells the search expands before it gives up (a broken world).")]
+        [Range(100, 200000)] [SerializeField] private int _pathMaxNodes = 40000;
+
         [Header("Spotter")]
         [Tooltip("Undiscovered relics, parts and scrap within this many metres of 07 catch its eye.")]
         [Range(5f, 100f)] [SerializeField] private float _spotRadius = 40f;
@@ -333,6 +367,17 @@ namespace MoonProject.Gameplay
         public float WalkWaypointReach => _walkWaypointReach;
         public float UnseenDistance => _unseenDistance;
         public float UnseenMargin => _unseenMargin;
+        public int UnseenSightSamples => _unseenSightSamples;
+        public float UnseenCheckInterval => _unseenCheckInterval;
+        public float HopProbe => _hopProbe;
+        public float HopDrop => _hopDrop;
+        public float HopLength => _hopLength;
+        public float HopArc => _hopArc;
+        public float HopDuration => _hopDuration;
+        public float PathCell => _pathCell;
+        public float PathMargin => _pathMargin;
+        public float PathMaxClimb => _pathMaxClimb;
+        public int PathMaxNodes => _pathMaxNodes;
         public float SpotRadius => _spotRadius;
         public float SpotHover => _spotHover;
         public float SpotDuration => _spotDuration;
