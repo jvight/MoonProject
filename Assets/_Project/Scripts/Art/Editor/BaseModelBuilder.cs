@@ -6,11 +6,12 @@ using MoonProject.Editor.Builders;
 namespace MoonProject.Art.Editor
 {
     /// <summary>
-    /// 07's home base per the M2 content contract (docs/ARCHITECTURE.md): <c>Lander</c>, <c>MuseumShelf</c> and
-    /// <c>RadioTower_L1..L3</c> in Generated/Art/Base. Meshes only, each pivoted at its ground-contact centre so it
-    /// stands on an anchor. The lander also carries friend perches (<c>FriendSocket_&lt;id&gt;</c>: an empty on
-    /// top of the perch, +Y up, +Z = the hatch side). Glowing parts (windows, shelf lights, tower lamps) are
-    /// separate renderers so gameplay can brighten the base as it comes back to life.
+    /// 07's home base per the M2 content contract (docs/ARCHITECTURE.md): <c>Lander</c>, <c>MuseumShelf</c>,
+    /// <c>RadioTower_L1..L3</c>, Kenji's <c>Workbench</c> and Bell's <c>CassetteShelf</c> in Generated/Art/Base.
+    /// Meshes only, each pivoted at its ground-contact centre so it stands on an anchor. The lander also carries
+    /// friend perches (<c>FriendSocket_&lt;id&gt;</c>: an empty on top of the perch, +Y up, +Z = the hatch side) and
+    /// every tower stage carries Bell's corner and her shelf's anchor. Glowing parts (windows, shelf lights, tower
+    /// lamps) are separate renderers so gameplay can brighten the base as it comes back to life.
     /// </summary>
     public static class BaseModelBuilder
     {
@@ -40,6 +41,23 @@ namespace MoonProject.Art.Editor
 
         public const string WorkbenchName = "Workbench";
 
+        public const string CassetteShelfName = "CassetteShelf";
+
+        /// <summary>
+        /// Where Bell stands, in tower space (the same on every stage): left of the tower, her 2.5 m dance circle
+        /// clear of the plinth and of the upgrade pad 3.4 m in front of the tower.
+        /// </summary>
+        public static readonly Vector3 BellCorner = new Vector3(-4.9f, 0f, 0.4f);
+
+        /// <summary>Bell's heading at home: her dial looks across the pad at the lander's porch.</summary>
+        public const float BellCornerYaw = 74f;
+
+        /// <summary>Where Bell's tape rack stands, in tower space: at her right, just outside her circle.</summary>
+        public static readonly Vector3 CassetteShelfAnchor = new Vector3(-4.6f, 0f, -2.75f);
+
+        /// <summary>The rack's heading: turned towards the lander, a little more towards the front than Bell.</summary>
+        public const float CassetteShelfYaw = 60f;
+
         [MoonBuilder("Art/Base", 140)]
         public static void Build()
         {
@@ -47,6 +65,7 @@ namespace MoonProject.Art.Editor
             ModelPrefabWriter.Write(CreateLander(), ArtPaths.BaseFolder, material);
             ModelPrefabWriter.Write(CreateShelf(), ArtPaths.BaseFolder, material);
             ModelPrefabWriter.Write(CreateWorkbench(), ArtPaths.BaseFolder, material);
+            ModelPrefabWriter.Write(CreateCassetteShelf(), ArtPaths.BaseFolder, material);
             for (int level = RadioTowerMeshes.MinLevel; level <= RadioTowerMeshes.MaxLevel; level++)
             {
                 ModelPrefabWriter.Write(CreateTower(level), ArtPaths.BaseFolder, material);
@@ -101,6 +120,23 @@ namespace MoonProject.Art.Editor
             return bench;
         }
 
+        /// <summary>
+        /// Bell's tape rack: root on the ground at the centre of its base (+Z = front), Slot_0..7 empties on the
+        /// cubby floors (+Y up, +Z = label facing) where a tape stands on its bottom edge.
+        /// </summary>
+        public static ModelNode CreateCassetteShelf()
+        {
+            var shelf = new ModelNode(CassetteShelfName, Vector3.zero,
+                new ModelMesh(CassetteShelfName, CassetteShelfMeshes.Rack()));
+            for (int i = 0; i < CassetteShelfMeshes.SlotCount; i++)
+            {
+                shelf.Add(new ModelNode("Slot_" + i.ToString(CultureInfo.InvariantCulture),
+                    CassetteShelfMeshes.SlotPosition(i)));
+            }
+
+            return shelf;
+        }
+
         /// <summary>Radio tower stage <paramref name="level"/> (1..3).</summary>
         public static ModelNode CreateTower(int level)
         {
@@ -109,6 +145,9 @@ namespace MoonProject.Art.Editor
             tower.Add(new ModelNode("Lights", Vector3.zero,
                 new ModelMesh(name + "_Lights", RadioTowerMeshes.Lights(level))));
             tower.Add(new ModelNode("BeaconSocket", RadioTowerMeshes.BeaconPosition(level)));
+            tower.Add(new ModelNode("BellCorner", BellCorner, Place.Rotation(new Vector3(0f, BellCornerYaw, 0f))));
+            tower.Add(new ModelNode("CassetteShelfAnchor", CassetteShelfAnchor,
+                Place.Rotation(new Vector3(0f, CassetteShelfYaw, 0f))));
             return tower;
         }
     }

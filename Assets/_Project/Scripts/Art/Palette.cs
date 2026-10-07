@@ -38,6 +38,8 @@ namespace MoonProject.Art
                                                  // under cool moonlight, where Cream greys out)
             new Color32(0x3B, 0x30, 0x2E, 0xFF), // LampGlass: dark glass of an indicator lamp; glows WarmLamp
             new Color32(0x24, 0x2C, 0x3A, 0xFF), // EyeGlass: dark glass of a young sensor eye; glows TechGlow
+            new Color32(0xC0, 0x7A, 0x4C, 0xFF), // Wood: warm caramel teak of an old radio cabinet (Bell); light
+                                                 // enough to stay brown, not mauve, under moonlight
         };
 
         private static readonly bool[] Emissive =
@@ -56,6 +58,7 @@ namespace MoonProject.Art
             false,
             true,  // LampGlass
             true,  // EyeGlass
+            false, // Wood
         };
 
         public static int Count => Colors.Length;

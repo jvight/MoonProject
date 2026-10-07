@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
+using MoonProject.Art.Editor;
 
 namespace MoonProject.Art.Tests
 {
@@ -98,6 +99,69 @@ namespace MoonProject.Art.Tests
         public static Vector3 FaceNormal(LowPolyMeshBuilder builder, int triangle)
         {
             return builder.Normals[triangle * 3];
+        }
+
+        /// <summary>Every swatch painted on <paramref name="builder"/>, in first-use order.</summary>
+        public static List<PaletteSwatch> Swatches(LowPolyMeshBuilder builder)
+        {
+            var swatches = new List<PaletteSwatch>();
+            for (int t = 0; t < builder.TriangleCount; t++)
+            {
+                PaletteSwatch swatch = SwatchOf(builder, t);
+                if (!swatches.Contains(swatch))
+                {
+                    swatches.Add(swatch);
+                }
+            }
+
+            return swatches;
+        }
+
+        /// <summary>
+        /// Every mesh vertex under <paramref name="node"/> (itself included), in <paramref name="parent"/>'s space.
+        /// </summary>
+        public static IEnumerable<Vector3> Points(ModelNode node, Matrix4x4 parent)
+        {
+            Matrix4x4 local = parent * node.LocalMatrix;
+            if (node.Mesh != null)
+            {
+                IReadOnlyList<Vector3> positions = node.Mesh.Geometry.Positions;
+                for (int v = 0; v < positions.Count; v++)
+                {
+                    yield return local.MultiplyPoint3x4(positions[v]);
+                }
+            }
+
+            foreach (ModelNode child in node.Children)
+            {
+                foreach (Vector3 p in Points(child, local))
+                {
+                    yield return p;
+                }
+            }
+        }
+
+        /// <summary>Same names, poses, materials and bit-identical meshes all the way down.</summary>
+        public static void AssertSameModel(ModelNode expected, ModelNode actual)
+        {
+            Assert.AreEqual(expected.Name, actual.Name);
+            Assert.AreEqual(expected.LocalPosition, actual.LocalPosition, expected.Name);
+            Assert.AreEqual(expected.LocalRotation, actual.LocalRotation, expected.Name);
+            Assert.AreEqual(expected.Material, actual.Material, expected.Name);
+            Assert.AreEqual(expected.Mesh == null, actual.Mesh == null, expected.Name);
+            if (expected.Mesh != null)
+            {
+                Assert.AreEqual(expected.Mesh.Name, actual.Mesh.Name);
+                CollectionAssert.AreEqual(expected.Mesh.Geometry.Positions, actual.Mesh.Geometry.Positions,
+                    expected.Mesh.Name);
+                CollectionAssert.AreEqual(expected.Mesh.Geometry.Uvs, actual.Mesh.Geometry.Uvs, expected.Mesh.Name);
+            }
+
+            Assert.AreEqual(expected.Children.Count, actual.Children.Count, expected.Name);
+            for (int i = 0; i < expected.Children.Count; i++)
+            {
+                AssertSameModel(expected.Children[i], actual.Children[i]);
+            }
         }
 
         private static bool IsPaletteCentre(Vector2 uv)
