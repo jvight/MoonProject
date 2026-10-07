@@ -208,6 +208,27 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator ACrewLogAndATape_EachGetTheirCard_OneAfterTheOther()
+        {
+            Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
+            Boot();
+            yield return null;
+            Events.Publish(new CrewLogFound(TestStrings.FirstLog, Vector3.zero));
+            Events.Publish(new CassetteCollected(TestStrings.FirstTape, Vector3.zero, 1, 3));
+            yield return Seconds(1f);
+            Assert.AreEqual(TestStrings.FirstLog, _rig.Ui.Card.Current);
+            StringAssert.StartsWith("Night one of Lumen After Dark", _rig.Ui.Layout.MemoryCardText.text);
+            Assert.IsTrue(_rig.Ui.Layout.MemoryCard.ClassListContains(MemoryCard.UntitledClass));
+
+            yield return Tap(keyboard.escapeKey);
+            yield return Seconds(_rig.Tuning.MemoryCard.Reveal.FadeOut + 0.6f);
+            Assert.AreEqual(TestStrings.FirstTape, _rig.Ui.Card.Current, "the liner card waited its turn");
+            Assert.AreEqual("Lumen After Dark, Vol. 1", _rig.Ui.Layout.MemoryCardName.text);
+            Assert.AreEqual("1/3", _rig.Ui.Layout.MemoryCardCount.text);
+            Assert.IsTrue(_rig.Ui.Layout.MemoryCard.ClassListContains(MemoryCard.LinerClass));
+        }
+
+        [UnityTest]
         public IEnumerator Ticker_SpeaksOnceAwake_MakesWayForACard_AndComesBack()
         {
             Keyboard keyboard = InputSystem.AddDevice<Keyboard>();

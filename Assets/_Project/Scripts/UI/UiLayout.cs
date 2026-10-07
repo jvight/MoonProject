@@ -41,7 +41,9 @@ namespace MoonProject.UI
 
             MemoryCard = Require<VisualElement>("memory-card");
             MemoryCardShadow = Require<VisualElement>("memory-card-shadow");
+            MemoryCardIcon = Require<VisualElement>("memory-card-icon");
             MemoryCardCaption = Require<Label>("memory-card-caption");
+            MemoryCardCount = Require<Label>("memory-card-count");
             MemoryCardName = Require<Label>("memory-card-name");
             MemoryCardText = Require<Label>("memory-card-text");
             MemoryCardGlyph = Require<VisualElement>("memory-card-glyph");
@@ -142,7 +144,11 @@ namespace MoonProject.UI
 
         public VisualElement MemoryCardShadow { get; }
 
+        public VisualElement MemoryCardIcon { get; }
+
         public Label MemoryCardCaption { get; }
+
+        public Label MemoryCardCount { get; }
 
         public Label MemoryCardName { get; }
 

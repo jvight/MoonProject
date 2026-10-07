@@ -179,6 +179,15 @@ Label {
     margin-left: 0;
 }
 
+/* The cassette icon (painted, see CassetteIconPainter) */
+
+.cassette-icon {
+    width: 24px;
+    height: 16px;
+    --icon-color: var(--moon-warm-lamp);
+    --icon-hole-color: var(--moon-sky-top);
+}
+
 /* Opening title */
 
 .title {
@@ -356,6 +365,75 @@ Label {
 
 .memory-card__body {
     padding: 24px 30px 20px 30px;
+}
+
+.memory-card__heading {
+    flex-direction: row;
+    align-items: center;
+}
+
+.memory-card__caption {
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.memory-card__icon,
+.memory-card__count,
+.memory-card__warmth {
+    display: none;
+}
+
+.memory-card__warmth {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 20px;
+    background-color: var(--moon-amber-soft);
+}
+
+/* A crew log: its caption says what it is, so it has no name line */
+
+.memory-card--untitled .memory-card__name {
+    display: none;
+}
+
+.memory-card--untitled .memory-card__text {
+    margin-top: 14px;
+}
+
+/* Liner notes: a smaller, warmer card with the cassette icon and the tape count */
+
+.memory-card--liner {
+    width: 440px;
+}
+
+.memory-card--liner .memory-card__body {
+    border-color: var(--moon-amber-edge);
+}
+
+.memory-card--liner .memory-card__warmth {
+    display: flex;
+}
+
+.memory-card--liner .memory-card__icon {
+    display: flex;
+    margin-right: 10px;
+}
+
+.memory-card--liner .memory-card__count {
+    display: flex;
+    margin-left: 12px;
+}
+
+.memory-card--liner .memory-card__name {
+    font-size: 26px;
+    color: var(--moon-honey);
+}
+
+.memory-card--liner .memory-card__text {
+    font-size: 19px;
 }
 
 .memory-card__name {

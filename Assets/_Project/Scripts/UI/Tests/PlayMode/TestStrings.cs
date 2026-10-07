@@ -13,6 +13,9 @@ namespace MoonProject.UI.PlayModeTests
     {
         public const string SignalKey = "ticker.bell.signal";
         public const string HomeKey = "ticker.bell.home";
+        public const string FirstLog = "ro_1";
+        public const string FirstTape = "after_dark_1";
+        public const string SecondTape = "dust_and_honey";
 
         /// <summary>(key, English, Vietnamese) triples.</summary>
         private static readonly string[] Entries =
@@ -21,6 +24,23 @@ namespace MoonProject.UI.PlayModeTests
             "Bell đang bắt được tín hiệu gì đó… hướng {0}.",
             HomeKey, "Bell got home before you. She says the porch light was on.",
             "Bell về nhà trước bạn rồi. Cô ấy bảo đèn hiên vẫn sáng.",
+            "log." + FirstLog,
+            "Night one of Lumen After Dark. Three listeners and a rover who rolls closer when I play the slow ones. "
+            + "Best audience I've ever had.",
+            "Đêm đầu tiên của Lumen After Dark. Ba thính giả và một chiếc rover cứ lăn lại gần mỗi khi tôi mở mấy bài "
+            + "chậm. Khán giả tuyệt nhất tôi từng có.",
+            "cassette." + FirstTape + ".title", "Lumen After Dark, Vol. 1", "Lumen After Dark, Tập 1",
+            "cassette." + FirstTape + ".note",
+            "First night show. Audience: three crew, one rover, one basil plant. The basil had requests.",
+            "Buổi phát sóng đêm đầu tiên. Khán giả: ba phi hành gia, một chiếc rover, một chậu húng quế. Chậu húng quế "
+            + "còn xin bài.",
+            "cassette." + SecondTape + ".title", "Dust & Honey", "Bụi & Mật ong",
+            "cassette." + SecondTape + ".note",
+            "Recorded with the mic taped to the airlock. If you hear a thump, that's Kenji.",
+            "Thu âm với chiếc micro dán băng keo vào cửa khoang. Nếu nghe tiếng thịch, đó là Kenji.",
+            UiKeys.CrewLogCaption, "Crew log", "Nhật ký phi hành đoàn",
+            UiKeys.LinerCaption, "Ro's liner notes", "Lời Ro ghi trên vỏ băng",
+            UiKeys.TapeCount, "{0}/{1}", "{0}/{1}",
         };
 
         /// <summary>

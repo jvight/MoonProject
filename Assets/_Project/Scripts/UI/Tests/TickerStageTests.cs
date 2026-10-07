@@ -78,20 +78,5 @@ namespace MoonProject.UI.Tests
             card.Tick(Frame, CloseGlyph, InputDeviceKind.KeyboardMouse, !ticker.IsVisible);
             ticker.Tick(Frame, !card.IsBusy);
         }
-
-        private sealed class NoFriends : IFriendStatuses
-        {
-            public int Count => 0;
-
-            public FriendDefinition Definition(int index)
-            {
-                throw new System.ArgumentOutOfRangeException(nameof(index));
-            }
-
-            public FriendStatus Status(int index)
-            {
-                throw new System.ArgumentOutOfRangeException(nameof(index));
-            }
-        }
     }
 }

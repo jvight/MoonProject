@@ -52,7 +52,12 @@
             <ui:VisualElement name="memory-card" class="memory-card" picking-mode="Ignore">
                 <ui:VisualElement name="memory-card-shadow" class="soft-shadow soft-shadow--panel" />
                 <ui:VisualElement name="memory-card-body" class="panel memory-card__body">
-                    <ui:Label name="memory-card-caption" class="caption" />
+                    <ui:VisualElement class="memory-card__warmth" picking-mode="Ignore" />
+                    <ui:VisualElement name="memory-card-heading" class="memory-card__heading">
+                        <ui:VisualElement name="memory-card-icon" class="cassette-icon memory-card__icon" />
+                        <ui:Label name="memory-card-caption" class="caption memory-card__caption" />
+                        <ui:Label name="memory-card-count" class="caption caption--quiet memory-card__count" />
+                    </ui:VisualElement>
                     <ui:Label name="memory-card-name" class="memory-card__name" />
                     <ui:Label name="memory-card-text" class="memory-card__text" />
                     <ui:VisualElement name="memory-card-footer" class="hint-row">

@@ -13,10 +13,11 @@ namespace MoonProject.UI
     /// <summary>
     /// The UI domain's game system (initialised last, after Gameplay). As little UI as possible, as calm as possible:
     /// a title while 07 wakes, context prompts only the first few times, a reticle only while aiming, a scrap chip
-    /// only when the balance changes, a memory card per relic brought home, the tower upgrade panel on its pad, a few
-    /// warm pips over a broken friend while 07 is near, its name and its crew log when it wakes, the radio's ticker
-    /// line along the bottom, and the pause menu with settings. It registers <see cref="ILocalization"/> and owns the cursor and the UI's save
-    /// sections. Everything animates on unscaled time so the menu stays alive while the game is paused.
+    /// only when the balance changes, a story card per relic brought home, crew log found and cassette collected, the
+    /// tower upgrade panel on its pad, a few warm pips over a broken friend while 07 is near, its name and its crew log
+    /// when it wakes, the radio's ticker line along the bottom, and the pause menu with settings. It registers
+    /// <see cref="ILocalization"/> and owns the cursor and the UI's save sections. Everything animates on unscaled
+    /// time so the menu stays alive while the game is paused.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class UISystem : MonoBehaviour, IGameSystem
@@ -197,6 +198,8 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<FriendRepairStarted>(OnFriendRepairStarted));
             _tokens.Add(events.Subscribe<FriendRepaired>(OnFriendRepaired));
             _tokens.Add(events.Subscribe<TickerLine>(OnTickerLine));
+            _tokens.Add(events.Subscribe<CrewLogFound>(OnCrewLogFound));
+            _tokens.Add(events.Subscribe<CassetteCollected>(OnCassetteCollected));
 
             services.Input.Menu.Enable();
             _cursor.Drive();
@@ -385,6 +388,22 @@ namespace MoonProject.UI
         private void OnExcavationStopped(ExcavationStopped stopped)
         {
             _digging = false;
+        }
+
+        private void OnCrewLogFound(CrewLogFound found)
+        {
+            if (_bound)
+            {
+                _card.EnqueueCrewLog(found.LogId);
+            }
+        }
+
+        private void OnCassetteCollected(CassetteCollected collected)
+        {
+            if (_bound)
+            {
+                _card.EnqueueCassette(collected.CassetteId, collected.Collected, collected.Total);
+            }
         }
 
         private void OnTickerLine(TickerLine line)
