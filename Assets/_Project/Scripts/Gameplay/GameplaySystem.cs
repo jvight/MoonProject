@@ -7,13 +7,14 @@ using MoonProject.Core.Save;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// The Gameplay domain's single entry in the bootstrap's system list (after World and Rover). Resolves the world,
-    /// rover and camera services, creates the wallet and the upgrade service (which grants rover abilities through
-    /// <see cref="IRoverAbilities"/>), initialises the gameplay parts in dependency order (relics, scrap, excavation,
-    /// tether, home, radio tower, workshop, friends, sonar), registers the read-only services the UI uses
-    /// (<see cref="IScrapWallet"/>, <see cref="ITetherAim"/>, <see cref="IUpgradeShop"/>,
-    /// <see cref="IInteractionHints"/>, <see cref="IFriendRoster"/>, <see cref="IFriendStatuses"/>) and the save
-    /// sections, announces the radio's signal radius, and owns the shared glow meshes.
+    /// The Gameplay domain's single entry in the bootstrap's system list (after World and Rover). Resolves the world
+    /// (surface, layout, anchors), rover and camera services, creates the wallet, the upgrade service (which grants
+    /// rover abilities through <see cref="IRoverAbilities"/>) and the radio program, initialises the gameplay parts in
+    /// dependency order (relics, scrap, excavation, tether, home, radio tower, workshop, friends, cassettes, sonar),
+    /// registers the services other domains read (<see cref="IScrapWallet"/>, <see cref="ITetherAim"/>,
+    /// <see cref="IUpgradeShop"/>, <see cref="IInteractionHints"/>, <see cref="IFriendRoster"/>,
+    /// <see cref="IFriendStatuses"/>, <see cref="IRadioProgram"/>) and the save sections, announces the radio's signal
+    /// radius and, once the save is loaded, the radio program, and owns the shared glow meshes.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class GameplaySystem : MonoBehaviour, IGameSystem
@@ -33,6 +34,7 @@ namespace MoonProject.Gameplay
         [SerializeField] private RadioTower _tower;
         [SerializeField] private Workshop _workshop;
         [SerializeField] private FriendField _friends;
+        [SerializeField] private CassetteField _cassettes;
 
         private readonly List<IDisposable> _saveTokens = new List<IDisposable>();
         private GlowMeshSet _meshes;
@@ -44,6 +46,8 @@ namespace MoonProject.Gameplay
         public IUpgradeShop Shop { get; private set; }
 
         public IInteractionHints Hints { get; private set; }
+
+        public RadioProgram Radio { get; private set; }
 
         public RelicField Relics => _relics;
 
@@ -63,9 +67,11 @@ namespace MoonProject.Gameplay
 
         public FriendField Friends => _friends;
 
+        public CassetteField Cassettes => _cassettes;
+
         internal void Wire(GameplayVisuals visuals, UpgradeDefinition[] upgradeDefinitions, RelicField relics,
             ScrapField scrap, SonarSystem sonar, ExcavationSystem excavation, TetherSystem tether, HomeBase home,
-            RadioTower tower, Workshop workshop, FriendField friends)
+            RadioTower tower, Workshop workshop, FriendField friends, CassetteField cassettes)
         {
             _visuals = visuals;
             _upgradeDefinitions = upgradeDefinitions;
@@ -78,6 +84,7 @@ namespace MoonProject.Gameplay
             _tower = tower;
             _workshop = workshop;
             _friends = friends;
+            _cassettes = cassettes;
         }
 
         public void Initialize(GameContext context)
@@ -99,16 +106,19 @@ namespace MoonProject.Gameplay
             Wallet = new ScrapWallet(context.Events);
             var save = context.Get<ISaveService>();
             var services = new GameplayServices(context.Events, context.Input, context.Get<ITerrainQuery>(),
-                context.Get<IWorldLayout>(), context.Get<IRoverState>(), context.Get<IRoverRig>(),
-                context.Get<IViewCamera>(), save, Wallet, _visuals, _meshes);
+                context.Get<IWorldLayout>(), context.Get<IWorldAnchors>(), context.Get<IRoverState>(),
+                context.Get<IRoverRig>(), context.Get<IViewCamera>(), save, Wallet, _visuals, _meshes);
             Upgrades = new UpgradeService(context.Events, Wallet, context.Get<IRoverAbilities>(),
                 _upgradeDefinitions);
+            Radio = new RadioProgram(context.Events, _cassettes.Catalog.Ids());
 
             Vector3 lander = HomeBase.LanderSpot(services.Terrain, services.Layout.BasePosition, _home.Tuning);
             if (!_relics.Initialize(services) || !_scrap.Initialize(services, _relics.Sites, lander) ||
                 !_excavation.Initialize(services, _relics) || !_tether.Initialize(services, _relics) ||
                 !_home.Initialize(services, _relics, _tether, Upgrades) || !_tower.Initialize(services, Upgrades) ||
-                !_workshop.Initialize(services, Upgrades) || !_friends.Initialize(services, _relics, _scrap, _home) ||
+                !_workshop.Initialize(services, Upgrades) ||
+                !_friends.Initialize(services, _relics, _scrap, _home) ||
+                !_cassettes.Initialize(services, Radio, _scrap.Tuning, KeepClearOfCassettes()) ||
                 !_sonar.Initialize(services, _relics, _friends))
             {
                 enabled = false;
@@ -135,6 +145,7 @@ namespace MoonProject.Gameplay
             context.Register<IInteractionHints>(Hints);
             context.Register<IFriendRoster>(_friends);
             context.Register<IFriendStatuses>(_friends);
+            context.Register<IRadioProgram>(Radio);
             Upgrades.PublishSignals();
             RegisterSaveSections(save);
         }
@@ -151,6 +162,38 @@ namespace MoonProject.Gameplay
                 GameplaySaveKeys.UpgradesVersion, Upgrades.Capture, RestoreUpgrades)));
             _saveTokens.Add(save.Register(new SaveSection<FriendsSaveData>(GameplaySaveKeys.Friends,
                 GameplaySaveKeys.FriendsVersion, _friends.Capture, _friends.Restore)));
+            _saveTokens.Add(save.Register(new SaveSection<RadioSaveData>(GameplaySaveKeys.Radio,
+                GameplaySaveKeys.RadioVersion, Radio.Capture, RestoreRadio)));
+        }
+
+        /// <summary>The save is loaded (Start runs after it): Audio and UI start from the real radio program.</summary>
+        private void Start()
+        {
+            Radio.Announce();
+        }
+
+        private void RestoreRadio(RadioSaveData data)
+        {
+            Radio.Restore(data);
+            _cassettes.SyncCollected();
+        }
+
+        /// <summary>Every relic site, friend site and friend part: a basin cassette keeps clear of them all.</summary>
+        private List<Vector3> KeepClearOfCassettes()
+        {
+            var points = new List<Vector3>();
+            foreach (RelicSite site in _relics.Sites)
+            {
+                points.Add(site.Position);
+            }
+
+            foreach (Friend friend in _friends.Friends)
+            {
+                points.Add(friend.Site.Position);
+                points.AddRange(friend.Site.Parts);
+            }
+
+            return points;
         }
 
         private void RestoreRelics(RelicsSaveData data)
@@ -210,6 +253,9 @@ namespace MoonProject.Gameplay
                 : _tower == null ? "RadioTower is not assigned."
                 : _workshop == null ? "Workshop is not assigned."
                 : _friends == null ? "FriendField is not assigned."
+                : _cassettes == null ? "CassetteField is not assigned."
+                : _cassettes.Catalog == null ? "CassetteField has no CassetteCatalog."
+                : _cassettes.Catalog.Validate() != null ? "CassetteCatalog " + _cassettes.Catalog.Validate() + "."
                 : null;
         }
 

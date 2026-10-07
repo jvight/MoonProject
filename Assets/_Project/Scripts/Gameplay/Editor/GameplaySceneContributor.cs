@@ -12,8 +12,8 @@ namespace MoonProject.Gameplay.Editor
     /// TowerAnchor, Kenji's workbench on its WorkshopAnchor). Art's base prefabs are meshes only, so gameplay makes
     /// them solid here: a static mesh collider on each body, on the Prop layer, so 07 drives around them and the camera
     /// never slips inside. The base is stood beside the pad here for the editor view and re-seated on the real ground
-    /// at boot; relic sites and the scrap field are planned from the World's surface at boot. Fails loudly when a
-    /// required asset or prefab node is missing.
+    /// at boot; relic sites, the scrap field, friends and cassettes are placed from the World's surface and anchors at
+    /// boot. Fails loudly when a required asset or prefab node is missing.
     /// </summary>
     public sealed class GameplaySceneContributor : ISceneContributor
     {
@@ -41,12 +41,15 @@ namespace MoonProject.Gameplay.Editor
             var hoverJump = context.LoadAsset<UpgradeDefinition>(GameplayAssetPaths.HoverJumpUpgrade);
             var friendTuning = context.LoadAsset<FriendTuning>(GameplayAssetPaths.FriendTuning);
             var friendCatalog = context.LoadAsset<FriendCatalog>(GameplayAssetPaths.FriendCatalog);
+            var cassetteTuning = context.LoadAsset<CassetteTuning>(GameplayAssetPaths.CassetteTuning);
+            var cassetteCatalog = context.LoadAsset<CassetteCatalog>(GameplayAssetPaths.CassetteCatalog);
             Require(visuals.Validate(), nameof(GameplayVisuals));
             Require(scrapCatalog.Validate(), nameof(ScrapCatalog));
             Require(relicCatalog.Validate(), nameof(RelicCatalog));
             Require(radioTower.Validate(), nameof(UpgradeDefinition));
             Require(hoverJump.Validate(), nameof(UpgradeDefinition));
             Require(friendCatalog.Validate(), nameof(FriendCatalog));
+            Require(cassetteCatalog.Validate(), nameof(CassetteCatalog));
 
             Transform root = context.GameplayRoot.transform;
             GameObject host = context.CreateChild("GameplaySystem", root);
@@ -60,6 +63,7 @@ namespace MoonProject.Gameplay.Editor
             var tower = Part<RadioTower>(context, host, "RadioTower");
             var workshop = Part<Workshop>(context, host, "Workshop");
             var friends = Part<FriendField>(context, host, "Friends");
+            var cassettes = Part<CassetteField>(context, host, "Cassettes");
 
             GameObject baseRoot = context.CreateChild("Base", host.transform);
             Vector3 offset = baseTuning.LanderOffset;
@@ -103,8 +107,9 @@ namespace MoonProject.Gameplay.Editor
             }
 
             friends.Wire(friendCatalog, friendTuning, perches);
+            cassettes.Wire(cassetteCatalog, cassetteTuning);
             gameplay.Wire(visuals, new[] { radioTower, hoverJump }, relics, scrap, sonar, excavation, tether, home,
-                tower, workshop, friends);
+                tower, workshop, friends, cassettes);
             context.AddSystem(gameplay);
         }
 

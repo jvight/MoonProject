@@ -26,6 +26,7 @@ namespace MoonProject.Gameplay.Editor
             EnsureExists<RadioTowerTuning>(GameplayAssetPaths.RadioTowerTuning);
             EnsureExists<WorkshopTuning>(GameplayAssetPaths.WorkshopTuning);
             EnsureExists<FriendTuning>(GameplayAssetPaths.FriendTuning);
+            EnsureExists<CassetteTuning>(GameplayAssetPaths.CassetteTuning);
         }
 
         private static void EnsureExists<T>(string path) where T : ScriptableObject

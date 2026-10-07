@@ -8,9 +8,10 @@ namespace MoonProject.Gameplay.Editor
 {
     /// <summary>
     /// Writes the gameplay content from code recipes: one RelicDefinition per <see cref="RelicRecipes"/> entry, the
-    /// relic catalog, the scrap catalog over Art's scrap prefabs, the radio tower and workshop upgrades, and the
-    /// friends (Tilly) and their catalog. Rewritten in place on every run (GUIDs kept). Every Art prefab it references
-    /// (M2 content contract) is required: a missing one fails the build loudly.
+    /// relic catalog, the scrap catalog over Art's scrap prefabs, the radio tower and workshop upgrades, the friends
+    /// (Tilly) and their catalog, and Ro's cassettes and their catalog. Rewritten in place on every run (GUIDs
+    /// kept). Every Art prefab it references (the content contracts) is required: a missing one fails the build
+    /// loudly.
     /// </summary>
     internal static class GameplayContentBuilder
     {
@@ -30,6 +31,7 @@ namespace MoonProject.Gameplay.Editor
             BuildRadioTower();
             BuildHoverJump();
             BuildFriends();
+            BuildCassettes();
             AssetDatabase.SaveAssets();
         }
 
@@ -122,13 +124,54 @@ namespace MoonProject.Gameplay.Editor
             Debug.Log($"{BuilderPath}: wrote {friends.Length} friend(s) and {GameplayAssetPaths.FriendCatalog}");
         }
 
+        /// <summary>
+        /// Ro's first three tapes (docs/features/M3-05 "Cassettes"): Lumen After Dark, Vol. 1 in her tin box beside
+        /// Bell at the canyon terminus, Dust &amp; Honey tucked against a small crater rim in the basin (no gate), and
+        /// Slow Orbit on the glinting ledge, a short Hover-Jump up. Anchor offsets are in the anchor's frame (x right,
+        /// y forward); content faces back toward 07 arriving. Their texts live in the localization tables
+        /// (cassette.&lt;id&gt;.*).
+        /// </summary>
+        private static void BuildCassettes()
+        {
+            var hoverJump = new AbilityGate(true, RoverAbility.HoverJump);
+            var noAnchor = new AnchorSpot(string.Empty, Vector2.zero);
+            CassetteDefinition[] cassettes =
+            {
+                Cassette("after_dark_1", CassetteSiteRule.Anchor,
+                    new AnchorSpot(WorldAnchorIds.CanyonTerminus, new Vector2(2.2f, -0.7f)), 0, hoverJump),
+                Cassette("dust_and_honey", CassetteSiteRule.BasinPlanner, noAnchor, 73, AbilityGate.Open),
+                Cassette("slow_orbit", CassetteSiteRule.Anchor, new AnchorSpot(WorldAnchorIds.CanyonLedge,
+                    Vector2.zero), 0, hoverJump),
+            };
+
+            var catalog = ScriptableObject.CreateInstance<CassetteCatalog>();
+            catalog.Populate(cassettes);
+            catalog = GeneratedAssets.CreateOrReplace(catalog, GameplayAssetPaths.CassetteCatalog);
+            string problem = catalog.Validate();
+            if (problem != null)
+            {
+                throw new InvalidOperationException($"{BuilderPath}: cassette catalog {problem}.");
+            }
+
+            Debug.Log($"{BuilderPath}: wrote {cassettes.Length} cassette(s) and {GameplayAssetPaths.CassetteCatalog}");
+        }
+
+        private static CassetteDefinition Cassette(string id, CassetteSiteRule site, AnchorSpot anchor,
+            int plannerSeed, AbilityGate gate)
+        {
+            var cassette = ScriptableObject.CreateInstance<CassetteDefinition>();
+            cassette.Populate(id, LoadArt(GameplayAssetPaths.CassettePrefab(id)), site, anchor, plannerSeed, gate);
+            return GeneratedAssets.CreateOrReplace(cassette, GameplayAssetPaths.CassetteDefinition(id));
+        }
+
         private static GameObject LoadArt(string path)
         {
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
             if (prefab == null)
             {
                 throw new InvalidOperationException(
-                    $"{BuilderPath}: Art prefab {path} is missing (friend Tilly contract). Run the Art builders.");
+                    $"{BuilderPath}: Art prefab {path} is missing (content contracts, docs/ARCHITECTURE.md). " +
+                    "Run the Art builders.");
             }
 
             return prefab;

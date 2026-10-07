@@ -8,7 +8,9 @@ namespace MoonProject.Gameplay.PlayModeTests
 {
     /// <summary>
     /// Records every gameplay event (and the rover's Hover-Jump events) with the time it was published, for order and
-    /// timing assertions.
+    /// timing assertions. The radio and story events of M3-05 (cassettes, radio program, crew logs, Bell's signals,
+    /// ticker lines) are recorded too but kept out of <see cref="Order"/>: the radio announces itself at every boot,
+    /// and the order assertions follow the play loop.
     /// </summary>
     public sealed class EventRecorder : IDisposable
     {
@@ -36,6 +38,12 @@ namespace MoonProject.Gameplay.PlayModeTests
             Listen(events, FriendSpotted);
             Listen(events, RoverJumpCharged);
             Listen(events, RoverJumped);
+            Listen(events, CassetteCollected, false);
+            Listen(events, RadioProgramChanged, false);
+            Listen(events, CrewLogFound, false);
+            Listen(events, BellSignalPicked, false);
+            Listen(events, BellSignalFound, false);
+            Listen(events, TickerLine, false);
         }
 
         /// <summary>Event type names in publish order.</summary>
@@ -69,6 +77,15 @@ namespace MoonProject.Gameplay.PlayModeTests
         public List<Timed<FriendSpotted>> FriendSpotted { get; } = new List<Timed<FriendSpotted>>();
         public List<Timed<RoverJumpCharged>> RoverJumpCharged { get; } = new List<Timed<RoverJumpCharged>>();
         public List<Timed<RoverJumped>> RoverJumped { get; } = new List<Timed<RoverJumped>>();
+        public List<Timed<CassetteCollected>> CassetteCollected { get; } = new List<Timed<CassetteCollected>>();
+
+        public List<Timed<RadioProgramChanged>> RadioProgramChanged { get; } =
+            new List<Timed<RadioProgramChanged>>();
+
+        public List<Timed<CrewLogFound>> CrewLogFound { get; } = new List<Timed<CrewLogFound>>();
+        public List<Timed<BellSignalPicked>> BellSignalPicked { get; } = new List<Timed<BellSignalPicked>>();
+        public List<Timed<BellSignalFound>> BellSignalFound { get; } = new List<Timed<BellSignalFound>>();
+        public List<Timed<TickerLine>> TickerLine { get; } = new List<Timed<TickerLine>>();
 
         public void Dispose()
         {
@@ -80,13 +97,16 @@ namespace MoonProject.Gameplay.PlayModeTests
             _subscriptions.Clear();
         }
 
-        private void Listen<T>(EventBus events, List<Timed<T>> log) where T : struct
+        private void Listen<T>(EventBus events, List<Timed<T>> log, bool ordered = true) where T : struct
         {
             string name = typeof(T).Name;
             _subscriptions.Add(events.Subscribe<T>(evt =>
             {
                 log.Add(new Timed<T>(evt, Time.time));
-                Order.Add(name);
+                if (ordered)
+                {
+                    Order.Add(name);
+                }
             }));
         }
 

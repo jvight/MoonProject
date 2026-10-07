@@ -14,9 +14,10 @@ using UnityEditor;
 namespace MoonProject.Gameplay.PlayModeTests
 {
     /// <summary>
-    /// A complete gameplay stack built in test code: a flat world, a fake 07, test content (relic and scrap stand-in
-    /// meshes in place of the Art prefabs, default tuning, SoftGlow materials) and the real gameplay components,
-    /// wired the way the scene contributor wires them and booted through GameBootstrap with a private save slot.
+    /// A complete gameplay stack built in test code: a flat world with canyon anchors, a fake 07, test content (relic,
+    /// scrap, friend and cassette stand-in meshes in place of the Art prefabs, default tuning, SoftGlow
+    /// materials) and the real gameplay components, wired the way the scene contributor wires them and booted through
+    /// GameBootstrap with a private save slot.
     /// </summary>
     public sealed class GameplayFixture : IDisposable
     {
@@ -83,6 +84,10 @@ namespace MoonProject.Gameplay.PlayModeTests
         public FriendTuning FriendTuning { get; private set; }
 
         public FriendDefinition Tilly { get; private set; }
+
+        public CassetteTuning CassetteTuning { get; private set; }
+
+        public CassetteCatalog Cassettes { get; private set; }
 
         /// <summary>The lander's FriendSocket_tilly stand-in.</summary>
         public Transform TillyPerch { get; private set; }
@@ -209,15 +214,17 @@ namespace MoonProject.Gameplay.PlayModeTests
             var tower = Child<RadioTower>(root, "RadioTower");
             var workshop = Child<Workshop>(root, "Workshop");
             var friends = Child<FriendField>(root, "Friends");
+            var cassettes = Child<CassetteField>(root, "Cassettes");
             BuildBase(root.transform, home, tower, workshop);
             BuildTilly(friends);
+            BuildCassettes(cassettes);
             relics.Wire(relicCatalog, placement, RelicTuning);
             scrap.Wire(ScrapTuning, scrapCatalog);
             sonar.Wire(SonarTuning);
             excavation.Wire(ExcavationTuning);
             tether.Wire(TetherTuning);
             Gameplay.Wire(visuals, new[] { RadioTowerUpgrade, HoverJumpUpgrade }, relics, scrap, sonar, excavation,
-                tether, home, tower, workshop, friends);
+                tether, home, tower, workshop, friends, cassettes);
             root.SetActive(true);
 
             Bootstrap = BootstrapHarness.Create(_controls, SaveSlot, World, Rover, Gameplay);
@@ -298,6 +305,35 @@ namespace MoonProject.Gameplay.PlayModeTests
             var catalog = Asset<FriendCatalog>();
             catalog.Populate(new[] { Tilly });
             friends.Wire(catalog, FriendTuning, new[] { TillyPerch });
+        }
+
+        /// <summary>
+        /// Ro's three tapes as in the content builder: one beside the terminus cache, one on the ledge (both behind the
+        /// Hover-Jump gate) and one planned in the basin.
+        /// </summary>
+        private void BuildCassettes(CassetteField field)
+        {
+            CassetteTuning = Asset<CassetteTuning>();
+            var hoverJump = new AbilityGate(true, RoverAbility.HoverJump);
+            Cassettes = Asset<CassetteCatalog>();
+            Cassettes.Populate(new[]
+            {
+                Cassette("after_dark_1", CassetteSiteRule.Anchor,
+                    new AnchorSpot(WorldAnchorIds.CanyonTerminus, new Vector2(2.2f, -0.7f)), hoverJump),
+                Cassette("dust_and_honey", CassetteSiteRule.BasinPlanner, new AnchorSpot(string.Empty, Vector2.zero),
+                    AbilityGate.Open),
+                Cassette("slow_orbit", CassetteSiteRule.Anchor,
+                    new AnchorSpot(WorldAnchorIds.CanyonLedge, Vector2.zero), hoverJump),
+            });
+            field.Wire(Cassettes, CassetteTuning);
+        }
+
+        private CassetteDefinition Cassette(string id, CassetteSiteRule site, AnchorSpot anchor, AbilityGate gate)
+        {
+            var cassette = Asset<CassetteDefinition>();
+            cassette.Populate(id, Template("Cassette_" + id, new Vector3(0.35f, 0.22f, 0.07f)), site, anchor, 73,
+                gate);
+            return cassette;
         }
 
         private GameObject FriendModel(string name, bool broken)
