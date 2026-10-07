@@ -45,6 +45,14 @@ namespace MoonProject.UI.PlayModeTests
         private const float FriendShotDistance = 7f;
         private const float FriendShotHeight = 2.4f;
         private const float FriendShotFov = 50f;
+        private const string BellId = "bell";
+        private const string BellCornerNode = "BellCorner";
+        private const string BellPrefabPath = "Assets/_Project/Generated/Art/Friends/Bell.prefab";
+        private const float BellHomeTolerance = 1.5f;
+        private const float BellShotFront = 4.2f;
+        private const float BellShotSide = 1.6f;
+        private const float BellShotHeight = 2f;
+        private const float BellLookHeight = 1.1f;
 
         private string _slot;
         private GameObject _uiHost;
@@ -53,10 +61,14 @@ namespace MoonProject.UI.PlayModeTests
         private RenderTexture _target;
         private UiTuning _tuning;
         private GameObject _friendCamera;
+        private GameObject _bellCamera;
+        private GameObject _bellStandIn;
 
         public override void TearDown()
         {
             Object.DestroyImmediate(_friendCamera);
+            Object.DestroyImmediate(_bellCamera);
+            Object.DestroyImmediate(_bellStandIn);
             Object.DestroyImmediate(_uiHost);
             Object.DestroyImmediate(_fakesHost);
             Object.DestroyImmediate(_panel);
@@ -194,6 +206,21 @@ namespace MoonProject.UI.PlayModeTests
             yield return new WaitForSecondsRealtime(_tuning.MemoryCard.Reveal.FadeOut + 0.3f);
 
             fakes.DialUnlocked = true;
+            Transform corner = BellAtHome(context);
+            Camera bellCamera = BellCamera(corner, camera);
+            fakes.Camera = bellCamera;
+            fakes.PrimaryHint = new InteractionHint(InteractionKind.Tune, corner.position, true);
+            yield return new WaitForSecondsRealtime(_tuning.Prompts.Find(InteractionKind.Tune).DwellSeconds +
+                                                    _tuning.Prompts.Reveal.FadeIn + 0.6f);
+            yield return Capture(bellCamera, folder, "30_bell_home_tune_prompt");
+            fakes.Tune(RadioChannel.QuietHours, UiTestRig.FirstTape);
+            yield return new WaitForSecondsRealtime(_tuning.Prompts.Reveal.FadeOut + _tuning.DialReadout.Reveal.FadeIn +
+                                                    0.5f);
+            yield return Capture(bellCamera, folder, "31_bell_home_dial_readout");
+            fakes.PrimaryHint = InteractionHint.None;
+            fakes.Camera = camera;
+            yield return new WaitForSecondsRealtime(ReadoutExit());
+
             fakes.Tune(RadioChannel.TapeDeck, UiTestRig.FirstTape);
             yield return new WaitForSecondsRealtime(_tuning.DialReadout.Reveal.FadeIn + 0.4f);
             yield return Capture(camera, folder, "21_dial_readout");
@@ -208,6 +235,7 @@ namespace MoonProject.UI.PlayModeTests
             fakes.AtStation = false;
             fakes.Upgrade = tower;
             yield return new WaitForSecondsRealtime(1f);
+
 
             yield return Tap(keyboard.escapeKey);
             yield return new WaitForSecondsRealtime(1.2f);
@@ -313,6 +341,90 @@ namespace MoonProject.UI.PlayModeTests
             return _tuning.DialReadout.HoldSeconds + _tuning.DialReadout.Reveal.FadeOut + 0.3f;
         }
 
+        /// <summary>
+        /// Bell's corner by the radio tower, with Bell standing in it: the scene's own Bell when the loaded save has
+        /// her home, else her art model placed there for the shot.
+        /// </summary>
+        private Transform BellAtHome(GameContext context)
+        {
+            Transform corner = ActiveSceneNode(BellCornerNode);
+            IFriendRoster roster = context.Get<IFriendRoster>();
+            for (int i = 0; i < roster.Count; i++)
+            {
+                IFriendState friend = roster.Get(i);
+                if (friend.Id != BellId)
+                {
+                    continue;
+                }
+
+                if (Vector3.ProjectOnPlane(friend.Position - corner.position, Vector3.up).magnitude >
+                    BellHomeTolerance)
+                {
+                    _bellStandIn = (GameObject)PrefabUtility.InstantiatePrefab(
+                        AssetDatabase.LoadAssetAtPath<GameObject>(BellPrefabPath));
+                    _bellStandIn.transform.SetPositionAndRotation(corner.position, corner.rotation);
+                }
+
+                return corner;
+            }
+
+            throw new InvalidOperationException($"The friend roster has no '{BellId}'.");
+        }
+
+        /// <summary>A camera beside the spot where 07 parks to tune, looking at Bell and her dial.</summary>
+        private Camera BellCamera(Transform corner, Camera reference)
+        {
+            Vector3 position = corner.position + corner.forward * BellShotFront + corner.right * BellShotSide +
+                               Vector3.up * BellShotHeight;
+            _bellCamera = new GameObject("BellCaptureCamera");
+            var camera = _bellCamera.AddComponent<Camera>();
+            camera.CopyFrom(reference);
+            camera.fieldOfView = FriendShotFov;
+            camera.GetUniversalAdditionalCameraData().renderPostProcessing = true;
+            _bellCamera.transform.SetPositionAndRotation(position,
+                Quaternion.LookRotation(corner.position + Vector3.up * BellLookHeight - position, Vector3.up));
+            return camera;
+        }
+
+        /// <summary>The active node called <paramref name="name"/> in Main (only one tower stage is live).</summary>
+        private static Transform ActiveSceneNode(string name)
+        {
+            foreach (GameObject root in SceneManager.GetSceneByPath(MainScene).GetRootGameObjects())
+            {
+                Transform hit = ActiveDescendant(root.transform, name);
+                if (hit != null)
+                {
+                    return hit;
+                }
+            }
+
+            throw new InvalidOperationException($"{MainScene} has no active node named {name}.");
+        }
+
+        private static Transform ActiveDescendant(Transform node, string name)
+        {
+            if (!node.gameObject.activeInHierarchy)
+            {
+                return null;
+            }
+
+            if (node.name == name)
+            {
+                return node;
+            }
+
+            for (int i = 0; i < node.childCount; i++)
+            {
+                Transform hit = ActiveDescendant(node.GetChild(i), name);
+                if (hit != null)
+                {
+                    return hit;
+                }
+            }
+
+            return null;
+        }
+
         /// <summary>Renders the UI at another frame size from now on (the panel lays itself out for it).</summary>
         private void Reframe(int width, int height)
         {
@@ -358,6 +470,7 @@ namespace MoonProject.UI.PlayModeTests
             _panel.clearColor = true;
             _panel.colorClearValue = Color.clear;
             _tuning = Object.Instantiate(AssetDatabase.LoadAssetAtPath<UiTuning>(UiTestRig.TuningPath));
+            _tuning.Prompts.AddMissingDefaults();
 
             _uiHost = new GameObject("CaptureUI");
             _uiHost.SetActive(false);

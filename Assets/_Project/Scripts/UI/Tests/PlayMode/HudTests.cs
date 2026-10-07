@@ -256,6 +256,40 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator TunePrompt_TeachesBellsDial_MakesWayForTheReadout_AndRetiresAfterOneTurn()
+        {
+            InputSystem.AddDevice<Keyboard>();
+            Boot();
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            _rig.Fakes.DialUnlocked = true;
+            yield return Seconds(0.5f);
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Tune, new Vector3(0f, 0f, 8f), true);
+            yield return Seconds(1.5f);
+            Assert.IsTrue(_rig.Ui.Prompt.IsVisible, "parked in front of Bell at home: the dial is taught");
+            Assert.AreEqual(Text(UiKeys.Hint(InteractionKind.Tune)), _rig.Ui.Layout.PromptWord.text);
+            Assert.AreEqual("E", _rig.Ui.Layout.PromptGlyphLabel.text, "Interact turns the dial");
+
+            _rig.Fakes.Tune(RadioChannel.QuietHours, string.Empty);
+            bool shared = false;
+            bool answered = false;
+            for (float t = 0f; t < 3f; t += Time.unscaledDeltaTime)
+            {
+                yield return null;
+                shared |= _rig.Ui.Prompt.IsVisible && _rig.Ui.Dial.IsVisible;
+                answered |= _rig.Ui.Dial.IsVisible;
+            }
+
+            Assert.IsFalse(shared, "the prompt fades before the readout eases in: never both on screen");
+            Assert.IsTrue(answered, "the turn is answered");
+            Assert.AreEqual(1, _rig.Ui.Ledger.Used(InteractionKind.Tune));
+            Assert.IsFalse(_rig.Ui.Ledger.ShouldTeach(InteractionKind.Tune), "one turn and the dial is known");
+
+            yield return Seconds(_rig.Tuning.DialReadout.HoldSeconds + _rig.Tuning.DialReadout.Reveal.FadeOut + 2f);
+            Assert.IsFalse(_rig.Ui.Dial.IsVisible);
+            Assert.IsFalse(_rig.Ui.Prompt.IsVisible, "still parked at the dial, but never taught again");
+        }
+
+        [UnityTest]
         public IEnumerator DialReadout_AnswersATurnOfTheDial_NeverTheLoad()
         {
             Boot();

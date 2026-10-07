@@ -6,7 +6,8 @@ namespace MoonProject.UI
 {
     /// <summary>
     /// Remembers, per action, how many times its prompt was shown and how many times the player did it. A prompt is
-    /// retired for good once either count reaches its limit (design ruling 6: only the first few times). Saved.
+    /// retired for good once it was shown the shared number of times or done as often as its entry says (design
+    /// ruling 6: only the first few times). Saved.
     /// </summary>
     internal sealed class PromptLedger
     {
@@ -37,11 +38,15 @@ namespace MoonProject.UI
             return _used[(int)kind];
         }
 
-        /// <summary>True while the prompt for <paramref name="kind"/> still has something to teach.</summary>
+        /// <summary>
+        /// True while the prompt for <paramref name="kind"/> still has something to teach (false for a kind without a
+        /// prompt entry).
+        /// </summary>
         public bool ShouldTeach(InteractionKind kind)
         {
-            return kind != InteractionKind.None && _shown[(int)kind] < _settings.ShowingsToRetire &&
-                   _used[(int)kind] < _settings.UsesToRetire;
+            PromptEntry entry = _settings.Find(kind);
+            return entry != null && _shown[(int)kind] < _settings.ShowingsToRetire &&
+                   _used[(int)kind] < entry.UsesToRetire;
         }
 
         public void RecordShown(InteractionKind kind)

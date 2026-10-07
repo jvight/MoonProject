@@ -9,7 +9,8 @@ namespace MoonProject.UI
     /// <see cref="DialWatch"/>), a small label eases in near the bottom centre, just above the ticker's band: one
     /// detent pip per station with the current one lit, the station's name ("radio.channel.&lt;station&gt;") and, on
     /// the Tape Deck, the chosen tape's title. It rests a moment after the last turn and fades; turning again while it
-    /// is up rewrites it in place.
+    /// is up rewrites it in place. A turn made while a context prompt is still on screen waits for the prompt to fade
+    /// (the UI closes the prompts' gate while the readout is busy), so the two never share the screen.
     /// </summary>
     internal sealed class DialReadout
     {
@@ -25,6 +26,7 @@ namespace MoonProject.UI
         private readonly Label _tape;
         private readonly VisualElement[] _detents;
         private float _rest;
+        private bool _pending;
 
         public DialReadout(UiLayout layout, DialReadoutSettings settings, ILocalization localization,
             IRadioProgram program)
@@ -61,25 +63,38 @@ namespace MoonProject.UI
 
         public bool IsVisible => !_reveal.IsHidden;
 
-        /// <summary>The radio program changed: shows the readout when that was a turn of the dial.</summary>
-        public void OnProgramChanged()
+        /// <summary>True while a turn waits to be shown or the readout is on screen.</summary>
+        public bool IsBusy => _pending || IsVisible;
+
+        /// <summary>
+        /// The radio program changed: true (and the readout will show) when that was a turn of the dial.
+        /// </summary>
+        public bool OnProgramChanged()
         {
             if (!_watch.Changed(_program))
             {
-                return;
+                return false;
             }
 
-            Write();
-            _rest = _settings.HoldSeconds;
-            _reveal.Show();
+            _pending = true;
+            return true;
         }
 
         /// <param name="deltaTime">Unscaled seconds; 0 while paused.</param>
-        public void Tick(float deltaTime)
+        /// <param name="stageClear">False while a context prompt is still on screen: a new turn waits for it.</param>
+        public void Tick(float deltaTime, bool stageClear)
         {
             if (!_watch.IsArmed)
             {
                 _watch.Arm(_program);
+            }
+
+            if (_pending && stageClear)
+            {
+                _pending = false;
+                Write();
+                _rest = _settings.HoldSeconds;
+                _reveal.Show();
             }
 
             if (_reveal.IsShown)

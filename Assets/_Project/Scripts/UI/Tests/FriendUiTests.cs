@@ -100,14 +100,14 @@ namespace MoonProject.UI.Tests
                 var serialized = new SerializedObject(tuning);
                 SerializedProperty entries = serialized.FindProperty("_prompts._entries");
                 int last = entries.arraySize - 1;
-                Assert.AreEqual(InteractionKind.Repair, tuning.Prompts.Entries[last].Kind);
+                InteractionKind newest = tuning.Prompts.Entries[last].Kind;
                 entries.DeleteArrayElementAtIndex(last);
                 entries.GetArrayElementAtIndex(0).FindPropertyRelative("_dwellSeconds").floatValue = 9f;
                 serialized.ApplyModifiedPropertiesWithoutUndo();
-                Assert.IsNull(tuning.Prompts.Find(InteractionKind.Repair), "an asset made before Repair existed");
+                Assert.IsNull(tuning.Prompts.Find(newest), $"an asset made before {newest} existed");
 
                 Assert.AreEqual(1, tuning.Prompts.AddMissingDefaults());
-                Assert.IsNotNull(tuning.Prompts.Find(InteractionKind.Repair));
+                Assert.IsNotNull(tuning.Prompts.Find(newest));
                 Assert.AreEqual(9f, tuning.Prompts.Entries[0].DwellSeconds, "hand tuning survives");
                 Assert.AreEqual(0, tuning.Prompts.AddMissingDefaults(), "idempotent");
                 Assert.IsNull(tuning.Validate());

@@ -326,7 +326,7 @@ namespace MoonProject.UI
             }
 
             bool promptsOpen = !paused && _awake && _sinceAwake >= _tuning.Prompts.StartDelay && !_title.IsPlaying &&
-                               !_card.IsVisible && !_tower.IsVisible;
+                               !_card.IsVisible && !_tower.IsVisible && !_dial.IsBusy;
             Rect panel = _layout.Root.layout;
             Vector2 panelSize = float.IsNaN(panel.width) ? Vector2.zero : panel.size;
             _friendReadout.Tick(deltaTime, !paused, panelSize,
@@ -334,9 +334,9 @@ namespace MoonProject.UI
             _friendName.Tick(hudTime, panelSize);
             _prompt.Tick(deltaTime, promptsOpen, _services.Hints.Primary, device, panelSize);
 
-            _dial.Tick(hudTime);
+            _dial.Tick(hudTime, !_prompt.IsVisible);
             bool tickerOpen = _awake && !_title.IsPlaying && !_card.IsBusy && !_digging && !_prompt.IsVisible &&
-                              !_reticle.IsVisible && !_dial.IsVisible;
+                              !_reticle.IsVisible && !_dial.IsBusy;
             _ticker.Tick(hudTime, tickerOpen);
         }
 
@@ -414,9 +414,9 @@ namespace MoonProject.UI
 
         private void OnRadioProgramChanged(RadioProgramChanged changed)
         {
-            if (_bound)
+            if (_bound && _dial.OnProgramChanged())
             {
-                _dial.OnProgramChanged();
+                _director.NotifyUsed(InteractionKind.Tune);
             }
         }
 

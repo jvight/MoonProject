@@ -16,8 +16,8 @@ namespace MoonProject.UI.PlayModeTests
     /// The UI booted through GameBootstrap the way UISceneContributor wires Main.unity (UIDocument on the generated
     /// PanelSettings, GameUI.uxml, the real tuning, catalog and string tables), behind
     /// <see cref="FakeGameServices"/>. The tuning is a copy with a short title, no prompt start delay and quick
-    /// ticker fades, so tests reach the interesting states quickly. Editor-only (assets come through the
-    /// AssetDatabase).
+    /// ticker fades, so tests reach the interesting states quickly; it also gains the prompt entries the UI/Tuning
+    /// builder adds for interaction kinds newer than the asset. Editor-only (assets come through the AssetDatabase).
     /// </summary>
     internal sealed class UiTestRig : IDisposable
     {
@@ -158,6 +158,7 @@ namespace MoonProject.UI.PlayModeTests
         private static UiTuning QuickTuning()
         {
             UiTuning tuning = Object.Instantiate(Load<UiTuning>(TuningPath));
+            tuning.Prompts.AddMissingDefaults();
             var serialized = new SerializedObject(tuning);
             serialized.FindProperty("_title._delay").floatValue = 0f;
             serialized.FindProperty("_title._hold").floatValue = 0.1f;
