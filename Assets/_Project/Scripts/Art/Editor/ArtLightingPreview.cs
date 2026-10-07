@@ -18,7 +18,7 @@ namespace MoonProject.Art.Editor
     /// <code>
     /// python tools/unity_batch.py exec --method MoonProject.Art.Editor.ArtLightingPreview.Capture
     ///     [--arg scene=rover|base|towers|relics|shadow|grit|friends|workshop|bell|bellbroken|pickups|bellcorner|
-    ///                  warmpoints]
+    ///                  warmpoints|relaysbroken|relayslit]
     /// </code>
     /// (default rover; a ';'-separated list captures several scenes in one run)
     /// rover: 07 at rest (half-lidded, head lowered, wing ajar) with its headlamp. base: the lander with the shelf
@@ -36,7 +36,9 @@ namespace MoonProject.Art.Editor
     /// tapes in slots 0-2. bellcorner: the base with Bell on the L3 tower's BellCorner, her rack on its anchor, 07
     /// parked at her dial, the tower's upgrade pad ring and her 2.5 m clear circle drawn on the dust. warmpoints: the
     /// glowing cast inside Main.unity's own earthlight, fog and grade, 07's eye at three linear glow levels (pillar 6,
-    /// "warm points in a cold field"). Glows are lit with the linear MaterialPropertyBlock contract.
+    /// "warm points in a cold field"). relaysbroken / relayslit: a relay mast on each of World's relay anchors in
+    /// Main.unity, dark and leaning or restored and lit, from the spawn first frame, from the base and at each pad.
+    /// Glows are lit with the linear MaterialPropertyBlock contract.
     /// </summary>
     public static class ArtLightingPreview
     {
@@ -56,6 +58,13 @@ namespace MoonProject.Art.Editor
 
         /// <summary>Where the warmpoints cast stands in Main.unity: open dust well away from the base.</summary>
         private static readonly Vector3 WarmStage = new Vector3(30f, 0f, -30f);
+
+        /// <summary>World's relay.0..3 anchors for the default seed (M3-06 anchor table); each faces home.</summary>
+        private static readonly Vector3[] RelayAnchors =
+        {
+            new Vector3(62.63f, 1.68f, 92.85f), new Vector3(-204.85f, 7.97f, -74.56f),
+            new Vector3(268.1f, 5.74f, 74.49f), new Vector3(456.57f, 36.35f, -16.66f),
+        };
 
         public static void Capture()
         {
@@ -135,10 +144,16 @@ namespace MoonProject.Art.Editor
                     case "warmpoints":
                         poses = WarmPointsScene(material, temporary);
                         break;
+                    case "relaysbroken":
+                        poses = RelaysScene(temporary, false);
+                        break;
+                    case "relayslit":
+                        poses = RelaysScene(temporary, true);
+                        break;
                     default:
                         Debug.LogError($"ArtLightingPreview: unknown scene '{scene}' " +
                             "(rover|base|towers|relics|shadow|grit|friends|workshop|bell|bellbroken|pickups|" +
-                            "bellcorner|warmpoints).");
+                            "bellcorner|warmpoints|relaysbroken|relayslit).");
                         return false;
                 }
 
@@ -598,6 +613,60 @@ namespace MoonProject.Art.Editor
         private static float[] Stage(float x, float y, float z)
         {
             Vector3 p = WarmStage + new Vector3(x, y, z);
+            return new[] { p.x, p.y, p.z };
+        }
+
+        /// <summary>
+        /// Opens Main.unity (its terrain preview, earthlight, fog and grade; never saved) and stands a relay mast on
+        /// each of World's relay anchors, facing home: broken with its part glinting on relay.0's pad, or restored with
+        /// its lamp lit at the authored 1. Poses: the spawn first frame, relay.0 from the base, and each mast near
+        /// and from afar.
+        /// </summary>
+        private static CameraPoseSet RelaysScene(TemporaryObjects temporary, bool restored)
+        {
+            EditorSceneManager.OpenScene(CaptureAutomation.MainScenePath, OpenSceneMode.Single);
+            string prefab = restored ? RelayModelBuilder.MastName : RelayModelBuilder.BrokenMastName;
+            var poses = new List<CameraPose>
+            {
+                new CameraPose { name = "spawn_first_frame", position = new[] { 0.78f, 4f, -8.97f },
+                    euler = new[] { 6f, -5f, 0f }, fov = 60f },
+                Pose("relay0_from_base", new[] { 0f, 3f, 0f }, Point(RelayAnchors[0] + Vector3.up * 4f), 50f),
+            };
+            for (int i = 0; i < RelayAnchors.Length; i++)
+            {
+                Vector3 anchor = RelayAnchors[i];
+                Vector3 home = new Vector3(-anchor.x, 0f, -anchor.z).normalized;
+                Quaternion facing = Quaternion.LookRotation(home);
+                GameObject mast = Instantiate(prefab, temporary, ArtPaths.RelayFolder);
+                mast.transform.SetPositionAndRotation(anchor, facing);
+                if (restored)
+                {
+                    SetGlow(mast.transform, "Lamp", new[] { "" }, 1f);
+                }
+
+                Vector3 side = facing * Vector3.right;
+                Vector3 look = anchor + Vector3.up * 4.5f;
+                poses.Add(Pose($"relay{i}_near", Point(anchor + home * 13f + side * 5f + Vector3.up * 3f),
+                    Point(look), 50f));
+                float far = i == RelayAnchors.Length - 1 ? 35f : 90f;
+                poses.Add(Pose($"relay{i}_far", Point(anchor + home * far + side * 8f + Vector3.up * 9f), Point(look),
+                    40f));
+            }
+
+            if (!restored)
+            {
+                GameObject part = Instantiate(RelayModelBuilder.PartName, temporary, ArtPaths.RelayFolder);
+                Vector3 spot = RelayAnchors[0] + Quaternion.LookRotation(new Vector3(-RelayAnchors[0].x, 0f,
+                    -RelayAnchors[0].z)) * new Vector3(1.8f, 0f, 1.2f);
+                float lift = part.transform.position.y - RendererBounds(part).min.y;
+                part.transform.SetPositionAndRotation(spot + Vector3.up * lift, Quaternion.Euler(0f, 30f, 0f));
+            }
+
+            return new CameraPoseSet { width = 1600, height = 900, postProcessing = true, poses = poses.ToArray() };
+        }
+
+        private static float[] Point(Vector3 p)
+        {
             return new[] { p.x, p.y, p.z };
         }
 

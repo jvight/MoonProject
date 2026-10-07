@@ -16,12 +16,12 @@ namespace MoonProject.Art.Tests
         private static readonly PaletteSwatch[] LivingLights =
         {
             PaletteSwatch.WarmLamp, PaletteSwatch.PilotLight, PaletteSwatch.LampGlass, PaletteSwatch.TechGlow,
-            PaletteSwatch.EyeGlass,
+            PaletteSwatch.EyeGlass, PaletteSwatch.SignalGlass,
         };
 
         private static readonly PaletteSwatch[] WarmLights =
         {
-            PaletteSwatch.WarmLamp, PaletteSwatch.PilotLight, PaletteSwatch.LampGlass,
+            PaletteSwatch.WarmLamp, PaletteSwatch.PilotLight, PaletteSwatch.LampGlass, PaletteSwatch.SignalGlass,
         };
 
         private static readonly PaletteSwatch[] CyanLights = { PaletteSwatch.TechGlow, PaletteSwatch.EyeGlass };
@@ -72,7 +72,8 @@ namespace MoonProject.Art.Tests
         [Test]
         public void WarmGlows_StayAmber_ThroughPerChannelTonemapping()
         {
-            foreach (PaletteSwatch swatch in new[] { PaletteSwatch.WarmLamp, PaletteSwatch.LampGlass })
+            foreach (PaletteSwatch swatch in new[]
+                     { PaletteSwatch.WarmLamp, PaletteSwatch.LampGlass, PaletteSwatch.SignalGlass })
             {
                 Color glow = Palette.GetGlow(swatch);
                 Assert.Less(glow.g, glow.r * MaxAmberGreen, $"{swatch} would bleach to lemon");

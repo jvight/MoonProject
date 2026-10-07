@@ -24,8 +24,8 @@ namespace MoonProject.Art
         public const float LitCeiling = 0.95f;
 
         /// <summary>
-        /// Glow of the home lamps (windows, bulbs, 07's eye) at intensity 1: well above lit dust and cream, so the
-        /// bloom picks out the base's lamps and nothing around them.
+        /// Glow of the home lamps (windows, bulbs, 07's eye) and of far signal lamps (relay masts) at intensity 1: well
+        /// above lit dust and cream, so the bloom picks out the warm lights and nothing around them.
         /// </summary>
         public const float WarmLampGlow = 2.4f;
 
@@ -85,6 +85,8 @@ namespace MoonProject.Art
             new Color32(0x24, 0x2C, 0x3A, 0xFF), // EyeGlass: dark glass of a young sensor eye; glows TechGlow
             new Color32(0xC0, 0x7A, 0x4C, 0xFF), // Wood: warm caramel teak of an old radio cabinet (Bell); light
                                                  // enough to stay brown, not mauve, under moonlight
+            new Color32(0x2E, 0x2B, 0x33, 0xFF), // SignalGlass: cold dark lens of a far signal lamp (relay masts);
+                                                 // glows WarmLamp at the home lamps' strength
         };
 
         private static readonly bool[] Emissive =
@@ -104,6 +106,7 @@ namespace MoonProject.Art
             true,  // LampGlass
             true,  // EyeGlass
             false, // Wood
+            true,  // SignalGlass
         };
 
         public static int Count => Colors.Length;
@@ -131,6 +134,7 @@ namespace MoonProject.Art
             switch (swatch)
             {
                 case PaletteSwatch.WarmLamp:
+                case PaletteSwatch.SignalGlass:
                     return Tint(PaletteSwatch.WarmLamp, AmberGreen, AmberBlue) * WarmLampGlow;
                 case PaletteSwatch.LampGlass:
                     return Tint(PaletteSwatch.WarmLamp, AmberGreen, AmberBlue) * LampGlassGlow;
