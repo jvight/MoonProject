@@ -17,6 +17,7 @@ namespace MoonProject.Audio.Editor
         public const string UiTuning = DataFolder + "/UiAudioTuning.asset";
         public const string FriendTuning = DataFolder + "/FriendAudioTuning.asset";
         public const string JumpTuning = DataFolder + "/JumpAudioTuning.asset";
+        public const string CanyonTuning = DataFolder + "/CanyonAudioTuning.asset";
 
         /// <summary>Written by tools/audio/build_sfx.py (project-relative).</summary>
         public const string SfxManifest = "tools/audio/sfx_manifest.json";

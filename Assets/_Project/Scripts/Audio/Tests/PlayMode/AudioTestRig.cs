@@ -68,6 +68,8 @@ namespace MoonProject.Audio.PlayModeTests
             Jump = Child(audioRoot, "JumpAudio").AddComponent<JumpAudio>();
             Radio = Child(audioRoot, "RadioStation").AddComponent<RadioStation>();
             Ambience = Child(audioRoot, "AmbienceBed").AddComponent<AmbienceBed>();
+            Canyon = Child(audioRoot, "CanyonAmbience").AddComponent<CanyonAmbience>();
+            Canyon.Wire(Load<CanyonAudioTuning>("CanyonAudioTuning.asset"));
             RoverAudio.Wire(Load<RoverAudioTuning>("RoverAudioTuning.asset"));
             Gameplay.Wire(Load<GameplayAudioTuning>("GameplayAudioTuning.asset"));
             Ui.Wire(Load<UiAudioTuning>("UiAudioTuning.asset"));
@@ -75,7 +77,7 @@ namespace MoonProject.Audio.PlayModeTests
             Jump.Wire(Load<JumpAudioTuning>("JumpAudioTuning.asset"));
             Radio.Wire(Load<RadioTuning>("RadioTuning.asset"), playlist, tapes);
             Director.Wire(Load<AudioLibrary>("AudioLibrary.asset"), Load<AudioMixTuning>("AudioMixTuning.asset"),
-                RoverAudio, Jump, Gameplay, Friends, Ui, Radio, Ambience);
+                RoverAudio, Jump, Gameplay, Friends, Ui, Radio, Ambience, Canyon);
             audioRoot.SetActive(true);
 
             Bootstrap = Track(BootstrapHarness.Create(controls, Rover, Director));
@@ -98,6 +100,8 @@ namespace MoonProject.Audio.PlayModeTests
         public RadioStation Radio { get; }
 
         public AmbienceBed Ambience { get; }
+
+        public CanyonAmbience Canyon { get; }
 
         public GameBootstrap Bootstrap { get; }
 

@@ -5,8 +5,8 @@ namespace MoonProject.Audio
 {
     /// <summary>
     /// The 72 s seamless lunar ambience loop on the Ambience bus, fading in gently at start. On Quiet Hours, when the
-    /// radio leaves the moon to itself, the bed swells a little so the silence is full rather than empty.
-    /// Initialised by <see cref="AudioDirector"/>.
+    /// radio leaves the moon to itself, the bed swells a little so the silence is full rather than empty; inside
+    /// Whispering Canyon it recedes under the canyon's own air. Initialised by <see cref="AudioDirector"/>.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class AmbienceBed : MonoBehaviour
@@ -15,6 +15,7 @@ namespace MoonProject.Audio
         private readonly EasedValue _quietLift = new EasedValue(1f);
         private AudioDirector _director;
         private RadioStation _radio;
+        private CanyonAmbience _canyon;
         private AudioMixTuning _tuning;
         private AudioSource _source;
         private float _cueVolume;
@@ -22,7 +23,8 @@ namespace MoonProject.Audio
         /// <summary>The Quiet Hours swell currently applied (1 = none; diagnostics and tests).</summary>
         internal float QuietLift => _quietLift.Value;
 
-        internal void Initialize(AudioDirector director, RadioStation radio, AudioMixTuning tuning)
+        internal void Initialize(AudioDirector director, RadioStation radio, CanyonAmbience canyon,
+            AudioMixTuning tuning)
         {
             CueHandle bed = director.Resolve(AudioCueIds.AmbienceBed);
             if (!bed.IsValid)
@@ -33,6 +35,7 @@ namespace MoonProject.Audio
 
             _director = director;
             _radio = radio;
+            _canyon = canyon;
             _tuning = tuning;
             _cueVolume = director.Library.GetCue(bed).VolumeMax;
             _source = director.CreateLoopSource(transform, "AmbienceLoop", bed, 0f);
@@ -50,7 +53,8 @@ namespace MoonProject.Audio
             float fade = _fade.Step(1f, dt, _tuning.AmbienceFadeIn);
             float quiet = _radio.Station == RadioChannel.QuietHours ? _tuning.QuietHoursAmbienceGain : 1f;
             float lift = _quietLift.Step(quiet, dt, _tuning.QuietHoursAmbienceEase);
-            _source.volume = Mathf.Clamp01(fade * lift * _cueVolume) * _director.Buses.Effective(AudioBus.Ambience);
+            float level = fade * lift * _canyon.BasinGain * _cueVolume;
+            _source.volume = Mathf.Clamp01(level) * _director.Buses.Effective(AudioBus.Ambience);
         }
     }
 }

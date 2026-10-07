@@ -134,7 +134,7 @@ namespace MoonProject.Audio.PlayModeTests
                 AudioTestRig.UpdateOf(_rig.Director), AudioTestRig.UpdateOf(_rig.RoverAudio),
                 AudioTestRig.UpdateOf(_rig.Gameplay), AudioTestRig.UpdateOf(_rig.Ui), AudioTestRig.UpdateOf(_rig.Radio),
                 AudioTestRig.UpdateOf(_rig.Friends), AudioTestRig.UpdateOf(_rig.Jump),
-                AudioTestRig.UpdateOf(_rig.Ambience),
+                AudioTestRig.UpdateOf(_rig.Ambience), AudioTestRig.UpdateOf(_rig.Canyon),
             };
 
             _rig.Program.Own(AudioTestRig.TapeA);
@@ -154,7 +154,8 @@ namespace MoonProject.Audio.PlayModeTests
             for (int frame = 0; frame < frames; frame++)
             {
                 float t = frame * 0.05f;
-                _rig.Rover.Position = new Vector3(200f * Mathf.Sin(t), 0f, 0f);
+                _rig.Rover.Position = new Vector3(20f * Mathf.Sin(t), 2f - 4f * Mathf.Sin(t * 2f),
+                    260f + 120f * Mathf.Sin(t * 0.3f));
                 _rig.Rover.NormalizedSpeed = 0.5f + 0.5f * Mathf.Sin(t * 3f);
                 _rig.Rover.DriveInput = new Vector2(0f, 1f);
                 _rig.Rover.IsGrounded = frame % 40 < 30;

@@ -15,8 +15,9 @@ namespace MoonProject.Audio
     /// Bell's dial while the radio is on crossfades through a short static swish (Bell crackles along; the detent
     /// click is hers); changes at load or before the radio comes on just set the state, without a sound. New tracks
     /// on Lumen After Dark go to the ticker as "now playing", once per track per session. Clarity follows the rover's
-    /// distance from the base through <see cref="RadioSignal"/> (low-pass, static, wow/flutter);
-    /// <see cref="SignalRadiusChanged"/> widens the clear zone. Initialised by <see cref="AudioDirector"/>.
+    /// distance from the base through <see cref="RadioSignal"/> (low-pass, static, wow/flutter), and thins further
+    /// inside Whispering Canyon (<see cref="CanyonAmbience"/>); <see cref="SignalRadiusChanged"/> widens the clear
+    /// zone. Initialised by <see cref="AudioDirector"/>.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class RadioStation : MonoBehaviour
@@ -49,6 +50,7 @@ namespace MoonProject.Audio
         private EventBus _events;
         private Vector3 _basePosition;
         private AudioDirector _director;
+        private CanyonAmbience _canyon;
         private RadioSignal _signal;
         private RadioProgramModel _model;
         private PlaylistShuffler _shuffler;
@@ -131,6 +133,7 @@ namespace MoonProject.Audio
             }
 
             _director = director;
+            _canyon = director.Canyon;
             _events = context.Events;
             _listener = context.Get<IRoverState>();
             _program = context.Get<IRadioProgram>();
@@ -193,9 +196,10 @@ namespace MoonProject.Audio
 
             float cabin = _director.CabinBlend;
             float level = _director.Buses.Effective(AudioBus.Music) * _wake.Power;
-            float music = mix.MusicVolume * level * _wake.MusicGain * Mathf.Lerp(1f, _tuning.CabinMusicGain, cabin);
+            float music = mix.MusicVolume * level * _wake.MusicGain * Mathf.Lerp(1f, _tuning.CabinMusicGain, cabin) *
+                          _canyon.RadioMusicGain;
             float cabinCutoff = _tuning.MaxCutoff * Mathf.Pow(_tuning.CabinCutoff / _tuning.MaxCutoff, cabin);
-            float cutoff = Mathf.Min(mix.CutoffHz, cabinCutoff);
+            float cutoff = _canyon.RadioCutoff(Mathf.Min(mix.CutoffHz, cabinCutoff));
             for (int i = 0; i < _decks.Length; i++)
             {
                 AudioSource deck = _decks[i];
