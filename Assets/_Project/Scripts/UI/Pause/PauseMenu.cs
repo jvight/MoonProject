@@ -14,7 +14,9 @@ namespace MoonProject.UI
     /// time), turns the rover controls off and frees the cursor; resuming reverses all three. Resume, Settings
     /// (volumes, look speed, invert look, language; persisted) and Quit (asks once). Keyboard, mouse and gamepad all
     /// work: UI Toolkit moves focus between the buttons and sliders; Esc / B steps back one level. Every touch is
-    /// published as a <see cref="UiCue"/> (open, close, focus move, confirm, back, slider step) for Audio.
+    /// published as a <see cref="UiCue"/> (open, close, focus move, confirm, back, slider step) for Audio. Once 07 owns
+    /// a cassette, a quiet line under the heading counts them against every tape in the game (both numbers from
+    /// <see cref="IRadioProgram"/>, so a loaded save is counted right).
     /// </summary>
     internal sealed class PauseMenu
     {
@@ -28,6 +30,7 @@ namespace MoonProject.UI
         private readonly EventBus _events;
         private readonly ISaveService _save;
         private readonly IScrapWallet _wallet;
+        private readonly IRadioProgram _radio;
         private readonly IntText _numbers;
         private readonly CursorPolicy _cursor;
         private readonly Action _quit;
@@ -46,8 +49,8 @@ namespace MoonProject.UI
         private float _writtenShift = float.NaN;
 
         public PauseMenu(UiLayout layout, PauseSettings settings, PlayerSettings player, ILocalization localization,
-            InputReader input, EventBus events, ISaveService save, IScrapWallet wallet, IntText numbers,
-            CursorPolicy cursor, Action quit)
+            InputReader input, EventBus events, ISaveService save, IScrapWallet wallet, IRadioProgram radio,
+            IntText numbers, CursorPolicy cursor, Action quit)
         {
             _layout = layout ?? throw new ArgumentNullException(nameof(layout));
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
@@ -57,6 +60,7 @@ namespace MoonProject.UI
             _events = events ?? throw new ArgumentNullException(nameof(events));
             _save = save ?? throw new ArgumentNullException(nameof(save));
             _wallet = wallet ?? throw new ArgumentNullException(nameof(wallet));
+            _radio = radio ?? throw new ArgumentNullException(nameof(radio));
             _numbers = numbers ?? throw new ArgumentNullException(nameof(numbers));
             _cursor = cursor ?? throw new ArgumentNullException(nameof(cursor));
             _quit = quit ?? throw new ArgumentNullException(nameof(quit));
@@ -75,6 +79,7 @@ namespace MoonProject.UI
             new ShadowPainter(layout.PauseMainShadow);
             new ShadowPainter(layout.PauseSettingsShadow);
             new ScrapIconPainter(layout.PauseScrapIcon);
+            new CassetteIconPainter(layout.PauseCassetteIcon);
 
             _lookTexts = new string[player.LookStepCount + 1];
             for (int step = player.MinLookStep; step <= player.LookStepCount; step++)
@@ -119,6 +124,7 @@ namespace MoonProject.UI
             _input.Disable();
             _cursor.Menu();
             _layout.PauseScrapCount.text = _numbers.Get(_wallet.Balance);
+            WriteCassettes();
             _veil.Show();
             _main.Show();
             _pendingFocus = _layout.ResumeButton;
@@ -222,10 +228,11 @@ namespace MoonProject.UI
             _pointerPressed = false;
         }
 
-        /// <summary>Shows the current language's name on the language selector.</summary>
+        /// <summary>Re-reads the menu's coded words (the language selector, the cassette line) in the new language.</summary>
         public void Relocalize()
         {
             _layout.LanguageButton.text = _localization.GetLanguageName(_localization.Language);
+            WriteCassettes();
         }
 
         /// <summary>Restores normal game speed immediately (the UI is going away mid-pause).</summary>
@@ -257,6 +264,18 @@ namespace MoonProject.UI
             look.fill = true;
             look.RegisterValueChangedCallback(OnLookChanged);
             _layout.InvertToggle.RegisterValueChangedCallback(OnInvertChanged);
+        }
+
+        /// <summary>Allocates (it formats); called when the menu opens or the language changes, never per frame.</summary>
+        private void WriteCassettes()
+        {
+            int owned = _radio.OwnedTapeCount;
+            _layout.PauseCassettes.style.display = owned > 0 ? DisplayStyle.Flex : DisplayStyle.None;
+            if (owned > 0)
+            {
+                _layout.PauseCassettesCount.text = string.Format(_localization.Get(UiKeys.PauseCassettes), owned,
+                    _radio.TotalTapeCount);
+            }
         }
 
         private void BindVolume(SliderInt slider, AudioBus bus)

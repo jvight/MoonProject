@@ -82,6 +82,9 @@ namespace MoonProject.UI
             PauseMainShadow = Require<VisualElement>("pause-main-shadow");
             PauseScrapIcon = Require<VisualElement>("pause-scrap-icon");
             PauseScrapCount = Require<Label>("pause-scrap-count");
+            PauseCassettes = Require<VisualElement>("pause-cassettes");
+            PauseCassetteIcon = Require<VisualElement>("pause-cassette-icon");
+            PauseCassettesCount = Require<Label>("pause-cassettes-count");
             PageMain = Require<VisualElement>("page-main");
             PageQuit = Require<VisualElement>("page-quit");
             ResumeButton = Require<Button>("button-resume");
@@ -223,6 +226,12 @@ namespace MoonProject.UI
         public VisualElement PauseScrapIcon { get; }
 
         public Label PauseScrapCount { get; }
+
+        public VisualElement PauseCassettes { get; }
+
+        public VisualElement PauseCassetteIcon { get; }
+
+        public Label PauseCassettesCount { get; }
 
         public VisualElement PageMain { get; }
 

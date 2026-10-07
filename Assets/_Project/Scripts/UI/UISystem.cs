@@ -259,7 +259,7 @@ namespace MoonProject.UI
             _tower = new TowerPanel(_layout, _tuning.TowerPanel, _localization, services.Events, services.Shop,
                 services.Wallet, services.Hints, _numbers);
             _pause = new PauseMenu(_layout, _tuning.Pause, _player, _localization, services.Input, services.Events,
-                services.Save, services.Wallet, _numbers, _cursor, Quit);
+                services.Save, services.Wallet, services.Radio, _numbers, _cursor, Quit);
             _bound = true;
             if (_awake)
             {

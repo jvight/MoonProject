@@ -45,6 +45,7 @@ namespace MoonProject.UI.PlayModeTests
             UiKeys.RadioChannelName(RadioChannel.LumenAfterDark), "Lumen After Dark", "Lumen After Dark",
             UiKeys.RadioChannelName(RadioChannel.TapeDeck), "Tape Deck", "Đầu băng",
             UiKeys.RadioChannelName(RadioChannel.QuietHours), "Quiet Hours", "Giờ tĩnh lặng",
+            UiKeys.PauseCassettes, "Cassettes {0}/{1}", "Băng cassette {0}/{1}",
         };
 
         /// <summary>

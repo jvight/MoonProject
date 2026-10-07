@@ -20,6 +20,7 @@ namespace MoonProject.UI
         public const string CrewLogCaption = "ui.card.crew_log";
         public const string LinerCaption = "ui.card.liner_caption";
         public const string TapeCount = "ui.card.tape_count";
+        public const string PauseCassettes = "ui.pause.cassettes";
 
         /// <summary>"hint.excavate": the one word of the prompt teaching <paramref name="kind"/>.</summary>
         public static string Hint(InteractionKind kind)

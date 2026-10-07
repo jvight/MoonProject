@@ -143,6 +143,37 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual("Tiếp tục", _rig.Ui.Layout.ResumeButton.text, "and so does the language");
         }
 
+        [UnityTest]
+        public IEnumerator CassetteLine_ShowsOnceATapeIsOwned_CountingEveryTapeInTheGame()
+        {
+            Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
+            Boot(BootstrapHarness.NewTestSlot());
+            yield return null;
+            UiLayout layout = _rig.Ui.Layout;
+            yield return Tap(keyboard.escapeKey);
+            yield return new WaitForSecondsRealtime(Settle);
+            Assert.AreEqual(DisplayStyle.None, layout.PauseCassettes.resolvedStyle.display, "nothing to count yet");
+            yield return Tap(keyboard.escapeKey);
+            yield return new WaitForSecondsRealtime(Settle);
+
+            _rig.Fakes.AddTape(TestStrings.FirstTape);
+            _rig.Fakes.AddTape(TestStrings.SecondTape);
+            yield return Tap(keyboard.escapeKey);
+            yield return new WaitForSecondsRealtime(Settle);
+            Assert.AreEqual(DisplayStyle.Flex, layout.PauseCassettes.resolvedStyle.display);
+            Assert.AreEqual(string.Format(_rig.Ui.Localization.Get(UiKeys.PauseCassettes), 2, 3),
+                layout.PauseCassettesCount.text, "both numbers from the program: the real total, never 8");
+
+            Submit(layout.SettingsButton);
+            yield return new WaitForSecondsRealtime(Settle);
+            Submit(layout.LanguageButton);
+            yield return null;
+            Assert.AreEqual(string.Format(_rig.Ui.Localization.Get(UiKeys.PauseCassettes), 2, 3),
+                layout.PauseCassettesCount.text);
+            StringAssert.Contains("2/3", layout.PauseCassettesCount.text, "and in Vietnamese at once");
+            Assert.AreEqual("vi", _rig.Ui.Localization.Language);
+        }
+
         /// <summary>
         /// Arrow keys, the d-pad and the stick reach UI Toolkit as navigation events through the Input System's UI
         /// provider (which an InputTestFixture cannot drive); this checks what the menu itself must get right: every

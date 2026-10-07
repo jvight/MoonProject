@@ -114,6 +114,11 @@
                                 <ui:VisualElement class="pause__titles">
                                     <ui:Label class="pause__heading loc" text="ui.pause.heading" />
                                     <ui:Label class="pause__subheading loc" text="ui.pause.subheading" />
+                                    <ui:VisualElement name="pause-cassettes" class="pause__cassettes">
+                                        <ui:VisualElement name="pause-cassette-icon"
+                                                          class="cassette-icon cassette-icon--quiet" />
+                                        <ui:Label name="pause-cassettes-count" class="pause__cassettes-count" />
+                                    </ui:VisualElement>
                                 </ui:VisualElement>
                                 <ui:VisualElement name="pause-scrap" class="chip chip--inline">
                                     <ui:VisualElement name="pause-scrap-icon" class="scrap-icon" />

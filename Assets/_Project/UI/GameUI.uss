@@ -190,6 +190,12 @@ Label {
     --icon-hole-color: var(--moon-sky-top);
 }
 
+.cassette-icon--quiet {
+    width: 20px;
+    height: 13px;
+    --icon-color: var(--moon-amber-edge);
+}
+
 /* Opening title */
 
 .title {
@@ -651,6 +657,18 @@ Label {
     font-size: 16px;
     color: var(--moon-text-faint);
     margin-top: 4px;
+}
+
+.pause__cassettes {
+    flex-direction: row;
+    align-items: center;
+    margin-top: 12px;
+}
+
+.pause__cassettes-count {
+    margin-left: 9px;
+    font-size: 15px;
+    color: var(--moon-text-dim);
 }
 
 .pause__pages {
