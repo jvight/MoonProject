@@ -25,6 +25,7 @@ namespace MoonProject.UI
             new PromptEntry(InteractionKind.Deposit, RoverAction.Tether, 0.25f, 1.4f),
             new PromptEntry(InteractionKind.Reel, RoverAction.Winch, 2.5f, 0.9f),
             new PromptEntry(InteractionKind.Repair, RoverAction.Excavate, 0.5f, 0.8f),
+            new PromptEntry(InteractionKind.Tune, RoverAction.Excavate, 0.6f, 1.8f, 1),
         };
 
         [Tooltip("Seconds after 07 starts waking before any prompt may appear (the opening belongs to the moon).")]
@@ -42,10 +43,6 @@ namespace MoonProject.UI
         [Tooltip("Times a prompt is shown before it is retired for good (saved).")]
         [Range(1, 10)]
         [SerializeField] private int _showingsToRetire = 3;
-
-        [Tooltip("Times the player does the action before its prompt is retired for good (saved).")]
-        [Range(1, 10)]
-        [SerializeField] private int _usesToRetire = 2;
 
         [Tooltip("Half-life (s) of the prompt following its world point on screen: it floats, never jitters.")]
         [Range(0f, 0.5f)]
@@ -66,8 +63,6 @@ namespace MoonProject.UI
         public float RepeatCooldown => _repeatCooldown;
 
         public int ShowingsToRetire => _showingsToRetire;
-
-        public int UsesToRetire => _usesToRetire;
 
         public float FollowHalfLife => _followHalfLife;
 

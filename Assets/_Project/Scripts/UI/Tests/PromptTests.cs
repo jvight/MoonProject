@@ -1,6 +1,9 @@
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
+using MoonProject.Core.Input;
 using MoonProject.Gameplay;
+using MoonProject.UI.Editor;
 
 namespace MoonProject.UI.Tests
 {
@@ -104,7 +107,7 @@ namespace MoonProject.UI.Tests
         [Test]
         public void APrompt_IsRetired_OnceTheActionIsLearned()
         {
-            for (int i = 0; i < _settings.UsesToRetire; i++)
+            for (int i = 0; i < _settings.Find(InteractionKind.Excavate).UsesToRetire; i++)
             {
                 _director.NotifyUsed(InteractionKind.Excavate);
             }
@@ -112,6 +115,47 @@ namespace MoonProject.UI.Tests
             Run(60f, Ready(InteractionKind.Excavate));
             Assert.AreEqual(0, _ledger.Shown(InteractionKind.Excavate),
                 "someone who already digs is not taught to dig");
+        }
+
+        [Test]
+        public void TheTunePrompt_NamesInteract_AndRetiresAfterTheFirstTurnOfTheDial()
+        {
+            PromptEntry tune = _settings.Find(InteractionKind.Tune);
+            Assert.IsNotNull(tune, "Bell's dial is taught");
+            Assert.AreEqual(RoverAction.Excavate, tune.Action, "the dial turns with Interact, like the repair");
+            Assert.AreEqual(1, tune.UsesToRetire, "one turn and the player knows the dial");
+
+            Run(2f, Ready(InteractionKind.Tune));
+            Assert.AreEqual(InteractionKind.Tune, _director.Displayed);
+            _director.NotifyUsed(InteractionKind.Tune);
+            Assert.IsFalse(_director.WantsShown, "the turn ends the showing");
+            Assert.IsFalse(_ledger.ShouldTeach(InteractionKind.Tune), "and retires the prompt");
+            Run(_settings.RepeatCooldown + 60f, Ready(InteractionKind.Tune));
+            Assert.AreEqual(1, _ledger.Shown(InteractionKind.Tune), "never again");
+        }
+
+        [Test]
+        public void EveryOtherPrompt_IsLearnedAfterTheDefaultNumberOfUses()
+        {
+            foreach (PromptEntry entry in _settings.Entries)
+            {
+                if (entry.Kind != InteractionKind.Tune)
+                {
+                    Assert.AreEqual(PromptEntry.DefaultUsesToRetire, entry.UsesToRetire, entry.Kind.ToString());
+                }
+            }
+        }
+
+        [Test]
+        public void TheShippedTuning_LetsEveryPromptBeLearned()
+        {
+            var tuning = AssetDatabase.LoadAssetAtPath<UiTuning>(UiAssetPaths.Tuning);
+            Assert.IsNotNull(tuning, UiAssetPaths.Tuning);
+            foreach (PromptEntry entry in tuning.Prompts.Entries)
+            {
+                Assert.That(entry.UsesToRetire, Is.InRange(1, 10),
+                    $"{entry.Kind}: an entry saved before the per-prompt limit existed reads its default");
+            }
         }
 
         [Test]
