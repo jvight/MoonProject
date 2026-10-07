@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe4925caa04a188498d8e8fb19b94176, type: 3}
+  m_Name: JumpAudioTuning
+  m_EditorClassIdentifier: 
+  _chargeFadeIn: 0.12
+  _chargeGlide: 0.05
+  _chargeStartVolume: 0.55
+  _chargeLeapFade: 0.06
+  _chargeCancelFade: 0.2
+  _hopThreshold: 0.35
+  _leapMinVolume: 0.5
+  _twangMinVolume: 0.35
+  _windMinAirTime: 0.25
+  _windSwellTime: 1.2
+  _windFullSpeed: 12
+  _windSlowGain: 0.35
+  _windSlowPitch: 0.9
+  _windFastPitch: 1.25
+  _windRiseTime: 0.35
+  _windFallTime: 0.2
+  _cushionMinImpact: 0.3
+  _cushionFullImpact: 4
+  _cushionSoftVolume: 0.35
+  _cushionHardVolume: 1

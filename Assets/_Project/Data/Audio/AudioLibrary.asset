@@ -577,6 +577,96 @@ MonoBehaviour:
     _volumeMax: 0.65
     _pitchMin: 1
     _pitchMax: 1
+  - _id: jump_charge
+    _clips:
+    - {fileID: 8300000, guid: 1a0bb3164128ed34ebb884bb94872fbf, type: 3}
+    _variantLabels:
+    - jump_charge
+    _bus: 2
+    _spatial: 1
+    _loop: 1
+    _volumeMin: 0.45
+    _volumeMax: 0.45
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: jump_leap
+    _clips:
+    - {fileID: 8300000, guid: 562713552065183488efa2c556dbbfe7, type: 3}
+    - {fileID: 8300000, guid: 9ad9d9d0c9e483548b0e1ad3f6dc2a2a, type: 3}
+    _variantLabels:
+    - hop
+    - leap
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.6
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: coil_twang
+    _clips:
+    - {fileID: 8300000, guid: ddbd907a20674e54c963e3eb96e997ca, type: 3}
+    - {fileID: 8300000, guid: 2c7a516c5db098345895c278a0d04da1, type: 3}
+    _variantLabels:
+    - A3
+    - D4
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.4
+    _volumeMax: 0.45
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: air_wind
+    _clips:
+    - {fileID: 8300000, guid: 7929ac1a9325603429db7398881db1b4, type: 3}
+    _variantLabels:
+    - air_wind
+    _bus: 2
+    _spatial: 1
+    _loop: 1
+    _volumeMin: 0.4
+    _volumeMax: 0.4
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: jump_land
+    _clips:
+    - {fileID: 8300000, guid: 5a66516439c153844b276fe552f67b0c, type: 3}
+    - {fileID: 8300000, guid: 91eb5268422555145a761c6bef6015c0, type: 3}
+    _variantLabels:
+    - 01
+    - 02
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.75
+    _volumeMax: 0.85
+    _pitchMin: 0.97
+    _pitchMax: 1.03
+  - _id: coil_pop
+    _clips:
+    - {fileID: 8300000, guid: fc56c0124009b654f9e944effd9fd838, type: 3}
+    _variantLabels:
+    - coil_pop
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.6
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: workbench_upgrade
+    _clips:
+    - {fileID: 8300000, guid: 51a47dc107ee8614b9edfcd336320424, type: 3}
+    _variantLabels:
+    - workbench_upgrade
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.75
+    _volumeMax: 0.75
+    _pitchMin: 1
+    _pitchMax: 1
   - _id: upgrade_arpeggio
     _clips:
     - {fileID: 8300000, guid: b62b3bb7da385dc4fbc9474cd20b68c4, type: 3}
