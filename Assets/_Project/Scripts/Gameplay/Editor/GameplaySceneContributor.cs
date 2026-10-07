@@ -11,15 +11,23 @@ namespace MoonProject.Gameplay.Editor
     /// home base built from Art's prefabs (lander, museum shelf on its ShelfAnchor, the three radio tower stages on its
     /// TowerAnchor, Kenji's workbench on its WorkshopAnchor). Art's base prefabs are meshes only, so gameplay makes
     /// them solid here: a static mesh collider on each body, on the Prop layer, so 07 drives around them and the camera
-    /// never slips inside. The base is stood beside the pad here for the editor view and re-seated on the real ground
-    /// at boot; relic sites and the scrap field are planned from the World's surface at boot. Fails loudly when a
-    /// required asset or prefab node is missing.
+    /// never slips inside. Each friend's home socket is the lander's node, or for a radio tower home (Bell's corner) a
+    /// fixed empty under the TowerAnchor at the socket every tower stage carries, so stage swaps never move it; the
+    /// cassette shelf stands the same way on the stages' CassetteShelfAnchor. The
+    /// base is stood beside the pad here for the editor view and re-seated on the real ground at boot; relic sites, the
+    /// scrap field, friends, cassettes and log caches are placed from the World's surface and anchors at boot. Fails
+    /// loudly when a required asset or prefab node is missing.
     /// </summary>
     public sealed class GameplaySceneContributor : ISceneContributor
     {
         private const int LampSockets = 4;
         private const int ShelfSlots = 6;
         private const int TowerStages = 3;
+        private const int CassetteSlots = 8;
+        private const string CassetteShelfAnchor = "CassetteShelfAnchor";
+
+        /// <summary>Metres a socket may differ between tower stages and still be the same spot.</summary>
+        private const float SocketTolerance = 0.01f;
 
         public int Order => 500;
 
@@ -41,12 +49,19 @@ namespace MoonProject.Gameplay.Editor
             var hoverJump = context.LoadAsset<UpgradeDefinition>(GameplayAssetPaths.HoverJumpUpgrade);
             var friendTuning = context.LoadAsset<FriendTuning>(GameplayAssetPaths.FriendTuning);
             var friendCatalog = context.LoadAsset<FriendCatalog>(GameplayAssetPaths.FriendCatalog);
+            var cassetteTuning = context.LoadAsset<CassetteTuning>(GameplayAssetPaths.CassetteTuning);
+            var cassetteCatalog = context.LoadAsset<CassetteCatalog>(GameplayAssetPaths.CassetteCatalog);
+            var logCacheTuning = context.LoadAsset<LogCacheTuning>(GameplayAssetPaths.LogCacheTuning);
+            var logCacheCatalog = context.LoadAsset<LogCacheCatalog>(GameplayAssetPaths.LogCacheCatalog);
+            var bellTuning = context.LoadAsset<BellTuning>(GameplayAssetPaths.BellTuning);
             Require(visuals.Validate(), nameof(GameplayVisuals));
             Require(scrapCatalog.Validate(), nameof(ScrapCatalog));
             Require(relicCatalog.Validate(), nameof(RelicCatalog));
             Require(radioTower.Validate(), nameof(UpgradeDefinition));
             Require(hoverJump.Validate(), nameof(UpgradeDefinition));
             Require(friendCatalog.Validate(), nameof(FriendCatalog));
+            Require(cassetteCatalog.Validate(), nameof(CassetteCatalog));
+            Require(logCacheCatalog.Validate(), nameof(LogCacheCatalog));
 
             Transform root = context.GameplayRoot.transform;
             GameObject host = context.CreateChild("GameplaySystem", root);
@@ -60,6 +75,9 @@ namespace MoonProject.Gameplay.Editor
             var tower = Part<RadioTower>(context, host, "RadioTower");
             var workshop = Part<Workshop>(context, host, "Workshop");
             var friends = Part<FriendField>(context, host, "Friends");
+            var cassettes = Part<CassetteField>(context, host, "Cassettes");
+            var logs = Part<LogCacheField>(context, host, "LogCaches");
+            var signals = Part<SignalField>(context, host, "BellSignals");
 
             GameObject baseRoot = context.CreateChild("Base", host.transform);
             Vector3 offset = baseTuning.LanderOffset;
@@ -82,6 +100,13 @@ namespace MoonProject.Gameplay.Editor
                 beacons[i] = Child(stages[i].transform, "BeaconSocket");
             }
 
+            Transform shelfAnchor = TowerSocket(context, CassetteShelfAnchor, towerAnchor, stages);
+            Transform cassetteShelf = context.InstantiatePrefab(GameplayAssetPaths.CassetteShelf, shelfAnchor)
+                .transform;
+            MakeSolid(cassetteShelf);
+            var tapeRack = cassetteShelf.gameObject.AddComponent<CassetteShelf>();
+            tapeRack.Wire(Children(cassetteShelf, "Slot_", CassetteSlots));
+
             Transform workshopAnchor = Child(lander, "WorkshopAnchor");
             Transform workbench = context.InstantiatePrefab(GameplayAssetPaths.Workbench, workshopAnchor).transform;
             MakeSolid(workbench);
@@ -96,16 +121,57 @@ namespace MoonProject.Gameplay.Editor
             tower.Wire(towerTuning, radioTower, towerAnchor, stages, stageLights, beacons);
             workshop.Wire(workshopTuning, new[] { hoverJump }, workshopAnchor, Glow(workbench),
                 Child(workbench, "SparkSocket"));
-            var perches = new Transform[friendCatalog.Friends.Count];
-            for (int i = 0; i < perches.Length; i++)
+            var homes = new Transform[friendCatalog.Friends.Count];
+            for (int i = 0; i < homes.Length; i++)
             {
-                perches[i] = Child(lander, friendCatalog.Friends[i].HomeSocket);
+                homes[i] = HomeSocket(context, friendCatalog.Friends[i], lander, towerAnchor, stages);
             }
 
-            friends.Wire(friendCatalog, friendTuning, perches);
+            friends.Wire(friendCatalog, friendTuning, bellTuning, homes);
+            cassettes.Wire(cassetteCatalog, cassetteTuning);
+            logs.Wire(logCacheCatalog, logCacheTuning);
             gameplay.Wire(visuals, new[] { radioTower, hoverJump }, relics, scrap, sonar, excavation, tether, home,
-                tower, workshop, friends);
+                tower, workshop, friends, cassettes, logs, signals, tapeRack);
             context.AddSystem(gameplay);
+        }
+
+        private static Transform HomeSocket(SceneBuildContext context, FriendDefinition friend, Transform lander,
+            Transform towerAnchor, GameObject[] stages)
+        {
+            switch (friend.Home)
+            {
+                case FriendHome.Lander:
+                    return Child(lander, friend.HomeSocket);
+                case FriendHome.RadioTower:
+                    return TowerSocket(context, friend.HomeSocket, towerAnchor, stages);
+                default:
+                    throw new InvalidOperationException($"Gameplay scene build: friend '{friend.Id}' has an unknown " +
+                                                        $"home {friend.Home}.");
+            }
+        }
+
+        /// <summary>
+        /// A fixed empty under the tower anchor at the socket <paramref name="name"/> that every tower stage carries
+        /// (they scale while swapping, the socket must not). Throws when the stages disagree about where it is.
+        /// </summary>
+        private static Transform TowerSocket(SceneBuildContext context, string name, Transform towerAnchor,
+            GameObject[] stages)
+        {
+            Transform first = Child(stages[0].transform, name);
+            for (int i = 1; i < stages.Length; i++)
+            {
+                Transform other = Child(stages[i].transform, name);
+                if (Vector3.Distance(first.position, other.position) > SocketTolerance)
+                {
+                    throw new InvalidOperationException($"Gameplay scene build: '{name}' stands elsewhere on " +
+                                                        $"{stages[i].name} than on {stages[0].name} (Bell contract, " +
+                                                        "docs/ARCHITECTURE.md).");
+                }
+            }
+
+            Transform socket = context.CreateChild(name, towerAnchor).transform;
+            socket.SetPositionAndRotation(first.position, first.rotation);
+            return socket;
         }
 
         /// <summary>A static collider of the prefab's own body mesh, on the Prop layer (props are solid).</summary>

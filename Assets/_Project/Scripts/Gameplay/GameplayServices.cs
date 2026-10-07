@@ -12,13 +12,14 @@ namespace MoonProject.Gameplay
     public sealed class GameplayServices
     {
         public GameplayServices(EventBus events, InputReader input, ITerrainQuery terrain, IWorldLayout layout,
-            IRoverState rover, IRoverRig rig, IViewCamera view, ISaveService save, ScrapWallet wallet,
-            GameplayVisuals visuals, GlowMeshSet meshes)
+            IWorldAnchors anchors, IRoverState rover, IRoverRig rig, IViewCamera view, ISaveService save,
+            ScrapWallet wallet, GameplayVisuals visuals, GlowMeshSet meshes)
         {
             Events = events ?? throw new ArgumentNullException(nameof(events));
             Input = input ?? throw new ArgumentNullException(nameof(input));
             Terrain = terrain ?? throw new ArgumentNullException(nameof(terrain));
             Layout = layout ?? throw new ArgumentNullException(nameof(layout));
+            Anchors = anchors ?? throw new ArgumentNullException(nameof(anchors));
             Rover = rover ?? throw new ArgumentNullException(nameof(rover));
             Rig = rig ?? throw new ArgumentNullException(nameof(rig));
             View = view ?? throw new ArgumentNullException(nameof(view));
@@ -35,6 +36,9 @@ namespace MoonProject.Gameplay
         public ITerrainQuery Terrain { get; }
 
         public IWorldLayout Layout { get; }
+
+        /// <summary>The World's named content anchors (canyon ledge, alcoves, terminus...).</summary>
+        public IWorldAnchors Anchors { get; }
 
         public IRoverState Rover { get; }
 

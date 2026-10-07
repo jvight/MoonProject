@@ -5,7 +5,8 @@ namespace MoonProject.Gameplay.Editor
 {
     /// <summary>
     /// Where the Gameplay builders write and what they read: tuning (create-if-missing), content (rewritten by the
-    /// content builder), generated materials, and the Art prefabs of the M2 content contract (docs/ARCHITECTURE.md).
+    /// content builder), generated materials, and the Art prefabs of the content contracts (docs/ARCHITECTURE.md: M2
+    /// content, friends, Bell and cassettes).
     /// </summary>
     internal static class GameplayAssetPaths
     {
@@ -20,6 +21,9 @@ namespace MoonProject.Gameplay.Editor
         public const string RadioTowerTuning = TuningFolder + "/RadioTowerTuning.asset";
         public const string WorkshopTuning = TuningFolder + "/WorkshopTuning.asset";
         public const string FriendTuning = TuningFolder + "/FriendTuning.asset";
+        public const string CassetteTuning = TuningFolder + "/CassetteTuning.asset";
+        public const string LogCacheTuning = TuningFolder + "/LogCacheTuning.asset";
+        public const string BellTuning = TuningFolder + "/BellTuning.asset";
 
         public const string ContentFolder = "Assets/_Project/Data/Content";
         public const string RelicFolder = ContentFolder + "/Relics";
@@ -30,6 +34,10 @@ namespace MoonProject.Gameplay.Editor
         public const string HoverJumpUpgrade = UpgradeFolder + "/Upgrade_rover_hover_jump.asset";
         public const string FriendFolder = ContentFolder + "/Friends";
         public const string FriendCatalog = ContentFolder + "/FriendCatalog.asset";
+        public const string CassetteFolder = ContentFolder + "/Cassettes";
+        public const string CassetteCatalog = ContentFolder + "/CassetteCatalog.asset";
+        public const string LogCacheFolder = ContentFolder + "/LogCaches";
+        public const string LogCacheCatalog = ContentFolder + "/LogCacheCatalog.asset";
 
         public const string GeneratedFolder = GeneratedAssets.Root + "/Gameplay";
         public const string MaterialFolder = GeneratedFolder + "/Materials";
@@ -45,7 +53,25 @@ namespace MoonProject.Gameplay.Editor
         public const string Lander = ArtBaseFolder + "/Lander.prefab";
         public const string MuseumShelf = ArtBaseFolder + "/MuseumShelf.prefab";
         public const string Workbench = ArtBaseFolder + "/Workbench.prefab";
+        public const string CassetteShelf = ArtBaseFolder + "/CassetteShelf.prefab";
         public const string ArtFriendFolder = ArtPaths.Root + "/Friends";
+        public const string ArtPickupFolder = ArtPaths.Root + "/Pickups";
+        public const string LogCache = ArtPaths.Root + "/Props/LogCache.prefab";
+
+        public static string CassetteDefinition(string id)
+        {
+            return CassetteFolder + "/Cassette_" + id + ".asset";
+        }
+
+        public static string CassettePrefab(string id)
+        {
+            return ArtPickupFolder + "/Cassette_" + id + ".prefab";
+        }
+
+        public static string LogCacheDefinition(string logId)
+        {
+            return LogCacheFolder + "/LogCache_" + logId + ".asset";
+        }
 
         public static string FriendDefinition(string id)
         {

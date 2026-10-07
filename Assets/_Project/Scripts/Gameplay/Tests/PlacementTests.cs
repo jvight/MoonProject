@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
+using MoonProject.Core;
 
 namespace MoonProject.Gameplay.Tests
 {
@@ -184,6 +185,43 @@ namespace MoonProject.Gameplay.Tests
             }
         }
 
+        [Test]
+        public void CanyonTrail_RunsFromThePlayableEdgeUpToTheLip_ZigzaggingOnTheCheapestScrap()
+        {
+            TestWorld world = TestWorld.Flat();
+            var tuning = Create<ScrapTuning>();
+            var lip = new Vector3(260f, 0f, 85f);
+            var anchors = new OneAnchor(new WorldAnchor(WorldAnchorIds.CanyonLip, lip, Vector3.right, 1.5f));
+            List<ScrapSpawn> trail = ScrapTrailPlanner.Plan(world, world, anchors, tuning, Variants(),
+                out string problem);
+            Assert.IsNull(problem);
+            Assert.AreEqual(tuning.CanyonTrailPieces, trail.Count);
+            Vector3 direction = lip.normalized;
+            var side = new Vector3(direction.z, 0f, -direction.x);
+            float previous = 0f;
+            for (int i = 0; i < trail.Count; i++)
+            {
+                ScrapSpawn piece = trail[i];
+                Assert.AreEqual(0, piece.Variant, "the cheapest scrap: a trail, not a jackpot");
+                Assert.AreEqual(tuning.HoverHeight, piece.Position.y, 1e-4f);
+                float along = Vector3.Dot(piece.Position, direction);
+                float across = Vector3.Dot(piece.Position, side);
+                Assert.Greater(along, previous, "in order toward the lip");
+                Assert.AreEqual(i % 2 == 0 ? tuning.CanyonTrailWobble : -tuning.CanyonTrailWobble, across, 1e-3f,
+                    "a gentle zigzag");
+                previous = along;
+            }
+
+            Rect area = world.PlayableArea;
+            Assert.IsFalse(area.Contains(new Vector2(trail[1].Position.x, trail[1].Position.z)),
+                "it starts where the way leaves the playable area");
+            Assert.AreEqual(lip.magnitude - tuning.CanyonTrailLipGap, previous, 1e-2f, "and stops short of the lip");
+
+            Assert.IsNull(ScrapTrailPlanner.Plan(world, world, new OneAnchor(default), tuning, Variants(),
+                out problem));
+            StringAssert.Contains(WorldAnchorIds.CanyonLip, problem);
+        }
+
         private ScrapVariant[] Variants()
         {
             var prefab = new GameObject("ScrapFixture");
@@ -193,6 +231,29 @@ namespace MoonProject.Gameplay.Tests
                 new ScrapVariant(prefab, 1, 3f), new ScrapVariant(prefab, 2, 2f), new ScrapVariant(prefab, 3, 1f),
                 new ScrapVariant(prefab, 2, 2f),
             };
+        }
+
+        private sealed class OneAnchor : IWorldAnchors
+        {
+            private readonly WorldAnchor _anchor;
+
+            public OneAnchor(WorldAnchor anchor)
+            {
+                _anchor = anchor;
+            }
+
+            public int Count => 1;
+
+            public WorldAnchor Get(int index)
+            {
+                return _anchor;
+            }
+
+            public bool TryGet(string id, out WorldAnchor anchor)
+            {
+                anchor = _anchor;
+                return id == _anchor.Id;
+            }
         }
 
         private T Create<T>() where T : ScriptableObject

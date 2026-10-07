@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using MoonProject.Core;
 
@@ -5,12 +6,31 @@ namespace MoonProject.Gameplay.PlayModeTests
 {
     /// <summary>
     /// Stands in for the World: a flat drivable disc at height 0 with a matching Ground collider, a visible floor for
-    /// captures, a soft key light and The Peak beyond the rim. Registers ITerrainQuery and IWorldLayout.
+    /// captures, a soft key light, The Peak beyond the rim, and the canyon's anchors laid out flat to the west, its
+    /// lip beyond the playable area as in the real basin (no chasm: the tests drive straight to them). Registers
+    /// ITerrainQuery, IWorldLayout and IWorldAnchors.
     /// </summary>
-    public sealed class FlatWorldSystem : MonoBehaviour, IGameSystem, ITerrainQuery, IWorldLayout
+    public sealed class FlatWorldSystem : MonoBehaviour, IGameSystem, ITerrainQuery, IWorldLayout, IWorldAnchors
     {
         public const float DrivableRadius = 300f;
         private const float FloorThickness = 1f;
+        private const float AnchorRadius = 8f;
+
+        private static readonly Vector3 West = new Vector3(-1f, 0f, 0f);
+        private static readonly Vector3 South = new Vector3(0f, 0f, -1f);
+
+        private readonly WorldAnchor[] _anchors =
+        {
+            new WorldAnchor(WorldAnchorIds.CanyonMouth, new Vector3(-250f, 0f, 40f), West, AnchorRadius),
+            new WorldAnchor(WorldAnchorIds.CanyonLip, new Vector3(-260f, 0f, 40f), West, AnchorRadius),
+            new WorldAnchor(WorldAnchorIds.CanyonLanding, new Vector3(-280f, 0f, 40f), West, AnchorRadius),
+            new WorldAnchor(WorldAnchorIds.CanyonLedge, new Vector3(-275f, 0f, 75f), West, AnchorRadius),
+            new WorldAnchor(WorldAnchorIds.CanyonAlcovePrefix + 0, new Vector3(-288f, 0f, 20f), West, AnchorRadius),
+            new WorldAnchor(WorldAnchorIds.CanyonAlcovePrefix + 1, new Vector3(-292f, 0f, 0f), West, AnchorRadius),
+            new WorldAnchor(WorldAnchorIds.CanyonAlcovePrefix + 2, new Vector3(-290f, 0f, -20f), West, AnchorRadius),
+            new WorldAnchor(WorldAnchorIds.CanyonTerminus, new Vector3(-285f, 0f, -45f), South, AnchorRadius),
+            new WorldAnchor(WorldAnchorIds.CanyonExit, new Vector3(-262f, 0f, 70f), Vector3.right, AnchorRadius),
+        };
 
         public Rect PlayableArea
         {
@@ -26,6 +46,8 @@ namespace MoonProject.Gameplay.PlayModeTests
         public Vector3 PeakPosition => new Vector3(0f, 150f, 440f);
 
         public Vector3 EarthDirection => new Vector3(0f, 0.5f, 0.866f);
+
+        public int Count => _anchors.Length;
 
         public static FlatWorldSystem Create()
         {
@@ -51,6 +73,38 @@ namespace MoonProject.Gameplay.PlayModeTests
         {
             context.Register<ITerrainQuery>(this);
             context.Register<IWorldLayout>(this);
+            context.Register<IWorldAnchors>(this);
+        }
+
+        public WorldAnchor Get(int index)
+        {
+            return _anchors[index];
+        }
+
+        public bool TryGet(string id, out WorldAnchor anchor)
+        {
+            foreach (WorldAnchor candidate in _anchors)
+            {
+                if (string.Equals(candidate.Id, id, StringComparison.Ordinal))
+                {
+                    anchor = candidate;
+                    return true;
+                }
+            }
+
+            anchor = default;
+            return false;
+        }
+
+        /// <summary>The anchor <paramref name="id"/> (tests drive to it); throws when there is none.</summary>
+        public WorldAnchor Anchor(string id)
+        {
+            if (!TryGet(id, out WorldAnchor anchor))
+            {
+                throw new ArgumentException($"The flat world has no anchor '{id}'.", nameof(id));
+            }
+
+            return anchor;
         }
 
         public bool IsDrivable(float x, float z)

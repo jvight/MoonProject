@@ -37,6 +37,7 @@ namespace MoonProject.Gameplay
         private readonly FriendTuning _tuning;
         private readonly ITerrainQuery _terrain;
         private readonly ISpotTargets _spots;
+        private readonly RoverHomeWatch _homeWatch = new RoverHomeWatch();
         private DeterministicRandom _random;
         private Mode _mode;
         private float _modeStart;
@@ -49,8 +50,6 @@ namespace MoonProject.Gameplay
         private float _hoverStart;
         private float _cooldownUntil;
         private float _nextScan;
-        private bool _roverHome;
-        private bool _wasAway;
         private Fade _fade;
         private float _visibility = 1f;
 
@@ -82,22 +81,20 @@ namespace MoonProject.Gameplay
         public Mode Current => _mode;
 
         /// <summary>True while 07 is at home (friends live at the base).</summary>
-        public bool RoverHome => _roverHome;
+        public bool RoverHome => _homeWatch.Home;
 
         /// <summary>Just repaired: follows 07 (or settles at home if 07 is there).</summary>
         public void Wake(FriendSenses senses)
         {
             float distance = SurfaceRules.HorizontalDistance(senses.Rover, senses.Home);
-            _roverHome = distance < _tuning.HomeRadius;
-            _wasAway = !_roverHome;
-            Begin(_roverHome ? Mode.Perched : Mode.Following, senses.Now);
+            _homeWatch.Reset(distance < _tuning.HomeRadius);
+            Begin(_homeWatch.Home ? Mode.Perched : Mode.Following, senses.Now);
         }
 
         /// <summary>Loaded from a save: it is on its perch and 07 has just woken at home.</summary>
         public void Settle(FriendSenses senses)
         {
-            _roverHome = true;
-            _wasAway = false;
+            _homeWatch.Reset(true);
             Begin(Mode.Perched, senses.Now);
         }
 
@@ -140,34 +137,21 @@ namespace MoonProject.Gameplay
 
         private void TrackHome(FriendSenses senses, ref FriendIntent intent)
         {
-            float distance = SurfaceRules.HorizontalDistance(senses.Rover, senses.Home);
-            if (distance > _tuning.AwayRadius)
+            switch (_homeWatch.Step(senses.Rover, senses.Home, _tuning))
             {
-                _wasAway = true;
-            }
-
-            bool home = _roverHome ? distance < _tuning.LeaveRadius : distance < _tuning.HomeRadius;
-            if (home && !_roverHome)
-            {
-                if (_wasAway)
-                {
-                    _wasAway = false;
+                case RoverHomeWatch.Change.CameHome:
                     Vector3 from = senses.Position - senses.Rover;
                     _greetAngle = Mathf.Atan2(from.z, from.x);
                     Begin(Mode.Greeting, senses.Now);
                     intent.Greeted = true;
-                }
-                else
-                {
+                    break;
+                case RoverHomeWatch.Change.Returned:
                     Begin(Mode.Perched, senses.Now);
-                }
+                    break;
+                case RoverHomeWatch.Change.Left:
+                    Begin(Mode.Following, senses.Now);
+                    break;
             }
-            else if (!home && _roverHome)
-            {
-                Begin(Mode.Following, senses.Now);
-            }
-
-            _roverHome = home;
         }
 
         private void Greet(FriendSenses senses, ref FriendIntent intent)
@@ -179,7 +163,7 @@ namespace MoonProject.Gameplay
             intent.Look = senses.Rover;
             if (t >= 1f)
             {
-                Begin(_roverHome ? Mode.Perched : Mode.Following, senses.Now);
+                Begin(_homeWatch.Home ? Mode.Perched : Mode.Following, senses.Now);
             }
         }
 
