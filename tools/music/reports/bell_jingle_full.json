@@ -1,0 +1,102 @@
+{
+  "id": "bell_jingle_full",
+  "notes": "Call D5 E5 A5 and answer B5 A5 F#5 D5: Bell's homecoming greeting and the dial stingers.",
+  "sha256": "63d5f14c1924a1ff8ea376cd8384f71192f64beccc6134d7604e2e9f014433fb",
+  "measured": {
+    "duration_s": 2.95,
+    "sample_rate": 44100,
+    "channels": 1,
+    "loudness_momentary_lufs": -17.9924,
+    "loudness_lufs": -19.9163,
+    "true_peak_dbtp": -13.3718,
+    "edge_max": 0.0,
+    "above_8k_db": -59.4323,
+    "chroma_out_of_pentatonic": 0.0169
+  },
+  "melody": [
+    {
+      "note": "D5",
+      "onset_s": 0.0,
+      "detected": "D5",
+      "cents": 1.7023
+    },
+    {
+      "note": "E5",
+      "onset_s": 0.18,
+      "detected": "E5",
+      "cents": 8.2602
+    },
+    {
+      "note": "A5",
+      "onset_s": 0.36,
+      "detected": "A5",
+      "cents": 0.7412
+    },
+    {
+      "note": "B5",
+      "onset_s": 0.9,
+      "detected": "B5",
+      "cents": 2.4775
+    },
+    {
+      "note": "A5",
+      "onset_s": 1.08,
+      "detected": "A5",
+      "cents": 7.2143
+    },
+    {
+      "note": "F#5",
+      "onset_s": 1.26,
+      "detected": "F#5",
+      "cents": 2.5228
+    },
+    {
+      "note": "D5",
+      "onset_s": 1.44,
+      "detected": "D5",
+      "cents": -8.2128
+    }
+  ],
+  "gates": {
+    "duration_s": {
+      "value": 2.95,
+      "pass": true
+    },
+    "sample_rate": {
+      "value": 44100,
+      "pass": true
+    },
+    "channels": {
+      "value": 1,
+      "pass": true
+    },
+    "true_peak_dbtp": {
+      "value": -13.3718,
+      "pass": true
+    },
+    "loudness_momentary_lufs": {
+      "value": -17.9924,
+      "pass": true
+    },
+    "edge_max": {
+      "value": 0.0,
+      "pass": true
+    },
+    "above_8k_db": {
+      "value": -59.4323,
+      "pass": true
+    },
+    "chroma_out_of_pentatonic": {
+      "value": 0.0169,
+      "pass": true
+    },
+    "notes_heard": {
+      "value": "D5 E5 A5 B5 A5 F#5 D5",
+      "pass": true
+    },
+    "notes_pentatonic": {
+      "value": true,
+      "pass": true
+    }
+  }
+}

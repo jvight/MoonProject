@@ -10,7 +10,9 @@ namespace MoonProject.Editor.Import
     /// <item>Audio/SFX: decompress on load, preloaded, Vorbis 0.8; forced mono (3D one-shots) unless the path
     /// contains <c>/2D/</c> (UI and other non-spatial sounds keep their channels). Short loops (file name ending in
     /// <c>_loop</c>) are PCM instead: Vorbis frame padding would break their sample-exact loop seam.</item>
-    /// <item>Audio/Music: streamed from disk in the background, Vorbis 0.7, not preloaded.</item>
+    /// <item>Audio/Music: streamed from disk in the background, Vorbis 0.7, not preloaded. Except Audio/Music/Jingles:
+    /// short stingers played at a friend, so they load like 3D SFX (decompress on load, preloaded, mono) and start
+    /// without streaming latency.</item>
     /// <item>Audio/Ambience: compressed in memory, preloaded, Vorbis 0.6 (long loops).</item>
     /// <item>Generated/** textures: point filter, no mipmaps, uncompressed, sRGB unless the file name ends in
     /// <c>_Linear</c> (data textures such as noise or masks).</item>
@@ -20,6 +22,7 @@ namespace MoonProject.Editor.Import
     {
         public const string SfxFolder = "Assets/_Project/Audio/SFX/";
         public const string MusicFolder = "Assets/_Project/Audio/Music/";
+        public const string JingleFolder = "Assets/_Project/Audio/Music/Jingles/";
         public const string AmbienceFolder = "Assets/_Project/Audio/Ambience/";
         public const string GeneratedFolder = "Assets/_Project/Generated/";
         public const string NonSpatialMarker = "/2D/";
@@ -39,6 +42,13 @@ namespace MoonProject.Editor.Import
                 bool loop = Path.GetFileNameWithoutExtension(path).EndsWith(LoopSuffix, StringComparison.Ordinal);
                 rule = new AudioImportRule(AudioClipLoadType.DecompressOnLoad,
                     loop ? AudioCompressionFormat.PCM : AudioCompressionFormat.Vorbis, SfxQuality, true, spatial, false);
+                return true;
+            }
+
+            if (path.StartsWith(JingleFolder, StringComparison.Ordinal))
+            {
+                rule = new AudioImportRule(AudioClipLoadType.DecompressOnLoad, AudioCompressionFormat.Vorbis,
+                    SfxQuality, true, true, false);
                 return true;
             }
 

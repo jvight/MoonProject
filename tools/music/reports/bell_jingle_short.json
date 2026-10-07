@@ -1,0 +1,78 @@
+{
+  "id": "bell_jingle_short",
+  "notes": "The call D5 E5 A5: Bell stands up after her repair.",
+  "sha256": "3ca39ec22ca954b91228f2391fde78a7b41fe5d9354dc8c32cec9241b3b23e72",
+  "measured": {
+    "duration_s": 1.9,
+    "sample_rate": 44100,
+    "channels": 1,
+    "loudness_momentary_lufs": -17.9934,
+    "loudness_lufs": -21.2841,
+    "true_peak_dbtp": -12.973,
+    "edge_max": 0.0,
+    "above_8k_db": -58.9443,
+    "chroma_out_of_pentatonic": 0.0154
+  },
+  "melody": [
+    {
+      "note": "D5",
+      "onset_s": 0.0,
+      "detected": "D5",
+      "cents": 1.8187
+    },
+    {
+      "note": "E5",
+      "onset_s": 0.18,
+      "detected": "E5",
+      "cents": 5.7316
+    },
+    {
+      "note": "A5",
+      "onset_s": 0.36,
+      "detected": "A5",
+      "cents": 5.2387
+    }
+  ],
+  "gates": {
+    "duration_s": {
+      "value": 1.9,
+      "pass": true
+    },
+    "sample_rate": {
+      "value": 44100,
+      "pass": true
+    },
+    "channels": {
+      "value": 1,
+      "pass": true
+    },
+    "true_peak_dbtp": {
+      "value": -12.973,
+      "pass": true
+    },
+    "loudness_momentary_lufs": {
+      "value": -17.9934,
+      "pass": true
+    },
+    "edge_max": {
+      "value": 0.0,
+      "pass": true
+    },
+    "above_8k_db": {
+      "value": -58.9443,
+      "pass": true
+    },
+    "chroma_out_of_pentatonic": {
+      "value": 0.0154,
+      "pass": true
+    },
+    "notes_heard": {
+      "value": "D5 E5 A5",
+      "pass": true
+    },
+    "notes_pentatonic": {
+      "value": true,
+      "pass": true
+    }
+  }
+}

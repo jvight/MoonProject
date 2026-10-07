@@ -1,0 +1,225 @@
+{
+  "id": "dust_and_honey",
+  "title": "Dust & Honey",
+  "bpm": 72.0,
+  "swing": 0.62,
+  "key": "D major",
+  "family": "I-IV/I",
+  "drums": "jam",
+  "ending": "loop",
+  "form": [
+    "Count-in x4",
+    "A x8",
+    "B x8",
+    "Airlock x4",
+    "A' x8",
+    "B' x8",
+    "Outro x4"
+  ],
+  "pcm_sha256": "9a03adaa6c05fec68b9a1a6d45094ca68a0d666f5d4c2a491a63670acc965201",
+  "measured": {
+    "duration_s": 146.6667,
+    "loudness_lufs": -16.0211,
+    "true_peak_dbtp": -1.3426,
+    "sample_peak_db": -1.3481,
+    "rms_db": -17.4928,
+    "crest_db": 16.1448,
+    "centroid_hz": 1292.7464,
+    "above_8k_db": -43.7515,
+    "bands": {
+      "low": 0.6912,
+      "mid": 0.3063,
+      "high": 0.0024
+    },
+    "correlation": 0.956,
+    "correlation_below_150hz": 0.9967,
+    "clipped_samples": 0,
+    "silent_gaps": [],
+    "dc": 0.0,
+    "chroma_out_of_key": 0.0432,
+    "beat_clarity": 2.0109
+  },
+  "theory": {
+    "chord_chart": {
+      "Count-in": [
+        "| Dmaj7 | Gmaj9/D | D6/9 | Gmaj9/D |"
+      ],
+      "A": [
+        "| Dmaj9 | G6/9/D | Dmaj9 | Gmaj7/D |",
+        "| Dmaj9 | Gmaj9/D | F#m7 | Bm9 |"
+      ],
+      "B": [
+        "| Em9 | F#m7 | Gmaj7 | A13 |",
+        "| Em11 | F#m7 | Gmaj9 | A13 A13 |"
+      ],
+      "Airlock": [
+        "| Dmaj9 | G6/9/D | D6/9 | Gmaj9/D |"
+      ],
+      "A'": [
+        "| D6/9 | Gmaj9#11/D | Dmaj9 | Em9 A13sus4 |",
+        "| Dmaj9 | Gmaj7/D | F#m7 | Bm9 |"
+      ],
+      "B'": [
+        "| Em7 | F#m7 | Gmaj9 | A13sus4 |",
+        "| Em11 | F#m7 | Gmaj9 | A13 A13sus4 |"
+      ],
+      "Outro": [
+        "| Dmaj7 | Gmaj9/D | Em9 | A13sus4 |"
+      ]
+    },
+    "out_of_key_notes": 0,
+    "borrowed_chords": [],
+    "lead_notes": 71,
+    "lead_non_pentatonic": 0,
+    "lead_strong_off_chord": 0,
+    "lead_clashes": 0,
+    "parts": {
+      "keys": 364,
+      "pad": 39,
+      "bass": 180,
+      "lead.rhodes": 71
+    },
+    "drum_hits": 361
+  },
+  "gates": {
+    "loudness_lufs": {
+      "value": -16.0211,
+      "pass": true
+    },
+    "true_peak_dbtp": {
+      "value": -1.3426,
+      "pass": true
+    },
+    "duration_s": {
+      "value": 146.6667,
+      "pass": true
+    },
+    "clipped_samples": {
+      "value": 0,
+      "pass": true
+    },
+    "silent_gaps": {
+      "value": 0,
+      "pass": true
+    },
+    "correlation_below_150hz": {
+      "value": 0.9967,
+      "pass": true
+    },
+    "correlation": {
+      "value": 0.956,
+      "pass": true
+    },
+    "high_band_share": {
+      "value": 0.0024,
+      "pass": true
+    },
+    "above_8k_db": {
+      "value": -43.7515,
+      "pass": true
+    },
+    "chroma_out_of_key": {
+      "value": 0.0432,
+      "pass": true
+    },
+    "beat_clarity": {
+      "value": 2.0109,
+      "pass": true
+    },
+    "tempo_error": {
+      "value": 0.0,
+      "pass": true
+    },
+    "out_of_key_notes": {
+      "value": 0,
+      "pass": true
+    },
+    "lead_non_pentatonic": {
+      "value": 0,
+      "pass": true
+    },
+    "lead_strong_off_chord": {
+      "value": 0,
+      "pass": true
+    },
+    "lead_clashes": {
+      "value": 0,
+      "pass": true
+    },
+    "seam_ratio": {
+      "value": 0.0469,
+      "pass": true
+    },
+    "seam_loudness_step_lu": {
+      "value": 0.752,
+      "pass": true
+    }
+  },
+  "tape": "dust_and_honey",
+  "notes": "A loose jam recorded with one mic taped to the airlock: honeyed Rhodes melody (auto-panned) over Rhodes comping that vamps between D and G-over-D, a walking bass, brushes stirring on every beat with lazy brush slaps and a drummer who sits well behind the beat. The mix is narrow and boxy (close metal reflections, a low-mid bloom, room tone with a faint hum on D and A under the tape hiss). In the Airlock break the band thins out and someone (Kenji) bumps the hatch: one soft, muffled thump on the and of 2.",
+  "instruments": {
+    "keys": "rhodes (comp, arp)",
+    "leads": [
+      "rhodes"
+    ],
+    "drums": "jam (+ swish)",
+    "bass": [
+      "walk",
+      "hold"
+    ],
+    "texture": "airlock",
+    "events": [
+      "thump"
+    ]
+  },
+  "listening": {
+    "tempo_detected_bpm": 72.0,
+    "tempo_detected_clarity": 2.0109,
+    "scale": {
+      "scale": "D major",
+      "share": 0.9568,
+      "runner_up": "A major",
+      "runner_up_share": 0.918
+    },
+    "loudness": {
+      "range_lu": 1.8287,
+      "min_lufs": -17.8564,
+      "max_lufs": -14.767,
+      "every_10s_lufs": [
+        -16.8758,
+        -16.6919,
+        -15.8505,
+        -17.3596,
+        -14.9584,
+        -15.756,
+        -15.5264,
+        -16.0388,
+        -16.262,
+        -15.4536,
+        -15.1293,
+        -15.4402,
+        -15.8568,
+        -15.3803,
+        -16.1126
+      ]
+    },
+    "octaves_db": {
+      "31.5": -24.76,
+      "63": 0.0,
+      "125": -2.9187,
+      "250": -2.3235,
+      "500": -4.4508,
+      "1000": -10.5919,
+      "2000": -16.6542,
+      "4000": -18.8149,
+      "8000": -29.4995,
+      "16000": -50.9448
+    },
+    "width_db": -12.806,
+    "seam": {
+      "ratio": 0.0469,
+      "jump_db": 20.3245,
+      "loudness_step_lu": 0.752
+    }
+  }
+}

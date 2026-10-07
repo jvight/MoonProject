@@ -56,6 +56,18 @@ namespace MoonProject.Editor.Tests
         }
 
         [Test]
+        public void Jingles_LoadLikeSpatialSfx()
+        {
+            Assert.IsTrue(ImportRuleSet.TryGetAudioRule("Assets/_Project/Audio/Music/Jingles/bell_jingle_short.wav",
+                out var rule));
+
+            Assert.AreEqual(AudioClipLoadType.DecompressOnLoad, rule.LoadType, "a stinger must start on cue");
+            Assert.IsTrue(rule.Preload);
+            Assert.IsTrue(rule.ForceMono, "played in 3D at the friend");
+            Assert.IsFalse(rule.LoadInBackground);
+        }
+
+        [Test]
         public void Ambience_IsCompressedInMemory()
         {
             Assert.IsTrue(ImportRuleSet.TryGetAudioRule("Assets/_Project/Audio/Ambience/hush.wav", out var rule));

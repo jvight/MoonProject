@@ -127,6 +127,10 @@
       "value": 2.3113,
       "pass": true
     },
+    "tempo_error": {
+      "value": 0.0,
+      "pass": true
+    },
     "out_of_key_notes": {
       "value": 0,
       "pass": true
@@ -143,5 +147,62 @@
       "value": 0,
       "pass": true
     }
+  },
+  "instruments": {
+    "keys": "rhodes (comp, arp)",
+    "leads": [
+      "kalimba",
+      "flute"
+    ],
+    "drums": "boombap",
+    "bass": [
+      "groove",
+      "hold"
+    ],
+    "texture": "vinyl",
+    "events": []
+  },
+  "listening": {
+    "tempo_detected_bpm": 82.0,
+    "tempo_detected_clarity": 2.2213,
+    "scale": {
+      "scale": "D major",
+      "share": 0.9352,
+      "runner_up": "G major",
+      "runner_up_share": 0.8946
+    },
+    "loudness": {
+      "range_lu": 1.7973,
+      "min_lufs": -21.0261,
+      "max_lufs": -14.7575,
+      "every_10s_lufs": [
+        -21.0261,
+        -17.4282,
+        -16.0419,
+        -15.3719,
+        -15.7638,
+        -15.9751,
+        -15.1483,
+        -15.6527,
+        -16.4206,
+        -16.5876,
+        -15.1325,
+        -16.048,
+        -15.7061
+      ]
+    },
+    "octaves_db": {
+      "31.5": -20.731,
+      "63": 0.0,
+      "125": -2.0087,
+      "250": -4.0572,
+      "500": -4.2883,
+      "1000": -7.4022,
+      "2000": -18.6265,
+      "4000": -21.9543,
+      "8000": -25.946,
+      "16000": -40.4328
+    },
+    "width_db": -9.8148
   }
 }
