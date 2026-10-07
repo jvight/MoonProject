@@ -303,7 +303,8 @@ namespace MoonProject.Gameplay.PlayModeTests
                     new FriendPart("rotor", Template("Part_TillyRotor", Vector3.one * 0.3f)),
                     new FriendPart("lens", Template("Part_TillyLens", Vector3.one * 0.3f)),
                     new FriendPart("cell", Template("Part_TillyCell", Vector3.one * 0.3f)),
-                }, "FriendSocket_tilly", FriendDefinition.SpotterAbility, 2f, "tilly",
+                }, Array.Empty<string>(), FriendHome.Lander, "FriendSocket_tilly", false,
+                FriendDefinition.SpotterAbility, 2f, "tilly",
                 new FriendPlacement(41, new Vector2(60f, 110f), 90f, 55f, new Vector2(0f, 4f), 10f, true,
                     new Vector2(30f, 60f)));
             var catalog = Asset<FriendCatalog>();

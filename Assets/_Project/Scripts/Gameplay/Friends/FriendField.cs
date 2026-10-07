@@ -12,13 +12,15 @@ namespace MoonProject.Gameplay
     /// <summary>
     /// The outpost's lost machines (docs/features/M3-02-friends-tilly.md). Each friend lies broken at a planned site
     /// with its missing parts scattered around, glinting amber. Driving through a part draws it in like scrap (softer)
-    /// and lights a lamp on the friend (<see cref="FriendPartCollected"/>). With every part gathered, holding Interact
-    /// near it starts a calm repair that always plays out: 07 holds still while its beam stitches the friend, which
-    /// shivers, flickers awake, spins up its rotors, wobbles into the air and looks at 07
+    /// and lights a lamp on the friend (<see cref="FriendPartCollected"/>); an item its repair also needs (Bell's
+    /// cassette) lights the next lamp as soon as 07 holds it (<see cref="IHeldItems"/>). With everything gathered,
+    /// holding Interact near it starts a calm repair that always plays out: 07 holds still while its beam stitches the
+    /// friend, which shivers, flickers awake, spins up its rotors, wobbles into the air and looks at 07
     /// (<see cref="FriendRepairStarted"/>, then <see cref="FriendRepaired"/>, then a save). Awake friends live at the
-    /// base, come along on trips, greet 07 coming home and use their gift (the spotter). Also the spotter's view of the
-    /// world (<see cref="ISpotTargets"/>), Core's <see cref="IFriendRoster"/> (live state for audio, UI and rover) and
-    /// the UI's <see cref="IFriendStatuses"/> (parts and repair readiness).
+    /// base, come along on trips, greet 07 coming home (the first homecoming of a friend that announces it also puts a
+    /// <see cref="TickerLine"/> on the radio) and use their gift (the spotter). Also the spotter's view of the world
+    /// (<see cref="ISpotTargets"/>), Core's <see cref="IFriendRoster"/> (live state for audio, UI and rover) and the
+    /// UI's <see cref="IFriendStatuses"/> (parts, items and repair readiness).
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class FriendField : MonoBehaviour, ISpotTargets, IFriendRoster, IFriendStatuses
@@ -66,7 +68,7 @@ namespace MoonProject.Gameplay
         [Tooltip("Friend tuning (Assets/_Project/Data/Tuning/Gameplay/FriendTuning.asset).")]
         [SerializeField] private FriendTuning _tuning;
 
-        [Tooltip("Each friend's home socket on the lander (FriendSocket_<id>), in catalog order.")]
+        [Tooltip("Each friend's home socket at the base (FriendSocket_<id>, BellCorner), in catalog order.")]
         [SerializeField] private Transform[] _perches = Array.Empty<Transform>();
 
         private readonly List<Friend> _friends = new List<Friend>();
@@ -77,6 +79,7 @@ namespace MoonProject.Gameplay
         private IViewCamera _view;
         private ITerrainQuery _terrain;
         private ISaveService _save;
+        private IHeldItems _items;
         private RelicField _relics;
         private ScrapField _scrap;
         private HomeBase _home;
@@ -142,11 +145,12 @@ namespace MoonProject.Gameplay
         {
             Friend friend = _friends[index];
             FriendProgress progress = friend.Progress;
-            return new FriendStatus(progress.State, progress.Collected, progress.PartCount, progress.Discovered,
-                progress.CanRepair, friend.Position);
+            return new FriendStatus(progress.State, progress.Collected, progress.PartCount, progress.ItemsCollected,
+                progress.ItemCount, progress.Discovered, progress.CanRepair, friend.Position);
         }
 
-        internal bool Initialize(GameplayServices services, RelicField relics, ScrapField scrap, HomeBase home)
+        internal bool Initialize(GameplayServices services, IHeldItems items, RelicField relics, ScrapField scrap,
+            HomeBase home)
         {
             string problem = _catalog == null ? "FriendCatalog is not assigned."
                 : _tuning == null ? "FriendTuning is not assigned."
@@ -165,6 +169,7 @@ namespace MoonProject.Gameplay
             _view = services.View;
             _terrain = services.Terrain;
             _save = services.Save;
+            _items = items ?? throw new ArgumentNullException(nameof(items));
             _relics = relics ?? throw new ArgumentNullException(nameof(relics));
             _scrap = scrap != null ? scrap : throw new ArgumentNullException(nameof(scrap));
             _home = home != null ? home : throw new ArgumentNullException(nameof(home));
@@ -370,7 +375,7 @@ namespace MoonProject.Gameplay
                 root);
             GameObject repaired = Instantiate(definition.RepairedPrefab, site.Position, Quaternion.Euler(0f, yaw, 0f),
                 root);
-            int lamps = definition.Parts.Count;
+            int lamps = definition.Parts.Count + definition.Items.Count;
             var brokenRig = new FriendRig(broken, lamps);
             var repairedRig = new FriendRig(repaired, lamps) { Visible = false };
 
@@ -489,6 +494,7 @@ namespace MoonProject.Gameplay
                                    Mathf.Lerp(1f, _tuning.PartArrivalScale, Ease.InOutSine(progress));
             }
 
+            CollectHeldItems(friend);
             StepLamps(friend.Broken, friend, deltaTime);
             friend.Activity = FriendActivity.Dormant;
             friend.RotorSpeed = 0f;
@@ -511,12 +517,29 @@ namespace MoonProject.Gameplay
             }
         }
 
+        /// <summary>A required item counts as soon as 07 holds it, wherever it was found.</summary>
+        private void CollectHeldItems(Friend friend)
+        {
+            IReadOnlyList<string> items = friend.Definition.Items;
+            for (int item = 0; item < items.Count; item++)
+            {
+                if (!friend.Progress.IsItemCollected(item) && _items.Holds(items[item]))
+                {
+                    friend.Progress.CollectItem(item);
+                }
+            }
+        }
+
+        /// <summary>Part lamps fill in order as parts arrive; each item's lamp follows its own item.</summary>
         private void StepLamps(FriendRig rig, Friend friend, float deltaTime)
         {
-            int lit = friend.Progress.Collected;
-            for (int lamp = 0; lamp < friend.Progress.PartCount; lamp++)
+            FriendProgress progress = friend.Progress;
+            int lit = progress.Collected;
+            int lamps = progress.PartCount + progress.ItemCount;
+            for (int lamp = 0; lamp < lamps; lamp++)
             {
-                float target = lamp < lit ? _tuning.PartLampGlow : 0f;
+                bool on = lamp < progress.PartCount ? lamp < lit : progress.IsItemCollected(lamp - progress.PartCount);
+                float target = on ? _tuning.PartLampGlow : 0f;
                 friend.LampLevels[lamp] = Damp.Toward(friend.LampLevels[lamp], target, _tuning.PartLampEase,
                     deltaTime);
                 rig.SetLamp(lamp, friend.LampLevels[lamp]);
@@ -655,6 +678,15 @@ namespace MoonProject.Gameplay
             if (intent.Greeted)
             {
                 _events.Publish(new FriendGreeted(friend.Definition.Id));
+                if (friend.Progress.Welcome())
+                {
+                    if (friend.Definition.AnnouncesHomecoming)
+                    {
+                        _events.Publish(new TickerLine(friend.HomecomingLine));
+                    }
+
+                    _save.SaveNow();
+                }
             }
 
             if (intent.Spotted)

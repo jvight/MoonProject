@@ -121,7 +121,7 @@ namespace MoonProject.Gameplay
                 !_excavation.Initialize(services, _relics) || !_tether.Initialize(services, _relics) ||
                 !_home.Initialize(services, _relics, _tether, Upgrades) || !_tower.Initialize(services, Upgrades) ||
                 !_workshop.Initialize(services, Upgrades) ||
-                !_friends.Initialize(services, _relics, _scrap, _home) ||
+                !_friends.Initialize(services, Radio, _relics, _scrap, _home) ||
                 !_cassettes.Initialize(services, Radio, _scrap.Tuning, KeepClearOfCassettes()) ||
                 !_logs.Initialize(services, _scrap.Tuning) || !_sonar.Initialize(services, _relics, _friends))
             {
@@ -165,7 +165,8 @@ namespace MoonProject.Gameplay
             _saveTokens.Add(save.Register(new SaveSection<UpgradesSaveData>(GameplaySaveKeys.Upgrades,
                 GameplaySaveKeys.UpgradesVersion, Upgrades.Capture, RestoreUpgrades)));
             _saveTokens.Add(save.Register(new SaveSection<FriendsSaveData>(GameplaySaveKeys.Friends,
-                GameplaySaveKeys.FriendsVersion, _friends.Capture, _friends.Restore)));
+                GameplaySaveKeys.FriendsVersion, _friends.Capture, _friends.Restore,
+                FriendsSaveMigrations.Migrate)));
             _saveTokens.Add(save.Register(new SaveSection<RadioSaveData>(GameplaySaveKeys.Radio,
                 GameplaySaveKeys.RadioVersion, Radio.Capture, RestoreRadio)));
             _saveTokens.Add(save.Register(new SaveSection<LogsSaveData>(GameplaySaveKeys.Logs,

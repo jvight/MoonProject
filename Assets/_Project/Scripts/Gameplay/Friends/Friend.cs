@@ -16,7 +16,8 @@ namespace MoonProject.Gameplay
             Definition = definition;
             Index = index;
             Site = site;
-            Progress = new FriendProgress(definition.Id, definition.Parts.Count);
+            Progress = new FriendProgress(definition.Id, definition.Parts.Count, definition.Items.Count);
+            HomecomingLine = "ticker." + definition.Id + ".home";
             Broken = broken;
             Repaired = repaired;
             Parts = parts;
@@ -55,6 +56,9 @@ namespace MoonProject.Gameplay
         public FriendSite Site { get; }
 
         public FriendProgress Progress { get; }
+
+        /// <summary>Its first-homecoming ticker key (when its definition announces one).</summary>
+        internal string HomecomingLine { get; }
 
         /// <summary>Where it is now: its site while broken, its flight once awake.</summary>
         public Vector3 Position => Swapped ? Repaired.Root.position : Site.Position;
@@ -101,6 +105,7 @@ namespace MoonProject.Gameplay
 
         internal float ConeLevel { get; set; }
 
-        internal float[] LampLevels { get; } = new float[FriendProgress.MaxParts];
+        /// <summary>Part lamps first, then one lamp per required item.</summary>
+        internal float[] LampLevels { get; } = new float[FriendProgress.MaxParts + FriendProgress.MaxItems];
     }
 }

@@ -105,7 +105,8 @@ namespace MoonProject.Gameplay.Editor
                     new FriendPart("rotor", LoadArt(GameplayAssetPaths.FriendPrefab("Part_TillyRotor"))),
                     new FriendPart("lens", LoadArt(GameplayAssetPaths.FriendPrefab("Part_TillyLens"))),
                     new FriendPart("cell", LoadArt(GameplayAssetPaths.FriendPrefab("Part_TillyCell"))),
-                }, "FriendSocket_tilly", FriendDefinition.SpotterAbility, 3.5f, "tilly",
+                }, Array.Empty<string>(), FriendHome.Lander, "FriendSocket_tilly", false,
+                FriendDefinition.SpotterAbility, 3.5f, "tilly",
                 new FriendPlacement(41, new Vector2(60f, 110f), 90f, 55f, new Vector2(0.3f, 2.5f), 10f, true,
                     new Vector2(30f, 60f)));
             var friends = new[]

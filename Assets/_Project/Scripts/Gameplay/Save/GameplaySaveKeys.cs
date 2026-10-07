@@ -19,7 +19,7 @@ namespace MoonProject.Gameplay
         public const int UpgradesVersion = 1;
 
         public const string Friends = "gameplay.friends";
-        public const int FriendsVersion = 1;
+        public const int FriendsVersion = 2;
 
         public const string Radio = "gameplay.radio";
         public const int RadioVersion = 1;
