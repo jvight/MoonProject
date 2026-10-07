@@ -89,6 +89,50 @@ MonoBehaviour:
       _radius: 40
       _depth: 4.4
       _lipHeight: 0.7
+    _canyon:
+      _bearing: 72
+      _mouthDistance: 280
+      _approachLength: 6
+      _rampLength: 12
+      _rampHeight: 1.6
+      _gap: 22.1
+      _troughDepth: 4.5
+      _troughSideSlope: 18
+      _apronRaise: 2
+      _apronLength: 38
+      _faceRun: 0.6
+      _mouthHalfWidth: 20
+      _chasmHalfWidth: 12
+      _canyonHalfWidth: 8
+      _bendStart: 120
+      _bendLength: 80
+      _bendAngle: 95
+      _length: 330
+      _windAmplitude: 16
+      _windWavelength: 120
+      _climb: 24
+      _terminusRadius: 20
+      _wallHeight: 26
+      _wallRun: 7
+      _flankRun: 10
+      _wallRoughness: 7
+      _alcoveCount: 3
+      _alcoveDepth: 8
+      _alcoveLength: 20
+      _ledgeHeight: 1.4
+      _ledgeRadius: 4.5
+      _glowHeight: 3.5
+      _glowIntensity: 0.9
+      _glowRadius: 1.2
+      _glowMinAngle: 0.3
+      _glowLightRange: 14
+      _glowLightIntensity: 1.6
+      _exitOffset: 40
+      _exitTurnRadius: 28
+      _exitBranch: 22
+      _exitHalfWidth: 6
+      _exitStepHeight: 2.5
+      _exitFootLength: 9
     _farRangeStart: 950
     _farRangeFull: 1700
     _farRangeHeight: 105
@@ -99,8 +143,10 @@ MonoBehaviour:
     _fineCellSize: 2
     _midCellSize: 4
     _coarseCellSize: 8
-    _fineRadius: 360
+    _farCellSize: 16
+    _fineRadius: 345
     _midRadius: 420
+    _coarseRadius: 470
     _jitter: 0.25
     _backdropInnerRadius: 500
     _backdropOuterRadius: 2800
@@ -128,6 +174,8 @@ MonoBehaviour:
     _shadowTone: -0.3
     _leeTilt: 6
     _dither: 0.02
+    _canyonMidTone: 0.05
+    _chasmDark: 0.5
     _craterShadow: 0.12
     _craterFloor: 0.7
     _craterHighlight: 0.6
@@ -141,6 +189,7 @@ MonoBehaviour:
     - 95
     - 165
     - 250
+    _canyonPebbleClear: 0.65
     _laneKeptPebbles: 0.5
     _clusterWavelength: 75
     _clusterContrast: 0.75
