@@ -197,6 +197,22 @@ Lander.prefab  FriendSocket_<id>: empty on top of the friend's perch, +Y up, +Z 
 `M_LowPolyGlowOff` is `M_LowPoly` with `_EmissionColor` authored black and `_EMISSION` on: its glow renderers start
 dark and are lit per renderer with the same MaterialPropertyBlock contract as 07's eye.
 
+## Contract: world anchors (World -> Gameplay, Audio)
+World registers `Core/IWorldAnchors` (Count / Get(index) / TryGet(id)): named `WorldAnchor`s (id, surface position,
+horizontal forward, radius of clear drivable ground), deterministic for the world seed and fixed after initialisation.
+`IWorldLayout` stays the small set of global landmarks; anything region-specific is an anchor. Ids live in
+`Core/WorldAnchorIds`:
+```
+canyon.mouth      where the canyon opens off the basin, facing in
+canyon.lip        top of the take-off ramp, facing across the chasm
+canyon.landing    centre of the far landing apron, facing into the canyon
+canyon.ledge      the glinting ledge seen from the base (relic)
+canyon.alcove_<n> side alcoves numbered from the mouth inward
+canyon.terminus   the terminus chamber (Bell + crew log cache, M3-05)
+canyon.exit       top of the no-jump way back to the basin, facing down it
+```
+A missing anchor is a wiring bug: consumers `Debug.LogError` with context, never invent a fallback position.
+
 ## Verification ladder
 1. `python tools/compile_check.py` — editor + player configs, zero warnings. Mandatory before every commit.
 2. EditMode tests (`Assets/_Project/Tests/EditMode`) for pure logic: mesh kit, event bus, economy, save, curves.
