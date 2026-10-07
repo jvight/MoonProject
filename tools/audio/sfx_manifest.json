@@ -1404,7 +1404,7 @@
         "workbench_upgrade"
       ],
       "sha256": [
-        "e1f4c65504378a1caaf0ec645629d82c82c0f4acd569d82caa47519faab44116"
+        "e7dd3a88999f76636d4b98b7d4817d752756b58bd6a8c21cfbef8b98e08ab4af"
       ],
       "volumeMin": 0.75,
       "volumeMax": 0.75,
@@ -1415,7 +1415,7 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": true,
-      "notes": "Workbench purchase: soft sparks + toolbox rattle + resolved A -> D major cadence."
+      "notes": "Workbench purchase: spark crackles at 0/0.16/0.32 s (matching the bench's bursts) + toolbox rattle + resolved A -> D major cadence."
     },
     {
       "id": "upgrade_arpeggio",

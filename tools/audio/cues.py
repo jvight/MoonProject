@@ -985,12 +985,21 @@ def coil_pop(_variant, gen):
     return filters.lowpass(mix, 4000.0)
 
 
+# Gameplay fires the bench's spark particle bursts at these times (s) after the purchase; the crackles match them.
+WORKBENCH_SPARK_BURSTS = (0.0, 0.16, 0.32)
+
+
 def workbench_upgrade(_variant, gen):
-    """Buying an upgrade at Kenji's workbench: a little shower of soft sparks and a toolbox rattle, then a resolved
-    cadence (felt piano A4 + E5 settling into D major with a music-box D6), distinct from the tower's arpeggio."""
+    """Buying an upgrade at Kenji's workbench: three soft spark crackles in time with the bench's spark bursts and a
+    toolbox rattle, then a resolved cadence (felt piano A4 + E5 settling into D major with a music-box D6), distinct
+    from the tower's arpeggio."""
     n = samples(3.2)
-    sparks = _grains(n, gen, 40.0, (0.002, 0.006), (0.0003, 0.0006), (0.002, 0.005), 0.25, 0.6)
-    sparks *= envelope.segments(n, [(0.0, 0.0), (0.03, 1.0), (0.45, 0.0)], shape="smooth")
+    sparks = np.zeros(n)
+    for burst, gain in zip(WORKBENCH_SPARK_BURSTS, (1.0, 0.8, 0.65)):
+        burst_n = samples(0.14)
+        crackle = _grains(burst_n, gen, 70.0, (0.002, 0.006), (0.0003, 0.0006), (0.002, 0.005), 0.25, 0.6)
+        crackle *= envelope.segments(burst_n, [(0.0, 0.0), (0.008, 1.0), (0.14, 0.0)], shape="smooth")
+        place(sparks, crackle, samples(burst), gain)
     sparks = filters.lowpass(filters.bandpass(sparks, 3000.0, 0.9), 5000.0)
     rattle = np.zeros(n)
     for k in range(7):
@@ -1127,7 +1136,8 @@ CUES = (
     Cue("coil_pop", "oneshot_3d", coil_pop, volume=(0.6, 0.6), fade_out=0.1, milestone="M3",
         notes="The Hover-Jump coils popping in after the purchase: clunk + sproing."),
     Cue("workbench_upgrade", "stinger_2d", workbench_upgrade, volume=(0.75, 0.75), fade_out=0.3, milestone="M3",
-        tonal=True, notes="Workbench purchase: soft sparks + toolbox rattle + resolved A -> D major cadence."),
+        tonal=True, notes="Workbench purchase: spark crackles at 0/0.16/0.32 s (matching the bench's bursts) + "
+                          "toolbox rattle + resolved A -> D major cadence."),
     Cue("upgrade_arpeggio", "stinger_2d", upgrade_arpeggio, volume=(0.8, 0.8), fade_out=0.3, milestone="M2",
         tonal=True, notes="Soft kalimba D4 A4 D5 F#5 A5, stereo, over a quiet D/A pad."),
 )
