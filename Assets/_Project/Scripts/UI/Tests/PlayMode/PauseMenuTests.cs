@@ -156,8 +156,8 @@ namespace MoonProject.UI.PlayModeTests
             yield return Tap(keyboard.escapeKey);
             yield return new WaitForSecondsRealtime(Settle);
 
-            _rig.Fakes.AddTape(TestStrings.FirstTape);
-            _rig.Fakes.AddTape(TestStrings.SecondTape);
+            _rig.Fakes.AddTape(UiTestRig.FirstTape);
+            _rig.Fakes.AddTape(UiTestRig.SecondTape);
             yield return Tap(keyboard.escapeKey);
             yield return new WaitForSecondsRealtime(Settle);
             Assert.AreEqual(DisplayStyle.Flex, layout.PauseCassettes.resolvedStyle.display);

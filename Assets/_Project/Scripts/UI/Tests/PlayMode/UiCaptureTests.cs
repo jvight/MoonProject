@@ -26,11 +26,11 @@ namespace MoonProject.UI.PlayModeTests
     /// <summary>
     /// Screenshots of every UI state over the real Main scene (world, rover, sky, real camera), for taste review. The
     /// UI renders into its own target and is composited over the camera's frame. Gameplay state is staged through
-    /// <see cref="FakeGameServices"/>, and the string tables are topped up by <see cref="TestStrings"/> until the
-    /// M3-05 keys ship; the scene's own save slot is never written (the UI saves to a test slot and the scene is torn
-    /// down before play mode ends). The last shots are taken at a narrow 5:4 frame. Needs a GPU, takes a few minutes:
-    /// run explicitly with <c>python tools/unity_batch.py tests --platform playmode --category UiCapture</c>. PNGs
-    /// land in Logs/ui-captures.
+    /// <see cref="FakeGameServices"/>; the scene's own save slot is never written (the UI saves to a test slot and the
+    /// scene is torn down before play mode ends). The last shots are taken at a narrow 5:4 frame. Needs a GPU, takes a
+    /// few minutes: run explicitly with
+    /// <c>python tools/unity_batch.py tests --platform playmode --category UiCapture</c>. PNGs land in
+    /// Logs/ui-captures.
     /// </summary>
     [Category("UiCapture")]
     [Explicit("Renders the full Main scene; run with --category UiCapture.")]
@@ -52,7 +52,6 @@ namespace MoonProject.UI.PlayModeTests
         private PanelSettings _panel;
         private RenderTexture _target;
         private UiTuning _tuning;
-        private TextAsset[] _tables;
         private GameObject _friendCamera;
 
         public override void TearDown()
@@ -62,14 +61,6 @@ namespace MoonProject.UI.PlayModeTests
             Object.DestroyImmediate(_fakesHost);
             Object.DestroyImmediate(_panel);
             Object.DestroyImmediate(_tuning);
-            if (_tables != null)
-            {
-                foreach (TextAsset table in _tables)
-                {
-                    Object.DestroyImmediate(table);
-                }
-            }
-
             if (_target != null)
             {
                 _target.Release();
@@ -185,17 +176,17 @@ namespace MoonProject.UI.PlayModeTests
             fakes.Camera = camera;
             yield return new WaitForSecondsRealtime(_tuning.Friends.NameHoldSeconds + 2f);
 
-            context.Events.Publish(new TickerLine(TestStrings.SignalKey, "140"));
+            context.Events.Publish(new TickerLine(UiTestRig.SignalLine, "140"));
             yield return new WaitForSecondsRealtime(TickerEntrance());
             yield return Capture(camera, folder, "18_ticker");
-            context.Events.Publish(new CrewLogFound(TestStrings.FirstLog, Vector3.zero));
+            context.Events.Publish(new CrewLogFound(UiTestRig.FirstLog, Vector3.zero));
             yield return new WaitForSecondsRealtime(CardEntrance());
             yield return Capture(camera, folder, "19_crew_log_card");
             ui.Card.Dismiss();
             yield return new WaitForSecondsRealtime(_tuning.MemoryCard.Reveal.FadeOut + 0.3f);
 
-            fakes.AddTape(TestStrings.FirstTape);
-            context.Events.Publish(new CassetteCollected(TestStrings.FirstTape, Vector3.zero, fakes.OwnedTapeCount,
+            fakes.AddTape(UiTestRig.FirstTape);
+            context.Events.Publish(new CassetteCollected(UiTestRig.FirstTape, Vector3.zero, fakes.OwnedTapeCount,
                 fakes.TotalTapeCount));
             yield return new WaitForSecondsRealtime(CardEntrance());
             yield return Capture(camera, folder, "20_liner_card");
@@ -203,7 +194,7 @@ namespace MoonProject.UI.PlayModeTests
             yield return new WaitForSecondsRealtime(_tuning.MemoryCard.Reveal.FadeOut + 0.3f);
 
             fakes.DialUnlocked = true;
-            fakes.Tune(RadioChannel.TapeDeck, TestStrings.FirstTape);
+            fakes.Tune(RadioChannel.TapeDeck, UiTestRig.FirstTape);
             yield return new WaitForSecondsRealtime(_tuning.DialReadout.Reveal.FadeIn + 0.4f);
             yield return Capture(camera, folder, "21_dial_readout");
             yield return new WaitForSecondsRealtime(ReadoutExit());
@@ -248,17 +239,17 @@ namespace MoonProject.UI.PlayModeTests
             ui.Card.Dismiss();
             yield return new WaitForSecondsRealtime(_tuning.MemoryCard.Reveal.FadeOut + 0.3f);
 
-            context.Events.Publish(new TickerLine(TestStrings.HomeKey));
+            context.Events.Publish(new TickerLine(UiTestRig.HomeLine));
             yield return new WaitForSecondsRealtime(TickerEntrance());
             yield return Capture(camera, folder, "23_ticker_vi");
-            fakes.AddTape(TestStrings.SecondTape);
-            context.Events.Publish(new CassetteCollected(TestStrings.SecondTape, Vector3.zero, fakes.OwnedTapeCount,
+            fakes.AddTape(UiTestRig.SecondTape);
+            context.Events.Publish(new CassetteCollected(UiTestRig.SecondTape, Vector3.zero, fakes.OwnedTapeCount,
                 fakes.TotalTapeCount));
             yield return new WaitForSecondsRealtime(CardEntrance());
             yield return Capture(camera, folder, "24_liner_card_vi");
             ui.Card.Dismiss();
             yield return new WaitForSecondsRealtime(_tuning.MemoryCard.Reveal.FadeOut + 0.3f);
-            fakes.Tune(RadioChannel.TapeDeck, TestStrings.SecondTape);
+            fakes.Tune(RadioChannel.TapeDeck, UiTestRig.SecondTape);
             yield return new WaitForSecondsRealtime(_tuning.DialReadout.Reveal.FadeIn + 0.4f);
             yield return Capture(camera, folder, "25_dial_readout_vi");
             yield return new WaitForSecondsRealtime(ReadoutExit());
@@ -269,16 +260,16 @@ namespace MoonProject.UI.PlayModeTests
             yield return new WaitForSecondsRealtime(1f);
 
             Reframe(NarrowWidth, NarrowHeight);
-            context.Events.Publish(new TickerLine(TestStrings.SignalKey, "205"));
+            context.Events.Publish(new TickerLine(UiTestRig.SignalLine, "205"));
             fakes.AtStation = true;
             yield return new WaitForSecondsRealtime(TickerEntrance() + 0.5f);
             yield return Capture(camera, folder, "27_narrow_ticker_and_tower_vi");
             fakes.AtStation = false;
-            fakes.Tune(RadioChannel.QuietHours, TestStrings.SecondTape);
+            fakes.Tune(RadioChannel.QuietHours, UiTestRig.SecondTape);
             yield return new WaitForSecondsRealtime(_tuning.DialReadout.Reveal.FadeIn + 0.4f);
             yield return Capture(camera, folder, "28_narrow_dial_readout_vi");
             yield return new WaitForSecondsRealtime(ReadoutExit());
-            context.Events.Publish(new CrewLogFound(TestStrings.FirstLog, Vector3.zero));
+            context.Events.Publish(new CrewLogFound(UiTestRig.FirstLog, Vector3.zero));
             yield return new WaitForSecondsRealtime(CardEntrance());
             yield return Capture(camera, folder, "29_narrow_crew_log_card_vi");
             Assert.IsTrue(save.SaveNow(), "the UI saved to its test slot");
@@ -374,9 +365,12 @@ namespace MoonProject.UI.PlayModeTests
             document.panelSettings = _panel;
             document.visualTreeAsset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(UiTestRig.UxmlPath);
             var ui = _uiHost.AddComponent<UISystem>();
-            _tables = TestStrings.Load(AssetDatabase.LoadAssetAtPath<TextAsset>(UiTestRig.EnglishPath),
-                AssetDatabase.LoadAssetAtPath<TextAsset>(UiTestRig.VietnamesePath));
-            ui.Wire(document, _tuning, AssetDatabase.LoadAssetAtPath<RelicCatalog>(UiTestRig.CatalogPath), _tables);
+            ui.Wire(document, _tuning, AssetDatabase.LoadAssetAtPath<RelicCatalog>(UiTestRig.CatalogPath),
+                new[]
+                {
+                    AssetDatabase.LoadAssetAtPath<TextAsset>(UiTestRig.EnglishPath),
+                    AssetDatabase.LoadAssetAtPath<TextAsset>(UiTestRig.VietnamesePath),
+                });
             ui.QuitAction = () => { };
             _uiHost.SetActive(true);
 

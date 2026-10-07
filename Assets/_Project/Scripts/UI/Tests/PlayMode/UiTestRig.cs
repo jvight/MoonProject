@@ -14,8 +14,8 @@ namespace MoonProject.UI.PlayModeTests
 {
     /// <summary>
     /// The UI booted through GameBootstrap the way UISceneContributor wires Main.unity (UIDocument on the generated
-    /// PanelSettings, GameUI.uxml, the real tuning, catalog and string tables topped up by <see cref="TestStrings"/>),
-    /// behind <see cref="FakeGameServices"/>. The tuning is a copy with a short title, no prompt start delay and quick
+    /// PanelSettings, GameUI.uxml, the real tuning, catalog and string tables), behind
+    /// <see cref="FakeGameServices"/>. The tuning is a copy with a short title, no prompt start delay and quick
     /// ticker fades, so tests reach the interesting states quickly. Editor-only (assets come through the
     /// AssetDatabase).
     /// </summary>
@@ -32,18 +32,27 @@ namespace MoonProject.UI.PlayModeTests
         public const string EnglishPath = "Assets/_Project/Data/Localization/en.json";
         public const string VietnamesePath = "Assets/_Project/Data/Localization/vi.json";
 
+        /// <summary>Bell's signal ticker line; its {0} is a bearing.</summary>
+        public const string SignalLine = "ticker.bell.signal";
+
+        /// <summary>Bell's first homecoming ticker line (no argument).</summary>
+        public const string HomeLine = "ticker.bell.home";
+
+        /// <summary>M3-05 content with text in the shipped tables: Ro's first crew log and two of her tapes.</summary>
+        public const string FirstLog = "ro_1";
+        public const string FirstTape = "after_dark_1";
+        public const string SecondTape = "dust_and_honey";
+
         private readonly GameObject _camera;
         private readonly GameObject _services;
         private readonly GameObject _ui;
-        private readonly TextAsset[] _tables;
 
-        private UiTestRig(GameObject camera, GameObject services, GameObject ui, TextAsset[] tables, UiTuning tuning,
+        private UiTestRig(GameObject camera, GameObject services, GameObject ui, UiTuning tuning,
             GameBootstrap bootstrap, string saveSlot)
         {
             _camera = camera;
             _services = services;
             _ui = ui;
-            _tables = tables;
             Tuning = tuning;
             Bootstrap = bootstrap;
             SaveSlot = saveSlot;
@@ -84,13 +93,13 @@ namespace MoonProject.UI.PlayModeTests
             document.panelSettings = Load<PanelSettings>(PanelSettingsPath);
             document.visualTreeAsset = Load<VisualTreeAsset>(UxmlPath);
             var system = ui.AddComponent<UISystem>();
-            TextAsset[] tables = TestStrings.Load(Load<TextAsset>(EnglishPath), Load<TextAsset>(VietnamesePath));
-            system.Wire(document, tuning, Load<RelicCatalog>(CatalogPath), tables);
+            system.Wire(document, tuning, Load<RelicCatalog>(CatalogPath),
+                new[] { Load<TextAsset>(EnglishPath), Load<TextAsset>(VietnamesePath) });
             system.QuitAction = () => { };
             ui.SetActive(true);
 
             GameBootstrap bootstrap = BootstrapHarness.Create(controls, saveSlot, fakes, system);
-            return new UiTestRig(camera, services, ui, tables, tuning, bootstrap, saveSlot);
+            return new UiTestRig(camera, services, ui, tuning, bootstrap, saveSlot);
 #else
             throw new NotSupportedException("UiTestRig loads assets through the editor's AssetDatabase.");
 #endif
@@ -131,11 +140,6 @@ namespace MoonProject.UI.PlayModeTests
             Object.DestroyImmediate(_services);
             Object.DestroyImmediate(_camera);
             Object.DestroyImmediate(Tuning);
-            foreach (TextAsset table in _tables)
-            {
-                Object.DestroyImmediate(table);
-            }
-
             Time.timeScale = 1f;
         }
 

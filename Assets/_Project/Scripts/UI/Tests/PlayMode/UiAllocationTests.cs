@@ -112,7 +112,7 @@ namespace MoonProject.UI.PlayModeTests
             _rig.Tune("_ticker._minHoldSeconds", LongHoldSeconds);
             _rig.Tune("_ticker._maxHoldSeconds", LongHoldSeconds);
             _rig.Bootstrap.Context.Events.Publish(new RoverAwoke(Vector3.zero, false));
-            _rig.Bootstrap.Context.Events.Publish(new TickerLine(TestStrings.SignalKey, "140"));
+            _rig.Bootstrap.Context.Events.Publish(new TickerLine(UiTestRig.SignalLine, "140"));
             yield return new WaitForSecondsRealtime(1.5f);
             Assert.IsTrue(_rig.Ui.Ticker.IsShown);
             yield return Measure(Bind(_rig.Ui, "Update"), "ticker line resting, its lamp breathing");

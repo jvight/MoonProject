@@ -213,17 +213,17 @@ namespace MoonProject.UI.PlayModeTests
             Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
             Boot();
             yield return null;
-            Events.Publish(new CrewLogFound(TestStrings.FirstLog, Vector3.zero));
-            Events.Publish(new CassetteCollected(TestStrings.FirstTape, Vector3.zero, 1, 3));
+            Events.Publish(new CrewLogFound(UiTestRig.FirstLog, Vector3.zero));
+            Events.Publish(new CassetteCollected(UiTestRig.FirstTape, Vector3.zero, 1, 3));
             yield return Seconds(1f);
-            Assert.AreEqual(TestStrings.FirstLog, _rig.Ui.Card.Current);
-            Assert.AreEqual(Text(UiKeys.CrewLog(TestStrings.FirstLog)), _rig.Ui.Layout.MemoryCardText.text);
+            Assert.AreEqual(UiTestRig.FirstLog, _rig.Ui.Card.Current);
+            Assert.AreEqual(Text(UiKeys.CrewLog(UiTestRig.FirstLog)), _rig.Ui.Layout.MemoryCardText.text);
             Assert.IsTrue(_rig.Ui.Layout.MemoryCard.ClassListContains(MemoryCard.UntitledClass));
 
             yield return Tap(keyboard.escapeKey);
             yield return Seconds(_rig.Tuning.MemoryCard.Reveal.FadeOut + 0.6f);
-            Assert.AreEqual(TestStrings.FirstTape, _rig.Ui.Card.Current, "the liner card waited its turn");
-            Assert.AreEqual(Text(UiKeys.CassetteTitle(TestStrings.FirstTape)), _rig.Ui.Layout.MemoryCardName.text);
+            Assert.AreEqual(UiTestRig.FirstTape, _rig.Ui.Card.Current, "the liner card waited its turn");
+            Assert.AreEqual(Text(UiKeys.CassetteTitle(UiTestRig.FirstTape)), _rig.Ui.Layout.MemoryCardName.text);
             Assert.AreEqual(string.Format(Text(UiKeys.TapeCount), 1, 3), _rig.Ui.Layout.MemoryCardCount.text);
             Assert.IsTrue(_rig.Ui.Layout.MemoryCard.ClassListContains(MemoryCard.LinerClass));
         }
@@ -260,28 +260,28 @@ namespace MoonProject.UI.PlayModeTests
         {
             Boot();
             _rig.Fakes.DialUnlocked = true;
-            _rig.Fakes.Tune(RadioChannel.TapeDeck, TestStrings.SecondTape);
+            _rig.Fakes.Tune(RadioChannel.TapeDeck, UiTestRig.SecondTape);
             yield return Seconds(1f);
             Assert.IsFalse(_rig.Ui.Dial.IsVisible, "a program loaded with the save is not a turn of the dial");
 
             Events.Publish(new RoverAwoke(Vector3.zero, false));
             yield return Seconds(1f);
-            _rig.Fakes.AddTape(TestStrings.FirstTape);
+            _rig.Fakes.AddTape(UiTestRig.FirstTape);
             yield return Seconds(0.5f);
             Assert.IsFalse(_rig.Ui.Dial.IsVisible, "a collected tape is not a turn either");
 
-            _rig.Fakes.Tune(RadioChannel.QuietHours, TestStrings.SecondTape);
+            _rig.Fakes.Tune(RadioChannel.QuietHours, UiTestRig.SecondTape);
             yield return Seconds(0.5f);
             Assert.IsTrue(_rig.Ui.Dial.IsVisible);
             Assert.AreEqual(Text(UiKeys.RadioChannelName(RadioChannel.QuietHours)), _rig.Ui.Layout.DialStation.text);
             Assert.AreEqual(DisplayStyle.None, _rig.Ui.Layout.DialTape.resolvedStyle.display);
 
-            _rig.Fakes.Tune(RadioChannel.TapeDeck, TestStrings.FirstTape);
-            Events.Publish(new TickerLine(TestStrings.HomeKey));
+            _rig.Fakes.Tune(RadioChannel.TapeDeck, UiTestRig.FirstTape);
+            Events.Publish(new TickerLine(UiTestRig.HomeLine));
             yield return Seconds(0.5f);
             Assert.AreEqual(Text(UiKeys.RadioChannelName(RadioChannel.TapeDeck)), _rig.Ui.Layout.DialStation.text,
                 "turning again rewrites it in place");
-            Assert.AreEqual(Text(UiKeys.CassetteTitle(TestStrings.FirstTape)), _rig.Ui.Layout.DialTape.text);
+            Assert.AreEqual(Text(UiKeys.CassetteTitle(UiTestRig.FirstTape)), _rig.Ui.Layout.DialTape.text);
             Assert.IsFalse(_rig.Ui.Ticker.IsVisible, "the ticker waits for the readout");
 
             yield return Seconds(_rig.Tuning.DialReadout.HoldSeconds + _rig.Tuning.DialReadout.Reveal.FadeOut);
@@ -296,18 +296,18 @@ namespace MoonProject.UI.PlayModeTests
             Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
             Boot();
             yield return null;
-            Events.Publish(new TickerLine(TestStrings.SignalKey, "140"));
+            Events.Publish(new TickerLine(UiTestRig.SignalLine, "140"));
             yield return Seconds(1.5f);
             Assert.IsFalse(_rig.Ui.Ticker.IsVisible, "the radio waits for 07 to wake");
 
             Events.Publish(new RoverAwoke(Vector3.zero, false));
             yield return Seconds(1.5f);
             Assert.IsTrue(_rig.Ui.Ticker.IsVisible, "then the line drifts in");
-            Assert.AreEqual(string.Format(Text(TestStrings.SignalKey), "140"), _rig.Ui.Layout.TickerText.text);
+            Assert.AreEqual(string.Format(Text(UiTestRig.SignalLine), "140"), _rig.Ui.Layout.TickerText.text);
             Assert.IsTrue(_rig.Bootstrap.Context.Input.Enabled, "the ticker never blocks driving");
 
             Events.Publish(new RelicDeposited("rubber_duck", Vector3.zero, 2));
-            Events.Publish(new TickerLine(TestStrings.HomeKey));
+            Events.Publish(new TickerLine(UiTestRig.HomeLine));
             yield return Seconds(0.6f);
             Assert.IsFalse(_rig.Ui.Ticker.IsVisible, "a card is coming: the ticker makes way");
             yield return Seconds(0.6f);
@@ -318,7 +318,7 @@ namespace MoonProject.UI.PlayModeTests
             yield return Seconds(1.5f);
             Assert.IsFalse(_rig.Ui.Card.IsVisible);
             Assert.IsTrue(_rig.Ui.Ticker.IsVisible, "the line comes back after the card");
-            Assert.AreEqual(string.Format(Text(TestStrings.SignalKey), "140"), _rig.Ui.Layout.TickerText.text,
+            Assert.AreEqual(string.Format(Text(UiTestRig.SignalLine), "140"), _rig.Ui.Layout.TickerText.text,
                 "the interrupted line first, then the next");
             Assert.AreEqual(1, _rig.Ui.TickerLines.Waiting);
         }
@@ -331,7 +331,7 @@ namespace MoonProject.UI.PlayModeTests
             Events.Publish(new RoverAwoke(Vector3.zero, false));
             yield return Seconds(1f);
             Events.Publish(new ExcavationStarted(new Vector3(0f, 0f, 12f)));
-            Events.Publish(new TickerLine(TestStrings.HomeKey));
+            Events.Publish(new TickerLine(UiTestRig.HomeLine));
             yield return Seconds(2f);
             Assert.IsFalse(_rig.Ui.Ticker.IsVisible, "never during a dig");
 
