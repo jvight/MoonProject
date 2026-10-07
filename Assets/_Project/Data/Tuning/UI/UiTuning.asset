@@ -77,31 +77,41 @@ MonoBehaviour:
       _action: 0
       _dwellSeconds: 6
       _liftMetres: 1.9
+      _usesToRetire: 2
     - _kind: 2
       _action: 1
       _dwellSeconds: 0.5
       _liftMetres: 0.9
+      _usesToRetire: 2
     - _kind: 3
       _action: 2
       _dwellSeconds: 0.4
       _liftMetres: 0.9
+      _usesToRetire: 2
     - _kind: 4
       _action: 2
       _dwellSeconds: 0.25
       _liftMetres: 1.4
+      _usesToRetire: 2
     - _kind: 6
       _action: 3
       _dwellSeconds: 2.5
       _liftMetres: 0.9
+      _usesToRetire: 2
     - _kind: 7
       _action: 1
       _dwellSeconds: 0.5
       _liftMetres: 0.8
+      _usesToRetire: 2
+    - _kind: 8
+      _action: 1
+      _dwellSeconds: 0.6
+      _liftMetres: 1.8
+      _usesToRetire: 1
     _startDelay: 9
     _maxShowSeconds: 7
     _repeatCooldown: 25
     _showingsToRetire: 3
-    _usesToRetire: 2
     _followHalfLife: 0.08
     _screenMargin: 72
   _reticle:
@@ -175,3 +185,29 @@ MonoBehaviour:
       _springDamping: 0.7
     _nameHoldSeconds: 3.5
     _nameLiftMetres: 1.1
+  _ticker:
+    _reveal:
+      _fadeIn: 0.9
+      _fadeOut: 1.1
+      _slide: 6
+      _scaleFrom: 1
+      _springFrequency: 1
+      _springDamping: 1
+    _holdBaseSeconds: 2.5
+    _holdSecondsPerCharacter: 0.055
+    _minHoldSeconds: 4
+    _maxHoldSeconds: 9
+    _gapSeconds: 1.5
+    _capacity: 5
+    _maxYields: 1
+    _lampBreathSeconds: 3.2
+    _lampMinOpacity: 0.45
+  _dialReadout:
+    _reveal:
+      _fadeIn: 0.3
+      _fadeOut: 0.8
+      _slide: 8
+      _scaleFrom: 0.96
+      _springFrequency: 1.8
+      _springDamping: 0.7
+    _holdSeconds: 2.4
