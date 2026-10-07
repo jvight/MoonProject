@@ -12,13 +12,16 @@ namespace MoonProject.Audio
     /// climbing the pentatonic by combo step, tether pluck / hum (follows the beam emitter while attached) / release
     /// or sighing snap, excavation rumble while the beam lifts plus the surfacing sparkle, the shelf "placed" cue and
     /// the upgrade sounds (the tower's arpeggio; for workshop upgrades, ids starting "rover.", the workbench's sparks,
-    /// rattle and cadence, plus the coils' clunk-sproing when the Hover-Jump is bought). Loops fade with
-    /// <see cref="LoopFader"/> and stop when silent. Initialised by <see cref="AudioDirector"/>.
+    /// rattle and cadence, plus the coils' clunk-sproing when the Hover-Jump is bought), a cassette's click and
+    /// spin, a crew log cache's tin and paper, and Bell's signals: a warm, very soft shimmer from the pillar when she
+    /// picks something (mostly flat, a hint of direction, so even a far pillar is heard as distant rather than lost)
+    /// and a resolved chime when it is found. Loops fade with <see cref="LoopFader"/> and stop when silent.
+    /// Initialised by <see cref="AudioDirector"/>.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class GameplayAudio : MonoBehaviour
     {
-        private const int SubscriptionCount = 10;
+        private const int SubscriptionCount = 14;
 
         /// <summary>Upgrades sold at Kenji's workbench (rover abilities) use this id prefix.</summary>
         private const string WorkshopUpgradePrefix = "rover.";
@@ -46,8 +49,13 @@ namespace MoonProject.Audio
         private CueHandle _upgradeArpeggio;
         private CueHandle _workbenchUpgrade;
         private CueHandle _coilPop;
+        private CueHandle _cassettePickup;
+        private CueHandle _crewLogFound;
+        private CueHandle _signalPick;
+        private CueHandle _signalFound;
         private IRoverState _rover;
         private AudioSource _tetherHum;
+        private AudioSource _signal;
         private AudioSource _rumble;
         private float _tetherHumCueVolume;
         private float _rumbleCueVolume;
@@ -62,6 +70,8 @@ namespace MoonProject.Audio
         internal AudioSource TetherHumSource => _tetherHum;
 
         internal AudioSource RumbleSource => _rumble;
+
+        internal AudioSource SignalSource => _signal;
 
         internal void Initialize(GameContext context, AudioDirector director)
         {
@@ -92,13 +102,18 @@ namespace MoonProject.Audio
             _upgradeArpeggio = director.Resolve(AudioCueIds.UpgradeArpeggio);
             _workbenchUpgrade = director.Resolve(AudioCueIds.WorkbenchUpgrade);
             _coilPop = director.Resolve(AudioCueIds.CoilPop);
+            _cassettePickup = director.Resolve(AudioCueIds.CassettePickup);
+            _crewLogFound = director.Resolve(AudioCueIds.CrewLogFound);
+            _signalPick = director.Resolve(AudioCueIds.BellSignalPick);
+            _signalFound = director.Resolve(AudioCueIds.BellSignalFound);
             _rover = context.Get<IRoverState>();
             CueHandle hum = director.Resolve(AudioCueIds.TetherHum);
             CueHandle rumble = director.Resolve(AudioCueIds.ExcavationRumble);
             if (!(_sonarPing.IsValid && _relicAnswer.IsValid && _scrapChime.IsValid && _tetherAttach.IsValid &&
                   _tetherRelease.IsValid && _tetherSnap.IsValid && _surfacingSparkle.IsValid && _relicPlaced.IsValid &&
                   _upgradeArpeggio.IsValid && _workbenchUpgrade.IsValid && _coilPop.IsValid && hum.IsValid &&
-                  rumble.IsValid))
+                  rumble.IsValid && _cassettePickup.IsValid && _crewLogFound.IsValid && _signalPick.IsValid &&
+                  _signalFound.IsValid))
             {
                 enabled = false;
                 return;
@@ -115,6 +130,8 @@ namespace MoonProject.Audio
             _rumbleCueVolume = director.Library.GetCue(rumble).VolumeMax;
             _tetherHum = director.CreateLoopSource(transform, "TetherHum", hum, _tuning.TetherHumSpatialBlend);
             _rumble = director.CreateLoopSource(transform, "ExcavationRumble", rumble, 1f);
+            _signal = director.CreateLoopSource(transform, "BellSignal", default, _tuning.SignalSpatialBlend);
+            _signal.loop = false;
 
             EventBus events = context.Events;
             _subscriptions[0] = events.Subscribe<SonarPinged>(OnSonarPinged);
@@ -127,6 +144,10 @@ namespace MoonProject.Audio
             _subscriptions[7] = events.Subscribe<RelicSurfaced>(OnRelicSurfaced);
             _subscriptions[8] = events.Subscribe<RelicDeposited>(OnRelicDeposited);
             _subscriptions[9] = events.Subscribe<UpgradePurchased>(OnUpgradePurchased);
+            _subscriptions[10] = events.Subscribe<CassetteCollected>(OnCassetteCollected);
+            _subscriptions[11] = events.Subscribe<CrewLogFound>(OnCrewLogFound);
+            _subscriptions[12] = events.Subscribe<BellSignalPicked>(OnBellSignalPicked);
+            _subscriptions[13] = events.Subscribe<BellSignalFound>(OnBellSignalFound);
         }
 
         internal void Wire(GameplayAudioTuning tuning)
@@ -245,6 +266,27 @@ namespace MoonProject.Audio
             {
                 _director.PlayAt(_coilPop, _rover.Position);
             }
+        }
+
+        private void OnCassetteCollected(CassetteCollected collected)
+        {
+            _director.PlayAt(_cassettePickup, collected.Position);
+        }
+
+        private void OnCrewLogFound(CrewLogFound found)
+        {
+            _director.PlayAt(_crewLogFound, found.Position);
+        }
+
+        private void OnBellSignalPicked(BellSignalPicked picked)
+        {
+            _signal.transform.position = picked.Position;
+            _director.PlayOn(_signal, _signalPick, _tuning.SignalPickVolume);
+        }
+
+        private void OnBellSignalFound(BellSignalFound found)
+        {
+            _director.PlayAt(_signalFound, found.Position);
         }
 
         private void OnDestroy()

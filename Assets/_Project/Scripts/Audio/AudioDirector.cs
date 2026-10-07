@@ -9,10 +9,11 @@ namespace MoonProject.Audio
     /// The Audio domain's game system. Owns the volume buses (registered as <see cref="IAudioSettings"/>), pooled
     /// 3D/2D one-shot voices and the cue library, plays the landing thump on <see cref="RoverLanded"/>, eases the
     /// pause mix on <see cref="PauseChanged"/> (world loops duck, the radio moves into the cabin), and initialises
-    /// the rover, Hover-Jump, gameplay, friend and UI sounds, radio and ambience bed. A landing that ends a leap gets
-    /// the jump's cushion instead of the thump. Initialise it after the World, Rover and
-    /// Gameplay systems (it reads <see cref="IRoverState"/>, <see cref="IRoverRig"/>, <see cref="IWorldLayout"/> and
-    /// <see cref="IFriendRoster"/>).
+    /// the rover, Hover-Jump, gameplay, friend and UI sounds, radio, ambience bed and Whispering Canyon. A landing
+    /// that ends a leap gets the jump's cushion instead of the thump. Only 3D sources take the canyon's echo (2D ones
+    /// bypass reverb zones). Initialise it after the World, Rover and Gameplay systems (it reads
+    /// <see cref="IRoverState"/>, <see cref="IRoverRig"/>, <see cref="IWorldLayout"/>, <see cref="IWorldAnchors"/>,
+    /// <see cref="IFriendRoster"/> and <see cref="IRadioProgram"/>).
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class AudioDirector : MonoBehaviour, IGameSystem
@@ -48,6 +49,9 @@ namespace MoonProject.Audio
         [Tooltip("The lunar ambience bed.")]
         [SerializeField] private AmbienceBed _ambience;
 
+        [Tooltip("Whispering Canyon's beds, echo and radio thinning.")]
+        [SerializeField] private CanyonAmbience _canyon;
+
         private readonly AudioBusMixer _buses = new AudioBusMixer();
         private readonly LoopFader _pause = new LoopFader();
         private readonly AudioClip[] _recentClips = new AudioClip[RecentClipCapacity];
@@ -75,6 +79,9 @@ namespace MoonProject.Audio
 
         /// <summary>0..1 eased "listening in the cabin" amount while paused (the radio uses it).</summary>
         public float CabinBlend => _pause.Gain;
+
+        /// <summary>Whispering Canyon (the radio and the ambience bed read how far inside 07 is).</summary>
+        internal CanyonAmbience Canyon => _canyon;
 
         /// <summary>The voice that started most recently (diagnostics and tests).</summary>
         internal AudioSource LastVoice { get; private set; }
@@ -136,8 +143,9 @@ namespace MoonProject.Audio
             _gameplay.Initialize(context, this);
             _friends.Initialize(context, this);
             _ui.Initialize(context, this);
+            _canyon.Initialize(context, this);
             _radio.Initialize(context, this);
-            _ambience.Initialize(this, _mixTuning.AmbienceFadeIn);
+            _ambience.Initialize(this, _radio, _canyon, _mixTuning);
         }
 
         /// <summary>Resolves a cue id once (call at initialisation); logs and returns an invalid handle if
@@ -207,6 +215,12 @@ namespace MoonProject.Audio
             Play(cue, _flat, Vector3.zero, volumeScale, pitchScale, -1, 0f, 0f);
         }
 
+        /// <summary>Bell's dial turned to another station: friends with a station-switch crackle voice it.</summary>
+        internal void NotifyStationSwitched()
+        {
+            _friends.OnStationSwitched();
+        }
+
         public void SetBusVolume(AudioBus bus, float volume)
         {
             _buses.SetVolume(bus, volume);
@@ -240,11 +254,14 @@ namespace MoonProject.Audio
             source.maxDistance = _mixTuning.MaxDistance;
             source.dopplerLevel = _mixTuning.DopplerLevel;
             source.spread = _mixTuning.Spread;
+
+            // The canyon's echo is for sounds in the world; the radio, UI and ambience beds stay dry.
+            source.bypassReverbZones = spatialBlend <= 0f;
         }
 
         internal void Wire(AudioLibrary library, AudioMixTuning mixTuning, RoverAudio roverAudio,
             JumpAudio jump, GameplayAudio gameplay, FriendAudio friends, UiAudio ui, RadioStation radio,
-            AmbienceBed ambience)
+            AmbienceBed ambience, CanyonAmbience canyon)
         {
             _jump = jump;
             _friends = friends;
@@ -255,6 +272,7 @@ namespace MoonProject.Audio
             _gameplay = gameplay;
             _radio = radio;
             _ambience = ambience;
+            _canyon = canyon;
         }
 
         private void Update()
@@ -385,6 +403,7 @@ namespace MoonProject.Audio
             ok &= Require(_jump, nameof(_jump));
             ok &= Require(_radio, nameof(_radio));
             ok &= Require(_ambience, nameof(_ambience));
+            ok &= Require(_canyon, nameof(_canyon));
             if (_library != null)
             {
                 string problem = _library.FindProblem();

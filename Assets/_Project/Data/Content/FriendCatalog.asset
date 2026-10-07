@@ -14,3 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _friends:
   - {fileID: 11400000, guid: 4999052abaa612e4fac65dcb6fe3ccf6, type: 2}
+  - {fileID: 11400000, guid: 9b5864864de4cb644b5dde4a37af5d7d, type: 2}

@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 using MoonProject.Core;
 
 namespace MoonProject.Gameplay
@@ -10,8 +11,8 @@ namespace MoonProject.Gameplay
     {
         private static readonly InteractionKind[] Priority =
         {
-            InteractionKind.Deposit, InteractionKind.Repair, InteractionKind.Upgrade, InteractionKind.Excavate,
-            InteractionKind.Tether, InteractionKind.Reel, InteractionKind.Ping,
+            InteractionKind.Deposit, InteractionKind.Repair, InteractionKind.Tune, InteractionKind.Upgrade,
+            InteractionKind.Excavate, InteractionKind.Tether, InteractionKind.Reel, InteractionKind.Ping,
         };
 
         private readonly IRoverState _rover;
@@ -82,6 +83,10 @@ namespace MoonProject.Gameplay
                         ? new InteractionHint(kind, broken.Site.Position, true)
                         : InteractionHint.None;
                     return broken != null;
+                case InteractionKind.Tune:
+                    bool tune = _friends.TryGetDial(out Vector3 dial);
+                    hint = tune ? new InteractionHint(kind, dial, true) : InteractionHint.None;
+                    return tune;
                 case InteractionKind.Reel:
                     hint = towed != null
                         ? new InteractionHint(kind, towed.transform.position, true)

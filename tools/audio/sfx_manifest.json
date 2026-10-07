@@ -1418,6 +1418,609 @@
       "notes": "Workbench purchase: spark crackles at 0/0.16/0.32 s (matching the bench's bursts) + toolbox rattle + resolved A -> D major cadence."
     },
     {
+      "id": "bell_broken",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/bell_broken_01.wav",
+        "Assets/_Project/Audio/SFX/bell_broken_02.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02"
+      ],
+      "sha256": [
+        "ab3996f35a42a5b3ac73d6dcc7853c7b9def8b49e920273345fd5e690c6dce5c",
+        "c73fdab1b00124201ece51333d8b4610442c0b99c53c00f48b615e7b12528d10"
+      ],
+      "volumeMin": 0.45,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "Bell dormant answering a ping: a dying set catching a station for a moment."
+    },
+    {
+      "id": "bell_excited",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/bell_excited_01.wav",
+        "Assets/_Project/Audio/SFX/bell_excited_02.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02"
+      ],
+      "sha256": [
+        "279734cac6528701a7461801bebd900a8b44a6f444c2fd2797446e9469e886eb",
+        "ed392fd6580c4ec859e3b72cc93589597038bc57d6a93cea3b4f7f1285ddb1a4"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bell's happy crackle on a new relic: static burst + two warbling blips up the scale."
+    },
+    {
+      "id": "bell_tune",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/bell_tune_01.wav",
+        "Assets/_Project/Audio/SFX/bell_tune_02.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02"
+      ],
+      "sha256": [
+        "6a4ca4fe795133b32ca44db4809094234a56672a379977fa14a5809f9fa51e9e",
+        "c64e066e4fb140a4a5d05d01953a9810c8e409c831bd8db28a19939acbcef29d"
+      ],
+      "volumeMin": 0.45,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "Bell's station-switch crackle: detent tick + a static swish as the needle moves."
+    },
+    {
+      "id": "bell_step",
+      "category": "tick_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/bell_step_01.wav",
+        "Assets/_Project/Audio/SFX/bell_step_02.wav",
+        "Assets/_Project/Audio/SFX/bell_step_03.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02",
+        "03"
+      ],
+      "sha256": [
+        "0a0261200f1d849868bc5efcd0043f510076e1f48f9ee6b6afa192557d940d72",
+        "ce079413610927693d60813da9411f3729d698a64eb835f78e5fc8d4fbb23698",
+        "57a415099cb6353e5a563a17e1197ee2fed65649bd803f76e33a250902377fac"
+      ],
+      "volumeMin": 0.45,
+      "volumeMax": 0.55,
+      "pitchMin": 0.96,
+      "pitchMax": 1.04,
+      "targetLufs": -26.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "Bell's light tripod-foot taps while she walks."
+    },
+    {
+      "id": "bell_doze",
+      "category": "loop_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/SFX/bell_doze_loop.wav"
+      ],
+      "variantLabels": [
+        "bell_doze"
+      ],
+      "sha256": [
+        "70bee2af75cd035fc936e64015384891572c75ccb3017754120c800c53690137"
+      ],
+      "volumeMin": 0.3,
+      "volumeMax": 0.3,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bell dozing: dial ember hum on D2/D3 + faint A3 glow + rare valve tick, 6 s seamless."
+    },
+    {
+      "id": "bell_wake",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/bell_wake.wav"
+      ],
+      "variantLabels": [
+        "bell_wake"
+      ],
+      "sha256": [
+        "cd9f9a24313d567a8dfabe69914981203c22f28c84f5a8b66ac26740c8dcf049"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bell waking: the hum warms up, a crackle, a sleepy E5 -> A5 hello."
+    },
+    {
+      "id": "bell_curious",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/bell_curious_01.wav",
+        "Assets/_Project/Audio/SFX/bell_curious_02.wav",
+        "Assets/_Project/Audio/SFX/bell_curious_03.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02",
+        "03"
+      ],
+      "sha256": [
+        "4b036bfbb83d888bd5d6236016cf4fb5cb72fbcc81dfa8eaf81efd411ffdfac3",
+        "86aaf81e8764513c876b25f63dbfd300a9d35c46adb9a7c925845cd21daf38da",
+        "e197851adcf21ba7d1b2457ffb190af5a89c817a325c97d787ff208536af04b3"
+      ],
+      "volumeMin": 0.45,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bell 'hm?': a tuning squeak settling onto a note, then the whistle sliding up like a question."
+    },
+    {
+      "id": "bell_happy",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/bell_happy_01.wav",
+        "Assets/_Project/Audio/SFX/bell_happy_02.wav",
+        "Assets/_Project/Audio/SFX/bell_happy_03.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02",
+        "03"
+      ],
+      "sha256": [
+        "bca719163f1df0c609b2c70c015d509766083edd7f7d8eb23821a280fdfca4ef",
+        "2ba74add63357575140f22b59d19faceb06e16885899ddbf01d416350842f780",
+        "8f843eb3c0ebac17cf008e13258b89c2ffa8809764c49a6f0bd0ce14a6c499a7"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bell happy at home: a gliding dial-whistle run up the pentatonic."
+    },
+    {
+      "id": "bell_sleepy",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/bell_sleepy_01.wav",
+        "Assets/_Project/Audio/SFX/bell_sleepy_02.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02"
+      ],
+      "sha256": [
+        "e64cbba2bb774d1519f726d98242f8fb45ecfc86f8774e9bf18012a6778baa06",
+        "4d455889a3205020ac6b969a32dca88e04359a55fa1f03fcfe144a19c6c79dd2"
+      ],
+      "volumeMin": 0.35,
+      "volumeMax": 0.4,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bell sleepy: a slow whistle sagging down like a tape winding down."
+    },
+    {
+      "id": "bell_greeting",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/bell_greeting_01.wav",
+        "Assets/_Project/Audio/SFX/bell_greeting_02.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02"
+      ],
+      "sha256": [
+        "c6f6778c0aea1148fe5076e67ce2641fcbc202821d4ad0ea265e34df440282fb",
+        "da056ca79edb7f760e7e053f6b770f945786c08e244ce71849c506ad77b56dc9"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bell 'hello!': upward tuning squeak + a station-ident whistle (her jingle replaces it at home)."
+    },
+    {
+      "id": "bell_found",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/bell_found_01.wav",
+        "Assets/_Project/Audio/SFX/bell_found_02.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02"
+      ],
+      "sha256": [
+        "496f52edb1b1406099b8f99f4fd63d90ad4953d588efef90fc08a1f39c70ebf1",
+        "e718cb07f18ad2b6faf47b0612816c0c86c1c8e3bb8a33ae9d349dee7f582b2b"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bell 'got it!': a squeak locking onto a clean tone, then up a fourth."
+    },
+    {
+      "id": "bell_rotor",
+      "category": "loop_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/SFX/bell_rotor_loop.wav"
+      ],
+      "variantLabels": [
+        "bell_rotor"
+      ],
+      "sha256": [
+        "92da0cc7b2c3b94ffc113299fea5a1e5c3d9dedc9eb8c26cb197b19225c4fb0b"
+      ],
+      "volumeMin": 0.3,
+      "volumeMax": 0.3,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 6000.0,
+      "hfMaxDb": -40.0,
+      "tonal": false,
+      "notes": "Bell's walking effort: soft clockwork tick-tock of her legs + spring whirr + creak, 4 s seamless."
+    },
+    {
+      "id": "bell_tape_slot",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/bell_tape_slot.wav"
+      ],
+      "variantLabels": [
+        "bell_tape_slot"
+      ],
+      "sha256": [
+        "8bee6329bdd63f59a75bebfe83c2e4d5be49ed2eabb3c86cad24d2df07467d24"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "BellCued.TapeSlotted: the tape slides into her slot, clacks home and the capstan motor catches."
+    },
+    {
+      "id": "bell_needle_sweep",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/bell_needle_sweep.wav"
+      ],
+      "variantLabels": [
+        "bell_needle_sweep"
+      ],
+      "sha256": [
+        "b4ff8e93e4874f6741db3af3b67a574683e4c4c6cb97c7c72ed3ccc8186b265d"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "BellCued.NeedleSwept: lamp hum warms, the needle sweeps up the band past three faint stations."
+    },
+    {
+      "id": "radio_dial_click",
+      "category": "tick_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/radio_dial_click.wav"
+      ],
+      "variantLabels": [
+        "radio_dial_click"
+      ],
+      "sha256": [
+        "883b694bcaad0c039fc1bb271c1bae66125094f3b315c4424bd2a23b99779fb8"
+      ],
+      "volumeMin": 0.7,
+      "volumeMax": 0.7,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -28.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "One detent of Bell's radio dial (2D, at the dial)."
+    },
+    {
+      "id": "cassette_pickup",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/cassette_pickup.wav"
+      ],
+      "variantLabels": [
+        "cassette_pickup"
+      ],
+      "sha256": [
+        "c653c60f1430ff61aef3ca8a02d77efbb1bdad6ae75028699193efefa51690fc"
+      ],
+      "volumeMin": 0.7,
+      "volumeMax": 0.7,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "Collecting a cassette: plastic clack + reels spinning up + a soft D6 counter tick."
+    },
+    {
+      "id": "crew_log_found",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/crew_log_found.wav"
+      ],
+      "variantLabels": [
+        "crew_log_found"
+      ],
+      "sha256": [
+        "e88aff4ec4db0156625709cbffb266baaef934c7709db3929f9a63ff00c92cd8"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "Opening a crew log cache: tin tink + hinge creak + paper rustle."
+    },
+    {
+      "id": "bell_signal_pick",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/bell_signal_pick.wav"
+      ],
+      "variantLabels": [
+        "bell_signal_pick"
+      ],
+      "sha256": [
+        "b293ce41bed8742b45cc47cfa91d7472fa3375f94ebe00d21c0ab1fa92a916c1"
+      ],
+      "volumeMin": 0.35,
+      "volumeMax": 0.35,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bell's signal pillar appearing: warm, very soft A4/D5/F#5 shimmer (played distant)."
+    },
+    {
+      "id": "bell_signal_found",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/bell_signal_found.wav"
+      ],
+      "variantLabels": [
+        "bell_signal_found"
+      ],
+      "sha256": [
+        "e6872308f21ba981584e21dafac23a505a7565851301511cb796a2ba1939e835"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Bell's signal found: resolved A5 -> D6 chime."
+    },
+    {
+      "id": "canyon_whisper",
+      "category": "ambience_2d",
+      "milestone": "M3",
+      "bus": "Ambience",
+      "spatial": false,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/Ambience/canyon_whisper_loop.wav"
+      ],
+      "variantLabels": [
+        "canyon_whisper"
+      ],
+      "sha256": [
+        "bd36adc99a32ed3acbd204facfb2141ad423e47d496e9711d54e761993d4c96c"
+      ],
+      "volumeMin": 0.8,
+      "volumeMax": 0.8,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -30.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "Whispering Canyon bed: breathy air with a slowly moving 'vowel', 16 s seamless stereo."
+    },
+    {
+      "id": "canyon_trough",
+      "category": "ambience_2d",
+      "milestone": "M3",
+      "bus": "Ambience",
+      "spatial": false,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/Ambience/canyon_trough_loop.wav"
+      ],
+      "variantLabels": [
+        "canyon_trough"
+      ],
+      "sha256": [
+        "01c61195582823377ea4fb2ccf4db6a9658551bebca7d44af1ab57eadd8f85fc"
+      ],
+      "volumeMin": 0.7,
+      "volumeMax": 0.7,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -30.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "The chasm trough's deeper, darker bed: low rumble + hollow 180 Hz + D2, 16 s seamless."
+    },
+    {
       "id": "upgrade_arpeggio",
       "category": "stinger_2d",
       "milestone": "M2",

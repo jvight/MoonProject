@@ -41,7 +41,9 @@ namespace MoonProject.UI
 
             MemoryCard = Require<VisualElement>("memory-card");
             MemoryCardShadow = Require<VisualElement>("memory-card-shadow");
+            MemoryCardIcon = Require<VisualElement>("memory-card-icon");
             MemoryCardCaption = Require<Label>("memory-card-caption");
+            MemoryCardCount = Require<Label>("memory-card-count");
             MemoryCardName = Require<Label>("memory-card-name");
             MemoryCardText = Require<Label>("memory-card-text");
             MemoryCardGlyph = Require<VisualElement>("memory-card-glyph");
@@ -63,6 +65,16 @@ namespace MoonProject.UI
             TowerCostIcon = Require<VisualElement>("tower-cost-icon");
             TowerCost = Require<Label>("tower-cost");
 
+            Ticker = Require<VisualElement>("ticker");
+            TickerLamp = Require<VisualElement>("ticker-lamp");
+            TickerText = Require<Label>("ticker-text");
+
+            DialReadout = Require<VisualElement>("dial-readout");
+            DialReadoutShadow = Require<VisualElement>("dial-readout-shadow");
+            DialDetents = Require<VisualElement>("dial-detents");
+            DialStation = Require<Label>("dial-station");
+            DialTape = Require<Label>("dial-tape");
+
             Pause = Require<VisualElement>("pause");
             PauseVeil = Require<VisualElement>("pause-veil");
             PauseStack = Require<VisualElement>("pause-stack");
@@ -70,6 +82,9 @@ namespace MoonProject.UI
             PauseMainShadow = Require<VisualElement>("pause-main-shadow");
             PauseScrapIcon = Require<VisualElement>("pause-scrap-icon");
             PauseScrapCount = Require<Label>("pause-scrap-count");
+            PauseCassettes = Require<VisualElement>("pause-cassettes");
+            PauseCassetteIcon = Require<VisualElement>("pause-cassette-icon");
+            PauseCassettesCount = Require<Label>("pause-cassettes-count");
             PageMain = Require<VisualElement>("page-main");
             PageQuit = Require<VisualElement>("page-quit");
             ResumeButton = Require<Button>("button-resume");
@@ -138,7 +153,11 @@ namespace MoonProject.UI
 
         public VisualElement MemoryCardShadow { get; }
 
+        public VisualElement MemoryCardIcon { get; }
+
         public Label MemoryCardCaption { get; }
+
+        public Label MemoryCardCount { get; }
 
         public Label MemoryCardName { get; }
 
@@ -178,6 +197,22 @@ namespace MoonProject.UI
 
         public Label TowerCost { get; }
 
+        public VisualElement Ticker { get; }
+
+        public VisualElement TickerLamp { get; }
+
+        public Label TickerText { get; }
+
+        public VisualElement DialReadout { get; }
+
+        public VisualElement DialReadoutShadow { get; }
+
+        public VisualElement DialDetents { get; }
+
+        public Label DialStation { get; }
+
+        public Label DialTape { get; }
+
         public VisualElement Pause { get; }
 
         public VisualElement PauseVeil { get; }
@@ -191,6 +226,12 @@ namespace MoonProject.UI
         public VisualElement PauseScrapIcon { get; }
 
         public Label PauseScrapCount { get; }
+
+        public VisualElement PauseCassettes { get; }
+
+        public VisualElement PauseCassetteIcon { get; }
+
+        public Label PauseCassettesCount { get; }
 
         public VisualElement PageMain { get; }
 

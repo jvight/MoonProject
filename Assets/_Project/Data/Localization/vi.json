@@ -397,6 +397,34 @@
         {
             "key": "ui.station.workshop",
             "text": "Bàn thợ của Kenji"
+        },
+        {
+            "key": "ticker.radio.now_playing",
+            "text": "Đang phát — {0}"
+        },
+        {
+            "key": "track.01_earthrise_static.title",
+            "text": "Rè sóng lúc Trái Đất mọc"
+        },
+        {
+            "key": "track.02_sevens_lullaby.title",
+            "text": "Khúc ru của 07"
+        },
+        {
+            "key": "track.03_dust_on_the_dial.title",
+            "text": "Bụi trên mặt số"
+        },
+        {
+            "key": "track.04_long_way_home.title",
+            "text": "Đường về xa"
+        },
+        {
+            "key": "track.05_low_orbit_tea.title",
+            "text": "Trà trên quỹ đạo thấp"
+        },
+        {
+            "key": "track.06_signal_through_craters.title",
+            "text": "Tín hiệu qua miệng hố"
         }
     ]
 }

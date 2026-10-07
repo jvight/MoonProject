@@ -35,8 +35,7 @@ namespace MoonProject.Audio.PlayModeTests
             yield return new WaitForSecondsRealtime(1f);
 
             Assert.IsFalse(_rig.Radio.IsOn);
-            Assert.IsFalse(Deck("DeckA").isPlaying, "no music before 07 wakes, not even silently");
-            Assert.IsFalse(Deck("DeckB").isPlaying);
+            Assert.IsFalse(_rig.AnyDeckPlaying(), "no music before 07 wakes, not even silently");
             Assert.IsFalse(Deck("Static").isPlaying);
             Assert.IsFalse(Deck("TuningSwish").isPlaying);
             Assert.AreEqual(0f, _rig.RoverAudio.HumSource.volume, "07 sleeps: no motor hum");
@@ -67,7 +66,7 @@ namespace MoonProject.Audio.PlayModeTests
 
             Assert.IsTrue(_rig.Radio.MusicStarted);
             yield return new WaitForSecondsRealtime(5f);
-            float music = Mathf.Max(Deck("DeckA").volume, Deck("DeckB").volume);
+            float music = _rig.LoudestDeck().volume;
             Assert.Greater(music, 0.3f, "the music has resolved");
             Assert.Less(Deck("Static").volume, crackle * 0.5f, "the wake-up static melted away");
         }

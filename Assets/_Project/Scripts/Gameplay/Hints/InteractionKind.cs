@@ -29,5 +29,8 @@ namespace MoonProject.Gameplay
 
         /// <summary>Next to a broken friend with every part gathered: hold to repair it.</summary>
         Repair = 7,
+
+        /// <summary>Parked in front of Bell's dial (Bell home, dial unlocked): turn it one detent.</summary>
+        Tune = 8,
     }
 }

@@ -1,9 +1,11 @@
+using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
+using MoonProject.Core;
 using MoonProject.Gameplay;
 using MoonProject.UI.Editor;
 
@@ -40,7 +42,7 @@ namespace MoonProject.UI.Tests
         public void EnglishIsThePrimaryTable_AndVietnameseShips()
         {
             Assert.AreEqual("en", _english.Language);
-            Assert.IsTrue(System.Array.Exists(_tables, table => table.Language == "vi"));
+            Assert.IsTrue(Array.Exists(_tables, table => table.Language == "vi"));
         }
 
         [Test]
@@ -99,10 +101,22 @@ namespace MoonProject.UI.Tests
             foreach (string key in new[]
                      {
                          UiKeys.CardCaption, UiKeys.CardClose, UiKeys.TowerLevel, UiKeys.TowerHold, UiKeys.TowerNeed,
-                         UiKeys.TowerPurchased,
+                         UiKeys.TowerPurchased, UiKeys.LogCaption, UiKeys.CrewLogCaption, UiKeys.LinerCaption,
+                         UiKeys.TapeCount, UiKeys.PauseCassettes,
                      })
             {
                 Assert.IsTrue(_english.TryGet(key, out _), key);
+            }
+
+            foreach (RadioChannel channel in Enum.GetValues(typeof(RadioChannel)))
+            {
+                Assert.IsTrue(_english.TryGet(UiKeys.RadioChannelName(channel), out _),
+                    UiKeys.RadioChannelName(channel));
+            }
+
+            foreach (UpgradeStationKind station in Enum.GetValues(typeof(UpgradeStationKind)))
+            {
+                Assert.IsTrue(_english.TryGet(UiKeys.StationName(station), out _), UiKeys.StationName(station));
             }
 
             foreach (PromptEntry entry in new PromptSettings().Entries)

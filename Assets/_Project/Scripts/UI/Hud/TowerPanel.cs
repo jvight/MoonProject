@@ -8,17 +8,22 @@ using MoonProject.Gameplay;
 namespace MoonProject.UI
 {
     /// <summary>
-    /// While 07 is parked on the radio tower's pad and a level is left to buy, a compact panel offers it: the next
-    /// level, what it does in plain words (the localized "upgrade.&lt;id&gt;.&lt;level&gt;.*" strings), its cost (the
-    /// balance stays in view in the pinned scrap chip; a shortfall is said in words), and a ring that fills while the
-    /// confirm button is held (<see cref="HoldToConfirm"/>: no accidental purchases). Buying goes through
-    /// <see cref="IUpgradeShop"/>; the panel glows a moment, then shows the next level or bows out when all are
-    /// bought. The ring starting and completing are published as <see cref="UiCue"/>s.
+    /// While 07 is parked on an upgrade station's pad (the radio tower or Kenji's workbench) and something is left to
+    /// buy, a compact panel offers it. Its header says where 07 is ("ui.station.&lt;station&gt;", with the station's
+    /// own accent and lamp) and, for an upgrade with several levels, which level is next, or else the upgrade's name.
+    /// Below: the level's title and what it does in plain words (the localized "upgrade.&lt;id&gt;.&lt;level&gt;.*"
+    /// strings), its cost (the balance stays in view in the pinned scrap chip; a shortfall is said in words), and a
+    /// ring that fills while the confirm button is held (<see cref="HoldToConfirm"/>: no accidental purchases). Buying
+    /// goes through <see cref="IUpgradeShop"/>; the panel glows a moment, then shows the next level or bows out when
+    /// all are bought. The ring starting and completing are published as <see cref="UiCue"/>s.
     /// </summary>
     internal sealed class TowerPanel
     {
         public const string CelebrateClass = "tower-panel--celebrate";
         public const string ShortClass = "cost--short";
+
+        private static readonly UpgradeStationKind[] Stations =
+            (UpgradeStationKind[])Enum.GetValues(typeof(UpgradeStationKind));
 
         private readonly TowerPanelSettings _settings;
         private readonly ILocalization _localization;
@@ -58,6 +63,20 @@ namespace MoonProject.UI
         }
 
         public bool IsVisible => !_reveal.IsHidden;
+
+        /// <summary>The panel's look at <paramref name="station"/> (USS): its accent colour and lamp.</summary>
+        public static string StationClass(UpgradeStationKind station)
+        {
+            switch (station)
+            {
+                case UpgradeStationKind.RadioTower:
+                    return "tower-panel--radio-tower";
+                case UpgradeStationKind.Workshop:
+                    return "tower-panel--workshop";
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(station), station, "This station has no look.");
+            }
+        }
 
         /// <summary>True while the panel glows after a purchase.</summary>
         public bool IsCelebrating => _celebrateTimer > 0f;
@@ -156,6 +175,14 @@ namespace MoonProject.UI
             _shownLevel = -1;
         }
 
+        private void DressFor(UpgradeStationKind station)
+        {
+            for (int i = 0; i < Stations.Length; i++)
+            {
+                _layout.TowerPanel.EnableInClassList(StationClass(Stations[i]), Stations[i] == station);
+            }
+        }
+
         private void Refresh(UpgradeDefinition upgrade, UpgradeOffer offer)
         {
             int balance = _wallet.Balance;
@@ -167,8 +194,11 @@ namespace MoonProject.UI
             if (upgrade != _shownUpgrade || offer.CurrentLevel != _shownLevel)
             {
                 int level = offer.CurrentLevel + 1;
-                _layout.TowerName.text = _localization.Get(UiKeys.UpgradeName(upgrade.Id));
-                _layout.TowerLevel.text = string.Format(_localization.Get(UiKeys.TowerLevel), level, offer.MaxLevel);
+                DressFor(upgrade.Station);
+                _layout.TowerName.text = _localization.Get(UiKeys.StationName(upgrade.Station));
+                _layout.TowerLevel.text = offer.MaxLevel > 1
+                    ? string.Format(_localization.Get(UiKeys.TowerLevel), level, offer.MaxLevel)
+                    : _localization.Get(UiKeys.UpgradeName(upgrade.Id));
                 _layout.TowerTitle.text = _localization.Get(UiKeys.UpgradeTitle(upgrade.Id, level));
                 _layout.TowerDescription.text = _localization.Get(UiKeys.UpgradeEffect(upgrade.Id, level));
                 _layout.TowerCost.text = _numbers.Get(offer.NextCost);

@@ -12,7 +12,8 @@ using Object = UnityEngine.Object;
 namespace MoonProject.Gameplay.PlayModeTests
 {
     /// <summary>
-    /// The feel checklist's last line: a busy steady state of every gameplay system allocates nothing.
+    /// The feel checklist's last line: a busy steady state of every gameplay system allocates nothing (Tilly and Bell
+    /// awake at home, Bell swaying and pointing her signal, cassettes, caches and her tape rack ticking along).
     /// </summary>
     public sealed class GameplayAllocationSessions : InputTestFixture
     {
@@ -44,7 +45,11 @@ namespace MoonProject.Gameplay.PlayModeTests
             GameplaySystem gameplay = _fixture.Gameplay;
             gameplay.Friends.Restore(new FriendsSaveData
             {
-                friends = new[] { new FriendSaveData { id = "tilly", state = (int)FriendState.Awake } },
+                friends = new[]
+                {
+                    new FriendSaveData { id = "tilly", state = (int)FriendState.Awake },
+                    new FriendSaveData { id = "bell", state = (int)FriendState.Awake, welcomed = true },
+                },
             });
             Relic duck = gameplay.Relics.Find("rubber_duck");
             duck.BeginLift();
@@ -65,12 +70,14 @@ namespace MoonProject.Gameplay.PlayModeTests
             Release(_keyboard.spaceKey);
             yield return new WaitForSeconds(3f);
             Assert.Greater(_fixture.Events.RelicAnswered.Count, 0, "pillars are standing");
+            Assert.AreEqual(1, _fixture.Events.BellSignalPicked.Count, "Bell is home and listening");
 
             var updates = new List<Action>();
             foreach (MonoBehaviour part in new MonoBehaviour[]
                      {
                          gameplay.Relics, gameplay.Scrap, gameplay.Sonar, gameplay.Excavation, gameplay.Tether,
-                         gameplay.Home, gameplay.Tower, gameplay.Friends,
+                         gameplay.Home, gameplay.Tower, gameplay.Friends, gameplay.Cassettes, gameplay.Logs,
+                         gameplay.Signals, gameplay.Shelf,
                      })
             {
                 updates.Add(Method(part, "Update"));
@@ -90,8 +97,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             Release(_mouse.rightButton);
             Assert.AreEqual(0, silent, "a hint (reel) is always available while towing");
             Assert.AreEqual(0L, allocated,
-                "bytes allocated by 300 frames of relics, scrap, sonar, excavation, tether, home, tower, friends " +
-                "and hints");
+                "bytes allocated by 300 frames of relics, scrap, sonar, excavation, tether, home, tower, friends, " +
+                "cassettes, caches, Bell's signals, her rack and hints");
         }
 
         /// <summary>

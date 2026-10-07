@@ -397,6 +397,34 @@
         {
             "key": "ui.station.workshop",
             "text": "Kenji's Workbench"
+        },
+        {
+            "key": "ticker.radio.now_playing",
+            "text": "Now playing — {0}"
+        },
+        {
+            "key": "track.01_earthrise_static.title",
+            "text": "Earthrise Static"
+        },
+        {
+            "key": "track.02_sevens_lullaby.title",
+            "text": "Seven's Lullaby"
+        },
+        {
+            "key": "track.03_dust_on_the_dial.title",
+            "text": "Dust on the Dial"
+        },
+        {
+            "key": "track.04_long_way_home.title",
+            "text": "Long Way Home"
+        },
+        {
+            "key": "track.05_low_orbit_tea.title",
+            "text": "Low Orbit Tea"
+        },
+        {
+            "key": "track.06_signal_through_craters.title",
+            "text": "Signal Through Craters"
         }
     ]
 }

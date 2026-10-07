@@ -34,28 +34,22 @@ namespace MoonProject.Audio.PlayModeTests
         [UnityTest]
         public IEnumerator Radio_TunesToTheOtherTrack_WhenOneEnds()
         {
-            AudioClip first = LoudestDeckClip();
+            RadioTrack first = _rig.Radio.CurrentTrack;
             AudioSource swish = AudioTestRig.FindChildSource(_rig.Radio.transform, "TuningSwish");
             Assert.IsNotNull(first);
             bool swishPlayed = false;
-            AudioClip next = first;
+            RadioTrack next = first;
             float deadline = Time.realtimeSinceStartup + AudioTestRig.ShortTrackSeconds + 4f;
-            while (next == first && Time.realtimeSinceStartup < deadline)
+            while ((next == first || next == null) && Time.realtimeSinceStartup < deadline)
             {
                 swishPlayed |= swish.isPlaying;
                 yield return null;
-                next = LoudestDeckClip();
+                next = _rig.Radio.CurrentTrack;
             }
 
+            Assert.IsNotNull(next);
             Assert.AreNotSame(first, next, "the station moves on to the other track (no immediate repeat)");
             Assert.IsTrue(swishPlayed, "the dial-tuning swish plays during the change");
-        }
-
-        private AudioClip LoudestDeckClip()
-        {
-            AudioSource a = AudioTestRig.FindChildSource(_rig.Radio.transform, "DeckA");
-            AudioSource b = AudioTestRig.FindChildSource(_rig.Radio.transform, "DeckB");
-            return (a.volume >= b.volume ? a : b).clip;
         }
     }
 }

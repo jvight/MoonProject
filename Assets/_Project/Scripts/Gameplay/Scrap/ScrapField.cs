@@ -7,8 +7,9 @@ using MoonProject.Core.Events;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// The glowing scrap scattered over the basin. Every resting piece carries a twinkling glint that reads from far
-    /// away (see <see cref="ScrapGlints"/>). Pieces near 07 bob and turn; within the magnet radius they lift
+    /// The glowing scrap scattered over the basin (<see cref="ScrapFieldPlanner"/>) and trailing up to Whispering
+    /// Canyon's lip (<see cref="ScrapTrailPlanner"/>). Every resting piece carries a twinkling glint that reads from
+    /// far away (see <see cref="ScrapGlints"/>). Pieces near 07 bob and turn; within the magnet radius they lift
     /// off and spiral into the cargo socket, where each one flashes, adds its value to the wallet and publishes
     /// <see cref="ScrapCollected"/> with the climbing melody step. 07 glances at the nearest piece. Every piece is
     /// instantiated once at initialisation; the frame loop walks plain arrays and allocates nothing.
@@ -78,6 +79,8 @@ namespace MoonProject.Gameplay
 
         public ScrapTuning Tuning => _tuning;
 
+        public ScrapCatalog Catalog => _catalog;
+
         /// <summary>The horizon glints (tests read how many were drawn and how bright).</summary>
         public ScrapGlints Glints => _glints;
 
@@ -137,6 +140,16 @@ namespace MoonProject.Gameplay
 
             List<ScrapSpawn> spawns = ScrapFieldPlanner.Plan(services.Terrain, services.Layout, _tuning, sites,
                 _catalog.Variants, lander);
+            List<ScrapSpawn> trail = ScrapTrailPlanner.Plan(services.Terrain, services.Layout, services.Anchors,
+                _tuning, _catalog.Variants, out string trailProblem);
+            if (trail == null)
+            {
+                Debug.LogError($"{nameof(ScrapField)}: {trailProblem} (world anchors contract).", this);
+                enabled = false;
+                return false;
+            }
+
+            spawns.AddRange(trail);
             Spawn(spawns);
             _glints = new ScrapGlints(transform, services.Visuals.ScrapGlint, _tuning, spawns.Count, Layers.Pickup);
             _initialized = true;

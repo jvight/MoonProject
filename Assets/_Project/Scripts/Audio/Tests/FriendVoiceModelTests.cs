@@ -96,6 +96,23 @@ namespace MoonProject.Audio.Tests
         }
 
         [Test]
+        public void FinishStitching_EndsTheStitchingWithoutABoot_UntilTheRepairEnds()
+        {
+            Run(2f, FriendActivity.Repairing, 0f, out _);
+            _model.FinishStitching();
+            Run(_tuning.StitchFadeOut + 0.1f, FriendActivity.Repairing, 0f, out _);
+            Assert.IsFalse(_model.StitchAudible, "the tape went in: the beam's stitching fades");
+            Assert.IsFalse(_model.TakeBoot(), "her own cue stands in for the shared boot");
+
+            Run(1f, FriendActivity.Repairing, 0.3f, out _);
+            Assert.IsFalse(_model.TakeBoot(), "not even when her legs start moving");
+
+            Run(1f, FriendActivity.Home, 0f, out _);
+            Run(0.6f, FriendActivity.Repairing, 0f, out _);
+            Assert.IsTrue(_model.StitchAudible, "a later repair stitches again");
+        }
+
+        [Test]
         public void ASecondRepair_StitchesFromTheStartAgain()
         {
             Run(4f, FriendActivity.Repairing, 0f, out _);

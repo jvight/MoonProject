@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
+using MoonProject.Core;
 using MoonProject.Core.Events;
 
 namespace MoonProject.Audio.PlayModeTests
@@ -191,6 +192,43 @@ namespace MoonProject.Audio.PlayModeTests
             Assert.AreEqual("upgrade_arpeggio", Last.clip.name);
             Assert.IsTrue(Last.isPlaying);
             Assert.AreEqual(0f, Last.spatialBlend, "a 2D stinger");
+        }
+
+        [Test]
+        public void CassetteCollected_ClicksAndSpinsWhereTheTapeArrives()
+        {
+            var socket = new Vector3(3f, 1.2f, -2f);
+            _rig.Events.Publish(new CassetteCollected("slow_orbit", socket, 2, 3));
+            AssertLastPlayed("cassette_pickup", socket);
+        }
+
+        [Test]
+        public void CrewLogFound_OpensTheTinAtTheCache()
+        {
+            var cache = new Vector3(40f, 6f, 380f);
+            _rig.Events.Publish(new CrewLogFound("ro_1", cache));
+            AssertLastPlayed("crew_log_found", cache);
+        }
+
+        [Test]
+        public void BellSignalPicked_ShimmersSoftlyFromThePillar_MostlyFlatSoEvenAFarOneIsHeard()
+        {
+            var pillar = new Vector3(260f, 0f, -180f);
+            _rig.Events.Publish(new BellSignalPicked(BellSignalTarget.Cassette, pillar));
+            Assert.AreEqual("bell_signal_pick", _rig.Director.LastClip.name);
+            AudioSource shimmer = _rig.Gameplay.SignalSource;
+            Assert.IsTrue(shimmer.isPlaying);
+            Assert.Less(Vector3.Distance(pillar, shimmer.transform.position), 1e-4f, "a hint of its direction");
+            Assert.Greater(shimmer.spatialBlend, 0f);
+            Assert.Less(shimmer.spatialBlend, 0.5f, "mostly flat: distant, not lost");
+        }
+
+        [Test]
+        public void BellSignalFound_ChimesWhereTheThingWas()
+        {
+            var found = new Vector3(-12f, 0f, 30f);
+            _rig.Events.Publish(new BellSignalFound(BellSignalTarget.CrewLog, found));
+            AssertLastPlayed("bell_signal_found", found);
         }
     }
 }

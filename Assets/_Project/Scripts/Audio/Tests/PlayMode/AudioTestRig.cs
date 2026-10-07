@@ -18,7 +18,8 @@ namespace MoonProject.Audio.PlayModeTests
     /// <summary>
     /// The real Audio domain (library and tuning assets from Assets/_Project/Data/Audio, built by the Audio builders)
     /// booted through GameBootstrap behind a fake rover, wired the way AudioSceneContributor wires Main.unity.
-    /// The radio gets a test playlist of short generated tones so track changes happen within seconds.
+    /// The radio gets a test playlist and two test tapes of generated tones (short ones change track within
+    /// seconds).
     /// </summary>
     public sealed class AudioTestRig : IDisposable
     {
@@ -27,6 +28,11 @@ namespace MoonProject.Audio.PlayModeTests
 
         /// <summary>Long tracks: no track change (and its crossfade static) during a test.</summary>
         public const int LongTrackSeconds = 30;
+
+        /// <summary>Cassette ids of the two test tapes (a third exists in the program but has no track).</summary>
+        public const string TapeA = "after_dark_1";
+
+        public const string TapeB = "slow_orbit";
 
         private const string DataFolder = "Assets/_Project/Data/Audio/";
         private const int SampleRate = 48000;
@@ -45,6 +51,12 @@ namespace MoonProject.Audio.PlayModeTests
                 new RadioTrack("t1", "Tone One", Track(Tone("t1", 293.66f, trackSeconds)), 76f),
                 new RadioTrack("t2", "Tone Two", Track(Tone("t2", 440f, trackSeconds)), 80f),
             });
+            var tapes = Track(ScriptableObject.CreateInstance<RadioTapeLibrary>());
+            tapes.Populate(new[]
+            {
+                new RadioTrack(TapeA, "Tape A", Track(Tone(TapeA, 369.99f, trackSeconds)), 84f, TapeA),
+                new RadioTrack(TapeB, "Tape B", Track(Tone(TapeB, 329.63f, trackSeconds)), 64f, TapeB),
+            });
 
             GameObject audioRoot = Track(new GameObject("[Audio]"));
             audioRoot.SetActive(false);
@@ -56,14 +68,16 @@ namespace MoonProject.Audio.PlayModeTests
             Jump = Child(audioRoot, "JumpAudio").AddComponent<JumpAudio>();
             Radio = Child(audioRoot, "RadioStation").AddComponent<RadioStation>();
             Ambience = Child(audioRoot, "AmbienceBed").AddComponent<AmbienceBed>();
+            Canyon = Child(audioRoot, "CanyonAmbience").AddComponent<CanyonAmbience>();
+            Canyon.Wire(Load<CanyonAudioTuning>("CanyonAudioTuning.asset"));
             RoverAudio.Wire(Load<RoverAudioTuning>("RoverAudioTuning.asset"));
             Gameplay.Wire(Load<GameplayAudioTuning>("GameplayAudioTuning.asset"));
             Ui.Wire(Load<UiAudioTuning>("UiAudioTuning.asset"));
             Friends.Wire(Load<FriendAudioTuning>("FriendAudioTuning.asset"));
             Jump.Wire(Load<JumpAudioTuning>("JumpAudioTuning.asset"));
-            Radio.Wire(Load<RadioTuning>("RadioTuning.asset"), playlist);
+            Radio.Wire(Load<RadioTuning>("RadioTuning.asset"), playlist, tapes);
             Director.Wire(Load<AudioLibrary>("AudioLibrary.asset"), Load<AudioMixTuning>("AudioMixTuning.asset"),
-                RoverAudio, Jump, Gameplay, Friends, Ui, Radio, Ambience);
+                RoverAudio, Jump, Gameplay, Friends, Ui, Radio, Ambience, Canyon);
             audioRoot.SetActive(true);
 
             Bootstrap = Track(BootstrapHarness.Create(controls, Rover, Director));
@@ -87,9 +101,19 @@ namespace MoonProject.Audio.PlayModeTests
 
         public AmbienceBed Ambience { get; }
 
+        public CanyonAmbience Canyon { get; }
+
         public GameBootstrap Bootstrap { get; }
 
         public EventBus Events => Bootstrap.Context.Events;
+
+        public FakeRadioProgram Program => Rover.Program;
+
+        /// <summary>Publishes <see cref="RadioProgramChanged"/> after the test changed <see cref="Program"/>.</summary>
+        public void ProgramChanged()
+        {
+            Events.Publish(new RadioProgramChanged());
+        }
 
         /// <summary>Publishes <see cref="RoverAwoke"/> (07 starts waking: the radio and motor come on).</summary>
         public void Wake(bool byPlayer)
@@ -116,6 +140,35 @@ namespace MoonProject.Audio.PlayModeTests
             }
 
             return null;
+        }
+
+        /// <summary>The radio's loudest music deck (the live one, except mid-change).</summary>
+        public AudioSource LoudestDeck()
+        {
+            AudioSource loudest = Radio.GetDeck(0);
+            for (int i = 1; i < RadioDeckMixer.DeckCount; i++)
+            {
+                if (Radio.GetDeck(i).volume > loudest.volume)
+                {
+                    loudest = Radio.GetDeck(i);
+                }
+            }
+
+            return loudest;
+        }
+
+        /// <summary>True while any of the radio's music decks plays (even silently).</summary>
+        public bool AnyDeckPlaying()
+        {
+            for (int i = 0; i < RadioDeckMixer.DeckCount; i++)
+            {
+                if (Radio.GetDeck(i).isPlaying)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         public static AudioSource FindChildSource(Transform parent, string name)

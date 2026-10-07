@@ -15,6 +15,7 @@ MonoBehaviour:
   _id: tilly
   _brokenPrefab: {fileID: 1138308237545249452, guid: a4fed2a9b7a0fa64b96976a51323ec6d, type: 3}
   _repairedPrefab: {fileID: 8140014391933972345, guid: 8d97cd1cc29ff3f4d894989c064b2f23, type: 3}
+  _body: 0
   _parts:
   - _id: rotor
     _prefab: {fileID: 6131441325819252, guid: a9aca548400a793409e3b0a31e293d5e, type: 3}
@@ -22,10 +23,14 @@ MonoBehaviour:
     _prefab: {fileID: 4612956121498811221, guid: c189b7070da470647af409c4fe791451, type: 3}
   - _id: cell
     _prefab: {fileID: 1245098529384217348, guid: e6a7d96fc117cd541ae6ee33eeaab83c, type: 3}
+  _items: []
+  _home: 0
   _homeSocket: FriendSocket_tilly
+  _announcesHomecoming: 0
   _abilityId: spotter
   _repairDuration: 3.5
   _chirpSet: tilly
+  _siteRule: 0
   _placement:
     _seed: 41
     _siteDistance: {x: 60, y: 110}
@@ -35,3 +40,11 @@ MonoBehaviour:
     _craterRadius: 10
     _visibleFromBase: 1
     _partDistance: {x: 30, y: 60}
+  _anchors:
+    _site:
+      _anchorId: 
+      _offset: {x: 0, y: 0}
+    _partAnchorPrefix: 
+    _lineStart: 
+    _lineSpacing: 0
+    _exit: 
