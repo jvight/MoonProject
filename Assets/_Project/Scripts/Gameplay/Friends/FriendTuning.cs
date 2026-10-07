@@ -4,8 +4,8 @@ namespace MoonProject.Gameplay
 {
     /// <summary>
     /// How every friend behaves: site and part placement rules, the part pickups, the repair and boot-up, flying,
-    /// following, home life, greetings and the spotter ability. Created by the Gameplay/Tuning builder; runtime code
-    /// only reads it.
+    /// following, walking home unseen, home life, greetings and the spotter ability. Created by the Gameplay/Tuning
+    /// builder; runtime code only reads it.
     /// </summary>
     public sealed class FriendTuning : ScriptableObject
     {
@@ -222,6 +222,19 @@ namespace MoonProject.Gameplay
         [Tooltip("Metres in front of the shelf it hovers to inspect it.")]
         [Range(0.3f, 5f)] [SerializeField] private float _inspectDistance = 1.6f;
 
+        [Header("Walking home on its own")]
+        [Tooltip("Walking speed (m/s) of a friend making its own way home (Bell's waddle).")]
+        [Range(0.1f, 5f)] [SerializeField] private float _walkSpeed = 1.1f;
+
+        [Tooltip("Within this many metres of a waypoint on its way it heads for the next one.")]
+        [Range(0.1f, 10f)] [SerializeField] private float _walkWaypointReach = 1.5f;
+
+        [Tooltip("It is set down at home only while at least this far (m) from 07, out of view, its home too.")]
+        [Range(10f, 300f)] [SerializeField] private float _unseenDistance = 60f;
+
+        [Tooltip("Radius (m) of the sphere standing on the ground (its whole body) that must be off screen.")]
+        [Range(0.1f, 5f)] [SerializeField] private float _unseenMargin = 1.2f;
+
         [Header("Spotter")]
         [Tooltip("Undiscovered relics, parts and scrap within this many metres of 07 catch its eye.")]
         [Range(5f, 100f)] [SerializeField] private float _spotRadius = 40f;
@@ -316,6 +329,10 @@ namespace MoonProject.Gameplay
         public float FlitHop => _flitHop;
         public float InspectDuration => _inspectDuration;
         public float InspectDistance => _inspectDistance;
+        public float WalkSpeed => _walkSpeed;
+        public float WalkWaypointReach => _walkWaypointReach;
+        public float UnseenDistance => _unseenDistance;
+        public float UnseenMargin => _unseenMargin;
         public float SpotRadius => _spotRadius;
         public float SpotHover => _spotHover;
         public float SpotDuration => _spotDuration;
