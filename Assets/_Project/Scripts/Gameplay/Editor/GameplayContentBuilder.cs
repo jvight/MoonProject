@@ -95,9 +95,10 @@ namespace MoonProject.Gameplay.Editor
         /// Tilly, Ines's survey drone (docs/features/M3-02-friends-tilly.md): she lies in a shallow crater 60-110 m
         /// east of home, in view from the base edge, her rotor, lens and cell scattered 30-60 m around her; repaired,
         /// she perches on the lander and spots for 07. Bell, Ro's radio cabinet on legs (docs/features/M3-05): she
-        /// leans against the back wall of the canyon terminus (2 m in from its anchor, her back 1 m behind her), her
-        /// knob, cone and valve in the alcoves (or along the way in), and Lumen After Dark, Vol. 1 is the fourth thing
-        /// she needs; repaired she walks home to her corner by the radio tower and brings the radio dial. Their texts
+        /// leans against the back wall of the canyon terminus (4.85 m in from its anchor, where her back, 1.03 m
+        /// behind her root, meets the sheer wall), her knob, cone and valve in the three alcoves (or along the way in),
+        /// and Lumen After Dark, Vol. 1 is the fourth thing she needs; repaired she walks home to her corner by the
+        /// radio tower and brings the radio dial. Their texts
         /// live in the localization tables (friend.&lt;id&gt;.*).
         /// </summary>
         private static void BuildFriends()
@@ -122,7 +123,7 @@ namespace MoonProject.Gameplay.Editor
                     new FriendPart("valve", LoadArt(GameplayAssetPaths.FriendPrefab("Part_BellValve"))),
                 }, new[] { "after_dark_1" }, FriendHome.RadioTower, "BellCorner", true,
                 FriendDefinition.RadioDialAbility, 4f, "bell",
-                new FriendAnchorPlacement(new AnchorSpot(WorldAnchorIds.CanyonTerminus, new Vector2(0f, 2f)),
+                new FriendAnchorPlacement(new AnchorSpot(WorldAnchorIds.CanyonTerminus, new Vector2(0f, 4.85f)),
                     WorldAnchorIds.CanyonAlcovePrefix, WorldAnchorIds.CanyonLanding, 40f, WorldAnchorIds.CanyonExit));
             var friends = new[]
             {
@@ -156,7 +157,7 @@ namespace MoonProject.Gameplay.Editor
             CassetteDefinition[] cassettes =
             {
                 Cassette("after_dark_1", CassetteSiteRule.Anchor,
-                    new AnchorSpot(WorldAnchorIds.CanyonTerminus, new Vector2(1.3f, 0.5f)), 0, hoverJump),
+                    new AnchorSpot(WorldAnchorIds.CanyonTerminus, new Vector2(1.2f, 1.9f)), 0, hoverJump),
                 Cassette("dust_and_honey", CassetteSiteRule.BasinPlanner, noAnchor, 73, AbilityGate.Open),
                 Cassette("slow_orbit", CassetteSiteRule.Anchor, new AnchorSpot(WorldAnchorIds.CanyonLedge,
                     Vector2.zero), 0, hoverJump),
@@ -190,7 +191,7 @@ namespace MoonProject.Gameplay.Editor
         {
             var ro = ScriptableObject.CreateInstance<LogCacheDefinition>();
             ro.Populate("ro_1", LoadArt(GameplayAssetPaths.LogCache),
-                new AnchorSpot(WorldAnchorIds.CanyonTerminus, new Vector2(1.6f, 1.5f)),
+                new AnchorSpot(WorldAnchorIds.CanyonTerminus, new Vector2(1.7f, 3f)),
                 new AbilityGate(true, RoverAbility.HoverJump));
             var caches = new[]
             {

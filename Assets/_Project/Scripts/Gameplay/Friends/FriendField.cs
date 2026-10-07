@@ -455,6 +455,11 @@ namespace MoonProject.Gameplay
                 return null;
             }
 
+            if (definition.Body == FriendBodyKind.RadioCabinet)
+            {
+                site = AgainstTheWall(site);
+            }
+
             var root = new GameObject("Friend_" + definition.Id).transform;
             root.SetParent(transform, false);
             var parts = new Transform[definition.Parts.Count];
@@ -514,6 +519,33 @@ namespace MoonProject.Gameplay
             }
 
             return site;
+        }
+
+        /// <summary>
+        /// Bell lies tipped back against a wall: feel for the wall's real surface (its collider, which the low-poly
+        /// rendering follows, not the analytic height) behind her placed spot at the height of her farthest-back point
+        /// and set her down so that point just meets it, never deeper than she was placed. Nothing behind her within
+        /// reach (open ground): she stays where she was placed.
+        /// </summary>
+        private FriendSite AgainstTheWall(FriendSite site)
+        {
+            Vector3 back = -site.Facing;
+            Vector3 origin = site.Position - back * _bellTuning.WallProbe + Vector3.up * _bellTuning.WallProbeHeight;
+            if (!Physics.Raycast(origin, back, out RaycastHit wall, _bellTuning.WallProbe * 3f, Layers.DriveableMask,
+                    QueryTriggerInteraction.Ignore))
+            {
+                return site;
+            }
+
+            float reach = wall.distance - _bellTuning.BrokenBackReach - _bellTuning.WallGap;
+            if (reach >= _bellTuning.WallProbe)
+            {
+                return site;
+            }
+
+            Vector3 spot = origin + back * reach;
+            return new FriendSite(SurfaceRules.OnSurface(_terrain, spot.x, spot.z), site.Normal, site.Facing,
+                site.Parts, site.InCrater, site.Visible);
         }
 
         private DroneBody SpawnDrone(FriendDefinition definition, int index, FriendSite site, Transform root,

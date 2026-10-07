@@ -53,7 +53,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             IRadioProgram radio = _fixture.Bootstrap.Context.Get<IRadioProgram>();
             Assert.AreSame(bell, friends.DialFriend);
             WorldAnchor terminus = _fixture.World.Anchor(WorldAnchorIds.CanyonTerminus);
-            Assert.Less(Vector3.Distance(bell.Site.Position, terminus.Position + terminus.Forward * 2f), 1e-3f,
+            Assert.Less(Vector3.Distance(bell.Site.Position, terminus.Position + terminus.Forward * 4.85f), 1e-3f,
                 "against the terminus wall");
             Assert.AreEqual(-terminus.Forward, bell.Site.Facing, "facing back toward 07 arriving");
             for (int part = 0; part < 3; part++)
@@ -126,8 +126,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             var away = new Vector3(150f, 0f, -150f);
             _fixture.Rover.Place(away, 90f);
             _fixture.Rover.Aim(away + new Vector3(-6f, 3f, 0f), away + new Vector3(30f, 0f, 0f));
-            yield return null;
-            yield return null;
+            yield return new WaitForSeconds(_fixture.FriendTuning.UnseenCheckInterval + 0.1f);
             Assert.IsTrue(bell.IsHome, "out of sight and far from 07: she is home");
             Assert.Less(Vector3.Distance(bell.Position, _fixture.BellCorner.position), 1e-3f, "in her corner");
             Assert.AreEqual(0, _fixture.Events.FriendGreeted.Count, "nobody home to greet yet");

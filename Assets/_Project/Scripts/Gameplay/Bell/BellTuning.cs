@@ -32,6 +32,19 @@ namespace MoonProject.Gameplay
         [Tooltip("Wobble (degrees) while she stands up, settling as she finds her feet.")]
         [Range(0f, 20f)] [SerializeField] private float _standWobble = 5f;
 
+        [Header("Lying broken against the wall")]
+        [Tooltip("How far (m) her broken pose reaches back behind her root (art: 1.03, the open lid).")]
+        [Range(0f, 3f)] [SerializeField] private float _brokenBackReach = 1.03f;
+
+        [Tooltip("Height (m) of that farthest-back point, where the wall behind her is felt for.")]
+        [Range(0f, 3f)] [SerializeField] private float _wallProbeHeight = 1f;
+
+        [Tooltip("The wall is felt for from this many metres in front of her placed spot, out to twice as far behind.")]
+        [Range(0.5f, 10f)] [SerializeField] private float _wallProbe = 3f;
+
+        [Tooltip("Gap (m) left between her back and the wall's surface.")]
+        [Range(0f, 0.5f)] [SerializeField] private float _wallGap = 0.05f;
+
         [Header("Two-step (after her repair)")]
         [Tooltip("Seconds of her little dance before she sets off home.")]
         [Range(0.5f, 10f)] [SerializeField] private float _danceDuration = 3.2f;
@@ -254,6 +267,10 @@ namespace MoonProject.Gameplay
         public float NeedleSweep => _needleSweep;
         public float StandUp => _standUp;
         public float StandWobble => _standWobble;
+        public float BrokenBackReach => _brokenBackReach;
+        public float WallProbeHeight => _wallProbeHeight;
+        public float WallProbe => _wallProbe;
+        public float WallGap => _wallGap;
         public float DanceDuration => _danceDuration;
         public float DanceRate => _danceRate;
         public float DanceRoll => _danceRoll;
