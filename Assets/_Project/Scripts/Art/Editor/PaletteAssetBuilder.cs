@@ -8,7 +8,10 @@ namespace MoonProject.Art.Editor
 {
     /// <summary>
     /// Generates the palette textures (one flat cell per <see cref="PaletteSwatch"/>, laid out as
-    /// <see cref="Palette.Uv"/> expects) and the shared <c>M_LowPoly</c> material every low-poly mesh renders with.
+    /// <see cref="Palette.Uv"/> expects): the sRGB base map of <see cref="Palette.GetSurface"/> colours and the
+    /// linear HDR emission map of <see cref="Palette.GetGlow"/>, and the shared <c>M_LowPoly</c> material every
+    /// low-poly mesh renders with. Its _EmissionColor stays authored white (glow-off: black), so a renderer's linear
+    /// MaterialPropertyBlock multiplier of 1 shows each swatch's HDR glow as authored.
     /// </summary>
     public static class PaletteAssetBuilder
     {
@@ -16,13 +19,14 @@ namespace MoonProject.Art.Editor
         public const int CellPixels = 8;
 
         private static readonly Color32 UnusedCell = new Color32(0, 0, 0, 255);
+        private static readonly Color UnusedGlow = Color.black;
 
         /// <summary>Writes both palette textures and the shared materials (the first Art builder).</summary>
         [MoonBuilder("Art/Palette", 100)]
         public static void Build()
         {
-            Texture2D baseMap = WritePaletteTexture(ArtPaths.PaletteTexture, false);
-            Texture2D emissionMap = WritePaletteTexture(ArtPaths.PaletteEmissionTexture, true);
+            Texture2D baseMap = WriteBaseMap();
+            Texture2D emissionMap = WriteEmissionMap();
             Shader shader = LoadShader();
             GeneratedAssets.CreateOrReplace(CreateMaterial(shader, baseMap, emissionMap, false),
                 ArtPaths.LowPolyMaterial);
@@ -98,47 +102,78 @@ namespace MoonProject.Art.Editor
             return shader;
         }
 
-        /// <summary>Palette pixels, row 0 at the bottom; emission-only maps keep non-glowing swatches black.</summary>
-        public static Color32[] CreatePixels(bool emissionOnly)
+        /// <summary>Base map pixels (sRGB surface colours), row 0 at the bottom; unused cells are black.</summary>
+        public static Color32[] CreateBasePixels()
         {
-            int width = Palette.Columns * CellPixels;
-            int height = Palette.Rows * CellPixels;
-            var pixels = new Color32[width * height];
-            for (int y = 0; y < height; y++)
+            var pixels = new Color32[Palette.Columns * CellPixels * Palette.Rows * CellPixels];
+            for (int i = 0; i < pixels.Length; i++)
             {
-                for (int x = 0; x < width; x++)
-                {
-                    int index = (y / CellPixels) * Palette.Columns + x / CellPixels;
-                    Color32 colour = UnusedCell;
-                    if (index < Palette.Count)
-                    {
-                        var swatch = (PaletteSwatch)index;
-                        colour = emissionOnly ? Palette.GetEmission(swatch) : Palette.Get(swatch);
-                    }
-
-                    pixels[y * width + x] = colour;
-                }
+                int index = CellOf(i);
+                pixels[i] = index < Palette.Count ? Palette.GetSurface((PaletteSwatch)index) : UnusedCell;
             }
 
             return pixels;
         }
 
-        private static Texture2D WritePaletteTexture(string path, bool emissionOnly)
+        /// <summary>Emission map pixels (linear HDR glow), row 0 at the bottom; non-glowing cells are black.</summary>
+        public static Color[] CreateGlowPixels()
+        {
+            var pixels = new Color[Palette.Columns * CellPixels * Palette.Rows * CellPixels];
+            for (int i = 0; i < pixels.Length; i++)
+            {
+                int index = CellOf(i);
+                pixels[i] = index < Palette.Count ? Palette.GetGlow((PaletteSwatch)index) : UnusedGlow;
+            }
+
+            return pixels;
+        }
+
+        private static int CellOf(int pixel)
+        {
+            int width = Palette.Columns * CellPixels;
+            return (pixel / width / CellPixels) * Palette.Columns + pixel % width / CellPixels;
+        }
+
+        private static Texture2D WriteBaseMap()
         {
             var texture = new Texture2D(Palette.Columns * CellPixels, Palette.Rows * CellPixels, TextureFormat.RGBA32,
                 false, false);
             try
             {
-                texture.SetPixels32(CreatePixels(emissionOnly));
+                texture.SetPixels32(CreateBasePixels());
                 texture.Apply(false);
-                GeneratedAssets.WriteFileIfChanged(path, texture.EncodeToPNG());
+                GeneratedAssets.WriteFileIfChanged(ArtPaths.PaletteTexture, texture.EncodeToPNG());
             }
             finally
             {
                 UnityEngine.Object.DestroyImmediate(texture);
             }
 
-            ApplyImportSettings(path);
+            return Import(ArtPaths.PaletteTexture, true);
+        }
+
+        private static Texture2D WriteEmissionMap()
+        {
+            var texture = new Texture2D(Palette.Columns * CellPixels, Palette.Rows * CellPixels,
+                TextureFormat.RGBAHalf, false, true);
+            try
+            {
+                texture.SetPixels(CreateGlowPixels());
+                texture.Apply(false);
+                GeneratedAssets.WriteFileIfChanged(ArtPaths.PaletteEmissionTexture,
+                    texture.EncodeToEXR(Texture2D.EXRFlags.CompressZIP));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(texture);
+            }
+
+            return Import(ArtPaths.PaletteEmissionTexture, false);
+        }
+
+        private static Texture2D Import(string path, bool srgb)
+        {
+            ApplyImportSettings(path, srgb);
             var imported = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
             if (imported == null)
             {
@@ -148,7 +183,7 @@ namespace MoonProject.Art.Editor
             return imported;
         }
 
-        private static void ApplyImportSettings(string path)
+        private static void ApplyImportSettings(string path, bool srgb)
         {
             var importer = (TextureImporter)AssetImporter.GetAtPath(path);
             if (importer == null)
@@ -157,7 +192,7 @@ namespace MoonProject.Art.Editor
             }
 
             bool settled = importer.textureType == TextureImporterType.Default
-                && importer.sRGBTexture
+                && importer.sRGBTexture == srgb
                 && !importer.mipmapEnabled
                 && importer.filterMode == FilterMode.Point
                 && importer.wrapMode == TextureWrapMode.Clamp
@@ -171,7 +206,7 @@ namespace MoonProject.Art.Editor
             }
 
             importer.textureType = TextureImporterType.Default;
-            importer.sRGBTexture = true;
+            importer.sRGBTexture = srgb;
             importer.mipmapEnabled = false;
             importer.filterMode = FilterMode.Point;
             importer.wrapMode = TextureWrapMode.Clamp;
