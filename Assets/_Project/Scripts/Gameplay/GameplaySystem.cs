@@ -11,7 +11,7 @@ namespace MoonProject.Gameplay
     /// (surface, layout, anchors), rover and camera services, creates the wallet, the upgrade service (which grants
     /// rover abilities through <see cref="IRoverAbilities"/>) and the radio program, initialises the gameplay parts in
     /// dependency order (relics, scrap, excavation, tether, home, radio tower, workshop, friends, cassettes, log
-    /// caches, sonar), registers the services other domains read
+    /// caches, sonar, Bell's signals), registers the services other domains read
     /// (<see cref="IScrapWallet"/>, <see cref="ITetherAim"/>, <see cref="IUpgradeShop"/>,
     /// <see cref="IInteractionHints"/>, <see cref="IFriendRoster"/>, <see cref="IFriendStatuses"/>,
     /// <see cref="IRadioProgram"/>) and the save sections, announces the radio's signal radius and, once the save is
@@ -37,6 +37,7 @@ namespace MoonProject.Gameplay
         [SerializeField] private FriendField _friends;
         [SerializeField] private CassetteField _cassettes;
         [SerializeField] private LogCacheField _logs;
+        [SerializeField] private SignalField _signals;
 
         private readonly List<IDisposable> _saveTokens = new List<IDisposable>();
         private GlowMeshSet _meshes;
@@ -73,9 +74,12 @@ namespace MoonProject.Gameplay
 
         public LogCacheField Logs => _logs;
 
+        public SignalField Signals => _signals;
+
         internal void Wire(GameplayVisuals visuals, UpgradeDefinition[] upgradeDefinitions, RelicField relics,
             ScrapField scrap, SonarSystem sonar, ExcavationSystem excavation, TetherSystem tether, HomeBase home,
-            RadioTower tower, Workshop workshop, FriendField friends, CassetteField cassettes, LogCacheField logs)
+            RadioTower tower, Workshop workshop, FriendField friends, CassetteField cassettes, LogCacheField logs,
+            SignalField signals)
         {
             _visuals = visuals;
             _upgradeDefinitions = upgradeDefinitions;
@@ -90,6 +94,7 @@ namespace MoonProject.Gameplay
             _friends = friends;
             _cassettes = cassettes;
             _logs = logs;
+            _signals = signals;
         }
 
         public void Initialize(GameContext context)
@@ -113,8 +118,8 @@ namespace MoonProject.Gameplay
             var services = new GameplayServices(context.Events, context.Input, context.Get<ITerrainQuery>(),
                 context.Get<IWorldLayout>(), context.Get<IWorldAnchors>(), context.Get<IRoverState>(),
                 context.Get<IRoverRig>(), context.Get<IViewCamera>(), save, Wallet, _visuals, _meshes);
-            Upgrades = new UpgradeService(context.Events, Wallet, context.Get<IRoverAbilities>(),
-                _upgradeDefinitions);
+            var abilities = context.Get<IRoverAbilities>();
+            Upgrades = new UpgradeService(context.Events, Wallet, abilities, _upgradeDefinitions);
             Radio = new RadioProgram(context.Events, _cassettes.Catalog.Ids());
 
             Vector3 lander = HomeBase.LanderSpot(services.Terrain, services.Layout.BasePosition, _home.Tuning);
@@ -124,7 +129,8 @@ namespace MoonProject.Gameplay
                 !_workshop.Initialize(services, Upgrades) ||
                 !_friends.Initialize(services, Radio, _cassettes.Catalog, _relics, _scrap, _home) ||
                 !_cassettes.Initialize(services, Radio, _scrap.Tuning, KeepClearOfCassettes()) ||
-                !_logs.Initialize(services, _scrap.Tuning) || !_sonar.Initialize(services, _relics, _friends))
+                !_logs.Initialize(services, _scrap.Tuning) || !_sonar.Initialize(services, _relics, _friends) ||
+                !_signals.Initialize(services, _friends, _cassettes, _logs, _relics, abilities, _sonar.Tuning))
             {
                 enabled = false;
                 return;
@@ -172,6 +178,8 @@ namespace MoonProject.Gameplay
                 GameplaySaveKeys.RadioVersion, Radio.Capture, RestoreRadio)));
             _saveTokens.Add(save.Register(new SaveSection<LogsSaveData>(GameplaySaveKeys.Logs,
                 GameplaySaveKeys.LogsVersion, _logs.Capture, _logs.Restore)));
+            _saveTokens.Add(save.Register(new SaveSection<BellSignalSaveData>(GameplaySaveKeys.BellSignals,
+                GameplaySaveKeys.BellSignalsVersion, _signals.Capture, _signals.Restore)));
         }
 
         /// <summary>The save is loaded (Start runs after it): Audio and UI start from the real radio program.</summary>
@@ -265,6 +273,7 @@ namespace MoonProject.Gameplay
                 : _cassettes.Catalog == null ? "CassetteField has no CassetteCatalog."
                 : _cassettes.Catalog.Validate() != null ? "CassetteCatalog " + _cassettes.Catalog.Validate() + "."
                 : _logs == null ? "LogCacheField is not assigned."
+                : _signals == null ? "SignalField is not assigned."
                 : null;
         }
 

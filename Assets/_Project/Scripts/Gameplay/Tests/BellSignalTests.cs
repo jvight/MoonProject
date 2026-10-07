@@ -181,6 +181,46 @@ namespace MoonProject.Gameplay.Tests
             Assert.AreEqual(2, stale.Current, "a saved target found meanwhile is replaced by a fresh pick");
         }
 
+        [Test]
+        public void Signals_RecheckingEveryFrame_AllocateNothing()
+        {
+            var targets = new FakeTargets();
+            targets.Add(BellSignalTarget.Cassette, "slow_orbit", new Vector3(0f, 0f, 200f), reachable: false);
+            targets.Add(BellSignalTarget.CrewLog, "ro_1", new Vector3(0f, 0f, -50f), waiting: false);
+            targets.Add(BellSignalTarget.Relic, "duck", new Vector3(-30f, 0f, 0f), waiting: false);
+            var bell = new BellSignals(_events, targets, Vector3.zero);
+            bell.Start();
+            Assert.AreEqual(-1, bell.Current, "nothing reachable is left: she rests and re-checks");
+            for (int frame = 0; frame < 100; frame++)
+            {
+                bell.Step();
+            }
+
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            for (int frame = 0; frame < 3000; frame++)
+            {
+                bell.Step();
+            }
+
+            Assert.AreEqual(0L, GC.GetAllocatedBytesForCurrentThread() - before, "bytes allocated by 3000 re-checks");
+
+            targets.Find("duck").Waiting = true;
+            bell.Step();
+            for (int frame = 0; frame < 100; frame++)
+            {
+                bell.Step();
+            }
+
+            before = GC.GetAllocatedBytesForCurrentThread();
+            for (int frame = 0; frame < 3000; frame++)
+            {
+                bell.Step();
+            }
+
+            Assert.AreEqual(0L, GC.GetAllocatedBytesForCurrentThread() - before,
+                "bytes allocated by 3000 frames pointing at a waiting target");
+        }
+
         private List<string> FoundLines()
         {
             var lines = new List<string>();

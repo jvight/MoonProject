@@ -74,6 +74,7 @@ namespace MoonProject.Gameplay.Editor
             var friends = Part<FriendField>(context, host, "Friends");
             var cassettes = Part<CassetteField>(context, host, "Cassettes");
             var logs = Part<LogCacheField>(context, host, "LogCaches");
+            var signals = Part<SignalField>(context, host, "BellSignals");
 
             GameObject baseRoot = context.CreateChild("Base", host.transform);
             Vector3 offset = baseTuning.LanderOffset;
@@ -120,7 +121,7 @@ namespace MoonProject.Gameplay.Editor
             cassettes.Wire(cassetteCatalog, cassetteTuning);
             logs.Wire(logCacheCatalog, logCacheTuning);
             gameplay.Wire(visuals, new[] { radioTower, hoverJump }, relics, scrap, sonar, excavation, tether, home,
-                tower, workshop, friends, cassettes, logs);
+                tower, workshop, friends, cassettes, logs, signals);
             context.AddSystem(gameplay);
         }
 

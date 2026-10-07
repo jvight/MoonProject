@@ -225,6 +225,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             var friends = Child<FriendField>(root, "Friends");
             var cassettes = Child<CassetteField>(root, "Cassettes");
             var logs = Child<LogCacheField>(root, "LogCaches");
+            var signals = Child<SignalField>(root, "BellSignals");
             BuildBase(root.transform, home, tower, workshop);
             BuildFriends(friends);
             BuildCassettes(cassettes);
@@ -235,7 +236,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             excavation.Wire(ExcavationTuning);
             tether.Wire(TetherTuning);
             Gameplay.Wire(visuals, new[] { RadioTowerUpgrade, HoverJumpUpgrade }, relics, scrap, sonar, excavation,
-                tether, home, tower, workshop, friends, cassettes, logs);
+                tether, home, tower, workshop, friends, cassettes, logs, signals);
             root.SetActive(true);
 
             Bootstrap = BootstrapHarness.Create(_controls, SaveSlot, World, Rover, Gameplay);

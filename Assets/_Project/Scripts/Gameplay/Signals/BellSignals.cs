@@ -49,6 +49,9 @@ namespace MoonProject.Gameplay
         /// <summary>Signals found so far.</summary>
         public int FoundCount { get; private set; }
 
+        /// <summary>Where the current target is (valid while <see cref="Current"/> is not -1).</summary>
+        public Vector3 TargetPosition => Current >= 0 ? _targets.Get(Current).Position : Vector3.zero;
+
         /// <summary>
         /// Whole degrees (0..359, clockwise from +Z) from <paramref name="home"/> to <paramref name="target"/>.
         /// </summary>

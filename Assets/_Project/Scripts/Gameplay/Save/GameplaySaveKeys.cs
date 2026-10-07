@@ -26,5 +26,8 @@ namespace MoonProject.Gameplay
 
         public const string Logs = "gameplay.logs";
         public const int LogsVersion = 1;
+
+        public const string BellSignals = "gameplay.bell_signals";
+        public const int BellSignalsVersion = 1;
     }
 }
