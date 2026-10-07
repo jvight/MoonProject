@@ -229,6 +229,33 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator UpgradePanel_IsDressedForItsStation()
+        {
+            Boot();
+            yield return null;
+            _rig.Fakes.SetBalance(500);
+            _rig.Fakes.AtStation = true;
+            yield return Seconds(1f);
+            UiLayout layout = _rig.Ui.Layout;
+            Assert.AreEqual(Text(UiKeys.StationName(UpgradeStationKind.RadioTower)), layout.TowerName.text);
+            Assert.AreEqual("Level 1 of 3", layout.TowerLevel.text, "the tower counts its levels");
+            Assert.IsTrue(layout.TowerPanel.ClassListContains(TowerPanel.StationClass(UpgradeStationKind.RadioTower)));
+
+            _rig.Fakes.AtStation = false;
+            yield return Seconds(1f);
+            _rig.Fakes.Upgrade = UiTestRig.WorkbenchUpgrade();
+            _rig.Fakes.AtStation = true;
+            yield return Seconds(1f);
+            Assert.AreEqual(Text(UiKeys.StationName(UpgradeStationKind.Workshop)), layout.TowerName.text);
+            Assert.AreEqual(Text(UiKeys.UpgradeName(_rig.Fakes.Upgrade.Id)), layout.TowerLevel.text,
+                "a single-level offer names the ability instead of counting to one");
+            Assert.AreEqual(Text(UiKeys.UpgradeTitle(_rig.Fakes.Upgrade.Id, 1)), layout.TowerTitle.text);
+            Assert.IsTrue(layout.TowerPanel.ClassListContains(TowerPanel.StationClass(UpgradeStationKind.Workshop)));
+            Assert.IsFalse(layout.TowerPanel.ClassListContains(
+                TowerPanel.StationClass(UpgradeStationKind.RadioTower)), "one station's look at a time");
+        }
+
+        [UnityTest]
         public IEnumerator DialReadout_AnswersATurnOfTheDial_NeverTheLoad()
         {
             Boot();

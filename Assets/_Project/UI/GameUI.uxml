@@ -82,7 +82,10 @@
                 <ui:VisualElement name="tower-panel-shadow" class="soft-shadow soft-shadow--panel" />
                 <ui:VisualElement name="tower-panel-body" class="panel tower-panel__body">
                     <ui:VisualElement class="tower-panel__heading">
-                        <ui:Label name="tower-name" class="caption" />
+                        <ui:VisualElement class="tower-panel__station">
+                            <ui:VisualElement class="tower-panel__lamp" />
+                            <ui:Label name="tower-name" class="caption tower-panel__name" />
+                        </ui:VisualElement>
                         <ui:Label name="tower-level" class="caption caption--quiet" />
                     </ui:VisualElement>
                     <ui:Label name="tower-title" class="tower-panel__title" />

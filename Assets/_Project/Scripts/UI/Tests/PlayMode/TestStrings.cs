@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using MoonProject.Core;
+using MoonProject.Gameplay;
 
 namespace MoonProject.UI.PlayModeTests
 {
@@ -46,6 +47,8 @@ namespace MoonProject.UI.PlayModeTests
             UiKeys.RadioChannelName(RadioChannel.TapeDeck), "Tape Deck", "Đầu băng",
             UiKeys.RadioChannelName(RadioChannel.QuietHours), "Quiet Hours", "Giờ tĩnh lặng",
             UiKeys.PauseCassettes, "Cassettes {0}/{1}", "Băng cassette {0}/{1}",
+            UiKeys.StationName(UpgradeStationKind.RadioTower), "Radio Tower", "Tháp Radio",
+            UiKeys.StationName(UpgradeStationKind.Workshop), "Kenji's Workbench", "Bàn thợ của Kenji",
         };
 
         /// <summary>

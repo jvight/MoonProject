@@ -536,6 +536,37 @@ Label {
     align-items: center;
 }
 
+.tower-panel__station {
+    flex-direction: row;
+    align-items: center;
+}
+
+.tower-panel__lamp {
+    width: 8px;
+    height: 8px;
+    margin-right: 9px;
+    border-radius: 4px;
+}
+
+/* Each station's accent: the radio tower's amber lamp, Kenji's workbench in the rover's warm orange paint */
+
+.tower-panel--radio-tower .tower-panel__lamp {
+    background-color: var(--moon-warm-lamp);
+}
+
+.tower-panel--workshop .tower-panel__lamp {
+    background-color: var(--moon-warm-accent);
+}
+
+.tower-panel--workshop .tower-panel__name,
+.tower-panel--workshop .hold__glyph {
+    color: var(--moon-warm-accent);
+}
+
+.tower-panel--workshop .hold__ring {
+    --fill-color: var(--moon-warm-accent);
+}
+
 .tower-panel__title {
     font-size: 27px;
     margin-top: 10px;

@@ -82,6 +82,20 @@ namespace MoonProject.UI
             }
         }
 
+        /// <summary>"ui.station.workshop": the name of the place an upgrade is sold.</summary>
+        public static string StationName(UpgradeStationKind station)
+        {
+            switch (station)
+            {
+                case UpgradeStationKind.RadioTower:
+                    return "ui.station.radio_tower";
+                case UpgradeStationKind.Workshop:
+                    return "ui.station.workshop";
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(station), station, "This station has no name key.");
+            }
+        }
+
         public static string UpgradeName(string upgradeId)
         {
             return "upgrade." + upgradeId + ".name";

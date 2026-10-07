@@ -26,6 +26,8 @@ namespace MoonProject.UI.PlayModeTests
         public const string TuningPath = "Assets/_Project/Data/Tuning/UI/UiTuning.asset";
         public const string CatalogPath = "Assets/_Project/Data/Content/RelicCatalog.asset";
         public const string UpgradePath = "Assets/_Project/Data/Content/Upgrades/Upgrade_radio_tower.asset";
+        public const string WorkbenchUpgradePath =
+            "Assets/_Project/Data/Content/Upgrades/Upgrade_rover_hover_jump.asset";
         public const string TillyPath = "Assets/_Project/Data/Content/Friends/Friend_tilly.asset";
         public const string EnglishPath = "Assets/_Project/Data/Localization/en.json";
         public const string VietnamesePath = "Assets/_Project/Data/Localization/vi.json";
@@ -89,6 +91,16 @@ namespace MoonProject.UI.PlayModeTests
 
             GameBootstrap bootstrap = BootstrapHarness.Create(controls, saveSlot, fakes, system);
             return new UiTestRig(camera, services, ui, tables, tuning, bootstrap, saveSlot);
+#else
+            throw new NotSupportedException("UiTestRig loads assets through the editor's AssetDatabase.");
+#endif
+        }
+
+        /// <summary>Kenji's workbench offer (Hover-Jump) in place of the radio tower's.</summary>
+        public static UpgradeDefinition WorkbenchUpgrade()
+        {
+#if UNITY_EDITOR
+            return Load<UpgradeDefinition>(WorkbenchUpgradePath);
 #else
             throw new NotSupportedException("UiTestRig loads assets through the editor's AssetDatabase.");
 #endif
