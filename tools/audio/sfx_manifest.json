@@ -2021,6 +2021,126 @@
       "notes": "The chasm trough's deeper, darker bed: low rumble + hollow 180 Hz + D2, 16 s seamless."
     },
     {
+      "id": "room_tone",
+      "category": "ambience_2d",
+      "milestone": "M3",
+      "bus": "Ambience",
+      "spatial": false,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/Ambience/room_tone_loop.wav"
+      ],
+      "variantLabels": [
+        "room_tone"
+      ],
+      "sha256": [
+        "1ada0919777aa5ff917146349ad7f61b73a8d54e1848a35623ed4d9a0753cab7"
+      ],
+      "volumeMin": 0.8,
+      "volumeMax": 0.8,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -30.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "Solitude room tone: wide, very soft dark air + faint D2/A2, 24 s seamless stereo."
+    },
+    {
+      "id": "rover_lamp_hum",
+      "category": "loop_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/SFX/rover_lamp_hum_loop.wav"
+      ],
+      "variantLabels": [
+        "rover_lamp_hum"
+      ],
+      "sha256": [
+        "6306f1871dc07e00622134d665fe4a0a9a741be3631c1c56761e86856527ae7e"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "07's lamp: tiny warm hum on D3 + filament buzz, 4 s seamless."
+    },
+    {
+      "id": "rover_servo",
+      "category": "loop_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/SFX/rover_servo_loop.wav"
+      ],
+      "variantLabels": [
+        "rover_servo"
+      ],
+      "sha256": [
+        "38d775b9aa0fff8ff3f02f460d533eff872f880d9d4c483b66f32d0664ccbe39"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "07's servos (steering, neck): soft gear whirr + faint whine, 2 s seamless."
+    },
+    {
+      "id": "rover_metal_tick",
+      "category": "tick_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/rover_metal_tick_01.wav",
+        "Assets/_Project/Audio/SFX/rover_metal_tick_02.wav",
+        "Assets/_Project/Audio/SFX/rover_metal_tick_03.wav",
+        "Assets/_Project/Audio/SFX/rover_metal_tick_04.wav",
+        "Assets/_Project/Audio/SFX/rover_metal_tick_05.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02",
+        "03",
+        "04",
+        "05"
+      ],
+      "sha256": [
+        "f581ad4371b6c5fbcaa6b737d744d38b54adcd83c574e738c6ff338b757b2b8c",
+        "d42964af847da1008b681cce22f6dced6cab2f49e13fb43686ddefc755fd4c9d",
+        "41400c373a4c420c8713fc37040f791bf760835b9ef401168a3da1bdcb563718",
+        "12a1867105f88e27a2ebb66e4140014b593fd45288914470dbb29ad8c048f6a1",
+        "ae77fe31e31f7c11b626f08f91caeb0e8827cafff776254d1b2589d26bf4906e"
+      ],
+      "volumeMin": 0.4,
+      "volumeMax": 0.55,
+      "pitchMin": 0.98,
+      "pitchMax": 1.02,
+      "targetLufs": -26.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "07's metal ticking as it cools after a drive: dry click + a tiny pentatonic ring."
+    },
+    {
       "id": "upgrade_arpeggio",
       "category": "stinger_2d",
       "milestone": "M2",

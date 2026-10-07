@@ -1426,6 +1426,92 @@ def canyon_trough(_variant, gen):
     return np.stack(sides, axis=1)
 
 
+# --------------------------------------------------------------------------------------------------- solitude (M3-10)
+
+ROOM_TONE_LOOP_S = 24.0
+
+
+def room_tone(_variant, gen):
+    """The sound of the space around 07 far from home: a wide, very soft, dark air (decorrelated low noise in each
+    ear, breathing very slowly) with a faint D2/A2 resonance far under it. Nothing much above ~1.2 kHz, so it never
+    tires the ear the way hiss does. 24 s seamless stereo."""
+    n = samples(ROOM_TONE_LOOP_S)
+    loop_hz = 1.0 / ROOM_TONE_LOOP_S
+    step = SAMPLE_RATE / n
+    d2 = loop_freq(note_freq("D2"), n)
+    a2 = loop_freq(note_freq("A2"), n)
+    sides = []
+    for side in range(2):
+        air = periodic(noise.white(n, gen), lambda x: filters.highpass(filters.lowpass(filters.lowpass(
+            noise.pink_filter(x), 420.0), 420.0), 40.0), warmup=samples(2.0))
+        air = air / max(float(np.std(air)), 1e-9)
+        sheen = periodic(noise.white(n, gen), lambda x: filters.bandpass(noise.pink_filter(x), 850.0, 0.7),
+                         warmup=samples(2.0))
+        sheen = sheen / max(float(np.std(sheen)), 1e-9) * envelope.lfo(n, loop_hz, 0.5, 0.5, phase=0.5 * side)
+        breath = (envelope.lfo(n, 2.0 * loop_hz, 0.12, 0.88, phase=0.31 * side)
+                  + envelope.lfo(n, 3.0 * loop_hz, 0.05, 0.0, phase=0.6 + 0.2 * side))
+        resonance = (osc.sine(n, d2 + side * step, phase=0.1 + 0.3 * side)
+                     + 0.6 * osc.sine(n, a2 - side * step, phase=0.4 + 0.2 * side))
+        resonance *= envelope.lfo(n, 2.0 * loop_hz, 0.4, 0.6, phase=0.15 + 0.5 * side)
+        mix = (air + 0.1 * sheen) * breath + 0.12 * resonance
+        sides.append(periodic(mix, lambda x: filters.lowpass(filters.lowpass(x, 1200.0), 1200.0)))
+    return np.stack(sides, axis=1)
+
+
+LAMP_HUM_LOOP_S = 4.0
+
+
+def rover_lamp_hum(_variant, gen):
+    """07's lamp: a tiny warm electrical hum on D3 with its octave and fifth, a whisper of filament buzz and a
+    slow shimmer as the current breathes. Seamless, very soft; heard mostly when everything else is quiet."""
+    n = samples(LAMP_HUM_LOOP_S)
+    step = SAMPLE_RATE / n
+    d3 = loop_freq(note_freq("D3"), n)
+    hum = osc.additive(n, d3, [(1, 1.0), (2, 0.45), (3, 0.18), (4, 0.06)])
+    hum += 0.3 * osc.sine(n, 2.0 * d3 + step, phase=0.25)
+    shimmer = envelope.lfo(n, 3.0 / LAMP_HUM_LOOP_S, 0.15, 0.85)
+    buzz = periodic(noise.white(n, gen), lambda x: filters.bandpass(x, 2.0 * d3 * 4.0, 6.0), warmup=samples(0.5))
+    buzz = buzz / max(float(np.std(buzz)), 1e-9) * 0.015 * envelope.lfo(n, 2.0 * d3, 0.5, 0.5) ** 4
+    mix = 0.3 * hum * shimmer + buzz
+    return periodic(mix, lambda x: filters.highpass(filters.lowpass(x, 2500.0), 80.0))
+
+
+SERVO_LOOP_S = 2.0
+
+
+def rover_servo(_variant, gen):
+    """A small servo working: a soft gear whirr (narrow noise bands with a faint whine riding on them) and the
+    flutter of the gear teeth. Seamless; the runtime fades it with how fast the servo moves and lifts its pitch."""
+    n = samples(SERVO_LOOP_S)
+    loop_hz = 1.0 / SERVO_LOOP_S
+    whirr = periodic(noise.white(n, gen), lambda x: filters.bandpass(noise.pink_filter(x), 650.0, 2.5),
+                     warmup=samples(0.5))
+    whirr = whirr / max(float(np.std(whirr)), 1e-9)
+    teeth = envelope.lfo(n, round(38.0 / loop_hz) * loop_hz, 0.25, 0.75)
+    whine = osc.additive(n, loop_freq(1240.0, n), [(1, 1.0), (2, 0.2)])
+    whine *= envelope.lfo(n, 3.0 * loop_hz, 0.3, 0.7)
+    body = periodic(noise.white(n, gen), lambda x: filters.bandpass(noise.pink_filter(x), 240.0, 1.5),
+                    warmup=samples(0.5))
+    body = body / max(float(np.std(body)), 1e-9)
+    mix = 0.12 * whirr * teeth + 0.015 * whine + 0.05 * body
+    return periodic(mix, lambda x: filters.highpass(filters.lowpass(x, 3500.0), 120.0))
+
+
+METAL_TICK_NOTES = ("A5", "D6", "E6", "F#6", "B5")
+
+
+def rover_metal_tick(variant, gen):
+    """07's metal cooling after a drive: one tiny tick of a panel settling - a dry click and a faint, very short
+    ring on a pentatonic note."""
+    n = samples(0.2)
+    freq = note_freq(METAL_TICK_NOTES[variant])
+    click = filters.bandpass(noise.white(n, gen), 3200.0, 1.5) * envelope.ar(n, 0.0003, 0.004)
+    click = click / max(float(np.max(np.abs(click))), 1e-9) * 0.2
+    ring = (instruments.partial(n, freq, 1.0, 0.0006, 0.09)
+            + instruments.partial(n, 2.76 * freq, 0.2, 0.0006, 0.03))
+    return filters.lowpass(click + 0.35 * ring, 6000.0)
+
+
 # --------------------------------------------------------------------------------------------------- registry
 
 CUES = (
@@ -1589,6 +1675,15 @@ CUES = (
         notes="Whispering Canyon bed: breathy air with a slowly moving 'vowel', 16 s seamless stereo."),
     Cue("canyon_trough", "ambience_2d", canyon_trough, loop=True, file_stem="canyon_trough_loop", volume=(0.7, 0.7),
         milestone="M3", notes="The chasm trough's deeper, darker bed: low rumble + hollow 180 Hz + D2, 16 s seamless."),
+    Cue("room_tone", "ambience_2d", room_tone, loop=True, file_stem="room_tone_loop", volume=(0.8, 0.8),
+        milestone="M3", notes="Solitude room tone: wide, very soft dark air + faint D2/A2, 24 s seamless stereo."),
+    Cue("rover_lamp_hum", "loop_3d", rover_lamp_hum, loop=True, file_stem="rover_lamp_hum_loop", volume=(0.5, 0.5),
+        milestone="M3", tonal=True, notes="07's lamp: tiny warm hum on D3 + filament buzz, 4 s seamless."),
+    Cue("rover_servo", "loop_3d", rover_servo, loop=True, file_stem="rover_servo_loop", volume=(0.5, 0.5),
+        milestone="M3", notes="07's servos (steering, neck): soft gear whirr + faint whine, 2 s seamless."),
+    Cue("rover_metal_tick", "tick_3d", rover_metal_tick, variants=len(METAL_TICK_NOTES), volume=(0.4, 0.55),
+        pitch=(0.98, 1.02), fade_out=0.03, milestone="M3", tonal=True,
+        notes="07's metal ticking as it cools after a drive: dry click + a tiny pentatonic ring."),
     Cue("upgrade_arpeggio", "stinger_2d", upgrade_arpeggio, volume=(0.8, 0.8), fade_out=0.3, milestone="M2",
         tonal=True, notes="Soft kalimba D4 A4 D5 F#5 A5, stereo, over a quiet D/A pad."),
 )
