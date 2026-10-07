@@ -10,8 +10,8 @@ namespace MoonProject.Gameplay
     {
         private static readonly InteractionKind[] Priority =
         {
-            InteractionKind.Deposit, InteractionKind.Repair, InteractionKind.Upgrade, InteractionKind.Excavate,
-            InteractionKind.Tether, InteractionKind.Reel, InteractionKind.Ping,
+            InteractionKind.Deposit, InteractionKind.Repair, InteractionKind.Tune, InteractionKind.Upgrade,
+            InteractionKind.Excavate, InteractionKind.Tether, InteractionKind.Reel, InteractionKind.Ping,
         };
 
         private readonly IRoverState _rover;
