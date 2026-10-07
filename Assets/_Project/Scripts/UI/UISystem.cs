@@ -15,9 +15,9 @@ namespace MoonProject.UI
     /// a title while 07 wakes, context prompts only the first few times, a reticle only while aiming, a scrap chip
     /// only when the balance changes, a story card per relic brought home, crew log found and cassette collected, the
     /// tower upgrade panel on its pad, a few warm pips over a broken friend while 07 is near, its name and its crew log
-    /// when it wakes, the radio's ticker line along the bottom, and the pause menu with settings. It registers
-    /// <see cref="ILocalization"/> and owns the cursor and the UI's save sections. Everything animates on unscaled
-    /// time so the menu stays alive while the game is paused.
+    /// when it wakes, the radio's ticker line along the bottom, the station's name when Bell's dial is turned, and the
+    /// pause menu with settings. It registers <see cref="ILocalization"/> and owns the cursor and the UI's save
+    /// sections. Everything animates on unscaled time so the menu stays alive while the game is paused.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class UISystem : MonoBehaviour, IGameSystem
@@ -55,6 +55,7 @@ namespace MoonProject.UI
         private MemoryCard _card;
         private TickerQueue _tickerLines;
         private RadioTicker _ticker;
+        private DialReadout _dial;
         private TowerPanel _tower;
         private FriendReadout _friendReadout;
         private FriendNameTag _friendName;
@@ -85,6 +86,8 @@ namespace MoonProject.UI
         internal RadioTicker Ticker => _ticker;
 
         internal TickerQueue TickerLines => _tickerLines;
+
+        internal DialReadout Dial => _dial;
 
         internal TowerPanel Tower => _tower;
 
@@ -200,6 +203,7 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<TickerLine>(OnTickerLine));
             _tokens.Add(events.Subscribe<CrewLogFound>(OnCrewLogFound));
             _tokens.Add(events.Subscribe<CassetteCollected>(OnCassetteCollected));
+            _tokens.Add(events.Subscribe<RadioProgramChanged>(OnRadioProgramChanged));
 
             services.Input.Menu.Enable();
             _cursor.Drive();
@@ -251,6 +255,7 @@ namespace MoonProject.UI
             _friendName = new FriendNameTag(_layout, _tuning.Friends, _tuning.Prompts, services.Friends,
                 _localization, services.View);
             _ticker = new RadioTicker(_layout, _tuning.Ticker, _tickerLines);
+            _dial = new DialReadout(_layout, _tuning.DialReadout, _localization, services.Radio);
             _tower = new TowerPanel(_layout, _tuning.TowerPanel, _localization, services.Events, services.Shop,
                 services.Wallet, services.Hints, _numbers);
             _pause = new PauseMenu(_layout, _tuning.Pause, _player, _localization, services.Input, services.Events,
@@ -329,8 +334,9 @@ namespace MoonProject.UI
             _friendName.Tick(hudTime, panelSize);
             _prompt.Tick(deltaTime, promptsOpen, _services.Hints.Primary, device, panelSize);
 
+            _dial.Tick(hudTime);
             bool tickerOpen = _awake && !_title.IsPlaying && !_card.IsBusy && !_digging && !_prompt.IsVisible &&
-                              !_reticle.IsVisible;
+                              !_reticle.IsVisible && !_dial.IsVisible;
             _ticker.Tick(hudTime, tickerOpen);
         }
 
@@ -406,6 +412,14 @@ namespace MoonProject.UI
             }
         }
 
+        private void OnRadioProgramChanged(RadioProgramChanged changed)
+        {
+            if (_bound)
+            {
+                _dial.OnProgramChanged();
+            }
+        }
+
         private void OnTickerLine(TickerLine line)
         {
             _tickerLines.Enqueue(line);
@@ -453,6 +467,7 @@ namespace MoonProject.UI
             _prompt.Relocalize();
             _card.Relocalize();
             _ticker.Relocalize();
+            _dial.Relocalize();
             _friendName.Relocalize();
             _tower.Relocalize();
             _pause.Relocalize();

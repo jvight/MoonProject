@@ -275,7 +275,7 @@ namespace MoonProject.UI.PlayModeTests
             _slot = BootstrapHarness.NewTestSlot();
             save = new SaveService(SaveService.DefaultDirectory, _slot);
             ui.Initialize(new UiServices(context.Events, context.Input, fakes, fakes, context.Get<IAudioSettings>(),
-                context.Get<ILookSettings>(), save, fakes, fakes, fakes, fakes, fakes));
+                context.Get<ILookSettings>(), save, fakes, fakes, fakes, fakes, fakes, fakes));
             save.Load();
             return ui;
         }

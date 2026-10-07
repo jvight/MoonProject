@@ -69,6 +69,12 @@ namespace MoonProject.UI
             TickerLamp = Require<VisualElement>("ticker-lamp");
             TickerText = Require<Label>("ticker-text");
 
+            DialReadout = Require<VisualElement>("dial-readout");
+            DialReadoutShadow = Require<VisualElement>("dial-readout-shadow");
+            DialDetents = Require<VisualElement>("dial-detents");
+            DialStation = Require<Label>("dial-station");
+            DialTape = Require<Label>("dial-tape");
+
             Pause = Require<VisualElement>("pause");
             PauseVeil = Require<VisualElement>("pause-veil");
             PauseStack = Require<VisualElement>("pause-stack");
@@ -193,6 +199,16 @@ namespace MoonProject.UI
         public VisualElement TickerLamp { get; }
 
         public Label TickerText { get; }
+
+        public VisualElement DialReadout { get; }
+
+        public VisualElement DialReadoutShadow { get; }
+
+        public VisualElement DialDetents { get; }
+
+        public Label DialStation { get; }
+
+        public Label DialTape { get; }
 
         public VisualElement Pause { get; }
 

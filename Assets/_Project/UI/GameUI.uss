@@ -29,6 +29,8 @@
 .section-label,
 .chip__number,
 .friend-name,
+.dial-readout__station,
+.dial-readout__tape,
 .glyph__label,
 .hold__glyph,
 .cost__price {
@@ -351,6 +353,59 @@ Label {
     letter-spacing: 0.4px;
     color: var(--moon-text-dim);
     white-space: normal;
+    -unity-text-align: middle-center;
+}
+
+/* Dial readout: the station Bell's dial was just turned to, just above the ticker's band */
+
+.dial-readout {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 84px;
+    align-items: center;
+}
+
+.dial-readout__body {
+    min-width: 230px;
+    align-items: center;
+    padding: 12px 28px 13px 28px;
+    border-radius: 20px;
+    border-width: 1px;
+    border-color: var(--moon-glass-edge);
+    background-color: var(--moon-glass);
+}
+
+.dial-readout__detents {
+    flex-direction: row;
+    margin-bottom: 9px;
+}
+
+.dial-readout__detent {
+    width: 9px;
+    height: 9px;
+    margin: 0 5px;
+    border-width: 1.5px;
+    border-radius: 5px;
+    border-color: var(--moon-text-faint);
+}
+
+.dial-readout__detent--lit {
+    border-color: var(--moon-warm-lamp);
+    background-color: var(--moon-warm-lamp);
+}
+
+.dial-readout__station {
+    font-size: 15px;
+    letter-spacing: 3px;
+    color: var(--moon-warm-lamp);
+    -unity-text-align: middle-center;
+}
+
+.dial-readout__tape {
+    margin-top: 5px;
+    font-size: 23px;
+    color: var(--moon-cream);
     -unity-text-align: middle-center;
 }
 

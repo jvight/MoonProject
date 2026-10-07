@@ -229,6 +229,41 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator DialReadout_AnswersATurnOfTheDial_NeverTheLoad()
+        {
+            Boot();
+            _rig.Fakes.DialUnlocked = true;
+            _rig.Fakes.Tune(RadioChannel.TapeDeck, TestStrings.SecondTape);
+            yield return Seconds(1f);
+            Assert.IsFalse(_rig.Ui.Dial.IsVisible, "a program loaded with the save is not a turn of the dial");
+
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            yield return Seconds(1f);
+            _rig.Fakes.AddTape(TestStrings.FirstTape);
+            yield return Seconds(0.5f);
+            Assert.IsFalse(_rig.Ui.Dial.IsVisible, "a collected tape is not a turn either");
+
+            _rig.Fakes.Tune(RadioChannel.QuietHours, TestStrings.SecondTape);
+            yield return Seconds(0.5f);
+            Assert.IsTrue(_rig.Ui.Dial.IsVisible);
+            Assert.AreEqual(Text(UiKeys.RadioChannelName(RadioChannel.QuietHours)), _rig.Ui.Layout.DialStation.text);
+            Assert.AreEqual(DisplayStyle.None, _rig.Ui.Layout.DialTape.resolvedStyle.display);
+
+            _rig.Fakes.Tune(RadioChannel.TapeDeck, TestStrings.FirstTape);
+            Events.Publish(new TickerLine(TestStrings.HomeKey));
+            yield return Seconds(0.5f);
+            Assert.AreEqual(Text(UiKeys.RadioChannelName(RadioChannel.TapeDeck)), _rig.Ui.Layout.DialStation.text,
+                "turning again rewrites it in place");
+            Assert.AreEqual(Text(UiKeys.CassetteTitle(TestStrings.FirstTape)), _rig.Ui.Layout.DialTape.text);
+            Assert.IsFalse(_rig.Ui.Ticker.IsVisible, "the ticker waits for the readout");
+
+            yield return Seconds(_rig.Tuning.DialReadout.HoldSeconds + _rig.Tuning.DialReadout.Reveal.FadeOut);
+            Assert.IsFalse(_rig.Ui.Dial.IsVisible, "it fades after a moment");
+            yield return Seconds(1f);
+            Assert.IsTrue(_rig.Ui.Ticker.IsVisible, "then the ticker has its turn");
+        }
+
+        [UnityTest]
         public IEnumerator Ticker_SpeaksOnceAwake_MakesWayForACard_AndComesBack()
         {
             Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
@@ -285,6 +320,12 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         private EventBus Events => _rig.Bootstrap.Context.Events;
+
+        /// <summary>The tables' own words for <paramref name="key"/>, so a test never guesses copy.</summary>
+        private string Text(string key)
+        {
+            return _rig.Ui.Localization.Get(key);
+        }
 
         private void Boot()
         {

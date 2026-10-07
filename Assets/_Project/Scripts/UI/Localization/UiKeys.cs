@@ -1,3 +1,5 @@
+using System;
+using MoonProject.Core;
 using MoonProject.Gameplay;
 
 namespace MoonProject.UI
@@ -61,6 +63,22 @@ namespace MoonProject.UI
         public static string CassetteNote(string cassetteId)
         {
             return "cassette." + cassetteId + ".note";
+        }
+
+        /// <summary>"radio.channel.tape_deck": the name of a station on Bell's dial.</summary>
+        public static string RadioChannelName(RadioChannel channel)
+        {
+            switch (channel)
+            {
+                case RadioChannel.LumenAfterDark:
+                    return "radio.channel.lumen_after_dark";
+                case RadioChannel.TapeDeck:
+                    return "radio.channel.tape_deck";
+                case RadioChannel.QuietHours:
+                    return "radio.channel.quiet_hours";
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(channel), channel, "This station has no name key.");
+            }
         }
 
         public static string UpgradeName(string upgradeId)

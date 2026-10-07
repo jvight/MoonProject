@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using MoonProject.Core;
 
 namespace MoonProject.UI.PlayModeTests
 {
@@ -41,6 +42,9 @@ namespace MoonProject.UI.PlayModeTests
             UiKeys.CrewLogCaption, "Crew log", "Nhật ký phi hành đoàn",
             UiKeys.LinerCaption, "Ro's liner notes", "Lời Ro ghi trên vỏ băng",
             UiKeys.TapeCount, "{0}/{1}", "{0}/{1}",
+            UiKeys.RadioChannelName(RadioChannel.LumenAfterDark), "Lumen After Dark", "Lumen After Dark",
+            UiKeys.RadioChannelName(RadioChannel.TapeDeck), "Tape Deck", "Đầu băng",
+            UiKeys.RadioChannelName(RadioChannel.QuietHours), "Quiet Hours", "Giờ tĩnh lặng",
         };
 
         /// <summary>
