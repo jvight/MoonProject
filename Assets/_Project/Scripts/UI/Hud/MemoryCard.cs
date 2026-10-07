@@ -22,7 +22,7 @@ namespace MoonProject.UI
     /// </summary>
     internal sealed class MemoryCard
     {
-        /// <summary>The liner-note look (USS): narrower and amber-edged, with the cassette icon and the count.</summary>
+        /// <summary>The liner-note look (USS): narrower, amber-edged, with the cassette icon and the count.</summary>
         public const string LinerClass = "memory-card--liner";
 
         /// <summary>A card without a name line (a crew log: its caption says what it is).</summary>

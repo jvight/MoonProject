@@ -439,19 +439,8 @@ Label {
 }
 
 .memory-card__icon,
-.memory-card__count,
-.memory-card__warmth {
+.memory-card__count {
     display: none;
-}
-
-.memory-card__warmth {
-    position: absolute;
-    left: 0;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    border-radius: 20px;
-    background-color: var(--moon-amber-soft);
 }
 
 /* A crew log: its caption says what it is, so it has no name line */
@@ -464,7 +453,7 @@ Label {
     margin-top: 14px;
 }
 
-/* Liner notes: a smaller, warmer card with the cassette icon and the tape count */
+/* Liner notes: a smaller card, warm in its amber frame, honey title and cassette icon, with the tape count */
 
 .memory-card--liner {
     width: 440px;
@@ -472,10 +461,6 @@ Label {
 
 .memory-card--liner .memory-card__body {
     border-color: var(--moon-amber-edge);
-}
-
-.memory-card--liner .memory-card__warmth {
-    display: flex;
 }
 
 .memory-card--liner .memory-card__icon {

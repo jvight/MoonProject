@@ -228,7 +228,7 @@ namespace MoonProject.UI
             _pointerPressed = false;
         }
 
-        /// <summary>Re-reads the menu's coded words (the language selector, the cassette line) in the new language.</summary>
+        /// <summary>Re-reads the words set from code (the language selector, the cassette line).</summary>
         public void Relocalize()
         {
             _layout.LanguageButton.text = _localization.GetLanguageName(_localization.Language);
@@ -266,7 +266,7 @@ namespace MoonProject.UI
             _layout.InvertToggle.RegisterValueChangedCallback(OnInvertChanged);
         }
 
-        /// <summary>Allocates (it formats); called when the menu opens or the language changes, never per frame.</summary>
+        /// <summary>Allocates (it formats): only when the menu opens or the language changes.</summary>
         private void WriteCassettes()
         {
             int owned = _radio.OwnedTapeCount;
