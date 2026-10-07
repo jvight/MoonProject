@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
+using MoonProject.Core;
 
 namespace MoonProject.World.Tests
 {
@@ -171,6 +172,32 @@ namespace MoonProject.World.Tests
             }
 
             AssertGateHolds(grid, reached, "climbing the rim and dropping in");
+        }
+
+        [Test]
+        public void Relays_OutsideTheGate_AreReachedWithoutAbilities_TheTerminusOneIsNot()
+        {
+            // The same climb-and-drop sweep from the base (M3-06): relay.0..2 need no ability, relay.3 lies past the
+            // Hover-Jump gate.
+            Rect bounds = _canyon.Bounds;
+            Rect area = Rect.MinMaxRect(Mathf.Min(bounds.xMin, -ReachExtent), Mathf.Min(bounds.yMin, -ReachExtent),
+                Mathf.Max(bounds.xMax, ReachExtent), Mathf.Max(bounds.yMax, ReachExtent));
+            Grid grid = Grid.Sample(_surface, area, ReachStep);
+            bool[] reached = Flood(grid, ClimbSlope, true, new[] { grid.Cell(0f, 0f) });
+            var anchors = new WorldAnchors(_surface, _settings.Canyon, new RelaySettings());
+            for (int i = 0; i < 4; i++)
+            {
+                Assert.IsTrue(anchors.TryGet(WorldAnchorIds.RelayPrefix + i, out WorldAnchor relay));
+                bool gated = i == 3;
+                Assert.AreEqual(!gated, reached[grid.Cell(relay.Position.x, relay.Position.z)],
+                    gated ? $"{relay.Id} must lie past the gate" : $"{relay.Id} must be reachable without abilities");
+            }
+
+            Assert.IsTrue(anchors.TryGet(WorldAnchorIds.RelayPrefix + 3, out WorldAnchor terminus));
+            Assert.IsTrue(_canyon.TryFloor(terminus.Position.x, terminus.Position.z, out bool main, out float arc,
+                out float _));
+            Assert.IsTrue(main && arc > _canyon.FarFaceArc + Canyon.SlabHalfDepth,
+                "relay.3 is inside the gated canyon");
         }
 
         [Test]

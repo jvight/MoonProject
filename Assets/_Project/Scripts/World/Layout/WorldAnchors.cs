@@ -8,7 +8,9 @@ namespace MoonProject.World
     /// <summary>
     /// The named content anchors of the generated world (registered as <see cref="IWorldAnchors"/>), built
     /// deterministically from the surface: today Whispering Canyon's mouth, lip, landing apron, glinting ledge,
-    /// alcoves, terminus and the top of its one-way exit. Every radius is flat, drivable, uncluttered ground.
+    /// alcoves, terminus and the top of its one-way exit, and the four relay masts of the station-reach network
+    /// (M3-06: relay.0..3, whose Forward points home; relay.0 stands in the spawn first frame). Every radius is
+    /// flat, drivable, uncluttered ground.
     /// <para>
     /// Forward is the way 07 travels when arriving into the space, so content faces -Forward to greet it: into the
     /// canyon at the mouth and the landing, across the chasm at the lip, into the bay at the ledge and into each
@@ -38,8 +40,13 @@ namespace MoonProject.World
         private readonly WorldAnchor[] _anchors;
         private readonly Dictionary<string, int> _byId = new Dictionary<string, int>(StringComparer.Ordinal);
 
-        public WorldAnchors(MoonSurface surface, CanyonSettings settings)
+        public WorldAnchors(MoonSurface surface, CanyonSettings settings, RelaySettings relays)
         {
+            if (relays == null)
+            {
+                throw new ArgumentNullException(nameof(relays));
+            }
+
             if (surface == null)
             {
                 throw new ArgumentNullException(nameof(surface));
@@ -82,6 +89,17 @@ namespace MoonProject.World
             float exitTop = canyon.ExitStepArc + Canyon.SlabHalfDepth + ExitTopSetback;
             anchors.Add(Make(surface, WorldAnchorIds.CanyonExit, exit.PointAt(exitTop), -exit.TangentAt(exitTop),
                 ExitRadius));
+
+            Vector2 mound = RelaySiteFinder.Find(surface, relays.MoundBearing, relays.MoundBearingSpread,
+                relays.MoundDistance, relays.MoundDistanceSpread, relays.PadRadius);
+            Vector2 shoulder = RelaySiteFinder.Find(surface, relays.ShoulderBearing, relays.ShoulderBearingSpread,
+                relays.ShoulderDistance, relays.ShoulderDistanceSpread, relays.PadRadius);
+            Vector2 mouth = main.PointAt(relays.MouthArc) + main.RightAt(relays.MouthArc) * relays.MouthLateral;
+            Vector2[] masts = { mound, shoulder, mouth, canyon.RelayLedgeCenter };
+            for (int i = 0; i < masts.Length; i++)
+            {
+                anchors.Add(Make(surface, WorldAnchorIds.RelayPrefix + i, masts[i], -masts[i], relays.PadRadius));
+            }
 
             _anchors = anchors.ToArray();
             for (int i = 0; i < _anchors.Length; i++)
