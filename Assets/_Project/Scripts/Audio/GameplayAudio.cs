@@ -11,13 +11,20 @@ namespace MoonProject.Audio
     /// with distance), scrap chimes
     /// climbing the pentatonic by combo step, tether pluck / hum (follows the beam emitter while attached) / release
     /// or sighing snap, excavation rumble while the beam lifts plus the surfacing sparkle, the shelf "placed" cue and
-    /// the upgrade arpeggio. Loops fade with <see cref="LoopFader"/> and stop when silent. Initialised by
-    /// <see cref="AudioDirector"/>.
+    /// the upgrade sounds (the tower's arpeggio; for workshop upgrades, ids starting "rover.", the workbench's sparks,
+    /// rattle and cadence, plus the coils' clunk-sproing when the Hover-Jump is bought). Loops fade with
+    /// <see cref="LoopFader"/> and stop when silent. Initialised by <see cref="AudioDirector"/>.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class GameplayAudio : MonoBehaviour
     {
         private const int SubscriptionCount = 10;
+
+        /// <summary>Upgrades sold at Kenji's workbench (rover abilities) use this id prefix.</summary>
+        private const string WorkshopUpgradePrefix = "rover.";
+
+        /// <summary>The Hover-Jump upgrade: buying it pops the spring coils in under 07.</summary>
+        private const string HoverJumpUpgradeId = "rover.hover_jump";
 
         [Tooltip("Assets/_Project/Data/Audio/GameplayAudioTuning.asset.")]
         [SerializeField] private GameplayAudioTuning _tuning;
@@ -37,6 +44,9 @@ namespace MoonProject.Audio
         private CueHandle _surfacingSparkle;
         private CueHandle _relicPlaced;
         private CueHandle _upgradeArpeggio;
+        private CueHandle _workbenchUpgrade;
+        private CueHandle _coilPop;
+        private IRoverState _rover;
         private AudioSource _tetherHum;
         private AudioSource _rumble;
         private float _tetherHumCueVolume;
@@ -80,11 +90,15 @@ namespace MoonProject.Audio
             _surfacingSparkle = director.Resolve(AudioCueIds.SurfacingSparkle);
             _relicPlaced = director.Resolve(AudioCueIds.RelicPlaced);
             _upgradeArpeggio = director.Resolve(AudioCueIds.UpgradeArpeggio);
+            _workbenchUpgrade = director.Resolve(AudioCueIds.WorkbenchUpgrade);
+            _coilPop = director.Resolve(AudioCueIds.CoilPop);
+            _rover = context.Get<IRoverState>();
             CueHandle hum = director.Resolve(AudioCueIds.TetherHum);
             CueHandle rumble = director.Resolve(AudioCueIds.ExcavationRumble);
             if (!(_sonarPing.IsValid && _relicAnswer.IsValid && _scrapChime.IsValid && _tetherAttach.IsValid &&
                   _tetherRelease.IsValid && _tetherSnap.IsValid && _surfacingSparkle.IsValid && _relicPlaced.IsValid &&
-                  _upgradeArpeggio.IsValid && hum.IsValid && rumble.IsValid))
+                  _upgradeArpeggio.IsValid && _workbenchUpgrade.IsValid && _coilPop.IsValid && hum.IsValid &&
+                  rumble.IsValid))
             {
                 enabled = false;
                 return;
@@ -219,7 +233,18 @@ namespace MoonProject.Audio
 
         private void OnUpgradePurchased(UpgradePurchased upgrade)
         {
-            _director.Play2D(_upgradeArpeggio);
+            string id = upgrade.UpgradeId;
+            if (id == null || !id.StartsWith(WorkshopUpgradePrefix, StringComparison.Ordinal))
+            {
+                _director.Play2D(_upgradeArpeggio);
+                return;
+            }
+
+            _director.Play2D(_workbenchUpgrade);
+            if (string.Equals(id, HoverJumpUpgradeId, StringComparison.Ordinal))
+            {
+                _director.PlayAt(_coilPop, _rover.Position);
+            }
         }
 
         private void OnDestroy()

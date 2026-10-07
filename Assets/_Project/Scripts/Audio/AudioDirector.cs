@@ -9,7 +9,8 @@ namespace MoonProject.Audio
     /// The Audio domain's game system. Owns the volume buses (registered as <see cref="IAudioSettings"/>), pooled
     /// 3D/2D one-shot voices and the cue library, plays the landing thump on <see cref="RoverLanded"/>, eases the
     /// pause mix on <see cref="PauseChanged"/> (world loops duck, the radio moves into the cabin), and initialises
-    /// the rover, gameplay, friend and UI sounds, radio and ambience bed. Initialise it after the World, Rover and
+    /// the rover, Hover-Jump, gameplay, friend and UI sounds, radio and ambience bed. A landing that ends a leap gets
+    /// the jump's cushion instead of the thump. Initialise it after the World, Rover and
     /// Gameplay systems (it reads <see cref="IRoverState"/>, <see cref="IRoverRig"/>, <see cref="IWorldLayout"/> and
     /// <see cref="IFriendRoster"/>).
     /// </summary>
@@ -18,6 +19,7 @@ namespace MoonProject.Audio
     {
         private const float MinPitch = 0.05f;
         private const float MinDistanceGap = 1f;
+        private const int RecentClipCapacity = 16;
 
         [Tooltip("Assets/_Project/Data/Audio/AudioLibrary.asset (built from tools/audio/sfx_manifest.json).")]
         [SerializeField] private AudioLibrary _library;
@@ -30,6 +32,9 @@ namespace MoonProject.Audio
 
         [Tooltip("Sonar, relics, scrap, tether, excavation, shelf and upgrade sounds.")]
         [SerializeField] private GameplayAudio _gameplay;
+
+        [Tooltip("Hover-Jump charge, leap, airborne wind and cushioned landing.")]
+        [SerializeField] private JumpAudio _jump;
 
         [Tooltip("Friend machines' voices (chirps, rotors, repair).")]
         [SerializeField] private FriendAudio _friends;
@@ -45,6 +50,8 @@ namespace MoonProject.Audio
 
         private readonly AudioBusMixer _buses = new AudioBusMixer();
         private readonly LoopFader _pause = new LoopFader();
+        private readonly AudioClip[] _recentClips = new AudioClip[RecentClipCapacity];
+        private int _playCount;
         private AudioRandom _random;
         private VoiceBank _spatial;
         private VoiceBank _flat;
@@ -74,7 +81,21 @@ namespace MoonProject.Audio
 
         /// <summary>The clip that started most recently (one-shots on a following voice keep their source's clip
         /// unchanged, so read this instead of <see cref="LastVoice"/>.clip).</summary>
-        internal AudioClip LastClip { get; private set; }
+        internal AudioClip LastClip => _playCount > 0 ? RecentClip(0) : null;
+
+        /// <summary>Number of one-shots started so far (diagnostics and tests).</summary>
+        internal int PlayCount => _playCount;
+
+        /// <summary>The clip started <paramref name="playsAgo"/> plays ago (0 = last), within the last 16.</summary>
+        internal AudioClip RecentClip(int playsAgo)
+        {
+            if (playsAgo < 0 || playsAgo >= Mathf.Min(_playCount, RecentClipCapacity))
+            {
+                return null;
+            }
+
+            return _recentClips[(_playCount - 1 - playsAgo) % RecentClipCapacity];
+        }
 
         public void Initialize(GameContext context)
         {
@@ -111,6 +132,7 @@ namespace MoonProject.Audio
             IsInitialized = true;
 
             _roverAudio.Initialize(context, this);
+            _jump.Initialize(context, this);
             _gameplay.Initialize(context, this);
             _friends.Initialize(context, this);
             _ui.Initialize(context, this);
@@ -176,7 +198,7 @@ namespace MoonProject.Audio
             float volume = _random.Range(entry.VolumeMin, entry.VolumeMax) * volumeScale * _buses.Effective(entry.Bus);
             source.PlayOneShot(entry.GetClip(clipIndex), volume);
             LastVoice = source;
-            LastClip = entry.GetClip(clipIndex);
+            Remember(entry.GetClip(clipIndex));
         }
 
         /// <summary>Plays a random variant of <paramref name="cue"/> flat (UI, stingers).</summary>
@@ -221,8 +243,10 @@ namespace MoonProject.Audio
         }
 
         internal void Wire(AudioLibrary library, AudioMixTuning mixTuning, RoverAudio roverAudio,
-            GameplayAudio gameplay, FriendAudio friends, UiAudio ui, RadioStation radio, AmbienceBed ambience)
+            JumpAudio jump, GameplayAudio gameplay, FriendAudio friends, UiAudio ui, RadioStation radio,
+            AmbienceBed ambience)
         {
+            _jump = jump;
             _friends = friends;
             _ui = ui;
             _library = library;
@@ -296,16 +320,27 @@ namespace MoonProject.Audio
 
             voice.Play();
             LastVoice = voice;
-            LastClip = clip;
+            Remember(clip);
         }
 
         private void OnRoverLanded(RoverLanded landed)
         {
+            if (_jump.TryCushionLanding(landed))
+            {
+                return;
+            }
+
             ImpactSound thump = ImpactSound.ForLanding(landed.ImpactSpeed, _mixTuning);
             if (thump.Audible && _landingThump.IsValid)
             {
                 PlayAt(_landingThump, landed.Position, thump.Volume, thump.Pitch);
             }
+        }
+
+        private void Remember(AudioClip clip)
+        {
+            _recentClips[_playCount % RecentClipCapacity] = clip;
+            _playCount++;
         }
 
         private void OnPauseChanged(PauseChanged changed)
@@ -347,6 +382,7 @@ namespace MoonProject.Audio
             ok &= Require(_gameplay, nameof(_gameplay));
             ok &= Require(_ui, nameof(_ui));
             ok &= Require(_friends, nameof(_friends));
+            ok &= Require(_jump, nameof(_jump));
             ok &= Require(_radio, nameof(_radio));
             ok &= Require(_ambience, nameof(_ambience));
             if (_library != null)

@@ -5,8 +5,8 @@ namespace MoonProject.Audio.Editor
 {
     /// <summary>
     /// Adds the Audio domain to Main.unity: under [Audio], an AudioDirector (the system, initialised after World, Rover
-    /// and Gameplay) wired to the library and tuning assets, plus its RoverAudio, GameplayAudio, FriendAudio, UiAudio,
-    /// RadioStation and AmbienceBed parts.
+    /// and Gameplay) wired to the library and tuning assets, plus its RoverAudio, JumpAudio, GameplayAudio,
+    /// FriendAudio, UiAudio, RadioStation and AmbienceBed parts.
     /// Voices and loop sources are created by the components at initialisation, not baked into the scene.
     /// </summary>
     public sealed class AudioSceneContributor : ISceneContributor
@@ -25,10 +25,12 @@ namespace MoonProject.Audio.Editor
             var gameplayTuning = context.LoadAsset<GameplayAudioTuning>(AudioAssetPaths.GameplayTuning);
             var uiTuning = context.LoadAsset<UiAudioTuning>(AudioAssetPaths.UiTuning);
             var friendTuning = context.LoadAsset<FriendAudioTuning>(AudioAssetPaths.FriendTuning);
+            var jumpTuning = context.LoadAsset<JumpAudioTuning>(AudioAssetPaths.JumpTuning);
 
             Transform root = context.AudioRoot.transform;
             var director = context.CreateChild("AudioDirector", root).AddComponent<AudioDirector>();
             var rover = context.CreateChild("RoverAudio", root).AddComponent<RoverAudio>();
+            var jump = context.CreateChild("JumpAudio", root).AddComponent<JumpAudio>();
             var gameplay = context.CreateChild("GameplayAudio", root).AddComponent<GameplayAudio>();
             var friends = context.CreateChild("FriendAudio", root).AddComponent<FriendAudio>();
             var ui = context.CreateChild("UiAudio", root).AddComponent<UiAudio>();
@@ -39,8 +41,9 @@ namespace MoonProject.Audio.Editor
             gameplay.Wire(gameplayTuning);
             ui.Wire(uiTuning);
             friends.Wire(friendTuning);
+            jump.Wire(jumpTuning);
             radio.Wire(radioTuning, playlist);
-            director.Wire(library, mixTuning, rover, gameplay, friends, ui, radio, ambience);
+            director.Wire(library, mixTuning, rover, jump, gameplay, friends, ui, radio, ambience);
             context.AddSystem(director);
         }
     }

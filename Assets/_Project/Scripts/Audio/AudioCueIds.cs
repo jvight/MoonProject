@@ -9,6 +9,13 @@ namespace MoonProject.Audio
         public const string FriendBoot = "friend_boot";
         public const string FriendPart = "friend_part";
         public const string FriendSpotPing = "friend_spot_ping";
+        public const string JumpCharge = "jump_charge";
+        public const string JumpLeap = "jump_leap";
+        public const string CoilTwang = "coil_twang";
+        public const string AirWind = "air_wind";
+        public const string JumpLand = "jump_land";
+        public const string CoilPop = "coil_pop";
+        public const string WorkbenchUpgrade = "workbench_upgrade";
         public const string RoverHum = "rover_hum";
         public const string DustCrunch = "dust_crunch";
         public const string SuspensionCreak = "suspension_creak";
