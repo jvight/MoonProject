@@ -16,6 +16,18 @@ namespace MoonProject.World.Tests
         private const int RingDirections = 24;
         private const float FacingDot = 0.9f;
 
+        // The relay network (docs/features/M3-06): four masts, each with a 3 m pad facing home, reach circles of
+        // ~110 m per mast and ~120 m for home's tower, linked home -> relay.0 -> relay.2 -> relay.3 and home ->
+        // relay.1. A mast is at least this tall, so its top must stand in the base's line of sight.
+        private const int RelayCount = 4;
+        private const float RelayPad = 3f;
+        private const float HomeReach = 120f;
+        private const float MastReach = 110f;
+        private const float MaxHomeAngle = 3f;
+        private const float MastHeight = 8f;
+        private const float BaseEyeHeight = 3f;
+        private const float SightTargetClearance = 2f;
+
         // Bell (M3-05) leans broken against the terminus's back wall: she needs this much flat ground, and the wall
         // must rise at least this high within this far past the radius's edge along Forward.
         private const float TerminusMinRadius = 3.5f;
@@ -38,7 +50,7 @@ namespace MoonProject.World.Tests
         {
             _settings = new SurfaceSettings();
             _surface = new MoonSurface(_settings, WorldSettings.DefaultSeed);
-            _anchors = new WorldAnchors(_surface, _settings.Canyon);
+            _anchors = new WorldAnchors(_surface, _settings.Canyon, new RelaySettings());
         }
 
         [Test]
@@ -52,6 +64,11 @@ namespace MoonProject.World.Tests
             for (int i = 0; i < _settings.Canyon.AlcoveCount; i++)
             {
                 expected.Add(WorldAnchorIds.CanyonAlcovePrefix + i);
+            }
+
+            for (int i = 0; i < RelayCount; i++)
+            {
+                expected.Add(WorldAnchorIds.RelayPrefix + i);
             }
 
             Assert.AreEqual(expected.Count, _anchors.Count);
@@ -82,7 +99,8 @@ namespace MoonProject.World.Tests
                 Assert.AreEqual(0f, anchor.Forward.y, $"{anchor.Id} forward is not horizontal");
                 Assert.AreEqual(1f, anchor.Forward.magnitude, 1e-4f, $"{anchor.Id} forward is not a unit vector");
                 Assert.Greater(anchor.Radius, 1f, $"{anchor.Id} has no room");
-                Assert.IsFalse(_surface.PlayableArea.Contains(new Vector2(p.x, p.z)),
+                bool relay = anchor.Id.StartsWith(WorldAnchorIds.RelayPrefix, System.StringComparison.Ordinal);
+                Assert.IsTrue(relay || !_surface.PlayableArea.Contains(new Vector2(p.x, p.z)),
                     $"{anchor.Id} lies inside PlayableArea, which the canyon must leave alone");
             }
         }
@@ -162,6 +180,49 @@ namespace MoonProject.World.Tests
         }
 
         [Test]
+        public void Relays_HaveAPad_FacingHome()
+        {
+            for (int i = 0; i < RelayCount; i++)
+            {
+                WorldAnchor relay = Anchor(WorldAnchorIds.RelayPrefix + i);
+                Assert.AreEqual(RelayPad, relay.Radius, 1e-4f, $"{relay.Id} pad radius");
+                var home = new Vector3(-relay.Position.x, 0f, -relay.Position.z);
+                Assert.LessOrEqual(Vector3.Angle(relay.Forward, home), MaxHomeAngle, $"{relay.Id} does not face home");
+            }
+        }
+
+        [Test]
+        public void Relays_LinkInAChain_BackToHome()
+        {
+            Vector3 relay0 = Anchor(WorldAnchorIds.RelayPrefix + 0).Position;
+            Vector3 relay1 = Anchor(WorldAnchorIds.RelayPrefix + 1).Position;
+            Vector3 relay2 = Anchor(WorldAnchorIds.RelayPrefix + 2).Position;
+            Vector3 relay3 = Anchor(WorldAnchorIds.RelayPrefix + 3).Position;
+            Assert.Less(Flat(relay0), HomeReach + MastReach, "home to relay.0");
+            Assert.Less(Flat(relay1), HomeReach + MastReach, "home to relay.1");
+            Assert.Less(Flat(relay2 - relay0), MastReach * 2f, "relay.0 to relay.2");
+            Assert.Less(Flat(relay3 - relay2), MastReach * 2f, "relay.2 to relay.3");
+        }
+
+        [Test]
+        public void RelaysOutsideTheCanyon_StandInPlainSightOfTheBase()
+        {
+            var eye = new Vector3(0f, _surface.SampleHeight(0f, 0f) + BaseEyeHeight, 0f);
+            for (int i = 0; i < 3; i++)
+            {
+                WorldAnchor relay = Anchor(WorldAnchorIds.RelayPrefix + i);
+                Vector3 top = relay.Position + Vector3.up * MastHeight;
+                float length = Vector3.Distance(eye, top);
+                for (float d = 0f; d < length - SightTargetClearance; d += 1f)
+                {
+                    Vector3 p = Vector3.Lerp(eye, top, d / length);
+                    Assert.Greater(p.y, _surface.SampleHeight(p.x, p.z),
+                        $"the base cannot see {relay.Id}'s mast: blocked at ({p.x:F0}, {p.z:F0})");
+                }
+            }
+        }
+
+        [Test]
         public void Terminus_HasRoomForBell_InFrontOfASheerBackWall()
         {
             WorldAnchor terminus = Anchor(WorldAnchorIds.CanyonTerminus);
@@ -213,6 +274,11 @@ namespace MoonProject.World.Tests
             Assert.That(exit.Position.y - foot.y, Is.InRange(1f, 2.6f), "the exit's top is one step above its foot");
             Assert.Greater(Vector3.Dot(new Vector3(down.x, 0f, down.z).normalized, exit.Forward), 0.95f,
                 "the exit should face down the step toward its foot");
+        }
+
+        private static float Flat(Vector3 v)
+        {
+            return new Vector2(v.x, v.z).magnitude;
         }
 
         private WorldAnchor Anchor(string id)

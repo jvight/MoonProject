@@ -46,10 +46,17 @@ namespace MoonProject.World
             }
 
             _clearings = new Vector3[anchors.Count];
+            var relaysOnTheFloor = new List<Vector2>();
             for (int i = 0; i < anchors.Count; i++)
             {
                 WorldAnchor anchor = anchors.Get(i);
-                _clearings[i] = new Vector3(anchor.Position.x, anchor.Position.z, anchor.Radius);
+                var site = new Vector2(anchor.Position.x, anchor.Position.z);
+                _clearings[i] = new Vector3(site.x, site.y, anchor.Radius);
+                if (anchor.Id.StartsWith(WorldAnchorIds.RelayPrefix, StringComparison.Ordinal)
+                    && !surface.Canyon.Bounds.Contains(site))
+                {
+                    relaysOnTheFloor.Add(site);
+                }
             }
 
             string error = settings.Validate();
@@ -82,6 +89,7 @@ namespace MoonProject.World
 
             ends.Add(surface.Canyon.MainPath.PointAt(0f));
             ends.Add(surface.Canyon.ExitFoot);
+            ends.AddRange(relaysOnTheFloor);
             foreach (float bearing in settings.LaneBearings ?? Array.Empty<float>())
             {
                 ends.Add(MoonSurface.BearingToDirection(bearing) * settings.ExtentRadius);

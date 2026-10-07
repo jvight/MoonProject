@@ -228,7 +228,7 @@ namespace MoonProject.World.Tests
 
         private WorldAnchors Anchors()
         {
-            return new WorldAnchors(_surface, new SurfaceSettings().Canyon);
+            return new WorldAnchors(_surface, new SurfaceSettings().Canyon, new RelaySettings());
         }
     }
 }
