@@ -79,7 +79,8 @@ namespace MoonProject.World.Tests
             var world = host.AddComponent<WorldSystem>();
             var serialized = new SerializedObject(world);
             serialized.FindProperty("_settings").objectReferenceValue = LoadSettings();
-            serialized.FindProperty("_terrainMaterial").objectReferenceValue = Load<Material>(ArtPaths.LowPolyMaterial);
+            serialized.FindProperty("_groundMaterial").objectReferenceValue = Load<Material>(WorldPaths.GroundMaterial);
+            serialized.FindProperty("_paletteMaterial").objectReferenceValue = Load<Material>(ArtPaths.LowPolyMaterial);
             serialized.FindProperty("_earthMaterial").objectReferenceValue = Load<Material>(WorldPaths.EarthMaterial);
             serialized.FindProperty("_earthlight").objectReferenceValue = light;
             serialized.FindProperty("_peakBeacon").objectReferenceValue = CreateBeaconHost(BeaconName);

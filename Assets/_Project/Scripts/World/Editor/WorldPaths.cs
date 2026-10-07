@@ -7,6 +7,7 @@ namespace MoonProject.World.Editor
         public const string Settings = "Assets/_Project/Data/Tuning/WorldSettings.asset";
         public const string SkyMaterial = GeneratedRoot + "/M_Sky.mat";
         public const string EarthMaterial = GeneratedRoot + "/M_Earth.mat";
+        public const string GroundMaterial = GeneratedRoot + "/M_Ground.mat";
         public const string VolumeProfile = GeneratedRoot + "/WorldVolumeProfile.asset";
         public const string BeaconFolder = GeneratedRoot + "/Beacon";
         public const string BeaconModelPrefab = BeaconFolder + "/PeakBeaconModel.prefab";
@@ -16,6 +17,7 @@ namespace MoonProject.World.Editor
         public const string CanyonGlowMaterial = GeneratedRoot + "/Canyon/M_CanyonGlow.mat";
         public const string SkyShader = "MoonProject/World/LofiSky";
         public const string EarthShader = "MoonProject/World/LofiEarth";
+        public const string GroundShader = "MoonProject/World/LofiTerrain";
         /// <summary>Art rocks (Generated/Art/Rocks) used as pebbles: the pebble, rounded and slab shapes.</summary>
         public static readonly string[] PebbleRocks = { "Rock_00", "Rock_01", "Rock_03" };
 

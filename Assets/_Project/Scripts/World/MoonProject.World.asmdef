@@ -3,7 +3,8 @@
     "rootNamespace": "MoonProject.World",
     "references": [
         "MoonProject.Core",
-        "MoonProject.Art"
+        "MoonProject.Art",
+        "Unity.RenderPipelines.Universal.Runtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

@@ -1,0 +1,14 @@
+{
+  "width": 1600,
+  "height": 900,
+  "postProcessing": true,
+  "poses": [
+    {"name": "spawn_first_frame", "position": [0.78, 4, -8.97], "euler": [6, -5, 0], "fov": 60},
+    {"name": "base_from_150m", "position": [56.19, 5.2, -139.08], "lookAt": [0, 2.5, 0], "fov": 50},
+    {"name": "base_from_300m", "position": [108.6, 7.4, -268.9], "lookAt": [0, 2.5, 0], "fov": 50},
+    {"name": "peak_from_mid_basin", "position": [-60, 3.2, 40], "lookAt": [91.5, 120, 430.4], "fov": 55},
+    {"name": "canyon_mouth_from_base", "position": [14, 3, 4.5], "lookAt": [380, 30, 123], "fov": 50},
+    {"name": "canyon_inside", "position": [351.9, 12, 114.3], "lookAt": [399.7, 15, 128.9], "fov": 60},
+    {"name": "low_wide_07_small", "position": [18, 1.0, -26], "lookAt": [-48, 26, 140], "fov": 50}
+  ]
+}

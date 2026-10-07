@@ -54,6 +54,15 @@ namespace MoonProject.World.Editor
             }
         }
 
+        /// <summary>The terrain's material: LofiTerrain draws its painted vertex colours, matte, flat-shaded.</summary>
+        [MoonBuilder("World/Ground Material", 205)]
+        public static void BuildGroundMaterial()
+        {
+            GeneratedAssets.CreateOrReplace(new Material(FindShader(WorldPaths.GroundShader)),
+                WorldPaths.GroundMaterial);
+            AssetDatabase.SaveAssets();
+        }
+
         [MoonBuilder("World/Sky Materials", 210)]
         public static void BuildSkyMaterials()
         {
@@ -107,6 +116,11 @@ namespace MoonProject.World.Editor
             liftGammaGain.lift.Override(post.Lift);
             liftGammaGain.gamma.Override(post.Gamma);
             liftGammaGain.gain.Override(post.Gain);
+
+            var split = Override<SplitToning>(profile);
+            split.shadows.Override(post.SplitShadows);
+            split.highlights.Override(post.SplitHighlights);
+            split.balance.Override(post.SplitBalance);
 
             var vignette = Override<Vignette>(profile);
             vignette.intensity.Override(post.VignetteIntensity);

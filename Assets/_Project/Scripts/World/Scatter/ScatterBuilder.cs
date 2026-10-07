@@ -84,7 +84,7 @@ namespace MoonProject.World
                 }
             }
 
-            var vertices = new TerrainVertex[groups.Count][];
+            var vertices = new ScatterVertex[groups.Count][];
             var bounds = new Bounds[groups.Count];
             Parallel.For(0, groups.Count, g =>
             {
@@ -166,10 +166,10 @@ namespace MoonProject.World
             return shapes;
         }
 
-        private static TerrainVertex[] Combine(ChunkGroup group, IReadOnlyList<ScatterInstance> instances,
+        private static ScatterVertex[] Combine(ChunkGroup group, IReadOnlyList<ScatterInstance> instances,
             RockShape[] shapes, float chunkSize, out Bounds bounds)
         {
-            var vertices = new TerrainVertex[group.VertexCount];
+            var vertices = new ScatterVertex[group.VertexCount];
             Vector3 origin = new Vector3(group.Cell.x, 0f, group.Cell.y) * chunkSize;
             Vector3 min = Vector3.positiveInfinity;
             Vector3 max = Vector3.negativeInfinity;
@@ -184,7 +184,7 @@ namespace MoonProject.World
                 for (int v = 0; v < shape.Positions.Length; v++)
                 {
                     Vector3 position = offset + rotation * (shape.Positions[v] * scale);
-                    vertices[written++] = new TerrainVertex(position, rotation * shape.Normals[v], shape.Uvs[v]);
+                    vertices[written++] = new ScatterVertex(position, rotation * shape.Normals[v], shape.Uvs[v]);
                     min = Vector3.Min(min, position);
                     max = Vector3.Max(max, position);
                 }
@@ -195,7 +195,7 @@ namespace MoonProject.World
             return vertices;
         }
 
-        private MeshRenderer CreateChunk(Transform parent, ChunkGroup group, TerrainVertex[] vertices, Bounds bounds,
+        private MeshRenderer CreateChunk(Transform parent, ChunkGroup group, ScatterVertex[] vertices, Bounds bounds,
             float chunkSize, Material material, HideFlags hideFlags)
         {
             string name = $"{(group.Boulders ? "Boulders" : "Pebbles")}_{group.Cell.x}_{group.Cell.y}";

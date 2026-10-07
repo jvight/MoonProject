@@ -1,7 +1,9 @@
 // Lofi Lunar night sky (skybox): zenith-to-horizon gradient whose horizon is the fog colour, a soft violet
-// horizon glow, a dense hash-based starfield with a subtle twinkle, a faint milky-way band, a soft halo around
-// Earth and an occasional slow shooting star. Every parameter is a _Moon* global set from WorldSettings by
-// MoonProject.World.SkyShaderGlobals, so this shader has no material properties of its own.
+// horizon glow with a thin band of light along the horizon line, a hash-based starfield whose brightnesses follow a
+// power law (faint dust, a handful of bright stars with a soft glow, a few slow twinklers), a faint milky-way band,
+// a soft halo and a thin atmospheric limb around Earth, and an occasional slow shooting star. Every parameter is a
+// _Moon* global set from WorldSettings by MoonProject.World.SkyShaderGlobals, so this shader has no material
+// properties of its own.
 Shader "MoonProject/World/LofiSky"
 {
     SubShader
@@ -27,11 +29,15 @@ Shader "MoonProject/World/LofiSky"
 
             float4 _MoonSkyTop;          // rgb zenith colour (linear), a gradient exponent
             float4 _MoonHorizonGlow;     // rgb glow (linear), a glow height
-            float4 _MoonStarParams;      // x density, y brightness, z twinkle speed, w size in pixels
+            float4 _MoonHorizonBand;     // rgb thin band along the horizon (linear), a band height
+            float4 _MoonStarParams;      // x density, y brightness, z power-law exponent, w core size in pixels
+            float4 _MoonStarTwinkle;     // x share that twinkles, y speed (rad/s), z depth, w glow of bright stars
             float4 _MoonMilkyWayAxis;    // xyz band plane normal, w intensity
             float4 _MoonMilkyWayColor;   // rgb haze colour (linear), a angular half-width
             float4 _MoonEarthDirection;  // xyz unit direction to Earth, w angular radius (radians)
             float4 _MoonEarthHalo;       // rgb halo colour (linear), a halo size as a fraction of the radius
+            float4 _MoonEarthLimb;       // rgb limb colour (linear), a limb width as a fraction of the radius
+            float4 _MoonEarthSun;        // xyz world direction toward the sun lighting Earth
             float4 _MoonShootingStars;   // x period, y duration, z brightness
 
             struct Attributes
@@ -82,7 +88,9 @@ Shader "MoonProject/World/LofiSky"
 
             // One layer of stars: at most one star per 3D cell of the direction scaled by `cells`. A star is kept
             // only when its projection on the sphere lies well inside its own cell, so no star is cut by a border.
-            float3 StarLayer(float3 dir, float cells, float density, float pixel, float size, float seed)
+            // Its brightness follows a power law from `faintest` up (N(>b) ~ b^-exponent, capped), its core grows a
+            // little with brightness, the brightest carry a soft glow, and only a few twinkle, slowly.
+            float3 StarLayer(float3 dir, float cells, float density, float pixel, float faintest, float seed)
             {
                 float3 p = dir * cells;
                 float3 cell = floor(p);
@@ -99,14 +107,24 @@ Shader "MoonProject/World/LofiSky"
                     return 0;
                 }
 
-                float magnitude = h.y * h.y * h.y * h.y;
-                float radius = pixel * size * (0.7 + 1.3 * magnitude);
-                float core = saturate(1.0 - length(p - star) / cells / radius);
+                // The glow is a Gaussian a few pixels wide, so it has faded to nothing long before the cell's edge.
+                float brightness = min(faintest * pow(max(h.y, 1e-3), -1.0 / _MoonStarParams.z), 2.5);
+                float distancePx = length(p - star) / cells / pixel;
+                float radius = _MoonStarParams.w * (0.65 + 0.45 * sqrt(brightness));
+                float core = saturate(1.0 - distancePx / radius);
                 core *= core;
-                float twinkle = 1.0 + 0.28 * sin(_Time.y * _MoonStarParams.z * (0.6 + h.z) + h.x * 61.0);
+                float spread = distancePx / (radius * 2.5);
+                float glow = exp(-spread * spread) * _MoonStarTwinkle.w * saturate(brightness - 0.8);
+
+                float twinkle = 1.0;
+                if (frac(h.z * 7.13) < _MoonStarTwinkle.x)
+                {
+                    twinkle += _MoonStarTwinkle.z * sin(_Time.y * _MoonStarTwinkle.y * (0.6 + h.z) + h.x * 61.0);
+                }
+
                 float3 tint = lerp(float3(0.72, 0.8, 1.0), float3(1.0, 0.88, 0.78), h.z);
                 tint = lerp(tint, float3(0.86, 0.78, 1.0), saturate(h.y * 2.0 - 1.0));
-                return tint * core * twinkle * (0.1 + 1.8 * magnitude);
+                return tint * (core + glow) * brightness * twinkle;
             }
 
             float3 ShootingStar(float3 dir, float pixel)
@@ -163,6 +181,7 @@ Shader "MoonProject/World/LofiSky"
                 float rise = pow(saturate(up), _MoonSkyTop.a);
                 float3 color = lerp(unity_FogColor.rgb, _MoonSkyTop.rgb, rise);
                 color += _MoonHorizonGlow.rgb * exp(-max(up, 0.0) / _MoonHorizonGlow.a);
+                color += _MoonHorizonBand.rgb * exp(-abs(up) / _MoonHorizonBand.a);
 
                 float above = smoothstep(0.0, 0.16, up);
                 float band = dot(dir, _MoonMilkyWayAxis.xyz) / _MoonMilkyWayColor.a;
@@ -171,16 +190,23 @@ Shader "MoonProject/World/LofiSky"
                 color += _MoonMilkyWayColor.rgb * bandMask * smoothstep(0.25, 0.85, haze) * _MoonMilkyWayAxis.w
                     * above;
 
-                float3 stars = StarLayer(dir, 110.0, _MoonStarParams.x, pixel, _MoonStarParams.w, 0.0);
-                stars += StarLayer(dir, 47.0, _MoonStarParams.x * 0.35, pixel, _MoonStarParams.w * 1.5, 41.0);
-                stars += StarLayer(dir, 230.0, _MoonStarParams.x * bandMask, pixel, _MoonStarParams.w * 0.8, 83.0)
-                    * 0.6;
+                float3 stars = StarLayer(dir, 150.0, _MoonStarParams.x, pixel, 0.08, 0.0);
+                stars += StarLayer(dir, 70.0, _MoonStarParams.x * 0.6, pixel, 0.15, 41.0);
+                stars += StarLayer(dir, 24.0, _MoonStarParams.x * 0.5, pixel, 0.4, 67.0);
+                stars += StarLayer(dir, 260.0, _MoonStarParams.x * bandMask, pixel, 0.06, 83.0);
                 color += stars * _MoonStarParams.y * above;
 
                 float earthAngle = acos(clamp(dot(dir, _MoonEarthDirection.xyz), -1.0, 1.0));
                 float radius = _MoonEarthDirection.w;
-                float halo = exp(-max(earthAngle - radius, 0.0) / max(radius * _MoonEarthHalo.a, 1e-4) * 2.2);
+                float outside = max(earthAngle - radius, 0.0);
+                float halo = exp(-outside / max(radius * _MoonEarthHalo.a, 1e-4) * 2.2);
                 color += _MoonEarthHalo.rgb * halo;
+
+                // The thin atmospheric limb, brightest on Earth's sunlit side.
+                float3 across = dir - _MoonEarthDirection.xyz * dot(dir, _MoonEarthDirection.xyz);
+                float sunward = dot(normalize(across + 1e-6), _MoonEarthSun.xyz);
+                float limb = exp(-outside / max(radius * _MoonEarthLimb.a, 1e-5));
+                color += _MoonEarthLimb.rgb * limb * saturate(0.3 + 0.7 * sunward);
 
                 color += ShootingStar(dir, pixel) * above;
                 return half4(color, 1.0);

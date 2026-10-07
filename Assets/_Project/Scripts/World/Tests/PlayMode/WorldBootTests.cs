@@ -22,7 +22,8 @@ namespace MoonProject.World.PlayModeTests
     {
         // Mirrors WorldPaths / ArtPaths (editor assemblies cannot be referenced from a PlayMode test assembly).
         private const string SettingsPath = "Assets/_Project/Data/Tuning/WorldSettings.asset";
-        private const string TerrainMaterialPath = "Assets/_Project/Generated/Art/Palette/M_LowPoly.mat";
+        private const string GroundMaterialPath = "Assets/_Project/Generated/World/M_Ground.mat";
+        private const string PaletteMaterialPath = "Assets/_Project/Generated/Art/Palette/M_LowPoly.mat";
         private const string EarthMaterialPath = "Assets/_Project/Generated/World/M_Earth.mat";
         private const string ControlsPath = "Assets/_Project/Data/Input/Controls.inputactions";
         private const string RockFolder = "Assets/_Project/Generated/Art/Rocks/";
@@ -57,7 +58,8 @@ namespace MoonProject.World.PlayModeTests
             var world = _host.AddComponent<WorldSystem>();
             var serialized = new SerializedObject(world);
             serialized.FindProperty("_settings").objectReferenceValue = settings;
-            serialized.FindProperty("_terrainMaterial").objectReferenceValue = Load<Material>(TerrainMaterialPath);
+            serialized.FindProperty("_groundMaterial").objectReferenceValue = Load<Material>(GroundMaterialPath);
+            serialized.FindProperty("_paletteMaterial").objectReferenceValue = Load<Material>(PaletteMaterialPath);
             serialized.FindProperty("_earthMaterial").objectReferenceValue = Load<Material>(EarthMaterialPath);
             serialized.FindProperty("_earthlight").objectReferenceValue = light;
             _beacon = CreateBeaconHost("PeakBeacon");
