@@ -5,7 +5,7 @@ Run: python -m unittest discover -s tools/music/tests -t tools/music
 import unittest
 
 import numpy as np
-from lofi import analysis
+from lofi import analysis, listening
 from synth.core import SAMPLE_RATE, midi_to_freq
 
 
@@ -57,6 +57,13 @@ class ListeningTests(unittest.TestCase):
         self.assertAlmostEqual(profile["max_lufs"] - profile["min_lufs"], 20.0, delta=1.0)
         octaves = analysis.octave_balance(loud)
         self.assertEqual(max(octaves, key=octaves.get), "500")
+
+    def test_width_tells_mono_from_wide(self):
+        mono = _tones((69, 76), 2.0)
+        self.assertLess(listening.width_db(mono), -100.0)
+        wide = mono.copy()
+        wide[:, 1] = _tones((71, 78), 2.0)[:, 0]
+        self.assertGreater(listening.width_db(wide), -3.0)
 
 
 if __name__ == "__main__":

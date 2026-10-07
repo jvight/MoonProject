@@ -1,4 +1,4 @@
-"""Whole-score checks on every playlist track. Run: python -m unittest discover -s tools/music/tests -t tools/music"""
+"""Whole-score checks on every track and tape. Run: python -m unittest discover -s tools/music/tests -t tools/music"""
 import unittest
 from itertools import pairwise
 
@@ -7,7 +7,7 @@ from lofi.composer import compose
 from lofi.melody import LEADS
 from lofi.theory import D_MAJOR
 from lofi.theory_report import melody_report, out_of_key_notes
-from lofi.tracks import PLAYLIST, track_by_id
+from lofi.tracks import CATALOGUE, PLAYLIST, track_by_id
 from lofi.voicing import KEYS_STYLE, PAD_STYLE
 
 MIN_SECONDS = 120.0
@@ -17,7 +17,7 @@ MAX_SECONDS = 180.0
 class CompositionTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.scores = [compose(spec) for spec in PLAYLIST]
+        cls.scores = [compose(spec) for spec in CATALOGUE]
 
     def test_track_lengths_fit_the_radio(self):
         for score in self.scores:
@@ -29,6 +29,8 @@ class CompositionTests(unittest.TestCase):
         self.assertEqual(len({s.family for s in PLAYLIST}), len(PLAYLIST))
         self.assertEqual(len({(s.bpm, s.swing) for s in PLAYLIST}), len(PLAYLIST))
         self.assertEqual(track_by_id("03").slug, "dust_on_the_dial")
+        self.assertEqual(track_by_id("slow_orbit").id, "slow_orbit")
+        self.assertEqual(len({s.id for s in CATALOGUE}), len(CATALOGUE))
 
     def test_no_note_leaves_the_key_except_borrowed_chords(self):
         for score in self.scores:
@@ -62,7 +64,7 @@ class CompositionTests(unittest.TestCase):
                     self.assertTrue(all(voice.low <= n.pitch <= voice.high for n in notes), name)
 
     def test_composition_is_deterministic(self):
-        for spec, score in zip(PLAYLIST, self.scores):
+        for spec, score in zip(CATALOGUE, self.scores):
             again = compose(spec)
             self.assertEqual(again.parts, score.parts, spec.id)
             self.assertEqual(again.drums, score.drums, spec.id)
