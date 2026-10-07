@@ -23,5 +23,11 @@ namespace MoonProject.Core
 
         /// <summary>Prefix of the side alcoves, numbered from the mouth inward: "canyon.alcove_0", "canyon.alcove_1"...</summary>
         public const string CanyonAlcovePrefix = "canyon.alcove_";
+
+        /// <summary>
+        /// Prefix of the relay mast sites (docs/features/M3-06), numbered in restoring order: "relay.0", "relay.1"...
+        /// Forward points from the mast toward home; the radius is the mast's flat pad.
+        /// </summary>
+        public const string RelayPrefix = "relay.";
     }
 }
