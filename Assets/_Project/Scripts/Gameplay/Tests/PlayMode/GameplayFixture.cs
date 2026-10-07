@@ -15,7 +15,7 @@ namespace MoonProject.Gameplay.PlayModeTests
 {
     /// <summary>
     /// A complete gameplay stack built in test code: a flat world with canyon anchors, a fake 07, test content (relic,
-    /// scrap, Tilly, Bell, cassette and log cache stand-ins in place of the Art prefabs, with the contracts'
+    /// scrap, Tilly, Bell, cassette, log cache and tape rack stand-ins in place of the Art prefabs, with the contracts'
     /// node names; default tuning; SoftGlow materials) and the real gameplay components, wired the way the scene
     /// contributor wires them and booted through GameBootstrap with a private save slot.
     /// </summary>
@@ -100,6 +100,9 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         /// <summary>The tower's BellCorner stand-in (pinned under the tower anchor, as the scene build does).</summary>
         public Transform BellCorner { get; private set; }
+
+        /// <summary>The tape rack's Slot_0..7 stand-ins.</summary>
+        public Transform[] ShelfSlots { get; private set; }
 
         /// <summary>Builds and boots everything; 07 starts at the base facing +Z.</summary>
         public static GameplayFixture Boot(InputActionAsset controls, string saveSlot = null)
@@ -226,7 +229,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             var cassettes = Child<CassetteField>(root, "Cassettes");
             var logs = Child<LogCacheField>(root, "LogCaches");
             var signals = Child<SignalField>(root, "BellSignals");
-            BuildBase(root.transform, home, tower, workshop);
+            CassetteShelf shelf = BuildBase(root.transform, home, tower, workshop);
             BuildFriends(friends);
             BuildCassettes(cassettes);
             BuildLogCaches(logs);
@@ -236,7 +239,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             excavation.Wire(ExcavationTuning);
             tether.Wire(TetherTuning);
             Gameplay.Wire(visuals, new[] { RadioTowerUpgrade, HoverJumpUpgrade }, relics, scrap, sonar, excavation,
-                tether, home, tower, workshop, friends, cassettes, logs, signals);
+                tether, home, tower, workshop, friends, cassettes, logs, signals, shelf);
             root.SetActive(true);
 
             Bootstrap = BootstrapHarness.Create(_controls, SaveSlot, World, Rover, Gameplay);
@@ -244,10 +247,10 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// A stand-in for Art's lander, shelf and tower stages with the contract's node names and positions, wired the
-        /// way the scene contributor wires the real prefabs.
+        /// A stand-in for Art's lander, shelf, tower stages and tape rack with the contract's node names and positions,
+        /// wired the way the scene contributor wires the real prefabs.
         /// </summary>
-        private void BuildBase(Transform parent, HomeBase home, RadioTower tower, Workshop workshop)
+        private CassetteShelf BuildBase(Transform parent, HomeBase home, RadioTower tower, Workshop workshop)
         {
             var baseRoot = new GameObject("Base").transform;
             baseRoot.SetParent(parent, false);
@@ -297,6 +300,20 @@ namespace MoonProject.Gameplay.PlayModeTests
             TillyPerch = Node("FriendSocket_tilly", lander, new Vector3(-1.6f, 3.3f, 0.9f));
             BellCorner = Node("BellCorner", anchor, new Vector3(-4.9f, 0f, 0.4f));
             BellCorner.localRotation = Quaternion.Euler(0f, 74f, 0f);
+            Transform rack = Node("CassetteShelf", Node("CassetteShelfAnchor", anchor, new Vector3(-4.6f, 0f, -2.75f)),
+                Vector3.zero);
+            rack.parent.localRotation = Quaternion.Euler(0f, 60f, 0f);
+            Block(rack, new Vector3(0f, 0.6f, -0.05f), new Vector3(0.6f, 1.2f, 0.1f)).name = "Rack";
+            ShelfSlots = new Transform[8];
+            for (int i = 0; i < ShelfSlots.Length; i++)
+            {
+                ShelfSlots[i] = Node("Slot_" + i, rack, new Vector3(i % 2 == 0 ? 0.2f : -0.2f,
+                    1.033f - 0.27f * (i / 2), 0.01f));
+            }
+
+            var tapes = rack.gameObject.AddComponent<CassetteShelf>();
+            tapes.Wire(ShelfSlots);
+            return tapes;
         }
 
         /// <summary>

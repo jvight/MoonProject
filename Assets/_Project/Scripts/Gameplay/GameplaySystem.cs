@@ -11,7 +11,7 @@ namespace MoonProject.Gameplay
     /// (surface, layout, anchors), rover and camera services, creates the wallet, the upgrade service (which grants
     /// rover abilities through <see cref="IRoverAbilities"/>) and the radio program, initialises the gameplay parts in
     /// dependency order (relics, scrap, excavation, tether, home, radio tower, workshop, friends, cassettes, log
-    /// caches, sonar, Bell's signals), registers the services other domains read
+    /// caches, sonar, Bell's signals, the cassette shelf), registers the services other domains read
     /// (<see cref="IScrapWallet"/>, <see cref="ITetherAim"/>, <see cref="IUpgradeShop"/>,
     /// <see cref="IInteractionHints"/>, <see cref="IFriendRoster"/>, <see cref="IFriendStatuses"/>,
     /// <see cref="IRadioProgram"/>) and the save sections, announces the radio's signal radius and, once the save is
@@ -38,6 +38,7 @@ namespace MoonProject.Gameplay
         [SerializeField] private CassetteField _cassettes;
         [SerializeField] private LogCacheField _logs;
         [SerializeField] private SignalField _signals;
+        [SerializeField] private CassetteShelf _shelf;
 
         private readonly List<IDisposable> _saveTokens = new List<IDisposable>();
         private GlowMeshSet _meshes;
@@ -76,10 +77,12 @@ namespace MoonProject.Gameplay
 
         public SignalField Signals => _signals;
 
+        public CassetteShelf Shelf => _shelf;
+
         internal void Wire(GameplayVisuals visuals, UpgradeDefinition[] upgradeDefinitions, RelicField relics,
             ScrapField scrap, SonarSystem sonar, ExcavationSystem excavation, TetherSystem tether, HomeBase home,
             RadioTower tower, Workshop workshop, FriendField friends, CassetteField cassettes, LogCacheField logs,
-            SignalField signals)
+            SignalField signals, CassetteShelf shelf)
         {
             _visuals = visuals;
             _upgradeDefinitions = upgradeDefinitions;
@@ -95,6 +98,7 @@ namespace MoonProject.Gameplay
             _cassettes = cassettes;
             _logs = logs;
             _signals = signals;
+            _shelf = shelf;
         }
 
         public void Initialize(GameContext context)
@@ -130,7 +134,8 @@ namespace MoonProject.Gameplay
                 !_friends.Initialize(services, Radio, _cassettes.Catalog, _relics, _scrap, _home) ||
                 !_cassettes.Initialize(services, Radio, _scrap.Tuning, KeepClearOfCassettes()) ||
                 !_logs.Initialize(services, _scrap.Tuning) || !_sonar.Initialize(services, _relics, _friends) ||
-                !_signals.Initialize(services, _friends, _cassettes, _logs, _relics, abilities, _sonar.Tuning))
+                !_signals.Initialize(services, _friends, _cassettes, _logs, _relics, abilities, _sonar.Tuning) ||
+                !_shelf.Initialize(Radio, _cassettes.Catalog, _friends.BellTuning))
             {
                 enabled = false;
                 return;
@@ -192,6 +197,7 @@ namespace MoonProject.Gameplay
         {
             Radio.Restore(data);
             _cassettes.SyncCollected();
+            _shelf.Sync();
         }
 
         /// <summary>Every relic site, friend site and friend part: a basin cassette keeps clear of them all.</summary>
@@ -274,6 +280,7 @@ namespace MoonProject.Gameplay
                 : _cassettes.Catalog.Validate() != null ? "CassetteCatalog " + _cassettes.Catalog.Validate() + "."
                 : _logs == null ? "LogCacheField is not assigned."
                 : _signals == null ? "SignalField is not assigned."
+                : _shelf == null ? "CassetteShelf is not assigned."
                 : null;
         }
 

@@ -12,7 +12,8 @@ namespace MoonProject.Gameplay.Editor
     /// TowerAnchor, Kenji's workbench on its WorkshopAnchor). Art's base prefabs are meshes only, so gameplay makes
     /// them solid here: a static mesh collider on each body, on the Prop layer, so 07 drives around them and the camera
     /// never slips inside. Each friend's home socket is the lander's node, or for a radio tower home (Bell's corner) a
-    /// fixed empty under the TowerAnchor at the socket every tower stage carries, so stage swaps never move it. The
+    /// fixed empty under the TowerAnchor at the socket every tower stage carries, so stage swaps never move it; the
+    /// cassette shelf stands the same way on the stages' CassetteShelfAnchor. The
     /// base is stood beside the pad here for the editor view and re-seated on the real ground at boot; relic sites, the
     /// scrap field, friends, cassettes and log caches are placed from the World's surface and anchors at boot. Fails
     /// loudly when a required asset or prefab node is missing.
@@ -22,6 +23,8 @@ namespace MoonProject.Gameplay.Editor
         private const int LampSockets = 4;
         private const int ShelfSlots = 6;
         private const int TowerStages = 3;
+        private const int CassetteSlots = 8;
+        private const string CassetteShelfAnchor = "CassetteShelfAnchor";
 
         /// <summary>Metres a socket may differ between tower stages and still be the same spot.</summary>
         private const float SocketTolerance = 0.01f;
@@ -97,6 +100,13 @@ namespace MoonProject.Gameplay.Editor
                 beacons[i] = Child(stages[i].transform, "BeaconSocket");
             }
 
+            Transform shelfAnchor = TowerSocket(context, CassetteShelfAnchor, towerAnchor, stages);
+            Transform cassetteShelf = context.InstantiatePrefab(GameplayAssetPaths.CassetteShelf, shelfAnchor)
+                .transform;
+            MakeSolid(cassetteShelf);
+            var tapeRack = cassetteShelf.gameObject.AddComponent<CassetteShelf>();
+            tapeRack.Wire(Children(cassetteShelf, "Slot_", CassetteSlots));
+
             Transform workshopAnchor = Child(lander, "WorkshopAnchor");
             Transform workbench = context.InstantiatePrefab(GameplayAssetPaths.Workbench, workshopAnchor).transform;
             MakeSolid(workbench);
@@ -121,7 +131,7 @@ namespace MoonProject.Gameplay.Editor
             cassettes.Wire(cassetteCatalog, cassetteTuning);
             logs.Wire(logCacheCatalog, logCacheTuning);
             gameplay.Wire(visuals, new[] { radioTower, hoverJump }, relics, scrap, sonar, excavation, tether, home,
-                tower, workshop, friends, cassettes, logs, signals);
+                tower, workshop, friends, cassettes, logs, signals, tapeRack);
             context.AddSystem(gameplay);
         }
 
