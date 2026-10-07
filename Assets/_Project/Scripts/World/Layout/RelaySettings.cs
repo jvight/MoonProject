@@ -6,8 +6,9 @@ namespace MoonProject.World
     /// <summary>
     /// Where the relay masts of the station-reach network stand (M3-06, docs/features/M3-06-relay-network.md). The
     /// first two are found on the ground itself: the highest gently-topped rise in a sector, so they read as high
-    /// points from the base. The third stands at the canyon mouth and the fourth on the canyon's relay ledge
-    /// (<see cref="CanyonSettings"/>), past the Hover-Jump gate.
+    /// points from the base; relay.0, the teaching mast, stands in the spawn first frame right of The Peak. The
+    /// third stands at the canyon mouth and the fourth on the canyon's relay ledge (<see cref="CanyonSettings"/>),
+    /// past the Hover-Jump gate.
     /// </summary>
     [Serializable]
     public sealed class RelaySettings
@@ -16,22 +17,23 @@ namespace MoonProject.World
         [Range(2f, 6f)]
         [SerializeField] private float _padRadius = 3f;
 
-        [Header("relay.0: a low mound toward the canyon")]
-        [Tooltip("Bearing from the base the search for relay.0 is centred on, degrees (the canyon lies at 72).")]
+        [Header("relay.0: a low mound in the spawn first frame")]
+        [Tooltip("Bearing from the base the search for relay.0 is centred on, degrees: inside the spawn view (yaw " +
+            "355, +-45) and at least 15 degrees right of The Peak (12), so the two silhouettes read apart.")]
         [Range(0f, 360f)]
-        [SerializeField] private float _moundBearing = 72f;
+        [SerializeField] private float _moundBearing = 30.5f;
 
         [Tooltip("Half-width of relay.0's search sector, degrees.")]
         [Range(1f, 45f)]
-        [SerializeField] private float _moundBearingSpread = 10f;
+        [SerializeField] private float _moundBearingSpread = 3.5f;
 
         [Tooltip("Distance from the base the search for relay.0 is centred on, metres.")]
         [Range(50f, 250f)]
-        [SerializeField] private float _moundDistance = 120f;
+        [SerializeField] private float _moundDistance = 113f;
 
         [Tooltip("Half-depth of relay.0's search sector, metres.")]
         [Range(5f, 80f)]
-        [SerializeField] private float _moundDistanceSpread = 25f;
+        [SerializeField] private float _moundDistanceSpread = 13f;
 
         [Header("relay.1: a crater-rim shoulder opposite the canyon")]
         [Tooltip("Bearing from the base the search for relay.1 is centred on, degrees.")]

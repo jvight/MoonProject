@@ -9,7 +9,8 @@ namespace MoonProject.World
     /// The named content anchors of the generated world (registered as <see cref="IWorldAnchors"/>), built
     /// deterministically from the surface: today Whispering Canyon's mouth, lip, landing apron, glinting ledge,
     /// alcoves, terminus and the top of its one-way exit, and the four relay masts of the station-reach network
-    /// (M3-06: relay.0..3, whose Forward points home). Every radius is flat, drivable, uncluttered ground.
+    /// (M3-06: relay.0..3, whose Forward points home; relay.0 stands in the spawn first frame). Every radius is
+    /// flat, drivable, uncluttered ground.
     /// <para>
     /// Forward is the way 07 travels when arriving into the space, so content faces -Forward to greet it: into the
     /// canyon at the mouth and the landing, across the chasm at the lip, into the bay at the ledge and into each

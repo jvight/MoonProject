@@ -25,6 +25,15 @@ namespace MoonProject.World.Tests
         private const float MastReach = 110f;
         private const float MaxHomeAngle = 3f;
         private const float MastHeight = 8f;
+        private const float ChainMargin = 10f;
+
+        // relay.0 is the teaching mast in the spawn first frame (yaw 355, about +-45 degrees, ruling 8): well inside
+        // the view, at least 15 degrees from The Peak so the silhouettes read apart, 100-130 m out.
+        private const float SpawnYaw = 355f;
+        private const float SpawnHalfView = 40f;
+        private const float MinPeakSeparation = 15f;
+        private const float MinTeachingDistance = 100f;
+        private const float MaxTeachingDistance = 130f;
         private const float BaseEyeHeight = 3f;
         private const float SightTargetClearance = 2f;
 
@@ -198,10 +207,22 @@ namespace MoonProject.World.Tests
             Vector3 relay1 = Anchor(WorldAnchorIds.RelayPrefix + 1).Position;
             Vector3 relay2 = Anchor(WorldAnchorIds.RelayPrefix + 2).Position;
             Vector3 relay3 = Anchor(WorldAnchorIds.RelayPrefix + 3).Position;
-            Assert.Less(Flat(relay0), HomeReach + MastReach, "home to relay.0");
-            Assert.Less(Flat(relay1), HomeReach + MastReach, "home to relay.1");
-            Assert.Less(Flat(relay2 - relay0), MastReach * 2f, "relay.0 to relay.2");
-            Assert.Less(Flat(relay3 - relay2), MastReach * 2f, "relay.2 to relay.3");
+            Assert.Less(Flat(relay0), HomeReach + MastReach - ChainMargin, "home to relay.0");
+            Assert.Less(Flat(relay1), HomeReach + MastReach - ChainMargin, "home to relay.1");
+            Assert.Less(Flat(relay2 - relay0), MastReach * 2f - ChainMargin, "relay.0 to relay.2");
+            Assert.Less(Flat(relay3 - relay2), MastReach * 2f - ChainMargin, "relay.2 to relay.3");
+        }
+
+        [Test]
+        public void TeachingRelay_StandsInTheSpawnView_ClearOfThePeak()
+        {
+            Vector3 relay = Anchor(WorldAnchorIds.RelayPrefix + 0).Position;
+            float bearing = Mathf.Atan2(relay.x, relay.z) * Mathf.Rad2Deg;
+            float peak = Mathf.Atan2(_surface.PeakSummit.x, _surface.PeakSummit.z) * Mathf.Rad2Deg;
+            Assert.LessOrEqual(Mathf.Abs(Mathf.DeltaAngle(SpawnYaw, bearing)), SpawnHalfView, "outside the spawn view");
+            Assert.GreaterOrEqual(Mathf.Abs(Mathf.DeltaAngle(peak, bearing)), MinPeakSeparation,
+                "too close to The Peak");
+            Assert.That(Flat(relay), Is.InRange(MinTeachingDistance, MaxTeachingDistance), "distance from home");
         }
 
         [Test]
