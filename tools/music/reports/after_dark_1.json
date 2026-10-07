@@ -1,0 +1,226 @@
+{
+  "id": "after_dark_1",
+  "title": "Lumen After Dark, Vol. 1",
+  "bpm": 84.0,
+  "swing": 0.64,
+  "key": "D major",
+  "family": "I-IV-iii-vi",
+  "drums": "bounce",
+  "ending": "loop",
+  "form": [
+    "On Air x4",
+    "A x8",
+    "B x8",
+    "A' x8",
+    "Break x4",
+    "B' x8",
+    "A'' x4",
+    "Outro x4"
+  ],
+  "pcm_sha256": "51a145a8cd2da5378e827adcc8f3f573274cefefdbc478f88d0b2c24238b99e0",
+  "measured": {
+    "duration_s": 137.1429,
+    "loudness_lufs": -15.9805,
+    "true_peak_dbtp": -1.4085,
+    "sample_peak_db": -1.4232,
+    "rms_db": -17.5083,
+    "crest_db": 16.085,
+    "centroid_hz": 1846.6535,
+    "above_8k_db": -31.3217,
+    "bands": {
+      "low": 0.7033,
+      "mid": 0.2918,
+      "high": 0.0049
+    },
+    "correlation": 0.9226,
+    "correlation_below_150hz": 0.9978,
+    "clipped_samples": 0,
+    "silent_gaps": [],
+    "dc": 0.0,
+    "chroma_out_of_key": 0.0623,
+    "beat_clarity": 2.5298
+  },
+  "theory": {
+    "chord_chart": {
+      "On Air": [
+        "| D6/9 | D6/9 | Em9 | A13sus4 |"
+      ],
+      "A": [
+        "| Dmaj9 | Gmaj7 | F#m7 Bm9 | Em9 A13sus4 |",
+        "| Dmaj9 | Gmaj7 | F#m7 Bm9 | Em9 A13sus4 |"
+      ],
+      "B": [
+        "| Gmaj9 | A13sus4 | F#m7 | Bm9 |",
+        "| Em9 | F#m7 | Gmaj7 | A13sus4 A13 |"
+      ],
+      "A'": [
+        "| D6/9 | Gmaj9#11 | F#m7 Bm11 | Em11 A13 |",
+        "| Dmaj9 | Gmaj9 | F#m7 Bm7 | Em11 A9sus4 |"
+      ],
+      "Break": [
+        "| Gmaj9 | A9sus4 | F#m7 | Bm9 |"
+      ],
+      "B'": [
+        "| Gmaj9 | A13sus4 | F#m7 | Bm9 |",
+        "| Em9 | F#m7 | Gmaj9 | A9sus4 A13sus4 |"
+      ],
+      "A''": [
+        "| Dmaj7 | Gmaj9 | F#m7 Bm9 | Em9 A13sus4 |"
+      ],
+      "Outro": [
+        "| Dmaj9 | Gmaj7 | Em9 | A13 |"
+      ]
+    },
+    "out_of_key_notes": 0,
+    "borrowed_chords": [],
+    "lead_notes": 96,
+    "lead_non_pentatonic": 0,
+    "lead_strong_off_chord": 0,
+    "lead_clashes": 0,
+    "parts": {
+      "keys": 616,
+      "pad": 81,
+      "bass": 150,
+      "lead.vibes": 96
+    },
+    "drum_hits": 1404
+  },
+  "gates": {
+    "loudness_lufs": {
+      "value": -15.9805,
+      "pass": true
+    },
+    "true_peak_dbtp": {
+      "value": -1.4085,
+      "pass": true
+    },
+    "duration_s": {
+      "value": 137.1429,
+      "pass": true
+    },
+    "clipped_samples": {
+      "value": 0,
+      "pass": true
+    },
+    "silent_gaps": {
+      "value": 0,
+      "pass": true
+    },
+    "correlation_below_150hz": {
+      "value": 0.9978,
+      "pass": true
+    },
+    "correlation": {
+      "value": 0.9226,
+      "pass": true
+    },
+    "high_band_share": {
+      "value": 0.0049,
+      "pass": true
+    },
+    "above_8k_db": {
+      "value": -31.3217,
+      "pass": true
+    },
+    "chroma_out_of_key": {
+      "value": 0.0623,
+      "pass": true
+    },
+    "beat_clarity": {
+      "value": 2.5298,
+      "pass": true
+    },
+    "tempo_error": {
+      "value": 0.0,
+      "pass": true
+    },
+    "out_of_key_notes": {
+      "value": 0,
+      "pass": true
+    },
+    "lead_non_pentatonic": {
+      "value": 0,
+      "pass": true
+    },
+    "lead_strong_off_chord": {
+      "value": 0,
+      "pass": true
+    },
+    "lead_clashes": {
+      "value": 0,
+      "pass": true
+    },
+    "seam_ratio": {
+      "value": 0.0795,
+      "pass": true
+    },
+    "seam_loudness_step_lu": {
+      "value": 0.4575,
+      "pass": true
+    }
+  },
+  "tape": "after_dark_1",
+  "notes": "Ro's night show opener: the brightest and bounciest tape. It opens On Air with Bell's station jingle on vibraphone over a held D6/9, and the A theme is that jingle re-sung over the changes. Finger snaps on 2 and 4, the swingiest hats and shaker of the catalogue, off-beat Rhodes stabs and a bouncing bass; faster chord changes (two per bar at phrase ends), cassette hiss instead of vinyl, and a presence lift that gives it the brightest top end of any track.",
+  "instruments": {
+    "keys": "rhodes (comp, stabs, arp)",
+    "leads": [
+      "vibes"
+    ],
+    "drums": "bounce (+ snap)",
+    "bass": [
+      "hold",
+      "groove"
+    ],
+    "texture": "cassette",
+    "events": []
+  },
+  "listening": {
+    "tempo_detected_bpm": 84.0,
+    "tempo_detected_clarity": 2.5298,
+    "scale": {
+      "scale": "D major",
+      "share": 0.9377,
+      "runner_up": "G major",
+      "runner_up_share": 0.8931
+    },
+    "loudness": {
+      "range_lu": 1.3243,
+      "min_lufs": -17.2361,
+      "max_lufs": -15.2495,
+      "every_10s_lufs": [
+        -16.1646,
+        -15.9501,
+        -15.3688,
+        -15.5931,
+        -15.6153,
+        -16.0906,
+        -15.2818,
+        -15.7954,
+        -17.0038,
+        -16.1757,
+        -15.2495,
+        -15.4306,
+        -15.7431,
+        -16.2149
+      ]
+    },
+    "octaves_db": {
+      "31.5": -25.7453,
+      "63": 0.0,
+      "125": -0.2775,
+      "250": -4.3017,
+      "500": -3.1799,
+      "1000": -7.1393,
+      "2000": -17.8618,
+      "4000": -18.7214,
+      "8000": -21.0189,
+      "16000": -38.3597
+    },
+    "width_db": -9.7101,
+    "seam": {
+      "ratio": 0.0795,
+      "jump_db": 12.9852,
+      "loudness_step_lu": 0.4575
+    }
+  }
+}
