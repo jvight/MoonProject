@@ -71,18 +71,25 @@ namespace MoonProject.Core.Events
 
     /// <summary>
     /// A line for the radio ticker along the bottom of the HUD (docs/features/M3-05 "The ticker"). Any domain may
-    /// publish it; the UI localizes <see cref="Key"/>, formats <see cref="Argument"/> into its {0} and queues it.
+    /// publish it; the UI localizes <see cref="Key"/>, formats <see cref="Argument"/> into its {0} and queues it, so
+    /// publishers never need <see cref="ILocalization"/> and queued lines follow a language change.
     /// </summary>
     public readonly struct TickerLine
     {
-        public TickerLine(string key, string argument)
+        public TickerLine(string key, string argument, bool argumentIsKey)
         {
             Key = key;
             Argument = argument;
+            ArgumentIsKey = argumentIsKey;
+        }
+
+        public TickerLine(string key, string argument)
+            : this(key, argument, false)
+        {
         }
 
         public TickerLine(string key)
-            : this(key, string.Empty)
+            : this(key, string.Empty, false)
         {
         }
 
@@ -90,6 +97,12 @@ namespace MoonProject.Core.Events
 
         /// <summary>Text for the line's {0} placeholder (e.g. a bearing); empty when the line has none.</summary>
         public string Argument { get; }
+
+        /// <summary>
+        /// True when <see cref="Argument"/> is itself a localization key (e.g. "track.&lt;id&gt;.title" for
+        /// "Now playing — {0}"), localized before formatting; false for literal text such as a bearing.
+        /// </summary>
+        public bool ArgumentIsKey { get; }
     }
 
     /// <summary>

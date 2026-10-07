@@ -21,6 +21,9 @@ namespace MoonProject.Core
         /// <summary>Collected cassettes, in the order they were collected.</summary>
         int OwnedTapeCount { get; }
 
+        /// <summary>Cassettes that exist in the game's content (collected or not); fixed after initialisation.</summary>
+        int TotalTapeCount { get; }
+
         string GetOwnedTape(int index);
     }
 }
