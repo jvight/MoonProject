@@ -39,6 +39,11 @@ namespace MoonProject.UI
         [Range(1, 20)]
         [SerializeField] private int _capacity = 5;
 
+        [Tooltip("Times a line may make way (for a card, a dig, a prompt, ...) and still come back. Interrupted once "
+            + "more, it eases away for good, so no line keeps returning.")]
+        [Range(0, 5)]
+        [SerializeField] private int _maxYields = 1;
+
         [Tooltip("Seconds of one slow breath of the amber on-air lamp beside the line.")]
         [Range(0.5f, 10f)]
         [SerializeField] private float _lampBreathSeconds = 3.2f;
@@ -60,6 +65,8 @@ namespace MoonProject.UI
         public float GapSeconds => _gapSeconds;
 
         public int Capacity => _capacity;
+
+        public int MaxYields => _maxYields;
 
         public float LampBreathSeconds => _lampBreathSeconds;
 

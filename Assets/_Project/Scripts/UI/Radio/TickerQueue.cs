@@ -11,7 +11,8 @@ namespace MoonProject.UI
     /// <item>One line at a time, in the order the lines arrived, after a breath of quiet (the gap).</item>
     /// <item>A line rests fully visible for a time that grows with its length, then eases out.</item>
     /// <item>Lines wait while the gate is closed (a card, a dig, a prompt, ...). A line already up when the gate
-    /// closes eases out and comes back, for its whole rest, once the gate has stayed open for the gap.</item>
+    /// closes eases out and comes back, for its whole rest, once the gate has stayed open for the gap; but only
+    /// <see cref="TickerSettings.MaxYields"/> times: interrupted once more, it eases away for good.</item>
     /// <item>A waiting line, or a line that yielded and waits hidden to come back, takes the argument of a newer line
     /// with the same key ("Now playing" names the latest track, a signal the latest bearing); the line on screen is
     /// not queued again; past the capacity the oldest waiting line is dropped.</item>
@@ -28,6 +29,7 @@ namespace MoonProject.UI
         private TickerLine _line;
         private float _timer;
         private float _hold;
+        private int _yields;
 
         public TickerQueue(TickerSettings settings, TickerText format)
         {
@@ -132,7 +134,8 @@ namespace MoonProject.UI
                 case Phase.Showing:
                     if (!gateOpen)
                     {
-                        _phase = Phase.Yielding;
+                        _phase = _yields < _settings.MaxYields ? Phase.Yielding : Phase.Leaving;
+                        _yields++;
                     }
                     else if (shown)
                     {
@@ -193,8 +196,10 @@ namespace MoonProject.UI
             _phase = Phase.Showing;
         }
 
+        /// <summary>Makes <paramref name="line"/> current: news, so it may make way again.</summary>
         private void Replace(TickerLine line)
         {
+            _yields = 0;
             _line = line;
             Text = _format.Format(line);
             Revision++;

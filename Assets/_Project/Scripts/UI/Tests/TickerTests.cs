@@ -189,6 +189,53 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
+        public void ALineInterruptedTooOften_EasesAwayForGood_AndTheNextLinePlays()
+        {
+            _queue.Enqueue(new TickerLine(Home));
+            _queue.Enqueue(new TickerLine(Signal, "140"));
+            RunUntilShown();
+            for (int i = 0; i < _settings.MaxYields; i++)
+            {
+                Run(_settings.Reveal.FadeOut + 0.1f, false);
+                Assert.IsTrue(_queue.HasLine, $"interruption {i + 1} of {_settings.MaxYields}: it waits to come back");
+                RunUntilShown();
+                Assert.AreEqual("Bell got home before you.", _queue.Text);
+            }
+
+            Run(_settings.Reveal.FadeOut + 0.1f, false);
+            Assert.IsFalse(_queue.HasLine, "one interruption too many: it is gone");
+            Run(_settings.GapSeconds + _settings.Reveal.FadeIn + 1f);
+            CollectionAssert.AreEqual(new[]
+            {
+                "Bell got home before you.",
+                "Bell's picking something up… bearing 140.",
+            }, _started, "it never came back; the next line had its turn");
+        }
+
+        [Test]
+        public void NewsForALineWaitingToComeBack_MayMakeWayAgain()
+        {
+            Assert.Greater(_settings.MaxYields, 0, "the default lets a line come back at least once");
+            _queue.Enqueue(new TickerLine(Signal, "140"));
+            RunUntilShown();
+            for (int i = 0; i < _settings.MaxYields; i++)
+            {
+                Run(_settings.Reveal.FadeOut + 0.1f, false);
+                if (i < _settings.MaxYields - 1)
+                {
+                    RunUntilShown();
+                }
+            }
+
+            Assert.IsTrue(_queue.HasLine && _line.IsHidden, "every yield used, waiting to come back");
+            _queue.Enqueue(new TickerLine(Signal, "205"));
+            RunUntilShown();
+            Assert.AreEqual("Bell's picking something up… bearing 205.", _queue.Text);
+            Run(_settings.Reveal.FadeOut + 0.1f, false);
+            Assert.IsTrue(_queue.HasLine, "news starts with a clean count: it may make way again");
+        }
+
+        [Test]
         public void AGateClosingOnlyBriefly_TurnsTheLineBackWithoutLosingItsRest()
         {
             _queue.Enqueue(new TickerLine(Home));
