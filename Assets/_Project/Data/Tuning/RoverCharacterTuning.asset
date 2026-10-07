@@ -40,7 +40,7 @@ MonoBehaviour:
   _activeBreathDepth: 0.06
   _idleBreathDepth: 0.28
   _idleGlowDim: 0.15
-  _perkGlowBoost: 0.7
+  _perkGlowBoost: 0.4
   _lidGlowDim: 0.5
   _eyeLightIntensity: 0.8
   _eyeLightRange: 1.6
@@ -63,4 +63,4 @@ MonoBehaviour:
   _oofSquashKick: 0.6
   _tipBlinkPeriod: 2.8
   _tipBlinkDuration: 0.6
-  _tipRestGlow: 0.15
+  _tipRestGlow: 0.01

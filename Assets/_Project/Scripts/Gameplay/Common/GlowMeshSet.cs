@@ -19,6 +19,7 @@ namespace MoonProject.Gameplay
             Cone = GlowMeshes.Cone(ConeSides);
             Pillar = GlowMeshes.Pillar(PillarSides);
             Sphere = GlowMeshes.Sphere(SphereRings, SphereSegments);
+            Quad = GlowMeshes.Quad();
         }
 
         public Mesh Cone { get; }
@@ -27,11 +28,14 @@ namespace MoonProject.Gameplay
 
         public Mesh Sphere { get; }
 
+        public Mesh Quad { get; }
+
         public void Dispose()
         {
             Destroy(Cone);
             Destroy(Pillar);
             Destroy(Sphere);
+            Destroy(Quad);
         }
 
         private static void Destroy(Object target)

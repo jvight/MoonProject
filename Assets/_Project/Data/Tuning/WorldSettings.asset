@@ -165,21 +165,21 @@ MonoBehaviour:
     _rockFacing: 2.5
     _rockDither: 0.2
     _patchWavelength: 140
-    _patchStrength: 0.45
-    _detailPatchWavelength: 15
-    _detailPatchStrength: 0.7
-    _tiltSmoothing: 7
-    _facingStrength: 5
-    _lightTone: 0.22
-    _shadowTone: -0.3
-    _leeTilt: 6
-    _dither: 0.02
-    _canyonMidTone: 0.05
+    _patchStrength: 1.1
+    _detailPatchWavelength: 22
+    _detailPatchStrength: 0.35
+    _toneBias: -0.1
+    _shadowReach: 1.1
+    _lightReach: 1.1
+    _lightShare: 0.55
+    _canyonMidShare: 0.85
     _chasmDark: 0.5
     _craterShadow: 0.12
     _craterFloor: 0.7
-    _craterHighlight: 0.6
+    _craterWallShade: 0.6
+    _craterRimLight: 0.5
     _highlandZone: 0.65
+    _highlandShade: 0.8
   _scatter:
     _extentRadius: 370
     _padClearance: 12
@@ -209,13 +209,19 @@ MonoBehaviour:
     _featureClearance: 8
   _sky:
     _skyTop: {r: 0.043137256, g: 0.05490196, b: 0.16470589, a: 1}
-    _horizonGlow: {r: 0.32, g: 0.2, b: 0.52, a: 1}
-    _horizonGlowHeight: 0.13
+    _horizonGlow: {r: 0.2, g: 0.13, b: 0.34, a: 1}
+    _horizonGlowHeight: 0.16
+    _horizonBand: {r: 0.2, g: 0.15, b: 0.3, a: 1}
+    _horizonBandHeight: 0.03
     _gradientExponent: 0.55
-    _starDensity: 0.24
-    _starBrightness: 2.2
-    _twinkleSpeed: 1.3
-    _starSize: 0.95
+    _starDensity: 0.45
+    _starBrightness: 0.45
+    _starPowerLaw: 1.5
+    _starSize: 0.9
+    _starGlow: 0.22
+    _twinkleShare: 0.15
+    _twinkleSpeed: 0.45
+    _twinkleDepth: 0.35
     _milkyWayBearing: 120
     _milkyWayTilt: 35
     _milkyWayColor: {r: 0.36, g: 0.3, b: 0.6, a: 1}
@@ -229,9 +235,13 @@ MonoBehaviour:
     _earthCloudFraction: 0.1
     _earthSunDirection: {x: -0.75, y: 0.35, z: 0.55}
     _earthNightBrightness: 0.22
-    _earthGlow: 1.1
+    _earthGlow: 0.8
     _earthAtmosphere: {r: 0.45, g: 0.78, b: 1, a: 1}
-    _earthHaloSize: 0.45
+    _earthRim: 0.4
+    _earthHaloSize: 0.6
+    _earthHaloStrength: 0.16
+    _earthLimb: 0.6
+    _earthLimbWidth: 0.06
     _earthSpinPeriod: 900
     _shootingStarPeriod: 38
     _shootingStarDuration: 2.4
@@ -239,37 +249,42 @@ MonoBehaviour:
   _beacon:
     _period: 3.2
     _sharpness: 1.6
-    _lampMinIntensity: 0.35
-    _lampMaxIntensity: 1.9
+    _lampMinIntensity: 0.1
+    _lampMaxIntensity: 4.1
     _haloColor: {r: 1, g: 0.3529412, b: 0.43137255, a: 1}
     _haloMinIntensity: 0.04
     _haloMaxIntensity: 1.8
     _haloRadius: 2.2
     _haloMinAngle: 0.55
   _atmosphere:
-    _lightColor: {r: 0.78, g: 0.8, b: 1, a: 1}
-    _lightIntensity: 1.7
-    _lightElevation: 30
+    _lightColor: {r: 0.86, g: 0.85, b: 1, a: 1}
+    _lightIntensity: 1.75
+    _lightElevation: 19
     _lightBearingOffset: -60
-    _shadowStrength: 0.8
-    _ambientSky: {r: 0.19, g: 0.17, b: 0.37, a: 1}
-    _ambientEquator: {r: 0.14, g: 0.12, b: 0.27, a: 1}
-    _ambientGround: {r: 0.08, g: 0.07, b: 0.15, a: 1}
-    _fogColor: {r: 0.25, g: 0.18, b: 0.44, a: 1}
-    _fogDensity: 0.00085
+    _shadowStrength: 0.88
+    _shadowDepthBias: 1
+    _shadowNormalBias: 0.5
+    _ambientSky: {r: 0.17, g: 0.155, b: 0.33, a: 1}
+    _ambientEquator: {r: 0.13, g: 0.115, b: 0.25, a: 1}
+    _ambientGround: {r: 0.06, g: 0.055, b: 0.12, a: 1}
+    _fogColor: {r: 0.27, g: 0.21, b: 0.45, a: 1}
+    _fogDensity: 0.002
   _postProcessing:
-    _bloomThreshold: 0.85
-    _bloomIntensity: 0.65
-    _bloomScatter: 0.72
-    _bloomTint: {r: 0.86, g: 0.82, b: 1, a: 1}
-    _postExposure: 0
+    _bloomThreshold: 1
+    _bloomIntensity: 1.1
+    _bloomScatter: 0.7
+    _bloomTint: {r: 1, g: 0.93, b: 0.86, a: 1}
+    _postExposure: 0.12
     _contrast: 10
-    _saturation: 8
-    _lift: {x: 1, y: 0.96, z: 1.08, w: 0.015}
+    _saturation: -12
+    _lift: {x: 0.96, y: 0.97, z: 1.08, w: 0.01}
     _gamma: {x: 1, y: 1, z: 1, w: 0}
-    _gain: {x: 1, y: 0.99, z: 1.02, w: 0}
-    _vignetteIntensity: 0.24
-    _vignetteSmoothness: 0.45
+    _gain: {x: 1.04, y: 1, z: 0.95, w: 0}
+    _splitShadows: {r: 0.32, g: 0.35, b: 0.55, a: 1}
+    _splitHighlights: {r: 1, g: 0.86, b: 0.68, a: 1}
+    _splitBalance: -10
+    _vignetteIntensity: 0.3
+    _vignetteSmoothness: 0.5
     _vignetteColor: {r: 0.05, g: 0.03, b: 0.12, a: 1}
-    _grainIntensity: 0.16
+    _grainIntensity: 0.12
     _grainResponse: 0.8

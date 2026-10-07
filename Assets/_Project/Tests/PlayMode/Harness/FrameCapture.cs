@@ -8,8 +8,10 @@ using Object = UnityEngine.Object;
 namespace MoonProject.Testing
 {
     /// <summary>
-    /// Renders a camera into an offscreen sRGB target and reads it back, for PlayMode tests and editor automation
-    /// (turntables, scene shots). Runtime-safe (no UnityEditor). Allocates per call: never use it every frame.
+    /// Renders a camera into an offscreen half-float target and reads it back as sRGB, for PlayMode tests and editor
+    /// automation (turntables, scene shots). The target must be HDR: URP sizes a camera's intermediate buffers from
+    /// its target texture, so an 8-bit target would clamp emission and bloom and captures could not show the game's
+    /// warm glows as players see them. Runtime-safe (no UnityEditor). Allocates per call: never use it every frame.
     /// Needs a real graphics device, so batch runs that capture must not pass -nographics.
     /// </summary>
     public static class FrameCapture
@@ -39,7 +41,7 @@ namespace MoonProject.Testing
                     "No graphics device: captures cannot run with -nographics. Re-run without --nographics.");
             }
 
-            var descriptor = new RenderTextureDescriptor(width, height, GraphicsFormat.R8G8B8A8_SRGB, 32)
+            var descriptor = new RenderTextureDescriptor(width, height, GraphicsFormat.R16G16B16A16_SFloat, 32)
             {
                 msaaSamples = Msaa,
             };
@@ -55,10 +57,16 @@ namespace MoonProject.Testing
                 camera.Render();
                 Graphics.Blit(multisampled, resolved);
                 RenderTexture.active = resolved;
-                var image = new Texture2D(width, height, TextureFormat.RGBA32, false, false);
-                image.ReadPixels(new Rect(0, 0, width, height), 0, 0, false);
-                image.Apply(false);
-                return image;
+                var linear = new Texture2D(width, height, TextureFormat.RGBAHalf, false, true);
+                try
+                {
+                    linear.ReadPixels(new Rect(0, 0, width, height), 0, 0, false);
+                    return ToSrgb(linear);
+                }
+                finally
+                {
+                    Object.DestroyImmediate(linear);
+                }
             }
             finally
             {
@@ -67,6 +75,27 @@ namespace MoonProject.Testing
                 RenderTexture.ReleaseTemporary(multisampled);
                 RenderTexture.ReleaseTemporary(resolved);
             }
+        }
+
+        /// <summary>
+        /// Encodes the linear (post-tonemapping) pixels of <paramref name="linear"/> into a new 8-bit sRGB texture, the
+        /// way the display would show them; values past 1 clip as they do on screen.
+        /// </summary>
+        private static Texture2D ToSrgb(Texture2D linear)
+        {
+            Color[] pixels = linear.GetPixels();
+            for (int i = 0; i < pixels.Length; i++)
+            {
+                Color c = pixels[i];
+                pixels[i] = new Color(Mathf.LinearToGammaSpace(Mathf.Clamp01(c.r)),
+                    Mathf.LinearToGammaSpace(Mathf.Clamp01(c.g)), Mathf.LinearToGammaSpace(Mathf.Clamp01(c.b)),
+                    Mathf.Clamp01(c.a));
+            }
+
+            var image = new Texture2D(linear.width, linear.height, TextureFormat.RGBA32, false, false);
+            image.SetPixels(pixels);
+            image.Apply(false);
+            return image;
         }
 
         /// <summary>Renders <paramref name="camera"/> and writes a PNG to <paramref name="path"/> (folders are created).</summary>

@@ -79,6 +79,10 @@ namespace MoonProject.Rover.PlayModeTests
 
         public RoverHoverCoils HoverCoils { get; private set; }
 
+        public RoverLampMotes LampMotes { get; private set; }
+
+        public Light Headlamp { get; private set; }
+
         /// <summary>The stand-in HoverCoils mount under CoilSocket.</summary>
         public Transform CoilMount { get; private set; }
 
@@ -92,11 +96,19 @@ namespace MoonProject.Rover.PlayModeTests
 
         public RoverRigTuning RigTuning => (RoverRigTuning)_tunings[1];
 
+        public RoverFxTuning FxTuning => (RoverFxTuning)_tunings[2];
+
+        public RoverCameraTuning CameraTuning => (RoverCameraTuning)_tunings[3];
+
+        public RoverCharacterTuning CharacterTuning => (RoverCharacterTuning)_tunings[4];
+
         /// <summary>
         /// Builds, wires and initialises a rover at <paramref name="position"/>, yaw in degrees. It starts awake
-        /// unless <paramref name="asleep"/> asks for the game's first-boot wake-up.
+        /// unless <paramref name="asleep"/> asks for the game's first-boot wake-up. <paramref name="wideShotDelay"/>
+        /// (seconds) shortens the rest before the wide shot opens, so sessions need not wait the shipped delay.
         /// </summary>
-        public static TestRover Spawn(TestWorld world, Vector3 position, float yaw, bool asleep = false)
+        public static TestRover Spawn(TestWorld world, Vector3 position, float yaw, bool asleep = false,
+            float wideShotDelay = 0f)
         {
             var tuning = ScriptableObject.CreateInstance<RoverTuning>();
             var rigTuning = ScriptableObject.CreateInstance<RoverRigTuning>();
@@ -107,6 +119,12 @@ namespace MoonProject.Rover.PlayModeTests
             var character = new SerializedObject(characterTuning);
             character.FindProperty("_sleepOnBoot").boolValue = asleep;
             character.ApplyModifiedPropertiesWithoutUndo();
+            if (wideShotDelay > 0f)
+            {
+                var cameraSettings = new SerializedObject(cameraTuning);
+                cameraSettings.FindProperty("_wideShot._delay").floatValue = wideShotDelay;
+                cameraSettings.ApplyModifiedPropertiesWithoutUndo();
+            }
 
             var root = new GameObject("TestRover");
             root.transform.SetPositionAndRotation(position, Quaternion.Euler(0f, yaw, 0f));
@@ -188,6 +206,8 @@ namespace MoonProject.Rover.PlayModeTests
             }
 
             var coilLight = Node("CoilGlow", coilSocket, Vector3.zero).gameObject.AddComponent<Light>();
+            var moteSystem = Particles("LampMotes", headlamp.transform, material);
+            var lampMotes = moteSystem.gameObject.AddComponent<RoverLampMotes>();
             var hoverCoils = visual.gameObject.AddComponent<RoverHoverCoils>();
 
             Transform fxHost = Node("WheelFx", root.transform, Vector3.zero);
@@ -205,9 +225,10 @@ namespace MoonProject.Rover.PlayModeTests
                 ("_dustLeft", Particles("DustLeft", fxHost, material)),
                 ("_dustRight", Particles("DustRight", fxHost, material)),
                 ("_landingDust", Particles("LandingDust", fxHost, material)));
+            Assign(lampMotes, ("_tuning", fxTuning), ("_motes", moteSystem), ("_headlamp", headlamp));
             Assign(controller, ("_tuning", tuning), ("_body", rigidbody), ("_sphere", collider), ("_visualRig", rig),
-                ("_wheelFx", fx), ("_hoverCoils", hoverCoils), ("_tetherOrigin", tetherOrigin),
-                ("_cargoSocket", cargo));
+                ("_wheelFx", fx), ("_hoverCoils", hoverCoils), ("_lampMotes", lampMotes),
+                ("_tetherOrigin", tetherOrigin), ("_cargoSocket", cargo));
             Assign(body, ("_tuning", characterTuning), ("_rover", controller), ("_rig", rig), ("_neck", neck),
                 ("_head", head), ("_eyelid", eyelid), ("_solarWing", wing),
                 ("_eyeRenderer", eye.GetComponent<MeshRenderer>()),
@@ -233,6 +254,8 @@ namespace MoonProject.Rover.PlayModeTests
                 Eyelid = eyelid,
                 EyeLight = eyeLight,
                 HoverCoils = hoverCoils,
+                LampMotes = lampMotes,
+                Headlamp = headlamp,
                 CoilMount = coilMount,
                 Coils = coils,
                 CoilGlows = coilGlows,

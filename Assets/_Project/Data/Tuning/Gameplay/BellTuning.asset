@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e68a9554d0a482b43a28ef25341faedb, type: 3}
-  m_Name: BellTuning
+  m_Name: 
   m_EditorClassIdentifier: 
   _tapeSlide: 1.4
   _tapeArc: 0.35
@@ -23,6 +23,7 @@ MonoBehaviour:
   _wallProbeHeight: 1
   _wallProbe: 3
   _wallGap: 0.05
+  _bodyPadding: 0.25
   _danceDuration: 3.2
   _danceRate: 1.5
   _danceRoll: 6
@@ -53,11 +54,11 @@ MonoBehaviour:
   _watchMaxTurn: 55
   _dialGlow: 1
   _dialEase: 0.4
-  _brokenFlicker: 0.55
+  _brokenFlicker: 0.27
   _brokenFlickerRate: 2.3
   _dozeAfter: 90
   _stillSpeed: 0.3
-  _emberGlow: 0.16
+  _emberGlow: 0.05
   _dozeEase: 2.5
   _dozeSink: 0.035
   _dozeKnee: 7

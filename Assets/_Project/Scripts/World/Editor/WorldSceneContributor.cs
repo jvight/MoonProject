@@ -20,7 +20,8 @@ namespace MoonProject.World.Editor
         public void Contribute(SceneBuildContext context)
         {
             var settings = context.LoadAsset<WorldSettings>(WorldPaths.Settings);
-            var terrainMaterial = context.LoadAsset<Material>(ArtPaths.LowPolyMaterial);
+            var groundMaterial = context.LoadAsset<Material>(WorldPaths.GroundMaterial);
+            var paletteMaterial = context.LoadAsset<Material>(ArtPaths.LowPolyMaterial);
             var earthMaterial = context.LoadAsset<Material>(WorldPaths.EarthMaterial);
             var skyMaterial = context.LoadAsset<Material>(WorldPaths.SkyMaterial);
             var profile = context.LoadAsset<VolumeProfile>(WorldPaths.VolumeProfile);
@@ -40,7 +41,8 @@ namespace MoonProject.World.Editor
             var world = context.CreateChild("World", root).AddComponent<WorldSystem>();
             var serialized = new SerializedObject(world);
             Assign(serialized, "_settings", settings);
-            Assign(serialized, "_terrainMaterial", terrainMaterial);
+            Assign(serialized, "_groundMaterial", groundMaterial);
+            Assign(serialized, "_paletteMaterial", paletteMaterial);
             Assign(serialized, "_earthMaterial", earthMaterial);
             AssignRocks(context, serialized, "_pebbleRocks", WorldPaths.PebbleRocks);
             AssignRocks(context, serialized, "_boulderRocks", WorldPaths.BoulderRocks);

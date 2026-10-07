@@ -1,6 +1,5 @@
 using System;
 using UnityEngine;
-using MoonProject.Art;
 
 namespace MoonProject.World
 {
@@ -51,6 +50,12 @@ namespace MoonProject.World
                 }
             }
 
+            var groundColors = new Color32[positions.Length];
+            for (int i = 0; i < positions.Length; i++)
+            {
+                groundColors[i] = painter.Ground(positions[i], regions[i]);
+            }
+
             var vertices = new TerrainVertex[rings * segments * 6];
             int written = 0;
             for (int k = 0; k < rings; k++)
@@ -65,13 +70,15 @@ namespace MoonProject.World
                     uint paintHash = Hashing.Hash(k, s, seed ^ PaintSalt);
                     if ((Hashing.Hash(k, s, seed ^ DiagonalSalt) & 1u) == 0u)
                     {
-                        Emit(positions, regions, a, c, b, painter, paintHash, vertices, ref written);
-                        Emit(positions, regions, b, c, d, painter, Hashing.Mix(paintHash), vertices, ref written);
+                        Emit(positions, regions, groundColors, a, c, b, painter, paintHash, vertices, ref written);
+                        Emit(positions, regions, groundColors, b, c, d, painter, Hashing.Mix(paintHash), vertices,
+                            ref written);
                     }
                     else
                     {
-                        Emit(positions, regions, a, c, d, painter, paintHash, vertices, ref written);
-                        Emit(positions, regions, a, d, b, painter, Hashing.Mix(paintHash), vertices, ref written);
+                        Emit(positions, regions, groundColors, a, c, d, painter, paintHash, vertices, ref written);
+                        Emit(positions, regions, groundColors, a, d, b, painter, Hashing.Mix(paintHash), vertices,
+                            ref written);
                     }
                 }
             }
@@ -89,8 +96,8 @@ namespace MoonProject.World
             return new TerrainMeshData("TerrainBackdrop", Vector3.zero, vertices, null, null, bounds);
         }
 
-        private static void Emit(Vector3[] positions, SurfaceSample[] regions, int i0, int i1, int i2,
-            TerrainPainter painter, uint hash, TerrainVertex[] vertices, ref int written)
+        private static void Emit(Vector3[] positions, SurfaceSample[] regions, Color32[] groundColors, int i0,
+            int i1, int i2, TerrainPainter painter, uint hash, TerrainVertex[] vertices, ref int written)
         {
             Vector3 p0 = positions[i0];
             Vector3 p1 = positions[i1];
@@ -98,10 +105,11 @@ namespace MoonProject.World
             Vector3 normal = Vector3.Cross(p1 - p0, p2 - p0).normalized;
             var region = new SurfaceSample(0f, 0f, 0f,
                 (regions[i0].RimZone + regions[i1].RimZone + regions[i2].RimZone) / 3f);
-            Vector2 uv = Palette.Uv(painter.Pick(normal, normal, (p0 + p1 + p2) / 3f, region, hash));
-            vertices[written++] = new TerrainVertex(p0, normal, uv);
-            vertices[written++] = new TerrainVertex(p1, normal, uv);
-            vertices[written++] = new TerrainVertex(p2, normal, uv);
+            bool rock = painter.IsRock(normal, region);
+            Color32 face = rock ? painter.Rock(normal, (p0 + p1 + p2) / 3f, hash) : default;
+            vertices[written++] = new TerrainVertex(p0, normal, rock ? face : groundColors[i0]);
+            vertices[written++] = new TerrainVertex(p1, normal, rock ? face : groundColors[i1]);
+            vertices[written++] = new TerrainVertex(p2, normal, rock ? face : groundColors[i2]);
         }
     }
 }

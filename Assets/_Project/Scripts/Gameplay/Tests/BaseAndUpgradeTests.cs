@@ -330,20 +330,99 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void Home_WarmsAsYouApproach()
+        public void Home_LightsTheGroundAsYouApproach_ButItsWindowsNeverDim()
         {
             var tuning = Create<BaseTuning>();
-            Assert.AreEqual(1f, tuning.WarmthAt(5f), 1e-5f);
-            Assert.AreEqual(tuning.FarWarmth, tuning.WarmthAt(500f), 1e-5f);
-            float previous = 2f;
-            for (float distance = 0f; distance < 120f; distance += 5f)
+            Assert.AreEqual(1f, tuning.LampWarmth(tuning.FarnessAt(5f)), 1e-5f);
+            Assert.AreEqual(tuning.FarLampWarmth, tuning.LampWarmth(tuning.FarnessAt(500f)), 1e-5f);
+            Assert.AreEqual(tuning.WindowGlow, tuning.WindowGlowAt(tuning.FarnessAt(5f)), 1e-5f);
+            Assert.AreEqual(tuning.WindowGlow * tuning.FarWindowBoost, tuning.WindowGlowAt(tuning.FarnessAt(500f)),
+                1e-5f);
+            Assert.GreaterOrEqual(tuning.FarWindowBoost, 1f, "home calls 07 back: a little brighter, never dimmer");
+            float previousLamp = 2f;
+            float previousWindow = 0f;
+            for (float distance = 0f; distance < 400f; distance += 5f)
             {
-                float warmth = tuning.WarmthAt(distance);
-                Assert.LessOrEqual(warmth, previous + 1e-5f);
-                previous = warmth;
+                float farness = tuning.FarnessAt(distance);
+                Assert.LessOrEqual(tuning.LampWarmth(farness), previousLamp + 1e-5f, "the lamps dim with distance");
+                Assert.GreaterOrEqual(tuning.WindowGlowAt(farness), previousWindow - 1e-5f, "the windows never dim");
+                previousLamp = tuning.LampWarmth(farness);
+                previousWindow = tuning.WindowGlowAt(farness);
             }
 
             Assert.Greater(tuning.DepositGift, 0, "each memory brought home gives a scrap gift");
+        }
+
+        [Test]
+        public void HomeHalo_IsInvisibleUpClose_AndShrinksOnScreenSlowerThanHome()
+        {
+            var tuning = Create<BaseTuning>();
+            Assert.AreEqual(0f, tuning.HaloGlowAt(10f), "nothing over the base while 07 is there");
+            Assert.AreEqual(0f, tuning.HaloGlowAt(tuning.HaloAppear), 1e-5f);
+            Assert.AreEqual(tuning.HaloGlow, tuning.HaloGlowAt(tuning.HaloFull), 1e-5f);
+            Assert.AreEqual(tuning.HaloGlow, tuning.HaloGlowAt(300f), 1e-5f, "full across the basin");
+            Assert.Greater(tuning.HaloGlowAt(150f), 0.5f * tuning.HaloGlow, "it carries from 150 m");
+            Assert.AreEqual(tuning.HaloRadius, tuning.HaloRadiusAt(tuning.HaloAppear), 1e-5f);
+            float near = tuning.HaloRadiusAt(150f);
+            float far = tuning.HaloRadiusAt(300f);
+            Assert.Greater(far, near, "it grows with distance");
+            Assert.Greater(far / 300f, 0.5f * near / 150f, "so on screen it shrinks slower than home does");
+        }
+
+        [Test]
+        public void HomeHalo_FacesTheEye_ClearOfTheLander()
+        {
+            var tuning = Create<BaseTuning>();
+            var lander = new GameObject("Lander").transform;
+            _created.Add(lander.gameObject);
+            lander.SetPositionAndRotation(new Vector3(10f, 2f, -5f), Quaternion.Euler(0f, 30f, 0f));
+            Mesh quad = GlowMeshes.Quad();
+            _created.Add(quad);
+            var material = new Material(Shader.Find(GlowMaterials.ShaderName));
+            _created.Add(material);
+            var halo = new HomeHalo(lander, quad, material, tuning, lander);
+            try
+            {
+                Vector3 centre = lander.TransformPoint(tuning.HaloCentre);
+                Assert.Less(Vector3.Distance(centre, halo.Centre), 1e-4f);
+                Vector3 away = new Vector3(0.6f, 0.1f, -0.8f).normalized;
+                halo.ShowFrom(centre + away * 20f);
+                Assert.AreEqual(0f, halo.Level, "hidden up close");
+                Renderer sprite = lander.Find("HomeHalo").GetComponent<Renderer>();
+                Assert.IsFalse(sprite.enabled, "and not drawn");
+
+                halo.ShowFrom(centre + away * 300f);
+                Assert.AreEqual(tuning.HaloGlowAt(300f), halo.Level, 1e-5f);
+                Assert.IsTrue(sprite.enabled);
+                Assert.AreEqual(tuning.HaloRadiusAt(300f), halo.Radius, 1e-4f);
+                Assert.Less(Vector3.Distance(centre + away * halo.Radius, sprite.transform.position), 1e-3f,
+                    "pulled toward the eye by its radius, so the lander never cuts it");
+                Assert.Less(Vector3.Angle(away, sprite.transform.forward), 0.01f, "faces the eye");
+                Assert.AreEqual(halo.Radius, sprite.transform.lossyScale.x, 1e-3f);
+
+                halo.Boost = 2f;
+                halo.ShowFrom(centre + away * 300f);
+                Assert.AreEqual(2f * tuning.HaloGlowAt(300f), halo.Level, 1e-5f, "the tower's light boost");
+            }
+            finally
+            {
+                halo.Dispose();
+            }
+        }
+
+        [Test]
+        public void EmissionGlow_WritesALinearMultiplier_NotAGammaColour()
+        {
+            var host = new GameObject("Glow");
+            _created.Add(host);
+            var renderer = host.AddComponent<MeshRenderer>();
+            var glow = new EmissionGlow(renderer);
+            glow.Apply(0.5f);
+            var block = new MaterialPropertyBlock();
+            renderer.GetPropertyBlock(block);
+            Assert.AreEqual(new Vector4(0.5f, 0.5f, 0.5f, 1f), block.GetVector("_EmissionColor"),
+                "SetVector keeps 0.5 as 0.5 (a gamma colour would light it at about 0.22)");
+            Assert.AreEqual(0.5f, glow.Intensity, 1e-6f);
         }
 
         private UpgradeService Service(params UpgradeDefinition[] definitions)

@@ -16,6 +16,12 @@ namespace MoonProject.World.Tests
         private const float HeightTolerance = 1e-3f;
         private const float HeightProbe = 0.01f;
 
+        // Floor tone (sRGB luminance, 0..1): its p10..p90 spread, and the most it may change across one facet on
+        // the open floor and anywhere drivable (crater rims and walls are forms, so they may turn a little faster).
+        private const float MinFloorSpread = 0.08f;
+        private const float MaxOpenFacetStep = 0.06f;
+        private const float MaxFacetStep = 0.25f;
+
         private static readonly PaletteSwatch[] TerrainSwatches =
         {
             PaletteSwatch.DustLight, PaletteSwatch.DustMid, PaletteSwatch.DustShadow, PaletteSwatch.RockLight,
@@ -86,12 +92,17 @@ namespace MoonProject.World.Tests
         }
 
         [Test]
-        public void Chunks_HaveUpFacingFacets_AndOnlyTerrainSwatches()
+        public void Chunks_HaveUpFacingFacets_AndStayInTheTerrainPalette()
         {
-            var allowed = new HashSet<Vector2>();
+            Color32 low = Palette.Get(TerrainSwatches[0]);
+            Color32 high = low;
             foreach (PaletteSwatch swatch in TerrainSwatches)
             {
-                allowed.Add(Palette.Uv(swatch));
+                Color32 c = Palette.Get(swatch);
+                low = new Color32((byte)Mathf.Min(low.r, c.r), (byte)Mathf.Min(low.g, c.g), (byte)Mathf.Min(low.b, c.b),
+                    255);
+                high = new Color32((byte)Mathf.Max(high.r, c.r), (byte)Mathf.Max(high.g, c.g),
+                    (byte)Mathf.Max(high.b, c.b), 255);
             }
 
             string firstProblem = null;
@@ -100,13 +111,14 @@ namespace MoonProject.World.Tests
                 for (int i = 0; i < chunk.Vertices.Length && firstProblem == null; i++)
                 {
                     TerrainVertex vertex = chunk.Vertices[i];
+                    Color32 c = vertex.Color;
                     if (!(vertex.Normal.y > 0f) || Mathf.Abs(vertex.Normal.magnitude - 1f) > 1e-4f)
                     {
                         firstProblem = $"{chunk.Name}: folded or bad normal on triangle {i / 3}: {vertex.Normal}";
                     }
-                    else if (!allowed.Contains(vertex.Uv))
+                    else if (c.r < low.r || c.g < low.g || c.b < low.b || c.r > high.r || c.g > high.g || c.b > high.b)
                     {
-                        firstProblem = $"{chunk.Name}: unexpected swatch UV {vertex.Uv}";
+                        firstProblem = $"{chunk.Name}: colour {c} outside the terrain palette's range";
                     }
                 }
             }
@@ -115,14 +127,14 @@ namespace MoonProject.World.Tests
         }
 
         [Test]
-        public void FloorDust_ComesInPatches_NeverConfetti()
+        public void FloorDust_ChangesValueGently_InPatches_NeverAsConfetti()
         {
-            // Design ruling 9: a bright facet with no bright neighbour reads as a paper scrap on the ground.
+            // Design ruling 9 and pillar 6: the floor varies in broad patches, and a facet never jumps out of its
+            // surroundings (no paper-cut shapes, no confetti), so across any one facet the tone barely changes.
             const float floorRadius = 280f;
-            const float maxIsolatedShare = 0.02f;
-            Vector2 light = Palette.Uv(PaletteSwatch.DustLight);
-            int lightFacets = 0;
-            int isolated = 0;
+            var luminances = new List<float>();
+            float steepest = 0f;
+            float steepestOpen = 0f;
             for (int c = 0; c < _chunks.Length; c++)
             {
                 TerrainMeshData chunk = _chunks[c];
@@ -131,52 +143,56 @@ namespace MoonProject.World.Tests
                     continue;
                 }
 
-                var byEdge = new Dictionary<long, List<int>>();
-                int triangles = chunk.TriangleCount;
-                for (int t = 0; t < triangles; t++)
-                {
-                    for (int k = 0; k < 3; k++)
-                    {
-                        long key = Edge(chunk, t, k);
-                        if (!byEdge.TryGetValue(key, out List<int> owners))
-                        {
-                            owners = new List<int>(2);
-                            byEdge.Add(key, owners);
-                        }
-
-                        owners.Add(t);
-                    }
-                }
-
-                for (int t = 0; t < triangles; t++)
+                for (int t = 0; t < chunk.TriangleCount; t++)
                 {
                     Vector3 world = chunk.Vertices[t * 3].Position + chunk.Origin;
-                    if (chunk.Vertices[t * 3].Uv != light || new Vector2(world.x, world.z).magnitude > floorRadius)
+                    if (new Vector2(world.x, world.z).magnitude > floorRadius
+                        || !_surface.IsDrivable(world.x, world.z))
                     {
                         continue;
                     }
 
-                    lightFacets++;
-                    bool hasLightNeighbour = false;
-                    for (int k = 0; k < 3 && !hasLightNeighbour; k++)
+                    float l0 = Luminance(chunk.Vertices[t * 3].Color);
+                    float l1 = Luminance(chunk.Vertices[t * 3 + 1].Color);
+                    float l2 = Luminance(chunk.Vertices[t * 3 + 2].Color);
+                    float step = Mathf.Max(Mathf.Abs(l0 - l1), Mathf.Max(Mathf.Abs(l1 - l2), Mathf.Abs(l2 - l0)));
+                    steepest = Mathf.Max(steepest, step);
+                    if (OnOpenFloor(chunk, t))
                     {
-                        long key = Edge(chunk, t, k);
-                        foreach (int other in byEdge[key])
-                        {
-                            hasLightNeighbour |= other != t && chunk.Vertices[other * 3].Uv == light;
-                        }
+                        steepestOpen = Mathf.Max(steepestOpen, step);
                     }
 
-                    if (!hasLightNeighbour)
-                    {
-                        isolated++;
-                    }
+                    luminances.Add(l0);
                 }
             }
 
-            TestContext.WriteLine($"Floor DustLight facets: {lightFacets}, isolated: {isolated}");
-            Assert.Greater(lightFacets, 1000, "the floor should still carry light dust patches");
-            Assert.LessOrEqual(isolated, lightFacets * maxIsolatedShare, "isolated bright facets (confetti)");
+            luminances.Sort();
+            float spread = luminances[luminances.Count * 9 / 10] - luminances[luminances.Count / 10];
+            TestContext.WriteLine($"Floor tone spread (p10..p90): {spread:F3}, largest change across a facet: " +
+                                  $"{steepestOpen:F3} on the open floor, {steepest:F3} anywhere drivable");
+            Assert.Greater(spread, MinFloorSpread, "the floor should still vary in patches");
+            Assert.LessOrEqual(steepestOpen, MaxOpenFacetStep, "an open-floor facet changes tone sharply (paper cut)");
+            Assert.LessOrEqual(steepest, MaxFacetStep, "a facet changes tone too sharply");
+        }
+
+        private bool OnOpenFloor(TerrainMeshData chunk, int triangle)
+        {
+            for (int k = 0; k < 3; k++)
+            {
+                Vector3 p = chunk.Vertices[triangle * 3 + k].Position + chunk.Origin;
+                SurfaceSample sample = _surface.Sample(p.x, p.z);
+                if (sample.CraterBowl > 0f || sample.CraterRim > 0f || sample.CanyonFloor > 0f)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static float Luminance(Color32 c)
+        {
+            return (0.2126f * c.r + 0.7152f * c.g + 0.0722f * c.b) / 255f;
         }
 
         [Test]

@@ -943,6 +943,62 @@ MonoBehaviour:
     _volumeMax: 0.7
     _pitchMin: 1
     _pitchMax: 1
+  - _id: room_tone
+    _clips:
+    - {fileID: 8300000, guid: 80e2fce3082688449843c39555cf0d48, type: 3}
+    _variantLabels:
+    - room_tone
+    _bus: 3
+    _spatial: 0
+    _loop: 1
+    _volumeMin: 0.8
+    _volumeMax: 0.8
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: rover_lamp_hum
+    _clips:
+    - {fileID: 8300000, guid: db449ba0d2b57684c9ad6b993207ebd5, type: 3}
+    _variantLabels:
+    - rover_lamp_hum
+    _bus: 2
+    _spatial: 1
+    _loop: 1
+    _volumeMin: 0.5
+    _volumeMax: 0.5
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: rover_servo
+    _clips:
+    - {fileID: 8300000, guid: a49a08d488e3f1e49ad1c10503733a9f, type: 3}
+    _variantLabels:
+    - rover_servo
+    _bus: 2
+    _spatial: 1
+    _loop: 1
+    _volumeMin: 0.5
+    _volumeMax: 0.5
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: rover_metal_tick
+    _clips:
+    - {fileID: 8300000, guid: 90917d1bd1ca70e46aac2f794bd8a704, type: 3}
+    - {fileID: 8300000, guid: 2c24269f5cbc3ff4d832d4eefcb70e9a, type: 3}
+    - {fileID: 8300000, guid: 8bcf1c17cf3f6a94b9c1e906c147d39e, type: 3}
+    - {fileID: 8300000, guid: 48b9997a31213ac4c91c7bd872b9d806, type: 3}
+    - {fileID: 8300000, guid: 19a8405fd3fef1f40be9998868cdb2b0, type: 3}
+    _variantLabels:
+    - 01
+    - 02
+    - 03
+    - 04
+    - 05
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.4
+    _volumeMax: 0.55
+    _pitchMin: 0.98
+    _pitchMax: 1.02
   - _id: upgrade_arpeggio
     _clips:
     - {fileID: 8300000, guid: b62b3bb7da385dc4fbc9474cd20b68c4, type: 3}

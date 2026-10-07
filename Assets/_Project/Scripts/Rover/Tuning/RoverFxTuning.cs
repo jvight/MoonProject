@@ -3,8 +3,9 @@ using UnityEngine;
 namespace MoonProject.Rover
 {
     /// <summary>
-    /// Wheel effects: tire tracks, rolling dust and the landing dust ring. Colours, meshes and particle curves are
-    /// authored by the Rover builder from the palette; the amounts and timings players feel live here.
+    /// Rover effects: tire tracks, rolling dust, the landing dust ring and the dust motes hanging in 07's lamp.
+    /// Colours, meshes and particle curves are authored by the Rover builder from the palette; the amounts and timings
+    /// players feel live here.
     /// </summary>
     [CreateAssetMenu(fileName = "RoverFxTuning", menuName = "MoonProject/Rover/Rover Fx Tuning")]
     public sealed class RoverFxTuning : ScriptableObject
@@ -132,6 +133,83 @@ namespace MoonProject.Rover
         [Range(0f, 1f)]
         [SerializeField] private float _landingOpacity = 0.6f;
 
+        [Header("Lamp motes")]
+        [Tooltip("Dust motes alive at once in and around the headlamp's beam (a few dozen; fixed memory).")]
+        [Range(0, 200)]
+        [SerializeField] private int _moteCount = 40;
+
+        [Tooltip("Seconds each mote lives; it fades in and out at both ends, so motes come and go unnoticed.")]
+        [Range(1f, 30f)]
+        [SerializeField] private float _moteLifetime = 10f;
+
+        [Tooltip("Fraction of a mote's life spent fading in, and again fading out.")]
+        [Range(0.01f, 0.5f)]
+        [SerializeField] private float _moteFade = 0.25f;
+
+        [Tooltip("Smallest mote size (m).")]
+        [Range(0.002f, 0.2f)]
+        [SerializeField] private float _moteMinSize = 0.012f;
+
+        [Tooltip("Largest mote size (m).")]
+        [Range(0.002f, 0.2f)]
+        [SerializeField] private float _moteMaxSize = 0.03f;
+
+        [Tooltip("Drift speed (m/s) of a mote in a random direction: they hang, barely moving.")]
+        [Range(0f, 0.5f)]
+        [SerializeField] private float _moteDrift = 0.035f;
+
+        [Tooltip("Strength (m/s) of the slow, curling air that wanders the motes about.")]
+        [Range(0f, 0.5f)]
+        [SerializeField] private float _moteWander = 0.03f;
+
+        [Tooltip("How quickly the wandering air changes (lower = lazier curls).")]
+        [Range(0.01f, 3f)]
+        [SerializeField] private float _moteWanderFrequency = 0.35f;
+
+        [Tooltip("Motes appear within this half-angle (deg) of the lamp's axis, inside its beam.")]
+        [Range(1f, 60f)]
+        [SerializeField] private float _moteSpread = 22f;
+
+        [Tooltip("Distance (m) in front of the lamp over which motes appear (near the lens).")]
+        [Range(0.2f, 10f)]
+        [SerializeField] private float _moteReach = 2.6f;
+
+        [Tooltip("Motes closer to the lens than this (m) fade out (they would be out of focus).")]
+        [Range(0f, 2f)]
+        [SerializeField] private float _moteNearFade = 0.3f;
+
+        [Tooltip("How much dimmer a mote at the far end of the reach is than one near the lens (the light thins).")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _moteFalloff = 0.75f;
+
+        [Tooltip("Peak opacity of a mote fully in the beam (very subtle).")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _moteOpacity = 0.5f;
+
+        [Tooltip("Brightness of the motes' warm light (linear HDR multiplier; above ~1 they catch a little bloom).")]
+        [Range(0f, 8f)]
+        [SerializeField] private float _moteBrightness = 1.4f;
+
+        [Tooltip("Speed (m/s) above which the motes begin to fade: they belong to stillness and crawling.")]
+        [Range(0f, 5f)]
+        [SerializeField] private float _moteFadeSpeed = 0.3f;
+
+        [Tooltip("Speed (m/s) at which the motes are gone.")]
+        [Range(0.1f, 10f)]
+        [SerializeField] private float _moteGoneSpeed = 2.5f;
+
+        [Tooltip("Half-life (s) of the motes fading with speed (in and out).")]
+        [Range(0.05f, 5f)]
+        [SerializeField] private float _moteVisibilityHalfLife = 0.6f;
+
+        [Tooltip("How much a mote's glint dims as it slowly turns in the light (0 = steady).")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _moteGlintDepth = 0.45f;
+
+        [Tooltip("Seconds per glint of a turning mote (slow: never a sparkle).")]
+        [Range(0.5f, 20f)]
+        [SerializeField] private float _moteGlintPeriod = 5f;
+
         public float TrackWidth => _trackWidth;
 
         public float TrackSegmentLength => _trackSegmentLength;
@@ -191,5 +269,43 @@ namespace MoonProject.Rover
         public float LandingDrag => _landingDrag;
 
         public float LandingOpacity => _landingOpacity;
+
+        public int MoteCount => _moteCount;
+
+        public float MoteLifetime => _moteLifetime;
+
+        public float MoteFade => _moteFade;
+
+        public float MoteMinSize => Mathf.Min(_moteMinSize, _moteMaxSize);
+
+        public float MoteMaxSize => _moteMaxSize;
+
+        public float MoteDrift => _moteDrift;
+
+        public float MoteWander => _moteWander;
+
+        public float MoteWanderFrequency => _moteWanderFrequency;
+
+        public float MoteSpread => _moteSpread;
+
+        public float MoteReach => _moteReach;
+
+        public float MoteNearFade => Mathf.Min(_moteNearFade, _moteReach);
+
+        public float MoteFalloff => _moteFalloff;
+
+        public float MoteOpacity => _moteOpacity;
+
+        public float MoteBrightness => _moteBrightness;
+
+        public float MoteFadeSpeed => Mathf.Min(_moteFadeSpeed, _moteGoneSpeed);
+
+        public float MoteGoneSpeed => _moteGoneSpeed;
+
+        public float MoteVisibilityHalfLife => _moteVisibilityHalfLife;
+
+        public float MoteGlintDepth => _moteGlintDepth;
+
+        public float MoteGlintPeriod => _moteGlintPeriod;
     }
 }

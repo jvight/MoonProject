@@ -14,6 +14,9 @@ namespace MoonProject.Rover.Editor
     ///   Visual         RoverVisualRig, RoverHoverCoils
     ///     Chassis      jelly lean / bob
     ///       RoverModel (nested prefab; adds Headlamp spot under HeadlampSocket and EyeGlow point under Eye)
+    ///         HeadlampSocket
+    ///           Headlamp
+    ///             LampMotes  RoverLampMotes: world-space dust motes in a cone along the beam
     ///         CoilSocket
     ///           HoverCoils (nested prefab, inactive until 07 owns the Hover-Jump)
     ///           CoilGlow   soft cyan point light, off until the jump charges
@@ -35,6 +38,15 @@ namespace MoonProject.Rover.Editor
         /// <summary>How far the lighter half of the puffs is lifted from the dust swatch toward white.</summary>
         private const float DustHighlight = 0.2f;
 
+        /// <summary>Radius (m) of the lamp's lens, where the motes' cone starts.</summary>
+        private const float MoteLensRadius = 0.05f;
+
+        /// <summary>Motes are lamp-warm dust: the lamp swatch, a share of the way toward cream.</summary>
+        private const float MoteCreamShare = 0.35f;
+
+        /// <summary>How fast (per second) the curling air the motes wander on changes its pattern.</summary>
+        private const float MoteNoiseScroll = 0.06f;
+
         /// <summary>Kicks rolling dust up and back from the rear wheel contact (cone axis tipped back).</summary>
         private static readonly Vector3 DustConeRotation = new Vector3(-120f, 0f, 0f);
 
@@ -52,6 +64,7 @@ namespace MoonProject.Rover.Editor
                 BuildWiring.Require<PhysicsMaterial>(RoverAssetPaths.SpherePhysicsMaterial, "Rover/Materials");
             var trackMaterial = BuildWiring.Require<Material>(RoverAssetPaths.TrackMaterial, "Rover/Materials");
             var dustMaterial = BuildWiring.Require<Material>(RoverAssetPaths.DustMaterial, "Rover/Materials");
+            var moteMaterial = BuildWiring.Require<Material>(RoverAssetPaths.MoteMaterial, "Rover/Materials");
 
             using (var scratch = new BuilderScratchScene())
             {
@@ -98,6 +111,7 @@ namespace MoonProject.Rover.Editor
                 RoverHoverCoils hoverCoils = BuildHoverCoils(scratch, visual, coilSocket, coils, rigTuning);
 
                 RoverWheelFx wheelFx = BuildWheelFx(scratch, root.transform, m, fxTuning, trackMaterial, dustMaterial);
+                RoverLampMotes lampMotes = BuildLampMotes(scratch, headlamp, fxTuning, moteMaterial);
 
                 BuildWiring.Assign(controller,
                     ("_tuning", tuning),
@@ -106,6 +120,7 @@ namespace MoonProject.Rover.Editor
                     ("_visualRig", rig),
                     ("_wheelFx", wheelFx),
                     ("_hoverCoils", hoverCoils),
+                    ("_lampMotes", lampMotes),
                     ("_tetherOrigin", BuildWiring.Node(m, RoverModelNodes.TetherOrigin)),
                     ("_cargoSocket", BuildWiring.Node(m, RoverModelNodes.CargoSocket)));
 
@@ -205,6 +220,67 @@ namespace MoonProject.Rover.Editor
                 ("_dustRight", Dust(scratch, "DustRight", host.transform, dustMaterial)),
                 ("_landingDust", LandingRing(scratch, host.transform, dustMaterial)));
             return wheelFx;
+        }
+
+        /// <summary>
+        /// Dust motes in the beam: a world-space cone volume along the lamp's +Z with random directions and slow noise,
+        /// started invisible (RoverLampMotes sets each mote's opacity from the light it is in, and the tuned amounts).
+        /// </summary>
+        private static RoverLampMotes BuildLampMotes(BuilderScratchScene scratch, Light headlamp, RoverFxTuning tuning,
+            Material material)
+        {
+            GameObject host = Child(scratch, "LampMotes", headlamp.transform);
+            var system = host.AddComponent<ParticleSystem>();
+            system.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+
+            ParticleSystem.MainModule main = system.main;
+            main.loop = true;
+            main.playOnAwake = true;
+            main.duration = 1f;
+            main.maxParticles = tuning.MoteCount;
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+            main.startLifetime = tuning.MoteLifetime;
+            main.startSize = new ParticleSystem.MinMaxCurve(tuning.MoteMinSize, tuning.MoteMaxSize);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(0f, tuning.MoteDrift);
+            Color tint = Color.Lerp(Palette.Get(PaletteSwatch.WarmLamp), Palette.Get(PaletteSwatch.Cream),
+                MoteCreamShare);
+            tint.a = 0f;
+            main.startColor = tint;
+            main.gravityModifier = 0f;
+
+            ParticleSystem.EmissionModule emission = system.emission;
+            emission.enabled = true;
+            emission.rateOverTime = tuning.MoteCount / tuning.MoteLifetime;
+
+            ParticleSystem.ShapeModule shape = system.shape;
+            shape.enabled = true;
+            shape.shapeType = ParticleSystemShapeType.ConeVolume;
+            shape.angle = tuning.MoteSpread;
+            shape.radius = MoteLensRadius;
+            shape.radiusThickness = 1f;
+            shape.length = tuning.MoteReach;
+            shape.randomDirectionAmount = 1f;
+
+            ParticleSystem.NoiseModule noise = system.noise;
+            noise.enabled = true;
+            noise.strength = tuning.MoteWander;
+            noise.frequency = tuning.MoteWanderFrequency;
+            noise.scrollSpeed = MoteNoiseScroll;
+            noise.octaveCount = 1;
+            noise.damping = true;
+            noise.quality = ParticleSystemNoiseQuality.Low;
+
+            var renderer = host.GetComponent<ParticleSystemRenderer>();
+            renderer.renderMode = ParticleSystemRenderMode.Billboard;
+            renderer.alignment = ParticleSystemRenderSpace.View;
+            renderer.sortMode = ParticleSystemSortMode.None;
+            renderer.sharedMaterial = material;
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+
+            var motes = host.AddComponent<RoverLampMotes>();
+            BuildWiring.Assign(motes, ("_tuning", tuning), ("_motes", system), ("_headlamp", headlamp));
+            return motes;
         }
 
         private static RoverTrackRenderer Track(BuilderScratchScene scratch, string name, Transform parent,

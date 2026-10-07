@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8ccac8e4e91132f44a292288260d28f1, type: 3}
-  m_Name: FriendTuning
+  m_Name: 
   m_EditorClassIdentifier: 
   _siteAttempts: 600
   _siteEdgeMargin: 12
@@ -37,7 +37,7 @@ MonoBehaviour:
   _partSpiralRadius: 0.4
   _partSpiralTurns: 0.9
   _partArrivalScale: 0.5
-  _partLampGlow: 1.6
+  _partLampGlow: 1
   _partLampEase: 0.4
   _repairRadius: 5
   _repairHold: 0.5
@@ -81,6 +81,21 @@ MonoBehaviour:
   _flitHop: 2.5
   _inspectDuration: 4
   _inspectDistance: 1.6
+  _walkSpeed: 1.1
+  _walkWaypointReach: 1.5
+  _unseenDistance: 60
+  _unseenMargin: 1.2
+  _unseenSightSamples: 24
+  _unseenCheckInterval: 0.25
+  _hopProbe: 1.2
+  _hopDrop: 0.6
+  _hopLength: 2.6
+  _hopArc: 0.35
+  _hopDuration: 1.1
+  _pathCell: 2.5
+  _pathMargin: 30
+  _pathMaxClimb: 1
+  _pathMaxNodes: 40000
   _spotRadius: 40
   _spotHover: 2.5
   _spotDuration: 3.5

@@ -12,7 +12,8 @@ namespace MoonProject.Rover
     /// up toward Earth. Each session opens with 07 asleep; it wakes on its own (or as soon as the player drives),
     /// publishing <see cref="RoverAwoke"/>. It reacts to the game: soft landings, waking up, scrap (happier as a
     /// combo climbs), a relic answering or surfacing (a glance and a perk-up), a deposit (a contented nod), a snapped
-    /// tether (a sigh), and hard landings (a small "oof").
+    /// tether (a sigh), and hard landings (a small "oof"). When the camera opens to the lonely wide shot
+    /// (<see cref="RoverWideShotChanged"/>) its daydream sigh lands with the frame.
     /// Needs <see cref="IWorldLayout"/>, so it must be initialised after the World systems.
     /// </summary>
     [DefaultExecutionOrder(10)]
@@ -107,6 +108,7 @@ namespace MoonProject.Rover
                 events.Subscribe<TetherReleased>(OnTetherReleased),
                 events.Subscribe<RoverRecovering>(OnRecovering),
                 events.Subscribe<RoverJumped>(OnJumped),
+                events.Subscribe<RoverWideShotChanged>(OnWideShotChanged),
             };
             _initialized = true;
             Apply();
@@ -184,6 +186,11 @@ namespace MoonProject.Rover
             {
                 _mood.Sigh(_tuning.SnapSigh);
             }
+        }
+
+        private void OnWideShotChanged(RoverWideShotChanged wideShot)
+        {
+            _mood.SetWideShot(wideShot.Wide);
         }
 
         private void OnLanded(RoverLanded landed)
@@ -281,7 +288,7 @@ namespace MoonProject.Rover
 
         private void SetGlow(Renderer target, float intensity)
         {
-            _glowBlock.SetColor(EmissionColorId, Color.white * intensity);
+            _glowBlock.SetVector(EmissionColorId, new Vector4(intensity, intensity, intensity, 1f));
             target.SetPropertyBlock(_glowBlock);
         }
 

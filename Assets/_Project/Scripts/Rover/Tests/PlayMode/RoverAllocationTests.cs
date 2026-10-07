@@ -13,9 +13,10 @@ namespace MoonProject.Rover.PlayModeTests
 {
     /// <summary>
     /// Steady-state zero-GC check: while 07 drives (tracks, dust, jelly, gaze all live) charging a Hover-Jump (coils
-    /// squashing and glowing), one frame additionally runs every per-frame method of the rover, rig, effects, body
-    /// language and camera 600 times. Unity's "GC Allocated In Frame" counter for the quietest of three such frames
-    /// must stay at the level of plain frames; a control frame proves the counter sees allocations at all.
+    /// squashing and glowing), and again while it rests in the opening wide shot (stillness, daydream, lamp motes), one
+    /// frame additionally runs every per-frame method of the rover, rig, effects, body language and camera 600 times.
+    /// Unity's "GC Allocated In Frame" counter for the quietest of three such frames must stay at the level of plain
+    /// frames; a control frame proves the counter sees allocations at all.
     /// </summary>
     public sealed class RoverAllocationTests : InputTestFixture
     {
@@ -31,6 +32,9 @@ namespace MoonProject.Rover.PlayModeTests
         private const long Tolerance = 2048L;
 
         private const string AllocatedInFrame = "GC Allocated In Frame";
+
+        /// <summary>A shortened rest before the wide shot opens (s).</summary>
+        private const float WideShotDelay = 1f;
 
         private LunarTestPhysics _physics;
         private TestWorld _world;
@@ -68,7 +72,31 @@ namespace MoonProject.Rover.PlayModeTests
 
             Assert.Greater(rover.Controller.Speed, 1f, "Measure while driving, laying tracks and raising dust.");
             rover.Drive.JumpHeld = true;
+            yield return MeasurePerFrameMethods(rover);
+        }
 
+        /// <summary>
+        /// 07 resting: the stillness count, the lonely wide shot opening and breathing, the daydream and its sigh, and
+        /// the lamp motes all live.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator PerFrameMethods_WhileResting_InTheWideShot_DoNotAllocate()
+        {
+            _world = new TestWorld();
+            _rover = TestRover.Spawn(_world, TestWorld.Point(0f, -100f), 0f, wideShotDelay: WideShotDelay);
+            float until = Time.time + WideShotDelay + 2f;
+            while (Time.time < until)
+            {
+                yield return null;
+            }
+
+            Assert.IsTrue(_rover.CameraRig.WideShot.IsOpen, "Measure while the wide shot opens.");
+            Assert.Greater(_rover.LampMotes.System.particleCount, 0, "And motes hang in the lamp.");
+            yield return MeasurePerFrameMethods(_rover);
+        }
+
+        private IEnumerator MeasurePerFrameMethods(TestRover rover)
+        {
             Action[] frame =
             {
                 Bind(rover.Controller, "FixedUpdate"),

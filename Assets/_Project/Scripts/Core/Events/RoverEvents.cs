@@ -91,4 +91,20 @@ namespace MoonProject.Core.Events
     public readonly struct RoverJumpCancelled
     {
     }
+
+    /// <summary>
+    /// The camera began its slow drift out to the lonely wide shot after 07 rested a while (<see cref="Wide"/> true;
+    /// VISION pillar 6), or handed the view back because the player drove, looked around or something began
+    /// (false). 07 sighs as the frame opens; anything else that wants to breathe out with it may listen.
+    /// </summary>
+    public readonly struct RoverWideShotChanged
+    {
+        public RoverWideShotChanged(bool wide)
+        {
+            Wide = wide;
+        }
+
+        /// <summary>True as the frame starts to open, false as it starts to come back to the chase view.</summary>
+        public bool Wide { get; }
+    }
 }

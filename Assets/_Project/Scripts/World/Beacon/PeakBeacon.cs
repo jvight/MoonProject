@@ -3,8 +3,9 @@ using UnityEngine;
 namespace MoonProject.World
 {
     /// <summary>
-    /// Breathes the light on The Peak. The lamp follows the palette glow contract (MaterialPropertyBlock
-    /// <c>_EmissionColor</c> = white x intensity on the shared material); the halo is a camera-facing glow
+    /// Breathes the light on The Peak. The lamp follows the palette glow contract (docs/ARCHITECTURE.md, "Glow
+    /// modulation": a MaterialPropertyBlock <c>_EmissionColor</c> set as a linear vector (i, i, i, 1), never as a
+    /// gamma-encoded colour, on the shared material); the halo is a camera-facing glow
     /// (LofiBeaconHalo) that never shrinks below a minimum apparent size, so it reads from the base at night.
     /// <see cref="WorldSystem"/> places and configures it; it sits still at full glow while editing.
     /// </summary>
@@ -56,7 +57,7 @@ namespace MoonProject.World
         private void Apply(float pulse)
         {
             float lamp = Mathf.Lerp(_settings.LampMinIntensity, _settings.LampMaxIntensity, pulse);
-            _lampBlock.SetColor(EmissionColorId, Color.white * lamp);
+            _lampBlock.SetVector(EmissionColorId, new Vector4(lamp, lamp, lamp, 1f));
             _lamp.SetPropertyBlock(_lampBlock);
 
             _haloBlock.SetColor(ColorId, _settings.HaloColor);

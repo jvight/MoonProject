@@ -12,7 +12,8 @@ using Object = UnityEngine.Object;
 namespace MoonProject.Gameplay.PlayModeTests
 {
     /// <summary>
-    /// Scripted sessions for the museum deposit, the radio tower shop, Kenji's workbench, the hint query and save/load.
+    /// Scripted sessions for home carrying across the basin, the museum deposit, the radio tower shop, Kenji's
+    /// workbench, the hint query and save/load.
     /// </summary>
     public sealed class BaseAndSaveSessions : InputTestFixture
     {
@@ -38,6 +39,32 @@ namespace MoonProject.Gameplay.PlayModeTests
             _fixture?.Dispose();
             Object.Destroy(_controls);
             base.TearDown();
+        }
+
+        [UnityTest]
+        public IEnumerator Home_CarriesAcrossTheBasin_WindowsHold_LampsDim_AndAHaloShowsFromAfar()
+        {
+            _fixture = GameplayFixture.Boot(_controls);
+            yield return null;
+            HomeBase home = _fixture.Gameplay.Home;
+            BaseTuning tuning = home.Tuning;
+            Vector3 lander = home.LanderPosition;
+            _fixture.Rover.Place(lander + new Vector3(8f, 0f, 0f), 0f);
+            yield return new WaitForSeconds(tuning.WarmEase * 3f);
+            float homeWindows = home.WindowLevel;
+            float homeWarmth = home.Warmth;
+            Assert.AreEqual(tuning.WindowGlow, homeWindows, 0.05f, "the windows at their glow while 07 is home");
+            Assert.AreEqual(1f, homeWarmth, 0.05f, "the lamps light the ground");
+            RenderTheView();
+            Assert.AreEqual(0f, home.Halo.Level, "no halo over the base while 07 is there");
+
+            _fixture.Rover.Place(lander + new Vector3(0f, 0f, -250f), 0f);
+            yield return new WaitForSeconds(tuning.WarmEase * 3f);
+            Assert.Less(home.Warmth, homeWarmth - 0.3f, "the lamps on the ground dim to a light left on");
+            Assert.Greater(home.WindowLevel, homeWindows, "the windows glow a little brighter, calling 07 home");
+            RenderTheView();
+            Assert.Greater(home.Halo.Level, 0.9f * tuning.HaloGlow, "a soft amber halo marks home from afar");
+            Assert.Greater(home.Halo.Radius, tuning.HaloRadius, "grown with the distance");
         }
 
         [UnityTest]
@@ -297,6 +324,12 @@ namespace MoonProject.Gameplay.PlayModeTests
             Vector3 shelf = home.ShelfPosition;
             Vector3 front = (Vector3.zero - shelf).normalized;
             _fixture.Rover.Aim(shelf + front * 6f + Vector3.up * 2.5f, shelf + Vector3.up);
+        }
+
+        /// <summary>Renders 07's view once (the halo places itself for each camera as it renders).</summary>
+        private void RenderTheView()
+        {
+            Object.Destroy(FrameCapture.Render(_fixture.Rover.Camera, 64, 36));
         }
 
         private Relic Loose(string id, Vector3 position)

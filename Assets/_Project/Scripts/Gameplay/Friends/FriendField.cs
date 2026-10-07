@@ -583,6 +583,8 @@ namespace MoonProject.Gameplay
             int lamps = definition.Parts.Count + definition.Items.Count;
             var broken = new BellRig(Instantiate(definition.BrokenPrefab, root), lamps);
             var repaired = new BellRig(Instantiate(definition.RepairedPrefab, root), lamps);
+            broken.MakeSolid(_bellTuning.BodyPadding);
+            repaired.MakeSolid(_bellTuning.BodyPadding);
             GameObject tape = Instantiate(Tape(cassettes, definition.Items[0]), root);
             tape.name = "Tape_" + definition.Items[0];
             var life = new BellLife(_bellTuning, _tuning, CabinetSeed + index);

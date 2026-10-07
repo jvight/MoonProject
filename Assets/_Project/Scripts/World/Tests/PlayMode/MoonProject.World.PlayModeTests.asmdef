@@ -9,6 +9,8 @@
         "MoonProject.App",
         "MoonProject.Testing",
         "Unity.InputSystem",
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.RenderPipelines.Universal.Runtime",
         "UnityEngine.TestRunner"
     ],
     "includePlatforms": [],

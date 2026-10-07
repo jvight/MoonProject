@@ -77,10 +77,53 @@ namespace MoonProject.Rover.Tests
             Assert.Greater(high - low, 0.2f, "The eye glow breathes visibly while daydreaming.");
         }
 
+        /// <summary>The largest sigh over <paramref name="seconds"/> of standing still.</summary>
+        private float DeepestSigh(float seconds)
+        {
+            float deepest = 0f;
+            for (float t = 0f; t < seconds; t += Frame)
+            {
+                _mood.Step(0f, 0f, Frame);
+                deepest = Mathf.Max(deepest, _mood.Sighing);
+            }
+
+            return deepest;
+        }
+
+        [Test]
+        public void Daydream_WithoutTheWideShot_DoesNotSigh()
+        {
+            Assert.Less(DeepestSigh(30f), 0.01f, "07 looks up at Earth; the sigh waits for the frame to open.");
+            Assert.IsTrue(_mood.IsDaydreaming);
+        }
+
+        [Test]
+        public void WideShotOpeningDuringTheDaydream_Sighs_OncePerOpening()
+        {
+            Run(_tuning.IdleDelay + 2f, 0f, 0f);
+            _mood.SetWideShot(true);
+            Assert.Greater(DeepestSigh(3f), 0.5f, "07 sighs as the frame opens.");
+            Run(20f, 0f, 0f);
+            Assert.Less(DeepestSigh(20f), 0.01f, "Once per opening.");
+
+            _mood.SetWideShot(false);
+            _mood.SetWideShot(true);
+            Assert.Greater(DeepestSigh(3f), 0.5f, "The next opening sighs again.");
+        }
+
+        [Test]
+        public void WideShotOpeningBeforeTheDaydream_SighsAsTheDaydreamBegins()
+        {
+            _mood.SetWideShot(true);
+            Assert.Less(DeepestSigh(_tuning.IdleDelay - 0.2f), 0.01f, "Not yet daydreaming: no sigh.");
+            Assert.Greater(DeepestSigh(3f), 0.5f, "The sigh lands when 07 drifts off under the open frame.");
+        }
+
         [Test]
         public void Daydream_WingSighsOpenPastRestThenSettles()
         {
             Run(_tuning.IdleDelay, 0f, 0f);
+            _mood.SetWideShot(true);
             float peak = 0f;
             for (float t = 0f; t < 15f; t += Frame)
             {
@@ -194,7 +237,7 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void AntennaTip_BlinksBetweenRestAndFullGlow()
+        public void AntennaTip_BlinksBetweenRestAndPeakGlow()
         {
             float low = float.MaxValue;
             float high = 0f;
@@ -206,7 +249,7 @@ namespace MoonProject.Rover.Tests
             }
 
             Assert.AreEqual(_tuning.TipRestGlow, low, 0.01f);
-            Assert.Greater(high, 0.95f);
+            Assert.AreEqual(_tuning.TipPeakGlow, high, 0.02f);
         }
 
         [Test]

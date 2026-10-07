@@ -363,6 +363,33 @@ namespace MoonProject.Gameplay.Tests
             Assert.Throws<InvalidOperationException>(() => new BellRig(standing, 4));
         }
 
+        [Test]
+        public void Rig_MakesHerSolid_WithASoftPaddedKinematicBox()
+        {
+            GameObject standing = Model("Bell", false);
+            var rig = new BellRig(standing, 4);
+            Assert.Throws<InvalidOperationException>(() => rig.MakeSolid(0.25f), "nothing to fit without a mesh");
+
+            GameObject cabinet = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            Object.DestroyImmediate(cabinet.GetComponent<Collider>());
+            cabinet.transform.SetParent(Find(standing.transform, BellRig.BodyNode), false);
+            cabinet.transform.localPosition = new Vector3(0f, 0.35f, 0f);
+            cabinet.transform.localScale = new Vector3(0.9f, 0.7f, 0.5f);
+            standing.transform.SetPositionAndRotation(new Vector3(5f, 1f, 3f), Quaternion.Euler(0f, 40f, 0f));
+
+            BoxCollider box = rig.MakeSolid(0.25f);
+            Assert.AreSame(standing, box.gameObject, "on her root, so it follows her walk and turns");
+            Assert.AreEqual(Layers.Prop, standing.layer, "solid to 07 like the base's props");
+            var body = standing.GetComponent<Rigidbody>();
+            Assert.IsNotNull(body);
+            Assert.IsTrue(body.isKinematic, "kinematic: 07 cannot shove her");
+            Assert.IsFalse(body.useGravity);
+            Assert.Less(Vector3.Distance(new Vector3(1.4f, 0.95f, 1f), box.size), 1e-4f,
+                "her cabinet with 0.25 m of room on every side but the ground");
+            Assert.Less(Vector3.Distance(new Vector3(0f, 1.225f, 0f), box.center), 1e-4f,
+                "its floor stays where her cabinet's is");
+        }
+
         private static BellSenses Senses(float now, Vector3 rover, bool atHome)
         {
             return new BellSenses

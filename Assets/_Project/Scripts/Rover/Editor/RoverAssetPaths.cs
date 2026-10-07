@@ -15,6 +15,7 @@ namespace MoonProject.Rover.Editor
         public const string SpherePhysicsMaterial = GeneratedRoot + "/Physics/RoverSphere.asset";
         public const string TrackMaterial = GeneratedRoot + "/Materials/M_RoverTrack.mat";
         public const string DustMaterial = GeneratedRoot + "/Materials/M_RoverDust.mat";
+        public const string MoteMaterial = GeneratedRoot + "/Materials/M_RoverMote.mat";
         public const string DustTexture = GeneratedRoot + "/Textures/DustPuff.asset";
 
         public const string TuningFolder = "Assets/_Project/Data/Tuning";
@@ -27,5 +28,7 @@ namespace MoonProject.Rover.Editor
         public const string TrackShader = "Assets/_Project/Shaders/Rover/RoverTrack.shader";
         public const string ParticlesSimpleLitShader =
             "Packages/com.unity.render-pipelines.universal/Shaders/Particles/ParticlesSimpleLit.shader";
+        public const string ParticlesUnlitShader =
+            "Packages/com.unity.render-pipelines.universal/Shaders/Particles/ParticlesUnlit.shader";
     }
 }

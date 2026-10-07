@@ -9,8 +9,9 @@ namespace MoonProject.Rover.Editor
     /// Physics and effect assets the rover prefab uses: the frictionless sphere material (all traction is done in
     /// code), the multiply-blended track material, and the soft dust puff: a round, feathered texture on a lit,
     /// alpha-blended particle material (dust catches the Earthlight and 07's headlamp) that fades where it meets the
-    /// ground and near the camera, so it reads as fine lunar dust rather than floating rocks. Colours come from the
-    /// palette.
+    /// ground and near the camera, so it reads as fine lunar dust rather than floating rocks. The lamp motes share the
+    /// puff texture on an unlit, additive particle material: they are only ever as bright as the beam they hang in
+    /// (set per mote at runtime), with an HDR tint for a whisper of bloom. Colours come from the palette.
     /// </summary>
     public static class RoverFxAssetBuilder
     {
@@ -38,6 +39,11 @@ namespace MoonProject.Rover.Editor
 
         private const float DustCameraFadeFar = 1.6f;
 
+        /// <summary>Motes nearer the camera than this vanish, fading in fully by the far distance (m).</summary>
+        private const float MoteCameraFadeNear = 0.3f;
+
+        private const float MoteCameraFadeFar = 1.2f;
+
         [MoonBuilder("Rover/Materials", 305)]
         public static void Build()
         {
@@ -45,6 +51,7 @@ namespace MoonProject.Rover.Editor
             BuildTrackMaterial();
             BuildDustTexture();
             BuildDustMaterial();
+            BuildMoteMaterial();
             AssetDatabase.SaveAssets();
         }
 
@@ -123,6 +130,24 @@ namespace MoonProject.Rover.Editor
             BaseShaderGUI.SetupMaterialBlendMode(material);
             MaterialValidation.Validate(material);
             GeneratedAssets.CreateOrReplace(material, RoverAssetPaths.DustMaterial);
+        }
+
+        private static void BuildMoteMaterial()
+        {
+            var shader = BuildWiring.Require<Shader>(RoverAssetPaths.ParticlesUnlitShader, "the URP package");
+            var texture = BuildWiring.Require<Texture2D>(RoverAssetPaths.DustTexture, "Rover/Materials");
+            var material = new Material(shader) { enableInstancing = true };
+            material.SetTexture("_BaseMap", texture);
+            material.SetColor("_BaseColor", Color.white);
+            material.SetFloat("_SoftParticlesEnabled", 0f);
+            material.SetFloat("_CameraFadingEnabled", 1f);
+            material.SetFloat("_CameraNearFadeDistance", MoteCameraFadeNear);
+            material.SetFloat("_CameraFarFadeDistance", MoteCameraFadeFar);
+            material.SetFloat("_Surface", (float)BaseShaderGUI.SurfaceType.Transparent);
+            material.SetFloat("_Blend", (float)BaseShaderGUI.BlendMode.Additive);
+            BaseShaderGUI.SetupMaterialBlendMode(material);
+            MaterialValidation.Validate(material);
+            GeneratedAssets.CreateOrReplace(material, RoverAssetPaths.MoteMaterial);
         }
     }
 }

@@ -1,0 +1,51 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d3214e54127e09e4785c78fc5f75e788, type: 3}
+  m_Name: SoundscapeTuning
+  m_EditorClassIdentifier: 
+  _silenceWidth: 150
+  _farRadioDb: -30
+  _farBasinDb: -10
+  _roomToneNearDb: -20
+  _roomToneFarDb: -2
+  _roomToneInCanyonDb: -6
+  _smallSoundsNearDb: -10
+  _quietHoursSolitude: 0.5
+  _canyonSolitude: 0.8
+  _quietHoursBasinDb: 2.6
+  _quietHoursEase: 3
+  _stillSpeed: 0.2
+  _stillInput: 0.05
+  _stillDelay: 1.5
+  _stillRiseTime: 1.5
+  _stillReleaseTime: 0.3
+  _stillDuckDb: -4
+  _lampVolume: 0.35
+  _lampFadeIn: 2
+  _steerDeadRate: 0.4
+  _steerFullRate: 3
+  _neckDeadRate: 25
+  _neckFullRate: 160
+  _servoVolume: 0.5
+  _servoMinPitch: 0.85
+  _servoMaxPitch: 1.25
+  _neckPitch: 1.35
+  _servoAttack: 0.05
+  _servoRelease: 0.15
+  _heatTime: 20
+  _coolTime: 30
+  _tickDelay: 3
+  _tickMinGap: 0.8
+  _tickMaxGap: 4
+  _tickGapJitter: 0.5
+  _tickMinHeat: 0.08
+  _tickVolume: 0.6

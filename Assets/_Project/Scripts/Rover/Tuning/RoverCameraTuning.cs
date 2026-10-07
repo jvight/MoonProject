@@ -3,8 +3,9 @@ using UnityEngine;
 namespace MoonProject.Rover
 {
     /// <summary>
-    /// The floaty drone camera behind 07: orbit input, idle recentering, downhill lift, speed FOV, landing bump and
-    /// the Cinemachine damping it hands to the orbital follow and composer.
+    /// The floaty drone camera behind 07: orbit input, idle recentering, downhill lift, speed FOV, landing bump, camera
+    /// moments, the lonely wide shot when 07 rests, and the Cinemachine damping it hands to the orbital follow and
+    /// composer.
     /// </summary>
     [CreateAssetMenu(fileName = "RoverCameraTuning", menuName = "MoonProject/Rover/Rover Camera Tuning")]
     public sealed class RoverCameraTuning : ScriptableObject
@@ -163,6 +164,11 @@ namespace MoonProject.Rover
         [Range(0.02f, 1f)]
         [SerializeField] private float _momentBlendHalfLife = 0.3f;
 
+        [Header("Wide shot")]
+        [Tooltip("Resting a while: the camera drifts out to a wide, lonely frame with 07 small against the land and "
+            + "the sky (VISION pillar 6), and hands back on any drive or look input.")]
+        [SerializeField] private WideShotSettings _wideShot = new WideShotSettings();
+
         [Header("Cinemachine damping")]
         [Tooltip("Orbital follow position damping (x, y, z): high = floaty drone.")]
         [SerializeField] private Vector3 _positionDamping = new Vector3(1.1f, 0.9f, 1.3f);
@@ -269,6 +275,8 @@ namespace MoonProject.Rover
         public float MomentCancelEaseOut => _momentCancelEaseOut;
 
         public float MomentBlendHalfLife => _momentBlendHalfLife;
+
+        public WideShotSettings WideShot => _wideShot;
 
         public Vector3 PositionDamping => _positionDamping;
 
