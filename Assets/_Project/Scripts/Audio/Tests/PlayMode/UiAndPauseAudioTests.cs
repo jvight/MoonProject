@@ -196,8 +196,7 @@ namespace MoonProject.Audio.PlayModeTests
 
         private float LoudestDeckVolume()
         {
-            return Mathf.Max(AudioTestRig.FindChildSource(_rig.Radio.transform, "DeckA").volume,
-                AudioTestRig.FindChildSource(_rig.Radio.transform, "DeckB").volume);
+            return _rig.LoudestDeck().volume;
         }
     }
 }

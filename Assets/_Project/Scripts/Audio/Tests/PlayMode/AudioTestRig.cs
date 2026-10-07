@@ -138,6 +138,35 @@ namespace MoonProject.Audio.PlayModeTests
             return null;
         }
 
+        /// <summary>The radio's loudest music deck (the live one, except mid-change).</summary>
+        public AudioSource LoudestDeck()
+        {
+            AudioSource loudest = Radio.GetDeck(0);
+            for (int i = 1; i < RadioDeckMixer.DeckCount; i++)
+            {
+                if (Radio.GetDeck(i).volume > loudest.volume)
+                {
+                    loudest = Radio.GetDeck(i);
+                }
+            }
+
+            return loudest;
+        }
+
+        /// <summary>True while any of the radio's music decks plays (even silently).</summary>
+        public bool AnyDeckPlaying()
+        {
+            for (int i = 0; i < RadioDeckMixer.DeckCount; i++)
+            {
+                if (Radio.GetDeck(i).isPlaying)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         public static AudioSource FindChildSource(Transform parent, string name)
         {
             Transform child = parent.Find(name);
