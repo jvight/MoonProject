@@ -1,0 +1,19 @@
+{
+  "width": 1600,
+  "height": 900,
+  "postProcessing": true,
+  "poses": [
+    {"name": "canyon_from_base", "position": [14, 3, 4.5], "lookAt": [380, 30, 123], "fov": 50},
+    {"name": "canyon_from_spawn", "position": [0.78, 4, -8.97], "lookAt": [380, 30, 123], "fov": 70},
+    {"name": "canyon_ledge_zoom", "position": [14, 3, 4.5], "lookAt": [373.95, 16.4, 104.7], "fov": 8},
+    {"name": "canyon_approach", "position": [240, 6, 75], "lookAt": [300, 8, 96], "fov": 60},
+    {"name": "canyon_lip", "position": [276, 10, 89.6], "lookAt": [316, 9.3, 102.7], "fov": 60},
+    {"name": "canyon_trough", "position": [287, 12, 84], "lookAt": [300, 2.5, 97.5], "fov": 60},
+    {"name": "canyon_far_face", "position": [297, 4.5, 96.4], "lookAt": [306, 6.5, 99.5], "fov": 60},
+    {"name": "canyon_inside", "position": [351.9, 12, 114.3], "lookAt": [399.7, 15, 128.9], "fov": 60},
+    {"name": "canyon_bend", "position": [409.7, 19, 129], "lookAt": [437.1, 22, 91.5], "fov": 60},
+    {"name": "canyon_terminus", "position": [452.4, 35, 13.6], "lookAt": [470.4, 33.5, -32.6], "fov": 60},
+    {"name": "canyon_exit_step", "position": [246.7, 7.5, 122.2], "lookAt": [263, 7, 127.5], "fov": 60},
+    {"name": "canyon_overview", "position": [250, 230, -120], "lookAt": [380, 15, 70], "fov": 50}
+  ]
+}
