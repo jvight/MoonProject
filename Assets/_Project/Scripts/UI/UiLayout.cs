@@ -63,6 +63,10 @@ namespace MoonProject.UI
             TowerCostIcon = Require<VisualElement>("tower-cost-icon");
             TowerCost = Require<Label>("tower-cost");
 
+            Ticker = Require<VisualElement>("ticker");
+            TickerLamp = Require<VisualElement>("ticker-lamp");
+            TickerText = Require<Label>("ticker-text");
+
             Pause = Require<VisualElement>("pause");
             PauseVeil = Require<VisualElement>("pause-veil");
             PauseStack = Require<VisualElement>("pause-stack");
@@ -177,6 +181,12 @@ namespace MoonProject.UI
         public VisualElement TowerCostIcon { get; }
 
         public Label TowerCost { get; }
+
+        public VisualElement Ticker { get; }
+
+        public VisualElement TickerLamp { get; }
+
+        public Label TickerText { get; }
 
         public VisualElement Pause { get; }
 

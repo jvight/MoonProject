@@ -17,6 +17,7 @@ namespace MoonProject.UI
         [SerializeField] private MemoryCardSettings _memoryCard = new MemoryCardSettings();
         [SerializeField] private TowerPanelSettings _towerPanel = new TowerPanelSettings();
         [SerializeField] private FriendUiSettings _friends = new FriendUiSettings();
+        [SerializeField] private TickerSettings _ticker = new TickerSettings();
 
         public PauseSettings Pause => _pause;
 
@@ -34,11 +35,13 @@ namespace MoonProject.UI
 
         public FriendUiSettings Friends => _friends;
 
+        public TickerSettings Ticker => _ticker;
+
         /// <summary>Null when the tuning is usable, else the first problem.</summary>
         public string Validate()
         {
             if (_pause == null || _title == null || _prompts == null || _reticle == null || _scrapChip == null ||
-                _memoryCard == null || _towerPanel == null || _friends == null)
+                _memoryCard == null || _towerPanel == null || _friends == null || _ticker == null)
             {
                 return "a settings section is missing";
             }

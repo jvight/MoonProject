@@ -15,7 +15,7 @@ namespace MoonProject.UI
     /// friend remembers ("friend.&lt;id&gt;.name" and "friend.&lt;id&gt;.repair_log"). It fades in a moment later,
     /// stays long enough to read at a calm pace (longer texts stay longer), then fades away. It never takes input
     /// focus, so driving is never blocked; the cancel button (shown on the card) closes it early. Cards that arrive
-    /// while one is up wait their turn.
+    /// while one is up wait their turn, and a card never appears while the radio ticker's line is still on screen.
     /// </summary>
     internal sealed class MemoryCard
     {
@@ -71,6 +71,9 @@ namespace MoonProject.UI
         /// <summary>True while a card is on screen (or fading).</summary>
         public bool IsVisible => !_reveal.IsHidden;
 
+        /// <summary>True while a card is on screen, about to appear, or waiting its turn.</summary>
+        public bool IsBusy => _phase != Phase.Idle || _pending.Count > 0;
+
         /// <summary>True while a card is up and can be closed with the cancel button.</summary>
         public bool CanDismiss => _phase == Phase.Reading;
 
@@ -119,7 +122,8 @@ namespace MoonProject.UI
         /// <param name="deltaTime">Unscaled seconds; pass 0 while paused so reading time waits too.</param>
         /// <param name="closeGlyph">The cancel control's label for the active device.</param>
         /// <param name="device">The active device (key cap or round glyph).</param>
-        public void Tick(float deltaTime, string closeGlyph, InputDeviceKind device)
+        /// <param name="stageClear">False while the radio ticker's line is still easing away: the card waits.</param>
+        public void Tick(float deltaTime, string closeGlyph, InputDeviceKind device, bool stageClear)
         {
             _glyph.Set(closeGlyph, device);
             switch (_phase)
@@ -134,7 +138,7 @@ namespace MoonProject.UI
                     break;
                 case Phase.Waiting:
                     _timer += deltaTime;
-                    if (_timer >= _settings.AppearDelay)
+                    if (_timer >= _settings.AppearDelay && stageClear)
                     {
                         Present(_pending.Dequeue());
                     }

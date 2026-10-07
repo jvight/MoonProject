@@ -14,9 +14,10 @@ namespace MoonProject.UI.PlayModeTests
 {
     /// <summary>
     /// The UI booted through GameBootstrap the way UISceneContributor wires Main.unity (UIDocument on the generated
-    /// PanelSettings, GameUI.uxml, the real tuning, catalog and string tables), behind <see cref="FakeGameServices"/>.
-    /// The tuning is a copy with a short title and no prompt start delay, so tests reach the interesting states
-    /// quickly. Editor-only (assets come through the AssetDatabase).
+    /// PanelSettings, GameUI.uxml, the real tuning, catalog and string tables topped up by <see cref="TestStrings"/>),
+    /// behind <see cref="FakeGameServices"/>. The tuning is a copy with a short title, no prompt start delay and quick
+    /// ticker fades, so tests reach the interesting states quickly. Editor-only (assets come through the
+    /// AssetDatabase).
     /// </summary>
     internal sealed class UiTestRig : IDisposable
     {
@@ -32,13 +33,15 @@ namespace MoonProject.UI.PlayModeTests
         private readonly GameObject _camera;
         private readonly GameObject _services;
         private readonly GameObject _ui;
+        private readonly TextAsset[] _tables;
 
-        private UiTestRig(GameObject camera, GameObject services, GameObject ui, UiTuning tuning,
+        private UiTestRig(GameObject camera, GameObject services, GameObject ui, TextAsset[] tables, UiTuning tuning,
             GameBootstrap bootstrap, string saveSlot)
         {
             _camera = camera;
             _services = services;
             _ui = ui;
+            _tables = tables;
             Tuning = tuning;
             Bootstrap = bootstrap;
             SaveSlot = saveSlot;
@@ -79,15 +82,33 @@ namespace MoonProject.UI.PlayModeTests
             document.panelSettings = Load<PanelSettings>(PanelSettingsPath);
             document.visualTreeAsset = Load<VisualTreeAsset>(UxmlPath);
             var system = ui.AddComponent<UISystem>();
-            system.Wire(document, tuning, Load<RelicCatalog>(CatalogPath),
-                new[] { Load<TextAsset>(EnglishPath), Load<TextAsset>(VietnamesePath) });
+            TextAsset[] tables = TestStrings.Load(Load<TextAsset>(EnglishPath), Load<TextAsset>(VietnamesePath));
+            system.Wire(document, tuning, Load<RelicCatalog>(CatalogPath), tables);
             system.QuitAction = () => { };
             ui.SetActive(true);
 
             GameBootstrap bootstrap = BootstrapHarness.Create(controls, saveSlot, fakes, system);
-            return new UiTestRig(camera, services, ui, tuning, bootstrap, saveSlot);
+            return new UiTestRig(camera, services, ui, tables, tuning, bootstrap, saveSlot);
 #else
             throw new NotSupportedException("UiTestRig loads assets through the editor's AssetDatabase.");
+#endif
+        }
+
+        /// <summary>Overrides one number of this rig's tuning copy (a serialized property path).</summary>
+        public void Tune(string propertyPath, float value)
+        {
+#if UNITY_EDITOR
+            var serialized = new SerializedObject(Tuning);
+            SerializedProperty property = serialized.FindProperty(propertyPath);
+            if (property == null)
+            {
+                throw new ArgumentException($"UiTuning has no '{propertyPath}'.", nameof(propertyPath));
+            }
+
+            property.floatValue = value;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+#else
+            throw new NotSupportedException("Tuning overrides go through the editor's SerializedObject.");
 #endif
         }
 
@@ -98,6 +119,11 @@ namespace MoonProject.UI.PlayModeTests
             Object.DestroyImmediate(_services);
             Object.DestroyImmediate(_camera);
             Object.DestroyImmediate(Tuning);
+            foreach (TextAsset table in _tables)
+            {
+                Object.DestroyImmediate(table);
+            }
+
             Time.timeScale = 1f;
         }
 
@@ -124,6 +150,9 @@ namespace MoonProject.UI.PlayModeTests
             serialized.FindProperty("_prompts._startDelay").floatValue = 0f;
             serialized.FindProperty("_memoryCard._appearDelay").floatValue = 0.1f;
             serialized.FindProperty("_memoryCard._reveal._fadeIn").floatValue = 0.2f;
+            serialized.FindProperty("_ticker._gapSeconds").floatValue = 0.2f;
+            serialized.FindProperty("_ticker._reveal._fadeIn").floatValue = 0.2f;
+            serialized.FindProperty("_ticker._reveal._fadeOut").floatValue = 0.2f;
             serialized.ApplyModifiedPropertiesWithoutUndo();
             return tuning;
         }

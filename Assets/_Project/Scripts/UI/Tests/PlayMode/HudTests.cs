@@ -207,6 +207,62 @@ namespace MoonProject.UI.PlayModeTests
             Assert.IsFalse(_rig.Ui.Tower.IsVisible);
         }
 
+        [UnityTest]
+        public IEnumerator Ticker_SpeaksOnceAwake_MakesWayForACard_AndComesBack()
+        {
+            Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
+            Boot();
+            yield return null;
+            Events.Publish(new TickerLine(TestStrings.SignalKey, "140"));
+            yield return Seconds(1.5f);
+            Assert.IsFalse(_rig.Ui.Ticker.IsVisible, "the radio waits for 07 to wake");
+
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            yield return Seconds(1.5f);
+            Assert.IsTrue(_rig.Ui.Ticker.IsVisible, "then the line drifts in");
+            Assert.AreEqual("Bell's picking something up… bearing 140.", _rig.Ui.Layout.TickerText.text);
+            Assert.IsTrue(_rig.Bootstrap.Context.Input.Enabled, "the ticker never blocks driving");
+
+            Events.Publish(new RelicDeposited("rubber_duck", Vector3.zero, 2));
+            Events.Publish(new TickerLine(TestStrings.HomeKey));
+            yield return Seconds(0.6f);
+            Assert.IsFalse(_rig.Ui.Ticker.IsVisible, "a card is coming: the ticker makes way");
+            yield return Seconds(0.6f);
+            Assert.IsTrue(_rig.Ui.Card.IsVisible);
+            Assert.IsFalse(_rig.Ui.Ticker.IsVisible, "never under a card");
+
+            yield return Tap(keyboard.escapeKey);
+            yield return Seconds(1.5f);
+            Assert.IsFalse(_rig.Ui.Card.IsVisible);
+            Assert.IsTrue(_rig.Ui.Ticker.IsVisible, "the line comes back after the card");
+            Assert.AreEqual("Bell's picking something up… bearing 140.", _rig.Ui.Layout.TickerText.text,
+                "the interrupted line first, then the next");
+            Assert.AreEqual(1, _rig.Ui.TickerLines.Waiting);
+        }
+
+        [UnityTest]
+        public IEnumerator Ticker_WaitsDuringADig_AndWhilePaused()
+        {
+            Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
+            Boot();
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            yield return Seconds(1f);
+            Events.Publish(new ExcavationStarted(new Vector3(0f, 0f, 12f)));
+            Events.Publish(new TickerLine(TestStrings.HomeKey));
+            yield return Seconds(2f);
+            Assert.IsFalse(_rig.Ui.Ticker.IsVisible, "never during a dig");
+
+            Events.Publish(new ExcavationStopped(new Vector3(0f, 0f, 12f), true));
+            yield return Seconds(1f);
+            Assert.IsTrue(_rig.Ui.Ticker.IsShown);
+
+            yield return Tap(keyboard.escapeKey);
+            yield return Seconds(_rig.Ui.TickerLines.HoldSeconds + 1f);
+            yield return Tap(keyboard.escapeKey);
+            yield return Seconds(0.6f);
+            Assert.IsTrue(_rig.Ui.Ticker.IsShown, "the pause held the line where it was");
+        }
+
         private EventBus Events => _rig.Bootstrap.Context.Events;
 
         private void Boot()

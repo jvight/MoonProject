@@ -43,6 +43,12 @@
                     <ui:Label name="scrap-chip-count" class="chip__number" />
                 </ui:VisualElement>
             </ui:VisualElement>
+            <ui:VisualElement name="ticker" class="ticker" picking-mode="Ignore">
+                <ui:VisualElement name="ticker-line" class="ticker__line" picking-mode="Ignore">
+                    <ui:VisualElement name="ticker-lamp" class="ticker__lamp" />
+                    <ui:Label name="ticker-text" class="ticker__text" />
+                </ui:VisualElement>
+            </ui:VisualElement>
             <ui:VisualElement name="memory-card" class="memory-card" picking-mode="Ignore">
                 <ui:VisualElement name="memory-card-shadow" class="soft-shadow soft-shadow--panel" />
                 <ui:VisualElement name="memory-card-body" class="panel memory-card__body">

@@ -308,6 +308,43 @@ Label {
     right: 56px;
 }
 
+/* Radio ticker: one soft line in the bottom band, below every panel and below the prompts' screen margin */
+
+.ticker {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 26px;
+    align-items: center;
+}
+
+.ticker__line {
+    flex-direction: row;
+    align-items: center;
+    max-width: 72%;
+    padding: 7px 20px 7px 16px;
+    border-radius: 18px;
+    background-color: var(--moon-shadow);
+}
+
+.ticker__lamp {
+    flex-shrink: 0;
+    width: 7px;
+    height: 7px;
+    margin-right: 12px;
+    border-radius: 4px;
+    background-color: var(--moon-warm-lamp);
+}
+
+.ticker__text {
+    flex-shrink: 1;
+    font-size: 19px;
+    letter-spacing: 0.4px;
+    color: var(--moon-text-dim);
+    white-space: normal;
+    -unity-text-align: middle-center;
+}
+
 /* Memory card */
 
 .memory-card {
