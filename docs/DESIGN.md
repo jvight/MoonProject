@@ -62,6 +62,30 @@ Hover-Jump (charged leap over chasms) · Magnetic Treads (climb steep crater wal
 never fall out) · Wider Sonar · Warm Headlamp (lights the shadowed crater) · Boost Coils (faster on flats, joyful).
 Every traversal upgrade must open at least one region and one visible secret near the base.
 
+### Station reach — the relay network (the second progression axis)
+Lumen Station was a radio-relay outpost, and the storm left its chain of relay masts dark across the moon. Restoring
+them is how the station's reach grows, so that "home" spreads outward step by step.
+- **Reach.** The radio tower (L1→L3) sets the home circle. Each repaired relay mast (scrap + one relay part found
+  nearby) lights up and adds its own circle. Masts stand at fixed high points (world anchors `relay.<n>`): a mound, a
+  rim shoulder, the canyon mouth, the foot of The Peak. Lit masts glow warm and are visible from the base, so the
+  player watches a chain of lights spread across the basin.
+- **Inside reach:**
+  - the radio is clear;
+  - sonar answers carry farther;
+  - the map (M3-07) draws itself;
+  - friends work fully;
+  - **radio-hop**: at any lit mast, Interact to hop to the base or to any other lit mast. A calm static-and-tune
+    transition, no loading drama.
+- **Outside reach.** Everything still works and nothing bad happens. It is only quieter, with static on the radio and
+  no map. The frontier feels lonely; lighting it is the reward. **There is never a battery, fuel or range limit that
+  forces 07 home.** That would be a hidden timer and would break rulings 1 and 7.
+- **Two axes.** Rover upgrades answer "can I get there?" (terrain). The station's reach answers "is it home yet?"
+  (comfort, knowledge, travel). Every region needs both: a rover upgrade to enter it, and a relay to make it home.
+- **Long-term scrap sink.** Masts cost escalating scrap, which keeps collecting meaningful after the workshop is
+  bought out.
+- **The arc.** The chain leads to The Peak. The final broadcast needs the network linked from the base to the great
+  dish, so every mast lit is a visible step toward the ending.
+
 ### Regions (one basin today → five areas)
 | Region | Mood | Gate | Holds |
 |---|---|---|---|
