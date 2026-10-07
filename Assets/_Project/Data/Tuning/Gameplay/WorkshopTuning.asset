@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c8dc59cd78a0c944dbe8136a68512358, type: 3}
-  m_Name: WorkshopTuning
+  m_Name: 
   m_EditorClassIdentifier: 
   _padOffset: {x: 0, y: 0, z: 3.2}
   _padRadius: 2.4
@@ -24,9 +24,9 @@ MonoBehaviour:
   _padEase: 0.4
   _padSegments: 48
   _padFlare: 2.4
-  _lampIdle: 0.6
-  _lampOccupied: 1.3
-  _lampFlare: 3
+  _lampIdle: 0.15
+  _lampOccupied: 0.75
+  _lampFlare: 4.7
   _lampEase: 0.35
   _sparkBursts: 3
   _sparkCount: 18

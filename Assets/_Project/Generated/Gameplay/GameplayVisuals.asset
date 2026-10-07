@@ -26,3 +26,4 @@ MonoBehaviour:
   _partGlint: {fileID: 2100000, guid: 4a700287616a19e49a3c4e0f7633e8b7, type: 2}
   _friendPillar: {fileID: 2100000, guid: 4a6726da4e6d9a34eb677a62fa140b19, type: 2}
   _spark: {fileID: 2100000, guid: 94b2acb381f20094e847454e82d34847, type: 2}
+  _homeHalo: {fileID: 2100000, guid: 4b4c8a73f5f09384b9c46bf0b8f06413, type: 2}

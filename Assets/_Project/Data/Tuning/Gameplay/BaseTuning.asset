@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c99275a7f80ecad4fa925ddf8d5718b1, type: 3}
-  m_Name: BaseTuning
+  m_Name: 
   m_EditorClassIdentifier: 
   _landerOffset: {x: -10, y: 0, z: 8}
   _depositRadius: 7
@@ -28,7 +28,14 @@ MonoBehaviour:
   _lampRange: 9
   _warmNear: 25
   _warmFar: 90
-  _farWarmth: 0.35
+  _farLampWarmth: 0.35
   _warmEase: 1.5
-  _windowGlow: 1.4
-  _shelfGlow: 1.2
+  _windowGlow: 1
+  _farWindowBoost: 1.2
+  _shelfGlow: 0.6
+  _haloCentre: {x: 0, y: 3, z: 0}
+  _haloAppear: 70
+  _haloFull: 200
+  _haloRadius: 5
+  _haloGrowth: 0.035
+  _haloGlow: 0.55

@@ -39,6 +39,7 @@ Material:
     - _Intensity: 1
     - _LengthFade: 0
     - _RadialMask: 1
+    - _RadialPower: 2
     - _SrcBlend: 1
     m_Colors:
     - _Color: {r: 0.654902, g: 0.6627451, b: 0.8, a: 0.4}

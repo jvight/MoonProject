@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: M_GlowTractorBeam
+  m_Name: M_GlowHomeHalo
   m_Shader: {fileID: 4800000, guid: 3fa12605bd210a54794f610e54caaf94, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -27,21 +27,21 @@ Material:
     m_Floats:
     - _AcrossIn: 0
     - _AcrossOut: 0
-    - _BandCount: 5
-    - _BandSpeed: 0.8
-    - _BandStrength: 0.45
-    - _CoreMix: 0.8
-    - _CorePower: 1
+    - _BandCount: 0
+    - _BandSpeed: 0
+    - _BandStrength: 0
+    - _CoreMix: 0
+    - _CorePower: 1.5
     - _Cull: 0
     - _DstBlend: 1
     - _FresnelMix: 0
     - _FresnelPower: 2
     - _Intensity: 1
-    - _LengthFade: 0.18
-    - _RadialMask: 0
-    - _RadialPower: 2
+    - _LengthFade: 0
+    - _RadialMask: 1
+    - _RadialPower: 5
     - _SrcBlend: 1
     m_Colors:
-    - _Color: {r: 0.37254903, g: 0.9529412, b: 1, a: 1}
+    - _Color: {r: 1, g: 0.4724849, b: 0.15508121, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
