@@ -20,8 +20,9 @@ and driving into the chasm's floor just slides you softly back out (no pit, no f
   ambient (the "whispering" — wind-like ambience is audio's job), a few alcoves, two or three gentle jump-able ledges
   as optional shortcuts, and a terminus chamber where Bell (M3-05) will lie with a crew log cache. Driveable
   everywhere, max slope ~20°.
-- **Return**: a gentle exit back to the basin that doesn't require a jump (a ramp down to the chasm floor's far end
-  or a side slope), so 07 is never stuck inside without the ability state mattering.
+- **Return**: a gentle exit back to the basin that needs no jump: a side corridor from the landing apron down a
+  ≤ 12° ramp to a shelf that ends in a one-way step down (≤ 2.5 m) into the basin (VISION design ruling 10). It is
+  never climbable from the basin, so the chasm stays a real gate.
 
 ## Content anchors (Core contract addition via the Director)
 World exposes the canyon's key points so gameplay can place things there: `IWorldLayout` gains
