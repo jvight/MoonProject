@@ -152,23 +152,23 @@ namespace MoonProject.Rover
 
         [Tooltip("Glow swing (linear fraction of authored emission) of each breath while active.")]
         [Range(0f, 1f)]
-        [SerializeField] private float _activeBreathDepth = 0.13f;
+        [SerializeField] private float _activeBreathDepth = 0.06f;
 
         [Tooltip("Glow swing (linear fraction of authored emission) of each breath while daydreaming.")]
         [Range(0f, 1f)]
-        [SerializeField] private float _idleBreathDepth = 0.51f;
+        [SerializeField] private float _idleBreathDepth = 0.28f;
 
         [Tooltip("How much dimmer (linear fraction of authored emission) the eye rests while daydreaming.")]
         [Range(0f, 1f)]
-        [SerializeField] private float _idleGlowDim = 0.2f;
+        [SerializeField] private float _idleGlowDim = 0.15f;
 
         [Tooltip("Extra emission (linear fraction of authored) at the peak of a full perk-up.")]
         [Range(0f, 3f)]
-        [SerializeField] private float _perkGlowBoost = 2.2f;
+        [SerializeField] private float _perkGlowBoost = 0.4f;
 
         [Tooltip("How much a closed lid dims the eye (linear fraction of emission at fully closed).")]
         [Range(0f, 1f)]
-        [SerializeField] private float _lidGlowDim = 0.8f;
+        [SerializeField] private float _lidGlowDim = 0.5f;
 
         [Tooltip("Intensity of the small warm light inside the eye at authored brightness.")]
         [Range(0f, 10f)]
@@ -355,7 +355,11 @@ namespace MoonProject.Rover
 
         [Tooltip("Antenna tip emission between blinks (linear fraction of authored).")]
         [Range(0f, 1f)]
-        [SerializeField] private float _tipRestGlow = 0.015f;
+        [SerializeField] private float _tipRestGlow = 0.01f;
+
+        [Tooltip("Antenna tip emission at the top of a blink (linear fraction of authored).")]
+        [Range(0f, 3f)]
+        [SerializeField] private float _tipPeakGlow = 0.55f;
 
         public float NeckYawLimit => _neckYawLimit;
 
@@ -524,5 +528,7 @@ namespace MoonProject.Rover
         public float TipBlinkDuration => Mathf.Min(_tipBlinkDuration, _tipBlinkPeriod);
 
         public float TipRestGlow => _tipRestGlow;
+
+        public float TipPeakGlow => _tipPeakGlow;
     }
 }

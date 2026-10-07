@@ -53,7 +53,12 @@ namespace MoonProject.Rover
 
         [Tooltip("Glow ring emission at a full charge (linear HDR multiplier; 1 = the authored glow).")]
         [Range(0f, 4f)]
-        [SerializeField] private float _glowPeak = 2.44f;
+        [SerializeField] private float _glowPeak = 1.7f;
+
+        [Tooltip("Ease of the ring glow over the charge: emission = peak x charge glow ^ this. Above 1 the rings stay "
+            + "dim through most of the charge and bloom at the end.")]
+        [Range(1f, 4f)]
+        [SerializeField] private float _glowCurve = 2.2f;
 
         [Tooltip("Half-life (s) of the glow rising with the charge.")]
         [Range(0.005f, 0.5f)]
@@ -93,6 +98,8 @@ namespace MoonProject.Rover
         public float MaxStretch => _maxStretch;
 
         public float GlowPeak => _glowPeak;
+
+        public float GlowCurve => _glowCurve;
 
         public float GlowRiseHalfLife => _glowRiseHalfLife;
 

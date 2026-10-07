@@ -250,7 +250,7 @@ namespace MoonProject.Rover
         {
             _tipTime = Mathf.Repeat(_tipTime + deltaTime, _tuning.TipBlinkPeriod);
             float pulse = _tipTime < _tuning.TipBlinkDuration ? Pulse(_tipTime / _tuning.TipBlinkDuration) : 0f;
-            TipGlow = Mathf.Lerp(_tuning.TipRestGlow, 1f, pulse);
+            TipGlow = Mathf.Lerp(_tuning.TipRestGlow, _tuning.TipPeakGlow, pulse);
         }
 
         private void ComposeFace()

@@ -194,7 +194,7 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void AntennaTip_BlinksBetweenRestAndFullGlow()
+        public void AntennaTip_BlinksBetweenRestAndPeakGlow()
         {
             float low = float.MaxValue;
             float high = 0f;
@@ -206,7 +206,7 @@ namespace MoonProject.Rover.Tests
             }
 
             Assert.AreEqual(_tuning.TipRestGlow, low, 0.01f);
-            Assert.Greater(high, 0.95f);
+            Assert.AreEqual(_tuning.TipPeakGlow, high, 0.02f);
         }
 
         [Test]

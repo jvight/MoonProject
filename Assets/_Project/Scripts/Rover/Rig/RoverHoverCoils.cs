@@ -151,7 +151,7 @@ namespace MoonProject.Rover
             }
 
             HoverCoilSettings settings = _tuning.HoverCoils;
-            float emission = settings.GlowPeak * glow;
+            float emission = settings.GlowPeak * Mathf.Pow(glow, settings.GlowCurve);
             _glowBlock.SetVector(EmissionColorId, new Vector4(emission, emission, emission, 1f));
             for (int i = 0; i < _glows.Length; i++)
             {
