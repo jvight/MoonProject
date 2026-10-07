@@ -13,6 +13,7 @@ namespace MoonProject.World.Editor
         public const string BeaconHaloMesh = BeaconFolder + "/BeaconHaloQuad.asset";
         public const string BeaconHaloMaterial = BeaconFolder + "/M_BeaconHalo.mat";
         public const string BeaconHaloShader = "MoonProject/World/LofiBeaconHalo";
+        public const string CanyonGlowMaterial = GeneratedRoot + "/Canyon/M_CanyonGlow.mat";
         public const string SkyShader = "MoonProject/World/LofiSky";
         public const string EarthShader = "MoonProject/World/LofiEarth";
         /// <summary>Art rocks (Generated/Art/Rocks) used as pebbles: the pebble, rounded and slab shapes.</summary>

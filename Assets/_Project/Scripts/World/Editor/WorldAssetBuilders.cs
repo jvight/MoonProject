@@ -3,6 +3,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using MoonProject.Art;
 using MoonProject.Editor.Automation;
 using MoonProject.Editor.Builders;
 
@@ -58,6 +59,20 @@ namespace MoonProject.World.Editor
         {
             GeneratedAssets.CreateOrReplace(new Material(FindShader(WorldPaths.SkyShader)), WorldPaths.SkyMaterial);
             GeneratedAssets.CreateOrReplace(new Material(FindShader(WorldPaths.EarthShader)), WorldPaths.EarthMaterial);
+            AssetDatabase.SaveAssets();
+        }
+
+        /// <summary>The faint warm light deep in Whispering Canyon: a static WarmLamp halo (LofiBeaconHalo).</summary>
+        [MoonBuilder("World/Canyon Glow", 240)]
+        public static void BuildCanyonGlow()
+        {
+            CanyonSettings canyon = LoadSettings().Surface.Canyon;
+            var material = new Material(FindShader(WorldPaths.BeaconHaloShader));
+            material.SetColor("_Color", Palette.Get(PaletteSwatch.WarmLamp));
+            material.SetFloat("_Intensity", canyon.GlowIntensity);
+            material.SetFloat("_Radius", canyon.GlowRadius);
+            material.SetFloat("_MinAngleTan", Mathf.Tan(canyon.GlowMinAngle * Mathf.Deg2Rad));
+            GeneratedAssets.CreateOrReplace(material, WorldPaths.CanyonGlowMaterial);
             AssetDatabase.SaveAssets();
         }
 
