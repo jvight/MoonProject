@@ -132,14 +132,14 @@ namespace MoonProject.Gameplay
         [Tooltip("Farthest she turns (degrees) from her corner's facing to watch 07.")]
         [Range(0f, 120f)] [SerializeField] private float _watchMaxTurn = 55f;
 
-        [Tooltip("Dial lamp glow while awake (art: about 1 reads amber, above 1.2 bleaches).")]
+        [Tooltip("Dial lamp glow while awake (linear emission multiplier; art: 1 reads amber, above 1.2 bleaches).")]
         [Range(0f, 1.2f)] [SerializeField] private float _dialGlow = 1f;
 
         [Tooltip("Seconds (time constant) for her dial lamp to change glow.")]
         [Range(0.05f, 3f)] [SerializeField] private float _dialEase = 0.4f;
 
         [Tooltip("Brightest flicker of her dial lamp while she lies broken (the warm light deep in the canyon).")]
-        [Range(0f, 1.2f)] [SerializeField] private float _brokenFlicker = 0.55f;
+        [Range(0f, 1.2f)] [SerializeField] private float _brokenFlicker = 0.27f;
 
         [Tooltip("Flickers per second of her broken dial lamp.")]
         [Range(0.1f, 10f)] [SerializeField] private float _brokenFlickerRate = 2.3f;
@@ -152,7 +152,7 @@ namespace MoonProject.Gameplay
         [Range(0.01f, 2f)] [SerializeField] private float _stillSpeed = 0.3f;
 
         [Tooltip("Dial glow while she dozes: a low ember, never dark.")]
-        [Range(0.02f, 0.6f)] [SerializeField] private float _emberGlow = 0.16f;
+        [Range(0.02f, 0.6f)] [SerializeField] private float _emberGlow = 0.05f;
 
         [Tooltip("Seconds (time constant) for her dial to dim to an ember as she dozes off.")]
         [Range(0.1f, 6f)] [SerializeField] private float _dozeEase = 2.5f;

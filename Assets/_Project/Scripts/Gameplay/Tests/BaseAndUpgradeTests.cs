@@ -346,6 +346,21 @@ namespace MoonProject.Gameplay.Tests
             Assert.Greater(tuning.DepositGift, 0, "each memory brought home gives a scrap gift");
         }
 
+        [Test]
+        public void EmissionGlow_WritesALinearMultiplier_NotAGammaColour()
+        {
+            var host = new GameObject("Glow");
+            _created.Add(host);
+            var renderer = host.AddComponent<MeshRenderer>();
+            var glow = new EmissionGlow(renderer);
+            glow.Apply(0.5f);
+            var block = new MaterialPropertyBlock();
+            renderer.GetPropertyBlock(block);
+            Assert.AreEqual(new Vector4(0.5f, 0.5f, 0.5f, 1f), block.GetVector("_EmissionColor"),
+                "SetVector keeps 0.5 as 0.5 (a gamma colour would light it at about 0.22)");
+            Assert.AreEqual(0.5f, glow.Intensity, 1e-6f);
+        }
+
         private UpgradeService Service(params UpgradeDefinition[] definitions)
         {
             return new UpgradeService(_events, _wallet, _abilities, definitions);

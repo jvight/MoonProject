@@ -4,9 +4,11 @@ using UnityEngine;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// Brightens an Art glow renderer (lander windows, shelf and tower light strips) through the palette material's
-    /// emission, per the rig contract: a MaterialPropertyBlock sets <c>_EmissionColor</c> to white × intensity
-    /// (1 = as authored, 0 = dark, above 1 = brighter, HDR). Cached block, no allocation per update.
+    /// Brightens an Art glow renderer (lander windows, shelf and tower light strips, friends' lamps) through the
+    /// palette material's emission, per the glow contract (docs/ARCHITECTURE.md, "Glow modulation"): a
+    /// MaterialPropertyBlock sets <c>_EmissionColor</c> to the vector (i, i, i, 1), a linear multiplier of the
+    /// palette's HDR emission (1 = as authored, 0 = dark, 2 = twice the light). Never a colour: Unity would read it as
+    /// gamma and raise it to about the power 2.2. Cached block, no allocation per update.
     /// </summary>
     public sealed class EmissionGlow
     {
@@ -36,7 +38,7 @@ namespace MoonProject.Gameplay
 
             _applied = intensity;
             _renderer.GetPropertyBlock(_block);
-            _block.SetColor(EmissionColorId, Color.white * intensity);
+            _block.SetVector(EmissionColorId, new Vector4(intensity, intensity, intensity, 1f));
             _renderer.SetPropertyBlock(_block);
         }
     }

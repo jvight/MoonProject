@@ -68,11 +68,11 @@ namespace MoonProject.Gameplay
         [Tooltip("Seconds (time constant) for the base to warm up or cool down.")]
         [Range(0f, 10f)] [SerializeField] private float _warmEase = 1.5f;
 
-        [Tooltip("Window glow (emission × this) when fully warm.")]
-        [Range(0f, 4f)] [SerializeField] private float _windowGlow = 1.4f;
+        [Tooltip("Window glow when fully warm (linear emission multiplier, 1 = as authored).")]
+        [Range(0f, 4f)] [SerializeField] private float _windowGlow = 1f;
 
-        [Tooltip("Shelf light strip glow when fully warm.")]
-        [Range(0f, 4f)] [SerializeField] private float _shelfGlow = 1.2f;
+        [Tooltip("Shelf light strip glow when fully warm (linear emission multiplier, 1 = as authored).")]
+        [Range(0f, 4f)] [SerializeField] private float _shelfGlow = 0.6f;
 
         public Vector3 LanderOffset => _landerOffset;
         public float DepositRadius => _depositRadius;
