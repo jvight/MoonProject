@@ -236,6 +236,21 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
+        public void ALineWaitingToComeBack_TakesTheNewestArgumentOfItsKey()
+        {
+            _queue.Enqueue(new TickerLine(Signal, "140"));
+            RunUntilShown();
+            Run(_settings.Reveal.FadeOut + 0.1f, false);
+            Assert.IsTrue(_line.IsHidden, "it yielded");
+
+            _queue.Enqueue(new TickerLine(Signal, "205"));
+            Assert.AreEqual(0, _queue.Waiting, "not a second line");
+            RunUntilShown();
+            Assert.AreEqual("Bell's picking something up… bearing 205.", _queue.Text, "it comes back with the news");
+            Assert.AreEqual(2, _started.Count);
+        }
+
+        [Test]
         public void TheLineOnScreen_IsNotQueuedAgain()
         {
             _queue.Enqueue(new TickerLine(Signal, "140"));

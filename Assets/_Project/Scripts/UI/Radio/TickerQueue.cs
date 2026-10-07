@@ -12,9 +12,9 @@ namespace MoonProject.UI
     /// <item>A line rests fully visible for a time that grows with its length, then eases out.</item>
     /// <item>Lines wait while the gate is closed (a card, a dig, a prompt, ...). A line already up when the gate
     /// closes eases out and comes back, for its whole rest, once the gate has stayed open for the gap.</item>
-    /// <item>A waiting line takes the argument of a newer line with the same key ("Now playing" names the latest
-    /// track, a signal the latest bearing); the line already on screen is not queued again; past the capacity the
-    /// oldest waiting line is dropped.</item>
+    /// <item>A waiting line, or a line that yielded and waits hidden to come back, takes the argument of a newer line
+    /// with the same key ("Now playing" names the latest track, a signal the latest bearing); the line on screen is
+    /// not queued again; past the capacity the oldest waiting line is dropped.</item>
     /// </list>
     /// Text is formatted when a line starts or the language changes, never per step. The view reports whether its line
     /// is fully shown or fully hidden, and shows <see cref="Text"/> while <see cref="WantsShown"/>.
@@ -86,6 +86,12 @@ namespace MoonProject.UI
 
             if (HasLine && Same(line, _line))
             {
+                return;
+            }
+
+            if (_phase == Phase.Returning && string.Equals(_line.Key, line.Key, StringComparison.Ordinal))
+            {
+                Replace(line);
                 return;
             }
 
@@ -182,12 +188,17 @@ namespace MoonProject.UI
 
         private void Start(TickerLine line)
         {
+            Replace(line);
+            _timer = 0f;
+            _phase = Phase.Showing;
+        }
+
+        private void Replace(TickerLine line)
+        {
             _line = line;
             Text = _format.Format(line);
             Revision++;
             _hold = _settings.HoldSeconds(Text.Length);
-            _timer = 0f;
-            _phase = Phase.Showing;
         }
 
         private void CountGap(float deltaTime, bool gateOpen)
