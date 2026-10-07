@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 14cd9f1f37dc0314991542eaa1c6f78a, type: 3}
+  m_Name: Cassette_after_dark_1
+  m_EditorClassIdentifier: 
+  _id: after_dark_1
+  _prefab: {fileID: 7838775247274028153, guid: 3aade6f828c12174fa7246ffd0ad4d6d, type: 3}
+  _site: 0
+  _anchor:
+    _anchorId: canyon.terminus
+    _offset: {x: 1.2, y: 1.9}
+  _plannerSeed: 0
+  _gate:
+    _gated: 1
+    _ability: 0

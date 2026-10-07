@@ -9,9 +9,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 18c0b51d45273c441b2673739c467fff, type: 3}
-  m_Name: FriendCatalog
+  m_Script: {fileID: 11500000, guid: d2291b45d95e47448a3618bd4922c1a1, type: 3}
+  m_Name: LogCacheCatalog
   m_EditorClassIdentifier: 
-  _friends:
-  - {fileID: 11400000, guid: 4999052abaa612e4fac65dcb6fe3ccf6, type: 2}
-  - {fileID: 11400000, guid: 9b5864864de4cb644b5dde4a37af5d7d, type: 2}
+  _caches:
+  - {fileID: 11400000, guid: 973c806dda90a674f94df0eed6c24983, type: 2}

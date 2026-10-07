@@ -9,9 +9,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 18c0b51d45273c441b2673739c467fff, type: 3}
-  m_Name: FriendCatalog
+  m_Script: {fileID: 11500000, guid: 615b42c831cabc04190f49e6735dadb3, type: 3}
+  m_Name: LogCacheTuning
   m_EditorClassIdentifier: 
-  _friends:
-  - {fileID: 11400000, guid: 4999052abaa612e4fac65dcb6fe3ccf6, type: 2}
-  - {fileID: 11400000, guid: 9b5864864de4cb644b5dde4a37af5d7d, type: 2}
+  _reachRadius: 4
+  _glowHeight: 0.3
+  _glanceRadius: 18
+  _flashDuration: 1.2
+  _flashRadius: {x: 0.2, y: 1.1}
+  _flashIntensity: 1

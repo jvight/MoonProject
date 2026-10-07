@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4cf69bef4dbb6a74ba614be2850bcf09, type: 3}
+  m_Name: RadioTapes
+  m_EditorClassIdentifier: 
+  _tracks:
+  - _id: after_dark_1
+    _title: Lumen After Dark, Vol. 1
+    _clip: {fileID: 8300000, guid: b4df05cf08b3c0647894f0971687cff7, type: 3}
+    _bpm: 84
+    _tapeId: after_dark_1
+  - _id: dust_and_honey
+    _title: Dust & Honey
+    _clip: {fileID: 8300000, guid: ab7495529304dfc4d8989218e0f1b49a, type: 3}
+    _bpm: 72
+    _tapeId: dust_and_honey
+  - _id: slow_orbit
+    _title: Slow Orbit
+    _clip: {fileID: 8300000, guid: 7cfb5c349b61bc742af1a89e68769740, type: 3}
+    _bpm: 64
+    _tapeId: slow_orbit

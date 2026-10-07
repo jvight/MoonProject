@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 14cd9f1f37dc0314991542eaa1c6f78a, type: 3}
+  m_Name: Cassette_dust_and_honey
+  m_EditorClassIdentifier: 
+  _id: dust_and_honey
+  _prefab: {fileID: 4847736811112975616, guid: 4f85306723685db4bb1b5f6666d06ff2, type: 3}
+  _site: 1
+  _anchor:
+    _anchorId: 
+    _offset: {x: 0, y: 0}
+  _plannerSeed: 73
+  _gate:
+    _gated: 0
+    _ability: 0
