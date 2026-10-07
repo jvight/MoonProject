@@ -17,7 +17,8 @@ namespace MoonProject.Art.Editor
     /// turntables: this is where emission, spot and point light response and far readability are judged.
     /// <code>
     /// python tools/unity_batch.py exec --method MoonProject.Art.Editor.ArtLightingPreview.Capture
-    ///     [--arg scene=rover|base|towers|relics|shadow|grit|friends|workshop|bell|bellbroken|pickups|bellcorner]
+    ///     [--arg scene=rover|base|towers|relics|shadow|grit|friends|workshop|bell|bellbroken|pickups|bellcorner|
+    ///                  warmpoints]
     /// </code>
     /// (default rover; a ';'-separated list captures several scenes in one run)
     /// rover: 07 at rest (half-lidded, head lowered, wing ajar) with its headlamp. base: the lander with the shelf
@@ -33,7 +34,9 @@ namespace MoonProject.Art.Editor
     /// tipped back against a canyon wall, dark, with Ro's log cache, the Vol. 1 tape and her three parts in the dust,
     /// 07 arriving. pickups: the three parts, the three tapes and the cache on the dust, and the tape rack with the
     /// tapes in slots 0-2. bellcorner: the base with Bell on the L3 tower's BellCorner, her rack on its anchor, 07
-    /// parked at her dial, the tower's upgrade pad ring and her 2.5 m clear circle drawn on the dust.
+    /// parked at her dial, the tower's upgrade pad ring and her 2.5 m clear circle drawn on the dust. warmpoints: the
+    /// glowing cast inside Main.unity's own earthlight, fog and grade, 07's eye at three linear glow levels (pillar 6,
+    /// "warm points in a cold field"). Glows are lit with the linear MaterialPropertyBlock contract.
     /// </summary>
     public static class ArtLightingPreview
     {
@@ -50,6 +53,9 @@ namespace MoonProject.Art.Editor
 
         /// <summary>The ground Bell keeps clear for her dance and for 07 parking at her dial.</summary>
         private const float BellClearRadius = 2.5f;
+
+        /// <summary>Where the warmpoints cast stands in Main.unity: open dust well away from the base.</summary>
+        private static readonly Vector3 WarmStage = new Vector3(30f, 0f, -30f);
 
         public static void Capture()
         {
@@ -126,10 +132,13 @@ namespace MoonProject.Art.Editor
                         NightSetting(material, temporary, 80f, 18f);
                         poses = BellCornerScene(material, temporary);
                         break;
+                    case "warmpoints":
+                        poses = WarmPointsScene(material, temporary);
+                        break;
                     default:
                         Debug.LogError($"ArtLightingPreview: unknown scene '{scene}' " +
                             "(rover|base|towers|relics|shadow|grit|friends|workshop|bell|bellbroken|pickups|" +
-                            "bellcorner).");
+                            "bellcorner|warmpoints).");
                         return false;
                 }
 
@@ -531,6 +540,67 @@ namespace MoonProject.Art.Editor
                 Pose("far40m", new[] { 14f, 12f, 38f }, new[] { -6f, 2f, 0f }, 35f));
         }
 
+        /// <summary>
+        /// Opens Main.unity (its earthlight, ambient, fog and graded volume; never saved) and stages the glowing cast
+        /// on a dust disc away from the base, every glow at a linear multiplier: three 07s whose eyes glow at 0.4, 0.7
+        /// and 1 (authored), Bell with her dial and part lamps at 1, Tilly at 1, and the pickups.
+        /// </summary>
+        private static CameraPoseSet WarmPointsScene(Material material, TemporaryObjects temporary)
+        {
+            EditorSceneManager.OpenScene(CaptureAutomation.MainScenePath, OpenSceneMode.Single);
+            var ground = new LowPolyMeshBuilder(64);
+            ground.Prism(Place.At(WarmStage + Vector3.down * 0.1f), 14f, 0.2f, 24, PaletteSwatch.DustMid);
+            temporary.Add(MeshObject("PreviewGround", ground.ToMesh("PreviewGround"), material, temporary));
+
+            float[] eyes = { 0.4f, 0.7f, 1f };
+            for (int i = 0; i < eyes.Length; i++)
+            {
+                Transform rover = Rover(temporary, WarmStage + new Vector3((i - 1) * 2.3f, 0f, -3f), 0f);
+                temporary.Add(rover.gameObject);
+                SetGlow(rover, "Eye", new[] { "" }, eyes[i]);
+            }
+
+            GameObject tilly = Instantiate(FriendModelBuilder.TillyName, temporary, ArtPaths.FriendFolder);
+            tilly.transform.SetPositionAndRotation(WarmStage + new Vector3(1.6f, 1.1f, 0.6f),
+                Quaternion.Euler(0f, -15f, 0f));
+            SetGlow(tilly.transform, "PartLamp_", 3, 1f);
+            GameObject bell = Instantiate(BellModelBuilder.BellName, temporary, ArtPaths.FriendFolder);
+            bell.transform.SetPositionAndRotation(WarmStage + new Vector3(-1.6f, 0f, 0.4f),
+                Quaternion.Euler(0f, 15f, 0f));
+            SetGlow(bell.transform, "PartLamp_", 4, 1f);
+            SetGlow(bell.transform, "DialLamp", new[] { "" }, 1f);
+
+            string[] pickups = { "Part_BellValve", "Part_BellCone", "Part_TillyLens" };
+            for (int i = 0; i < pickups.Length; i++)
+            {
+                Ground(Instantiate(pickups[i], temporary, ArtPaths.FriendFolder),
+                    new Vector3(i * 0.55f - 1.4f, 0f, 2.6f));
+            }
+
+            Ground(Instantiate(CassetteModelBuilder.PrefabName("after_dark_1"), temporary, ArtPaths.PickupFolder),
+                new Vector3(0.35f, 0f, 2.7f));
+            Ground(Instantiate("Scrap_Coil", temporary, ArtPaths.ScrapFolder), new Vector3(0.95f, 0f, 2.6f));
+            return Poses(
+                Pose("eyes", Stage(0f, 1.5f, 1.2f), Stage(0f, 1.15f, -3f), 50f),
+                Pose("friends", Stage(0f, 1.4f, 4.4f), Stage(0f, 1f, 0.5f), 45f),
+                Pose("pickups", Stage(-0.2f, 0.9f, 4.6f), Stage(-0.2f, 0.15f, 2.6f), 40f),
+                Pose("stage_from_40m", Stage(8f, 8f, 40f), Stage(0f, 0.8f, -1f), 40f));
+        }
+
+        /// <summary>Stands a pickup on the dust at <paramref name="offset"/> from the stage.</summary>
+        private static void Ground(GameObject pickup, Vector3 offset)
+        {
+            float lift = pickup.transform.position.y - RendererBounds(pickup).min.y;
+            pickup.transform.SetPositionAndRotation(WarmStage + offset + Vector3.up * lift,
+                Quaternion.Euler(0f, 20f, 0f));
+        }
+
+        private static float[] Stage(float x, float y, float z)
+        {
+            Vector3 p = WarmStage + new Vector3(x, y, z);
+            return new[] { p.x, p.y, p.z };
+        }
+
         /// <summary>Stands one tape of each style on the first slots of a cassette shelf instance.</summary>
         private static void FillShelf(Transform shelf, TemporaryObjects temporary)
         {
@@ -557,11 +627,14 @@ namespace MoonProject.Art.Editor
             SetGlow(root, prefix, suffixes, intensity);
         }
 
-        /// <summary>Lights the glow renderers named prefix + each suffix (MaterialPropertyBlock _EmissionColor).</summary>
+        /// <summary>
+        /// Lights the glow renderers named prefix + each suffix with a linear multiplier (the MaterialPropertyBlock
+        /// contract: SetVector, never the gamma-encoded SetColor).
+        /// </summary>
         private static void SetGlow(Transform root, string prefix, string[] suffixes, float intensity)
         {
             var block = new MaterialPropertyBlock();
-            block.SetColor("_EmissionColor", Color.white * intensity);
+            block.SetVector("_EmissionColor", new Vector4(intensity, intensity, intensity, 1f));
             foreach (string suffix in suffixes)
             {
                 Descendant(root, prefix + suffix).GetComponent<Renderer>().SetPropertyBlock(block);
