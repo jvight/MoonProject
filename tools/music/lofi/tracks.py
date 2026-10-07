@@ -1,8 +1,10 @@
 """
 The radio station's playlist. Each spec gives a track its own personality: tempo, swing, drummer, progression
-family, lead voices and production colour. Track ids are "NN_slug" and name the rendered files.
+family, lead voices and production colour. Track ids are "NN_slug" and name the rendered files. The catalogue adds
+Ro's cassette tapes (lofi.tapes), which the radio only plays once they are collected.
 """
 from .spec import Mood, SectionPlan, TrackSpec
+from .tapes import TAPES
 
 PLAYLIST = (
     TrackSpec(
@@ -102,8 +104,12 @@ PLAYLIST = (
 )
 
 
+CATALOGUE = PLAYLIST + TAPES
+
+
 def track_by_id(track_id):
-    for spec in PLAYLIST:
+    """A playlist track or a tape by id, slug or catalogue number ("3", "03", "dust_on_the_dial", "slow_orbit")."""
+    for spec in CATALOGUE:
         if track_id in (spec.id, spec.slug, str(spec.number), f"{spec.number:02d}"):
             return spec
-    raise ValueError(f"unknown track {track_id!r}; known: {[s.id for s in PLAYLIST]}")
+    raise ValueError(f"unknown track {track_id!r}; known: {[s.id for s in CATALOGUE]}")

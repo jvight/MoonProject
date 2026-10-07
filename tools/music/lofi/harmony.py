@@ -88,6 +88,32 @@ FAMILIES = {f.name: f for f in (
         "B2": "iv:m9 | III:maj9 | VI:maj9#11 | v:7sus4",
         "O": "i:m9 | VI:maj9 | III:maj9 | i:m9",
     }),
+    # Tape families. Each outro ends on V so the tape loops straight back into its first chord.
+    Family("I-IV-iii-vi", "major", {
+        "F": "I:6/9= | I:6/9= | ii:m9 | V:13sus4",
+        "A1": "I:maj9 | IV:maj9 | iii:m7 vi:m9 | ii:m9 V:13",
+        "A2": "I:maj9 | IV:maj9 | iii:m7 vi:m9 | ii:m9 V:13sus4",
+        "A3": "I:6/9 | IV:maj9#11 | iii:m7 vi:m11 | ii:m11 V:13",
+        "B1": "IV:maj9 | V:13sus4 | iii:m7 | vi:m9",
+        "B2": "ii:m9 | iii:m7 | IV:maj9 | V:13sus4 V:13",
+        "O": "I:maj9 | IV:maj9 | ii:m9 | V:13sus4",
+    }),
+    Family("I-IV/I", "major", {
+        "A1": "I:maj9 | IV:maj9/I | I:maj9 | IV:maj9/I",
+        "A2": "I:maj9 | IV:maj9/I | iii:m7 | vi:m9",
+        "A3": "I:6/9 | IV:maj9#11/I | I:maj9 | ii:m9 V:13sus4",
+        "B1": "ii:m9 | iii:m7 | IV:maj9 | V:13sus4",
+        "B2": "ii:m11 | iii:m7 | IV:maj9 | V:13sus4 V:13",
+        "O": "I:maj9 | IV:maj9/I | ii:m9 | V:13sus4",
+    }),
+    Family("I-vi-IV#11", "major", {
+        "A1": "I:maj9 | I:maj9 | vi:m9 | vi:m9",
+        "A2": "IV:maj9#11 | IV:maj9#11 | I:maj9/iii | V:13sus4",
+        "A3": "I:6/9 | I:maj9 | vi:m11 | vi:m9",
+        "B1": "ii:m9 | ii:m9 | IV:maj9 | IV:maj9",
+        "B2": "vi:m11 | iii:m7 | IV:maj9#11 | V:13sus4",
+        "O": "I:maj9 | vi:m9 | IV:maj9#11 | V:13sus4",
+    }),
 )}
 
 
@@ -103,7 +129,12 @@ def parse_phrase(text, key):
 
 
 def substitute(chord, key, rng, rate):
-    """With probability `rate`, swap the chord's colour for a sibling quality that stays in (or keeps) its key."""
+    """
+    With probability `rate`, swap the chord's colour for a sibling quality that stays in (or keeps) its key.
+    A fixed chord is returned before any draw, so marking one never reshuffles the choices around it.
+    """
+    if chord.fixed:
+        return chord
     options = _SUBSTITUTES.get(chord.quality.suffix, ())
     if not options or rng.random() >= rate:
         return chord
