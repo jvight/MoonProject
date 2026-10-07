@@ -112,7 +112,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(RoLog, logs.Definition(0).LogId);
             Vector3 right = new Vector3(terminus.Forward.z, 0f, -terminus.Forward.x);
             Vector3 cache = logs.Position(0);
-            Vector3 expected = terminus.Position + right * 2.2f + terminus.Forward * 0.3f;
+            Vector3 expected = terminus.Position + right * 1.6f + terminus.Forward * 1.5f;
             Assert.Less(Vector3.Distance(expected, cache), 1e-3f, "beside Bell's spot at the terminus");
             CassetteField cassettes = _fixture.Gameplay.Cassettes;
             int tape = IndexOf(cassettes, AfterDark);

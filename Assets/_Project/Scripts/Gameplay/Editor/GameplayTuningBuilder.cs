@@ -28,6 +28,7 @@ namespace MoonProject.Gameplay.Editor
             EnsureExists<FriendTuning>(GameplayAssetPaths.FriendTuning);
             EnsureExists<CassetteTuning>(GameplayAssetPaths.CassetteTuning);
             EnsureExists<LogCacheTuning>(GameplayAssetPaths.LogCacheTuning);
+            EnsureExists<BellTuning>(GameplayAssetPaths.BellTuning);
         }
 
         private static void EnsureExists<T>(string path) where T : ScriptableObject

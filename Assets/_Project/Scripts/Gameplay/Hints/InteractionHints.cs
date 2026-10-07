@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 using MoonProject.Core;
 
 namespace MoonProject.Gameplay
@@ -82,6 +83,10 @@ namespace MoonProject.Gameplay
                         ? new InteractionHint(kind, broken.Site.Position, true)
                         : InteractionHint.None;
                     return broken != null;
+                case InteractionKind.Tune:
+                    bool tune = _friends.TryGetDial(out Vector3 dial);
+                    hint = tune ? new InteractionHint(kind, dial, true) : InteractionHint.None;
+                    return tune;
                 case InteractionKind.Reel:
                     hint = towed != null
                         ? new InteractionHint(kind, towed.transform.position, true)

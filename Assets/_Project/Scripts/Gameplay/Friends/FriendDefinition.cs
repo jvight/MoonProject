@@ -14,8 +14,11 @@ namespace MoonProject.Gameplay
     /// </summary>
     public sealed class FriendDefinition : ScriptableObject
     {
-        /// <summary>The abilities the runtime knows (<see cref="AbilityId"/> must be one of them).</summary>
+        /// <summary>Tilly's gift: she spots undiscovered things near 07 (an <see cref="AbilityId"/>).</summary>
         public const string SpotterAbility = "spotter";
+
+        /// <summary>Bell's gift: the radio dial and her signals (an <see cref="AbilityId"/>).</summary>
+        public const string RadioDialAbility = "radio_dial";
 
         [Tooltip("Stable id (saves, localization keys friend.<id>.*, the lander's FriendSocket_<id>), e.g. tilly.")]
         [SerializeField] private string _id = string.Empty;
@@ -25,6 +28,9 @@ namespace MoonProject.Gameplay
 
         [Tooltip("Art prefab of the friend repaired (Generated/Art/Friends/<Name>.prefab), same rig nodes.")]
         [SerializeField] private GameObject _repairedPrefab;
+
+        [Tooltip("Its body: a hover-drone (Tilly's rig) or a radio cabinet on legs (Bell's rig).")]
+        [SerializeField] private FriendBodyKind _body;
 
         [Tooltip("Its missing parts (3 to 5), in order; each lights one PartLamp_<index> on its body.")]
         [SerializeField] private FriendPart[] _parts = Array.Empty<FriendPart>();
@@ -41,7 +47,7 @@ namespace MoonProject.Gameplay
         [Tooltip("Its first homecoming greeting puts a line on the radio ticker (ticker.<id>.home).")]
         [SerializeField] private bool _announcesHomecoming;
 
-        [Tooltip("The gift it brings once awake (spotter).")]
+        [Tooltip("The gift it brings once awake (spotter, radio_dial).")]
         [SerializeField] private string _abilityId = SpotterAbility;
 
         [Tooltip("Seconds 07's beam stitches it before it boots up.")]
@@ -50,12 +56,19 @@ namespace MoonProject.Gameplay
         [Tooltip("Chirp vocabulary id the Audio domain voices it with.")]
         [SerializeField] private string _chirpSet = string.Empty;
 
-        [Tooltip("Where it lies and where its parts are scattered.")]
+        [Tooltip("Whether its site is planned on the basin floor or taken from the World's anchors.")]
+        [SerializeField] private FriendSiteRule _siteRule;
+
+        [Tooltip("Where it lies and where its parts are scattered (Planner rule).")]
         [SerializeField] private FriendPlacement _placement;
+
+        [Tooltip("Its anchors: site, parts, driving line and way home (Anchors rule).")]
+        [SerializeField] private FriendAnchorPlacement _anchors;
 
         public string Id => _id;
         public GameObject BrokenPrefab => _brokenPrefab;
         public GameObject RepairedPrefab => _repairedPrefab;
+        public FriendBodyKind Body => _body;
         public IReadOnlyList<FriendPart> Parts => _parts;
         public IReadOnlyList<string> Items => _items;
         public FriendHome Home => _home;
@@ -64,7 +77,9 @@ namespace MoonProject.Gameplay
         public string AbilityId => _abilityId;
         public float RepairDuration => _repairDuration;
         public string ChirpSet => _chirpSet;
+        public FriendSiteRule SiteRule => _siteRule;
         public FriendPlacement Placement => _placement;
+        public FriendAnchorPlacement Anchors => _anchors;
 
         /// <summary>Null when the definition is complete, else what is wrong with it.</summary>
         public string Validate()
@@ -123,21 +138,65 @@ namespace MoonProject.Gameplay
                 return $"'{_id}' has no home socket";
             }
 
-            if (_abilityId != SpotterAbility)
+            if (_abilityId != SpotterAbility && _abilityId != RadioDialAbility)
             {
                 return $"'{_id}' has an unknown ability '{_abilityId}'";
             }
 
-            return _placement == null ? $"'{_id}' has no placement" : null;
+            if (_body != FriendBodyKind.Drone && _body != FriendBodyKind.RadioCabinet)
+            {
+                return $"'{_id}' has an unknown body {_body}";
+            }
+
+            if (_body == FriendBodyKind.RadioCabinet && _items.Length == 0)
+            {
+                return $"'{_id}' is a radio cabinet with no tape to slide in (its first item)";
+            }
+
+            switch (_siteRule)
+            {
+                case FriendSiteRule.Planner:
+                    return _placement == null ? $"'{_id}' has no placement" : null;
+                case FriendSiteRule.Anchors:
+                    string anchors = _anchors == null ? "has no anchors" : _anchors.Validate();
+                    return anchors == null ? null : $"'{_id}' {anchors}";
+                default:
+                    return $"'{_id}' has an unknown site rule {_siteRule}";
+            }
         }
 
-        internal void Populate(string id, GameObject brokenPrefab, GameObject repairedPrefab, FriendPart[] parts,
-            string[] items, FriendHome home, string homeSocket, bool announcesHomecoming, string abilityId,
-            float repairDuration, string chirpSet, FriendPlacement placement)
+        /// <summary>A friend placed by the basin planner.</summary>
+        internal void Populate(string id, GameObject brokenPrefab, GameObject repairedPrefab, FriendBodyKind body,
+            FriendPart[] parts, string[] items, FriendHome home, string homeSocket, bool announcesHomecoming,
+            string abilityId, float repairDuration, string chirpSet, FriendPlacement placement)
+        {
+            Fill(id, brokenPrefab, repairedPrefab, body, parts, items, home, homeSocket, announcesHomecoming,
+                abilityId, repairDuration, chirpSet);
+            _siteRule = FriendSiteRule.Planner;
+            _placement = placement ?? throw new ArgumentNullException(nameof(placement));
+            _anchors = null;
+        }
+
+        /// <summary>A friend placed at the World's anchors.</summary>
+        internal void Populate(string id, GameObject brokenPrefab, GameObject repairedPrefab, FriendBodyKind body,
+            FriendPart[] parts, string[] items, FriendHome home, string homeSocket, bool announcesHomecoming,
+            string abilityId, float repairDuration, string chirpSet, FriendAnchorPlacement anchors)
+        {
+            Fill(id, brokenPrefab, repairedPrefab, body, parts, items, home, homeSocket, announcesHomecoming,
+                abilityId, repairDuration, chirpSet);
+            _siteRule = FriendSiteRule.Anchors;
+            _anchors = anchors ?? throw new ArgumentNullException(nameof(anchors));
+            _placement = null;
+        }
+
+        private void Fill(string id, GameObject brokenPrefab, GameObject repairedPrefab, FriendBodyKind body,
+            FriendPart[] parts, string[] items, FriendHome home, string homeSocket, bool announcesHomecoming,
+            string abilityId, float repairDuration, string chirpSet)
         {
             _id = id;
             _brokenPrefab = brokenPrefab;
             _repairedPrefab = repairedPrefab;
+            _body = body;
             _parts = parts ?? throw new ArgumentNullException(nameof(parts));
             _items = items ?? throw new ArgumentNullException(nameof(items));
             _home = home;
@@ -146,7 +205,6 @@ namespace MoonProject.Gameplay
             _abilityId = abilityId;
             _repairDuration = repairDuration;
             _chirpSet = chirpSet;
-            _placement = placement ?? throw new ArgumentNullException(nameof(placement));
         }
     }
 }

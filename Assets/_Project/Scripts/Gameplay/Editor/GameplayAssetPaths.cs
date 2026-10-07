@@ -23,6 +23,7 @@ namespace MoonProject.Gameplay.Editor
         public const string FriendTuning = TuningFolder + "/FriendTuning.asset";
         public const string CassetteTuning = TuningFolder + "/CassetteTuning.asset";
         public const string LogCacheTuning = TuningFolder + "/LogCacheTuning.asset";
+        public const string BellTuning = TuningFolder + "/BellTuning.asset";
 
         public const string ContentFolder = "Assets/_Project/Data/Content";
         public const string RelicFolder = ContentFolder + "/Relics";

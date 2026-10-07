@@ -15,9 +15,9 @@ namespace MoonProject.Gameplay.PlayModeTests
 {
     /// <summary>
     /// A complete gameplay stack built in test code: a flat world with canyon anchors, a fake 07, test content (relic,
-    /// scrap, friend, cassette and log cache stand-in meshes in place of the Art prefabs, default tuning, SoftGlow
-    /// materials) and the real gameplay components, wired the way the scene contributor wires them and booted through
-    /// GameBootstrap with a private save slot.
+    /// scrap, Tilly, Bell, cassette and log cache stand-ins in place of the Art prefabs, with the contracts'
+    /// node names; default tuning; SoftGlow materials) and the real gameplay components, wired the way the scene
+    /// contributor wires them and booted through GameBootstrap with a private save slot.
     /// </summary>
     public sealed class GameplayFixture : IDisposable
     {
@@ -93,6 +93,13 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         /// <summary>The lander's FriendSocket_tilly stand-in.</summary>
         public Transform TillyPerch { get; private set; }
+
+        public BellTuning BellTuning { get; private set; }
+
+        public FriendDefinition Bell { get; private set; }
+
+        /// <summary>The tower's BellCorner stand-in (pinned under the tower anchor, as the scene build does).</summary>
+        public Transform BellCorner { get; private set; }
 
         /// <summary>Builds and boots everything; 07 starts at the base facing +Z.</summary>
         public static GameplayFixture Boot(InputActionAsset controls, string saveSlot = null)
@@ -219,7 +226,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             var cassettes = Child<CassetteField>(root, "Cassettes");
             var logs = Child<LogCacheField>(root, "LogCaches");
             BuildBase(root.transform, home, tower, workshop);
-            BuildTilly(friends);
+            BuildFriends(friends);
             BuildCassettes(cassettes);
             BuildLogCaches(logs);
             relics.Wire(relicCatalog, placement, RelicTuning);
@@ -287,18 +294,23 @@ namespace MoonProject.Gameplay.PlayModeTests
             workshop.Wire(WorkshopTuning, new[] { HoverJumpUpgrade }, workbench.parent, lamp.GetComponent<Renderer>(),
                 Node("SparkSocket", workbench, new Vector3(-0.82f, 1.14f, 0.32f)));
             TillyPerch = Node("FriendSocket_tilly", lander, new Vector3(-1.6f, 3.3f, 0.9f));
+            BellCorner = Node("BellCorner", anchor, new Vector3(-4.9f, 0f, 0.4f));
+            BellCorner.localRotation = Quaternion.Euler(0f, 74f, 0f);
         }
 
         /// <summary>
         /// A stand-in Tilly with the friend rig contract's nodes (broken and repaired), her three parts and her
         /// definition, placed east of home in the flat world (which has no craters, so the crater preference allows a
-        /// flat floor).
+        /// flat floor); and a stand-in Bell with her rig's nodes, her three parts in the canyon's alcoves, Lumen After
+        /// Dark, Vol. 1 as her fourth need and her corner by the tower, as in the content builder.
         /// </summary>
-        private void BuildTilly(FriendField friends)
+        private void BuildFriends(FriendField friends)
         {
             FriendTuning = Asset<FriendTuning>();
+            BellTuning = Asset<BellTuning>();
             Tilly = Asset<FriendDefinition>();
-            Tilly.Populate("tilly", FriendModel("Tilly_Broken", true), FriendModel("Tilly", false), new[]
+            Tilly.Populate("tilly", FriendModel("Tilly_Broken", true), FriendModel("Tilly", false),
+                FriendBodyKind.Drone, new[]
                 {
                     new FriendPart("rotor", Template("Part_TillyRotor", Vector3.one * 0.3f)),
                     new FriendPart("lens", Template("Part_TillyLens", Vector3.one * 0.3f)),
@@ -307,9 +319,78 @@ namespace MoonProject.Gameplay.PlayModeTests
                 FriendDefinition.SpotterAbility, 2f, "tilly",
                 new FriendPlacement(41, new Vector2(60f, 110f), 90f, 55f, new Vector2(0f, 4f), 10f, true,
                     new Vector2(30f, 60f)));
+            Bell = Asset<FriendDefinition>();
+            Bell.Populate("bell", BellModel("Bell_Broken", true), BellModel("Bell", false),
+                FriendBodyKind.RadioCabinet, new[]
+                {
+                    new FriendPart("knob", Template("Part_BellKnob", Vector3.one * 0.3f)),
+                    new FriendPart("cone", Template("Part_BellCone", Vector3.one * 0.3f)),
+                    new FriendPart("valve", Template("Part_BellValve", Vector3.one * 0.3f)),
+                }, new[] { "after_dark_1" }, FriendHome.RadioTower, "BellCorner", true,
+                FriendDefinition.RadioDialAbility, 2.5f, "bell",
+                new FriendAnchorPlacement(new AnchorSpot(WorldAnchorIds.CanyonTerminus, new Vector2(0f, 2f)),
+                    WorldAnchorIds.CanyonAlcovePrefix, WorldAnchorIds.CanyonLanding, 40f, WorldAnchorIds.CanyonExit));
             var catalog = Asset<FriendCatalog>();
-            catalog.Populate(new[] { Tilly });
-            friends.Wire(catalog, FriendTuning, new[] { TillyPerch });
+            catalog.Populate(new[] { Tilly, Bell });
+            friends.Wire(catalog, FriendTuning, BellTuning, new[] { TillyPerch, BellCorner });
+        }
+
+        /// <summary>
+        /// A stand-in Bell with her rig contract's nodes under their parents (Body with Lid, DialFace/Needle/DialLamp,
+        /// Speaker, TapeSlot, Antenna and PartLamp_0..3; Leg_* at the hips with their Shin_*); the broken one tipped
+        /// back with her lid open.
+        /// </summary>
+        private GameObject BellModel(string name, bool broken)
+        {
+            var root = new GameObject(name);
+            root.transform.position = new Vector3(0f, -500f, 0f);
+            _created.Add(root);
+            Transform body = Node(BellRig.BodyNode, root.transform, new Vector3(0f, broken ? 0.3f : 0.75f, 0f));
+            Named(Block(body, new Vector3(0f, 0.35f, 0f), new Vector3(0.9f, 0.7f, 0.5f)), "Cabinet");
+            Transform lid = Node(BellRig.LidNode, body, new Vector3(0f, 0.68f, -0.25f));
+            Named(Block(lid, new Vector3(0f, 0.02f, 0.25f), new Vector3(0.9f, 0.04f, 0.5f)), "LidPanel");
+            Transform dial = Node("DialFace", body, new Vector3(0f, 0.43f, 0.262f));
+            Named(Block(dial, new Vector3(0.05f, 0.05f, 0.01f), new Vector3(0.12f, 0.01f, 0.01f)), BellRig.NeedleNode);
+            Named(Block(dial, Vector3.zero, new Vector3(0.3f, 0.15f, 0.01f)), BellRig.DialLampNode);
+            Named(Block(body, new Vector3(0.2f, 0.21f, 0.28f), new Vector3(0.2f, 0.2f, 0.02f)), BellRig.SpeakerNode);
+            Node(BellRig.TapeSlotNode, body, new Vector3(-0.16f, 0.21f, 0.274f));
+            Named(Block(body, new Vector3(-0.46f, 0.8f, -0.15f), new Vector3(0.02f, 0.4f, 0.02f)), "Antenna");
+            for (int i = 0; i < 4; i++)
+            {
+                Named(Block(body, new Vector3(0.1f - 0.06f * i, 0.37f, 0.262f), Vector3.one * 0.04f),
+                    BellRig.PartLampPrefix + i);
+            }
+
+            for (int leg = 0; leg < BellRig.Corners.Length; leg++)
+            {
+                float side = leg % 2 == 0 ? -1f : 1f;
+                float front = leg < 2 ? 1f : -1f;
+                string corner = BellRig.Corners[leg];
+                Transform hip = Node(BellRig.LegPrefix + corner, root.transform,
+                    new Vector3(0.33f * side, broken ? 0.3f : 0.74f, 0.15f * front));
+                Named(Block(hip, new Vector3(0f, -0.17f, 0f), new Vector3(0.04f, 0.35f, 0.04f)), "Thigh_" + corner);
+                Transform shin = Node(BellRig.ShinPrefix + corner, hip,
+                    new Vector3(0.13f * side, -0.35f, 0.08f * front));
+                Named(Block(shin, new Vector3(0f, -0.2f, 0f), new Vector3(0.03f, 0.4f, 0.03f)), "Foot_" + corner);
+                if (broken)
+                {
+                    hip.localRotation = Quaternion.Euler(-60f, 0f, 0f);
+                }
+            }
+
+            if (broken)
+            {
+                body.localRotation = Quaternion.Euler(-34f, 10f, 0f);
+                lid.localRotation = Quaternion.Euler(-74f, 0f, 0f);
+            }
+
+            return root;
+        }
+
+        private static Transform Named(Transform node, string name)
+        {
+            node.name = name;
+            return node;
         }
 
         /// <summary>
@@ -324,7 +405,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Cassettes.Populate(new[]
             {
                 Cassette("after_dark_1", CassetteSiteRule.Anchor,
-                    new AnchorSpot(WorldAnchorIds.CanyonTerminus, new Vector2(2.2f, -0.7f)), hoverJump),
+                    new AnchorSpot(WorldAnchorIds.CanyonTerminus, new Vector2(1.3f, 0.5f)), hoverJump),
                 Cassette("dust_and_honey", CassetteSiteRule.BasinPlanner, new AnchorSpot(string.Empty, Vector2.zero),
                     AbilityGate.Open),
                 Cassette("slow_orbit", CassetteSiteRule.Anchor,
@@ -347,7 +428,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             LogCacheTuning = Asset<LogCacheTuning>();
             var ro = Asset<LogCacheDefinition>();
             ro.Populate("ro_1", Template("LogCache", new Vector3(0.5f, 0.3f, 0.35f)),
-                new AnchorSpot(WorldAnchorIds.CanyonTerminus, new Vector2(2.2f, 0.3f)),
+                new AnchorSpot(WorldAnchorIds.CanyonTerminus, new Vector2(1.6f, 1.5f)),
                 new AbilityGate(true, RoverAbility.HoverJump));
             var catalog = Asset<LogCacheCatalog>();
             catalog.Populate(new[] { ro });

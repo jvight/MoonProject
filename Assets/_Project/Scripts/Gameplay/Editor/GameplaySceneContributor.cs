@@ -50,6 +50,7 @@ namespace MoonProject.Gameplay.Editor
             var cassetteCatalog = context.LoadAsset<CassetteCatalog>(GameplayAssetPaths.CassetteCatalog);
             var logCacheTuning = context.LoadAsset<LogCacheTuning>(GameplayAssetPaths.LogCacheTuning);
             var logCacheCatalog = context.LoadAsset<LogCacheCatalog>(GameplayAssetPaths.LogCacheCatalog);
+            var bellTuning = context.LoadAsset<BellTuning>(GameplayAssetPaths.BellTuning);
             Require(visuals.Validate(), nameof(GameplayVisuals));
             Require(scrapCatalog.Validate(), nameof(ScrapCatalog));
             Require(relicCatalog.Validate(), nameof(RelicCatalog));
@@ -115,7 +116,7 @@ namespace MoonProject.Gameplay.Editor
                 homes[i] = HomeSocket(context, friendCatalog.Friends[i], lander, towerAnchor, stages);
             }
 
-            friends.Wire(friendCatalog, friendTuning, homes);
+            friends.Wire(friendCatalog, friendTuning, bellTuning, homes);
             cassettes.Wire(cassetteCatalog, cassetteTuning);
             logs.Wire(logCacheCatalog, logCacheTuning);
             gameplay.Wire(visuals, new[] { radioTower, hoverJump }, relics, scrap, sonar, excavation, tether, home,

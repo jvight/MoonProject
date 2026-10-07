@@ -11,10 +11,11 @@ namespace MoonProject.Gameplay
     /// (surface, layout, anchors), rover and camera services, creates the wallet, the upgrade service (which grants
     /// rover abilities through <see cref="IRoverAbilities"/>) and the radio program, initialises the gameplay parts in
     /// dependency order (relics, scrap, excavation, tether, home, radio tower, workshop, friends, cassettes, log
-    /// caches, sonar), registers the services other domains read (<see cref="IScrapWallet"/>, <see cref="ITetherAim"/>,
-    /// <see cref="IUpgradeShop"/>, <see cref="IInteractionHints"/>, <see cref="IFriendRoster"/>,
-    /// <see cref="IFriendStatuses"/>, <see cref="IRadioProgram"/>) and the save sections, announces the radio's signal
-    /// radius and, once the save is loaded, the radio program, and owns the shared glow meshes.
+    /// caches, sonar), registers the services other domains read
+    /// (<see cref="IScrapWallet"/>, <see cref="ITetherAim"/>, <see cref="IUpgradeShop"/>,
+    /// <see cref="IInteractionHints"/>, <see cref="IFriendRoster"/>, <see cref="IFriendStatuses"/>,
+    /// <see cref="IRadioProgram"/>) and the save sections, announces the radio's signal radius and, once the save is
+    /// loaded, the radio program, and owns the shared glow meshes.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class GameplaySystem : MonoBehaviour, IGameSystem
@@ -121,7 +122,7 @@ namespace MoonProject.Gameplay
                 !_excavation.Initialize(services, _relics) || !_tether.Initialize(services, _relics) ||
                 !_home.Initialize(services, _relics, _tether, Upgrades) || !_tower.Initialize(services, Upgrades) ||
                 !_workshop.Initialize(services, Upgrades) ||
-                !_friends.Initialize(services, Radio, _relics, _scrap, _home) ||
+                !_friends.Initialize(services, Radio, _cassettes.Catalog, _relics, _scrap, _home) ||
                 !_cassettes.Initialize(services, Radio, _scrap.Tuning, KeepClearOfCassettes()) ||
                 !_logs.Initialize(services, _scrap.Tuning) || !_sonar.Initialize(services, _relics, _friends))
             {

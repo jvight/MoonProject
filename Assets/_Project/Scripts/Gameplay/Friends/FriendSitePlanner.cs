@@ -69,8 +69,11 @@ namespace MoonProject.Gameplay
             var partRandom = new DeterministicRandom(placement.Seed ^ PartSalt);
             Vector3[] parts = PlaceParts(terrain, layout, placement, tuning, relicSites, site.Position, partCount,
                 ref partRandom);
-            return new FriendSite(site.Position, terrain.SampleNormal(site.Position.x, site.Position.z), parts,
-                site.InCrater, site.Visible);
+            Vector3 toHome = layout.BasePosition - site.Position;
+            toHome.y = 0f;
+            Vector3 facing = toHome.sqrMagnitude > 1e-6f ? toHome.normalized : Vector3.forward;
+            return new FriendSite(site.Position, terrain.SampleNormal(site.Position.x, site.Position.z), facing,
+                parts, site.InCrater, site.Visible);
         }
 
         /// <summary>How much lower (m) (x, z) lies than the ring <paramref name="radius"/> around it.</summary>

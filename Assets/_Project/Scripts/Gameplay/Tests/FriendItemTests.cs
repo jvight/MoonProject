@@ -125,11 +125,12 @@ namespace MoonProject.Gameplay.Tests
         {
             GameObject model = Track(new GameObject("Bell"));
             var bell = Track(ScriptableObject.CreateInstance<FriendDefinition>());
-            bell.Populate("bell", model, model, new[]
+            bell.Populate("bell", model, model, FriendBodyKind.RadioCabinet, new[]
                 {
                     new FriendPart("knob", model), new FriendPart("cone", model), new FriendPart("valve", model),
-                }, items, home, "BellCorner", true, FriendDefinition.SpotterAbility, 4f, "bell",
-                new FriendPlacement(5, new Vector2(10f, 20f), 0f, 30f, Vector2.zero, 5f, false, new Vector2(5f, 9f)));
+                }, items, home, "BellCorner", true, FriendDefinition.RadioDialAbility, 4f, "bell",
+                new FriendAnchorPlacement(new AnchorSpot("canyon.terminus", new Vector2(0f, 2f)), "canyon.alcove_",
+                    "canyon.landing", 40f, "canyon.exit"));
             return bell;
         }
 
