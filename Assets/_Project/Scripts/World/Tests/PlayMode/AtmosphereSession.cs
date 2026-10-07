@@ -14,6 +14,7 @@ using UnityEngine.TestTools;
 using MoonProject.App;
 using MoonProject.Core;
 using MoonProject.Core.Events;
+using MoonProject.Core.Save;
 using MoonProject.Testing;
 using Debug = UnityEngine.Debug;
 using Object = UnityEngine.Object;
@@ -24,12 +25,13 @@ using UnityEditor.SceneManagement;
 namespace MoonProject.World.PlayModeTests
 {
     /// <summary>
-    /// The look of the real game against pillar 6 (M3-10): boots the built Main scene on its own save slot, lets 07
-    /// wake and the base warm up, then, for each pose of Editor/Captures/atmosphere_views.json, renders the game's own
-    /// camera (same lens, post-processing and anti-aliasing) to Logs/world-captures/atmosphere-*.png and times
-    /// <see cref="TimedFrames"/> 1920x1080 frames there, each waited for on the GPU, so the median is the full render
-    /// cost of a frame (CPU submit and GPU, serialised). Writes atmosphere.md. Slow and needs a GPU: run on demand
-    /// with --category AtmosphereSession.
+    /// The look of the real game against pillar 6 (M3-10): boots the built Main scene on its own save slot, seeded so
+    /// that Bell is repaired and home at her corner (her dial is one of the warm points), lets 07 wake and the base
+    /// warm up, then, for each pose of Editor/Captures/atmosphere_views.json and two poses at Bell's corner, renders
+    /// the game's own camera (same lens, post-processing and anti-aliasing) to Logs/world-captures/atmosphere-*.png
+    /// and times <see cref="TimedFrames"/> 1920x1080 frames there, each waited for on the GPU, so the median is the
+    /// full render cost of a frame (CPU submit and GPU, serialised). Writes atmosphere.md. Slow and needs a GPU: run
+    /// on demand with --category AtmosphereSession.
     /// </summary>
     [Explicit("Slow look-and-cost session in the real Main scene; run on demand with --category AtmosphereSession.")]
     [Category("AtmosphereSession")]
@@ -44,6 +46,23 @@ namespace MoonProject.World.PlayModeTests
         private const int TimedFrames = 60;
         private const float WakeTimeout = 20f;
         private const float SettleSeconds = 4f;
+
+        // The save seeded before boot: Bell (FriendState.Awake = 3, every part and item held) home at her corner,
+        // in the envelope and section format of Core's SaveService and Gameplay's friends section (version 2).
+        private const string BellHomeSave =
+            "{\"formatVersion\":1,\"savedAtUtc\":\"2026-10-08T00:00:00Z\"," +
+            "\"sections\":[{\"key\":\"gameplay.friends\"," +
+            "\"version\":2,\"json\":\"{\\\"friends\\\":[{\\\"id\\\":\\\"bell\\\",\\\"state\\\":3," +
+            "\\\"parts\\\":15,\\\"items\\\":15,\\\"discovered\\\":true,\\\"welcomed\\\":true}]}\"}]}";
+
+        // Bell's corner on the radio tower, seen up close and as a warm point from 40 m.
+        private const string BellCornerName = "BellCorner";
+        private const float BellNearDistance = 4.5f;
+        private const float BellNearSide = 1.8f;
+        private const float BellNearHeight = 1.8f;
+        private const float BellFarDistance = 40f;
+        private const float BellFarHeight = 9f;
+        private const float BellLookHeight = 0.8f;
 
         private static readonly string CaptureFolder =
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "world-captures"));
@@ -81,6 +100,10 @@ namespace MoonProject.World.PlayModeTests
         [PostBuildCleanup(typeof(CanyonSessionScene))]
         public IEnumerator Poses_AreCapturedAndTimed_InTheRealGame()
         {
+            Directory.CreateDirectory(SaveService.DefaultDirectory);
+            string save = Path.Combine(SaveService.DefaultDirectory,
+                CanyonSessionScene.SaveSlot + SaveService.Extension);
+            File.WriteAllText(save, BellHomeSave);
 #if UNITY_EDITOR
             AsyncOperation loading = EditorSceneManager.LoadSceneAsyncInPlayMode(CanyonSessionScene.ScenePath,
                 new LoadSceneParameters(LoadSceneMode.Single));
@@ -92,9 +115,14 @@ namespace MoonProject.World.PlayModeTests
             throw new NotSupportedException("The atmosphere session loads the scene through the editor.");
 #endif
             GameBootstrap bootstrap = null;
+            Transform bellCorner = null;
             foreach (GameObject root in SceneManager.GetSceneByPath(CanyonSessionScene.ScenePath).GetRootGameObjects())
             {
                 bootstrap = bootstrap != null ? bootstrap : root.GetComponent<GameBootstrap>();
+                foreach (Transform node in root.GetComponentsInChildren<Transform>(true))
+                {
+                    bellCorner = bellCorner != null || node.name != BellCornerName ? bellCorner : node;
+                }
             }
 
             Assert.IsNotNull(bootstrap, "the scene has its bootstrap");
@@ -109,7 +137,13 @@ namespace MoonProject.World.PlayModeTests
 
             yield return new WaitForSeconds(SettleSeconds);
 
-            PoseFile poses = JsonUtility.FromJson<PoseFile>(File.ReadAllText(PosesPath));
+            Assert.IsNotNull(bellCorner, "the radio tower carries Bell's corner");
+            PoseFile file = JsonUtility.FromJson<PoseFile>(File.ReadAllText(PosesPath));
+            var poses = new List<Pose>(file.poses)
+            {
+                BellPose(bellCorner, "bell_corner_near"),
+                BellPose(bellCorner, null),
+            };
             Camera view = context.Get<IViewCamera>().Camera;
             var report = new StringBuilder();
             report.AppendLine("# Atmosphere session (real Main scene)");
@@ -126,7 +160,7 @@ namespace MoonProject.World.PlayModeTests
                 camera.CopyFrom(view);
                 camera.enabled = false;
                 CopyPipelineSettings(view, camera);
-                foreach (Pose pose in poses.poses)
+                foreach (Pose pose in poses)
                 {
                     Place(camera, pose);
                     FrameCapture.SavePng(camera, CaptureWidth, CaptureHeight,
@@ -158,6 +192,23 @@ namespace MoonProject.World.PlayModeTests
             target.antialiasingQuality = source.antialiasingQuality;
             target.renderShadows = source.renderShadows;
             target.dithering = source.dithering;
+        }
+
+        /// <summary>A pose at Bell's corner: up close beside it, or (unnamed) as a warm point from 40 m.</summary>
+        private static Pose BellPose(Transform corner, string nearName)
+        {
+            Vector3 look = corner.position + Vector3.up * BellLookHeight;
+            Vector3 eye = nearName != null
+                ? corner.position + corner.forward * BellNearDistance + corner.right * BellNearSide
+                    + Vector3.up * BellNearHeight
+                : corner.position + corner.forward * BellFarDistance + Vector3.up * BellFarHeight;
+            return new Pose
+            {
+                name = nearName ?? "bell_corner_from_40m",
+                position = new[] { eye.x, eye.y, eye.z },
+                lookAt = new[] { look.x, look.y, look.z },
+                fov = 50f,
+            };
         }
 
         private static void Place(Camera camera, Pose pose)
