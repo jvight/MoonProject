@@ -10,7 +10,7 @@ namespace MoonProject.Rover
     /// the visual model following the interpolated sphere. Registers itself as <see cref="IRoverState"/> and
     /// <see cref="IRoverRig"/> (interaction points and gaze requests for gameplay) and <see cref="IRoverStillness"/>
     /// (how long 07 has rested, stepped every rendered frame), publishes <see cref="RoverLanded"/>, and ticks its
-    /// visual rig and wheel effects in a fixed order every frame.
+    /// visual rig, wheel effects and lamp motes in a fixed order every frame.
     /// Needs the World's <see cref="ITerrainQuery"/> (spawn height, stuck recovery), so it initialises after the World
     /// systems. If 07 is trying to drive but stuck for a few seconds, it is lifted gently to a nearby open spot.
     /// The maths lives in plain classes (<see cref="LongitudinalDrive"/>, <see cref="SteeringModel"/>,
@@ -36,6 +36,9 @@ namespace MoonProject.Rover
 
         [Tooltip("Tire tracks and dust.")]
         [SerializeField] private RoverWheelFx _wheelFx;
+
+        [Tooltip("Dust motes hanging in the headlamp's beam.")]
+        [SerializeField] private RoverLampMotes _lampMotes;
 
         [Tooltip("The Hover-Jump coils under the belly (shown only while 07 owns the ability).")]
         [SerializeField] private RoverHoverCoils _hoverCoils;
@@ -219,7 +222,8 @@ namespace MoonProject.Rover
             bool visualsReady = _visualRig.Initialize(this);
             bool effectsReady = _wheelFx.Initialize(context, this);
             bool coilsReady = _hoverCoils.Initialize(context, this, _visualRig);
-            _initialized = visualsReady && effectsReady && coilsReady;
+            bool motesReady = _lampMotes.Initialize(this);
+            _initialized = visualsReady && effectsReady && coilsReady && motesReady;
             enabled = _initialized;
         }
 
@@ -241,6 +245,7 @@ namespace MoonProject.Rover
             ok &= Require(_visualRig != null, "RoverVisualRig is not assigned.");
             ok &= Require(_wheelFx != null, "RoverWheelFx is not assigned.");
             ok &= Require(_hoverCoils != null, "RoverHoverCoils is not assigned.");
+            ok &= Require(_lampMotes != null, "RoverLampMotes is not assigned.");
             ok &= Require(_tetherOrigin != null && _cargoSocket != null, "TetherOrigin/CargoSocket are not assigned.");
             if (_body != null)
             {
@@ -587,6 +592,7 @@ namespace MoonProject.Rover
             _visualRig.Tick(deltaTime);
             _wheelFx.Tick();
             _hoverCoils.Tick(deltaTime);
+            _lampMotes.Tick(deltaTime);
         }
 
         /// <summary>This frame's motion and the player's hands, as <see cref="RoverStillness"/> reads them.</summary>
