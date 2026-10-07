@@ -15,11 +15,19 @@ namespace MoonProject.World
         [SerializeField] private Color _skyTop = new Color32(0x0B, 0x0E, 0x2A, 0xFF);
 
         [Tooltip("Soft violet glow hugging the horizon (added on top of the gradient).")]
-        [SerializeField] private Color _horizonGlow = new Color(0.32f, 0.2f, 0.52f);
+        [SerializeField] private Color _horizonGlow = new Color(0.2f, 0.13f, 0.34f);
 
         [Tooltip("Height of the horizon glow, as the sine of the elevation where it has faded to ~37%.")]
         [Range(0.01f, 0.6f)]
-        [SerializeField] private float _horizonGlowHeight = 0.13f;
+        [SerializeField] private float _horizonGlowHeight = 0.16f;
+
+        [Tooltip("The faint, thin band of light right along the horizon line (added on top of the glow): it sets the " +
+            "far rim against the sky and makes the horizon feel far away.")]
+        [SerializeField] private Color _horizonBand = new Color(0.2f, 0.15f, 0.3f);
+
+        [Tooltip("Height of the thin horizon band, as the sine of the elevation where it has faded to ~37%.")]
+        [Range(0.002f, 0.2f)]
+        [SerializeField] private float _horizonBandHeight = 0.03f;
 
         [Tooltip("Exponent of the horizon-to-zenith blend. Lower = the horizon colour climbs higher.")]
         [Range(0.1f, 2f)]
@@ -28,19 +36,36 @@ namespace MoonProject.World
         [Header("Stars")]
         [Tooltip("Fraction of star cells that hold a star (dense = 0.5+).")]
         [Range(0f, 1f)]
-        [SerializeField] private float _starDensity = 0.24f;
+        [SerializeField] private float _starDensity = 0.45f;
 
         [Tooltip("Brightness of the stars.")]
         [Range(0f, 8f)]
-        [SerializeField] private float _starBrightness = 2.2f;
+        [SerializeField] private float _starBrightness = 0.45f;
 
-        [Tooltip("Twinkle speed (radians per second). Keep it slow and subtle.")]
-        [Range(0f, 10f)]
-        [SerializeField] private float _twinkleSpeed = 1.3f;
+        [Tooltip("Power-law exponent of the star counts: the number of stars brighter than b falls as b to the " +
+            "minus this. Higher = fewer bright stars; ~1.5 gives a sky of faint dust with a handful of bright ones.")]
+        [Range(0.8f, 4f)]
+        [SerializeField] private float _starPowerLaw = 1.5f;
 
-        [Tooltip("Star size in screen pixels.")]
+        [Tooltip("Core size of a faint star in screen pixels; brighter stars are a little larger.")]
         [Range(0.5f, 4f)]
-        [SerializeField] private float _starSize = 0.95f;
+        [SerializeField] private float _starSize = 0.9f;
+
+        [Tooltip("Soft glow around the brightest stars (0 = none). Gentle, never a flare.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _starGlow = 0.22f;
+
+        [Tooltip("Share of the stars that twinkle (0..1). Only a few.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _twinkleShare = 0.15f;
+
+        [Tooltip("Twinkle speed (radians per second). Slow: a breath, never a flicker.")]
+        [Range(0f, 3f)]
+        [SerializeField] private float _twinkleSpeed = 0.45f;
+
+        [Tooltip("How deep a twinkle dims and brightens its star (0..1).")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _twinkleDepth = 0.35f;
 
         [Header("Milky way")]
         [Tooltip("Bearing of the point where the milky way band crosses the horizon highest, degrees.")]
@@ -97,14 +122,26 @@ namespace MoonProject.World
 
         [Tooltip("Emissive boost of Earth's lit side, so it blooms softly.")]
         [Range(0f, 4f)]
-        [SerializeField] private float _earthGlow = 1.1f;
+        [SerializeField] private float _earthGlow = 0.9f;
 
         [Tooltip("Colour of Earth's atmosphere rim and halo.")]
         [SerializeField] private Color _earthAtmosphere = new Color(0.45f, 0.78f, 1f);
 
         [Tooltip("Angular size of the soft halo around Earth, as a fraction of its radius.")]
         [Range(0f, 2f)]
-        [SerializeField] private float _earthHaloSize = 0.45f;
+        [SerializeField] private float _earthHaloSize = 0.6f;
+
+        [Tooltip("Strength of the soft halo around Earth.")]
+        [Range(0f, 2f)]
+        [SerializeField] private float _earthHaloStrength = 0.16f;
+
+        [Tooltip("Strength of the thin atmospheric limb hugging Earth's edge (brightest on its sunlit side).")]
+        [Range(0f, 4f)]
+        [SerializeField] private float _earthLimb = 0.8f;
+
+        [Tooltip("Width of the atmospheric limb, as a fraction of Earth's radius.")]
+        [Range(0.01f, 0.5f)]
+        [SerializeField] private float _earthLimbWidth = 0.06f;
 
         [Tooltip("Seconds per Earth rotation. Slow enough to notice only after a while.")]
         [Range(10f, 3600f)]
@@ -126,11 +163,17 @@ namespace MoonProject.World
         public Color SkyTop => _skyTop;
         public Color HorizonGlow => _horizonGlow;
         public float HorizonGlowHeight => _horizonGlowHeight;
+        public Color HorizonBand => _horizonBand;
+        public float HorizonBandHeight => _horizonBandHeight;
         public float GradientExponent => _gradientExponent;
         public float StarDensity => _starDensity;
         public float StarBrightness => _starBrightness;
-        public float TwinkleSpeed => _twinkleSpeed;
+        public float StarPowerLaw => _starPowerLaw;
         public float StarSize => _starSize;
+        public float StarGlow => _starGlow;
+        public float TwinkleShare => _twinkleShare;
+        public float TwinkleSpeed => _twinkleSpeed;
+        public float TwinkleDepth => _twinkleDepth;
         public float MilkyWayBearing => _milkyWayBearing;
         public float MilkyWayTilt => _milkyWayTilt;
         public Color MilkyWayColor => _milkyWayColor;
@@ -147,6 +190,9 @@ namespace MoonProject.World
         public float EarthGlow => _earthGlow;
         public Color EarthAtmosphere => _earthAtmosphere;
         public float EarthHaloSize => _earthHaloSize;
+        public float EarthHaloStrength => _earthHaloStrength;
+        public float EarthLimb => _earthLimb;
+        public float EarthLimbWidth => _earthLimbWidth;
         public float EarthSpinPeriod => _earthSpinPeriod;
         public float ShootingStarPeriod => _shootingStarPeriod;
         public float ShootingStarDuration => _shootingStarDuration;
