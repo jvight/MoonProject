@@ -361,6 +361,42 @@
         {
             "key": "hint.tune",
             "text": "Dò đài"
+        },
+        {
+            "key": "radio.channel.lumen_after_dark",
+            "text": "Lumen After Dark"
+        },
+        {
+            "key": "radio.channel.tape_deck",
+            "text": "Đầu băng"
+        },
+        {
+            "key": "radio.channel.quiet_hours",
+            "text": "Giờ tĩnh lặng"
+        },
+        {
+            "key": "ui.pause.cassettes",
+            "text": "Băng cassette {0}/{1}"
+        },
+        {
+            "key": "ui.card.crew_log",
+            "text": "Nhật ký phi hành đoàn"
+        },
+        {
+            "key": "ui.card.liner_caption",
+            "text": "Lời Ro ghi trên vỏ băng"
+        },
+        {
+            "key": "ui.card.tape_count",
+            "text": "{0}/{1}"
+        },
+        {
+            "key": "ui.station.radio_tower",
+            "text": "Tháp radio"
+        },
+        {
+            "key": "ui.station.workshop",
+            "text": "Bàn thợ của Kenji"
         }
     ]
 }
