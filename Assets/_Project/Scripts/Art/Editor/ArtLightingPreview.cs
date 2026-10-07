@@ -17,8 +17,9 @@ namespace MoonProject.Art.Editor
     /// turntables: this is where emission, spot and point light response and far readability are judged.
     /// <code>
     /// python tools/unity_batch.py exec --method MoonProject.Art.Editor.ArtLightingPreview.Capture
-    ///     [--arg scene=rover|base|towers|relics|shadow|grit|friends|workshop]   (default rover)
+    ///     [--arg scene=rover|base|towers|relics|shadow|grit|friends|workshop|bell|bellbroken|pickups|bellcorner]
     /// </code>
+    /// (default rover; a ';'-separated list captures several scenes in one run)
     /// rover: 07 at rest (half-lidded, head lowered, wing ajar) with its headlamp. base: the lander with the shelf
     /// and the L3 tower on their anchors, its lamp sockets lit, 07 coming home. towers: L1-L3 side by side seen
     /// from 15 m and 55 m. relics: the six relics on the lit museum shelf, and seen from 15 m. shadow: 07's cast
@@ -27,6 +28,12 @@ namespace MoonProject.Art.Editor
     /// hovering beside 07 (3/3 part lamps lit), and broken on the dust among her amber parts (1/3 lit), near and
     /// from 30 m. The base scene also seats Tilly on her lander perch. workshop: Kenji's bench on the lander's
     /// WorkshopAnchor with its lamp lit, 07 on the bench pad wearing the Hover-Jump coils glowing as if charging.
+    /// bell: Bell standing with her dial and 4/4 lamps lit beside 07 for scale, and a second Bell caught mid-dance
+    /// (lid lifted, needle swept, a foot tapping) to prove the pivots, near and from 15 m and 30 m. bellbroken: Bell
+    /// tipped back against a canyon wall, dark, with Ro's log cache, the Vol. 1 tape and her three parts in the dust,
+    /// 07 arriving. pickups: the three parts, the three tapes and the cache on the dust, and the tape rack with the
+    /// tapes in slots 0-2. bellcorner: the base with Bell on the L3 tower's BellCorner, her rack on its anchor, 07
+    /// parked at her dial, the tower's upgrade pad ring and her 2.5 m clear circle drawn on the dust.
     /// </summary>
     public static class ArtLightingPreview
     {
@@ -37,66 +44,101 @@ namespace MoonProject.Art.Editor
         private const float BaseLampIntensity = 3f;
         private const float BaseLampRange = 7f;
 
+        /// <summary>Gameplay's tower upgrade pad (RadioTowerTuning): centre ahead of the tower, radius.</summary>
+        private const float TowerPadOffset = 3.4f;
+        private const float TowerPadRadius = 2.4f;
+
+        /// <summary>The ground Bell keeps clear for her dance and for 07 parking at her dial.</summary>
+        private const float BellClearRadius = 2.5f;
+
         public static void Capture()
         {
             BatchRunner.Run(nameof(ArtLightingPreview), args =>
             {
-                string scene = args.GetString("scene", "rover");
+                string[] scenes = args.GetList("scene");
                 Material material = PaletteAssetBuilder.LoadMaterial();
-                EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-                var temporary = new TemporaryObjects();
-                try
+                string output = Path.Combine(args.OutputDirectory, "art_preview");
+                bool captured = true;
+                foreach (string scene in scenes.Length > 0 ? scenes : new[] { "rover" })
                 {
-                    CameraPoseSet poses;
-                    switch (scene)
-                    {
-                        case "rover":
-                            NightSetting(material, temporary, 40f, 3.5f);
-                            poses = RoverScene(temporary);
-                            break;
-                        case "base":
-                            NightSetting(material, temporary, 70f, 10f);
-                            poses = BaseScene(temporary);
-                            break;
-                        case "towers":
-                            NightSetting(material, temporary, 90f, 12f);
-                            poses = TowersScene(temporary);
-                            break;
-                        case "relics":
-                            NightSetting(material, temporary, 40f, 8f);
-                            poses = RelicsScene(temporary);
-                            break;
-                        case "shadow":
-                            NightSetting(material, temporary, 40f, 8f);
-                            poses = ShadowScene(temporary);
-                            break;
-                        case "friends":
-                            NightSetting(material, temporary, 50f, 12f);
-                            poses = FriendsScene(temporary);
-                            break;
-                        case "workshop":
-                            NightSetting(material, temporary, 70f, 16f);
-                            poses = WorkshopScene(temporary);
-                            break;
-                        case "grit":
-                            NightSetting(material, temporary, 40f, 9f);
-                            poses = GritScene(material, temporary);
-                            break;
-                        default:
-                            Debug.LogError(
-                                $"ArtLightingPreview: unknown scene '{scene}' " +
-                                "(rover|base|towers|relics|shadow|grit|friends|workshop).");
-                            return false;
-                    }
+                    captured &= CaptureScene(scene, material, output);
+                }
 
-                    string output = Path.Combine(args.OutputDirectory, "art_preview");
-                    return CaptureAutomation.CapturePoses(poses, output, "night_" + scene) > 0;
-                }
-                finally
-                {
-                    temporary.Dispose();
-                }
+                return captured;
             });
+        }
+
+        /// <summary>Stages <paramref name="scene"/> in a fresh scene and renders it; false if unknown.</summary>
+        private static bool CaptureScene(string scene, Material material, string output)
+        {
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var temporary = new TemporaryObjects();
+            try
+            {
+                CameraPoseSet poses;
+                switch (scene)
+                {
+                    case "rover":
+                        NightSetting(material, temporary, 40f, 3.5f);
+                        poses = RoverScene(temporary);
+                        break;
+                    case "base":
+                        NightSetting(material, temporary, 70f, 10f);
+                        poses = BaseScene(temporary);
+                        break;
+                    case "towers":
+                        NightSetting(material, temporary, 90f, 12f);
+                        poses = TowersScene(temporary);
+                        break;
+                    case "relics":
+                        NightSetting(material, temporary, 40f, 8f);
+                        poses = RelicsScene(temporary);
+                        break;
+                    case "shadow":
+                        NightSetting(material, temporary, 40f, 8f);
+                        poses = ShadowScene(temporary);
+                        break;
+                    case "friends":
+                        NightSetting(material, temporary, 50f, 12f);
+                        poses = FriendsScene(temporary);
+                        break;
+                    case "workshop":
+                        NightSetting(material, temporary, 70f, 16f);
+                        poses = WorkshopScene(temporary);
+                        break;
+                    case "grit":
+                        NightSetting(material, temporary, 40f, 9f);
+                        poses = GritScene(material, temporary);
+                        break;
+                    case "bell":
+                        NightSetting(material, temporary, 50f, 7f);
+                        poses = BellScene(temporary);
+                        break;
+                    case "bellbroken":
+                        NightSetting(material, temporary, 50f, 9f);
+                        poses = BellBrokenScene(material, temporary);
+                        break;
+                    case "pickups":
+                        NightSetting(material, temporary, 40f, 8f);
+                        poses = PickupsScene(temporary);
+                        break;
+                    case "bellcorner":
+                        NightSetting(material, temporary, 80f, 18f);
+                        poses = BellCornerScene(material, temporary);
+                        break;
+                    default:
+                        Debug.LogError($"ArtLightingPreview: unknown scene '{scene}' " +
+                            "(rover|base|towers|relics|shadow|grit|friends|workshop|bell|bellbroken|pickups|" +
+                            "bellcorner).");
+                        return false;
+                }
+
+                return CaptureAutomation.CapturePoses(poses, output, "night_" + scene) > 0;
+            }
+            finally
+            {
+                temporary.Dispose();
+            }
         }
 
         /// <summary>Dust floor, rocks from <paramref name="clearRadius"/> outwards, moonlight, bloom.</summary>
@@ -329,6 +371,178 @@ namespace MoonProject.Art.Editor
                 Pose("pair", new[] { 2.4f, 1.6f, 4.2f }, new[] { 0.7f, 1.1f, 0.8f }, 40f),
                 Pose("broken", new[] { -3.2f, 1.2f, 9.6f }, new[] { -5f, 0.2f, 7f }, 40f),
                 Pose("broken30m", new[] { -24f, 9f, 27f }, new[] { -5f, 0f, 7f }, 35f));
+        }
+
+        private static CameraPoseSet BellScene(TemporaryObjects temporary)
+        {
+            GameObject bell = Instantiate(BellModelBuilder.BellName, temporary, ArtPaths.FriendFolder);
+            bell.transform.rotation = Quaternion.Euler(0f, 12f, 0f);
+            SetGlow(bell.transform, "PartLamp_", 4, 1f);
+            SetGlow(bell.transform, "DialLamp", new[] { "" }, 1f);
+            temporary.Add(Rover(temporary, new Vector3(1.9f, 0f, 0.7f), -25f).gameObject);
+            Light lamp = NewLight("PorchLamp", LightType.Point, Palette.Get(PaletteSwatch.WarmLamp), 2.5f);
+            lamp.transform.position = new Vector3(-1.2f, 2.2f, 2.2f);
+            lamp.range = BaseLampRange;
+            lamp.shadows = LightShadows.Soft;
+            temporary.Add(lamp.gameObject);
+
+            GameObject dancer = Instantiate(BellModelBuilder.BellName, temporary, ArtPaths.FriendFolder);
+            dancer.transform.SetPositionAndRotation(new Vector3(-2.4f, 0f, 0.4f), Quaternion.Euler(0f, 30f, 0f));
+            SetGlow(dancer.transform, "PartLamp_", 4, 1f);
+            SetGlow(dancer.transform, "DialLamp", new[] { "" }, 1f);
+            Transform body = Descendant(dancer.transform, "Body");
+            body.localPosition += new Vector3(0.03f, -0.04f, 0f);
+            body.localRotation = Quaternion.Euler(0f, 0f, 6f);
+            Descendant(dancer.transform, "Lid").localRotation = Quaternion.Euler(-28f, 0f, 0f);
+            Descendant(dancer.transform, "Needle").localRotation = Quaternion.Euler(0f, 0f, 90f);
+            Descendant(dancer.transform, "Leg_FR").localRotation = Quaternion.Euler(-24f, 0f, 6f);
+            Descendant(dancer.transform, "Shin_FR").localRotation = Quaternion.Euler(30f, 0f, 0f);
+            foreach (string corner in new[] { "FL", "RL", "RR" })
+            {
+                Descendant(dancer.transform, "Leg_" + corner).localPosition += new Vector3(0f, -0.04f, 0f);
+                Descendant(dancer.transform, "Shin_" + corner).localRotation = Quaternion.Euler(8f, 0f, 0f);
+            }
+
+            return Poses(
+                Pose("hero", new[] { 2.4f, 1.5f, 3.9f }, new[] { 0.6f, 0.95f, 0f }, 42f),
+                Pose("face", new[] { 0.35f, 1.35f, 1.5f }, new[] { 0f, 1.2f, 0.2f }, 40f),
+                Pose("dance", new[] { -1.2f, 1.3f, 3.2f }, new[] { -2.3f, 0.9f, 0.4f }, 40f),
+                Pose("side", new[] { -3.2f, 1.2f, -1.6f }, new[] { 0f, 0.95f, 0f }, 40f),
+                Pose("far15m", new[] { 4f, 4f, 14f }, new[] { 0f, 0.9f, 0f }, 40f),
+                Pose("far30m", new[] { 8f, 8f, 28f }, new[] { 0f, 0.9f, 0f }, 40f));
+        }
+
+        private static CameraPoseSet BellBrokenScene(Material material, TemporaryObjects temporary)
+        {
+            GameObject bell = Instantiate(BellModelBuilder.BellBrokenName, temporary, ArtPaths.FriendFolder);
+            float back = RendererBounds(bell).min.z;
+            BatchRunner.Log($"Bell_Broken reaches {back:F3} m behind her root: stand her that far from the wall");
+            var wall = new LowPolyMeshBuilder(64);
+            wall.Box(Place.At(0f, 2f, back - 0.6f), new Vector3(9f, 4f, 1.2f), PaletteSwatch.RockDark, 0.2f,
+                new Displacement(5, 0.12f, 1.4f, 2));
+            temporary.Add(MeshObject("CanyonWall", wall.ToMesh("PreviewWall"), material, temporary));
+
+            GameObject cache = Instantiate(PropModelBuilder.LogCacheName, temporary, ArtPaths.PropFolder);
+            cache.transform.SetPositionAndRotation(new Vector3(1.15f, 0f, 0.35f), Quaternion.Euler(0f, -28f, 0f));
+            GameObject tape = Instantiate(CassetteModelBuilder.PrefabName("after_dark_1"), temporary,
+                ArtPaths.PickupFolder);
+            float tapeLift = tape.transform.position.y - RendererBounds(tape).min.y;
+            tape.transform.SetPositionAndRotation(new Vector3(1.6f, tapeLift, 0.95f), Quaternion.Euler(0f, -40f, 0f));
+            IReadOnlyList<string> parts = BellModelBuilder.PartNames;
+            for (int i = 0; i < parts.Count; i++)
+            {
+                GameObject part = Instantiate(parts[i], temporary, ArtPaths.FriendFolder);
+                var at = new Vector3(-2.6f + i * 2.4f, 0f, 3.2f + (i % 2) * 1.6f);
+                float lift = part.transform.position.y - RendererBounds(part).min.y;
+                part.transform.SetPositionAndRotation(at + Vector3.up * lift, Quaternion.Euler(0f, i * 50f, 0f));
+            }
+
+            temporary.Add(Rover(temporary, new Vector3(2.2f, 0f, 6.5f), 200f).gameObject);
+            return Poses(
+                Pose("found", new[] { 2.4f, 1.5f, 4.4f }, new[] { 0.2f, 0.45f, 0f }, 42f),
+                Pose("close", new[] { 0.7f, 1f, 1.9f }, new[] { 0f, 0.5f, -0.1f }, 42f),
+                Pose("cache", new[] { 1.7f, 0.75f, 1.9f }, new[] { 1.2f, 0.2f, 0.5f }, 40f),
+                Pose("parts", new[] { 0.5f, 2.2f, 8.5f }, new[] { -0.2f, 0.2f, 3.6f }, 50f),
+                Pose("far30m", new[] { -6f, 8f, 28f }, new[] { 0f, 0.5f, 0f }, 35f));
+        }
+
+        private static CameraPoseSet PickupsScene(TemporaryObjects temporary)
+        {
+            IReadOnlyList<string> parts = BellModelBuilder.PartNames;
+            for (int i = 0; i < parts.Count; i++)
+            {
+                GameObject part = Instantiate(parts[i], temporary, ArtPaths.FriendFolder);
+                float lift = part.transform.position.y - RendererBounds(part).min.y;
+                part.transform.SetPositionAndRotation(new Vector3((i - 1) * 0.6f, lift, 2.4f),
+                    Quaternion.Euler(0f, 15f, 0f));
+            }
+
+            IReadOnlyList<CassetteStyle> styles = CassetteModelBuilder.Styles;
+            for (int i = 0; i < styles.Count; i++)
+            {
+                GameObject tape = Instantiate(CassetteModelBuilder.PrefabName(styles[i].Id), temporary,
+                    ArtPaths.PickupFolder);
+                float lift = tape.transform.position.y - RendererBounds(tape).min.y;
+                tape.transform.SetPositionAndRotation(new Vector3((i - 1) * 0.55f, lift, 1.4f),
+                    Quaternion.Euler(0f, -12f + i * 12f, 0f));
+            }
+
+            GameObject cache = Instantiate(PropModelBuilder.LogCacheName, temporary, ArtPaths.PropFolder);
+            cache.transform.SetPositionAndRotation(new Vector3(1.6f, 0f, 1.9f), Quaternion.Euler(0f, -30f, 0f));
+            GameObject shelf = Instantiate(BaseModelBuilder.CassetteShelfName, temporary);
+            shelf.transform.SetPositionAndRotation(new Vector3(-1.7f, 0f, 0.4f), Quaternion.Euler(0f, 25f, 0f));
+            FillShelf(shelf.transform, temporary);
+            temporary.Add(Rover(temporary, new Vector3(0.3f, 0f, -1.6f), 10f).gameObject);
+            Light lamp = NewLight("PorchLamp", LightType.Point, Palette.Get(PaletteSwatch.WarmLamp), 2.5f);
+            lamp.transform.position = new Vector3(-0.4f, 2.2f, 3.4f);
+            lamp.range = BaseLampRange;
+            temporary.Add(lamp.gameObject);
+            return Poses(
+                Pose("parts", new[] { 0f, 0.75f, 3.6f }, new[] { 0f, 0.12f, 2.4f }, 40f),
+                Pose("tapes", new[] { 0f, 0.55f, 2.5f }, new[] { 0f, 0.1f, 1.4f }, 40f),
+                Pose("cache", new[] { 1.9f, 0.7f, 2.9f }, new[] { 1.6f, 0.15f, 1.9f }, 40f),
+                Pose("shelf", new[] { -0.9f, 1.3f, 2.6f }, new[] { -1.7f, 0.75f, 0.4f }, 42f),
+                Pose("far15m", new[] { 3f, 5f, 14f }, new[] { 0f, 0.3f, 1.5f }, 40f));
+        }
+
+        private static CameraPoseSet BellCornerScene(Material material, TemporaryObjects temporary)
+        {
+            GameObject lander = Instantiate(BaseModelBuilder.LanderName, temporary);
+            Instantiate(BaseModelBuilder.ShelfName, temporary).transform.position = BaseModelBuilder.ShelfAnchor;
+            GameObject tower = Instantiate(BaseModelBuilder.TowerPrefix + "3", temporary);
+            tower.transform.position = BaseModelBuilder.TowerAnchor;
+            for (int i = 0; i < 4; i++)
+            {
+                Light baseLamp = NewLight("BaseLamp", LightType.Point, Palette.Get(PaletteSwatch.WarmLamp),
+                    BaseLampIntensity);
+                baseLamp.transform.position = Descendant(lander.transform, "LampSocket_" + i).position;
+                baseLamp.range = BaseLampRange;
+                baseLamp.shadows = i == 0 ? LightShadows.Soft : LightShadows.None;
+                temporary.Add(baseLamp.gameObject);
+            }
+
+            Transform corner = Descendant(tower.transform, "BellCorner");
+            GameObject bell = Instantiate(BellModelBuilder.BellName, temporary, ArtPaths.FriendFolder);
+            bell.transform.SetPositionAndRotation(corner.position, corner.rotation);
+            SetGlow(bell.transform, "PartLamp_", 4, 1f);
+            SetGlow(bell.transform, "DialLamp", new[] { "" }, 1f);
+
+            Transform anchor = Descendant(tower.transform, "CassetteShelfAnchor");
+            GameObject shelf = Instantiate(BaseModelBuilder.CassetteShelfName, temporary);
+            shelf.transform.SetPositionAndRotation(anchor.position, anchor.rotation);
+            FillShelf(shelf.transform, temporary);
+
+            Vector3 parked = corner.position + corner.forward * 2f;
+            temporary.Add(Rover(temporary, parked, corner.eulerAngles.y + 180f).gameObject);
+
+            var rings = new LowPolyMeshBuilder(400);
+            Vector3 pad = tower.transform.TransformPoint(new Vector3(0f, 0.03f, TowerPadOffset));
+            rings.Torus(Place.At(pad), TowerPadRadius, 0.06f, 32, 3, PaletteSwatch.PilotLight);
+            rings.Torus(Place.At(corner.position + Vector3.up * 0.03f), BellClearRadius, 0.03f, 32, 3,
+                PaletteSwatch.Metal);
+            temporary.Add(MeshObject("LayoutRings", rings.ToMesh("PreviewRings"), material, temporary));
+
+            Vector3 bellAt = corner.position;
+            return Poses(
+                Pose("homecoming", new[] { 2f, 4f, 16f }, new[] { -7f, 1.2f, 0f }, 50f),
+                Pose("parked", new[] { parked.x + 2.2f, 2.4f, parked.z + 1.6f },
+                    new[] { bellAt.x, 0.9f, bellAt.z }, 50f),
+                Pose("overhead", new[] { -6.5f, 22f, 4f }, new[] { -6.5f, 0f, 0.2f }, 50f),
+                Pose("far40m", new[] { 14f, 12f, 38f }, new[] { -6f, 2f, 0f }, 35f));
+        }
+
+        /// <summary>Stands one tape of each style on the first slots of a cassette shelf instance.</summary>
+        private static void FillShelf(Transform shelf, TemporaryObjects temporary)
+        {
+            IReadOnlyList<CassetteStyle> styles = CassetteModelBuilder.Styles;
+            for (int i = 0; i < styles.Count; i++)
+            {
+                Transform slot = Descendant(shelf, "Slot_" + i);
+                GameObject tape = Instantiate(CassetteModelBuilder.PrefabName(styles[i].Id), temporary,
+                    ArtPaths.PickupFolder);
+                float lift = tape.transform.position.y - RendererBounds(tape).min.y;
+                tape.transform.SetPositionAndRotation(slot.position + slot.up * lift, slot.rotation);
+            }
         }
 
         /// <summary>Lights the first <paramref name="count"/> glow renderers named prefix0, prefix1, ...</summary>
