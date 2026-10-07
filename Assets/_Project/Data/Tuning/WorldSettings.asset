@@ -235,11 +235,12 @@ MonoBehaviour:
     _earthCloudFraction: 0.1
     _earthSunDirection: {x: -0.75, y: 0.35, z: 0.55}
     _earthNightBrightness: 0.22
-    _earthGlow: 0.9
+    _earthGlow: 0.8
     _earthAtmosphere: {r: 0.45, g: 0.78, b: 1, a: 1}
+    _earthRim: 0.4
     _earthHaloSize: 0.6
     _earthHaloStrength: 0.16
-    _earthLimb: 0.8
+    _earthLimb: 0.6
     _earthLimbWidth: 0.06
     _earthSpinPeriod: 900
     _shootingStarPeriod: 38
@@ -248,8 +249,8 @@ MonoBehaviour:
   _beacon:
     _period: 3.2
     _sharpness: 1.6
-    _lampMinIntensity: 0.35
-    _lampMaxIntensity: 1.9
+    _lampMinIntensity: 0.1
+    _lampMaxIntensity: 4.1
     _haloColor: {r: 1, g: 0.3529412, b: 0.43137255, a: 1}
     _haloMinIntensity: 0.04
     _haloMaxIntensity: 1.8
@@ -270,8 +271,8 @@ MonoBehaviour:
     _fogDensity: 0.002
   _postProcessing:
     _bloomThreshold: 1
-    _bloomIntensity: 0.7
-    _bloomScatter: 0.76
+    _bloomIntensity: 1.1
+    _bloomScatter: 0.7
     _bloomTint: {r: 1, g: 0.93, b: 0.86, a: 1}
     _postExposure: 0.12
     _contrast: 10
