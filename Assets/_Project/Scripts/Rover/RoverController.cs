@@ -8,8 +8,9 @@ namespace MoonProject.Rover
     /// <summary>
     /// The player rover: a hidden, rotation-locked physics sphere pushed by accelerations along a steered heading, with
     /// the visual model following the interpolated sphere. Registers itself as <see cref="IRoverState"/> and
-    /// <see cref="IRoverRig"/> (interaction points and gaze requests for gameplay), publishes
-    /// <see cref="RoverLanded"/>, and ticks its visual rig and wheel effects in a fixed order every frame.
+    /// <see cref="IRoverRig"/> (interaction points and gaze requests for gameplay) and <see cref="IRoverStillness"/>
+    /// (how long 07 has rested, stepped every rendered frame), publishes <see cref="RoverLanded"/>, and ticks its
+    /// visual rig and wheel effects in a fixed order every frame.
     /// Needs the World's <see cref="ITerrainQuery"/> (spawn height, stuck recovery), so it initialises after the World
     /// systems. If 07 is trying to drive but stuck for a few seconds, it is lifted gently to a nearby open spot.
     /// The maths lives in plain classes (<see cref="LongitudinalDrive"/>, <see cref="SteeringModel"/>,
@@ -52,6 +53,7 @@ namespace MoonProject.Rover
         private LandingDetector _landing;
         private StuckDetector _stuck;
         private HoverJump _jump;
+        private RoverStillness _stillness;
         private int _abilities;
         private bool _jumpHeld;
         private bool _leaping;
@@ -202,6 +204,7 @@ namespace MoonProject.Rover
             _landing = new LandingDetector(_tuning.Landing);
             _stuck = new StuckDetector(_tuning.Recovery);
             _jump = new HoverJump(_tuning.HoverJump);
+            _stillness = new RoverStillness(_tuning.Stillness);
             _terrain = context.Get<ITerrainQuery>();
             PlaceOnTerrain(_terrain);
             ConfigureBody();
@@ -211,6 +214,7 @@ namespace MoonProject.Rover
             context.Register<IRoverState>(this);
             context.Register<IRoverRig>(this);
             context.Register<IRoverAbilities>(this);
+            context.Register<IRoverStillness>(_stillness);
 
             bool visualsReady = _visualRig.Initialize(this);
             bool effectsReady = _wheelFx.Initialize(context, this);
@@ -578,9 +582,19 @@ namespace MoonProject.Rover
             float alpha = Mathf.Clamp01((Time.time - Time.fixedTime) / Time.fixedDeltaTime);
             _visualHeading = Mathf.LerpAngle(_previousHeading, _heading, alpha);
 
-            _visualRig.Tick(Time.deltaTime);
+            float deltaTime = Time.deltaTime;
+            _stillness.Step(SampleStillness(), deltaTime);
+            _visualRig.Tick(deltaTime);
             _wheelFx.Tick();
-            _hoverCoils.Tick(Time.deltaTime);
+            _hoverCoils.Tick(deltaTime);
+        }
+
+        /// <summary>This frame's motion and the player's hands, as <see cref="RoverStillness"/> reads them.</summary>
+        private StillnessSample SampleStillness()
+        {
+            Vector2 drive = _driveSource != null ? _driveSource.Drive : _input.Drive;
+            bool engaged = _recovering || _holds.IsHeld || _jump.Charge > 0f;
+            return new StillnessSample(_landing.IsGrounded, Speed, drive, _input.LookDelta, _input.LookRate, engaged);
         }
     }
 }
