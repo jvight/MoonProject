@@ -5,10 +5,11 @@ namespace MoonProject.Audio
 {
     /// <summary>
     /// Whispering Canyon's sound (M3-04, feel pillar 6 "Alone, and at peace"). Inside the corridor the World's canyon
-    /// anchors trace (<see cref="CanyonField"/>), a breathy whisper bed rises while the basin's bed recedes and the
-    /// radio thins (read by <see cref="AmbienceBed"/> and <see cref="RadioStation"/>); down in the chasm's trough a
-    /// deeper, darker bed takes over; and a gentle echo (one AudioReverbZone over the canyon, its level following
-    /// "inside") rings on 07's own 3D sounds while the 2D radio, UI and beds bypass it. Everything eases with 07's
+    /// anchors trace (<see cref="CanyonField"/>), a breathy whisper bed rises; down in the chasm's trough a deeper,
+    /// darker bed takes over; and a gentle echo (one AudioReverbZone over the canyon, its level following "inside")
+    /// rings on 07's own 3D sounds while the 2D radio, UI and beds bypass it. What being inside does to the rest of
+    /// the mix (the basin bed receding, the radio thinning, the room tone) is the <see cref="Soundscape"/>'s, which
+    /// reads <see cref="Inside"/>; the beds here pull back with it when 07 is still. Everything eases with 07's
     /// position, so driving in and out is a slow change of air, never a switch. Initialised by
     /// <see cref="AudioDirector"/>.
     /// </summary>
@@ -34,6 +35,7 @@ namespace MoonProject.Audio
         private readonly EasedValue _inside = new EasedValue(0f);
         private readonly EasedValue _trough = new EasedValue(0f);
         private AudioDirector _director;
+        private Soundscape _soundscape;
         private IRoverState _rover;
         private CanyonField _field;
         private AudioSource _whisper;
@@ -49,29 +51,14 @@ namespace MoonProject.Audio
         /// <summary>0 .. 1 down in the chasm's trough (eased).</summary>
         public float Trough => _trough.Value;
 
-        /// <summary>Level of the basin's ambience bed here: it recedes inside the canyon.</summary>
-        public float BasinGain => _field != null ? Mathf.Lerp(1f, _tuning.BasinBedInside, Inside) : 1f;
-
-        /// <summary>Radio music level here: thinner inside the canyon.</summary>
-        public float RadioMusicGain => _field != null ? Mathf.Lerp(1f, _tuning.RadioMusicInside, Inside) : 1f;
+        /// <summary>The canyon's tuning (the soundscape reads how the rest of the mix responds inside).</summary>
+        internal CanyonAudioTuning Tuning => _tuning;
 
         internal AudioSource WhisperSource => _whisper;
 
         internal AudioSource TroughSource => _troughBed;
 
         internal AudioReverbZone Echo => _echo;
-
-        /// <summary>The radio's low-pass here, from its open <paramref name="cutoffHz"/>: eased geometrically towards
-        /// the canyon's thin set as 07 goes in.</summary>
-        public float RadioCutoff(float cutoffHz)
-        {
-            if (_field == null || Inside <= 0f)
-            {
-                return cutoffHz;
-            }
-
-            return cutoffHz * Mathf.Pow(Mathf.Min(1f, _tuning.RadioCutoffInside / cutoffHz), Inside);
-        }
 
         internal void Initialize(GameContext context, AudioDirector director)
         {
@@ -99,6 +86,7 @@ namespace MoonProject.Audio
             }
 
             _director = director;
+            _soundscape = director.Soundscape;
             _rover = context.Get<IRoverState>();
             _whisperCueVolume = director.Library.GetCue(whisper).VolumeMax;
             _troughCueVolume = director.Library.GetCue(trough).VolumeMax;
@@ -126,7 +114,7 @@ namespace MoonProject.Audio
             Ease(_trough, _field.Trough(position, _tuning.HalfWidth, _tuning.Edge, _tuning.TroughDepthStart,
                 _tuning.TroughDepthRange), dt);
 
-            float bus = _director.Buses.Effective(AudioBus.Ambience);
+            float bus = _director.Buses.Effective(AudioBus.Ambience) * _soundscape.CanyonBedGain;
             Drive(_whisper, Inside * (1f - Trough) * _tuning.WhisperGain * _whisperCueVolume * bus);
             Drive(_troughBed, Trough * _tuning.TroughGain * _troughCueVolume * bus);
             UpdateEcho();

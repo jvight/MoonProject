@@ -4,8 +4,9 @@ namespace MoonProject.Audio
 {
     /// <summary>
     /// How Whispering Canyon sounds (feel pillar 6: far from home, wide, airy, sparse): where "inside" begins along
-    /// the World's canyon anchors, the whisper and chasm-trough beds, the basin bed and radio thinning inside, and a
-    /// gentle echo on 07's own sounds. Created by the Audio/Tuning builder; runtime code only reads it.
+    /// the World's canyon anchors, the whisper and chasm-trough beds, the basin bed and radio thinning inside (applied
+    /// by the soundscape's mix) and a gentle echo on 07's own sounds. Created by the Audio/Tuning builder; runtime code
+    /// only reads it.
     /// </summary>
     public sealed class CanyonAudioTuning : ScriptableObject
     {

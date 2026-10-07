@@ -75,7 +75,7 @@ namespace MoonProject.Audio.PlayModeTests
         {
             yield return WakeAndWaitForMusic();
             AudioSource staticSource = AudioTestRig.FindChildSource(_rig.Radio.transform, "Static");
-            Assert.AreEqual(1f, _rig.Ambience.QuietLift);
+            Assert.AreEqual(0f, _rig.Soundscape.QuietHours);
 
             Program.DialUnlocked = true;
             Program.Channel = RadioChannel.QuietHours;
@@ -84,9 +84,9 @@ namespace MoonProject.Audio.PlayModeTests
 
             Assert.IsFalse(_rig.Radio.MusicStarted, "no music on Quiet Hours");
             Assert.Less(staticSource.volume, 1e-3f, "and no static either");
-            Assert.Greater(_rig.Ambience.QuietLift, 1.2f, "the moon's own sound swells a little");
+            Assert.Greater(_rig.Soundscape.QuietHours, 0.9f, "the mix settles into Quiet Hours");
 
-            float quietLift = _rig.Ambience.QuietLift;
+            float quiet = _rig.Soundscape.QuietHours;
             yield return new WaitWhile(() => Swish.isPlaying);
             Program.Channel = RadioChannel.LumenAfterDark;
             _rig.ProgramChanged();
@@ -94,7 +94,7 @@ namespace MoonProject.Audio.PlayModeTests
             yield return new WaitForSecondsRealtime(2f);
             Assert.IsTrue(_rig.Radio.MusicStarted, "the show comes back");
             Assert.AreEqual(string.Empty, _rig.Radio.CurrentTrack.TapeId);
-            Assert.Less(_rig.Ambience.QuietLift, quietLift, "and the moon settles back under it");
+            Assert.Less(_rig.Soundscape.QuietHours, quiet, "and eases back out of it");
         }
 
         [UnityTest]

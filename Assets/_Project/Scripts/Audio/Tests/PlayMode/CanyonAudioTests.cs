@@ -37,9 +37,9 @@ namespace MoonProject.Audio.PlayModeTests
             Assert.IsFalse(Canyon.WhisperSource.isPlaying);
             Assert.IsFalse(Canyon.TroughSource.isPlaying);
             Assert.IsFalse(Canyon.Echo.enabled);
-            Assert.AreEqual(1f, Canyon.BasinGain);
-            Assert.AreEqual(1f, Canyon.RadioMusicGain);
-            Assert.AreEqual(22000f, Canyon.RadioCutoff(22000f));
+            Assert.AreEqual(1f, _rig.Soundscape.BasinBedGain, 1e-4f);
+            Assert.AreEqual(1f, _rig.Soundscape.RadioGain, 1e-4f);
+            Assert.AreEqual(22000f, _rig.Soundscape.RadioCutoff(22000f));
         }
 
         [UnityTest]
@@ -54,9 +54,9 @@ namespace MoonProject.Audio.PlayModeTests
             Assert.IsFalse(Canyon.TroughSource.isPlaying, "the trough bed is only for the chasm");
             Assert.IsTrue(Canyon.Echo.enabled, "a gentle echo on 07's sounds");
             Assert.Greater(Canyon.Echo.room, -1500);
-            Assert.Less(Canyon.BasinGain, 0.7f, "the open basin recedes");
-            Assert.Less(Canyon.RadioMusicGain, 0.7f, "home's radio is thinner in here");
-            Assert.Less(Canyon.RadioCutoff(22000f), 3000f);
+            Assert.Less(_rig.Soundscape.BasinBedGain, 0.7f, "the open basin recedes");
+            Assert.Less(_rig.Soundscape.RadioGain, 0.7f, "home's radio is thinner in here");
+            Assert.Less(_rig.Soundscape.RadioCutoff(22000f), 3000f);
 
             _rig.Rover.Position = Vector3.zero;
             yield return new WaitForSecondsRealtime(SettleSeconds);
