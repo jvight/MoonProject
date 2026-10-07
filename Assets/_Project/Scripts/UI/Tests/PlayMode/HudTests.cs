@@ -217,14 +217,14 @@ namespace MoonProject.UI.PlayModeTests
             Events.Publish(new CassetteCollected(TestStrings.FirstTape, Vector3.zero, 1, 3));
             yield return Seconds(1f);
             Assert.AreEqual(TestStrings.FirstLog, _rig.Ui.Card.Current);
-            StringAssert.StartsWith("Night one of Lumen After Dark", _rig.Ui.Layout.MemoryCardText.text);
+            Assert.AreEqual(Text(UiKeys.CrewLog(TestStrings.FirstLog)), _rig.Ui.Layout.MemoryCardText.text);
             Assert.IsTrue(_rig.Ui.Layout.MemoryCard.ClassListContains(MemoryCard.UntitledClass));
 
             yield return Tap(keyboard.escapeKey);
             yield return Seconds(_rig.Tuning.MemoryCard.Reveal.FadeOut + 0.6f);
             Assert.AreEqual(TestStrings.FirstTape, _rig.Ui.Card.Current, "the liner card waited its turn");
-            Assert.AreEqual("Lumen After Dark, Vol. 1", _rig.Ui.Layout.MemoryCardName.text);
-            Assert.AreEqual("1/3", _rig.Ui.Layout.MemoryCardCount.text);
+            Assert.AreEqual(Text(UiKeys.CassetteTitle(TestStrings.FirstTape)), _rig.Ui.Layout.MemoryCardName.text);
+            Assert.AreEqual(string.Format(Text(UiKeys.TapeCount), 1, 3), _rig.Ui.Layout.MemoryCardCount.text);
             Assert.IsTrue(_rig.Ui.Layout.MemoryCard.ClassListContains(MemoryCard.LinerClass));
         }
 
@@ -303,7 +303,7 @@ namespace MoonProject.UI.PlayModeTests
             Events.Publish(new RoverAwoke(Vector3.zero, false));
             yield return Seconds(1.5f);
             Assert.IsTrue(_rig.Ui.Ticker.IsVisible, "then the line drifts in");
-            Assert.AreEqual("Bell's picking something up… bearing 140.", _rig.Ui.Layout.TickerText.text);
+            Assert.AreEqual(string.Format(Text(TestStrings.SignalKey), "140"), _rig.Ui.Layout.TickerText.text);
             Assert.IsTrue(_rig.Bootstrap.Context.Input.Enabled, "the ticker never blocks driving");
 
             Events.Publish(new RelicDeposited("rubber_duck", Vector3.zero, 2));
@@ -318,7 +318,7 @@ namespace MoonProject.UI.PlayModeTests
             yield return Seconds(1.5f);
             Assert.IsFalse(_rig.Ui.Card.IsVisible);
             Assert.IsTrue(_rig.Ui.Ticker.IsVisible, "the line comes back after the card");
-            Assert.AreEqual("Bell's picking something up… bearing 140.", _rig.Ui.Layout.TickerText.text,
+            Assert.AreEqual(string.Format(Text(TestStrings.SignalKey), "140"), _rig.Ui.Layout.TickerText.text,
                 "the interrupted line first, then the next");
             Assert.AreEqual(1, _rig.Ui.TickerLines.Waiting);
         }
