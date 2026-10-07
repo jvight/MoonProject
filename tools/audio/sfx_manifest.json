@@ -1220,6 +1220,204 @@
       "notes": "Friend part collected: amber vibraphone bar climbing D5 F#5 A5 B5; 'complete' on the last part resolves A5 -> D6."
     },
     {
+      "id": "jump_charge",
+      "category": "loop_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/SFX/jump_charge_loop.wav"
+      ],
+      "variantLabels": [
+        "jump_charge"
+      ],
+      "sha256": [
+        "76f9d84b4eda1c709b4cb5d194d3fecf0a30b6290e65981a7f36119354578401"
+      ],
+      "volumeMin": 0.45,
+      "volumeMax": 0.45,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 6000.0,
+      "hfMaxDb": -40.0,
+      "tonal": true,
+      "notes": "Hover-Jump charge hum on D4 + spring creak; runtime steps it D E F# A B with the charge."
+    },
+    {
+      "id": "jump_leap",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/jump_leap_hop.wav",
+        "Assets/_Project/Audio/SFX/jump_leap_leap.wav"
+      ],
+      "variantLabels": [
+        "hop",
+        "leap"
+      ],
+      "sha256": [
+        "a99b019c46903b41160daf98e67fb4fec08dcde700d79a662c307ca3f323a62b",
+        "209d554edd7895e95267f0984dd04903ae6d59044767a7dba053cfd53bd8acab"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "Leap: soft rising boing + whoosh; 'hop' for taps, 'leap' for strong charges (volume by strength)."
+    },
+    {
+      "id": "coil_twang",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/coil_twang_A3.wav",
+        "Assets/_Project/Audio/SFX/coil_twang_D4.wav"
+      ],
+      "variantLabels": [
+        "A3",
+        "D4"
+      ],
+      "sha256": [
+        "fb01b50ff3cd2971f7d3c2e6aebdd5bf95ed283b64ef76e083630b1f1592c6bb",
+        "be582d90331dac6462294ff35127e87932d0d3a599c1f96b59519012a5580b3a"
+      ],
+      "volumeMin": 0.4,
+      "volumeMax": 0.45,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "The coils springing out on a leap: soft plucked spring."
+    },
+    {
+      "id": "air_wind",
+      "category": "loop_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/SFX/air_wind_loop.wav"
+      ],
+      "variantLabels": [
+        "air_wind"
+      ],
+      "sha256": [
+        "bdd888a6aa4b0c8ef91e9bc9896ac365128b73f9f42061c3d768b08eab19ab1e"
+      ],
+      "volumeMin": 0.4,
+      "volumeMax": 0.4,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "Soft rushing air while airborne, 6 s seamless; swells with air time and speed."
+    },
+    {
+      "id": "jump_land",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/jump_land_01.wav",
+        "Assets/_Project/Audio/SFX/jump_land_02.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02"
+      ],
+      "sha256": [
+        "8243d0d9784f7d56c7e1ffbd6bed183afdf353bd15a3e6a5389e57d1081a1565",
+        "5787637c7c5f69f19a148a40560a3e9801dee0dc2c2b86a10496a7ace7b8c13d"
+      ],
+      "volumeMin": 0.75,
+      "volumeMax": 0.85,
+      "pitchMin": 0.97,
+      "pitchMax": 1.03,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "Cushioned landing after a leap: air puff + muted thud + spring + dust (gentler than the thump)."
+    },
+    {
+      "id": "coil_pop",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/coil_pop.wav"
+      ],
+      "variantLabels": [
+        "coil_pop"
+      ],
+      "sha256": [
+        "07a34a0ad4afa035a5d89583486231da7188dd5b7509cd7c56d71f6698378a0b"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "The Hover-Jump coils popping in after the purchase: clunk + sproing."
+    },
+    {
+      "id": "workbench_upgrade",
+      "category": "stinger_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/workbench_upgrade.wav"
+      ],
+      "variantLabels": [
+        "workbench_upgrade"
+      ],
+      "sha256": [
+        "e7dd3a88999f76636d4b98b7d4817d752756b58bd6a8c21cfbef8b98e08ab4af"
+      ],
+      "volumeMin": 0.75,
+      "volumeMax": 0.75,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -20.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Workbench purchase: spark crackles at 0/0.16/0.32 s (matching the bench's bursts) + toolbox rattle + resolved A -> D major cadence."
+    },
+    {
       "id": "upgrade_arpeggio",
       "category": "stinger_2d",
       "milestone": "M2",

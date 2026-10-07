@@ -133,7 +133,7 @@ namespace MoonProject.Audio.PlayModeTests
             {
                 AudioTestRig.UpdateOf(_rig.Director), AudioTestRig.UpdateOf(_rig.RoverAudio),
                 AudioTestRig.UpdateOf(_rig.Gameplay), AudioTestRig.UpdateOf(_rig.Ui), AudioTestRig.UpdateOf(_rig.Radio),
-                AudioTestRig.UpdateOf(_rig.Friends),
+                AudioTestRig.UpdateOf(_rig.Friends), AudioTestRig.UpdateOf(_rig.Jump),
                 AudioTestRig.UpdateOf(_rig.Ambience),
             };
 
@@ -156,6 +156,8 @@ namespace MoonProject.Audio.PlayModeTests
                 _rig.Rover.NormalizedSpeed = 0.5f + 0.5f * Mathf.Sin(t * 3f);
                 _rig.Rover.DriveInput = new Vector2(0f, 1f);
                 _rig.Rover.IsGrounded = frame % 40 < 30;
+                _rig.Rover.AirTime = frame % 40 < 30 ? 0f : (frame % 40 - 30) * 0.1f;
+                _rig.Rover.Velocity = new Vector3(6f * Mathf.Sin(t), 2f, 0f);
                 _rig.Rover.GroundNormal = Quaternion.Euler(frame % 20 == 0 ? 12f : 0f, 0f, 0f) * Vector3.up;
                 _rig.Rover.Tilly.Position = new Vector3(3f * Mathf.Cos(t), 3f, 3f * Mathf.Sin(t));
                 _rig.Rover.Tilly.Activity = (FriendActivity)(frame / 50 % 6);
@@ -196,6 +198,12 @@ namespace MoonProject.Audio.PlayModeTests
                         events.Publish(new RoverRecovering(Vector3.zero, Vector3.one, 0.5f));
                     }
 
+                    events.Publish(new RoverJumpCharged(frame % 5 / 4f));
+                    if (frame % 36 == 4)
+                    {
+                        events.Publish(new RoverJumpCancelled());
+                    }
+
                     break;
                 case 5:
                     events.Publish(new TetherAttached(Vector3.right, 5f));
@@ -217,7 +225,9 @@ namespace MoonProject.Audio.PlayModeTests
                     events.Publish(new ExcavationStopped(Vector3.left, true));
                     break;
                 case 11:
+                    events.Publish(new RoverJumped(frame % 24 == 11 ? 1f : 0.2f));
                     events.Publish(new RoverLanded(Vector3.zero, 2.5f, 1f));
+                    events.Publish(new UpgradePurchased(frame % 24 == 11 ? "rover.hover_jump" : "radio_tower", 1));
                     settings.SetVolume(AudioBus.Sfx, frame % 24 == 11 ? 0.9f : 1f);
                     break;
             }

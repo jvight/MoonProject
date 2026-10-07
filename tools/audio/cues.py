@@ -868,6 +868,159 @@ def friend_part(variant, _gen):
     return _mono_reverb(filters.lowpass(mix, 6000.0), room=0.5, damping=0.55, wet=0.22, dry=1.0)
 
 
+# --------------------------------------------------------------------------------------------------- hover-jump
+
+JUMP_CHARGE_LOOP_S = 4.0
+
+
+def jump_charge(_variant, gen):
+    """The Hover-Jump charging: a soft electric hum on D4 (the runtime steps it up D E F# A B as the charge grows)
+    with a gentle tremolo and a quiet spring-creak texture underneath. Seamless; < 3.5 kHz so the climb stays clean."""
+    n = samples(JUMP_CHARGE_LOOP_S)
+    step = SAMPLE_RATE / n
+    f = loop_freq(note_freq("D4"), n)
+    hum = osc.additive(n, f, [(1, 1.0), (2, 0.28), (3, 0.1), (4, 0.04)])
+    hum += 0.45 * osc.additive(n, f + step, [(1, 1.0), (2, 0.2)], phase=0.27)
+    hum *= envelope.lfo(n, 24.0 / JUMP_CHARGE_LOOP_S, 0.12, 0.88)
+    excitation = np.zeros(n)
+    for pos in noise.event_times(n, gen, 26.0, jitter=0.6):
+        excitation[int(pos)] += gen.uniform(0.3, 1.0)
+    creak = periodic(excitation, lambda x: 0.6 * filters.bandpass(x, 310.0, 8.0) + 0.35 * filters.bandpass(
+        x, 520.0, 7.0), warmup=samples(0.5))
+    creak *= 1.0 / max(float(np.std(creak)), 1e-9) * 0.05
+    return periodic(0.3 * hum + creak, lambda x: filters.highpass(filters.lowpass(x, 3200.0), 70.0))
+
+
+JUMP_LEAP_SIZES = ("hop", "leap")
+
+
+def jump_leap(variant, gen):
+    """The leap: a soft rising 'boing' (a wobbling D4/A3 spring tone settling into tune) over a whoosh of air;
+    the hop is small and short, the leap longer and fuller."""
+    big = variant == 1
+    duration = 1.1 if big else 0.5
+    n = samples(duration)
+    base = note_freq("A3" if big else "D4")
+    t = np.arange(n) / SAMPLE_RATE
+    wobble = 1.0 + 0.05 * np.exp(-t / (0.16 if big else 0.08)) * np.sin(2.0 * math.pi * 11.0 * t)
+    rise = osc.glide(n, 0.82 * base, base, time_constant=0.05)
+    boing = osc.additive(n, rise * wobble, [(1, 1.0), (2, 0.18), (3, 0.05)])
+    boing *= envelope.ar(n, 0.006, 0.6 if big else 0.28)
+    sweep_n = samples(0.9 if big else 0.35)
+    whoosh = filters.swept(noise.pink(sweep_n, gen), "bandpass", osc.glide(sweep_n, 280.0, 1300.0), q=1.1)
+    whoosh *= envelope.segments(sweep_n, [(0.0, 0.0), (0.2 if big else 0.08, 1.0),
+                                          (0.9 if big else 0.35, 0.0)], shape="smooth")
+    whoosh = whoosh / max(float(np.std(whoosh)), 1e-9) * 0.08
+    mix = 0.55 * boing
+    place(mix, whoosh, 0, 1.0 if big else 0.6)
+    return filters.lowpass(mix, 4500.0)
+
+
+def coil_twang(variant, gen):
+    """The coils springing out on the leap: a soft plucked spring on A3/D4 with the spring's falling dispersive
+    'tw-' chirp, felt-soft."""
+    note = ("A3", "D4")[variant]
+    n = samples(0.8)
+    string = karplus_strong(n, note_freq(note), gen, decay=0.993, brightness=0.3, pick_softness=1800.0)
+    chirp_n = samples(0.09)
+    chirp = osc.sine(chirp_n, osc.glide(chirp_n, 1300.0, 320.0)) * envelope.ar(chirp_n, 0.002, 0.07)
+    mix = string.copy()
+    place(mix, chirp, 0, 0.12)
+    return filters.lowpass(mix, 4000.0)
+
+
+AIR_WIND_LOOP_S = 6.0
+
+
+def air_wind(_variant, gen):
+    """Air rushing past during a leap: two soft band-passed noise layers (no whistle) breathing slowly.
+    Seamless; the runtime swells it with air time and speed."""
+    n = samples(AIR_WIND_LOOP_S)
+    low = periodic(noise.white(n, gen), lambda x: filters.bandpass(noise.pink_filter(x), 520.0, 0.6),
+                   warmup=samples(1.0))
+    high = periodic(noise.white(n, gen), lambda x: filters.bandpass(noise.pink_filter(x), 1400.0, 0.9),
+                    warmup=samples(1.0))
+    low *= envelope.lfo(n, 2.0 / AIR_WIND_LOOP_S, 0.2, 0.8)
+    high *= envelope.lfo(n, 3.0 / AIR_WIND_LOOP_S, 0.3, 0.7, phase=0.25)
+    mix = low / max(float(np.std(low)), 1e-9) + 0.5 * high / max(float(np.std(high)), 1e-9)
+    return periodic(mix, lambda x: filters.lowpass(filters.lowpass(x, 2800.0), 2800.0))
+
+
+JUMP_LAND_SETTINGS = (
+    # thud start/end Hz, cushion T60, sproing note
+    (80.0, 52.0, 0.35, "D3"),
+    (72.0, 48.0, 0.42, "E3"),
+)
+
+
+def jump_land(variant, gen):
+    """A cushioned landing after a leap: the air cushion's soft 'pfff', a muted low thud, the springs taking the
+    weight with a little sproing, and dust settling. Much gentler than the hard landing thump."""
+    f_start, f_end, cushion_t60, spring_note = JUMP_LAND_SETTINGS[variant]
+    n = samples(1.4)
+    puff = filters.highpass(filters.lowpass(filters.lowpass(noise.pink(n, gen), 900.0), 900.0), 150.0)
+    puff *= envelope.ar(n, 0.015, cushion_t60)
+    puff = puff / max(float(np.std(puff)), 1e-9) * 0.11
+    thud = osc.sine(n, osc.glide(n, 1.4 * f_start, f_end, time_constant=0.05)) * envelope.ar(n, 0.025, 0.25)
+    t = np.arange(n) / SAMPLE_RATE
+    spring_f = note_freq(spring_note) * (1.0 + 0.03 * np.exp(-t / 0.12) * np.sin(2.0 * math.pi * 9.0 * t))
+    spring = osc.sine(n, spring_f) * envelope.ar(n, 0.02, 0.35)
+    dust = filters.lowpass(filters.highpass(noise.pink(n, gen), 1400.0), 4200.0) * envelope.ar(n, 0.06, 0.9)
+    dust = dust / max(float(np.std(dust)), 1e-9) * 0.004
+    return puff + 0.16 * thud + 0.15 * spring + dust
+
+
+def coil_pop(_variant, gen):
+    """The coils popping in under 07 after the purchase: a small mechanical clunk, then a springy sproing on D4."""
+    n = samples(1.0)
+    clunk = filters.bandpass(noise.white(n, gen), 260.0, 1.4) * envelope.ar(n, 0.002, 0.06)
+    clunk = clunk / max(float(np.std(clunk[:samples(0.05)])), 1e-9) * 0.08
+    clunk += 0.25 * osc.sine(n, osc.glide(n, 150.0, 110.0, time_constant=0.03)) * envelope.ar(n, 0.004, 0.09)
+    t = np.arange(n) / SAMPLE_RATE
+    sproing_f = osc.glide(n, note_freq("A3"), note_freq("D4"), time_constant=0.04) * (
+        1.0 + 0.06 * np.exp(-t / 0.18) * np.sin(2.0 * math.pi * 10.0 * t))
+    sproing = osc.additive(n, sproing_f, [(1, 1.0), (2, 0.15)]) * envelope.ar(n, 0.01, 0.55)
+    mix = clunk.copy()
+    place(mix, 0.6 * sproing[:n - samples(0.06)], samples(0.06))
+    return filters.lowpass(mix, 4000.0)
+
+
+# Gameplay fires the bench's spark particle bursts at these times (s) after the purchase; the crackles match them.
+WORKBENCH_SPARK_BURSTS = (0.0, 0.16, 0.32)
+
+
+def workbench_upgrade(_variant, gen):
+    """Buying an upgrade at Kenji's workbench: three soft spark crackles in time with the bench's spark bursts and a
+    toolbox rattle, then a resolved cadence (felt piano A4 + E5 settling into D major with a music-box D6), distinct
+    from the tower's arpeggio."""
+    n = samples(3.2)
+    sparks = np.zeros(n)
+    for burst, gain in zip(WORKBENCH_SPARK_BURSTS, (1.0, 0.8, 0.65)):
+        burst_n = samples(0.14)
+        crackle = _grains(burst_n, gen, 70.0, (0.002, 0.006), (0.0003, 0.0006), (0.002, 0.005), 0.25, 0.6)
+        crackle *= envelope.segments(burst_n, [(0.0, 0.0), (0.008, 1.0), (0.14, 0.0)], shape="smooth")
+        place(sparks, crackle, samples(burst), gain)
+    sparks = filters.lowpass(filters.bandpass(sparks, 3000.0, 0.9), 5000.0)
+    rattle = np.zeros(n)
+    for k in range(7):
+        freq = gen.uniform(900.0, 1500.0)
+        clink_n = samples(0.12)
+        clink = (instruments.partial(clink_n, freq, 1.0, 0.0008, 0.06)
+                 + instruments.partial(clink_n, 1.53 * freq, 0.5, 0.0008, 0.04)
+                 + instruments.partial(clink_n, 2.31 * freq, 0.2, 0.0008, 0.025))
+        place(rattle, clink, samples(0.05 + 0.045 * k + gen.uniform(0.0, 0.02)), gen.uniform(0.4, 0.8))
+    rattle = filters.lowpass(rattle, 4500.0)
+    chord = np.zeros(n)
+    place(chord, _rolled(("A4", "E5"), 0.03, 1.0, gen, decay=0.8, brightness=0.45), samples(0.38), 0.6)
+    place(chord, _rolled(("D4", "F#4", "A4", "D5"), 0.02, 2.4, gen, decay=1.6, brightness=0.45,
+                         gains=(0.7, 0.55, 0.55, 0.6)), samples(0.72))
+    place(chord, instruments.music_box(note_freq("D6"), 2.0, decay=1.3), samples(0.78), 0.2)
+    mono = 0.6 * sparks + 0.5 * rattle + chord
+    wet = effects.reverb(mono, room=0.5, damping=0.6, wet=0.22, dry=0.0, width=0.85)
+    dry = np.stack([0.6 * sparks + 0.5 * rattle * 0.8 + chord, 0.6 * sparks * 0.8 + 0.5 * rattle + chord], axis=1)
+    return dry + wet
+
+
 # --------------------------------------------------------------------------------------------------- registry
 
 CUES = (
@@ -967,6 +1120,24 @@ CUES = (
         variant_labels=("step1", "step2", "step3", "step4", "complete"), fade_out=0.2, milestone="M3",
         tonal=True, notes="Friend part collected: amber vibraphone bar climbing D5 F#5 A5 B5; 'complete' on the last "
                           "part resolves A5 -> D6."),
+    Cue("jump_charge", "loop_3d", jump_charge, loop=True, file_stem="jump_charge_loop", volume=(0.45, 0.45),
+        hf_cutoff=6000.0, hf_max_db=-40.0, milestone="M3", tonal=True,
+        notes="Hover-Jump charge hum on D4 + spring creak; runtime steps it D E F# A B with the charge."),
+    Cue("jump_leap", "oneshot_3d", jump_leap, variants=len(JUMP_LEAP_SIZES), variant_labels=JUMP_LEAP_SIZES,
+        volume=(0.6, 0.6), fade_out=0.1, milestone="M3",
+        notes="Leap: soft rising boing + whoosh; 'hop' for taps, 'leap' for strong charges (volume by strength)."),
+    Cue("coil_twang", "oneshot_3d", coil_twang, variants=2, variant_labels=("A3", "D4"), volume=(0.4, 0.45),
+        fade_out=0.1, milestone="M3", tonal=True, notes="The coils springing out on a leap: soft plucked spring."),
+    Cue("air_wind", "loop_3d", air_wind, loop=True, file_stem="air_wind_loop", volume=(0.4, 0.4), milestone="M3",
+        notes="Soft rushing air while airborne, 6 s seamless; swells with air time and speed."),
+    Cue("jump_land", "oneshot_3d", jump_land, variants=len(JUMP_LAND_SETTINGS), volume=(0.75, 0.85),
+        pitch=(0.97, 1.03), fade_out=0.1, milestone="M3",
+        notes="Cushioned landing after a leap: air puff + muted thud + spring + dust (gentler than the thump)."),
+    Cue("coil_pop", "oneshot_3d", coil_pop, volume=(0.6, 0.6), fade_out=0.1, milestone="M3",
+        notes="The Hover-Jump coils popping in after the purchase: clunk + sproing."),
+    Cue("workbench_upgrade", "stinger_2d", workbench_upgrade, volume=(0.75, 0.75), fade_out=0.3, milestone="M3",
+        tonal=True, notes="Workbench purchase: spark crackles at 0/0.16/0.32 s (matching the bench's bursts) + "
+                          "toolbox rattle + resolved A -> D major cadence."),
     Cue("upgrade_arpeggio", "stinger_2d", upgrade_arpeggio, volume=(0.8, 0.8), fade_out=0.3, milestone="M2",
         tonal=True, notes="Soft kalimba D4 A4 D5 F#5 A5, stereo, over a quiet D/A pad."),
 )
