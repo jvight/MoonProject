@@ -183,18 +183,7 @@ namespace MoonProject.Art.Tests
 
         private static List<PaletteSwatch> Swatches(ModelNode node)
         {
-            LowPolyMeshBuilder geometry = node.Mesh.Geometry;
-            var swatches = new List<PaletteSwatch>();
-            for (int t = 0; t < geometry.TriangleCount; t++)
-            {
-                PaletteSwatch swatch = MeshChecks.SwatchOf(geometry, t);
-                if (!swatches.Contains(swatch))
-                {
-                    swatches.Add(swatch);
-                }
-            }
-
-            return swatches;
+            return MeshChecks.Swatches(node.Mesh.Geometry);
         }
     }
 }

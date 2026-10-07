@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using UnityEngine;
@@ -51,7 +50,7 @@ namespace MoonProject.Art.Tests
             Vector3 anchor = BaseModelBuilder.WorkshopAnchor;
             float shelfRight = BaseModelBuilder.ShelfAnchor.x + BaseModelBuilder.ShelfWidth * 0.5f + 0.2f;
 
-            foreach (Vector3 local in AllPoints(bench))
+            foreach (Vector3 local in MeshChecks.Points(bench, Matrix4x4.identity))
             {
                 Vector3 p = anchor + local;
                 Assert.LessOrEqual(p.z, -1.2f, "bench front edge stays behind z = -1.2");
@@ -93,38 +92,12 @@ namespace MoonProject.Art.Tests
             Assert.AreEqual(Quaternion.identity, socket.LocalRotation);
             Assert.AreEqual("CoilSocket", rover.Children[rover.Children.Count - 1].Name, "appended last");
 
-            foreach (Vector3 local in AllPoints(RoverModelBuilder.CreateHoverCoils()))
+            foreach (Vector3 local in MeshChecks.Points(RoverModelBuilder.CreateHoverCoils(), Matrix4x4.identity))
             {
                 Vector3 p = socket.LocalPosition + local;
                 Assert.Less(Mathf.Abs(p.x), 0.4f, "between the bogies");
                 Assert.Greater(p.y, 0.1f, "clear of the ground");
                 Assert.LessOrEqual(p.y, socket.LocalPosition.y + 1e-3f, "under the belly");
-            }
-        }
-
-        private static IEnumerable<Vector3> AllPoints(ModelNode root)
-        {
-            return Points(root, Matrix4x4.identity);
-        }
-
-        private static IEnumerable<Vector3> Points(ModelNode node, Matrix4x4 parent)
-        {
-            Matrix4x4 local = parent * node.LocalMatrix;
-            if (node.Mesh != null)
-            {
-                IReadOnlyList<Vector3> positions = node.Mesh.Geometry.Positions;
-                for (int v = 0; v < positions.Count; v++)
-                {
-                    yield return local.MultiplyPoint3x4(positions[v]);
-                }
-            }
-
-            foreach (ModelNode child in node.Children)
-            {
-                foreach (Vector3 p in Points(child, local))
-                {
-                    yield return p;
-                }
             }
         }
     }
