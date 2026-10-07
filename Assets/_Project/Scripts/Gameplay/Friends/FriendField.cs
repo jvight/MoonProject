@@ -539,7 +539,7 @@ namespace MoonProject.Gameplay
             if (definition.SiteRule == FriendSiteRule.Anchors)
             {
                 wayHome = FriendAnchorPlanner.WayHome(services.Anchors, _terrain, definition.Anchors,
-                    _homes[index].position, _bellTuning.BelowStep, out string problem);
+                    _homes[index].position, _bellTuning.BelowStep, _tuning, out string problem);
                 if (wayHome == null)
                 {
                     Debug.LogError($"{nameof(FriendField)}: '{definition.Id}' has no way home: {problem} " +

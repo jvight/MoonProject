@@ -65,6 +65,18 @@ namespace MoonProject.Gameplay.Tests
             });
         }
 
+        /// <summary>The wall along x = 0 (see <see cref="WithWall"/>) ends here: north of it the way is open.</summary>
+        public const float WallGap = 21.25f;
+
+        /// <summary>
+        /// Flat floor with a 10 m wall 2.5 m thick along x = 0 from z = -150 to <see cref="WallGap"/> (its edges fall
+        /// between the cells of a 2.5 m search grid laid from whole metres).
+        /// </summary>
+        public static TestWorld WithWall()
+        {
+            return new TestWorld((x, z) => Mathf.Abs(x) < 1.25f && z > -150f && z < WallGap ? 10f : 0f);
+        }
+
         public Rect PlayableArea { get; }
 
         public Vector3 BasePosition => new Vector3(0f, _height(0f, 0f), 0f);

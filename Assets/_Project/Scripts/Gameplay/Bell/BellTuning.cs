@@ -73,8 +73,8 @@ namespace MoonProject.Gameplay
         [Tooltip("Motor effort (Core RotorSpeed scale) while walking, for her leg taps.")]
         [Range(0f, 1f)] [SerializeField] private float _walkMotor = 0.6f;
 
-        [Tooltip("Metres past the canyon exit's step down she aims for before heading home.")]
-        [Range(0f, 30f)] [SerializeField] private float _belowStep = 5f;
+        [Tooltip("Metres from the canyon exit's anchor, on past its step, to the basin floor she heads for first.")]
+        [Range(0f, 40f)] [SerializeField] private float _belowStep = 14f;
 
         [Header("At home")]
         [Tooltip("Sway cycles per second while music plays.")]

@@ -2,10 +2,14 @@ using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
 using MoonProject.Core;
+using Object = UnityEngine.Object;
 
 namespace MoonProject.Gameplay.Tests
 {
-    /// <summary>A friend placed at the World's anchors (Bell): her site, her parts and her way home.</summary>
+    /// <summary>
+    /// A friend placed at the World's anchors (Bell): her site, her parts and her way home (a walking line found over
+    /// drivable ground).
+    /// </summary>
     public sealed class FriendAnchorTests
     {
         private static readonly Vector3 Corner = new Vector3(-10f, 0f, 0f);
@@ -52,20 +56,65 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void WayHome_GoesBackOutThroughTheAlcoves_ThenTheExitAndHome()
+        public void WayHome_WalksFromTheTerminusToTheWayOut_DownItsStep_AndHome()
         {
             TestWorld world = TestWorld.Flat();
-            Vector3[] route = FriendAnchorPlanner.WayHome(Canyon(3), world, Placement(), Corner, 5f,
-                out string problem);
-            Assert.IsNull(problem);
-            CollectionAssert.AreEqual(new[]
+            var tuning = ScriptableObject.CreateInstance<FriendTuning>();
+            try
             {
-                new Vector3(-262f, 0f, 78f), new Vector3(-245f, 0f, 45f), new Vector3(-225f, 0f, 75f),
-                new Vector3(-205f, 0f, 60f), new Vector3(-200f, 0f, 30f), new Vector3(-195f, 0f, 30f), Corner,
-            }, route);
-            var noExit = new FakeAnchors(new WorldAnchor(WorldAnchorIds.CanyonLanding, Vector3.zero, Vector3.left, 5f));
-            Assert.IsNull(FriendAnchorPlanner.WayHome(noExit, world, Placement(), Corner, 5f, out problem));
-            StringAssert.Contains("canyon.exit", problem);
+                Vector3[] route = FriendAnchorPlanner.WayHome(Canyon(3), world, Placement(), Corner, 5f, tuning,
+                    out string problem);
+                Assert.IsNull(problem);
+                CollectionAssert.AreEqual(new[]
+                {
+                    new Vector3(-275f, 0f, 60f), new Vector3(-200f, 0f, 30f), new Vector3(-195f, 0f, 30f), Corner,
+                }, route, "open ground: straight to the way out, on past its step, then home");
+                var noExit = new FakeAnchors(new WorldAnchor(WorldAnchorIds.CanyonTerminus, Vector3.zero,
+                    Vector3.left, 5f));
+                Assert.IsNull(FriendAnchorPlanner.WayHome(noExit, world, Placement(), Corner, 5f, tuning,
+                    out problem));
+                StringAssert.Contains("canyon.exit", problem);
+            }
+            finally
+            {
+                Object.DestroyImmediate(tuning);
+            }
+        }
+
+        [Test]
+        public void WalkPath_GoesAroundAWall_ThroughItsGap_OnGentleGround()
+        {
+            TestWorld world = TestWorld.WithWall();
+            var tuning = ScriptableObject.CreateInstance<FriendTuning>();
+            try
+            {
+                var from = new Vector3(-50f, 0f, 0f);
+                var to = new Vector3(50f, 0f, 0f);
+                Vector3[] path = WalkPathPlanner.Plan(world, from, to, tuning);
+                Assert.IsNotNull(path);
+                Assert.AreEqual(from, path[0]);
+                Assert.AreEqual(to, path[path.Length - 1]);
+                bool throughGap = false;
+                for (int i = 0; i < path.Length - 1; i++)
+                {
+                    float length = SurfaceRules.HorizontalDistance(path[i], path[i + 1]);
+                    for (float along = 0f; along <= length; along += 0.5f)
+                    {
+                        Vector3 point = Vector3.Lerp(path[i], path[i + 1], along / length);
+                        Assert.Less(world.SampleHeight(point.x, point.z), 1f, $"never over the wall ({point})");
+                        throughGap |= Mathf.Abs(point.x) < 1.25f && point.z > TestWorld.WallGap;
+                    }
+                }
+
+                Assert.IsTrue(throughGap, "through the gap");
+                Assert.Less(path.Length, 8, "string-pulled into a few straight legs");
+                Assert.IsNull(WalkPathPlanner.Plan(world, from, new Vector3(50f, 0f, 400f), tuning),
+                    "off the drivable ground: no way");
+            }
+            finally
+            {
+                Object.DestroyImmediate(tuning);
+            }
         }
 
         private static FriendAnchorPlacement Placement()

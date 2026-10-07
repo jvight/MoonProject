@@ -10,8 +10,9 @@ namespace MoonProject.Gameplay
     /// back toward 07 arriving, part i waits at the numbered part anchor i (canyon.alcove_i), and parts left over
     /// when the World has fewer such anchors go along the driving line (from its start through the part anchors to
     /// the site) at least the line spacing apart from every other part and from the site, relaxed once if the line is
-    /// short. Also lays out its way home: back out through the part anchors, the line start, the way out, a little
-    /// past the step down, then home. Pure; a missing anchor is reported (a wiring bug), never invented.
+    /// short. Also lays out its way home: a walking line over drivable ground from its site anchor to the top of the
+    /// way out (<see cref="WalkPathPlanner"/>), on past the step down to the basin floor, then home. Pure; a missing
+    /// anchor is reported (a wiring bug), never invented.
     /// </summary>
     public static class FriendAnchorPlanner
     {
@@ -90,12 +91,12 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// Its way home from its site, or null with <paramref name="problem"/>: the part anchors back out (the last
-        /// first), the driving line's start, the way out, <paramref name="belowStep"/> metres on past its step down,
-        /// then <paramref name="home"/>.
+        /// Its way home from its site, or null with <paramref name="problem"/>: a walking line over drivable ground
+        /// from the site anchor to the way out's anchor, then <paramref name="belowStep"/> metres on along it (down its
+        /// step to the basin floor), then <paramref name="home"/>.
         /// </summary>
         public static Vector3[] WayHome(IWorldAnchors anchors, ITerrainQuery terrain, FriendAnchorPlacement placement,
-            Vector3 home, float belowStep, out string problem)
+            Vector3 home, float belowStep, FriendTuning tuning, out string problem)
         {
             if (anchors == null)
             {
@@ -112,9 +113,9 @@ namespace MoonProject.Gameplay
                 throw new ArgumentNullException(nameof(placement));
             }
 
-            if (!anchors.TryGet(placement.LineStart, out WorldAnchor start))
+            if (!anchors.TryGet(placement.Site.AnchorId, out WorldAnchor site))
             {
-                problem = $"the World publishes no driving line start '{placement.LineStart}'";
+                problem = $"the World publishes no site anchor '{placement.Site.AnchorId}'";
                 return null;
             }
 
@@ -124,20 +125,14 @@ namespace MoonProject.Gameplay
                 return null;
             }
 
-            var inward = new List<Vector3>();
-            for (int i = 0; anchors.TryGet(placement.PartAnchorPrefix + i, out WorldAnchor anchor); i++)
+            Vector3[] walk = WalkPathPlanner.Plan(terrain, site.Position, exit.Position, tuning);
+            if (walk == null)
             {
-                inward.Add(anchor.Position);
+                problem = $"no drivable walk from '{placement.Site.AnchorId}' to '{placement.Exit}'";
+                return null;
             }
 
-            var route = new List<Vector3>();
-            for (int i = inward.Count - 1; i >= 0; i--)
-            {
-                route.Add(inward[i]);
-            }
-
-            route.Add(start.Position);
-            route.Add(exit.Position);
+            var route = new List<Vector3>(walk);
             Vector3 below = exit.Position + exit.Forward * belowStep;
             route.Add(SurfaceRules.OnSurface(terrain, below.x, below.z));
             route.Add(home);

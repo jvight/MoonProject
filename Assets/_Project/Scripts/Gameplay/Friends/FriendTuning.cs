@@ -235,6 +235,19 @@ namespace MoonProject.Gameplay
         [Tooltip("Radius (m) of the sphere standing on the ground (its whole body) that must be off screen.")]
         [Range(0.1f, 5f)] [SerializeField] private float _unseenMargin = 1.2f;
 
+        [Header("Finding its way")]
+        [Tooltip("Cell size (m) of the grid a walking friend's way is searched on.")]
+        [Range(0.5f, 10f)] [SerializeField] private float _pathCell = 2.5f;
+
+        [Tooltip("Metres the search box reaches beyond both ends of the way.")]
+        [Range(0f, 200f)] [SerializeField] private float _pathMargin = 30f;
+
+        [Tooltip("Largest height change (m) between neighbouring cells it walks (a gentle slope, never a wall).")]
+        [Range(0.05f, 5f)] [SerializeField] private float _pathMaxClimb = 1f;
+
+        [Tooltip("Most cells the search expands before it gives up (a broken world).")]
+        [Range(100, 200000)] [SerializeField] private int _pathMaxNodes = 40000;
+
         [Header("Spotter")]
         [Tooltip("Undiscovered relics, parts and scrap within this many metres of 07 catch its eye.")]
         [Range(5f, 100f)] [SerializeField] private float _spotRadius = 40f;
@@ -333,6 +346,10 @@ namespace MoonProject.Gameplay
         public float WalkWaypointReach => _walkWaypointReach;
         public float UnseenDistance => _unseenDistance;
         public float UnseenMargin => _unseenMargin;
+        public float PathCell => _pathCell;
+        public float PathMargin => _pathMargin;
+        public float PathMaxClimb => _pathMaxClimb;
+        public int PathMaxNodes => _pathMaxNodes;
         public float SpotRadius => _spotRadius;
         public float SpotHover => _spotHover;
         public float SpotDuration => _spotDuration;
