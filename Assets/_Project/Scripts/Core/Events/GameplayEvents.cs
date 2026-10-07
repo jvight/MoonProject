@@ -176,6 +176,54 @@ namespace MoonProject.Core.Events
         public float Radius { get; }
     }
 
+    /// <summary>A relay mast was restored and linked: the station's reach grew (docs/features/M3-06).</summary>
+    public readonly struct RelayRestored
+    {
+        public RelayRestored(string relayId, Vector3 position, int litCount, int total)
+        {
+            RelayId = relayId;
+            Position = position;
+            LitCount = litCount;
+            Total = total;
+        }
+
+        public string RelayId { get; }
+
+        public Vector3 Position { get; }
+
+        /// <summary>Lit masts after this one (home not counted).</summary>
+        public int LitCount { get; }
+
+        /// <summary>Masts in the whole game.</summary>
+        public int Total { get; }
+    }
+
+    /// <summary>A radio-hop began: static rises and the view eases out before 07 is moved.</summary>
+    public readonly struct RadioHopStarted
+    {
+        public RadioHopStarted(string fromId, string toId)
+        {
+            FromId = fromId;
+            ToId = toId;
+        }
+
+        /// <summary>The node 07 hops from ("home" or a relay id).</summary>
+        public string FromId { get; }
+
+        public string ToId { get; }
+    }
+
+    /// <summary>A radio-hop ended: 07 stands on the target pad and the view eases back in.</summary>
+    public readonly struct RadioHopFinished
+    {
+        public RadioHopFinished(string toId)
+        {
+            ToId = toId;
+        }
+
+        public string ToId { get; }
+    }
+
     /// <summary>07 picked up a cassette tape (a new radio track and Ro's liner note).</summary>
     public readonly struct CassetteCollected
     {
