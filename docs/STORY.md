@@ -60,6 +60,20 @@ Fixed everything, including 07 (seven times). Explained bugs to a rubber duck; t
 - **Ines**: the morning rim walk → choosing to evacuate → "We were coming back. I need you to know we tried."
 - **Kenji**: fixing 07 the first time → the spare wheel he hid for "next time" → "Don't let anyone retire you."
 
+## Cassettes (8 tapes; liner notes are Ro's, one or two sentences)
+| id | Title | Ro's note |
+|---|---|---|
+| after_dark_1 | Lumen After Dark, Vol. 1 | First night show. Audience: three crew, one rover, one basil plant. The basil had requests. |
+| dust_and_honey | Dust & Honey | Recorded with the mic taped to the airlock. If you hear a thump, that's Kenji. |
+| slow_orbit | Slow Orbit | For the nights Earth looks close enough to walk to. It isn't. I checked. |
+The other five arrive with the Rim Terraces, the Shadowed Crater and The Peak (M4).
+
+## Bell's lines (ticker, M3-05)
+- Home for the first time: "Bell got home before you. She says the porch light was on."
+- A signal picked: "Bell's picking something up… bearing {0}."
+- A signal found: "Bell says: told you so." / "Bell says: that one's been waiting for you." / "Bell says: Ro would
+  have liked that."
+
 ## The radio's fragments (ticker text, unlocked as the signal grows)
 Short lines that drift across the radio as 07 restores the tower — old broadcasts, then letters addressed to the
 station, years apart. They reveal that the crew tried to return, the program was cancelled, and Ro kept writing

@@ -33,5 +33,5 @@ World exposes the canyon's key points so gameplay can place things there: `IWorl
 |---|---|
 | world | canyon + chasm carved into the height function (deterministic, smooth normals), floor paint (cooler, darker swatches inside), scatter rules (boulders on walls, clear driving line), the glinting ledge read from the base, anchors; captures from the base, the lip, mid-leap, inside, terminus |
 | art | canyon set dressing later (old cable runs, a toppled antenna, the crew's trail markers) |
-| gameplay | content placement at the anchors (scrap trail toward the lip, a relic on the ledge, Bell's site later) |
+| gameplay | content placement at the anchors (scrap trail toward the lip; the ledge cassette, Bell's parts and Bell herself come with M3-05) |
 | audio | canyon ambience (wind-whisper bed, echo/reverb zone inside) |
