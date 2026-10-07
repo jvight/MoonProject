@@ -33,9 +33,10 @@ namespace MoonProject.Audio.Tests
             return SoundscapeModel.ToDb(gain);
         }
 
-        private void At(float distance, float stillness = 0f, float canyon = 0f, bool quietHours = false)
+        private void At(float distance, float stillness = 0f, float canyon = 0f, bool quietHours = false,
+            float wide = 0f)
         {
-            _model.Step(distance, Edge, stillness, canyon, quietHours, Settled);
+            _model.Step(distance, Edge, stillness, wide, canyon, quietHours, Settled);
         }
 
         [Test]
@@ -94,7 +95,7 @@ namespace MoonProject.Audio.Tests
         public void ATallerTower_PushesTheSilenceOut()
         {
             float far = Edge + _tuning.SilenceWidth;
-            _model.Step(far, Edge + 300f, 0f, 0f, false, Settled);
+            _model.Step(far, Edge + 300f, 0f, 0f, 0f, false, Settled);
             Assert.AreEqual(0f, _model.Farness, "a wider signal brings this spot back in range");
         }
 
@@ -114,9 +115,32 @@ namespace MoonProject.Audio.Tests
         }
 
         [Test]
+        public void TheWideShot_BreathesOutFurther_TheRoomToneOpensWithTheFrame()
+        {
+            At(0f, 1f);
+            float radio = Db(_model.RadioGain);
+            float basin = Db(_model.BasinBedGain);
+            float canyonBeds = Db(_model.CanyonBedGain);
+            float room = Db(_model.RoomToneGain);
+            float small = _model.SmallSoundsGain;
+
+            At(0f, 1f, wide: 1f);
+            Assert.AreEqual(radio + _tuning.WideDuckDb, Db(_model.RadioGain), DbTolerance);
+            Assert.AreEqual(basin + _tuning.WideDuckDb, Db(_model.BasinBedGain), DbTolerance);
+            Assert.AreEqual(canyonBeds + _tuning.WideDuckDb, Db(_model.CanyonBedGain), DbTolerance);
+            Assert.AreEqual(room + _tuning.WideRoomToneDb, Db(_model.RoomToneGain), DbTolerance);
+            Assert.AreEqual(small, _model.SmallSoundsGain, 1e-6f, "07 stays as close as ever");
+            Assert.LessOrEqual(_tuning.WideDuckDb, -2f, "a gentle -2 to -3 dB");
+            Assert.GreaterOrEqual(_tuning.WideDuckDb, -3f);
+
+            At(0f, 1f, wide: 0.5f);
+            Assert.AreEqual(radio + 0.5f * _tuning.WideDuckDb, Db(_model.RadioGain), DbTolerance, "follows the frame");
+        }
+
+        [Test]
         public void QuietHours_EasesIn_SwellsTheBasin_AndBringsTheRoomAnd07Forward()
         {
-            _model.Step(0f, Edge, 0f, 0f, true, 0.1f);
+            _model.Step(0f, Edge, 0f, 0f, 0f, true, 0.1f);
             Assert.Greater(_model.QuietHours, 0f);
             Assert.Less(_model.QuietHours, 0.1f, "eased, never a switch");
 

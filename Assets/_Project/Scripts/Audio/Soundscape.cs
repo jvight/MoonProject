@@ -7,9 +7,11 @@ namespace MoonProject.Audio
 {
     /// <summary>
     /// The sound of solitude (feel pillar 6, M3-10): one <see cref="SoundscapeModel"/> fed every frame with 07's
-    /// distance from the base, the radio's signal edge and station, Whispering Canyon and 07's stillness
-    /// (<see cref="StillnessTracker"/>, counted once 07 is awake). The radio, the basin bed, the canyon beds and 07's
-    /// small sounds read their gains here, so Quiet Hours, the canyon, distance and stillness make one coherent mix.
+    /// distance from the base, the radio's signal edge and station, Whispering Canyon, 07's stillness (the Rover's
+    /// <see cref="IRoverStillness"/> through <see cref="StillnessTracker"/>, counted once 07 is awake) and the
+    /// camera's wide shot (<see cref="RoverWideShotChanged"/>: the mix breathes out over the frame's opening and back
+    /// in with the hand-back). The radio, the basin bed, the canyon beds and 07's small sounds read their gains here,
+    /// so Quiet Hours, the canyon, distance, stillness and the wide shot make one coherent mix.
     /// Plays the room tone bed that takes over as everything else recedes. Neutral (all gains 1) until initialised.
     /// Initialised by <see cref="AudioDirector"/> after the radio and the canyon.
     /// </summary>
@@ -19,22 +21,29 @@ namespace MoonProject.Audio
         [Tooltip("Assets/_Project/Data/Audio/SoundscapeTuning.asset.")]
         [SerializeField] private SoundscapeTuning _tuning;
 
+        private const int SubscriptionCount = 2;
+
         private readonly EasedValue _fadeIn = new EasedValue(0f);
+        private readonly LoopFader _wide = new LoopFader();
+        private readonly IDisposable[] _subscriptions = new IDisposable[SubscriptionCount];
         private AudioDirector _director;
         private IRoverState _rover;
+        private IRoverStillness _rest;
         private RadioStation _radio;
         private CanyonAmbience _canyon;
         private Vector3 _basePosition;
         private StillnessTracker _stillness;
         private SoundscapeModel _model;
         private AudioSource _roomTone;
-        private IDisposable _awokeSubscription;
         private float _roomToneCueVolume;
         private float _fadeInTime;
         private bool _awake;
 
         /// <summary>0 moving .. 1 settled into stillness (eased; 0 while 07 sleeps).</summary>
         public float Stillness => _stillness != null ? _stillness.Amount : 0f;
+
+        /// <summary>The camera's wide shot as the mix hears it, 0 closed .. 1 fully open (eased).</summary>
+        public float Wide => _wide.Gain;
 
         /// <summary>Seconds 07 has been still since it last moved (0 while 07 sleeps).</summary>
         public float StillSeconds => _stillness != null ? _stillness.StillSeconds : 0f;
@@ -84,12 +93,14 @@ namespace MoonProject.Audio
             _canyon = canyon;
             _fadeInTime = fadeInSeconds;
             _rover = context.Get<IRoverState>();
+            _rest = context.Get<IRoverStillness>();
             _basePosition = context.Get<IWorldLayout>().BasePosition;
             _stillness = new StillnessTracker(_tuning);
             _model = new SoundscapeModel(_tuning, canyon.Tuning);
             _roomToneCueVolume = director.Library.GetCue(roomTone).VolumeMax;
             _roomTone = director.CreateLoopSource(transform, "RoomTone", roomTone, 0f);
-            _awokeSubscription = context.Events.Subscribe<RoverAwoke>(OnRoverAwoke);
+            _subscriptions[0] = context.Events.Subscribe<RoverAwoke>(OnRoverAwoke);
+            _subscriptions[1] = context.Events.Subscribe<RoverWideShotChanged>(OnWideShotChanged);
         }
 
         internal void Wire(SoundscapeTuning tuning)
@@ -104,14 +115,11 @@ namespace MoonProject.Audio
                 return;
             }
 
-            if (_awake)
-            {
-                _stillness.Step(_rover.Speed, _rover.DriveInput, _rover.IsGrounded, Time.deltaTime);
-            }
-
+            _stillness.Step(_awake ? _rest.StillSeconds : 0f, Time.deltaTime);
             float dt = Time.unscaledDeltaTime;
+            _wide.Step(dt, _tuning.WideOpenTime, _tuning.WideReleaseTime);
             float distance = SignalField.HorizontalDistance(_rover.Position, _basePosition);
-            _model.Step(distance, _radio.SignalEdge, _stillness.Amount, _canyon.Inside,
+            _model.Step(distance, _radio.SignalEdge, _stillness.Amount, _wide.Gain, _canyon.Inside,
                 _radio.Station == RadioChannel.QuietHours, dt);
 
             float fade = _fadeIn.Step(1f, dt, _fadeInTime);
@@ -129,10 +137,25 @@ namespace MoonProject.Audio
             _awake = true;
         }
 
+        private void OnWideShotChanged(RoverWideShotChanged changed)
+        {
+            if (changed.Wide)
+            {
+                _wide.FadeIn();
+            }
+            else
+            {
+                _wide.FadeOut();
+            }
+        }
+
         private void OnDestroy()
         {
-            _awokeSubscription?.Dispose();
-            _awokeSubscription = null;
+            for (int i = 0; i < _subscriptions.Length; i++)
+            {
+                _subscriptions[i]?.Dispose();
+                _subscriptions[i] = null;
+            }
         }
     }
 }

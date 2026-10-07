@@ -6,11 +6,12 @@ namespace MoonProject.Audio.PlayModeTests
     /// <summary>
     /// Stands in for the Rover, World and Gameplay systems: registers <see cref="IRoverState"/>,
     /// <see cref="IRoverRig"/>, <see cref="IWorldLayout"/>, a two-friend <see cref="IFriendRoster"/> (Tilly, then
-    /// Bell), Bell's <see cref="IRadioProgram"/> and a test canyon's <see cref="IWorldAnchors"/> with values the test
+    /// Bell), Bell's <see cref="IRadioProgram"/>, a test canyon's <see cref="IWorldAnchors"/> and
+    /// <see cref="IRoverStillness"/> (counting up while <see cref="Resting"/>, as the Rover does) with values the test
     /// sets directly.
     /// </summary>
     public sealed class FakeRoverSystem : MonoBehaviour, IGameSystem, IRoverState, IRoverRig, IWorldLayout,
-        IFriendRoster
+        IFriendRoster, IRoverStillness
     {
         private Transform _tetherOrigin;
 
@@ -35,6 +36,11 @@ namespace MoonProject.Audio.PlayModeTests
         public Vector3 Velocity { get; set; }
 
         public float Speed { get; set; }
+
+        /// <summary>While true, <see cref="StillSeconds"/> counts up each frame; false resets it (07 moved).</summary>
+        public bool Resting { get; set; } = true;
+
+        public float StillSeconds { get; set; }
 
         public float NormalizedSpeed { get; set; }
 
@@ -70,6 +76,11 @@ namespace MoonProject.Audio.PlayModeTests
         {
         }
 
+        private void Update()
+        {
+            StillSeconds = Resting ? StillSeconds + Time.deltaTime : 0f;
+        }
+
         public void Initialize(GameContext context)
         {
             _tetherOrigin = new GameObject("TetherOrigin").transform;
@@ -80,6 +91,7 @@ namespace MoonProject.Audio.PlayModeTests
             context.Register<IFriendRoster>(this);
             context.Register<IRadioProgram>(Program);
             context.Register<IWorldAnchors>(new FakeWorldAnchors());
+            context.Register<IRoverStillness>(this);
         }
     }
 }

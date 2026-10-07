@@ -5,7 +5,8 @@ namespace MoonProject.Audio
 {
     /// <summary>
     /// One mix for being alone on the moon (feel pillar 6): from how far 07 is past the radio's signal, how still it
-    /// is, how deep in Whispering Canyon and whether the radio is on Quiet Hours, the gain of every layer.
+    /// is, whether the camera's wide shot is open, how deep in Whispering Canyon and whether the radio is on Quiet
+    /// Hours, the gain of every layer.
     /// <list type="bullet">
     /// <item><b>Farness</b> 0..1 eases in over the silence width past the signal's edge.</item>
     /// <item><b>Solitude</b> 0..1 combines farness, Quiet Hours and the canyon (each weighted): how alone 07 is.</item>
@@ -16,6 +17,8 @@ namespace MoonProject.Audio
     /// <item><b>07's small sounds</b>: come forward with solitude.</item>
     /// <item><b>Stillness</b> pulls the world (radio, basin and canyon beds) back a few dB; the room tone and 07's
     /// own sounds stay, so the space feels wider.</item>
+    /// <item><b>The wide shot</b> breathes out a little further with the frame: the radio and beds back again, the
+    /// room tone up a touch.</item>
     /// </list>
     /// Every contribution is added in dB, so the layers move smoothly and independently. Allocation-free.
     /// </summary>
@@ -32,7 +35,7 @@ namespace MoonProject.Audio
         {
             _tuning = tuning != null ? tuning : throw new ArgumentNullException(nameof(tuning));
             _canyon = canyon != null ? canyon : throw new ArgumentNullException(nameof(canyon));
-            Step(0f, 1f, 0f, 0f, false, 0f);
+            Step(0f, 1f, 0f, 0f, 0f, false, 0f);
         }
 
         /// <summary>0 within the radio's signal .. 1 past the silence width beyond it.</summary>
@@ -45,6 +48,9 @@ namespace MoonProject.Audio
         public float QuietHours => _quietHours.Value;
 
         public float Stillness { get; private set; }
+
+        /// <summary>The camera's wide shot, 0 closed .. 1 fully open (eased by the caller).</summary>
+        public float Wide { get; private set; }
 
         public float Canyon { get; private set; }
 
@@ -65,26 +71,27 @@ namespace MoonProject.Audio
         /// <summary>
         /// Recomputes every gain. <paramref name="distance"/> is 07's horizontal distance from the base,
         /// <paramref name="signalEdge"/> where the radio's signal is lost entirely (both metres);
-        /// <paramref name="stillness"/> and <paramref name="canyonInside"/> are 0..1 (already eased);
-        /// <paramref name="quietHours"/> eases in and out here.
+        /// <paramref name="stillness"/>, <paramref name="wide"/> and <paramref name="canyonInside"/> are 0..1
+        /// (already eased); <paramref name="quietHours"/> eases in and out here.
         /// </summary>
-        public void Step(float distance, float signalEdge, float stillness, float canyonInside, bool quietHours,
-            float deltaTime)
+        public void Step(float distance, float signalEdge, float stillness, float wide, float canyonInside,
+            bool quietHours, float deltaTime)
         {
             _quietHours.Step(quietHours ? 1f : 0f, Mathf.Max(0f, deltaTime), _tuning.QuietHoursEase);
             Farness = Smooth01((distance - signalEdge) / _tuning.SilenceWidth);
             Stillness = Mathf.Clamp01(stillness);
+            Wide = Mathf.Clamp01(wide);
             Canyon = Mathf.Clamp01(canyonInside);
             Solitude = 1f - (1f - Farness) * (1f - QuietHours * _tuning.QuietHoursSolitude) *
                        (1f - Canyon * _tuning.CanyonSolitude);
 
-            float still = Stillness * _tuning.StillDuckDb;
+            float still = Stillness * _tuning.StillDuckDb + Wide * _tuning.WideDuckDb;
             RadioGain = FromDb(Farness * _tuning.FarRadioDb + Canyon * ToDb(_canyon.RadioMusicInside) + still);
             BasinBedGain = FromDb(Farness * _tuning.FarBasinDb + Canyon * ToDb(_canyon.BasinBedInside) +
                                   QuietHours * _tuning.QuietHoursBasinDb + still);
             CanyonBedGain = FromDb(still);
             RoomToneGain = FromDb(Mathf.Lerp(_tuning.RoomToneNearDb, _tuning.RoomToneFarDb, Solitude) +
-                                  Canyon * _tuning.RoomToneInCanyonDb);
+                                  Canyon * _tuning.RoomToneInCanyonDb + Wide * _tuning.WideRoomToneDb);
             SmallSoundsGain = FromDb(Mathf.Lerp(_tuning.SmallSoundsNearDb, 0f, Solitude));
         }
 
