@@ -18,6 +18,9 @@ namespace MoonProject.Audio
         /// <summary>False until <see cref="Begin"/>: the radio is completely silent.</summary>
         public bool IsAwake { get; private set; }
 
+        /// <summary>True from the step the music starts (after the delay): the radio is on.</summary>
+        public bool MusicStarted => _musicStarted;
+
         /// <summary>The set's power-on ramp 0..1 (everything the radio plays is scaled by it).</summary>
         public float Power => IsAwake ? Smooth(_elapsed / _powerTime) : 0f;
 

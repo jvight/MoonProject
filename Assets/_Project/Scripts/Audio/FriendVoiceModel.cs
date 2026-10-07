@@ -7,7 +7,8 @@ namespace MoonProject.Audio
     /// <summary>
     /// Pure sound logic of one friend: rotor loop pitch/volume eased from its effort (silent when stopped); the repair
     /// stitching, heard while the beam stitches (repairing with the rotors still) and rising over the stitch time;
-    /// the boot, due the moment the rotors start turning during the repair (its eye flickers on then); and
+    /// the boot, due the moment the rotors start turning during the repair (its eye flickers on then), unless the
+    /// friend ends its stitching with a cue of its own (<see cref="FinishStitching"/>); and
     /// occasional chirps of its own by activity (curious when out, happy at home, sleepy when napping, never while
     /// dormant or being repaired).
     /// </summary>
@@ -31,6 +32,7 @@ namespace MoonProject.Audio
         private float _stitchTime;
         private bool _booted;
         private bool _bootDue;
+        private bool _stitchFinished;
 
         public FriendVoiceModel(FriendAudioTuning tuning, AudioRandom random)
         {
@@ -62,6 +64,17 @@ namespace MoonProject.Audio
             return due;
         }
 
+        /// <summary>
+        /// The repair moved on from the beam with a moment of the friend's own (Bell's tape sliding into its slot):
+        /// the stitching fades now, and that moment stands in for the shared boot. Holds until the repair ends.
+        /// </summary>
+        public void FinishStitching()
+        {
+            _stitchFinished = true;
+            _booted = true;
+            _bootDue = false;
+        }
+
         /// <summary>Advances one frame of game time; returns true when a chirp of <paramref name="mood"/> is
         /// due.</summary>
         public bool Step(float deltaTime, FriendActivity activity, float rotorSpeed, out FriendMood mood)
@@ -74,7 +87,12 @@ namespace MoonProject.Audio
                 _rotorEffort.Snap(0f);
             }
 
-            bool stitching = activity == FriendActivity.Repairing && effort <= 0f;
+            if (activity != FriendActivity.Repairing)
+            {
+                _stitchFinished = false;
+            }
+
+            bool stitching = activity == FriendActivity.Repairing && effort <= 0f && !_stitchFinished;
             if (stitching)
             {
                 if (!_stitch.IsOn)

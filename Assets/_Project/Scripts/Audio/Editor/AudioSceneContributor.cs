@@ -6,7 +6,7 @@ namespace MoonProject.Audio.Editor
     /// <summary>
     /// Adds the Audio domain to Main.unity: under [Audio], an AudioDirector (the system, initialised after World, Rover
     /// and Gameplay) wired to the library and tuning assets, plus its RoverAudio, JumpAudio, GameplayAudio,
-    /// FriendAudio, UiAudio, RadioStation and AmbienceBed parts.
+    /// FriendAudio, UiAudio, RadioStation, AmbienceBed and CanyonAmbience parts.
     /// Voices and loop sources are created by the components at initialisation, not baked into the scene.
     /// </summary>
     public sealed class AudioSceneContributor : ISceneContributor
@@ -19,6 +19,7 @@ namespace MoonProject.Audio.Editor
         {
             var library = context.LoadAsset<AudioLibrary>(AudioAssetPaths.Library);
             var playlist = context.LoadAsset<RadioPlaylist>(AudioAssetPaths.Playlist);
+            var tapes = context.LoadAsset<RadioTapeLibrary>(AudioAssetPaths.Tapes);
             var mixTuning = context.LoadAsset<AudioMixTuning>(AudioAssetPaths.MixTuning);
             var roverTuning = context.LoadAsset<RoverAudioTuning>(AudioAssetPaths.RoverTuning);
             var radioTuning = context.LoadAsset<RadioTuning>(AudioAssetPaths.RadioTuning);
@@ -26,6 +27,7 @@ namespace MoonProject.Audio.Editor
             var uiTuning = context.LoadAsset<UiAudioTuning>(AudioAssetPaths.UiTuning);
             var friendTuning = context.LoadAsset<FriendAudioTuning>(AudioAssetPaths.FriendTuning);
             var jumpTuning = context.LoadAsset<JumpAudioTuning>(AudioAssetPaths.JumpTuning);
+            var canyonTuning = context.LoadAsset<CanyonAudioTuning>(AudioAssetPaths.CanyonTuning);
 
             Transform root = context.AudioRoot.transform;
             var director = context.CreateChild("AudioDirector", root).AddComponent<AudioDirector>();
@@ -36,14 +38,16 @@ namespace MoonProject.Audio.Editor
             var ui = context.CreateChild("UiAudio", root).AddComponent<UiAudio>();
             var radio = context.CreateChild("RadioStation", root).AddComponent<RadioStation>();
             var ambience = context.CreateChild("AmbienceBed", root).AddComponent<AmbienceBed>();
+            var canyon = context.CreateChild("CanyonAmbience", root).AddComponent<CanyonAmbience>();
 
             rover.Wire(roverTuning);
             gameplay.Wire(gameplayTuning);
             ui.Wire(uiTuning);
             friends.Wire(friendTuning);
             jump.Wire(jumpTuning);
-            radio.Wire(radioTuning, playlist);
-            director.Wire(library, mixTuning, rover, jump, gameplay, friends, ui, radio, ambience);
+            radio.Wire(radioTuning, playlist, tapes);
+            canyon.Wire(canyonTuning);
+            director.Wire(library, mixTuning, rover, jump, gameplay, friends, ui, radio, ambience, canyon);
             context.AddSystem(director);
         }
     }
