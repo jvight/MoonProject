@@ -20,6 +20,8 @@ namespace MoonProject.Art.Editor
         public const string BaseFolder = Root + "/Base";
         public const string RelicFolder = Root + "/Relics";
         public const string FriendFolder = Root + "/Friends";
+        public const string PickupFolder = Root + "/Pickups";
+        public const string PropFolder = Root + "/Props";
 
         /// <summary>
         /// URP Simple Lit: Lambert diffuse (no specular sheen on flat palette faces) plus an emission map, with every

@@ -6,11 +6,12 @@ using MoonProject.Editor.Builders;
 namespace MoonProject.Art.Editor
 {
     /// <summary>
-    /// 07's home base per the M2 content contract (docs/ARCHITECTURE.md): <c>Lander</c>, <c>MuseumShelf</c> and
-    /// <c>RadioTower_L1..L3</c> in Generated/Art/Base. Meshes only, each pivoted at its ground-contact centre so it
-    /// stands on an anchor. The lander also carries friend perches (<c>FriendSocket_&lt;id&gt;</c>: an empty on
-    /// top of the perch, +Y up, +Z = the hatch side). Glowing parts (windows, shelf lights, tower lamps) are
-    /// separate renderers so gameplay can brighten the base as it comes back to life.
+    /// 07's home base per the M2 content contract (docs/ARCHITECTURE.md): <c>Lander</c>, <c>MuseumShelf</c>,
+    /// <c>RadioTower_L1..L3</c>, Kenji's <c>Workbench</c> and Bell's <c>CassetteShelf</c> in Generated/Art/Base.
+    /// Meshes only, each pivoted at its ground-contact centre so it stands on an anchor. The lander also carries
+    /// friend perches (<c>FriendSocket_&lt;id&gt;</c>: an empty on top of the perch, +Y up, +Z = the hatch side).
+    /// Glowing parts (windows, shelf lights, tower lamps) are separate renderers so gameplay can brighten the base as
+    /// it comes back to life.
     /// </summary>
     public static class BaseModelBuilder
     {
@@ -40,6 +41,8 @@ namespace MoonProject.Art.Editor
 
         public const string WorkbenchName = "Workbench";
 
+        public const string CassetteShelfName = "CassetteShelf";
+
         [MoonBuilder("Art/Base", 140)]
         public static void Build()
         {
@@ -47,6 +50,7 @@ namespace MoonProject.Art.Editor
             ModelPrefabWriter.Write(CreateLander(), ArtPaths.BaseFolder, material);
             ModelPrefabWriter.Write(CreateShelf(), ArtPaths.BaseFolder, material);
             ModelPrefabWriter.Write(CreateWorkbench(), ArtPaths.BaseFolder, material);
+            ModelPrefabWriter.Write(CreateCassetteShelf(), ArtPaths.BaseFolder, material);
             for (int level = RadioTowerMeshes.MinLevel; level <= RadioTowerMeshes.MaxLevel; level++)
             {
                 ModelPrefabWriter.Write(CreateTower(level), ArtPaths.BaseFolder, material);
@@ -99,6 +103,23 @@ namespace MoonProject.Art.Editor
                 new ModelMesh(WorkbenchName + "_Lights", WorkbenchMeshes.LampBulbMesh())));
             bench.Add(new ModelNode("SparkSocket", WorkbenchMeshes.Sparks));
             return bench;
+        }
+
+        /// <summary>
+        /// Bell's tape rack: root on the ground at the centre of its base (+Z = front), Slot_0..7 empties on the
+        /// cubby floors (+Y up, +Z = label facing) where a tape stands on its bottom edge.
+        /// </summary>
+        public static ModelNode CreateCassetteShelf()
+        {
+            var shelf = new ModelNode(CassetteShelfName, Vector3.zero,
+                new ModelMesh(CassetteShelfName, CassetteShelfMeshes.Rack()));
+            for (int i = 0; i < CassetteShelfMeshes.SlotCount; i++)
+            {
+                shelf.Add(new ModelNode("Slot_" + i.ToString(CultureInfo.InvariantCulture),
+                    CassetteShelfMeshes.SlotPosition(i)));
+            }
+
+            return shelf;
         }
 
         /// <summary>Radio tower stage <paramref name="level"/> (1..3).</summary>
