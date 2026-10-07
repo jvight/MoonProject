@@ -152,9 +152,11 @@ Generated/Art/Rover/HoverCoils.prefab  (meshes only; parent it to RoverModel's C
 Renaming or re-pivoting any node is a contract change: coordinate through the Director.
 
 Glow modulation: `Eye` and `AntennaTip` are their own MeshRenderers on the shared palette material. Their glow
-comes from the palette emission map; the material's `_EmissionColor` is authored as white (1,1,1). At runtime the
-rover scales glow per renderer with a `MaterialPropertyBlock` setting `_EmissionColor` = white × intensity
-(1 = authored, 0 = dark, > 1 brighter, HDR). Any custom palette shader must keep the URP `_EmissionColor` name.
+comes from the palette emission map, which carries the warm swatches' HDR strength; the material's `_EmissionColor`
+is authored as white (1,1,1). At runtime every domain scales glow per renderer with a `MaterialPropertyBlock`:
+`SetVector(_EmissionColor, new Vector4(i, i, i, 1))`, a **linear** multiplier (1 = authored, 0 = dark, 2 = twice
+the light). Never `SetColor`: Unity treats a colour as gamma-encoded and raises the intensity to ~2.2, so 2 would
+mean ~4.6×. Any custom palette shader must keep the URP `_EmissionColor` name.
 
 ## Contract: M2 content (Art -> Gameplay)
 Meshes-only prefabs on `M_LowPoly` (no colliders, no scripts; gameplay adds physics), +Y up, +Z front. Pivots: scrap and
