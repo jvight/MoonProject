@@ -281,7 +281,7 @@ namespace MoonProject.Rover
 
         private void SetGlow(Renderer target, float intensity)
         {
-            _glowBlock.SetColor(EmissionColorId, Color.white * intensity);
+            _glowBlock.SetVector(EmissionColorId, new Vector4(intensity, intensity, intensity, 1f));
             target.SetPropertyBlock(_glowBlock);
         }
 

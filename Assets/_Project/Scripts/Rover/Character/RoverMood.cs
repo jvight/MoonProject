@@ -76,13 +76,13 @@ namespace MoonProject.Rover
         /// <summary>Eyelid closure 0 (open) .. 1 (closed), all influences combined.</summary>
         public float LidClosure { get; private set; }
 
-        /// <summary>Eye brightness multiplier (1 = authored glow while active and calm).</summary>
+        /// <summary>Eye emission as a linear multiplier (1 = authored glow while active and calm).</summary>
         public float EyeGlow { get; private set; } = 1f;
 
         /// <summary>Solar wing opening, 0 (folded) .. 1 (fully open).</summary>
         public float WingOpen => Mathf.Clamp01(_wing.Value);
 
-        /// <summary>Antenna tip brightness multiplier.</summary>
+        /// <summary>Antenna tip emission as a linear multiplier.</summary>
         public float TipGlow { get; private set; }
 
         /// <summary>Effort while charging a Hover-Jump, 0..1 (eased): a squint and a gathered head.</summary>

@@ -54,7 +54,7 @@ namespace MoonProject.Rover.PlayModeTests
         private float RingGlow()
         {
             _rover.CoilGlows[0].GetPropertyBlock(_block);
-            return _block.GetColor(EmissionColorId).r;
+            return _block.GetVector(EmissionColorId).x;
         }
 
         [UnityTest]

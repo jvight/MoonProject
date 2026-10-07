@@ -150,25 +150,25 @@ namespace MoonProject.Rover
         [Range(1f, 15f)]
         [SerializeField] private float _breathPeriod = 5.5f;
 
-        [Tooltip("Glow swing (fraction of authored brightness) of each breath while active.")]
+        [Tooltip("Glow swing (linear fraction of authored emission) of each breath while active.")]
         [Range(0f, 1f)]
-        [SerializeField] private float _activeBreathDepth = 0.06f;
+        [SerializeField] private float _activeBreathDepth = 0.13f;
 
-        [Tooltip("Glow swing of each breath while daydreaming.")]
+        [Tooltip("Glow swing (linear fraction of authored emission) of each breath while daydreaming.")]
         [Range(0f, 1f)]
-        [SerializeField] private float _idleBreathDepth = 0.28f;
+        [SerializeField] private float _idleBreathDepth = 0.51f;
 
-        [Tooltip("How much dimmer (fraction) the eye rests while daydreaming.")]
+        [Tooltip("How much dimmer (linear fraction of authored emission) the eye rests while daydreaming.")]
         [Range(0f, 1f)]
-        [SerializeField] private float _idleGlowDim = 0.15f;
+        [SerializeField] private float _idleGlowDim = 0.2f;
 
-        [Tooltip("Extra brightness (fraction) at the peak of a full perk-up.")]
+        [Tooltip("Extra emission (linear fraction of authored) at the peak of a full perk-up.")]
         [Range(0f, 3f)]
-        [SerializeField] private float _perkGlowBoost = 0.7f;
+        [SerializeField] private float _perkGlowBoost = 2.2f;
 
-        [Tooltip("How much a closed lid dims the eye (fraction at fully closed).")]
+        [Tooltip("How much a closed lid dims the eye (linear fraction of emission at fully closed).")]
         [Range(0f, 1f)]
-        [SerializeField] private float _lidGlowDim = 0.5f;
+        [SerializeField] private float _lidGlowDim = 0.8f;
 
         [Tooltip("Intensity of the small warm light inside the eye at authored brightness.")]
         [Range(0f, 10f)]
@@ -353,9 +353,9 @@ namespace MoonProject.Rover
         [Range(0.05f, 3f)]
         [SerializeField] private float _tipBlinkDuration = 0.6f;
 
-        [Tooltip("Antenna tip brightness between blinks (fraction of authored).")]
+        [Tooltip("Antenna tip emission between blinks (linear fraction of authored).")]
         [Range(0f, 1f)]
-        [SerializeField] private float _tipRestGlow = 0.15f;
+        [SerializeField] private float _tipRestGlow = 0.015f;
 
         public float NeckYawLimit => _neckYawLimit;
 
