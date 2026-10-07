@@ -223,7 +223,7 @@ namespace MoonProject.Audio
                                  + _tuning.TuneStaticBoost * _mixer.Swell;
             _static.volume = Mathf.Clamp01(staticVolume) * _staticCueVolume * level * _soundscape.RadioGain *
                              Mathf.Lerp(1f, _tuning.CabinStaticGain, cabin);
-            _swish.volume = _tuning.TuneSwishVolume * _swishCueVolume * level;
+            _swish.volume = _tuning.TuneSwishVolume * _swishCueVolume * level * _soundscape.RadioGain;
         }
 
         private float StaticPresenceTarget()
