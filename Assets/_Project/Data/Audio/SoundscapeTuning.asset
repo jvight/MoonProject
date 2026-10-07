@@ -24,7 +24,6 @@ MonoBehaviour:
   _quietHoursBasinDb: 2.6
   _quietHoursEase: 3
   _stillSpeed: 0.2
-  _stillInput: 0.05
   _stillDelay: 1.5
   _stillRiseTime: 1.5
   _stillReleaseTime: 0.3
