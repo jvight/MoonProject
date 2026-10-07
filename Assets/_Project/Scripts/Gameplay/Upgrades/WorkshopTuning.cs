@@ -46,14 +46,15 @@ namespace MoonProject.Gameplay
         [Range(0f, 6f)] [SerializeField] private float _padFlare = 2.4f;
 
         [Header("Work lamp")]
-        [Tooltip("The lamp left on over the bench (1 = as authored): a warm welcome from across the base.")]
-        [Range(0f, 3f)] [SerializeField] private float _lampIdle = 0.6f;
+        [Tooltip("The lamp left on over the bench (linear emission multiplier, 1 = as authored): a warm welcome " +
+                 "from across the base.")]
+        [Range(0f, 3f)] [SerializeField] private float _lampIdle = 0.15f;
 
-        [Tooltip("The lamp while 07 is parked at the bench, leaning in to work.")]
-        [Range(0f, 4f)] [SerializeField] private float _lampOccupied = 1.3f;
+        [Tooltip("The lamp while 07 is parked at the bench, leaning in to work (linear emission multiplier).")]
+        [Range(0f, 4f)] [SerializeField] private float _lampOccupied = 0.75f;
 
-        [Tooltip("The lamp the moment an ability is bought (HDR); it eases back by itself.")]
-        [Range(0f, 8f)] [SerializeField] private float _lampFlare = 3f;
+        [Tooltip("The lamp the moment an ability is bought (linear emission multiplier); it eases back by itself.")]
+        [Range(0f, 8f)] [SerializeField] private float _lampFlare = 4.7f;
 
         [Tooltip("Seconds (time constant) for the lamp to brighten or dim.")]
         [Range(0f, 3f)] [SerializeField] private float _lampEase = 0.35f;

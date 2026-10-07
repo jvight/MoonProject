@@ -15,5 +15,6 @@ namespace MoonProject.Gameplay
         WarmGlow = 9,
         FriendPillar = 10,
         Spark = 11,
+        HomeHalo = 12,
     }
 }

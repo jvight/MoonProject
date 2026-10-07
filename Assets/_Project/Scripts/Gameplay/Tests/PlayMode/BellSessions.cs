@@ -16,7 +16,7 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// <summary>
     /// Scripted sessions for Bell (docs/features/M3-05) with a stand-in Bell (her rig contract's node names) in the
     /// flat world's canyon anchors: gathering, the repair beat, the unseen walk home, the homecoming, her signals, the
-    /// dial, the tape rack and her crackle; and all of it kept through a save and a reboot.
+    /// dial, the tape rack and her crackle, her soft solid body; and all of it kept through a save and a reboot.
     /// </summary>
     public sealed class BellSessions : InputTestFixture
     {
@@ -56,6 +56,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.Less(Vector3.Distance(bell.Site.Position, terminus.Position + terminus.Forward * 4.85f), 1e-3f,
                 "against the terminus wall");
             Assert.AreEqual(-terminus.Forward, bell.Site.Facing, "facing back toward 07 arriving");
+            StringAssert.StartsWith("Bell_Broken", SolidBody(friends).name, "lying broken, she is solid to 07");
             for (int part = 0; part < 3; part++)
             {
                 WorldAnchor alcove = _fixture.World.Anchor(WorldAnchorIds.CanyonAlcovePrefix + part);
@@ -129,6 +130,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return new WaitForSeconds(_fixture.FriendTuning.UnseenCheckInterval + 0.1f);
             Assert.IsTrue(bell.IsHome, "out of sight and far from 07: she is home");
             Assert.Less(Vector3.Distance(bell.Position, _fixture.BellCorner.position), 1e-3f, "in her corner");
+            BoxCollider standing = SolidBody(friends);
+            StringAssert.StartsWith("Bell(", standing.name, "standing, her own box goes with her");
+            Assert.Less(SurfaceRules.HorizontalDistance(standing.bounds.center, _fixture.BellCorner.position), 0.5f,
+                "07 cannot drive through her at home");
             Assert.AreEqual(0, _fixture.Events.FriendGreeted.Count, "nobody home to greet yet");
             yield return new WaitForSeconds(0.5f);
             Assert.AreEqual(FriendActivity.Napping, bell.Activity, "07 is away: she dozes");
@@ -292,6 +297,17 @@ namespace MoonProject.Gameplay.PlayModeTests
             {
                 yield return null;
             }
+        }
+
+        /// <summary>Bell's one live collider (the rig she shows), checked solid to 07 and kinematic.</summary>
+        private static BoxCollider SolidBody(FriendField friends)
+        {
+            BoxCollider[] boxes = friends.transform.Find("Friend_" + BellId).GetComponentsInChildren<BoxCollider>();
+            Assert.AreEqual(1, boxes.Length, "one soft box: on the rig she shows");
+            Assert.AreEqual(Layers.Prop, boxes[0].gameObject.layer, "solid to 07 like the base's props");
+            Assert.IsNotNull(boxes[0].attachedRigidbody);
+            Assert.IsTrue(boxes[0].attachedRigidbody.isKinematic, "07 cannot shove her");
+            return boxes[0];
         }
 
         private static Transform FindDeep(Transform root, string name)

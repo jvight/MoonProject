@@ -22,8 +22,8 @@ namespace MoonProject.Gameplay
         /// <summary>Close enough (m) to the perch to settle on it.</summary>
         private const float PerchSettle = 0.3f;
 
-        /// <summary>Eye glow while napping on the perch.</summary>
-        private const float NapEye = 0.3f;
+        /// <summary>Eye glow while napping on the perch (linear emission multiplier; awake is 1).</summary>
+        private const float NapEye = 0.07f;
 
         /// <summary>Share of cruise speed it potters about the base at.</summary>
         private const float HomeSpeed = 0.5f;

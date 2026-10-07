@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using MoonProject.Core;
 
 namespace MoonProject.Gameplay
 {
@@ -9,7 +10,8 @@ namespace MoonProject.Gameplay
     /// Bell"): finds her nodes anywhere in the hierarchy, lights her dial lamp and part lamps through the emission
     /// contract, blends every node from another rig's pose to her own rest pose (lying broken to standing), and poses
     /// her with a <see cref="BellPose"/> on top: Body (with the hips) bobbing, rolling and pitching, the Lid, the
-    /// Needle, the Speaker cone, each Leg's swing and Shin's bend. Throws when a node is missing.
+    /// Needle, the Speaker cone, each Leg's swing and Shin's bend. Makes her solid to 07 with a soft kinematic box.
+    /// Throws when a node is missing.
     /// </summary>
     public sealed class BellRig
     {
@@ -125,6 +127,57 @@ namespace MoonProject.Gameplay
                     Root.gameObject.SetActive(value);
                 }
             }
+        }
+
+        /// <summary>
+        /// Makes her solid to 07 (Prop layer, like the base's props): a kinematic body that follows her root and a box
+        /// around her meshes as posed now, <paramref name="padding"/> metres roomier on every side but the ground, so
+        /// 07 stops softly just short of her (its frictionless sphere slides along). Throws without a mesh to fit.
+        /// </summary>
+        public BoxCollider MakeSolid(float padding)
+        {
+            bool found = false;
+            var bounds = new Bounds();
+            foreach (MeshFilter filter in Root.GetComponentsInChildren<MeshFilter>(true))
+            {
+                if (filter.sharedMesh == null)
+                {
+                    continue;
+                }
+
+                Bounds mesh = filter.sharedMesh.bounds;
+                for (int corner = 0; corner < 8; corner++)
+                {
+                    var local = new Vector3((corner & 1) == 0 ? mesh.min.x : mesh.max.x,
+                        (corner & 2) == 0 ? mesh.min.y : mesh.max.y, (corner & 4) == 0 ? mesh.min.z : mesh.max.z);
+                    Vector3 point = Root.InverseTransformPoint(filter.transform.TransformPoint(local));
+                    if (found)
+                    {
+                        bounds.Encapsulate(point);
+                    }
+                    else
+                    {
+                        bounds = new Bounds(point, Vector3.zero);
+                        found = true;
+                    }
+                }
+            }
+
+            if (!found)
+            {
+                throw new InvalidOperationException($"{nameof(BellRig)}: '{Root.name}' has no mesh to make solid.");
+            }
+
+            padding = Mathf.Max(0f, padding);
+            GameObject host = Root.gameObject;
+            host.layer = Layers.Prop;
+            var body = host.AddComponent<Rigidbody>();
+            body.isKinematic = true;
+            body.useGravity = false;
+            var box = host.AddComponent<BoxCollider>();
+            box.center = bounds.center + Vector3.up * (padding * 0.5f);
+            box.size = bounds.size + new Vector3(padding * 2f, padding, padding * 2f);
+            return box;
         }
 
         public void SetDialLamp(float intensity)

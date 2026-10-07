@@ -70,6 +70,21 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
+        /// Quad in the XY plane with corners at (-1, -1) .. (1, 1) (scale for the radius), facing +Z; uv runs 0..1
+        /// across it, so the SoftGlow radial mask turns it into a soft round sprite.
+        /// </summary>
+        public static Mesh Quad()
+        {
+            var vertices = new[]
+            {
+                new Vector3(-1f, -1f, 0f), new Vector3(1f, -1f, 0f), new Vector3(-1f, 1f, 0f), new Vector3(1f, 1f, 0f),
+            };
+            var normals = new[] { Vector3.forward, Vector3.forward, Vector3.forward, Vector3.forward };
+            var uvs = new[] { new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0f, 1f), new Vector2(1f, 1f) };
+            return Assemble("GlowQuad", vertices, normals, uvs, new[] { 0, 2, 1, 1, 2, 3 });
+        }
+
+        /// <summary>
         /// Open tube whose first ring has <paramref name="startRadius"/> and second ring radius 1, along +Z
         /// (<paramref name="alongZ"/>) or +Y.
         /// </summary>

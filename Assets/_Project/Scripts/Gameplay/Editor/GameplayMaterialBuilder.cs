@@ -29,7 +29,7 @@ namespace MoonProject.Gameplay.Editor
                 GeneratedAssets.CreateOrReplace(GlintMaterials.Create(glint), GameplayAssetPaths.GlintMaterial),
                 GeneratedAssets.CreateOrReplace(GlintMaterials.CreatePart(glint),
                     GameplayAssetPaths.PartGlintMaterial), Write(shader, GlowRole.FriendPillar),
-                Write(shader, GlowRole.Spark));
+                Write(shader, GlowRole.Spark), Write(shader, GlowRole.HomeHalo));
             GeneratedAssets.CreateOrReplace(visuals, GameplayAssetPaths.Visuals);
             AssetDatabase.SaveAssets();
             Debug.Log($"{BuilderPath}: wrote {Enum.GetValues(typeof(GlowRole)).Length + 2} materials and " +

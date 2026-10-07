@@ -86,8 +86,8 @@ namespace MoonProject.Gameplay
         [Tooltip("Scale of a part as it reaches 07.")]
         [Range(0.05f, 1f)] [SerializeField] private float _partArrivalScale = 0.5f;
 
-        [Tooltip("Brightness of a lit part lamp on the friend's body (emission × this).")]
-        [Range(0f, 4f)] [SerializeField] private float _partLampGlow = 1.6f;
+        [Tooltip("Brightness of a lit part lamp on the friend's body (linear emission multiplier, 1 = as authored).")]
+        [Range(0f, 4f)] [SerializeField] private float _partLampGlow = 1f;
 
         [Tooltip("Seconds (time constant) for a part lamp to light.")]
         [Range(0f, 3f)] [SerializeField] private float _partLampEase = 0.4f;

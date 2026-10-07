@@ -65,11 +65,12 @@ namespace MoonProject.Gameplay
         [Tooltip("Intensity of the beacon's point light at level 1 (it grows with the glow).")]
         [Range(0f, 10f)] [SerializeField] private float _beaconLightIntensity = 1.5f;
 
-        [Tooltip("Tower light strips while the mast is unpowered (level 0).")]
-        [Range(0f, 1f)] [SerializeField] private float _unpoweredGlow = 0.08f;
+        [Tooltip("Tower light strips while the mast is unpowered (level 0; linear emission multiplier).")]
+        [Range(0f, 1f)] [SerializeField] private float _unpoweredGlow = 0.02f;
 
-        [Tooltip("Tower light strips once powered (level 1 and up).")]
-        [Range(0f, 4f)] [SerializeField] private float _poweredGlow = 1.1f;
+        [Tooltip("Tower light strips once powered (level 1 and up; linear emission multiplier, 1 = as authored). " +
+                 "The upgrade flare adds up to 1 on top.")]
+        [Range(0f, 4f)] [SerializeField] private float _poweredGlow = 1f;
 
         [Header("Upgrade moment")]
         [Tooltip("Seconds the beacon flares before the new stage appears.")]

@@ -4,9 +4,9 @@ using MoonProject.Core;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// How Bell moves (docs/features/M3-05): her repair beat, her two-step and waddle, her life at the base (swaying,
-    /// foot taps, watching 07 park, dozing and waking), her dial and its prompt, her signal pillar and the cassette
-    /// shelf at her corner. Created by the Gameplay/Tuning builder; runtime code only reads it.
+    /// How Bell moves (docs/features/M3-05): her repair beat, her solid body, her two-step and waddle, her life at the
+    /// base (swaying, foot taps, watching 07 park, dozing and waking), her dial and its prompt, her signal pillar and
+    /// the cassette shelf at her corner. Created by the Gameplay/Tuning builder; runtime code only reads it.
     /// </summary>
     public sealed class BellTuning : ScriptableObject
     {
@@ -44,6 +44,11 @@ namespace MoonProject.Gameplay
 
         [Tooltip("Gap (m) left between her back and the wall's surface.")]
         [Range(0f, 0.5f)] [SerializeField] private float _wallGap = 0.05f;
+
+        [Header("Body")]
+        [Tooltip("Room (m) her collider keeps around her cabinet on every side, so 07's nose (which reaches past its " +
+                 "physics sphere) stops softly just short of her, broken or home.")]
+        [Range(0f, 0.6f)] [SerializeField] private float _bodyPadding = 0.25f;
 
         [Header("Two-step (after her repair)")]
         [Tooltip("Seconds of her little dance before she sets off home.")]
@@ -132,14 +137,14 @@ namespace MoonProject.Gameplay
         [Tooltip("Farthest she turns (degrees) from her corner's facing to watch 07.")]
         [Range(0f, 120f)] [SerializeField] private float _watchMaxTurn = 55f;
 
-        [Tooltip("Dial lamp glow while awake (art: about 1 reads amber, above 1.2 bleaches).")]
+        [Tooltip("Dial lamp glow while awake (linear emission multiplier; art: 1 reads amber, above 1.2 bleaches).")]
         [Range(0f, 1.2f)] [SerializeField] private float _dialGlow = 1f;
 
         [Tooltip("Seconds (time constant) for her dial lamp to change glow.")]
         [Range(0.05f, 3f)] [SerializeField] private float _dialEase = 0.4f;
 
         [Tooltip("Brightest flicker of her dial lamp while she lies broken (the warm light deep in the canyon).")]
-        [Range(0f, 1.2f)] [SerializeField] private float _brokenFlicker = 0.55f;
+        [Range(0f, 1.2f)] [SerializeField] private float _brokenFlicker = 0.27f;
 
         [Tooltip("Flickers per second of her broken dial lamp.")]
         [Range(0.1f, 10f)] [SerializeField] private float _brokenFlickerRate = 2.3f;
@@ -152,7 +157,7 @@ namespace MoonProject.Gameplay
         [Range(0.01f, 2f)] [SerializeField] private float _stillSpeed = 0.3f;
 
         [Tooltip("Dial glow while she dozes: a low ember, never dark.")]
-        [Range(0.02f, 0.6f)] [SerializeField] private float _emberGlow = 0.16f;
+        [Range(0.02f, 0.6f)] [SerializeField] private float _emberGlow = 0.05f;
 
         [Tooltip("Seconds (time constant) for her dial to dim to an ember as she dozes off.")]
         [Range(0.1f, 6f)] [SerializeField] private float _dozeEase = 2.5f;
@@ -271,6 +276,7 @@ namespace MoonProject.Gameplay
         public float WallProbeHeight => _wallProbeHeight;
         public float WallProbe => _wallProbe;
         public float WallGap => _wallGap;
+        public float BodyPadding => _bodyPadding;
         public float DanceDuration => _danceDuration;
         public float DanceRate => _danceRate;
         public float DanceRoll => _danceRoll;
