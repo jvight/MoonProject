@@ -76,6 +76,16 @@ namespace MoonProject.Gameplay
         [Tooltip("Height (m) pieces float above the ground.")]
         [Range(0.1f, 2f)] [SerializeField] private float _hoverHeight = 0.45f;
 
+        [Header("Trail to the canyon")]
+        [Tooltip("Pieces in the trail from the playable area's edge up the mouth lane toward the canyon's lip.")]
+        [Range(0, 40)] [SerializeField] private int _canyonTrailPieces = 10;
+
+        [Tooltip("The trail stops this many metres short of the take-off lip.")]
+        [Range(0f, 30f)] [SerializeField] private float _canyonTrailLipGap = 4f;
+
+        [Tooltip("Sideways zigzag (m) of the trail's pieces, alternating left and right.")]
+        [Range(0f, 5f)] [SerializeField] private float _canyonTrailWobble = 1f;
+
         [Header("Idle")]
         [Tooltip("Bob amplitude (m) of a floating piece.")]
         [Range(0f, 0.5f)] [SerializeField] private float _bobAmplitude = 0.08f;
@@ -190,6 +200,9 @@ namespace MoonProject.Gameplay
         public int TopUpAttempts => _topUpAttempts;
         public float MinPieceSpacing => _minPieceSpacing;
         public float HoverHeight => _hoverHeight;
+        public int CanyonTrailPieces => _canyonTrailPieces;
+        public float CanyonTrailLipGap => _canyonTrailLipGap;
+        public float CanyonTrailWobble => _canyonTrailWobble;
         public float BobAmplitude => _bobAmplitude;
         public float BobFrequency => _bobFrequency;
         public float SpinSpeed => _spinSpeed;

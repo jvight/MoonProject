@@ -6,8 +6,9 @@ namespace MoonProject.Gameplay.PlayModeTests
 {
     /// <summary>
     /// Stands in for the World: a flat drivable disc at height 0 with a matching Ground collider, a visible floor for
-    /// captures, a soft key light, The Peak beyond the rim, and the canyon's anchors laid out flat to the west (no
-    /// chasm: the tests drive straight to them). Registers ITerrainQuery, IWorldLayout and IWorldAnchors.
+    /// captures, a soft key light, The Peak beyond the rim, and the canyon's anchors laid out flat to the west, its
+    /// lip beyond the playable area as in the real basin (no chasm: the tests drive straight to them). Registers
+    /// ITerrainQuery, IWorldLayout and IWorldAnchors.
     /// </summary>
     public sealed class FlatWorldSystem : MonoBehaviour, IGameSystem, ITerrainQuery, IWorldLayout, IWorldAnchors
     {
@@ -16,18 +17,19 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float AnchorRadius = 8f;
 
         private static readonly Vector3 West = new Vector3(-1f, 0f, 0f);
+        private static readonly Vector3 South = new Vector3(0f, 0f, -1f);
 
         private readonly WorldAnchor[] _anchors =
         {
-            new WorldAnchor(WorldAnchorIds.CanyonMouth, new Vector3(-170f, 0f, 60f), West, AnchorRadius),
-            new WorldAnchor(WorldAnchorIds.CanyonLip, new Vector3(-180f, 0f, 60f), West, AnchorRadius),
-            new WorldAnchor(WorldAnchorIds.CanyonLanding, new Vector3(-205f, 0f, 60f), West, AnchorRadius),
-            new WorldAnchor(WorldAnchorIds.CanyonLedge, new Vector3(-200f, 0f, 95f), West, AnchorRadius),
-            new WorldAnchor(WorldAnchorIds.CanyonAlcovePrefix + 0, new Vector3(-225f, 0f, 75f), West, AnchorRadius),
-            new WorldAnchor(WorldAnchorIds.CanyonAlcovePrefix + 1, new Vector3(-245f, 0f, 45f), West, AnchorRadius),
-            new WorldAnchor(WorldAnchorIds.CanyonAlcovePrefix + 2, new Vector3(-262f, 0f, 78f), West, AnchorRadius),
-            new WorldAnchor(WorldAnchorIds.CanyonTerminus, new Vector3(-275f, 0f, 60f), West, AnchorRadius),
-            new WorldAnchor(WorldAnchorIds.CanyonExit, new Vector3(-200f, 0f, 30f), Vector3.right, AnchorRadius),
+            new WorldAnchor(WorldAnchorIds.CanyonMouth, new Vector3(-250f, 0f, 40f), West, AnchorRadius),
+            new WorldAnchor(WorldAnchorIds.CanyonLip, new Vector3(-260f, 0f, 40f), West, AnchorRadius),
+            new WorldAnchor(WorldAnchorIds.CanyonLanding, new Vector3(-280f, 0f, 40f), West, AnchorRadius),
+            new WorldAnchor(WorldAnchorIds.CanyonLedge, new Vector3(-275f, 0f, 75f), West, AnchorRadius),
+            new WorldAnchor(WorldAnchorIds.CanyonAlcovePrefix + 0, new Vector3(-288f, 0f, 20f), West, AnchorRadius),
+            new WorldAnchor(WorldAnchorIds.CanyonAlcovePrefix + 1, new Vector3(-292f, 0f, 0f), West, AnchorRadius),
+            new WorldAnchor(WorldAnchorIds.CanyonAlcovePrefix + 2, new Vector3(-290f, 0f, -20f), West, AnchorRadius),
+            new WorldAnchor(WorldAnchorIds.CanyonTerminus, new Vector3(-285f, 0f, -45f), South, AnchorRadius),
+            new WorldAnchor(WorldAnchorIds.CanyonExit, new Vector3(-262f, 0f, 70f), Vector3.right, AnchorRadius),
         };
 
         public Rect PlayableArea
