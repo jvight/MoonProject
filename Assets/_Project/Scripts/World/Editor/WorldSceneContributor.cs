@@ -1,6 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
+using MoonProject.Art;
 using MoonProject.Art.Editor;
 using MoonProject.Editor.SceneBuild;
 
@@ -34,6 +35,7 @@ namespace MoonProject.World.Editor
             WorldAtmosphere.Apply(settings.Atmosphere, settings.Sky, earthlight);
 
             PeakBeacon beacon = CreateBeacon(context, settings, root);
+            CreateCanyonGlow(context, settings, root);
 
             var world = context.CreateChild("World", root).AddComponent<WorldSystem>();
             var serialized = new SerializedObject(world);
@@ -89,6 +91,37 @@ namespace MoonProject.World.Editor
             Assign(serialized, "_halo", haloRenderer);
             serialized.ApplyModifiedPropertiesWithoutUndo();
             return beacon;
+        }
+
+        /// <summary>
+        /// The faint warm light deep in Whispering Canyon, over the glinting ledge: seen from the base down the
+        /// canyon, it pools warm light on the ledge where a relic waits.
+        /// </summary>
+        private static void CreateCanyonGlow(SceneBuildContext context, WorldSettings settings, Transform root)
+        {
+            CanyonSettings canyon = settings.Surface.Canyon;
+            MoonSurface surface = settings.CreateSurface();
+            Vector2 point = surface.Canyon.GlowPoint;
+            Vector2 ledge = surface.Canyon.LedgeCenter;
+            float height = surface.SampleHeight(ledge.x, ledge.y) + canyon.GlowHeight;
+            GameObject glow = context.CreateChild("CanyonGlow", root);
+            glow.transform.position = new Vector3(point.x, height, point.y);
+
+            GameObject halo = context.CreateChild("Halo", glow.transform);
+            halo.AddComponent<MeshFilter>().sharedMesh = context.LoadAsset<Mesh>(WorldPaths.BeaconHaloMesh);
+            var haloRenderer = halo.AddComponent<MeshRenderer>();
+            haloRenderer.sharedMaterial = context.LoadAsset<Material>(WorldPaths.CanyonGlowMaterial);
+            haloRenderer.shadowCastingMode = ShadowCastingMode.Off;
+            haloRenderer.receiveShadows = false;
+            haloRenderer.lightProbeUsage = LightProbeUsage.Off;
+            haloRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+
+            var light = glow.AddComponent<Light>();
+            light.type = LightType.Point;
+            light.color = Palette.Get(PaletteSwatch.WarmLamp);
+            light.range = canyon.GlowLightRange;
+            light.intensity = canyon.GlowLightIntensity;
+            light.shadows = LightShadows.None;
         }
 
         private static void AssignRocks(SceneBuildContext context, SerializedObject serialized, string field,

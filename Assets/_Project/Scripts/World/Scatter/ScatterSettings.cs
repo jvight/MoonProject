@@ -28,6 +28,11 @@ namespace MoonProject.World
         [Tooltip("Extra boulder-free lanes from the base to the rim, as bearings in degrees clockwise from +Z.")]
         [SerializeField] private float[] _laneBearings = { 325f, 95f, 165f, 250f };
 
+        [Tooltip("Inside Whispering Canyon, pebbles only lie this far out from the centre line (0 = centre, 1 = wall " +
+            "foot), so the driving line stays clear.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _canyonPebbleClear = 0.65f;
+
         [Tooltip("Pebble density kept inside lanes (fraction).")]
         [Range(0f, 1f)]
         [SerializeField] private float _laneKeptPebbles = 0.5f;
@@ -102,6 +107,7 @@ namespace MoonProject.World
         public float LaneHalfWidth => _laneHalfWidth;
         public float[] LaneBearings => _laneBearings;
         public float LaneKeptPebbles => _laneKeptPebbles;
+        public float CanyonPebbleClear => _canyonPebbleClear;
         public float ClusterWavelength => _clusterWavelength;
         public float ClusterContrast => _clusterContrast;
         public float PebbleSpacing => _pebbleSpacing;

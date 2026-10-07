@@ -225,6 +225,10 @@ namespace MoonProject.World
             new BowlPlacement(140f, 215f, 40f, 4.4f, 0.7f),
         };
 
+        [Header("Whispering Canyon")]
+        [Tooltip("The canyon cut through the rim, gated by a chasm (docs/features/M3-04).")]
+        [SerializeField] private CanyonSettings _canyon = new CanyonSettings();
+
         [Header("Far field")]
         [Tooltip("Radius where the distant ranges beyond the rim start rising.")]
         [Range(500f, 4000f)]
@@ -293,6 +297,7 @@ namespace MoonProject.World
         public float CraterClearance => _craterClearance;
         public RampPlacement[] Ramps => _ramps;
         public BowlPlacement[] Bowls => _bowls;
+        public CanyonSettings Canyon => _canyon;
         public float FarRangeStart => _farRangeStart;
         public float FarRangeFull => _farRangeFull;
         public float FarRangeHeight => _farRangeHeight;
@@ -349,7 +354,7 @@ namespace MoonProject.World
                 return "Rim mountains, gullies, crags or far ranges could rise above The Peak; lower them or raise it.";
             }
 
-            return null;
+            return _canyon.Validate();
         }
     }
 }

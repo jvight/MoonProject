@@ -51,7 +51,7 @@ namespace MoonProject.World
             }
 
             var total = Stopwatch.StartNew();
-            TerrainChunkPlan[] plans = TerrainChunkPlanner.Plan(meshSettings);
+            TerrainChunkPlan[] plans = TerrainChunkPlanner.Plan(meshSettings, surface.Canyon.Touches);
             var painter = new TerrainPainter(paintSettings, surface.Seed, lightDirection);
             var mesher = new TerrainChunkMesher(surface, painter, meshSettings);
             var pieces = new TerrainMeshData[plans.Length + 1];

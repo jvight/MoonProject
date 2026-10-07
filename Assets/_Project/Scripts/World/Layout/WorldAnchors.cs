@@ -1,0 +1,128 @@
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+using MoonProject.Core;
+
+namespace MoonProject.World
+{
+    /// <summary>
+    /// The named content anchors of the generated world (registered as <see cref="IWorldAnchors"/>), built
+    /// deterministically from the surface: today Whispering Canyon's mouth, lip, landing apron, glinting ledge,
+    /// alcoves, terminus and the top of its one-way exit. Every radius is flat, drivable, uncluttered ground.
+    /// <para>
+    /// Forward is the way 07 travels when arriving into the space, so content faces -Forward to greet it: into the
+    /// canyon at the mouth and the landing, across the chasm at the lip, into the bay at the ledge and into each
+    /// alcove from the corridor, into the chamber at the terminus, and down the step, out to the basin, at the exit.
+    /// </para>
+    /// <para>
+    /// The landing is the touchdown zone just past the far face (where charged leaps come down), not the apron's
+    /// middle. The terminus stands just in front of the chamber's back wall: past the edge of its radius along
+    /// Forward lies a short strip of flat floor and then the sheer wall, so something can lean against it.
+    /// </para>
+    /// </summary>
+    public sealed class WorldAnchors : IWorldAnchors
+    {
+        private const float MouthRadius = 4f;
+        private const float LipRadius = 1.5f;
+        private const float LandingRadius = 6f;
+        private const float LandingSetback = 1f;
+        private const float LedgeRadius = 2f;
+        private const float AlcoveRadius = 2f;
+
+        // The terminus space, and the flat floor left between its edge and the foot of the chamber's back wall.
+        private const float TerminusSpace = 4f;
+        private const float TerminusWallGap = 1.25f;
+        private const float ExitRadius = 2.5f;
+        private const float ExitTopSetback = 4f;
+
+        private readonly WorldAnchor[] _anchors;
+        private readonly Dictionary<string, int> _byId = new Dictionary<string, int>(StringComparer.Ordinal);
+
+        public WorldAnchors(MoonSurface surface, CanyonSettings settings)
+        {
+            if (surface == null)
+            {
+                throw new ArgumentNullException(nameof(surface));
+            }
+
+            if (settings == null)
+            {
+                throw new ArgumentNullException(nameof(settings));
+            }
+
+            Canyon canyon = surface.Canyon;
+            CanyonPath main = canyon.MainPath;
+            CanyonPath exit = canyon.ExitPath;
+            var anchors = new List<WorldAnchor>
+            {
+                Make(surface, WorldAnchorIds.CanyonMouth, main.PointAt(0f), main.TangentAt(0f), MouthRadius),
+                Make(surface, WorldAnchorIds.CanyonLip, main.PointAt(canyon.LipArc), main.TangentAt(canyon.LipArc),
+                    LipRadius),
+            };
+
+            float landing = canyon.FarFaceArc + Canyon.SlabHalfDepth + LandingSetback + LandingRadius;
+            anchors.Add(Make(surface, WorldAnchorIds.CanyonLanding, main.PointAt(landing), main.TangentAt(landing),
+                LandingRadius));
+            anchors.Add(Make(surface, WorldAnchorIds.CanyonLedge, canyon.LedgeCenter,
+                main.RightAt(canyon.LedgeArc) * canyon.LedgeSide, LedgeRadius));
+            for (int i = 0; i < canyon.AlcoveArcs.Count; i++)
+            {
+                float arc = canyon.AlcoveArcs[i];
+                float side = canyon.AlcoveSides[i];
+                Vector2 outward = main.RightAt(arc) * side;
+                Vector2 centre = main.PointAt(arc) + outward * (settings.CanyonHalfWidth + settings.AlcoveDepth * 0.5f);
+                anchors.Add(Make(surface, WorldAnchorIds.CanyonAlcovePrefix + i, centre, outward, AlcoveRadius));
+            }
+
+            // The chamber is the corridor's round end cap, its wall foot TerminusRadius beyond the line's end.
+            Vector2 intoChamber = main.TangentAt(main.EndArc);
+            Vector2 terminus = main.PointAt(main.EndArc)
+                + intoChamber * (settings.TerminusRadius - TerminusWallGap - TerminusSpace);
+            anchors.Add(Make(surface, WorldAnchorIds.CanyonTerminus, terminus, intoChamber, TerminusSpace));
+            float exitTop = canyon.ExitStepArc + Canyon.SlabHalfDepth + ExitTopSetback;
+            anchors.Add(Make(surface, WorldAnchorIds.CanyonExit, exit.PointAt(exitTop), -exit.TangentAt(exitTop),
+                ExitRadius));
+
+            _anchors = anchors.ToArray();
+            for (int i = 0; i < _anchors.Length; i++)
+            {
+                _byId.Add(_anchors[i].Id, i);
+            }
+
+            Vector2 foot = canyon.ExitFoot;
+            ExitFoot = new Vector3(foot.x, surface.SampleHeight(foot.x, foot.y), foot.y);
+        }
+
+        public int Count => _anchors.Length;
+
+        /// <summary>
+        /// The foot of the exit's step on the basin side (not an anchor id yet): where a crew trail marker can stand.
+        /// </summary>
+        public Vector3 ExitFoot { get; }
+
+        public WorldAnchor Get(int index)
+        {
+            return _anchors[index];
+        }
+
+        public bool TryGet(string id, out WorldAnchor anchor)
+        {
+            if (id != null && _byId.TryGetValue(id, out int index))
+            {
+                anchor = _anchors[index];
+                return true;
+            }
+
+            anchor = default;
+            return false;
+        }
+
+        private static WorldAnchor Make(MoonSurface surface, string id, Vector2 position, Vector2 forward,
+            float radius)
+        {
+            Vector2 flat = forward.normalized;
+            var ground = new Vector3(position.x, surface.SampleHeight(position.x, position.y), position.y);
+            return new WorldAnchor(id, ground, new Vector3(flat.x, 0f, flat.y), radius);
+        }
+    }
+}

@@ -5,6 +5,9 @@
         "MoonProject.Core",
         "MoonProject.Art",
         "MoonProject.World",
+        "MoonProject.Rover",
+        "MoonProject.App",
+        "MoonProject.Testing",
         "Unity.InputSystem",
         "UnityEngine.TestRunner"
     ],

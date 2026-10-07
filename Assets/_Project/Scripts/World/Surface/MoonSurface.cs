@@ -264,6 +264,9 @@ namespace MoonProject.World
                 _craterCalmStart[i] = calmStart;
                 _craterCalmEnd[i] = calmEnd;
             }
+
+            // Built last: the canyon reads the finished world height at its mouths.
+            Canyon = new Canyon(settings.Canyon, baseSeed, (x, z) => SampleWorld(x, z).Height);
         }
 
         public int Seed { get; }
@@ -291,6 +294,9 @@ namespace MoonProject.World
 
         public IReadOnlyList<Ramp> Ramps => _ramps;
 
+        /// <summary>Whispering Canyon, carved into the rim (docs/features/M3-04).</summary>
+        public Canyon Canyon { get; }
+
         /// <summary>Unit XZ direction for a bearing in degrees clockwise from +Z.</summary>
         public static Vector2 BearingToDirection(float bearingDegrees)
         {
@@ -311,9 +317,22 @@ namespace MoonProject.World
             return new Vector3(-dx, 2f * NormalStep, -dz).normalized;
         }
 
-        /// <summary>True on the basin floor inside the (warped) rim and away from The Peak's flanks.</summary>
+        /// <summary>
+        /// True on the basin floor inside the (warped) rim and away from The Peak's flanks, and on Whispering
+        /// Canyon's floors (its corridors, the landing apron, the exit shelf and the chasm trough), never on the
+        /// canyon's walls or gate faces.
+        /// </summary>
         public bool IsDrivable(float x, float z)
         {
+            if (Canyon.Bounds.Contains(new Vector2(x, z)))
+            {
+                bool? canyon = Canyon.IsDrivable(x, z);
+                if (canyon.HasValue)
+                {
+                    return canyon.Value;
+                }
+            }
+
             float r = Mathf.Sqrt(x * x + z * z);
             if (r <= _rimWarpStart)
             {
@@ -336,6 +355,19 @@ namespace MoonProject.World
 
         /// <summary>Height plus region weights at world XZ.</summary>
         public SurfaceSample Sample(float x, float z)
+        {
+            SurfaceSample world = SampleWorld(x, z);
+            if (!Canyon.Bounds.Contains(new Vector2(x, z)))
+            {
+                return world;
+            }
+
+            float height = Canyon.Apply(x, z, world.Height, out float floor, out float chasm);
+            return new SurfaceSample(height, world.CraterBowl, world.CraterRim, world.RimZone, floor, chasm);
+        }
+
+        /// <summary>The surface without Whispering Canyon.</summary>
+        private SurfaceSample SampleWorld(float x, float z)
         {
             float r2 = x * x + z * z;
             if (r2 <= _padRadiusSq)

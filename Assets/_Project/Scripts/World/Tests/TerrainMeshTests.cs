@@ -11,10 +11,15 @@ namespace MoonProject.World.Tests
     {
         private const float SeamTolerance = 1e-3f;
 
+        // Mesh vertices must sit on the surface within this (m, times one plus the steepest slope nearby, measured
+        // over the probe step).
+        private const float HeightTolerance = 1e-3f;
+        private const float HeightProbe = 0.01f;
+
         private static readonly PaletteSwatch[] TerrainSwatches =
         {
             PaletteSwatch.DustLight, PaletteSwatch.DustMid, PaletteSwatch.DustShadow, PaletteSwatch.RockLight,
-            PaletteSwatch.RockDark,
+            PaletteSwatch.RockDark, PaletteSwatch.Charcoal,
         };
 
         private MoonSurface _surface;
@@ -32,7 +37,7 @@ namespace MoonProject.World.Tests
             Vector3 toLight = WorldAtmosphere.LightSourceDirection(new AtmosphereSettings(), new SkySettings());
             _painter = new TerrainPainter(new TerrainPaintSettings(), WorldSettings.DefaultSeed, toLight);
             var mesher = new TerrainChunkMesher(_surface, _painter, _settings);
-            _plans = TerrainChunkPlanner.Plan(_settings);
+            _plans = TerrainChunkPlanner.Plan(_settings, _surface.Canyon.Touches);
             _chunks = new TerrainMeshData[_plans.Length];
             var watch = Stopwatch.StartNew();
             Parallel.For(0, _plans.Length, i => _chunks[i] = mesher.Build(_plans[i]));
@@ -68,9 +73,9 @@ namespace MoonProject.World.Tests
         [Test]
         public void FineTier_CoversEverythingDrivable()
         {
-            for (float z = -400f; z <= 400f; z += 4f)
+            for (float z = -500f; z <= 500f; z += 4f)
             {
-                for (float x = -400f; x <= 400f; x += 4f)
+                for (float x = -500f; x <= 500f; x += 4f)
                 {
                     if (_surface.IsDrivable(x, z))
                     {
@@ -208,10 +213,24 @@ namespace MoonProject.World.Tests
                         continue;
                     }
 
+                    // Out at the rim the height function is only float-accurate to a few 1e-4 m (its noise terms
+                    // sum large magnitudes), and storing positions chunk-local moves them by about as much, which
+                    // steep canyon walls (and the creases at their feet) multiply by their slope.
                     Vector3 world = local + chunk.Origin;
-                    Assert.AreEqual(_surface.SampleHeight(world.x, world.z), world.y, 1e-4f, chunk.Name);
+                    float height = _surface.SampleHeight(world.x, world.z);
+                    float slope = SteepestRise(world.x, world.z, height) / HeightProbe;
+                    Assert.AreEqual(height, world.y, HeightTolerance * (1f + slope), chunk.Name);
                 }
             }
+        }
+
+        /// <summary>Largest height change one <see cref="HeightProbe"/> step away along either axis.</summary>
+        private float SteepestRise(float x, float z, float height)
+        {
+            float rise = Mathf.Abs(_surface.SampleHeight(x + HeightProbe, z) - height);
+            rise = Mathf.Max(rise, Mathf.Abs(_surface.SampleHeight(x - HeightProbe, z) - height));
+            rise = Mathf.Max(rise, Mathf.Abs(_surface.SampleHeight(x, z + HeightProbe) - height));
+            return Mathf.Max(rise, Mathf.Abs(_surface.SampleHeight(x, z - HeightProbe) - height));
         }
 
         [Test]

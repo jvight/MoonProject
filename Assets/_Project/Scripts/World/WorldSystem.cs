@@ -7,10 +7,11 @@ using MoonProject.Core;
 namespace MoonProject.World
 {
     /// <summary>
-    /// Owns the moon: builds the analytic surface, the terrain, the rock scatter and Earth, applies the atmosphere and
-    /// sky, and registers <see cref="ITerrainQuery"/> and <see cref="IWorldLayout"/> in the context. In edit mode it
-    /// also builds a preview (HideFlags.DontSave: never saved into the scene, destroyed in OnDisable) so the scene view
-    /// and scene captures show the world; <see cref="Initialize"/> is the only play-mode path.
+    /// Owns the moon: builds the analytic surface, the terrain (with Whispering Canyon's gate slabs), the rock scatter
+    /// and Earth, applies the atmosphere and sky, and registers <see cref="ITerrainQuery"/>,
+    /// <see cref="IWorldLayout"/> and <see cref="IWorldAnchors"/> in the context. In edit mode it also builds a
+    /// preview (HideFlags.DontSave: never saved into the scene, destroyed in OnDisable) so the scene view and scene
+    /// captures show the world; <see cref="Initialize"/> is the only play-mode path.
     /// </summary>
     [ExecuteAlways]
     public sealed class WorldSystem : MonoBehaviour, IGameSystem
@@ -43,12 +44,15 @@ namespace MoonProject.World
 
         private readonly TerrainBuilder _terrainBuilder = new TerrainBuilder();
         private readonly ScatterBuilder _scatterBuilder = new ScatterBuilder();
+        private readonly CanyonGateBuilder _gateBuilder = new CanyonGateBuilder();
         private GameObject _generatedRoot;
         private Mesh _earthMesh;
 
         public MoonSurface Surface { get; private set; }
 
         public WorldLayout Layout { get; private set; }
+
+        public WorldAnchors Anchors { get; private set; }
 
         public TerrainBuildReport LastBuild { get; private set; }
 
@@ -68,6 +72,7 @@ namespace MoonProject.World
             Generate(HideFlags.None);
             context.Register<ITerrainQuery>(Surface);
             context.Register<IWorldLayout>(Layout);
+            context.Register<IWorldAnchors>(Anchors);
             Debug.Log($"{nameof(WorldSystem)}: terrain {LastBuild}; scatter {LastScatter}", this);
         }
 
@@ -101,6 +106,7 @@ namespace MoonProject.World
             MoonSurface surface = _settings.CreateSurface();
             Surface = surface;
             Layout = new WorldLayout(surface, _settings.Sky);
+            Anchors = new WorldAnchors(surface, _settings.Surface.Canyon);
 
             // Scatter planning only reads the analytic surface: it runs on a worker while the terrain is meshed.
             ScatterSettings scatterSettings = _settings.Scatter;
@@ -114,6 +120,7 @@ namespace MoonProject.World
             Vector3 toLight = WorldAtmosphere.LightSourceDirection(_settings.Atmosphere, _settings.Sky);
             LastBuild = _terrainBuilder.Build(_generatedRoot.transform, Surface, _settings.Mesh, _settings.Paint,
                 toLight, _terrainMaterial, hideFlags);
+            _gateBuilder.Build(_generatedRoot.transform, surface.Canyon.Slabs, _terrainMaterial, hideFlags);
             LastScatter = _scatterBuilder.Build(_generatedRoot.transform, scatterPlan.GetAwaiter().GetResult(),
                 scatterSettings, _settings.Mesh.ChunkSize, _pebbleRocks, _boulderRocks, _terrainMaterial, hideFlags);
             BuildEarth(hideFlags);
@@ -152,6 +159,7 @@ namespace MoonProject.World
             _earthMesh = null;
             _terrainBuilder.DestroyMeshes();
             _scatterBuilder.DestroyMeshes();
+            _gateBuilder.DestroyMeshes();
         }
 
         private static void Release(Object target)

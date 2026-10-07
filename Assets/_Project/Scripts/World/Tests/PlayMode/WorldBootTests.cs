@@ -33,6 +33,13 @@ namespace MoonProject.World.PlayModeTests
         private const float ColliderTolerance = 0.25f;
         private const float ScatterProbeRadius = 1000f;
 
+        // Gate probes start this far (m) in front of a gate slab, across these shares of the corridor's half width;
+        // a sheer face has a near-horizontal normal and sits where the slab's front should be.
+        private const float GateProbeRun = 6f;
+        private const float GateProbeTolerance = 0.5f;
+        private const float SheerNormalY = 0.2f;
+        private static readonly float[] GateProbeShares = { -0.6f, 0f, 0.6f };
+
         private GameObject _host;
         private GameObject _lightHost;
         private PeakBeacon _beacon;
@@ -89,6 +96,13 @@ namespace MoonProject.World.PlayModeTests
                     $"collider and surface disagree at {probe}");
             }
 
+            Assert.AreSame(world.Anchors, context.Get<IWorldAnchors>());
+            Canyon canyon = world.Surface.Canyon;
+            float exitHalfWidth = settings.Surface.Canyon.ExitHalfWidth;
+            AssertSheerFace(world.Surface, canyon.MainPath, canyon.FarFaceArc, settings.Surface.Canyon.ChasmHalfWidth,
+                "the chasm's far face");
+            AssertSheerFace(world.Surface, canyon.ExitPath, canyon.ExitStepArc, exitHalfWidth, "the exit step");
+
             ScatterBuildReport scatter = world.LastScatter;
             Assert.Greater(scatter.Pebbles, 0);
             Assert.AreEqual(layout.PeakPosition, _beacon.transform.position, "the beacon stands on the summit");
@@ -105,6 +119,31 @@ namespace MoonProject.World.PlayModeTests
             Assert.Ignore("Needs editor asset access to wire the WorldSystem.");
             yield break;
 #endif
+        }
+
+        /// <summary>
+        /// A rover-height probe run straight at a gate face (across its width) must meet a vertical collider on the
+        /// ground layer where the face is, not a ramp of terrain triangles in front of it.
+        /// </summary>
+        private static void AssertSheerFace(MoonSurface surface, CanyonPath path, float faceArc, float halfWidth,
+            string what)
+        {
+            float before = faceArc - Canyon.SlabHalfDepth - GateProbeRun;
+            float after = faceArc + Canyon.SlabHalfDepth + GateProbeRun;
+            Vector2 along = path.TangentAt(faceArc);
+            foreach (float share in GateProbeShares)
+            {
+                Vector2 start = path.PointAt(before) + path.RightAt(before) * (share * halfWidth);
+                Vector2 end = path.PointAt(after) + path.RightAt(after) * (share * halfWidth);
+                float low = surface.SampleHeight(start.x, start.y);
+                float high = surface.SampleHeight(end.x, end.y);
+                var origin = new Vector3(start.x, (low + high) * 0.5f, start.y);
+                string where = $"{what} at {share * halfWidth:F1} m across";
+                Assert.IsTrue(Physics.Raycast(origin, new Vector3(along.x, 0f, along.y), out RaycastHit hit,
+                    2f * GateProbeRun, Layers.GroundMask), $"{where}: nothing to hit");
+                Assert.Less(Mathf.Abs(hit.normal.y), SheerNormalY, $"{where}: the face is not sheer");
+                Assert.AreEqual(GateProbeRun, hit.distance, GateProbeTolerance, $"{where}: the face is not in place");
+            }
         }
 
         [TearDown]
