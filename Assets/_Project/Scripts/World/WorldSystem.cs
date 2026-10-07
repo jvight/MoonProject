@@ -115,7 +115,7 @@ namespace MoonProject.World
             // Scatter planning only reads the analytic surface: it runs on a worker while the terrain is meshed.
             ScatterSettings scatterSettings = _settings.Scatter;
             Task<List<ScatterInstance>> scatterPlan =
-                Task.Run(() => new ScatterPlanner(surface, scatterSettings).Plan());
+                Task.Run(() => new ScatterPlanner(surface, scatterSettings, Anchors).Plan());
             WorldAtmosphere.Apply(_settings.Atmosphere, _settings.Sky, _earthlight);
             SkyShaderGlobals.Apply(_settings.Sky);
 

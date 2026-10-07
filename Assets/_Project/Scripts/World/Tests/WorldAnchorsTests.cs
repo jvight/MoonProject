@@ -114,7 +114,7 @@ namespace MoonProject.World.Tests
         [Test]
         public void EveryRadius_IsClearOfScatter()
         {
-            List<ScatterInstance> plan = new ScatterPlanner(_surface, new ScatterSettings()).Plan();
+            List<ScatterInstance> plan = new ScatterPlanner(_surface, new ScatterSettings(), _anchors).Plan();
             for (int i = 0; i < _anchors.Count; i++)
             {
                 WorldAnchor anchor = _anchors.Get(i);

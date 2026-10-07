@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using MoonProject.Core;
 
 namespace MoonProject.World
 {
@@ -28,13 +29,29 @@ namespace MoonProject.World
         private readonly uint _seed;
         private readonly GradientNoise _clusterNoise;
         private readonly Vector2[] _laneEnds;
+
+        // Anchor spaces kept clear of rocks: x, z of the centre and its radius.
+        private readonly Vector3[] _clearings;
         private readonly float _pebbleMaxSlopeCos;
         private readonly float _boulderMaxSlopeCos;
 
-        public ScatterPlanner(MoonSurface surface, ScatterSettings settings)
+        /// <param name="anchors">The world's anchors: no rock lies inside any anchor's radius.</param>
+        public ScatterPlanner(MoonSurface surface, ScatterSettings settings, IWorldAnchors anchors)
         {
             _surface = surface ?? throw new ArgumentNullException(nameof(surface));
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+            if (anchors == null)
+            {
+                throw new ArgumentNullException(nameof(anchors));
+            }
+
+            _clearings = new Vector3[anchors.Count];
+            for (int i = 0; i < anchors.Count; i++)
+            {
+                WorldAnchor anchor = anchors.Get(i);
+                _clearings[i] = new Vector3(anchor.Position.x, anchor.Position.z, anchor.Radius);
+            }
+
             string error = settings.Validate();
             if (error != null)
             {
@@ -132,6 +149,20 @@ namespace MoonProject.World
             return Mathf.Clamp01(chance);
         }
 
+        private bool InClearing(Vector2 site, float size)
+        {
+            foreach (Vector3 clearing in _clearings)
+            {
+                float reach = clearing.z + size + _settings.AnchorClearance;
+                if ((site - new Vector2(clearing.x, clearing.y)).sqrMagnitude < reach * reach)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         /// <summary>Distance from <paramref name="point"/> to the nearest driving lane, metres.</summary>
         public float DistanceToLanes(Vector2 point)
         {
@@ -170,6 +201,11 @@ namespace MoonProject.World
                 uint shape = Hashing.Hash(qx, qz, seed ^ ShapeSalt);
                 float sizeT = Hashing.ToUnit(Hashing.Mix(shape));
                 float size = Mathf.Lerp(sizeRange.x, sizeRange.y, sizeT * sizeT);
+                if (InClearing(site, size))
+                {
+                    continue;
+                }
+
                 float yaw = Hashing.ToUnit(Hashing.Mix(shape ^ 0x5bd1e995u)) * 360f;
                 var position = new Vector3(site.x, _surface.SampleHeight(site.x, site.y), site.y);
                 instances.Add(new ScatterInstance(kind, position, normal, yaw, size, (int)(shape >> 1)));

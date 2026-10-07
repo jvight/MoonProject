@@ -426,7 +426,7 @@ namespace MoonProject.World
             return width;
         }
 
-        /// <summary>Height the two mesas on the main floor add at (x, z): the glinting ledge and the relay ledge.</summary>
+        /// <summary>Height the main floor's two mesas add at (x, z): the glinting and the relay ledge.</summary>
         private float Ledge(float x, float z)
         {
             var point = new Vector2(x, z);

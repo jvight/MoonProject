@@ -18,7 +18,7 @@ namespace MoonProject.World.Tests
         {
             _surface = new MoonSurface(new SurfaceSettings(), WorldSettings.DefaultSeed);
             _settings = new ScatterSettings();
-            _planner = new ScatterPlanner(_surface, _settings);
+            _planner = new ScatterPlanner(_surface, _settings, Anchors());
             var watch = Stopwatch.StartNew();
             _plan = _planner.Plan();
             _planMs = watch.Elapsed.TotalMilliseconds;
@@ -48,7 +48,7 @@ namespace MoonProject.World.Tests
         [Test]
         public void Plan_IsDeterministic()
         {
-            List<ScatterInstance> again = new ScatterPlanner(_surface, _settings).Plan();
+            List<ScatterInstance> again = new ScatterPlanner(_surface, _settings, Anchors()).Plan();
             Assert.AreEqual(_plan.Count, again.Count);
             for (int i = 0; i < _plan.Count; i++)
             {
@@ -224,6 +224,11 @@ namespace MoonProject.World.Tests
             }
 
             return count;
+        }
+
+        private WorldAnchors Anchors()
+        {
+            return new WorldAnchors(_surface, new SurfaceSettings().Canyon);
         }
     }
 }

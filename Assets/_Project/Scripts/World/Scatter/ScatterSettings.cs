@@ -19,6 +19,11 @@ namespace MoonProject.World
         [Range(0f, 60f)]
         [SerializeField] private float _padClearance = 12f;
 
+        [Tooltip("Extra clear ground (metres) kept around every world anchor's radius, beyond the rock's own size: " +
+            "anchor spaces (a relay mast's pad, an alcove, the terminus) stay uncluttered.")]
+        [Range(0f, 10f)]
+        [SerializeField] private float _anchorClearance = 1.5f;
+
         [Header("Driving lanes")]
         [Tooltip("Half width of the boulder-free lanes from the base to The Peak, the ramps, the bowls and the " +
             "extra bearings below, metres.")]
@@ -104,6 +109,7 @@ namespace MoonProject.World
 
         public float ExtentRadius => _extentRadius;
         public float PadClearance => _padClearance;
+        public float AnchorClearance => _anchorClearance;
         public float LaneHalfWidth => _laneHalfWidth;
         public float[] LaneBearings => _laneBearings;
         public float LaneKeptPebbles => _laneKeptPebbles;
