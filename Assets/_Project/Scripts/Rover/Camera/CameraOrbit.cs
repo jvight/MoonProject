@@ -61,6 +61,15 @@ namespace MoonProject.Rover
             FieldOfView = _tuning.BaseFov;
         }
 
+        /// <summary>
+        /// Takes over <paramref name="yawOffset"/> (deg) as the player's orbit, so a view the wide shot turned to stays
+        /// where it is when control comes back instead of swinging round again.
+        /// </summary>
+        public void AdoptYaw(float yawOffset)
+        {
+            YawOffset = Mathf.DeltaAngle(0f, yawOffset);
+        }
+
         /// <param name="lookDegrees">Orbit change requested this frame: x = orbit right, y = camera up (deg).</param>
         /// <param name="speed">Rover horizontal speed (m/s).</param>
         /// <param name="normalizedSpeed">Speed as a fraction of top speed.</param>
