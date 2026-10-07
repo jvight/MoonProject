@@ -8,7 +8,7 @@ namespace MoonProject.Art.Editor
 {
     /// <summary>
     /// Generates the palette textures (one flat cell per <see cref="PaletteSwatch"/>, laid out as
-    /// <see cref="Palette.Uv"/> expects): the sRGB base map of <see cref="Palette.Get"/> colours and the
+    /// <see cref="Palette.Uv"/> expects): the sRGB base map of <see cref="Palette.GetSurface"/> colours and the
     /// linear HDR emission map of <see cref="Palette.GetGlow"/>, and the shared <c>M_LowPoly</c> material every
     /// low-poly mesh renders with. Its _EmissionColor stays authored white (glow-off: black), so a renderer's linear
     /// MaterialPropertyBlock multiplier of 1 shows each swatch's HDR glow as authored.
@@ -102,14 +102,14 @@ namespace MoonProject.Art.Editor
             return shader;
         }
 
-        /// <summary>Base map pixels (sRGB swatch colours), row 0 at the bottom; unused cells are black.</summary>
+        /// <summary>Base map pixels (sRGB surface colours), row 0 at the bottom; unused cells are black.</summary>
         public static Color32[] CreateBasePixels()
         {
             var pixels = new Color32[Palette.Columns * CellPixels * Palette.Rows * CellPixels];
             for (int i = 0; i < pixels.Length; i++)
             {
                 int index = CellOf(i);
-                pixels[i] = index < Palette.Count ? Palette.Get((PaletteSwatch)index) : UnusedCell;
+                pixels[i] = index < Palette.Count ? Palette.GetSurface((PaletteSwatch)index) : UnusedCell;
             }
 
             return pixels;

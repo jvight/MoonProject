@@ -5,9 +5,9 @@ namespace MoonProject.Art
     /// <summary>
     /// Colour values of every <see cref="PaletteSwatch"/> (sRGB), whether the swatch glows, and where it lives in
     /// the generated palette textures: a <see cref="Columns"/> x <see cref="Rows"/> grid of flat cells, swatch i at
-    /// column i % Columns, row i / Columns, row 0 at the bottom (UV v = 0). Low-poly meshes glow with
-    /// <see cref="GetGlow"/> (pillar 6, "warm points in a cold field"): only the living lights cross the game's bloom
-    /// threshold, warm above cyan.
+    /// column i % Columns, row i / Columns, row 0 at the bottom (UV v = 0). Low-poly meshes paint with
+    /// <see cref="GetSurface"/> and glow with <see cref="GetGlow"/> (pillar 6, "warm points in a cold field"): only
+    /// the living lights cross the game's bloom threshold, warm above cyan, while every lit surface stays under it.
     /// </summary>
     public static class Palette
     {
@@ -16,6 +16,12 @@ namespace MoonProject.Art
 
         /// <summary>Linear brightness above which the game's bloom picks a pixel up (World's grade).</summary>
         public const float BloomThreshold = 1f;
+
+        /// <summary>
+        /// The brightest a lit surface may get under <see cref="ReferenceLight"/>: just under the bloom threshold,
+        /// where the world keeps its lit dust, so cream panels and orange stripes never glow like lamps.
+        /// </summary>
+        public const float LitCeiling = 0.95f;
 
         /// <summary>
         /// Glow of the home lamps (windows, bulbs, 07's eye) at intensity 1: well above lit dust and cream, so the
@@ -34,6 +40,14 @@ namespace MoonProject.Art
 
         /// <summary>Glow of the cyan tech swatches (scrap, sensor glass): a notch under the warm lamps.</summary>
         public const float CyanGlow = 1.45f;
+
+        /// <summary>
+        /// The most light a lit face receives in the game, in linear RGB: the low earthlight square-on plus the sky's
+        /// ambient (World's AtmosphereSettings: colour (0.86, 0.85, 1) at intensity 1.75, ambient sky
+        /// (0.17, 0.155, 0.33)). Surfaces are darkened against it, hue kept, until they sit under
+        /// <see cref="LitCeiling"/>.
+        /// </summary>
+        public static readonly Color ReferenceLight = new Color(1.27f, 1.24f, 1.84f);
 
         // The game's Neutral tonemapper compresses each channel on its own, so a bright WarmLamp drifts towards lemon:
         // warm glows keep less green and blue than the swatch to still read amber once graded.
@@ -130,6 +144,26 @@ namespace MoonProject.Art
             }
         }
 
+        /// <summary>
+        /// The swatch's colour as painted on lit low-poly surfaces (the base map, sRGB): <see cref="Get"/>, darkened
+        /// with its hue kept just enough that a face square-on to <see cref="ReferenceLight"/> stays under
+        /// <see cref="LitCeiling"/>. Only the brightest swatches move (cream, enamel, honey, the orange accents, the
+        /// lightest dust, lamp bodies); <see cref="Get"/> stays the art bible's colour for UI, sky and terrain.
+        /// </summary>
+        public static Color32 GetSurface(PaletteSwatch swatch)
+        {
+            Color albedo = Linear(Get(swatch));
+            float lit = Mathf.Max(albedo.r * ReferenceLight.r,
+                Mathf.Max(albedo.g * ReferenceLight.g, albedo.b * ReferenceLight.b));
+            if (lit <= LitCeiling)
+            {
+                return Get(swatch);
+            }
+
+            float scale = LitCeiling / lit;
+            return new Color32(ToSrgb(albedo.r * scale), ToSrgb(albedo.g * scale), ToSrgb(albedo.b * scale), 0xFF);
+        }
+
         /// <summary>An sRGB swatch colour in linear RGB (the standard sRGB curve, computed in managed code).</summary>
         public static Color Linear(Color32 srgb)
         {
@@ -153,6 +187,13 @@ namespace MoonProject.Art
         {
             float c = channel / 255f;
             return c <= 0.04045f ? c / 12.92f : Mathf.Pow((c + 0.055f) / 1.055f, 2.4f);
+        }
+
+        private static byte ToSrgb(float linear)
+        {
+            float c = Mathf.Clamp01(linear);
+            float srgb = c <= 0.0031308f ? c * 12.92f : 1.055f * Mathf.Pow(c, 1f / 2.4f) - 0.055f;
+            return (byte)Mathf.RoundToInt(srgb * 255f);
         }
     }
 }

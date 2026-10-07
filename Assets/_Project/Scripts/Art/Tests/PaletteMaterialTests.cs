@@ -52,7 +52,7 @@ namespace MoonProject.Art.Tests
             {
                 Vector2 uv = Palette.Uv(swatch);
                 int pixel = (int)(uv.y * height) * width + (int)(uv.x * width);
-                Assert.AreEqual(Palette.Get(swatch), surfaces[pixel], swatch.ToString());
+                Assert.AreEqual(Palette.GetSurface(swatch), surfaces[pixel], swatch.ToString());
                 Assert.AreEqual(Palette.GetGlow(swatch), glows[pixel], swatch.ToString());
             }
 
