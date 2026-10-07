@@ -35,12 +35,22 @@ namespace MoonProject.World
         [Range(0f, 1f)]
         [SerializeField] private float _shadowStrength = 0.88f;
 
+        [Tooltip("Depth bias of the earthlight's shadows. Low, grazing light needs more than the pipeline default " +
+            "so the facets never speckle themselves with shadow acne.")]
+        [Range(0f, 3f)]
+        [SerializeField] private float _shadowDepthBias = 1f;
+
+        [Tooltip("Normal bias of the earthlight's shadows for everything but the ground (whose separate facets " +
+            "would crack apart under it).")]
+        [Range(0f, 3f)]
+        [SerializeField] private float _shadowNormalBias = 0.5f;
+
         [Header("Ambient (trilight)")]
         [Tooltip("Ambient from above: the violet glow of the sky.")]
-        [SerializeField] private Color _ambientSky = new Color(0.15f, 0.135f, 0.3f);
+        [SerializeField] private Color _ambientSky = new Color(0.17f, 0.155f, 0.33f);
 
         [Tooltip("Ambient from the horizon.")]
-        [SerializeField] private Color _ambientEquator = new Color(0.115f, 0.1f, 0.23f);
+        [SerializeField] private Color _ambientEquator = new Color(0.13f, 0.115f, 0.25f);
 
         [Tooltip("Ambient from below: bounce off the dust.")]
         [SerializeField] private Color _ambientGround = new Color(0.06f, 0.055f, 0.12f);
@@ -59,6 +69,8 @@ namespace MoonProject.World
         public float LightElevation => _lightElevation;
         public float LightBearingOffset => _lightBearingOffset;
         public float ShadowStrength => _shadowStrength;
+        public float ShadowDepthBias => _shadowDepthBias;
+        public float ShadowNormalBias => _shadowNormalBias;
         public Color AmbientSky => _ambientSky;
         public Color AmbientEquator => _ambientEquator;
         public Color AmbientGround => _ambientGround;

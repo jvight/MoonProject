@@ -138,22 +138,18 @@ Shader "MoonProject/World/LofiTerrain"
             float3 _LightDirection;
             float3 _LightPosition;
 
-            struct Attributes
+            // Every facet has its own vertices and normal, so the usual normal-offset bias would push neighbouring
+            // facets apart and open cracks in the shadow map (light leaking along every edge): the ground is
+            // biased along the light only.
+            float4 Vert(float3 positionOS : POSITION) : SV_POSITION
             {
-                float3 positionOS : POSITION;
-                float3 normalOS : NORMAL;
-            };
-
-            float4 Vert(Attributes input) : SV_POSITION
-            {
-                float3 positionWS = TransformObjectToWorld(input.positionOS);
-                float3 normalWS = TransformObjectToWorldNormal(input.normalOS);
+                float3 positionWS = TransformObjectToWorld(positionOS);
                 #if defined(_CASTING_PUNCTUAL_LIGHT_SHADOW)
                 float3 toLight = normalize(_LightPosition - positionWS);
                 #else
                 float3 toLight = _LightDirection;
                 #endif
-                float4 positionCS = TransformWorldToHClip(ApplyShadowBias(positionWS, normalWS, toLight));
+                float4 positionCS = TransformWorldToHClip(positionWS + toLight * _ShadowBias.x);
                 #if UNITY_REVERSED_Z
                 positionCS.z = min(positionCS.z, UNITY_NEAR_CLIP_VALUE);
                 #else

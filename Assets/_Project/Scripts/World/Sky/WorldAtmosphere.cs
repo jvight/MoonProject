@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 namespace MoonProject.World
 {
@@ -37,6 +38,9 @@ namespace MoonProject.World
             earthlight.intensity = atmosphere.LightIntensity;
             earthlight.shadows = LightShadows.Soft;
             earthlight.shadowStrength = atmosphere.ShadowStrength;
+            earthlight.GetUniversalAdditionalLightData().usePipelineSettings = false;
+            earthlight.shadowBias = atmosphere.ShadowDepthBias;
+            earthlight.shadowNormalBias = atmosphere.ShadowNormalBias;
             earthlight.transform.rotation = Quaternion.LookRotation(-LightSourceDirection(atmosphere, sky));
         }
 
