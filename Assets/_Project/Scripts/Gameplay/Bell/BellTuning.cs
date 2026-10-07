@@ -4,9 +4,9 @@ using MoonProject.Core;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// How Bell moves (docs/features/M3-05): her repair beat, her two-step and waddle, her life at the base (swaying,
-    /// foot taps, watching 07 park, dozing and waking), her dial and its prompt, her signal pillar and the cassette
-    /// shelf at her corner. Created by the Gameplay/Tuning builder; runtime code only reads it.
+    /// How Bell moves (docs/features/M3-05): her repair beat, her solid body, her two-step and waddle, her life at the
+    /// base (swaying, foot taps, watching 07 park, dozing and waking), her dial and its prompt, her signal pillar and
+    /// the cassette shelf at her corner. Created by the Gameplay/Tuning builder; runtime code only reads it.
     /// </summary>
     public sealed class BellTuning : ScriptableObject
     {
@@ -44,6 +44,11 @@ namespace MoonProject.Gameplay
 
         [Tooltip("Gap (m) left between her back and the wall's surface.")]
         [Range(0f, 0.5f)] [SerializeField] private float _wallGap = 0.05f;
+
+        [Header("Body")]
+        [Tooltip("Room (m) her collider keeps around her cabinet on every side, so 07's nose (which reaches past its " +
+                 "physics sphere) stops softly just short of her, broken or home.")]
+        [Range(0f, 0.6f)] [SerializeField] private float _bodyPadding = 0.25f;
 
         [Header("Two-step (after her repair)")]
         [Tooltip("Seconds of her little dance before she sets off home.")]
@@ -271,6 +276,7 @@ namespace MoonProject.Gameplay
         public float WallProbeHeight => _wallProbeHeight;
         public float WallProbe => _wallProbe;
         public float WallGap => _wallGap;
+        public float BodyPadding => _bodyPadding;
         public float DanceDuration => _danceDuration;
         public float DanceRate => _danceRate;
         public float DanceRoll => _danceRoll;
