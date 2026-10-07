@@ -189,6 +189,7 @@ namespace MoonProject.Core.Events
 
         public string RelayId { get; }
 
+        /// <summary>World position of the restored mast's Lamp (where 07 and the camera look up to).</summary>
         public Vector3 Position { get; }
 
         /// <summary>Lit masts after this one (home not counted).</summary>
@@ -196,6 +197,20 @@ namespace MoonProject.Core.Events
 
         /// <summary>Masts in the whole game.</summary>
         public int Total { get; }
+    }
+
+    /// <summary>
+    /// The radio-hop node list opened (07 parked on a lit pad choosing where to go) or closed. The camera keeps its
+    /// lonely wide shot closed while the list is open.
+    /// </summary>
+    public readonly struct RadioHopListChanged
+    {
+        public RadioHopListChanged(bool open)
+        {
+            Open = open;
+        }
+
+        public bool Open { get; }
     }
 
     /// <summary>A radio-hop began: static rises and the view eases out before 07 is moved.</summary>
