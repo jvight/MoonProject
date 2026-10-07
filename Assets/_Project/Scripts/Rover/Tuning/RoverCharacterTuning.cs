@@ -212,7 +212,7 @@ namespace MoonProject.Rover
         [Range(0f, 1f)]
         [SerializeField] private float _sighLidDroop = 0.2f;
 
-        [Tooltip("Sigh strength (0..1) when 07 drifts into a daydream.")]
+        [Tooltip("Sigh strength (0..1) while daydreaming as the camera opens to the lonely wide shot.")]
         [Range(0f, 1f)]
         [SerializeField] private float _daydreamSigh = 1f;
 
