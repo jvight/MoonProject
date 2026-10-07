@@ -16,13 +16,13 @@ namespace MoonProject.World
         [Range(1f, 4f)]
         [SerializeField] private float _sharpness = 1.6f;
 
-        [Tooltip("Lamp glow at the dimmest point (multiplier of the palette emission; 1 = authored).")]
+        [Tooltip("Lamp glow at the dimmest point: a linear multiplier of the palette emission (1 = authored).")]
         [Range(0f, 4f)]
-        [SerializeField] private float _lampMinIntensity = 0.35f;
+        [SerializeField] private float _lampMinIntensity = 0.1f;
 
-        [Tooltip("Lamp glow at the brightest point. Above ~1.5 it blooms softly.")]
+        [Tooltip("Lamp glow at the brightest point (linear multiplier). It blooms softly near the top.")]
         [Range(0f, 8f)]
-        [SerializeField] private float _lampMaxIntensity = 1.9f;
+        [SerializeField] private float _lampMaxIntensity = 4.1f;
 
         [Tooltip("Colour of the halo around the lamp.")]
         [SerializeField] private Color _haloColor = Palette.Get(PaletteSwatch.AlertSoft);

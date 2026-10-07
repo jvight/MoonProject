@@ -19,11 +19,11 @@ namespace MoonProject.World
 
         [Tooltip("Bloom strength. Soft: a glow, not a flare.")]
         [Range(0f, 3f)]
-        [SerializeField] private float _bloomIntensity = 0.7f;
+        [SerializeField] private float _bloomIntensity = 1.1f;
 
         [Tooltip("How far the bloom spreads (0..1).")]
         [Range(0f, 1f)]
-        [SerializeField] private float _bloomScatter = 0.76f;
+        [SerializeField] private float _bloomScatter = 0.7f;
 
         [Tooltip("Tint of the bloom: a touch warm, so the lamps glow like home.")]
         [SerializeField] private Color _bloomTint = new Color(1f, 0.93f, 0.86f);

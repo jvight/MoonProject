@@ -73,7 +73,8 @@ namespace MoonProject.World
             Vector3 sunWorld = (right * sun.x + up * sun.y - toEarth * sun.z).normalized;
             Shader.SetGlobalVector(EarthSun, WithAlpha(sunWorld, sky.EarthNightBrightness));
             Shader.SetGlobalVector(EarthGlow, new Vector4(sky.EarthGlow, Mathf.PI * 2f / sky.EarthSpinPeriod, 0f, 0f));
-            Shader.SetGlobalVector(EarthAtmosphere, WithAlpha(sky.EarthAtmosphere.linear, EarthRimExponent));
+            Shader.SetGlobalVector(EarthAtmosphere,
+                WithAlpha(sky.EarthAtmosphere.linear * sky.EarthRim, EarthRimExponent));
             Shader.SetGlobalVector(ShootingStars,
                 new Vector4(sky.ShootingStarPeriod, sky.ShootingStarDuration, sky.ShootingStarBrightness, 0f));
         }

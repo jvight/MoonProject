@@ -1,12 +1,14 @@
 using NUnit.Framework;
 using UnityEngine;
+using MoonProject.Art;
 
 namespace MoonProject.World.Tests
 {
     /// <summary>
     /// Pillar 6 ("Alone, and at peace") guards for the atmosphere: near ground stays crisp while far rock dissolves,
-    /// the earthlight is low enough to rake long shadows yet leaves most of the floor lit, and lit dust never crosses
-    /// the bloom threshold, so only the warm lights glow.
+    /// the earthlight is low enough to rake long shadows yet leaves most of the floor lit and never exceeds the light
+    /// Art caps its surfaces against, lit dust never crosses the bloom threshold, and Earth glows softly, far under
+    /// the warm lamps of home.
     /// </summary>
     public sealed class AtmosphereTests
     {
@@ -26,6 +28,12 @@ namespace MoonProject.World.Tests
         private const float ShadowReach = 700f;
         private const float ShadowStep = 4f;
         private const float DustStep = 6f;
+
+        // Art rounds its reference light to two decimals.
+        private const float ReferenceTolerance = 0.01f;
+
+        // Earth may just touch the bloom (a soft glow); its limb and halo in the sky stay under it.
+        private const float EarthGlowCap = 1.1f;
 
         private AtmosphereSettings _atmosphere;
         private SkySettings _sky;
@@ -78,6 +86,38 @@ namespace MoonProject.World.Tests
             }
 
             Assert.LessOrEqual((float)shadowed / floor, MaxShadowedFloor, "the rim's shadow covers too much floor");
+        }
+
+        [Test]
+        public void Earthlight_StaysAtOrUnderArtsReferenceLight()
+        {
+            // Art darkens bright surfaces until they stay under the bloom threshold in this light: brighter
+            // earthlight would make cream panels glow like lamps.
+            Color light = _atmosphere.LightColor.linear * _atmosphere.LightIntensity + _atmosphere.AmbientSky.linear;
+            Color reference = Palette.ReferenceLight;
+            Assert.LessOrEqual(light.r, reference.r + ReferenceTolerance, "red");
+            Assert.LessOrEqual(light.g, reference.g + ReferenceTolerance, "green");
+            Assert.LessOrEqual(light.b, reference.b + ReferenceTolerance, "blue");
+        }
+
+        [Test]
+        public void Earth_GlowsSoftly_FarUnderTheWarmLamps()
+        {
+            var post = new PostProcessSettings();
+            Color rim = _sky.EarthAtmosphere.linear * _sky.EarthRim;
+            float brightest = 0f;
+            foreach (PaletteSwatch swatch in new[]
+                         { PaletteSwatch.EarthOcean, PaletteSwatch.EarthLand, PaletteSwatch.Cream })
+            {
+                Color face = ((Color)Palette.Get(swatch)).linear * _sky.EarthGlow + rim;
+                brightest = Mathf.Max(brightest, face.maxColorComponent);
+            }
+
+            Assert.LessOrEqual(brightest, EarthGlowCap * post.BloomThreshold,
+                "Earth's lit side and rim bloom too much");
+            Assert.Less(brightest, Palette.WarmLampGlow, "Earth outshines the lamps of home");
+            Color sky = _sky.EarthAtmosphere.linear * (_sky.EarthLimb + _sky.EarthHaloStrength);
+            Assert.Less(sky.maxColorComponent, post.BloomThreshold, "Earth's limb and halo in the sky bloom");
         }
 
         [Test]

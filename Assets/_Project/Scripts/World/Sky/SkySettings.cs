@@ -120,12 +120,17 @@ namespace MoonProject.World
         [Range(0f, 1f)]
         [SerializeField] private float _earthNightBrightness = 0.22f;
 
-        [Tooltip("Emissive boost of Earth's lit side, so it blooms softly.")]
+        [Tooltip("Emissive strength of Earth's lit side. Keep it soft: Earth is cool and beautiful, but the warm " +
+            "lamps of home must win the eye (and the bloom).")]
         [Range(0f, 4f)]
-        [SerializeField] private float _earthGlow = 0.9f;
+        [SerializeField] private float _earthGlow = 0.8f;
 
         [Tooltip("Colour of Earth's atmosphere rim and halo.")]
         [SerializeField] private Color _earthAtmosphere = new Color(0.45f, 0.78f, 1f);
+
+        [Tooltip("Strength of the atmosphere rim along Earth's facets (on top of the lit side).")]
+        [Range(0f, 2f)]
+        [SerializeField] private float _earthRim = 0.4f;
 
         [Tooltip("Angular size of the soft halo around Earth, as a fraction of its radius.")]
         [Range(0f, 2f)]
@@ -137,7 +142,7 @@ namespace MoonProject.World
 
         [Tooltip("Strength of the thin atmospheric limb hugging Earth's edge (brightest on its sunlit side).")]
         [Range(0f, 4f)]
-        [SerializeField] private float _earthLimb = 0.8f;
+        [SerializeField] private float _earthLimb = 0.6f;
 
         [Tooltip("Width of the atmospheric limb, as a fraction of Earth's radius.")]
         [Range(0.01f, 0.5f)]
@@ -189,6 +194,7 @@ namespace MoonProject.World
         public float EarthNightBrightness => _earthNightBrightness;
         public float EarthGlow => _earthGlow;
         public Color EarthAtmosphere => _earthAtmosphere;
+        public float EarthRim => _earthRim;
         public float EarthHaloSize => _earthHaloSize;
         public float EarthHaloStrength => _earthHaloStrength;
         public float EarthLimb => _earthLimb;
