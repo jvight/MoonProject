@@ -43,6 +43,20 @@ namespace MoonProject.Art.Editor
 
         public const string WorkbenchName = "Workbench";
 
+        /// <summary>
+        /// Kenji's Rover Bay, the bench station since M3-14 (stands on <see cref="WorkshopAnchor"/>).
+        /// </summary>
+        public const string RoverBayName = "RoverBay";
+
+        /// <summary>
+        /// The bay arms' folded rest pose (Upper, Lower and Tip local pitch, degrees): tucked back under the roof,
+        /// clear of 07 driving in; rover and gameplay swing them down to fit a kit piece.
+        /// </summary>
+        public static readonly Vector3 ArmUpperRest = new Vector3(80f, 0f, 0f);
+
+        public static readonly Vector3 ArmLowerRest = new Vector3(-160f, 0f, 0f);
+        public static readonly Vector3 ArmTipRest = new Vector3(80f, 0f, 0f);
+
         public const string CassetteShelfName = "CassetteShelf";
 
         /// <summary>
@@ -73,6 +87,8 @@ namespace MoonProject.Art.Editor
             ModelPrefabWriter.Write(CreateLander(), ArtPaths.BaseFolder, material);
             ModelPrefabWriter.Write(CreateShelf(), ArtPaths.BaseFolder, material);
             ModelPrefabWriter.Write(CreateWorkbench(), ArtPaths.BaseFolder, material);
+            ModelPrefabWriter.Write(CreateRoverBay(), ArtPaths.BaseFolder, material,
+                PaletteAssetBuilder.LoadGlowOffMaterial());
             ModelPrefabWriter.Write(CreateCassetteShelf(), ArtPaths.BaseFolder, material);
             for (int level = RadioTowerMeshes.MinLevel; level <= RadioTowerMeshes.MaxLevel; level++)
             {
@@ -138,6 +154,57 @@ namespace MoonProject.Art.Editor
             Weathering.Attach(bench, WorkbenchName, Weathering.Bleach(top, Weathering.PaintLift),
                 WorkbenchMeshes.Rust(), Weathering.Dust(top, FurnitureDustTide, Weathering.DustLift));
             return bench;
+        }
+
+        /// <summary>
+        /// Kenji's Rover Bay: root on the ground at the bay centre (stands on WorkshopAnchor, +Z = the open front 07
+        /// drives in from). A Turntable 07 parks on (its +Z = 07's heading driving in; turn it about local Y), three
+        /// Arm_n gantry arms in their folded rest pose (Upper / Lower / Tip pitch about local X, SparkSocket at each
+        /// tip), the HopperMouth 07's beam feeds, two work Lamp_n glasses on the glow-off material, and the weather
+        /// layers.
+        /// </summary>
+        public static ModelNode CreateRoverBay()
+        {
+            LowPolyMeshBuilder frame = RoverBayMeshes.Frame();
+            var bay = new ModelNode(RoverBayName, Vector3.zero, new ModelMesh(RoverBayName, frame));
+            bay.Add(new ModelNode("Turntable", RoverBayMeshes.TurntableCentre,
+                Place.Rotation(new Vector3(0f, 180f, 0f)),
+                new ModelMesh(RoverBayName + "_Turntable", RoverBayMeshes.Turntable())));
+            var mount = new ModelMesh(RoverBayName + "_ArmMount", RoverBayMeshes.ShoulderMount());
+            var upper = new ModelMesh(RoverBayName + "_ArmUpper",
+                RoverBayMeshes.Link(RoverBayMeshes.UpperLength, 0.13f));
+            var lower = new ModelMesh(RoverBayName + "_ArmLower",
+                RoverBayMeshes.Link(RoverBayMeshes.LowerLength, 0.1f));
+            var tip = new ModelMesh(RoverBayName + "_ArmTip", RoverBayMeshes.Tip());
+            for (int i = 0; i < RoverBayMeshes.ArmCount; i++)
+            {
+                string index = i.ToString(CultureInfo.InvariantCulture);
+                ModelNode arm = bay.Add(new ModelNode("Arm_" + index, RoverBayMeshes.Shoulder(i),
+                    Place.Rotation(new Vector3(0f, RoverBayMeshes.ShoulderYaw(i), 0f)), mount));
+                ModelNode upperNode = arm.Add(new ModelNode("Upper", Vector3.zero, Place.Rotation(ArmUpperRest),
+                    upper));
+                ModelNode lowerNode = upperNode.Add(new ModelNode("Lower", Vector3.down * RoverBayMeshes.UpperLength,
+                    Place.Rotation(ArmLowerRest), lower));
+                ModelNode tipNode = lowerNode.Add(new ModelNode("Tip", Vector3.down * RoverBayMeshes.LowerLength,
+                    Place.Rotation(ArmTipRest), tip));
+                tipNode.Add(new ModelNode("SparkSocket", new Vector3(0f, -RoverBayMeshes.TipLength, 0.06f),
+                    Place.Rotation(new Vector3(90f, 0f, 0f))));
+            }
+
+            bay.Add(new ModelNode("HopperMouth", RoverBayMeshes.HopperMouth,
+                Place.Rotation(RoverBayMeshes.HopperFacing)));
+            var glass = new ModelMesh(RoverBayName + "_LampGlass", RoverBayMeshes.LampGlassMesh());
+            for (int i = 0; i < RoverBayMeshes.LampCount; i++)
+            {
+                bay.Add(new ModelNode("Lamp_" + i.ToString(CultureInfo.InvariantCulture), RoverBayMeshes.LampGlass(i),
+                    Place.Rotation(RoverBayMeshes.LampEuler), glass, ModelMaterial.PaletteGlowOff));
+            }
+
+            LowPolyMeshBuilder dust = Weathering.Dust(frame, FurnitureDustTide, Weathering.DustLift);
+            dust.Append(RoverBayMeshes.Drifts(), Matrix4x4.identity);
+            Weathering.Attach(bay, RoverBayName, Weathering.Bleach(frame, Weathering.PaintLift), RoverBayMeshes.Rust(),
+                dust);
+            return bay;
         }
 
         /// <summary>
