@@ -32,7 +32,7 @@ finally gets an answer from Earth.** The player is not saving the world — they
 | Scale | Loop | Status |
 |---|---|---|
 | Seconds | drive → spot a wreck → salvage with the beam (salvage melody) → sonar → the site's relic → home | M2 ✅, salvage replaces the scrap field in M3-13 |
-| Session (15–30 min) | pick a wreck or signal on the horizon → expedition → bring materials and a memory home → craft at Kenji's bench → 07 and the base visibly change | M2 slice, deepened in M3 |
+| Session (15–30 min) | pick a wreck or signal on the horizon → expedition → bring materials and a memory home → craft in Kenji's Rover Bay → 07 and the base visibly change | M2 slice, deepened in M3 |
 | Hours | restore the outpost: radio tower · workshop (rover upgrades) · museum sets · friends · biodome | M3–M4 |
 | Arc | climb The Peak → repair the great dish → broadcast → Earth answers | M4 |
 | After | free roam, completion, cosmetics, photo mode, moon-weather events | M4–M5 |
@@ -57,7 +57,21 @@ and a small light on Earth's night side blinks back. Bittersweet, warm, hopeful:
 | **Atlas** — a big, gentle hauler | the engineer's crane | the rim terraces (needs Magnetic Treads) | heavy parts | rests by the workshop | carries relics home automatically from marked spots; needed to lift the great dish |
 Each friend: a small set of idle behaviours, a greeting when 07 returns, a reaction to new relics, and a sleep spot.
 
-### Workshop — rover upgrades (traversal + comfort), bought with scrap + parts
+### How 07 does things (VISION ruling 14: 07 has no hands)
+| Action | How it physically happens on screen |
+|---|---|
+| Collect salvage, bits, parts, tapes | the beam cuts or pulls; the piece flies to the cargo socket |
+| Dig a relic | the beam lifts dust and the relic rises |
+| Carry a relic | the beam tows it, or it rides in the Cargo Cradle |
+| Place a relic on the shelf | the beam lifts it into its slot |
+| Repair a friend or a relay mast | the beam stitches; parts slide in along the beam |
+| Craft kit | 07 drives into **Kenji's Rover Bay**. Its beam feeds materials into the bay's hopper, and the bay's gantry arms fit the part onto 07 |
+| Upgrade the radio tower | 07 parks at the tower's rover-height service port, feeds the hopper, and its beam stitches the new section while the tower raises it |
+| Turn Bell's dial | 07's beam taps the dial's knob; Bell turns it with a wiggle |
+| Go up to the lander deck | the cable lift beside the crew's ladder |
+| Rest and charge | the charging dock at the base, not a doormat |
+
+### Workshop — rover upgrades (traversal + comfort), crafted from materials in Kenji's Rover Bay
 Hover-Jump (charged leap over chasms) · Magnetic Treads (climb steep crater walls) · Cargo Cradle (carry 3 relics,
 never fall out) · Wider Sonar · Warm Headlamp (lights the shadowed crater) · Boost Coils (faster on flats, joyful).
 Every traversal upgrade must open at least one region and one visible secret near the base.
@@ -90,7 +104,8 @@ one.
 | Boost Coils | twin capacitor drums (the "big batteries") on the flanks that glow while boosting |
 | Friends' gifts | the solar wing's missing cell is replaced (Tilly), the patch gets a painted flower (Moss), the "07" is repainted (Ro and Bell), and a tow hook appears (Atlas) |
 
-- **Install moment.** Buying an upgrade at Kenji's bench plays a short eased camera moment: sparks, the part settling
+- **Install moment.** Crafting in Kenji's Rover Bay plays a short eased camera moment: the bay's gantry arms lower the part,
+  sparks, the part settling
   onto 07, then a small proud pose (head lift, eye brighter, an antenna wiggle). It is the payoff, never skippable
   clutter, and about 3 s long.
 - **Home shows it too.** The tower's three stages, Bell's corner, the cassette rack, the lit relay masts, the warmth
