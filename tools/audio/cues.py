@@ -1512,6 +1512,100 @@ def rover_metal_tick(variant, gen):
     return filters.lowpass(click + 0.35 * ring, 6000.0)
 
 
+# --------------------------------------------------------------------------------------------------- relays (M3-06)
+
+def relay_mast_creak(_variant, gen):
+    """An old relay mast straightening: a long, low metal groan rising as it comes upright (stick-slip pulses in a
+    resonant body), a last little scrape and a soft clunk as it locks."""
+    n = samples(2.3)
+    groan_n = samples(1.7)
+    rate = osc.glide(groan_n, 9.0, 22.0, time_constant=0.6)
+    phase = np.cumsum(rate) / SAMPLE_RATE
+    pulses = np.maximum(0.0, np.sin(2.0 * math.pi * phase)) ** 3
+    friction = filters.bandpass(noise.white(groan_n, gen), 900.0, 1.2) * pulses
+    body = filters.swept(friction, "bandpass", osc.glide(groan_n, 160.0, 260.0, time_constant=0.7), q=3.0)
+    body = effects.saturate(body / max(float(np.std(body)), 1e-9), 0.6)
+    body *= envelope.segments(groan_n, [(0.0, 0.0), (0.25, 1.0), (1.4, 0.8), (1.7, 0.0)], shape="smooth")
+    scrape_n = samples(0.25)
+    scrape = filters.bandpass(noise.pink(scrape_n, gen), 1400.0, 1.0) * envelope.segments(
+        scrape_n, [(0.0, 0.0), (0.05, 1.0), (0.25, 0.0)], shape="smooth")
+    clunk_n = samples(0.5)
+    clunk = osc.sine(clunk_n, osc.glide(clunk_n, 120.0, 90.0, time_constant=0.03)) * envelope.ar(clunk_n, 0.003,
+                                                                                                   0.18)
+    clunk += 0.4 * filters.bandpass(noise.white(clunk_n, gen), 500.0, 1.5) * envelope.ar(clunk_n, 0.001, 0.03)
+    mix = np.zeros(n)
+    place(mix, 0.2 * body, 0)
+    place(mix, 0.05 * scrape / max(float(np.std(scrape)), 1e-9), samples(1.55))
+    place(mix, 0.3 * clunk, samples(1.75))
+    return filters.lowpass(filters.highpass(mix, 50.0), 4500.0)
+
+
+def relay_lamp_warm(_variant, gen):
+    """The mast's lamp warming up: a filament's tiny catch, then a soft hum rising from D3 into a warm glow with its
+    fifth and octave blooming over it."""
+    n = samples(2.6)
+    d3 = note_freq("D3")
+    hum = osc.additive(n, osc.glide(n, 0.92 * d3, d3, time_constant=0.25), [(1, 1.0), (2, 0.4), (3, 0.15)])
+    hum *= envelope.segments(n, [(0.0, 0.0), (0.5, 0.7), (1.6, 1.0), (2.6, 0.0)], shape="smooth")
+    glow = (instruments.soft_pad(note_freq("A4"), 2.4, 0.7, 1.2, hold=0.4)
+            + 0.7 * instruments.soft_pad(note_freq("D5"), 2.4, 0.9, 1.2, hold=0.3))
+    catch_n = samples(0.1)
+    catch = filters.bandpass(noise.white(catch_n, gen), 3000.0, 2.0) * envelope.ar(catch_n, 0.0005, 0.02)
+    mix = 0.25 * hum
+    place(mix, 0.12 * glow, samples(0.2))
+    place(mix, 0.04 * catch / max(float(np.max(np.abs(catch))), 1e-9), 0)
+    return filters.lowpass(mix, 5000.0)
+
+
+RELAY_LINK_NOTES = (("A4", 0.0), ("D5", 0.2), ("F#5", 0.4))
+
+
+def relay_link(_variant, gen):
+    """The link: a short three-note answer as an old radio would sound it - A4, D5, then F#5 left ringing - with a
+    breath of static, as if home had heard the new mast and replied."""
+    n = samples(1.9)
+    mix = np.zeros(n)
+    for note, when in RELAY_LINK_NOTES:
+        last = note == RELAY_LINK_NOTES[-1][0]
+        place(mix, _radio_blip(note, 0.9 if last else 0.18, gen, 1.0 if last else 0.75), samples(when))
+        place(mix, 0.5 * instruments.soft_bell(note_freq(note), 1.4 if last else 0.5, decay=1.0 if last else 0.4),
+              samples(when))
+    hiss = _static(n, gen, 1400.0, 0.8) * envelope.segments(n, [(0.0, 0.0), (0.1, 1.0), (1.0, 0.2), (1.9, 0.0)],
+                                                            shape="smooth")
+    return _old_radio(mix + 0.12 * hiss, 1.2)
+
+
+def radio_hop_out(_variant, gen):
+    """A radio-hop leaving: static swells up while a resonant band sweeps down and the sound filters out to a thin,
+    soft hiss as the screen fades (the radio's own static holds the dark until the hop lands)."""
+    n = samples(1.1)
+    centre = osc.glide(n, 1800.0, 380.0, time_constant=0.35)
+    env = envelope.segments(n, [(0.0, 0.0), (0.3, 1.0), (0.8, 0.6), (1.1, 0.0)], shape="smooth")
+    sides = []
+    for side in range(2):
+        hiss = filters.lowpass(filters.highpass(noise.white(n, gen), 250.0), 2600.0)
+        sweep = filters.swept(noise.white(n, gen), "bandpass", centre * (1.0 + 0.03 * side), q=4.0)
+        sides.append(filters.lowpass(filters.lowpass((0.4 * hiss + 1.2 * sweep) * env, 3200.0), 3200.0))
+    return np.stack(sides, axis=1)
+
+
+def radio_hop_in(_variant, gen):
+    """A radio-hop landing: the static's band sweeps up and locks onto the station - a soft D5 carrier emerges and
+    the hiss settles away as the view eases back in."""
+    n = samples(1.3)
+    centre = osc.glide(n, 380.0, 1600.0, time_constant=0.3)
+    hiss_env = envelope.segments(n, [(0.0, 0.6), (0.4, 1.0), (1.0, 0.15), (1.3, 0.0)], shape="smooth")
+    carrier = osc.additive(n, note_freq("D5"), [(1, 1.0), (2, 0.15)]) * envelope.segments(
+        n, [(0.0, 0.0), (0.45, 0.0), (0.75, 1.0), (1.3, 0.0)], shape="smooth")
+    sides = []
+    for side in range(2):
+        sweep = filters.swept(noise.white(n, gen), "bandpass", centre * (1.0 + 0.03 * side), q=4.0)
+        hiss = filters.lowpass(filters.highpass(noise.white(n, gen), 250.0), 2600.0)
+        mix = (1.0 * sweep + 0.3 * hiss) * hiss_env + 0.5 * carrier
+        sides.append(filters.lowpass(filters.lowpass(mix, 3200.0), 3200.0))
+    return np.stack(sides, axis=1)
+
+
 # --------------------------------------------------------------------------------------------------- registry
 
 CUES = (
@@ -1684,6 +1778,16 @@ CUES = (
     Cue("rover_metal_tick", "tick_3d", rover_metal_tick, variants=len(METAL_TICK_NOTES), volume=(0.4, 0.55),
         pitch=(0.98, 1.02), fade_out=0.03, milestone="M3", tonal=True,
         notes="07's metal ticking as it cools after a drive: dry click + a tiny pentatonic ring."),
+    Cue("relay_mast_creak", "oneshot_3d", relay_mast_creak, volume=(0.6, 0.6), fade_out=0.1, milestone="M3",
+        notes="A relay mast straightening: low metal groan rising, a scrape and a soft locking clunk."),
+    Cue("relay_lamp_warm", "oneshot_3d", relay_lamp_warm, volume=(0.55, 0.55), fade_out=0.2, milestone="M3",
+        tonal=True, notes="A mast's lamp warming: filament catch, hum rising onto D3, A4/D5 glow."),
+    Cue("relay_link", "oneshot_3d", relay_link, volume=(0.6, 0.6), fade_out=0.2, milestone="M3", tonal=True,
+        notes="The link answer from home's direction: old-radio A4 D5 F#5 with a breath of static."),
+    Cue("radio_hop_out", "radio_fx_2d", radio_hop_out, volume=(0.8, 0.8), fade_out=0.05, milestone="M3",
+        notes="Radio-hop leaving: static swells, band sweeps down and filters out as the screen fades."),
+    Cue("radio_hop_in", "radio_fx_2d", radio_hop_in, volume=(0.8, 0.8), fade_out=0.1, milestone="M3",
+        notes="Radio-hop landing: band sweeps up and locks onto a soft D5 carrier as the view eases in."),
     Cue("upgrade_arpeggio", "stinger_2d", upgrade_arpeggio, volume=(0.8, 0.8), fade_out=0.3, milestone="M2",
         tonal=True, notes="Soft kalimba D4 A4 D5 F#5 A5, stereo, over a quiet D/A pad."),
 )
