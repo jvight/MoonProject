@@ -36,6 +36,19 @@
                     </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>
+            <ui:VisualElement name="relay-tag-anchor" class="world-anchor" picking-mode="Ignore">
+                <ui:VisualElement name="relay-tag-center" class="world-anchor__center" picking-mode="Ignore">
+                    <ui:VisualElement name="relay-tag" class="relay-tag" picking-mode="Ignore">
+                        <ui:VisualElement name="relay-tag-shadow" class="soft-shadow soft-shadow--chip" />
+                        <ui:VisualElement name="relay-tag-body" class="chip relay-tag__body">
+                            <ui:VisualElement name="relay-tag-ring" class="relay-tag__ring">
+                                <ui:VisualElement name="relay-tag-icon" class="scrap-icon scrap-icon--small" />
+                            </ui:VisualElement>
+                            <ui:Label name="relay-tag-cost" class="chip__number relay-tag__cost" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
             <ui:VisualElement name="scrap-chip" class="scrap-chip" picking-mode="Ignore">
                 <ui:VisualElement name="scrap-chip-shadow" class="soft-shadow soft-shadow--chip" />
                 <ui:VisualElement name="scrap-chip-body" class="chip">
@@ -57,6 +70,12 @@
                         <ui:Label name="dial-station" class="dial-readout__station" />
                         <ui:Label name="dial-tape" class="dial-readout__tape" />
                     </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="hop-list" class="hop-list" picking-mode="Ignore">
+                <ui:VisualElement name="hop-list-frame" class="hop-list__frame" picking-mode="Ignore">
+                    <ui:VisualElement name="hop-list-shadow" class="soft-shadow soft-shadow--chip" />
+                    <ui:VisualElement name="hop-list-rows" class="hop-list__rows" picking-mode="Ignore" />
                 </ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement name="memory-card" class="memory-card" picking-mode="Ignore">
@@ -105,6 +124,10 @@
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
+        <ui:VisualElement name="hop-veil" class="hop-veil" picking-mode="Ignore">
+            <ui:VisualElement name="hop-veil-dark" class="hop-veil__dark" picking-mode="Ignore" />
+            <ui:VisualElement name="hop-veil-grain" class="hop-veil__grain" picking-mode="Ignore" />
+        </ui:VisualElement>
         <ui:VisualElement name="pause" class="pause" picking-mode="Ignore">
             <ui:VisualElement name="pause-veil" class="pause__veil" />
             <ui:VisualElement name="pause-frame" class="pause__frame" picking-mode="Ignore">
@@ -120,6 +143,10 @@
                                         <ui:VisualElement name="pause-cassette-icon"
                                                           class="cassette-icon cassette-icon--quiet" />
                                         <ui:Label name="pause-cassettes-count" class="pause__cassettes-count" />
+                                    </ui:VisualElement>
+                                    <ui:VisualElement name="pause-relays" class="pause__cassettes pause__relays">
+                                        <ui:VisualElement name="pause-relay-icon" class="relay-icon" />
+                                        <ui:Label name="pause-relays-count" class="pause__cassettes-count" />
                                     </ui:VisualElement>
                                 </ui:VisualElement>
                                 <ui:VisualElement name="pause-scrap" class="chip chip--inline">

@@ -102,7 +102,7 @@ namespace MoonProject.UI.Tests
                      {
                          UiKeys.CardCaption, UiKeys.CardClose, UiKeys.TowerLevel, UiKeys.TowerHold, UiKeys.TowerNeed,
                          UiKeys.TowerPurchased, UiKeys.LogCaption, UiKeys.CrewLogCaption, UiKeys.LinerCaption,
-                         UiKeys.TapeCount, UiKeys.PauseCassettes,
+                         UiKeys.TapeCount, UiKeys.PauseCassettes, UiKeys.PauseRelays,
                      })
             {
                 Assert.IsTrue(_english.TryGet(key, out _), key);

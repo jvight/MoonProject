@@ -14,7 +14,7 @@ namespace MoonProject.UI
     {
         public UiServices(EventBus events, InputReader input, IViewCamera view, IRoverState rover, IAudioSettings audio,
             ILookSettings look, ISaveService save, IScrapWallet wallet, ITetherAim tether, IInteractionHints hints,
-            IUpgradeShop shop, IFriendStatuses friends, IRadioProgram radio)
+            IUpgradeShop shop, IFriendStatuses friends, IRadioProgram radio, IRadioHop hop, IRelayStatus relays)
         {
             Events = events ?? throw new ArgumentNullException(nameof(events));
             Input = input ?? throw new ArgumentNullException(nameof(input));
@@ -29,6 +29,8 @@ namespace MoonProject.UI
             Shop = shop ?? throw new ArgumentNullException(nameof(shop));
             Friends = friends ?? throw new ArgumentNullException(nameof(friends));
             Radio = radio ?? throw new ArgumentNullException(nameof(radio));
+            Hop = hop ?? throw new ArgumentNullException(nameof(hop));
+            Relays = relays ?? throw new ArgumentNullException(nameof(relays));
         }
 
         public EventBus Events { get; }
@@ -57,6 +59,10 @@ namespace MoonProject.UI
 
         public IRadioProgram Radio { get; }
 
+        public IRadioHop Hop { get; }
+
+        public IRelayStatus Relays { get; }
+
         /// <summary>
         /// Resolves every service; a missing one throws (a system is missing from the bootstrap order).
         /// </summary>
@@ -70,7 +76,8 @@ namespace MoonProject.UI
             return new UiServices(context.Events, context.Input, context.Get<IViewCamera>(), context.Get<IRoverState>(),
                 context.Get<IAudioSettings>(), context.Get<ILookSettings>(), context.Get<ISaveService>(),
                 context.Get<IScrapWallet>(), context.Get<ITetherAim>(), context.Get<IInteractionHints>(),
-                context.Get<IUpgradeShop>(), context.Get<IFriendStatuses>(), context.Get<IRadioProgram>());
+                context.Get<IUpgradeShop>(), context.Get<IFriendStatuses>(), context.Get<IRadioProgram>(),
+                context.Get<IRadioHop>(), context.Get<IRelayStatus>());
         }
     }
 }

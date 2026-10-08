@@ -53,6 +53,14 @@ namespace MoonProject.UI.PlayModeTests
         private const float BellShotSide = 1.6f;
         private const float BellShotHeight = 2f;
         private const float BellLookHeight = 1.1f;
+        private const string PartSocketNode = "PartSocket";
+        private const float MastSocketReach = 8f;
+        private const float MastShotFront = 4.5f;
+        private const float MastShotSide = 1.8f;
+        private const float MastShotHeight = 1.3f;
+        private const float MastLookHeight = 1f;
+        private const float HopHold = 0.45f;
+        private const float HopMidFade = 0.55f;
 
         private string _slot;
         private GameObject _uiHost;
@@ -63,12 +71,14 @@ namespace MoonProject.UI.PlayModeTests
         private GameObject _friendCamera;
         private GameObject _bellCamera;
         private GameObject _bellStandIn;
+        private GameObject _mastCamera;
 
         public override void TearDown()
         {
             Object.DestroyImmediate(_friendCamera);
             Object.DestroyImmediate(_bellCamera);
             Object.DestroyImmediate(_bellStandIn);
+            Object.DestroyImmediate(_mastCamera);
             Object.DestroyImmediate(_uiHost);
             Object.DestroyImmediate(_fakesHost);
             Object.DestroyImmediate(_panel);
@@ -236,6 +246,56 @@ namespace MoonProject.UI.PlayModeTests
             fakes.Upgrade = tower;
             yield return new WaitForSecondsRealtime(1f);
 
+            Transform socket = DarkMastSocket(context.Get<IWorldAnchors>());
+            Camera mastCamera = MastCamera(socket, camera);
+            fakes.Camera = mastCamera;
+            fakes.NextCost = 90;
+            fakes.SetBalance(30);
+            fakes.PrimaryHint = new InteractionHint(InteractionKind.Restore, socket.position, false);
+            yield return new WaitForSecondsRealtime(_tuning.Relays.Tag.FadeIn + 1f);
+            yield return Capture(mastCamera, folder, "32_relay_tag_short");
+            fakes.SetBalance(200);
+            fakes.PrimaryHint = new InteractionHint(InteractionKind.Restore, socket.position, true);
+            yield return new WaitForSecondsRealtime(_tuning.Prompts.Find(InteractionKind.Restore).DwellSeconds +
+                                                    _tuning.Prompts.Reveal.FadeIn + 0.8f);
+            fakes.RestoreHold = HopHold;
+            yield return new WaitForSecondsRealtime(0.2f);
+            yield return Capture(mastCamera, folder, "33_relay_restore_prompt");
+            fakes.RestoreHold = 0f;
+            fakes.PrimaryHint = InteractionHint.None;
+            fakes.Camera = camera;
+            yield return new WaitForSecondsRealtime(1f);
+
+            fakes.SetHopChoices(UiTestRig.FirstRelayNode, UiTestRig.SecondRelayNode);
+            fakes.PrimaryHint = new InteractionHint(InteractionKind.Hop, context.Get<IRoverState>().Position, true);
+            yield return new WaitForSecondsRealtime(_tuning.Prompts.Find(InteractionKind.Hop).DwellSeconds +
+                                                    _tuning.Prompts.Reveal.FadeIn + 0.8f);
+            yield return Capture(camera, folder, "34_hop_prompt");
+            fakes.Open();
+            fakes.ConfirmHold = HopHold;
+            yield return new WaitForSecondsRealtime(_tuning.Prompts.Reveal.FadeOut + _tuning.Relays.List.FadeIn + 0.5f);
+            yield return Capture(camera, folder, "35_hop_list");
+            fakes.ConfirmHold = 0f;
+            fakes.Confirm();
+            fakes.PrimaryHint = InteractionHint.None;
+            fakes.Fade = HopMidFade;
+            yield return new WaitForSecondsRealtime(1f);
+            yield return Capture(camera, folder, "36_hop_mid_fade");
+            fakes.Fade = 1f;
+            yield return new WaitForSecondsRealtime(1f);
+            yield return Capture(camera, folder, "37_hop_dark");
+            fakes.Phase = RadioHopPhase.Arriving;
+            fakes.Fade = 0f;
+            yield return new WaitForSecondsRealtime(1f);
+            fakes.Phase = RadioHopPhase.Closed;
+
+            fakes.LitMasts = 2;
+            yield return Tap(keyboard.escapeKey);
+            yield return new WaitForSecondsRealtime(1.2f);
+            yield return Capture(camera, folder, "38_pause_relays");
+            yield return Tap(keyboard.escapeKey);
+            yield return new WaitForSecondsRealtime(1f);
+
 
             yield return Tap(keyboard.escapeKey);
             yield return new WaitForSecondsRealtime(1.2f);
@@ -371,6 +431,65 @@ namespace MoonProject.UI.PlayModeTests
             throw new InvalidOperationException($"The friend roster has no '{BellId}'.");
         }
 
+        /// <summary>
+        /// The part socket of the first relay mast that is still dark in the loaded save (its broken pose is the live
+        /// one).
+        /// </summary>
+        private static Transform DarkMastSocket(IWorldAnchors anchors)
+        {
+            for (int i = 0; anchors.TryGet(WorldAnchorIds.RelayPrefix + i, out MoonProject.Core.WorldAnchor mast); i++)
+            {
+                Transform socket = NearestActiveNode(PartSocketNode, mast.Position, MastSocketReach);
+                if (socket != null)
+                {
+                    return socket;
+                }
+            }
+
+            throw new InvalidOperationException("Every relay mast is lit in the loaded save: no dark mast to capture.");
+        }
+
+        /// <summary>A camera on the home side of a mast's foot, looking at its part socket.</summary>
+        private Camera MastCamera(Transform socket, Camera reference)
+        {
+            Vector3 front = Vector3.ProjectOnPlane(socket.forward, Vector3.up).normalized;
+            Vector3 side = Vector3.Cross(Vector3.up, front);
+            Vector3 position = socket.position + front * MastShotFront + side * MastShotSide +
+                               Vector3.up * MastShotHeight;
+            _mastCamera = new GameObject("MastCaptureCamera");
+            var camera = _mastCamera.AddComponent<Camera>();
+            camera.CopyFrom(reference);
+            camera.fieldOfView = FriendShotFov;
+            camera.GetUniversalAdditionalCameraData().renderPostProcessing = true;
+            _mastCamera.transform.SetPositionAndRotation(position,
+                Quaternion.LookRotation(socket.position + Vector3.up * MastLookHeight - position, Vector3.up));
+            return camera;
+        }
+
+        /// <summary>
+        /// The active node called <paramref name="name"/> in Main nearest to <paramref name="near"/>, within
+        /// <paramref name="reach"/> metres, or null.
+        /// </summary>
+        private static Transform NearestActiveNode(string name, Vector3 near, float reach)
+        {
+            Transform best = null;
+            float bestSq = reach * reach;
+            foreach (GameObject root in SceneManager.GetSceneByPath(MainScene).GetRootGameObjects())
+            {
+                foreach (Transform node in root.GetComponentsInChildren<Transform>(false))
+                {
+                    float distanceSq = (node.position - near).sqrMagnitude;
+                    if (node.name == name && distanceSq <= bestSq)
+                    {
+                        best = node;
+                        bestSq = distanceSq;
+                    }
+                }
+            }
+
+            return best;
+        }
+
         /// <summary>A camera beside the spot where 07 parks to tune, looking at Bell and her dial.</summary>
         private Camera BellCamera(Transform corner, Camera reference)
         {
@@ -490,7 +609,7 @@ namespace MoonProject.UI.PlayModeTests
             _slot = BootstrapHarness.NewTestSlot();
             save = new SaveService(SaveService.DefaultDirectory, _slot);
             ui.Initialize(new UiServices(context.Events, context.Input, fakes, fakes, context.Get<IAudioSettings>(),
-                context.Get<ILookSettings>(), save, fakes, fakes, fakes, fakes, fakes, fakes));
+                context.Get<ILookSettings>(), save, fakes, fakes, fakes, fakes, fakes, fakes, fakes, fakes));
             save.Load();
             return ui;
         }
