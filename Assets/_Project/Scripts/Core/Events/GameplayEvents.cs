@@ -223,23 +223,19 @@ namespace MoonProject.Core.Events
 
     /// <summary>
     /// Kenji's Rover Bay starts fitting the kit piece of <see cref="UpgradeId"/> onto 07, parked on its turntable,
-    /// now that 07's beam has fed the hopper (docs/features/M3-14). The install moment plays from here: the bay's
-    /// gantry arms lower the piece onto 07 and the turntable turns 07 a little to show it. <see cref="Bay"/> is the
-    /// bay as built by Art, its nodes per the art contract: <c>Turntable</c> and <c>Arm_0..2</c>, each
-    /// <c>Upper/Lower/Tip/SparkSocket</c>, standing in their rest pose. The bay throws its weld sparks from the
-    /// SparkSockets as this is published, so they follow the tips wherever the arms are driven.
+    /// now that 07's beam has fed the hopper (docs/features/M3-14). The install moment plays from here: the Rover
+    /// domain drives the bay's arms through <see cref="IRoverBay"/> to lower the piece onto 07, and the turntable
+    /// turns 07 to show it. The bay throws its weld sparks from the arms' SparkSockets as this is published, so they
+    /// follow the tips wherever the arms are driven.
     /// </summary>
     public readonly struct RoverBayFitting
     {
-        public RoverBayFitting(string upgradeId, Transform bay)
+        public RoverBayFitting(string upgradeId)
         {
             UpgradeId = upgradeId;
-            Bay = bay;
         }
 
         public string UpgradeId { get; }
-
-        public Transform Bay { get; }
     }
 
     /// <summary>
