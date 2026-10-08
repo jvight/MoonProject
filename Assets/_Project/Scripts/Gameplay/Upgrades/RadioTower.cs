@@ -69,6 +69,9 @@ namespace MoonProject.Gameplay
 
         public float PadLevel => _pad != null ? _pad.Level : 0f;
 
+        /// <summary>Where the beacon glows: the BeaconSocket of the stage currently standing.</summary>
+        public Vector3 BeaconPosition => _beaconSockets[ActiveStage].position;
+
         /// <summary>The stage currently standing (tests and debugging views).</summary>
         public int ActiveStage
         {

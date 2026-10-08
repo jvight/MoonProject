@@ -142,7 +142,8 @@ namespace MoonProject.Gameplay
                 !_logs.Initialize(services, _scrap.Tuning) || !_sonar.Initialize(services, _relics, _friends) ||
                 !_signals.Initialize(services, _friends, _cassettes, _logs, _relics, abilities, _sonar.Tuning) ||
                 !_shelf.Initialize(Radio, _cassettes.Catalog, _friends.BellTuning) ||
-                !_relays.Initialize(services, Upgrades, _tether, _friends.Tuning, _scrap.Tuning, Placement(context)))
+                !_relays.Initialize(services, Upgrades, _tower, _tether, _friends.Tuning, _scrap.Tuning,
+                    Placement(context)))
             {
                 enabled = false;
                 return;

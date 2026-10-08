@@ -23,6 +23,7 @@ namespace MoonProject.Gameplay
         private readonly string[] _ids;
         private readonly Vector3[] _positions;
         private readonly float[] _radii;
+        private readonly Vector3[] _lamps;
         private readonly bool[] _restored;
         private readonly bool[] _lit;
         private readonly int[] _queue;
@@ -30,11 +31,13 @@ namespace MoonProject.Gameplay
 
         /// <param name="home">The base pad's centre on the surface (home's node and hop pad).</param>
         /// <param name="homeRadius">The tower's clear-signal radius (m).</param>
+        /// <param name="homeLamp">The tower's beacon (home's lamp).</param>
         /// <param name="mastIds">Each mast's anchor id ("relay.0", ...).</param>
         /// <param name="mastPositions">Each mast's pad centre on the surface.</param>
+        /// <param name="mastLamps">Each mast's lamp, standing upright.</param>
         /// <param name="mastRadius">Every mast's reach (m).</param>
-        public StationReach(Vector3 home, float homeRadius, IReadOnlyList<string> mastIds,
-            IReadOnlyList<Vector3> mastPositions, float mastRadius)
+        public StationReach(Vector3 home, float homeRadius, Vector3 homeLamp, IReadOnlyList<string> mastIds,
+            IReadOnlyList<Vector3> mastPositions, IReadOnlyList<Vector3> mastLamps, float mastRadius)
         {
             if (mastIds == null)
             {
@@ -46,10 +49,16 @@ namespace MoonProject.Gameplay
                 throw new ArgumentException("Every mast needs one position.", nameof(mastPositions));
             }
 
+            if (mastLamps == null || mastLamps.Count != mastIds.Count)
+            {
+                throw new ArgumentException("Every mast needs one lamp.", nameof(mastLamps));
+            }
+
             int count = mastIds.Count + 1;
             _ids = new string[count];
             _positions = new Vector3[count];
             _radii = new float[count];
+            _lamps = new Vector3[count];
             _restored = new bool[count];
             _lit = new bool[count];
             _queue = new int[count];
@@ -57,12 +66,14 @@ namespace MoonProject.Gameplay
             _ids[Home] = HomeId;
             _positions[Home] = home;
             _radii[Home] = Mathf.Max(0f, homeRadius);
+            _lamps[Home] = homeLamp;
             _restored[Home] = true;
             for (int i = 1; i < count; i++)
             {
                 _ids[i] = mastIds[i - 1];
                 _positions[i] = mastPositions[i - 1];
                 _radii[i] = Mathf.Max(0f, mastRadius);
+                _lamps[i] = mastLamps[i - 1];
             }
 
             Relink();
@@ -79,7 +90,7 @@ namespace MoonProject.Gameplay
 
         public RelayNode GetNode(int index)
         {
-            return new RelayNode(_ids[index], _positions[index], _lit[index]);
+            return new RelayNode(_ids[index], _positions[index], _lit[index], _radii[index], _lamps[index]);
         }
 
         public string Id(int node)
@@ -95,6 +106,11 @@ namespace MoonProject.Gameplay
         public float Radius(int node)
         {
             return _radii[node];
+        }
+
+        public Vector3 Lamp(int node)
+        {
+            return _lamps[node];
         }
 
         public bool IsLit(int node)
@@ -182,6 +198,12 @@ namespace MoonProject.Gameplay
         {
             _radii[Home] = Mathf.Max(0f, radius);
             Relink();
+        }
+
+        /// <summary>Moves home's lamp (the tower's beacon stands higher on each stage).</summary>
+        public void SetHomeLamp(Vector3 lamp)
+        {
+            _lamps[Home] = lamp;
         }
 
         /// <summary>Marks mast node <paramref name="node"/> restored (or not) and relinks.</summary>
