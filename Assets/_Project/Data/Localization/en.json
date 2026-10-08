@@ -461,6 +461,10 @@
         {
             "key": "hop.node.relay.3",
             "text": "Terminus relay"
+        },
+        {
+            "key": "ui.pause.relays",
+            "text": "Relays {0}/{1}"
         }
     ]
 }

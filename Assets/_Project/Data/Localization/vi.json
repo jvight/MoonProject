@@ -461,6 +461,10 @@
         {
             "key": "hop.node.relay.3",
             "text": "Trạm cuối hẻm"
+        },
+        {
+            "key": "ui.pause.relays",
+            "text": "Trạm tiếp sóng {0}/{1}"
         }
     ]
 }
