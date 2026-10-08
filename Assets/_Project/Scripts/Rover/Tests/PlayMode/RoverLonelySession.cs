@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Reflection;
 using System.Text;
 using NUnit.Framework;
 using UnityEngine;
@@ -28,9 +27,8 @@ namespace MoonProject.Rover.PlayModeTests
     /// three frames of the hand-back as 07 drives off, and the dust motes in 07's lamp (as a player orbiting round 07
     /// sees them, and up close; base and canyon) to Logs/rover-captures/*.png, with lonely.md recording each frame's
     /// distance to 07, 07's place on screen and the horizon. Game time advances a fixed 1/60 s per frame, so
-    /// slow captures never skip game time. 07 is moved between places by setting its body directly (a test-only
-    /// shortcut, held parked meanwhile so the camera hands back first). Slow and needs a GPU: run on demand with
-    /// --category RoverLonelySession.
+    /// slow captures never skip game time. 07 is moved between places through <see cref="IRoverPlacement"/>, held
+    /// parked meanwhile. Slow and needs a GPU: run on demand with --category RoverLonelySession.
     /// </summary>
     [Explicit("Slow real-game capture session; run on demand with --category RoverLonelySession.")]
     [Category("RoverLonelySession")]
@@ -179,7 +177,7 @@ namespace MoonProject.Rover.PlayModeTests
             float earth = WideShotComposer.Bearing(layout.EarthDirection);
             Vector3 midBasin = layout.BasePosition - WideShotComposer.Direction(earth) * MidBasinDistance;
             Assert.IsTrue(terrain.IsDrivable(midBasin.x, midBasin.z), "Mid-basin spot is open ground.");
-            yield return MoveTo(terrain, midBasin, earth + MidBasinHeadingOffset);
+            yield return MoveTo(midBasin, earth + MidBasinHeadingOffset);
             rig.SetHoldStill(_hold, false);
             yield return WaitForWideShot();
             Capture("midbasin-wide");
@@ -189,7 +187,7 @@ namespace MoonProject.Rover.PlayModeTests
                 "The world has the canyon's landing apron.");
             Vector3 canyon = landing.Position + landing.Forward * CanyonInset;
             Assert.IsTrue(terrain.IsDrivable(canyon.x, canyon.z), "The canyon spot is open ground.");
-            yield return MoveTo(terrain, canyon, WideShotComposer.Bearing(landing.Forward));
+            yield return MoveTo(canyon, WideShotComposer.Bearing(landing.Forward));
             rig.SetHoldStill(_hold, false);
             yield return WaitForWideShot();
             Capture("canyon-wide");
@@ -245,49 +243,14 @@ namespace MoonProject.Rover.PlayModeTests
         }
 
         /// <summary>
-        /// Test-only: sets 07's body down at <paramref name="ground"/> facing <paramref name="yaw"/> (held parked, so
-        /// the camera has handed back), breaks the tire tracks so no ribbon stretches across the jump, and snaps the
-        /// model and the camera behind 07.
+        /// Sets 07 down at <paramref name="ground"/> facing <paramref name="yaw"/> through
+        /// <see cref="IRoverPlacement"/> (held parked, so the wide shot stays closed), then lets the view settle.
         /// </summary>
-        private IEnumerator MoveTo(ITerrainQuery terrain, Vector3 ground, float yaw)
+        private IEnumerator MoveTo(Vector3 ground, float yaw)
         {
             yield return Wait(1f);
-            Vector3 normal = terrain.SampleNormal(ground.x, ground.z);
-            Vector3 centre = new Vector3(ground.x, terrain.SampleHeight(ground.x, ground.z), ground.z)
-                + normal * _rover.SphereRadius;
-            Rigidbody body = _rover.PhysicsBody;
-            body.position = centre;
-            body.transform.position = centre;
-            body.linearVelocity = Vector3.zero;
-            foreach (string field in new[] { "_heading", "_previousHeading", "_visualHeading" })
-            {
-                SetPrivate(_rover, field, Mathf.Repeat(yaw, 360f));
-            }
-
-            RoverWheelFx wheelFx = _rover.GetComponentInChildren<RoverWheelFx>(true);
-            foreach (string track in new[] { "_trackLeft", "_trackRight" })
-            {
-                GetPrivate<RoverTrackRenderer>(wheelFx, track).Break();
-            }
-
-            yield return new WaitForFixedUpdate();
-            _rover.GetComponentInChildren<RoverVisualRig>(true).Snap();
-            _cameraRig.Snap();
+            _context.Get<IRoverPlacement>().PlaceAt(ground, Quaternion.Euler(0f, yaw, 0f));
             yield return Wait(SettleSeconds);
-        }
-
-        private static void SetPrivate(object target, string field, float value)
-        {
-            FieldInfo info = target.GetType().GetField(field, BindingFlags.Instance | BindingFlags.NonPublic);
-            Assert.IsNotNull(info, $"{target.GetType().Name}.{field}");
-            info.SetValue(target, value);
-        }
-
-        private static T GetPrivate<T>(object target, string field)
-        {
-            FieldInfo info = target.GetType().GetField(field, BindingFlags.Instance | BindingFlags.NonPublic);
-            Assert.IsNotNull(info, $"{target.GetType().Name}.{field}");
-            return (T)info.GetValue(target);
         }
 
         private void Capture(string name)

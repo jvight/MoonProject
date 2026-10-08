@@ -31,6 +31,18 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
+        public void ResetTo_RestsOnTheGroundPlaneAtOnce()
+        {
+            Vector3 normal = GroundPlaneFit.Tilt(12f, 7f) * Vector3.up;
+            _attitude.ResetTo(normal);
+            Assert.AreEqual(GroundPlaneFit.PitchOf(normal), _attitude.Pitch, 1e-3f);
+            Assert.AreEqual(GroundPlaneFit.RollOf(normal), _attitude.Roll, 1e-3f);
+            float pitch = _attitude.Pitch;
+            Ground(normal, 1f);
+            Assert.AreEqual(pitch, _attitude.Pitch, 0.05f, "Already at rest: nothing settles afterwards.");
+        }
+
+        [Test]
         public void SettlesOntoTheGroundPlane()
         {
             Vector3 normal = GroundPlaneFit.Tilt(20f, -5f) * Vector3.up;

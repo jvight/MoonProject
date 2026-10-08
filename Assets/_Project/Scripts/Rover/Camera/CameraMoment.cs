@@ -69,6 +69,14 @@ namespace MoonProject.Rover
             }
         }
 
+        /// <summary>Ends the moment at once, no ease (07 was placed somewhere else while the view was dark).</summary>
+        public void Clear()
+        {
+            _held = false;
+            Weight = 0f;
+            _phase = Phase.Idle;
+        }
+
         /// <summary>Ends the moment early, easing out from the current weight over the given seconds.</summary>
         public void Cancel(float easeOut)
         {

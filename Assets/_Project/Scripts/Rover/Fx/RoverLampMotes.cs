@@ -44,6 +44,9 @@ namespace MoonProject.Rover
         /// <summary>The motes' particle system, for tests and tooling.</summary>
         public ParticleSystem System => _motes;
 
+        /// <summary>The headlamp whose beam the motes hang in.</summary>
+        public Transform Lamp => _headlamp.transform;
+
         /// <summary>Validates the wiring and applies the tuning. Returns false (and logs) when broken.</summary>
         public bool Initialize(RoverController rover)
         {
@@ -117,6 +120,26 @@ namespace MoonProject.Rover
 
             _particles = new ParticleSystem.Particle[tuning.MoteCount];
             _motes.Play();
+        }
+
+        /// <summary>
+        /// The lamp jumped (a placement): carries every mote along so it hangs where it hung relative to the lamp,
+        /// which was at <paramref name="lens"/> facing <paramref name="facing"/> before the jump.
+        /// </summary>
+        public void Carry(Vector3 lens, Quaternion facing)
+        {
+            int count = _motes.GetParticles(_particles);
+            Transform lamp = _headlamp.transform;
+            Quaternion turn = lamp.rotation * Quaternion.Inverse(facing);
+            Vector3 now = lamp.position;
+            for (int i = 0; i < count; i++)
+            {
+                ref ParticleSystem.Particle mote = ref _particles[i];
+                mote.position = now + turn * (mote.position - lens);
+                mote.velocity = turn * mote.velocity;
+            }
+
+            _motes.SetParticles(_particles, count);
         }
 
         public void Tick(float deltaTime)
