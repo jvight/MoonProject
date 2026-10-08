@@ -139,7 +139,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             RelayMast mound = relays.Masts[0];
             RelayMast shoulder = relays.Masts[1];
             RelayMast mouth = relays.Masts[2];
-            _fixture.GiveMaterials(8, 4, 0);
+            _fixture.GiveMaterials(9, 3, 0);
 
             yield return Restore(mouth);
             Assert.IsEmpty(_fixture.Events.RelayRestored, "nothing lit reaches the canyon mouth yet");

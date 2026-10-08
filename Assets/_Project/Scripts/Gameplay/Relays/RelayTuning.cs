@@ -19,7 +19,7 @@ namespace MoonProject.Gameplay
                  "sink; VISION ruling 5: the sites yield at least twice every recipe).")]
         [SerializeField] private Recipe[] _costs =
         {
-            new Recipe(2, 1, 0), new Recipe(3, 1, 0), new Recipe(3, 2, 0), new Recipe(4, 2, 0),
+            new Recipe(2, 1, 0), new Recipe(3, 1, 0), new Recipe(4, 1, 0), new Recipe(4, 2, 0),
         };
 
         [Header("Relay part")]

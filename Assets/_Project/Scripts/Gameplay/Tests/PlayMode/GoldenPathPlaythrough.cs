@@ -46,6 +46,7 @@ namespace MoonProject.Gameplay.PlayModeTests
     {
         private const string Tower = "radio_tower";
         private const string HoverJump = "rover.hover_jump";
+        private const string CargoCradle = "rover.cargo_cradle";
         private const string TillyId = "tilly";
         private const string BellId = "bell";
         private const string AfterDark = "after_dark_1";
@@ -796,7 +797,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(HoverJump, purchase.UpgradeId);
             Assert.AreEqual(1, purchase.Level);
             Assert.IsTrue(abilities.Has(RoverAbility.HoverJump), "07 can leap now");
-            Assert.IsFalse(_gameplay.Hints.TryGet(InteractionKind.Upgrade, out _), "the bench has nothing left");
+            Assert.AreEqual(CargoCradle, bench.Definition.Id, "the bench offers the Cargo Cradle next");
             yield return new WaitForSeconds(SparkDelay);
             Assert.Greater(bench.SparkCount, 0, "sparks fly from between the vice jaws");
             Vector3 front = bench.PadCentre - bench.BenchPosition;

@@ -94,6 +94,12 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         public UpgradeDefinition HoverJumpUpgrade { get; private set; }
 
+        public UpgradeDefinition CargoCradleUpgrade { get; private set; }
+
+        public UpgradeDefinition WarmHeadlampUpgrade { get; private set; }
+
+        public UpgradeDefinition BoostCoilsUpgrade { get; private set; }
+
         public FriendTuning FriendTuning { get; private set; }
 
         public FriendDefinition Tilly { get; private set; }
@@ -222,7 +228,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             RadioTowerUpgrade = Asset<UpgradeDefinition>();
             RadioTowerUpgrade.Populate("radio_tower", UpgradeStationKind.RadioTower, 60f, new[]
             {
-                new UpgradeLevel(new Recipe(0, 1, 1), 110f, 1.25f), new UpgradeLevel(new Recipe(0, 2, 1), 170f, 1.5f),
+                new UpgradeLevel(new Recipe(0, 1, 1), 110f, 1.25f), new UpgradeLevel(new Recipe(0, 1, 2), 170f, 1.5f),
                 new UpgradeLevel(new Recipe(0, 2, 2), 260f, 1.8f),
             });
             WorkshopTuning = Asset<WorkshopTuning>();
@@ -231,6 +237,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             {
                 new UpgradeLevel(new Recipe(4, 2, 1), RoverAbility.HoverJump),
             });
+            CargoCradleUpgrade = RoverKit("rover.cargo_cradle", new Recipe(4, 0, 0), RoverAbility.CargoCradle);
+            WarmHeadlampUpgrade = RoverKit("rover.warm_headlamp", new Recipe(1, 0, 3), RoverAbility.WarmHeadlamp);
+            BoostCoilsUpgrade = RoverKit("rover.boost_coils", new Recipe(1, 2, 1), RoverAbility.BoostCoils);
 
             var relicCatalog = Asset<RelicCatalog>();
             var definitions = new RelicDefinition[RelicIds.Length];
@@ -285,8 +294,11 @@ namespace MoonProject.Gameplay.PlayModeTests
             sonar.Wire(SonarTuning);
             excavation.Wire(ExcavationTuning);
             tether.Wire(TetherTuning);
-            Gameplay.Wire(visuals, GlintTuning, new[] { RadioTowerUpgrade, HoverJumpUpgrade }, salvage, relics,
-                sonar, excavation, tether, home, tower, workshop, friends, cassettes, logs, signals, shelf, relays);
+            Gameplay.Wire(visuals, GlintTuning, new[]
+                {
+                    RadioTowerUpgrade, HoverJumpUpgrade, CargoCradleUpgrade, WarmHeadlampUpgrade, BoostCoilsUpgrade,
+                }, salvage, relics, sonar, excavation, tether, home, tower, workshop, friends, cassettes, logs, signals,
+                shelf, relays);
             root.SetActive(true);
 
             Bootstrap = BootstrapHarness.Create(_controls, SaveSlot, World, Rover, Gameplay);
@@ -342,7 +354,9 @@ namespace MoonProject.Gameplay.PlayModeTests
                 Vector3.zero);
             Block(workbench, new Vector3(0f, 0.47f, 0f), new Vector3(2.3f, 0.95f, 0.9f));
             Transform lamp = Block(workbench, new Vector3(0.55f, 2.02f, 0.18f), Vector3.one * 0.12f);
-            workshop.Wire(WorkshopTuning, new[] { HoverJumpUpgrade }, workbench.parent, lamp.GetComponent<Renderer>(),
+            workshop.Wire(WorkshopTuning,
+                new[] { HoverJumpUpgrade, CargoCradleUpgrade, WarmHeadlampUpgrade, BoostCoilsUpgrade },
+                workbench.parent, lamp.GetComponent<Renderer>(),
                 Node("SparkSocket", workbench, new Vector3(-0.82f, 1.14f, 0.32f)));
             TillyPerch = Node("FriendSocket_tilly", lander, new Vector3(-1.6f, 3.3f, 0.9f));
             BellCorner = Node("BellCorner", anchor, new Vector3(-4.9f, 0f, 0.4f));
@@ -361,6 +375,14 @@ namespace MoonProject.Gameplay.PlayModeTests
             var tapes = rack.gameObject.AddComponent<CassetteShelf>();
             tapes.Wire(ShelfSlots);
             return tapes;
+        }
+
+        /// <summary>A one-level rover ability sold at the bench, as in the content builder.</summary>
+        private UpgradeDefinition RoverKit(string id, Recipe recipe, RoverAbility ability)
+        {
+            var upgrade = Asset<UpgradeDefinition>();
+            upgrade.Populate(id, UpgradeStationKind.Workshop, 0f, new[] { new UpgradeLevel(recipe, ability) });
+            return upgrade;
         }
 
         /// <summary>
