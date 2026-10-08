@@ -16,6 +16,7 @@ using MoonProject.Core.Save;
 using MoonProject.Testing;
 using Object = UnityEngine.Object;
 #if UNITY_EDITOR
+using UnityEditor;
 using UnityEditor.SceneManagement;
 #endif
 
@@ -26,9 +27,12 @@ namespace MoonProject.Rover.PlayModeTests
     /// renders the game camera as the lonely wide shot settles at the base, mid-basin looking home and in the canyon,
     /// three frames of the hand-back as 07 drives off, and the dust motes in 07's lamp (as a player orbiting round 07
     /// sees them, and up close; base and canyon) to Logs/rover-captures/*.png, with lonely.md recording each frame's
-    /// distance to 07, 07's place on screen and the horizon. Game time advances a fixed 1/60 s per frame, so
-    /// slow captures never skip game time. 07 is moved between places through <see cref="IRoverPlacement"/>, held
-    /// parked meanwhile. Slow and needs a GPU: run on demand with --category RoverLonelySession.
+    /// distance to 07, 07's place on screen and the horizon. A second session stages the restoration moment (M3-06) at
+    /// relay.0: a restored mast stood on the anchor, 07 parked on its pad, RelayRestored published with the lamp
+    /// warming, and five frames from before to after the camera's look up (relay.md). Game time advances a fixed
+    /// 1/60 s per frame, so slow captures never skip game time. 07 is moved between places through
+    /// <see cref="IRoverPlacement"/>, held parked meanwhile. Slow and needs a GPU: run on demand with
+    /// --category RoverLonelySession.
     /// </summary>
     [Explicit("Slow real-game capture session; run on demand with --category RoverLonelySession.")]
     [Category("RoverLonelySession")]
@@ -72,6 +76,27 @@ namespace MoonProject.Rover.PlayModeTests
 
         /// <summary>Height (m) of the middle of 07's body above its ground contact.</summary>
         private const float BodyHeight = 0.8f;
+
+        /// <summary>The restored relay mast art (contract in docs/ARCHITECTURE.md) and its lamp node.</summary>
+        private const string RelayMastPath = "Assets/_Project/Generated/Art/Relay/RelayMast.prefab";
+        private const string LampNode = "Lamp";
+        private const string RelayId = "relay.0";
+
+        /// <summary>07 parks this far toward home from the pad centre, nose to the mast's junction box.</summary>
+        private const float PadOffset = 1.2f;
+
+        /// <summary>Seconds the staged lamp takes to warm to its authored glow after the restore.</summary>
+        private const float LampWarmSeconds = 2f;
+
+        /// <summary>Seconds after RelayRestored at which the moment's frames are taken.</summary>
+        private static readonly float[] RelayFrames = { 1.5f, 4.2f, 6.8f, 10f };
+
+        private static readonly string[] RelayFrameNames =
+        {
+            "relay-2-tilting", "relay-3-held", "relay-4-returning", "relay-5-after",
+        };
+
+        private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
 
         private const float HorizonReach = 1000f;
 
@@ -119,29 +144,8 @@ namespace MoonProject.Rover.PlayModeTests
         [PostBuildCleanup(typeof(RoverSessionScene))]
         public IEnumerator LonelyWideShots_AndLampMotes_AreCapturedInTheRealGame()
         {
-            Directory.CreateDirectory(SaveService.DefaultDirectory);
-#if UNITY_EDITOR
-            AsyncOperation loading = EditorSceneManager.LoadSceneAsyncInPlayMode(RoverSessionScene.ScenePath,
-                new LoadSceneParameters(LoadSceneMode.Single));
-            while (!loading.isDone)
-            {
-                yield return null;
-            }
-#else
-            throw new NotSupportedException("The rover session loads the scene through the editor.");
-#endif
-            FindSystems();
-            _awoke = _context.Events.Subscribe<RoverAwoke>(_ => _awake = true);
-            float started = Time.time;
-            while (!_awake)
-            {
-                Assert.Less(Time.time - started, WakeTimeout, "07 wakes up");
-                yield return null;
-            }
-
+            yield return Boot();
             IRoverRig rig = _context.Get<IRoverRig>();
-            rig.SetHoldStill(_hold, true);
-            yield return Wait(SettleSeconds);
             _report.AppendLine("# The lonely wide shot (real Main scene)");
             _report.AppendLine();
             _report.AppendLine("| Capture | Camera to 07 (m) | 07 on screen (x, y) | Horizon y | Wide frame |");
@@ -200,6 +204,123 @@ namespace MoonProject.Rover.PlayModeTests
             File.WriteAllText(Path.Combine(CaptureFolder, "lonely.md"), _report.ToString());
             Debug.Log("[rover-lonely] " + _report);
             Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
+        [UnityTest]
+        [Timeout(600000)]
+        [PrebuildSetup(typeof(RoverSessionScene))]
+        [PostBuildCleanup(typeof(RoverSessionScene))]
+        public IEnumerator RelayRestoration_IsCapturedAtRelay0()
+        {
+            yield return Boot();
+            Assert.IsTrue(_context.Get<IWorldAnchors>().TryGet(RelayId, out WorldAnchor relay),
+                "The world has relay.0's anchor.");
+            Renderer lamp = StageMast(relay);
+            Vector3 pad = relay.Position + relay.Forward * PadOffset;
+            yield return MoveTo(pad, WideShotComposer.Bearing(-relay.Forward));
+
+            _report.AppendLine("# The relay restoration moment at relay.0 (real Main scene, staged mast)");
+            _report.AppendLine();
+            _report.AppendLine("| Capture | Lamp on screen (x, y) | 07 on screen (x, y) | Camera off the lamp (deg) | "
+                + "07's gaze off the lamp (deg) | Moment weight |");
+            _report.AppendLine("|---|---|---|---:|---:|---:|");
+            Vector3 lampPosition = lamp.transform.position;
+            CaptureRelay("relay-1-before", lampPosition);
+
+            _context.Events.Publish(new RelayRestored(RelayId, lampPosition, 1, 4));
+            float restored = Time.time;
+            for (int i = 0; i < RelayFrames.Length; i++)
+            {
+                while (Time.time < restored + RelayFrames[i])
+                {
+                    SetGlow(lamp, Mathf.SmoothStep(0f, 1f, (Time.time - restored) / LampWarmSeconds));
+                    yield return null;
+                }
+
+                CaptureRelay(RelayFrameNames[i], lampPosition);
+            }
+
+            _context.Get<IRoverRig>().SetHoldStill(_hold, false);
+            Directory.CreateDirectory(CaptureFolder);
+            File.WriteAllText(Path.Combine(CaptureFolder, "relay.md"), _report.ToString());
+            Debug.Log("[rover-relay] " + _report);
+            Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
+        /// <summary>Loads the session scene, waits for 07 to wake and holds it parked a moment.</summary>
+        private IEnumerator Boot()
+        {
+            Directory.CreateDirectory(SaveService.DefaultDirectory);
+#if UNITY_EDITOR
+            AsyncOperation loading = EditorSceneManager.LoadSceneAsyncInPlayMode(RoverSessionScene.ScenePath,
+                new LoadSceneParameters(LoadSceneMode.Single));
+            while (!loading.isDone)
+            {
+                yield return null;
+            }
+#else
+            throw new NotSupportedException("The rover session loads the scene through the editor.");
+#endif
+            FindSystems();
+            _awoke = _context.Events.Subscribe<RoverAwoke>(_ => _awake = true);
+            float started = Time.time;
+            while (!_awake)
+            {
+                Assert.Less(Time.time - started, WakeTimeout, "07 wakes up");
+                yield return null;
+            }
+
+            _context.Get<IRoverRig>().SetHoldStill(_hold, true);
+            yield return Wait(SettleSeconds);
+        }
+
+        /// <summary>
+        /// Test-only staging of what Gameplay will own: the restored mast stood on <paramref name="relay"/>'s anchor
+        /// (root at the pad centre, +Z toward home), its lamp dark. Returns the lamp's renderer.
+        /// </summary>
+        private static Renderer StageMast(WorldAnchor relay)
+        {
+#if UNITY_EDITOR
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(RelayMastPath);
+            Assert.IsNotNull(prefab, $"{RelayMastPath} exists (the art box's relay builder).");
+            GameObject mast = Object.Instantiate(prefab, relay.Position, Quaternion.LookRotation(relay.Forward));
+            SceneManager.MoveGameObjectToScene(mast, SceneManager.GetSceneByPath(RoverSessionScene.ScenePath));
+            foreach (Renderer renderer in mast.GetComponentsInChildren<Renderer>(true))
+            {
+                if (renderer.name == LampNode)
+                {
+                    SetGlow(renderer, 0f);
+                    return renderer;
+                }
+            }
+
+            Assert.Fail("The relay mast has a Lamp renderer.");
+            return null;
+#else
+            throw new NotSupportedException("The rover session loads the mast through the editor.");
+#endif
+        }
+
+        /// <summary>Lights a glow renderer through the linear MaterialPropertyBlock contract.</summary>
+        private static void SetGlow(Renderer renderer, float intensity)
+        {
+            var block = new MaterialPropertyBlock();
+            renderer.GetPropertyBlock(block);
+            block.SetVector(EmissionColorId, new Vector4(intensity, intensity, intensity, 1f));
+            renderer.SetPropertyBlock(block);
+        }
+
+        private void CaptureRelay(string name, Vector3 lamp)
+        {
+            FrameCapture.SavePng(_view, CaptureWidth, CaptureHeight, Path.Combine(CaptureFolder, name + ".png"));
+            Transform camera = _view.transform;
+            Vector3 lampOnScreen = _view.WorldToViewportPoint(lamp);
+            Vector3 body = _view.WorldToViewportPoint(_rover.Position + Vector3.up * BodyHeight);
+            Transform eye = _context.Get<IRoverRig>().TetherOrigin;
+            _report.AppendLine(string.Format(CultureInfo.InvariantCulture,
+                "| {0} | {1:0.00}, {2:0.00} | {3:0.00}, {4:0.00} | {5:0.0} | {6:0.0} | {7:0.00} |", name,
+                lampOnScreen.x, lampOnScreen.y, body.x, body.y, Vector3.Angle(camera.forward, lamp - camera.position),
+                Vector3.Angle(eye.forward, lamp - eye.position), _cameraRig.MomentWeight));
         }
 
         private void FindSystems()
