@@ -5,15 +5,19 @@ using MoonProject.Art.Editor;
 
 namespace MoonProject.Art.Tests
 {
+    /// <summary>The six relics at true size (VISION ruling 13), pivoted on their centre of mass.</summary>
     public sealed class RelicModelTests
     {
+        // Ruling 13: small personal things stay under about half a metre.
+        private const float MaxRelicSize = 0.5f + 0.002f;
+
         public static IEnumerable<string> Ids()
         {
             return RelicModelBuilder.Ids;
         }
 
         [TestCaseSource(nameof(Ids))]
-        public void Relic_IsRelicSized_WithinBudget_AndPivotedOnItsCentreOfMass(string id)
+        public void Relic_IsTrueSized_WithinBudget_AndPivotedOnItsCentreOfMass(string id)
         {
             ModelNode relic = RelicModelBuilder.CreateModel(id);
             LowPolyMeshBuilder geometry = relic.Mesh.Geometry;
@@ -22,7 +26,9 @@ namespace MoonProject.Art.Tests
             Assert.AreEqual("Relic_" + id, relic.Name);
             Assert.AreEqual(0, relic.Children.Count);
             MeshChecks.AssertWellFormed(geometry);
-            Assert.That(Mathf.Max(size.x, Mathf.Max(size.y, size.z)), Is.InRange(0.5f, 1.2f), "largest dimension");
+            float largest = Mathf.Max(size.x, Mathf.Max(size.y, size.z));
+            Assert.AreEqual(RelicModelBuilder.TrueSize(id), largest, 0.002f, "largest dimension at its true size");
+            Assert.LessOrEqual(largest, MaxRelicSize, "never a giant prop");
             Assert.That(geometry.TriangleCount, Is.InRange(300, 1200), "triangle budget");
             Assert.Less(geometry.VolumeCentroid().magnitude, 1e-3f, "pivot at the centre of mass");
         }
