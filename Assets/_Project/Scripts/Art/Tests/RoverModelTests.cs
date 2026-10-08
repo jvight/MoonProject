@@ -10,7 +10,8 @@ namespace MoonProject.Art.Tests
     {
         private static readonly string[] ContractPaths =
         {
-            "Body", "Body/Decal07Fresh", "Bogie_L", "Bogie_R",
+            "Body", "Body/Decal07Fresh", "Body/Weather_Paint", "Body/Weather_Rust", "Body/Weather_Dust",
+            "Bogie_L", "Bogie_R",
             "Wheel_FL", "Wheel_FR", "Wheel_ML", "Wheel_MR", "Wheel_RL", "Wheel_RR",
             "Neck", "Neck/Head", "Neck/Head/Eye", "Neck/Head/Eye/TetherOrigin", "Neck/Head/Eyelid",
             "SolarWing", "SolarWing/CellFilled", "Antenna", "Antenna/AntennaTip", "Antenna/Pennant",
@@ -114,7 +115,7 @@ namespace MoonProject.Art.Tests
             Assert.That(size.z, Is.InRange(2.1f, 2.4f), "length");
             Assert.That(size.x, Is.InRange(1.4f, 1.7f), "width");
             Assert.That(max.y, Is.InRange(1.35f, 1.8f), "height (the hooded head and whip antenna top it)");
-            Assert.That(triangles, Is.InRange(3000, 7000), "triangle budget (the hidden gifts included)");
+            Assert.That(triangles, Is.InRange(3000, 8500), "triangle budget (the hidden gifts and weather included)");
         }
 
         [Test]

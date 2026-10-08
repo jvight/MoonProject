@@ -21,6 +21,7 @@ namespace MoonProject.Art.Editor
         private const float SheetThickness = 0.04f;
         private const float RidgePitch = 0.45f;
         private const int CableSides = 5;
+        private const float StreakWidth = 0.05f;
 
         // A shallow dish walked so the bowl faces up (radius, height); scaled to the dish's radius.
         private static readonly Vector2[] DishProfile =
@@ -120,9 +121,20 @@ namespace MoonProject.Art.Editor
         /// <summary>A rust streak running down a face from a bolt at (x, y) on the face frame.</summary>
         public static void RustStreak(LowPolyMeshBuilder b, Matrix4x4 face, float x, float y, float length)
         {
-            b.Prism(face * At(new Vector3(x, y, 0.008f), AlongZ), 0.03f, 0.016f, 6, PaletteSwatch.Metal);
-            b.Box(face * At(x, y - length * 0.5f, 0.004f), new Vector3(0.05f, length, 0.008f), PaletteSwatch.Rust);
-            b.Box(face * At(x, y - length - 0.03f, 0.004f), new Vector3(0.03f, 0.08f, 0.008f), PaletteSwatch.Rust);
+            RustStreak(b, face, x, y, length, StreakWidth);
+        }
+
+        /// <summary>
+        /// As the other overload, the streak <paramref name="width"/> wide (the bolt and drip scale with it).
+        /// </summary>
+        public static void RustStreak(LowPolyMeshBuilder b, Matrix4x4 face, float x, float y, float length, float width)
+        {
+            float scale = width / StreakWidth;
+            b.Prism(face * At(new Vector3(x, y, 0.008f * scale), AlongZ), 0.03f * scale, 0.016f * scale, 6,
+                PaletteSwatch.Metal);
+            b.Box(face * At(x, y - length * 0.5f, 0.004f), new Vector3(width, length, 0.008f), PaletteSwatch.Rust);
+            b.Box(face * At(x, y - length - 0.03f * scale, 0.004f), new Vector3(width * 0.6f, 0.08f * scale, 0.008f),
+                PaletteSwatch.Rust);
         }
 
         /// <summary>An irregular rust patch on a face frame, centred at (x, y).</summary>

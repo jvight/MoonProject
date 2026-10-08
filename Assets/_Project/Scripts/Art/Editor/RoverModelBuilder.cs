@@ -55,6 +55,12 @@ namespace MoonProject.Art.Editor
         public const float MiddleWheelTravel = 0.16f;
 
         public const string Decal07FreshName = "Decal07Fresh";
+
+        // 07's faded stripe and dust sit just proud of the paint: the old serial's numerals still stand through.
+        private const float StripeFadeLift = 0.002f;
+
+        /// <summary>How high dust has caked on 07's lower body.</summary>
+        private const float BodyDustTide = 0.47f;
         public const string CellFilledName = "CellFilled";
         public const string PennantName = "Pennant";
 
@@ -79,9 +85,14 @@ namespace MoonProject.Art.Editor
             var spareLeft = new ModelMesh(ModelName + "_WheelSpareL", Mirrored(RoverMeshes.SpareWheel()));
 
             var root = new ModelNode(ModelName, Vector3.zero);
-            ModelNode body = root.Add(new ModelNode("Body", Vector3.zero,
-                new ModelMesh(ModelName + "_Body", RoverMeshes.Body())));
+            LowPolyMeshBuilder shell = RoverMeshes.Body();
+            ModelNode body = root.Add(new ModelNode("Body", Vector3.zero, new ModelMesh(ModelName + "_Body", shell)));
             body.Add(Gift(Decal07FreshName, Vector3.zero, ModelName + "_Decal07Fresh", RoverGiftMeshes.FreshSerial()));
+            var stripe = new LowPolyMeshBuilder(200);
+            stripe.AppendRepainted(shell, PaletteSwatch.WarmAccent, PaletteSwatch.FadedAccent, StripeFadeLift);
+            LowPolyMeshBuilder dust = RoverMeshes.DustPatches();
+            dust.AppendBelow(shell, BodyDustTide, StripeFadeLift, PaletteSwatch.CakedDust);
+            Weathering.Attach(body, ModelName, stripe, RoverMeshes.Rust(), dust);
             root.Add(new ModelNode("Bogie_L", MirrorX(BogieHinge), bogieLeft));
             root.Add(new ModelNode("Bogie_R", BogieHinge, bogieRight));
             root.Add(new ModelNode("Wheel_FL", WheelCentre(-1f, 1f), wheelLeft));
