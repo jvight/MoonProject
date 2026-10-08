@@ -38,6 +38,11 @@ namespace MoonProject.UI
             MaterialsChipShadow = Require<VisualElement>("materials-chip-shadow");
             MaterialsChipItems = Require<VisualElement>("materials-chip-items");
 
+            SalvageRingAnchor = Require<VisualElement>("salvage-ring-anchor");
+            SalvageRing = Require<VisualElement>("salvage-ring");
+            SiteNameAnchor = Require<VisualElement>("site-name-anchor");
+            SiteName = Require<Label>("site-name");
+
             MemoryCard = Require<VisualElement>("memory-card");
             MemoryCardShadow = Require<VisualElement>("memory-card-shadow");
             MemoryCardIcon = Require<VisualElement>("memory-card-icon");
@@ -161,6 +166,14 @@ namespace MoonProject.UI
         public VisualElement MaterialsChipShadow { get; }
 
         public VisualElement MaterialsChipItems { get; }
+
+        public VisualElement SalvageRingAnchor { get; }
+
+        public VisualElement SalvageRing { get; }
+
+        public VisualElement SiteNameAnchor { get; }
+
+        public Label SiteName { get; }
 
         public VisualElement MemoryCard { get; }
 

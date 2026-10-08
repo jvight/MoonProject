@@ -52,6 +52,16 @@
                     </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>
+            <ui:VisualElement name="salvage-ring-anchor" class="world-anchor" picking-mode="Ignore">
+                <ui:VisualElement name="salvage-ring-middle" class="world-anchor__middle" picking-mode="Ignore">
+                    <ui:VisualElement name="salvage-ring" class="salvage-ring" picking-mode="Ignore" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="site-name-anchor" class="world-anchor" picking-mode="Ignore">
+                <ui:VisualElement name="site-name-center" class="world-anchor__center" picking-mode="Ignore">
+                    <ui:Label name="site-name" class="friend-name site-name" picking-mode="Ignore" />
+                </ui:VisualElement>
+            </ui:VisualElement>
             <ui:VisualElement name="materials-chip" class="materials-chip" picking-mode="Ignore">
                 <ui:VisualElement name="materials-chip-shadow" class="soft-shadow soft-shadow--chip" />
                 <ui:VisualElement name="materials-chip-items" class="chip materials-chip__body" />

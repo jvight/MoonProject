@@ -413,6 +413,37 @@ Label {
     padding: 8px 12px 8px 8px;
 }
 
+/* Salvage: the hold ring centred on a piece's cut point, and a site's name over it */
+
+.world-anchor__middle {
+    position: absolute;
+    left: 0;
+    top: 0;
+    translate: -50% -50%;
+}
+
+.salvage-ring {
+    width: 48px;
+    height: 48px;
+    justify-content: center;
+    align-items: center;
+    border-radius: 24px;
+    background-color: var(--moon-glass);
+    --track-color: var(--moon-track);
+    --fill-color: var(--moon-warm-lamp);
+    --ring-width: 3.5;
+}
+
+.salvage-ring__icon {
+    width: 20px;
+    height: 20px;
+}
+
+.site-name {
+    font-size: 26px;
+    letter-spacing: 3px;
+}
+
 /* Radio ticker: one soft line in the bottom band, below every panel and below the prompts' screen margin */
 
 .ticker {

@@ -9,11 +9,11 @@ namespace MoonProject.UI.PlayModeTests
     /// <summary>
     /// Everything the UI reads from the World, Rover, Audio and Gameplay domains, as one scriptable stand-in system
     /// (initialised before the UI). Tests set the tether state, the gameplay hint, the material stock, the tower offer,
-    /// the radio program, the relay network, and the radio-hop.
+    /// the radio program, the relay network, the radio-hop and the salvage cut.
     /// </summary>
     public sealed class FakeGameServices : MonoBehaviour, IGameSystem, IViewCamera, IAudioSettings, ILookSettings,
         IMaterialStock, ITetherAim, IInteractionHints, IUpgradeShop, IRoverState, IFriendStatuses, IRadioProgram,
-        IRadioHop, IRelayStatus
+        IRadioHop, IRelayStatus, ISalvageStatus
     {
         private readonly float[] _volumes = { 1f, 1f, 1f, 1f };
         private readonly List<string> _tapes = new List<string>();
@@ -67,6 +67,19 @@ namespace MoonProject.UI.PlayModeTests
         public int Optics { get; private set; }
 
         public int Total => Metal + Wiring + Optics;
+
+        public bool HasTarget { get; set; }
+
+        public Vector3 CutPoint { get; set; }
+
+        public bool IsCutting { get; set; }
+
+        /// <summary>The salvage cut's progress (<see cref="ISalvageStatus.Progress"/>; the hop has its own).</summary>
+        public float CutProgress { get; set; }
+
+        public SalvageMaterial Material { get; set; }
+
+        float ISalvageStatus.Progress => CutProgress;
 
         public TetherAimState State => TetherState;
 
@@ -139,6 +152,7 @@ namespace MoonProject.UI.PlayModeTests
             context.Register<IRadioProgram>(this);
             context.Register<IRadioHop>(this);
             context.Register<IRelayStatus>(this);
+            context.Register<ISalvageStatus>(this);
         }
 
         /// <summary>The lit nodes the list will offer (their name keys), home first.</summary>

@@ -61,6 +61,11 @@ namespace MoonProject.UI.PlayModeTests
         private const float MastLookHeight = 1f;
         private const float HopHold = 0.45f;
         private const float HopMidFade = 0.55f;
+        private const string DepotSite = "site.depot";
+        private const float SiteShotBack = 9f;
+        private const float SiteShotHeight = 3.2f;
+        private const float CutHeight = 0.8f;
+        private const float CutHeld = 0.55f;
 
         private string _slot;
         private GameObject _uiHost;
@@ -72,6 +77,7 @@ namespace MoonProject.UI.PlayModeTests
         private GameObject _bellCamera;
         private GameObject _bellStandIn;
         private GameObject _mastCamera;
+        private GameObject _siteCamera;
         private UpgradeDefinition _tower;
         private UpgradeDefinition _bench;
 
@@ -81,6 +87,7 @@ namespace MoonProject.UI.PlayModeTests
             Object.DestroyImmediate(_bellCamera);
             Object.DestroyImmediate(_bellStandIn);
             Object.DestroyImmediate(_mastCamera);
+            Object.DestroyImmediate(_siteCamera);
             Object.DestroyImmediate(_tower);
             Object.DestroyImmediate(_bench);
             Object.DestroyImmediate(_uiHost);
@@ -253,6 +260,39 @@ namespace MoonProject.UI.PlayModeTests
             fakes.AtStation = false;
             fakes.Upgrade = _tower;
             yield return new WaitForSecondsRealtime(1f);
+
+            if (!context.Get<IWorldAnchors>().TryGet(DepotSite, out MoonProject.Core.WorldAnchor depot))
+            {
+                throw new InvalidOperationException($"The world has no '{DepotSite}' anchor.");
+            }
+
+            Camera siteCamera = SiteCamera(depot, camera);
+            Vector3 cut = depot.Position + Vector3.up * CutHeight;
+            fakes.Camera = siteCamera;
+            fakes.HasTarget = true;
+            fakes.CutPoint = cut;
+            fakes.Material = SalvageMaterial.Wiring;
+            fakes.PrimaryHint = new InteractionHint(InteractionKind.Salvage, cut, true);
+            yield return new WaitForSecondsRealtime(_tuning.Prompts.Find(InteractionKind.Salvage).DwellSeconds +
+                                                    _tuning.Prompts.Reveal.FadeIn + 0.8f);
+            yield return Capture(siteCamera, folder, "40_salvage_cut_prompt");
+            fakes.IsCutting = true;
+            fakes.CutProgress = CutHeld * 0.5f;
+            yield return new WaitForSecondsRealtime(0.5f);
+            fakes.IsCutting = false;
+            fakes.CutProgress = CutHeld;
+            yield return new WaitForSecondsRealtime(_tuning.Prompts.Reveal.FadeOut + _tuning.Salvage.Ring.FadeIn +
+                                                    0.5f);
+            yield return Capture(siteCamera, folder, "41_salvage_ring_kept");
+            fakes.HasTarget = false;
+            fakes.CutProgress = 0f;
+            fakes.PrimaryHint = InteractionHint.None;
+            context.Events.Publish(new SiteAnswered(DepotSite, depot.Position, 30f, true));
+            yield return new WaitForSecondsRealtime(_tuning.Salvage.SiteName.FadeIn + 0.5f);
+            yield return Capture(siteCamera, folder, "42_site_name");
+            fakes.Camera = camera;
+            yield return new WaitForSecondsRealtime(_tuning.Salvage.SiteNameHoldSeconds +
+                                                    _tuning.Salvage.SiteName.FadeOut + 0.3f);
 
             Transform socket = DarkMastSocket(context.Get<IWorldAnchors>());
             Camera mastCamera = MastCamera(socket, camera);
@@ -457,6 +497,21 @@ namespace MoonProject.UI.PlayModeTests
             throw new InvalidOperationException("Every relay mast is lit in the loaded save: no dark mast to capture.");
         }
 
+        /// <summary>A camera on a site's approach lane, a few metres out, looking at its heart.</summary>
+        private Camera SiteCamera(MoonProject.Core.WorldAnchor site, Camera reference)
+        {
+            Vector3 lane = Vector3.ProjectOnPlane(site.Forward, Vector3.up).normalized;
+            Vector3 position = site.Position - lane * SiteShotBack + Vector3.up * SiteShotHeight;
+            _siteCamera = new GameObject("SiteCaptureCamera");
+            var camera = _siteCamera.AddComponent<Camera>();
+            camera.CopyFrom(reference);
+            camera.fieldOfView = FriendShotFov;
+            camera.GetUniversalAdditionalCameraData().renderPostProcessing = true;
+            _siteCamera.transform.SetPositionAndRotation(position,
+                Quaternion.LookRotation(site.Position + Vector3.up * CutHeight - position, Vector3.up));
+            return camera;
+        }
+
         /// <summary>A camera on the home side of a mast's foot, looking at its part socket.</summary>
         private Camera MastCamera(Transform socket, Camera reference)
         {
@@ -621,7 +676,7 @@ namespace MoonProject.UI.PlayModeTests
             _slot = BootstrapHarness.NewTestSlot();
             save = new SaveService(SaveService.DefaultDirectory, _slot);
             ui.Initialize(new UiServices(context.Events, context.Input, fakes, fakes, context.Get<IAudioSettings>(),
-                context.Get<ILookSettings>(), save, fakes, fakes, fakes, fakes, fakes, fakes, fakes, fakes));
+                context.Get<ILookSettings>(), save, fakes, fakes, fakes, fakes, fakes, fakes, fakes, fakes, fakes));
             save.Load();
             return ui;
         }

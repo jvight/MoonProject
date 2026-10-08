@@ -13,8 +13,9 @@ namespace MoonProject.UI
     /// <summary>
     /// The UI domain's game system (initialised last, after Gameplay). As little UI as possible, as calm as possible: a
     /// title while 07 wakes, context prompts only the first few times, a reticle only while aiming, the materials chip
-    /// only when the stock changes, a story card per relic brought home, crew log found and cassette collected, the
-    /// station upgrade panel with its recipe, a few warm pips over a broken friend while 07 is near, its name and its crew log when it wakes,
+    /// only when the stock changes, the hold ring at a salvage cut and a site's name the first time it answers the
+    /// sonar, a story card per relic brought home, crew log found and cassette collected, the station upgrade panel
+    /// with its recipe, a few warm pips over a broken friend while 07 is near, its name and its crew log when it wakes,
     /// the radio's ticker line along the bottom, the station's name when Bell's dial is turned, the relay network's
     /// price tag, hop list and soft hop fade, and the pause menu with settings. It registers
     /// <see cref="ILocalization"/> and owns the cursor and the UI's save sections. Everything animates on unscaled time
@@ -53,6 +54,8 @@ namespace MoonProject.UI
         private TetherReticle _reticle;
         private ContextPrompt _prompt;
         private MaterialsChip _chip;
+        private SalvageRing _salvageRing;
+        private SiteNameTag _siteName;
         private MemoryCard _card;
         private TickerQueue _tickerLines;
         private RadioTicker _ticker;
@@ -68,6 +71,7 @@ namespace MoonProject.UI
         private bool _bound;
         private bool _awake;
         private bool _digging;
+        private bool _wasCutting;
         private float _sinceAwake;
 
         /// <summary>The localization service this system registered (tests and editor tools read it).</summary>
@@ -84,6 +88,10 @@ namespace MoonProject.UI
         internal TetherReticle Reticle => _reticle;
 
         internal MaterialsChip Chip => _chip;
+
+        internal SalvageRing SalvageRing => _salvageRing;
+
+        internal SiteNameTag SiteName => _siteName;
 
         internal MemoryCard Card => _card;
 
@@ -204,6 +212,7 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<RelicDeposited>(OnRelicDeposited));
             _tokens.Add(events.Subscribe<RoverAwoke>(OnRoverAwoke));
             _tokens.Add(events.Subscribe<SonarPinged>(OnSonarPinged));
+            _tokens.Add(events.Subscribe<SiteAnswered>(OnSiteAnswered));
             _tokens.Add(events.Subscribe<ExcavationStarted>(OnExcavationStarted));
             _tokens.Add(events.Subscribe<ExcavationStopped>(OnExcavationStopped));
             _tokens.Add(events.Subscribe<TetherAttached>(OnTetherAttached));
@@ -260,6 +269,8 @@ namespace MoonProject.UI
             _chip = new MaterialsChip(_layout, _tuning.MaterialsChip, _numbers);
             IMaterialStock stock = services.Materials;
             _chip.Change(stock.Metal, stock.Wiring, stock.Optics);
+            _salvageRing = new SalvageRing(_layout, _tuning.Salvage, _tuning.Prompts, services.Salvage, services.View);
+            _siteName = new SiteNameTag(_layout, _tuning.Salvage, _tuning.Prompts, _localization, services.View);
             _card = new MemoryCard(_layout, _tuning.MemoryCard, _localization, services.Events, _relics,
                 services.Friends);
             _friendReadout = new FriendReadout(_layout, _tuning.Friends, _tuning.Prompts, services.Friends,
@@ -336,6 +347,13 @@ namespace MoonProject.UI
             _tower.Tick(hudTime, !paused, input.ExcavateHeld, _glyphs.For(RoverAction.Excavate, device));
             _chip.SetPinned(_tower.IsVisible || _relayTag.IsVisible);
             _chip.Tick(deltaTime);
+            bool cutting = _services.Salvage.IsCutting;
+            if (cutting && !_wasCutting)
+            {
+                _director.NotifyUsed(InteractionKind.Salvage);
+            }
+
+            _wasCutting = cutting;
 
             if (_director.Displayed == InteractionKind.Reel && _director.WantsShown && input.Winch != 0f)
             {
@@ -349,11 +367,13 @@ namespace MoonProject.UI
             _friendReadout.Tick(deltaTime, !paused, panelSize,
                 _prompt.StackHeight(InteractionKind.Repair, _tuning.Friends.StackGap));
             _friendName.Tick(hudTime, panelSize);
+            _siteName.Tick(hudTime, panelSize);
             _prompt.Tick(deltaTime, promptsOpen, _services.Hints.Primary, device, panelSize);
             bool tagOpen = !paused && _awake && !_title.IsPlaying && !_card.IsVisible && !_tower.IsVisible &&
                            !_hopList.IsBusy && !hopping;
             _relayTag.Tick(deltaTime, tagOpen, panelSize,
                 _prompt.StackHeight(InteractionKind.Restore, _tuning.Relays.TagStackGap));
+            _salvageRing.Tick(deltaTime, tagOpen, panelSize);
 
             if (_services.Hop.Phase == RadioHopPhase.Choosing && _dial.IsVisible)
             {
@@ -363,7 +383,7 @@ namespace MoonProject.UI
             _hopList.Tick(deltaTime, !_dial.IsVisible && !_prompt.IsVisible, _glyphs.For(RoverAction.Excavate, device),
                 device);
             _dial.Tick(hudTime, !_prompt.IsVisible && !_hopList.IsBusy);
-            bool tickerOpen = _awake && !_title.IsPlaying && !_card.IsBusy && !_digging &&
+            bool tickerOpen = _awake && !_title.IsPlaying && !_card.IsBusy && !_digging && !cutting &&
                               !_prompt.IsVisible && !_reticle.IsVisible && !_dial.IsBusy && !_hopList.IsBusy &&
                               !hopping;
             _ticker.Tick(hudTime, tickerOpen);
@@ -380,6 +400,14 @@ namespace MoonProject.UI
             if (_bound)
             {
                 _chip.Change(changed.Metal, changed.Wiring, changed.Optics);
+            }
+        }
+
+        private void OnSiteAnswered(SiteAnswered answered)
+        {
+            if (_bound)
+            {
+                _siteName.Answered(answered.SiteId, answered.Position);
             }
         }
 
@@ -506,6 +534,7 @@ namespace MoonProject.UI
             _friendName.Relocalize();
             _tower.Relocalize();
             _relayTag.Relocalize();
+            _siteName.Relocalize();
             _pause.Relocalize();
         }
 

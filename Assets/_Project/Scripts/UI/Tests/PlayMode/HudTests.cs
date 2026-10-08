@@ -318,6 +318,66 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator Salvage_CutPromptThenARing_ThatKeepsItsProgress()
+        {
+            InputSystem.AddDevice<Keyboard>();
+            Boot();
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            var cut = new Vector3(0.5f, 0.6f, 6f);
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Salvage, cut, true);
+            _rig.Fakes.HasTarget = true;
+            _rig.Fakes.CutPoint = cut;
+            _rig.Fakes.Material = SalvageMaterial.Optics;
+            yield return Seconds(1.5f);
+            Assert.IsTrue(_rig.Ui.Prompt.IsVisible, "aimed at a piece: the cut is taught");
+            Assert.AreEqual(Text(UiKeys.Hint(InteractionKind.Salvage)), _rig.Ui.Layout.PromptWord.text);
+            Assert.IsFalse(_rig.Ui.SalvageRing.IsVisible, "no ring before there is a cut to show");
+
+            _rig.Fakes.IsCutting = true;
+            _rig.Fakes.CutProgress = 0.3f;
+            yield return Seconds(0.8f);
+            Assert.IsTrue(_rig.Ui.SalvageRing.IsVisible);
+            Assert.AreEqual(0.3f, _rig.Ui.SalvageRing.Progress, 1e-3f);
+            Assert.AreEqual(SalvageMaterial.Optics, _rig.Ui.SalvageRing.ShownMaterial, "it says what the piece yields");
+            Assert.AreEqual(1, _rig.Ui.Ledger.Used(InteractionKind.Salvage), "cutting is doing it");
+            Assert.IsFalse(_rig.Ui.Prompt.IsVisible, "the prompt bows out once the beam cuts");
+
+            _rig.Fakes.IsCutting = false;
+            _rig.Fakes.CutProgress = 0.55f;
+            yield return Seconds(1f);
+            Assert.IsTrue(_rig.Ui.SalvageRing.IsVisible, "let go halfway: the ring keeps the progress");
+            Assert.AreEqual(0.55f, _rig.Ui.SalvageRing.Progress, 1e-3f);
+
+            _rig.Fakes.HasTarget = false;
+            _rig.Fakes.PrimaryHint = InteractionHint.None;
+            yield return Seconds(1f);
+            Assert.IsFalse(_rig.Ui.SalvageRing.IsVisible, "aimed away: it eases off");
+        }
+
+        [UnityTest]
+        public IEnumerator Site_NamesItselfTheFirstTimeItAnswers_Once()
+        {
+            Boot();
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            yield return Seconds(0.5f);
+            Events.Publish(new SiteAnswered("site.depot", new Vector3(0f, 0f, 40f), 40f, true));
+            yield return Seconds(_rig.Tuning.Salvage.SiteName.FadeIn + 0.2f);
+            Assert.IsTrue(_rig.Ui.SiteName.IsVisible);
+            Assert.AreEqual(Text(UiKeys.SiteName("site.depot")), _rig.Ui.Layout.SiteName.text);
+            Events.Publish(new SiteAnswered("site.kestrel", new Vector3(30f, 0f, 60f), 70f, false));
+            Assert.AreEqual("site.depot", _rig.Ui.SiteName.Current, "one name at a time");
+
+            yield return Seconds(_rig.Tuning.Salvage.SiteNameHoldSeconds + _rig.Tuning.Salvage.SiteName.FadeOut + 0.5f);
+            Assert.IsFalse(_rig.Ui.SiteName.IsVisible);
+            Events.Publish(new SiteAnswered("site.depot", new Vector3(0f, 0f, 40f), 40f, true));
+            yield return Seconds(0.3f);
+            Assert.IsFalse(_rig.Ui.SiteName.IsVisible, "a site is named once");
+            Events.Publish(new SiteAnswered("site.kestrel", new Vector3(30f, 0f, 60f), 70f, false));
+            yield return Seconds(0.3f);
+            Assert.AreEqual("site.kestrel", _rig.Ui.SiteName.Current, "the one that waited gets its turn");
+        }
+
+        [UnityTest]
         public IEnumerator Hop_PromptThenList_ThenASoftFade_NeverOverlapping()
         {
             InputSystem.AddDevice<Keyboard>();

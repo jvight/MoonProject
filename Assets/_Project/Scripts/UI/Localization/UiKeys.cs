@@ -113,6 +113,12 @@ namespace MoonProject.UI
             }
         }
 
+        /// <summary>"site.kestrel.name" for the site anchored as "site.kestrel".</summary>
+        public static string SiteName(string siteId)
+        {
+            return siteId + ".name";
+        }
+
         public static string UpgradeName(string upgradeId)
         {
             return "upgrade." + upgradeId + ".name";

@@ -14,7 +14,8 @@ namespace MoonProject.UI
     {
         public UiServices(EventBus events, InputReader input, IViewCamera view, IRoverState rover, IAudioSettings audio,
             ILookSettings look, ISaveService save, IMaterialStock materials, ITetherAim tether, IInteractionHints hints,
-            IUpgradeShop shop, IFriendStatuses friends, IRadioProgram radio, IRadioHop hop, IRelayStatus relays)
+            IUpgradeShop shop, IFriendStatuses friends, IRadioProgram radio, IRadioHop hop, IRelayStatus relays,
+            ISalvageStatus salvage)
         {
             Events = events ?? throw new ArgumentNullException(nameof(events));
             Input = input ?? throw new ArgumentNullException(nameof(input));
@@ -31,6 +32,7 @@ namespace MoonProject.UI
             Radio = radio ?? throw new ArgumentNullException(nameof(radio));
             Hop = hop ?? throw new ArgumentNullException(nameof(hop));
             Relays = relays ?? throw new ArgumentNullException(nameof(relays));
+            Salvage = salvage ?? throw new ArgumentNullException(nameof(salvage));
         }
 
         public EventBus Events { get; }
@@ -63,6 +65,8 @@ namespace MoonProject.UI
 
         public IRelayStatus Relays { get; }
 
+        public ISalvageStatus Salvage { get; }
+
         /// <summary>
         /// Resolves every service; a missing one throws (a system is missing from the bootstrap order).
         /// </summary>
@@ -77,7 +81,7 @@ namespace MoonProject.UI
                 context.Get<IAudioSettings>(), context.Get<ILookSettings>(), context.Get<ISaveService>(),
                 context.Get<IMaterialStock>(), context.Get<ITetherAim>(), context.Get<IInteractionHints>(),
                 context.Get<IUpgradeShop>(), context.Get<IFriendStatuses>(), context.Get<IRadioProgram>(),
-                context.Get<IRadioHop>(), context.Get<IRelayStatus>());
+                context.Get<IRadioHop>(), context.Get<IRelayStatus>(), context.Get<ISalvageStatus>());
         }
     }
 }
