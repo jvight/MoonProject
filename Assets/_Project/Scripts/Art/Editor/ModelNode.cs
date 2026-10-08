@@ -13,7 +13,7 @@ namespace MoonProject.Art.Editor
         private readonly List<ModelNode> _children = new List<ModelNode>();
 
         public ModelNode(string name, Vector3 localPosition, Quaternion localRotation, ModelMesh mesh = null,
-            ModelMaterial material = ModelMaterial.Palette)
+            ModelMaterial material = ModelMaterial.Palette, bool active = true)
         {
             if (string.IsNullOrEmpty(name))
             {
@@ -25,6 +25,7 @@ namespace MoonProject.Art.Editor
             LocalRotation = localRotation;
             Mesh = mesh;
             Material = material;
+            Active = active;
         }
 
         public ModelNode(string name, Vector3 localPosition, ModelMesh mesh = null)
@@ -43,6 +44,11 @@ namespace MoonProject.Art.Editor
 
         /// <summary>Material the node's mesh renders with (ignored for empty pivots).</summary>
         public ModelMaterial Material { get; }
+
+        /// <summary>
+        /// False for a node the prefab keeps but starts hidden (inactive GameObject), shown at runtime when earned.
+        /// </summary>
+        public bool Active { get; }
 
         public IReadOnlyList<ModelNode> Children => _children;
 

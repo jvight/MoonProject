@@ -141,13 +141,14 @@ namespace MoonProject.Art.Tests
             }
         }
 
-        /// <summary>Same names, poses, materials and bit-identical meshes all the way down.</summary>
+        /// <summary>Same names, poses, materials, active states and bit-identical meshes all the way down.</summary>
         public static void AssertSameModel(ModelNode expected, ModelNode actual)
         {
             Assert.AreEqual(expected.Name, actual.Name);
             Assert.AreEqual(expected.LocalPosition, actual.LocalPosition, expected.Name);
             Assert.AreEqual(expected.LocalRotation, actual.LocalRotation, expected.Name);
             Assert.AreEqual(expected.Material, actual.Material, expected.Name);
+            Assert.AreEqual(expected.Active, actual.Active, expected.Name);
             Assert.AreEqual(expected.Mesh == null, actual.Mesh == null, expected.Name);
             if (expected.Mesh != null)
             {
