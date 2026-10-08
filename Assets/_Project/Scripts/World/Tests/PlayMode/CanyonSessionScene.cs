@@ -10,13 +10,16 @@ namespace MoonProject.World.PlayModeTests
 {
     /// <summary>
     /// Before the canyon session enters play mode, copies the built Main.unity to a scratch scene whose bootstrap
-    /// saves to its own slot, so the session starts from a fresh game and never touches the player's progress;
-    /// removes the copy and the slot's files afterwards.
+    /// saves to its own slot, so the session starts from a fresh game and never touches the player's progress, nor a
+    /// session running on another worktree at the same time; removes the copy and the slot's files afterwards.
     /// </summary>
     public sealed class CanyonSessionScene : IPrebuildSetup, IPostBuildCleanup
     {
         public const string ScenePath = Folder + "/CanyonSessionMain.unity";
-        public const string SaveSlot = "canyon-session";
+        /// <summary>
+        /// "canyon-session-&lt;process id&gt;", this editor's own: see <see cref="BootstrapHarness.ProcessSlot"/>.
+        /// </summary>
+        public static string SaveSlot => BootstrapHarness.ProcessSlot("canyon-session");
 
         private const string MainScene = "Assets/_Project/Scenes/Main.unity";
         private const string Parent = "Assets/_Project/Generated/World";

@@ -10,14 +10,17 @@ namespace MoonProject.Gameplay.PlayModeTests
 {
     /// <summary>
     /// Before the playthrough enters play mode, copies the built Main.unity to a scratch scene whose bootstrap saves
-    /// to its own slot, so the run starts from a fresh game and never reads or writes the player's progress; removes
-    /// the copy and the slot's files afterwards.
+    /// to its own slot, so the run starts from a fresh game and never reads or writes the player's progress, nor a
+    /// playthrough running on another worktree at the same time; removes the copy and the slot's files afterwards.
     /// </summary>
     public sealed class PlaythroughScene : IPrebuildSetup, IPostBuildCleanup
     {
         public const string MainScene = "Assets/_Project/Scenes/Main.unity";
         public const string ScenePath = "Assets/_Project/Generated/Gameplay/Playthrough/PlaythroughMain.unity";
-        public const string SaveSlot = "playthrough";
+        /// <summary>
+        /// "playthrough-&lt;process id&gt;", this editor's own: see <see cref="BootstrapHarness.ProcessSlot"/>.
+        /// </summary>
+        public static string SaveSlot => BootstrapHarness.ProcessSlot("playthrough");
 
         private const string Folder = "Assets/_Project/Generated/Gameplay/Playthrough";
         private const string SceneSlotLine = "_saveSlot: main";
