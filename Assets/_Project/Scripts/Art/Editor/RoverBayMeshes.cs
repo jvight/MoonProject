@@ -4,13 +4,15 @@ using static MoonProject.Art.Place;
 namespace MoonProject.Art.Editor
 {
     /// <summary>
-    /// Kenji's Rover Bay (docs/features/M3-14-built-for-07.md, VISION ruling 14: 07 has no hands): a drive-in service
-    /// bay the crew built for a rover. A sheltered frame open at the front, a low ramp up to a turntable sized for
-    /// 07 with room all round, three gantry arms hanging from the overhead rail that fit kit onto 07 with welding
-    /// tips, a material hopper at rover height by the entrance that 07's beam feeds, two work lamps, a cable reel, a
-    /// "PIT 07" board, and Kenji's old human bench left beside it as a remnant. Built in its own space: origin on the
-    /// ground at WorkshopAnchor, +Z = the open front 07 drives in from. Long left alone (ruling 12): faded paint, a
-    /// roof panel gone, rust and dust in its weather layers.
+    /// Kenji's Rover Bay (docs/features/M3-14-built-for-07.md, VISION ruling 14: 07 has no hands; the art contract in
+    /// docs/ARCHITECTURE.md, "Contract: Kenji's Rover Bay"): a drive-in service bay the crew built for a rover. A
+    /// sheltered frame with an arched front, a low ramp up to a turning turntable sized for 07 with a pit under its
+    /// central hole, three gantry arms on the crane rail (a yaw turret, two long links and a fitting tip each, folded
+    /// along the rail under the roof at rest) and a floor arm that rises through the hole to fit kit under 07's belly,
+    /// a material hopper inside the bay at rover height that 07's beam feeds, two work lamps, cable reels, a lit "07"
+    /// sign and Kenji's old human bench beside it as a remnant. Built in its own space: origin on the ground at
+    /// WorkshopAnchor, +Z = the open front 07 drives in from. Long left alone (ruling 12): faded paint, a roof panel
+    /// gone, rust and dust in its weather skins.
     /// </summary>
     internal static class RoverBayMeshes
     {
@@ -24,24 +26,50 @@ namespace MoonProject.Art.Editor
         public const float BackZ = -2.5f;
         public const float EaveHeight = 3.4f;
 
-        /// <summary>The turntable: centre of its top, its radius and the height of its top.</summary>
-        public static readonly Vector3 TurntableCentre = new Vector3(0f, PadTop, -0.35f);
+        /// <summary>
+        /// The turntable: the centre of its top (a plate standing a little proud of the floor, bevelled so 07 rolls
+        /// on), its radius, the radius of the hole in its middle the floor arm rises through (wide enough for the
+        /// Hover-Jump coils' plate to pass), and the floor's height.
+        /// </summary>
+        public static readonly Vector3 TurntableCentre = new Vector3(0f, PadTop + TurntableRaise, -0.35f);
 
         public const float TurntableRadius = 1.75f;
+        public const float TurntableHole = 0.5f;
         public const float PadTop = 0.12f;
 
-        /// <summary>The overhead rail the arms hang from, and the arms' link lengths.</summary>
-        public const float RailHeight = 3.18f;
+        /// <summary>
+        /// The arms' shoulders under the crane rail, and their link lengths: long enough that a tip reaches every kit
+        /// socket on a parked 07 with room to spare (rover's BayReach test proves it).
+        /// </summary>
+        public const float RailHeight = 3.08f;
 
-        public const float UpperLength = 0.9f;
-        public const float LowerLength = 0.8f;
+        public const float UpperLength = 1.3f;
+        public const float LowerLength = 1.2f;
         public const float TipLength = 0.26f;
 
-        /// <summary>The hopper's mouth (its centre, at rover height) and the way it faces: at the turntable.</summary>
-        public static readonly Vector3 HopperMouth = new Vector3(2.85f, 1.2f, 1.5f);
+        /// <summary>
+        /// The arms' folded rest pose (Upper, Lower, Tip pitch about local X, deg): the upper link along the rail, the
+        /// lower folded back under it, the tip hanging down; each arm's Yaw turns it along its stretch of rail.
+        /// </summary>
+        public static readonly Vector3 ArmRest = new Vector3(-90f, 170f, -80f);
+
+        /// <summary>
+        /// The floor arm: its base under the turntable's centre (on the ground, its frame level), and where its tip
+        /// (the top of the cradle the coils ride) rests, just under the turntable's top in the hole.
+        /// </summary>
+        public static readonly Vector3 FloorArmBase = new Vector3(TurntableCentre.x, 0f, TurntableCentre.z);
+
+        public const float FloorTipRest = PadTop + 0.015f;
+        public const float FloorTipOffset = 0.03f;
+
+        /// <summary>
+        /// The hopper's mouth (its centre, at rover height) inside the bay's back right corner: ahead and to the side
+        /// of a parked 07's eye, so its beam reaches the mouth with nothing in the way, not even 07 itself.
+        /// </summary>
+        public static readonly Vector3 HopperMouth = new Vector3(1.55f, 1.15f, -1.85f);
 
         /// <summary>Half the width of the bay hopper's mouth.</summary>
-        public const float HopperSize = 0.5f;
+        public const float HopperSize = 0.38f;
 
         /// <summary>The arch 07 drives in under: half its span and the height its arch springs from.</summary>
         public const float ArchHalfSpan = 1.45f;
@@ -58,6 +86,19 @@ namespace MoonProject.Art.Editor
         private const int ArchSegments = 12;
         private const float FacadeDepth = 0.06f;
         private const int HazardSegments = 20;
+        private const float TurntableRaise = 0.03f;
+        private const float TurntableDepth = 0.09f;
+        private const float TurntableBevel = 0.04f;
+        private const float HazardBand = 0.1f;
+
+        // The crane rail rides this far over the shoulders, clear of the folded elbows.
+        private const float RingRise = 0.3f;
+
+        private const float FloorColumn = 0.6f;
+
+        // Kenji's remnant bench, left of the bay.
+        private static Matrix4x4 BenchPlacement =>
+            At(new Vector3(-HalfWidth - 1.95f, 0f, 0.9f), new Vector3(0f, 12f, 0f));
 
         /// <summary>
         /// Shoulder <paramref name="index"/> on the overhead rail: left, back and right of the turntable.
@@ -87,6 +128,25 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
+        /// The rest turn of arm <paramref name="index"/>'s Yaw joint (deg, about local Y): the side arms fold forward
+        /// along their side of the rail, the back arm to the left along the back.
+        /// </summary>
+        public static float FoldYaw(int index)
+        {
+            switch (index)
+            {
+                case 0:
+                    return -90f;
+                case 1:
+                    return -90f;
+                case 2:
+                    return 90f;
+                default:
+                    throw new System.ArgumentOutOfRangeException(nameof(index), index, "Bay arms are 0..2.");
+            }
+        }
+
+        /// <summary>
         /// The work lamp glass <paramref name="index"/>: on the front beam, aimed down at the turntable.
         /// </summary>
         public static Vector3 LampGlass(int index)
@@ -111,7 +171,7 @@ namespace MoonProject.Art.Editor
             Hopper(b);
             SiteKit.Drum(b, At(new Vector3(-HalfWidth - 0.45f, 0.56f, -1.4f), new Vector3(0f, 90f, 0f)), 0.5f, 0.6f,
                 PaletteSwatch.WarmAccent);
-            SiteKit.Drum(b, At(new Vector3(1.65f, PadTop + 0.42f, -1.95f)), 0.42f, 0.45f, PaletteSwatch.Charcoal);
+            SiteKit.Drum(b, At(new Vector3(1.75f, PadTop + 0.42f, 1.25f)), 0.42f, 0.45f, PaletteSwatch.Charcoal);
             SiteKit.Drum(b, At(new Vector3(-1.75f, PadTop + 0.3f, 1.25f), new Vector3(0f, 90f, 0f)), 0.3f, 0.35f,
                 PaletteSwatch.FadedAccent);
             Board(b);
@@ -126,50 +186,124 @@ namespace MoonProject.Art.Editor
                     FrontZ), 0.025f, 5, PaletteSwatch.Metal);
             }
 
-            b.Append(WorkbenchMeshes.Bench(), At(new Vector3(-HalfWidth - 1.95f, 0f, 0.9f), new Vector3(0f, 12f, 0f)));
+            b.Append(WorkbenchMeshes.Bench(), BenchPlacement);
             return b;
         }
 
         /// <summary>
-        /// The turntable (origin at its top centre): a ribbed plate on a ring, 07's tyre tracks worn in.
+        /// The turntable (origin at its top centre, the node turns about local Y with 07 on it): a ribbed ring plate
+        /// with a bevelled edge, hazard bands round its rim and round the hole in its middle, 07's tyre tracks worn in.
         /// </summary>
         public static LowPolyMeshBuilder Turntable()
         {
-            var b = new LowPolyMeshBuilder(400);
-            b.Prism(At(0f, -0.045f, 0f), TurntableRadius, 0.09f, HazardSegments, PaletteSwatch.Metal);
-            b.Torus(At(0f, -0.015f, 0f), TurntableRadius - 0.05f, 0.03f, 20, 3, PaletteSwatch.Charcoal);
-            float apothem = TurntableRadius * Mathf.Cos(Mathf.PI / HazardSegments);
-            float stripe = 2f * TurntableRadius * Mathf.Sin(Mathf.PI / HazardSegments) - 0.01f;
-            for (int i = 0; i < HazardSegments; i++)
+            var b = new LowPolyMeshBuilder(900);
+            Vector2[] ring =
             {
-                float yaw = i * 360f / HazardSegments;
-                Matrix4x4 face = At(Rotation(new Vector3(0f, yaw, 0f)) * Vector3.forward * (apothem + 0.004f),
-                    new Vector3(0f, yaw, 0f));
-                b.Box(face * At(0f, -0.045f, 0f), new Vector3(stripe, 0.07f, 0.01f),
-                    i % 2 == 0 ? PaletteSwatch.Honey : PaletteSwatch.Charcoal);
-            }
+                new Vector2(TurntableRadius + TurntableBevel, -TurntableDepth), new Vector2(TurntableRadius, 0f),
+                new Vector2(TurntableHole, 0f), new Vector2(TurntableHole, -TurntableDepth),
+                new Vector2(TurntableRadius + TurntableBevel, -TurntableDepth),
+            };
+            b.Lathe(Matrix4x4.identity, ring, HazardSegments, PaletteSwatch.Metal);
+            HazardRing(b, TurntableRadius - HazardBand - 0.02f, TurntableRadius - 0.02f);
+            HazardRing(b, TurntableHole + 0.01f, TurntableHole + HazardBand);
             for (int side = -1; side <= 1; side += 2)
             {
-                b.Box(At(side * 0.64f, 0.004f, 0f), new Vector3(0.26f, 0.008f, TurntableRadius * 1.7f),
+                b.Box(At(side * 0.66f, 0.004f, 0f), new Vector3(0.24f, 0.008f, TurntableRadius * 1.7f),
                     PaletteSwatch.Charcoal);
             }
 
-            for (int i = 0; i < 6; i++)
+            float inner = TurntableHole + HazardBand + 0.05f;
+            float outer = TurntableRadius - HazardBand - 0.07f;
+            for (int i = 0; i < 12; i++)
             {
-                b.Box(At(new Vector3(0f, 0.003f, 0f), new Vector3(0f, i * 30f, 0f)), new Vector3(0.05f, 0.006f,
-                    TurntableRadius * 1.9f), PaletteSwatch.FadedPaint);
+                Matrix4x4 rib = At(Vector3.zero, new Vector3(0f, i * 30f + 15f, 0f));
+                b.Box(rib * At(0f, 0.003f, (inner + outer) * 0.5f), new Vector3(0.05f, 0.006f, outer - inner),
+                    PaletteSwatch.FadedPaint);
             }
 
             return b;
         }
 
-        /// <summary>An arm's shoulder mount on the rail (Arm_n's own mesh): a trolley and a motor drum.</summary>
-        public static LowPolyMeshBuilder ShoulderMount()
+        /// <summary>A flat band of alternating crane-yellow and black segments on the turntable's top.</summary>
+        private static void HazardRing(LowPolyMeshBuilder b, float inner, float outer)
+        {
+            const int segments = 24;
+            float step = 2f * Mathf.PI / segments;
+            var points = new Vector3[4];
+            for (int i = 0; i < segments; i++)
+            {
+                float a0 = i * step;
+                float a1 = a0 + step;
+                points[0] = new Vector3(Mathf.Sin(a0) * inner, 0.003f, Mathf.Cos(a0) * inner);
+                points[1] = new Vector3(Mathf.Sin(a0) * outer, 0.003f, Mathf.Cos(a0) * outer);
+                points[2] = new Vector3(Mathf.Sin(a1) * outer, 0.003f, Mathf.Cos(a1) * outer);
+                points[3] = new Vector3(Mathf.Sin(a1) * inner, 0.003f, Mathf.Cos(a1) * inner);
+                b.Polygon(points, Vector3.up, i % 2 == 0 ? PaletteSwatch.Honey : PaletteSwatch.Charcoal);
+            }
+        }
+
+        /// <summary>
+        /// An arm's Yaw joint (its own mesh, origin at the shoulder): a slewing ring under the trolley, the shoulder's
+        /// pitch drum the upper link hangs from and the drum's motor.
+        /// </summary>
+        public static LowPolyMeshBuilder YawJoint()
+        {
+            var b = new LowPolyMeshBuilder(160);
+            b.Prism(At(0f, 0.04f, 0f), 0.16f, 0.06f, 12, PaletteSwatch.Charcoal);
+            for (int side = -1; side <= 1; side += 2)
+            {
+                b.Box(At(side * 0.17f, -0.01f, 0f), new Vector3(0.04f, 0.16f, 0.2f), PaletteSwatch.FadedPaint, 0.01f);
+            }
+
+            b.Prism(At(Vector3.zero, AlongX), 0.11f, 0.32f, 10, PaletteSwatch.Metal);
+            b.Prism(At(new Vector3(0.24f, 0f, 0f), AlongX), 0.08f, 0.1f, 8, PaletteSwatch.Charcoal);
+            return b;
+        }
+
+        /// <summary>
+        /// The floor arm's lift (its own mesh, origin at the top of its column): a hydraulic column reaching down into
+        /// the pit and a guide collar; it rises along local Y.
+        /// </summary>
+        public static LowPolyMeshBuilder FloorLiftMesh()
         {
             var b = new LowPolyMeshBuilder(120);
-            b.Box(At(0f, 0.1f, 0f), new Vector3(0.3f, 0.18f, 0.34f), PaletteSwatch.FadedPaint, 0.03f);
-            b.Prism(At(new Vector3(0f, 0f, 0f), AlongX), 0.11f, 0.36f, 10, PaletteSwatch.Metal);
-            b.Prism(At(new Vector3(0.2f, 0f, 0f), AlongX), 0.08f, 0.06f, 8, PaletteSwatch.Charcoal);
+            b.Prism(At(0f, -FloorColumn * 0.5f, 0f), 0.09f, FloorColumn, 10, PaletteSwatch.Metal);
+            b.Prism(At(0f, -0.04f, 0f), 0.13f, 0.05f, 10, PaletteSwatch.FadedAccent);
+            return b;
+        }
+
+        /// <summary>
+        /// The floor arm's tip (its own mesh, origin on top of its cradle, where a belly piece rides up): a crane-
+        /// yellow cradle plate with four rubber pads, small enough to rise through the turntable's hole.
+        /// </summary>
+        public static LowPolyMeshBuilder FloorTipMesh()
+        {
+            var b = new LowPolyMeshBuilder(120);
+            b.Box(At(0f, -0.02f, 0f), new Vector3(0.44f, 0.04f, 0.62f), PaletteSwatch.Honey, 0.01f);
+            b.Prism(At(0f, -FloorTipOffset - 0.02f, 0f), 0.12f, 0.04f, 10, PaletteSwatch.Charcoal);
+            for (int i = 0; i < 4; i++)
+            {
+                b.Box(At((i % 2 == 0 ? -1f : 1f) * 0.16f, -0.004f, (i < 2 ? -1f : 1f) * 0.25f),
+                    new Vector3(0.08f, 0.008f, 0.08f), PaletteSwatch.Charcoal);
+            }
+
+            return b;
+        }
+
+        /// <summary>
+        /// An arm's trolley on the crane rail (Arm_n's own mesh, origin at the shoulder): a box riding the rail on
+        /// four wheels.
+        /// </summary>
+        public static LowPolyMeshBuilder ShoulderMount()
+        {
+            var b = new LowPolyMeshBuilder(160);
+            b.Box(At(0f, 0.13f, 0f), new Vector3(0.32f, 0.12f, 0.4f), PaletteSwatch.FadedPaint, 0.03f);
+            for (int i = 0; i < 4; i++)
+            {
+                b.Prism(At(new Vector3((i % 2 == 0 ? -1f : 1f) * 0.12f, 0.2f, (i < 2 ? -1f : 1f) * 0.13f), AlongX),
+                    0.04f, 0.04f, 8, PaletteSwatch.Charcoal);
+            }
+
             return b;
         }
 
@@ -185,6 +319,17 @@ namespace MoonProject.Art.Editor
                 PaletteSwatch.Charcoal);
             RecipeKit.Rod(b, new Vector3(0f, -length * 0.15f, -thickness * 0.8f),
                 new Vector3(0f, -length * 0.8f, -thickness * 0.8f), thickness * 0.22f, 6, PaletteSwatch.Metal);
+            return b;
+        }
+
+        /// <summary>
+        /// A link's rust (in the link's space): a band round it just above the joint at its end, where grit and
+        /// grease gathered.
+        /// </summary>
+        public static LowPolyMeshBuilder LinkRust(float length, float thickness)
+        {
+            var b = new LowPolyMeshBuilder(40);
+            Weathering.Collar(b, At(0f, -length + thickness * 1.6f, 0f), thickness * 0.78f, thickness * 0.8f);
             return b;
         }
 
@@ -276,10 +421,10 @@ namespace MoonProject.Art.Editor
                     PaletteSwatch.Metal);
             }
 
-            // The arms' crane rail: a square ring of crane-yellow I-beams under the roof round the turntable, hung
-            // from the roof beams on drop rods; the arms' trolleys ride its underside.
+            // The arms' crane rail: a square ring of crane-yellow I-beams just under the roof round the turntable, tied
+            // to the side beams by cross girders; the arms' trolleys ride its underside.
             float ring = 1.3f;
-            Vector3 centre = new Vector3(TurntableCentre.x, RailHeight + 0.2f, TurntableCentre.z);
+            Vector3 centre = new Vector3(TurntableCentre.x, RailHeight + RingRise, TurntableCentre.z);
             Vector3[] corners =
             {
                 centre + new Vector3(-ring, 0f, -ring), centre + new Vector3(ring, 0f, -ring),
@@ -288,8 +433,12 @@ namespace MoonProject.Art.Editor
             for (int i = 0; i < corners.Length; i++)
             {
                 IBeam(b, corners[i], corners[(i + 1) % corners.Length]);
-                SiteKit.Bar(b, corners[i] + Vector3.up * 0.1f, new Vector3(corners[i].x, EaveHeight, corners[i].z),
-                    0.05f, PaletteSwatch.Metal);
+            }
+
+            foreach (float z in new[] { corners[0].z, corners[2].z })
+            {
+                float y = centre.y + 0.06f;
+                SiteKit.Bar(b, new Vector3(-HalfWidth, y, z), new Vector3(HalfWidth, y, z), 0.08f, PaletteSwatch.Metal);
             }
         }
 
@@ -420,13 +569,17 @@ namespace MoonProject.Art.Editor
             }
         }
 
-        /// <summary>The slab, the turntable's sunken ring and the low ramp in from the front.</summary>
+        /// <summary>The slab, the ring round the turntable, the dark pit under its hole and the ramp in.</summary>
         private static void Floor(LowPolyMeshBuilder b)
         {
             float depth = FrontZ - BackZ;
             b.Box(At(0f, PadTop * 0.5f, (FrontZ + BackZ) * 0.5f), new Vector3(2f * HalfWidth, PadTop, depth),
                 PaletteSwatch.Metal, 0.03f);
-            b.Torus(At(TurntableCentre + Vector3.down * 0.01f), TurntableRadius + 0.05f, 0.04f, 20, 3,
+            b.Torus(At(new Vector3(TurntableCentre.x, PadTop, TurntableCentre.z)),
+                TurntableRadius + TurntableBevel + 0.06f, 0.04f, 20, 3, PaletteSwatch.Charcoal);
+
+            // The pit under the turntable's hole: dark, ringed, the floor arm's column standing in it.
+            b.Prism(At(TurntableCentre.x, PadTop + 0.002f, TurntableCentre.z), TurntableHole - 0.01f, 0.004f, 20,
                 PaletteSwatch.Charcoal);
             b.Wedge(At(0f, PadTop * 0.5f, FrontZ + 0.55f), new Vector3(2.6f, PadTop, 1.1f), PaletteSwatch.Metal);
             for (int side = -1; side <= 1; side += 2)
@@ -437,14 +590,15 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
-        /// The material hopper by the entrance: a funnel on four legs, its mouth at rover height turned to the
-        /// turntable so 07's beam can feed it, a chute down into the bay's back.
+        /// The material hopper inside the bay's back right corner: a funnel on four legs, its mouth at rover height
+        /// turned to the turntable so a parked 07's beam reaches it with nothing in the way, a chute out through the
+        /// back wall to the store behind.
         /// </summary>
         private static void Hopper(LowPolyMeshBuilder b)
         {
             ServiceKit.Hopper(b, HopperMouth, HopperFacing, HopperSize);
-            RecipeKit.Rod(b, new Vector3(HopperMouth.x - 0.2f, 0.6f, HopperMouth.z - 0.6f),
-                new Vector3(HalfWidth - 0.4f, 0.4f, BackZ + 0.6f), 0.08f, 8, PaletteSwatch.Metal);
+            RecipeKit.Rod(b, new Vector3(HopperMouth.x + 0.2f, 0.66f, HopperMouth.z - 0.3f),
+                new Vector3(HopperMouth.x + 0.35f, PadTop + 0.35f, BackZ - 0.12f), 0.07f, 8, PaletteSwatch.Metal);
         }
 
         /// <summary>
