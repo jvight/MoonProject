@@ -4,41 +4,24 @@ using UnityEngine;
 namespace MoonProject.Rover
 {
     /// <summary>
-    /// 07's visible kit and the friends' gifts (VISION ruling 11, docs/features/M3-11): how a newly fitted piece comes
-    /// in (it appears just above its socket, drops and settles with a small overshoot), how a gift appears (a soft
-    /// grow), how the Warm Headlamp's lamp bar changes the road light, and how the capacitor drums glow with the boost.
+    /// 07's visible kit and the friends' gifts (VISION ruling 11, docs/features/M3-11): how a crafted piece grows as
+    /// the Rover Bay's arm carries it in, how a gift appears (a soft grow), how the Warm Headlamp's lamp bar changes
+    /// the road light, how the capacitor drums glow with the boost, and the install moment in the bay (M3-14).
     /// </summary>
     [Serializable]
     public sealed class KitSettings
     {
         [Header("Fitting a kit piece")]
-        [Tooltip("Seconds after a purchase before the piece appears, so the camera has eased round to look first.")]
-        [Range(0f, 3f)]
-        [SerializeField] private float _fitDelay = 1f;
-
-        [Tooltip("Height (m) above its socket where a newly fitted piece appears before it drops into place.")]
-        [Range(0f, 1f)]
-        [SerializeField] private float _fitDrop = 0.32f;
-
-        [Tooltip("Spring frequency (Hz) of the drop into place.")]
-        [Range(0.3f, 6f)]
-        [SerializeField] private float _fitFrequency = 1.6f;
-
-        [Tooltip("Damping ratio of the drop: below 1 it dips once just past its seat and settles (a small overshoot).")]
-        [Range(0.2f, 1.5f)]
-        [SerializeField] private float _fitDamping = 0.55f;
-
-        [Tooltip("Scale a newly fitted piece appears at, growing to 1 as it drops (never a hard pop-in).")]
-        [Range(0f, 1f)]
-        [SerializeField] private float _fitStartScale = 0.35f;
-
-        [Tooltip("Spring frequency (Hz) of that grow.")]
+        [Tooltip("Spring frequency (Hz) of a crafted piece growing to full size as the bay's arm carries it in.")]
         [Range(0.5f, 10f)]
         [SerializeField] private float _fitGrowFrequency = 3f;
 
         [Tooltip("Half-life (s) of a fitted piece's lights coming on (the lamp bar's glasses, the warmer road light).")]
         [Range(0.05f, 3f)]
         [SerializeField] private float _lightsOnHalfLife = 0.35f;
+
+        [Header("The install moment in the Rover Bay")]
+        [SerializeField] private BayFitSettings _bay = new BayFitSettings();
 
         [Header("A friend's gift")]
         [Tooltip("Seconds after the soft moment starts before the gift appears.")]
@@ -94,17 +77,9 @@ namespace MoonProject.Rover
         [Range(0f, 1f)]
         [SerializeField] private float _drumIdleGlow = 0.05f;
 
-        public float FitDelay => _fitDelay;
-
-        public float FitDrop => _fitDrop;
-
-        public float FitFrequency => _fitFrequency;
-
-        public float FitDamping => _fitDamping;
-
-        public float FitStartScale => _fitStartScale;
-
         public float FitGrowFrequency => _fitGrowFrequency;
+
+        public BayFitSettings Bay => _bay;
 
         public float LightsOnHalfLife => _lightsOnHalfLife;
 

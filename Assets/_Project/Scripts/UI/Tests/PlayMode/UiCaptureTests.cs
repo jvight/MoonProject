@@ -320,14 +320,14 @@ namespace MoonProject.UI.PlayModeTests
             context.Events.Publish(new UpgradePurchased(_benchKit[1].Id, 1));
             context.Events.Publish(new RoverKitInstalling(RoverKitPiece.CargoRack, false));
             yield return new WaitForSecondsRealtime(KitSettleSeconds);
-            context.Events.Publish(new RoverKitFitted(RoverKitPiece.CargoRack, false));
+            context.Events.Publish(new RoverKitFitted(RoverKitPiece.CargoRack, false, _benchKit[1].Id));
             yield return new WaitForSecondsRealtime(_tuning.KitTitle.Delay + _tuning.KitTitle.Reveal.FadeIn + 0.4f);
             yield return Capture(camera, folder, "44_kit_title_crafted");
             yield return new WaitForSecondsRealtime(_tuning.KitTitle.HoldSeconds + _tuning.KitTitle.Reveal.FadeOut +
                                                     0.3f);
             context.Events.Publish(new RoverKitInstalling(RoverKitPiece.SolarCell, true));
             yield return new WaitForSecondsRealtime(KitSettleSeconds);
-            context.Events.Publish(new RoverKitFitted(RoverKitPiece.SolarCell, true));
+            context.Events.Publish(new RoverKitFitted(RoverKitPiece.SolarCell, true, string.Empty));
             yield return new WaitForSecondsRealtime(_tuning.KitTitle.Delay + _tuning.KitTitle.Reveal.FadeIn + 0.4f);
             yield return Capture(camera, folder, "45_kit_title_gift");
             fakes.Bench = null;

@@ -17,12 +17,12 @@ namespace MoonProject.Rover.Tests
         }
 
         /// <summary>Steps <paramref name="seconds"/> of frames; returns the largest coil length seen.</summary>
-        private float Run(float seconds, bool owned, float charge)
+        private float Run(float seconds, bool shown, float charge)
         {
             float longest = 0f;
             for (float t = 0f; t < seconds; t += Frame)
             {
-                _motion.Step(owned, charge, Frame);
+                _motion.Step(shown, charge, Frame);
                 longest = Mathf.Max(longest, _motion.CoilLength);
             }
 
@@ -38,31 +38,13 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void OwnedFromTheStart_TheCoilsAreSimplyThere()
+        public void OnceOn07_TheCoilsAreThereAtRestLength()
         {
-            Assert.IsFalse(_motion.Step(true, 0f, Frame), "No pop-in for an ability loaded from the save.");
+            _motion.Step(true, 0f, Frame);
             Assert.IsTrue(_motion.Visible);
-            Assert.AreEqual(1f, _motion.MountScale, 1e-4f);
-        }
-
-        [Test]
-        public void BoughtLater_TheCoilsPopInOnceOvershootAndSettle()
-        {
+            Assert.AreEqual(1f, _motion.CoilLength, 1e-4f);
             _motion.Step(false, 0f, Frame);
-            Assert.IsTrue(_motion.Step(true, 0f, Frame), "The purchase pops the coils in.");
-            Assert.Less(_motion.MountScale, 0.5f, "They grow from nothing.");
-
-            float largest = 0f;
-            int pops = 0;
-            for (float t = 0f; t < 1.5f; t += Frame)
-            {
-                pops += _motion.Step(true, 0f, Frame) ? 1 : 0;
-                largest = Mathf.Max(largest, _motion.MountScale);
-            }
-
-            Assert.AreEqual(0, pops, "Only once.");
-            Assert.That(largest, Is.InRange(1.05f, 1.4f), "One soft overshoot.");
-            Assert.AreEqual(1f, _motion.MountScale, 0.02f, "Settled within 1.5 s.");
+            Assert.IsTrue(_motion.Visible, "Once fitted they stay.");
         }
 
         [Test]

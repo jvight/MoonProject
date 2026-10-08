@@ -70,6 +70,9 @@ namespace MoonProject.Rover
         private BoostDrive _boost;
         private IDisposable _dockChanges;
         private bool _docked;
+        private bool _cradled;
+        private Vector3 _cradleBody;
+        private float _cradleHeading;
         private float _dockElapsed;
         private Vector3 _dockFrom;
         private Vector3 _dockTo;
@@ -193,6 +196,9 @@ namespace MoonProject.Rover
         /// <summary>07's visible kit and friends' gifts.</summary>
         public RoverKit Kit => _kit;
 
+        /// <summary>The Hover-Jump coils under 07's belly.</summary>
+        public RoverHoverCoils HoverCoils => _hoverCoils;
+
         /// <summary>How much of the Boost Coils' extra cruise is in, 0..1 (eased; the drums glow with it).</summary>
         public float BoostLevel => _boost.Level;
 
@@ -202,7 +208,39 @@ namespace MoonProject.Rover
         /// <summary>True while 07 rests on the charging dock (eased onto it, held there until it drives off).</summary>
         public bool IsDocked => _docked;
 
-        /// <summary>Held by a machine (the dock): kinematic, at rest, no jump or leap under way.</summary>
+        /// <summary>True while a machine holds 07 in a pose it sets (the Rover Bay's turntable and guides).</summary>
+        public bool IsCradled => _cradled;
+
+        /// <summary>
+        /// A machine holds 07 (the Rover Bay, M3-14): its physics sphere at <paramref name="bodyCentre"/>, facing
+        /// <paramref name="heading"/> (deg), set every frame by the holder, who eases it. The drive input is still
+        /// read; nothing drives 07 until <see cref="ReleasePose"/>.
+        /// </summary>
+        public void HoldPose(Vector3 bodyCentre, float heading)
+        {
+            if (!_cradled)
+            {
+                _cradled = true;
+                Freeze();
+            }
+
+            _cradleBody = bodyCentre;
+            _cradleHeading = heading;
+        }
+
+        /// <summary>The machine lets 07 go: free at once, at rest.</summary>
+        public void ReleasePose()
+        {
+            if (!_cradled)
+            {
+                return;
+            }
+
+            _cradled = false;
+            Free();
+        }
+
+        /// <summary>Held by a machine (the dock, the bay): kinematic, at rest, no jump or leap under way.</summary>
         private void Freeze()
         {
             _body.linearVelocity = Vector3.zero;
@@ -279,9 +317,9 @@ namespace MoonProject.Rover
             _dockChanges = _events.Subscribe<RoverDockChanged>(OnDockChanged);
 
             bool visualsReady = _visualRig.Initialize(this);
-            bool kitReady = _kit.Initialize(context, this);
+            bool kitReady = _kit.Initialize(context, this, _visualRig);
             bool effectsReady = _wheelFx.Initialize(context, this);
-            bool coilsReady = _hoverCoils.Initialize(context, this, _visualRig);
+            bool coilsReady = _hoverCoils.Initialize(context, this);
             bool motesReady = _lampMotes.Initialize(this);
             _initialized = visualsReady && kitReady && effectsReady && coilsReady && motesReady;
             enabled = _initialized;
@@ -375,6 +413,15 @@ namespace MoonProject.Rover
             {
                 ReadInput(dt);
                 StepDock(dt);
+                return;
+            }
+
+            if (_cradled)
+            {
+                ReadInput(dt);
+                _body.MovePosition(_cradleBody);
+                _previousHeading = _heading;
+                _heading = Mathf.Repeat(_cradleHeading, 360f);
                 return;
             }
 
@@ -786,7 +833,7 @@ namespace MoonProject.Rover
         private StillnessSample SampleStillness()
         {
             Vector2 drive = _driveSource != null ? _driveSource.Drive : _input.Drive;
-            bool engaged = _recovering || _holds.IsHeld || _jump.Charge > 0f;
+            bool engaged = _recovering || _cradled || _holds.IsHeld || _jump.Charge > 0f;
             return new StillnessSample(_landing.IsGrounded, Speed, drive, _input.LookDelta, _input.LookRate, engaged);
         }
 

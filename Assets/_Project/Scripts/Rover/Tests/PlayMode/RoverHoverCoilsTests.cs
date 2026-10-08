@@ -9,9 +9,10 @@ using MoonProject.Core;
 namespace MoonProject.Rover.PlayModeTests
 {
     /// <summary>
-    /// The Hover-Jump coils through the real wiring: hidden (and dark) without the ability, popping in when it is
-    /// bought, squashing and glowing with the charge (rings and the cyan light under the belly), springing out on the
-    /// leap and going dark after it. Metrics go to Logs/rover-metrics/hovercoils-metrics.md.
+    /// The Hover-Jump coils through the real wiring: hidden (and dark) without the ability, there once owned (bought
+    /// coils ride the Rover Bay's floor arm up: <see cref="RoverBayTests"/>), squashing and glowing with the charge
+    /// (rings and the cyan light under the belly), springing out on the leap and going dark after it. Metrics go to
+    /// Logs/rover-metrics/hovercoils-metrics.md.
     /// </summary>
     public sealed class RoverHoverCoilsTests : InputTestFixture
     {
@@ -58,39 +59,21 @@ namespace MoonProject.Rover.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator Coils_StayHiddenWithoutTheAbility_AndPopInWhenBought()
+        public IEnumerator Coils_StayHiddenWithoutTheAbility_AndAreThereOnceOwned()
         {
             yield return Frames(0.5f);
             _rover.Drive.JumpHeld = true;
             yield return Frames(1f);
-            Assert.IsFalse(_rover.CoilMount.gameObject.activeSelf, "No coils before the Hover-Jump is bought.");
+            Assert.IsFalse(_rover.CoilMount.gameObject.activeSelf, "No coils before the Hover-Jump is owned.");
             Assert.IsFalse(_rover.CoilLight.enabled, "No charge light either.");
             _rover.Drive.JumpHeld = false;
             yield return Frames(0.5f);
 
-            var report = new FeelReport();
-            float chassisRest = _rover.Chassis.localPosition.y;
             _rover.Context.Get<IRoverAbilities>().Grant(RoverAbility.HoverJump);
             yield return null;
-            Assert.IsTrue(_rover.CoilMount.gameObject.activeSelf, "Bought: the coils appear.");
-            float boughtAt = Time.time;
-            float largest = 0f;
-            float bob = 0f;
-            float settled = 0f;
-            while (Time.time - boughtAt < 2f)
-            {
-                yield return null;
-                float scale = _rover.CoilMount.localScale.y;
-                largest = Mathf.Max(largest, scale);
-                bob = Mathf.Max(bob, _rover.Chassis.localPosition.y - chassisRest);
-                settled = Mathf.Abs(scale - 1f) > 0.02f ? Time.time - boughtAt : settled;
-            }
-
-            report.Add("Pop-in: mount overshoot", largest, "x", 1.05f, 1.4f, "one soft overshoot");
-            report.Add("Pop-in: settled after", settled, "s", 0f, 1.2f, "< 1.2 s");
-            report.Add("Pop-in: chassis bob", bob, "m", 0.01f, 0.1f, "a visible little hop");
-            report.Write(Path.Combine(OutputFolder, "hovercoils-popin-metrics.md"));
-            Assert.IsEmpty(report.Failures, report.Table);
+            Assert.IsTrue(_rover.CoilMount.gameObject.activeSelf, "Owned (not bought at the bay): simply there...");
+            Assert.AreEqual(Vector3.one, _rover.CoilMount.localScale, "...at full size.");
+            Assert.AreEqual(Vector3.zero, _rover.CoilMount.localPosition, "On the CoilSocket.");
         }
 
         [UnityTest]

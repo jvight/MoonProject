@@ -10,10 +10,13 @@ namespace MoonProject.Rover
     /// gifts its friends give, each a node hidden until earned.
     /// <list type="bullet">
     /// <item>Kit by <see cref="IRoverAbilities"/>: the Warm Headlamp's lamp bar, the Boost Coils' capacitor drums, the
-    /// Cargo Cradle's rear rack, and when the Hover-Jump's coils may appear (<see cref="Shows"/>; they pop in through
-    /// <see cref="RoverHoverCoils"/>). Owned when the game loads: there at once. Bought (an UpgradePurchased for a
-    /// "rover." id): <see cref="RoverKitInstalling"/>, then the piece appears above its socket, drops and settles
-    /// (<see cref="KitFit"/>) with <see cref="RoverKitFitted"/> as it lands.</item>
+    /// Cargo Cradle's rear rack and the Hover-Jump's coils (shown through <see cref="RoverHoverCoils"/>). Owned when
+    /// the game loads, or granted without a purchase: there at once. Bought (the UpgradePurchased for a "rover." id
+    /// that granted it): hidden until Kenji's Rover Bay fits it (<see cref="RoverBayFitting"/> for that id), then
+    /// <see cref="RoverKitInstalling"/> and the install moment (VISION ruling 14, <see cref="BayFitting"/>): the bay's
+    /// arms, or its floor arm for the coils, carry it onto its socket, and <see cref="RoverKitFitted"/> (with the
+    /// upgrade id) as it is set there. A bay that is missing or cannot reach a socket is a contract bug: logged, and
+    /// the piece simply appears.</item>
     /// <item>Gifts by <see cref="IFriendRoster"/> (<see cref="FriendGift"/>): Tilly's cell for the solar wing, Bell's
     /// fresh "07" and pennant. A friend repaired before the game loaded: there at once; repaired during play: the
     /// soft version of the moment the next time 07 is home.</item>
@@ -22,6 +25,7 @@ namespace MoonProject.Rover
     /// </list>
     /// Registered by <see cref="RoverController"/> as <see cref="IRoverCargoSeat"/> (the rack's RelicSeat). Ticked by
     /// <see cref="RoverController"/> in Update, so the rack has its pose for this frame before any LateUpdate reads it.
+    /// The bay (<see cref="IRoverBay"/>, Gameplay) is resolved at its first fitting, as Gameplay initialises later.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class RoverKit : MonoBehaviour, IRoverCargoSeat
@@ -70,17 +74,25 @@ namespace MoonProject.Rover
         private readonly KitFit[] _fits = new KitFit[PieceCount];
         private readonly FriendGift _tillyGift = new FriendGift();
         private readonly FriendGift _bellGift = new FriendGift();
+        private readonly string[] _awaiting = new string[PieceCount];
+        private readonly int[] _requested = new int[PieceCount];
+        private readonly Transform[] _parts = new Transform[BayFitting.MaxParts];
         private RoverController _rover;
+        private RoverVisualRig _rig;
         private GameContext _context;
         private EventBus _events;
         private IWorldLayout _world;
         private IFriendState _tilly;
         private IFriendState _bell;
         private IDisposable _purchases;
+        private IDisposable _fittings;
         private MaterialPropertyBlock _glowBlock;
-        private Vector3 _lampBarRest;
-        private Vector3[] _drumRest;
-        private Vector3 _rackRest;
+        private BayFitting _bayFitting;
+        private IRoverBay _bay;
+        private BayArm[] _arms;
+        private string _fittingId;
+        private int _requests;
+        private bool _watching;
         private Vector3 _lampBarScale;
         private Vector3[] _drumScale;
         private Vector3 _rackScale;
@@ -99,10 +111,9 @@ namespace MoonProject.Rover
         private float _appliedLampLevel = -1f;
         private bool _docked;
         private float _appliedDrumGlow = -1f;
-        private bool _purchased;
         private bool _started;
 
-        /// <summary>True when the piece is on 07 right now (settling in or fitted).</summary>
+        /// <summary>True when the piece is on 07 right now (on its way on, settling in or fitted).</summary>
         public bool Shows(RoverKitPiece piece)
         {
             return _fits[(int)piece].Visible;
@@ -114,6 +125,18 @@ namespace MoonProject.Rover
             return _fits[(int)piece];
         }
 
+        /// <summary>True while the Rover Bay is fitting a piece onto 07 (holding 07 on its turntable).</summary>
+        public bool IsFitting => _bayFitting != null && _bayFitting.Active;
+
+        /// <summary>The install moment in the bay (for tests and tooling).</summary>
+        public BayFitting BayFitting => _bayFitting;
+
+        /// <summary>How bright the road light is right now as a share of normal (dimmed while docked).</summary>
+        public float LampLevel => _lampLevel;
+
+        /// <summary>Tilly's cell has been given (the solar wing then opens wider at rest).</summary>
+        public bool HasMendedWing => _tillyGift.Given;
+
         // IRoverCargoSeat
         public bool IsFitted => _rover.Has(RoverAbility.CargoCradle);
 
@@ -122,7 +145,7 @@ namespace MoonProject.Rover
         public Quaternion Rotation => _relicSeat.rotation;
 
         /// <summary>Checks wiring, hides all kit and gifts, sets the road light; false when broken (logged).</summary>
-        public bool Initialize(GameContext context, RoverController rover)
+        public bool Initialize(GameContext context, RoverController rover, RoverVisualRig rig)
         {
             if (!ValidateWiring())
             {
@@ -131,6 +154,7 @@ namespace MoonProject.Rover
             }
 
             _rover = rover;
+            _rig = rig;
             _context = context;
             _events = context.Events;
             _world = context.Get<IWorldLayout>();
@@ -142,10 +166,12 @@ namespace MoonProject.Rover
             }
 
             _glowBlock = new MaterialPropertyBlock();
-            CacheRestPoses();
+            _bayFitting = new BayFitting(settings.Bay, rover);
+            CacheRestScales();
             ConfigureHeadlamp();
             HideAll();
             _purchases = _events.Subscribe<UpgradePurchased>(OnUpgradePurchased);
+            _fittings = _events.Subscribe<RoverBayFitting>(OnBayFitting);
             return true;
         }
 
@@ -191,19 +217,15 @@ namespace MoonProject.Rover
             return condition;
         }
 
-        private void CacheRestPoses()
+        private void CacheRestScales()
         {
-            _lampBarRest = _lampBar.localPosition;
             _lampBarScale = _lampBar.localScale;
-            _drumRest = new Vector3[DrumCount];
             _drumScale = new Vector3[DrumCount];
             for (int i = 0; i < DrumCount; i++)
             {
-                _drumRest[i] = _drums[i].localPosition;
                 _drumScale[i] = _drums[i].localScale;
             }
 
-            _rackRest = _cargoRack.localPosition;
             _rackScale = _cargoRack.localScale;
             _cellScale = _solarCell.localScale;
             _serialScale = _freshSerial.localScale;
@@ -240,9 +262,43 @@ namespace MoonProject.Rover
             _pennant.gameObject.SetActive(false);
         }
 
+        /// <summary>
+        /// The kit a purchase granted (owned now, still hidden, not yet waiting) waits for the bay to fit it under the
+        /// purchase's id: abilities are granted just before the purchase is announced.
+        /// </summary>
         private void OnUpgradePurchased(UpgradePurchased upgrade)
         {
-            _purchased |= RoverKitPieces.IsRoverUpgrade(upgrade.UpgradeId);
+            if (!_started || !RoverKitPieces.IsRoverUpgrade(upgrade.UpgradeId))
+            {
+                return;
+            }
+
+            for (int i = 0; i < PieceCount; i++)
+            {
+                if (IsNewKit(i))
+                {
+                    _awaiting[i] = upgrade.UpgradeId;
+                }
+            }
+        }
+
+        /// <summary>The bay asks to fit the kit bought as <see cref="RoverBayFitting.UpgradeId"/>, in turn.</summary>
+        private void OnBayFitting(RoverBayFitting fitting)
+        {
+            for (int i = 0; i < PieceCount; i++)
+            {
+                if (_requested[i] == 0 && string.Equals(_awaiting[i], fitting.UpgradeId, StringComparison.Ordinal))
+                {
+                    _requested[i] = ++_requests;
+                }
+            }
+        }
+
+        /// <summary>Kit 07 owns that is neither on it nor waiting for the bay.</summary>
+        private bool IsNewKit(int index)
+        {
+            return RoverKitPieces.TryGetAbility((RoverKitPiece)index, out RoverAbility ability) && _rover.Has(ability)
+                && _fits[index].IsHidden && _awaiting[index] == null;
         }
 
         public void Tick(float deltaTime)
@@ -254,25 +310,21 @@ namespace MoonProject.Rover
 
             for (int i = 0; i < PieceCount; i++)
             {
-                var piece = (RoverKitPiece)i;
-                if (RoverKitPieces.TryGetAbility(piece, out RoverAbility ability) && _rover.Has(ability)
-                    && _fits[i].IsHidden)
+                if (IsNewKit(i))
                 {
-                    Bring(piece, _started && _purchased, false);
+                    _fits[i].Show();
                 }
             }
 
             bool home = IsHome();
             Give(_tillyGift.Step(IsAwake(_tilly), home), RoverKitPiece.SolarCell);
             Give(_bellGift.Step(IsAwake(_bell), home), RoverKitPiece.FreshPaint);
-
+            StepBay(deltaTime);
             for (int i = 0; i < PieceCount; i++)
             {
                 if (_fits[i].Step(deltaTime))
                 {
-                    var piece = (RoverKitPiece)i;
-                    _events.Publish(new RoverKitFitted(piece, piece == RoverKitPiece.SolarCell
-                        || piece == RoverKitPiece.FreshPaint));
+                    _events.Publish(new RoverKitFitted((RoverKitPiece)i, true, string.Empty));
                 }
             }
 
@@ -281,21 +333,14 @@ namespace MoonProject.Rover
             _lampLevel = Smoothing.Damp(_lampLevel, _docked ? dock.LampDim : 1f, dock.LampHalfLife, deltaTime);
             ApplyWarmth(_fits[(int)RoverKitPiece.LampBar].Lights);
             ApplyDrumGlow();
-            _purchased = false;
             _started = true;
         }
-
-        /// <summary>Tilly's cell has been given (the solar wing then opens wider at rest).</summary>
-        public bool HasMendedWing => _tillyGift.Given;
 
         /// <summary>07 rests on the charging dock (its road light and lamp bar dim) or left it.</summary>
         public void SetDocked(bool docked)
         {
             _docked = docked;
         }
-
-        /// <summary>How bright the road light is right now as a share of normal (dimmed while docked).</summary>
-        public float LampLevel => _lampLevel;
 
         private void FindFriends()
         {
@@ -343,68 +388,181 @@ namespace MoonProject.Rover
 
         private void Give(GiftCue cue, RoverKitPiece piece)
         {
+            KitFit fit = _fits[(int)piece];
             if (cue == GiftCue.ShowSilently)
             {
-                Bring(piece, false, true);
+                fit.Show();
             }
             else if (cue == GiftCue.Present)
             {
-                Bring(piece, true, true);
+                fit.Install();
+                _events.Publish(new RoverKitInstalling(piece, true));
             }
         }
 
-        /// <summary>Shows <paramref name="piece"/> at once, or installs it with the moment.</summary>
-        private void Bring(RoverKitPiece piece, bool withMoment, bool gift)
+        /// <summary>Starts the next fitting the bay asked for once it is free; steps the one under way.</summary>
+        private void StepBay(float deltaTime)
         {
-            KitFit fit = _fits[(int)piece];
-            if (!withMoment)
+            if (!_bayFitting.Active)
             {
-                fit.Show();
+                BeginNextFitting();
+            }
+
+            if (_bayFitting.Active && _bayFitting.Step(deltaTime) == BayCue.Landed)
+            {
+                RoverKitPiece piece = _bayFitting.Piece;
+                _fits[(int)piece].Land();
+                BayFitSettings settings = _tuning.Kit.Bay;
+                _rig.KickHeave(-settings.SeatHeaveKick);
+                _rig.KickAntenna(settings.SeatAntennaKick);
+                _events.Publish(new RoverKitFitted(piece, false, _fittingId));
+            }
+
+            Watch();
+        }
+
+        /// <summary>07 watches the piece come in on the arm until it is on.</summary>
+        private void Watch()
+        {
+            bool watching = _bayFitting.Active && _fits[(int)_bayFitting.Piece].IsCarried;
+            if (watching)
+            {
+                _rover.Gaze.Set(this, _parts[0].position, _tuning.Kit.Bay.WatchPriority);
+            }
+            else if (_watching)
+            {
+                _rover.Gaze.Clear(this);
+            }
+
+            _watching = watching;
+        }
+
+        private void BeginNextFitting()
+        {
+            int next = -1;
+            for (int i = 0; i < PieceCount; i++)
+            {
+                if (_requested[i] > 0 && (next < 0 || _requested[i] < _requested[next]))
+                {
+                    next = i;
+                }
+            }
+
+            if (next < 0)
+            {
                 return;
             }
 
-            fit.Install();
-            _events.Publish(new RoverKitInstalling(piece, gift));
+            var piece = (RoverKitPiece)next;
+            string upgradeId = _awaiting[next];
+            _awaiting[next] = null;
+            _requested[next] = 0;
+            KitFit fit = _fits[next];
+            int count = CollectParts(piece);
+            if (!ResolveBay() || !_bayFitting.Begin(_bay, _arms, piece, _parts, count,
+                    piece == RoverKitPiece.HoverCoils, this))
+            {
+                fit.Show();
+                _events.Publish(new RoverKitFitted(piece, false, upgradeId));
+                return;
+            }
+
+            _fittingId = upgradeId;
+            fit.Carry(_tuning.Kit.Bay.PickScale);
+            _events.Publish(new RoverKitInstalling(piece, false));
+        }
+
+        /// <summary>Puts the nodes the bay carries for <paramref name="piece"/> in the parts buffer.</summary>
+        private int CollectParts(RoverKitPiece piece)
+        {
+            switch (piece)
+            {
+                case RoverKitPiece.HoverCoils:
+                    _parts[0] = _rover.HoverCoils.Mount;
+                    return 1;
+                case RoverKitPiece.LampBar:
+                    _parts[0] = _lampBar;
+                    return 1;
+                case RoverKitPiece.CapacitorDrums:
+                    _parts[0] = _drums[0];
+                    _parts[1] = _drums[1];
+                    return DrumCount;
+                case RoverKitPiece.CargoRack:
+                    _parts[0] = _cargoRack;
+                    return 1;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(piece), piece,
+                        "Only crafted kit is fitted in the bay.");
+            }
+        }
+
+        /// <summary>
+        /// The bay and its arms, kept once they check out against the art contract; false (logged at every fitting
+        /// it fails) when the bay is missing or broken.
+        /// </summary>
+        private bool ResolveBay()
+        {
+            if (_arms != null)
+            {
+                return true;
+            }
+
+            if (!_context.TryGet(out IRoverBay bay))
+            {
+                Debug.LogError($"{nameof(RoverKit)}: no {nameof(IRoverBay)} is registered (Gameplay); the bay cannot "
+                    + "fit kit onto 07.", this);
+                return false;
+            }
+
+            if (bay.Turntable == null || bay.FloorLift == null || bay.FloorLift.parent == null || bay.FloorTip == null
+                || bay.ArmCount < 1 || bay.ArmCount > BayPlanner.MaxArms)
+            {
+                Debug.LogError($"{nameof(RoverKit)}: the {nameof(IRoverBay)} lacks its Turntable, FloorLift, FloorTip "
+                    + $"or 1..{BayPlanner.MaxArms} arms ({BayArm.Contract}).", this);
+                return false;
+            }
+
+            var arms = new BayArm[bay.ArmCount];
+            for (int i = 0; i < arms.Length; i++)
+            {
+                arms[i] = BayArm.Read(bay, i, out string problem);
+                if (arms[i] == null)
+                {
+                    Debug.LogError($"{nameof(RoverKit)}: the Rover Bay's {problem} ({BayArm.Contract}).", this);
+                    return false;
+                }
+            }
+
+            _bay = bay;
+            _arms = arms;
+            return true;
         }
 
         private void ApplyPieces()
         {
-            Place(_lampBar, _fits[(int)RoverKitPiece.LampBar], _lampBarRest, _lampBarScale);
+            Place(_lampBar, _fits[(int)RoverKitPiece.LampBar], _lampBarScale);
             KitFit drums = _fits[(int)RoverKitPiece.CapacitorDrums];
             for (int i = 0; i < DrumCount; i++)
             {
-                Place(_drums[i], drums, _drumRest[i], _drumScale[i]);
+                Place(_drums[i], drums, _drumScale[i]);
             }
 
-            Place(_cargoRack, _fits[(int)RoverKitPiece.CargoRack], _rackRest, _rackScale);
-            Grow(_solarCell, _fits[(int)RoverKitPiece.SolarCell], _cellScale);
+            Place(_cargoRack, _fits[(int)RoverKitPiece.CargoRack], _rackScale);
+            Place(_solarCell, _fits[(int)RoverKitPiece.SolarCell], _cellScale);
             KitFit paint = _fits[(int)RoverKitPiece.FreshPaint];
-            Grow(_freshSerial, paint, _serialScale);
-            Grow(_pennant, paint, _pennantScale);
+            Place(_freshSerial, paint, _serialScale);
+            Place(_pennant, paint, _pennantScale);
         }
 
         /// <summary>
-        /// A kit piece at its socket, raised along world up by the fit's drop and scaled by its grow (written only
-        /// while it moves or as it appears).
+        /// A piece or gift node shown with its fit and scaled by it (written only while it moves or as it appears).
+        /// Where it sits is the bay's while it is carried, its rest pose on its socket otherwise.
         /// </summary>
-        private static void Place(Transform piece, KitFit fit, Vector3 rest, Vector3 scale)
+        private static void Place(Transform node, KitFit fit, Vector3 scale)
         {
-            if (!Reveal(piece, fit))
+            if (Reveal(node, fit))
             {
-                return;
-            }
-
-            Transform socket = piece.parent;
-            piece.localPosition = rest + socket.InverseTransformDirection(Vector3.up) * fit.Offset;
-            piece.localScale = scale * fit.Scale;
-        }
-
-        /// <summary>A gift node shown and grown by its fit.</summary>
-        private static void Grow(Transform gift, KitFit fit, Vector3 scale)
-        {
-            if (Reveal(gift, fit))
-            {
-                gift.localScale = scale * fit.Scale;
+                node.localScale = scale * fit.Scale;
             }
         }
 
@@ -471,6 +629,7 @@ namespace MoonProject.Rover
         private void OnDestroy()
         {
             _purchases?.Dispose();
+            _fittings?.Dispose();
         }
     }
 }

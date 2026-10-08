@@ -368,9 +368,9 @@ namespace MoonProject.UI.PlayModeTests
             yield return Seconds(settings.Delay + settings.Reveal.FadeIn);
             Assert.IsFalse(_rig.Ui.KitTitle.IsVisible, "bought but not yet settled: no name before the piece lands");
 
-            Events.Publish(new RoverKitFitted(RoverKitPiece.LampBar, false));
+            Events.Publish(new RoverKitFitted(RoverKitPiece.LampBar, false, "rover.warm_headlamp"));
             Events.Publish(new RoverKitInstalling(RoverKitPiece.SolarCell, true));
-            Events.Publish(new RoverKitFitted(RoverKitPiece.SolarCell, true));
+            Events.Publish(new RoverKitFitted(RoverKitPiece.SolarCell, true, string.Empty));
             yield return Seconds(settings.Delay + settings.Reveal.FadeIn + 0.2f);
             Assert.IsTrue(_rig.Ui.KitTitle.IsVisible);
             Assert.AreEqual(Text(UiKeys.UpgradeName(bench[2].Id)), _rig.Ui.Layout.KitTitleName.text);
@@ -385,7 +385,7 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual(Text(gift), _rig.Ui.Layout.KitTitleName.text);
 
             LogAssert.Expect(LogType.Error, new Regex("CargoRack settled onto 07"));
-            Events.Publish(new RoverKitFitted(RoverKitPiece.CargoRack, false));
+            Events.Publish(new RoverKitFitted(RoverKitPiece.CargoRack, false, "rover.cargo_cradle"));
         }
 
         [UnityTest]

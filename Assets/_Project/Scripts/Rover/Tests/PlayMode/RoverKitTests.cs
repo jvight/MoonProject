@@ -10,19 +10,13 @@ using MoonProject.Core.Events;
 namespace MoonProject.Rover.PlayModeTests
 {
     /// <summary>
-    /// Visible progression on 07 (M3-11, real wiring): owned kit is there at once on load; a purchase plays the install
-    /// moment (camera round to the piece, the piece drops in and settles, 07's proud pose, camera back) and the lamp
-    /// bar warms and widens the road light; the cargo seat follows the rack; friends' gifts show silently on load or
-    /// softly when 07 comes home; the Boost Coils give a gentle extra cruise and the drums glow with it.
+    /// Visible progression on 07 (M3-11, real wiring): owned kit is there at once on load, and so is kit granted
+    /// without a purchase (bought kit waits for the Rover Bay to fit it: <see cref="RoverBayTests"/>); the cargo seat
+    /// follows the rack; friends' gifts show silently on load or softly when 07 comes home; the Boost Coils give a
+    /// gentle extra cruise and the drums glow with it.
     /// </summary>
     public sealed class RoverKitTests : InputTestFixture
     {
-        private const float Frame = 1f / 60f;
-
-        /// <summary>The install moment swings far round 07 but eased: never faster than this (m/s, deg/s).</summary>
-        private const float MaxInstallSpeed = 18f;
-        private const float MaxInstallTurn = 150f;
-
         private LunarTestPhysics _physics;
         private TestWorld _world;
         private TestRover _rover;
@@ -73,12 +67,6 @@ namespace MoonProject.Rover.PlayModeTests
 
         private IRoverAbilities Abilities => _rover.Context.Get<IRoverAbilities>();
 
-        private void Buy(RoverAbility ability, string upgradeId)
-        {
-            Abilities.Grant(ability);
-            _rover.Context.Events.Publish(new UpgradePurchased(upgradeId, 1));
-        }
-
         [UnityTest]
         public IEnumerator OwnedOnLoad_IsThereAtOnce_NoMoment()
         {
@@ -98,68 +86,18 @@ namespace MoonProject.Rover.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator Purchase_PlaysTheInstallMoment_AndTheLampBarWarmsTheRoadLight()
+        public IEnumerator GrantedWithoutAPurchase_IsThereAtOnce_NoMoment()
         {
             Spawn();
-            yield return Wait(1.5f);
+            yield return Wait(0.5f);
             float plainAngle = _rover.Headlamp.spotAngle;
-            Color plainColor = _rover.Headlamp.color;
-            Transform camera = _rover.Camera.transform;
-            Vector3 resting = camera.position;
-            RoverController controller = _rover.Controller;
-
-            Buy(RoverAbility.WarmHeadlamp, "rover.warm_headlamp");
+            Abilities.Grant(RoverAbility.WarmHeadlamp);
             yield return null;
-            Assert.AreEqual(1, _installing.Count, "The install moment begins.");
-            Assert.AreEqual(RoverKitPiece.LampBar, _installing[0].Piece);
-            Assert.IsFalse(_installing[0].Gift);
-            Assert.IsFalse(_rover.LampBar.gameObject.activeSelf, "Not yet: the camera eases round first.");
-
-            var trace = new CameraTrace(camera);
-            float highest = 0f;
-            float widestView = 0f;
-            float perk = 0f;
-            float landedAt = -1f;
-            float started = Time.time;
-            float until = started + 4.5f;
-            while (Time.time < until)
-            {
-                yield return null;
-                trace.Step(_rover.CameraRig.MomentWeight);
-                if (_rover.LampBar.gameObject.activeSelf)
-                {
-                    highest = Mathf.Max(highest, _rover.LampBar.localPosition.y);
-                }
-
-                if (landedAt < 0f && _fitted.Count > 0)
-                {
-                    landedAt = Time.time - started;
-                }
-
-                Vector3 flat = Vector3.ProjectOnPlane(camera.forward, Vector3.up);
-                widestView = Mathf.Max(widestView, Vector3.Angle(flat, controller.Rotation * Vector3.forward));
-                perk = Mathf.Max(perk, _rover.BodyLanguage.Mood.Perk);
-                Vector3 onScreen = _rover.Camera.WorldToViewportPoint(controller.Position);
-                Assert.That(onScreen.x, Is.InRange(0f, 1f), "07 stays in frame.");
-                Assert.That(onScreen.y, Is.InRange(0f, 1f), "07 stays in frame.");
-            }
-
-            Debug.Log($"[rover-kit] lamp bar appeared up to {highest:0.00} m above its socket, landed at "
-                + $"{landedAt:0.00} s; camera turned {widestView:0} deg round 07; perk {perk:0.00}; {trace}");
-            Assert.AreEqual(1, _fitted.Count, "Landed once.");
-            Assert.AreEqual(RoverKitPiece.LampBar, _fitted[0].Piece);
-            Assert.Greater(highest, 0.15f, "It appears just above its socket and drops in.");
-            Assert.AreEqual(0f, _rover.LampBar.localPosition.magnitude, 1e-3f, "Settled on its socket.");
-            Assert.Greater(widestView, 110f, "The camera eases round to a front three-quarter view.");
-            Assert.Greater(perk, 0.6f, "07's proud pose.");
-            Assert.Less(trace.Fastest, MaxInstallSpeed, "Eased, never a cut.");
-            Assert.Less(trace.FastestTurn, MaxInstallTurn, "Eased, never a whip.");
-            Assert.Greater(_rover.Headlamp.spotAngle, plainAngle + 20f, "A wider road light...");
-            Assert.Less(_rover.Headlamp.color.g, plainColor.g, "...and warmer.");
-            Assert.Greater(GlowOf(_rover.Lamps[1]), 0.5f, "The lamp bar's glasses glow.");
-
-            yield return Wait(2f);
-            Assert.Less(Vector3.Distance(resting, camera.position), 0.6f, "Back to the chase view.");
+            Assert.IsTrue(_rover.LampBar.gameObject.activeSelf, "Not bought at the bay: simply there.");
+            Assert.AreEqual(Vector3.zero, _rover.LampBar.localPosition, "At rest on its socket.");
+            Assert.IsEmpty(_installing);
+            Assert.IsEmpty(_fitted);
+            Assert.Greater(_rover.Headlamp.spotAngle, plainAngle + 20f, "The warm road light at once.");
         }
 
         [UnityTest]
