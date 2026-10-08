@@ -288,6 +288,27 @@ Generated/Art/Sites/Debris_<Material>_<n>.prefab            4–6 small loose wr
   or a bent antenna mast, ≥ 6 m.
 - **Readability.** Salvage pieces read as distinct chunky shapes, so the player can tell what is left.
 
+## Contract: Kenji's Rover Bay (Art -> Gameplay, Rover), M3-14
+The bay fits kit onto 07 (VISION ruling 14), so its arms must actually reach every kit socket on a 07 parked on the
+turntable. A piece must never drop the last stretch.
+```
+Generated/Art/Base/RoverBay.prefab   on the lander's WorkshopAnchor (12.5, 0, -2)
+  Turntable                 the disc 07 parks on; rotates about local Y (gameplay/rover turn it to show a piece)
+  Arm_0..2                  gantry arms on the crane rail
+    Yaw                     shoulder turn about local Y, so each arm can aim off its rail plane
+      Upper / Lower / Tip   pitch joints about local X; links long enough that the Tip reaches every kit socket
+                            (lamp bar, both drums, rack) on a parked 07, e.g. 1.25 / 1.15 / 0.26 m
+        SparkSocket         weld sparks
+  FloorArm
+    FloorLift               rises through a slot in the turntable from a pit below (local Y travel)
+      FloorTip              reaches 07's CoilSocket under the belly; the Hover-Jump coils ride it up
+  HopperMouth               rover-height hopper, in line of sight of a parked 07's beam (no beam through walls)
+  Lamp_0/1, BaySign         glow renderers (SetVector, linear)
+  Weather_Paint/Rust/Dust   cleanable skins
+```
+Gameplay registers `Core/IRoverBay` from serialized references (never name lookups). Rover drives the joints with IK.
+A test proves reach: from each piece's chosen arm (or the floor arm), its socket lies within reach.
+
 ## Contract: world anchors (World -> Gameplay, Audio)
 World registers `Core/IWorldAnchors` (Count / Get(index) / TryGet(id)): named `WorldAnchor`s (id, surface position,
 horizontal forward, radius of clear drivable ground), deterministic for the world seed and fixed after initialisation.
