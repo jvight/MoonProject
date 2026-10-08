@@ -465,26 +465,28 @@ namespace MoonProject.Art.Editor
                 PaletteSwatch.WarmAccent);
         }
 
-        /// <summary>Hand-painted "07" in enamel on a flank stripe, reading front-to-back from outside.</summary>
+        /// <summary>
+        /// The hand-painted "07" on a flank stripe, chalky with age, reading front-to-back from outside.
+        /// </summary>
         private static void SerialOnFlank(LowPolyMeshBuilder b, float side, float zeroZ, float sevenZ)
         {
             const float scale = 0.7f;
             float x = side * (BodyHalfWidth + PaintProud + PaintThickness * 0.5f + 0.002f);
             b.Torus(At(new Vector3(x, StripeY - 0.002f, zeroZ), new Vector3(0f, 0f, side * -86f),
-                new Vector3(1.35f * scale, 0.25f, scale)), 0.032f, 0.013f, 10, 4, PaletteSwatch.Enamel);
+                new Vector3(1.35f * scale, 0.25f, scale)), 0.032f, 0.013f, 10, 4, PaletteSwatch.FadedPaint);
             b.Extrude(At(new Vector3(x, StripeY + 0.002f, sevenZ), new Vector3(0f, side > 0f ? -90f : 90f, -3f),
-                new Vector3(scale, scale, 1f)), Seven, 0.006f, PaletteSwatch.Enamel);
+                new Vector3(scale, scale, 1f)), Seven, 0.006f, PaletteSwatch.FadedPaint);
         }
 
-        /// <summary>"07" on the back stripe, so the chase camera always sees who this is.</summary>
+        /// <summary>The faded "07" on the back stripe, so the chase camera always sees who this is.</summary>
         private static void SerialOnBack(LowPolyMeshBuilder b)
         {
             const float scale = 0.8f;
             float z = BodyBack - PaintProud - PaintThickness * 0.5f - 0.002f;
             b.Torus(At(new Vector3(-0.045f, StripeY - 0.002f, z), new Vector3(90f, 0f, 3f),
-                new Vector3(scale, 0.25f, 1.35f * scale)), 0.032f, 0.013f, 10, 4, PaletteSwatch.Enamel);
+                new Vector3(scale, 0.25f, 1.35f * scale)), 0.032f, 0.013f, 10, 4, PaletteSwatch.FadedPaint);
             b.Extrude(At(new Vector3(0.04f, StripeY + 0.002f, z), new Vector3(0f, 0f, -3f),
-                new Vector3(scale, scale, 1f)), Seven, 0.006f, PaletteSwatch.Enamel);
+                new Vector3(scale, scale, 1f)), Seven, 0.006f, PaletteSwatch.FadedPaint);
         }
 
         /// <summary>Sage plate riveted over the left rear flank, askew, covering a stretch of the stripe.</summary>
