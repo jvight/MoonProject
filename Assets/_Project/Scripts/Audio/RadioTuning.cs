@@ -95,6 +95,22 @@ namespace MoonProject.Audio
         [Tooltip("Seconds (time constant) for the static to settle into or out of Quiet Hours.")]
         [Range(0.05f, 5f)] [SerializeField] private float _quietStaticFade = 1.2f;
 
+        [Header("Radio-hop (between lit relay nodes)")]
+        [Tooltip("Seconds for the radio to ease into static as the hop starts and the screen fades.")]
+        [Range(0.1f, 5f)] [SerializeField] private float _hopOutTime = 1f;
+
+        [Tooltip("Seconds for the static to resolve into the target node's radio as the view eases back in.")]
+        [Range(0.1f, 5f)] [SerializeField] private float _hopInTime = 1f;
+
+        [Tooltip("Extra static at the depth of the hop (0..1, on top of the clarity static).")]
+        [Range(0f, 1f)] [SerializeField] private float _hopStaticBoost = 0.5f;
+
+        [Tooltip("Music level at the depth of the hop (it filters away, not off).")]
+        [Range(0f, 1f)] [SerializeField] private float _hopMusicGain = 0.15f;
+
+        [Tooltip("Low-pass (Hz) the music closes to at the depth of the hop.")]
+        [Range(100f, 22000f)] [SerializeField] private float _hopCutoff = 700f;
+
         [Header("Paused: listening in the cabin")]
         [Tooltip("Low-pass (Hz) the radio eases to while paused: a subtly closer, warmer set (22 kHz = unchanged).")]
         [Range(2000f, 22000f)] [SerializeField] private float _cabinCutoff = 7000f;
@@ -151,6 +167,11 @@ namespace MoonProject.Audio
         public float SilentSwitchFade => _silentSwitchFade;
         public float QuietStaticGain => _quietStaticGain;
         public float QuietStaticFade => _quietStaticFade;
+        public float HopOutTime => _hopOutTime;
+        public float HopInTime => _hopInTime;
+        public float HopStaticBoost => _hopStaticBoost;
+        public float HopMusicGain => _hopMusicGain;
+        public float HopCutoff => _hopCutoff;
         public float CabinCutoff => _cabinCutoff;
         public float CabinMusicGain => _cabinMusicGain;
         public float CabinStaticGain => _cabinStaticGain;

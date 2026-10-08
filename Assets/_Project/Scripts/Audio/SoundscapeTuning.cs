@@ -14,10 +14,14 @@ namespace MoonProject.Audio
         // Keeps ranges non-degenerate if an asset is edited into min >= max.
         private const float MinSpan = 0.01f;
 
-        [Header("Distance: past the radio's signal")]
-        [Tooltip("Metres past the edge of the radio's signal (clear radius + falloff, so tower upgrades move it out) " +
-                 "over which the radio, static and all, fades to near-silence.")]
+        [Header("Distance: past the radio's signal (measured to the nearest lit relay node)")]
+        [Tooltip("Metres past the edge of the radio's signal (clear radius + falloff around every lit node, so tower " +
+                 "upgrades and masts both push it out) over which the radio, static and all, fades to near-silence.")]
         [Range(10f, 1000f)] [SerializeField] private float _silenceWidth = 150f;
+
+        [Tooltip("Seconds (time constant) for the mix to follow the distance when the network changes under 07 " +
+                 "(a mast lights up beside it): it warms in over a few seconds, never snaps.")]
+        [Range(0.1f, 10f)] [SerializeField] private float _farnessEase = 1.5f;
 
         [Tooltip("Radio level (music and static) once fully past the signal (dB): near-silence.")]
         [Range(-60f, 0f)] [SerializeField] private float _farRadioDb = -30f;
@@ -148,6 +152,7 @@ namespace MoonProject.Audio
         [Range(0f, 1f)] [SerializeField] private float _tickVolume = 0.6f;
 
         public float SilenceWidth => _silenceWidth;
+        public float FarnessEase => _farnessEase;
         public float FarRadioDb => _farRadioDb;
         public float FarBasinDb => _farBasinDb;
         public float RoomToneNearDb => _roomToneNearDb;

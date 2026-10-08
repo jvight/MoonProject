@@ -8,7 +8,8 @@ namespace MoonProject.Audio
     /// is, whether the camera's wide shot is open, how deep in Whispering Canyon and whether the radio is on Quiet
     /// Hours, the gain of every layer.
     /// <list type="bullet">
-    /// <item><b>Farness</b> 0..1 eases in over the silence width past the signal's edge.</item>
+    /// <item><b>Farness</b> 0..1 eases in over the silence width past the signal's edge, measured to the nearest lit
+    /// relay node; it follows with a short time constant, so a mast lighting beside 07 warms the mix in.</item>
     /// <item><b>Solitude</b> 0..1 combines farness, Quiet Hours and the canyon (each weighted): how alone 07 is.</item>
     /// <item><b>Radio</b> (music and static): fades to near-silence with farness, thins in the canyon.</item>
     /// <item><b>Basin bed</b>: recedes with farness and in the canyon, swells a little on Quiet Hours.</item>
@@ -30,6 +31,7 @@ namespace MoonProject.Audio
         private readonly SoundscapeTuning _tuning;
         private readonly CanyonAudioTuning _canyon;
         private readonly EasedValue _quietHours = new EasedValue(0f);
+        private readonly EasedValue _farness = new EasedValue(0f);
 
         public SoundscapeModel(SoundscapeTuning tuning, CanyonAudioTuning canyon)
         {
@@ -38,8 +40,8 @@ namespace MoonProject.Audio
             Step(0f, 1f, 0f, 0f, 0f, false, 0f);
         }
 
-        /// <summary>0 within the radio's signal .. 1 past the silence width beyond it.</summary>
-        public float Farness { get; private set; }
+        /// <summary>0 within the radio's signal .. 1 past the silence width beyond it (eased).</summary>
+        public float Farness => _farness.Value;
 
         /// <summary>0 at home with the radio on .. 1 utterly alone.</summary>
         public float Solitude { get; private set; }
@@ -69,16 +71,17 @@ namespace MoonProject.Audio
         public float SmallSoundsGain { get; private set; }
 
         /// <summary>
-        /// Recomputes every gain. <paramref name="distance"/> is 07's horizontal distance from the base,
-        /// <paramref name="signalEdge"/> where the radio's signal is lost entirely (both metres);
+        /// Recomputes every gain. <paramref name="distance"/> is 07's horizontal distance to the nearest lit relay node
+        /// (home or a mast), <paramref name="signalEdge"/> where the radio's signal is lost entirely (both metres);
         /// <paramref name="stillness"/>, <paramref name="wide"/> and <paramref name="canyonInside"/> are 0..1
         /// (already eased); <paramref name="quietHours"/> eases in and out here.
         /// </summary>
         public void Step(float distance, float signalEdge, float stillness, float wide, float canyonInside,
             bool quietHours, float deltaTime)
         {
-            _quietHours.Step(quietHours ? 1f : 0f, Mathf.Max(0f, deltaTime), _tuning.QuietHoursEase);
-            Farness = Smooth01((distance - signalEdge) / _tuning.SilenceWidth);
+            float dt = Mathf.Max(0f, deltaTime);
+            _quietHours.Step(quietHours ? 1f : 0f, dt, _tuning.QuietHoursEase);
+            _farness.Step(FarnessAt(distance, signalEdge), dt, _tuning.FarnessEase);
             Stillness = Mathf.Clamp01(stillness);
             Wide = Mathf.Clamp01(wide);
             Canyon = Mathf.Clamp01(canyonInside);
@@ -93,6 +96,12 @@ namespace MoonProject.Audio
             RoomToneGain = FromDb(Mathf.Lerp(_tuning.RoomToneNearDb, _tuning.RoomToneFarDb, Solitude) +
                                   Canyon * _tuning.RoomToneInCanyonDb + Wide * _tuning.WideRoomToneDb);
             SmallSoundsGain = FromDb(Mathf.Lerp(_tuning.SmallSoundsNearDb, 0f, Solitude));
+        }
+
+        /// <summary>07 was set down somewhere new unseen (a radio-hop): the distance takes effect at once.</summary>
+        public void SettleAt(float distance, float signalEdge)
+        {
+            _farness.Snap(FarnessAt(distance, signalEdge));
         }
 
         /// <summary>The radio's low-pass from its open <paramref name="cutoffHz"/>: thinner in the canyon (eased
@@ -117,6 +126,11 @@ namespace MoonProject.Audio
         public static float ToDb(float gain)
         {
             return DecibelsPerAmplitudeDecade * Mathf.Log10(Mathf.Max(gain, MinLinear));
+        }
+
+        private float FarnessAt(float distance, float signalEdge)
+        {
+            return Smooth01((distance - signalEdge) / _tuning.SilenceWidth);
         }
 
         private static float Smooth01(float x)
