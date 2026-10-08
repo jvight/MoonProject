@@ -35,5 +35,11 @@ namespace MoonProject.Core
         /// "site.lander". Forward points the way 07 approaches; the radius is the site's footprint.
         /// </summary>
         public const string SitePrefix = "site.";
+
+        /// <summary>
+        /// The far (home-side) end of Kestrel-3's debris furrow; Forward is the fall line toward the crater. Loose
+        /// salvage bits lie between it and <c>site.kestrel</c>. Not a site.
+        /// </summary>
+        public const string KestrelTrail = "trail.kestrel";
     }
 }
