@@ -44,6 +44,16 @@ namespace MoonProject.Art.Editor
 
         public static readonly Vector3 CargoPosition = new Vector3(0f, 0.48f, -0.64f);
 
+        /// <summary>
+        /// Right capacitor drum socket on the lid edge above the middle wheel (+X outward); the left one mirrors x
+        /// and turns half round, so its +X points out too.
+        /// </summary>
+        public static readonly Vector3 DrumSocket = new Vector3(0.47f, 0.87f, -0.12f);
+
+        public const string Decal07FreshName = "Decal07Fresh";
+        public const string CellFilledName = "CellFilled";
+        public const string PennantName = "Pennant";
+
         /// <summary>Writes the rover meshes and prefab (the palette material must exist).</summary>
         [MoonBuilder("Art/Rover", 120)]
         public static void Build()
@@ -65,7 +75,9 @@ namespace MoonProject.Art.Editor
             var spareLeft = new ModelMesh(ModelName + "_WheelSpareL", Mirrored(RoverMeshes.SpareWheel()));
 
             var root = new ModelNode(ModelName, Vector3.zero);
-            root.Add(new ModelNode("Body", Vector3.zero, new ModelMesh(ModelName + "_Body", RoverMeshes.Body())));
+            ModelNode body = root.Add(new ModelNode("Body", Vector3.zero,
+                new ModelMesh(ModelName + "_Body", RoverMeshes.Body())));
+            body.Add(Gift(Decal07FreshName, Vector3.zero, ModelName + "_Decal07Fresh", RoverGiftMeshes.FreshSerial()));
             root.Add(new ModelNode("Bogie_L", MirrorX(BogieHinge), bogieLeft));
             root.Add(new ModelNode("Bogie_R", BogieHinge, bogieRight));
             root.Add(new ModelNode("Wheel_FL", WheelCentre(-1f, 1f), wheelLeft));
@@ -85,12 +97,16 @@ namespace MoonProject.Art.Editor
             head.Add(new ModelNode("Eyelid", RoverMeshes.EyeCentre,
                 new ModelMesh(ModelName + "_Eyelid", RoverMeshes.Eyelid())));
 
-            root.Add(new ModelNode("SolarWing", SolarWingHinge,
+            ModelNode wing = root.Add(new ModelNode("SolarWing", SolarWingHinge,
                 new ModelMesh(ModelName + "_SolarWing", RoverMeshes.SolarWing())));
+            wing.Add(Gift(CellFilledName, RoverGiftMeshes.CellFilledCentre, ModelName + "_CellFilled",
+                RoverGiftMeshes.ReplacementCell()));
             ModelNode antenna = root.Add(new ModelNode("Antenna", AntennaBase,
                 new ModelMesh(ModelName + "_Antenna", RoverMeshes.Antenna())));
             antenna.Add(new ModelNode("AntennaTip", RoverMeshes.AntennaTipPosition,
                 new ModelMesh(ModelName + "_AntennaTip", RoverMeshes.AntennaTip())));
+            antenna.Add(Gift(PennantName, RoverGiftMeshes.PennantClip, ModelName + "_Pennant",
+                RoverGiftMeshes.Pennant()));
 
             root.Add(new ModelNode("HeadlampSocket", HeadlampPosition,
                 Place.Rotation(new Vector3(HeadlampPitchDegrees, 0f, 0f))));
@@ -98,7 +114,16 @@ namespace MoonProject.Art.Editor
             root.Add(new ModelNode("DustSocket_L", new Vector3(-WheelTrack, 0f, -WheelBase)));
             root.Add(new ModelNode("DustSocket_R", new Vector3(WheelTrack, 0f, -WheelBase)));
             root.Add(new ModelNode("CoilSocket", CoilSocket));
+            root.Add(new ModelNode("DrumSocket_L", MirrorX(DrumSocket), Place.Rotation(new Vector3(0f, 180f, 0f))));
+            root.Add(new ModelNode("DrumSocket_R", DrumSocket));
             return root;
+        }
+
+        /// <summary>A friend's gift: kept in the prefab but hidden until rover shows it.</summary>
+        private static ModelNode Gift(string name, Vector3 position, string meshName, LowPolyMeshBuilder geometry)
+        {
+            return new ModelNode(name, position, Quaternion.identity, new ModelMesh(meshName, geometry),
+                ModelMaterial.Palette, false);
         }
 
         /// <summary>

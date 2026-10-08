@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using UnityEngine;
@@ -90,7 +91,13 @@ namespace MoonProject.Art.Tests
             ModelNode socket = rover.GetDescendant("CoilSocket");
             Assert.IsNull(socket.Mesh);
             Assert.AreEqual(Quaternion.identity, socket.LocalRotation);
-            Assert.AreEqual("CoilSocket", rover.Children[rover.Children.Count - 1].Name, "appended last");
+            var names = new List<string>();
+            foreach (ModelNode child in rover.Children)
+            {
+                names.Add(child.Name);
+            }
+
+            Assert.Greater(names.IndexOf("CoilSocket"), names.IndexOf("DustSocket_R"), "appended after the M1 rig");
 
             foreach (Vector3 local in MeshChecks.Points(RoverModelBuilder.CreateHoverCoils(), Matrix4x4.identity))
             {

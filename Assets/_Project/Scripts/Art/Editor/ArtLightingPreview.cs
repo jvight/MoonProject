@@ -18,7 +18,7 @@ namespace MoonProject.Art.Editor
     /// <code>
     /// python tools/unity_batch.py exec --method MoonProject.Art.Editor.ArtLightingPreview.Capture
     ///     [--arg scene=rover|base|towers|relics|shadow|grit|friends|workshop|bell|bellbroken|pickups|bellcorner|
-    ///                  warmpoints|relaysbroken|relayslit|sites|sitesclean|salvagebits]
+    ///                  warmpoints|relaysbroken|relayslit|sites|sitesclean|salvagebits|kit]
     /// </code>
     /// (default rover; a ';'-separated list captures several scenes in one run)
     /// rover: 07 at rest (half-lidded, head lowered, wing ajar) with its headlamp. base: the lander with the shelf
@@ -40,7 +40,9 @@ namespace MoonProject.Art.Editor
     /// Main.unity, dark and leaning or restored and lit, from the spawn first frame, from the base and at each pad.
     /// sites / sitesclean: the five salvage sites on World's site anchors in Main.unity, whole or picked clean to their
     /// skeletons, from the way in, the side and 30 m, Kestrel-3 from the base, the depot close. salvagebits: the three
-    /// material bundles and the Kestrel trail's loose bits on the dust beside 07.
+    /// material bundles and the Kestrel trail's loose bits on the dust beside 07. kit: 07 bare, with each crafted
+    /// kit piece (lamp bar lit, drums glowing as if boosting, the cargo cradle carrying a relic), fully kitted with
+    /// the friends' gifts, and "minute one versus hour five" side by side from the chase camera and at 30 m.
     /// Glows are lit with the linear MaterialPropertyBlock contract.
     /// </summary>
     public static class ArtLightingPreview
@@ -55,6 +57,9 @@ namespace MoonProject.Art.Editor
         /// <summary>Gameplay's tower upgrade pad (RadioTowerTuning): centre ahead of the tower, radius.</summary>
         private const float TowerPadOffset = 3.4f;
         private const float TowerPadRadius = 2.4f;
+
+        /// <summary>Spacing of the kit scene's 07s, wide enough that each chase shot frames one rover.</summary>
+        private const float KitSpacing = 9f;
 
         /// <summary>The ground Bell keeps clear for her dance and for 07 parking at her dial.</summary>
         private const float BellClearRadius = 2.5f;
@@ -180,10 +185,14 @@ namespace MoonProject.Art.Editor
                         NightSetting(material, temporary, 40f, 8f);
                         poses = SalvageBitsScene(temporary);
                         break;
+                    case "kit":
+                        NightSetting(material, temporary, 90f, 40f);
+                        poses = KitScene(temporary);
+                        break;
                     default:
                         Debug.LogError($"ArtLightingPreview: unknown scene '{scene}' " +
                             "(rover|base|towers|relics|shadow|grit|friends|workshop|bell|bellbroken|pickups|" +
-                            "bellcorner|warmpoints|relaysbroken|relayslit|sites|sitesclean|salvagebits).");
+                            "bellcorner|warmpoints|relaysbroken|relayslit|sites|sitesclean|salvagebits|kit).");
                         return false;
                 }
 
@@ -624,7 +633,8 @@ namespace MoonProject.Art.Editor
 
             Ground(Instantiate(CassetteModelBuilder.PrefabName("after_dark_1"), temporary, ArtPaths.PickupFolder),
                 new Vector3(0.35f, 0f, 2.7f));
-            Ground(Instantiate("Scrap_Coil", temporary, ArtPaths.ScrapFolder), new Vector3(0.95f, 0f, 2.6f));
+            Ground(Instantiate(SiteModelBuilder.BundleName(SalvageMaterial.Wiring), temporary, ArtPaths.PickupFolder),
+                new Vector3(0.95f, 0f, 2.6f));
             return Poses(
                 Pose("eyes", Stage(0f, 1.5f, 1.2f), Stage(0f, 1.15f, -3f), 50f),
                 Pose("friends", Stage(0f, 1.4f, 4.4f), Stage(0f, 1f, 0.5f), 45f),
@@ -742,6 +752,99 @@ namespace MoonProject.Art.Editor
             poses.Add(Pose("depot_close", Point(depot - depotForward * 5.5f + depotSide * 2.5f + Vector3.up * 2.4f),
                 Point(depot + depotForward * 2.5f + depotSide * 1.2f + Vector3.up * 1f), 55f));
             return new CameraPoseSet { width = 1600, height = 900, postProcessing = true, poses = poses.ToArray() };
+        }
+
+        /// <summary>
+        /// 07 in five stages in a row (bare, lamp bar, drums, cradle, everything plus the gifts), each from the
+        /// default chase camera's rear three-quarter; then a bare 07 beside a fully kitted one, from the chase camera
+        /// and from 30 m.
+        /// </summary>
+        private static CameraPoseSet KitScene(TemporaryObjects temporary)
+        {
+            string[] stages = { "bare", "lampbar", "drums", "cradle", "full" };
+            var chase = new Vector3(4.3f, 2.1f, -6.1f);
+            var poses = new List<CameraPose>();
+            for (int i = 0; i < stages.Length; i++)
+            {
+                var at = new Vector3((i - 2) * KitSpacing, 0f, 0f);
+                Transform rover = Rover(temporary, at, 0f);
+                temporary.Add(rover.gameObject);
+                FitKit(rover, temporary, i == 1 || i == 4, i == 2 || i == 4, i == 3 || i == 4, i == 4, i == 4);
+                poses.Add(Pose(stages[i] + "_chase", Point(at + chase), Point(at + Vector3.up * 0.9f), 45f));
+            }
+
+            var pair = new Vector3(0f, 0f, KitSpacing * 4f);
+            for (int side = -1; side <= 1; side += 2)
+            {
+                Transform rover = Rover(temporary, pair + Vector3.right * side * 1.9f, 0f);
+                temporary.Add(rover.gameObject);
+                bool kitted = side > 0;
+                FitKit(rover, temporary, kitted, kitted, kitted, kitted, kitted);
+            }
+
+            Vector3 look = pair + Vector3.up * 0.8f;
+            poses.Add(Pose("minute_one_vs_hour_five_chase", Point(pair + new Vector3(2.6f, 2.6f, -7.2f)), Point(look),
+                45f));
+            poses.Add(Pose("minute_one_vs_hour_five_30m", Point(pair + new Vector3(15f, 8.3f, -24.5f)), Point(look),
+                40f));
+            poses.Add(Pose("full_front", Point(new Vector3(2f * KitSpacing - 2.2f, 1.4f, 3.6f)),
+                Point(new Vector3(2f * KitSpacing, 0.9f, 0f)), 45f));
+            return new CameraPoseSet { width = 1600, height = 900, postProcessing = true, poses = poses.ToArray() };
+        }
+
+        /// <summary>
+        /// Fits the chosen kit to a rover instance on its sockets, lit as in play (the lamps on, the drums glowing),
+        /// optionally with a relic riding in the cradle, and shows the friends' gifts.
+        /// </summary>
+        private static void FitKit(Transform rover, TemporaryObjects temporary, bool lampBar, bool drums, bool cradle,
+            bool relic, bool gifts)
+        {
+            if (lampBar)
+            {
+                Transform bar = Attach(rover, RoverKitBuilder.LampBarName, "HeadlampSocket", temporary);
+                SetGlow(bar, RoverKitBuilder.LampPrefix, RoverKitMeshes.LampCount, 1f);
+            }
+
+            if (drums)
+            {
+                foreach (string socket in new[] { "DrumSocket_L", "DrumSocket_R" })
+                {
+                    Transform drum = Attach(rover, RoverKitBuilder.CapacitorDrumName, socket, temporary);
+                    SetGlow(drum, RoverKitBuilder.DrumGlowName, new[] { "" }, 1f);
+                }
+            }
+
+            if (cradle)
+            {
+                Transform rack = Attach(rover, RoverKitBuilder.CargoRackName, "CargoSocket", temporary);
+                if (relic)
+                {
+                    Transform seat = Descendant(rack, RoverKitBuilder.RelicSeatName);
+                    GameObject carried = Instantiate(RelicModelBuilder.PrefabName("teapot"), temporary,
+                        ArtPaths.RelicFolder);
+                    float lift = carried.transform.position.y - RendererBounds(carried).min.y;
+                    carried.transform.SetPositionAndRotation(seat.position + seat.up * lift,
+                        seat.rotation * Quaternion.Euler(0f, 30f, 0f));
+                }
+            }
+
+            if (gifts)
+            {
+                foreach (string gift in new[]
+                {
+                    RoverModelBuilder.Decal07FreshName, RoverModelBuilder.CellFilledName, RoverModelBuilder.PennantName,
+                })
+                {
+                    Descendant(rover, gift).gameObject.SetActive(true);
+                }
+            }
+        }
+
+        private static Transform Attach(Transform rover, string kit, string socket, TemporaryObjects temporary)
+        {
+            GameObject piece = Instantiate(kit, temporary, ArtPaths.RoverFolder);
+            piece.transform.SetParent(Descendant(rover, socket), false);
+            return piece.transform;
         }
 
         /// <summary>The three material bundles in a row by 07, the trail's loose bits strewn behind them.</summary>

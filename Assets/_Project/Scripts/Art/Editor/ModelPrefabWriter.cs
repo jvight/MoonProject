@@ -57,12 +57,13 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
-        /// True when <paramref name="saved"/> already holds exactly what <see cref="Instantiate"/> built: names, poses,
-        /// components, meshes and materials, all the way down.
+        /// True when <paramref name="saved"/> already holds exactly what <see cref="Instantiate"/> built: names, active
+        /// states, poses, components, meshes and materials, all the way down.
         /// </summary>
         private static bool SameModel(Transform saved, Transform built)
         {
-            if (saved.name != built.name || !saved.localPosition.Equals(built.localPosition)
+            if (saved.name != built.name || saved.gameObject.activeSelf != built.gameObject.activeSelf
+                || !saved.localPosition.Equals(built.localPosition)
                 || !saved.localRotation.Equals(built.localRotation) || !saved.localScale.Equals(built.localScale)
                 || saved.childCount != built.childCount || !SameRendering(saved.gameObject, built.gameObject))
             {
@@ -152,6 +153,7 @@ namespace MoonProject.Art.Editor
             Transform transform = gameObject.transform;
             transform.localPosition = node.LocalPosition;
             transform.localRotation = node.LocalRotation;
+            gameObject.SetActive(node.Active);
             if (node.Mesh != null)
             {
                 gameObject.AddComponent<MeshFilter>().sharedMesh = meshes[node.Mesh];
