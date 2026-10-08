@@ -142,6 +142,26 @@ On each new session: a gentle chance of a *meteor shower* (fresh glints), a *new
 where none was), or an *event*: **Eclipse** (bioluminescent paths reveal secrets), **Solar Flare** (aurora, 07
 overcharged and fast), **Earthrise** (a calm photo moment). Events last the session; nothing expires.
 
+### A base built for 07, waking from decades of neglect (owner priority, 2026-10-08)
+- **Rover-first architecture.** The crew built Lumen Station around a rover:
+  - a cable lift (a winch platform) beside the lander's human ladder, up to the hatch deck, used by M3-07 to reach
+    the hand-drawn map inside;
+  - ramps onto every pad;
+  - 07's charging and docking cradle instead of a doormat;
+  - rover-height junction boxes and dials.
+
+  The crew's ladder stays as a remnant: 07 has never climbed it.
+- **Abandoned at first.** At the start everything is dusty, faded and rusted:
+  - the lander's paint is sun-bleached and rust streaks run from its rivets;
+  - dust drifts lean against the legs;
+  - a cable hangs slack and the "HOME" sign tilts;
+  - the lift is jammed halfway.
+- **Restored over time.** Each restoration step (tower levels, friends home, relays lit, the workshop) visibly
+  cleans one part of home: dust caps gone, a fresh paint patch, the sign straightened, the lift running, lights on.
+  By the end the base looks lived-in and loved, still old, never new.
+- **The same arc on 07.** It starts with rust spots, a faded stripe and dust on its top faces; repairs and gifts
+  clean and repaint it piece by piece (see "Visible progression").
+
 ### Base life & decoration
 The base gains lights, plants, friends' corners and player-placed decorations on snap points (lanterns, pennants,
 a little bench facing Earth). Base "warmth" is visible from far away — the glow grows across the basin.

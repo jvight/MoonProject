@@ -96,6 +96,7 @@
 | M3-09 | Màn hình tiêu đề (Continue/Settings), bộ sưu tập hiển thị ở căn cứ | ui | ⬜ |
 | M3-10 | **Cô đơn & bình yên — đợt trau chuốt không khí** (trụ cột 6 trong VISION): hình (chân trời xa mờ, tương phản sáng tối, bóng dài, bầu trời sống, grading/bloom/vignette/grain) · camera (lùi ra toàn cảnh khi đứng yên, bụi lơ lửng trong đèn 07) · âm thanh (radio mỏng dần theo khoảng cách → gần như im lặng, tiếng máy nhỏ của 07) | world + rover + audio | 🟩 |
 | M3-11 | **Tiến trình nhìn thấy được** (luật 11): mỗi nâng cấp có một bộ phận hiện trên 07 — bánh to có gai (Magnetic Treads), giỏ hàng sau (Cargo Cradle), chảo/ăng-ten lớn (Wide Sonar), giàn đèn có lồng (Warm Headlamp), hai trống tụ điện (Boost Coils); quà của bạn bè chữa dần "dấu hiệu cô đơn" (ô pin mặt trời, vá sơn, số 07 sơn lại); khoảnh khắc lắp đặt ở bàn Kenji (xem `docs/DESIGN.md` "Visible progression") | art + rover + gameplay | ⬜ |
+| M3-12 | **Bỏ hoang lâu năm → được chăm lại** (luật 12): bộ "phong hoá" low-poly (sơn phai, gỉ chảy từ đinh tán, bụi dồn chân, dây chùng, biển nghiêng) cho lander, tháp, xưởng, kệ, cột relay và cả 07; kiến trúc cho xe: thang nâng tời cạnh thang người ở lander, dốc lên mọi bệ, bệ sạc/đỗ của 07 thay tấm thảm; mỗi bước khôi phục làm sạch một phần căn cứ | art + gameplay + world | ⬜ |
 
 ## M4 — Thế giới mở rộng, sự kiện & kết thúc
 Magnetic Treads + **Rim Terraces** + **Atlas**; Warm Headlamp + **Shadowed Crater** + **Moss** + Biodome; sự kiện
