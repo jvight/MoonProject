@@ -97,6 +97,66 @@ namespace MoonProject.Art.Editor
             return level;
         }
 
+        /// <summary>
+        /// The stage's rust: streaks down the old cabinet from its band, collars where the pole or the lattice legs
+        /// meet the plinth, and streaks down the plinth's sides from its bolts.
+        /// </summary>
+        public static LowPolyMeshBuilder Rust(int level)
+        {
+            var b = new LowPolyMeshBuilder(500);
+            float front = 0.27f + 0.21f + Weathering.RustLift;
+            Matrix4x4 cabinet = SiteKit.Face(new Vector3(0f, 0f, front), Vector3.forward, Vector3.up);
+            SiteKit.RustStreak(b, cabinet, -0.22f, PlinthHeight + 0.5f, 0.3f);
+            SiteKit.RustStreak(b, cabinet, 0.24f, PlinthHeight + 0.5f, 0.18f);
+            for (int side = 0; side < 4; side++)
+            {
+                Vector3 normal = Rotation(new Vector3(0f, side * 90f, 0f)) * Vector3.forward;
+                Matrix4x4 plinth = SiteKit.Face(normal * (PlinthSize * 0.5f + Weathering.RustLift), normal, Vector3.up);
+                SiteKit.RustStreak(b, plinth, side % 2 == 0 ? 0.45f : -0.5f, PlinthHeight - 0.03f, 0.1f);
+            }
+
+            if (RequireLevel(level) == 1)
+            {
+                Weathering.Collar(b, At(new Vector3(0f, PlinthHeight + 0.08f, -0.3f)), 0.075f, 0.14f);
+                return b;
+            }
+
+            float half = level == 2 ? 0.62f : 0.66f;
+            for (int corner = 0; corner < 4; corner++)
+            {
+                Weathering.Collar(b, At(Corner(corner, PlinthHeight + 0.09f, half)), 0.075f, 0.16f);
+            }
+
+            return b;
+        }
+
+        /// <summary>What holds dust: the plinth, the cabinet and the platforms (not every lattice bar).</summary>
+        public static LowPolyMeshBuilder DustSurfaces(int level)
+        {
+            var b = new LowPolyMeshBuilder(400);
+            Plinth(b);
+            if (RequireLevel(level) == 2)
+            {
+                Platform(b, 3.4f, 0.66f);
+            }
+            else if (level == 3)
+            {
+                Platform(b, 3.2f, 0.7f);
+                Platform(b, 6.6f, 0.66f);
+            }
+
+            return b;
+        }
+
+        /// <summary>Dust drifted against two sides of the plinth.</summary>
+        public static LowPolyMeshBuilder Drifts()
+        {
+            var b = new LowPolyMeshBuilder(700);
+            SiteKit.Drift(b, new Vector3(-0.95f, 0f, -0.2f), 1.8f, 0.6f, 0.2f, 5f, 91);
+            SiteKit.Drift(b, new Vector3(0.3f, 0f, -0.95f), 1.6f, 0.55f, 0.18f, 95f, 92);
+            return b;
+        }
+
         /// <summary>The shared footing: a metal plinth and the old radio cabinet that the tower amplifies.</summary>
         private static void Plinth(LowPolyMeshBuilder b)
         {

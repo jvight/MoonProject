@@ -103,7 +103,9 @@ namespace MoonProject.Art.Tests
             }
 
             Assert.AreEqual("CassetteShelf", shelf.Name);
-            CollectionAssert.AreEqual(Enumerable.Range(0, 8).Select(i => $"Slot_{i}").ToArray(),
+            CollectionAssert.AreEqual(
+                Enumerable.Range(0, 8).Select(i => $"Slot_{i}").Concat(new[] { "Weather_Paint",
+                "Weather_Dust" }).ToArray(),
                 shelf.Children.Select(child => child.Name).ToArray());
             for (int row = 0; row < 4; row++)
             {
@@ -129,7 +131,7 @@ namespace MoonProject.Art.Tests
         {
             ModelNode shelf = BaseModelBuilder.CreateCassetteShelf();
             LowPolyMeshBuilder rack = shelf.Mesh.Geometry;
-            foreach (ModelNode slot in shelf.Children)
+            foreach (ModelNode slot in shelf.Children.Where(child => child.Name.StartsWith("Slot_")))
             {
                 Vector3 bottom = slot.LocalPosition;
                 var tape = new Bounds(bottom + Vector3.up * (TapeHeight * 0.5f),

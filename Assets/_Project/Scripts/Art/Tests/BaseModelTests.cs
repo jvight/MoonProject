@@ -9,6 +9,9 @@ namespace MoonProject.Art.Tests
     /// <summary>The base part of the M2 content contract: names, anchors, sockets and pivots.</summary>
     public sealed class BaseModelTests
     {
+        // The removable weather layers (dust, rust, bleach) cost at most this much more on top of a model.
+        private const int WeatherBudget = 7000;
+
         [Test]
         public void Lander_HasAnchorsAndLampSockets_OnTheGroundPivot()
         {
@@ -94,16 +97,26 @@ namespace MoonProject.Art.Tests
             foreach (ModelNode model in models)
             {
                 int triangles = 0;
+                int weather = 0;
                 foreach (ModelNode node in new[] { model }.Concat(model.Children))
                 {
                     if (node.Mesh != null)
                     {
                         MeshChecks.AssertWellFormed(node.Mesh.Geometry);
-                        triangles += node.Mesh.Geometry.TriangleCount;
+                        if (node.Name.StartsWith("Weather_"))
+                        {
+                            weather += node.Mesh.Geometry.TriangleCount;
+                        }
+                        else
+                        {
+                            triangles += node.Mesh.Geometry.TriangleCount;
+                        }
                     }
                 }
 
+                TestContext.WriteLine($"{model.Name}: {triangles} triangles, {weather} in its weather layers");
                 Assert.That(triangles, Is.InRange(300, 6000), $"{model.Name} triangle budget");
+                Assert.LessOrEqual(weather, WeatherBudget, $"{model.Name} weather layers budget");
             }
         }
 

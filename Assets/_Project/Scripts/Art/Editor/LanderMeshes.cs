@@ -6,8 +6,10 @@ namespace MoonProject.Art.Editor
     /// <summary>
     /// The abandoned lander that 07 calls home: a gold-foil descent stage on four splayed legs under a cream
     /// enamel cabin with 07's worn orange stripe, a hatch onto the deck, a ladder down to a welcome mat, round warm
-    /// windows and little porch lamps. Built in base space: origin on the ground under the lander's centre,
-    /// +Z = the hatch side.
+    /// windows and little porch lamps. Decades alone show in its shape (a dented stage panel, one torn away, the dish
+    /// knocked askew, a snapped cable, the HOME sign leaning) and in the removable weather layers (see
+    /// <see cref="Weathering"/>). Built in base space: origin on the ground under the lander's centre, +Z = the hatch
+    /// side.
     /// </summary>
     internal static class LanderMeshes
     {
@@ -33,6 +35,11 @@ namespace MoonProject.Art.Editor
         private const float DeckEdge = 1.92f;
 
         private static readonly float CabinApothem = CabinRadius * Mathf.Cos(Mathf.PI / 8f);
+        private static readonly float StageApothem = StageRadius * Mathf.Cos(Mathf.PI / 8f);
+
+        // Which stage panels (by quarter turn from the hatch side) took the years worst.
+        private const int DentedPanel = 1;
+        private const int TornPanel = 3;
 
         private static readonly Vector2[] FootpadProfile =
         {
@@ -50,6 +57,78 @@ namespace MoonProject.Art.Editor
             new Vector2(0f, -0.1f), new Vector2(0.22f, -0.07f), new Vector2(0.42f, 0.05f), new Vector2(0.38f, 0.06f),
             new Vector2(0.2f, -0.03f), new Vector2(0f, -0.05f),
         };
+
+        /// <summary>
+        /// The lander's rust: streaks down the cabin from the window frames and the rivet line under the stripe,
+        /// flakes where the stripe has lifted, streaks down the gold stage from its top rivets, collars at the leg
+        /// knees and feet, and the sign's bolts weeping.
+        /// </summary>
+        public static LowPolyMeshBuilder Rust()
+        {
+            var b = new LowPolyMeshBuilder(900);
+            float face = CabinApothem + Weathering.RustLift;
+            for (int side = -1; side <= 1; side += 2)
+            {
+                Matrix4x4 window = Face(side * 45f, face);
+                SiteKit.RustStreak(b, window, -0.12f, WindowHeight - 0.32f, 0.42f);
+                SiteKit.RustStreak(b, window, 0.15f, WindowHeight - 0.3f, 0.28f);
+                Matrix4x4 flank = Face(side * 90f, face);
+                SiteKit.RustStreak(b, flank, 0.3f, 4.25f, 0.55f);
+                SiteKit.RustPatch(b, flank, -0.25f, 4.36f, 0.16f);
+            }
+
+            Matrix4x4 back = Face(180f, face);
+            SiteKit.RustStreak(b, back, 0.3f, WindowHeight - 0.27f, 0.5f);
+            SiteKit.RustStreak(b, back, -0.35f, 4.25f, 0.4f);
+            Matrix4x4 front = Face(0f, face);
+            SiteKit.RustPatch(b, front, 0.45f, 4.36f, 0.13f);
+            SiteKit.RustStreak(b, front, -0.45f, 4.25f, 0.6f);
+
+            float stage = StageApothem + Weathering.RustLift;
+            for (int i = 0; i < 8; i++)
+            {
+                Matrix4x4 panel = Face(i * 45f, stage);
+                SiteKit.RustStreak(b, panel, i % 2 == 0 ? -0.35f : 0.25f, StageTop - 0.12f, 0.45f + (i % 3) * 0.2f);
+            }
+
+            SiteKit.RustPatch(b, Face(DentedPanel * 90f, StageApothem + 0.035f), 0.1f, 2.0f, 0.22f);
+            for (int i = 0; i < 4; i++)
+            {
+                float yaw = 45f + i * 90f;
+                Vector3 direction = Rotation(new Vector3(0f, yaw, 0f)) * Vector3.forward;
+                Vector3 hip = direction * HipRadius + Vector3.up * 2.35f;
+                Vector3 foot = direction * FootRadius + Vector3.up * 0.18f;
+                Vector3 knee = Vector3.Lerp(hip, foot, 0.45f);
+                Weathering.Collar(b, Along(knee - (foot - hip).normalized * 0.12f,
+                    knee + (foot - hip).normalized * 0.12f)
+                    * Matrix4x4.Rotate(Rotation(AlongZ)), 0.1f, 0.16f);
+                Weathering.Collar(b, At(foot + Vector3.up * 0.1f), 0.12f, 0.12f);
+            }
+
+            Matrix4x4 sign = HomeSignFrame * At(0f, 0.95f, 0.035f + 0.02f + Weathering.RustLift);
+            SiteKit.RustStreak(b, sign, -0.36f, 0.12f, 0.16f);
+            SiteKit.RustStreak(b, sign, 0.36f, 0.12f, 0.22f);
+            return b;
+        }
+
+        /// <summary>
+        /// Dust drifted against the lander over the decades: round each footpad, a long low mound under the stage
+        /// and against the crates.
+        /// </summary>
+        public static LowPolyMeshBuilder Drifts()
+        {
+            var b = new LowPolyMeshBuilder(1400);
+            for (int i = 0; i < 4; i++)
+            {
+                float yaw = 45f + i * 90f;
+                Vector3 foot = Rotation(new Vector3(0f, yaw, 0f)) * Vector3.forward * (FootRadius + 0.15f);
+                SiteKit.Drift(b, foot, 1.5f, 0.85f, 0.18f, yaw + 15f, 81 + i);
+            }
+
+            SiteKit.Drift(b, new Vector3(0.2f, 0f, -0.3f), 3.8f, 3.2f, 0.26f, 20f, 85);
+            SiteKit.Drift(b, new Vector3(-2.6f, 0f, 1.25f), 1.4f, 0.7f, 0.22f, 100f, 86);
+            return b;
+        }
 
         public static LowPolyMeshBuilder Hull()
         {
@@ -129,9 +208,26 @@ namespace MoonProject.Art.Editor
             {
                 float yaw = i * 90f;
                 Vector3 normal = Rotation(new Vector3(0f, yaw, 0f)) * Vector3.forward;
-                Vector3 centre = normal * (StageRadius * Mathf.Cos(Mathf.PI / 8f) + 0.02f) + Vector3.up * 2.05f;
-                b.Box(At(centre, new Vector3(0f, yaw, 0f)), new Vector3(0.6f, 0.36f, 0.05f), PaletteSwatch.Metal,
-                    0.015f);
+                Vector3 centre = normal * (StageApothem + 0.02f) + Vector3.up * 2.05f;
+                if (i == TornPanel)
+                {
+                    // Torn away long ago: a dark hole in the foil and the two bolts that held it.
+                    b.Box(At(centre - normal * 0.015f, new Vector3(0f, yaw, 0f)), new Vector3(0.56f, 0.32f, 0.02f),
+                        PaletteSwatch.Charcoal);
+                    for (int side = -1; side <= 1; side += 2)
+                    {
+                        Vector3 bolt = centre + Rotation(new Vector3(0f, yaw, 0f)) * new Vector3(side * 0.26f, 0.14f,
+                            0.01f);
+                        b.Icosphere(At(bolt), 0.022f, 0, PaletteSwatch.Metal);
+                    }
+
+                    continue;
+                }
+
+                // The panel by the ladder took a knock: pushed in and twisted.
+                Vector3 euler = i == DentedPanel ? new Vector3(-7f, yaw + 5f, 4f) : new Vector3(0f, yaw, 0f);
+                Vector3 seat = i == DentedPanel ? centre - normal * 0.025f : centre;
+                b.Box(At(seat, euler), new Vector3(0.6f, 0.36f, 0.05f), PaletteSwatch.Metal, 0.015f);
             }
         }
 
@@ -245,13 +341,20 @@ namespace MoonProject.Art.Editor
             b.Prism(At(0f, CabinTop + 0.68f, 0f), 0.22f, 0.08f, 8, PaletteSwatch.Charcoal);
 
             var mastBase = new Vector3(-0.6f, CabinTop + 0.3f, -0.55f);
-            Vector3 mastTop = mastBase + Vector3.up * 0.9f;
+            Vector3 mastTop = mastBase + new Vector3(0.05f, 0.9f, 0.03f);
             RecipeKit.Rod(b, mastBase, mastTop, 0.04f, 6, PaletteSwatch.Metal);
-            b.Lathe(At(mastTop + new Vector3(0f, 0.05f, 0.05f), new Vector3(70f, 25f, 0f)), DishProfile, 10,
+            b.Lathe(At(mastTop + new Vector3(0f, 0.05f, 0.05f), new Vector3(84f, 48f, 15f)), DishProfile, 10,
                 PaletteSwatch.Enamel);
 
             var whipBase = new Vector3(0.7f, CabinTop + 0.25f, -0.4f);
             RecipeKit.Rod(b, whipBase, whipBase + new Vector3(0.08f, 1.6f, -0.05f), 0.015f, 5, PaletteSwatch.Metal);
+
+            // The whip's feed snapped long ago and hangs down the back of the cabin.
+            SiteKit.Cable(b, new[]
+            {
+                whipBase + new Vector3(0.02f, 0.05f, 0f), whipBase + new Vector3(0.18f, -0.15f, -0.25f),
+                new Vector3(0.92f, CabinTop - 0.7f, -1.32f), new Vector3(0.98f, CabinTop - 1.35f, -1.4f),
+            }, 0.018f, PaletteSwatch.Charcoal);
         }
 
         /// <summary>Signs of a long, quiet life: crates by a leg, a spare wheel leaning on a footpad.</summary>
@@ -266,6 +369,11 @@ namespace MoonProject.Art.Editor
             Matrix4x4 wheel = At(new Vector3(2.6f, 0.345f, -2.05f), new Vector3(0f, 40f, -14f));
             b.Prism(wheel * Matrix4x4.Rotate(Rotation(AlongX)), 0.32f, 0.2f, 10, PaletteSwatch.Charcoal);
             b.Prism(wheel * At(new Vector3(0.11f, 0f, 0f), AlongX), 0.2f, 0.03f, 10, PaletteSwatch.Enamel);
+
+            // A power lead from the porch lamp post, slack across the dust to the front left leg.
+            Vector3 post = LampPosition(1);
+            SiteKit.Cable(b, SiteKit.Sag(new Vector3(post.x - 0.03f, 0.35f, post.z), new Vector3(-2.3f, 0.3f, 2.35f),
+                0.3f, 5), 0.016f, PaletteSwatch.Charcoal);
         }
 
         /// <summary>
@@ -307,13 +415,27 @@ namespace MoonProject.Art.Editor
                 PaletteSwatch.Metal);
         }
 
-        /// <summary>A little hand-painted "HOME" sign planted in the dust beside the ladder, a touch crooked.</summary>
+        /// <summary>
+        /// A little hand-painted "HOME" sign planted in the dust beside the ladder, leaning with the years.
+        /// </summary>
         private static void HomeSign(LowPolyMeshBuilder b)
         {
-            Matrix4x4 sign = At(new Vector3(1.25f, 0f, 3.15f), new Vector3(0f, -12f, 4f));
+            Matrix4x4 sign = HomeSignFrame;
             b.Box(sign * At(0f, 0.46f, 0f), new Vector3(0.06f, 0.9f, 0.05f), PaletteSwatch.Metal);
             b.Box(sign * At(0f, 0.95f, 0.035f), new Vector3(0.92f, 0.36f, 0.04f), PaletteSwatch.Enamel, 0.012f);
             Glyphs.Write(b, sign * At(0f, 0.95f, 0.055f), "HOME", 0.2f, PaletteSwatch.WarmAccent, PaletteSwatch.Enamel);
+        }
+
+        /// <summary>The HOME sign's lean: back and to the side, sunk a little in the dust.</summary>
+        private static Matrix4x4 HomeSignFrame => At(new Vector3(1.25f, 0f, 3.15f), new Vector3(-9f, -17f, 13f));
+
+        /// <summary>
+        /// A face frame on a vertical octagon wall facing <paramref name="yaw"/>, <paramref name="distance"/> out.
+        /// </summary>
+        private static Matrix4x4 Face(float yaw, float distance)
+        {
+            Vector3 normal = Rotation(new Vector3(0f, yaw, 0f)) * Vector3.forward;
+            return SiteKit.Face(normal * distance, normal, Vector3.up);
         }
 
         /// <summary>A faded round mission patch on the right wall: a sage field, a cream moon, a star.</summary>

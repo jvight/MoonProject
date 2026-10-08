@@ -11,7 +11,9 @@ namespace MoonProject.Art.Editor
     /// Meshes only, each pivoted at its ground-contact centre so it stands on an anchor. The lander also carries
     /// friend perches (<c>FriendSocket_&lt;id&gt;</c>: an empty on top of the perch, +Y up, +Z = the hatch side) and
     /// every tower stage carries Bell's corner and her shelf's anchor. Glowing parts (windows, shelf lights, tower
-    /// lamps) are separate renderers so gameplay can brighten the base as it comes back to life.
+    /// lamps) are separate renderers so gameplay can brighten the base as it comes back to life, and decades of
+    /// neglect sit in removable Weather_Paint / Weather_Rust / Weather_Dust children (see <see cref="Weathering"/>) so
+    /// it can be cleaned as it does.
     /// </summary>
     public static class BaseModelBuilder
     {
@@ -58,6 +60,12 @@ namespace MoonProject.Art.Editor
         /// <summary>The rack's heading: turned towards the lander, a little more towards the front than Bell.</summary>
         public const float CassetteShelfYaw = 60f;
 
+        /// <summary>How high dust has crept up the lander's legs, ladder and clutter.</summary>
+        private const float LanderDustTide = 0.45f;
+
+        /// <summary>How high dust has crept up the feet of the tower, the shelves and the bench.</summary>
+        private const float FurnitureDustTide = 0.22f;
+
         [MoonBuilder("Art/Base", 140)]
         public static void Build()
         {
@@ -76,7 +84,8 @@ namespace MoonProject.Art.Editor
 
         public static ModelNode CreateLander()
         {
-            var lander = new ModelNode(LanderName, Vector3.zero, new ModelMesh(LanderName, LanderMeshes.Hull()));
+            LowPolyMeshBuilder hull = LanderMeshes.Hull();
+            var lander = new ModelNode(LanderName, Vector3.zero, new ModelMesh(LanderName, hull));
             lander.Add(new ModelNode("Windows", Vector3.zero,
                 new ModelMesh(LanderName + "_Windows", LanderMeshes.Windows())));
             lander.Add(new ModelNode("ShelfAnchor", ShelfAnchor));
@@ -89,12 +98,17 @@ namespace MoonProject.Art.Editor
 
             lander.Add(new ModelNode("FriendSocket_tilly", LanderMeshes.TillyPerch));
             lander.Add(new ModelNode("WorkshopAnchor", WorkshopAnchor));
+            LowPolyMeshBuilder dust = Weathering.Dust(hull, LanderDustTide, Weathering.DustLift);
+            dust.Append(LanderMeshes.Drifts(), Matrix4x4.identity);
+            Weathering.Attach(lander, LanderName, Weathering.Bleach(hull, Weathering.PaintLift), LanderMeshes.Rust(),
+                dust);
             return lander;
         }
 
         public static ModelNode CreateShelf()
         {
-            var shelf = new ModelNode(ShelfName, Vector3.zero, new ModelMesh(ShelfName, MuseumShelfMeshes.Cabinet()));
+            LowPolyMeshBuilder cabinet = MuseumShelfMeshes.Cabinet();
+            var shelf = new ModelNode(ShelfName, Vector3.zero, new ModelMesh(ShelfName, cabinet));
             shelf.Add(new ModelNode("Lights", Vector3.zero,
                 new ModelMesh(ShelfName + "_Lights", MuseumShelfMeshes.Lights())));
             for (int i = 0; i < MuseumShelfMeshes.SlotCount; i++)
@@ -103,6 +117,10 @@ namespace MoonProject.Art.Editor
                     MuseumShelfMeshes.SlotPosition(i)));
             }
 
+            LowPolyMeshBuilder dust = Weathering.Dust(cabinet, FurnitureDustTide, Weathering.DustLift);
+            dust.Append(MuseumShelfMeshes.Drifts(), Matrix4x4.identity);
+            Weathering.Attach(shelf, ShelfName, Weathering.Bleach(cabinet, Weathering.PaintLift),
+                MuseumShelfMeshes.Rust(), dust);
             return shelf;
         }
 
@@ -112,11 +130,13 @@ namespace MoonProject.Art.Editor
         /// </summary>
         public static ModelNode CreateWorkbench()
         {
-            var bench = new ModelNode(WorkbenchName, Vector3.zero,
-                new ModelMesh(WorkbenchName, WorkbenchMeshes.Bench()));
+            LowPolyMeshBuilder top = WorkbenchMeshes.Bench();
+            var bench = new ModelNode(WorkbenchName, Vector3.zero, new ModelMesh(WorkbenchName, top));
             bench.Add(new ModelNode("Lights", WorkbenchMeshes.LampBulb,
                 new ModelMesh(WorkbenchName + "_Lights", WorkbenchMeshes.LampBulbMesh())));
             bench.Add(new ModelNode("SparkSocket", WorkbenchMeshes.Sparks));
+            Weathering.Attach(bench, WorkbenchName, Weathering.Bleach(top, Weathering.PaintLift),
+                WorkbenchMeshes.Rust(), Weathering.Dust(top, FurnitureDustTide, Weathering.DustLift));
             return bench;
         }
 
@@ -126,14 +146,16 @@ namespace MoonProject.Art.Editor
         /// </summary>
         public static ModelNode CreateCassetteShelf()
         {
-            var shelf = new ModelNode(CassetteShelfName, Vector3.zero,
-                new ModelMesh(CassetteShelfName, CassetteShelfMeshes.Rack()));
+            LowPolyMeshBuilder rack = CassetteShelfMeshes.Rack();
+            var shelf = new ModelNode(CassetteShelfName, Vector3.zero, new ModelMesh(CassetteShelfName, rack));
             for (int i = 0; i < CassetteShelfMeshes.SlotCount; i++)
             {
                 shelf.Add(new ModelNode("Slot_" + i.ToString(CultureInfo.InvariantCulture),
                     CassetteShelfMeshes.SlotPosition(i)));
             }
 
+            Weathering.Attach(shelf, CassetteShelfName, Weathering.Bleach(rack, Weathering.PaintLift), null,
+                Weathering.Dust(rack, FurnitureDustTide, Weathering.DustLift));
             return shelf;
         }
 
@@ -141,13 +163,19 @@ namespace MoonProject.Art.Editor
         public static ModelNode CreateTower(int level)
         {
             string name = TowerPrefix + level.ToString(CultureInfo.InvariantCulture);
-            var tower = new ModelNode(name, Vector3.zero, new ModelMesh(name, RadioTowerMeshes.Structure(level)));
+            LowPolyMeshBuilder structure = RadioTowerMeshes.Structure(level);
+            var tower = new ModelNode(name, Vector3.zero, new ModelMesh(name, structure));
             tower.Add(new ModelNode("Lights", Vector3.zero,
                 new ModelMesh(name + "_Lights", RadioTowerMeshes.Lights(level))));
             tower.Add(new ModelNode("BeaconSocket", RadioTowerMeshes.BeaconPosition(level)));
             tower.Add(new ModelNode("BellCorner", BellCorner, Place.Rotation(new Vector3(0f, BellCornerYaw, 0f))));
             tower.Add(new ModelNode("CassetteShelfAnchor", CassetteShelfAnchor,
                 Place.Rotation(new Vector3(0f, CassetteShelfYaw, 0f))));
+            LowPolyMeshBuilder dust = Weathering.Dust(RadioTowerMeshes.DustSurfaces(level), FurnitureDustTide,
+                Weathering.DustLift);
+            dust.Append(RadioTowerMeshes.Drifts(), Matrix4x4.identity);
+            Weathering.Attach(tower, name, Weathering.Bleach(structure, Weathering.PaintLift),
+                RadioTowerMeshes.Rust(level), dust);
             return tower;
         }
     }

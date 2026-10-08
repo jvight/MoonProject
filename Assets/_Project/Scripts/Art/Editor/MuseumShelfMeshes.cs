@@ -74,6 +74,41 @@ namespace MoonProject.Art.Editor
             return b;
         }
 
+        /// <summary>
+        /// The shelf's rust: streaks down the side panels from the shelf bolts, rust at the posts' feet.
+        /// </summary>
+        public static LowPolyMeshBuilder Rust()
+        {
+            var b = new LowPolyMeshBuilder(300);
+            float halfWidth = Width * 0.5f;
+            for (int side = -1; side <= 1; side += 2)
+            {
+                Vector3 normal = Vector3.right * side;
+                Matrix4x4 panel = SiteKit.Face(normal * (halfWidth + 0.06f + Weathering.RustLift), normal, Vector3.up);
+                foreach (float shelfTop in new[] { UpperShelfTop, Top })
+                {
+                    SiteKit.RustStreak(b, panel, side * 0.2f, shelfTop - PlankThickness * 0.5f, 0.35f);
+                }
+            }
+
+            for (int side = -1; side <= 1; side += 2)
+            {
+                Weathering.Collar(b, At(side * BayPitch * 0.5f, LowerShelfTop + 0.05f, Depth * 0.5f - 0.06f), 0.055f,
+                    0.08f);
+            }
+
+            return b;
+        }
+
+        /// <summary>Dust drifted against the shelf's base.</summary>
+        public static LowPolyMeshBuilder Drifts()
+        {
+            var b = new LowPolyMeshBuilder(500);
+            SiteKit.Drift(b, new Vector3(-Width * 0.3f, 0f, Depth * 0.5f + 0.15f), Width * 0.45f, 0.5f, 0.12f, 90f, 93);
+            SiteKit.Drift(b, new Vector3(Width * 0.5f + 0.2f, 0f, 0f), Depth * 1.4f, 0.45f, 0.16f, 0f, 94);
+            return b;
+        }
+
         /// <summary>Warm strips under the front edge of the upper shelf and the top, lighting the tier below.</summary>
         public static LowPolyMeshBuilder Lights()
         {

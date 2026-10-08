@@ -51,6 +51,24 @@ namespace MoonProject.Art.Editor
             return b;
         }
 
+        /// <summary>The bench's rust: collars at the leg feet and streaks down the apron from its bolts.</summary>
+        public static LowPolyMeshBuilder Rust()
+        {
+            var b = new LowPolyMeshBuilder(300);
+            float x = Width * 0.5f - LegInset;
+            float z = Depth * 0.5f - LegInset;
+            for (int i = 0; i < 4; i++)
+            {
+                Weathering.Collar(b, At(i % 2 == 0 ? -x : x, 0.1f, i < 2 ? z : -z), 0.075f, 0.12f);
+            }
+
+            Matrix4x4 apron = SiteKit.Face(new Vector3(0f, 0f, Depth * 0.5f - 0.01f + Weathering.RustLift),
+                Vector3.forward, Vector3.up);
+            SiteKit.RustStreak(b, apron, -0.9f, WorktopHeight - 0.1f, 0.2f);
+            SiteKit.RustStreak(b, apron, 0.95f, WorktopHeight - 0.1f, 0.16f);
+            return b;
+        }
+
         /// <summary>The work lamp's bulb (the Lights glow renderer); origin = bulb centre.</summary>
         public static LowPolyMeshBuilder LampBulbMesh()
         {
