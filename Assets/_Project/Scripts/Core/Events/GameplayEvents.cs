@@ -144,6 +144,24 @@ namespace MoonProject.Core.Events
         public int DisplayedCount { get; }
     }
 
+    /// <summary>
+    /// A relic settled into 07's Cargo Cradle (docs/features/M3-11): it rides home in the rear rack instead of on the
+    /// tether.
+    /// </summary>
+    public readonly struct RelicStowed
+    {
+        public RelicStowed(string relicId, Vector3 position)
+        {
+            RelicId = relicId;
+            Position = position;
+        }
+
+        public string RelicId { get; }
+
+        /// <summary>Where it rests in the rack (the cargo seat).</summary>
+        public Vector3 Position { get; }
+    }
+
     /// <summary>An upgrade (rover or base) was bought.</summary>
     public readonly struct UpgradePurchased
     {

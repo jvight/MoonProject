@@ -46,6 +46,10 @@ namespace MoonProject.Gameplay.Editor
             var relicCatalog = context.LoadAsset<RelicCatalog>(GameplayAssetPaths.RelicCatalog);
             var radioTower = context.LoadAsset<UpgradeDefinition>(GameplayAssetPaths.RadioTowerUpgrade);
             var hoverJump = context.LoadAsset<UpgradeDefinition>(GameplayAssetPaths.HoverJumpUpgrade);
+            var cargoCradle = context.LoadAsset<UpgradeDefinition>(GameplayAssetPaths.CargoCradleUpgrade);
+            var warmHeadlamp = context.LoadAsset<UpgradeDefinition>(GameplayAssetPaths.WarmHeadlampUpgrade);
+            var boostCoils = context.LoadAsset<UpgradeDefinition>(GameplayAssetPaths.BoostCoilsUpgrade);
+            UpgradeDefinition[] benchKit = { hoverJump, cargoCradle, warmHeadlamp, boostCoils };
             var friendTuning = context.LoadAsset<FriendTuning>(GameplayAssetPaths.FriendTuning);
             var friendCatalog = context.LoadAsset<FriendCatalog>(GameplayAssetPaths.FriendCatalog);
             var cassetteTuning = context.LoadAsset<CassetteTuning>(GameplayAssetPaths.CassetteTuning);
@@ -66,7 +70,10 @@ namespace MoonProject.Gameplay.Editor
             Require(salvageCatalog.Validate(), nameof(SalvageCatalog));
             Require(relicCatalog.Validate(), nameof(RelicCatalog));
             Require(radioTower.Validate(), nameof(UpgradeDefinition));
-            Require(hoverJump.Validate(), nameof(UpgradeDefinition));
+            foreach (UpgradeDefinition kit in benchKit)
+            {
+                Require(kit.Validate(), nameof(UpgradeDefinition));
+            }
             Require(friendCatalog.Validate(), nameof(FriendCatalog));
             Require(cassetteCatalog.Validate(), nameof(CassetteCatalog));
             Require(logCacheCatalog.Validate(), nameof(LogCacheCatalog));
@@ -80,6 +87,7 @@ namespace MoonProject.Gameplay.Editor
             var excavation = Part<ExcavationSystem>(context, host, "Excavation");
             var tether = Part<TetherSystem>(context, host, "Tether");
             var home = Part<HomeBase>(context, host, "Home");
+            var cradle = Part<CargoCradle>(context, host, "CargoCradle");
             var tower = Part<RadioTower>(context, host, "RadioTower");
             var workshop = Part<Workshop>(context, host, "Workshop");
             var friends = Part<FriendField>(context, host, "Friends");
@@ -128,7 +136,7 @@ namespace MoonProject.Gameplay.Editor
             home.Wire(baseTuning, baseRoot.transform, Renderer(Child(lander, "Windows")),
                 Children(lander, "LampSocket_", LampSockets), shelf, Glow(shelf), Children(shelf, "Slot_", ShelfSlots));
             tower.Wire(towerTuning, radioTower, towerAnchor, stages, stageLights, beacons);
-            workshop.Wire(workshopTuning, new[] { hoverJump }, workshopAnchor, Glow(workbench),
+            workshop.Wire(workshopTuning, benchKit, workshopAnchor, Glow(workbench),
                 Child(workbench, "SparkSocket"));
             var homes = new Transform[friendCatalog.Friends.Count];
             for (int i = 0; i < homes.Length; i++)
@@ -140,8 +148,9 @@ namespace MoonProject.Gameplay.Editor
             cassettes.Wire(cassetteCatalog, cassetteTuning);
             logs.Wire(logCacheCatalog, logCacheTuning);
             relays.Wire(relayTuning, relayMast, relayMastBroken, relayPart);
-            gameplay.Wire(visuals, glintTuning, new[] { radioTower, hoverJump }, salvage, relics, sonar, excavation,
-                tether, home, tower, workshop, friends, cassettes, logs, signals, tapeRack, relays);
+            gameplay.Wire(visuals, glintTuning,
+                new[] { radioTower, hoverJump, cargoCradle, warmHeadlamp, boostCoils }, salvage, relics, sonar,
+                excavation, tether, home, cradle, tower, workshop, friends, cassettes, logs, signals, tapeRack, relays);
             context.AddSystem(gameplay);
         }
 

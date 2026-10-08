@@ -29,6 +29,7 @@ namespace MoonProject.Gameplay
         private float _dismissTime = float.PositiveInfinity;
         private readonly float _scale;
         private float _brightness;
+        private float _lingered;
         private bool _hasPosition;
 
         /// <param name="scale">Brightness scale of every glow of this marker (warm markers read brighter).</param>
@@ -86,6 +87,26 @@ namespace MoonProject.Gameplay
             _answerTime = now;
             _dismissTime = float.PositiveInfinity;
             _brightness = brightness;
+            _lingered = 0f;
+        }
+
+        /// <summary>
+        /// Keeps a standing pillar (past its rise) up <paramref name="seconds"/> longer, at most <paramref name="cap"/>
+        /// seconds in all for this answer: 07's Warm Headlamp on it.
+        /// </summary>
+        public void Linger(float seconds, float cap, float now)
+        {
+            if (!PillarStanding(now) || now - _answerTime < _tuning.PillarRise)
+            {
+                return;
+            }
+
+            float extra = Mathf.Min(seconds, cap - _lingered);
+            if (extra > 0f)
+            {
+                _answerTime += extra;
+                _lingered += extra;
+            }
         }
 
         /// <summary>

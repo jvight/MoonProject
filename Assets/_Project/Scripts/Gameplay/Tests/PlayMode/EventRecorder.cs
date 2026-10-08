@@ -31,6 +31,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Listen(events, RelicSurfaced);
             Listen(events, TetherAttached);
             Listen(events, TetherReleased);
+            Listen(events, RelicStowed);
             Listen(events, RelicDeposited);
             Listen(events, UpgradePurchased);
             Listen(events, SignalRadiusChanged);
@@ -74,6 +75,8 @@ namespace MoonProject.Gameplay.PlayModeTests
         public List<Timed<RelicSurfaced>> RelicSurfaced { get; } = new List<Timed<RelicSurfaced>>();
         public List<Timed<TetherAttached>> TetherAttached { get; } = new List<Timed<TetherAttached>>();
         public List<Timed<TetherReleased>> TetherReleased { get; } = new List<Timed<TetherReleased>>();
+        public List<Timed<RelicStowed>> RelicStowed { get; } = new List<Timed<RelicStowed>>();
+
         public List<Timed<RelicDeposited>> RelicDeposited { get; } = new List<Timed<RelicDeposited>>();
         public List<Timed<UpgradePurchased>> UpgradePurchased { get; } = new List<Timed<UpgradePurchased>>();
 

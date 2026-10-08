@@ -48,6 +48,24 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
+        public void ExtraTopSpeed_SettlesAtTheBoostedCruise_ThenCoastsBackSoftly()
+        {
+            const float extra = 1.6f;
+            float speed = _drive.TopSpeed;
+            for (float t = 0f; t < 10f; t += Step)
+            {
+                speed += LongitudinalDrive.Acceleration(_drive, speed, 1f, extra, Step) * Step;
+            }
+
+            Assert.That(speed, Is.InRange(_drive.TopSpeed + 0.98f * extra, _drive.TopSpeed + extra));
+            float decel = -LongitudinalDrive.Acceleration(_drive, speed, 1f, 0f, Step);
+            Assert.Greater(decel, 0f, "Without the boost it slows back to the normal cruise...");
+            Assert.Less(decel, LongitudinalDrive.Acceleration(_drive, 0f, 1f, Step), "...gently, no brake.");
+            Assert.AreEqual(LongitudinalDrive.Acceleration(_drive, 3f, -1f, Step),
+                LongitudinalDrive.Acceleration(_drive, 3f, -1f, extra, Step), "The boost never touches braking.");
+        }
+
+        [Test]
         public void FullThrottle_EasesOutAndNeverExceedsTopSpeed()
         {
             float speed = 0f;

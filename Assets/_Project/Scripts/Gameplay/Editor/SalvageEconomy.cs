@@ -14,10 +14,19 @@ namespace MoonProject.Gameplay.Editor
         /// <summary>Hover-Jump: its coils (metal and wiring) and its charge lamp (optics).</summary>
         public static Recipe HoverJump => new Recipe(4, 2, 1);
 
+        /// <summary>The Cargo Cradle (M3-11): a strapped rack basket, almost all metal.</summary>
+        public static Recipe CargoCradle => new Recipe(4, 0, 0);
+
+        /// <summary>The Warm Headlamp (M3-11): a caged lamp bar, lenses and lamps on a metal cage.</summary>
+        public static Recipe WarmHeadlamp => new Recipe(1, 0, 3);
+
+        /// <summary>The Boost Coils (M3-11): wound coils in two capacitor drums with a glow window.</summary>
+        public static Recipe BoostCoils => new Recipe(1, 2, 1);
+
         /// <summary>The radio tower's three levels: wiring and optics, a little more each time.</summary>
         public static IReadOnlyList<Recipe> RadioTower { get; } = new[]
         {
-            new Recipe(0, 1, 1), new Recipe(0, 2, 1), new Recipe(0, 2, 2),
+            new Recipe(0, 1, 1), new Recipe(0, 1, 2), new Recipe(0, 2, 2),
         };
 
         /// <summary>The salvage sites in catalog order (Art's Site_&lt;name&gt; on site.&lt;name&gt;).</summary>

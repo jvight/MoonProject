@@ -185,10 +185,11 @@ namespace MoonProject.Gameplay
             MakeLoose(velocity, angularVelocity);
         }
 
-        /// <summary>Takes a relic out of physics to be carried along a scripted path (shelf, return).</summary>
+        /// <summary>Takes a relic out of physics to carry it on a scripted path (shelf, return, cradle).</summary>
         internal void BeginCarry(RelicState carryState, int slot)
         {
-            if (carryState != RelicState.Depositing && carryState != RelicState.Returning)
+            if (carryState != RelicState.Depositing && carryState != RelicState.Returning &&
+                carryState != RelicState.Cradled)
             {
                 throw new ArgumentOutOfRangeException(nameof(carryState), carryState, "Not a carried state.");
             }
@@ -231,7 +232,10 @@ namespace MoonProject.Gameplay
             };
         }
 
-        /// <summary>Applies saved state. Carried relics come back where they were heading (see RelicField).</summary>
+        /// <summary>
+        /// Applies saved state. Carried relics come back where they were heading (see RelicField); a relic saved in the
+        /// Cargo Cradle comes back in it (the cradle takes it up again).
+        /// </summary>
         internal void Restore(RelicState state, float progress, bool discovered, Vector3 position,
             Quaternion rotation, int slot)
         {
@@ -251,6 +255,10 @@ namespace MoonProject.Gameplay
                 case RelicState.Displayed:
                     Place(position, rotation);
                     SetDisplayed(slot);
+                    break;
+                case RelicState.Cradled:
+                    Place(position, rotation);
+                    BeginCarry(RelicState.Cradled, -1);
                     break;
                 default:
                     Place(position, rotation);
@@ -302,6 +310,7 @@ namespace MoonProject.Gameplay
                 Collider.enabled = true;
                 Body.isKinematic = false;
                 Body.useGravity = true;
+                Body.interpolation = RigidbodyInterpolation.Interpolate;
                 Body.WakeUp();
             }
             else
@@ -314,6 +323,10 @@ namespace MoonProject.Gameplay
 
                 Body.isKinematic = true;
                 Body.useGravity = false;
+
+                // A carried relic sits exactly where it is put (the cradle's seat moves every frame): physics must not
+                // interpolate it back toward its last step.
+                Body.interpolation = RigidbodyInterpolation.None;
                 Collider.enabled = false;
             }
         }
@@ -328,6 +341,7 @@ namespace MoonProject.Gameplay
             float deltaTime = Time.deltaTime;
             float stateGlow = State == RelicState.Surfacing ? _tuning.SurfacingGlow
                 : State == RelicState.Displayed || State == RelicState.Depositing ? _tuning.DisplayGlow
+                : State == RelicState.Cradled ? _tuning.CradleGlow
                 : 0f;
             _halo = Damp.Toward(_halo, Mathf.Max(stateGlow, _aimHighlight), _tuning.HaloEase, deltaTime);
             for (int i = 0; i < _halos.Count; i++)

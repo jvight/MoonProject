@@ -14,8 +14,9 @@ namespace MoonProject.Rover
     /// with Decollider and Deoccluder keeping it out of the terrain), widens the FOV with speed and dips softly on
     /// landings. Reads the rover only through <see cref="IRoverState"/>, so it must initialise after the rover.
     /// Slow, skippable camera moments frame 07 with the beam while digging, a surfacing relic, a relay mast's lamp as
-    /// it lights, or the base after an upgrade (needs <see cref="IWorldLayout"/>). When 07 has rested a while
-    /// (<see cref="IRoverStillness"/>) with nothing going on, the camera drifts out to the lonely
+    /// it lights, the base after an upgrade (needs <see cref="IWorldLayout"/>), or 07 itself from low and round the
+    /// side as a new kit piece or a friend's gift settles onto it (<see cref="RoverKitInstalling"/>). When 07 has
+    /// rested a while (<see cref="IRoverStillness"/>) with nothing going on, the camera drifts out to the lonely
     /// <see cref="WideShot"/>, composed against the analytic terrain (<see cref="ITerrainQuery"/>), and publishes
     /// <see cref="RoverWideShotChanged"/> as it opens and hands back. Camera moments, a leap, the tether, the radio-hop
     /// list and interactions take precedence over it. When 07 is placed somewhere else (<see cref="RoverPlaced"/>)
@@ -135,6 +136,7 @@ namespace MoonProject.Rover
                 context.Events.Subscribe<BellCued>(OnBellCued),
                 context.Events.Subscribe<RadioHopListChanged>(OnHopListChanged),
                 context.Events.Subscribe<RoverPlaced>(OnPlaced),
+                context.Events.Subscribe<RoverKitInstalling>(OnKitInstalling),
             };
             context.Register<IViewCamera>(this);
             context.Register<ILookSettings>(this);
@@ -532,9 +534,31 @@ namespace MoonProject.Rover
             }
         }
 
+        /// <summary>
+        /// A base upgrade (the radio tower) takes in the base; kit for 07 itself has its own install moment
+        /// (<see cref="OnKitInstalling"/>).
+        /// </summary>
         private void OnUpgradePurchased(UpgradePurchased upgrade)
         {
+            if (RoverKitPieces.IsRoverUpgrade(upgrade.UpgradeId))
+            {
+                return;
+            }
+
             _moment.Start(_tuning.UpgradeMoment, _world.BasePosition + Vector3.up * _tuning.TargetHeight, false);
+        }
+
+        /// <summary>
+        /// The install moment: the camera eases low and round to the side the new piece faces (Kit views), holds
+        /// while it settles and 07 strikes its pose, then returns; a friend's gift gets a softer, shorter version.
+        /// </summary>
+        private void OnKitInstalling(RoverKitInstalling installing)
+        {
+            KitViewSettings views = _tuning.KitViews;
+            float bearing = RoverYaw() + views.Bearing(installing.Piece);
+            Vector3 toward = Quaternion.Euler(0f, bearing, 0f) * Vector3.forward;
+            Vector3 subject = _rover.Position + toward * views.SubjectDistance;
+            _moment.Start(installing.Gift ? _tuning.GiftMoment : _tuning.InstallMoment, subject, false);
         }
 
         private void OnLanded(RoverLanded landed)

@@ -134,6 +134,9 @@ namespace MoonProject.Rover
         [Tooltip("Coils under the belly: pop-in when bought, squash and glow while charging, spring-out on the leap.")]
         [SerializeField] private HoverCoilSettings _hoverCoils = new HoverCoilSettings();
 
+        [Header("Visible kit and gifts")]
+        [SerializeField] private KitSettings _kit = new KitSettings();
+
         [Header("Antenna")]
         [Tooltip("Spring frequency (Hz) of the antenna wobble.")]
         [Range(0.2f, 10f)]
@@ -228,6 +231,8 @@ namespace MoonProject.Rover
         public float CrouchLean => _crouchLean;
 
         public HoverCoilSettings HoverCoils => _hoverCoils;
+
+        public KitSettings Kit => _kit;
 
         public float AntennaFrequency => _antennaFrequency;
 

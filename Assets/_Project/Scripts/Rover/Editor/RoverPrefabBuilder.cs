@@ -11,12 +11,17 @@ namespace MoonProject.Rover.Editor
     /// <code>
     /// Rover            RoverController, RoverBodyLanguage (both IGameSystems)
     ///   PhysicsSphere  Rigidbody + SphereCollider (layer Rover, frictionless)
-    ///   Visual         RoverVisualRig, RoverHoverCoils
+    ///   Visual         RoverVisualRig, RoverHoverCoils, RoverKit
     ///     Chassis      jelly lean / bob
     ///       RoverModel (nested prefab; adds Headlamp spot under HeadlampSocket and EyeGlow point under Eye)
     ///         HeadlampSocket
     ///           Headlamp
     ///             LampMotes  RoverLampMotes: world-space dust motes in a cone along the beam
+    ///           Kit_LampBar (nested prefab, inactive until 07 owns the Warm Headlamp)
+    ///         DrumSocket_L, DrumSocket_R
+    ///           Kit_CapacitorDrum (nested prefab twice, inactive until 07 owns the Boost Coils)
+    ///         CargoSocket
+    ///           Kit_CargoRack (nested prefab, inactive until 07 owns the Cargo Cradle)
     ///         CoilSocket
     ///           HoverCoils (nested prefab, inactive until 07 owns the Hover-Jump)
     ///           CoilGlow   soft cyan point light, off until the jump charges
@@ -55,6 +60,9 @@ namespace MoonProject.Rover.Editor
         {
             var model = BuildWiring.Require<GameObject>(RoverAssetPaths.RoverModel, "the Art box's rover builder");
             var coils = BuildWiring.Require<GameObject>(RoverAssetPaths.HoverCoils, "the Art box's rover builder");
+            var lampBar = BuildWiring.Require<GameObject>(RoverAssetPaths.KitLampBar, "the Art box's kit builder");
+            var drum = BuildWiring.Require<GameObject>(RoverAssetPaths.KitCapacitorDrum, "the Art box's kit builder");
+            var rack = BuildWiring.Require<GameObject>(RoverAssetPaths.KitCargoRack, "the Art box's kit builder");
             var tuning = BuildWiring.Require<RoverTuning>(RoverAssetPaths.RoverTuning, "Rover/Tuning");
             var rigTuning = BuildWiring.Require<RoverRigTuning>(RoverAssetPaths.RigTuning, "Rover/Tuning");
             var fxTuning = BuildWiring.Require<RoverFxTuning>(RoverAssetPaths.FxTuning, "Rover/Tuning");
@@ -104,11 +112,11 @@ namespace MoonProject.Rover.Editor
                     ("_chassis", chassis.transform),
                     ("_bogieLeft", BuildWiring.Node(m, RoverModelNodes.BogieLeft)),
                     ("_bogieRight", BuildWiring.Node(m, RoverModelNodes.BogieRight)),
-                    ("_antenna", BuildWiring.Node(m, RoverModelNodes.Antenna)),
-                    ("_headlamp", headlamp));
+                    ("_antenna", BuildWiring.Node(m, RoverModelNodes.Antenna)));
                 BuildWiring.AssignArray(rig, "_wheels", wheels);
                 Transform coilSocket = BuildWiring.Node(m, RoverModelNodes.CoilSocket);
                 RoverHoverCoils hoverCoils = BuildHoverCoils(scratch, visual, coilSocket, coils, rigTuning);
+                RoverKit kit = BuildKit(scratch, visual, m, headlamp, rigTuning, lampBar, drum, rack);
 
                 RoverWheelFx wheelFx = BuildWheelFx(scratch, root.transform, m, fxTuning, trackMaterial, dustMaterial);
                 RoverLampMotes lampMotes = BuildLampMotes(scratch, headlamp, fxTuning, moteMaterial);
@@ -121,6 +129,7 @@ namespace MoonProject.Rover.Editor
                     ("_wheelFx", wheelFx),
                     ("_hoverCoils", hoverCoils),
                     ("_lampMotes", lampMotes),
+                    ("_kit", kit),
                     ("_tetherOrigin", BuildWiring.Node(m, RoverModelNodes.TetherOrigin)),
                     ("_cargoSocket", BuildWiring.Node(m, RoverModelNodes.CargoSocket)));
 
@@ -220,6 +229,54 @@ namespace MoonProject.Rover.Editor
                 ("_dustRight", Dust(scratch, "DustRight", host.transform, dustMaterial)),
                 ("_landingDust", LandingRing(scratch, host.transform, dustMaterial)));
             return wheelFx;
+        }
+
+        /// <summary>
+        /// 07's visible kit (art's pieces on their sockets with identity, hidden until owned) and the friends' gift
+        /// nodes already in RoverModel, wired to <see cref="RoverKit"/> with the road light it now owns.
+        /// </summary>
+        private static RoverKit BuildKit(BuilderScratchScene scratch, GameObject host, Transform model, Light headlamp,
+            RoverRigTuning tuning, GameObject lampBarPrefab, GameObject drumPrefab, GameObject rackPrefab)
+        {
+            Transform lampBar = Mount(scratch, lampBarPrefab, BuildWiring.Node(model, RoverModelNodes.HeadlampSocket));
+            var lamps = new Object[RoverModelNodes.KitLampCount];
+            for (int i = 0; i < lamps.Length; i++)
+            {
+                lamps[i] = BuildWiring.NodeComponent<MeshRenderer>(lampBar, RoverModelNodes.KitLamp(i));
+            }
+
+            Transform drumLeft = Mount(scratch, drumPrefab, BuildWiring.Node(model, RoverModelNodes.DrumSocketLeft));
+            Transform drumRight = Mount(scratch, drumPrefab, BuildWiring.Node(model, RoverModelNodes.DrumSocketRight));
+            Transform rack = Mount(scratch, rackPrefab, BuildWiring.Node(model, RoverModelNodes.CargoSocket));
+
+            var kit = host.AddComponent<RoverKit>();
+            BuildWiring.Assign(kit,
+                ("_tuning", tuning),
+                ("_headlamp", headlamp),
+                ("_lampBar", lampBar),
+                ("_cargoRack", rack),
+                ("_relicSeat", BuildWiring.Node(rack, RoverModelNodes.RelicSeat)),
+                ("_solarCell", BuildWiring.Node(model, RoverModelNodes.CellFilled)),
+                ("_freshSerial", BuildWiring.Node(model, RoverModelNodes.Decal07Fresh)),
+                ("_pennant", BuildWiring.Node(model, RoverModelNodes.Pennant)));
+            BuildWiring.AssignArray(kit, "_lamps", lamps);
+            BuildWiring.AssignArray(kit, "_drums", new Object[] { drumLeft, drumRight });
+            BuildWiring.AssignArray(kit, "_drumGlows", new Object[]
+            {
+                BuildWiring.NodeComponent<MeshRenderer>(drumLeft, RoverModelNodes.DrumGlow),
+                BuildWiring.NodeComponent<MeshRenderer>(drumRight, RoverModelNodes.DrumGlow),
+            });
+            return kit;
+        }
+
+        /// <summary>A kit prefab on <paramref name="socket"/> with identity, hidden until 07 owns it.</summary>
+        private static Transform Mount(BuilderScratchScene scratch, GameObject prefab, Transform socket)
+        {
+            Transform mount = scratch.Instantiate(prefab, socket).transform;
+            mount.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+            mount.localScale = Vector3.one;
+            mount.gameObject.SetActive(false);
+            return mount;
         }
 
         /// <summary>

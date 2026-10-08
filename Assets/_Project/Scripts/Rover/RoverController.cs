@@ -10,8 +10,10 @@ namespace MoonProject.Rover
     /// the visual model following the interpolated sphere. Registers itself as <see cref="IRoverState"/> and
     /// <see cref="IRoverRig"/> (interaction points and gaze requests for gameplay), <see cref="IRoverStillness"/>
     /// (how long 07 has rested, stepped every rendered frame) and <see cref="IRoverPlacement"/> (set 07 down elsewhere
-    /// in one step, publishing <see cref="RoverPlaced"/>), publishes <see cref="RoverLanded"/>, and ticks its visual
-    /// rig, wheel effects and lamp motes in a fixed order every frame.
+    /// in one step, publishing <see cref="RoverPlaced"/>) and <see cref="IRoverCargoSeat"/> (its kit's rack, see
+    /// <see cref="RoverKit"/>), publishes <see cref="RoverLanded"/> and <see cref="RoverBoostChanged"/>, and ticks its
+    /// visual rig, kit, wheel effects and lamp motes in a fixed order every frame. The Boost Coils raise the top speed
+    /// gently while held at cruise on open, flat-ish ground (<see cref="BoostDrive"/>).
     /// Needs the World's <see cref="ITerrainQuery"/> (spawn height, stuck recovery), so it initialises after the World
     /// systems. If 07 is trying to drive but stuck for a few seconds, it is lifted gently to a nearby open spot.
     /// The maths lives in plain classes (<see cref="LongitudinalDrive"/>, <see cref="SteeringModel"/>,
@@ -42,6 +44,9 @@ namespace MoonProject.Rover
         [Tooltip("Dust motes hanging in the headlamp's beam.")]
         [SerializeField] private RoverLampMotes _lampMotes;
 
+        [Tooltip("07's visible kit and friends' gifts, its road light and the cargo seat.")]
+        [SerializeField] private RoverKit _kit;
+
         [Tooltip("The Hover-Jump coils under the belly (shown only while 07 owns the ability).")]
         [SerializeField] private RoverHoverCoils _hoverCoils;
 
@@ -59,6 +64,7 @@ namespace MoonProject.Rover
         private StuckDetector _stuck;
         private HoverJump _jump;
         private RoverStillness _stillness;
+        private BoostDrive _boost;
         private int _abilities;
         private bool _jumpHeld;
         private bool _leaping;
@@ -174,6 +180,15 @@ namespace MoonProject.Rover
         /// <summary>True while any owner asks 07 to stay parked.</summary>
         public bool IsHeldStill => _holds.IsHeld;
 
+        /// <summary>07's visible kit and friends' gifts.</summary>
+        public RoverKit Kit => _kit;
+
+        /// <summary>How much of the Boost Coils' extra cruise is in, 0..1 (eased; the drums glow with it).</summary>
+        public float BoostLevel => _boost.Level;
+
+        /// <summary>True while the Boost Coils are engaged.</summary>
+        public bool IsBoosting => _boost.Engaged;
+
         // IRoverAbilities
         public bool Has(RoverAbility ability)
         {
@@ -210,6 +225,7 @@ namespace MoonProject.Rover
             _stuck = new StuckDetector(_tuning.Recovery);
             _jump = new HoverJump(_tuning.HoverJump);
             _stillness = new RoverStillness(_tuning.Stillness);
+            _boost = new BoostDrive(_tuning.Boost);
             _terrain = context.Get<ITerrainQuery>();
             PlaceOnTerrain(_terrain);
             ConfigureBody();
@@ -221,12 +237,14 @@ namespace MoonProject.Rover
             context.Register<IRoverAbilities>(this);
             context.Register<IRoverStillness>(_stillness);
             context.Register<IRoverPlacement>(this);
+            context.Register<IRoverCargoSeat>(_kit);
 
             bool visualsReady = _visualRig.Initialize(this);
+            bool kitReady = _kit.Initialize(context, this);
             bool effectsReady = _wheelFx.Initialize(context, this);
             bool coilsReady = _hoverCoils.Initialize(context, this, _visualRig);
             bool motesReady = _lampMotes.Initialize(this);
-            _initialized = visualsReady && effectsReady && coilsReady && motesReady;
+            _initialized = visualsReady && kitReady && effectsReady && coilsReady && motesReady;
             enabled = _initialized;
         }
 
@@ -247,6 +265,7 @@ namespace MoonProject.Rover
             ok &= Require(_sphere != null, "Physics sphere SphereCollider is not assigned.");
             ok &= Require(_visualRig != null, "RoverVisualRig is not assigned.");
             ok &= Require(_wheelFx != null, "RoverWheelFx is not assigned.");
+            ok &= Require(_kit != null, "RoverKit is not assigned.");
             ok &= Require(_hoverCoils != null, "RoverHoverCoils is not assigned.");
             ok &= Require(_lampMotes != null, "RoverLampMotes is not assigned.");
             ok &= Require(_tetherOrigin != null && _cargoSocket != null, "TetherOrigin/CargoSocket are not assigned.");
@@ -347,6 +366,7 @@ namespace MoonProject.Rover
             }
 
             StepHoverJump(velocity, dt);
+            StepBoost(dt);
 
             Vector3 normal = _hasContact ? _contactNormal : Vector3.up;
             Vector3 forward = Vector3.ProjectOnPlane(yaw * Vector3.forward, normal).normalized;
@@ -546,6 +566,23 @@ namespace MoonProject.Rover
             }
         }
 
+        /// <summary>
+        /// The Boost Coils (M3-11): engaged while 07 owns them and cruises on open, flat-ish ground with Drive held,
+        /// free of holds, leaps and lifts; the extra top speed eases in and out and <see cref="RoverBoostChanged"/>
+        /// marks each change.
+        /// </summary>
+        private void StepBoost(float dt)
+        {
+            bool free = _hasContact && _landing.IsGrounded && !_holds.IsHeld && !_leaping && _liftoff <= 0f;
+            float slope = Vector3.Angle(_contactNormal, Vector3.up);
+            var sample = new BoostSample(Has(RoverAbility.BoostCoils), _throttle, _steer, _forwardSpeed,
+                _tuning.Drive.TopSpeed, slope, free);
+            if (_boost.Step(sample, dt))
+            {
+                _events.Publish(new RoverBoostChanged(_boost.Engaged));
+            }
+        }
+
         /// <summary>Eases toward a held input with one half-life and back toward zero with another.</summary>
         private static float Ease(float current, float target, float riseHalfLife, float fallHalfLife, float dt)
         {
@@ -589,7 +626,7 @@ namespace MoonProject.Rover
             GroundSettings ground = _tuning.Ground;
             float drive = _holds.IsHeld
                 ? LongitudinalDrive.HoldAcceleration(_tuning.Drive, _forwardSpeed, dt)
-                : LongitudinalDrive.Acceleration(_tuning.Drive, _forwardSpeed, _throttle, dt);
+                : LongitudinalDrive.Acceleration(_tuning.Drive, _forwardSpeed, _throttle, _boost.ExtraSpeed, dt);
 
             if (_hasContact)
             {
@@ -649,6 +686,7 @@ namespace MoonProject.Rover
             float deltaTime = Time.deltaTime;
             _stillness.Step(SampleStillness(), deltaTime);
             _visualRig.Tick(deltaTime);
+            _kit.Tick(deltaTime);
             _wheelFx.Tick();
             _hoverCoils.Tick(deltaTime);
             _lampMotes.Tick(deltaTime);

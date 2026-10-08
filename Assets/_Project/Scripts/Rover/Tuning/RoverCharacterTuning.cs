@@ -188,6 +188,11 @@ namespace MoonProject.Rover
         [Range(0f, 1f)]
         [SerializeField] private float _wingIdleOpen = 0.16f;
 
+        [Tooltip("How far (0..1) the wing settles open while daydreaming once Tilly has replaced its missing cell: "
+            + "wider, proud of its mended panel.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _wingIdleOpenMended = 0.45f;
+
         [Tooltip("Spring frequency (Hz) of the wing. Slow: a sigh, not a flap.")]
         [Range(0.05f, 3f)]
         [SerializeField] private float _wingFrequency = 0.3f;
@@ -309,6 +314,14 @@ namespace MoonProject.Rover
         [Tooltip("How far (deg) the head lifts while looking around, scanning the horizon.")]
         [Range(0f, 30f)]
         [SerializeField] private float _lookAroundLift = 6f;
+
+        [Tooltip("Perk-up strength of 07's proud pose as a new kit piece settles onto it.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _kitProudPerk = 0.95f;
+
+        [Tooltip("Perk-up strength as a friend's gift appears on 07 (softer than new kit).")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _giftPerk = 0.55f;
 
         [Tooltip("Perk-up strength as 07 lands from a radio-hop and looks around.")]
         [Range(0f, 1f)]
@@ -547,6 +560,12 @@ namespace MoonProject.Rover
         public float LookAroundLift => _lookAroundLift;
 
         public float HopArrivalPerk => _hopArrivalPerk;
+
+        public float KitProudPerk => _kitProudPerk;
+
+        public float GiftPerk => _giftPerk;
+
+        public float WingIdleOpenMended => _wingIdleOpenMended;
 
         public float RecoveryPerk => _recoveryPerk;
 

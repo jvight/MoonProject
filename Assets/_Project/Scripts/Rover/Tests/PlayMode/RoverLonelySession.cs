@@ -29,9 +29,12 @@ namespace MoonProject.Rover.PlayModeTests
     /// sees them, and up close; base and canyon) to Logs/rover-captures/*.png, with lonely.md recording each frame's
     /// distance to 07, 07's place on screen and the horizon. A second session stages the restoration moment (M3-06) at
     /// relay.0: a restored mast stood on the anchor, 07 parked on its pad, RelayRestored published with the lamp
-    /// warming, and five frames from before to after the camera's look up (relay.md). Game time advances a fixed
-    /// 1/60 s per frame, so slow captures never skip game time. 07 is moved between places through
-    /// <see cref="IRoverPlacement"/>, held parked meanwhile. Slow and needs a GPU: run on demand with
+    /// warming, and five frames from before to after the camera's look up (relay.md). A third shows visible
+    /// progression (M3-11, kit.md): 07 at minute one from the chase camera and at 30 m, each kit piece fitted at
+    /// Kenji's bench (a staged purchase, three frames of the moment), a relic riding in the rack, then the scene
+    /// reloaded from a save with Tilly and Bell home and every piece owned: 07 fully kitted from the same two views.
+    /// Game time advances a fixed 1/60 s per frame, so slow captures never skip game time. 07 is moved between places
+    /// through <see cref="IRoverPlacement"/>, held parked meanwhile. Slow and needs a GPU: run on demand with
     /// --category RoverLonelySession.
     /// </summary>
     [Explicit("Slow real-game capture session; run on demand with --category RoverLonelySession.")]
@@ -97,6 +100,53 @@ namespace MoonProject.Rover.PlayModeTests
         };
 
         private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
+
+        /// <summary>The bench's shop pad: 3.2 m in front of the lander's WorkshopAnchor (art contract).</summary>
+        private const string WorkshopAnchorName = "WorkshopAnchor";
+        private const float ShopPadAhead = 3.2f;
+
+        /// <summary>Seconds after a staged purchase at which the moment's three frames are taken.</summary>
+        private static readonly float[] FitFrames = { 0.7f, 1.25f, 2.3f };
+
+        private const float FitMomentSeconds = 5f;
+
+        /// <summary>The 30 m review view: behind and to the right of 07, a little above.</summary>
+        private const float FarDistance = 30f;
+        private const float FarBearing = 145f;
+        private const float FarElevation = 10f;
+
+        /// <summary>The relic close-up: above and behind the rack.</summary>
+        private const float RackViewBack = 3.2f;
+        private const float RackViewRise = 2.4f;
+        private const float RackViewSide = 1.4f;
+        private const float RackFov = 45f;
+        private const string RidingRelicPath = "Assets/_Project/Generated/Art/Relics/Relic_teapot.prefab";
+        private const float RideThrottle = 0.4f;
+        private const float RideSeconds = 2.5f;
+
+        // The save seeded for the fully kitted reload: Tilly and Bell repaired and home (FriendState.Awake = 3), in
+        // the envelope and section format of Core's SaveService and Gameplay's friends section (version 2).
+        private const string FriendsHomeSave =
+            "{\"formatVersion\":1,\"savedAtUtc\":\"2026-10-08T00:00:00Z\"," +
+            "\"sections\":[{\"key\":\"gameplay.friends\"," +
+            "\"version\":2,\"json\":\"{\\\"friends\\\":[" +
+            "{\\\"id\\\":\\\"tilly\\\",\\\"state\\\":3,\\\"parts\\\":15,\\\"items\\\":15," +
+            "\\\"discovered\\\":true,\\\"welcomed\\\":true}," +
+            "{\\\"id\\\":\\\"bell\\\",\\\"state\\\":3,\\\"parts\\\":15,\\\"items\\\":15," +
+            "\\\"discovered\\\":true,\\\"welcomed\\\":true}]}\"}]}";
+
+        /// <summary>The kit pieces in buying order, with the ability and upgrade id that bring each.</summary>
+        private static readonly RoverAbility[] KitAbilities =
+        {
+            RoverAbility.HoverJump, RoverAbility.WarmHeadlamp, RoverAbility.BoostCoils, RoverAbility.CargoCradle,
+        };
+
+        private static readonly string[] KitUpgrades =
+        {
+            "rover.hover_jump", "rover.warm_headlamp", "rover.boost_coils", "rover.cargo_cradle",
+        };
+
+        private static readonly string[] KitNames = { "coils", "lampbar", "drums", "rack" };
 
         private const float HorizonReach = 1000f;
 
@@ -245,6 +295,147 @@ namespace MoonProject.Rover.PlayModeTests
             File.WriteAllText(Path.Combine(CaptureFolder, "relay.md"), _report.ToString());
             Debug.Log("[rover-relay] " + _report);
             Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
+        [UnityTest]
+        [Timeout(900000)]
+        [PrebuildSetup(typeof(RoverSessionScene))]
+        [PostBuildCleanup(typeof(RoverSessionScene))]
+        public IEnumerator VisibleProgression_IsCapturedInTheRealGame()
+        {
+            yield return Boot();
+            _report.AppendLine("# Visible progression (real Main scene, staged purchases)");
+            _report.AppendLine();
+            _report.AppendLine("| Capture | Camera to 07 (m) | 07 on screen (x, y) | Horizon y | Wide frame |");
+            _report.AppendLine("|---|---:|---|---:|---|");
+            Pose spawn = new Pose(_rover.Position, Quaternion.Euler(0f, _rover.Heading, 0f));
+            Capture("kit-minute-one-chase");
+            CaptureFar("kit-minute-one-30m");
+
+            Transform anchor = FindNode(WorkshopAnchorName);
+            Assert.IsNotNull(anchor, "The lander carries Kenji's WorkshopAnchor.");
+            Vector3 pad = anchor.position + anchor.forward * ShopPadAhead;
+            yield return MoveTo(pad, WideShotComposer.Bearing(-anchor.forward));
+            IRoverAbilities abilities = _context.Get<IRoverAbilities>();
+            for (int piece = 0; piece < KitAbilities.Length; piece++)
+            {
+                abilities.Grant(KitAbilities[piece]);
+                _context.Events.Publish(new UpgradePurchased(KitUpgrades[piece], 1));
+                float bought = Time.time;
+                for (int frame = 0; frame < FitFrames.Length; frame++)
+                {
+                    while (Time.time < bought + FitFrames[frame])
+                    {
+                        yield return null;
+                    }
+
+                    Capture($"kit-fit-{KitNames[piece]}-{frame + 1}");
+                }
+
+                while (Time.time < bought + FitMomentSeconds)
+                {
+                    yield return null;
+                }
+            }
+
+            yield return MoveTo(spawn.position, spawn.rotation.eulerAngles.y);
+            yield return RideARelic();
+            yield return Reload(FriendsHomeSave);
+            for (int piece = 0; piece < KitAbilities.Length; piece++)
+            {
+                _context.Get<IRoverAbilities>().Grant(KitAbilities[piece]);
+            }
+
+            yield return MoveTo(spawn.position, spawn.rotation.eulerAngles.y);
+            Capture("kit-full-chase");
+            CaptureFar("kit-full-30m");
+            _context.Get<IRoverRig>().SetHoldStill(_hold, false);
+
+            Directory.CreateDirectory(CaptureFolder);
+            File.WriteAllText(Path.Combine(CaptureFolder, "kit.md"), _report.ToString());
+            Debug.Log("[rover-kit] " + _report);
+            Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
+        /// <summary>
+        /// Test-only staging of the cradle's carry: a relic rides the rack's seat (as Gameplay's CargoCradle does)
+        /// while 07 rolls slowly forward; the chase view and a close look over the rack.
+        /// </summary>
+        private IEnumerator RideARelic()
+        {
+#if UNITY_EDITOR
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(RidingRelicPath);
+            Assert.IsNotNull(prefab, $"{RidingRelicPath} exists (the art box's relic builder).");
+            GameObject relic = Object.Instantiate(prefab);
+            SceneManager.MoveGameObjectToScene(relic, SceneManager.GetSceneByPath(RoverSessionScene.ScenePath));
+            float rest = 0f;
+            foreach (Renderer renderer in relic.GetComponentsInChildren<Renderer>())
+            {
+                rest = Mathf.Max(rest, relic.transform.position.y - renderer.bounds.min.y);
+            }
+
+            relic.AddComponent<SeatRider>().Ride(_context.Get<IRoverCargoSeat>(), rest);
+#else
+            throw new NotSupportedException("The rover session loads the relic through the editor.");
+#endif
+            IRoverRig rig = _context.Get<IRoverRig>();
+            rig.SetHoldStill(_hold, false);
+            var drive = new ScriptedDrive();
+            _rover.SetDriveSource(drive);
+            drive.Drive = new Vector2(0f, RideThrottle);
+            yield return Wait(RideSeconds);
+            drive.Drive = Vector2.zero;
+            rig.SetHoldStill(_hold, true);
+            yield return Wait(SettleSeconds);
+            _rover.SetDriveSource(null);
+            Capture("kit-relic-rack-chase");
+            Vector3 seat = _context.Get<IRoverCargoSeat>().Position;
+            Quaternion heading = Quaternion.Euler(0f, _rover.Heading, 0f);
+            Vector3 eye = seat - heading * Vector3.forward * RackViewBack + heading * Vector3.right * RackViewSide
+                + Vector3.up * RackViewRise;
+            RenderReview("kit-relic-rack-close", eye, seat, RackFov);
+            _report.AppendLine("| kit-relic-rack-close | close-up over the rack | | | |");
+        }
+
+        /// <summary>Reloads the session scene from <paramref name="save"/> and boots it again.</summary>
+        private IEnumerator Reload(string save)
+        {
+            _awoke?.Dispose();
+            _awoke = null;
+            _awake = false;
+            _rover = null;
+            _cameraRig = null;
+            string file = RoverSessionScene.SaveSlot + SaveService.Extension;
+            string path = Path.Combine(SaveService.DefaultDirectory, file);
+            File.WriteAllText(path, save);
+            yield return Boot();
+        }
+
+        /// <summary>07 from 30 m behind and to its right, a little above, with the game camera's lens.</summary>
+        private void CaptureFar(string name)
+        {
+            Vector3 body = _rover.Position + Vector3.up * BodyHeight;
+            float elevation = FarElevation * Mathf.Deg2Rad;
+            Vector3 eye = body + WideShotComposer.Direction(_rover.Heading + FarBearing)
+                * (FarDistance * Mathf.Cos(elevation)) + Vector3.up * (FarDistance * Mathf.Sin(elevation));
+            RenderReview(name, eye, body, _view.fieldOfView);
+            _report.AppendLine($"| {name} | {FarDistance:0} (review camera) | | | |");
+        }
+
+        private static Transform FindNode(string name)
+        {
+            foreach (GameObject root in SceneManager.GetSceneByPath(RoverSessionScene.ScenePath).GetRootGameObjects())
+            {
+                foreach (Transform node in root.GetComponentsInChildren<Transform>(true))
+                {
+                    if (node.name == name)
+                    {
+                        return node;
+                    }
+                }
+            }
+
+            return null;
         }
 
         /// <summary>Loads the session scene, waits for 07 to wake and holds it parked a moment.</summary>

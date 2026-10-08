@@ -10,8 +10,8 @@ namespace MoonProject.Gameplay.Editor
     /// <summary>
     /// Writes the gameplay content from code recipes: the salvage catalog over Art's site, bundle and debris prefabs
     /// (<see cref="SalvageEconomy"/>), one RelicDefinition per <see cref="RelicRecipes"/> entry and the relic catalog,
-    /// the radio tower and workshop upgrades crafted from the <see cref="SalvageEconomy"/> recipes, the friends (Tilly
-    /// and Bell) and their catalog, Ro's cassettes and their catalog, and the crew log caches and their catalog.
+    /// the radio tower and the bench's rover kit crafted from the <see cref="SalvageEconomy"/> recipes, the friends
+    /// (Tilly and Bell) and their catalog, Ro's cassettes and their catalog, and the crew log caches and their catalog.
     /// Rewritten in place on every run (GUIDs kept). Every Art prefab it references (the content contracts) is
     /// required: a missing one fails the build loudly.
     /// </summary>
@@ -26,7 +26,7 @@ namespace MoonProject.Gameplay.Editor
             BuildSalvage();
             BuildRelics();
             BuildRadioTower();
-            BuildHoverJump();
+            BuildWorkshopUpgrades();
             BuildFriends();
             BuildCassettes();
             BuildLogCaches();
@@ -54,19 +54,29 @@ namespace MoonProject.Gameplay.Editor
         }
 
         /// <summary>
-        /// Hover-Jump, the workshop's first rover ability (docs/features/M3-03-workshop-hoverjump.md): one level
-        /// crafted at Kenji's bench (<see cref="SalvageEconomy.HoverJump"/>). Its texts live in the localization tables
-        /// (upgrade.rover.hover_jump.*).
+        /// Kenji's bench sells rover kit, offered in this order (docs/features/M3-03, M3-11): Hover-Jump, then the
+        /// Cargo Cradle, the Warm Headlamp and the Boost Coils, one level each, crafted from the
+        /// <see cref="SalvageEconomy"/> recipes. Each grants its rover ability; the Rover domain shows its kit on 07.
+        /// Their texts live in the localization tables (upgrade.rover.&lt;ability&gt;.*).
         /// </summary>
-        private static void BuildHoverJump()
+        private static void BuildWorkshopUpgrades()
+        {
+            RoverKit("rover.hover_jump", SalvageEconomy.HoverJump, RoverAbility.HoverJump,
+                GameplayAssetPaths.HoverJumpUpgrade);
+            RoverKit("rover.cargo_cradle", SalvageEconomy.CargoCradle, RoverAbility.CargoCradle,
+                GameplayAssetPaths.CargoCradleUpgrade);
+            RoverKit("rover.warm_headlamp", SalvageEconomy.WarmHeadlamp, RoverAbility.WarmHeadlamp,
+                GameplayAssetPaths.WarmHeadlampUpgrade);
+            RoverKit("rover.boost_coils", SalvageEconomy.BoostCoils, RoverAbility.BoostCoils,
+                GameplayAssetPaths.BoostCoilsUpgrade);
+        }
+
+        private static void RoverKit(string id, Recipe recipe, RoverAbility ability, string path)
         {
             var upgrade = ScriptableObject.CreateInstance<UpgradeDefinition>();
-            upgrade.Populate("rover.hover_jump", UpgradeStationKind.Workshop, 0f, new[]
-            {
-                new UpgradeLevel(SalvageEconomy.HoverJump, RoverAbility.HoverJump),
-            });
-            GeneratedAssets.CreateOrReplace(upgrade, GameplayAssetPaths.HoverJumpUpgrade);
-            Debug.Log($"{BuilderPath}: wrote {GameplayAssetPaths.HoverJumpUpgrade}");
+            upgrade.Populate(id, UpgradeStationKind.Workshop, 0f, new[] { new UpgradeLevel(recipe, ability) });
+            GeneratedAssets.CreateOrReplace(upgrade, path);
+            Debug.Log($"{BuilderPath}: wrote {path}");
         }
 
         /// <summary>

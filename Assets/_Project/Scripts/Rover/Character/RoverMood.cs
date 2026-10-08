@@ -42,6 +42,7 @@ namespace MoonProject.Rover
         private float _effortTarget;
         private bool _wideShot;
         private bool _sighedIntoWideShot;
+        private bool _wingMended;
 
         /// <param name="startAsleep">Open the session with 07 asleep (first boot).</param>
         public RoverMood(RoverCharacterTuning tuning, uint seed, bool startAsleep)
@@ -136,7 +137,8 @@ namespace MoonProject.Rover
 
             _sigh.Step(0f, _tuning.SighFrequency, 1f, deltaTime);
             _nod.Step(0f, _tuning.NodFrequency, 1f, deltaTime);
-            float wingTarget = Idle * _tuning.WingIdleOpen + _tuning.WingSighAmount * Sighing;
+            float idleOpen = _wingMended ? _tuning.WingIdleOpenMended : _tuning.WingIdleOpen;
+            float wingTarget = Idle * idleOpen + _tuning.WingSighAmount * Sighing;
             _wing.Step(wingTarget, _tuning.WingFrequency, _tuning.WingDamping, deltaTime);
             _wing.Clamp(0f, 1f);
             _perk.Step(0f, _tuning.PerkFrequency, 1f, deltaTime);
@@ -165,6 +167,14 @@ namespace MoonProject.Rover
         {
             _wideShot = open;
             _sighedIntoWideShot &= open;
+        }
+
+        /// <summary>
+        /// Tilly replaced the solar wing's missing cell: from now on the wing settles open wider while daydreaming.
+        /// </summary>
+        public void SetWingMended(bool mended)
+        {
+            _wingMended = mended;
         }
 
         /// <summary>

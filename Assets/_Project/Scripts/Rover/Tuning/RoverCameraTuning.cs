@@ -161,6 +161,18 @@ namespace MoonProject.Rover
         [SerializeField] private CameraMomentSettings _relayMoment =
             new CameraMomentSettings(3f, 2.6f, 2.6f, 0.22f, 3f, 0.5f, 26f, 40f, -13f, 0.65f, 40f);
 
+        [Tooltip("A kit piece fitted at Kenji's bench: the camera eases round, low and closer, to a view of the new "
+            + "piece (Kit views), holds while it settles and 07 strikes its proud pose, then returns (~3.6 s).")]
+        [SerializeField] private CameraMomentSettings _installMoment =
+            new CameraMomentSettings(1.2f, 1.4f, 1.0f, 0f, 0f, 1f, 0f, 170f, -7f, -0.3f, 40f);
+
+        [Tooltip("A friend's gift appearing as 07 comes home: a softer, shorter swing toward the gift, then back.")]
+        [SerializeField] private CameraMomentSettings _giftMoment =
+            new CameraMomentSettings(1.4f, 1.0f, 1.2f, 0f, 0f, 0.5f, 0f, 80f, -3f, -0.15f, 40f);
+
+        [Tooltip("Which way the install moment looks for each kit piece and gift.")]
+        [SerializeField] private KitViewSettings _kitViews = new KitViewSettings();
+
         [Tooltip("Seconds a camera moment takes to ease away when the player looks around (always skippable).")]
         [Range(0.1f, 3f)]
         [SerializeField] private float _momentCancelEaseOut = 0.6f;
@@ -274,6 +286,12 @@ namespace MoonProject.Rover
         public CameraMomentSettings LeapMoment => _leapMoment;
 
         public CameraMomentSettings RelayMoment => _relayMoment;
+
+        public CameraMomentSettings InstallMoment => _installMoment;
+
+        public CameraMomentSettings GiftMoment => _giftMoment;
+
+        public KitViewSettings KitViews => _kitViews;
 
         public float LeapMomentMinStrength => _leapMomentMinStrength;
 

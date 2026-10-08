@@ -17,6 +17,7 @@ namespace MoonProject.Rover
         [SerializeField] private RecoverySettings _recovery = new RecoverySettings();
         [SerializeField] private HoverJumpSettings _hoverJump = new HoverJumpSettings();
         [SerializeField] private StillnessSettings _stillness = new StillnessSettings();
+        [SerializeField] private BoostSettings _boost = new BoostSettings();
 
         public DriveSettings Drive => _drive;
 
@@ -33,5 +34,7 @@ namespace MoonProject.Rover
         public HoverJumpSettings HoverJump => _hoverJump;
 
         public StillnessSettings Stillness => _stillness;
+
+        public BoostSettings Boost => _boost;
     }
 }

@@ -30,7 +30,9 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// hold. Then Tilly (M3-02): find her with a ping, gather her three parts, repair her, drive home with her, be
     /// greeted, and let her spot a salvage site on the next trip. Then the workshop (M3-03): find that holding Jump
     /// does nothing yet, craft Hover-Jump at Kenji's workbench through the same hold, and take the first full-charge
-    /// leap on the base pad. Then Bell (M3-04/05): drive up the mouth lane, leap the chasm, find her lying at the
+    /// leap on the base pad. Then the Cargo Cradle (M3-11): craft it at the bench, dig Kenji's duck out of the garage's
+    /// heart, lift it into the rack with the tether button, drive home and set it down on the shelf from the rack.
+    /// Then Bell (M3-04/05): drive up the mouth lane, leap the chasm, find her lying at the
     /// terminus with Ro's log cache and her tape, gather her three parts from the alcoves, repair her (the tape slides
     /// in, her dial wakes, she stands), drive home by the one-way exit while she makes her own way, be greeted by her,
     /// turn her dial through every station, and follow her first signal to the basin tape onto her rack. Then the
@@ -46,6 +48,7 @@ namespace MoonProject.Gameplay.PlayModeTests
     {
         private const string Tower = "radio_tower";
         private const string HoverJump = "rover.hover_jump";
+        private const string CargoCradle = "rover.cargo_cradle";
         private const string TillyId = "tilly";
         private const string BellId = "bell";
         private const string AfterDark = "after_dark_1";
@@ -140,6 +143,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>07 digs a relic from this far (m) from the heart, within the beam's reach.</summary>
         private const float DigStandOff = 3.5f;
 
+        /// <summary>Metres nearer the meant relic than any other in its heart that 07 parks to dig.</summary>
+        private const float HeartMargin = 0.5f;
+
         /// <summary>Sphere (m) that must be free of the wreck where 07 parks to dig.</summary>
         private const float ParkClearance = 1.6f;
 
@@ -222,6 +228,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return Ping(depot);
             yield return SalvageTheDepot(depot);
             yield return Excavate(depot, relic);
+            Assert.IsFalse(depot.AnswersSonar, "picked clean and its relic lifted: the depot falls silent");
             yield return LatchTether(relic);
             yield return TowHome(depot, relic);
             yield return Deposit(relic);
@@ -232,6 +239,12 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return DriveHomeWithTilly();
             yield return TillySpotsOnTheNextTrip();
             yield return BuyHoverJumpAtTheBench();
+            yield return CraftTheCargoCradle();
+            SalvageSite garage = _gameplay.Salvage.Find(WorldAnchorIds.SitePrefix + "garage");
+            Relic duck = garage.Relics[0];
+            yield return Excavate(garage, duck);
+            yield return StowInTheCradle(duck);
+            yield return CarryHomeInTheCradle(garage, duck);
             yield return FirstLeap();
             yield return DriveToTheCanyon();
             yield return LeapTheChasm();
@@ -467,7 +480,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 bool open = !Physics.CheckSphere(new Vector3(spot.x, ground + ParkClearance + 0.2f, spot.z),
                     ParkClearance, Layers.PropMask, QueryTriggerInteraction.Ignore);
                 float distance = SurfaceRules.HorizontalDistance(spot, _rover.Position);
-                if (open && distance < best)
+                if (open && NearestOfItsHeart(site, relic, spot) && distance < best)
                 {
                     best = distance;
                     park = spot;
@@ -475,26 +488,25 @@ namespace MoonProject.Gameplay.PlayModeTests
                 }
             }
 
-            Assert.Less(best, float.MaxValue, "open ground to dig from round the depot's heart");
+            Assert.Less(best, float.MaxValue, $"open ground to dig from round the heart of {site.Id}");
             yield return CircleTo(site, Flat(heart + outward * CutLineUp), 0f);
             yield return DriveTo(Flat(heart + outward * CutLineUp), 2f, 0.6f, 40f, "a line-up facing the heart");
-            yield return DriveTo(park, 1f, 0.35f, 30f, "the depot's heart");
-            yield return Until(() => _gameplay.Excavation.Candidate == relic, 4f, "the walkman is in the beam's reach");
+            yield return DriveTo(park, 1f, 0.35f, 30f, "the site's heart");
+            yield return Until(() => _gameplay.Excavation.Candidate == relic, 4f, "the relic is in the beam's reach");
             Press(_keyboard.eKey);
             yield return Until(() => _events.ExcavationStarted.Count > 0, 6f, "the tractor beam takes hold");
             Assert.IsTrue(_rover.IsHeldStill, "07 is asked to hold still while the beam is held");
             float duration = _gameplay.Excavation.Tuning.DurationFor(relic.Definition.Mass);
             yield return new WaitForSeconds(duration * 0.5f);
-            Capture("03-excavating");
+            Capture("03-excavating-" + relic.Definition.Id);
             yield return Until(() => Surfaced(relic.Definition.Id), duration + 8f, "the relic surfaces");
             Release(_keyboard.eKey);
             yield return null;
             yield return null;
             Assert.IsFalse(_rover.IsHeldStill, "07 is free again once the relic is up");
             Assert.AreEqual(RelicState.Loose, relic.State);
-            Assert.IsFalse(site.AnswersSonar, "picked clean and its relic lifted: the depot falls silent");
             yield return new WaitForSeconds(1.5f);
-            End("Dig the walkman from the depot's heart",
+            End($"Dig '{relic.Definition.Id}' from the heart of {site.Id}",
                 $"lift took {duration:F1} s of beam for {relic.Definition.Mass:F0} kg");
         }
 
@@ -796,7 +808,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(HoverJump, purchase.UpgradeId);
             Assert.AreEqual(1, purchase.Level);
             Assert.IsTrue(abilities.Has(RoverAbility.HoverJump), "07 can leap now");
-            Assert.IsFalse(_gameplay.Hints.TryGet(InteractionKind.Upgrade, out _), "the bench has nothing left");
+            Assert.AreEqual(CargoCradle, bench.Definition.Id, "the bench offers the Cargo Cradle next");
             yield return new WaitForSeconds(SparkDelay);
             Assert.Greater(bench.SparkCount, 0, "sparks fly from between the vice jaws");
             Vector3 front = bench.PadCentre - bench.BenchPosition;
@@ -810,6 +822,138 @@ namespace MoonProject.Gameplay.PlayModeTests
             End("Park at the workbench and craft Hover-Jump", $"recipe " +
                 $"{_gameplay.Upgrades.Find(HoverJump).Levels[0].Recipe}, stock metal {stock.Metal}, wiring " +
                 $"{stock.Wiring}, optics {stock.Optics}");
+        }
+
+        /// <summary>Still at the bench: craft the Cargo Cradle from the depot's metal and see the rack on 07.</summary>
+        private IEnumerator CraftTheCargoCradle()
+        {
+            Begin();
+            Workshop bench = _gameplay.Workshop;
+            var seat = _context.Get<IRoverCargoSeat>();
+            Assert.IsFalse(seat.IsFitted, "no rack on 07 yet");
+            yield return Until(() => bench.Occupied, 3f, "07 is parked on the bench's pad");
+            Assert.AreSame(bench.Definition, _gameplay.Shop.StationUpgrade, "the bench offers the Cargo Cradle");
+            Assert.IsTrue(_gameplay.Hints.TryGet(InteractionKind.Upgrade, out InteractionHint hint));
+            Assert.IsTrue(hint.Ready, "the depot's metal covers the Cargo Cradle");
+            int purchases = _events.UpgradePurchased.Count;
+            Press(_keyboard.eKey);
+            yield return Until(() => _events.UpgradePurchased.Count > purchases, 15f, "holding confirm crafts it");
+            Release(_keyboard.eKey);
+            Assert.AreEqual(CargoCradle, _events.UpgradePurchased[_events.UpgradePurchased.Count - 1].Value.UpgradeId);
+            Assert.IsTrue(_context.Get<IRoverAbilities>().Has(RoverAbility.CargoCradle));
+            yield return Until(() => seat.IsFitted, 6f, "the rack is fitted on 07");
+            yield return new WaitForSeconds(1.5f);
+            Vector3 back = -Flat(_rover.Rotation * Vector3.forward).normalized;
+            Review(_rover.Position + back * 5f + Vector3.up * 2.5f, seat.Position, "13c-cargo-cradle-fitted");
+            IMaterialStock stock = _gameplay.Materials;
+            End("Craft the Cargo Cradle at the bench", $"recipe " +
+                $"{_gameplay.Upgrades.Find(CargoCradle).Levels[0].Recipe}, stock metal {stock.Metal}, wiring " +
+                $"{stock.Wiring}, optics {stock.Optics}");
+        }
+
+        /// <summary>
+        /// The duck hopped out in front of 07: back out, turn and creep up on it with the tether button held, which now
+        /// lifts it gently into the rack instead of towing it.
+        /// </summary>
+        private IEnumerator StowInTheCradle(Relic relic)
+        {
+            Begin();
+            CargoCradle cradle = _gameplay.Cradle;
+            int tethers = _events.TetherAttached.Count;
+            Vector3 back = Flat(_rover.Position - relic.transform.position).normalized;
+            yield return DriveTo(Flat(relic.transform.position + back * RetreatDistance), 3f, 0.6f, 40f,
+                "a spot to turn back and aim from");
+            Press(_mouse.rightButton);
+            float deadline = Time.time + LatchTimeout;
+            while (cradle.Carried != relic && Time.time < deadline)
+            {
+                _pilot.GoTo(relic.transform.position, LatchReach, 0.45f);
+                yield return null;
+            }
+
+            _pilot.Target = null;
+            Release(_mouse.rightButton);
+            Assert.AreSame(relic, cradle.Carried, $"the press lifts the relic into the rack ({relic.State}, " +
+                $"{Vector3.Distance(relic.transform.position, _rover.Position):F1} m from 07)");
+            Assert.AreEqual(tethers, _events.TetherAttached.Count, "instead of towing it");
+            yield return new WaitForSeconds(0.3f);
+            Capture("13d-cradle-lifting");
+            yield return Until(() => cradle.IsSettled, 6f, "it settles into the rack");
+            Assert.AreEqual(relic.Definition.Id, _events.RelicStowed[_events.RelicStowed.Count - 1].Value.RelicId);
+            Witness(relic.transform.position, "13e-relic-in-the-cradle");
+            End("Lift it into the Cargo Cradle", "a press of the tether button, a gentle float, a soft settle");
+        }
+
+        /// <summary>
+        /// Home with the relic riding in the rack: out round the wreck, across the basin, up to the shelf, and a press
+        /// sets it down onto it.
+        /// </summary>
+        private IEnumerator CarryHomeInTheCradle(SalvageSite site, Relic relic)
+        {
+            Begin();
+            CargoCradle cradle = _gameplay.Cradle;
+            var seat = _context.Get<IRoverCargoSeat>();
+            Vector3 home = _context.Get<IWorldLayout>().BasePosition;
+            Vector3 toHome = Flat(home - site.Position).normalized;
+            yield return CircleTo(site, Flat(site.Position + toHome * RetreatDistance), 0f);
+            HomeBase homeBase = _gameplay.Home;
+            Vector3 shelf = homeBase.ShelfPosition;
+            Vector3 front = Flat(home - shelf).normalized;
+            float distance = SurfaceRules.HorizontalDistance(_rover.Position, shelf);
+            _pilot.GoTo(home, PadArrival, 0.9f);
+            float deadline = Time.time + 90f;
+            bool captured = false;
+            while (!_pilot.Arrived && Time.time < deadline)
+            {
+                Assert.AreSame(relic, cradle.Carried, "it rides home in the rack, over every bump");
+                if (!captured && _pilot.Distance < distance * 0.5f)
+                {
+                    Capture("13f-carrying-home");
+                    captured = true;
+                }
+
+                yield return null;
+            }
+
+            _pilot.Target = null;
+            yield return Until(() => _rover.Speed < StopSpeed, 6f, "07 comes to rest on the base pad");
+            yield return null;
+            Assert.Less(Vector3.Distance(relic.transform.position,
+                seat.Position + seat.Rotation * Vector3.up * relic.RestHeight), 0.01f, "seated in the rack");
+            yield return DriveTo(shelf + front * ShelfStandOff, 1.5f, 0.5f, 60f, "the museum shelf");
+            yield return Until(() => cradle.CanUnload, 3f, "the rack is in reach of the shelf");
+            Assert.IsTrue(_gameplay.Hints.TryGet(InteractionKind.Deposit, out _), "the Deposit prompt is offered");
+            int deposits = _events.RelicDeposited.Count;
+            Press(_mouse.rightButton);
+            yield return Until(() => _events.RelicDeposited.Count > deposits, 8f,
+                "a press sets it down onto the shelf");
+            Release(_mouse.rightButton);
+            Assert.AreEqual(relic.Definition.Id, _events.RelicDeposited[deposits].Value.RelicId);
+            Assert.AreEqual(RelicState.Displayed, relic.State);
+            Assert.IsNull(cradle.Carried, "the rack is empty again");
+            yield return new WaitForSeconds(1f);
+            Capture("13g-duck-on-the-shelf");
+            End($"Carry it home in the Cargo Cradle ({distance:F0} m)",
+                $"{_events.RelicDeposited[deposits].Value.DisplayedCount} memories on display");
+        }
+
+        /// <summary>
+        /// The park spot <paramref name="spot"/> is nearer <paramref name="relic"/> than any other relic still in the
+        /// same heart, so the beam takes the one meant.
+        /// </summary>
+        private static bool NearestOfItsHeart(SalvageSite site, Relic relic, Vector3 spot)
+        {
+            float mine = SurfaceRules.HorizontalDistance(spot, relic.Site.Position);
+            foreach (Relic other in site.Relics)
+            {
+                if (other != relic && other.CanBeLifted &&
+                    SurfaceRules.HorizontalDistance(spot, other.Site.Position) < mine + HeartMargin)
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private IEnumerator FirstLeap()

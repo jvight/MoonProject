@@ -40,6 +40,29 @@ namespace MoonProject.Rover
         public const string DustSocketLeft = "DustSocket_L";
         public const string DustSocketRight = "DustSocket_R";
         public const string CoilSocket = "CoilSocket";
+        public const string DrumSocketLeft = "DrumSocket_L";
+        public const string DrumSocketRight = "DrumSocket_R";
+
+        /// <summary>Friend gifts on RoverModel, hidden until given (SolarWing/, Body/ and Antenna/ children).</summary>
+        public const string CellFilled = "CellFilled";
+        public const string Decal07Fresh = "Decal07Fresh";
+        public const string Pennant = "Pennant";
+
+        /// <summary>Nodes of art's kit prefabs (ARCHITECTURE "Visible kit (M3-11)"): glasses, band and seat.</summary>
+        public const int KitLampCount = 3;
+        public const string DrumGlow = "Glow";
+        public const string RelicSeat = "RelicSeat";
+
+        /// <summary>The lamp bar's glass <paramref name="index"/> (0..2), its own glow renderer.</summary>
+        public static string KitLamp(int index)
+        {
+            if (index < 0 || index >= KitLampCount)
+            {
+                throw new ArgumentOutOfRangeException(nameof(index), index, "Lamp index is 0..2.");
+            }
+
+            return "Lamp_" + index;
+        }
 
         /// <summary>Springs of art's HoverCoils prefab (mounted on <see cref="CoilSocket"/>).</summary>
         public const int CoilCount = 4;

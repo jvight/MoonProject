@@ -10,15 +10,16 @@ namespace MoonProject.Gameplay
     /// The Gameplay domain's single entry in the bootstrap's system list (after World and Rover). Resolves the world
     /// (surface, layout, anchors), rover and camera services, creates the material stock, the upgrade service (which
     /// grants rover abilities through <see cref="IRoverAbilities"/>) and the radio program, initialises the gameplay
-    /// parts in dependency order (salvage sites, the relics in their hearts, excavation, tether, home, radio tower,
-    /// workshop, friends, cassettes, log caches, sonar, Bell's signals, the cassette shelf, the relay network),
+    /// parts in dependency order (salvage sites, the relics in their hearts, excavation, tether, home, the Cargo
+    /// Cradle, radio tower, workshop, friends, cassettes, log caches, sonar, Bell's signals, the cassette shelf, the
+    /// relay network),
     /// registers the services other domains read (<see cref="IMaterialStock"/>, <see cref="ISalvageStatus"/>,
     /// <see cref="ITetherAim"/>, <see cref="IUpgradeShop"/>, <see cref="IInteractionHints"/>,
     /// <see cref="IFriendRoster"/>, <see cref="IFriendStatuses"/>, <see cref="IRadioProgram"/>,
     /// <see cref="IStationReach"/>, <see cref="IRadioHop"/>, <see cref="IRelayStatus"/>) and the save sections,
     /// announces the radio's signal radius and, once the save is loaded, the radio program, and owns the shared glow
-    /// meshes. The radio-hop moves 07 through Core's <see cref="IRoverPlacement"/> when the Rover
-    /// domain registers it.
+    /// meshes. The radio-hop moves 07 through Core's <see cref="IRoverPlacement"/> when the Rover domain registers it;
+    /// Core's <see cref="IRoverCargoSeat"/> (where a relic rides in the Cargo Cradle) is required at boot.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class GameplaySystem : MonoBehaviour, IGameSystem
@@ -38,6 +39,7 @@ namespace MoonProject.Gameplay
         [SerializeField] private ExcavationSystem _excavation;
         [SerializeField] private TetherSystem _tether;
         [SerializeField] private HomeBase _home;
+        [SerializeField] private CargoCradle _cradle;
         [SerializeField] private RadioTower _tower;
         [SerializeField] private Workshop _workshop;
         [SerializeField] private FriendField _friends;
@@ -72,6 +74,8 @@ namespace MoonProject.Gameplay
 
         public HomeBase Home => _home;
 
+        public CargoCradle Cradle => _cradle;
+
         public RadioTower Tower => _tower;
 
         public Workshop Workshop => _workshop;
@@ -90,8 +94,9 @@ namespace MoonProject.Gameplay
 
         internal void Wire(GameplayVisuals visuals, GlintTuning glints, UpgradeDefinition[] upgradeDefinitions,
             SalvageField salvage, RelicField relics, SonarSystem sonar, ExcavationSystem excavation,
-            TetherSystem tether, HomeBase home, RadioTower tower, Workshop workshop, FriendField friends,
-            CassetteField cassettes, LogCacheField logs, SignalField signals, CassetteShelf shelf, RelayField relays)
+            TetherSystem tether, HomeBase home, CargoCradle cradle, RadioTower tower, Workshop workshop,
+            FriendField friends, CassetteField cassettes, LogCacheField logs, SignalField signals, CassetteShelf shelf,
+            RelayField relays)
         {
             _visuals = visuals;
             _glints = glints;
@@ -102,6 +107,7 @@ namespace MoonProject.Gameplay
             _excavation = excavation;
             _tether = tether;
             _home = home;
+            _cradle = cradle;
             _tower = tower;
             _workshop = workshop;
             _friends = friends;
@@ -127,6 +133,14 @@ namespace MoonProject.Gameplay
                 return;
             }
 
+            if (!context.TryGet(out IRoverCargoSeat seat))
+            {
+                Debug.LogError($"{nameof(GameplaySystem)}: no {nameof(IRoverCargoSeat)} is registered. The Rover " +
+                               "domain registers 07's cargo seat for the Cargo Cradle (docs/features/M3-11).", this);
+                enabled = false;
+                return;
+            }
+
             _meshes = new GlowMeshSet();
             Materials = new MaterialStock(context.Events);
             var save = context.Get<ISaveService>();
@@ -141,11 +155,12 @@ namespace MoonProject.Gameplay
             if (!_salvage.Initialize(services) || !_relics.Initialize(services, _salvage) ||
                 !_excavation.Initialize(services, _relics, _salvage) ||
                 !_tether.Initialize(services, _relics, _salvage) ||
-                !_home.Initialize(services, _relics, _tether, Upgrades) || !_tower.Initialize(services, Upgrades) ||
+                !_home.Initialize(services, _relics, _tether, Upgrades) ||
+                !_cradle.Initialize(services, seat, _relics, _home) || !_tower.Initialize(services, Upgrades) ||
                 !_workshop.Initialize(services, Upgrades) ||
                 !_friends.Initialize(services, Radio, _cassettes.Catalog, _relics, _salvage, _home) ||
                 !_cassettes.Initialize(services, Radio, KeepClearOfCassettes()) || !_logs.Initialize(services) ||
-                !_sonar.Initialize(services, _relics, _friends, _salvage) ||
+                !_sonar.Initialize(services, _relics, _friends, _salvage, abilities) ||
                 !_signals.Initialize(services, _friends, _cassettes, _logs, _relics, abilities, _sonar.Tuning) ||
                 !_shelf.Initialize(Radio, _cassettes.Catalog, _friends.BellTuning) ||
                 !_relays.Initialize(services, Upgrades, _tower, _tether, _friends.Tuning, Placement(context)))
@@ -165,10 +180,11 @@ namespace MoonProject.Gameplay
 
             _friends.Connect(_sonar);
             _salvage.Connect(_excavation);
+            _tether.Connect(_cradle);
 
             Shop = new UpgradeShop(Upgrades, stations, save);
-            Hints = new InteractionHints(services.Rover, _sonar, _excavation, _salvage, _tether, _home, stations,
-                Upgrades, _friends, _relays);
+            Hints = new InteractionHints(services.Rover, _sonar, _excavation, _salvage, _tether, _cradle, _home,
+                stations, Upgrades, _friends, _relays);
             context.Register<IMaterialStock>(Materials);
             context.Register<ISalvageStatus>(_salvage);
             context.Register<ITetherAim>(_tether);
@@ -248,6 +264,7 @@ namespace MoonProject.Gameplay
         private void RestoreRelics(RelicsSaveData data)
         {
             _relics.Restore(data);
+            _cradle.AdoptRestored();
             _home.SyncDisplays();
             _sonar.RefreshDiscoveredSites();
         }
@@ -299,6 +316,7 @@ namespace MoonProject.Gameplay
                 : _excavation == null ? "ExcavationSystem is not assigned."
                 : _tether == null ? "TetherSystem is not assigned."
                 : _home == null ? "HomeBase is not assigned."
+                : _cradle == null ? "CargoCradle is not assigned."
                 : _home.Tuning == null ? "HomeBase has no BaseTuning."
                 : _tower == null ? "RadioTower is not assigned."
                 : _workshop == null ? "Workshop is not assigned."

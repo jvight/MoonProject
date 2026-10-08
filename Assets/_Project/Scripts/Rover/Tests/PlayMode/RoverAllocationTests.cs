@@ -7,6 +7,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.TestTools;
 using Unity.Profiling;
 using MoonProject.Core;
+using MoonProject.Core.Events;
 using Object = UnityEngine.Object;
 
 namespace MoonProject.Rover.PlayModeTests
@@ -92,6 +93,35 @@ namespace MoonProject.Rover.PlayModeTests
 
             Assert.IsTrue(_rover.CameraRig.WideShot.IsOpen, "Measure while the wide shot opens.");
             Assert.Greater(_rover.LampMotes.System.particleCount, 0, "And motes hang in the lamp.");
+            yield return MeasurePerFrameMethods(_rover);
+        }
+
+        /// <summary>
+        /// Fully kitted (loaded), Bell's gift on, boosting straight down the plain while a just-bought Hover-Jump's
+        /// coils are being fitted and the install moment plays.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator PerFrameMethods_FullyKitted_Boosting_Installing_DoNotAllocate()
+        {
+            _world = new TestWorld();
+            _rover = TestRover.Spawn(_world, TestWorld.Point(0f, -300f), 0f);
+            IRoverAbilities abilities = _rover.Context.Get<IRoverAbilities>();
+            abilities.Grant(RoverAbility.WarmHeadlamp);
+            abilities.Grant(RoverAbility.BoostCoils);
+            abilities.Grant(RoverAbility.CargoCradle);
+            _rover.Friends.Bell.Activity = FriendActivity.Home;
+            _rover.Drive.Drive = new Vector2(0f, 1f);
+            float until = Time.time + 5f;
+            while (Time.time < until)
+            {
+                yield return null;
+            }
+
+            Assert.IsTrue(_rover.Controller.IsBoosting, "Measure while boosting.");
+            abilities.Grant(RoverAbility.HoverJump);
+            _rover.Context.Events.Publish(new UpgradePurchased("rover.hover_jump", 1));
+            yield return null;
+            Assert.Greater(_rover.CameraRig.MomentWeight, 0f, "...with the install moment playing.");
             yield return MeasurePerFrameMethods(_rover);
         }
 
