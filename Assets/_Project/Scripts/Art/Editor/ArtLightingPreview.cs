@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -64,6 +65,13 @@ namespace MoonProject.Art.Editor
         /// <summary>Gameplay's tower upgrade pad (RadioTowerTuning): centre ahead of the tower, radius.</summary>
         private const float TowerPadOffset = 3.4f;
         private const float TowerPadRadius = 2.4f;
+
+        /// <summary>
+        /// Where 07 stops to work the tower's service port (metres ahead of the tower), and how far the hatch swings.
+        /// </summary>
+        private const float TowerServiceStop = 2.9f;
+
+        private const float OpenHatchYaw = -70f;
 
         /// <summary>Spacing of the kit scene's 07s, wide enough that each chase shot frames one rover.</summary>
         private const float KitSpacing = 9f;
@@ -385,7 +393,8 @@ namespace MoonProject.Art.Editor
         {
             GameObject lander = Instantiate(BaseModelBuilder.LanderName, temporary);
             Instantiate(BaseModelBuilder.ShelfName, temporary).transform.position = BaseModelBuilder.ShelfAnchor;
-            Instantiate(BaseModelBuilder.TowerPrefix + "2", temporary).transform.position = BaseModelBuilder.TowerAnchor;
+            GameObject tower = Instantiate(BaseModelBuilder.TowerPrefix + "2", temporary);
+            tower.transform.position = BaseModelBuilder.TowerAnchor;
             Transform anchor = Descendant(lander.transform, "WorkshopAnchor");
             GameObject bench = Instantiate(BaseModelBuilder.WorkbenchName, temporary);
             bench.transform.SetPositionAndRotation(anchor.position, anchor.rotation);
@@ -944,14 +953,25 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
-        /// Opens Main.unity (never saved), stands Kenji's Rover Bay on the lander's WorkshopAnchor in place of the old
-        /// bench with 07 parked on its turntable, and lays out the true-size relics beside a second 07 and a 1.75 m
-        /// reference person on open ground left of the lander.
+        /// Opens Main.unity (never saved) and stages what M3-14 built for 07: Kenji's Rover Bay on the lander's
+        /// WorkshopAnchor in place of the old bench with 07 parked on its turntable, the true-size relics beside a
+        /// second 07 and a 1.75 m reference person on open ground left of the lander, and a third 07 working the radio
+        /// tower's service port with the hatch swung open.
         /// </summary>
         private static CameraPoseSet BuiltFor07Scene(Material material, TemporaryObjects temporary)
         {
             EditorSceneManager.OpenScene(CaptureAutomation.MainScenePath, OpenSceneMode.Single);
             Transform lander = SceneObject(BaseModelBuilder.LanderName);
+            var poses = new List<CameraPose>();
+            StageRoverBay(lander, temporary, poses);
+            StageRelics(lander, material, temporary, poses);
+            StageTowerPort(temporary, poses);
+            return new CameraPoseSet { width = 1600, height = 900, postProcessing = true, poses = poses.ToArray() };
+        }
+
+        /// <summary>The Rover Bay in place of the old bench: lamps lit, 07 on the turntable, one arm fitting.</summary>
+        private static void StageRoverBay(Transform lander, TemporaryObjects temporary, List<CameraPose> poses)
+        {
             SceneObject(BaseModelBuilder.WorkbenchName).gameObject.SetActive(false);
             GameObject bay = Instantiate(BaseModelBuilder.RoverBayName, temporary);
             bay.transform.SetPositionAndRotation(lander.TransformPoint(BaseModelBuilder.WorkshopAnchor),
@@ -964,7 +984,19 @@ namespace MoonProject.Art.Editor
             Descendant(fitting, "Upper").localRotation = Quaternion.Euler(-28f, 0f, 0f);
             Descendant(fitting, "Lower").localRotation = Quaternion.Euler(-35f, 0f, 0f);
             Descendant(fitting, "Tip").localRotation = Quaternion.Euler(60f, 0f, 0f);
+            Vector3 centre = turntable.position + Vector3.up * 1.1f;
+            poses.Add(Pose("bay_front", Point(bay.transform.TransformPoint(new Vector3(1.5f, 2.6f, 7.5f))),
+                Point(centre), 55f));
+            poses.Add(Pose("bay_quarter", Point(bay.transform.TransformPoint(new Vector3(6.5f, 3.4f, 6f))),
+                Point(centre), 50f));
+            poses.Add(Pose("bay_hopper", Point(bay.transform.TransformPoint(new Vector3(3.6f, 1.9f, 4.4f))),
+                Point(bay.transform.TransformPoint(RoverBayMeshes.HopperMouth)), 50f));
+        }
 
+        /// <summary>The true-size relics in a row before 07 and a 1.75 m reference person; 07's spare wheel.</summary>
+        private static void StageRelics(Transform lander, Material material, TemporaryObjects temporary,
+            List<CameraPose> poses)
+        {
             Vector3 row = lander.TransformPoint(new Vector3(-9f, 0f, 6.5f));
             Quaternion facing = lander.rotation * Quaternion.Euler(0f, 90f, 0f);
             GameObject rover = Instantiate(RoverModelBuilder.ModelName, temporary, ArtPaths.RoverFolder);
@@ -985,22 +1017,44 @@ namespace MoonProject.Art.Editor
                     facing * Quaternion.Euler(0f, 180f, 0f));
             }
 
-            Vector3 bayFront = bay.transform.TransformPoint(new Vector3(1.5f, 2.6f, 7.5f));
-            Vector3 bayCentre = turntable.position + Vector3.up * 1.1f;
             Transform wheel = Descendant(rover.transform, "Wheel_RL");
-            var poses = new List<CameraPose>
+            poses.Add(Pose("relics_and_reference", Point(row + ahead * 5.5f + side * 1.2f + Vector3.up * 1.6f),
+                Point(row + ahead * 1f + Vector3.up * 0.6f), 50f));
+            poses.Add(Pose("spare_wheel_close", Point(wheel.position - side * 1.5f - ahead * 1.1f + Vector3.up * 0.5f),
+                Point(wheel.position), 45f));
+        }
+
+        /// <summary>
+        /// The tower stage Main.unity shows, its service hatch swung open and 07 stopped before the port, nose to the
+        /// hopper.
+        /// </summary>
+        private static void StageTowerPort(TemporaryObjects temporary, List<CameraPose> poses)
+        {
+            Transform stage = ActiveTowerStage();
+            Descendant(stage, "ServiceHatch").localRotation = Quaternion.Euler(0f, OpenHatchYaw, 0f);
+            GameObject rover = Instantiate(RoverModelBuilder.ModelName, temporary, ArtPaths.RoverFolder);
+            rover.transform.SetPositionAndRotation(stage.TransformPoint(new Vector3(0f, 0f, TowerServiceStop)),
+                stage.rotation * Quaternion.Euler(0f, 180f, 0f));
+            Vector3 port = stage.TransformPoint(new Vector3(-0.1f, 0.85f, 1.1f));
+            poses.Add(Pose("tower_port", Point(stage.TransformPoint(new Vector3(3.4f, 2.2f, 5.2f))), Point(port), 50f));
+            poses.Add(Pose("tower_port_close", Point(stage.TransformPoint(new Vector3(2.7f, 1.8f, 4.1f))),
+                Point(port), 40f));
+        }
+
+        /// <summary>The radio tower stage the open scene shows (fails loudly if none is active).</summary>
+        private static Transform ActiveTowerStage()
+        {
+            for (int level = 1; level <= 3; level++)
             {
-                Pose("bay_front", Point(bayFront), Point(bayCentre), 55f),
-                Pose("bay_quarter", Point(bay.transform.TransformPoint(new Vector3(6.5f, 3.4f, 6f))), Point(bayCentre),
-                    50f),
-                Pose("bay_hopper", Point(bay.transform.TransformPoint(new Vector3(3.6f, 1.9f, 4.4f))),
-                    Point(bay.transform.TransformPoint(RoverBayMeshes.HopperMouth)), 50f),
-                Pose("relics_and_reference", Point(row + ahead * 5.5f + side * 1.2f + Vector3.up * 1.6f),
-                    Point(row + ahead * 1f + Vector3.up * 0.6f), 50f),
-                Pose("spare_wheel_close", Point(wheel.position - side * 1.5f - ahead * 1.1f + Vector3.up * 0.5f),
-                    Point(wheel.position), 45f),
-            };
-            return new CameraPoseSet { width = 1600, height = 900, postProcessing = true, poses = poses.ToArray() };
+                string name = BaseModelBuilder.TowerPrefix + level.ToString(CultureInfo.InvariantCulture);
+                Transform stage = SceneObject(name);
+                if (stage.gameObject.activeInHierarchy)
+                {
+                    return stage;
+                }
+            }
+
+            throw new InvalidOperationException("The open scene shows no radio tower stage.");
         }
 
         /// <summary>
