@@ -123,6 +123,11 @@ MonoBehaviour:
       _dwellSeconds: 0.4
       _liftMetres: 0.6
       _usesToRetire: 2
+    - _kind: 12
+      _action: 2
+      _dwellSeconds: 0.4
+      _liftMetres: 0.9
+      _usesToRetire: 2
     _startDelay: 9
     _maxShowSeconds: 7
     _repeatCooldown: 25
@@ -181,6 +186,18 @@ MonoBehaviour:
     _drainSeconds: 0.35
     _armVisibility: 0.9
     _celebrateSeconds: 1.4
+    _tapSeconds: 0.2
+    _winchStep: 0.5
+  _kitTitle:
+    _reveal:
+      _fadeIn: 0.9
+      _fadeOut: 1.4
+      _slide: 12
+      _scaleFrom: 0.94
+      _springFrequency: 1
+      _springDamping: 0.7
+    _delay: 0.35
+    _holdSeconds: 2.6
   _friends:
     _readout:
       _fadeIn: 0.5
