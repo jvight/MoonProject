@@ -10,6 +10,19 @@
 2. **Full game (M3 → M5)**: nâng cấp rover, mở rộng thế giới, sự kiện Nhật thực / Bão mặt trời, Biodome,
    sửa chảo vệ tinh trên đỉnh núi, phát bản nhạc cuối về Trái Đất.
 
+## Lộ trình theo phiên bản (chủ dự án, 2026-10-08): xong hẳn một phase mới sang phase sau
+Mỗi phase kết thúc bằng một bản build chơi thử, đã kiểm chứng đầy đủ, bạn chơi và góp ý xong mới mở phase kế.
+Không mở rộng nội dung khi phần nhìn của phase hiện tại chưa chỉn chu.
+
+| Phiên bản | Chủ đề | Gồm | TT |
+|---|---|---|---|
+| **0.4 — "Nhìn cho đúng"** | Phần nhìn chỉn chu, mọi thứ hợp logic | M3-14 (xây cho 07: trạm sửa xe với cánh tay máy, cổng bảo trì tháp, dock sạc, thang nâng, tỉ lệ thật, bánh dự phòng, trống tụ điện) · M3-12 (phong hoá: gỉ, sơn phai, bụi cho căn cứ và 07) · đánh bóng hình còn tồn (quầng sáng nhà, Trái Đất bớt rực, đọc bộ phận ở 30 m, bóng cho nhãn tên) · âm thanh và UI đi kèm · preview trong Scene view | 🟦 |
+| 0.5 — "Căn cứ sống" | Hoàn thiện lòng hố | M3-07 bản đồ vẽ tay trong lander (lên bằng thang nâng) · M3-08 mặt trăng trôi khi vắng mặt (mảnh vệ tinh mới rơi) · M3-09 màn hình tiêu đề, bộ sưu tập ở căn cứ · nhật ký phi hành đoàn còn lại trong vùng | ⬜ |
+| 0.6 — "Rim Terraces" | Mở rộng bản đồ #1 | Magnetic Treads (bánh to có gai) · vùng Rim Terraces · Atlas · bãi trục vớt mới, cột relay mới | ⬜ |
+| 0.7 — "Shadowed Crater" | Mở rộng bản đồ #2 | vùng hố tối · Moss + Biodome · Wide Sonar · sự kiện Nhật thực | ⬜ |
+| 0.8 — "The Peak" | Kết thúc | leo The Peak · sửa chảo lớn · phát sóng bản nhạc cuối · Trái Đất đáp lại | ⬜ |
+| 1.0 | Phát hành | đánh bóng, cài đặt, tay cầm, hiệu năng, bản build phát hành | ⬜ |
+
 ## Các box (agent) và vùng sở hữu
 | Box | Sở hữu | Ghi chú |
 |---|---|---|
