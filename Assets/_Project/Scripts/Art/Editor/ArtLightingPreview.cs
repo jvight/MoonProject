@@ -6,6 +6,7 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using UnityEngine.SceneManagement;
 using MoonProject.Editor.Automation;
 using Object = UnityEngine.Object;
 
@@ -18,7 +19,7 @@ namespace MoonProject.Art.Editor
     /// <code>
     /// python tools/unity_batch.py exec --method MoonProject.Art.Editor.ArtLightingPreview.Capture
     ///     [--arg scene=rover|base|towers|relics|shadow|grit|friends|workshop|bell|bellbroken|pickups|bellcorner|
-    ///                  warmpoints|relaysbroken|relayslit|sites|sitesclean|salvagebits|kit]
+    ///                  warmpoints|relaysbroken|relayslit|sites|sitesclean|salvagebits|kit|home|homeclean]
     /// </code>
     /// (default rover; a ';'-separated list captures several scenes in one run)
     /// rover: 07 at rest (half-lidded, head lowered, wing ajar) with its headlamp. base: the lander with the shelf
@@ -42,7 +43,10 @@ namespace MoonProject.Art.Editor
     /// skeletons, from the way in, the side and 30 m, Kestrel-3 from the base, the depot close. salvagebits: the three
     /// material bundles and the Kestrel trail's loose bits on the dust beside 07. kit: 07 bare, with each crafted
     /// kit piece (lamp bar lit, drums glowing as if boosting, the cargo cradle carrying a relic), fully kitted with
-    /// the friends' gifts, and "minute one versus hour five" side by side from the chase camera and at 30 m.
+    /// the friends' gifts, and "minute one versus hour five" side by side from the chase camera and at 30 m. home:
+    /// the base as Main.unity has it (its own grading), from the spawn view, the lander close and three-quarter, the
+    /// tower, the shelf area, and a 07 parked in front from the chase camera and close; homeclean: the same with every
+    /// Weather_* layer hidden, as restoration will leave it.
     /// Glows are lit with the linear MaterialPropertyBlock contract.
     /// </summary>
     public static class ArtLightingPreview
@@ -189,10 +193,17 @@ namespace MoonProject.Art.Editor
                         NightSetting(material, temporary, 90f, 40f);
                         poses = KitScene(temporary);
                         break;
+                    case "home":
+                        poses = HomeScene(temporary, true);
+                        break;
+                    case "homeclean":
+                        poses = HomeScene(temporary, false);
+                        break;
                     default:
                         Debug.LogError($"ArtLightingPreview: unknown scene '{scene}' " +
                             "(rover|base|towers|relics|shadow|grit|friends|workshop|bell|bellbroken|pickups|" +
-                            "bellcorner|warmpoints|relaysbroken|relayslit|sites|sitesclean|salvagebits|kit).");
+                            "bellcorner|warmpoints|relaysbroken|relayslit|sites|sitesclean|salvagebits|kit|home|" +
+                            "homeclean).");
                         return false;
                 }
 
@@ -793,6 +804,56 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
+        /// Opens Main.unity (never saved) as it stands, with a 07 parked in front of the lander, and frames the base
+        /// the way the owner sees it: the spawn view, the lander close and three-quarter, the tower, the shelf area and
+        /// 07 from the chase camera.
+        /// </summary>
+        private static CameraPoseSet HomeScene(TemporaryObjects temporary, bool weathered)
+        {
+            EditorSceneManager.OpenScene(CaptureAutomation.MainScenePath, OpenSceneMode.Single);
+            Transform lander = SceneObject(BaseModelBuilder.LanderName);
+            Vector3 parked = lander.TransformPoint(new Vector3(5.5f, 0f, 9f));
+            GameObject rover = Instantiate(RoverModelBuilder.ModelName, temporary, ArtPaths.RoverFolder);
+            rover.transform.SetPositionAndRotation(parked, lander.rotation * Quaternion.Euler(0f, 250f, 0f));
+            Vector3 tower = lander.TransformPoint(BaseModelBuilder.TowerAnchor);
+            Vector3 shelf = lander.TransformPoint(BaseModelBuilder.ShelfAnchor);
+            Vector3 roverBack = rover.transform.TransformDirection(new Vector3(0.6f, 0f, -0.8f));
+            var poses = new List<CameraPose>
+            {
+                new CameraPose { name = "spawn_first_frame", position = new[] { 0.78f, 4f, -8.97f },
+                    euler = new[] { 6f, -5f, 0f }, fov = 60f },
+                Pose("lander_close", Point(lander.TransformPoint(new Vector3(0.6f, 2.3f, 8.4f))),
+                    Point(lander.TransformPoint(new Vector3(0f, 2.6f, 0f))), 55f),
+                Pose("lander_quarter", Point(lander.TransformPoint(new Vector3(6.2f, 3.2f, 6.4f))),
+                    Point(lander.TransformPoint(new Vector3(0f, 2.2f, 0f))), 50f),
+                Pose("tower", Point(tower + lander.TransformDirection(new Vector3(4.5f, 3f, 8f))),
+                    Point(tower + Vector3.up * 3.5f), 55f),
+                Pose("shelf_area", Point(shelf + lander.TransformDirection(new Vector3(1.8f, 2f, 5.5f))),
+                    Point(shelf + Vector3.up * 1.1f), 50f),
+                Pose("rover_chase", Point(parked + roverBack * 7.4f + Vector3.up * 2.2f), Point(parked + Vector3.up),
+                    50f),
+                Pose("rover_close", Point(parked + roverBack * 3.2f + Vector3.up * 1.6f),
+                Point(parked + Vector3.up * 0.7f),
+                    50f),
+            };
+            if (!weathered)
+            {
+                foreach (GameObject root in SceneManager.GetActiveScene().GetRootGameObjects())
+                {
+                    foreach (Transform node in root.GetComponentsInChildren<Transform>(true))
+                    {
+                        if (node.name.StartsWith("Weather_", StringComparison.Ordinal))
+                        {
+                            node.gameObject.SetActive(false);
+                        }
+                    }
+                }
+            }
+
+            return new CameraPoseSet { width = 1600, height = 900, postProcessing = true, poses = poses.ToArray() };
+        }
+
+        /// <summary>
         /// Fits the chosen kit to a rover instance on its sockets, lit as in play (the lamps on, the drums glowing),
         /// optionally with a relic riding in the cradle, and shows the friends' gifts.
         /// </summary>
@@ -874,6 +935,23 @@ namespace MoonProject.Art.Editor
                 Pose("bundles", new[] { 0f, 0.9f, 0.2f }, new[] { 0f, 0.12f, 1.6f }, 40f),
                 Pose("debris", new[] { 0f, 2.2f, 0.4f }, new[] { 0f, 0.2f, 4f }, 45f),
                 Pose("bits_from_10m", new[] { 3f, 4f, -7f }, new[] { 0f, 0.3f, 2.5f }, 40f));
+        }
+
+        /// <summary>
+        /// The first object called <paramref name="name"/> in the open scene (fails loudly if missing).
+        /// </summary>
+        private static Transform SceneObject(string name)
+        {
+            foreach (GameObject root in SceneManager.GetActiveScene().GetRootGameObjects())
+            {
+                Transform hit = Search(root.transform, name);
+                if (hit != null)
+                {
+                    return hit;
+                }
+            }
+
+            throw new InvalidOperationException($"The open scene has no object named {name}.");
         }
 
         private static float[] Point(Vector3 p)
