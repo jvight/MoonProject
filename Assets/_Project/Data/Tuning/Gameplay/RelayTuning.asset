@@ -20,8 +20,8 @@ MonoBehaviour:
   - _metal: 3
     _wiring: 1
     _optics: 0
-  - _metal: 3
-    _wiring: 2
+  - _metal: 4
+    _wiring: 1
     _optics: 0
   - _metal: 4
     _wiring: 2
