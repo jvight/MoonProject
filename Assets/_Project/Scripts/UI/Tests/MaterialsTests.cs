@@ -142,6 +142,12 @@ namespace MoonProject.UI.Tests
             Assert.AreEqual(DisplayStyle.Flex, layout.TowerNeed.style.display.value);
             Assert.IsFalse(view.IsAffordable);
 
+            string line = layout.TowerNeed.text;
+            view.Show(new Recipe(7, 4, 0), stock);
+            Assert.AreEqual("5 more metal to salvage", layout.TowerNeed.text);
+            view.Show(new Recipe(6, 4, 0), stock);
+            Assert.AreSame(line, layout.TowerNeed.text, "a need line seen before is reused, not formatted again");
+
             localization.SetLanguage(TestTables.Vietnamese);
             view.Relocalize();
             view.Show(new Recipe(6, 4, 0), stock);

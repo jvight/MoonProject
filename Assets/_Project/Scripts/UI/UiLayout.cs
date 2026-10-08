@@ -66,6 +66,11 @@ namespace MoonProject.UI
             TowerHoldWord = Require<Label>("tower-hold-word");
             TowerNeed = Require<Label>("tower-need");
             TowerRecipe = Require<VisualElement>("tower-recipe");
+            TowerChoices = Require<VisualElement>("tower-choices");
+            TowerPick = Require<VisualElement>("tower-pick");
+            TowerPickGlyph = Require<VisualElement>("tower-pick-glyph");
+            TowerPickGlyphLabel = Require<Label>("tower-pick-glyph-label");
+            TowerPickWord = Require<Label>("tower-pick-word");
 
             Ticker = Require<VisualElement>("ticker");
             TickerLamp = Require<VisualElement>("ticker-lamp");
@@ -218,6 +223,16 @@ namespace MoonProject.UI
         public Label TowerNeed { get; }
 
         public VisualElement TowerRecipe { get; }
+
+        public VisualElement TowerChoices { get; }
+
+        public VisualElement TowerPick { get; }
+
+        public VisualElement TowerPickGlyph { get; }
+
+        public Label TowerPickGlyphLabel { get; }
+
+        public Label TowerPickWord { get; }
 
         public VisualElement Ticker { get; }
 

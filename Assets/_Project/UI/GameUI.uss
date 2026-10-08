@@ -31,6 +31,7 @@
 .section-label,
 .chip__number,
 .friend-name,
+.bench-row__name,
 .hop-list__glyph,
 .dial-readout__station,
 .dial-readout__tape,
@@ -800,6 +801,77 @@ Label {
 .tower-panel__need {
     flex-shrink: 1;
     margin-right: 12px;
+}
+
+/* Kenji's bench: what is left to craft, one row each, the picked one lit and read in full */
+
+.tower-panel__choices {
+    margin: 12px -12px 0 -12px;
+}
+
+.bench-row {
+    padding: 9px 12px 10px 12px;
+    margin-bottom: 2px;
+    border-radius: 12px;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0);
+}
+
+.bench-row--selected {
+    background-color: var(--moon-cream-glow);
+    border-color: var(--moon-glass-edge);
+}
+
+.bench-row__line {
+    flex-direction: row;
+    align-items: center;
+}
+
+.bench-row__lamp {
+    width: 6px;
+    height: 6px;
+    margin-right: 10px;
+    border-radius: 3px;
+    background-color: var(--moon-track);
+}
+
+.bench-row--selected .bench-row__lamp {
+    background-color: var(--moon-warm-accent);
+}
+
+.bench-row__name {
+    flex-grow: 1;
+    flex-shrink: 1;
+    font-size: 19px;
+    color: var(--moon-text-dim);
+}
+
+.bench-row--selected .bench-row__name {
+    color: var(--moon-text);
+}
+
+.bench-row__recipe {
+    flex-shrink: 0;
+    margin-left: 12px;
+}
+
+.bench-row__effect {
+    margin: 3px 0 0 16px;
+    font-size: 15px;
+    color: var(--moon-text-faint);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bench-row--selected .bench-row__effect {
+    color: var(--moon-text-dim);
+    white-space: normal;
+}
+
+.tower-panel__pick {
+    margin-top: 0;
+    flex-shrink: 0;
 }
 
 .hold {

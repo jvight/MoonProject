@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using MoonProject.Core;
 using MoonProject.Core.Events;
+using MoonProject.Core.Input;
 using MoonProject.Gameplay;
 
 namespace MoonProject.UI
@@ -17,10 +18,17 @@ namespace MoonProject.UI
     /// while the confirm button is held (<see cref="HoldToConfirm"/>: no accidental purchases). Buying goes through
     /// <see cref="IUpgradeShop"/>; the panel glows a moment, then shows the next level or bows out when all are bought.
     /// The ring starting and completing are published as <see cref="UiCue"/>s.
+    /// <para>
+    /// While the station has more than one thing left to sell (Kenji's bench, docs/features/M3-11), the panel lists
+    /// them instead (<see cref="BenchList"/>): a tap of Interact or the Winch picks (<see cref="BenchPick"/>, a
+    /// <see cref="UiCueKind.FocusMove"/> each), the hold crafts the picked one, and a faint "ui.bench.pick" line says
+    /// how to choose. The radio tower, and the bench's last piece, keep the single offer.
+    /// </para>
     /// </summary>
     internal sealed class TowerPanel
     {
         public const string CelebrateClass = "tower-panel--celebrate";
+        public const string ChoosingClass = "tower-panel--choosing";
 
         private static readonly UpgradeStationKind[] Stations =
             (UpgradeStationKind[])Enum.GetValues(typeof(UpgradeStationKind));
@@ -36,6 +44,11 @@ namespace MoonProject.UI
         private readonly HoldToConfirm _hold;
         private readonly ProgressRingPainter _ring;
         private readonly UiLayout _layout;
+        private readonly BenchChoice _choices = new BenchChoice();
+        private readonly BenchPick _pick;
+        private readonly BenchList _list;
+        private readonly GlyphView _pickGlyph;
+        private bool _listed;
         private UpgradeDefinition _shownUpgrade;
         private int _shownLevel = -1;
         private bool _shownAffordable;
@@ -59,6 +72,11 @@ namespace MoonProject.UI
             _ring = new ProgressRingPainter(layout.TowerRing);
             new ShadowPainter(layout.TowerPanelShadow);
             layout.TowerHoldWord.text = localization.Get(UiKeys.TowerHold);
+            _pick = new BenchPick(settings);
+            _list = new BenchList(layout.TowerChoices, localization, numbers);
+            _pickGlyph = new GlyphView(layout.TowerPickGlyph, layout.TowerPickGlyphLabel);
+            layout.TowerPickWord.text = localization.Get(UiKeys.BenchPick);
+            WriteListed(false);
         }
 
         public bool IsVisible => !_reveal.IsHidden;
@@ -86,17 +104,26 @@ namespace MoonProject.UI
         /// <summary>The recipe on the panel (tests and captures).</summary>
         public RecipeView Recipe => _recipe;
 
+        /// <summary>True while the panel lists the station's choices instead of a single offer.</summary>
+        public bool IsChoosing => _listed;
+
+        /// <summary>What the station still sells and which is picked (tests and captures).</summary>
+        public BenchChoice Choices => _choices;
+
+        /// <summary>The bench's rows (tests and captures).</summary>
+        public BenchList List => _list;
+
         /// <param name="deltaTime">Unscaled seconds; pass 0 while paused.</param>
         /// <param name="gateOpen">False while paused.</param>
-        /// <param name="confirmHeld">True while the confirm (Excavate) button is held.</param>
+        /// <param name="confirmHeld">True while the confirm (Interact) button is held.</param>
+        /// <param name="winch">The Winch axis (-1..1, + up): steps between the bench's choices.</param>
+        /// <param name="towing">Something is on the tether: the Winch reels, so it does not pick.</param>
         /// <param name="confirmGlyph">The confirm control's label for the active device.</param>
-        public void Tick(float deltaTime, bool gateOpen, bool confirmHeld, string confirmGlyph)
+        /// <param name="device">The active device (key cap or round glyph).</param>
+        public void Tick(float deltaTime, bool gateOpen, bool confirmHeld, float winch, bool towing,
+            string confirmGlyph, InputDeviceKind device)
         {
             bool offered = gateOpen && _hints.TryGet(InteractionKind.Upgrade, out InteractionHint _);
-            UpgradeOffer offer = default;
-            UpgradeDefinition upgrade = offered ? _shop.StationUpgrade : null;
-            offered = upgrade != null && _shop.TryGetOffer(upgrade.Id, out offer) && !offer.IsMaxed;
-
             if (IsCelebrating)
             {
                 _celebrateTimer -= deltaTime;
@@ -105,6 +132,15 @@ namespace MoonProject.UI
                     EndCelebration();
                 }
             }
+
+            if (offered && !IsCelebrating)
+            {
+                _choices.Refresh(_shop);
+            }
+
+            UpgradeOffer offer = default;
+            UpgradeDefinition upgrade = offered ? _choices.Current : null;
+            offered = upgrade != null && _shop.TryGetOffer(upgrade.Id, out offer) && !offer.IsMaxed;
 
             if (offered && !IsCelebrating)
             {
@@ -117,10 +153,17 @@ namespace MoonProject.UI
                 _shownGlyph = confirmGlyph;
             }
 
+            _pickGlyph.Set(confirmGlyph, device);
             _reveal.Set(gateOpen && (offered || IsCelebrating));
-            bool available = offered && offer.CanAfford && !IsCelebrating &&
-                             _reveal.Target && _reveal.Visibility >= _settings.ArmVisibility;
-            HoldStep step = _hold.Step(available, confirmHeld, deltaTime);
+            bool ready = offered && !IsCelebrating && _reveal.Target && _reveal.Visibility >= _settings.ArmVisibility;
+            int pick = _pick.Step(ready && _listed, confirmHeld, winch, towing, deltaTime);
+            if (pick != 0 && _choices.Step(pick))
+            {
+                _events.Publish(new UiCue(UiCueKind.FocusMove));
+            }
+
+            bool held = _listed ? _pick.HoldHeld : confirmHeld;
+            HoldStep step = _hold.Step(ready && offer.CanAfford, held, deltaTime);
             if (step == HoldStep.Started)
             {
                 _events.Publish(new UiCue(UiCueKind.HoldFill));
@@ -139,6 +182,11 @@ namespace MoonProject.UI
                 _hold.Reset();
             }
 
+            if (_shop.StationUpgradeCount == 0)
+            {
+                _choices.Clear();
+            }
+
             _ring.Progress = IsCelebrating ? 1f : _hold.Progress;
             _reveal.Tick(deltaTime);
         }
@@ -147,7 +195,9 @@ namespace MoonProject.UI
         public void Relocalize()
         {
             _layout.TowerHoldWord.text = _localization.Get(IsCelebrating ? UiKeys.TowerPurchased : UiKeys.TowerHold);
+            _layout.TowerPickWord.text = _localization.Get(UiKeys.BenchPick);
             _recipe.Relocalize();
+            _list.Relocalize();
             _shownUpgrade = null;
             _shownLevel = -1;
         }
@@ -186,19 +236,50 @@ namespace MoonProject.UI
             }
         }
 
+        /// <summary>Lists the choices (true) or shows the single offer (false).</summary>
+        private void WriteListed(bool listed)
+        {
+            DisplayStyle single = listed ? DisplayStyle.None : DisplayStyle.Flex;
+            DisplayStyle choosing = listed ? DisplayStyle.Flex : DisplayStyle.None;
+            _layout.TowerLevel.style.display = single;
+            _layout.TowerTitle.style.display = single;
+            _layout.TowerDescription.style.display = single;
+            _layout.TowerRecipe.style.display = single;
+            _layout.TowerChoices.style.display = choosing;
+            _layout.TowerPick.style.display = choosing;
+            _layout.TowerPanel.EnableInClassList(ChoosingClass, listed);
+            _listed = listed;
+            _shownUpgrade = null;
+        }
+
         private void Refresh(UpgradeDefinition upgrade, UpgradeOffer offer)
         {
+            bool listed = _choices.Count > 1;
+            if (listed != _listed)
+            {
+                WriteListed(listed);
+            }
+
             if (upgrade != _shownUpgrade || offer.CurrentLevel != _shownLevel)
             {
                 int level = offer.CurrentLevel + 1;
                 DressFor(upgrade.Station);
                 _layout.TowerName.text = _localization.Get(UiKeys.StationName(upgrade.Station));
-                _layout.TowerLevel.text = offer.MaxLevel > 1
-                    ? string.Format(_localization.Get(UiKeys.TowerLevel), level, offer.MaxLevel)
-                    : _localization.Get(UiKeys.UpgradeName(upgrade.Id));
-                _layout.TowerTitle.text = _localization.Get(UiKeys.UpgradeTitle(upgrade.Id, level));
-                _layout.TowerDescription.text = _localization.Get(UiKeys.UpgradeEffect(upgrade.Id, level));
+                if (!listed)
+                {
+                    _layout.TowerLevel.text = offer.MaxLevel > 1
+                        ? string.Format(_localization.Get(UiKeys.TowerLevel), level, offer.MaxLevel)
+                        : _localization.Get(UiKeys.UpgradeName(upgrade.Id));
+                    _layout.TowerTitle.text = _localization.Get(UiKeys.UpgradeTitle(upgrade.Id, level));
+                    _layout.TowerDescription.text = _localization.Get(UiKeys.UpgradeEffect(upgrade.Id, level));
+                }
+
                 _shownAffordable = !offer.CanAfford;
+            }
+
+            if (listed)
+            {
+                _list.Show(_choices, _materials);
             }
 
             _recipe.Show(offer.NextCost, _materials);

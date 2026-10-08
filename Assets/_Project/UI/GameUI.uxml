@@ -118,6 +118,7 @@
                     </ui:VisualElement>
                     <ui:Label name="tower-title" class="tower-panel__title" />
                     <ui:Label name="tower-description" class="tower-panel__text" />
+                    <ui:VisualElement name="tower-choices" class="tower-panel__choices" />
                     <ui:VisualElement class="tower-panel__footer">
                         <ui:VisualElement name="tower-confirm" class="hold">
                             <ui:VisualElement name="tower-ring" class="hold__ring">
@@ -127,6 +128,12 @@
                         </ui:VisualElement>
                         <ui:Label name="tower-need" class="recipe__need tower-panel__need" />
                         <ui:VisualElement name="tower-recipe" class="recipe" />
+                        <ui:VisualElement name="tower-pick" class="hint-row tower-panel__pick">
+                            <ui:VisualElement name="tower-pick-glyph" class="glyph glyph--small">
+                                <ui:Label name="tower-pick-glyph-label" class="glyph__label" />
+                            </ui:VisualElement>
+                            <ui:Label name="tower-pick-word" class="hint-row__word" />
+                        </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>

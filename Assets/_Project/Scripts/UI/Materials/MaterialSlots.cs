@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.UIElements;
 using MoonProject.Core;
+using MoonProject.Gameplay;
 
 namespace MoonProject.UI
 {
@@ -108,6 +109,21 @@ namespace MoonProject.UI
             {
                 slot.Root.EnableInClassList(ShortClass, isShort);
                 slot.Short = isShort;
+            }
+        }
+
+        /// <summary>
+        /// Shows <paramref name="recipe"/>: only the materials it uses, each with its amount, the ones
+        /// <paramref name="status"/> is short of dimmed.
+        /// </summary>
+        public void ShowRecipe(Recipe recipe, RecipeStatus status)
+        {
+            for (int i = 0; i < Materials.Count; i++)
+            {
+                SalvageMaterial material = Materials.At(i);
+                SetShown(material, status.Uses(material));
+                SetCount(material, recipe.Of(material));
+                SetShort(material, status.IsShort(material));
             }
         }
 

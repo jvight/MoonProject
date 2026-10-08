@@ -15,7 +15,8 @@ namespace MoonProject.UI
     /// title while 07 wakes, context prompts only the first few times, a reticle only while aiming, the materials chip
     /// only when the stock changes, the hold ring at a salvage cut and a site's name the first time it answers the
     /// sonar, a story card per relic brought home, crew log found and cassette collected, the station upgrade panel
-    /// with its recipe, a few warm pips over a broken friend while 07 is near, its name and its crew log when it wakes,
+    /// with its recipe (a list to pick from at Kenji's bench), a few warm pips over a broken friend while 07 is
+    /// near, its name and its crew log when it wakes,
     /// the radio's ticker line along the bottom, the station's name when Bell's dial is turned, the relay network's
     /// price tag, hop list and soft hop fade, and the pause menu with settings. It registers
     /// <see cref="ILocalization"/> and owns the cursor and the UI's save sections. Everything animates on unscaled time
@@ -345,7 +346,8 @@ namespace MoonProject.UI
             _title.Tick(hudTime);
             _reticle.Tick(deltaTime, _services.Tether.State, input.TetherHeld);
             _card.Tick(hudTime, _glyphs.Cancel(device), device, !_ticker.IsVisible && !hopping && !_hopList.IsBusy);
-            _tower.Tick(hudTime, !paused, input.ExcavateHeld, _glyphs.For(RoverAction.Excavate, device));
+            _tower.Tick(hudTime, !paused, input.ExcavateHeld, input.Winch,
+                _services.Tether.State == TetherAimState.Towing, _glyphs.For(RoverAction.Excavate, device), device);
             _chip.SetPinned(_tower.IsVisible || _relayTag.IsVisible);
             _chip.Tick(deltaTime);
             bool cutting = _services.Salvage.IsCutting;
