@@ -12,12 +12,12 @@ namespace MoonProject.Gameplay
     /// grants rover abilities through <see cref="IRoverAbilities"/>) and the radio program, initialises the gameplay
     /// parts in dependency order (salvage sites, the relics in their hearts, excavation, tether, home, radio tower,
     /// workshop, friends, cassettes, log caches, sonar, Bell's signals, the cassette shelf, the relay network),
-    /// registers the services other domains read (<see cref="IMaterialStock"/>, <see cref="ITetherAim"/>,
-    /// <see cref="IUpgradeShop"/>, <see cref="IInteractionHints"/>, <see cref="IFriendRoster"/>,
-    /// <see cref="IFriendStatuses"/>, <see cref="IRadioProgram"/>, <see cref="IStationReach"/>,
-    /// <see cref="IRadioHop"/>, <see cref="IRelayStatus"/>) and the save sections, announces the radio's signal
-    /// radius and, once the save is loaded, the radio program, and
-    /// owns the shared glow meshes. The radio-hop moves 07 through Core's <see cref="IRoverPlacement"/> when the Rover
+    /// registers the services other domains read (<see cref="IMaterialStock"/>, <see cref="ISalvageStatus"/>,
+    /// <see cref="ITetherAim"/>, <see cref="IUpgradeShop"/>, <see cref="IInteractionHints"/>,
+    /// <see cref="IFriendRoster"/>, <see cref="IFriendStatuses"/>, <see cref="IRadioProgram"/>,
+    /// <see cref="IStationReach"/>, <see cref="IRadioHop"/>, <see cref="IRelayStatus"/>) and the save sections,
+    /// announces the radio's signal radius and, once the save is loaded, the radio program, and owns the shared glow
+    /// meshes. The radio-hop moves 07 through Core's <see cref="IRoverPlacement"/> when the Rover
     /// domain registers it.
     /// </summary>
     [DisallowMultipleComponent]
@@ -170,6 +170,7 @@ namespace MoonProject.Gameplay
             Hints = new InteractionHints(services.Rover, _sonar, _excavation, _salvage, _tether, _home, stations,
                 Upgrades, _friends, _relays);
             context.Register<IMaterialStock>(Materials);
+            context.Register<ISalvageStatus>(_salvage);
             context.Register<ITetherAim>(_tether);
             context.Register<IUpgradeShop>(Shop);
             context.Register<IInteractionHints>(Hints);

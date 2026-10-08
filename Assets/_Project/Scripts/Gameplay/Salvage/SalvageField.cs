@@ -20,10 +20,11 @@ namespace MoonProject.Gameplay
     /// lie loose and the beam can cut them. When every piece is gone the skeleton stays, picked clean for good. Along
     /// Kestrel-3's debris trail, loose bits glint and fold into 07 as it drives through (<see cref="SalvageTrail"/>).
     /// A relic in a site's heart is dug by the excavation: whichever 07 looks at more directly, the heart or a piece,
-    /// is what the hold works on. Everything is built at initialisation; the frame loop allocates nothing.
+    /// is what the hold works on. It is the <see cref="ISalvageStatus"/> the UI's hold ring and the audio's beam
+    /// read. Everything is built at initialisation; the frame loop allocates nothing.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class SalvageField : MonoBehaviour
+    public sealed class SalvageField : MonoBehaviour, ISalvageStatus
     {
         /// <summary>Half-angle (degrees) inside which a relic's heart competes with the pieces for the hold.</summary>
         private const float HeartCone = 90f;
@@ -81,6 +82,19 @@ namespace MoonProject.Gameplay
 
         /// <summary>True while salvage owns the Excavate hold (a piece is picked or being cut).</summary>
         public bool ClaimsHold => Candidate != null || _cutting != null;
+
+        public bool HasTarget => Aimed != null;
+
+        public Vector3 CutPoint => Aimed != null ? Aimed.CutPosition : Vector3.zero;
+
+        public bool IsCutting => _cutting != null;
+
+        public float Progress => Aimed != null ? Aimed.Progress : 0f;
+
+        public SalvageMaterial Material => Aimed != null ? Aimed.Material : default;
+
+        /// <summary>The piece under the beam, else the one a hold would cut, else null.</summary>
+        private SalvagePiece Aimed => _cutting ?? Candidate;
 
         /// <summary>Current cutting beam brightness (tests and debugging views).</summary>
         public float BeamLevel => _beam != null ? _beam.Level : 0f;

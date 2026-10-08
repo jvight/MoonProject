@@ -58,6 +58,13 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(InteractionKind.Salvage, _fixture.Gameplay.Hints.Primary.Kind, "the hold-to-cut prompt");
             Assert.IsTrue(_fixture.Rover.TryGetGaze(salvage, out _, out int glance));
             Assert.AreEqual(GazePriorities.Interest, glance, "07 looks at the piece it could cut");
+            var status = _fixture.Bootstrap.Context.Get<ISalvageStatus>();
+            Assert.AreSame(salvage, status, "registered for the UI's hold ring and the audio's beam");
+            Assert.IsTrue(status.HasTarget);
+            Assert.Less(Vector3.Distance(metal.CutPosition, status.CutPoint), 1e-4f);
+            Assert.IsFalse(status.IsCutting);
+            Assert.AreEqual(0f, status.Progress);
+            Assert.AreEqual(SalvageMaterial.Metal, status.Material);
 
             Press(_keyboard.eKey);
             yield return Waits.Until(() => _fixture.Events.SalvageCutStarted.Count > 0, PressTimeout);
@@ -68,6 +75,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(1, _fixture.Rover.HoldStillCount, "holding the beam asks 07 to hold still");
             Assert.IsTrue(_fixture.Rover.TryGetGaze(salvage, out _, out int focus));
             Assert.AreEqual(GazePriorities.Focus, focus);
+            Assert.IsTrue(status.IsCutting);
 
             yield return new WaitForSeconds(0.4f * metal.CutSeconds);
             Assert.Greater(salvage.BeamLevel, 0.8f, "the beam is on");
@@ -81,6 +89,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(0, _fixture.Rover.HoldStillCount, "07 is free again");
             float kept = metal.Progress;
             Assert.That(kept, Is.InRange(0.2f, 0.6f));
+            Assert.IsFalse(status.IsCutting, "the hold let go");
+            Assert.AreEqual(kept, status.Progress, "the ring still shows how far the cut came");
             yield return new WaitForSeconds(0.5f);
             Assert.AreEqual(kept, metal.Progress, "progress is kept, nothing resets");
             Assert.AreEqual(SalvagePieceState.Attached, metal.State);
