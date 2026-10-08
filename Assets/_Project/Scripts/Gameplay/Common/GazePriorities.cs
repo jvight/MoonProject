@@ -2,11 +2,11 @@ namespace MoonProject.Gameplay
 {
     /// <summary>
     /// Priorities gameplay passes to <c>IRoverRig.SetGazeTarget</c>, matching the rover's attention ladder: higher
-    /// wins, so 07 glances at scrap, turns to a relic that answered, and fixes on what it is working on.
+    /// wins, so 07 glances at a glinting trail bit, turns to a site that answered, and fixes on what it is working on.
     /// </summary>
     public static class GazePriorities
     {
-        /// <summary>Passing interest: glinting scrap nearby.</summary>
+        /// <summary>Passing interest: a glinting pickup nearby.</summary>
         public const int Glance = 0;
 
         /// <summary>Something answered or is aimed at: a pinged relic, the tether's aimed target.</summary>

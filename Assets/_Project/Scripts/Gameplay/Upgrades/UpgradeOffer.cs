@@ -22,9 +22,10 @@ namespace MoonProject.Gameplay
         /// <summary>The next level on offer, or null when maxed.</summary>
         public UpgradeLevel Next => IsMaxed ? null : Definition.Levels[CurrentLevel];
 
-        public int NextCost => IsMaxed ? 0 : Definition.Levels[CurrentLevel].Cost;
+        /// <summary>The next level's recipe (free when maxed).</summary>
+        public Recipe NextCost => IsMaxed ? default : Definition.Levels[CurrentLevel].Recipe;
 
-        /// <summary>True when the wallet covers the next level.</summary>
+        /// <summary>True when 07's materials cover the next level's recipe.</summary>
         public bool CanAfford { get; }
     }
 }

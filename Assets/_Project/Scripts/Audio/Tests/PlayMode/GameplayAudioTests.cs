@@ -94,21 +94,26 @@ namespace MoonProject.Audio.PlayModeTests
         }
 
         [Test]
-        public void ScrapCollected_ClimbsThePentatonic_ThenWeavesOverTheTop()
+        public void SiteAnswered_EachSiteOnItsNote_WarmerWhileItHoldsARelic()
         {
-            string[] expected =
-            {
-                "scrap_chime_D5", "scrap_chime_E5", "scrap_chime_Fs5", "scrap_chime_A5", "scrap_chime_B5",
-                "scrap_chime_D6", "scrap_chime_E6", "scrap_chime_Fs6", "scrap_chime_E6", "scrap_chime_D6",
-                "scrap_chime_B5", "scrap_chime_D6", "scrap_chime_E6", "scrap_chime_Fs6", "scrap_chime_E6",
-            };
+            var depot = new Vector3(30f, 0f, 20f);
+            _rig.Events.Publish(new SiteAnswered("site.depot", depot, 30f, false));
+            AssertLastPlayed("site_answer_depot", depot);
 
-            for (int step = 0; step < expected.Length; step++)
-            {
-                _rig.Events.Publish(new ScrapCollected(Vector3.one * step, 1, step));
-                AssertLastPlayed(expected[step], Vector3.one * step);
-                Assert.AreEqual(1f, Last.pitch, 1e-6f, "chimes stay in key: no pitch variance");
-            }
+            var kestrel = new Vector3(-200f, 0f, 160f);
+            _rig.Events.Publish(new SiteAnswered("site.kestrel", kestrel, 250f, true));
+            Assert.AreEqual("site_answer_kestrel_relic", Last.clip.name, "a relic still waits there: warmer");
+            Assert.Less(Vector3.Distance(kestrel, Last.transform.position), 1e-4f);
+            Assert.AreEqual(1f, Last.spatialBlend);
+        }
+
+        [Test]
+        public void SiteAnswered_UnknownSite_IsReportedAndSilent()
+        {
+            int plays = _rig.Director.PlayCount;
+            LogAssert.Expect(LogType.Error, new Regex("no answer voice for site 'site.nowhere'"));
+            _rig.Events.Publish(new SiteAnswered("site.nowhere", Vector3.zero, 10f, false));
+            Assert.AreEqual(plays, _rig.Director.PlayCount);
         }
 
         [UnityTest]

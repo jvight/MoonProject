@@ -15,7 +15,7 @@ namespace MoonProject.UI.PlayModeTests
 {
     /// <summary>
     /// The driving HUD end to end: prompts appear only near usable things and only a few times, the reticle only while
-    /// aiming, the scrap chip only on change, the memory card after a deposit, and the tower panel buys only on a
+    /// aiming, the materials chip only on change, the memory card after a deposit, and the tower panel buys only on a
     /// deliberate hold.
     /// </summary>
     public sealed class HudTests : InputTestFixture
@@ -123,22 +123,26 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator ScrapChip_DriftsInOnAChange_CountsUp_AndLeaves()
+        public IEnumerator MaterialsChip_DriftsInOnAGain_ThatMaterialGlows_CountsUp_AndLeaves()
         {
             Boot();
-            yield return null;
-            _rig.Fakes.SetBalance(0);
-            yield return Seconds(0.2f);
-            Assert.IsFalse(_rig.Ui.Chip.IsVisible, "a balance without a change (a loaded save) shows nothing");
+            _rig.Fakes.SetMaterials(5, 2, 1);
+            yield return Seconds(0.3f);
+            Assert.IsFalse(_rig.Ui.Chip.IsVisible, "the stock a save loads with shows nothing");
+            Assert.AreEqual("5", _rig.Ui.Chip.Slots.Text(SalvageMaterial.Metal), "but is taken as it is");
 
-            _rig.Fakes.SetBalance(9);
-            yield return Seconds(0.2f);
+            _rig.Fakes.SetMaterials(5, 6, 1);
+            yield return Seconds(0.15f);
             Assert.IsTrue(_rig.Ui.Chip.IsVisible);
-            Assert.Less(_rig.Ui.Chip.Shown, 9, "it counts rather than jumps");
-            yield return Seconds(1.5f);
-            Assert.AreEqual(9, _rig.Ui.Chip.Shown);
-            Assert.AreEqual("9", _rig.Ui.Layout.ScrapChipCount.text);
-            yield return Seconds(_rig.Tuning.ScrapChip.LingerSeconds + _rig.Tuning.ScrapChip.Reveal.FadeOut + 0.3f);
+            Assert.Greater(_rig.Ui.Chip.Glow(SalvageMaterial.Wiring), 0f, "the wiring that grew glows");
+            Assert.AreEqual(0f, _rig.Ui.Chip.Glow(SalvageMaterial.Metal), "the others stay calm");
+            Assert.Less(_rig.Ui.Chip.Shown(SalvageMaterial.Wiring), 6, "it counts rather than jumps");
+            yield return Seconds(_rig.Tuning.MaterialsChip.PulseSeconds + 0.3f);
+            Assert.AreEqual("6", _rig.Ui.Chip.Slots.Text(SalvageMaterial.Wiring));
+            Assert.AreEqual(0f, _rig.Ui.Chip.Glow(SalvageMaterial.Wiring), "the glow settles");
+
+            yield return Seconds(_rig.Tuning.MaterialsChip.LingerSeconds +
+                                 _rig.Tuning.MaterialsChip.Reveal.FadeOut + 0.3f);
             Assert.IsFalse(_rig.Ui.Chip.IsVisible, "then it leaves the screen to the moon");
         }
 
@@ -172,7 +176,8 @@ namespace MoonProject.UI.PlayModeTests
             Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
             Boot();
             yield return null;
-            _rig.Fakes.SetBalance(20);
+            _rig.Fakes.Upgrade = _rig.TestTower();
+            _rig.Fakes.SetMaterials(3, 1, 0);
             Press(keyboard.eKey);
             _rig.Fakes.AtStation = true;
             yield return Seconds(2f);
@@ -180,9 +185,15 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual(0, _rig.Fakes.Purchases, "arriving with the button already held buys nothing");
             Assert.AreEqual("Wake the old mast", _rig.Ui.Layout.TowerTitle.text);
             Assert.AreEqual("Level 1 of 3", _rig.Ui.Layout.TowerLevel.text);
-            Assert.AreEqual("20", _rig.Ui.Layout.ScrapChipCount.text, "the pinned chip shows the balance");
-            Assert.AreEqual("15", _rig.Ui.Layout.TowerCost.text);
-            Assert.IsTrue(_rig.Ui.Chip.IsVisible, "the balance stays in view at the pad");
+            MaterialSlots recipe = _rig.Ui.Tower.Recipe.Slots;
+            Assert.AreEqual("2", recipe.Text(SalvageMaterial.Metal));
+            Assert.AreEqual("1", recipe.Text(SalvageMaterial.Wiring));
+            Assert.AreEqual(DisplayStyle.None, recipe.Root(SalvageMaterial.Optics).resolvedStyle.display,
+                "a material the recipe does not use is left out");
+            Assert.IsFalse(recipe.Root(SalvageMaterial.Metal).ClassListContains(MaterialSlots.ShortClass));
+            Assert.AreEqual(DisplayStyle.None, _rig.Ui.Layout.TowerNeed.resolvedStyle.display, "nothing is short");
+            Assert.AreEqual("3", _rig.Ui.Chip.Slots.Text(SalvageMaterial.Metal), "the pinned chip shows the stock");
+            Assert.IsTrue(_rig.Ui.Chip.IsVisible, "the stock stays in view at the pad");
 
             Release(keyboard.eKey);
             yield return Seconds(0.2f);
@@ -198,9 +209,15 @@ namespace MoonProject.UI.PlayModeTests
             Release(keyboard.eKey);
             yield return Seconds(0.3f);
             Assert.AreEqual("Raise the mast", _rig.Ui.Layout.TowerTitle.text, "the next level is offered");
+            Assert.IsTrue(recipe.Root(SalvageMaterial.Metal).ClassListContains(MaterialSlots.ShortClass),
+                "what 07 is short of reads dimmed");
+            Assert.IsTrue(recipe.Root(SalvageMaterial.Optics).ClassListContains(MaterialSlots.ShortClass));
             Assert.AreEqual(DisplayStyle.Flex, _rig.Ui.Layout.TowerNeed.resolvedStyle.display,
-                "and the panel says how much scrap is still to gather");
-            StringAssert.StartsWith("35 more scrap", _rig.Ui.Layout.TowerNeed.text);
+                "and one quiet line says what to salvage");
+            Assert.AreEqual(string.Format(Text(UiKeys.RecipeNeed), 3, Text(UiKeys.MaterialName(SalvageMaterial.Metal))),
+                _rig.Ui.Layout.TowerNeed.text);
+            Assert.AreEqual(DisplayStyle.None, _rig.Ui.Layout.TowerConfirm.resolvedStyle.display,
+                "the hold waits until the recipe is covered");
 
             _rig.Fakes.AtStation = false;
             yield return Seconds(1f);
@@ -233,7 +250,7 @@ namespace MoonProject.UI.PlayModeTests
         {
             Boot();
             yield return null;
-            _rig.Fakes.SetBalance(500);
+            _rig.Fakes.SetMaterials(50, 50, 50);
             _rig.Fakes.AtStation = true;
             yield return Seconds(1f);
             UiLayout layout = _rig.Ui.Layout;
@@ -256,27 +273,34 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator RelayTag_ShowsTheCost_DimmedWhenShort_AndRestsOnTheRestorePrompt()
+        public IEnumerator RelayTag_ShowsTheRecipe_DimmedWhereShort_AndRestsOnTheRestorePrompt()
         {
             InputSystem.AddDevice<Keyboard>();
             Boot();
             Events.Publish(new RoverAwoke(Vector3.zero, false));
-            _rig.Fakes.NextCost = 90;
-            _rig.Fakes.SetBalance(10);
+            _rig.Fakes.NextCost = new Recipe(6, 4, 0);
+            _rig.Fakes.SetMaterials(2, 4, 0);
             var socket = new Vector3(0f, 0f, 8f);
             _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Restore, socket, false);
             yield return Seconds(1.5f);
-            Assert.IsTrue(_rig.Ui.RelayTag.IsVisible, "holding the part at the mast: its price shows");
-            Assert.AreEqual("90", _rig.Ui.Layout.RelayTagCost.text);
-            Assert.IsTrue(_rig.Ui.RelayTag.IsShort, "short of scrap: the cost is dimmed");
+            Assert.IsTrue(_rig.Ui.RelayTag.IsVisible, "holding the part at the mast: its recipe shows");
+            MaterialSlots recipe = _rig.Ui.RelayTag.Recipe.Slots;
+            Assert.AreEqual("6", recipe.Text(SalvageMaterial.Metal));
+            Assert.IsTrue(recipe.Root(SalvageMaterial.Metal).ClassListContains(MaterialSlots.ShortClass),
+                "short of metal: it reads dimmed");
+            Assert.IsFalse(recipe.Root(SalvageMaterial.Wiring).ClassListContains(MaterialSlots.ShortClass),
+                "the wiring 07 has enough of reads normally");
+            Assert.AreEqual(string.Format(Text(UiKeys.RecipeNeed), 4, Text(UiKeys.MaterialName(SalvageMaterial.Metal))),
+                _rig.Ui.Layout.RelayTagNeed.text);
             Assert.IsFalse(_rig.Ui.Prompt.IsVisible, "and nothing nags");
 
-            _rig.Fakes.SetBalance(120);
+            _rig.Fakes.SetMaterials(8, 5, 0);
             _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Restore, socket, true);
             yield return Seconds(1.5f);
             Assert.IsTrue(_rig.Ui.Prompt.IsVisible);
             Assert.AreEqual(Text(UiKeys.Hint(InteractionKind.Restore)), _rig.Ui.Layout.PromptWord.text);
-            Assert.IsFalse(_rig.Ui.RelayTag.IsShort);
+            Assert.IsFalse(recipe.Root(SalvageMaterial.Metal).ClassListContains(MaterialSlots.ShortClass));
+            Assert.AreEqual(DisplayStyle.None, _rig.Ui.Layout.RelayTagNeed.resolvedStyle.display);
             Assert.LessOrEqual(_rig.Ui.Layout.RelayTag.worldBound.yMax, _rig.Ui.Layout.Prompt.worldBound.yMin + 1f,
                 "the tag rests on top of the prompt, never over it");
 
@@ -291,6 +315,66 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual(1, _rig.Ui.Ledger.Used(InteractionKind.Restore));
             Assert.IsFalse(_rig.Ui.RelayTag.IsVisible);
             Assert.IsFalse(_rig.Ui.Prompt.IsVisible);
+        }
+
+        [UnityTest]
+        public IEnumerator Salvage_CutPromptThenARing_ThatKeepsItsProgress()
+        {
+            InputSystem.AddDevice<Keyboard>();
+            Boot();
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            var cut = new Vector3(0.5f, 0.6f, 6f);
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Salvage, cut, true);
+            _rig.Fakes.HasTarget = true;
+            _rig.Fakes.CutPoint = cut;
+            _rig.Fakes.Material = SalvageMaterial.Optics;
+            yield return Seconds(1.5f);
+            Assert.IsTrue(_rig.Ui.Prompt.IsVisible, "aimed at a piece: the cut is taught");
+            Assert.AreEqual(Text(UiKeys.Hint(InteractionKind.Salvage)), _rig.Ui.Layout.PromptWord.text);
+            Assert.IsFalse(_rig.Ui.SalvageRing.IsVisible, "no ring before there is a cut to show");
+
+            _rig.Fakes.IsCutting = true;
+            _rig.Fakes.CutProgress = 0.3f;
+            yield return Seconds(0.8f);
+            Assert.IsTrue(_rig.Ui.SalvageRing.IsVisible);
+            Assert.AreEqual(0.3f, _rig.Ui.SalvageRing.Progress, 1e-3f);
+            Assert.AreEqual(SalvageMaterial.Optics, _rig.Ui.SalvageRing.ShownMaterial, "it says what the piece yields");
+            Assert.AreEqual(1, _rig.Ui.Ledger.Used(InteractionKind.Salvage), "cutting is doing it");
+            Assert.IsFalse(_rig.Ui.Prompt.IsVisible, "the prompt bows out once the beam cuts");
+
+            _rig.Fakes.IsCutting = false;
+            _rig.Fakes.CutProgress = 0.55f;
+            yield return Seconds(1f);
+            Assert.IsTrue(_rig.Ui.SalvageRing.IsVisible, "let go halfway: the ring keeps the progress");
+            Assert.AreEqual(0.55f, _rig.Ui.SalvageRing.Progress, 1e-3f);
+
+            _rig.Fakes.HasTarget = false;
+            _rig.Fakes.PrimaryHint = InteractionHint.None;
+            yield return Seconds(1f);
+            Assert.IsFalse(_rig.Ui.SalvageRing.IsVisible, "aimed away: it eases off");
+        }
+
+        [UnityTest]
+        public IEnumerator Site_NamesItselfTheFirstTimeItAnswers_Once()
+        {
+            Boot();
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            yield return Seconds(0.5f);
+            Events.Publish(new SiteAnswered("site.depot", new Vector3(0f, 0f, 40f), 40f, true));
+            yield return Seconds(_rig.Tuning.Salvage.SiteName.FadeIn + 0.2f);
+            Assert.IsTrue(_rig.Ui.SiteName.IsVisible);
+            Assert.AreEqual(Text(UiKeys.SiteName("site.depot")), _rig.Ui.Layout.SiteName.text);
+            Events.Publish(new SiteAnswered("site.kestrel", new Vector3(30f, 0f, 60f), 70f, false));
+            Assert.AreEqual("site.depot", _rig.Ui.SiteName.Current, "one name at a time");
+
+            yield return Seconds(_rig.Tuning.Salvage.SiteNameHoldSeconds + _rig.Tuning.Salvage.SiteName.FadeOut + 0.5f);
+            Assert.IsFalse(_rig.Ui.SiteName.IsVisible);
+            Events.Publish(new SiteAnswered("site.depot", new Vector3(0f, 0f, 40f), 40f, true));
+            yield return Seconds(0.3f);
+            Assert.IsFalse(_rig.Ui.SiteName.IsVisible, "a site is named once");
+            Events.Publish(new SiteAnswered("site.kestrel", new Vector3(30f, 0f, 60f), 70f, false));
+            yield return Seconds(0.3f);
+            Assert.AreEqual("site.kestrel", _rig.Ui.SiteName.Current, "the one that waited gets its turn");
         }
 
         [UnityTest]

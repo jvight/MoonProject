@@ -6,11 +6,9 @@ namespace MoonProject.Gameplay
     /// </summary>
     public static class GameplaySaveKeys
     {
-        public const string Wallet = "gameplay.wallet";
-        public const int WalletVersion = 1;
-
-        public const string Scrap = "gameplay.scrap";
-        public const int ScrapVersion = 1;
+        /// <summary>07's salvaged materials; the scrap wallet's key (version 1), so an old balance migrates.</summary>
+        public const string Materials = "gameplay.wallet";
+        public const int MaterialsVersion = 2;
 
         public const string Relics = "gameplay.relics";
         public const int RelicsVersion = 1;
@@ -32,5 +30,8 @@ namespace MoonProject.Gameplay
 
         public const string Relays = "gameplay.relays";
         public const int RelaysVersion = 1;
+
+        public const string Salvage = "gameplay.salvage";
+        public const int SalvageVersion = 1;
     }
 }

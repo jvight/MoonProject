@@ -181,7 +181,9 @@ namespace MoonProject.World.Tests
             {
                 Vector3 p = chunk.Vertices[triangle * 3 + k].Position + chunk.Origin;
                 SurfaceSample sample = _surface.Sample(p.x, p.z);
-                if (sample.CraterBowl > 0f || sample.CraterRim > 0f || sample.CanyonFloor > 0f)
+                // Kestrel-3's scorch (M3-13) is a deliberate dark scar like a crater's shaded wall: its soft edge spans
+                // several facets, yet steps more within one than the open floor's patches do.
+                if (sample.CraterBowl > 0f || sample.CraterRim > 0f || sample.CanyonFloor > 0f || sample.Scorch > 0f)
                 {
                     return false;
                 }

@@ -32,7 +32,7 @@ namespace MoonProject.Audio
         [Tooltip("Rover hum, dust crunch and suspension creaks.")]
         [SerializeField] private RoverAudio _roverAudio;
 
-        [Tooltip("Sonar, relics, scrap, tether, excavation, shelf and upgrade sounds.")]
+        [Tooltip("Sonar, relic and site answers, tether, excavation, shelf and upgrade sounds.")]
         [SerializeField] private GameplayAudio _gameplay;
 
         [Tooltip("Hover-Jump charge, leap, airborne wind and cushioned landing.")]
@@ -61,6 +61,9 @@ namespace MoonProject.Audio
 
         [Tooltip("The relay masts: repair beat, link answer, lamp hum.")]
         [SerializeField] private RelayAudio _relays;
+
+        [Tooltip("Salvage: the cutting beam, the break-off and the salvage melody.")]
+        [SerializeField] private SalvageAudio _salvage;
 
         private readonly AudioBusMixer _buses = new AudioBusMixer();
         private readonly LoopFader _pause = new LoopFader();
@@ -159,6 +162,7 @@ namespace MoonProject.Audio
             _ambience.Initialize(this, _soundscape, _mixTuning.AmbienceFadeIn);
             _smallSounds.Initialize(context, this, _soundscape);
             _relays.Initialize(context, this);
+            _salvage.Initialize(context, this);
         }
 
         /// <summary>Resolves a cue id once (call at initialisation); logs and returns an invalid handle if
@@ -182,7 +186,7 @@ namespace MoonProject.Audio
         }
 
         /// <summary>Plays variant <paramref name="variant"/> (clamped to the cue's clips) of <paramref name="cue"/> in
-        /// 3D, e.g. the chime note of a scrap combo step.</summary>
+        /// 3D, e.g. the chime note of a salvage combo step.</summary>
         public void PlayVariantAt(CueHandle cue, int variant, Vector3 position, float volumeScale = 1f)
         {
             Play(cue, _spatial, position, volumeScale, 1f, Mathf.Max(0, variant), 0f, 0f);
@@ -275,7 +279,7 @@ namespace MoonProject.Audio
         internal void Wire(AudioLibrary library, AudioMixTuning mixTuning, RoverAudio roverAudio,
             JumpAudio jump, GameplayAudio gameplay, FriendAudio friends, UiAudio ui, RadioStation radio,
             AmbienceBed ambience, CanyonAmbience canyon, Soundscape soundscape, RoverSmallSounds smallSounds,
-            RelayAudio relays)
+            RelayAudio relays, SalvageAudio salvage)
         {
             _jump = jump;
             _friends = friends;
@@ -290,6 +294,7 @@ namespace MoonProject.Audio
             _soundscape = soundscape;
             _smallSounds = smallSounds;
             _relays = relays;
+            _salvage = salvage;
         }
 
         private void Update()
@@ -424,6 +429,7 @@ namespace MoonProject.Audio
             ok &= Require(_soundscape, nameof(_soundscape));
             ok &= Require(_smallSounds, nameof(_smallSounds));
             ok &= Require(_relays, nameof(_relays));
+            ok &= Require(_salvage, nameof(_salvage));
             if (_library != null)
             {
                 string problem = _library.FindProblem();

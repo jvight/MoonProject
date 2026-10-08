@@ -2,7 +2,7 @@ namespace MoonProject.Gameplay
 {
     /// <summary>
     /// Small seeded xorshift generator for content placement: the same seed always yields the same sequence, so
-    /// scrap fields and relic sites are identical on every run (no global random state).
+    /// planned friend sites, relay parts and basin tapes are identical on every run (no global random state).
     /// </summary>
     public struct DeterministicRandom
     {

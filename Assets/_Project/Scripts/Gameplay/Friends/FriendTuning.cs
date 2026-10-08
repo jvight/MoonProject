@@ -65,7 +65,7 @@ namespace MoonProject.Gameplay
         [Tooltip("Idle turn (degrees per second) of a waiting part.")]
         [Range(0f, 180f)] [SerializeField] private float _partSpin = 30f;
 
-        [Tooltip("A part within this many metres of 07 drifts in (a little closer than scrap: softer).")]
+        [Tooltip("A part within this many metres of 07 drifts in (close: softer than the salvage trail).")]
         [Range(1f, 15f)] [SerializeField] private float _partMagnetRadius = 4.5f;
 
         [Tooltip("Flight time (s) of a part right next to 07.")]
@@ -270,7 +270,7 @@ namespace MoonProject.Gameplay
         [Range(100, 200000)] [SerializeField] private int _pathMaxNodes = 40000;
 
         [Header("Spotter")]
-        [Tooltip("Undiscovered relics, parts and scrap within this many metres of 07 catch its eye.")]
+        [Tooltip("Undiscovered salvage sites and parts within this many metres of 07 catch its eye.")]
         [Range(5f, 100f)] [SerializeField] private float _spotRadius = 40f;
 
         [Tooltip("Height (m) it hovers above what it spotted.")]

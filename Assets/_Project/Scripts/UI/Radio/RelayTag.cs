@@ -7,35 +7,32 @@ using MoonProject.Gameplay;
 namespace MoonProject.UI
 {
     /// <summary>
-    /// The price tag at a dark relay mast (docs/features/M3-06): while 07 holds the mast's part beside it, a small
-    /// glass chip floats over the part socket with the scrap nut inside a ring and the scrap the restoration costs
-    /// (<see cref="IRelayStatus.NextCost"/>). The ring fills as Interact is held
-    /// (<see cref="IRelayStatus.RestoreHold"/>). When the scrap is not there yet the cost is simply dimmed: no words,
-    /// no nagging. Unlike the Restore prompt, which teaches the action only the first few times, a price is shown at
-    /// every mast. It rests on top of the Restore prompt when that shares its point, and hides while the socket is off
-    /// screen.
+    /// The price tag at a dark relay mast (docs/features/M3-06, M3-13): while 07 holds the mast's part beside it, a
+    /// small glass chip floats over the part socket with a little mast inside a ring and the restoration's recipe in
+    /// materials (<see cref="IRelayStatus.NextCost"/>, shown by <see cref="RecipeView"/>). The ring fills as
+    /// Interact is held (<see cref="IRelayStatus.RestoreHold"/>). A material 07 is short of is dimmed, with one quiet
+    /// need line under it: no nagging. Unlike the Restore prompt, which teaches the action only the first few times,
+    /// the recipe is shown at every mast. It rests on top of the Restore prompt when that shares its point, and hides
+    /// while the socket is off screen.
     /// </summary>
     internal sealed class RelayTag
     {
-        public const string ShortClass = "relay-tag--short";
-
         private const float RaiseEpsilon = 0.5f;
 
         private readonly RelaySettings _settings;
         private readonly IInteractionHints _hints;
         private readonly IRelayStatus _relays;
-        private readonly IntText _numbers;
+        private readonly IMaterialStock _materials;
+        private readonly RecipeView _recipe;
         private readonly Reveal _reveal;
         private readonly WorldAnchor _anchor;
         private readonly VisualElement _chip;
-        private readonly Label _cost;
         private readonly ProgressRingPainter _ring;
-        private int _writtenCost = -1;
-        private bool _writtenShort;
         private float _writtenRaise = -1f;
 
         public RelayTag(UiLayout layout, RelaySettings settings, PromptSettings anchoring, IInteractionHints hints,
-            IRelayStatus relays, IViewCamera view, IntText numbers)
+            IRelayStatus relays, IMaterialStock materials, ILocalization localization, IViewCamera view,
+            IntText numbers)
         {
             if (layout == null)
             {
@@ -50,22 +47,22 @@ namespace MoonProject.UI
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _hints = hints ?? throw new ArgumentNullException(nameof(hints));
             _relays = relays ?? throw new ArgumentNullException(nameof(relays));
-            _numbers = numbers ?? throw new ArgumentNullException(nameof(numbers));
+            _materials = materials ?? throw new ArgumentNullException(nameof(materials));
+            _recipe = new RecipeView(layout.RelayTagRecipe, layout.RelayTagNeed, localization, numbers);
             _chip = layout.RelayTag;
-            _cost = layout.RelayTagCost;
             _reveal = new Reveal(layout.RelayTag, settings.Tag);
             _reveal.Snap(false);
             _anchor = new WorldAnchor(layout.RelayTagAnchor, view, anchoring.ScreenMargin, anchoring.FollowHalfLife,
                 false);
             _ring = new ProgressRingPainter(layout.RelayTagRing);
             new ShadowPainter(layout.RelayTagShadow);
-            new ScrapIconPainter(layout.RelayTagIcon);
+            new RelayIconPainter(layout.RelayTagIcon);
         }
 
         public bool IsVisible => !_reveal.IsHidden;
 
-        /// <summary>True while the cost is shown dimmed (the scrap is not there yet).</summary>
-        public bool IsShort => _writtenShort;
+        /// <summary>The recipe on the tag (tests and captures).</summary>
+        public RecipeView Recipe => _recipe;
 
         /// <summary>The ring's fill (tests and captures).</summary>
         public float Hold => _ring.Progress;
@@ -87,7 +84,7 @@ namespace MoonProject.UI
                 deltaTime, _reveal.IsHidden);
             if (offered)
             {
-                Write(_relays.NextCost, !hint.Ready);
+                _recipe.Show(_relays.NextCost, _materials);
             }
 
             _ring.Progress = offered ? _relays.RestoreHold : 0f;
@@ -95,19 +92,10 @@ namespace MoonProject.UI
             _reveal.Tick(deltaTime);
         }
 
-        private void Write(int cost, bool isShort)
+        /// <summary>Re-reads the need line in the new language.</summary>
+        public void Relocalize()
         {
-            if (cost != _writtenCost)
-            {
-                _cost.text = _numbers.Get(cost);
-                _writtenCost = cost;
-            }
-
-            if (isShort != _writtenShort)
-            {
-                _chip.EnableInClassList(ShortClass, isShort);
-                _writtenShort = isShort;
-            }
+            _recipe.Relocalize();
         }
     }
 }

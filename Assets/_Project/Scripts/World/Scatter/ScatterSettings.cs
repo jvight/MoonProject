@@ -24,6 +24,11 @@ namespace MoonProject.World
         [Range(0f, 10f)]
         [SerializeField] private float _anchorClearance = 1.5f;
 
+        [Tooltip("Scorch weight (0..1) above which no rock lies: Kestrel-3's crater, its furrow and their dark " +
+            "halo stay clear for the debris gameplay lays along the trail.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _scorchClear = 0.05f;
+
         [Header("Driving lanes")]
         [Tooltip("Half width of the boulder-free lanes from the base to The Peak, the ramps, the bowls and the " +
             "extra bearings below, metres.")]
@@ -110,6 +115,7 @@ namespace MoonProject.World
         public float ExtentRadius => _extentRadius;
         public float PadClearance => _padClearance;
         public float AnchorClearance => _anchorClearance;
+        public float ScorchClear => _scorchClear;
         public float LaneHalfWidth => _laneHalfWidth;
         public float[] LaneBearings => _laneBearings;
         public float LaneKeptPebbles => _laneKeptPebbles;

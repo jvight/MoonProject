@@ -8,12 +8,12 @@ namespace MoonProject.UI.PlayModeTests
 {
     /// <summary>
     /// Everything the UI reads from the World, Rover, Audio and Gameplay domains, as one scriptable stand-in system
-    /// (initialised before the UI). Tests set the tether state, the gameplay hint, the wallet, the tower offer, the
-    /// radio program, the relay network and the radio-hop.
+    /// (initialised before the UI). Tests set the tether state, the gameplay hint, the material stock, the tower offer,
+    /// the radio program, the relay network, the radio-hop and the salvage cut.
     /// </summary>
     public sealed class FakeGameServices : MonoBehaviour, IGameSystem, IViewCamera, IAudioSettings, ILookSettings,
-        IScrapWallet, ITetherAim, IInteractionHints, IUpgradeShop, IRoverState, IFriendStatuses, IRadioProgram,
-        IRadioHop, IRelayStatus
+        IMaterialStock, ITetherAim, IInteractionHints, IUpgradeShop, IRoverState, IFriendStatuses, IRadioProgram,
+        IRadioHop, IRelayStatus, ISalvageStatus
     {
         private readonly float[] _volumes = { 1f, 1f, 1f, 1f };
         private readonly List<string> _tapes = new List<string>();
@@ -60,7 +60,26 @@ namespace MoonProject.UI.PlayModeTests
 
         public TetherAimState TetherState { get; set; }
 
-        public int Balance { get; private set; }
+        public int Metal { get; private set; }
+
+        public int Wiring { get; private set; }
+
+        public int Optics { get; private set; }
+
+        public int Total => Metal + Wiring + Optics;
+
+        public bool HasTarget { get; set; }
+
+        public Vector3 CutPoint { get; set; }
+
+        public bool IsCutting { get; set; }
+
+        /// <summary>The salvage cut's progress (<see cref="ISalvageStatus.Progress"/>; the hop has its own).</summary>
+        public float CutProgress { get; set; }
+
+        public SalvageMaterial Material { get; set; }
+
+        float ISalvageStatus.Progress => CutProgress;
 
         public TetherAimState State => TetherState;
 
@@ -114,7 +133,7 @@ namespace MoonProject.UI.PlayModeTests
 
         public int LitMasts { get; set; }
 
-        public int NextCost { get; set; } = 60;
+        public Recipe NextCost { get; set; } = new Recipe(2, 1, 0);
 
         public float RestoreHold { get; set; }
 
@@ -124,7 +143,7 @@ namespace MoonProject.UI.PlayModeTests
             context.Register<IViewCamera>(this);
             context.Register<IAudioSettings>(this);
             context.Register<ILookSettings>(this);
-            context.Register<IScrapWallet>(this);
+            context.Register<IMaterialStock>(this);
             context.Register<ITetherAim>(this);
             context.Register<IInteractionHints>(this);
             context.Register<IUpgradeShop>(this);
@@ -133,6 +152,7 @@ namespace MoonProject.UI.PlayModeTests
             context.Register<IRadioProgram>(this);
             context.Register<IRadioHop>(this);
             context.Register<IRelayStatus>(this);
+            context.Register<ISalvageStatus>(this);
         }
 
         /// <summary>The lit nodes the list will offer (their name keys), home first.</summary>
@@ -226,17 +246,33 @@ namespace MoonProject.UI.PlayModeTests
             return TillyStatus;
         }
 
-        /// <summary>Sets the balance and publishes the change like the real wallet.</summary>
-        public void SetBalance(int balance)
+        /// <summary>Sets the materials held and publishes the change like the real stock.</summary>
+        public void SetMaterials(int metal, int wiring, int optics)
         {
-            int delta = balance - Balance;
-            Balance = balance;
-            _events.Publish(new CurrencyChanged(balance, delta));
+            Metal = metal;
+            Wiring = wiring;
+            Optics = optics;
+            _events.Publish(new MaterialsChanged(metal, wiring, optics));
         }
 
-        public bool CanAfford(int cost)
+        public int Of(SalvageMaterial material)
         {
-            return Balance >= cost;
+            switch (material)
+            {
+                case SalvageMaterial.Metal:
+                    return Metal;
+                case SalvageMaterial.Wiring:
+                    return Wiring;
+                case SalvageMaterial.Optics:
+                    return Optics;
+                default:
+                    throw new System.ArgumentOutOfRangeException(nameof(material), material, "Unknown material.");
+            }
+        }
+
+        public bool Has(Recipe recipe)
+        {
+            return Metal >= recipe.Metal && Wiring >= recipe.Wiring && Optics >= recipe.Optics;
         }
 
         public float GetVolume(AudioBus bus)
@@ -274,7 +310,7 @@ namespace MoonProject.UI.PlayModeTests
             }
 
             bool maxed = UpgradeLevel >= Upgrade.MaxLevel;
-            offer = new UpgradeOffer(Upgrade, UpgradeLevel, !maxed && CanAfford(Upgrade.Levels[UpgradeLevel].Cost));
+            offer = new UpgradeOffer(Upgrade, UpgradeLevel, !maxed && Has(Upgrade.Levels[UpgradeLevel].Recipe));
             return true;
         }
 
@@ -302,7 +338,8 @@ namespace MoonProject.UI.PlayModeTests
 
             Purchases++;
             UpgradeLevel++;
-            SetBalance(Balance - offer.NextCost);
+            Recipe cost = offer.NextCost;
+            SetMaterials(Metal - cost.Metal, Wiring - cost.Wiring, Optics - cost.Optics);
             _events.Publish(new UpgradePurchased(upgradeId, UpgradeLevel));
             return PurchaseResult.Purchased;
         }
@@ -312,7 +349,7 @@ namespace MoonProject.UI.PlayModeTests
             if (AtStation && Upgrade != null && UpgradeLevel < Upgrade.MaxLevel)
             {
                 hint = new InteractionHint(InteractionKind.Upgrade, Vector3.zero,
-                    CanAfford(Upgrade.Levels[UpgradeLevel].Cost));
+                    Has(Upgrade.Levels[UpgradeLevel].Recipe));
                 return true;
             }
 

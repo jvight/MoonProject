@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
@@ -51,6 +52,7 @@ namespace MoonProject.UI.PlayModeTests
         private readonly GameObject _camera;
         private readonly GameObject _services;
         private readonly GameObject _ui;
+        private readonly List<UpgradeDefinition> _upgrades = new List<UpgradeDefinition>();
 
         private UiTestRig(GameObject camera, GameObject services, GameObject ui, UiTuning tuning,
             GameBootstrap bootstrap, string saveSlot)
@@ -120,6 +122,53 @@ namespace MoonProject.UI.PlayModeTests
 #endif
         }
 
+        /// <summary>The radio tower with three known recipes (2/1/0, 4/2/1, 6/4/2), whatever the content.</summary>
+        public UpgradeDefinition TestTower()
+        {
+            return UpgradeCosting(UpgradePath, new Recipe(2, 1, 0), new Recipe(4, 2, 1), new Recipe(6, 4, 2));
+        }
+
+        /// <summary>
+        /// A copy of the upgrade at <paramref name="path"/> whose levels cost exactly <paramref name="recipes"/>, so a
+        /// test reads the recipes it set whatever the content's tuning; destroyed with the rig.
+        /// </summary>
+        public UpgradeDefinition UpgradeCosting(string path, params Recipe[] recipes)
+        {
+            UpgradeDefinition copy = CopyCosting(path, recipes);
+            _upgrades.Add(copy);
+            return copy;
+        }
+
+        /// <summary>
+        /// A copy of the upgrade at <paramref name="path"/> whose levels cost exactly <paramref name="recipes"/>; the
+        /// caller destroys it.
+        /// </summary>
+        public static UpgradeDefinition CopyCosting(string path, params Recipe[] recipes)
+        {
+#if UNITY_EDITOR
+            UpgradeDefinition copy = Object.Instantiate(Load<UpgradeDefinition>(path));
+            var serialized = new SerializedObject(copy);
+            SerializedProperty levels = serialized.FindProperty("_levels");
+            if (levels.arraySize != recipes.Length)
+            {
+                throw new ArgumentException($"{path} has {levels.arraySize} levels, not {recipes.Length}.");
+            }
+
+            for (int i = 0; i < recipes.Length; i++)
+            {
+                SerializedProperty recipe = levels.GetArrayElementAtIndex(i).FindPropertyRelative("_recipe");
+                recipe.FindPropertyRelative("_metal").intValue = recipes[i].Metal;
+                recipe.FindPropertyRelative("_wiring").intValue = recipes[i].Wiring;
+                recipe.FindPropertyRelative("_optics").intValue = recipes[i].Optics;
+            }
+
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            return copy;
+#else
+            throw new NotSupportedException("UiTestRig edits assets through the editor's SerializedObject.");
+#endif
+        }
+
         /// <summary>Overrides one number of this rig's tuning copy (a serialized property path).</summary>
         public void Tune(string propertyPath, float value)
         {
@@ -145,6 +194,11 @@ namespace MoonProject.UI.PlayModeTests
             Object.DestroyImmediate(_services);
             Object.DestroyImmediate(_camera);
             Object.DestroyImmediate(Tuning);
+            foreach (UpgradeDefinition upgrade in _upgrades)
+            {
+                Object.DestroyImmediate(upgrade);
+            }
+
             Time.timeScale = 1f;
         }
 

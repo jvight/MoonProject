@@ -15,7 +15,7 @@ namespace MoonProject.Gameplay
 
         public SpotKind Kind { get; }
 
-        /// <summary>Relic index, friend index (for a part) or scrap piece index.</summary>
+        /// <summary>Salvage site index, or friend index (for a part).</summary>
         public int Index { get; }
 
         /// <summary>Part index for a friend part, else -1.</summary>

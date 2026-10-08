@@ -229,6 +229,10 @@ namespace MoonProject.World
         [Tooltip("The canyon cut through the rim, gated by a chasm (docs/features/M3-04).")]
         [SerializeField] private CanyonSettings _canyon = new CanyonSettings();
 
+        [Header("Sites")]
+        [Tooltip("Ground shaped for the salvage sites and relay.0's mound, and Kestrel-3's impact (M3-13).")]
+        [SerializeField] private SiteSettings _sites = new SiteSettings();
+
         [Header("Far field")]
         [Tooltip("Radius where the distant ranges beyond the rim start rising.")]
         [Range(500f, 4000f)]
@@ -298,6 +302,7 @@ namespace MoonProject.World
         public RampPlacement[] Ramps => _ramps;
         public BowlPlacement[] Bowls => _bowls;
         public CanyonSettings Canyon => _canyon;
+        public SiteSettings Sites => _sites;
         public float FarRangeStart => _farRangeStart;
         public float FarRangeFull => _farRangeFull;
         public float FarRangeHeight => _farRangeHeight;
@@ -354,7 +359,7 @@ namespace MoonProject.World
                 return "Rim mountains, gullies, crags or far ranges could rise above The Peak; lower them or raise it.";
             }
 
-            return _canyon.Validate();
+            return _canyon.Validate() ?? _sites.Validate();
         }
     }
 }

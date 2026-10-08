@@ -7,10 +7,12 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// <summary>
     /// Stands in for the World: a flat drivable disc at height 0 with a matching Ground collider, a visible floor for
     /// captures, a soft key light, The Peak beyond the rim, and the canyon's anchors laid out flat to the west, its
-    /// lip beyond the playable area as in the real basin (no chasm: the tests drive straight to them), and four relay
+    /// lip beyond the playable area as in the real basin (no chasm: the tests drive straight to them), four relay
     /// mast pads facing home, linked like the real chain (relay.0 within the dark tower's reach, relay.1 only once
-    /// the tower's first level widens home, relay.2 through relay.0, relay.3 through relay.2). Registers
-    /// ITerrainQuery, IWorldLayout and IWorldAnchors.
+    /// the tower's first level widens home, relay.2 through relay.0, relay.3 through relay.2), the five salvage
+    /// sites (the depot just ahead of home; each approached heading +Z, so a test parked south of a heart faces it
+    /// over the wreck's pieces) and Kestrel-3's debris trail leading to its site. Registers ITerrainQuery,
+    /// IWorldLayout and IWorldAnchors.
     /// </summary>
     public sealed class FlatWorldSystem : MonoBehaviour, IGameSystem, ITerrainQuery, IWorldLayout, IWorldAnchors
     {
@@ -18,6 +20,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float FloorThickness = 1f;
         private const float AnchorRadius = 8f;
         private const float RelayPad = 3f;
+        private const float SiteRadius = 9f;
 
         private static readonly Vector3 West = new Vector3(-1f, 0f, 0f);
         private static readonly Vector3 South = new Vector3(0f, 0f, -1f);
@@ -37,6 +40,13 @@ namespace MoonProject.Gameplay.PlayModeTests
             Relay(1, 150f, -150f),
             Relay(2, -235f, 60f),
             Relay(3, -262f, -10f),
+            Site("depot", 0f, 32f),
+            Site("kestrel", -20f, 170f),
+            Site("drill", -90f, -20f),
+            Site("garage", -45f, -55f),
+            Site("lander", 200f, 120f),
+            new WorldAnchor(WorldAnchorIds.KestrelTrail, new Vector3(-45f, 0f, 70f),
+                new Vector3(25f, 0f, 100f).normalized, AnchorRadius),
         };
 
         public Rect PlayableArea
@@ -118,6 +128,13 @@ namespace MoonProject.Gameplay.PlayModeTests
         {
             var pad = new Vector3(x, 0f, z);
             return new WorldAnchor(WorldAnchorIds.RelayPrefix + index, pad, -pad.normalized, RelayPad);
+        }
+
+        /// <summary>A salvage site <paramref name="name"/> at (x, z), approached heading +Z.</summary>
+        private static WorldAnchor Site(string name, float x, float z)
+        {
+            return new WorldAnchor(WorldAnchorIds.SitePrefix + name, new Vector3(x, 0f, z), Vector3.forward,
+                SiteRadius);
         }
 
         public bool IsDrivable(float x, float z)

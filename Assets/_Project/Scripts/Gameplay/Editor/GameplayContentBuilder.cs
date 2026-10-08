@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using MoonProject.Core;
@@ -7,9 +8,10 @@ using MoonProject.Editor.Builders;
 namespace MoonProject.Gameplay.Editor
 {
     /// <summary>
-    /// Writes the gameplay content from code recipes: one RelicDefinition per <see cref="RelicRecipes"/> entry, the
-    /// relic catalog, the scrap catalog over Art's scrap prefabs, the radio tower and workshop upgrades, the friends
-    /// (Tilly and Bell) and their catalog, Ro's cassettes and their catalog, and the crew log caches and their catalog.
+    /// Writes the gameplay content from code recipes: the salvage catalog over Art's site, bundle and debris prefabs
+    /// (<see cref="SalvageEconomy"/>), one RelicDefinition per <see cref="RelicRecipes"/> entry and the relic catalog,
+    /// the radio tower and workshop upgrades crafted from the <see cref="SalvageEconomy"/> recipes, the friends (Tilly
+    /// and Bell) and their catalog, Ro's cassettes and their catalog, and the crew log caches and their catalog.
     /// Rewritten in place on every run (GUIDs kept). Every Art prefab it references (the content contracts) is
     /// required: a missing one fails the build loudly.
     /// </summary>
@@ -18,15 +20,10 @@ namespace MoonProject.Gameplay.Editor
         public const string BuilderPath = "Gameplay/Content";
         public const int BuilderOrder = 510;
 
-        private static readonly (string Kind, int Value, float Weight)[] ScrapKinds =
-        {
-            ("Bolt", 1, 3f), ("Gear", 2, 2f), ("Panel", 3, 1f), ("Coil", 2, 2f),
-        };
-
         [MoonBuilder(BuilderPath, BuilderOrder)]
         private static void Build()
         {
-            BuildScrapCatalog();
+            BuildSalvage();
             BuildRelics();
             BuildRadioTower();
             BuildHoverJump();
@@ -36,48 +33,29 @@ namespace MoonProject.Gameplay.Editor
             AssetDatabase.SaveAssets();
         }
 
-        private static void BuildScrapCatalog()
-        {
-            var variants = new ScrapVariant[ScrapKinds.Length];
-            for (int i = 0; i < ScrapKinds.Length; i++)
-            {
-                string path = GameplayAssetPaths.ScrapPrefab(ScrapKinds[i].Kind);
-                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
-                if (prefab == null)
-                {
-                    throw new InvalidOperationException(
-                        $"{BuilderPath}: Art prefab {path} is missing (M2 content contract). Run the Art builders.");
-                }
-
-                variants[i] = new ScrapVariant(prefab, ScrapKinds[i].Value, ScrapKinds[i].Weight);
-            }
-
-            var catalog = ScriptableObject.CreateInstance<ScrapCatalog>();
-            catalog.Populate(variants);
-            GeneratedAssets.CreateOrReplace(catalog, GameplayAssetPaths.ScrapCatalog);
-            Debug.Log($"{BuilderPath}: wrote {GameplayAssetPaths.ScrapCatalog} ({variants.Length} variants)");
-        }
-
         /// <summary>
         /// The radio tower: before any purchase the old mast is dark and the clear signal reaches 60 m; three levels
-        /// (15, 40, 80 scrap) widen it to 110, 170 and 260 m and warm the base up. The basin's scrap covers twice
-        /// everything on sale (tower and workshop), and every relic brought home adds a gift (design ruling 5). Its
-        /// name and level texts live in the localization tables (upgrade.radio_tower.*).
+        /// crafted from wiring and optics (<see cref="SalvageEconomy.RadioTower"/>) widen it to 110, 170 and 260 m and
+        /// warm the base up.
+        /// The sites yield at least twice every recipe (VISION ruling 5, an EditMode test keeps it). Its name and level
+        /// texts live in the localization tables (upgrade.radio_tower.*).
         /// </summary>
         private static void BuildRadioTower()
         {
             var upgrade = ScriptableObject.CreateInstance<UpgradeDefinition>();
             upgrade.Populate("radio_tower", UpgradeStationKind.RadioTower, 60f, new[]
             {
-                new UpgradeLevel(15, 110f, 1.25f), new UpgradeLevel(40, 170f, 1.5f), new UpgradeLevel(80, 260f, 1.8f),
+                new UpgradeLevel(SalvageEconomy.RadioTower[0], 110f, 1.25f),
+                new UpgradeLevel(SalvageEconomy.RadioTower[1], 170f, 1.5f),
+                new UpgradeLevel(SalvageEconomy.RadioTower[2], 260f, 1.8f),
             });
             GeneratedAssets.CreateOrReplace(upgrade, GameplayAssetPaths.RadioTowerUpgrade);
             Debug.Log($"{BuilderPath}: wrote {GameplayAssetPaths.RadioTowerUpgrade}");
         }
 
         /// <summary>
-        /// Hover-Jump, the workshop's first rover ability (docs/features/M3-03-workshop-hoverjump.md): one level for
-        /// 150 scrap, the slice's big scrap sink once the tower is done. Its texts live in the localization tables
+        /// Hover-Jump, the workshop's first rover ability (docs/features/M3-03-workshop-hoverjump.md): one level
+        /// crafted at Kenji's bench (<see cref="SalvageEconomy.HoverJump"/>). Its texts live in the localization tables
         /// (upgrade.rover.hover_jump.*).
         /// </summary>
         private static void BuildHoverJump()
@@ -85,7 +63,7 @@ namespace MoonProject.Gameplay.Editor
             var upgrade = ScriptableObject.CreateInstance<UpgradeDefinition>();
             upgrade.Populate("rover.hover_jump", UpgradeStationKind.Workshop, 0f, new[]
             {
-                new UpgradeLevel(150, RoverAbility.HoverJump),
+                new UpgradeLevel(SalvageEconomy.HoverJump, RoverAbility.HoverJump),
             });
             GeneratedAssets.CreateOrReplace(upgrade, GameplayAssetPaths.HoverJumpUpgrade);
             Debug.Log($"{BuilderPath}: wrote {GameplayAssetPaths.HoverJumpUpgrade}");
@@ -223,6 +201,52 @@ namespace MoonProject.Gameplay.Editor
             return prefab;
         }
 
+        /// <summary>
+        /// The salvage catalog: Art's five wreck sites on their World anchors (the canyon lander past the Hover-Jump
+        /// gate), the three material bundles cut pieces fold into, and Kestrel-3's loose trail bits spread evenly down
+        /// its debris furrow from the trail anchor toward the crater.
+        /// </summary>
+        private static void BuildSalvage()
+        {
+            IReadOnlyList<string> names = SalvageEconomy.SiteNames;
+            var sites = new SalvageSiteEntry[names.Count];
+            for (int i = 0; i < sites.Length; i++)
+            {
+                AbilityGate gate = names[i] == SalvageEconomy.GatedSite
+                    ? new AbilityGate(true, RoverAbility.HoverJump)
+                    : AbilityGate.Open;
+                sites[i] = new SalvageSiteEntry(SalvageEconomy.SiteId(names[i]),
+                    LoadArt(GameplayAssetPaths.SitePrefab(names[i])), gate);
+            }
+
+            IReadOnlyList<string> bits = SalvageEconomy.TrailBits;
+            var trail = new SalvageTrailBit[bits.Count];
+            for (int i = 0; i < trail.Length; i++)
+            {
+                if (!SalvagePieceName.TryParseDebris(bits[i], out SalvageMaterial material))
+                {
+                    throw new InvalidOperationException($"{BuilderPath}: '{bits[i]}' is not a debris prefab name.");
+                }
+
+                float distance = trail.Length > 1 ? SalvageEconomy.TrailLength * i / (trail.Length - 1) : 0f;
+                trail[i] = new SalvageTrailBit(LoadArt(GameplayAssetPaths.DebrisPrefab(bits[i])), material, distance);
+            }
+
+            var catalog = ScriptableObject.CreateInstance<SalvageCatalog>();
+            catalog.Populate(sites, LoadArt(GameplayAssetPaths.BundlePrefab(SalvageMaterial.Metal)),
+                LoadArt(GameplayAssetPaths.BundlePrefab(SalvageMaterial.Wiring)),
+                LoadArt(GameplayAssetPaths.BundlePrefab(SalvageMaterial.Optics)), trail);
+            catalog = GeneratedAssets.CreateOrReplace(catalog, GameplayAssetPaths.SalvageCatalog);
+            string problem = catalog.Validate();
+            if (problem != null)
+            {
+                throw new InvalidOperationException($"{BuilderPath}: salvage catalog {problem}.");
+            }
+
+            Debug.Log($"{BuilderPath}: wrote {GameplayAssetPaths.SalvageCatalog} ({sites.Length} sites, " +
+                      $"{trail.Length} trail bits)");
+        }
+
         private static void BuildRelics()
         {
             RelicRecipe[] recipes = RelicRecipes.All;
@@ -240,7 +264,8 @@ namespace MoonProject.Gameplay.Editor
                 }
 
                 var definition = ScriptableObject.CreateInstance<RelicDefinition>();
-                definition.Populate(recipe.Id, recipe.Mass, prefab, recipe.AnswerNote, recipe.Placement);
+                definition.Populate(recipe.Id, recipe.Mass, prefab, recipe.AnswerNote,
+                    SalvageEconomy.SiteId(recipe.Site), recipe.HeartOffset);
                 definitions[i] = GeneratedAssets.CreateOrReplace(definition,
                     GameplayAssetPaths.RelicDefinition(recipe.Id));
             }

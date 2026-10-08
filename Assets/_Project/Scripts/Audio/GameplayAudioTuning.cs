@@ -3,7 +3,7 @@ using UnityEngine;
 namespace MoonProject.Audio
 {
     /// <summary>
-    /// How gameplay events sound: relic answers by distance, the scrap melody, tether and excavation loops.
+    /// How gameplay events sound: relic and site answers by distance, tether and excavation loops.
     /// Created by the Audio/Tuning builder; runtime code only reads it.
     /// </summary>
     public sealed class GameplayAudioTuning : ScriptableObject
@@ -32,10 +32,6 @@ namespace MoonProject.Audio
 
         [Tooltip("3D full-volume radius (m) of answers: larger than usual so distant relics stay findable by ear.")]
         [Min(0.1f)] [SerializeField] private float _answerMinDistance = 25f;
-
-        [Header("Scrap melody")]
-        [Tooltip("Long chains weave over this many of the highest chime notes once the climb reaches the top.")]
-        [Range(2, 8)] [SerializeField] private int _scrapTopWindow = 4;
 
         [Header("Tether")]
         [Tooltip("Seconds for the tether hum to fade in after attaching.")]
@@ -87,7 +83,6 @@ namespace MoonProject.Audio
         public float AnswerNearCutoff => _answerNearCutoff;
         public float AnswerFarCutoff => _answerFarCutoff;
         public float AnswerMinDistance => _answerMinDistance;
-        public int ScrapTopWindow => _scrapTopWindow;
         public float TetherHumFadeIn => _tetherHumFadeIn;
         public float TetherHumFadeOut => _tetherHumFadeOut;
         public float TetherHumVolume => _tetherHumVolume;

@@ -111,29 +111,5 @@ namespace MoonProject.UI
             Disc(painter, new Vector2(glass.center.x - offset, glass.center.y), reel, shell);
             Disc(painter, new Vector2(glass.center.x + offset, glass.center.y), reel, shell);
         }
-
-        /// <summary>A hexagonal nut (the scrap icon): six flat sides with a round hole.</summary>
-        public static void Nut(Painter2D painter, Vector2 center, float radius, Color body, Color hole)
-        {
-            painter.fillColor = body;
-            painter.BeginPath();
-            for (int i = 0; i < 6; i++)
-            {
-                float angle = Mathf.Deg2Rad * (60f * i + 30f);
-                var corner = new Vector2(center.x + Mathf.Cos(angle) * radius, center.y + Mathf.Sin(angle) * radius);
-                if (i == 0)
-                {
-                    painter.MoveTo(corner);
-                }
-                else
-                {
-                    painter.LineTo(corner);
-                }
-            }
-
-            painter.ClosePath();
-            painter.Fill();
-            Disc(painter, center, radius * 0.42f, hole);
-        }
     }
 }

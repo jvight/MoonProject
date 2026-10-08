@@ -218,7 +218,8 @@ namespace MoonProject.World
                 Mathf.Lerp(region.CraterRim, nextRegion.CraterRim, t),
                 Mathf.Lerp(region.RimZone, nextRegion.RimZone, t),
                 Mathf.Lerp(region.CanyonFloor, nextRegion.CanyonFloor, t),
-                Mathf.Lerp(region.Chasm, nextRegion.Chasm, t));
+                Mathf.Lerp(region.Chasm, nextRegion.Chasm, t),
+                Mathf.Lerp(region.Scorch, nextRegion.Scorch, t));
         }
 
         private void Anchor(float line, int k, float anchorCell, float fineCell, bool vertical, out Vector3 position,

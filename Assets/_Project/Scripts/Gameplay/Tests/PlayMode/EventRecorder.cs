@@ -19,9 +19,12 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         public EventRecorder(EventBus events)
         {
-            Listen(events, ScrapCollected);
-            Listen(events, CurrencyChanged);
+            Listen(events, SalvageCutStarted);
+            Listen(events, SalvageCutStopped);
+            Listen(events, MaterialSalvaged);
+            Listen(events, MaterialsChanged);
             Listen(events, SonarPinged);
+            Listen(events, SiteAnswered);
             Listen(events, RelicAnswered);
             Listen(events, ExcavationStarted);
             Listen(events, ExcavationStopped);
@@ -56,9 +59,15 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>Event type names in publish order.</summary>
         public List<string> Order { get; } = new List<string>();
 
-        public List<Timed<ScrapCollected>> ScrapCollected { get; } = new List<Timed<ScrapCollected>>();
-        public List<Timed<CurrencyChanged>> CurrencyChanged { get; } = new List<Timed<CurrencyChanged>>();
+        public List<Timed<SalvageCutStarted>> SalvageCutStarted { get; } = new List<Timed<SalvageCutStarted>>();
+
+        public List<Timed<SalvageCutStopped>> SalvageCutStopped { get; } = new List<Timed<SalvageCutStopped>>();
+
+        public List<Timed<MaterialSalvaged>> MaterialSalvaged { get; } = new List<Timed<MaterialSalvaged>>();
+        public List<Timed<MaterialsChanged>> MaterialsChanged { get; } = new List<Timed<MaterialsChanged>>();
         public List<Timed<SonarPinged>> SonarPinged { get; } = new List<Timed<SonarPinged>>();
+        public List<Timed<SiteAnswered>> SiteAnswered { get; } = new List<Timed<SiteAnswered>>();
+
         public List<Timed<RelicAnswered>> RelicAnswered { get; } = new List<Timed<RelicAnswered>>();
         public List<Timed<ExcavationStarted>> ExcavationStarted { get; } = new List<Timed<ExcavationStarted>>();
         public List<Timed<ExcavationStopped>> ExcavationStopped { get; } = new List<Timed<ExcavationStopped>>();

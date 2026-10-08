@@ -146,7 +146,7 @@ namespace MoonProject.UI.Tests
 
             Run(2f, new InteractionHint(InteractionKind.Restore, Site, false));
             Assert.AreEqual(InteractionKind.None, _director.Displayed,
-                "short of scrap: the price tag says it quietly, the prompt does not nag");
+                "short of materials: the price tag says it quietly, the prompt does not nag");
             Run(2f, Ready(InteractionKind.Restore));
             Assert.AreEqual(InteractionKind.Restore, _director.Displayed);
         }

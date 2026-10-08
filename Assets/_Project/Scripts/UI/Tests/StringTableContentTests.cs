@@ -100,9 +100,9 @@ namespace MoonProject.UI.Tests
         {
             foreach (string key in new[]
                      {
-                         UiKeys.CardCaption, UiKeys.CardClose, UiKeys.TowerLevel, UiKeys.TowerHold, UiKeys.TowerNeed,
+                         UiKeys.CardCaption, UiKeys.CardClose, UiKeys.TowerLevel, UiKeys.TowerHold,
                          UiKeys.TowerPurchased, UiKeys.LogCaption, UiKeys.CrewLogCaption, UiKeys.LinerCaption,
-                         UiKeys.TapeCount, UiKeys.PauseCassettes, UiKeys.PauseRelays,
+                         UiKeys.TapeCount, UiKeys.PauseCassettes, UiKeys.PauseRelays, UiKeys.RecipeNeed,
                      })
             {
                 Assert.IsTrue(_english.TryGet(key, out _), key);
@@ -112,6 +112,11 @@ namespace MoonProject.UI.Tests
             {
                 Assert.IsTrue(_english.TryGet(UiKeys.RadioChannelName(channel), out _),
                     UiKeys.RadioChannelName(channel));
+            }
+
+            foreach (SalvageMaterial material in Enum.GetValues(typeof(SalvageMaterial)))
+            {
+                Assert.IsTrue(_english.TryGet(UiKeys.MaterialName(material), out _), UiKeys.MaterialName(material));
             }
 
             foreach (UpgradeStationKind station in Enum.GetValues(typeof(UpgradeStationKind)))

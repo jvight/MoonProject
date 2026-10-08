@@ -8,8 +8,8 @@ namespace MoonProject.Audio
 {
     /// <summary>
     /// Gives every gameplay event its sound: sonar ping, relic answers (each relic on its own note, softer and darker
-    /// with distance), scrap chimes
-    /// climbing the pentatonic by combo step, tether pluck / hum (follows the beam emitter while attached) / release
+    /// with distance), salvage sites answering a ping (each site on its own note, warmer while it still holds a crew
+    /// relic, softer and darker with distance), tether pluck / hum (follows the beam emitter while attached) / release
     /// or sighing snap, excavation rumble while the beam lifts plus the surfacing sparkle, the shelf "placed" cue and
     /// the upgrade sounds (the tower's arpeggio; for workshop upgrades, ids starting "rover.", the workbench's sparks,
     /// rattle and cadence, plus the coils' clunk-sproing when the Hover-Jump is bought), a cassette's click and
@@ -22,6 +22,7 @@ namespace MoonProject.Audio
     public sealed class GameplayAudio : MonoBehaviour
     {
         private const int SubscriptionCount = 14;
+        private const string SiteRelicSuffix = "_relic";
 
         /// <summary>Upgrades sold at Kenji's workbench (rover abilities) use this id prefix.</summary>
         private const string WorkshopUpgradePrefix = "rover.";
@@ -36,11 +37,16 @@ namespace MoonProject.Audio
         private readonly LoopFader _tetherFader = new LoopFader();
         private readonly LoopFader _rumbleFader = new LoopFader();
         private readonly Dictionary<string, int> _relicVoices = new Dictionary<string, int>(StringComparer.Ordinal);
+
+        // Site answers by site id ("site.depot"): the plain voice and the warmer one while a relic waits there.
+        private readonly Dictionary<string, int> _siteVoices = new Dictionary<string, int>(StringComparer.Ordinal);
+        private readonly Dictionary<string, int> _siteRelicVoices =
+            new Dictionary<string, int>(StringComparer.Ordinal);
         private AudioDirector _director;
         private Transform _tetherOrigin;
         private CueHandle _sonarPing;
         private CueHandle _relicAnswer;
-        private CueHandle _scrapChime;
+        private CueHandle _siteAnswer;
         private CueHandle _tetherAttach;
         private CueHandle _tetherRelease;
         private CueHandle _tetherSnap;
@@ -59,7 +65,6 @@ namespace MoonProject.Audio
         private AudioSource _rumble;
         private float _tetherHumCueVolume;
         private float _rumbleCueVolume;
-        private int _scrapNotes;
 
         /// <summary>True while the tether hum can be heard (including its fade-out).</summary>
         public bool TetherHumAudible => _tetherFader.IsAudible;
@@ -93,7 +98,7 @@ namespace MoonProject.Audio
 
             _sonarPing = director.Resolve(AudioCueIds.SonarPing);
             _relicAnswer = director.Resolve(AudioCueIds.RelicAnswer);
-            _scrapChime = director.Resolve(AudioCueIds.ScrapChime);
+            _siteAnswer = director.Resolve(AudioCueIds.SiteAnswer);
             _tetherAttach = director.Resolve(AudioCueIds.TetherAttach);
             _tetherRelease = director.Resolve(AudioCueIds.TetherRelease);
             _tetherSnap = director.Resolve(AudioCueIds.TetherSnap);
@@ -109,7 +114,7 @@ namespace MoonProject.Audio
             _rover = context.Get<IRoverState>();
             CueHandle hum = director.Resolve(AudioCueIds.TetherHum);
             CueHandle rumble = director.Resolve(AudioCueIds.ExcavationRumble);
-            if (!(_sonarPing.IsValid && _relicAnswer.IsValid && _scrapChime.IsValid && _tetherAttach.IsValid &&
+            if (!(_sonarPing.IsValid && _relicAnswer.IsValid && _siteAnswer.IsValid && _tetherAttach.IsValid &&
                   _tetherRelease.IsValid && _tetherSnap.IsValid && _surfacingSparkle.IsValid && _relicPlaced.IsValid &&
                   _upgradeArpeggio.IsValid && _workbenchUpgrade.IsValid && _coilPop.IsValid && hum.IsValid &&
                   rumble.IsValid && _cassettePickup.IsValid && _crewLogFound.IsValid && _signalPick.IsValid &&
@@ -119,11 +124,25 @@ namespace MoonProject.Audio
                 return;
             }
 
-            _scrapNotes = director.Library.GetCue(_scrapChime).ClipCount;
             AudioCue answers = director.Library.GetCue(_relicAnswer);
             for (int i = 0; i < answers.ClipCount; i++)
             {
                 _relicVoices[answers.GetVariantLabel(i)] = i;
+            }
+
+            AudioCue sites = director.Library.GetCue(_siteAnswer);
+            for (int i = 0; i < sites.ClipCount; i++)
+            {
+                string label = sites.GetVariantLabel(i);
+                if (label.EndsWith(SiteRelicSuffix, StringComparison.Ordinal))
+                {
+                    _siteRelicVoices[WorldAnchorIds.SitePrefix + label.Substring(0, label.Length -
+                                                                                  SiteRelicSuffix.Length)] = i;
+                }
+                else
+                {
+                    _siteVoices[WorldAnchorIds.SitePrefix + label] = i;
+                }
             }
 
             _tetherHumCueVolume = director.Library.GetCue(hum).VolumeMax;
@@ -136,7 +155,7 @@ namespace MoonProject.Audio
             EventBus events = context.Events;
             _subscriptions[0] = events.Subscribe<SonarPinged>(OnSonarPinged);
             _subscriptions[1] = events.Subscribe<RelicAnswered>(OnRelicAnswered);
-            _subscriptions[2] = events.Subscribe<ScrapCollected>(OnScrapCollected);
+            _subscriptions[2] = events.Subscribe<SiteAnswered>(OnSiteAnswered);
             _subscriptions[3] = events.Subscribe<TetherAttached>(OnTetherAttached);
             _subscriptions[4] = events.Subscribe<TetherReleased>(OnTetherReleased);
             _subscriptions[5] = events.Subscribe<ExcavationStarted>(OnExcavationStarted);
@@ -210,10 +229,19 @@ namespace MoonProject.Audio
                 _tuning.AnswerMinDistance);
         }
 
-        private void OnScrapCollected(ScrapCollected scrap)
+        private void OnSiteAnswered(SiteAnswered answer)
         {
-            int note = ScrapMelody.NoteIndex(scrap.ComboStep, _scrapNotes, _tuning.ScrapTopWindow);
-            _director.PlayVariantAt(_scrapChime, note, scrap.Position);
+            Dictionary<string, int> voices = answer.HoldsRelic ? _siteRelicVoices : _siteVoices;
+            if (answer.SiteId == null || !voices.TryGetValue(answer.SiteId, out int voice))
+            {
+                Debug.LogError($"{nameof(GameplayAudio)}: no answer voice for site '{answer.SiteId}'. Add it to " +
+                               "SITE_ANSWER_NOTES in tools/audio/cues.py and rebuild.", this);
+                return;
+            }
+
+            RelicAnswerTone tone = RelicAnswerTone.ForDistance(answer.Distance, _tuning);
+            _director.PlayFilteredAt(_siteAnswer, voice, answer.Position, tone.Volume, tone.CutoffHz,
+                _tuning.AnswerMinDistance);
         }
 
         private void OnTetherAttached(TetherAttached attached)

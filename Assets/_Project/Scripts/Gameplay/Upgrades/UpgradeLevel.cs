@@ -5,15 +5,16 @@ using MoonProject.Core;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// One purchasable level of an upgrade: its cost and its effects (signal reach, base warmth, a rover ability). Its
+    /// One level of an upgrade: the recipe it is crafted from (salvaged materials, docs/features/M3-13) and its effects
+    /// (signal reach, base warmth, a rover ability). Its
     /// title and description are player-facing prose and live in the localization tables under
     /// "upgrade.&lt;id&gt;.&lt;level&gt;.*".
     /// </summary>
     [Serializable]
     public sealed class UpgradeLevel
     {
-        [Tooltip("Scrap it costs.")]
-        [Range(1, 1000)] [SerializeField] private int _cost = 10;
+        [Tooltip("Salvaged materials it is crafted from.")]
+        [SerializeField] private Recipe _recipe;
 
         [Tooltip("Clear radio signal radius (m) once bought; 0 = this upgrade does not touch the radio.")]
         [Range(0f, 1000f)] [SerializeField] private float _signalRadius;
@@ -27,23 +28,23 @@ namespace MoonProject.Gameplay
         [Tooltip("The ability it unlocks.")]
         [SerializeField] private RoverAbility _ability;
 
-        public UpgradeLevel(int cost, float signalRadius, float lightBoost)
+        public UpgradeLevel(Recipe recipe, float signalRadius, float lightBoost)
         {
-            _cost = cost;
+            _recipe = recipe;
             _signalRadius = signalRadius;
             _lightBoost = lightBoost;
         }
 
-        /// <summary>A level that unlocks <paramref name="ability"/> for <paramref name="cost"/> scrap.</summary>
-        public UpgradeLevel(int cost, RoverAbility ability)
+        /// <summary>A level that unlocks <paramref name="ability"/>, crafted from <paramref name="recipe"/>.</summary>
+        public UpgradeLevel(Recipe recipe, RoverAbility ability)
         {
-            _cost = cost;
+            _recipe = recipe;
             _lightBoost = 1f;
             _grantsAbility = true;
             _ability = ability;
         }
 
-        public int Cost => _cost;
+        public Recipe Recipe => _recipe;
 
         public float SignalRadius => _signalRadius;
 

@@ -10,7 +10,7 @@ namespace MoonProject.Gameplay
     {
         TetherAimState State { get; }
 
-        /// <summary>World position of the hovered or towed relic (valid unless <see cref="State"/> is Idle).</summary>
+        /// <summary>World position of what is hovered or towed (valid unless <see cref="State"/> is Idle).</summary>
         Vector3 TargetPosition { get; }
 
         /// <summary>0..1: how close the tether is to letting go softly.</summary>

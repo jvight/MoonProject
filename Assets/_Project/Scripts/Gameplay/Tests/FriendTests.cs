@@ -248,7 +248,7 @@ namespace MoonProject.Gameplay.Tests
         public void Behaviour_SpotsSomethingNearby_HoversAndPingsOnce()
         {
             TestWorld world = TestWorld.Flat();
-            var spots = new FakeSpots { Next = new SpotTarget(SpotKind.Relic, 2, -1, new Vector3(20f, 0f, 90f)) };
+            var spots = new FakeSpots { Next = new SpotTarget(SpotKind.Site, 2, -1, new Vector3(20f, 0f, 90f)) };
             var brain = new FriendBehaviour(_tuning, world, spots, 7);
             FriendSenses senses = Senses(new Vector3(0f, 0f, 90f), 0f);
             brain.Wake(senses);

@@ -61,12 +61,12 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void ScrapFlight_LeavesTheRestPoseAndMeetsTheSocketSmoothly()
+        public void PickupFlight_LeavesTheRestPoseAndMeetsTheSocketSmoothly()
         {
             var start = new Vector3(2f, 0.5f, 3f);
             var target = new Vector3(0f, 1.1f, -0.4f);
-            Vector3 first = ScrapFlight.Evaluate(start, target, 0f, 0.7f, 1f, 0.9f, 0.6f, 1.25f);
-            Vector3 last = ScrapFlight.Evaluate(start, target, 1f, 0.7f, 1f, 0.9f, 0.6f, 1.25f);
+            Vector3 first = PickupFlight.Evaluate(start, target, 0f, 0.7f, 1f, 0.9f, 0.6f, 1.25f);
+            Vector3 last = PickupFlight.Evaluate(start, target, 1f, 0.7f, 1f, 0.9f, 0.6f, 1.25f);
             Assert.Less(Vector3.Distance(first, start), 1e-4f);
             Assert.Less(Vector3.Distance(last, target), 1e-4f);
 
@@ -74,26 +74,26 @@ namespace MoonProject.Gameplay.Tests
             float maxStep = 0f;
             for (int i = 1; i <= 200; i++)
             {
-                Vector3 point = ScrapFlight.Evaluate(start, target, i / 200f, 0.7f, 1f, 0.9f, 0.6f, 1.25f);
+                Vector3 point = PickupFlight.Evaluate(start, target, i / 200f, 0.7f, 1f, 0.9f, 0.6f, 1.25f);
                 maxStep = Mathf.Max(maxStep, Vector3.Distance(point, previous));
                 previous = point;
             }
 
             Assert.Less(maxStep, 0.1f, "no jumps along the path (200 steps over ~4 m)");
-            Assert.Less(Vector3.Distance(ScrapFlight.Evaluate(start, target, 0.01f, 0.7f, 1f, 0.9f, 0.6f, 1.25f),
+            Assert.Less(Vector3.Distance(PickupFlight.Evaluate(start, target, 0.01f, 0.7f, 1f, 0.9f, 0.6f, 1.25f),
                 start), 0.01f, "eased out of the rest pose");
         }
 
         [Test]
-        public void ScrapFlight_LiftsAndSpiralsMidFlight()
+        public void PickupFlight_LiftsAndSpiralsMidFlight()
         {
             var start = Vector3.zero;
             var target = new Vector3(4f, 0f, 0f);
-            Vector3 middle = ScrapFlight.Evaluate(start, target, 0.45f, 0f, 1f, 0.9f, 0.6f, 1.25f);
+            Vector3 middle = PickupFlight.Evaluate(start, target, 0.45f, 0f, 1f, 0.9f, 0.6f, 1.25f);
             Vector3 straight = Vector3.Lerp(start, target, Ease.InOutCubic(0.45f));
             Assert.Greater(Vector3.Distance(middle, straight), 0.5f, "it does not fly in a straight line");
-            Assert.AreEqual(0.6f, ScrapFlight.Duration(0f, 0.6f, 0.06f), 1e-6f);
-            Assert.AreEqual(0.9f, ScrapFlight.Duration(5f, 0.6f, 0.06f), 1e-6f);
+            Assert.AreEqual(0.6f, PickupFlight.Duration(0f, 0.6f, 0.06f), 1e-6f);
+            Assert.AreEqual(0.9f, PickupFlight.Duration(5f, 0.6f, 0.06f), 1e-6f);
         }
 
         [Test]

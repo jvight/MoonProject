@@ -66,6 +66,31 @@ namespace MoonProject.Core.Events
         public string RelicId { get; }
     }
 
+    /// <summary>
+    /// A salvage site answered a ping (docs/features/M3-13): it still has pieces to cut or a relic in its heart.
+    /// Published at the moment the answer is heard; each site answers with its own tone.
+    /// </summary>
+    public readonly struct SiteAnswered
+    {
+        public SiteAnswered(string siteId, Vector3 position, float distance, bool holdsRelic)
+        {
+            SiteId = siteId;
+            Position = position;
+            Distance = distance;
+            HoldsRelic = holdsRelic;
+        }
+
+        /// <summary>The site's anchor id ("site.depot", "site.kestrel", ...).</summary>
+        public string SiteId { get; }
+
+        public Vector3 Position { get; }
+
+        public float Distance { get; }
+
+        /// <summary>A relic still waits in the site's heart (the answer can carry a warmer overtone).</summary>
+        public bool HoldsRelic { get; }
+    }
+
     /// <summary>The tractor beam started lifting a buried relic.</summary>
     public readonly struct ExcavationStarted
     {

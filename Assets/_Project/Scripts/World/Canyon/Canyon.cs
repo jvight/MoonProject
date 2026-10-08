@@ -100,7 +100,7 @@ namespace MoonProject.World
             _sideLength = settings.TroughDepth / Mathf.Tan(settings.TroughSideSlope * Mathf.Deg2Rad)
                 + CanyonSettings.TroughSideEase;
 
-            float widest = Mathf.Max(settings.MouthHalfWidth, settings.ChasmHalfWidth,
+            float widest = Mathf.Max(settings.MouthHalfWidth, settings.ChasmHalfWidth + settings.LanderBayDepth,
                 settings.CanyonHalfWidth + Mathf.Max(BayWidth, settings.AlcoveDepth), settings.TerminusRadius);
             _mainReach = widest + settings.WallRun + settings.FlankRun + ReachMargin;
             _exitReach = ExitMouthHalfWidth + settings.WallRun + settings.FlankRun + ReachMargin;
@@ -117,6 +117,7 @@ namespace MoonProject.World
             _exitFoot = settings.ExitFootLength;
 
             _ledgeSide = settings.BendAngle >= 0f ? -1f : 1f;
+            LanderSide = -_ledgeSide;
             _ledgeArc = SightArc(outward);
             _ledgeCenter = _main.PointAt(_ledgeArc)
                 + _main.RightAt(_ledgeArc) * (_ledgeSide * (settings.CanyonHalfWidth + BayWidth * 0.5f));
@@ -188,6 +189,12 @@ namespace MoonProject.World
         /// bay in the bend's outer wall, so its warm light reads from the base.
         /// </summary>
         public float LedgeArc => _ledgeArc;
+
+        /// <summary>
+        /// Side of the corridor (-1 left, +1 right, looking in) the crashed lander's bay opens on: opposite the ledge
+        /// and the exit's branch.
+        /// </summary>
+        public float LanderSide { get; }
 
         /// <summary>Which wall the ledge's bay is cut into: -1 left, +1 right (the bend's outer side).</summary>
         public float LedgeSide => _ledgeSide;
@@ -413,6 +420,10 @@ namespace MoonProject.World
             if (side == _ledgeSide)
             {
                 width += BayWidth * SmoothMath.Bump((arc - _ledgeArc) / BayHalfLength);
+            }
+            else
+            {
+                width += s.LanderBayDepth * SmoothMath.Bump((arc - s.LanderBayArc) / s.LanderBayHalfLength);
             }
 
             for (int i = 0; i < _alcoveArcs.Length; i++)

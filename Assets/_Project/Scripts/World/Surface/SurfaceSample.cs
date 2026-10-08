@@ -4,7 +4,7 @@ namespace MoonProject.World
     public readonly struct SurfaceSample
     {
         public SurfaceSample(float height, float craterBowl, float craterRim, float rimZone, float canyonFloor = 0f,
-            float chasm = 0f)
+            float chasm = 0f, float scorch = 0f)
         {
             Height = height;
             CraterBowl = craterBowl;
@@ -12,6 +12,7 @@ namespace MoonProject.World
             RimZone = rimZone;
             CanyonFloor = canyonFloor;
             Chasm = chasm;
+            Scorch = scorch;
         }
 
         public float Height { get; }
@@ -30,5 +31,8 @@ namespace MoonProject.World
 
         /// <summary>1 in the canyon's chasm trough, 0 elsewhere.</summary>
         public float Chasm { get; }
+
+        /// <summary>1 on the scorched dust of Kestrel-3's crater and furrow, 0 elsewhere.</summary>
+        public float Scorch { get; }
     }
 }

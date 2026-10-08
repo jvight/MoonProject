@@ -20,6 +20,7 @@ namespace MoonProject.UI.Editor
             new Token("--moon-cream", PaletteSwatch.Cream, 1f),
             new Token("--moon-honey", PaletteSwatch.Honey, 1f),
             new Token("--moon-tech-glow", PaletteSwatch.TechGlow, 1f),
+            new Token("--moon-metal", PaletteSwatch.Metal, 1f),
             new Token("--moon-text", PaletteSwatch.Cream, 1f),
             new Token("--moon-text-dim", PaletteSwatch.Cream, 0.74f),
             new Token("--moon-text-faint", PaletteSwatch.Cream, 0.46f),

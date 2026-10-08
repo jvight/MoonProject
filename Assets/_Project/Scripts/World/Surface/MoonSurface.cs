@@ -129,6 +129,8 @@ namespace MoonProject.World
 
         private readonly Ramp[] _ramps;
         private readonly float[] _rampCalmBoundSq;
+        private readonly KestrelImpact _kestrel;
+        private readonly GroundShaping _shaping;
 
         public MoonSurface(SurfaceSettings settings, int seed)
         {
@@ -237,6 +239,8 @@ namespace MoonProject.World
                 _rampCalmBoundSq[i] = bound * bound;
             }
 
+            float minCalmSpan = settings.DuneWavelength * MinCalmSpanInWavelengths;
+            _kestrel = new KestrelImpact(settings.Sites.Kestrel, baseSeed, minCalmSpan);
             _craters = PlaceCraters(settings, baseSeed);
             int count = _craters.Length;
             _craterX = new float[count];
@@ -248,7 +252,6 @@ namespace MoonProject.World
             _craterInvRimWidth = new float[count];
             _craterCalmStart = new float[count];
             _craterCalmEnd = new float[count];
-            float minCalmSpan = settings.DuneWavelength * MinCalmSpanInWavelengths;
             for (int i = 0; i < count; i++)
             {
                 Crater crater = _craters[i];
@@ -265,7 +268,9 @@ namespace MoonProject.World
                 _craterCalmEnd[i] = calmEnd;
             }
 
-            // Built last: the canyon reads the finished world height at its mouths.
+            // The shaped sites read the natural ground at their centres; the canyon is built last, as it reads the
+            // finished world height at its mouths.
+            _shaping = new GroundShaping(settings.Sites, (x, z) => SampleNatural(x, z).Height);
             Canyon = new Canyon(settings.Canyon, baseSeed, (x, z) => SampleWorld(x, z).Height);
         }
 
@@ -296,6 +301,12 @@ namespace MoonProject.World
 
         /// <summary>Whispering Canyon, carved into the rim (docs/features/M3-04).</summary>
         public Canyon Canyon { get; }
+
+        /// <summary>Kestrel-3's impact crater and furrow (docs/features/M3-13).</summary>
+        public KestrelImpact Kestrel => _kestrel;
+
+        /// <summary>The flat site footprints and relay.0's mound shaped into the floor.</summary>
+        public GroundShaping Shaping => _shaping;
 
         /// <summary>Unit XZ direction for a bearing in degrees clockwise from +Z.</summary>
         public static Vector2 BearingToDirection(float bearingDegrees)
@@ -363,11 +374,20 @@ namespace MoonProject.World
             }
 
             float height = Canyon.Apply(x, z, world.Height, out float floor, out float chasm);
-            return new SurfaceSample(height, world.CraterBowl, world.CraterRim, world.RimZone, floor, chasm);
+            return new SurfaceSample(height, world.CraterBowl, world.CraterRim, world.RimZone, floor, chasm,
+                world.Scorch);
         }
 
         /// <summary>The surface without Whispering Canyon.</summary>
         private SurfaceSample SampleWorld(float x, float z)
+        {
+            SurfaceSample natural = SampleNatural(x, z);
+            return new SurfaceSample(_shaping.Apply(x, z, natural.Height), natural.CraterBowl, natural.CraterRim,
+                natural.RimZone, 0f, 0f, natural.Scorch);
+        }
+
+        /// <summary>The surface without Whispering Canyon and the shaped sites.</summary>
+        private SurfaceSample SampleNatural(float x, float z)
         {
             float r2 = x * x + z * z;
             if (r2 <= _padRadiusSq)
@@ -396,12 +416,14 @@ namespace MoonProject.World
 
             float craterBowl = 0f;
             float craterRim = 0f;
+            float scorch = 0f;
             float floorWeight = 1f - SmoothMath.Smootherstep(_floorRadius, _foothillEnd, rw);
             if (floorWeight > 0f)
             {
                 float calm = 1f;
                 height += CraterHeights(x, z, ref calm, ref craterBowl, ref craterRim);
                 height += RampHeights(x, z, ref calm);
+                height += floorWeight * _kestrel.Sample(x, z, ref calm, out scorch);
                 float floorDetail = floorWeight * SmoothMath.Smootherstep(_padRadius, _padBlendEnd, r);
                 if (floorDetail > 0f)
                 {
@@ -418,7 +440,7 @@ namespace MoonProject.World
                 height = Peak(dpx, dpz, dp2, height);
             }
 
-            return new SurfaceSample(height, craterBowl, craterRim, rimZone);
+            return new SurfaceSample(height, craterBowl, craterRim, rimZone, 0f, 0f, scorch);
         }
 
         private float WarpedRadius(float x, float z, float r)
@@ -637,10 +659,41 @@ namespace MoonProject.World
             }
 
             // Seeded craters first, play bowls last: indices of seeded craters stay stable when bowls are edited.
-            var ordered = new Crater[placed.Count];
-            placed.CopyTo(bowls.Length, ordered, 0, seeded);
-            placed.CopyTo(0, ordered, seeded, bowls.Length);
-            return ordered;
+            // Seeded craters on a site are dropped only now, so every other crater lies where it always did: the
+            // impact and the flat footprints erase the older ground beneath them.
+            var ordered = new List<Crater>(placed.Count);
+            for (int i = bowls.Length; i < placed.Count; i++)
+            {
+                if (!OnASite(placed[i], settings.Sites))
+                {
+                    ordered.Add(placed[i]);
+                }
+            }
+
+            for (int i = 0; i < bowls.Length; i++)
+            {
+                ordered.Add(placed[i]);
+            }
+
+            return ordered.ToArray();
+        }
+
+        /// <summary>
+        /// True when a seeded crater would reach into Kestrel-3's impact or a flat site footprint. The drill rig is
+        /// left out on purpose: it stands on a crater's rim.
+        /// </summary>
+        private bool OnASite(Crater crater, SiteSettings sites)
+        {
+            float blend = sites.FootprintBlend;
+            return _kestrel.Overlaps(crater.Center, crater.OuterRadius)
+                || Reaches(crater, sites.DepotCenter, sites.DepotRadius + blend)
+                || Reaches(crater, sites.GarageCenter, sites.GarageRadius + blend)
+                || Reaches(crater, sites.MoundCenter, sites.MoundRadius + sites.MoundRun);
+        }
+
+        private static bool Reaches(Crater crater, Vector2 centre, float reach)
+        {
+            return Vector2.Distance(crater.Center, centre) < crater.OuterRadius + reach;
         }
 
         private bool IsClear(Vector2 center, float reach, List<Crater> placed)

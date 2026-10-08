@@ -41,20 +41,30 @@
                     <ui:VisualElement name="relay-tag" class="relay-tag" picking-mode="Ignore">
                         <ui:VisualElement name="relay-tag-shadow" class="soft-shadow soft-shadow--chip" />
                         <ui:VisualElement name="relay-tag-body" class="chip relay-tag__body">
-                            <ui:VisualElement name="relay-tag-ring" class="relay-tag__ring">
-                                <ui:VisualElement name="relay-tag-icon" class="scrap-icon scrap-icon--small" />
+                            <ui:VisualElement class="relay-tag__row">
+                                <ui:VisualElement name="relay-tag-ring" class="relay-tag__ring">
+                                    <ui:VisualElement name="relay-tag-icon" class="relay-icon relay-icon--tag" />
+                                </ui:VisualElement>
+                                <ui:VisualElement name="relay-tag-recipe" class="recipe relay-tag__recipe" />
                             </ui:VisualElement>
-                            <ui:Label name="relay-tag-cost" class="chip__number relay-tag__cost" />
+                            <ui:Label name="relay-tag-need" class="recipe__need relay-tag__need" />
                         </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>
-            <ui:VisualElement name="scrap-chip" class="scrap-chip" picking-mode="Ignore">
-                <ui:VisualElement name="scrap-chip-shadow" class="soft-shadow soft-shadow--chip" />
-                <ui:VisualElement name="scrap-chip-body" class="chip">
-                    <ui:VisualElement name="scrap-chip-icon" class="scrap-icon" />
-                    <ui:Label name="scrap-chip-count" class="chip__number" />
+            <ui:VisualElement name="salvage-ring-anchor" class="world-anchor" picking-mode="Ignore">
+                <ui:VisualElement name="salvage-ring-middle" class="world-anchor__middle" picking-mode="Ignore">
+                    <ui:VisualElement name="salvage-ring" class="salvage-ring" picking-mode="Ignore" />
                 </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="site-name-anchor" class="world-anchor" picking-mode="Ignore">
+                <ui:VisualElement name="site-name-center" class="world-anchor__center" picking-mode="Ignore">
+                    <ui:Label name="site-name" class="friend-name site-name" picking-mode="Ignore" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="materials-chip" class="materials-chip" picking-mode="Ignore">
+                <ui:VisualElement name="materials-chip-shadow" class="soft-shadow soft-shadow--chip" />
+                <ui:VisualElement name="materials-chip-items" class="chip materials-chip__body" />
             </ui:VisualElement>
             <ui:VisualElement name="ticker" class="ticker" picking-mode="Ignore">
                 <ui:VisualElement name="ticker-line" class="ticker__line" picking-mode="Ignore">
@@ -115,11 +125,8 @@
                             </ui:VisualElement>
                             <ui:Label name="tower-hold-word" class="hold__word" />
                         </ui:VisualElement>
-                        <ui:Label name="tower-need" class="tower-panel__need" />
-                        <ui:VisualElement name="tower-cost-row" class="cost">
-                            <ui:VisualElement name="tower-cost-icon" class="scrap-icon scrap-icon--small" />
-                            <ui:Label name="tower-cost" class="cost__price" />
-                        </ui:VisualElement>
+                        <ui:Label name="tower-need" class="recipe__need tower-panel__need" />
+                        <ui:VisualElement name="tower-recipe" class="recipe" />
                     </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>
@@ -149,10 +156,7 @@
                                         <ui:Label name="pause-relays-count" class="pause__cassettes-count" />
                                     </ui:VisualElement>
                                 </ui:VisualElement>
-                                <ui:VisualElement name="pause-scrap" class="chip chip--inline">
-                                    <ui:VisualElement name="pause-scrap-icon" class="scrap-icon" />
-                                    <ui:Label name="pause-scrap-count" class="chip__number" />
-                                </ui:VisualElement>
+                                <ui:VisualElement name="pause-materials" class="chip chip--inline pause__materials" />
                             </ui:VisualElement>
                             <ui:VisualElement class="pause__pages">
                                 <ui:VisualElement name="page-main" class="pause__page">
