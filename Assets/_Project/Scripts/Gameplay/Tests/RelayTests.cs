@@ -24,6 +24,10 @@ namespace MoonProject.Gameplay.Tests
         private static readonly Vector3 Relay3 = new Vector3(456.57f, 36.35f, -16.66f);
         private static readonly string[] Ids = { "relay.0", "relay.1", "relay.2", "relay.3" };
 
+        // Home's lamp (the tower's beacon) and how high a mast's lamp stands, as the field passes them in.
+        private static readonly Vector3 HomeBeacon = new Vector3(-16f, 6.6f, 7f);
+        private const float MastLampHeight = 8.25f;
+
         // The radio tower's clear-signal radius before any level and at level 1 (the content builder's tower).
         private const float DarkTower = 60f;
         private const float TowerLevel1 = 110f;
@@ -78,6 +82,12 @@ namespace MoonProject.Gameplay.Tests
             Assert.AreEqual(0f, reach.DistanceToNearestNode(Relay2), 1e-3f);
             Assert.IsTrue(reach.GetNode(4).Lit);
             Assert.AreEqual(Relay3, reach.GetNode(4).Position);
+            Assert.AreEqual(tuning.MastReach, reach.GetNode(4).Radius, "audio reads a mast's reach from the node");
+            Assert.AreEqual(Lamp(Relay3), reach.GetNode(4).LampPosition);
+            Assert.AreEqual(TowerLevel1, reach.GetNode(0).Radius);
+            Assert.AreEqual(HomeBeacon, reach.GetNode(0).LampPosition, "home's lamp is the tower's beacon");
+            reach.SetHomeLamp(HomeBeacon + Vector3.up * 3.4f);
+            Assert.AreEqual(HomeBeacon + Vector3.up * 3.4f, reach.GetNode(0).LampPosition, "a taller stage");
             Assert.GreaterOrEqual(tuning.MastReach, 105f, "the world's chain needs at least 105 m per mast");
         }
 
@@ -90,6 +100,7 @@ namespace MoonProject.Gameplay.Tests
             reach.SetHomeRadius(TowerLevel1);
             Assert.IsTrue(reach.IsLit(2), "the tower's first level reaches it");
             Assert.AreEqual(TowerLevel1, reach.HomeRadius);
+            Assert.AreEqual(TowerLevel1, reach.GetNode(0).Radius, "home's node follows the tower's level");
             Assert.Throws<ArgumentException>(() => reach.SetRestored(StationReach.Home, false));
         }
 
@@ -339,8 +350,14 @@ namespace MoonProject.Gameplay.Tests
         private StationReach RealChain(float homeRadius, out RelayTuning tuning)
         {
             tuning = Create<RelayTuning>();
-            return new StationReach(Vector3.zero, homeRadius, Ids, new[] { Relay0, Relay1, Relay2, Relay3 },
-                tuning.MastReach);
+            var pads = new[] { Relay0, Relay1, Relay2, Relay3 };
+            var lamps = new[] { Lamp(Relay0), Lamp(Relay1), Lamp(Relay2), Lamp(Relay3) };
+            return new StationReach(Vector3.zero, homeRadius, HomeBeacon, Ids, pads, lamps, tuning.MastReach);
+        }
+
+        private static Vector3 Lamp(Vector3 pad)
+        {
+            return pad + new Vector3(0f, MastLampHeight, -2.2f);
         }
 
         private static RadioHop Hop(EventBus bus, StationReach reach, RelayTuning tuning, FakeRover rover,

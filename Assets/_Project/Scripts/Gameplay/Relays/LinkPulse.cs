@@ -56,21 +56,25 @@ namespace MoonProject.Gameplay
         /// <summary>Brightness right now.</summary>
         public float Level => _glow.Intensity;
 
-        /// <summary>Sends a pulse from <paramref name="from"/> toward <paramref name="to"/>.</summary>
-        public void Begin(Vector3 from, Vector3 to, float now)
+        /// <summary>
+        /// Sends a pulse from <paramref name="from"/> toward <paramref name="to"/>; returns the seconds until its head
+        /// arrives there.
+        /// </summary>
+        public float Begin(Vector3 from, Vector3 to, float now)
         {
             Vector3 way = to - from;
             way.y = 0f;
             _length = way.magnitude;
             if (_length < Mathf.Epsilon)
             {
-                return;
+                return 0f;
             }
 
             _from = from;
             _direction = way / _length;
             _start = now;
             Running = true;
+            return _length / _tuning.PulseSpeed;
         }
 
         public void Step(float now)

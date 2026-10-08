@@ -57,6 +57,7 @@ namespace MoonProject.Gameplay
         private ISaveService _save;
         private ScrapWallet _wallet;
         private UpgradeService _upgrades;
+        private RadioTower _tower;
         private FriendTuning _friends;
         private StationReach _reach;
         private RadioHop _hop;
@@ -124,8 +125,8 @@ namespace MoonProject.Gameplay
         }
 
         /// <param name="placement">Core's rover placement for the hop, or null while no domain registers it.</param>
-        internal bool Initialize(GameplayServices services, UpgradeService upgrades, ITetherAim tether,
-            FriendTuning friends, ScrapTuning scrap, IRoverPlacement placement)
+        internal bool Initialize(GameplayServices services, UpgradeService upgrades, RadioTower tower,
+            ITetherAim tether, FriendTuning friends, ScrapTuning scrap, IRoverPlacement placement)
         {
             List<WorldAnchor> anchors = services.Anchors != null ? RelayAnchors(services.Anchors) : null;
             string problem = _tuning == null ? "RelayTuning is not assigned."
@@ -150,6 +151,7 @@ namespace MoonProject.Gameplay
             _wallet = services.Wallet;
             _upgrades = upgrades ?? throw new ArgumentNullException(nameof(upgrades));
             _friends = friends != null ? friends : throw new ArgumentNullException(nameof(friends));
+            _tower = tower != null ? tower : throw new ArgumentNullException(nameof(tower));
             if (tether == null || scrap == null)
             {
                 throw new ArgumentNullException(tether == null ? nameof(tether) : nameof(scrap));
@@ -160,13 +162,7 @@ namespace MoonProject.Gameplay
                 services.Layout.BasePosition.z);
             var ids = new string[anchors.Count];
             var pads = new Vector3[anchors.Count];
-            for (int i = 0; i < anchors.Count; i++)
-            {
-                ids[i] = anchors[i].Id;
-                pads[i] = anchors[i].Position;
-            }
-
-            _reach = new StationReach(home, _upgrades.SignalRadius, ids, pads, _tuning.MastReach);
+            var lamps = new Vector3[anchors.Count];
             for (int i = 0; i < anchors.Count; i++)
             {
                 RelayMast mast = Spawn(anchors[i], i, services);
@@ -177,7 +173,13 @@ namespace MoonProject.Gameplay
                 }
 
                 _masts.Add(mast);
+                ids[i] = anchors[i].Id;
+                pads[i] = anchors[i].Position;
+                lamps[i] = mast.Restored.Lamp.position;
             }
+
+            _reach = new StationReach(home, _upgrades.SignalRadius, _tower.BeaconPosition, ids, pads, lamps,
+                _tuning.MastReach);
 
             _glints = new ScrapGlints(transform, services.Visuals.PartGlint, scrap, _masts.Count, Layers.Pickup);
             _beam = new RepairBeam("RelayBeam", transform, services.Visuals.TetherBeam, _friends.StitchRate,
@@ -329,6 +331,7 @@ namespace MoonProject.Gameplay
 
             float now = Time.time;
             float deltaTime = Time.deltaTime;
+            _reach.SetHomeLamp(_tower.BeaconPosition);
             if (!Mathf.Approximately(_upgrades.SignalRadius, _reach.HomeRadius))
             {
                 _reach.SetHomeRadius(_upgrades.SignalRadius);
@@ -609,17 +612,24 @@ namespace MoonProject.Gameplay
             }
         }
 
-        /// <summary>The mast is online: its pulse leaves for the node it links to; the moment is announced.</summary>
+        /// <summary>
+        /// The mast is online: its pulse leaves for the node it links to; the moment is announced with where the pulse
+        /// goes and when it arrives.
+        /// </summary>
         private void GoOnline(RelayMast mast, float now)
         {
             int link = _reach.NearestLink(mast.Node);
-            if (link >= 0)
+            if (link < 0)
             {
-                mast.Pulse.Begin(mast.Anchor.Position, _reach.Position(link), now);
+                Debug.LogError($"{nameof(RelayField)}: '{mast.Id}' is lit but overlaps no lit node " +
+                               $"({nameof(StationReach)} linking).", this);
+                return;
             }
 
+            float pulse = mast.Pulse.Begin(mast.Anchor.Position, _reach.Position(link), now);
             int lit = _reach.LitMasts;
-            _events.Publish(new RelayRestored(mast.Id, mast.Restored.Lamp.position, lit, _masts.Count));
+            _events.Publish(new RelayRestored(mast.Id, mast.Restored.Lamp.position, lit, _masts.Count,
+                _reach.Id(link), pulse));
             _events.Publish(new TickerLine(TickerOnline, _counts[Mathf.Clamp(lit, 0, _counts.Length - 1)]));
         }
 
