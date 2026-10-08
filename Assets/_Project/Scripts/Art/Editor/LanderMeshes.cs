@@ -15,7 +15,7 @@ namespace MoonProject.Art.Editor
     {
         public const float StageBottom = 1.45f;
         public const float StageTop = 2.75f;
-        public const float CabinTop = 4.64f;
+        public const float CabinTop = 4.95f;
 
         /// <summary>Top of the porch deck in front of the hatch.</summary>
         public const float DeckTop = StageTop + 0.05f;
@@ -33,9 +33,21 @@ namespace MoonProject.Art.Editor
         private const float CabinBottom = StageTop + 0.04f;
         private const float HipRadius = 1.75f;
         private const float FootRadius = 3.4f;
-        private const float WindowHeight = 3.55f;
-        private const float HatchCentreY = 3.5f;
         private const float DeckEdge = 1.92f;
+
+        // Sized for the crew (VISION ruling 13: a person is 1.75 m): a door they walk through upright, its porthole
+        // and the cabin's windows at their eye height, a handle at hand height, a porch rail at their waist.
+        private const float DoorWidth = 0.8f;
+        private const float DoorHeight = 1.85f;
+        private const float DoorBottom = DeckTop + 0.03f;
+        private const float HatchCentreY = DoorBottom + DoorHeight * 0.5f;
+        private const float EyeHeight = 1.5f;
+        private const float HandHeight = 1f;
+        private const float RailHeight = 1f;
+        private const float WindowHeight = DeckTop + 1.3f;
+
+        // The cabin's worn orange band, near the top of its walls.
+        private const float BandY = CabinTop - 0.28f;
 
         private static readonly float CabinApothem = CabinRadius * Mathf.Cos(Mathf.PI / 8f);
         private static readonly float StageApothem = StageRadius * Mathf.Cos(Mathf.PI / 8f);
@@ -76,16 +88,16 @@ namespace MoonProject.Art.Editor
                 SiteKit.RustStreak(b, window, -0.12f, WindowHeight - 0.32f, 0.42f);
                 SiteKit.RustStreak(b, window, 0.15f, WindowHeight - 0.3f, 0.28f);
                 Matrix4x4 flank = Face(side * 90f, face);
-                SiteKit.RustStreak(b, flank, 0.3f, 4.25f, 0.55f);
-                SiteKit.RustPatch(b, flank, -0.25f, 4.36f, 0.16f);
+                SiteKit.RustStreak(b, flank, 0.3f, BandY - 0.11f, 0.55f);
+                SiteKit.RustPatch(b, flank, -0.25f, BandY, 0.16f);
             }
 
             Matrix4x4 back = Face(180f, face);
             SiteKit.RustStreak(b, back, 0.3f, WindowHeight - 0.27f, 0.5f);
-            SiteKit.RustStreak(b, back, -0.35f, 4.25f, 0.4f);
+            SiteKit.RustStreak(b, back, -0.35f, BandY - 0.11f, 0.4f);
             Matrix4x4 front = Face(0f, face);
-            SiteKit.RustPatch(b, front, 0.45f, 4.36f, 0.13f);
-            SiteKit.RustStreak(b, front, -0.45f, 4.25f, 0.6f);
+            SiteKit.RustPatch(b, front, 0.3f, CabinTop - 0.08f, 0.1f);
+            SiteKit.RustStreak(b, front, -0.45f, BandY - 0.11f, 0.6f);
 
             float stage = StageApothem + Weathering.RustLift;
             for (int i = 0; i < 8; i++)
@@ -172,7 +184,7 @@ namespace MoonProject.Art.Editor
 
             b.Prism(At(new Vector3(0f, WindowHeight, -CabinApothem - 0.03f), new Vector3(90f, 180f, 0f)), 0.22f,
                 0.03f, 12, PaletteSwatch.WarmLamp);
-            b.Prism(At(new Vector3(0f, HatchCentreY + 0.3f, CabinApothem + 0.1f), AlongZ), 0.13f, 0.03f, 10,
+            b.Prism(At(new Vector3(0f, DoorBottom + EyeHeight, CabinApothem + 0.1f), AlongZ), 0.13f, 0.03f, 10,
                 PaletteSwatch.WarmLamp);
             for (int i = 0; i < LampCount; i++)
             {
@@ -191,7 +203,7 @@ namespace MoonProject.Art.Editor
             switch (index)
             {
                 case 0:
-                    return new Vector3(0f, 4.08f, 1.62f);
+                    return new Vector3(0f, DoorBottom + DoorHeight + 0.14f, 1.62f);
                 case 1:
                     return new Vector3(-1.08f, 1.05f, 3.05f);
                 case 2:
@@ -264,7 +276,7 @@ namespace MoonProject.Art.Editor
         {
             float height = CabinTop - CabinBottom;
             b.Prism(At(0f, CabinBottom + height * 0.5f, 0f), CabinRadius, height, 8, PaletteSwatch.Enamel);
-            b.Prism(At(0f, 4.36f, 0f), CabinRadius + 0.012f, 0.16f, 8, PaletteSwatch.WarmAccent);
+            b.Prism(At(0f, BandY, 0f), CabinRadius + 0.012f, 0.16f, 8, PaletteSwatch.WarmAccent);
             b.Prism(At(0f, CabinBottom + 0.05f, 0f), CabinRadius + 0.03f, 0.1f, 8, PaletteSwatch.Charcoal);
 
             for (int side = -1; side <= 1; side += 2)
@@ -274,19 +286,21 @@ namespace MoonProject.Art.Editor
                 Vector3 centre = normal * (CabinApothem + 0.03f) + Vector3.up * WindowHeight;
                 b.Torus(At(centre, new Vector3(90f, yaw, 0f)), 0.3f, 0.05f, 12, 4, PaletteSwatch.Charcoal);
                 Vector3 thruster = Rotation(new Vector3(0f, side * 90f, 0f)) * Vector3.forward * (CabinApothem + 0.1f);
-                RcsQuad(b, thruster + Vector3.up * 4.0f, side * 90f);
+                RcsQuad(b, thruster + Vector3.up * (BandY - 0.37f), side * 90f);
             }
 
             b.Torus(At(new Vector3(0f, WindowHeight, -CabinApothem - 0.03f), new Vector3(90f, 180f, 0f)), 0.25f,
                 0.045f, 12, 4, PaletteSwatch.Charcoal);
 
             float face = CabinApothem;
-            b.Box(At(0f, HatchCentreY, face + 0.03f), new Vector3(0.98f, 1.45f, 0.06f), PaletteSwatch.Charcoal,
+            const float frameTop = DoorBottom + DoorHeight + 0.1f;
+            b.Box(At(0f, (DeckTop + frameTop) * 0.5f, face + 0.03f), new Vector3(DoorWidth + 0.2f, frameTop - DeckTop,
+                0.06f), PaletteSwatch.Charcoal, 0.02f);
+            b.Box(At(0f, HatchCentreY, face + 0.07f), new Vector3(DoorWidth, DoorHeight, 0.05f), PaletteSwatch.Metal,
                 0.02f);
-            b.Box(At(0f, HatchCentreY, face + 0.07f), new Vector3(0.78f, 1.25f, 0.05f), PaletteSwatch.Metal, 0.02f);
-            b.Torus(At(new Vector3(0f, HatchCentreY + 0.3f, face + 0.1f), AlongZ), 0.15f, 0.03f, 10, 4,
+            b.Torus(At(new Vector3(0f, DoorBottom + EyeHeight, face + 0.1f), AlongZ), 0.15f, 0.03f, 10, 4,
                 PaletteSwatch.Charcoal);
-            b.Box(At(0.28f, HatchCentreY - 0.12f, face + 0.11f), new Vector3(0.05f, 0.2f, 0.04f),
+            b.Box(At(DoorWidth * 0.5f - 0.1f, DoorBottom + HandHeight, face + 0.11f), new Vector3(0.05f, 0.2f, 0.04f),
                 PaletteSwatch.Charcoal, 0.01f);
         }
 
@@ -315,12 +329,12 @@ namespace MoonProject.Art.Editor
             };
             for (int i = 0; i < posts.Length; i++)
             {
-                RecipeKit.Rod(b, posts[i], posts[i] + Vector3.up * 0.75f, 0.03f, 6, PaletteSwatch.Metal);
+                RecipeKit.Rod(b, posts[i], posts[i] + Vector3.up * RailHeight, 0.03f, 6, PaletteSwatch.Metal);
             }
 
-            RecipeKit.Rod(b, posts[0] + Vector3.up * 0.75f, posts[1] + Vector3.up * 0.75f, 0.025f, 6,
-                PaletteSwatch.WarmAccent);
-            RecipeKit.Rod(b, posts[2] + Vector3.up * 0.75f, posts[3] + Vector3.up * 0.75f, 0.025f, 6,
+            Vector3 rail = Vector3.up * RailHeight;
+            RecipeKit.Rod(b, posts[0] + rail, posts[1] + rail, 0.025f, 6, PaletteSwatch.WarmAccent);
+            RecipeKit.Rod(b, posts[2] + rail, posts[3] + rail, 0.025f, 6,
                 PaletteSwatch.WarmAccent);
         }
 
