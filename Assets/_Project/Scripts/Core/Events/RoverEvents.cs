@@ -92,6 +92,65 @@ namespace MoonProject.Core.Events
     {
     }
 
+    /// <summary>A piece of 07's visible kit or a friend's gift on 07 (docs/features/M3-11, VISION ruling 11).</summary>
+    public enum RoverKitPiece
+    {
+        /// <summary>The Hover-Jump's coils under the belly.</summary>
+        HoverCoils = 0,
+
+        /// <summary>The Warm Headlamp's caged lamp bar across the front.</summary>
+        LampBar = 1,
+
+        /// <summary>The Boost Coils' twin capacitor drums on the flanks.</summary>
+        CapacitorDrums = 2,
+
+        /// <summary>The Cargo Cradle's strapped rear rack.</summary>
+        CargoRack = 3,
+
+        /// <summary>Tilly's gift: the solar wing's missing cell replaced.</summary>
+        SolarCell = 4,
+
+        /// <summary>Bell's gift: the "07" freshly stencilled and a radio pennant on the antenna.</summary>
+        FreshPaint = 5,
+    }
+
+    /// <summary>
+    /// A kit piece is about to be fitted on 07 after a purchase (<see cref="Gift"/> false), or a friend's gift is about
+    /// to appear as 07 comes home (true): the install moment begins and the camera eases round to look. A loaded game
+    /// shows its kit silently, without this.
+    /// </summary>
+    public readonly struct RoverKitInstalling
+    {
+        public RoverKitInstalling(RoverKitPiece piece, bool gift)
+        {
+            Piece = piece;
+            Gift = gift;
+        }
+
+        public RoverKitPiece Piece { get; }
+
+        /// <summary>True for a friend's gift: the soft version of the moment.</summary>
+        public bool Gift { get; }
+    }
+
+    /// <summary>
+    /// The piece settled onto 07 (the "fitted" clunk; for a gift, the moment it is fully there): 07 strikes its proud
+    /// pose.
+    /// </summary>
+    public readonly struct RoverKitFitted
+    {
+        public RoverKitFitted(RoverKitPiece piece, bool gift)
+        {
+            Piece = piece;
+            Gift = gift;
+        }
+
+        public RoverKitPiece Piece { get; }
+
+        /// <summary>True for a friend's gift.</summary>
+        public bool Gift { get; }
+    }
+
     /// <summary>
     /// The Boost Coils engaged (<see cref="Boosting"/> true: holding Drive at cruise on open, flat-ish ground) or let
     /// go. The boost itself eases in and out over about a second; listeners ease their own response (the hum).

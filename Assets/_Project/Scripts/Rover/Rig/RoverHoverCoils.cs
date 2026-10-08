@@ -6,11 +6,12 @@ using MoonProject.Core.Events;
 namespace MoonProject.Rover
 {
     /// <summary>
-    /// Shows art's HoverCoils (mounted on RoverModel 'CoilSocket') only while 07 owns the Hover-Jump, popping them in
-    /// when it is bought (<see cref="HoverCoilMotion"/>). While the jump charges, Coil_FL/FR/RL/RR squash along local
-    /// Y and their Glow_ rings light up (MaterialPropertyBlock _EmissionColor = linear glow, set as a vector), and a soft cyan point
-    /// light at CoilSocket pools on the ground so the charge reads from the chase camera; on the leap the springs kick
-    /// out. Ticked by <see cref="RoverController"/>.
+    /// Shows art's HoverCoils (mounted on RoverModel 'CoilSocket') once 07 owns the Hover-Jump, popping them in when
+    /// it is bought, at the moment <see cref="RoverKit"/> fits them (<see cref="HoverCoilMotion"/>). While the jump
+    /// charges, Coil_FL/FR/RL/RR squash along local Y and their Glow_ rings light up (MaterialPropertyBlock
+    /// _EmissionColor = linear glow, set as a vector), and a soft cyan point light at CoilSocket pools on the ground so
+    /// the charge reads from the chase camera; on the leap the springs kick out. Ticked by
+    /// <see cref="RoverController"/>.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class RoverHoverCoils : MonoBehaviour
@@ -114,7 +115,7 @@ namespace MoonProject.Rover
         public void Tick(float deltaTime)
         {
             bool wasVisible = _motion.Visible;
-            if (_motion.Step(_rover.Has(RoverAbility.HoverJump), _rover.JumpCharge, deltaTime))
+            if (_motion.Step(_rover.Kit.Shows(RoverKitPiece.HoverCoils), _rover.JumpCharge, deltaTime))
             {
                 HoverCoilSettings settings = _tuning.HoverCoils;
                 _rig.KickHeave(settings.PopHeaveKick);
