@@ -51,6 +51,19 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         private static readonly float[] RelicMasses = { 6f, 3f, 5f, 9f, 7f, 14f };
 
+        /// <summary>
+        /// Each relic stand-in's size (m) at true scale, gently exaggerated (VISION ruling 13, the art report): the
+        /// cassette player 0.25, the duck 0.20, the golden record 0.40, the boot 0.40, the teapot 0.35, the gnome 0.50.
+        /// </summary>
+        private static readonly Vector3[] RelicSizes =
+        {
+            new Vector3(0.25f, 0.16f, 0.08f), new Vector3(0.16f, 0.2f, 0.14f), new Vector3(0.4f, 0.4f, 0.06f),
+            new Vector3(0.18f, 0.4f, 0.3f), new Vector3(0.35f, 0.24f, 0.22f), new Vector3(0.22f, 0.5f, 0.2f),
+        };
+
+        /// <summary>A cassette stand-in's size (m): 0.18 m across, as the art rescaled them.</summary>
+        private static readonly Vector3 CassetteSize = new Vector3(0.18f, 0.115f, 0.03f);
+
         private readonly List<Object> _created = new List<Object>();
         private readonly InputActionAsset _controls;
 
@@ -251,7 +264,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             {
                 definitions[i] = Asset<RelicDefinition>();
                 definitions[i].Populate(RelicIds[i], RelicMasses[i],
-                    Template("Relic_" + RelicIds[i], new Vector3(0.7f, 0.6f, 0.5f)), i,
+                    Template("Relic_" + RelicIds[i], RelicSizes[i]), i,
                     WorldAnchorIds.SitePrefix + RelicSites[i], i == RelicIds.Length - 1 ? new Vector2(1.2f, 0f)
                         : Vector2.zero);
             }
@@ -330,11 +343,11 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             Transform shelf = Node("MuseumShelf", Node("ShelfAnchor", lander, new Vector3(6f, 0f, 1.2f)),
                 Vector3.zero);
-            Transform shelfLights = Block(shelf, new Vector3(0f, 2.4f, 0f), new Vector3(4.2f, 0.1f, 0.6f));
+            Transform shelfLights = Block(shelf, new Vector3(0f, 1.75f, 0f), new Vector3(2.7f, 0.1f, 0.6f));
             var slots = new Transform[6];
             for (int i = 0; i < slots.Length; i++)
             {
-                slots[i] = Node("Slot_" + i, shelf, new Vector3(-1.37f + 1.37f * (i % 3), i < 3 ? 0.38f : 1.78f,
+                slots[i] = Node("Slot_" + i, shelf, new Vector3(-0.86f + 0.86f * (i % 3), i < 3 ? 0.33f : 1.03f,
                     0.04f));
             }
 
@@ -373,12 +386,12 @@ namespace MoonProject.Gameplay.PlayModeTests
             Transform rack = Node("CassetteShelf", Node("CassetteShelfAnchor", anchor, new Vector3(-4.6f, 0f, -2.75f)),
                 Vector3.zero);
             rack.parent.localRotation = Quaternion.Euler(0f, 60f, 0f);
-            Block(rack, new Vector3(0f, 0.6f, -0.05f), new Vector3(0.6f, 1.2f, 0.1f)).name = "Rack";
+            Block(rack, new Vector3(0f, 0.58f, -0.05f), new Vector3(0.56f, 1.16f, 0.1f)).name = "Rack";
             ShelfSlots = new Transform[8];
             for (int i = 0; i < ShelfSlots.Length; i++)
             {
-                ShelfSlots[i] = Node("Slot_" + i, rack, new Vector3(i % 2 == 0 ? 0.2f : -0.2f,
-                    1.033f - 0.27f * (i / 2), 0.01f));
+                ShelfSlots[i] = Node("Slot_" + i, rack, new Vector3(i % 2 == 0 ? 0.12f : -0.12f,
+                    1.003f - 0.16f * (i / 2), 0.006f));
             }
 
             var tapes = rack.gameObject.AddComponent<CassetteShelf>();
@@ -643,7 +656,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         private CassetteDefinition Cassette(string id, CassetteSiteRule site, AnchorSpot anchor, AbilityGate gate)
         {
             var cassette = Asset<CassetteDefinition>();
-            cassette.Populate(id, Template("Cassette_" + id, new Vector3(0.35f, 0.22f, 0.07f)), site, anchor, 73,
+            cassette.Populate(id, Template("Cassette_" + id, CassetteSize), site, anchor, 73,
                 gate);
             return cassette;
         }
