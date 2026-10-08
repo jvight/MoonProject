@@ -246,6 +246,99 @@ namespace MoonProject.Art
             return new MeshRange(first, TriangleCount - first);
         }
 
+        /// <summary>
+        /// Copies the triangles of <paramref name="source"/> whose normal n satisfies dot(n, direction) &gt;=
+        /// <paramref name="minDot"/>, each pushed <paramref name="lift"/> out along its own normal and painted
+        /// <paramref name="swatch"/>: a skin over part of another mesh (dust settled on its top faces), built as its
+        /// own mesh so it can be shown or removed on its own. Glowing faces are skipped.
+        /// </summary>
+        public MeshRange AppendFacing(LowPolyMeshBuilder source, Vector3 direction, float minDot, float lift,
+            PaletteSwatch swatch)
+        {
+            RequireOverlaySource(source);
+            Vector3 axis = direction.normalized;
+            Vector2 uv = Palette.Uv(swatch);
+            int first = TriangleCount;
+            for (int v = 0; v < source.VertexCount; v += 3)
+            {
+                if (Vector3.Dot(source._normals[v], axis) >= minDot && !IsGlowing(source._uvs[v]))
+                {
+                    AddLifted(source._positions[v], source._positions[v + 1], source._positions[v + 2],
+                        source._normals[v], lift, uv);
+                }
+            }
+
+            return new MeshRange(first, TriangleCount - first);
+        }
+
+        /// <summary>
+        /// Copies the triangles of <paramref name="source"/> painted <paramref name="from"/>, each pushed
+        /// <paramref name="lift"/> out along its own normal and repainted <paramref name="to"/>: a coat over that paint
+        /// (sun-bleached enamel over the clean enamel), its own mesh so the clean paint can come back.
+        /// </summary>
+        public MeshRange AppendRepainted(LowPolyMeshBuilder source, PaletteSwatch from, PaletteSwatch to, float lift)
+        {
+            RequireOverlaySource(source);
+            Vector2 match = Palette.Uv(from);
+            Vector2 uv = Palette.Uv(to);
+            int first = TriangleCount;
+            for (int v = 0; v < source.VertexCount; v += 3)
+            {
+                if (source._uvs[v] == match)
+                {
+                    AddLifted(source._positions[v], source._positions[v + 1], source._positions[v + 2],
+                        source._normals[v], lift, uv);
+                }
+            }
+
+            return new MeshRange(first, TriangleCount - first);
+        }
+
+        /// <summary>
+        /// Copies the part of <paramref name="source"/> below <paramref name="height"/> (triangles crossing it are
+        /// cut at that level), pushed <paramref name="lift"/> out along each face's normal and painted
+        /// <paramref name="swatch"/>: a crisp tide line of dust round the foot of anything standing in it. Glowing
+        /// faces are skipped.
+        /// </summary>
+        public MeshRange AppendBelow(LowPolyMeshBuilder source, float height, float lift, PaletteSwatch swatch)
+        {
+            RequireOverlaySource(source);
+            Vector2 uv = Palette.Uv(swatch);
+            int first = TriangleCount;
+            var polygon = new List<Vector3>(4);
+            for (int v = 0; v < source.VertexCount; v += 3)
+            {
+                if (IsGlowing(source._uvs[v]))
+                {
+                    continue;
+                }
+
+                polygon.Clear();
+                for (int e = 0; e < 3; e++)
+                {
+                    Vector3 from = source._positions[v + e];
+                    Vector3 to = source._positions[v + (e + 1) % 3];
+                    bool fromBelow = from.y <= height;
+                    if (fromBelow)
+                    {
+                        polygon.Add(from);
+                    }
+
+                    if (fromBelow != (to.y <= height))
+                    {
+                        polygon.Add(Vector3.Lerp(from, to, (height - from.y) / (to.y - from.y)));
+                    }
+                }
+
+                for (int i = 2; i < polygon.Count; i++)
+                {
+                    AddLifted(polygon[0], polygon[i - 1], polygon[i], source._normals[v], lift, uv);
+                }
+            }
+
+            return new MeshRange(first, TriangleCount - first);
+        }
+
         /// <summary>Recolours every triangle in <paramref name="range"/>.</summary>
         public void Repaint(MeshRange range, PaletteSwatch swatch)
         {
@@ -541,6 +634,39 @@ namespace MoonProject.Art
             }
 
             return new MeshRange(first, TriangleCount - first);
+        }
+
+        private void AddLifted(Vector3 a, Vector3 b, Vector3 c, Vector3 normal, float lift, Vector2 uv)
+        {
+            Vector3 offset = normal * lift;
+            AddFlatTriangle(a + offset, b + offset, c + offset, uv);
+        }
+
+        /// <summary>Glowing glass is never dusted over: a lamp under dust would read as a dead one.</summary>
+        private static bool IsGlowing(Vector2 uv)
+        {
+            foreach (PaletteSwatch swatch in (PaletteSwatch[])Enum.GetValues(typeof(PaletteSwatch)))
+            {
+                if (Palette.Uv(swatch) == uv)
+                {
+                    return Palette.IsEmissive(swatch);
+                }
+            }
+
+            return false;
+        }
+
+        private void RequireOverlaySource(LowPolyMeshBuilder source)
+        {
+            if (source == null)
+            {
+                throw new ArgumentNullException(nameof(source));
+            }
+
+            if (ReferenceEquals(source, this))
+            {
+                throw new ArgumentException("A builder cannot overlay itself.", nameof(source));
+            }
         }
 
         private void AddFlatTriangle(Vector3 a, Vector3 b, Vector3 c, Vector2 uv)

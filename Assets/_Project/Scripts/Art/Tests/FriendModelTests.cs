@@ -125,7 +125,9 @@ namespace MoonProject.Art.Tests
             string[] expected =
             {
                 "Windows", "ShelfAnchor", "TowerAnchor", "LampSocket_0", "LampSocket_1", "LampSocket_2",
-                "LampSocket_3", "FriendSocket_tilly", "WorkshopAnchor",
+                "LampSocket_3", "FriendSocket_tilly", "WorkshopAnchor", "DockAnchor", "DockGlow", "LiftBottom",
+                "LiftTop", "LiftPlatform", "LiftCable_L", "LiftCable_R", "Weather_Paint", "Weather_Rust",
+                "Weather_Dust",
             };
 
             CollectionAssert.AreEqual(expected, lander.Children.Select(child => child.Name).ToArray());

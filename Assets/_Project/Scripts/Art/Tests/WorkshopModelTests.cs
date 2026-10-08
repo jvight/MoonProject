@@ -28,7 +28,9 @@ namespace MoonProject.Art.Tests
             ModelNode bench = BaseModelBuilder.CreateWorkbench();
 
             Assert.AreEqual("Workbench", bench.Name);
-            CollectionAssert.AreEqual(new[] { "Lights", "SparkSocket" }, bench.Children.Select(c => c.Name).ToArray());
+            CollectionAssert.AreEqual(new[] { "Lights", "SparkSocket", "Weather_Paint", "Weather_Rust",
+                "Weather_Dust" },
+                bench.Children.Select(c => c.Name).ToArray());
             Assert.IsNull(bench.GetDescendant("SparkSocket").Mesh);
             LowPolyMeshBuilder lights = bench.GetDescendant("Lights").Mesh.Geometry;
             for (int t = 0; t < lights.TriangleCount; t++)

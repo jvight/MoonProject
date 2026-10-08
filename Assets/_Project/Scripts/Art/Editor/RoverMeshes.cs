@@ -44,7 +44,10 @@ namespace MoonProject.Art.Editor
 
         private const float BodyCentreZ = 0.03f;
         internal const float BodyHalfWidth = 0.44f;
-        private const float BodyFront = 0.68f;
+        internal const float BodyFront = 0.68f;
+
+        // Rust on 07 is drawn finer than on the wrecks: it is seen close, from the chase camera.
+        private const float SpotWidth = 0.025f;
         internal const float BodyBack = -0.62f;
         private const float TubBottom = 0.34f;
         private const float TubTop = 0.84f;
@@ -99,6 +102,7 @@ namespace MoonProject.Art.Editor
             Bevel(b, cushion, 0.035f, true, false);
 
             Stripes(b);
+            Dent(b);
             SerialOnFlank(b, 1f, 0.13f, 0.21f);
             SerialOnFlank(b, -1f, 0.21f, 0.13f);
             SerialOnBack(b);
@@ -106,6 +110,63 @@ namespace MoonProject.Art.Editor
             RadioFace(b);
             Rear(b);
             LidRivets(b);
+            return b;
+        }
+
+        /// <summary>
+        /// 07's rust, in body space: spots at the lid rivets weeping down over the stripe, at the corners of the rear
+        /// hatch and under the radio face's knobs. Small, so 07 still reads as itself, just old.
+        /// </summary>
+        public static LowPolyMeshBuilder Rust()
+        {
+            var b = new LowPolyMeshBuilder(500);
+            const float lidSide = BodyHalfWidth + 0.03f + 0.003f;
+            const float stripeSide = BodyHalfWidth + PaintProud + PaintThickness * 0.5f + 0.003f;
+            for (int side = -1; side <= 1; side += 2)
+            {
+                Matrix4x4 lid = SiteKit.Face(new Vector3(side * lidSide, 0f, 0f), Vector3.right * side, Vector3.up);
+                Matrix4x4 stripe = SiteKit.Face(new Vector3(side * stripeSide, 0f, 0f), Vector3.right * side,
+                    Vector3.up);
+                foreach (float z in new[] { -0.28f, 0.2f, 0.44f })
+                {
+                    float along = side > 0 ? -z : z;
+                    SiteKit.RustPatch(b, lid, along, 0.87f, 0.04f);
+                    SiteKit.RustStreak(b, stripe, along, 0.835f, 0.08f, SpotWidth);
+                }
+            }
+
+            Matrix4x4 back = SiteKit.Face(new Vector3(0f, 0f, BodyBack - 0.004f), Vector3.back, Vector3.up);
+            SiteKit.RustPatch(b, back, -0.14f, 0.42f, 0.06f);
+            SiteKit.RustPatch(b, back, 0.13f, 0.55f, 0.05f);
+            Matrix4x4 front = SiteKit.Face(new Vector3(0f, 0f, BodyFront + 0.004f), Vector3.forward, Vector3.up);
+            SiteKit.RustStreak(b, front, -0.2f, LampHeight - 0.04f, 0.09f, SpotWidth);
+            SiteKit.RustStreak(b, front, 0.2f, LampHeight - 0.04f, 0.06f, SpotWidth);
+            return b;
+        }
+
+        /// <summary>
+        /// Dust settled on 07's lid in soft drifts at the back corners and one front corner (never the whole lid:
+        /// the cream still shows), in body space.
+        /// </summary>
+        public static LowPolyMeshBuilder DustPatches()
+        {
+            var b = new LowPolyMeshBuilder(120);
+            Vector2[] drift =
+            {
+                new Vector2(0.16f, 0.02f), new Vector2(0.1f, 0.13f), new Vector2(-0.06f, 0.15f),
+                    new Vector2(-0.17f, 0.05f),
+                new Vector2(-0.14f, -0.1f), new Vector2(0.02f, -0.15f), new Vector2(0.14f, -0.09f),
+            };
+            float top = LidTop + Weathering.DustLift * 0.25f;
+            Vector3[] spots = { new Vector3(0.22f, top, -0.36f), new Vector3(0.33f, top, 0.16f),
+                new Vector3(-0.3f, top, 0.48f) };
+            for (int i = 0; i < spots.Length; i++)
+            {
+                b.Extrude(At(spots[i], new Vector3(90f, i * 70f, 0f), new Vector3(1f + i * 0.2f, 1f, 1f)), drift,
+                    0.008f,
+                    PaletteSwatch.CakedDust);
+            }
+
             return b;
         }
 
@@ -153,13 +214,22 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
-        /// The mismatched replacement from another machine: a grey metal tyre (it shows from behind) with four
-        /// lugs and a sage hub held by four bolts.
+        /// The mismatched spare from another machine, clearly patched on: dark rubber like the others but with a
+        /// busier tread of eight small lugs, two wraps of faded tape round the tyre with a loose end, and a sage hub
+        /// held by four bolts (VISION ruling 13: wear must read as intentional at first glance).
         /// </summary>
         public static LowPolyMeshBuilder SpareWheel()
         {
-            var b = new LowPolyMeshBuilder(300);
-            Tyre(b, 10, 4, PaletteSwatch.Metal, PaletteSwatch.Charcoal);
+            var b = new LowPolyMeshBuilder(400);
+            Tyre(b, 10, 8, PaletteSwatch.Charcoal, PaletteSwatch.Charcoal);
+            for (int wrap = -1; wrap <= 1; wrap += 2)
+            {
+                b.Prism(At(new Vector3(wrap * 0.045f, 0f, 0f), new Vector3(0f, wrap * 7f, -90f)), TyreRadius + 0.006f,
+                    0.032f, 10, PaletteSwatch.FadedPaint, false);
+            }
+
+            b.Box(At(new Vector3(WheelHalfWidth + 0.003f, -0.2f, -0.21f), new Vector3(-35f, 0f, 0f)),
+                new Vector3(0.006f, 0.034f, 0.09f), PaletteSwatch.FadedPaint);
             b.Prism(At(new Vector3(WheelHalfWidth + 0.012f, 0f, 0f), AlongX), 0.24f, 0.03f, 10, PaletteSwatch.Sage);
             for (int i = 0; i < 4; i++)
             {
@@ -487,6 +557,23 @@ namespace MoonProject.Art.Editor
                 new Vector3(scale, 0.25f, 1.35f * scale)), 0.032f, 0.013f, 10, 4, PaletteSwatch.FadedPaint);
             b.Extrude(At(new Vector3(0.04f, StripeY + 0.002f, z), new Vector3(0f, 0f, -3f),
                 new Vector3(scale, scale, 1f)), Seven, 0.006f, PaletteSwatch.FadedPaint);
+        }
+
+        /// <summary>
+        /// A dent low on the right front flank: two pressed facets meeting in a crease, catching the light differently
+        /// from the flat enamel round them.
+        /// </summary>
+        private static void Dent(LowPolyMeshBuilder b)
+        {
+            const float x = BodyHalfWidth + 0.004f;
+            for (int side = -1; side <= 1; side += 2)
+            {
+                b.Box(At(new Vector3(x, 0.5f, 0.42f + side * 0.045f), new Vector3(0f, side * 12f, side * 6f)),
+                    new Vector3(0.008f, 0.12f, 0.09f), PaletteSwatch.Enamel);
+            }
+
+            b.Box(At(new Vector3(x + 0.005f, 0.5f, 0.42f), new Vector3(0f, 0f, 6f)), new Vector3(0.004f, 0.11f, 0.008f),
+                PaletteSwatch.Charcoal);
         }
 
         /// <summary>Sage plate riveted over the left rear flank, askew, covering a stretch of the stripe.</summary>

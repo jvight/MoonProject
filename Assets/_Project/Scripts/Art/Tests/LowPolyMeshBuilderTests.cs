@@ -500,6 +500,63 @@ namespace MoonProject.Art.Tests
         }
 
         [Test]
+        public void AppendFacing_CopiesOnlyTheFacesThatLookThatWay_LiftedAndRepainted()
+        {
+            var source = new LowPolyMeshBuilder();
+            source.Box(Matrix4x4.identity, Vector3.one, PaletteSwatch.Cream);
+            var skin = new LowPolyMeshBuilder();
+
+            MeshRange top = skin.AppendFacing(source, Vector3.up, 0.9f, 0.01f, PaletteSwatch.CakedDust);
+
+            Assert.AreEqual(2, top.TriangleCount, "only the top face");
+            MeshChecks.AssertWellFormed(skin);
+            foreach (Vector3 p in skin.Positions)
+            {
+                Assert.AreEqual(0.51f, p.y, 1e-5f, "lifted along the face normal");
+            }
+
+            CollectionAssert.AreEqual(new[] { PaletteSwatch.CakedDust }, MeshChecks.Swatches(skin));
+        }
+
+        [Test]
+        public void AppendRepainted_CopiesOnlyThatPaint()
+        {
+            var source = new LowPolyMeshBuilder();
+            source.Box(Matrix4x4.identity, Vector3.one, PaletteSwatch.Cream);
+            source.Box(Place.At(2f, 0f, 0f), Vector3.one, PaletteSwatch.WarmAccent);
+            var coat = new LowPolyMeshBuilder();
+
+            coat.AppendRepainted(source, PaletteSwatch.WarmAccent, PaletteSwatch.FadedAccent, 0.005f);
+
+            Assert.AreEqual(12, coat.TriangleCount);
+            Assert.Greater(coat.Bounds.min.x, 1.49f, "only the orange box");
+            Assert.AreEqual(1.01f, coat.Bounds.size.x, 1e-4f, "lifted out of every face");
+            CollectionAssert.AreEqual(new[] { PaletteSwatch.FadedAccent }, MeshChecks.Swatches(coat));
+        }
+
+        [Test]
+        public void AppendBelow_CutsTheShapeAtTheTideLine()
+        {
+            var source = new LowPolyMeshBuilder();
+            source.Box(Matrix4x4.identity, new Vector3(1f, 2f, 1f), PaletteSwatch.Cream);
+            var tide = new LowPolyMeshBuilder();
+
+            tide.AppendBelow(source, -0.4f, 0f, PaletteSwatch.CakedDust);
+
+            MeshChecks.AssertWellFormed(tide);
+            Assert.AreEqual(-1f, tide.Bounds.min.y, 1e-5f);
+            Assert.AreEqual(-0.4f, tide.Bounds.max.y, 1e-5f, "cut exactly at the line");
+            float area = 0f;
+            for (int v = 0; v < tide.VertexCount; v += 3)
+            {
+                area += Vector3.Cross(tide.Positions[v + 1] - tide.Positions[v], tide.Positions[v + 2] -
+                    tide.Positions[v]).magnitude * 0.5f;
+            }
+
+            Assert.AreEqual(1f + 4f * 0.6f, area, 1e-4f, "the bottom and the lower 0.6 m of four sides");
+        }
+
+        [Test]
         public void Clear_EmptiesTheBuilder()
         {
             var builder = new LowPolyMeshBuilder();

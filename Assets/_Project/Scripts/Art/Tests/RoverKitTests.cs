@@ -202,6 +202,9 @@ namespace MoonProject.Art.Tests
             foreach (string side in new[] { "L", "R" })
             {
                 Bounds drum = Mounted(RoverKitBuilder.CreateCapacitorDrum(), "DrumSocket_" + side);
+                Bounds middle = Mounted(_rover.GetDescendant("Wheel_M" + side), "Wheel_M" + side);
+                Assert.GreaterOrEqual(drum.min.y - (middle.max.y + RoverModelBuilder.MiddleWheelTravel),
+                    WheelClearance * 0.5f, $"drum {side} clears the middle wheel at the top of its travel");
                 foreach (string row in new[] { "F", "M", "R" })
                 {
                     Bounds wheel = Mounted(_rover.GetDescendant($"Wheel_{row}{side}"), $"Wheel_{row}{side}");
