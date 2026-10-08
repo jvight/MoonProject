@@ -149,6 +149,22 @@ Generated/Art/Rover/HoverCoils.prefab  (meshes only; parent it to RoverModel's C
       Glow_<corner>    ring around the foot pad, own glow renderer on M_LowPolyGlowOff (dark glass, glows cyan):
                        light it with MaterialPropertyBlock _EmissionColor = white x charge
 ```
+Visible kit (M3-11, VISION ruling 11). Meshes only, `M_LowPoly`; each prefab parents to its socket with identity.
+Every piece must read in silhouette from the default chase camera and at 30 m, sturdy and well-loved, never spiky.
+```
+Generated/Art/Rover/Kit_LampBar.prefab       caged lamp bar across the front, root at HeadlampSocket
+  Lamp_0..2                                  own glow renderers on M_LowPolyGlowOff (WarmLamp), lit via SetVector
+Generated/Art/Rover/Kit_CapacitorDrum.prefab twin-ready capacitor drum, root at DrumSocket_L / DrumSocket_R
+  Glow                                       own glow renderer on M_LowPolyGlowOff (cyan, like the coils), lit while boosting
+Generated/Art/Rover/Kit_CargoRack.prefab     strapped rear rack basket, root at CargoSocket
+  RelicSeat                                  empty where a carried relic rests (+Y up)
+RoverModel additions:
+  DrumSocket_L, DrumSocket_R                 empties on the flanks, +X outward
+  SolarWing/CellFilled                       the replacement cell, hidden until Tilly's gift
+  Body/Decal07Fresh                          a freshly stencilled "07", hidden until Bell's gift (the faded one hides then)
+  Antenna/Pennant                            small radio pennant, hidden until Bell's gift
+```
+
 Renaming or re-pivoting any node is a contract change: coordinate through the Director.
 
 Glow modulation: `Eye` and `AntennaTip` are their own MeshRenderers on the shared palette material. Their glow
