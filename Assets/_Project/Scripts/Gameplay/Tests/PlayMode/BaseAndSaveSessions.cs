@@ -243,7 +243,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsFalse(_fixture.Rover.Has(RoverAbility.HoverJump));
             Assert.Greater(SurfaceRules.HorizontalDistance(bay.PadCentre, tower.PadCentre),
                 look.Radius + _fixture.TowerTuning.PadRadius, "the two pads never overlap");
-            Assert.AreEqual(0.12f, bay.PadCentre.y - bay.BayPosition.y, 1e-3f, "the pad lies on the turntable");
+            Assert.AreEqual(0.15f, bay.PadCentre.y - bay.BayPosition.y, 1e-3f, "the pad lies on the turntable");
 
             _fixture.GiveMaterials(5, 2, 1);
             Assert.AreEqual(PurchaseResult.NotAtStation, shop.Purchase(HoverJump), "bought in the bay, not anywhere");
