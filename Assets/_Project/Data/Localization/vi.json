@@ -465,6 +465,50 @@
         {
             "key": "ui.pause.relays",
             "text": "Trạm tiếp sóng {0}/{1}"
+        },
+        {
+            "key": "hint.salvage",
+            "text": "Cắt"
+        },
+        {
+            "key": "material.metal",
+            "text": "Kim loại"
+        },
+        {
+            "key": "material.wiring",
+            "text": "Dây điện"
+        },
+        {
+            "key": "material.optics",
+            "text": "Quang học"
+        },
+        {
+            "key": "site.depot.name",
+            "text": "Kho tiếp tế"
+        },
+        {
+            "key": "site.kestrel.name",
+            "text": "Kestrel-3"
+        },
+        {
+            "key": "site.drill.name",
+            "text": "Giàn khoan"
+        },
+        {
+            "key": "site.garage.name",
+            "text": "Gara của Kenji"
+        },
+        {
+            "key": "site.lander.name",
+            "text": "Tàu tiếp tế trong hẻm"
+        },
+        {
+            "key": "ui.recipe.line",
+            "text": "{0} kim loại · {1} dây điện · {2} quang học"
+        },
+        {
+            "key": "ui.recipe.need",
+            "text": "Cần trục vớt thêm {0} {1}"
         }
     ]
 }

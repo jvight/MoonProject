@@ -14,15 +14,6 @@ namespace MoonProject.Core
             LampPosition = lampPosition;
         }
 
-        /// <summary>
-        /// A node known only by where it stands (test stand-ins): no reach (<see cref="Radius"/> 0) and its lamp at
-        /// its pad.
-        /// </summary>
-        public RelayNode(string id, Vector3 position, bool lit)
-            : this(id, position, lit, 0f, position)
-        {
-        }
-
         /// <summary>"home" for the radio tower, otherwise the mast's anchor id ("relay.0", ...).</summary>
         public string Id { get; }
 

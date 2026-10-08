@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 using MoonProject.Editor.Builders;
 
@@ -9,7 +10,8 @@ namespace MoonProject.Art.Editor
     /// Turns a <see cref="ModelNode"/> tree into assets through <see cref="GeneratedAssets"/> (GUIDs survive
     /// re-runs): one '&lt;folder&gt;/&lt;mesh name&gt;.asset' per distinct <see cref="ModelMesh"/> and
     /// '&lt;folder&gt;/&lt;root name&gt;.prefab' with a MeshFilter + MeshRenderer on every node that has a mesh.
-    /// The prefab is assembled in a <see cref="BuilderScratchScene"/>, so the open scene is never touched.
+    /// The prefab is assembled in a <see cref="BuilderScratchScene"/>, so the open scene is never touched, and is only
+    /// saved when it changed.
     /// </summary>
     public static class ModelPrefabWriter
     {
@@ -40,8 +42,69 @@ namespace MoonProject.Art.Editor
             using (var scratch = new BuilderScratchScene())
             {
                 GameObject instance = Instantiate(scratch, root, null, meshes, material, glowOffMaterial);
-                return GeneratedAssets.SavePrefab(instance, $"{folder}/{root.Name}.prefab");
+                string path = $"{folder}/{root.Name}.prefab";
+
+                // Unity matches objects by name when it overwrites a prefab, so nodes sharing a name (each salvage
+                // piece's CutPoint) would get fresh file IDs on every save: an unchanged prefab is left untouched.
+                var saved = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                if (saved != null && SameModel(saved.transform, instance.transform))
+                {
+                    return saved;
+                }
+
+                return GeneratedAssets.SavePrefab(instance, path);
             }
+        }
+
+        /// <summary>
+        /// True when <paramref name="saved"/> already holds exactly what <see cref="Instantiate"/> built: names, poses,
+        /// components, meshes and materials, all the way down.
+        /// </summary>
+        private static bool SameModel(Transform saved, Transform built)
+        {
+            if (saved.name != built.name || !saved.localPosition.Equals(built.localPosition)
+                || !saved.localRotation.Equals(built.localRotation) || !saved.localScale.Equals(built.localScale)
+                || saved.childCount != built.childCount || !SameRendering(saved.gameObject, built.gameObject))
+            {
+                return false;
+            }
+
+            for (int i = 0; i < saved.childCount; i++)
+            {
+                if (!SameModel(saved.GetChild(i), built.GetChild(i)))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static bool SameRendering(GameObject saved, GameObject built)
+        {
+            Component[] savedComponents = saved.GetComponents<Component>();
+            Component[] builtComponents = built.GetComponents<Component>();
+            if (savedComponents.Length != builtComponents.Length)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < savedComponents.Length; i++)
+            {
+                if (savedComponents[i].GetType() != builtComponents[i].GetType())
+                {
+                    return false;
+                }
+            }
+
+            if (saved.TryGetComponent(out MeshFilter filter)
+                && filter.sharedMesh != built.GetComponent<MeshFilter>().sharedMesh)
+            {
+                return false;
+            }
+
+            return !saved.TryGetComponent(out MeshRenderer renderer)
+                || renderer.sharedMaterial == built.GetComponent<MeshRenderer>().sharedMaterial;
         }
 
         private static void WriteMeshes(ModelNode node, string folder, Dictionary<ModelMesh, Mesh> meshes)

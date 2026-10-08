@@ -31,8 +31,8 @@ finally gets an answer from Earth.** The player is not saving the world — they
 ## The loops
 | Scale | Loop | Status |
 |---|---|---|
-| Seconds | drive → glints → scrap melody → sonar → dig → tow | M2 ✅ |
-| Session (15–30 min) | pick a signal on the horizon → expedition → bring something home → spend → base visibly changes | M2 slice, deepened in M3 |
+| Seconds | drive → spot a wreck → salvage with the beam (salvage melody) → sonar → the site's relic → home | M2 ✅, salvage replaces the scrap field in M3-13 |
+| Session (15–30 min) | pick a wreck or signal on the horizon → expedition → bring materials and a memory home → craft at Kenji's bench → 07 and the base visibly change | M2 slice, deepened in M3 |
 | Hours | restore the outpost: radio tower · workshop (rover upgrades) · museum sets · friends · biodome | M3–M4 |
 | Arc | climb The Peak → repair the great dish → broadcast → Earth answers | M4 |
 | After | free roam, completion, cosmetics, photo mode, moon-weather events | M4–M5 |

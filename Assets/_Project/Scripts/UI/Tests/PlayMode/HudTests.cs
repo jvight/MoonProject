@@ -284,7 +284,7 @@ namespace MoonProject.UI.PlayModeTests
             yield return null;
             Assert.AreEqual(0.5f, _rig.Ui.RelayTag.Hold, 1e-3f, "the ring fills as Interact is held");
 
-            Events.Publish(new RelayRestored("relay.0", socket, 1, 4));
+            Events.Publish(new RelayRestored("relay.0", socket, 1, 4, "home", 0f));
             _rig.Fakes.PrimaryHint = InteractionHint.None;
             _rig.Fakes.RestoreHold = 0f;
             yield return Seconds(1f);

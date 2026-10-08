@@ -33,5 +33,8 @@ namespace MoonProject.Art
         EyeGlass = 23,
         Wood = 24,
         SignalGlass = 25,
+        Rust = 26,
+        FadedPaint = 27,
+        CakedDust = 28,
     }
 }

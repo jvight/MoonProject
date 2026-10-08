@@ -15,12 +15,9 @@ MonoBehaviour:
   _stitchVolume: 0.8
   _stitchFadeIn: 0.3
   _stitchFadeOut: 0.5
-  _pulseSpeed: 45
-  _maxAnswerDelay: 3
   _linkDistance: 14
   _linkSpatialBlend: 0.65
   _mastHumVolume: 0.25
   _mastHumPitch: 0.75
-  _mastLampHeight: 6
   _mastHumNear: 4
   _mastHumFar: 25
