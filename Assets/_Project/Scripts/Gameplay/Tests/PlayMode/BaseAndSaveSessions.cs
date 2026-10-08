@@ -13,7 +13,7 @@ namespace MoonProject.Gameplay.PlayModeTests
 {
     /// <summary>
     /// Scripted sessions for home carrying across the basin, the museum deposit, the radio tower shop and its service
-    /// port, Kenji's Rover Bay, the hint query and save/load.
+    /// port, Kenji's Rover Bay, the charging dock, the hint query and save/load.
     /// </summary>
     public sealed class BaseAndSaveSessions : InputTestFixture
     {
@@ -362,6 +362,71 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(0, _fixture.Events.UpgradePurchased.Count, "a load is never a purchase");
             Assert.AreEqual(0, _fixture.Events.StationCued.Count, "nor a feed");
             Assert.AreEqual(balance, _fixture.Gameplay.Materials.Total, "the checkpoint kept the change");
+        }
+
+        [UnityTest]
+        public IEnumerator Dock_07RestsWhenItStopsOnIt_GlowsWhileItCharges_AndLeavesOnAnyDriveInput()
+        {
+            _fixture = GameplayFixture.Boot(_controls);
+            yield return null;
+            BaseTuning tuning = _fixture.BaseTuning;
+            ChargingDock dock = _fixture.Gameplay.Home.Dock;
+            Assert.IsFalse(dock.Docked);
+            Assert.AreEqual(tuning.DockIdleGlow, dock.GlowLevel, 1e-3f, "the dock waits with a soft glow");
+            Vector3 anchor = Flat(dock.Position);
+            Vector3 facing = dock.Rotation * Vector3.forward;
+            Assert.Less(Vector3.Angle(facing, Flat(_fixture.Gameplay.Home.LanderPosition) - anchor), 1f,
+                "07 rests facing the lander");
+
+            Vector3 approach = anchor - facing * 6f;
+            float start = Time.time;
+            while (Time.time - start < 1f)
+            {
+                _fixture.Rover.MoveTo(Vector3.Lerp(approach, anchor + facing * 6f, (Time.time - start) / 1f),
+                    Yaw(facing));
+                yield return null;
+            }
+
+            Assert.AreEqual(0, _fixture.Events.RoverDockChanged.Count, "driving over the dock never docks");
+
+            Vector3 parked = anchor - facing * (tuning.DockRadius * 0.5f);
+            _fixture.Rover.Place(parked, Yaw(facing));
+            yield return new WaitForSeconds(tuning.DockDelay * 0.5f);
+            Assert.IsFalse(dock.Docked, "it waits a moment first");
+            yield return new WaitForSeconds(tuning.DockDelay * 0.5f + 0.2f);
+            Assert.IsTrue(dock.Docked, "stopped on the dock, no input: 07 rests");
+            Assert.AreEqual(1, _fixture.Events.RoverDockChanged.Count);
+            RoverDockChanged rest = _fixture.Events.RoverDockChanged[0].Value;
+            Assert.IsTrue(rest.Docked);
+            Assert.Less(Vector3.Distance(dock.Position, rest.Position), 1e-3f, "settled onto the dock's anchor");
+            Assert.Less(Quaternion.Angle(dock.Rotation, rest.Rotation), 0.1f);
+            Assert.AreEqual(0, _fixture.Rover.Placements, "the rover settles 07 itself: gameplay never snaps it");
+            yield return new WaitForSeconds(tuning.DockGlowEase * 3f);
+            Assert.Greater(dock.GlowLevel, tuning.DockChargingGlow * (1f - tuning.DockBreathDepth) * 0.9f,
+                "the dock's glow warms while 07 charges");
+            _fixture.Rover.Aim(anchor + facing * -5f + Vector3.Cross(Vector3.up, facing) * 3f + Vector3.up * 2.5f,
+                anchor + Vector3.up * 0.5f);
+            _fixture.Capture("12a-charging-dock");
+
+            _fixture.Rover.DriveInput = new Vector2(0f, 0.3f);
+            yield return null;
+            Assert.IsFalse(dock.Docked, "any drive input leaves at once");
+            Assert.AreEqual(2, _fixture.Events.RoverDockChanged.Count);
+            Assert.IsFalse(_fixture.Events.RoverDockChanged[1].Value.Docked);
+            _fixture.Rover.DriveInput = new Vector2(0.4f, 0f);
+            yield return new WaitForSeconds(tuning.DockDelay + 0.3f);
+            Assert.IsFalse(dock.Docked, "steering alone keeps it awake");
+            _fixture.Rover.DriveInput = Vector2.zero;
+            yield return new WaitForSeconds(tuning.DockDelay + 0.3f);
+            Assert.IsTrue(dock.Docked, "let go again and it settles back in");
+            Assert.AreEqual(3, _fixture.Events.RoverDockChanged.Count);
+
+            _fixture.Rover.Place(anchor - facing * (tuning.DockRadius + 1f), Yaw(facing));
+            yield return null;
+            Assert.IsFalse(dock.Docked, "moved off the dock (a recovery, a hop): the rest ends");
+            Assert.AreEqual(4, _fixture.Events.RoverDockChanged.Count);
+            yield return new WaitForSeconds(tuning.DockGlowEase * 5f);
+            Assert.AreEqual(tuning.DockIdleGlow, dock.GlowLevel, 0.05f, "the glow cools back to waiting");
         }
 
         [UnityTest]

@@ -5,7 +5,7 @@ namespace MoonProject.Gameplay.Tests
 {
     /// <summary>
     /// The logic of how 07 works with the base's machines (docs/features/M3-14): feeding a hopper, the tower's service
-    /// port moment and purchases waiting their turn.
+    /// port moment, purchases waiting their turn and resting on the charging dock.
     /// </summary>
     public sealed class StationTests
     {
@@ -87,6 +87,52 @@ namespace MoonProject.Gameplay.Tests
             queue.Clear();
             Assert.AreEqual(0, queue.Count, "a load forgets what was waiting");
             Assert.Throws<ArgumentOutOfRangeException>(() => _ = new PurchaseQueue(0));
+        }
+
+        [Test]
+        public void DockRest_StoppedOnTheDockWithNoInput_RestsAfterAMoment()
+        {
+            var rest = new DockRest(1.3f, 0.3f, 1.2f, 0.08f);
+            int changes = Run(rest, 1.1f, 0.5f, 0.2f, 0f);
+            Assert.AreEqual(0, changes, "not before the moment has passed");
+            Assert.IsFalse(rest.Docked);
+            changes = Run(rest, 0.2f, 0.5f, 0.2f, 0f);
+            Assert.AreEqual(1, changes);
+            Assert.IsTrue(rest.Docked);
+            Assert.AreEqual(0f, rest.StillFor);
+            Assert.AreEqual(0, Run(rest, 5f, 0.5f, 0f, 0.05f), "input inside the dead zone keeps it resting");
+            Assert.IsTrue(rest.Docked);
+        }
+
+        [Test]
+        public void DockRest_IsNeverForced_AnyInputOrMovingOffEndsIt()
+        {
+            var rest = new DockRest(1.3f, 0.3f, 1.2f, 0.08f);
+            Assert.AreEqual(0, Run(rest, 5f, 0.5f, 2f, 0f), "rolling across the dock never rests");
+            Assert.AreEqual(0, Run(rest, 5f, 0.5f, 0f, 0.5f), "nor holding the stick");
+            Assert.AreEqual(0, Run(rest, 5f, 2f, 0f, 0f), "nor stopping beside it");
+            Run(rest, 1.3f, 0.5f, 0f, 0f);
+            Assert.IsTrue(rest.Docked);
+            Assert.IsTrue(rest.Step(0.5f, 0f, 0.3f, Frame), "any drive input leaves at once");
+            Assert.IsFalse(rest.Docked);
+            Run(rest, 0.6f, 0.5f, 0f, 0f);
+            Assert.IsFalse(rest.Docked, "the moment starts over after leaving");
+            Run(rest, 0.7f, 0.5f, 0f, 0f);
+            Assert.IsTrue(rest.Docked);
+            Assert.IsTrue(rest.Step(1.5f, 0f, 0f, Frame), "moved off the dock: the rest ends");
+            Assert.IsFalse(rest.Docked);
+        }
+
+        /// <summary>Steps the rest for <paramref name="seconds"/> at 60 fps; returns how often it changed.</summary>
+        private static int Run(DockRest rest, float seconds, float distance, float speed, float input)
+        {
+            int changes = 0;
+            for (float t = 0f; t < seconds - Frame * 0.5f; t += Frame)
+            {
+                changes += rest.Step(distance, speed, input, Frame) ? 1 : 0;
+            }
+
+            return changes;
         }
     }
 }

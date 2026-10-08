@@ -311,7 +311,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// A stand-in for Art's lander, shelf, tower stages (with their service ports), Rover
+        /// A stand-in for Art's lander (with its charging dock), shelf, tower stages (with their service ports), Rover
         /// Bay and tape rack with the contract's node names and positions, wired the way the scene contributor wires
         /// the real prefabs.
         /// </summary>
@@ -359,8 +359,12 @@ namespace MoonProject.Gameplay.PlayModeTests
                 stages[i] = stage.gameObject;
             }
 
+            Transform dock = Node("DockAnchor", lander, new Vector3(0f, 0.05f, 4.15f));
+            dock.localRotation = Quaternion.Euler(0f, 180f, 0f);
+            Transform dockGlow = Named(Block(lander, new Vector3(0f, 0.02f, 4.15f), new Vector3(1.6f, 0.04f, 2.4f)),
+                "DockGlow");
             home.Wire(BaseTuning, baseRoot, windows.GetComponent<Renderer>(), sockets, shelf,
-                shelfLights.GetComponent<Renderer>(), slots);
+                shelfLights.GetComponent<Renderer>(), slots, dock, dockGlow.GetComponent<Renderer>());
             tower.Wire(TowerTuning, RadioTowerUpgrade, anchor, stages, lights, beacons, hoppers, hatches);
             BuildBay(Node("WorkshopAnchor", lander, new Vector3(12.5f, 0f, -2f)), workshop);
             TillyPerch = Node("FriendSocket_tilly", lander, new Vector3(-1.6f, 3.3f, 0.9f));

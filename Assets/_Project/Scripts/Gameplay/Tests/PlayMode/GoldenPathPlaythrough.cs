@@ -172,6 +172,11 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>How far past the mound relay (m, away from home) 07 drives to find home still in reach.</summary>
         private static readonly Vector2 PastTheMast = new Vector2(55f, 95f);
 
+        /// <summary>07 lines up this far (m) in front of the charging dock, then stops this close to its anchor.
+        /// </summary>
+        private const float DockApproach = 5f;
+        private const float DockParkRadius = 0.5f;
+
         /// <summary>Close enough (m) to a hop pad's centre to park on it.</summary>
         private const float PadArrive = 1f;
 
@@ -277,6 +282,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return RestoreTheMoundRelay();
             yield return DriveOutInReach();
             yield return HopHomeAndBack();
+            yield return RestOnTheDock();
 
             float total = Time.time - started;
             WriteReport(total);
@@ -1383,6 +1389,38 @@ namespace MoonProject.Gameplay.PlayModeTests
             Capture("36-hopped-back");
             End("Radio-hop home and back", $"{_events.RadioHopFinished.Count} hops, about " +
                                            $"{HopSequence.For(_gameplay.Relays.Tuning).Duration:F1} s each");
+        }
+
+        /// <summary>
+        /// Home at last: hop home, drive up to the charging dock in front of the lander, stop on it and let go of the
+        /// wheel; 07 settles in to rest and the dock's glow warms. A touch of the throttle leaves.
+        /// </summary>
+        private IEnumerator RestOnTheDock()
+        {
+            Begin();
+            yield return Hop(_context.Get<IRadioHop>(), StationReach.HomeId);
+            ChargingDock dock = _gameplay.Home.Dock;
+            BaseTuning tuning = _gameplay.Home.Tuning;
+            Vector3 facing = Flat(dock.Rotation * Vector3.forward).normalized;
+            int rests = _events.RoverDockChanged.Count;
+            yield return DriveTo(Flat(dock.Position) - facing * DockApproach, 1.5f, 0.6f, 60f,
+                "the front of the charging dock");
+            yield return DriveTo(Flat(dock.Position), DockParkRadius, 0.35f, 30f, "the charging dock");
+            yield return Until(() => dock.Docked, tuning.DockDelay + 3f, "07 settles in to rest on the dock");
+            RoverDockChanged rest = _events.RoverDockChanged[rests].Value;
+            Assert.IsTrue(rest.Docked);
+            float off = SurfaceRules.HorizontalDistance(_rover.Position, dock.Position);
+            yield return new WaitForSeconds(tuning.DockGlowEase * 3f);
+            Assert.Greater(dock.GlowLevel, tuning.DockIdleGlow * 2f, "the dock glows warm while 07 charges");
+            Vector3 aside = Vector3.Cross(Vector3.up, facing);
+            Review(Flat(dock.Position) - facing * 6f + aside * 3f + Vector3.up * 2.5f,
+                dock.Position + Vector3.up * 0.6f, "37-resting-on-the-dock");
+            _pilot.Reverse = BayThrottle;
+            yield return Until(() => !dock.Docked, 2f, "a touch of the throttle leaves the dock");
+            _pilot.Reverse = 0f;
+            Assert.IsFalse(_events.RoverDockChanged[_events.RoverDockChanged.Count - 1].Value.Docked);
+            yield return Until(() => _rover.Speed < StopSpeed, 6f, "07 stops off the dock");
+            End("Rest on the charging dock", $"settled {off:F2} m from its anchor, glow {dock.GlowLevel:F2}");
         }
 
         /// <summary>Opens the hop list on 07's pad, steps to <paramref name="to"/> and holds Interact to go.</summary>

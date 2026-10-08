@@ -8,7 +8,7 @@ namespace MoonProject.Gameplay.Editor
     /// <summary>
     /// The Gameplay domain's part of Main.unity: under [Gameplay], the <see cref="GameplaySystem"/> (one system,
     /// initialised after World and Rover) and its parts, wired to the tuning, content and material assets, plus the
-    /// home base built from Art's prefabs (lander, museum shelf on its ShelfAnchor, the three
+    /// home base built from Art's prefabs (lander with its charging dock, museum shelf on its ShelfAnchor, the three
     /// radio tower stages with their service ports on its TowerAnchor, Kenji's Rover Bay on its WorkshopAnchor). Art's
     /// base prefabs are meshes only, so gameplay makes them solid here: a static mesh collider on each body, on the
     /// Prop layer, so 07 drives around them (and up the bay's ramp onto its floor) and the camera never slips inside.
@@ -152,7 +152,8 @@ namespace MoonProject.Gameplay.Editor
             excavation.Wire(excavationTuning);
             tether.Wire(tetherTuning);
             home.Wire(baseTuning, baseRoot.transform, Renderer(Child(lander, "Windows")),
-                Children(lander, "LampSocket_", LampSockets), shelf, Glow(shelf), Children(shelf, "Slot_", ShelfSlots));
+                Children(lander, "LampSocket_", LampSockets), shelf, Glow(shelf), Children(shelf, "Slot_", ShelfSlots),
+                Child(lander, "DockAnchor"), Renderer(Child(lander, "DockGlow")));
             tower.Wire(towerTuning, radioTower, towerAnchor, stages, stageLights, beacons, hoppers, hatches);
             workshop.Wire(workshopTuning, benchKit, bay, Child(bay, "Turntable"), Child(bay, "HopperMouth"), bayLamps,
                 Renderer(Child(bay, "BaySign")), weldSockets);
