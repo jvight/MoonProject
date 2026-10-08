@@ -26,6 +26,9 @@ namespace MoonProject.Art.Editor
         private const float PlinthRadius = 0.18f;
         private const float SlotZ = 0.03f;
 
+        // The awning stripe that sags.
+        private const int SaggingStripe = 6;
+
         /// <summary>Where relic <paramref name="index"/> rests: its plinth top (0-2 lower tier, 3-5 upper).</summary>
         public static Vector3 SlotPosition(int index)
         {
@@ -110,6 +113,10 @@ namespace MoonProject.Art.Editor
             var b = new LowPolyMeshBuilder(500);
             SiteKit.Drift(b, new Vector3(-Width * 0.3f, 0f, Depth * 0.5f + 0.12f), Width * 0.45f, 0.4f, 0.09f, 90f, 93);
             SiteKit.Drift(b, new Vector3(Width * 0.5f + 0.16f, 0f, 0f), Depth * 1.5f, 0.36f, 0.12f, 0f, 94);
+
+            // A name plaque that fell off long ago, face down in the dust.
+            b.Box(At(new Vector3(0.55f, 0.01f, Depth * 0.5f + 0.45f), new Vector3(0f, 22f, 0f)),
+                new Vector3(0.22f, 0.02f, 0.05f), PaletteSwatch.Honey);
             return b;
         }
 
@@ -135,16 +142,21 @@ namespace MoonProject.Art.Editor
             float stripeWidth = width / stripes;
             float depth = Depth + overhang;
             Matrix4x4 awning = At(new Vector3(0f, Top + 0.1f, 0.08f), new Vector3(10f, 0f, 0f));
-            Vector3 awningUp = awning.MultiplyVector(Vector3.up);
             for (int i = 0; i < stripes; i++)
             {
                 float x = -width * 0.5f + (i + 0.5f) * stripeWidth;
                 PaletteSwatch swatch = i % 2 == 0 ? PaletteSwatch.Honey : PaletteSwatch.Enamel;
-                b.Box(awning * At(x, 0f, 0f), new Vector3(stripeWidth, 0.05f, depth), swatch);
-                Vector3 hem = awning.MultiplyPoint3x4(new Vector3(x, -0.02f, depth * 0.5f));
-                MeshRange scallop = b.Prism(awning * At(new Vector3(x, -0.02f, depth * 0.5f), AlongZ),
+                // One stripe's fixings rusted through at the front: it sags over the shelf's right bay.
+                Matrix4x4 stripe = i == SaggingStripe
+                    ? awning * At(x, 0f, -depth * 0.5f) * Matrix4x4.Rotate(Rotation(new Vector3(24f, 0f, 3f)))
+                        * At(0f, 0f, depth * 0.5f)
+                    : awning * At(x, 0f, 0f);
+                Vector3 stripeUp = stripe.MultiplyVector(Vector3.up).normalized;
+                b.Box(stripe, new Vector3(stripeWidth, 0.05f, depth), swatch);
+                Vector3 hem = stripe.MultiplyPoint3x4(new Vector3(0f, -0.02f, depth * 0.5f));
+                MeshRange scallop = b.Prism(stripe * At(new Vector3(0f, -0.02f, depth * 0.5f), AlongZ),
                     stripeWidth * 0.46f, 0.025f, 10, swatch);
-                b.Shave(scallop, awningUp, Vector3.Dot(awningUp, hem));
+                b.Shave(scallop, stripeUp, Vector3.Dot(stripeUp, hem));
             }
 
             b.Box(awning * At(0f, -0.005f, depth * 0.5f), new Vector3(width, 0.045f, 0.03f), PaletteSwatch.WarmAccent);

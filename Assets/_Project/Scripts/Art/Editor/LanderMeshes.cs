@@ -56,6 +56,9 @@ namespace MoonProject.Art.Editor
         private const int DentedPanel = 1;
         private const int TornPanel = 3;
 
+        // The dish's knocks and dents (its lathe displaced by this seed).
+        private const int DishDentSeed = 84;
+
         private static readonly Vector2[] FootpadProfile =
         {
             new Vector2(0f, 0f), new Vector2(0.46f, 0.02f), new Vector2(0.48f, 0.1f), new Vector2(0.3f, 0.17f),
@@ -144,7 +147,31 @@ namespace MoonProject.Art.Editor
 
             SiteKit.Drift(b, new Vector3(0.2f, 0f, -0.3f), 3.8f, 3.2f, 0.26f, 20f, 85);
             SiteKit.Drift(b, new Vector3(-2.6f, 0f, 1.25f), 1.4f, 0.7f, 0.22f, 100f, 86);
+            Debris(b);
             return b;
+        }
+
+        /// <summary>
+        /// What fell and was never picked up, half sunk in the dust round the feet: a foil sheet that blew off under
+        /// the hanging one, a snapped brace, a coil of cable, a dented canister on its side and a sheet leaning on the
+        /// back leg. It sweeps away with the dust.
+        /// </summary>
+        private static void Debris(LowPolyMeshBuilder b)
+        {
+            b.Box(At(new Vector3(-2.55f, 0.02f, -0.4f), new Vector3(4f, 25f, -3f)), new Vector3(0.8f, 0.025f, 0.5f),
+                PaletteSwatch.Honey);
+            RecipeKit.Strut(b, new Vector3(-1.85f, 0.05f, -2.85f), new Vector3(-1.0f, 0.04f, -2.55f),
+                new Vector2(0.07f, 0.07f), PaletteSwatch.Metal);
+            for (int i = 0; i < 3; i++)
+            {
+                b.Torus(At(new Vector3(-3.05f, 0.03f + i * 0.022f, -1.6f), new Vector3(0f, i * 23f, i * 4f)),
+                    0.24f - i * 0.03f, 0.016f, 10, 3, PaletteSwatch.Charcoal);
+            }
+
+            b.Prism(At(new Vector3(2.95f, 0.12f, -0.85f), new Vector3(0f, 65f, -90f)), 0.12f, 0.36f, 8,
+                PaletteSwatch.Metal);
+            b.Box(At(new Vector3(-2.45f, 0.3f, -2.75f), new Vector3(-58f, 40f, 0f)), new Vector3(0.6f, 0.02f, 0.7f),
+                PaletteSwatch.Enamel);
         }
 
         public static LowPolyMeshBuilder Hull()
@@ -230,16 +257,7 @@ namespace MoonProject.Art.Editor
                 Vector3 centre = normal * (StageApothem + 0.02f) + Vector3.up * 2.05f;
                 if (i == TornPanel)
                 {
-                    // Torn away long ago: a dark hole in the foil and the two bolts that held it.
-                    b.Box(At(centre - normal * 0.015f, new Vector3(0f, yaw, 0f)), new Vector3(0.56f, 0.32f, 0.02f),
-                        PaletteSwatch.Charcoal);
-                    for (int side = -1; side <= 1; side += 2)
-                    {
-                        Vector3 bolt = centre + Rotation(new Vector3(0f, yaw, 0f)) * new Vector3(side * 0.26f, 0.14f,
-                            0.01f);
-                        b.Icosphere(At(bolt), 0.022f, 0, PaletteSwatch.Metal);
-                    }
-
+                    HangingPanel(b, yaw);
                     continue;
                 }
 
@@ -248,6 +266,27 @@ namespace MoonProject.Art.Editor
                 Vector3 seat = i == DentedPanel ? centre - normal * 0.025f : centre;
                 b.Box(At(seat, euler), new Vector3(0.6f, 0.36f, 0.05f), PaletteSwatch.Metal, 0.015f);
             }
+        }
+
+        /// <summary>
+        /// The foil sheet that worked loose on the side facing the tower: a dark hole in the stage where it was, and
+        /// the sheet itself hanging from its last bolt at one top corner, swung down past the stage's bottom edge.
+        /// </summary>
+        private static void HangingPanel(LowPolyMeshBuilder b, float yaw)
+        {
+            Matrix4x4 face = At(Rotation(new Vector3(0f, yaw, 0f)) * Vector3.forward * (StageApothem + 0.01f),
+                new Vector3(0f, yaw, 0f));
+            const float width = 0.9f;
+            const float height = 0.6f;
+            var hole = new Vector3(0.1f, StageBottom + 0.12f + height * 0.5f + 0.06f, 0f);
+            b.Box(face * At(hole), new Vector3(width, height, 0.03f), PaletteSwatch.Charcoal);
+            var bolt = new Vector3(hole.x - width * 0.5f + 0.04f, hole.y + height * 0.5f - 0.04f, 0.03f);
+            b.Icosphere(face * At(bolt), 0.028f, 0, PaletteSwatch.Metal);
+            Matrix4x4 sheet = face * At(bolt, new Vector3(-10f, 6f, 58f));
+            b.Box(sheet * At(width * 0.5f - 0.04f, -height * 0.5f + 0.04f, 0.02f), new Vector3(width, height, 0.025f),
+                PaletteSwatch.Honey);
+            b.Box(sheet * At(width * 0.5f - 0.04f, -height * 0.5f + 0.04f, -0.002f),
+                new Vector3(width - 0.06f, height - 0.06f, 0.012f), PaletteSwatch.Metal);
         }
 
         private static void Legs(LowPolyMeshBuilder b)
@@ -332,8 +371,11 @@ namespace MoonProject.Art.Editor
                 RecipeKit.Rod(b, posts[i], posts[i] + Vector3.up * RailHeight, 0.03f, 6, PaletteSwatch.Metal);
             }
 
+            // The left rail took a blow long ago: bent down and out in the middle.
             Vector3 rail = Vector3.up * RailHeight;
-            RecipeKit.Rod(b, posts[0] + rail, posts[1] + rail, 0.025f, 6, PaletteSwatch.WarmAccent);
+            Vector3 kink = Vector3.Lerp(posts[0], posts[1], 0.55f) + rail + new Vector3(-0.07f, -0.2f, 0.06f);
+            RecipeKit.Rod(b, posts[0] + rail, kink, 0.025f, 6, PaletteSwatch.WarmAccent);
+            RecipeKit.Rod(b, kink, posts[1] + rail, 0.025f, 6, PaletteSwatch.WarmAccent);
             RecipeKit.Rod(b, posts[2] + rail, posts[3] + rail, 0.025f, 6,
                 PaletteSwatch.WarmAccent);
         }
@@ -362,7 +404,7 @@ namespace MoonProject.Art.Editor
             Vector3 mastTop = mastBase + new Vector3(0.05f, 0.9f, 0.03f);
             RecipeKit.Rod(b, mastBase, mastTop, 0.04f, 6, PaletteSwatch.Metal);
             b.Lathe(At(mastTop + new Vector3(0f, 0.05f, 0.05f), new Vector3(84f, 48f, 15f)), DishProfile, 10,
-                PaletteSwatch.Enamel);
+                PaletteSwatch.Enamel, new Displacement(DishDentSeed, 0.035f, 4f));
 
             var whipBase = new Vector3(0.7f, CabinTop + 0.25f, -0.4f);
             RecipeKit.Rod(b, whipBase, whipBase + new Vector3(0.08f, 1.6f, -0.05f), 0.015f, 5, PaletteSwatch.Metal);
@@ -392,6 +434,16 @@ namespace MoonProject.Art.Editor
             Vector3 post = LampPosition(1);
             SiteKit.Cable(b, SiteKit.Sag(new Vector3(post.x - 0.03f, 0.35f, post.z), new Vector3(-2.3f, 0.3f, 2.35f),
                 0.3f, 5), 0.016f, PaletteSwatch.Charcoal);
+
+            // Looms that came loose under the stage: one loops down and back, one reached the dust and trails off.
+            SiteKit.Cable(b, SiteKit.Sag(new Vector3(-1.2f, StageBottom + 0.02f, 1.35f),
+                new Vector3(-0.55f, StageBottom + 0.02f, 1.75f), 0.75f, 6), 0.022f, PaletteSwatch.Charcoal);
+            SiteKit.Cable(b, new[]
+            {
+                new Vector3(1.45f, StageBottom + 0.02f, -1.2f), new Vector3(1.75f, 0.9f, -1.5f),
+                new Vector3(2.05f, 0.25f, -1.75f), new Vector3(2.35f, 0.03f, -1.95f), new Vector3(2.9f, 0.03f, -2.5f),
+                new Vector3(3.15f, 0.03f, -2.45f),
+            }, 0.02f, PaletteSwatch.Charcoal);
         }
 
         /// <summary>
