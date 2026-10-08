@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.Rendering;
 using MoonProject.Core;
 using MoonProject.Core.Events;
 
@@ -12,9 +13,12 @@ namespace MoonProject.Gameplay
     /// brightly while 07 is parked on it and dims once the bay has nothing left. A purchase flares the ring; then 07,
     /// held still and looking at the hopper by the entrance, feeds it the recipe's materials along its beam
     /// (<see cref="HopperFeed"/>), and once they are in, the bay starts fitting the piece
-    /// (<see cref="RoverBayFitting"/>: the rover plays the install moment with the bay's arms): its work lamps flare
-    /// and weld sparks fly from the arms' tips. A purchase made while another is being fed waits its turn. The lamps
-    /// stay on as a warm welcome and lean brighter while 07 is parked; the bay's sign glows as a landmark.
+    /// (<see cref="RoverBayFitting"/>: the rover plays the install moment with the bay's arms). When the rover sets
+    /// the piece on (<see cref="RoverKitFitted"/>), the work lamps flare and weld sparks fly from the tip of the arm
+    /// that fitted it (the floor arm's for a belly piece). A purchase made while another is being fed waits its turn.
+    /// While the bay works (feeding and fitting, and a moment after) a warm point light under each work lamp lights its
+    /// interior and arms, easing down to a low glow when it is done; the lamps stay on as a warm welcome and lean
+    /// brighter while 07 is parked; the bay's sign glows as a landmark.
     /// It is also the <see cref="IRoverBay"/> the Rover domain drives (registered by the <see cref="GameplaySystem"/>):
     /// the turntable, the gantry arms' joints and the floor arm, all from serialized references wired by the scene
     /// build, never looked up by name.
@@ -73,6 +77,15 @@ namespace MoonProject.Gameplay
         private EmissionGlow[] _lampGlows = Array.Empty<EmissionGlow>();
         private EmissionGlow _signGlow;
         private BenchSparks[] _sparks = Array.Empty<BenchSparks>();
+        private BenchSparks _floorSparks;
+        private Vector3[] _socketRest = Array.Empty<Vector3>();
+        private Vector3 _floorRest;
+        private Light[] _lights = Array.Empty<Light>();
+        private IDisposable _fittings;
+        private float _lightLevel;
+        private bool _lightShadows;
+        private int _fitting;
+        private float _lastWeld = float.NegativeInfinity;
         private HopperFeed _feed;
         private PurchaseQueue _waiting;
         private string _feeding;
@@ -118,12 +131,20 @@ namespace MoonProject.Gameplay
         /// <summary>Current sign brightness (tests and debugging views).</summary>
         public float SignLevel => _signGlow != null ? _signGlow.Intensity : 0f;
 
-        /// <summary>Weld sparks in the air, all arms together (tests and debugging views).</summary>
+        /// <summary>
+        /// True while the bay works: 07 feeding its hopper, a piece being fitted, and a moment after it is set on.
+        /// </summary>
+        public bool Working { get; private set; }
+
+        /// <summary>Current intensity of the work lights (tests and debugging views).</summary>
+        public float LightLevel => _lightLevel;
+
+        /// <summary>Weld sparks in the air, all arms and the floor arm together (tests and debugging views).</summary>
         public int SparkCount
         {
             get
             {
-                int count = 0;
+                int count = _floorSparks != null ? _floorSparks.ParticleCount : 0;
                 for (int i = 0; i < _sparks.Length; i++)
                 {
                     count += _sparks[i].ParticleCount;
@@ -132,6 +153,16 @@ namespace MoonProject.Gameplay
                 return count;
             }
         }
+
+        /// <summary>Weld sparks in the air at gantry arm <paramref name="arm"/>'s tip (tests and debugging views).
+        /// </summary>
+        public int SparkCountOf(int arm)
+        {
+            return _sparks[arm].ParticleCount;
+        }
+
+        /// <summary>Weld sparks in the air at the floor arm's tip (tests and debugging views).</summary>
+        public int FloorSparkCount => _floorSparks != null ? _floorSparks.ParticleCount : 0;
 
         public WorkshopTuning Tuning => _tuning;
 
@@ -241,16 +272,45 @@ namespace MoonProject.Gameplay
             _lampLevel = _tuning.LampIdle;
             ApplyLamps();
             _sparks = new BenchSparks[_sparkSockets.Length];
+            _socketRest = new Vector3[_sparkSockets.Length];
             for (int i = 0; i < _sparks.Length; i++)
             {
                 _sparks[i] = new BenchSparks(_sparkSockets[i], _tuning, services.Visuals.Spark);
+                _socketRest[i] = _sparkSockets[i].position;
             }
+
+            _floorSparks = new BenchSparks(_floorTip, _tuning, services.Visuals.Spark);
+            _floorRest = _floorTip.position;
+            BuildLights();
 
             _feed = new HopperFeed("BayFeed", transform, services.Visuals.TetherBeam, bundles, _tuning.FeedLook);
             _waiting = new PurchaseQueue(PurchaseQueue.CapacityFor(_definitions));
             _purchases = services.Events.Subscribe<UpgradePurchased>(OnPurchased);
+            _fittings = services.Events.Subscribe<RoverKitFitted>(OnKitFitted);
             _initialized = true;
             return true;
+        }
+
+        /// <summary>A warm point light under each work lamp, along its aim, at the low idle glow.</summary>
+        private void BuildLights()
+        {
+            _lights = new Light[_lamps.Length];
+            for (int i = 0; i < _lamps.Length; i++)
+            {
+                var host = new GameObject("WorkLight");
+                host.transform.SetParent(_lamps[i].transform, false);
+                host.transform.localPosition = Vector3.forward * _tuning.LightOffset;
+                Light light = host.AddComponent<Light>();
+                light.type = LightType.Point;
+                light.color = _tuning.LightColor;
+                light.range = _tuning.LightRange;
+                light.shadows = LightShadows.None;
+                light.renderMode = LightRenderMode.ForcePixel;
+                _lights[i] = light;
+            }
+
+            _lightLevel = _tuning.LightIdle;
+            ApplyLights(false);
         }
 
         private string WiringProblem(UpgradeService upgrades)
@@ -378,16 +438,45 @@ namespace MoonProject.Gameplay
         /// <summary>The materials are in: the bay starts fitting the piece.</summary>
         private void Fit()
         {
+            _fitting++;
             _events.Publish(new StationCued(StationCue.Fed, _feeding, _hopperMouth.position));
             _events.Publish(new RoverBayFitting(_feeding));
-            _lampLevel = Mathf.Max(_lampLevel, _tuning.LampFlare);
-            ApplyLamps();
-            for (int i = 0; i < _sparks.Length; i++)
+            _feeding = null;
+        }
+
+        /// <summary>The rover set a piece bought here on 07: the weld.</summary>
+        private void OnKitFitted(RoverKitFitted fitted)
+        {
+            if (fitted.Gift || !Sells(fitted.UpgradeId))
             {
-                _sparks[i].Burst();
+                return;
             }
 
-            _feeding = null;
+            _fitting = Mathf.Max(0, _fitting - 1);
+            _lastWeld = Time.time;
+            _lampLevel = Mathf.Max(_lampLevel, _tuning.LampFlare);
+            Weld();
+        }
+
+        /// <summary>
+        /// Weld sparks from every arm that is out fitting (its tip well away from where it rests on the rail), or from
+        /// the floor arm's tip when it is the one that rose.
+        /// </summary>
+        private void Weld()
+        {
+            float travel = _tuning.WeldArmTravel;
+            for (int i = 0; i < _sparks.Length; i++)
+            {
+                if (Vector3.Distance(_sparkSockets[i].position, _socketRest[i]) > travel)
+                {
+                    _sparks[i].Burst();
+                }
+            }
+
+            if (Vector3.Distance(_floorTip.position, _floorRest) > travel)
+            {
+                _floorSparks.Burst();
+            }
         }
 
         private void Update()
@@ -403,9 +492,28 @@ namespace MoonProject.Gameplay
             UpgradeDefinition offer = Definition;
             _upgrades.TryGetOffer(offer.Id, out UpgradeOffer current);
             _pad.Tick(_rover.Position, current.IsMaxed, current.CanAfford, now, deltaTime);
-            float lamp = _pad.Occupied ? _tuning.LampOccupied : _tuning.LampIdle;
+            Working = _feed.Feeding || _waiting.Count > 0 || _fitting > 0 || now - _lastWeld < _tuning.WorkLinger;
+            float light = Working ? _tuning.LightWorking : _tuning.LightIdle;
+            _lightLevel = Damp.Toward(_lightLevel, light, _tuning.LightEase, deltaTime);
+            ApplyLights(Working && _tuning.LightCastsShadows);
+            float lamp = _pad.Occupied || Working ? _tuning.LampOccupied : _tuning.LampIdle;
             _lampLevel = Damp.Toward(_lampLevel, lamp, _tuning.LampEase, deltaTime);
             ApplyLamps();
+        }
+
+        private void ApplyLights(bool shadows)
+        {
+            LightShadows mode = shadows ? LightShadows.Soft : LightShadows.None;
+            bool changed = shadows != _lightShadows;
+            _lightShadows = shadows;
+            for (int i = 0; i < _lights.Length; i++)
+            {
+                _lights[i].intensity = _lightLevel;
+                if (changed)
+                {
+                    _lights[i].shadows = mode;
+                }
+            }
         }
 
         private void StepFeed(float now, float deltaTime)
@@ -460,6 +568,7 @@ namespace MoonProject.Gameplay
         private void OnDestroy()
         {
             _purchases?.Dispose();
+            _fittings?.Dispose();
             _pad?.Dispose();
         }
     }

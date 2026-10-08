@@ -1,11 +1,12 @@
 using UnityEngine;
+using MoonProject.Art;
 
 namespace MoonProject.Gameplay
 {
     /// <summary>
     /// Kenji's Rover Bay: its pad on the turntable (the diegetic shop for rover kit), 07 feeding its hopper, its work
-    /// lamps and sign, and the weld sparks of a fitting. Created by the Gameplay/Tuning builder; runtime code only
-    /// reads it.
+    /// lamps and the lights under them, its sign, and the weld sparks of a fitting. Created by the Gameplay/Tuning
+    /// builder; runtime code only reads it.
     /// </summary>
     public sealed class WorkshopTuning : ScriptableObject
     {
@@ -68,19 +69,46 @@ namespace MoonProject.Gameplay
         [Tooltip("The lamps while 07 is parked on the turntable, leaning in to work (linear emission multiplier).")]
         [Range(0f, 4f)] [SerializeField] private float _lampOccupied = 0.75f;
 
-        [Tooltip("The lamps the moment the bay starts fitting a kit piece (linear emission multiplier); they ease " +
+        [Tooltip("The lamps the moment a kit piece is set on 07, the weld (linear emission multiplier); they ease " +
                  "back by themselves.")]
         [Range(0f, 8f)] [SerializeField] private float _lampFlare = 4.7f;
 
         [Tooltip("Seconds (time constant) for the lamps to brighten or dim.")]
         [Range(0f, 3f)] [SerializeField] private float _lampEase = 0.35f;
 
+        [Header("Work lights")]
+        [Tooltip("Colour of the warm point light under each work lamp.")]
+        [SerializeField] private Color _lightColor = Palette.Get(PaletteSwatch.WarmLamp);
+
+        [Tooltip("Intensity of the work lights while the bay waits: a low warm glow inside it.")]
+        [Range(0f, 2f)] [SerializeField] private float _lightIdle = 0.25f;
+
+        [Tooltip("Intensity of the work lights while the bay works (07 feeding the hopper, a piece being fitted), " +
+                 "so its interior and the arms read.")]
+        [Range(0f, 8f)] [SerializeField] private float _lightWorking = 3f;
+
+        [Tooltip("Seconds (time constant) for the work lights to come up or ease down.")]
+        [Range(0f, 3f)] [SerializeField] private float _lightEase = 0.5f;
+
+        [Tooltip("Range (m) of each work light.")]
+        [Range(1f, 20f)] [SerializeField] private float _lightRange = 6f;
+
+        [Tooltip("Metres in front of each lamp's glass, along its aim, where its light sits.")]
+        [Range(0f, 1f)] [SerializeField] private float _lightOffset = 0.25f;
+
+        [Tooltip("Soft shadows from the work lights while the bay works (none while it waits).")]
+        [SerializeField] private bool _lightShadows = true;
+
+        [Tooltip("Seconds the bay keeps working after a piece is set on: the weld, the arms folding away and the " +
+                 "turntable showing the piece.")]
+        [Range(0f, 10f)] [SerializeField] private float _workLinger = 3f;
+
         [Tooltip("The bay's lit sign never glows dimmer than this (linear emission multiplier): a landmark from " +
                  "across the base. Above it, it follows the lamps.")]
         [Range(0f, 3f)] [SerializeField] private float _signGlow = 0.6f;
 
         [Header("Weld sparks")]
-        [Tooltip("Bursts of sparks from each gantry arm's tip when the bay starts fitting a kit piece.")]
+        [Tooltip("Bursts of sparks from the fitting arm's tip as the piece is set on 07.")]
         [Range(1, 8)] [SerializeField] private int _sparkBursts = 3;
 
         [Tooltip("Sparks per burst.")]
@@ -110,12 +138,26 @@ namespace MoonProject.Gameplay
         [Tooltip("Streak length per m/s of speed (stretched sprites).")]
         [Range(0f, 0.3f)] [SerializeField] private float _sparkStreak = 0.05f;
 
+        [Tooltip("An arm (gantry or floor) is the one fitting when its tip is this many metres from where it rests " +
+                 "(the floor arm rises only a short way to 07's belly): its tip throws the weld sparks as the piece " +
+                 "is set on.")]
+        [Range(0.02f, 2f)] [SerializeField] private float _weldArmTravel = 0.12f;
+
         public float PadFlare => _padFlare;
         public float LampIdle => _lampIdle;
         public float LampOccupied => _lampOccupied;
         public float LampFlare => _lampFlare;
         public float LampEase => _lampEase;
+        public Color LightColor => _lightColor;
+        public float LightIdle => _lightIdle;
+        public float LightWorking => _lightWorking;
+        public float LightEase => _lightEase;
+        public float LightRange => _lightRange;
+        public float LightOffset => _lightOffset;
+        public bool LightCastsShadows => _lightShadows;
+        public float WorkLinger => _workLinger;
         public float SignGlow => _signGlow;
+        public float WeldArmTravel => _weldArmTravel;
         public int SparkBursts => _sparkBursts;
         public int SparkCount => _sparkCount;
         public float SparkInterval => _sparkInterval;

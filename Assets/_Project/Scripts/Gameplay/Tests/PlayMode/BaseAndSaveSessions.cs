@@ -238,6 +238,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             WorkshopTuning tuning = _fixture.WorkshopTuning;
             Assert.AreSame(_fixture.HoverJumpUpgrade, bay.Definition, "the bay's first offer");
             Assert.AreEqual(tuning.LampIdle, bay.LampLevel, 1e-3f, "Kenji's work lamps are left on");
+            Assert.AreEqual(tuning.LightIdle, bay.LightLevel, 1e-3f, "a low warm glow lights the bay inside");
+            Assert.IsFalse(bay.Working);
             Assert.AreEqual(tuning.SignGlow, bay.SignLevel, 1e-3f, "the bay's sign glows as a landmark");
             Assert.AreEqual(0, bay.SparkCount, "no sparks before a purchase");
             Assert.IsFalse(_fixture.Rover.Has(RoverAbility.HoverJump));
@@ -287,6 +289,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(PurchaseResult.Maxed, shop.Purchase(HoverJump));
 
             Assert.IsTrue(bay.Feeding, "07's beam reaches for the bay's hopper");
+            yield return null;
+            Assert.IsTrue(bay.Working, "the bay works");
             Assert.AreEqual(1, _fixture.Rover.HoldStillCount, "07 holds still on the turntable");
             Assert.IsTrue(_fixture.Rover.TryGetGaze(bay, out Vector3 gaze, out _));
             Assert.Less(Vector3.Distance(bay.HopperMouth, gaze), 1e-3f, "and looks at the hopper");
@@ -298,6 +302,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return new WaitForSeconds(feedLook.BeamLead + feedLook.Stagger * 1.5f);
             Assert.Greater(bay.FeedBeamLevel, 0.5f, "the beam reaches the hopper");
             Assert.AreEqual(2, bay.BundlesInFlight, "metal and wiring are on their way, optics next");
+            Assert.Greater(bay.LightLevel, tuning.LightIdle + (tuning.LightWorking - tuning.LightIdle) * 0.4f,
+                "its work lights ease up to light the inside and the arms");
             Assert.AreEqual(0, _fixture.Events.RoverBayFitting.Count, "nothing is fitted before the hopper is fed");
             Assert.AreEqual(0, bay.SparkCount);
             Vector3 front = bay.BayForward;
@@ -319,12 +325,30 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.Less(Vector3.Distance(bay.PadCentre, rig.TurntablePosition), 0.2f, "07 parks on the turntable");
             Assert.IsFalse(bay.Feeding);
             Assert.AreEqual(0, bay.BundlesInFlight, "every bundle went in");
-            Assert.Greater(bay.LampLevel, tuning.LampOccupied * 2f, "the lamps flare as the bay starts fitting");
-            yield return new WaitForSeconds(tuning.SparkInterval * 1.5f);
-            Assert.Greater(bay.SparkCount, tuning.SparkCount * 3, "weld sparks fly from every arm's tip");
-            Assert.AreEqual(0, _fixture.Rover.HoldStillCount, "07 is free again");
+            Assert.AreEqual(0, _fixture.Rover.HoldStillCount, "the bay lets go: the rover's install holds 07");
             Assert.IsFalse(_fixture.Rover.TryGetGaze(bay, out _, out _));
+            yield return new WaitForSeconds(tuning.SparkInterval * 1.5f);
+            Assert.AreEqual(0, bay.SparkCount, "no sparks while the arms are still folded at the rail");
+            Assert.IsTrue(bay.Working, "the bay works on while the piece is fitted");
+
+            // The rover's floor arm lifts the Hover-Jump coils up through the turntable and sets them on.
+            rig.FloorLift.localPosition += Vector3.up * 0.25f;
+            Weld(new RoverKitFitted(RoverKitPiece.SolarCell, true, string.Empty));
+            Assert.AreEqual(0, bay.SparkCount, "a friend's gift is no weld");
+            Weld(new RoverKitFitted(RoverKitPiece.HoverCoils, false, HoverJump));
+            Assert.Greater(bay.LampLevel, tuning.LampOccupied * 2f, "the lamps flare at the weld");
+            yield return new WaitForSeconds(tuning.SparkInterval * 1.5f);
+            Assert.Greater(bay.FloorSparkCount, tuning.SparkCount, "weld sparks fly from the floor arm's tip");
+            for (int arm = 0; arm < rig.ArmCount; arm++)
+            {
+                Assert.AreEqual(0, bay.SparkCountOf(arm), "never from an arm folded at the rail");
+            }
+
             _fixture.Capture("18-bay-hover-jump");
+            rig.FloorLift.localPosition -= Vector3.up * 0.25f;
+            yield return new WaitForSeconds(tuning.WorkLinger + tuning.LightEase * 5f);
+            Assert.IsFalse(bay.Working, "done: the bay rests");
+            Assert.AreEqual(tuning.LightIdle, bay.LightLevel, 0.1f, "its lights ease back down to the low glow");
 
             _fixture.GiveMaterials(5, 2, 4);
             UpgradeDefinition[] kit =
@@ -350,11 +374,26 @@ namespace MoonProject.Gameplay.PlayModeTests
                     "pieces bought together are fed and fitted one after another, in order");
             }
 
+            // The right-hand arm swings down to set the Cargo Cradle's rack on 07's back.
+            Transform shoulder = rig.GetArmJoint(2, RoverBayJoint.Upper);
+            Quaternion folded = shoulder.localRotation;
+            shoulder.localRotation = folded * Quaternion.Euler(70f, 0f, 0f);
+            Weld(new RoverKitFitted(RoverKitPiece.CargoRack, false, _fixture.CargoCradleUpgrade.Id));
+            yield return new WaitForSeconds(tuning.SparkInterval * 1.5f);
+            Assert.Greater(bay.SparkCountOf(2), tuning.SparkCount, "weld sparks fly from the fitting arm's tip");
+            Assert.AreEqual(0, bay.SparkCountOf(0) + bay.SparkCountOf(1), "and only from it");
+            shoulder.localRotation = folded;
+            Assert.IsTrue(bay.Working, "two more pieces to set on");
+            Weld(new RoverKitFitted(RoverKitPiece.LampBar, false, _fixture.WarmHeadlampUpgrade.Id));
+            Weld(new RoverKitFitted(RoverKitPiece.CapacitorDrums, false, _fixture.BoostCoilsUpgrade.Id));
+
             yield return new WaitForSeconds(tuning.SparkInterval * tuning.SparkBursts + tuning.SparkLifetime.y + 0.5f);
             Assert.AreEqual(0, bay.SparkCount, "the sparks die out (an idle bay costs nothing)");
             Assert.Less(bay.PadLevel, look.Occupied * 0.5f, "an empty bay's pad rests dim");
             Assert.AreEqual(tuning.LampOccupied, bay.LampLevel, 0.05f, "the lamps settle back");
             Assert.AreEqual(0, _fixture.Rover.HoldStillCount);
+            yield return new WaitForSeconds(tuning.WorkLinger + tuning.LightEase * 5f);
+            Assert.IsFalse(bay.Working, "every piece is on");
 
             _fixture.Dispose(true);
             yield return null;
@@ -488,6 +527,12 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.Greater(gameplay.Tower.BeaconLevel, 0.5f, "the beacon is lit straight away");
             AimAtShelf(gameplay.Home);
             _fixture.Capture("12-reloaded-museum");
+        }
+
+        /// <summary>Stands in for the rover setting a piece on 07 in the bay (or a friend's gift appearing).</summary>
+        private void Weld(RoverKitFitted fitted)
+        {
+            _fixture.Bootstrap.Context.Events.Publish(fitted);
         }
 
         /// <summary>The review camera out in front of the tower's service port, a little aside.</summary>

@@ -103,6 +103,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float BayViewHeight = 2.6f;
         private const float SparkDelay = 0.3f;
 
+        /// <summary>Seconds the bay's arms may take to set a bought piece on 07 (the rover's install moment).</summary>
+        private const float BayFitTimeout = 25f;
+
         /// <summary>07 lines up this far (m) in front of the turntable to drive in; it backs out as far.</summary>
         private const float BayApproach = 6f;
 
@@ -858,8 +861,12 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return Until(() => _events.RoverBayFitting.Count > fittings, 3f, "the bay starts fitting the kit");
             AssertCues(cues, HoverJump, StationCue.FeedStarted, StationCue.Fed);
             Assert.AreEqual(HoverJump, _events.RoverBayFitting[_events.RoverBayFitting.Count - 1].Value.UpgradeId);
+            Assert.IsTrue(bench.Working, "the bay works: its lights are up");
+            Assert.AreEqual(0, bench.SparkCount, "no sparks while the arms are folded");
+            yield return Until(() => Fitted(HoverJump), BayFitTimeout, "the floor arm sets the coils on 07");
             yield return new WaitForSeconds(SparkDelay);
-            Assert.Greater(bench.SparkCount, 0, "weld sparks fly from the gantry arms' tips");
+            Assert.Greater(bench.FloorSparkCount, 0, "weld sparks fly from the floor arm's tip as the coils go on");
+            Assert.Greater(bench.LightLevel, bench.Tuning.LightIdle * 2f, "the work lights light the bay");
             ReviewBay(bench, "13b-bay-sparks");
             yield return new WaitForSeconds(1.5f);
             Capture("13-bay-hover-jump");
@@ -888,6 +895,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             Release(_keyboard.eKey);
             Assert.AreEqual(CargoCradle, _events.UpgradePurchased[_events.UpgradePurchased.Count - 1].Value.UpgradeId);
             Assert.IsTrue(_context.Get<IRoverAbilities>().Has(RoverAbility.CargoCradle));
+            yield return Until(() => Fitted(CargoCradle), BayFitTimeout, "an arm sets the rack on 07");
+            yield return new WaitForSeconds(SparkDelay);
+            Assert.Greater(bench.SparkCount - bench.FloorSparkCount, 0, "weld sparks fly from the fitting arm's tip");
             yield return Until(() => seat.IsFitted, 6f, "the rack is fitted on 07");
             yield return new WaitForSeconds(1.5f);
             Vector3 back = -Flat(_rover.Rotation * Vector3.forward).normalized;
@@ -1661,6 +1671,21 @@ namespace MoonProject.Gameplay.PlayModeTests
             Vector3 aside = Vector3.Cross(Vector3.up, front);
             Review(bay.BayPosition + front * BayViewDistance + aside * BayViewSide + Vector3.up * BayViewHeight,
                 bay.BayPosition + Vector3.up, name);
+        }
+
+        /// <summary>True once the bay has set a piece bought as <paramref name="upgradeId"/> on 07.</summary>
+        private bool Fitted(string upgradeId)
+        {
+            for (int i = 0; i < _events.RoverKitFitted.Count; i++)
+            {
+                RoverKitFitted fitted = _events.RoverKitFitted[i].Value;
+                if (!fitted.Gift && fitted.UpgradeId == upgradeId)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>True once a station cued <paramref name="cue"/> after the first <paramref name="from"/>.</summary>

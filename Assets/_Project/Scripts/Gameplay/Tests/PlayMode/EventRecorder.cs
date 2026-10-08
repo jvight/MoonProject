@@ -10,7 +10,8 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// Records every gameplay event (and the rover's Hover-Jump events) with the time it was published, for order and
     /// timing assertions. The radio and story events of M3-05 (cassettes, radio program, crew logs, Bell's signals
     /// and cues, ticker lines), the relay network's of M3-06 (relay cues and restorations, the radio-hop) and the
-    /// stations' and charging dock's of M3-14 (station cues, the bay's fitting, the dock rest) are recorded too but
+    /// stations' and charging dock's of M3-14 (station cues, the bay's fitting, a kit piece set on, the dock rest) are
+    /// recorded too but
     /// kept out of <see cref="Order"/>: the radio announces itself at every boot, and the order assertions follow the
     /// play loop.
     /// </summary>
@@ -58,6 +59,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Listen(events, RadioHopFinished, false);
             Listen(events, StationCued, false);
             Listen(events, RoverBayFitting, false);
+            Listen(events, RoverKitFitted, false);
             Listen(events, RoverDockChanged, false);
         }
 
@@ -125,6 +127,8 @@ namespace MoonProject.Gameplay.PlayModeTests
         public List<Timed<StationCued>> StationCued { get; } = new List<Timed<StationCued>>();
 
         public List<Timed<RoverBayFitting>> RoverBayFitting { get; } = new List<Timed<RoverBayFitting>>();
+
+        public List<Timed<RoverKitFitted>> RoverKitFitted { get; } = new List<Timed<RoverKitFitted>>();
 
         public List<Timed<RoverDockChanged>> RoverDockChanged { get; } = new List<Timed<RoverDockChanged>>();
 
