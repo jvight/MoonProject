@@ -541,6 +541,18 @@
         {
             "key": "hint.stow",
             "text": "Cất vào giỏ"
+        },
+        {
+            "key": "ui.bench.pick",
+            "text": "nhấn nhẹ để đổi món"
+        },
+        {
+            "key": "kit.solar_cell.name",
+            "text": "Ô pin mặt trời của Tilly"
+        },
+        {
+            "key": "kit.fresh_paint.name",
+            "text": "Lớp sơn mới từ Bell"
         }
     ]
 }

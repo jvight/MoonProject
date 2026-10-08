@@ -541,6 +541,18 @@
         {
             "key": "hint.stow",
             "text": "Stow"
+        },
+        {
+            "key": "ui.bench.pick",
+            "text": "tap for the next"
+        },
+        {
+            "key": "kit.solar_cell.name",
+            "text": "Tilly's solar cell"
+        },
+        {
+            "key": "kit.fresh_paint.name",
+            "text": "A fresh coat from Bell"
         }
     ]
 }
