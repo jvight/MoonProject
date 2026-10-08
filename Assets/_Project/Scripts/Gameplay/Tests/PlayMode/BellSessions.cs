@@ -248,12 +248,67 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(Vector3.one, _fixture.Gameplay.Shelf.TapeIn(0).localScale, "already in place");
         }
 
+        [UnityTest]
+        public IEnumerator Bell_DialIsTappedBy07sBeam_ThenSheTurnsIt()
+        {
+            _fixture = GameplayFixture.Boot(_controls);
+            yield return null;
+            FriendField friends = _fixture.Gameplay.Friends;
+            friends.Restore(new FriendsSaveData
+            {
+                friends = new[] { new FriendSaveData { id = BellId, state = (int)FriendState.Awake, welcomed = true } },
+            });
+            yield return null;
+            Friend bell = friends.Find(BellId);
+            var body = (RadioCabinetBody)bell.Body;
+            IRadioProgram radio = _fixture.Bootstrap.Context.Get<IRadioProgram>();
+            Vector3 parked = Flat(body.DialFront);
+            _fixture.Rover.Place(parked, Yaw(Flat(_fixture.BellCorner.position) - parked));
+            yield return null;
+            yield return null;
+            Assert.IsTrue(friends.CanTune, "parked in front of her dial");
+            RadioChannel before = radio.Channel;
+            int cues = _fixture.Events.BellCued.Count;
+            int changes = _fixture.Events.RadioProgramChanged.Count;
+
+            Press(_keyboard.eKey);
+            yield return null;
+            yield return null;
+            Release(_keyboard.eKey);
+            Assert.IsTrue(friends.TappingDial, "07's beam reaches for her dial");
+            Assert.AreEqual(cues, _fixture.Events.BellCued.Count, "no click yet");
+            Assert.AreEqual(before, radio.Channel, "she has not turned it yet");
+            Assert.AreEqual(changes, _fixture.Events.RadioProgramChanged.Count);
+            yield return new WaitForSeconds(_fixture.BellTuning.DialTapTime * 0.5f);
+            Assert.Greater(friends.DialBeamLevel, 0.5f, "the beam is out to her dial");
+            Press(_keyboard.eKey);
+            yield return null;
+            Release(_keyboard.eKey);
+            _fixture.Rover.Aim(_fixture.BellCorner.position + _fixture.BellCorner.forward * 2.5f +
+                               _fixture.BellCorner.right * 1.5f + Vector3.up * 1.6f,
+                _fixture.BellCorner.position + Vector3.up * 1.1f);
+            _fixture.Capture("26a-bell-dial-tap");
+
+            yield return new WaitForSeconds(_fixture.BellTuning.DialTapTime);
+            Assert.IsFalse(friends.TappingDial);
+            Assert.AreNotEqual(before, radio.Channel, "then she turns her dial");
+            Assert.AreEqual(changes + 1, _fixture.Events.RadioProgramChanged.Count, "one detent: a press mid-tap " +
+                                                                                    "never doubles it");
+            Assert.AreEqual(cues + 1, _fixture.Events.BellCued.Count);
+            Assert.AreEqual(BellCue.DialTurned, LastCue(), "her detented click");
+            yield return new WaitForSeconds(0.5f);
+            Assert.Less(friends.DialBeamLevel, 0.05f, "the beam lets go");
+        }
+
+        /// <summary>A press of Interact at her dial: 07's beam taps it, and she turns it after the tap.</summary>
         private IEnumerator Click()
         {
             Press(_keyboard.eKey);
             yield return null;
             yield return null;
             Release(_keyboard.eKey);
+            Assert.IsTrue(_fixture.Gameplay.Friends.TappingDial, "07's beam taps her dial first");
+            yield return new WaitForSeconds(_fixture.BellTuning.DialTapTime);
             yield return null;
         }
 

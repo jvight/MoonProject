@@ -7,7 +7,7 @@ namespace MoonProject.Gameplay
     /// <summary>
     /// 07's stitching beam (a friend's repair, a relay mast's restoration, a tower section rising): a line of light
     /// bowed up from 07's eye to what it mends, its far end sweeping sideways and, at twice the rate, up and down so it
-    /// reads as stitching; with no sweep it is a steady beam (feeding a hopper). It eases in and
+    /// reads as stitching; with no sweep it is a steady beam (feeding a hopper, tapping Bell's dial). It eases in and
     /// out; dark, it costs no draw call. Allocation-free per frame.
     /// </summary>
     public sealed class RepairBeam

@@ -1225,11 +1225,22 @@ namespace MoonProject.Gameplay.PlayModeTests
             var heard = new List<string>();
             for (int turn = 0; turn < 3; turn++)
             {
+                int cues = _events.BellCued.Count;
                 Press(_keyboard.eKey, queueEventOnly: true);
                 yield return null;
                 yield return null;
                 Release(_keyboard.eKey);
-                yield return new WaitForSeconds(DialPause);
+                Assert.IsTrue(_gameplay.Friends.TappingDial, "07's beam taps her dial first");
+                if (turn == 0)
+                {
+                    yield return new WaitForSeconds(0.15f);
+                    Transform corner = bell.Home;
+                    Review(corner.position + corner.forward * 2.2f + corner.right * 1.4f + Vector3.up * 1.6f,
+                        corner.position + Vector3.up * 1.1f, "26a-dial-tap");
+                }
+
+                yield return new WaitForSeconds(_gameplay.Friends.BellTuning.DialTapTime + DialPause);
+                Assert.AreEqual(BellCue.DialTurned, _events.BellCued[cues].Value.Cue, "then she turns it");
                 heard.Add(radio.Channel == RadioChannel.TapeDeck ? radio.Channel + " (" + radio.SelectedTape + ")"
                     : radio.Channel.ToString());
                 Assert.AreEqual(_gameplay.Friends.BellTuning.Detent(radio.Channel), cabinet.Life.Needle, 2f,
