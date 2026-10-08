@@ -210,6 +210,7 @@ namespace MoonProject.UI
             EventBus events = services.Events;
             _tokens.Add(events.Subscribe<MaterialsChanged>(OnMaterialsChanged));
             _tokens.Add(events.Subscribe<RelicDeposited>(OnRelicDeposited));
+            _tokens.Add(events.Subscribe<RelicStowed>(OnRelicStowed));
             _tokens.Add(events.Subscribe<RoverAwoke>(OnRoverAwoke));
             _tokens.Add(events.Subscribe<SonarPinged>(OnSonarPinged));
             _tokens.Add(events.Subscribe<SiteAnswered>(OnSiteAnswered));
@@ -418,6 +419,11 @@ namespace MoonProject.UI
             {
                 _card.Enqueue(deposited.RelicId, deposited.DisplayedCount);
             }
+        }
+
+        private void OnRelicStowed(RelicStowed stowed)
+        {
+            _director.NotifyUsed(InteractionKind.Stow);
         }
 
         private void OnRoverAwoke(RoverAwoke awoke)

@@ -355,6 +355,27 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator Stow_PromptOverTheRelic_BowsOutOnceItRidesInTheRack()
+        {
+            InputSystem.AddDevice<Keyboard>();
+            Boot();
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            var relic = new Vector3(-1f, 0.4f, 7f);
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Stow, relic, true);
+            yield return Seconds(1.5f);
+            Assert.IsTrue(_rig.Ui.Prompt.IsVisible, "an empty cradle and a highlighted relic: stowing is taught");
+            Assert.AreEqual(Text(UiKeys.Hint(InteractionKind.Stow)), _rig.Ui.Layout.PromptWord.text);
+            Assert.AreEqual(relic + Vector3.up * _rig.Tuning.Prompts.Find(InteractionKind.Stow).LiftMetres,
+                _rig.Ui.Director.WorldPoint, "it floats over the relic");
+
+            Events.Publish(new RelicStowed("relic.test", new Vector3(0f, 1f, -1f)));
+            _rig.Fakes.PrimaryHint = InteractionHint.None;
+            yield return Seconds(1f);
+            Assert.AreEqual(1, _rig.Ui.Ledger.Used(InteractionKind.Stow), "a relic in the rack is doing it");
+            Assert.IsFalse(_rig.Ui.Prompt.IsVisible);
+        }
+
+        [UnityTest]
         public IEnumerator Site_NamesItselfTheFirstTimeItAnswers_Once()
         {
             Boot();
