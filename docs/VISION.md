@@ -112,6 +112,9 @@ Each ruling removes friction the original pitch would have caused. Boxes impleme
     landing more gently than the basin's play ramps. It is visible from the basin side as a promise, and it is never
     climbable as a way in. Trying the gate without the ability may fail, but it never traps: any trough or pit 07
     can fall into has a ≤ 20° side to drive out.
+11. **Every upgrade shows.** Progress must be visible on 07 or at home, readable from the default camera and at 30 m.
+    07's look moves from tired to cared-for: its signs of solitude heal and sturdy expedition kit appears. Rugged
+    and capable, never menacing; the gentle one-eyed face never changes. See `docs/DESIGN.md` "Visible progression".
 
 ## World concept
 The playable space is the floor of a **vast ancient crater basin** (~600 m across for the vertical slice).
