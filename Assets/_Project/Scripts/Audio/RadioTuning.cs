@@ -12,6 +12,10 @@ namespace MoonProject.Audio
         [Tooltip("Metres from the base where the music is perfectly clear (radio tower upgrades raise it at runtime).")]
         [Min(0f)] [SerializeField] private float _signalRadius = 60f;
 
+        [Tooltip("Reach (m) of a lit relay mast, as Gameplay's relay network has it (110 m): the radio is clear " +
+                 "within it, like within home's radius.")]
+        [Range(10f, 500f)] [SerializeField] private float _mastReach = 110f;
+
         [Tooltip("Metres over which the signal fades from clear to gone beyond the radius.")]
         [Min(1f)] [SerializeField] private float _falloffWidth = 140f;
 
@@ -95,6 +99,25 @@ namespace MoonProject.Audio
         [Tooltip("Seconds (time constant) for the static to settle into or out of Quiet Hours.")]
         [Range(0.05f, 5f)] [SerializeField] private float _quietStaticFade = 1.2f;
 
+        [Header("Radio-hop (between lit relay nodes; times match Gameplay's hop view)")]
+        [Tooltip("Seconds for the radio to ease into static as the hop starts and the screen fades.")]
+        [Range(0.1f, 5f)] [SerializeField] private float _hopOutTime = 0.8f;
+
+        [Tooltip("Seconds of full dark (07 is moved) before the static starts to resolve.")]
+        [Range(0f, 5f)] [SerializeField] private float _hopDarkTime = 0.4f;
+
+        [Tooltip("Seconds for the static to resolve into the target node's radio as the view eases back in.")]
+        [Range(0.1f, 5f)] [SerializeField] private float _hopInTime = 0.8f;
+
+        [Tooltip("Extra static at the depth of the hop (0..1, on top of the clarity static).")]
+        [Range(0f, 1f)] [SerializeField] private float _hopStaticBoost = 0.5f;
+
+        [Tooltip("Music level at the depth of the hop (it filters away, not off).")]
+        [Range(0f, 1f)] [SerializeField] private float _hopMusicGain = 0.15f;
+
+        [Tooltip("Low-pass (Hz) the music closes to at the depth of the hop.")]
+        [Range(100f, 22000f)] [SerializeField] private float _hopCutoff = 700f;
+
         [Header("Paused: listening in the cabin")]
         [Tooltip("Low-pass (Hz) the radio eases to while paused: a subtly closer, warmer set (22 kHz = unchanged).")]
         [Range(2000f, 22000f)] [SerializeField] private float _cabinCutoff = 7000f;
@@ -126,6 +149,7 @@ namespace MoonProject.Audio
 
         public float SignalRadius => _signalRadius;
         public float FalloffWidth => _falloffWidth;
+        public float MastReach => _mastReach;
         public float RadiusEaseTime => _radiusEaseTime;
         public float ClaritySmoothing => _claritySmoothing;
         public float MinCutoff => _minCutoff;
@@ -151,6 +175,12 @@ namespace MoonProject.Audio
         public float SilentSwitchFade => _silentSwitchFade;
         public float QuietStaticGain => _quietStaticGain;
         public float QuietStaticFade => _quietStaticFade;
+        public float HopOutTime => _hopOutTime;
+        public float HopDarkTime => _hopDarkTime;
+        public float HopInTime => _hopInTime;
+        public float HopStaticBoost => _hopStaticBoost;
+        public float HopMusicGain => _hopMusicGain;
+        public float HopCutoff => _hopCutoff;
         public float CabinCutoff => _cabinCutoff;
         public float CabinMusicGain => _cabinMusicGain;
         public float CabinStaticGain => _cabinStaticGain;

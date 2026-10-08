@@ -15,16 +15,19 @@ namespace MoonProject.Audio
     /// Bell's dial while the radio is on crossfades through a short static swish (Bell crackles along; the detent
     /// click is hers); changes at load or before the radio comes on just set the state, without a sound. New tracks
     /// on Lumen After Dark go to the ticker as "now playing", once per track per session. Clarity follows the rover's
-    /// distance from the base through <see cref="RadioSignal"/> (low-pass, static, wow/flutter); past the signal's
-    /// edge the whole set fades towards near-silence, it thins in Whispering Canyon and pulls back when 07 is still
-    /// (the <see cref="Soundscape"/>'s mix). <see cref="SignalRadiusChanged"/> widens the clear zone. Initialised by
+    /// place in the relay network through <see cref="RadioSignal"/> (low-pass, static, wow/flutter): clear anywhere
+    /// home or a lit mast reaches (<see cref="StationDistance"/>), falling off past the nearest edge; beyond, the whole
+    /// set fades towards near-silence, it thins in Whispering Canyon and pulls back when 07 is still (the
+    /// <see cref="Soundscape"/>'s mix). <see cref="SignalRadiusChanged"/> widens home's clear zone. A radio-hop
+    /// (<see cref="RadioHopStarted"/>) eases the set into static as the screen fades, holds through the dark and
+    /// resolves into the target node's clarity as the view eases in (<see cref="RadioHop"/>). Initialised by
     /// <see cref="AudioDirector"/>.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class RadioStation : MonoBehaviour
     {
         private const float MinPitch = 0.01f;
-        private const int SubscriptionCount = 3;
+        private const int SubscriptionCount = 6;
 
         [Tooltip("Assets/_Project/Data/Audio/RadioTuning.asset.")]
         [SerializeField] private RadioTuning _tuning;
@@ -43,13 +46,14 @@ namespace MoonProject.Audio
         private readonly RadioWakeUp _wake = new RadioWakeUp();
         private readonly NowPlayingLog _nowPlaying = new NowPlayingLog();
         private readonly EasedValue _staticPresence = new EasedValue(1f);
+        private readonly RadioHop _hop = new RadioHop();
         private readonly IDisposable[] _subscriptions = new IDisposable[SubscriptionCount];
         private readonly Dictionary<string, RadioTrack> _tapeTracks = new Dictionary<string, RadioTrack>(
             StringComparer.Ordinal);
         private IRoverState _listener;
+        private IStationReach _reach;
         private IRadioProgram _program;
         private EventBus _events;
-        private Vector3 _basePosition;
         private AudioDirector _director;
         private Soundscape _soundscape;
         private RadioSignal _signal;
@@ -59,6 +63,8 @@ namespace MoonProject.Audio
         private int _poolCount;
         private AudioSource _static;
         private AudioSource _swish;
+        private CueHandle _hopOut;
+        private CueHandle _hopIn;
         private float _staticCueVolume;
         private float _swishCueVolume;
 
@@ -100,6 +106,17 @@ namespace MoonProject.Audio
         /// <summary>Where the signal is lost entirely: the clear radius in effect plus the falloff (metres).</summary>
         public float SignalEdge => _signal != null ? _signal.Radius + _tuning.FalloffWidth : 0f;
 
+        /// <summary>0 .. 1 how far into a radio-hop's static the set is.</summary>
+        public float HopAmount => _hop.Amount;
+
+        /// <summary>The home-relative distance giving the radio's signal at <paramref name="position"/>: home's
+        /// clear radius plus how far it is past the nearest lit node's reach (see <see cref="StationDistance"/>).
+        /// </summary>
+        public float ReachDistance(Vector3 position)
+        {
+            return StationDistance.Equivalent(_reach, position, SignalRadius, _tuning.MastReach);
+        }
+
         /// <summary>The clear-signal radius the station is easing towards (metres).</summary>
         public float TargetSignalRadius => _signal != null ? _signal.TargetRadius : 0f;
 
@@ -130,7 +147,9 @@ namespace MoonProject.Audio
 
             CueHandle staticCue = director.Resolve(AudioCueIds.RadioStatic);
             CueHandle swishCue = director.Resolve(AudioCueIds.RadioTune);
-            if (!staticCue.IsValid || !swishCue.IsValid)
+            _hopOut = director.Resolve(AudioCueIds.RadioHopOut);
+            _hopIn = director.Resolve(AudioCueIds.RadioHopIn);
+            if (!staticCue.IsValid || !swishCue.IsValid || !_hopOut.IsValid || !_hopIn.IsValid)
             {
                 enabled = false;
                 return;
@@ -141,9 +160,9 @@ namespace MoonProject.Audio
             _events = context.Events;
             _listener = context.Get<IRoverState>();
             _program = context.Get<IRadioProgram>();
-            _basePosition = context.Get<IWorldLayout>().BasePosition;
+            _reach = context.Get<IStationReach>();
             _signal = new RadioSignal(_tuning);
-            _signal.Snap(SignalField.HorizontalDistance(_listener.Position, _basePosition));
+            _signal.Snap(ReachDistance(_listener.Position));
             BuildTrackTables();
 
             for (int i = 0; i < _decks.Length; i++)
@@ -166,6 +185,9 @@ namespace MoonProject.Audio
             _subscriptions[0] = context.Events.Subscribe<SignalRadiusChanged>(OnSignalRadiusChanged);
             _subscriptions[1] = context.Events.Subscribe<RoverAwoke>(OnRoverAwoke);
             _subscriptions[2] = context.Events.Subscribe<RadioProgramChanged>(OnRadioProgramChanged);
+            _subscriptions[3] = context.Events.Subscribe<RadioHopStarted>(OnRadioHopStarted);
+            _subscriptions[4] = context.Events.Subscribe<RadioHopFinished>(OnRadioHopFinished);
+            _subscriptions[5] = context.Events.Subscribe<RoverPlaced>(OnRoverPlaced);
         }
 
         internal void Wire(RadioTuning tuning, RadioPlaylist playlist, RadioTapeLibrary tapes)
@@ -183,7 +205,13 @@ namespace MoonProject.Audio
             }
 
             float dt = Time.unscaledDeltaTime;
-            _signal.Step(SignalField.HorizontalDistance(_listener.Position, _basePosition), dt);
+            _signal.Step(ReachDistance(_listener.Position), dt);
+            float hop = _hop.Step(dt, _tuning.HopOutTime, _tuning.HopDarkTime, _tuning.HopInTime, out bool landing);
+            if (landing)
+            {
+                _director.Play2D(_hopIn);
+            }
+
             RadioMix mix = _signal.Mix;
             float wobble = _wowFlutter.Step(dt, _tuning.WowRate, _tuning.FlutterRate, _tuning.FlutterShare);
             float pitch = Mathf.Max(MinPitch, WowFlutter.PitchFactor(wobble, mix.WobbleCents));
@@ -201,9 +229,10 @@ namespace MoonProject.Audio
             float cabin = _director.CabinBlend;
             float level = _director.Buses.Effective(AudioBus.Music) * _wake.Power;
             float music = mix.MusicVolume * level * _wake.MusicGain * Mathf.Lerp(1f, _tuning.CabinMusicGain, cabin) *
-                          _soundscape.RadioGain;
+                          _soundscape.RadioGain * Mathf.Lerp(1f, _tuning.HopMusicGain, hop);
             float cabinCutoff = _tuning.MaxCutoff * Mathf.Pow(_tuning.CabinCutoff / _tuning.MaxCutoff, cabin);
             float cutoff = _soundscape.RadioCutoff(Mathf.Min(mix.CutoffHz, cabinCutoff));
+            cutoff *= Mathf.Pow(Mathf.Min(1f, _tuning.HopCutoff / cutoff), hop);
             for (int i = 0; i < _decks.Length; i++)
             {
                 AudioSource deck = _decks[i];
@@ -220,7 +249,7 @@ namespace MoonProject.Audio
 
             float presence = _staticPresence.Step(StaticPresenceTarget(), dt, _tuning.QuietStaticFade);
             float staticVolume = (mix.StaticVolume + _tuning.WakeStaticBoost * _wake.CrackleBoost) * presence
-                                 + _tuning.TuneStaticBoost * _mixer.Swell;
+                                 + _tuning.TuneStaticBoost * _mixer.Swell + _tuning.HopStaticBoost * hop;
             _static.volume = Mathf.Clamp01(staticVolume) * _staticCueVolume * level * _soundscape.RadioGain *
                              Mathf.Lerp(1f, _tuning.CabinStaticGain, cabin);
             _swish.volume = _tuning.TuneSwishVolume * _swishCueVolume * level * _soundscape.RadioGain;
@@ -411,6 +440,23 @@ namespace MoonProject.Audio
         {
             _swish.Stop();
             _swish.Play();
+        }
+
+        private void OnRadioHopStarted(RadioHopStarted started)
+        {
+            _hop.Begin();
+            _director.Play2D(_hopOut);
+        }
+
+        private void OnRadioHopFinished(RadioHopFinished finished)
+        {
+            _hop.End();
+        }
+
+        private void OnRoverPlaced(RoverPlaced placed)
+        {
+            // Set down unseen at full dark: the signal is the new place's at once, revealed as the hop resolves.
+            _signal.Snap(ReachDistance(placed.Position));
         }
 
         private void OnSignalRadiusChanged(SignalRadiusChanged changed)

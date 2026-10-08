@@ -2141,6 +2141,141 @@
       "notes": "07's metal ticking as it cools after a drive: dry click + a tiny pentatonic ring."
     },
     {
+      "id": "relay_mast_creak",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/relay_mast_creak.wav"
+      ],
+      "variantLabels": [
+        "relay_mast_creak"
+      ],
+      "sha256": [
+        "a0c8dee8ce8e7f32db2089d93cb4cfb98a3b36de996fb7526266b722d30c108a"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "A relay mast straightening: low metal groan rising, a scrape and a soft locking clunk."
+    },
+    {
+      "id": "relay_lamp_warm",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/relay_lamp_warm.wav"
+      ],
+      "variantLabels": [
+        "relay_lamp_warm"
+      ],
+      "sha256": [
+        "0131b8fdb5d44183e4ab49bebdd7d7c66843a91c5ad47bf2c414ac754f3bd280"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "A mast's lamp warming: filament catch, hum rising onto D3, A4/D5 glow."
+    },
+    {
+      "id": "relay_link",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/relay_link.wav"
+      ],
+      "variantLabels": [
+        "relay_link"
+      ],
+      "sha256": [
+        "29476b8bb8004f90052df468879ac65d5df95a6fa79fcd6e3dd5edae47d841fc"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "The link answer from home's direction: old-radio A4 D5 F#5 with a breath of static."
+    },
+    {
+      "id": "radio_hop_out",
+      "category": "radio_fx_2d",
+      "milestone": "M3",
+      "bus": "Music",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/radio_hop_out.wav"
+      ],
+      "variantLabels": [
+        "radio_hop_out"
+      ],
+      "sha256": [
+        "d2add3d9213d9467e08a704bf306f1e0f424e2428e1c0ba3d5d930146361c302"
+      ],
+      "volumeMin": 0.8,
+      "volumeMax": 0.8,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -24.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "Radio-hop leaving: static swells, band sweeps down and filters out as the screen fades."
+    },
+    {
+      "id": "radio_hop_in",
+      "category": "radio_fx_2d",
+      "milestone": "M3",
+      "bus": "Music",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/radio_hop_in.wav"
+      ],
+      "variantLabels": [
+        "radio_hop_in"
+      ],
+      "sha256": [
+        "214fd0b4c0bf19c92310e6c74b236ca2c41df067ab1ceb73b82a533204f02090"
+      ],
+      "volumeMin": 0.8,
+      "volumeMax": 0.8,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -24.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "Radio-hop landing: band sweeps up and locks onto a soft D5 carrier as the view eases in."
+    },
+    {
       "id": "upgrade_arpeggio",
       "category": "stinger_2d",
       "milestone": "M2",

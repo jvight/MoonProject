@@ -59,6 +59,11 @@ namespace MoonProject.Audio
         public const string RoverLampHum = "rover_lamp_hum";
         public const string RoverServo = "rover_servo";
         public const string RoverMetalTick = "rover_metal_tick";
+        public const string RelayMastCreak = "relay_mast_creak";
+        public const string RelayLampWarm = "relay_lamp_warm";
+        public const string RelayLink = "relay_link";
+        public const string RadioHopOut = "radio_hop_out";
+        public const string RadioHopIn = "radio_hop_in";
 
         /// <summary>A friend's chirp cue, <c>&lt;friendId&gt;_&lt;mood&gt;</c> (e.g. tilly_curious). Builds a string:
         /// call at initialisation only.</summary>

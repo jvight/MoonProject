@@ -113,8 +113,7 @@ namespace MoonProject.Audio.PlayModeTests
             Assert.Greater(edgeStatic, nearStatic * 5f);
 
             _rig.Rover.Position = new Vector3(600f, 0f, 0f);
-            yield return null;
-            yield return null;
+            yield return new WaitForSecondsRealtime(8f);
             Assert.Less(staticLoop.volume, edgeStatic * 0.05f, "far past the signal even the static falls quiet");
         }
 
@@ -143,6 +142,7 @@ namespace MoonProject.Audio.PlayModeTests
                 AudioTestRig.UpdateOf(_rig.Friends), AudioTestRig.UpdateOf(_rig.Jump),
                 AudioTestRig.UpdateOf(_rig.Ambience), AudioTestRig.UpdateOf(_rig.Canyon),
                 AudioTestRig.UpdateOf(_rig.Soundscape), AudioTestRig.UpdateOf(_rig.SmallSounds),
+                AudioTestRig.UpdateOf(_rig.Relays),
             };
 
             _rig.Program.Own(AudioTestRig.TapeA);
@@ -243,6 +243,15 @@ namespace MoonProject.Audio.PlayModeTests
                     break;
                 case 6:
                     events.Publish(new UiCue(frame % 24 == 6 ? UiCueKind.HoldFill : UiCueKind.HoldRelease));
+                    events.Publish(new RelayCued((RelayCue)(frame / 12 % 5), "relay.0", Vector3.right * 90f));
+                    if (frame % 48 == 6)
+                    {
+                        events.Publish(new RelayRestored("relay.0", Vector3.right * 90f, 1, 4));
+                        events.Publish(new RadioHopStarted("home", "relay.0"));
+                        events.Publish(new RoverPlaced(Vector3.right * 90f, Quaternion.identity));
+                        events.Publish(new RadioHopFinished("relay.0"));
+                    }
+
                     break;
                 case 7:
                     events.Publish(new ExcavationStarted(Vector3.left));

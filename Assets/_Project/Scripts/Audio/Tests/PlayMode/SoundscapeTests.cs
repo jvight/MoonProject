@@ -58,15 +58,17 @@ namespace MoonProject.Audio.PlayModeTests
 
             _rig.Rover.Position = FarAway;
             yield return new WaitForSecondsRealtime(1f);
-            Assert.AreEqual(1f, Mix.Farness, 1e-3f);
+            Assert.Less(Mix.Farness, 0.9f, "the near-silence settles in, never a cut");
+            yield return new WaitForSecondsRealtime(7f);
+            Assert.AreEqual(1f, Mix.Farness, 0.01f);
             Assert.Less(Mix.RadioGain, 0.04f, "near-silence: about -30 dB");
             Assert.Less(Mix.BasinBedGain, 0.4f, "the basin bed recedes");
             Assert.Greater(room.volume, roomAtHome * 4f, "the room tone takes over");
             Assert.IsTrue(room.isPlaying);
 
             _rig.Rover.Position = Vector3.zero;
-            yield return new WaitForSecondsRealtime(1f);
-            Assert.AreEqual(1f, Mix.RadioGain, 1e-3f, "coming home warms it all back in");
+            yield return new WaitForSecondsRealtime(8f);
+            Assert.AreEqual(1f, Mix.RadioGain, 0.02f, "coming home warms it all back in");
         }
 
         [UnityTest]

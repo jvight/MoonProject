@@ -59,6 +59,9 @@ namespace MoonProject.Audio
         [Tooltip("07's lamp hum, servos and cooling ticks.")]
         [SerializeField] private RoverSmallSounds _smallSounds;
 
+        [Tooltip("The relay masts: repair beat, link answer, lamp hum.")]
+        [SerializeField] private RelayAudio _relays;
+
         private readonly AudioBusMixer _buses = new AudioBusMixer();
         private readonly LoopFader _pause = new LoopFader();
         private readonly AudioClip[] _recentClips = new AudioClip[RecentClipCapacity];
@@ -155,6 +158,7 @@ namespace MoonProject.Audio
             _soundscape.Initialize(context, this, _radio, _canyon, _mixTuning.AmbienceFadeIn);
             _ambience.Initialize(this, _soundscape, _mixTuning.AmbienceFadeIn);
             _smallSounds.Initialize(context, this, _soundscape);
+            _relays.Initialize(context, this);
         }
 
         /// <summary>Resolves a cue id once (call at initialisation); logs and returns an invalid handle if
@@ -270,7 +274,8 @@ namespace MoonProject.Audio
 
         internal void Wire(AudioLibrary library, AudioMixTuning mixTuning, RoverAudio roverAudio,
             JumpAudio jump, GameplayAudio gameplay, FriendAudio friends, UiAudio ui, RadioStation radio,
-            AmbienceBed ambience, CanyonAmbience canyon, Soundscape soundscape, RoverSmallSounds smallSounds)
+            AmbienceBed ambience, CanyonAmbience canyon, Soundscape soundscape, RoverSmallSounds smallSounds,
+            RelayAudio relays)
         {
             _jump = jump;
             _friends = friends;
@@ -284,6 +289,7 @@ namespace MoonProject.Audio
             _canyon = canyon;
             _soundscape = soundscape;
             _smallSounds = smallSounds;
+            _relays = relays;
         }
 
         private void Update()
@@ -417,6 +423,7 @@ namespace MoonProject.Audio
             ok &= Require(_canyon, nameof(_canyon));
             ok &= Require(_soundscape, nameof(_soundscape));
             ok &= Require(_smallSounds, nameof(_smallSounds));
+            ok &= Require(_relays, nameof(_relays));
             if (_library != null)
             {
                 string problem = _library.FindProblem();
