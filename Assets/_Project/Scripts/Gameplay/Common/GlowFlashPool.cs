@@ -4,8 +4,8 @@ using UnityEngine;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// A small ring buffer of soft light balls that swell and fade where something is collected. All flashes are created
-    /// up front; spawning reuses the oldest, so a fast arpeggio never allocates.
+    /// A small ring buffer of soft light balls that swell and fade where something is collected. All flashes are
+    /// created up front; spawning reuses the oldest, so a fast arpeggio never allocates.
     /// </summary>
     public sealed class GlowFlashPool
     {

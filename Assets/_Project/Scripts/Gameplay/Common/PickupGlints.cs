@@ -107,7 +107,7 @@ namespace MoonProject.Gameplay
             Brightest = 0f;
         }
 
-        /// <summary>Adds the glint of a resting pickup at <paramref name="piece"/> with its own twinkle phase.</summary>
+        /// <summary>Adds the glint of a pickup resting at <paramref name="piece"/>, on its own phase.</summary>
         public void Add(Vector3 piece, float phase)
         {
             if (_count == _capacity)

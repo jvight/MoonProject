@@ -1364,7 +1364,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsTrue(condition(), $"timed out after {timeout:F0} s waiting until {what}");
         }
 
-        /// <summary>Holds the winch in (+1) or out (-1) for <paramref name="seconds"/>, as a held scroll would.</summary>
+        /// <summary>Holds the winch in (+1) or out (-1) for <paramref name="seconds"/>, like a held scroll.</summary>
         private IEnumerator Reel(float direction, float seconds)
         {
             float until = Time.time + seconds;
