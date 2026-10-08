@@ -10,7 +10,8 @@ namespace MoonProject.Audio
     /// when its part is picked up, the beam's stitching at the mast until the part slots home with a clack, the long
     /// creak as the mast straightens and its lamp warming. When a mast comes online (<see cref="RelayRestored"/>),
     /// home answers: a short old-radio motif from the direction of the node it links to, as the ground pulse arrives
-    /// there. Near a lit mast its lamp hums faintly. Initialised by <see cref="AudioDirector"/>.
+    /// there. Near a lit mast its lamp (<see cref="RelayNode.LampPosition"/>) hums faintly. Initialised by
+    /// <see cref="AudioDirector"/>.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class RelayAudio : MonoBehaviour
@@ -163,18 +164,32 @@ namespace MoonProject.Audio
 
         private void OnRelayRestored(RelayRestored restored)
         {
-            if (!RelayLink.TryFindLinkedNode(_reach, restored.RelayId, restored.Position, out Vector3 linked))
+            if (!TryFindNode(restored.LinkedNodeId, out RelayNode linked))
             {
-                Debug.LogError($"{nameof(RelayAudio)}: '{restored.RelayId}' came online with no lit node to link to.",
-                    this);
+                Debug.LogError($"{nameof(RelayAudio)}: '{restored.RelayId}' links to '{restored.LinkedNodeId}', " +
+                               "which is not in the station's reach.", this);
                 return;
             }
 
-            float delay = RelayLink.AnswerDelay(SignalField.HorizontalDistance(restored.Position, linked),
-                _tuning.PulseSpeed, _tuning.MaxAnswerDelay);
             int slot = FreeAnswerSlot();
-            _answerIn[slot] = delay;
-            _answerFrom[slot] = linked;
+            _answerIn[slot] = Mathf.Max(0f, restored.PulseSeconds);
+            _answerFrom[slot] = linked.Position;
+        }
+
+        private bool TryFindNode(string id, out RelayNode found)
+        {
+            for (int i = 0; i < _reach.NodeCount; i++)
+            {
+                RelayNode node = _reach.GetNode(i);
+                if (string.Equals(node.Id, id, StringComparison.Ordinal))
+                {
+                    found = node;
+                    return true;
+                }
+            }
+
+            found = default;
+            return false;
         }
 
         /// <summary>Plays home's answer a little way from 07 toward <paramref name="linked"/>.</summary>
@@ -218,12 +233,11 @@ namespace MoonProject.Audio
             for (int i = 1; i < _reach.NodeCount; i++)
             {
                 RelayNode node = _reach.GetNode(i);
-                Vector3 top = node.Position + Vector3.up * _tuning.MastLampHeight;
-                float distance = Vector3.Distance(rover, top);
+                float distance = Vector3.Distance(rover, node.LampPosition);
                 if (node.Lit && distance < best)
                 {
                     best = distance;
-                    lamp = top;
+                    lamp = node.LampPosition;
                     found = true;
                 }
             }

@@ -246,7 +246,7 @@ namespace MoonProject.Audio.PlayModeTests
                     events.Publish(new RelayCued((RelayCue)(frame / 12 % 5), "relay.0", Vector3.right * 90f));
                     if (frame % 48 == 6)
                     {
-                        events.Publish(new RelayRestored("relay.0", Vector3.right * 90f, 1, 4));
+                        events.Publish(new RelayRestored("relay.0", Vector3.right * 90f, 1, 4, "home", 2f));
                         events.Publish(new RadioHopStarted("home", "relay.0"));
                         events.Publish(new RoverPlaced(Vector3.right * 90f, Quaternion.identity));
                         events.Publish(new RadioHopFinished("relay.0"));

@@ -114,7 +114,7 @@ namespace MoonProject.Audio
         /// </summary>
         public float ReachDistance(Vector3 position)
         {
-            return StationDistance.Equivalent(_reach, position, SignalRadius, _tuning.MastReach);
+            return StationDistance.Equivalent(_reach, position, SignalRadius);
         }
 
         /// <summary>The clear-signal radius the station is easing towards (metres).</summary>
