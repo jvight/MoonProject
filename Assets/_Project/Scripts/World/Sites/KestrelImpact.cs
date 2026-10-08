@@ -18,13 +18,13 @@ namespace MoonProject.World
         private const float GougeStretch = 0.8f;
 
         // The furrow's tail scorch keeps this share of the darkness it has at the crater.
-        private const float TailScorch = 0.4f;
+        private const float TailScorch = 0.6f;
 
         // The berms rise only outside the crater, over this length past the rim crest.
         private const float BermRise = 6f;
 
-        // Share of the scorch's fade eased at each end: the rest is an even ramp, so the tone never steps across a
-        // facet.
+        // Share of the scorch's fade eased at each end: the rest is an even ramp, so its edge stays soft over several
+        // facets.
         private const float ScorchEase = 0.25f;
 
         private readonly Vector2 _back;

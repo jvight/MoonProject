@@ -126,11 +126,11 @@ namespace MoonProject.World
         [Header("Kestrel-3's scorch")]
         [Tooltip("How far the scorched dust turns toward the scorch tone (0..1).")]
         [Range(0f, 1f)]
-        [SerializeField] private float _scorchShade = 0.8f;
+        [SerializeField] private float _scorchShade = 0.85f;
 
         [Tooltip("How far the scorch tone goes from the shadow dust toward charcoal (0..1).")]
         [Range(0f, 1f)]
-        [SerializeField] private float _scorchCharcoal = 0.5f;
+        [SerializeField] private float _scorchCharcoal = 0.6f;
 
         [Tooltip("How much the small dust patches lighten the scorch, so it lies in soft patches, not one flat stain.")]
         [Range(0f, 1f)]

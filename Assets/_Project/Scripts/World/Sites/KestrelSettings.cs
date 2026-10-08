@@ -17,7 +17,7 @@ namespace MoonProject.World
 
         [Tooltip("Distance of the crater from the base, metres.")]
         [Range(100f, 280f)]
-        [SerializeField] private float _distance = 225f;
+        [SerializeField] private float _distance = 185f;
 
         [Tooltip("Bearing Kestrel-3 was travelling when it came down, degrees: the furrow trails back the other way.")]
         [Range(0f, 360f)]
@@ -54,7 +54,7 @@ namespace MoonProject.World
 
         [Tooltip("Half-width of the furrow where it meets the crater, metres.")]
         [Range(2f, 8f)]
-        [SerializeField] private float _furrowHalfWidth = 5f;
+        [SerializeField] private float _furrowHalfWidth = 6f;
 
         [Tooltip("Half-width of the furrow at its far, faint end, metres.")]
         [Range(1f, 6f)]
@@ -62,7 +62,7 @@ namespace MoonProject.World
 
         [Tooltip("Depth of the furrow where it meets the crater, metres; it fades out toward its far end.")]
         [Range(0.1f, 1.2f)]
-        [SerializeField] private float _furrowDepth = 0.4f;
+        [SerializeField] private float _furrowDepth = 0.3f;
 
         [Tooltip("Height of the low berms of pushed-up dust along the furrow's sides, metres.")]
         [Range(0f, 0.6f)]
@@ -89,10 +89,10 @@ namespace MoonProject.World
         [SerializeField] private float _gougeHalfWidth = 2f;
 
         [Header("Scorch")]
-        [Tooltip("How far the scorched dust fades out past the rim crest and the furrow's edges, metres: long " +
-            "enough that the tone never steps across a facet (ruling 9).")]
+        [Tooltip("How far the scorched dust fades out past the rim crest and the furrow's edges, metres: a soft " +
+            "edge several facets wide, never a paper-cut step (ruling 9).")]
         [Range(4f, 30f)]
-        [SerializeField] private float _scorchReach = 20f;
+        [SerializeField] private float _scorchReach = 8f;
 
         [Tooltip("Margin around the crater and the furrow inside which no older crater survives, metres.")]
         [Range(0f, 20f)]
