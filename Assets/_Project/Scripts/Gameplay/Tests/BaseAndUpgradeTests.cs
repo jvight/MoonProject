@@ -257,6 +257,35 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
+        public void Shop_ListsEverythingTheParkedStationSells_InItsOrder()
+        {
+            UpgradeDefinition headlamp = Create<UpgradeDefinition>();
+            headlamp.Populate("rover.warm_headlamp", UpgradeStationKind.Workshop, 0f,
+                new[] { new UpgradeLevel(new Recipe(1, 0, 2), RoverAbility.WarmHeadlamp) });
+            var service = Service(_tower, _hoverJump, headlamp);
+            var tower = new TestStation { Definition = _tower };
+            var bench = new TestStation { Definition = _hoverJump, Catalog = new[] { _hoverJump, headlamp } };
+            var shop = new UpgradeShop(service, new IUpgradeStation[] { tower, bench }, new CountingSave());
+            Assert.AreEqual(0, shop.StationUpgradeCount, "not parked: nothing listed");
+            Assert.Throws<InvalidOperationException>(() => shop.StationUpgradeAt(0));
+
+            tower.Occupied = true;
+            Assert.AreEqual(1, shop.StationUpgradeCount, "the tower sells its one upgrade");
+            Assert.AreSame(_tower, shop.StationUpgradeAt(0));
+
+            tower.Occupied = false;
+            bench.Occupied = true;
+            Assert.AreEqual(2, shop.StationUpgradeCount);
+            Assert.AreSame(_hoverJump, shop.StationUpgradeAt(0));
+            Assert.AreSame(headlamp, shop.StationUpgradeAt(1), "in the bench's own order");
+
+            Give(10, 10, 10);
+            Assert.AreEqual(PurchaseResult.Purchased, shop.Purchase("rover.warm_headlamp"),
+                "any piece the bench sells can be crafted, not only the first");
+            Assert.AreEqual(2, shop.StationUpgradeCount, "bought ones stay listed; the UI leaves out the maxed");
+        }
+
+        [Test]
         public void Workshop_OffersItsFirstAbilityNotYetBought_ThenRestsOnTheLast()
         {
             var cradle = Create<UpgradeDefinition>();
@@ -461,13 +490,23 @@ namespace MoonProject.Gameplay.Tests
         {
             public UpgradeDefinition Definition { get; set; }
 
+            /// <summary>Everything it sells, in order; just <see cref="Definition"/> when not set.</summary>
+            public UpgradeDefinition[] Catalog { get; set; }
+
             public bool Occupied { get; set; }
 
             public Vector3 PadCentre => Vector3.zero;
 
+            public int UpgradeCount => Catalog?.Length ?? (Definition != null ? 1 : 0);
+
             public bool Sells(UpgradeDefinition definition)
             {
-                return definition == Definition;
+                return Catalog != null ? Array.IndexOf(Catalog, definition) >= 0 : definition == Definition;
+            }
+
+            public UpgradeDefinition UpgradeAt(int index)
+            {
+                return Catalog != null ? Catalog[index] : Definition;
             }
         }
 

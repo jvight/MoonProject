@@ -15,7 +15,8 @@ namespace MoonProject.UI
     /// title while 07 wakes, context prompts only the first few times, a reticle only while aiming, the materials chip
     /// only when the stock changes, the hold ring at a salvage cut and a site's name the first time it answers the
     /// sonar, a story card per relic brought home, crew log found and cassette collected, the station upgrade panel
-    /// with its recipe, a few warm pips over a broken friend while 07 is near, its name and its crew log when it wakes,
+    /// with its recipe (a list to pick from at Kenji's bench), the name of each piece of kit as it settles onto 07, a
+    /// few warm pips over a broken friend while 07 is near, its name and its crew log when it wakes,
     /// the radio's ticker line along the bottom, the station's name when Bell's dial is turned, the relay network's
     /// price tag, hop list and soft hop fade, and the pause menu with settings. It registers
     /// <see cref="ILocalization"/> and owns the cursor and the UI's save sections. Everything animates on unscaled time
@@ -64,6 +65,8 @@ namespace MoonProject.UI
         private HopFade _hopFade;
         private RelayTag _relayTag;
         private TowerPanel _tower;
+        private KitNames _kitNames;
+        private KitTitle _kitTitle;
         private FriendReadout _friendReadout;
         private FriendNameTag _friendName;
         private PauseMenu _pause;
@@ -108,6 +111,8 @@ namespace MoonProject.UI
         internal RelayTag RelayTag => _relayTag;
 
         internal TowerPanel Tower => _tower;
+
+        internal KitTitle KitTitle => _kitTitle;
 
         internal TitleCard Title => _title;
 
@@ -200,6 +205,7 @@ namespace MoonProject.UI
             _cursor = new CursorPolicy();
             _glyphs = new GlyphLabels(services.Input, _localization);
             _tickerLines = new TickerQueue(_tuning.Ticker, new TickerText(_localization));
+            _kitNames = new KitNames();
 
             ISaveService save = services.Save;
             _tokens.Add(save.Register(new SaveSection<SettingsSaveData>(UiSaveKeys.Settings,
@@ -210,6 +216,7 @@ namespace MoonProject.UI
             EventBus events = services.Events;
             _tokens.Add(events.Subscribe<MaterialsChanged>(OnMaterialsChanged));
             _tokens.Add(events.Subscribe<RelicDeposited>(OnRelicDeposited));
+            _tokens.Add(events.Subscribe<RelicStowed>(OnRelicStowed));
             _tokens.Add(events.Subscribe<RoverAwoke>(OnRoverAwoke));
             _tokens.Add(events.Subscribe<SonarPinged>(OnSonarPinged));
             _tokens.Add(events.Subscribe<SiteAnswered>(OnSiteAnswered));
@@ -225,6 +232,8 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<RadioProgramChanged>(OnRadioProgramChanged));
             _tokens.Add(events.Subscribe<RelayRestored>(OnRelayRestored));
             _tokens.Add(events.Subscribe<RadioHopListChanged>(OnRadioHopListChanged));
+            _tokens.Add(events.Subscribe<UpgradePurchased>(OnUpgradePurchased));
+            _tokens.Add(events.Subscribe<RoverKitFitted>(OnRoverKitFitted));
 
             services.Input.Menu.Enable();
             _cursor.Drive();
@@ -285,6 +294,7 @@ namespace MoonProject.UI
                 services.Materials, _localization, services.View, _numbers);
             _tower = new TowerPanel(_layout, _tuning.TowerPanel, _localization, services.Events, services.Shop,
                 services.Materials, services.Hints, _numbers);
+            _kitTitle = new KitTitle(_layout, _tuning.KitTitle, _localization);
             _pause = new PauseMenu(_layout, _tuning.Pause, _player, _localization, services.Input, services.Events,
                 services.Save, services.Materials, services.Radio, services.Relays, _numbers, _cursor, Quit);
             _bound = true;
@@ -344,7 +354,9 @@ namespace MoonProject.UI
             _title.Tick(hudTime);
             _reticle.Tick(deltaTime, _services.Tether.State, input.TetherHeld);
             _card.Tick(hudTime, _glyphs.Cancel(device), device, !_ticker.IsVisible && !hopping && !_hopList.IsBusy);
-            _tower.Tick(hudTime, !paused, input.ExcavateHeld, _glyphs.For(RoverAction.Excavate, device));
+            _tower.Tick(hudTime, !paused, input.ExcavateHeld, input.Winch,
+                _services.Tether.State == TetherAimState.Towing, _glyphs.For(RoverAction.Excavate, device), device);
+            _kitTitle.Tick(hudTime);
             _chip.SetPinned(_tower.IsVisible || _relayTag.IsVisible);
             _chip.Tick(deltaTime);
             bool cutting = _services.Salvage.IsCutting;
@@ -420,6 +432,11 @@ namespace MoonProject.UI
             }
         }
 
+        private void OnRelicStowed(RelicStowed stowed)
+        {
+            _director.NotifyUsed(InteractionKind.Stow);
+        }
+
         private void OnRoverAwoke(RoverAwoke awoke)
         {
             _awake = true;
@@ -482,6 +499,34 @@ namespace MoonProject.UI
             }
         }
 
+        private void OnUpgradePurchased(UpgradePurchased purchased)
+        {
+            if (_services.Shop.TryGetOffer(purchased.UpgradeId, out UpgradeOffer offer))
+            {
+                _kitNames.Purchased(offer.Definition, purchased.Level);
+            }
+            else
+            {
+                Debug.LogError($"{nameof(UISystem)}: '{purchased.UpgradeId}' was bought but the shop does not know " +
+                               "it; its kit cannot be named.", this);
+            }
+        }
+
+        private void OnRoverKitFitted(RoverKitFitted fitted)
+        {
+            if (!_kitNames.TryTitle(fitted, out string key))
+            {
+                Debug.LogError($"{nameof(UISystem)}: {fitted.Piece} settled onto 07 (gift: {fitted.Gift}) with no " +
+                               "purchase or gift to name it.", this);
+                return;
+            }
+
+            if (_bound)
+            {
+                _kitTitle.Enqueue(key);
+            }
+        }
+
         private void OnTickerLine(TickerLine line)
         {
             _tickerLines.Enqueue(line);
@@ -533,6 +578,7 @@ namespace MoonProject.UI
             _hopList.Relocalize();
             _friendName.Relocalize();
             _tower.Relocalize();
+            _kitTitle.Relocalize();
             _relayTag.Relocalize();
             _siteName.Relocalize();
             _pause.Relocalize();

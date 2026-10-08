@@ -6,6 +6,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 using MoonProject.Core;
+using MoonProject.Core.Events;
 using MoonProject.Gameplay;
 using MoonProject.UI.Editor;
 
@@ -103,6 +104,7 @@ namespace MoonProject.UI.Tests
                          UiKeys.CardCaption, UiKeys.CardClose, UiKeys.TowerLevel, UiKeys.TowerHold,
                          UiKeys.TowerPurchased, UiKeys.LogCaption, UiKeys.CrewLogCaption, UiKeys.LinerCaption,
                          UiKeys.TapeCount, UiKeys.PauseCassettes, UiKeys.PauseRelays, UiKeys.RecipeNeed,
+                         UiKeys.BenchPick,
                      })
             {
                 Assert.IsTrue(_english.TryGet(key, out _), key);
@@ -122,6 +124,14 @@ namespace MoonProject.UI.Tests
             foreach (UpgradeStationKind station in Enum.GetValues(typeof(UpgradeStationKind)))
             {
                 Assert.IsTrue(_english.TryGet(UiKeys.StationName(station), out _), UiKeys.StationName(station));
+            }
+
+            foreach (RoverKitPiece piece in Enum.GetValues(typeof(RoverKitPiece)))
+            {
+                if (UiKeys.TryGetGiftName(piece, out string gift))
+                {
+                    Assert.IsTrue(_english.TryGet(gift, out _), gift);
+                }
             }
 
             foreach (PromptEntry entry in new PromptSettings().Entries)

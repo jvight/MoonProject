@@ -68,6 +68,13 @@ namespace MoonProject.Gameplay
             return definition != null && Sells(definition.Id);
         }
 
+        public int UpgradeCount => _definitions.Length;
+
+        public UpgradeDefinition UpgradeAt(int index)
+        {
+            return _definitions[index];
+        }
+
         internal void Wire(WorkshopTuning tuning, UpgradeDefinition[] definitions, Transform anchor, Renderer lamp,
             Transform sparkSocket)
         {

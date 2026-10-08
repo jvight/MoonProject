@@ -22,20 +22,26 @@ namespace MoonProject.Gameplay
 
         public bool IsAtStation => StationUpgrade != null;
 
-        public UpgradeDefinition StationUpgrade
+        public UpgradeDefinition StationUpgrade => Parked()?.Definition;
+
+        public int StationUpgradeCount
         {
             get
             {
-                for (int i = 0; i < _stations.Length; i++)
-                {
-                    if (_stations[i].Occupied)
-                    {
-                        return _stations[i].Definition;
-                    }
-                }
-
-                return null;
+                IUpgradeStation station = Parked();
+                return station != null ? station.UpgradeCount : 0;
             }
+        }
+
+        public UpgradeDefinition StationUpgradeAt(int index)
+        {
+            IUpgradeStation station = Parked();
+            if (station == null)
+            {
+                throw new InvalidOperationException("07 is not parked at an upgrade station.");
+            }
+
+            return station.UpgradeAt(index);
         }
 
         public int LevelOf(string upgradeId)
@@ -71,6 +77,20 @@ namespace MoonProject.Gameplay
             }
 
             return result;
+        }
+
+        /// <summary>The station 07 is parked at, or null.</summary>
+        private IUpgradeStation Parked()
+        {
+            for (int i = 0; i < _stations.Length; i++)
+            {
+                if (_stations[i].Occupied)
+                {
+                    return _stations[i];
+                }
+            }
+
+            return null;
         }
     }
 }

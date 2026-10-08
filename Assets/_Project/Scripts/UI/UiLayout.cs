@@ -15,6 +15,9 @@ namespace MoonProject.UI
             Hud = Require<VisualElement>("hud");
 
             Title = Require<VisualElement>("title");
+            KitTitle = Require<VisualElement>("kit-title");
+            KitTitleName = Require<Label>("kit-title-name");
+            KitTitleShadow = Require<VisualElement>("kit-title-shadow");
 
             Reticle = Require<VisualElement>("reticle");
             ReticleRest = Require<VisualElement>("reticle-rest");
@@ -66,6 +69,11 @@ namespace MoonProject.UI
             TowerHoldWord = Require<Label>("tower-hold-word");
             TowerNeed = Require<Label>("tower-need");
             TowerRecipe = Require<VisualElement>("tower-recipe");
+            TowerChoices = Require<VisualElement>("tower-choices");
+            TowerPick = Require<VisualElement>("tower-pick");
+            TowerPickGlyph = Require<VisualElement>("tower-pick-glyph");
+            TowerPickGlyphLabel = Require<Label>("tower-pick-glyph-label");
+            TowerPickWord = Require<Label>("tower-pick-word");
 
             Ticker = Require<VisualElement>("ticker");
             TickerLamp = Require<VisualElement>("ticker-lamp");
@@ -130,6 +138,12 @@ namespace MoonProject.UI
         public VisualElement Hud { get; }
 
         public VisualElement Title { get; }
+
+        public VisualElement KitTitle { get; }
+
+        public Label KitTitleName { get; }
+
+        public VisualElement KitTitleShadow { get; }
 
         public VisualElement Reticle { get; }
 
@@ -218,6 +232,16 @@ namespace MoonProject.UI
         public Label TowerNeed { get; }
 
         public VisualElement TowerRecipe { get; }
+
+        public VisualElement TowerChoices { get; }
+
+        public VisualElement TowerPick { get; }
+
+        public VisualElement TowerPickGlyph { get; }
+
+        public Label TowerPickGlyphLabel { get; }
+
+        public Label TowerPickWord { get; }
 
         public VisualElement Ticker { get; }
 

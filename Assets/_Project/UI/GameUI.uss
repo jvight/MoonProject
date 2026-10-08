@@ -31,6 +31,8 @@
 .section-label,
 .chip__number,
 .friend-name,
+.kit-title__name,
+.bench-row__name,
 .hop-list__glyph,
 .dial-readout__station,
 .dial-readout__tape,
@@ -304,6 +306,47 @@ Label {
     margin-top: 16px;
     border-radius: 1px;
     background-color: var(--moon-amber-edge);
+}
+
+/*
+ * A fitted piece of kit's name (crafted at Kenji's bench, or a friend's gift): high and quiet, clear of 07, on a
+ * soft dusk of shadow so it reads even over the bright Earth.
+ */
+
+.kit-title {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 12%;
+    align-items: center;
+}
+
+.kit-title__body {
+    align-items: center;
+    padding: 4px 10px 6px 10px;
+}
+
+.soft-shadow--title {
+    --shadow-offset: 0;
+    --shadow-radius: 30;
+    --shadow-spread: 56;
+    --shadow-layers: 10;
+}
+
+.kit-title__name {
+    font-size: 30px;
+    letter-spacing: 4px;
+    color: var(--moon-cream);
+    -unity-text-align: middle-center;
+    text-shadow: 0 2px 14px var(--moon-shadow);
+}
+
+.kit-title__rule {
+    width: 64px;
+    height: 2px;
+    margin-top: 12px;
+    border-radius: 1px;
+    background-color: var(--moon-warm-accent);
 }
 
 /* Tether reticle (painted, see ReticlePainter) */
@@ -800,6 +843,77 @@ Label {
 .tower-panel__need {
     flex-shrink: 1;
     margin-right: 12px;
+}
+
+/* Kenji's bench: what is left to craft, one row each, the picked one lit and read in full */
+
+.tower-panel__choices {
+    margin: 12px -12px 0 -12px;
+}
+
+.bench-row {
+    padding: 9px 12px 10px 12px;
+    margin-bottom: 2px;
+    border-radius: 12px;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0);
+}
+
+.bench-row--selected {
+    background-color: var(--moon-cream-glow);
+    border-color: var(--moon-glass-edge);
+}
+
+.bench-row__line {
+    flex-direction: row;
+    align-items: center;
+}
+
+.bench-row__lamp {
+    width: 6px;
+    height: 6px;
+    margin-right: 10px;
+    border-radius: 3px;
+    background-color: var(--moon-track);
+}
+
+.bench-row--selected .bench-row__lamp {
+    background-color: var(--moon-warm-accent);
+}
+
+.bench-row__name {
+    flex-grow: 1;
+    flex-shrink: 1;
+    font-size: 19px;
+    color: var(--moon-text-dim);
+}
+
+.bench-row--selected .bench-row__name {
+    color: var(--moon-text);
+}
+
+.bench-row__recipe {
+    flex-shrink: 0;
+    margin-left: 12px;
+}
+
+.bench-row__effect {
+    margin: 3px 0 0 16px;
+    font-size: 15px;
+    color: var(--moon-text-faint);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bench-row--selected .bench-row__effect {
+    color: var(--moon-text-dim);
+    white-space: normal;
+}
+
+.tower-panel__pick {
+    margin-top: 0;
+    flex-shrink: 0;
 }
 
 .hold {

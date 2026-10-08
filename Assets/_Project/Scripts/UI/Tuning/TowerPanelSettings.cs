@@ -3,7 +3,10 @@ using UnityEngine;
 
 namespace MoonProject.UI
 {
-    /// <summary>The radio tower upgrade panel and its hold-to-confirm ring (no accidental purchases).</summary>
+    /// <summary>
+    /// The station upgrade panel and its hold-to-confirm ring (no accidental purchases), and how Kenji's bench picks
+    /// between its choices.
+    /// </summary>
     [Serializable]
     public sealed class TowerPanelSettings
     {
@@ -26,6 +29,16 @@ namespace MoonProject.UI
         [Range(0.2f, 4f)]
         [SerializeField] private float _celebrateSeconds = 1.4f;
 
+        [Tooltip("At Kenji's bench: Interact let go within this many seconds is a tap (the next choice), not a hold. " +
+                 "The ring waits this long before it starts to fill, so a tap never stirs it.")]
+        [Range(0.05f, 0.5f)]
+        [SerializeField] private float _tapSeconds = 0.2f;
+
+        [Tooltip("At Kenji's bench: how far (0..1) the Winch must move to step once (a wheel notch or a d-pad " +
+                 "press). It must settle back below this before it steps again; smaller trackpad drift is ignored.")]
+        [Range(0.05f, 1f)]
+        [SerializeField] private float _winchStep = 0.5f;
+
         public RevealSettings Reveal => _reveal;
 
         public float HoldSeconds => _holdSeconds;
@@ -35,5 +48,9 @@ namespace MoonProject.UI
         public float ArmVisibility => _armVisibility;
 
         public float CelebrateSeconds => _celebrateSeconds;
+
+        public float TapSeconds => _tapSeconds;
+
+        public float WinchStep => _winchStep;
     }
 }
