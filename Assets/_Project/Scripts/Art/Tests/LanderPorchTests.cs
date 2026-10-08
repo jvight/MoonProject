@@ -52,7 +52,7 @@ namespace MoonProject.Art.Tests
             Assert.AreEqual(ModelMaterial.PaletteGlowOff, glow.Material, "dark until 07 charges");
             Assert.IsTrue(MeshChecks.Swatches(glow.Mesh.Geometry).SequenceEqual(new[] { PaletteSwatch.LampGlass }));
             ModelNode platform = _lander.GetDescendant("LiftPlatform");
-            CollectionAssert.AreEqual(new[] { "RoverSpot", "Weather_Rust", "Weather_Dust" },
+            CollectionAssert.AreEqual(new[] { "RoverSpot", "Weather_Paint", "Weather_Rust", "Weather_Dust" },
                 platform.Children.Select(child => child.Name));
             Assert.IsNull(platform.GetDescendant("RoverSpot").Mesh);
             var moving = new[] { platform, _lander.GetDescendant("LiftCable_L"), _lander.GetDescendant("LiftCable_R") };

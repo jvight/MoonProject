@@ -66,7 +66,7 @@ namespace MoonProject.Art.Tests
             ModelNode lid = body.GetDescendant("Lid");
             float cabinetTop = body.LocalPosition.y + lid.LocalPosition.y + lid.Mesh.Geometry.Bounds.max.y;
             float roverHead = MeshChecks.Points(RoverModelBuilder.CreateModel().GetDescendant("Neck"),
-                Matrix4x4.identity).Max(p => p.y);
+                Matrix4x4.identity, false).Max(p => p.y);
 
             Assert.AreEqual(0f, bounds.min.y, 1e-3f, "feet on the ground at the pivot");
             Assert.That(body.LocalPosition.y, Is.InRange(0.7f, 0.8f), "on ~0.75 m legs");

@@ -82,26 +82,47 @@ namespace MoonProject.Art.Editor
         /// <summary>The rack's heading: turned towards the lander, a little more towards the front than Bell.</summary>
         public const float CassetteShelfYaw = 60f;
 
-        /// <summary>How high dust has crept up the lander's legs, ladder and clutter.</summary>
-        private const float LanderDustTide = 0.45f;
+        // How hard the decades worked each piece of home over (Weathering.Weather): the lander and the tower stood
+        // out in it longest and biggest; the furniture weathered under them; the jammed lift platform has hung off
+        // the ground, dusted only from above.
+        private static readonly WeatherProfile LanderWeather = new WeatherProfile(seed: 11, lift: 0.006f,
+            panelWidth: 0.7f, panelHeight: 0.62f, paintWear: 1f, mismatched: true, runsPerMetre: 3f, rustHeight: 2.4f,
+            metalRust: 0.8f, paintRust: 0.45f, tide: 2.1f, groundDust: 0.95f, topDust: 0.9f);
 
-        /// <summary>How high dust has crept up the feet of the tower, the shelves and the bench.</summary>
-        private const float FurnitureDustTide = 0.22f;
+        private static readonly WeatherProfile LiftPlatformWeather = new WeatherProfile(seed: 71, lift: 0.006f,
+            panelWidth: 0.6f, panelHeight: 0.6f, paintWear: 1f, mismatched: true, runsPerMetre: 2.2f, rustHeight: 0f,
+            metalRust: 0f, paintRust: 0f, tide: 0f, groundDust: 0f, topDust: 0.8f);
+
+        private static readonly WeatherProfile ShelfWeather = new WeatherProfile(seed: 23, lift: 0.006f,
+            panelWidth: 0.45f, panelHeight: 0.45f, paintWear: 1f, mismatched: true, runsPerMetre: 2.6f,
+            rustHeight: 0.7f, metalRust: 0.6f, paintRust: 0.3f, tide: 0.75f, groundDust: 0.72f, topDust: 0.75f);
+
+        private static readonly WeatherProfile WorkbenchWeather = new WeatherProfile(seed: 31, lift: 0.006f,
+            panelWidth: 0.5f, panelHeight: 0.45f, paintWear: 1f, mismatched: true, runsPerMetre: 2.2f, rustHeight: 0.5f,
+            metalRust: 0.6f, paintRust: 0.25f, tide: 0.55f, groundDust: 0.65f, topDust: 0.65f);
+
+        private static readonly WeatherProfile RoverBayWeather = new WeatherProfile(seed: 41, lift: 0.006f,
+            panelWidth: 0.8f, panelHeight: 0.7f, paintWear: 1f, mismatched: true, runsPerMetre: 2.2f, rustHeight: 1.1f,
+            metalRust: 0.7f, paintRust: 0.3f, tide: 1f, groundDust: 0.72f, topDust: 0.75f);
+
+        private static readonly WeatherProfile CassetteShelfWeather = new WeatherProfile(seed: 53, lift: 0.006f,
+            panelWidth: 0.3f, panelHeight: 0.3f, paintWear: 1f, mismatched: true, runsPerMetre: 2.4f, rustHeight: 0.4f,
+            metalRust: 0.5f, paintRust: 0.3f, tide: 0.45f, groundDust: 0.65f, topDust: 0.7f);
 
         [MoonBuilder("Art/Base", 140)]
         public static void Build()
         {
             Material material = PaletteAssetBuilder.LoadMaterial();
-            ModelPrefabWriter.Write(CreateLander(), ArtPaths.BaseFolder, material,
-                PaletteAssetBuilder.LoadGlowOffMaterial());
-            ModelPrefabWriter.Write(CreateShelf(), ArtPaths.BaseFolder, material);
-            ModelPrefabWriter.Write(CreateWorkbench(), ArtPaths.BaseFolder, material);
-            ModelPrefabWriter.Write(CreateRoverBay(), ArtPaths.BaseFolder, material,
-                PaletteAssetBuilder.LoadGlowOffMaterial());
-            ModelPrefabWriter.Write(CreateCassetteShelf(), ArtPaths.BaseFolder, material);
+            Material glowOff = PaletteAssetBuilder.LoadGlowOffMaterial();
+            Material weather = PaletteAssetBuilder.LoadWeatherMaterial();
+            ModelPrefabWriter.Write(CreateLander(), ArtPaths.BaseFolder, material, glowOff, weather);
+            ModelPrefabWriter.Write(CreateShelf(), ArtPaths.BaseFolder, material, glowOff, weather);
+            ModelPrefabWriter.Write(CreateWorkbench(), ArtPaths.BaseFolder, material, glowOff, weather);
+            ModelPrefabWriter.Write(CreateRoverBay(), ArtPaths.BaseFolder, material, glowOff, weather);
+            ModelPrefabWriter.Write(CreateCassetteShelf(), ArtPaths.BaseFolder, material, glowOff, weather);
             for (int level = RadioTowerMeshes.MinLevel; level <= RadioTowerMeshes.MaxLevel; level++)
             {
-                ModelPrefabWriter.Write(CreateTower(level), ArtPaths.BaseFolder, material);
+                ModelPrefabWriter.Write(CreateTower(level), ArtPaths.BaseFolder, material, glowOff, weather);
             }
 
             AssetDatabase.SaveAssets();
@@ -128,10 +149,7 @@ namespace MoonProject.Art.Editor
             lander.Add(new ModelNode("DockGlow", Vector3.zero, Quaternion.identity,
                 new ModelMesh(LanderName + "_DockGlow", ChargingDockMeshes.Glow()), ModelMaterial.PaletteGlowOff));
             AddLift(lander);
-            LowPolyMeshBuilder dust = Weathering.Dust(hull, LanderDustTide, Weathering.DustLift);
-            dust.Append(LanderMeshes.Drifts(), Matrix4x4.identity);
-            Weathering.Attach(lander, LanderName, Weathering.Bleach(hull, Weathering.PaintLift), LanderMeshes.Rust(),
-                dust);
+            Weathering.Weather(lander, LanderName, hull, LanderWeather, LanderMeshes.Rust(), LanderMeshes.Drifts());
             return lander;
         }
 
@@ -150,8 +168,8 @@ namespace MoonProject.Art.Editor
                 new ModelMesh(prefix, deck)));
             platform.Add(new ModelNode("RoverSpot", CableLiftMeshes.RoverSpot,
                 Place.Rotation(CableLiftMeshes.RoverSpotEuler)));
-            Weathering.Attach(platform, prefix, null, CableLiftMeshes.PlatformRust(),
-                CableLiftMeshes.PlatformDust(deck));
+            Weathering.Weather(platform, prefix, deck, LiftPlatformWeather, CableLiftMeshes.PlatformRust(),
+                CableLiftMeshes.PlatformDrift());
             var cable = new ModelMesh(LanderName + "_LiftCable",
                 CableLiftMeshes.Cable(CableLiftMeshes.CableLength(CableLiftMeshes.Jammed)));
             lander.Add(new ModelNode("LiftCable_L", CableLiftMeshes.CableTop(-1), cable));
@@ -170,10 +188,8 @@ namespace MoonProject.Art.Editor
                     MuseumShelfMeshes.SlotPosition(i)));
             }
 
-            LowPolyMeshBuilder dust = Weathering.Dust(cabinet, FurnitureDustTide, Weathering.DustLift);
-            dust.Append(MuseumShelfMeshes.Drifts(), Matrix4x4.identity);
-            Weathering.Attach(shelf, ShelfName, Weathering.Bleach(cabinet, Weathering.PaintLift),
-                MuseumShelfMeshes.Rust(), dust);
+            Weathering.Weather(shelf, ShelfName, cabinet, ShelfWeather, MuseumShelfMeshes.Rust(),
+                MuseumShelfMeshes.Drifts());
             return shelf;
         }
 
@@ -188,8 +204,7 @@ namespace MoonProject.Art.Editor
             bench.Add(new ModelNode("Lights", WorkbenchMeshes.LampBulb,
                 new ModelMesh(WorkbenchName + "_Lights", WorkbenchMeshes.LampBulbMesh())));
             bench.Add(new ModelNode("SparkSocket", WorkbenchMeshes.Sparks));
-            Weathering.Attach(bench, WorkbenchName, Weathering.Bleach(top, Weathering.PaintLift),
-                WorkbenchMeshes.Rust(), Weathering.Dust(top, FurnitureDustTide, Weathering.DustLift));
+            Weathering.Weather(bench, WorkbenchName, top, WorkbenchWeather, WorkbenchMeshes.Rust(), null);
             return bench;
         }
 
@@ -230,6 +245,8 @@ namespace MoonProject.Art.Editor
 
             bay.Add(new ModelNode("HopperMouth", RoverBayMeshes.HopperMouth,
                 Place.Rotation(RoverBayMeshes.HopperFacing)));
+            bay.Add(new ModelNode("BaySign", Vector3.zero, Quaternion.identity,
+                new ModelMesh(RoverBayName + "_BaySign", RoverBayMeshes.SignGlow()), ModelMaterial.PaletteGlowOff));
             var glass = new ModelMesh(RoverBayName + "_LampGlass", RoverBayMeshes.LampGlassMesh());
             for (int i = 0; i < RoverBayMeshes.LampCount; i++)
             {
@@ -237,10 +254,8 @@ namespace MoonProject.Art.Editor
                     Place.Rotation(RoverBayMeshes.LampEuler), glass, ModelMaterial.PaletteGlowOff));
             }
 
-            LowPolyMeshBuilder dust = Weathering.Dust(frame, FurnitureDustTide, Weathering.DustLift);
-            dust.Append(RoverBayMeshes.Drifts(), Matrix4x4.identity);
-            Weathering.Attach(bay, RoverBayName, Weathering.Bleach(frame, Weathering.PaintLift), RoverBayMeshes.Rust(),
-                dust);
+            Weathering.Weather(bay, RoverBayName, frame, RoverBayWeather, RoverBayMeshes.Rust(),
+                RoverBayMeshes.Drifts());
             return bay;
         }
 
@@ -258,8 +273,7 @@ namespace MoonProject.Art.Editor
                     CassetteShelfMeshes.SlotPosition(i)));
             }
 
-            Weathering.Attach(shelf, CassetteShelfName, Weathering.Bleach(rack, Weathering.PaintLift), null,
-                Weathering.Dust(rack, FurnitureDustTide, Weathering.DustLift));
+            Weathering.Weather(shelf, CassetteShelfName, rack, CassetteShelfWeather, null, null);
             return shelf;
         }
 
@@ -284,12 +298,17 @@ namespace MoonProject.Art.Editor
             tower.Add(new ModelNode("ServiceHatch", RadioTowerMeshes.ServiceHatchHinge, Quaternion.identity,
                 new ModelMesh("RadioTower_ServiceHatch",
                     ServiceKit.Hatch(RadioTowerMeshes.ServiceHatchWidth, RadioTowerMeshes.ServiceHatchHeight))));
-            LowPolyMeshBuilder dust = Weathering.Dust(RadioTowerMeshes.DustSurfaces(level), FurnitureDustTide,
-                Weathering.DustLift);
-            dust.Append(RadioTowerMeshes.Drifts(), Matrix4x4.identity);
-            Weathering.Attach(tower, name, Weathering.Bleach(structure, Weathering.PaintLift),
-                RadioTowerMeshes.Rust(level), dust);
+            Weathering.Weather(tower, name, structure, TowerWeather(level), RadioTowerMeshes.Rust(level),
+                RadioTowerMeshes.Drifts());
             return tower;
+        }
+
+        /// <summary>A tower stage's weather: the tallest thing at home, out in it as long as the lander.</summary>
+        private static WeatherProfile TowerWeather(int level)
+        {
+            return new WeatherProfile(seed: 60 + level, lift: 0.006f, panelWidth: 0.5f, panelHeight: 0.5f,
+                paintWear: 1f, mismatched: true, runsPerMetre: 2.6f, rustHeight: 1.5f, metalRust: 0.75f,
+                paintRust: 0.3f, tide: 1.6f, groundDust: 0.85f, topDust: 0.7f);
         }
     }
 }

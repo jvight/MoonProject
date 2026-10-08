@@ -47,10 +47,12 @@ namespace MoonProject.Art.Editor
     /// kit piece (lamp bar lit, drums glowing as if boosting, the cargo cradle carrying a relic), fully kitted with
     /// the friends' gifts, and "minute one versus hour five" side by side from the chase camera and at 30 m. home:
     /// the base as Main.unity has it (its own grading), from the spawn view, the lander close and three-quarter, the
-    /// tower, the shelf area, and a 07 parked in front from the chase camera and close; homeclean: the same with every
-    /// Weather_* layer hidden, as restoration will leave it. builtfor07: Main.unity with Kenji's Rover Bay on the
-    /// WorkshopAnchor and 07 parked on its turntable (lamps lit, one arm lowered as if fitting), the true-size relics
-    /// in a row beside 07 and a 1.75 m person (a capture-only reference), and 07's spare wheel close.
+    /// tower, the shelf area, a 07 parked in front from the chase camera and close, and Kenji's Rover Bay (sign lit)
+    /// from the front and the quarter; homeclean: the same with every Weather_* layer hidden, as restoration will
+    /// leave it. builtfor07: Main.unity with the Rover Bay on the WorkshopAnchor and 07 parked on its turntable (lamps
+    /// and sign lit, one arm lowered as if fitting), the true-size relics in a row beside 07 and a 1.75 m person (a
+    /// capture-only reference), 07's spare wheel close, the tower port, the dock, the lift and the human-scale
+    /// checks.
     /// Glows are lit with the linear MaterialPropertyBlock contract.
     /// </summary>
     public static class ArtLightingPreview
@@ -833,6 +835,12 @@ namespace MoonProject.Art.Editor
             Vector3 tower = lander.TransformPoint(BaseModelBuilder.TowerAnchor);
             Vector3 shelf = lander.TransformPoint(BaseModelBuilder.ShelfAnchor);
             Vector3 roverBack = rover.transform.TransformDirection(new Vector3(0.6f, 0f, -0.8f));
+            SceneObject(BaseModelBuilder.WorkbenchName).gameObject.SetActive(false);
+            GameObject bay = Instantiate(BaseModelBuilder.RoverBayName, temporary);
+            bay.transform.SetPositionAndRotation(lander.TransformPoint(BaseModelBuilder.WorkshopAnchor),
+                lander.rotation);
+            SetGlow(bay.transform, "BaySign", new[] { string.Empty }, 1f);
+            Vector3 bayCentre = bay.transform.TransformPoint(RoverBayMeshes.TurntableCentre + Vector3.up * 1.6f);
             var poses = new List<CameraPose>
             {
                 new CameraPose { name = "spawn_first_frame", position = new[] { 0.78f, 4f, -8.97f },
@@ -848,8 +856,11 @@ namespace MoonProject.Art.Editor
                 Pose("rover_chase", Point(parked + roverBack * 7.4f + Vector3.up * 2.2f), Point(parked + Vector3.up),
                     50f),
                 Pose("rover_close", Point(parked + roverBack * 3.2f + Vector3.up * 1.6f),
-                Point(parked + Vector3.up * 0.7f),
-                    50f),
+                    Point(parked + Vector3.up * 0.7f), 50f),
+                Pose("bay_front", Point(bay.transform.TransformPoint(new Vector3(1.5f, 2.8f, 8.5f))),
+                    Point(bayCentre), 55f),
+                Pose("bay_quarter", Point(bay.transform.TransformPoint(new Vector3(-5.5f, 3.4f, 7f))),
+                    Point(bayCentre), 50f),
             };
             if (!weathered)
             {
@@ -985,6 +996,7 @@ namespace MoonProject.Art.Editor
             GameObject parked = Instantiate(RoverModelBuilder.ModelName, temporary, ArtPaths.RoverFolder);
             parked.transform.SetPositionAndRotation(turntable.position, turntable.rotation);
             SetGlow(bay.transform, "Lamp_", 2, 1f);
+            SetGlow(bay.transform, "BaySign", new[] { string.Empty }, 1f);
             Transform fitting = Descendant(bay.transform, "Arm_1");
             Descendant(fitting, "Upper").localRotation = Quaternion.Euler(-28f, 0f, 0f);
             Descendant(fitting, "Lower").localRotation = Quaternion.Euler(-35f, 0f, 0f);

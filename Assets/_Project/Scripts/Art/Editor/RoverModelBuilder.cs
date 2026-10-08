@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using MoonProject.Editor.Builders;
@@ -56,11 +58,22 @@ namespace MoonProject.Art.Editor
 
         public const string Decal07FreshName = "Decal07Fresh";
 
-        // 07's faded stripe and dust sit just proud of the paint: the old serial's numerals still stand through.
-        private const float StripeFadeLift = 0.002f;
+        // 07 weathered as itself, just old (VISION ruling 11): no mismatched panels, rust low down and at the bolts,
+        // dust on the lid and lower body; its skins stand off by a hair so Bell's fresh "07" sits over all of them.
+        // 07's head: tired paint and dust on the hood, no rust; it is off the ground.
+        private static readonly WeatherProfile HeadWeather = new WeatherProfile(seed: 9, lift: 0.0015f,
+            panelWidth: 0.25f, panelHeight: 0.2f, paintWear: 0.5f, mismatched: false, runsPerMetre: 2.5f,
+            rustHeight: 0f, metalRust: 0f, paintRust: 0f, tide: 0f, groundDust: 0f, topDust: 0.45f);
 
-        /// <summary>How high dust has caked on 07's lower body.</summary>
-        private const float BodyDustTide = 0.47f;
+        // Wheels and bogies are caked over whole: they turn, so the dust has no top.
+        private const float WheelDust = 0.45f;
+        private const float BogieRust = 0.4f;
+        private const float BogieDust = 0.35f;
+        private const float CoatLift = 0.002f;
+
+        private static readonly WeatherProfile BodyWeather = new WeatherProfile(seed: 7, lift: 0.0018f,
+            panelWidth: 0.45f, panelHeight: 0.3f, paintWear: 0.75f, mismatched: false, runsPerMetre: 3f,
+            rustHeight: 0.6f, metalRust: 0.6f, paintRust: 0.55f, tide: 0.85f, groundDust: 0.7f, topDust: 0.6f);
         public const string CellFilledName = "CellFilled";
         public const string PennantName = "Pennant";
 
@@ -69,7 +82,8 @@ namespace MoonProject.Art.Editor
         public static void Build()
         {
             Material material = PaletteAssetBuilder.LoadMaterial();
-            ModelPrefabWriter.Write(CreateModel(), ArtPaths.RoverFolder, material);
+            ModelPrefabWriter.Write(CreateModel(), ArtPaths.RoverFolder, material, null,
+                PaletteAssetBuilder.LoadWeatherMaterial());
             ModelPrefabWriter.Write(CreateHoverCoils(), ArtPaths.RoverFolder, material,
                 PaletteAssetBuilder.LoadGlowOffMaterial());
             AssetDatabase.SaveAssets();
@@ -88,24 +102,23 @@ namespace MoonProject.Art.Editor
             LowPolyMeshBuilder shell = RoverMeshes.Body();
             ModelNode body = root.Add(new ModelNode("Body", Vector3.zero, new ModelMesh(ModelName + "_Body", shell)));
             body.Add(Gift(Decal07FreshName, Vector3.zero, ModelName + "_Decal07Fresh", RoverGiftMeshes.FreshSerial()));
-            var stripe = new LowPolyMeshBuilder(200);
-            stripe.AppendRepainted(shell, PaletteSwatch.WarmAccent, PaletteSwatch.FadedAccent, StripeFadeLift);
-            LowPolyMeshBuilder dust = RoverMeshes.DustPatches();
-            dust.AppendBelow(shell, BodyDustTide, StripeFadeLift, PaletteSwatch.CakedDust);
-            Weathering.Attach(body, ModelName, stripe, RoverMeshes.Rust(), dust);
-            root.Add(new ModelNode("Bogie_L", MirrorX(BogieHinge), bogieLeft));
-            root.Add(new ModelNode("Bogie_R", BogieHinge, bogieRight));
-            root.Add(new ModelNode("Wheel_FL", WheelCentre(-1f, 1f), wheelLeft));
-            root.Add(new ModelNode("Wheel_FR", WheelCentre(1f, 1f), wheelRight));
-            root.Add(new ModelNode("Wheel_ML", WheelCentre(-1f, 0f), wheelLeft));
-            root.Add(new ModelNode("Wheel_MR", WheelCentre(1f, 0f), wheelRight));
-            root.Add(new ModelNode("Wheel_RL", WheelCentre(-1f, -1f), spareLeft));
-            root.Add(new ModelNode("Wheel_RR", WheelCentre(1f, -1f), wheelRight));
+            Weathering.Weather(body, ModelName, shell, BodyWeather, RoverMeshes.Rust(), RoverMeshes.DustPatches());
+            var coats = new Dictionary<(ModelMesh, string), ModelMesh>();
+            Grimed(root.Add(new ModelNode("Bogie_L", MirrorX(BogieHinge), bogieLeft)), coats);
+            Grimed(root.Add(new ModelNode("Bogie_R", BogieHinge, bogieRight)), coats);
+            Dusty(root.Add(new ModelNode("Wheel_FL", WheelCentre(-1f, 1f), wheelLeft)), coats);
+            Dusty(root.Add(new ModelNode("Wheel_FR", WheelCentre(1f, 1f), wheelRight)), coats);
+            Dusty(root.Add(new ModelNode("Wheel_ML", WheelCentre(-1f, 0f), wheelLeft)), coats);
+            Dusty(root.Add(new ModelNode("Wheel_MR", WheelCentre(1f, 0f), wheelRight)), coats);
+            Dusty(root.Add(new ModelNode("Wheel_RL", WheelCentre(-1f, -1f), spareLeft)), coats);
+            Dusty(root.Add(new ModelNode("Wheel_RR", WheelCentre(1f, -1f), wheelRight)), coats);
 
             ModelNode neck = root.Add(new ModelNode("Neck", NeckBase,
                 new ModelMesh(ModelName + "_Neck", RoverMeshes.Neck())));
+            LowPolyMeshBuilder hooded = RoverMeshes.Head();
             ModelNode head = neck.Add(new ModelNode("Head", RoverMeshes.HeadHinge,
-                new ModelMesh(ModelName + "_Head", RoverMeshes.Head())));
+                new ModelMesh(ModelName + "_Head", hooded)));
+            Weathering.Weather(head, ModelName + "_Head", hooded, HeadWeather, RoverMeshes.HoodScuffs(), null, null);
             ModelNode eye = head.Add(new ModelNode("Eye", RoverMeshes.EyeCentre,
                 new ModelMesh(ModelName + "_Eye", RoverMeshes.Eye())));
             eye.Add(new ModelNode("TetherOrigin", new Vector3(0f, 0f, RoverMeshes.LensFront)));
@@ -132,6 +145,41 @@ namespace MoonProject.Art.Editor
             root.Add(new ModelNode("DrumSocket_L", MirrorX(DrumSocket), Place.Rotation(new Vector3(0f, 180f, 0f))));
             root.Add(new ModelNode("DrumSocket_R", DrumSocket));
             return root;
+        }
+
+        /// <summary>A wheel caked in dust from rim to hub (one coat per wheel mesh, shared by its wheels).</summary>
+        private static void Dusty(ModelNode wheel, Dictionary<(ModelMesh, string), ModelMesh> coats)
+        {
+            wheel.Add(Weathering.CoatNode(Weathering.DustName, Coat(coats, wheel.Mesh, Weathering.DustName,
+                mesh => Weathering.Coat(mesh.Name, Weathering.DustName, mesh.Geometry,
+                    Palette.GetSurface(PaletteSwatch.CakedDust), WheelDust, CoatLift))));
+        }
+
+        /// <summary>A bogie gone rusty, then dusty over the rust.</summary>
+        private static void Grimed(ModelNode bogie, Dictionary<(ModelMesh, string), ModelMesh> coats)
+        {
+            ModelMesh rust = Coat(coats, bogie.Mesh, Weathering.RustName, mesh => Weathering.Coat(mesh.Name,
+                Weathering.RustName, mesh.Geometry, Weathering.DarkRust, BogieRust, CoatLift));
+            bogie.Add(Weathering.CoatNode(Weathering.RustName, rust));
+            bogie.Add(Weathering.CoatNode(Weathering.DustName, Coat(coats, rust, Weathering.DustName,
+                mesh => Weathering.Coat(bogie.Mesh.Name, Weathering.DustName, mesh.Geometry,
+                    Palette.GetSurface(PaletteSwatch.CakedDust), BogieDust, CoatLift))));
+        }
+
+        /// <summary>
+        /// The coat made for <paramref name="part"/> under <paramref name="layer"/>, made once per part mesh so every
+        /// node showing the part shares it (the prefab writer needs one mesh per name).
+        /// </summary>
+        private static ModelMesh Coat(Dictionary<(ModelMesh, string), ModelMesh> coats, ModelMesh part, string layer,
+            Func<ModelMesh, ModelMesh> make)
+        {
+            if (!coats.TryGetValue((part, layer), out ModelMesh coat))
+            {
+                coat = make(part);
+                coats.Add((part, layer), coat);
+            }
+
+            return coat;
         }
 
         /// <summary>A friend's gift: kept in the prefab but hidden until rover shows it.</summary>

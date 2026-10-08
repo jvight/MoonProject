@@ -41,10 +41,11 @@ namespace MoonProject.Art.Tests
                 p => Mathf.Abs(p.x) < 0.3f && p.z > DoorNear && p.z < PortholeFar);
             Assert.That(porthole.center.y - deck, Is.InRange(1.4f, 1.65f), "the door's porthole at eye height");
 
+            // One rail was bent down long ago: the rails' tops still stand at a person's waist.
             Bounds rail = Faces(lander.Mesh.Geometry, PaletteSwatch.WarmAccent,
                 p => p.z > DoorNear && p.y > deck && p.y < deck + 1.5f);
-            Assert.That(rail.min.y - deck, Is.GreaterThan(0.9f), "the porch rail at waist height");
-            Assert.That(rail.max.y - deck, Is.LessThan(1.1f), "the porch rail at waist height");
+            Assert.That(rail.max.y - deck, Is.InRange(0.9f, 1.1f), "the porch rail at waist height");
+            Assert.Greater(rail.min.y - deck, 0.7f, "even bent, a rail, not a step");
         }
 
         [Test]

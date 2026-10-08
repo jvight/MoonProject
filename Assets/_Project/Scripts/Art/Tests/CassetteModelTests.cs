@@ -105,7 +105,7 @@ namespace MoonProject.Art.Tests
             Assert.AreEqual("CassetteShelf", shelf.Name);
             CollectionAssert.AreEqual(
                 Enumerable.Range(0, 8).Select(i => $"Slot_{i}").Concat(new[] { "Weather_Paint",
-                "Weather_Dust" }).ToArray(),
+                "Weather_Rust", "Weather_Dust" }).ToArray(),
                 shelf.Children.Select(child => child.Name).ToArray());
             for (int row = 0; row < 4; row++)
             {

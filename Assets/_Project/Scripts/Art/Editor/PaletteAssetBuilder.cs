@@ -11,7 +11,8 @@ namespace MoonProject.Art.Editor
     /// <see cref="Palette.Uv"/> expects): the sRGB base map of <see cref="Palette.GetSurface"/> colours and the
     /// linear HDR emission map of <see cref="Palette.GetGlow"/>, and the shared <c>M_LowPoly</c> material every
     /// low-poly mesh renders with. Its _EmissionColor stays authored white (glow-off: black), so a renderer's linear
-    /// MaterialPropertyBlock multiplier of 1 shows each swatch's HDR glow as authored.
+    /// MaterialPropertyBlock multiplier of 1 shows each swatch's HDR glow as authored. Also the weather skins'
+    /// <c>M_LowPolyWeather</c> (vertex colours, lit like M_LowPoly).
     /// </summary>
     public static class PaletteAssetBuilder
     {
@@ -32,7 +33,38 @@ namespace MoonProject.Art.Editor
                 ArtPaths.LowPolyMaterial);
             GeneratedAssets.CreateOrReplace(CreateMaterial(shader, baseMap, emissionMap, true),
                 ArtPaths.LowPolyGlowOffMaterial);
+            GeneratedAssets.CreateOrReplace(CreateWeatherMaterial(), ArtPaths.LowPolyWeatherMaterial);
             AssetDatabase.SaveAssets();
+        }
+
+        /// <summary>The weather skins' material, or an exception asking for the palette to be built first.</summary>
+        public static Material LoadWeatherMaterial()
+        {
+            var material = AssetDatabase.LoadAssetAtPath<Material>(ArtPaths.LowPolyWeatherMaterial);
+            if (material == null)
+            {
+                throw new InvalidOperationException(
+                    $"{ArtPaths.LowPolyWeatherMaterial} is missing: run the Art/Palette builder first.");
+            }
+
+            return material;
+        }
+
+        /// <summary>The weather skins' material (not saved): LofiWeather, opaque, instanced, never glowing.</summary>
+        public static Material CreateWeatherMaterial()
+        {
+            var shader = AssetDatabase.LoadAssetAtPath<Shader>(ArtPaths.WeatherShader);
+            if (shader == null)
+            {
+                throw new InvalidOperationException($"The weather shader is missing at {ArtPaths.WeatherShader}.");
+            }
+
+            var material = new Material(shader);
+            material.SetColor("_BaseColor", Color.white);
+            material.SetColor("_EmissionColor", Color.black);
+            material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
+            material.enableInstancing = true;
+            return material;
         }
 
         /// <summary>The shared material, or an exception telling the caller to build the palette first.</summary>

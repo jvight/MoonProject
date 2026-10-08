@@ -8,5 +8,8 @@ namespace MoonProject.Art.Editor
 
         /// <summary>M_LowPolyGlowOff: dark until lit with a MaterialPropertyBlock _EmissionColor.</summary>
         PaletteGlowOff = 1,
+
+        /// <summary>M_LowPolyWeather: draws each vertex's colour (the removable weather skins), never glows.</summary>
+        PaletteWeather = 2,
     }
 }

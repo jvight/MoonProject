@@ -16,6 +16,9 @@ namespace MoonProject.Art.Editor
         public const float PlinthSize = 1.6f;
         public const float PlinthHeight = 0.16f;
 
+        // The lattice face whose second-tier brace buckled.
+        private const int BentFace = 2;
+
         private static readonly Vector2[] DishProfile =
         {
             new Vector2(0f, -0.24f), new Vector2(0.5f, -0.17f), new Vector2(1f, 0.12f), new Vector2(0.92f, 0.14f),
@@ -69,6 +72,12 @@ namespace MoonProject.Art.Editor
                     break;
             }
 
+            // A feed that worked loose at the back left: it hangs in a loop and lies across the plinth.
+            SiteKit.Cable(b, new[]
+            {
+                new Vector3(-0.45f, 2.2f, -0.45f), new Vector3(-0.72f, 1.5f, -0.6f), new Vector3(-0.78f, 0.8f, -0.3f),
+                new Vector3(-0.72f, PlinthHeight + 0.04f, 0f), new Vector3(-0.6f, PlinthHeight + 0.02f, 0.3f),
+            }, 0.02f, PaletteSwatch.Charcoal);
             return b;
         }
 
@@ -145,25 +154,6 @@ namespace MoonProject.Art.Editor
             for (int corner = 0; corner < 4; corner++)
             {
                 Weathering.Collar(b, At(Corner(corner, PlinthHeight + 0.09f, half)), 0.075f, 0.16f);
-            }
-
-            return b;
-        }
-
-        /// <summary>What holds dust: the plinth, the cabinet and the platforms (not every lattice bar).</summary>
-        public static LowPolyMeshBuilder DustSurfaces(int level)
-        {
-            var b = new LowPolyMeshBuilder(400);
-            Plinth(b);
-            ServicePort(b);
-            if (RequireLevel(level) == 2)
-            {
-                Platform(b, 3.4f, 0.66f);
-            }
-            else if (level == 3)
-            {
-                Platform(b, 3.2f, 0.7f);
-                Platform(b, 6.6f, 0.66f);
             }
 
             return b;
@@ -316,7 +306,21 @@ namespace MoonProject.Art.Editor
                 for (int face = 0; face < 4; face++)
                 {
                     int next = (face + 1) % 4;
-                    Brace(b, Corner(face, y0, half0), Corner(next, y1, half1));
+                    if (segment == 1 && face == BentFace)
+                    {
+                        // Something heavy came down on this brace: it buckled outwards in the middle.
+                        Vector3 from = Corner(face, y0, half0);
+                        Vector3 to = Corner(next, y1, half1);
+                        Vector3 bow = Vector3.Lerp(from, to, 0.5f) + (from + to).normalized * 0.12f;
+                        bow.y = (from.y + to.y) * 0.5f - 0.1f;
+                        Brace(b, from, bow);
+                        Brace(b, bow, to);
+                    }
+                    else
+                    {
+                        Brace(b, Corner(face, y0, half0), Corner(next, y1, half1));
+                    }
+
                     Brace(b, Corner(next, y0, half0), Corner(face, y1, half1));
                     Brace(b, Corner(face, y1, half1), Corner(next, y1, half1));
                 }
