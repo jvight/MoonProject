@@ -175,10 +175,10 @@ namespace MoonProject.Art.Editor
             return b;
         }
 
-        /// <summary>Dust on the platform's top faces and a small drift against the carriage (platform space).</summary>
-        public static LowPolyMeshBuilder PlatformDust(LowPolyMeshBuilder platform)
+        /// <summary>A small drift of dust against the carriage on the platform's deck (platform space).</summary>
+        public static LowPolyMeshBuilder PlatformDrift()
         {
-            LowPolyMeshBuilder dust = Weathering.Dust(platform, 0f, Weathering.DustLift);
+            var dust = new LowPolyMeshBuilder(200);
             SiteKit.Drift(dust, new Vector3(-0.45f, 0f, CarriageZ + 0.25f), 0.8f, 0.35f, 0.07f, 90f, 121);
             return dust;
         }

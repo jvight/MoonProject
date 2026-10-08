@@ -122,6 +122,20 @@ namespace MoonProject.Art.Tests
         /// </summary>
         public static IEnumerable<Vector3> Points(ModelNode node, Matrix4x4 parent)
         {
+            return Points(node, parent, true);
+        }
+
+        /// <summary>
+        /// As the other overload; without <paramref name="weather"/> the Weather_* skins (millimetre-thin overlays,
+        /// not part of a model's shape) are left out.
+        /// </summary>
+        public static IEnumerable<Vector3> Points(ModelNode node, Matrix4x4 parent, bool weather)
+        {
+            if (!weather && node.Name.StartsWith("Weather_"))
+            {
+                yield break;
+            }
+
             Matrix4x4 local = parent * node.LocalMatrix;
             if (node.Mesh != null)
             {
@@ -134,7 +148,7 @@ namespace MoonProject.Art.Tests
 
             foreach (ModelNode child in node.Children)
             {
-                foreach (Vector3 p in Points(child, local))
+                foreach (Vector3 p in Points(child, local, weather))
                 {
                     yield return p;
                 }

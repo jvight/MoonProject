@@ -10,10 +10,11 @@ namespace MoonProject.Art.Tests
     public sealed class BaseModelTests
     {
         // A base model costs at most this many triangles (the lander, carrying 07's dock and the lift, is the most).
-        private const int TriangleBudget = 7000;
+        private const int TriangleBudget = 8000;
 
-        // The removable weather layers (dust, rust, bleach) cost at most this much more on top of a model.
-        private const int WeatherBudget = 7000;
+        // The removable weather skins (patchwork paint over every face, rust, dust over both) cost at most this much
+        // more on top of a model: about three times the lander they cover.
+        private const int WeatherBudget = 24000;
 
         [Test]
         public void Lander_HasAnchorsAndLampSockets_OnTheGroundPivot()

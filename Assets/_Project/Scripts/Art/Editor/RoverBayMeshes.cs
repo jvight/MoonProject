@@ -43,8 +43,21 @@ namespace MoonProject.Art.Editor
         /// <summary>Half the width of the bay hopper's mouth.</summary>
         public const float HopperSize = 0.5f;
 
+        /// <summary>The arch 07 drives in under: half its span and the height its arch springs from.</summary>
+        public const float ArchHalfSpan = 1.45f;
+
+        public const float ArchSpring = 1.7f;
+
+        /// <summary>The lit "07" sign on the roof over the arch: its centre and the numerals' height.</summary>
+        public static readonly Vector3 SignCentre = new Vector3(0f, EaveHeight + 0.62f, FrontZ + 0.02f);
+
+        private const float SignHeight = 0.42f;
+
         private const float Post = 0.16f;
         private const float Beam = 0.14f;
+        private const int ArchSegments = 12;
+        private const float FacadeDepth = 0.06f;
+        private const int HazardSegments = 20;
 
         /// <summary>
         /// Shoulder <paramref name="index"/> on the overhead rail: left, back and right of the turntable.
@@ -89,15 +102,20 @@ namespace MoonProject.Art.Editor
         /// </summary>
         public static LowPolyMeshBuilder Frame()
         {
-            var b = new LowPolyMeshBuilder(6000);
+            var b = new LowPolyMeshBuilder(7000);
             Structure(b);
             Roof(b);
             Walls(b);
+            Facade(b);
             Floor(b);
             Hopper(b);
             SiteKit.Drum(b, At(new Vector3(-HalfWidth - 0.45f, 0.56f, -1.4f), new Vector3(0f, 90f, 0f)), 0.5f, 0.6f,
                 PaletteSwatch.WarmAccent);
+            SiteKit.Drum(b, At(new Vector3(1.65f, PadTop + 0.42f, -1.95f)), 0.42f, 0.45f, PaletteSwatch.Charcoal);
+            SiteKit.Drum(b, At(new Vector3(-1.75f, PadTop + 0.3f, 1.25f), new Vector3(0f, 90f, 0f)), 0.3f, 0.35f,
+                PaletteSwatch.FadedAccent);
             Board(b);
+            Sign(b);
             for (int i = 0; i < LampCount; i++)
             {
                 Matrix4x4 lamp = At(LampGlass(i), LampEuler);
@@ -118,8 +136,18 @@ namespace MoonProject.Art.Editor
         public static LowPolyMeshBuilder Turntable()
         {
             var b = new LowPolyMeshBuilder(400);
-            b.Prism(At(0f, -0.045f, 0f), TurntableRadius, 0.09f, 20, PaletteSwatch.Metal);
+            b.Prism(At(0f, -0.045f, 0f), TurntableRadius, 0.09f, HazardSegments, PaletteSwatch.Metal);
             b.Torus(At(0f, -0.015f, 0f), TurntableRadius - 0.05f, 0.03f, 20, 3, PaletteSwatch.Charcoal);
+            float apothem = TurntableRadius * Mathf.Cos(Mathf.PI / HazardSegments);
+            float stripe = 2f * TurntableRadius * Mathf.Sin(Mathf.PI / HazardSegments) - 0.01f;
+            for (int i = 0; i < HazardSegments; i++)
+            {
+                float yaw = i * 360f / HazardSegments;
+                Matrix4x4 face = At(Rotation(new Vector3(0f, yaw, 0f)) * Vector3.forward * (apothem + 0.004f),
+                    new Vector3(0f, yaw, 0f));
+                b.Box(face * At(0f, -0.045f, 0f), new Vector3(stripe, 0.07f, 0.01f),
+                    i % 2 == 0 ? PaletteSwatch.Honey : PaletteSwatch.Charcoal);
+            }
             for (int side = -1; side <= 1; side += 2)
             {
                 b.Box(At(side * 0.64f, 0.004f, 0f), new Vector3(0.26f, 0.008f, TurntableRadius * 1.7f),
@@ -248,7 +276,8 @@ namespace MoonProject.Art.Editor
                     PaletteSwatch.Metal);
             }
 
-            // The arms' rail: a square ring under the roof round the turntable, hung on drop rods.
+            // The arms' crane rail: a square ring of crane-yellow I-beams under the roof round the turntable, hung
+            // from the roof beams on drop rods; the arms' trolleys ride its underside.
             float ring = 1.3f;
             Vector3 centre = new Vector3(TurntableCentre.x, RailHeight + 0.2f, TurntableCentre.z);
             Vector3[] corners =
@@ -258,10 +287,89 @@ namespace MoonProject.Art.Editor
             };
             for (int i = 0; i < corners.Length; i++)
             {
-                SiteKit.Bar(b, corners[i], corners[(i + 1) % corners.Length], 0.12f, PaletteSwatch.Metal);
-                SiteKit.Bar(b, corners[i], new Vector3(corners[i].x, EaveHeight, corners[i].z), 0.05f,
-                    PaletteSwatch.Metal);
+                IBeam(b, corners[i], corners[(i + 1) % corners.Length]);
+                SiteKit.Bar(b, corners[i] + Vector3.up * 0.1f, new Vector3(corners[i].x, EaveHeight, corners[i].z),
+                    0.05f, PaletteSwatch.Metal);
             }
+        }
+
+        /// <summary>
+        /// A crane-rail I-beam from <paramref name="from"/> to <paramref name="to"/> (level): a web and two flanges,
+        /// running past the corners so the ring's ends overlap.
+        /// </summary>
+        private static void IBeam(LowPolyMeshBuilder b, Vector3 from, Vector3 to)
+        {
+            Matrix4x4 run = Along(from, to);
+            float length = Vector3.Distance(from, to) + 0.18f;
+            b.Box(run, new Vector3(0.05f, 0.2f, length), PaletteSwatch.Honey);
+            for (int flange = -1; flange <= 1; flange += 2)
+            {
+                b.Box(run * At(0f, flange * 0.1f, 0f), new Vector3(0.18f, 0.03f, length), PaletteSwatch.Honey);
+            }
+        }
+
+        /// <summary>
+        /// The front: a facade between the front posts with a rover-sized arch cut in it (07 drives in under it with
+        /// a metre to spare), the arch trimmed in 07's orange with a keystone.
+        /// </summary>
+        private static void Facade(LowPolyMeshBuilder b)
+        {
+            float z = FrontZ;
+            for (int side = -1; side <= 1; side += 2)
+            {
+                b.Box(At(side * (ArchHalfSpan + HalfWidth) * 0.5f, EaveHeight * 0.5f, z),
+                    new Vector3(HalfWidth - ArchHalfSpan, EaveHeight, FacadeDepth), PaletteSwatch.FadedPaint);
+            }
+
+            float step = 2f * ArchHalfSpan / ArchSegments;
+            var strip = new Vector2[4];
+            for (int i = 0; i < ArchSegments; i++)
+            {
+                float x0 = -ArchHalfSpan + i * step;
+                float x1 = x0 + step;
+                strip[0] = new Vector2(x0, ArchY(x0));
+                strip[1] = new Vector2(x1, ArchY(x1));
+                strip[2] = new Vector2(x1, EaveHeight);
+                strip[3] = new Vector2(x0, EaveHeight);
+                b.Extrude(At(0f, 0f, z), strip, FacadeDepth, PaletteSwatch.FadedPaint);
+                float trim = z + FacadeDepth * 0.5f + 0.03f;
+                SiteKit.Bar(b, new Vector3(x0, ArchY(x0), trim), new Vector3(x1, ArchY(x1), trim), 0.09f,
+                    PaletteSwatch.WarmAccent);
+            }
+
+            b.Box(At(0f, ArchSpring + ArchHalfSpan - 0.02f, z + FacadeDepth * 0.5f + 0.05f),
+                new Vector3(0.24f, 0.3f, 0.1f), PaletteSwatch.WarmAccent, 0.02f);
+        }
+
+        /// <summary>The arch's height over <paramref name="x"/> (its springing height outside the span).</summary>
+        private static float ArchY(float x)
+        {
+            return ArchSpring + Mathf.Sqrt(Mathf.Max(0f, ArchHalfSpan * ArchHalfSpan - x * x));
+        }
+
+        /// <summary>
+        /// The "07" sign's box on the roof over the arch, on two legs: its numerals are their own glow renderer
+        /// (<see cref="SignGlow"/>), dark until the bay has power.
+        /// </summary>
+        private static void Sign(LowPolyMeshBuilder b)
+        {
+            b.Box(At(SignCentre), new Vector3(1.05f, 0.62f, 0.12f), PaletteSwatch.Charcoal, 0.02f);
+            b.Box(At(SignCentre + new Vector3(0f, 0f, 0.061f)), new Vector3(0.95f, 0.52f, 0.004f),
+                PaletteSwatch.FadedPaint);
+            for (int side = -1; side <= 1; side += 2)
+            {
+                SiteKit.Bar(b, new Vector3(side * 0.35f, EaveHeight, SignCentre.z),
+                    new Vector3(side * 0.35f, SignCentre.y - 0.31f, SignCentre.z), 0.05f, PaletteSwatch.Metal);
+            }
+        }
+
+        /// <summary>The sign's warm "07" (a glow renderer on the glow-off material, in bay space).</summary>
+        public static LowPolyMeshBuilder SignGlow()
+        {
+            var b = new LowPolyMeshBuilder(200);
+            Glyphs.Write(b, At(SignCentre + new Vector3(0f, 0f, 0.063f)), "07", SignHeight, PaletteSwatch.LampGlass,
+                PaletteSwatch.Charcoal);
+            return b;
         }
 
         /// <summary>A shallow roof of corrugated sheets with one sheet long gone, open sky over the left bay.</summary>
@@ -352,15 +460,13 @@ namespace MoonProject.Art.Editor
             }
         }
 
-        /// <summary>The "PIT 07" board over the entrance, hand-painted like the bench sticker.</summary>
+        /// <summary>The old hand-painted "PIT" board on the left pier, hung askew like the bench sticker.</summary>
         private static void Board(LowPolyMeshBuilder b)
         {
-            Matrix4x4 board = At(new Vector3(0.4f, EaveHeight - 0.32f, FrontZ + 0.1f), new Vector3(0f, 0f, -2.5f));
-            b.Box(board, new Vector3(1.5f, 0.42f, 0.05f), PaletteSwatch.Enamel, 0.012f);
-            // Read from the front, +X is on the reader's left: "PIT" first, then "07".
-            Glyphs.Write(b, board * At(0.25f, 0f, 0.026f), "PIT", 0.24f, PaletteSwatch.Charcoal, PaletteSwatch.Enamel);
-            Glyphs.Write(b, board * At(-0.42f, 0f, 0.026f), "07", 0.24f, PaletteSwatch.WarmAccent,
-                PaletteSwatch.Enamel);
+            Matrix4x4 board = At(new Vector3(-(ArchHalfSpan + HalfWidth) * 0.5f, 2.3f, FrontZ + FacadeDepth * 0.5f
+                + 0.03f), new Vector3(0f, 0f, -4f));
+            b.Box(board, new Vector3(0.62f, 0.3f, 0.04f), PaletteSwatch.Enamel, 0.01f);
+            Glyphs.Write(b, board * At(0f, 0f, 0.021f), "PIT", 0.18f, PaletteSwatch.Charcoal, PaletteSwatch.Enamel);
         }
     }
 }

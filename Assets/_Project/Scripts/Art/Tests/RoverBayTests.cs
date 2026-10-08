@@ -39,7 +39,7 @@ namespace MoonProject.Art.Tests
         public void Bay_HasTheContractNodes()
         {
             Assert.AreEqual("RoverBay", _bay.Name);
-            var expected = new List<string> { "Turntable", "HopperMouth", "Lamp_0", "Lamp_1" };
+            var expected = new List<string> { "Turntable", "HopperMouth", "BaySign", "Lamp_0", "Lamp_1" };
             for (int i = 0; i < 3; i++)
             {
                 expected.Add($"Arm_{i}");
@@ -60,10 +60,15 @@ namespace MoonProject.Art.Tests
             {
                 MeshChecks.AssertWellFormed(node.Mesh.Geometry);
                 bool lamp = node.Name.StartsWith("Lamp_");
-                Assert.AreEqual(lamp ? ModelMaterial.PaletteGlowOff : ModelMaterial.Palette, node.Material, node.Name);
+                bool sign = node.Name == "BaySign";
+                bool weather = node.Name.StartsWith("Weather_");
+                ModelMaterial material = lamp || sign ? ModelMaterial.PaletteGlowOff
+                    : weather ? ModelMaterial.PaletteWeather : ModelMaterial.Palette;
+                Assert.AreEqual(material, node.Material, node.Name);
                 List<PaletteSwatch> swatches = MeshChecks.Swatches(node.Mesh.Geometry);
                 Assert.IsTrue(lamp ? swatches.SequenceEqual(new[] { PaletteSwatch.LampGlass })
-                    : !swatches.Any(Palette.IsEmissive), $"{node.Name}: only the lamp glasses glow, and only when lit");
+                    : sign ? swatches.Where(Palette.IsEmissive).SequenceEqual(new[] { PaletteSwatch.LampGlass })
+                    : !swatches.Any(Palette.IsEmissive), $"{node.Name}: only the lamps and the sign glow, when lit");
             }
         }
 

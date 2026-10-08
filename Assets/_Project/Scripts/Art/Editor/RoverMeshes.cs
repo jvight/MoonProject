@@ -102,7 +102,7 @@ namespace MoonProject.Art.Editor
             Bevel(b, cushion, 0.035f, true, false);
 
             Stripes(b);
-            Dent(b);
+            Dents(b);
             SerialOnFlank(b, 1f, 0.13f, 0.21f);
             SerialOnFlank(b, -1f, 0.21f, 0.13f);
             SerialOnBack(b);
@@ -114,30 +114,41 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
-        /// 07's rust, in body space: spots at the lid rivets weeping down over the stripe, at the corners of the rear
-        /// hatch and under the radio face's knobs. Small, so 07 still reads as itself, just old.
+        /// 07's rust, in body space: blooms at the lid rivets weeping down over the stripe, round the bolts low on the
+        /// flanks and at the corners of the rear hatch, and runs under the radio face's knobs. Clearly old, but kept
+        /// off the face and the eye, so 07 still reads as itself.
         /// </summary>
         public static LowPolyMeshBuilder Rust()
         {
-            var b = new LowPolyMeshBuilder(500);
+            var b = new LowPolyMeshBuilder(800);
             const float lidSide = BodyHalfWidth + 0.03f + 0.003f;
             const float stripeSide = BodyHalfWidth + PaintProud + PaintThickness * 0.5f + 0.003f;
+            const float flankSide = BodyHalfWidth + 0.004f;
             for (int side = -1; side <= 1; side += 2)
             {
                 Matrix4x4 lid = SiteKit.Face(new Vector3(side * lidSide, 0f, 0f), Vector3.right * side, Vector3.up);
                 Matrix4x4 stripe = SiteKit.Face(new Vector3(side * stripeSide, 0f, 0f), Vector3.right * side,
                     Vector3.up);
+                Matrix4x4 flank = SiteKit.Face(new Vector3(side * flankSide, 0f, 0f), Vector3.right * side,
+                    Vector3.up);
                 foreach (float z in new[] { -0.28f, 0.2f, 0.44f })
                 {
                     float along = side > 0 ? -z : z;
-                    SiteKit.RustPatch(b, lid, along, 0.87f, 0.04f);
-                    SiteKit.RustStreak(b, stripe, along, 0.835f, 0.08f, SpotWidth);
+                    SiteKit.RustPatch(b, lid, along, 0.87f, 0.065f);
+                    SiteKit.RustStreak(b, stripe, along, 0.835f, 0.14f, SpotWidth * 1.4f);
+                }
+
+                foreach (float z in new[] { -0.5f, 0.02f, 0.52f })
+                {
+                    float along = side > 0 ? -z : z;
+                    SiteKit.RustPatch(b, flank, along, 0.42f, 0.075f);
                 }
             }
 
             Matrix4x4 back = SiteKit.Face(new Vector3(0f, 0f, BodyBack - 0.004f), Vector3.back, Vector3.up);
-            SiteKit.RustPatch(b, back, -0.14f, 0.42f, 0.06f);
-            SiteKit.RustPatch(b, back, 0.13f, 0.55f, 0.05f);
+            SiteKit.RustPatch(b, back, -0.14f, 0.42f, 0.09f);
+            SiteKit.RustPatch(b, back, 0.13f, 0.55f, 0.08f);
+            SiteKit.RustPatch(b, back, 0.3f, 0.4f, 0.07f);
             Matrix4x4 front = SiteKit.Face(new Vector3(0f, 0f, BodyFront + 0.004f), Vector3.forward, Vector3.up);
             SiteKit.RustStreak(b, front, -0.2f, LampHeight - 0.04f, 0.09f, SpotWidth);
             SiteKit.RustStreak(b, front, 0.2f, LampHeight - 0.04f, 0.06f, SpotWidth);
@@ -560,20 +571,58 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
-        /// A dent low on the right front flank: two pressed facets meeting in a crease, catching the light differently
-        /// from the flat enamel round them.
+        /// The knocks of decades: dents low on the right front flank, the left front flank and the right rear, each
+        /// two pressed facets meeting in a crease that catch the light differently from the flat enamel round them.
         /// </summary>
-        private static void Dent(LowPolyMeshBuilder b)
+        private static void Dents(LowPolyMeshBuilder b)
         {
-            const float x = BodyHalfWidth + 0.004f;
-            for (int side = -1; side <= 1; side += 2)
+            Dent(b, 1f, 0.5f, 0.42f, 1f);
+            Dent(b, -1f, 0.47f, 0.38f, 0.8f);
+            Dent(b, 1f, 0.53f, -0.42f, 1.2f);
+        }
+
+        private static void Dent(LowPolyMeshBuilder b, float side, float y, float z, float size)
+        {
+            float x = side * (BodyHalfWidth + 0.004f);
+            for (int half = -1; half <= 1; half += 2)
             {
-                b.Box(At(new Vector3(x, 0.5f, 0.42f + side * 0.045f), new Vector3(0f, side * 12f, side * 6f)),
-                    new Vector3(0.008f, 0.12f, 0.09f), PaletteSwatch.Enamel);
+                b.Box(At(new Vector3(x, y, z + half * 0.045f * size), new Vector3(0f, half * 12f, half * 6f)),
+                    new Vector3(0.008f, 0.12f * size, 0.09f * size), PaletteSwatch.Enamel);
             }
 
-            b.Box(At(new Vector3(x + 0.005f, 0.5f, 0.42f), new Vector3(0f, 0f, 6f)), new Vector3(0.004f, 0.11f, 0.008f),
-                PaletteSwatch.Charcoal);
+            b.Box(At(new Vector3(x + side * 0.005f, y, z), new Vector3(0f, 0f, 6f)),
+                new Vector3(0.004f, 0.11f * size, 0.008f), PaletteSwatch.Charcoal);
+        }
+
+        /// <summary>
+        /// Scuffs on the head's hood where decades of dust storms and low doorways rubbed the enamel through to the
+        /// metal: chips along the brow's top edge and down its sides, and one long scratch (head space, standing just
+        /// over the head's weather skins).
+        /// </summary>
+        public static LowPolyMeshBuilder HoodScuffs()
+        {
+            var b = new LowPolyMeshBuilder(120);
+            const float top = 0.41f + 0.007f;
+            Vector3[] chips =
+            {
+                new Vector3(-0.15f, top, 0.1f), new Vector3(0.04f, top, 0.11f), new Vector3(0.17f, top, 0.06f),
+                new Vector3(-0.03f, top, -0.12f),
+            };
+            for (int i = 0; i < chips.Length; i++)
+            {
+                b.Box(At(chips[i], new Vector3(0f, i * 37f, 0f)), new Vector3(0.05f + i * 0.01f, 0.004f, 0.03f),
+                    i % 2 == 0 ? PaletteSwatch.Metal : PaletteSwatch.FadedPaint);
+            }
+
+            for (int side = -1; side <= 1; side += 2)
+            {
+                b.Box(At(new Vector3(side * (0.3f + 0.006f), 0.3f, 0.05f), new Vector3(side * 8f, 0f, 0f)),
+                    new Vector3(0.004f, 0.025f, 0.12f), PaletteSwatch.Metal);
+            }
+
+            b.Box(At(new Vector3(0.1f, top, 0f), new Vector3(0f, 28f, 0f)), new Vector3(0.006f, 0.004f, 0.26f),
+                PaletteSwatch.Metal);
+            return b;
         }
 
         /// <summary>Sage plate riveted over the left rear flank, askew, covering a stretch of the stripe.</summary>
