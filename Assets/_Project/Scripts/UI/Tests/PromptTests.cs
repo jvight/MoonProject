@@ -135,6 +135,23 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
+        public void TheRelayPrompts_TeachRestoreAndHop_WithInteract()
+        {
+            foreach (InteractionKind kind in new[] { InteractionKind.Restore, InteractionKind.Hop })
+            {
+                PromptEntry entry = _settings.Find(kind);
+                Assert.IsNotNull(entry, $"{kind} is taught");
+                Assert.AreEqual(RoverAction.Excavate, entry.Action, $"{kind}: Interact, like the repair");
+            }
+
+            Run(2f, new InteractionHint(InteractionKind.Restore, Site, false));
+            Assert.AreEqual(InteractionKind.None, _director.Displayed,
+                "short of scrap: the price tag says it quietly, the prompt does not nag");
+            Run(2f, Ready(InteractionKind.Restore));
+            Assert.AreEqual(InteractionKind.Restore, _director.Displayed);
+        }
+
+        [Test]
         public void EveryOtherPrompt_IsLearnedAfterTheDefaultNumberOfUses()
         {
             foreach (PromptEntry entry in _settings.Entries)

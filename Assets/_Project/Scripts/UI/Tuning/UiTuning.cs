@@ -19,6 +19,7 @@ namespace MoonProject.UI
         [SerializeField] private FriendUiSettings _friends = new FriendUiSettings();
         [SerializeField] private TickerSettings _ticker = new TickerSettings();
         [SerializeField] private DialReadoutSettings _dialReadout = new DialReadoutSettings();
+        [SerializeField] private RelaySettings _relays = new RelaySettings();
 
         public PauseSettings Pause => _pause;
 
@@ -40,12 +41,14 @@ namespace MoonProject.UI
 
         public DialReadoutSettings DialReadout => _dialReadout;
 
+        public RelaySettings Relays => _relays;
+
         /// <summary>Null when the tuning is usable, else the first problem.</summary>
         public string Validate()
         {
             if (_pause == null || _title == null || _prompts == null || _reticle == null || _scrapChip == null ||
                 _memoryCard == null || _towerPanel == null || _friends == null || _ticker == null ||
-                _dialReadout == null)
+                _dialReadout == null || _relays == null)
             {
                 return "a settings section is missing";
             }

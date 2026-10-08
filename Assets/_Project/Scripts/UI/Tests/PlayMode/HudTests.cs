@@ -256,6 +256,101 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator RelayTag_ShowsTheCost_DimmedWhenShort_AndRestsOnTheRestorePrompt()
+        {
+            InputSystem.AddDevice<Keyboard>();
+            Boot();
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            _rig.Fakes.NextCost = 90;
+            _rig.Fakes.SetBalance(10);
+            var socket = new Vector3(0f, 0f, 8f);
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Restore, socket, false);
+            yield return Seconds(1.5f);
+            Assert.IsTrue(_rig.Ui.RelayTag.IsVisible, "holding the part at the mast: its price shows");
+            Assert.AreEqual("90", _rig.Ui.Layout.RelayTagCost.text);
+            Assert.IsTrue(_rig.Ui.RelayTag.IsShort, "short of scrap: the cost is dimmed");
+            Assert.IsFalse(_rig.Ui.Prompt.IsVisible, "and nothing nags");
+
+            _rig.Fakes.SetBalance(120);
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Restore, socket, true);
+            yield return Seconds(1.5f);
+            Assert.IsTrue(_rig.Ui.Prompt.IsVisible);
+            Assert.AreEqual(Text(UiKeys.Hint(InteractionKind.Restore)), _rig.Ui.Layout.PromptWord.text);
+            Assert.IsFalse(_rig.Ui.RelayTag.IsShort);
+            Assert.LessOrEqual(_rig.Ui.Layout.RelayTag.worldBound.yMax, _rig.Ui.Layout.Prompt.worldBound.yMin + 1f,
+                "the tag rests on top of the prompt, never over it");
+
+            _rig.Fakes.RestoreHold = 0.5f;
+            yield return null;
+            Assert.AreEqual(0.5f, _rig.Ui.RelayTag.Hold, 1e-3f, "the ring fills as Interact is held");
+
+            Events.Publish(new RelayRestored("relay.0", socket, 1, 4));
+            _rig.Fakes.PrimaryHint = InteractionHint.None;
+            _rig.Fakes.RestoreHold = 0f;
+            yield return Seconds(1f);
+            Assert.AreEqual(1, _rig.Ui.Ledger.Used(InteractionKind.Restore));
+            Assert.IsFalse(_rig.Ui.RelayTag.IsVisible);
+            Assert.IsFalse(_rig.Ui.Prompt.IsVisible);
+        }
+
+        [UnityTest]
+        public IEnumerator Hop_PromptThenList_ThenASoftFade_NeverOverlapping()
+        {
+            InputSystem.AddDevice<Keyboard>();
+            Boot();
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            _rig.Fakes.SetHopChoices(UiTestRig.HomeNode, UiTestRig.SecondRelayNode);
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Hop, new Vector3(0f, 0f, 6f), true);
+            yield return Seconds(1.5f);
+            Assert.IsTrue(_rig.Ui.Prompt.IsVisible, "parked on a lit pad: the hop is taught");
+            Assert.AreEqual(Text(UiKeys.Hint(InteractionKind.Hop)), _rig.Ui.Layout.PromptWord.text);
+
+            Assert.IsTrue(_rig.Fakes.Open());
+            Events.Publish(new TickerLine(UiTestRig.HomeLine));
+            bool shared = false;
+            for (float t = 0f; t < 1.5f; t += Time.unscaledDeltaTime)
+            {
+                yield return null;
+                shared |= _rig.Ui.HopList.IsVisible && (_rig.Ui.Prompt.IsVisible || _rig.Ui.Ticker.IsVisible);
+            }
+
+            Assert.IsFalse(shared, "the prompt fades before the list eases in, and the ticker waits");
+            Assert.IsTrue(_rig.Ui.HopList.IsVisible);
+            Assert.AreEqual(1, _rig.Ui.Ledger.Used(InteractionKind.Hop), "opening the list is doing it");
+            Assert.AreEqual(Text(UiTestRig.HomeNode), _rig.Ui.HopList.RowName(0));
+            Assert.AreEqual(Text(UiTestRig.SecondRelayNode), _rig.Ui.HopList.RowName(1));
+            _rig.Fakes.ConfirmHold = 0.5f;
+            yield return null;
+            Assert.AreEqual(0.5f, _rig.Ui.HopList.RowHold(0), 1e-3f);
+
+            Assert.IsTrue(_rig.Fakes.Confirm());
+            _rig.Fakes.ConfirmHold = 0f;
+            _rig.Fakes.PrimaryHint = InteractionHint.None;
+            float previous = 0f;
+            float largestStep = 0f;
+            for (float t = 0f; t < 1f; t += Time.unscaledDeltaTime)
+            {
+                _rig.Fakes.Fade = UiEase.InOutSine(t);
+                yield return null;
+                largestStep = Mathf.Max(largestStep, _rig.Ui.HopFade.Level - previous);
+                previous = _rig.Ui.HopFade.Level;
+            }
+
+            Assert.IsTrue(_rig.Ui.HopFade.IsVisible, "the screen eases to a soft dark");
+            Assert.Less(largestStep, 0.2f, "never a hard cut");
+            Assert.IsFalse(_rig.Ui.HopList.IsVisible, "the list bowed out");
+            Assert.IsFalse(_rig.Ui.Ticker.IsVisible, "nothing speaks in the dark");
+
+            _rig.Fakes.Phase = RadioHopPhase.Arriving;
+            _rig.Fakes.Fade = 0f;
+            yield return Seconds(0.5f);
+            _rig.Fakes.Phase = RadioHopPhase.Closed;
+            yield return Seconds(_rig.Tuning.Ticker.GapSeconds + _rig.Tuning.Ticker.Reveal.FadeIn + 0.5f);
+            Assert.IsFalse(_rig.Ui.HopFade.IsVisible, "the view is clear again");
+            Assert.IsTrue(_rig.Ui.Ticker.IsVisible, "and the waiting line has its turn");
+        }
+
+        [UnityTest]
         public IEnumerator TunePrompt_TeachesBellsDial_MakesWayForTheReadout_AndRetiresAfterOneTurn()
         {
             InputSystem.AddDevice<Keyboard>();

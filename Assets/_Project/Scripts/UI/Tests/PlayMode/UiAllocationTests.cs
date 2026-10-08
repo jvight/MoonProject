@@ -15,9 +15,10 @@ namespace MoonProject.UI.PlayModeTests
 {
     /// <summary>
     /// Steady-state zero-GC check of the UI: with a prompt following a moving point under the reticle, with the tower
-    /// panel and its pinned chip, with a ticker line resting, and with the pause menu open, one frame additionally
-    /// runs the UI's Update 600 times. Unity's "GC Allocated In Frame" for the quietest of three such frames must stay
-    /// at the level of plain frames; a control frame proves the counter sees allocations at all.
+    /// panel and its pinned chip, with a ticker line resting, with the hop list over a moving fade, and with the
+    /// pause menu open, one frame additionally runs the UI's Update 600 times. Unity's "GC Allocated In Frame" for the
+    /// quietest of three such frames must stay at the level of plain frames; a control frame proves the counter sees
+    /// allocations at all.
     /// </summary>
     public sealed class UiAllocationTests : InputTestFixture
     {
@@ -117,6 +118,29 @@ namespace MoonProject.UI.PlayModeTests
             Assert.IsTrue(_rig.Ui.Ticker.IsShown);
             yield return Measure(Bind(_rig.Ui, "Update"), "ticker line resting, its lamp breathing");
             Assert.IsTrue(_rig.Ui.Ticker.IsShown, "the line rested through the whole measurement");
+        }
+
+        [UnityTest]
+        public IEnumerator HopListHoldingAndTheFadeMidway_DoNotAllocate()
+        {
+            InputSystem.AddDevice<Keyboard>();
+            _rig = UiTestRig.Boot(_controls, _slot);
+            _rig.Bootstrap.Context.Events.Publish(new RoverAwoke(Vector3.zero, false));
+            _rig.Fakes.SetHopChoices(UiTestRig.HomeNode, UiTestRig.FirstRelayNode, UiTestRig.SecondRelayNode);
+            _rig.Fakes.Open();
+            _rig.Fakes.Fade = 0.5f;
+            yield return new WaitForSecondsRealtime(1f);
+            Assert.IsTrue(_rig.Ui.HopList.IsVisible && _rig.Ui.HopFade.IsVisible);
+
+            Action update = Bind(_rig.Ui, "Update");
+            Action frame = () =>
+            {
+                _step++;
+                _rig.Fakes.ConfirmHold = (_step % 100) * 0.01f;
+                _rig.Fakes.Fade = 0.5f + 0.4f * Mathf.Sin(_step * 0.02f);
+                update();
+            };
+            yield return Measure(frame, "hop list with a filling ring over a moving fade");
         }
 
         private static IEnumerator Measure(Action frame, string label)

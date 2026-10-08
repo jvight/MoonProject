@@ -7,6 +7,8 @@
 
 .moon-root,
 .hud,
+.hop-veil,
+.hop-veil__dark,
 .pause,
 .pause__veil,
 .pause__frame {
@@ -29,6 +31,7 @@
 .section-label,
 .chip__number,
 .friend-name,
+.hop-list__glyph,
 .dial-readout__station,
 .dial-readout__tape,
 .glyph__label,
@@ -188,6 +191,13 @@ Label {
     height: 16px;
     --icon-color: var(--moon-warm-lamp);
     --icon-hole-color: var(--moon-sky-top);
+}
+
+.relay-icon {
+    width: 20px;
+    height: 16px;
+    --icon-color: var(--moon-warm-lamp);
+    --mast-color: var(--moon-text-faint);
 }
 
 .cassette-icon--quiet {
@@ -413,6 +423,106 @@ Label {
     font-size: 23px;
     color: var(--moon-cream);
     -unity-text-align: middle-center;
+}
+
+/* Radio-hop list: the other lit nodes, in the dial readout's place just above the ticker's band */
+
+.hop-list {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 84px;
+    align-items: center;
+}
+
+.hop-list__rows {
+    min-width: 250px;
+    padding: 12px 24px 12px 16px;
+    border-radius: 20px;
+    border-width: 1px;
+    border-color: var(--moon-glass-edge);
+    background-color: var(--moon-glass);
+}
+
+.hop-list__row {
+    flex-direction: row;
+    align-items: center;
+    height: 38px;
+}
+
+.hop-list__marker {
+    width: 30px;
+    height: 30px;
+    margin-right: 12px;
+    justify-content: center;
+    align-items: center;
+    --track-color: var(--moon-track);
+    --fill-color: var(--moon-warm-lamp);
+    --ring-width: 2;
+}
+
+.hop-list__glyph {
+    font-size: 12px;
+    color: var(--moon-warm-lamp);
+    -unity-text-align: middle-center;
+    display: none;
+}
+
+.hop-list__name {
+    font-size: 19px;
+    color: var(--moon-text-dim);
+}
+
+.hop-list__row--selected .hop-list__marker {
+    border-radius: 15px;
+    background-color: var(--moon-amber-soft);
+}
+
+.hop-list__row--selected .hop-list__glyph {
+    display: flex;
+}
+
+.hop-list__row--selected .hop-list__name {
+    color: var(--moon-cream);
+}
+
+/* Relay price tag: the scrap nut in a hold ring, and the cost (dimmed while the scrap is not there yet) */
+
+.relay-tag__body {
+    padding: 6px 16px 6px 7px;
+}
+
+.relay-tag__ring {
+    width: 32px;
+    height: 32px;
+    justify-content: center;
+    align-items: center;
+    --track-color: var(--moon-track);
+    --fill-color: var(--moon-warm-lamp);
+    --ring-width: 2.5;
+}
+
+.relay-tag__cost {
+    margin-left: 6px;
+}
+
+.relay-tag--short .relay-tag__cost {
+    color: var(--moon-text-faint);
+}
+
+.relay-tag--short .scrap-icon {
+    opacity: 0.5;
+}
+
+/* Radio-hop fade: a soft indigo dark and a faint crawling grain, over the HUD and under the pause menu */
+
+.hop-veil__dark {
+    background-color: var(--moon-sky-top);
+}
+
+.hop-veil__grain {
+    position: absolute;
+    -unity-background-image-tint-color: var(--moon-cream);
 }
 
 /* Memory card */
@@ -685,6 +795,10 @@ Label {
     margin-left: 9px;
     font-size: 15px;
     color: var(--moon-text-dim);
+}
+
+.pause__relays {
+    margin-top: 6px;
 }
 
 .pause__pages {

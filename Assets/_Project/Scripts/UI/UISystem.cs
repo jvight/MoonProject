@@ -11,13 +11,14 @@ using MoonProject.Gameplay;
 namespace MoonProject.UI
 {
     /// <summary>
-    /// The UI domain's game system (initialised last, after Gameplay). As little UI as possible, as calm as possible:
-    /// a title while 07 wakes, context prompts only the first few times, a reticle only while aiming, a scrap chip
-    /// only when the balance changes, a story card per relic brought home, crew log found and cassette collected, the
-    /// tower upgrade panel on its pad, a few warm pips over a broken friend while 07 is near, its name and its crew log
-    /// when it wakes, the radio's ticker line along the bottom, the station's name when Bell's dial is turned, and the
-    /// pause menu with settings. It registers <see cref="ILocalization"/> and owns the cursor and the UI's save
-    /// sections. Everything animates on unscaled time so the menu stays alive while the game is paused.
+    /// The UI domain's game system (initialised last, after Gameplay). As little UI as possible, as calm as possible: a
+    /// title while 07 wakes, context prompts only the first few times, a reticle only while aiming, a scrap chip only
+    /// when the balance changes, a story card per relic brought home, crew log found and cassette collected, the tower
+    /// upgrade panel on its pad, a few warm pips over a broken friend while 07 is near, its name and its crew log when
+    /// it wakes, the radio's ticker line along the bottom, the station's name when Bell's dial is turned, the relay
+    /// network's price tag, hop list and soft hop fade, and the pause menu with settings. It registers
+    /// <see cref="ILocalization"/> and owns the cursor and the UI's save sections. Everything animates on unscaled time
+    /// so the menu stays alive while the game is paused.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class UISystem : MonoBehaviour, IGameSystem
@@ -56,6 +57,9 @@ namespace MoonProject.UI
         private TickerQueue _tickerLines;
         private RadioTicker _ticker;
         private DialReadout _dial;
+        private HopList _hopList;
+        private HopFade _hopFade;
+        private RelayTag _relayTag;
         private TowerPanel _tower;
         private FriendReadout _friendReadout;
         private FriendNameTag _friendName;
@@ -88,6 +92,12 @@ namespace MoonProject.UI
         internal TickerQueue TickerLines => _tickerLines;
 
         internal DialReadout Dial => _dial;
+
+        internal HopList HopList => _hopList;
+
+        internal HopFade HopFade => _hopFade;
+
+        internal RelayTag RelayTag => _relayTag;
 
         internal TowerPanel Tower => _tower;
 
@@ -204,6 +214,8 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<CrewLogFound>(OnCrewLogFound));
             _tokens.Add(events.Subscribe<CassetteCollected>(OnCassetteCollected));
             _tokens.Add(events.Subscribe<RadioProgramChanged>(OnRadioProgramChanged));
+            _tokens.Add(events.Subscribe<RelayRestored>(OnRelayRestored));
+            _tokens.Add(events.Subscribe<RadioHopListChanged>(OnRadioHopListChanged));
 
             services.Input.Menu.Enable();
             _cursor.Drive();
@@ -256,10 +268,14 @@ namespace MoonProject.UI
                 _localization, services.View);
             _ticker = new RadioTicker(_layout, _tuning.Ticker, _tickerLines);
             _dial = new DialReadout(_layout, _tuning.DialReadout, _localization, services.Radio);
+            _hopList = new HopList(_layout, _tuning.Relays, _localization, services.Hop);
+            _hopFade = new HopFade(_layout, _tuning.Relays, services.Hop);
+            _relayTag = new RelayTag(_layout, _tuning.Relays, _tuning.Prompts, services.Hints, services.Relays,
+                services.View, _numbers);
             _tower = new TowerPanel(_layout, _tuning.TowerPanel, _localization, services.Events, services.Shop,
                 services.Wallet, services.Hints, _numbers);
             _pause = new PauseMenu(_layout, _tuning.Pause, _player, _localization, services.Input, services.Events,
-                services.Save, services.Wallet, services.Radio, _numbers, _cursor, Quit);
+                services.Save, services.Wallet, services.Radio, services.Relays, _numbers, _cursor, Quit);
             _bound = true;
             if (_awake)
             {
@@ -313,9 +329,10 @@ namespace MoonProject.UI
             }
 
             InputDeviceKind device = input.ActiveDevice;
+            bool hopping = _services.Hop.Phase >= RadioHopPhase.Leaving || _hopFade.IsVisible;
             _title.Tick(hudTime);
             _reticle.Tick(deltaTime, _services.Tether.State, input.TetherHeld);
-            _card.Tick(hudTime, _glyphs.Cancel(device), device, !_ticker.IsVisible);
+            _card.Tick(hudTime, _glyphs.Cancel(device), device, !_ticker.IsVisible && !hopping && !_hopList.IsBusy);
             _tower.Tick(hudTime, !paused, input.ExcavateHeld, _glyphs.For(RoverAction.Excavate, device));
             _chip.SetPinned(_tower.IsVisible);
             _chip.Tick(deltaTime);
@@ -326,18 +343,30 @@ namespace MoonProject.UI
             }
 
             bool promptsOpen = !paused && _awake && _sinceAwake >= _tuning.Prompts.StartDelay && !_title.IsPlaying &&
-                               !_card.IsVisible && !_tower.IsVisible && !_dial.IsBusy;
+                               !_card.IsVisible && !_tower.IsVisible && !_dial.IsBusy && !_hopList.IsBusy && !hopping;
             Rect panel = _layout.Root.layout;
             Vector2 panelSize = float.IsNaN(panel.width) ? Vector2.zero : panel.size;
             _friendReadout.Tick(deltaTime, !paused, panelSize,
                 _prompt.StackHeight(InteractionKind.Repair, _tuning.Friends.StackGap));
             _friendName.Tick(hudTime, panelSize);
             _prompt.Tick(deltaTime, promptsOpen, _services.Hints.Primary, device, panelSize);
+            bool tagOpen = !paused && _awake && !_title.IsPlaying && !_card.IsVisible && !_tower.IsVisible &&
+                           !_hopList.IsBusy && !hopping;
+            _relayTag.Tick(deltaTime, tagOpen, panelSize,
+                _prompt.StackHeight(InteractionKind.Restore, _tuning.Relays.TagStackGap));
 
-            _dial.Tick(hudTime, !_prompt.IsVisible);
+            if (_services.Hop.Phase == RadioHopPhase.Choosing && _dial.IsVisible)
+            {
+                _dial.MakeWay();
+            }
+
+            _hopList.Tick(deltaTime, !_dial.IsVisible && !_prompt.IsVisible, _glyphs.For(RoverAction.Excavate, device),
+                device);
+            _dial.Tick(hudTime, !_prompt.IsVisible && !_hopList.IsBusy);
             bool tickerOpen = _awake && !_title.IsPlaying && !_card.IsBusy && !_digging && !_prompt.IsVisible &&
-                              !_reticle.IsVisible && !_dial.IsBusy;
+                              !_reticle.IsVisible && !_dial.IsBusy && !_hopList.IsBusy && !hopping;
             _ticker.Tick(hudTime, tickerOpen);
+            _hopFade.Tick(deltaTime);
         }
 
         private void Quit()
@@ -420,6 +449,19 @@ namespace MoonProject.UI
             }
         }
 
+        private void OnRelayRestored(RelayRestored restored)
+        {
+            _director.NotifyUsed(InteractionKind.Restore);
+        }
+
+        private void OnRadioHopListChanged(RadioHopListChanged changed)
+        {
+            if (changed.Open)
+            {
+                _director.NotifyUsed(InteractionKind.Hop);
+            }
+        }
+
         private void OnTickerLine(TickerLine line)
         {
             _tickerLines.Enqueue(line);
@@ -468,6 +510,7 @@ namespace MoonProject.UI
             _card.Relocalize();
             _ticker.Relocalize();
             _dial.Relocalize();
+            _hopList.Relocalize();
             _friendName.Relocalize();
             _tower.Relocalize();
             _pause.Relocalize();
@@ -502,6 +545,7 @@ namespace MoonProject.UI
                 }
 
                 _pause.RestoreTime();
+                _hopFade.Dispose();
             }
 
             _services.Input.Menu.Disable();

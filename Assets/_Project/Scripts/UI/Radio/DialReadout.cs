@@ -80,6 +80,13 @@ namespace MoonProject.UI
             return true;
         }
 
+        /// <summary>Something else needs the bottom centre (the hop list): the readout eases away early.</summary>
+        public void MakeWay()
+        {
+            _pending = false;
+            _reveal.Hide();
+        }
+
         /// <param name="deltaTime">Unscaled seconds; 0 while paused.</param>
         /// <param name="stageClear">False while a context prompt is still on screen: a new turn waits for it.</param>
         public void Tick(float deltaTime, bool stageClear)
