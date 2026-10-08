@@ -13,7 +13,7 @@ namespace MoonProject.Gameplay
         {
             InteractionKind.Deposit, InteractionKind.Repair, InteractionKind.Restore, InteractionKind.Tune,
             InteractionKind.Hop, InteractionKind.Upgrade, InteractionKind.Salvage, InteractionKind.Excavate,
-            InteractionKind.Tether, InteractionKind.Reel, InteractionKind.Ping,
+            InteractionKind.Stow, InteractionKind.Tether, InteractionKind.Reel, InteractionKind.Ping,
         };
 
         private readonly IRoverState _rover;
@@ -21,6 +21,7 @@ namespace MoonProject.Gameplay
         private readonly ExcavationSystem _excavation;
         private readonly SalvageField _salvage;
         private readonly TetherSystem _tether;
+        private readonly CargoCradle _cradle;
         private readonly HomeBase _home;
         private readonly IUpgradeStation[] _stations;
         private readonly UpgradeService _upgrades;
@@ -28,7 +29,7 @@ namespace MoonProject.Gameplay
         private readonly RelayField _relays;
 
         public InteractionHints(IRoverState rover, SonarSystem sonar, ExcavationSystem excavation,
-            SalvageField salvage, TetherSystem tether, HomeBase home, IUpgradeStation[] stations,
+            SalvageField salvage, TetherSystem tether, CargoCradle cradle, HomeBase home, IUpgradeStation[] stations,
             UpgradeService upgrades, FriendField friends, RelayField relays)
         {
             _rover = rover ?? throw new ArgumentNullException(nameof(rover));
@@ -36,6 +37,7 @@ namespace MoonProject.Gameplay
             _excavation = excavation != null ? excavation : throw new ArgumentNullException(nameof(excavation));
             _salvage = salvage != null ? salvage : throw new ArgumentNullException(nameof(salvage));
             _tether = tether != null ? tether : throw new ArgumentNullException(nameof(tether));
+            _cradle = cradle != null ? cradle : throw new ArgumentNullException(nameof(cradle));
             _home = home != null ? home : throw new ArgumentNullException(nameof(home));
             _stations = stations ?? throw new ArgumentNullException(nameof(stations));
             _upgrades = upgrades ?? throw new ArgumentNullException(nameof(upgrades));
@@ -77,15 +79,21 @@ namespace MoonProject.Gameplay
                     SalvagePiece piece = _salvage.Cutting ?? _salvage.Candidate;
                     hint = piece != null ? new InteractionHint(kind, piece.CutPosition, true) : InteractionHint.None;
                     return piece != null;
+                case InteractionKind.Stow:
+                    Relic stowable = _cradle.CanStow ? _tether.Hovered : null;
+                    hint = stowable != null
+                        ? new InteractionHint(kind, stowable.transform.position, true)
+                        : InteractionHint.None;
+                    return stowable != null;
                 case InteractionKind.Tether:
                     ITowable hovered = _tether.HoveredBody;
-                    hint = hovered != null
-                        ? new InteractionHint(kind, hovered.Position, true)
-                        : InteractionHint.None;
-                    return hovered != null;
+                    bool tow = hovered != null && !(_cradle.CanStow && hovered is Relic);
+                    hint = tow ? new InteractionHint(kind, hovered.Position, true) : InteractionHint.None;
+                    return tow;
                 case InteractionKind.Deposit:
                     Relic relic = _tether.Towed;
-                    bool deposit = relic != null && _home.InDepositZone(relic.transform.position);
+                    bool deposit = (relic != null && _home.InDepositZone(relic.transform.position)) ||
+                                   _cradle.CanUnload;
                     hint = deposit ? new InteractionHint(kind, _home.ShelfPosition, true) : InteractionHint.None;
                     return deposit;
                 case InteractionKind.Repair:

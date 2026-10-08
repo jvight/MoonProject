@@ -4,6 +4,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.TestTools;
+using MoonProject.Core;
 using MoonProject.Core.Events;
 using MoonProject.Testing;
 using Object = UnityEngine.Object;
@@ -152,6 +153,26 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(1, _fixture.Events.RelicAnswered.Count);
             Assert.AreEqual(walkman.Definition.Id, _fixture.Events.RelicAnswered[0].Value.RelicId);
             Assert.IsTrue(walkman.Discovered);
+        }
+
+        [UnityTest]
+        public IEnumerator WarmHeadlamp_HoldsUpThePillarAhead_AWhileLonger()
+        {
+            _fixture = GameplayFixture.Boot(_controls);
+            yield return null;
+            _fixture.Rover.Grant(RoverAbility.WarmHeadlamp);
+            SonarSystem sonar = _fixture.Gameplay.Sonar;
+            SonarTuning tuning = _fixture.SonarTuning;
+            int firstSite = _fixture.Gameplay.Relics.Relics.Count + _fixture.Gameplay.Friends.Count;
+            SiteMarker ahead = sonar.Markers[firstSite + _fixture.FindSite("depot").Index];
+            SiteMarker behind = sonar.Markers[firstSite + _fixture.FindSite("garage").Index];
+
+            yield return Tap();
+            yield return new WaitForSeconds(tuning.PillarLifetime + tuning.RingDuration + tuning.AnswerLag + 0.5f);
+            Assert.IsFalse(behind.PillarStanding(Time.time), "the pillar behind 07 bows out on time");
+            Assert.IsTrue(ahead.PillarStanding(Time.time), "the one 07 heads for, in the headlamp, stands longer");
+            yield return new WaitForSeconds(tuning.HeadlampMaxLinger);
+            Assert.IsFalse(ahead.PillarStanding(Time.time), "but only a little longer");
         }
 
         [UnityTest]

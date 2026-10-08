@@ -137,7 +137,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(0, tower.ActiveStage);
             Assert.Less(tower.BeaconLevel, 0.01f, "the old mast stands dark");
 
-            _fixture.GiveMaterials(0, 3, 2);
+            _fixture.GiveMaterials(0, 2, 3);
             Assert.AreEqual(PurchaseResult.NotAtStation, shop.Purchase(Tower), "bought on the pad, not anywhere");
             _fixture.Rover.Place(tower.PadCentre, 0f);
             yield return null;
@@ -178,7 +178,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator Workshop_SellsHoverJumpOnItsOwnPad_GrantsIt_AndGrantsItAgainOnLoad()
+        public IEnumerator Workshop_SellsItsKitInOrderOnItsOwnPad_GrantsIt_AndGrantsItAgainOnLoad()
         {
             string slot = BootstrapHarness.NewTestSlot();
             _fixture = GameplayFixture.Boot(_controls, slot);
@@ -227,13 +227,32 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsTrue(_fixture.Rover.Has(RoverAbility.HoverJump), "07 can leap now");
             Assert.Greater(workshop.PadLevel, look.Occupied, "the purchase flares the pad");
             Assert.AreEqual(tuning.LampFlare, workshop.LampLevel, 1e-3f, "and the lamp");
-            Assert.IsFalse(_fixture.Gameplay.Hints.TryGet(InteractionKind.Upgrade, out _), "nothing left to buy");
+            Assert.AreSame(_fixture.CargoCradleUpgrade, workshop.Definition, "then the bench offers the Cargo Cradle");
+            Assert.IsTrue(_fixture.Gameplay.Hints.TryGet(InteractionKind.Upgrade, out hint));
+            Assert.IsFalse(hint.Ready, "4 metal it does not have yet");
             Assert.AreEqual(PurchaseResult.Maxed, shop.Purchase(HoverJump));
             Vector3 pad = workshop.PadCentre;
             _fixture.Rover.Aim(pad + new Vector3(-7f, 5f, -7f), pad + Vector3.up);
             yield return new WaitForSeconds(tuning.SparkInterval * 1.5f);
             Assert.Greater(workshop.SparkCount, tuning.SparkCount, "sparks fly from between the vice jaws");
             _fixture.Capture("18-workshop-hover-jump");
+
+            _fixture.GiveMaterials(5, 2, 4);
+            UpgradeDefinition[] kit =
+            {
+                _fixture.CargoCradleUpgrade, _fixture.WarmHeadlampUpgrade, _fixture.BoostCoilsUpgrade,
+            };
+            RoverAbility[] abilities = { RoverAbility.CargoCradle, RoverAbility.WarmHeadlamp, RoverAbility.BoostCoils };
+            for (int i = 0; i < kit.Length; i++)
+            {
+                Assert.AreSame(kit[i], workshop.Definition, "the bench offers its kit in order");
+                Assert.AreEqual(PurchaseResult.Purchased, shop.Purchase(kit[i].Id));
+                Assert.IsTrue(_fixture.Rover.Has(abilities[i]), $"{kit[i].Id} grants its ability");
+            }
+
+            Assert.AreEqual(0, _fixture.Gameplay.Materials.Total, "the kit takes exactly its recipes");
+            balance = 0;
+            Assert.IsFalse(_fixture.Gameplay.Hints.TryGet(InteractionKind.Upgrade, out _), "nothing left to buy");
             yield return new WaitForSeconds(tuning.SparkInterval * tuning.SparkBursts + tuning.SparkLifetime.y + 0.5f);
             Assert.AreEqual(0, workshop.SparkCount, "the sparks die out (an idle bench costs nothing)");
             Assert.Less(workshop.PadLevel, look.Occupied * 0.5f, "an empty bench's pad rests dim");
@@ -245,6 +264,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return null;
             Assert.AreEqual(1, _fixture.Gameplay.Upgrades.LevelOf(HoverJump), "the purchase was a checkpoint");
             Assert.IsTrue(_fixture.Rover.Has(RoverAbility.HoverJump), "granted again on load");
+            Assert.IsTrue(_fixture.Rover.Has(RoverAbility.CargoCradle));
+            Assert.IsTrue(_fixture.Rover.Has(RoverAbility.WarmHeadlamp));
+            Assert.IsTrue(_fixture.Rover.Has(RoverAbility.BoostCoils));
             Assert.AreEqual(0, _fixture.Events.UpgradePurchased.Count, "a load is never a purchase");
             Assert.AreEqual(balance, _fixture.Gameplay.Materials.Total, "the checkpoint kept the change");
         }

@@ -147,7 +147,8 @@ namespace MoonProject.Gameplay.Tests
             }
 
             var relays = Create<RelayTuning>();
-            Recipe costs = SalvageEconomy.HoverJump.Plus(relays.TotalCost(RelayMasts));
+            Recipe costs = SalvageEconomy.HoverJump.Plus(relays.TotalCost(RelayMasts))
+                .Plus(SalvageEconomy.CargoCradle).Plus(SalvageEconomy.WarmHeadlamp).Plus(SalvageEconomy.BoostCoils);
             foreach (Recipe level in SalvageEconomy.RadioTower)
             {
                 costs = costs.Plus(level);
@@ -165,6 +166,29 @@ namespace MoonProject.Gameplay.Tests
             }
 
             Assert.GreaterOrEqual(yield[0] + yield[1] + yield[2], 2 * costs.Total, "and at least twice in all");
+        }
+
+        [Test]
+        public void BenchKit_LeansOnItsOwnMaterial()
+        {
+            AssertLeansOn(SalvageEconomy.CargoCradle, SalvageMaterial.Metal, "the Cargo Cradle is a metal rack");
+            AssertLeansOn(SalvageEconomy.WarmHeadlamp, SalvageMaterial.Optics, "the Warm Headlamp is lenses and lamps");
+            AssertLeansOn(SalvageEconomy.BoostCoils, SalvageMaterial.Wiring, "the Boost Coils are wound wiring");
+        }
+
+        private static void AssertLeansOn(Recipe recipe, SalvageMaterial material, string what)
+        {
+            Assert.IsFalse(recipe.IsFree, what);
+            foreach (SalvageMaterial other in new[]
+                     {
+                         SalvageMaterial.Metal, SalvageMaterial.Wiring, SalvageMaterial.Optics,
+                     })
+            {
+                if (other != material)
+                {
+                    Assert.Greater(recipe.Of(material), recipe.Of(other), what);
+                }
+            }
         }
 
         private T Create<T>() where T : ScriptableObject

@@ -3,8 +3,9 @@ using UnityEngine;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// How relics behave as objects: low-gravity physics, the highlight halo, their idle and display motion, and the
-    /// gentle return when one drifts out of reach. Created by the Gameplay/Tuning builder; runtime code only reads it.
+    /// How relics behave as objects: low-gravity physics, the highlight halo, their idle and display motion, the
+    /// gentle return when one drifts out of reach, and the lift into 07's Cargo Cradle. Created by the Gameplay/Tuning
+    /// builder; runtime code only reads it.
     /// </summary>
     public sealed class RelicTuning : ScriptableObject
     {
@@ -67,6 +68,25 @@ namespace MoonProject.Gameplay
         [Tooltip("Seconds for a returning relic to float back.")]
         [Range(0.5f, 10f)] [SerializeField] private float _returnDuration = 3.5f;
 
+        [Header("Cargo Cradle")]
+        [Tooltip("Seconds a relic takes to lift gently into 07's rack from right beside it...")]
+        [Range(0.3f, 5f)] [SerializeField] private float _stowDuration = 1.2f;
+
+        [Tooltip("...plus this many seconds per metre it floats to get there.")]
+        [Range(0f, 0.3f)] [SerializeField] private float _stowPerMetre = 0.05f;
+
+        [Tooltip("Height (m) of the soft arc a relic floats along into the rack.")]
+        [Range(0f, 4f)] [SerializeField] private float _stowLift = 1.1f;
+
+        [Tooltip("Height (m) above its seat a stowed relic pauses at before it settles in.")]
+        [Range(0f, 1f)] [SerializeField] private float _stowHover = 0.3f;
+
+        [Tooltip("How far a relic settling into the rack overshoots its seat (0 = none, ~1.7 = a clear bounce).")]
+        [Range(0f, 3f)] [SerializeField] private float _stowOvershoot = 1.2f;
+
+        [Tooltip("Halo brightness of a relic riding in the rack (it is precious cargo).")]
+        [Range(0f, 2f)] [SerializeField] private float _cradleGlow = 0.25f;
+
         public float Bounciness => _bounciness;
         public float Friction => _friction;
         public float LinearDamping => _linearDamping;
@@ -85,5 +105,11 @@ namespace MoonProject.Gameplay
         public float ReturnMargin => _returnMargin;
         public float ReturnHover => _returnHover;
         public float ReturnDuration => _returnDuration;
+        public float StowDuration => _stowDuration;
+        public float StowPerMetre => _stowPerMetre;
+        public float StowLift => _stowLift;
+        public float StowHover => _stowHover;
+        public float StowOvershoot => _stowOvershoot;
+        public float CradleGlow => _cradleGlow;
     }
 }

@@ -20,5 +20,8 @@ namespace MoonProject.Gameplay
 
         /// <summary>Drifted off the drivable floor (or below it) and is floating gently back within reach.</summary>
         Returning = 5,
+
+        /// <summary>Riding home in 07's Cargo Cradle (docs/features/M3-11), lifted in or settled in the rack.</summary>
+        Cradled = 6,
     }
 }

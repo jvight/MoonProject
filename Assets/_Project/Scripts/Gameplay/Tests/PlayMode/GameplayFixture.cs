@@ -54,8 +54,11 @@ namespace MoonProject.Gameplay.PlayModeTests
         private readonly List<Object> _created = new List<Object>();
         private readonly InputActionAsset _controls;
 
-        private GameplayFixture(InputActionAsset controls, string saveSlot)
+        private readonly bool _cargoSeat;
+
+        private GameplayFixture(InputActionAsset controls, string saveSlot, bool cargoSeat)
         {
+            _cargoSeat = cargoSeat;
             _controls = controls;
             SaveSlot = saveSlot;
         }
@@ -94,6 +97,12 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         public UpgradeDefinition HoverJumpUpgrade { get; private set; }
 
+        public UpgradeDefinition CargoCradleUpgrade { get; private set; }
+
+        public UpgradeDefinition WarmHeadlampUpgrade { get; private set; }
+
+        public UpgradeDefinition BoostCoilsUpgrade { get; private set; }
+
         public FriendTuning FriendTuning { get; private set; }
 
         public FriendDefinition Tilly { get; private set; }
@@ -120,9 +129,10 @@ namespace MoonProject.Gameplay.PlayModeTests
         public RelayTuning RelayTuning { get; private set; }
 
         /// <summary>Builds and boots everything; 07 starts at the base facing +Z.</summary>
-        public static GameplayFixture Boot(InputActionAsset controls, string saveSlot = null)
+        /// <param name="cargoSeat">False boots a rover that registers no cargo seat (the boot check's test).</param>
+        public static GameplayFixture Boot(InputActionAsset controls, string saveSlot = null, bool cargoSeat = true)
         {
-            var fixture = new GameplayFixture(controls, saveSlot ?? BootstrapHarness.NewTestSlot());
+            var fixture = new GameplayFixture(controls, saveSlot ?? BootstrapHarness.NewTestSlot(), cargoSeat);
             fixture.Build();
             return fixture;
         }
@@ -210,7 +220,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         private void Build()
         {
             World = Track(FlatWorldSystem.Create());
-            Rover = Track(FakeRoverSystem.Create(Vector3.zero, 0f));
+            Rover = Track(FakeRoverSystem.Create(Vector3.zero, 0f, _cargoSeat));
 
             GlintTuning = Asset<GlintTuning>();
             SonarTuning = Asset<SonarTuning>();
@@ -222,7 +232,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             RadioTowerUpgrade = Asset<UpgradeDefinition>();
             RadioTowerUpgrade.Populate("radio_tower", UpgradeStationKind.RadioTower, 60f, new[]
             {
-                new UpgradeLevel(new Recipe(0, 1, 1), 110f, 1.25f), new UpgradeLevel(new Recipe(0, 2, 1), 170f, 1.5f),
+                new UpgradeLevel(new Recipe(0, 1, 1), 110f, 1.25f), new UpgradeLevel(new Recipe(0, 1, 2), 170f, 1.5f),
                 new UpgradeLevel(new Recipe(0, 2, 2), 260f, 1.8f),
             });
             WorkshopTuning = Asset<WorkshopTuning>();
@@ -231,6 +241,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             {
                 new UpgradeLevel(new Recipe(4, 2, 1), RoverAbility.HoverJump),
             });
+            CargoCradleUpgrade = RoverKit("rover.cargo_cradle", new Recipe(4, 0, 0), RoverAbility.CargoCradle);
+            WarmHeadlampUpgrade = RoverKit("rover.warm_headlamp", new Recipe(1, 0, 3), RoverAbility.WarmHeadlamp);
+            BoostCoilsUpgrade = RoverKit("rover.boost_coils", new Recipe(1, 2, 1), RoverAbility.BoostCoils);
 
             var relicCatalog = Asset<RelicCatalog>();
             var definitions = new RelicDefinition[RelicIds.Length];
@@ -266,6 +279,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             var excavation = Child<ExcavationSystem>(root, "Excavation");
             var tether = Child<TetherSystem>(root, "Tether");
             var home = Child<HomeBase>(root, "Home");
+            var cradle = Child<CargoCradle>(root, "CargoCradle");
             var tower = Child<RadioTower>(root, "RadioTower");
             var workshop = Child<Workshop>(root, "Workshop");
             var friends = Child<FriendField>(root, "Friends");
@@ -285,8 +299,11 @@ namespace MoonProject.Gameplay.PlayModeTests
             sonar.Wire(SonarTuning);
             excavation.Wire(ExcavationTuning);
             tether.Wire(TetherTuning);
-            Gameplay.Wire(visuals, GlintTuning, new[] { RadioTowerUpgrade, HoverJumpUpgrade }, salvage, relics,
-                sonar, excavation, tether, home, tower, workshop, friends, cassettes, logs, signals, shelf, relays);
+            Gameplay.Wire(visuals, GlintTuning, new[]
+                {
+                    RadioTowerUpgrade, HoverJumpUpgrade, CargoCradleUpgrade, WarmHeadlampUpgrade, BoostCoilsUpgrade,
+                }, salvage, relics, sonar, excavation, tether, home, cradle, tower, workshop, friends, cassettes, logs,
+                signals, shelf, relays);
             root.SetActive(true);
 
             Bootstrap = BootstrapHarness.Create(_controls, SaveSlot, World, Rover, Gameplay);
@@ -342,7 +359,9 @@ namespace MoonProject.Gameplay.PlayModeTests
                 Vector3.zero);
             Block(workbench, new Vector3(0f, 0.47f, 0f), new Vector3(2.3f, 0.95f, 0.9f));
             Transform lamp = Block(workbench, new Vector3(0.55f, 2.02f, 0.18f), Vector3.one * 0.12f);
-            workshop.Wire(WorkshopTuning, new[] { HoverJumpUpgrade }, workbench.parent, lamp.GetComponent<Renderer>(),
+            workshop.Wire(WorkshopTuning,
+                new[] { HoverJumpUpgrade, CargoCradleUpgrade, WarmHeadlampUpgrade, BoostCoilsUpgrade },
+                workbench.parent, lamp.GetComponent<Renderer>(),
                 Node("SparkSocket", workbench, new Vector3(-0.82f, 1.14f, 0.32f)));
             TillyPerch = Node("FriendSocket_tilly", lander, new Vector3(-1.6f, 3.3f, 0.9f));
             BellCorner = Node("BellCorner", anchor, new Vector3(-4.9f, 0f, 0.4f));
@@ -361,6 +380,14 @@ namespace MoonProject.Gameplay.PlayModeTests
             var tapes = rack.gameObject.AddComponent<CassetteShelf>();
             tapes.Wire(ShelfSlots);
             return tapes;
+        }
+
+        /// <summary>A one-level rover ability sold at the bench, as in the content builder.</summary>
+        private UpgradeDefinition RoverKit(string id, Recipe recipe, RoverAbility ability)
+        {
+            var upgrade = Asset<UpgradeDefinition>();
+            upgrade.Populate(id, UpgradeStationKind.Workshop, 0f, new[] { new UpgradeLevel(recipe, ability) });
+            return upgrade;
         }
 
         /// <summary>

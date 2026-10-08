@@ -13,7 +13,8 @@ namespace MoonProject.Gameplay
     /// publishing <see cref="SiteAnswered"/> and raising a light pillar on the horizon that stands for a while. A relic
     /// lying loose out in the world answers on its own (<see cref="RelicAnswered"/>), and a broken friend with its
     /// broken chirp (<see cref="FriendAnswered"/>) and a warm pillar. 07 turns to the nearest answer, then keeps
-    /// glancing at the nearest standing pillar now and then. A spotter friend can also reveal a site softly.
+    /// glancing at the nearest standing pillar now and then. A spotter friend can also reveal a site softly. With the
+    /// Warm Headlamp fitted, a site's or relic's pillar 07 is heading toward stands a little longer.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class SonarSystem : MonoBehaviour
@@ -28,6 +29,7 @@ namespace MoonProject.Gameplay
         private RelicField _relics;
         private FriendField _friends;
         private SalvageField _salvage;
+        private IRoverAbilities _abilities;
         private SonarSchedule _schedule;
         private SonarRing[] _rings = Array.Empty<SonarRing>();
         private SiteMarker[] _markers = Array.Empty<SiteMarker>();
@@ -59,7 +61,7 @@ namespace MoonProject.Gameplay
         }
 
         internal bool Initialize(GameplayServices services, RelicField relics, FriendField friends,
-            SalvageField salvage)
+            SalvageField salvage, IRoverAbilities abilities)
         {
             if (_tuning == null)
             {
@@ -75,6 +77,7 @@ namespace MoonProject.Gameplay
             _relics = relics ?? throw new ArgumentNullException(nameof(relics));
             _friends = friends != null ? friends : throw new ArgumentNullException(nameof(friends));
             _salvage = salvage != null ? salvage : throw new ArgumentNullException(nameof(salvage));
+            _abilities = abilities ?? throw new ArgumentNullException(nameof(abilities));
             int relicCount = relics.Relics.Count;
             int answerers = relicCount + friends.Count + salvage.Sites.Count;
             _schedule = new SonarSchedule(answerers);
@@ -148,6 +151,11 @@ namespace MoonProject.Gameplay
                 _rings[i].Tick(now);
             }
 
+            if (_abilities.Has(RoverAbility.WarmHeadlamp))
+            {
+                LingerFacedPillars(now, Time.deltaTime);
+            }
+
             int relicCount = _relics.Relics.Count;
             for (int i = 0; i < relicCount; i++)
             {
@@ -171,6 +179,42 @@ namespace MoonProject.Gameplay
             }
 
             UpdateGaze(now);
+        }
+
+        /// <summary>
+        /// The Warm Headlamp's gift to the sonar: a site's or relic's pillar 07 is heading toward stands a little
+        /// longer (friends' warm pillars keep their own time).
+        /// </summary>
+        private void LingerFacedPillars(float now, float deltaTime)
+        {
+            Vector3 heading = _rover.Rotation * Vector3.forward;
+            heading.y = 0f;
+            if (heading.sqrMagnitude < 1e-6f)
+            {
+                return;
+            }
+
+            heading.Normalize();
+            float minCos = Mathf.Cos(_tuning.HeadlampCone * Mathf.Deg2Rad);
+            float seconds = deltaTime * _tuning.HeadlampLinger;
+            Vector3 rover = _rover.Position;
+            int friendsEnd = _relics.Relics.Count + _friends.Count;
+            for (int i = 0; i < _markers.Length; i++)
+            {
+                if (i >= _relics.Relics.Count && i < friendsEnd)
+                {
+                    continue;
+                }
+
+                SiteMarker marker = _markers[i];
+                Vector3 toMarker = marker.Position - rover;
+                toMarker.y = 0f;
+                float distance = toMarker.magnitude;
+                if (distance > 1e-3f && Vector3.Dot(heading, toMarker) >= minCos * distance)
+                {
+                    marker.Linger(seconds, _tuning.HeadlampMaxLinger, now);
+                }
+            }
         }
 
         private void Ping(float now)
