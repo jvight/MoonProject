@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
@@ -9,52 +10,94 @@ namespace MoonProject.Gameplay.Tests
     public sealed class EconomyTests
     {
         private EventBus _events;
-        private List<CurrencyChanged> _changes;
-        private ScrapWallet _wallet;
+        private List<MaterialsChanged> _changes;
+        private MaterialStock _stock;
 
         [SetUp]
         public void SetUp()
         {
             _events = new EventBus();
-            _changes = new List<CurrencyChanged>();
-            _events.Subscribe<CurrencyChanged>(change => _changes.Add(change));
-            _wallet = new ScrapWallet(_events);
+            _changes = new List<MaterialsChanged>();
+            _events.Subscribe<MaterialsChanged>(change => _changes.Add(change));
+            _stock = new MaterialStock(_events);
         }
 
         [Test]
-        public void Wallet_AddAndSpend_PublishTotalsAndDeltas()
+        public void Stock_AddsSalvage_AndSpendsWholeRecipes_PublishingTotals()
         {
-            _wallet.Add(3);
-            _wallet.Add(2);
-            Assert.IsTrue(_wallet.TrySpend(4));
+            _stock.Add(SalvageMaterial.Metal, 4);
+            _stock.Add(SalvageMaterial.Wiring, 3);
+            _stock.Add(SalvageMaterial.Optics, 2);
+            Assert.IsTrue(_stock.Has(new Recipe(4, 2, 1)));
+            Assert.IsTrue(_stock.TrySpend(new Recipe(4, 2, 1)));
 
-            Assert.AreEqual(1, _wallet.Balance);
-            Assert.AreEqual(3, _changes.Count);
-            Assert.AreEqual(5, _changes[1].Total);
-            Assert.AreEqual(2, _changes[1].Delta);
-            Assert.AreEqual(1, _changes[2].Total);
-            Assert.AreEqual(-4, _changes[2].Delta);
+            Assert.AreEqual(0, _stock.Metal);
+            Assert.AreEqual(1, _stock.Wiring);
+            Assert.AreEqual(1, _stock.Optics);
+            Assert.AreEqual(2, _stock.Total);
+            Assert.AreEqual(1, _stock.Of(SalvageMaterial.Optics));
+            Assert.AreEqual(4, _changes.Count);
+            Assert.AreEqual(4, _changes[2].Metal);
+            Assert.AreEqual(2, _changes[2].Optics);
+            Assert.AreEqual(0, _changes[3].Metal);
+            Assert.AreEqual(1, _changes[3].Wiring);
         }
 
         [Test]
-        public void Wallet_CannotSpendMoreThanItHolds_AndNothingChanges()
+        public void Stock_NeverSpendsPartOfARecipe()
         {
-            _wallet.Add(3);
-            Assert.IsFalse(_wallet.CanAfford(4));
-            Assert.IsFalse(_wallet.TrySpend(4));
-            Assert.AreEqual(3, _wallet.Balance);
-            Assert.AreEqual(1, _changes.Count);
+            _stock.Add(SalvageMaterial.Metal, 9);
+            _stock.Add(SalvageMaterial.Wiring, 9);
+            Assert.IsFalse(_stock.Has(new Recipe(1, 1, 1)), "one optics short");
+            Assert.IsFalse(_stock.TrySpend(new Recipe(1, 1, 1)));
+            Assert.AreEqual(18, _stock.Total, "nothing taken");
+            Assert.AreEqual(2, _changes.Count);
+            Assert.Throws<ArgumentException>(() => _stock.TrySpend(new Recipe(0, 0, 0)));
+            Assert.Throws<ArgumentOutOfRangeException>(() => _stock.Add(SalvageMaterial.Optics, 0));
         }
 
         [Test]
-        public void Wallet_Restore_IsARefreshWithZeroDelta()
+        public void Stock_Restore_RoundTripsAndAnnounces()
         {
-            _wallet.Add(5);
-            _wallet.Restore(new WalletSaveData { balance = 42 });
-            Assert.AreEqual(42, _wallet.Balance);
-            Assert.AreEqual(42, _changes[1].Total);
-            Assert.AreEqual(0, _changes[1].Delta);
-            Assert.AreEqual(42, _wallet.Capture().balance);
+            _stock.Add(SalvageMaterial.Metal, 5);
+            _stock.Restore(new MaterialsSaveData { metal = 7, wiring = 3, optics = 2 });
+            Assert.AreEqual(12, _stock.Total);
+            Assert.AreEqual(7, _changes[1].Metal);
+            Assert.AreEqual(3, _changes[1].Wiring);
+            MaterialsSaveData saved = _stock.Capture();
+            Assert.AreEqual(7, saved.metal);
+            Assert.AreEqual(2, saved.optics);
+            Assert.Throws<FormatException>(() => _stock.Restore(new MaterialsSaveData { wiring = -1 }));
+        }
+
+        [Test]
+        public void OldScrap_BecomesAFairMaterialStock()
+        {
+            string json = MaterialsSaveMigrations.Migrate(JsonUtility.ToJson(new WalletSaveData { balance = 150 }),
+                1);
+            MaterialsSaveData stock = JsonUtility.FromJson<MaterialsSaveData>(json);
+            Assert.AreEqual(8, stock.metal + stock.wiring + stock.optics, "150 scrap at 20 per unit, rounded");
+            Assert.AreEqual(4, stock.metal, "dealt metal, wiring, metal, wiring, metal, wiring, optics, metal");
+            Assert.AreEqual(3, stock.wiring);
+            Assert.AreEqual(1, stock.optics);
+            MaterialsSaveData none = MaterialsSaveMigrations.Convert(0);
+            Assert.AreEqual(0, none.metal + none.wiring + none.optics);
+            MaterialsSaveData all = MaterialsSaveMigrations.Convert(705);
+            Assert.AreEqual(35, all.metal + all.wiring + all.optics, "the whole old economy buys about every recipe");
+            Assert.Throws<InvalidOperationException>(() => MaterialsSaveMigrations.Migrate("{}", 2));
+        }
+
+        [Test]
+        public void Recipe_AddsUp()
+        {
+            var recipe = new Recipe(4, 2, 1);
+            Assert.AreEqual(7, recipe.Total);
+            Assert.AreEqual(2, recipe.Of(SalvageMaterial.Wiring));
+            Recipe sum = recipe.Plus(new Recipe(1, 1, 1));
+            Assert.AreEqual(5, sum.Metal);
+            Assert.AreEqual(2, sum.Optics);
+            Assert.IsTrue(new Recipe(0, 0, 0).IsFree);
+            Assert.Throws<ArgumentOutOfRangeException>(() => new Recipe(-1, 0, 0));
         }
 
         [Test]
@@ -97,11 +140,6 @@ namespace MoonProject.Gameplay.Tests
             Assert.AreEqual(0.4f, copy.relics[0].progress, 1e-6f);
             Assert.IsTrue(copy.relics[0].discovered);
             Assert.AreEqual(new Vector3(1f, 2f, 3f), copy.relics[0].position);
-
-            var scrap = new ScrapSaveData { layoutSignature = 77, collected = new[] { 3, 9 } };
-            ScrapSaveData scrapCopy = JsonUtility.FromJson<ScrapSaveData>(JsonUtility.ToJson(scrap));
-            Assert.AreEqual(77, scrapCopy.layoutSignature);
-            CollectionAssert.AreEqual(new[] { 3, 9 }, scrapCopy.collected);
 
             var upgrades = new UpgradesSaveData
             {

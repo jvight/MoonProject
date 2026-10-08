@@ -56,10 +56,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             CassetteSite site = field.Site(basin);
             Vector2 band = _fixture.CassetteTuning.Distance;
             Assert.That(SurfaceRules.HorizontalDistance(site.Position, Vector3.zero), Is.InRange(band.x, band.y));
-            foreach (RelicSite relic in _fixture.Gameplay.Relics.Sites)
+            foreach (SalvageSite wreck in _fixture.Gameplay.Salvage.Sites)
             {
-                Assert.GreaterOrEqual(SurfaceRules.HorizontalDistance(site.Position, relic.Position),
-                    _fixture.CassetteTuning.Clearance, "clear of every relic");
+                Assert.GreaterOrEqual(SurfaceRules.HorizontalDistance(site.Position, wreck.Position),
+                    _fixture.CassetteTuning.Clearance, "clear of every salvage site");
             }
 
             Friend tilly = _fixture.Gameplay.Friends.Find("tilly");

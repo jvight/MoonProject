@@ -5,10 +5,9 @@ using MoonProject.Art;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// Home: where the lander stands, how relics are taken onto the museum shelf, the scrap gift for each memory
-    /// brought home, how the base lights the ground as 07 approaches, and how it carries across the basin while 07 is
-    /// far away (windows that never dim, a soft amber halo). Created by the Gameplay/Tuning builder; runtime code only
-    /// reads it.
+    /// Home: where the lander stands, how relics are taken onto the museum shelf, how the base lights the ground as 07
+    /// approaches, and how it carries across the basin while 07 is far away (windows that never dim, a soft amber
+    /// halo). Created by the Gameplay/Tuning builder; runtime code only reads it.
     /// </summary>
     public sealed class BaseTuning : ScriptableObject
     {
@@ -35,9 +34,6 @@ namespace MoonProject.Gameplay
 
         [Tooltip("Overshoot of the final settle (0 = none, ~1.7 = classic back-ease).")]
         [Range(0f, 3f)] [SerializeField] private float _settleOvershoot = 1.4f;
-
-        [Tooltip("Scrap gift for every memory brought home (no grind: exploring funds the tower).")]
-        [Range(0, 100)] [SerializeField] private int _depositGift = 10;
 
         [Tooltip("Radius (m) of the small warm glow that shows which slot a towed relic will take.")]
         [Range(0.1f, 2f)] [SerializeField] private float _slotHintRadius = 0.2f;
@@ -108,7 +104,6 @@ namespace MoonProject.Gameplay
         public float DepositLift => _depositLift;
         public float DepositHover => _depositHover;
         public float SettleOvershoot => _settleOvershoot;
-        public int DepositGift => _depositGift;
         public float SlotHintRadius => _slotHintRadius;
         public float SlotHintIntensity => _slotHintIntensity;
         public float SlotHintEase => _slotHintEase;

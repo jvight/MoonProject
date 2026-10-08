@@ -16,7 +16,7 @@ namespace MoonProject.Gameplay.Tests
         private List<string> _order;
         private List<float> _radii;
         private List<UpgradePurchased> _purchases;
-        private ScrapWallet _wallet;
+        private MaterialStock _stock;
         private TestAbilities _abilities;
         private UpgradeDefinition _tower;
         private UpgradeDefinition _hoverJump;
@@ -28,7 +28,7 @@ namespace MoonProject.Gameplay.Tests
             _order = new List<string>();
             _radii = new List<float>();
             _purchases = new List<UpgradePurchased>();
-            _events.Subscribe<CurrencyChanged>(_ => _order.Add(nameof(CurrencyChanged)));
+            _events.Subscribe<MaterialsChanged>(_ => _order.Add(nameof(MaterialsChanged)));
             _events.Subscribe<UpgradePurchased>(evt =>
             {
                 _order.Add(nameof(UpgradePurchased));
@@ -39,17 +39,18 @@ namespace MoonProject.Gameplay.Tests
                 _order.Add(nameof(SignalRadiusChanged));
                 _radii.Add(evt.Radius);
             });
-            _wallet = new ScrapWallet(_events);
+            _stock = new MaterialStock(_events);
             _abilities = new TestAbilities();
             _tower = Create<UpgradeDefinition>();
             _tower.Populate("radio_tower", UpgradeStationKind.RadioTower, 60f, new[]
             {
-                new UpgradeLevel(15, 110f, 1.25f), new UpgradeLevel(40, 170f, 1.5f), new UpgradeLevel(80, 260f, 1.8f),
+                new UpgradeLevel(new Recipe(0, 1, 1), 110f, 1.25f), new UpgradeLevel(new Recipe(0, 2, 1), 170f, 1.5f),
+                new UpgradeLevel(new Recipe(0, 2, 2), 260f, 1.8f),
             });
             _hoverJump = Create<UpgradeDefinition>();
             _hoverJump.Populate("rover.hover_jump", UpgradeStationKind.Workshop, 0f, new[]
             {
-                new UpgradeLevel(150, RoverAbility.HoverJump),
+                new UpgradeLevel(new Recipe(4, 2, 1), RoverAbility.HoverJump),
             });
         }
 
@@ -65,21 +66,22 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void Purchase_SpendsScrap_RaisesTheLevel_AndWidensTheSignal()
+        public void Purchase_SpendsTheRecipe_RaisesTheLevel_AndWidensTheSignal()
         {
             var service = Service(_tower);
             Assert.AreEqual(PurchaseResult.CannotAfford, service.Purchase("radio_tower"));
             Assert.AreEqual(0, service.LevelOf("radio_tower"));
-            Assert.IsEmpty(_order, "nothing happens without the scrap");
+            Assert.IsEmpty(_order, "nothing happens without the materials");
 
-            _wallet.Add(20);
+            Give(0, 2, 2);
             _order.Clear();
             Assert.AreEqual(PurchaseResult.Purchased, service.Purchase("radio_tower"));
             Assert.AreEqual(1, service.LevelOf("radio_tower"));
-            Assert.AreEqual(5, _wallet.Balance);
+            Assert.AreEqual(1, _stock.Wiring);
+            Assert.AreEqual(1, _stock.Optics);
             CollectionAssert.AreEqual(new[]
             {
-                nameof(CurrencyChanged), nameof(UpgradePurchased), nameof(SignalRadiusChanged),
+                nameof(MaterialsChanged), nameof(UpgradePurchased), nameof(SignalRadiusChanged),
             }, _order);
             Assert.AreEqual(1, _purchases[0].Level);
             Assert.AreEqual(110f, _radii[0]);
@@ -90,11 +92,11 @@ namespace MoonProject.Gameplay.Tests
         public void Purchase_StopsAtTheLastLevel_AndRejectsUnknownIds()
         {
             var service = Service(_tower);
-            _wallet.Add(135);
+            Give(0, 5, 4);
             Assert.AreEqual(PurchaseResult.Purchased, service.Purchase("radio_tower"));
             Assert.AreEqual(PurchaseResult.Purchased, service.Purchase("radio_tower"));
             Assert.AreEqual(PurchaseResult.Purchased, service.Purchase("radio_tower"));
-            Assert.AreEqual(0, _wallet.Balance, "the three levels cost 135 in all");
+            Assert.AreEqual(0, _stock.Total, "the three levels take 5 wiring and 4 optics in all");
             Assert.AreEqual(PurchaseResult.Maxed, service.Purchase("radio_tower"));
             Assert.AreEqual(PurchaseResult.Unknown, service.Purchase("hover_jump"));
             Assert.IsTrue(service.TryGetOffer("radio_tower", out UpgradeOffer offer));
@@ -107,14 +109,15 @@ namespace MoonProject.Gameplay.Tests
         public void Offer_ShowsTheNextLevel_AndWhetherItIsAffordable()
         {
             var service = Service(_tower);
-            _wallet.Add(14);
+            Give(0, 1, 0);
             Assert.IsTrue(service.TryGetOffer("radio_tower", out UpgradeOffer offer));
             Assert.AreEqual(0, offer.CurrentLevel);
             Assert.AreEqual(3, offer.MaxLevel);
-            Assert.AreEqual(15, offer.NextCost);
+            Assert.AreEqual(1, offer.NextCost.Wiring);
+            Assert.AreEqual(1, offer.NextCost.Optics);
             Assert.AreSame(_tower.Levels[0], offer.Next);
-            Assert.IsFalse(offer.CanAfford);
-            _wallet.Add(1);
+            Assert.IsFalse(offer.CanAfford, "one optics short");
+            Give(0, 0, 1);
             Assert.IsTrue(service.TryGetOffer("radio_tower", out offer));
             Assert.IsTrue(offer.CanAfford);
             Assert.IsFalse(service.TryGetOffer("nope", out _));
@@ -148,7 +151,7 @@ namespace MoonProject.Gameplay.Tests
             var station = new TestStation { Definition = _tower };
             var save = new CountingSave();
             var shop = new UpgradeShop(service, new IUpgradeStation[] { station }, save);
-            _wallet.Add(60);
+            Give(0, 3, 2);
             Assert.IsFalse(shop.IsAtStation);
             Assert.IsNull(shop.StationUpgrade);
             Assert.AreEqual(PurchaseResult.NotAtStation, shop.Purchase("radio_tower"));
@@ -171,18 +174,18 @@ namespace MoonProject.Gameplay.Tests
             var service = Service(_tower, _hoverJump);
             bool grantedWhenAnnounced = false;
             _events.Subscribe<UpgradePurchased>(_ => grantedWhenAnnounced = _abilities.Has(RoverAbility.HoverJump));
-            _wallet.Add(149);
+            Give(4, 2, 0);
             Assert.AreEqual(PurchaseResult.CannotAfford, service.Purchase("rover.hover_jump"));
             Assert.AreEqual(0, _abilities.Grants);
 
-            _wallet.Add(1);
+            Give(0, 0, 1);
             _order.Clear();
             Assert.AreEqual(PurchaseResult.Purchased, service.Purchase("rover.hover_jump"));
-            Assert.AreEqual(0, _wallet.Balance);
+            Assert.AreEqual(0, _stock.Total);
             Assert.AreEqual(1, service.LevelOf("rover.hover_jump"));
             Assert.IsTrue(_abilities.Has(RoverAbility.HoverJump));
             Assert.IsTrue(grantedWhenAnnounced, "listeners of the purchase already see the ability");
-            CollectionAssert.AreEqual(new[] { nameof(CurrencyChanged), nameof(UpgradePurchased) }, _order,
+            CollectionAssert.AreEqual(new[] { nameof(MaterialsChanged), nameof(UpgradePurchased) }, _order,
                 "not a radio upgrade: no signal change");
             Assert.AreEqual("rover.hover_jump", _purchases[0].UpgradeId);
             Assert.AreEqual(1, _purchases[0].Level);
@@ -194,7 +197,7 @@ namespace MoonProject.Gameplay.Tests
         public void TowerLevels_GrantNoAbility()
         {
             var service = Service(_tower, _hoverJump);
-            _wallet.Add(135);
+            Give(0, 5, 4);
             for (int i = 0; i < 3; i++)
             {
                 Assert.AreEqual(PurchaseResult.Purchased, service.Purchase("radio_tower"));
@@ -236,7 +239,7 @@ namespace MoonProject.Gameplay.Tests
             var tower = new TestStation { Definition = _tower };
             var bench = new TestStation { Definition = _hoverJump };
             var shop = new UpgradeShop(service, new IUpgradeStation[] { tower, bench }, new CountingSave());
-            _wallet.Add(200);
+            Give(10, 10, 10);
 
             tower.Occupied = true;
             Assert.AreSame(_tower, shop.StationUpgrade);
@@ -250,7 +253,7 @@ namespace MoonProject.Gameplay.Tests
             Assert.AreEqual(PurchaseResult.NotAtStation, shop.Purchase("radio_tower"));
             Assert.AreEqual(PurchaseResult.Purchased, shop.Purchase("rover.hover_jump"));
             Assert.IsTrue(_abilities.Has(RoverAbility.HoverJump));
-            Assert.AreEqual(50, _wallet.Balance);
+            Assert.AreEqual(6, _stock.Metal, "Hover-Jump took its 4 metal");
         }
 
         [Test]
@@ -259,13 +262,13 @@ namespace MoonProject.Gameplay.Tests
             var cradle = Create<UpgradeDefinition>();
             cradle.Populate("rover.cargo_cradle", UpgradeStationKind.Workshop, 0f, new[]
             {
-                new UpgradeLevel(60, RoverAbility.CargoCradle),
+                new UpgradeLevel(new Recipe(2, 1, 1), RoverAbility.CargoCradle),
             });
             var service = Service(_hoverJump, cradle);
             var sold = new[] { _hoverJump, cradle };
             Assert.AreEqual(0, Workshop.OfferIndex(sold, service));
 
-            _wallet.Add(210);
+            Give(6, 3, 2);
             service.Purchase("rover.hover_jump");
             Assert.AreEqual(1, Workshop.OfferIndex(sold, service));
             service.Purchase("rover.cargo_cradle");
@@ -350,7 +353,6 @@ namespace MoonProject.Gameplay.Tests
                 previousWindow = tuning.WindowGlowAt(farness);
             }
 
-            Assert.Greater(tuning.DepositGift, 0, "each memory brought home gives a scrap gift");
         }
 
         [Test]
@@ -425,9 +427,27 @@ namespace MoonProject.Gameplay.Tests
             Assert.AreEqual(0.5f, glow.Intensity, 1e-6f);
         }
 
+        private void Give(int metal, int wiring, int optics)
+        {
+            if (metal > 0)
+            {
+                _stock.Add(SalvageMaterial.Metal, metal);
+            }
+
+            if (wiring > 0)
+            {
+                _stock.Add(SalvageMaterial.Wiring, wiring);
+            }
+
+            if (optics > 0)
+            {
+                _stock.Add(SalvageMaterial.Optics, optics);
+            }
+        }
+
         private UpgradeService Service(params UpgradeDefinition[] definitions)
         {
-            return new UpgradeService(_events, _wallet, _abilities, definitions);
+            return new UpgradeService(_events, _stock, _abilities, definitions);
         }
 
         private T Create<T>() where T : ScriptableObject

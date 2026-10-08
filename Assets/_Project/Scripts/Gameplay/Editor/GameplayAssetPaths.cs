@@ -11,10 +11,8 @@ namespace MoonProject.Gameplay.Editor
     internal static class GameplayAssetPaths
     {
         public const string TuningFolder = "Assets/_Project/Data/Tuning/Gameplay";
-        public const string ScrapTuning = TuningFolder + "/ScrapTuning.asset";
         public const string SonarTuning = TuningFolder + "/SonarTuning.asset";
         public const string RelicTuning = TuningFolder + "/RelicTuning.asset";
-        public const string RelicPlacement = TuningFolder + "/RelicPlacementTuning.asset";
         public const string ExcavationTuning = TuningFolder + "/ExcavationTuning.asset";
         public const string TetherTuning = TuningFolder + "/TetherTuning.asset";
         public const string BaseTuning = TuningFolder + "/BaseTuning.asset";
@@ -26,11 +24,12 @@ namespace MoonProject.Gameplay.Editor
         public const string BellTuning = TuningFolder + "/BellTuning.asset";
         public const string RelayTuning = TuningFolder + "/RelayTuning.asset";
         public const string GlintTuning = TuningFolder + "/GlintTuning.asset";
+        public const string SalvageTuning = TuningFolder + "/SalvageTuning.asset";
 
         public const string ContentFolder = "Assets/_Project/Data/Content";
         public const string RelicFolder = ContentFolder + "/Relics";
         public const string RelicCatalog = ContentFolder + "/RelicCatalog.asset";
-        public const string ScrapCatalog = ContentFolder + "/ScrapCatalog.asset";
+        public const string SalvageCatalog = ContentFolder + "/SalvageCatalog.asset";
         public const string UpgradeFolder = ContentFolder + "/Upgrades";
         public const string RadioTowerUpgrade = UpgradeFolder + "/Upgrade_radio_tower.asset";
         public const string HoverJumpUpgrade = UpgradeFolder + "/Upgrade_rover_hover_jump.asset";
@@ -47,7 +46,7 @@ namespace MoonProject.Gameplay.Editor
 
         public const string Shader = "Assets/_Project/Shaders/Gameplay/SoftGlow.shader";
         public const string GlintShader = "Assets/_Project/Shaders/Gameplay/Glint.shader";
-        public const string GlintMaterial = MaterialFolder + "/M_ScrapGlint.mat";
+        public const string SalvageGlintMaterial = MaterialFolder + "/M_SalvageGlint.mat";
         public const string PartGlintMaterial = MaterialFolder + "/M_PartGlint.mat";
 
         public const string ArtRelicFolder = ArtPaths.Root + "/Relics";
@@ -62,6 +61,24 @@ namespace MoonProject.Gameplay.Editor
         public const string RelayMast = ArtPaths.RelayFolder + "/RelayMast.prefab";
         public const string RelayMastBroken = ArtPaths.RelayFolder + "/RelayMast_Broken.prefab";
         public const string RelayPart = ArtPaths.RelayFolder + "/Part_RelayModule.prefab";
+
+        /// <summary>Art's salvage site prefab (Site_depot, Site_kestrel...).</summary>
+        public static string SitePrefab(string name)
+        {
+            return ArtPaths.SitesFolder + "/Site_" + name + ".prefab";
+        }
+
+        /// <summary>Art's loose trail bit prefab (Debris_Metal_0...).</summary>
+        public static string DebrisPrefab(string name)
+        {
+            return ArtPaths.SitesFolder + "/" + name + ".prefab";
+        }
+
+        /// <summary>Art's bundle a cut piece of <paramref name="material"/> folds into.</summary>
+        public static string BundlePrefab(Core.SalvageMaterial material)
+        {
+            return ArtPickupFolder + "/Material_" + material + ".prefab";
+        }
 
         public static string CassetteDefinition(string id)
         {
@@ -102,11 +119,6 @@ namespace MoonProject.Gameplay.Editor
         public static string RelicPrefab(string id)
         {
             return ArtRelicFolder + "/Relic_" + id + ".prefab";
-        }
-
-        public static string ScrapPrefab(string kind)
-        {
-            return ArtPaths.ScrapFolder + "/Scrap_" + kind + ".prefab";
         }
 
         public static string Material(GlowRole role)

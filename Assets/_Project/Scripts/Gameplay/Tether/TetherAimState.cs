@@ -6,10 +6,10 @@ namespace MoonProject.Gameplay
         /// <summary>Nothing in the aim cone.</summary>
         Idle = 0,
 
-        /// <summary>A relic is highlighted: pressing Tether latches onto it.</summary>
+        /// <summary>A relic or drag piece is highlighted: pressing Tether latches onto it.</summary>
         Hovering = 1,
 
-        /// <summary>A relic is on the tether.</summary>
+        /// <summary>A relic or drag piece is on the tether.</summary>
         Towing = 2,
     }
 }

@@ -24,22 +24,21 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// <summary>
     /// The golden path through the real game, as a regression and a pacing measurement: the built Main scene (on its
     /// own save slot) boots, 07 wakes, and a calm autopilot holds the wheel while the real input actions do the rest.
-    /// Drive to the nearest onboarding relic picking up scrap on the way, ping, dig it up, tow it home (round by the
-    /// base pad, since the lander is solid), put it on the shelf, pick up scrap until the tower is affordable, park on
-    /// the tower pad and buy level 1 through the UI's hold. Then Tilly (M3-02): find her with a ping, gather her three
-    /// parts, repair her, drive home with her, be greeted, and let her spot a relic on the next trip. Then the
-    /// workshop (M3-03): gather scrap for Hover-Jump, find that holding Jump does nothing yet, buy it at Kenji's
-    /// workbench through the same hold, and take the first full-charge leap on the base pad. Then Bell (M3-04/05):
-    /// follow the scrap trail up the mouth lane, leap the chasm, find her lying at the terminus with Ro's log cache
-    /// and her tape, gather her three parts from the alcoves, repair her (the tape slides in, her dial wakes, she
-    /// stands), drive home by the one-way exit while she makes her own way, be greeted by her, turn her dial through
-    /// every station, and follow her first signal to the basin tape onto her rack. Then the relay network (M3-06):
-    /// gather scrap for the mound relay, pick up its part, restore it at its foot and watch it come online, drive out
-    /// past the tower's reach and find home still reaching 07 there, then radio-hop home from the mast's pad and back.
-    /// Inside the canyon 07 drives a line found over drivable ground (the same planner Bell walks by). Every step is
-    /// timed
-    /// (Logs/gameplay-captures/playthrough.md) and captured, with review frames of every M3-05 placement; any error or
-    /// exception in the log fails it. Slow: run on demand with --category Playthrough.
+    /// Salvage (M3-13): drive to the supply depot, ping (the site answers), cut it piece by piece with the beam until
+    /// it is picked clean, dig the walkman out of its heart, tow it home (round by the base pad, since the lander is
+    /// solid), put it on the shelf, park on the tower pad and craft level 1 from the depot's materials through the UI's
+    /// hold. Then Tilly (M3-02): find her with a ping, gather her three parts, repair her, drive home with her, be
+    /// greeted, and let her spot a salvage site on the next trip. Then the workshop (M3-03): find that holding Jump
+    /// does nothing yet, craft Hover-Jump at Kenji's workbench through the same hold, and take the first full-charge
+    /// leap on the base pad. Then Bell (M3-04/05): drive up the mouth lane, leap the chasm, find her lying at the
+    /// terminus with Ro's log cache and her tape, gather her three parts from the alcoves, repair her (the tape slides
+    /// in, her dial wakes, she stands), drive home by the one-way exit while she makes her own way, be greeted by her,
+    /// turn her dial through every station, and follow her first signal to the basin tape onto her rack. Then the
+    /// relay network (M3-06): pick up the mound relay's part, restore it at its foot with materials and watch it come
+    /// online, drive out past the tower's reach and find home still reaching 07 there, then radio-hop home from the
+    /// mast's pad and back. Inside the canyon 07 drives a line found over drivable ground (the same planner Bell walks
+    /// by). Every step is timed (Logs/gameplay-captures/playthrough.md) and captured, with review frames of every
+    /// M3-05 placement; any error or exception in the log fails it. Slow: run on demand with --category Playthrough.
     /// </summary>
     [Explicit("Slow end-to-end playthrough of the real Main scene; run on demand with --category Playthrough.")]
     [Category("Playthrough")]
@@ -87,7 +86,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float TillyPingDistance = 35f;
         private const float RepairStandOff = 3f;
 
-        /// <summary>07 waits this far (m) short of an undiscovered relic for Tilly to spot it.</summary>
+        /// <summary>07 waits this far (m) short of an undiscovered salvage site for Tilly to spot it.</summary>
         private const float SpotStandOff = 25f;
 
         /// <summary>Where the review camera stands relative to Tilly (m away from 07, m up).</summary>
@@ -104,6 +103,45 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float RetreatDistance = 16f;
         private const float ShelfStandOff = 4f;
         private const float ReelFrom = 12f;
+
+        /// <summary>Seconds 07 may take to creep up on the surfaced relic and latch on.</summary>
+        private const float LatchTimeout = 40f;
+
+        /// <summary>07 creeps up on the surfaced relic no closer than this (m).</summary>
+        private const float LatchReach = 5f;
+
+        /// <summary>07 stops this far (m) short of the depot's centre on its way in, clear of the wreck.</summary>
+        private const float SiteApproach = 18f;
+
+        /// <summary>07 circles a wreck this far (m) outside its footprint, so it never drives through it.</summary>
+        private const float RingMargin = 5f;
+
+        /// <summary>Metres wider 07 circles a wreck with a relic in tow, so it trails clear of the wreck.</summary>
+        private const float TowRingExtra = 6f;
+
+        /// <summary>Seconds of reeling that take the tether from one end of the winch to the other.</summary>
+        private const float ReelSeconds = 3f;
+
+        /// <summary>Degrees between two points 07 drives through when circling a wreck.</summary>
+        private const float RingStep = 50f;
+
+        /// <summary>07 lines up this far (m) out from a piece's cut, then eases in to cut it from...</summary>
+        private const float CutLineUp = 11f;
+
+        /// <summary>...this far (m), facing it.</summary>
+        private const float CutStandOff = 4.5f;
+
+        /// <summary>A cut face looking mostly up or down is approached from the site's centre outward.</summary>
+        private const float MinCutFacing = 0.35f;
+
+        /// <summary>Seconds 07 waits, parked in front of a piece, for the aim to pick something.</summary>
+        private const float AimSettle = 3f;
+
+        /// <summary>07 digs a relic from this far (m) from the heart, within the beam's reach.</summary>
+        private const float DigStandOff = 3.5f;
+
+        /// <summary>Sphere (m) that must be free of the wreck where 07 parks to dig.</summary>
+        private const float ParkClearance = 1.6f;
 
         /// <summary>07 parks this far (m) in front of a relay mast's junction box to restore it.</summary>
         private const float RelayFoot = 3f;
@@ -177,24 +215,25 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return Boot();
             yield return WakeUp();
 
-            Relic relic = NearestOnboardingRelic();
-            yield return DriveToRelic(relic);
-            yield return Ping(relic);
-            yield return Excavate(relic);
+            SalvageSite depot = _gameplay.Salvage.Find(WorldAnchorIds.SitePrefix + "depot");
+            Assert.IsNotNull(depot, "the supply depot stands near home");
+            Relic relic = depot.Relics[0];
+            yield return DriveToSite(depot);
+            yield return Ping(depot);
+            yield return SalvageTheDepot(depot);
+            yield return Excavate(depot, relic);
             yield return LatchTether(relic);
-            yield return TowHome(relic);
+            yield return TowHome(depot, relic);
             yield return Deposit(relic);
-            yield return GatherScrapFor(Tower, "the tower", 120f);
             yield return BuyTowerLevel();
             yield return FindTilly();
             yield return GatherTillyParts();
             yield return RepairTilly();
             yield return DriveHomeWithTilly();
             yield return TillySpotsOnTheNextTrip();
-            yield return GatherScrapFor(HoverJump, "Hover-Jump", 300f);
             yield return BuyHoverJumpAtTheBench();
             yield return FirstLeap();
-            yield return FollowTheTrailToTheCanyon();
+            yield return DriveToTheCanyon();
             yield return LeapTheChasm();
             yield return FindBell();
             yield return GatherBellsParts();
@@ -253,9 +292,16 @@ namespace MoonProject.Gameplay.PlayModeTests
             _awoke = _context.Events.Subscribe<RoverAwoke>(_ => _awokeAt = Time.time);
             _pilot = new Autopilot(_rover);
             _rover.SetDriveSource(_pilot);
-            Assert.AreEqual(0, _gameplay.Wallet.Balance, "a fresh game (its own save slot)");
-            End("Boot the real Main scene", $"{_gameplay.Scrap.Count} scrap pieces, " +
-                                            $"{_gameplay.Scrap.RemainingValue} scrap value in the basin");
+            Assert.AreEqual(0, _gameplay.Materials.Total, "a fresh game (its own save slot)");
+            SalvageField salvage = _gameplay.Salvage;
+            int units = salvage.TrailCount * salvage.Tuning.TrailYield;
+            foreach (SalvagePiece piece in salvage.Pieces)
+            {
+                units += piece.Units;
+            }
+
+            End("Boot the real Main scene", $"{salvage.Sites.Count} salvage sites with {salvage.Pieces.Count} " +
+                                            $"pieces and {salvage.TrailCount} trail bits: {units} units of salvage");
         }
 
         private IEnumerator WakeUp()
@@ -267,97 +313,235 @@ namespace MoonProject.Gameplay.PlayModeTests
             End("07 wakes", "woke on its own (not by player input)");
         }
 
-        private Relic NearestOnboardingRelic()
-        {
-            Relic nearest = null;
-            float best = float.MaxValue;
-            foreach (Relic relic in _gameplay.Relics.Relics)
-            {
-                float distance = SurfaceRules.HorizontalDistance(relic.Site.Position, _rover.Position);
-                if (relic.Definition.Placement == RelicPlacementBand.Onboarding && distance < best)
-                {
-                    best = distance;
-                    nearest = relic;
-                }
-            }
-
-            Assert.IsNotNull(nearest, "an onboarding relic exists");
-            return nearest;
-        }
-
-        private IEnumerator DriveToRelic(Relic relic)
+        private IEnumerator DriveToSite(SalvageSite site)
         {
             Begin();
-            Vector3 site = relic.Site.Position;
-            Vector3 toSite = site - _rover.Position;
-            toSite.y = 0f;
-            float distance = toSite.magnitude;
-            Vector3 stop = site - toSite.normalized * ApproachOffset;
-            yield return DriveTo(stop, 1.5f, 1f, 60f, "the relic site");
-            Assert.Greater(_events.ScrapCollected.Count, 0, "scrap is collected on the way");
-            End($"Drive to '{relic.Definition.Id}' ({distance:F0} m)",
-                $"{_events.ScrapCollected.Count} scrap pieces picked up, wallet {_gameplay.Wallet.Balance}");
+            float distance = SurfaceRules.HorizontalDistance(site.Position, _rover.Position);
+            Vector3 toSite = Flat(site.Position - _rover.Position).normalized;
+            yield return DriveTo(Flat(site.Position - toSite * SiteApproach), 3f, 1f, 60f, "the supply depot");
+            Capture("01b-the-depot");
+            End($"Drive to the supply depot ({distance:F0} m)", $"{site.Pieces.Count} pieces on the wreck");
         }
 
-        private IEnumerator Ping(Relic relic)
+        private IEnumerator Ping(SalvageSite site)
         {
             Begin();
             Press(_keyboard.spaceKey, queueEventOnly: true);
             yield return null;
             Release(_keyboard.spaceKey);
             yield return Until(() => _events.SonarPinged.Count > 0, 2f, "space pings");
-            yield return Until(() => Answered(relic.Definition.Id), _gameplay.Sonar.Tuning.RingDuration + 2f,
-                "the relic answers the ping with its id");
+            yield return Until(() => SiteHeard(site.Id), _gameplay.Sonar.Tuning.RingDuration + 2f,
+                "the depot answers the ping with its own tone");
+            Assert.IsEmpty(_events.RelicAnswered, "the relic in its heart lets the site answer for it");
+            Assert.IsTrue(site.Discovered);
             Capture("02-ping-answered");
-            End("Ping", $"{_events.RelicAnswered.Count} relic(s) answered");
+            End("Ping", $"{_events.SiteAnswered.Count} site(s) answered");
         }
 
-        private IEnumerator Excavate(Relic relic)
+        /// <summary>
+        /// Every piece of the depot in turn: circle the wreck to it, line up in front of its cut, ease in facing it and
+        /// hold Excavate until it folds into 07. A piece the aim cannot pick from there is retried on a second pass.
+        /// </summary>
+        private IEnumerator SalvageTheDepot(SalvageSite site)
         {
             Begin();
+            SalvageField salvage = _gameplay.Salvage;
+            int cuts = 0;
+            bool captured = false;
+            for (int pass = 0; pass < 2 && !site.IsPickedClean; pass++)
+            {
+                foreach (SalvagePiece piece in site.Pieces)
+                {
+                    if (!piece.IsCuttable)
+                    {
+                        continue;
+                    }
+
+                    yield return FacePiece(site, piece);
+                    float settle = Time.time + AimSettle;
+                    while (salvage.Candidate == null && Time.time < settle)
+                    {
+                        yield return null;
+                    }
+
+                    if (salvage.Candidate == null)
+                    {
+                        continue;
+                    }
+
+                    int salvaged = _events.MaterialSalvaged.Count;
+                    int completed = CompletedCuts();
+                    float cutSeconds = salvage.Candidate.CutSeconds;
+                    Press(_keyboard.eKey);
+                    yield return Until(() => _events.SalvageCutStarted.Count > cuts, 6f, "the beam starts cutting");
+                    Assert.IsTrue(_rover.IsHeldStill, "07 is asked to hold still while it cuts");
+                    if (!captured)
+                    {
+                        yield return new WaitForSeconds(cutSeconds * 0.5f);
+                        Capture("02b-salvage-cut");
+                        Witness(salvage.Cutting != null ? salvage.Cutting.CutPosition : site.Position,
+                            "02c-salvage-cut-closeup");
+                        captured = true;
+                    }
+
+                    yield return Until(() => CompletedCuts() > completed, cutSeconds + 4f, "the beam cuts it free");
+                    Release(_keyboard.eKey);
+                    yield return Until(() => _events.MaterialSalvaged.Count > salvaged, 6f,
+                        "the piece comes away and folds into 07");
+                    cuts = _events.SalvageCutStarted.Count;
+                    yield return null;
+                }
+            }
+
+            Assert.IsTrue(site.IsPickedClean, "every piece of the depot is salvaged");
+            Assert.IsTrue(site.Root.Find("Skeleton").gameObject.activeSelf, "its weathered skeleton stays");
+            int topStep = 0;
+            foreach (EventRecorder.Timed<MaterialSalvaged> piece in _events.MaterialSalvaged)
+            {
+                Assert.AreEqual(site.Id, piece.Value.SiteId);
+                topStep = Mathf.Max(topStep, piece.Value.ComboStep);
+            }
+
+            Assert.Greater(topStep, 0, "consecutive pieces climb the salvage melody");
+            IMaterialStock stock = _gameplay.Materials;
+            Review(site.Position - Flat(site.Root.forward) * 16f + Vector3.up * 6f, site.Position + Vector3.up,
+                "02d-depot-picked-clean");
+            End("Salvage the depot", $"{site.Pieces.Count} pieces in {cuts} cuts, melody up to step {topStep}; " +
+                                     $"stock metal {stock.Metal}, wiring {stock.Wiring}, optics {stock.Optics}");
+        }
+
+        /// <summary>Circles the wreck to the piece's side, lines up in front of its cut and eases in.</summary>
+        private IEnumerator FacePiece(SalvageSite site, SalvagePiece piece)
+        {
+            Vector3 cut = piece.CutPosition;
+            Vector3 facing = Flat(piece.CutNormal);
+            Vector3 outward = facing.magnitude >= MinCutFacing
+                ? facing.normalized
+                : Flat(cut - site.Position).normalized;
+            yield return CircleTo(site, Flat(cut + outward * CutLineUp), 0f);
+            yield return DriveTo(Flat(cut + outward * CutLineUp), 2f, 0.6f, 40f, "a line-up in front of a piece");
+            yield return DriveTo(Flat(cut + outward * CutStandOff), 1f, 0.35f, 30f, "the piece's cut");
+        }
+
+        /// <summary>
+        /// Drives round the wreck, outside its footprint (and <paramref name="extra"/> metres more), to the side facing
+        /// the target.
+        /// </summary>
+        private IEnumerator CircleTo(SalvageSite site, Vector3 target, float extra)
+        {
+            float ring = Anchor(site.Id).Radius + RingMargin + extra;
+            Vector3 centre = Flat(site.Position);
+            float from = Bearing(_rover.Position - centre);
+            float to = Bearing(target - centre);
+            float turn = Mathf.DeltaAngle(from, to);
+            int steps = Mathf.CeilToInt(Mathf.Abs(turn) / RingStep);
+            for (int i = 0; i <= steps; i++)
+            {
+                float bearing = from + (steps == 0 ? 0f : turn * i / steps);
+                Vector3 point = centre + SurfaceRules.BearingDirection(bearing) * ring;
+                yield return DriveTo(point, 3f, 0.7f, 40f, "the way round the wreck");
+            }
+        }
+
+        private static float Bearing(Vector3 direction)
+        {
+            return SurfaceRules.Bearing(Flat(direction));
+        }
+
+        /// <summary>
+        /// Dig the relic out of the heart: park within the beam's reach on open ground round the heart, facing it, and
+        /// hold Excavate until it is free.
+        /// </summary>
+        private IEnumerator Excavate(SalvageSite site, Relic relic)
+        {
+            Begin();
+            Vector3 heart = relic.Site.Position;
+            Vector3 park = Vector3.zero;
+            Vector3 outward = Vector3.zero;
+            float best = float.MaxValue;
+            for (float bearing = 0f; bearing < 360f; bearing += 30f)
+            {
+                Vector3 direction = SurfaceRules.BearingDirection(bearing);
+                Vector3 spot = Flat(heart + direction * DigStandOff);
+                float ground = _context.Get<ITerrainQuery>().SampleHeight(spot.x, spot.z);
+                bool open = !Physics.CheckSphere(new Vector3(spot.x, ground + ParkClearance + 0.2f, spot.z),
+                    ParkClearance, Layers.PropMask, QueryTriggerInteraction.Ignore);
+                float distance = SurfaceRules.HorizontalDistance(spot, _rover.Position);
+                if (open && distance < best)
+                {
+                    best = distance;
+                    park = spot;
+                    outward = direction;
+                }
+            }
+
+            Assert.Less(best, float.MaxValue, "open ground to dig from round the depot's heart");
+            yield return CircleTo(site, Flat(heart + outward * CutLineUp), 0f);
+            yield return DriveTo(Flat(heart + outward * CutLineUp), 2f, 0.6f, 40f, "a line-up facing the heart");
+            yield return DriveTo(park, 1f, 0.35f, 30f, "the depot's heart");
+            yield return Until(() => _gameplay.Excavation.Candidate == relic, 4f, "the walkman is in the beam's reach");
             Press(_keyboard.eKey);
             yield return Until(() => _events.ExcavationStarted.Count > 0, 6f, "the tractor beam takes hold");
             Assert.IsTrue(_rover.IsHeldStill, "07 is asked to hold still while the beam is held");
-            yield return new WaitForSeconds(1.5f);
-            Capture("03-excavating");
             float duration = _gameplay.Excavation.Tuning.DurationFor(relic.Definition.Mass);
+            yield return new WaitForSeconds(duration * 0.5f);
+            Capture("03-excavating");
             yield return Until(() => Surfaced(relic.Definition.Id), duration + 8f, "the relic surfaces");
             Release(_keyboard.eKey);
             yield return null;
             yield return null;
             Assert.IsFalse(_rover.IsHeldStill, "07 is free again once the relic is up");
             Assert.AreEqual(RelicState.Loose, relic.State);
+            Assert.IsFalse(site.AnswersSonar, "picked clean and its relic lifted: the depot falls silent");
             yield return new WaitForSeconds(1.5f);
-            End("Excavate", $"lift took {duration:F1} s of beam for {relic.Definition.Mass:F0} kg");
+            End("Dig the walkman from the depot's heart",
+                $"lift took {duration:F1} s of beam for {relic.Definition.Mass:F0} kg");
         }
 
+        /// <summary>
+        /// The walkman hopped out in front of 07, against the wreck: back out the way 07 came in, turn and creep up on
+        /// it with the tether held until it latches.
+        /// </summary>
         private IEnumerator LatchTether(Relic relic)
         {
             Begin();
-            Vector3 home = _context.Get<IWorldLayout>().BasePosition;
-            Vector3 toHome = home - relic.transform.position;
-            toHome.y = 0f;
-            Vector3 retreat = relic.transform.position + toHome.normalized * RetreatDistance;
-            yield return DriveTo(retreat, 3f, 0.7f, 40f, "a spot to turn back and aim from");
-
+            Vector3 back = Flat(_rover.Position - relic.transform.position).normalized;
+            yield return DriveTo(Flat(relic.transform.position + back * RetreatDistance), 3f, 0.6f, 40f,
+                "a spot to turn back and aim from");
             Press(_mouse.rightButton);
-            float deadline = Time.time + 40f;
+            float deadline = Time.time + LatchTimeout;
             while (_gameplay.Tether.State != TetherAimState.Towing && Time.time < deadline)
             {
-                _pilot.GoTo(relic.transform.position, 5f, 0.45f);
+                _pilot.GoTo(relic.transform.position, LatchReach, 0.45f);
                 yield return null;
             }
 
             _pilot.Target = null;
-            Assert.AreEqual(TetherAimState.Towing, _gameplay.Tether.State, "the tether latches onto the relic");
+            Assert.AreEqual(TetherAimState.Towing, _gameplay.Tether.State,
+                $"the tether latches onto the relic ({relic.State}, " +
+                $"{Vector3.Distance(relic.transform.position, _rover.Position):F1} m from 07)");
             Assert.AreSame(relic, _gameplay.Tether.Towed);
             Assert.AreEqual(1, _events.TetherAttached.Count);
             End("Turn back and latch the tether", $"latched at {_gameplay.Tether.Length:F1} m");
         }
 
-        private IEnumerator TowHome(Relic relic)
+        /// <summary>
+        /// Reel the relic in close, pull it straight out from the wreck and round it, wide, to its home side; then home
+        /// and up to the shelf.
+        /// </summary>
+        private IEnumerator TowHome(SalvageSite site, Relic relic)
         {
             Begin();
+            yield return Reel(1f, ReelSeconds);
+            Assert.Less(_gameplay.Tether.Length, _gameplay.Tether.Tuning.MinLength + 0.5f, "reeled in close");
+            Vector3 centre = Flat(site.Position);
+            float ring = Anchor(site.Id).Radius + RingMargin + TowRingExtra;
+            yield return DriveTo(centre + Flat(_rover.Position - centre).normalized * ring, 3f, 0.6f, 40f,
+                "open ground out from the wreck, the relic in tow");
+            Vector3 toHome = Flat(_context.Get<IWorldLayout>().BasePosition - site.Position).normalized;
+            yield return CircleTo(site, centre + toHome * ring, TowRingExtra);
+            Assert.AreEqual(0, _events.TetherReleased.Count, "the relic follows 07 out round the wreck");
+            yield return Reel(-1f, ReelSeconds);
             HomeBase homeBase = _gameplay.Home;
             Vector3 shelf = homeBase.ShelfPosition;
             Vector3 front = _context.Get<IWorldLayout>().BasePosition - shelf;
@@ -398,43 +582,18 @@ namespace MoonProject.Gameplay.PlayModeTests
         private IEnumerator Deposit(Relic relic)
         {
             Begin();
-            int balance = _gameplay.Wallet.Balance;
+            int materials = _events.MaterialsChanged.Count;
             Release(_mouse.rightButton);
             yield return Until(() => _events.RelicDeposited.Count > 0, 8f, "the relic floats onto the shelf");
             RelicDeposited deposited = _events.RelicDeposited[0].Value;
             Assert.AreEqual(relic.Definition.Id, deposited.RelicId);
             Assert.AreEqual(1, deposited.DisplayedCount);
             Assert.AreEqual(RelicState.Displayed, relic.State);
-            int gift = _gameplay.Home.Tuning.DepositGift;
             yield return null;
-            Assert.AreEqual(balance + gift, _gameplay.Wallet.Balance, "the scrap gift for bringing a memory home");
+            Assert.AreEqual(materials, _events.MaterialsChanged.Count, "memories are not paid for");
             yield return new WaitForSeconds(1f);
             Capture("06-on-the-shelf");
-            End("Deposit on the shelf", $"+{gift} scrap gift, wallet {_gameplay.Wallet.Balance}");
-        }
-
-        private IEnumerator GatherScrapFor(string upgradeId, string what, float timeout)
-        {
-            yield return GatherScrap(_gameplay.Upgrades.Find(upgradeId).Levels[0].Cost, what, timeout);
-        }
-
-        private IEnumerator GatherScrap(int cost, string what, float timeout)
-        {
-            Begin();
-            int start = _gameplay.Wallet.Balance;
-            int detours = 0;
-            float deadline = Time.time + timeout;
-            while (_gameplay.Wallet.Balance < cost && Time.time < deadline)
-            {
-                Vector3 piece = NearestRestingScrap();
-                yield return DriveTo(new Vector3(piece.x, 0f, piece.z), 1.5f, 0.8f, 40f, "a scrap cluster");
-                yield return new WaitForSeconds(1.5f);
-                detours++;
-            }
-
-            Assert.GreaterOrEqual(_gameplay.Wallet.Balance, cost, "enough scrap for " + what);
-            End("Gather scrap for " + what, $"{detours} detour(s), wallet {start} -> {_gameplay.Wallet.Balance} / " +
-                                            $"{cost}, {_gameplay.Scrap.RemainingValue} left in the basin");
+            End("Deposit on the shelf", $"{deposited.DisplayedCount} memory on display");
         }
 
         private IEnumerator BuyTowerLevel()
@@ -446,7 +605,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return DriveTo(tower.PadCentre, 1f, 0.6f, 60f, "the tower pad");
             yield return Until(() => _gameplay.Shop.IsAtStation, 3f, "07 is parked on the pad");
             Assert.IsTrue(_gameplay.Hints.TryGet(InteractionKind.Upgrade, out InteractionHint hint));
-            Assert.IsTrue(hint.Ready, "the first level is affordable");
+            Assert.IsTrue(hint.Ready, "the depot's materials cover the first level");
             int purchasesBefore = _events.SignalRadiusChanged.Count;
             Press(_keyboard.eKey);
             yield return Until(() => _events.UpgradePurchased.Count > 0, 15f, "holding confirm buys the level");
@@ -459,8 +618,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(_gameplay.Upgrades.Find(Tower).SignalRadiusAt(1), radius, 1e-3f);
             yield return new WaitForSeconds(2.5f);
             Capture("07-tower-awake");
-            End("Park on the pad and buy tower level 1", $"signal radius {radius:F0} m, wallet " +
-                                                        $"{_gameplay.Wallet.Balance}");
+            End("Park on the pad and craft tower level 1", $"signal radius {radius:F0} m, recipe " +
+                                                          $"{_gameplay.Upgrades.Find(Tower).Levels[0].Recipe}");
         }
 
         private IEnumerator FindTilly()
@@ -572,23 +731,24 @@ namespace MoonProject.Gameplay.PlayModeTests
         private IEnumerator TillySpotsOnTheNextTrip()
         {
             Begin();
-            Relic undiscovered = null;
+            SalvageSite undiscovered = null;
             Vector3 home = _context.Get<IWorldLayout>().BasePosition;
-            foreach (Relic relic in _gameplay.Relics.Relics)
+            var abilities = _context.Get<IRoverAbilities>();
+            foreach (SalvageSite site in _gameplay.Salvage.Sites)
             {
-                bool hidden = relic.State == RelicState.Buried && !relic.Discovered;
+                bool hidden = site.AnswersSonar && !site.Discovered && site.Gate.IsOpen(abilities);
                 if (hidden && (undiscovered == null ||
-                               SurfaceRules.HorizontalDistance(relic.Site.Position, home) <
-                               SurfaceRules.HorizontalDistance(undiscovered.Site.Position, home)))
+                               SurfaceRules.HorizontalDistance(site.Position, home) <
+                               SurfaceRules.HorizontalDistance(undiscovered.Position, home)))
                 {
-                    undiscovered = relic;
+                    undiscovered = site;
                 }
             }
 
-            Assert.IsNotNull(undiscovered, "a relic is still waiting to be found");
-            Vector3 toRelic = undiscovered.Site.Position - home;
-            toRelic.y = 0f;
-            Vector3 stand = undiscovered.Site.Position - toRelic.normalized * SpotStandOff;
+            Assert.IsNotNull(undiscovered, "a salvage site is still waiting to be found");
+            Vector3 toSite = undiscovered.Position - home;
+            toSite.y = 0f;
+            Vector3 stand = undiscovered.Position - toSite.normalized * SpotStandOff;
             _pilot.GoTo(stand, 3f, 1f);
             float deadline = Time.time + 120f;
             while (!Spotted(undiscovered) && Time.time < deadline)
@@ -597,11 +757,11 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             _pilot.Target = null;
-            Assert.IsTrue(Spotted(undiscovered), $"Tilly spots '{undiscovered.Definition.Id}' on the next trip");
+            Assert.IsTrue(Spotted(undiscovered), $"Tilly spots '{undiscovered.Id}' on the next trip");
             Assert.IsTrue(undiscovered.Discovered, "it shows on 07's sonar without a ping");
             yield return new WaitForSeconds(1.5f);
             Capture("12-tilly-spots");
-            End($"Next trip: Tilly spots '{undiscovered.Definition.Id}'",
+            End($"Next trip: Tilly spots '{undiscovered.Id}'",
                 $"{_events.FriendSpotted.Count} spot(s) on the way");
         }
 
@@ -627,7 +787,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(0, _events.RoverJumped.Count);
 
             Assert.IsTrue(_gameplay.Hints.TryGet(InteractionKind.Upgrade, out InteractionHint hint));
-            Assert.IsTrue(hint.Ready, "Hover-Jump is affordable");
+            Assert.IsTrue(hint.Ready, "the depot's materials cover Hover-Jump");
             int purchases = _events.UpgradePurchased.Count;
             Press(_keyboard.eKey);
             yield return Until(() => _events.UpgradePurchased.Count > purchases, 15f, "holding confirm buys it");
@@ -646,8 +806,10 @@ namespace MoonProject.Gameplay.PlayModeTests
                    Vector3.up * BenchViewHeight, bench.BenchPosition + Vector3.up, "13b-workbench-sparks");
             yield return new WaitForSeconds(1.5f);
             Capture("13-workbench-hover-jump");
-            End("Park at the workbench and buy Hover-Jump", $"wallet {_gameplay.Wallet.Balance} after " +
-                                                            $"{_gameplay.Upgrades.Find(HoverJump).Levels[0].Cost}");
+            IMaterialStock stock = _gameplay.Materials;
+            End("Park at the workbench and craft Hover-Jump", $"recipe " +
+                $"{_gameplay.Upgrades.Find(HoverJump).Levels[0].Recipe}, stock metal {stock.Metal}, wiring " +
+                $"{stock.Wiring}, optics {stock.Optics}");
         }
 
         private IEnumerator FirstLeap()
@@ -690,23 +852,18 @@ namespace MoonProject.Gameplay.PlayModeTests
             End("First Hover-Jump on the base pad", $"strength {strength:F2}, apex {apex:F1} m, hang {hang:F1} s");
         }
 
-        private IEnumerator FollowTheTrailToTheCanyon()
+        private IEnumerator DriveToTheCanyon()
         {
             Begin();
             WorldAnchor lip = Anchor(WorldAnchorIds.CanyonLip);
             Vector3 runStart = lip.Position - lip.Forward * RunUp;
-            List<int> trail = TrailPieces();
-            Assert.AreEqual(_gameplay.Scrap.Tuning.CanyonTrailPieces, trail.Count, "the whole trail lies on the lane");
-            int earlier = CollectedOf(trail);
             yield return DriveTo(_context.Get<IWorldLayout>().BasePosition, PadArrival, 0.8f, 60f, "the base pad");
             Review(_context.Get<IWorldLayout>().BasePosition + Vector3.up * 3f, lip.Position + Vector3.up * 2f,
-                "16-trail-to-the-canyon");
+                "16-toward-the-canyon");
             float distance = SurfaceRules.HorizontalDistance(_rover.Position, runStart);
             yield return DriveTo(runStart, 2f, 1f, 90f, "the run-up on the mouth lane");
             Capture("16b-at-the-run-up");
-            End($"Follow the scrap trail to the canyon ({distance:F0} m)",
-                $"{earlier} trail piece(s) already gathered for the workshop, {CollectedOf(trail) - earlier} on the " +
-                $"way, {trail.Count - CollectedOf(trail)} left up to the lip");
+            End($"Drive to the canyon ({distance:F0} m)", "up the mouth lane to the run-up");
         }
 
         private IEnumerator LeapTheChasm()
@@ -747,9 +904,6 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             _pilot.Target = null;
-            List<int> trail = TrailPieces();
-            yield return Until(() => CollectedOf(trail) == trail.Count, 3f,
-                "the scrap trail is gathered all the way up to the lip");
             float landed = Along(lip);
             Assert.Greater(landed, ChasmWidth, "07 comes down past the chasm's far face");
             Assert.Greater(_rover.Position.y, lip.Position.y + ApronRise, "up on the landing apron");
@@ -934,16 +1088,17 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// The mound relay (relay.0), the teaching mast in the spawn view: its part from the dust, the scrap it costs,
-        /// a hold of Interact at its foot, and the whole beat until it comes online.
+        /// The mound relay (relay.0), the teaching mast in the spawn view: its part from the dust, the materials it
+        /// takes (still in the stock from the depot), a hold of Interact at its foot, and the whole beat until it comes
+        /// online.
         /// </summary>
         private IEnumerator RestoreTheMoundRelay()
         {
             RelayField relays = _gameplay.Relays;
             RelayMast mast = relays.Masts[0];
             Assert.AreEqual(WorldAnchorIds.RelayPrefix + 0, mast.Id);
-            int cost = relays.NextCost;
-            yield return GatherScrap(cost, "the mound relay", 300f);
+            Recipe recipe = relays.NextCost;
+            Assert.IsTrue(_gameplay.Materials.Has(recipe), "the depot's materials cover the mound relay too");
             Begin();
             Vector3 pad = mast.Anchor.Position;
             Review(pad + mast.Anchor.Forward * 16f + Vector3.up * 2.5f, pad + Vector3.up * 5f, "30-relay-dark");
@@ -972,7 +1127,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             Review(pad + mast.Anchor.Forward * 30f + Vector3.up * 14f, pad + mast.Anchor.Forward * 40f,
                 "33-relay-link-pulse");
             End("Restore the mound relay (relay.0)",
-                $"{mast.Paid} scrap, its part {partAway:F0} m from the mast, beat {beat.Duration:F1} s");
+                $"recipe {recipe} ({mast.Paid} units), its part {partAway:F0} m from the mast, beat " +
+                $"{beat.Duration:F1} s");
         }
 
         /// <summary>Past the mound relay, beyond the tower's own reach: home still reaches 07 there.</summary>
@@ -1083,40 +1239,6 @@ namespace MoonProject.Gameplay.PlayModeTests
             travelled?.Invoke(length);
         }
 
-        /// <summary>The scrap pieces of the trail to the canyon (planned again from the same world, tuning).</summary>
-        private List<int> TrailPieces()
-        {
-            ScrapField scrap = _gameplay.Scrap;
-            List<ScrapSpawn> planned = ScrapTrailPlanner.Plan(_context.Get<ITerrainQuery>(),
-                _context.Get<IWorldLayout>(), _context.Get<IWorldAnchors>(), scrap.Tuning, scrap.Catalog.Variants,
-                out string problem);
-            Assert.IsNotNull(planned, problem);
-            var pieces = new List<int>();
-            foreach (ScrapSpawn spawn in planned)
-            {
-                for (int i = 0; i < scrap.Count; i++)
-                {
-                    if (Vector3.Distance(scrap.RestPosition(i), spawn.Position) < 0.01f)
-                    {
-                        pieces.Add(i);
-                    }
-                }
-            }
-
-            return pieces;
-        }
-
-        private int CollectedOf(List<int> pieces)
-        {
-            int collected = 0;
-            foreach (int piece in pieces)
-            {
-                collected += _gameplay.Scrap.IsCollected(piece) ? 1 : 0;
-            }
-
-            return collected;
-        }
-
         private float Along(WorldAnchor anchor)
         {
             Vector3 offset = _rover.Position - anchor.Position;
@@ -1193,11 +1315,11 @@ namespace MoonProject.Gameplay.PlayModeTests
             return false;
         }
 
-        private bool Spotted(Relic relic)
+        private bool Spotted(SalvageSite site)
         {
             foreach (EventRecorder.Timed<FriendSpotted> spotted in _events.FriendSpotted)
             {
-                if (SurfaceRules.HorizontalDistance(spotted.Value.Position, relic.Site.Position) < 0.1f)
+                if (SurfaceRules.HorizontalDistance(spotted.Value.Position, site.Position) < 0.1f)
                 {
                     return true;
                 }
@@ -1242,11 +1364,35 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsTrue(condition(), $"timed out after {timeout:F0} s waiting until {what}");
         }
 
-        private bool Answered(string relicId)
+        /// <summary>Holds the winch in (+1) or out (-1) for <paramref name="seconds"/>, as a held scroll would.</summary>
+        private IEnumerator Reel(float direction, float seconds)
         {
-            foreach (EventRecorder.Timed<RelicAnswered> answer in _events.RelicAnswered)
+            float until = Time.time + seconds;
+            while (Time.time < until)
             {
-                if (answer.Value.RelicId == relicId)
+                Set(_mouse.scroll, new Vector2(0f, direction));
+                yield return null;
+            }
+
+            Set(_mouse.scroll, Vector2.zero);
+        }
+
+        private int CompletedCuts()
+        {
+            int completed = 0;
+            foreach (EventRecorder.Timed<SalvageCutStopped> stopped in _events.SalvageCutStopped)
+            {
+                completed += stopped.Value.Completed ? 1 : 0;
+            }
+
+            return completed;
+        }
+
+        private bool SiteHeard(string siteId)
+        {
+            foreach (EventRecorder.Timed<SiteAnswered> answer in _events.SiteAnswered)
+            {
+                if (answer.Value.SiteId == siteId)
                 {
                     return true;
                 }
@@ -1266,25 +1412,6 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             return false;
-        }
-
-        private Vector3 NearestRestingScrap()
-        {
-            ScrapField scrap = _gameplay.Scrap;
-            int nearest = -1;
-            float best = float.MaxValue;
-            for (int i = 0; i < scrap.Count; i++)
-            {
-                float distance = SurfaceRules.HorizontalDistance(scrap.RestPosition(i), _rover.Position);
-                if (!scrap.IsCollected(i) && distance < best)
-                {
-                    best = distance;
-                    nearest = i;
-                }
-            }
-
-            Assert.GreaterOrEqual(nearest, 0, "scrap is left in the basin");
-            return scrap.RestPosition(nearest);
         }
 
         private void Begin()
@@ -1316,7 +1443,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Review(subject - toRover.normalized * WitnessDistance + Vector3.up * WitnessHeight, subject, name);
         }
 
-        /// <summary>A review capture from a second camera (same lens as the game's) at <paramref name="eye"/>.</summary>
+        /// <summary>A review capture from a second camera (the game's lens) at <paramref name="eye"/>.</summary>
         private void Review(Vector3 eye, Vector3 target, string name)
         {
             Camera view = _context.Get<IViewCamera>().Camera;

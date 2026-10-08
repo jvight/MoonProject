@@ -10,10 +10,10 @@ namespace MoonProject.Gameplay
         /// <summary>Send a sonar ping (Ready while the sonar is not cooling down).</summary>
         Ping = 1,
 
-        /// <summary>Hold to lift the buried relic 07 is next to.</summary>
+        /// <summary>Hold to lift the relic resting in the site's heart 07 is next to.</summary>
         Excavate = 2,
 
-        /// <summary>Hold to latch the tether onto the highlighted relic.</summary>
+        /// <summary>Hold to latch the tether onto the highlighted relic or drag piece.</summary>
         Tether = 3,
 
         /// <summary>Let go here: the towed relic will float onto the museum shelf.</summary>
@@ -24,7 +24,7 @@ namespace MoonProject.Gameplay
         /// </summary>
         Upgrade = 5,
 
-        /// <summary>Towing: the winch reels the relic in or out.</summary>
+        /// <summary>Towing: the winch reels the relic or drag piece in or out.</summary>
         Reel = 6,
 
         /// <summary>Next to a broken friend with every part gathered: hold to repair it.</summary>
@@ -34,7 +34,7 @@ namespace MoonProject.Gameplay
         Tune = 8,
 
         /// <summary>
-        /// At a dark relay mast's foot with its part held: hold to restore it (Ready when the scrap is there).
+        /// At a dark relay mast's foot with its part held: hold to restore it (Ready when the materials are there).
         /// </summary>
         Restore = 9,
 
@@ -43,5 +43,8 @@ namespace MoonProject.Gameplay
         /// another lit node to hop to).
         /// </summary>
         Hop = 10,
+
+        /// <summary>A salvage piece is picked (within reach, in the aim cone): hold Excavate to cut it loose.</summary>
+        Salvage = 11,
     }
 }

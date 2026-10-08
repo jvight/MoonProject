@@ -8,14 +8,15 @@ namespace MoonProject.Gameplay
 {
     /// <summary>
     /// The Gameplay domain's single entry in the bootstrap's system list (after World and Rover). Resolves the world
-    /// (surface, layout, anchors), rover and camera services, creates the wallet, the upgrade service (which grants
-    /// rover abilities through <see cref="IRoverAbilities"/>) and the radio program, initialises the gameplay parts in
-    /// dependency order (relics, scrap, excavation, tether, home, radio tower, workshop, friends, cassettes, log
-    /// caches, sonar, Bell's signals, the cassette shelf, the relay network), registers the services other domains
-    /// read (<see cref="IScrapWallet"/>, <see cref="ITetherAim"/>, <see cref="IUpgradeShop"/>,
-    /// <see cref="IInteractionHints"/>, <see cref="IFriendRoster"/>, <see cref="IFriendStatuses"/>,
-    /// <see cref="IRadioProgram"/>, <see cref="IStationReach"/>, <see cref="IRadioHop"/>, <see cref="IRelayStatus"/>)
-    /// and the save sections, announces the radio's signal radius and, once the save is loaded, the radio program, and
+    /// (surface, layout, anchors), rover and camera services, creates the material stock, the upgrade service (which
+    /// grants rover abilities through <see cref="IRoverAbilities"/>) and the radio program, initialises the gameplay
+    /// parts in dependency order (salvage sites, the relics in their hearts, excavation, tether, home, radio tower,
+    /// workshop, friends, cassettes, log caches, sonar, Bell's signals, the cassette shelf, the relay network),
+    /// registers the services other domains read (<see cref="IMaterialStock"/>, <see cref="ITetherAim"/>,
+    /// <see cref="IUpgradeShop"/>, <see cref="IInteractionHints"/>, <see cref="IFriendRoster"/>,
+    /// <see cref="IFriendStatuses"/>, <see cref="IRadioProgram"/>, <see cref="IStationReach"/>,
+    /// <see cref="IRadioHop"/>, <see cref="IRelayStatus"/>) and the save sections, announces the radio's signal
+    /// radius and, once the save is loaded, the radio program, and
     /// owns the shared glow meshes. The radio-hop moves 07 through Core's <see cref="IRoverPlacement"/> when the Rover
     /// domain registers it.
     /// </summary>
@@ -28,11 +29,11 @@ namespace MoonProject.Gameplay
         [Tooltip("How pickups glint from afar (Assets/_Project/Data/Tuning/Gameplay/GlintTuning.asset).")]
         [SerializeField] private GlintTuning _glints;
 
-        [Tooltip("Every upgrade bought with scrap (Assets/_Project/Data/Content/Upgrades).")]
+        [Tooltip("Every upgrade crafted from materials (Assets/_Project/Data/Content/Upgrades).")]
         [SerializeField] private UpgradeDefinition[] _upgradeDefinitions = Array.Empty<UpgradeDefinition>();
 
+        [SerializeField] private SalvageField _salvage;
         [SerializeField] private RelicField _relics;
-        [SerializeField] private ScrapField _scrap;
         [SerializeField] private SonarSystem _sonar;
         [SerializeField] private ExcavationSystem _excavation;
         [SerializeField] private TetherSystem _tether;
@@ -49,7 +50,7 @@ namespace MoonProject.Gameplay
         private readonly List<IDisposable> _saveTokens = new List<IDisposable>();
         private GlowMeshSet _meshes;
 
-        public ScrapWallet Wallet { get; private set; }
+        public MaterialStock Materials { get; private set; }
 
         public UpgradeService Upgrades { get; private set; }
 
@@ -59,9 +60,9 @@ namespace MoonProject.Gameplay
 
         public RadioProgram Radio { get; private set; }
 
-        public RelicField Relics => _relics;
+        public SalvageField Salvage => _salvage;
 
-        public ScrapField Scrap => _scrap;
+        public RelicField Relics => _relics;
 
         public SonarSystem Sonar => _sonar;
 
@@ -87,16 +88,16 @@ namespace MoonProject.Gameplay
 
         public RelayField Relays => _relays;
 
-        internal void Wire(GameplayVisuals visuals, GlintTuning glints, UpgradeDefinition[] upgradeDefinitions, RelicField relics,
-            ScrapField scrap, SonarSystem sonar, ExcavationSystem excavation, TetherSystem tether, HomeBase home,
-            RadioTower tower, Workshop workshop, FriendField friends, CassetteField cassettes, LogCacheField logs,
-            SignalField signals, CassetteShelf shelf, RelayField relays)
+        internal void Wire(GameplayVisuals visuals, GlintTuning glints, UpgradeDefinition[] upgradeDefinitions,
+            SalvageField salvage, RelicField relics, SonarSystem sonar, ExcavationSystem excavation,
+            TetherSystem tether, HomeBase home, RadioTower tower, Workshop workshop, FriendField friends,
+            CassetteField cassettes, LogCacheField logs, SignalField signals, CassetteShelf shelf, RelayField relays)
         {
             _visuals = visuals;
             _glints = glints;
             _upgradeDefinitions = upgradeDefinitions;
+            _salvage = salvage;
             _relics = relics;
-            _scrap = scrap;
             _sonar = sonar;
             _excavation = excavation;
             _tether = tether;
@@ -127,23 +128,24 @@ namespace MoonProject.Gameplay
             }
 
             _meshes = new GlowMeshSet();
-            Wallet = new ScrapWallet(context.Events);
+            Materials = new MaterialStock(context.Events);
             var save = context.Get<ISaveService>();
             var services = new GameplayServices(context.Events, context.Input, context.Get<ITerrainQuery>(),
                 context.Get<IWorldLayout>(), context.Get<IWorldAnchors>(), context.Get<IRoverState>(),
-                context.Get<IRoverRig>(), context.Get<IViewCamera>(), save, Wallet, _visuals, _glints, _meshes);
+                context.Get<IRoverRig>(), context.Get<IViewCamera>(), save, Materials, _visuals, _glints, _meshes);
             var abilities = context.Get<IRoverAbilities>();
-            Upgrades = new UpgradeService(context.Events, Wallet, abilities, _upgradeDefinitions);
+            Upgrades = new UpgradeService(context.Events, Materials, abilities, _upgradeDefinitions);
             Radio = new RadioProgram(context.Events, _cassettes.Catalog.Ids());
 
             Vector3 lander = HomeBase.LanderSpot(services.Terrain, services.Layout.BasePosition, _home.Tuning);
-            if (!_relics.Initialize(services) || !_scrap.Initialize(services, _relics.Sites, lander) ||
-                !_excavation.Initialize(services, _relics) || !_tether.Initialize(services, _relics) ||
+            if (!_salvage.Initialize(services) || !_relics.Initialize(services, _salvage) ||
+                !_excavation.Initialize(services, _relics, _salvage) ||
+                !_tether.Initialize(services, _relics, _salvage) ||
                 !_home.Initialize(services, _relics, _tether, Upgrades) || !_tower.Initialize(services, Upgrades) ||
                 !_workshop.Initialize(services, Upgrades) ||
-                !_friends.Initialize(services, Radio, _cassettes.Catalog, _relics, _scrap, _home) ||
+                !_friends.Initialize(services, Radio, _cassettes.Catalog, _relics, _salvage, _home) ||
                 !_cassettes.Initialize(services, Radio, KeepClearOfCassettes()) || !_logs.Initialize(services) ||
-                !_sonar.Initialize(services, _relics, _friends) ||
+                !_sonar.Initialize(services, _relics, _friends, _salvage) ||
                 !_signals.Initialize(services, _friends, _cassettes, _logs, _relics, abilities, _sonar.Tuning) ||
                 !_shelf.Initialize(Radio, _cassettes.Catalog, _friends.BellTuning) ||
                 !_relays.Initialize(services, Upgrades, _tower, _tether, _friends.Tuning, Placement(context)))
@@ -162,11 +164,12 @@ namespace MoonProject.Gameplay
             }
 
             _friends.Connect(_sonar);
+            _salvage.Connect(_excavation);
 
             Shop = new UpgradeShop(Upgrades, stations, save);
-            Hints = new InteractionHints(services.Rover, _sonar, _excavation, _tether, _home, stations, Upgrades,
-                _friends, _relays);
-            context.Register<IScrapWallet>(Wallet);
+            Hints = new InteractionHints(services.Rover, _sonar, _excavation, _salvage, _tether, _home, stations,
+                Upgrades, _friends, _relays);
+            context.Register<IMaterialStock>(Materials);
             context.Register<ITetherAim>(_tether);
             context.Register<IUpgradeShop>(Shop);
             context.Register<IInteractionHints>(Hints);
@@ -182,10 +185,11 @@ namespace MoonProject.Gameplay
 
         private void RegisterSaveSections(ISaveService save)
         {
-            _saveTokens.Add(save.Register(new SaveSection<WalletSaveData>(GameplaySaveKeys.Wallet,
-                GameplaySaveKeys.WalletVersion, Wallet.Capture, Wallet.Restore)));
-            _saveTokens.Add(save.Register(new SaveSection<ScrapSaveData>(GameplaySaveKeys.Scrap,
-                GameplaySaveKeys.ScrapVersion, _scrap.Capture, _scrap.Restore)));
+            _saveTokens.Add(save.Register(new SaveSection<MaterialsSaveData>(GameplaySaveKeys.Materials,
+                GameplaySaveKeys.MaterialsVersion, Materials.Capture, Materials.Restore,
+                MaterialsSaveMigrations.Migrate)));
+            _saveTokens.Add(save.Register(new SaveSection<SalvageSaveData>(GameplaySaveKeys.Salvage,
+                GameplaySaveKeys.SalvageVersion, _salvage.Capture, _salvage.Restore)));
             _saveTokens.Add(save.Register(new SaveSection<RelicsSaveData>(GameplaySaveKeys.Relics,
                 GameplaySaveKeys.RelicsVersion, _relics.Capture, RestoreRelics)));
             _saveTokens.Add(save.Register(new SaveSection<UpgradesSaveData>(GameplaySaveKeys.Upgrades,
@@ -222,11 +226,11 @@ namespace MoonProject.Gameplay
             _shelf.Sync();
         }
 
-        /// <summary>Every relic site, friend site and friend part: a basin cassette keeps clear of them all.</summary>
+        /// <summary>Every salvage site, friend site and friend part: a basin cassette keeps clear of them.</summary>
         private List<Vector3> KeepClearOfCassettes()
         {
             var points = new List<Vector3>();
-            foreach (RelicSite site in _relics.Sites)
+            foreach (SalvageSite site in _salvage.Sites)
             {
                 points.Add(site.Position);
             }
@@ -288,8 +292,8 @@ namespace MoonProject.Gameplay
 
             return _glints == null ? "GlintTuning is not assigned."
                 : _upgradeDefinitions == null || _upgradeDefinitions.Length == 0 ? "no upgrade definitions."
+                : _salvage == null ? "SalvageField is not assigned."
                 : _relics == null ? "RelicField is not assigned."
-                : _scrap == null ? "ScrapField is not assigned."
                 : _sonar == null ? "SonarSystem is not assigned."
                 : _excavation == null ? "ExcavationSystem is not assigned."
                 : _tether == null ? "TetherSystem is not assigned."

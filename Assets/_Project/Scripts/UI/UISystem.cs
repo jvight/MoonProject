@@ -53,6 +53,7 @@ namespace MoonProject.UI
         private TetherReticle _reticle;
         private ContextPrompt _prompt;
         private ScrapChip _chip;
+        private int _chipTotal;
         private MemoryCard _card;
         private TickerQueue _tickerLines;
         private RadioTicker _ticker;
@@ -200,7 +201,7 @@ namespace MoonProject.UI
                 UiSaveKeys.PromptsVersion, _ledger.Capture, _ledger.Restore)));
 
             EventBus events = services.Events;
-            _tokens.Add(events.Subscribe<CurrencyChanged>(OnCurrencyChanged));
+            _tokens.Add(events.Subscribe<MaterialsChanged>(OnMaterialsChanged));
             _tokens.Add(events.Subscribe<RelicDeposited>(OnRelicDeposited));
             _tokens.Add(events.Subscribe<RoverAwoke>(OnRoverAwoke));
             _tokens.Add(events.Subscribe<SonarPinged>(OnSonarPinged));
@@ -259,7 +260,8 @@ namespace MoonProject.UI
                 services.Events);
             _chip = new ScrapChip(_layout.ScrapChip, _layout.ScrapChipShadow, _layout.ScrapChipIcon,
                 _layout.ScrapChipCount, _tuning.ScrapChip, _numbers);
-            _chip.Snap(services.Wallet.Balance);
+            _chip.Snap(services.Materials.Total);
+            _chipTotal = services.Materials.Total;
             _card = new MemoryCard(_layout, _tuning.MemoryCard, _localization, services.Events, _relics,
                 services.Friends);
             _friendReadout = new FriendReadout(_layout, _tuning.Friends, _tuning.Prompts, services.Friends,
@@ -273,9 +275,9 @@ namespace MoonProject.UI
             _relayTag = new RelayTag(_layout, _tuning.Relays, _tuning.Prompts, services.Hints, services.Relays,
                 services.View, _numbers);
             _tower = new TowerPanel(_layout, _tuning.TowerPanel, _localization, services.Events, services.Shop,
-                services.Wallet, services.Hints, _numbers);
+                services.Materials, services.Hints, _numbers);
             _pause = new PauseMenu(_layout, _tuning.Pause, _player, _localization, services.Input, services.Events,
-                services.Save, services.Wallet, services.Radio, services.Relays, _numbers, _cursor, Quit);
+                services.Save, services.Materials, services.Radio, services.Relays, _numbers, _cursor, Quit);
             _bound = true;
             if (_awake)
             {
@@ -374,21 +376,24 @@ namespace MoonProject.UI
             QuitAction();
         }
 
-        private void OnCurrencyChanged(CurrencyChanged changed)
+        private void OnMaterialsChanged(MaterialsChanged changed)
         {
             if (!_bound)
             {
                 return;
             }
 
-            if (changed.Delta == 0)
+            int total = changed.Metal + changed.Wiring + changed.Optics;
+            if (total == _chipTotal)
             {
-                _chip.Snap(changed.Total);
+                _chip.Snap(total);
             }
             else
             {
-                _chip.Change(changed.Total);
+                _chip.Change(total);
             }
+
+            _chipTotal = total;
         }
 
         private void OnRelicDeposited(RelicDeposited deposited)

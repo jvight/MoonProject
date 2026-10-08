@@ -8,12 +8,13 @@ using MoonProject.Core.Input;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// The energy tether. The most central loose relic inside a soft aim cone around the screen centre is
-    /// highlighted (and stays picked while it is roughly there); holding Tether latches a glowing beam from 07's eye
-    /// onto it (<see cref="TetherAttached"/>). A PD spring floats it along behind 07 at the winch length, mass and all.
-    /// Letting go releases it where it is; if it gets caught or falls far behind, the tether lets go softly by itself
-    /// and the relic stays right there (<see cref="TetherReleased"/>, snapped). 07 looks at what it aims at and fixes
-    /// on what it tows.
+    /// The energy tether. The most central towable inside a soft aim cone around the screen centre (a loose relic, or
+    /// a salvage drag piece still hanging on its wreck) is highlighted and stays picked while it is roughly there;
+    /// holding Tether latches a glowing beam from 07's eye onto it (<see cref="TetherAttached"/>). A PD spring floats
+    /// it along behind 07 at the winch length, mass and all. Letting go releases it where it is; if it gets caught or
+    /// falls far behind, the tether lets go softly by itself and it stays right there (<see cref="TetherReleased"/>,
+    /// snapped). A drag piece pulled clear of its wreck is let go softly too (not snapped). 07 looks at what it aims at
+    /// and fixes on what it tows.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class TetherSystem : MonoBehaviour, ITetherAim
@@ -29,14 +30,14 @@ namespace MoonProject.Gameplay
         private IRoverRig _rig;
         private IViewCamera _view;
         private ITerrainQuery _terrain;
-        private RelicField _relics;
+        private ITowable[] _towables = Array.Empty<ITowable>();
         private WinchControl _winch;
         private TetherSnapRule _snap;
         private LineRenderer _line;
         private GlowRenderer _glow;
         private Vector3[] _points = Array.Empty<Vector3>();
-        private Relic _hovered;
-        private Relic _towed;
+        private ITowable _hovered;
+        private ITowable _towed;
         private bool _armed;
         private bool _wasHeld;
         private float _reach;
@@ -51,19 +52,25 @@ namespace MoonProject.Gameplay
             : _hovered != null ? TetherAimState.Hovering
             : TetherAimState.Idle;
 
-        public Vector3 TargetPosition => _towed != null ? _towed.transform.position
-            : _hovered != null ? _hovered.transform.position
+        public Vector3 TargetPosition => _towed != null ? _towed.Position
+            : _hovered != null ? _hovered.Position
             : Vector3.zero;
 
         public float Strain => _towed != null ? _snap.Strain : 0f;
 
         public float Length => _towed != null ? _winch.Length : 0f;
 
-        /// <summary>The relic on the tether, or null.</summary>
-        public Relic Towed => _towed;
+        /// <summary>The relic on the tether, or null (also null while it tows a drag piece).</summary>
+        public Relic Towed => _towed as Relic;
 
-        /// <summary>The highlighted relic a press would latch onto, or null.</summary>
-        public Relic Hovered => _hovered;
+        /// <summary>The highlighted relic a press would latch onto, or null (also null over a drag piece).</summary>
+        public Relic Hovered => _hovered as Relic;
+
+        /// <summary>Whatever is on the tether (a relic or a drag piece), or null.</summary>
+        internal ITowable TowedBody => _towed;
+
+        /// <summary>Whatever a press would latch onto (a relic or a drag piece), or null.</summary>
+        internal ITowable HoveredBody => _hovered;
 
         public TetherTuning Tuning => _tuning;
 
@@ -75,7 +82,7 @@ namespace MoonProject.Gameplay
             _tuning = tuning;
         }
 
-        internal bool Initialize(GameplayServices services, RelicField relics)
+        internal bool Initialize(GameplayServices services, RelicField relics, SalvageField salvage)
         {
             if (_tuning == null)
             {
@@ -90,7 +97,27 @@ namespace MoonProject.Gameplay
             _rig = services.Rig;
             _view = services.View;
             _terrain = services.Terrain;
-            _relics = relics ?? throw new ArgumentNullException(nameof(relics));
+            if (relics == null)
+            {
+                throw new ArgumentNullException(nameof(relics));
+            }
+
+            if (salvage == null)
+            {
+                throw new ArgumentNullException(nameof(salvage));
+            }
+
+            _towables = new ITowable[relics.Relics.Count + salvage.Drags.Count];
+            for (int i = 0; i < relics.Relics.Count; i++)
+            {
+                _towables[i] = relics.Relics[i];
+            }
+
+            for (int i = 0; i < salvage.Drags.Count; i++)
+            {
+                _towables[relics.Relics.Count + i] = salvage.Drags[i];
+            }
+
             _winch = new WinchControl(_tuning.MinLength, _tuning.MaxLength, _tuning.WinchStep, _tuning.ReelSpeed,
                 _tuning.WinchLead);
             _snap = new TetherSnapRule(_tuning.SnapStretch, _tuning.SnapGrace, _tuning.SnapDistance);
@@ -179,29 +206,39 @@ namespace MoonProject.Gameplay
             {
                 Release(true, true);
             }
+            else if (_towed.WantsRelease)
+            {
+                // Done: the held button must not latch straight back on.
+                _armed = false;
+                Release(false, true);
+            }
         }
 
-        private Relic FindTarget()
+        private ITowable FindTarget()
         {
             Transform view = _view.Camera.transform;
             Vector3 eye = view.position;
             Vector3 forward = view.forward;
-            Relic best = null;
+
+            // Aimed from the view, but the beam leaves 07's eye: what 07 can see is in reach (a relic surfacing under
+            // a wreck's roof is hidden from the camera above, never from 07 beside it).
+            Vector3 beamOrigin = _rig.TetherOrigin.position;
+            ITowable best = null;
             float bestScore = float.MaxValue;
-            for (int i = 0; i < _relics.Relics.Count; i++)
+            for (int i = 0; i < _towables.Length; i++)
             {
-                Relic relic = _relics.Relics[i];
-                if (!relic.IsTetherable)
+                ITowable towable = _towables[i];
+                if (!towable.IsTetherable)
                 {
                     continue;
                 }
 
-                float cone = relic == _hovered ? _tuning.StickyCone : _tuning.AimCone;
-                Vector3 position = relic.transform.position;
+                float cone = towable == _hovered ? _tuning.StickyCone : _tuning.AimCone;
+                Vector3 position = towable.Position;
                 if (TetherAim.TryScore(eye, forward, position, cone, _tuning.AimRange, _tuning.DistanceWeight,
-                        out float score) && score < bestScore && InSight(eye, position, relic.Radius))
+                        out float score) && score < bestScore && InSight(beamOrigin, position, towable.Radius))
                 {
-                    best = relic;
+                    best = towable;
                     bestScore = score;
                 }
             }
@@ -209,17 +246,17 @@ namespace MoonProject.Gameplay
             return best;
         }
 
-        private static bool InSight(Vector3 eye, Vector3 target, float radius)
+        private static bool InSight(Vector3 origin, Vector3 target, float radius)
         {
-            Vector3 toTarget = target - eye;
+            Vector3 toTarget = target - origin;
             float distance = toTarget.magnitude - radius;
-            return distance <= 0f || !Physics.Raycast(eye, toTarget.normalized, distance, OcclusionMask,
+            return distance <= 0f || !Physics.Raycast(origin, toTarget.normalized, distance, OcclusionMask,
                 QueryTriggerInteraction.Ignore);
         }
 
-        private void SetHovered(Relic relic)
+        private void SetHovered(ITowable towable)
         {
-            if (relic == _hovered)
+            if (towable == _hovered)
             {
                 return;
             }
@@ -229,20 +266,20 @@ namespace MoonProject.Gameplay
                 _hovered.SetAimHighlight(0f);
             }
 
-            _hovered = relic;
+            _hovered = towable;
             if (_hovered != null)
             {
                 _hovered.SetAimHighlight(_tuning.HoverHighlight);
             }
         }
 
-        private void Attach(Relic relic)
+        private void Attach(ITowable towable)
         {
             SetHovered(null);
-            _towed = relic;
-            relic.IsTethered = true;
-            relic.SetAimHighlight(_tuning.TowHighlight);
-            Rigidbody body = relic.Body;
+            _towed = towable;
+            towable.BeginTow();
+            towable.SetAimHighlight(_tuning.TowHighlight);
+            Rigidbody body = towable.Body;
             _savedLinearDamping = body.linearDamping;
             _savedAngularDamping = body.angularDamping;
             body.linearDamping = _tuning.TowLinearDamping;
@@ -258,8 +295,8 @@ namespace MoonProject.Gameplay
         /// <param name="announce">False when the scene is being torn down: listeners may already be gone.</param>
         private void Release(bool snapped, bool announce)
         {
-            Relic relic = _towed;
-            Rigidbody body = relic.Body;
+            ITowable towable = _towed;
+            Rigidbody body = towable.Body;
             body.linearDamping = _savedLinearDamping;
             body.angularDamping = _savedAngularDamping;
             if (snapped)
@@ -269,10 +306,10 @@ namespace MoonProject.Gameplay
                 _armed = false;
             }
 
-            relic.IsTethered = false;
-            relic.SetAimHighlight(0f);
+            towable.EndTow();
+            towable.SetAimHighlight(0f);
             _towed = null;
-            _beamEnd = relic.transform.position;
+            _beamEnd = towable.Position;
             _retracting = true;
             _snap.Reset();
             if (announce)
@@ -286,7 +323,7 @@ namespace MoonProject.Gameplay
             if (_towed != null)
             {
                 _reach = Mathf.MoveTowards(_reach, 1f, deltaTime / _tuning.BeamExtend);
-                _beamEnd = _towed.transform.position;
+                _beamEnd = _towed.Position;
             }
             else if (_retracting)
             {
@@ -319,12 +356,12 @@ namespace MoonProject.Gameplay
         {
             if (_towed != null)
             {
-                _rig.SetGazeTarget(this, _towed.transform.position, GazePriorities.Focus);
+                _rig.SetGazeTarget(this, _towed.Position, GazePriorities.Focus);
                 _gazing = true;
             }
             else if (_hovered != null)
             {
-                _rig.SetGazeTarget(this, _hovered.transform.position, GazePriorities.Interest);
+                _rig.SetGazeTarget(this, _hovered.Position, GazePriorities.Interest);
                 _gazing = true;
             }
             else if (_gazing)

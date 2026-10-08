@@ -7,7 +7,8 @@ using MoonProject.Core.Events;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// Upgrade levels and their effects. A purchase spends scrap through the wallet, raises the level and publishes
+    /// Upgrade levels and their effects. A purchase spends the level's recipe from 07's materials, raises the level and
+    /// publishes
     /// <see cref="UpgradePurchased"/>; a radio upgrade also publishes <see cref="SignalRadiusChanged"/>, and a level
     /// that unlocks a rover ability grants it through <see cref="IRoverAbilities"/> (before the event, so listeners
     /// already see it). Restoring a save applies levels silently (no purchase event), re-grants their abilities and
@@ -16,16 +17,16 @@ namespace MoonProject.Gameplay
     public sealed class UpgradeService
     {
         private readonly EventBus _events;
-        private readonly ScrapWallet _wallet;
+        private readonly MaterialStock _stock;
         private readonly IRoverAbilities _abilities;
         private readonly UpgradeDefinition[] _definitions;
         private readonly int[] _levels;
 
-        public UpgradeService(EventBus events, ScrapWallet wallet, IRoverAbilities abilities,
+        public UpgradeService(EventBus events, MaterialStock stock, IRoverAbilities abilities,
             IReadOnlyList<UpgradeDefinition> definitions)
         {
             _events = events ?? throw new ArgumentNullException(nameof(events));
-            _wallet = wallet ?? throw new ArgumentNullException(nameof(wallet));
+            _stock = stock ?? throw new ArgumentNullException(nameof(stock));
             _abilities = abilities ?? throw new ArgumentNullException(nameof(abilities));
             if (definitions == null)
             {
@@ -106,7 +107,7 @@ namespace MoonProject.Gameplay
 
             UpgradeDefinition definition = _definitions[index];
             int level = _levels[index];
-            bool canAfford = level < definition.MaxLevel && _wallet.CanAfford(definition.Levels[level].Cost);
+            bool canAfford = level < definition.MaxLevel && _stock.Has(definition.Levels[level].Recipe);
             offer = new UpgradeOffer(definition, level, canAfford);
             return true;
         }
@@ -126,7 +127,7 @@ namespace MoonProject.Gameplay
                 return PurchaseResult.Maxed;
             }
 
-            if (!_wallet.TrySpend(definition.Levels[level].Cost))
+            if (!_stock.TrySpend(definition.Levels[level].Recipe))
             {
                 return PurchaseResult.CannotAfford;
             }

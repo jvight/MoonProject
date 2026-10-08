@@ -3,6 +3,7 @@
     "rootNamespace": "MoonProject.Gameplay.Tests",
     "references": [
         "MoonProject.Gameplay",
+        "MoonProject.Gameplay.Editor",
         "MoonProject.Core",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"

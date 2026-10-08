@@ -119,10 +119,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(slot, duck.Slot, "it took the slot that was shown");
             Assert.AreEqual(1, home.DisplayedCount);
             Assert.AreEqual(nameof(TetherReleased), _fixture.Events.Order[before]);
-            int depositedAt = _fixture.Events.Order.IndexOf(nameof(RelicDeposited));
-            Assert.AreEqual(nameof(CurrencyChanged), _fixture.Events.Order[depositedAt + 1], "then the scrap gift");
-            CurrencyChanged gift = _fixture.Events.CurrencyChanged[_fixture.Events.CurrencyChanged.Count - 1].Value;
-            Assert.AreEqual(_fixture.BaseTuning.DepositGift, gift.Delta);
+            Assert.IsEmpty(_fixture.Events.MaterialsChanged, "memories are not paid for: materials come from salvage");
             Assert.Less(Vector3.Distance(duck.transform.position, deposited.Position), 0.05f, "settled on its slot");
             Assert.IsTrue(System.IO.File.Exists(_fixture.Bootstrap.Context.Get<ISaveService>().FilePath),
                 "a deposit is a save checkpoint");
@@ -140,7 +137,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(0, tower.ActiveStage);
             Assert.Less(tower.BeaconLevel, 0.01f, "the old mast stands dark");
 
-            _fixture.Gameplay.Wallet.Add(60);
+            _fixture.GiveMaterials(0, 3, 2);
             Assert.AreEqual(PurchaseResult.NotAtStation, shop.Purchase(Tower), "bought on the pad, not anywhere");
             _fixture.Rover.Place(tower.PadCentre, 0f);
             yield return null;
@@ -156,7 +153,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(PurchaseResult.Purchased, shop.Purchase(Tower));
             CollectionAssert.AreEqual(new[]
             {
-                nameof(CurrencyChanged), nameof(UpgradePurchased), nameof(SignalRadiusChanged),
+                nameof(MaterialsChanged), nameof(UpgradePurchased), nameof(SignalRadiusChanged),
             }, _fixture.Events.Order.GetRange(before, 3));
             Assert.AreEqual(1, _fixture.Events.UpgradePurchased[0].Value.Level);
             Assert.AreEqual(110f, _fixture.Events.SignalRadiusChanged[0].Value.Radius);
@@ -176,13 +173,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return new WaitForSeconds(2.5f);
             Assert.AreEqual(1, tower.ActiveStage);
             Assert.AreEqual(170f, _fixture.Events.SignalRadiusChanged[1].Value.Radius);
-            int picked = 0;
-            foreach (EventRecorder.Timed<ScrapCollected> piece in _fixture.Events.ScrapCollected)
-            {
-                picked += piece.Value.Value;
-            }
-
-            Assert.AreEqual(60 - 15 - 40 + picked, _fixture.Gameplay.Wallet.Balance, "exactly the costs were spent");
+            Assert.AreEqual(0, _fixture.Gameplay.Materials.Total, "exactly the two recipes were spent");
             _fixture.Capture("11-tower-level-2");
         }
 
@@ -204,7 +195,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.Greater(SurfaceRules.HorizontalDistance(workshop.PadCentre, tower.PadCentre),
                 look.Radius + _fixture.TowerTuning.PadRadius, "the two pads never overlap");
 
-            _fixture.Gameplay.Wallet.Add(150);
+            _fixture.GiveMaterials(5, 2, 1);
             Assert.AreEqual(PurchaseResult.NotAtStation, shop.Purchase(HoverJump), "bought at the bench, not anywhere");
             _fixture.Rover.Place(tower.PadCentre, 0f);
             yield return null;
@@ -226,11 +217,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.Greater(workshop.LampLevel, 0.9f * tuning.LampOccupied, "the lamp leans in");
 
             int before = _fixture.Events.Order.Count;
-            int funds = _fixture.Gameplay.Wallet.Balance;
             Assert.AreEqual(PurchaseResult.Purchased, shop.Purchase(HoverJump));
-            int balance = _fixture.Gameplay.Wallet.Balance;
-            Assert.AreEqual(funds - 150, balance, "Hover-Jump costs 150");
-            CollectionAssert.AreEqual(new[] { nameof(CurrencyChanged), nameof(UpgradePurchased) },
+            int balance = _fixture.Gameplay.Materials.Total;
+            Assert.AreEqual(1, balance, "Hover-Jump takes 4 metal, 2 wiring and 1 optics: one metal is left");
+            CollectionAssert.AreEqual(new[] { nameof(MaterialsChanged), nameof(UpgradePurchased) },
                 _fixture.Events.Order.GetRange(before, _fixture.Events.Order.Count - before));
             Assert.AreEqual(HoverJump, _fixture.Events.UpgradePurchased[0].Value.UpgradeId);
             Assert.AreEqual(1, _fixture.Events.UpgradePurchased[0].Value.Level);
@@ -256,7 +246,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(1, _fixture.Gameplay.Upgrades.LevelOf(HoverJump), "the purchase was a checkpoint");
             Assert.IsTrue(_fixture.Rover.Has(RoverAbility.HoverJump), "granted again on load");
             Assert.AreEqual(0, _fixture.Events.UpgradePurchased.Count, "a load is never a purchase");
-            Assert.AreEqual(balance, _fixture.Gameplay.Wallet.Balance, "the checkpoint kept the change");
+            Assert.AreEqual(balance, _fixture.Gameplay.Materials.Total, "the checkpoint kept the change");
         }
 
         [UnityTest]
@@ -266,13 +256,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             _fixture = GameplayFixture.Boot(_controls, slot);
             yield return null;
             GameplaySystem gameplay = _fixture.Gameplay;
-            gameplay.Wallet.Add(30);
-
-            ScrapField scrap = gameplay.Scrap;
-            Vector3 cluster = scrap.RestPosition(0);
-            _fixture.Rover.Place(new Vector3(cluster.x, 0f, cluster.z), 0f);
-            yield return new WaitForSeconds(2.5f);
-            Assert.Less(scrap.Remaining, scrap.Count);
+            _fixture.GiveMaterials(3, 3, 3);
 
             HomeBase home = gameplay.Home;
             Vector3 towardPad = (Vector3.zero - home.ShelfPosition).normalized;
@@ -292,8 +276,6 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return null;
             yield return null;
             Assert.AreEqual(PurchaseResult.Purchased, _fixture.Bootstrap.Context.Get<IUpgradeShop>().Purchase(Tower));
-            int balance = gameplay.Wallet.Balance;
-            int remaining = scrap.Remaining;
             Assert.IsTrue(_fixture.Bootstrap.Context.Get<ISaveService>().SaveNow());
             _fixture.Dispose(true);
             yield return null;
@@ -301,8 +283,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             _fixture = GameplayFixture.Boot(_controls, slot);
             yield return null;
             gameplay = _fixture.Gameplay;
-            Assert.AreEqual(balance, gameplay.Wallet.Balance, "wallet");
-            Assert.AreEqual(remaining, gameplay.Scrap.Remaining, "collected scrap stays collected");
+            Assert.AreEqual(3, gameplay.Materials.Metal, "materials, less the tower's recipe");
+            Assert.AreEqual(2, gameplay.Materials.Wiring);
+            Assert.AreEqual(2, gameplay.Materials.Optics);
             Relic duckAgain = _fixture.FindRelic(Duck);
             Assert.AreEqual(RelicState.Displayed, duckAgain.State, "the museum keeps its relics");
             Assert.AreEqual(duckSlot, duckAgain.Slot);

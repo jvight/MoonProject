@@ -14,10 +14,11 @@ namespace MoonProject.Gameplay.Editor
     /// never slips inside. Each friend's home socket is the lander's node, or for a radio tower home (Bell's corner) a
     /// fixed empty under the TowerAnchor at the socket every tower stage carries, so stage swaps never move it; the
     /// cassette shelf stands the same way on the stages' CassetteShelfAnchor. The
-    /// base is stood beside the pad here for the editor view and re-seated on the real ground at boot; relic sites, the
-    /// scrap field, friends, cassettes, log caches and the relay masts (Art's RelayMast and RelayMast_Broken on the
-    /// World's relay anchors, with their relay parts) are placed from the World's surface and anchors at boot. Fails
-    /// loudly when a required asset or prefab node is missing.
+    /// base is stood beside the pad here for the editor view and re-seated on the real ground at boot; the salvage
+    /// sites (Art's wrecks on the World's site anchors, the relics in their hearts) and Kestrel-3's trail bits, the
+    /// friends, cassettes, log caches and the relay masts (Art's RelayMast and RelayMast_Broken on the World's relay
+    /// anchors, with their relay parts) are placed from the World's surface and anchors at boot. Fails loudly when a
+    /// required asset or prefab node is missing.
     /// </summary>
     public sealed class GameplaySceneContributor : ISceneContributor
     {
@@ -35,16 +36,13 @@ namespace MoonProject.Gameplay.Editor
         public void Contribute(SceneBuildContext context)
         {
             var visuals = context.LoadAsset<GameplayVisuals>(GameplayAssetPaths.Visuals);
-            var scrapTuning = context.LoadAsset<ScrapTuning>(GameplayAssetPaths.ScrapTuning);
             var sonarTuning = context.LoadAsset<SonarTuning>(GameplayAssetPaths.SonarTuning);
             var relicTuning = context.LoadAsset<RelicTuning>(GameplayAssetPaths.RelicTuning);
-            var placement = context.LoadAsset<RelicPlacementTuning>(GameplayAssetPaths.RelicPlacement);
             var excavationTuning = context.LoadAsset<ExcavationTuning>(GameplayAssetPaths.ExcavationTuning);
             var tetherTuning = context.LoadAsset<TetherTuning>(GameplayAssetPaths.TetherTuning);
             var baseTuning = context.LoadAsset<BaseTuning>(GameplayAssetPaths.BaseTuning);
             var towerTuning = context.LoadAsset<RadioTowerTuning>(GameplayAssetPaths.RadioTowerTuning);
             var workshopTuning = context.LoadAsset<WorkshopTuning>(GameplayAssetPaths.WorkshopTuning);
-            var scrapCatalog = context.LoadAsset<ScrapCatalog>(GameplayAssetPaths.ScrapCatalog);
             var relicCatalog = context.LoadAsset<RelicCatalog>(GameplayAssetPaths.RelicCatalog);
             var radioTower = context.LoadAsset<UpgradeDefinition>(GameplayAssetPaths.RadioTowerUpgrade);
             var hoverJump = context.LoadAsset<UpgradeDefinition>(GameplayAssetPaths.HoverJumpUpgrade);
@@ -57,13 +55,15 @@ namespace MoonProject.Gameplay.Editor
             var bellTuning = context.LoadAsset<BellTuning>(GameplayAssetPaths.BellTuning);
             var relayTuning = context.LoadAsset<RelayTuning>(GameplayAssetPaths.RelayTuning);
             var glintTuning = context.LoadAsset<GlintTuning>(GameplayAssetPaths.GlintTuning);
+            var salvageTuning = context.LoadAsset<SalvageTuning>(GameplayAssetPaths.SalvageTuning);
+            var salvageCatalog = context.LoadAsset<SalvageCatalog>(GameplayAssetPaths.SalvageCatalog);
             var relayMast = context.LoadAsset<GameObject>(GameplayAssetPaths.RelayMast);
             var relayMastBroken = context.LoadAsset<GameObject>(GameplayAssetPaths.RelayMastBroken);
             var relayPart = context.LoadAsset<GameObject>(GameplayAssetPaths.RelayPart);
             RequireRelayRig(relayMast);
             RequireRelayRig(relayMastBroken);
             Require(visuals.Validate(), nameof(GameplayVisuals));
-            Require(scrapCatalog.Validate(), nameof(ScrapCatalog));
+            Require(salvageCatalog.Validate(), nameof(SalvageCatalog));
             Require(relicCatalog.Validate(), nameof(RelicCatalog));
             Require(radioTower.Validate(), nameof(UpgradeDefinition));
             Require(hoverJump.Validate(), nameof(UpgradeDefinition));
@@ -74,8 +74,8 @@ namespace MoonProject.Gameplay.Editor
             Transform root = context.GameplayRoot.transform;
             GameObject host = context.CreateChild("GameplaySystem", root);
             var gameplay = host.AddComponent<GameplaySystem>();
+            var salvage = Part<SalvageField>(context, host, "Salvage");
             var relics = Part<RelicField>(context, host, "Relics");
-            var scrap = Part<ScrapField>(context, host, "Scrap");
             var sonar = Part<SonarSystem>(context, host, "Sonar");
             var excavation = Part<ExcavationSystem>(context, host, "Excavation");
             var tether = Part<TetherSystem>(context, host, "Tether");
@@ -120,8 +120,8 @@ namespace MoonProject.Gameplay.Editor
             Transform workbench = context.InstantiatePrefab(GameplayAssetPaths.Workbench, workshopAnchor).transform;
             MakeSolid(workbench);
 
-            relics.Wire(relicCatalog, placement, relicTuning);
-            scrap.Wire(scrapTuning, scrapCatalog);
+            salvage.Wire(salvageTuning, salvageCatalog);
+            relics.Wire(relicCatalog, relicTuning);
             sonar.Wire(sonarTuning);
             excavation.Wire(excavationTuning);
             tether.Wire(tetherTuning);
@@ -140,8 +140,8 @@ namespace MoonProject.Gameplay.Editor
             cassettes.Wire(cassetteCatalog, cassetteTuning);
             logs.Wire(logCacheCatalog, logCacheTuning);
             relays.Wire(relayTuning, relayMast, relayMastBroken, relayPart);
-            gameplay.Wire(visuals, glintTuning, new[] { radioTower, hoverJump }, relics, scrap, sonar, excavation, tether,
-                home, tower, workshop, friends, cassettes, logs, signals, tapeRack, relays);
+            gameplay.Wire(visuals, glintTuning, new[] { radioTower, hoverJump }, salvage, relics, sonar, excavation,
+                tether, home, tower, workshop, friends, cassettes, logs, signals, tapeRack, relays);
             context.AddSystem(gameplay);
         }
 

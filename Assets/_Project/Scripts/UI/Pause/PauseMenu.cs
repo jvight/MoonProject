@@ -30,7 +30,7 @@ namespace MoonProject.UI
         private readonly InputReader _input;
         private readonly EventBus _events;
         private readonly ISaveService _save;
-        private readonly IScrapWallet _wallet;
+        private readonly IMaterialStock _materials;
         private readonly IRadioProgram _radio;
         private readonly IRelayStatus _relays;
         private readonly IntText _numbers;
@@ -51,7 +51,7 @@ namespace MoonProject.UI
         private float _writtenShift = float.NaN;
 
         public PauseMenu(UiLayout layout, PauseSettings settings, PlayerSettings player, ILocalization localization,
-            InputReader input, EventBus events, ISaveService save, IScrapWallet wallet, IRadioProgram radio,
+            InputReader input, EventBus events, ISaveService save, IMaterialStock materials, IRadioProgram radio,
             IRelayStatus relays, IntText numbers, CursorPolicy cursor, Action quit)
         {
             _layout = layout ?? throw new ArgumentNullException(nameof(layout));
@@ -61,7 +61,7 @@ namespace MoonProject.UI
             _input = input ?? throw new ArgumentNullException(nameof(input));
             _events = events ?? throw new ArgumentNullException(nameof(events));
             _save = save ?? throw new ArgumentNullException(nameof(save));
-            _wallet = wallet ?? throw new ArgumentNullException(nameof(wallet));
+            _materials = materials ?? throw new ArgumentNullException(nameof(materials));
             _radio = radio ?? throw new ArgumentNullException(nameof(radio));
             _relays = relays ?? throw new ArgumentNullException(nameof(relays));
             _numbers = numbers ?? throw new ArgumentNullException(nameof(numbers));
@@ -127,7 +127,7 @@ namespace MoonProject.UI
             _clock.Pause();
             _input.Disable();
             _cursor.Menu();
-            _layout.PauseScrapCount.text = _numbers.Get(_wallet.Balance);
+            _layout.PauseScrapCount.text = _numbers.Get(_materials.Total);
             WriteCassettes();
             WriteRelays();
             _veil.Show();

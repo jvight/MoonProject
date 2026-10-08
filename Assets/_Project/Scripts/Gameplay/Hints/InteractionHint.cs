@@ -18,7 +18,7 @@ namespace MoonProject.Gameplay
         public Vector3 Position { get; }
 
         /// <summary>
-        /// False when the action is there but waiting (sonar cooling down, not enough scrap for the next level).
+        /// False when the action is there but waiting (sonar cooling down, not enough materials for the next level).
         /// </summary>
         public bool Ready { get; }
 

@@ -13,7 +13,7 @@ namespace MoonProject.UI
     internal sealed class UiServices
     {
         public UiServices(EventBus events, InputReader input, IViewCamera view, IRoverState rover, IAudioSettings audio,
-            ILookSettings look, ISaveService save, IScrapWallet wallet, ITetherAim tether, IInteractionHints hints,
+            ILookSettings look, ISaveService save, IMaterialStock materials, ITetherAim tether, IInteractionHints hints,
             IUpgradeShop shop, IFriendStatuses friends, IRadioProgram radio, IRadioHop hop, IRelayStatus relays)
         {
             Events = events ?? throw new ArgumentNullException(nameof(events));
@@ -23,7 +23,7 @@ namespace MoonProject.UI
             Audio = audio ?? throw new ArgumentNullException(nameof(audio));
             Look = look ?? throw new ArgumentNullException(nameof(look));
             Save = save ?? throw new ArgumentNullException(nameof(save));
-            Wallet = wallet ?? throw new ArgumentNullException(nameof(wallet));
+            Materials = materials ?? throw new ArgumentNullException(nameof(materials));
             Tether = tether ?? throw new ArgumentNullException(nameof(tether));
             Hints = hints ?? throw new ArgumentNullException(nameof(hints));
             Shop = shop ?? throw new ArgumentNullException(nameof(shop));
@@ -47,7 +47,7 @@ namespace MoonProject.UI
 
         public ISaveService Save { get; }
 
-        public IScrapWallet Wallet { get; }
+        public IMaterialStock Materials { get; }
 
         public ITetherAim Tether { get; }
 
@@ -75,7 +75,7 @@ namespace MoonProject.UI
 
             return new UiServices(context.Events, context.Input, context.Get<IViewCamera>(), context.Get<IRoverState>(),
                 context.Get<IAudioSettings>(), context.Get<ILookSettings>(), context.Get<ISaveService>(),
-                context.Get<IScrapWallet>(), context.Get<ITetherAim>(), context.Get<IInteractionHints>(),
+                context.Get<IMaterialStock>(), context.Get<ITetherAim>(), context.Get<IInteractionHints>(),
                 context.Get<IUpgradeShop>(), context.Get<IFriendStatuses>(), context.Get<IRadioProgram>(),
                 context.Get<IRadioHop>(), context.Get<IRelayStatus>());
         }

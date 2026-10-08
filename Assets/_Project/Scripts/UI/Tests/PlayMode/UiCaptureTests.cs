@@ -249,7 +249,7 @@ namespace MoonProject.UI.PlayModeTests
             Transform socket = DarkMastSocket(context.Get<IWorldAnchors>());
             Camera mastCamera = MastCamera(socket, camera);
             fakes.Camera = mastCamera;
-            fakes.NextCost = 90;
+            fakes.NextCost = new Recipe(60, 30, 0);
             fakes.SetBalance(30);
             fakes.PrimaryHint = new InteractionHint(InteractionKind.Restore, socket.position, false);
             yield return new WaitForSecondsRealtime(_tuning.Relays.Tag.FadeIn + 1f);

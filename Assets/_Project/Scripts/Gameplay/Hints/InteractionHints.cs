@@ -12,13 +12,14 @@ namespace MoonProject.Gameplay
         private static readonly InteractionKind[] Priority =
         {
             InteractionKind.Deposit, InteractionKind.Repair, InteractionKind.Restore, InteractionKind.Tune,
-            InteractionKind.Hop, InteractionKind.Upgrade, InteractionKind.Excavate, InteractionKind.Tether,
-            InteractionKind.Reel, InteractionKind.Ping,
+            InteractionKind.Hop, InteractionKind.Upgrade, InteractionKind.Salvage, InteractionKind.Excavate,
+            InteractionKind.Tether, InteractionKind.Reel, InteractionKind.Ping,
         };
 
         private readonly IRoverState _rover;
         private readonly SonarSystem _sonar;
         private readonly ExcavationSystem _excavation;
+        private readonly SalvageField _salvage;
         private readonly TetherSystem _tether;
         private readonly HomeBase _home;
         private readonly IUpgradeStation[] _stations;
@@ -26,12 +27,14 @@ namespace MoonProject.Gameplay
         private readonly FriendField _friends;
         private readonly RelayField _relays;
 
-        public InteractionHints(IRoverState rover, SonarSystem sonar, ExcavationSystem excavation, TetherSystem tether,
-            HomeBase home, IUpgradeStation[] stations, UpgradeService upgrades, FriendField friends, RelayField relays)
+        public InteractionHints(IRoverState rover, SonarSystem sonar, ExcavationSystem excavation,
+            SalvageField salvage, TetherSystem tether, HomeBase home, IUpgradeStation[] stations,
+            UpgradeService upgrades, FriendField friends, RelayField relays)
         {
             _rover = rover ?? throw new ArgumentNullException(nameof(rover));
             _sonar = sonar != null ? sonar : throw new ArgumentNullException(nameof(sonar));
             _excavation = excavation != null ? excavation : throw new ArgumentNullException(nameof(excavation));
+            _salvage = salvage != null ? salvage : throw new ArgumentNullException(nameof(salvage));
             _tether = tether != null ? tether : throw new ArgumentNullException(nameof(tether));
             _home = home != null ? home : throw new ArgumentNullException(nameof(home));
             _stations = stations ?? throw new ArgumentNullException(nameof(stations));
@@ -58,7 +61,7 @@ namespace MoonProject.Gameplay
 
         public bool TryGet(InteractionKind kind, out InteractionHint hint)
         {
-            Relic towed = _tether.Towed;
+            ITowable towed = _tether.TowedBody;
             switch (kind)
             {
                 case InteractionKind.Ping:
@@ -70,14 +73,19 @@ namespace MoonProject.Gameplay
                         ? new InteractionHint(kind, candidate.Site.Position, true)
                         : InteractionHint.None;
                     return candidate != null;
+                case InteractionKind.Salvage:
+                    SalvagePiece piece = _salvage.Cutting ?? _salvage.Candidate;
+                    hint = piece != null ? new InteractionHint(kind, piece.CutPosition, true) : InteractionHint.None;
+                    return piece != null;
                 case InteractionKind.Tether:
-                    Relic hovered = _tether.Hovered;
+                    ITowable hovered = _tether.HoveredBody;
                     hint = hovered != null
-                        ? new InteractionHint(kind, hovered.transform.position, true)
+                        ? new InteractionHint(kind, hovered.Position, true)
                         : InteractionHint.None;
                     return hovered != null;
                 case InteractionKind.Deposit:
-                    bool deposit = towed != null && _home.InDepositZone(towed.transform.position);
+                    Relic relic = _tether.Towed;
+                    bool deposit = relic != null && _home.InDepositZone(relic.transform.position);
                     hint = deposit ? new InteractionHint(kind, _home.ShelfPosition, true) : InteractionHint.None;
                     return deposit;
                 case InteractionKind.Repair:
@@ -104,7 +112,7 @@ namespace MoonProject.Gameplay
                     return hopHere;
                 case InteractionKind.Reel:
                     hint = towed != null
-                        ? new InteractionHint(kind, towed.transform.position, true)
+                        ? new InteractionHint(kind, towed.Position, true)
                         : InteractionHint.None;
                     return towed != null;
                 case InteractionKind.Upgrade:

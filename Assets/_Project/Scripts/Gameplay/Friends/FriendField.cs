@@ -11,7 +11,7 @@ namespace MoonProject.Gameplay
     /// <summary>
     /// The outpost's lost machines (docs/features/M3-02-friends-tilly.md, M3-05). Each friend lies broken at its site
     /// (planned on the basin floor, or at the World's anchors) with its missing parts around it, glinting amber.
-    /// Driving through a part draws it in like scrap (softer) and lights a lamp on the friend
+    /// Driving through a part draws it in (softly, amber) and lights a lamp on the friend
     /// (<see cref="FriendPartCollected"/>); an item its repair also needs (Bell's cassette) lights the next lamp as
     /// soon as 07 holds it (<see cref="IHeldItems"/>). With everything gathered, holding Interact near it starts a
     /// calm repair that always plays out: 07 holds still while its beam reaches the friend
@@ -26,9 +26,6 @@ namespace MoonProject.Gameplay
     [DisallowMultipleComponent]
     public sealed class FriendField : MonoBehaviour, ISpotTargets, IFriendRoster, IFriendStatuses
     {
-        /// <summary>Scrap pieces this close (m) to a spotted one count as the same cluster.</summary>
-        private const float ScrapClusterRadius = 4f;
-
         /// <summary>Degrees between the idle headings of a friend's parts (so they never turn in step).</summary>
         private const float PartHeadingStep = 120f;
 
@@ -61,14 +58,13 @@ namespace MoonProject.Gameplay
         private RadioProgram _radio;
         private IHeldItems _items;
         private RelicField _relics;
-        private ScrapField _scrap;
+        private SalvageField _salvage;
         private SonarSystem _sonar;
         private PickupGlints _glints;
         private RepairBeam _beam;
         private IDisposable _relicSubscription;
         private RadioCabinetBody _cabinet;
-        private bool[] _spottedRelics = Array.Empty<bool>();
-        private bool[] _spottedScrap = Array.Empty<bool>();
+        private bool[] _spottedSites = Array.Empty<bool>();
         private float _holdTime;
         private bool _holding;
         private bool _gazing;
@@ -144,7 +140,7 @@ namespace MoonProject.Gameplay
         }
 
         internal bool Initialize(GameplayServices services, RadioProgram radio, CassetteCatalog cassettes,
-            RelicField relics, ScrapField scrap, HomeBase home)
+            RelicField relics, SalvageField salvage, HomeBase home)
         {
             string problem = _catalog == null ? "FriendCatalog is not assigned."
                 : _tuning == null ? "FriendTuning is not assigned."
@@ -166,14 +162,13 @@ namespace MoonProject.Gameplay
             _radio = radio ?? throw new ArgumentNullException(nameof(radio));
             _items = radio;
             _relics = relics ?? throw new ArgumentNullException(nameof(relics));
-            _scrap = scrap != null ? scrap : throw new ArgumentNullException(nameof(scrap));
+            _salvage = salvage != null ? salvage : throw new ArgumentNullException(nameof(salvage));
             if (home == null)
             {
                 throw new ArgumentNullException(nameof(home));
             }
 
-            _spottedRelics = new bool[relics.Relics.Count];
-            _spottedScrap = new bool[scrap.Count];
+            _spottedSites = new bool[salvage.Sites.Count];
 
             int partCount = 0;
             IReadOnlyList<FriendDefinition> definitions = _catalog.Friends;
@@ -262,16 +257,15 @@ namespace MoonProject.Gameplay
             target = default;
             float best = radiusSq;
             bool found = false;
-            for (int i = 0; i < _relics.Relics.Count; i++)
+            for (int i = 0; i < _salvage.Sites.Count; i++)
             {
-                Relic relic = _relics.Relics[i];
-                bool hidden = (relic.State == RelicState.Buried || relic.State == RelicState.Surfacing) &&
-                              !relic.Discovered && !_spottedRelics[i];
-                float distance = SurfaceRules.HorizontalDistanceSquared(around, relic.Site.Position);
+                SalvageSite site = _salvage.Sites[i];
+                bool hidden = site.AnswersSonar && !site.Discovered && !_spottedSites[i];
+                float distance = SurfaceRules.HorizontalDistanceSquared(around, site.Position);
                 if (hidden && distance <= best)
                 {
                     best = distance;
-                    target = new SpotTarget(SpotKind.Relic, i, -1, relic.Site.Position);
+                    target = new SpotTarget(SpotKind.Site, i, -1, site.Position);
                     found = true;
                 }
             }
@@ -297,27 +291,6 @@ namespace MoonProject.Gameplay
                 }
             }
 
-            if (found)
-            {
-                return true;
-            }
-
-            for (int i = 0; i < _scrap.Count; i++)
-            {
-                if (_spottedScrap[i] || !_scrap.IsResting(i))
-                {
-                    continue;
-                }
-
-                float distance = SurfaceRules.HorizontalDistanceSquared(around, _scrap.RestPosition(i));
-                if (distance <= best)
-                {
-                    best = distance;
-                    target = new SpotTarget(SpotKind.Scrap, i, -1, _scrap.RestPosition(i));
-                    found = true;
-                }
-            }
-
             return found;
         }
 
@@ -325,25 +298,15 @@ namespace MoonProject.Gameplay
         {
             switch (target.Kind)
             {
-                case SpotKind.Relic:
-                    _spottedRelics[target.Index] = true;
-                    _sonar?.Reveal(target.Index, _tuning.SpotPillar);
+                case SpotKind.Site:
+                    _spottedSites[target.Index] = true;
+                    _sonar?.RevealSite(target.Index, _tuning.SpotPillar);
                     break;
                 case SpotKind.Part:
                     _friends[target.Index].PartSpotted[target.Part] = true;
                     break;
                 default:
-                    float clusterSq = ScrapClusterRadius * ScrapClusterRadius;
-                    for (int i = 0; i < _scrap.Count; i++)
-                    {
-                        if (SurfaceRules.HorizontalDistanceSquared(_scrap.RestPosition(i), target.Position) <=
-                            clusterSq)
-                        {
-                            _spottedScrap[i] = true;
-                        }
-                    }
-
-                    break;
+                    throw new ArgumentOutOfRangeException(nameof(target), target.Kind, "Unknown spot kind.");
             }
         }
 

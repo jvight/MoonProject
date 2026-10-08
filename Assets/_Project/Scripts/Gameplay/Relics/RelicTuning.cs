@@ -21,8 +21,9 @@ namespace MoonProject.Gameplay
         [Tooltip("Angular damping of a loose relic: it tumbles a little, never spins wildly.")]
         [Range(0f, 5f)] [SerializeField] private float _angularDamping = 0.6f;
 
-        [Tooltip("Metres between the top of a buried relic and the surface.")]
-        [Range(0f, 1f)] [SerializeField] private float _burialClearance = 0.08f;
+        [Tooltip("Share of a relic's height sunk in the dust of its site's heart; the rest peeks out, so the heart " +
+                 "reads up close and the dig is a short, gentle one.")]
+        [Range(0.2f, 1f)] [SerializeField] private float _buriedShare = 0.7f;
 
         [Header("Halo")]
         [Tooltip("Scale of the halo shell around the relic's meshes.")]
@@ -70,7 +71,7 @@ namespace MoonProject.Gameplay
         public float Friction => _friction;
         public float LinearDamping => _linearDamping;
         public float AngularDamping => _angularDamping;
-        public float BurialClearance => _burialClearance;
+        public float BuriedShare => _buriedShare;
         public float HaloScale => _haloScale;
         public float HaloEase => _haloEase;
         public float SurfacingGlow => _surfacingGlow;

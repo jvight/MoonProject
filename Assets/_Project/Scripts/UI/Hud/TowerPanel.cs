@@ -29,7 +29,7 @@ namespace MoonProject.UI
         private readonly ILocalization _localization;
         private readonly EventBus _events;
         private readonly IUpgradeShop _shop;
-        private readonly IScrapWallet _wallet;
+        private readonly IMaterialStock _materials;
         private readonly IInteractionHints _hints;
         private readonly IntText _numbers;
         private readonly Reveal _reveal;
@@ -43,14 +43,14 @@ namespace MoonProject.UI
         private float _celebrateTimer;
 
         public TowerPanel(UiLayout layout, TowerPanelSettings settings, ILocalization localization, EventBus events,
-            IUpgradeShop shop, IScrapWallet wallet, IInteractionHints hints, IntText numbers)
+            IUpgradeShop shop, IMaterialStock materials, IInteractionHints hints, IntText numbers)
         {
             _layout = layout ?? throw new ArgumentNullException(nameof(layout));
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _localization = localization ?? throw new ArgumentNullException(nameof(localization));
             _events = events ?? throw new ArgumentNullException(nameof(events));
             _shop = shop ?? throw new ArgumentNullException(nameof(shop));
-            _wallet = wallet ?? throw new ArgumentNullException(nameof(wallet));
+            _materials = materials ?? throw new ArgumentNullException(nameof(materials));
             _hints = hints ?? throw new ArgumentNullException(nameof(hints));
             _numbers = numbers ?? throw new ArgumentNullException(nameof(numbers));
             _reveal = new Reveal(layout.TowerPanel, settings.Reveal);
@@ -185,7 +185,7 @@ namespace MoonProject.UI
 
         private void Refresh(UpgradeDefinition upgrade, UpgradeOffer offer)
         {
-            int balance = _wallet.Balance;
+            int balance = _materials.Total;
             if (upgrade == _shownUpgrade && offer.CurrentLevel == _shownLevel && balance == _shownBalance)
             {
                 return;
@@ -201,16 +201,17 @@ namespace MoonProject.UI
                     : _localization.Get(UiKeys.UpgradeName(upgrade.Id));
                 _layout.TowerTitle.text = _localization.Get(UiKeys.UpgradeTitle(upgrade.Id, level));
                 _layout.TowerDescription.text = _localization.Get(UiKeys.UpgradeEffect(upgrade.Id, level));
-                _layout.TowerCost.text = _numbers.Get(offer.NextCost);
+                _layout.TowerCost.text = _numbers.Get(offer.NextCost.Total);
             }
 
-            bool affordable = balance >= offer.NextCost;
+            bool affordable = offer.CanAfford;
             _layout.TowerConfirm.style.display = affordable ? DisplayStyle.Flex : DisplayStyle.None;
             _layout.TowerNeed.style.display = affordable ? DisplayStyle.None : DisplayStyle.Flex;
             _layout.TowerCostRow.EnableInClassList(ShortClass, !affordable);
             if (!affordable)
             {
-                _layout.TowerNeed.text = string.Format(_localization.Get(UiKeys.TowerNeed), offer.NextCost - balance);
+                _layout.TowerNeed.text = string.Format(_localization.Get(UiKeys.TowerNeed),
+                    Math.Max(1, offer.NextCost.Total - balance));
             }
 
             _shownUpgrade = upgrade;

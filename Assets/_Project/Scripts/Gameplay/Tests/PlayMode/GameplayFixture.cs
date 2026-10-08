@@ -14,11 +14,11 @@ using UnityEditor;
 namespace MoonProject.Gameplay.PlayModeTests
 {
     /// <summary>
-    /// A complete gameplay stack built in test code: a flat world with canyon and relay anchors, a fake 07, test
-    /// content (relic, scrap, Tilly, Bell, cassette, log cache, tape rack, relay mast and relay part stand-ins in place
-    /// of the Art prefabs, with the contracts' node names; default tuning; SoftGlow materials) and the real gameplay
-    /// components, wired the way the scene contributor wires them and booted through GameBootstrap with a private save
-    /// slot.
+    /// A complete gameplay stack built in test code: a flat world with canyon, relay and salvage site anchors, a fake
+    /// 07, test content (salvage site, bundle, trail bit, relic, Tilly, Bell, cassette, log cache, tape rack, relay
+    /// mast and relay part stand-ins in place of the Art prefabs, with the contracts' node names; default tuning;
+    /// SoftGlow materials) and the real gameplay components, wired the way the scene contributor wires them and booted
+    /// through GameBootstrap with a private save slot.
     /// </summary>
     public sealed class GameplayFixture : IDisposable
     {
@@ -33,11 +33,21 @@ namespace MoonProject.Gameplay.PlayModeTests
             "cassette_player", "rubber_duck", "golden_record", "astronaut_boot", "teapot", "garden_gnome",
         };
 
-        private static readonly RelicPlacementBand[] RelicBands =
+        /// <summary>Where each relic rests, as in the content builder (the gnome beside the duck).</summary>
+        private static readonly string[] RelicSites =
         {
-            RelicPlacementBand.Onboarding, RelicPlacementBand.Onboarding, RelicPlacementBand.RimView,
-            RelicPlacementBand.Wanderer, RelicPlacementBand.Wanderer, RelicPlacementBand.Wanderer,
+            "depot", "garage", "kestrel", "drill", "lander", "garage",
         };
+
+        private static readonly string[] SiteNames = { "depot", "kestrel", "drill", "garage", "lander" };
+
+        private static readonly string[] TrailBits =
+        {
+            "Debris_Metal_0", "Debris_Optics_0", "Debris_Wiring_0", "Debris_Metal_1", "Debris_Optics_1",
+        };
+
+        /// <summary>Metres the trail bits spread over, as in the content builder.</summary>
+        private const float TrailLength = 84f;
 
         private static readonly float[] RelicMasses = { 6f, 3f, 5f, 9f, 7f, 14f };
 
@@ -62,9 +72,9 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         public EventRecorder Events { get; private set; }
 
-        public ScrapTuning ScrapTuning { get; private set; }
-
         public GlintTuning GlintTuning { get; private set; }
+
+        public SalvageTuning SalvageTuning { get; private set; }
 
         public SonarTuning SonarTuning { get; private set; }
 
@@ -117,6 +127,18 @@ namespace MoonProject.Gameplay.PlayModeTests
             return fixture;
         }
 
+        /// <summary>The salvage site named <paramref name="name"/> ("depot", ...).</summary>
+        public SalvageSite FindSite(string name)
+        {
+            SalvageSite site = Gameplay.Salvage.Find(WorldAnchorIds.SitePrefix + name);
+            if (site == null)
+            {
+                throw new ArgumentException($"No salvage site '{name}'.", nameof(name));
+            }
+
+            return site;
+        }
+
         public Relic FindRelic(string id)
         {
             Relic relic = Gameplay.Relics.Find(id);
@@ -126,6 +148,25 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             return relic;
+        }
+
+        /// <summary>Puts materials in 07's stock, as salvage would.</summary>
+        public void GiveMaterials(int metal, int wiring, int optics)
+        {
+            if (metal > 0)
+            {
+                Gameplay.Materials.Add(SalvageMaterial.Metal, metal);
+            }
+
+            if (wiring > 0)
+            {
+                Gameplay.Materials.Add(SalvageMaterial.Wiring, wiring);
+            }
+
+            if (optics > 0)
+            {
+                Gameplay.Materials.Add(SalvageMaterial.Optics, optics);
+            }
         }
 
         /// <summary>
@@ -171,7 +212,6 @@ namespace MoonProject.Gameplay.PlayModeTests
             World = Track(FlatWorldSystem.Create());
             Rover = Track(FakeRoverSystem.Create(Vector3.zero, 0f));
 
-            ScrapTuning = Asset<ScrapTuning>();
             GlintTuning = Asset<GlintTuning>();
             SonarTuning = Asset<SonarTuning>();
             RelicTuning = Asset<RelicTuning>();
@@ -182,15 +222,15 @@ namespace MoonProject.Gameplay.PlayModeTests
             RadioTowerUpgrade = Asset<UpgradeDefinition>();
             RadioTowerUpgrade.Populate("radio_tower", UpgradeStationKind.RadioTower, 60f, new[]
             {
-                new UpgradeLevel(15, 110f, 1.25f), new UpgradeLevel(40, 170f, 1.5f), new UpgradeLevel(80, 260f, 1.8f),
+                new UpgradeLevel(new Recipe(0, 1, 1), 110f, 1.25f), new UpgradeLevel(new Recipe(0, 2, 1), 170f, 1.5f),
+                new UpgradeLevel(new Recipe(0, 2, 2), 260f, 1.8f),
             });
             WorkshopTuning = Asset<WorkshopTuning>();
             HoverJumpUpgrade = Asset<UpgradeDefinition>();
             HoverJumpUpgrade.Populate("rover.hover_jump", UpgradeStationKind.Workshop, 0f, new[]
             {
-                new UpgradeLevel(150, RoverAbility.HoverJump),
+                new UpgradeLevel(new Recipe(4, 2, 1), RoverAbility.HoverJump),
             });
-            var placement = Asset<RelicPlacementTuning>();
 
             var relicCatalog = Asset<RelicCatalog>();
             var definitions = new RelicDefinition[RelicIds.Length];
@@ -198,16 +238,12 @@ namespace MoonProject.Gameplay.PlayModeTests
             {
                 definitions[i] = Asset<RelicDefinition>();
                 definitions[i].Populate(RelicIds[i], RelicMasses[i],
-                    Template("Relic_" + RelicIds[i], new Vector3(0.7f, 0.6f, 0.5f)), i, RelicBands[i]);
+                    Template("Relic_" + RelicIds[i], new Vector3(0.7f, 0.6f, 0.5f)), i,
+                    WorldAnchorIds.SitePrefix + RelicSites[i], i == RelicIds.Length - 1 ? new Vector2(1.2f, 0f)
+                        : Vector2.zero);
             }
 
             relicCatalog.Populate(definitions);
-            var scrapCatalog = Asset<ScrapCatalog>();
-            scrapCatalog.Populate(new[]
-            {
-                new ScrapVariant(Template("Scrap_A", Vector3.one * 0.3f), 1, 3f),
-                new ScrapVariant(Template("Scrap_B", Vector3.one * 0.45f), 2, 2f),
-            });
 
             var visuals = Asset<GameplayVisuals>();
             Shader shader = LoadShader(ShaderPath);
@@ -216,7 +252,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 GlowMaterial(shader, GlowRole.TetherBeam), GlowMaterial(shader, GlowRole.Flash),
                 GlowMaterial(shader, GlowRole.RelicHalo), GlowMaterial(shader, GlowRole.Dust),
                 GlowMaterial(shader, GlowRole.WarmRing), GlowMaterial(shader, GlowRole.WarmGlow),
-                Track(GlintMaterials.Create(LoadShader(GlintShaderPath))),
+                Track(GlintMaterials.CreateSalvage(LoadShader(GlintShaderPath))),
                 Track(GlintMaterials.CreatePart(LoadShader(GlintShaderPath))),
                 GlowMaterial(shader, GlowRole.FriendPillar), GlowMaterial(shader, GlowRole.Spark),
                 GlowMaterial(shader, GlowRole.HomeHalo), GlowMaterial(shader, GlowRole.LinkPulse));
@@ -224,8 +260,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             var root = new GameObject("[Gameplay]");
             root.SetActive(false);
             Gameplay = root.AddComponent<GameplaySystem>();
+            var salvage = Child<SalvageField>(root, "Salvage");
             var relics = Child<RelicField>(root, "Relics");
-            var scrap = Child<ScrapField>(root, "Scrap");
             var sonar = Child<SonarSystem>(root, "Sonar");
             var excavation = Child<ExcavationSystem>(root, "Excavation");
             var tether = Child<TetherSystem>(root, "Tether");
@@ -244,13 +280,13 @@ namespace MoonProject.Gameplay.PlayModeTests
             RelayTuning = Asset<RelayTuning>();
             relays.Wire(RelayTuning, RelayModel("RelayMast", false), RelayModel("RelayMast_Broken", true),
                 Template("Part_RelayModule", Vector3.one * 0.3f));
-            relics.Wire(relicCatalog, placement, RelicTuning);
-            scrap.Wire(ScrapTuning, scrapCatalog);
+            BuildSalvage(salvage);
+            relics.Wire(relicCatalog, RelicTuning);
             sonar.Wire(SonarTuning);
             excavation.Wire(ExcavationTuning);
             tether.Wire(TetherTuning);
-            Gameplay.Wire(visuals, GlintTuning, new[] { RadioTowerUpgrade, HoverJumpUpgrade }, relics, scrap, sonar,
-                excavation, tether, home, tower, workshop, friends, cassettes, logs, signals, shelf, relays);
+            Gameplay.Wire(visuals, GlintTuning, new[] { RadioTowerUpgrade, HoverJumpUpgrade }, salvage, relics,
+                sonar, excavation, tether, home, tower, workshop, friends, cassettes, logs, signals, shelf, relays);
             root.SetActive(true);
 
             Bootstrap = BootstrapHarness.Create(_controls, SaveSlot, World, Rover, Gameplay);
@@ -325,6 +361,66 @@ namespace MoonProject.Gameplay.PlayModeTests
             var tapes = rack.gameObject.AddComponent<CassetteShelf>();
             tapes.Wire(ShelfSlots);
             return tapes;
+        }
+
+        /// <summary>
+        /// The five salvage sites as stand-in wrecks with the site contract's nodes (the canyon lander past the
+        /// Hover-Jump gate), the three material bundles and Kestrel-3's five trail bits, as in the content builder.
+        /// </summary>
+        private void BuildSalvage(SalvageField field)
+        {
+            SalvageTuning = Asset<SalvageTuning>();
+            var sites = new SalvageSiteEntry[SiteNames.Length];
+            for (int i = 0; i < sites.Length; i++)
+            {
+                string name = SiteNames[i];
+                sites[i] = new SalvageSiteEntry(WorldAnchorIds.SitePrefix + name, SiteModel(name, name == "depot"),
+                    name == "lander" ? new AbilityGate(true, RoverAbility.HoverJump) : AbilityGate.Open);
+            }
+
+            var trail = new SalvageTrailBit[TrailBits.Length];
+            for (int i = 0; i < trail.Length; i++)
+            {
+                SalvagePieceName.TryParseDebris(TrailBits[i], out SalvageMaterial material);
+                trail[i] = new SalvageTrailBit(Template(TrailBits[i], Vector3.one * 0.5f), material,
+                    TrailLength * i / (trail.Length - 1));
+            }
+
+            var catalog = Asset<SalvageCatalog>();
+            catalog.Populate(sites, Template("Material_Metal", Vector3.one * 0.35f),
+                Template("Material_Wiring", Vector3.one * 0.35f), Template("Material_Optics", Vector3.one * 0.35f),
+                trail);
+            field.Wire(SalvageTuning, catalog);
+        }
+
+        /// <summary>
+        /// A stand-in wreck in its anchor's frame (+Z the way 07 arrives): a skeleton wall behind the heart, one small
+        /// piece of each material around it (each worth the small yield), every cut point on the face toward 07's
+        /// approach, and at the depot also a drag piece behind them.
+        /// </summary>
+        private GameObject SiteModel(string name, bool drag)
+        {
+            var root = new GameObject("Site_" + name);
+            root.transform.position = new Vector3(0f, -500f, 0f);
+            _created.Add(root);
+            Named(Block(root.transform, new Vector3(0f, 1f, 4.5f), new Vector3(6f, 2f, 1f)), "Skeleton");
+            Piece(root.transform, "Salvage_0_Metal", new Vector3(-3.5f, 0.4f, 0.5f), Vector3.one * 0.8f);
+            Piece(root.transform, "Salvage_1_Wiring", new Vector3(3.5f, 0.4f, 0.5f), Vector3.one * 0.8f);
+            Piece(root.transform, "Salvage_2_Optics", new Vector3(-2.5f, 0.4f, 3f), Vector3.one * 0.8f);
+            if (drag)
+            {
+                Piece(root.transform, "Salvage_3_Metal_Drag", new Vector3(2.5f, 0.3f, 3f),
+                    new Vector3(1.4f, 0.4f, 1.4f));
+            }
+
+            Node("Heart", root.transform, Vector3.zero);
+            return root;
+        }
+
+        private static void Piece(Transform site, string name, Vector3 position, Vector3 size)
+        {
+            Transform piece = Named(Block(site, position, size), name);
+            Node("CutPoint", piece, new Vector3(0f, 0f, -0.5f)).localRotation = Quaternion.Euler(0f, 180f, 0f);
         }
 
         /// <summary>

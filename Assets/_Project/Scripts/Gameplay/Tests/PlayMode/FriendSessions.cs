@@ -125,7 +125,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator AwakeTilly_SpotsAnUndiscoveredRelic_OnTheNextTrip()
+        public IEnumerator AwakeTilly_SpotsAnUndiscoveredSite_OnTheNextTrip()
         {
             _fixture = GameplayFixture.Boot(_controls);
             yield return null;
@@ -138,37 +138,28 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return new WaitForSeconds(0.5f);
             Assert.Less(Vector3.Distance(tilly.Position, _fixture.TillyPerch.position), 0.5f, "a load: on her perch");
 
-            Relic wanderer = null;
-            foreach (Relic relic in _fixture.Gameplay.Relics.Relics)
-            {
-                if (relic.Definition.Placement == RelicPlacementBand.Wanderer)
-                {
-                    wanderer = relic;
-                    break;
-                }
-            }
-
-            Vector3 stop = Toward(wanderer.Site.Position, Vector3.zero, 20f);
+            Vector3 stop = Toward(_fixture.FindSite("drill").Position, Vector3.zero, 20f);
             float began = Time.time;
-            Relic target = null;
+            SalvageSite target = null;
             while (target == null && Time.time - began < 60f)
             {
                 float t = Mathf.Clamp01((Time.time - began) / 15f);
                 _fixture.Rover.MoveTo(Vector3.Lerp(Vector3.zero, stop, Ease.InOutSine(t)), Yaw(Vector3.zero, stop));
-                target = SpottedRelic();
+                target = SpottedSite();
                 yield return null;
             }
 
             Assert.Greater(_fixture.Events.FriendSpotted.Count, 0, "07 left home: she came along and spotted things");
             Assert.AreEqual(TillyId, _fixture.Events.FriendSpotted[0].Value.FriendId);
-            Assert.IsNotNull(target, "an undiscovered relic within her reach is spotted");
+            Assert.IsNotNull(target, "an undiscovered salvage site within her reach is spotted");
             Assert.AreEqual(FriendActivity.Spotting, tilly.Activity);
-            Assert.Less(SurfaceRules.HorizontalDistance(target.Site.Position, _fixture.Rover.Position),
+            Assert.Less(SurfaceRules.HorizontalDistance(target.Position, _fixture.Rover.Position),
                 _fixture.FriendTuning.SpotRadius + 1f, "within her spotting radius of 07");
             Assert.IsTrue(target.Discovered, "and it shows on 07's sonar without a ping");
-            Assert.AreEqual(0, _fixture.Events.RelicAnswered.Count);
+            Assert.IsTrue(target.Relics[0].Discovered, "the relic in its heart counts as found too");
+            Assert.AreEqual(0, _fixture.Events.SiteAnswered.Count);
             yield return new WaitForSeconds(1f);
-            _fixture.Rover.Aim(_fixture.Rover.Position + new Vector3(-6f, 6f, -8f), target.Site.Position);
+            _fixture.Rover.Aim(_fixture.Rover.Position + new Vector3(-6f, 6f, -8f), target.Position);
             _fixture.Capture("17-tilly-spotting");
         }
 
@@ -203,15 +194,15 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(0, _fixture.Events.FriendPartCollected.Count, "a load is not a pickup");
         }
 
-        private Relic SpottedRelic()
+        private SalvageSite SpottedSite()
         {
             foreach (EventRecorder.Timed<FriendSpotted> spotted in _fixture.Events.FriendSpotted)
             {
-                foreach (Relic relic in _fixture.Gameplay.Relics.Relics)
+                foreach (SalvageSite site in _fixture.Gameplay.Salvage.Sites)
                 {
-                    if (SurfaceRules.HorizontalDistance(spotted.Value.Position, relic.Site.Position) < 0.1f)
+                    if (SurfaceRules.HorizontalDistance(spotted.Value.Position, site.Position) < 0.1f)
                     {
-                        return relic;
+                        return site;
                     }
                 }
             }

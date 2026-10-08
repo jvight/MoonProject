@@ -172,7 +172,7 @@ namespace MoonProject.UI.PlayModeTests
             Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
             Boot();
             yield return null;
-            _rig.Fakes.SetBalance(20);
+            _rig.Fakes.SetBalance(3);
             Press(keyboard.eKey);
             _rig.Fakes.AtStation = true;
             yield return Seconds(2f);
@@ -180,8 +180,8 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual(0, _rig.Fakes.Purchases, "arriving with the button already held buys nothing");
             Assert.AreEqual("Wake the old mast", _rig.Ui.Layout.TowerTitle.text);
             Assert.AreEqual("Level 1 of 3", _rig.Ui.Layout.TowerLevel.text);
-            Assert.AreEqual("20", _rig.Ui.Layout.ScrapChipCount.text, "the pinned chip shows the balance");
-            Assert.AreEqual("15", _rig.Ui.Layout.TowerCost.text);
+            Assert.AreEqual("3", _rig.Ui.Layout.ScrapChipCount.text, "the pinned chip shows the balance");
+            Assert.AreEqual("2", _rig.Ui.Layout.TowerCost.text);
             Assert.IsTrue(_rig.Ui.Chip.IsVisible, "the balance stays in view at the pad");
 
             Release(keyboard.eKey);
@@ -200,7 +200,7 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual("Raise the mast", _rig.Ui.Layout.TowerTitle.text, "the next level is offered");
             Assert.AreEqual(DisplayStyle.Flex, _rig.Ui.Layout.TowerNeed.resolvedStyle.display,
                 "and the panel says how much scrap is still to gather");
-            StringAssert.StartsWith("35 more scrap", _rig.Ui.Layout.TowerNeed.text);
+            StringAssert.StartsWith("2 more scrap", _rig.Ui.Layout.TowerNeed.text);
 
             _rig.Fakes.AtStation = false;
             yield return Seconds(1f);
@@ -261,7 +261,7 @@ namespace MoonProject.UI.PlayModeTests
             InputSystem.AddDevice<Keyboard>();
             Boot();
             Events.Publish(new RoverAwoke(Vector3.zero, false));
-            _rig.Fakes.NextCost = 90;
+            _rig.Fakes.NextCost = new Recipe(60, 30, 0);
             _rig.Fakes.SetBalance(10);
             var socket = new Vector3(0f, 0f, 8f);
             _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Restore, socket, false);

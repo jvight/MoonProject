@@ -8,11 +8,12 @@ namespace MoonProject.Gameplay
     /// <summary>
     /// One relic in the world: the Art prefab as its visual, a Rigidbody and box collider on the Relic layer (active
     /// only while it is loose), a halo shell that brightens when it is aimed at, surfacing or on display, and its
-    /// state, excavation progress and shelf slot. The gameplay systems move it; it only keeps itself alive-looking
-    /// (halo easing, the bob of a relic waiting half-lifted in the dust).
+    /// state, excavation progress and shelf slot. It starts half-sunk in the dust of its salvage site's heart
+    /// (docs/features/M3-13). The gameplay systems move it; it only keeps itself alive-looking (halo easing, the bob of
+    /// a relic waiting half-lifted in the dust).
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class Relic : MonoBehaviour
+    public sealed class Relic : MonoBehaviour, ITowable
     {
         private const string VisualName = "Visual";
         private const string HaloName = "Halo";
@@ -37,6 +38,9 @@ namespace MoonProject.Gameplay
 
         public RelicSite Site { get; private set; }
 
+        /// <summary>The salvage site whose heart it rested in.</summary>
+        public SalvageSite Home { get; private set; }
+
         public RelicState State { get; private set; }
 
         /// <summary>Excavation progress 0..1; never goes back down.</summary>
@@ -48,8 +52,8 @@ namespace MoonProject.Gameplay
         /// <summary>Museum shelf slot while depositing or displayed, else -1.</summary>
         public int Slot { get; private set; } = -1;
 
-        /// <summary>Set by the tether while it holds this relic.</summary>
-        public bool IsTethered { get; internal set; }
+        /// <summary>True while the tether holds this relic.</summary>
+        public bool IsTethered { get; private set; }
 
         public Rigidbody Body { get; private set; }
 
@@ -64,7 +68,7 @@ namespace MoonProject.Gameplay
         /// <summary>Half of the largest dimension of the relic's bounds (m).</summary>
         public float Radius { get; private set; }
 
-        /// <summary>Where the relic rests when fully buried (top just below the surface).</summary>
+        /// <summary>Where the relic rests in its site's heart, mostly sunk in the dust.</summary>
         public Vector3 BuriedPosition { get; private set; }
 
         /// <summary>Can the beam lift it? Only while it is still in the ground.</summary>
@@ -74,18 +78,23 @@ namespace MoonProject.Gameplay
         public bool IsTetherable => State == RelicState.Loose && !IsTethered;
 
         /// <summary>
-        /// Still somewhere in the world (not on its way to, or on, the shelf), so it answers the sonar.
+        /// Out in the world on its own (loose or drifting back, not on the tether), so it answers the sonar itself.
+        /// While it waits in its site's heart, the site answers for it.
         /// </summary>
-        public bool AnswersSonar => State != RelicState.Depositing && State != RelicState.Displayed && !IsTethered;
+        public bool AnswersSonar => (State == RelicState.Loose || State == RelicState.Returning) && !IsTethered;
 
-        /// <summary>The ground point a sonar answer or marker refers to.</summary>
-        public Vector3 SonarPosition =>
-            State == RelicState.Buried || State == RelicState.Surfacing ? Site.Position : transform.position;
+        /// <summary>The point a sonar answer or marker refers to.</summary>
+        public Vector3 SonarPosition => transform.position;
 
-        internal void Setup(RelicDefinition definition, int index, RelicSite site, RelicTuning tuning,
-            PhysicsMaterial physicsMaterial, Material haloMaterial)
+        Vector3 ITowable.Position => transform.position;
+
+        bool ITowable.WantsRelease => false;
+
+        internal void Setup(RelicDefinition definition, int index, SalvageSite home, RelicSite site,
+            RelicTuning tuning, PhysicsMaterial physicsMaterial, Material haloMaterial)
         {
             Definition = definition != null ? definition : throw new ArgumentNullException(nameof(definition));
+            Home = home ?? throw new ArgumentNullException(nameof(home));
             _tuning = tuning != null ? tuning : throw new ArgumentNullException(nameof(tuning));
             Index = index;
             Site = site;
@@ -116,17 +125,24 @@ namespace MoonProject.Gameplay
             Body.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
             Body.centerOfMass = Vector3.zero;
 
-            float depth = bounds.max.y + tuning.BurialClearance;
-            BuriedPosition = site.Position - Vector3.up * depth;
+            // The bottom sinks the buried share of the relic's height below the heart's surface.
+            BuriedPosition = site.Position - Vector3.up * (bounds.min.y + tuning.BuriedShare * bounds.size.y);
             Bury();
         }
 
-        /// <summary>
-        /// How strongly the tether's aim highlights this relic (0 = not aimed at, 1 = the hovered target).
-        /// </summary>
-        internal void SetAimHighlight(float level)
+        void ITowable.SetAimHighlight(float level)
         {
             _aimHighlight = Mathf.Max(0f, level);
+        }
+
+        void ITowable.BeginTow()
+        {
+            IsTethered = true;
+        }
+
+        void ITowable.EndTow()
+        {
+            IsTethered = false;
         }
 
         internal void MarkDiscovered()

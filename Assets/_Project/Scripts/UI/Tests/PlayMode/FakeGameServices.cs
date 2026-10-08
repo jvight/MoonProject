@@ -12,7 +12,7 @@ namespace MoonProject.UI.PlayModeTests
     /// radio program, the relay network and the radio-hop.
     /// </summary>
     public sealed class FakeGameServices : MonoBehaviour, IGameSystem, IViewCamera, IAudioSettings, ILookSettings,
-        IScrapWallet, ITetherAim, IInteractionHints, IUpgradeShop, IRoverState, IFriendStatuses, IRadioProgram,
+        IMaterialStock, ITetherAim, IInteractionHints, IUpgradeShop, IRoverState, IFriendStatuses, IRadioProgram,
         IRadioHop, IRelayStatus
     {
         private readonly float[] _volumes = { 1f, 1f, 1f, 1f };
@@ -60,7 +60,16 @@ namespace MoonProject.UI.PlayModeTests
 
         public TetherAimState TetherState { get; set; }
 
+        /// <summary>Material units the fake holds, all counted as metal (it compares totals only).</summary>
         public int Balance { get; private set; }
+
+        public int Metal => Balance;
+
+        public int Wiring => 0;
+
+        public int Optics => 0;
+
+        public int Total => Balance;
 
         public TetherAimState State => TetherState;
 
@@ -114,7 +123,7 @@ namespace MoonProject.UI.PlayModeTests
 
         public int LitMasts { get; set; }
 
-        public int NextCost { get; set; } = 60;
+        public Recipe NextCost { get; set; } = new Recipe(2, 1, 0);
 
         public float RestoreHold { get; set; }
 
@@ -124,7 +133,7 @@ namespace MoonProject.UI.PlayModeTests
             context.Register<IViewCamera>(this);
             context.Register<IAudioSettings>(this);
             context.Register<ILookSettings>(this);
-            context.Register<IScrapWallet>(this);
+            context.Register<IMaterialStock>(this);
             context.Register<ITetherAim>(this);
             context.Register<IInteractionHints>(this);
             context.Register<IUpgradeShop>(this);
@@ -226,17 +235,22 @@ namespace MoonProject.UI.PlayModeTests
             return TillyStatus;
         }
 
-        /// <summary>Sets the balance and publishes the change like the real wallet.</summary>
+        /// <summary>Sets the units held and publishes the change like the real stock.</summary>
         public void SetBalance(int balance)
         {
-            int delta = balance - Balance;
             Balance = balance;
-            _events.Publish(new CurrencyChanged(balance, delta));
+            _events.Publish(new MaterialsChanged(balance, 0, 0));
         }
 
-        public bool CanAfford(int cost)
+        public int Of(SalvageMaterial material)
         {
-            return Balance >= cost;
+            return material == SalvageMaterial.Metal ? Balance : 0;
+        }
+
+        /// <summary>The fake affords a recipe when it holds as many units in total.</summary>
+        public bool Has(Recipe recipe)
+        {
+            return Balance >= recipe.Total;
         }
 
         public float GetVolume(AudioBus bus)
@@ -274,7 +288,7 @@ namespace MoonProject.UI.PlayModeTests
             }
 
             bool maxed = UpgradeLevel >= Upgrade.MaxLevel;
-            offer = new UpgradeOffer(Upgrade, UpgradeLevel, !maxed && CanAfford(Upgrade.Levels[UpgradeLevel].Cost));
+            offer = new UpgradeOffer(Upgrade, UpgradeLevel, !maxed && Has(Upgrade.Levels[UpgradeLevel].Recipe));
             return true;
         }
 
@@ -302,7 +316,7 @@ namespace MoonProject.UI.PlayModeTests
 
             Purchases++;
             UpgradeLevel++;
-            SetBalance(Balance - offer.NextCost);
+            SetBalance(Balance - offer.NextCost.Total);
             _events.Publish(new UpgradePurchased(upgradeId, UpgradeLevel));
             return PurchaseResult.Purchased;
         }
@@ -312,7 +326,7 @@ namespace MoonProject.UI.PlayModeTests
             if (AtStation && Upgrade != null && UpgradeLevel < Upgrade.MaxLevel)
             {
                 hint = new InteractionHint(InteractionKind.Upgrade, Vector3.zero,
-                    CanAfford(Upgrade.Levels[UpgradeLevel].Cost));
+                    Has(Upgrade.Levels[UpgradeLevel].Recipe));
                 return true;
             }
 

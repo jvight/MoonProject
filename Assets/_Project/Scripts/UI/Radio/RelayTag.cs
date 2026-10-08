@@ -87,7 +87,7 @@ namespace MoonProject.UI
                 deltaTime, _reveal.IsHidden);
             if (offered)
             {
-                Write(_relays.NextCost, !hint.Ready);
+                Write(_relays.NextCost.Total, !hint.Ready);
             }
 
             _ring.Progress = offered ? _relays.RestoreHold : 0f;
