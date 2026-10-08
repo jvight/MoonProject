@@ -10,7 +10,7 @@ namespace MoonProject.Rover
     /// the head looks at whatever it interacts with (gaze requests made through <see cref="IRoverRig"/>) or along its
     /// way with a lagging glance into turns; left alone it drifts into a daydream (<see cref="RoverMood"/>) and looks
     /// up toward Earth. Each session opens with 07 asleep; it wakes on its own (or as soon as the player drives),
-    /// publishing <see cref="RoverAwoke"/>. It reacts to the game: soft landings, waking up, scrap (happier as a
+    /// publishing <see cref="RoverAwoke"/>. It reacts to the game: soft landings, waking up, salvage (happier as a
     /// combo climbs), a relic answering or surfacing (a glance and a perk-up), a deposit (a contented nod), a snapped
     /// tether (a sigh), and hard landings (a small "oof"). When the camera opens to the lonely wide shot
     /// (<see cref="RoverWideShotChanged"/>) its daydream sigh lands with the frame. A relay mast it restored gets a
@@ -105,7 +105,7 @@ namespace MoonProject.Rover
             _subscriptions = new[]
             {
                 events.Subscribe<RoverLanded>(OnLanded),
-                events.Subscribe<ScrapCollected>(OnScrapCollected),
+                events.Subscribe<MaterialSalvaged>(OnMaterialSalvaged),
                 events.Subscribe<RelicAnswered>(OnRelicAnswered),
                 events.Subscribe<RelicSurfaced>(OnRelicSurfaced),
                 events.Subscribe<RelicDeposited>(OnRelicDeposited),
@@ -160,10 +160,10 @@ namespace MoonProject.Rover
             _glanceEnds = Time.time + seconds;
         }
 
-        private void OnScrapCollected(ScrapCollected scrap)
+        private void OnMaterialSalvaged(MaterialSalvaged salvage)
         {
-            float strength = _tuning.ScrapPerk + _tuning.ScrapComboPerk * scrap.ComboStep;
-            PerkUp(Mathf.Min(strength, _tuning.ScrapPerkMax));
+            float strength = _tuning.SalvagePerk + _tuning.SalvageComboPerk * salvage.ComboStep;
+            PerkUp(Mathf.Min(strength, _tuning.SalvagePerkMax));
         }
 
         private void OnRelicAnswered(RelicAnswered answer)

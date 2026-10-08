@@ -2,38 +2,6 @@ using UnityEngine;
 
 namespace MoonProject.Core.Events
 {
-    /// <summary>A scrap piece reached the rover. <see cref="ComboStep"/> climbs while pickups chain (melody step).</summary>
-    public readonly struct ScrapCollected
-    {
-        public ScrapCollected(Vector3 position, int value, int comboStep)
-        {
-            Position = position;
-            Value = value;
-            ComboStep = comboStep;
-        }
-
-        public Vector3 Position { get; }
-
-        public int Value { get; }
-
-        /// <summary>0 for the first pickup of a chain, +1 for each pickup that follows within the combo window.</summary>
-        public int ComboStep { get; }
-    }
-
-    /// <summary>The scrap balance changed (pickup, purchase, refund).</summary>
-    public readonly struct CurrencyChanged
-    {
-        public CurrencyChanged(int total, int delta)
-        {
-            Total = total;
-            Delta = delta;
-        }
-
-        public int Total { get; }
-
-        public int Delta { get; }
-    }
-
     /// <summary>The rover emitted a sonar ping from <see cref="Origin"/>.</summary>
     public readonly struct SonarPinged
     {
@@ -465,7 +433,7 @@ namespace MoonProject.Core.Events
         /// <summary>07 picked up a mast's relay part (drawn in like a friend's part).</summary>
         PartCollected = 0,
 
-        /// <summary>07's beam starts stitching the mast (the scrap is paid).</summary>
+        /// <summary>07's beam starts stitching the mast (the recipe is paid).</summary>
         Stitched = 1,
 
         /// <summary>The relay part clicks into the mast's junction box.</summary>

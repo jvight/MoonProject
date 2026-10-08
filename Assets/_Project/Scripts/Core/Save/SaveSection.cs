@@ -6,9 +6,9 @@ namespace MoonProject.Core.Save
     /// <summary>
     /// <see cref="ISaveSection"/> over a plain <c>[Serializable]</c> data class serialised with JsonUtility:
     /// <code>
-    /// _saveToken = context.Get&lt;ISaveService&gt;().Register(new SaveSection&lt;ScrapSaveData&gt;(
-    ///     "gameplay.scrap", 2, () =&gt; new ScrapSaveData { total = _total }, data =&gt; _total = data.total,
-    ///     ScrapSaveMigrations.Migrate));
+    /// _saveToken = context.Get&lt;ISaveService&gt;().Register(new SaveSection&lt;MaterialsSaveData&gt;(
+    ///     "gameplay.wallet", 2, () =&gt; new MaterialsSaveData { metal = _metal }, data =&gt; _metal = data.metal,
+    ///     MaterialsSaveMigrations.Migrate));
     /// </code>
     /// <paramref name="migrate"/> receives JSON at version N and returns JSON at N + 1 (keep old DTO classes around
     /// to read old shapes). Without it, loading an older version fails loudly for this section only.

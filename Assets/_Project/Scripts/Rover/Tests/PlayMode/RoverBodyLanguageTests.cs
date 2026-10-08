@@ -176,22 +176,22 @@ namespace MoonProject.Rover.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator ChainedScrap_PerksUpMoreAsTheComboClimbs()
+        public IEnumerator ChainedSalvage_PerksUpMoreAsTheComboClimbs()
         {
             Spawn(false);
             yield return Wait(1f);
-            yield return PeakPerkAfter(new ScrapCollected(Vector3.zero, 1, 0));
+            yield return PeakPerkAfter(new MaterialSalvaged(SalvageMaterial.Metal, 2, Vector3.zero, "site.depot", 0));
             float first = _peakPerk;
             yield return Wait(4f);
-            yield return PeakPerkAfter(new ScrapCollected(Vector3.zero, 1, 4));
+            yield return PeakPerkAfter(new MaterialSalvaged(SalvageMaterial.Metal, 2, Vector3.zero, "site.depot", 4));
             Assert.Greater(first, 0.05f, "Every pickup gets a little perk-up.");
             Assert.Greater(_peakPerk, first + 0.1f, "Chained pickups make 07 visibly happier.");
         }
 
-        private IEnumerator PeakPerkAfter(ScrapCollected scrap)
+        private IEnumerator PeakPerkAfter(MaterialSalvaged salvage)
         {
             _peakPerk = 0f;
-            _rover.Context.Events.Publish(scrap);
+            _rover.Context.Events.Publish(salvage);
             float until = Time.time + 1f;
             while (Time.time < until)
             {

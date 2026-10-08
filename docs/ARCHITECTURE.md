@@ -73,7 +73,7 @@ Assembly references use **names**, not GUIDs (tools/compile_check.py relies on i
 ## Events
 - `EventBus` is a typed publish/subscribe hub owned by the context (not static).
 - Events are `readonly struct`s in `Core/Events/<Domain>Events.cs` — data only, past-tense names
-  (`ScrapCollected`, `RoverLanded`, `RelicSurfaced`).
+  (`MaterialSalvaged`, `RoverLanded`, `RelicSurfaced`).
 - `Subscribe` returns an `IDisposable`; subscribers dispose in `OnDestroy`/`OnDisable`.
 - Publishing is allocation-free for struct events.
 
