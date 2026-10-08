@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Text.RegularExpressions;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -351,6 +352,40 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual(DisplayStyle.Flex, layout.TowerTitle.resolvedStyle.display);
             Assert.AreEqual(DisplayStyle.None, layout.TowerChoices.resolvedStyle.display);
             Assert.AreEqual(DisplayStyle.None, layout.TowerPick.resolvedStyle.display);
+        }
+
+        [UnityTest]
+        public IEnumerator KitTitle_NamesTheCraftedPiece_ThenTheGift_HighAndClearOf07()
+        {
+            Boot();
+            _rig.Tune("_kitTitle._holdSeconds", 0.6f);
+            yield return null;
+            UpgradeDefinition[] bench = _rig.TestBench(new Recipe(2, 1, 0), new Recipe(3, 2, 0), new Recipe(1, 2, 2));
+            _rig.Fakes.Bench = bench;
+            KitTitleSettings settings = _rig.Tuning.KitTitle;
+            Events.Publish(new UpgradePurchased(bench[2].Id, 1));
+            Events.Publish(new RoverKitInstalling(RoverKitPiece.LampBar, false));
+            yield return Seconds(settings.Delay + settings.Reveal.FadeIn);
+            Assert.IsFalse(_rig.Ui.KitTitle.IsVisible, "bought but not yet settled: no name before the piece lands");
+
+            Events.Publish(new RoverKitFitted(RoverKitPiece.LampBar, false));
+            Events.Publish(new RoverKitInstalling(RoverKitPiece.SolarCell, true));
+            Events.Publish(new RoverKitFitted(RoverKitPiece.SolarCell, true));
+            yield return Seconds(settings.Delay + settings.Reveal.FadeIn + 0.2f);
+            Assert.IsTrue(_rig.Ui.KitTitle.IsVisible);
+            Assert.AreEqual(Text(UiKeys.UpgradeName(bench[2].Id)), _rig.Ui.Layout.KitTitleName.text);
+            Rect screen = _rig.Ui.Layout.Root.worldBound;
+            Assert.Less(_rig.Ui.Layout.KitTitle.worldBound.yMax, screen.yMin + screen.height * 0.3f,
+                "high on screen, clear of 07 in the middle of the install view");
+
+            yield return Seconds(settings.HoldSeconds + settings.Reveal.FadeOut + settings.Delay +
+                                 settings.Reveal.FadeIn + 0.4f);
+            Assert.IsTrue(UiKeys.TryGetGiftName(RoverKitPiece.SolarCell, out string gift));
+            Assert.AreEqual(gift, _rig.Ui.KitTitle.Current, "the gift's title waited its turn");
+            Assert.AreEqual(Text(gift), _rig.Ui.Layout.KitTitleName.text);
+
+            LogAssert.Expect(LogType.Error, new Regex("CargoRack settled onto 07"));
+            Events.Publish(new RoverKitFitted(RoverKitPiece.CargoRack, false));
         }
 
         [UnityTest]

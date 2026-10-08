@@ -6,6 +6,13 @@
                 <ui:Label name="title-wordmark" class="title__wordmark loc" text="ui.title.wordmark" />
                 <ui:VisualElement name="title-rule" class="title__rule" />
             </ui:VisualElement>
+            <ui:VisualElement name="kit-title" class="kit-title" picking-mode="Ignore">
+                <ui:VisualElement class="kit-title__body" picking-mode="Ignore">
+                    <ui:VisualElement name="kit-title-shadow" class="soft-shadow soft-shadow--title" />
+                    <ui:Label name="kit-title-name" class="kit-title__name" picking-mode="Ignore" />
+                    <ui:VisualElement name="kit-title-rule" class="kit-title__rule" picking-mode="Ignore" />
+                </ui:VisualElement>
+            </ui:VisualElement>
             <ui:VisualElement name="reticle" class="reticle" picking-mode="Ignore">
                 <ui:VisualElement name="reticle-rest" class="reticle__ring reticle__ring--rest" />
                 <ui:VisualElement name="reticle-hover" class="reticle__ring reticle__ring--hover" />

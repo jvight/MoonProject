@@ -18,7 +18,7 @@ namespace MoonProject.UI.PlayModeTests
     /// <summary>
     /// Steady-state zero-GC check of the UI: with a prompt following a moving point under the reticle, with the tower
     /// panel and its pinned chip, with Kenji's bench resting with a piece picked (and its update allocation-free while
-    /// picking as the stock changes), with a ticker line resting, with the hop list over a
+    /// picking as the stock changes), with a kit name resting, with a ticker line resting, with the hop list over a
     /// moving fade, with the salvage ring filling under the materials chip, and with the pause menu open, one frame
     /// additionally runs the UI's Update 600 times. Unity's "GC Allocated In Frame" for the quietest of three such
     /// frames must stay at the level of plain frames; a control frame proves the counter sees allocations at all.
@@ -129,6 +129,20 @@ namespace MoonProject.UI.PlayModeTests
                 "picking at the bench while the stock changes allocates nothing in the UI's update");
             yield return null;
             yield return Measure(update, "bench resting with a piece picked");
+        }
+
+        [UnityTest]
+        public IEnumerator KitNameResting_DoesNotAllocate()
+        {
+            InputSystem.AddDevice<Keyboard>();
+            _rig = UiTestRig.Boot(_controls, _slot);
+            _rig.Tune("_kitTitle._holdSeconds", LongHoldSeconds);
+            _rig.Bootstrap.Context.Events.Publish(new RoverKitFitted(RoverKitPiece.SolarCell, true));
+            yield return new WaitForSecondsRealtime(_rig.Tuning.KitTitle.Delay + _rig.Tuning.KitTitle.Reveal.FadeIn +
+                                                    0.5f);
+            Assert.IsTrue(_rig.Ui.KitTitle.IsVisible);
+            yield return Measure(Bind(_rig.Ui, "Update"), "a kit name resting");
+            Assert.IsTrue(_rig.Ui.KitTitle.IsVisible, "the name rested through the whole measurement");
         }
 
         [UnityTest]

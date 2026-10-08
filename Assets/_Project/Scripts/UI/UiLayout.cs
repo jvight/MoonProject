@@ -15,6 +15,9 @@ namespace MoonProject.UI
             Hud = Require<VisualElement>("hud");
 
             Title = Require<VisualElement>("title");
+            KitTitle = Require<VisualElement>("kit-title");
+            KitTitleName = Require<Label>("kit-title-name");
+            KitTitleShadow = Require<VisualElement>("kit-title-shadow");
 
             Reticle = Require<VisualElement>("reticle");
             ReticleRest = Require<VisualElement>("reticle-rest");
@@ -135,6 +138,12 @@ namespace MoonProject.UI
         public VisualElement Hud { get; }
 
         public VisualElement Title { get; }
+
+        public VisualElement KitTitle { get; }
+
+        public Label KitTitleName { get; }
+
+        public VisualElement KitTitleShadow { get; }
 
         public VisualElement Reticle { get; }
 
