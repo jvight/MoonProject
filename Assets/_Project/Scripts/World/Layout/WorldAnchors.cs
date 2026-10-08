@@ -10,8 +10,8 @@ namespace MoonProject.World
     /// deterministically from the surface: today Whispering Canyon's mouth, lip, landing apron, glinting ledge,
     /// alcoves, terminus and the top of its one-way exit, the four relay masts of the station-reach network
     /// (M3-06: relay.0..3, whose Forward points home; relay.0 stands in the spawn first frame) and the five salvage
-    /// sites (M3-13: site.depot, site.kestrel, site.drill, site.garage, site.lander). Every radius is flat,
-    /// drivable, uncluttered ground.
+    /// sites (M3-13: site.depot, site.kestrel, site.drill, site.garage, site.lander) with trail.kestrel, the
+    /// home-side end of Kestrel-3's debris furrow. Every radius is flat, drivable, uncluttered ground.
     /// <para>
     /// Forward is the way 07 travels when arriving into the space, so content faces -Forward to greet it: into the
     /// canyon at the mouth and the landing, across the chasm at the lip, into the bay at the ledge and into each
@@ -19,8 +19,9 @@ namespace MoonProject.World
     /// </para>
     /// <para>
     /// The salvage sites on the basin floor face on from home, the way 07 drives out to them; Kestrel-3's crater
-    /// faces along its fall line, the way its debris trail leads 07 in (the furrow trails back from the crater along
-    /// -Forward, see <see cref="MoonSurface.Kestrel"/>); the crashed lander faces into its bay off the canyon apron.
+    /// faces along its fall line, the way its debris trail leads 07 in, and so does trail.kestrel at the furrow's
+    /// home-side end (its radius is the furrow's half-width there); the crashed lander faces into its bay off the
+    /// canyon apron.
     /// </para>
     /// <para>
     /// The landing is the touchdown zone just past the far face (where charged leaps come down), not the apron's
@@ -120,6 +121,8 @@ namespace MoonProject.World
             KestrelImpact kestrel = surface.Kestrel;
             anchors.Add(Footprint(surface, Depot, shaping.Depot));
             anchors.Add(Make(surface, Kestrel, kestrel.Center, kestrel.Fall, kestrel.FloorRadius));
+            anchors.Add(Make(surface, WorldAnchorIds.KestrelTrail, kestrel.TrailEnd, kestrel.Fall,
+                kestrel.TailHalfWidth));
             anchors.Add(Footprint(surface, Drill, shaping.Drill));
             anchors.Add(Footprint(surface, Garage, shaping.Garage));
             float bayArc = settings.LanderBayArc;

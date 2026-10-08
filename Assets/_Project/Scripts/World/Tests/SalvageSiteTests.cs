@@ -215,6 +215,25 @@ namespace MoonProject.World.Tests
         }
 
         [Test]
+        public void KestrelTrail_MarksTheFurrowsHomeSideEnd_FacingAlongTheFallLine()
+        {
+            Assert.IsTrue(_anchors.TryGet(WorldAnchorIds.KestrelTrail, out WorldAnchor trail));
+            WorldAnchor site = Site(Kestrel);
+            KestrelImpact kestrel = _surface.Kestrel;
+            Assert.AreEqual(0f, Vector2.Distance(new Vector2(trail.Position.x, trail.Position.z), kestrel.TrailEnd),
+                1e-4f, "trail.kestrel should stand at the furrow's far end");
+            Assert.Greater(Vector3.Dot(trail.Forward, site.Forward), 0.999f, "trail.kestrel faces along the fall line");
+            Vector3 toCrater = site.Position - trail.Position;
+            var along = new Vector2(toCrater.x, toCrater.z);
+            Assert.Less(Vector2.Angle(along, new Vector2(trail.Forward.x, trail.Forward.z)), 0.1f,
+                "the crater lies straight ahead of trail.kestrel");
+            Assert.That(along.magnitude - kestrel.RimRadius, Is.InRange(MinFurrow, MaxFurrow), "furrow length");
+            Assert.AreEqual(kestrel.TailHalfWidth, trail.Radius, 1e-4f, "trail.kestrel spans the furrow's tail");
+            Assert.Less(Vector2.Distance(Vector2.zero, new Vector2(trail.Position.x, trail.Position.z)),
+                new Vector2(site.Position.x, site.Position.z).magnitude, "the trail's end lies on the home side");
+        }
+
+        [Test]
         public void Kestrel_ScorchedDust_ReadsDarkerThanTheFloorAround()
         {
             var painter = new TerrainPainter(new TerrainPaintSettings(), WorldSettings.DefaultSeed, PainterLight);
@@ -262,7 +281,8 @@ namespace MoonProject.World.Tests
                 for (int i = 0; i < _anchors.Count; i++)
                 {
                     WorldAnchor other = _anchors.Get(i);
-                    if (other.Id == site.Id)
+                    bool partOfKestrel = name == Kestrel && other.Id == WorldAnchorIds.KestrelTrail;
+                    if (other.Id == site.Id || partOfKestrel)
                     {
                         continue;
                     }

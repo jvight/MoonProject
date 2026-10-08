@@ -92,6 +92,8 @@ namespace MoonProject.World.Tests
                 expected.Add(WorldAnchorIds.SitePrefix + site);
             }
 
+            expected.Add(WorldAnchorIds.KestrelTrail);
+
             Assert.AreEqual(expected.Count, _anchors.Count);
             var seen = new HashSet<string>();
             for (int i = 0; i < _anchors.Count; i++)

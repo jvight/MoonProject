@@ -121,6 +121,9 @@ namespace MoonProject.World
         /// <summary>Half-width of the furrow where it meets the crater.</summary>
         public float FurrowHalfWidth => _headHalfWidth;
 
+        /// <summary>Half-width of the furrow at its far, faint end (<see cref="TrailEnd"/>).</summary>
+        public float TailHalfWidth => _tailHalfWidth;
+
         /// <summary>
         /// True when a disc at <paramref name="centre"/> of <paramref name="radius"/> reaches the crater, the furrow
         /// or the margin kept clear around them.
