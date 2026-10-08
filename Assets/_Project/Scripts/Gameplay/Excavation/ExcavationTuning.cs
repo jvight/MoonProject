@@ -3,13 +3,14 @@ using UnityEngine;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// The tractor beam: how close 07 must be, how the relic rises toward its eye, the beam's light and the swirling
-    /// dust. Created by the Gameplay/Tuning builder; runtime code only reads it.
+    /// The tractor beam: how close 07 must be, how the relic rises out of its site's heart toward its eye (a short,
+    /// gentle dig: the relic is already half out of the dust), the beam's light and the swirling dust. Created by the
+    /// Gameplay/Tuning builder; runtime code only reads it.
     /// </summary>
     public sealed class ExcavationTuning : ScriptableObject
     {
         [Header("Reach")]
-        [Tooltip("07 can lift a relic anywhere within this many metres (horizontal) of its site.")]
+        [Tooltip("07 can lift a relic anywhere within this many metres (horizontal) of where it rests.")]
         [Range(1f, 15f)] [SerializeField] private float _reachRadius = 5f;
 
         [Tooltip("Once lifting, the beam holds on until 07 is this many times the reach away " +
@@ -21,10 +22,10 @@ namespace MoonProject.Gameplay
 
         [Header("Rise")]
         [Tooltip("Seconds to lift a weightless relic all the way.")]
-        [Range(0.5f, 20f)] [SerializeField] private float _baseDuration = 4.5f;
+        [Range(0.5f, 20f)] [SerializeField] private float _baseDuration = 2.5f;
 
         [Tooltip("Extra seconds per kilogram: heavy memories come up slower.")]
-        [Range(0f, 1f)] [SerializeField] private float _secondsPerKg = 0.12f;
+        [Range(0f, 1f)] [SerializeField] private float _secondsPerKg = 0.06f;
 
         [Tooltip("The relic rises to a point this far (m, horizontal) ahead of 07's eye, clear of the rover.")]
         [Range(1.5f, 8f)] [SerializeField] private float _presentDistance = 3.2f;
@@ -58,8 +59,8 @@ namespace MoonProject.Gameplay
         [Range(0.1f, 3f)] [SerializeField] private float _beamRadius = 0.9f;
 
         [Header("Dust")]
-        [Tooltip("Dust motes per second swirling around the site while lifting.")]
-        [Range(0f, 200f)] [SerializeField] private float _dustRate = 30f;
+        [Tooltip("Dust motes per second swirling around the heart while lifting (a gentle puff, not a storm).")]
+        [Range(0f, 200f)] [SerializeField] private float _dustRate = 18f;
 
         [Tooltip("Seconds a mote lives (min, max).")]
         [SerializeField] private Vector2 _dustLifetime = new Vector2(1.2f, 2.2f);
@@ -68,16 +69,16 @@ namespace MoonProject.Gameplay
         [SerializeField] private Vector2 _dustSize = new Vector2(0.2f, 0.45f);
 
         [Tooltip("Radius (m) of the ring the dust rises from.")]
-        [Range(0.1f, 5f)] [SerializeField] private float _dustRadius = 1.3f;
+        [Range(0.1f, 5f)] [SerializeField] private float _dustRadius = 1f;
 
         [Tooltip("Swirl speed of the dust around the site (radians per second).")]
-        [Range(0f, 6f)] [SerializeField] private float _dustSwirl = 1.4f;
+        [Range(0f, 6f)] [SerializeField] private float _dustSwirl = 1.1f;
 
         [Tooltip("Upward drift (m/s) of the dust.")]
         [Range(0f, 3f)] [SerializeField] private float _dustRise = 0.5f;
 
         [Tooltip("Most motes alive at once.")]
-        [Range(10, 500)] [SerializeField] private int _maxDust = 120;
+        [Range(10, 500)] [SerializeField] private int _maxDust = 80;
 
         public float ReachRadius => _reachRadius;
         public float ReachHysteresis => _reachHysteresis;

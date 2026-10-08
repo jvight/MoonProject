@@ -1,12 +1,14 @@
+using System;
 using UnityEngine;
+using MoonProject.Core;
 
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// One lost memory of Earth: its id, how heavy it is to tow, its look (an Art prefab from the M2 content contract)
-    /// and the note it sings when it answers the sonar. Its name and memory text are player-facing prose and live in
-    /// the localization tables under "relic.&lt;id&gt;.*". Written by the Gameplay/Content builder; runtime code only
-    /// reads it.
+    /// One lost memory of Earth: its id, how heavy it is to tow, its look (an Art prefab from the M2 content contract),
+    /// the note it sings when it answers the sonar and the salvage site whose heart it waits in (docs/features/M3-13).
+    /// Its name and memory text are player-facing prose and live in the localization tables under
+    /// "relic.&lt;id&gt;.*". Written by the Gameplay/Content builder; runtime code only reads it.
     /// </summary>
     [CreateAssetMenu(menuName = "MoonProject/Gameplay/Relic Definition", fileName = "Relic")]
     public sealed class RelicDefinition : ScriptableObject
@@ -25,8 +27,12 @@ namespace MoonProject.Gameplay
                  "(0 = D5, 1 = E5, 2 = F#5, 3 = A5, 4 = B5, 5 = D6 ...).")]
         [Range(0, 9)] [SerializeField] private int _answerNote;
 
-        [Tooltip("Which part of the crater it is buried in.")]
-        [SerializeField] private RelicPlacementBand _placement = RelicPlacementBand.Wanderer;
+        [Tooltip("The salvage site whose heart it waits in (its anchor id, e.g. site.depot).")]
+        [SerializeField] private string _siteId = string.Empty;
+
+        [Tooltip("Offset (m) from the site's Heart in the site's frame (x to its right, y along its forward), for a " +
+                 "second relic sharing one heart.")]
+        [SerializeField] private Vector2 _heartOffset;
 
         public string Id => _id;
 
@@ -36,7 +42,9 @@ namespace MoonProject.Gameplay
 
         public int AnswerNote => _answerNote;
 
-        public RelicPlacementBand Placement => _placement;
+        public string SiteId => _siteId;
+
+        public Vector2 HeartOffset => _heartOffset;
 
         /// <summary>Null when the definition is complete, else what is wrong with it.</summary>
         public string Validate()
@@ -46,16 +54,25 @@ namespace MoonProject.Gameplay
                 return "has no id";
             }
 
-            return _prefab == null ? $"'{_id}' has no prefab (Generated/Art/Relics/Relic_{_id}.prefab)" : null;
+            if (_prefab == null)
+            {
+                return $"'{_id}' has no prefab (Generated/Art/Relics/Relic_{_id}.prefab)";
+            }
+
+            return _siteId != null && _siteId.StartsWith(WorldAnchorIds.SitePrefix, StringComparison.Ordinal)
+                ? null
+                : $"'{_id}' names no salvage site ('{_siteId}')";
         }
 
-        internal void Populate(string id, float mass, GameObject prefab, int answerNote, RelicPlacementBand placement)
+        internal void Populate(string id, float mass, GameObject prefab, int answerNote, string siteId,
+            Vector2 heartOffset)
         {
             _id = id;
             _mass = mass;
             _prefab = prefab;
             _answerNote = answerNote;
-            _placement = placement;
+            _siteId = siteId;
+            _heartOffset = heartOffset;
         }
     }
 }

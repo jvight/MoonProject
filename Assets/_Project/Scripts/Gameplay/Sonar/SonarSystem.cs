@@ -8,11 +8,12 @@ namespace MoonProject.Gameplay
 {
     /// <summary>
     /// The sonar ping. A press (remembered briefly if the calm cooldown is still running) publishes
-    /// <see cref="SonarPinged"/> and rolls a ring over the ground; every relic still out in the world within range
-    /// answers when the ring has touched it (closer ones sooner and brighter), publishing <see cref="RelicAnswered"/>
-    /// and raising a light pillar on the horizon that stands for a while. A broken friend answers too, with its own
+    /// <see cref="SonarPinged"/> and rolls a ring over the ground; every salvage site with something left to find (a
+    /// piece to cut or a relic in its heart) answers when the ring has touched it (closer ones sooner and brighter),
+    /// publishing <see cref="SiteAnswered"/> and raising a light pillar on the horizon that stands for a while. A relic
+    /// lying loose out in the world answers on its own (<see cref="RelicAnswered"/>), and a broken friend with its
     /// broken chirp (<see cref="FriendAnswered"/>) and a warm pillar. 07 turns to the nearest answer, then keeps
-    /// glancing at the nearest standing pillar now and then. A spotter friend can also reveal a relic softly.
+    /// glancing at the nearest standing pillar now and then. A spotter friend can also reveal a site softly.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class SonarSystem : MonoBehaviour
@@ -26,6 +27,7 @@ namespace MoonProject.Gameplay
         private IRoverRig _rig;
         private RelicField _relics;
         private FriendField _friends;
+        private SalvageField _salvage;
         private SonarSchedule _schedule;
         private SonarRing[] _rings = Array.Empty<SonarRing>();
         private SiteMarker[] _markers = Array.Empty<SiteMarker>();
@@ -48,7 +50,7 @@ namespace MoonProject.Gameplay
         /// <summary>The ring pool (tests and debug views read ring radius and brightness).</summary>
         internal SonarRing[] Rings => _rings;
 
-        /// <summary>One marker per relic (by relic index), then one per friend.</summary>
+        /// <summary>One marker per relic (by relic index), then one per friend, then one per salvage site.</summary>
         internal SiteMarker[] Markers => _markers;
 
         internal void Wire(SonarTuning tuning)
@@ -56,7 +58,8 @@ namespace MoonProject.Gameplay
             _tuning = tuning;
         }
 
-        internal bool Initialize(GameplayServices services, RelicField relics, FriendField friends)
+        internal bool Initialize(GameplayServices services, RelicField relics, FriendField friends,
+            SalvageField salvage)
         {
             if (_tuning == null)
             {
@@ -71,41 +74,50 @@ namespace MoonProject.Gameplay
             _rig = services.Rig;
             _relics = relics ?? throw new ArgumentNullException(nameof(relics));
             _friends = friends != null ? friends : throw new ArgumentNullException(nameof(friends));
+            _salvage = salvage != null ? salvage : throw new ArgumentNullException(nameof(salvage));
             int relicCount = relics.Relics.Count;
-            _schedule = new SonarSchedule(relicCount + friends.Count);
+            int answerers = relicCount + friends.Count + salvage.Sites.Count;
+            _schedule = new SonarSchedule(answerers);
             _rings = new SonarRing[_tuning.RingPoolSize];
             for (int i = 0; i < _rings.Length; i++)
             {
                 _rings[i] = new SonarRing(transform, _tuning, services.Terrain, services.Visuals.SonarRing);
             }
 
-            _markers = new SiteMarker[relicCount + friends.Count];
+            _markers = new SiteMarker[answerers];
+            int friendsEnd = relicCount + friends.Count;
             for (int i = 0; i < _markers.Length; i++)
             {
-                bool relic = i < relicCount;
-                string id = relic ? relics.Relics[i].Definition.Id : friends.Friends[i - relicCount].Definition.Id;
+                bool friend = i >= relicCount && i < friendsEnd;
+                string id = i < relicCount ? relics.Relics[i].Definition.Id
+                    : friend ? friends.Friends[i - relicCount].Definition.Id
+                    : salvage.Sites[i - friendsEnd].Id;
                 _markers[i] = new SiteMarker("Marker_" + id, transform, _tuning, services.Terrain,
-                    relic ? services.Visuals.SitePillar : services.Visuals.FriendPillar,
-                    relic ? services.Visuals.SiteRing : services.Visuals.WarmRing, services.Meshes.Pillar,
-                    relic ? 1f : _tuning.FriendGlowScale);
+                    friend ? services.Visuals.FriendPillar : services.Visuals.SitePillar,
+                    friend ? services.Visuals.WarmRing : services.Visuals.SiteRing, services.Meshes.Pillar,
+                    friend ? _tuning.FriendGlowScale : 1f);
             }
 
             _initialized = true;
             return true;
         }
 
-        /// <summary>After a load: discovered relics still in the ground show their breathing ring again.</summary>
+        /// <summary>After a load: discovered sites with something left to find breathe on the sonar again.</summary>
         internal void RefreshDiscoveredSites()
         {
-            for (int i = 0; i < _relics.Relics.Count; i++)
+            int first = SiteMarkerStart;
+            for (int i = 0; i < _salvage.Sites.Count; i++)
             {
-                Relic relic = _relics.Relics[i];
-                if (relic.Discovered && (relic.State == RelicState.Buried || relic.State == RelicState.Surfacing))
+                SalvageSite site = _salvage.Sites[i];
+                if (site.Discovered && site.AnswersSonar)
                 {
-                    _markers[i].Place(relic.Site.Position);
+                    _markers[first + i].Place(site.Position);
                 }
             }
         }
+
+        /// <summary>Index of the first salvage site's marker.</summary>
+        private int SiteMarkerStart => _relics.Relics.Count + _friends.Count;
 
         private void Update()
         {
@@ -140,8 +152,7 @@ namespace MoonProject.Gameplay
             for (int i = 0; i < relicCount; i++)
             {
                 Relic relic = _relics.Relics[i];
-                bool inGround = relic.State == RelicState.Buried || relic.State == RelicState.Surfacing;
-                _markers[i].Tick(relic.SonarPosition, relic.AnswersSonar, inGround && relic.Discovered, now);
+                _markers[i].Tick(relic.SonarPosition, relic.AnswersSonar, false, now);
             }
 
             for (int i = 0; i < _friends.Count; i++)
@@ -149,6 +160,14 @@ namespace MoonProject.Gameplay
                 FriendProgress progress = _friends.Friends[i].Progress;
                 _markers[relicCount + i].Tick(_friends.Friends[i].Site.Position, progress.AnswersSonar,
                     progress.AnswersSonar && progress.Discovered, now);
+            }
+
+            int first = SiteMarkerStart;
+            for (int i = 0; i < _salvage.Sites.Count; i++)
+            {
+                SalvageSite site = _salvage.Sites[i];
+                bool answers = site.AnswersSonar;
+                _markers[first + i].Tick(site.Position, answers, answers && site.Discovered, now);
             }
 
             UpdateGaze(now);
@@ -189,24 +208,51 @@ namespace MoonProject.Gameplay
                 _firstAnswerPending |= _schedule.Add(relicCount + i, distance, now, _tuning.Range,
                     _tuning.RingDuration, _tuning.AnswerLag);
             }
+
+            int first = SiteMarkerStart;
+            for (int i = 0; i < _salvage.Sites.Count; i++)
+            {
+                SalvageSite site = _salvage.Sites[i];
+                if (!site.AnswersSonar)
+                {
+                    continue;
+                }
+
+                float distance = SurfaceRules.HorizontalDistance(origin, site.Position);
+                _firstAnswerPending |= _schedule.Add(first + i, distance, now, _tuning.Range, _tuning.RingDuration,
+                    _tuning.AnswerLag);
+            }
         }
 
         /// <summary>
-        /// A spotter friend found relic <paramref name="relicIndex"/>: it shows on the sonar (a softer pillar and its
-        /// breathing ring) without a ping.
+        /// A spotter friend found salvage site <paramref name="siteIndex"/>: it shows on the sonar (a softer pillar and
+        /// its breathing ring) without a ping.
         /// </summary>
-        internal void Reveal(int relicIndex, float brightness)
+        internal void RevealSite(int siteIndex, float brightness)
         {
-            Relic relic = _relics.Relics[relicIndex];
-            relic.MarkDiscovered();
-            _markers[relicIndex].Answer(relic.SonarPosition, brightness, Time.time);
+            SalvageSite site = _salvage.Sites[siteIndex];
+            site.MarkDiscovered();
+            _markers[SiteMarkerStart + siteIndex].Answer(site.Position, brightness, Time.time);
         }
 
         private void Answer(int index, float distance, float now)
         {
             Vector3 position;
             int relicCount = _relics.Relics.Count;
-            if (index >= relicCount)
+            int first = SiteMarkerStart;
+            if (index >= first)
+            {
+                SalvageSite site = _salvage.Sites[index - first];
+                if (!site.AnswersSonar)
+                {
+                    return;
+                }
+
+                position = site.Position;
+                site.MarkDiscovered();
+                _events.Publish(new SiteAnswered(site.Id, position, distance, site.HoldsRelic));
+            }
+            else if (index >= relicCount)
             {
                 Friend friend = _friends.Friends[index - relicCount];
                 if (!friend.Progress.AnswersSonar)
@@ -234,7 +280,7 @@ namespace MoonProject.Gameplay
             _markers[index].Answer(position, _tuning.BrightnessAt(distance), now);
             if (_firstAnswerPending)
             {
-                // Answers arrive nearest first, so the first one of a ping is the closest relic.
+                // Answers arrive nearest first, so the first one of a ping is the closest.
                 _firstAnswerPending = false;
                 _rig.SetGazeTarget(this, _markers[index].Position, GazePriorities.Interest);
                 _gazing = true;

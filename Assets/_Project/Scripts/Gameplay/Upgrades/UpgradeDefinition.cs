@@ -5,9 +5,9 @@ using UnityEngine;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// An upgrade bought with scrap: its id, the station that sells it, its state before any purchase (level 0) and its
-    /// levels in order. Its name lives in the localization tables under "upgrade.&lt;id&gt;.name". Written by the
-    /// Gameplay/Content builder; runtime code only reads it.
+    /// An upgrade crafted from materials: its id, the station that sells it, its state before any purchase (level 0)
+    /// and its levels (each with its recipe) in order. Its name lives in the localization tables under
+    /// "upgrade.&lt;id&gt;.name". Written by the Gameplay/Content builder; runtime code only reads it.
     /// </summary>
     public sealed class UpgradeDefinition : ScriptableObject
     {
@@ -60,9 +60,9 @@ namespace MoonProject.Gameplay
 
             for (int i = 0; i < _levels.Length; i++)
             {
-                if (_levels[i] == null || _levels[i].Cost <= 0)
+                if (_levels[i] == null || _levels[i].Recipe.IsFree)
                 {
-                    return $"'{_id}' level {i + 1} needs a positive cost";
+                    return $"'{_id}' level {i + 1} needs a recipe";
                 }
             }
 

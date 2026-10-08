@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using NUnit.Framework;
 using UnityEngine;
+using MoonProject.Core;
 
 namespace MoonProject.World.Tests
 {
@@ -135,6 +136,40 @@ namespace MoonProject.World.Tests
                     Assert.GreaterOrEqual(centre, _settings.CanyonPebbleClear,
                         $"pebble on the canyon's driving line at {rock.Position}");
                 }
+            }
+        }
+
+        [Test]
+        public void Kestrel_KeepsItsScorchedCraterAndFurrowClearOfRocks()
+        {
+            // M3-13: the debris trail is gameplay's to dress; no rock competes with it or blocks its driving line.
+            foreach (ScatterInstance rock in _plan)
+            {
+                Assert.LessOrEqual(_surface.Sample(rock.Position.x, rock.Position.z).Scorch, _settings.ScorchClear,
+                    $"{rock.Kind} on Kestrel-3's scorched ground at {rock.Position}");
+            }
+
+            KestrelImpact kestrel = _surface.Kestrel;
+            float furrow = Vector2.Distance(kestrel.Center, kestrel.TrailEnd);
+            for (float d = 0f; d <= furrow; d += 1f)
+            {
+                Vector2 p = kestrel.Center - kestrel.Fall * d;
+                Assert.Greater(_surface.Sample(p.x, p.y).Scorch, _settings.ScorchClear,
+                    $"the furrow's driving line at {p} is not kept clear");
+            }
+        }
+
+        [Test]
+        public void SalvageSitesOnTheFloor_EndADrivingLane()
+        {
+            WorldAnchors anchors = Anchors();
+            foreach (string name in SalvageSiteTests.Sites)
+            {
+                Assert.IsTrue(anchors.TryGet(WorldAnchorIds.SitePrefix + name, out WorldAnchor site));
+                var at = new Vector2(site.Position.x, site.Position.z);
+                bool onTheFloor = !_surface.Canyon.Bounds.Contains(at);
+                Assert.AreEqual(onTheFloor, _planner.DistanceToLanes(at) < 1e-3f,
+                    onTheFloor ? $"no lane leads to {site.Id}" : $"a lane runs into the canyon to {site.Id}");
             }
         }
 

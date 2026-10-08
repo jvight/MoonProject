@@ -16,10 +16,8 @@ namespace MoonProject.Gameplay.Editor
         [MoonBuilder(BuilderPath, BuilderOrder)]
         private static void Build()
         {
-            EnsureExists<ScrapTuning>(GameplayAssetPaths.ScrapTuning);
             EnsureExists<SonarTuning>(GameplayAssetPaths.SonarTuning);
             EnsureExists<RelicTuning>(GameplayAssetPaths.RelicTuning);
-            EnsureExists<RelicPlacementTuning>(GameplayAssetPaths.RelicPlacement);
             EnsureExists<ExcavationTuning>(GameplayAssetPaths.ExcavationTuning);
             EnsureExists<TetherTuning>(GameplayAssetPaths.TetherTuning);
             EnsureExists<BaseTuning>(GameplayAssetPaths.BaseTuning);
@@ -30,6 +28,8 @@ namespace MoonProject.Gameplay.Editor
             EnsureExists<LogCacheTuning>(GameplayAssetPaths.LogCacheTuning);
             EnsureExists<BellTuning>(GameplayAssetPaths.BellTuning);
             EnsureExists<RelayTuning>(GameplayAssetPaths.RelayTuning);
+            EnsureExists<GlintTuning>(GameplayAssetPaths.GlintTuning);
+            EnsureExists<SalvageTuning>(GameplayAssetPaths.SalvageTuning);
         }
 
         private static void EnsureExists<T>(string path) where T : ScriptableObject

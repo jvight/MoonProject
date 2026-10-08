@@ -5,8 +5,8 @@ namespace MoonProject.Gameplay
 {
     /// <summary>
     /// Everything Bell's signals can point at, read live from the world: the cassettes (waiting until collected), then
-    /// the crew log caches (until opened), then the relics (until they answer a ping). Reachability comes from each
-    /// cassette's and cache's ability gate and 07's abilities; relics lie on the basin floor and are always reachable.
+    /// the crew log caches (until opened), then the relics (until their site answers a ping). Reachability comes from
+    /// each cassette's and cache's ability gate, and for a relic its salvage site's, and 07's abilities.
     /// Allocation-free.
     /// </summary>
     internal sealed class SignalTargets : ISignalTargets
@@ -47,7 +47,7 @@ namespace MoonProject.Gameplay
             Relic relic = _relics.Relics[index - _logs.Count];
             bool inGround = relic.State == RelicState.Buried || relic.State == RelicState.Surfacing;
             return new SignalCandidate(BellSignalTarget.Relic, relic.Definition.Id, relic.Site.Position,
-                inGround && !relic.Discovered, true);
+                inGround && !relic.Discovered, relic.Home.Gate.IsOpen(_abilities));
         }
     }
 }

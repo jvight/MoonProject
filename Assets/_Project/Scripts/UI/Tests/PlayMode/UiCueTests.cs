@@ -134,7 +134,8 @@ namespace MoonProject.UI.PlayModeTests
 
             _cues.Clear();
             _rig.Fakes.PrimaryHint = InteractionHint.None;
-            _rig.Fakes.SetBalance(20);
+            _rig.Fakes.Upgrade = _rig.TestTower();
+            _rig.Fakes.SetMaterials(20, 20, 20);
             _rig.Fakes.AtStation = true;
             yield return new WaitForSecondsRealtime(1.5f);
             Press(keyboard.eKey);

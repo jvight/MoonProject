@@ -15,10 +15,10 @@ namespace MoonProject.UI.PlayModeTests
 {
     /// <summary>
     /// Steady-state zero-GC check of the UI: with a prompt following a moving point under the reticle, with the tower
-    /// panel and its pinned chip, with a ticker line resting, with the hop list over a moving fade, and with the
-    /// pause menu open, one frame additionally runs the UI's Update 600 times. Unity's "GC Allocated In Frame" for the
-    /// quietest of three such frames must stay at the level of plain frames; a control frame proves the counter sees
-    /// allocations at all.
+    /// panel and its pinned chip, with a ticker line resting, with the hop list over a moving fade, with the salvage
+    /// ring filling under the materials chip, and with the pause menu open, one frame additionally runs the UI's Update
+    /// 600 times. Unity's "GC Allocated In Frame" for the quietest of three such frames must stay at the level of plain
+    /// frames; a control frame proves the counter sees allocations at all.
     /// </summary>
     public sealed class UiAllocationTests : InputTestFixture
     {
@@ -84,7 +84,8 @@ namespace MoonProject.UI.PlayModeTests
         {
             InputSystem.AddDevice<Keyboard>();
             _rig = UiTestRig.Boot(_controls, _slot);
-            _rig.Fakes.SetBalance(20);
+            _rig.Fakes.Upgrade = _rig.TestTower();
+            _rig.Fakes.SetMaterials(1, 1, 0);
             _rig.Fakes.AtStation = true;
             yield return new WaitForSecondsRealtime(2f);
             Assert.IsTrue(_rig.Ui.Tower.IsVisible && _rig.Ui.Chip.IsVisible);
@@ -141,6 +142,31 @@ namespace MoonProject.UI.PlayModeTests
                 update();
             };
             yield return Measure(frame, "hop list with a filling ring over a moving fade");
+        }
+
+        [UnityTest]
+        public IEnumerator SalvageRingFilling_UnderTheMaterialsChip_DoesNotAllocate()
+        {
+            InputSystem.AddDevice<Keyboard>();
+            _rig = UiTestRig.Boot(_controls, _slot);
+            _rig.Bootstrap.Context.Events.Publish(new RoverAwoke(Vector3.zero, false));
+            _rig.Fakes.HasTarget = true;
+            _rig.Fakes.IsCutting = true;
+            _rig.Fakes.CutPoint = new Vector3(0f, 0.5f, 6f);
+            _rig.Fakes.CutProgress = 0.2f;
+            yield return new WaitForSecondsRealtime(1f);
+            _rig.Fakes.SetMaterials(3, 12, 1);
+            yield return new WaitForSecondsRealtime(0.2f);
+            Assert.IsTrue(_rig.Ui.SalvageRing.IsVisible && _rig.Ui.Chip.IsVisible);
+
+            Action update = Bind(_rig.Ui, "Update");
+            Action frame = () =>
+            {
+                _step++;
+                _rig.Fakes.CutProgress = (_step % 100) * 0.01f;
+                update();
+            };
+            yield return Measure(frame, "salvage ring filling under the materials chip");
         }
 
         private static IEnumerator Measure(Action frame, string label)

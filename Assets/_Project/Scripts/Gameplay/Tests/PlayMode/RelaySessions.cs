@@ -12,7 +12,7 @@ namespace MoonProject.Gameplay.PlayModeTests
 {
     /// <summary>
     /// Scripted sessions for the relay network (docs/features/M3-06) with stand-in masts on the flat world's relay
-    /// pads: gathering a mast's part, restoring it with the scrap it costs, the link pulse and the reach it adds; a
+    /// pads: gathering a mast's part, restoring it with the materials it takes, the link pulse and the reach it adds; a
     /// mast beyond the lit frontier listening until a neighbour or a stronger tower links it; the radio-hop home and
     /// back; and all of it kept through a save and a reboot.
     /// </summary>
@@ -42,7 +42,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator Relay_IsRestoredWithItsPartAndScrap_ComesOnline_AndHomeReachesFarther()
+        public IEnumerator Relay_IsRestoredWithItsPartAndMaterials_ComesOnline_AndHomeReachesFarther()
         {
             _fixture = GameplayFixture.Boot(_controls);
             yield return null;
@@ -67,20 +67,21 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return null;
             yield return null;
             Assert.IsTrue(_fixture.Gameplay.Hints.TryGet(InteractionKind.Restore, out InteractionHint hint));
-            Assert.IsFalse(hint.Ready, "60 scrap it does not have yet");
-            Assert.AreEqual(60, relays.NextCost);
+            Assert.IsFalse(hint.Ready, "materials it does not have yet");
+            Assert.AreEqual(3, relays.NextCost.Total);
             yield return HoldInteract(_fixture.RelayTuning.RestoreHold + 0.4f);
             Assert.IsFalse(mast.Restoring, "no restoration on credit");
 
-            _fixture.Gameplay.Wallet.Add(75);
+            _fixture.GiveMaterials(3, 1, 1);
             yield return null;
             Assert.IsTrue(_fixture.Gameplay.Hints.TryGet(InteractionKind.Restore, out hint));
             Assert.IsTrue(hint.Ready);
             Assert.AreEqual(InteractionKind.Restore, _fixture.Gameplay.Hints.Primary.Kind);
             yield return HoldInteract(_fixture.RelayTuning.RestoreHold + 0.2f);
             Assert.IsTrue(mast.Restoring);
-            Assert.AreEqual(60, mast.Paid, "60 scrap paid");
-            Assert.AreEqual(90, relays.NextCost, "the next one costs more");
+            Assert.AreEqual(3, mast.Paid, "its recipe paid: 2 metal and 1 wiring");
+            Assert.AreEqual(1, _fixture.Gameplay.Materials.Metal);
+            Assert.AreEqual(4, relays.NextCost.Total, "the next one costs more");
             Assert.AreEqual(1, _fixture.Rover.HoldStillCount, "07 holds still under its beam");
             _fixture.Rover.Aim(mast.Anchor.Position + mast.Anchor.Forward * 9f + Vector3.up * 3f,
                 mast.Anchor.Position + Vector3.up * 3f);
@@ -138,7 +139,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             RelayMast mound = relays.Masts[0];
             RelayMast shoulder = relays.Masts[1];
             RelayMast mouth = relays.Masts[2];
-            _fixture.Gameplay.Wallet.Add(60 + 90 + 120);
+            _fixture.GiveMaterials(8, 4, 0);
 
             yield return Restore(mouth);
             Assert.IsEmpty(_fixture.Events.RelayRestored, "nothing lit reaches the canyon mouth yet");
@@ -160,10 +161,10 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             yield return Restore(shoulder);
             Assert.AreEqual(2, _fixture.Events.RelayRestored.Count, "the dark tower does not reach the shoulder");
-            Assert.AreEqual(60, mouth.Paid, "the first restoration costs 60");
-            Assert.AreEqual(90, mound.Paid);
-            Assert.AreEqual(120, shoulder.Paid);
-            _fixture.Gameplay.Wallet.Add(15);
+            Assert.AreEqual(3, mouth.Paid, "the first restoration takes 3 units");
+            Assert.AreEqual(4, mound.Paid);
+            Assert.AreEqual(5, shoulder.Paid);
+            _fixture.GiveMaterials(0, 1, 1);
             Assert.AreEqual(PurchaseResult.Purchased, _fixture.Gameplay.Upgrades.Purchase(Tower));
             yield return new WaitForSeconds(0.5f);
             Assert.AreEqual(3, _fixture.Events.RelayRestored.Count, "the tower's first level links it");
@@ -180,7 +181,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             IRadioHop hop = _fixture.Bootstrap.Context.Get<IRadioHop>();
             Assert.AreSame(relays.Hop, hop);
             RelayMast mast = relays.Masts[0];
-            _fixture.Gameplay.Wallet.Add(60);
+            _fixture.GiveMaterials(2, 1, 0);
             Assert.IsFalse(_fixture.Gameplay.Hints.TryGet(InteractionKind.Hop, out _), "nowhere to hop yet");
             yield return Restore(mast);
 
@@ -238,7 +239,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             _fixture = GameplayFixture.Boot(_controls, slot);
             yield return null;
             RelayField relays = _fixture.Gameplay.Relays;
-            _fixture.Gameplay.Wallet.Add(60);
+            _fixture.GiveMaterials(2, 1, 0);
             yield return Restore(relays.Masts[0]);
             yield return Gather(relays.Masts[1]);
             _fixture.Dispose(true);
@@ -249,14 +250,14 @@ namespace MoonProject.Gameplay.PlayModeTests
             relays = _fixture.Gameplay.Relays;
             RelayMast mound = relays.Masts[0];
             Assert.IsTrue(mound.IsRestored);
-            Assert.AreEqual(60, mound.Paid);
+            Assert.AreEqual(3, mound.Paid);
             Assert.IsTrue(mound.Restored.Visible, "upright");
             Assert.IsFalse(mound.Broken.Visible);
             Assert.AreEqual(RelayPartState.Installed, mound.PartState);
             Assert.AreEqual(_fixture.RelayTuning.LampGlow, mound.Restored.LampLevel, 1e-3f, "lit at once");
             Assert.IsTrue(relays.Reach.IsLit(mound.Node));
             Assert.AreEqual(RelayPartState.Held, relays.Masts[1].PartState, "the shoulder's part is still held");
-            Assert.AreEqual(90, relays.NextCost);
+            Assert.AreEqual(4, relays.NextCost.Total);
             Assert.IsEmpty(_fixture.Events.RelayRestored, "a load replays no moment");
             Assert.IsFalse(mound.Pulse.Running);
         }
@@ -268,7 +269,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(RelayPartState.Held, mast.PartState, $"{mast.Id}'s part is drawn in");
         }
 
-        /// <summary>Gathers the mast's part and restores it with the scrap already in the wallet.</summary>
+        /// <summary>Gathers the mast's part and restores it with the materials already in the stock.</summary>
         private IEnumerator Restore(RelayMast mast)
         {
             yield return Gather(mast);

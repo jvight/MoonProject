@@ -77,14 +77,14 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return null;
             Release(_keyboard.spaceKey);
             yield return new WaitForSeconds(3f);
-            Assert.Greater(_fixture.Events.RelicAnswered.Count, 0, "pillars are standing");
+            Assert.Greater(_fixture.Events.SiteAnswered.Count, 0, "pillars are standing");
             Assert.AreEqual(1, _fixture.Events.BellSignalPicked.Count, "Bell is home and listening");
             Assert.AreEqual(2, gameplay.Relays.Reach.LitCount, "home and the mound relay are lit");
 
             var updates = new List<Action>();
             foreach (MonoBehaviour part in new MonoBehaviour[]
                      {
-                         gameplay.Relics, gameplay.Scrap, gameplay.Sonar, gameplay.Excavation, gameplay.Tether,
+                         gameplay.Salvage, gameplay.Relics, gameplay.Sonar, gameplay.Excavation, gameplay.Tether,
                          gameplay.Home, gameplay.Tower, gameplay.Friends, gameplay.Cassettes, gameplay.Logs,
                          gameplay.Signals, gameplay.Shelf, gameplay.Relays,
                      })
@@ -106,7 +106,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Release(_mouse.rightButton);
             Assert.AreEqual(0, silent, "a hint (reel) is always available while towing");
             Assert.AreEqual(0L, allocated,
-                "bytes allocated by 300 frames of relics, scrap, sonar, excavation, tether, home, tower, friends, " +
+                "bytes allocated by 300 frames of salvage, relics, sonar, excavation, tether, home, tower, friends, " +
                 "cassettes, caches, Bell's signals, her rack, the relays, the reach and hints");
         }
 

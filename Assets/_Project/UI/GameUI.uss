@@ -36,7 +36,7 @@
 .dial-readout__tape,
 .glyph__label,
 .hold__glyph,
-.cost__price {
+.material-slot__count {
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/BeVietnamPro-SemiBold.asset");
 }
 
@@ -168,20 +168,89 @@ Label {
     font-size: 12px;
 }
 
-/* The scrap icon (painted, see ScrapIconPainter) */
+/* Salvage materials (painted, see MaterialIconPainter), in art's bundle colours: steel, copper, violet */
 
-.scrap-icon {
-    width: 22px;
-    height: 22px;
-    margin-left: 4px;
-    --icon-color: var(--moon-tech-glow);
+.material-slot {
+    flex-direction: row;
+    align-items: center;
+    margin: 0 6px;
+}
+
+.material-icon {
+    width: 20px;
+    height: 20px;
     --icon-hole-color: var(--moon-sky-top);
 }
 
-.scrap-icon--small {
+.material-icon--metal {
+    --icon-color: var(--moon-metal);
+    --icon-detail: var(--moon-text-faint);
+}
+
+.material-icon--wiring {
+    --icon-color: var(--moon-warm-accent);
+    --icon-detail: var(--moon-warm-lamp);
+}
+
+.material-icon--optics {
+    --icon-color: var(--moon-sky-horizon);
+    --icon-detail: var(--moon-metal);
+}
+
+.material-slot__count {
+    font-size: 18px;
+    margin-left: 6px;
+    min-width: 14px;
+    color: var(--moon-text);
+}
+
+.material-slot__glow {
+    position: absolute;
+    left: 3px;
+    top: 50%;
     width: 16px;
     height: 16px;
-    margin-left: 0;
+    margin-top: -8px;
+    --shadow-color: var(--moon-cream);
+    --shadow-offset: 0;
+    --shadow-layers: 8;
+    --shadow-radius: 8;
+    --shadow-spread: 16;
+}
+
+.materials-chip .material-icon {
+    width: 22px;
+    height: 22px;
+}
+
+.materials-chip .material-slot__count {
+    font-size: 19px;
+}
+
+/* A recipe: what it takes, the short materials dimmed, and one quiet need line */
+
+.recipe {
+    flex-direction: row;
+    align-items: center;
+}
+
+.recipe .material-icon {
+    width: 18px;
+    height: 18px;
+}
+
+.material-slot--short .material-icon {
+    opacity: 0.4;
+}
+
+.material-slot--short .material-slot__count {
+    color: var(--moon-text-faint);
+}
+
+.recipe__need {
+    font-size: 15px;
+    color: var(--moon-text-faint);
+    white-space: normal;
 }
 
 /* The cassette icon (painted, see CassetteIconPainter) */
@@ -198,6 +267,11 @@ Label {
     height: 16px;
     --icon-color: var(--moon-warm-lamp);
     --mast-color: var(--moon-text-faint);
+}
+
+.relay-icon--tag {
+    width: 18px;
+    height: 16px;
 }
 
 .cassette-icon--quiet {
@@ -327,12 +401,47 @@ Label {
     text-shadow: 0 2px 14px var(--moon-shadow);
 }
 
-/* Scrap chip */
+/* Materials chip: the stock, drifting in only when it changes */
 
-.scrap-chip {
+.materials-chip {
     position: absolute;
     top: 44px;
     right: 56px;
+}
+
+.materials-chip__body {
+    padding: 8px 12px 8px 8px;
+}
+
+/* Salvage: the hold ring centred on a piece's cut point, and a site's name over it */
+
+.world-anchor__middle {
+    position: absolute;
+    left: 0;
+    top: 0;
+    translate: -50% -50%;
+}
+
+.salvage-ring {
+    width: 48px;
+    height: 48px;
+    justify-content: center;
+    align-items: center;
+    border-radius: 24px;
+    background-color: var(--moon-glass);
+    --track-color: var(--moon-track);
+    --fill-color: var(--moon-warm-lamp);
+    --ring-width: 3.5;
+}
+
+.salvage-ring__icon {
+    width: 20px;
+    height: 20px;
+}
+
+.site-name {
+    font-size: 26px;
+    letter-spacing: 3px;
 }
 
 /* Radio ticker: one soft line in the bottom band, below every panel and below the prompts' screen margin */
@@ -486,10 +595,26 @@ Label {
     color: var(--moon-cream);
 }
 
-/* Relay price tag: the scrap nut in a hold ring, and the cost (dimmed while the scrap is not there yet) */
+/* Relay price tag: a little mast in the hold ring, the recipe beside it, the need line under them */
 
 .relay-tag__body {
+    flex-direction: column;
+    align-items: flex-start;
     padding: 6px 16px 6px 7px;
+}
+
+.relay-tag__row {
+    flex-direction: row;
+    align-items: center;
+}
+
+.relay-tag__recipe {
+    margin-left: 10px;
+}
+
+.relay-tag__need {
+    font-size: 13px;
+    margin: 2px 0 2px 6px;
 }
 
 .relay-tag__ring {
@@ -502,17 +627,6 @@ Label {
     --ring-width: 2.5;
 }
 
-.relay-tag__cost {
-    margin-left: 6px;
-}
-
-.relay-tag--short .relay-tag__cost {
-    color: var(--moon-text-faint);
-}
-
-.relay-tag--short .scrap-icon {
-    opacity: 0.5;
-}
 
 /* Radio-hop fade: a soft indigo dark and a faint crawling grain, over the HUD and under the pause menu */
 
@@ -685,9 +799,6 @@ Label {
 
 .tower-panel__need {
     flex-shrink: 1;
-    font-size: 16px;
-    color: var(--moon-text-dim);
-    white-space: normal;
     margin-right: 12px;
 }
 
@@ -725,20 +836,6 @@ Label {
     color: var(--moon-honey);
 }
 
-.cost {
-    flex-direction: row;
-    align-items: center;
-}
-
-.cost__price {
-    font-size: 20px;
-    margin-left: 7px;
-    color: var(--moon-text);
-}
-
-.cost--short .cost__price {
-    color: var(--moon-text-faint);
-}
 
 /* Pause menu */
 

@@ -11,9 +11,9 @@ using Object = UnityEngine.Object;
 namespace MoonProject.Gameplay.Tests
 {
     /// <summary>
-    /// The relay network's pure logic (docs/features/M3-06): the station's reach over the real chain, the scrap cost
-    /// and VISION ruling 5, where a mast's part lies, the restoration and hop timelines, the radio-hop's list and
-    /// sequence, and the mast rig.
+    /// The relay network's pure logic (docs/features/M3-06): the station's reach over the real chain, the escalating
+    /// recipes, where a mast's part lies, the restoration and hop timelines, the radio-hop's list and sequence, and
+    /// the mast rig.
     /// </summary>
     public sealed class RelayTests
     {
@@ -32,10 +32,6 @@ namespace MoonProject.Gameplay.Tests
         private const float DarkTower = 60f;
         private const float TowerLevel1 = 110f;
 
-        // The other sinks of VISION ruling 5, as in the content builder: the tower's three levels and Hover-Jump.
-        private const int TowerCost = 15 + 40 + 80;
-        private const int HoverJumpCost = 150;
-        private const int Relics = 6;
 
         private const float Frame = 1f / 60f;
 
@@ -136,22 +132,20 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void Cost_Escalates_AndTheBasinStillFundsTwiceEverySink()
+        public void Cost_Escalates_InMaterials()
         {
             var relays = Create<RelayTuning>();
-            Assert.AreEqual(60, relays.CostAfter(0));
-            Assert.AreEqual(90, relays.CostAfter(1));
-            Assert.AreEqual(120, relays.CostAfter(2));
-            Assert.AreEqual(150, relays.CostAfter(3));
-            Assert.AreEqual(420, relays.TotalCost(Ids.Length));
+            Assert.AreEqual(3, relays.CostAfter(0).Total);
+            Assert.AreEqual(4, relays.CostAfter(1).Total);
+            Assert.AreEqual(5, relays.CostAfter(2).Total);
+            Assert.AreEqual(6, relays.CostAfter(3).Total);
+            Assert.AreEqual(6, relays.CostAfter(9).Total, "past the last price the last one holds");
+            Recipe all = relays.TotalCost(Ids.Length);
+            Assert.AreEqual(12, all.Metal);
+            Assert.AreEqual(6, all.Wiring);
+            Assert.AreEqual(0, all.Optics);
             Assert.IsNull(relays.Validate(Ids.Length));
             StringAssert.Contains("prices", relays.Validate(Ids.Length + 1));
-
-            var scrap = Create<ScrapTuning>();
-            var home = Create<BaseTuning>();
-            int income = scrap.MinTotalValue + Relics * home.DepositGift;
-            int sinks = TowerCost + HoverJumpCost + relays.TotalCost(Ids.Length);
-            Assert.GreaterOrEqual(income, 2 * sinks, $"VISION ruling 5: income {income} vs sinks {sinks}");
         }
 
         [Test]

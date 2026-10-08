@@ -12,8 +12,8 @@ namespace MoonProject.Gameplay
         /// <summary>Masts restored and linked to home.</summary>
         int LitMasts { get; }
 
-        /// <summary>Scrap the next restoration costs (escalating with each one).</summary>
-        int NextCost { get; }
+        /// <summary>The next restoration's recipe (escalating with each one).</summary>
+        Recipe NextCost { get; }
 
         /// <summary>0..1 how far Interact has been held toward starting a restoration.</summary>
         float RestoreHold { get; }

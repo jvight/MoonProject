@@ -36,6 +36,7 @@ namespace MoonProject.World
         private readonly Color _midDust;
         private readonly Color _lightDust;
         private readonly Color _charcoal;
+        private readonly Color _scorch;
         private readonly Color32 _rockLight;
         private readonly Color32 _rockDark;
 
@@ -62,6 +63,7 @@ namespace MoonProject.World
             _midDust = Palette.Get(PaletteSwatch.DustMid);
             _lightDust = Palette.Get(PaletteSwatch.DustLight);
             _charcoal = Palette.Get(PaletteSwatch.Charcoal);
+            _scorch = Color.Lerp(_shadowDust, _charcoal, settings.ScorchCharcoal);
             _rockLight = Palette.Get(PaletteSwatch.RockLight);
             _rockDark = Palette.Get(PaletteSwatch.RockDark);
         }
@@ -115,6 +117,11 @@ namespace MoonProject.World
             float highland = SmoothMath.Smootherstep(_settings.HighlandZone - HighlandBand,
                 _settings.HighlandZone + HighlandBand, region.RimZone);
             dust = Color.Lerp(dust, _shadowDust, highland * _settings.HighlandShade);
+            if (region.Scorch > 0f)
+            {
+                float mottle = 1f - _settings.ScorchMottle * Mathf.Clamp01(0.5f + 0.5f * detail);
+                dust = Color.Lerp(dust, _scorch, region.Scorch * _settings.ScorchShade * mottle);
+            }
 
             float canyonTone = _settings.CanyonMidShare * Mathf.Clamp01(0.5f + tone * 0.5f);
             Color canyon = Color.Lerp(_shadowDust, _midDust, canyonTone);

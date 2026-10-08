@@ -7,9 +7,10 @@ using Object = UnityEngine.Object;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// Every relic in the world: plans the burial sites at initialisation, spawns one <see cref="Relic"/> per catalog
-    /// entry, and keeps the "no loss, ever" promise — a loose relic that comes to rest off the drivable floor (or
-    /// sinks under it) floats gently back to the nearest reachable spot on the way home.
+    /// Every relic in the world: spawns one <see cref="Relic"/> per catalog entry, half-sunk in the heart of the
+    /// salvage site it names (docs/features/M3-13), and keeps the "no loss, ever" promise — a loose relic that comes
+    /// to rest off the drivable floor (or sinks under it) floats gently back to the nearest reachable spot on the way
+    /// home.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class RelicField : MonoBehaviour
@@ -22,9 +23,6 @@ namespace MoonProject.Gameplay
 
         [Tooltip("Relic definitions (Assets/_Project/Data/Content/RelicCatalog.asset).")]
         [SerializeField] private RelicCatalog _catalog;
-
-        [Tooltip("Burial site placement (Assets/_Project/Data/Tuning/Gameplay/RelicPlacementTuning.asset).")]
-        [SerializeField] private RelicPlacementTuning _placement;
 
         [Tooltip("Relic physics, halo and motion (Assets/_Project/Data/Tuning/Gameplay/RelicTuning.asset).")]
         [SerializeField] private RelicTuning _tuning;
@@ -47,19 +45,26 @@ namespace MoonProject.Gameplay
 
         public RelicTuning Tuning => _tuning;
 
-        internal void Wire(RelicCatalog catalog, RelicPlacementTuning placement, RelicTuning tuning)
+        internal void Wire(RelicCatalog catalog, RelicTuning tuning)
         {
             _catalog = catalog;
-            _placement = placement;
             _tuning = tuning;
         }
 
-        internal bool Initialize(GameplayServices services)
+        /// <summary>
+        /// Spawns every relic in the heart of its salvage site. False (logged) when wiring is missing or a relic names
+        /// a site that does not stand in the world.
+        /// </summary>
+        internal bool Initialize(GameplayServices services, SalvageField salvage)
         {
+            if (salvage == null)
+            {
+                throw new ArgumentNullException(nameof(salvage));
+            }
+
             string problem = _catalog == null ? "RelicCatalog is not assigned."
-                : _placement == null ? "RelicPlacementTuning is not assigned."
                 : _tuning == null ? "RelicTuning is not assigned."
-                : _catalog.Validate();
+                : _catalog.Validate() ?? UnknownSite(salvage);
             if (problem != null)
             {
                 Debug.LogError($"{nameof(RelicField)}: {problem}", this);
@@ -70,13 +75,14 @@ namespace MoonProject.Gameplay
             _terrain = services.Terrain;
             _layout = services.Layout;
             IReadOnlyList<RelicDefinition> definitions = _catalog.Relics;
-            var bands = new RelicPlacementBand[definitions.Count];
-            for (int i = 0; i < bands.Length; i++)
+            var homes = new SalvageSite[definitions.Count];
+            _sites = new RelicSite[definitions.Count];
+            for (int i = 0; i < _sites.Length; i++)
             {
-                bands[i] = definitions[i].Placement;
+                homes[i] = salvage.Find(definitions[i].SiteId);
+                _sites[i] = HeartOf(homes[i], definitions[i].HeartOffset);
             }
 
-            _sites = RelicSitePlanner.Plan(_terrain, _layout, _placement, bands);
             _physicsMaterial = new PhysicsMaterial("Relic")
             {
                 bounciness = _tuning.Bounciness,
@@ -97,12 +103,39 @@ namespace MoonProject.Gameplay
                 var host = new GameObject("Relic_" + definitions[i].Id);
                 host.transform.SetParent(transform, false);
                 _relics[i] = host.AddComponent<Relic>();
-                _relics[i].Setup(definitions[i], i, _sites[i], _tuning, _physicsMaterial,
+                _relics[i].Setup(definitions[i], i, homes[i], _sites[i], _tuning, _physicsMaterial,
                     services.Visuals.RelicHalo);
+                homes[i].AddRelic(_relics[i]);
             }
 
             _initialized = true;
             return true;
+        }
+
+        /// <summary>The first relic naming a salvage site that does not stand in the world, or null.</summary>
+        private string UnknownSite(SalvageField salvage)
+        {
+            foreach (RelicDefinition definition in _catalog.Relics)
+            {
+                if (salvage.Find(definition.SiteId) == null)
+                {
+                    return $"relic '{definition.Id}' rests at salvage site '{definition.SiteId}', which is not " +
+                           "in the salvage catalog.";
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Where a relic rests: the site's heart, moved by <paramref name="offset"/> in the site's frame (x to its
+        /// right, y along its forward), on the ground the heart stands on.
+        /// </summary>
+        private RelicSite HeartOf(SalvageSite site, Vector2 offset)
+        {
+            Transform root = site.Root;
+            Vector3 heart = site.Heart + root.right * offset.x + root.forward * offset.y;
+            return new RelicSite(heart, _terrain.SampleNormal(heart.x, heart.z));
         }
 
         /// <summary>The relic with <paramref name="id"/>, or null.</summary>

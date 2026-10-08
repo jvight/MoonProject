@@ -8,11 +8,13 @@ using MoonProject.Core.Save;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// The tractor beam. Holding Excavate within reach of a buried relic asks 07 to ease to a stop
-    /// (<see cref="IRoverRig.SetHoldStill"/>); once it is slow enough a soft cone of light reaches from its eye, dust
-    /// swirls over the site and the relic rises out of the ground toward the eye. Letting go keeps the progress (the
-    /// relic waits, bobbing, where it is). When it is fully up it is handed to physics with a little hop:
-    /// <see cref="ExcavationStopped"/> (completed) then <see cref="RelicSurfaced"/>, and the game saves.
+    /// The tractor beam. Holding Excavate within reach of a relic half-sunk in a salvage site's heart asks 07 to ease
+    /// to a stop (<see cref="IRoverRig.SetHoldStill"/>); once it is slow enough a soft cone of light reaches from its
+    /// eye, a little dust swirls over the heart and the relic rises out of the dust toward the eye: a short, gentle
+    /// dig. Letting go keeps the progress (the relic waits, bobbing, where it is). When it is fully up it is handed to
+    /// physics with a little hop: <see cref="ExcavationStopped"/> (completed) then <see cref="RelicSurfaced"/>, and the
+    /// game saves. The hold is shared with salvage: while <see cref="SalvageField"/> has a piece picked (07 looks at it
+    /// more directly than at the heart) or is cutting, there is nothing to dig.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class ExcavationSystem : MonoBehaviour
@@ -30,6 +32,7 @@ namespace MoonProject.Gameplay
         private ITerrainQuery _terrain;
         private ISaveService _save;
         private RelicField _relics;
+        private SalvageField _salvage;
         private Transform _beam;
         private GlowRenderer _beamGlow;
         private DustSwirl _dust;
@@ -63,7 +66,7 @@ namespace MoonProject.Gameplay
             _tuning = tuning;
         }
 
-        internal bool Initialize(GameplayServices services, RelicField relics)
+        internal bool Initialize(GameplayServices services, RelicField relics, SalvageField salvage)
         {
             if (_tuning == null)
             {
@@ -79,6 +82,7 @@ namespace MoonProject.Gameplay
             _terrain = services.Terrain;
             _save = services.Save;
             _relics = relics ?? throw new ArgumentNullException(nameof(relics));
+            _salvage = salvage != null ? salvage : throw new ArgumentNullException(nameof(salvage));
             MeshRenderer beam = GlowObject.Create("TractorBeam", transform, services.Meshes.Cone,
                 services.Visuals.TractorBeam);
             _beam = beam.transform;
@@ -96,7 +100,7 @@ namespace MoonProject.Gameplay
             }
 
             float deltaTime = Time.deltaTime;
-            Candidate = FindCandidate();
+            Candidate = _salvage.ClaimsHold ? null : NearestLiftable();
             bool wantsBeam = _input.ExcavateHeld && Candidate != null;
             SetHold(wantsBeam);
 
@@ -121,7 +125,11 @@ namespace MoonProject.Gameplay
             UpdateGaze(wantsBeam);
         }
 
-        private Relic FindCandidate()
+        /// <summary>
+        /// The relic the beam would lift if salvage did not claim the hold (null when none in reach): the one being
+        /// lifted while it stays within the hysteresis, else the nearest liftable one within reach.
+        /// </summary>
+        internal Relic NearestLiftable()
         {
             Vector3 rover = _rover.Position;
             float reach = _tuning.ReachRadius;
@@ -182,6 +190,7 @@ namespace MoonProject.Gameplay
             Vector3 eye = _rig.TetherOrigin.position;
             Vector3 present = ExcavationRise.Ahead(eye, _rover.Rotation * Vector3.forward, _tuning.PresentDistance);
             present.y = _terrain.SampleHeight(present.x, present.z) + _tuning.PresentHeight;
+            present = ClearOfWrecks(eye, present, relic.Radius);
             Vector3 position = ExcavationRise.Position(_segmentFrom, present, segment);
             _spin += _tuning.RiseSpin * deltaTime;
             relic.SetLiftPose(position, Quaternion.Euler(0f, _spin, 0f), progress);
@@ -189,6 +198,26 @@ namespace MoonProject.Gameplay
             {
                 Complete(relic);
             }
+        }
+
+        /// <summary>
+        /// Where the relic comes up: the point ahead of 07's eye, or short of whatever stands in between (a heart lies
+        /// inside its wreck, and the relic must surface where 07 sees it, never inside a wall).
+        /// </summary>
+        private static Vector3 ClearOfWrecks(Vector3 eye, Vector3 present, float radius)
+        {
+            Vector3 toPresent = present - eye;
+            float distance = toPresent.magnitude;
+            if (distance < 1e-3f)
+            {
+                return present;
+            }
+
+            Vector3 direction = toPresent / distance;
+            return Physics.SphereCast(eye, radius, direction, out RaycastHit hit, distance, Layers.PropMask,
+                QueryTriggerInteraction.Ignore)
+                ? eye + direction * hit.distance
+                : present;
         }
 
         private void Complete(Relic relic)

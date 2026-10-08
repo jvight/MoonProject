@@ -13,13 +13,14 @@ namespace MoonProject.UI
         [SerializeField] private TitleSettings _title = new TitleSettings();
         [SerializeField] private PromptSettings _prompts = new PromptSettings();
         [SerializeField] private ReticleSettings _reticle = new ReticleSettings();
-        [SerializeField] private ScrapChipSettings _scrapChip = new ScrapChipSettings();
+        [SerializeField] private MaterialsChipSettings _materialsChip = new MaterialsChipSettings();
         [SerializeField] private MemoryCardSettings _memoryCard = new MemoryCardSettings();
         [SerializeField] private TowerPanelSettings _towerPanel = new TowerPanelSettings();
         [SerializeField] private FriendUiSettings _friends = new FriendUiSettings();
         [SerializeField] private TickerSettings _ticker = new TickerSettings();
         [SerializeField] private DialReadoutSettings _dialReadout = new DialReadoutSettings();
         [SerializeField] private RelaySettings _relays = new RelaySettings();
+        [SerializeField] private SalvageSettings _salvage = new SalvageSettings();
 
         public PauseSettings Pause => _pause;
 
@@ -29,7 +30,7 @@ namespace MoonProject.UI
 
         public ReticleSettings Reticle => _reticle;
 
-        public ScrapChipSettings ScrapChip => _scrapChip;
+        public MaterialsChipSettings MaterialsChip => _materialsChip;
 
         public MemoryCardSettings MemoryCard => _memoryCard;
 
@@ -43,12 +44,15 @@ namespace MoonProject.UI
 
         public RelaySettings Relays => _relays;
 
+        public SalvageSettings Salvage => _salvage;
+
         /// <summary>Null when the tuning is usable, else the first problem.</summary>
         public string Validate()
         {
-            if (_pause == null || _title == null || _prompts == null || _reticle == null || _scrapChip == null ||
+            if (_pause == null || _title == null || _prompts == null || _reticle == null || _materialsChip == null ||
                 _memoryCard == null || _towerPanel == null || _friends == null || _ticker == null ||
-                _dialReadout == null || _relays == null)
+                _dialReadout == null || _relays == null ||
+                _salvage == null)
             {
                 return "a settings section is missing";
             }

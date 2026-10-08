@@ -9,12 +9,12 @@ namespace MoonProject.UI
     /// </summary>
     internal sealed class CountUp
     {
-        private readonly ScrapChipSettings _settings;
+        private readonly MaterialsChipSettings _settings;
         private float _from;
         private float _elapsed;
         private float _duration;
 
-        public CountUp(ScrapChipSettings settings)
+        public CountUp(MaterialsChipSettings settings)
         {
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
         }
@@ -45,7 +45,7 @@ namespace MoonProject.UI
             _from = Current();
             Target = target;
             _elapsed = 0f;
-            _duration = Mathf.Clamp(Mathf.Abs(target - _from) * _settings.SecondsPerScrap, _settings.MinCountSeconds,
+            _duration = Mathf.Clamp(Mathf.Abs(target - _from) * _settings.SecondsPerUnit, _settings.MinCountSeconds,
                 _settings.MaxCountSeconds);
         }
 

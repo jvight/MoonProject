@@ -175,10 +175,10 @@ namespace MoonProject.World.Tests
         }
 
         [Test]
-        public void Relays_OutsideTheGate_AreReachedWithoutAbilities_TheTerminusOneIsNot()
+        public void RelaysAndSites_OutsideTheGate_AreReachedWithoutAbilities_TheGatedOnesAreNot()
         {
-            // The same climb-and-drop sweep from the base (M3-06): relay.0..2 need no ability, relay.3 lies past the
-            // Hover-Jump gate.
+            // The same climb-and-drop sweep from the base (M3-06, M3-13): relay.0..2 and the salvage sites on the
+            // basin floor need no ability; relay.3 and the crashed lander lie past the Hover-Jump gate.
             Rect bounds = _canyon.Bounds;
             Rect area = Rect.MinMaxRect(Mathf.Min(bounds.xMin, -ReachExtent), Mathf.Min(bounds.yMin, -ReachExtent),
                 Mathf.Max(bounds.xMax, ReachExtent), Mathf.Max(bounds.yMax, ReachExtent));
@@ -193,11 +193,23 @@ namespace MoonProject.World.Tests
                     gated ? $"{relay.Id} must lie past the gate" : $"{relay.Id} must be reachable without abilities");
             }
 
-            Assert.IsTrue(anchors.TryGet(WorldAnchorIds.RelayPrefix + 3, out WorldAnchor terminus));
-            Assert.IsTrue(_canyon.TryFloor(terminus.Position.x, terminus.Position.z, out bool main, out float arc,
-                out float _));
-            Assert.IsTrue(main && arc > _canyon.FarFaceArc + Canyon.SlabHalfDepth,
-                "relay.3 is inside the gated canyon");
+            foreach (string name in SalvageSiteTests.Sites)
+            {
+                Assert.IsTrue(anchors.TryGet(WorldAnchorIds.SitePrefix + name, out WorldAnchor site));
+                bool gated = name == SalvageSiteTests.Lander;
+                Assert.AreEqual(!gated, reached[grid.Cell(site.Position.x, site.Position.z)],
+                    gated ? $"{site.Id} must lie past the gate" : $"{site.Id} must be reachable without abilities");
+            }
+
+            string lander = WorldAnchorIds.SitePrefix + SalvageSiteTests.Lander;
+            foreach (string id in new[] { WorldAnchorIds.RelayPrefix + 3, lander })
+            {
+                Assert.IsTrue(anchors.TryGet(id, out WorldAnchor gated));
+                Assert.IsTrue(_canyon.TryFloor(gated.Position.x, gated.Position.z, out bool main, out float arc,
+                    out float _));
+                Assert.IsTrue(main && arc > _canyon.FarFaceArc + Canyon.SlabHalfDepth,
+                    $"{id} is inside the gated canyon");
+            }
         }
 
         [Test]

@@ -13,7 +13,7 @@ namespace MoonProject.Gameplay
     /// The station's relay network (docs/features/M3-06). A dark, leaning mast stands on each of the World's
     /// <c>relay.&lt;n&gt;</c> anchors with its one relay part glinting amber nearby (<see cref="RelayPartPlanner"/>);
     /// driving through the part draws it in like a friend's part. With the part held, holding Interact at the mast's
-    /// foot pays the next escalating scrap cost and plays the restoration (<see cref="RelayBeat"/>): 07's beam
+    /// foot spends the next escalating recipe and plays the restoration (<see cref="RelayBeat"/>): 07's beam
     /// stitches while the part glides into the junction box, the mast straightens with a creak and its lamp warms. A
     /// mast that links home (<see cref="StationReach"/>) comes online: a pulse of light runs along the ground toward
     /// the node it links to, and <see cref="RelayRestored"/> and the radio's ticker line follow. One beyond the lit
@@ -55,14 +55,14 @@ namespace MoonProject.Gameplay
         private IRoverRig _rig;
         private IViewCamera _view;
         private ISaveService _save;
-        private ScrapWallet _wallet;
+        private MaterialStock _stock;
         private UpgradeService _upgrades;
         private RadioTower _tower;
         private FriendTuning _friends;
         private StationReach _reach;
         private RadioHop _hop;
         private RepairBeam _beam;
-        private ScrapGlints _glints;
+        private PickupGlints _glints;
         private StationPad[] _pads = Array.Empty<StationPad>();
         private RelayBeat _beat;
         private string[] _counts = Array.Empty<string>();
@@ -86,7 +86,7 @@ namespace MoonProject.Gameplay
 
         public int LitMasts => _reach != null ? _reach.LitMasts : 0;
 
-        public int NextCost => _tuning.CostAfter(PaidCount);
+        public Recipe NextCost => _tuning.CostAfter(PaidCount);
 
         public float RestoreHold => _tuning != null && _tuning.RestoreHold > 0f
             ? Mathf.Clamp01(_holdTime / _tuning.RestoreHold)
@@ -96,7 +96,7 @@ namespace MoonProject.Gameplay
         public bool TryGetRestore(out Vector3 position, out bool affordable)
         {
             position = _candidate != null ? _candidate.Broken.PartSocket.position : Vector3.zero;
-            affordable = _candidate != null && _wallet.CanAfford(NextCost);
+            affordable = _candidate != null && _stock.Has(NextCost);
             return _candidate != null;
         }
 
@@ -126,7 +126,7 @@ namespace MoonProject.Gameplay
 
         /// <param name="placement">Core's rover placement for the hop, or null while no domain registers it.</param>
         internal bool Initialize(GameplayServices services, UpgradeService upgrades, RadioTower tower,
-            ITetherAim tether, FriendTuning friends, ScrapTuning scrap, IRoverPlacement placement)
+            ITetherAim tether, FriendTuning friends, IRoverPlacement placement)
         {
             List<WorldAnchor> anchors = services.Anchors != null ? RelayAnchors(services.Anchors) : null;
             string problem = _tuning == null ? "RelayTuning is not assigned."
@@ -148,13 +148,13 @@ namespace MoonProject.Gameplay
             _rig = services.Rig;
             _view = services.View;
             _save = services.Save;
-            _wallet = services.Wallet;
+            _stock = services.Materials;
             _upgrades = upgrades ?? throw new ArgumentNullException(nameof(upgrades));
             _friends = friends != null ? friends : throw new ArgumentNullException(nameof(friends));
             _tower = tower != null ? tower : throw new ArgumentNullException(nameof(tower));
-            if (tether == null || scrap == null)
+            if (tether == null)
             {
-                throw new ArgumentNullException(tether == null ? nameof(tether) : nameof(scrap));
+                throw new ArgumentNullException(nameof(tether));
             }
 
             _beat = RelayBeat.For(_tuning);
@@ -181,7 +181,8 @@ namespace MoonProject.Gameplay
             _reach = new StationReach(home, _upgrades.SignalRadius, _tower.BeaconPosition, ids, pads, lamps,
                 _tuning.MastReach);
 
-            _glints = new ScrapGlints(transform, services.Visuals.PartGlint, scrap, _masts.Count, Layers.Pickup);
+            _glints = new PickupGlints(transform, services.Visuals.PartGlint, services.Glints, _masts.Count,
+                Layers.Pickup);
             _beam = new RepairBeam("RelayBeam", transform, services.Visuals.TetherBeam, _friends.StitchRate,
                 _friends.StitchSpread);
             _pads = new StationPad[_reach.NodeCount];
@@ -401,7 +402,7 @@ namespace MoonProject.Gameplay
                         mast.PartState = RelayPartState.Flying;
                         mast.FlightStart = rest;
                         mast.FlightTime = 0f;
-                        mast.FlightDuration = ScrapFlight.Duration(Vector3.Distance(rest, socket),
+                        mast.FlightDuration = PickupFlight.Duration(Vector3.Distance(rest, socket),
                             _friends.PartFlightDuration, _friends.PartFlightPerMetre);
                     }
 
@@ -420,7 +421,7 @@ namespace MoonProject.Gameplay
                     }
 
                     part.SetPositionAndRotation(
-                        ScrapFlight.Evaluate(mast.FlightStart, socket, progress, index, 1f, _friends.PartFlightLift,
+                        PickupFlight.Evaluate(mast.FlightStart, socket, progress, index, 1f, _friends.PartFlightLift,
                             _friends.PartSpiralRadius, _friends.PartSpiralTurns),
                         Quaternion.Euler(0f, now * _friends.PartSpin * PartFlightSpin, 0f));
                     part.localScale = mast.PartScale *
@@ -431,7 +432,7 @@ namespace MoonProject.Gameplay
 
         private void StepRestoreInput(float now, float deltaTime)
         {
-            if (_candidate == null || !_input.ExcavateHeld || !_wallet.CanAfford(NextCost))
+            if (_candidate == null || !_input.ExcavateHeld || !_stock.Has(NextCost))
             {
                 _holdTime = 0f;
                 return;
@@ -449,13 +450,13 @@ namespace MoonProject.Gameplay
 
         private void BeginRestore(RelayMast mast, float now)
         {
-            int cost = NextCost;
-            if (!_wallet.TrySpend(cost))
+            Recipe cost = NextCost;
+            if (!_stock.TrySpend(cost))
             {
                 return;
             }
 
-            mast.Paid = cost;
+            mast.Paid = cost.Total;
             mast.IsRestored = true;
             mast.Restoring = true;
             mast.RestoreStart = now;

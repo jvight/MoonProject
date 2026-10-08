@@ -9,8 +9,9 @@ namespace MoonProject.World
     /// Decides where every rock lies. Poisson-disk sites per class are thinned by a density field: seeded clusters
     /// for pebbles; for boulders a sparse scatter on the open floor, ejecta on raised crater rims and a talus band
     /// at the foot of the rim. The base pad, the ramps and bowls, crater interiors, steep faces, Whispering Canyon's
-    /// floors and the driving lanes (base to The Peak, each play feature, the canyon's mouth and exit, and a few extra
-    /// bearings) are kept clear of boulders; inside the canyon pebbles keep off the chasm and the centre line.
+    /// floors and the driving lanes (base to The Peak, each play feature, the canyon's mouth and exit, the relays and
+    /// salvage sites on the floor, and a few extra bearings) are kept clear of boulders; inside the canyon pebbles
+    /// keep off the chasm and the centre line, and no rock at all lies on Kestrel-3's scorched crater and furrow.
     /// Pure and deterministic for (surface, settings, seed).
     /// </summary>
     public sealed class ScatterPlanner
@@ -46,16 +47,17 @@ namespace MoonProject.World
             }
 
             _clearings = new Vector3[anchors.Count];
-            var relaysOnTheFloor = new List<Vector2>();
+            var placesOnTheFloor = new List<Vector2>();
             for (int i = 0; i < anchors.Count; i++)
             {
                 WorldAnchor anchor = anchors.Get(i);
                 var site = new Vector2(anchor.Position.x, anchor.Position.z);
                 _clearings[i] = new Vector3(site.x, site.y, anchor.Radius);
-                if (anchor.Id.StartsWith(WorldAnchorIds.RelayPrefix, StringComparison.Ordinal)
-                    && !surface.Canyon.Bounds.Contains(site))
+                bool lanePlace = anchor.Id.StartsWith(WorldAnchorIds.RelayPrefix, StringComparison.Ordinal)
+                    || anchor.Id.StartsWith(WorldAnchorIds.SitePrefix, StringComparison.Ordinal);
+                if (lanePlace && !surface.Canyon.Bounds.Contains(site))
                 {
-                    relaysOnTheFloor.Add(site);
+                    placesOnTheFloor.Add(site);
                 }
             }
 
@@ -89,7 +91,7 @@ namespace MoonProject.World
 
             ends.Add(surface.Canyon.MainPath.PointAt(0f));
             ends.Add(surface.Canyon.ExitFoot);
-            ends.AddRange(relaysOnTheFloor);
+            ends.AddRange(placesOnTheFloor);
             foreach (float bearing in settings.LaneBearings ?? Array.Empty<float>())
             {
                 ends.Add(MoonSurface.BearingToDirection(bearing) * settings.ExtentRadius);
@@ -112,7 +114,7 @@ namespace MoonProject.World
         /// <summary>Chance (0..1) that a pebble site at (x, z) holds a pebble.</summary>
         public float PebbleChance(float x, float z)
         {
-            if (Mathf.Sqrt(x * x + z * z) < _surface.PadRadius + _settings.PadClearance)
+            if (Mathf.Sqrt(x * x + z * z) < _surface.PadRadius + _settings.PadClearance || Scorched(x, z))
             {
                 return 0f;
             }
@@ -138,7 +140,7 @@ namespace MoonProject.World
         {
             var point = new Vector2(x, z);
             if (point.magnitude < _surface.PadRadius + _settings.PadClearance * 2f
-                || DistanceToLanes(point) < _settings.LaneHalfWidth || NearPlayFeature(point))
+                || DistanceToLanes(point) < _settings.LaneHalfWidth || NearPlayFeature(point) || Scorched(x, z))
             {
                 return 0f;
             }
@@ -155,6 +157,11 @@ namespace MoonProject.World
             float chance = _settings.BoulderDensity * 2f * cluster + _settings.CraterRimBoulders * sample.CraterRim
                 + _settings.TalusBoulders * talus * (0.25f + cluster);
             return Mathf.Clamp01(chance);
+        }
+
+        private bool Scorched(float x, float z)
+        {
+            return _surface.Kestrel.ScorchAt(x, z) > _settings.ScorchClear;
         }
 
         private bool InClearing(Vector2 site, float size)

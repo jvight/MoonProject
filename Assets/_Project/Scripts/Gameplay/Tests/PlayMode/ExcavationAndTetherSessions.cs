@@ -67,7 +67,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsTrue(_fixture.Rover.TryGetGaze(excavation, out _, out int priority));
             Assert.AreEqual(GazePriorities.Focus, priority);
 
-            yield return new WaitForSeconds(2f);
+            float full = _fixture.ExcavationTuning.DurationFor(duck.Definition.Mass);
+            yield return new WaitForSeconds(0.45f * full);
             Assert.Greater(excavation.BeamLevel, 0.8f * _fixture.ExcavationTuning.BeamIntensity);
             Assert.Greater(excavation.Dust.ParticleCount, 5, "dust swirls over the site");
             _fixture.Rover.Aim(site + new Vector3(6f, 3f, -6f), site + Vector3.up);
@@ -97,7 +98,6 @@ namespace MoonProject.Gameplay.PlayModeTests
             Release(_keyboard.eKey);
             Assert.AreEqual(1, _fixture.Events.RelicSurfaced.Count, "the relic surfaces");
             float secondHold = _fixture.Events.RelicSurfaced[0].Time - _fixture.Events.ExcavationStarted[1].Time;
-            float full = _fixture.ExcavationTuning.DurationFor(duck.Definition.Mass);
             Assert.AreEqual(full * (1f - kept), secondHold, 0.25f, "the second hold only finishes the rest");
             CollectionAssert.AreEqual(new[]
             {

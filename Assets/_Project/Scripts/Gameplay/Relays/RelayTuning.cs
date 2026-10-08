@@ -3,7 +3,7 @@ using UnityEngine;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// The relay network (docs/features/M3-06): each mast's reach, the escalating scrap cost, where a mast's relay part
+    /// The relay network (docs/features/M3-06): each mast's reach, the escalating recipes, where a mast's relay part
     /// lies, the restoration beat (stitch, straighten, lamp, link pulse), the hop pads and the radio-hop's fade.
     /// Created by the Gameplay/Tuning builder; runtime code only reads it.
     /// </summary>
@@ -14,10 +14,13 @@ namespace MoonProject.Gameplay
                  "(relay.2 to relay.3 is 209.4 m).")]
         [Range(50f, 400f)] [SerializeField] private float _mastReach = 110f;
 
-        [Header("Scrap cost")]
-        [Tooltip("Scrap each restoration costs, in the order the masts are restored (the long-term sink; VISION " +
-                 "ruling 5: the basin holds at least twice every sink, ScrapTuning's minimum included).")]
-        [SerializeField] private int[] _costs = { 60, 90, 120, 150 };
+        [Header("Recipes")]
+        [Tooltip("Materials each restoration takes, in the order the masts are restored (escalating: the long-term " +
+                 "sink; VISION ruling 5: the sites yield at least twice every recipe).")]
+        [SerializeField] private Recipe[] _costs =
+        {
+            new Recipe(2, 1, 0), new Recipe(3, 1, 0), new Recipe(3, 2, 0), new Recipe(4, 2, 0),
+        };
 
         [Header("Relay part")]
         [Tooltip("The part lies this far (m) from its mast's pad centre, nearest the middle of the range first " +
@@ -182,19 +185,19 @@ namespace MoonProject.Gameplay
         public PadLook PadLook => new PadLook(_padRadius, _padRingWidth, _padSegments, 0f, _padInviting,
             _padOccupied, 0f, _padBreathPeriod, _padBreathDepth, _padEase);
 
-        /// <summary>Scrap for the restoration that follows <paramref name="restored"/> earlier ones.</summary>
-        public int CostAfter(int restored)
+        /// <summary>The recipe of the restoration that follows <paramref name="restored"/> earlier ones.</summary>
+        public Recipe CostAfter(int restored)
         {
             return _costs[Mathf.Clamp(restored, 0, _costs.Length - 1)];
         }
 
-        /// <summary>Every restoration's cost together (the network's whole scrap sink).</summary>
-        public int TotalCost(int masts)
+        /// <summary>Every restoration's recipe together (the network's whole sink).</summary>
+        public Recipe TotalCost(int masts)
         {
-            int total = 0;
+            var total = new Recipe(0, 0, 0);
             for (int i = 0; i < masts; i++)
             {
-                total += CostAfter(i);
+                total = total.Plus(CostAfter(i));
             }
 
             return total;
@@ -210,9 +213,9 @@ namespace MoonProject.Gameplay
 
             for (int i = 0; i < _costs.Length; i++)
             {
-                if (_costs[i] <= 0 || (i > 0 && _costs[i] < _costs[i - 1]))
+                if (_costs[i].IsFree || (i > 0 && _costs[i].Total < _costs[i - 1].Total))
                 {
-                    return "RelayTuning's costs must be positive and never fall.";
+                    return "RelayTuning's recipes must cost something and never fall.";
                 }
             }
 

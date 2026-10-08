@@ -6,7 +6,7 @@ namespace MoonProject.Gameplay
 {
     /// <summary>
     /// One relay mast's live state (<see cref="RelayField"/>): its broken and restored rigs on its anchor, its relay
-    /// part, the scrap paid, its restoration's progress, whether its lamp shows it linked home, and its link pulse.
+    /// part, what was paid, its restoration's progress, whether its lamp shows it linked home, and its link pulse.
     /// </summary>
     internal sealed class RelayMast
     {
@@ -51,7 +51,7 @@ namespace MoonProject.Gameplay
 
         public float FlightDuration { get; set; }
 
-        /// <summary>Scrap paid for its restoration (0 until one began).</summary>
+        /// <summary>Material units paid for its restoration (0 until one began).</summary>
         public int Paid { get; set; }
 
         /// <summary>A restoration began (it counts as restored from then on, in the save too).</summary>

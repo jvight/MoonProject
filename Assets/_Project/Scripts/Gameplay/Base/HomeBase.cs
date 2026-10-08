@@ -12,8 +12,8 @@ namespace MoonProject.Gameplay
     /// (a little brighter far away) and a soft amber <see cref="HomeHalo"/> over the lander grows in with distance, so
     /// from far away home is a small amber cluster. It keeps the museum: a relic let go near the shelf (or one that
     /// rolls there and rests) floats onto the nearest free slot and settles with a soft overshoot:
-    /// <see cref="RelicDeposited"/>, a scrap gift, a save. While a towed relic is in reach of the shelf, a warm glow
-    /// marks the slot it will take. Displayed relics turn slowly.
+    /// <see cref="RelicDeposited"/> and a save. While a towed relic is in reach of the shelf, a warm glow marks the
+    /// slot it will take. Displayed relics turn slowly.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class HomeBase : MonoBehaviour
@@ -48,7 +48,6 @@ namespace MoonProject.Gameplay
         private IRoverState _rover;
         private ITerrainQuery _terrain;
         private ISaveService _save;
-        private ScrapWallet _wallet;
         private RelicField _relics;
         private TetherSystem _tether;
         private UpgradeService _upgrades;
@@ -132,7 +131,6 @@ namespace MoonProject.Gameplay
             _rover = services.Rover;
             _terrain = services.Terrain;
             _save = services.Save;
-            _wallet = services.Wallet;
             _relics = relics ?? throw new ArgumentNullException(nameof(relics));
             _tether = tether ?? throw new ArgumentNullException(nameof(tether));
             _upgrades = upgrades ?? throw new ArgumentNullException(nameof(upgrades));
@@ -318,11 +316,6 @@ namespace MoonProject.Gameplay
             _displayAngle[index] = 0f;
             DisplayedCount++;
             _events.Publish(new RelicDeposited(relic.Definition.Id, end, DisplayedCount));
-            if (_tuning.DepositGift > 0)
-            {
-                _wallet.Add(_tuning.DepositGift);
-            }
-
             _save.SaveNow();
         }
 
