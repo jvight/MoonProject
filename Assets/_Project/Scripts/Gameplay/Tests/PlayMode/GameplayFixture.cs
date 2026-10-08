@@ -54,8 +54,11 @@ namespace MoonProject.Gameplay.PlayModeTests
         private readonly List<Object> _created = new List<Object>();
         private readonly InputActionAsset _controls;
 
-        private GameplayFixture(InputActionAsset controls, string saveSlot)
+        private readonly bool _cargoSeat;
+
+        private GameplayFixture(InputActionAsset controls, string saveSlot, bool cargoSeat)
         {
+            _cargoSeat = cargoSeat;
             _controls = controls;
             SaveSlot = saveSlot;
         }
@@ -126,9 +129,10 @@ namespace MoonProject.Gameplay.PlayModeTests
         public RelayTuning RelayTuning { get; private set; }
 
         /// <summary>Builds and boots everything; 07 starts at the base facing +Z.</summary>
-        public static GameplayFixture Boot(InputActionAsset controls, string saveSlot = null)
+        /// <param name="cargoSeat">False boots a rover that registers no cargo seat (the boot check's test).</param>
+        public static GameplayFixture Boot(InputActionAsset controls, string saveSlot = null, bool cargoSeat = true)
         {
-            var fixture = new GameplayFixture(controls, saveSlot ?? BootstrapHarness.NewTestSlot());
+            var fixture = new GameplayFixture(controls, saveSlot ?? BootstrapHarness.NewTestSlot(), cargoSeat);
             fixture.Build();
             return fixture;
         }
@@ -216,7 +220,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         private void Build()
         {
             World = Track(FlatWorldSystem.Create());
-            Rover = Track(FakeRoverSystem.Create(Vector3.zero, 0f));
+            Rover = Track(FakeRoverSystem.Create(Vector3.zero, 0f, _cargoSeat));
 
             GlintTuning = Asset<GlintTuning>();
             SonarTuning = Asset<SonarTuning>();
@@ -275,6 +279,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             var excavation = Child<ExcavationSystem>(root, "Excavation");
             var tether = Child<TetherSystem>(root, "Tether");
             var home = Child<HomeBase>(root, "Home");
+            var cradle = Child<CargoCradle>(root, "CargoCradle");
             var tower = Child<RadioTower>(root, "RadioTower");
             var workshop = Child<Workshop>(root, "Workshop");
             var friends = Child<FriendField>(root, "Friends");
@@ -297,8 +302,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             Gameplay.Wire(visuals, GlintTuning, new[]
                 {
                     RadioTowerUpgrade, HoverJumpUpgrade, CargoCradleUpgrade, WarmHeadlampUpgrade, BoostCoilsUpgrade,
-                }, salvage, relics, sonar, excavation, tether, home, tower, workshop, friends, cassettes, logs, signals,
-                shelf, relays);
+                }, salvage, relics, sonar, excavation, tether, home, cradle, tower, workshop, friends, cassettes, logs,
+                signals, shelf, relays);
             root.SetActive(true);
 
             Bootstrap = BootstrapHarness.Create(_controls, SaveSlot, World, Rover, Gameplay);

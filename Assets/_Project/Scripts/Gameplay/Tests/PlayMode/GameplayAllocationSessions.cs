@@ -60,19 +60,37 @@ namespace MoonProject.Gameplay.PlayModeTests
             {
                 masts = new[] { new RelaySaveData { id = "relay.0", part = true, paid = 60, restored = true } },
             });
+            _fixture.GiveMaterials(4, 0, 0);
+            Assert.AreEqual(PurchaseResult.Purchased, gameplay.Upgrades.Purchase("rover.cargo_cradle"));
+
+            // Stow and latch out of the museum shelf's reach, where a press would set the rack's relic down instead.
+            _fixture.Rover.Place(new Vector3(0f, 0f, -8f), 0f);
+            Relic gnome = gameplay.Relics.Find("garden_gnome");
+            gnome.BeginLift();
+            gnome.SetLiftPose(new Vector3(0f, 0.6f, 0f), Quaternion.identity, 1f);
+            gnome.Surface(Vector3.zero, Vector3.zero);
+            yield return new WaitForSeconds(0.8f);
+            Vector3 camera = _fixture.Rover.Camera.transform.position;
+            _fixture.Rover.Aim(camera, gnome.transform.position);
+            yield return null;
+            yield return null;
+            Press(_mouse.rightButton, queueEventOnly: true);
+            yield return Waits.Until(() => gameplay.Cradle.IsSettled, 5f);
+            Release(_mouse.rightButton);
+            Assert.IsTrue(gameplay.Cradle.IsSettled, "a relic rides in the cradle");
+
             Relic duck = gameplay.Relics.Find("rubber_duck");
             duck.BeginLift();
-            duck.SetLiftPose(new Vector3(0f, 0.6f, 8f), Quaternion.identity, 1f);
+            duck.SetLiftPose(new Vector3(0f, 0.6f, 0f), Quaternion.identity, 1f);
             duck.Surface(Vector3.zero, Vector3.zero);
             yield return new WaitForSeconds(0.8f);
 
-            Vector3 camera = _fixture.Rover.Camera.transform.position;
             _fixture.Rover.Aim(camera, duck.transform.position);
             yield return null;
             yield return null;
             Press(_mouse.rightButton, queueEventOnly: true);
             yield return Waits.Until(() => gameplay.Tether.State == TetherAimState.Towing, LatchTimeout);
-            Assert.AreEqual(TetherAimState.Towing, gameplay.Tether.State);
+            Assert.AreEqual(TetherAimState.Towing, gameplay.Tether.State, "the second relic goes on the tether");
             Press(_keyboard.spaceKey, queueEventOnly: true);
             yield return null;
             Release(_keyboard.spaceKey);
@@ -93,6 +111,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             updates.Add(Method(gameplay.Tether, "FixedUpdate"));
+            updates.Add(Method(gameplay.Cradle, "LateUpdate"));
             foreach (Relic relic in gameplay.Relics.Relics)
             {
                 updates.Add(Method(relic, "Update"));
@@ -106,7 +125,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             Release(_mouse.rightButton);
             Assert.AreEqual(0, silent, "a hint (reel) is always available while towing");
             Assert.AreEqual(0L, allocated,
-                "bytes allocated by 300 frames of salvage, relics, sonar, excavation, tether, home, tower, friends, " +
+                "bytes allocated by 300 frames of salvage, relics, sonar, excavation, tether, the cradle, home, " +
+                "tower, friends, " +
                 "cassettes, caches, Bell's signals, her rack, the relays, the reach and hints");
         }
 

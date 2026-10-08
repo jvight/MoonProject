@@ -87,6 +87,7 @@ namespace MoonProject.Gameplay.Editor
             var excavation = Part<ExcavationSystem>(context, host, "Excavation");
             var tether = Part<TetherSystem>(context, host, "Tether");
             var home = Part<HomeBase>(context, host, "Home");
+            var cradle = Part<CargoCradle>(context, host, "CargoCradle");
             var tower = Part<RadioTower>(context, host, "RadioTower");
             var workshop = Part<Workshop>(context, host, "Workshop");
             var friends = Part<FriendField>(context, host, "Friends");
@@ -149,7 +150,7 @@ namespace MoonProject.Gameplay.Editor
             relays.Wire(relayTuning, relayMast, relayMastBroken, relayPart);
             gameplay.Wire(visuals, glintTuning,
                 new[] { radioTower, hoverJump, cargoCradle, warmHeadlamp, boostCoils }, salvage, relics, sonar,
-                excavation, tether, home, tower, workshop, friends, cassettes, logs, signals, tapeRack, relays);
+                excavation, tether, home, cradle, tower, workshop, friends, cassettes, logs, signals, tapeRack, relays);
             context.AddSystem(gameplay);
         }
 

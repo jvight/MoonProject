@@ -16,7 +16,7 @@ namespace MoonProject.Gameplay
         /// <summary>Hold to latch the tether onto the highlighted relic or drag piece.</summary>
         Tether = 3,
 
-        /// <summary>Let go here: the towed relic will float onto the museum shelf.</summary>
+        /// <summary>Let go here (or press, for a relic in the cradle): it will float onto the museum shelf.</summary>
         Deposit = 4,
 
         /// <summary>
@@ -46,5 +46,10 @@ namespace MoonProject.Gameplay
 
         /// <summary>A salvage piece is picked (within reach, in the aim cone): hold Excavate to cut it loose.</summary>
         Salvage = 11,
+
+        /// <summary>
+        /// The Cargo Cradle is on 07 and empty and a loose relic is highlighted: press Tether to lift it into the rack.
+        /// </summary>
+        Stow = 12,
     }
 }
