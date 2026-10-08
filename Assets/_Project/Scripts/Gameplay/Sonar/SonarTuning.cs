@@ -111,6 +111,17 @@ namespace MoonProject.Gameplay
         [Tooltip("...for this many seconds.")]
         [Range(0.2f, 10f)] [SerializeField] private float _glanceDuration = 1.6f;
 
+        [Header("Warm Headlamp (M3-11)")]
+        [Tooltip("With the Warm Headlamp fitted, a site's or relic's pillar within this half-angle (degrees) of " +
+                 "07's heading counts as faced...")]
+        [Range(1f, 90f)] [SerializeField] private float _headlampCone = 22f;
+
+        [Tooltip("...and ages this much slower while faced (0 = as usual, 1 = not at all): it stands a little longer.")]
+        [Range(0f, 1f)] [SerializeField] private float _headlampLinger = 0.6f;
+
+        [Tooltip("At most this many extra seconds per answer, so a pillar still bows out in the end.")]
+        [Range(0f, 120f)] [SerializeField] private float _headlampMaxLinger = 25f;
+
         public float Cooldown => _cooldown;
         public float InputBuffer => _inputBuffer;
         public float Range => _range;
@@ -143,6 +154,9 @@ namespace MoonProject.Gameplay
         public float AnswerGaze => _answerGaze;
         public float GlanceInterval => _glanceInterval;
         public float GlanceDuration => _glanceDuration;
+        public float HeadlampCone => _headlampCone;
+        public float HeadlampLinger => _headlampLinger;
+        public float HeadlampMaxLinger => _headlampMaxLinger;
 
         /// <summary>
         /// Answer brightness for a relic <paramref name="distance"/> metres away: closer is brighter.

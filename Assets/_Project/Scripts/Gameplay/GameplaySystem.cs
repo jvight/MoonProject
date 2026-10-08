@@ -145,7 +145,7 @@ namespace MoonProject.Gameplay
                 !_workshop.Initialize(services, Upgrades) ||
                 !_friends.Initialize(services, Radio, _cassettes.Catalog, _relics, _salvage, _home) ||
                 !_cassettes.Initialize(services, Radio, KeepClearOfCassettes()) || !_logs.Initialize(services) ||
-                !_sonar.Initialize(services, _relics, _friends, _salvage) ||
+                !_sonar.Initialize(services, _relics, _friends, _salvage, abilities) ||
                 !_signals.Initialize(services, _friends, _cassettes, _logs, _relics, abilities, _sonar.Tuning) ||
                 !_shelf.Initialize(Radio, _cassettes.Catalog, _friends.BellTuning) ||
                 !_relays.Initialize(services, Upgrades, _tower, _tether, _friends.Tuning, Placement(context)))
