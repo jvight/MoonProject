@@ -87,7 +87,7 @@ namespace MoonProject.Art.Editor
         // the ground, dusted only from above.
         private static readonly WeatherProfile LanderWeather = new WeatherProfile(seed: 11, lift: 0.006f,
             panelWidth: 0.7f, panelHeight: 0.62f, paintWear: 1f, mismatched: true, runsPerMetre: 3f, rustHeight: 2.4f,
-            metalRust: 0.8f, paintRust: 0.45f, tide: 1.5f, groundDust: 0.95f, topDust: 0.9f);
+            metalRust: 0.8f, paintRust: 0.45f, tide: 2.1f, groundDust: 0.95f, topDust: 0.9f);
 
         private static readonly WeatherProfile LiftPlatformWeather = new WeatherProfile(seed: 71, lift: 0.006f,
             panelWidth: 0.6f, panelHeight: 0.6f, paintWear: 1f, mismatched: true, runsPerMetre: 2.2f, rustHeight: 0f,
@@ -308,7 +308,7 @@ namespace MoonProject.Art.Editor
         {
             return new WeatherProfile(seed: 60 + level, lift: 0.006f, panelWidth: 0.5f, panelHeight: 0.5f,
                 paintWear: 1f, mismatched: true, runsPerMetre: 2.6f, rustHeight: 1.5f, metalRust: 0.75f,
-                paintRust: 0.3f, tide: 1.2f, groundDust: 0.72f, topDust: 0.7f);
+                paintRust: 0.3f, tide: 1.6f, groundDust: 0.85f, topDust: 0.7f);
         }
     }
 }
