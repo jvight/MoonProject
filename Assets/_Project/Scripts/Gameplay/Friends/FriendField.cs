@@ -85,7 +85,7 @@ namespace MoonProject.Gameplay
         /// <summary>07 is parked in front of Bell's dial at home and could turn it now.</summary>
         public bool CanTune { get; private set; }
 
-        /// <summary>True while 07's beam taps Bell's dial, before she turns it.</summary>
+        /// <summary>True while 07's beam taps Bell's tuning knob, before she turns it.</summary>
         public bool TappingDial => _tapping;
 
         /// <summary>Current brightness of the dial-tapping beam (tests and debugging views).</summary>
@@ -775,8 +775,9 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// Parked in front of Bell at home with her dial: a press of Interact sends 07's beam to tap her dial, and a
-        /// beat later she turns it one detent (07 has no hands, VISION ruling 14).
+        /// Parked in front of Bell at home with her dial: a press of Interact sends 07's beam to tap her tuning knob,
+        /// and a beat later she turns it one detent, the knob turning with the needle (07 has no hands, VISION ruling
+        /// 14).
         /// </summary>
         private void StepTune(float now, float deltaTime)
         {
@@ -802,7 +803,7 @@ namespace MoonProject.Gameplay
             }
 
             _dialBeam.Step(_tapping, _cabinet != null, _rig.TetherOrigin.position,
-                _cabinet != null ? _cabinet.Dial : Vector3.zero, now, deltaTime);
+                _cabinet != null ? _cabinet.Knob : Vector3.zero, now, deltaTime);
         }
 
         private void OnRelicDeposited(RelicDeposited deposited)

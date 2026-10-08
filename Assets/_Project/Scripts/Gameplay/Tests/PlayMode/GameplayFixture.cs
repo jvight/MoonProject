@@ -400,19 +400,21 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// A stand-in Rover Bay with the art contract's nodes (Turntable, three arms Yaw/Upper/Lower/Tip down to their
-        /// SparkSockets in the rest pose with the contract's link lengths, the floor arm FloorLift/FloorTip,
-        /// HopperMouth, Lamp_0/1, BaySign), wired as the scene contributor wires the real one.
+        /// A stand-in Rover Bay with the art contract's nodes and positions (docs/ARCHITECTURE.md: Turntable, three
+        /// arms Yaw/Upper/Lower/Tip down to their SparkSockets folded along the rail in the rest pose with the
+        /// contract's link lengths, the floor arm FloorLift/FloorTip, HopperMouth in the back-right corner, Lamp_0/1,
+        /// BaySign), wired as the scene contributor wires the real one.
         /// </summary>
         private void BuildBay(Transform anchor, Workshop workshop)
         {
             Transform bay = Node("RoverBay", anchor, Vector3.zero);
-            Transform turntable = Node("Turntable", bay, new Vector3(0f, 0.12f, -0.35f));
+            Transform turntable = Node("Turntable", bay, new Vector3(0f, 0.15f, -0.35f));
             turntable.localRotation = Quaternion.Euler(0f, 180f, 0f);
             Block(turntable, new Vector3(0f, -0.05f, 0f), new Vector3(3.5f, 0.1f, 3.5f));
-            Vector3[] shoulders = { new Vector3(-1.3f, 3.18f, -0.35f), new Vector3(0f, 3.18f, -1.65f),
-                new Vector3(1.3f, 3.18f, -0.35f) };
+            Vector3[] shoulders = { new Vector3(-1.3f, 3.08f, -0.35f), new Vector3(0f, 3.08f, -1.65f),
+                new Vector3(1.3f, 3.08f, -0.35f) };
             float[] yaws = { 90f, 0f, -90f };
+            float[] restYaws = { -90f, -90f, 90f };
             var armYaws = new Transform[shoulders.Length];
             var uppers = new Transform[shoulders.Length];
             var lowers = new Transform[shoulders.Length];
@@ -423,22 +425,23 @@ namespace MoonProject.Gameplay.PlayModeTests
                 Transform arm = Node("Arm_" + i, bay, shoulders[i]);
                 arm.localRotation = Quaternion.Euler(0f, yaws[i], 0f);
                 armYaws[i] = Node("Yaw", arm, Vector3.zero);
+                armYaws[i].localRotation = Quaternion.Euler(0f, restYaws[i], 0f);
                 uppers[i] = Node("Upper", armYaws[i], Vector3.zero);
-                uppers[i].localRotation = Quaternion.Euler(80f, 0f, 0f);
-                lowers[i] = Node("Lower", uppers[i], new Vector3(0f, -1.25f, 0f));
-                lowers[i].localRotation = Quaternion.Euler(-160f, 0f, 0f);
-                tips[i] = Node("Tip", lowers[i], new Vector3(0f, -1.15f, 0f));
-                tips[i].localRotation = Quaternion.Euler(80f, 0f, 0f);
+                uppers[i].localRotation = Quaternion.Euler(-90f, 0f, 0f);
+                lowers[i] = Node("Lower", uppers[i], new Vector3(0f, -1.3f, 0f));
+                lowers[i].localRotation = Quaternion.Euler(170f, 0f, 0f);
+                tips[i] = Node("Tip", lowers[i], new Vector3(0f, -1.2f, 0f));
+                tips[i].localRotation = Quaternion.Euler(-80f, 0f, 0f);
                 sockets[i] = Node("SparkSocket", tips[i], new Vector3(0f, -0.26f, 0.06f));
                 sockets[i].localRotation = Quaternion.Euler(90f, 180f, 0f);
             }
 
-            Transform floorArm = Node("FloorArm", bay, new Vector3(0f, -0.4f, -0.35f));
-            Transform floorLift = Node("FloorLift", floorArm, Vector3.zero);
-            Transform floorTip = Node("FloorTip", floorLift, new Vector3(0f, 0.2f, 0f));
+            Transform floorArm = Node("FloorArm", bay, new Vector3(0f, 0f, -0.35f));
+            Transform floorLift = Node("FloorLift", floorArm, new Vector3(0f, 0.105f, 0f));
+            Transform floorTip = Node("FloorTip", floorLift, new Vector3(0f, 0.03f, 0f));
 
-            Transform mouth = Node("HopperMouth", bay, new Vector3(2.85f, 1.2f, 1.5f));
-            mouth.localRotation = Quaternion.Euler(-40f, -123f, 0f);
+            Transform mouth = Node("HopperMouth", bay, new Vector3(1.55f, 1.15f, -1.85f));
+            mouth.localRotation = Quaternion.Euler(-40f, -45.9f, 0f);
             Renderer[] lamps =
             {
                 Named(Block(bay, new Vector3(-1.55f, 3.08f, 1.65f), Vector3.one * 0.25f), "Lamp_0")
@@ -560,9 +563,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// A stand-in Bell with her rig contract's nodes under their parents (Body with Lid, DialFace/Needle/DialLamp,
-        /// Speaker, TapeSlot, Antenna and PartLamp_0..3; Leg_* at the hips with their Shin_*); the broken one tipped
-        /// back with her lid open.
+        /// A stand-in Bell with her rig contract's nodes under their parents (Body with Lid,
+        /// DialFace/Needle/DialLamp/Knob, Speaker, TapeSlot, Antenna and PartLamp_0..3; Leg_* at the hips with their
+        /// Shin_*); the broken one tipped back with her lid open.
         /// </summary>
         private GameObject BellModel(string name, bool broken)
         {
@@ -576,6 +579,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Transform dial = Node("DialFace", body, new Vector3(0f, 0.43f, 0.262f));
             Named(Block(dial, new Vector3(0.05f, 0.05f, 0.01f), new Vector3(0.12f, 0.01f, 0.01f)), BellRig.NeedleNode);
             Named(Block(dial, Vector3.zero, new Vector3(0.3f, 0.15f, 0.01f)), BellRig.DialLampNode);
+            Named(Block(dial, new Vector3(-0.31f, 0.07f, -0.006f), new Vector3(0.1f, 0.1f, 0.06f)), BellRig.KnobNode);
             Named(Block(body, new Vector3(0.2f, 0.21f, 0.28f), new Vector3(0.2f, 0.2f, 0.02f)), BellRig.SpeakerNode);
             Node(BellRig.TapeSlotNode, body, new Vector3(-0.16f, 0.21f, 0.274f));
             Named(Block(body, new Vector3(-0.46f, 0.8f, -0.15f), new Vector3(0.02f, 0.4f, 0.02f)), "Antenna");

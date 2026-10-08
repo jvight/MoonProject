@@ -175,6 +175,7 @@ namespace MoonProject.Gameplay
             else
             {
                 pose.Needle = _needle;
+                pose.Knob = _needle * _bell.KnobTurn;
                 pose.DialLamp = _dial;
             }
 
@@ -305,7 +306,14 @@ namespace MoonProject.Gameplay
                 pose.Bob += _bell.GreetHop * Ease.Hump(Mathf.Repeat(greet * _bell.GreetBounces, 1f));
             }
 
-            float needle = _needle;
+            float turned = _needle;
+            float click = (now - _clickStart) / _bell.ClickDuration;
+            if (click < 1f)
+            {
+                turned += _bell.ClickKick * Mathf.Sin(Mathf.PI * click) * (1f - click);
+            }
+
+            float needle = turned;
             float dial = _dial;
             float crackle = (now - _crackleStart) / _bell.CrackleDuration;
             if (crackle < 1f)
@@ -315,13 +323,8 @@ namespace MoonProject.Gameplay
                 dial += _bell.CrackleFlash * Ease.Hump(crackle);
             }
 
-            float click = (now - _clickStart) / _bell.ClickDuration;
-            if (click < 1f)
-            {
-                needle += _bell.ClickKick * Mathf.Sin(Mathf.PI * click) * (1f - click);
-            }
-
             pose.Needle = needle;
+            pose.Knob = turned * _bell.KnobTurn;
             pose.DialLamp = dial;
             Watch(senses, ref pose);
         }

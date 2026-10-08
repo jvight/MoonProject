@@ -11,12 +11,16 @@ namespace MoonProject.Rover.PlayModeTests
     /// <summary>
     /// Before the rover's real-game session enters play mode, copies the built Main.unity to a scratch scene whose
     /// bootstrap saves to its own slot, so the session starts from a fresh game and never touches the player's
-    /// progress; removes the copy and the slot's files afterwards.
+    /// progress, nor a session running on another worktree at the same time; removes the copy and the slot's files
+    /// afterwards.
     /// </summary>
     public sealed class RoverSessionScene : IPrebuildSetup, IPostBuildCleanup
     {
         public const string ScenePath = Folder + "/RoverSessionMain.unity";
-        public const string SaveSlot = "rover-session";
+        /// <summary>
+        /// "rover-session-&lt;process id&gt;", this editor's own: see <see cref="BootstrapHarness.ProcessSlot"/>.
+        /// </summary>
+        public static string SaveSlot => BootstrapHarness.ProcessSlot("rover-session");
 
         private const string MainScene = "Assets/_Project/Scenes/Main.unity";
         private const string Parent = "Assets/_Project/Generated/Rover";
