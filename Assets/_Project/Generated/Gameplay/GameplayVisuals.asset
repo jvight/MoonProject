@@ -27,3 +27,4 @@ MonoBehaviour:
   _friendPillar: {fileID: 2100000, guid: 4a6726da4e6d9a34eb677a62fa140b19, type: 2}
   _spark: {fileID: 2100000, guid: 94b2acb381f20094e847454e82d34847, type: 2}
   _homeHalo: {fileID: 2100000, guid: 4b4c8a73f5f09384b9c46bf0b8f06413, type: 2}
+  _linkPulse: {fileID: 2100000, guid: 4a167f2be8259a14bbe1c2ad51b5c191, type: 2}

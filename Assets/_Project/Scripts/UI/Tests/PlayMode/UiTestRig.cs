@@ -43,6 +43,11 @@ namespace MoonProject.UI.PlayModeTests
         public const string FirstTape = "after_dark_1";
         public const string SecondTape = "dust_and_honey";
 
+        /// <summary>Name keys of the radio-hop's nodes: home and the first two masts.</summary>
+        public const string HomeNode = "hop.node.home";
+        public const string FirstRelayNode = "hop.node.relay.0";
+        public const string SecondRelayNode = "hop.node.relay.1";
+
         private readonly GameObject _camera;
         private readonly GameObject _services;
         private readonly GameObject _ui;

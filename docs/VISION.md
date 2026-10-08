@@ -112,6 +112,13 @@ Each ruling removes friction the original pitch would have caused. Boxes impleme
     landing more gently than the basin's play ramps. It is visible from the basin side as a promise, and it is never
     climbable as a way in. Trying the gate without the ability may fail, but it never traps: any trough or pit 07
     can fall into has a ≤ 20° side to drive out.
+11. **Every upgrade shows.** Progress must be visible on 07 or at home, readable from the default camera and at 30 m.
+    07's look moves from tired to cared-for: its signs of solitude heal and sturdy expedition kit appears. Rugged
+    and capable, never menacing; the gentle one-eyed face never changes. See `docs/DESIGN.md` "Visible progression".
+12. **Built for a rover, abandoned for decades.** Everything 07 uses is made for wheels: ramps, cable lifts,
+    rover-height hatches, docking and charging pads, never stairs or ladders on 07's path. Human-scale things (the
+    crew's ladder, a chair, a mug) stay only as remnants that tell of their absence. Everything starts looking left
+    alone for a very long time, and restoring it visibly cleans and repairs it (ruling 11).
 
 ## World concept
 The playable space is the floor of a **vast ancient crater basin** (~600 m across for the vertical slice).
@@ -144,6 +151,12 @@ Driving back towards its glow should feel like coming home on a winter night.
 | Alert-soft | `#FF5A6E` | the peak's blinking light only |
 
 Rules: max 4 swatches per object (the terrain is the exception: up to 6, the dust family plus Charcoal, which is kept for depth such as the chasm trough), emissive only for things that are *alive* (lamps, scrap, tether, sonar, Earth).
+Weathering ("left alone for decades"), done the low-poly way and never as texture grime:
+- faded paint swatches and rust patches as flat facets, with rust streaks running down from bolts and seams;
+- dust drifts piled against the bases of things, and dust caps on top faces;
+- dents (vertex offsets), slack or snapped cables, tilted signs, missing panels, half-buried debris;
+- big, readable shapes: weathering must read at 30 m and never turn into noise.
+Restored things lose their dust caps, get a patch of fresh paint and light up; the contrast is the reward.
 
 ## Audio direction
 - **The radio** plays lofi. Near base the signal is clear; far away it drifts into warm static and low-pass haze.

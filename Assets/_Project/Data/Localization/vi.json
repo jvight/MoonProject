@@ -425,6 +425,46 @@
         {
             "key": "track.06_signal_through_craters.title",
             "text": "Tín hiệu qua miệng hố"
+        },
+        {
+            "key": "hint.restore",
+            "text": "Khôi phục"
+        },
+        {
+            "key": "hint.hop",
+            "text": "Nhảy sóng"
+        },
+        {
+            "key": "ticker.relay.online",
+            "text": "Trạm tiếp sóng {0} đã bật. Lumen Station nghe xa thêm được một chút."
+        },
+        {
+            "key": "ticker.relay.waiting",
+            "text": "Trạm tiếp sóng đã sửa xong. Nó đang lắng nghe một trạm sáng bên cạnh."
+        },
+        {
+            "key": "hop.node.home",
+            "text": "Lumen Station"
+        },
+        {
+            "key": "hop.node.relay.0",
+            "text": "Trạm trên gò"
+        },
+        {
+            "key": "hop.node.relay.1",
+            "text": "Trạm vai vành hố"
+        },
+        {
+            "key": "hop.node.relay.2",
+            "text": "Trạm miệng hẻm"
+        },
+        {
+            "key": "hop.node.relay.3",
+            "text": "Trạm cuối hẻm"
+        },
+        {
+            "key": "ui.pause.relays",
+            "text": "Trạm tiếp sóng {0}/{1}"
         }
     ]
 }

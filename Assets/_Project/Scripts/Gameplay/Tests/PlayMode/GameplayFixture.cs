@@ -14,10 +14,11 @@ using UnityEditor;
 namespace MoonProject.Gameplay.PlayModeTests
 {
     /// <summary>
-    /// A complete gameplay stack built in test code: a flat world with canyon anchors, a fake 07, test content (relic,
-    /// scrap, Tilly, Bell, cassette, log cache and tape rack stand-ins in place of the Art prefabs, with the contracts'
-    /// node names; default tuning; SoftGlow materials) and the real gameplay components, wired the way the scene
-    /// contributor wires them and booted through GameBootstrap with a private save slot.
+    /// A complete gameplay stack built in test code: a flat world with canyon and relay anchors, a fake 07, test
+    /// content (relic, scrap, Tilly, Bell, cassette, log cache, tape rack, relay mast and relay part stand-ins in place
+    /// of the Art prefabs, with the contracts' node names; default tuning; SoftGlow materials) and the real gameplay
+    /// components, wired the way the scene contributor wires them and booted through GameBootstrap with a private save
+    /// slot.
     /// </summary>
     public sealed class GameplayFixture : IDisposable
     {
@@ -103,6 +104,8 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         /// <summary>The tape rack's Slot_0..7 stand-ins.</summary>
         public Transform[] ShelfSlots { get; private set; }
+
+        public RelayTuning RelayTuning { get; private set; }
 
         /// <summary>Builds and boots everything; 07 starts at the base facing +Z.</summary>
         public static GameplayFixture Boot(InputActionAsset controls, string saveSlot = null)
@@ -213,7 +216,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 Track(GlintMaterials.Create(LoadShader(GlintShaderPath))),
                 Track(GlintMaterials.CreatePart(LoadShader(GlintShaderPath))),
                 GlowMaterial(shader, GlowRole.FriendPillar), GlowMaterial(shader, GlowRole.Spark),
-                GlowMaterial(shader, GlowRole.HomeHalo));
+                GlowMaterial(shader, GlowRole.HomeHalo), GlowMaterial(shader, GlowRole.LinkPulse));
 
             var root = new GameObject("[Gameplay]");
             root.SetActive(false);
@@ -230,17 +233,21 @@ namespace MoonProject.Gameplay.PlayModeTests
             var cassettes = Child<CassetteField>(root, "Cassettes");
             var logs = Child<LogCacheField>(root, "LogCaches");
             var signals = Child<SignalField>(root, "BellSignals");
+            var relays = Child<RelayField>(root, "Relays");
             CassetteShelf shelf = BuildBase(root.transform, home, tower, workshop);
             BuildFriends(friends);
             BuildCassettes(cassettes);
             BuildLogCaches(logs);
+            RelayTuning = Asset<RelayTuning>();
+            relays.Wire(RelayTuning, RelayModel("RelayMast", false), RelayModel("RelayMast_Broken", true),
+                Template("Part_RelayModule", Vector3.one * 0.3f));
             relics.Wire(relicCatalog, placement, RelicTuning);
             scrap.Wire(ScrapTuning, scrapCatalog);
             sonar.Wire(SonarTuning);
             excavation.Wire(ExcavationTuning);
             tether.Wire(TetherTuning);
             Gameplay.Wire(visuals, new[] { RadioTowerUpgrade, HoverJumpUpgrade }, relics, scrap, sonar, excavation,
-                tether, home, tower, workshop, friends, cassettes, logs, signals, shelf);
+                tether, home, tower, workshop, friends, cassettes, logs, signals, shelf, relays);
             root.SetActive(true);
 
             Bootstrap = BootstrapHarness.Create(_controls, SaveSlot, World, Rover, Gameplay);
@@ -401,6 +408,32 @@ namespace MoonProject.Gameplay.PlayModeTests
             {
                 body.localRotation = Quaternion.Euler(-34f, 10f, 0f);
                 lid.localRotation = Quaternion.Euler(-74f, 0f, 0f);
+            }
+
+            return root;
+        }
+
+        /// <summary>
+        /// A stand-in relay mast with the contract's nodes (root at the pad centre, +Z toward home): the footing and
+        /// junction box at the pad's back edge, the mast on it with its dish and lamp, the part socket and beam point
+        /// on the box front; the broken one leaning back and to its left.
+        /// </summary>
+        private GameObject RelayModel(string name, bool broken)
+        {
+            var root = new GameObject(name);
+            root.transform.position = new Vector3(0f, -500f, 0f);
+            _created.Add(root);
+            Named(Block(root.transform, new Vector3(0f, 0.15f, -2.2f), new Vector3(1.9f, 0.3f, 1.9f)),
+                RelayRig.BaseNode);
+            Transform mast = Named(Block(root.transform, new Vector3(0f, 0.3f, -2.2f), Vector3.one), RelayRig.MastNode);
+            Named(Block(mast, new Vector3(0f, 3.7f, 0f), new Vector3(0.6f, 7.4f, 0.6f)), "Core");
+            Node(RelayRig.DishNode, mast, new Vector3(0f, 6.1f, 0.4f));
+            Named(Block(mast, new Vector3(0f, 7.95f, 0f), Vector3.one * 0.5f), RelayRig.LampNode);
+            Node(RelayRig.PartSocketNode, root.transform, new Vector3(0f, 0.78f, -1.24f));
+            Node(RelayRig.BeamPointNode, root.transform, new Vector3(0f, 1.12f, -1.24f));
+            if (broken)
+            {
+                mast.localRotation = Quaternion.Euler(-9f, 0f, 10f);
             }
 
             return root;

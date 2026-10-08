@@ -15,7 +15,8 @@ namespace MoonProject.Gameplay.Editor
     /// fixed empty under the TowerAnchor at the socket every tower stage carries, so stage swaps never move it; the
     /// cassette shelf stands the same way on the stages' CassetteShelfAnchor. The
     /// base is stood beside the pad here for the editor view and re-seated on the real ground at boot; relic sites, the
-    /// scrap field, friends, cassettes and log caches are placed from the World's surface and anchors at boot. Fails
+    /// scrap field, friends, cassettes, log caches and the relay masts (Art's RelayMast and RelayMast_Broken on the
+    /// World's relay anchors, with their relay parts) are placed from the World's surface and anchors at boot. Fails
     /// loudly when a required asset or prefab node is missing.
     /// </summary>
     public sealed class GameplaySceneContributor : ISceneContributor
@@ -54,6 +55,12 @@ namespace MoonProject.Gameplay.Editor
             var logCacheTuning = context.LoadAsset<LogCacheTuning>(GameplayAssetPaths.LogCacheTuning);
             var logCacheCatalog = context.LoadAsset<LogCacheCatalog>(GameplayAssetPaths.LogCacheCatalog);
             var bellTuning = context.LoadAsset<BellTuning>(GameplayAssetPaths.BellTuning);
+            var relayTuning = context.LoadAsset<RelayTuning>(GameplayAssetPaths.RelayTuning);
+            var relayMast = context.LoadAsset<GameObject>(GameplayAssetPaths.RelayMast);
+            var relayMastBroken = context.LoadAsset<GameObject>(GameplayAssetPaths.RelayMastBroken);
+            var relayPart = context.LoadAsset<GameObject>(GameplayAssetPaths.RelayPart);
+            RequireRelayRig(relayMast);
+            RequireRelayRig(relayMastBroken);
             Require(visuals.Validate(), nameof(GameplayVisuals));
             Require(scrapCatalog.Validate(), nameof(ScrapCatalog));
             Require(relicCatalog.Validate(), nameof(RelicCatalog));
@@ -78,6 +85,7 @@ namespace MoonProject.Gameplay.Editor
             var cassettes = Part<CassetteField>(context, host, "Cassettes");
             var logs = Part<LogCacheField>(context, host, "LogCaches");
             var signals = Part<SignalField>(context, host, "BellSignals");
+            var relays = Part<RelayField>(context, host, "Relays");
 
             GameObject baseRoot = context.CreateChild("Base", host.transform);
             Vector3 offset = baseTuning.LanderOffset;
@@ -130,8 +138,9 @@ namespace MoonProject.Gameplay.Editor
             friends.Wire(friendCatalog, friendTuning, bellTuning, homes);
             cassettes.Wire(cassetteCatalog, cassetteTuning);
             logs.Wire(logCacheCatalog, logCacheTuning);
+            relays.Wire(relayTuning, relayMast, relayMastBroken, relayPart);
             gameplay.Wire(visuals, new[] { radioTower, hoverJump }, relics, scrap, sonar, excavation, tether, home,
-                tower, workshop, friends, cassettes, logs, signals, tapeRack);
+                tower, workshop, friends, cassettes, logs, signals, tapeRack, relays);
             context.AddSystem(gameplay);
         }
 
@@ -172,6 +181,12 @@ namespace MoonProject.Gameplay.Editor
             Transform socket = context.CreateChild(name, towerAnchor).transform;
             socket.SetPositionAndRotation(first.position, first.rotation);
             return socket;
+        }
+
+        /// <summary>Fails the build when a relay mast prefab breaks its node contract (naming the node).</summary>
+        private static void RequireRelayRig(GameObject prefab)
+        {
+            _ = new RelayRig(prefab);
         }
 
         /// <summary>A static collider of the prefab's own body mesh, on the Prop layer (props are solid).</summary>

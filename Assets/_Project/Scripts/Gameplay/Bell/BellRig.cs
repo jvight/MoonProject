@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 using MoonProject.Core;
 
@@ -25,16 +24,12 @@ namespace MoonProject.Gameplay
         public const string LegPrefix = "Leg_";
         public const string ShinPrefix = "Shin_";
 
+        private const string Contract = "Bell rig";
+
         /// <summary>Leg corners in <see cref="BellPose"/> order.</summary>
         public static readonly string[] Corners = { "FL", "FR", "RL", "RR" };
 
-        private readonly Transform[] _nodes;
-        private readonly Vector3[] _restPositions;
-        private readonly Quaternion[] _restRotations;
-        private readonly Vector3[] _fromPositions;
-        private readonly Quaternion[] _fromRotations;
-        private readonly Vector3[] _posePositions;
-        private readonly Quaternion[] _poseRotations;
+        private readonly RigPose _pose;
         private readonly bool[] _animated;
         private readonly Transform _body;
         private readonly Transform _lid;
@@ -56,44 +51,25 @@ namespace MoonProject.Gameplay
         public BellRig(GameObject root, int partLamps)
         {
             Root = root != null ? root.transform : throw new ArgumentNullException(nameof(root));
-            var nodes = new List<Transform>();
-            Collect(Root, nodes);
-            _nodes = nodes.ToArray();
-            int count = _nodes.Length;
-            _restPositions = new Vector3[count];
-            _restRotations = new Quaternion[count];
-            _fromPositions = new Vector3[count];
-            _fromRotations = new Quaternion[count];
-            _posePositions = new Vector3[count];
-            _poseRotations = new Quaternion[count];
-            for (int i = 0; i < count; i++)
-            {
-                _restPositions[i] = _nodes[i].localPosition;
-                _restRotations[i] = _nodes[i].localRotation;
-                _fromPositions[i] = _restPositions[i];
-                _fromRotations[i] = _restRotations[i];
-                _posePositions[i] = _restPositions[i];
-                _poseRotations[i] = _restRotations[i];
-            }
-
-            _bodyIndex = IndexOf(BodyNode);
-            _lidIndex = IndexOf(LidNode);
-            _needleIndex = IndexOf(NeedleNode);
-            _speakerIndex = IndexOf(SpeakerNode);
-            _body = _nodes[_bodyIndex];
-            _lid = _nodes[_lidIndex];
-            _needle = _nodes[_needleIndex];
-            _speaker = _nodes[_speakerIndex];
-            TapeSlot = _nodes[IndexOf(TapeSlotNode)];
+            _pose = new RigPose(Root, Contract);
+            _bodyIndex = _pose.IndexOf(BodyNode);
+            _lidIndex = _pose.IndexOf(LidNode);
+            _needleIndex = _pose.IndexOf(NeedleNode);
+            _speakerIndex = _pose.IndexOf(SpeakerNode);
+            _body = _pose.Node(_bodyIndex);
+            _lid = _pose.Node(_lidIndex);
+            _needle = _pose.Node(_needleIndex);
+            _speaker = _pose.Node(_speakerIndex);
+            TapeSlot = _pose.Node(_pose.IndexOf(TapeSlotNode));
             for (int leg = 0; leg < BellPose.Legs; leg++)
             {
-                _legIndex[leg] = IndexOf(LegPrefix + Corners[leg]);
-                _shinIndex[leg] = IndexOf(ShinPrefix + Corners[leg]);
-                _legs[leg] = _nodes[_legIndex[leg]];
-                _shins[leg] = _nodes[_shinIndex[leg]];
+                _legIndex[leg] = _pose.IndexOf(LegPrefix + Corners[leg]);
+                _shinIndex[leg] = _pose.IndexOf(ShinPrefix + Corners[leg]);
+                _legs[leg] = _pose.Node(_legIndex[leg]);
+                _shins[leg] = _pose.Node(_shinIndex[leg]);
             }
 
-            _animated = new bool[count];
+            _animated = new bool[_pose.Count];
             _animated[_bodyIndex] = true;
             _animated[_lidIndex] = true;
             _animated[_needleIndex] = true;
@@ -104,11 +80,11 @@ namespace MoonProject.Gameplay
                 _animated[_shinIndex[leg]] = true;
             }
 
-            _dialLamp = new EmissionGlow(Renderer(_nodes[IndexOf(DialLampNode)]));
+            _dialLamp = new EmissionGlow(_pose.RendererOf(DialLampNode));
             _lamps = new EmissionGlow[partLamps];
             for (int i = 0; i < partLamps; i++)
             {
-                _lamps[i] = new EmissionGlow(Renderer(_nodes[IndexOf(PartLampPrefix + i)]));
+                _lamps[i] = new EmissionGlow(_pose.RendererOf(PartLampPrefix + i));
             }
         }
 
@@ -136,34 +112,7 @@ namespace MoonProject.Gameplay
         /// </summary>
         public BoxCollider MakeSolid(float padding)
         {
-            bool found = false;
-            var bounds = new Bounds();
-            foreach (MeshFilter filter in Root.GetComponentsInChildren<MeshFilter>(true))
-            {
-                if (filter.sharedMesh == null)
-                {
-                    continue;
-                }
-
-                Bounds mesh = filter.sharedMesh.bounds;
-                for (int corner = 0; corner < 8; corner++)
-                {
-                    var local = new Vector3((corner & 1) == 0 ? mesh.min.x : mesh.max.x,
-                        (corner & 2) == 0 ? mesh.min.y : mesh.max.y, (corner & 4) == 0 ? mesh.min.z : mesh.max.z);
-                    Vector3 point = Root.InverseTransformPoint(filter.transform.TransformPoint(local));
-                    if (found)
-                    {
-                        bounds.Encapsulate(point);
-                    }
-                    else
-                    {
-                        bounds = new Bounds(point, Vector3.zero);
-                        found = true;
-                    }
-                }
-            }
-
-            if (!found)
+            if (!MeshBounds.TryLocal(Root, Root, out Bounds bounds))
             {
                 throw new InvalidOperationException($"{nameof(BellRig)}: '{Root.name}' has no mesh to make solid.");
             }
@@ -198,12 +147,7 @@ namespace MoonProject.Gameplay
                 throw new ArgumentNullException(nameof(other));
             }
 
-            for (int i = 0; i < _nodes.Length; i++)
-            {
-                Transform match = other.Find(_nodes[i].name);
-                _fromPositions[i] = match != null ? match.localPosition : _restPositions[i];
-                _fromRotations[i] = match != null ? match.localRotation : _restRotations[i];
-            }
+            _pose.CaptureFrom(other._pose);
         }
 
         /// <summary>
@@ -212,82 +156,23 @@ namespace MoonProject.Gameplay
         /// </summary>
         public void Apply(float blend, BellPose pose)
         {
-            for (int i = 0; i < _nodes.Length; i++)
-            {
-                _posePositions[i] = Vector3.LerpUnclamped(_fromPositions[i], _restPositions[i], blend);
-                _poseRotations[i] = Quaternion.Slerp(_fromRotations[i], _restRotations[i], blend);
-            }
-
+            _pose.Evaluate(blend);
             Vector3 lift = Vector3.up * pose.Bob;
-            _body.localPosition = _posePositions[_bodyIndex] + lift;
-            _body.localRotation = _poseRotations[_bodyIndex] * Quaternion.Euler(pose.Pitch, 0f, pose.Roll);
-            _lid.localRotation = _poseRotations[_lidIndex] * Quaternion.Euler(pose.Lid, 0f, 0f);
-            _needle.localRotation = _poseRotations[_needleIndex] * Quaternion.Euler(0f, 0f, pose.Needle);
-            _speaker.localPosition = _posePositions[_speakerIndex] + Vector3.forward * pose.Speaker;
+            _body.localPosition = _pose.Position(_bodyIndex) + lift;
+            _body.localRotation = _pose.Rotation(_bodyIndex) * Quaternion.Euler(pose.Pitch, 0f, pose.Roll);
+            _lid.localRotation = _pose.Rotation(_lidIndex) * Quaternion.Euler(pose.Lid, 0f, 0f);
+            _needle.localRotation = _pose.Rotation(_needleIndex) * Quaternion.Euler(0f, 0f, pose.Needle);
+            _speaker.localPosition = _pose.Position(_speakerIndex) + Vector3.forward * pose.Speaker;
             for (int leg = 0; leg < BellPose.Legs; leg++)
             {
                 int hip = _legIndex[leg];
                 int knee = _shinIndex[leg];
-                _legs[leg].localPosition = _posePositions[hip] + lift;
-                _legs[leg].localRotation = _poseRotations[hip] * Quaternion.Euler(pose.Leg(leg), 0f, 0f);
-                _shins[leg].localRotation = _poseRotations[knee] * Quaternion.Euler(pose.Shin(leg), 0f, 0f);
+                _legs[leg].localPosition = _pose.Position(hip) + lift;
+                _legs[leg].localRotation = _pose.Rotation(hip) * Quaternion.Euler(pose.Leg(leg), 0f, 0f);
+                _shins[leg].localRotation = _pose.Rotation(knee) * Quaternion.Euler(pose.Shin(leg), 0f, 0f);
             }
 
-            for (int i = 0; i < _nodes.Length; i++)
-            {
-                if (!_animated[i])
-                {
-                    _nodes[i].localPosition = _posePositions[i];
-                    _nodes[i].localRotation = _poseRotations[i];
-                }
-            }
-        }
-
-        private Transform Find(string name)
-        {
-            for (int i = 0; i < _nodes.Length; i++)
-            {
-                if (_nodes[i].name == name)
-                {
-                    return _nodes[i];
-                }
-            }
-
-            return null;
-        }
-
-        private int IndexOf(string name)
-        {
-            for (int i = 0; i < _nodes.Length; i++)
-            {
-                if (_nodes[i].name == name)
-                {
-                    return i;
-                }
-            }
-
-            throw new InvalidOperationException($"Bell prefab {Root.name} has no '{name}' node " +
-                                                "(Bell rig contract, docs/ARCHITECTURE.md).");
-        }
-
-        private static void Collect(Transform parent, List<Transform> nodes)
-        {
-            for (int i = 0; i < parent.childCount; i++)
-            {
-                Transform child = parent.GetChild(i);
-                nodes.Add(child);
-                Collect(child, nodes);
-            }
-        }
-
-        private static Renderer Renderer(Transform node)
-        {
-            if (!node.TryGetComponent(out Renderer renderer))
-            {
-                throw new InvalidOperationException($"Bell rig node '{node.name}' has no renderer to light.");
-            }
-
-            return renderer;
+            _pose.Apply(_animated);
         }
     }
 }

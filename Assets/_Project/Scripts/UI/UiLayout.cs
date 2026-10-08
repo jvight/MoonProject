@@ -75,6 +75,21 @@ namespace MoonProject.UI
             DialStation = Require<Label>("dial-station");
             DialTape = Require<Label>("dial-tape");
 
+            HopList = Require<VisualElement>("hop-list");
+            HopListShadow = Require<VisualElement>("hop-list-shadow");
+            HopListRows = Require<VisualElement>("hop-list-rows");
+
+            RelayTagAnchor = Require<VisualElement>("relay-tag-anchor");
+            RelayTag = Require<VisualElement>("relay-tag");
+            RelayTagShadow = Require<VisualElement>("relay-tag-shadow");
+            RelayTagRing = Require<VisualElement>("relay-tag-ring");
+            RelayTagIcon = Require<VisualElement>("relay-tag-icon");
+            RelayTagCost = Require<Label>("relay-tag-cost");
+
+            HopVeil = Require<VisualElement>("hop-veil");
+            HopVeilDark = Require<VisualElement>("hop-veil-dark");
+            HopVeilGrain = Require<VisualElement>("hop-veil-grain");
+
             Pause = Require<VisualElement>("pause");
             PauseVeil = Require<VisualElement>("pause-veil");
             PauseStack = Require<VisualElement>("pause-stack");
@@ -85,6 +100,9 @@ namespace MoonProject.UI
             PauseCassettes = Require<VisualElement>("pause-cassettes");
             PauseCassetteIcon = Require<VisualElement>("pause-cassette-icon");
             PauseCassettesCount = Require<Label>("pause-cassettes-count");
+            PauseRelays = Require<VisualElement>("pause-relays");
+            PauseRelayIcon = Require<VisualElement>("pause-relay-icon");
+            PauseRelaysCount = Require<Label>("pause-relays-count");
             PageMain = Require<VisualElement>("page-main");
             PageQuit = Require<VisualElement>("page-quit");
             ResumeButton = Require<Button>("button-resume");
@@ -213,6 +231,30 @@ namespace MoonProject.UI
 
         public Label DialTape { get; }
 
+        public VisualElement HopList { get; }
+
+        public VisualElement HopListShadow { get; }
+
+        public VisualElement HopListRows { get; }
+
+        public VisualElement RelayTagAnchor { get; }
+
+        public VisualElement RelayTag { get; }
+
+        public VisualElement RelayTagShadow { get; }
+
+        public VisualElement RelayTagRing { get; }
+
+        public VisualElement RelayTagIcon { get; }
+
+        public Label RelayTagCost { get; }
+
+        public VisualElement HopVeil { get; }
+
+        public VisualElement HopVeilDark { get; }
+
+        public VisualElement HopVeilGrain { get; }
+
         public VisualElement Pause { get; }
 
         public VisualElement PauseVeil { get; }
@@ -232,6 +274,12 @@ namespace MoonProject.UI
         public VisualElement PauseCassetteIcon { get; }
 
         public Label PauseCassettesCount { get; }
+
+        public VisualElement PauseRelays { get; }
+
+        public VisualElement PauseRelayIcon { get; }
+
+        public Label PauseRelaysCount { get; }
 
         public VisualElement PageMain { get; }
 

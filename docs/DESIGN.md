@@ -65,6 +65,39 @@ Gates hold only while each upgrade stays inside its lane. Today 07 climbs at mos
 canyon gate) becomes climbable at ~50°, with a ~27 m drop into the canyon terminus. So Magnetic Treads must climb
 only surfaces marked as climbable walls (the rim terraces), never raise the general slope limit.
 
+### Visible progression — you can see how far you've come (owner priority, 2026-10-08)
+Every upgrade to 07 or to home changes what you see, so a screenshot from hour five looks clearly different from minute
+one.
+- **07's arc goes from tired to cared-for, not from cute to menacing.** 07 starts with its "signs of solitude" (VISION):
+  - a solar wing with a missing cell;
+  - a bent antenna;
+  - a patched panel;
+  - one mismatched replacement wheel;
+  - a half-lidded eye.
+
+  Progression heals those signs one by one and adds sturdy, well-loved expedition kit. By the end 07 looks rugged and
+  capable, a rover someone takes care of again, while keeping its gentle face. It is never militarised and never
+  spiky.
+- **One visible kit piece per upgrade,** readable from the default chase camera (rear three-quarter view) and at 30 m:
+
+| Upgrade | What changes on 07 |
+|---|---|
+| Hover-Jump | spring coils under the belly, glowing when charged (done) |
+| Magnetic Treads | all six wheels become bigger, chunkier treaded wheels, so the mismatched wheel is finally matched and 07 sits higher |
+| Cargo Cradle | a rear rack basket with straps; carried relics ride in it |
+| Wide Sonar | a larger dish and antenna array on the back, and the bent antenna is straightened |
+| Warm Headlamp | a caged lamp bar across the front; the light pool is visibly wider |
+| Boost Coils | twin capacitor drums (the "big batteries") on the flanks that glow while boosting |
+| Friends' gifts | the solar wing's missing cell is replaced (Tilly), the patch gets a painted flower (Moss), the "07" is repainted (Ro and Bell), and a tow hook appears (Atlas) |
+
+- **Install moment.** Buying an upgrade at Kenji's bench plays a short eased camera moment: sparks, the part settling
+  onto 07, then a small proud pose (head lift, eye brighter, an antenna wiggle). It is the payoff, never skippable
+  clutter, and about 3 s long.
+- **Home shows it too.** The tower's three stages, Bell's corner, the cassette rack, the lit relay masts, the warmth
+  spreading across the basin (M3-06) and decorations (M3-09). Every station upgrade must change home's silhouette or
+  its lights.
+- **Rule.** An upgrade that doesn't change what the player sees isn't finished (VISION ruling 11).
+
 ### Station reach — the relay network (the second progression axis)
 Lumen Station was a radio-relay outpost, and the storm left its chain of relay masts dark across the moon. Restoring
 them is how the station's reach grows, so that "home" spreads outward step by step.
@@ -108,6 +141,26 @@ them is how the station's reach grows, so that "home" spreads outward step by st
 On each new session: a gentle chance of a *meteor shower* (fresh glints), a *new signal* (a relic or part appears
 where none was), or an *event*: **Eclipse** (bioluminescent paths reveal secrets), **Solar Flare** (aurora, 07
 overcharged and fast), **Earthrise** (a calm photo moment). Events last the session; nothing expires.
+
+### A base built for 07, waking from decades of neglect (owner priority, 2026-10-08)
+- **Rover-first architecture.** The crew built Lumen Station around a rover:
+  - a cable lift (a winch platform) beside the lander's human ladder, up to the hatch deck, used by M3-07 to reach
+    the hand-drawn map inside;
+  - ramps onto every pad;
+  - 07's charging and docking cradle instead of a doormat;
+  - rover-height junction boxes and dials.
+
+  The crew's ladder stays as a remnant: 07 has never climbed it.
+- **Abandoned at first.** At the start everything is dusty, faded and rusted:
+  - the lander's paint is sun-bleached and rust streaks run from its rivets;
+  - dust drifts lean against the legs;
+  - a cable hangs slack and the "HOME" sign tilts;
+  - the lift is jammed halfway.
+- **Restored over time.** Each restoration step (tower levels, friends home, relays lit, the workshop) visibly
+  cleans one part of home: dust caps gone, a fresh paint patch, the sign straightened, the lift running, lights on.
+  By the end the base looks lived-in and loved, still old, never new.
+- **The same arc on 07.** It starts with rust spots, a faded stripe and dust on its top faces; repairs and gifts
+  clean and repaint it piece by piece (see "Visible progression").
 
 ### Base life & decoration
 The base gains lights, plants, friends' corners and player-placed decorations on snap points (lanterns, pennants,

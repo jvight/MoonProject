@@ -8,14 +8,16 @@ namespace MoonProject.UI.PlayModeTests
 {
     /// <summary>
     /// Everything the UI reads from the World, Rover, Audio and Gameplay domains, as one scriptable stand-in system
-    /// (initialised before the UI). Tests set the tether state, the gameplay hint, the wallet, the tower offer and the
-    /// radio program.
+    /// (initialised before the UI). Tests set the tether state, the gameplay hint, the wallet, the tower offer, the
+    /// radio program, the relay network and the radio-hop.
     /// </summary>
     public sealed class FakeGameServices : MonoBehaviour, IGameSystem, IViewCamera, IAudioSettings, ILookSettings,
-        IScrapWallet, ITetherAim, IInteractionHints, IUpgradeShop, IRoverState, IFriendStatuses, IRadioProgram
+        IScrapWallet, ITetherAim, IInteractionHints, IUpgradeShop, IRoverState, IFriendStatuses, IRadioProgram,
+        IRadioHop, IRelayStatus
     {
         private readonly float[] _volumes = { 1f, 1f, 1f, 1f };
         private readonly List<string> _tapes = new List<string>();
+        private readonly List<string> _hopChoices = new List<string>();
         private float _sensitivity = 1f;
         private EventBus _events;
 
@@ -92,6 +94,30 @@ namespace MoonProject.UI.PlayModeTests
 
         public int TotalTapeCount { get; set; } = 3;
 
+        public RadioHopPhase Phase { get; set; }
+
+        public bool CanOpen => Phase == RadioHopPhase.Closed && _hopChoices.Count > 0;
+
+        public int Here => -1;
+
+        public int ChoiceCount => Phase == RadioHopPhase.Closed ? 0 : _hopChoices.Count;
+
+        public int Selected { get; set; }
+
+        public float ConfirmHold { get; set; }
+
+        public float Fade { get; set; }
+
+        public float Progress => 0f;
+
+        public int MastCount { get; set; } = 4;
+
+        public int LitMasts { get; set; }
+
+        public int NextCost { get; set; } = 60;
+
+        public float RestoreHold { get; set; }
+
         public void Initialize(GameContext context)
         {
             _events = context.Events;
@@ -105,6 +131,69 @@ namespace MoonProject.UI.PlayModeTests
             context.Register<IRoverState>(this);
             context.Register<IFriendStatuses>(this);
             context.Register<IRadioProgram>(this);
+            context.Register<IRadioHop>(this);
+            context.Register<IRelayStatus>(this);
+        }
+
+        /// <summary>The lit nodes the list will offer (their name keys), home first.</summary>
+        public void SetHopChoices(params string[] labelKeys)
+        {
+            _hopChoices.Clear();
+            _hopChoices.AddRange(labelKeys);
+        }
+
+        public int ChoiceNode(int choice)
+        {
+            return choice;
+        }
+
+        public string ChoiceLabelKey(int choice)
+        {
+            return _hopChoices[choice];
+        }
+
+        public bool Open()
+        {
+            if (!CanOpen)
+            {
+                return false;
+            }
+
+            Selected = 0;
+            Phase = RadioHopPhase.Choosing;
+            _events.Publish(new RadioHopListChanged(true));
+            return true;
+        }
+
+        public void Next()
+        {
+            Selected = (Selected + 1) % _hopChoices.Count;
+        }
+
+        public void Previous()
+        {
+            Selected = (Selected + _hopChoices.Count - 1) % _hopChoices.Count;
+        }
+
+        public bool Confirm()
+        {
+            if (Phase != RadioHopPhase.Choosing)
+            {
+                return false;
+            }
+
+            Phase = RadioHopPhase.Leaving;
+            _events.Publish(new RadioHopListChanged(false));
+            return true;
+        }
+
+        public void Cancel()
+        {
+            if (Phase == RadioHopPhase.Choosing)
+            {
+                Phase = RadioHopPhase.Closed;
+                _events.Publish(new RadioHopListChanged(false));
+            }
         }
 
         public string GetOwnedTape(int index)

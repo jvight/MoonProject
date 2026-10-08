@@ -16,7 +16,8 @@ namespace MoonProject.UI
     /// work: UI Toolkit moves focus between the buttons and sliders; Esc / B steps back one level. Every touch is
     /// published as a <see cref="UiCue"/> (open, close, focus move, confirm, back, slider step) for Audio. Once 07 owns
     /// a cassette, a quiet line under the heading counts them against every tape in the game (both numbers from
-    /// <see cref="IRadioProgram"/>, so a loaded save is counted right).
+    /// <see cref="IRadioProgram"/>, so a loaded save is counted right); once a relay mast is lit, another counts the
+    /// lit masts against them all (<see cref="IRelayStatus"/>). Neither shows before the world has shown the thing.
     /// </summary>
     internal sealed class PauseMenu
     {
@@ -31,6 +32,7 @@ namespace MoonProject.UI
         private readonly ISaveService _save;
         private readonly IScrapWallet _wallet;
         private readonly IRadioProgram _radio;
+        private readonly IRelayStatus _relays;
         private readonly IntText _numbers;
         private readonly CursorPolicy _cursor;
         private readonly Action _quit;
@@ -50,7 +52,7 @@ namespace MoonProject.UI
 
         public PauseMenu(UiLayout layout, PauseSettings settings, PlayerSettings player, ILocalization localization,
             InputReader input, EventBus events, ISaveService save, IScrapWallet wallet, IRadioProgram radio,
-            IntText numbers, CursorPolicy cursor, Action quit)
+            IRelayStatus relays, IntText numbers, CursorPolicy cursor, Action quit)
         {
             _layout = layout ?? throw new ArgumentNullException(nameof(layout));
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
@@ -61,6 +63,7 @@ namespace MoonProject.UI
             _save = save ?? throw new ArgumentNullException(nameof(save));
             _wallet = wallet ?? throw new ArgumentNullException(nameof(wallet));
             _radio = radio ?? throw new ArgumentNullException(nameof(radio));
+            _relays = relays ?? throw new ArgumentNullException(nameof(relays));
             _numbers = numbers ?? throw new ArgumentNullException(nameof(numbers));
             _cursor = cursor ?? throw new ArgumentNullException(nameof(cursor));
             _quit = quit ?? throw new ArgumentNullException(nameof(quit));
@@ -80,6 +83,7 @@ namespace MoonProject.UI
             new ShadowPainter(layout.PauseSettingsShadow);
             new ScrapIconPainter(layout.PauseScrapIcon);
             new CassetteIconPainter(layout.PauseCassetteIcon);
+            new RelayIconPainter(layout.PauseRelayIcon);
 
             _lookTexts = new string[player.LookStepCount + 1];
             for (int step = player.MinLookStep; step <= player.LookStepCount; step++)
@@ -125,6 +129,7 @@ namespace MoonProject.UI
             _cursor.Menu();
             _layout.PauseScrapCount.text = _numbers.Get(_wallet.Balance);
             WriteCassettes();
+            WriteRelays();
             _veil.Show();
             _main.Show();
             _pendingFocus = _layout.ResumeButton;
@@ -228,11 +233,12 @@ namespace MoonProject.UI
             _pointerPressed = false;
         }
 
-        /// <summary>Re-reads the words set from code (the language selector, the cassette line).</summary>
+        /// <summary>Re-reads the words set from code (the language selector, the cassette and relay lines).</summary>
         public void Relocalize()
         {
             _layout.LanguageButton.text = _localization.GetLanguageName(_localization.Language);
             WriteCassettes();
+            WriteRelays();
         }
 
         /// <summary>Restores normal game speed immediately (the UI is going away mid-pause).</summary>
@@ -275,6 +281,18 @@ namespace MoonProject.UI
             {
                 _layout.PauseCassettesCount.text = string.Format(_localization.Get(UiKeys.PauseCassettes), owned,
                     _radio.TotalTapeCount);
+            }
+        }
+
+        /// <summary>Allocates (it formats): only when the menu opens or the language changes.</summary>
+        private void WriteRelays()
+        {
+            int lit = _relays.LitMasts;
+            _layout.PauseRelays.style.display = lit > 0 ? DisplayStyle.Flex : DisplayStyle.None;
+            if (lit > 0)
+            {
+                _layout.PauseRelaysCount.text = string.Format(_localization.Get(UiKeys.PauseRelays), lit,
+                    _relays.MastCount);
             }
         }
 

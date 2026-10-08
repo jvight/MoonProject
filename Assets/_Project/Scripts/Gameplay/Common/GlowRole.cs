@@ -16,5 +16,6 @@ namespace MoonProject.Gameplay
         FriendPillar = 10,
         Spark = 11,
         HomeHalo = 12,
+        LinkPulse = 13,
     }
 }

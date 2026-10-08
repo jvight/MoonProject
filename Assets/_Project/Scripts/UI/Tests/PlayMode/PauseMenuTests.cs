@@ -174,6 +174,28 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual("vi", _rig.Ui.Localization.Language);
         }
 
+        [UnityTest]
+        public IEnumerator RelayLine_ShowsOnceAMastIsLit_CountingEveryMast()
+        {
+            Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
+            Boot(BootstrapHarness.NewTestSlot());
+            yield return null;
+            UiLayout layout = _rig.Ui.Layout;
+            yield return Tap(keyboard.escapeKey);
+            yield return new WaitForSecondsRealtime(Settle);
+            Assert.AreEqual(DisplayStyle.None, layout.PauseRelays.resolvedStyle.display,
+                "no relay count before the world has shown a relay");
+            yield return Tap(keyboard.escapeKey);
+            yield return new WaitForSecondsRealtime(Settle);
+
+            _rig.Fakes.LitMasts = 2;
+            yield return Tap(keyboard.escapeKey);
+            yield return new WaitForSecondsRealtime(Settle);
+            Assert.AreEqual(DisplayStyle.Flex, layout.PauseRelays.resolvedStyle.display);
+            Assert.AreEqual(string.Format(_rig.Ui.Localization.Get(UiKeys.PauseRelays), 2, 4),
+                layout.PauseRelaysCount.text, "lit masts of every mast, both from the relay status");
+        }
+
         /// <summary>
         /// Arrow keys, the d-pad and the stick reach UI Toolkit as navigation events through the Input System's UI
         /// provider (which an InputTestFixture cannot drive); this checks what the menu itself must get right: every

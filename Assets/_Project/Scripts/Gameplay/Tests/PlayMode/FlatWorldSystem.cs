@@ -7,7 +7,9 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// <summary>
     /// Stands in for the World: a flat drivable disc at height 0 with a matching Ground collider, a visible floor for
     /// captures, a soft key light, The Peak beyond the rim, and the canyon's anchors laid out flat to the west, its
-    /// lip beyond the playable area as in the real basin (no chasm: the tests drive straight to them). Registers
+    /// lip beyond the playable area as in the real basin (no chasm: the tests drive straight to them), and four relay
+    /// mast pads facing home, linked like the real chain (relay.0 within the dark tower's reach, relay.1 only once
+    /// the tower's first level widens home, relay.2 through relay.0, relay.3 through relay.2). Registers
     /// ITerrainQuery, IWorldLayout and IWorldAnchors.
     /// </summary>
     public sealed class FlatWorldSystem : MonoBehaviour, IGameSystem, ITerrainQuery, IWorldLayout, IWorldAnchors
@@ -15,6 +17,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         public const float DrivableRadius = 300f;
         private const float FloorThickness = 1f;
         private const float AnchorRadius = 8f;
+        private const float RelayPad = 3f;
 
         private static readonly Vector3 West = new Vector3(-1f, 0f, 0f);
         private static readonly Vector3 South = new Vector3(0f, 0f, -1f);
@@ -30,6 +33,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             new WorldAnchor(WorldAnchorIds.CanyonAlcovePrefix + 2, new Vector3(-290f, 0f, -20f), West, AnchorRadius),
             new WorldAnchor(WorldAnchorIds.CanyonTerminus, new Vector3(-285f, 0f, -45f), South, AnchorRadius),
             new WorldAnchor(WorldAnchorIds.CanyonExit, new Vector3(-262f, 0f, 70f), Vector3.right, AnchorRadius),
+            Relay(0, -70f, 80f),
+            Relay(1, 150f, -150f),
+            Relay(2, -235f, 60f),
+            Relay(3, -262f, -10f),
         };
 
         public Rect PlayableArea
@@ -105,6 +112,12 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             return anchor;
+        }
+
+        private static WorldAnchor Relay(int index, float x, float z)
+        {
+            var pad = new Vector3(x, 0f, z);
+            return new WorldAnchor(WorldAnchorIds.RelayPrefix + index, pad, -pad.normalized, RelayPad);
         }
 
         public bool IsDrivable(float x, float z)
