@@ -501,6 +501,46 @@
         {
             "key": "ui.recipe.need",
             "text": "Cần trục vớt thêm {0} {1}"
+        },
+        {
+            "key": "upgrade.rover.cargo_cradle.name",
+            "text": "Giỏ chở đồ"
+        },
+        {
+            "key": "upgrade.rover.cargo_cradle.1.title",
+            "text": "Chiếc giỏ có dây buộc"
+        },
+        {
+            "key": "upgrade.rover.cargo_cradle.1.effect",
+            "text": "Một kỷ vật được chở về nhà, nằm gọn trong giỏ trên lưng 07; dây kéo vẫn rảnh cho những mảnh trục vớt lớn."
+        },
+        {
+            "key": "upgrade.rover.warm_headlamp.name",
+            "text": "Đèn pha ấm"
+        },
+        {
+            "key": "upgrade.rover.warm_headlamp.1.title",
+            "text": "Giàn đèn có lồng"
+        },
+        {
+            "key": "upgrade.rover.warm_headlamp.1.effect",
+            "text": "Vùng sáng phía trước rộng và ấm hơn, các cột sáng sonar mà 07 đang hướng tới cũng ở lại lâu hơn một chút."
+        },
+        {
+            "key": "upgrade.rover.boost_coils.name",
+            "text": "Cuộn tăng tốc"
+        },
+        {
+            "key": "upgrade.rover.boost_coils.1.title",
+            "text": "Cặp trống tụ điện"
+        },
+        {
+            "key": "upgrade.rover.boost_coils.1.effect",
+            "text": "Giữ nút tiến trên đất trống, 07 ngân nga chạy nhanh hơn một chút, hai trống sáng lên. Không bao giờ là một cuộc đua."
+        },
+        {
+            "key": "hint.stow",
+            "text": "Cất vào giỏ"
         }
     ]
 }

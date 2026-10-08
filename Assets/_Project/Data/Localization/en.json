@@ -501,6 +501,46 @@
         {
             "key": "ui.recipe.need",
             "text": "{0} more {1} to salvage"
+        },
+        {
+            "key": "upgrade.rover.cargo_cradle.name",
+            "text": "Cargo Cradle"
+        },
+        {
+            "key": "upgrade.rover.cargo_cradle.1.title",
+            "text": "A strapped rack basket"
+        },
+        {
+            "key": "upgrade.rover.cargo_cradle.1.effect",
+            "text": "One memory rides home snug in a basket on 07's back; the tether stays free for big salvage."
+        },
+        {
+            "key": "upgrade.rover.warm_headlamp.name",
+            "text": "Warm Headlamp"
+        },
+        {
+            "key": "upgrade.rover.warm_headlamp.1.title",
+            "text": "A caged lamp bar"
+        },
+        {
+            "key": "upgrade.rover.warm_headlamp.1.effect",
+            "text": "A wider, warmer pool of light ahead, and the sonar pillars 07 heads for stay a little longer."
+        },
+        {
+            "key": "upgrade.rover.boost_coils.name",
+            "text": "Boost Coils"
+        },
+        {
+            "key": "upgrade.rover.boost_coils.1.title",
+            "text": "Twin capacitor drums"
+        },
+        {
+            "key": "upgrade.rover.boost_coils.1.effect",
+            "text": "Hold forward on open ground and 07 hums along a little faster, drums aglow. Never a race."
+        },
+        {
+            "key": "hint.stow",
+            "text": "Stow"
         }
     ]
 }
