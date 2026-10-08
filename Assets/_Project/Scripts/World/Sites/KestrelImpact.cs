@@ -193,7 +193,9 @@ namespace MoonProject.World
                 + (_tailHalfWidth - _headHalfWidth) * SmoothMath.Smootherstep(_rimRadius, _furrowEnd, along);
         }
 
-        /// <summary>Distance from <paramref name="point"/> to the furrow's centre line (crater centre to tail).</summary>
+        /// <summary>
+        /// Distance from <paramref name="point"/> to the furrow's centre line, from the crater's centre to its tail.
+        /// </summary>
         private float TrailDistance(Vector2 point)
         {
             Vector2 offset = point - Center;

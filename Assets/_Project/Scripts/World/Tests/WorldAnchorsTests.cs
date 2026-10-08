@@ -87,6 +87,11 @@ namespace MoonProject.World.Tests
                 expected.Add(WorldAnchorIds.RelayPrefix + i);
             }
 
+            foreach (string site in SalvageSiteTests.Sites)
+            {
+                expected.Add(WorldAnchorIds.SitePrefix + site);
+            }
+
             Assert.AreEqual(expected.Count, _anchors.Count);
             var seen = new HashSet<string>();
             for (int i = 0; i < _anchors.Count; i++)
@@ -115,8 +120,8 @@ namespace MoonProject.World.Tests
                 Assert.AreEqual(0f, anchor.Forward.y, $"{anchor.Id} forward is not horizontal");
                 Assert.AreEqual(1f, anchor.Forward.magnitude, 1e-4f, $"{anchor.Id} forward is not a unit vector");
                 Assert.Greater(anchor.Radius, 1f, $"{anchor.Id} has no room");
-                bool relay = anchor.Id.StartsWith(WorldAnchorIds.RelayPrefix, System.StringComparison.Ordinal);
-                Assert.IsTrue(relay || !_surface.PlayableArea.Contains(new Vector2(p.x, p.z)),
+                bool canyon = anchor.Id.StartsWith("canyon.", System.StringComparison.Ordinal);
+                Assert.IsTrue(!canyon || !_surface.PlayableArea.Contains(new Vector2(p.x, p.z)),
                     $"{anchor.Id} lies inside PlayableArea, which the canyon must leave alone");
             }
         }
@@ -174,7 +179,7 @@ namespace MoonProject.World.Tests
                     $"{id} should face on into the canyon");
             }
 
-            var sideSpaces = new List<string> { WorldAnchorIds.CanyonLedge };
+            var sideSpaces = new List<string> { WorldAnchorIds.CanyonLedge, WorldAnchorIds.SitePrefix + "lander" };
             for (int i = 0; i < _settings.Canyon.AlcoveCount; i++)
             {
                 sideSpaces.Add(WorldAnchorIds.CanyonAlcovePrefix + i);

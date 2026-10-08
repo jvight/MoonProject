@@ -8,13 +8,19 @@ namespace MoonProject.World
     /// <summary>
     /// The named content anchors of the generated world (registered as <see cref="IWorldAnchors"/>), built
     /// deterministically from the surface: today Whispering Canyon's mouth, lip, landing apron, glinting ledge,
-    /// alcoves, terminus and the top of its one-way exit, and the four relay masts of the station-reach network
-    /// (M3-06: relay.0..3, whose Forward points home; relay.0 stands in the spawn first frame). Every radius is
-    /// flat, drivable, uncluttered ground.
+    /// alcoves, terminus and the top of its one-way exit, the four relay masts of the station-reach network
+    /// (M3-06: relay.0..3, whose Forward points home; relay.0 stands in the spawn first frame) and the five salvage
+    /// sites (M3-13: site.depot, site.kestrel, site.drill, site.garage, site.lander). Every radius is flat,
+    /// drivable, uncluttered ground.
     /// <para>
     /// Forward is the way 07 travels when arriving into the space, so content faces -Forward to greet it: into the
     /// canyon at the mouth and the landing, across the chasm at the lip, into the bay at the ledge and into each
     /// alcove from the corridor, into the chamber at the terminus, and down the step, out to the basin, at the exit.
+    /// </para>
+    /// <para>
+    /// The salvage sites on the basin floor face on from home, the way 07 drives out to them; Kestrel-3's crater
+    /// faces along its fall line, the way its debris trail leads 07 in (the furrow trails back from the crater along
+    /// -Forward, see <see cref="MoonSurface.Kestrel"/>); the crashed lander faces into its bay off the canyon apron.
     /// </para>
     /// <para>
     /// The landing is the touchdown zone just past the far face (where charged leaps come down), not the apron's
@@ -36,6 +42,16 @@ namespace MoonProject.World
         private const float TerminusWallGap = 1.25f;
         private const float ExitRadius = 2.5f;
         private const float ExitTopSetback = 4f;
+
+        // The crashed lander's footprint in its bay, and the floor left between its edge and the bay's back wall.
+        private const float LanderRadius = 9f;
+        private const float LanderWallGap = 3f;
+
+        private const string Depot = WorldAnchorIds.SitePrefix + "depot";
+        private const string Kestrel = WorldAnchorIds.SitePrefix + "kestrel";
+        private const string Drill = WorldAnchorIds.SitePrefix + "drill";
+        private const string Garage = WorldAnchorIds.SitePrefix + "garage";
+        private const string Lander = WorldAnchorIds.SitePrefix + "lander";
 
         private readonly WorldAnchor[] _anchors;
         private readonly Dictionary<string, int> _byId = new Dictionary<string, int>(StringComparer.Ordinal);
@@ -100,6 +116,17 @@ namespace MoonProject.World
                 anchors.Add(Make(surface, WorldAnchorIds.RelayPrefix + i, masts[i], -masts[i], relays.PadRadius));
             }
 
+            GroundShaping shaping = surface.Shaping;
+            KestrelImpact kestrel = surface.Kestrel;
+            anchors.Add(Footprint(surface, Depot, shaping.Depot));
+            anchors.Add(Make(surface, Kestrel, kestrel.Center, kestrel.Fall, kestrel.FloorRadius));
+            anchors.Add(Footprint(surface, Drill, shaping.Drill));
+            anchors.Add(Footprint(surface, Garage, shaping.Garage));
+            float bayArc = settings.LanderBayArc;
+            Vector2 intoBay = main.RightAt(bayArc) * canyon.LanderSide;
+            float bayLateral = settings.ChasmHalfWidth + settings.LanderBayDepth - LanderRadius - LanderWallGap;
+            anchors.Add(Make(surface, Lander, main.PointAt(bayArc) + intoBay * bayLateral, intoBay, LanderRadius));
+
             _anchors = anchors.ToArray();
             for (int i = 0; i < _anchors.Length; i++)
             {
@@ -132,6 +159,12 @@ namespace MoonProject.World
 
             anchor = default;
             return false;
+        }
+
+        /// <summary>A shaped site footprint on the basin floor, facing on from home.</summary>
+        private static WorldAnchor Footprint(MoonSurface surface, string id, GroundShape shape)
+        {
+            return Make(surface, id, shape.Center, shape.Center, shape.Radius);
         }
 
         private static WorldAnchor Make(MoonSurface surface, string id, Vector2 position, Vector2 forward,

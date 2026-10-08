@@ -165,6 +165,20 @@ namespace MoonProject.World
         [Range(3f, 10f)]
         [SerializeField] private float _relayLedgeRadius = 4.5f;
 
+        [Header("The crashed supply lander's bay (M3-13)")]
+        [Tooltip("Arc length along the canyon of the bay where the supply lander came down: on the landing apron, " +
+            "past the chasm's far face and the touchdown zone, so it is seen across the gap before the jump.")]
+        [Range(40f, 120f)]
+        [SerializeField] private float _landerBayArc = 70f;
+
+        [Tooltip("How far the bay widens the apron, metres, on the side opposite the ledge and the exit.")]
+        [Range(4f, 16f)]
+        [SerializeField] private float _landerBayDepth = 10f;
+
+        [Tooltip("Half-length of the bay along the canyon, metres.")]
+        [Range(8f, 30f)]
+        [SerializeField] private float _landerBayHalfLength = 20f;
+
         [Header("The faint warm light inside")]
         [Tooltip("Height of the warm light above the glinting ledge, metres.")]
         [Range(0.5f, 15f)]
@@ -252,6 +266,9 @@ namespace MoonProject.World
         public float RelayLedgeHeight => _relayLedgeHeight;
         public float RelayLedgeRadius => _relayLedgeRadius;
         public float LedgeRadius => _ledgeRadius;
+        public float LanderBayArc => _landerBayArc;
+        public float LanderBayDepth => _landerBayDepth;
+        public float LanderBayHalfLength => _landerBayHalfLength;
         public float GlowHeight => _glowHeight;
         public float GlowIntensity => _glowIntensity;
         public float GlowRadius => _glowRadius;
@@ -288,6 +305,13 @@ namespace MoonProject.World
                 || _exitOffset < _exitTurnRadius + _chasmHalfWidth - _exitHalfWidth)
             {
                 return "Canyon: the exit runs too close to the chasm, or its turn does not fit; widen its offset.";
+            }
+
+            float farFace = _approachLength + _rampLength + _gap;
+            if (_landerBayArc - _landerBayHalfLength < farFace + Canyon.SlabHalfDepth
+                || _landerBayArc + _landerBayHalfLength > _bendStart)
+            {
+                return "Canyon: the lander's bay must open past the chasm's far face and before the bend.";
             }
 
             float side = _troughDepth / Mathf.Tan(_troughSideSlope * Mathf.Deg2Rad) + TroughSideEase;

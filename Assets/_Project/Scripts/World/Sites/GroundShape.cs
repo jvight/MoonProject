@@ -32,7 +32,9 @@ namespace MoonProject.World
         /// <summary>Height of the flat disc.</summary>
         public float Plateau { get; }
 
-        /// <summary>How much the shape holds the ground at distance <paramref name="distance"/>: 1 on the disc.</summary>
+        /// <summary>
+        /// How much the shape holds the ground <paramref name="distance"/> from its centre: 1 on the disc.
+        /// </summary>
         public float Weight(float distance)
         {
             return 1f - SmoothMath.SmoothRamp(distance - Radius, Run, Run * EaseShare);

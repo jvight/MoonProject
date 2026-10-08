@@ -19,7 +19,7 @@ namespace MoonProject.World
         [Header("site.depot: the crew's supply depot, near the base")]
         [Tooltip("Bearing of the depot from the base, degrees.")]
         [Range(0f, 360f)]
-        [SerializeField] private float _depotBearing = 310f;
+        [SerializeField] private float _depotBearing = 315f;
 
         [Tooltip("Distance of the depot from the base, metres.")]
         [Range(30f, 120f)]
@@ -57,8 +57,8 @@ namespace MoonProject.World
         [SerializeField] private float _garageRadius = 10f;
 
         [Header("relay.0's mound: the teaching mast in the spawn first frame")]
-        [Tooltip("Bearing of the mound from the base, degrees: inside the spawn view and at least 15 degrees right of " +
-            "The Peak; past the play ramp at bearing 38 so no jump lands on the mast.")]
+        [Tooltip("Bearing of the mound from the base, degrees: inside the spawn view and at least 15 degrees " +
+            "right of The Peak; past the play ramp at bearing 38 so no jump lands on the mast.")]
         [Range(0f, 360f)]
         [SerializeField] private float _moundBearing = 28.5f;
 

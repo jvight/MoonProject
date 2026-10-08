@@ -25,11 +25,11 @@ namespace MoonProject.World
 
         [Tooltip("Radius of the crater's flat floor, where the wreck lies, metres.")]
         [Range(4f, 14f)]
-        [SerializeField] private float _floorRadius = 7.5f;
+        [SerializeField] private float _floorRadius = 8f;
 
         [Tooltip("Radius of the crater's rim crest, metres.")]
         [Range(8f, 20f)]
-        [SerializeField] private float _rimRadius = 12.5f;
+        [SerializeField] private float _rimRadius = 13f;
 
         [Tooltip("Depth of the crater floor below the ground around it, metres.")]
         [Range(0.2f, 2f)]
