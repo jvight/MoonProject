@@ -17,8 +17,8 @@ namespace MoonProject.Rover
     /// it lights, or the base after an upgrade (needs <see cref="IWorldLayout"/>). When 07 has rested a while
     /// (<see cref="IRoverStillness"/>) with nothing going on, the camera drifts out to the lonely
     /// <see cref="WideShot"/>, composed against the analytic terrain (<see cref="ITerrainQuery"/>), and publishes
-    /// <see cref="RoverWideShotChanged"/> as it opens and hands back. Camera moments, a leap, the tether and
-    /// interactions take precedence over it. When 07 is placed somewhere else (<see cref="RoverPlaced"/>)
+    /// <see cref="RoverWideShotChanged"/> as it opens and hands back. Camera moments, a leap, the tether, the radio-hop
+    /// list and interactions take precedence over it. When 07 is placed somewhere else (<see cref="RoverPlaced"/>)
     /// everything snaps behind it, no ease. Registers itself as <see cref="IViewCamera"/> (gameplay aims from its
     /// centre ray, UI projects with it) and <see cref="ILookSettings"/> (the UI applies the player's sensitivity and
     /// invert-Y).
@@ -59,6 +59,7 @@ namespace MoonProject.Rover
         private WideShot _wide;
         private bool _wideSteersYaw;
         private bool _tethered;
+        private bool _hopListOpen;
         private bool _paused;
         private float _momentYaw;
         private float _momentLift;
@@ -132,6 +133,7 @@ namespace MoonProject.Rover
                 context.Events.Subscribe<PauseChanged>(OnPauseChanged),
                 context.Events.Subscribe<UiCue>(OnUiCue),
                 context.Events.Subscribe<BellCued>(OnBellCued),
+                context.Events.Subscribe<RadioHopListChanged>(OnHopListChanged),
                 context.Events.Subscribe<RoverPlaced>(OnPlaced),
             };
             context.Register<IViewCamera>(this);
@@ -352,7 +354,7 @@ namespace MoonProject.Rover
         /// </summary>
         private void StepWideShot(float deltaTime)
         {
-            bool busy = _moment.IsActive || _leapHeld || _tethered;
+            bool busy = _moment.IsActive || _leapHeld || _tethered || _hopListOpen;
             switch (_wide.Step(_stillness.StillSeconds, busy, _paused, deltaTime))
             {
                 case WideShotCue.Open:
@@ -408,6 +410,11 @@ namespace MoonProject.Rover
         private void OnTetherReleased(TetherReleased released)
         {
             _tethered = false;
+        }
+
+        private void OnHopListChanged(RadioHopListChanged list)
+        {
+            _hopListOpen = list.Open;
         }
 
         /// <summary>

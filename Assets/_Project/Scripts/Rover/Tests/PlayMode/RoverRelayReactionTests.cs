@@ -12,7 +12,8 @@ namespace MoonProject.Rover.PlayModeTests
     /// 07 and its camera around the relay network (M3-06, real wiring): a restored mast's lamp gets a long look up, a
     /// perk-up and a slow camera tilt that frames it, then everything returns (07 held parked meanwhile, as the
     /// repair does, so the wide shot does not open over it); a new Bell signal pillar within range
-    /// gets a glance (beyond it, none); landing from a radio-hop 07 looks around, left then right, then settles.
+    /// gets a glance (beyond it, none); landing from a radio-hop 07 looks around, left then right, then settles; the
+    /// open hop list keeps the wide shot closed.
     /// </summary>
     public sealed class RoverRelayReactionTests : InputTestFixture
     {
@@ -172,6 +173,22 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.Greater(right, 25f, "Then right.");
             Assert.Less(leftAt, rightAt, "Left first.");
             Assert.Less(Mathf.Abs(NeckYaw), 5f, "Then settles ahead.");
+        }
+
+        [UnityTest]
+        public IEnumerator HopListOpen_KeepsTheWideShotClosed()
+        {
+            _rover.Context.Events.Publish(new RadioHopListChanged(true));
+            yield return Wait(WideShotDelay + 2f);
+            Assert.IsFalse(_rover.CameraRig.WideShot.IsOpen, "Choosing where to hop: the camera stays close.");
+
+            _rover.Context.Events.Publish(new RadioHopListChanged(false));
+            yield return Wait(WideShotDelay + 0.5f);
+            Assert.IsTrue(_rover.CameraRig.WideShot.IsOpen, "List closed and left alone: the frame opens.");
+
+            _rover.Context.Events.Publish(new RadioHopListChanged(true));
+            yield return null;
+            Assert.IsFalse(_rover.CameraRig.WideShot.IsOpen, "Opening the list hands the view back.");
         }
     }
 }
