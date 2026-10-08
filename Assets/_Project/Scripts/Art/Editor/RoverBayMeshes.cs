@@ -383,6 +383,7 @@ namespace MoonProject.Art.Editor
             }
 
             ServiceKit.HopperRust(b, HopperMouth, HopperFacing, HopperSize);
+            b.Append(WorkbenchMeshes.Rust(), BenchPlacement);
             return b;
         }
 

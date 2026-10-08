@@ -8,7 +8,7 @@ namespace MoonProject.Art.Editor
 {
     /// <summary>
     /// 07's home base per the M2 content contract (docs/ARCHITECTURE.md): <c>Lander</c>, <c>MuseumShelf</c>,
-    /// <c>RadioTower_L1..L3</c>, Kenji's <c>Workbench</c> and Bell's <c>CassetteShelf</c> in Generated/Art/Base.
+    /// <c>RadioTower_L1..L3</c>, Kenji's <c>RoverBay</c> and Bell's <c>CassetteShelf</c> in Generated/Art/Base.
     /// Meshes only, each pivoted at its ground-contact centre so it stands on an anchor. The lander also carries
     /// friend perches (<c>FriendSocket_&lt;id&gt;</c>: an empty on top of the perch, +Y up, +Z = the hatch side) and
     /// every tower stage carries Bell's corner and her shelf's anchor. Glowing parts (windows, shelf lights, tower
@@ -45,12 +45,10 @@ namespace MoonProject.Art.Editor
         public static readonly Vector3 TowerAnchor = new Vector3(-6f, 0f, -1f);
 
         /// <summary>
-        /// Where gameplay stands Kenji's workbench: right of the museum shelf, slightly behind it, far enough that
-        /// its shop pad (3.2 m in front, +Z, radius 2.4 m) stays clear of the shelf.
+        /// Where gameplay stands Kenji's Rover Bay: right of the museum shelf, slightly behind it, its open front
+        /// (+Z) towards the plain.
         /// </summary>
         public static readonly Vector3 WorkshopAnchor = new Vector3(12.5f, 0f, -2f);
-
-        public const string WorkbenchName = "Workbench";
 
         /// <summary>
         /// Kenji's Rover Bay, the bench station since M3-14 (stands on <see cref="WorkshopAnchor"/>).
@@ -104,10 +102,6 @@ namespace MoonProject.Art.Editor
             panelWidth: 0.45f, panelHeight: 0.45f, paintWear: 1f, mismatched: true, runsPerMetre: 2.6f,
             rustHeight: 0.7f, metalRust: 0.6f, paintRust: 0.3f, tide: 0.75f, groundDust: 0.72f, topDust: 0.75f);
 
-        private static readonly WeatherProfile WorkbenchWeather = new WeatherProfile(seed: 31, lift: 0.006f,
-            panelWidth: 0.5f, panelHeight: 0.45f, paintWear: 1f, mismatched: true, runsPerMetre: 2.2f, rustHeight: 0.5f,
-            metalRust: 0.6f, paintRust: 0.25f, tide: 0.55f, groundDust: 0.65f, topDust: 0.65f);
-
         private static readonly WeatherProfile RoverBayWeather = new WeatherProfile(seed: 41, lift: 0.006f,
             panelWidth: 0.8f, panelHeight: 0.7f, paintWear: 1f, mismatched: true, runsPerMetre: 2.2f, rustHeight: 1.1f,
             metalRust: 0.7f, paintRust: 0.3f, tide: 1f, groundDust: 0.72f, topDust: 0.75f);
@@ -142,7 +136,6 @@ namespace MoonProject.Art.Editor
             Material weather = PaletteAssetBuilder.LoadWeatherMaterial();
             ModelPrefabWriter.Write(CreateLander(), ArtPaths.BaseFolder, material, glowOff, weather);
             ModelPrefabWriter.Write(CreateShelf(), ArtPaths.BaseFolder, material, glowOff, weather);
-            ModelPrefabWriter.Write(CreateWorkbench(), ArtPaths.BaseFolder, material, glowOff, weather);
             ModelPrefabWriter.Write(CreateRoverBay(), ArtPaths.BaseFolder, material, glowOff, weather);
             ModelPrefabWriter.Write(CreateCassetteShelf(), ArtPaths.BaseFolder, material, glowOff, weather);
             for (int level = RadioTowerMeshes.MinLevel; level <= RadioTowerMeshes.MaxLevel; level++)
@@ -216,21 +209,6 @@ namespace MoonProject.Art.Editor
             Weathering.Weather(shelf, ShelfName, cabinet, ShelfWeather, MuseumShelfMeshes.Rust(),
                 MuseumShelfMeshes.Drifts());
             return shelf;
-        }
-
-        /// <summary>
-        /// Kenji's workbench: root on the ground at the bench centre (+Z = the front where 07 parks), a Lights glow
-        /// child (the hanging work lamp's bulb) and an empty SparkSocket between the vice jaws.
-        /// </summary>
-        public static ModelNode CreateWorkbench()
-        {
-            LowPolyMeshBuilder top = WorkbenchMeshes.Bench();
-            var bench = new ModelNode(WorkbenchName, Vector3.zero, new ModelMesh(WorkbenchName, top));
-            bench.Add(new ModelNode("Lights", WorkbenchMeshes.LampBulb,
-                new ModelMesh(WorkbenchName + "_Lights", WorkbenchMeshes.LampBulbMesh())));
-            bench.Add(new ModelNode("SparkSocket", WorkbenchMeshes.Sparks));
-            Weathering.Weather(bench, WorkbenchName, top, WorkbenchWeather, WorkbenchMeshes.Rust(), null);
-            return bench;
         }
 
         /// <summary>

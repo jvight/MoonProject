@@ -22,7 +22,6 @@ namespace MoonProject.Art.Tests
         {
             yield return BaseModelBuilder.CreateLander();
             yield return BaseModelBuilder.CreateShelf();
-            yield return BaseModelBuilder.CreateWorkbench();
             yield return BaseModelBuilder.CreateRoverBay();
             yield return BaseModelBuilder.CreateCassetteShelf();
             for (int level = 1; level <= 3; level++)

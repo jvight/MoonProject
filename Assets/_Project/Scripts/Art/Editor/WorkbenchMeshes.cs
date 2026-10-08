@@ -7,9 +7,9 @@ namespace MoonProject.Art.Editor
     /// Kenji's workbench (docs/STORY.md: he fixed everything, 07 seven times): a sturdy honey-topped bench with a
     /// pegboard of painted tool outlines (the tools went with the crew, one small wrench stayed) and seven tally
     /// marks, a sage vice, a toolbox, a coffee mug with a chip, a hanging work lamp, a "07 PIT CREW" sticker on the
-    /// apron, spare coil and a spare 07 wheel he hid "for next time". A human bench: since M3-14 it stands beside the
-    /// Rover Bay as a remnant. Built in its own space: origin on the ground at the bench centre, +Z = the front, 2.3 m
-    /// wide.
+    /// apron, spare coil and a spare 07 wheel he hid "for next time". A human bench, so only a remnant now: it is
+    /// part of the Rover Bay's frame, beside it, its lamp long dark. Built in its own space: origin on the ground at
+    /// the bench centre, +Z = the front, 2.3 m wide.
     /// </summary>
     internal static class WorkbenchMeshes
     {
@@ -17,11 +17,8 @@ namespace MoonProject.Art.Editor
         public const float Depth = 0.9f;
         public const float WorktopHeight = 0.95f;
 
-        /// <summary>Centre of the work lamp's bulb: the pivot of the Lights glow renderer.</summary>
-        public static readonly Vector3 LampBulb = new Vector3(0.55f, 2.02f, 0.18f);
-
-        /// <summary>Between the vice jaws, where upgrade sparks fly (+Z out of the bench front).</summary>
-        public static readonly Vector3 Sparks = new Vector3(-0.82f, WorktopHeight + 0.19f, 0.32f);
+        // Where the hanging work lamp's (dark) bulb hangs.
+        private static readonly Vector3 LampBulb = new Vector3(0.55f, 2.02f, 0.18f);
 
         private const float LegInset = 0.12f;
         private const float BoardZ = -0.42f;
@@ -68,14 +65,6 @@ namespace MoonProject.Art.Editor
                 Vector3.forward, Vector3.up);
             SiteKit.RustStreak(b, apron, -0.9f, WorktopHeight - 0.1f, 0.2f);
             SiteKit.RustStreak(b, apron, 0.95f, WorktopHeight - 0.1f, 0.16f);
-            return b;
-        }
-
-        /// <summary>The work lamp's bulb (the Lights glow renderer); origin = bulb centre.</summary>
-        public static LowPolyMeshBuilder LampBulbMesh()
-        {
-            var b = new LowPolyMeshBuilder(80);
-            b.Icosphere(Matrix4x4.identity, 0.065f, 1, PaletteSwatch.WarmLamp);
             return b;
         }
 
