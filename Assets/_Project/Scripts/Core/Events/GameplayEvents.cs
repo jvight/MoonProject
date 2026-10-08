@@ -179,12 +179,24 @@ namespace MoonProject.Core.Events
     /// <summary>A relay mast was restored and linked: the station's reach grew (docs/features/M3-06).</summary>
     public readonly struct RelayRestored
     {
-        public RelayRestored(string relayId, Vector3 position, int litCount, int total)
+        public RelayRestored(string relayId, Vector3 position, int litCount, int total, string linkedNodeId,
+            float pulseSeconds)
         {
             RelayId = relayId;
             Position = position;
             LitCount = litCount;
             Total = total;
+            LinkedNodeId = linkedNodeId;
+            PulseSeconds = pulseSeconds;
+        }
+
+        /// <summary>
+        /// A restoration known only by its mast (test stand-ins): no linked node (<see cref="LinkedNodeId"/> empty)
+        /// and a pulse that arrives at once.
+        /// </summary>
+        public RelayRestored(string relayId, Vector3 position, int litCount, int total)
+            : this(relayId, position, litCount, total, string.Empty, 0f)
+        {
         }
 
         public string RelayId { get; }
@@ -197,6 +209,12 @@ namespace MoonProject.Core.Events
 
         /// <summary>Masts in the whole game.</summary>
         public int Total { get; }
+
+        /// <summary>The lit node its ground pulse runs to ("home" or a mast's id): the one it links to.</summary>
+        public string LinkedNodeId { get; }
+
+        /// <summary>Seconds from this event until the ground pulse arrives at <see cref="LinkedNodeId"/>.</summary>
+        public float PulseSeconds { get; }
     }
 
     /// <summary>
