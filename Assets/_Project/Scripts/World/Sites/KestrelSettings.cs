@@ -89,9 +89,10 @@ namespace MoonProject.World
         [SerializeField] private float _gougeHalfWidth = 2f;
 
         [Header("Scorch")]
-        [Tooltip("How far the scorched dust reaches past the rim crest and the furrow's edges, metres.")]
-        [Range(0f, 12f)]
-        [SerializeField] private float _scorchReach = 4f;
+        [Tooltip("How far the scorched dust fades out past the rim crest and the furrow's edges, metres: long " +
+            "enough that the tone never steps across a facet (ruling 9).")]
+        [Range(4f, 30f)]
+        [SerializeField] private float _scorchReach = 20f;
 
         [Tooltip("Margin around the crater and the furrow inside which no older crater survives, metres.")]
         [Range(0f, 20f)]

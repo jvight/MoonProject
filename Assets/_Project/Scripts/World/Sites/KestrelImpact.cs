@@ -23,6 +23,10 @@ namespace MoonProject.World
         // The berms rise only outside the crater, over this length past the rim crest.
         private const float BermRise = 6f;
 
+        // Share of the scorch's fade eased at each end: the rest is an even ramp, so the tone never steps across a
+        // facet.
+        private const float ScorchEase = 0.25f;
+
         private readonly Vector2 _back;
         private readonly Vector2 _across;
         private readonly float _floorRadius;
@@ -166,14 +170,40 @@ namespace MoonProject.World
             calm *= SmoothMath.Smootherstep(_outerRadius, _outerRadius + _calmSpan, distance)
                 * SmoothMath.Smootherstep(_headHalfWidth + _bermHalfWidth,
                     _headHalfWidth + _bermHalfWidth + _calmSpan, trail);
-
-            float craterScorch = 1f - SmoothMath.Smootherstep(_rimRadius, _rimRadius + _scorchReach, distance);
-            float trailScorch = SmoothMath.Smootherstep(0f, _rimRadius, along)
-                * (1f - (1f - TailScorch) * SmoothMath.Smootherstep(_rimRadius, _furrowEnd, along))
-                * (1f - SmoothMath.Smootherstep(_furrowEnd, _furrowEnd + _scorchReach, along))
-                * (1f - SmoothMath.Smootherstep(halfWidth, halfWidth + _scorchReach, Mathf.Abs(side)));
-            scorch = Mathf.Max(craterScorch, trailScorch);
+            scorch = Scorch(distance, along, side, halfWidth);
             return height;
+        }
+
+        /// <summary>How scorched the dust is at (x, z), 0..1: the same weight <see cref="Sample"/> reports.</summary>
+        public float ScorchAt(float x, float z)
+        {
+            var offset = new Vector2(x - Center.x, z - Center.y);
+            if (TrailDistance(new Vector2(x, z)) >= _reach)
+            {
+                return 0f;
+            }
+
+            float along = Vector2.Dot(offset, _back);
+            return Scorch(offset.magnitude, along, Vector2.Dot(offset, _across), HalfWidthAt(along));
+        }
+
+        /// <summary>
+        /// Darkest over the crater and at the furrow's head, fading toward its tail, then evenly out past the rim
+        /// crest and the furrow's edges over the scorch reach.
+        /// </summary>
+        private float Scorch(float distance, float along, float side, float halfWidth)
+        {
+            float crater = 1f - Fade(distance - _rimRadius);
+            float trail = SmoothMath.Smootherstep(0f, _rimRadius, along)
+                * (1f - (1f - TailScorch) * SmoothMath.Smootherstep(_rimRadius, _furrowEnd, along))
+                * (1f - Fade(along - _furrowEnd))
+                * (1f - Fade(Mathf.Abs(side) - halfWidth));
+            return Mathf.Max(crater, trail);
+        }
+
+        private float Fade(float beyond)
+        {
+            return SmoothMath.SmoothRamp(beyond, _scorchReach, _scorchReach * ScorchEase);
         }
 
         private float Crater(float distance)

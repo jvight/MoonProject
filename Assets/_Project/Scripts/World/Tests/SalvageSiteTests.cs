@@ -45,6 +45,12 @@ namespace MoonProject.World.Tests
         private const float MinFurrowInSight = 0.5f;
         private const float FarFromTheImpact = 40f;
 
+        // The scorched crater floor paints at least this much darker (luminance) than the floor on a ring this far
+        // out; the light direction only steers rock paint.
+        private const float MinScorchContrast = 0.1f;
+        private const float OpenFloorRing = 70f;
+        private static readonly Vector3 PainterLight = new Vector3(0.3f, 0.35f, 0.9f);
+
         // The drill rig's footprint edge stands within this far of the crest of a crater at least this large.
         private const float RimReach = 6f;
         private const float MinRigCraterRadius = 15f;
@@ -209,6 +215,25 @@ namespace MoonProject.World.Tests
         }
 
         [Test]
+        public void Kestrel_ScorchedDust_ReadsDarkerThanTheFloorAround()
+        {
+            var painter = new TerrainPainter(new TerrainPaintSettings(), WorldSettings.DefaultSeed, PainterLight);
+            KestrelImpact kestrel = _surface.Kestrel;
+            float scorched = 0f;
+            float around = 0f;
+            const int samples = 24;
+            for (int i = 0; i < samples; i++)
+            {
+                Vector2 direction = MoonSurface.BearingToDirection(i * 360f / samples);
+                scorched += Luminance(painter, kestrel.Center + direction * kestrel.FloorRadius * 0.5f);
+                around += Luminance(painter, kestrel.Center + direction * OpenFloorRing);
+            }
+
+            Assert.Greater((around - scorched) / samples, MinScorchContrast,
+                "Kestrel-3's crater should read as a dark scar on the floor");
+        }
+
+        [Test]
         public void Drill_StandsOnACraterRim()
         {
             WorldAnchor site = Site(Drill);
@@ -337,6 +362,13 @@ namespace MoonProject.World.Tests
             }
 
             return true;
+        }
+
+        private float Luminance(TerrainPainter painter, Vector2 p)
+        {
+            SurfaceSample sample = _surface.Sample(p.x, p.y);
+            Color32 c = painter.Ground(new Vector3(p.x, sample.Height, p.y), sample);
+            return (0.2126f * c.r + 0.7152f * c.g + 0.0722f * c.b) / 255f;
         }
 
         private float Slope(Vector2 p)
