@@ -84,7 +84,7 @@ namespace MoonProject.UI.Tests
         [Test]
         public void CountUp_CountsTowardsTheTarget_NeverPastIt_AndReportsOnlyChanges()
         {
-            var settings = new ScrapChipSettings();
+            var settings = new MaterialsChipSettings();
             var count = new CountUp(settings);
             count.Snap(10);
             count.SetTarget(30);
@@ -110,8 +110,8 @@ namespace MoonProject.UI.Tests
         [Test]
         public void CountUp_TakesLongerForBiggerChanges_WithinItsBounds()
         {
-            var settings = new ScrapChipSettings();
-            Assert.Greater(SecondsToCount(settings, 12), SecondsToCount(settings, 3), "a bigger gift counts longer");
+            var settings = new MaterialsChipSettings();
+            Assert.Greater(SecondsToCount(settings, 12), SecondsToCount(settings, 3), "a bigger haul counts longer");
             float huge = SecondsToCount(settings, 500);
             Assert.LessOrEqual(huge, settings.MaxCountSeconds + 2 * Frame, "but never forever");
             Assert.Greater(huge, settings.MaxCountSeconds * 0.8f);
@@ -120,7 +120,7 @@ namespace MoonProject.UI.Tests
         [Test]
         public void CountUp_ANewTargetMidCount_ContinuesFromTheShownNumber()
         {
-            var count = new CountUp(new ScrapChipSettings());
+            var count = new CountUp(new MaterialsChipSettings());
             count.Snap(0);
             count.SetTarget(20);
             for (int i = 0; i < 10; i++)
@@ -172,7 +172,7 @@ namespace MoonProject.UI.Tests
             Assert.AreEqual(settings.MaxReadSeconds, settings.ReadSeconds(10000));
         }
 
-        private static float SecondsToCount(ScrapChipSettings settings, int delta)
+        private static float SecondsToCount(MaterialsChipSettings settings, int delta)
         {
             var count = new CountUp(settings);
             count.Snap(0);

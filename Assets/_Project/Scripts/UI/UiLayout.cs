@@ -34,10 +34,9 @@ namespace MoonProject.UI
             FriendNameAnchor = Require<VisualElement>("friend-name-anchor");
             FriendName = Require<Label>("friend-name");
 
-            ScrapChip = Require<VisualElement>("scrap-chip");
-            ScrapChipShadow = Require<VisualElement>("scrap-chip-shadow");
-            ScrapChipIcon = Require<VisualElement>("scrap-chip-icon");
-            ScrapChipCount = Require<Label>("scrap-chip-count");
+            MaterialsChip = Require<VisualElement>("materials-chip");
+            MaterialsChipShadow = Require<VisualElement>("materials-chip-shadow");
+            MaterialsChipItems = Require<VisualElement>("materials-chip-items");
 
             MemoryCard = Require<VisualElement>("memory-card");
             MemoryCardShadow = Require<VisualElement>("memory-card-shadow");
@@ -61,9 +60,7 @@ namespace MoonProject.UI
             TowerRingGlyph = Require<Label>("tower-ring-glyph");
             TowerHoldWord = Require<Label>("tower-hold-word");
             TowerNeed = Require<Label>("tower-need");
-            TowerCostRow = Require<VisualElement>("tower-cost-row");
-            TowerCostIcon = Require<VisualElement>("tower-cost-icon");
-            TowerCost = Require<Label>("tower-cost");
+            TowerRecipe = Require<VisualElement>("tower-recipe");
 
             Ticker = Require<VisualElement>("ticker");
             TickerLamp = Require<VisualElement>("ticker-lamp");
@@ -84,7 +81,8 @@ namespace MoonProject.UI
             RelayTagShadow = Require<VisualElement>("relay-tag-shadow");
             RelayTagRing = Require<VisualElement>("relay-tag-ring");
             RelayTagIcon = Require<VisualElement>("relay-tag-icon");
-            RelayTagCost = Require<Label>("relay-tag-cost");
+            RelayTagRecipe = Require<VisualElement>("relay-tag-recipe");
+            RelayTagNeed = Require<Label>("relay-tag-need");
 
             HopVeil = Require<VisualElement>("hop-veil");
             HopVeilDark = Require<VisualElement>("hop-veil-dark");
@@ -95,8 +93,7 @@ namespace MoonProject.UI
             PauseStack = Require<VisualElement>("pause-stack");
             PauseMain = Require<VisualElement>("pause-main");
             PauseMainShadow = Require<VisualElement>("pause-main-shadow");
-            PauseScrapIcon = Require<VisualElement>("pause-scrap-icon");
-            PauseScrapCount = Require<Label>("pause-scrap-count");
+            PauseMaterials = Require<VisualElement>("pause-materials");
             PauseCassettes = Require<VisualElement>("pause-cassettes");
             PauseCassetteIcon = Require<VisualElement>("pause-cassette-icon");
             PauseCassettesCount = Require<Label>("pause-cassettes-count");
@@ -159,13 +156,11 @@ namespace MoonProject.UI
 
         public Label FriendName { get; }
 
-        public VisualElement ScrapChip { get; }
+        public VisualElement MaterialsChip { get; }
 
-        public VisualElement ScrapChipShadow { get; }
+        public VisualElement MaterialsChipShadow { get; }
 
-        public VisualElement ScrapChipIcon { get; }
-
-        public Label ScrapChipCount { get; }
+        public VisualElement MaterialsChipItems { get; }
 
         public VisualElement MemoryCard { get; }
 
@@ -209,11 +204,7 @@ namespace MoonProject.UI
 
         public Label TowerNeed { get; }
 
-        public VisualElement TowerCostRow { get; }
-
-        public VisualElement TowerCostIcon { get; }
-
-        public Label TowerCost { get; }
+        public VisualElement TowerRecipe { get; }
 
         public VisualElement Ticker { get; }
 
@@ -247,7 +238,9 @@ namespace MoonProject.UI
 
         public VisualElement RelayTagIcon { get; }
 
-        public Label RelayTagCost { get; }
+        public VisualElement RelayTagRecipe { get; }
+
+        public Label RelayTagNeed { get; }
 
         public VisualElement HopVeil { get; }
 
@@ -265,9 +258,7 @@ namespace MoonProject.UI
 
         public VisualElement PauseMainShadow { get; }
 
-        public VisualElement PauseScrapIcon { get; }
-
-        public Label PauseScrapCount { get; }
+        public VisualElement PauseMaterials { get; }
 
         public VisualElement PauseCassettes { get; }
 

@@ -14,7 +14,8 @@ namespace MoonProject.UI
     /// time), turns the rover controls off and frees the cursor; resuming reverses all three. Resume, Settings
     /// (volumes, look speed, invert look, language; persisted) and Quit (asks once). Keyboard, mouse and gamepad all
     /// work: UI Toolkit moves focus between the buttons and sliders; Esc / B steps back one level. Every touch is
-    /// published as a <see cref="UiCue"/> (open, close, focus move, confirm, back, slider step) for Audio. Once 07 owns
+    /// published as a <see cref="UiCue"/> (open, close, focus move, confirm, back, slider step) for Audio. Beside the
+    /// heading, a small summary shows 07's metal, wiring and optics (<see cref="IMaterialStock"/>). Once 07 owns
     /// a cassette, a quiet line under the heading counts them against every tape in the game (both numbers from
     /// <see cref="IRadioProgram"/>, so a loaded save is counted right); once a relay mast is lit, another counts the
     /// lit masts against them all (<see cref="IRelayStatus"/>). Neither shows before the world has shown the thing.
@@ -33,7 +34,7 @@ namespace MoonProject.UI
         private readonly IMaterialStock _materials;
         private readonly IRadioProgram _radio;
         private readonly IRelayStatus _relays;
-        private readonly IntText _numbers;
+        private readonly MaterialSlots _stock;
         private readonly CursorPolicy _cursor;
         private readonly Action _quit;
         private readonly PauseClock _clock;
@@ -64,7 +65,7 @@ namespace MoonProject.UI
             _materials = materials ?? throw new ArgumentNullException(nameof(materials));
             _radio = radio ?? throw new ArgumentNullException(nameof(radio));
             _relays = relays ?? throw new ArgumentNullException(nameof(relays));
-            _numbers = numbers ?? throw new ArgumentNullException(nameof(numbers));
+            _stock = new MaterialSlots(layout.PauseMaterials, numbers, false);
             _cursor = cursor ?? throw new ArgumentNullException(nameof(cursor));
             _quit = quit ?? throw new ArgumentNullException(nameof(quit));
             _clock = new PauseClock(settings);
@@ -81,7 +82,6 @@ namespace MoonProject.UI
             _quitPage.Snap(false);
             new ShadowPainter(layout.PauseMainShadow);
             new ShadowPainter(layout.PauseSettingsShadow);
-            new ScrapIconPainter(layout.PauseScrapIcon);
             new CassetteIconPainter(layout.PauseCassetteIcon);
             new RelayIconPainter(layout.PauseRelayIcon);
 
@@ -127,7 +127,7 @@ namespace MoonProject.UI
             _clock.Pause();
             _input.Disable();
             _cursor.Menu();
-            _layout.PauseScrapCount.text = _numbers.Get(_materials.Total);
+            WriteMaterials();
             WriteCassettes();
             WriteRelays();
             _veil.Show();
@@ -281,6 +281,16 @@ namespace MoonProject.UI
             {
                 _layout.PauseCassettesCount.text = string.Format(_localization.Get(UiKeys.PauseCassettes), owned,
                     _radio.TotalTapeCount);
+            }
+        }
+
+        /// <summary>The stock summary in the header: every material's icon and count.</summary>
+        private void WriteMaterials()
+        {
+            for (int i = 0; i < Materials.Count; i++)
+            {
+                SalvageMaterial material = Materials.At(i);
+                _stock.SetCount(material, Materials.Of(_materials, material));
             }
         }
 

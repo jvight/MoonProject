@@ -14,7 +14,6 @@ namespace MoonProject.UI
         public const string CardClose = "ui.card.close";
         public const string TowerLevel = "ui.tower.level";
         public const string TowerHold = "ui.tower.hold";
-        public const string TowerNeed = "ui.tower.need";
         public const string TowerPurchased = "ui.tower.purchased";
         public const string LogCaption = "ui.card.log_caption";
         public const string CrewLogCaption = "ui.card.crew_log";
@@ -22,6 +21,7 @@ namespace MoonProject.UI
         public const string TapeCount = "ui.card.tape_count";
         public const string PauseCassettes = "ui.pause.cassettes";
         public const string PauseRelays = "ui.pause.relays";
+        public const string RecipeNeed = "ui.recipe.need";
 
         /// <summary>"hint.excavate": the one word of the prompt teaching <paramref name="kind"/>.</summary>
         public static string Hint(InteractionKind kind)
@@ -94,6 +94,22 @@ namespace MoonProject.UI
                     return "ui.station.workshop";
                 default:
                     throw new ArgumentOutOfRangeException(nameof(station), station, "This station has no name key.");
+            }
+        }
+
+        /// <summary>"material.wiring": a salvage material's name.</summary>
+        public static string MaterialName(SalvageMaterial material)
+        {
+            switch (material)
+            {
+                case SalvageMaterial.Metal:
+                    return "material.metal";
+                case SalvageMaterial.Wiring:
+                    return "material.wiring";
+                case SalvageMaterial.Optics:
+                    return "material.optics";
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(material), material, "This material has no name key.");
             }
         }
 

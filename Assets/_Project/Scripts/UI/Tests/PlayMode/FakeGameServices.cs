@@ -8,8 +8,8 @@ namespace MoonProject.UI.PlayModeTests
 {
     /// <summary>
     /// Everything the UI reads from the World, Rover, Audio and Gameplay domains, as one scriptable stand-in system
-    /// (initialised before the UI). Tests set the tether state, the gameplay hint, the wallet, the tower offer, the
-    /// radio program, the relay network and the radio-hop.
+    /// (initialised before the UI). Tests set the tether state, the gameplay hint, the material stock, the tower offer,
+    /// the radio program, the relay network, and the radio-hop.
     /// </summary>
     public sealed class FakeGameServices : MonoBehaviour, IGameSystem, IViewCamera, IAudioSettings, ILookSettings,
         IMaterialStock, ITetherAim, IInteractionHints, IUpgradeShop, IRoverState, IFriendStatuses, IRadioProgram,
@@ -60,16 +60,13 @@ namespace MoonProject.UI.PlayModeTests
 
         public TetherAimState TetherState { get; set; }
 
-        /// <summary>Material units the fake holds, all counted as metal (it compares totals only).</summary>
-        public int Balance { get; private set; }
+        public int Metal { get; private set; }
 
-        public int Metal => Balance;
+        public int Wiring { get; private set; }
 
-        public int Wiring => 0;
+        public int Optics { get; private set; }
 
-        public int Optics => 0;
-
-        public int Total => Balance;
+        public int Total => Metal + Wiring + Optics;
 
         public TetherAimState State => TetherState;
 
@@ -235,22 +232,33 @@ namespace MoonProject.UI.PlayModeTests
             return TillyStatus;
         }
 
-        /// <summary>Sets the units held and publishes the change like the real stock.</summary>
-        public void SetBalance(int balance)
+        /// <summary>Sets the materials held and publishes the change like the real stock.</summary>
+        public void SetMaterials(int metal, int wiring, int optics)
         {
-            Balance = balance;
-            _events.Publish(new MaterialsChanged(balance, 0, 0));
+            Metal = metal;
+            Wiring = wiring;
+            Optics = optics;
+            _events.Publish(new MaterialsChanged(metal, wiring, optics));
         }
 
         public int Of(SalvageMaterial material)
         {
-            return material == SalvageMaterial.Metal ? Balance : 0;
+            switch (material)
+            {
+                case SalvageMaterial.Metal:
+                    return Metal;
+                case SalvageMaterial.Wiring:
+                    return Wiring;
+                case SalvageMaterial.Optics:
+                    return Optics;
+                default:
+                    throw new System.ArgumentOutOfRangeException(nameof(material), material, "Unknown material.");
+            }
         }
 
-        /// <summary>The fake affords a recipe when it holds as many units in total.</summary>
         public bool Has(Recipe recipe)
         {
-            return Balance >= recipe.Total;
+            return Metal >= recipe.Metal && Wiring >= recipe.Wiring && Optics >= recipe.Optics;
         }
 
         public float GetVolume(AudioBus bus)
@@ -316,7 +324,8 @@ namespace MoonProject.UI.PlayModeTests
 
             Purchases++;
             UpgradeLevel++;
-            SetBalance(Balance - offer.NextCost.Total);
+            Recipe cost = offer.NextCost;
+            SetMaterials(Metal - cost.Metal, Wiring - cost.Wiring, Optics - cost.Optics);
             _events.Publish(new UpgradePurchased(upgradeId, UpgradeLevel));
             return PurchaseResult.Purchased;
         }

@@ -16,9 +16,8 @@ namespace MoonProject.UI.PlayModeTests
     /// <summary>
     /// Steady-state zero-GC check of the UI: with a prompt following a moving point under the reticle, with the tower
     /// panel and its pinned chip, with a ticker line resting, with the hop list over a moving fade, and with the
-    /// pause menu open, one frame additionally runs the UI's Update 600 times. Unity's "GC Allocated In Frame" for the
-    /// quietest of three such frames must stay at the level of plain frames; a control frame proves the counter sees
-    /// allocations at all.
+    /// pause menu open, one frame additionally runs the UI's Update 600 times. Unity's "GC Allocated In Frame" for the quietest of three such frames must stay at the level of plain
+    /// frames; a control frame proves the counter sees allocations at all.
     /// </summary>
     public sealed class UiAllocationTests : InputTestFixture
     {
@@ -84,7 +83,8 @@ namespace MoonProject.UI.PlayModeTests
         {
             InputSystem.AddDevice<Keyboard>();
             _rig = UiTestRig.Boot(_controls, _slot);
-            _rig.Fakes.SetBalance(20);
+            _rig.Fakes.Upgrade = _rig.TestTower();
+            _rig.Fakes.SetMaterials(1, 1, 0);
             _rig.Fakes.AtStation = true;
             yield return new WaitForSecondsRealtime(2f);
             Assert.IsTrue(_rig.Ui.Tower.IsVisible && _rig.Ui.Chip.IsVisible);

@@ -72,6 +72,8 @@ namespace MoonProject.UI.PlayModeTests
         private GameObject _bellCamera;
         private GameObject _bellStandIn;
         private GameObject _mastCamera;
+        private UpgradeDefinition _tower;
+        private UpgradeDefinition _bench;
 
         public override void TearDown()
         {
@@ -79,6 +81,8 @@ namespace MoonProject.UI.PlayModeTests
             Object.DestroyImmediate(_bellCamera);
             Object.DestroyImmediate(_bellStandIn);
             Object.DestroyImmediate(_mastCamera);
+            Object.DestroyImmediate(_tower);
+            Object.DestroyImmediate(_bench);
             Object.DestroyImmediate(_uiHost);
             Object.DestroyImmediate(_fakesHost);
             Object.DestroyImmediate(_panel);
@@ -148,10 +152,11 @@ namespace MoonProject.UI.PlayModeTests
             yield return Capture(camera, folder, "03_reticle_hover");
             fakes.TetherState = TetherAimState.Idle;
 
-            fakes.SetBalance(0);
-            fakes.SetBalance(23);
-            yield return new WaitForSecondsRealtime(1.8f);
-            yield return Capture(camera, folder, "04_scrap_chip");
+            fakes.SetMaterials(4, 2, 1);
+            fakes.SetMaterials(7, 2, 3);
+            yield return new WaitForSecondsRealtime(_tuning.MaterialsChip.PulseSeconds * 0.5f);
+            yield return Capture(camera, folder, "04_materials_chip_gain");
+            yield return new WaitForSecondsRealtime(_tuning.MaterialsChip.PulseSeconds);
 
             context.Events.Publish(new RelicDeposited("cassette_player", Vector3.zero, 3));
             yield return new WaitForSecondsRealtime(_tuning.MemoryCard.AppearDelay +
@@ -160,13 +165,14 @@ namespace MoonProject.UI.PlayModeTests
             ui.Card.Dismiss();
             yield return new WaitForSecondsRealtime(1.5f);
 
+            fakes.Upgrade = _tower;
             fakes.AtStation = true;
             yield return new WaitForSecondsRealtime(1.2f);
             Press(keyboard.eKey);
             yield return new WaitForSecondsRealtime(_tuning.TowerPanel.HoldSeconds * 0.55f);
             yield return Capture(camera, folder, "06_tower_holding");
             Release(keyboard.eKey);
-            fakes.SetBalance(6);
+            fakes.SetMaterials(1, 0, 3);
             yield return new WaitForSecondsRealtime(1.5f);
             yield return Capture(camera, folder, "07_tower_short");
             fakes.AtStation = false;
@@ -236,25 +242,27 @@ namespace MoonProject.UI.PlayModeTests
             yield return Capture(camera, folder, "21_dial_readout");
             yield return new WaitForSecondsRealtime(ReadoutExit());
 
-            UpgradeDefinition tower = fakes.Upgrade;
-            fakes.Upgrade = AssetDatabase.LoadAssetAtPath<UpgradeDefinition>(UiTestRig.WorkbenchUpgradePath);
-            fakes.SetBalance(200);
+            fakes.Upgrade = _bench;
+            fakes.SetMaterials(12, 7, 2);
             fakes.AtStation = true;
             yield return new WaitForSecondsRealtime(1.8f);
-            yield return Capture(camera, folder, "22_workbench_panel_and_ticker");
+            yield return Capture(camera, folder, "22_bench_affordable_and_ticker");
+            fakes.SetMaterials(12, 3, 0);
+            yield return new WaitForSecondsRealtime(1f);
+            yield return Capture(camera, folder, "22b_bench_short");
             fakes.AtStation = false;
-            fakes.Upgrade = tower;
+            fakes.Upgrade = _tower;
             yield return new WaitForSecondsRealtime(1f);
 
             Transform socket = DarkMastSocket(context.Get<IWorldAnchors>());
             Camera mastCamera = MastCamera(socket, camera);
             fakes.Camera = mastCamera;
-            fakes.NextCost = new Recipe(60, 30, 0);
-            fakes.SetBalance(30);
+            fakes.NextCost = new Recipe(6, 4, 0);
+            fakes.SetMaterials(2, 4, 0);
             fakes.PrimaryHint = new InteractionHint(InteractionKind.Restore, socket.position, false);
             yield return new WaitForSecondsRealtime(_tuning.Relays.Tag.FadeIn + 1f);
             yield return Capture(mastCamera, folder, "32_relay_tag_short");
-            fakes.SetBalance(200);
+            fakes.SetMaterials(8, 5, 0);
             fakes.PrimaryHint = new InteractionHint(InteractionKind.Restore, socket.position, true);
             yield return new WaitForSecondsRealtime(_tuning.Prompts.Find(InteractionKind.Restore).DwellSeconds +
                                                     _tuning.Prompts.Reveal.FadeIn + 0.8f);
@@ -575,12 +583,16 @@ namespace MoonProject.UI.PlayModeTests
         {
             _fakesHost = new GameObject("CaptureFakes");
             fakes = _fakesHost.AddComponent<FakeGameServices>();
-            fakes.Upgrade = AssetDatabase.LoadAssetAtPath<UpgradeDefinition>(UiTestRig.UpgradePath);
+            _tower = UiTestRig.CopyCosting(UiTestRig.UpgradePath, new Recipe(2, 1, 0), new Recipe(4, 2, 1),
+                new Recipe(6, 4, 2));
+            _bench = UiTestRig.CopyCosting(UiTestRig.WorkbenchUpgradePath, new Recipe(10, 6, 2));
+            fakes.Upgrade = _tower;
             fakes.Friend = AssetDatabase.LoadAssetAtPath<FriendDefinition>(UiTestRig.TillyPath);
             fakes.Camera = context.Get<IViewCamera>().Camera;
             fakes.Position = context.Get<IRoverState>().Position;
             fakes.TillyStatus = new FriendStatus(FriendState.Dormant, 0, 3, false, false, new Vector3(0f, 0f, 500f));
             fakes.Initialize(new GameContext(context.Events, context.Input));
+            fakes.SetMaterials(10, 6, 2);
 
             _target = new RenderTexture(Width, Height, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
             _target.Create();

@@ -12,15 +12,15 @@ namespace MoonProject.UI
     /// buy, a compact panel offers it. Its header says where 07 is ("ui.station.&lt;station&gt;", with the station's
     /// own accent and lamp) and, for an upgrade with several levels, which level is next, or else the upgrade's name.
     /// Below: the level's title and what it does in plain words (the localized "upgrade.&lt;id&gt;.&lt;level&gt;.*"
-    /// strings), its cost (the balance stays in view in the pinned scrap chip; a shortfall is said in words), and a
-    /// ring that fills while the confirm button is held (<see cref="HoldToConfirm"/>: no accidental purchases). Buying
-    /// goes through <see cref="IUpgradeShop"/>; the panel glows a moment, then shows the next level or bows out when
-    /// all are bought. The ring starting and completing are published as <see cref="UiCue"/>s.
+    /// strings), its recipe in materials (<see cref="RecipeView"/>: the ones 07 is short of dimmed, with one quiet
+    /// need line in place of the hold; the stock stays in view in the pinned materials chip), and a ring that fills
+    /// while the confirm button is held (<see cref="HoldToConfirm"/>: no accidental purchases). Buying goes through
+    /// <see cref="IUpgradeShop"/>; the panel glows a moment, then shows the next level or bows out when all are bought.
+    /// The ring starting and completing are published as <see cref="UiCue"/>s.
     /// </summary>
     internal sealed class TowerPanel
     {
         public const string CelebrateClass = "tower-panel--celebrate";
-        public const string ShortClass = "cost--short";
 
         private static readonly UpgradeStationKind[] Stations =
             (UpgradeStationKind[])Enum.GetValues(typeof(UpgradeStationKind));
@@ -31,14 +31,14 @@ namespace MoonProject.UI
         private readonly IUpgradeShop _shop;
         private readonly IMaterialStock _materials;
         private readonly IInteractionHints _hints;
-        private readonly IntText _numbers;
+        private readonly RecipeView _recipe;
         private readonly Reveal _reveal;
         private readonly HoldToConfirm _hold;
         private readonly ProgressRingPainter _ring;
         private readonly UiLayout _layout;
         private UpgradeDefinition _shownUpgrade;
         private int _shownLevel = -1;
-        private int _shownBalance = -1;
+        private bool _shownAffordable;
         private string _shownGlyph;
         private float _celebrateTimer;
 
@@ -52,13 +52,12 @@ namespace MoonProject.UI
             _shop = shop ?? throw new ArgumentNullException(nameof(shop));
             _materials = materials ?? throw new ArgumentNullException(nameof(materials));
             _hints = hints ?? throw new ArgumentNullException(nameof(hints));
-            _numbers = numbers ?? throw new ArgumentNullException(nameof(numbers));
+            _recipe = new RecipeView(layout.TowerRecipe, layout.TowerNeed, localization, numbers);
             _reveal = new Reveal(layout.TowerPanel, settings.Reveal);
             _reveal.Snap(false);
             _hold = new HoldToConfirm(settings);
             _ring = new ProgressRingPainter(layout.TowerRing);
             new ShadowPainter(layout.TowerPanelShadow);
-            new ScrapIconPainter(layout.TowerCostIcon);
             layout.TowerHoldWord.text = localization.Get(UiKeys.TowerHold);
         }
 
@@ -83,6 +82,9 @@ namespace MoonProject.UI
 
         /// <summary>0..1 fill of the hold ring.</summary>
         public float HoldProgress => _hold.Progress;
+
+        /// <summary>The recipe on the panel (tests and captures).</summary>
+        public RecipeView Recipe => _recipe;
 
         /// <param name="deltaTime">Unscaled seconds; pass 0 while paused.</param>
         /// <param name="gateOpen">False while paused.</param>
@@ -145,6 +147,7 @@ namespace MoonProject.UI
         public void Relocalize()
         {
             _layout.TowerHoldWord.text = _localization.Get(IsCelebrating ? UiKeys.TowerPurchased : UiKeys.TowerHold);
+            _recipe.Relocalize();
             _shownUpgrade = null;
             _shownLevel = -1;
         }
@@ -162,8 +165,8 @@ namespace MoonProject.UI
             _celebrateTimer = _settings.CelebrateSeconds;
             _layout.TowerPanel.AddToClassList(CelebrateClass);
             _layout.TowerHoldWord.text = _localization.Get(UiKeys.TowerPurchased);
-            _layout.TowerNeed.style.display = DisplayStyle.None;
             _layout.TowerConfirm.style.display = DisplayStyle.Flex;
+            _shownAffordable = true;
         }
 
         private void EndCelebration()
@@ -185,12 +188,6 @@ namespace MoonProject.UI
 
         private void Refresh(UpgradeDefinition upgrade, UpgradeOffer offer)
         {
-            int balance = _materials.Total;
-            if (upgrade == _shownUpgrade && offer.CurrentLevel == _shownLevel && balance == _shownBalance)
-            {
-                return;
-            }
-
             if (upgrade != _shownUpgrade || offer.CurrentLevel != _shownLevel)
             {
                 int level = offer.CurrentLevel + 1;
@@ -201,22 +198,19 @@ namespace MoonProject.UI
                     : _localization.Get(UiKeys.UpgradeName(upgrade.Id));
                 _layout.TowerTitle.text = _localization.Get(UiKeys.UpgradeTitle(upgrade.Id, level));
                 _layout.TowerDescription.text = _localization.Get(UiKeys.UpgradeEffect(upgrade.Id, level));
-                _layout.TowerCost.text = _numbers.Get(offer.NextCost.Total);
+                _shownAffordable = !offer.CanAfford;
             }
 
+            _recipe.Show(offer.NextCost, _materials);
             bool affordable = offer.CanAfford;
-            _layout.TowerConfirm.style.display = affordable ? DisplayStyle.Flex : DisplayStyle.None;
-            _layout.TowerNeed.style.display = affordable ? DisplayStyle.None : DisplayStyle.Flex;
-            _layout.TowerCostRow.EnableInClassList(ShortClass, !affordable);
-            if (!affordable)
+            if (affordable != _shownAffordable)
             {
-                _layout.TowerNeed.text = string.Format(_localization.Get(UiKeys.TowerNeed),
-                    Math.Max(1, offer.NextCost.Total - balance));
+                _layout.TowerConfirm.style.display = affordable ? DisplayStyle.Flex : DisplayStyle.None;
+                _shownAffordable = affordable;
             }
 
             _shownUpgrade = upgrade;
             _shownLevel = offer.CurrentLevel;
-            _shownBalance = balance;
         }
     }
 }
