@@ -87,6 +87,9 @@ namespace MoonProject.Art
                                                  // enough to stay brown, not mauve, under moonlight
             new Color32(0x2E, 0x2B, 0x33, 0xFF), // SignalGlass: cold dark lens of a far signal lamp (relay masts);
                                                  // glows WarmLamp at the home lamps' strength
+            new Color32(0x7E, 0x4A, 0x3A, 0xFF), // Rust: decades of rust on patches and streaks (ruling 12)
+            new Color32(0xB8, 0xAF, 0xA2, 0xFF), // FadedPaint: crew enamel bleached chalky by decades of sun
+            new Color32(0xA8, 0xA6, 0xC4, 0xFF), // CakedDust: dust caked on the top faces of wrecks, paler than metal
         };
 
         private static readonly bool[] Emissive =
@@ -107,6 +110,9 @@ namespace MoonProject.Art
             true,  // EyeGlass
             false, // Wood
             true,  // SignalGlass
+            false, // Rust
+            false, // FadedPaint
+            false, // CakedDust
         };
 
         public static int Count => Colors.Length;
