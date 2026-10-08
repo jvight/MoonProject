@@ -955,8 +955,9 @@ namespace MoonProject.Art.Editor
         /// <summary>
         /// Opens Main.unity (never saved) and stages what M3-14 built for 07: Kenji's Rover Bay on the lander's
         /// WorkshopAnchor in place of the old bench with 07 parked on its turntable, the true-size relics beside a
-        /// second 07 and a 1.75 m reference person on open ground left of the lander, and a third 07 working the radio
-        /// tower's service port with the hatch swung open.
+        /// second 07 and a 1.75 m reference person on open ground left of the lander, a third 07 working the radio
+        /// tower's service port with the hatch swung open, a fourth resting on its charging dock with the glow lit, and
+        /// the crew's cable lift jammed halfway beside the ladder.
         /// </summary>
         private static CameraPoseSet BuiltFor07Scene(Material material, TemporaryObjects temporary)
         {
@@ -966,6 +967,7 @@ namespace MoonProject.Art.Editor
             StageRoverBay(lander, temporary, poses);
             StageRelics(lander, material, temporary, poses);
             StageTowerPort(temporary, poses);
+            StageDockAndLift(lander, temporary, poses);
             return new CameraPoseSet { width = 1600, height = 900, postProcessing = true, poses = poses.ToArray() };
         }
 
@@ -1039,6 +1041,27 @@ namespace MoonProject.Art.Editor
             poses.Add(Pose("tower_port", Point(stage.TransformPoint(new Vector3(3.4f, 2.2f, 5.2f))), Point(port), 50f));
             poses.Add(Pose("tower_port_close", Point(stage.TransformPoint(new Vector3(2.7f, 1.8f, 4.1f))),
                 Point(port), 40f));
+        }
+
+        /// <summary>
+        /// 07 resting on its dock at the ladder's foot, nose to the contacts, the charging glow lit; the lift as it has
+        /// hung for decades.
+        /// </summary>
+        private static void StageDockAndLift(Transform lander, TemporaryObjects temporary, List<CameraPose> poses)
+        {
+            Transform dock = Descendant(lander, "DockAnchor");
+            GameObject rover = Instantiate(RoverModelBuilder.ModelName, temporary, ArtPaths.RoverFolder);
+            rover.transform.SetPositionAndRotation(dock.position, dock.rotation);
+            SetGlow(lander, "DockGlow", new[] { string.Empty }, 1f);
+            Vector3 lift = Descendant(lander, "LiftPlatform").position;
+            poses.Add(Pose("dock_rest", Point(lander.TransformPoint(new Vector3(1.8f, 2.2f, 10.5f))),
+                Point(dock.position + Vector3.up * 0.9f), 50f));
+            poses.Add(Pose("dock_close", Point(lander.TransformPoint(new Vector3(-1.3f, 1.3f, 2.35f))),
+                Point(lander.TransformPoint(new Vector3(0f, 0.6f, 3.35f))), 50f));
+            poses.Add(Pose("lift", Point(lander.TransformPoint(new Vector3(6.5f, 3.2f, 10f))),
+                Point(lift + Vector3.up * 0.8f), 50f));
+            poses.Add(Pose("lift_close", Point(lander.TransformPoint(new Vector3(4.2f, 2.4f, 7.2f))),
+                Point(lift + lander.TransformDirection(new Vector3(0f, 0.6f, -1f))), 45f));
         }
 
         /// <summary>The radio tower stage the open scene shows (fails loudly if none is active).</summary>
