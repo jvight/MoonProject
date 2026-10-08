@@ -108,6 +108,16 @@ MonoBehaviour:
       _dwellSeconds: 0.6
       _liftMetres: 1.8
       _usesToRetire: 1
+    - _kind: 9
+      _action: 1
+      _dwellSeconds: 0.4
+      _liftMetres: 0.9
+      _usesToRetire: 2
+    - _kind: 10
+      _action: 1
+      _dwellSeconds: 0.8
+      _liftMetres: 1.7
+      _usesToRetire: 2
     _startDelay: 9
     _maxShowSeconds: 7
     _repeatCooldown: 25
@@ -211,3 +221,27 @@ MonoBehaviour:
       _springFrequency: 1.8
       _springDamping: 0.7
     _holdSeconds: 2.4
+  _relays:
+    _veilMaxChangePerSecond: 3
+    _veilMaxDarkness: 0.94
+    _grainOpacity: 0.05
+    _grainTexels: 256
+    _grainTilePixels: 256
+    _grainDensity: 0.5
+    _grainStepsPerSecond: 12
+    _list:
+      _fadeIn: 0.3
+      _fadeOut: 0.35
+      _slide: 8
+      _scaleFrom: 0.96
+      _springFrequency: 1.8
+      _springDamping: 0.7
+    _tag:
+      _fadeIn: 0.4
+      _fadeOut: 0.4
+      _slide: 8
+      _scaleFrom: 0.9
+      _springFrequency: 1.4
+      _springDamping: 0.6
+    _tagLiftMetres: 0.9
+    _tagStackGap: 8
