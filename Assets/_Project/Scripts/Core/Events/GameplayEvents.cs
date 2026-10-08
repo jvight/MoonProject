@@ -349,4 +349,45 @@ namespace MoonProject.Core.Events
 
         public Vector3 Position { get; }
     }
+
+    /// <summary>
+    /// A moment of a relay mast's restoration that Audio voices (other domains may react too): see
+    /// <see cref="RelayCued"/>. The link tone needs no cue of its own: it plays on <see cref="RelayRestored"/>, when
+    /// the mast comes online and its pulse leaves for home.
+    /// </summary>
+    public enum RelayCue
+    {
+        /// <summary>07 picked up a mast's relay part (drawn in like a friend's part).</summary>
+        PartCollected = 0,
+
+        /// <summary>07's beam starts stitching the mast (the scrap is paid).</summary>
+        Stitched = 1,
+
+        /// <summary>The relay part clicks into the mast's junction box.</summary>
+        PartSlotted = 2,
+
+        /// <summary>The mast straightens up with a creak.</summary>
+        Straightened = 3,
+
+        /// <summary>The mast's lamp starts warming: to full when it links home, else to a low listening glow.</summary>
+        LampWarmed = 4,
+    }
+
+    /// <summary>A relay mast did something worth a sound (docs/features/M3-06).</summary>
+    public readonly struct RelayCued
+    {
+        public RelayCued(RelayCue cue, string relayId, Vector3 position)
+        {
+            Cue = cue;
+            RelayId = relayId;
+            Position = position;
+        }
+
+        public RelayCue Cue { get; }
+
+        /// <summary>The mast's anchor id ("relay.0", ...).</summary>
+        public string RelayId { get; }
+
+        public Vector3 Position { get; }
+    }
 }
