@@ -26,6 +26,17 @@ namespace MoonProject.Art.Editor
         /// </summary>
         public static GameObject Write(ModelNode root, string folder, Material material, Material glowOffMaterial)
         {
+            return Write(root, folder, material, glowOffMaterial, null);
+        }
+
+        /// <summary>
+        /// As <see cref="Write(ModelNode, string, Material, Material)"/>; nodes marked
+        /// <see cref="ModelMaterial.PaletteWeather"/> (the weather skins) render with
+        /// <paramref name="weatherMaterial"/>.
+        /// </summary>
+        public static GameObject Write(ModelNode root, string folder, Material material, Material glowOffMaterial,
+            Material weatherMaterial)
+        {
             if (root == null)
             {
                 throw new ArgumentNullException(nameof(root));
@@ -41,7 +52,8 @@ namespace MoonProject.Art.Editor
             WriteMeshes(root, folder, meshes);
             using (var scratch = new BuilderScratchScene())
             {
-                GameObject instance = Instantiate(scratch, root, null, meshes, material, glowOffMaterial);
+                var materials = new[] { material, glowOffMaterial, weatherMaterial };
+                GameObject instance = Instantiate(scratch, root, null, meshes, materials);
                 string path = $"{folder}/{root.Name}.prefab";
 
                 // Unity matches objects by name when it overwrites a prefab, so nodes sharing a name (each salvage
@@ -130,24 +142,21 @@ namespace MoonProject.Art.Editor
             }
         }
 
-        private static Material MaterialFor(ModelNode node, Material material, Material glowOffMaterial)
+        /// <summary>A node's material (<paramref name="materials"/> in <see cref="ModelMaterial"/> order).</summary>
+        private static Material MaterialFor(ModelNode node, Material[] materials)
         {
-            if (node.Material != ModelMaterial.PaletteGlowOff)
-            {
-                return material;
-            }
-
-            if (glowOffMaterial == null)
+            Material chosen = materials[(int)node.Material];
+            if (chosen == null)
             {
                 throw new InvalidOperationException(
-                    $"'{node.Name}' renders glow-off but no glow-off material was given.");
+                    $"'{node.Name}' renders with {node.Material} but no such material was given.");
             }
 
-            return glowOffMaterial;
+            return chosen;
         }
 
         private static GameObject Instantiate(BuilderScratchScene scratch, ModelNode node, Transform parent,
-            Dictionary<ModelMesh, Mesh> meshes, Material material, Material glowOffMaterial)
+            Dictionary<ModelMesh, Mesh> meshes, Material[] materials)
         {
             GameObject gameObject = scratch.Create(node.Name, parent);
             Transform transform = gameObject.transform;
@@ -157,12 +166,12 @@ namespace MoonProject.Art.Editor
             if (node.Mesh != null)
             {
                 gameObject.AddComponent<MeshFilter>().sharedMesh = meshes[node.Mesh];
-                gameObject.AddComponent<MeshRenderer>().sharedMaterial = MaterialFor(node, material, glowOffMaterial);
+                gameObject.AddComponent<MeshRenderer>().sharedMaterial = MaterialFor(node, materials);
             }
 
             for (int i = 0; i < node.Children.Count; i++)
             {
-                Instantiate(scratch, node.Children[i], transform, meshes, material, glowOffMaterial);
+                Instantiate(scratch, node.Children[i], transform, meshes, materials);
             }
 
             return gameObject;
