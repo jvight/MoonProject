@@ -28,12 +28,19 @@ namespace MoonProject.World.Tests
         private const float ChainMargin = 10f;
 
         // relay.0 is the teaching mast in the spawn first frame (yaw 355, about +-45 degrees, ruling 8): well inside
-        // the view, at least 15 degrees from The Peak so the silhouettes read apart, 100-130 m out.
+        // the view, at least 15 degrees from The Peak so the silhouettes read apart. The play ramp at bearing 38
+        // fills that slice of the view out to its landing ground, ~130 m; the mast stands just beyond it, on its
+        // mound, rather than where a jump comes down.
         private const float SpawnYaw = 355f;
         private const float SpawnHalfView = 40f;
         private const float MinPeakSeparation = 15f;
         private const float MinTeachingDistance = 100f;
-        private const float MaxTeachingDistance = 130f;
+        private const float MaxTeachingDistance = 160f;
+
+        // A jump off a play ramp flies straight on along it and comes down within this far past the ramp's foot
+        // (a charged leap at top speed), at most this far outside its sides.
+        private const float RampFlightReach = 20f;
+        private const float RampFlightSpread = 2f;
         private const float BaseEyeHeight = 3f;
         private const float SightTargetClearance = 2f;
 
@@ -223,6 +230,23 @@ namespace MoonProject.World.Tests
             Assert.GreaterOrEqual(Mathf.Abs(Mathf.DeltaAngle(peak, bearing)), MinPeakSeparation,
                 "too close to The Peak");
             Assert.That(Flat(relay), Is.InRange(MinTeachingDistance, MaxTeachingDistance), "distance from home");
+        }
+
+        [Test]
+        public void TeachingRelay_StandsClearOfWhereRampJumpsComeDown()
+        {
+            WorldAnchor relay = Anchor(WorldAnchorIds.RelayPrefix + 0);
+            foreach (Ramp ramp in _surface.Ramps)
+            {
+                Vector2 offset = new Vector2(relay.Position.x, relay.Position.z) - ramp.Crest;
+                float along = Vector2.Dot(offset, ramp.Direction);
+                float across = Mathf.Abs(offset.y * ramp.Direction.x - offset.x * ramp.Direction.y);
+                float beyondEnds = Mathf.Max(0f, Mathf.Max(along - (ramp.FallLength + RampFlightReach),
+                    -ramp.RiseLength - along));
+                float beyondSides = Mathf.Max(0f, across - (ramp.HalfWidth + RampFlightSpread));
+                Assert.Greater(new Vector2(beyondEnds, beyondSides).magnitude, relay.Radius,
+                    $"relay.0's pad lies where a jump off the ramp at {ramp.Crest} comes down");
+            }
         }
 
         [Test]

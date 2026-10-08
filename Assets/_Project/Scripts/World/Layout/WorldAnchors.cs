@@ -90,8 +90,7 @@ namespace MoonProject.World
             anchors.Add(Make(surface, WorldAnchorIds.CanyonExit, exit.PointAt(exitTop), -exit.TangentAt(exitTop),
                 ExitRadius));
 
-            Vector2 mound = RelaySiteFinder.Find(surface, relays.MoundBearing, relays.MoundBearingSpread,
-                relays.MoundDistance, relays.MoundDistanceSpread, relays.PadRadius);
+            Vector2 mound = surface.Shaping.RelayMound.Center;
             Vector2 shoulder = RelaySiteFinder.Find(surface, relays.ShoulderBearing, relays.ShoulderBearingSpread,
                 relays.ShoulderDistance, relays.ShoulderDistanceSpread, relays.PadRadius);
             Vector2 mouth = main.PointAt(relays.MouthArc) + main.RightAt(relays.MouthArc) * relays.MouthLateral;

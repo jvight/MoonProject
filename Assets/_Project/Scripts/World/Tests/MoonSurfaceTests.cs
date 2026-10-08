@@ -9,6 +9,9 @@ namespace MoonProject.World.Tests
         private const float MaxDrivableSlopeDegrees = 20f;
         private const float RimClearanceAboveFloor = 40f;
 
+        // Kestrel-3's impact and the flat site footprints erase the few seeded craters beneath them (M3-13).
+        private const int MaxCratersErasedBySites = 4;
+
         // The dish's blinking light on the summit plateau: what the player must see from the base.
         private const float BeaconHeightAboveSummit = 4f;
 
@@ -205,7 +208,8 @@ namespace MoonProject.World.Tests
         [Test]
         public void Craters_AreAllPlaced_ClearOfThePadAndInsideTheFloor()
         {
-            Assert.AreEqual(_settings.CraterCount + _settings.Bowls.Length, _surface.Craters.Count);
+            int erased = _settings.CraterCount + _settings.Bowls.Length - _surface.Craters.Count;
+            Assert.That(erased, Is.InRange(0, MaxCratersErasedBySites), "only the craters under a site are erased");
             int bowls = 0;
             for (int i = 0; i < _surface.Craters.Count; i++)
             {
