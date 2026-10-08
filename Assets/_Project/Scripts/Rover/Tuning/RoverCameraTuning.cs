@@ -156,6 +156,11 @@ namespace MoonProject.Rover
         [SerializeField] private CameraMomentSettings _upgradeMoment =
             new CameraMomentSettings(1.3f, 1.8f, 1.5f, 0.5f, 6f, 0.6f, 0f, 45f, 14f, 0.5f, 40f);
 
+        [Tooltip("A relay mast 07 restored lights up: the camera eases low, back and a little to the side, looking up "
+            + "past 07 at the mast and its warming lamp against the sky, then returns (~8 s).")]
+        [SerializeField] private CameraMomentSettings _relayMoment =
+            new CameraMomentSettings(3f, 2.6f, 2.6f, 0.22f, 3f, 0.5f, 26f, 40f, -13f, 0.65f, 40f);
+
         [Tooltip("Seconds a camera moment takes to ease away when the player looks around (always skippable).")]
         [Range(0.1f, 3f)]
         [SerializeField] private float _momentCancelEaseOut = 0.6f;
@@ -267,6 +272,8 @@ namespace MoonProject.Rover
         public CameraMomentSettings UpgradeMoment => _upgradeMoment;
 
         public CameraMomentSettings LeapMoment => _leapMoment;
+
+        public CameraMomentSettings RelayMoment => _relayMoment;
 
         public float LeapMomentMinStrength => _leapMomentMinStrength;
 

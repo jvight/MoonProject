@@ -13,8 +13,8 @@ namespace MoonProject.Rover
     /// <see cref="CameraOrbit"/> into a Cinemachine 3 rig (OrbitalFollow locked to the target's yaw + RotationComposer,
     /// with Decollider and Deoccluder keeping it out of the terrain), widens the FOV with speed and dips softly on
     /// landings. Reads the rover only through <see cref="IRoverState"/>, so it must initialise after the rover.
-    /// Slow, skippable camera moments frame 07 with the beam while digging, a surfacing relic, or the base after an
-    /// upgrade (needs <see cref="IWorldLayout"/>). When 07 has rested a while
+    /// Slow, skippable camera moments frame 07 with the beam while digging, a surfacing relic, a relay mast's lamp as
+    /// it lights, or the base after an upgrade (needs <see cref="IWorldLayout"/>). When 07 has rested a while
     /// (<see cref="IRoverStillness"/>) with nothing going on, the camera drifts out to the lonely
     /// <see cref="WideShot"/>, composed against the analytic terrain (<see cref="ITerrainQuery"/>), and publishes
     /// <see cref="RoverWideShotChanged"/> as it opens and hands back. Camera moments, a leap, the tether and
@@ -83,6 +83,9 @@ namespace MoonProject.Rover
         /// <summary>The lonely wide shot's state (quiet time, weight, frame), for tests and tooling.</summary>
         public WideShot WideShot => _wide;
 
+        /// <summary>How far the current camera moment has eased in, 0..1 (for tests and tooling).</summary>
+        public float MomentWeight => _moment.Weight;
+
         public Camera Camera => _viewCamera;
 
         public float Sensitivity
@@ -121,6 +124,7 @@ namespace MoonProject.Rover
                 context.Events.Subscribe<ExcavationStarted>(OnExcavationStarted),
                 context.Events.Subscribe<ExcavationStopped>(OnExcavationStopped),
                 context.Events.Subscribe<RelicSurfaced>(OnRelicSurfaced),
+                context.Events.Subscribe<RelayRestored>(OnRelayRestored),
                 context.Events.Subscribe<UpgradePurchased>(OnUpgradePurchased),
                 context.Events.Subscribe<RoverJumped>(OnJumped),
                 context.Events.Subscribe<TetherAttached>(OnTetherAttached),
@@ -333,7 +337,7 @@ namespace MoonProject.Rover
             }
 
             _orbit.HorizontalAxis.Value = yaw;
-            _orbit.VerticalAxis.Value = Mathf.Min(elevation, _tuning.MaxPitch);
+            _orbit.VerticalAxis.Value = Mathf.Clamp(elevation, _tuning.MinPitch, _tuning.MaxPitch);
             _orbit.Radius = radius;
             _camera.Lens.FieldOfView = fov;
             ScreenComposerSettings composition = _composer.Composition;
@@ -483,6 +487,12 @@ namespace MoonProject.Rover
         private void OnRelicSurfaced(RelicSurfaced relic)
         {
             _moment.Start(_tuning.RelicMoment, relic.Position, false);
+        }
+
+        /// <summary>The mast 07 restored lights up: a slow look up at it and its lamp against the sky.</summary>
+        private void OnRelayRestored(RelayRestored relay)
+        {
+            _moment.Start(_tuning.RelayMoment, relay.Position, false);
         }
 
         /// <summary>A real leap (not a hop) lifts the camera and looks ahead to the landing until 07 is down.</summary>
