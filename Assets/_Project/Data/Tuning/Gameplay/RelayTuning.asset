@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 29a36a334e0c74b4d96219bdfddf95ce, type: 3}
+  m_Name: RelayTuning
+  m_EditorClassIdentifier: 
+  _mastReach: 110
+  _costs: 3c0000005a0000007800000096000000
+  _partDistance: {x: 14, y: 34}
+  _partPreferred: 22
+  _partRingStep: 4
+  _partAngleStep: 20
+  _partMaxSlope: 14
+  _partMargin: 2
+  _partPathTries: 16
+  _restoreRadius: 6
+  _restoreHold: 0.8
+  _stitch: 2
+  _partSlide: 1.3
+  _partArc: 0.4
+  _straighten: 1.6
+  _straightenOvershoot: 1.2
+  _lampWarm: 1.4
+  _lampGlow: 1
+  _waitingGlow: 0.12
+  _lampEase: 0.35
+  _pulseSpeed: 45
+  _pulseLength: 16
+  _pulseWidth: 0.35
+  _pulseGlow: 1.1
+  _pulseLift: 0.15
+  _pulseFade: 0.35
+  _chainDelay: 0.9
+  _padRadius: 3
+  _padRingWidth: 0.3
+  _padInviting: 0.3
+  _padOccupied: 0.8
+  _padBreathPeriod: 3.6
+  _padBreathDepth: 0.35
+  _padEase: 0.5
+  _padSegments: 48
+  _hopMaxSpeed: 0.8
+  _hopConfirmHold: 0.7
+  _hopCancelDrive: 0.35
+  _hopFadeOut: 0.8
+  _hopDark: 0.4
+  _hopFadeIn: 0.8
