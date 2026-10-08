@@ -96,6 +96,18 @@ namespace MoonProject.Gameplay
             return definition == _definition;
         }
 
+        public int UpgradeCount => _definition != null ? 1 : 0;
+
+        public UpgradeDefinition UpgradeAt(int index)
+        {
+            if (index != 0 || _definition == null)
+            {
+                throw new ArgumentOutOfRangeException(nameof(index), index, "The radio tower sells one upgrade.");
+            }
+
+            return _definition;
+        }
+
         internal void Wire(RadioTowerTuning tuning, UpgradeDefinition definition, Transform anchor,
             GameObject[] stages, Renderer[] stageLights, Transform[] beaconSockets)
         {

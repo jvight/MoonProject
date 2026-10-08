@@ -18,6 +18,7 @@ namespace MoonProject.UI.PlayModeTests
         private readonly float[] _volumes = { 1f, 1f, 1f, 1f };
         private readonly List<string> _tapes = new List<string>();
         private readonly List<string> _hopChoices = new List<string>();
+        private readonly Dictionary<string, int> _levels = new Dictionary<string, int>();
         private float _sensitivity = 1f;
         private EventBus _events;
 
@@ -48,9 +49,11 @@ namespace MoonProject.UI.PlayModeTests
 
         public int Count => Friend != null ? 1 : 0;
 
+        /// <summary>The station's one upgrade (the radio tower), unless <see cref="Bench"/> is set.</summary>
         public UpgradeDefinition Upgrade { get; set; }
 
-        public int UpgradeLevel { get; set; }
+        /// <summary>When set, the station sells these instead, in this order (Kenji's bench).</summary>
+        public UpgradeDefinition[] Bench { get; set; }
 
         public bool AtStation { get; set; }
 
@@ -99,7 +102,29 @@ namespace MoonProject.UI.PlayModeTests
 
         public bool IsAtStation => StationUpgrade != null;
 
-        public UpgradeDefinition StationUpgrade => AtStation ? Upgrade : null;
+        public UpgradeDefinition StationUpgrade
+        {
+            get
+            {
+                if (StationUpgradeCount == 0)
+                {
+                    return null;
+                }
+
+                for (int i = 0; i < StationUpgradeCount; i++)
+                {
+                    UpgradeDefinition upgrade = StationUpgradeAt(i);
+                    if (LevelOf(upgrade.Id) < upgrade.MaxLevel)
+                    {
+                        return upgrade;
+                    }
+                }
+
+                return StationUpgradeAt(StationUpgradeCount - 1);
+            }
+        }
+
+        public int StationUpgradeCount => !AtStation ? 0 : Bench?.Length ?? (Upgrade != null ? 1 : 0);
 
         public InteractionHint Primary => IsUpgradeOffered(out InteractionHint upgrade) ? upgrade : PrimaryHint;
 
@@ -296,21 +321,28 @@ namespace MoonProject.UI.PlayModeTests
             return kind != InteractionKind.None && kind == PrimaryHint.Kind;
         }
 
+        public UpgradeDefinition StationUpgradeAt(int index)
+        {
+            return Bench != null ? Bench[index] : Upgrade;
+        }
+
         public int LevelOf(string upgradeId)
         {
-            return Upgrade != null && upgradeId == Upgrade.Id ? UpgradeLevel : 0;
+            return _levels.TryGetValue(upgradeId, out int level) ? level : 0;
         }
 
         public bool TryGetOffer(string upgradeId, out UpgradeOffer offer)
         {
-            if (Upgrade == null || upgradeId != Upgrade.Id)
+            UpgradeDefinition upgrade = Sold(upgradeId);
+            if (upgrade == null)
             {
                 offer = default;
                 return false;
             }
 
-            bool maxed = UpgradeLevel >= Upgrade.MaxLevel;
-            offer = new UpgradeOffer(Upgrade, UpgradeLevel, !maxed && Has(Upgrade.Levels[UpgradeLevel].Recipe));
+            int level = LevelOf(upgradeId);
+            bool maxed = level >= upgrade.MaxLevel;
+            offer = new UpgradeOffer(upgrade, level, !maxed && Has(upgrade.Levels[level].Recipe));
             return true;
         }
 
@@ -337,24 +369,45 @@ namespace MoonProject.UI.PlayModeTests
             }
 
             Purchases++;
-            UpgradeLevel++;
+            _levels[upgradeId] = offer.CurrentLevel + 1;
             Recipe cost = offer.NextCost;
             SetMaterials(Metal - cost.Metal, Wiring - cost.Wiring, Optics - cost.Optics);
-            _events.Publish(new UpgradePurchased(upgradeId, UpgradeLevel));
+            _events.Publish(new UpgradePurchased(upgradeId, offer.CurrentLevel + 1));
             return PurchaseResult.Purchased;
         }
 
         private bool IsUpgradeOffered(out InteractionHint hint)
         {
-            if (AtStation && Upgrade != null && UpgradeLevel < Upgrade.MaxLevel)
+            UpgradeDefinition upgrade = StationUpgrade;
+            int level = upgrade != null ? LevelOf(upgrade.Id) : 0;
+            if (upgrade != null && level < upgrade.MaxLevel)
             {
-                hint = new InteractionHint(InteractionKind.Upgrade, Vector3.zero,
-                    Has(Upgrade.Levels[UpgradeLevel].Recipe));
+                hint = new InteractionHint(InteractionKind.Upgrade, Vector3.zero, Has(upgrade.Levels[level].Recipe));
                 return true;
             }
 
             hint = InteractionHint.None;
             return false;
+        }
+
+        /// <summary>The upgrade called <paramref name="upgradeId"/> if this station's catalogue has it.</summary>
+        private UpgradeDefinition Sold(string upgradeId)
+        {
+            UpgradeDefinition[] bench = Bench;
+            if (bench != null)
+            {
+                for (int i = 0; i < bench.Length; i++)
+                {
+                    if (bench[i].Id == upgradeId)
+                    {
+                        return bench[i];
+                    }
+                }
+
+                return null;
+            }
+
+            return Upgrade != null && Upgrade.Id == upgradeId ? Upgrade : null;
         }
     }
 }

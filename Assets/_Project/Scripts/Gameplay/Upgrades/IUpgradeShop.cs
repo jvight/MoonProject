@@ -14,6 +14,15 @@ namespace MoonProject.Gameplay
         /// <summary>What the station 07 is parked at offers now, or null.</summary>
         UpgradeDefinition StationUpgrade { get; }
 
+        /// <summary>How many upgrades the station 07 is parked at sells (0 while not parked).</summary>
+        int StationUpgradeCount { get; }
+
+        /// <summary>
+        /// The parked station's upgrade <paramref name="index"/>, in the station's own order (bought ones included), for
+        /// the bench's choosing panel. Allocation-free.
+        /// </summary>
+        UpgradeDefinition StationUpgradeAt(int index);
+
         int LevelOf(string upgradeId);
 
         bool TryGetOffer(string upgradeId, out UpgradeOffer offer);

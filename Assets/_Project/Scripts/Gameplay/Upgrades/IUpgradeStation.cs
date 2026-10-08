@@ -15,5 +15,11 @@ namespace MoonProject.Gameplay
         Vector3 PadCentre { get; }
 
         bool Sells(UpgradeDefinition definition);
+
+        /// <summary>How many upgrades it sells, bought ones included.</summary>
+        int UpgradeCount { get; }
+
+        /// <summary>Its upgrade <paramref name="index"/>, in its own order.</summary>
+        UpgradeDefinition UpgradeAt(int index);
     }
 }
