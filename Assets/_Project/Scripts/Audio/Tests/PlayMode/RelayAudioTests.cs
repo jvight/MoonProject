@@ -79,9 +79,9 @@ namespace MoonProject.Audio.PlayModeTests
         {
             _rig.Rover.Position = MastPad + new Vector3(0f, 0f, 5f);
             _rig.Reach.Light(Mast);
-            _rig.Events.Publish(new RelayRestored(Mast, MastPad + Vector3.up * 6f, 1, 4));
+            _rig.Events.Publish(new RelayRestored(Mast, MastPad + Vector3.up * 6f, 1, 4, "home", 3f));
 
-            // 300 m to home at 45 m/s is past the 3 s cap: the answer comes after 3 s.
+            // The pulse takes 3 s to run home: the answer comes back as it arrives.
             yield return new WaitForSeconds(2.5f);
             Assert.AreNotEqual("relay_link", LastClip, "the pulse is still on its way");
             yield return new WaitForSeconds(1f);

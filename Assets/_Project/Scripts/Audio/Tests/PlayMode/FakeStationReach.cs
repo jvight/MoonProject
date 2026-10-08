@@ -7,18 +7,20 @@ namespace MoonProject.Audio.PlayModeTests
 {
     /// <summary>
     /// An <see cref="IStationReach"/> the test drives: home first (lit, with the radio's 60 m clear radius), then
-    /// masts with a 110 m reach that the test lights. Allocation-free queries, like the real one.
+    /// masts with a 110 m reach and their lamp 6 m above the pad, which the test lights. Allocation-free queries,
+    /// like the real one.
     /// </summary>
     public sealed class FakeStationReach : IStationReach
     {
         public const float HomeRadius = 60f;
         public const float MastReach = 110f;
+        public const float LampHeight = 6f;
 
         private readonly List<RelayNode> _nodes = new List<RelayNode>();
 
         public FakeStationReach(Vector3 home)
         {
-            _nodes.Add(new RelayNode("home", home, true));
+            _nodes.Add(new RelayNode("home", home, true, HomeRadius, home + Vector3.up * LampHeight));
         }
 
         public int NodeCount => _nodes.Count;
@@ -46,8 +48,8 @@ namespace MoonProject.Audio.PlayModeTests
         {
             for (int i = 0; i < _nodes.Count; i++)
             {
-                float radius = i == 0 ? HomeRadius : MastReach;
-                if (_nodes[i].Lit && SignalField.HorizontalDistance(position, _nodes[i].Position) <= radius)
+                RelayNode node = _nodes[i];
+                if (node.Lit && SignalField.HorizontalDistance(position, node.Position) <= node.Radius)
                 {
                     return true;
                 }
@@ -72,7 +74,7 @@ namespace MoonProject.Audio.PlayModeTests
 
         public void AddMast(string id, Vector3 position)
         {
-            _nodes.Add(new RelayNode(id, position, false));
+            _nodes.Add(new RelayNode(id, position, false, MastReach, position + Vector3.up * LampHeight));
         }
 
         public void Light(string id)
@@ -81,7 +83,8 @@ namespace MoonProject.Audio.PlayModeTests
             {
                 if (string.Equals(_nodes[i].Id, id, StringComparison.Ordinal))
                 {
-                    _nodes[i] = new RelayNode(id, _nodes[i].Position, true);
+                    RelayNode node = _nodes[i];
+                    _nodes[i] = new RelayNode(id, node.Position, true, node.Radius, node.LampPosition);
                 }
             }
         }

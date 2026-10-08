@@ -5,7 +5,7 @@ using MoonProject.Core;
 
 namespace MoonProject.Audio.Tests
 {
-    /// <summary>The relay network in the mix: distance through the network, the radio-hop and home's answer.</summary>
+    /// <summary>The relay network in the mix: distance through the network and the radio-hop.</summary>
     public sealed class RelayNetworkAudioTests
     {
         private const float Frame = 1f / 60f;
@@ -26,9 +26,9 @@ namespace MoonProject.Audio.Tests
             _soundscape = ScriptableObject.CreateInstance<SoundscapeTuning>();
             _canyon = ScriptableObject.CreateInstance<CanyonAudioTuning>();
             _radio = ScriptableObject.CreateInstance<RadioTuning>();
-            _reach = new FakeStationReach(_radio.SignalRadius, MastReach);
-            _reach.Add("home", Vector3.zero, true);
-            _reach.Add("relay.0", MastNearby, false);
+            _reach = new FakeStationReach();
+            _reach.Add("home", Vector3.zero, true, _radio.SignalRadius);
+            _reach.Add("relay.0", MastNearby, false, MastReach);
         }
 
         [TearDown]
@@ -43,7 +43,7 @@ namespace MoonProject.Audio.Tests
 
         private float Distance(Vector3 position)
         {
-            return StationDistance.Equivalent(_reach, position, _radio.SignalRadius, MastReach);
+            return StationDistance.Equivalent(_reach, position, _radio.SignalRadius);
         }
 
         [Test]
@@ -63,11 +63,13 @@ namespace MoonProject.Audio.Tests
         }
 
         [Test]
-        public void InReach_IsAlwaysClear_EvenIfTheRadiiDisagree()
+        public void InReach_IsAlwaysClear_EvenWhileTheRadiosRadiusBloomsIn()
         {
-            _reach.Light("relay.0");
-            float tooSmall = StationDistance.Equivalent(_reach, OutThere, _radio.SignalRadius, 40f);
-            Assert.LessOrEqual(tooSmall, _radio.SignalRadius, "the network says it reaches: the radio is warm");
+            var upgraded = new FakeStationReach();
+            upgraded.Add("home", Vector3.zero, true, _radio.SignalRadius + 100f);
+            var justInside = new Vector3(_radio.SignalRadius + 90f, 0f, 0f);
+            float distance = StationDistance.Equivalent(upgraded, justInside, _radio.SignalRadius);
+            Assert.LessOrEqual(distance, _radio.SignalRadius, "the network says it reaches: the radio is warm");
         }
 
         [Test]
@@ -107,11 +109,9 @@ namespace MoonProject.Audio.Tests
             _reach.Light("relay.0");
             Vector3 pastTheMast = MastNearby + new Vector3(0f, 0f, MastReach + 40f);
             float before = Distance(pastTheMast) - _radio.SignalRadius;
-            float after = StationDistance.Equivalent(_reach, pastTheMast, _radio.SignalRadius + 100f, MastReach) -
+            float after = StationDistance.Equivalent(_reach, pastTheMast, _radio.SignalRadius + 100f) -
                           (_radio.SignalRadius + 100f);
             Assert.AreEqual(before, after, 1e-3f, "still 40 m past the mast's edge");
-            Assert.AreEqual(0f, StationDistance.Equivalent(_reach, new Vector3(150f, 0f, -200f),
-                _radio.SignalRadius + 300f, MastReach) - (_radio.SignalRadius + 300f), 1e-3f, "inside the wider home");
         }
 
         [Test]
@@ -185,38 +185,12 @@ namespace MoonProject.Audio.Tests
             Assert.IsFalse(landing, "a late finish changes nothing");
         }
 
-        [Test]
-        public void HomesAnswer_ComesFromTheNearestOtherLitNode_WhenThePulseArrives()
-        {
-            _reach.Light("relay.0");
-            _reach.Add("relay.1", new Vector3(320f, 0f, 260f), true);
-            Assert.IsTrue(RelayLink.TryFindLinkedNode(_reach, "relay.1", new Vector3(320f, 6f, 260f), out Vector3 to));
-            Assert.AreEqual(MastNearby, to, "the nearest lit node, not itself");
-
-            Assert.AreEqual(2f, RelayLink.AnswerDelay(90f, 45f, 3f), 1e-4f);
-            Assert.AreEqual(3f, RelayLink.AnswerDelay(400f, 45f, 3f), 1e-4f, "a long link still answers in time");
-        }
-
-        [Test]
-        public void HomesAnswer_NeedsAnotherLitNode()
-        {
-            var lonely = new FakeStationReach(60f, MastReach);
-            lonely.Add("relay.0", Vector3.zero, true);
-            Assert.IsFalse(RelayLink.TryFindLinkedNode(lonely, "relay.0", Vector3.zero, out _));
-        }
-
         /// <summary>An <see cref="IStationReach"/> over nodes the test lights: home first, then masts.</summary>
         private sealed class FakeStationReach : IStationReach
         {
-            private readonly List<RelayNode> _nodes = new List<RelayNode>();
-            private readonly float _homeRadius;
-            private readonly float _mastReach;
+            private const float LampHeight = 6f;
 
-            public FakeStationReach(float homeRadius, float mastReach)
-            {
-                _homeRadius = homeRadius;
-                _mastReach = mastReach;
-            }
+            private readonly List<RelayNode> _nodes = new List<RelayNode>();
 
             public int LitCount => _nodes.FindAll(node => node.Lit).Count;
 
@@ -229,10 +203,9 @@ namespace MoonProject.Audio.Tests
 
             public bool IsInReach(Vector3 position)
             {
-                for (int i = 0; i < _nodes.Count; i++)
+                foreach (RelayNode node in _nodes)
                 {
-                    float radius = i == 0 ? _homeRadius : _mastReach;
-                    if (_nodes[i].Lit && SignalField.HorizontalDistance(position, _nodes[i].Position) <= radius)
+                    if (node.Lit && SignalField.HorizontalDistance(position, node.Position) <= node.Radius)
                     {
                         return true;
                     }
@@ -255,9 +228,9 @@ namespace MoonProject.Audio.Tests
                 return best;
             }
 
-            public void Add(string id, Vector3 position, bool lit)
+            public void Add(string id, Vector3 position, bool lit, float radius)
             {
-                _nodes.Add(new RelayNode(id, position, lit));
+                _nodes.Add(new RelayNode(id, position, lit, radius, position + Vector3.up * LampHeight));
             }
 
             public void Light(string id)
@@ -266,7 +239,8 @@ namespace MoonProject.Audio.Tests
                 {
                     if (_nodes[i].Id == id)
                     {
-                        _nodes[i] = new RelayNode(id, _nodes[i].Position, true);
+                        RelayNode node = _nodes[i];
+                        _nodes[i] = new RelayNode(id, node.Position, true, node.Radius, node.LampPosition);
                     }
                 }
             }

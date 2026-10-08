@@ -12,10 +12,6 @@ namespace MoonProject.Audio
         [Tooltip("Metres from the base where the music is perfectly clear (radio tower upgrades raise it at runtime).")]
         [Min(0f)] [SerializeField] private float _signalRadius = 60f;
 
-        [Tooltip("Reach (m) of a lit relay mast, as Gameplay's relay network has it (110 m): the radio is clear " +
-                 "within it, like within home's radius.")]
-        [Range(10f, 500f)] [SerializeField] private float _mastReach = 110f;
-
         [Tooltip("Metres over which the signal fades from clear to gone beyond the radius.")]
         [Min(1f)] [SerializeField] private float _falloffWidth = 140f;
 
@@ -149,7 +145,6 @@ namespace MoonProject.Audio
 
         public float SignalRadius => _signalRadius;
         public float FalloffWidth => _falloffWidth;
-        public float MastReach => _mastReach;
         public float RadiusEaseTime => _radiusEaseTime;
         public float ClaritySmoothing => _claritySmoothing;
         public float MinCutoff => _minCutoff;
