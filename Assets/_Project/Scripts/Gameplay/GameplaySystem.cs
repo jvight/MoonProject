@@ -156,8 +156,9 @@ namespace MoonProject.Gameplay
                 !_excavation.Initialize(services, _relics, _salvage) ||
                 !_tether.Initialize(services, _relics, _salvage) ||
                 !_home.Initialize(services, _relics, _tether, Upgrades) ||
-                !_cradle.Initialize(services, seat, _relics, _home) || !_tower.Initialize(services, Upgrades) ||
-                !_workshop.Initialize(services, Upgrades) ||
+                !_cradle.Initialize(services, seat, _relics, _home) ||
+                !_tower.Initialize(services, Upgrades, _salvage.Catalog) ||
+                !_workshop.Initialize(services, Upgrades, _salvage.Catalog) ||
                 !_friends.Initialize(services, Radio, _cassettes.Catalog, _relics, _salvage, _home) ||
                 !_cassettes.Initialize(services, Radio, KeepClearOfCassettes()) || !_logs.Initialize(services) ||
                 !_sonar.Initialize(services, _relics, _friends, _salvage, abilities) ||

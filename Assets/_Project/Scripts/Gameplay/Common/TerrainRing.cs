@@ -80,6 +80,20 @@ namespace MoonProject.Gameplay
                 throw new ArgumentNullException(nameof(terrain));
             }
 
+            Lay(terrain, centre, innerRadius, outerRadius, lift);
+        }
+
+        /// <summary>
+        /// Lays the band level at <paramref name="centre"/>'s height plus <paramref name="lift"/> (a raised deck, such
+        /// as the Rover Bay's turntable, rather than the ground).
+        /// </summary>
+        public void RebuildLevel(Vector3 centre, float innerRadius, float outerRadius, float lift)
+        {
+            Lay(null, centre, innerRadius, outerRadius, lift);
+        }
+
+        private void Lay(ITerrainQuery terrain, Vector3 centre, float innerRadius, float outerRadius, float lift)
+        {
             innerRadius = Mathf.Max(0f, innerRadius);
             outerRadius = Mathf.Max(innerRadius + MinBandWidth, outerRadius);
             int rowLength = _segments + 1;
@@ -95,7 +109,7 @@ namespace MoonProject.Gameplay
                     float radius = row == 0 ? innerRadius : outerRadius;
                     float x = centre.x + cos * radius;
                     float z = centre.z + sin * radius;
-                    float y = terrain.SampleHeight(x, z) + lift;
+                    float y = (terrain != null ? terrain.SampleHeight(x, z) : centre.y) + lift;
                     _vertices[row * rowLength + i] = new Vector3(x, y, z);
                     minY = Mathf.Min(minY, y);
                     maxY = Mathf.Max(maxY, y);

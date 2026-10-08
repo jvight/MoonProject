@@ -20,7 +20,7 @@ namespace MoonProject.Gameplay
         Deposit = 4,
 
         /// <summary>
-        /// Parked on a station's pad (the tower or the workbench): buy what it offers (Ready when affordable).
+        /// Parked on a station's pad (the tower or the Rover Bay): buy what it offers (Ready when affordable).
         /// </summary>
         Upgrade = 5,
 

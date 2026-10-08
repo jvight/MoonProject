@@ -10,7 +10,7 @@ namespace MoonProject.Gameplay.Editor
     /// <summary>
     /// Writes the gameplay content from code recipes: the salvage catalog over Art's site, bundle and debris prefabs
     /// (<see cref="SalvageEconomy"/>), one RelicDefinition per <see cref="RelicRecipes"/> entry and the relic catalog,
-    /// the radio tower and the bench's rover kit crafted from the <see cref="SalvageEconomy"/> recipes, the friends
+    /// the radio tower and the Rover Bay's kit crafted from the <see cref="SalvageEconomy"/> recipes, the friends
     /// (Tilly and Bell) and their catalog, Ro's cassettes and their catalog, and the crew log caches and their catalog.
     /// Rewritten in place on every run (GUIDs kept). Every Art prefab it references (the content contracts) is
     /// required: a missing one fails the build loudly.

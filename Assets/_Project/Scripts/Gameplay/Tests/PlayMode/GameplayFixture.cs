@@ -311,8 +311,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// A stand-in for Art's lander, shelf, tower stages and tape rack with the contract's node names and positions,
-        /// wired the way the scene contributor wires the real prefabs.
+        /// A stand-in for Art's lander, shelf, tower stages (with their service ports), Rover
+        /// Bay and tape rack with the contract's node names and positions, wired the way the scene contributor wires
+        /// the real prefabs.
         /// </summary>
         private CassetteShelf BuildBase(Transform parent, HomeBase home, RadioTower tower, Workshop workshop)
         {
@@ -342,6 +343,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             var stages = new GameObject[3];
             var lights = new Renderer[3];
             var beacons = new Transform[3];
+            var hoppers = new Transform[3];
+            var hatches = new Transform[3];
             for (int i = 0; i < 3; i++)
             {
                 Transform stage = Node("RadioTower_L" + (i + 1), anchor, Vector3.zero);
@@ -349,20 +352,17 @@ namespace MoonProject.Gameplay.PlayModeTests
                 lights[i] = Block(stage, new Vector3(0f, heights[i] * 0.8f, 0.35f), new Vector3(0.3f, 0.3f, 0.05f))
                     .GetComponent<Renderer>();
                 beacons[i] = Node("BeaconSocket", stage, new Vector3(0f, heights[i], 0f));
+                hoppers[i] = Node("HopperMouth", stage, new Vector3(0.5f, 1.12f, 1.25f));
+                hoppers[i].localRotation = Quaternion.Euler(-40f, 0f, 0f);
+                hatches[i] = Node("ServiceHatch", stage, new Vector3(-0.72f, 0.62f, 1.08f));
+                Block(hatches[i], new Vector3(0.21f, 0f, 0.01f), new Vector3(0.42f, 0.5f, 0.02f));
                 stages[i] = stage.gameObject;
             }
 
             home.Wire(BaseTuning, baseRoot, windows.GetComponent<Renderer>(), sockets, shelf,
                 shelfLights.GetComponent<Renderer>(), slots);
-            tower.Wire(TowerTuning, RadioTowerUpgrade, anchor, stages, lights, beacons);
-            Transform workbench = Node("Workbench", Node("WorkshopAnchor", lander, new Vector3(12.5f, 0f, -2f)),
-                Vector3.zero);
-            Block(workbench, new Vector3(0f, 0.47f, 0f), new Vector3(2.3f, 0.95f, 0.9f));
-            Transform lamp = Block(workbench, new Vector3(0.55f, 2.02f, 0.18f), Vector3.one * 0.12f);
-            workshop.Wire(WorkshopTuning,
-                new[] { HoverJumpUpgrade, CargoCradleUpgrade, WarmHeadlampUpgrade, BoostCoilsUpgrade },
-                workbench.parent, lamp.GetComponent<Renderer>(),
-                Node("SparkSocket", workbench, new Vector3(-0.82f, 1.14f, 0.32f)));
+            tower.Wire(TowerTuning, RadioTowerUpgrade, anchor, stages, lights, beacons, hoppers, hatches);
+            BuildBay(Node("WorkshopAnchor", lander, new Vector3(12.5f, 0f, -2f)), workshop);
             TillyPerch = Node("FriendSocket_tilly", lander, new Vector3(-1.6f, 3.3f, 0.9f));
             BellCorner = Node("BellCorner", anchor, new Vector3(-4.9f, 0f, 0.4f));
             BellCorner.localRotation = Quaternion.Euler(0f, 74f, 0f);
@@ -380,6 +380,50 @@ namespace MoonProject.Gameplay.PlayModeTests
             var tapes = rack.gameObject.AddComponent<CassetteShelf>();
             tapes.Wire(ShelfSlots);
             return tapes;
+        }
+
+        /// <summary>
+        /// A stand-in Rover Bay with the art contract's nodes (Turntable, three arms down to their SparkSockets in the
+        /// rest pose, HopperMouth, Lamp_0/1, BaySign), wired as the scene contributor wires the real one.
+        /// </summary>
+        private void BuildBay(Transform anchor, Workshop workshop)
+        {
+            Transform bay = Node("RoverBay", anchor, Vector3.zero);
+            Transform turntable = Node("Turntable", bay, new Vector3(0f, 0.12f, -0.35f));
+            turntable.localRotation = Quaternion.Euler(0f, 180f, 0f);
+            Block(turntable, new Vector3(0f, -0.05f, 0f), new Vector3(3.5f, 0.1f, 3.5f));
+            Vector3[] shoulders = { new Vector3(-1.3f, 3.18f, -0.35f), new Vector3(0f, 3.18f, -1.65f),
+                new Vector3(1.3f, 3.18f, -0.35f) };
+            float[] yaws = { 90f, 0f, -90f };
+            var sockets = new Transform[shoulders.Length];
+            for (int i = 0; i < shoulders.Length; i++)
+            {
+                Transform arm = Node("Arm_" + i, bay, shoulders[i]);
+                arm.localRotation = Quaternion.Euler(0f, yaws[i], 0f);
+                Transform upper = Node("Upper", arm, Vector3.zero);
+                upper.localRotation = Quaternion.Euler(80f, 0f, 0f);
+                Transform lower = Node("Lower", upper, new Vector3(0f, -0.9f, 0f));
+                lower.localRotation = Quaternion.Euler(-160f, 0f, 0f);
+                Transform tip = Node("Tip", lower, new Vector3(0f, -0.8f, 0f));
+                tip.localRotation = Quaternion.Euler(80f, 0f, 0f);
+                sockets[i] = Node("SparkSocket", tip, new Vector3(0f, -0.26f, 0.06f));
+                sockets[i].localRotation = Quaternion.Euler(90f, 180f, 0f);
+            }
+
+            Transform mouth = Node("HopperMouth", bay, new Vector3(2.85f, 1.2f, 1.5f));
+            mouth.localRotation = Quaternion.Euler(-40f, -123f, 0f);
+            Renderer[] lamps =
+            {
+                Named(Block(bay, new Vector3(-1.55f, 3.08f, 1.65f), Vector3.one * 0.25f), "Lamp_0")
+                    .GetComponent<Renderer>(),
+                Named(Block(bay, new Vector3(1.55f, 3.08f, 1.65f), Vector3.one * 0.25f), "Lamp_1")
+                    .GetComponent<Renderer>(),
+            };
+            Transform sign = Named(Block(bay, new Vector3(0f, 4.02f, 1.92f), new Vector3(0.8f, 0.42f, 0.04f)),
+                "BaySign");
+            workshop.Wire(WorkshopTuning,
+                new[] { HoverJumpUpgrade, CargoCradleUpgrade, WarmHeadlampUpgrade, BoostCoilsUpgrade }, bay,
+                turntable, mouth, lamps, sign.GetComponent<Renderer>(), sockets);
         }
 
         /// <summary>A one-level rover ability sold at the bench, as in the content builder.</summary>

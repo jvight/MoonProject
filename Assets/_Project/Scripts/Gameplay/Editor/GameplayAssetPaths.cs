@@ -56,7 +56,7 @@ namespace MoonProject.Gameplay.Editor
         public const string ArtBaseFolder = ArtPaths.Root + "/Base";
         public const string Lander = ArtBaseFolder + "/Lander.prefab";
         public const string MuseumShelf = ArtBaseFolder + "/MuseumShelf.prefab";
-        public const string Workbench = ArtBaseFolder + "/Workbench.prefab";
+        public const string RoverBay = ArtBaseFolder + "/RoverBay.prefab";
         public const string CassetteShelf = ArtBaseFolder + "/CassetteShelf.prefab";
         public const string ArtFriendFolder = ArtPaths.Root + "/Friends";
         public const string ArtPickupFolder = ArtPaths.Root + "/Pickups";
