@@ -176,6 +176,77 @@ namespace MoonProject.Core.Events
         public float Radius { get; }
     }
 
+    /// <summary>07's beam started cutting a salvage piece loose (docs/features/M3-13).</summary>
+    public readonly struct SalvageCutStarted
+    {
+        public SalvageCutStarted(Vector3 position, SalvageMaterial material)
+        {
+            Position = position;
+            Material = material;
+        }
+
+        /// <summary>The piece's cut point, where the sparks fly.</summary>
+        public Vector3 Position { get; }
+
+        public SalvageMaterial Material { get; }
+    }
+
+    /// <summary>The cut stopped: the piece came loose (<see cref="Completed"/>) or the player let go (progress kept).</summary>
+    public readonly struct SalvageCutStopped
+    {
+        public SalvageCutStopped(bool completed)
+        {
+            Completed = completed;
+        }
+
+        public bool Completed { get; }
+    }
+
+    /// <summary>
+    /// Salvage reached 07 (a cut piece or a loose trail bit folded into its cargo). <see cref="ComboStep"/> climbs while
+    /// pieces chain at one site, for the salvage melody.
+    /// </summary>
+    public readonly struct MaterialSalvaged
+    {
+        public MaterialSalvaged(SalvageMaterial material, int amount, Vector3 position, string siteId, int comboStep)
+        {
+            Material = material;
+            Amount = amount;
+            Position = position;
+            SiteId = siteId;
+            ComboStep = comboStep;
+        }
+
+        public SalvageMaterial Material { get; }
+
+        public int Amount { get; }
+
+        public Vector3 Position { get; }
+
+        /// <summary>The site it came from ("site.kestrel", ...), or "trail.kestrel" for a loose trail bit.</summary>
+        public string SiteId { get; }
+
+        /// <summary>0 for the first piece in a chain, then 1, 2, ... (resets after a pause).</summary>
+        public int ComboStep { get; }
+    }
+
+    /// <summary>07's material stock changed (salvage, a craft, load). Carries the new totals.</summary>
+    public readonly struct MaterialsChanged
+    {
+        public MaterialsChanged(int metal, int wiring, int optics)
+        {
+            Metal = metal;
+            Wiring = wiring;
+            Optics = optics;
+        }
+
+        public int Metal { get; }
+
+        public int Wiring { get; }
+
+        public int Optics { get; }
+    }
+
     /// <summary>A relay mast was restored and linked: the station's reach grew (docs/features/M3-06).</summary>
     public readonly struct RelayRestored
     {
