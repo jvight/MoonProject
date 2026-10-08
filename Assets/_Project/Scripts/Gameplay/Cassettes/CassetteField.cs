@@ -33,7 +33,7 @@ namespace MoonProject.Gameplay
         private IViewCamera _view;
         private ISaveService _save;
         private RadioProgram _radio;
-        private ScrapGlints _glints;
+        private PickupGlints _glints;
         private GlowFlashPool _flashes;
         private Transform[] _pieces = Array.Empty<Transform>();
         private CassetteSite[] _sites = Array.Empty<CassetteSite>();
@@ -61,7 +61,7 @@ namespace MoonProject.Gameplay
 
         public CassetteTuning Tuning => _tuning;
 
-        internal ScrapGlints Glints => _glints;
+        internal PickupGlints Glints => _glints;
 
         public CassetteDefinition Definition(int index)
         {
@@ -90,8 +90,7 @@ namespace MoonProject.Gameplay
         /// Finds every cassette's spot (anchors, or the basin planner clear of <paramref name="keepClear"/>) and
         /// spawns the pickups. False (logged) when wiring or an anchor is missing.
         /// </summary>
-        internal bool Initialize(GameplayServices services, RadioProgram radio, ScrapTuning glintTuning,
-            IReadOnlyList<Vector3> keepClear)
+        internal bool Initialize(GameplayServices services, RadioProgram radio, IReadOnlyList<Vector3> keepClear)
         {
             string problem = _catalog == null ? "CassetteCatalog is not assigned."
                 : _tuning == null ? "CassetteTuning is not assigned."
@@ -116,7 +115,7 @@ namespace MoonProject.Gameplay
             }
 
             Spawn();
-            _glints = new ScrapGlints(transform, services.Visuals.PartGlint, glintTuning, Mathf.Max(1, Count),
+            _glints = new PickupGlints(transform, services.Visuals.PartGlint, services.Glints, Mathf.Max(1, Count),
                 Layers.Pickup);
             _flashes = new GlowFlashPool(transform, services.Meshes.Sphere, services.Visuals.WarmGlow,
                 FlashPoolSize, _tuning.FlashDuration, _tuning.FlashRadius, _tuning.FlashIntensity);
@@ -251,7 +250,7 @@ namespace MoonProject.Gameplay
             _state[index] = PieceState.Flying;
             _flightStart[index] = _rest[index];
             _flightTime[index] = 0f;
-            _flightDuration[index] = ScrapFlight.Duration(Vector3.Distance(_rest[index], socket),
+            _flightDuration[index] = PickupFlight.Duration(Vector3.Distance(_rest[index], socket),
                 _tuning.FlightDuration, _tuning.FlightPerMetre);
         }
 
@@ -265,7 +264,7 @@ namespace MoonProject.Gameplay
                 return;
             }
 
-            Vector3 position = ScrapFlight.Evaluate(_flightStart[index], socket, progress, index, 1f,
+            Vector3 position = PickupFlight.Evaluate(_flightStart[index], socket, progress, index, 1f,
                 _tuning.FlightLift, _tuning.SpiralRadius, _tuning.SpiralTurns);
             float yaw = _restRotation[index].eulerAngles.y + _flightTime[index] * _tuning.FlightSpin;
             Quaternion upright = Quaternion.Euler(0f, yaw, 0f);

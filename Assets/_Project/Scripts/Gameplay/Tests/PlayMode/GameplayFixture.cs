@@ -64,6 +64,8 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         public ScrapTuning ScrapTuning { get; private set; }
 
+        public GlintTuning GlintTuning { get; private set; }
+
         public SonarTuning SonarTuning { get; private set; }
 
         public RelicTuning RelicTuning { get; private set; }
@@ -170,6 +172,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Rover = Track(FakeRoverSystem.Create(Vector3.zero, 0f));
 
             ScrapTuning = Asset<ScrapTuning>();
+            GlintTuning = Asset<GlintTuning>();
             SonarTuning = Asset<SonarTuning>();
             RelicTuning = Asset<RelicTuning>();
             ExcavationTuning = Asset<ExcavationTuning>();
@@ -246,8 +249,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             sonar.Wire(SonarTuning);
             excavation.Wire(ExcavationTuning);
             tether.Wire(TetherTuning);
-            Gameplay.Wire(visuals, new[] { RadioTowerUpgrade, HoverJumpUpgrade }, relics, scrap, sonar, excavation,
-                tether, home, tower, workshop, friends, cassettes, logs, signals, shelf, relays);
+            Gameplay.Wire(visuals, GlintTuning, new[] { RadioTowerUpgrade, HoverJumpUpgrade }, relics, scrap, sonar,
+                excavation, tether, home, tower, workshop, friends, cassettes, logs, signals, shelf, relays);
             root.SetActive(true);
 
             Bootstrap = BootstrapHarness.Create(_controls, SaveSlot, World, Rover, Gameplay);

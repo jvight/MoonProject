@@ -25,6 +25,9 @@ namespace MoonProject.Gameplay
         [Tooltip("SoftGlow materials (Generated/Gameplay/GameplayVisuals.asset).")]
         [SerializeField] private GameplayVisuals _visuals;
 
+        [Tooltip("How pickups glint from afar (Assets/_Project/Data/Tuning/Gameplay/GlintTuning.asset).")]
+        [SerializeField] private GlintTuning _glints;
+
         [Tooltip("Every upgrade bought with scrap (Assets/_Project/Data/Content/Upgrades).")]
         [SerializeField] private UpgradeDefinition[] _upgradeDefinitions = Array.Empty<UpgradeDefinition>();
 
@@ -84,12 +87,13 @@ namespace MoonProject.Gameplay
 
         public RelayField Relays => _relays;
 
-        internal void Wire(GameplayVisuals visuals, UpgradeDefinition[] upgradeDefinitions, RelicField relics,
+        internal void Wire(GameplayVisuals visuals, GlintTuning glints, UpgradeDefinition[] upgradeDefinitions, RelicField relics,
             ScrapField scrap, SonarSystem sonar, ExcavationSystem excavation, TetherSystem tether, HomeBase home,
             RadioTower tower, Workshop workshop, FriendField friends, CassetteField cassettes, LogCacheField logs,
             SignalField signals, CassetteShelf shelf, RelayField relays)
         {
             _visuals = visuals;
+            _glints = glints;
             _upgradeDefinitions = upgradeDefinitions;
             _relics = relics;
             _scrap = scrap;
@@ -127,7 +131,7 @@ namespace MoonProject.Gameplay
             var save = context.Get<ISaveService>();
             var services = new GameplayServices(context.Events, context.Input, context.Get<ITerrainQuery>(),
                 context.Get<IWorldLayout>(), context.Get<IWorldAnchors>(), context.Get<IRoverState>(),
-                context.Get<IRoverRig>(), context.Get<IViewCamera>(), save, Wallet, _visuals, _meshes);
+                context.Get<IRoverRig>(), context.Get<IViewCamera>(), save, Wallet, _visuals, _glints, _meshes);
             var abilities = context.Get<IRoverAbilities>();
             Upgrades = new UpgradeService(context.Events, Wallet, abilities, _upgradeDefinitions);
             Radio = new RadioProgram(context.Events, _cassettes.Catalog.Ids());
@@ -138,12 +142,11 @@ namespace MoonProject.Gameplay
                 !_home.Initialize(services, _relics, _tether, Upgrades) || !_tower.Initialize(services, Upgrades) ||
                 !_workshop.Initialize(services, Upgrades) ||
                 !_friends.Initialize(services, Radio, _cassettes.Catalog, _relics, _scrap, _home) ||
-                !_cassettes.Initialize(services, Radio, _scrap.Tuning, KeepClearOfCassettes()) ||
-                !_logs.Initialize(services, _scrap.Tuning) || !_sonar.Initialize(services, _relics, _friends) ||
+                !_cassettes.Initialize(services, Radio, KeepClearOfCassettes()) || !_logs.Initialize(services) ||
+                !_sonar.Initialize(services, _relics, _friends) ||
                 !_signals.Initialize(services, _friends, _cassettes, _logs, _relics, abilities, _sonar.Tuning) ||
                 !_shelf.Initialize(Radio, _cassettes.Catalog, _friends.BellTuning) ||
-                !_relays.Initialize(services, Upgrades, _tower, _tether, _friends.Tuning, _scrap.Tuning,
-                    Placement(context)))
+                !_relays.Initialize(services, Upgrades, _tower, _tether, _friends.Tuning, Placement(context)))
             {
                 enabled = false;
                 return;
@@ -283,7 +286,8 @@ namespace MoonProject.Gameplay
                 return "GameplayVisuals: " + visuals;
             }
 
-            return _upgradeDefinitions == null || _upgradeDefinitions.Length == 0 ? "no upgrade definitions."
+            return _glints == null ? "GlintTuning is not assigned."
+                : _upgradeDefinitions == null || _upgradeDefinitions.Length == 0 ? "no upgrade definitions."
                 : _relics == null ? "RelicField is not assigned."
                 : _scrap == null ? "ScrapField is not assigned."
                 : _sonar == null ? "SonarSystem is not assigned."

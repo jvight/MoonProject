@@ -9,7 +9,7 @@ namespace MoonProject.Gameplay
     /// <summary>
     /// The glowing scrap scattered over the basin (<see cref="ScrapFieldPlanner"/>) and trailing up to Whispering
     /// Canyon's lip (<see cref="ScrapTrailPlanner"/>). Every resting piece carries a twinkling glint that reads from
-    /// far away (see <see cref="ScrapGlints"/>). Pieces near 07 bob and turn; within the magnet radius they lift
+    /// far away (see <see cref="PickupGlints"/>). Pieces near 07 bob and turn; within the magnet radius they lift
     /// off and spiral into the cargo socket, where each one flashes, adds its value to the wallet and publishes
     /// <see cref="ScrapCollected"/> with the climbing melody step. 07 glances at the nearest piece. Every piece is
     /// instantiated once at initialisation; the frame loop walks plain arrays and allocates nothing.
@@ -37,7 +37,7 @@ namespace MoonProject.Gameplay
         private IRoverState _rover;
         private IRoverRig _rig;
         private IViewCamera _view;
-        private ScrapGlints _glints;
+        private PickupGlints _glints;
         private ComboCounter _combo;
         private PickupCadence _cadence;
         private GlowFlashPool _flashes;
@@ -82,7 +82,7 @@ namespace MoonProject.Gameplay
         public ScrapCatalog Catalog => _catalog;
 
         /// <summary>The horizon glints (tests read how many were drawn and how bright).</summary>
-        public ScrapGlints Glints => _glints;
+        public PickupGlints Glints => _glints;
 
         /// <summary>Where piece <paramref name="index"/> floats when at rest.</summary>
         internal Vector3 RestPosition(int index)
@@ -151,7 +151,8 @@ namespace MoonProject.Gameplay
 
             spawns.AddRange(trail);
             Spawn(spawns);
-            _glints = new ScrapGlints(transform, services.Visuals.ScrapGlint, _tuning, spawns.Count, Layers.Pickup);
+            _glints = new PickupGlints(transform, services.Visuals.ScrapGlint, services.Glints, spawns.Count,
+                Layers.Pickup);
             _initialized = true;
             return true;
         }
@@ -300,7 +301,7 @@ namespace MoonProject.Gameplay
             _state[index] = PieceState.Flying;
             _flightStart[index] = position;
             _flightTime[index] = 0f;
-            _flightDuration[index] = ScrapFlight.Duration(Vector3.Distance(position, socket),
+            _flightDuration[index] = PickupFlight.Duration(Vector3.Distance(position, socket),
                 _tuning.FlightBaseDuration, _tuning.FlightSecondsPerMetre);
         }
 
@@ -315,7 +316,7 @@ namespace MoonProject.Gameplay
             }
 
             float direction = (index & 1) == 0 ? 1f : -1f;
-            Vector3 position = ScrapFlight.Evaluate(_flightStart[index], socket, progress, _spiralPhase[index],
+            Vector3 position = PickupFlight.Evaluate(_flightStart[index], socket, progress, _spiralPhase[index],
                 direction, _tuning.FlightLift, _tuning.SpiralRadius, _tuning.SpiralTurns);
             float spin = _yaw[index] + now * _tuning.SpinSpeed * FlightSpinFactor;
             _pieces[index].SetPositionAndRotation(position, RestRotation(spin, _phase[index]));

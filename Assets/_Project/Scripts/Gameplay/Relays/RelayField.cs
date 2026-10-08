@@ -62,7 +62,7 @@ namespace MoonProject.Gameplay
         private StationReach _reach;
         private RadioHop _hop;
         private RepairBeam _beam;
-        private ScrapGlints _glints;
+        private PickupGlints _glints;
         private StationPad[] _pads = Array.Empty<StationPad>();
         private RelayBeat _beat;
         private string[] _counts = Array.Empty<string>();
@@ -126,7 +126,7 @@ namespace MoonProject.Gameplay
 
         /// <param name="placement">Core's rover placement for the hop, or null while no domain registers it.</param>
         internal bool Initialize(GameplayServices services, UpgradeService upgrades, RadioTower tower,
-            ITetherAim tether, FriendTuning friends, ScrapTuning scrap, IRoverPlacement placement)
+            ITetherAim tether, FriendTuning friends, IRoverPlacement placement)
         {
             List<WorldAnchor> anchors = services.Anchors != null ? RelayAnchors(services.Anchors) : null;
             string problem = _tuning == null ? "RelayTuning is not assigned."
@@ -152,9 +152,9 @@ namespace MoonProject.Gameplay
             _upgrades = upgrades ?? throw new ArgumentNullException(nameof(upgrades));
             _friends = friends != null ? friends : throw new ArgumentNullException(nameof(friends));
             _tower = tower != null ? tower : throw new ArgumentNullException(nameof(tower));
-            if (tether == null || scrap == null)
+            if (tether == null)
             {
-                throw new ArgumentNullException(tether == null ? nameof(tether) : nameof(scrap));
+                throw new ArgumentNullException(nameof(tether));
             }
 
             _beat = RelayBeat.For(_tuning);
@@ -181,7 +181,8 @@ namespace MoonProject.Gameplay
             _reach = new StationReach(home, _upgrades.SignalRadius, _tower.BeaconPosition, ids, pads, lamps,
                 _tuning.MastReach);
 
-            _glints = new ScrapGlints(transform, services.Visuals.PartGlint, scrap, _masts.Count, Layers.Pickup);
+            _glints = new PickupGlints(transform, services.Visuals.PartGlint, services.Glints, _masts.Count,
+                Layers.Pickup);
             _beam = new RepairBeam("RelayBeam", transform, services.Visuals.TetherBeam, _friends.StitchRate,
                 _friends.StitchSpread);
             _pads = new StationPad[_reach.NodeCount];
@@ -401,7 +402,7 @@ namespace MoonProject.Gameplay
                         mast.PartState = RelayPartState.Flying;
                         mast.FlightStart = rest;
                         mast.FlightTime = 0f;
-                        mast.FlightDuration = ScrapFlight.Duration(Vector3.Distance(rest, socket),
+                        mast.FlightDuration = PickupFlight.Duration(Vector3.Distance(rest, socket),
                             _friends.PartFlightDuration, _friends.PartFlightPerMetre);
                     }
 
@@ -420,7 +421,7 @@ namespace MoonProject.Gameplay
                     }
 
                     part.SetPositionAndRotation(
-                        ScrapFlight.Evaluate(mast.FlightStart, socket, progress, index, 1f, _friends.PartFlightLift,
+                        PickupFlight.Evaluate(mast.FlightStart, socket, progress, index, 1f, _friends.PartFlightLift,
                             _friends.PartSpiralRadius, _friends.PartSpiralTurns),
                         Quaternion.Euler(0f, now * _friends.PartSpin * PartFlightSpin, 0f));
                     part.localScale = mast.PartScale *

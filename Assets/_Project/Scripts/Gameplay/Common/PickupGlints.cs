@@ -6,12 +6,12 @@ using Object = UnityEngine.Object;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// The glints that make scrap read from far away: one camera-facing star per resting piece, all in a single
+    /// The glints that make pickups read from far away: one camera-facing star per resting pickup, all in a single
     /// dynamic mesh drawn with one material (one draw call, any camera). Each glint keeps a minimum on-screen size,
     /// twinkles on its own phase, and fades out close to the camera (where the model itself reads) and at the far end
-    /// of its range. Buffers are allocated once for the whole field; a frame of glints allocates nothing.
+    /// of its range. Buffers are allocated once for every pickup; a frame of glints allocates nothing.
     /// </summary>
-    public sealed class ScrapGlints : IDisposable
+    public sealed class PickupGlints : IDisposable
     {
         /// <summary>The far fade starts at this fraction of the maximum distance.</summary>
         private const float FarFadeStart = 0.8f;
@@ -28,7 +28,7 @@ namespace MoonProject.Gameplay
             new Vector2(-1f, -1f), new Vector2(1f, -1f), new Vector2(-1f, 1f), new Vector2(1f, 1f),
         };
 
-        private readonly ScrapTuning _tuning;
+        private readonly GlintTuning _tuning;
         private readonly Mesh _mesh;
         private readonly Vector3[] _centres;
         private readonly Vector2[] _sizeAndBrightness;
@@ -38,7 +38,7 @@ namespace MoonProject.Gameplay
         private float _twinklePhase;
         private int _count;
 
-        public ScrapGlints(Transform parent, Material material, ScrapTuning tuning, int capacity, int layer)
+        public PickupGlints(Transform parent, Material material, GlintTuning tuning, int capacity, int layer)
         {
             _tuning = tuning != null ? tuning : throw new ArgumentNullException(nameof(tuning));
             if (material == null)
@@ -71,7 +71,7 @@ namespace MoonProject.Gameplay
 
             _mesh = new Mesh
             {
-                name = "ScrapGlints",
+                name = "PickupGlints",
                 indexFormat = vertexCount > ushort.MaxValue ? IndexFormat.UInt32 : IndexFormat.UInt16,
             };
             _mesh.MarkDynamic();
@@ -82,7 +82,7 @@ namespace MoonProject.Gameplay
             _mesh.bounds = new Bounds(Vector3.zero, Vector3.one * WorldBoundsSize);
             _mesh.SetSubMesh(0, Range(0), Quiet);
 
-            var host = new GameObject("ScrapGlints") { layer = layer };
+            var host = new GameObject("PickupGlints") { layer = layer };
             host.transform.SetParent(parent, false);
             host.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
             host.AddComponent<MeshFilter>().sharedMesh = _mesh;
@@ -107,7 +107,7 @@ namespace MoonProject.Gameplay
             Brightest = 0f;
         }
 
-        /// <summary>Adds the glint of a resting piece at <paramref name="piece"/> with its own twinkle phase.</summary>
+        /// <summary>Adds the glint of a resting pickup at <paramref name="piece"/> with its own twinkle phase.</summary>
         public void Add(Vector3 piece, float phase)
         {
             if (_count == _capacity)

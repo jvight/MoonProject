@@ -13,7 +13,7 @@ namespace MoonProject.Gameplay
     {
         public GameplayServices(EventBus events, InputReader input, ITerrainQuery terrain, IWorldLayout layout,
             IWorldAnchors anchors, IRoverState rover, IRoverRig rig, IViewCamera view, ISaveService save,
-            ScrapWallet wallet, GameplayVisuals visuals, GlowMeshSet meshes)
+            ScrapWallet wallet, GameplayVisuals visuals, GlintTuning glints, GlowMeshSet meshes)
         {
             Events = events ?? throw new ArgumentNullException(nameof(events));
             Input = input ?? throw new ArgumentNullException(nameof(input));
@@ -26,6 +26,7 @@ namespace MoonProject.Gameplay
             Save = save ?? throw new ArgumentNullException(nameof(save));
             Wallet = wallet ?? throw new ArgumentNullException(nameof(wallet));
             Visuals = visuals != null ? visuals : throw new ArgumentNullException(nameof(visuals));
+            Glints = glints != null ? glints : throw new ArgumentNullException(nameof(glints));
             Meshes = meshes ?? throw new ArgumentNullException(nameof(meshes));
         }
 
@@ -52,6 +53,9 @@ namespace MoonProject.Gameplay
         public ScrapWallet Wallet { get; }
 
         public GameplayVisuals Visuals { get; }
+
+        /// <summary>How every pickup's glint reads from far away.</summary>
+        public GlintTuning Glints { get; }
 
         public GlowMeshSet Meshes { get; }
     }

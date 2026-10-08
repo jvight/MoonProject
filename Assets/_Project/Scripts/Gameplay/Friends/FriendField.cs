@@ -63,7 +63,7 @@ namespace MoonProject.Gameplay
         private RelicField _relics;
         private ScrapField _scrap;
         private SonarSystem _sonar;
-        private ScrapGlints _glints;
+        private PickupGlints _glints;
         private RepairBeam _beam;
         private IDisposable _relicSubscription;
         private RadioCabinetBody _cabinet;
@@ -95,7 +95,7 @@ namespace MoonProject.Gameplay
 
         internal IReadOnlyList<Friend> Friends => _friends;
 
-        internal ScrapGlints Glints => _glints;
+        internal PickupGlints Glints => _glints;
 
         internal void Wire(FriendCatalog catalog, FriendTuning tuning, BellTuning bellTuning, Transform[] homes)
         {
@@ -190,7 +190,7 @@ namespace MoonProject.Gameplay
                 partCount += definitions[i].Parts.Count;
             }
 
-            _glints = new ScrapGlints(transform, services.Visuals.PartGlint, scrap.Tuning, Mathf.Max(1, partCount),
+            _glints = new PickupGlints(transform, services.Visuals.PartGlint, services.Glints, Mathf.Max(1, partCount),
                 Layers.Pickup);
             _beam = new RepairBeam("RepairBeam", transform, services.Visuals.TetherBeam, _tuning.StitchRate,
                 _tuning.StitchSpread);
@@ -637,7 +637,7 @@ namespace MoonProject.Gameplay
                         friend.PartFlying[p] = true;
                         friend.PartStart[p] = rest;
                         friend.PartFlightTime[p] = 0f;
-                        friend.PartFlightDuration[p] = ScrapFlight.Duration(Vector3.Distance(rest, socket),
+                        friend.PartFlightDuration[p] = PickupFlight.Duration(Vector3.Distance(rest, socket),
                             _tuning.PartFlightDuration, _tuning.PartFlightPerMetre);
                     }
 
@@ -652,7 +652,7 @@ namespace MoonProject.Gameplay
                     continue;
                 }
 
-                Vector3 position = ScrapFlight.Evaluate(friend.PartStart[p], socket, progress, p, 1f,
+                Vector3 position = PickupFlight.Evaluate(friend.PartStart[p], socket, progress, p, 1f,
                     _tuning.PartFlightLift, _tuning.PartSpiralRadius, _tuning.PartSpiralTurns);
                 piece.SetPositionAndRotation(position,
                     Quaternion.Euler(0f, now * _tuning.PartSpin * PartFlightSpin, 0f));

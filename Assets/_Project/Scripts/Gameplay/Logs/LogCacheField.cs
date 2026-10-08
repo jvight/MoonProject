@@ -30,7 +30,7 @@ namespace MoonProject.Gameplay
         private IRoverRig _rig;
         private IViewCamera _view;
         private ISaveService _save;
-        private ScrapGlints _glints;
+        private PickupGlints _glints;
         private GlowFlashPool _flashes;
         private Vector3[] _positions = Array.Empty<Vector3>();
         private bool[] _found = Array.Empty<bool>();
@@ -66,7 +66,7 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>Stands every cache at its anchor. False (logged) when wiring or an anchor is missing.</summary>
-        internal bool Initialize(GameplayServices services, ScrapTuning glintTuning)
+        internal bool Initialize(GameplayServices services)
         {
             string problem = _catalog == null ? "LogCacheCatalog is not assigned."
                 : _tuning == null ? "LogCacheTuning is not assigned."
@@ -104,7 +104,7 @@ namespace MoonProject.Gameplay
                 cache.name = "LogCache_" + caches[i].LogId;
             }
 
-            _glints = new ScrapGlints(transform, services.Visuals.PartGlint, glintTuning, Mathf.Max(1, Count),
+            _glints = new PickupGlints(transform, services.Visuals.PartGlint, services.Glints, Mathf.Max(1, Count),
                 Layers.Prop);
             _flashes = new GlowFlashPool(transform, services.Meshes.Sphere, services.Visuals.WarmGlow,
                 FlashPoolSize, _tuning.FlashDuration, _tuning.FlashRadius, _tuning.FlashIntensity);

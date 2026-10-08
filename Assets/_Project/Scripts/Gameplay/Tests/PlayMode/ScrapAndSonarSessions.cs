@@ -130,7 +130,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return null;
             yield return null;
             ScrapField field = _fixture.Gameplay.Scrap;
-            ScrapTuning tuning = _fixture.ScrapTuning;
+            GlintTuning tuning = _fixture.GlintTuning;
             int expected = 0;
             Vector3 camera = _fixture.Rover.Camera.transform.position;
             for (int i = 0; i < field.Count; i++)

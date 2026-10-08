@@ -56,6 +56,7 @@ namespace MoonProject.Gameplay.Editor
             var logCacheCatalog = context.LoadAsset<LogCacheCatalog>(GameplayAssetPaths.LogCacheCatalog);
             var bellTuning = context.LoadAsset<BellTuning>(GameplayAssetPaths.BellTuning);
             var relayTuning = context.LoadAsset<RelayTuning>(GameplayAssetPaths.RelayTuning);
+            var glintTuning = context.LoadAsset<GlintTuning>(GameplayAssetPaths.GlintTuning);
             var relayMast = context.LoadAsset<GameObject>(GameplayAssetPaths.RelayMast);
             var relayMastBroken = context.LoadAsset<GameObject>(GameplayAssetPaths.RelayMastBroken);
             var relayPart = context.LoadAsset<GameObject>(GameplayAssetPaths.RelayPart);
@@ -139,8 +140,8 @@ namespace MoonProject.Gameplay.Editor
             cassettes.Wire(cassetteCatalog, cassetteTuning);
             logs.Wire(logCacheCatalog, logCacheTuning);
             relays.Wire(relayTuning, relayMast, relayMastBroken, relayPart);
-            gameplay.Wire(visuals, new[] { radioTower, hoverJump }, relics, scrap, sonar, excavation, tether, home,
-                tower, workshop, friends, cassettes, logs, signals, tapeRack, relays);
+            gameplay.Wire(visuals, glintTuning, new[] { radioTower, hoverJump }, relics, scrap, sonar, excavation, tether,
+                home, tower, workshop, friends, cassettes, logs, signals, tapeRack, relays);
             context.AddSystem(gameplay);
         }
 

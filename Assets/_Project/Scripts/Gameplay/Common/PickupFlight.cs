@@ -3,11 +3,11 @@ using UnityEngine;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// The path a scrap piece takes into 07: it eases from where it floated toward the (moving) cargo socket, lifting
+    /// The path a pickup takes into 07: it eases from where it floated toward the (moving) cargo socket, lifting
     /// on a soft arc while spiralling around its line of travel. Lift and spiral grow from zero and fade back to
     /// zero, so the flight leaves the idle pose and meets the socket without a jolt.
     /// </summary>
-    public static class ScrapFlight
+    public static class PickupFlight
     {
         /// <param name="start">Where the piece was when it lifted off.</param>
         /// <param name="target">The cargo socket now (it moves with 07).</param>
