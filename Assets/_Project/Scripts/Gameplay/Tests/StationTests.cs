@@ -1,11 +1,12 @@
 using System;
 using NUnit.Framework;
+using UnityEngine;
 
 namespace MoonProject.Gameplay.Tests
 {
     /// <summary>
     /// The logic of how 07 works with the base's machines (docs/features/M3-14): feeding a hopper, the tower's service
-    /// port moment, purchases waiting their turn and resting on the charging dock.
+    /// port moment, purchases waiting their turn, the bay's sign flickering on and resting on the charging dock.
     /// </summary>
     public sealed class StationTests
     {
@@ -87,6 +88,49 @@ namespace MoonProject.Gameplay.Tests
             queue.Clear();
             Assert.AreEqual(0, queue.Count, "a load forgets what was waiting");
             Assert.Throws<ArgumentOutOfRangeException>(() => _ = new PurchaseQueue(0));
+        }
+
+        [Test]
+        public void SignFlicker_RisesFromDark_DimsAFewTimesMoreSoftly_ThenHoldsSteady()
+        {
+            const float duration = 1.6f;
+            const int flickers = 4;
+            Assert.AreEqual(0f, SignFlicker.Level(-1f, duration, flickers, 0.85f), "dark before the power comes");
+            Assert.AreEqual(0f, SignFlicker.Level(0f, duration, flickers, 0.85f));
+            Assert.AreEqual(1f, SignFlicker.Level(duration, duration, flickers, 0.85f), "steady once settled");
+            Assert.AreEqual(1f, SignFlicker.Level(float.PositiveInfinity, duration, flickers, 0.85f),
+                "a sign that was lit at load never flickers");
+            int dips = 0;
+            float previous = 0f;
+            float peak = 0f;
+            float lastDip = 0f;
+            float deepest = 0f;
+            bool falling = false;
+            for (float t = Frame; t < duration; t += Frame)
+            {
+                float level = SignFlicker.Level(t, duration, flickers, 0.85f);
+                Assert.That(level, Is.InRange(0f, 1f));
+                if (level < previous && !falling)
+                {
+                    falling = true;
+                    peak = previous;
+                }
+                else if (level > previous && falling)
+                {
+                    falling = false;
+                    dips++;
+                    Assert.Greater(previous, lastDip, "each dip comes back brighter than the last");
+                    deepest = Mathf.Max(deepest, peak - previous);
+                    lastDip = previous;
+                }
+
+                previous = level;
+            }
+
+            Assert.GreaterOrEqual(dips, flickers - 1, "it flickers on its way up");
+            Assert.Greater(deepest, 0.15f, "visibly");
+            Assert.AreEqual(Ease.OutCubic(0.5f), SignFlicker.Level(0.8f, duration, flickers, 0f), 1e-5f,
+                "with no depth it simply eases on");
         }
 
         [Test]

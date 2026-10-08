@@ -18,7 +18,8 @@ namespace MoonProject.Gameplay
     /// that fitted it (the floor arm's for a belly piece). A purchase made while another is being fed waits its turn.
     /// While the bay works (feeding and fitting, and a moment after) a warm point light under each work lamp lights its
     /// interior and arms, easing down to a low glow when it is done; the lamps stay on as a warm welcome and lean
-    /// brighter while 07 is parked; the bay's sign glows as a landmark.
+    /// brighter while 07 is parked. The bay's sign lights with the base's power (the radio tower's first level): it
+    /// flickers on softly the first time, and stays lit.
     /// It is also the <see cref="IRoverBay"/> the Rover domain drives (registered by the <see cref="GameplaySystem"/>):
     /// the turntable, the gantry arms' joints and the floor arm, all from serialized references wired by the scene
     /// build, never looked up by name.
@@ -81,11 +82,14 @@ namespace MoonProject.Gameplay
         private Vector3[] _socketRest = Array.Empty<Vector3>();
         private Vector3 _floorRest;
         private Light[] _lights = Array.Empty<Light>();
+        private RadioTower _power;
         private IDisposable _fittings;
         private float _lightLevel;
         private bool _lightShadows;
         private int _fitting;
         private float _lastWeld = float.NegativeInfinity;
+        private bool _powered;
+        private float _poweredAt = float.NegativeInfinity;
         private HopperFeed _feed;
         private PurchaseQueue _waiting;
         private string _feeding;
@@ -130,6 +134,9 @@ namespace MoonProject.Gameplay
 
         /// <summary>Current sign brightness (tests and debugging views).</summary>
         public float SignLevel => _signGlow != null ? _signGlow.Intensity : 0f;
+
+        /// <summary>True once the base has power (the radio tower's first level): the sign is lit.</summary>
+        public bool Powered => _powered;
 
         /// <summary>
         /// True while the bay works: 07 feeding its hopper, a piece being fitted, and a moment after it is set on.
@@ -235,12 +242,16 @@ namespace MoonProject.Gameplay
             _floorTip = floorTip;
         }
 
-        internal bool Initialize(GameplayServices services, UpgradeService upgrades, SalvageCatalog bundles)
+        /// <param name="power">The radio tower: its first level brings the base's power, which lights the sign.</param>
+        internal bool Initialize(GameplayServices services, UpgradeService upgrades, SalvageCatalog bundles,
+            RadioTower power)
         {
             if (upgrades == null)
             {
                 throw new ArgumentNullException(nameof(upgrades));
             }
+
+            _power = power != null ? power : throw new ArgumentNullException(nameof(power));
 
             if (bundles == null)
             {
@@ -270,7 +281,8 @@ namespace MoonProject.Gameplay
 
             _signGlow = new EmissionGlow(_sign);
             _lampLevel = _tuning.LampIdle;
-            ApplyLamps();
+            _powered = _power.ShownLevel > 0;
+            ApplyLamps(Time.time);
             _sparks = new BenchSparks[_sparkSockets.Length];
             _socketRest = new Vector3[_sparkSockets.Length];
             for (int i = 0; i < _sparks.Length; i++)
@@ -498,7 +510,23 @@ namespace MoonProject.Gameplay
             ApplyLights(Working && _tuning.LightCastsShadows);
             float lamp = _pad.Occupied || Working ? _tuning.LampOccupied : _tuning.LampIdle;
             _lampLevel = Damp.Toward(_lampLevel, lamp, _tuning.LampEase, deltaTime);
-            ApplyLamps();
+            StepPower(now);
+            ApplyLamps(now);
+        }
+
+        /// <summary>
+        /// The base gets its power as the radio tower's first level shows. Bought in play, the sign flickers on;
+        /// loaded with power, it is simply lit.
+        /// </summary>
+        private void StepPower(float now)
+        {
+            if (_powered || _power.ShownLevel <= 0)
+            {
+                return;
+            }
+
+            _powered = true;
+            _poweredAt = _power.Crafting ? now : float.NegativeInfinity;
         }
 
         private void ApplyLights(bool shadows)
@@ -540,14 +568,16 @@ namespace MoonProject.Gameplay
             }
         }
 
-        private void ApplyLamps()
+        private void ApplyLamps(float now)
         {
             for (int i = 0; i < _lampGlows.Length; i++)
             {
                 _lampGlows[i].Apply(_lampLevel);
             }
 
-            _signGlow.Apply(Mathf.Max(_tuning.SignGlow, _lampLevel));
+            float flicker = SignFlicker.Level(now - _poweredAt, _tuning.SignFlickerDuration, _tuning.SignFlickers,
+                _tuning.SignFlickerDepth);
+            _signGlow.Apply(_powered ? Mathf.Max(_tuning.SignGlow, _lampLevel) * flicker : 0f);
         }
 
         private void Hold(bool hold)

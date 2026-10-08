@@ -103,9 +103,19 @@ namespace MoonProject.Gameplay
                  "turntable showing the piece.")]
         [Range(0f, 10f)] [SerializeField] private float _workLinger = 3f;
 
-        [Tooltip("The bay's lit sign never glows dimmer than this (linear emission multiplier): a landmark from " +
-                 "across the base. Above it, it follows the lamps.")]
+        [Header("Sign")]
+        [Tooltip("The bay's lit sign, once the base has power, never glows dimmer than this (linear emission " +
+                 "multiplier): a landmark from across the base. Above it, it follows the lamps.")]
         [Range(0f, 3f)] [SerializeField] private float _signGlow = 0.6f;
+
+        [Tooltip("Seconds the sign takes to flicker on the first time the base has power.")]
+        [Range(0.1f, 5f)] [SerializeField] private float _signFlickerDuration = 1.6f;
+
+        [Tooltip("Flickers in that first power-on.")]
+        [Range(1, 12)] [SerializeField] private int _signFlickers = 4;
+
+        [Tooltip("How deep those flickers dim (0 = it just fades on); they soften as it settles.")]
+        [Range(0f, 1f)] [SerializeField] private float _signFlickerDepth = 0.85f;
 
         [Header("Weld sparks")]
         [Tooltip("Bursts of sparks from the fitting arm's tip as the piece is set on 07.")]
@@ -157,6 +167,9 @@ namespace MoonProject.Gameplay
         public bool LightCastsShadows => _lightShadows;
         public float WorkLinger => _workLinger;
         public float SignGlow => _signGlow;
+        public float SignFlickerDuration => _signFlickerDuration;
+        public int SignFlickers => _signFlickers;
+        public float SignFlickerDepth => _signFlickerDepth;
         public float WeldArmTravel => _weldArmTravel;
         public int SparkBursts => _sparkBursts;
         public int SparkCount => _sparkCount;

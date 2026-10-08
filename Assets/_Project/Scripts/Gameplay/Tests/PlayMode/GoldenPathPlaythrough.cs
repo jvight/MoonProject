@@ -672,6 +672,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return Until(() => !tower.Crafting, 6f, "the hatch shuts and the moment ends");
             AssertCues(cues, Tower, StationCue.FeedStarted, StationCue.Fed, StationCue.HatchOpened,
                 StationCue.StitchStarted, StationCue.HatchClosed);
+            Assert.IsTrue(_gameplay.Workshop.Powered, "the base has power now: the Rover Bay's sign is lit");
             yield return new WaitForSeconds(1f);
             Capture("07-tower-awake");
             End("Park on the pad and craft tower level 1", $"signal radius {radius:F0} m, recipe " +

@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -240,7 +241,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(tuning.LampIdle, bay.LampLevel, 1e-3f, "Kenji's work lamps are left on");
             Assert.AreEqual(tuning.LightIdle, bay.LightLevel, 1e-3f, "a low warm glow lights the bay inside");
             Assert.IsFalse(bay.Working);
-            Assert.AreEqual(tuning.SignGlow, bay.SignLevel, 1e-3f, "the bay's sign glows as a landmark");
+            Assert.IsFalse(bay.Powered);
+            Assert.AreEqual(0f, bay.SignLevel, 1e-3f, "the bay's sign is dark until the base has power");
             Assert.AreEqual(0, bay.SparkCount, "no sparks before a purchase");
             Assert.IsFalse(_fixture.Rover.Has(RoverAbility.HoverJump));
             Assert.Greater(SurfaceRules.HorizontalDistance(bay.PadCentre, tower.PadCentre),
@@ -407,6 +409,61 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(0, _fixture.Events.UpgradePurchased.Count, "a load is never a purchase");
             Assert.AreEqual(0, _fixture.Events.StationCued.Count, "nor a feed");
             Assert.AreEqual(balance, _fixture.Gameplay.Materials.Total, "the checkpoint kept the change");
+        }
+
+        [UnityTest]
+        public IEnumerator BaySign_LightsWithTheBasePower_FlickeringOnTheFirstTime_AndIsLitOnLoad()
+        {
+            string slot = BootstrapHarness.NewTestSlot();
+            _fixture = GameplayFixture.Boot(_controls, slot);
+            yield return null;
+            Workshop bay = _fixture.Gameplay.Workshop;
+            RadioTower tower = _fixture.Gameplay.Tower;
+            WorkshopTuning tuning = _fixture.WorkshopTuning;
+            yield return new WaitForSeconds(0.5f);
+            Assert.IsFalse(bay.Powered);
+            Assert.AreEqual(0f, bay.SignLevel, 1e-3f, "dark: the base has no power yet");
+
+            _fixture.GiveMaterials(0, 1, 1);
+            _fixture.Rover.Place(tower.PadCentre, 0f);
+            yield return null;
+            yield return null;
+            Assert.AreEqual(PurchaseResult.Purchased, _fixture.Bootstrap.Context.Get<IUpgradeShop>().Purchase(Tower));
+            yield return null;
+            Assert.IsFalse(bay.Powered, "not while 07 is still feeding the tower");
+            yield return Waits.Until(() => bay.Powered, 5f);
+            Assert.IsTrue(bay.Powered, "the tower's first level brings the base its power");
+            Assert.AreEqual(1, tower.ShownLevel);
+            var levels = new List<float>();
+            float start = Time.time;
+            while (Time.time - start < tuning.SignFlickerDuration)
+            {
+                levels.Add(bay.SignLevel);
+                yield return null;
+            }
+
+            Assert.Less(levels[0], tuning.SignGlow * 0.5f, "it comes up from dark");
+            int dims = 0;
+            for (int i = 1; i < levels.Count; i++)
+            {
+                dims += levels[i] < levels[i - 1] - 1e-4f ? 1 : 0;
+            }
+
+            Assert.Greater(dims, 0, "flickering on the way up");
+            yield return null;
+            Assert.AreEqual(tuning.SignGlow, bay.SignLevel, 1e-3f, "then holds steady");
+            _fixture.Rover.Aim(bay.BayPosition + bay.BayForward * 9f + Vector3.up * 3f,
+                bay.BayPosition + Vector3.up * 3f);
+            _fixture.Capture("18b-bay-sign-lit");
+
+            _fixture.Dispose(true);
+            yield return null;
+            _fixture = GameplayFixture.Boot(_controls, slot);
+            yield return null;
+            yield return null;
+            bay = _fixture.Gameplay.Workshop;
+            Assert.IsTrue(bay.Powered, "the base keeps its power across a load");
+            Assert.AreEqual(tuning.SignGlow, bay.SignLevel, 1e-3f, "and the sign is simply lit, no flicker");
         }
 
         [UnityTest]
