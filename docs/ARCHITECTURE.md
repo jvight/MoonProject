@@ -226,6 +226,7 @@ Generated/Art/Friends/Bell.prefab  (root on the ground between the feet, +Z = di
       DialLamp         own glow renderer on M_LowPolyGlowOff behind the dial glass (amber)
     Speaker            grille + cone, pivot at the cone centre (pulse along local Z)
     TapeSlot           empty at the cassette door on the front, +Z out (07's beam slides the tape in here)
+    Knob               chunky tuning knob right of the dial (~1.25 m high); turns about local Z; 07's beam taps it
     Antenna            telescopic whip, pivot at its base (spring wobble)
     PartLamp_0..3      own glow renderers on M_LowPolyGlowOff: 0..2 = parts, 3 = the tape (amber)
   Leg_FL/FR/RL/RR      pivot at the hip under Body; swing about local X, splay about local Z
@@ -289,25 +290,25 @@ Generated/Art/Sites/Debris_<Material>_<n>.prefab            4–6 small loose wr
 - **Readability.** Salvage pieces read as distinct chunky shapes, so the player can tell what is left.
 
 ## Contract: Kenji's Rover Bay (Art -> Gameplay, Rover), M3-14
-The bay fits kit onto 07 (VISION ruling 14), so its arms must actually reach every kit socket on a 07 parked on the
-turntable. A piece must never drop the last stretch.
+The bay fits kit onto 07 (VISION ruling 14), so its arms reach every kit socket on a 07 parked on the turntable; a
+piece is never dropped the last stretch (BayReachContractTests proves it on the real prefabs).
 ```
-Generated/Art/Base/RoverBay.prefab   on the lander's WorkshopAnchor (12.5, 0, -2)
-  Turntable                 the disc 07 parks on; rotates about local Y (gameplay/rover turn it to show a piece)
-  Arm_0..2                  gantry arms on the crane rail
-    Yaw                     shoulder turn about local Y, so each arm can aim off its rail plane
-      Upper / Lower / Tip   pitch joints about local X; links long enough that the Tip reaches every kit socket
-                            (lamp bar, both drums, rack) on a parked 07, e.g. 1.25 / 1.15 / 0.26 m
-        SparkSocket         weld sparks
-  FloorArm
-    FloorLift               rises through a slot in the turntable from a pit below (local Y travel)
-      FloorTip              reaches 07's CoilSocket under the belly; the Hover-Jump coils ride it up
-  HopperMouth               rover-height hopper, in line of sight of a parked 07's beam (no beam through walls)
+Generated/Art/Base/RoverBay.prefab   on the lander's WorkshopAnchor (12.5, 0, -2); bay space, metres
+  Turntable                 own disc, top y 0.15, radius 1.75, hazard rim on the disc, centre hole radius 0.5;
+                            rotates about local Y with 07 on it
+  Arm_0..2                  shoulders on the crane rail at y 3.08
+    Yaw                     shoulder turn about local Y
+      Upper / Lower / Tip   pitch about local X, each link hanging along its parent's -Y; links 1.30 / 1.20 / 0.26
+        SparkSocket         on the welding nozzle at Tip (0, -0.26, 0.06)
+                            rest pose: Upper -90, Lower 170, Tip -80, yaw -90/-90/+90 (folded along the rail)
+  FloorArm                  on the ground under the turntable axis, over a dark pit
+    FloorLift               rises along local Y through the centre hole
+      FloorTip              reaches 07's CoilSocket under the belly (Hover-Jump coils)
+  HopperMouth               back-right corner (1.55, 1.15, -1.85), facing the turntable, in 07's line of sight
   Lamp_0/1, BaySign         glow renderers (SetVector, linear)
-  Weather_Paint/Rust/Dust   cleanable skins
+  Weather_Paint/Rust/Dust   cleanable skins (arms share one set)
 ```
-Gameplay registers `Core/IRoverBay` from serialized references (never name lookups). Rover drives the joints with IK.
-A test proves reach: from each piece's chosen arm (or the floor arm), its socket lies within reach.
+Gameplay registers `Core/IRoverBay` from serialized references (never name lookups); Rover drives the joints with IK.
 
 ## Contract: world anchors (World -> Gameplay, Audio)
 World registers `Core/IWorldAnchors` (Count / Get(index) / TryGet(id)): named `WorldAnchor`s (id, surface position,
