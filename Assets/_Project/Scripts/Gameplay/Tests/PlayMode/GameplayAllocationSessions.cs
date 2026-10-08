@@ -17,6 +17,9 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// </summary>
     public sealed class GameplayAllocationSessions : InputTestFixture
     {
+        /// <summary>Seconds a held tether press may take to latch (a slow first frame must not eat it).</summary>
+        private const float LatchTimeout = 1f;
+
         private InputActionAsset _controls;
         private GameplayFixture _fixture;
         private Keyboard _keyboard;
@@ -62,8 +65,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return null;
             yield return null;
             Press(_mouse.rightButton, queueEventOnly: true);
-            yield return null;
-            yield return null;
+            yield return Waits.Until(() => gameplay.Tether.State == TetherAimState.Towing, LatchTimeout);
             Assert.AreEqual(TetherAimState.Towing, gameplay.Tether.State);
             Press(_keyboard.spaceKey, queueEventOnly: true);
             yield return null;
@@ -119,8 +121,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 if (hints.Primary.Kind == InteractionKind.None)
                 {
                     silent++;
-                }
-            }
+                }            }
 
             return silent;
         }
