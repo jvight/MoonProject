@@ -465,6 +465,50 @@
         {
             "key": "ui.pause.relays",
             "text": "Relays {0}/{1}"
+        },
+        {
+            "key": "hint.salvage",
+            "text": "Cut"
+        },
+        {
+            "key": "material.metal",
+            "text": "Metal"
+        },
+        {
+            "key": "material.wiring",
+            "text": "Wiring"
+        },
+        {
+            "key": "material.optics",
+            "text": "Optics"
+        },
+        {
+            "key": "site.depot.name",
+            "text": "Supply Depot"
+        },
+        {
+            "key": "site.kestrel.name",
+            "text": "Kestrel-3"
+        },
+        {
+            "key": "site.drill.name",
+            "text": "Drill Rig"
+        },
+        {
+            "key": "site.garage.name",
+            "text": "Kenji's Garage"
+        },
+        {
+            "key": "site.lander.name",
+            "text": "Canyon Supply Lander"
+        },
+        {
+            "key": "ui.recipe.line",
+            "text": "{0} metal · {1} wiring · {2} optics"
+        },
+        {
+            "key": "ui.recipe.need",
+            "text": "{0} more {1} to salvage"
         }
     ]
 }
