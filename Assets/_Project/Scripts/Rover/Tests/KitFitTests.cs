@@ -133,12 +133,22 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void EveryPiece_HasAView()
+        public void EveryGift_HasAView_KitIsShownInTheBay()
         {
             var views = new KitViewSettings();
+            var shows = new BayFitSettings();
             foreach (RoverKitPiece piece in System.Enum.GetValues(typeof(RoverKitPiece)))
             {
-                Assert.That(views.Bearing(piece), Is.InRange(-180f, 180f), piece.ToString());
+                if (RoverKitPieces.TryGetAbility(piece, out _))
+                {
+                    Assert.That(shows.Show(piece), Is.InRange(-180f, 180f), piece.ToString());
+                    Assert.Throws<System.ArgumentOutOfRangeException>(() => views.Bearing(piece));
+                }
+                else
+                {
+                    Assert.That(views.Bearing(piece), Is.InRange(-180f, 180f), piece.ToString());
+                    Assert.Throws<System.ArgumentOutOfRangeException>(() => shows.Show(piece));
+                }
             }
         }
     }

@@ -15,14 +15,16 @@ namespace MoonProject.Rover
     /// landings. Reads the rover only through <see cref="IRoverState"/>, so it must initialise after the rover.
     /// Slow, skippable camera moments frame 07 with the beam while digging, a surfacing relic, a relay mast's lamp as
     /// it lights, the base after an upgrade (needs <see cref="IWorldLayout"/>), or 07 itself from low and round the
-    /// side as a new kit piece or a friend's gift settles onto it (<see cref="RoverKitInstalling"/>). When 07 has
+    /// side as a friend's gift settles onto it (<see cref="RoverKitInstalling"/>). In Kenji's Rover Bay
+    /// (<see cref="IRoverBay"/>, resolved once Gameplay registers it) a held moment fixes the view in through the open
+    /// front, under the crane rail (<see cref="BayFramingSettings"/>), and the install moment plays there. When 07 has
     /// rested a while (<see cref="IRoverStillness"/>) with nothing going on, the camera drifts out to the lonely
     /// <see cref="WideShot"/>, composed against the analytic terrain (<see cref="ITerrainQuery"/>), and publishes
     /// <see cref="RoverWideShotChanged"/> as it opens and hands back. Camera moments, a leap, the tether, the radio-hop
-    /// list and interactions take precedence over it. When 07 is placed somewhere else (<see cref="RoverPlaced"/>)
-    /// everything snaps behind it, no ease. Registers itself as <see cref="IViewCamera"/> (gameplay aims from its
-    /// centre ray, UI projects with it) and <see cref="ILookSettings"/> (the UI applies the player's sensitivity and
-    /// invert-Y).
+    /// list, the bay and interactions take precedence over it. When 07 is placed somewhere else
+    /// (<see cref="RoverPlaced"/>) everything snaps behind it, no ease. Registers itself as <see cref="IViewCamera"/>
+    /// (gameplay aims from its centre ray, UI projects with it) and <see cref="ILookSettings"/> (the UI applies the
+    /// player's sensitivity and invert-Y).
     /// </summary>
     [DefaultExecutionOrder(100)]
     [DisallowMultipleComponent]
@@ -65,12 +67,19 @@ namespace MoonProject.Rover
         private float _momentYaw;
         private float _momentLift;
         private float _momentPullBack;
+        private float _framedRoverYaw;
         private Vector3 _momentShift;
         private bool _leapHeld;
         private bool _leapAirborne;
         private IRoverState _rover;
         private IWorldLayout _world;
         private IRoverStillness _stillness;
+        private GameContext _context;
+        private IRoverBay _bay;
+        private float _bayRail;
+        private bool _bayBroken;
+        private bool _inBay;
+        private bool _bayDismissed;
         private ITerrainQuery _terrain;
         private EventBus _events;
         private InputReader _input;
@@ -110,6 +119,7 @@ namespace MoonProject.Rover
                 return;
             }
 
+            _context = context;
             _rover = context.Get<IRoverState>();
             _world = context.Get<IWorldLayout>();
             _stillness = context.Get<IRoverStillness>();
@@ -233,9 +243,11 @@ namespace MoonProject.Rover
             if (look.sqrMagnitude > LookEpsilon * LookEpsilon)
             {
                 _moment.Cancel(_tuning.MomentCancelEaseOut);
+                _bayDismissed |= _inBay;
             }
 
             ReleaseLeapOnTouchdown();
+            StepBay();
             _moment.Step(deltaTime);
             StepWideShot(deltaTime);
             StepMomentFraming(deltaTime);
@@ -254,7 +266,9 @@ namespace MoonProject.Rover
         /// <summary>
         /// The current moment's framing as offsets from the normal chase camera (yaw swing, look shift, lift,
         /// pull-back), eased by the moment's weight and smoothed again so one moment flowing into the next (dig into
-        /// relic) never jumps. With no moment they all settle to zero.
+        /// relic) never jumps. The yaw swing gives back at once the share of any turn of 07's that the moment holds
+        /// toward its subject, so a view fixed on the world (the bay's) stays put while the turntable turns 07. With
+        /// no moment they all settle to zero.
         /// </summary>
         private void StepMomentFraming(float deltaTime)
         {
@@ -263,6 +277,9 @@ namespace MoonProject.Rover
             float pullBack = 0f;
             Vector3 shift = Vector3.zero;
             float weight = _moment.Weight;
+            float roverYaw = RoverYaw();
+            float turned = Mathf.DeltaAngle(_framedRoverYaw, roverYaw);
+            _framedRoverYaw = roverYaw;
             if (weight > 0f)
             {
                 CameraMomentSettings moment = _moment.Settings;
@@ -272,9 +289,9 @@ namespace MoonProject.Rover
                 float reach = weight * CameraMoment.FocusReach(moment, distance);
                 if (distance > MinSubjectDistance)
                 {
-                    float roverYaw = RoverYaw();
                     float subjectYaw = Mathf.Atan2(toSubject.x, toSubject.z) * Mathf.Rad2Deg;
                     yaw = Mathf.DeltaAngle(roverYaw, CameraMoment.BlendYaw(moment, roverYaw, subjectYaw, reach));
+                    _momentYaw -= turned * moment.YawShare * Mathf.Clamp01(reach);
                 }
 
                 Vector3 follow = rover + Vector3.up * _tuning.TargetHeight;
@@ -284,10 +301,102 @@ namespace MoonProject.Rover
             }
 
             float halfLife = _tuning.MomentBlendHalfLife;
-            _momentYaw = Smoothing.Damp(_momentYaw, yaw, halfLife, deltaTime);
+            _momentYaw = Smoothing.Damp(_momentYaw, _momentYaw + Mathf.DeltaAngle(_momentYaw, yaw), halfLife,
+                deltaTime);
             _momentShift = Smoothing.Damp(_momentShift, shift, halfLife, deltaTime);
             _momentLift = Smoothing.Damp(_momentLift, lift, halfLife, deltaTime);
             _momentPullBack = Smoothing.Damp(_momentPullBack, pullBack, halfLife, deltaTime);
+        }
+
+        /// <summary>The camera moment running now is the bay's view.</summary>
+        private bool IsBayMoment => _moment.IsActive && ReferenceEquals(_moment.Settings, _tuning.BayMoment);
+
+        /// <summary>
+        /// 07 in the bay: the held bay view, unless the player has looked away since 07 drove in or another moment is
+        /// playing (the view comes back after it). Out of the bay: it hands back to the chase camera.
+        /// </summary>
+        private void StepBay()
+        {
+            if (!ResolveBay())
+            {
+                return;
+            }
+
+            BayFramingSettings settings = _tuning.BayFraming;
+            Vector3 offset = _rover.Position - _bay.TurntablePosition;
+            float reach = _inBay ? settings.Radius + settings.Hysteresis : settings.Radius;
+            _inBay = offset.x * offset.x + offset.z * offset.z <= reach * reach;
+            if (!_inBay)
+            {
+                _bayDismissed = false;
+                if (IsBayMoment)
+                {
+                    _moment.Release();
+                }
+
+                return;
+            }
+
+            if (!_bayDismissed && (!_moment.IsActive || (IsBayMoment && !_moment.IsHeld)))
+            {
+                Vector3 into = Vector3.ProjectOnPlane(_bay.TurntableRotation * Vector3.forward, Vector3.up).normalized;
+                Vector3 subject = _bay.TurntablePosition + into * settings.SubjectDistance
+                    + Vector3.up * _tuning.TargetHeight;
+                _moment.Start(_tuning.BayMoment, subject, true);
+            }
+        }
+
+        /// <summary>
+        /// The bay and the height of its crane rail (its lowest arm shoulder), once Gameplay has registered it; a bay
+        /// without arms breaks the art contract and is logged once and left alone.
+        /// </summary>
+        private bool ResolveBay()
+        {
+            if (_bay != null)
+            {
+                return true;
+            }
+
+            if (_bayBroken || !_context.TryGet(out IRoverBay bay))
+            {
+                return false;
+            }
+
+            float rail = float.MaxValue;
+            for (int i = 0; i < bay.ArmCount; i++)
+            {
+                Transform shoulder = bay.GetArmJoint(i, RoverBayJoint.Yaw);
+                if (shoulder == null)
+                {
+                    rail = float.NaN;
+                    break;
+                }
+
+                rail = Mathf.Min(rail, shoulder.position.y);
+            }
+
+            if (bay.ArmCount < 1 || float.IsNaN(rail))
+            {
+                Debug.LogError($"{nameof(RoverCameraRig)}: the {nameof(IRoverBay)} has no arms or an arm without its "
+                    + $"Yaw shoulder ({BayArm.Contract}); the bay view is off.", this);
+                _bayBroken = true;
+                return false;
+            }
+
+            _bay = bay;
+            _bayRail = rail;
+            return true;
+        }
+
+        /// <summary>
+        /// The highest orbit elevation (deg) at <paramref name="radius"/> that keeps the camera the rail clearance
+        /// below the bay's crane rail, so it looks in under the roof.
+        /// </summary>
+        private float BayCeiling(float radius)
+        {
+            float follow = _rover.Position.y + _tuning.TargetHeight + _momentShift.y;
+            float room = _bayRail - _tuning.BayFraming.RailClearance - follow;
+            return Mathf.Asin(Mathf.Clamp(room / radius, -1f, 1f)) * Mathf.Rad2Deg;
         }
 
         private float RoverYaw()
@@ -317,6 +426,12 @@ namespace MoonProject.Rover
             float yaw = _orbitState.YawOffset * (1f - _moment.Weight);
             float elevation = _orbitState.Elevation + _momentLift;
             float radius = _tuning.Distance * (1f + _momentPullBack);
+            if (IsBayMoment)
+            {
+                float bay = Mathf.Min(_tuning.BayFraming.Elevation, BayCeiling(radius));
+                elevation = Mathf.Lerp(elevation, bay, _moment.Weight);
+            }
+
             float fov = _orbitState.FieldOfView;
             Vector2 screen = _tuning.ScreenPosition;
             float wide = _wide.Weight;
@@ -356,7 +471,7 @@ namespace MoonProject.Rover
         /// </summary>
         private void StepWideShot(float deltaTime)
         {
-            bool busy = _moment.IsActive || _leapHeld || _tethered || _hopListOpen;
+            bool busy = _moment.IsActive || _leapHeld || _tethered || _hopListOpen || _inBay;
             switch (_wide.Step(_stillness.StillSeconds, busy, _paused, deltaTime))
             {
                 case WideShotCue.Open:
@@ -429,6 +544,8 @@ namespace MoonProject.Rover
             _wide.Close();
             _wideSteersYaw = false;
             _moment.Clear();
+            _inBay = false;
+            _bayDismissed = false;
             _leapHeld = false;
             _leapAirborne = false;
             _momentYaw = 0f;
@@ -535,8 +652,7 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// A base upgrade (the radio tower) takes in the base; kit for 07 itself has its own install moment
-        /// (<see cref="OnKitInstalling"/>).
+        /// A base upgrade (the radio tower) takes in the base; kit for 07 itself is fitted inside the bay's view.
         /// </summary>
         private void OnUpgradePurchased(UpgradePurchased upgrade)
         {
@@ -549,16 +665,23 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// The install moment: the camera eases low and round to the side the new piece faces (Kit views), holds
-        /// while it settles and 07 strikes its pose, then returns; a friend's gift gets a softer, shorter version.
+        /// A friend's gift: the camera eases low and round to the side the gift faces (gift views), holds while it
+        /// settles, then returns. Kit is fitted inside the bay's view, which the fitting brings back if the player
+        /// had looked away.
         /// </summary>
         private void OnKitInstalling(RoverKitInstalling installing)
         {
+            if (!installing.Gift)
+            {
+                _bayDismissed = false;
+                return;
+            }
+
             KitViewSettings views = _tuning.KitViews;
             float bearing = RoverYaw() + views.Bearing(installing.Piece);
             Vector3 toward = Quaternion.Euler(0f, bearing, 0f) * Vector3.forward;
             Vector3 subject = _rover.Position + toward * views.SubjectDistance;
-            _moment.Start(installing.Gift ? _tuning.GiftMoment : _tuning.InstallMoment, subject, false);
+            _moment.Start(_tuning.GiftMoment, subject, false);
         }
 
         private void OnLanded(RoverLanded landed)
