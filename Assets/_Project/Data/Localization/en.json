@@ -425,6 +425,42 @@
         {
             "key": "track.06_signal_through_craters.title",
             "text": "Signal Through Craters"
+        },
+        {
+            "key": "hint.restore",
+            "text": "Restore"
+        },
+        {
+            "key": "hint.hop",
+            "text": "Hop"
+        },
+        {
+            "key": "ticker.relay.online",
+            "text": "Relay {0} online. Lumen Station can hear a little farther."
+        },
+        {
+            "key": "ticker.relay.waiting",
+            "text": "Relay restored. It is listening for a lit neighbour."
+        },
+        {
+            "key": "hop.node.home",
+            "text": "Lumen Station"
+        },
+        {
+            "key": "hop.node.relay.0",
+            "text": "Mound relay"
+        },
+        {
+            "key": "hop.node.relay.1",
+            "text": "Rim shoulder relay"
+        },
+        {
+            "key": "hop.node.relay.2",
+            "text": "Canyon mouth relay"
+        },
+        {
+            "key": "hop.node.relay.3",
+            "text": "Terminus relay"
         }
     ]
 }
