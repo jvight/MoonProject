@@ -19,7 +19,8 @@ namespace MoonProject.Art.Editor
     /// <code>
     /// python tools/unity_batch.py exec --method MoonProject.Art.Editor.ArtLightingPreview.Capture
     ///     [--arg scene=rover|base|towers|relics|shadow|grit|friends|workshop|bell|bellbroken|pickups|bellcorner|
-    ///                  warmpoints|relaysbroken|relayslit|sites|sitesclean|salvagebits|kit|home|homeclean]
+    ///                  warmpoints|relaysbroken|relayslit|sites|sitesclean|salvagebits|kit|home|homeclean|
+    ///                  builtfor07]
     /// </code>
     /// (default rover; a ';'-separated list captures several scenes in one run)
     /// rover: 07 at rest (half-lidded, head lowered, wing ajar) with its headlamp. base: the lander with the shelf
@@ -46,7 +47,9 @@ namespace MoonProject.Art.Editor
     /// the friends' gifts, and "minute one versus hour five" side by side from the chase camera and at 30 m. home:
     /// the base as Main.unity has it (its own grading), from the spawn view, the lander close and three-quarter, the
     /// tower, the shelf area, and a 07 parked in front from the chase camera and close; homeclean: the same with every
-    /// Weather_* layer hidden, as restoration will leave it.
+    /// Weather_* layer hidden, as restoration will leave it. builtfor07: Main.unity with Kenji's Rover Bay on the
+    /// WorkshopAnchor and 07 parked on its turntable (lamps lit, one arm lowered as if fitting), the true-size relics
+    /// in a row beside 07 and a 1.75 m person (a capture-only reference), and 07's spare wheel close.
     /// Glows are lit with the linear MaterialPropertyBlock contract.
     /// </summary>
     public static class ArtLightingPreview
@@ -199,11 +202,14 @@ namespace MoonProject.Art.Editor
                     case "homeclean":
                         poses = HomeScene(temporary, false);
                         break;
+                    case "builtfor07":
+                        poses = BuiltFor07Scene(material, temporary);
+                        break;
                     default:
                         Debug.LogError($"ArtLightingPreview: unknown scene '{scene}' " +
                             "(rover|base|towers|relics|shadow|grit|friends|workshop|bell|bellbroken|pickups|" +
                             "bellcorner|warmpoints|relaysbroken|relayslit|sites|sitesclean|salvagebits|kit|home|" +
-                            "homeclean).");
+                            "homeclean|builtfor07).");
                         return false;
                 }
 
@@ -935,6 +941,86 @@ namespace MoonProject.Art.Editor
                 Pose("bundles", new[] { 0f, 0.9f, 0.2f }, new[] { 0f, 0.12f, 1.6f }, 40f),
                 Pose("debris", new[] { 0f, 2.2f, 0.4f }, new[] { 0f, 0.2f, 4f }, 45f),
                 Pose("bits_from_10m", new[] { 3f, 4f, -7f }, new[] { 0f, 0.3f, 2.5f }, 40f));
+        }
+
+        /// <summary>
+        /// Opens Main.unity (never saved), stands Kenji's Rover Bay on the lander's WorkshopAnchor in place of the old
+        /// bench with 07 parked on its turntable, and lays out the true-size relics beside a second 07 and a 1.75 m
+        /// reference person on open ground left of the lander.
+        /// </summary>
+        private static CameraPoseSet BuiltFor07Scene(Material material, TemporaryObjects temporary)
+        {
+            EditorSceneManager.OpenScene(CaptureAutomation.MainScenePath, OpenSceneMode.Single);
+            Transform lander = SceneObject(BaseModelBuilder.LanderName);
+            SceneObject(BaseModelBuilder.WorkbenchName).gameObject.SetActive(false);
+            GameObject bay = Instantiate(BaseModelBuilder.RoverBayName, temporary);
+            bay.transform.SetPositionAndRotation(lander.TransformPoint(BaseModelBuilder.WorkshopAnchor),
+                lander.rotation);
+            Transform turntable = Descendant(bay.transform, "Turntable");
+            GameObject parked = Instantiate(RoverModelBuilder.ModelName, temporary, ArtPaths.RoverFolder);
+            parked.transform.SetPositionAndRotation(turntable.position, turntable.rotation);
+            SetGlow(bay.transform, "Lamp_", 2, 1f);
+            Transform fitting = Descendant(bay.transform, "Arm_1");
+            Descendant(fitting, "Upper").localRotation = Quaternion.Euler(-28f, 0f, 0f);
+            Descendant(fitting, "Lower").localRotation = Quaternion.Euler(-35f, 0f, 0f);
+            Descendant(fitting, "Tip").localRotation = Quaternion.Euler(60f, 0f, 0f);
+
+            Vector3 row = lander.TransformPoint(new Vector3(-9f, 0f, 6.5f));
+            Quaternion facing = lander.rotation * Quaternion.Euler(0f, 90f, 0f);
+            GameObject rover = Instantiate(RoverModelBuilder.ModelName, temporary, ArtPaths.RoverFolder);
+            rover.transform.SetPositionAndRotation(row, facing);
+            Vector3 side = facing * Vector3.right;
+            Vector3 ahead = facing * Vector3.forward;
+            GameObject person = MeshObject("ReferencePerson", ReferencePerson().ToMesh("ReferencePerson"), material,
+                temporary);
+            person.transform.SetPositionAndRotation(row - side * 1.7f, facing);
+            IReadOnlyList<string> relics = RelicModelBuilder.Ids;
+            for (int i = 0; i < relics.Count; i++)
+            {
+                GameObject relic = Instantiate(RelicModelBuilder.PrefabName(relics[i]), temporary,
+                    ArtPaths.RelicFolder);
+                float lift = relic.transform.position.y - RendererBounds(relic).min.y;
+                Vector3 spot = row + ahead * 2.2f + side * ((i - 2.5f) * 0.6f);
+                relic.transform.SetPositionAndRotation(spot + Vector3.up * lift,
+                    facing * Quaternion.Euler(0f, 180f, 0f));
+            }
+
+            Vector3 bayFront = bay.transform.TransformPoint(new Vector3(1.5f, 2.6f, 7.5f));
+            Vector3 bayCentre = turntable.position + Vector3.up * 1.1f;
+            Transform wheel = Descendant(rover.transform, "Wheel_RL");
+            var poses = new List<CameraPose>
+            {
+                Pose("bay_front", Point(bayFront), Point(bayCentre), 55f),
+                Pose("bay_quarter", Point(bay.transform.TransformPoint(new Vector3(6.5f, 3.4f, 6f))), Point(bayCentre),
+                    50f),
+                Pose("bay_hopper", Point(bay.transform.TransformPoint(new Vector3(3.6f, 1.9f, 4.4f))),
+                    Point(bay.transform.TransformPoint(RoverBayMeshes.HopperMouth)), 50f),
+                Pose("relics_and_reference", Point(row + ahead * 5.5f + side * 1.2f + Vector3.up * 1.6f),
+                    Point(row + ahead * 1f + Vector3.up * 0.6f), 50f),
+                Pose("spare_wheel_close", Point(wheel.position - side * 1.5f - ahead * 1.1f + Vector3.up * 0.5f),
+                    Point(wheel.position), 45f),
+            };
+            return new CameraPoseSet { width = 1600, height = 900, postProcessing = true, poses = poses.ToArray() };
+        }
+
+        /// <summary>
+        /// A plain 1.75 m person for scale checks in captures only (legs, body, arms, head in charcoal): never part
+        /// of the game's content.
+        /// </summary>
+        private static LowPolyMeshBuilder ReferencePerson()
+        {
+            var b = new LowPolyMeshBuilder(200);
+            for (int side = -1; side <= 1; side += 2)
+            {
+                b.Box(Place.At(side * 0.1f, 0.42f, 0f), new Vector3(0.13f, 0.84f, 0.16f), PaletteSwatch.Charcoal,
+                    0.03f);
+                b.Box(Place.At(side * 0.27f, 1.12f, 0f), new Vector3(0.09f, 0.62f, 0.1f), PaletteSwatch.Charcoal,
+                    0.03f);
+            }
+
+            b.Box(Place.At(0f, 1.15f, 0f), new Vector3(0.4f, 0.62f, 0.22f), PaletteSwatch.Charcoal, 0.05f);
+            b.Icosphere(Place.At(0f, 1.62f, 0f), 0.13f, 1, PaletteSwatch.Charcoal);
+            return b;
         }
 
         /// <summary>
