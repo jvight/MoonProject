@@ -33,11 +33,14 @@ namespace MoonProject.UI.Tests
             names.Purchased(_upgrades.Kit("rover.boost_coils", new Recipe(4, 3, 1)), 1);
             Assert.AreEqual(2, names.Pending);
 
-            Assert.IsTrue(names.TryTitle(new RoverKitFitted(RoverKitPiece.LampBar, false), out string first));
+            var lampBar = new RoverKitFitted(RoverKitPiece.LampBar, false, "rover.warm_headlamp");
+            Assert.IsTrue(names.TryTitle(lampBar, out string first));
             Assert.AreEqual(UiKeys.UpgradeName("rover.warm_headlamp"), first);
-            Assert.IsTrue(names.TryTitle(new RoverKitFitted(RoverKitPiece.CapacitorDrums, false), out string second));
+            var drums = new RoverKitFitted(RoverKitPiece.CapacitorDrums, false, "rover.boost_coils");
+            Assert.IsTrue(names.TryTitle(drums, out string second));
             Assert.AreEqual(UiKeys.UpgradeName("rover.boost_coils"), second);
-            Assert.IsFalse(names.TryTitle(new RoverKitFitted(RoverKitPiece.CargoRack, false), out _),
+            var rack = new RoverKitFitted(RoverKitPiece.CargoRack, false, "rover.cargo_cradle");
+            Assert.IsFalse(names.TryTitle(rack, out _),
                 "a crafted piece nobody bought is a wiring fault, not a guess");
         }
 
@@ -56,11 +59,13 @@ namespace MoonProject.UI.Tests
         public void Gifts_HaveTheirOwnTitles()
         {
             var names = new KitNames();
-            Assert.IsTrue(names.TryTitle(new RoverKitFitted(RoverKitPiece.SolarCell, true), out string cell));
+            var solarCell = new RoverKitFitted(RoverKitPiece.SolarCell, true, string.Empty);
+            Assert.IsTrue(names.TryTitle(solarCell, out string cell));
             Assert.AreEqual("kit.solar_cell.name", cell);
-            Assert.IsTrue(names.TryTitle(new RoverKitFitted(RoverKitPiece.FreshPaint, true), out string paint));
+            var freshPaint = new RoverKitFitted(RoverKitPiece.FreshPaint, true, string.Empty);
+            Assert.IsTrue(names.TryTitle(freshPaint, out string paint));
             Assert.AreEqual("kit.fresh_paint.name", paint);
-            Assert.IsFalse(names.TryTitle(new RoverKitFitted(RoverKitPiece.HoverCoils, true), out _),
+            Assert.IsFalse(names.TryTitle(new RoverKitFitted(RoverKitPiece.HoverCoils, true, string.Empty), out _),
                 "no friend gives the hover coils");
         }
     }

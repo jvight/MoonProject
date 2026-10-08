@@ -161,16 +161,20 @@ namespace MoonProject.Rover
         [SerializeField] private CameraMomentSettings _relayMoment =
             new CameraMomentSettings(3f, 2.6f, 2.6f, 0.22f, 3f, 0.5f, 26f, 40f, -13f, 0.65f, 40f);
 
-        [Tooltip("A kit piece fitted at Kenji's bench: the camera eases round, low and closer, to a view of the new "
-            + "piece (Kit views), holds while it settles and 07 strikes its proud pose, then returns (~3.6 s).")]
-        [SerializeField] private CameraMomentSettings _installMoment =
-            new CameraMomentSettings(1.2f, 1.4f, 1.0f, 0f, 0f, 1f, 0f, 170f, -7f, -0.3f, 40f);
+        [Tooltip("07 in Kenji's Rover Bay: the camera eases to a fixed view in through the open front and holds it "
+            + "(whole yaw share, any swing) while 07 stays in, a little farther than the chase camera and at the bay "
+            + "framing's own elevation, so the arms show over 07. The install moment plays inside this view.")]
+        [SerializeField] private CameraMomentSettings _bayMoment =
+            new CameraMomentSettings(1.4f, 0f, 1.4f, 0f, 0f, 1f, 0f, 180f, 0f, 0.12f, 40f);
+
+        [Tooltip("Where the bay view looks from and how it keeps clear of the bay's roof.")]
+        [SerializeField] private BayFramingSettings _bayFraming = new BayFramingSettings();
 
         [Tooltip("A friend's gift appearing as 07 comes home: a softer, shorter swing toward the gift, then back.")]
         [SerializeField] private CameraMomentSettings _giftMoment =
             new CameraMomentSettings(1.4f, 1.0f, 1.2f, 0f, 0f, 0.5f, 0f, 80f, -3f, -0.15f, 40f);
 
-        [Tooltip("Which way the install moment looks for each kit piece and gift.")]
+        [Tooltip("Which way the gift moment looks for each friend's gift.")]
         [SerializeField] private KitViewSettings _kitViews = new KitViewSettings();
 
         [Tooltip("Seconds a camera moment takes to ease away when the player looks around (always skippable).")]
@@ -287,7 +291,9 @@ namespace MoonProject.Rover
 
         public CameraMomentSettings RelayMoment => _relayMoment;
 
-        public CameraMomentSettings InstallMoment => _installMoment;
+        public CameraMomentSettings BayMoment => _bayMoment;
+
+        public BayFramingSettings BayFraming => _bayFraming;
 
         public CameraMomentSettings GiftMoment => _giftMoment;
 

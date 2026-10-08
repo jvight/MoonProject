@@ -139,12 +139,21 @@ namespace MoonProject.Gameplay.Editor
                 bayLamps[i] = Renderer(Child(bay, "Lamp_" + i));
             }
 
+            var armYaws = new Transform[BayArms];
+            var armUppers = new Transform[BayArms];
+            var armLowers = new Transform[BayArms];
+            var armTips = new Transform[BayArms];
             var weldSockets = new Transform[BayArms];
             for (int i = 0; i < BayArms; i++)
             {
-                weldSockets[i] = Child(Child(Child(Child(Child(bay, "Arm_" + i), "Upper"), "Lower"), "Tip"),
-                    "SparkSocket");
+                armYaws[i] = Child(Child(bay, "Arm_" + i), "Yaw");
+                armUppers[i] = Child(armYaws[i], "Upper");
+                armLowers[i] = Child(armUppers[i], "Lower");
+                armTips[i] = Child(armLowers[i], "Tip");
+                weldSockets[i] = Child(armTips[i], "SparkSocket");
             }
+
+            Transform floorLift = Child(Child(bay, "FloorArm"), "FloorLift");
 
             salvage.Wire(salvageTuning, salvageCatalog);
             relics.Wire(relicCatalog, relicTuning);
@@ -157,6 +166,7 @@ namespace MoonProject.Gameplay.Editor
             tower.Wire(towerTuning, radioTower, towerAnchor, stages, stageLights, beacons, hoppers, hatches);
             workshop.Wire(workshopTuning, benchKit, bay, Child(bay, "Turntable"), Child(bay, "HopperMouth"), bayLamps,
                 Renderer(Child(bay, "BaySign")), weldSockets);
+            workshop.WireArms(armYaws, armUppers, armLowers, armTips, floorLift, Child(floorLift, "FloorTip"));
             var homes = new Transform[friendCatalog.Friends.Count];
             for (int i = 0; i < homes.Length; i++)
             {

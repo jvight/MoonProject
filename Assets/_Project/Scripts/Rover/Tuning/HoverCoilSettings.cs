@@ -4,29 +4,13 @@ using UnityEngine;
 namespace MoonProject.Rover
 {
     /// <summary>
-    /// The Hover-Jump coils under 07's belly (art's HoverCoils on CoilSocket): they pop in when the ability is bought,
-    /// squash and glow while the jump charges, spring out on the leap, and a soft cyan light under the belly lets the
-    /// charge read from the chase camera, which never sees the coils themselves.
+    /// The Hover-Jump coils under 07's belly (art's HoverCoils on CoilSocket; the Rover Bay's floor arm fits them, see
+    /// <see cref="BayFitSettings"/>): they squash and glow while the jump charges, spring out on the leap, and a soft
+    /// cyan light under the belly lets the charge read from the chase camera, which never sees the coils themselves.
     /// </summary>
     [Serializable]
     public sealed class HoverCoilSettings
     {
-        [Tooltip("Spring frequency (Hz) of the coils popping in when the Hover-Jump is bought.")]
-        [Range(0.5f, 8f)]
-        [SerializeField] private float _popFrequency = 2.8f;
-
-        [Tooltip("Damping ratio of the pop-in: below 1 the mount overshoots once and settles, like a happy unfold.")]
-        [Range(0.1f, 1.5f)]
-        [SerializeField] private float _popDamping = 0.4f;
-
-        [Tooltip("Upward chassis bob (m/s) as the coils unfold, so the pop reads from behind 07.")]
-        [Range(0f, 2f)]
-        [SerializeField] private float _popHeaveKick = 0.5f;
-
-        [Tooltip("Antenna wiggle (deg/s) as the coils unfold.")]
-        [Range(0f, 300f)]
-        [SerializeField] private float _popAntennaKick = 80f;
-
         [Tooltip("Fraction of a coil's length squashed away at a full charge.")]
         [Range(0f, 0.8f)]
         [SerializeField] private float _chargeSquash = 0.35f;
@@ -76,14 +60,6 @@ namespace MoonProject.Rover
         [Tooltip("Range (m) of the charge light.")]
         [Range(0.5f, 10f)]
         [SerializeField] private float _lightRange = 3f;
-
-        public float PopFrequency => _popFrequency;
-
-        public float PopDamping => _popDamping;
-
-        public float PopHeaveKick => _popHeaveKick;
-
-        public float PopAntennaKick => _popAntennaKick;
 
         public float ChargeSquash => _chargeSquash;
 

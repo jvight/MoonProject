@@ -6,12 +6,12 @@ using MoonProject.Core.Events;
 namespace MoonProject.Rover
 {
     /// <summary>
-    /// Shows art's HoverCoils (mounted on RoverModel 'CoilSocket') once 07 owns the Hover-Jump, popping them in when
-    /// it is bought, at the moment <see cref="RoverKit"/> fits them (<see cref="HoverCoilMotion"/>). While the jump
-    /// charges, Coil_FL/FR/RL/RR squash along local Y and their Glow_ rings light up (MaterialPropertyBlock
-    /// _EmissionColor = linear glow, set as a vector), and a soft cyan point light at CoilSocket pools on the ground so
-    /// the charge reads from the chase camera; on the leap the springs kick out. Ticked by
-    /// <see cref="RoverController"/>.
+    /// Shows art's HoverCoils (mounted on RoverModel 'CoilSocket') once they are on 07: there at once in a loaded
+    /// game, or carried up by the Rover Bay's floor arm and growing as they come (<see cref="RoverKit"/> fits them and
+    /// owns the mount's pose and scale while it does; <see cref="HoverCoilMotion"/>). While the jump charges,
+    /// Coil_FL/FR/RL/RR squash along local Y and their Glow_ rings light up (MaterialPropertyBlock _EmissionColor =
+    /// linear glow, set as a vector), and a soft cyan point light at CoilSocket pools on the ground so the charge reads
+    /// from the chase camera; on the leap the springs kick out. Ticked by <see cref="RoverController"/>.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class RoverHoverCoils : MonoBehaviour
@@ -34,7 +34,6 @@ namespace MoonProject.Rover
         [SerializeField] private Light _light;
 
         private RoverController _rover;
-        private RoverVisualRig _rig;
         private HoverCoilMotion _motion;
         private MaterialPropertyBlock _glowBlock;
         private IDisposable _jumpedSubscription;
@@ -42,11 +41,14 @@ namespace MoonProject.Rover
         private Vector3 _mountRestScale;
         private float _appliedGlow = -1f;
 
-        /// <summary>The coils' motion (visibility, pop-in, squash, glow), for tests and tooling.</summary>
+        /// <summary>The coils' motion (visibility, squash, glow), for tests and tooling.</summary>
         public HoverCoilMotion Motion => _motion;
 
+        /// <summary>The HoverCoils instance on CoilSocket: the part the Rover Bay's floor arm carries up.</summary>
+        public Transform Mount => _mount;
+
         /// <summary>Validates the wiring and starts hidden. Returns false (and logs) when broken.</summary>
-        public bool Initialize(GameContext context, RoverController rover, RoverVisualRig rig)
+        public bool Initialize(GameContext context, RoverController rover)
         {
             if (!ValidateWiring())
             {
@@ -55,7 +57,6 @@ namespace MoonProject.Rover
             }
 
             _rover = rover;
-            _rig = rig;
             HoverCoilSettings settings = _tuning.HoverCoils;
             _motion = new HoverCoilMotion(settings);
             _glowBlock = new MaterialPropertyBlock();
@@ -115,13 +116,7 @@ namespace MoonProject.Rover
         public void Tick(float deltaTime)
         {
             bool wasVisible = _motion.Visible;
-            if (_motion.Step(_rover.Kit.Shows(RoverKitPiece.HoverCoils), _rover.JumpCharge, deltaTime))
-            {
-                HoverCoilSettings settings = _tuning.HoverCoils;
-                _rig.KickHeave(settings.PopHeaveKick);
-                _rig.KickAntenna(settings.PopAntennaKick);
-            }
-
+            _motion.Step(_rover.Kit.Shows(RoverKitPiece.HoverCoils), _rover.JumpCharge, deltaTime);
             if (!_motion.Visible)
             {
                 return;
@@ -132,7 +127,7 @@ namespace MoonProject.Rover
                 _mount.gameObject.SetActive(true);
             }
 
-            _mount.localScale = _mountRestScale * _motion.MountScale;
+            _mount.localScale = _mountRestScale * _rover.Kit.Fit(RoverKitPiece.HoverCoils).Scale;
             float length = _motion.CoilLength;
             for (int i = 0; i < _coils.Length; i++)
             {

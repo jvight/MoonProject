@@ -16,7 +16,8 @@ namespace MoonProject.Gameplay
     /// registers the services other domains read (<see cref="IMaterialStock"/>, <see cref="ISalvageStatus"/>,
     /// <see cref="ITetherAim"/>, <see cref="IUpgradeShop"/>, <see cref="IInteractionHints"/>,
     /// <see cref="IFriendRoster"/>, <see cref="IFriendStatuses"/>, <see cref="IRadioProgram"/>,
-    /// <see cref="IStationReach"/>, <see cref="IRadioHop"/>, <see cref="IRelayStatus"/>) and the save sections,
+    /// <see cref="IStationReach"/>, <see cref="IRadioHop"/>, <see cref="IRelayStatus"/>, the workshop as
+    /// <see cref="IRoverBay"/>) and the save sections,
     /// announces the radio's signal radius and, once the save is loaded, the radio program, and owns the shared glow
     /// meshes. The radio-hop moves 07 through Core's <see cref="IRoverPlacement"/> when the Rover domain registers it;
     /// Core's <see cref="IRoverCargoSeat"/> (where a relic rides in the Cargo Cradle) is required at boot.
@@ -192,6 +193,7 @@ namespace MoonProject.Gameplay
             context.Register<IUpgradeShop>(Shop);
             context.Register<IInteractionHints>(Hints);
             context.Register<IFriendRoster>(_friends);
+            context.Register<IRoverBay>(_workshop);
             context.Register<IFriendStatuses>(_friends);
             context.Register<IRadioProgram>(Radio);
             context.Register<IStationReach>(_relays.Reach);

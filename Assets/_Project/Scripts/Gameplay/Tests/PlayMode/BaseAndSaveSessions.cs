@@ -310,7 +310,13 @@ namespace MoonProject.Gameplay.PlayModeTests
             AssertCues(cues, HoverJump, StationCue.FeedStarted, StationCue.Fed);
             RoverBayFitting fitting = _fixture.Events.RoverBayFitting[0].Value;
             Assert.AreEqual(HoverJump, fitting.UpgradeId);
-            Assert.AreEqual("RoverBay", fitting.Bay.name, "the bay itself, for the rover to drive its arms");
+            var rig = _fixture.Bootstrap.Context.Get<IRoverBay>();
+            Assert.AreSame(bay, rig, "the bay itself is registered for the rover to drive its arms");
+            Assert.AreEqual(3, rig.ArmCount);
+            Assert.AreEqual("Yaw", rig.GetArmJoint(1, RoverBayJoint.Yaw).name);
+            Assert.AreEqual("SparkSocket", rig.GetArmJoint(1, RoverBayJoint.SparkSocket).name);
+            Assert.AreEqual("FloorTip", rig.FloorTip.name);
+            Assert.Less(Vector3.Distance(bay.PadCentre, rig.TurntablePosition), 0.2f, "07 parks on the turntable");
             Assert.IsFalse(bay.Feeding);
             Assert.AreEqual(0, bay.BundlesInFlight, "every bundle went in");
             Assert.Greater(bay.LampLevel, tuning.LampOccupied * 2f, "the lamps flare as the bay starts fitting");

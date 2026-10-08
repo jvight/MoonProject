@@ -30,9 +30,12 @@ namespace MoonProject.Rover.PlayModeTests
     /// distance to 07, 07's place on screen and the horizon. A second session stages the restoration moment (M3-06) at
     /// relay.0: a restored mast stood on the anchor, 07 parked on its pad, RelayRestored published with the lamp
     /// warming, and five frames from before to after the camera's look up (relay.md). A third shows visible
-    /// progression (M3-11, kit.md): 07 at minute one from the chase camera and at 30 m, each kit piece fitted at
-    /// Kenji's bench (a staged purchase, three frames of the moment), a relic riding in the rack, then the scene
-    /// reloaded from a save with Tilly and Bell home and every piece owned: 07 fully kitted from the same two views.
+    /// progression (M3-11, kit.md): 07 at minute one from the chase camera and at 30 m, each kit piece bought with 07
+    /// parked on Kenji's Rover Bay's turntable (M3-14: the hopper fed, then the bay fitting it, four frames each from
+    /// the bay's view, <see cref="BayStrip"/>), a relic riding in the rack, then the scene reloaded from a save with
+    /// Tilly and Bell home and every piece owned: 07 fully kitted from the same two views.
+    /// A fourth parks 07 just short of the charging dock (M3-14, dock.md): gameplay docks it, 07 eases onto the anchor
+    /// and its lamp dims; frames before, while settling and resting, from the chase camera and a low side view.
     /// Game time advances a fixed 1/60 s per frame, so slow captures never skip game time. 07 is moved between places
     /// through <see cref="IRoverPlacement"/>, held parked meanwhile. Slow and needs a GPU: run on demand with
     /// --category RoverLonelySession.
@@ -101,14 +104,8 @@ namespace MoonProject.Rover.PlayModeTests
 
         private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
 
-        /// <summary>The bench's shop pad: 3.2 m in front of the lander's WorkshopAnchor (art contract).</summary>
-        private const string WorkshopAnchorName = "WorkshopAnchor";
-        private const float ShopPadAhead = 3.2f;
-
-        /// <summary>Seconds after a staged purchase at which the moment's three frames are taken.</summary>
-        private static readonly float[] FitFrames = { 0.7f, 1.25f, 2.3f };
-
-        private const float FitMomentSeconds = 5f;
+        /// <summary>Seconds a purchase may take from the hopper feed to the piece shown on 07.</summary>
+        private const float FitTimeout = 40f;
 
         /// <summary>The 30 m review view: behind and to the right of 07, a little above.</summary>
         private const float FarDistance = 30f;
@@ -147,6 +144,33 @@ namespace MoonProject.Rover.PlayModeTests
         };
 
         private static readonly string[] KitNames = { "coils", "lampbar", "drums", "rack" };
+
+        private static readonly RoverKitPiece[] KitPieces =
+        {
+            RoverKitPiece.HoverCoils, RoverKitPiece.LampBar, RoverKitPiece.CapacitorDrums, RoverKitPiece.CargoRack,
+        };
+
+        /// <summary>The node each piece's strip follows (the first drum for the pair).</summary>
+        private static readonly string[] KitNodes =
+        {
+            "HoverCoils", "Kit_LampBar", "Kit_CapacitorDrum", "Kit_CargoRack",
+        };
+
+        /// <summary>The charging dock: 07 stops this short of the anchor, turned this far off its facing.</summary>
+        private const string DockAnchorName = "DockAnchor";
+        private const float DockShort = 0.7f;
+        private const float DockSkew = 14f;
+
+        /// <summary>Seconds after the dock takes 07 at which the settling frames are taken.</summary>
+        private static readonly float[] DockFrames = { 0.35f, 0.8f, 3f };
+
+        private const float DockTimeout = 10f;
+
+        /// <summary>The low side view of 07 on the dock, from its left (the sign post stands on its right).</summary>
+        private const float DockViewSide = 3.6f;
+        private const float DockViewBack = 1.2f;
+        private const float DockViewRise = 1.1f;
+        private const float DockViewFov = 45f;
 
         private const float HorizonReach = 1000f;
 
@@ -312,31 +336,24 @@ namespace MoonProject.Rover.PlayModeTests
             Capture("kit-minute-one-chase");
             CaptureFar("kit-minute-one-30m");
 
-            Transform anchor = FindNode(WorkshopAnchorName);
-            Assert.IsNotNull(anchor, "The lander carries Kenji's WorkshopAnchor.");
-            Vector3 pad = anchor.position + anchor.forward * ShopPadAhead;
-            yield return MoveTo(pad, WideShotComposer.Bearing(-anchor.forward));
+            IRoverBay bay = _context.Get<IRoverBay>();
+            yield return MoveTo(bay.TurntablePosition, RoverPlacementMath.Yaw(bay.TurntableRotation));
+            _context.Get<IRoverRig>().SetHoldStill(_hold, false);
             IRoverAbilities abilities = _context.Get<IRoverAbilities>();
+            var strip = new BayStrip(_context.Events, _rover, _view, CaptureFolder);
+            _report.AppendLine();
+            _report.AppendLine("## Kenji's Rover Bay fits each piece (the hopper fed first)");
+            _report.AppendLine();
+            BayStrip.Header(_report);
             for (int piece = 0; piece < KitAbilities.Length; piece++)
             {
+                Transform part = RoverNode(KitNodes[piece]);
                 abilities.Grant(KitAbilities[piece]);
                 _context.Events.Publish(new UpgradePurchased(KitUpgrades[piece], 1));
-                float bought = Time.time;
-                for (int frame = 0; frame < FitFrames.Length; frame++)
-                {
-                    while (Time.time < bought + FitFrames[frame])
-                    {
-                        yield return null;
-                    }
-
-                    Capture($"kit-fit-{KitNames[piece]}-{frame + 1}");
-                }
-
-                while (Time.time < bought + FitMomentSeconds)
-                {
-                    yield return null;
-                }
+                yield return strip.Capture(KitPieces[piece], part, $"kit-fit-{KitNames[piece]}", _report, FitTimeout);
             }
+
+            _report.AppendLine();
 
             yield return MoveTo(spawn.position, spawn.rotation.eulerAngles.y);
             yield return RideARelic();
@@ -355,6 +372,71 @@ namespace MoonProject.Rover.PlayModeTests
             File.WriteAllText(Path.Combine(CaptureFolder, "kit.md"), _report.ToString());
             Debug.Log("[rover-kit] " + _report);
             Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
+        [UnityTest]
+        [Timeout(600000)]
+        [PrebuildSetup(typeof(RoverSessionScene))]
+        [PostBuildCleanup(typeof(RoverSessionScene))]
+        public IEnumerator DockRest_IsCapturedInTheRealGame()
+        {
+            yield return Boot();
+            Transform anchor = FindNode(DockAnchorName);
+            Assert.IsNotNull(anchor, "The lander carries the charging dock's DockAnchor.");
+            _report.AppendLine("# Resting on the charging dock (real Main scene)");
+            _report.AppendLine();
+            _report.AppendLine("| Capture | 07 to the anchor (m) | Heading off the anchor (deg) | Road light |");
+            _report.AppendLine("|---|---:|---:|---:|");
+            bool docked = false;
+            using (_context.Events.Subscribe<RoverDockChanged>(changed => docked = changed.Docked))
+            {
+                Vector3 stop = anchor.position - anchor.forward * DockShort;
+                Quaternion skewed = Quaternion.Euler(0f, anchor.eulerAngles.y + DockSkew, 0f);
+                _context.Get<IRoverPlacement>().PlaceAt(stop, skewed);
+                _context.Get<IRoverRig>().SetHoldStill(_hold, false);
+                yield return null;
+                yield return null;
+                Assert.IsFalse(docked, "Not yet: the dock waits for 07 to stand still a moment.");
+                CaptureDock("dock-1-arriving", anchor);
+                float timeout = Time.time + DockTimeout;
+                while (!docked)
+                {
+                    Assert.Less(Time.time, timeout, "Gameplay docks 07 once it stands still on the pad.");
+                    yield return null;
+                }
+
+                float rested = Time.time;
+                for (int i = 0; i < DockFrames.Length; i++)
+                {
+                    while (Time.time < rested + DockFrames[i])
+                    {
+                        yield return null;
+                    }
+
+                    CaptureDock($"dock-{i + 2}-resting", anchor);
+                }
+
+                Assert.IsTrue(_rover.IsDocked, "07 rests on the dock.");
+                Vector3 side = -anchor.right * DockViewSide - anchor.forward * DockViewBack + Vector3.up * DockViewRise;
+                RenderReview("dock-side", anchor.position + side, anchor.position + Vector3.up * BodyHeight,
+                    DockViewFov);
+            }
+
+            Directory.CreateDirectory(CaptureFolder);
+            File.WriteAllText(Path.Combine(CaptureFolder, "dock.md"), _report.ToString());
+            Debug.Log("[rover-dock] " + _report);
+            Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
+        private void CaptureDock(string name, Transform anchor)
+        {
+            FrameCapture.SavePng(_view, CaptureWidth, CaptureHeight, Path.Combine(CaptureFolder, name + ".png"));
+            Vector3 offset = _rover.Position - anchor.position;
+            offset.y = 0f;
+            float heading = Mathf.DeltaAngle(anchor.eulerAngles.y, _rover.Heading);
+            float lamp = _rover.Kit.LampLevel;
+            _report.AppendLine(string.Format(CultureInfo.InvariantCulture, "| {0} | {1:0.00} | {2:0.0} | {3:0.00} |",
+                name, offset.magnitude, heading, lamp));
         }
 
         /// <summary>
@@ -420,6 +502,21 @@ namespace MoonProject.Rover.PlayModeTests
                 * (FarDistance * Mathf.Cos(elevation)) + Vector3.up * (FarDistance * Mathf.Sin(elevation));
             RenderReview(name, eye, body, _view.fieldOfView);
             _report.AppendLine($"| {name} | {FarDistance:0} (review camera) | | | |");
+        }
+
+        /// <summary>The first node called <paramref name="name"/> on 07.</summary>
+        private Transform RoverNode(string name)
+        {
+            foreach (Transform node in _rover.GetComponentsInChildren<Transform>(true))
+            {
+                if (node.name == name)
+                {
+                    return node;
+                }
+            }
+
+            Assert.Fail($"07 has no '{name}' node.");
+            return null;
         }
 
         private static Transform FindNode(string name)

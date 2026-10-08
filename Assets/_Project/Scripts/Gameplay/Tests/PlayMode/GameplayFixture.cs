@@ -400,8 +400,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// A stand-in Rover Bay with the art contract's nodes (Turntable, three arms down to their SparkSockets in the
-        /// rest pose, HopperMouth, Lamp_0/1, BaySign), wired as the scene contributor wires the real one.
+        /// A stand-in Rover Bay with the art contract's nodes (Turntable, three arms Yaw/Upper/Lower/Tip down to their
+        /// SparkSockets in the rest pose with the contract's link lengths, the floor arm FloorLift/FloorTip,
+        /// HopperMouth, Lamp_0/1, BaySign), wired as the scene contributor wires the real one.
         /// </summary>
         private void BuildBay(Transform anchor, Workshop workshop)
         {
@@ -412,20 +413,29 @@ namespace MoonProject.Gameplay.PlayModeTests
             Vector3[] shoulders = { new Vector3(-1.3f, 3.18f, -0.35f), new Vector3(0f, 3.18f, -1.65f),
                 new Vector3(1.3f, 3.18f, -0.35f) };
             float[] yaws = { 90f, 0f, -90f };
+            var armYaws = new Transform[shoulders.Length];
+            var uppers = new Transform[shoulders.Length];
+            var lowers = new Transform[shoulders.Length];
+            var tips = new Transform[shoulders.Length];
             var sockets = new Transform[shoulders.Length];
             for (int i = 0; i < shoulders.Length; i++)
             {
                 Transform arm = Node("Arm_" + i, bay, shoulders[i]);
                 arm.localRotation = Quaternion.Euler(0f, yaws[i], 0f);
-                Transform upper = Node("Upper", arm, Vector3.zero);
-                upper.localRotation = Quaternion.Euler(80f, 0f, 0f);
-                Transform lower = Node("Lower", upper, new Vector3(0f, -0.9f, 0f));
-                lower.localRotation = Quaternion.Euler(-160f, 0f, 0f);
-                Transform tip = Node("Tip", lower, new Vector3(0f, -0.8f, 0f));
-                tip.localRotation = Quaternion.Euler(80f, 0f, 0f);
-                sockets[i] = Node("SparkSocket", tip, new Vector3(0f, -0.26f, 0.06f));
+                armYaws[i] = Node("Yaw", arm, Vector3.zero);
+                uppers[i] = Node("Upper", armYaws[i], Vector3.zero);
+                uppers[i].localRotation = Quaternion.Euler(80f, 0f, 0f);
+                lowers[i] = Node("Lower", uppers[i], new Vector3(0f, -1.25f, 0f));
+                lowers[i].localRotation = Quaternion.Euler(-160f, 0f, 0f);
+                tips[i] = Node("Tip", lowers[i], new Vector3(0f, -1.15f, 0f));
+                tips[i].localRotation = Quaternion.Euler(80f, 0f, 0f);
+                sockets[i] = Node("SparkSocket", tips[i], new Vector3(0f, -0.26f, 0.06f));
                 sockets[i].localRotation = Quaternion.Euler(90f, 180f, 0f);
             }
+
+            Transform floorArm = Node("FloorArm", bay, new Vector3(0f, -0.4f, -0.35f));
+            Transform floorLift = Node("FloorLift", floorArm, Vector3.zero);
+            Transform floorTip = Node("FloorTip", floorLift, new Vector3(0f, 0.2f, 0f));
 
             Transform mouth = Node("HopperMouth", bay, new Vector3(2.85f, 1.2f, 1.5f));
             mouth.localRotation = Quaternion.Euler(-40f, -123f, 0f);
@@ -441,6 +451,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             workshop.Wire(WorkshopTuning,
                 new[] { HoverJumpUpgrade, CargoCradleUpgrade, WarmHeadlampUpgrade, BoostCoilsUpgrade }, bay,
                 turntable, mouth, lamps, sign.GetComponent<Renderer>(), sockets);
+            workshop.WireArms(armYaws, uppers, lowers, tips, floorLift, floorTip);
         }
 
         /// <summary>A one-level rover ability sold at the bench, as in the content builder.</summary>

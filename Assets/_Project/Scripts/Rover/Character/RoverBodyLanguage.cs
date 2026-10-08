@@ -15,9 +15,10 @@ namespace MoonProject.Rover
     /// tether (a sigh), and hard landings (a small "oof"). When the camera opens to the lonely wide shot
     /// (<see cref="RoverWideShotChanged"/>) its daydream sigh lands with the frame. A relay mast it restored gets a
     /// long look up at its lamp and a perk-up; a new signal pillar of Bell's within range gets a glance; landing from
-    /// a radio-hop, 07 rouses and looks around (<see cref="LookAround"/>). As a new kit piece settles onto it
-    /// (<see cref="RoverKitFitted"/>) it strikes a proud pose (head up, eye bright, antenna wiggle), softer for a
-    /// friend's gift; with Tilly's cell in its wing the wing settles open wider.
+    /// a radio-hop, 07 rouses and looks around (<see cref="LookAround"/>). Once the Rover Bay has fitted a kit piece
+    /// (<see cref="RoverKitFitted"/>) and lets 07 go, turned to show it, 07 strikes a proud pose (head up, eye bright,
+    /// antenna wiggle); a friend's gift gets a softer one as it settles; with Tilly's cell in its wing the wing settles
+    /// open wider.
     /// Needs <see cref="IWorldLayout"/>, so it must be initialised after the World systems.
     /// </summary>
     [DefaultExecutionOrder(10)]
@@ -75,6 +76,7 @@ namespace MoonProject.Rover
         private Quaternion _headRest;
         private Quaternion _eyelidRest;
         private Quaternion _wingRest;
+        private bool _proudPending;
         private bool _initialized;
 
         /// <summary>Read-only view of the mood, for audio/debug tooling.</summary>
@@ -230,10 +232,20 @@ namespace MoonProject.Rover
                 _tuning.SignalGlanceSeconds);
         }
 
-        /// <summary>A kit piece or a gift settled onto 07: the proud pose (a perk-up), softer for a gift.</summary>
+        /// <summary>
+        /// A gift settled onto 07: a soft perk-up now. A kit piece fitted by the bay: the proud pose once the bay
+        /// lets 07 go, turned to show the piece.
+        /// </summary>
         private void OnKitFitted(RoverKitFitted fitted)
         {
-            PerkUp(fitted.Gift ? _tuning.GiftPerk : _tuning.KitProudPerk);
+            if (fitted.Gift)
+            {
+                PerkUp(_tuning.GiftPerk);
+            }
+            else
+            {
+                _proudPending = true;
+            }
         }
 
         /// <summary>Landed from a radio-hop: 07 rouses from any daydream and looks around, "where am I?".</summary>
@@ -279,6 +291,12 @@ namespace MoonProject.Rover
                 case MoodTransition.WokeFromDaydream:
                     PerkUp(_tuning.WakePerk);
                     break;
+            }
+
+            if (_proudPending && !_rover.Kit.IsFitting)
+            {
+                _proudPending = false;
+                PerkUp(_tuning.KitProudPerk);
             }
 
             if (_glanceEnds >= 0f && Time.time >= _glanceEnds)

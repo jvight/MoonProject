@@ -35,6 +35,9 @@ namespace MoonProject.Rover
 
         public bool IsActive => _phase != Phase.Idle;
 
+        /// <summary>A held moment not yet released (or cancelled): it keeps its framing until then.</summary>
+        public bool IsHeld => _held && _phase != Phase.Idle;
+
         public Vector3 Subject { get; private set; }
 
         public CameraMomentSettings Settings { get; private set; }

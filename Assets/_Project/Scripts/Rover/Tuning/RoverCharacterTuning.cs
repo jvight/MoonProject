@@ -315,7 +315,7 @@ namespace MoonProject.Rover
         [Range(0f, 30f)]
         [SerializeField] private float _lookAroundLift = 6f;
 
-        [Tooltip("Perk-up strength of 07's proud pose as a new kit piece settles onto it.")]
+        [Tooltip("Perk-up strength of 07's proud pose once the Rover Bay has fitted a new kit piece and lets it go.")]
         [Range(0f, 1f)]
         [SerializeField] private float _kitProudPerk = 0.95f;
 

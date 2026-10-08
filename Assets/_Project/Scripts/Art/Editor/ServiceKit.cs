@@ -14,6 +14,9 @@ namespace MoonProject.Art.Editor
 
         private const float LegThickness = 0.06f;
 
+        // The funnel's dark inside stands a hair proud of its outer shell's top, so the mouth reads open and dark.
+        private const float InnerDrop = 0.47f;
+
         /// <summary>
         /// A hopper standing on four legs: a box body and a square funnel whose mouth is centred on
         /// <paramref name="mouth"/>, opening along the +Z of <paramref name="facing"/> (Euler degrees), its inside
@@ -36,7 +39,7 @@ namespace MoonProject.Art.Editor
             b.Box(At(foot + Vector3.up * (bodyTop - 0.1f)), new Vector3(leg * 1.8f, 0.26f, leg * 1.8f),
                 PaletteSwatch.FadedPaint, 0.03f);
             b.Frustum(funnel * At(0f, -size * 0.5f, 0f), size * 0.35f, size, size, 4, PaletteSwatch.FadedPaint);
-            b.Frustum(funnel * At(0f, -size * 0.5f, 0f), size * 0.31f, size * 0.94f, size * 0.95f, 4,
+            b.Frustum(funnel * At(0f, -size * InnerDrop, 0f), size * 0.31f, size * 0.94f, size * 0.95f, 4,
                 PaletteSwatch.Charcoal);
             b.Torus(funnel, size, size * 0.1f, 4, 3, PaletteSwatch.FadedAccent);
         }

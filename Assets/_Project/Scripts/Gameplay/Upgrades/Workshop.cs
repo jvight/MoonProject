@@ -15,9 +15,12 @@ namespace MoonProject.Gameplay
     /// (<see cref="RoverBayFitting"/>: the rover plays the install moment with the bay's arms): its work lamps flare
     /// and weld sparks fly from the arms' tips. A purchase made while another is being fed waits its turn. The lamps
     /// stay on as a warm welcome and lean brighter while 07 is parked; the bay's sign glows as a landmark.
+    /// It is also the <see cref="IRoverBay"/> the Rover domain drives (registered by the <see cref="GameplaySystem"/>):
+    /// the turntable, the gantry arms' joints and the floor arm, all from serialized references wired by the scene
+    /// build, never looked up by name.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class Workshop : MonoBehaviour, IUpgradeStation
+    public sealed class Workshop : MonoBehaviour, IUpgradeStation, IRoverBay
     {
         [Tooltip("Workshop tuning (Assets/_Project/Data/Tuning/Gameplay/WorkshopTuning.asset).")]
         [SerializeField] private WorkshopTuning _tuning;
@@ -40,8 +43,26 @@ namespace MoonProject.Gameplay
         [Tooltip("The bay's BaySign glow renderer.")]
         [SerializeField] private Renderer _sign;
 
-        [Tooltip("Each gantry arm's SparkSocket (Arm_n/Upper/Lower/Tip/SparkSocket), in order.")]
+        [Tooltip("Each gantry arm's shoulder turn (Arm_n/Yaw), in order.")]
+        [SerializeField] private Transform[] _armYaws = Array.Empty<Transform>();
+
+        [Tooltip("Each gantry arm's shoulder pitch (Arm_n/Yaw/Upper), in order.")]
+        [SerializeField] private Transform[] _armUppers = Array.Empty<Transform>();
+
+        [Tooltip("Each gantry arm's elbow (Arm_n/Yaw/Upper/Lower), in order.")]
+        [SerializeField] private Transform[] _armLowers = Array.Empty<Transform>();
+
+        [Tooltip("Each gantry arm's wrist (Arm_n/Yaw/Upper/Lower/Tip), in order.")]
+        [SerializeField] private Transform[] _armTips = Array.Empty<Transform>();
+
+        [Tooltip("Each gantry arm's SparkSocket (Arm_n/Yaw/Upper/Lower/Tip/SparkSocket), in order.")]
         [SerializeField] private Transform[] _sparkSockets = Array.Empty<Transform>();
+
+        [Tooltip("The floor arm's lift (FloorArm/FloorLift): rises along its local Y through the turntable.")]
+        [SerializeField] private Transform _floorLift;
+
+        [Tooltip("The floor arm's tip (FloorArm/FloorLift/FloorTip), where a belly piece rides up.")]
+        [SerializeField] private Transform _floorTip;
 
         private EventBus _events;
         private IRoverState _rover;
@@ -55,6 +76,7 @@ namespace MoonProject.Gameplay
         private HopperFeed _feed;
         private PurchaseQueue _waiting;
         private string _feeding;
+        private Quaternion _turntableRest;
         private float _lampLevel;
         private bool _holding;
         private bool _initialized;
@@ -125,6 +147,38 @@ namespace MoonProject.Gameplay
             return _definitions[index];
         }
 
+        // IRoverBay (fixed after initialisation; the rover turns the turntable and poses the arms)
+        public Vector3 TurntablePosition => _turntable.position;
+
+        public Quaternion TurntableRotation => _turntableRest;
+
+        public Transform Turntable => _turntable;
+
+        public Transform FloorLift => _floorLift;
+
+        public Transform FloorTip => _floorTip;
+
+        public int ArmCount => _sparkSockets.Length;
+
+        public Transform GetArmJoint(int arm, RoverBayJoint joint)
+        {
+            switch (joint)
+            {
+                case RoverBayJoint.Yaw:
+                    return _armYaws[arm];
+                case RoverBayJoint.Upper:
+                    return _armUppers[arm];
+                case RoverBayJoint.Lower:
+                    return _armLowers[arm];
+                case RoverBayJoint.Tip:
+                    return _armTips[arm];
+                case RoverBayJoint.SparkSocket:
+                    return _sparkSockets[arm];
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(joint), joint, "Unknown Rover Bay joint.");
+            }
+        }
+
         internal void Wire(WorkshopTuning tuning, UpgradeDefinition[] definitions, Transform bay, Transform turntable,
             Transform hopperMouth, Renderer[] lamps, Renderer sign, Transform[] sparkSockets)
         {
@@ -136,6 +190,18 @@ namespace MoonProject.Gameplay
             _lamps = lamps;
             _sign = sign;
             _sparkSockets = sparkSockets;
+        }
+
+        /// <summary>The joints the rover drives: each arm's Yaw, Upper, Lower, Tip; the floor arm.</summary>
+        internal void WireArms(Transform[] yaws, Transform[] uppers, Transform[] lowers, Transform[] tips,
+            Transform floorLift, Transform floorTip)
+        {
+            _armYaws = yaws;
+            _armUppers = uppers;
+            _armLowers = lowers;
+            _armTips = tips;
+            _floorLift = floorLift;
+            _floorTip = floorTip;
         }
 
         internal bool Initialize(GameplayServices services, UpgradeService upgrades, SalvageCatalog bundles)
@@ -162,6 +228,7 @@ namespace MoonProject.Gameplay
             _rover = services.Rover;
             _rig = services.Rig;
             _upgrades = upgrades;
+            _turntableRest = _turntable.rotation;
             _pad = StationPad.OnDeck("BayPad", transform, _turntable.position, _tuning.PadLook,
                 services.Visuals.WarmRing);
             _lampGlows = new EmissionGlow[_lamps.Length];
@@ -208,6 +275,16 @@ namespace MoonProject.Gameplay
                 return "the bay's arm SparkSockets are not assigned.";
             }
 
+            if (!EveryArm(_armYaws) || !EveryArm(_armUppers) || !EveryArm(_armLowers) || !EveryArm(_armTips))
+            {
+                return "the bay's arm joints (Yaw/Upper/Lower/Tip, one per SparkSocket) are not assigned.";
+            }
+
+            if (_floorLift == null || _floorTip == null)
+            {
+                return "the bay's floor arm (FloorLift, FloorTip) is not assigned.";
+            }
+
             if (_definitions == null || _definitions.Length == 0)
             {
                 return "it sells nothing (no upgrade definitions).";
@@ -232,6 +309,12 @@ namespace MoonProject.Gameplay
             }
 
             return null;
+        }
+
+        /// <summary>One joint per arm (as many as SparkSockets), none missing.</summary>
+        private bool EveryArm(Transform[] joints)
+        {
+            return joints != null && joints.Length == _sparkSockets.Length && Array.IndexOf(joints, null) < 0;
         }
 
         private bool Sells(string upgradeId)
@@ -296,7 +379,7 @@ namespace MoonProject.Gameplay
         private void Fit()
         {
             _events.Publish(new StationCued(StationCue.Fed, _feeding, _hopperMouth.position));
-            _events.Publish(new RoverBayFitting(_feeding, _bay));
+            _events.Publish(new RoverBayFitting(_feeding));
             _lampLevel = Mathf.Max(_lampLevel, _tuning.LampFlare);
             ApplyLamps();
             for (int i = 0; i < _sparks.Length; i++)

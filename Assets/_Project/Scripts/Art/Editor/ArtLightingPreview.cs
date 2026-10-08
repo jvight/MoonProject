@@ -30,8 +30,9 @@ namespace MoonProject.Art.Editor
     /// shadow under a low (30 degree) earthlight from its side, seen from the gameplay camera's height. grit: a
     /// dense field of <see cref="RockStyle.Grit"/> pebbles batched into one mesh around 07. friends: Tilly
     /// hovering beside 07 (3/3 part lamps lit), and broken on the dust among her amber parts (1/3 lit), near and
-    /// from 30 m. The base scene also seats Tilly on her lander perch. workshop: Kenji's bench on the lander's
-    /// WorkshopAnchor with its lamp lit, 07 on the bench pad wearing the Hover-Jump coils glowing as if charging.
+    /// from 30 m. The base scene also seats Tilly on her lander perch. workshop: Kenji's Rover Bay on the lander's
+    /// WorkshopAnchor with its lamps and sign lit, 07 on its turntable wearing the Hover-Jump coils glowing as if
+    /// charging.
     /// bell: Bell standing with her dial and 4/4 lamps lit beside 07 for scale, and a second Bell caught mid-dance
     /// (lid lifted, needle swept, a foot tapping) to prove the pivots, near and from 15 m and 30 m. bellbroken: Bell
     /// tipped back against a canyon wall, dark, with Ro's log cache, the Vol. 1 tape and her three parts in the dust,
@@ -74,6 +75,9 @@ namespace MoonProject.Art.Editor
         private const float TowerServiceStop = 2.9f;
 
         private const float OpenHatchYaw = -70f;
+
+        /// <summary>How far the builtfor07 capture raises the bay's floor arm out of its pit.</summary>
+        private const float FloorLiftShown = 0.18f;
 
         /// <summary>Spacing of the kit scene's 07s, wide enough that each chase shot frames one rover.</summary>
         private const float KitSpacing = 9f;
@@ -398,14 +402,9 @@ namespace MoonProject.Art.Editor
             GameObject tower = Instantiate(BaseModelBuilder.TowerPrefix + "2", temporary);
             tower.transform.position = BaseModelBuilder.TowerAnchor;
             Transform anchor = Descendant(lander.transform, "WorkshopAnchor");
-            GameObject bench = Instantiate(BaseModelBuilder.WorkbenchName, temporary);
-            bench.transform.SetPositionAndRotation(anchor.position, anchor.rotation);
-            Transform bulb = Descendant(bench.transform, "Lights");
-            Light lamp = NewLight("WorkLamp", LightType.Point, Palette.Get(PaletteSwatch.WarmLamp), 3f);
-            lamp.transform.position = bulb.position - Vector3.up * 0.1f;
-            lamp.range = 6f;
-            lamp.shadows = LightShadows.Soft;
-            temporary.Add(lamp.gameObject);
+            GameObject bay = Instantiate(BaseModelBuilder.RoverBayName, temporary);
+            bay.transform.SetPositionAndRotation(anchor.position, anchor.rotation);
+            LightBay(bay.transform, temporary);
             for (int i = 0; i < 4; i++)
             {
                 Light baseLamp = NewLight("BaseLamp", LightType.Point, Palette.Get(PaletteSwatch.WarmLamp),
@@ -415,9 +414,9 @@ namespace MoonProject.Art.Editor
                 temporary.Add(baseLamp.gameObject);
             }
 
-            Vector3 pad = anchor.position + anchor.rotation * new Vector3(0f, 0f, 3.2f);
-            Vector3 parked = pad + new Vector3(1.9f, 0f, 0.4f);
-            Transform rover = Rover(temporary, parked, 200f);
+            Transform turntable = Descendant(bay.transform, "Turntable");
+            Vector3 parked = turntable.position;
+            Transform rover = Rover(temporary, parked, turntable.eulerAngles.y);
             temporary.Add(rover.gameObject);
             GameObject coils = Instantiate(RoverModelBuilder.HoverCoilsName, temporary, ArtPaths.RoverFolder);
             Transform socket = Descendant(rover, "CoilSocket");
@@ -429,9 +428,9 @@ namespace MoonProject.Art.Editor
             }
 
             return Poses(
-                Pose("bench", new[] { 12.1f, 1.9f, 2.8f }, new[] { 12.5f, 1.3f, -1.9f }, 50f),
-                Pose("coils", new[] { parked.x + 0.75f, 0.24f, parked.z + 2.1f },
-                    new[] { parked.x, 0.2f, parked.z }, 45f),
+                Pose("bay", new[] { 13.5f, 2.4f, 6.5f }, new[] { 12.5f, 1.2f, -2.3f }, 50f),
+                Pose("coils", new[] { parked.x + 0.3f, 0.42f, parked.z + 2.3f },
+                    new[] { parked.x, 0.33f, parked.z }, 40f),
                 Pose("homecoming", new[] { 4.5f, 3.6f, 14.5f }, new[] { 4f, 1.8f, 0f }, 55f),
                 Pose("far40m", new[] { 32f, 12f, 30f }, new[] { 10f, 1.2f, -1f }, 35f));
         }
@@ -835,12 +834,9 @@ namespace MoonProject.Art.Editor
             Vector3 tower = lander.TransformPoint(BaseModelBuilder.TowerAnchor);
             Vector3 shelf = lander.TransformPoint(BaseModelBuilder.ShelfAnchor);
             Vector3 roverBack = rover.transform.TransformDirection(new Vector3(0.6f, 0f, -0.8f));
-            SceneObject(BaseModelBuilder.WorkbenchName).gameObject.SetActive(false);
-            GameObject bay = Instantiate(BaseModelBuilder.RoverBayName, temporary);
-            bay.transform.SetPositionAndRotation(lander.TransformPoint(BaseModelBuilder.WorkshopAnchor),
-                lander.rotation);
-            SetGlow(bay.transform, "BaySign", new[] { string.Empty }, 1f);
-            Vector3 bayCentre = bay.transform.TransformPoint(RoverBayMeshes.TurntableCentre + Vector3.up * 1.6f);
+            Transform bay = SceneObject(BaseModelBuilder.RoverBayName);
+            SetGlow(bay, "BaySign", new[] { string.Empty }, 1f);
+            Vector3 bayCentre = bay.TransformPoint(RoverBayMeshes.TurntableCentre + Vector3.up * 1.6f);
             var poses = new List<CameraPose>
             {
                 new CameraPose { name = "spawn_first_frame", position = new[] { 0.78f, 4f, -8.97f },
@@ -857,10 +853,8 @@ namespace MoonProject.Art.Editor
                     50f),
                 Pose("rover_close", Point(parked + roverBack * 3.2f + Vector3.up * 1.6f),
                     Point(parked + Vector3.up * 0.7f), 50f),
-                Pose("bay_front", Point(bay.transform.TransformPoint(new Vector3(1.5f, 2.8f, 8.5f))),
-                    Point(bayCentre), 55f),
-                Pose("bay_quarter", Point(bay.transform.TransformPoint(new Vector3(-5.5f, 3.4f, 7f))),
-                    Point(bayCentre), 50f),
+                Pose("bay_front", Point(bay.TransformPoint(new Vector3(1.5f, 2.8f, 8.5f))), Point(bayCentre), 55f),
+                Pose("bay_quarter", Point(bay.TransformPoint(new Vector3(-5.5f, 3.4f, 7f))), Point(bayCentre), 50f),
             };
             if (!weathered)
             {
@@ -964,8 +958,8 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
-        /// Opens Main.unity (never saved) and stages what M3-14 built for 07: Kenji's Rover Bay on the lander's
-        /// WorkshopAnchor in place of the old bench with 07 parked on its turntable, the true-size relics beside a
+        /// Opens Main.unity (never saved) and stages what M3-14 built for 07: Main's own Rover Bay on the lander's
+        /// WorkshopAnchor with 07 parked on its turntable and an arm fitting, the true-size relics beside a
         /// second 07 and a 1.75 m reference person on open ground left of the lander, a third 07 working the radio
         /// tower's service port with the hatch swung open, a fourth resting on its charging dock with the glow lit, and
         /// the crew's cable lift jammed halfway beside the ladder. The 1.75 m reference person also stands on the
@@ -976,7 +970,7 @@ namespace MoonProject.Art.Editor
             EditorSceneManager.OpenScene(CaptureAutomation.MainScenePath, OpenSceneMode.Single);
             Transform lander = SceneObject(BaseModelBuilder.LanderName);
             var poses = new List<CameraPose>();
-            StageRoverBay(lander, material, temporary, poses);
+            StageRoverBay(material, temporary, poses);
             StageRelics(lander, material, temporary, poses);
             StageTowerPort(temporary, poses);
             StageDockAndLift(lander, temporary, poses);
@@ -984,34 +978,50 @@ namespace MoonProject.Art.Editor
             return new CameraPoseSet { width = 1600, height = 900, postProcessing = true, poses = poses.ToArray() };
         }
 
-        /// <summary>The Rover Bay in place of the old bench: lamps lit, 07 on the turntable, one arm fitting.</summary>
-        private static void StageRoverBay(Transform lander, Material material, TemporaryObjects temporary,
-            List<CameraPose> poses)
+        /// <summary>The bay powered: its lamps and sign glowing, a warm point light under each lamp.</summary>
+        private static void LightBay(Transform bay, TemporaryObjects temporary)
         {
-            SceneObject(BaseModelBuilder.WorkbenchName).gameObject.SetActive(false);
-            GameObject bay = Instantiate(BaseModelBuilder.RoverBayName, temporary);
-            bay.transform.SetPositionAndRotation(lander.TransformPoint(BaseModelBuilder.WorkshopAnchor),
-                lander.rotation);
-            Transform turntable = Descendant(bay.transform, "Turntable");
+            SetGlow(bay, "Lamp_", 2, 1f);
+            SetGlow(bay, "BaySign", new[] { string.Empty }, 1f);
+            for (int i = 0; i < 2; i++)
+            {
+                Light lamp = NewLight("WorkLamp", LightType.Point, Palette.Get(PaletteSwatch.WarmLamp), 3f);
+                lamp.transform.position = Descendant(bay, "Lamp_" + i).position - Vector3.up * 0.2f;
+                lamp.range = 6f;
+                lamp.shadows = LightShadows.Soft;
+                temporary.Add(lamp.gameObject);
+            }
+        }
+
+        /// <summary>
+        /// Main.unity's Rover Bay: lamps and sign lit, 07 on the turntable, the right arm swung out and lowered over
+        /// 07's back as if fitting its rack, the floor arm raised half way through the turntable's hole.
+        /// </summary>
+        private static void StageRoverBay(Material material, TemporaryObjects temporary, List<CameraPose> poses)
+        {
+            Transform bay = SceneObject(BaseModelBuilder.RoverBayName);
+            Transform turntable = Descendant(bay, "Turntable");
             GameObject parked = Instantiate(RoverModelBuilder.ModelName, temporary, ArtPaths.RoverFolder);
             parked.transform.SetPositionAndRotation(turntable.position, turntable.rotation);
-            SetGlow(bay.transform, "Lamp_", 2, 1f);
-            SetGlow(bay.transform, "BaySign", new[] { string.Empty }, 1f);
-            Transform fitting = Descendant(bay.transform, "Arm_1");
-            Descendant(fitting, "Upper").localRotation = Quaternion.Euler(-28f, 0f, 0f);
-            Descendant(fitting, "Lower").localRotation = Quaternion.Euler(-35f, 0f, 0f);
-            Descendant(fitting, "Tip").localRotation = Quaternion.Euler(60f, 0f, 0f);
+            LightBay(bay, temporary);
+            Transform fitting = Descendant(bay, "Arm_2");
+            Descendant(fitting, "Yaw").localRotation = Quaternion.Euler(0f, 26f, 0f);
+            Descendant(fitting, "Upper").localRotation = Quaternion.Euler(-77f, 0f, 0f);
+            Descendant(fitting, "Lower").localRotation = Quaternion.Euler(69f, 0f, 0f);
+            Descendant(fitting, "Tip").localRotation = Quaternion.Euler(8f, 0f, 0f);
+            Descendant(bay, "FloorLift").localPosition += Vector3.up * FloorLiftShown;
             Vector3 centre = turntable.position + Vector3.up * 1.1f;
-            poses.Add(Pose("bay_front", Point(bay.transform.TransformPoint(new Vector3(1.5f, 2.6f, 7.5f))),
-                Point(centre), 55f));
-            poses.Add(Pose("bay_quarter", Point(bay.transform.TransformPoint(new Vector3(6.5f, 3.4f, 6f))),
-                Point(centre), 50f));
-            poses.Add(Pose("bay_hopper", Point(bay.transform.TransformPoint(new Vector3(3.6f, 1.9f, 4.4f))),
-                Point(bay.transform.TransformPoint(RoverBayMeshes.HopperMouth)), 50f));
-            Person(material, temporary, bay.transform.TransformPoint(new Vector3(-3.2f, 0f, 2.2f)),
-                bay.transform.rotation);
-            poses.Add(Pose("human_bench", Point(bay.transform.TransformPoint(new Vector3(-1.2f, 1.6f, 6.4f))),
-                Point(bay.transform.TransformPoint(new Vector3(-3.8f, 1f, 1f))), 45f));
+            poses.Add(Pose("bay_front", Point(bay.TransformPoint(new Vector3(1.5f, 2.6f, 7.5f))), Point(centre), 55f));
+            poses.Add(Pose("bay_quarter", Point(bay.TransformPoint(new Vector3(6.5f, 3.4f, 6f))), Point(centre), 50f));
+            poses.Add(Pose("bay_hopper", Point(bay.TransformPoint(new Vector3(-0.35f, 2.35f, 0.1f))),
+                Point(bay.TransformPoint(RoverBayMeshes.HopperMouth)), 50f));
+            poses.Add(Pose("bay_arms", Point(bay.TransformPoint(new Vector3(0.5f, 1.6f, 3.4f))),
+                Point(bay.TransformPoint(new Vector3(0f, 2.8f, -0.6f))), 60f));
+            poses.Add(Pose("bay_pit", Point(bay.TransformPoint(new Vector3(0.35f, 0.45f, 2.4f))),
+                Point(bay.TransformPoint(RoverBayMeshes.FloorArmBase + Vector3.up * 0.28f)), 40f));
+            Person(material, temporary, bay.TransformPoint(new Vector3(-3.2f, 0f, 2.2f)), bay.rotation);
+            poses.Add(Pose("human_bench", Point(bay.TransformPoint(new Vector3(-1.2f, 1.6f, 6.4f))),
+                Point(bay.TransformPoint(new Vector3(-3.8f, 1f, 1f))), 45f));
         }
 
         /// <summary>The true-size relics in a row before 07 and a 1.75 m reference person; 07's spare wheel.</summary>
