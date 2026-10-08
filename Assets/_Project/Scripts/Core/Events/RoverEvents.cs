@@ -93,6 +93,20 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
+    /// The Boost Coils engaged (<see cref="Boosting"/> true: holding Drive at cruise on open, flat-ish ground) or let
+    /// go. The boost itself eases in and out over about a second; listeners ease their own response (the hum).
+    /// </summary>
+    public readonly struct RoverBoostChanged
+    {
+        public RoverBoostChanged(bool boosting)
+        {
+            Boosting = boosting;
+        }
+
+        public bool Boosting { get; }
+    }
+
+    /// <summary>
     /// 07 was set down somewhere else in one step (<see cref="IRoverPlacement.PlaceAt"/>, e.g. a radio-hop while the
     /// view is dark): the camera and anything that follows 07 snap with it instead of easing across.
     /// </summary>
