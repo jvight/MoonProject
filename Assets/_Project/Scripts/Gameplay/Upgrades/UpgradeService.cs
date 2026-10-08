@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 using MoonProject.Core;
 using MoonProject.Core.Events;
 
@@ -60,6 +61,24 @@ namespace MoonProject.Gameplay
                 }
 
                 return boost;
+            }
+        }
+
+        /// <summary>
+        /// How far the radio tower's clear signal reaches now (m): the widest radio upgrade's radius at its level (0
+        /// when none is a radio upgrade). Home's circle in the station's reach.
+        /// </summary>
+        public float SignalRadius
+        {
+            get
+            {
+                float radius = 0f;
+                for (int i = 0; i < _definitions.Length; i++)
+                {
+                    radius = Mathf.Max(radius, _definitions[i].SignalRadiusAt(_levels[i]));
+                }
+
+                return radius;
             }
         }
 

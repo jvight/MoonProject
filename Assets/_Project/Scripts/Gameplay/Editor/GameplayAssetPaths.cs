@@ -24,6 +24,7 @@ namespace MoonProject.Gameplay.Editor
         public const string CassetteTuning = TuningFolder + "/CassetteTuning.asset";
         public const string LogCacheTuning = TuningFolder + "/LogCacheTuning.asset";
         public const string BellTuning = TuningFolder + "/BellTuning.asset";
+        public const string RelayTuning = TuningFolder + "/RelayTuning.asset";
 
         public const string ContentFolder = "Assets/_Project/Data/Content";
         public const string RelicFolder = ContentFolder + "/Relics";
@@ -57,6 +58,9 @@ namespace MoonProject.Gameplay.Editor
         public const string ArtFriendFolder = ArtPaths.Root + "/Friends";
         public const string ArtPickupFolder = ArtPaths.Root + "/Pickups";
         public const string LogCache = ArtPaths.Root + "/Props/LogCache.prefab";
+        public const string RelayMast = ArtPaths.RelayFolder + "/RelayMast.prefab";
+        public const string RelayMastBroken = ArtPaths.RelayFolder + "/RelayMast_Broken.prefab";
+        public const string RelayPart = ArtPaths.RelayFolder + "/Part_RelayModule.prefab";
 
         public static string CassetteDefinition(string id)
         {

@@ -46,7 +46,7 @@ namespace MoonProject.Gameplay
         [Range(0, 8)] [SerializeField] private int _poiClusters = 2;
 
         [Tooltip("Lone clusters scattered over the rest of the basin.")]
-        [Range(0, 200)] [SerializeField] private int _fillClusters = 18;
+        [Range(0, 200)] [SerializeField] private int _fillClusters = 70;
 
         [Tooltip("Attempts per lone cluster before giving up on it.")]
         [Range(1, 200)] [SerializeField] private int _fillAttempts = 24;
@@ -63,12 +63,13 @@ namespace MoonProject.Gameplay
         [Tooltip("Pieces per cluster (min, max).")]
         [SerializeField] private Vector2Int _piecesPerCluster = new Vector2Int(3, 5);
 
-        [Tooltip("The basin always holds at least this much scrap value (no grind: at least twice what everything on " +
-                 "sale costs, the tower's 135 and Hover-Jump's 150); lone clusters are added until it does.")]
-        [Range(0, 5000)] [SerializeField] private int _minTotalValue = 580;
+        [Tooltip("The basin always holds at least this much scrap value (VISION ruling 5, no grind: with the relic " +
+                 "gifts, at least twice every sink: the tower's 135, Hover-Jump's 150 and the relay masts' 420); " +
+                 "lone clusters are added until it does.")]
+        [Range(0, 5000)] [SerializeField] private int _minTotalValue = 1350;
 
         [Tooltip("Extra lone-cluster attempts allowed to reach the minimum total value.")]
-        [Range(0, 5000)] [SerializeField] private int _topUpAttempts = 600;
+        [Range(0, 5000)] [SerializeField] private int _topUpAttempts = 1500;
 
         [Tooltip("Minimum metres between pieces of a cluster.")]
         [Range(0.2f, 3f)] [SerializeField] private float _minPieceSpacing = 0.75f;

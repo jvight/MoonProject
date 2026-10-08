@@ -14,6 +14,9 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// <summary>Scripted sessions for the tractor beam and the tether on the real components behind fakes.</summary>
     public sealed class ExcavationAndTetherSessions : InputTestFixture
     {
+        /// <summary>Seconds a held tether press may take to latch (a slow first frame must not eat it).</summary>
+        private const float LatchTimeout = 1f;
+
         private const string Duck = "rubber_duck";
 
         private readonly List<Object> _props = new List<Object>();
@@ -136,8 +139,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             _fixture.Capture("06-tether-hover");
 
             Press(_mouse.rightButton, queueEventOnly: true);
-            yield return null;
-            yield return null;
+            yield return Waits.Until(() => _fixture.Events.TetherAttached.Count > 0, LatchTimeout);
             Assert.AreEqual(1, _fixture.Events.TetherAttached.Count);
             Assert.AreEqual(duck.Definition.Mass, _fixture.Events.TetherAttached[0].Value.Mass, 1e-4f);
             Assert.AreEqual(TetherAimState.Towing, tether.State);
@@ -183,8 +185,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             _fixture.Rover.Aim(camera, duck.transform.position);
             yield return null;
             Press(_mouse.rightButton, queueEventOnly: true);
-            yield return null;
-            yield return null;
+            yield return Waits.Until(() => _fixture.Events.TetherAttached.Count > 0, LatchTimeout);
             Assert.AreEqual(1, _fixture.Events.TetherAttached.Count);
             Wall(new Vector3(0f, 1.5f, 4.5f), new Vector3(20f, 3f, 0.6f));
 

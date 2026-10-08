@@ -33,8 +33,11 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// follow the scrap trail up the mouth lane, leap the chasm, find her lying at the terminus with Ro's log cache
     /// and her tape, gather her three parts from the alcoves, repair her (the tape slides in, her dial wakes, she
     /// stands), drive home by the one-way exit while she makes her own way, be greeted by her, turn her dial through
-    /// every station, and follow her first signal to the basin tape onto her rack. Inside the canyon 07 drives a line
-    /// found over drivable ground (the same planner Bell walks by). Every step is timed
+    /// every station, and follow her first signal to the basin tape onto her rack. Then the relay network (M3-06):
+    /// gather scrap for the mound relay, pick up its part, restore it at its foot and watch it come online, drive out
+    /// past the tower's reach and find home still reaching 07 there, then radio-hop home from the mast's pad and back.
+    /// Inside the canyon 07 drives a line found over drivable ground (the same planner Bell walks by). Every step is
+    /// timed
     /// (Logs/gameplay-captures/playthrough.md) and captured, with review frames of every M3-05 placement; any error or
     /// exception in the log fails it. Slow: run on demand with --category Playthrough.
     /// </summary>
@@ -101,6 +104,18 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float RetreatDistance = 16f;
         private const float ShelfStandOff = 4f;
         private const float ReelFrom = 12f;
+
+        /// <summary>07 parks this far (m) in front of a relay mast's junction box to restore it.</summary>
+        private const float RelayFoot = 3f;
+
+        /// <summary>07 first swings this far (m) to the side of the mast, clear of it and its guy wires.</summary>
+        private const float RelayAside = 12f;
+
+        /// <summary>How far past the mound relay (m, away from home) 07 drives to find home still in reach.</summary>
+        private static readonly Vector2 PastTheMast = new Vector2(55f, 95f);
+
+        /// <summary>Close enough (m) to a hop pad's centre to park on it.</summary>
+        private const float PadArrive = 1f;
 
         /// <summary>Close enough (m) to the base pad centre to turn toward the shelf or the tower.</summary>
         private const float PadArrival = 5f;
@@ -187,6 +202,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return HomeByTheExit();
             yield return TurnBellsDial();
             yield return FollowBellsSignal();
+            yield return RestoreTheMoundRelay();
+            yield return DriveOutInReach();
+            yield return HopHomeAndBack();
 
             float total = Time.time - started;
             WriteReport(total);
@@ -397,8 +415,12 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         private IEnumerator GatherScrapFor(string upgradeId, string what, float timeout)
         {
+            yield return GatherScrap(_gameplay.Upgrades.Find(upgradeId).Levels[0].Cost, what, timeout);
+        }
+
+        private IEnumerator GatherScrap(int cost, string what, float timeout)
+        {
             Begin();
-            int cost = _gameplay.Upgrades.Find(upgradeId).Levels[0].Cost;
             int start = _gameplay.Wallet.Balance;
             int detours = 0;
             float deadline = Time.time + timeout;
@@ -909,6 +931,133 @@ namespace MoonProject.Gameplay.PlayModeTests
                 _gameplay.Shelf.transform.position + Vector3.up * 0.6f, "29-tape-rack");
             End($"Follow Bell's signal to the basin tape ({distance:F0} m)",
                 $"Dust & Honey on the rack next to Vol. 1 by {corner.name}");
+        }
+
+        /// <summary>
+        /// The mound relay (relay.0), the teaching mast in the spawn view: its part from the dust, the scrap it costs,
+        /// a hold of Interact at its foot, and the whole beat until it comes online.
+        /// </summary>
+        private IEnumerator RestoreTheMoundRelay()
+        {
+            RelayField relays = _gameplay.Relays;
+            RelayMast mast = relays.Masts[0];
+            Assert.AreEqual(WorldAnchorIds.RelayPrefix + 0, mast.Id);
+            int cost = relays.NextCost;
+            yield return GatherScrap(cost, "the mound relay", 300f);
+            Begin();
+            Vector3 pad = mast.Anchor.Position;
+            Review(pad + mast.Anchor.Forward * 16f + Vector3.up * 2.5f, pad + Vector3.up * 5f, "30-relay-dark");
+            float partAway = SurfaceRules.HorizontalDistance(mast.PartRest, pad);
+            yield return DriveTo(Flat(mast.PartRest), 1.5f, 0.7f, 120f, "the mound relay's part");
+            yield return Until(() => mast.PartState == RelayPartState.Held, 8f, "the relay part flies into 07");
+            Vector3 foot = mast.Broken.PartSocket.position + mast.Anchor.Forward * RelayFoot;
+            yield return DriveTo(Flat(foot), 1.2f, 0.5f, 60f, "the mound relay's foot");
+            yield return Until(() => _gameplay.Hints.TryGet(InteractionKind.Restore, out InteractionHint hint) &&
+                                     hint.Ready, 4f, "the restore prompt is ready");
+            Press(_keyboard.eKey);
+            yield return Until(() => mast.Restoring, 4f, "holding Interact begins the restoration");
+            Release(_keyboard.eKey);
+            RelayBeat beat = RelayBeat.For(relays.Tuning);
+            yield return new WaitForSeconds(beat.StitchEnd * 0.6f);
+            Review(pad + mast.Anchor.Forward * 9f + Vector3.up * 2.4f, mast.Broken.BeamPoint.position,
+                "31-relay-stitching");
+            yield return Until(() => _events.RelayRestored.Count > 0, beat.Duration + 2f,
+                "the mound relay comes online");
+            Assert.AreEqual(mast.Id, _events.RelayRestored[0].Value.RelayId);
+            Assert.IsTrue(Ticker("ticker.relay.online"), "Relay 1 online. Lumen Station can hear a little farther.");
+            Assert.AreEqual(2, _context.Get<IStationReach>().LitCount, "home and the mound relay");
+            Review(pad + mast.Anchor.Forward * 14f + Vector3.up * 1.2f, mast.Restored.Lamp.position,
+                "32-relay-online");
+            yield return new WaitForSeconds(1.2f);
+            Review(pad + mast.Anchor.Forward * 30f + Vector3.up * 14f, pad + mast.Anchor.Forward * 40f,
+                "33-relay-link-pulse");
+            End("Restore the mound relay (relay.0)",
+                $"{mast.Paid} scrap, its part {partAway:F0} m from the mast, beat {beat.Duration:F1} s");
+        }
+
+        /// <summary>Past the mound relay, beyond the tower's own reach: home still reaches 07 there.</summary>
+        private IEnumerator DriveOutInReach()
+        {
+            Begin();
+            RelayMast mast = _gameplay.Relays.Masts[0];
+            var reach = _context.Get<IStationReach>();
+            var terrain = _context.Get<ITerrainQuery>();
+            Vector3 home = _context.Get<IWorldLayout>().BasePosition;
+            Vector3 outward = -mast.Anchor.Forward;
+            Vector3 target = Vector3.zero;
+            bool found = false;
+            for (float distance = PastTheMast.x; distance <= PastTheMast.y && !found; distance += 5f)
+            {
+                Vector3 point = mast.Anchor.Position + outward * distance;
+                found = SurfaceRules.InsideDrivable(terrain, point.x, point.z, 3f) &&
+                        SurfaceRules.HorizontalDistance(point, home) > _gameplay.Upgrades.SignalRadius;
+                target = point;
+            }
+
+            Assert.IsTrue(found, "drivable ground past the mound relay, beyond the tower's reach");
+            Vector3 aside = mast.Anchor.Position + Vector3.Cross(Vector3.up, mast.Anchor.Forward) * RelayAside;
+            yield return DriveTo(Flat(aside), WaypointArrive, CanyonThrottle, 60f, "the side of the mound relay");
+            yield return DriveAlong(target, "the ground past the mound relay", null);
+            float fromHome = SurfaceRules.HorizontalDistance(_rover.Position, home);
+            Assert.Greater(fromHome, _gameplay.Upgrades.SignalRadius, "beyond the tower's own circle");
+            Assert.IsTrue(reach.IsInReach(_rover.Position), "the radio stays clear: the mast reaches 07 here");
+            float nearest = reach.DistanceToNearestNode(_rover.Position);
+            Witness(mast.Restored.Lamp.position, "34-in-reach-out-there");
+            End("Drive out past the tower's reach",
+                $"{fromHome:F0} m from home (tower {_gameplay.Upgrades.SignalRadius:F0} m), {nearest:F0} m from the " +
+                "nearest lit node: in reach");
+        }
+
+        /// <summary>From the mound relay's pad, the radio-hop home; then from home's pad, back to the mast.</summary>
+        private IEnumerator HopHomeAndBack()
+        {
+            Begin();
+            RelayMast mast = _gameplay.Relays.Masts[0];
+            IRadioHop hop = _context.Get<IRadioHop>();
+            Vector3 aside = mast.Anchor.Position + Vector3.Cross(Vector3.up, mast.Anchor.Forward) * RelayAside;
+            yield return DriveTo(Flat(aside), WaypointArrive, CanyonThrottle, 60f, "the side of the mound relay");
+            yield return DriveTo(Flat(mast.Anchor.Position + mast.Anchor.Forward * RelayFoot), WaypointArrive,
+                CanyonThrottle, 60f, "the front of the mound relay's pad");
+            yield return DriveTo(Flat(mast.Anchor.Position), PadArrive, 0.5f, 90f, "the mound relay's pad");
+            yield return Hop(hop, StationReach.HomeId);
+            Vector3 home = _context.Get<IWorldLayout>().BasePosition;
+            Assert.Less(SurfaceRules.HorizontalDistance(_rover.Position, home), 3f, "on home's pad");
+            Capture("35-hopped-home");
+            yield return Hop(hop, mast.Id);
+            Assert.Less(SurfaceRules.HorizontalDistance(_rover.Position, mast.Anchor.Position), 3f,
+                "back on the mound relay's pad");
+            Capture("36-hopped-back");
+            End("Radio-hop home and back", $"{_events.RadioHopFinished.Count} hops, about " +
+                                           $"{HopSequence.For(_gameplay.Relays.Tuning).Duration:F1} s each");
+        }
+
+        /// <summary>Opens the hop list on 07's pad, steps to <paramref name="to"/> and holds Interact to go.</summary>
+        private IEnumerator Hop(IRadioHop hop, string to)
+        {
+            int hops = _events.RadioHopFinished.Count;
+            yield return Until(() => hop.CanOpen, 6f, "07 is parked on a lit pad");
+            Press(_keyboard.eKey);
+            yield return Until(() => hop.Phase == RadioHopPhase.Choosing, 2f, "Interact opens the hop list");
+            Release(_keyboard.eKey);
+            yield return null;
+            var reach = _context.Get<IStationReach>();
+            for (int i = 0; i < hop.ChoiceCount && reach.GetNode(hop.ChoiceNode(hop.Selected)).Id != to; i++)
+            {
+                hop.Next();
+            }
+
+            Assert.AreEqual(to, reach.GetNode(hop.ChoiceNode(hop.Selected)).Id, $"{to} is in the list");
+            Press(_keyboard.eKey);
+            yield return Until(() => hop.Phase >= RadioHopPhase.Leaving, 3f, "holding Interact hops");
+            Release(_keyboard.eKey);
+            yield return Until(() => _events.RadioHopFinished.Count > hops && hop.Phase == RadioHopPhase.Closed, 6f,
+                "the hop eases out, 07 lands on " + to + " and the view eases back in");
+            Assert.AreEqual(to, _events.RadioHopFinished[hops].Value.ToId);
+        }
+
+        private static Vector3 Flat(Vector3 point)
+        {
+            return new Vector3(point.x, 0f, point.z);
         }
 
         /// <summary>

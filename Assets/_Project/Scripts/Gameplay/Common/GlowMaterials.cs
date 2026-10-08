@@ -129,6 +129,11 @@ namespace MoonProject.Gameplay
                         corePower: 1.5f, radial: 1f, additive: true, cull: CullMode.Off);
                     material.SetFloat(RadialPowerId, HaloRadialPower);
                     break;
+                case GlowRole.LinkPulse:
+                    // A thin running line: soft across, soft at both ends, so the pulse has no hard edge anywhere.
+                    Set(material, warm, edge: 0.5f, length: 0.45f, bands: 0f, speed: 0f, strength: 0f, fresnel: 0f,
+                        fresnelPower: 2f, core: 0f, corePower: 1.5f, radial: 0f, additive: true, cull: CullMode.Off);
+                    break;
                 case GlowRole.WarmGlow:
                     material.SetColor(ColorId, warm);
                     material.SetFloat(FresnelMixId, 0.4f);

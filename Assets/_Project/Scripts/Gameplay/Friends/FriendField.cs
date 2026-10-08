@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Rendering;
 using MoonProject.Core;
 using MoonProject.Core.Events;
 using MoonProject.Core.Input;
@@ -27,28 +26,14 @@ namespace MoonProject.Gameplay
     [DisallowMultipleComponent]
     public sealed class FriendField : MonoBehaviour, ISpotTargets, IFriendRoster, IFriendStatuses
     {
-        /// <summary>Points along the stitching beam.</summary>
-        private const int BeamPoints = 16;
-
         /// <summary>Scrap pieces this close (m) to a spotted one count as the same cluster.</summary>
         private const float ScrapClusterRadius = 4f;
-
-        /// <summary>Seconds (time constant) for the stitching beam to brighten and fade.</summary>
-        private const float BeamEase = 0.15f;
-
-        private const float BeamWidth = 0.06f;
-
-        /// <summary>Upward bow (m) of the stitching beam.</summary>
-        private const float BeamArc = 0.2f;
 
         /// <summary>Degrees between the idle headings of a friend's parts (so they never turn in step).</summary>
         private const float PartHeadingStep = 120f;
 
         /// <summary>A part spins this many times faster in flight than at rest.</summary>
         private const float PartFlightSpin = 4f;
-
-        /// <summary>The stitch's up-and-down sweep is this share of its sideways sweep, at twice the rate.</summary>
-        private const float StitchLift = 0.5f;
 
         /// <summary>Seeds a radio cabinet's life (foot tap timing) apart from its friend index.</summary>
         private const int CabinetSeed = 0x6E11;
@@ -79,15 +64,12 @@ namespace MoonProject.Gameplay
         private ScrapField _scrap;
         private SonarSystem _sonar;
         private ScrapGlints _glints;
-        private LineRenderer _beam;
-        private GlowRenderer _beamGlow;
+        private RepairBeam _beam;
         private IDisposable _relicSubscription;
         private RadioCabinetBody _cabinet;
-        private Vector3[] _beamPoints = Array.Empty<Vector3>();
         private bool[] _spottedRelics = Array.Empty<bool>();
         private bool[] _spottedScrap = Array.Empty<bool>();
         private float _holdTime;
-        private float _beamLevel;
         private bool _holding;
         private bool _gazing;
         private bool _interactHeld;
@@ -210,9 +192,8 @@ namespace MoonProject.Gameplay
 
             _glints = new ScrapGlints(transform, services.Visuals.PartGlint, scrap.Tuning, Mathf.Max(1, partCount),
                 Layers.Pickup);
-            _beamPoints = new Vector3[BeamPoints];
-            _beam = CreateBeam(services.Visuals.TetherBeam);
-            _beamGlow = new GlowRenderer(_beam);
+            _beam = new RepairBeam("RepairBeam", transform, services.Visuals.TetherBeam, _tuning.StitchRate,
+                _tuning.StitchSpread);
             if (_cabinet != null)
             {
                 _relicSubscription = _events.Subscribe<RelicDeposited>(OnRelicDeposited);
@@ -594,21 +575,6 @@ namespace MoonProject.Gameplay
             return _cabinet;
         }
 
-        private LineRenderer CreateBeam(Material material)
-        {
-            var host = new GameObject("RepairBeam");
-            host.transform.SetParent(transform, false);
-            var line = host.AddComponent<LineRenderer>();
-            line.useWorldSpace = true;
-            line.positionCount = BeamPoints;
-            line.textureMode = LineTextureMode.Stretch;
-            line.alignment = LineAlignment.View;
-            line.widthMultiplier = BeamWidth;
-            line.shadowCastingMode = ShadowCastingMode.Off;
-            GlowObject.Configure(line, material);
-            return line;
-        }
-
         private void Update()
         {
             if (!_initialized)
@@ -858,26 +824,8 @@ namespace MoonProject.Gameplay
         private void StepBeam(Friend repairing, float now, float deltaTime)
         {
             bool beaming = repairing != null && repairing.Body.Beaming(now - repairing.RepairStart);
-            _beamLevel = Damp.Toward(_beamLevel, beaming ? 1f : 0f, BeamEase, deltaTime);
-            _beamGlow.Apply(_beamLevel);
-            if (!_beam.enabled || repairing == null)
-            {
-                return;
-            }
-
-            Vector3 start = _rig.TetherOrigin.position;
-            Vector3 target = repairing.Body.BeamTarget;
-            float phase = now * _tuning.StitchRate * 2f * Mathf.PI;
-            Vector3 across = Vector3.Cross(Vector3.up, target - start).normalized;
-            Vector3 end = target + across * (Mathf.Sin(phase) * _tuning.StitchSpread) +
-                          Vector3.up * (Mathf.Sin(phase * 2f) * _tuning.StitchSpread * StitchLift);
-            for (int i = 0; i < BeamPoints; i++)
-            {
-                float t = (float)i / (BeamPoints - 1);
-                _beamPoints[i] = Vector3.Lerp(start, end, t) + Vector3.up * (Ease.Hump(t) * BeamArc);
-            }
-
-            _beam.SetPositions(_beamPoints);
+            _beam.Step(beaming, repairing != null, _rig.TetherOrigin.position,
+                repairing != null ? repairing.Body.BeamTarget : Vector3.zero, now, deltaTime);
         }
 
         private void StepGaze(Friend repairing)

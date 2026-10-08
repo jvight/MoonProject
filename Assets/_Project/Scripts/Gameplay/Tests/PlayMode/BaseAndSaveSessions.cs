@@ -17,6 +17,9 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// </summary>
     public sealed class BaseAndSaveSessions : InputTestFixture
     {
+        /// <summary>Seconds a held tether press may take to latch (a slow first frame must not eat it).</summary>
+        private const float LatchTimeout = 1f;
+
         private const string Duck = "rubber_duck";
         private const string Teapot = "teapot";
         private const string Tower = "radio_tower";
@@ -83,8 +86,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreSame(duck, _fixture.Gameplay.Tether.Hovered,
                 $"duck {duck.State} at {duck.transform.position}, camera {camera}");
             Press(_mouse.rightButton, queueEventOnly: true);
-            yield return null;
-            yield return null;
+            yield return Waits.Until(() => _fixture.Events.TetherAttached.Count > 0, LatchTimeout);
             Assert.AreEqual(1, _fixture.Events.TetherAttached.Count);
 
             Vector3 from = _fixture.Rover.Position;
