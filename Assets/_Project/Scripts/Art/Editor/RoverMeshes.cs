@@ -26,17 +26,33 @@ namespace MoonProject.Art.Editor
         /// <summary>Antenna tip in antenna space: the end of the bent whip.</summary>
         public static readonly Vector3 AntennaTipPosition = new Vector3(0.035f, 0.56f, -0.045f);
 
+        /// <summary>The whip's tired kink in antenna space.</summary>
+        public static readonly Vector3 AntennaKink = new Vector3(0f, 0.33f, 0.01f);
+
+        /// <summary>
+        /// The folded solar wing's 2 x 3 cell grid (wing space): cell size (x across, y along the wing).
+        /// </summary>
+        public static readonly Vector2 WingCell =
+            new Vector2(WingHalfWidth - 1.5f * WingBar, (WingLength - 4f * WingBar) / 3f);
+
+        public const float CellThickness = 0.012f;
+
+        /// <summary>The cell lost to the years (rear right), the gap Tilly's gift fills.</summary>
+        public const int MissingRow = 2;
+
+        public const int MissingColumn = 1;
+
         private const float BodyCentreZ = 0.03f;
-        private const float BodyHalfWidth = 0.44f;
+        internal const float BodyHalfWidth = 0.44f;
         private const float BodyFront = 0.68f;
-        private const float BodyBack = -0.62f;
+        internal const float BodyBack = -0.62f;
         private const float TubBottom = 0.34f;
         private const float TubTop = 0.84f;
         private const float BodyCorner = 0.16f;
-        private const float StripeY = 0.75f;
-        private const float StripeHeight = 0.1f;
-        private const float PaintProud = 0.0035f;
-        private const float PaintThickness = 0.012f;
+        internal const float StripeY = 0.75f;
+        internal const float StripeHeight = 0.1f;
+        internal const float PaintProud = 0.0035f;
+        internal const float PaintThickness = 0.012f;
 
         /// <summary>Half-length of the straight (non-rounded) part of the front and back faces.</summary>
         private const float FaceHalfSpan = BodyHalfWidth - BodyCorner;
@@ -49,6 +65,9 @@ namespace MoonProject.Art.Editor
         private const float LidWidth = 0.38f;
         private const float BrowInner = 0.205f;
         private const float BrowOuter = 0.255f;
+        private const float WingBar = 0.02f;
+        private const float WingHalfWidth = 0.31f;
+        private const float WingLength = 0.62f;
 
         private static readonly Vector2[] Seven =
         {
@@ -270,10 +289,10 @@ namespace MoonProject.Art.Editor
         /// </summary>
         public static LowPolyMeshBuilder SolarWing()
         {
-            const float bar = 0.02f;
+            const float bar = WingBar;
             const float height = 0.022f;
-            const float halfWidth = 0.31f;
-            const float length = 0.62f;
+            const float halfWidth = WingHalfWidth;
+            const float length = WingLength;
             var b = new LowPolyMeshBuilder(280);
             b.Prism(At(Vector3.zero, AlongX), 0.016f, 2f * halfWidth + 0.02f, 8, PaletteSwatch.Charcoal);
             b.Box(At(0f, -0.007f, -length * 0.5f), new Vector3(2f * halfWidth - 0.02f, 0.008f, length - 0.02f),
@@ -283,26 +302,25 @@ namespace MoonProject.Art.Editor
             b.Box(At(halfWidth - bar * 0.5f, 0f, -length * 0.5f), new Vector3(bar, height, length),
                 PaletteSwatch.Metal, 0.004f);
             b.Box(At(0f, 0f, -length * 0.5f), new Vector3(bar, height, length - 0.02f), PaletteSwatch.Metal, 0.004f);
-            float cellLength = (length - 4f * bar) / 3f;
+            float cellLength = WingCell.y;
             for (int i = 0; i <= 3; i++)
             {
                 float z = -bar * 0.5f - i * (cellLength + bar);
                 b.Box(At(0f, 0f, z), new Vector3(2f * halfWidth, height, bar), PaletteSwatch.Metal, 0.004f);
             }
 
-            float cellWidth = halfWidth - 1.5f * bar;
+            float cellWidth = WingCell.x;
             for (int row = 0; row < 3; row++)
             {
                 for (int column = 0; column < 2; column++)
                 {
-                    if (row == 2 && column == 1)
+                    if (row == MissingRow && column == MissingColumn)
                     {
                         continue;
                     }
 
-                    float x = (column == 0 ? -1f : 1f) * (bar * 0.5f + cellWidth * 0.5f);
-                    float z = -bar - cellLength * 0.5f - row * (cellLength + bar);
-                    b.Box(At(x, 0f, z), new Vector3(cellWidth, 0.012f, cellLength), PaletteSwatch.SkyHorizon);
+                    b.Box(At(WingCellCentre(row, column)), new Vector3(cellWidth, CellThickness, cellLength),
+                        PaletteSwatch.SkyHorizon);
                 }
             }
 
@@ -313,7 +331,7 @@ namespace MoonProject.Art.Editor
         public static LowPolyMeshBuilder Antenna()
         {
             var b = new LowPolyMeshBuilder(100);
-            var kink = new Vector3(0f, 0.33f, 0.01f);
+            Vector3 kink = AntennaKink;
             b.Prism(At(0f, 0.02f, 0f), 0.032f, 0.04f, 8, PaletteSwatch.Charcoal);
             RecipeKit.Rod(b, new Vector3(0f, 0.04f, 0f), kink, 0.0085f, 5, PaletteSwatch.Metal);
             RecipeKit.Rod(b, kink, AntennaTipPosition, 0.0075f, 5, PaletteSwatch.Metal);
@@ -535,6 +553,16 @@ namespace MoonProject.Art.Editor
                 b.Icosphere(At(x, y, z), 0.01f, 0, PaletteSwatch.Enamel);
                 b.Icosphere(At(-x, y, z), 0.01f, 0, PaletteSwatch.Enamel);
             }
+        }
+
+        /// <summary>
+        /// Centre of the wing cell at <paramref name="row"/> (0 = by the hinge) and column (0 = left).
+        /// </summary>
+        public static Vector3 WingCellCentre(int row, int column)
+        {
+            float x = (column == 0 ? -1f : 1f) * (WingBar * 0.5f + WingCell.x * 0.5f);
+            float z = -WingBar - WingCell.y * 0.5f - row * (WingCell.y + WingBar);
+            return new Vector3(x, 0f, z);
         }
 
         private static Vector3 AxleLocal(float wheelZ)
