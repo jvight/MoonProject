@@ -11,11 +11,12 @@ namespace MoonProject.Gameplay
     /// (surface, layout, anchors), rover and camera services, creates the wallet, the upgrade service (which grants
     /// rover abilities through <see cref="IRoverAbilities"/>) and the radio program, initialises the gameplay parts in
     /// dependency order (relics, scrap, excavation, tether, home, radio tower, workshop, friends, cassettes, log
-    /// caches, sonar, Bell's signals, the cassette shelf), registers the services other domains read
-    /// (<see cref="IScrapWallet"/>, <see cref="ITetherAim"/>, <see cref="IUpgradeShop"/>,
+    /// caches, sonar, Bell's signals, the cassette shelf, the relay network), registers the services other domains
+    /// read (<see cref="IScrapWallet"/>, <see cref="ITetherAim"/>, <see cref="IUpgradeShop"/>,
     /// <see cref="IInteractionHints"/>, <see cref="IFriendRoster"/>, <see cref="IFriendStatuses"/>,
-    /// <see cref="IRadioProgram"/>) and the save sections, announces the radio's signal radius and, once the save is
-    /// loaded, the radio program, and owns the shared glow meshes.
+    /// <see cref="IRadioProgram"/>, <see cref="IStationReach"/>, <see cref="IRelayStatus"/>) and the save sections,
+    /// announces the radio's signal radius and, once the save is loaded, the radio program, and owns the shared glow
+    /// meshes.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class GameplaySystem : MonoBehaviour, IGameSystem
@@ -39,6 +40,7 @@ namespace MoonProject.Gameplay
         [SerializeField] private LogCacheField _logs;
         [SerializeField] private SignalField _signals;
         [SerializeField] private CassetteShelf _shelf;
+        [SerializeField] private RelayField _relays;
 
         private readonly List<IDisposable> _saveTokens = new List<IDisposable>();
         private GlowMeshSet _meshes;
@@ -79,10 +81,12 @@ namespace MoonProject.Gameplay
 
         public CassetteShelf Shelf => _shelf;
 
+        public RelayField Relays => _relays;
+
         internal void Wire(GameplayVisuals visuals, UpgradeDefinition[] upgradeDefinitions, RelicField relics,
             ScrapField scrap, SonarSystem sonar, ExcavationSystem excavation, TetherSystem tether, HomeBase home,
             RadioTower tower, Workshop workshop, FriendField friends, CassetteField cassettes, LogCacheField logs,
-            SignalField signals, CassetteShelf shelf)
+            SignalField signals, CassetteShelf shelf, RelayField relays)
         {
             _visuals = visuals;
             _upgradeDefinitions = upgradeDefinitions;
@@ -99,6 +103,7 @@ namespace MoonProject.Gameplay
             _logs = logs;
             _signals = signals;
             _shelf = shelf;
+            _relays = relays;
         }
 
         public void Initialize(GameContext context)
@@ -135,7 +140,8 @@ namespace MoonProject.Gameplay
                 !_cassettes.Initialize(services, Radio, _scrap.Tuning, KeepClearOfCassettes()) ||
                 !_logs.Initialize(services, _scrap.Tuning) || !_sonar.Initialize(services, _relics, _friends) ||
                 !_signals.Initialize(services, _friends, _cassettes, _logs, _relics, abilities, _sonar.Tuning) ||
-                !_shelf.Initialize(Radio, _cassettes.Catalog, _friends.BellTuning))
+                !_shelf.Initialize(Radio, _cassettes.Catalog, _friends.BellTuning) ||
+                !_relays.Initialize(services, Upgrades, _friends.Tuning, _scrap.Tuning))
             {
                 enabled = false;
                 return;
@@ -154,7 +160,7 @@ namespace MoonProject.Gameplay
 
             Shop = new UpgradeShop(Upgrades, stations, save);
             Hints = new InteractionHints(services.Rover, _sonar, _excavation, _tether, _home, stations, Upgrades,
-                _friends);
+                _friends, _relays);
             context.Register<IScrapWallet>(Wallet);
             context.Register<ITetherAim>(_tether);
             context.Register<IUpgradeShop>(Shop);
@@ -162,6 +168,8 @@ namespace MoonProject.Gameplay
             context.Register<IFriendRoster>(_friends);
             context.Register<IFriendStatuses>(_friends);
             context.Register<IRadioProgram>(Radio);
+            context.Register<IStationReach>(_relays.Reach);
+            context.Register<IRelayStatus>(_relays);
             Upgrades.PublishSignals();
             RegisterSaveSections(save);
         }
@@ -185,6 +193,8 @@ namespace MoonProject.Gameplay
                 GameplaySaveKeys.LogsVersion, _logs.Capture, _logs.Restore)));
             _saveTokens.Add(save.Register(new SaveSection<BellSignalSaveData>(GameplaySaveKeys.BellSignals,
                 GameplaySaveKeys.BellSignalsVersion, _signals.Capture, _signals.Restore)));
+            _saveTokens.Add(save.Register(new SaveSection<RelaysSaveData>(GameplaySaveKeys.Relays,
+                GameplaySaveKeys.RelaysVersion, _relays.Capture, _relays.Restore)));
         }
 
         /// <summary>The save is loaded (Start runs after it): Audio and UI start from the real radio program.</summary>
@@ -281,6 +291,7 @@ namespace MoonProject.Gameplay
                 : _logs == null ? "LogCacheField is not assigned."
                 : _signals == null ? "SignalField is not assigned."
                 : _shelf == null ? "CassetteShelf is not assigned."
+                : _relays == null ? "RelayField is not assigned."
                 : null;
         }
 

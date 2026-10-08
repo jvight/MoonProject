@@ -29,6 +29,7 @@ namespace MoonProject.Gameplay.Editor
             EnsureExists<CassetteTuning>(GameplayAssetPaths.CassetteTuning);
             EnsureExists<LogCacheTuning>(GameplayAssetPaths.LogCacheTuning);
             EnsureExists<BellTuning>(GameplayAssetPaths.BellTuning);
+            EnsureExists<RelayTuning>(GameplayAssetPaths.RelayTuning);
         }
 
         private static void EnsureExists<T>(string path) where T : ScriptableObject

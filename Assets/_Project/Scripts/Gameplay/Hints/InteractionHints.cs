@@ -11,8 +11,9 @@ namespace MoonProject.Gameplay
     {
         private static readonly InteractionKind[] Priority =
         {
-            InteractionKind.Deposit, InteractionKind.Repair, InteractionKind.Tune, InteractionKind.Upgrade,
-            InteractionKind.Excavate, InteractionKind.Tether, InteractionKind.Reel, InteractionKind.Ping,
+            InteractionKind.Deposit, InteractionKind.Repair, InteractionKind.Restore, InteractionKind.Tune,
+            InteractionKind.Upgrade, InteractionKind.Excavate, InteractionKind.Tether, InteractionKind.Reel,
+            InteractionKind.Ping,
         };
 
         private readonly IRoverState _rover;
@@ -23,9 +24,10 @@ namespace MoonProject.Gameplay
         private readonly IUpgradeStation[] _stations;
         private readonly UpgradeService _upgrades;
         private readonly FriendField _friends;
+        private readonly RelayField _relays;
 
         public InteractionHints(IRoverState rover, SonarSystem sonar, ExcavationSystem excavation, TetherSystem tether,
-            HomeBase home, IUpgradeStation[] stations, UpgradeService upgrades, FriendField friends)
+            HomeBase home, IUpgradeStation[] stations, UpgradeService upgrades, FriendField friends, RelayField relays)
         {
             _rover = rover ?? throw new ArgumentNullException(nameof(rover));
             _sonar = sonar != null ? sonar : throw new ArgumentNullException(nameof(sonar));
@@ -35,6 +37,7 @@ namespace MoonProject.Gameplay
             _stations = stations ?? throw new ArgumentNullException(nameof(stations));
             _upgrades = upgrades ?? throw new ArgumentNullException(nameof(upgrades));
             _friends = friends != null ? friends : throw new ArgumentNullException(nameof(friends));
+            _relays = relays != null ? relays : throw new ArgumentNullException(nameof(relays));
         }
 
         public InteractionHint Primary
@@ -87,6 +90,10 @@ namespace MoonProject.Gameplay
                     bool tune = _friends.TryGetDial(out Vector3 dial);
                     hint = tune ? new InteractionHint(kind, dial, true) : InteractionHint.None;
                     return tune;
+                case InteractionKind.Restore:
+                    bool restore = _relays.TryGetRestore(out Vector3 socket, out bool affordable);
+                    hint = restore ? new InteractionHint(kind, socket, affordable) : InteractionHint.None;
+                    return restore;
                 case InteractionKind.Reel:
                     hint = towed != null
                         ? new InteractionHint(kind, towed.transform.position, true)

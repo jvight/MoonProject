@@ -9,8 +9,9 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// <summary>
     /// Records every gameplay event (and the rover's Hover-Jump events) with the time it was published, for order and
     /// timing assertions. The radio and story events of M3-05 (cassettes, radio program, crew logs, Bell's signals
-    /// and cues, ticker lines) are recorded too but kept out of <see cref="Order"/>: the radio announces itself at
-    /// every boot, and the order assertions follow the play loop.
+    /// and cues, ticker lines) and the relay network's of M3-06 (relay cues and restorations) are recorded too but
+    /// kept out of <see cref="Order"/>: the radio announces itself at every boot, and the order assertions follow the
+    /// play loop.
     /// </summary>
     public sealed class EventRecorder : IDisposable
     {
@@ -45,6 +46,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             Listen(events, BellSignalFound, false);
             Listen(events, TickerLine, false);
             Listen(events, BellCued, false);
+            Listen(events, RelayCued, false);
+            Listen(events, RelayRestored, false);
         }
 
         /// <summary>Event type names in publish order.</summary>
@@ -88,6 +91,10 @@ namespace MoonProject.Gameplay.PlayModeTests
         public List<Timed<BellSignalFound>> BellSignalFound { get; } = new List<Timed<BellSignalFound>>();
         public List<Timed<TickerLine>> TickerLine { get; } = new List<Timed<TickerLine>>();
         public List<Timed<BellCued>> BellCued { get; } = new List<Timed<BellCued>>();
+
+        public List<Timed<RelayCued>> RelayCued { get; } = new List<Timed<RelayCued>>();
+
+        public List<Timed<RelayRestored>> RelayRestored { get; } = new List<Timed<RelayRestored>>();
 
         public void Dispose()
         {
