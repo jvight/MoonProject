@@ -250,6 +250,29 @@ Generated/Art/Relay/Part_RelayModule.prefab  0.27–0.36 m pickup, centre-of-mas
 Gameplay places the mast on the `relay.<n>` anchor (root at Position, +Z = Forward). The 3 m pad must stay clear for
 07 to park and for the radio-hop arrival.
 
+## Contract: salvage sites (Art -> Gameplay), M3-13
+Weathered wrecks and ruins (VISION ruling 12: faded paint, rust streaks, dust drifts, dents, slack cables), meshes only,
+`M_LowPoly`. Each site is one prefab whose salvage points are separate, detachable nodes.
+```
+Generated/Art/Sites/Site_<id>.prefab   id: depot | kestrel | drill | garage | lander
+                                       root on the ground at the site anchor, +Z = the anchor's Forward, +Y up
+  Skeleton                    what remains when everything is salvaged (weathered frame, stays forever)
+  Salvage_<n>_<Material>      4–8 per site, Material = Metal | Wiring | Optics; a self-contained piece with its pivot
+                              at its attach point, so gameplay can detach and fly it to 07 without seams
+    CutPoint                  empty where 07's beam aims and sparks (+Z out of the cut face)
+  Salvage_<n>_<Material>_Drag optional big piece (0–1 per site) that must be tethered clear before cutting
+  Heart                       empty in a sheltered spot inside the wreck: the site's crew relic rests here
+Generated/Art/Pickups/Material_Metal|Wiring|Optics.prefab   0.30–0.40 m bundles, centre-of-mass pivot (fold-in and
+                                       loose trail bits)
+Generated/Art/Sites/Debris_<Material>_<n>.prefab            4–6 small loose wreck bits for the Kestrel trail,
+                                       centre-of-mass pivot, each worth one bundle
+```
+- **Footprints.** Site footprints (World): depot 10 m, kestrel 8 m crater floor, drill 9 m, garage 10 m, lander 9 m.
+  Nothing tall in a 3 m lane on the approach side (−Z).
+- **Kestrel-3 silhouette.** It must read from the base at 185 m: a tall element, such as a solar wing standing on edge
+  or a bent antenna mast, ≥ 6 m.
+- **Readability.** Salvage pieces read as distinct chunky shapes, so the player can tell what is left.
+
 ## Contract: world anchors (World -> Gameplay, Audio)
 World registers `Core/IWorldAnchors` (Count / Get(index) / TryGet(id)): named `WorldAnchor`s (id, surface position,
 horizontal forward, radius of clear drivable ground), deterministic for the world seed and fixed after initialisation.
