@@ -4,11 +4,11 @@ using UnityEngine;
 namespace MoonProject.World
 {
     /// <summary>
-    /// Where the relay masts of the station-reach network stand (M3-06, docs/features/M3-06-relay-network.md). The
-    /// first two are found on the ground itself: the highest gently-topped rise in a sector, so they read as high
-    /// points from the base; relay.0, the teaching mast, stands in the spawn first frame right of The Peak. The
-    /// third stands at the canyon mouth and the fourth on the canyon's relay ledge (<see cref="CanyonSettings"/>),
-    /// past the Hover-Jump gate.
+    /// Where the relay masts of the station-reach network stand (M3-06, docs/features/M3-06-relay-network.md).
+    /// relay.0, the teaching mast, stands on a low mound shaped for it in the spawn first frame right of The Peak
+    /// (<see cref="SiteSettings"/>). relay.1 is found on the ground itself: the highest gently-topped rise in a
+    /// sector, so it reads as a high point from the base. The third stands at the canyon mouth and the fourth on the
+    /// canyon's relay ledge (<see cref="CanyonSettings"/>), past the Hover-Jump gate.
     /// </summary>
     [Serializable]
     public sealed class RelaySettings
@@ -16,24 +16,6 @@ namespace MoonProject.World
         [Tooltip("Radius of every mast's flat, drivable, rock-free pad, metres.")]
         [Range(2f, 6f)]
         [SerializeField] private float _padRadius = 3f;
-
-        [Header("relay.0: a low mound in the spawn first frame")]
-        [Tooltip("Bearing from the base the search for relay.0 is centred on, degrees: inside the spawn view (yaw " +
-            "355, +-45) and at least 15 degrees right of The Peak (12), so the two silhouettes read apart.")]
-        [Range(0f, 360f)]
-        [SerializeField] private float _moundBearing = 30.5f;
-
-        [Tooltip("Half-width of relay.0's search sector, degrees.")]
-        [Range(1f, 45f)]
-        [SerializeField] private float _moundBearingSpread = 3.5f;
-
-        [Tooltip("Distance from the base the search for relay.0 is centred on, metres.")]
-        [Range(50f, 250f)]
-        [SerializeField] private float _moundDistance = 113f;
-
-        [Tooltip("Half-depth of relay.0's search sector, metres.")]
-        [Range(5f, 80f)]
-        [SerializeField] private float _moundDistanceSpread = 13f;
 
         [Header("relay.1: a crater-rim shoulder opposite the canyon")]
         [Tooltip("Bearing from the base the search for relay.1 is centred on, degrees.")]
@@ -63,10 +45,6 @@ namespace MoonProject.World
         [SerializeField] private float _mouthLateral = 12f;
 
         public float PadRadius => _padRadius;
-        public float MoundBearing => _moundBearing;
-        public float MoundBearingSpread => _moundBearingSpread;
-        public float MoundDistance => _moundDistance;
-        public float MoundDistanceSpread => _moundDistanceSpread;
         public float ShoulderBearing => _shoulderBearing;
         public float ShoulderBearingSpread => _shoulderBearingSpread;
         public float ShoulderDistance => _shoulderDistance;
@@ -77,9 +55,9 @@ namespace MoonProject.World
         /// <summary>Returns null when the settings are consistent, otherwise the problem.</summary>
         public string Validate()
         {
-            if (_moundDistance - _moundDistanceSpread <= 0f || _shoulderDistance - _shoulderDistanceSpread <= 0f)
+            if (_shoulderDistance - _shoulderDistanceSpread <= 0f)
             {
-                return "Relays: a search sector reaches back to the base.";
+                return "Relays: relay.1's search sector reaches back to the base.";
             }
 
             return null;

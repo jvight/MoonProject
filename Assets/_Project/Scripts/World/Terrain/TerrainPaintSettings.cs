@@ -123,6 +123,19 @@ namespace MoonProject.World
         [Range(0f, 1f)]
         [SerializeField] private float _highlandShade = 0.8f;
 
+        [Header("Kestrel-3's scorch")]
+        [Tooltip("How far the scorched dust turns toward the scorch tone (0..1).")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _scorchShade = 0.85f;
+
+        [Tooltip("How far the scorch tone goes from the shadow dust toward charcoal (0..1).")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _scorchCharcoal = 0.6f;
+
+        [Tooltip("How much the small dust patches lighten the scorch, so it lies in soft patches, not one flat stain.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _scorchMottle = 0.25f;
+
         public float RockSlope => _rockSlope;
         public float RimRockSlope => _rimRockSlope;
         public float RimZoneStart => _rimZoneStart;
@@ -149,5 +162,8 @@ namespace MoonProject.World
         public float CraterRimLight => _craterRimLight;
         public float HighlandZone => _highlandZone;
         public float HighlandShade => _highlandShade;
+        public float ScorchShade => _scorchShade;
+        public float ScorchCharcoal => _scorchCharcoal;
+        public float ScorchMottle => _scorchMottle;
     }
 }
