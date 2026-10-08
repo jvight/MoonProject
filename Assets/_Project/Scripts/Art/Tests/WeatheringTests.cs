@@ -15,6 +15,9 @@ namespace MoonProject.Art.Tests
     {
         private static readonly string[] Layers = { "Weather_Paint", "Weather_Rust", "Weather_Dust" };
 
+        // How far a skin may spread past its model's own bounds: drifts and debris lie round the feet.
+        private const float StrayReach = 1.5f;
+
         private static IEnumerable<ModelNode> Weathered()
         {
             yield return BaseModelBuilder.CreateLander();
@@ -45,6 +48,22 @@ namespace MoonProject.Art.Tests
                     Assert.IsFalse(MeshChecks.Swatches(skin.Mesh.Geometry).Any(Palette.IsEmissive),
                         $"{model.Name}/{layer} never glows");
                     MeshChecks.AssertWellFormed(skin.Mesh.Geometry);
+                }
+            }
+        }
+
+        [Test]
+        public void Skins_HugTheirModel_WithNoStrayFacets()
+        {
+            foreach (ModelNode model in Weathered())
+            {
+                Bounds shape = model.Mesh.Geometry.Bounds;
+                shape.Expand(new Vector3(StrayReach, StrayReach, StrayReach) * 2f);
+                foreach (ModelNode skin in model.Children.Where(c => c.Name.StartsWith("Weather_")))
+                {
+                    Bounds reach = skin.Mesh.Geometry.Bounds;
+                    Assert.IsTrue(shape.Contains(reach.min) && shape.Contains(reach.max),
+                        $"{model.Name}/{skin.Name} reaches {reach} beyond its model {shape}");
                 }
             }
         }
