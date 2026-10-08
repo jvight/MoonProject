@@ -11,9 +11,9 @@ using Object = UnityEngine.Object;
 namespace MoonProject.Gameplay.Tests
 {
     /// <summary>
-    /// The relay network's pure logic (docs/features/M3-06): the station's reach over the real chain, the scrap cost,
-    /// where a mast's part lies, the restoration and hop timelines, the radio-hop's list and sequence, and the mast
-    /// rig.
+    /// The relay network's pure logic (docs/features/M3-06): the station's reach over the real chain, the scrap cost
+    /// and VISION ruling 5, where a mast's part lies, the restoration and hop timelines, the radio-hop's list and
+    /// sequence, and the mast rig.
     /// </summary>
     public sealed class RelayTests
     {
@@ -27,6 +27,11 @@ namespace MoonProject.Gameplay.Tests
         // The radio tower's clear-signal radius before any level and at level 1 (the content builder's tower).
         private const float DarkTower = 60f;
         private const float TowerLevel1 = 110f;
+
+        // The other sinks of VISION ruling 5, as in the content builder: the tower's three levels and Hover-Jump.
+        private const int TowerCost = 15 + 40 + 80;
+        private const int HoverJumpCost = 150;
+        private const int Relics = 6;
 
         private const float Frame = 1f / 60f;
 
@@ -120,7 +125,7 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void Cost_Escalates()
+        public void Cost_Escalates_AndTheBasinStillFundsTwiceEverySink()
         {
             var relays = Create<RelayTuning>();
             Assert.AreEqual(60, relays.CostAfter(0));
@@ -131,6 +136,11 @@ namespace MoonProject.Gameplay.Tests
             Assert.IsNull(relays.Validate(Ids.Length));
             StringAssert.Contains("prices", relays.Validate(Ids.Length + 1));
 
+            var scrap = Create<ScrapTuning>();
+            var home = Create<BaseTuning>();
+            int income = scrap.MinTotalValue + Relics * home.DepositGift;
+            int sinks = TowerCost + HoverJumpCost + relays.TotalCost(Ids.Length);
+            Assert.GreaterOrEqual(income, 2 * sinks, $"VISION ruling 5: income {income} vs sinks {sinks}");
         }
 
         [Test]
