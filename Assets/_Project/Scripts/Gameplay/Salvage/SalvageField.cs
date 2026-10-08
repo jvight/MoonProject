@@ -20,8 +20,9 @@ namespace MoonProject.Gameplay
     /// lie loose and the beam can cut them. When every piece is gone the skeleton stays, picked clean for good. Along
     /// Kestrel-3's debris trail, loose bits glint and fold into 07 as it drives through (<see cref="SalvageTrail"/>).
     /// A relic in a site's heart is dug by the excavation: whichever 07 looks at more directly, the heart or a piece,
-    /// is what the hold works on. It is the <see cref="ISalvageStatus"/> the UI's hold ring and the audio's beam
-    /// read. Everything is built at initialisation; the frame loop allocates nothing.
+    /// is what the hold works on. A drag piece lost off the drivable floor floats back beside its site (ruling 1).
+    /// It is the <see cref="ISalvageStatus"/> the UI's hold ring and the audio's beam read. Everything is built at
+    /// initialisation; the frame loop allocates nothing.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class SalvageField : MonoBehaviour, ISalvageStatus
@@ -154,8 +155,8 @@ namespace MoonProject.Gameplay
                     return false;
                 }
 
-                problem = SalvageSiteBuilder.Build(i, entries[i], anchor, transform, _tuning, _catalog,
-                    services.Visuals.RelicHalo, _dragMaterial, _pieces, _drags, out SalvageSite site);
+                problem = SalvageSiteBuilder.Build(i, entries[i], anchor, transform, services.Terrain, _tuning,
+                    _catalog, services.Visuals.RelicHalo, _dragMaterial, _pieces, _drags, out SalvageSite site);
                 if (problem != null)
                 {
                     Fail($"site '{entries[i].AnchorId}': {problem} (salvage site contract, docs/features/M3-13).");
@@ -260,6 +261,18 @@ namespace MoonProject.Gameplay
                             rotation = body.rotation,
                         });
                     }
+                    else if (piece.State == SalvagePieceState.Returning)
+                    {
+                        // Floating back beside its site: it is saved where it will rest.
+                        pieces.Add(new SalvagePieceSaveData
+                        {
+                            number = piece.Number,
+                            progress = piece.Progress,
+                            loose = true,
+                            position = piece.Drag.ReturnEnd,
+                            rotation = piece.Drag.ReturnEndRotation,
+                        });
+                    }
                     else if (piece.State != SalvagePieceState.Attached)
                     {
                         // Breaking or flying, not yet in the stock: it comes back fully cut, a touch of the beam away.
@@ -331,7 +344,7 @@ namespace MoonProject.Gameplay
                     if (pieceData.loose && piece.Drag != null)
                     {
                         piece.Drag.RestoreLoose(pieceData.position, pieceData.rotation);
-                        piece.State = SalvagePieceState.Loose;
+                        piece.State = piece.Drag.IsClear ? SalvagePieceState.Loose : SalvagePieceState.Attached;
                     }
                 }
             }
@@ -355,6 +368,11 @@ namespace MoonProject.Gameplay
             float now = Time.time;
             float deltaTime = Time.deltaTime;
             UpdateCut(now, deltaTime);
+            for (int i = 0; i < _drags.Count; i++)
+            {
+                _drags[i].StepReach(deltaTime);
+            }
+
             Vector3 socket = _rig.CargoSocket.position;
             StepPieces(socket, now, deltaTime);
             if (_trail.Step(now, deltaTime, _rover.Position, socket, _view.Camera.transform.position, _cadence,

@@ -17,5 +17,8 @@ namespace MoonProject.Gameplay
 
         /// <summary>Folded into 07's stock; it never comes back.</summary>
         Taken = 4,
+
+        /// <summary>A drag piece lost off the drivable floor, floating back beside its site (ruling 1).</summary>
+        Returning = 5,
     }
 }

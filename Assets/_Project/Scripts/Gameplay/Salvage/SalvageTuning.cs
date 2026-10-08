@@ -123,6 +123,25 @@ namespace MoonProject.Gameplay
         [Tooltip("Friction of a drag piece's collider.")]
         [Range(0f, 1f)] [SerializeField] private float _dragFriction = 0.8f;
 
+        [Header("No loss (VISION ruling 1)")]
+        [Tooltip("A drag piece resting off the drivable floor this many seconds eases back beside its site.")]
+        [Range(0.2f, 10f)] [SerializeField] private float _returnDelay = 2f;
+
+        [Tooltip("A drag piece this many metres under the surface (it fell through) eases back at once.")]
+        [Range(0.2f, 10f)] [SerializeField] private float _belowSurfaceLimit = 1.5f;
+
+        [Tooltip("Metres outside its site's footprint, and inside the drivable floor, where a lost piece is set down.")]
+        [Range(0.5f, 15f)] [SerializeField] private float _returnMargin = 3f;
+
+        [Tooltip("Height (m) of the soft arc a returning piece floats along, and of its hover before it settles.")]
+        [Range(0f, 5f)] [SerializeField] private float _returnHover = 1.2f;
+
+        [Tooltip("Seconds a return takes over no distance at all...")]
+        [Range(0.5f, 10f)] [SerializeField] private float _returnDuration = 3f;
+
+        [Tooltip("...plus this many seconds per metre it floats (a long way back stays gentle).")]
+        [Range(0f, 0.2f)] [SerializeField] private float _returnPerMetre = 0.02f;
+
         [Header("Break off")]
         [Tooltip("Seconds a cut piece takes to come away and fold into a bundle.")]
         [Range(0.1f, 2f)] [SerializeField] private float _breakDuration = 0.7f;
@@ -224,6 +243,12 @@ namespace MoonProject.Gameplay
         public float DragAngularDamping => _dragAngularDamping;
         public float DragBounciness => _dragBounciness;
         public float DragFriction => _dragFriction;
+        public float ReturnDelay => _returnDelay;
+        public float BelowSurfaceLimit => _belowSurfaceLimit;
+        public float ReturnMargin => _returnMargin;
+        public float ReturnHover => _returnHover;
+        public float ReturnDuration => _returnDuration;
+        public float ReturnPerMetre => _returnPerMetre;
         public float BreakDuration => _breakDuration;
         public float BreakPop => _breakPop;
         public float BreakTumble => _breakTumble;

@@ -24,8 +24,8 @@ namespace MoonProject.Gameplay
         /// it stands, else what breaks the contract.
         /// </summary>
         public static string Build(int index, SalvageSiteEntry entry, WorldAnchor anchor, Transform parent,
-            SalvageTuning tuning, SalvageCatalog catalog, Material halo, PhysicsMaterial dragMaterial,
-            List<SalvagePiece> pieces, List<SalvageDrag> drags, out SalvageSite site)
+            ITerrainQuery terrain, SalvageTuning tuning, SalvageCatalog catalog, Material halo,
+            PhysicsMaterial dragMaterial, List<SalvagePiece> pieces, List<SalvageDrag> drags, out SalvageSite site)
         {
             site = null;
             Vector3 forward = anchor.Forward;
@@ -48,7 +48,7 @@ namespace MoonProject.Gameplay
                 return $"'{SkeletonName}' has no mesh";
             }
 
-            var built = new SalvageSite(index, entry.AnchorId, root, heart.position, entry.Gate,
+            var built = new SalvageSite(index, entry.AnchorId, root, anchor.Radius, heart.position, entry.Gate,
                 new ComboCounter(tuning.ChainWindow));
             var wreck = new List<Collider> { skeletonCollider };
             int firstDrag = drags.Count;
@@ -61,8 +61,8 @@ namespace MoonProject.Gameplay
                     continue;
                 }
 
-                string problem = AddPiece(built, node, number, material, drag, parent, tuning, catalog, halo,
-                    dragMaterial, wreck, drags);
+                string problem = AddPiece(built, node, number, material, drag, parent, terrain, tuning, catalog,
+                    halo, dragMaterial, wreck, drags);
                 if (problem != null)
                 {
                     return problem;
@@ -89,8 +89,8 @@ namespace MoonProject.Gameplay
         }
 
         private static string AddPiece(SalvageSite site, Transform node, int number, SalvageMaterial material,
-            bool drag, Transform parent, SalvageTuning tuning, SalvageCatalog catalog, Material halo,
-            PhysicsMaterial dragMaterial, List<Collider> wreck, List<SalvageDrag> drags)
+            bool drag, Transform parent, ITerrainQuery terrain, SalvageTuning tuning, SalvageCatalog catalog,
+            Material halo, PhysicsMaterial dragMaterial, List<Collider> wreck, List<SalvageDrag> drags)
         {
             if (site.Find(number) != null)
             {
@@ -134,7 +134,7 @@ namespace MoonProject.Gameplay
             {
                 SetLayer(node, Layers.Relic);
                 var body = node.gameObject.AddComponent<SalvageDrag>();
-                body.Setup(piece, bounds, tuning, dragMaterial);
+                body.Setup(piece, bounds, tuning, dragMaterial, terrain);
                 piece.Drag = body;
                 drags.Add(body);
             }

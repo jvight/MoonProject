@@ -14,8 +14,9 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// <summary>
     /// Scripted sessions for salvage (docs/features/M3-13) on the real components behind fakes: cutting a piece with
     /// the beam (progress kept when the hold lets go, ruling 4), the piece folding into the stock with the site's
-    /// melody, a drag piece tethered clear and then cut, the hold shared with the dig at a site's heart, Kestrel-3's
-    /// trail bits drawn in by driving through, and a picked-clean site that stays empty after a reboot.
+    /// melody, a drag piece tethered clear and then cut, a lost drag piece floating back beside its site (ruling 1),
+    /// the hold shared with the dig at a site's heart, Kestrel-3's trail bits drawn in by driving through, and a
+    /// picked-clean site that stays empty after a reboot.
     /// </summary>
     public sealed class SalvageSessions : InputTestFixture
     {
@@ -187,6 +188,48 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator DragPiece_LostOffTheFloor_FloatsBackBesideItsSite()
+        {
+            _fixture = GameplayFixture.Boot(_controls);
+            yield return null;
+            SalvageTuning tuning = _fixture.SalvageTuning;
+            SalvageSite depot = _fixture.FindSite("depot");
+            SalvagePiece hatch = depot.Find(3);
+
+            // Past the edge of the drivable floor (the flat world's floor runs on beyond it).
+            var lost = new Vector3(250f, 1f, 250f);
+            Assert.IsFalse(_fixture.World.IsDrivable(lost.x, lost.z));
+            hatch.Drag.RestoreLoose(lost, Quaternion.Euler(20f, 40f, 0f));
+            hatch.State = SalvagePieceState.Loose;
+            yield return Waits.Until(() => hatch.State == SalvagePieceState.Returning, tuning.ReturnDelay + 3f);
+            Assert.AreEqual(SalvagePieceState.Returning, hatch.State, "resting off the floor, it starts back");
+            Assert.IsFalse(hatch.IsCuttable);
+            Assert.IsFalse(hatch.Drag.IsTetherable, "nothing grabs it while it floats");
+            SalvagePieceSaveData saved = SavedPiece(depot, hatch);
+            Assert.IsTrue(saved.loose, "a save mid-float keeps it");
+            Assert.Less(Vector3.Distance(hatch.Drag.ReturnEnd, saved.position), 1e-3f, "where it will rest");
+
+            float began = Time.time;
+            yield return Waits.Until(() => hatch.State != SalvagePieceState.Returning, 30f);
+            Assert.AreEqual(SalvagePieceState.Loose, hatch.State, "set down loose again, clear of its wreck");
+            Assert.GreaterOrEqual(Time.time - began, tuning.ReturnDuration * 0.9f, "a gentle float, not a snap");
+            yield return new WaitForSeconds(2f);
+            AssertBesideItsSite(depot, hatch, tuning);
+            Assert.IsTrue(hatch.IsCuttable, "and ready for the beam");
+
+            // Sunk under the surface (it fell through): it starts back at once.
+            hatch.Drag.RestoreLoose(new Vector3(6f, -3f, 18f), Quaternion.identity);
+            yield return null;
+            yield return null;
+            Assert.AreEqual(SalvagePieceState.Returning, hatch.State, "under the floor, it starts back straight away");
+            yield return Waits.Until(() => hatch.State != SalvagePieceState.Returning, 30f);
+            yield return new WaitForSeconds(2f);
+            AssertBesideItsSite(depot, hatch, tuning);
+            Assert.Less(SurfaceRules.HorizontalDistance(hatch.Drag.Position, new Vector3(6f, 0f, 18f)),
+                SurfaceRules.HorizontalDistance(hatch.Drag.Position, lost), "on the side it was lost toward");
+        }
+
+        [UnityTest]
         public IEnumerator Hold_GoesToTheHeart_OrThePiece_Whichever07LooksAt()
         {
             _fixture = GameplayFixture.Boot(_controls);
@@ -315,6 +358,38 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(0.5f, _fixture.FindSite("drill").Find(1).Progress, 1e-4f, "a part-cut piece keeps its cut");
             Assert.AreEqual(total, _fixture.Gameplay.Materials.Total);
             Assert.AreEqual(0, _fixture.Events.MaterialSalvaged.Count, "a load is not salvage");
+        }
+
+        private SalvagePieceSaveData SavedPiece(SalvageSite site, SalvagePiece piece)
+        {
+            foreach (SalvageSiteSaveData saved in _fixture.Gameplay.Salvage.Capture().sites)
+            {
+                if (saved.id != site.Id)
+                {
+                    continue;
+                }
+
+                foreach (SalvagePieceSaveData pieceData in saved.pieces)
+                {
+                    if (pieceData.number == piece.Number)
+                    {
+                        return pieceData;
+                    }
+                }
+            }
+
+            Assert.Fail($"{site.Id} piece {piece.Number} is not in the save.");
+            return null;
+        }
+
+        private void AssertBesideItsSite(SalvageSite site, SalvagePiece piece, SalvageTuning tuning)
+        {
+            Vector3 rest = piece.Drag.Position;
+            Assert.IsTrue(_fixture.World.IsDrivable(rest.x, rest.z), "back on the drivable floor");
+            Assert.That(rest.y, Is.InRange(0f, 1.5f), "resting on the ground");
+            Assert.That(SurfaceRules.HorizontalDistance(rest, site.Position),
+                Is.InRange(site.Radius, site.Radius + tuning.ReturnMargin + 1.5f),
+                "beside its site, just outside the footprint");
         }
 
         /// <summary>Parks 07 in front of the piece's cut, looking at it, and lets the aim settle.</summary>

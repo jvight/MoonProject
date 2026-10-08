@@ -14,11 +14,13 @@ namespace MoonProject.Gameplay
         private readonly List<SalvagePiece> _pieces = new List<SalvagePiece>();
         private readonly List<Relic> _relics = new List<Relic>();
 
-        internal SalvageSite(int index, string id, Transform root, Vector3 heart, AbilityGate gate, ComboCounter combo)
+        internal SalvageSite(int index, string id, Transform root, float radius, Vector3 heart, AbilityGate gate,
+            ComboCounter combo)
         {
             Index = index;
             Id = id ?? throw new ArgumentNullException(nameof(id));
             Root = root != null ? root : throw new ArgumentNullException(nameof(root));
+            Radius = radius;
             Heart = heart;
             Gate = gate ?? throw new ArgumentNullException(nameof(gate));
             Combo = combo ?? throw new ArgumentNullException(nameof(combo));
@@ -34,6 +36,9 @@ namespace MoonProject.Gameplay
         public Transform Root { get; }
 
         public Vector3 Position => Root.position;
+
+        /// <summary>Radius (m) of the site's flat footprint (its World anchor's).</summary>
+        public float Radius { get; }
 
         /// <summary>The "Heart" node's world position: where its relics rest.</summary>
         public Vector3 Heart { get; }
@@ -75,7 +80,8 @@ namespace MoonProject.Gameplay
                 for (int i = 0; i < _pieces.Count; i++)
                 {
                     SalvagePieceState state = _pieces[i].State;
-                    if (state == SalvagePieceState.Attached || state == SalvagePieceState.Loose)
+                    if (state != SalvagePieceState.Breaking && state != SalvagePieceState.Flying &&
+                        state != SalvagePieceState.Taken)
                     {
                         return false;
                     }
