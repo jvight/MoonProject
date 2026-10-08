@@ -161,6 +161,12 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>Close enough (m) to a hop pad's centre to park on it.</summary>
         private const float PadArrive = 1f;
 
+        /// <summary>
+        /// A drive whose line passes this close (m) to the lander's centre goes round it, by a point this far out.
+        /// </summary>
+        private const float LanderKeepOut = 9f;
+        private const float LanderDetour = 13f;
+
         /// <summary>Close enough (m) to the base pad centre to turn toward the shelf or the tower.</summary>
         private const float PadArrival = 5f;
         private const float TotalBudget = 1100f;
@@ -1491,10 +1497,52 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         private IEnumerator DriveTo(Vector3 target, float arriveRadius, float maxThrottle, float timeout, string what)
         {
+            if (TryDetourRoundTheLander(target, out Vector3 detour))
+            {
+                _pilot.GoTo(detour, WaypointArrive, maxThrottle);
+                yield return Until(() => _pilot.Arrived, timeout, "07 drives round the lander toward " + what);
+            }
+
             _pilot.GoTo(target, arriveRadius, maxThrottle);
             yield return Until(() => _pilot.Arrived, timeout, "07 reaches " + what);
             _pilot.Target = null;
             yield return Until(() => _rover.Speed < StopSpeed, 6f, "07 comes to rest at " + what);
+        }
+
+        /// <summary>
+        /// A long drive whose straight line would cross the lander (its porch, dock and lift stand out from it) goes
+        /// round it by a point beside it instead. Drives that start or end at home, next to the lander, go straight.
+        /// </summary>
+        private bool TryDetourRoundTheLander(Vector3 target, out Vector3 detour)
+        {
+            detour = Vector3.zero;
+            Vector3 lander = Flat(_gameplay.Home.LanderPosition);
+            Vector3 from = Flat(_rover.Position);
+            Vector3 to = Flat(target);
+            if (Vector3.Distance(from, lander) < LanderKeepOut || Vector3.Distance(to, lander) < LanderKeepOut)
+            {
+                return false;
+            }
+
+            Vector3 line = to - from;
+            float length = line.magnitude;
+            if (length < 1e-3f)
+            {
+                return false;
+            }
+
+            Vector3 direction = line / length;
+            float along = Mathf.Clamp(Vector3.Dot(lander - from, direction), 0f, length);
+            Vector3 closest = from + direction * along;
+            Vector3 away = closest - lander;
+            if (away.magnitude >= LanderKeepOut)
+            {
+                return false;
+            }
+
+            Vector3 side = away.sqrMagnitude > 1e-4f ? away.normalized : Vector3.Cross(Vector3.up, direction);
+            detour = lander + side * LanderDetour;
+            return true;
         }
 
         private IEnumerator Until(Func<bool> condition, float timeout, string what)
