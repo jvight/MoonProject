@@ -77,6 +77,8 @@ namespace MoonProject.Audio.PlayModeTests
             SmallSounds.Wire(soundscapeTuning);
             Relays = Child(audioRoot, "RelayAudio").AddComponent<RelayAudio>();
             Relays.Wire(Load<RelayAudioTuning>("RelayAudioTuning.asset"));
+            Salvage = Child(audioRoot, "SalvageAudio").AddComponent<SalvageAudio>();
+            Salvage.Wire(Load<SalvageAudioTuning>("SalvageAudioTuning.asset"));
             RoverAudio.Wire(Load<RoverAudioTuning>("RoverAudioTuning.asset"));
             Gameplay.Wire(Load<GameplayAudioTuning>("GameplayAudioTuning.asset"));
             Ui.Wire(Load<UiAudioTuning>("UiAudioTuning.asset"));
@@ -84,7 +86,8 @@ namespace MoonProject.Audio.PlayModeTests
             Jump.Wire(Load<JumpAudioTuning>("JumpAudioTuning.asset"));
             Radio.Wire(Load<RadioTuning>("RadioTuning.asset"), playlist, tapes);
             Director.Wire(Load<AudioLibrary>("AudioLibrary.asset"), Load<AudioMixTuning>("AudioMixTuning.asset"),
-                RoverAudio, Jump, Gameplay, Friends, Ui, Radio, Ambience, Canyon, Soundscape, SmallSounds, Relays);
+                RoverAudio, Jump, Gameplay, Friends, Ui, Radio, Ambience, Canyon, Soundscape, SmallSounds, Relays,
+                Salvage);
             audioRoot.SetActive(true);
 
             Bootstrap = Track(BootstrapHarness.Create(controls, Rover, Director));
@@ -115,6 +118,8 @@ namespace MoonProject.Audio.PlayModeTests
         public RoverSmallSounds SmallSounds { get; }
 
         public RelayAudio Relays { get; }
+
+        public SalvageAudio Salvage { get; }
 
         public FakeStationReach Reach => Rover.Reach;
 

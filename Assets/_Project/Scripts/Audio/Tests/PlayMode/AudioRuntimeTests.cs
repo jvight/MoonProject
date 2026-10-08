@@ -142,7 +142,7 @@ namespace MoonProject.Audio.PlayModeTests
                 AudioTestRig.UpdateOf(_rig.Friends), AudioTestRig.UpdateOf(_rig.Jump),
                 AudioTestRig.UpdateOf(_rig.Ambience), AudioTestRig.UpdateOf(_rig.Canyon),
                 AudioTestRig.UpdateOf(_rig.Soundscape), AudioTestRig.UpdateOf(_rig.SmallSounds),
-                AudioTestRig.UpdateOf(_rig.Relays),
+                AudioTestRig.UpdateOf(_rig.Relays), AudioTestRig.UpdateOf(_rig.Salvage),
             };
 
             _rig.Program.Own(AudioTestRig.TapeA);
@@ -195,10 +195,18 @@ namespace MoonProject.Audio.PlayModeTests
             switch (frame % 12)
             {
                 case 0:
-                    events.Publish(new ScrapCollected(Vector3.one, 1, frame / 12));
+                    var material = (SalvageMaterial)(frame / 12 % 3);
+                    events.Publish(new SalvageCutStarted(Vector3.one, material));
+                    events.Publish(new MaterialSalvaged(material, 2, Vector3.one, "site.depot", frame / 12 % 9));
+                    events.Publish(new SiteAnswered("site.drill", Vector3.forward * 60f, 60f, frame % 24 == 0));
                     break;
                 case 1:
                     events.Publish(new UiCue(frame % 24 == 1 ? UiCueKind.FocusMove : UiCueKind.SliderStep));
+                    if (frame % 36 == 1)
+                    {
+                        events.Publish(new SalvageCutStopped(frame % 72 == 1));
+                    }
+
                     break;
                 case 2:
                     events.Publish(new SonarPinged(Vector3.zero, 80f));

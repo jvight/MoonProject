@@ -26,7 +26,6 @@ namespace MoonProject.Audio
         public const string AmbienceBed = "ambience_bed";
         public const string SonarPing = "sonar_ping";
         public const string RelicAnswer = "relic_answer";
-        public const string ScrapChime = "scrap_chime";
         public const string TetherAttach = "tether_attach";
         public const string TetherHum = "tether_hum";
         public const string TetherRelease = "tether_release";
@@ -64,6 +63,13 @@ namespace MoonProject.Audio
         public const string RelayLink = "relay_link";
         public const string RadioHopOut = "radio_hop_out";
         public const string RadioHopIn = "radio_hop_in";
+        public const string SalvageChime = "salvage_chime";
+        public const string SalvageCutMetal = "salvage_cut_metal";
+        public const string SalvageCutWiring = "salvage_cut_wiring";
+        public const string SalvageCutOptics = "salvage_cut_optics";
+        public const string SalvageCutTone = "salvage_cut_tone";
+        public const string SalvageBreak = "salvage_break";
+        public const string SiteAnswer = "site_answer";
 
         /// <summary>A friend's chirp cue, <c>&lt;friendId&gt;_&lt;mood&gt;</c> (e.g. tilly_curious). Builds a string:
         /// call at initialisation only.</summary>

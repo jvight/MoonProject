@@ -6,22 +6,22 @@ namespace MoonProject.Audio.Tests
     public sealed class GameplayAudioLogicTests
     {
         [Test]
-        public void ScrapMelody_ClimbsOneNotePerStep_ThenWeavesOverTheTopWindow()
+        public void SalvageMelody_ClimbsOneNotePerStep_ThenWeavesOverTheTopWindow()
         {
             int[] expected = { 0, 1, 2, 3, 4, 5, 6, 7, 6, 5, 4, 5, 6, 7, 6, 5, 4 };
             for (int step = 0; step < expected.Length; step++)
             {
-                Assert.AreEqual(expected[step], ScrapMelody.NoteIndex(step, 8, 4), $"step {step}");
+                Assert.AreEqual(expected[step], SalvageMelody.NoteIndex(step, 8, 4), $"step {step}");
             }
         }
 
         [Test]
-        public void ScrapMelody_NeverLeavesTheScale_AndNeverRepeatsANote()
+        public void SalvageMelody_NeverLeavesTheScale_AndNeverRepeatsANote()
         {
             int previous = -1;
             for (int step = 0; step < 500; step++)
             {
-                int note = ScrapMelody.NoteIndex(step, 8, 4);
+                int note = SalvageMelody.NoteIndex(step, 8, 4);
                 Assert.That(note, Is.InRange(0, 7));
                 Assert.AreNotEqual(previous, note, $"step {step}");
                 previous = note;
@@ -29,12 +29,12 @@ namespace MoonProject.Audio.Tests
         }
 
         [Test]
-        public void ScrapMelody_EdgeCases()
+        public void SalvageMelody_EdgeCases()
         {
-            Assert.AreEqual(0, ScrapMelody.NoteIndex(-3, 8, 4));
-            Assert.AreEqual(0, ScrapMelody.NoteIndex(5, 1, 4));
-            Assert.AreEqual(1, ScrapMelody.NoteIndex(1, 2, 1));
-            Assert.AreEqual(0, ScrapMelody.NoteIndex(2, 2, 1));
+            Assert.AreEqual(0, SalvageMelody.NoteIndex(-3, 8, 4));
+            Assert.AreEqual(0, SalvageMelody.NoteIndex(5, 1, 4));
+            Assert.AreEqual(1, SalvageMelody.NoteIndex(1, 2, 1));
+            Assert.AreEqual(0, SalvageMelody.NoteIndex(2, 2, 1));
         }
 
         [Test]

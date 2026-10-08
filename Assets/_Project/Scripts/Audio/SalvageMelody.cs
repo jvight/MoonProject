@@ -1,11 +1,11 @@
 namespace MoonProject.Audio
 {
     /// <summary>
-    /// Which chime note a scrap pickup plays for its combo step. The chain climbs the pentatonic one note per
-    /// pickup; once it reaches the top it weaves up and down over the highest notes (a gentle arpeggio) instead of
-    /// climbing forever like a siren.
+    /// Which chime note a piece of salvage plays as it folds into 07, for its site's combo step. The chain climbs the
+    /// pentatonic one note per piece; once it reaches the top it weaves up and down over the highest notes (a gentle
+    /// arpeggio) instead of climbing forever like a siren, and a new chain starts again at the bottom.
     /// </summary>
-    public static class ScrapMelody
+    public static class SalvageMelody
     {
         /// <summary>Note index 0..<paramref name="noteCount"/>-1 for <paramref name="comboStep"/>.</summary>
         /// <param name="topWindow">How many of the highest notes long chains weave over (at least 2).</param>
