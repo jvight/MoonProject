@@ -999,6 +999,66 @@ MonoBehaviour:
     _volumeMax: 0.55
     _pitchMin: 0.98
     _pitchMax: 1.02
+  - _id: relay_mast_creak
+    _clips:
+    - {fileID: 8300000, guid: a6ed104629b55654396d7ae15023a3f4, type: 3}
+    _variantLabels:
+    - relay_mast_creak
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.6
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: relay_lamp_warm
+    _clips:
+    - {fileID: 8300000, guid: df2cdc03af126044b906ac55fa40ad05, type: 3}
+    _variantLabels:
+    - relay_lamp_warm
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.55
+    _volumeMax: 0.55
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: relay_link
+    _clips:
+    - {fileID: 8300000, guid: 859ee4c8e254be249acf0bae440c44fe, type: 3}
+    _variantLabels:
+    - relay_link
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.6
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: radio_hop_out
+    _clips:
+    - {fileID: 8300000, guid: cf5e2fc7fd5a292458ff71b055a9fbc7, type: 3}
+    _variantLabels:
+    - radio_hop_out
+    _bus: 1
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.8
+    _volumeMax: 0.8
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: radio_hop_in
+    _clips:
+    - {fileID: 8300000, guid: 249687fb872e027499fef766fc156874, type: 3}
+    _variantLabels:
+    - radio_hop_in
+    _bus: 1
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.8
+    _volumeMax: 0.8
+    _pitchMin: 1
+    _pitchMax: 1
   - _id: upgrade_arpeggio
     _clips:
     - {fileID: 8300000, guid: b62b3bb7da385dc4fbc9474cd20b68c4, type: 3}

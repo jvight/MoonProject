@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bc2b7b02723146e46b993d1f39f86e58, type: 3}
+  m_Name: RelayAudioTuning
+  m_EditorClassIdentifier: 
+  _stitchVolume: 0.8
+  _stitchFadeIn: 0.3
+  _stitchFadeOut: 0.5
+  _pulseSpeed: 45
+  _maxAnswerDelay: 3
+  _linkDistance: 14
+  _linkSpatialBlend: 0.65
+  _mastHumVolume: 0.25
+  _mastHumPitch: 0.75
+  _mastLampHeight: 6
+  _mastHumNear: 4
+  _mastHumFar: 25
