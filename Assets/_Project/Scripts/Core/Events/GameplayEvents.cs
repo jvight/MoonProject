@@ -190,15 +190,6 @@ namespace MoonProject.Core.Events
             PulseSeconds = pulseSeconds;
         }
 
-        /// <summary>
-        /// A restoration known only by its mast (test stand-ins): no linked node (<see cref="LinkedNodeId"/> empty)
-        /// and a pulse that arrives at once.
-        /// </summary>
-        public RelayRestored(string relayId, Vector3 position, int litCount, int total)
-            : this(relayId, position, litCount, total, string.Empty, 0f)
-        {
-        }
-
         public string RelayId { get; }
 
         /// <summary>World position of the restored mast's Lamp (where 07 and the camera look up to).</summary>
