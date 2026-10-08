@@ -110,12 +110,12 @@ namespace MoonProject.World
             MoonSurface surface = _settings.CreateSurface();
             Surface = surface;
             Layout = new WorldLayout(surface, _settings.Sky);
-            Anchors = new WorldAnchors(surface, _settings.Surface.Canyon);
+            Anchors = new WorldAnchors(surface, _settings.Surface.Canyon, _settings.Relays);
 
             // Scatter planning only reads the analytic surface: it runs on a worker while the terrain is meshed.
             ScatterSettings scatterSettings = _settings.Scatter;
             Task<List<ScatterInstance>> scatterPlan =
-                Task.Run(() => new ScatterPlanner(surface, scatterSettings).Plan());
+                Task.Run(() => new ScatterPlanner(surface, scatterSettings, Anchors).Plan());
             WorldAtmosphere.Apply(_settings.Atmosphere, _settings.Sky, _earthlight);
             SkyShaderGlobals.Apply(_settings.Sky);
 

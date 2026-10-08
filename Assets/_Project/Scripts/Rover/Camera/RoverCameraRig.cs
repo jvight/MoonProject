@@ -13,13 +13,15 @@ namespace MoonProject.Rover
     /// <see cref="CameraOrbit"/> into a Cinemachine 3 rig (OrbitalFollow locked to the target's yaw + RotationComposer,
     /// with Decollider and Deoccluder keeping it out of the terrain), widens the FOV with speed and dips softly on
     /// landings. Reads the rover only through <see cref="IRoverState"/>, so it must initialise after the rover.
-    /// Slow, skippable camera moments frame 07 with the beam while digging, a surfacing relic, or the base after an
-    /// upgrade (needs <see cref="IWorldLayout"/>). When 07 has rested a while (<see cref="IRoverStillness"/>) with
-    /// nothing going on, the camera drifts out to the lonely <see cref="WideShot"/>, composed against the analytic
-    /// terrain (<see cref="ITerrainQuery"/>), and publishes <see cref="RoverWideShotChanged"/> as it opens and hands
-    /// back. Camera moments, a leap, the tether and interactions take precedence over it. Registers itself as
-    /// <see cref="IViewCamera"/> (gameplay aims from its centre ray, UI projects with it) and
-    /// <see cref="ILookSettings"/> (the UI applies the player's sensitivity and invert-Y).
+    /// Slow, skippable camera moments frame 07 with the beam while digging, a surfacing relic, a relay mast's lamp as
+    /// it lights, or the base after an upgrade (needs <see cref="IWorldLayout"/>). When 07 has rested a while
+    /// (<see cref="IRoverStillness"/>) with nothing going on, the camera drifts out to the lonely
+    /// <see cref="WideShot"/>, composed against the analytic terrain (<see cref="ITerrainQuery"/>), and publishes
+    /// <see cref="RoverWideShotChanged"/> as it opens and hands back. Camera moments, a leap, the tether, the radio-hop
+    /// list and interactions take precedence over it. When 07 is placed somewhere else (<see cref="RoverPlaced"/>)
+    /// everything snaps behind it, no ease. Registers itself as <see cref="IViewCamera"/> (gameplay aims from its
+    /// centre ray, UI projects with it) and <see cref="ILookSettings"/> (the UI applies the player's sensitivity and
+    /// invert-Y).
     /// </summary>
     [DefaultExecutionOrder(100)]
     [DisallowMultipleComponent]
@@ -57,6 +59,7 @@ namespace MoonProject.Rover
         private WideShot _wide;
         private bool _wideSteersYaw;
         private bool _tethered;
+        private bool _hopListOpen;
         private bool _paused;
         private float _momentYaw;
         private float _momentLift;
@@ -80,6 +83,9 @@ namespace MoonProject.Rover
 
         /// <summary>The lonely wide shot's state (quiet time, weight, frame), for tests and tooling.</summary>
         public WideShot WideShot => _wide;
+
+        /// <summary>How far the current camera moment has eased in, 0..1 (for tests and tooling).</summary>
+        public float MomentWeight => _moment.Weight;
 
         public Camera Camera => _viewCamera;
 
@@ -119,6 +125,7 @@ namespace MoonProject.Rover
                 context.Events.Subscribe<ExcavationStarted>(OnExcavationStarted),
                 context.Events.Subscribe<ExcavationStopped>(OnExcavationStopped),
                 context.Events.Subscribe<RelicSurfaced>(OnRelicSurfaced),
+                context.Events.Subscribe<RelayRestored>(OnRelayRestored),
                 context.Events.Subscribe<UpgradePurchased>(OnUpgradePurchased),
                 context.Events.Subscribe<RoverJumped>(OnJumped),
                 context.Events.Subscribe<TetherAttached>(OnTetherAttached),
@@ -126,6 +133,8 @@ namespace MoonProject.Rover
                 context.Events.Subscribe<PauseChanged>(OnPauseChanged),
                 context.Events.Subscribe<UiCue>(OnUiCue),
                 context.Events.Subscribe<BellCued>(OnBellCued),
+                context.Events.Subscribe<RadioHopListChanged>(OnHopListChanged),
+                context.Events.Subscribe<RoverPlaced>(OnPlaced),
             };
             context.Register<IViewCamera>(this);
             context.Register<ILookSettings>(this);
@@ -200,7 +209,7 @@ namespace MoonProject.Rover
             _deoccluder.AvoidObstacles.SmoothingTime = _tuning.OcclusionSmoothing;
         }
 
-        /// <summary>Puts the camera straight behind the rover with no damping (spawn only).</summary>
+        /// <summary>Puts the camera straight behind the rover with no damping (spawn, placement).</summary>
         public void Snap()
         {
             _orbitState.Reset();
@@ -330,7 +339,7 @@ namespace MoonProject.Rover
             }
 
             _orbit.HorizontalAxis.Value = yaw;
-            _orbit.VerticalAxis.Value = Mathf.Min(elevation, _tuning.MaxPitch);
+            _orbit.VerticalAxis.Value = Mathf.Clamp(elevation, _tuning.MinPitch, _tuning.MaxPitch);
             _orbit.Radius = radius;
             _camera.Lens.FieldOfView = fov;
             ScreenComposerSettings composition = _composer.Composition;
@@ -345,7 +354,7 @@ namespace MoonProject.Rover
         /// </summary>
         private void StepWideShot(float deltaTime)
         {
-            bool busy = _moment.IsActive || _leapHeld || _tethered;
+            bool busy = _moment.IsActive || _leapHeld || _tethered || _hopListOpen;
             switch (_wide.Step(_stillness.StillSeconds, busy, _paused, deltaTime))
             {
                 case WideShotCue.Open:
@@ -403,6 +412,34 @@ namespace MoonProject.Rover
             _tethered = false;
         }
 
+        private void OnHopListChanged(RadioHopListChanged list)
+        {
+            _hopListOpen = list.Open;
+        }
+
+        /// <summary>
+        /// 07 jumped somewhere else while the view was dark: the wide shot and any moment end at once and the camera
+        /// snaps behind 07, so nothing lerps across from the old spot.
+        /// </summary>
+        private void OnPlaced(RoverPlaced placed)
+        {
+            bool wasWide = _wide.IsOpen;
+            _wide.Close();
+            _wideSteersYaw = false;
+            _moment.Clear();
+            _leapHeld = false;
+            _leapAirborne = false;
+            _momentYaw = 0f;
+            _momentLift = 0f;
+            _momentPullBack = 0f;
+            _momentShift = Vector3.zero;
+            Snap();
+            if (wasWide)
+            {
+                _events.Publish(new RoverWideShotChanged(false));
+            }
+        }
+
         private void OnPauseChanged(PauseChanged pause)
         {
             _paused = pause.Paused;
@@ -457,6 +494,12 @@ namespace MoonProject.Rover
         private void OnRelicSurfaced(RelicSurfaced relic)
         {
             _moment.Start(_tuning.RelicMoment, relic.Position, false);
+        }
+
+        /// <summary>The mast 07 restored lights up: a slow look up at it and its lamp against the sky.</summary>
+        private void OnRelayRestored(RelayRestored relay)
+        {
+            _moment.Start(_tuning.RelayMoment, relay.Position, false);
         }
 
         /// <summary>A real leap (not a hop) lifts the camera and looks ahead to the landing until 07 is down.</summary>

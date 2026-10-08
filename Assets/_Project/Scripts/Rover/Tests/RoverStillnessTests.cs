@@ -101,6 +101,16 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
+        public void Reset_StartsTheCountOver()
+        {
+            Run(Resting(), 3f);
+            _stillness.Reset();
+            Assert.AreEqual(0f, _stillness.StillSeconds);
+            Run(Resting(), 1f);
+            Assert.AreEqual(1f, _stillness.StillSeconds, 0.02f);
+        }
+
+        [Test]
         public void Paused_NoGameTime_HoldsTheCount()
         {
             Run(Resting(), 2f);

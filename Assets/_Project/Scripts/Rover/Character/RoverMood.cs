@@ -167,6 +167,15 @@ namespace MoonProject.Rover
             _sighedIntoWideShot &= open;
         }
 
+        /// <summary>
+        /// Something new needs 07's attention (it landed from a radio-hop): any daydream ends and the rest starts
+        /// over, easing back with the usual fall half-life.
+        /// </summary>
+        public void Rouse()
+        {
+            _stillTime = 0f;
+        }
+
         /// <summary>How hard 07 is gathering itself for a Hover-Jump right now (the charge, 0..1).</summary>
         public void SetEffort(float effort)
         {

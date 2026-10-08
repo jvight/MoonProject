@@ -40,5 +40,11 @@ namespace MoonProject.Rover
         {
             StillSeconds = IsStill(_settings, sample) ? StillSeconds + Mathf.Max(deltaTime, 0f) : 0f;
         }
+
+        /// <summary>Back to 0, as if 07 had just moved (it was placed somewhere else).</summary>
+        public void Reset()
+        {
+            StillSeconds = 0f;
+        }
     }
 }

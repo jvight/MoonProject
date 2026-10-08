@@ -230,6 +230,26 @@ RadioTower_L1|L2|L3.prefab  (same on all three stages)
 ```
 The sockets must leave a clear 2.5 m radius for Bell's dance and 07 parking in front of the dial (Interact range).
 
+## Contract: relay masts (Art -> Gameplay), M3-06
+The crew's old radio relay masts: a chunky tapering mast about 8 m to the lamp, with a small relay dish, a junction
+box at its foot and guy wires. Meshes only, `M_LowPoly`. It must read as a silhouette at 100–280 m: a few big shapes
+(taper, cross braces, dish, lamp housing), never a thin lattice that vanishes at distance.
+```
+Generated/Art/Relay/RelayMast.prefab  (restored pose; root at the pad centre on the ground, +Z = toward home, +Y up)
+  Base                 footing plinth + junction box (static)
+  Mast                 pivot at the mast foot; the broken pose leans it about local X/Z
+    Dish               relay dish near the top, pivot at its mount; yaw about local Y to aim home
+    Lamp               lamp housing at the top, own glow renderer on M_LowPolyGlowOff (WarmLamp, HDR): dark until
+                       lit via MaterialPropertyBlock (SetVector, linear, see "Glow modulation")
+  PartSocket           empty on the junction box front, +Z out: the relay part slots in here
+  BeamPoint            empty on the junction box: 07's repair beam target
+Generated/Art/Relay/RelayMast_Broken.prefab  same node names; Mast leaning 12–15° with the dish hanging, Lamp on
+  M_LowPolyGlowOff (dark), slack guy wires
+Generated/Art/Relay/Part_RelayModule.prefab  0.27–0.36 m pickup, centre-of-mass pivot, warm amber accents
+```
+Gameplay places the mast on the `relay.<n>` anchor (root at Position, +Z = Forward). The 3 m pad must stay clear for
+07 to park and for the radio-hop arrival.
+
 ## Contract: world anchors (World -> Gameplay, Audio)
 World registers `Core/IWorldAnchors` (Count / Get(index) / TryGet(id)): named `WorldAnchor`s (id, surface position,
 horizontal forward, radius of clear drivable ground), deterministic for the world seed and fixed after initialisation.

@@ -93,6 +93,25 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
+    /// 07 was set down somewhere else in one step (<see cref="IRoverPlacement.PlaceAt"/>, e.g. a radio-hop while the
+    /// view is dark): the camera and anything that follows 07 snap with it instead of easing across.
+    /// </summary>
+    public readonly struct RoverPlaced
+    {
+        public RoverPlaced(Vector3 position, Quaternion rotation)
+        {
+            Position = position;
+            Rotation = rotation;
+        }
+
+        /// <summary>The ground point 07 now rests on.</summary>
+        public Vector3 Position { get; }
+
+        /// <summary>07's heading (yaw only).</summary>
+        public Quaternion Rotation { get; }
+    }
+
+    /// <summary>
     /// The camera began its slow drift out to the lonely wide shot after 07 rested a while (<see cref="Wide"/> true;
     /// VISION pillar 6), or handed the view back because the player drove, looked around or something began
     /// (false). 07 sighs as the frame opens; anything else that wants to breathe out with it may listen.

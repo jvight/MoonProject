@@ -69,7 +69,7 @@ namespace MoonProject.Rover
             _jelly = new ChassisJelly(_tuning);
             CacheRestPose();
             ApplyHeadlamp();
-            Snap();
+            Snap(Vector3.up);
             return true;
         }
 
@@ -142,12 +142,16 @@ namespace MoonProject.Rover
             _headlamp.innerSpotAngle = _tuning.HeadlampInnerSpotAngle;
         }
 
-        /// <summary>Places the model upright on the sphere with every spring at rest (spawn).</summary>
-        public void Snap()
+        /// <summary>
+        /// Places the model on the sphere, tilted to the ground of <paramref name="groundNormal"/> (world space), with
+        /// every spring at rest (spawn, placement).
+        /// </summary>
+        public void Snap(Vector3 groundNormal)
         {
-            _attitude.Reset(0f, 0f);
+            Quaternion heading = _rover.HeadingRotation;
+            _attitude.ResetTo(Quaternion.Inverse(heading) * groundNormal);
             _jelly.Reset();
-            Quaternion rotation = _rover.HeadingRotation;
+            Quaternion rotation = heading * GroundPlaneFit.Tilt(_attitude.Pitch, _attitude.Roll);
             Vector3 position = _rover.SpherePosition - rotation * Vector3.up * _rover.SphereRadius;
             transform.SetPositionAndRotation(position, rotation);
             _lastPosition = position;

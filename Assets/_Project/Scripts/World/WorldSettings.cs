@@ -34,6 +34,9 @@ namespace MoonProject.World
         [Tooltip("The slow red beacon on The Peak.")]
         [SerializeField] private BeaconSettings _beacon = new BeaconSettings();
 
+        [Tooltip("Where the relay masts of the station-reach network stand (M3-06).")]
+        [SerializeField] private RelaySettings _relays = new RelaySettings();
+
         [Tooltip("Earthlight, ambient and fog.")]
         [SerializeField] private AtmosphereSettings _atmosphere = new AtmosphereSettings();
 
@@ -54,6 +57,8 @@ namespace MoonProject.World
 
         public BeaconSettings Beacon => _beacon;
 
+        public RelaySettings Relays => _relays;
+
         public AtmosphereSettings Atmosphere => _atmosphere;
 
         public PostProcessSettings PostProcessing => _postProcessing;
@@ -67,7 +72,7 @@ namespace MoonProject.World
         /// <summary>Returns null when every settings block is valid, otherwise the first problem found.</summary>
         public string Validate()
         {
-            return _surface.Validate() ?? _mesh.Validate() ?? _scatter.Validate();
+            return _surface.Validate() ?? _mesh.Validate() ?? _scatter.Validate() ?? _relays.Validate();
         }
 
         private void OnValidate()

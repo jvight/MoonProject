@@ -147,6 +147,24 @@ namespace MoonProject.World
         [Range(2f, 10f)]
         [SerializeField] private float _ledgeRadius = 4.5f;
 
+        [Header("The relay ledge above the terminus chamber (M3-06)")]
+        [Tooltip("Arc length along the canyon of the relay mast's ledge, at the mouth of the terminus chamber: close " +
+            "enough to the canyon mouth for the relay chain to link.")]
+        [Range(150f, 400f)]
+        [SerializeField] private float _relayLedgeArc = 310f;
+
+        [Tooltip("Offset of the relay ledge across the corridor, metres (positive = right of the way in).")]
+        [Range(-20f, 20f)]
+        [SerializeField] private float _relayLedgeLateral = 10f;
+
+        [Tooltip("Height of the relay ledge above the chamber floor: a gentle mesa, drivable all round.")]
+        [Range(0.5f, 6f)]
+        [SerializeField] private float _relayLedgeHeight = 3f;
+
+        [Tooltip("Radius of the relay ledge's flat top (the mast's pad needs 3 m).")]
+        [Range(3f, 10f)]
+        [SerializeField] private float _relayLedgeRadius = 4.5f;
+
         [Header("The faint warm light inside")]
         [Tooltip("Height of the warm light above the glinting ledge, metres.")]
         [Range(0.5f, 15f)]
@@ -229,6 +247,10 @@ namespace MoonProject.World
         public float AlcoveDepth => _alcoveDepth;
         public float AlcoveLength => _alcoveLength;
         public float LedgeHeight => _ledgeHeight;
+        public float RelayLedgeArc => _relayLedgeArc;
+        public float RelayLedgeLateral => _relayLedgeLateral;
+        public float RelayLedgeHeight => _relayLedgeHeight;
+        public float RelayLedgeRadius => _relayLedgeRadius;
         public float LedgeRadius => _ledgeRadius;
         public float GlowHeight => _glowHeight;
         public float GlowIntensity => _glowIntensity;
@@ -246,6 +268,11 @@ namespace MoonProject.World
         /// <summary>Returns null when the canyon is consistent, otherwise the problem.</summary>
         public string Validate()
         {
+            if (_relayLedgeArc <= _bendStart + _bendLength || _relayLedgeArc > _length)
+            {
+                return "Canyon: the relay ledge must lie past the bend, inside the canyon.";
+            }
+
             float apronEnd = _approachLength + _rampLength + _gap + _apronLength;
             if (_bendStart <= apronEnd || _bendStart + _bendLength >= _length - _terminusRadius)
             {

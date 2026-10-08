@@ -103,5 +103,12 @@ namespace MoonProject.Rover
             IsOpen = false;
             _quiet = 0f;
         }
+
+        /// <summary>Back to the chase camera at once, no ease (07 was placed elsewhere in the dark).</summary>
+        public void Close()
+        {
+            HandBack();
+            _weight.Reset(0f);
+        }
     }
 }

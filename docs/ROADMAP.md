@@ -90,11 +90,11 @@
 | M3-03 | Xưởng nâng cấp rover (khung chung) + **Hover-Jump** | gameplay + rover | 🟩 |
 | M3-04 | Vùng **Whispering Canyon** (mở bằng Hover-Jump) + bí mật nhìn thấy được từ căn cứ — world 🟩 (khe 18,5 m, lối ra một chiều); còn: nội dung gameplay, âm thanh hẻm, trang trí miệng hẻm (art) | world + art + gameplay + audio | 🟩 |
 | M3-05 | **Bell** + núm dò đài (3 đài) + tín hiệu của Bell (dẫn đường tới thứ chưa tìm) + 3 băng cassette (bài mới + ghi chú của Ro) — đặc tả `docs/features/M3-05-bell-radio-cassettes.md` | art + gameplay + music + audio + ui | 🟩 |
-| M3-06 | **Mạng tiếp sóng**: sửa các cột relay tắt của trạm → vùng phủ sóng lan dần (radio rõ, sonar xa hơn, "radio-hop" giữa các cột đã sáng, bản đồ tự vẽ); căn cứ ấm dần (xem `docs/DESIGN.md` "Station reach") | world + art + gameplay + audio + ui | ⬜ |
+| M3-06 | **Mạng tiếp sóng**: sửa các cột relay tắt của trạm → vùng phủ sóng lan dần (radio rõ, sonar xa hơn, "radio-hop" giữa các cột đã sáng, bản đồ tự vẽ); căn cứ ấm dần (đặc tả `docs/features/M3-06-relay-network.md`) | world + art + gameplay + audio + ui | ⬜ |
 | M3-07 | Bản đồ vẽ tay ghim trong lander (tự vẽ trong vùng phủ sóng của M3-06) | ui | ⬜ |
 | M3-08 | "Mặt Trăng trôi khi bạn vắng mặt": mưa sao băng (scrap mới), tín hiệu mới — không FOMO | gameplay | ⬜ |
 | M3-09 | Màn hình tiêu đề (Continue/Settings), bộ sưu tập hiển thị ở căn cứ | ui | ⬜ |
-| M3-10 | **Cô đơn & bình yên — đợt trau chuốt không khí** (trụ cột 6 trong VISION): hình (chân trời xa mờ, tương phản sáng tối, bóng dài, bầu trời sống, grading/bloom/vignette/grain) · camera (lùi ra toàn cảnh khi đứng yên, bụi lơ lửng trong đèn 07) · âm thanh (radio mỏng dần theo khoảng cách → gần như im lặng, tiếng máy nhỏ của 07) | world + rover + audio | 🟦 |
+| M3-10 | **Cô đơn & bình yên — đợt trau chuốt không khí** (trụ cột 6 trong VISION): hình (chân trời xa mờ, tương phản sáng tối, bóng dài, bầu trời sống, grading/bloom/vignette/grain) · camera (lùi ra toàn cảnh khi đứng yên, bụi lơ lửng trong đèn 07) · âm thanh (radio mỏng dần theo khoảng cách → gần như im lặng, tiếng máy nhỏ của 07) | world + rover + audio | 🟩 |
 
 ## M4 — Thế giới mở rộng, sự kiện & kết thúc
 Magnetic Treads + **Rim Terraces** + **Atlas**; Warm Headlamp + **Shadowed Crater** + **Moss** + Biodome; sự kiện

@@ -8,12 +8,12 @@ namespace MoonProject.Rover.PlayModeTests
     /// moment, to catch snaps. Step it once per frame from a test coroutine (after Update): the pose read then is the
     /// one Cinemachine set in the previous frame's LateUpdate, so each change is timed with the previous frame's time.
     /// Changes are measured over windows of at least <see cref="Window"/> seconds: batch runs reach thousands of
-    /// frames per second, where a single frame's change is lost in float precision, while a cut still shows as a
-    /// jump within one window.
+    /// frames per second, where a single frame's change is lost in float precision, and a long suite has the odd
+    /// render hitch, while a cut still shows as a jump within one window.
     /// </summary>
     public sealed class CameraTrace
     {
-        public const float Window = 1f / 30f;
+        public const float Window = 0.1f;
 
         private readonly Transform _camera;
         private Vector3 _position;

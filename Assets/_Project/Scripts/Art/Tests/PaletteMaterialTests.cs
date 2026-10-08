@@ -14,7 +14,10 @@ namespace MoonProject.Art.Tests
         {
             AssertDarkerThan(Palette.Get(PaletteSwatch.LampGlass), Palette.Get(PaletteSwatch.WarmLamp));
             AssertDarkerThan(Palette.Get(PaletteSwatch.EyeGlass), Palette.Get(PaletteSwatch.TechGlow));
+            AssertDarkerThan(Palette.Get(PaletteSwatch.SignalGlass), Palette.Get(PaletteSwatch.WarmLamp));
             AssertSameHue(Palette.GetGlow(PaletteSwatch.WarmLamp), Palette.GetGlow(PaletteSwatch.LampGlass));
+            Assert.AreEqual(Palette.GetGlow(PaletteSwatch.WarmLamp), Palette.GetGlow(PaletteSwatch.SignalGlass),
+                "a far signal lamp glows like the home lamps");
             Assert.AreEqual(Palette.GetGlow(PaletteSwatch.TechGlow), Palette.GetGlow(PaletteSwatch.EyeGlass));
         }
 
@@ -30,6 +33,7 @@ namespace MoonProject.Art.Tests
                     case PaletteSwatch.LampGlass:
                     case PaletteSwatch.TechGlow:
                     case PaletteSwatch.EyeGlass:
+                    case PaletteSwatch.SignalGlass:
                         continue;
                 }
 

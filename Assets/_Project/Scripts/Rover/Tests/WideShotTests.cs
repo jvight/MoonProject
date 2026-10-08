@@ -83,6 +83,18 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
+        public void Close_EndsAnOpenFrameAtOnce_AndTheRestStartsOver()
+        {
+            OpenFully();
+            _wide.Close();
+            Assert.IsFalse(_wide.IsOpen);
+            Assert.AreEqual(0f, _wide.Weight, "No ease: 07 was placed somewhere else in the dark.");
+            Assert.AreEqual(0f, _wide.QuietSeconds);
+            Assert.AreEqual(WideShotCue.None, Run(Frame));
+            Assert.AreEqual(0f, _wide.Weight, 1e-6f, "And it stays home.");
+        }
+
+        [Test]
         public void Held_DelaysOpening_ButLeavesAnOpenFrameAlone()
         {
             Assert.AreEqual(WideShotCue.None, Run(3f * _settings.Delay, held: true), "Paused: it waits.");

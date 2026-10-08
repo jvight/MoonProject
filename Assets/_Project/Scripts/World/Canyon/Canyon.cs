@@ -39,6 +39,9 @@ namespace MoonProject.World
         private const float BayWidth = 7f;
         private const float BayHalfLength = 14f;
         private const float LedgeRun = 12f;
+
+        // The relay ledge is taller than the glinting one, so its slopes run longer to stay a gentle climb (<= 20 deg).
+        private const float RelayLedgeRun = 28f;
         private const float ExitMouthHalfWidth = 9f;
         private const float ExitEase = 4f;
         private const float RoughnessWavelength = 18f;
@@ -74,6 +77,7 @@ namespace MoonProject.World
         private readonly float _ledgeArc;
         private readonly float _ledgeSide;
         private readonly Vector2 _ledgeCenter;
+        private readonly Vector2 _relayLedgeCenter;
         private readonly float[] _alcoveArcs;
         private readonly float[] _alcoveSides;
         private readonly float _mainReach;
@@ -116,6 +120,8 @@ namespace MoonProject.World
             _ledgeArc = SightArc(outward);
             _ledgeCenter = _main.PointAt(_ledgeArc)
                 + _main.RightAt(_ledgeArc) * (_ledgeSide * (settings.CanyonHalfWidth + BayWidth * 0.5f));
+            _relayLedgeCenter = _main.PointAt(settings.RelayLedgeArc)
+                + _main.RightAt(settings.RelayLedgeArc) * settings.RelayLedgeLateral;
             _alcoveArcs = new float[settings.AlcoveCount];
             _alcoveSides = new float[settings.AlcoveCount];
             float first = _ledgeArc + BayHalfLength + settings.AlcoveLength;
@@ -187,6 +193,9 @@ namespace MoonProject.World
         public float LedgeSide => _ledgeSide;
 
         public Vector2 LedgeCenter => _ledgeCenter;
+
+        /// <summary>Centre (XZ) of the relay mast's ledge at the mouth of the terminus chamber (M3-06).</summary>
+        public Vector2 RelayLedgeCenter => _relayLedgeCenter;
 
         /// <summary>Where the faint warm light hangs (XZ): over the glinting ledge, near the bay's back wall.</summary>
         public Vector2 GlowPoint => _ledgeCenter + _main.RightAt(_ledgeArc) * (_ledgeSide * _settings.LedgeRadius);
@@ -417,11 +426,15 @@ namespace MoonProject.World
             return width;
         }
 
+        /// <summary>Height the main floor's two mesas add at (x, z): the glinting and the relay ledge.</summary>
         private float Ledge(float x, float z)
         {
-            float distance = Vector2.Distance(new Vector2(x, z), _ledgeCenter);
-            return _settings.LedgeHeight
-                * (1f - SmoothMath.Smootherstep(_settings.LedgeRadius, _settings.LedgeRadius + LedgeRun, distance));
+            var point = new Vector2(x, z);
+            float glinting = _settings.LedgeHeight * (1f - SmoothMath.Smootherstep(_settings.LedgeRadius,
+                _settings.LedgeRadius + LedgeRun, Vector2.Distance(point, _ledgeCenter)));
+            float relay = _settings.RelayLedgeHeight * (1f - SmoothMath.Smootherstep(_settings.RelayLedgeRadius,
+                _settings.RelayLedgeRadius + RelayLedgeRun, Vector2.Distance(point, _relayLedgeCenter)));
+            return glinting + relay;
         }
 
         private CanyonSlab Slab(CanyonPath path, float arc, float halfWidth, float low, float high)

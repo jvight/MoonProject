@@ -142,6 +142,13 @@ namespace MoonProject.Rover
             emission.rateOverTimeMultiplier = onGround ? rate : 0f;
         }
 
+        /// <summary>Ends both tire tracks where they are, so no ribbon stretches across a placement.</summary>
+        public void Break()
+        {
+            _trackLeft.Break();
+            _trackRight.Break();
+        }
+
         private void OnLanded(RoverLanded landed)
         {
             if (!enabled || landed.ImpactSpeed < _tuning.LandingMinImpact)
