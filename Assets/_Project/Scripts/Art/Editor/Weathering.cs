@@ -68,6 +68,17 @@ namespace MoonProject.Art.Editor
         public static void Weather(ModelNode node, string meshPrefix, LowPolyMeshBuilder surface,
             WeatherProfile profile, LowPolyMeshBuilder paint, LowPolyMeshBuilder rust, LowPolyMeshBuilder dust)
         {
+            Wear(node, Skins(meshPrefix, surface, profile, paint, rust, dust));
+        }
+
+        /// <summary>
+        /// The three skins of <paramref name="surface"/> as <see cref="Weather"/> makes them, as meshes (those with
+        /// geometry, in stacking order) to hang with <see cref="Wear"/> on every node showing the same part, such as
+        /// the three bay arms' links.
+        /// </summary>
+        public static IReadOnlyList<ModelMesh> Skins(string meshPrefix, LowPolyMeshBuilder surface,
+            WeatherProfile profile, LowPolyMeshBuilder paint, LowPolyMeshBuilder rust, LowPolyMeshBuilder dust)
+        {
             List<SkinPlane> planes = WeatherSkins.Planes(surface);
             LowPolyMeshBuilder paintSkin = LowPolyMeshBuilder.WithVertexColours(surface.TriangleCount * 2);
             WeatherSkins.Patchwork(paintSkin, surface, planes, profile, profile.Lift);
@@ -91,7 +102,21 @@ namespace MoonProject.Art.Editor
                 dustSkin.Append(dust, Matrix4x4.identity);
             }
 
-            Attach(node, meshPrefix, paintSkin, rustSkin, dustSkin);
+            var skins = new List<ModelMesh>(3);
+            AddSkin(skins, meshPrefix, PaintName, paintSkin);
+            AddSkin(skins, meshPrefix, RustName, rustSkin);
+            AddSkin(skins, meshPrefix, DustName, dustSkin);
+            return skins;
+        }
+
+        /// <summary>Hangs <paramref name="skins"/> (from <see cref="Skins"/>) on <paramref name="node"/>.</summary>
+        public static void Wear(ModelNode node, IReadOnlyList<ModelMesh> skins)
+        {
+            foreach (ModelMesh skin in skins)
+            {
+                string layer = skin.Name.Substring(skin.Name.LastIndexOf("Weather_", System.StringComparison.Ordinal));
+                node.Add(new ModelNode(layer, Vector3.zero, Quaternion.identity, skin, ModelMaterial.PaletteWeather));
+            }
         }
 
         /// <summary>
@@ -196,6 +221,14 @@ namespace MoonProject.Art.Editor
             }
 
             (_, toward, amount) = tones[tones.Length - 1];
+        }
+
+        private static void AddSkin(List<ModelMesh> skins, string meshPrefix, string layer, LowPolyMeshBuilder skin)
+        {
+            if (skin.TriangleCount > 0)
+            {
+                skins.Add(new ModelMesh(meshPrefix + "_" + layer, skin));
+            }
         }
 
         private static void Add(ModelNode node, string meshPrefix, string layer, LowPolyMeshBuilder geometry)
