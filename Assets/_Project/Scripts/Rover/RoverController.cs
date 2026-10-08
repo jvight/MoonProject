@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using MoonProject.Core;
 using MoonProject.Core.Events;
@@ -13,7 +14,9 @@ namespace MoonProject.Rover
     /// in one step, publishing <see cref="RoverPlaced"/>) and <see cref="IRoverCargoSeat"/> (its kit's rack, see
     /// <see cref="RoverKit"/>), publishes <see cref="RoverLanded"/> and <see cref="RoverBoostChanged"/>, and ticks its
     /// visual rig, kit, wheel effects and lamp motes in a fixed order every frame. The Boost Coils raise the top speed
-    /// gently while held at cruise on open, flat-ish ground (<see cref="BoostDrive"/>).
+    /// gently while held at cruise on open, flat-ish ground (<see cref="BoostDrive"/>). Docked at home
+    /// (<see cref="RoverDockChanged"/>), 07 eases onto the dock's anchor and rests there, its lamp dimmed, while its
+    /// drive input is still read so a touch shows at once and gameplay can undock it; undocked, it is free at once.
     /// Needs the World's <see cref="ITerrainQuery"/> (spawn height, stuck recovery), so it initialises after the World
     /// systems. If 07 is trying to drive but stuck for a few seconds, it is lifted gently to a nearby open spot.
     /// The maths lives in plain classes (<see cref="LongitudinalDrive"/>, <see cref="SteeringModel"/>,
@@ -65,6 +68,13 @@ namespace MoonProject.Rover
         private HoverJump _jump;
         private RoverStillness _stillness;
         private BoostDrive _boost;
+        private IDisposable _dockChanges;
+        private bool _docked;
+        private float _dockElapsed;
+        private Vector3 _dockFrom;
+        private Vector3 _dockTo;
+        private float _dockFromHeading;
+        private float _dockToHeading;
         private int _abilities;
         private bool _jumpHeld;
         private bool _leaping;
@@ -189,6 +199,34 @@ namespace MoonProject.Rover
         /// <summary>True while the Boost Coils are engaged.</summary>
         public bool IsBoosting => _boost.Engaged;
 
+        /// <summary>True while 07 rests on the charging dock (eased onto it, held there until it drives off).</summary>
+        public bool IsDocked => _docked;
+
+        /// <summary>Held by a machine (the dock): kinematic, at rest, no jump or leap under way.</summary>
+        private void Freeze()
+        {
+            _body.linearVelocity = Vector3.zero;
+            _body.isKinematic = true;
+            _lastVelocity = Vector3.zero;
+            _localAcceleration = Vector3.zero;
+            _yawRate = 0f;
+            _forwardSpeed = 0f;
+            _leaping = false;
+            _liftoff = 0f;
+            _jump.Reset();
+        }
+
+        /// <summary>Let go by a machine: on its wheels again, at rest.</summary>
+        private void Free()
+        {
+            _body.isKinematic = false;
+            _body.linearVelocity = Vector3.zero;
+            _lastVelocity = Vector3.zero;
+            _forwardSpeed = 0f;
+            _landing.Reset();
+            _stuck.Reset();
+        }
+
         // IRoverAbilities
         public bool Has(RoverAbility ability)
         {
@@ -238,6 +276,7 @@ namespace MoonProject.Rover
             context.Register<IRoverStillness>(_stillness);
             context.Register<IRoverPlacement>(this);
             context.Register<IRoverCargoSeat>(_kit);
+            _dockChanges = _events.Subscribe<RoverDockChanged>(OnDockChanged);
 
             bool visualsReady = _visualRig.Initialize(this);
             bool kitReady = _kit.Initialize(context, this);
@@ -332,6 +371,13 @@ namespace MoonProject.Rover
             }
 
             float dt = Time.fixedDeltaTime;
+            if (_docked)
+            {
+                ReadInput(dt);
+                StepDock(dt);
+                return;
+            }
+
             if (_recovering)
             {
                 ReadInput(dt);
@@ -412,6 +458,8 @@ namespace MoonProject.Rover
 
             _recovering = false;
             _recoveryElapsed = 0f;
+            _docked = false;
+            _kit.SetDocked(false);
             _body.isKinematic = false;
             _body.transform.SetPositionAndRotation(centre, Quaternion.identity);
             _body.position = centre;
@@ -479,6 +527,48 @@ namespace MoonProject.Rover
                 StartRecovery(from, rest);
                 return;
             }
+        }
+
+        /// <summary>
+        /// Docked: 07 eases from where it stopped onto the dock's anchor (07's pivot, facing the lander), held there by
+        /// the dock rather than its wheels. Undocked: free at once, at rest.
+        /// </summary>
+        private void OnDockChanged(RoverDockChanged dock)
+        {
+            if (!_initialized)
+            {
+                return;
+            }
+
+            _kit.SetDocked(dock.Docked);
+            if (!dock.Docked)
+            {
+                if (_docked)
+                {
+                    _docked = false;
+                    Free();
+                }
+
+                return;
+            }
+
+            _docked = true;
+            _recovering = false;
+            _dockElapsed = 0f;
+            _dockFrom = _body.position;
+            _dockTo = dock.Position + dock.Rotation * Vector3.up * _tuning.Ground.SphereRadius;
+            _dockFromHeading = _heading;
+            _dockToHeading = RoverPlacementMath.Yaw(dock.Rotation);
+            Freeze();
+        }
+
+        private void StepDock(float dt)
+        {
+            _dockElapsed += dt;
+            float settle = Smoothing.SmoothStep(0f, 1f, _dockElapsed / _tuning.Dock.SettleSeconds);
+            _body.MovePosition(Vector3.Lerp(_dockFrom, _dockTo, settle));
+            _previousHeading = _heading;
+            _heading = Mathf.Repeat(Mathf.LerpAngle(_dockFromHeading, _dockToHeading, settle), 360f);
         }
 
         private void StartRecovery(Vector3 from, Vector3 to)
@@ -698,6 +788,11 @@ namespace MoonProject.Rover
             Vector2 drive = _driveSource != null ? _driveSource.Drive : _input.Drive;
             bool engaged = _recovering || _holds.IsHeld || _jump.Charge > 0f;
             return new StillnessSample(_landing.IsGrounded, Speed, drive, _input.LookDelta, _input.LookRate, engaged);
+        }
+
+        private void OnDestroy()
+        {
+            _dockChanges?.Dispose();
         }
     }
 }

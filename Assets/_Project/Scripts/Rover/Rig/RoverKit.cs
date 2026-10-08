@@ -18,7 +18,7 @@ namespace MoonProject.Rover
     /// fresh "07" and pennant. A friend repaired before the game loaded: there at once; repaired during play: the
     /// soft version of the moment the next time 07 is home.</item>
     /// <item>The road light: the lamp bar makes it wider and warmer and moves it to the bar's middle glass, and its
-    /// three glasses glow; the drums' bands glow with the boost.</item>
+    /// three glasses glow; the drums' bands glow with the boost. Both dim while 07 rests on the charging dock.</item>
     /// </list>
     /// Registered by <see cref="RoverController"/> as <see cref="IRoverCargoSeat"/> (the rack's RelicSeat). Ticked by
     /// <see cref="RoverController"/> in Update, so the rack has its pose for this frame before any LateUpdate reads it.
@@ -95,6 +95,9 @@ namespace MoonProject.Rover
         private Vector3 _baseLightPosition;
         private Vector3 _warmLightPosition;
         private float _appliedWarmth = -1f;
+        private float _lampLevel = 1f;
+        private float _appliedLampLevel = -1f;
+        private bool _docked;
         private float _appliedDrumGlow = -1f;
         private bool _purchased;
         private bool _started;
@@ -274,6 +277,8 @@ namespace MoonProject.Rover
             }
 
             ApplyPieces();
+            DockSettings dock = _rover.Tuning.Dock;
+            _lampLevel = Smoothing.Damp(_lampLevel, _docked ? dock.LampDim : 1f, dock.LampHalfLife, deltaTime);
             ApplyWarmth(_fits[(int)RoverKitPiece.LampBar].Lights);
             ApplyDrumGlow();
             _purchased = false;
@@ -282,6 +287,15 @@ namespace MoonProject.Rover
 
         /// <summary>Tilly's cell has been given (the solar wing then opens wider at rest).</summary>
         public bool HasMendedWing => _tillyGift.Given;
+
+        /// <summary>07 rests on the charging dock (its road light and lamp bar dim) or left it.</summary>
+        public void SetDocked(bool docked)
+        {
+            _docked = docked;
+        }
+
+        /// <summary>How bright the road light is right now as a share of normal (dimmed while docked).</summary>
+        public float LampLevel => _lampLevel;
 
         private void FindFriends()
         {
@@ -407,23 +421,28 @@ namespace MoonProject.Rover
             return visible && (changed || fit.Moving);
         }
 
-        /// <summary>The road light and the lamp bar's glasses, <paramref name="warmth"/> of the way to warm.</summary>
+        /// <summary>
+        /// The road light and the lamp bar's glasses, <paramref name="warmth"/> of the way to warm, at the current
+        /// lamp level (dimmed on the dock).
+        /// </summary>
         private void ApplyWarmth(float warmth)
         {
-            if (Mathf.Abs(warmth - _appliedWarmth) < GlowEpsilon)
+            if (Mathf.Abs(warmth - _appliedWarmth) < GlowEpsilon && Mathf.Abs(_lampLevel - _appliedLampLevel)
+                < GlowEpsilon)
             {
                 return;
             }
 
             KitSettings settings = _tuning.Kit;
-            _headlamp.intensity = Mathf.Lerp(_baseIntensity, settings.WarmIntensity, warmth);
+            _headlamp.intensity = _lampLevel * Mathf.Lerp(_baseIntensity, settings.WarmIntensity, warmth);
             _headlamp.range = Mathf.Lerp(_baseRange, settings.WarmRange, warmth);
             _headlamp.spotAngle = Mathf.Lerp(_baseSpotAngle, settings.WarmSpotAngle, warmth);
             _headlamp.innerSpotAngle = Mathf.Lerp(_baseInnerSpotAngle, settings.WarmInnerSpotAngle, warmth);
             _headlamp.color = Color.Lerp(_baseColor, settings.WarmColor, warmth);
             _headlamp.transform.localPosition = Vector3.Lerp(_baseLightPosition, _warmLightPosition, warmth);
-            SetGlow(_lamps, settings.LampBarGlow * warmth);
+            SetGlow(_lamps, settings.LampBarGlow * warmth * _lampLevel);
             _appliedWarmth = warmth;
+            _appliedLampLevel = _lampLevel;
         }
 
         private void ApplyDrumGlow()
