@@ -8,7 +8,7 @@
 - **Cinemachine 3.x** (`Unity.Cinemachine` namespace) for every camera.
 - **UI Toolkit** for UI (UXML/USS are text — reviewable and merge-friendly). No uGUI canvases.
 - Physics: PhysX, fixed timestep 0.02 s, global gravity **(0, -1.62, 0)** (lunar). Systems needing a
-  different feel (rover downforce, scrap magnet) add their own forces explicitly from tuning values.
+  different feel (rover downforce, the salvage bit magnet) add their own forces explicitly from tuning values.
 
 ## Folder layout
 ```
@@ -18,7 +18,7 @@ Assets/_Project/
     Art/        MoonProject.Art        - low-poly mesh kit, palette (runtime-safe, used by builders & procedural runtime)
     World/      MoonProject.World      - terrain generation & queries, sky, lighting/atmosphere, scatter
     Rover/      MoonProject.Rover      - rover physics controller, suspension visuals, camera rig, rover VFX
-    Gameplay/   MoonProject.Gameplay   - scrap, sonar, excavation, tether, cargo, base, upgrades, progression, save
+    Gameplay/   MoonProject.Gameplay   - salvage, materials, sonar, excavation, tether, base, upgrades, progression, save
     Audio/      MoonProject.Audio      - audio director, radio/music, SFX players driven by events
     UI/         MoonProject.UI         - UI Toolkit screens & HUD
     App/        MoonProject.App        - composition root (GameBootstrap), scene flow
@@ -98,7 +98,7 @@ Assembly references use **names**, not GUIDs (tools/compile_check.py relies on i
 | 6 | Ground | terrain chunks, base floors |
 | 7 | Rover | rover physics sphere + body colliders |
 | 8 | Relic | excavated/tetherable relics |
-| 9 | Pickup | scrap (trigger-only interactions) |
+| 9 | Pickup | loose salvage bits, friend parts, cassettes (trigger-only interactions) |
 | 10 | Prop | rocks, structures |
 | 11 | Trigger | volumes (snap points, signal radius, zones) |
 
@@ -175,11 +175,10 @@ the light). Never `SetColor`: Unity treats a colour as gamma-encoded and raises 
 mean ~4.6×. Any custom palette shader must keep the URP `_EmissionColor` name.
 
 ## Contract: M2 content (Art -> Gameplay)
-Meshes-only prefabs on `M_LowPoly` (no colliders, no scripts; gameplay adds physics), +Y up, +Z front. Pivots: scrap and
+Meshes-only prefabs on `M_LowPoly` (no colliders, no scripts; gameplay adds physics), +Y up, +Z front. Pivots: pickups and
 relics at the centre of mass (they are physics bodies); Lander, MuseumShelf and RadioTower at their ground-contact centre
 (they stand on anchors). Gameplay references them by path; art may refine their looks freely without renaming.
 ```
-Generated/Art/Scrap/Scrap_Bolt|Scrap_Gear|Scrap_Panel|Scrap_Coil.prefab     0.3–0.5 m, TechGlow accents
 Generated/Art/Relics/Relic_<Id>.prefab                                       0.5–1.2 m, one per relic id:
     cassette_player, rubber_duck, golden_record, astronaut_boot, teapot, garden_gnome
 Generated/Art/Base/Lander.prefab        the abandoned lander (base origin = its pivot on the ground)
