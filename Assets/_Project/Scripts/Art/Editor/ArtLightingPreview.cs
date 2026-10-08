@@ -957,22 +957,25 @@ namespace MoonProject.Art.Editor
         /// WorkshopAnchor in place of the old bench with 07 parked on its turntable, the true-size relics beside a
         /// second 07 and a 1.75 m reference person on open ground left of the lander, a third 07 working the radio
         /// tower's service port with the hatch swung open, a fourth resting on its charging dock with the glow lit, and
-        /// the crew's cable lift jammed halfway beside the ladder.
+        /// the crew's cable lift jammed halfway beside the ladder. The 1.75 m reference person also stands on the
+        /// porch beside the door, by the museum shelf and at Kenji's old bench for the human-scale audit.
         /// </summary>
         private static CameraPoseSet BuiltFor07Scene(Material material, TemporaryObjects temporary)
         {
             EditorSceneManager.OpenScene(CaptureAutomation.MainScenePath, OpenSceneMode.Single);
             Transform lander = SceneObject(BaseModelBuilder.LanderName);
             var poses = new List<CameraPose>();
-            StageRoverBay(lander, temporary, poses);
+            StageRoverBay(lander, material, temporary, poses);
             StageRelics(lander, material, temporary, poses);
             StageTowerPort(temporary, poses);
             StageDockAndLift(lander, temporary, poses);
+            StageHumanScale(lander, material, temporary, poses);
             return new CameraPoseSet { width = 1600, height = 900, postProcessing = true, poses = poses.ToArray() };
         }
 
         /// <summary>The Rover Bay in place of the old bench: lamps lit, 07 on the turntable, one arm fitting.</summary>
-        private static void StageRoverBay(Transform lander, TemporaryObjects temporary, List<CameraPose> poses)
+        private static void StageRoverBay(Transform lander, Material material, TemporaryObjects temporary,
+            List<CameraPose> poses)
         {
             SceneObject(BaseModelBuilder.WorkbenchName).gameObject.SetActive(false);
             GameObject bay = Instantiate(BaseModelBuilder.RoverBayName, temporary);
@@ -993,6 +996,10 @@ namespace MoonProject.Art.Editor
                 Point(centre), 50f));
             poses.Add(Pose("bay_hopper", Point(bay.transform.TransformPoint(new Vector3(3.6f, 1.9f, 4.4f))),
                 Point(bay.transform.TransformPoint(RoverBayMeshes.HopperMouth)), 50f));
+            Person(material, temporary, bay.transform.TransformPoint(new Vector3(-3.2f, 0f, 2.2f)),
+                bay.transform.rotation);
+            poses.Add(Pose("human_bench", Point(bay.transform.TransformPoint(new Vector3(-1.2f, 1.6f, 6.4f))),
+                Point(bay.transform.TransformPoint(new Vector3(-3.8f, 1f, 1f))), 45f));
         }
 
         /// <summary>The true-size relics in a row before 07 and a 1.75 m reference person; 07's spare wheel.</summary>
@@ -1005,9 +1012,7 @@ namespace MoonProject.Art.Editor
             rover.transform.SetPositionAndRotation(row, facing);
             Vector3 side = facing * Vector3.right;
             Vector3 ahead = facing * Vector3.forward;
-            GameObject person = MeshObject("ReferencePerson", ReferencePerson().ToMesh("ReferencePerson"), material,
-                temporary);
-            person.transform.SetPositionAndRotation(row - side * 1.7f, facing);
+            Person(material, temporary, row - side * 1.7f, facing);
             IReadOnlyList<string> relics = RelicModelBuilder.Ids;
             for (int i = 0; i < relics.Count; i++)
             {
@@ -1062,6 +1067,28 @@ namespace MoonProject.Art.Editor
                 Point(lift + Vector3.up * 0.8f), 50f));
             poses.Add(Pose("lift_close", Point(lander.TransformPoint(new Vector3(4.2f, 2.4f, 7.2f))),
                 Point(lift + lander.TransformDirection(new Vector3(0f, 0.6f, -1f))), 45f));
+        }
+
+        /// <summary>The reference person on the lander's porch beside the door and beside the museum shelf.</summary>
+        private static void StageHumanScale(Transform lander, Material material, TemporaryObjects temporary,
+            List<CameraPose> poses)
+        {
+            float deck = BaseModelBuilder.LanderDeckTop;
+            Person(material, temporary, lander.TransformPoint(new Vector3(0.62f, deck, 1.62f)), lander.rotation);
+            poses.Add(Pose("human_door", Point(lander.TransformPoint(new Vector3(-2.3f, deck + 1.1f, 6f))),
+                Point(lander.TransformPoint(new Vector3(0.2f, deck + 0.9f, 1.5f))), 45f));
+            Transform shelf = SceneObject(BaseModelBuilder.ShelfName);
+            Person(material, temporary, shelf.TransformPoint(new Vector3(-1.75f, 0f, 0.5f)), shelf.rotation);
+            poses.Add(Pose("human_shelf", Point(shelf.TransformPoint(new Vector3(0.6f, 1.3f, 4.8f))),
+                Point(shelf.TransformPoint(new Vector3(-0.4f, 0.9f, 0.3f))), 45f));
+        }
+
+        /// <summary>Stands a capture-only 1.75 m reference person at <paramref name="position"/>.</summary>
+        private static void Person(Material material, TemporaryObjects temporary, Vector3 position, Quaternion facing)
+        {
+            GameObject person = MeshObject("ReferencePerson", ReferencePerson().ToMesh("ReferencePerson"), material,
+                temporary);
+            person.transform.SetPositionAndRotation(position, facing);
         }
 
         /// <summary>The radio tower stage the open scene shows (fails loudly if none is active).</summary>
