@@ -1,5 +1,7 @@
+using System;
 using UnityEngine;
 using MoonProject.Core;
+using MoonProject.Core.Events;
 
 namespace MoonProject.Audio
 {
@@ -10,8 +12,8 @@ namespace MoonProject.Audio
     /// rings on 07's own 3D sounds while the 2D radio, UI and beds bypass it. What being inside does to the rest of
     /// the mix (the basin bed receding, the radio thinning, the room tone) is the <see cref="Soundscape"/>'s, which
     /// reads <see cref="Inside"/>; the beds here pull back with it when 07 is still. Everything eases with 07's
-    /// position, so driving in and out is a slow change of air, never a switch. Initialised by
-    /// <see cref="AudioDirector"/>.
+    /// position, so driving in and out is a slow change of air, never a switch; a radio-hop (<see cref="RoverPlaced"/>
+    /// at full dark) takes the new place at once. Initialised by <see cref="AudioDirector"/>.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class CanyonAmbience : MonoBehaviour
@@ -44,6 +46,7 @@ namespace MoonProject.Audio
         private float _whisperCueVolume;
         private float _troughCueVolume;
         private float _appliedRoom = RoomOff;
+        private IDisposable _placedSubscription;
 
         /// <summary>0 outside .. 1 deep in the canyon (eased).</summary>
         public float Inside => _inside.Value;
@@ -94,6 +97,7 @@ namespace MoonProject.Audio
             _troughBed = director.CreateLoopSource(transform, "Trough", trough, 0f);
             _echo = CreateEcho(field);
             _field = field;
+            _placedSubscription = context.Events.Subscribe<RoverPlaced>(OnRoverPlaced);
         }
 
         internal void Wire(CanyonAudioTuning tuning)
@@ -118,6 +122,19 @@ namespace MoonProject.Audio
             Drive(_whisper, Inside * (1f - Trough) * _tuning.WhisperGain * _whisperCueVolume * bus);
             Drive(_troughBed, Trough * _tuning.TroughGain * _troughCueVolume * bus);
             UpdateEcho();
+        }
+
+        private void OnRoverPlaced(RoverPlaced placed)
+        {
+            _inside.Snap(_field.Inside(placed.Position, _tuning.HalfWidth, _tuning.Edge, _tuning.Entry));
+            _trough.Snap(_field.Trough(placed.Position, _tuning.HalfWidth, _tuning.Edge, _tuning.TroughDepthStart,
+                _tuning.TroughDepthRange));
+        }
+
+        private void OnDestroy()
+        {
+            _placedSubscription?.Dispose();
+            _placedSubscription = null;
         }
 
         private void Ease(EasedValue value, float target, float dt)

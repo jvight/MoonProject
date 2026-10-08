@@ -5,14 +5,15 @@ using MoonProject.Core;
 
 namespace MoonProject.Audio.Tests
 {
-    /// <summary>The relay network in the mix: nearest lit node distance, the radio-hop, a mast coming back.</summary>
+    /// <summary>The relay network in the mix: distance through the network, the radio-hop and home's answer.</summary>
     public sealed class RelayNetworkAudioTests
     {
         private const float Frame = 1f / 60f;
+        private const float MastReach = 110f;
 
         // 320 m from home: past the radio's signal edge (60 m clear + 140 m falloff) and into the near-silence.
         private static readonly Vector3 OutThere = new Vector3(320f, 0f, 0f);
-        private static readonly Vector3 MastNearby = new Vector3(320f, 0f, 20f);
+        private static readonly Vector3 MastNearby = new Vector3(320f, 0f, 80f);
 
         private SoundscapeTuning _soundscape;
         private CanyonAudioTuning _canyon;
@@ -25,7 +26,7 @@ namespace MoonProject.Audio.Tests
             _soundscape = ScriptableObject.CreateInstance<SoundscapeTuning>();
             _canyon = ScriptableObject.CreateInstance<CanyonAudioTuning>();
             _radio = ScriptableObject.CreateInstance<RadioTuning>();
-            _reach = new FakeStationReach();
+            _reach = new FakeStationReach(_radio.SignalRadius, MastReach);
             _reach.Add("home", Vector3.zero, true);
             _reach.Add("relay.0", MastNearby, false);
         }
@@ -40,28 +41,55 @@ namespace MoonProject.Audio.Tests
 
         private float Edge => _radio.SignalRadius + _radio.FalloffWidth;
 
+        private float Distance(Vector3 position)
+        {
+            return StationDistance.Equivalent(_reach, position, _radio.SignalRadius, MastReach);
+        }
+
         [Test]
-        public void HomeOnly_OutThereIsNearSilent_ALitMastNearbyMakesItHomeAgain()
+        public void HomeOnly_TheDistanceIsToTheBase()
+        {
+            Assert.AreEqual(320f, Distance(OutThere), 1e-3f);
+            Assert.AreEqual(30f, Distance(new Vector3(30f, 0f, 0f)), 1e-3f);
+        }
+
+        [Test]
+        public void ALitMast_IsClearWithinItsReach_AndFallsOffFromItsEdge()
+        {
+            _reach.Light("relay.0");
+            Assert.LessOrEqual(Distance(OutThere), _radio.SignalRadius, "80 m from a lit mast: inside its 110 m reach");
+            Vector3 pastTheMast = MastNearby + new Vector3(0f, 0f, MastReach + 40f);
+            Assert.AreEqual(_radio.SignalRadius + 40f, Distance(pastTheMast), 1e-3f, "40 m past its edge");
+        }
+
+        [Test]
+        public void InReach_IsAlwaysClear_EvenIfTheRadiiDisagree()
+        {
+            _reach.Light("relay.0");
+            float tooSmall = StationDistance.Equivalent(_reach, OutThere, _radio.SignalRadius, 40f);
+            Assert.LessOrEqual(tooSmall, _radio.SignalRadius, "the network says it reaches: the radio is warm");
+        }
+
+        [Test]
+        public void LightingAMastBeside07_WarmsTheRadioInOverAFewSeconds_NeverASnap()
         {
             var signal = new RadioSignal(_radio);
             var model = new SoundscapeModel(_soundscape, _canyon);
-            float distance = _reach.DistanceToNearestNode(OutThere);
-            Assert.AreEqual(320f, distance, 1e-3f, "home only: the distance is to the base");
+            float distance = Distance(OutThere);
             signal.Snap(distance);
             model.SettleAt(distance, Edge);
             Assert.AreEqual(0f, signal.Clarity, 1e-3f, "static out here");
             Assert.Greater(model.Farness, 0.8f, "and fading towards near-silence");
 
             _reach.Light("relay.0");
-            distance = _reach.DistanceToNearestNode(OutThere);
-            Assert.AreEqual(20f, distance, 1e-3f, "now the nearest lit node is the mast");
+            distance = Distance(OutThere);
             for (int i = 0; i < 30; i++)
             {
                 signal.Step(distance, Frame);
                 model.Step(distance, Edge, 0f, 0f, 0f, false, Frame);
             }
 
-            Assert.Greater(model.Farness, 0.4f, "half a second after lighting: still warming, never a snap");
+            Assert.Greater(model.Farness, 0.4f, "half a second after lighting: still warming");
             for (int i = 0; i < 600; i++)
             {
                 signal.Step(distance, Frame);
@@ -69,27 +97,21 @@ namespace MoonProject.Audio.Tests
             }
 
             Assert.Less(model.Farness, 0.01f, "warm within a few seconds");
-            Assert.Greater(signal.Clarity, 0.95f, "the radio is clear at a lit mast");
-            Assert.AreEqual(1f, model.RadioGain, 0.02f);
+            Assert.Greater(signal.Clarity, 0.99f, "the radio is clear in the mast's reach");
+            Assert.AreEqual(1f, model.RadioGain, 0.01f);
         }
 
         [Test]
-        public void ATallerTowerWidensTheClearZoneAroundEveryNode()
+        public void ATallerTower_WidensHomesCircle_NotTheMasts()
         {
             _reach.Light("relay.0");
-            var signal = new RadioSignal(_radio);
-            Vector3 beyondMast = MastNearby + new Vector3(0f, 0f, 150f);
-            float distance = _reach.DistanceToNearestNode(beyondMast);
-            signal.Snap(distance);
-            float before = signal.Clarity;
-
-            signal.SetTargetRadius(_radio.SignalRadius + 100f);
-            for (int i = 0; i < 1200; i++)
-            {
-                signal.Step(distance, Frame);
-            }
-
-            Assert.Greater(signal.Clarity, before + 0.3f, "the upgrade is heard out at the masts too");
+            Vector3 pastTheMast = MastNearby + new Vector3(0f, 0f, MastReach + 40f);
+            float before = Distance(pastTheMast) - _radio.SignalRadius;
+            float after = StationDistance.Equivalent(_reach, pastTheMast, _radio.SignalRadius + 100f, MastReach) -
+                          (_radio.SignalRadius + 100f);
+            Assert.AreEqual(before, after, 1e-3f, "still 40 m past the mast's edge");
+            Assert.AreEqual(0f, StationDistance.Equivalent(_reach, new Vector3(150f, 0f, -200f),
+                _radio.SignalRadius + 300f, MastReach) - (_radio.SignalRadius + 300f), 1e-3f, "inside the wider home");
         }
 
         [Test]
@@ -103,113 +125,100 @@ namespace MoonProject.Audio.Tests
         }
 
         [Test]
-        public void RadioHop_EasesIntoStaticOverTheOutTime_HoldsInTheDark_ThenResolvesOverTheInTime()
+        public void RadioHop_FollowsTheView_OutThenDarkThenIn_LandingOnce()
         {
             var hop = new RadioHop();
             Assert.IsFalse(hop.Active);
             hop.Begin();
             float t = 0f;
-            float half = -1f;
-            while (hop.Step(Frame, _radio.HopOutTime, _radio.HopInTime) < 1f)
+            float fullAt = -1f;
+            float landedAt = -1f;
+            int landings = 0;
+            while (t < 4f)
             {
+                hop.Step(Frame, _radio.HopOutTime, _radio.HopDarkTime, _radio.HopInTime, out bool landing);
                 t += Frame;
-                if (half < 0f && hop.Amount >= 0.5f)
+                if (fullAt < 0f && hop.Amount >= 1f)
                 {
-                    half = t;
+                    fullAt = t;
                 }
 
-                Assert.Less(t, 5f);
+                if (landing)
+                {
+                    landings++;
+                    landedAt = t;
+                    Assert.AreEqual(1f, hop.Amount, 1e-4f, "the static is full through the dark");
+                }
+
+                if (!hop.Active)
+                {
+                    break;
+                }
             }
 
-            Assert.AreEqual(_radio.HopOutTime, t + Frame, 2f * Frame, "all static as the screen goes dark");
-            Assert.AreEqual(_radio.HopOutTime * 0.5f, half, 2f * Frame, "eased, symmetric");
-
-            for (int i = 0; i < 120; i++)
-            {
-                hop.Step(Frame, _radio.HopOutTime, _radio.HopInTime);
-            }
-
-            Assert.AreEqual(1f, hop.Amount, "holds while 07 is moved");
-            hop.Finish();
-            t = 0f;
-            while (hop.Active)
-            {
-                hop.Step(Frame, _radio.HopOutTime, _radio.HopInTime);
-                t += Frame;
-                Assert.Less(t, 5f);
-            }
-
-            Assert.AreEqual(_radio.HopInTime, t, 2f * Frame, "resolved as the view eases back in");
+            Assert.AreEqual(1, landings);
+            Assert.AreEqual(_radio.HopOutTime, fullAt, 2f * Frame, "all static as the screen goes dark");
+            Assert.AreEqual(_radio.HopOutTime + _radio.HopDarkTime, landedAt, 3f * Frame, "resolving as it eases in");
+            Assert.AreEqual(_radio.HopOutTime + _radio.HopDarkTime + _radio.HopInTime, t, 3f * Frame);
             Assert.AreEqual(0f, hop.Amount);
         }
 
         [Test]
-        public void RadioHop_FinishedEarly_TurnsBackWithoutAJump()
+        public void RadioHop_FinishedBeforeItsDarkEnds_ResolvesFromWhereItIs()
         {
             var hop = new RadioHop();
             hop.Begin();
             for (int i = 0; i < 20; i++)
             {
-                hop.Step(Frame, 1f, 1f);
+                hop.Step(Frame, 0.8f, 0.4f, 0.8f, out _);
             }
 
             float before = hop.Amount;
-            hop.Finish();
-            hop.Step(Frame, 1f, 1f);
-            Assert.Less(Mathf.Abs(hop.Amount - before), 0.05f);
+            hop.End();
+            hop.Step(Frame, 0.8f, 0.4f, 0.8f, out bool landing);
+            Assert.IsTrue(landing);
+            Assert.Less(Mathf.Abs(hop.Amount - before), 0.05f, "no jump");
             Assert.Less(hop.Amount, before);
+
+            hop.End();
+            hop.Step(Frame, 0.8f, 0.4f, 0.8f, out landing);
+            Assert.IsFalse(landing, "a late finish changes nothing");
         }
 
         [Test]
-        public void AMastComingBack_CreaksThenItsLampWarms_ThenHomeAnswers()
+        public void HomesAnswer_ComesFromTheNearestOtherLitNode_WhenThePulseArrives()
         {
-            var sequence = new RelayRestoreSequence();
-            sequence.Begin();
-            int lamps = 0;
-            int links = 0;
-            float lampAt = -1f;
-            float linkAt = -1f;
-            for (float t = Frame; t < 4f; t += Frame)
-            {
-                sequence.Step(Frame, 0.9f, 1.9f, out bool lamp, out bool link);
-                if (lamp)
-                {
-                    lamps++;
-                    lampAt = t;
-                }
+            _reach.Light("relay.0");
+            _reach.Add("relay.1", new Vector3(320f, 0f, 260f), true);
+            Assert.IsTrue(RelayLink.TryFindLinkedNode(_reach, "relay.1", new Vector3(320f, 6f, 260f), out Vector3 to));
+            Assert.AreEqual(MastNearby, to, "the nearest lit node, not itself");
 
-                if (link)
-                {
-                    links++;
-                    linkAt = t;
-                }
-            }
-
-            Assert.AreEqual(1, lamps);
-            Assert.AreEqual(1, links);
-            Assert.AreEqual(0.9f, lampAt, 2f * Frame);
-            Assert.AreEqual(1.9f, linkAt, 2f * Frame);
-            Assert.IsFalse(sequence.Running);
+            Assert.AreEqual(2f, RelayLink.AnswerDelay(90f, 45f, 3f), 1e-4f);
+            Assert.AreEqual(3f, RelayLink.AnswerDelay(400f, 45f, 3f), 1e-4f, "a long link still answers in time");
         }
 
-        /// <summary>An <see cref="IStationReach"/> over a list of nodes the test lights directly.</summary>
+        [Test]
+        public void HomesAnswer_NeedsAnotherLitNode()
+        {
+            var lonely = new FakeStationReach(60f, MastReach);
+            lonely.Add("relay.0", Vector3.zero, true);
+            Assert.IsFalse(RelayLink.TryFindLinkedNode(lonely, "relay.0", Vector3.zero, out _));
+        }
+
+        /// <summary>An <see cref="IStationReach"/> over nodes the test lights: home first, then masts.</summary>
         private sealed class FakeStationReach : IStationReach
         {
             private readonly List<RelayNode> _nodes = new List<RelayNode>();
+            private readonly float _homeRadius;
+            private readonly float _mastReach;
 
-            public int LitCount
+            public FakeStationReach(float homeRadius, float mastReach)
             {
-                get
-                {
-                    int lit = 0;
-                    foreach (RelayNode node in _nodes)
-                    {
-                        lit += node.Lit ? 1 : 0;
-                    }
-
-                    return lit;
-                }
+                _homeRadius = homeRadius;
+                _mastReach = mastReach;
             }
+
+            public int LitCount => _nodes.FindAll(node => node.Lit).Count;
 
             public int NodeCount => _nodes.Count;
 
@@ -220,12 +229,21 @@ namespace MoonProject.Audio.Tests
 
             public bool IsInReach(Vector3 position)
             {
-                return DistanceToNearestNode(position) <= 110f;
+                for (int i = 0; i < _nodes.Count; i++)
+                {
+                    float radius = i == 0 ? _homeRadius : _mastReach;
+                    if (_nodes[i].Lit && SignalField.HorizontalDistance(position, _nodes[i].Position) <= radius)
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
             }
 
             public float DistanceToNearestNode(Vector3 position)
             {
-                float best = float.PositiveInfinity;
+                float best = float.MaxValue;
                 foreach (RelayNode node in _nodes)
                 {
                     if (node.Lit)
