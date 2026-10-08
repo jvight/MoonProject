@@ -90,6 +90,7 @@ namespace MoonProject.Art
             new Color32(0x7E, 0x4A, 0x3A, 0xFF), // Rust: decades of rust on patches and streaks (ruling 12)
             new Color32(0xB8, 0xAF, 0xA2, 0xFF), // FadedPaint: crew enamel bleached chalky by decades of sun
             new Color32(0xA8, 0xA6, 0xC4, 0xFF), // CakedDust: dust caked on the top faces of wrecks, paler than metal
+            new Color32(0xC6, 0x8F, 0x76, 0xFF), // FadedAccent: 07's orange stripe after decades of sun, chalky
         };
 
         private static readonly bool[] Emissive =
@@ -113,6 +114,7 @@ namespace MoonProject.Art
             false, // Rust
             false, // FadedPaint
             false, // CakedDust
+            false, // FadedAccent
         };
 
         public static int Count => Colors.Length;
