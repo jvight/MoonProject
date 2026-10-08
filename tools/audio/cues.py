@@ -348,13 +348,14 @@ def recovery_settle(_variant, gen):
     return filters.lowpass(1.8 * sigh + 0.35 * servo + 0.3 * body, 4000.0)
 
 
-SCRAP_CHIME_NOTES = 8
+SALVAGE_CHIME_NOTES = 8
 CHIME_BRIGHT_LIMIT_HZ = 1000.0
 
 
-def scrap_chime(variant, _gen):
-    """Glassy chime on degree ``variant`` of D major pentatonic from D5 (D5 E5 F#5 A5 B5 D6 E6 F#6): consecutive
-    pickups climb. Above ~1 kHz the bell partials are tapered so the top notes stay as soft as the low ones."""
+def salvage_chime(variant, gen):
+    """A piece folding into 07's cargo: a soft felt fold and a glassy chime on degree ``variant`` of D major
+    pentatonic from D5 (D5 E5 F#5 A5 B5 D6 E6 F#6), so a chain of pieces at one site climbs. Above ~1 kHz the bell
+    partials are tapered so the top notes stay as soft as the low ones."""
     freq = pentatonic(5, variant)
     n = samples(1.4)
     if freq <= CHIME_BRIGHT_LIMIT_HZ:
@@ -365,7 +366,9 @@ def scrap_chime(variant, _gen):
                + instruments.partial(n, freq, 0.25, 0.0012, 0.92, detune_cents=2.0)
                + instruments.partial(n, 2.76 * freq, 0.20 * taper, 0.0012, 0.32)
                + instruments.partial(n, 5.40 * freq, 0.06 * taper * taper, 0.0012, 0.1))
-    return _mono_reverb(dry, room=0.5, damping=0.55, wet=0.2, dry=1.0)
+    fold = filters.lowpass(filters.lowpass(noise.white(n, gen), 700.0), 700.0) * envelope.ar(n, 0.003, 0.05)
+    fold = fold / max(float(np.max(np.abs(fold))), 1e-9) * 0.08
+    return _mono_reverb(dry + fold, room=0.5, damping=0.55, wet=0.2, dry=1.0)
 
 
 def relic_placed(_variant, gen):
@@ -1606,6 +1609,126 @@ def radio_hop_in(_variant, gen):
     return np.stack(sides, axis=1)
 
 
+# --------------------------------------------------------------------------------------------------- salvage (M3-13)
+
+SALVAGE_CUT_LOOP_S = 3.0
+
+
+def _cut_sparks(n: int, gen, rate: float, centre: float) -> np.ndarray:
+    """Soft spark ticks scattered over a loop (wrapping), band-limited so they never bite."""
+    sparks = _grains(n, gen, rate, (0.0008, 0.003), (0.0002, 0.0004), (0.002, 0.006), 0.4, 0.7)
+    return periodic(sparks, lambda x: filters.lowpass(filters.bandpass(x, centre, 0.9), 5000.0))
+
+
+def salvage_cut_metal(_variant, gen):
+    """07's beam cutting a metal plate: a low, soft grind that breathes with the beam, with sparks pattering over it.
+    Gritty but never harsh; seamless."""
+    n = samples(SALVAGE_CUT_LOOP_S)
+    grind = periodic(noise.white(n, gen), lambda x: filters.bandpass(noise.brown_filter(x, 0.995), 220.0, 1.2))
+    grind = grind / max(float(np.std(grind)), 1e-9) * envelope.lfo(n, 9.0 / SALVAGE_CUT_LOOP_S, 0.25, 0.75)
+    body = periodic(noise.white(n, gen), lambda x: filters.bandpass(noise.pink_filter(x), 650.0, 2.0))
+    body = body / max(float(np.std(body)), 1e-9)
+    sparks = _cut_sparks(n, gen, 26.0, 3000.0)
+    mix = 0.5 * grind + 0.15 * body + 1.4 * sparks
+    return periodic(mix, lambda x: filters.highpass(filters.lowpass(x, 5000.0), 60.0))
+
+
+def salvage_cut_wiring(_variant, gen):
+    """The beam working loose a cable bundle: dry crackle and the odd snap of a strand over a light, buzzy grind."""
+    n = samples(SALVAGE_CUT_LOOP_S)
+    crackle = _grains(n, gen, 90.0, (0.0004, 0.0015), (0.0001, 0.0002), (0.0005, 0.0015), 0.4, 0.4)
+    crackle = periodic(crackle, lambda x: filters.lowpass(filters.bandpass(x, 2200.0, 0.8), 5000.0))
+    snaps = _grains(n, gen, 6.0, (0.004, 0.008), (0.0002, 0.0003), (0.006, 0.012), 0.35, 0.2)
+    snaps = periodic(snaps, lambda x: filters.lowpass(filters.bandpass(x, 1500.0, 1.2), 4500.0))
+    buzz = periodic(noise.white(n, gen), lambda x: filters.bandpass(noise.pink_filter(x), 420.0, 2.5))
+    buzz = buzz / max(float(np.std(buzz)), 1e-9) * envelope.lfo(n, 12.0 / SALVAGE_CUT_LOOP_S, 0.3, 0.7)
+    mix = 1.2 * crackle + 0.8 * snaps + 0.15 * buzz
+    return periodic(mix, lambda x: filters.highpass(filters.lowpass(x, 5000.0), 90.0))
+
+
+def salvage_cut_optics(_variant, gen):
+    """The beam easing free a solar cell or lens: a glassy shimmer of tiny high ticks over a soft, airy hiss."""
+    n = samples(SALVAGE_CUT_LOOP_S)
+    glints = _grains(n, gen, 30.0, (0.001, 0.003), (0.0003, 0.0006), (0.01, 0.03), 0.35, 0.6)
+    glints = periodic(glints, lambda x: filters.lowpass(filters.bandpass(x, 3400.0, 3.0), 5500.0))
+    air = periodic(noise.white(n, gen), lambda x: filters.bandpass(noise.pink_filter(x), 1600.0, 0.8))
+    air = air / max(float(np.std(air)), 1e-9) * envelope.lfo(n, 6.0 / SALVAGE_CUT_LOOP_S, 0.3, 0.7)
+    low = periodic(noise.white(n, gen), lambda x: filters.bandpass(noise.brown_filter(x, 0.995), 300.0, 1.2))
+    low = low / max(float(np.std(low)), 1e-9)
+    mix = 1.5 * glints + 0.08 * air + 0.12 * low
+    return periodic(mix, lambda x: filters.highpass(filters.lowpass(x, 5500.0), 80.0))
+
+
+CUT_TONE_LOOP_S = 2.0
+
+
+def salvage_cut_tone(_variant, gen):
+    """The beam's singing edge: a soft D4 whine (a touch of its octave and fifth, a slow shimmer) that the runtime
+    steps up the pentatonic as the cut goes on. Seamless."""
+    n = samples(CUT_TONE_LOOP_S)
+    step = SAMPLE_RATE / n
+    d4 = loop_freq(note_freq("D4"), n)
+    tone = osc.additive(n, d4, [(1, 1.0), (2, 0.3), (3, 0.12)]) + 0.35 * osc.sine(n, d4 + step, phase=0.3)
+    tone *= envelope.lfo(n, 4.0 / CUT_TONE_LOOP_S, 0.15, 0.85)
+    return periodic(0.3 * tone, lambda x: filters.lowpass(x, 3000.0))
+
+
+SALVAGE_BREAK_KINDS = ("metal", "wiring", "optics")
+
+
+def salvage_break(variant, gen):
+    """The piece breaking loose, by material: metal a soft muffled crack and a hollow clunk; wiring a snap with a
+    little spring of the cable; optics a glassy crack with a tiny tinkle. Satisfying, never sharp."""
+    n = samples(1.0)
+    kind = SALVAGE_BREAK_KINDS[variant]
+    crack = filters.bandpass(noise.white(n, gen), 1800.0, 1.0) * envelope.ar(n, 0.0008, 0.03)
+    crack = crack / max(float(np.max(np.abs(crack))), 1e-9)
+    mix = np.zeros(n)
+    if kind == "metal":
+        clunk = osc.sine(n, osc.glide(n, 180.0, 120.0, time_constant=0.04)) * envelope.ar(n, 0.003, 0.25)
+        ring = instruments.partial(n, note_freq("A2"), 0.4, 0.004, 0.5) + instruments.partial(
+            n, 2.0 * note_freq("A2"), 0.15, 0.004, 0.3)
+        mix = 0.25 * filters.lowpass(crack, 2500.0) + 0.5 * clunk + 0.25 * ring
+    elif kind == "wiring":
+        t = np.arange(n) / SAMPLE_RATE
+        spring_f = note_freq("D4") * (1.0 + 0.05 * np.exp(-t / 0.15) * np.sin(2.0 * math.pi * 11.0 * t))
+        spring = osc.additive(n, spring_f, [(1, 1.0), (2, 0.2)]) * envelope.ar(n, 0.006, 0.35)
+        snap = effects.saturate(filters.lowpass(crack, 3000.0), 1.5)
+        mix = 0.3 * snap + 0.2 * spring
+    else:
+        tinkle = np.zeros(n)
+        for k, note in enumerate(("B5", "D6", "F#6")):
+            place(tinkle, instruments.glass_chime(note_freq(note), 0.7, decay=0.35), samples(0.03 + 0.05 * k),
+                  0.5 - 0.1 * k)
+        mix = 0.3 * filters.highpass(crack, 900.0) + 0.25 * tinkle
+    return filters.lowpass(mix, 6000.0)
+
+
+# Site names after their anchor's "site." prefix; the runtime maps SiteAnswered.SiteId to these labels.
+SITE_ANSWER_NOTES = (("depot", "D4"), ("garage", "E4"), ("drill", "F#4"), ("kestrel", "A4"), ("lander", "B4"))
+SITE_ANSWER_LABELS = tuple(label for site, _ in SITE_ANSWER_NOTES for label in (site, f"{site}_relic"))
+
+
+def site_answer(variant, gen):
+    """A salvage site answering 07's ping on its own note: a soft, hollow hull resonance swelling up (detuned twins,
+    a slow beat) and settling. A site still holding a crew relic answers warmer: its octave and a D5 glow rise
+    with it."""
+    note = SITE_ANSWER_NOTES[variant // 2][1]
+    holds_relic = variant % 2 == 1
+    freq = note_freq(note)
+    n = samples(3.0)
+    hull = (instruments.partial(n, freq, 1.0, 0.12, 2.2)
+            + instruments.partial(n, freq, 0.6, 0.12, 2.0, detune_cents=6.0)
+            + instruments.partial(n, 2.0 * freq, 0.18, 0.1, 1.0)
+            + instruments.partial(n, 3.0 * freq, 0.05, 0.1, 0.5))
+    knock = filters.lowpass(noise.white(n, gen), 600.0) * envelope.ar(n, 0.002, 0.04)
+    mix = 0.6 * hull + 0.05 * knock / max(float(np.max(np.abs(knock))), 1e-9)
+    if holds_relic:
+        mix += 0.22 * instruments.soft_bell(2.0 * freq, 3.0, decay=1.6, attack=0.15)
+        mix += 0.12 * instruments.soft_pad(note_freq("D5"), 3.0, 0.6, 1.4, hold=0.4)
+    return _mono_reverb(filters.lowpass(mix, 4500.0), room=0.7, damping=0.6, wet=0.3, dry=1.0)
+
+
 # --------------------------------------------------------------------------------------------------- registry
 
 CUES = (
@@ -1636,10 +1759,10 @@ CUES = (
         notes="Servo whir D3/A3 + air while 07 is lifted to safety; content < 3.2 kHz for the pitch glide."),
     Cue("recovery_settle", "oneshot_3d", recovery_settle, volume=(0.7, 0.7), fade_out=0.15, milestone="M2",
         notes="Air release + A3 -> D3 servo settle when the recovery lift sets 07 down."),
-    Cue("scrap_chime", "oneshot_3d", scrap_chime, variants=SCRAP_CHIME_NOTES, volume=(0.7, 0.7), fade_out=0.1,
-        variant_labels=("D5", "E5", "Fs5", "A5", "B5", "D6", "E6", "Fs6"), milestone="M2", tonal=True,
-        notes="Glassy chime per pentatonic degree D5..F#6, ascending; the runtime picks the clip from the combo "
-              "step (climbs, then weaves over the top notes)."),
+    Cue("salvage_chime", "oneshot_3d", salvage_chime, variants=SALVAGE_CHIME_NOTES, volume=(0.7, 0.7),
+        fade_out=0.1, variant_labels=("D5", "E5", "Fs5", "A5", "B5", "D6", "E6", "Fs6"), milestone="M3",
+        tonal=True, notes="Salvage folding in: felt fold + glassy chime per pentatonic degree D5..F#6; the salvage "
+                          "melody picks the clip from the site's combo step (climbs, then weaves over the top)."),
     Cue("tether_attach", "oneshot_3d", tether_attach, volume=(0.7, 0.7), fade_out=0.15, milestone="M2",
         tonal=True, notes="Karplus-Strong felt pluck D4 + A2 body."),
     Cue("tether_hum", "loop_3d", tether_hum, loop=True, file_stem="tether_hum_loop", volume=(0.5, 0.5),
@@ -1788,6 +1911,22 @@ CUES = (
         notes="Radio-hop leaving: static swells, band sweeps down and filters out as the screen fades."),
     Cue("radio_hop_in", "radio_fx_2d", radio_hop_in, volume=(0.8, 0.8), fade_out=0.1, milestone="M3",
         notes="Radio-hop landing: band sweeps up and locks onto a soft D5 carrier as the view eases in."),
+    Cue("salvage_cut_metal", "loop_3d", salvage_cut_metal, loop=True, file_stem="salvage_cut_metal_loop",
+        volume=(0.5, 0.5), milestone="M3", notes="Cutting metal: low soft grind breathing with the beam + sparks."),
+    Cue("salvage_cut_wiring", "loop_3d", salvage_cut_wiring, loop=True, file_stem="salvage_cut_wiring_loop",
+        volume=(0.5, 0.5), milestone="M3", notes="Working wiring loose: dry crackle, the odd strand snap, light buzz."),
+    Cue("salvage_cut_optics", "loop_3d", salvage_cut_optics, loop=True, file_stem="salvage_cut_optics_loop",
+        volume=(0.5, 0.5), milestone="M3", notes="Easing optics free: glassy shimmer of tiny ticks over soft air."),
+    Cue("salvage_cut_tone", "loop_3d", salvage_cut_tone, loop=True, file_stem="salvage_cut_tone_loop",
+        volume=(0.4, 0.4), milestone="M3", tonal=True, hf_cutoff=6000.0, hf_max_db=-40.0,
+        notes="The beam's singing edge on D4; the runtime steps it up the pentatonic as the cut goes on."),
+    Cue("salvage_break", "oneshot_3d", salvage_break, variants=len(SALVAGE_BREAK_KINDS),
+        variant_labels=SALVAGE_BREAK_KINDS, volume=(0.65, 0.65), fade_out=0.1, milestone="M3",
+        notes="A piece breaking loose: metal crack + clunk, wiring snap + spring, optics glassy crack + tinkle."),
+    Cue("site_answer", "oneshot_3d", site_answer, variants=len(SITE_ANSWER_LABELS), variant_labels=SITE_ANSWER_LABELS,
+        volume=(0.8, 0.8), fade_out=0.25, milestone="M3", tonal=True,
+        notes="A site answering a ping: hull resonance on its note (depot D4, garage E4, drill F#4, kestrel A4, "
+              "lander B4); '_relic' answers warmer with its octave and a D5 glow."),
     Cue("upgrade_arpeggio", "stinger_2d", upgrade_arpeggio, volume=(0.8, 0.8), fade_out=0.3, milestone="M2",
         tonal=True, notes="Soft kalimba D4 A4 D5 F#5 A5, stereo, over a quiet D/A pad."),
 )

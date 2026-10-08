@@ -329,21 +329,21 @@
       "notes": "Air release + A3 -> D3 servo settle when the recovery lift sets 07 down."
     },
     {
-      "id": "scrap_chime",
+      "id": "salvage_chime",
       "category": "oneshot_3d",
-      "milestone": "M2",
+      "milestone": "M3",
       "bus": "Sfx",
       "spatial": true,
       "loop": false,
       "files": [
-        "Assets/_Project/Audio/SFX/scrap_chime_D5.wav",
-        "Assets/_Project/Audio/SFX/scrap_chime_E5.wav",
-        "Assets/_Project/Audio/SFX/scrap_chime_Fs5.wav",
-        "Assets/_Project/Audio/SFX/scrap_chime_A5.wav",
-        "Assets/_Project/Audio/SFX/scrap_chime_B5.wav",
-        "Assets/_Project/Audio/SFX/scrap_chime_D6.wav",
-        "Assets/_Project/Audio/SFX/scrap_chime_E6.wav",
-        "Assets/_Project/Audio/SFX/scrap_chime_Fs6.wav"
+        "Assets/_Project/Audio/SFX/salvage_chime_D5.wav",
+        "Assets/_Project/Audio/SFX/salvage_chime_E5.wav",
+        "Assets/_Project/Audio/SFX/salvage_chime_Fs5.wav",
+        "Assets/_Project/Audio/SFX/salvage_chime_A5.wav",
+        "Assets/_Project/Audio/SFX/salvage_chime_B5.wav",
+        "Assets/_Project/Audio/SFX/salvage_chime_D6.wav",
+        "Assets/_Project/Audio/SFX/salvage_chime_E6.wav",
+        "Assets/_Project/Audio/SFX/salvage_chime_Fs6.wav"
       ],
       "variantLabels": [
         "D5",
@@ -356,14 +356,14 @@
         "Fs6"
       ],
       "sha256": [
-        "f7cd1f4d45d40b57dd97093d22db9242f4187e01b3ae62ff57aa604d16a47434",
-        "c87047ba82c5020b85ec1e23ca50c83e69a486d02564b5fe36fd18f7b45d049f",
-        "0749641a2e4ec5f7bb29afa0363a1cc4979ab6bf78db3defe2e5f847a86f59d3",
-        "8423e4f0c89712218431feb3308f41225054d0fb4f212e8416e0d9191bc0e5af",
-        "86d21032683107a4399cb7497705d97e3e390f8269d2f413be99401d0cc498c3",
-        "5a73be259723b3e2e13716b76bbf14d6f27d43bb3c2714433c4ea676a3dd7e1f",
-        "e4546850f112057dcb538793e3ce6440722e20f8ab57f47ac31a835666b4b376",
-        "133bcc0abfe5961ac20ab42dc6556ec930415f1724eb7dba30b68f944dd62d13"
+        "698431fd085287dd639738b37a075767f01c5546d1e04e79e57c3ce35609d27c",
+        "55921536b1224f168d126cbd4743f5421a79ff2ca39f8a939a7775f25353bef4",
+        "1a3b7d00e6cd296bd99098df5b2fc10cfca76da7e89c232d89073ad0fae6611a",
+        "e2b4f61d006b4fec18e704bc3dd5e23334bd9bd11f66fb4a5f90df13653aea34",
+        "7670ed7fec90e73c078d1af957c4ac4e55fe76ebc517958552e3f2c7d377a1b2",
+        "ee1a7e0160bd1974eaf2c8dc590d2842583f4eb701685a19b4a3bf3de43580d3",
+        "f7137ca79f005eafe3098f786c2229327a149e965d3a7c72db6dfb38e0ed20c3",
+        "3349f5505a19cf2dcdadc4b75043d70067e5edabfdaf8d15f641f6e8053bffcc"
       ],
       "volumeMin": 0.7,
       "volumeMax": 0.7,
@@ -374,7 +374,7 @@
       "hfCutoffHz": 8000.0,
       "hfMaxDb": -30.0,
       "tonal": true,
-      "notes": "Glassy chime per pentatonic degree D5..F#6, ascending; the runtime picks the clip from the combo step (climbs, then weaves over the top notes)."
+      "notes": "Salvage folding in: felt fold + glassy chime per pentatonic degree D5..F#6; the salvage melody picks the clip from the site's combo step (climbs, then weaves over the top)."
     },
     {
       "id": "tether_attach",
@@ -2274,6 +2274,201 @@
       "hfMaxDb": -30.0,
       "tonal": false,
       "notes": "Radio-hop landing: band sweeps up and locks onto a soft D5 carrier as the view eases in."
+    },
+    {
+      "id": "salvage_cut_metal",
+      "category": "loop_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/SFX/salvage_cut_metal_loop.wav"
+      ],
+      "variantLabels": [
+        "salvage_cut_metal"
+      ],
+      "sha256": [
+        "838ad22aeff6b68698f9d96e27246d343b757a0e1340cec57b0ec9cef7a124ec"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "Cutting metal: low soft grind breathing with the beam + sparks."
+    },
+    {
+      "id": "salvage_cut_wiring",
+      "category": "loop_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/SFX/salvage_cut_wiring_loop.wav"
+      ],
+      "variantLabels": [
+        "salvage_cut_wiring"
+      ],
+      "sha256": [
+        "124587474ab2970199a32de52a7c28393543cb3f13941a2f71c690b02b9fdcf2"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "Working wiring loose: dry crackle, the odd strand snap, light buzz."
+    },
+    {
+      "id": "salvage_cut_optics",
+      "category": "loop_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/SFX/salvage_cut_optics_loop.wav"
+      ],
+      "variantLabels": [
+        "salvage_cut_optics"
+      ],
+      "sha256": [
+        "6272eabafe0ccc544f220a355446735b8758e279b7d8cf07195f620d2b33bd5b"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "Easing optics free: glassy shimmer of tiny ticks over soft air."
+    },
+    {
+      "id": "salvage_cut_tone",
+      "category": "loop_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/SFX/salvage_cut_tone_loop.wav"
+      ],
+      "variantLabels": [
+        "salvage_cut_tone"
+      ],
+      "sha256": [
+        "866d58d0437ae9a6bc5df2c9bfec8823157f50d40f6ecaac566d3b16344b8711"
+      ],
+      "volumeMin": 0.4,
+      "volumeMax": 0.4,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 6000.0,
+      "hfMaxDb": -40.0,
+      "tonal": true,
+      "notes": "The beam's singing edge on D4; the runtime steps it up the pentatonic as the cut goes on."
+    },
+    {
+      "id": "salvage_break",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/salvage_break_metal.wav",
+        "Assets/_Project/Audio/SFX/salvage_break_wiring.wav",
+        "Assets/_Project/Audio/SFX/salvage_break_optics.wav"
+      ],
+      "variantLabels": [
+        "metal",
+        "wiring",
+        "optics"
+      ],
+      "sha256": [
+        "4a454dfe63b41683018c1004562082de95da17dfcac6f8d64130f830c12f8c13",
+        "add6ac51b9dd1ca204dcedef2ce1728207ab81ae877bf18c7bb619bf8c17eb1b",
+        "a803bc50e4b0fd11c6a45fbd3e2c091c67771575516a8fb7c1ea4c06d82e4914"
+      ],
+      "volumeMin": 0.65,
+      "volumeMax": 0.65,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "A piece breaking loose: metal crack + clunk, wiring snap + spring, optics glassy crack + tinkle."
+    },
+    {
+      "id": "site_answer",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/site_answer_depot.wav",
+        "Assets/_Project/Audio/SFX/site_answer_depot_relic.wav",
+        "Assets/_Project/Audio/SFX/site_answer_garage.wav",
+        "Assets/_Project/Audio/SFX/site_answer_garage_relic.wav",
+        "Assets/_Project/Audio/SFX/site_answer_drill.wav",
+        "Assets/_Project/Audio/SFX/site_answer_drill_relic.wav",
+        "Assets/_Project/Audio/SFX/site_answer_kestrel.wav",
+        "Assets/_Project/Audio/SFX/site_answer_kestrel_relic.wav",
+        "Assets/_Project/Audio/SFX/site_answer_lander.wav",
+        "Assets/_Project/Audio/SFX/site_answer_lander_relic.wav"
+      ],
+      "variantLabels": [
+        "depot",
+        "depot_relic",
+        "garage",
+        "garage_relic",
+        "drill",
+        "drill_relic",
+        "kestrel",
+        "kestrel_relic",
+        "lander",
+        "lander_relic"
+      ],
+      "sha256": [
+        "6631ee536aec6e289fd1e2346bfddfa5f341348c932fb56be5e0689cd14966c6",
+        "b97359691185c0caa0220a9d0b30b4f33c57336c637dd6b30ef5de23657432d5",
+        "116947dec697965bc1fe5644c2d907ad44e5ebd164682fcc2ea23965d5ec3e9b",
+        "f0c69c43c5165a9498cbef77d95c67eb0df91ccaf1a7053e1862197a506819c3",
+        "0386b4104ec643829e9478669652bf77dc6b5800dffc340855bafddad482a24c",
+        "cb7c564ce9736576fe675723b990f1ec9b8819adf81c09d96c0ef4e6c486e9ad",
+        "ccd65732f4268f6ae49493ed9595f627bfc9fb0df7844cfdb2e3a07f0b097c0c",
+        "fe9fca43e7f46efc4456392035e221ff944cc17b2033cc3abf25051efd6a70a4",
+        "577fa5cbda7dbdcc8c6c9829211f8905f858f7843a6a3f3a6371283b404a4aae",
+        "bbffdaaca0b111f640bbbe043cfd2c71ac3ae9efdf4d229c4ac30bf81d4c3392"
+      ],
+      "volumeMin": 0.8,
+      "volumeMax": 0.8,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "A site answering a ping: hull resonance on its note (depot D4, garage E4, drill F#4, kestrel A4, lander B4); '_relic' answers warmer with its octave and a D5 glow."
     },
     {
       "id": "upgrade_arpeggio",
