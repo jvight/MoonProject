@@ -138,6 +138,19 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
+        public void Rouse_EndsTheDaydream_AndTheRestStartsOver()
+        {
+            Run(_tuning.IdleDelay + 5f, 0f, 0f);
+            Assert.IsTrue(_mood.IsDaydreaming);
+            _mood.Rouse();
+            Run(1f, 0f, 0f);
+            Assert.IsFalse(_mood.IsDaydreaming);
+            Assert.Less(_mood.Idle, 0.2f, "The daydream eases away.");
+            Run(_tuning.IdleDelay, 0f, 0f);
+            Assert.IsTrue(_mood.IsDaydreaming, "Left alone again, it drifts off again.");
+        }
+
+        [Test]
         public void DrivingOffFromADeepDaydream_WakesOnce()
         {
             Run(15f, 0f, 0f);

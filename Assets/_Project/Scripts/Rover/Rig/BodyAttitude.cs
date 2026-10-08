@@ -31,6 +31,14 @@ namespace MoonProject.Rover
             _roll.Reset(roll);
         }
 
+        /// <summary>At rest on the ground plane given as a normal in the heading frame (a placement).</summary>
+        public void ResetTo(Vector3 localGroundNormal)
+        {
+            float limit = _tuning.MaxTilt;
+            Reset(Mathf.Clamp(GroundPlaneFit.PitchOf(localGroundNormal), -limit, limit),
+                Mathf.Clamp(GroundPlaneFit.RollOf(localGroundNormal), -limit, limit));
+        }
+
         /// <summary>Settles toward the ground plane given as a normal in the heading frame.</summary>
         public void StepGrounded(Vector3 localGroundNormal, float deltaTime)
         {

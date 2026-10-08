@@ -265,6 +265,51 @@ namespace MoonProject.Rover
         [Range(0f, 30f)]
         [SerializeField] private float _nodDepth = 9f;
 
+        [Header("Relays and the radio-hop (M3-06)")]
+        [Tooltip("Perk-up strength when a relay mast 07 restored lights up.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _relayRestoredPerk = 0.6f;
+
+        [Tooltip("Seconds 07 looks up at a newly lit mast's lamp.")]
+        [Range(0f, 10f)]
+        [SerializeField] private float _relayLookSeconds = 6f;
+
+        [Tooltip("Gaze priority of that look up: above 07's idle and its own glances (-1) and passing scrap (0), so "
+            + "the lamp holds its attention; hands-on gameplay requests (2) still win.")]
+        [SerializeField] private int _relayLookPriority = 1;
+
+        [Tooltip("Bell's signal pillars within this distance (m) of 07 get a glance when she picks one.")]
+        [Range(10f, 1000f)]
+        [SerializeField] private float _signalGlanceRange = 300f;
+
+        [Tooltip("Height (m) up the pillar 07 glances at (a warm column of light, not the ground under it).")]
+        [Range(0f, 30f)]
+        [SerializeField] private float _signalGlanceLift = 4f;
+
+        [Tooltip("Seconds 07 glances toward a new signal pillar.")]
+        [Range(0f, 10f)]
+        [SerializeField] private float _signalGlanceSeconds = 2f;
+
+        [Tooltip("Seconds after a radio-hop lands before 07 looks around (the view is still easing in).")]
+        [Range(0f, 3f)]
+        [SerializeField] private float _lookAroundDelay = 0.3f;
+
+        [Tooltip("Seconds of the 'where am I' look around: head left, right, then settle.")]
+        [Range(0.5f, 8f)]
+        [SerializeField] private float _lookAroundSeconds = 3.4f;
+
+        [Tooltip("How far (deg) the head turns each way while looking around.")]
+        [Range(0f, 90f)]
+        [SerializeField] private float _lookAroundYaw = 50f;
+
+        [Tooltip("How far (deg) the head lifts while looking around, scanning the horizon.")]
+        [Range(0f, 30f)]
+        [SerializeField] private float _lookAroundLift = 6f;
+
+        [Tooltip("Perk-up strength as 07 lands from a radio-hop and looks around.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _hopArrivalPerk = 0.3f;
+
         [Header("Perk-up")]
         [Tooltip("Spring frequency (Hz) of the perk-up swell: peaks after ~1/(2*pi*f) s and fades softly.")]
         [Range(0.1f, 4f)]
@@ -476,6 +521,28 @@ namespace MoonProject.Rover
         public float RelicGlanceSeconds => _relicGlanceSeconds;
 
         public int ReactionGazePriority => _reactionGazePriority;
+
+        public float RelayRestoredPerk => _relayRestoredPerk;
+
+        public float RelayLookSeconds => _relayLookSeconds;
+
+        public int RelayLookPriority => _relayLookPriority;
+
+        public float SignalGlanceRange => _signalGlanceRange;
+
+        public float SignalGlanceLift => _signalGlanceLift;
+
+        public float SignalGlanceSeconds => _signalGlanceSeconds;
+
+        public float LookAroundDelay => _lookAroundDelay;
+
+        public float LookAroundSeconds => _lookAroundSeconds;
+
+        public float LookAroundYaw => _lookAroundYaw;
+
+        public float LookAroundLift => _lookAroundLift;
+
+        public float HopArrivalPerk => _hopArrivalPerk;
 
         public float RecoveryPerk => _recoveryPerk;
 

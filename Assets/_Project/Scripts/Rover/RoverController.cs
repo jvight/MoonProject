@@ -8,16 +8,18 @@ namespace MoonProject.Rover
     /// <summary>
     /// The player rover: a hidden, rotation-locked physics sphere pushed by accelerations along a steered heading, with
     /// the visual model following the interpolated sphere. Registers itself as <see cref="IRoverState"/> and
-    /// <see cref="IRoverRig"/> (interaction points and gaze requests for gameplay) and <see cref="IRoverStillness"/>
-    /// (how long 07 has rested, stepped every rendered frame), publishes <see cref="RoverLanded"/>, and ticks its
-    /// visual rig, wheel effects and lamp motes in a fixed order every frame.
+    /// <see cref="IRoverRig"/> (interaction points and gaze requests for gameplay), <see cref="IRoverStillness"/>
+    /// (how long 07 has rested, stepped every rendered frame) and <see cref="IRoverPlacement"/> (set 07 down elsewhere
+    /// in one step, publishing <see cref="RoverPlaced"/>), publishes <see cref="RoverLanded"/>, and ticks its visual
+    /// rig, wheel effects and lamp motes in a fixed order every frame.
     /// Needs the World's <see cref="ITerrainQuery"/> (spawn height, stuck recovery), so it initialises after the World
     /// systems. If 07 is trying to drive but stuck for a few seconds, it is lifted gently to a nearby open spot.
     /// The maths lives in plain classes (<see cref="LongitudinalDrive"/>, <see cref="SteeringModel"/>,
     /// <see cref="GroundModel"/>, <see cref="LandingDetector"/>); this component only wires them to physics.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class RoverController : MonoBehaviour, IGameSystem, IRoverState, IRoverRig, IRoverAbilities
+    public sealed class RoverController : MonoBehaviour, IGameSystem, IRoverState, IRoverRig, IRoverAbilities,
+        IRoverPlacement
     {
         /// <summary>The probe starts this fraction of the radius above the centre, so slight sinking hits.</summary>
         private const float ProbeLiftFraction = 0.5f;
@@ -218,6 +220,7 @@ namespace MoonProject.Rover
             context.Register<IRoverRig>(this);
             context.Register<IRoverAbilities>(this);
             context.Register<IRoverStillness>(_stillness);
+            context.Register<IRoverPlacement>(this);
 
             bool visualsReady = _visualRig.Initialize(this);
             bool effectsReady = _wheelFx.Initialize(context, this);
@@ -364,6 +367,62 @@ namespace MoonProject.Rover
 
         /// <summary>True while 07 is being lifted out of a stuck spot.</summary>
         public bool IsRecovering => _recovering;
+
+        /// <summary>
+        /// Sets 07 down at rest on the surface under <paramref name="position"/> (the terrain's height and slope),
+        /// facing <paramref name="rotation"/>'s yaw, in one step: the body, heading, visual rig, tire tracks and lamp
+        /// motes jump; velocity, eased input, a lift, a jump charge and the stuck/landing detectors start over;
+        /// stillness goes back to 0; then <see cref="RoverPlaced"/> lets the camera snap too. Only for moments the
+        /// player cannot see.
+        /// </summary>
+        public void PlaceAt(Vector3 position, Quaternion rotation)
+        {
+            if (!_initialized)
+            {
+                Debug.LogError($"{nameof(RoverController)}: PlaceAt before initialisation.", this);
+                return;
+            }
+
+            Transform lamp = _lampMotes.Lamp;
+            Vector3 lens = lamp.position;
+            Quaternion facing = lamp.rotation;
+            Vector3 ground = RoverPlacementMath.Ground(_terrain, position, out Vector3 normal);
+            Vector3 centre = RoverPlacementMath.RestingCentre(ground, normal, _tuning.Ground.SphereRadius);
+            float yaw = RoverPlacementMath.Yaw(rotation);
+
+            _recovering = false;
+            _recoveryElapsed = 0f;
+            _body.isKinematic = false;
+            _body.transform.SetPositionAndRotation(centre, Quaternion.identity);
+            _body.position = centre;
+            _body.rotation = Quaternion.identity;
+            _body.linearVelocity = Vector3.zero;
+            _body.angularVelocity = Vector3.zero;
+            _lastVelocity = Vector3.zero;
+            _localAcceleration = Vector3.zero;
+
+            _heading = yaw;
+            _previousHeading = yaw;
+            _visualHeading = yaw;
+            _yawRate = 0f;
+            _forwardSpeed = 0f;
+            _throttle = 0f;
+            _steer = 0f;
+            _steerDirection = 1f;
+            _contactNormal = normal;
+            _groundNormal = normal;
+            _leaping = false;
+            _liftoff = 0f;
+            _jump.Reset();
+            _landing.Reset();
+            _stuck.Reset();
+            _stillness.Reset();
+
+            _visualRig.Snap(normal);
+            _wheelFx.Break();
+            _lampMotes.Carry(lens, facing);
+            _events.Publish(new RoverPlaced(ground, Quaternion.Euler(0f, yaw, 0f)));
+        }
 
         /// <summary>
         /// Looks for the nearest comfortable spot (drivable, gentle, clear of rocks) and starts the lift there. If none

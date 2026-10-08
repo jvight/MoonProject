@@ -13,7 +13,9 @@ namespace MoonProject.Rover
     /// publishing <see cref="RoverAwoke"/>. It reacts to the game: soft landings, waking up, scrap (happier as a
     /// combo climbs), a relic answering or surfacing (a glance and a perk-up), a deposit (a contented nod), a snapped
     /// tether (a sigh), and hard landings (a small "oof"). When the camera opens to the lonely wide shot
-    /// (<see cref="RoverWideShotChanged"/>) its daydream sigh lands with the frame.
+    /// (<see cref="RoverWideShotChanged"/>) its daydream sigh lands with the frame. A relay mast it restored gets a
+    /// long look up at its lamp and a perk-up; a new signal pillar of Bell's within range gets a glance; landing from
+    /// a radio-hop, 07 rouses and looks around (<see cref="LookAround"/>).
     /// Needs <see cref="IWorldLayout"/>, so it must be initialised after the World systems.
     /// </summary>
     [DefaultExecutionOrder(10)]
@@ -59,6 +61,7 @@ namespace MoonProject.Rover
         private readonly object _glanceOwner = new object();
 
         private RoverMood _mood;
+        private LookAround _lookAround;
         private IWorldLayout _world;
         private EventBus _events;
         private IDisposable[] _subscriptions;
@@ -85,6 +88,7 @@ namespace MoonProject.Rover
 
             _world = context.Get<IWorldLayout>();
             _mood = new RoverMood(_tuning, MoodSeed, _tuning.SleepOnBoot);
+            _lookAround = new LookAround(_tuning);
             _glowBlock = new MaterialPropertyBlock();
             _neckRest = _neck.localRotation;
             _headRest = _head.localRotation;
@@ -109,6 +113,9 @@ namespace MoonProject.Rover
                 events.Subscribe<RoverRecovering>(OnRecovering),
                 events.Subscribe<RoverJumped>(OnJumped),
                 events.Subscribe<RoverWideShotChanged>(OnWideShotChanged),
+                events.Subscribe<RelayRestored>(OnRelayRestored),
+                events.Subscribe<BellSignalPicked>(OnBellSignalPicked),
+                events.Subscribe<RadioHopFinished>(OnRadioHopFinished),
             };
             _initialized = true;
             Apply();
@@ -143,8 +150,14 @@ namespace MoonProject.Rover
         /// <summary>07 glances at <paramref name="point"/> for a moment (gameplay requests can override it).</summary>
         private void Glance(Vector3 point)
         {
-            _rover.Gaze.Set(_glanceOwner, point, _tuning.ReactionGazePriority);
-            _glanceEnds = Time.time + _tuning.RelicGlanceSeconds;
+            Glance(point, _tuning.ReactionGazePriority, _tuning.RelicGlanceSeconds);
+        }
+
+        /// <summary>07 looks at <paramref name="point"/> for a while at a gaze priority.</summary>
+        private void Glance(Vector3 point, int priority, float seconds)
+        {
+            _rover.Gaze.Set(_glanceOwner, point, priority);
+            _glanceEnds = Time.time + seconds;
         }
 
         private void OnScrapCollected(ScrapCollected scrap)
@@ -193,6 +206,35 @@ namespace MoonProject.Rover
             _mood.SetWideShot(wideShot.Wide);
         }
 
+        /// <summary>The mast 07 just restored lights up: a long look up at its warming lamp, and a perk-up.</summary>
+        private void OnRelayRestored(RelayRestored relay)
+        {
+            Glance(relay.Position, _tuning.RelayLookPriority, _tuning.RelayLookSeconds);
+            PerkUp(_tuning.RelayRestoredPerk);
+        }
+
+        /// <summary>Bell pointed at something: a glance toward the new pillar of light if it is within range.</summary>
+        private void OnBellSignalPicked(BellSignalPicked signal)
+        {
+            Vector3 offset = signal.Position - _rover.Position;
+            float range = _tuning.SignalGlanceRange;
+            if (offset.x * offset.x + offset.z * offset.z > range * range)
+            {
+                return;
+            }
+
+            Glance(signal.Position + Vector3.up * _tuning.SignalGlanceLift, _tuning.ReactionGazePriority,
+                _tuning.SignalGlanceSeconds);
+        }
+
+        /// <summary>Landed from a radio-hop: 07 rouses from any daydream and looks around, "where am I?".</summary>
+        private void OnRadioHopFinished(RadioHopFinished hop)
+        {
+            _mood.Rouse();
+            _lookAround.Start();
+            PerkUp(_tuning.HopArrivalPerk);
+        }
+
         private void OnLanded(RoverLanded landed)
         {
             float oof = _mood.OofStrength(landed.ImpactSpeed);
@@ -235,6 +277,7 @@ namespace MoonProject.Rover
                 _glanceEnds = -1f;
             }
 
+            _lookAround.Step(deltaTime);
             StepGaze(deltaTime);
             Apply();
         }
@@ -245,7 +288,14 @@ namespace MoonProject.Rover
             Vector2 aim;
             float frequency;
 
-            if (_rover.Gaze.TryGetTop(out Vector3 target))
+            if (_lookAround.IsActive)
+            {
+                Vector2 look = _lookAround.Aim;
+                float limit = _tuning.NeckYawLimit;
+                aim = new Vector2(Mathf.Clamp(look.x, -limit, limit), _tuning.TravelHeadPitch + look.y);
+                frequency = _tuning.TargetGazeFrequency;
+            }
+            else if (_rover.Gaze.TryGetTop(out Vector3 target))
             {
                 aim = Aim(frame.InverseTransformDirection(target - _head.position));
                 frequency = _tuning.TargetGazeFrequency;

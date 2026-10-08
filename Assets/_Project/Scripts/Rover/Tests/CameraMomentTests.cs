@@ -24,6 +24,19 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
+        public void Clear_EndsAtOnce()
+        {
+            var moment = new CameraMoment();
+            moment.Start(Settings, Vector3.one, true);
+            Run(moment, 2f);
+            moment.Clear();
+            Assert.AreEqual(0f, moment.Weight);
+            Assert.IsFalse(moment.IsActive);
+            Run(moment, 1f);
+            Assert.AreEqual(0f, moment.Weight, "A cleared held moment stays gone.");
+        }
+
+        [Test]
         public void Idle_HasNoWeight()
         {
             var moment = new CameraMoment();

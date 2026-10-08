@@ -43,8 +43,9 @@ namespace MoonProject.Rover
         [Range(0f, 180f)]
         [SerializeField] private float _maxYawSwing = 60f;
 
-        [Tooltip("Extra orbit elevation (deg) at the height of the moment.")]
-        [Range(0f, 40f)]
+        [Tooltip("Extra orbit elevation (deg) at the height of the moment; negative lowers the camera so it looks "
+            + "up at something tall.")]
+        [Range(-20f, 40f)]
         [SerializeField] private float _lift;
 
         [Tooltip("Extra orbit distance (fraction of the normal distance) at the height of the moment.")]
