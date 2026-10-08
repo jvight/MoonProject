@@ -115,5 +115,15 @@ namespace MoonProject.Rover.Tests
             Assert.IsFalse(RoverKitPieces.IsRoverUpgrade("radio_tower"));
             Assert.IsFalse(RoverKitPieces.IsRoverUpgrade(null));
         }
+
+        [Test]
+        public void EveryPiece_HasAView()
+        {
+            var views = new KitViewSettings();
+            foreach (RoverKitPiece piece in System.Enum.GetValues(typeof(RoverKitPiece)))
+            {
+                Assert.That(views.Bearing(piece), Is.InRange(-180f, 180f), piece.ToString());
+            }
+        }
     }
 }

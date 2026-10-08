@@ -15,7 +15,9 @@ namespace MoonProject.Rover
     /// tether (a sigh), and hard landings (a small "oof"). When the camera opens to the lonely wide shot
     /// (<see cref="RoverWideShotChanged"/>) its daydream sigh lands with the frame. A relay mast it restored gets a
     /// long look up at its lamp and a perk-up; a new signal pillar of Bell's within range gets a glance; landing from
-    /// a radio-hop, 07 rouses and looks around (<see cref="LookAround"/>).
+    /// a radio-hop, 07 rouses and looks around (<see cref="LookAround"/>). As a new kit piece settles onto it
+    /// (<see cref="RoverKitFitted"/>) it strikes a proud pose (head up, eye bright, antenna wiggle), softer for a
+    /// friend's gift; with Tilly's cell in its wing the wing settles open wider.
     /// Needs <see cref="IWorldLayout"/>, so it must be initialised after the World systems.
     /// </summary>
     [DefaultExecutionOrder(10)]
@@ -116,6 +118,7 @@ namespace MoonProject.Rover
                 events.Subscribe<RelayRestored>(OnRelayRestored),
                 events.Subscribe<BellSignalPicked>(OnBellSignalPicked),
                 events.Subscribe<RadioHopFinished>(OnRadioHopFinished),
+                events.Subscribe<RoverKitFitted>(OnKitFitted),
             };
             _initialized = true;
             Apply();
@@ -227,6 +230,12 @@ namespace MoonProject.Rover
                 _tuning.SignalGlanceSeconds);
         }
 
+        /// <summary>A kit piece or a gift settled onto 07: the proud pose (a perk-up), softer for a gift.</summary>
+        private void OnKitFitted(RoverKitFitted fitted)
+        {
+            PerkUp(fitted.Gift ? _tuning.GiftPerk : _tuning.KitProudPerk);
+        }
+
         /// <summary>Landed from a radio-hop: 07 rouses from any daydream and looks around, "where am I?".</summary>
         private void OnRadioHopFinished(RadioHopFinished hop)
         {
@@ -258,6 +267,7 @@ namespace MoonProject.Rover
             }
 
             _mood.SetEffort(_rover.JumpCharge);
+            _mood.SetWingMended(_rover.Kit.HasMendedWing);
             switch (_mood.Step(_rover.Speed, _rover.DriveInput.magnitude, deltaTime))
             {
                 case MoodTransition.BeganWaking:
