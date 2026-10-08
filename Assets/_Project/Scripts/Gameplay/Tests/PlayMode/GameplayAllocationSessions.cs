@@ -15,7 +15,9 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// <summary>
     /// The feel checklist's last line: a busy steady state of every gameplay system allocates nothing (Tilly and Bell
     /// awake at home, Bell swaying and pointing her signal, cassettes, caches and her tape rack ticking along, a relay
-    /// mast lit with its hop pads breathing, the station's reach polled the way Audio and UI poll it).
+    /// mast lit with its hop pads breathing, the station's reach polled the way Audio and UI poll it), and neither do
+    /// the moments 07 works the base's machines in (the bay's hopper feed, the tower's stitching, resting on the
+    /// charging dock, tapping Bell's dial).
     /// </summary>
     public sealed class GameplayAllocationSessions : InputTestFixture
     {
@@ -128,6 +130,81 @@ namespace MoonProject.Gameplay.PlayModeTests
                 "bytes allocated by 300 frames of salvage, relics, sonar, excavation, tether, the cradle, home, " +
                 "tower, friends, " +
                 "cassettes, caches, Bell's signals, her rack, the relays, the reach and hints");
+        }
+
+        [UnityTest]
+        public IEnumerator StationMoments_FeedStitchDockAndDialTap_AllocateNothing()
+        {
+            _fixture = GameplayFixture.Boot(_controls);
+            yield return null;
+            GameplaySystem gameplay = _fixture.Gameplay;
+            gameplay.Friends.Restore(new FriendsSaveData
+            {
+                friends = new[] { new FriendSaveData { id = "bell", state = (int)FriendState.Awake, welcomed = true } },
+            });
+            _fixture.GiveMaterials(9, 6, 6);
+            IUpgradeShop shop = _fixture.Bootstrap.Context.Get<IUpgradeShop>();
+
+            Workshop bay = gameplay.Workshop;
+            _fixture.Rover.Place(Flat(bay.PadCentre), 0f);
+            yield return null;
+            yield return null;
+            Assert.AreEqual(PurchaseResult.Purchased, shop.Purchase("rover.hover_jump"));
+            FeedLook feed = bay.Tuning.FeedLook;
+            yield return new WaitForSeconds(feed.BeamLead + feed.Stagger + feed.Flight * 0.3f);
+            Assert.Greater(bay.BundlesInFlight, 0, "the bay's hopper is being fed");
+            AssertAllocatesNothing(Method(bay, "Update"), "the bay feeding its hopper");
+            yield return Waits.Until(() => !bay.Feeding, 2f);
+
+            RadioTower tower = gameplay.Tower;
+            _fixture.Rover.Place(tower.PadCentre, 0f);
+            yield return null;
+            yield return null;
+            Assert.AreEqual(PurchaseResult.Purchased, shop.Purchase("radio_tower"));
+            yield return Waits.Until(() => tower.StitchLevel > 0.5f, 4f);
+            Assert.Greater(tower.StitchLevel, 0.5f, "07's beam stitches up the tower");
+            AssertAllocatesNothing(Method(tower, "Update"), "the tower stitching while its stage grows");
+            yield return Waits.Until(() => !tower.Crafting, 4f);
+
+            ChargingDock dock = gameplay.Home.Dock;
+            _fixture.Rover.Place(Flat(dock.Position), 0f);
+            yield return new WaitForSeconds(gameplay.Home.Tuning.DockDelay + 0.3f);
+            Assert.IsTrue(dock.Docked, "07 rests on the dock");
+            AssertAllocatesNothing(Method(gameplay.Home, "Update"), "home with 07 charging on the dock");
+
+            var bell = (RadioCabinetBody)gameplay.Friends.Find("bell").Body;
+            _fixture.Rover.Place(Flat(bell.DialFront), 0f);
+            yield return null;
+            yield return null;
+            Press(_keyboard.eKey);
+            yield return null;
+            yield return null;
+            Release(_keyboard.eKey);
+            Assert.IsTrue(gameplay.Friends.TappingDial, "07's beam taps Bell's dial");
+            AssertAllocatesNothing(Method(gameplay.Friends, "Update"), "07's beam tapping Bell's dial");
+        }
+
+        /// <summary>Warms <paramref name="update"/> up, then asserts 300 more frames of it allocate nothing.</summary>
+        private static void AssertAllocatesNothing(Action update, string what)
+        {
+            for (int frame = 0; frame < 30; frame++)
+            {
+                update();
+            }
+
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            for (int frame = 0; frame < 300; frame++)
+            {
+                update();
+            }
+
+            Assert.AreEqual(0L, GC.GetAllocatedBytesForCurrentThread() - before,
+                "bytes allocated by 300 frames of " + what);
+        }
+
+        private static Vector3 Flat(Vector3 point)
+        {
+            return new Vector3(point.x, 0f, point.z);
         }
 
         /// <summary>

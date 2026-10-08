@@ -35,7 +35,8 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         public float NormalizedSpeed => Mathf.Clamp01(Speed / 8f);
 
-        public Vector2 DriveInput => Vector2.zero;
+        /// <summary>The drive input 07 reports (zero unless a test sets it: a player touching the stick).</summary>
+        public Vector2 DriveInput { get; set; }
 
         public bool IsGrounded => true;
 

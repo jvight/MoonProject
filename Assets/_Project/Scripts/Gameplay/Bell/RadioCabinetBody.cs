@@ -104,6 +104,9 @@ namespace MoonProject.Gameplay
 
         public float RepairDuration => _sequence.Duration;
 
+        /// <summary>Her dial, where 07's beam taps to tune her (as repaired).</summary>
+        public Vector3 Dial => _repaired.DialFace.position;
+
         /// <summary>Where 07 parks to turn her dial: in front of her corner.</summary>
         public Vector3 DialFront => _home.position + _home.forward * _bell.TuneFront;
 

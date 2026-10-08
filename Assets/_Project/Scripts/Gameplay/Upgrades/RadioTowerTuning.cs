@@ -4,14 +4,16 @@ using MoonProject.Art;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// The radio tower: its pad (the diegetic shop), the beacon, how a new stage grows in, and the warm bloom that
-    /// rolls out to the new clear-signal radius. Created by the Gameplay/Tuning builder; runtime code only reads it.
+    /// The radio tower: its pad (the diegetic shop), 07 feeding its service port's hopper, the hatch and the stitching
+    /// beam, the beacon, how a new stage grows in, and the warm bloom that rolls out to the new clear-signal radius.
+    /// Created by the Gameplay/Tuning builder; runtime code only reads it.
     /// </summary>
     public sealed class RadioTowerTuning : ScriptableObject
     {
         [Header("Pad")]
-        [Tooltip("Pad centre relative to the lander's tower anchor, in lander space (m): in front of the tower.")]
-        [SerializeField] private Vector3 _padOffset = new Vector3(0f, 0f, 3.4f);
+        [Tooltip("Pad centre relative to the lander's tower anchor, in lander space (m): in front of the tower's " +
+                 "service port, its ring clear of the port's plate (which reaches 1.4 m out from the tower).")]
+        [SerializeField] private Vector3 _padOffset = new Vector3(0f, 0f, 4.1f);
 
         [Tooltip("07 counts as parked on the pad within this many metres of its centre.")]
         [Range(0.5f, 6f)] [SerializeField] private float _padRadius = 2.4f;
@@ -43,6 +45,34 @@ namespace MoonProject.Gameplay
         [Tooltip("Segments of the pad ring.")]
         [Range(8, 128)] [SerializeField] private int _padSegments = 48;
 
+        [Header("Service port")]
+        [Tooltip("Seconds 07's beam reaches the port's hopper before the first bundle of materials leaves 07.")]
+        [Range(0f, 1f)] [SerializeField] private float _feedBeamLead = 0.15f;
+
+        [Tooltip("Seconds each bundle takes from 07's cargo socket into the hopper's mouth.")]
+        [Range(0.1f, 2f)] [SerializeField] private float _feedFlight = 0.55f;
+
+        [Tooltip("Seconds between one bundle leaving 07 and the next (one bundle per material the recipe spends).")]
+        [Range(0f, 1f)] [SerializeField] private float _feedStagger = 0.15f;
+
+        [Tooltip("Metres a bundle's flight bows up above the straight line.")]
+        [Range(0f, 2f)] [SerializeField] private float _feedLift = 0.45f;
+
+        [Tooltip("Share of a flight a bundle spends popping out of 07, and again shrinking into the mouth.")]
+        [Range(0.05f, 0.5f)] [SerializeField] private float _feedGrowShare = 0.25f;
+
+        [Tooltip("Degrees the service hatch swings open (on its left hinge) once the hopper is fed.")]
+        [Range(10f, 160f)] [SerializeField] private float _hatchAngle = 70f;
+
+        [Tooltip("Seconds the hatch takes to swing open, and again to swing shut after the stitching.")]
+        [Range(0.05f, 2f)] [SerializeField] private float _hatchTime = 0.45f;
+
+        [Tooltip("Stitches per second of 07's beam while it stitches up the tower.")]
+        [Range(0.2f, 10f)] [SerializeField] private float _stitchRate = 2.5f;
+
+        [Tooltip("Half-width (m) of the stitching across the tower.")]
+        [Range(0.02f, 2f)] [SerializeField] private float _stitchSpread = 0.2f;
+
         [Header("Beacon and lights")]
         [Tooltip("Colour of the beacon's light.")]
         [SerializeField] private Color _beaconColor = Palette.Get(PaletteSwatch.WarmLamp);
@@ -73,7 +103,7 @@ namespace MoonProject.Gameplay
         [Range(0f, 4f)] [SerializeField] private float _poweredGlow = 1f;
 
         [Header("Upgrade moment")]
-        [Tooltip("Seconds the beacon flares before the new stage appears.")]
+        [Tooltip("Seconds the beacon flares before the new stage appears (07's beam is stitching by then).")]
         [Range(0.1f, 3f)] [SerializeField] private float _flareDuration = 0.7f;
 
         [Tooltip("Peak extra beacon brightness of the flare.")]
@@ -127,10 +157,16 @@ namespace MoonProject.Gameplay
         public float GrowFrom => _growFrom;
         public float GrowOvershoot => _growOvershoot;
         public float SinkTo => _sinkTo;
+        public float HatchAngle => _hatchAngle;
+        public float HatchTime => _hatchTime;
+        public float StitchRate => _stitchRate;
+        public float StitchSpread => _stitchSpread;
         public float BloomDuration => _bloomDuration;
         public float BloomWidth => _bloomWidth;
         public float BloomGlow => _bloomGlow;
         public int BloomSegments => _bloomSegments;
+
+        public FeedLook FeedLook => new FeedLook(_feedBeamLead, _feedFlight, _feedStagger, _feedLift, _feedGrowShare);
 
         public PadLook PadLook => new PadLook(_padRadius, _padRingWidth, _padSegments, _padIdle, _padInviting,
             _padOccupied, _padDone, _breathPeriod, _padBreathDepth, _padEase);

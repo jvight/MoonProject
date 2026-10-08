@@ -6,7 +6,7 @@ namespace MoonProject.Gameplay
         /// <summary>The radio tower's pad: base upgrades (signal reach, warmth).</summary>
         RadioTower = 0,
 
-        /// <summary>Kenji's workbench: rover abilities.</summary>
+        /// <summary>Kenji's Rover Bay: rover kit.</summary>
         Workshop = 1,
     }
 }

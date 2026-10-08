@@ -14,7 +14,7 @@ namespace MoonProject.Gameplay
         [Tooltip("Stable id (saves and the localization keys upgrade.<id>.* use it), e.g. radio_tower.")]
         [SerializeField] private string _id = string.Empty;
 
-        [Tooltip("Where it is sold: the radio tower's pad or Kenji's workbench.")]
+        [Tooltip("Where it is sold: the radio tower's pad or Kenji's Rover Bay.")]
         [SerializeField] private UpgradeStationKind _station;
 
         [Tooltip("Clear radio signal radius (m) before any level is bought; 0 = not a radio upgrade.")]

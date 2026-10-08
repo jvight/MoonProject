@@ -236,6 +236,9 @@ namespace MoonProject.Gameplay
         [Tooltip("07 counts as parked below this speed (m/s).")]
         [Range(0.05f, 3f)] [SerializeField] private float _tuneMaxSpeed = 0.8f;
 
+        [Tooltip("Seconds 07's beam taps her dial before she turns it (07 has no hands, VISION ruling 14).")]
+        [Range(0.05f, 1.5f)] [SerializeField] private float _dialTapTime = 0.35f;
+
         [Header("Signal pillar")]
         [Tooltip("Brightness of her amber signal pillar (warm, persistent).")]
         [Range(0f, 4f)] [SerializeField] private float _pillarGlow = 0.9f;
@@ -334,6 +337,7 @@ namespace MoonProject.Gameplay
         public float TuneFront => _tuneFront;
         public float TuneRadius => _tuneRadius;
         public float TuneMaxSpeed => _tuneMaxSpeed;
+        public float DialTapTime => _dialTapTime;
         public float PillarGlow => _pillarGlow;
         public float PillarRingGlow => _pillarRingGlow;
         public float PillarRise => _pillarRise;

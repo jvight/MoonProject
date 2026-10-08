@@ -6,9 +6,10 @@ namespace MoonProject.Gameplay.PlayModeTests
 {
     /// <summary>
     /// Holds 07's wheel in the playthrough like a calm player would: it steers toward a target, eases off as it gets
-    /// close, slows down for sharp turns and lets go of the throttle once it has arrived, and holds the Hover-Jump
-    /// button when told to. Read by the real RoverController through <see cref="IRoverDriveSource"/> and
-    /// <see cref="IRoverJumpSource"/>, so drive easing, steering, jumping and physics are the game's.
+    /// close, slows down for sharp turns and lets go of the throttle once it has arrived, backs straight up when told
+    /// to (out of Kenji's Rover Bay), and holds the Hover-Jump button when told to. Read by the real RoverController
+    /// through <see cref="IRoverDriveSource"/> and <see cref="IRoverJumpSource"/>, so drive easing, steering, jumping
+    /// and physics are the game's.
     /// </summary>
     public sealed class Autopilot : IRoverDriveSource, IRoverJumpSource
     {
@@ -39,6 +40,9 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         public float MaxThrottle { get; set; } = 1f;
 
+        /// <summary>While above zero, backs straight up at this throttle (0..1), whatever the target.</summary>
+        public float Reverse { get; set; }
+
         /// <summary>Holding the Hover-Jump button.</summary>
         public bool JumpHeld { get; set; }
 
@@ -50,6 +54,11 @@ namespace MoonProject.Gameplay.PlayModeTests
         {
             get
             {
+                if (Reverse > 0f)
+                {
+                    return new Vector2(0f, -Reverse);
+                }
+
                 if (Target == null || Arrived)
                 {
                     return Vector2.zero;

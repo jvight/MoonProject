@@ -47,7 +47,7 @@ namespace MoonProject.Gameplay
         [Tooltip("Light pillar over a broken friend that answered (WarmLamp, additive, rising bands).")]
         [SerializeField] private Material _friendPillar;
 
-        [Tooltip("Workbench upgrade sparks (WarmLamp, additive, soft round sprites).")]
+        [Tooltip("The Rover Bay's weld sparks (WarmLamp, additive, soft round sprites).")]
         [SerializeField] private Material _spark;
 
         [Tooltip("The soft amber halo over home seen from across the basin (WarmLamp, additive, round sprite).")]

@@ -16,6 +16,7 @@ namespace MoonProject.Gameplay
     {
         public const string BodyNode = "Body";
         public const string LidNode = "Lid";
+        public const string DialFaceNode = "DialFace";
         public const string NeedleNode = "Needle";
         public const string DialLampNode = "DialLamp";
         public const string SpeakerNode = "Speaker";
@@ -61,6 +62,7 @@ namespace MoonProject.Gameplay
             _needle = _pose.Node(_needleIndex);
             _speaker = _pose.Node(_speakerIndex);
             TapeSlot = _pose.Node(_pose.IndexOf(TapeSlotNode));
+            DialFace = _pose.Node(_pose.IndexOf(DialFaceNode));
             for (int leg = 0; leg < BellPose.Legs; leg++)
             {
                 _legIndex[leg] = _pose.IndexOf(LegPrefix + Corners[leg]);
@@ -92,6 +94,9 @@ namespace MoonProject.Gameplay
 
         /// <summary>The cassette door on her front (+Z out): where 07's beam slides the tape in.</summary>
         public Transform TapeSlot { get; }
+
+        /// <summary>Her dial on her front (the needle's window): where 07's beam taps to tune her.</summary>
+        public Transform DialFace { get; }
 
         public bool Visible
         {
