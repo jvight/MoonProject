@@ -227,6 +227,10 @@ namespace MoonProject.Gameplay
         [Tooltip("Seconds of that kick.")]
         [Range(0.05f, 2f)] [SerializeField] private float _clickDuration = 0.35f;
 
+        [Tooltip("Degrees her tuning knob turns per degree the needle moves between detents (its click kick " +
+                 "included, her crackle's jiggle not): the knob turns with each detent.")]
+        [Range(0f, 4f)] [SerializeField] private float _knobTurn = 1f;
+
         [Tooltip("07 parks this many metres in front of her dial to turn it (art: 2 m keeps off the tower pad).")]
         [Range(0.5f, 6f)] [SerializeField] private float _tuneFront = 2f;
 
@@ -334,6 +338,7 @@ namespace MoonProject.Gameplay
         public float NeedleEase => _needleEase;
         public float ClickKick => _clickKick;
         public float ClickDuration => _clickDuration;
+        public float KnobTurn => _knobTurn;
         public float TuneFront => _tuneFront;
         public float TuneRadius => _tuneRadius;
         public float TuneMaxSpeed => _tuneMaxSpeed;

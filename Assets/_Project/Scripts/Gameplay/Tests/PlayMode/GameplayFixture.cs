@@ -560,9 +560,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// A stand-in Bell with her rig contract's nodes under their parents (Body with Lid, DialFace/Needle/DialLamp,
-        /// Speaker, TapeSlot, Antenna and PartLamp_0..3; Leg_* at the hips with their Shin_*); the broken one tipped
-        /// back with her lid open.
+        /// A stand-in Bell with her rig contract's nodes under their parents (Body with Lid,
+        /// DialFace/Needle/DialLamp/Knob, Speaker, TapeSlot, Antenna and PartLamp_0..3; Leg_* at the hips with their
+        /// Shin_*); the broken one tipped back with her lid open.
         /// </summary>
         private GameObject BellModel(string name, bool broken)
         {
@@ -576,6 +576,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Transform dial = Node("DialFace", body, new Vector3(0f, 0.43f, 0.262f));
             Named(Block(dial, new Vector3(0.05f, 0.05f, 0.01f), new Vector3(0.12f, 0.01f, 0.01f)), BellRig.NeedleNode);
             Named(Block(dial, Vector3.zero, new Vector3(0.3f, 0.15f, 0.01f)), BellRig.DialLampNode);
+            Named(Block(dial, new Vector3(-0.31f, 0.07f, -0.006f), new Vector3(0.1f, 0.1f, 0.06f)), BellRig.KnobNode);
             Named(Block(body, new Vector3(0.2f, 0.21f, 0.28f), new Vector3(0.2f, 0.2f, 0.02f)), BellRig.SpeakerNode);
             Node(BellRig.TapeSlotNode, body, new Vector3(-0.16f, 0.21f, 0.274f));
             Named(Block(body, new Vector3(-0.46f, 0.8f, -0.15f), new Vector3(0.02f, 0.4f, 0.02f)), "Antenna");

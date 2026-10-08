@@ -39,6 +39,9 @@ namespace MoonProject.Gameplay
         /// <summary>Needle about the dial hub: 0 the band's left end, positive sweeps right.</summary>
         public float Needle { get; set; }
 
+        /// <summary>Tuning knob about its local Z, turning with the needle's detents (07's beam taps it).</summary>
+        public float Knob { get; set; }
+
         /// <summary>Dial lamp glow (1 reads warm amber).</summary>
         public float DialLamp { get; set; }
 

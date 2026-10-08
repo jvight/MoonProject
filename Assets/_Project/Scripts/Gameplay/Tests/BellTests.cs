@@ -306,7 +306,7 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void Dial_EasesItsNeedleToEachDetent_WithAClick()
+        public void Dial_EasesItsNeedleToEachDetent_WithAClick_AndTheKnobTurnsWithIt()
         {
             var bell = new BellLife(_bell, _friends, 7);
             bell.Settle(0f, RadioChannel.LumenAfterDark);
@@ -323,13 +323,28 @@ namespace MoonProject.Gameplay.Tests
             senses.Now = t;
             BellBeat first = bell.Step(senses);
             Assert.Less(first.Pose.Needle, 70f * 0.5f, "eased, not snapped");
+            Assert.AreEqual(first.Pose.Needle * _bell.KnobTurn, first.Pose.Knob, 1e-4f, "the knob turns with it");
+            BellPose last = first.Pose;
             for (; t < 3f; t += Frame)
             {
                 senses.Now = t;
-                previous = bell.Step(senses).Pose.Needle;
+                last = bell.Step(senses).Pose;
+                previous = last.Needle;
             }
 
             Assert.AreEqual(70f, previous, 0.5f, "settled on the Tape Deck's detent");
+            Assert.AreEqual(70f * _bell.KnobTurn, last.Knob, 0.5f, "and the knob one detent round");
+
+            Assert.IsTrue(bell.Crackle(t), "a new relic: her happy crackle");
+            float jiggle = 0f;
+            for (float end = t + 0.5f; t < end; t += Frame)
+            {
+                senses.Now = t;
+                BellPose pose = bell.Step(senses).Pose;
+                jiggle = Mathf.Max(jiggle, Mathf.Abs(pose.Knob - 70f * _bell.KnobTurn));
+            }
+
+            Assert.Less(jiggle, 0.5f, "her crackle jiggles the needle, never the knob");
         }
 
         [Test]
@@ -342,6 +357,8 @@ namespace MoonProject.Gameplay.Tests
             Assert.AreEqual("TapeSlot", rest.TapeSlot.name);
             Transform body = Find(standing.transform, BellRig.BodyNode);
             Transform needle = Find(standing.transform, BellRig.NeedleNode);
+            Transform knob = Find(standing.transform, BellRig.KnobNode);
+            Assert.AreSame(knob, rest.Knob, "07's beam taps her knob");
             Transform legFr = Find(standing.transform, "Leg_FR");
 
             rest.CapturePoseFrom(broken);
@@ -351,10 +368,11 @@ namespace MoonProject.Gameplay.Tests
             rest.Apply(1f, new BellPose());
             Assert.Less(Quaternion.Angle(Quaternion.identity, body.localRotation), 0.01f, "ends standing at rest");
 
-            var pose = new BellPose { Needle = 70f, Bob = 0.05f };
+            var pose = new BellPose { Needle = 70f, Knob = 45f, Bob = 0.05f };
             pose.SetLeg(BellPose.FrontRight, -20f, 30f);
             rest.Apply(1f, pose);
             Assert.AreEqual(70f, needle.localEulerAngles.z, 1e-3f);
+            Assert.AreEqual(45f, knob.localEulerAngles.z, 1e-3f, "the knob turns about its local Z");
             Assert.AreEqual(0.8f, body.localPosition.y, 1e-4f, "the body bobs");
             Assert.AreEqual(0.79f, legFr.localPosition.y, 1e-4f, "with its hips");
             Assert.AreEqual(340f, legFr.localEulerAngles.x, 1e-3f);
@@ -414,6 +432,7 @@ namespace MoonProject.Gameplay.Tests
             Transform dial = Node("DialFace", body, new Vector3(0f, 0.43f, 0.26f));
             Node(BellRig.NeedleNode, dial, Vector3.zero);
             Lamp(BellRig.DialLampNode, dial);
+            Node(BellRig.KnobNode, dial, new Vector3(-0.31f, 0.07f, -0.006f));
             Node(BellRig.SpeakerNode, body, new Vector3(0.2f, 0.21f, 0.28f));
             Node(BellRig.TapeSlotNode, body, new Vector3(-0.16f, 0.21f, 0.27f));
             for (int i = 0; i < 4; i++)
