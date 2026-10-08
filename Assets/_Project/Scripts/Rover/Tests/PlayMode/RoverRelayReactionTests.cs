@@ -77,7 +77,7 @@ namespace MoonProject.Rover.PlayModeTests
             float cameraBefore = Vector3.Angle(camera.forward, lamp - camera.position);
             Vector3 restingCamera = camera.position;
 
-            _rover.Context.Events.Publish(new RelayRestored("relay.0", lamp, 1, 4));
+            _rover.Context.Events.Publish(new RelayRestored("relay.0", lamp, 1, 4, "home", 0f));
             var trace = new CameraTrace(camera);
             float closestGaze = gazeBefore;
             float closestCamera = cameraBefore;

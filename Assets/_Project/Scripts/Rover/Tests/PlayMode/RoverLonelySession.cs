@@ -227,7 +227,7 @@ namespace MoonProject.Rover.PlayModeTests
             Vector3 lampPosition = lamp.transform.position;
             CaptureRelay("relay-1-before", lampPosition);
 
-            _context.Events.Publish(new RelayRestored(RelayId, lampPosition, 1, 4));
+            _context.Events.Publish(new RelayRestored(RelayId, lampPosition, 1, 4, "home", 0f));
             float restored = Time.time;
             for (int i = 0; i < RelayFrames.Length; i++)
             {
