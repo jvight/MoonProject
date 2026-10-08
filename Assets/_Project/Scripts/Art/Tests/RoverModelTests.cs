@@ -10,16 +10,18 @@ namespace MoonProject.Art.Tests
     {
         private static readonly string[] ContractPaths =
         {
-            "Body", "Bogie_L", "Bogie_R",
+            "Body", "Body/Decal07Fresh", "Bogie_L", "Bogie_R",
             "Wheel_FL", "Wheel_FR", "Wheel_ML", "Wheel_MR", "Wheel_RL", "Wheel_RR",
             "Neck", "Neck/Head", "Neck/Head/Eye", "Neck/Head/Eye/TetherOrigin", "Neck/Head/Eyelid",
-            "SolarWing", "Antenna", "Antenna/AntennaTip",
-            "HeadlampSocket", "CargoSocket", "DustSocket_L", "DustSocket_R", "CoilSocket",
+            "SolarWing", "SolarWing/CellFilled", "Antenna", "Antenna/AntennaTip", "Antenna/Pennant",
+            "HeadlampSocket", "CargoSocket", "DustSocket_L", "DustSocket_R", "CoilSocket", "DrumSocket_L",
+            "DrumSocket_R",
         };
 
         private static readonly string[] EmptyNodes =
         {
             "TetherOrigin", "HeadlampSocket", "CargoSocket", "DustSocket_L", "DustSocket_R", "CoilSocket",
+            "DrumSocket_L", "DrumSocket_R",
         };
 
         private ModelNode _rover;
@@ -112,7 +114,7 @@ namespace MoonProject.Art.Tests
             Assert.That(size.z, Is.InRange(2.1f, 2.4f), "length");
             Assert.That(size.x, Is.InRange(1.4f, 1.7f), "width");
             Assert.That(max.y, Is.InRange(1.35f, 1.8f), "height (the hooded head and whip antenna top it)");
-            Assert.That(triangles, Is.InRange(3000, 6500), "triangle budget");
+            Assert.That(triangles, Is.InRange(3000, 7000), "triangle budget (the hidden gifts included)");
         }
 
         [Test]
