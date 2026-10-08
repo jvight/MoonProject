@@ -13,9 +13,7 @@ namespace MoonProject.Rover.Tests
     /// Proves the art contract's reach (docs/ARCHITECTURE.md, "Contract: Kenji's Rover Bay"): with the real built
     /// Rover.prefab parked on the real RoverBay.prefab's turntable, every kit piece's socket (and the point above it
     /// the arm lowers from) lies within reach of a different arm at some turntable turn, and the Hover-Jump coils'
-    /// socket sits over the floor arm. Until art's bay carries the M3-14 arm rig (Yaw joints, the floor arm) there is
-    /// nothing to prove and it passes saying exactly that (so it never reddens a run before art's branch lands); from
-    /// then on it must reach (category BayReach runs it alone).
+    /// socket sits over the floor arm (category BayReach runs it alone).
     /// </summary>
     [TestFixture]
     [Category("BayReach")]
@@ -40,12 +38,6 @@ namespace MoonProject.Rover.Tests
             var roverAsset = AssetDatabase.LoadAssetAtPath<GameObject>(RoverAssetPaths.RoverPrefab);
             Assert.IsNotNull(bayAsset, $"{BayPrefab} is not built.");
             Assert.IsNotNull(roverAsset, $"{RoverAssetPaths.RoverPrefab} is not built.");
-            if (bayAsset.transform.Find("Arm_0/Yaw") == null || bayAsset.transform.Find("FloorArm") == null)
-            {
-                Assert.Pass("NOT YET PROVEN: art's Rover Bay has no M3-14 arm rig (Arm_n/Yaw, FloorArm/FloorLift/"
-                    + "FloorTip); this proves the reach once it lands.");
-            }
-
             _bay = Object.Instantiate(bayAsset);
             _rover = Object.Instantiate(roverAsset);
             var bay = new PrefabBay(_bay.transform);
