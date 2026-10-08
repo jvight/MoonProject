@@ -624,7 +624,8 @@ namespace MoonProject.Art.Editor
 
             Ground(Instantiate(CassetteModelBuilder.PrefabName("after_dark_1"), temporary, ArtPaths.PickupFolder),
                 new Vector3(0.35f, 0f, 2.7f));
-            Ground(Instantiate("Scrap_Coil", temporary, ArtPaths.ScrapFolder), new Vector3(0.95f, 0f, 2.6f));
+            Ground(Instantiate(SiteModelBuilder.BundleName(SalvageMaterial.Wiring), temporary, ArtPaths.PickupFolder),
+                new Vector3(0.95f, 0f, 2.6f));
             return Poses(
                 Pose("eyes", Stage(0f, 1.5f, 1.2f), Stage(0f, 1.15f, -3f), 50f),
                 Pose("friends", Stage(0f, 1.4f, 4.4f), Stage(0f, 1f, 0.5f), 45f),

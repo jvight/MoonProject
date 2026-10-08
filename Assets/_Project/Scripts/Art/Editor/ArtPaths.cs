@@ -20,7 +20,6 @@ namespace MoonProject.Art.Editor
         public const string LowPolyGlowOffMaterial = PaletteFolder + "/M_LowPolyGlowOff.mat";
         public const string RoverFolder = Root + "/Rover";
         public const string RockFolder = Root + "/Rocks";
-        public const string ScrapFolder = Root + "/Scrap";
         public const string BaseFolder = Root + "/Base";
         public const string RelicFolder = Root + "/Relics";
         public const string FriendFolder = Root + "/Friends";
