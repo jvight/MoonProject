@@ -45,10 +45,14 @@ namespace MoonProject.Art.Editor
         public static readonly Vector3 CargoPosition = new Vector3(0f, 0.48f, -0.64f);
 
         /// <summary>
-        /// Right capacitor drum socket on the lid edge above the middle wheel (+X outward); the left one mirrors x
-        /// and turns half round, so its +X points out too.
+        /// Right capacitor drum socket at the top of the lid edge above the middle wheel (+X outward), high enough
+        /// that the drum clears the wheel at the top of its suspension travel; the left one mirrors x and turns half
+        /// round, so its +X points out too.
         /// </summary>
-        public static readonly Vector3 DrumSocket = new Vector3(0.47f, 0.87f, -0.12f);
+        public static readonly Vector3 DrumSocket = new Vector3(0.47f, 0.95f, -0.12f);
+
+        /// <summary>How far the middle wheels rise at the top of their suspension travel (Rover's rig).</summary>
+        public const float MiddleWheelTravel = 0.16f;
 
         public const string Decal07FreshName = "Decal07Fresh";
         public const string CellFilledName = "CellFilled";
