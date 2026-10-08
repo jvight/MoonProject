@@ -11,7 +11,8 @@ Usage (from anywhere inside your worktree):
   python tools/unity_batch.py status      # who holds the machine-wide batch slots
 
 Common options:
-  --timeout SECONDS   kill Unity after this long (default 900, or 3600 when the worktree has no Library yet)
+  --timeout SECONDS   kill Unity after this long (default 900, 2400 for playmode tests, or 3600 when the worktree
+                      has no Library yet)
   --nographics        no GPU device (faster startup; never use it for captures)
   --no-wait           fail instead of waiting when all batch slots are busy
   --project PATH      run on another worktree of this repository instead of the current one
@@ -39,11 +40,19 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from moonbatch import logscan, mcpguard, nunit, procutil, slots  # noqa: E402
 
 DEFAULT_TIMEOUT = 900
+PLAYMODE_TIMEOUT = 2400  # the full PlayMode suite passed 15 min (Main-scene sessions) in M3-06
 FIRST_RUN_TIMEOUT = 3600
 FIRST_RUN_MEASURED = "measured: ~2 min for ~4000 assets on the 16-thread dev machine"
 HEARTBEAT_SECONDS = 30
 KEEP_RUNS = 30
 LOCK_DIR_NAME = "moon-batch"
+
+
+def default_timeout(args):
+    """Per-command default: full PlayMode runs boot the real Main scene several times and need longer."""
+    if args.cmd == "tests" and getattr(args, "platform", None) == "playmode":
+        return PLAYMODE_TIMEOUT
+    return DEFAULT_TIMEOUT
 
 
 def say(message):
@@ -302,7 +311,7 @@ def main():
             log_path = batch_dir / f"{stamp}-{label}.log"
             out_dir.mkdir(parents=True, exist_ok=True)
             first_run = not (root / "Library" / "ArtifactDB").exists()
-            timeout = args.timeout or (FIRST_RUN_TIMEOUT if first_run else DEFAULT_TIMEOUT)
+            timeout = args.timeout or (FIRST_RUN_TIMEOUT if first_run else default_timeout(args))
             cmdline = [str(unity), "-batchmode", "-projectPath", str(root), "-logFile", str(log_path),
                        "-silent-crashes"]
             if args.nographics:

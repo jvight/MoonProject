@@ -97,6 +97,17 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(mast.Restored.Lamp.position, restored.Position, "where 07 and the camera look up to");
             Assert.AreEqual(1, restored.LitCount);
             Assert.AreEqual(4, restored.Total);
+            Assert.AreEqual("home", restored.LinkedNodeId, "its pulse runs home");
+            float way = SurfaceRules.HorizontalDistance(mast.Anchor.Position, Vector3.zero);
+            Assert.AreEqual(way / _fixture.RelayTuning.PulseSpeed, restored.PulseSeconds, 1e-3f,
+                "when the pulse reaches home");
+            RelayNode node = reach.GetNode(mast.Node);
+            Assert.AreEqual(_fixture.RelayTuning.MastReach, node.Radius);
+            Assert.Less(Vector3.Distance(mast.Restored.Lamp.position, node.LampPosition), 1e-3f, "its lamp, upright");
+            Assert.Less(Vector3.Distance(_fixture.Gameplay.Tower.BeaconPosition, reach.GetNode(0).LampPosition),
+                1e-3f, "home's lamp is the tower's beacon");
+            Assert.AreEqual(_fixture.RadioTowerUpgrade.SignalRadiusAt(0), reach.GetNode(0).Radius,
+                "home's reach is the dark tower's");
             TickerLine line = _fixture.Events.TickerLine[_fixture.Events.TickerLine.Count - 1].Value;
             Assert.AreEqual("ticker.relay.online", line.Key);
             Assert.AreEqual("1", line.Argument);
@@ -140,6 +151,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return new WaitForSeconds(_fixture.RelayTuning.ChainDelay + 0.3f);
             Assert.AreEqual(2, _fixture.Events.RelayRestored.Count, "...then the mouth, in turn");
             Assert.AreEqual("relay.2", _fixture.Events.RelayRestored[1].Value.RelayId);
+            Assert.AreEqual("relay.0", _fixture.Events.RelayRestored[1].Value.LinkedNodeId,
+                "the mouth's pulse runs to the mound, the node it links through");
             Assert.AreEqual(2, _fixture.Events.RelayRestored[1].Value.LitCount);
             Assert.Greater(_fixture.Events.RelayRestored[1].Time, _fixture.Events.RelayRestored[0].Time);
             yield return new WaitForSeconds(_fixture.RelayTuning.LampWarm + 0.2f);
