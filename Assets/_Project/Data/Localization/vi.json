@@ -99,10 +99,6 @@
             "text": "Giữ"
         },
         {
-            "key": "ui.tower.need",
-            "text": "Cần nhặt thêm {0} mảnh phế liệu"
-        },
-        {
             "key": "ui.tower.purchased",
             "text": "Sóng radio đã vươn xa hơn"
         },
@@ -501,10 +497,6 @@
         {
             "key": "site.lander.name",
             "text": "Tàu tiếp tế trong hẻm"
-        },
-        {
-            "key": "ui.recipe.line",
-            "text": "{0} kim loại · {1} dây điện · {2} quang học"
         },
         {
             "key": "ui.recipe.need",

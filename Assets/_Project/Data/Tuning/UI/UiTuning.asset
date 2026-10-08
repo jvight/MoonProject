@@ -118,6 +118,11 @@ MonoBehaviour:
       _dwellSeconds: 0.8
       _liftMetres: 1.7
       _usesToRetire: 2
+    - _kind: 11
+      _action: 1
+      _dwellSeconds: 0.4
+      _liftMetres: 0.6
+      _usesToRetire: 2
     _startDelay: 9
     _maxShowSeconds: 7
     _repeatCooldown: 25
@@ -136,7 +141,7 @@ MonoBehaviour:
     _hoverFadeSeconds: 0.25
     _hoverSpringFrequency: 1.6
     _hoverSpringDamping: 0.55
-  _scrapChip:
+  _materialsChip:
     _reveal:
       _fadeIn: 0.35
       _fadeOut: 0.7
@@ -144,10 +149,13 @@ MonoBehaviour:
       _scaleFrom: 0.92
       _springFrequency: 1.8
       _springDamping: 0.6
-    _secondsPerScrap: 0.06
-    _minCountSeconds: 0.35
+    _secondsPerUnit: 0.12
+    _minCountSeconds: 0.4
     _maxCountSeconds: 1.4
     _lingerSeconds: 3
+    _pulseSeconds: 1.2
+    _pulseScale: 0.16
+    _glowOpacity: 0.35
   _memoryCard:
     _reveal:
       _fadeIn: 1
@@ -245,3 +253,20 @@ MonoBehaviour:
       _springDamping: 0.6
     _tagLiftMetres: 0.9
     _tagStackGap: 8
+  _salvage:
+    _ring:
+      _fadeIn: 0.3
+      _fadeOut: 0.5
+      _slide: 0
+      _scaleFrom: 0.85
+      _springFrequency: 1.8
+      _springDamping: 0.6
+    _siteName:
+      _fadeIn: 0.9
+      _fadeOut: 1.4
+      _slide: 12
+      _scaleFrom: 0.94
+      _springFrequency: 1
+      _springDamping: 0.7
+    _siteNameHoldSeconds: 3
+    _siteNameLiftMetres: 6

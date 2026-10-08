@@ -16,17 +16,26 @@ MonoBehaviour:
   _station: 0
   _baseSignalRadius: 60
   _levels:
-  - _cost: 15
+  - _recipe:
+      _metal: 0
+      _wiring: 1
+      _optics: 1
     _signalRadius: 110
     _lightBoost: 1.25
     _grantsAbility: 0
     _ability: 0
-  - _cost: 40
+  - _recipe:
+      _metal: 0
+      _wiring: 2
+      _optics: 1
     _signalRadius: 170
     _lightBoost: 1.5
     _grantsAbility: 0
     _ability: 0
-  - _cost: 80
+  - _recipe:
+      _metal: 0
+      _wiring: 2
+      _optics: 2
     _signalRadius: 260
     _lightBoost: 1.8
     _grantsAbility: 0

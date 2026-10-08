@@ -99,10 +99,6 @@
             "text": "Hold"
         },
         {
-            "key": "ui.tower.need",
-            "text": "{0} more scrap to gather"
-        },
-        {
             "key": "ui.tower.purchased",
             "text": "The signal grows"
         },
@@ -501,10 +497,6 @@
         {
             "key": "site.lander.name",
             "text": "Canyon Supply Lander"
-        },
-        {
-            "key": "ui.recipe.line",
-            "text": "{0} metal · {1} wiring · {2} optics"
         },
         {
             "key": "ui.recipe.need",

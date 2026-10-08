@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d7476f4687ca7f41adea8569517c64d, type: 3}
+  m_Name: SalvageAudioTuning
+  m_EditorClassIdentifier: 
+  _cutFadeIn: 0.25
+  _releaseFade: 0.6
+  _breakFade: 0.12
+  _stepSeconds: 0.6
+  _topStep: 4
+  _glide: 0.06
+  _textureRise: 1.12
+  _textureVolume: 0.85
+  _toneVolume: 0.6
+  _melodyTopWindow: 4

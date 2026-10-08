@@ -16,4 +16,5 @@ MonoBehaviour:
   _mass: 14
   _prefab: {fileID: 376253268612102607, guid: fa31f0137eab6134ab5c58dbbbfeba81, type: 3}
   _answerNote: 2
-  _placement: 1
+  _siteId: site.garage
+  _heartOffset: {x: 1.2, y: 0}

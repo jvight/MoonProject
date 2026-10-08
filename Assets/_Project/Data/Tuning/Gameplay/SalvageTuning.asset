@@ -1,0 +1,76 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bd6bb337f492f6944b2832a357f160be, type: 3}
+  m_Name: SalvageTuning
+  m_EditorClassIdentifier: 
+  _reachRadius: 8
+  _reachHysteresis: 1.3
+  _aimCone: 26
+  _stickyCone: 36
+  _distanceWeight: 1.5
+  _haloScale: 1.06
+  _hoverHalo: 0.55
+  _cutHalo: 0.9
+  _haloEase: 0.15
+  _engageSpeed: 1.2
+  _engageHysteresis: 1.5
+  _cutSecondsPerUnit: 1
+  _cutSeconds: {x: 2, y: 4}
+  _beamSweepRate: 0.9
+  _beamSweep: 0.12
+  _sparkRate: 26
+  _sparkSpeed: {x: 0.6, y: 1.8}
+  _sparkLifetime: {x: 0.35, y: 0.8}
+  _sparkSize: {x: 0.02, y: 0.05}
+  _sparkSpread: 40
+  _sparkGravity: 0.16
+  _sparkStreak: 0.12
+  _maxSparks: 48
+  _smallVolume: 1
+  _mediumVolume: 3
+  _smallYield: 2
+  _mediumYield: 3
+  _largeYield: 4
+  _dragYield: 4
+  _trailYield: 1
+  _dragClearance: 3
+  _dragMass: 14
+  _dragLinearDamping: 0.6
+  _dragAngularDamping: 1.2
+  _dragBounciness: 0.1
+  _dragFriction: 0.8
+  _returnDelay: 2
+  _belowSurfaceLimit: 1.5
+  _returnMargin: 3
+  _returnHover: 1.2
+  _returnDuration: 3
+  _returnPerMetre: 0.02
+  _breakDuration: 0.7
+  _breakPop: 0.45
+  _breakTumble: 35
+  _magnetRadius: 5.5
+  _flightDuration: 0.7
+  _flightPerMetre: 0.06
+  _flightLift: 0.9
+  _spiralRadius: 0.5
+  _spiralTurns: 1
+  _flightSpin: 180
+  _arrivalScale: 0.3
+  _minArrivalInterval: 0.12
+  _chainWindow: 40
+  _trailSink: 0.3
+  _trailTilt: 12
+  _glanceRadius: 12
+  _flashPoolSize: 4
+  _flashDuration: 0.45
+  _flashRadius: {x: 0.12, y: 0.5}
+  _flashIntensity: 1.2

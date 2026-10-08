@@ -10,10 +10,22 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 29a36a334e0c74b4d96219bdfddf95ce, type: 3}
-  m_Name: RelayTuning
+  m_Name: 
   m_EditorClassIdentifier: 
   _mastReach: 110
-  _costs: 3c0000005a0000007800000096000000
+  _costs:
+  - _metal: 2
+    _wiring: 1
+    _optics: 0
+  - _metal: 3
+    _wiring: 1
+    _optics: 0
+  - _metal: 3
+    _wiring: 2
+    _optics: 0
+  - _metal: 4
+    _wiring: 2
+    _optics: 0
   _partDistance: {x: 14, y: 34}
   _partPreferred: 22
   _partRingStep: 4
