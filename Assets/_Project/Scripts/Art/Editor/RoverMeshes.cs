@@ -153,13 +153,22 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
-        /// The mismatched replacement from another machine: a grey metal tyre (it shows from behind) with four
-        /// lugs and a sage hub held by four bolts.
+        /// The mismatched spare from another machine, clearly patched on: dark rubber like the others but with a
+        /// busier tread of eight small lugs, two wraps of faded tape round the tyre with a loose end, and a sage hub
+        /// held by four bolts (VISION ruling 13: wear must read as intentional at first glance).
         /// </summary>
         public static LowPolyMeshBuilder SpareWheel()
         {
-            var b = new LowPolyMeshBuilder(300);
-            Tyre(b, 10, 4, PaletteSwatch.Metal, PaletteSwatch.Charcoal);
+            var b = new LowPolyMeshBuilder(400);
+            Tyre(b, 10, 8, PaletteSwatch.Charcoal, PaletteSwatch.Charcoal);
+            for (int wrap = -1; wrap <= 1; wrap += 2)
+            {
+                b.Prism(At(new Vector3(wrap * 0.045f, 0f, 0f), new Vector3(0f, wrap * 7f, -90f)), TyreRadius + 0.006f,
+                    0.032f, 10, PaletteSwatch.FadedPaint, false);
+            }
+
+            b.Box(At(new Vector3(WheelHalfWidth + 0.003f, -0.2f, -0.21f), new Vector3(-35f, 0f, 0f)),
+                new Vector3(0.006f, 0.034f, 0.09f), PaletteSwatch.FadedPaint);
             b.Prism(At(new Vector3(WheelHalfWidth + 0.012f, 0f, 0f), AlongX), 0.24f, 0.03f, 10, PaletteSwatch.Sage);
             for (int i = 0; i < 4; i++)
             {
