@@ -9,6 +9,9 @@ namespace MoonProject.Art.Tests
     /// <summary>The base part of the M2 content contract: names, anchors, sockets and pivots.</summary>
     public sealed class BaseModelTests
     {
+        // A base model costs at most this many triangles (the lander, carrying 07's dock and the lift, is the most).
+        private const int TriangleBudget = 7000;
+
         // The removable weather layers (dust, rust, bleach) cost at most this much more on top of a model.
         private const int WeatherBudget = 7000;
 
@@ -115,7 +118,7 @@ namespace MoonProject.Art.Tests
                 }
 
                 TestContext.WriteLine($"{model.Name}: {triangles} triangles, {weather} in its weather layers");
-                Assert.That(triangles, Is.InRange(300, 6000), $"{model.Name} triangle budget");
+                Assert.That(triangles, Is.InRange(300, TriangleBudget), $"{model.Name} triangle budget");
                 Assert.LessOrEqual(weather, WeatherBudget, $"{model.Name} weather layers budget");
             }
         }

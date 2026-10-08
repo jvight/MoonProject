@@ -21,6 +21,9 @@ namespace MoonProject.Art.Editor
         public const string ShelfName = "MuseumShelf";
         public const string TowerPrefix = "RadioTower_L";
 
+        /// <summary>Height of the lander's porch deck in front of the hatch (where the cable lift tops out).</summary>
+        public const float LanderDeckTop = LanderMeshes.DeckTop;
+
         /// <summary>Width of the museum shelf (it stands centred on <see cref="ShelfAnchor"/>).</summary>
         public const float ShelfWidth = MuseumShelfMeshes.Width;
 
@@ -89,7 +92,8 @@ namespace MoonProject.Art.Editor
         public static void Build()
         {
             Material material = PaletteAssetBuilder.LoadMaterial();
-            ModelPrefabWriter.Write(CreateLander(), ArtPaths.BaseFolder, material);
+            ModelPrefabWriter.Write(CreateLander(), ArtPaths.BaseFolder, material,
+                PaletteAssetBuilder.LoadGlowOffMaterial());
             ModelPrefabWriter.Write(CreateShelf(), ArtPaths.BaseFolder, material);
             ModelPrefabWriter.Write(CreateWorkbench(), ArtPaths.BaseFolder, material);
             ModelPrefabWriter.Write(CreateRoverBay(), ArtPaths.BaseFolder, material,
@@ -119,11 +123,39 @@ namespace MoonProject.Art.Editor
 
             lander.Add(new ModelNode("FriendSocket_tilly", LanderMeshes.TillyPerch));
             lander.Add(new ModelNode("WorkshopAnchor", WorkshopAnchor));
+            lander.Add(new ModelNode("DockAnchor", ChargingDockMeshes.Anchor,
+                Place.Rotation(ChargingDockMeshes.AnchorEuler)));
+            lander.Add(new ModelNode("DockGlow", Vector3.zero, Quaternion.identity,
+                new ModelMesh(LanderName + "_DockGlow", ChargingDockMeshes.Glow()), ModelMaterial.PaletteGlowOff));
+            AddLift(lander);
             LowPolyMeshBuilder dust = Weathering.Dust(hull, LanderDustTide, Weathering.DustLift);
             dust.Append(LanderMeshes.Drifts(), Matrix4x4.identity);
             Weathering.Attach(lander, LanderName, Weathering.Bleach(hull, Weathering.PaintLift), LanderMeshes.Rust(),
                 dust);
             return lander;
+        }
+
+        /// <summary>
+        /// The cable lift's moving parts on the lander: the platform at its jammed halfway pose with a RoverSpot
+        /// child and its own weather layers, the LiftBottom and LiftTop stops it travels between, and the two hoist
+        /// cables hanging from the drum to the carriage at the jammed pose.
+        /// </summary>
+        private static void AddLift(ModelNode lander)
+        {
+            lander.Add(new ModelNode("LiftBottom", CableLiftMeshes.Bottom));
+            lander.Add(new ModelNode("LiftTop", CableLiftMeshes.Top));
+            LowPolyMeshBuilder deck = CableLiftMeshes.Platform();
+            string prefix = LanderName + "_LiftPlatform";
+            ModelNode platform = lander.Add(new ModelNode("LiftPlatform", CableLiftMeshes.Jammed,
+                new ModelMesh(prefix, deck)));
+            platform.Add(new ModelNode("RoverSpot", CableLiftMeshes.RoverSpot,
+                Place.Rotation(CableLiftMeshes.RoverSpotEuler)));
+            Weathering.Attach(platform, prefix, null, CableLiftMeshes.PlatformRust(),
+                CableLiftMeshes.PlatformDust(deck));
+            var cable = new ModelMesh(LanderName + "_LiftCable",
+                CableLiftMeshes.Cable(CableLiftMeshes.CableLength(CableLiftMeshes.Jammed)));
+            lander.Add(new ModelNode("LiftCable_L", CableLiftMeshes.CableTop(-1), cable));
+            lander.Add(new ModelNode("LiftCable_R", CableLiftMeshes.CableTop(1), cable));
         }
 
         public static ModelNode CreateShelf()
@@ -250,7 +282,7 @@ namespace MoonProject.Art.Editor
             tower.Add(new ModelNode("HopperMouth", RadioTowerMeshes.PortHopperMouth,
                 Place.Rotation(RadioTowerMeshes.PortHopperFacing)));
             tower.Add(new ModelNode("ServiceHatch", RadioTowerMeshes.ServiceHatchHinge, Quaternion.identity,
-                new ModelMesh(TowerPrefix + "ServiceHatch",
+                new ModelMesh("RadioTower_ServiceHatch",
                     ServiceKit.Hatch(RadioTowerMeshes.ServiceHatchWidth, RadioTowerMeshes.ServiceHatchHeight))));
             LowPolyMeshBuilder dust = Weathering.Dust(RadioTowerMeshes.DustSurfaces(level), FurnitureDustTide,
                 Weathering.DustLift);

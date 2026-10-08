@@ -5,17 +5,20 @@ namespace MoonProject.Art.Editor
 {
     /// <summary>
     /// The abandoned lander that 07 calls home: a gold-foil descent stage on four splayed legs under a cream
-    /// enamel cabin with 07's worn orange stripe, a hatch onto the deck, a ladder down to a welcome mat, round warm
-    /// windows and little porch lamps. Decades alone show in its shape (a dented stage panel, one torn away, the dish
-    /// knocked askew, a snapped cable, the HOME sign leaning) and in the removable weather layers (see
-    /// <see cref="Weathering"/>). Built in base space: origin on the ground under the lander's centre, +Z = the hatch
-    /// side.
+    /// enamel cabin with 07's worn orange stripe, a hatch onto the deck, the crew's ladder down to 07's charging dock
+    /// with the crew's cable lift beside it, round warm windows and little porch lamps. Decades alone show in its
+    /// shape (a dented stage panel, one torn away, the dish knocked askew, a snapped cable, the HOME sign leaning) and
+    /// in the removable weather layers (see <see cref="Weathering"/>). Built in base space: origin on the ground under
+    /// the lander's centre, +Z = the hatch side.
     /// </summary>
     internal static class LanderMeshes
     {
         public const float StageBottom = 1.45f;
         public const float StageTop = 2.75f;
         public const float CabinTop = 4.64f;
+
+        /// <summary>Top of the porch deck in front of the hatch.</summary>
+        public const float DeckTop = StageTop + 0.05f;
 
         public const int LampCount = 4;
 
@@ -108,6 +111,8 @@ namespace MoonProject.Art.Editor
             Matrix4x4 sign = HomeSignFrame * At(0f, 0.95f, 0.035f + 0.02f + Weathering.RustLift);
             SiteKit.RustStreak(b, sign, -0.36f, 0.12f, 0.16f);
             SiteKit.RustStreak(b, sign, 0.36f, 0.12f, 0.22f);
+            ChargingDockMeshes.Rust(b);
+            CableLiftMeshes.FrameRust(b);
             return b;
         }
 
@@ -138,6 +143,8 @@ namespace MoonProject.Art.Editor
             Cabin(b);
             Deck(b);
             Ladder(b);
+            ChargingDockMeshes.Dock(b);
+            CableLiftMeshes.Frame(b);
             Roof(b);
             Clutter(b);
             for (int i = 0; i < LampCount; i++)
@@ -186,7 +193,7 @@ namespace MoonProject.Art.Editor
                 case 0:
                     return new Vector3(0f, 4.08f, 1.62f);
                 case 1:
-                    return new Vector3(-0.95f, 1.05f, 3.05f);
+                    return new Vector3(-1.08f, 1.05f, 3.05f);
                 case 2:
                     return new Vector3(1.78f, 3.4f, 0f);
                 case 3:
@@ -317,7 +324,7 @@ namespace MoonProject.Art.Editor
                 PaletteSwatch.WarmAccent);
         }
 
-        /// <summary>A ladder from the deck edge down to a warm welcome mat on the dust.</summary>
+        /// <summary>The crew's ladder from the deck edge down to the dust: a remnant, 07 rides the lift.</summary>
         private static void Ladder(LowPolyMeshBuilder b)
         {
             var topLeft = new Vector3(-0.32f, StageTop + 0.02f, DeckEdge);
@@ -330,9 +337,6 @@ namespace MoonProject.Art.Editor
                 Vector3 rung = Vector3.Lerp(bottomLeft, topLeft, i / 8f);
                 RecipeKit.Rod(b, rung, rung + across, 0.022f, 5, PaletteSwatch.Metal);
             }
-
-            b.Box(At(0f, 0.012f, DeckEdge + 1.55f), new Vector3(1.1f, 0.024f, 0.7f), PaletteSwatch.WarmAccent);
-            b.Box(At(0f, 0.026f, DeckEdge + 1.55f), new Vector3(0.9f, 0.006f, 0.5f), PaletteSwatch.Honey);
         }
 
         private static void Roof(LowPolyMeshBuilder b)
@@ -416,7 +420,7 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
-        /// A little hand-painted "HOME" sign planted in the dust beside the ladder, leaning with the years.
+        /// A little hand-painted "HOME" sign planted in the dust beside 07's dock, leaning with the years.
         /// </summary>
         private static void HomeSign(LowPolyMeshBuilder b)
         {
@@ -427,7 +431,7 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>The HOME sign's lean: back and to the side, sunk a little in the dust.</summary>
-        private static Matrix4x4 HomeSignFrame => At(new Vector3(1.25f, 0f, 3.15f), new Vector3(-9f, -17f, 13f));
+        private static Matrix4x4 HomeSignFrame => At(new Vector3(-1.35f, 0f, 4.75f), new Vector3(-9f, -17f, 13f));
 
         /// <summary>
         /// A face frame on a vertical octagon wall facing <paramref name="yaw"/>, <paramref name="distance"/> out.
