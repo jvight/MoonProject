@@ -13,8 +13,8 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// <summary>
     /// Scripted sessions for the relay network (docs/features/M3-06) with stand-in masts on the flat world's relay
     /// pads: gathering a mast's part, restoring it with the scrap it costs, the link pulse and the reach it adds; a
-    /// mast beyond the lit frontier listening until a neighbour or a stronger tower links it; and all of it kept
-    /// through a save and a reboot.
+    /// mast beyond the lit frontier listening until a neighbour or a stronger tower links it; the radio-hop home and
+    /// back; and all of it kept through a save and a reboot.
     /// </summary>
     public sealed class RelaySessions : InputTestFixture
     {
@@ -156,6 +156,66 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(3, _fixture.Events.RelayRestored.Count, "the tower's first level links it");
             Assert.AreEqual("relay.1", _fixture.Events.RelayRestored[2].Value.RelayId);
             Assert.AreEqual(4, relays.Reach.LitCount);
+        }
+
+        [UnityTest]
+        public IEnumerator Hop_FromALitMast_Home_AndBack_ThroughASoftDark()
+        {
+            _fixture = GameplayFixture.Boot(_controls);
+            yield return null;
+            RelayField relays = _fixture.Gameplay.Relays;
+            IRadioHop hop = _fixture.Bootstrap.Context.Get<IRadioHop>();
+            Assert.AreSame(relays.Hop, hop);
+            RelayMast mast = relays.Masts[0];
+            _fixture.Gameplay.Wallet.Add(60);
+            Assert.IsFalse(_fixture.Gameplay.Hints.TryGet(InteractionKind.Hop, out _), "nowhere to hop yet");
+            yield return Restore(mast);
+
+            _fixture.Rover.Place(Flat(mast.Anchor.Position), Yaw(mast.Anchor.Forward));
+            yield return null;
+            yield return null;
+            Assert.IsTrue(_fixture.Gameplay.Hints.TryGet(InteractionKind.Hop, out InteractionHint hint));
+            Assert.AreEqual(mast.Anchor.Position, hint.Position);
+            Press(_keyboard.eKey);
+            yield return null;
+            yield return null;
+            Assert.AreEqual(RadioHopPhase.Choosing, hop.Phase);
+            Assert.IsTrue(_fixture.Events.RadioHopListChanged[0].Value.Open, "the camera keeps its wide shot closed");
+            Assert.AreEqual(1, hop.ChoiceCount);
+            Assert.AreEqual("hop.node.home", hop.ChoiceLabelKey(0));
+            Release(_keyboard.eKey);
+            yield return null;
+            Press(_keyboard.eKey);
+            yield return new WaitForSeconds(_fixture.RelayTuning.HopConfirmHold + 0.15f);
+            Release(_keyboard.eKey);
+            Assert.AreEqual("relay.0", _fixture.Events.RadioHopStarted[0].Value.FromId);
+            Assert.AreEqual("home", _fixture.Events.RadioHopStarted[0].Value.ToId);
+            Assert.IsFalse(_fixture.Events.RadioHopListChanged[1].Value.Open);
+            HopSequence sequence = HopSequence.For(_fixture.RelayTuning);
+            yield return new WaitForSeconds(sequence.PlaceAt - 0.3f);
+            Assert.Greater(hop.Fade, 0.3f, "the view eases out");
+            Assert.AreEqual(0, _fixture.Rover.Placements, "07 stays put until the view is dark");
+            yield return new WaitForSeconds(sequence.Duration - sequence.PlaceAt + 0.5f);
+            Assert.AreEqual(1, _fixture.Rover.Placements);
+            Assert.AreEqual("home", _fixture.Events.RadioHopFinished[0].Value.ToId);
+            Assert.Less(SurfaceRules.HorizontalDistance(_fixture.Rover.Position, Vector3.zero), 0.01f,
+                "on home's pad");
+            Assert.AreEqual(RadioHopPhase.Closed, hop.Phase);
+            Assert.AreEqual(0f, hop.Fade);
+            Assert.AreEqual(0, _fixture.Rover.HoldStillCount);
+
+            Press(_keyboard.eKey);
+            yield return null;
+            Release(_keyboard.eKey);
+            yield return null;
+            Assert.AreEqual(RadioHopPhase.Choosing, hop.Phase, "home is a pad too");
+            Assert.AreEqual("hop.node.relay.0", hop.ChoiceLabelKey(0));
+            Assert.IsTrue(hop.Confirm(), "the UI may confirm too");
+            yield return new WaitForSeconds(sequence.Duration + 0.3f);
+            Assert.AreEqual(2, _fixture.Rover.Placements);
+            Assert.Less(SurfaceRules.HorizontalDistance(_fixture.Rover.Position, mast.Anchor.Position), 0.01f,
+                "back on relay.0's pad");
+            Assert.AreEqual(Yaw(-mast.Anchor.Forward), _fixture.Rover.Rotation.eulerAngles.y, 0.5f, "facing out");
         }
 
         [UnityTest]

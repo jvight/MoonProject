@@ -1,15 +1,19 @@
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools;
 using MoonProject.Core;
+using MoonProject.Core.Events;
 using Object = UnityEngine.Object;
 
 namespace MoonProject.Gameplay.Tests
 {
     /// <summary>
     /// The relay network's pure logic (docs/features/M3-06): the station's reach over the real chain, the scrap cost,
-    /// where a mast's part lies, the restoration timeline and the mast rig.
+    /// where a mast's part lies, the restoration and hop timelines, the radio-hop's list and sequence, and the mast
+    /// rig.
     /// </summary>
     public sealed class RelayTests
     {
@@ -181,6 +185,118 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
+        public void HopSequence_EasesOutAndBackIn_InAboutTwoSeconds()
+        {
+            HopSequence hop = HopSequence.For(Create<RelayTuning>());
+            Assert.That(hop.Duration, Is.InRange(1.5f, 2.5f));
+            Assert.AreEqual(0f, hop.Fade(0f), 1e-5f, "never a cut");
+            Assert.AreEqual(1f, hop.Fade(hop.PlaceAt), 1e-5f, "07 moves only while the view is dark");
+            Assert.AreEqual(1f, hop.Fade(hop.FinishAt - Frame), 1e-5f);
+            Assert.AreEqual(0f, hop.Fade(hop.Duration), 1e-5f);
+            Assert.Less(hop.Fade(hop.PlaceAt * 0.5f), 0.9f);
+            Assert.AreEqual(1f, hop.Progress(hop.Duration), 1e-5f);
+            Assert.Throws<ArgumentException>(() => new HopSequence(0f, 0.4f, 0.8f), "never instant");
+        }
+
+        [Test]
+        public void Hop_OpensOnALitPad_TapCycles_HoldHops_ThroughTheDark()
+        {
+            var bus = new EventBus();
+            var opened = new List<bool>();
+            var started = new List<RadioHopStarted>();
+            var finished = new List<RadioHopFinished>();
+            using IDisposable a = bus.Subscribe<RadioHopListChanged>(e => opened.Add(e.Open));
+            using IDisposable b = bus.Subscribe<RadioHopStarted>(e => started.Add(e));
+            using IDisposable c = bus.Subscribe<RadioHopFinished>(e => finished.Add(e));
+            StationReach reach = RealChain(TowerLevel1, out RelayTuning tuning);
+            var rover = new FakeRover { Position = Relay0 };
+            var tether = new FakeTether();
+            RadioHop hop = Hop(bus, reach, tuning, rover, rover, tether);
+
+            hop.Step(Frame, false, Vector2.zero);
+            Assert.IsFalse(hop.CanOpen, "relay.0 is dark: no hop from it");
+            reach.SetRestored(1, true);
+            reach.SetRestored(3, true);
+            hop.Step(Frame, false, Vector2.zero);
+            Assert.IsTrue(hop.CanOpen);
+            Assert.AreEqual(1, hop.Here);
+            rover.Speed = 3f;
+            hop.Step(Frame, false, Vector2.zero);
+            Assert.IsFalse(hop.CanOpen, "only parked");
+            rover.Speed = 0f;
+            tether.State = TetherAimState.Towing;
+            hop.Step(Frame, false, Vector2.zero);
+            Assert.IsFalse(hop.CanOpen, "relics come home by road");
+            tether.State = TetherAimState.Idle;
+
+            hop.Step(Frame, true, Vector2.zero);
+            Assert.AreEqual(RadioHopPhase.Choosing, hop.Phase);
+            CollectionAssert.AreEqual(new[] { true }, opened);
+            Assert.AreEqual(2, hop.ChoiceCount, "home and relay.2, not relay.0 itself");
+            Assert.AreEqual(0, hop.ChoiceNode(0));
+            Assert.AreEqual("hop.node.home", hop.ChoiceLabelKey(0));
+            Assert.AreEqual("hop.node.relay.2", hop.ChoiceLabelKey(1));
+            Step(hop, 1f, true);
+            Assert.AreEqual(RadioHopPhase.Choosing, hop.Phase, "the press that opened it never hops");
+            hop.Step(Frame, false, Vector2.zero);
+            hop.Step(Frame, true, Vector2.zero);
+            hop.Step(Frame, false, Vector2.zero);
+            Assert.AreEqual(1, hop.Selected, "a tap picks the next node");
+            hop.Previous();
+            Assert.AreEqual(0, hop.Selected);
+            Assert.IsTrue(rover.Gazes > 0, "07 glances toward the highlighted node");
+
+            Step(hop, tuning.HopConfirmHold + Frame, true);
+            Assert.AreEqual(RadioHopPhase.Leaving, hop.Phase);
+            CollectionAssert.AreEqual(new[] { true, false }, opened, "the list closes as the hop begins");
+            Assert.AreEqual("relay.0", started[0].FromId);
+            Assert.AreEqual(StationReach.HomeId, started[0].ToId);
+            Assert.AreEqual(1, rover.Holds, "07 holds still");
+            HopSequence sequence = HopSequence.For(tuning);
+            Step(hop, sequence.PlaceAt - 0.05f, false);
+            Assert.AreEqual(0, rover.Placements, "not before the view is dark");
+            Assert.Greater(hop.Fade, 0.9f);
+            Step(hop, 0.1f, false);
+            Assert.AreEqual(RadioHopPhase.Dark, hop.Phase);
+            Assert.AreEqual(1, rover.Placements);
+            Assert.AreEqual(reach.Position(0), rover.Position, "on home's pad");
+            Assert.IsEmpty(finished);
+            Step(hop, sequence.FinishAt - sequence.PlaceAt, false);
+            Assert.AreEqual(StationReach.HomeId, finished[0].ToId);
+            Assert.AreEqual(RadioHopPhase.Arriving, hop.Phase);
+            Step(hop, sequence.Duration, false);
+            Assert.AreEqual(RadioHopPhase.Closed, hop.Phase);
+            Assert.AreEqual(0, rover.Holds, "07 is free again");
+            Assert.AreEqual(0f, hop.Fade);
+
+            hop.Step(Frame, false, Vector2.zero);
+            hop.Step(Frame, true, Vector2.zero);
+            Assert.AreEqual(RadioHopPhase.Choosing, hop.Phase, "home is a pad too");
+            hop.Step(Frame, false, new Vector2(0f, 1f));
+            Assert.AreEqual(RadioHopPhase.Closed, hop.Phase, "driving off closes the list");
+            Assert.AreEqual(false, opened[opened.Count - 1]);
+        }
+
+        [Test]
+        public void Hop_WithoutARoverPlacement_FailsLoudly_AndNeverStarts()
+        {
+            var bus = new EventBus();
+            var started = new List<RadioHopStarted>();
+            using IDisposable a = bus.Subscribe<RadioHopStarted>(e => started.Add(e));
+            StationReach reach = RealChain(TowerLevel1, out RelayTuning tuning);
+            reach.SetRestored(1, true);
+            var rover = new FakeRover { Position = reach.Position(0) };
+            RadioHop hop = Hop(bus, reach, tuning, rover, null, new FakeTether());
+            hop.Step(Frame, false, Vector2.zero);
+            Assert.IsTrue(hop.Open());
+            LogAssert.Expect(LogType.Error, new Regex("no IRoverPlacement is registered"));
+            Assert.IsFalse(hop.Confirm());
+            Assert.AreEqual(RadioHopPhase.Closed, hop.Phase);
+            Assert.IsEmpty(started);
+            Assert.AreEqual(0, rover.Holds);
+        }
+
+        [Test]
         public void Rig_StraightensFromTheBrokenLean_AndIsSolidToRover()
         {
             var restored = new RelayRig(Track(Model("RelayMast", false)));
@@ -215,6 +331,28 @@ namespace MoonProject.Gameplay.Tests
             tuning = Create<RelayTuning>();
             return new StationReach(Vector3.zero, homeRadius, Ids, new[] { Relay0, Relay1, Relay2, Relay3 },
                 tuning.MastReach);
+        }
+
+        private static RadioHop Hop(EventBus bus, StationReach reach, RelayTuning tuning, FakeRover rover,
+            IRoverPlacement placement, FakeTether tether)
+        {
+            var facings = new Quaternion[reach.NodeCount];
+            var labels = new string[reach.NodeCount];
+            for (int node = 0; node < reach.NodeCount; node++)
+            {
+                facings[node] = Quaternion.identity;
+                labels[node] = "hop.node." + reach.Id(node);
+            }
+
+            return new RadioHop(bus, reach, tuning, rover, rover, placement, tether, facings, labels);
+        }
+
+        private static void Step(RadioHop hop, float seconds, bool interact)
+        {
+            for (float t = 0f; t < seconds; t += Frame)
+            {
+                hop.Step(Frame, interact, Vector2.zero);
+            }
         }
 
         /// <summary>A stand-in mast with the contract's nodes (the fixture's shape).</summary>
@@ -255,6 +393,80 @@ namespace MoonProject.Gameplay.Tests
         {
             _created.Add(created);
             return created;
+        }
+
+        private sealed class FakeRover : IRoverState, IRoverRig, IRoverPlacement
+        {
+            private readonly HashSet<object> _holders = new HashSet<object>();
+
+            public Vector3 Position { get; set; }
+
+            public Quaternion Rotation { get; private set; } = Quaternion.identity;
+
+            public Vector3 Velocity => Vector3.zero;
+
+            public float Speed { get; set; }
+
+            public float NormalizedSpeed => 0f;
+
+            public Vector2 DriveInput => Vector2.zero;
+
+            public bool IsGrounded => true;
+
+            public float AirTime => 0f;
+
+            public Vector3 GroundNormal => Vector3.up;
+
+            public Transform TetherOrigin => null;
+
+            public Transform CargoSocket => null;
+
+            public Rigidbody PhysicsBody => null;
+
+            public int Holds => _holders.Count;
+
+            public int Gazes { get; private set; }
+
+            public int Placements { get; private set; }
+
+            public void SetGazeTarget(object owner, Vector3 worldPosition, int priority)
+            {
+                Gazes++;
+            }
+
+            public void ClearGazeTarget(object owner)
+            {
+            }
+
+            public void SetHoldStill(object owner, bool hold)
+            {
+                if (hold)
+                {
+                    _holders.Add(owner);
+                }
+                else
+                {
+                    _holders.Remove(owner);
+                }
+            }
+
+            public void PlaceAt(Vector3 position, Quaternion rotation)
+            {
+                Placements++;
+                Position = position;
+                Rotation = rotation;
+            }
+        }
+
+        private sealed class FakeTether : ITetherAim
+        {
+            public TetherAimState State { get; set; }
+
+            public Vector3 TargetPosition => Vector3.zero;
+
+            public float Strain => 0f;
+
+            public float Length => 0f;
         }
     }
 }

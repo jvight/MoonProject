@@ -12,8 +12,8 @@ namespace MoonProject.Gameplay
         private static readonly InteractionKind[] Priority =
         {
             InteractionKind.Deposit, InteractionKind.Repair, InteractionKind.Restore, InteractionKind.Tune,
-            InteractionKind.Upgrade, InteractionKind.Excavate, InteractionKind.Tether, InteractionKind.Reel,
-            InteractionKind.Ping,
+            InteractionKind.Hop, InteractionKind.Upgrade, InteractionKind.Excavate, InteractionKind.Tether,
+            InteractionKind.Reel, InteractionKind.Ping,
         };
 
         private readonly IRoverState _rover;
@@ -94,6 +94,14 @@ namespace MoonProject.Gameplay
                     bool restore = _relays.TryGetRestore(out Vector3 socket, out bool affordable);
                     hint = restore ? new InteractionHint(kind, socket, affordable) : InteractionHint.None;
                     return restore;
+                case InteractionKind.Hop:
+                    IRadioHop hop = _relays.Hop;
+                    bool open = hop.Phase == RadioHopPhase.Choosing;
+                    bool hopHere = open || hop.CanOpen;
+                    hint = hopHere
+                        ? new InteractionHint(kind, _relays.Reach.Position(hop.Here), true)
+                        : InteractionHint.None;
+                    return hopHere;
                 case InteractionKind.Reel:
                     hint = towed != null
                         ? new InteractionHint(kind, towed.transform.position, true)

@@ -4,7 +4,7 @@ namespace MoonProject.Gameplay
 {
     /// <summary>
     /// The relay network (docs/features/M3-06): each mast's reach, the escalating scrap cost, where a mast's relay part
-    /// lies and the restoration beat (stitch, straighten, lamp, link pulse).
+    /// lies, the restoration beat (stitch, straighten, lamp, link pulse), the hop pads and the radio-hop's fade.
     /// Created by the Gameplay/Tuning builder; runtime code only reads it.
     /// </summary>
     public sealed class RelayTuning : ScriptableObject
@@ -99,6 +99,50 @@ namespace MoonProject.Gameplay
         [Tooltip("Seconds between masts lighting one after another when one restoration links a whole chain.")]
         [Range(0f, 5f)] [SerializeField] private float _chainDelay = 0.9f;
 
+        [Header("Hop pads")]
+        [Tooltip("07 counts as parked on a node's pad within this many metres of its centre (World's pads: 3 m).")]
+        [Range(1f, 6f)] [SerializeField] private float _padRadius = 3f;
+
+        [Tooltip("Width (m) of the pad's ring of light.")]
+        [Range(0.05f, 2f)] [SerializeField] private float _padRingWidth = 0.3f;
+
+        [Tooltip("Pad brightness when a hop is possible from it.")]
+        [Range(0f, 3f)] [SerializeField] private float _padInviting = 0.3f;
+
+        [Tooltip("Pad brightness while 07 is parked on it.")]
+        [Range(0f, 3f)] [SerializeField] private float _padOccupied = 0.8f;
+
+        [Tooltip("Seconds per breath of a waiting pad.")]
+        [Range(0.5f, 10f)] [SerializeField] private float _padBreathPeriod = 3.6f;
+
+        [Tooltip("How deeply a waiting pad breathes (0 = steady).")]
+        [Range(0f, 1f)] [SerializeField] private float _padBreathDepth = 0.35f;
+
+        [Tooltip("Seconds (time constant) for a pad to brighten or dim.")]
+        [Range(0f, 3f)] [SerializeField] private float _padEase = 0.5f;
+
+        [Tooltip("Segments of a pad ring.")]
+        [Range(8, 128)] [SerializeField] private int _padSegments = 48;
+
+        [Header("Radio-hop")]
+        [Tooltip("07 counts as parked below this speed (m/s).")]
+        [Range(0.05f, 3f)] [SerializeField] private float _hopMaxSpeed = 0.8f;
+
+        [Tooltip("Seconds Interact is held, with the list open, to hop to the chosen node (a tap picks the next).")]
+        [Range(0.2f, 3f)] [SerializeField] private float _hopConfirmHold = 0.7f;
+
+        [Tooltip("Drive input above this closes the list (the player drives off instead).")]
+        [Range(0.05f, 1f)] [SerializeField] private float _hopCancelDrive = 0.35f;
+
+        [Tooltip("Seconds the view eases to a soft dark as the static rises.")]
+        [Range(0.2f, 3f)] [SerializeField] private float _hopFadeOut = 0.8f;
+
+        [Tooltip("Seconds the view rests dark while 07 is placed on the target pad.")]
+        [Range(0f, 2f)] [SerializeField] private float _hopDark = 0.4f;
+
+        [Tooltip("Seconds the view eases back in as the static resolves.")]
+        [Range(0.2f, 3f)] [SerializeField] private float _hopFadeIn = 0.8f;
+
         public float MastReach => _mastReach;
         public int CostCount => _costs.Length;
         public Vector2 PartDistance => _partDistance;
@@ -126,6 +170,18 @@ namespace MoonProject.Gameplay
         public float PulseLift => _pulseLift;
         public float PulseFade => _pulseFade;
         public float ChainDelay => _chainDelay;
+        public float PadRadius => _padRadius;
+        public float HopMaxSpeed => _hopMaxSpeed;
+        public float HopConfirmHold => _hopConfirmHold;
+        public float HopCancelDrive => _hopCancelDrive;
+        public float HopFadeOut => _hopFadeOut;
+        public float HopDark => _hopDark;
+        public float HopFadeIn => _hopFadeIn;
+
+        /// <summary>The hop pads' look: invisible with nowhere to go, breathing when a hop is possible.</summary>
+        public PadLook PadLook => new PadLook(_padRadius, _padRingWidth, _padSegments, 0f, _padInviting,
+            _padOccupied, 0f, _padBreathPeriod, _padBreathDepth, _padEase);
+
         /// <summary>Scrap for the restoration that follows <paramref name="restored"/> earlier ones.</summary>
         public int CostAfter(int restored)
         {

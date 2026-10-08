@@ -14,9 +14,10 @@ namespace MoonProject.Gameplay
     /// caches, sonar, Bell's signals, the cassette shelf, the relay network), registers the services other domains
     /// read (<see cref="IScrapWallet"/>, <see cref="ITetherAim"/>, <see cref="IUpgradeShop"/>,
     /// <see cref="IInteractionHints"/>, <see cref="IFriendRoster"/>, <see cref="IFriendStatuses"/>,
-    /// <see cref="IRadioProgram"/>, <see cref="IStationReach"/>, <see cref="IRelayStatus"/>) and the save sections,
-    /// announces the radio's signal radius and, once the save is loaded, the radio program, and owns the shared glow
-    /// meshes.
+    /// <see cref="IRadioProgram"/>, <see cref="IStationReach"/>, <see cref="IRadioHop"/>, <see cref="IRelayStatus"/>)
+    /// and the save sections, announces the radio's signal radius and, once the save is loaded, the radio program, and
+    /// owns the shared glow meshes. The radio-hop moves 07 through Core's <see cref="IRoverPlacement"/> when the Rover
+    /// domain registers it.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class GameplaySystem : MonoBehaviour, IGameSystem
@@ -141,7 +142,7 @@ namespace MoonProject.Gameplay
                 !_logs.Initialize(services, _scrap.Tuning) || !_sonar.Initialize(services, _relics, _friends) ||
                 !_signals.Initialize(services, _friends, _cassettes, _logs, _relics, abilities, _sonar.Tuning) ||
                 !_shelf.Initialize(Radio, _cassettes.Catalog, _friends.BellTuning) ||
-                !_relays.Initialize(services, Upgrades, _friends.Tuning, _scrap.Tuning))
+                !_relays.Initialize(services, Upgrades, _tether, _friends.Tuning, _scrap.Tuning, Placement(context)))
             {
                 enabled = false;
                 return;
@@ -169,6 +170,7 @@ namespace MoonProject.Gameplay
             context.Register<IFriendStatuses>(_friends);
             context.Register<IRadioProgram>(Radio);
             context.Register<IStationReach>(_relays.Reach);
+            context.Register<IRadioHop>(_relays.Hop);
             context.Register<IRelayStatus>(_relays);
             Upgrades.PublishSignals();
             RegisterSaveSections(save);
@@ -195,6 +197,12 @@ namespace MoonProject.Gameplay
                 GameplaySaveKeys.BellSignalsVersion, _signals.Capture, _signals.Restore)));
             _saveTokens.Add(save.Register(new SaveSection<RelaysSaveData>(GameplaySaveKeys.Relays,
                 GameplaySaveKeys.RelaysVersion, _relays.Capture, _relays.Restore)));
+        }
+
+        /// <summary>Core's rover placement for the radio-hop, or null while no domain registers it.</summary>
+        private static IRoverPlacement Placement(GameContext context)
+        {
+            return context.TryGet(out IRoverPlacement placement) ? placement : null;
         }
 
         /// <summary>The save is loaded (Start runs after it): Audio and UI start from the real radio program.</summary>

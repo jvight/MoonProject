@@ -6,11 +6,12 @@ namespace MoonProject.Gameplay.PlayModeTests
 {
     /// <summary>
     /// Stands in for the Rover domain: a kinematic body the test moves directly, with an eye (TetherOrigin), a cargo
-    /// socket and a following camera. Registers IRoverState, IRoverRig, IViewCamera and IRoverAbilities, and records
-    /// every gaze and hold-still request and every ability granted so tests can assert 07's attention and upgrades.
+    /// socket and a following camera. Registers IRoverState, IRoverRig, IViewCamera, IRoverAbilities and
+    /// IRoverPlacement, and records every gaze and hold-still request, every ability granted and every placement so
+    /// tests can assert 07's attention, upgrades and radio-hops.
     /// </summary>
     public sealed class FakeRoverSystem : MonoBehaviour, IGameSystem, IRoverState, IRoverRig, IViewCamera,
-        IRoverAbilities
+        IRoverAbilities, IRoverPlacement
     {
         private readonly Dictionary<object, GazeRequest> _gaze = new Dictionary<object, GazeRequest>();
         private readonly HashSet<object> _holders = new HashSet<object>();
@@ -56,6 +57,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>Grant calls received (idempotent grants still count).</summary>
         public int AbilityGrants { get; private set; }
 
+        /// <summary>PlaceAt calls received (one per radio-hop).</summary>
+        public int Placements { get; private set; }
+
         public static FakeRoverSystem Create(Vector3 position, float yaw)
         {
             var host = new GameObject("FakeRover");
@@ -71,6 +75,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             context.Register<IRoverRig>(this);
             context.Register<IViewCamera>(this);
             context.Register<IRoverAbilities>(this);
+            context.Register<IRoverPlacement>(this);
         }
 
         public bool Has(RoverAbility ability)
@@ -90,6 +95,12 @@ namespace MoonProject.Gameplay.PlayModeTests
             transform.SetPositionAndRotation(position, Quaternion.Euler(0f, yaw, 0f));
             _lastPosition = position;
             Velocity = Vector3.zero;
+        }
+
+        public void PlaceAt(Vector3 position, Quaternion rotation)
+        {
+            Placements++;
+            Place(position, rotation.eulerAngles.y);
         }
 
         /// <summary>Drives 07 to <paramref name="position"/> (velocity follows from the motion each frame).</summary>

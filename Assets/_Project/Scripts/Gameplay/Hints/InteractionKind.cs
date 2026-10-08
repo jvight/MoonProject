@@ -37,5 +37,11 @@ namespace MoonProject.Gameplay
         /// At a dark relay mast's foot with its part held: hold to restore it (Ready when the scrap is there).
         /// </summary>
         Restore = 9,
+
+        /// <summary>
+        /// Parked on the pad of home or of a lit mast, not towing: open the radio-hop list (Ready while there is
+        /// another lit node to hop to).
+        /// </summary>
+        Hop = 10,
     }
 }

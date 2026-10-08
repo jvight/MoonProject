@@ -18,8 +18,9 @@ namespace MoonProject.Gameplay
     /// mast that links home (<see cref="StationReach"/>) comes online: a pulse of light runs along the ground toward
     /// the node it links to, and <see cref="RelayRestored"/> and the radio's ticker line follow. One beyond the lit
     /// frontier keeps a low listening glow until a neighbour or a stronger tower reaches it, then lights in turn (a
-    /// whole chain one after another). Home's circle is the radio tower's clear-signal radius. This is Core's
-    /// <see cref="IStationReach"/> (through <see cref="Reach"/>) and the UI's <see cref="IRelayStatus"/>.
+    /// whole chain one after another). Home's circle is the radio tower's clear-signal radius. Also the radio-hop
+    /// (<see cref="RadioHop"/>) between the lit nodes' pads, each pad a ring of light while a hop is possible. This
+    /// is Core's <see cref="IStationReach"/> (through <see cref="Reach"/>) and the UI's <see cref="IRelayStatus"/>.
     /// Everything paid, gathered and restored is saved at once and never lost. Allocation-free per frame.
     /// </summary>
     [DisallowMultipleComponent]
@@ -27,6 +28,7 @@ namespace MoonProject.Gameplay
     {
         private const string TickerOnline = "ticker.relay.online";
         private const string TickerWaiting = "ticker.relay.waiting";
+        private const string HopLabelPrefix = "hop.node.";
 
         /// <summary>A part spins this many times faster in flight than at rest.</summary>
         private const float PartFlightSpin = 4f;
@@ -57,8 +59,10 @@ namespace MoonProject.Gameplay
         private UpgradeService _upgrades;
         private FriendTuning _friends;
         private StationReach _reach;
+        private RadioHop _hop;
         private RepairBeam _beam;
         private ScrapGlints _glints;
+        private StationPad[] _pads = Array.Empty<StationPad>();
         private RelayBeat _beat;
         private string[] _counts = Array.Empty<string>();
         private RelayMast _restoring;
@@ -73,6 +77,9 @@ namespace MoonProject.Gameplay
 
         /// <summary>The station's reach (Core's <see cref="IStationReach"/>).</summary>
         public StationReach Reach => _reach;
+
+        /// <summary>The radio-hop (the UI's <see cref="IRadioHop"/>).</summary>
+        public IRadioHop Hop => _hop;
 
         public int MastCount => _masts.Count;
 
@@ -116,8 +123,9 @@ namespace MoonProject.Gameplay
             _partPrefab = partPrefab;
         }
 
-        internal bool Initialize(GameplayServices services, UpgradeService upgrades, FriendTuning friends,
-            ScrapTuning scrap)
+        /// <param name="placement">Core's rover placement for the hop, or null while no domain registers it.</param>
+        internal bool Initialize(GameplayServices services, UpgradeService upgrades, ITetherAim tether,
+            FriendTuning friends, ScrapTuning scrap, IRoverPlacement placement)
         {
             List<WorldAnchor> anchors = services.Anchors != null ? RelayAnchors(services.Anchors) : null;
             string problem = _tuning == null ? "RelayTuning is not assigned."
@@ -142,9 +150,9 @@ namespace MoonProject.Gameplay
             _wallet = services.Wallet;
             _upgrades = upgrades ?? throw new ArgumentNullException(nameof(upgrades));
             _friends = friends != null ? friends : throw new ArgumentNullException(nameof(friends));
-            if (scrap == null)
+            if (tether == null || scrap == null)
             {
-                throw new ArgumentNullException(nameof(scrap));
+                throw new ArgumentNullException(tether == null ? nameof(tether) : nameof(scrap));
             }
 
             _beat = RelayBeat.For(_tuning);
@@ -174,6 +182,20 @@ namespace MoonProject.Gameplay
             _glints = new ScrapGlints(transform, services.Visuals.PartGlint, scrap, _masts.Count, Layers.Pickup);
             _beam = new RepairBeam("RelayBeam", transform, services.Visuals.TetherBeam, _friends.StitchRate,
                 _friends.StitchSpread);
+            _pads = new StationPad[_reach.NodeCount];
+            var facings = new Quaternion[_reach.NodeCount];
+            var labels = new string[_reach.NodeCount];
+            for (int node = 0; node < _reach.NodeCount; node++)
+            {
+                _pads[node] = new StationPad("HopPad_" + _reach.Id(node), transform, services.Terrain,
+                    _reach.Position(node), _tuning.PadLook, services.Visuals.WarmRing);
+                labels[node] = HopLabelPrefix + _reach.Id(node);
+                facings[node] = node == StationReach.Home
+                    ? Facing(services.Layout.PeakPosition - home)
+                    : Quaternion.LookRotation(-_masts[node - 1].Anchor.Forward);
+            }
+
+            _hop = new RadioHop(_events, _reach, _tuning, _rover, _rig, placement, tether, facings, labels);
             _counts = new string[_masts.Count + 1];
             for (int i = 0; i < _counts.Length; i++)
             {
@@ -251,6 +273,12 @@ namespace MoonProject.Gameplay
             }
 
             return found;
+        }
+
+        private static Quaternion Facing(Vector3 direction)
+        {
+            direction.y = 0f;
+            return direction.sqrMagnitude > 1e-4f ? Quaternion.LookRotation(direction) : Quaternion.identity;
         }
 
         private RelayMast Spawn(WorldAnchor anchor, int index, GameplayServices services)
@@ -341,6 +369,13 @@ namespace MoonProject.Gameplay
             _beam.Step(beaming, _restoring != null, _rig.TetherOrigin.position,
                 _restoring != null ? _restoring.Shown.BeamPoint.position : Vector3.zero, now, deltaTime);
             SetHold(beaming);
+            _hop.Step(deltaTime, _candidate == null && _input.ExcavateHeld, _input.Drive);
+            for (int node = 0; node < _pads.Length; node++)
+            {
+                bool hop = _reach.IsLit(node) && _reach.LitCount > 1;
+                _pads[node].Tick(_rover.Position, !hop, hop, now, deltaTime);
+            }
+
             StepGaze();
         }
 
@@ -646,6 +681,7 @@ namespace MoonProject.Gameplay
             }
 
             SetHold(false);
+            _hop.Release();
             if (_gazing)
             {
                 _rig.ClearGazeTarget(this);
@@ -656,6 +692,10 @@ namespace MoonProject.Gameplay
         private void OnDestroy()
         {
             _glints?.Dispose();
+            foreach (StationPad pad in _pads)
+            {
+                pad.Dispose();
+            }
         }
 
         private static void SetLayer(Transform root, int layer)
