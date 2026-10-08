@@ -29,5 +29,11 @@ namespace MoonProject.Core
         /// Forward points from the mast toward home; the radius is the mast's flat pad.
         /// </summary>
         public const string RelayPrefix = "relay.";
+
+        /// <summary>
+        /// Prefix of the salvage sites (docs/features/M3-13): "site.depot", "site.kestrel", "site.drill", "site.garage",
+        /// "site.lander". Forward points the way 07 approaches; the radius is the site's footprint.
+        /// </summary>
+        public const string SitePrefix = "site.";
     }
 }
