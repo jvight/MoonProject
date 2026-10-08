@@ -29,6 +29,11 @@ namespace MoonProject.Art.Editor
 
         public const float TowerPlinthHeight = RadioTowerMeshes.PlinthHeight;
 
+        /// <summary>
+        /// Front edge (+Z) of every tower stage's footprint: the plinth plus the plate its service port stands on.
+        /// </summary>
+        public const float TowerFootprintFront = RadioTowerMeshes.FootprintFront;
+
         /// <summary>Where gameplay stands the museum shelf: right of the lander, facing the same way (+Z).</summary>
         public static readonly Vector3 ShelfAnchor = new Vector3(6f, 0f, 1.2f);
 
@@ -226,7 +231,11 @@ namespace MoonProject.Art.Editor
             return shelf;
         }
 
-        /// <summary>Radio tower stage <paramref name="level"/> (1..3).</summary>
+        /// <summary>
+        /// Radio tower stage <paramref name="level"/> (1..3). Every stage has the same rover-height service port facing
+        /// the upgrade pad: a HopperMouth empty (+Z out of the mouth) and a ServiceHatch door pivoted on its left hinge
+        /// (swing it about local Y to open).
+        /// </summary>
         public static ModelNode CreateTower(int level)
         {
             string name = TowerPrefix + level.ToString(CultureInfo.InvariantCulture);
@@ -238,6 +247,11 @@ namespace MoonProject.Art.Editor
             tower.Add(new ModelNode("BellCorner", BellCorner, Place.Rotation(new Vector3(0f, BellCornerYaw, 0f))));
             tower.Add(new ModelNode("CassetteShelfAnchor", CassetteShelfAnchor,
                 Place.Rotation(new Vector3(0f, CassetteShelfYaw, 0f))));
+            tower.Add(new ModelNode("HopperMouth", RadioTowerMeshes.PortHopperMouth,
+                Place.Rotation(RadioTowerMeshes.PortHopperFacing)));
+            tower.Add(new ModelNode("ServiceHatch", RadioTowerMeshes.ServiceHatchHinge, Quaternion.identity,
+                new ModelMesh(TowerPrefix + "ServiceHatch",
+                    ServiceKit.Hatch(RadioTowerMeshes.ServiceHatchWidth, RadioTowerMeshes.ServiceHatchHeight))));
             LowPolyMeshBuilder dust = Weathering.Dust(RadioTowerMeshes.DustSurfaces(level), FurnitureDustTide,
                 Weathering.DustLift);
             dust.Append(RadioTowerMeshes.Drifts(), Matrix4x4.identity);

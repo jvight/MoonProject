@@ -22,6 +22,21 @@ namespace MoonProject.Art.Editor
             new Vector2(0.48f, -0.07f), new Vector2(0f, -0.12f),
         };
 
+        /// <summary>
+        /// The service port at the foot of every stage, facing the upgrade pad (+Z): the hopper's mouth at rover
+        /// height on the right, tipped up towards 07, and the service box's hatch on the left, hinged on its left edge.
+        /// </summary>
+        public static readonly Vector3 PortHopperMouth = new Vector3(0.5f, 1.12f, 1.25f);
+
+        public static readonly Vector3 PortHopperFacing = new Vector3(-ServiceKit.MouthTilt, 0f, 0f);
+        public const float PortHopperSize = 0.32f;
+        public static readonly Vector3 ServiceHatchHinge = new Vector3(-0.72f, 0.62f, 1.08f);
+        public const float ServiceHatchWidth = 0.42f;
+        public const float ServiceHatchHeight = 0.5f;
+
+        /// <summary>Front edge (+Z) of the plate the port stands on: each stage's footprint reaches this far.</summary>
+        public const float FootprintFront = 1.4f;
+
         /// <summary>Top of the tower: where the beacon (gameplay's signal light) sits.</summary>
         public static Vector3 BeaconPosition(int level)
         {
@@ -40,6 +55,7 @@ namespace MoonProject.Art.Editor
         {
             var b = new LowPolyMeshBuilder(2400);
             Plinth(b);
+            ServicePort(b);
             switch (RequireLevel(level))
             {
                 case 1:
@@ -115,6 +131,10 @@ namespace MoonProject.Art.Editor
                 SiteKit.RustStreak(b, plinth, side % 2 == 0 ? 0.45f : -0.5f, PlinthHeight - 0.03f, 0.1f);
             }
 
+            ServiceKit.HopperRust(b, PortHopperMouth, PortHopperFacing, PortHopperSize);
+            Matrix4x4 box = SiteKit.Face(new Vector3(-0.5f, 0f, ServiceHatchHinge.z + Weathering.RustLift),
+                Vector3.forward, Vector3.up);
+            SiteKit.RustStreak(b, box, 0.12f, 1.1f, 0.18f, 0.035f);
             if (RequireLevel(level) == 1)
             {
                 Weathering.Collar(b, At(new Vector3(0f, PlinthHeight + 0.08f, -0.3f)), 0.075f, 0.14f);
@@ -135,6 +155,7 @@ namespace MoonProject.Art.Editor
         {
             var b = new LowPolyMeshBuilder(400);
             Plinth(b);
+            ServicePort(b);
             if (RequireLevel(level) == 2)
             {
                 Platform(b, 3.4f, 0.66f);
@@ -155,6 +176,30 @@ namespace MoonProject.Art.Editor
             SiteKit.Drift(b, new Vector3(-0.95f, 0f, -0.2f), 1.8f, 0.6f, 0.2f, 5f, 91);
             SiteKit.Drift(b, new Vector3(0.3f, 0f, -0.95f), 1.6f, 0.55f, 0.18f, 95f, 92);
             return b;
+        }
+
+        /// <summary>
+        /// The service port (the same on every stage): a hopper 07's beam feeds and a service box whose hatch 07 can
+        /// reach, both at rover height in front of the plinth, wired into it. The hatch door itself is its own node.
+        /// </summary>
+        private static void ServicePort(LowPolyMeshBuilder b)
+        {
+            const float plateLeft = -0.79f;
+            const float plateRight = 0.78f;
+            float plateBack = PlinthSize * 0.5f - 0.05f;
+            b.Box(At((plateLeft + plateRight) * 0.5f, 0.04f, (plateBack + FootprintFront) * 0.5f),
+                new Vector3(plateRight - plateLeft, 0.08f, FootprintFront - plateBack), PaletteSwatch.Metal, 0.02f);
+            ServiceKit.Hopper(b, PortHopperMouth, PortHopperFacing, PortHopperSize);
+            const float boxDepth = 0.36f;
+            float boxZ = ServiceHatchHinge.z - 0.01f - boxDepth * 0.5f;
+            b.Box(At(-0.5f, 0.56f, boxZ), new Vector3(0.56f, 1.12f, boxDepth), PaletteSwatch.FadedPaint, 0.03f);
+            b.Box(At(-0.5f, 1.14f, boxZ), new Vector3(0.62f, 0.05f, boxDepth + 0.06f), PaletteSwatch.Metal, 0.01f);
+            b.Box(At(ServiceHatchHinge.x + ServiceHatchWidth * 0.5f, ServiceHatchHinge.y, ServiceHatchHinge.z - 0.006f),
+                new Vector3(ServiceHatchWidth + 0.04f, ServiceHatchHeight + 0.04f, 0.01f), PaletteSwatch.Charcoal);
+            SiteKit.Cable(b, SiteKit.Sag(new Vector3(-0.32f, 0.95f, boxZ - boxDepth * 0.5f),
+                new Vector3(-0.2f, PlinthHeight + 0.55f, 0.47f), 0.06f, 3), 0.025f, PaletteSwatch.Charcoal);
+            RecipeKit.Rod(b, new Vector3(PortHopperMouth.x, 0.8f, 0.95f),
+                new Vector3(0.22f, PlinthHeight + 0.4f, 0.46f), 0.07f, 8, PaletteSwatch.Metal);
         }
 
         /// <summary>The shared footing: a metal plinth and the old radio cabinet that the tower amplifies.</summary>

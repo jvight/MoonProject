@@ -120,6 +120,28 @@ namespace MoonProject.Art.Tests
             }
         }
 
+        [Test]
+        public void TowerStages_ShareARoverHeightServicePort_FacingThePad()
+        {
+            ModelNode first = BaseModelBuilder.CreateTower(1);
+            for (int level = 1; level <= 3; level++)
+            {
+                ModelNode tower = BaseModelBuilder.CreateTower(level);
+                ModelNode mouth = AssertEmpty(tower, "HopperMouth");
+                ModelNode hatch = tower.GetDescendant("ServiceHatch");
+                Assert.IsNotNull(hatch, $"{tower.Name} has a ServiceHatch");
+                MeshChecks.AssertWellFormed(hatch.Mesh.Geometry);
+                Assert.IsFalse(MeshChecks.Swatches(hatch.Mesh.Geometry).Any(Palette.IsEmissive));
+                Assert.AreEqual(first.GetDescendant("HopperMouth").LocalPosition, mouth.LocalPosition, "identical");
+                Assert.AreEqual(first.GetDescendant("ServiceHatch").LocalPosition, hatch.LocalPosition, "identical");
+                Assert.That(mouth.LocalPosition.y, Is.InRange(0.9f, 1.5f), "07's beam reaches the hopper");
+                Assert.Greater((mouth.LocalRotation * Vector3.forward).z, 0.7f, "the mouth faces the pad, tipped up");
+                Bounds door = hatch.Mesh.Geometry.Bounds;
+                Assert.That(hatch.LocalPosition.y + door.center.y, Is.InRange(0.3f, 1.2f), "the hatch at rover height");
+                Assert.Greater(hatch.LocalPosition.z, BaseModelBuilder.TowerPlinthSize * 0.5f, "before the plinth");
+            }
+        }
+
         private static ModelNode AssertEmpty(ModelNode model, string name)
         {
             ModelNode node = model.GetDescendant(name);
@@ -148,7 +170,7 @@ namespace MoonProject.Art.Tests
                 if (p.y < BaseModelBuilder.TowerPlinthHeight - 1e-3f)
                 {
                     Assert.LessOrEqual(Mathf.Abs(p.x), half);
-                    Assert.LessOrEqual(Mathf.Abs(p.z), half);
+                    Assert.That(p.z, Is.InRange(-half, BaseModelBuilder.TowerFootprintFront + 1e-3f));
                 }
             }
         }

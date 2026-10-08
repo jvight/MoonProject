@@ -40,6 +40,9 @@ namespace MoonProject.Art.Editor
         /// <summary>The hopper's mouth (its centre, at rover height) and the way it faces: at the turntable.</summary>
         public static readonly Vector3 HopperMouth = new Vector3(2.85f, 1.2f, 1.5f);
 
+        /// <summary>Half the width of the bay hopper's mouth.</summary>
+        public const float HopperSize = 0.5f;
+
         private const float Post = 0.16f;
         private const float Beam = 0.14f;
 
@@ -206,13 +209,7 @@ namespace MoonProject.Art.Editor
                 SiteKit.RustStreak(b, back, (i % 2 == 0 ? 0.3f : -0.25f), EaveHeight - 0.3f, 0.6f + i * 0.15f);
             }
 
-            var foot = new Vector3(HopperMouth.x, 0f, HopperMouth.z);
-            for (int i = 0; i < 4; i++)
-            {
-                var corner = new Vector3(i % 2 == 0 ? -0.3f : 0.3f, 0.12f, i < 2 ? -0.3f : 0.3f);
-                Weathering.Collar(b, At(foot + corner), 0.06f, 0.12f);
-            }
-
+            ServiceKit.HopperRust(b, HopperMouth, HopperFacing, HopperSize);
             return b;
         }
 
@@ -337,23 +334,9 @@ namespace MoonProject.Art.Editor
         /// </summary>
         private static void Hopper(LowPolyMeshBuilder b)
         {
-            Vector3 mouth = HopperMouth;
-            var foot = new Vector3(mouth.x, 0f, mouth.z);
-            for (int i = 0; i < 4; i++)
-            {
-                var corner = new Vector3(i % 2 == 0 ? -0.3f : 0.3f, 0f, i < 2 ? -0.3f : 0.3f);
-                SiteKit.Bar(b, foot + corner + Vector3.up * 0.03f, foot + corner * 0.7f + Vector3.up * 0.75f, 0.06f,
-                    PaletteSwatch.Metal);
-            }
-
-            b.Box(At(foot + Vector3.up * 0.72f), new Vector3(0.55f, 0.26f, 0.55f), PaletteSwatch.FadedPaint, 0.03f);
-            Matrix4x4 funnel = At(mouth, HopperFacing) * Matrix4x4.Rotate(Rotation(AlongZ));
-            b.Frustum(funnel * At(0f, -0.15f, 0f), 0.22f, 0.5f, 0.3f, 4, PaletteSwatch.FadedPaint);
-            b.Frustum(funnel * At(0f, -0.15f, 0f), 0.2f, 0.47f, 0.28f, 4, PaletteSwatch.Charcoal);
-            b.Torus(funnel * At(0f, 0f, 0f) * Matrix4x4.Rotate(Rotation(new Vector3(0f, 45f, 0f))), 0.5f, 0.035f, 4, 3,
-                PaletteSwatch.FadedAccent);
-            RecipeKit.Rod(b, foot + new Vector3(-0.2f, 0.6f, -0.2f), new Vector3(HalfWidth - 0.4f, 0.4f, BackZ + 0.6f),
-                0.08f, 8, PaletteSwatch.Metal);
+            ServiceKit.Hopper(b, HopperMouth, HopperFacing, HopperSize);
+            RecipeKit.Rod(b, new Vector3(HopperMouth.x - 0.2f, 0.6f, HopperMouth.z - 0.6f),
+                new Vector3(HalfWidth - 0.4f, 0.4f, BackZ + 0.6f), 0.08f, 8, PaletteSwatch.Metal);
         }
 
         /// <summary>
@@ -365,7 +348,7 @@ namespace MoonProject.Art.Editor
             {
                 Vector3 toPad = TurntableCentre - HopperMouth;
                 float yaw = Mathf.Atan2(toPad.x, toPad.z) * Mathf.Rad2Deg;
-                return new Vector3(-25f, yaw, 0f);
+                return new Vector3(-ServiceKit.MouthTilt, yaw, 0f);
             }
         }
 
