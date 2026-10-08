@@ -18,7 +18,7 @@ namespace MoonProject.Art.Editor
     /// <code>
     /// python tools/unity_batch.py exec --method MoonProject.Art.Editor.ArtLightingPreview.Capture
     ///     [--arg scene=rover|base|towers|relics|shadow|grit|friends|workshop|bell|bellbroken|pickups|bellcorner|
-    ///                  warmpoints|relaysbroken|relayslit]
+    ///                  warmpoints|relaysbroken|relayslit|sites|sitesclean|salvagebits]
     /// </code>
     /// (default rover; a ';'-separated list captures several scenes in one run)
     /// rover: 07 at rest (half-lidded, head lowered, wing ajar) with its headlamp. base: the lander with the shelf
@@ -38,6 +38,9 @@ namespace MoonProject.Art.Editor
     /// glowing cast inside Main.unity's own earthlight, fog and grade, 07's eye at three linear glow levels (pillar 6,
     /// "warm points in a cold field"). relaysbroken / relayslit: a relay mast on each of World's relay anchors in
     /// Main.unity, dark and leaning or restored and lit, from the spawn first frame, from the base and at each pad.
+    /// sites / sitesclean: the five salvage sites on World's site anchors in Main.unity, whole or picked clean to their
+    /// skeletons, from the way in, the side and 30 m, Kestrel-3 from the base, the depot close. salvagebits: the three
+    /// material bundles and the Kestrel trail's loose bits on the dust beside 07.
     /// Glows are lit with the linear MaterialPropertyBlock contract.
     /// </summary>
     public static class ArtLightingPreview
@@ -64,6 +67,23 @@ namespace MoonProject.Art.Editor
         {
             new Vector3(62.63f, 1.68f, 92.85f), new Vector3(-204.85f, 7.97f, -74.56f),
             new Vector3(268.1f, 5.74f, 74.49f), new Vector3(456.57f, 36.35f, -16.66f),
+        };
+
+        /// <summary>
+        /// World's salvage site anchors for the default seed (M3-13 table), in SiteModelBuilder.Ids order.
+        /// </summary>
+        private static readonly Vector3[] SiteAnchors =
+        {
+            new Vector3(-38.89f, -0.88f, 38.89f), new Vector3(-12.9f, 3.77f, 184.55f),
+            new Vector3(136.51f, 2.68f, -57.95f), new Vector3(10.89f, 2.07f, -124.52f),
+            new Vector3(335.96f, 9.29f, 98.65f),
+        };
+
+        /// <summary>The site anchors' Forward: the way 07 approaches, away from home.</summary>
+        private static readonly Vector3[] SiteForwards =
+        {
+            new Vector3(-0.71f, 0f, 0.71f), new Vector3(0.34f, 0f, 0.94f), new Vector3(0.92f, 0f, -0.39f),
+            new Vector3(0.09f, 0f, -1f), new Vector3(0.31f, 0f, -0.95f),
         };
 
         public static void Capture()
@@ -150,10 +170,20 @@ namespace MoonProject.Art.Editor
                     case "relayslit":
                         poses = RelaysScene(temporary, true);
                         break;
+                    case "sites":
+                        poses = SitesScene(temporary, false);
+                        break;
+                    case "sitesclean":
+                        poses = SitesScene(temporary, true);
+                        break;
+                    case "salvagebits":
+                        NightSetting(material, temporary, 40f, 8f);
+                        poses = SalvageBitsScene(temporary);
+                        break;
                     default:
                         Debug.LogError($"ArtLightingPreview: unknown scene '{scene}' " +
                             "(rover|base|towers|relics|shadow|grit|friends|workshop|bell|bellbroken|pickups|" +
-                            "bellcorner|warmpoints|relaysbroken|relayslit).");
+                            "bellcorner|warmpoints|relaysbroken|relayslit|sites|sitesclean|salvagebits).");
                         return false;
                 }
 
@@ -663,6 +693,84 @@ namespace MoonProject.Art.Editor
             }
 
             return new CameraPoseSet { width = 1600, height = 900, postProcessing = true, poses = poses.ToArray() };
+        }
+
+        /// <summary>
+        /// Opens Main.unity (never saved) and stands each salvage site on its World anchor, +Z along the anchor's
+        /// Forward: whole, or <paramref name="pickedClean"/> with every salvage piece taken. Poses: the spawn first
+        /// frame, Kestrel-3 from the base, each site from the way in, its side and 30 m, the depot close.
+        /// </summary>
+        private static CameraPoseSet SitesScene(TemporaryObjects temporary, bool pickedClean)
+        {
+            EditorSceneManager.OpenScene(CaptureAutomation.MainScenePath, OpenSceneMode.Single);
+            Vector3 kestrel = SiteAnchors[1] + Vector3.up * 3f;
+            var poses = new List<CameraPose>
+            {
+                new CameraPose { name = "spawn_first_frame", position = new[] { 0.78f, 4f, -8.97f },
+                    euler = new[] { 6f, -5f, 0f }, fov = 60f },
+                Pose("kestrel_from_base", new[] { 0f, 3f, 0f }, Point(kestrel), 60f),
+                Pose("kestrel_from_base_zoom", new[] { 0f, 3f, 0f }, Point(kestrel), 15f),
+            };
+            IReadOnlyList<string> ids = SiteModelBuilder.Ids;
+            for (int i = 0; i < ids.Count; i++)
+            {
+                Vector3 anchor = SiteAnchors[i];
+                Vector3 forward = SiteForwards[i].normalized;
+                Quaternion facing = Quaternion.LookRotation(forward);
+                GameObject site = Instantiate(SiteModelBuilder.SiteName(ids[i]), temporary, ArtPaths.SitesFolder);
+                site.transform.SetPositionAndRotation(anchor, facing);
+                if (pickedClean)
+                {
+                    foreach (Transform child in site.transform)
+                    {
+                        child.gameObject.SetActive(!child.name.StartsWith("Salvage_", StringComparison.Ordinal));
+                    }
+                }
+
+                Vector3 side = facing * Vector3.right;
+                poses.Add(Pose($"{ids[i]}_approach", Point(anchor - forward * 14f + side * 4f + Vector3.up * 4.5f),
+                    Point(anchor + forward * 1.5f + Vector3.up * 1.2f), 50f));
+                poses.Add(Pose($"{ids[i]}_side", Point(anchor + side * 13f + forward * 3f + Vector3.up * 5f),
+                    Point(anchor + forward * 2f + Vector3.up * 1f), 50f));
+                poses.Add(Pose($"{ids[i]}_30m", Point(anchor - forward * 28f - side * 10f + Vector3.up * 6f),
+                    Point(anchor + Vector3.up * 1.5f), 40f));
+            }
+
+            Vector3 depot = SiteAnchors[0];
+            Vector3 depotForward = SiteForwards[0].normalized;
+            Vector3 depotSide = Quaternion.LookRotation(depotForward) * Vector3.right;
+            poses.Add(Pose("depot_close", Point(depot - depotForward * 5.5f + depotSide * 2.5f + Vector3.up * 2.4f),
+                Point(depot + depotForward * 2.5f + depotSide * 1.2f + Vector3.up * 1f), 55f));
+            return new CameraPoseSet { width = 1600, height = 900, postProcessing = true, poses = poses.ToArray() };
+        }
+
+        /// <summary>The three material bundles in a row by 07, the trail's loose bits strewn behind them.</summary>
+        private static CameraPoseSet SalvageBitsScene(TemporaryObjects temporary)
+        {
+            Array materials = Enum.GetValues(typeof(SalvageMaterial));
+            for (int i = 0; i < materials.Length; i++)
+            {
+                GameObject bundle = Instantiate(SiteModelBuilder.BundleName((SalvageMaterial)materials.GetValue(i)),
+                    temporary, ArtPaths.PickupFolder);
+                float lift = bundle.transform.position.y - RendererBounds(bundle).min.y;
+                bundle.transform.SetPositionAndRotation(new Vector3((i - 1) * 0.6f, lift, 1.6f),
+                    Quaternion.Euler(0f, 20f, 0f));
+            }
+
+            IReadOnlyList<string> debris = SiteModelBuilder.DebrisNames;
+            for (int i = 0; i < debris.Count; i++)
+            {
+                GameObject bit = Instantiate(debris[i], temporary, ArtPaths.SitesFolder);
+                float lift = bit.transform.position.y - RendererBounds(bit).min.y;
+                bit.transform.SetPositionAndRotation(new Vector3((i - 2) * 1.2f, lift, 3.6f + (i % 2) * 0.8f),
+                    Quaternion.Euler(0f, -30f + i * 35f, 0f));
+            }
+
+            temporary.Add(Rover(temporary, new Vector3(1.9f, 0f, 0.2f), -20f).gameObject);
+            return Poses(
+                Pose("bundles", new[] { 0f, 0.9f, 0.2f }, new[] { 0f, 0.12f, 1.6f }, 40f),
+                Pose("debris", new[] { 0f, 2.2f, 0.4f }, new[] { 0f, 0.2f, 4f }, 45f),
+                Pose("bits_from_10m", new[] { 3f, 4f, -7f }, new[] { 0f, 0.3f, 2.5f }, 40f));
         }
 
         private static float[] Point(Vector3 p)
