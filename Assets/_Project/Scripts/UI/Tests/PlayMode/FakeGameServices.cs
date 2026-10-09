@@ -57,6 +57,11 @@ namespace MoonProject.UI.PlayModeTests
 
         public bool AtStation { get; set; }
 
+        /// <summary>
+        /// False in captures over the real scene: a staged purchase must not set the scene's real stations working.
+        /// </summary>
+        public bool AnnouncesPurchases { get; set; } = true;
+
         public int Purchases { get; private set; }
 
         public InteractionHint PrimaryHint { get; set; } = InteractionHint.None;
@@ -372,7 +377,10 @@ namespace MoonProject.UI.PlayModeTests
             _levels[upgradeId] = offer.CurrentLevel + 1;
             Recipe cost = offer.NextCost;
             SetMaterials(Metal - cost.Metal, Wiring - cost.Wiring, Optics - cost.Optics);
-            _events.Publish(new UpgradePurchased(upgradeId, offer.CurrentLevel + 1));
+            if (AnnouncesPurchases)
+            {
+                _events.Publish(new UpgradePurchased(upgradeId, offer.CurrentLevel + 1));
+            }
             return PurchaseResult.Purchased;
         }
 

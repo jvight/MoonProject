@@ -950,6 +950,12 @@ Label {
     color: var(--moon-honey);
 }
 
+/* While the station works on a purchase nothing can be picked, so the pick hint steps back (its place is kept) */
+
+.tower-panel--celebrate .tower-panel__pick {
+    visibility: hidden;
+}
+
 
 /* Pause menu */
 

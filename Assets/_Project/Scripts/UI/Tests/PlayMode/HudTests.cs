@@ -21,6 +21,11 @@ namespace MoonProject.UI.PlayModeTests
     /// </summary>
     public sealed class HudTests : InputTestFixture
     {
+        /// <summary>About when the tower's new section starts rising after a purchase (the port moment).</summary>
+        private const float StitchDelay = 1.3f;
+
+        private const float ShortCueWait = 1.5f;
+
         private string _slot;
         private InputActionAsset _controls;
         private UiTestRig _rig;
@@ -204,12 +209,25 @@ namespace MoonProject.UI.PlayModeTests
             Assert.Greater(_rig.Ui.Tower.HoldProgress, 0.2f);
             yield return Seconds(_rig.Tuning.TowerPanel.HoldSeconds);
             Assert.AreEqual(1, _rig.Fakes.Purchases);
-            Assert.IsTrue(_rig.Ui.Tower.IsCelebrating);
+            Assert.IsTrue(_rig.Ui.Tower.IsWorking, "the station works; the ring rests full");
+            Assert.AreEqual(1f, _rig.Ui.Tower.HoldProgress, 1e-3f);
+            Assert.AreEqual(string.Empty, _rig.Ui.Layout.TowerHoldWord.text, "and nothing is said yet");
+            yield return Seconds(StitchDelay);
+            Assert.IsTrue(_rig.Ui.Tower.IsWorking, "no line at the purchase itself");
+            Events.Publish(new StationCued(StationCue.FeedStarted, _rig.Fakes.Upgrade.Id, Vector3.zero));
+            Events.Publish(new StationCued(StationCue.Fed, _rig.Fakes.Upgrade.Id, Vector3.zero));
+            yield return null;
+            Assert.IsTrue(_rig.Ui.Tower.IsWorking, "feeding is not yet the tower's moment");
+            Events.Publish(new StationCued(StationCue.StitchStarted, _rig.Fakes.Upgrade.Id, Vector3.zero));
+            yield return null;
+            Assert.IsTrue(_rig.Ui.Tower.IsCelebrating, "the beam stitches the new section up: the line comes");
+            Assert.AreEqual(Text(UiKeys.TowerPurchased), _rig.Ui.Layout.TowerHoldWord.text);
             yield return Seconds(_rig.Tuning.TowerPanel.CelebrateSeconds + 0.5f);
             Assert.AreEqual(1, _rig.Fakes.Purchases, "one purchase per hold");
             Release(keyboard.eKey);
             yield return Seconds(0.3f);
             Assert.AreEqual("Raise the mast", _rig.Ui.Layout.TowerTitle.text, "the next level is offered");
+            Assert.AreEqual(Text(UiKeys.TowerHold), _rig.Ui.Layout.TowerHoldWord.text);
             Assert.IsTrue(recipe.Root(SalvageMaterial.Metal).ClassListContains(MaterialSlots.ShortClass),
                 "what 07 is short of reads dimmed");
             Assert.IsTrue(recipe.Root(SalvageMaterial.Optics).ClassListContains(MaterialSlots.ShortClass));
@@ -327,7 +345,16 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual(1, _rig.Fakes.Purchases);
             Assert.AreEqual(1, _rig.Fakes.LevelOf(cradle.Id), "the hold crafts the picked piece");
             Assert.AreEqual(0, _rig.Fakes.LevelOf(hover.Id), "not the first on the list");
-            Assert.IsTrue(panel.IsCelebrating);
+            Assert.IsTrue(panel.IsWorking, "the bay feeds and fits; nothing is said yet");
+            Assert.AreEqual(string.Empty, layout.TowerHoldWord.text);
+            Events.Publish(new RoverKitFitted(RoverKitPiece.SolarCell, true, string.Empty));
+            Events.Publish(new RoverKitInstalling(RoverKitPiece.CargoRack, false));
+            yield return Seconds(StitchDelay);
+            Assert.IsTrue(panel.IsWorking, "a gift or the install starting is not the piece set on");
+            Events.Publish(new RoverKitFitted(RoverKitPiece.CargoRack, false, cradle.Id));
+            yield return null;
+            Assert.IsTrue(panel.IsCelebrating, "the arms set the piece on: the bay's line comes");
+            Assert.AreEqual(Text(UiKeys.BayFitted), layout.TowerHoldWord.text);
             yield return Seconds(_rig.Tuning.TowerPanel.CelebrateSeconds + 0.5f);
             Release(keyboard.eKey);
             yield return Seconds(0.3f);
@@ -344,6 +371,7 @@ namespace MoonProject.UI.PlayModeTests
             Press(keyboard.eKey);
             yield return Seconds(_rig.Tuning.TowerPanel.TapSeconds + _rig.Tuning.TowerPanel.HoldSeconds + 0.3f);
             Assert.AreEqual(1, _rig.Fakes.LevelOf(hover.Id));
+            Events.Publish(new RoverKitFitted(RoverKitPiece.HoverCoils, false, hover.Id));
             yield return Seconds(_rig.Tuning.TowerPanel.CelebrateSeconds + 0.5f);
             Release(keyboard.eKey);
             yield return Seconds(0.3f);
@@ -352,6 +380,27 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual(DisplayStyle.Flex, layout.TowerTitle.resolvedStyle.display);
             Assert.AreEqual(DisplayStyle.None, layout.TowerChoices.resolvedStyle.display);
             Assert.AreEqual(DisplayStyle.None, layout.TowerPick.resolvedStyle.display);
+        }
+
+        [UnityTest]
+        public IEnumerator AStationThatNeverShowsItsWork_IsReported_AndThePanelMovesOn()
+        {
+            Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
+            Boot();
+            _rig.Tune("_towerPanel._cueWaitSeconds", ShortCueWait);
+            yield return null;
+            _rig.Fakes.Upgrade = _rig.TestTower();
+            _rig.Fakes.SetMaterials(20, 20, 20);
+            _rig.Fakes.AtStation = true;
+            yield return Seconds(1.5f);
+            Press(keyboard.eKey);
+            yield return Seconds(_rig.Tuning.TowerPanel.HoldSeconds + 0.2f);
+            Release(keyboard.eKey);
+            Assert.IsTrue(_rig.Ui.Tower.IsWorking);
+            LogAssert.Expect(LogType.Error, new Regex("never showed its work"));
+            yield return Seconds(ShortCueWait + 0.5f);
+            Assert.IsFalse(_rig.Ui.Tower.IsWorking, "the panel does not wait forever");
+            Assert.AreEqual(Text(UiKeys.TowerHold), _rig.Ui.Layout.TowerHoldWord.text, "it offers the next level");
         }
 
         [UnityTest]

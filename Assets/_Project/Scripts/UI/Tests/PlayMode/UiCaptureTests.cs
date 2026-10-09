@@ -71,6 +71,8 @@ namespace MoonProject.UI.PlayModeTests
         private const float RelicShotSide = 2.2f;
         private const float RelicShotYaw = 35f;
         private const float KitSettleSeconds = 1.1f;
+        private const float LineShotSeconds = 0.5f;
+        private const float TowerStitchDelay = 1.3f;
 
         private string _slot;
         private GameObject _uiHost;
@@ -317,12 +319,24 @@ namespace MoonProject.UI.PlayModeTests
             Object.DestroyImmediate(_relicStandIn);
 
             fakes.Bay = _bayKit;
-            context.Events.Publish(new UpgradePurchased(_bayKit[1].Id, 1));
+            fakes.SetMaterials(12, 7, 2);
+            fakes.AtStation = true;
+            yield return new WaitForSecondsRealtime(1.8f);
+            yield return Tap(keyboard.eKey);
+            yield return new WaitForSecondsRealtime(0.4f);
+            Press(keyboard.eKey);
+            yield return new WaitForSecondsRealtime(_tuning.TowerPanel.TapSeconds + _tuning.TowerPanel.HoldSeconds +
+                                                    0.3f);
+            Release(keyboard.eKey);
             context.Events.Publish(new RoverKitInstalling(RoverKitPiece.CargoRack, false));
             yield return new WaitForSecondsRealtime(KitSettleSeconds);
+            yield return Capture(camera, folder, "44_bay_working");
             context.Events.Publish(new RoverKitFitted(RoverKitPiece.CargoRack, false, _bayKit[1].Id));
-            yield return new WaitForSecondsRealtime(_tuning.KitTitle.Delay + _tuning.KitTitle.Reveal.FadeIn + 0.4f);
-            yield return Capture(camera, folder, "44_kit_title_crafted");
+            yield return new WaitForSecondsRealtime(LineShotSeconds);
+            yield return Capture(camera, folder, "44b_bay_fitted_line");
+            yield return new WaitForSecondsRealtime(_tuning.KitTitle.Delay + _tuning.KitTitle.Reveal.FadeIn);
+            yield return Capture(camera, folder, "44c_kit_title_crafted");
+            fakes.AtStation = false;
             yield return new WaitForSecondsRealtime(_tuning.KitTitle.HoldSeconds + _tuning.KitTitle.Reveal.FadeOut +
                                                     0.3f);
             context.Events.Publish(new RoverKitInstalling(RoverKitPiece.SolarCell, true));
@@ -333,6 +347,20 @@ namespace MoonProject.UI.PlayModeTests
             fakes.Bay = null;
             yield return new WaitForSecondsRealtime(_tuning.KitTitle.HoldSeconds + _tuning.KitTitle.Reveal.FadeOut +
                                                     0.3f);
+
+            fakes.SetMaterials(12, 7, 2);
+            fakes.AtStation = true;
+            yield return new WaitForSecondsRealtime(1.5f);
+            Press(keyboard.eKey);
+            yield return new WaitForSecondsRealtime(_tuning.TowerPanel.HoldSeconds + 0.3f);
+            Release(keyboard.eKey);
+            yield return new WaitForSecondsRealtime(TowerStitchDelay);
+            context.Events.Publish(new StationCued(StationCue.StitchStarted, _tower.Id,
+                context.Get<IRoverState>().Position));
+            yield return new WaitForSecondsRealtime(LineShotSeconds);
+            yield return Capture(camera, folder, "47_tower_stitch_line");
+            fakes.AtStation = false;
+            yield return new WaitForSecondsRealtime(_tuning.TowerPanel.CelebrateSeconds + 1f);
 
             Transform socket = DarkMastSocket(context.Get<IWorldAnchors>());
             Camera mastCamera = MastCamera(socket, camera);
@@ -712,6 +740,7 @@ namespace MoonProject.UI.PlayModeTests
             fakes.Camera = context.Get<IViewCamera>().Camera;
             fakes.Position = context.Get<IRoverState>().Position;
             fakes.TillyStatus = new FriendStatus(FriendState.Dormant, 0, 3, false, false, new Vector3(0f, 0f, 500f));
+            fakes.AnnouncesPurchases = false;
             fakes.Initialize(new GameContext(context.Events, context.Input));
             fakes.SetMaterials(10, 6, 2);
 

@@ -16,6 +16,7 @@ namespace MoonProject.UI
         public const string TowerLevel = "ui.tower.level";
         public const string TowerHold = "ui.tower.hold";
         public const string TowerPurchased = "ui.tower.purchased";
+        public const string BayFitted = "ui.bay.fitted";
         public const string LogCaption = "ui.card.log_caption";
         public const string CrewLogCaption = "ui.card.crew_log";
         public const string LinerCaption = "ui.card.liner_caption";
@@ -96,6 +97,23 @@ namespace MoonProject.UI
                     return "ui.station.workshop";
                 default:
                     throw new ArgumentOutOfRangeException(nameof(station), station, "This station has no name key.");
+            }
+        }
+
+        /// <summary>
+        /// The quiet line a station says once its work on a purchase shows: the radio tower's "ui.tower.purchased" as
+        /// its new section rises, the Rover Bay's "ui.bay.fitted" as it sets the piece on 07.
+        /// </summary>
+        public static string StationLine(UpgradeStationKind station)
+        {
+            switch (station)
+            {
+                case UpgradeStationKind.RadioTower:
+                    return TowerPurchased;
+                case UpgradeStationKind.Workshop:
+                    return BayFitted;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(station), station, "This station has no line.");
             }
         }
 
