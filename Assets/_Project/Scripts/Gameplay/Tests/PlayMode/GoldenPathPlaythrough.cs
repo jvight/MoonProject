@@ -676,8 +676,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             Review(port + front * PortViewDistance * 1.6f + aside * PortViewSide + Vector3.up * PortViewHeight,
                 Vector3.Lerp(port, tower.BeaconPosition, 0.5f), "07b-tower-port-stitch");
             yield return Until(() => !tower.Crafting, 6f, "the hatch shuts and the moment ends");
-            AssertCues(cues, Tower, StationCue.FeedStarted, StationCue.Fed, StationCue.HatchOpened,
-                StationCue.StitchStarted, StationCue.HatchClosed);
+            AssertCues(cues, Tower, StationCue.FeedStarted, StationCue.BundleDropped, StationCue.BundleDropped,
+                StationCue.Fed, StationCue.HatchOpened, StationCue.StitchStarted, StationCue.HatchClosed);
             Assert.IsTrue(_gameplay.Workshop.Powered, "the base has power now: the Rover Bay's sign is lit");
             yield return new WaitForSeconds(1f);
             Capture("07-tower-awake");
@@ -866,7 +866,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.Greater(bench.BundlesInFlight, 0, "the recipe's bundles fly into the hopper");
             ReviewBay(bench, "13a-bay-hopper-feed");
             yield return Until(() => _events.RoverBayFitting.Count > fittings, 3f, "the bay starts fitting the kit");
-            AssertCues(cues, HoverJump, StationCue.FeedStarted, StationCue.Fed);
+            AssertCues(cues, HoverJump, StationCue.FeedStarted, StationCue.BundleDropped, StationCue.BundleDropped,
+                StationCue.BundleDropped, StationCue.Fed);
             Assert.AreEqual(HoverJump, _events.RoverBayFitting[_events.RoverBayFitting.Count - 1].Value.UpgradeId);
             Assert.IsTrue(bench.Working, "the bay works: its lights are up");
             Assert.AreEqual(0, bench.SparkCount, "no sparks while the arms are folded");

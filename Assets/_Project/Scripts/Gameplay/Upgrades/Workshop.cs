@@ -307,7 +307,8 @@ namespace MoonProject.Gameplay
             _floorRest = _floorTip.position;
             BuildLights();
 
-            _feed = new HopperFeed("BayFeed", transform, services.Visuals.TetherBeam, bundles, _tuning.FeedLook);
+            _feed = new HopperFeed("BayFeed", transform, services.Visuals.TetherBeam, bundles, _tuning.FeedLook,
+                services.Events);
             _waiting = new PurchaseQueue(PurchaseQueue.CapacityFor(_definitions));
             _purchases = services.Events.Subscribe<UpgradePurchased>(OnPurchased);
             _fittings = services.Events.Subscribe<RoverKitFitted>(OnKitFitted);
@@ -472,7 +473,7 @@ namespace MoonProject.Gameplay
         {
             _waiting.TryDequeue(out _feeding, out int level);
             Recipe recipe = _upgrades.Find(_feeding).Levels[level - 1].Recipe;
-            _feed.Begin(recipe, now);
+            _feed.Begin(recipe, _feeding, now);
             Vector3 mouth = _hopperMouth.position;
             _rig.SetGazeTarget(this, mouth, GazePriorities.Focus);
             Hold(true);
