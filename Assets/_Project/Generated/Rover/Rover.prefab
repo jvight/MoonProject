@@ -137,10 +137,10 @@ MonoBehaviour:
   - {fileID: 4367732790281566733}
   _drums:
   - {fileID: 1595588396189497097}
-  - {fileID: 5148775425623254877}
+  - {fileID: 6402823492511405656}
   _drumGlows:
   - {fileID: 2441347414823654816}
-  - {fileID: 8120513774117783028}
+  - {fileID: 8007019372605797617}
   _cargoRack: {fileID: 2801794370426553594}
   _relicSeat: {fileID: 3849550755732465449}
   _solarCell: {fileID: 1301963487990893594}
@@ -20229,7 +20229,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a38525af0ae8f494baca63c436e60396, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!1001 &253799413112082068
+--- !u!1001 &2029668546679439249
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -20290,15 +20290,15 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: bfd26167adc1b504d8da23dcb905ae3e, type: 3}
---- !u!4 &5148775425623254877 stripped
+--- !u!4 &6402823492511405656 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4967948405263788489, guid: bfd26167adc1b504d8da23dcb905ae3e, type: 3}
-  m_PrefabInstance: {fileID: 253799413112082068}
+  m_PrefabInstance: {fileID: 2029668546679439249}
   m_PrefabAsset: {fileID: 0}
---- !u!23 &8120513774117783028 stripped
+--- !u!23 &8007019372605797617 stripped
 MeshRenderer:
   m_CorrespondingSourceObject: {fileID: 8301384775060065120, guid: bfd26167adc1b504d8da23dcb905ae3e, type: 3}
-  m_PrefabInstance: {fileID: 253799413112082068}
+  m_PrefabInstance: {fileID: 2029668546679439249}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &2071711077337894435
 PrefabInstance:
@@ -20626,7 +20626,7 @@ PrefabInstance:
       addedObject: {fileID: 1595588396189497097}
     - targetCorrespondingSourceObject: {fileID: 2903409049900282589, guid: 6c81c221efa0d3a46b80a864668dcb02, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 5148775425623254877}
+      addedObject: {fileID: 6402823492511405656}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 6c81c221efa0d3a46b80a864668dcb02, type: 3}
 --- !u!4 &85023969792443 stripped
