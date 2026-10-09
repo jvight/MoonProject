@@ -43,6 +43,30 @@
             "text": "Thoát"
         },
         {
+            "key": "ui.pause.new_game",
+            "text": "Trò chơi mới"
+        },
+        {
+            "key": "ui.pause.new_game_question",
+            "text": "Bắt đầu hành trình mới?"
+        },
+        {
+            "key": "ui.pause.new_game_aside",
+            "text": "Hành trình này sẽ được cất đi, không mất."
+        },
+        {
+            "key": "ui.pause.new_game_keep",
+            "text": "Tiếp tục"
+        },
+        {
+            "key": "ui.pause.new_game_confirm",
+            "text": "Bắt đầu lại"
+        },
+        {
+            "key": "ui.journey.put_away",
+            "text": "Một hành trình cũ đã được cất đi."
+        },
+        {
             "key": "ui.settings.sound",
             "text": "Âm thanh"
         },
