@@ -8,8 +8,8 @@ namespace MoonProject.Audio
     /// <summary>
     /// The base's machines working for 07, who has no hands (M3-14):
     /// <list type="bullet">
-    /// <item>the feeding beam hums at a station's hopper and the last bundle clunks in
-    /// (<see cref="StationCued"/>);</item>
+    /// <item>the feeding beam hums at a station's hopper and each bundle clunks in, a little higher as the bin fills
+    /// (<see cref="StationCued"/>, <see cref="BundleDrops"/>);</item>
     /// <item>the Rover Bay's old arms whir at their tips while they move and sigh as they come to rest, and the
     /// turntable rumbles while it turns 07 (both read from <see cref="IRoverBay"/>'s transforms, so they follow
     /// wherever the Rover drives them);</item>
@@ -25,6 +25,7 @@ namespace MoonProject.Audio
     public sealed class StationAudio : MonoBehaviour
     {
         private const int SubscriptionCount = 3;
+        private const uint DropSeedSalt = 0x68E31DA4u;
         private const float CentsPerSemitone = 100f;
         private const float CentsPerOctave = 1200f;
 
@@ -38,6 +39,7 @@ namespace MoonProject.Audio
         private CueHandle[] _beats = Array.Empty<CueHandle>();
         private AudioDirector _director;
         private IRoverState _rover;
+        private BundleDrops _drops;
         private Transform[] _tips = Array.Empty<Transform>();
         private Vector3[] _lastTips = Array.Empty<Vector3>();
         private BayArmVoice[] _arms = Array.Empty<BayArmVoice>();
@@ -108,6 +110,7 @@ namespace MoonProject.Audio
             _rover = context.Get<IRoverState>();
             IRoverBay bay = context.Get<IRoverBay>();
             _charge = new ChargeModel(_tuning);
+            _drops = new BundleDrops(_tuning, new AudioRandom(unchecked((uint)Environment.TickCount) ^ DropSeedSalt));
             AudioLibrary library = director.Library;
             _feedCueVolume = library.GetCue(feed).VolumeMax;
             _servoCueVolume = library.GetCue(servo).VolumeMax;
@@ -188,13 +191,21 @@ namespace MoonProject.Audio
 
         private void OnStationCued(StationCued cued)
         {
+            float volume = 1f;
+            float pitch = 1f;
             switch (cued.Cue)
             {
                 case StationCue.FeedStarted:
                     _feedHum.transform.position = cued.Position;
+                    _drops.Restart();
                     _feed.FadeIn();
                     break;
+                case StationCue.BundleDropped:
+                    volume = _tuning.DropVolume;
+                    pitch = _drops.NextPitch();
+                    break;
                 case StationCue.Fed:
+                    _drops.Restart();
                     _feed.FadeOut();
                     break;
                 case StationCue.StitchStarted:
@@ -210,7 +221,7 @@ namespace MoonProject.Audio
             int beat = (int)cued.Cue;
             if (beat >= 0 && beat < _beats.Length && _beats[beat].IsValid)
             {
-                _director.PlayAt(_beats[beat], cued.Position);
+                _director.PlayAt(_beats[beat], cued.Position, volume, pitch);
             }
         }
 

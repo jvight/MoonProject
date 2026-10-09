@@ -13,6 +13,8 @@ namespace MoonProject.Audio.PlayModeTests
         private const string Upgrade = "rover.hover_jump";
 
         private AudioTestRig _rig;
+        private float _firstDropPitch;
+        private float _lastDropPitch;
 
         [UnitySetUp]
         public IEnumerator SetUp()
@@ -39,10 +41,18 @@ namespace MoonProject.Audio.PlayModeTests
             yield return new WaitForSeconds(0.4f);
             Assert.IsTrue(Stations.FeedSource.isPlaying, "the feeding beam hums");
             Assert.Less(Vector3.Distance(Stations.FeedSource.transform.position, mouth), 1e-4f);
+            yield return DropBundles(mouth, 3);
+            int clunks = _rig.Director.PlayCount;
             _rig.Events.Publish(new StationCued(StationCue.Fed, Upgrade, mouth));
-            StringAssert.StartsWith("hopper_clunk", LastClip, "the bundles clunk in");
+            Assert.AreEqual(clunks, _rig.Director.PlayCount, "all in: no extra clunk, the hum settles away");
             yield return new WaitForSeconds(0.6f);
             Assert.IsFalse(Stations.FeedSource.isPlaying);
+
+            float top = _lastDropPitch;
+            _rig.Events.Publish(new StationCued(StationCue.FeedStarted, Upgrade, mouth));
+            yield return DropBundles(mouth, 2);
+            Assert.Less(_firstDropPitch, top, "the next feed starts in an empty bin again");
+            _rig.Events.Publish(new StationCued(StationCue.Fed, Upgrade, mouth));
 
             _rig.Events.Publish(new RoverBayFitting(Upgrade));
             Transform upper = _rig.Bay.GetArmJoint(0, RoverBayJoint.Upper);
@@ -135,6 +145,36 @@ namespace MoonProject.Audio.PlayModeTests
             _rig.Events.Publish(new BellCued(BellCue.DialTapped, dial));
             Assert.AreEqual("bell_knob_tap", LastClip);
             Assert.Less(Vector3.Distance(_rig.Director.LastVoice.transform.position, dial), 1e-4f);
+        }
+
+        /// <summary>Drops <paramref name="count"/> bundles a beat apart: each clunks at the mouth, never the same
+        /// variant twice running, each a little higher than the one before.</summary>
+        private IEnumerator DropBundles(Vector3 mouth, int count)
+        {
+            string lastClip = string.Empty;
+            float lastPitch = 0f;
+            for (int i = 0; i < count; i++)
+            {
+                int plays = _rig.Director.PlayCount;
+                _rig.Events.Publish(new StationCued(StationCue.BundleDropped, Upgrade, mouth));
+                Assert.AreEqual(plays + 1, _rig.Director.PlayCount, $"bundle {i} clunks in");
+                StringAssert.StartsWith("hopper_clunk", LastClip);
+                Assert.AreNotEqual(lastClip, LastClip, $"bundle {i} is not the clunk before it again");
+                AudioSource voice = _rig.Director.LastVoice;
+                Assert.Less(Vector3.Distance(voice.transform.position, mouth), 1e-4f, "at the hopper's mouth");
+                Assert.Greater(voice.pitch, lastPitch, $"bundle {i} lands on the ones already in");
+                lastClip = LastClip;
+                lastPitch = voice.pitch;
+                if (i == 0)
+                {
+                    _firstDropPitch = lastPitch;
+                }
+
+                yield return new WaitForSeconds(0.15f);
+            }
+
+            Assert.Less(lastPitch, 1.1f, "a touch higher, never a squeak");
+            _lastDropPitch = lastPitch;
         }
 
         private bool RecentlyPlayed(string name, int within)

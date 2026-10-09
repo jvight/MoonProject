@@ -22,6 +22,16 @@ namespace MoonProject.Audio
         [Tooltip("Volume scale of the feeding beam's hum.")]
         [Range(0f, 1f)] [SerializeField] private float _feedVolume = 0.7f;
 
+        [Tooltip("Volume scale of each bundle's clunk into the hopper (a feed drops up to three, a beat apart).")]
+        [Range(0f, 1f)] [SerializeField] private float _dropVolume = 0.7f;
+
+        [Tooltip("Pitch each later bundle of a feed lands higher, on the ones already in the bin (0.035 = about a " +
+                 "semitone over three drops).")]
+        [Range(0f, 0.1f)] [SerializeField] private float _dropPitchStep = 0.035f;
+
+        [Tooltip("Random pitch wobble on each clunk (keep it under half the step so later drops always land higher).")]
+        [Range(0f, 0.05f)] [SerializeField] private float _dropPitchWobble = 0.012f;
+
         [Header("The bay's arms")]
         [Tooltip("Tip speed (m/s) below which an arm's servo is silent.")]
         [Range(0f, 2f)] [SerializeField] private float _armDeadSpeed = 0.05f;
@@ -104,6 +114,9 @@ namespace MoonProject.Audio
         public float FeedFadeIn => _feedFadeIn;
         public float FeedFadeOut => _feedFadeOut;
         public float FeedVolume => _feedVolume;
+        public float DropVolume => _dropVolume;
+        public float DropPitchStep => _dropPitchStep;
+        public float DropPitchWobble => _dropPitchWobble;
         public float ArmDeadSpeed => _armDeadSpeed;
         public float ArmFullSpeed => Mathf.Max(_armFullSpeed, _armDeadSpeed + MinSpan);
         public float ArmPlacedSpeed => _armPlacedSpeed;

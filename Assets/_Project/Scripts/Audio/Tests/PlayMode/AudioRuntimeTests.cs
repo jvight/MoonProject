@@ -278,6 +278,7 @@ namespace MoonProject.Audio.PlayModeTests
                     events.Publish(new UiCue(frame % 24 == 8 ? UiCueKind.CardShown : UiCueKind.PromptShown));
                     events.Publish(new StationCued((StationCue)(frame / 12 % StationCues), "radio_tower",
                         Vector3.right * 4f));
+                    events.Publish(new StationCued(StationCue.BundleDropped, "rover.hover_jump", Vector3.left * 4f));
                     if (frame % 48 == 8)
                     {
                         events.Publish(new RoverBayFitting("rover.hover_jump"));

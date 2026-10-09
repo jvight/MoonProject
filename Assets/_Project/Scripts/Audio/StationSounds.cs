@@ -4,8 +4,8 @@ using MoonProject.Core.Events;
 namespace MoonProject.Audio
 {
     /// <summary>
-    /// What each station beat plays once (M3-14): the last bundle's clunk into the hopper, the tower's hatch opening
-    /// and shutting. The feed's hum and the tower's stitch are loops that start and stop on these beats.
+    /// What each station beat plays once (M3-14): every bundle's clunk into the hopper, the tower's hatch opening and
+    /// shutting. The feed's hum and the tower's stitch are loops that start and stop on these beats.
     /// </summary>
     public static class StationSounds
     {
@@ -18,10 +18,11 @@ namespace MoonProject.Audio
             switch (cue)
             {
                 case StationCue.FeedStarted:
+                case StationCue.Fed:
                 case StationCue.StitchStarted:
                     id = null;
                     return true;
-                case StationCue.Fed:
+                case StationCue.BundleDropped:
                     id = AudioCueIds.HopperClunk;
                     return true;
                 case StationCue.HatchOpened:
