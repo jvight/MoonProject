@@ -103,6 +103,26 @@ namespace MoonProject.Gameplay
                  "turntable showing the piece.")]
         [Range(0f, 10f)] [SerializeField] private float _workLinger = 3f;
 
+        [Header("Pit light")]
+        [Tooltip("Metres the floor arm's tip must rise from its rest for the pit to light up (it lights while the " +
+                 "arm carries a belly piece up through the turntable, easing like the work lights).")]
+        [Range(0.005f, 0.5f)] [SerializeField] private float _pitTrigger = 0.02f;
+
+        [Tooltip("Intensity of the warm light in the pit under the turntable while the floor arm is up.")]
+        [Range(0f, 8f)] [SerializeField] private float _pitLightIntensity = 2.5f;
+
+        [Tooltip("Range (m) of the pit light.")]
+        [Range(0.5f, 8f)] [SerializeField] private float _pitLightRange = 2.5f;
+
+        [Tooltip("Metres above the floor arm's base (the pit floor) where the pit light sits.")]
+        [Range(0f, 1f)] [SerializeField] private float _pitLightLift = 0.1f;
+
+        [Tooltip("Intensity of the warm light on the floor arm's tip, rising with the piece it carries.")]
+        [Range(0f, 8f)] [SerializeField] private float _tipLightIntensity = 1.5f;
+
+        [Tooltip("Range (m) of the tip light: enough to warm the piece and 07's belly above it.")]
+        [Range(0.2f, 4f)] [SerializeField] private float _tipLightRange = 1.2f;
+
         [Header("Sign")]
         [Tooltip("The bay's lit sign, once the base has power, never glows dimmer than this (linear emission " +
                  "multiplier): a landmark from across the base. Above it, it follows the lamps.")]
@@ -166,6 +186,12 @@ namespace MoonProject.Gameplay
         public float LightOffset => _lightOffset;
         public bool LightCastsShadows => _lightShadows;
         public float WorkLinger => _workLinger;
+        public float PitTrigger => _pitTrigger;
+        public float PitLightIntensity => _pitLightIntensity;
+        public float PitLightRange => _pitLightRange;
+        public float PitLightLift => _pitLightLift;
+        public float TipLightIntensity => _tipLightIntensity;
+        public float TipLightRange => _tipLightRange;
         public float SignGlow => _signGlow;
         public float SignFlickerDuration => _signFlickerDuration;
         public int SignFlickers => _signFlickers;

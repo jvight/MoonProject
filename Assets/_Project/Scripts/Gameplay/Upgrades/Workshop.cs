@@ -17,9 +17,10 @@ namespace MoonProject.Gameplay
     /// the piece on (<see cref="RoverKitFitted"/>), the work lamps flare and weld sparks fly from the tip of the arm
     /// that fitted it (the floor arm's for a belly piece). A purchase made while another is being fed waits its turn.
     /// While the bay works (feeding and fitting, and a moment after) a warm point light under each work lamp lights its
-    /// interior and arms, easing down to a low glow when it is done; the lamps stay on as a warm welcome and lean
-    /// brighter while 07 is parked. The bay's sign lights with the base's power (the radio tower's first level): it
-    /// flickers on softly the first time, and stays lit.
+    /// interior and arms, easing down to a low glow when it is done, and while the floor arm rises through the
+    /// turntable a warm light in the pit and one on its tip light the piece coming up under 07's belly. The lamps
+    /// stay on as a warm welcome and lean brighter while 07 is parked. The bay's sign lights with the base's power
+    /// (the radio tower's first level): it flickers on softly the first time, and stays lit.
     /// It is also the <see cref="IRoverBay"/> the Rover domain drives (registered by the <see cref="GameplaySystem"/>):
     /// the turntable, the gantry arms' joints and the floor arm, all from serialized references wired by the scene
     /// build, never looked up by name.
@@ -27,6 +28,9 @@ namespace MoonProject.Gameplay
     [DisallowMultipleComponent]
     public sealed class Workshop : MonoBehaviour, IUpgradeStation, IRoverBay
     {
+        /// <summary>Below this share of their glow the pit lights switch off instead of drawing nothing.</summary>
+        private const float PitLightCutoff = 0.01f;
+
         [Tooltip("Workshop tuning (Assets/_Project/Data/Tuning/Gameplay/WorkshopTuning.asset).")]
         [SerializeField] private WorkshopTuning _tuning;
 
@@ -82,6 +86,9 @@ namespace MoonProject.Gameplay
         private Vector3[] _socketRest = Array.Empty<Vector3>();
         private Vector3 _floorRest;
         private Light[] _lights = Array.Empty<Light>();
+        private Light _pitLight;
+        private Light _tipLight;
+        private float _pitLevel;
         private RadioTower _power;
         private IDisposable _fittings;
         private float _lightLevel;
@@ -145,6 +152,11 @@ namespace MoonProject.Gameplay
 
         /// <summary>Current intensity of the work lights (tests and debugging views).</summary>
         public float LightLevel => _lightLevel;
+
+        /// <summary>
+        /// 0..1 share of the pit light's full glow (tests and debugging views): up while the floor arm is raised.
+        /// </summary>
+        public float PitLevel => _pitLevel;
 
         /// <summary>Weld sparks in the air, all arms and the floor arm together (tests and debugging views).</summary>
         public int SparkCount
@@ -323,6 +335,26 @@ namespace MoonProject.Gameplay
 
             _lightLevel = _tuning.LightIdle;
             ApplyLights(false);
+            _pitLight = PitLight("PitLight", _floorLift.parent, Vector3.up * _tuning.PitLightLift,
+                _tuning.PitLightRange);
+            _tipLight = PitLight("TipLight", _floorTip, Vector3.zero, _tuning.TipLightRange);
+            ApplyPitLight();
+        }
+
+        /// <summary>A warm point light for the floor arm, dark until it rises.</summary>
+        private Light PitLight(string name, Transform parent, Vector3 localPosition, float range)
+        {
+            var host = new GameObject(name);
+            host.transform.SetParent(parent, false);
+            host.transform.localPosition = localPosition;
+            Light light = host.AddComponent<Light>();
+            light.type = LightType.Point;
+            light.color = _tuning.LightColor;
+            light.range = range;
+            light.shadows = LightShadows.None;
+            light.renderMode = LightRenderMode.ForcePixel;
+            light.enabled = false;
+            return light;
         }
 
         private string WiringProblem(UpgradeService upgrades)
@@ -508,6 +540,9 @@ namespace MoonProject.Gameplay
             float light = Working ? _tuning.LightWorking : _tuning.LightIdle;
             _lightLevel = Damp.Toward(_lightLevel, light, _tuning.LightEase, deltaTime);
             ApplyLights(Working && _tuning.LightCastsShadows);
+            bool rising = Vector3.Distance(_floorTip.position, _floorRest) > _tuning.PitTrigger;
+            _pitLevel = Damp.Toward(_pitLevel, rising ? 1f : 0f, _tuning.LightEase, deltaTime);
+            ApplyPitLight();
             float lamp = _pad.Occupied || Working ? _tuning.LampOccupied : _tuning.LampIdle;
             _lampLevel = Damp.Toward(_lampLevel, lamp, _tuning.LampEase, deltaTime);
             StepPower(now);
@@ -527,6 +562,16 @@ namespace MoonProject.Gameplay
 
             _powered = true;
             _poweredAt = _power.Crafting ? now : float.NegativeInfinity;
+        }
+
+        /// <summary>The pit and tip lights at the floor arm's share of their glow; off (and free) when dark.</summary>
+        private void ApplyPitLight()
+        {
+            bool lit = _pitLevel > PitLightCutoff;
+            _pitLight.enabled = lit;
+            _tipLight.enabled = lit;
+            _pitLight.intensity = _tuning.PitLightIntensity * _pitLevel;
+            _tipLight.intensity = _tuning.TipLightIntensity * _pitLevel;
         }
 
         private void ApplyLights(bool shadows)

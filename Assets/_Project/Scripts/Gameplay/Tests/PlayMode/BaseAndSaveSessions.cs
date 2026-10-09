@@ -240,6 +240,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreSame(_fixture.HoverJumpUpgrade, bay.Definition, "the bay's first offer");
             Assert.AreEqual(tuning.LampIdle, bay.LampLevel, 1e-3f, "Kenji's work lamps are left on");
             Assert.AreEqual(tuning.LightIdle, bay.LightLevel, 1e-3f, "a low warm glow lights the bay inside");
+            Assert.AreEqual(0f, bay.PitLevel, "the pit under the turntable is dark");
             Assert.IsFalse(bay.Working);
             Assert.IsFalse(bay.Powered);
             Assert.AreEqual(0f, bay.SignLevel, 1e-3f, "the bay's sign is dark until the base has power");
@@ -335,6 +336,8 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             // The rover's floor arm lifts the Hover-Jump coils up through the turntable and sets them on.
             rig.FloorLift.localPosition += Vector3.up * 0.25f;
+            yield return new WaitForSeconds(tuning.LightEase * 4f);
+            Assert.Greater(bay.PitLevel, 0.9f, "the pit and the floor arm's tip light the coils coming up");
             Weld(new RoverKitFitted(RoverKitPiece.SolarCell, true, string.Empty));
             Assert.AreEqual(0, bay.SparkCount, "a friend's gift is no weld");
             Weld(new RoverKitFitted(RoverKitPiece.HoverCoils, false, HoverJump));
@@ -350,6 +353,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             rig.FloorLift.localPosition -= Vector3.up * 0.25f;
             yield return new WaitForSeconds(tuning.WorkLinger + tuning.LightEase * 5f);
             Assert.IsFalse(bay.Working, "done: the bay rests");
+            Assert.Less(bay.PitLevel, 0.02f, "the arm is down: the pit goes dark again");
             Assert.AreEqual(tuning.LightIdle, bay.LightLevel, 0.1f, "its lights ease back down to the low glow");
 
             _fixture.GiveMaterials(5, 2, 4);
