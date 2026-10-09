@@ -15,8 +15,9 @@ namespace MoonProject.Audio
     /// homecoming. Shared: the repair stitching and boot (logic in <see cref="FriendVoiceModel"/>), the amber part
     /// tone and the spotter ping. Bell's own moments arrive as <see cref="BellCued"/>: the tape slotting in (which
     /// ends her stitching instead of a boot), the needle sweep, foot taps to the music, her happy crackle at a new
-    /// relic and the dial's detent click. Events: <see cref="FriendAnswered"/>, <see cref="FriendPartCollected"/>,
-    /// <see cref="FriendRepaired"/>, <see cref="FriendGreeted"/>, <see cref="FriendSpotted"/>,
+    /// relic, 07's beam tapping her dial's knob and the dial's detent click. Events: <see cref="FriendAnswered"/>,
+    /// <see cref="FriendPartCollected"/>, <see cref="FriendRepaired"/>, <see cref="FriendGreeted"/>,
+    /// <see cref="FriendSpotted"/>,
     /// <see cref="RelicDeposited"/> (excited, for friends at home other than Bell). Game-time loops duck while paused
     /// through the director's world gain. Initialised by <see cref="AudioDirector"/>.
     /// </summary>
@@ -43,6 +44,7 @@ namespace MoonProject.Audio
         private CueHandle _tapeSlot;
         private CueHandle _needleSweep;
         private CueHandle _dialClick;
+        private CueHandle _knobTap;
         private Voice _bell;
         private int _completePart;
 
@@ -67,8 +69,10 @@ namespace MoonProject.Audio
             _tapeSlot = director.Resolve(AudioCueIds.BellTapeSlot);
             _needleSweep = director.Resolve(AudioCueIds.BellNeedleSweep);
             _dialClick = director.Resolve(AudioCueIds.RadioDialClick);
+            _knobTap = director.Resolve(AudioCueIds.BellKnobTap);
             if (!stitch.IsValid || !_sharedBoot.IsValid || !_part.IsValid || !_spotPing.IsValid || !_tapeSlot.IsValid ||
-                !_needleSweep.IsValid || !_dialClick.IsValid || !TryFindCompletePart(out _completePart))
+                !_needleSweep.IsValid || !_dialClick.IsValid || !_knobTap.IsValid ||
+                !TryFindCompletePart(out _completePart))
             {
                 enabled = false;
                 return;
@@ -243,6 +247,9 @@ namespace MoonProject.Audio
                     break;
                 case BellCue.DialTurned:
                     _director.Play2D(_dialClick);
+                    break;
+                case BellCue.DialTapped:
+                    _director.PlayAt(_knobTap, cued.Position);
                     break;
                 default:
                     Debug.LogError($"{nameof(FriendAudio)}: no sound for Bell's cue {cued.Cue}.", this);

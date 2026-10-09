@@ -7,8 +7,9 @@ namespace MoonProject.Audio.PlayModeTests
     /// Stands in for the Rover, World and Gameplay systems: registers <see cref="IRoverState"/>,
     /// <see cref="IRoverRig"/>, <see cref="IWorldLayout"/>, a two-friend <see cref="IFriendRoster"/> (Tilly, then
     /// Bell), Bell's <see cref="IRadioProgram"/>, a test canyon's <see cref="IWorldAnchors"/>,
-    /// <see cref="IRoverStillness"/> (counting up while <see cref="Resting"/>, as the Rover does) and a relay network
-    /// (<see cref="IStationReach"/>: home at the base, masts the test lights) with values the test sets directly.
+    /// <see cref="IRoverStillness"/> (counting up while <see cref="Resting"/>, as the Rover does), a relay network
+    /// (<see cref="IStationReach"/>: home at the base, masts the test lights) and a Rover Bay
+    /// (<see cref="IRoverBay"/>: transforms the test moves) with values the test sets directly.
     /// </summary>
     public sealed class FakeRoverSystem : MonoBehaviour, IGameSystem, IRoverState, IRoverRig, IWorldLayout,
         IFriendRoster, IRoverStillness
@@ -24,6 +25,9 @@ namespace MoonProject.Audio.PlayModeTests
 
         /// <summary>The relay network: home at the origin (the base) plus the test's masts.</summary>
         public FakeStationReach Reach { get; } = new FakeStationReach(Vector3.zero);
+
+        /// <summary>The Rover Bay, built at initialisation under this object.</summary>
+        public FakeRoverBay Bay { get; private set; }
 
         public int Count => 2;
 
@@ -96,6 +100,8 @@ namespace MoonProject.Audio.PlayModeTests
             context.Register<IWorldAnchors>(new FakeWorldAnchors());
             context.Register<IRoverStillness>(this);
             context.Register<IStationReach>(Reach);
+            Bay = new FakeRoverBay(transform);
+            context.Register<IRoverBay>(Bay);
         }
     }
 }

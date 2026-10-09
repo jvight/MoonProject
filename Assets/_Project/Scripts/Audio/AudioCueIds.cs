@@ -70,6 +70,20 @@ namespace MoonProject.Audio
         public const string SalvageCutTone = "salvage_cut_tone";
         public const string SalvageBreak = "salvage_break";
         public const string SiteAnswer = "site_answer";
+        public const string HopperFeedHum = "hopper_feed_hum";
+        public const string HopperClunk = "hopper_clunk";
+        public const string BayArmServo = "bay_arm_servo";
+        public const string BayArmSigh = "bay_arm_sigh";
+        public const string BayTurntable = "bay_turntable";
+        public const string BayWeld = "bay_weld";
+        public const string BayFittedChime = "bay_fitted_chime";
+        public const string PortHatchOpen = "port_hatch_open";
+        public const string PortHatchClose = "port_hatch_close";
+        public const string DockConnect = "dock_connect";
+        public const string DockChargeHum = "dock_charge_hum";
+        public const string DockFull = "dock_full";
+        public const string DockRelease = "dock_release";
+        public const string BellKnobTap = "bell_knob_tap";
 
         /// <summary>A friend's chirp cue, <c>&lt;friendId&gt;_&lt;mood&gt;</c> (e.g. tilly_curious). Builds a string:
         /// call at initialisation only.</summary>

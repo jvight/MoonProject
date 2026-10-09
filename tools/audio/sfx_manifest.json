@@ -2471,6 +2471,387 @@
       "notes": "A site answering a ping: hull resonance on its note (depot D4, garage E4, drill F#4, kestrel A4, lander B4); '_relic' answers warmer with its octave and a D5 glow."
     },
     {
+      "id": "hopper_feed_hum",
+      "category": "loop_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/SFX/hopper_feed_hum_loop.wav"
+      ],
+      "variantLabels": [
+        "hopper_feed_hum"
+      ],
+      "sha256": [
+        "a62735d81d055400c6673b8902c09a6efd5aeda0314ea9be458b6173f2f88267"
+      ],
+      "volumeMin": 0.45,
+      "volumeMax": 0.45,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "07's beam feeding a hopper: soft D3/A3 hum + air."
+    },
+    {
+      "id": "hopper_clunk",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/hopper_clunk_01.wav",
+        "Assets/_Project/Audio/SFX/hopper_clunk_02.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02"
+      ],
+      "sha256": [
+        "21f7ff23457231e46332c27e548385f774e690aed33528246f743a2ba1f4cc46",
+        "b4a1c0c5526706d6143f8abb02fb1e47061cd8fdbfda68d6601ac6b014792ec5"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "Bundles dropping into the hopper: muffled clunk + a short settling rattle."
+    },
+    {
+      "id": "bay_arm_servo",
+      "category": "loop_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/SFX/bay_arm_servo_loop.wav"
+      ],
+      "variantLabels": [
+        "bay_arm_servo"
+      ],
+      "sha256": [
+        "2760eacb21ece6a8e0a85a4f6dcd3e34ba8c53cedc85a798be383e60e4bb14ee"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "An old gantry arm moving: low servo whirr, gear flutter, a gentle creak."
+    },
+    {
+      "id": "bay_arm_sigh",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/bay_arm_sigh.wav"
+      ],
+      "variantLabels": [
+        "bay_arm_sigh"
+      ],
+      "sha256": [
+        "baf3215eb88e357247328cf24074f87bb6522551f1d36e6a15801309280ac7a5"
+      ],
+      "volumeMin": 0.45,
+      "volumeMax": 0.45,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "An arm coming to rest: soft hydraulic sigh + low settling thunk."
+    },
+    {
+      "id": "bay_weld",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/bay_weld.wav"
+      ],
+      "variantLabels": [
+        "bay_weld"
+      ],
+      "sha256": [
+        "a75cb9b04d2d7410c9e9fa4b411f2ebf1fdcd7c52ab36687153bfb3ad943a99e"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "Kit set on 07: short weld hiss + soft spark crackle, then a gentle 'fitted' clunk."
+    },
+    {
+      "id": "bay_fitted_chime",
+      "category": "stinger_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/bay_fitted_chime.wav"
+      ],
+      "variantLabels": [
+        "bay_fitted_chime"
+      ],
+      "sha256": [
+        "8a91eb72c23372d05f350719274522a760ceb3e31ea64c2667bb6005a8f557ac"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -20.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "'Done for 07': A4 resolving onto D5, felt-soft kalimba over a faint D4 pad."
+    },
+    {
+      "id": "bay_turntable",
+      "category": "loop_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/SFX/bay_turntable_loop.wav"
+      ],
+      "variantLabels": [
+        "bay_turntable"
+      ],
+      "sha256": [
+        "31a7c8c8866a5c4e195cc9f1ad07c11fa21169c78876e23672c23f4f93a1d0d8"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 6000.0,
+      "hfMaxDb": -40.0,
+      "tonal": true,
+      "notes": "The turntable turning 07: low roller rumble + bearing hum on D2."
+    },
+    {
+      "id": "port_hatch_open",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/port_hatch_open.wav"
+      ],
+      "variantLabels": [
+        "port_hatch_open"
+      ],
+      "sha256": [
+        "45d84fc65b9d88249915820b4f981acd65ded09ad751fc4e1f2f0a0c0916d36a"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "The tower's service hatch opening: latch clack + short hinge creak."
+    },
+    {
+      "id": "port_hatch_close",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/port_hatch_close.wav"
+      ],
+      "variantLabels": [
+        "port_hatch_close"
+      ],
+      "sha256": [
+        "46ac72bdbac0db56183588439dec2a9dbace0a59bb81ed4890041ad0759e5b34"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "The hatch swinging shut: hinge swing + a solid little latch click."
+    },
+    {
+      "id": "dock_connect",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/dock_connect.wav"
+      ],
+      "variantLabels": [
+        "dock_connect"
+      ],
+      "sha256": [
+        "60ac355f02b4cff4d4242e973d1b8077ceb9d4d45606515cab6d794cf7d381f0"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "07 settling onto the charging dock: soft magnetic clunk + tiny electric tick."
+    },
+    {
+      "id": "dock_charge_hum",
+      "category": "loop_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/SFX/dock_charge_hum_loop.wav"
+      ],
+      "variantLabels": [
+        "dock_charge_hum"
+      ],
+      "sha256": [
+        "0fa8d14e61cf49107debbfb1b8c94013c7093f37f08f3513feeeef0631dbc977"
+      ],
+      "volumeMin": 0.35,
+      "volumeMax": 0.35,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Charging: a very soft warm hum on D3 + octave, breathing slowly."
+    },
+    {
+      "id": "dock_full",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/dock_full.wav"
+      ],
+      "variantLabels": [
+        "dock_full"
+      ],
+      "sha256": [
+        "9af25b36a785d8f310909ba0559a9c08858e8606bd6020ff666189b492bd07b8"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Charged: soft bell on D5 with A5 blooming above it."
+    },
+    {
+      "id": "dock_release",
+      "category": "tick_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/dock_release.wav"
+      ],
+      "variantLabels": [
+        "dock_release"
+      ],
+      "sha256": [
+        "8d9185ce5dc9518a83737dc25161be028a9101f054797d7faea7331ddd672976"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -26.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "Leaving the dock: contacts parting, a soft click and a breath of air."
+    },
+    {
+      "id": "bell_knob_tap",
+      "category": "tick_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/bell_knob_tap.wav"
+      ],
+      "variantLabels": [
+        "bell_knob_tap"
+      ],
+      "sha256": [
+        "874acf9b59304249bed81f4ecf82d1cc5f0dabd60d13e8a92de3cabb1e86e48d"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -26.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "BellCued.DialTapped: 07's beam taps Bell's dial knob, a tiny bakelite tick."
+    },
+    {
       "id": "upgrade_arpeggio",
       "category": "stinger_2d",
       "milestone": "M2",

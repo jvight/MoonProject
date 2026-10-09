@@ -507,6 +507,9 @@ namespace MoonProject.Core.Events
 
         /// <summary>07 turned her dial one detent (a detented click; RadioProgramChanged follows).</summary>
         DialTurned = 4,
+
+        /// <summary>07's beam taps her dial's knob (a tiny tick) just before she turns it.</summary>
+        DialTapped = 5,
     }
 
     /// <summary>
