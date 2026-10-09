@@ -17,7 +17,8 @@ namespace MoonProject.Rover.PlayModeTests
     /// piece rides the arm's tip the whole way and is set exactly on its socket, never dropped), the arm folds away,
     /// the turntable turns 07 to show it and 07 strikes its proud pose once it is let go. The drums take two arms,
     /// the Hover-Jump coils ride the floor arm up through the turntable. A socket out of reach is a contract bug,
-    /// logged loudly. The camera holds a view in through the bay's open front, under the crane rail, while 07 turns.
+    /// logged loudly. The camera holds a view in through the bay's open front, under the crane rail, while 07 turns,
+    /// and eases in close to the socket while a part is set on (low under 07 for the floor arm) and back out after.
     /// </summary>
     public sealed class RoverBayTests : InputTestFixture
     {
@@ -30,6 +31,9 @@ namespace MoonProject.Rover.PlayModeTests
         private const float MaxBodySpeed = 3f;
         private const float MaxBodyTurn = 260f;
         private const float MaxTipSpeed = 6f;
+
+        /// <summary>Viewport margin a socket and the tool setting a part on it must sit inside.</summary>
+        private const float FrameMargin = 0.05f;
 
         /// <summary>The camera in the bay never whips (m/s, deg/s).</summary>
         private const float MaxCameraSpeed = 12f;
@@ -132,18 +136,45 @@ namespace MoonProject.Rover.PlayModeTests
             return nearest;
         }
 
-        /// <summary>Each arm folded back in its rest pose (the shoulder unturned).</summary>
+        /// <summary>Each arm folded back in its rest pose along the rail.</summary>
         private void AssertArmsAtRest()
         {
             for (int i = 0; i < _bay.ArmCount; i++)
             {
-                Assert.Less(Quaternion.Angle(Quaternion.identity, _bay.GetArmJoint(i, RoverBayJoint.Yaw).localRotation),
-                    0.5f, $"arm {i} turned back");
-                Assert.Less(Quaternion.Angle(Quaternion.Euler(80f, 0f, 0f),
-                    _bay.GetArmJoint(i, RoverBayJoint.Upper).localRotation), 0.5f, $"arm {i} folded");
-                Assert.Less(Quaternion.Angle(Quaternion.Euler(-160f, 0f, 0f),
-                    _bay.GetArmJoint(i, RoverBayJoint.Lower).localRotation), 0.5f, $"arm {i} folded");
+                Assert.Less(_bay.OffRest(i), 0.5f, $"arm {i} folded back to rest");
             }
+        }
+
+        /// <summary>
+        /// As a part is set on <paramref name="socket"/> by <paramref name="tool"/> (an arm's tip or the floor arm's),
+        /// the game camera is in its close shot: a few metres off, inside the bay's walls, under the crane rail, with
+        /// the socket and the tool in frame. Returns the camera's height above 07's pivot.
+        /// </summary>
+        private float AssertSetOnFramed(Vector3 socket, Vector3 tool, string piece)
+        {
+            Camera view = _rover.Camera;
+            Vector3 eye = view.transform.position;
+            BayShotSettings shot = _rover.CameraTuning.BayFraming.Shot;
+            float distance = Vector3.Distance(eye, socket);
+            Vector3 onScreen = view.WorldToViewportPoint(socket);
+            Vector3 toolOnScreen = view.WorldToViewportPoint(tool);
+            Debug.Log($"[rover-bay] {piece} set on: camera {distance:0.00} m off, {eye.y - Centre.y:0.00} m up, "
+                + $"socket at ({onScreen.x:0.00}, {onScreen.y:0.00}), tool at ({toolOnScreen.x:0.00}, "
+                + $"{toolOnScreen.y:0.00}), shot weight {_rover.CameraRig.FittingShotWeight:0.00}");
+            Assert.Greater(_rover.CameraRig.FittingShotWeight, 0.95f, $"{piece}: the close shot is in.");
+            Assert.That(distance, Is.InRange(shot.MinDistance - 0.5f, shot.ArmDistance + 1f),
+                $"{piece}: a few metres off the socket.");
+            Assert.IsTrue(_bay.WithinWalls(eye), $"{piece}: inside the bay's walls.");
+            Assert.Less(eye.y - Centre.y, TestRoverBay.RailHeight, $"{piece}: under the crane rail.");
+            Assert.IsTrue(InFrame(onScreen), $"{piece}: the socket is in frame.");
+            Assert.IsTrue(InFrame(toolOnScreen), $"{piece}: the arm setting it on is in frame.");
+            return eye.y - Centre.y;
+        }
+
+        private static bool InFrame(Vector3 viewport)
+        {
+            return viewport.z > 0f && viewport.x > FrameMargin && viewport.x < 1f - FrameMargin
+                && viewport.y > FrameMargin && viewport.y < 1f - FrameMargin;
         }
 
         [UnityTest]
@@ -215,6 +246,7 @@ namespace MoonProject.Rover.PlayModeTests
                 {
                     landedAt = now;
                     landingGap = NearestTip(bar.position);
+                    AssertSetOnFramed(bar.position, _bay.TipEnd(NearestArm(bar.position)), "lamp bar");
                 }
 
                 if (landedAt >= 0f)
@@ -237,7 +269,7 @@ namespace MoonProject.Rover.PlayModeTests
                     proud = Mathf.Max(proud, perk);
                 }
 
-                if (_rover.CameraRig.MomentWeight > 0.95f)
+                if (_rover.CameraRig.MomentWeight > 0.95f && _rover.CameraRig.FittingShotWeight < 0.05f)
                 {
                     Vector3 fromBay = Vector3.ProjectOnPlane(_rover.Camera.transform.position - Centre, Vector3.up);
                     bearing = Mathf.Max(bearing, Vector3.Angle(fromBay, _bay.OpenFront));
@@ -274,7 +306,8 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.Greater(proud, 0.6f, "07's proud pose...");
             Assert.Less(proudHeld, proud - 0.2f, "...once the bay lets it go, showing the bar.");
             Assert.Greater(_rover.Headlamp.spotAngle, plainAngle + 20f, "A wider, warmer road light.");
-            Assert.Less(bearing, 20f, "The camera looks in through the open front all along...");
+            Assert.Less(bearing, 20f, "Out of the close shot, the camera looks in through the open front...");
+            Assert.Less(_rover.CameraRig.FittingShotWeight, 0.05f, "...back in the bay's view once 07 is let go...");
             Assert.Less(cameraHigh, TestRoverBay.RailHeight, "...from under the crane rail...");
             Assert.Greater(cameraHigh, 1.8f, "...and above 07's back.");
             Assert.Less(camera.Fastest, MaxCameraSpeed, "Eased, never a cut.");
@@ -294,11 +327,18 @@ namespace MoonProject.Rover.PlayModeTests
 
             float grip = 0f;
             float started = Time.time;
+            bool framed = false;
             while (_rover.Kit.IsFitting && Time.time - started < LongestFitting)
             {
                 if (_rover.Kit.Fit(RoverKitPiece.CapacitorDrums).IsCarried)
                 {
                     grip = Mathf.Max(grip, Mathf.Max(NearestTip(drums[0].position), NearestTip(drums[1].position)));
+                }
+
+                if (!framed && _fitted.Count > 0)
+                {
+                    framed = true;
+                    AssertSetOnFramed(drums[0].position, _bay.TipEnd(NearestArm(drums[0].position)), "drum");
                 }
 
                 yield return null;
@@ -331,8 +371,14 @@ namespace MoonProject.Rover.PlayModeTests
             float lowest = mount.position.y;
             float aside = 0f;
             float started = Time.time;
+            float cameraUp = -1f;
             while (_rover.Kit.IsFitting && Time.time - started < LongestFitting)
             {
+                if (cameraUp < 0f && _fitted.Count > 0)
+                {
+                    cameraUp = AssertSetOnFramed(mount.position, _bay.FloorTip.position, "coils");
+                }
+
                 lowest = Mathf.Min(lowest, mount.position.y);
                 if (_rover.Kit.Fit(RoverKitPiece.HoverCoils).IsCarried)
                 {
@@ -353,6 +399,7 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.AreEqual(1f, mount.localScale.x, 1e-3f, "Full size.");
             Assert.AreEqual(liftRest, _bay.FloorLift.localPosition, "The floor arm sinks back into its pit.");
             Assert.Less(aside, 0.25f, "Straight over the floor arm.");
+            Assert.Less(cameraUp, 1f, "The camera watched from low down, under 07's belly.");
             AssertArmsAtRest();
         }
 

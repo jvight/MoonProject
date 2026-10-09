@@ -41,6 +41,9 @@ namespace MoonProject.Rover
         /// <summary>The folded pose the arm hangs in between fittings.</summary>
         public BayArmPose Rest { get; }
 
+        /// <summary>The shoulder, where the arm hangs from the crane rail (world).</summary>
+        public Vector3 Shoulder => _yaw.position;
+
         /// <summary>The tip's end, where a carried piece is held (world).</summary>
         public Vector3 TipEnd => _tip.TransformPoint(new Vector3(0f, -Geometry.Tip, 0f));
 

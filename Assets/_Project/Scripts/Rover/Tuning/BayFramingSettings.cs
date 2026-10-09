@@ -36,6 +36,10 @@ namespace MoonProject.Rover
         [Range(0f, 2f)]
         [SerializeField] private float _railClearance = 0.5f;
 
+        [Header("While the bay fits a piece")]
+        [Tooltip("The close shot of the arm setting the piece on (or the floor arm lifting it under 07).")]
+        [SerializeField] private BayShotSettings _shot = new BayShotSettings();
+
         public float Radius => _radius;
 
         public float Hysteresis => _hysteresis;
@@ -45,5 +49,7 @@ namespace MoonProject.Rover
         public float Elevation => _elevation;
 
         public float RailClearance => _railClearance;
+
+        public BayShotSettings Shot => _shot;
     }
 }

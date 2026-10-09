@@ -24,7 +24,7 @@ namespace MoonProject.Rover
     /// Belly pieces ride the floor arm up through the turntable instead. A piece no arm can reach is a contract bug:
     /// <see cref="Begin"/> refuses it and logs, and it is never dropped the last stretch. Allocation-free per frame.
     /// </summary>
-    public sealed class BayFitting
+    public sealed class BayFitting : IBayFitView
     {
         public const int MaxParts = 2;
 
@@ -78,6 +78,20 @@ namespace MoonProject.Rover
         }
 
         public bool Active => _phase != Phase.Idle;
+
+        public bool Working => Active && _phase != Phase.Fold;
+
+        public bool Belly => _floor;
+
+        public Vector3 Socket { get; private set; }
+
+        public Vector3 Shoulder { get; private set; }
+
+        public Vector3 Centre => _centre;
+
+        public Vector3 Facing { get; private set; }
+
+        public Vector3 Front { get; private set; }
 
         public RoverKitPiece Piece { get; private set; }
 
@@ -166,9 +180,14 @@ namespace MoonProject.Rover
             {
                 Debug.LogError($"{nameof(BayFitting)}: the Rover Bay cannot reach the {Piece} socket(s) on a parked "
                     + $"07 (contract bug: {BayArm.Contract}).", context);
+                return false;
             }
 
-            return planned;
+            Socket = BayPlanner.Turned(_sockets[0], _centre, _up, _turn);
+            Shoulder = _floor ? _bay.FloorTip.position : _arms[_armOf[0]].Shoulder;
+            Facing = Quaternion.AngleAxis(_parkedHeading + _turn, _up) * Vector3.forward;
+            Front = Quaternion.AngleAxis(_parkedHeading, _up) * Vector3.back;
+            return true;
         }
 
         /// <summary>Advances the moment; reports the frame the piece is fitted and the frame it is over.</summary>
@@ -270,7 +289,7 @@ namespace MoonProject.Rover
             for (int i = 0; i < _count; i++)
             {
                 BayArm arm = _arms[_armOf[i]];
-                if (!Solve(arm, Socket(i) + _up * _settings.Hover, out _ready[i]))
+                if (!Solve(arm, LiveSocket(i) + _up * _settings.Hover, out _ready[i]))
                 {
                     _ready[i] = arm.Rest;
                 }
@@ -387,7 +406,7 @@ namespace MoonProject.Rover
             for (int i = 0; i < _count; i++)
             {
                 BayArm arm = _arms[_armOf[i]];
-                if (Solve(arm, Socket(i) + _up * (_settings.Hover * above), out BayArmPose pose))
+                if (Solve(arm, LiveSocket(i) + _up * (_settings.Hover * above), out BayArmPose pose))
                 {
                     _held[i] = pose;
                     arm.Apply(pose);
@@ -412,7 +431,7 @@ namespace MoonProject.Rover
         }
 
         /// <summary>Where part <paramref name="index"/>'s pivot rests on 07 right now (world).</summary>
-        private Vector3 Socket(int index)
+        private Vector3 LiveSocket(int index)
         {
             return _parts[index].parent.TransformPoint(_rest[index]);
         }
@@ -420,7 +439,7 @@ namespace MoonProject.Rover
         /// <summary>How far (lift units) the floor arm must rise to set its part on the belly socket now.</summary>
         private float Rise()
         {
-            return _bay.FloorLift.parent.InverseTransformPoint(Socket(0)).y - _tipRest.y;
+            return _bay.FloorLift.parent.InverseTransformPoint(LiveSocket(0)).y - _tipRest.y;
         }
 
         private void SetLift(float rise)
@@ -438,7 +457,7 @@ namespace MoonProject.Rover
             if (_floor)
             {
                 Vector3 tip = _bay.FloorTip.position;
-                Vector3 aside = Socket(0) - tip;
+                Vector3 aside = LiveSocket(0) - tip;
                 aside -= Vector3.Project(aside, _bay.FloorLift.parent.up);
                 _parts[0].position = tip + aside * under;
                 return;

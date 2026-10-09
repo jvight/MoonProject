@@ -25,7 +25,8 @@ namespace MoonProject.Rover
     /// </list>
     /// Registered by <see cref="RoverController"/> as <see cref="IRoverCargoSeat"/> (the rack's RelicSeat). Ticked by
     /// <see cref="RoverController"/> in Update, so the rack has its pose for this frame before any LateUpdate reads it.
-    /// The bay (<see cref="IRoverBay"/>, Gameplay) is resolved at its first fitting, as Gameplay initialises later.
+    /// The bay (<see cref="IRoverBay"/>, Gameplay) is resolved at its first fitting, as Gameplay initialises later; the
+    /// fitting is registered as <see cref="IBayFitView"/> for the camera.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class RoverKit : MonoBehaviour, IRoverCargoSeat
@@ -167,6 +168,7 @@ namespace MoonProject.Rover
 
             _glowBlock = new MaterialPropertyBlock();
             _bayFitting = new BayFitting(settings.Bay, rover);
+            context.Register<IBayFitView>(_bayFitting);
             CacheRestScales();
             ConfigureHeadlamp();
             HideAll();
