@@ -1729,6 +1729,186 @@ def site_answer(variant, gen):
     return _mono_reverb(filters.lowpass(mix, 4500.0), room=0.7, damping=0.6, wet=0.3, dry=1.0)
 
 
+# ------------------------------------------------------------------------------------------- built for 07 (M3-14)
+
+HOPPER_HUM_LOOP_S = 2.0
+
+
+def hopper_feed_hum(_variant, gen):
+    """07's beam feeding a hopper: a soft, warm beam hum on D3 with its fifth, a little air flowing along it."""
+    n = samples(HOPPER_HUM_LOOP_S)
+    step = SAMPLE_RATE / n
+    d3 = loop_freq(note_freq("D3"), n)
+    a3 = loop_freq(note_freq("A3"), n)
+    hum = osc.additive(n, d3, [(1, 1.0), (2, 0.35), (3, 0.1)]) + 0.5 * osc.sine(n, a3 + step, phase=0.2)
+    hum *= envelope.lfo(n, 6.0 / HOPPER_HUM_LOOP_S, 0.12, 0.88)
+    air = periodic(noise.white(n, gen), lambda x: filters.bandpass(noise.pink_filter(x), 1100.0, 0.8))
+    air = air / max(float(np.std(air)), 1e-9) * envelope.lfo(n, 2.0 / HOPPER_HUM_LOOP_S, 0.3, 0.7)
+    mix = 0.3 * hum + 0.04 * air
+    return periodic(mix, lambda x: filters.highpass(filters.lowpass(x, 3000.0), 70.0))
+
+
+def hopper_clunk(variant, gen):
+    """A bundle dropping into the hopper: a muffled clunk inside the bin and a short rattle settling."""
+    n = samples(0.8)
+    pitch = (1.0, 0.88)[variant]
+    clunk = osc.sine(n, osc.glide(n, 170.0 * pitch, 110.0 * pitch, time_constant=0.03)) * envelope.ar(n, 0.002, 0.2)
+    thud = filters.lowpass(noise.white(n, gen), 500.0) * envelope.ar(n, 0.001, 0.05)
+    rattle = _grains(n, gen, 30.0, (0.002, 0.005), (0.0005, 0.001), (0.01, 0.02), 0.5, 0.5)
+    rattle = filters.lowpass(filters.bandpass(rattle, 1300.0, 1.0), 3000.0) * envelope.segments(
+        n, [(0.0, 0.0), (0.04, 1.0), (0.35, 0.3), (0.8, 0.0)], shape="smooth")
+    mix = 0.6 * clunk + 0.25 * thud / max(float(np.max(np.abs(thud))), 1e-9) + 0.5 * rattle
+    return filters.lowpass(mix, 4000.0)
+
+
+BAY_SERVO_LOOP_S = 2.0
+
+
+def bay_arm_servo(_variant, gen):
+    """An old gantry arm moving: a low, patient servo whirr with a slow gear flutter and a gentle creak breathing
+    through it. Seamless; the runtime follows how fast the arm's tip moves."""
+    n = samples(BAY_SERVO_LOOP_S)
+    loop_hz = 1.0 / BAY_SERVO_LOOP_S
+    whirr = periodic(noise.white(n, gen), lambda x: filters.bandpass(noise.pink_filter(x), 380.0, 2.2))
+    whirr = whirr / max(float(np.std(whirr)), 1e-9) * envelope.lfo(n, round(24.0 / loop_hz) * loop_hz, 0.2, 0.8)
+    motor = osc.additive(n, loop_freq(note_freq("A2"), n), [(1, 1.0), (2, 0.4), (3, 0.15)])
+    creak = periodic(noise.white(n, gen), lambda x: filters.swept(
+        x, "bandpass", 480.0 + 60.0 * np.sin(2.0 * math.pi * 2.0 * np.arange(x.shape[0]) / n), q=7.0))
+    creak = creak / max(float(np.std(creak)), 1e-9) * envelope.lfo(n, 2.0 * loop_hz, 0.5, 0.5) ** 3
+    mix = 0.1 * whirr + 0.05 * motor + 0.03 * creak
+    return periodic(mix, lambda x: filters.highpass(filters.lowpass(x, 3000.0), 60.0))
+
+
+def bay_arm_sigh(_variant, gen):
+    """An arm coming to rest: a soft hydraulic sigh (a filtered exhale) and a low settling thunk."""
+    n = samples(1.0)
+    breath = filters.swept(noise.pink(n, gen), "bandpass", osc.glide(n, 1400.0, 500.0, time_constant=0.3), q=1.2)
+    breath *= envelope.segments(n, [(0.0, 0.0), (0.08, 1.0), (0.5, 0.4), (1.0, 0.0)], shape="smooth")
+    thunk = osc.sine(n, osc.glide(n, 110.0, 80.0, time_constant=0.04)) * envelope.ar(n, 0.004, 0.15)
+    return filters.lowpass(0.08 * breath / max(float(np.std(breath)), 1e-9) + 0.3 * thunk, 4000.0)
+
+
+def bay_weld(_variant, gen):
+    """The kit set on 07: a short weld hiss with a soft crackle of sparks, then a gentle 'fitted' clunk."""
+    n = samples(1.1)
+    hiss = filters.bandpass(noise.white(n, gen), 1900.0, 0.9) * envelope.segments(
+        n, [(0.0, 0.0), (0.03, 1.0), (0.45, 0.6), (0.6, 0.0)], shape="smooth")
+    crackle = _grains(n, gen, 45.0, (0.0006, 0.002), (0.0002, 0.0003), (0.002, 0.005), 0.4, 0.6)
+    crackle = filters.lowpass(filters.bandpass(crackle, 2800.0, 0.9), 5000.0) * envelope.segments(
+        n, [(0.0, 0.0), (0.02, 1.0), (0.55, 0.3), (0.65, 0.0)], shape="smooth")
+    clunk_n = samples(0.4)
+    clunk = osc.sine(clunk_n, osc.glide(clunk_n, 200.0, 140.0, time_constant=0.02)) * envelope.ar(clunk_n, 0.002,
+                                                                                                    0.12)
+    mix = 0.05 * hiss / max(float(np.std(hiss)), 1e-9) + 0.9 * crackle
+    place(mix, 0.45 * clunk, samples(0.62))
+    return filters.lowpass(filters.lowpass(mix, 4500.0), 4500.0)
+
+
+def bay_fitted_chime(_variant, gen):
+    """'Fitted - for you, 07': a resolved two-note chime, A4 settling onto D5, felt-soft, after a breath."""
+    n = samples(2.2)
+    mix = np.zeros((n, 2))
+    place(mix, pan(instruments.kalimba(note_freq("A4"), 1.2, gen, decay=0.9), -0.15), samples(0.25), 0.7)
+    place(mix, pan(instruments.kalimba(note_freq("D5"), 1.8, gen, decay=1.4), 0.15), samples(0.45), 0.85)
+    pad = instruments.soft_pad(note_freq("D4"), 1.8, 0.4, 1.2, hold=0.2)
+    place(mix, 0.08 * pad, samples(0.45))
+    return mix
+
+
+BAY_TURNTABLE_LOOP_S = 3.0
+
+
+def bay_turntable(_variant, gen):
+    """The turntable turning 07: a low rumble of the disc on its rollers and a steady bearing hum on D2."""
+    n = samples(BAY_TURNTABLE_LOOP_S)
+    loop_hz = 1.0 / BAY_TURNTABLE_LOOP_S
+    rumble = periodic(noise.white(n, gen), lambda x: filters.lowpass(filters.lowpass(
+        noise.brown_filter(x, 0.996), 200.0), 200.0))
+    rumble = rumble / max(float(np.std(rumble)), 1e-9) * envelope.lfo(n, round(8.0 / loop_hz) * loop_hz, 0.2, 0.8)
+    bearing = osc.additive(n, loop_freq(note_freq("D2"), n), [(1, 1.0), (2, 0.5), (3, 0.2), (4, 0.08)])
+    mix = 0.25 * rumble + 0.12 * bearing
+    return periodic(mix, lambda x: filters.highpass(filters.lowpass(x, 1500.0), 30.0))
+
+
+def port_hatch_open(_variant, gen):
+    """The tower's service hatch opening: a metal latch clacking free and a short hinge creak as it swings."""
+    n = samples(1.0)
+    latch = filters.bandpass(noise.white(n, gen), 2000.0, 1.6) * envelope.ar(n, 0.0005, 0.015)
+    latch = latch / max(float(np.max(np.abs(latch))), 1e-9)
+    creak_n = samples(0.6)
+    creak = filters.swept(noise.white(creak_n, gen), "bandpass", osc.glide(creak_n, 600.0, 820.0), q=9.0)
+    creak = creak / max(float(np.std(creak)), 1e-9) * envelope.segments(
+        creak_n, [(0.0, 0.0), (0.1, 1.0), (0.45, 0.6), (0.6, 0.0)], shape="smooth")
+    mix = 0.25 * latch
+    place(mix, 0.06 * creak, samples(0.12))
+    return filters.lowpass(mix, 4500.0)
+
+
+def port_hatch_close(_variant, gen):
+    """The hatch swinging shut: a brief hinge swing and a solid little latch click."""
+    n = samples(0.8)
+    swing_n = samples(0.3)
+    swing = filters.swept(noise.white(swing_n, gen), "bandpass", osc.glide(swing_n, 760.0, 560.0), q=8.0)
+    swing = swing / max(float(np.std(swing)), 1e-9) * envelope.segments(
+        swing_n, [(0.0, 0.0), (0.08, 1.0), (0.3, 0.0)], shape="smooth")
+    click = filters.lowpass(filters.bandpass(noise.white(n, gen), 1500.0, 1.2), 2500.0) * envelope.ar(n, 0.002,
+                                                                                                    0.02)
+    knock = osc.additive(n, 280.0, [(1, 1.0), (2, 0.3)]) * envelope.ar(n, 0.004, 0.16)
+    mix = np.zeros(n)
+    place(mix, 0.12 * swing, 0)
+    tail = 0.1 * click / max(float(np.max(np.abs(click))), 1e-9) + 0.3 * knock
+    place(mix, tail[:n - samples(0.3)], samples(0.3))
+    return filters.lowpass(mix, 4500.0)
+
+
+def dock_connect(_variant, gen):
+    """07 settling onto the charging dock: a soft magnetic clunk as the contacts meet, a tiny electric tick."""
+    n = samples(0.7)
+    clunk = osc.sine(n, osc.glide(n, 150.0, 105.0, time_constant=0.025)) * envelope.ar(n, 0.003, 0.18)
+    mag = osc.sine(n, osc.glide(n, 900.0, 600.0, time_constant=0.02)) * envelope.ar(n, 0.002, 0.05)
+    tick = filters.bandpass(noise.white(n, gen), 3000.0, 2.0) * envelope.ar(n, 0.0004, 0.006)
+    mix = 0.55 * clunk + 0.06 * mag + 0.05 * tick / max(float(np.max(np.abs(tick))), 1e-9)
+    return filters.lowpass(mix, 5000.0)
+
+
+DOCK_HUM_LOOP_S = 4.0
+
+
+def dock_charge_hum(_variant, gen):
+    """Charging: a very soft, warm hum on D3 with its octave, breathing slowly, like a lamp keeping watch."""
+    n = samples(DOCK_HUM_LOOP_S)
+    step = SAMPLE_RATE / n
+    d3 = loop_freq(note_freq("D3"), n)
+    hum = osc.additive(n, d3, [(1, 1.0), (2, 0.5), (3, 0.12)]) + 0.4 * osc.sine(n, 2.0 * d3 + step, phase=0.4)
+    hum *= envelope.lfo(n, 2.0 / DOCK_HUM_LOOP_S, 0.25, 0.75)
+    return periodic(0.3 * hum, lambda x: filters.highpass(filters.lowpass(x, 2000.0), 80.0))
+
+
+def dock_full(_variant, gen):
+    """Charged: a gentle 'full' tone - a soft bell on D5 with its fifth A5 blooming above it."""
+    mix = instruments.soft_bell(note_freq("D5"), 2.4, decay=1.6, attack=0.04)
+    place(mix, 0.45 * instruments.soft_bell(note_freq("A5"), 2.2, decay=1.4, attack=0.05), samples(0.18))
+    return _mono_reverb(filters.lowpass(mix, 5000.0), room=0.6, damping=0.6, wet=0.25, dry=1.0)
+
+
+def dock_release(_variant, gen):
+    """Leaving the dock: a tiny release, the contacts parting with a soft click and a breath of air."""
+    n = samples(0.25)
+    click = filters.bandpass(noise.white(n, gen), 1800.0, 1.4) * envelope.ar(n, 0.0005, 0.01)
+    air = filters.bandpass(noise.pink(n, gen), 900.0, 0.8) * envelope.segments(
+        n, [(0.0, 0.0), (0.03, 1.0), (0.2, 0.0)], shape="smooth")
+    mix = 0.25 * click / max(float(np.max(np.abs(click))), 1e-9) + 0.02 * air / max(float(np.std(air)), 1e-9)
+    return filters.lowpass(mix, 4500.0)
+
+
+def bell_knob_tap(_variant, gen):
+    """07's beam tapping Bell's dial knob: a tiny bakelite tick."""
+    n = samples(0.12)
+    tick = filters.bandpass(noise.white(n, gen), 2200.0, 1.6) * envelope.ar(n, 0.0004, 0.008)
+    knock = osc.sine(n, note_freq("A4")) * envelope.ar(n, 0.001, 0.025)
+    return filters.lowpass(0.25 * tick / max(float(np.max(np.abs(tick))), 1e-9) + 0.3 * knock, 4000.0)
+
+
 # --------------------------------------------------------------------------------------------------- registry
 
 CUES = (
@@ -1927,6 +2107,36 @@ CUES = (
         volume=(0.8, 0.8), fade_out=0.25, milestone="M3", tonal=True,
         notes="A site answering a ping: hull resonance on its note (depot D4, garage E4, drill F#4, kestrel A4, "
               "lander B4); '_relic' answers warmer with its octave and a D5 glow."),
+    Cue("hopper_feed_hum", "loop_3d", hopper_feed_hum, loop=True, file_stem="hopper_feed_hum_loop",
+        volume=(0.45, 0.45), milestone="M3", tonal=True, notes="07's beam feeding a hopper: soft D3/A3 hum + air."),
+    Cue("hopper_clunk", "oneshot_3d", hopper_clunk, variants=2, volume=(0.55, 0.6), fade_out=0.1, milestone="M3",
+        notes="Bundles dropping into the hopper: muffled clunk + a short settling rattle."),
+    Cue("bay_arm_servo", "loop_3d", bay_arm_servo, loop=True, file_stem="bay_arm_servo_loop", volume=(0.5, 0.5),
+        milestone="M3", notes="An old gantry arm moving: low servo whirr, gear flutter, a gentle creak."),
+    Cue("bay_arm_sigh", "oneshot_3d", bay_arm_sigh, volume=(0.45, 0.45), fade_out=0.1, milestone="M3",
+        notes="An arm coming to rest: soft hydraulic sigh + low settling thunk."),
+    Cue("bay_weld", "oneshot_3d", bay_weld, volume=(0.6, 0.6), fade_out=0.1, milestone="M3",
+        notes="Kit set on 07: short weld hiss + soft spark crackle, then a gentle 'fitted' clunk."),
+    Cue("bay_fitted_chime", "stinger_2d", bay_fitted_chime, volume=(0.6, 0.6), fade_out=0.3, milestone="M3",
+        tonal=True, notes="'Done for 07': A4 resolving onto D5, felt-soft kalimba over a faint D4 pad."),
+    Cue("bay_turntable", "loop_3d", bay_turntable, loop=True, file_stem="bay_turntable_loop", volume=(0.5, 0.5),
+        milestone="M3", tonal=True, hf_cutoff=6000.0, hf_max_db=-40.0,
+        notes="The turntable turning 07: low roller rumble + bearing hum on D2."),
+    Cue("port_hatch_open", "oneshot_3d", port_hatch_open, volume=(0.55, 0.55), fade_out=0.1, milestone="M3",
+        notes="The tower's service hatch opening: latch clack + short hinge creak."),
+    Cue("port_hatch_close", "oneshot_3d", port_hatch_close, volume=(0.55, 0.55), fade_out=0.08, milestone="M3",
+        notes="The hatch swinging shut: hinge swing + a solid little latch click."),
+    Cue("dock_connect", "oneshot_3d", dock_connect, volume=(0.55, 0.55), fade_out=0.08, milestone="M3",
+        notes="07 settling onto the charging dock: soft magnetic clunk + tiny electric tick."),
+    Cue("dock_charge_hum", "loop_3d", dock_charge_hum, loop=True, file_stem="dock_charge_hum_loop",
+        volume=(0.35, 0.35), milestone="M3", tonal=True,
+        notes="Charging: a very soft warm hum on D3 + octave, breathing slowly."),
+    Cue("dock_full", "oneshot_3d", dock_full, volume=(0.5, 0.5), fade_out=0.2, milestone="M3", tonal=True,
+        notes="Charged: soft bell on D5 with A5 blooming above it."),
+    Cue("dock_release", "tick_3d", dock_release, volume=(0.5, 0.5), fade_out=0.03, milestone="M3",
+        notes="Leaving the dock: contacts parting, a soft click and a breath of air."),
+    Cue("bell_knob_tap", "tick_3d", bell_knob_tap, volume=(0.55, 0.55), fade_out=0.02, milestone="M3",
+        notes="BellCued.DialTapped: 07's beam taps Bell's dial knob, a tiny bakelite tick."),
     Cue("upgrade_arpeggio", "stinger_2d", upgrade_arpeggio, volume=(0.8, 0.8), fade_out=0.3, milestone="M2",
         tonal=True, notes="Soft kalimba D4 A4 D5 F#5 A5, stereo, over a quiet D/A pad."),
 )
