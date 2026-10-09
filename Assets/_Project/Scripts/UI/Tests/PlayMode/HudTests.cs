@@ -548,7 +548,7 @@ namespace MoonProject.UI.PlayModeTests
             Events.Publish(new SiteAnswered("site.depot", new Vector3(0f, 0f, 40f), 40f, true));
             yield return Seconds(_rig.Tuning.Salvage.SiteName.FadeIn + 0.2f);
             Assert.IsTrue(_rig.Ui.SiteName.IsVisible);
-            Assert.AreEqual(Text(UiKeys.SiteName("site.depot")), _rig.Ui.Layout.SiteName.text);
+            Assert.AreEqual(Text(UiKeys.SiteName("site.depot")), _rig.Ui.Layout.SiteNameText.text);
             Events.Publish(new SiteAnswered("site.kestrel", new Vector3(30f, 0f, 60f), 70f, false));
             Assert.AreEqual("site.depot", _rig.Ui.SiteName.Current, "one name at a time");
 

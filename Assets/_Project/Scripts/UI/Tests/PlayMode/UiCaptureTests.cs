@@ -487,7 +487,8 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         /// <summary>
-        /// The floating names at their hardest: Tilly's and Bell's as each wakes, and a site's as it answers, each
+        /// The floating names at their hardest: Tilly's as she wakes, Bell's in her home corner (her canyon hides
+        /// Earth), and a site's as it answers, each
         /// seen from below with the bright Earth right behind it. Quick to rerun on its own:
         /// <c>python tools/unity_batch.py tests --platform playmode --filter CaptureFloatingNames_OverEarth</c>.
         /// </summary>
@@ -517,7 +518,7 @@ namespace MoonProject.UI.PlayModeTests
             yield return new WaitForSecondsRealtime(_tuning.Friends.NameHoldSeconds + _tuning.Friends.Name.FadeOut +
                                                     0.3f);
 
-            Vector3 bell = FriendPosition(friends, BellId);
+            Vector3 bell = BellAtHome(context).position;
             Camera bellCamera = EarthCamera(bell + Vector3.up * nameLift, earth, terrain, context);
             fakes.Camera = bellCamera;
             fakes.Friend = AssetDatabase.LoadAssetAtPath<FriendDefinition>(BellPath);

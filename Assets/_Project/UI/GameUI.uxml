@@ -7,9 +7,9 @@
                 <ui:VisualElement name="title-rule" class="title__rule" />
             </ui:VisualElement>
             <ui:VisualElement name="kit-title" class="kit-title" picking-mode="Ignore">
-                <ui:VisualElement class="kit-title__body" picking-mode="Ignore">
-                    <ui:VisualElement name="kit-title-shadow" class="soft-shadow soft-shadow--title" />
-                    <ui:Label name="kit-title-name" class="kit-title__name" picking-mode="Ignore" />
+                <ui:VisualElement class="name-tag" picking-mode="Ignore">
+                    <ui:VisualElement name="kit-title-shadow" class="soft-shadow soft-shadow--name" />
+                    <ui:Label name="kit-title-name" class="name-tag__name" picking-mode="Ignore" />
                     <ui:VisualElement name="kit-title-rule" class="kit-title__rule" picking-mode="Ignore" />
                 </ui:VisualElement>
             </ui:VisualElement>
@@ -27,7 +27,10 @@
             </ui:VisualElement>
             <ui:VisualElement name="friend-name-anchor" class="world-anchor" picking-mode="Ignore">
                 <ui:VisualElement name="friend-name-center" class="world-anchor__center" picking-mode="Ignore">
-                    <ui:Label name="friend-name" class="friend-name" picking-mode="Ignore" />
+                    <ui:VisualElement name="friend-name" class="name-tag" picking-mode="Ignore">
+                        <ui:VisualElement name="friend-name-shadow" class="soft-shadow soft-shadow--name" />
+                        <ui:Label name="friend-name-text" class="name-tag__name" picking-mode="Ignore" />
+                    </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement name="prompt-anchor" class="world-anchor" picking-mode="Ignore">
@@ -66,7 +69,10 @@
             </ui:VisualElement>
             <ui:VisualElement name="site-name-anchor" class="world-anchor" picking-mode="Ignore">
                 <ui:VisualElement name="site-name-center" class="world-anchor__center" picking-mode="Ignore">
-                    <ui:Label name="site-name" class="friend-name site-name" picking-mode="Ignore" />
+                    <ui:VisualElement name="site-name" class="name-tag" picking-mode="Ignore">
+                        <ui:VisualElement name="site-name-shadow" class="soft-shadow soft-shadow--name" />
+                        <ui:Label name="site-name-text" class="name-tag__name site-name" picking-mode="Ignore" />
+                    </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement name="materials-chip" class="materials-chip" picking-mode="Ignore">
