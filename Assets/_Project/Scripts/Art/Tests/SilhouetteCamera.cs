@@ -6,7 +6,8 @@ namespace MoonProject.Art.Tests
 {
     /// <summary>
     /// A pinhole camera that rasterises model triangles into a coverage mask, so tests can measure how a model reads in
-    /// silhouette from a given view (pixels covered, pixels one part adds to another's outline).
+    /// silhouette from a given view (pixels covered, pixels one part adds to another's outline), or depth-tested into
+    /// an owner buffer, so they can measure how much of a part is actually seen in front of the rest.
     /// </summary>
     internal sealed class SilhouetteCamera
     {
@@ -109,6 +110,56 @@ namespace MoonProject.Art.Tests
             return new bool[Width * Height];
         }
 
+        /// <summary>A depth buffer for <see cref="RasterizeNearest"/>: nothing drawn yet.</summary>
+        public float[] NewDepth()
+        {
+            var depth = new float[Width * Height];
+            for (int i = 0; i < depth.Length; i++)
+            {
+                depth[i] = float.PositiveInfinity;
+            }
+
+            return depth;
+        }
+
+        /// <summary>An owner buffer for <see cref="RasterizeNearest"/>: every pixel owned by nothing (0).</summary>
+        public int[] NewOwners()
+        {
+            return new int[Width * Height];
+        }
+
+        /// <summary>
+        /// Depth-tests <paramref name="triangles"/> against <paramref name="depth"/> (distance along the view) and
+        /// marks every pixel where one of them is nearest with <paramref name="owner"/>.
+        /// </summary>
+        public void RasterizeNearest(List<Vector3> triangles, float[] depth, int[] owners, int owner)
+        {
+            for (int t = 0; t + 2 < triangles.Count; t += 3)
+            {
+                if (Project(triangles[t], out Vector2 a, out float za)
+                    && Project(triangles[t + 1], out Vector2 b, out float zb)
+                    && Project(triangles[t + 2], out Vector2 c, out float zc))
+                {
+                    FillNearest(a, b, c, new Vector3(1f / za, 1f / zb, 1f / zc), depth, owners, owner);
+                }
+            }
+        }
+
+        /// <summary>Pixels <paramref name="owner"/> holds in <paramref name="owners"/>.</summary>
+        public static int Count(int[] owners, int owner)
+        {
+            int count = 0;
+            for (int i = 0; i < owners.Length; i++)
+            {
+                if (owners[i] == owner)
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
         /// <summary>Pixels set in <paramref name="mask"/> but not in <paramref name="without"/>.</summary>
         public static int Added(bool[] mask, bool[] without)
         {
@@ -139,8 +190,13 @@ namespace MoonProject.Art.Tests
 
         private bool Project(Vector3 world, out Vector2 pixel)
         {
+            return Project(world, out pixel, out _);
+        }
+
+        private bool Project(Vector3 world, out Vector2 pixel, out float z)
+        {
             Vector3 d = world - _position;
-            float z = Vector3.Dot(d, _forward);
+            z = Vector3.Dot(d, _forward);
             pixel = default;
             if (z < Near)
             {
@@ -176,6 +232,47 @@ namespace MoonProject.Art.Tests
                     if (w0 >= 0f && w1 >= 0f && w2 >= 0f)
                     {
                         mask[y * Width + x] = true;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Fills triangle abc where it is nearer than <paramref name="depth"/>; <paramref name="inverseDepth"/> holds
+        /// 1 / z at a, b and c, which is linear across the screen.
+        /// </summary>
+        private void FillNearest(Vector2 a, Vector2 b, Vector2 c, Vector3 inverseDepth, float[] depth, int[] owners,
+            int owner)
+        {
+            float area = Edge(a, b, c);
+            if (Mathf.Abs(area) < 1e-9f)
+            {
+                return;
+            }
+
+            int minX = Mathf.Max(0, Mathf.FloorToInt(Mathf.Min(a.x, Mathf.Min(b.x, c.x))));
+            int maxX = Mathf.Min(Width - 1, Mathf.CeilToInt(Mathf.Max(a.x, Mathf.Max(b.x, c.x))));
+            int minY = Mathf.Max(0, Mathf.FloorToInt(Mathf.Min(a.y, Mathf.Min(b.y, c.y))));
+            int maxY = Mathf.Min(Height - 1, Mathf.CeilToInt(Mathf.Max(a.y, Mathf.Max(b.y, c.y))));
+            for (int y = minY; y <= maxY; y++)
+            {
+                for (int x = minX; x <= maxX; x++)
+                {
+                    var p = new Vector2(x + 0.5f, y + 0.5f);
+                    float w0 = Edge(b, c, p) / area;
+                    float w1 = Edge(c, a, p) / area;
+                    float w2 = Edge(a, b, p) / area;
+                    if (w0 < 0f || w1 < 0f || w2 < 0f)
+                    {
+                        continue;
+                    }
+
+                    float z = 1f / (w0 * inverseDepth.x + w1 * inverseDepth.y + w2 * inverseDepth.z);
+                    int pixel = y * Width + x;
+                    if (z < depth[pixel])
+                    {
+                        depth[pixel] = z;
+                        owners[pixel] = owner;
                     }
                 }
             }
