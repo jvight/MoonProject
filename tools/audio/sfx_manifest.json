@@ -2636,6 +2636,33 @@
       "notes": "'Done for 07': A4 resolving onto D5, felt-soft kalimba over a faint D4 pad."
     },
     {
+      "id": "stargaze_swell",
+      "category": "stinger_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/stargaze_swell.wav"
+      ],
+      "variantLabels": [
+        "stargaze_swell"
+      ],
+      "sha256": [
+        "6dce73b9918b5e08b8c925ba09e5feb2382e1af2560db45e3476c758cad96e3b"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -20.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "07 stargazing: a soft low D2/A2/D3 pad with a faint A3, swelling in under airy noise."
+    },
+    {
       "id": "bay_turntable",
       "category": "loop_3d",
       "milestone": "M3",

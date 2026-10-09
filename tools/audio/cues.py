@@ -1815,6 +1815,21 @@ def bay_fitted_chime(_variant, gen):
     return mix
 
 
+def stargaze_swell(_variant, gen):
+    """07 looks up at the stars: a soft, low, airy swell. A D2/A2/D3 pad breathes in under a slowly opening band of
+    air, holds a moment with a faint A3 on top, and lets go over the wind."""
+    n = samples(6.0)
+    mix = np.zeros((n, 2))
+    for note, gain, side in (("D2", 0.5, 0.0), ("A2", 0.32, -0.2), ("D3", 0.22, 0.2), ("A3", 0.06, 0.1)):
+        place(mix, pan(gain * instruments.soft_pad(note_freq(note), 6.0, 2.2, 2.4, hold=0.9), side), 0, 0.25)
+    shape = envelope.segments(n, [(0.0, 0.0), (2.4, 1.0), (3.4, 0.7), (6.0, 0.0)], shape="smooth")
+    for side in (-0.35, 0.35):
+        air = filters.swept(noise.pink(n, gen), "bandpass", osc.glide(n, 320.0, 900.0, time_constant=1.6), q=0.9)
+        air = filters.lowpass(air / max(float(np.std(air)), 1e-9), 2500.0) * shape
+        place(mix, pan(0.035 * air, side), 0)
+    return mix
+
+
 BAY_TURNTABLE_LOOP_S = 3.0
 
 
@@ -2119,6 +2134,8 @@ CUES = (
         notes="Kit set on 07: short weld hiss + soft spark crackle, then a gentle 'fitted' clunk."),
     Cue("bay_fitted_chime", "stinger_2d", bay_fitted_chime, volume=(0.6, 0.6), fade_out=0.3, milestone="M3",
         tonal=True, notes="'Done for 07': A4 resolving onto D5, felt-soft kalimba over a faint D4 pad."),
+    Cue("stargaze_swell", "stinger_2d", stargaze_swell, volume=(0.5, 0.5), fade_out=0.6, milestone="M3",
+        tonal=True, notes="07 stargazing: a soft low D2/A2/D3 pad with a faint A3, swelling in under airy noise."),
     Cue("bay_turntable", "loop_3d", bay_turntable, loop=True, file_stem="bay_turntable_loop", volume=(0.5, 0.5),
         milestone="M3", tonal=True, hf_cutoff=6000.0, hf_max_db=-40.0,
         notes="The turntable turning 07: low roller rumble + bearing hum on D2."),
