@@ -62,6 +62,9 @@ namespace MoonProject.Art.Tests
         private const float WheelClearance = 0.03f;
         private const float FaceClearance = 0.03f;
         private const float WingClearance = 0.01f;
+
+        /// <summary>How far a gap is measured before it counts as wide open (the kit pieces' grid reach).</summary>
+        private const float GapReach = 0.06f;
         private const float TurntableRoom = 0.25f;
         private const float MaxRustShare = 0.08f;
         private const float StripePaint = 0.012f;
@@ -323,6 +326,7 @@ namespace MoonProject.Art.Tests
         [Test]
         public void Kit_KeepsClearOfTheWheels_AtFullTravelAndSteer()
         {
+            var tightest = new Tightest();
             foreach (string side in new[] { "L", "R" })
             {
                 foreach (string row in new[] { "F", "M", "R" })
@@ -338,10 +342,11 @@ namespace MoonProject.Art.Tests
                                 null, triangles);
                             foreach (KitPiece piece in _pieces)
                             {
-                                float gap = piece.GapTo(triangles, 2f * WheelClearance, out Vector3 where);
+                                float gap = piece.GapTo(triangles, GapReach, out Vector3 where);
+                                string pose = $"wheel {row}{side}, travel {travel}, steer {turn}";
+                                tightest.Note(piece.Name, gap, $"{pose}, at {where}");
                                 Assert.GreaterOrEqual(gap, WheelClearance,
-                                    $"{piece.Name} and wheel {row}{side} (travel {travel}, steer {turn}) are only " +
-                                    $"{gap:F3} m apart at {where}");
+                                    $"{piece.Name} is only {gap:F3} m from {pose} at {where}");
                             }
                         }
                     }
@@ -352,10 +357,13 @@ namespace MoonProject.Art.Tests
                 SilhouetteCamera.CollectTriangles(bogie, Matrix4x4.identity, arm);
                 foreach (KitPiece piece in _pieces)
                 {
-                    Assert.GreaterOrEqual(piece.GapTo(arm, 2f * WheelClearance), WheelClearance,
-                        $"{piece.Name} and bogie {side}");
+                    float gap = piece.GapTo(arm, GapReach);
+                    tightest.Note(piece.Name, gap, "bogie " + side);
+                    Assert.GreaterOrEqual(gap, WheelClearance, $"{piece.Name} and bogie {side}");
                 }
             }
+
+            tightest.Log("from the wheels and bogies");
         }
 
         [Test]
@@ -364,6 +372,7 @@ namespace MoonProject.Art.Tests
             ModelNode neck = _rover.GetDescendant("Neck");
             var turns = new Dictionary<string, Quaternion>();
             var face = new List<Vector3>();
+            var tightest = new Tightest();
             for (float yaw = -NeckYawLimit; yaw <= NeckYawLimit; yaw += PoseStep)
             {
                 foreach (float pitch in Steps(-HeadPitchUp, HeadPitchDown, PoseStep))
@@ -376,14 +385,17 @@ namespace MoonProject.Art.Tests
                         Collect(neck, Pose(neck.LocalPosition, new Vector3(0f, yaw, 0f)), turns, face);
                         foreach (KitPiece piece in _pieces)
                         {
-                            float gap = piece.GapTo(face, 2f * FaceClearance, out Vector3 where);
+                            float gap = piece.GapTo(face, GapReach, out Vector3 where);
+                            string pose = $"neck yaw {yaw}, head pitch {pitch}, lid {lid}";
+                            tightest.Note(piece.Name, gap, pose);
                             Assert.GreaterOrEqual(gap, FaceClearance,
-                                $"{piece.Name} comes {gap:F3} m from the face at {where} (neck yaw {yaw}, head pitch " +
-                                $"{pitch}, lid {lid})");
+                                $"{piece.Name} comes {gap:F3} m from the face at {where} ({pose})");
                         }
                     }
                 }
             }
+
+            tightest.Log("from the face");
         }
 
         [Test]
@@ -391,17 +403,21 @@ namespace MoonProject.Art.Tests
         {
             ModelNode wing = _rover.GetDescendant("SolarWing");
             var panel = new List<Vector3>();
+            var tightest = new Tightest();
             foreach (float angle in Steps(0f, WingOpen, PoseStep))
             {
                 panel.Clear();
                 Collect(wing, Pose(wing.LocalPosition, new Vector3(angle, 0f, 0f)), null, panel);
                 foreach (KitPiece drum in _pieces.Skip(1).Take(2))
                 {
-                    float gap = drum.GapTo(panel, 2f * WingClearance, out Vector3 where);
+                    float gap = drum.GapTo(panel, GapReach, out Vector3 where);
+                    tightest.Note(drum.Name, gap, $"wing open {angle} degrees");
                     Assert.GreaterOrEqual(gap, WingClearance,
                         $"{drum.Name} comes {gap:F3} m from the wing at {where}, open {angle} degrees");
                 }
             }
+
+            tightest.Log("from the solar wing");
         }
 
         [Test]
@@ -947,6 +963,29 @@ namespace MoonProject.Art.Tests
                 foreach (ModelNode descendant in Nodes(child))
                 {
                     yield return descendant;
+                }
+            }
+        }
+
+        /// <summary>The narrowest gap each piece came to across a sweep, and where, for the test log.</summary>
+        private sealed class Tightest
+        {
+            private readonly Dictionary<string, (float, string)> _gaps = new Dictionary<string, (float, string)>();
+
+            public void Note(string piece, float gap, string pose)
+            {
+                if (!_gaps.TryGetValue(piece, out (float, string) known) || gap < known.Item1)
+                {
+                    _gaps[piece] = (gap, pose);
+                }
+            }
+
+            public void Log(string from)
+            {
+                foreach (KeyValuePair<string, (float, string)> piece in _gaps)
+                {
+                    string gap = piece.Value.Item1 < GapReach ? $"{piece.Value.Item1:F3} m" : $"over {GapReach} m";
+                    TestContext.WriteLine($"{piece.Key} keeps {gap} {from} at its tightest ({piece.Value.Item2})");
                 }
             }
         }
