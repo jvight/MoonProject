@@ -200,7 +200,8 @@ namespace MoonProject.Gameplay
             BuildBeacon(services);
             _pad = new StationPad("TowerPad", transform, _terrain, _anchor.TransformPoint(_tuning.PadOffset),
                 _tuning.PadLook, services.Visuals.WarmRing);
-            _feed = new HopperFeed("PortFeed", transform, services.Visuals.TetherBeam, bundles, _tuning.FeedLook);
+            _feed = new HopperFeed("PortFeed", transform, services.Visuals.TetherBeam, bundles, _tuning.FeedLook,
+                services.Events);
             _stitch = new RepairBeam("TowerStitch", transform, services.Visuals.TetherBeam, _tuning.StitchRate,
                 _tuning.StitchSpread);
             _waiting = new PurchaseQueue(_definition.MaxLevel);
@@ -286,7 +287,7 @@ namespace MoonProject.Gameplay
         private void FeedNext(float now)
         {
             _waiting.TryDequeue(out _crafting, out _craftingLevel);
-            _feed.Begin(_definition.Levels[_craftingLevel - 1].Recipe, now);
+            _feed.Begin(_definition.Levels[_craftingLevel - 1].Recipe, _crafting, now);
             _fedAt = float.NegativeInfinity;
             _stitchStarted = false;
             _hatchClosed = false;

@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using MoonProject.Core;
+using MoonProject.Core.Events;
 using Object = UnityEngine.Object;
 
 namespace MoonProject.Gameplay
@@ -8,8 +9,9 @@ namespace MoonProject.Gameplay
     /// <summary>
     /// 07 feeds a station's hopper (VISION ruling 14: 07 has no hands): its beam reaches from its eye to the hopper's
     /// mouth and the recipe's materials fly in along it from the cargo socket, one bundle per material the recipe
-    /// spends, a beat apart, each popping out of 07 and shrinking as it drops into the mouth. The bundles are built
-    /// once (one per material, from the salvage catalog's); allocation-free per frame.
+    /// spends, a beat apart, each popping out of 07 and shrinking as it drops into the mouth, where it cues
+    /// <see cref="StationCue.BundleDropped"/> (its clunk). The bundles are built once (one per material, from the
+    /// salvage catalog's); allocation-free per frame.
     /// </summary>
     public sealed class HopperFeed
     {
@@ -19,17 +21,20 @@ namespace MoonProject.Gameplay
         };
 
         private readonly FeedLook _look;
+        private readonly EventBus _events;
         private readonly RepairBeam _beam;
         private readonly Transform[] _bundles = new Transform[Materials.Length];
         private readonly Vector3[] _bundleScales = new Vector3[Materials.Length];
         private readonly int[] _order = new int[Materials.Length];
         private readonly Vector3[] _launchedFrom = new Vector3[Materials.Length];
         private readonly bool[] _launched = new bool[Materials.Length];
+        private readonly bool[] _dropped = new bool[Materials.Length];
+        private string _upgradeId;
         private int _count;
         private float _start = float.NegativeInfinity;
 
         public HopperFeed(string name, Transform parent, Material beamMaterial, SalvageCatalog bundles,
-            FeedLook look)
+            FeedLook look, EventBus events)
         {
             if (parent == null)
             {
@@ -41,7 +46,13 @@ namespace MoonProject.Gameplay
                 throw new ArgumentNullException(nameof(bundles));
             }
 
+            if (events == null)
+            {
+                throw new ArgumentNullException(nameof(events));
+            }
+
             _look = look;
+            _events = events;
             _beam = new RepairBeam(name + "Beam", parent, beamMaterial, 0f, 0f);
             for (int i = 0; i < Materials.Length; i++)
             {
@@ -105,14 +116,17 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// Starts feeding the materials <paramref name="recipe"/> spends (restarts a feed in progress).
+        /// Starts feeding the materials <paramref name="recipe"/> spends, crafting <paramref name="upgradeId"/>
+        /// (restarts a feed in progress).
         /// </summary>
-        public void Begin(Recipe recipe, float now)
+        public void Begin(Recipe recipe, string upgradeId, float now)
         {
+            _upgradeId = upgradeId;
             _count = 0;
             for (int i = 0; i < Materials.Length; i++)
             {
                 _launched[i] = false;
+                _dropped[i] = false;
                 _bundles[i].gameObject.SetActive(false);
                 if (recipe.Of(Materials[i]) > 0)
                 {
@@ -127,8 +141,8 @@ namespace MoonProject.Gameplay
 
         /// <summary>
         /// Moves the beam and the bundles: the beam from <paramref name="eye"/> to <paramref name="mouth"/>, each
-        /// bundle from where <paramref name="cargo"/> was when it left. Returns true on the step the feed finishes;
-        /// call it every frame (the beam fades out by itself afterwards).
+        /// bundle from where <paramref name="cargo"/> was when it left. Returns true on the step the feed finishes,
+        /// after every bundle has cued its drop; call it every frame (the beam fades out by itself afterwards).
         /// </summary>
         public bool Step(Vector3 eye, Vector3 cargo, Vector3 mouth, float now, float deltaTime)
         {
@@ -136,6 +150,11 @@ namespace MoonProject.Gameplay
             bool finished = Feeding && t >= Duration;
             if (finished)
             {
+                for (int slot = 0; slot < _count; slot++)
+                {
+                    Drop(_order[slot], mouth);
+                }
+
                 Feeding = false;
                 for (int i = 0; i < _bundles.Length; i++)
                 {
@@ -176,6 +195,7 @@ namespace MoonProject.Gameplay
             if (progress >= 1f)
             {
                 bundle.gameObject.SetActive(false);
+                Drop(material, mouth);
                 return;
             }
 
@@ -186,6 +206,18 @@ namespace MoonProject.Gameplay
             Quaternion rotation = travel.sqrMagnitude > 1e-6f ? Quaternion.LookRotation(travel) : bundle.rotation;
             bundle.SetPositionAndRotation(position, rotation);
             bundle.localScale = _bundleScales[material] * BundleSize(progress, _look);
+        }
+
+        /// <summary>Cues the bundle of <paramref name="material"/> dropping in, once per feed.</summary>
+        private void Drop(int material, Vector3 mouth)
+        {
+            if (_dropped[material])
+            {
+                return;
+            }
+
+            _dropped[material] = true;
+            _events.Publish(new StationCued(StationCue.BundleDropped, _upgradeId, mouth));
         }
     }
 }

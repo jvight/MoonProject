@@ -199,8 +199,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return Waits.Until(() => !tower.Crafting, TowerPortMoment.Duration(tuning.HatchTime,
                 TowerPortMoment.StitchDuration(tuning.FlareDuration, tuning.GrowDuration)) + 1f);
             Assert.IsFalse(tower.Crafting, "the moment ends");
-            AssertCues(cues, Tower, StationCue.FeedStarted, StationCue.Fed, StationCue.HatchOpened,
-                StationCue.StitchStarted, StationCue.HatchClosed);
+            AssertCues(cues, Tower, StationCue.FeedStarted, StationCue.BundleDropped, StationCue.BundleDropped,
+                StationCue.Fed, StationCue.HatchOpened, StationCue.StitchStarted, StationCue.HatchClosed);
             Assert.Less(tower.HatchOpenAngle, 0.5f, "the hatch is shut again");
             Assert.AreEqual(0, _fixture.Rover.HoldStillCount, "07 is free to drive");
             Assert.IsFalse(_fixture.Rover.TryGetGaze(tower, out _, out _), "and to look around");
@@ -316,7 +316,8 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             yield return Waits.Until(() => _fixture.Events.RoverBayFitting.Count > 0,
                 HopperFeed.DurationFor(3, feedLook) + 0.5f);
-            AssertCues(cues, HoverJump, StationCue.FeedStarted, StationCue.Fed);
+            AssertCues(cues, HoverJump, StationCue.FeedStarted, StationCue.BundleDropped, StationCue.BundleDropped,
+                StationCue.BundleDropped, StationCue.Fed);
             RoverBayFitting fitting = _fixture.Events.RoverBayFitting[0].Value;
             Assert.AreEqual(HoverJump, fitting.UpgradeId);
             var rig = _fixture.Bootstrap.Context.Get<IRoverBay>();

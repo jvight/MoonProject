@@ -1,6 +1,8 @@
+using System;
 using NUnit.Framework;
 using UnityEngine;
 using MoonProject.Core.Events;
+using Object = UnityEngine.Object;
 
 namespace MoonProject.Audio.Tests
 {
@@ -23,13 +25,61 @@ namespace MoonProject.Audio.Tests
         }
 
         [TestCase(StationCue.FeedStarted, null)]
-        [TestCase(StationCue.Fed, "hopper_clunk")]
+        [TestCase(StationCue.BundleDropped, "hopper_clunk")]
+        [TestCase(StationCue.Fed, null)]
         [TestCase(StationCue.HatchOpened, "port_hatch_open")]
         [TestCase(StationCue.StitchStarted, null)]
         [TestCase(StationCue.HatchClosed, "port_hatch_close")]
         public void EachStationBeat_PlaysItsSound(StationCue cue, string expected)
         {
-            Assert.AreEqual(expected, StationSounds.OneShot(cue));
+            Assert.IsTrue(StationSounds.TryGetOneShot(cue, out string id));
+            Assert.AreEqual(expected, id);
+        }
+
+        [Test]
+        public void EveryStationBeat_HasASound_AndASlot()
+        {
+            int size = StationSounds.TableSize();
+            foreach (StationCue cue in (StationCue[])Enum.GetValues(typeof(StationCue)))
+            {
+                Assert.IsTrue(StationSounds.TryGetOneShot(cue, out _), $"{cue} needs a sound in StationSounds");
+                Assert.Less((int)cue, size, $"{cue} fits the beat table");
+            }
+        }
+
+        [Test]
+        public void AnUnknownBeat_IsSilent_NotAnError()
+        {
+            Assert.IsFalse(StationSounds.TryGetOneShot((StationCue)StationSounds.TableSize(), out string id));
+            Assert.IsNull(id);
+        }
+
+        [Test]
+        public void EachBundleOfAFeed_LandsALittleHigher_SoNoTwoDropsMatch()
+        {
+            var drops = new BundleDrops(_tuning, new AudioRandom(7u));
+            float previous = 0f;
+            for (int i = 0; i < 3; i++)
+            {
+                float pitch = drops.NextPitch();
+                Assert.AreEqual(1f + i * _tuning.DropPitchStep, pitch, _tuning.DropPitchWobble + 1e-6f,
+                    $"drop {i} sits on its step, wobbling a little");
+                Assert.Greater(pitch, previous, $"drop {i} lands on the ones already in the bin");
+                previous = pitch;
+            }
+
+            Assert.AreEqual(3, drops.Dropped);
+            Assert.Less(previous, 1.1f, "a touch higher, never a squeak");
+            drops.Restart();
+            Assert.AreEqual(0, drops.Dropped);
+            Assert.AreEqual(1f, drops.NextPitch(), _tuning.DropPitchWobble + 1e-6f, "the next feed starts low again");
+        }
+
+        [Test]
+        public void TheDropWobble_IsUnderHalfTheStep_SoLaterDropsAlwaysLandHigher()
+        {
+            Assert.Less(2f * _tuning.DropPitchWobble, _tuning.DropPitchStep);
+            Assert.Greater(_tuning.DropPitchWobble, 0f, "the same bundle twice still sounds a little different");
         }
 
         [Test]

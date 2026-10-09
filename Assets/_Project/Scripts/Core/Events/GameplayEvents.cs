@@ -187,7 +187,9 @@ namespace MoonProject.Core.Events
         /// </summary>
         FeedStarted = 0,
 
-        /// <summary>The last bundle dropped into the hopper (a soft clunk): the station takes over from here.</summary>
+        /// <summary>
+        /// All the recipe's bundles are in the hopper (the feed's hum settles away): the station takes over from here.
+        /// </summary>
         Fed = 1,
 
         /// <summary>The radio tower's service hatch swings open (a hinge creak).</summary>
@@ -198,6 +200,13 @@ namespace MoonProject.Core.Events
 
         /// <summary>The stitching beam lets go and the tower's hatch swings shut (a latch click).</summary>
         HatchClosed = 4,
+
+        /// <summary>
+        /// One of the recipe's bundles reaches the hopper's mouth and drops in (a clunk and a short rattle): once per
+        /// bundle, between <see cref="FeedStarted"/> and <see cref="Fed"/>, the last one just before
+        /// <see cref="Fed"/>.
+        /// </summary>
+        BundleDropped = 5,
     }
 
     /// <summary>
