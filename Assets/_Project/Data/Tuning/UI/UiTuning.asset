@@ -186,6 +186,7 @@ MonoBehaviour:
     _drainSeconds: 0.35
     _armVisibility: 0.9
     _celebrateSeconds: 1.4
+    _cueWaitSeconds: 20
     _tapSeconds: 0.2
     _winchStep: 0.5
   _kitTitle:
@@ -287,3 +288,20 @@ MonoBehaviour:
       _springDamping: 0.7
     _siteNameHoldSeconds: 3
     _siteNameLiftMetres: 6
+  _stargaze:
+    _hud:
+      _fadeIn: 0.8
+      _fadeOut: 2
+      _slide: 0
+      _scaleFrom: 1
+      _springFrequency: 1.4
+      _springDamping: 0.6
+    _hint:
+      _fadeIn: 0.6
+      _fadeOut: 0.8
+      _slide: 10
+      _scaleFrom: 0.9
+      _springFrequency: 1.4
+      _springDamping: 0.6
+    _hintDelay: 2
+    _hintHoldSeconds: 6
