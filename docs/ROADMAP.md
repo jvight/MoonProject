@@ -16,7 +16,7 @@ Không mở rộng nội dung khi phần nhìn của phase hiện tại chưa ch
 
 | Phiên bản | Chủ đề | Gồm | TT |
 |---|---|---|---|
-| **0.4 — "Nhìn cho đúng"** | Phần nhìn chỉn chu, mọi thứ hợp logic | M3-14 (xây cho 07: trạm sửa xe với cánh tay máy, cổng bảo trì tháp, dock sạc, thang nâng, tỉ lệ thật, bánh dự phòng, trống tụ điện) · M3-12 (phong hoá: gỉ, sơn phai, bụi cho căn cứ và 07) · đánh bóng hình còn tồn (quầng sáng nhà, Trái Đất bớt rực, đọc bộ phận ở 30 m, bóng cho nhãn tên) · âm thanh và UI đi kèm · preview trong Scene view | 🟦 |
+| **0.4 — "Nhìn cho đúng"** | Phần nhìn chỉn chu, mọi thứ hợp logic | M3-14 (xây cho 07: trạm sửa xe với cánh tay máy, cổng bảo trì tháp, dock sạc, thang nâng, tỉ lệ thật, bánh dự phòng, trống tụ điện) · M3-12 (phong hoá: gỉ, sơn phai, bụi cho căn cứ và 07) · đánh bóng hình còn tồn (quầng sáng nhà, Trái Đất bớt rực, đọc bộ phận ở 30 m, bóng cho nhãn tên) · âm thanh và UI đi kèm · preview trong Scene view | 🟩 bản 0.4.0 (2026-10-09) |
 | 0.5 — "Căn cứ sống" | Hoàn thiện lòng hố | M3-07 bản đồ vẽ tay trong lander (lên bằng thang nâng) · M3-08 mặt trăng trôi khi vắng mặt (mảnh vệ tinh mới rơi) · M3-09 màn hình tiêu đề, bộ sưu tập ở căn cứ · nhật ký phi hành đoàn còn lại trong vùng | ⬜ |
 | 0.6 — "Rim Terraces" | Mở rộng bản đồ #1 | Magnetic Treads (bánh to có gai) · vùng Rim Terraces · Atlas · bãi trục vớt mới, cột relay mới | ⬜ |
 | 0.7 — "Shadowed Crater" | Mở rộng bản đồ #2 | vùng hố tối · Moss + Biodome · Wide Sonar · sự kiện Nhật thực | ⬜ |
@@ -94,6 +94,12 @@ Không mở rộng nội dung khi phần nhìn của phase hiện tại chưa ch
 - Audio đợt 3: radio rè bật lúc `RoverAwoke`; âm "nhấc bổng" khi `RoverRecovering`; hạ tiếng động cơ khi `PauseChanged`; mỗi relic đáp sonar bằng nốt riêng (cần thêm `RelicId` vào `RelicAnswered`).
 - Camera blend chậm khi relic trồi lên / khi nâng cấp tháp (rover).
 - World chuyển đá cuội sang `RockStyle.Grit` (16–20 tam giác) của art.
+- Sau 0.4 (từ báo cáo các phiên, 2026-10-09):
+  - Chuyển `PrefabWriter` / `HierarchyComparison` của rover vào `Editor/Builders` dùng chung, để mọi builder prefab chỉ lưu khi đổi (rover).
+  - Mỗi người bạn có độ nâng nhãn tên riêng: tên Bell đang đè lên mặt cô (ui). Ảnh `42_site_name` của UiCapture không hiện tên khu (ui).
+  - Đặt đèn đường ấm trước kính `Lamp_1` vài cm. Ghi khối `_kit` vào `RoverRigTuning.asset` (rover).
+  - Từ góc 3/4 sau, trống tụ điện che ~25% số "07" bên hông (art).
+  - Thêm biến thể tiếng "cộp" thứ ba cho phễu để 3 bó không lặp mẫu (audio).
 
 ## M3 — "Trạm thức giấc": chiều sâu phần 1 (xem `docs/DESIGN.md`)
 | ID | Việc | Box | TT |
@@ -109,9 +115,9 @@ Không mở rộng nội dung khi phần nhìn của phase hiện tại chưa ch
 | M3-09 | Màn hình tiêu đề (Continue/Settings), bộ sưu tập hiển thị ở căn cứ | ui | ⬜ |
 | M3-10 | **Cô đơn & bình yên — đợt trau chuốt không khí** (trụ cột 6 trong VISION): hình (chân trời xa mờ, tương phản sáng tối, bóng dài, bầu trời sống, grading/bloom/vignette/grain) · camera (lùi ra toàn cảnh khi đứng yên, bụi lơ lửng trong đèn 07) · âm thanh (radio mỏng dần theo khoảng cách → gần như im lặng, tiếng máy nhỏ của 07) | world + rover + audio | 🟩 |
 | M3-11 | **Tiến trình nhìn thấy được** (luật 11): mỗi nâng cấp có một bộ phận hiện trên 07 — bánh to có gai (Magnetic Treads), giỏ hàng sau (Cargo Cradle), chảo/ăng-ten lớn (Wide Sonar), giàn đèn có lồng (Warm Headlamp), hai trống tụ điện (Boost Coils); quà của bạn bè chữa dần "dấu hiệu cô đơn" (ô pin mặt trời, vá sơn, số 07 sơn lại); khoảnh khắc lắp đặt ở bàn Kenji (đặc tả `docs/features/M3-11-visible-progression.md`: Warm Headlamp, Boost Coils, Cargo Cradle + quà của bạn bè + khoảnh khắc lắp đặt) | art + rover + gameplay | 🟩 |
-| M3-12 | **Bỏ hoang lâu năm → được chăm lại** (luật 12): bộ "phong hoá" low-poly (sơn phai, gỉ chảy từ đinh tán, bụi dồn chân, dây chùng, biển nghiêng) cho lander, tháp, xưởng, kệ, cột relay và cả 07; kiến trúc cho xe: thang nâng tời cạnh thang người ở lander, dốc lên mọi bệ, bệ sạc/đỗ của 07 thay tấm thảm; mỗi bước khôi phục làm sạch một phần căn cứ | art + gameplay + world | ⬜ |
+| M3-12 | **Bỏ hoang lâu năm → được chăm lại** (luật 12): bộ "phong hoá" low-poly (sơn phai, gỉ chảy từ đinh tán, bụi dồn chân, dây chùng, biển nghiêng) cho lander, tháp, xưởng, kệ, cột relay và cả 07; kiến trúc cho xe: thang nâng tời cạnh thang người ở lander, dốc lên mọi bệ, bệ sạc/đỗ của 07 thay tấm thảm; mỗi bước khôi phục làm sạch một phần căn cứ | art + gameplay + world | 🟩 |
 | M3-13 | **Bãi trục vớt thay cho scrap rải đầy đất** (ý chủ dự án): mảnh vệ tinh rơi, kho tiếp tế đổ, giàn khoan, gara cũ, tàu hàng rơi trong hẻm → cắt/cạy bằng tia sáng lấy Kim loại / Dây điện / Quang học → chế tạo ở bàn Kenji; relic nằm trong "trái tim" mỗi bãi; bãi trống dần thành bộ khung — đặc tả `docs/features/M3-13-salvage-sites.md`. **Ưu tiên ngay sau M3-06, trước M3-11/M3-12** | world + art + gameplay + audio + ui + rover | 🟩 |
-| M3-14 | **Xây cho 07 — chỉnh logic & tỉ lệ** (luật 12–14, ý chủ dự án): 07 không có tay → bàn chế tạo thành **Trạm sửa xe của Kenji** (cánh tay giàn treo lắp đồ, phễu nạp vật liệu bằng tia sáng); tháp radio có cổng bảo trì ngang tầm xe; dock sạc thay tấm thảm; thang nâng tời; thu nhỏ relic/cassette về đúng tỉ lệ; bánh dự phòng không còn trông như lỗi; nâng trống tụ điện — đặc tả `docs/features/M3-14-built-for-07.md`. **Ưu tiên ngay** | art + gameplay + rover + audio + ui | ⬜ |
+| M3-14 | **Xây cho 07 — chỉnh logic & tỉ lệ** (luật 12–14, ý chủ dự án): 07 không có tay → bàn chế tạo thành **Trạm sửa xe của Kenji** (cánh tay giàn treo lắp đồ, phễu nạp vật liệu bằng tia sáng); tháp radio có cổng bảo trì ngang tầm xe; dock sạc thay tấm thảm; thang nâng tời; thu nhỏ relic/cassette về đúng tỉ lệ; bánh dự phòng không còn trông như lỗi; nâng trống tụ điện — đặc tả `docs/features/M3-14-built-for-07.md`. **Ưu tiên ngay** | art + gameplay + rover + audio + ui | 🟩 |
 
 ## M4 — Thế giới mở rộng, sự kiện & kết thúc
 Magnetic Treads + **Rim Terraces** + **Atlas**; Warm Headlamp + **Shadowed Crater** + **Moss** + Biodome; sự kiện
