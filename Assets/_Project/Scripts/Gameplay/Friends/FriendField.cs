@@ -791,6 +791,7 @@ namespace MoonProject.Gameplay
             {
                 _tapping = true;
                 _tapStart = now;
+                _cabinet.KnobTapped();
             }
 
             if (_tapping && now - _tapStart >= _bellTuning.DialTapTime)

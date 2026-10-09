@@ -1257,7 +1257,8 @@ namespace MoonProject.Gameplay.PlayModeTests
                 }
 
                 yield return new WaitForSeconds(_gameplay.Friends.BellTuning.DialTapTime + DialPause);
-                Assert.AreEqual(BellCue.DialTurned, _events.BellCued[cues].Value.Cue, "then she turns it");
+                Assert.AreEqual(BellCue.DialTapped, _events.BellCued[cues].Value.Cue, "the beam taps her knob");
+                Assert.AreEqual(BellCue.DialTurned, _events.BellCued[cues + 1].Value.Cue, "then she turns it");
                 heard.Add(radio.Channel == RadioChannel.TapeDeck ? radio.Channel + " (" + radio.SelectedTape + ")"
                     : radio.Channel.ToString());
                 Assert.AreEqual(_gameplay.Friends.BellTuning.Detent(radio.Channel), cabinet.Life.Needle, 2f,

@@ -276,7 +276,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return null;
             Release(_keyboard.eKey);
             Assert.IsTrue(friends.TappingDial, "07's beam reaches for her dial");
-            Assert.AreEqual(cues, _fixture.Events.BellCued.Count, "no click yet");
+            Assert.AreEqual(cues + 1, _fixture.Events.BellCued.Count, "no click yet, just the tap");
+            BellCued tap = _fixture.Events.BellCued[cues].Value;
+            Assert.AreEqual(BellCue.DialTapped, tap.Cue, "a tiny tick as the beam taps her knob");
+            Assert.Less(Vector3.Distance(body.Knob, tap.Position), 1e-3f, "on her knob");
             Assert.AreEqual(before, radio.Channel, "she has not turned it yet");
             Assert.AreEqual(changes, _fixture.Events.RadioProgramChanged.Count);
             yield return new WaitForSeconds(_fixture.BellTuning.DialTapTime * 0.5f);
@@ -294,7 +297,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreNotEqual(before, radio.Channel, "then she turns her dial");
             Assert.AreEqual(changes + 1, _fixture.Events.RadioProgramChanged.Count, "one detent: a press mid-tap " +
                                                                                     "never doubles it");
-            Assert.AreEqual(cues + 1, _fixture.Events.BellCued.Count);
+            Assert.AreEqual(cues + 2, _fixture.Events.BellCued.Count, "one tap, one click: a press mid-tap adds none");
             Assert.AreEqual(BellCue.DialTurned, LastCue(), "her detented click");
             yield return new WaitForSeconds(0.5f);
             Assert.Less(friends.DialBeamLevel, 0.05f, "the beam lets go");
