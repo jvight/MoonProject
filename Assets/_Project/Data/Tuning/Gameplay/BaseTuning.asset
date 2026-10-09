@@ -37,4 +37,4 @@ MonoBehaviour:
   _haloFull: 200
   _haloRadius: 5
   _haloGrowth: 0.035
-  _haloGlow: 0.55
+  _haloGlow: 0.45
