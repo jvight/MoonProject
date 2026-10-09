@@ -215,9 +215,11 @@ namespace MoonProject.UI.PlayModeTests
             yield return Navigate(NavigationMoveEvent.Direction.Down);
             Assert.AreSame(layout.SettingsButton, Focused(), "down moves to the next button");
             yield return Navigate(NavigationMoveEvent.Direction.Down);
+            Assert.AreSame(layout.NewGameButton, Focused());
+            yield return Navigate(NavigationMoveEvent.Direction.Down);
             Assert.AreSame(layout.QuitButton, Focused());
             yield return Navigate(NavigationMoveEvent.Direction.Up);
-            Assert.AreSame(layout.SettingsButton, Focused(), "and up moves back");
+            Assert.AreSame(layout.NewGameButton, Focused(), "and up moves back");
         }
 
         [UnityTest]

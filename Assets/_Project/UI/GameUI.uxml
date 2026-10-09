@@ -183,7 +183,17 @@
                                     <ui:Button name="button-resume" class="menu-button loc" text="ui.pause.resume" />
                                     <ui:Button name="button-settings" class="menu-button loc"
                                                text="ui.pause.settings" />
+                                    <ui:Button name="button-new-game" class="menu-button loc"
+                                               text="ui.pause.new_game" />
                                     <ui:Button name="button-quit" class="menu-button loc" text="ui.pause.quit" />
+                                </ui:VisualElement>
+                                <ui:VisualElement name="page-new-game" class="pause__page">
+                                    <ui:Label class="pause__question loc" text="ui.pause.new_game_question" />
+                                    <ui:Label class="pause__aside loc" text="ui.pause.new_game_aside" />
+                                    <ui:Button name="button-new-game-keep" class="menu-button loc"
+                                               text="ui.pause.new_game_keep" />
+                                    <ui:Button name="button-new-game-confirm" class="menu-button menu-button--quiet loc"
+                                               text="ui.pause.new_game_confirm" />
                                 </ui:VisualElement>
                                 <ui:VisualElement name="page-quit" class="pause__page">
                                     <ui:Label class="pause__question loc" text="ui.pause.quit_question" />

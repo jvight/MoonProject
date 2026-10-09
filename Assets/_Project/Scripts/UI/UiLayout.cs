@@ -121,9 +121,13 @@ namespace MoonProject.UI
             PageQuit = Require<VisualElement>("page-quit");
             ResumeButton = Require<Button>("button-resume");
             SettingsButton = Require<Button>("button-settings");
+            NewGameButton = Require<Button>("button-new-game");
             QuitButton = Require<Button>("button-quit");
             QuitStayButton = Require<Button>("button-quit-stay");
             QuitConfirmButton = Require<Button>("button-quit-confirm");
+            PageNewGame = Require<VisualElement>("page-new-game");
+            NewGameKeepButton = Require<Button>("button-new-game-keep");
+            NewGameConfirmButton = Require<Button>("button-new-game-confirm");
             PauseSettings = Require<VisualElement>("pause-settings");
             PauseSettingsShadow = Require<VisualElement>("pause-settings-shadow");
             MasterSlider = Require<SliderInt>("slider-master");
@@ -329,11 +333,19 @@ namespace MoonProject.UI
 
         public Button SettingsButton { get; }
 
+        public Button NewGameButton { get; }
+
         public Button QuitButton { get; }
 
         public Button QuitStayButton { get; }
 
         public Button QuitConfirmButton { get; }
+
+        public VisualElement PageNewGame { get; }
+
+        public Button NewGameKeepButton { get; }
+
+        public Button NewGameConfirmButton { get; }
 
         public VisualElement PauseSettings { get; }
 

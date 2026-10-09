@@ -40,6 +40,7 @@ namespace MoonProject.UI
         [SerializeField] private TextAsset[] _stringTables = Array.Empty<TextAsset>();
 
         private readonly List<IDisposable> _tokens = new List<IDisposable>();
+        private readonly JourneyNotice _journey = new JourneyNotice();
         private UiServices _services;
         private LocalizationService _localization;
         private PromptLedger _ledger;
@@ -441,6 +442,10 @@ namespace MoonProject.UI
             if (_bound)
             {
                 _title.Play();
+                if (_journey.TryTake(_services.Save.LoadResult, out TickerLine line))
+                {
+                    _tickerLines.Enqueue(line);
+                }
             }
         }
 
