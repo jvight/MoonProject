@@ -104,6 +104,11 @@ namespace MoonProject.Rover.PlayModeTests
 
         private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
 
+        private const string KitTableHeader =
+            "| Capture | Camera to 07 (m) | 07 on screen (x, y) | Horizon y | Wide frame |";
+
+        private const string KitTableRule = "|---|---:|---|---:|---|";
+
         /// <summary>Seconds a purchase may take from the hopper feed to the piece shown on 07.</summary>
         private const float FitTimeout = 40f;
 
@@ -330,8 +335,8 @@ namespace MoonProject.Rover.PlayModeTests
             yield return Boot();
             _report.AppendLine("# Visible progression (real Main scene, staged purchases)");
             _report.AppendLine();
-            _report.AppendLine("| Capture | Camera to 07 (m) | 07 on screen (x, y) | Horizon y | Wide frame |");
-            _report.AppendLine("|---|---:|---|---:|---|");
+            _report.AppendLine(KitTableHeader);
+            _report.AppendLine(KitTableRule);
             Pose spawn = new Pose(_rover.Position, Quaternion.Euler(0f, _rover.Heading, 0f));
             Capture("kit-minute-one-chase");
             CaptureFar("kit-minute-one-30m");
@@ -354,6 +359,10 @@ namespace MoonProject.Rover.PlayModeTests
             }
 
             _report.AppendLine();
+            _report.AppendLine("## A relic in the rack, and fully kitted");
+            _report.AppendLine();
+            _report.AppendLine(KitTableHeader);
+            _report.AppendLine(KitTableRule);
 
             yield return MoveTo(spawn.position, spawn.rotation.eulerAngles.y);
             yield return RideARelic();
