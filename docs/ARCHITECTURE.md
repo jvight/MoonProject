@@ -330,8 +330,13 @@ A missing anchor is a wiring bug: consumers `Debug.LogError` with context, never
 1. `python tools/compile_check.py` — editor + player configs, zero warnings. Mandatory before every commit.
 2. EditMode tests (`Assets/_Project/Tests/EditMode`) for pure logic: mesh kit, event bus, economy, save, curves.
 3. `python tools/unity_batch.py` — headless Unity run on a worktree: run builders, capture screenshots,
-   run scripted play sessions and print metrics (once Foundation lands it).
-4. Director integration in the main editor: real play mode, feel review against `docs/VISION.md` checklist.
+   run scripted play sessions and print metrics. At most two batch editors run machine-wide, so boxes run the
+   tests and captures that cover their change (`--filter`, `--assembly`, `--category`); the full PlayMode suite and
+   the Playthrough golden path are the Director's, on the merged main.
+4. Director integration: `python tools/director.py land <box> -m ...` merges a box (compile_check gates the merge)
+   and hot-reloads the main editor (refresh, the box's builders, Main.unity); `outputs` commits regenerated assets;
+   `verify --push` runs compile_check, EditMode, PlayMode and the Playthrough on main in the verification worktree
+   and pushes only a commit that passed all four. Then real play mode and a feel review against `docs/VISION.md`.
 
 ## Performance budget (PC target, 1080p)
 - 60 fps on mid-range GPU; < 1.5 ms CPU per gameplay system per frame.
