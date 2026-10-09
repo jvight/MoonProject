@@ -548,6 +548,40 @@ namespace MoonProject.UI.PlayModeTests
 #endif
         }
 
+        /// <summary>
+        /// The pause menu's New game question, resting on Keep going. Rerun on its own:
+        /// <c>python tools/unity_batch.py tests --platform playmode --filter CaptureNewGameQuestion</c>.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator CaptureNewGameQuestion()
+        {
+#if UNITY_EDITOR
+            Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
+            yield return LoadMain();
+            GameContext context = FindBootstrap().Context;
+            Camera camera = context.Get<IViewCamera>().Camera;
+            UISystem ui = BuildUi(context, out _, out _);
+            yield return null;
+            string folder = Path.GetFullPath(OutputFolder);
+            Directory.CreateDirectory(folder);
+            context.Events.Publish(new RoverAwoke(Vector3.zero, false));
+            yield return new WaitForSecondsRealtime(1f);
+
+            yield return Tap(keyboard.escapeKey);
+            yield return new WaitForSecondsRealtime(1.2f);
+            Submit(ui.Layout.NewGameButton);
+            yield return new WaitForSecondsRealtime(1f);
+            Assert.IsTrue(ui.Pause.IsAskingNewGame);
+            yield return Capture(camera, folder, "39_pause_new_game");
+            yield return Tap(keyboard.escapeKey);
+            yield return new WaitForSecondsRealtime(0.5f);
+            Assert.IsTrue(ui.Pause.IsOpen && !ui.Pause.IsAskingNewGame, "Esc keeps going, back to the menu");
+#else
+            Assert.Ignore("Captures need the editor.");
+            yield break;
+#endif
+        }
+
 #if UNITY_EDITOR
         private static IEnumerator LoadMain()
         {

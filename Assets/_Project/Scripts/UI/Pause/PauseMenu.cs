@@ -12,7 +12,9 @@ namespace MoonProject.UI
     /// <summary>
     /// The pause menu (Esc / gamepad Start). Opening it eases game time to a stop (the radio keeps playing on unscaled
     /// time), turns the rover controls off and frees the cursor; resuming reverses all three. Resume, Settings
-    /// (volumes, look speed, invert look, language; persisted) and Quit (asks once). Keyboard, mouse and gamepad all
+    /// (volumes, look speed, invert look, language; persisted), New game and Quit (each asks once, resting on its
+    /// safe answer; see <see cref="PausePages"/>). A confirmed new game restores game time and publishes
+    /// <see cref="NewGameRequested"/>: the App puts the save away and reloads. Keyboard, mouse and gamepad all
     /// work: UI Toolkit moves focus between the buttons and sliders; Esc / B steps back one level. Every touch is
     /// published as a <see cref="UiCue"/> (open, close, focus move, confirm, back, slider step) for Audio. Beside the
     /// heading, a small summary shows 07's metal, wiring and optics (<see cref="IMaterialStock"/>). Once 07 owns
@@ -43,11 +45,12 @@ namespace MoonProject.UI
         private readonly Reveal _settingsPanel;
         private readonly Reveal _mainPage;
         private readonly Reveal _quitPage;
+        private readonly Reveal _newGamePage;
+        private readonly PausePages _pages = new PausePages();
         private readonly string[] _lookTexts;
         private Focusable _pendingFocus;
         private bool _focusingByCode;
         private bool _pointerPressed;
-        private bool _onQuitPage;
         private float _resumeScale = 1f;
         private float _writtenShift = float.NaN;
 
@@ -75,11 +78,13 @@ namespace MoonProject.UI
             _settingsPanel = new Reveal(layout.PauseSettings, settings.SettingsPanel);
             _mainPage = new Reveal(layout.PageMain, settings.Page);
             _quitPage = new Reveal(layout.PageQuit, settings.Page);
+            _newGamePage = new Reveal(layout.PageNewGame, settings.Page);
             _veil.Snap(false);
             _main.Snap(false);
             _settingsPanel.Snap(false);
             _mainPage.Snap(true);
             _quitPage.Snap(false);
+            _newGamePage.Snap(false);
             new ShadowPainter(layout.PauseMainShadow);
             new ShadowPainter(layout.PauseSettingsShadow);
             new CassetteIconPainter(layout.PauseCassetteIcon);
@@ -101,7 +106,10 @@ namespace MoonProject.UI
         public bool IsSettingsOpen => _settingsPanel.Target;
 
         /// <summary>True while the quit question replaces the main buttons.</summary>
-        public bool IsAskingToQuit => _onQuitPage;
+        public bool IsAskingToQuit => _pages.Current == PausePage.Quit;
+
+        /// <summary>True while the new-game question replaces the main buttons.</summary>
+        public bool IsAskingNewGame => _pages.Current == PausePage.NewGame;
 
         /// <summary>
         /// True once everything about the menu has finished easing (time fully stopped or fully running).
@@ -121,9 +129,10 @@ namespace MoonProject.UI
             }
 
             IsOpen = true;
-            _onQuitPage = false;
+            _pages.Reset();
             _mainPage.Snap(true);
             _quitPage.Snap(false);
+            _newGamePage.Snap(false);
             _clock.Pause();
             _input.Disable();
             _cursor.Menu();
@@ -158,7 +167,7 @@ namespace MoonProject.UI
             Cue(UiCueKind.MenuClose);
         }
 
-        /// <summary>Esc / B: one level back (quit question or settings to the menu, the menu to the game).</summary>
+        /// <summary>Esc / B: one level back (a question or settings to the menu, the menu to the game).</summary>
         public void Back()
         {
             if (!IsOpen)
@@ -166,9 +175,9 @@ namespace MoonProject.UI
                 return;
             }
 
-            if (_onQuitPage)
+            if (_pages.Back(out PauseFocus focus))
             {
-                ShowMainPage(_layout.QuitButton);
+                _pendingFocus = Button(focus);
                 Cue(UiCueKind.Back);
             }
             else if (_settingsPanel.Target)
@@ -190,28 +199,14 @@ namespace MoonProject.UI
                 Time.timeScale = _clock.IsSettled && !_clock.Paused ? _resumeScale : _resumeScale * _clock.Scale;
             }
 
-            if (_onQuitPage)
-            {
-                _mainPage.Hide();
-                if (_mainPage.IsHidden)
-                {
-                    _quitPage.Show();
-                }
-            }
-            else
-            {
-                _quitPage.Hide();
-                if (_quitPage.IsHidden)
-                {
-                    _mainPage.Show();
-                }
-            }
+            SwapPages();
 
             _veil.Tick(unscaledDeltaTime);
             _main.Tick(unscaledDeltaTime);
             _settingsPanel.Tick(unscaledDeltaTime);
             _mainPage.Tick(unscaledDeltaTime);
             _quitPage.Tick(unscaledDeltaTime);
+            _newGamePage.Tick(unscaledDeltaTime);
             ShiftForSettings();
 
             if (IsOpen)
@@ -251,6 +246,9 @@ namespace MoonProject.UI
         {
             _layout.ResumeButton.clicked += OnResumeClicked;
             _layout.SettingsButton.clicked += OnSettingsClicked;
+            _layout.NewGameButton.clicked += OnNewGameClicked;
+            _layout.NewGameKeepButton.clicked += OnKeepGoingClicked;
+            _layout.NewGameConfirmButton.clicked += OnNewGameConfirmed;
             _layout.QuitButton.clicked += OnQuitClicked;
             _layout.QuitStayButton.clicked += OnStayClicked;
             _layout.QuitConfirmButton.clicked += OnQuitConfirmed;
@@ -339,10 +337,85 @@ namespace MoonProject.UI
             _pendingFocus = _layout.SettingsButton;
         }
 
-        private void ShowMainPage(Focusable focus)
+        /// <summary>
+        /// Eases the pages that are not current away; once they are gone, the current one eases in. Never two at once.
+        /// </summary>
+        private void SwapPages()
         {
-            _onQuitPage = false;
-            _pendingFocus = focus;
+            bool clear = Leave(_mainPage, PausePage.Main) & Leave(_quitPage, PausePage.Quit) &
+                         Leave(_newGamePage, PausePage.NewGame);
+            if (clear)
+            {
+                Page(_pages.Current).Show();
+            }
+        }
+
+        private bool Leave(Reveal page, PausePage which)
+        {
+            if (which == _pages.Current)
+            {
+                return true;
+            }
+
+            page.Hide();
+            return page.IsHidden;
+        }
+
+        private Reveal Page(PausePage page)
+        {
+            switch (page)
+            {
+                case PausePage.Quit:
+                    return _quitPage;
+                case PausePage.NewGame:
+                    return _newGamePage;
+                default:
+                    return _mainPage;
+            }
+        }
+
+        private Focusable Button(PauseFocus focus)
+        {
+            switch (focus)
+            {
+                case PauseFocus.NewGame:
+                    return _layout.NewGameButton;
+                case PauseFocus.Quit:
+                    return _layout.QuitButton;
+                case PauseFocus.QuitStay:
+                    return _layout.QuitStayButton;
+                case PauseFocus.NewGameKeep:
+                    return _layout.NewGameKeepButton;
+                default:
+                    return _layout.ResumeButton;
+            }
+        }
+
+        /// <summary>Asks <paramref name="question"/> in place of the main buttons, focused on its safe answer.</summary>
+        private void Ask(PausePage question)
+        {
+            if (!IsOpen || !_pages.Ask(question))
+            {
+                return;
+            }
+
+            if (_settingsPanel.Target)
+            {
+                CloseSettings();
+            }
+
+            _pendingFocus = Button(_pages.DefaultFocus);
+            Cue(UiCueKind.Confirm);
+        }
+
+        /// <summary>Stay / Keep going: back to the button that asked.</summary>
+        private void Answer(PausePage question)
+        {
+            if (IsOpen && _pages.Current == question && _pages.Back(out PauseFocus focus))
+            {
+                _pendingFocus = Button(focus);
+                Cue(UiCueKind.Back);
+            }
         }
 
         private void SaveIfChanged()
@@ -392,7 +465,7 @@ namespace MoonProject.UI
                 return _layout.MasterSlider;
             }
 
-            return _onQuitPage ? _layout.QuitStayButton : (Focusable)_layout.ResumeButton;
+            return Button(_pages.DefaultFocus);
         }
 
         private Focusable FocusedElement()
@@ -428,7 +501,7 @@ namespace MoonProject.UI
 
         private void OnResumeClicked()
         {
-            if (IsOpen && !_onQuitPage)
+            if (IsOpen && _pages.Current == PausePage.Main)
             {
                 Resume();
             }
@@ -436,7 +509,7 @@ namespace MoonProject.UI
 
         private void OnSettingsClicked()
         {
-            if (IsOpen && !_onQuitPage)
+            if (IsOpen && _pages.Current == PausePage.Main)
             {
                 OpenSettings();
                 Cue(UiCueKind.Confirm);
@@ -445,31 +518,41 @@ namespace MoonProject.UI
 
         private void OnQuitClicked()
         {
-            if (IsOpen && !_onQuitPage)
-            {
-                if (_settingsPanel.Target)
-                {
-                    CloseSettings();
-                }
-
-                _onQuitPage = true;
-                _pendingFocus = _layout.QuitStayButton;
-                Cue(UiCueKind.Confirm);
-            }
+            Ask(PausePage.Quit);
         }
 
         private void OnStayClicked()
         {
-            if (IsOpen && _onQuitPage)
+            Answer(PausePage.Quit);
+        }
+
+        private void OnNewGameClicked()
+        {
+            Ask(PausePage.NewGame);
+        }
+
+        private void OnKeepGoingClicked()
+        {
+            Answer(PausePage.NewGame);
+        }
+
+        /// <summary>
+        /// Start over: game time comes back first (Time.timeScale is global and outlives the reload), then the App is
+        /// asked for a new game. Once only, however often the button is pressed before the scene goes.
+        /// </summary>
+        private void OnNewGameConfirmed()
+        {
+            if (IsOpen && _pages.ConfirmNewGame())
             {
-                ShowMainPage(_layout.QuitButton);
-                Cue(UiCueKind.Back);
+                Cue(UiCueKind.Confirm);
+                RestoreTime();
+                _events.Publish(new NewGameRequested());
             }
         }
 
         private void OnQuitConfirmed()
         {
-            if (IsOpen && _onQuitPage)
+            if (IsOpen && _pages.Current == PausePage.Quit)
             {
                 SaveIfChanged();
                 Cue(UiCueKind.Confirm);

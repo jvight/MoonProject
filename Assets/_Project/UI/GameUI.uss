@@ -478,6 +478,16 @@ Label {
     letter-spacing: 3px;
 }
 
+/* The one-time Look up hint: the prompt chip's look, low and centred, above the ticker's band */
+
+.look-hint {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 22%;
+    align-items: center;
+}
+
 /* Radio ticker: one soft line in the bottom band, below every panel and below the prompts' screen margin */
 
 .ticker {

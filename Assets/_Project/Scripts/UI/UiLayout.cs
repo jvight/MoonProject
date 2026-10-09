@@ -82,6 +82,13 @@ namespace MoonProject.UI
             Ticker = Require<VisualElement>("ticker");
             TickerLamp = Require<VisualElement>("ticker-lamp");
             TickerText = Require<Label>("ticker-text");
+            TickerLine = Require<VisualElement>("ticker-line");
+
+            LookHint = Require<VisualElement>("look-hint");
+            LookHintShadow = Require<VisualElement>("look-hint-shadow");
+            LookHintGlyph = Require<VisualElement>("look-hint-glyph");
+            LookHintGlyphLabel = Require<Label>("look-hint-glyph-label");
+            LookHintWord = Require<Label>("look-hint-word");
 
             DialReadout = Require<VisualElement>("dial-readout");
             DialReadoutShadow = Require<VisualElement>("dial-readout-shadow");
@@ -121,9 +128,13 @@ namespace MoonProject.UI
             PageQuit = Require<VisualElement>("page-quit");
             ResumeButton = Require<Button>("button-resume");
             SettingsButton = Require<Button>("button-settings");
+            NewGameButton = Require<Button>("button-new-game");
             QuitButton = Require<Button>("button-quit");
             QuitStayButton = Require<Button>("button-quit-stay");
             QuitConfirmButton = Require<Button>("button-quit-confirm");
+            PageNewGame = Require<VisualElement>("page-new-game");
+            NewGameKeepButton = Require<Button>("button-new-game-keep");
+            NewGameConfirmButton = Require<Button>("button-new-game-confirm");
             PauseSettings = Require<VisualElement>("pause-settings");
             PauseSettingsShadow = Require<VisualElement>("pause-settings-shadow");
             MasterSlider = Require<SliderInt>("slider-master");
@@ -261,6 +272,18 @@ namespace MoonProject.UI
 
         public Label TickerText { get; }
 
+        public VisualElement TickerLine { get; }
+
+        public VisualElement LookHint { get; }
+
+        public VisualElement LookHintShadow { get; }
+
+        public VisualElement LookHintGlyph { get; }
+
+        public Label LookHintGlyphLabel { get; }
+
+        public Label LookHintWord { get; }
+
         public VisualElement DialReadout { get; }
 
         public VisualElement DialReadoutShadow { get; }
@@ -329,11 +352,19 @@ namespace MoonProject.UI
 
         public Button SettingsButton { get; }
 
+        public Button NewGameButton { get; }
+
         public Button QuitButton { get; }
 
         public Button QuitStayButton { get; }
 
         public Button QuitConfirmButton { get; }
+
+        public VisualElement PageNewGame { get; }
+
+        public Button NewGameKeepButton { get; }
+
+        public Button NewGameConfirmButton { get; }
 
         public VisualElement PauseSettings { get; }
 

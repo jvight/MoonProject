@@ -43,6 +43,38 @@
             "text": "Quit"
         },
         {
+            "key": "ui.pause.new_game",
+            "text": "New game"
+        },
+        {
+            "key": "ui.pause.new_game_question",
+            "text": "Start a new journey?"
+        },
+        {
+            "key": "ui.pause.new_game_aside",
+            "text": "This one will be put away, not lost."
+        },
+        {
+            "key": "ui.pause.new_game_keep",
+            "text": "Keep going"
+        },
+        {
+            "key": "ui.pause.new_game_confirm",
+            "text": "Start over"
+        },
+        {
+            "key": "ui.journey.put_away",
+            "text": "An older journey was put away."
+        },
+        {
+            "key": "ui.hint.look_up",
+            "text": "Look up"
+        },
+        {
+            "key": "glyph.mouse.move",
+            "text": "Mouse"
+        },
+        {
             "key": "ui.settings.sound",
             "text": "Sound"
         },

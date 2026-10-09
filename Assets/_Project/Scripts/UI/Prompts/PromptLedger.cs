@@ -7,7 +7,7 @@ namespace MoonProject.UI
     /// <summary>
     /// Remembers, per action, how many times its prompt was shown and how many times the player did it. A prompt is
     /// retired for good once it was shown the shared number of times or done as often as its entry says (design
-    /// ruling 6: only the first few times). Saved.
+    /// ruling 6: only the first few times). The Look up hint, shown once per save, is remembered here too. Saved.
     /// </summary>
     internal sealed class PromptLedger
     {
@@ -57,6 +57,14 @@ namespace MoonProject.UI
             }
         }
 
+        /// <summary>True once the Look up hint has been shown in this save.</summary>
+        public bool LookUpHinted { get; private set; }
+
+        public void RecordLookUpHinted()
+        {
+            LookUpHinted = true;
+        }
+
         public void RecordUsed(InteractionKind kind)
         {
             if (kind != InteractionKind.None)
@@ -79,7 +87,7 @@ namespace MoonProject.UI
                 }
             }
 
-            return new PromptsSaveData { kinds = kinds.ToArray() };
+            return new PromptsSaveData { kinds = kinds.ToArray(), lookUpHinted = LookUpHinted };
         }
 
         /// <summary>Applies saved counts; entries naming a kind this build does not know are skipped.</summary>
@@ -87,6 +95,7 @@ namespace MoonProject.UI
         {
             Array.Clear(_shown, 0, _shown.Length);
             Array.Clear(_used, 0, _used.Length);
+            LookUpHinted = data != null && data.lookUpHinted;
             if (data?.kinds == null)
             {
                 return;
