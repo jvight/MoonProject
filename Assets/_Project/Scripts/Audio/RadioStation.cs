@@ -229,7 +229,8 @@ namespace MoonProject.Audio
             float cabin = _director.CabinBlend;
             float level = _director.Buses.Effective(AudioBus.Music) * _wake.Power;
             float music = mix.MusicVolume * level * _wake.MusicGain * Mathf.Lerp(1f, _tuning.CabinMusicGain, cabin) *
-                          _soundscape.RadioGain * Mathf.Lerp(1f, _tuning.HopMusicGain, hop);
+                          _soundscape.RadioGain * _soundscape.StargazeMusicGain *
+                          Mathf.Lerp(1f, _tuning.HopMusicGain, hop);
             float cabinCutoff = _tuning.MaxCutoff * Mathf.Pow(_tuning.CabinCutoff / _tuning.MaxCutoff, cabin);
             float cutoff = _soundscape.RadioCutoff(Mathf.Min(mix.CutoffHz, cabinCutoff));
             cutoff *= Mathf.Pow(Mathf.Min(1f, _tuning.HopCutoff / cutoff), hop);

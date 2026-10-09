@@ -12,7 +12,9 @@ namespace MoonProject.Audio
     /// <see cref="IRoverStillness"/> through <see cref="StillnessTracker"/>, counted once 07 is awake) and the
     /// camera's wide shot (<see cref="RoverWideShotChanged"/>: the mix breathes out over the frame's opening and back
     /// in with the hand-back). The radio, the basin bed, the canyon beds and 07's small sounds read their gains here,
-    /// so Quiet Hours, the canyon, distance, stillness and the wide shot make one coherent mix.
+    /// so Quiet Hours, the canyon, distance, stillness and the wide shot make one coherent mix. While 07 stargazes
+    /// (<see cref="StargazingChanged"/>, <see cref="StargazeMix"/>) the music thins to a few notes over the wind and
+    /// the beat begins with a soft airy swell.
     /// Plays the room tone bed that takes over as everything else recedes. Neutral (all gains 1) until initialised.
     /// Initialised by <see cref="AudioDirector"/> after the radio and the canyon.
     /// </summary>
@@ -22,7 +24,7 @@ namespace MoonProject.Audio
         [Tooltip("Assets/_Project/Data/Audio/SoundscapeTuning.asset.")]
         [SerializeField] private SoundscapeTuning _tuning;
 
-        private const int SubscriptionCount = 3;
+        private const int SubscriptionCount = 4;
 
         private readonly EasedValue _fadeIn = new EasedValue(0f);
         private readonly LoopFader _wide = new LoopFader();
@@ -34,6 +36,8 @@ namespace MoonProject.Audio
         private CanyonAmbience _canyon;
         private StillnessTracker _stillness;
         private SoundscapeModel _model;
+        private StargazeMix _stargaze;
+        private CueHandle _swell;
         private AudioSource _roomTone;
         private float _roomToneCueVolume;
         private float _fadeInTime;
@@ -56,6 +60,12 @@ namespace MoonProject.Audio
 
         public float RadioGain => _model != null ? _model.RadioGain : 1f;
 
+        /// <summary>The music's own gain on top of <see cref="RadioGain"/>: thinned while 07 stargazes.</summary>
+        public float StargazeMusicGain => _stargaze != null ? _stargaze.MusicGain : 1f;
+
+        /// <summary>0 normal .. 1 the music fully thinned for stargazing (eased).</summary>
+        public float Stargaze => _stargaze != null ? _stargaze.Amount : 0f;
+
         public float BasinBedGain => _model != null ? _model.BasinBedGain : 1f;
 
         public float CanyonBedGain => _model != null ? _model.CanyonBedGain : 1f;
@@ -64,10 +74,11 @@ namespace MoonProject.Audio
 
         internal AudioSource RoomToneSource => _roomTone;
 
-        /// <summary>The radio's low-pass from its open <paramref name="cutoffHz"/> (thinner in the canyon).</summary>
+        /// <summary>The radio's low-pass from its open <paramref name="cutoffHz"/> (thinner in the canyon and while
+        /// 07 stargazes).</summary>
         public float RadioCutoff(float cutoffHz)
         {
-            return _model != null ? _model.RadioCutoff(cutoffHz) : cutoffHz;
+            return _model != null ? _stargaze.MusicCutoff(_model.RadioCutoff(cutoffHz)) : cutoffHz;
         }
 
         internal void Initialize(GameContext context, AudioDirector director, RadioStation radio,
@@ -82,7 +93,8 @@ namespace MoonProject.Audio
             }
 
             CueHandle roomTone = director.Resolve(AudioCueIds.RoomTone);
-            if (!roomTone.IsValid)
+            _swell = director.Resolve(AudioCueIds.StargazeSwell);
+            if (!roomTone.IsValid || !_swell.IsValid)
             {
                 enabled = false;
                 return;
@@ -96,11 +108,13 @@ namespace MoonProject.Audio
             _rest = context.Get<IRoverStillness>();
             _stillness = new StillnessTracker(_tuning);
             _model = new SoundscapeModel(_tuning, canyon.Tuning);
+            _stargaze = new StargazeMix(_tuning);
             _roomToneCueVolume = director.Library.GetCue(roomTone).VolumeMax;
             _roomTone = director.CreateLoopSource(transform, "RoomTone", roomTone, 0f);
             _subscriptions[0] = context.Events.Subscribe<RoverAwoke>(OnRoverAwoke);
             _subscriptions[1] = context.Events.Subscribe<RoverWideShotChanged>(OnWideShotChanged);
             _subscriptions[2] = context.Events.Subscribe<RoverPlaced>(OnRoverPlaced);
+            _subscriptions[3] = context.Events.Subscribe<StargazingChanged>(OnStargazingChanged);
         }
 
         internal void Wire(SoundscapeTuning tuning)
@@ -118,6 +132,7 @@ namespace MoonProject.Audio
             _stillness.Step(_awake ? _rest.StillSeconds : 0f, Time.deltaTime);
             float dt = Time.unscaledDeltaTime;
             _wide.Step(dt, _tuning.WideOpenTime, _tuning.WideReleaseTime);
+            _stargaze.Step(dt);
             float distance = _radio.ReachDistance(_rover.Position);
             _model.Step(distance, _radio.SignalEdge, _stillness.Amount, _wide.Gain, _canyon.Inside,
                 _radio.Station == RadioChannel.QuietHours, dt);
@@ -141,6 +156,14 @@ namespace MoonProject.Audio
         {
             // A radio-hop sets 07 down at full dark: the new place's distance holds at once, not eased in.
             _model.SettleAt(_radio.ReachDistance(placed.Position), _radio.SignalEdge);
+        }
+
+        private void OnStargazingChanged(StargazingChanged changed)
+        {
+            if (_stargaze.SetGazing(changed.IsStargazing))
+            {
+                _director.Play2D(_swell, _tuning.StargazeSwellVolume);
+            }
         }
 
         private void OnWideShotChanged(RoverWideShotChanged changed)

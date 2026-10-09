@@ -291,6 +291,7 @@ namespace MoonProject.Audio.PlayModeTests
                 case 10:
                     events.Publish(new PauseChanged(frame % 24 == 10));
                     events.Publish(new RoverWideShotChanged(frame % 36 == 10));
+                    events.Publish(new StargazingChanged(frame % 48 < 24));
                     break;
                 case 9:
                     events.Publish(new TetherReleased(Vector3.right, frame % 24 == 9));
