@@ -77,6 +77,7 @@ namespace MoonProject.Audio
         public const string BayTurntable = "bay_turntable";
         public const string BayWeld = "bay_weld";
         public const string BayFittedChime = "bay_fitted_chime";
+        public const string StargazeSwell = "stargaze_swell";
         public const string PortHatchOpen = "port_hatch_open";
         public const string PortHatchClose = "port_hatch_close";
         public const string DockConnect = "dock_connect";
