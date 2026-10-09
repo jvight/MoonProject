@@ -7,8 +7,8 @@ namespace MoonProject.World
 {
     /// <summary>
     /// Builds Earth as a flat-shaded unit icosphere in its own frame (Y = spin axis) with one palette colour per
-    /// face: ocean, seeded continents, a few clouds and the polar caps. LofiEarth places it in the sky. Vertex
-    /// colours are linear because the shader uses them directly.
+    /// face, faded toward the sky's pale haze: ocean, seeded continents, a few clouds and the polar caps. LofiEarth
+    /// places it in the sky. Vertex colours are linear because the shader uses them directly.
     /// </summary>
     public static class EarthMeshBuilder
     {
@@ -53,9 +53,9 @@ namespace MoonProject.World
 
             float landThreshold = Quantile(land, 1f - sky.EarthLandFraction);
             float cloudThreshold = Quantile(cloud, 1f - sky.EarthCloudFraction);
-            Color ocean = ((Color)Palette.Get(PaletteSwatch.EarthOcean)).linear;
-            Color green = ((Color)Palette.Get(PaletteSwatch.EarthLand)).linear;
-            Color white = ((Color)Palette.Get(PaletteSwatch.Cream)).linear;
+            Color ocean = FaceColor(PaletteSwatch.EarthOcean, sky);
+            Color green = FaceColor(PaletteSwatch.EarthLand, sky);
+            Color white = FaceColor(PaletteSwatch.Cream, sky);
 
             var positions = new Vector3[faces * 3];
             var normals = new Vector3[faces * 3];
@@ -86,6 +86,20 @@ namespace MoonProject.World
             mesh.SetTriangles(indices, 0, false);
             mesh.bounds = new Bounds(Vector3.zero, Vector3.one * NeverCulledExtent);
             return mesh;
+        }
+
+        /// <summary>
+        /// Linear colour of an Earth face painted in <paramref name="swatch"/>: the swatch faded toward the sky's
+        /// haze (mixed in sRGB, as the eye compares them).
+        /// </summary>
+        public static Color FaceColor(PaletteSwatch swatch, SkySettings sky)
+        {
+            if (sky == null)
+            {
+                throw new ArgumentNullException(nameof(sky));
+            }
+
+            return Color.Lerp(Palette.Get(swatch), sky.EarthHaze, sky.EarthPaleness).linear;
         }
 
         /// <summary>Seamless noise on the sphere: three orthogonal planar samples summed.</summary>
