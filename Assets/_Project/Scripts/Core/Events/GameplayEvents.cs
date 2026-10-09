@@ -578,4 +578,12 @@ namespace MoonProject.Core.Events
 
         public Vector3 Position { get; }
     }
+
+    /// <summary>
+    /// The player chose to start over (the pause menu's New game, once confirmed). The App puts the save away as
+    /// &lt;slot&gt;.old-&lt;stamp&gt;.json (never deleted) and reloads the scene, so the game boots fresh.
+    /// </summary>
+    public readonly struct NewGameRequested
+    {
+    }
 }

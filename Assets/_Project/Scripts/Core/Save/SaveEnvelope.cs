@@ -7,6 +7,10 @@ namespace MoonProject.Core.Save
     internal sealed class SaveEnvelope
     {
         public int formatVersion;
+
+        /// <summary>Application.version of the build that wrote the file; null in saves from before 0.4.1.</summary>
+        public string contentVersion;
+
         public string savedAtUtc;
         public SaveEntry[] sections = Array.Empty<SaveEntry>();
     }

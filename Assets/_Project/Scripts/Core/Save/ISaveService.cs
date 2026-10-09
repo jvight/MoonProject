@@ -28,5 +28,12 @@ namespace MoonProject.Core.Save
 
         /// <summary>Writes every section to disk atomically. Returns false (and logs why) if nothing was written.</summary>
         bool SaveNow();
+
+        /// <summary>
+        /// Starts over: moves the save (and its backup) to &lt;slot&gt;.old-&lt;utc stamp&gt;.json, never deleting it,
+        /// forgets the loaded progress and refuses every later save, so the session being torn down cannot write the
+        /// old progress back. Returns the archived save's path, or null when there was nothing on disk.
+        /// </summary>
+        string PutAway();
     }
 }

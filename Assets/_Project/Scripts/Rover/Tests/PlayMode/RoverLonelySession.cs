@@ -129,7 +129,7 @@ namespace MoonProject.Rover.PlayModeTests
         // The save seeded for the fully kitted reload: Tilly and Bell repaired and home (FriendState.Awake = 3), in
         // the envelope and section format of Core's SaveService and Gameplay's friends section (version 2).
         private const string FriendsHomeSave =
-            "{\"formatVersion\":1,\"savedAtUtc\":\"2026-10-08T00:00:00Z\"," +
+            "{\"formatVersion\":1,\"contentVersion\":\"0.4.1\",\"savedAtUtc\":\"2026-10-08T00:00:00Z\"," +
             "\"sections\":[{\"key\":\"gameplay.friends\"," +
             "\"version\":2,\"json\":\"{\\\"friends\\\":[" +
             "{\\\"id\\\":\\\"tilly\\\",\\\"state\\\":3,\\\"parts\\\":15,\\\"items\\\":15," +

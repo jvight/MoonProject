@@ -61,7 +61,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         // Bell (FriendState.Awake = 3, every part and item held) home at her corner, welcomed: the same save the
         // world's atmosphere session seeds, in Core's envelope and Gameplay's friends section format (version 2).
         private const string BellHomeSave =
-            "{\"formatVersion\":1,\"savedAtUtc\":\"2026-10-08T00:00:00Z\"," +
+            "{\"formatVersion\":1,\"contentVersion\":\"0.4.1\",\"savedAtUtc\":\"2026-10-08T00:00:00Z\"," +
             "\"sections\":[{\"key\":\"gameplay.friends\"," +
             "\"version\":2,\"json\":\"{\\\"friends\\\":[{\\\"id\\\":\\\"bell\\\",\\\"state\\\":3," +
             "\\\"parts\\\":15,\\\"items\\\":15,\\\"discovered\\\":true,\\\"welcomed\\\":true}]}\"}]}";
