@@ -21,6 +21,12 @@ namespace MoonProject.Gameplay
         /// <summary>Radial falloff of the home halo: a bright core with a long faint tail and no visible rim.</summary>
         private const float HaloRadialPower = 5f;
 
+        // The home halo is a faint glow laid over the lilac haze, never bright enough to drift towards lemon in the
+        // tonemapper, so unlike the lamps it keeps most of the lamp's green: with the lamps' redder amber the haze's
+        // blue turned it peach and pink from across the basin. Shares of the WarmLamp swatch's (linear) green and blue.
+        private const float HaloGreen = 0.8f;
+        private const float HaloBlue = 0.1f;
+
         private static readonly int ColorId = Shader.PropertyToID("_Color");
         private static readonly int IntensityId = Shader.PropertyToID("_Intensity");
         private static readonly int AcrossInId = Shader.PropertyToID("_AcrossIn");
@@ -121,12 +127,12 @@ namespace MoonProject.Gameplay
                         cull: CullMode.Off);
                     break;
                 case GlowRole.HomeHalo:
-                    // The lamps' own amber (the palette's warm glow, which keeps less green and blue so it stays
-                    // amber once graded), passed as gamma so the shader receives it linear; a bright core with a
-                    // long faint tail, so from afar it reads as glow around the windows, not as a disc.
-                    Set(material, (Palette.GetGlow(PaletteSwatch.WarmLamp) / Palette.WarmLampGlow).gamma, edge: 0f,
-                        length: 0f, bands: 0f, speed: 0f, strength: 0f, fresnel: 0f, fresnelPower: 2f, core: 0f,
-                        corePower: 1.5f, radial: 1f, additive: true, cull: CullMode.Off);
+                    // A deep amber over the haze (see HaloGreen), passed as gamma so the shader receives it linear;
+                    // a bright core with a long faint tail, so from afar it reads as glow around the windows, not as
+                    // a disc.
+                    Set(material, HaloAmber().gamma, edge: 0f, length: 0f, bands: 0f, speed: 0f, strength: 0f,
+                        fresnel: 0f, fresnelPower: 2f, core: 0f, corePower: 1.5f, radial: 1f, additive: true,
+                        cull: CullMode.Off);
                     material.SetFloat(RadialPowerId, HaloRadialPower);
                     break;
                 case GlowRole.LinkPulse:
@@ -166,6 +172,13 @@ namespace MoonProject.Gameplay
             material.SetFloat(DstBlendId, (float)(additive ? BlendMode.One : BlendMode.OneMinusSrcAlpha));
             material.SetFloat(CullId, (float)cull);
             material.renderQueue = TransparentQueue;
+        }
+
+        /// <summary>The home halo's linear colour: the lamps' swatch as a deep amber over the haze.</summary>
+        private static Color HaloAmber()
+        {
+            Color lamp = Palette.Linear(Palette.Get(PaletteSwatch.WarmLamp));
+            return new Color(lamp.r, lamp.g * HaloGreen, lamp.b * HaloBlue);
         }
     }
 }

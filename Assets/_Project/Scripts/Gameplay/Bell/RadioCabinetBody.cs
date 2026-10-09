@@ -255,6 +255,12 @@ namespace MoonProject.Gameplay
             }
         }
 
+        /// <summary>07's beam taps her tuning knob (a tiny tick): she turns the dial a beat later.</summary>
+        public void KnobTapped()
+        {
+            _events.Publish(new BellCued(BellCue.DialTapped, Knob));
+        }
+
         /// <summary>07 turned her dial one detent.</summary>
         public void DialTurned(float now)
         {

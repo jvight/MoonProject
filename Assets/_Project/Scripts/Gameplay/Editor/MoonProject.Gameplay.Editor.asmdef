@@ -6,7 +6,8 @@
         "MoonProject.Core",
         "MoonProject.Art",
         "MoonProject.Art.Editor",
-        "MoonProject.Editor"
+        "MoonProject.Editor",
+        "MoonProject.World"
     ],
     "includePlatforms": [
         "Editor"

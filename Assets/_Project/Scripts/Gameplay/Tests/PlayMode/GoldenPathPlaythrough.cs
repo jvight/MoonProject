@@ -103,6 +103,12 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float BayViewHeight = 2.6f;
         private const float SparkDelay = 0.3f;
 
+        /// <summary>Where the low review camera watches the coils rise under 07 (m out front, m up, m up the target).
+        /// </summary>
+        private const float PitViewDistance = 3.6f;
+        private const float PitViewHeight = 0.45f;
+        private const float PitViewTarget = 0.35f;
+
         /// <summary>Seconds the bay's arms may take to set a bought piece on 07 (the rover's install moment).</summary>
         private const float BayFitTimeout = 25f;
 
@@ -865,6 +871,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsTrue(bench.Working, "the bay works: its lights are up");
             Assert.AreEqual(0, bench.SparkCount, "no sparks while the arms are folded");
             yield return Until(() => Fitted(HoverJump), BayFitTimeout, "the floor arm sets the coils on 07");
+            Assert.Greater(bench.PitLevel, 0.5f, "the pit and the floor arm's tip light the coils under 07's belly");
+            Vector3 bayFront = Flat(bench.BayForward).normalized;
+            Review(bench.PadCentre + bayFront * PitViewDistance + Vector3.up * PitViewHeight,
+                bench.PadCentre + Vector3.up * PitViewTarget, "13b0-bay-coils-pit-light");
             yield return new WaitForSeconds(SparkDelay);
             Assert.Greater(bench.FloorSparkCount, 0, "weld sparks fly from the floor arm's tip as the coils go on");
             Assert.Greater(bench.LightLevel, bench.Tuning.LightIdle * 2f, "the work lights light the bay");
@@ -1257,7 +1267,8 @@ namespace MoonProject.Gameplay.PlayModeTests
                 }
 
                 yield return new WaitForSeconds(_gameplay.Friends.BellTuning.DialTapTime + DialPause);
-                Assert.AreEqual(BellCue.DialTurned, _events.BellCued[cues].Value.Cue, "then she turns it");
+                Assert.AreEqual(BellCue.DialTapped, _events.BellCued[cues].Value.Cue, "the beam taps her knob");
+                Assert.AreEqual(BellCue.DialTurned, _events.BellCued[cues + 1].Value.Cue, "then she turns it");
                 heard.Add(radio.Channel == RadioChannel.TapeDeck ? radio.Channel + " (" + radio.SelectedTape + ")"
                     : radio.Channel.ToString());
                 Assert.AreEqual(_gameplay.Friends.BellTuning.Detent(radio.Channel), cabinet.Life.Needle, 2f,
