@@ -284,13 +284,15 @@ MonoBehaviour:
     _earthLandFraction: 0.36
     _earthCloudFraction: 0.1
     _earthSunDirection: {x: -0.75, y: 0.35, z: 0.55}
+    _earthHaze: {r: 0.72, g: 0.78, b: 0.9, a: 1}
+    _earthPaleness: 0.3
     _earthNightBrightness: 0.22
-    _earthGlow: 0.8
-    _earthAtmosphere: {r: 0.45, g: 0.78, b: 1, a: 1}
-    _earthRim: 0.4
+    _earthGlow: 0.72
+    _earthAtmosphere: {r: 0.6, g: 0.72, b: 0.95, a: 1}
+    _earthRim: 0.35
     _earthHaloSize: 0.6
     _earthHaloStrength: 0.16
-    _earthLimb: 0.6
+    _earthLimb: 0.5
     _earthLimbWidth: 0.06
     _earthSpinPeriod: 900
     _shootingStarPeriod: 38
@@ -322,6 +324,10 @@ MonoBehaviour:
     _shadowStrength: 0.88
     _shadowDepthBias: 1
     _shadowNormalBias: 0.5
+    _fillColor: {r: 0.62, g: 0.7, b: 1, a: 1}
+    _fillIntensity: 0.3
+    _fillElevation: 6
+    _fillBearingOffset: 232
     _ambientSky: {r: 0.17, g: 0.155, b: 0.33, a: 1}
     _ambientEquator: {r: 0.13, g: 0.115, b: 0.25, a: 1}
     _ambientGround: {r: 0.06, g: 0.055, b: 0.12, a: 1}
