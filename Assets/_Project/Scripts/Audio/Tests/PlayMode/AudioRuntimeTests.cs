@@ -143,6 +143,7 @@ namespace MoonProject.Audio.PlayModeTests
                 AudioTestRig.UpdateOf(_rig.Ambience), AudioTestRig.UpdateOf(_rig.Canyon),
                 AudioTestRig.UpdateOf(_rig.Soundscape), AudioTestRig.UpdateOf(_rig.SmallSounds),
                 AudioTestRig.UpdateOf(_rig.Relays), AudioTestRig.UpdateOf(_rig.Salvage),
+                AudioTestRig.UpdateOf(_rig.Stations),
             };
 
             _rig.Program.Own(AudioTestRig.TapeA);
@@ -171,6 +172,9 @@ namespace MoonProject.Audio.PlayModeTests
                 _rig.Rover.StillSeconds = driving ? 0f : (frame % 60 - 40) * 0.5f;
                 _rig.Rover.DriveInput = driving ? new Vector2(Mathf.Sin(t * 4f), 1f) : Vector2.zero;
                 _rig.Rover.TetherOrigin.localRotation = Quaternion.Euler(0f, 60f * Mathf.Sin(t * 2f), 0f);
+                _rig.Bay.GetArmJoint(frame % FakeRoverBay.Arms, RoverBayJoint.Upper).localRotation =
+                    Quaternion.Euler(40f * Mathf.Sin(t * 3f), 0f, 0f);
+                _rig.Bay.Turntable.localRotation = Quaternion.Euler(0f, frame % 60 < 30 ? t * 20f : 0f, 0f);
                 _rig.Rover.IsGrounded = frame % 40 < 30;
                 _rig.Rover.AirTime = frame % 40 < 30 ? 0f : (frame % 40 - 30) * 0.1f;
                 _rig.Rover.Velocity = new Vector3(6f * Mathf.Sin(t), 2f, 0f);
@@ -270,6 +274,15 @@ namespace MoonProject.Audio.PlayModeTests
                     break;
                 case 8:
                     events.Publish(new UiCue(frame % 24 == 8 ? UiCueKind.CardShown : UiCueKind.PromptShown));
+                    events.Publish(new StationCued((StationCue)(frame / 12 % 5), "radio_tower", Vector3.right * 4f));
+                    if (frame % 48 == 8)
+                    {
+                        events.Publish(new RoverBayFitting("rover.hover_jump"));
+                        events.Publish(new RoverKitFitted(RoverKitPiece.HoverCoils, false, "rover.hover_jump"));
+                        events.Publish(new RoverDockChanged(frame % 96 == 8, Vector3.back * 6f, Quaternion.identity));
+                        events.Publish(new BellCued(BellCue.DialTapped, Vector3.left));
+                    }
+
                     break;
                 case 10:
                     events.Publish(new PauseChanged(frame % 24 == 10));

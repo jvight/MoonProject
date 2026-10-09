@@ -6,7 +6,7 @@ namespace MoonProject.Audio.Editor
 {
     /// <summary>
     /// Creates the audio tuning assets (mix, rover, jump, gameplay, friends, UI, radio, canyon, soundscape, relays,
-    /// salvage) with their code defaults when they do not exist yet.
+    /// salvage, stations) with their code defaults when they do not exist yet.
     /// Existing assets are left untouched so hand-tuned values survive every rebuild.
     /// </summary>
     internal static class AudioTuningBuilder
@@ -28,6 +28,7 @@ namespace MoonProject.Audio.Editor
             EnsureExists<SoundscapeTuning>(AudioAssetPaths.SoundscapeTuning);
             EnsureExists<RelayAudioTuning>(AudioAssetPaths.RelayTuning);
             EnsureExists<SalvageAudioTuning>(AudioAssetPaths.SalvageTuning);
+            EnsureExists<StationAudioTuning>(AudioAssetPaths.StationTuning);
         }
 
         private static void EnsureExists<T>(string path) where T : ScriptableObject

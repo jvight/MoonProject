@@ -6,8 +6,8 @@ namespace MoonProject.Audio.Editor
     /// <summary>
     /// Adds the Audio domain to Main.unity: under [Audio], an AudioDirector (the system, initialised after World, Rover
     /// and Gameplay) wired to the library and tuning assets, plus its RoverAudio, JumpAudio, GameplayAudio,
-    /// FriendAudio, UiAudio, RadioStation, AmbienceBed, CanyonAmbience, Soundscape, RoverSmallSounds, RelayAudio and
-    /// SalvageAudio parts.
+    /// FriendAudio, UiAudio, RadioStation, AmbienceBed, CanyonAmbience, Soundscape, RoverSmallSounds, RelayAudio,
+    /// SalvageAudio and StationAudio parts.
     /// Voices and loop sources are created by the components at initialisation, not baked into the scene.
     /// </summary>
     public sealed class AudioSceneContributor : ISceneContributor
@@ -32,6 +32,7 @@ namespace MoonProject.Audio.Editor
             var soundscapeTuning = context.LoadAsset<SoundscapeTuning>(AudioAssetPaths.SoundscapeTuning);
             var relayTuning = context.LoadAsset<RelayAudioTuning>(AudioAssetPaths.RelayTuning);
             var salvageTuning = context.LoadAsset<SalvageAudioTuning>(AudioAssetPaths.SalvageTuning);
+            var stationTuning = context.LoadAsset<StationAudioTuning>(AudioAssetPaths.StationTuning);
 
             Transform root = context.AudioRoot.transform;
             var director = context.CreateChild("AudioDirector", root).AddComponent<AudioDirector>();
@@ -47,6 +48,7 @@ namespace MoonProject.Audio.Editor
             var smallSounds = context.CreateChild("RoverSmallSounds", root).AddComponent<RoverSmallSounds>();
             var relays = context.CreateChild("RelayAudio", root).AddComponent<RelayAudio>();
             var salvage = context.CreateChild("SalvageAudio", root).AddComponent<SalvageAudio>();
+            var stations = context.CreateChild("StationAudio", root).AddComponent<StationAudio>();
 
             rover.Wire(roverTuning);
             gameplay.Wire(gameplayTuning);
@@ -59,8 +61,9 @@ namespace MoonProject.Audio.Editor
             smallSounds.Wire(soundscapeTuning);
             relays.Wire(relayTuning);
             salvage.Wire(salvageTuning);
+            stations.Wire(stationTuning);
             director.Wire(library, mixTuning, rover, jump, gameplay, friends, ui, radio, ambience, canyon, soundscape,
-                smallSounds, relays, salvage);
+                smallSounds, relays, salvage, stations);
             context.AddSystem(director);
         }
     }

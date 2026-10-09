@@ -65,6 +65,9 @@ namespace MoonProject.Audio
         [Tooltip("Salvage: the cutting beam, the break-off and the salvage melody.")]
         [SerializeField] private SalvageAudio _salvage;
 
+        [Tooltip("The base's machines: hopper feed, Rover Bay arms and turntable, tower port, charging dock.")]
+        [SerializeField] private StationAudio _stations;
+
         private readonly AudioBusMixer _buses = new AudioBusMixer();
         private readonly LoopFader _pause = new LoopFader();
         private readonly AudioClip[] _recentClips = new AudioClip[RecentClipCapacity];
@@ -163,6 +166,7 @@ namespace MoonProject.Audio
             _smallSounds.Initialize(context, this, _soundscape);
             _relays.Initialize(context, this);
             _salvage.Initialize(context, this);
+            _stations.Initialize(context, this);
         }
 
         /// <summary>Resolves a cue id once (call at initialisation); logs and returns an invalid handle if
@@ -279,7 +283,7 @@ namespace MoonProject.Audio
         internal void Wire(AudioLibrary library, AudioMixTuning mixTuning, RoverAudio roverAudio,
             JumpAudio jump, GameplayAudio gameplay, FriendAudio friends, UiAudio ui, RadioStation radio,
             AmbienceBed ambience, CanyonAmbience canyon, Soundscape soundscape, RoverSmallSounds smallSounds,
-            RelayAudio relays, SalvageAudio salvage)
+            RelayAudio relays, SalvageAudio salvage, StationAudio stations)
         {
             _jump = jump;
             _friends = friends;
@@ -295,6 +299,7 @@ namespace MoonProject.Audio
             _smallSounds = smallSounds;
             _relays = relays;
             _salvage = salvage;
+            _stations = stations;
         }
 
         private void Update()
@@ -430,6 +435,7 @@ namespace MoonProject.Audio
             ok &= Require(_smallSounds, nameof(_smallSounds));
             ok &= Require(_relays, nameof(_relays));
             ok &= Require(_salvage, nameof(_salvage));
+            ok &= Require(_stations, nameof(_stations));
             if (_library != null)
             {
                 string problem = _library.FindProblem();
