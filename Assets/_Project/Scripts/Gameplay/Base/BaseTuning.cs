@@ -96,7 +96,7 @@ namespace MoonProject.Gameplay
         [Range(0f, 0.2f)] [SerializeField] private float _haloGrowth = 0.035f;
 
         [Tooltip("Brightness at full glow: soft, under the bloom threshold (the windows are the bright points).")]
-        [Range(0f, 2f)] [SerializeField] private float _haloGlow = 0.55f;
+        [Range(0f, 2f)] [SerializeField] private float _haloGlow = 0.45f;
 
         [Header("Charging dock")]
         [Tooltip("07 rests on the dock when its centre stops within this many metres (horizontal) of the dock's " +
