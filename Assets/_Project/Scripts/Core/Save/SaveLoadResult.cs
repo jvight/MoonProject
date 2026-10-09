@@ -20,5 +20,11 @@ namespace MoonProject.Core.Save
 
         /// <summary>The file was written by a newer build; it is left untouched and saving is disabled.</summary>
         NewerFormat = 5,
+
+        /// <summary>
+        /// The save came from content older than <see cref="SaveService.OldestCompatibleContent"/> (or has no content
+        /// version): it was put away as &lt;slot&gt;.old-&lt;stamp&gt;.json, never deleted, and the game starts fresh.
+        /// </summary>
+        PutAwayOlder = 6,
     }
 }

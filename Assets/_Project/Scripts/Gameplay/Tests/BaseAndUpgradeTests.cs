@@ -548,6 +548,11 @@ namespace MoonProject.Gameplay.Tests
                 Saves++;
                 return true;
             }
+
+            public string PutAway()
+            {
+                throw new NotSupportedException("The shop never starts a new game.");
+            }
         }
     }
 }

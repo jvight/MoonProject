@@ -10,6 +10,7 @@ namespace MoonProject.Core.Save.Tests
     public sealed class SaveServiceTests
     {
         private const string Slot = "unit";
+        private const string Current = SaveService.OldestCompatibleContent;
 
         private string _directory;
 
@@ -298,15 +299,114 @@ namespace MoonProject.Core.Save.Tests
             Assert.Throws<InvalidOperationException>(() => service.Register(new ProgressHolder().Section(1)));
             Assert.Throws<ArgumentNullException>(() => service.Register(null));
             Assert.Throws<ArgumentOutOfRangeException>(() => new ProgressHolder().Section(0));
-            Assert.Throws<ArgumentException>(() => new SaveService(_directory, "../escape"));
-            Assert.Throws<ArgumentException>(() => new SaveService(_directory, string.Empty));
+            Assert.Throws<ArgumentException>(() => new SaveService(_directory, "../escape", Current));
+            Assert.Throws<ArgumentException>(() => new SaveService(_directory, string.Empty, Current));
             service.Load();
             Assert.Throws<InvalidOperationException>(() => service.Load());
         }
 
-        private SaveService NewService()
+        [TestCase("0.4.0")]
+        [TestCase("0.3.9")]
+        [TestCase(null)]
+        [TestCase("0.4.1-beta")]
+        public void OlderOrUnversionedSave_IsPutAwayWithItsBackup_AndANewGameStarts(string savedVersion)
         {
-            return new SaveService(_directory, Slot);
+            string entry = "{\"key\":\"progress\",\"version\":1,\"json\":\"{\\\"scrap\\\":5}\"}";
+            string old = EnvelopeOf(savedVersion, entry);
+            WriteMain(old);
+            File.WriteAllText(Path.Combine(_directory, Slot + SaveService.Extension + SaveService.BackupSuffix), old);
+            var holder = new ProgressHolder { Data = { scrap = 3 } };
+            SaveService service = NewService();
+            service.Register(holder.Section(1));
+
+            Assert.AreEqual(SaveLoadResult.PutAwayOlder, service.Load());
+            Assert.AreEqual(3, holder.Data.scrap, "nothing of the older journey is restored");
+            Assert.AreEqual(0, holder.RestoreCount);
+            Assert.IsFalse(File.Exists(service.FilePath));
+            Assert.IsFalse(File.Exists(service.BackupPath));
+            string[] archived = PutAwayFiles(SaveService.Extension);
+            Assert.AreEqual(1, archived.Length, "the save is kept, put away");
+            Assert.AreEqual(old, File.ReadAllText(archived[0]));
+            Assert.AreEqual(old, File.ReadAllText(archived[0] + SaveService.BackupSuffix), "and its backup with it");
+            Assert.IsTrue(service.SaveNow(), "the new game saves as usual");
+        }
+
+        [Test]
+        public void Save_RecordsItsContentVersion_AndSameOrNewerContentLoads()
+        {
+            var writer = new ProgressHolder { Data = { scrap = 8 } };
+            SaveService first = NewService("0.5.2");
+            first.Register(writer.Section(1));
+            first.Load();
+            Assert.IsTrue(first.SaveNow());
+            StringAssert.Contains("\"contentVersion\": \"0.5.2\"", ReadMain());
+
+            var reader = new ProgressHolder();
+            SaveService second = NewService();
+            second.Register(reader.Section(1));
+            Assert.AreEqual(SaveLoadResult.Loaded, second.Load());
+            Assert.AreEqual(8, reader.Data.scrap);
+        }
+
+        [Test]
+        public void PutAway_ArchivesSaveAndBackup_ForgetsTheProgress_AndRefusesLaterSaves()
+        {
+            SaveWith(4);
+            SaveWith(6);
+            var holder = new ProgressHolder();
+            SaveService service = NewService();
+            service.Register(holder.Section(1));
+            service.Load();
+            string saved = ReadMain();
+
+            string archived = service.PutAway();
+
+            Assert.AreEqual(PutAwayFiles(SaveService.Extension)[0], archived);
+            Assert.AreEqual(saved, File.ReadAllText(archived));
+            Assert.IsTrue(File.Exists(archived + SaveService.BackupSuffix));
+            Assert.IsFalse(File.Exists(service.FilePath));
+            Assert.IsFalse(File.Exists(service.BackupPath));
+            Assert.IsFalse(service.SaveNow(), "the session being torn down never writes the old progress back");
+            Assert.IsFalse(File.Exists(service.FilePath));
+            Assert.IsNull(service.PutAway(), "nothing left to put away");
+
+            SaveWith(9);
+            string second = NewService().PutAway();
+            Assert.AreNotEqual(archived, second, "a second new game within the same second keeps both journeys");
+            Assert.AreEqual(2, PutAwayFiles(SaveService.Extension).Length);
+        }
+
+        [Test]
+        public void ContentVersions_CompareByNumber_AndABuildOlderThanTheFloorCannotSave()
+        {
+            Assert.IsTrue(ContentVersion.IsAtLeast("0.4.1", "0.4.1"));
+            Assert.IsTrue(ContentVersion.IsAtLeast("0.4.10", "0.4.9"), "by number, not text");
+            Assert.IsTrue(ContentVersion.IsAtLeast("1.0", "0.4.1"));
+            Assert.IsTrue(ContentVersion.IsAtLeast("0.4.1.0", "0.4.1"));
+            Assert.IsFalse(ContentVersion.IsAtLeast("0.4", "0.4.1"));
+            Assert.IsFalse(ContentVersion.IsAtLeast("0.3.12", "0.4.1"));
+            Assert.IsFalse(ContentVersion.IsAtLeast(string.Empty, "0.4.1"));
+            Assert.IsFalse(ContentVersion.IsAtLeast("0..1", "0.4.1"));
+            Assert.Throws<ArgumentException>(() => ContentVersion.IsAtLeast("0.4.1", "next"));
+            Assert.Throws<ArgumentException>(() => NewService("0.4.0"));
+            Assert.Throws<ArgumentException>(() => NewService("dev"));
+        }
+
+        private SaveService NewService(string contentVersion = Current)
+        {
+            return new SaveService(_directory, Slot, contentVersion);
+        }
+
+        private static string EnvelopeOf(string contentVersion, params string[] entries)
+        {
+            string version = contentVersion == null ? string.Empty : $"\"contentVersion\":\"{contentVersion}\",";
+            return "{\"formatVersion\":1," + version + "\"savedAtUtc\":\"test\",\"sections\":[" +
+                   string.Join(",", entries) + "]}";
+        }
+
+        private string[] PutAwayFiles(string suffix)
+        {
+            return Directory.GetFiles(_directory, Slot + SaveService.PutAwayMarker + "*" + suffix);
         }
 
         private void SaveWith(int scrap, int version = 1)
@@ -337,7 +437,7 @@ namespace MoonProject.Core.Save.Tests
 
         private static string Envelope(params string[] entries)
         {
-            return "{\"formatVersion\":1,\"savedAtUtc\":\"test\",\"sections\":[" + string.Join(",", entries) + "]}";
+            return EnvelopeOf(Current, entries);
         }
 
         private static string Entry(string key, int version, string json)
