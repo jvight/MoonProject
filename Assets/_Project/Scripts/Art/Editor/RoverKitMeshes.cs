@@ -54,6 +54,15 @@ namespace MoonProject.Art.Editor
         private const float LugHeight = 0.055f;
         private const float TerminalLean = 35f;
         private const float TerminalOffset = 0.06f;
+
+        // Where each saddle plate meets the drum (degrees round its axis from +X): low on its inboard side, high enough
+        // that the plate clears the middle wheel at the top of its travel.
+        private const float SaddleAngle = 215f;
+
+        // The fat lead leaves the drum's inboard side between the window band and a saddle, drops outboard of the solar
+        // wing's edge, then runs into the lid's side under it, well over the middle wheel.
+        private const float LeadZ = 0.055f;
+        private const float LeadRadius = 0.017f;
         private const int DrumSides = 14;
 
         // The cargo rack, body space: a crate-like basket behind the hatch, its boarded sides standing well over the
@@ -187,8 +196,7 @@ namespace MoonProject.Art.Editor
             }
 
             LiftingLug(b);
-            RecipeKit.Rod(b, DrumCentre + new Vector3(0.012f - DrumRadius, -0.03f, 0.06f),
-                new Vector3(0.004f, -0.075f, 0.07f), 0.017f, 6, PaletteSwatch.Charcoal);
+            Lead(b);
             return b;
         }
 
@@ -273,10 +281,11 @@ namespace MoonProject.Art.Editor
                 Strap(b, new Vector3(0f, StrapSag, z + 0.01f), new Vector3(RackHalfWidth, RackTop + 0.02f, z));
             }
 
+            // The loose end hangs flat against the side boards, clear of the rear wheel at full travel and steer.
             float hanging = StrapRows[1];
-            Strap(b, new Vector3(RackHalfWidth + 0.02f, RackTop + 0.01f, hanging),
-                new Vector3(RackHalfWidth + 0.03f, RackTop - 0.12f, hanging - 0.02f));
-            b.Box(At(RackPoint(new Vector3(RackHalfWidth + 0.03f, RackTop - 0.14f, hanging - 0.02f))),
+            Strap(b, new Vector3(RackHalfWidth + 0.015f, RackTop + 0.01f, hanging),
+                new Vector3(RackHalfWidth + 0.02f, RackTop - 0.12f, hanging));
+            b.Box(At(RackPoint(new Vector3(RackHalfWidth + 0.022f, RackTop - 0.14f, hanging))),
                 new Vector3(0.016f, 0.05f, 0.06f), PaletteSwatch.Rust, 0.004f);
             return b;
         }
@@ -332,24 +341,41 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
-        /// One saddle under the drum at <paramref name="z"/>: a charcoal block bolted to the lid's side (below the
-        /// solar wing's edge), an upright block outboard of the wing's edge (its rusty bolts on its outer face), and a
-        /// metal plate from its top tangent to the drum low on its inboard side (clear of the middle wheel at the top
-        /// of its travel).
+        /// One saddle under the drum at <paramref name="z"/>: a stepped charcoal block bolted to the lid's side (below
+        /// the solar wing's edge, narrower at its foot over the middle wheel), an upright block outboard of the wing's
+        /// edge (its rusty bolts on its outer face), and a metal plate from its top tangent to the drum low on its
+        /// inboard side (clear of the middle wheel at the top of its travel).
         /// </summary>
         private static void Saddle(LowPolyMeshBuilder b, float z)
         {
-            b.Box(At(new Vector3(0.015f, -0.0575f, z)), new Vector3(0.04f, 0.085f, 0.05f), PaletteSwatch.Charcoal,
+            b.Box(At(new Vector3(0.015f, -0.0375f, z)), new Vector3(0.04f, 0.045f, 0.05f), PaletteSwatch.Charcoal,
                 0.006f);
-            b.Box(At(new Vector3(0.0475f, 0.005f, z)), new Vector3(0.025f, 0.13f, 0.05f), PaletteSwatch.Charcoal,
+            b.Box(At(new Vector3(0.0075f, -0.0775f, z)), new Vector3(0.025f, 0.045f, 0.05f), PaletteSwatch.Charcoal,
+                0.006f);
+            b.Box(At(new Vector3(0.0475f, 0.025f, z)), new Vector3(0.025f, 0.14f, 0.05f), PaletteSwatch.Charcoal,
                 0.004f);
-            var down = new Vector3(-Mathf.Sqrt(0.5f), -Mathf.Sqrt(0.5f), 0f);
-            b.Box(At(DrumCentre + down * (DrumRadius + 0.009f) + Vector3.forward * z, new Vector3(0f, 0f, -45f)),
-                new Vector3(0.12f, 0.018f, 0.05f), PaletteSwatch.Metal, 0.004f);
+            float angle = SaddleAngle * Mathf.Deg2Rad;
+            var toward = new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0f);
+            b.Box(At(DrumCentre + toward * (DrumRadius + 0.009f) + Vector3.forward * z,
+                new Vector3(0f, 0f, SaddleAngle - 270f)), new Vector3(0.1f, 0.018f, 0.05f), PaletteSwatch.Metal,
+                0.004f);
             for (int k = -1; k <= 1; k += 2)
             {
                 b.Icosphere(At(new Vector3(0.056f, -0.035f, z + k * 0.014f)), 0.009f, 0, PaletteSwatch.Rust);
             }
+        }
+
+        /// <summary>
+        /// The drum's fat lead: from its inboard side down past the solar wing's edge, then into the lid's side.
+        /// </summary>
+        private static void Lead(LowPolyMeshBuilder b)
+        {
+            Vector3 from = DrumCentre + new Vector3(0.012f - DrumRadius, -0.048f, LeadZ);
+            var bend = new Vector3(0.04f, -0.04f, LeadZ);
+            var into = new Vector3(-0.015f, -0.055f, LeadZ);
+            RecipeKit.Rod(b, from, bend, LeadRadius, 6, PaletteSwatch.Charcoal);
+            RecipeKit.Rod(b, bend, into, LeadRadius, 6, PaletteSwatch.Charcoal);
+            b.Icosphere(At(bend), LeadRadius * 1.05f, 0, PaletteSwatch.Charcoal);
         }
 
         /// <summary>
