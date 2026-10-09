@@ -116,6 +116,10 @@ namespace MoonProject.Gameplay
             }
         }
 
+        /// <summary>Art's broken mast, as each relay anchor shows it before 07 restores it (the editor's preview).
+        /// </summary>
+        internal GameObject BrokenPrefab => _brokenPrefab;
+
         internal void Wire(RelayTuning tuning, GameObject mastPrefab, GameObject brokenPrefab, GameObject partPrefab)
         {
             _tuning = tuning;

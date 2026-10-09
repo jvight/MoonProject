@@ -14,11 +14,13 @@ namespace MoonProject.Gameplay.Editor
     /// Prop layer, so 07 drives around them (and up the bay's ramp onto its floor) and the camera never slips inside.
     /// Each friend's home socket is the lander's node, or for a radio tower home (Bell's corner) a fixed empty under
     /// the TowerAnchor at the socket every tower stage carries, so stage swaps never move it; the cassette shelf stands
-    /// the same way on the stages' CassetteShelfAnchor. The base is stood beside the pad here for the editor view and
-    /// re-seated on the real ground at boot; the salvage sites (Art's wrecks on the World's site anchors, the relics in
-    /// their hearts) and Kestrel-3's trail bits, the friends, cassettes, log caches and the relay masts (Art's
-    /// RelayMast and RelayMast_Broken on the World's relay anchors, with their relay parts) are placed from the World's
-    /// surface and anchors at boot. Fails loudly when a required asset or prefab node is missing.
+    /// the same way on the stages' CassetteShelfAnchor. Only the first stage is saved showing, as a fresh game starts.
+    /// The base is stood beside the pad here for the editor view and re-seated on the real ground at boot; the salvage
+    /// sites (Art's wrecks on the World's site anchors, the relics in their hearts) and Kestrel-3's trail bits, the
+    /// friends, cassettes, log caches and the relay masts (Art's RelayMast and RelayMast_Broken on the World's relay
+    /// anchors, with their relay parts) are placed from the World's surface and anchors at boot (the editor previews
+    /// the wrecks and masts: <see cref="GameplayEditPreview"/>). Fails loudly when a required asset or prefab node is
+    /// missing.
     /// </summary>
     public sealed class GameplaySceneContributor : ISceneContributor
     {
@@ -173,6 +175,8 @@ namespace MoonProject.Gameplay.Editor
                 homes[i] = HomeSocket(context, friendCatalog.Friends[i], lander, towerAnchor, stages);
             }
 
+            ShowFirstStage(stages);
+
             friends.Wire(friendCatalog, friendTuning, bellTuning, homes);
             cassettes.Wire(cassetteCatalog, cassetteTuning);
             logs.Wire(logCacheCatalog, logCacheTuning);
@@ -220,6 +224,18 @@ namespace MoonProject.Gameplay.Editor
             Transform socket = context.CreateChild(name, towerAnchor).transform;
             socket.SetPositionAndRotation(first.position, first.rotation);
             return socket;
+        }
+
+        /// <summary>
+        /// Saves only the first tower stage shown, as a fresh game starts (the radio tower shows its level at boot), so
+        /// the stages never stand inside each other in the editor. Their sockets are read while all of them stand.
+        /// </summary>
+        private static void ShowFirstStage(GameObject[] stages)
+        {
+            for (int i = 0; i < stages.Length; i++)
+            {
+                stages[i].SetActive(i == 0);
+            }
         }
 
         /// <summary>Fails the build when a relay mast prefab breaks its node contract (naming the node).</summary>
