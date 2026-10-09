@@ -7,8 +7,9 @@ namespace MoonProject.Rover
     /// in the arm's shoulder frame: origin at the shoulder pivot, +Y up, the shoulder's zero yaw facing +Z. The
     /// shoulder turns about Y so the target lies ahead in the arm's pitch plane; the upper and lower links (pitch about
     /// local X, each hanging along its local -Y at zero) put the wrist straight above the target; the wrist keeps the
-    /// tip pointing straight down, so a piece held at the tip's end arrives level. The elbow bends back and up, like
-    /// the folded rest pose, so it never swings through 07.
+    /// tip pointing straight down, so a piece held at the tip's end arrives level. The elbow bends out toward the
+    /// target, over the turntable, as in art's rest pose folded along the rail: unfolding then needs no flip of the
+    /// elbow (so the arm never whips) and the elbow keeps clear of the bay's walls behind the shoulders.
     /// </summary>
     public static class BayArmIk
     {
@@ -31,7 +32,7 @@ namespace MoonProject.Rover
             float toWrist = Pitch(wrist);
             float cosine = (arm.Upper * arm.Upper + distance * distance - arm.Lower * arm.Lower)
                 / (2f * arm.Upper * distance);
-            float upper = toWrist + Mathf.Acos(Mathf.Clamp(cosine, -1f, 1f)) * Mathf.Rad2Deg;
+            float upper = toWrist - Mathf.Acos(Mathf.Clamp(cosine, -1f, 1f)) * Mathf.Rad2Deg;
             Vector2 elbow = Link(upper, arm.Upper);
             float lower = Pitch(wrist - elbow);
             pose = new BayArmPose(yaw, upper, lower - upper, -lower);

@@ -132,17 +132,12 @@ namespace MoonProject.Rover.PlayModeTests
             return nearest;
         }
 
-        /// <summary>Each arm folded back in its rest pose (the shoulder unturned).</summary>
+        /// <summary>Each arm folded back in its rest pose along the rail.</summary>
         private void AssertArmsAtRest()
         {
             for (int i = 0; i < _bay.ArmCount; i++)
             {
-                Assert.Less(Quaternion.Angle(Quaternion.identity, _bay.GetArmJoint(i, RoverBayJoint.Yaw).localRotation),
-                    0.5f, $"arm {i} turned back");
-                Assert.Less(Quaternion.Angle(Quaternion.Euler(80f, 0f, 0f),
-                    _bay.GetArmJoint(i, RoverBayJoint.Upper).localRotation), 0.5f, $"arm {i} folded");
-                Assert.Less(Quaternion.Angle(Quaternion.Euler(-160f, 0f, 0f),
-                    _bay.GetArmJoint(i, RoverBayJoint.Lower).localRotation), 0.5f, $"arm {i} folded");
+                Assert.Less(_bay.OffRest(i), 0.5f, $"arm {i} folded back to rest");
             }
         }
 

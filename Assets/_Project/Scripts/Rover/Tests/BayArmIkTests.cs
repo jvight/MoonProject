@@ -5,8 +5,8 @@ namespace MoonProject.Rover.Tests
 {
     /// <summary>
     /// The Rover Bay arm's analytic IK (shoulder frame: +Y up, zero yaw on +Z): it puts the tip's end exactly on a
-    /// target with the tip straight down, bends the elbow back like the folded rest pose (such a pose solves back to
-    /// itself), and refuses what is out of reach.
+    /// target with the tip straight down, bends the elbow out toward the target like art's folded rest pose (such a
+    /// pose solves back to itself), and refuses what is out of reach.
     /// </summary>
     public sealed class BayArmIkTests
     {
@@ -32,9 +32,9 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void AnElbowBackPose_SolvesBackToItself()
+        public void AnElbowOutPose_SolvesBackToItself()
         {
-            var bent = new BayArmPose(25f, 40f, -100f, 60f);
+            var bent = new BayArmPose(25f, -50f, 100f, -50f);
             Vector3 end = BayArmIk.EndOf(Arm, bent);
             Assert.IsTrue(BayArmIk.TrySolve(Arm, end, out BayArmPose pose));
             Assert.AreEqual(bent.Yaw, pose.Yaw, 1e-2f);

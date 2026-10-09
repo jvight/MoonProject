@@ -7,26 +7,28 @@ namespace MoonProject.Rover.PlayModeTests
 {
     /// <summary>
     /// A stand-in Kenji's Rover Bay built in code to the art contract (docs/ARCHITECTURE.md, "Contract: Kenji's Rover
-    /// Bay") until art's arms land: the turntable (flush with the test plain), three gantry arms hanging from a crane
-    /// rail at the current bay's shoulders, each Arm_n/Yaw/Upper/Lower/Tip/SparkSocket in the folded rest pose (links
-    /// a little longer than the contract's example 1.25/1.15 m, so the stand-in rover's sockets sit comfortably in
-    /// reach), and a floor arm in a pit under the turntable's centre. It is the
-    /// <see cref="IRoverBay"/> the rover drives, with plain shapes (no colliders) so captures read as a bay: walls on
-    /// three sides, a roof, the rail, the links. 07 parks facing into it, its open front behind.
+    /// Bay") with art's measures taken from the turntable's top, which lies flush with the test plain: three gantry
+    /// arms on the crane rail, each Arm_n/Yaw/Upper/Lower/Tip/SparkSocket with the contract's links (1.30/1.20/0.26 m)
+    /// in art's rest pose folded along the rail, and a floor arm whose tip rests just under the turntable's centre.
+    /// It is the <see cref="IRoverBay"/> the rover drives, with plain shapes (no colliders) so captures read as a bay:
+    /// walls on three sides, a roof, the rail, the links. 07 parks facing into it, its open front behind.
     /// </summary>
     public sealed class TestRoverBay : IRoverBay, IDisposable
     {
-        public const float RailHeight = 3.18f;
+        public const float RailHeight = 2.93f;
         public const float UpperLength = 1.3f;
         public const float LowerLength = 1.2f;
         public const float TipLength = 0.26f;
 
-        /// <summary>The links of art's current bay, too short to reach the kit sockets (the reach bug).</summary>
+        /// <summary>Links too short to reach the kit sockets (art's first bay: the reach bug).</summary>
         public const float ShortUpperLength = 0.9f;
         public const float ShortLowerLength = 0.8f;
 
         /// <summary>The folded rest pose (Upper, Lower, Tip pitch, deg), as art's bay.</summary>
-        private static readonly Vector3 RestPose = new Vector3(80f, -160f, 80f);
+        private static readonly Vector3 RestPose = new Vector3(-90f, 170f, -80f);
+
+        /// <summary>Each shoulder's turn folding its arm along the rail at rest (deg), as art's bay.</summary>
+        private static readonly float[] FoldYaw = { -90f, -90f, 90f };
 
         /// <summary>Bay-local shoulders on the rail, as art's bay (+Z is its open front).</summary>
         private static readonly Vector3[] Shoulders =
@@ -37,17 +39,18 @@ namespace MoonProject.Rover.PlayModeTests
 
         private static readonly Vector3 TurntableCentre = new Vector3(0f, 0f, -0.35f);
         private const float TurntableRadius = 1.75f;
-        private const float PitDepth = 0.6f;
-        private const float FloorTipRise = 0.2f;
+        private const float FloorTipRest = -0.015f;
+        private const float FloorTipRise = 0.03f;
         private const float HalfWidth = 2.2f;
         private const float FrontZ = 1.9f;
         private const float BackZ = -2.5f;
-        private const float EaveHeight = 3.4f;
+        private const float EaveHeight = 3.25f;
         private const float Wall = 0.1f;
         private const float Link = 0.08f;
 
         private readonly GameObject _root;
         private readonly Transform[,] _joints;
+        private readonly Quaternion[,] _rest;
         private readonly Quaternion _parked;
 
         private TestRoverBay(GameObject root, Transform turntable, Transform floorLift, Transform floorTip,
@@ -59,6 +62,14 @@ namespace MoonProject.Rover.PlayModeTests
             FloorTip = floorTip;
             _joints = joints;
             _parked = turntable.rotation;
+            _rest = new Quaternion[joints.GetLength(0), joints.GetLength(1)];
+            for (int arm = 0; arm < joints.GetLength(0); arm++)
+            {
+                for (int joint = 0; joint < joints.GetLength(1); joint++)
+                {
+                    _rest[arm, joint] = joints[arm, joint].localRotation;
+                }
+            }
         }
 
         public Transform Root => _root.transform;
@@ -81,6 +92,18 @@ namespace MoonProject.Rover.PlayModeTests
         public Transform GetArmJoint(int arm, RoverBayJoint joint)
         {
             return _joints[arm, (int)joint];
+        }
+
+        /// <summary>The largest turn (deg) of any joint of <paramref name="arm"/> away from its rest pose.</summary>
+        public float OffRest(int arm)
+        {
+            float largest = 0f;
+            for (int joint = 0; joint < _joints.GetLength(1); joint++)
+            {
+                largest = Mathf.Max(largest, Quaternion.Angle(_rest[arm, joint], _joints[arm, joint].localRotation));
+            }
+
+            return largest;
         }
 
         /// <summary>The tip's end of <paramref name="arm"/> (where it holds a part), world.</summary>
@@ -115,6 +138,7 @@ namespace MoonProject.Rover.PlayModeTests
                 Vector3 toCentre = TurntableCentre - Shoulders[i];
                 arm.localRotation = Quaternion.Euler(0f, Mathf.Atan2(toCentre.x, toCentre.z) * Mathf.Rad2Deg, 0f);
                 Transform yaw = Node("Yaw", arm, Vector3.zero);
+                yaw.localRotation = Quaternion.Euler(0f, FoldYaw[i], 0f);
                 Transform upper = Node("Upper", yaw, Vector3.zero);
                 upper.localRotation = Quaternion.Euler(RestPose.x, 0f, 0f);
                 Transform lower = Node("Lower", upper, new Vector3(0f, -upperLength, 0f));
@@ -132,7 +156,7 @@ namespace MoonProject.Rover.PlayModeTests
                 joints[i, (int)RoverBayJoint.Yaw] = yaw;
             }
 
-            Transform floorArm = Node("FloorArm", bay, TurntableCentre + Vector3.down * PitDepth);
+            Transform floorArm = Node("FloorArm", bay, TurntableCentre + Vector3.up * (FloorTipRest - FloorTipRise));
             Transform floorLift = Node("FloorLift", floorArm, Vector3.zero);
             Transform floorTip = Node("FloorTip", floorLift, Vector3.up * FloorTipRise);
             Shape(PrimitiveType.Cube, floorTip, Vector3.zero, new Vector3(0.3f, 0.04f, 0.3f), material);
