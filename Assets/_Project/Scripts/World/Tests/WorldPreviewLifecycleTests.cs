@@ -4,6 +4,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.TestTools;
 using MoonProject.Art.Editor;
+using MoonProject.Core;
 using MoonProject.World.Editor;
 
 namespace MoonProject.World.Tests
@@ -30,6 +31,10 @@ namespace MoonProject.World.Tests
             CreateHost();
             Assert.AreEqual(ExpectedChunks(), CountChunkObjects(), "edit-mode preview not built");
             AssertPreviewIsNeverSaved();
+            var world = FindHost().GetComponent<WorldSystem>();
+            IWorldPreview preview = world;
+            Assert.IsTrue(preview.HasGeneratedWorld, "other domains' edit-mode previews see no world");
+            Assert.AreSame(world.Anchors, preview.Anchors, "other domains' edit-mode previews read other anchors");
 
             yield return new EnterPlayMode();
             Assert.AreEqual(0, CountChunkObjects(), "play mode kept or rebuilt the edit-mode preview");

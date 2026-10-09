@@ -11,10 +11,11 @@ namespace MoonProject.World
     /// and Earth, applies the atmosphere and sky, and registers <see cref="ITerrainQuery"/>,
     /// <see cref="IWorldLayout"/> and <see cref="IWorldAnchors"/> in the context. In edit mode it also builds a
     /// preview (HideFlags.DontSave: never saved into the scene, destroyed in OnDisable) so the scene view and scene
-    /// captures show the world; <see cref="Initialize"/> is the only play-mode path.
+    /// captures show the world, and other domains' edit-mode previews read its anchors through
+    /// <see cref="IWorldPreview"/>; <see cref="Initialize"/> is the only play-mode path.
     /// </summary>
     [ExecuteAlways]
-    public sealed class WorldSystem : MonoBehaviour, IGameSystem
+    public sealed class WorldSystem : MonoBehaviour, IGameSystem, IWorldPreview
     {
         private const string GeneratedRootName = "Generated";
 
@@ -57,6 +58,8 @@ namespace MoonProject.World
         public WorldLayout Layout { get; private set; }
 
         public WorldAnchors Anchors { get; private set; }
+
+        IWorldAnchors IWorldPreview.Anchors => Anchors;
 
         public TerrainBuildReport LastBuild { get; private set; }
 
