@@ -27,7 +27,8 @@ namespace MoonProject.Rover.Editor
     ///           CoilGlow   soft cyan point light, off until the jump charges
     ///   WheelFx        RoverWheelFx: TrackLeft/Right ribbons, DustLeft/Right, LandingDust
     /// </code>
-    /// Fails with a clear error when RoverModel.prefab does not exist yet: there is no placeholder model.
+    /// Fails with a clear error when RoverModel.prefab does not exist yet: there is no placeholder model. Saved only
+    /// when it changed (<see cref="PrefabWriter"/>), so a re-run leaves the file byte-identical.
     /// </summary>
     public static class RoverPrefabBuilder
     {
@@ -58,6 +59,15 @@ namespace MoonProject.Rover.Editor
         [MoonBuilder("Rover/Rover", 310)]
         public static void Build()
         {
+            using (var scratch = new BuilderScratchScene())
+            {
+                PrefabWriter.SaveIfChanged(Assemble(scratch), RoverAssetPaths.RoverPrefab);
+            }
+        }
+
+        /// <summary>The Rover hierarchy described above, built in <paramref name="scratch"/> and not saved.</summary>
+        public static GameObject Assemble(BuilderScratchScene scratch)
+        {
             var model = BuildWiring.Require<GameObject>(RoverAssetPaths.RoverModel, "the Art box's rover builder");
             var coils = BuildWiring.Require<GameObject>(RoverAssetPaths.HoverCoils, "the Art box's rover builder");
             var lampBar = BuildWiring.Require<GameObject>(RoverAssetPaths.KitLampBar, "the Art box's kit builder");
@@ -74,79 +84,76 @@ namespace MoonProject.Rover.Editor
             var dustMaterial = BuildWiring.Require<Material>(RoverAssetPaths.DustMaterial, "Rover/Materials");
             var moteMaterial = BuildWiring.Require<Material>(RoverAssetPaths.MoteMaterial, "Rover/Materials");
 
-            using (var scratch = new BuilderScratchScene())
+            GameObject root = scratch.Create("Rover");
+            var controller = root.AddComponent<RoverController>();
+            var bodyLanguage = root.AddComponent<RoverBodyLanguage>();
+
+            GameObject sphere = Child(scratch, "PhysicsSphere", root.transform);
+            sphere.layer = Layers.Rover;
+            sphere.transform.localPosition = Vector3.up * tuning.Ground.SphereRadius;
+            var body = sphere.AddComponent<Rigidbody>();
+            body.mass = tuning.Ground.Mass;
+            body.interpolation = RigidbodyInterpolation.Interpolate;
+            body.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+            body.constraints = RigidbodyConstraints.FreezeRotation;
+            var collider = sphere.AddComponent<SphereCollider>();
+            collider.radius = tuning.Ground.SphereRadius;
+            collider.sharedMaterial = sphereMaterial;
+
+            GameObject visual = Child(scratch, "Visual", root.transform);
+            var rig = visual.AddComponent<RoverVisualRig>();
+            GameObject chassis = Child(scratch, "Chassis", visual.transform);
+            GameObject instance = scratch.Instantiate(model, chassis.transform);
+            Transform m = instance.transform;
+
+            Light headlamp = AddHeadlamp(scratch, BuildWiring.Node(m, RoverModelNodes.HeadlampSocket), rigTuning);
+            Light eyeLight = AddEyeLight(scratch, BuildWiring.Node(m, RoverModelNodes.Eye), characterTuning);
+
+            var wheels = new Object[RoverModelNodes.WheelCount];
+            for (int i = 0; i < wheels.Length; i++)
             {
-                GameObject root = scratch.Create("Rover");
-                var controller = root.AddComponent<RoverController>();
-                var bodyLanguage = root.AddComponent<RoverBodyLanguage>();
-
-                GameObject sphere = Child(scratch, "PhysicsSphere", root.transform);
-                sphere.layer = Layers.Rover;
-                sphere.transform.localPosition = Vector3.up * tuning.Ground.SphereRadius;
-                var body = sphere.AddComponent<Rigidbody>();
-                body.mass = tuning.Ground.Mass;
-                body.interpolation = RigidbodyInterpolation.Interpolate;
-                body.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
-                body.constraints = RigidbodyConstraints.FreezeRotation;
-                var collider = sphere.AddComponent<SphereCollider>();
-                collider.radius = tuning.Ground.SphereRadius;
-                collider.sharedMaterial = sphereMaterial;
-
-                GameObject visual = Child(scratch, "Visual", root.transform);
-                var rig = visual.AddComponent<RoverVisualRig>();
-                GameObject chassis = Child(scratch, "Chassis", visual.transform);
-                GameObject instance = scratch.Instantiate(model, chassis.transform);
-                Transform m = instance.transform;
-
-                Light headlamp = AddHeadlamp(scratch, BuildWiring.Node(m, RoverModelNodes.HeadlampSocket), rigTuning);
-                Light eyeLight = AddEyeLight(scratch, BuildWiring.Node(m, RoverModelNodes.Eye), characterTuning);
-
-                var wheels = new Object[RoverModelNodes.WheelCount];
-                for (int i = 0; i < wheels.Length; i++)
-                {
-                    wheels[i] = BuildWiring.Node(m, RoverModelNodes.Wheel(i));
-                }
-
-                BuildWiring.Assign(rig,
-                    ("_tuning", rigTuning),
-                    ("_chassis", chassis.transform),
-                    ("_bogieLeft", BuildWiring.Node(m, RoverModelNodes.BogieLeft)),
-                    ("_bogieRight", BuildWiring.Node(m, RoverModelNodes.BogieRight)),
-                    ("_antenna", BuildWiring.Node(m, RoverModelNodes.Antenna)));
-                BuildWiring.AssignArray(rig, "_wheels", wheels);
-                Transform coilSocket = BuildWiring.Node(m, RoverModelNodes.CoilSocket);
-                RoverHoverCoils hoverCoils = BuildHoverCoils(scratch, visual, coilSocket, coils, rigTuning);
-                RoverKit kit = BuildKit(scratch, visual, m, headlamp, rigTuning, lampBar, drum, rack);
-
-                RoverWheelFx wheelFx = BuildWheelFx(scratch, root.transform, m, fxTuning, trackMaterial, dustMaterial);
-                RoverLampMotes lampMotes = BuildLampMotes(scratch, headlamp, fxTuning, moteMaterial);
-
-                BuildWiring.Assign(controller,
-                    ("_tuning", tuning),
-                    ("_body", body),
-                    ("_sphere", collider),
-                    ("_visualRig", rig),
-                    ("_wheelFx", wheelFx),
-                    ("_hoverCoils", hoverCoils),
-                    ("_lampMotes", lampMotes),
-                    ("_kit", kit),
-                    ("_tetherOrigin", BuildWiring.Node(m, RoverModelNodes.TetherOrigin)),
-                    ("_cargoSocket", BuildWiring.Node(m, RoverModelNodes.CargoSocket)));
-
-                BuildWiring.Assign(bodyLanguage,
-                    ("_tuning", characterTuning),
-                    ("_rover", controller),
-                    ("_rig", rig),
-                    ("_neck", BuildWiring.Node(m, RoverModelNodes.Neck)),
-                    ("_head", BuildWiring.Node(m, RoverModelNodes.Head)),
-                    ("_eyelid", BuildWiring.Node(m, RoverModelNodes.Eyelid)),
-                    ("_solarWing", BuildWiring.Node(m, RoverModelNodes.SolarWing)),
-                    ("_eyeRenderer", BuildWiring.NodeComponent<MeshRenderer>(m, RoverModelNodes.Eye)),
-                    ("_antennaTipRenderer", BuildWiring.NodeComponent<MeshRenderer>(m, RoverModelNodes.AntennaTip)),
-                    ("_eyeLight", eyeLight));
-
-                GeneratedAssets.SavePrefab(root, RoverAssetPaths.RoverPrefab);
+                wheels[i] = BuildWiring.Node(m, RoverModelNodes.Wheel(i));
             }
+
+            BuildWiring.Assign(rig,
+                ("_tuning", rigTuning),
+                ("_chassis", chassis.transform),
+                ("_bogieLeft", BuildWiring.Node(m, RoverModelNodes.BogieLeft)),
+                ("_bogieRight", BuildWiring.Node(m, RoverModelNodes.BogieRight)),
+                ("_antenna", BuildWiring.Node(m, RoverModelNodes.Antenna)));
+            BuildWiring.AssignArray(rig, "_wheels", wheels);
+            Transform coilSocket = BuildWiring.Node(m, RoverModelNodes.CoilSocket);
+            RoverHoverCoils hoverCoils = BuildHoverCoils(scratch, visual, coilSocket, coils, rigTuning);
+            RoverKit kit = BuildKit(scratch, visual, m, headlamp, rigTuning, lampBar, drum, rack);
+
+            RoverWheelFx wheelFx = BuildWheelFx(scratch, root.transform, m, fxTuning, trackMaterial, dustMaterial);
+            RoverLampMotes lampMotes = BuildLampMotes(scratch, headlamp, fxTuning, moteMaterial);
+
+            BuildWiring.Assign(controller,
+                ("_tuning", tuning),
+                ("_body", body),
+                ("_sphere", collider),
+                ("_visualRig", rig),
+                ("_wheelFx", wheelFx),
+                ("_hoverCoils", hoverCoils),
+                ("_lampMotes", lampMotes),
+                ("_kit", kit),
+                ("_tetherOrigin", BuildWiring.Node(m, RoverModelNodes.TetherOrigin)),
+                ("_cargoSocket", BuildWiring.Node(m, RoverModelNodes.CargoSocket)));
+
+            BuildWiring.Assign(bodyLanguage,
+                ("_tuning", characterTuning),
+                ("_rover", controller),
+                ("_rig", rig),
+                ("_neck", BuildWiring.Node(m, RoverModelNodes.Neck)),
+                ("_head", BuildWiring.Node(m, RoverModelNodes.Head)),
+                ("_eyelid", BuildWiring.Node(m, RoverModelNodes.Eyelid)),
+                ("_solarWing", BuildWiring.Node(m, RoverModelNodes.SolarWing)),
+                ("_eyeRenderer", BuildWiring.NodeComponent<MeshRenderer>(m, RoverModelNodes.Eye)),
+                ("_antennaTipRenderer", BuildWiring.NodeComponent<MeshRenderer>(m, RoverModelNodes.AntennaTip)),
+                ("_eyeLight", eyeLight));
+
+            return root;
         }
 
         private static GameObject Child(BuilderScratchScene scratch, string name, Transform parent)

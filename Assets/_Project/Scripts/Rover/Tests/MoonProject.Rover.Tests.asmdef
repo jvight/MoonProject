@@ -3,6 +3,7 @@
     "rootNamespace": "MoonProject.Rover.Tests",
     "references": [
         "MoonProject.Core",
+        "MoonProject.Editor",
         "MoonProject.Rover",
         "MoonProject.Rover.Editor",
         "UnityEngine.TestRunner",
