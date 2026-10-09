@@ -67,6 +67,14 @@
             "text": "Một hành trình cũ đã được cất đi."
         },
         {
+            "key": "ui.hint.look_up",
+            "text": "Ngước nhìn lên"
+        },
+        {
+            "key": "glyph.mouse.move",
+            "text": "Chuột"
+        },
+        {
             "key": "ui.settings.sound",
             "text": "Âm thanh"
         },

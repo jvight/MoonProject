@@ -82,6 +82,13 @@ namespace MoonProject.UI
             Ticker = Require<VisualElement>("ticker");
             TickerLamp = Require<VisualElement>("ticker-lamp");
             TickerText = Require<Label>("ticker-text");
+            TickerLine = Require<VisualElement>("ticker-line");
+
+            LookHint = Require<VisualElement>("look-hint");
+            LookHintShadow = Require<VisualElement>("look-hint-shadow");
+            LookHintGlyph = Require<VisualElement>("look-hint-glyph");
+            LookHintGlyphLabel = Require<Label>("look-hint-glyph-label");
+            LookHintWord = Require<Label>("look-hint-word");
 
             DialReadout = Require<VisualElement>("dial-readout");
             DialReadoutShadow = Require<VisualElement>("dial-readout-shadow");
@@ -264,6 +271,18 @@ namespace MoonProject.UI
         public VisualElement TickerLamp { get; }
 
         public Label TickerText { get; }
+
+        public VisualElement TickerLine { get; }
+
+        public VisualElement LookHint { get; }
+
+        public VisualElement LookHintShadow { get; }
+
+        public VisualElement LookHintGlyph { get; }
+
+        public Label LookHintGlyphLabel { get; }
+
+        public Label LookHintWord { get; }
 
         public VisualElement DialReadout { get; }
 

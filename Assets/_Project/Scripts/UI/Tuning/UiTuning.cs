@@ -22,6 +22,7 @@ namespace MoonProject.UI
         [SerializeField] private DialReadoutSettings _dialReadout = new DialReadoutSettings();
         [SerializeField] private RelaySettings _relays = new RelaySettings();
         [SerializeField] private SalvageSettings _salvage = new SalvageSettings();
+        [SerializeField] private StargazeSettings _stargaze = new StargazeSettings();
 
         public PauseSettings Pause => _pause;
 
@@ -49,12 +50,15 @@ namespace MoonProject.UI
 
         public SalvageSettings Salvage => _salvage;
 
+        public StargazeSettings Stargaze => _stargaze;
+
         /// <summary>Null when the tuning is usable, else the first problem.</summary>
         public string Validate()
         {
             if (_pause == null || _title == null || _prompts == null || _reticle == null || _materialsChip == null ||
                 _memoryCard == null || _towerPanel == null || _kitTitle == null || _friends == null ||
-                _ticker == null || _dialReadout == null || _relays == null || _salvage == null)
+                _ticker == null || _dialReadout == null || _relays == null || _salvage == null ||
+                _stargaze == null)
             {
                 return "a settings section is missing";
             }

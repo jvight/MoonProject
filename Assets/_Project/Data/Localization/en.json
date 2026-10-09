@@ -67,6 +67,14 @@
             "text": "An older journey was put away."
         },
         {
+            "key": "ui.hint.look_up",
+            "text": "Look up"
+        },
+        {
+            "key": "glyph.mouse.move",
+            "text": "Mouse"
+        },
+        {
             "key": "ui.settings.sound",
             "text": "Sound"
         },

@@ -52,6 +52,9 @@ namespace MoonProject.UI
         private UiLayout _layout;
         private StaticTextLocalizer _staticText;
         private Reveal _hud;
+        private StargazeVeil _stargaze;
+        private LookUpHint _lookUpHint;
+        private LookUpChip _lookUpChip;
         private TitleCard _title;
         private TetherReticle _reticle;
         private ContextPrompt _prompt;
@@ -217,6 +220,8 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<RelicDeposited>(OnRelicDeposited));
             _tokens.Add(events.Subscribe<RelicStowed>(OnRelicStowed));
             _tokens.Add(events.Subscribe<RoverAwoke>(OnRoverAwoke));
+            _tokens.Add(events.Subscribe<StargazingChanged>(OnStargazingChanged));
+            _tokens.Add(events.Subscribe<RoverWideShotChanged>(OnWideShotChanged));
             _tokens.Add(events.Subscribe<SonarPinged>(OnSonarPinged));
             _tokens.Add(events.Subscribe<SiteAnswered>(OnSiteAnswered));
             _tokens.Add(events.Subscribe<ExcavationStarted>(OnExcavationStarted));
@@ -270,6 +275,11 @@ namespace MoonProject.UI
             _staticText = new StaticTextLocalizer(root, _localization);
             _hud = new Reveal(_layout.Hud, _tuning.Pause.Hud);
             _hud.Snap(true);
+            _stargaze = new StargazeVeil(_tuning.Stargaze.Hud, _layout.PromptAnchor, _layout.FriendAnchor,
+                _layout.FriendNameAnchor, _layout.RelayTagAnchor, _layout.SalvageRingAnchor, _layout.SiteNameAnchor,
+                _layout.TickerLine);
+            _lookUpHint = new LookUpHint(_tuning.Stargaze, _ledger);
+            _lookUpChip = new LookUpChip(_layout, _tuning.Stargaze, _localization);
             _title = new TitleCard(_layout.Title, _tuning.Title);
             _reticle = new TetherReticle(_layout.Reticle, _layout.ReticleRest, _layout.ReticleHover, _tuning.Reticle);
             _prompt = new ContextPrompt(_layout, _tuning.Prompts, _director, services.View, _glyphs, _localization,
@@ -343,6 +353,7 @@ namespace MoonProject.UI
             float hudTime = paused ? 0f : deltaTime;
             _hud.Set(!paused);
             _hud.Tick(deltaTime);
+            _stargaze.Tick(deltaTime);
             if (_awake)
             {
                 _sinceAwake += hudTime;
@@ -399,6 +410,8 @@ namespace MoonProject.UI
                               !hopping;
             _ticker.Tick(hudTime, tickerOpen);
             _hopFade.Tick(deltaTime);
+            _lookUpHint.Tick(hudTime);
+            _lookUpChip.Tick(deltaTime, !paused && _lookUpHint.WantsShown, device);
         }
 
         private void Quit()
@@ -446,6 +459,23 @@ namespace MoonProject.UI
                 {
                     _tickerLines.Enqueue(line);
                 }
+            }
+        }
+
+        private void OnStargazingChanged(StargazingChanged changed)
+        {
+            if (_bound)
+            {
+                _stargaze.SetStargazing(changed.IsStargazing);
+                _lookUpHint.SetStargazing(changed.IsStargazing);
+            }
+        }
+
+        private void OnWideShotChanged(RoverWideShotChanged changed)
+        {
+            if (_bound)
+            {
+                _lookUpHint.SetWide(changed.Wide);
             }
         }
 
@@ -578,6 +608,7 @@ namespace MoonProject.UI
             _prompt.Relocalize();
             _card.Relocalize();
             _ticker.Relocalize();
+            _lookUpChip.Relocalize();
             _dial.Relocalize();
             _hopList.Relocalize();
             _friendName.Relocalize();
