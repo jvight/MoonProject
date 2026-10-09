@@ -10,8 +10,9 @@ namespace MoonProject.Rover.PlayModeTests
     /// Bay") with art's measures taken from the turntable's top, which lies flush with the test plain: three gantry
     /// arms on the crane rail, each Arm_n/Yaw/Upper/Lower/Tip/SparkSocket with the contract's links (1.30/1.20/0.26 m)
     /// in art's rest pose folded along the rail, and a floor arm whose tip rests just under the turntable's centre.
-    /// It is the <see cref="IRoverBay"/> the rover drives, with plain shapes (no colliders) so captures read as a bay:
-    /// walls on three sides, a roof, the rail, the links. 07 parks facing into it, its open front behind.
+    /// It is the <see cref="IRoverBay"/> the rover drives, with plain shapes so captures read as a bay: the walls on
+    /// three sides and the roof are solid on the Prop layer (as gameplay makes art's bay), the rail and the arms are
+    /// not. 07 parks facing into it, its open front behind.
     /// </summary>
     public sealed class TestRoverBay : IRoverBay, IDisposable
     {
@@ -94,6 +95,16 @@ namespace MoonProject.Rover.PlayModeTests
             return _joints[arm, (int)joint];
         }
 
+        /// <summary>
+        /// True when <paramref name="world"/> lies within the side walls, in front of the back wall and under the
+        /// roof (the open front is no wall: out past it counts).
+        /// </summary>
+        public bool WithinWalls(Vector3 world)
+        {
+            Vector3 local = Root.InverseTransformPoint(world);
+            return Mathf.Abs(local.x) < HalfWidth && local.z > BackZ && local.y < EaveHeight;
+        }
+
         /// <summary>The largest turn (deg) of any joint of <paramref name="arm"/> away from its rest pose.</summary>
         public float OffRest(int arm)
         {
@@ -165,19 +176,19 @@ namespace MoonProject.Rover.PlayModeTests
             return new TestRoverBay(root, turntable, floorLift, floorTip, joints);
         }
 
-        /// <summary>Back and side walls, the roof and the crane rail, so a capture reads as a bay.</summary>
+        /// <summary>Back and side walls and the roof (solid), and the crane rail, so captures read as a bay.</summary>
         private static void BuildShell(Transform bay, Material material)
         {
             float depth = FrontZ - BackZ;
             float middle = 0.5f * (FrontZ + BackZ);
-            Shape(PrimitiveType.Cube, bay, new Vector3(0f, 0.5f * EaveHeight, BackZ),
-                new Vector3(2f * HalfWidth, EaveHeight, Wall), material);
-            Shape(PrimitiveType.Cube, bay, new Vector3(-HalfWidth, 0.5f * EaveHeight, middle),
-                new Vector3(Wall, EaveHeight, depth), material);
-            Shape(PrimitiveType.Cube, bay, new Vector3(HalfWidth, 0.5f * EaveHeight, middle),
-                new Vector3(Wall, EaveHeight, depth), material);
-            Shape(PrimitiveType.Cube, bay, new Vector3(0f, EaveHeight, middle),
-                new Vector3(2f * HalfWidth, Wall, depth), material);
+            Solid(Shape(PrimitiveType.Cube, bay, new Vector3(0f, 0.5f * EaveHeight, BackZ),
+                new Vector3(2f * HalfWidth, EaveHeight, Wall), material));
+            Solid(Shape(PrimitiveType.Cube, bay, new Vector3(-HalfWidth, 0.5f * EaveHeight, middle),
+                new Vector3(Wall, EaveHeight, depth), material));
+            Solid(Shape(PrimitiveType.Cube, bay, new Vector3(HalfWidth, 0.5f * EaveHeight, middle),
+                new Vector3(Wall, EaveHeight, depth), material));
+            Solid(Shape(PrimitiveType.Cube, bay, new Vector3(0f, EaveHeight, middle),
+                new Vector3(2f * HalfWidth, Wall, depth), material));
             Shape(PrimitiveType.Cube, bay, new Vector3(0f, RailHeight + 0.06f, -0.35f),
                 new Vector3(2.9f, 0.08f, 0.1f), material);
             Shape(PrimitiveType.Cube, bay, new Vector3(0f, RailHeight + 0.06f, -1.0f),
@@ -198,7 +209,8 @@ namespace MoonProject.Rover.PlayModeTests
             return node;
         }
 
-        private static void Shape(PrimitiveType type, Transform parent, Vector3 localPosition, Vector3 scale,
+        /// <summary>A plain shape without a collider.</summary>
+        private static GameObject Shape(PrimitiveType type, Transform parent, Vector3 localPosition, Vector3 scale,
             Material material)
         {
             GameObject shape = GameObject.CreatePrimitive(type);
@@ -207,6 +219,14 @@ namespace MoonProject.Rover.PlayModeTests
             shape.transform.SetParent(parent, false);
             shape.transform.localPosition = localPosition;
             shape.transform.localScale = scale;
+            return shape;
+        }
+
+        /// <summary>Makes a shape solid scenery on the Prop layer, as gameplay makes art's bay.</summary>
+        private static void Solid(GameObject shape)
+        {
+            shape.layer = Layers.Prop;
+            shape.AddComponent<BoxCollider>();
         }
 
         public void Dispose()

@@ -17,7 +17,9 @@ namespace MoonProject.Rover
     /// it lights, the base after an upgrade (needs <see cref="IWorldLayout"/>), or 07 itself from low and round the
     /// side as a friend's gift settles onto it (<see cref="RoverKitInstalling"/>). In Kenji's Rover Bay
     /// (<see cref="IRoverBay"/>, resolved once Gameplay registers it) a held moment fixes the view in through the open
-    /// front, under the crane rail (<see cref="BayFramingSettings"/>), and the install moment plays there. When 07 has
+    /// front, under the crane rail (<see cref="BayFramingSettings"/>); while the bay fits a piece
+    /// (<see cref="IBayFitView"/>) it eases in to a close shot of the arm setting it on, or low under 07's belly for
+    /// the floor arm, and back out as the arms fold away (<see cref="BayShotComposer"/>). When 07 has
     /// rested a while (<see cref="IRoverStillness"/>) with nothing going on, the camera drifts out to the lonely
     /// <see cref="WideShot"/>, composed against the analytic terrain (<see cref="ITerrainQuery"/>), and publishes
     /// <see cref="RoverWideShotChanged"/> as it opens and hands back. Camera moments, a leap, the tether, the radio-hop
@@ -68,6 +70,7 @@ namespace MoonProject.Rover
         private float _momentLift;
         private float _momentPullBack;
         private float _framedRoverYaw;
+        private float _targetYaw;
         private Vector3 _momentShift;
         private bool _leapHeld;
         private bool _leapAirborne;
@@ -80,6 +83,14 @@ namespace MoonProject.Rover
         private bool _bayBroken;
         private bool _inBay;
         private bool _bayDismissed;
+        private IBayFitView _fit;
+        private readonly PropSightLine _sight = new PropSightLine();
+        private BayShot _shot;
+        private bool _shotSolved;
+        private bool _hasShot;
+        private float _shotEase;
+        private float _shotWeight;
+        private float _appliedCameraRadius = -1f;
         private ITerrainQuery _terrain;
         private EventBus _events;
         private InputReader _input;
@@ -96,6 +107,16 @@ namespace MoonProject.Rover
 
         /// <summary>How far the current camera moment has eased in, 0..1 (for tests and tooling).</summary>
         public float MomentWeight => _moment.Weight;
+
+        /// <summary>How far the close shot of a bay fitting has eased in, 0..1 (for tests and tooling).</summary>
+        public float FittingShotWeight => _shotWeight;
+
+        /// <summary>The close shot composed for the bay fitting under way, if any (for tests and tooling).</summary>
+        public bool TryGetFittingShot(out BayShot shot)
+        {
+            shot = _shot;
+            return _shotSolved && _hasShot;
+        }
 
         public Camera Camera => _viewCamera;
 
@@ -123,6 +144,7 @@ namespace MoonProject.Rover
             _rover = context.Get<IRoverState>();
             _world = context.Get<IWorldLayout>();
             _stillness = context.Get<IRoverStillness>();
+            _fit = context.Get<IBayFitView>();
             _terrain = context.Get<ITerrainQuery>();
             _events = context.Events;
             _input = context.Input;
@@ -248,6 +270,7 @@ namespace MoonProject.Rover
 
             ReleaseLeapOnTouchdown();
             StepBay();
+            StepShot(deltaTime);
             _moment.Step(deltaTime);
             StepWideShot(deltaTime);
             StepMomentFraming(deltaTime);
@@ -392,11 +415,79 @@ namespace MoonProject.Rover
         /// The highest orbit elevation (deg) at <paramref name="radius"/> that keeps the camera the rail clearance
         /// below the bay's crane rail, so it looks in under the roof.
         /// </summary>
-        private float BayCeiling(float radius)
+        private float BayCeiling(float follow, float radius)
         {
-            float follow = _rover.Position.y + _tuning.TargetHeight + _momentShift.y;
-            float room = _bayRail - _tuning.BayFraming.RailClearance - follow;
-            return Mathf.Asin(Mathf.Clamp(room / radius, -1f, 1f)) * Mathf.Rad2Deg;
+            return Mathf.Asin(Mathf.Clamp((BayTop - follow) / radius, -1f, 1f)) * Mathf.Rad2Deg;
+        }
+
+        /// <summary>The highest the camera may stand in the bay (world y): the rail clearance under the rail.</summary>
+        private float BayTop => _bayRail - _tuning.BayFraming.RailClearance;
+
+        /// <summary>Where the bay's view, fully eased in, stands for 07 parked for the fitting (world).</summary>
+        private Vector3 BayEye()
+        {
+            Vector3 follow = _fit.Centre + Vector3.up * _tuning.TargetHeight;
+            float radius = _tuning.Distance * (1f + _tuning.BayMoment.PullBack);
+            float pitch = Mathf.Min(_tuning.BayFraming.Elevation, BayCeiling(follow.y, radius)) * Mathf.Deg2Rad;
+            Vector3 front = Vector3.ProjectOnPlane(_fit.Front, Vector3.up).normalized;
+            return follow + (front * Mathf.Cos(pitch) + Vector3.up * Mathf.Sin(pitch)) * radius;
+        }
+
+        /// <summary>
+        /// The close shot of a bay fitting: composed once as the fitting begins in the bay's view, eased in while the
+        /// arms work and out as they fold away (or as soon as looking round dismisses the bay's view).
+        /// </summary>
+        private void StepShot(float deltaTime)
+        {
+            BayShotSettings settings = _tuning.BayFraming.Shot;
+            if (!_fit.Active)
+            {
+                _shotSolved = false;
+            }
+            else if (!_shotSolved && _bay != null && IsBayMoment)
+            {
+                _shotSolved = true;
+                _hasShot = BayShotComposer.TrySolve(settings, _fit, BayEye(), BayTop, _sight, out _shot);
+            }
+
+            bool wanted = _shotSolved && _hasShot && _fit.Working && IsBayMoment && !_bayDismissed;
+            float seconds = wanted ? settings.EaseIn : settings.EaseOut;
+            _shotEase = Mathf.MoveTowards(_shotEase, wanted ? 1f : 0f, deltaTime / seconds);
+            _shotWeight = Smoothing.SmoothStep(0f, 1f, _shotEase);
+            ApplyCameraRadius(Mathf.Lerp(_tuning.CameraRadius, settings.CameraRadius, _shotWeight));
+        }
+
+        /// <summary>The clearance Cinemachine keeps from scenery (smaller in the bay's close shot).</summary>
+        private void ApplyCameraRadius(float radius)
+        {
+            if (Mathf.Approximately(radius, _appliedCameraRadius))
+            {
+                return;
+            }
+
+            _decollider.CameraRadius = radius;
+            _deoccluder.AvoidObstacles.CameraRadius = radius;
+            _appliedCameraRadius = radius;
+        }
+
+        /// <summary>
+        /// Blends the orbit's pose toward the fitting shot by its weight along straight lines (where the camera stands
+        /// and where it looks), so it comes in through the bay's open front rather than swinging round through a wall,
+        /// and hands the result back to the orbit as a target, a yaw, an elevation and a distance.
+        /// </summary>
+        private void BlendShot(ref float orbitYaw, ref float elevation, ref float radius)
+        {
+            Vector3 target = _target.position;
+            float pitch = Mathf.Clamp(elevation, _tuning.MinPitch, _tuning.MaxPitch) * Mathf.Deg2Rad;
+            Vector3 back = Quaternion.Euler(0f, _targetYaw + orbitYaw, 0f) * Vector3.back;
+            Vector3 eye = target + (back * Mathf.Cos(pitch) + Vector3.up * Mathf.Sin(pitch)) * radius;
+            Vector3 focus = Vector3.Lerp(target, _shot.Focus, _shotWeight);
+            Vector3 line = focus - Vector3.Lerp(eye, _shot.Eye, _shotWeight);
+            radius = line.magnitude;
+            elevation = Mathf.Asin(Mathf.Clamp(-line.y / radius, -1f, 1f)) * Mathf.Rad2Deg;
+            _targetYaw = Mathf.Atan2(line.x, line.z) * Mathf.Rad2Deg;
+            orbitYaw = 0f;
+            _target.SetPositionAndRotation(focus, Quaternion.Euler(0f, _targetYaw, 0f));
         }
 
         private float RoverYaw()
@@ -409,7 +500,8 @@ namespace MoonProject.Rover
         private void PlaceTarget()
         {
             Vector3 point = _rover.Position + Vector3.up * _tuning.TargetHeight + _momentShift;
-            _target.SetPositionAndRotation(point, Quaternion.Euler(0f, RoverYaw() + _momentYaw, 0f));
+            _targetYaw = RoverYaw() + _momentYaw;
+            _target.SetPositionAndRotation(point, Quaternion.Euler(0f, _targetYaw, 0f));
         }
 
         private Vector2 ReadLook(float deltaTime)
@@ -428,7 +520,8 @@ namespace MoonProject.Rover
             float radius = _tuning.Distance * (1f + _momentPullBack);
             if (IsBayMoment)
             {
-                float bay = Mathf.Min(_tuning.BayFraming.Elevation, BayCeiling(radius));
+                float follow = _rover.Position.y + _tuning.TargetHeight + _momentShift.y;
+                float bay = Mathf.Min(_tuning.BayFraming.Elevation, BayCeiling(follow, radius));
                 elevation = Mathf.Lerp(elevation, bay, _moment.Weight);
             }
 
@@ -453,6 +546,11 @@ namespace MoonProject.Rover
                 radius = Mathf.Lerp(radius, frame.Distance * (1f + drift), wide);
                 fov = Mathf.Lerp(fov, _tuning.BaseFov + settings.FovWiden, wide);
                 screen.y = Mathf.Lerp(screen.y, frame.ScreenY, wide);
+            }
+
+            if (_shotWeight > 0f)
+            {
+                BlendShot(ref yaw, ref elevation, ref radius);
             }
 
             _orbit.HorizontalAxis.Value = yaw;
@@ -546,6 +644,9 @@ namespace MoonProject.Rover
             _moment.Clear();
             _inBay = false;
             _bayDismissed = false;
+            _shotSolved = false;
+            _shotEase = 0f;
+            _shotWeight = 0f;
             _leapHeld = false;
             _leapAirborne = false;
             _momentYaw = 0f;
