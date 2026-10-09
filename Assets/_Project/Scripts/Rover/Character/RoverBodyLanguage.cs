@@ -66,6 +66,8 @@ namespace MoonProject.Rover
         private RoverMood _mood;
         private LookAround _lookAround;
         private IWorldLayout _world;
+        private GameContext _context;
+        private ISkyGaze _sky;
         private EventBus _events;
         private IDisposable[] _subscriptions;
         private float _glanceEnds = -1f;
@@ -90,6 +92,7 @@ namespace MoonProject.Rover
                 return;
             }
 
+            _context = context;
             _world = context.Get<IWorldLayout>();
             _mood = new RoverMood(_tuning, MoodSeed, _tuning.SleepOnBoot);
             _lookAround = new LookAround(_tuning);
@@ -123,7 +126,7 @@ namespace MoonProject.Rover
                 events.Subscribe<RoverKitFitted>(OnKitFitted),
             };
             _initialized = true;
-            Apply();
+            Apply(0f);
         }
 
         private bool ValidateWiring()
@@ -306,11 +309,26 @@ namespace MoonProject.Rover
             }
 
             _lookAround.Step(deltaTime);
-            StepGaze(deltaTime);
-            Apply();
+            float sky = SkyLift();
+            StepGaze(sky, deltaTime);
+            Apply(sky);
         }
 
-        private void StepGaze(float deltaTime)
+        /// <summary>
+        /// How far 07 joins the player's look at the sky. The camera rig registers it after 07's systems initialise,
+        /// so it is picked up on the first frame it exists.
+        /// </summary>
+        private float SkyLift()
+        {
+            if (_sky == null)
+            {
+                _context.TryGet(out _sky);
+            }
+
+            return _sky != null ? _sky.SkyLift : 0f;
+        }
+
+        private void StepGaze(float sky, float deltaTime)
         {
             Transform frame = _neck.parent;
             Vector2 aim;
@@ -337,6 +355,7 @@ namespace MoonProject.Rover
                 frequency = Mathf.Lerp(_tuning.TravelGazeFrequency, _tuning.IdleGazeFrequency, idle);
             }
 
+            aim.y = Mathf.Lerp(aim.y, _tuning.StargazeHeadPitch, sky);
             _yaw.Step(aim.x, frequency, _tuning.GazeDamping, deltaTime);
             _pitch.Step(aim.y, frequency, _tuning.GazeDamping, deltaTime);
         }
@@ -347,7 +366,7 @@ namespace MoonProject.Rover
                 _tuning.HeadPitchDownLimit);
         }
 
-        private void Apply()
+        private void Apply(float sky)
         {
             float breathing = _tuning.IdleHeadBreath * _mood.Idle * (2f * _mood.Breath - 1f);
             float pitch = _pitch.Value + _mood.HeadPitchOffset + breathing;
@@ -356,12 +375,14 @@ namespace MoonProject.Rover
             _head.localRotation = _headRest * Quaternion.AngleAxis(-pitch, Vector3.right);
             _eyelid.localRotation = _eyelidRest
                 * Quaternion.AngleAxis(_mood.LidClosure * _tuning.EyelidClosedAngle, Vector3.right);
+            float wingOpen = Mathf.Max(_mood.WingOpen, sky * _tuning.StargazeWingOpen);
             _solarWing.localRotation = _wingRest
-                * Quaternion.AngleAxis(_mood.WingOpen * _tuning.WingOpenAngle, Vector3.right);
+                * Quaternion.AngleAxis(wingOpen * _tuning.WingOpenAngle, Vector3.right);
 
-            SetGlow(_eyeRenderer, _mood.EyeGlow);
+            float eyeGlow = _mood.EyeGlow * Mathf.Lerp(1f, _tuning.StargazeEyeGlow, sky);
+            SetGlow(_eyeRenderer, eyeGlow);
             SetGlow(_antennaTipRenderer, _mood.TipGlow);
-            _eyeLight.intensity = _tuning.EyeLightIntensity * _mood.EyeGlow;
+            _eyeLight.intensity = _tuning.EyeLightIntensity * eyeGlow;
         }
 
         private void SetGlow(Renderer target, float intensity)
