@@ -20,7 +20,7 @@ namespace MoonProject.Art.Editor
     /// <code>
     /// python tools/unity_batch.py exec --method MoonProject.Art.Editor.ArtLightingPreview.Capture
     ///     [--arg scene=rover|base|towers|relics|shadow|grit|friends|workshop|bell|bellbroken|pickups|bellcorner|
-    ///                  warmpoints|relaysbroken|relayslit|sites|sitesclean|salvagebits|kit|home|homeclean|
+    ///                  warmpoints|relaysbroken|relayslit|sites|sitesclean|salvagebits|kit|kitmain|home|homeclean|
     ///                  builtfor07]
     /// </code>
     /// (default rover; a ';'-separated list captures several scenes in one run)
@@ -46,7 +46,10 @@ namespace MoonProject.Art.Editor
     /// skeletons, from the way in, the side and 30 m, Kestrel-3 from the base, the depot close. salvagebits: the three
     /// material bundles and the Kestrel trail's loose bits on the dust beside 07. kit: 07 bare, with each crafted
     /// kit piece (lamp bar lit, drums glowing as if boosting, the cargo cradle carrying a relic), fully kitted with
-    /// the friends' gifts, and "minute one versus hour five" side by side from the chase camera and at 30 m. home:
+    /// the friends' gifts, and "minute one versus hour five" side by side from the chase camera and at 30 m. kitmain:
+    /// the same comparison in Main.unity under its own grade: minute one beside fully kitted at the spawn, travelling,
+    /// with play's road lights and glow levels, from the chase camera and at 30 m, each 07 from its own chase camera,
+    /// and the lamp bar close. home:
     /// the base as Main.unity has it (its own grading), from the spawn view, the lander close and three-quarter, the
     /// tower, the shelf area, a 07 parked in front from the chase camera and close, and Kenji's Rover Bay (sign lit)
     /// from the front and the quarter; homeclean: the same with every Weather_* layer hidden, as restoration will
@@ -81,6 +84,42 @@ namespace MoonProject.Art.Editor
 
         /// <summary>Spacing of the kit scene's 07s, wide enough that each chase shot frames one rover.</summary>
         private const float KitSpacing = 9f;
+
+        /// <summary>How far apart kitmain parks minute one and the fully kitted 07, side by side.</summary>
+        private const float KitPairGap = 4f;
+
+        // The game's default chase camera (RoverCameraTuning asset): distance, pitch, look-at height and lens; and the
+        // spawn heading (RoverTuning) both kitmain 07s face, so Earth and The Peak sit ahead of them.
+        private const float ChaseDistance = 7.5f;
+        private const float ChasePitch = 16f;
+        private const float ChaseTargetHeight = 1.1f;
+        private const float ChaseFov = 52f;
+        private const float ChaseQuarterYaw = 35f;
+        private const float FarDistance = 30f;
+        private const float SpawnYaw = 355f;
+
+        // 07 travelling as play poses it (RoverCharacterTuning): the head a little up, the lid at its active droop.
+        private const float TravelHeadPitchDegrees = -6f;
+        private const float ActiveEyelidDegrees = 24f;
+
+        // Play's road light (RoverRigTuning) and the Warm Headlamp's from the lamp bar's middle glass (KitSettings),
+        // neither casting shadows; the eye's small glow light (RoverCharacterTuning).
+        private const float RoadLightIntensity = 35f;
+        private const float RoadLightRange = 20f;
+        private const float RoadLightAngle = 62f;
+        private const float RoadLightInnerAngle = 30f;
+        private const float WarmLightIntensity = 42f;
+        private const float WarmLightRange = 24f;
+        private const float WarmLightAngle = 90f;
+        private const float WarmLightInnerAngle = 48f;
+        private const float EyeLightIntensity = 0.8f;
+        private const float EyeLightRange = 1.6f;
+
+        // Play's glow levels (KitSettings): the lamp bar's glasses, and the drum bands idling between boosts.
+        private const float LampBarGlow = 0.7f;
+        private const float DrumIdleGlow = 0.05f;
+
+        private static readonly Color WarmLightColor = new Color(1f, 0.62f, 0.33f);
 
         /// <summary>The ground Bell keeps clear for her dance and for 07 parking at her dial.</summary>
         private const float BellClearRadius = 2.5f;
@@ -210,6 +249,9 @@ namespace MoonProject.Art.Editor
                         NightSetting(material, temporary, 90f, 40f);
                         poses = KitScene(temporary);
                         break;
+                    case "kitmain":
+                        poses = KitMainScene(temporary);
+                        break;
                     case "home":
                         poses = HomeScene(temporary, true);
                         break;
@@ -222,8 +264,8 @@ namespace MoonProject.Art.Editor
                     default:
                         Debug.LogError($"ArtLightingPreview: unknown scene '{scene}' " +
                             "(rover|base|towers|relics|shadow|grit|friends|workshop|bell|bellbroken|pickups|" +
-                            "bellcorner|warmpoints|relaysbroken|relayslit|sites|sitesclean|salvagebits|kit|home|" +
-                            "homeclean|builtfor07).");
+                            "bellcorner|warmpoints|relaysbroken|relayslit|sites|sitesclean|salvagebits|kit|kitmain|" +
+                            "home|homeclean|builtfor07).");
                         return false;
                 }
 
@@ -817,6 +859,115 @@ namespace MoonProject.Art.Editor
             poses.Add(Pose("full_front", Point(new Vector3(2f * KitSpacing - 2.2f, 1.4f, 3.6f)),
                 Point(new Vector3(2f * KitSpacing, 0.9f, 0f)), 45f));
             return new CameraPoseSet { width = 1600, height = 900, postProcessing = true, poses = poses.ToArray() };
+        }
+
+        /// <summary>
+        /// Opens Main.unity (its terrain preview, earthlight, fog and grade; never saved), hides the scene's own 07 and
+        /// parks two on the base pad at the spawn, facing the spawn heading: minute one (bare) on the left and fully
+        /// kitted (lamp bar, drums idling, empty cradle, Hover-Jump coils, the friends' gifts) on the right, both
+        /// travelling with play's road light (the kitted one's warmer and wider, from the lamp bar's middle glass) and
+        /// eye light. Poses at the game's lens: the pair from the chase camera and from 30 m (straight behind, the rear
+        /// three-quarter and broadside), each 07 from its own chase camera, and the lamp bar close from the front
+        /// three-quarter and from behind.
+        /// </summary>
+        private static CameraPoseSet KitMainScene(TemporaryObjects temporary)
+        {
+            EditorSceneManager.OpenScene(CaptureAutomation.MainScenePath, OpenSceneMode.Single);
+            SceneObject("[Rover]").gameObject.SetActive(false);
+            Quaternion heading = Quaternion.Euler(0f, SpawnYaw, 0f);
+            Vector3 side = heading * Vector3.right * (KitPairGap * 0.5f);
+            Transform bare = TravellingRover(temporary, -side, heading, false);
+            Transform kitted = TravellingRover(temporary, side, heading, true);
+            Vector3 pair = Vector3.zero;
+            var poses = new List<CameraPose>
+            {
+                ChasePose("pair_chase", pair, heading, ChaseDistance, 0f),
+                ChasePose("pair_chase_quarter", pair, heading, ChaseDistance, ChaseQuarterYaw),
+                ChasePose("pair_30m", pair, heading, FarDistance, 0f),
+                ChasePose("pair_30m_quarter", pair, heading, FarDistance, ChaseQuarterYaw),
+                ChasePose("pair_30m_broadside", pair, heading, FarDistance, 90f),
+                ChasePose("minute_one_chase", bare.position, heading, ChaseDistance, 0f),
+                ChasePose("full_kit_chase", kitted.position, heading, ChaseDistance, 0f),
+                ChasePose("minute_one_chase_quarter", bare.position, heading, ChaseDistance, -ChaseQuarterYaw),
+                ChasePose("full_kit_chase_quarter", kitted.position, heading, ChaseDistance, ChaseQuarterYaw),
+                Pose("lampbar_close", Point(kitted.TransformPoint(new Vector3(1.25f, 1.2f, 2.3f))),
+                    Point(kitted.TransformPoint(new Vector3(0f, 1.1f, 0.7f))), 45f),
+                Pose("lampbar_close_behind", Point(kitted.TransformPoint(new Vector3(1.1f, 2.3f, -2.6f))),
+                    Point(kitted.TransformPoint(new Vector3(0f, 1.1f, 0.7f))), 45f),
+            };
+            return new CameraPoseSet { width = 1920, height = 1080, postProcessing = true, poses = poses.ToArray() };
+        }
+
+        /// <summary>
+        /// The game's chase camera on a 07 at <paramref name="at"/> facing <paramref name="heading"/>,
+        /// <paramref name="distance"/> out and swung <paramref name="yaw"/> degrees from straight behind (+ = to its
+        /// right).
+        /// </summary>
+        private static CameraPose ChasePose(string name, Vector3 at, Quaternion heading, float distance, float yaw)
+        {
+            Vector3 target = at + Vector3.up * ChaseTargetHeight;
+            Vector3 offset = heading * Quaternion.Euler(ChasePitch, -yaw, 0f) * Vector3.back * distance;
+            return Pose(name, Point(target + offset), Point(target), ChaseFov);
+        }
+
+        /// <summary>
+        /// A 07 travelling as play poses it, with play's road light and eye light; <paramref name="kitted"/> fits the
+        /// whole kit lit at play's levels (the drums idling), the Hover-Jump coils and the friends' gifts, and moves
+        /// the road light to the lamp bar's middle glass, warmer and wider.
+        /// </summary>
+        private static Transform TravellingRover(TemporaryObjects temporary, Vector3 position, Quaternion heading,
+            bool kitted)
+        {
+            GameObject instance = Instantiate(RoverModelBuilder.ModelName, temporary, ArtPaths.RoverFolder);
+            Transform rover = instance.transform;
+            rover.SetPositionAndRotation(position, heading);
+            Descendant(rover, "Head").localRotation = Quaternion.Euler(TravelHeadPitchDegrees, 0f, 0f);
+            Descendant(rover, "Eyelid").localRotation = Quaternion.Euler(ActiveEyelidDegrees, 0f, 0f);
+
+            Transform socket = Descendant(rover, "HeadlampSocket");
+            Light road = NewLight("RoadLight", LightType.Spot, Palette.Get(PaletteSwatch.WarmLamp), RoadLightIntensity);
+            road.transform.SetPositionAndRotation(socket.position, socket.rotation);
+            road.range = RoadLightRange;
+            road.spotAngle = RoadLightAngle;
+            road.innerSpotAngle = RoadLightInnerAngle;
+            road.shadows = LightShadows.None;
+            temporary.Add(road.gameObject);
+
+            Light eye = NewLight("EyeGlow", LightType.Point, Palette.Get(PaletteSwatch.WarmLamp), EyeLightIntensity);
+            eye.transform.position = Descendant(rover, "Eye").position;
+            eye.range = EyeLightRange;
+            eye.shadows = LightShadows.None;
+            temporary.Add(eye.gameObject);
+            if (!kitted)
+            {
+                return rover;
+            }
+
+            Transform bar = Attach(rover, RoverKitBuilder.LampBarName, "HeadlampSocket", temporary);
+            SetGlow(bar, RoverKitBuilder.LampPrefix, RoverKitMeshes.LampCount, LampBarGlow);
+            road.transform.position = Descendant(bar, RoverKitBuilder.LampPrefix + "1").position;
+            road.color = WarmLightColor;
+            road.intensity = WarmLightIntensity;
+            road.range = WarmLightRange;
+            road.spotAngle = WarmLightAngle;
+            road.innerSpotAngle = WarmLightInnerAngle;
+            foreach (string drumSocket in new[] { "DrumSocket_L", "DrumSocket_R" })
+            {
+                Transform drum = Attach(rover, RoverKitBuilder.CapacitorDrumName, drumSocket, temporary);
+                SetGlow(drum, RoverKitBuilder.DrumGlowName, new[] { string.Empty }, DrumIdleGlow);
+            }
+
+            Attach(rover, RoverKitBuilder.CargoRackName, "CargoSocket", temporary);
+            Attach(rover, RoverModelBuilder.HoverCoilsName, "CoilSocket", temporary);
+            foreach (string gift in new[]
+            {
+                RoverModelBuilder.Decal07FreshName, RoverModelBuilder.CellFilledName, RoverModelBuilder.PennantName,
+            })
+            {
+                Descendant(rover, gift).gameObject.SetActive(true);
+            }
+
+            return rover;
         }
 
         /// <summary>
