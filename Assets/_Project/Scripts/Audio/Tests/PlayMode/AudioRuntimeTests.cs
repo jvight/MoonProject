@@ -11,6 +11,8 @@ namespace MoonProject.Audio.PlayModeTests
     /// <summary>Director, rover audio, radio and ambience running for real behind a fake rover.</summary>
     public sealed class AudioRuntimeTests
     {
+        private static readonly int StationCues = StationSounds.TableSize();
+
         private AudioTestRig _rig;
 
         [UnitySetUp]
@@ -274,7 +276,8 @@ namespace MoonProject.Audio.PlayModeTests
                     break;
                 case 8:
                     events.Publish(new UiCue(frame % 24 == 8 ? UiCueKind.CardShown : UiCueKind.PromptShown));
-                    events.Publish(new StationCued((StationCue)(frame / 12 % 5), "radio_tower", Vector3.right * 4f));
+                    events.Publish(new StationCued((StationCue)(frame / 12 % StationCues), "radio_tower",
+                        Vector3.right * 4f));
                     if (frame % 48 == 8)
                     {
                         events.Publish(new RoverBayFitting("rover.hover_jump"));

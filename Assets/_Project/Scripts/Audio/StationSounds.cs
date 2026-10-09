@@ -9,23 +9,43 @@ namespace MoonProject.Audio
     /// </summary>
     public static class StationSounds
     {
-        /// <summary>The one-shot cue of <paramref name="cue"/>, or null when the beat only starts a loop.</summary>
-        public static string OneShot(StationCue cue)
+        /// <summary>
+        /// The one-shot cue of <paramref name="cue"/> (null when the beat only starts or stops a loop). False for a
+        /// beat this table does not know yet: it stays silent in the game, and the station sound tests fail.
+        /// </summary>
+        public static bool TryGetOneShot(StationCue cue, out string id)
         {
             switch (cue)
             {
                 case StationCue.FeedStarted:
                 case StationCue.StitchStarted:
-                    return null;
+                    id = null;
+                    return true;
                 case StationCue.Fed:
-                    return AudioCueIds.HopperClunk;
+                    id = AudioCueIds.HopperClunk;
+                    return true;
                 case StationCue.HatchOpened:
-                    return AudioCueIds.PortHatchOpen;
+                    id = AudioCueIds.PortHatchOpen;
+                    return true;
                 case StationCue.HatchClosed:
-                    return AudioCueIds.PortHatchClose;
+                    id = AudioCueIds.PortHatchClose;
+                    return true;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(cue), cue, "Unknown station cue.");
+                    id = null;
+                    return false;
             }
+        }
+
+        /// <summary>Length of a table indexed by <see cref="StationCue"/>: one past its largest beat.</summary>
+        public static int TableSize()
+        {
+            int size = 0;
+            foreach (StationCue cue in (StationCue[])Enum.GetValues(typeof(StationCue)))
+            {
+                size = Math.Max(size, (int)cue + 1);
+            }
+
+            return size;
         }
     }
 }

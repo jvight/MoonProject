@@ -1,6 +1,8 @@
+using System;
 using NUnit.Framework;
 using UnityEngine;
 using MoonProject.Core.Events;
+using Object = UnityEngine.Object;
 
 namespace MoonProject.Audio.Tests
 {
@@ -29,8 +31,28 @@ namespace MoonProject.Audio.Tests
         [TestCase(StationCue.HatchClosed, "port_hatch_close")]
         public void EachStationBeat_PlaysItsSound(StationCue cue, string expected)
         {
-            Assert.AreEqual(expected, StationSounds.OneShot(cue));
+            Assert.IsTrue(StationSounds.TryGetOneShot(cue, out string id));
+            Assert.AreEqual(expected, id);
         }
+
+        [Test]
+        public void EveryStationBeat_HasASound_AndASlot()
+        {
+            int size = StationSounds.TableSize();
+            foreach (StationCue cue in (StationCue[])Enum.GetValues(typeof(StationCue)))
+            {
+                Assert.IsTrue(StationSounds.TryGetOneShot(cue, out _), $"{cue} needs a sound in StationSounds");
+                Assert.Less((int)cue, size, $"{cue} fits the beat table");
+            }
+        }
+
+        [Test]
+        public void AnUnknownBeat_IsSilent_NotAnError()
+        {
+            Assert.IsFalse(StationSounds.TryGetOneShot((StationCue)StationSounds.TableSize(), out string id));
+            Assert.IsNull(id);
+        }
+
 
         [Test]
         public void BellsKnobTap_IsACue()
