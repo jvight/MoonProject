@@ -69,6 +69,25 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(1, NewGameScene.PutAwayFiles().Length, "it was put away, not deleted");
         }
 
+        /// <summary>
+        /// Clears the reloaded scene so the next fixture (e.g. World's boot test, which counts every prop collider)
+        /// starts without a second world in the physics scene.
+        /// </summary>
+        [TearDown]
+        public void TearDown()
+        {
+            Scene scene = SceneManager.GetSceneByPath(PlaythroughScene.ScenePath);
+            if (!scene.IsValid() || !scene.isLoaded)
+            {
+                return;
+            }
+
+            foreach (GameObject root in scene.GetRootGameObjects())
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
         private static IEnumerator Boot(Action<GameBootstrap> found)
         {
             AsyncOperation loading = SceneManager.LoadSceneAsync(PlaythroughScene.ScenePath, LoadSceneMode.Single);
