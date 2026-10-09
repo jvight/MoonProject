@@ -360,20 +360,19 @@ namespace MoonProject.UI.PlayModeTests
             Boot();
             _rig.Tune("_kitTitle._holdSeconds", 0.6f);
             yield return null;
-            UpgradeDefinition[] bay = _rig.TestBay(new Recipe(2, 1, 0), new Recipe(3, 2, 0), new Recipe(1, 2, 2));
-            _rig.Fakes.Bay = bay;
+            const string headlamp = "rover.warm_headlamp";
             KitTitleSettings settings = _rig.Tuning.KitTitle;
-            Events.Publish(new UpgradePurchased(bay[2].Id, 1));
             Events.Publish(new RoverKitInstalling(RoverKitPiece.LampBar, false));
             yield return Seconds(settings.Delay + settings.Reveal.FadeIn);
-            Assert.IsFalse(_rig.Ui.KitTitle.IsVisible, "bought but not yet settled: no name before the piece lands");
+            Assert.IsFalse(_rig.Ui.KitTitle.IsVisible, "installing, not yet settled: no name before the piece lands");
 
-            Events.Publish(new RoverKitFitted(RoverKitPiece.LampBar, false, "rover.warm_headlamp"));
+            Events.Publish(new RoverKitFitted(RoverKitPiece.LampBar, false, headlamp));
             Events.Publish(new RoverKitInstalling(RoverKitPiece.SolarCell, true));
             Events.Publish(new RoverKitFitted(RoverKitPiece.SolarCell, true, string.Empty));
             yield return Seconds(settings.Delay + settings.Reveal.FadeIn + 0.2f);
             Assert.IsTrue(_rig.Ui.KitTitle.IsVisible);
-            Assert.AreEqual(Text(UiKeys.UpgradeName(bay[2].Id)), _rig.Ui.Layout.KitTitleName.text);
+            Assert.AreEqual(Text(UiKeys.UpgradeName(headlamp)), _rig.Ui.Layout.KitTitleName.text,
+                "named after the upgrade the fitted piece came from");
             Rect screen = _rig.Ui.Layout.Root.worldBound;
             Assert.Less(_rig.Ui.Layout.KitTitle.worldBound.yMax, screen.yMin + screen.height * 0.3f,
                 "high on screen, clear of 07 in the middle of the install view");
@@ -385,7 +384,7 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual(Text(gift), _rig.Ui.Layout.KitTitleName.text);
 
             LogAssert.Expect(LogType.Error, new Regex("CargoRack settled onto 07"));
-            Events.Publish(new RoverKitFitted(RoverKitPiece.CargoRack, false, "rover.cargo_cradle"));
+            Events.Publish(new RoverKitFitted(RoverKitPiece.CargoRack, false, string.Empty));
         }
 
         [UnityTest]

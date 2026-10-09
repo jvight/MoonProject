@@ -36,13 +36,21 @@ namespace MoonProject.UI.Tests
         /// <summary>A piece of bay kit: one level costing <paramref name="cost"/>, granting an ability.</summary>
         public UpgradeDefinition Kit(string id, Recipe cost)
         {
-            return Make(id, UpgradeStationKind.Workshop, true, cost);
-        }
-
-        /// <summary>A radio-tower style upgrade: one level per recipe, none granting an ability.</summary>
-        public UpgradeDefinition Tower(string id, params Recipe[] costs)
-        {
-            return Make(id, UpgradeStationKind.RadioTower, false, costs);
+            var upgrade = ScriptableObject.CreateInstance<UpgradeDefinition>();
+            var serialized = new SerializedObject(upgrade);
+            serialized.FindProperty("_id").stringValue = id;
+            serialized.FindProperty("_station").intValue = (int)UpgradeStationKind.Workshop;
+            SerializedProperty levels = serialized.FindProperty("_levels");
+            levels.arraySize = 1;
+            SerializedProperty level = levels.GetArrayElementAtIndex(0);
+            SerializedProperty recipe = level.FindPropertyRelative("_recipe");
+            recipe.FindPropertyRelative("_metal").intValue = cost.Metal;
+            recipe.FindPropertyRelative("_wiring").intValue = cost.Wiring;
+            recipe.FindPropertyRelative("_optics").intValue = cost.Optics;
+            level.FindPropertyRelative("_grantsAbility").boolValue = true;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            _made.Add(upgrade);
+            return upgrade;
         }
 
         public UpgradeDefinition StationUpgradeAt(int index)
@@ -97,29 +105,6 @@ namespace MoonProject.UI.Tests
             }
 
             _made.Clear();
-        }
-
-        private UpgradeDefinition Make(string id, UpgradeStationKind station, bool grantsAbility, params Recipe[] costs)
-        {
-            var upgrade = ScriptableObject.CreateInstance<UpgradeDefinition>();
-            var serialized = new SerializedObject(upgrade);
-            serialized.FindProperty("_id").stringValue = id;
-            serialized.FindProperty("_station").intValue = (int)station;
-            SerializedProperty levels = serialized.FindProperty("_levels");
-            levels.arraySize = costs.Length;
-            for (int i = 0; i < costs.Length; i++)
-            {
-                SerializedProperty level = levels.GetArrayElementAtIndex(i);
-                SerializedProperty recipe = level.FindPropertyRelative("_recipe");
-                recipe.FindPropertyRelative("_metal").intValue = costs[i].Metal;
-                recipe.FindPropertyRelative("_wiring").intValue = costs[i].Wiring;
-                recipe.FindPropertyRelative("_optics").intValue = costs[i].Optics;
-                level.FindPropertyRelative("_grantsAbility").boolValue = grantsAbility;
-            }
-
-            serialized.ApplyModifiedPropertiesWithoutUndo();
-            _made.Add(upgrade);
-            return upgrade;
         }
     }
 }

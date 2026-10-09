@@ -65,7 +65,6 @@ namespace MoonProject.UI
         private HopFade _hopFade;
         private RelayTag _relayTag;
         private TowerPanel _tower;
-        private KitNames _kitNames;
         private KitTitle _kitTitle;
         private FriendReadout _friendReadout;
         private FriendNameTag _friendName;
@@ -205,7 +204,6 @@ namespace MoonProject.UI
             _cursor = new CursorPolicy();
             _glyphs = new GlyphLabels(services.Input, _localization);
             _tickerLines = new TickerQueue(_tuning.Ticker, new TickerText(_localization));
-            _kitNames = new KitNames();
 
             ISaveService save = services.Save;
             _tokens.Add(save.Register(new SaveSection<SettingsSaveData>(UiSaveKeys.Settings,
@@ -232,7 +230,6 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<RadioProgramChanged>(OnRadioProgramChanged));
             _tokens.Add(events.Subscribe<RelayRestored>(OnRelayRestored));
             _tokens.Add(events.Subscribe<RadioHopListChanged>(OnRadioHopListChanged));
-            _tokens.Add(events.Subscribe<UpgradePurchased>(OnUpgradePurchased));
             _tokens.Add(events.Subscribe<RoverKitFitted>(OnRoverKitFitted));
 
             services.Input.Menu.Enable();
@@ -499,25 +496,12 @@ namespace MoonProject.UI
             }
         }
 
-        private void OnUpgradePurchased(UpgradePurchased purchased)
-        {
-            if (_services.Shop.TryGetOffer(purchased.UpgradeId, out UpgradeOffer offer))
-            {
-                _kitNames.Purchased(offer.Definition, purchased.Level);
-            }
-            else
-            {
-                Debug.LogError($"{nameof(UISystem)}: '{purchased.UpgradeId}' was bought but the shop does not know " +
-                               "it; its kit cannot be named.", this);
-            }
-        }
-
         private void OnRoverKitFitted(RoverKitFitted fitted)
         {
-            if (!_kitNames.TryTitle(fitted, out string key))
+            if (!KitNames.TryTitle(fitted, out string key))
             {
                 Debug.LogError($"{nameof(UISystem)}: {fitted.Piece} settled onto 07 (gift: {fitted.Gift}) with no " +
-                               "purchase or gift to name it.", this);
+                               "upgrade or gift to name it.", this);
                 return;
             }
 
