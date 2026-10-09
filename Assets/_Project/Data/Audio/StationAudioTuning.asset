@@ -15,6 +15,9 @@ MonoBehaviour:
   _feedFadeIn: 0.2
   _feedFadeOut: 0.4
   _feedVolume: 0.7
+  _dropVolume: 0.7
+  _dropPitchStep: 0.035
+  _dropPitchWobble: 0.012
   _armDeadSpeed: 0.05
   _armFullSpeed: 0.8
   _armPlacedSpeed: 10
