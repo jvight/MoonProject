@@ -6,18 +6,24 @@ using UnityEngine.Rendering.Universal;
 namespace MoonProject.World
 {
     /// <summary>
-    /// Applies <see cref="AtmosphereSettings"/> to the scene: trilight ambient, exponential-squared fog and the
-    /// directional earthlight shining from Earth's side of the sky. Used by the scene build (saved into the scene)
-    /// and by <see cref="WorldSystem"/> (so play mode always matches the tuning asset).
+    /// Applies <see cref="AtmosphereSettings"/> to the scene: trilight ambient, exponential-squared fog, the
+    /// directional earthlight shining from Earth's side of the sky and the shadowless fill opposite it. Used by the
+    /// scene build (saved into the scene) and by <see cref="WorldSystem"/> (so play mode always matches the tuning
+    /// asset).
     /// </summary>
     public static class WorldAtmosphere
     {
-        public static void Apply(AtmosphereSettings atmosphere, SkySettings sky, Light earthlight)
+        public static void Apply(AtmosphereSettings atmosphere, SkySettings sky, Light earthlight, Light fill)
         {
-            if (atmosphere == null || sky == null || earthlight == null)
+            if (atmosphere == null || sky == null || earthlight == null || fill == null)
             {
                 throw new ArgumentNullException(atmosphere == null ? nameof(atmosphere)
-                    : sky == null ? nameof(sky) : nameof(earthlight));
+                    : sky == null ? nameof(sky) : earthlight == null ? nameof(earthlight) : nameof(fill));
+            }
+
+            if (fill == earthlight)
+            {
+                throw new ArgumentException("The fill must be a light of its own, not the earthlight.", nameof(fill));
             }
 
             RenderSettings.ambientMode = AmbientMode.Trilight;
@@ -42,14 +48,37 @@ namespace MoonProject.World
             earthlight.shadowBias = atmosphere.ShadowDepthBias;
             earthlight.shadowNormalBias = atmosphere.ShadowNormalBias;
             earthlight.transform.rotation = Quaternion.LookRotation(-LightSourceDirection(atmosphere, sky));
+
+            // The earthlight stays the main light (RenderSettings.sun): the fill is a Forward+ additional light.
+            fill.type = LightType.Directional;
+            fill.color = atmosphere.FillColor;
+            fill.intensity = atmosphere.FillIntensity;
+            fill.shadows = LightShadows.None;
+            fill.transform.rotation = Quaternion.LookRotation(-FillSourceDirection(atmosphere, sky));
         }
 
         /// <summary>Unit vector pointing from the ground toward where the earthlight comes from.</summary>
         public static Vector3 LightSourceDirection(AtmosphereSettings atmosphere, SkySettings sky)
         {
-            float elevation = atmosphere.LightElevation * Mathf.Deg2Rad;
-            Vector2 horizontal = MoonSurface.BearingToDirection(sky.EarthBearing + atmosphere.LightBearingOffset)
-                * Mathf.Cos(elevation);
+            return SourceDirection(LightBearing(atmosphere, sky), atmosphere.LightElevation);
+        }
+
+        /// <summary>Unit vector pointing from the ground toward where the fill comes from.</summary>
+        public static Vector3 FillSourceDirection(AtmosphereSettings atmosphere, SkySettings sky)
+        {
+            return SourceDirection(LightBearing(atmosphere, sky) + atmosphere.FillBearingOffset,
+                atmosphere.FillElevation);
+        }
+
+        private static float LightBearing(AtmosphereSettings atmosphere, SkySettings sky)
+        {
+            return sky.EarthBearing + atmosphere.LightBearingOffset;
+        }
+
+        private static Vector3 SourceDirection(float bearing, float elevationDegrees)
+        {
+            float elevation = elevationDegrees * Mathf.Deg2Rad;
+            Vector2 horizontal = MoonSurface.BearingToDirection(bearing) * Mathf.Cos(elevation);
             return new Vector3(horizontal.x, Mathf.Sin(elevation), horizontal.y);
         }
     }

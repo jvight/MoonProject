@@ -8,9 +8,9 @@ using MoonProject.Editor.SceneBuild;
 namespace MoonProject.World.Editor
 {
     /// <summary>
-    /// The World's part of Main.unity: the earthlight, the post-processing volume, the skybox, fog and ambient
-    /// (saved into the scene), The Peak's beacon, and the <see cref="WorldSystem"/> that generates the terrain, the
-    /// rocks and Earth at boot.
+    /// The World's part of Main.unity: the earthlight and its fill, the post-processing volume, the skybox, fog and
+    /// ambient (saved into the scene), The Peak's beacon, and the <see cref="WorldSystem"/> that generates the
+    /// terrain, the rocks and Earth at boot.
     /// Runs first (order 200) because rover, audio and gameplay read ITerrainQuery and IWorldLayout.
     /// </summary>
     public sealed class WorldSceneContributor : ISceneContributor
@@ -28,12 +28,13 @@ namespace MoonProject.World.Editor
             Transform root = context.WorldRoot.transform;
 
             var earthlight = context.CreateChild("Earthlight", root).AddComponent<Light>();
+            var fill = context.CreateChild("Fill Light", root).AddComponent<Light>();
             var volume = context.CreateChild("Post Processing", root).AddComponent<Volume>();
             volume.isGlobal = true;
             volume.sharedProfile = profile;
 
             RenderSettings.skybox = skyMaterial;
-            WorldAtmosphere.Apply(settings.Atmosphere, settings.Sky, earthlight);
+            WorldAtmosphere.Apply(settings.Atmosphere, settings.Sky, earthlight, fill);
 
             PeakBeacon beacon = CreateBeacon(context, settings, root);
             CreateCanyonGlow(context, settings, root);
@@ -47,6 +48,7 @@ namespace MoonProject.World.Editor
             AssignRocks(context, serialized, "_pebbleRocks", WorldPaths.PebbleRocks);
             AssignRocks(context, serialized, "_boulderRocks", WorldPaths.BoulderRocks);
             Assign(serialized, "_earthlight", earthlight);
+            Assign(serialized, "_fillLight", fill);
             Assign(serialized, "_peakBeacon", beacon);
             serialized.ApplyModifiedPropertiesWithoutUndo();
             context.AddSystem(world);

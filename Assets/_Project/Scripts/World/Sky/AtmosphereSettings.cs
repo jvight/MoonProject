@@ -5,10 +5,11 @@ namespace MoonProject.World
 {
     /// <summary>
     /// The cool night light of the moon (pillar 6, "Alone, and at peace"): a low earthlight from Earth's side of the
-    /// sky that rakes long shadows across the dunes, a deep violet trilight ambient so the moon is mostly cool
-    /// shadow with soft-lit planes, and the horizon-coloured exponential fog that keeps near ground crisp while far
-    /// rock dissolves toward the sky band. Warm lights belong to the rover and the base; everything here stays cool
-    /// so they glow.
+    /// sky that rakes long shadows across the dunes, a faint cool fill from the far horizon opposite it so the sides
+    /// of built things it leaves dark still show their paint and rust, a deep violet trilight ambient so the moon is
+    /// mostly cool shadow with soft-lit planes, and the horizon-coloured exponential fog that keeps near ground crisp
+    /// while far rock dissolves toward the sky band. Warm lights belong to the rover and the base; everything here
+    /// stays cool so they glow.
     /// </summary>
     [Serializable]
     public sealed class AtmosphereSettings
@@ -45,6 +46,27 @@ namespace MoonProject.World
         [Range(0f, 3f)]
         [SerializeField] private float _shadowNormalBias = 0.5f;
 
+        [Header("Fill")]
+        [Tooltip("Colour of the fill: the cool glow of the far horizon opposite the earthlight, a little bluer than " +
+            "it. It lights built things (the base, wrecks, rocks, 07), never the ground: LofiTerrain takes no " +
+            "directional fill, so the dunes' shadow sides and the earthlight's long shadows stay deep.")]
+        [SerializeField] private Color _fillColor = new Color(0.62f, 0.7f, 1f);
+
+        [Tooltip("Intensity of the fill (it casts no shadows). Soft: the faces the earthlight leaves dark show their " +
+            "paint, rust and dust instead of a flat violet, while staying far darker than the lit faces.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _fillIntensity = 0.3f;
+
+        [Tooltip("Elevation the fill shines from, degrees. Near the horizon it lifts walls and leaves top faces " +
+            "(and their dust caps) to the earthlight.")]
+        [Range(0f, 30f)]
+        [SerializeField] private float _fillElevation = 6f;
+
+        [Tooltip("Bearing of the fill relative to the earthlight's, degrees. Roughly opposite it, swung toward the " +
+            "south so the base's side the spawn view looks at, which faces away from the earthlight, catches it.")]
+        [Range(90f, 270f)]
+        [SerializeField] private float _fillBearingOffset = 232f;
+
         [Header("Ambient (trilight)")]
         [Tooltip("Ambient from above: the violet glow of the sky.")]
         [SerializeField] private Color _ambientSky = new Color(0.17f, 0.155f, 0.33f);
@@ -71,6 +93,10 @@ namespace MoonProject.World
         public float ShadowStrength => _shadowStrength;
         public float ShadowDepthBias => _shadowDepthBias;
         public float ShadowNormalBias => _shadowNormalBias;
+        public Color FillColor => _fillColor;
+        public float FillIntensity => _fillIntensity;
+        public float FillElevation => _fillElevation;
+        public float FillBearingOffset => _fillBearingOffset;
         public Color AmbientSky => _ambientSky;
         public Color AmbientEquator => _ambientEquator;
         public Color AmbientGround => _ambientGround;
