@@ -47,9 +47,10 @@ namespace MoonProject.Rover
         [Range(-10f, 80f)]
         [SerializeField] private float _defaultPitch = 16f;
 
-        [Tooltip("Lowest orbit elevation (deg).")]
-        [Range(-20f, 60f)]
-        [SerializeField] private float _minPitch = 3f;
+        [Tooltip("Lowest orbit elevation (deg): below zero the camera sinks under 07 and looks up at the sky over it. "
+            + "Near the dust it stops sinking (Lowest Camera Height) and the rest of the way only tilts up.")]
+        [Range(-40f, 60f)]
+        [SerializeField] private float _minPitch = -25f;
 
         [Tooltip("Orbit elevation (deg) of the opening shot: low, so the camera looks almost level across the basin "
             + "at Earth and The Peak (design ruling 8: at most ~6 deg down). It eases to the resting elevation once 07 "
@@ -60,6 +61,50 @@ namespace MoonProject.Rover
         [Tooltip("Highest orbit elevation (deg).")]
         [Range(10f, 89f)]
         [SerializeField] private float _maxPitch = 60f;
+
+        [Tooltip("Lowest the orbit lets the camera sink (m above 07's ground contact); asking for a lower elevation "
+            + "tilts the view up instead, so the camera never digs into the dust.")]
+        [Range(0.2f, 2f)]
+        [SerializeField] private float _lowestCameraHeight = 0.6f;
+
+        [Tooltip("Most the view tilts up (deg) once the camera stopped sinking, so 07 stays in the frame, a small "
+            + "silhouette under the sky.")]
+        [Range(0f, 30f)]
+        [SerializeField] private float _maxLookUpTilt = 10f;
+
+        [Header("Stargazing")]
+        [Tooltip("Orbit elevation (deg) where looking up begins to count: 07 starts lifting its head toward the sky.")]
+        [Range(-10f, 20f)]
+        [SerializeField] private float _stargazeStartElevation = 0f;
+
+        [Tooltip("Orbit elevation (deg) at which the view counts as looking fully up.")]
+        [Range(-40f, 0f)]
+        [SerializeField] private float _stargazeFullElevation = -20f;
+
+        [Tooltip("Half-life (s) of 07 lifting its gaze to the sky: slow, like noticing the stars.")]
+        [Range(0.05f, 5f)]
+        [SerializeField] private float _stargazeRiseHalfLife = 1.2f;
+
+        [Tooltip("Half-life (s) of 07 lowering its gaze again when the view drops or the player drives.")]
+        [Range(0.05f, 3f)]
+        [SerializeField] private float _stargazeFallHalfLife = 0.4f;
+
+        [Tooltip("Seconds of rest while looking up before the stargazing beat begins (HUD fades, music thins).")]
+        [Range(0.5f, 15f)]
+        [SerializeField] private float _stargazeDelay = 3f;
+
+        [Tooltip("How far up the view must look (0..1 between start and full elevation) for the beat to begin.")]
+        [Range(0.1f, 1f)]
+        [SerializeField] private float _stargazeBeginShare = 0.6f;
+
+        [Tooltip("The beat holds while the view still looks at least this far up (below Begin Share, so a small "
+            + "nudge of the view never ends it).")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _stargazeHoldShare = 0.3f;
+
+        [Tooltip("Above this speed (m/s) 07 is not still: no gaze to the sky and no beat.")]
+        [Range(0.01f, 2f)]
+        [SerializeField] private float _stargazeMaxSpeed = 0.3f;
 
         [Header("Auto-recenter")]
         [Tooltip("Seconds without look input before the camera eases back behind 07.")]
@@ -248,6 +293,26 @@ namespace MoonProject.Rover
         public float MinPitch => Mathf.Min(_minPitch, _maxPitch);
 
         public float MaxPitch => _maxPitch;
+
+        public float LowestCameraHeight => _lowestCameraHeight;
+
+        public float MaxLookUpTilt => _maxLookUpTilt;
+
+        public float StargazeStartElevation => _stargazeStartElevation;
+
+        public float StargazeFullElevation => Mathf.Min(_stargazeFullElevation, _stargazeStartElevation - 1f);
+
+        public float StargazeRiseHalfLife => _stargazeRiseHalfLife;
+
+        public float StargazeFallHalfLife => _stargazeFallHalfLife;
+
+        public float StargazeDelay => _stargazeDelay;
+
+        public float StargazeBeginShare => _stargazeBeginShare;
+
+        public float StargazeHoldShare => Mathf.Min(_stargazeHoldShare, _stargazeBeginShare);
+
+        public float StargazeMaxSpeed => _stargazeMaxSpeed;
 
         public float RecenterDelay => _recenterDelay;
 
