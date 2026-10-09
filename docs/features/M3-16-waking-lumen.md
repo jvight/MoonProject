@@ -5,6 +5,8 @@
 > that looks useless. It must be clear: design the progression step by step, so the player unlocks things and gets
 > used to them." This spec replaces "everything available from minute one" with a guided, logical wake-up of the
 > base. It absorbs M3-15 §2 (the lift) and §4 (pads). Rulings 11, 12 and 14 and pillar 6 apply.
+>
+> **Approved by the owner on 2026-10-09:** this is the core of 0.5; a fresh game opens fully dark (only the dock and 07's eye are lit); kits unlock through blueprints found in salvage sites.
 
 ## Three rules
 1. **Asleep until woken.** The whole base is there from the first frame: it is home, and you should see it. But every
@@ -68,7 +70,7 @@ to do. Dormant and finished stations show nothing.
 ## Save compatibility
 A save from before this progression is put away (SaveService content floor raised to this release), as in M3-15 §1.
 
-## Split (proposal; sized after owner approval)
+## Split
 | Box | Delivers |
 |---|---|
 | gameplay | dormant/awake state per station and power stages from tower levels; step flow and the "next" line source; blueprints and the board; sonar "not yet" answers; lift station and ride |
