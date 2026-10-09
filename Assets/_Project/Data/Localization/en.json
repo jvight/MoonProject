@@ -553,6 +553,14 @@
         {
             "key": "kit.fresh_paint.name",
             "text": "A fresh coat from Bell"
+        },
+        {
+            "key": "ui.bay.fitted",
+            "text": "Fitted to 07"
+        },
+        {
+            "key": "ui.bay.pick",
+            "text": "tap for the next"
         }
     ]
 }

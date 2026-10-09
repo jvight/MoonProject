@@ -553,6 +553,14 @@
         {
             "key": "kit.fresh_paint.name",
             "text": "Lớp sơn mới từ Bell"
+        },
+        {
+            "key": "ui.bay.fitted",
+            "text": "Đã lắp cho 07"
+        },
+        {
+            "key": "ui.bay.pick",
+            "text": "nhấn nhẹ để đổi món"
         }
     ]
 }
