@@ -50,7 +50,7 @@ namespace MoonProject.World.PlayModeTests
         // The save seeded before boot: Bell (FriendState.Awake = 3, every part and item held) home at her corner,
         // in the envelope and section format of Core's SaveService and Gameplay's friends section (version 2).
         private const string BellHomeSave =
-            "{\"formatVersion\":1,\"savedAtUtc\":\"2026-10-08T00:00:00Z\"," +
+            "{\"formatVersion\":1,\"contentVersion\":\"0.4.1\",\"savedAtUtc\":\"2026-10-08T00:00:00Z\"," +
             "\"sections\":[{\"key\":\"gameplay.friends\"," +
             "\"version\":2,\"json\":\"{\\\"friends\\\":[{\\\"id\\\":\\\"bell\\\",\\\"state\\\":3," +
             "\\\"parts\\\":15,\\\"items\\\":15,\\\"discovered\\\":true,\\\"welcomed\\\":true}]}\"}]}";
