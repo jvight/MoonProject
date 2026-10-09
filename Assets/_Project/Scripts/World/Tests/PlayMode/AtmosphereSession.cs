@@ -27,8 +27,8 @@ namespace MoonProject.World.PlayModeTests
     /// <summary>
     /// The look of the real game against pillar 6 (M3-10): boots the built Main scene on its own save slot, seeded so
     /// that Bell is repaired and home at her corner (her dial is one of the warm points), lets 07 wake and the base
-    /// warm up, then, for each pose of Editor/Captures/atmosphere_views.json and two poses at Bell's corner, renders
-    /// the game's own camera (same lens, post-processing and anti-aliasing) to Logs/world-captures/atmosphere-*.png
+    /// warm up, then, for the game camera's own view at spawn, each pose of Editor/Captures/atmosphere_views.json, the
+    /// lander up close (the owner's view) and two poses at Bell's corner, renders the game's own camera (same lens, post-processing and anti-aliasing) to Logs/world-captures/atmosphere-*.png
     /// and times <see cref="TimedFrames"/> 1920x1080 frames there, each waited for on the GPU, so the median is the
     /// full render cost of a frame (CPU submit and GPU, serialised). Writes atmosphere.md. Slow and needs a GPU: run
     /// on demand with --category AtmosphereSession.
@@ -63,6 +63,12 @@ namespace MoonProject.World.PlayModeTests
         private const float BellFarDistance = 40f;
         private const float BellFarHeight = 9f;
         private const float BellLookHeight = 0.8f;
+
+        // The lander up close, the way the owner looks at the base (Art's lander_close, in the lander's frame).
+        private const string LanderName = "Lander";
+        private static readonly Vector3 LanderCloseEye = new Vector3(0.6f, 2.3f, 8.4f);
+        private static readonly Vector3 LanderCloseLook = new Vector3(0f, 2.6f, 0f);
+        private const float LanderCloseFov = 55f;
 
         private static readonly string CaptureFolder =
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "world-captures"));
@@ -116,12 +122,14 @@ namespace MoonProject.World.PlayModeTests
 #endif
             GameBootstrap bootstrap = null;
             Transform bellCorner = null;
+            Transform lander = null;
             foreach (GameObject root in SceneManager.GetSceneByPath(CanyonSessionScene.ScenePath).GetRootGameObjects())
             {
                 bootstrap = bootstrap != null ? bootstrap : root.GetComponent<GameBootstrap>();
                 foreach (Transform node in root.GetComponentsInChildren<Transform>(true))
                 {
                     bellCorner = bellCorner != null || node.name != BellCornerName ? bellCorner : node;
+                    lander = lander != null || node.name != LanderName ? lander : node;
                 }
             }
 
@@ -138,13 +146,15 @@ namespace MoonProject.World.PlayModeTests
             yield return new WaitForSeconds(SettleSeconds);
 
             Assert.IsNotNull(bellCorner, "the radio tower carries Bell's corner");
-            PoseFile file = JsonUtility.FromJson<PoseFile>(File.ReadAllText(PosesPath));
-            var poses = new List<Pose>(file.poses)
-            {
-                BellPose(bellCorner, "bell_corner_near"),
-                BellPose(bellCorner, null),
-            };
+            Assert.IsNotNull(lander, "the base has its lander");
             Camera view = context.Get<IViewCamera>().Camera;
+            PoseFile file = JsonUtility.FromJson<PoseFile>(File.ReadAllText(PosesPath));
+            var poses = new List<Pose> { ViewPose(view.transform, view.fieldOfView) };
+            poses.AddRange(file.poses);
+            poses.Add(LookPose("lander_close", lander.TransformPoint(LanderCloseEye),
+                lander.TransformPoint(LanderCloseLook), LanderCloseFov));
+            poses.Add(BellPose(bellCorner, "bell_corner_near"));
+            poses.Add(BellPose(bellCorner, null));
             var report = new StringBuilder();
             report.AppendLine("# Atmosphere session (real Main scene)");
             report.AppendLine();
@@ -202,12 +212,31 @@ namespace MoonProject.World.PlayModeTests
                 ? corner.position + corner.forward * BellNearDistance + corner.right * BellNearSide
                     + Vector3.up * BellNearHeight
                 : corner.position + corner.forward * BellFarDistance + Vector3.up * BellFarHeight;
+            return LookPose(nearName ?? "bell_corner_from_40m", eye, look, 50f);
+        }
+
+        /// <summary>What the game camera itself shows once 07 is awake: the player's real first frame.</summary>
+        private static Pose ViewPose(Transform view, float fov)
+        {
+            Vector3 eye = view.position;
+            Vector3 euler = view.eulerAngles;
             return new Pose
             {
-                name = nearName ?? "bell_corner_from_40m",
+                name = "spawn_game_camera",
+                position = new[] { eye.x, eye.y, eye.z },
+                euler = new[] { euler.x, euler.y, euler.z },
+                fov = fov,
+            };
+        }
+
+        private static Pose LookPose(string name, Vector3 eye, Vector3 look, float fov)
+        {
+            return new Pose
+            {
+                name = name,
                 position = new[] { eye.x, eye.y, eye.z },
                 lookAt = new[] { look.x, look.y, look.z },
-                fov = 50f,
+                fov = fov,
             };
         }
 
