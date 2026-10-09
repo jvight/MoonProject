@@ -7,21 +7,21 @@ using MoonProject.Gameplay;
 namespace MoonProject.UI
 {
     /// <summary>
-    /// Kenji's bench's choices on the station panel (docs/features/M3-11): one row per piece of kit still to craft,
+    /// Kenji's Rover Bay's choices on the station panel (docs/features/M3-11): one row per piece of kit still to craft,
     /// with its name ("upgrade.&lt;id&gt;.name"), its recipe in material icons (the ones 07 is short of dimmed) and
     /// what it does in one line ("upgrade.&lt;id&gt;.&lt;level&gt;.effect", cut short with an ellipsis). The picked
     /// row is lit and shows its whole line. Rows are made when the list first needs them and then reused; text is
     /// written only when the list, the pick, the stock or the language changes.
     /// </summary>
-    internal sealed class BenchList
+    internal sealed class BayList
     {
-        public const string RowClass = "bench-row";
-        public const string SelectedClass = "bench-row--selected";
-        public const string LineClass = "bench-row__line";
-        public const string LampClass = "bench-row__lamp";
-        public const string NameClass = "bench-row__name";
-        public const string RecipeClass = "bench-row__recipe";
-        public const string EffectClass = "bench-row__effect";
+        public const string RowClass = "bay-row";
+        public const string SelectedClass = "bay-row--selected";
+        public const string LineClass = "bay-row__line";
+        public const string LampClass = "bay-row__lamp";
+        public const string NameClass = "bay-row__name";
+        public const string RecipeClass = "bay-row__recipe";
+        public const string EffectClass = "bay-row__effect";
 
         private readonly VisualElement _container;
         private readonly ILocalization _localization;
@@ -35,7 +35,7 @@ namespace MoonProject.UI
         private int _optics = -1;
         private bool _stale = true;
 
-        public BenchList(VisualElement container, ILocalization localization, IntText numbers)
+        public BayList(VisualElement container, ILocalization localization, IntText numbers)
         {
             _container = container ?? throw new ArgumentNullException(nameof(container));
             _localization = localization ?? throw new ArgumentNullException(nameof(localization));
@@ -70,7 +70,7 @@ namespace MoonProject.UI
         }
 
         /// <summary>Shows <paramref name="choices"/> against <paramref name="stock"/> (cheap when unchanged).</summary>
-        public void Show(BenchChoice choices, IMaterialStock stock)
+        public void Show(BayChoice choices, IMaterialStock stock)
         {
             if (_stale || choices.Version != _version)
             {
@@ -107,7 +107,7 @@ namespace MoonProject.UI
             _stale = true;
         }
 
-        private void Fill(BenchChoice choices)
+        private void Fill(BayChoice choices)
         {
             int count = choices.Count;
             while (_pool.Count < count)

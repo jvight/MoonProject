@@ -32,7 +32,7 @@
 .chip__number,
 .friend-name,
 .kit-title__name,
-.bench-row__name,
+.bay-row__name,
 .hop-list__glyph,
 .dial-readout__station,
 .dial-readout__tape,
@@ -309,7 +309,7 @@ Label {
 }
 
 /*
- * A fitted piece of kit's name (crafted at Kenji's bench, or a friend's gift): high and quiet, clear of 07, on a
+ * A fitted piece of kit's name (crafted at Kenji's Rover Bay, or a friend's gift): high and quiet, clear of 07, on a
  * soft dusk of shadow so it reads even over the bright Earth.
  */
 
@@ -800,7 +800,7 @@ Label {
     border-radius: 4px;
 }
 
-/* Each station's accent: the radio tower's amber lamp, Kenji's workbench in the rover's warm orange paint */
+/* Each station's accent: the radio tower's amber lamp, Kenji's Rover Bay in the rover's warm orange paint */
 
 .tower-panel--radio-tower .tower-panel__lamp {
     background-color: var(--moon-warm-lamp);
@@ -845,13 +845,13 @@ Label {
     margin-right: 12px;
 }
 
-/* Kenji's bench: what is left to craft, one row each, the picked one lit and read in full */
+/* Kenji's Rover Bay: what is left to craft, one row each, the picked one lit and read in full */
 
 .tower-panel__choices {
     margin: 12px -12px 0 -12px;
 }
 
-.bench-row {
+.bay-row {
     padding: 9px 12px 10px 12px;
     margin-bottom: 2px;
     border-radius: 12px;
@@ -859,17 +859,17 @@ Label {
     border-color: rgba(0, 0, 0, 0);
 }
 
-.bench-row--selected {
+.bay-row--selected {
     background-color: var(--moon-cream-glow);
     border-color: var(--moon-glass-edge);
 }
 
-.bench-row__line {
+.bay-row__line {
     flex-direction: row;
     align-items: center;
 }
 
-.bench-row__lamp {
+.bay-row__lamp {
     width: 6px;
     height: 6px;
     margin-right: 10px;
@@ -877,27 +877,27 @@ Label {
     background-color: var(--moon-track);
 }
 
-.bench-row--selected .bench-row__lamp {
+.bay-row--selected .bay-row__lamp {
     background-color: var(--moon-warm-accent);
 }
 
-.bench-row__name {
+.bay-row__name {
     flex-grow: 1;
     flex-shrink: 1;
     font-size: 19px;
     color: var(--moon-text-dim);
 }
 
-.bench-row--selected .bench-row__name {
+.bay-row--selected .bay-row__name {
     color: var(--moon-text);
 }
 
-.bench-row__recipe {
+.bay-row__recipe {
     flex-shrink: 0;
     margin-left: 12px;
 }
 
-.bench-row__effect {
+.bay-row__effect {
     margin: 3px 0 0 16px;
     font-size: 15px;
     color: var(--moon-text-faint);
@@ -906,7 +906,7 @@ Label {
     text-overflow: ellipsis;
 }
 
-.bench-row--selected .bench-row__effect {
+.bay-row--selected .bay-row__effect {
     color: var(--moon-text-dim);
     white-space: normal;
 }
@@ -948,6 +948,12 @@ Label {
 
 .tower-panel--celebrate .hold__word {
     color: var(--moon-honey);
+}
+
+/* While the station works on a purchase nothing can be picked, so the pick hint steps back (its place is kept) */
+
+.tower-panel--celebrate .tower-panel__pick {
+    visibility: hidden;
 }
 
 

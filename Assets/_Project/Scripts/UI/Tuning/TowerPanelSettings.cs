@@ -4,8 +4,8 @@ using UnityEngine;
 namespace MoonProject.UI
 {
     /// <summary>
-    /// The station upgrade panel and its hold-to-confirm ring (no accidental purchases), and how Kenji's bench picks
-    /// between its choices.
+    /// The station upgrade panel and its hold-to-confirm ring (no accidental purchases), the station's line once its
+    /// work shows, and how Kenji's Rover Bay picks between its choices.
     /// </summary>
     [Serializable]
     public sealed class TowerPanelSettings
@@ -25,16 +25,22 @@ namespace MoonProject.UI
         [Range(0f, 1f)]
         [SerializeField] private float _armVisibility = 0.9f;
 
-        [Tooltip("Seconds the panel glows after a purchase before showing the next level.")]
+        [Tooltip("Seconds the station's line glows (once its work shows: the tower's stitch, the bay setting the " +
+                 "piece on) before the panel offers what is next.")]
         [Range(0.2f, 4f)]
         [SerializeField] private float _celebrateSeconds = 1.4f;
 
-        [Tooltip("At Kenji's bench: Interact let go within this many seconds is a tap (the next choice), not a hold. " +
-                 "The ring waits this long before it starts to fill, so a tap never stirs it.")]
+        [Tooltip("Seconds the panel waits after a purchase for the station to show its work. Longer than any feed " +
+                 "and install moment; running out is reported as a fault and the panel moves on.")]
+        [Range(5f, 60f)]
+        [SerializeField] private float _cueWaitSeconds = 20f;
+
+        [Tooltip("At Kenji's Rover Bay: Interact let go within this many seconds is a tap (the next choice), not a " +
+                 "hold. The ring waits this long before it starts to fill, so a tap never stirs it.")]
         [Range(0.05f, 0.5f)]
         [SerializeField] private float _tapSeconds = 0.2f;
 
-        [Tooltip("At Kenji's bench: how far (0..1) the Winch must move to step once (a wheel notch or a d-pad " +
+        [Tooltip("At Kenji's Rover Bay: how far (0..1) the Winch must move to step once (a wheel notch or a d-pad " +
                  "press). It must settle back below this before it steps again; smaller trackpad drift is ignored.")]
         [Range(0.05f, 1f)]
         [SerializeField] private float _winchStep = 0.5f;
@@ -48,6 +54,8 @@ namespace MoonProject.UI
         public float ArmVisibility => _armVisibility;
 
         public float CelebrateSeconds => _celebrateSeconds;
+
+        public float CueWaitSeconds => _cueWaitSeconds;
 
         public float TapSeconds => _tapSeconds;
 

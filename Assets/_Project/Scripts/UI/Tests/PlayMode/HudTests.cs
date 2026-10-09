@@ -21,6 +21,11 @@ namespace MoonProject.UI.PlayModeTests
     /// </summary>
     public sealed class HudTests : InputTestFixture
     {
+        /// <summary>About when the tower's new section starts rising after a purchase (the port moment).</summary>
+        private const float StitchDelay = 1.3f;
+
+        private const float ShortCueWait = 1.5f;
+
         private string _slot;
         private InputActionAsset _controls;
         private UiTestRig _rig;
@@ -204,12 +209,25 @@ namespace MoonProject.UI.PlayModeTests
             Assert.Greater(_rig.Ui.Tower.HoldProgress, 0.2f);
             yield return Seconds(_rig.Tuning.TowerPanel.HoldSeconds);
             Assert.AreEqual(1, _rig.Fakes.Purchases);
-            Assert.IsTrue(_rig.Ui.Tower.IsCelebrating);
+            Assert.IsTrue(_rig.Ui.Tower.IsWorking, "the station works; the ring rests full");
+            Assert.AreEqual(1f, _rig.Ui.Tower.HoldProgress, 1e-3f);
+            Assert.AreEqual(string.Empty, _rig.Ui.Layout.TowerHoldWord.text, "and nothing is said yet");
+            yield return Seconds(StitchDelay);
+            Assert.IsTrue(_rig.Ui.Tower.IsWorking, "no line at the purchase itself");
+            Events.Publish(new StationCued(StationCue.FeedStarted, _rig.Fakes.Upgrade.Id, Vector3.zero));
+            Events.Publish(new StationCued(StationCue.Fed, _rig.Fakes.Upgrade.Id, Vector3.zero));
+            yield return null;
+            Assert.IsTrue(_rig.Ui.Tower.IsWorking, "feeding is not yet the tower's moment");
+            Events.Publish(new StationCued(StationCue.StitchStarted, _rig.Fakes.Upgrade.Id, Vector3.zero));
+            yield return null;
+            Assert.IsTrue(_rig.Ui.Tower.IsCelebrating, "the beam stitches the new section up: the line comes");
+            Assert.AreEqual(Text(UiKeys.TowerPurchased), _rig.Ui.Layout.TowerHoldWord.text);
             yield return Seconds(_rig.Tuning.TowerPanel.CelebrateSeconds + 0.5f);
             Assert.AreEqual(1, _rig.Fakes.Purchases, "one purchase per hold");
             Release(keyboard.eKey);
             yield return Seconds(0.3f);
             Assert.AreEqual("Raise the mast", _rig.Ui.Layout.TowerTitle.text, "the next level is offered");
+            Assert.AreEqual(Text(UiKeys.TowerHold), _rig.Ui.Layout.TowerHoldWord.text);
             Assert.IsTrue(recipe.Root(SalvageMaterial.Metal).ClassListContains(MaterialSlots.ShortClass),
                 "what 07 is short of reads dimmed");
             Assert.IsTrue(recipe.Root(SalvageMaterial.Optics).ClassListContains(MaterialSlots.ShortClass));
@@ -261,7 +279,7 @@ namespace MoonProject.UI.PlayModeTests
 
             _rig.Fakes.AtStation = false;
             yield return Seconds(1f);
-            _rig.Fakes.Upgrade = UiTestRig.WorkbenchUpgrade();
+            _rig.Fakes.Upgrade = UiTestRig.HoverJumpUpgrade();
             _rig.Fakes.AtStation = true;
             yield return Seconds(1f);
             Assert.AreEqual(Text(UiKeys.StationName(UpgradeStationKind.Workshop)), layout.TowerName.text);
@@ -274,38 +292,38 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator Bench_ListsWhatIsLeft_TapAndWinchPick_AndTheHoldCraftsThePickedOne()
+        public IEnumerator Bay_ListsWhatIsLeft_TapAndWinchPick_AndTheHoldCraftsThePickedOne()
         {
             Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
             Gamepad gamepad = InputSystem.AddDevice<Gamepad>();
             Boot();
             yield return null;
-            UpgradeDefinition[] bench = _rig.TestBench(new Recipe(2, 1, 0), new Recipe(3, 2, 0), new Recipe(1, 2, 2));
-            UpgradeDefinition hover = bench[0];
-            UpgradeDefinition cradle = bench[1];
-            UpgradeDefinition headlamp = bench[2];
-            _rig.Fakes.Bench = bench;
+            UpgradeDefinition[] bay = _rig.TestBay(new Recipe(2, 1, 0), new Recipe(3, 2, 0), new Recipe(1, 2, 2));
+            UpgradeDefinition hover = bay[0];
+            UpgradeDefinition cradle = bay[1];
+            UpgradeDefinition headlamp = bay[2];
+            _rig.Fakes.Bay = bay;
             _rig.Fakes.SetMaterials(4, 3, 0);
             _rig.Fakes.AtStation = true;
             yield return Seconds(1.5f);
             UiLayout layout = _rig.Ui.Layout;
             TowerPanel panel = _rig.Ui.Tower;
-            Assert.IsTrue(panel.IsVisible && panel.IsChoosing, "three pieces to craft: the bench lists them");
+            Assert.IsTrue(panel.IsVisible && panel.IsChoosing, "three pieces to craft: the bay lists them");
             Assert.AreEqual(3, panel.List.RowCount);
             Assert.AreEqual(Text(UiKeys.UpgradeName(hover.Id)), panel.List.RowName(0));
             Assert.AreEqual(Text(UiKeys.UpgradeEffect(headlamp.Id, 1)), panel.List.RowEffect(2));
-            Assert.IsTrue(panel.List.RowRoot(0).ClassListContains(BenchList.SelectedClass), "the first is picked");
+            Assert.IsTrue(panel.List.RowRoot(0).ClassListContains(BayList.SelectedClass), "the first is picked");
             Assert.IsTrue(panel.List.RowRecipe(2).Root(SalvageMaterial.Optics).ClassListContains(
                 MaterialSlots.ShortClass), "no optics yet: the headlamp's optics read dimmed");
             Assert.AreEqual(DisplayStyle.None, layout.TowerTitle.resolvedStyle.display, "no single offer's title");
             Assert.AreEqual(DisplayStyle.Flex, layout.TowerPick.resolvedStyle.display);
-            Assert.AreEqual(Text(UiKeys.BenchPick), layout.TowerPickWord.text);
+            Assert.AreEqual(Text(UiKeys.BayPick), layout.TowerPickWord.text);
             Assert.AreEqual(DisplayStyle.Flex, layout.TowerConfirm.resolvedStyle.display, "the hover-jump is covered");
 
             yield return Tap(keyboard.eKey);
             yield return Seconds(0.1f);
             Assert.AreSame(cradle, panel.Choices.Current, "a tap picks the next");
-            Assert.IsTrue(panel.List.RowRoot(1).ClassListContains(BenchList.SelectedClass));
+            Assert.IsTrue(panel.List.RowRoot(1).ClassListContains(BayList.SelectedClass));
             Assert.AreEqual(0f, panel.HoldProgress, "a tap never stirs the ring");
             Assert.AreEqual(0, _rig.Fakes.Purchases);
 
@@ -327,7 +345,16 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual(1, _rig.Fakes.Purchases);
             Assert.AreEqual(1, _rig.Fakes.LevelOf(cradle.Id), "the hold crafts the picked piece");
             Assert.AreEqual(0, _rig.Fakes.LevelOf(hover.Id), "not the first on the list");
-            Assert.IsTrue(panel.IsCelebrating);
+            Assert.IsTrue(panel.IsWorking, "the bay feeds and fits; nothing is said yet");
+            Assert.AreEqual(string.Empty, layout.TowerHoldWord.text);
+            Events.Publish(new RoverKitFitted(RoverKitPiece.SolarCell, true, string.Empty));
+            Events.Publish(new RoverKitInstalling(RoverKitPiece.CargoRack, false));
+            yield return Seconds(StitchDelay);
+            Assert.IsTrue(panel.IsWorking, "a gift or the install starting is not the piece set on");
+            Events.Publish(new RoverKitFitted(RoverKitPiece.CargoRack, false, cradle.Id));
+            yield return null;
+            Assert.IsTrue(panel.IsCelebrating, "the arms set the piece on: the bay's line comes");
+            Assert.AreEqual(Text(UiKeys.BayFitted), layout.TowerHoldWord.text);
             yield return Seconds(_rig.Tuning.TowerPanel.CelebrateSeconds + 0.5f);
             Release(keyboard.eKey);
             yield return Seconds(0.3f);
@@ -344,6 +371,7 @@ namespace MoonProject.UI.PlayModeTests
             Press(keyboard.eKey);
             yield return Seconds(_rig.Tuning.TowerPanel.TapSeconds + _rig.Tuning.TowerPanel.HoldSeconds + 0.3f);
             Assert.AreEqual(1, _rig.Fakes.LevelOf(hover.Id));
+            Events.Publish(new RoverKitFitted(RoverKitPiece.HoverCoils, false, hover.Id));
             yield return Seconds(_rig.Tuning.TowerPanel.CelebrateSeconds + 0.5f);
             Release(keyboard.eKey);
             yield return Seconds(0.3f);
@@ -355,25 +383,45 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator AStationThatNeverShowsItsWork_IsReported_AndThePanelMovesOn()
+        {
+            Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
+            Boot();
+            _rig.Tune("_towerPanel._cueWaitSeconds", ShortCueWait);
+            yield return null;
+            _rig.Fakes.Upgrade = _rig.TestTower();
+            _rig.Fakes.SetMaterials(20, 20, 20);
+            _rig.Fakes.AtStation = true;
+            yield return Seconds(1.5f);
+            Press(keyboard.eKey);
+            yield return Seconds(_rig.Tuning.TowerPanel.HoldSeconds + 0.2f);
+            Release(keyboard.eKey);
+            Assert.IsTrue(_rig.Ui.Tower.IsWorking);
+            LogAssert.Expect(LogType.Error, new Regex("never showed its work"));
+            yield return Seconds(ShortCueWait + 0.5f);
+            Assert.IsFalse(_rig.Ui.Tower.IsWorking, "the panel does not wait forever");
+            Assert.AreEqual(Text(UiKeys.TowerHold), _rig.Ui.Layout.TowerHoldWord.text, "it offers the next level");
+        }
+
+        [UnityTest]
         public IEnumerator KitTitle_NamesTheCraftedPiece_ThenTheGift_HighAndClearOf07()
         {
             Boot();
             _rig.Tune("_kitTitle._holdSeconds", 0.6f);
             yield return null;
-            UpgradeDefinition[] bench = _rig.TestBench(new Recipe(2, 1, 0), new Recipe(3, 2, 0), new Recipe(1, 2, 2));
-            _rig.Fakes.Bench = bench;
+            const string headlamp = "rover.warm_headlamp";
             KitTitleSettings settings = _rig.Tuning.KitTitle;
-            Events.Publish(new UpgradePurchased(bench[2].Id, 1));
             Events.Publish(new RoverKitInstalling(RoverKitPiece.LampBar, false));
             yield return Seconds(settings.Delay + settings.Reveal.FadeIn);
-            Assert.IsFalse(_rig.Ui.KitTitle.IsVisible, "bought but not yet settled: no name before the piece lands");
+            Assert.IsFalse(_rig.Ui.KitTitle.IsVisible, "installing, not yet settled: no name before the piece lands");
 
-            Events.Publish(new RoverKitFitted(RoverKitPiece.LampBar, false, "rover.warm_headlamp"));
+            Events.Publish(new RoverKitFitted(RoverKitPiece.LampBar, false, headlamp));
             Events.Publish(new RoverKitInstalling(RoverKitPiece.SolarCell, true));
             Events.Publish(new RoverKitFitted(RoverKitPiece.SolarCell, true, string.Empty));
             yield return Seconds(settings.Delay + settings.Reveal.FadeIn + 0.2f);
             Assert.IsTrue(_rig.Ui.KitTitle.IsVisible);
-            Assert.AreEqual(Text(UiKeys.UpgradeName(bench[2].Id)), _rig.Ui.Layout.KitTitleName.text);
+            Assert.AreEqual(Text(UiKeys.UpgradeName(headlamp)), _rig.Ui.Layout.KitTitleName.text,
+                "named after the upgrade the fitted piece came from");
             Rect screen = _rig.Ui.Layout.Root.worldBound;
             Assert.Less(_rig.Ui.Layout.KitTitle.worldBound.yMax, screen.yMin + screen.height * 0.3f,
                 "high on screen, clear of 07 in the middle of the install view");
@@ -385,7 +433,7 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual(Text(gift), _rig.Ui.Layout.KitTitleName.text);
 
             LogAssert.Expect(LogType.Error, new Regex("CargoRack settled onto 07"));
-            Events.Publish(new RoverKitFitted(RoverKitPiece.CargoRack, false, "rover.cargo_cradle"));
+            Events.Publish(new RoverKitFitted(RoverKitPiece.CargoRack, false, string.Empty));
         }
 
         [UnityTest]

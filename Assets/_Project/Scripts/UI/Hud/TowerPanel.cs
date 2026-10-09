@@ -9,20 +9,23 @@ using MoonProject.Gameplay;
 namespace MoonProject.UI
 {
     /// <summary>
-    /// While 07 is parked on an upgrade station's pad (the radio tower or Kenji's workbench) and something is left to
+    /// While 07 is parked on an upgrade station's pad (the radio tower or Kenji's Rover Bay) and something is left to
     /// buy, a compact panel offers it. Its header says where 07 is ("ui.station.&lt;station&gt;", with the station's
     /// own accent and lamp) and, for an upgrade with several levels, which level is next, or else the upgrade's name.
     /// Below: the level's title and what it does in plain words (the localized "upgrade.&lt;id&gt;.&lt;level&gt;.*"
     /// strings), its recipe in materials (<see cref="RecipeView"/>: the ones 07 is short of dimmed, with one quiet
     /// need line in place of the hold; the stock stays in view in the pinned materials chip), and a ring that fills
     /// while the confirm button is held (<see cref="HoldToConfirm"/>: no accidental purchases). Buying goes through
-    /// <see cref="IUpgradeShop"/>; the panel glows a moment, then shows the next level or bows out when all are bought.
-    /// The ring starting and completing are published as <see cref="UiCue"/>s.
+    /// <see cref="IUpgradeShop"/>. Then the ring rests full while the station does the work (<see cref="StationWork"/>,
+    /// docs/features/M3-14), and the station's own line ("ui.tower.purchased" as the tower's beam starts stitching up
+    /// its new section, "ui.bay.fitted" as the Rover Bay sets the piece on 07) glows a moment before the panel shows
+    /// what is next, or bows out when all is bought. The ring starting and completing are published as
+    /// <see cref="UiCue"/>s.
     /// <para>
-    /// While the station has more than one thing left to sell (Kenji's bench, docs/features/M3-11), the panel lists
-    /// them instead (<see cref="BenchList"/>): a tap of Interact or the Winch picks (<see cref="BenchPick"/>, a
-    /// <see cref="UiCueKind.FocusMove"/> each), the hold crafts the picked one, and a faint "ui.bench.pick" line says
-    /// how to choose. The radio tower, and the bench's last piece, keep the single offer.
+    /// While the station has more than one thing left to sell (Kenji's Rover Bay, docs/features/M3-11), the panel lists
+    /// them instead (<see cref="BayList"/>): a tap of Interact or the Winch picks (<see cref="BayPick"/>, a
+    /// <see cref="UiCueKind.FocusMove"/> each), the hold crafts the picked one, and a faint "ui.bay.pick" line says
+    /// how to choose. The radio tower, and the bay's last piece, keep the single offer.
     /// </para>
     /// </summary>
     internal sealed class TowerPanel
@@ -44,16 +47,16 @@ namespace MoonProject.UI
         private readonly HoldToConfirm _hold;
         private readonly ProgressRingPainter _ring;
         private readonly UiLayout _layout;
-        private readonly BenchChoice _choices = new BenchChoice();
-        private readonly BenchPick _pick;
-        private readonly BenchList _list;
+        private readonly BayChoice _choices = new BayChoice();
+        private readonly BayPick _pick;
+        private readonly BayList _list;
         private readonly GlyphView _pickGlyph;
         private bool _listed;
         private UpgradeDefinition _shownUpgrade;
         private int _shownLevel = -1;
         private bool _shownAffordable;
         private string _shownGlyph;
-        private float _celebrateTimer;
+        private readonly StationWork _work;
 
         public TowerPanel(UiLayout layout, TowerPanelSettings settings, ILocalization localization, EventBus events,
             IUpgradeShop shop, IMaterialStock materials, IInteractionHints hints, IntText numbers)
@@ -69,13 +72,14 @@ namespace MoonProject.UI
             _reveal = new Reveal(layout.TowerPanel, settings.Reveal);
             _reveal.Snap(false);
             _hold = new HoldToConfirm(settings);
+            _work = new StationWork(settings);
             _ring = new ProgressRingPainter(layout.TowerRing);
             new ShadowPainter(layout.TowerPanelShadow);
             layout.TowerHoldWord.text = localization.Get(UiKeys.TowerHold);
-            _pick = new BenchPick(settings);
-            _list = new BenchList(layout.TowerChoices, localization, numbers);
+            _pick = new BayPick(settings);
+            _list = new BayList(layout.TowerChoices, localization, numbers);
             _pickGlyph = new GlyphView(layout.TowerPickGlyph, layout.TowerPickGlyphLabel);
-            layout.TowerPickWord.text = localization.Get(UiKeys.BenchPick);
+            layout.TowerPickWord.text = localization.Get(UiKeys.BayPick);
             WriteListed(false);
         }
 
@@ -95,8 +99,13 @@ namespace MoonProject.UI
             }
         }
 
-        /// <summary>True while the panel glows after a purchase.</summary>
-        public bool IsCelebrating => _celebrateTimer > 0f;
+        /// <summary>
+        /// True from a purchase until the station has shown its work (the ring rests full, nothing is said).
+        /// </summary>
+        public bool IsWorking => _work.IsWorking;
+
+        /// <summary>True while the station's line glows, once its work shows.</summary>
+        public bool IsCelebrating => _work.IsShowingLine;
 
         /// <summary>0..1 fill of the hold ring.</summary>
         public float HoldProgress => _hold.Progress;
@@ -108,15 +117,15 @@ namespace MoonProject.UI
         public bool IsChoosing => _listed;
 
         /// <summary>What the station still sells and which is picked (tests and captures).</summary>
-        public BenchChoice Choices => _choices;
+        public BayChoice Choices => _choices;
 
-        /// <summary>The bench's rows (tests and captures).</summary>
-        public BenchList List => _list;
+        /// <summary>The bay's rows (tests and captures).</summary>
+        public BayList List => _list;
 
         /// <param name="deltaTime">Unscaled seconds; pass 0 while paused.</param>
         /// <param name="gateOpen">False while paused.</param>
         /// <param name="confirmHeld">True while the confirm (Interact) button is held.</param>
-        /// <param name="winch">The Winch axis (-1..1, + up): steps between the bench's choices.</param>
+        /// <param name="winch">The Winch axis (-1..1, + up): steps between the bay's choices.</param>
         /// <param name="towing">Something is on the tether: the Winch reels, so it does not pick.</param>
         /// <param name="confirmGlyph">The confirm control's label for the active device.</param>
         /// <param name="device">The active device (key cap or round glyph).</param>
@@ -124,16 +133,20 @@ namespace MoonProject.UI
             string confirmGlyph, InputDeviceKind device)
         {
             bool offered = gateOpen && _hints.TryGet(InteractionKind.Upgrade, out InteractionHint _);
-            if (IsCelebrating)
+            StationWork.Outcome outcome = _work.Step(deltaTime);
+            if (outcome == StationWork.Outcome.Overdue)
             {
-                _celebrateTimer -= deltaTime;
-                if (!IsCelebrating)
-                {
-                    EndCelebration();
-                }
+                Debug.LogError($"{nameof(TowerPanel)}: the station never showed its work on a purchase within " +
+                               $"{_settings.CueWaitSeconds} s (no stitch at the tower, no piece set on at the bay).");
             }
 
-            if (offered && !IsCelebrating)
+            if (outcome != StationWork.Outcome.None)
+            {
+                EndWork();
+            }
+
+            bool busy = _work.IsBusy;
+            if (offered && !busy)
             {
                 _choices.Refresh(_shop);
             }
@@ -142,7 +155,7 @@ namespace MoonProject.UI
             UpgradeDefinition upgrade = offered ? _choices.Current : null;
             offered = upgrade != null && _shop.TryGetOffer(upgrade.Id, out offer) && !offer.IsMaxed;
 
-            if (offered && !IsCelebrating)
+            if (offered && !busy)
             {
                 Refresh(upgrade, offer);
             }
@@ -154,8 +167,8 @@ namespace MoonProject.UI
             }
 
             _pickGlyph.Set(confirmGlyph, device);
-            _reveal.Set(gateOpen && (offered || IsCelebrating));
-            bool ready = offered && !IsCelebrating && _reveal.Target && _reveal.Visibility >= _settings.ArmVisibility;
+            _reveal.Set(gateOpen && (offered || busy));
+            bool ready = offered && !busy && _reveal.Target && _reveal.Visibility >= _settings.ArmVisibility;
             int pick = _pick.Step(ready && _listed, confirmHeld, winch, towing, deltaTime);
             if (pick != 0 && _choices.Step(pick))
             {
@@ -177,7 +190,7 @@ namespace MoonProject.UI
                 _events.Publish(new UiCue(UiCueKind.HoldRelease));
             }
 
-            if (_reveal.IsHidden && !IsCelebrating)
+            if (_reveal.IsHidden && !_work.IsBusy)
             {
                 _hold.Reset();
             }
@@ -185,17 +198,35 @@ namespace MoonProject.UI
             if (_shop.StationUpgradeCount == 0)
             {
                 _choices.Clear();
+                if (_work.IsBusy)
+                {
+                    _work.Clear();
+                    EndWork();
+                }
             }
 
-            _ring.Progress = IsCelebrating ? 1f : _hold.Progress;
+            _ring.Progress = _work.IsBusy ? 1f : _hold.Progress;
             _reveal.Tick(deltaTime);
+        }
+
+        /// <summary>
+        /// <paramref name="station"/> showed its work on <paramref name="upgradeId"/> (the tower's beam starts
+        /// stitching up its new section; the Rover Bay set the piece on 07). If that is the purchase the panel waits
+        /// on, the station's line comes now.
+        /// </summary>
+        public void StationShowed(UpgradeStationKind station, string upgradeId)
+        {
+            if (_work.Showed(station, upgradeId))
+            {
+                _layout.TowerHoldWord.text = _localization.Get(UiKeys.StationLine(station));
+            }
         }
 
         /// <summary>Re-reads every string in the new language (the panel on screen changes in place).</summary>
         public void Relocalize()
         {
-            _layout.TowerHoldWord.text = _localization.Get(IsCelebrating ? UiKeys.TowerPurchased : UiKeys.TowerHold);
-            _layout.TowerPickWord.text = _localization.Get(UiKeys.BenchPick);
+            _layout.TowerHoldWord.text = HoldWord();
+            _layout.TowerPickWord.text = _localization.Get(UiKeys.BayPick);
             _recipe.Relocalize();
             _list.Relocalize();
             _shownUpgrade = null;
@@ -212,20 +243,30 @@ namespace MoonProject.UI
             }
 
             _events.Publish(new UiCue(UiCueKind.HoldComplete));
-            _celebrateTimer = _settings.CelebrateSeconds;
+            _work.Begin(upgrade.Station, upgrade.Id);
             _layout.TowerPanel.AddToClassList(CelebrateClass);
-            _layout.TowerHoldWord.text = _localization.Get(UiKeys.TowerPurchased);
+            _layout.TowerHoldWord.text = string.Empty;
             _layout.TowerConfirm.style.display = DisplayStyle.Flex;
             _shownAffordable = true;
         }
 
-        private void EndCelebration()
+        private void EndWork()
         {
-            _celebrateTimer = 0f;
             _layout.TowerPanel.RemoveFromClassList(CelebrateClass);
             _layout.TowerHoldWord.text = _localization.Get(UiKeys.TowerHold);
             _hold.Reset();
             _shownLevel = -1;
+        }
+
+        /// <summary>The word beside the ring now: the hold, nothing while the station works, or its line.</summary>
+        private string HoldWord()
+        {
+            if (_work.IsShowingLine)
+            {
+                return _localization.Get(UiKeys.StationLine(_work.Station));
+            }
+
+            return _work.IsWorking ? string.Empty : _localization.Get(UiKeys.TowerHold);
         }
 
         private void DressFor(UpgradeStationKind station)

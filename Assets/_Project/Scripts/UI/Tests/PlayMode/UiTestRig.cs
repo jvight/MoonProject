@@ -27,7 +27,7 @@ namespace MoonProject.UI.PlayModeTests
         public const string TuningPath = "Assets/_Project/Data/Tuning/UI/UiTuning.asset";
         public const string CatalogPath = "Assets/_Project/Data/Content/RelicCatalog.asset";
         public const string UpgradePath = "Assets/_Project/Data/Content/Upgrades/Upgrade_radio_tower.asset";
-        public const string WorkbenchUpgradePath =
+        public const string HoverJumpUpgradePath =
             "Assets/_Project/Data/Content/Upgrades/Upgrade_rover_hover_jump.asset";
         public const string CradleUpgradePath =
             "Assets/_Project/Data/Content/Upgrades/Upgrade_rover_cargo_cradle.asset";
@@ -116,11 +116,11 @@ namespace MoonProject.UI.PlayModeTests
 #endif
         }
 
-        /// <summary>Kenji's workbench offer (Hover-Jump) in place of the radio tower's.</summary>
-        public static UpgradeDefinition WorkbenchUpgrade()
+        /// <summary>Kenji's Rover Bay offer (Hover-Jump) in place of the radio tower's.</summary>
+        public static UpgradeDefinition HoverJumpUpgrade()
         {
 #if UNITY_EDITOR
-            return Load<UpgradeDefinition>(WorkbenchUpgradePath);
+            return Load<UpgradeDefinition>(HoverJumpUpgradePath);
 #else
             throw new NotSupportedException("UiTestRig loads assets through the editor's AssetDatabase.");
 #endif
@@ -133,14 +133,14 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         /// <summary>
-        /// Kenji's bench selling the Hover-Jump, the Cargo Cradle and the Warm Headlamp, in that order, at exactly
+        /// Kenji's Rover Bay selling the Hover-Jump, the Cargo Cradle and the Warm Headlamp, in that order, at exactly
         /// these recipes (copies destroyed with the rig).
         /// </summary>
-        public UpgradeDefinition[] TestBench(Recipe hoverJump, Recipe cargoCradle, Recipe warmHeadlamp)
+        public UpgradeDefinition[] TestBay(Recipe hoverJump, Recipe cargoCradle, Recipe warmHeadlamp)
         {
             return new[]
             {
-                UpgradeCosting(WorkbenchUpgradePath, hoverJump),
+                UpgradeCosting(HoverJumpUpgradePath, hoverJump),
                 UpgradeCosting(CradleUpgradePath, cargoCradle),
                 UpgradeCosting(HeadlampUpgradePath, warmHeadlamp),
             };

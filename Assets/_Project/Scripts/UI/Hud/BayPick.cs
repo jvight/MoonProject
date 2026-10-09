@@ -4,7 +4,7 @@ using UnityEngine;
 namespace MoonProject.UI
 {
     /// <summary>
-    /// How 07's own controls pick at Kenji's bench (docs/features/M3-11), pure logic, EditMode-tested: a tap of
+    /// How 07's own controls pick at Kenji's Rover Bay (docs/features/M3-11), pure logic, EditMode-tested: a tap of
     /// Interact steps to the next choice, a hold crafts the chosen one, and the Winch (mouse wheel, d-pad up/down)
     /// steps back (up) or on (down), except while something is on the tether, where the Winch reels.
     /// <list type="bullet">
@@ -16,7 +16,7 @@ namespace MoonProject.UI
     /// change under a filling ring.</item>
     /// </list>
     /// </summary>
-    internal sealed class BenchPick
+    internal sealed class BayPick
     {
         private readonly TowerPanelSettings _settings;
         private bool _wasHeld;
@@ -24,7 +24,7 @@ namespace MoonProject.UI
         private float _heldFor;
         private bool _winched;
 
-        public BenchPick(TowerPanelSettings settings)
+        public BayPick(TowerPanelSettings settings)
         {
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
         }

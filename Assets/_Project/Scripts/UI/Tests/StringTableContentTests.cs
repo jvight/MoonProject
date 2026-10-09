@@ -104,7 +104,7 @@ namespace MoonProject.UI.Tests
                          UiKeys.CardCaption, UiKeys.CardClose, UiKeys.TowerLevel, UiKeys.TowerHold,
                          UiKeys.TowerPurchased, UiKeys.LogCaption, UiKeys.CrewLogCaption, UiKeys.LinerCaption,
                          UiKeys.TapeCount, UiKeys.PauseCassettes, UiKeys.PauseRelays, UiKeys.RecipeNeed,
-                         UiKeys.BenchPick,
+                         UiKeys.BayPick, UiKeys.BayFitted,
                      })
             {
                 Assert.IsTrue(_english.TryGet(key, out _), key);
@@ -124,6 +124,7 @@ namespace MoonProject.UI.Tests
             foreach (UpgradeStationKind station in Enum.GetValues(typeof(UpgradeStationKind)))
             {
                 Assert.IsTrue(_english.TryGet(UiKeys.StationName(station), out _), UiKeys.StationName(station));
+                Assert.IsTrue(_english.TryGet(UiKeys.StationLine(station), out _), UiKeys.StationLine(station));
             }
 
             foreach (RoverKitPiece piece in Enum.GetValues(typeof(RoverKitPiece)))

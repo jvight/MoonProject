@@ -146,12 +146,12 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator BenchCues_ATapIsAFocusMove_NeverAHoldSwell()
+        public IEnumerator BayCues_ATapIsAFocusMove_NeverAHoldSwell()
         {
             Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
             Boot();
             yield return null;
-            _rig.Fakes.Bench = _rig.TestBench(new Recipe(2, 1, 0), new Recipe(3, 2, 0), new Recipe(1, 2, 2));
+            _rig.Fakes.Bay = _rig.TestBay(new Recipe(2, 1, 0), new Recipe(3, 2, 0), new Recipe(1, 2, 2));
             _rig.Fakes.SetMaterials(20, 20, 20);
             _rig.Fakes.AtStation = true;
             yield return new WaitForSecondsRealtime(1.5f);

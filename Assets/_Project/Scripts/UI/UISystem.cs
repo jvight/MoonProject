@@ -15,12 +15,12 @@ namespace MoonProject.UI
     /// title while 07 wakes, context prompts only the first few times, a reticle only while aiming, the materials chip
     /// only when the stock changes, the hold ring at a salvage cut and a site's name the first time it answers the
     /// sonar, a story card per relic brought home, crew log found and cassette collected, the station upgrade panel
-    /// with its recipe (a list to pick from at Kenji's bench), the name of each piece of kit as it settles onto 07, a
-    /// few warm pips over a broken friend while 07 is near, its name and its crew log when it wakes,
-    /// the radio's ticker line along the bottom, the station's name when Bell's dial is turned, the relay network's
-    /// price tag, hop list and soft hop fade, and the pause menu with settings. It registers
-    /// <see cref="ILocalization"/> and owns the cursor and the UI's save sections. Everything animates on unscaled time
-    /// so the menu stays alive while the game is paused.
+    /// with its recipe (a list to pick from at Kenji's Rover Bay) and each station's line once its work shows, the name
+    /// of each piece of kit as it settles onto 07, a few warm pips over a broken friend while 07 is near, its name and
+    /// its crew log when it wakes, the radio's ticker line along the bottom, the station's name when Bell's dial is
+    /// turned, the relay network's price tag, hop list and soft hop fade, and the pause menu with settings. It
+    /// registers <see cref="ILocalization"/> and owns the cursor and the UI's save sections. Everything animates on
+    /// unscaled time so the menu stays alive while the game is paused.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class UISystem : MonoBehaviour, IGameSystem
@@ -65,7 +65,6 @@ namespace MoonProject.UI
         private HopFade _hopFade;
         private RelayTag _relayTag;
         private TowerPanel _tower;
-        private KitNames _kitNames;
         private KitTitle _kitTitle;
         private FriendReadout _friendReadout;
         private FriendNameTag _friendName;
@@ -205,7 +204,6 @@ namespace MoonProject.UI
             _cursor = new CursorPolicy();
             _glyphs = new GlyphLabels(services.Input, _localization);
             _tickerLines = new TickerQueue(_tuning.Ticker, new TickerText(_localization));
-            _kitNames = new KitNames();
 
             ISaveService save = services.Save;
             _tokens.Add(save.Register(new SaveSection<SettingsSaveData>(UiSaveKeys.Settings,
@@ -232,7 +230,7 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<RadioProgramChanged>(OnRadioProgramChanged));
             _tokens.Add(events.Subscribe<RelayRestored>(OnRelayRestored));
             _tokens.Add(events.Subscribe<RadioHopListChanged>(OnRadioHopListChanged));
-            _tokens.Add(events.Subscribe<UpgradePurchased>(OnUpgradePurchased));
+            _tokens.Add(events.Subscribe<StationCued>(OnStationCued));
             _tokens.Add(events.Subscribe<RoverKitFitted>(OnRoverKitFitted));
 
             services.Input.Menu.Enable();
@@ -499,31 +497,32 @@ namespace MoonProject.UI
             }
         }
 
-        private void OnUpgradePurchased(UpgradePurchased purchased)
+        private void OnStationCued(StationCued cued)
         {
-            if (_services.Shop.TryGetOffer(purchased.UpgradeId, out UpgradeOffer offer))
+            if (_bound && cued.Cue == StationCue.StitchStarted)
             {
-                _kitNames.Purchased(offer.Definition, purchased.Level);
-            }
-            else
-            {
-                Debug.LogError($"{nameof(UISystem)}: '{purchased.UpgradeId}' was bought but the shop does not know " +
-                               "it; its kit cannot be named.", this);
+                _tower.StationShowed(UpgradeStationKind.RadioTower, cued.UpgradeId);
             }
         }
 
         private void OnRoverKitFitted(RoverKitFitted fitted)
         {
-            if (!_kitNames.TryTitle(fitted, out string key))
+            if (!KitNames.TryTitle(fitted, out string key))
             {
                 Debug.LogError($"{nameof(UISystem)}: {fitted.Piece} settled onto 07 (gift: {fitted.Gift}) with no " +
-                               "purchase or gift to name it.", this);
+                               "upgrade or gift to name it.", this);
                 return;
             }
 
-            if (_bound)
+            if (!_bound)
             {
-                _kitTitle.Enqueue(key);
+                return;
+            }
+
+            _kitTitle.Enqueue(key);
+            if (!fitted.Gift)
+            {
+                _tower.StationShowed(UpgradeStationKind.Workshop, fitted.UpgradeId);
             }
         }
 

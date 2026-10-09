@@ -49,13 +49,18 @@ namespace MoonProject.UI.PlayModeTests
 
         public int Count => Friend != null ? 1 : 0;
 
-        /// <summary>The station's one upgrade (the radio tower), unless <see cref="Bench"/> is set.</summary>
+        /// <summary>The station's one upgrade (the radio tower), unless <see cref="Bay"/> is set.</summary>
         public UpgradeDefinition Upgrade { get; set; }
 
-        /// <summary>When set, the station sells these instead, in this order (Kenji's bench).</summary>
-        public UpgradeDefinition[] Bench { get; set; }
+        /// <summary>When set, the station sells these instead, in this order (Kenji's Rover Bay).</summary>
+        public UpgradeDefinition[] Bay { get; set; }
 
         public bool AtStation { get; set; }
+
+        /// <summary>
+        /// False in captures over the real scene: a staged purchase must not set the scene's real stations working.
+        /// </summary>
+        public bool AnnouncesPurchases { get; set; } = true;
 
         public int Purchases { get; private set; }
 
@@ -124,7 +129,7 @@ namespace MoonProject.UI.PlayModeTests
             }
         }
 
-        public int StationUpgradeCount => !AtStation ? 0 : Bench?.Length ?? (Upgrade != null ? 1 : 0);
+        public int StationUpgradeCount => !AtStation ? 0 : Bay?.Length ?? (Upgrade != null ? 1 : 0);
 
         public InteractionHint Primary => IsUpgradeOffered(out InteractionHint upgrade) ? upgrade : PrimaryHint;
 
@@ -323,7 +328,7 @@ namespace MoonProject.UI.PlayModeTests
 
         public UpgradeDefinition StationUpgradeAt(int index)
         {
-            return Bench != null ? Bench[index] : Upgrade;
+            return Bay != null ? Bay[index] : Upgrade;
         }
 
         public int LevelOf(string upgradeId)
@@ -372,7 +377,10 @@ namespace MoonProject.UI.PlayModeTests
             _levels[upgradeId] = offer.CurrentLevel + 1;
             Recipe cost = offer.NextCost;
             SetMaterials(Metal - cost.Metal, Wiring - cost.Wiring, Optics - cost.Optics);
-            _events.Publish(new UpgradePurchased(upgradeId, offer.CurrentLevel + 1));
+            if (AnnouncesPurchases)
+            {
+                _events.Publish(new UpgradePurchased(upgradeId, offer.CurrentLevel + 1));
+            }
             return PurchaseResult.Purchased;
         }
 
@@ -393,14 +401,14 @@ namespace MoonProject.UI.PlayModeTests
         /// <summary>The upgrade called <paramref name="upgradeId"/> if this station's catalogue has it.</summary>
         private UpgradeDefinition Sold(string upgradeId)
         {
-            UpgradeDefinition[] bench = Bench;
-            if (bench != null)
+            UpgradeDefinition[] bay = Bay;
+            if (bay != null)
             {
-                for (int i = 0; i < bench.Length; i++)
+                for (int i = 0; i < bay.Length; i++)
                 {
-                    if (bench[i].Id == upgradeId)
+                    if (bay[i].Id == upgradeId)
                     {
-                        return bench[i];
+                        return bay[i];
                     }
                 }
 

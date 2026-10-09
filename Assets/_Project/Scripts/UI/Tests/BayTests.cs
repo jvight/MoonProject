@@ -11,11 +11,11 @@ using Is = UnityEngine.TestTools.Constraints.Is;
 namespace MoonProject.UI.Tests
 {
     /// <summary>
-    /// Kenji's bench's choosing (docs/features/M3-11): the list keeps the station's order and leaves out what is
+    /// Kenji's Rover Bay's choosing (docs/features/M3-11): the list keeps the station's order and leaves out what is
     /// bought, the pick stays put or moves to the piece that took its place, a tap steps without stirring the hold
     /// ring, the Winch steps once per notch (never while towing or holding), and the rows dim what 07 is short of.
     /// </summary>
-    public sealed class BenchTests
+    public sealed class BayTests
     {
         private const float Frame = 1f / 60f;
         private const int ControlBytes = 1024;
@@ -49,7 +49,7 @@ namespace MoonProject.UI.Tests
         public void TheChoices_AreWhatIsLeft_InTheStationsOwnOrder()
         {
             _shop.Purchase(_hover.Id);
-            var choices = new BenchChoice();
+            var choices = new BayChoice();
             Assert.IsTrue(choices.Refresh(_shop));
             Assert.AreEqual(3, choices.Count, "bought kit is left out");
             Assert.AreSame(_cradle, choices.At(0));
@@ -63,7 +63,7 @@ namespace MoonProject.UI.Tests
         [Test]
         public void ThePick_StaysOnItsPiece_AndMovesToTheOneThatTookItsPlace()
         {
-            var choices = new BenchChoice();
+            var choices = new BayChoice();
             choices.Refresh(_shop);
             Assert.IsTrue(choices.Step(1));
             Assert.AreSame(_cradle, choices.Current);
@@ -88,7 +88,7 @@ namespace MoonProject.UI.Tests
         [Test]
         public void Stepping_WrapsBothWays()
         {
-            var choices = new BenchChoice();
+            var choices = new BayChoice();
             choices.Refresh(_shop);
             choices.Step(1);
             choices.Step(1);
@@ -103,7 +103,7 @@ namespace MoonProject.UI.Tests
         [Test]
         public void Refresh_ReportsOnlyChanges_AndAllocatesNothing()
         {
-            var choices = new BenchChoice();
+            var choices = new BayChoice();
             Assert.IsTrue(choices.Refresh(_shop));
             int version = choices.Version;
             Assert.IsFalse(choices.Refresh(_shop));
@@ -127,7 +127,7 @@ namespace MoonProject.UI.Tests
         [Test]
         public void Clear_ForgetsThePick_SoTheNextVisitStartsAtTheFirst()
         {
-            var choices = new BenchChoice();
+            var choices = new BayChoice();
             choices.Refresh(_shop);
             choices.Step(2);
             choices.Clear();
@@ -144,7 +144,7 @@ namespace MoonProject.UI.Tests
         [Test]
         public void ATap_StepsToTheNext_WithoutStirringTheRing()
         {
-            var pick = new BenchPick(_settings);
+            var pick = new BayPick(_settings);
             Assert.AreEqual(0, pick.Step(true, false, 0f, false, Frame));
             int frames = (int)(_settings.TapSeconds / Frame) - 2;
             for (int i = 0; i < frames; i++)
@@ -160,7 +160,7 @@ namespace MoonProject.UI.Tests
         [Test]
         public void AHold_ReachesTheRing_AfterTheTapWindow_AndIsNoTap()
         {
-            var pick = new BenchPick(_settings);
+            var pick = new BayPick(_settings);
             pick.Step(true, false, 0f, false, Frame);
             pick.Step(true, true, 0f, false, Frame);
             Assert.IsFalse(pick.HoldHeld);
@@ -178,7 +178,7 @@ namespace MoonProject.UI.Tests
         [Test]
         public void APressFromBeforeTheChoicesOpened_IsNeitherTapNorHold()
         {
-            var pick = new BenchPick(_settings);
+            var pick = new BayPick(_settings);
             pick.Step(false, true, 0f, false, Frame);
             Assert.IsTrue(pick.HoldHeld, "the ring sees it held, so it never arms");
             Assert.AreEqual(0, pick.Step(true, true, 0f, false, Frame));
@@ -191,7 +191,7 @@ namespace MoonProject.UI.Tests
         [Test]
         public void TheWinch_StepsOncePerNotch_UpForThePrevious_ButNotWhileTowingOrHolding()
         {
-            var pick = new BenchPick(_settings);
+            var pick = new BayPick(_settings);
             Assert.AreEqual(-1, pick.Step(true, false, 1f, false, Frame), "wheel or d-pad up: the previous one");
             Assert.AreEqual(0, pick.Step(true, false, 1f, false, Frame), "a held d-pad steps once");
             Assert.AreEqual(0, pick.Step(true, false, 0f, false, Frame));
@@ -222,12 +222,12 @@ namespace MoonProject.UI.Tests
                 UiKeys.UpgradeName(_coils.Id), "Boost Coils", "Cuộn tăng tốc",
                 UiKeys.UpgradeEffect(_coils.Id, 1), "Swift on the flats.", "Nhanh trên đất bằng.");
             var layout = new UiLayout(uxml.Instantiate());
-            var list = new BenchList(layout.TowerChoices, localization, new IntText(100));
+            var list = new BayList(layout.TowerChoices, localization, new IntText(100));
             _shop.Purchase(_hover.Id);
             _shop.Metal = 3;
             _shop.Wiring = 2;
             _shop.Optics = 0;
-            var choices = new BenchChoice();
+            var choices = new BayChoice();
             choices.Refresh(_shop);
             choices.Step(1);
 
@@ -235,8 +235,8 @@ namespace MoonProject.UI.Tests
             Assert.AreEqual(3, list.RowCount);
             Assert.AreEqual("Cargo Cradle", list.RowName(0));
             Assert.AreEqual("Light in the dark.", list.RowEffect(1));
-            Assert.IsTrue(list.RowRoot(1).ClassListContains(BenchList.SelectedClass), "the pick is lit");
-            Assert.IsFalse(list.RowRoot(0).ClassListContains(BenchList.SelectedClass));
+            Assert.IsTrue(list.RowRoot(1).ClassListContains(BayList.SelectedClass), "the pick is lit");
+            Assert.IsFalse(list.RowRoot(0).ClassListContains(BayList.SelectedClass));
             MaterialSlots cradle = list.RowRecipe(0);
             Assert.AreEqual("3", cradle.Text(SalvageMaterial.Metal));
             Assert.IsFalse(cradle.Root(SalvageMaterial.Metal).ClassListContains(MaterialSlots.ShortClass),
@@ -254,14 +254,14 @@ namespace MoonProject.UI.Tests
 
             choices.Step(1);
             list.Show(choices, _shop);
-            Assert.IsTrue(list.RowRoot(2).ClassListContains(BenchList.SelectedClass));
-            Assert.IsFalse(list.RowRoot(1).ClassListContains(BenchList.SelectedClass), "one lit row at a time");
+            Assert.IsTrue(list.RowRoot(2).ClassListContains(BayList.SelectedClass));
+            Assert.IsFalse(list.RowRoot(1).ClassListContains(BayList.SelectedClass), "one lit row at a time");
 
             localization.SetLanguage(TestTables.Vietnamese);
             list.Relocalize();
             list.Show(choices, _shop);
             Assert.AreEqual("Giỏ hàng", list.RowName(0), "a new language re-reads the rows");
-            Assert.IsTrue(list.RowRoot(2).ClassListContains(BenchList.SelectedClass), "and keeps the pick lit");
+            Assert.IsTrue(list.RowRoot(2).ClassListContains(BayList.SelectedClass), "and keeps the pick lit");
         }
     }
 }

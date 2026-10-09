@@ -7,11 +7,11 @@ using MoonProject.Gameplay;
 namespace MoonProject.UI
 {
     /// <summary>
-    /// A recipe in materials (docs/features/M3-13), the way the tower panel, Kenji's bench and the relay price tag show
-    /// it: the icon and number of each material it uses, the ones 07 has enough of reading normally and the short ones
-    /// dimmed, with one quiet need line ("ui.recipe.need") naming the first short material
+    /// A recipe in materials (docs/features/M3-13), the way the tower panel, Kenji's Rover Bay and the relay price tag
+    /// show it: the icon and number of each material it uses, the ones 07 has enough of reading normally and the short
+    /// ones dimmed, with one quiet need line ("ui.recipe.need") naming the first short material
     /// (<see cref="RecipeStatus"/>). No other words. Each need line is formatted once per language and then reused, so
-    /// picking between recipes (Kenji's bench) or a changing stock writes text without allocating.
+    /// picking between recipes (Kenji's Rover Bay) or a changing stock writes text without allocating.
     /// </summary>
     internal sealed class RecipeView
     {

@@ -17,9 +17,9 @@ namespace MoonProject.UI.PlayModeTests
 {
     /// <summary>
     /// Steady-state zero-GC check of the UI: with a prompt following a moving point under the reticle, with the tower
-    /// panel and its pinned chip, with Kenji's bench resting with a piece picked (and its update allocation-free while
-    /// picking as the stock changes), with a kit name resting, with a ticker line resting, with the hop list over a
-    /// moving fade, with the salvage ring filling under the materials chip, and with the pause menu open, one frame
+    /// panel and its pinned chip, with Kenji's Rover Bay resting with a piece picked (and its update allocation-free
+    /// while picking as the stock changes), with a kit name resting, with a ticker line resting, with the hop list over
+    /// a moving fade, with the salvage ring filling under the materials chip, and with the pause menu open, one frame
     /// additionally runs the UI's Update 600 times. Unity's "GC Allocated In Frame" for the quietest of three such
     /// frames must stay at the level of plain frames; a control frame proves the counter sees allocations at all.
     /// </summary>
@@ -98,11 +98,11 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator BenchPickingAsTheStockChanges_DoesNotAllocate_AndRestsQuietly()
+        public IEnumerator BayPickingAsTheStockChanges_DoesNotAllocate_AndRestsQuietly()
         {
             InputSystem.AddDevice<Keyboard>();
             _rig = UiTestRig.Boot(_controls, _slot);
-            _rig.Fakes.Bench = _rig.TestBench(new Recipe(2, 1, 0), new Recipe(3, 2, 0), new Recipe(1, 2, 2));
+            _rig.Fakes.Bay = _rig.TestBay(new Recipe(2, 1, 0), new Recipe(3, 2, 0), new Recipe(1, 2, 2));
             _rig.Fakes.SetMaterials(4, 3, 0);
             _rig.Fakes.AtStation = true;
             yield return new WaitForSecondsRealtime(2f);
@@ -126,9 +126,9 @@ namespace MoonProject.UI.PlayModeTests
             };
             Run(picking, WarmUpCalls * PickEvery);
             Assert.That(() => Run(picking, MeasuredCalls), Is.Not.AllocatingGCMemory(),
-                "picking at the bench while the stock changes allocates nothing in the UI's update");
+                "picking at the bay while the stock changes allocates nothing in the UI's update");
             yield return null;
-            yield return Measure(update, "bench resting with a piece picked");
+            yield return Measure(update, "bay resting with a piece picked");
         }
 
         [UnityTest]
