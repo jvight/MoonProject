@@ -11,10 +11,11 @@ namespace MoonProject.World
     /// and Earth, applies the atmosphere and sky, and registers <see cref="ITerrainQuery"/>,
     /// <see cref="IWorldLayout"/> and <see cref="IWorldAnchors"/> in the context. In edit mode it also builds a
     /// preview (HideFlags.DontSave: never saved into the scene, destroyed in OnDisable) so the scene view and scene
-    /// captures show the world; <see cref="Initialize"/> is the only play-mode path.
+    /// captures show the world, and other domains' edit-mode previews read its anchors through
+    /// <see cref="IWorldPreview"/>; <see cref="Initialize"/> is the only play-mode path.
     /// </summary>
     [ExecuteAlways]
-    public sealed class WorldSystem : MonoBehaviour, IGameSystem
+    public sealed class WorldSystem : MonoBehaviour, IGameSystem, IWorldPreview
     {
         private const string GeneratedRootName = "Generated";
 
@@ -43,6 +44,10 @@ namespace MoonProject.World
         [Tooltip("The directional earthlight; its colour, intensity and angle come from the atmosphere settings.")]
         [SerializeField] private Light _earthlight;
 
+        [Tooltip("The shadowless directional fill opposite the earthlight; its colour, intensity and angle come " +
+            "from the atmosphere settings.")]
+        [SerializeField] private Light _fillLight;
+
         [Tooltip("Build the world while editing (never saved into the scene) so the scene view shows it.")]
         [SerializeField] private bool _previewInEditMode = true;
 
@@ -57,6 +62,8 @@ namespace MoonProject.World
         public WorldLayout Layout { get; private set; }
 
         public WorldAnchors Anchors { get; private set; }
+
+        IWorldAnchors IWorldPreview.Anchors => Anchors;
 
         public TerrainBuildReport LastBuild { get; private set; }
 
@@ -116,7 +123,7 @@ namespace MoonProject.World
             ScatterSettings scatterSettings = _settings.Scatter;
             Task<List<ScatterInstance>> scatterPlan =
                 Task.Run(() => new ScatterPlanner(surface, scatterSettings, Anchors).Plan());
-            WorldAtmosphere.Apply(_settings.Atmosphere, _settings.Sky, _earthlight);
+            WorldAtmosphere.Apply(_settings.Atmosphere, _settings.Sky, _earthlight, _fillLight);
             SkyShaderGlobals.Apply(_settings.Sky);
 
             _generatedRoot = new GameObject(GeneratedRootName) { hideFlags = hideFlags };
@@ -239,6 +246,12 @@ namespace MoonProject.World
             if (_earthlight == null || _earthlight.transform.IsChildOf(transform))
             {
                 return "Earthlight must be assigned and must not be this object or its child (it gets rotated).";
+            }
+
+            if (_fillLight == null || _fillLight == _earthlight || _fillLight.transform.IsChildOf(transform))
+            {
+                return "Fill Light must be assigned, must not be the earthlight and must not be this object or its " +
+                    "child (it gets rotated).";
             }
 
             if (!IsWorldAligned(transform))

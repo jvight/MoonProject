@@ -43,6 +43,7 @@ namespace MoonProject.World.PlayModeTests
 
         private GameObject _host;
         private GameObject _lightHost;
+        private GameObject _fillHost;
         private PeakBeacon _beacon;
         private InputReader _input;
 
@@ -53,6 +54,8 @@ namespace MoonProject.World.PlayModeTests
             var settings = Load<WorldSettings>(SettingsPath);
             _lightHost = new GameObject("Earthlight");
             var light = _lightHost.AddComponent<Light>();
+            _fillHost = new GameObject("Fill Light");
+            var fill = _fillHost.AddComponent<Light>();
             _host = new GameObject("World");
             _host.SetActive(false);
             var world = _host.AddComponent<WorldSystem>();
@@ -62,6 +65,7 @@ namespace MoonProject.World.PlayModeTests
             serialized.FindProperty("_paletteMaterial").objectReferenceValue = Load<Material>(PaletteMaterialPath);
             serialized.FindProperty("_earthMaterial").objectReferenceValue = Load<Material>(EarthMaterialPath);
             serialized.FindProperty("_earthlight").objectReferenceValue = light;
+            serialized.FindProperty("_fillLight").objectReferenceValue = fill;
             _beacon = CreateBeaconHost("PeakBeacon");
             serialized.FindProperty("_peakBeacon").objectReferenceValue = _beacon;
             AssignRocks(serialized.FindProperty("_pebbleRocks"), PebbleRocks);
@@ -159,6 +163,11 @@ namespace MoonProject.World.PlayModeTests
             if (_lightHost != null)
             {
                 Object.Destroy(_lightHost);
+            }
+
+            if (_fillHost != null)
+            {
+                Object.Destroy(_fillHost);
             }
 
             if (_beacon != null)

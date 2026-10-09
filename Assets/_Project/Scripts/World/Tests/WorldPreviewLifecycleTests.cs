@@ -4,6 +4,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.TestTools;
 using MoonProject.Art.Editor;
+using MoonProject.Core;
 using MoonProject.World.Editor;
 
 namespace MoonProject.World.Tests
@@ -18,6 +19,7 @@ namespace MoonProject.World.Tests
     {
         private const string HostName = "[WorldPreviewLifecycleTest]";
         private const string LightName = "[WorldPreviewLifecycleTestLight]";
+        private const string FillName = "[WorldPreviewLifecycleTestFill]";
         private const string BeaconName = "[WorldPreviewLifecycleTestBeacon]";
         private const string ChunkPrefix = "TerrainChunk_";
 
@@ -30,6 +32,10 @@ namespace MoonProject.World.Tests
             CreateHost();
             Assert.AreEqual(ExpectedChunks(), CountChunkObjects(), "edit-mode preview not built");
             AssertPreviewIsNeverSaved();
+            var world = FindHost().GetComponent<WorldSystem>();
+            IWorldPreview preview = world;
+            Assert.IsTrue(preview.HasGeneratedWorld, "other domains' edit-mode previews see no world");
+            Assert.AreSame(world.Anchors, preview.Anchors, "other domains' edit-mode previews read other anchors");
 
             yield return new EnterPlayMode();
             Assert.AreEqual(0, CountChunkObjects(), "play mode kept or rebuilt the edit-mode preview");
@@ -55,7 +61,7 @@ namespace MoonProject.World.Tests
             foreach (Light light in Object.FindObjectsByType<Light>(FindObjectsInactive.Include,
                          FindObjectsSortMode.None))
             {
-                if (light.gameObject.name == LightName)
+                if (light.gameObject.name == LightName || light.gameObject.name == FillName)
                 {
                     Object.DestroyImmediate(light.gameObject);
                 }
@@ -74,6 +80,7 @@ namespace MoonProject.World.Tests
         private static void CreateHost()
         {
             var light = new GameObject(LightName).AddComponent<Light>();
+            var fill = new GameObject(FillName).AddComponent<Light>();
             var host = new GameObject(HostName);
             host.SetActive(false);
             var world = host.AddComponent<WorldSystem>();
@@ -83,6 +90,7 @@ namespace MoonProject.World.Tests
             serialized.FindProperty("_paletteMaterial").objectReferenceValue = Load<Material>(ArtPaths.LowPolyMaterial);
             serialized.FindProperty("_earthMaterial").objectReferenceValue = Load<Material>(WorldPaths.EarthMaterial);
             serialized.FindProperty("_earthlight").objectReferenceValue = light;
+            serialized.FindProperty("_fillLight").objectReferenceValue = fill;
             serialized.FindProperty("_peakBeacon").objectReferenceValue = CreateBeaconHost(BeaconName);
             AssignRocks(serialized.FindProperty("_pebbleRocks"), WorldPaths.PebbleRocks);
             AssignRocks(serialized.FindProperty("_boulderRocks"), WorldPaths.BoulderRocks);

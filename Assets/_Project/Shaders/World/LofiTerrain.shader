@@ -2,7 +2,9 @@
 // colour is the vertex colour (sRGB, painted by MoonProject.World.TerrainPainter): one flat tone per rock facet,
 // gentle continuous tones on the dust, so large patches carry soft value changes instead of paper-cut edges.
 // Lighting is plain Lambert from the earthlight with its soft shadows, the trilight ambient (with SSAO), Forward+
-// additional lights (07's lamp, the base) and the scene's fog, which fades distant ground toward the horizon.
+// additional punctual lights (07's lamp, the base) and the scene's fog, which fades distant ground toward the horizon.
+// The light loop walks only the punctual lights: the earthlight's directional fill is left out on purpose, so it lifts
+// the shadow sides of built things while the dunes' shadow sides and the long shadows stay deep (pillar 6).
 Shader "MoonProject/World/LofiTerrain"
 {
     SubShader

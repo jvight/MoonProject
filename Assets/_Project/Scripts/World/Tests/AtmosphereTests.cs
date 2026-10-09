@@ -7,8 +7,9 @@ namespace MoonProject.World.Tests
     /// <summary>
     /// Pillar 6 ("Alone, and at peace") guards for the atmosphere: near ground stays crisp while far rock dissolves,
     /// the earthlight is low enough to rake long shadows yet leaves most of the floor lit and never exceeds the light
-    /// Art caps its surfaces against, lit dust never crosses the bloom threshold, and Earth glows softly, far under
-    /// the warm lamps of home.
+    /// Art caps its surfaces against, the fill softly lifts the side the earthlight leaves dark without ever adding to
+    /// a face's brightest light, lit dust never crosses the bloom threshold, and Earth glows softly, far under the
+    /// warm lamps of home.
     /// </summary>
     public sealed class AtmosphereTests
     {
@@ -32,8 +33,20 @@ namespace MoonProject.World.Tests
         // Art rounds its reference light to two decimals.
         private const float ReferenceTolerance = 0.01f;
 
+        // The fill lifts the earthlight's shadow side well above the flat ambient, yet stays a few stops under the
+        // earthlight (lit faces keep their contrast) and lights top faces only faintly. Normals are swept this finely.
+        private const float MinFillOverAmbient = 3f;
+        private const float MaxFillShare = 0.2f;
+        private const float MaxFillOnTopFaces = 0.05f;
+        private const float NormalStep = 2f;
+
         // Earth may just touch the bloom (a soft glow); its limb and halo in the sky stay under it.
         private const float EarthGlowCap = 1.1f;
+
+        // Earth is a pale, cool jewel: no face or rim as saturated as the palette's own cyan ocean (HSV saturation).
+        private const float MaxEarthSaturation = 0.6f;
+        private static readonly PaletteSwatch[] EarthSwatches =
+            { PaletteSwatch.EarthOcean, PaletteSwatch.EarthLand, PaletteSwatch.Cream };
 
         private AtmosphereSettings _atmosphere;
         private SkySettings _sky;
@@ -101,15 +114,53 @@ namespace MoonProject.World.Tests
         }
 
         [Test]
+        public void Fill_SoftlyLiftsTheSideTheEarthlightLeavesDark()
+        {
+            Vector3 toLight = WorldAtmosphere.LightSourceDirection(_atmosphere, _sky);
+            Vector3 toFill = WorldAtmosphere.FillSourceDirection(_atmosphere, _sky);
+            Assert.Less(Vector3.Dot(toLight, toFill), 0f, "the fill must come from the earthlight's dark side");
+
+            float fill = Fill().grayscale;
+            Assert.GreaterOrEqual(fill, MinFillOverAmbient * _atmosphere.AmbientEquator.linear.grayscale,
+                "the fill barely lifts the shadow side above the flat ambient");
+            Assert.LessOrEqual(fill, MaxFillShare * Earthlight().grayscale,
+                "the fill flattens the earthlight's modelling");
+            Assert.LessOrEqual(fill * Mathf.Max(0f, toFill.y), MaxFillOnTopFaces,
+                "the fill lights top faces, which belong to the earthlight");
+        }
+
+        [Test]
+        public void Fill_NeverLightsAFacePastArtsReferenceLight()
+        {
+            // Art caps its surfaces against the earthlight square-on: no face may gather more from both lights.
+            Vector3 toLight = WorldAtmosphere.LightSourceDirection(_atmosphere, _sky);
+            Vector3 toFill = WorldAtmosphere.FillSourceDirection(_atmosphere, _sky);
+            Color reference = Palette.ReferenceLight;
+            for (float pitch = -90f; pitch <= 90f; pitch += NormalStep)
+            {
+                for (float yaw = 0f; yaw < 360f; yaw += NormalStep)
+                {
+                    Vector3 normal = Quaternion.Euler(pitch, yaw, 0f) * Vector3.forward;
+                    Color light = _atmosphere.AmbientSky.linear
+                        + Earthlight() * Mathf.Max(0f, Vector3.Dot(normal, toLight))
+                        + Fill() * Mathf.Max(0f, Vector3.Dot(normal, toFill));
+                    string face = $"face ({pitch}, {yaw})";
+                    Assert.LessOrEqual(light.r, reference.r + ReferenceTolerance, face + " red");
+                    Assert.LessOrEqual(light.g, reference.g + ReferenceTolerance, face + " green");
+                    Assert.LessOrEqual(light.b, reference.b + ReferenceTolerance, face + " blue");
+                }
+            }
+        }
+
+        [Test]
         public void Earth_GlowsSoftly_FarUnderTheWarmLamps()
         {
             var post = new PostProcessSettings();
             Color rim = _sky.EarthAtmosphere.linear * _sky.EarthRim;
             float brightest = 0f;
-            foreach (PaletteSwatch swatch in new[]
-                         { PaletteSwatch.EarthOcean, PaletteSwatch.EarthLand, PaletteSwatch.Cream })
+            foreach (PaletteSwatch swatch in EarthSwatches)
             {
-                Color face = ((Color)Palette.Get(swatch)).linear * _sky.EarthGlow + rim;
+                Color face = EarthMeshBuilder.FaceColor(swatch, _sky) * _sky.EarthGlow + rim;
                 brightest = Mathf.Max(brightest, face.maxColorComponent);
             }
 
@@ -118,6 +169,18 @@ namespace MoonProject.World.Tests
             Assert.Less(brightest, Palette.WarmLampGlow, "Earth outshines the lamps of home");
             Color sky = _sky.EarthAtmosphere.linear * (_sky.EarthLimb + _sky.EarthHaloStrength);
             Assert.Less(sky.maxColorComponent, post.BloomThreshold, "Earth's limb and halo in the sky bloom");
+        }
+
+        [Test]
+        public void Earth_IsAPaleCoolJewel_NotASaturatedCyan()
+        {
+            foreach (PaletteSwatch swatch in EarthSwatches)
+            {
+                Assert.LessOrEqual(Saturation(EarthMeshBuilder.FaceColor(swatch, _sky).gamma), MaxEarthSaturation,
+                    $"Earth's {swatch} faces");
+            }
+
+            Assert.LessOrEqual(Saturation(_sky.EarthAtmosphere), MaxEarthSaturation, "Earth's rim and halo");
         }
 
         [Test]
@@ -140,6 +203,22 @@ namespace MoonProject.World.Tests
 
             Assert.Less(brightest, new PostProcessSettings().BloomThreshold,
                 "dust facing the earthlight would bloom; only the warm lights may");
+        }
+
+        private Color Earthlight()
+        {
+            return _atmosphere.LightColor.linear * _atmosphere.LightIntensity;
+        }
+
+        private Color Fill()
+        {
+            return _atmosphere.FillColor.linear * _atmosphere.FillIntensity;
+        }
+
+        private static float Saturation(Color color)
+        {
+            Color.RGBToHSV(color, out float _, out float saturation, out float _);
+            return saturation;
         }
 
         private float Fog(float distance)

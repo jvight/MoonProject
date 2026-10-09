@@ -4,7 +4,9 @@
     "references": [
         "MoonProject.Gameplay",
         "MoonProject.Gameplay.Editor",
+        "MoonProject.Gameplay.PlayModeTests",
         "MoonProject.Core",
+        "MoonProject.Editor",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

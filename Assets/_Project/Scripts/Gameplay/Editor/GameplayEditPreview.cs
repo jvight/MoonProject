@@ -4,7 +4,6 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using MoonProject.Core;
-using MoonProject.World;
 using Object = UnityEngine.Object;
 
 namespace MoonProject.Gameplay.Editor
@@ -12,11 +11,12 @@ namespace MoonProject.Gameplay.Editor
     /// <summary>
     /// Editor-only preview of what the game places at boot, so the Scene view shows the basin's layout outside Play:
     /// Art's salvage wrecks on the World's site anchors and the broken relay masts on its relay anchors, read from the
-    /// World's own edit-mode preview (<see cref="WorldSystem.Anchors"/>). The base itself (lander, tower, bay, shelf,
-    /// rack) is part of the built scene already. The preview is one hidden root per scene (HideAndDontSave: never
-    /// saved, never in a build, not in the hierarchy) built when a scene holding the gameplay and a world preview is
-    /// opened or saved (the scene build saves a fresh one), removed before Play and rebuilt after it. Building it
-    /// twice leaves one; a scene without both systems is left alone.
+    /// World's own edit-mode preview (the scene's <see cref="IWorldPreview"/>, found by interface so this assembly
+    /// never references the World's). The base itself (lander, tower, bay, shelf, rack) is part of the built scene
+    /// already. The preview is one hidden root per scene (HideAndDontSave: never saved, never in a build, not in the
+    /// hierarchy) built when a scene holding the gameplay and a world preview is opened or saved (the scene build
+    /// saves a fresh one), removed before Play and rebuilt after it. Building it twice leaves one; a scene without
+    /// both systems is left alone.
     /// </summary>
     [InitializeOnLoad]
     public static class GameplayEditPreview
@@ -45,7 +45,7 @@ namespace MoonProject.Gameplay.Editor
             Remove(scene);
             SalvageField salvage = FindInScene<SalvageField>(scene);
             RelayField relays = FindInScene<RelayField>(scene);
-            WorldSystem world = FindInScene<WorldSystem>(scene);
+            IWorldPreview world = FindInScene<IWorldPreview>(scene);
             if (salvage == null || relays == null || world == null || !world.HasGeneratedWorld)
             {
                 return;
@@ -143,7 +143,7 @@ namespace MoonProject.Gameplay.Editor
             }
         }
 
-        private static T FindInScene<T>(Scene scene) where T : Component
+        private static T FindInScene<T>(Scene scene) where T : class
         {
             foreach (GameObject root in scene.GetRootGameObjects())
             {
