@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: SoundscapeTuning
   m_EditorClassIdentifier: 
   _silenceWidth: 150
+  _farnessEase: 1.5
   _farRadioDb: -30
   _farBasinDb: -10
   _roomToneNearDb: -20
@@ -23,11 +24,20 @@ MonoBehaviour:
   _canyonSolitude: 0.8
   _quietHoursBasinDb: 2.6
   _quietHoursEase: 3
-  _stillSpeed: 0.2
   _stillDelay: 1.5
   _stillRiseTime: 1.5
   _stillReleaseTime: 0.3
   _stillDuckDb: -4
+  _wideDuckDb: -2.5
+  _wideRoomToneDb: 1.5
+  _wideOpenTime: 8
+  _wideReleaseTime: 1
+  _stargazeThinTime: 2.5
+  _stargazeReturnTime: 1.5
+  _stargazeMusicDb: -12
+  _stargazeCutoff: 1200
+  _stargazeSwellVolume: 0.8
+  _stargazeSwellRest: 20
   _lampVolume: 0.35
   _lampFadeIn: 2
   _steerDeadRate: 0.4
@@ -40,6 +50,7 @@ MonoBehaviour:
   _neckPitch: 1.35
   _servoAttack: 0.05
   _servoRelease: 0.15
+  _stillSpeed: 0.2
   _heatTime: 20
   _coolTime: 30
   _tickDelay: 3

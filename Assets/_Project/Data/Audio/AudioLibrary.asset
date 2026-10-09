@@ -1227,6 +1227,18 @@ MonoBehaviour:
     _volumeMax: 0.6
     _pitchMin: 1
     _pitchMax: 1
+  - _id: stargaze_swell
+    _clips:
+    - {fileID: 8300000, guid: 4e67df059ca52c74bb93bfc9061266e4, type: 3}
+    _variantLabels:
+    - stargaze_swell
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.5
+    _volumeMax: 0.5
+    _pitchMin: 1
+    _pitchMax: 1
   - _id: bay_turntable
     _clips:
     - {fileID: 8300000, guid: 89b834fb45150ea4b8c4488f9d27c4fa, type: 3}
