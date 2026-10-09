@@ -1153,6 +1153,176 @@ MonoBehaviour:
     _volumeMax: 0.8
     _pitchMin: 1
     _pitchMax: 1
+  - _id: hopper_feed_hum
+    _clips:
+    - {fileID: 8300000, guid: b95dc9afc5cb3e149988cfb1b5df16b5, type: 3}
+    _variantLabels:
+    - hopper_feed_hum
+    _bus: 2
+    _spatial: 1
+    _loop: 1
+    _volumeMin: 0.45
+    _volumeMax: 0.45
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: hopper_clunk
+    _clips:
+    - {fileID: 8300000, guid: 13b77584baa89eb4e947a5de6a318f2e, type: 3}
+    - {fileID: 8300000, guid: 4bfb99aede0d29a48920de4ca3077254, type: 3}
+    _variantLabels:
+    - 01
+    - 02
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.55
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: bay_arm_servo
+    _clips:
+    - {fileID: 8300000, guid: ff008dea1cc4d334983d6ab35ef11d03, type: 3}
+    _variantLabels:
+    - bay_arm_servo
+    _bus: 2
+    _spatial: 1
+    _loop: 1
+    _volumeMin: 0.5
+    _volumeMax: 0.5
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: bay_arm_sigh
+    _clips:
+    - {fileID: 8300000, guid: 899caa863c941154889f99004f4e29b2, type: 3}
+    _variantLabels:
+    - bay_arm_sigh
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.45
+    _volumeMax: 0.45
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: bay_weld
+    _clips:
+    - {fileID: 8300000, guid: 534e05898b6b5e542b5ddfbcfa942eae, type: 3}
+    _variantLabels:
+    - bay_weld
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.6
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: bay_fitted_chime
+    _clips:
+    - {fileID: 8300000, guid: 7e6639de7bd63e64fa1114264f4a471e, type: 3}
+    _variantLabels:
+    - bay_fitted_chime
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.6
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: bay_turntable
+    _clips:
+    - {fileID: 8300000, guid: 89b834fb45150ea4b8c4488f9d27c4fa, type: 3}
+    _variantLabels:
+    - bay_turntable
+    _bus: 2
+    _spatial: 1
+    _loop: 1
+    _volumeMin: 0.5
+    _volumeMax: 0.5
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: port_hatch_open
+    _clips:
+    - {fileID: 8300000, guid: dc67a20459525f241bf2e1f9509e3a0f, type: 3}
+    _variantLabels:
+    - port_hatch_open
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.55
+    _volumeMax: 0.55
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: port_hatch_close
+    _clips:
+    - {fileID: 8300000, guid: c2313d2b58788894681af5d7018684d9, type: 3}
+    _variantLabels:
+    - port_hatch_close
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.55
+    _volumeMax: 0.55
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: dock_connect
+    _clips:
+    - {fileID: 8300000, guid: e95865ca003fa46469b76cd2021ed810, type: 3}
+    _variantLabels:
+    - dock_connect
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.55
+    _volumeMax: 0.55
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: dock_charge_hum
+    _clips:
+    - {fileID: 8300000, guid: b1b183c6e914bc349a88db9c71cc8853, type: 3}
+    _variantLabels:
+    - dock_charge_hum
+    _bus: 2
+    _spatial: 1
+    _loop: 1
+    _volumeMin: 0.35
+    _volumeMax: 0.35
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: dock_full
+    _clips:
+    - {fileID: 8300000, guid: f55c442d57d4f5d4bab18b4d0a987c93, type: 3}
+    _variantLabels:
+    - dock_full
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.5
+    _volumeMax: 0.5
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: dock_release
+    _clips:
+    - {fileID: 8300000, guid: a5c3eb4d3c6d8fa4e9ef6ba16af24c53, type: 3}
+    _variantLabels:
+    - dock_release
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.5
+    _volumeMax: 0.5
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: bell_knob_tap
+    _clips:
+    - {fileID: 8300000, guid: 3f0f9173d3517524e9537fdd6d3a0257, type: 3}
+    _variantLabels:
+    - bell_knob_tap
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.55
+    _volumeMax: 0.55
+    _pitchMin: 1
+    _pitchMax: 1
   - _id: upgrade_arpeggio
     _clips:
     - {fileID: 8300000, guid: b62b3bb7da385dc4fbc9474cd20b68c4, type: 3}

@@ -1879,6 +1879,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _tuning: {fileID: 11400000, guid: 71f7907dc0ec70a42b4e74119751a310, type: 2}
+--- !u!4 &2544677672827803279
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3649707861690292891}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3569663343529599628}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &2564753837985943034 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2978424742558113628, guid: 4b82c3617374d4b419fc400f87570c1f, type: 3}
@@ -2884,6 +2899,7 @@ Transform:
   - {fileID: 4441763323186666915}
   - {fileID: 1219061948819551767}
   - {fileID: 4368428839079671322}
+  - {fileID: 2544677672827803279}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &3602465756659096541
@@ -2943,6 +2959,23 @@ MeshRenderer:
   m_CorrespondingSourceObject: {fileID: 2780080451317353678, guid: 5022f0bbed17bb548bcd41566d8d0b30, type: 3}
   m_PrefabInstance: {fileID: 383827891659176777}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &3649707861690292891
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2544677672827803279}
+  - component: {fileID: 4374700793077755986}
+  m_Layer: 0
+  m_Name: StationAudio
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
 --- !u!1 &3659900848972596440
 GameObject:
   m_ObjectHideFlags: 0
@@ -3086,6 +3119,7 @@ MonoBehaviour:
   _smallSounds: {fileID: 846657015395640654}
   _relays: {fileID: 4196618957470830756}
   _salvage: {fileID: 3414527768827304137}
+  _stations: {fileID: 4374700793077755986}
 --- !u!23 &3892068201316012684 stripped
 MeshRenderer:
   m_CorrespondingSourceObject: {fileID: 653152446647358019, guid: 22aeae19514facc49a05b23e3114d6a5, type: 3}
@@ -3541,6 +3575,19 @@ Transform:
   m_Children: []
   m_Father: {fileID: 3569663343529599628}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4374700793077755986
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3649707861690292891}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f964113cf6107a43ac6fb21d1da9ce9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _tuning: {fileID: 11400000, guid: b9edc27a12cc24a48ad9bcce8468ccec, type: 2}
 --- !u!4 &4376702971511476740
 Transform:
   m_ObjectHideFlags: 0

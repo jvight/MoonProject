@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 31ce447f6103edc468aacec036c8608f, type: 3}
+  m_Name: StationAudioTuning
+  m_EditorClassIdentifier: 
+  _feedFadeIn: 0.2
+  _feedFadeOut: 0.4
+  _feedVolume: 0.7
+  _armDeadSpeed: 0.05
+  _armFullSpeed: 0.8
+  _armPlacedSpeed: 10
+  _armAttack: 0.08
+  _armRelease: 0.2
+  _armVolume: 0.7
+  _armMinPitch: 0.85
+  _armMaxPitch: 1.15
+  _sighAfter: 0.4
+  _sighMoving: 0.3
+  _sighResting: 0.05
+  _turnDeadRate: 2
+  _turnFullRate: 30
+  _turnVolume: 0.8
+  _turnMinPitch: 0.9
+  _turnMaxPitch: 1.1
+  _stitchFadeIn: 0.3
+  _stitchFadeOut: 0.5
+  _stitchRise: 5
+  _stitchRiseTime: 3
+  _stitchVolume: 0.8
+  _chargeFadeIn: 1.5
+  _chargeSeconds: 20
+  _chargeFadeOut: 2
+  _chargeVolume: 0.5
