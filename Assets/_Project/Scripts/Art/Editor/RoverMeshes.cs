@@ -26,17 +26,36 @@ namespace MoonProject.Art.Editor
         /// <summary>Antenna tip in antenna space: the end of the bent whip.</summary>
         public static readonly Vector3 AntennaTipPosition = new Vector3(0.035f, 0.56f, -0.045f);
 
+        /// <summary>The whip's tired kink in antenna space.</summary>
+        public static readonly Vector3 AntennaKink = new Vector3(0f, 0.33f, 0.01f);
+
+        /// <summary>
+        /// The folded solar wing's 2 x 3 cell grid (wing space): cell size (x across, y along the wing).
+        /// </summary>
+        public static readonly Vector2 WingCell =
+            new Vector2(WingHalfWidth - 1.5f * WingBar, (WingLength - 4f * WingBar) / 3f);
+
+        public const float CellThickness = 0.012f;
+
+        /// <summary>The cell lost to the years (rear right), the gap Tilly's gift fills.</summary>
+        public const int MissingRow = 2;
+
+        public const int MissingColumn = 1;
+
         private const float BodyCentreZ = 0.03f;
-        private const float BodyHalfWidth = 0.44f;
-        private const float BodyFront = 0.68f;
-        private const float BodyBack = -0.62f;
+        internal const float BodyHalfWidth = 0.44f;
+        internal const float BodyFront = 0.68f;
+
+        // Rust on 07 is drawn finer than on the wrecks: it is seen close, from the chase camera.
+        private const float SpotWidth = 0.025f;
+        internal const float BodyBack = -0.62f;
         private const float TubBottom = 0.34f;
         private const float TubTop = 0.84f;
         private const float BodyCorner = 0.16f;
-        private const float StripeY = 0.75f;
-        private const float StripeHeight = 0.1f;
-        private const float PaintProud = 0.0035f;
-        private const float PaintThickness = 0.012f;
+        internal const float StripeY = 0.75f;
+        internal const float StripeHeight = 0.1f;
+        internal const float PaintProud = 0.0035f;
+        internal const float PaintThickness = 0.012f;
 
         /// <summary>Half-length of the straight (non-rounded) part of the front and back faces.</summary>
         private const float FaceHalfSpan = BodyHalfWidth - BodyCorner;
@@ -49,6 +68,9 @@ namespace MoonProject.Art.Editor
         private const float LidWidth = 0.38f;
         private const float BrowInner = 0.205f;
         private const float BrowOuter = 0.255f;
+        private const float WingBar = 0.02f;
+        private const float WingHalfWidth = 0.31f;
+        private const float WingLength = 0.62f;
 
         private static readonly Vector2[] Seven =
         {
@@ -80,6 +102,7 @@ namespace MoonProject.Art.Editor
             Bevel(b, cushion, 0.035f, true, false);
 
             Stripes(b);
+            Dents(b);
             SerialOnFlank(b, 1f, 0.13f, 0.21f);
             SerialOnFlank(b, -1f, 0.21f, 0.13f);
             SerialOnBack(b);
@@ -87,6 +110,74 @@ namespace MoonProject.Art.Editor
             RadioFace(b);
             Rear(b);
             LidRivets(b);
+            return b;
+        }
+
+        /// <summary>
+        /// 07's rust, in body space: blooms at the lid rivets weeping down over the stripe, round the bolts low on the
+        /// flanks and at the corners of the rear hatch, and runs under the radio face's knobs. Clearly old, but kept
+        /// off the face and the eye, so 07 still reads as itself.
+        /// </summary>
+        public static LowPolyMeshBuilder Rust()
+        {
+            var b = new LowPolyMeshBuilder(800);
+            const float lidSide = BodyHalfWidth + 0.03f + 0.003f;
+            const float stripeSide = BodyHalfWidth + PaintProud + PaintThickness * 0.5f + 0.003f;
+            const float flankSide = BodyHalfWidth + 0.004f;
+            for (int side = -1; side <= 1; side += 2)
+            {
+                Matrix4x4 lid = SiteKit.Face(new Vector3(side * lidSide, 0f, 0f), Vector3.right * side, Vector3.up);
+                Matrix4x4 stripe = SiteKit.Face(new Vector3(side * stripeSide, 0f, 0f), Vector3.right * side,
+                    Vector3.up);
+                Matrix4x4 flank = SiteKit.Face(new Vector3(side * flankSide, 0f, 0f), Vector3.right * side,
+                    Vector3.up);
+                foreach (float z in new[] { -0.28f, 0.2f, 0.44f })
+                {
+                    float along = side > 0 ? -z : z;
+                    SiteKit.RustPatch(b, lid, along, 0.87f, 0.065f);
+                    SiteKit.RustStreak(b, stripe, along, 0.835f, 0.14f, SpotWidth * 1.4f);
+                }
+
+                foreach (float z in new[] { -0.5f, 0.02f, 0.52f })
+                {
+                    float along = side > 0 ? -z : z;
+                    SiteKit.RustPatch(b, flank, along, 0.42f, 0.075f);
+                }
+            }
+
+            Matrix4x4 back = SiteKit.Face(new Vector3(0f, 0f, BodyBack - 0.004f), Vector3.back, Vector3.up);
+            SiteKit.RustPatch(b, back, -0.14f, 0.42f, 0.09f);
+            SiteKit.RustPatch(b, back, 0.13f, 0.55f, 0.08f);
+            SiteKit.RustPatch(b, back, 0.3f, 0.4f, 0.07f);
+            Matrix4x4 front = SiteKit.Face(new Vector3(0f, 0f, BodyFront + 0.004f), Vector3.forward, Vector3.up);
+            SiteKit.RustStreak(b, front, -0.2f, LampHeight - 0.04f, 0.09f, SpotWidth);
+            SiteKit.RustStreak(b, front, 0.2f, LampHeight - 0.04f, 0.06f, SpotWidth);
+            return b;
+        }
+
+        /// <summary>
+        /// Dust settled on 07's lid in soft drifts at the back corners and one front corner (never the whole lid:
+        /// the cream still shows), in body space.
+        /// </summary>
+        public static LowPolyMeshBuilder DustPatches()
+        {
+            var b = new LowPolyMeshBuilder(120);
+            Vector2[] drift =
+            {
+                new Vector2(0.16f, 0.02f), new Vector2(0.1f, 0.13f), new Vector2(-0.06f, 0.15f),
+                    new Vector2(-0.17f, 0.05f),
+                new Vector2(-0.14f, -0.1f), new Vector2(0.02f, -0.15f), new Vector2(0.14f, -0.09f),
+            };
+            float top = LidTop + Weathering.DustLift * 0.25f;
+            Vector3[] spots = { new Vector3(0.22f, top, -0.36f), new Vector3(0.33f, top, 0.16f),
+                new Vector3(-0.3f, top, 0.48f) };
+            for (int i = 0; i < spots.Length; i++)
+            {
+                b.Extrude(At(spots[i], new Vector3(90f, i * 70f, 0f), new Vector3(1f + i * 0.2f, 1f, 1f)), drift,
+                    0.008f,
+                    PaletteSwatch.CakedDust);
+            }
+
             return b;
         }
 
@@ -134,13 +225,22 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
-        /// The mismatched replacement from another machine: a grey metal tyre (it shows from behind) with four
-        /// lugs and a sage hub held by four bolts.
+        /// The mismatched spare from another machine, clearly patched on: dark rubber like the others but with a
+        /// busier tread of eight small lugs, two wraps of faded tape round the tyre with a loose end, and a sage hub
+        /// held by four bolts (VISION ruling 13: wear must read as intentional at first glance).
         /// </summary>
         public static LowPolyMeshBuilder SpareWheel()
         {
-            var b = new LowPolyMeshBuilder(300);
-            Tyre(b, 10, 4, PaletteSwatch.Metal, PaletteSwatch.Charcoal);
+            var b = new LowPolyMeshBuilder(400);
+            Tyre(b, 10, 8, PaletteSwatch.Charcoal, PaletteSwatch.Charcoal);
+            for (int wrap = -1; wrap <= 1; wrap += 2)
+            {
+                b.Prism(At(new Vector3(wrap * 0.045f, 0f, 0f), new Vector3(0f, wrap * 7f, -90f)), TyreRadius + 0.006f,
+                    0.032f, 10, PaletteSwatch.FadedPaint, false);
+            }
+
+            b.Box(At(new Vector3(WheelHalfWidth + 0.003f, -0.2f, -0.21f), new Vector3(-35f, 0f, 0f)),
+                new Vector3(0.006f, 0.034f, 0.09f), PaletteSwatch.FadedPaint);
             b.Prism(At(new Vector3(WheelHalfWidth + 0.012f, 0f, 0f), AlongX), 0.24f, 0.03f, 10, PaletteSwatch.Sage);
             for (int i = 0; i < 4; i++)
             {
@@ -270,10 +370,10 @@ namespace MoonProject.Art.Editor
         /// </summary>
         public static LowPolyMeshBuilder SolarWing()
         {
-            const float bar = 0.02f;
+            const float bar = WingBar;
             const float height = 0.022f;
-            const float halfWidth = 0.31f;
-            const float length = 0.62f;
+            const float halfWidth = WingHalfWidth;
+            const float length = WingLength;
             var b = new LowPolyMeshBuilder(280);
             b.Prism(At(Vector3.zero, AlongX), 0.016f, 2f * halfWidth + 0.02f, 8, PaletteSwatch.Charcoal);
             b.Box(At(0f, -0.007f, -length * 0.5f), new Vector3(2f * halfWidth - 0.02f, 0.008f, length - 0.02f),
@@ -283,26 +383,25 @@ namespace MoonProject.Art.Editor
             b.Box(At(halfWidth - bar * 0.5f, 0f, -length * 0.5f), new Vector3(bar, height, length),
                 PaletteSwatch.Metal, 0.004f);
             b.Box(At(0f, 0f, -length * 0.5f), new Vector3(bar, height, length - 0.02f), PaletteSwatch.Metal, 0.004f);
-            float cellLength = (length - 4f * bar) / 3f;
+            float cellLength = WingCell.y;
             for (int i = 0; i <= 3; i++)
             {
                 float z = -bar * 0.5f - i * (cellLength + bar);
                 b.Box(At(0f, 0f, z), new Vector3(2f * halfWidth, height, bar), PaletteSwatch.Metal, 0.004f);
             }
 
-            float cellWidth = halfWidth - 1.5f * bar;
+            float cellWidth = WingCell.x;
             for (int row = 0; row < 3; row++)
             {
                 for (int column = 0; column < 2; column++)
                 {
-                    if (row == 2 && column == 1)
+                    if (row == MissingRow && column == MissingColumn)
                     {
                         continue;
                     }
 
-                    float x = (column == 0 ? -1f : 1f) * (bar * 0.5f + cellWidth * 0.5f);
-                    float z = -bar - cellLength * 0.5f - row * (cellLength + bar);
-                    b.Box(At(x, 0f, z), new Vector3(cellWidth, 0.012f, cellLength), PaletteSwatch.SkyHorizon);
+                    b.Box(At(WingCellCentre(row, column)), new Vector3(cellWidth, CellThickness, cellLength),
+                        PaletteSwatch.SkyHorizon);
                 }
             }
 
@@ -313,7 +412,7 @@ namespace MoonProject.Art.Editor
         public static LowPolyMeshBuilder Antenna()
         {
             var b = new LowPolyMeshBuilder(100);
-            var kink = new Vector3(0f, 0.33f, 0.01f);
+            Vector3 kink = AntennaKink;
             b.Prism(At(0f, 0.02f, 0f), 0.032f, 0.04f, 8, PaletteSwatch.Charcoal);
             RecipeKit.Rod(b, new Vector3(0f, 0.04f, 0f), kink, 0.0085f, 5, PaletteSwatch.Metal);
             RecipeKit.Rod(b, kink, AntennaTipPosition, 0.0075f, 5, PaletteSwatch.Metal);
@@ -447,26 +546,83 @@ namespace MoonProject.Art.Editor
                 PaletteSwatch.WarmAccent);
         }
 
-        /// <summary>Hand-painted "07" in enamel on a flank stripe, reading front-to-back from outside.</summary>
+        /// <summary>
+        /// The hand-painted "07" on a flank stripe, chalky with age, reading front-to-back from outside.
+        /// </summary>
         private static void SerialOnFlank(LowPolyMeshBuilder b, float side, float zeroZ, float sevenZ)
         {
             const float scale = 0.7f;
             float x = side * (BodyHalfWidth + PaintProud + PaintThickness * 0.5f + 0.002f);
             b.Torus(At(new Vector3(x, StripeY - 0.002f, zeroZ), new Vector3(0f, 0f, side * -86f),
-                new Vector3(1.35f * scale, 0.25f, scale)), 0.032f, 0.013f, 10, 4, PaletteSwatch.Enamel);
+                new Vector3(1.35f * scale, 0.25f, scale)), 0.032f, 0.013f, 10, 4, PaletteSwatch.FadedPaint);
             b.Extrude(At(new Vector3(x, StripeY + 0.002f, sevenZ), new Vector3(0f, side > 0f ? -90f : 90f, -3f),
-                new Vector3(scale, scale, 1f)), Seven, 0.006f, PaletteSwatch.Enamel);
+                new Vector3(scale, scale, 1f)), Seven, 0.006f, PaletteSwatch.FadedPaint);
         }
 
-        /// <summary>"07" on the back stripe, so the chase camera always sees who this is.</summary>
+        /// <summary>The faded "07" on the back stripe, so the chase camera always sees who this is.</summary>
         private static void SerialOnBack(LowPolyMeshBuilder b)
         {
             const float scale = 0.8f;
             float z = BodyBack - PaintProud - PaintThickness * 0.5f - 0.002f;
             b.Torus(At(new Vector3(-0.045f, StripeY - 0.002f, z), new Vector3(90f, 0f, 3f),
-                new Vector3(scale, 0.25f, 1.35f * scale)), 0.032f, 0.013f, 10, 4, PaletteSwatch.Enamel);
+                new Vector3(scale, 0.25f, 1.35f * scale)), 0.032f, 0.013f, 10, 4, PaletteSwatch.FadedPaint);
             b.Extrude(At(new Vector3(0.04f, StripeY + 0.002f, z), new Vector3(0f, 0f, -3f),
-                new Vector3(scale, scale, 1f)), Seven, 0.006f, PaletteSwatch.Enamel);
+                new Vector3(scale, scale, 1f)), Seven, 0.006f, PaletteSwatch.FadedPaint);
+        }
+
+        /// <summary>
+        /// The knocks of decades: dents low on the right front flank, the left front flank and the right rear, each
+        /// two pressed facets meeting in a crease that catch the light differently from the flat enamel round them.
+        /// </summary>
+        private static void Dents(LowPolyMeshBuilder b)
+        {
+            Dent(b, 1f, 0.5f, 0.42f, 1f);
+            Dent(b, -1f, 0.47f, 0.38f, 0.8f);
+            Dent(b, 1f, 0.53f, -0.42f, 1.2f);
+        }
+
+        private static void Dent(LowPolyMeshBuilder b, float side, float y, float z, float size)
+        {
+            float x = side * (BodyHalfWidth + 0.004f);
+            for (int half = -1; half <= 1; half += 2)
+            {
+                b.Box(At(new Vector3(x, y, z + half * 0.045f * size), new Vector3(0f, half * 12f, half * 6f)),
+                    new Vector3(0.008f, 0.12f * size, 0.09f * size), PaletteSwatch.Enamel);
+            }
+
+            b.Box(At(new Vector3(x + side * 0.005f, y, z), new Vector3(0f, 0f, 6f)),
+                new Vector3(0.004f, 0.11f * size, 0.008f), PaletteSwatch.Charcoal);
+        }
+
+        /// <summary>
+        /// Scuffs on the head's hood where decades of dust storms and low doorways rubbed the enamel through to the
+        /// metal: chips along the brow's top edge and down its sides, and one long scratch (head space, standing just
+        /// over the head's weather skins).
+        /// </summary>
+        public static LowPolyMeshBuilder HoodScuffs()
+        {
+            var b = new LowPolyMeshBuilder(120);
+            const float top = 0.41f + 0.007f;
+            Vector3[] chips =
+            {
+                new Vector3(-0.15f, top, 0.1f), new Vector3(0.04f, top, 0.11f), new Vector3(0.17f, top, 0.06f),
+                new Vector3(-0.03f, top, -0.12f),
+            };
+            for (int i = 0; i < chips.Length; i++)
+            {
+                b.Box(At(chips[i], new Vector3(0f, i * 37f, 0f)), new Vector3(0.05f + i * 0.01f, 0.004f, 0.03f),
+                    i % 2 == 0 ? PaletteSwatch.Metal : PaletteSwatch.FadedPaint);
+            }
+
+            for (int side = -1; side <= 1; side += 2)
+            {
+                b.Box(At(new Vector3(side * (0.3f + 0.006f), 0.3f, 0.05f), new Vector3(side * 8f, 0f, 0f)),
+                    new Vector3(0.004f, 0.025f, 0.12f), PaletteSwatch.Metal);
+            }
+
+            b.Box(At(new Vector3(0.1f, top, 0f), new Vector3(0f, 28f, 0f)), new Vector3(0.006f, 0.004f, 0.26f),
+                PaletteSwatch.Metal);
+            return b;
         }
 
         /// <summary>Sage plate riveted over the left rear flank, askew, covering a stretch of the stripe.</summary>
@@ -535,6 +691,16 @@ namespace MoonProject.Art.Editor
                 b.Icosphere(At(x, y, z), 0.01f, 0, PaletteSwatch.Enamel);
                 b.Icosphere(At(-x, y, z), 0.01f, 0, PaletteSwatch.Enamel);
             }
+        }
+
+        /// <summary>
+        /// Centre of the wing cell at <paramref name="row"/> (0 = by the hinge) and column (0 = left).
+        /// </summary>
+        public static Vector3 WingCellCentre(int row, int column)
+        {
+            float x = (column == 0 ? -1f : 1f) * (WingBar * 0.5f + WingCell.x * 0.5f);
+            float z = -WingBar - WingCell.y * 0.5f - row * (WingCell.y + WingBar);
+            return new Vector3(x, 0f, z);
         }
 
         private static Vector3 AxleLocal(float wheelZ)

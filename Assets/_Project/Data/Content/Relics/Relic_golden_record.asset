@@ -16,4 +16,5 @@ MonoBehaviour:
   _mass: 5
   _prefab: {fileID: 5592195012531211553, guid: 7db3a58f2dc18c74f9668da203018e85, type: 3}
   _answerNote: 0
-  _placement: 2
+  _siteId: site.kestrel
+  _heartOffset: {x: 0, y: 0}

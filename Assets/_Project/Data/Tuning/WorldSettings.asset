@@ -125,6 +125,9 @@ MonoBehaviour:
       _relayLedgeLateral: 10
       _relayLedgeHeight: 3
       _relayLedgeRadius: 4.5
+      _landerBayArc: 70
+      _landerBayDepth: 10
+      _landerBayHalfLength: 20
       _glowHeight: 3.5
       _glowIntensity: 0.9
       _glowRadius: 1.2
@@ -137,6 +140,44 @@ MonoBehaviour:
       _exitHalfWidth: 6
       _exitStepHeight: 2.5
       _exitFootLength: 9
+    _sites:
+      _footprintBlend: 12
+      _depotBearing: 315
+      _depotDistance: 55
+      _depotRadius: 10
+      _drillBearing: 113
+      _drillDistance: 148.3
+      _drillRadius: 9
+      _garageBearing: 175
+      _garageDistance: 125
+      _garageRadius: 10
+      _moundBearing: 28.5
+      _moundDistance: 150
+      _moundRadius: 4
+      _moundRise: 1.6
+      _moundRun: 16
+      _kestrel:
+        _bearing: 356
+        _distance: 185
+        _fallBearing: 20
+        _floorRadius: 8
+        _rimRadius: 13
+        _depth: 0.6
+        _rimHeight: 0.3
+        _wallEase: 1.25
+        _rimFlank: 6
+        _furrowLength: 90
+        _furrowHalfWidth: 6
+        _furrowTailHalfWidth: 2
+        _furrowDepth: 0.3
+        _bermHeight: 0.15
+        _bermHalfWidth: 1.5
+        _gougeCount: 4
+        _gougeDepth: 0.2
+        _gougeHalfLength: 5
+        _gougeHalfWidth: 2
+        _scorchReach: 8
+        _clearMargin: 4
     _farRangeStart: 950
     _farRangeFull: 1700
     _farRangeHeight: 105
@@ -184,10 +225,14 @@ MonoBehaviour:
     _craterRimLight: 0.5
     _highlandZone: 0.65
     _highlandShade: 0.8
+    _scorchShade: 0.85
+    _scorchCharcoal: 0.6
+    _scorchMottle: 0.25
   _scatter:
     _extentRadius: 370
     _padClearance: 12
     _anchorClearance: 1.5
+    _scorchClear: 0.05
     _laneHalfWidth: 13
     _laneBearings:
     - 325
@@ -263,10 +308,6 @@ MonoBehaviour:
     _haloMinAngle: 0.55
   _relays:
     _padRadius: 3
-    _moundBearing: 30.5
-    _moundBearingSpread: 3.5
-    _moundDistance: 113
-    _moundDistanceSpread: 13
     _shoulderBearing: 250
     _shoulderBearingSpread: 15
     _shoulderDistance: 220

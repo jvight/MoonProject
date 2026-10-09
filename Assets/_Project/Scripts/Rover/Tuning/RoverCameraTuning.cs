@@ -161,6 +161,22 @@ namespace MoonProject.Rover
         [SerializeField] private CameraMomentSettings _relayMoment =
             new CameraMomentSettings(3f, 2.6f, 2.6f, 0.22f, 3f, 0.5f, 26f, 40f, -13f, 0.65f, 40f);
 
+        [Tooltip("07 in Kenji's Rover Bay: the camera eases to a fixed view in through the open front and holds it "
+            + "(whole yaw share, any swing) while 07 stays in, a little farther than the chase camera and at the bay "
+            + "framing's own elevation, so the arms show over 07. The install moment plays inside this view.")]
+        [SerializeField] private CameraMomentSettings _bayMoment =
+            new CameraMomentSettings(1.4f, 0f, 1.4f, 0f, 0f, 1f, 0f, 180f, 0f, 0.12f, 40f);
+
+        [Tooltip("Where the bay view looks from and how it keeps clear of the bay's roof.")]
+        [SerializeField] private BayFramingSettings _bayFraming = new BayFramingSettings();
+
+        [Tooltip("A friend's gift appearing as 07 comes home: a softer, shorter swing toward the gift, then back.")]
+        [SerializeField] private CameraMomentSettings _giftMoment =
+            new CameraMomentSettings(1.4f, 1.0f, 1.2f, 0f, 0f, 0.5f, 0f, 80f, -3f, -0.15f, 40f);
+
+        [Tooltip("Which way the gift moment looks for each friend's gift.")]
+        [SerializeField] private KitViewSettings _kitViews = new KitViewSettings();
+
         [Tooltip("Seconds a camera moment takes to ease away when the player looks around (always skippable).")]
         [Range(0.1f, 3f)]
         [SerializeField] private float _momentCancelEaseOut = 0.6f;
@@ -274,6 +290,14 @@ namespace MoonProject.Rover
         public CameraMomentSettings LeapMoment => _leapMoment;
 
         public CameraMomentSettings RelayMoment => _relayMoment;
+
+        public CameraMomentSettings BayMoment => _bayMoment;
+
+        public BayFramingSettings BayFraming => _bayFraming;
+
+        public CameraMomentSettings GiftMoment => _giftMoment;
+
+        public KitViewSettings KitViews => _kitViews;
 
         public float LeapMomentMinStrength => _leapMomentMinStrength;
 

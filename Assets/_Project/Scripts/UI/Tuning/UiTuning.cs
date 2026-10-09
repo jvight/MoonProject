@@ -16,6 +16,7 @@ namespace MoonProject.UI
         [SerializeField] private MaterialsChipSettings _materialsChip = new MaterialsChipSettings();
         [SerializeField] private MemoryCardSettings _memoryCard = new MemoryCardSettings();
         [SerializeField] private TowerPanelSettings _towerPanel = new TowerPanelSettings();
+        [SerializeField] private KitTitleSettings _kitTitle = new KitTitleSettings();
         [SerializeField] private FriendUiSettings _friends = new FriendUiSettings();
         [SerializeField] private TickerSettings _ticker = new TickerSettings();
         [SerializeField] private DialReadoutSettings _dialReadout = new DialReadoutSettings();
@@ -36,6 +37,8 @@ namespace MoonProject.UI
 
         public TowerPanelSettings TowerPanel => _towerPanel;
 
+        public KitTitleSettings KitTitle => _kitTitle;
+
         public FriendUiSettings Friends => _friends;
 
         public TickerSettings Ticker => _ticker;
@@ -50,9 +53,8 @@ namespace MoonProject.UI
         public string Validate()
         {
             if (_pause == null || _title == null || _prompts == null || _reticle == null || _materialsChip == null ||
-                _memoryCard == null || _towerPanel == null || _friends == null || _ticker == null ||
-                _dialReadout == null || _relays == null ||
-                _salvage == null)
+                _memoryCard == null || _towerPanel == null || _kitTitle == null || _friends == null ||
+                _ticker == null || _dialReadout == null || _relays == null || _salvage == null)
             {
                 return "a settings section is missing";
             }

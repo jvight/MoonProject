@@ -6,9 +6,9 @@ using Object = UnityEngine.Object;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// A station's shop: a ring of warm light on the ground that knows when 07 is parked on it. It breathes softly
-    /// while there is nothing to buy, glows inviting when the offer is affordable, brightly under 07 and dims once
-    /// everything is bought; a purchase flares it.
+    /// A station's shop: a ring of warm light on the ground (or level on a station's deck) that knows when 07 is
+    /// parked on it. It breathes softly while there is nothing to buy, glows inviting when the offer is affordable,
+    /// brightly under 07 and dims once everything is bought; a purchase flares it.
     /// </summary>
     public sealed class StationPad : IDisposable
     {
@@ -19,6 +19,7 @@ namespace MoonProject.Gameplay
         private readonly TerrainRing _ring;
         private readonly GlowRenderer _glow;
 
+        /// <summary>A pad on the ground around <paramref name="centre"/> (its height is the ground's).</summary>
         public StationPad(string name, Transform parent, ITerrainQuery terrain, Vector3 centre, PadLook look,
             Material material)
         {
@@ -30,9 +31,24 @@ namespace MoonProject.Gameplay
             _look = look;
             Centre = SurfaceRules.OnSurface(terrain, centre.x, centre.z);
             _ring = new TerrainRing(look.Segments);
-            _ring.Rebuild(terrain, Centre, look.Radius - look.RingWidth * 0.5f, look.Radius + look.RingWidth * 0.5f,
-                RingLift);
+            _ring.Rebuild(terrain, Centre, InnerRadius(look), OuterRadius(look), RingLift);
             _glow = new GlowRenderer(GlowObject.Create(name, parent, _ring.Mesh, material));
+        }
+
+        private StationPad(string name, Transform parent, Vector3 deckCentre, PadLook look, Material material)
+        {
+            _look = look;
+            Centre = deckCentre;
+            _ring = new TerrainRing(look.Segments);
+            _ring.RebuildLevel(deckCentre, InnerRadius(look), OuterRadius(look), RingLift);
+            _glow = new GlowRenderer(GlowObject.Create(name, parent, _ring.Mesh, material));
+        }
+
+        /// <summary>A pad lying level on a station's deck around <paramref name="deckCentre"/> (on its top).</summary>
+        public static StationPad OnDeck(string name, Transform parent, Vector3 deckCentre, PadLook look,
+            Material material)
+        {
+            return new StationPad(name, parent, deckCentre, look, material);
         }
 
         public Vector3 Centre { get; }
@@ -62,6 +78,16 @@ namespace MoonProject.Gameplay
         {
             Level = Mathf.Max(Level, level);
             _glow.Apply(Level);
+        }
+
+        private static float InnerRadius(PadLook look)
+        {
+            return look.Radius - look.RingWidth * 0.5f;
+        }
+
+        private static float OuterRadius(PadLook look)
+        {
+            return look.Radius + look.RingWidth * 0.5f;
         }
 
         public void Dispose()

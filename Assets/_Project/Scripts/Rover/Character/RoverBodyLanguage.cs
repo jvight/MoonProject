@@ -10,12 +10,15 @@ namespace MoonProject.Rover
     /// the head looks at whatever it interacts with (gaze requests made through <see cref="IRoverRig"/>) or along its
     /// way with a lagging glance into turns; left alone it drifts into a daydream (<see cref="RoverMood"/>) and looks
     /// up toward Earth. Each session opens with 07 asleep; it wakes on its own (or as soon as the player drives),
-    /// publishing <see cref="RoverAwoke"/>. It reacts to the game: soft landings, waking up, scrap (happier as a
+    /// publishing <see cref="RoverAwoke"/>. It reacts to the game: soft landings, waking up, salvage (happier as a
     /// combo climbs), a relic answering or surfacing (a glance and a perk-up), a deposit (a contented nod), a snapped
     /// tether (a sigh), and hard landings (a small "oof"). When the camera opens to the lonely wide shot
     /// (<see cref="RoverWideShotChanged"/>) its daydream sigh lands with the frame. A relay mast it restored gets a
     /// long look up at its lamp and a perk-up; a new signal pillar of Bell's within range gets a glance; landing from
-    /// a radio-hop, 07 rouses and looks around (<see cref="LookAround"/>).
+    /// a radio-hop, 07 rouses and looks around (<see cref="LookAround"/>). Once the Rover Bay has fitted a kit piece
+    /// (<see cref="RoverKitFitted"/>) and lets 07 go, turned to show it, 07 strikes a proud pose (head up, eye bright,
+    /// antenna wiggle); a friend's gift gets a softer one as it settles; with Tilly's cell in its wing the wing settles
+    /// open wider.
     /// Needs <see cref="IWorldLayout"/>, so it must be initialised after the World systems.
     /// </summary>
     [DefaultExecutionOrder(10)]
@@ -73,6 +76,7 @@ namespace MoonProject.Rover
         private Quaternion _headRest;
         private Quaternion _eyelidRest;
         private Quaternion _wingRest;
+        private bool _proudPending;
         private bool _initialized;
 
         /// <summary>Read-only view of the mood, for audio/debug tooling.</summary>
@@ -105,7 +109,7 @@ namespace MoonProject.Rover
             _subscriptions = new[]
             {
                 events.Subscribe<RoverLanded>(OnLanded),
-                events.Subscribe<ScrapCollected>(OnScrapCollected),
+                events.Subscribe<MaterialSalvaged>(OnMaterialSalvaged),
                 events.Subscribe<RelicAnswered>(OnRelicAnswered),
                 events.Subscribe<RelicSurfaced>(OnRelicSurfaced),
                 events.Subscribe<RelicDeposited>(OnRelicDeposited),
@@ -116,6 +120,7 @@ namespace MoonProject.Rover
                 events.Subscribe<RelayRestored>(OnRelayRestored),
                 events.Subscribe<BellSignalPicked>(OnBellSignalPicked),
                 events.Subscribe<RadioHopFinished>(OnRadioHopFinished),
+                events.Subscribe<RoverKitFitted>(OnKitFitted),
             };
             _initialized = true;
             Apply();
@@ -160,10 +165,10 @@ namespace MoonProject.Rover
             _glanceEnds = Time.time + seconds;
         }
 
-        private void OnScrapCollected(ScrapCollected scrap)
+        private void OnMaterialSalvaged(MaterialSalvaged salvage)
         {
-            float strength = _tuning.ScrapPerk + _tuning.ScrapComboPerk * scrap.ComboStep;
-            PerkUp(Mathf.Min(strength, _tuning.ScrapPerkMax));
+            float strength = _tuning.SalvagePerk + _tuning.SalvageComboPerk * salvage.ComboStep;
+            PerkUp(Mathf.Min(strength, _tuning.SalvagePerkMax));
         }
 
         private void OnRelicAnswered(RelicAnswered answer)
@@ -227,6 +232,22 @@ namespace MoonProject.Rover
                 _tuning.SignalGlanceSeconds);
         }
 
+        /// <summary>
+        /// A gift settled onto 07: a soft perk-up now. A kit piece fitted by the bay: the proud pose once the bay
+        /// lets 07 go, turned to show the piece.
+        /// </summary>
+        private void OnKitFitted(RoverKitFitted fitted)
+        {
+            if (fitted.Gift)
+            {
+                PerkUp(_tuning.GiftPerk);
+            }
+            else
+            {
+                _proudPending = true;
+            }
+        }
+
         /// <summary>Landed from a radio-hop: 07 rouses from any daydream and looks around, "where am I?".</summary>
         private void OnRadioHopFinished(RadioHopFinished hop)
         {
@@ -258,6 +279,7 @@ namespace MoonProject.Rover
             }
 
             _mood.SetEffort(_rover.JumpCharge);
+            _mood.SetWingMended(_rover.Kit.HasMendedWing);
             switch (_mood.Step(_rover.Speed, _rover.DriveInput.magnitude, deltaTime))
             {
                 case MoodTransition.BeganWaking:
@@ -269,6 +291,12 @@ namespace MoonProject.Rover
                 case MoodTransition.WokeFromDaydream:
                     PerkUp(_tuning.WakePerk);
                     break;
+            }
+
+            if (_proudPending && !_rover.Kit.IsFitting)
+            {
+                _proudPending = false;
+                PerkUp(_tuning.KitProudPerk);
             }
 
             if (_glanceEnds >= 0f && Time.time >= _glanceEnds)

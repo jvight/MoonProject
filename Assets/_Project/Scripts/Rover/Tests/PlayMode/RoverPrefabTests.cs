@@ -87,6 +87,7 @@ namespace MoonProject.Rover.PlayModeTests
             var context = new GameContext(new EventBus(), _input);
             context.Register(_world.Terrain);
             context.Register<IWorldLayout>(new TestWorldLayout());
+            context.Register<IFriendRoster>(new TestFriendRoster());
             var controller = _rover.GetComponent<RoverController>();
             controller.Initialize(context);
             controller.SetDriveSource(_drive);
@@ -98,6 +99,7 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.AreSame(controller, context.Get<IRoverState>());
             Assert.AreSame(controller, context.Get<IRoverRig>());
             Assert.IsNotNull(context.Get<IRoverRig>().TetherOrigin);
+            Assert.AreSame(controller.Kit, context.Get<IRoverCargoSeat>(), "The kit's rack is the cargo seat.");
             Assert.AreSame(cameraRig.Camera, context.Get<IViewCamera>().Camera);
             Assert.AreSame(cameraRig, context.Get<ILookSettings>());
 
@@ -158,6 +160,21 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.IsTrue(coilLight.enabled, "Charging lights the ground under 07.");
             FrameCapture.SavePng(camera, 960, 540, Path.Combine(OutputFolder, "15-prefab-coils-charging.png"));
             _drive.JumpHeld = false;
+
+            IRoverAbilities abilities = context.Get<IRoverAbilities>();
+            abilities.Grant(RoverAbility.WarmHeadlamp);
+            abilities.Grant(RoverAbility.BoostCoils);
+            abilities.Grant(RoverAbility.CargoCradle);
+            yield return Settle(1.5f);
+            foreach (string kit in new[] { "Kit_LampBar", "Kit_CapacitorDrum", "Kit_CargoRack" })
+            {
+                Transform piece = Find(_rover.transform, kit);
+                Assert.IsNotNull(piece, $"Rover.prefab mounts art's {kit}.");
+                Assert.IsTrue(piece.gameObject.activeSelf, $"Owned: {kit} is on 07.");
+            }
+
+            Assert.IsTrue(context.Get<IRoverCargoSeat>().IsFitted, "The cradle is fitted.");
+            FrameCapture.SavePng(camera, 960, 540, Path.Combine(OutputFolder, "16-prefab-fully-kitted.png"));
         }
 
         private static Vector3 EarthlightSource()

@@ -163,16 +163,16 @@ MonoBehaviour:
     _volumeMax: 0.7
     _pitchMin: 1
     _pitchMax: 1
-  - _id: scrap_chime
+  - _id: salvage_chime
     _clips:
-    - {fileID: 8300000, guid: 679bde49b07968146b88a0d89378712a, type: 3}
-    - {fileID: 8300000, guid: f127d984f6e53414bb668a533fe83c7e, type: 3}
-    - {fileID: 8300000, guid: f2525b88a89da9d43ba67299c6801102, type: 3}
-    - {fileID: 8300000, guid: 5da7cf1978ca0e344b55ef02cedb0159, type: 3}
-    - {fileID: 8300000, guid: 5a17f18acc19fd54c99642505658cc2d, type: 3}
-    - {fileID: 8300000, guid: c233c37a004a1ec4ba2e5f70cee7885d, type: 3}
-    - {fileID: 8300000, guid: f2b0de51124878944b74771b06edaee5, type: 3}
-    - {fileID: 8300000, guid: 555718e840dee3041a59ce7f962b0a3e, type: 3}
+    - {fileID: 8300000, guid: 2fa8f3bba8258d741a970754c0ea94f1, type: 3}
+    - {fileID: 8300000, guid: 6339af1ff755b194089dd04198889d5e, type: 3}
+    - {fileID: 8300000, guid: de95f7ed5029aea41aa2f9ce4c11f91d, type: 3}
+    - {fileID: 8300000, guid: 00482fc3fea5a6845a43bd232c7a9278, type: 3}
+    - {fileID: 8300000, guid: fcebd3b3705da094fb1a8076471ab2f4, type: 3}
+    - {fileID: 8300000, guid: 75b5811cc2fd1cd448a95f81e4b339dc, type: 3}
+    - {fileID: 8300000, guid: 0de215956e7837042b11bee22095d640, type: 3}
+    - {fileID: 8300000, guid: 66e04580a85351742b98daf62e72a4c8, type: 3}
     _variantLabels:
     - D5
     - E5
@@ -1054,6 +1054,100 @@ MonoBehaviour:
     - radio_hop_in
     _bus: 1
     _spatial: 0
+    _loop: 0
+    _volumeMin: 0.8
+    _volumeMax: 0.8
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: salvage_cut_metal
+    _clips:
+    - {fileID: 8300000, guid: 721e8a46e825c8d4ab639059930040a4, type: 3}
+    _variantLabels:
+    - salvage_cut_metal
+    _bus: 2
+    _spatial: 1
+    _loop: 1
+    _volumeMin: 0.5
+    _volumeMax: 0.5
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: salvage_cut_wiring
+    _clips:
+    - {fileID: 8300000, guid: cee14a56975c2e4469c0f0328280fcdb, type: 3}
+    _variantLabels:
+    - salvage_cut_wiring
+    _bus: 2
+    _spatial: 1
+    _loop: 1
+    _volumeMin: 0.5
+    _volumeMax: 0.5
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: salvage_cut_optics
+    _clips:
+    - {fileID: 8300000, guid: 48a4924313ce3ff469ac0331f6b9c0ab, type: 3}
+    _variantLabels:
+    - salvage_cut_optics
+    _bus: 2
+    _spatial: 1
+    _loop: 1
+    _volumeMin: 0.5
+    _volumeMax: 0.5
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: salvage_cut_tone
+    _clips:
+    - {fileID: 8300000, guid: 3a20803e3144f53499dcef645f071154, type: 3}
+    _variantLabels:
+    - salvage_cut_tone
+    _bus: 2
+    _spatial: 1
+    _loop: 1
+    _volumeMin: 0.4
+    _volumeMax: 0.4
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: salvage_break
+    _clips:
+    - {fileID: 8300000, guid: 251839141c5b28a4880a54deee363ba8, type: 3}
+    - {fileID: 8300000, guid: 383c8a9d0cf9c434d97f0a8acc08f7b2, type: 3}
+    - {fileID: 8300000, guid: e745d27b9b1439c44a45af6fa0303176, type: 3}
+    _variantLabels:
+    - metal
+    - wiring
+    - optics
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.65
+    _volumeMax: 0.65
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: site_answer
+    _clips:
+    - {fileID: 8300000, guid: 35fe2446c6c02cf4c803bd5580be2c80, type: 3}
+    - {fileID: 8300000, guid: 36cee8fb82189244aa331a7012df2f83, type: 3}
+    - {fileID: 8300000, guid: 5a3fa04558bbb6a4db49dbfda7b52130, type: 3}
+    - {fileID: 8300000, guid: 863600d8e6d2aaf48a92f6d97bc96a29, type: 3}
+    - {fileID: 8300000, guid: 61edfe011792b86499662705c7b92b89, type: 3}
+    - {fileID: 8300000, guid: 698667f7cf8bed9449fe68fc989812ed, type: 3}
+    - {fileID: 8300000, guid: d7521f8dfa9bc9944bd496f2558cc9c0, type: 3}
+    - {fileID: 8300000, guid: 7955051805288df41b472e87b9a065c4, type: 3}
+    - {fileID: 8300000, guid: 243320a7085503442900e2b754e3a294, type: 3}
+    - {fileID: 8300000, guid: 8bc9a22cd2ecce14a82ba1bd5d1fe35f, type: 3}
+    _variantLabels:
+    - depot
+    - depot_relic
+    - garage
+    - garage_relic
+    - drill
+    - drill_relic
+    - kestrel
+    - kestrel_relic
+    - lander
+    - lander_relic
+    _bus: 2
+    _spatial: 1
     _loop: 0
     _volumeMin: 0.8
     _volumeMax: 0.8

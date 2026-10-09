@@ -99,10 +99,6 @@
             "text": "Giữ"
         },
         {
-            "key": "ui.tower.need",
-            "text": "Cần nhặt thêm {0} mảnh phế liệu"
-        },
-        {
             "key": "ui.tower.purchased",
             "text": "Sóng radio đã vươn xa hơn"
         },
@@ -396,7 +392,7 @@
         },
         {
             "key": "ui.station.workshop",
-            "text": "Bàn thợ của Kenji"
+            "text": "Trạm sửa xe của Kenji"
         },
         {
             "key": "ticker.radio.now_playing",
@@ -503,12 +499,60 @@
             "text": "Tàu tiếp tế trong hẻm"
         },
         {
-            "key": "ui.recipe.line",
-            "text": "{0} kim loại · {1} dây điện · {2} quang học"
-        },
-        {
             "key": "ui.recipe.need",
             "text": "Cần trục vớt thêm {0} {1}"
+        },
+        {
+            "key": "upgrade.rover.cargo_cradle.name",
+            "text": "Giỏ chở đồ"
+        },
+        {
+            "key": "upgrade.rover.cargo_cradle.1.title",
+            "text": "Chiếc giỏ có dây buộc"
+        },
+        {
+            "key": "upgrade.rover.cargo_cradle.1.effect",
+            "text": "Một kỷ vật được chở về nhà, nằm gọn trong giỏ trên lưng 07; dây kéo vẫn rảnh cho những mảnh trục vớt lớn."
+        },
+        {
+            "key": "upgrade.rover.warm_headlamp.name",
+            "text": "Đèn pha ấm"
+        },
+        {
+            "key": "upgrade.rover.warm_headlamp.1.title",
+            "text": "Giàn đèn có lồng"
+        },
+        {
+            "key": "upgrade.rover.warm_headlamp.1.effect",
+            "text": "Vùng sáng phía trước rộng và ấm hơn, các cột sáng sonar mà 07 đang hướng tới cũng ở lại lâu hơn một chút."
+        },
+        {
+            "key": "upgrade.rover.boost_coils.name",
+            "text": "Cuộn tăng tốc"
+        },
+        {
+            "key": "upgrade.rover.boost_coils.1.title",
+            "text": "Cặp trống tụ điện"
+        },
+        {
+            "key": "upgrade.rover.boost_coils.1.effect",
+            "text": "Giữ nút tiến trên đất trống, 07 ngân nga chạy nhanh hơn một chút, hai trống sáng lên. Không bao giờ là một cuộc đua."
+        },
+        {
+            "key": "hint.stow",
+            "text": "Cất vào giỏ"
+        },
+        {
+            "key": "ui.bench.pick",
+            "text": "nhấn nhẹ để đổi món"
+        },
+        {
+            "key": "kit.solar_cell.name",
+            "text": "Ô pin mặt trời của Tilly"
+        },
+        {
+            "key": "kit.fresh_paint.name",
+            "text": "Lớp sơn mới từ Bell"
         }
     ]
 }

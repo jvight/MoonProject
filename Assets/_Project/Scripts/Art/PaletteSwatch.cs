@@ -36,5 +36,6 @@ namespace MoonProject.Art
         Rust = 26,
         FadedPaint = 27,
         CakedDust = 28,
+        FadedAccent = 29,
     }
 }

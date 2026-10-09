@@ -18,9 +18,13 @@ namespace MoonProject.Art.Editor
         /// that start dark and are lit at runtime through a MaterialPropertyBlock (part lamps, a dormant eye).
         /// </summary>
         public const string LowPolyGlowOffMaterial = PaletteFolder + "/M_LowPolyGlowOff.mat";
+
+        /// <summary>
+        /// The weather skins' material (LofiWeather): each vertex's own colour, lit exactly like M_LowPoly.
+        /// </summary>
+        public const string LowPolyWeatherMaterial = PaletteFolder + "/M_LowPolyWeather.mat";
         public const string RoverFolder = Root + "/Rover";
         public const string RockFolder = Root + "/Rocks";
-        public const string ScrapFolder = Root + "/Scrap";
         public const string BaseFolder = Root + "/Base";
         public const string RelicFolder = Root + "/Relics";
         public const string FriendFolder = Root + "/Friends";
@@ -34,5 +38,8 @@ namespace MoonProject.Art.Editor
         /// URP light, shadow, fog, Forward+, SRP Batcher and instancing path maintained by Unity.
         /// </summary>
         public const string LowPolyShader = "Packages/com.unity.render-pipelines.universal/Shaders/SimpleLit.shader";
+
+        /// <summary>The Art domain's vertex-coloured variant of the palette shader for the weather skins.</summary>
+        public const string WeatherShader = "Assets/_Project/Shaders/Art/LofiWeather.shader";
     }
 }

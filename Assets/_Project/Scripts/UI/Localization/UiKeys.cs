@@ -1,5 +1,6 @@
 using System;
 using MoonProject.Core;
+using MoonProject.Core.Events;
 using MoonProject.Gameplay;
 
 namespace MoonProject.UI
@@ -22,6 +23,7 @@ namespace MoonProject.UI
         public const string PauseCassettes = "ui.pause.cassettes";
         public const string PauseRelays = "ui.pause.relays";
         public const string RecipeNeed = "ui.recipe.need";
+        public const string BenchPick = "ui.bench.pick";
 
         /// <summary>"hint.excavate": the one word of the prompt teaching <paramref name="kind"/>.</summary>
         public static string Hint(InteractionKind kind)
@@ -110,6 +112,26 @@ namespace MoonProject.UI
                     return "material.optics";
                 default:
                     throw new ArgumentOutOfRangeException(nameof(material), material, "This material has no name key.");
+            }
+        }
+
+        /// <summary>
+        /// "kit.solar_cell.name": the title of a friend's gift fitted on 07. False for a piece no friend gives (crafted
+        /// kit is titled by its upgrade's <see cref="UpgradeName"/>).
+        /// </summary>
+        public static bool TryGetGiftName(RoverKitPiece piece, out string key)
+        {
+            switch (piece)
+            {
+                case RoverKitPiece.SolarCell:
+                    key = "kit.solar_cell.name";
+                    return true;
+                case RoverKitPiece.FreshPaint:
+                    key = "kit.fresh_paint.name";
+                    return true;
+                default:
+                    key = null;
+                    return false;
             }
         }
 

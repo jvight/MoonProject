@@ -11,6 +11,11 @@ namespace MoonProject.Art.Tests
     {
         private static readonly string[] Corners = { "FL", "FR", "RL", "RR" };
 
+        // The tuning knob: chunky (its skirt's half width), proud of the face, within this of 07's beam height.
+        private const float ChunkyKnob = 0.08f;
+        private const float KnobProud = 0.06f;
+        private const float KnobBeamReach = 0.2f;
+
         private static readonly string[] GlowNodes =
         {
             "DialLamp", "PartLamp_0", "PartLamp_1", "PartLamp_2", "PartLamp_3",
@@ -28,6 +33,7 @@ namespace MoonProject.Art.Tests
                 { "DialFace", "Body" },
                 { "Needle", "DialFace" },
                 { "DialLamp", "DialFace" },
+                { "Knob", "DialFace" },
                 { "Speaker", "Body" },
                 { "TapeSlot", "Body" },
                 { "Antenna", "Body" },
@@ -66,7 +72,7 @@ namespace MoonProject.Art.Tests
             ModelNode lid = body.GetDescendant("Lid");
             float cabinetTop = body.LocalPosition.y + lid.LocalPosition.y + lid.Mesh.Geometry.Bounds.max.y;
             float roverHead = MeshChecks.Points(RoverModelBuilder.CreateModel().GetDescendant("Neck"),
-                Matrix4x4.identity).Max(p => p.y);
+                Matrix4x4.identity, false).Max(p => p.y);
 
             Assert.AreEqual(0f, bounds.min.y, 1e-3f, "feet on the ground at the pivot");
             Assert.That(body.LocalPosition.y, Is.InRange(0.7f, 0.8f), "on ~0.75 m legs");
@@ -117,6 +123,29 @@ namespace MoonProject.Art.Tests
             Bounds antenna = body.GetDescendant("Antenna").Mesh.Geometry.Bounds;
             Assert.Greater(antenna.max.y, 0.4f, "the whip rises from its swivel");
             Assert.Greater(antenna.min.y, -0.03f);
+        }
+
+        [Test]
+        public void Knob_IsChunky_BesideTheDial_AtRoverBeamHeight()
+        {
+            ModelNode bell = BellModelBuilder.CreateBell(false);
+            ModelNode body = bell.GetDescendant("Body");
+            ModelNode dial = body.GetDescendant("DialFace");
+            ModelNode knob = dial.GetDescendant("Knob");
+            Bounds shape = knob.Mesh.Geometry.Bounds;
+            var placed = new Bounds(shape.center + knob.LocalPosition, shape.size);
+            float beam = SilhouetteCamera.WorldOf(RoverModelBuilder.CreateModel(), "Neck/Head/Eye/TetherOrigin")
+                .GetColumn(3).y;
+            float height = SilhouetteCamera.WorldOf(bell, "Body/DialFace/Knob").GetColumn(3).y;
+
+            Assert.AreEqual(Quaternion.identity, knob.LocalRotation, "+Z out of the dial; Bell turns it about local Z");
+            Assert.Less(new Vector2(shape.center.x, shape.center.y).magnitude, 0.005f, "pivot on its axis");
+            Assert.GreaterOrEqual(shape.extents.x, ChunkyKnob, "chunky, twice the volume knob");
+            Assert.GreaterOrEqual(shape.max.z, KnobProud, "stands proud of the face for 07's beam to tap");
+            Assert.AreEqual(beam, height, KnobBeamReach, "at 07's beam height");
+            Assert.IsFalse(placed.Intersects(dial.Mesh.Geometry.Bounds), "beside the dial, clear of its bezel");
+            Assert.LessOrEqual(Mathf.Abs(placed.min.x + dial.LocalPosition.x), body.Mesh.Geometry.Bounds.max.x,
+                "on the cabinet's face");
         }
 
         [Test]
@@ -214,13 +243,15 @@ namespace MoonProject.Art.Tests
                 Assert.AreEqual(bell.GetDescendant(shared).Mesh.Name, broken.GetDescendant(shared).Mesh.Name, shared);
             }
 
-            foreach (string changed in new[] { "Body", "Speaker", "Antenna" })
+            foreach (string changed in new[] { "Body", "Knob", "Speaker", "Antenna" })
             {
                 Assert.AreNotEqual(bell.GetDescendant(changed).Mesh.Name, broken.GetDescendant(changed).Mesh.Name);
             }
 
             Assert.Less(broken.GetDescendant("Body").Mesh.Geometry.TriangleCount,
-                bell.GetDescendant("Body").Mesh.Geometry.TriangleCount, "a valve and a knob are missing");
+                bell.GetDescendant("Body").Mesh.Geometry.TriangleCount, "a valve is missing");
+            Assert.Less(broken.GetDescendant("Knob").Mesh.Geometry.TriangleCount,
+                bell.GetDescendant("Knob").Mesh.Geometry.TriangleCount, "the tuning knob is gone to a bare shaft");
             CollectionAssert.Contains(MeshChecks.Swatches(bell.GetDescendant("Body").Mesh.Geometry),
                 PaletteSwatch.LampGlass, "her valves glow under the lid");
             foreach (PaletteSwatch swatch in MeshChecks.Swatches(broken.GetDescendant("Body").Mesh.Geometry))

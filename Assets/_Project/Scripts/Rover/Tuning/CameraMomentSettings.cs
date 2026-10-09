@@ -48,8 +48,9 @@ namespace MoonProject.Rover
         [Range(-20f, 40f)]
         [SerializeField] private float _lift;
 
-        [Tooltip("Extra orbit distance (fraction of the normal distance) at the height of the moment.")]
-        [Range(0f, 2f)]
+        [Tooltip("Extra orbit distance (fraction of the normal distance) at the height of the moment; negative comes "
+            + "closer.")]
+        [Range(-0.6f, 2f)]
         [SerializeField] private float _pullBack;
 
         [Tooltip("Subjects farther than this (m) from 07 are not turned to (the camera only lifts and pulls back).")]

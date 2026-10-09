@@ -1,0 +1,59 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab46228b22d49944d98411bb90900255, type: 3}
+  m_Name: SalvageCatalog
+  m_EditorClassIdentifier: 
+  _sites:
+  - _anchorId: site.depot
+    _prefab: {fileID: 698500926225981626, guid: 4e05b735d883bb345af17f4e8d2befbc, type: 3}
+    _gate:
+      _gated: 0
+      _ability: 0
+  - _anchorId: site.kestrel
+    _prefab: {fileID: 6452073641338690709, guid: 0382be6e5dabbda49989eee33d564b49, type: 3}
+    _gate:
+      _gated: 0
+      _ability: 0
+  - _anchorId: site.drill
+    _prefab: {fileID: 4663772846675265821, guid: 2703d9d50f921874a8ee09e301212165, type: 3}
+    _gate:
+      _gated: 0
+      _ability: 0
+  - _anchorId: site.garage
+    _prefab: {fileID: 541481811713480840, guid: 8c3a57a9fff9e7e41a594c7f5d505c3f, type: 3}
+    _gate:
+      _gated: 0
+      _ability: 0
+  - _anchorId: site.lander
+    _prefab: {fileID: 2727997806974874189, guid: dfc50462b5908d5479e12c5d0ef9b1b0, type: 3}
+    _gate:
+      _gated: 1
+      _ability: 0
+  _metalBundle: {fileID: 8960714290519639283, guid: 26e27ff987c8ae2478a4f6090ec487d1, type: 3}
+  _wiringBundle: {fileID: 8133406963958762877, guid: 20853bd915ffc68498705589c043faee, type: 3}
+  _opticsBundle: {fileID: 7272007056206292504, guid: 0c943ef936aaa0d4c8382df341cfd7c4, type: 3}
+  _trail:
+  - _prefab: {fileID: 6318756582023520441, guid: 977d9c43b34727b44842fba2d5cad368, type: 3}
+    _material: 0
+    _distance: 0
+  - _prefab: {fileID: 8233554219087481563, guid: 2760e3d47ae3984468c94d205c4feaa6, type: 3}
+    _material: 2
+    _distance: 21
+  - _prefab: {fileID: 4162382666459232184, guid: 8bb6ea413a325474fa3bbef56a2f9acb, type: 3}
+    _material: 1
+    _distance: 42
+  - _prefab: {fileID: 2621452573191037930, guid: 4b281814080006a48b0dc93c755c436e, type: 3}
+    _material: 0
+    _distance: 63
+  - _prefab: {fileID: 267186517319596607, guid: 5af9c27a0d034a242aa0dae21bd48f4c, type: 3}
+    _material: 2
+    _distance: 84

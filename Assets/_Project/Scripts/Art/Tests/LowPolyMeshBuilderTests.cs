@@ -500,6 +500,155 @@ namespace MoonProject.Art.Tests
         }
 
         [Test]
+        public void AppendFacing_CopiesOnlyTheFacesThatLookThatWay_LiftedAndRepainted()
+        {
+            var source = new LowPolyMeshBuilder();
+            source.Box(Matrix4x4.identity, Vector3.one, PaletteSwatch.Cream);
+            var skin = new LowPolyMeshBuilder();
+
+            MeshRange top = skin.AppendFacing(source, Vector3.up, 0.9f, 0.01f, PaletteSwatch.CakedDust);
+
+            Assert.AreEqual(2, top.TriangleCount, "only the top face");
+            MeshChecks.AssertWellFormed(skin);
+            foreach (Vector3 p in skin.Positions)
+            {
+                Assert.AreEqual(0.51f, p.y, 1e-5f, "lifted along the face normal");
+            }
+
+            CollectionAssert.AreEqual(new[] { PaletteSwatch.CakedDust }, MeshChecks.Swatches(skin));
+        }
+
+        [Test]
+        public void AppendRepainted_CopiesOnlyThatPaint()
+        {
+            var source = new LowPolyMeshBuilder();
+            source.Box(Matrix4x4.identity, Vector3.one, PaletteSwatch.Cream);
+            source.Box(Place.At(2f, 0f, 0f), Vector3.one, PaletteSwatch.WarmAccent);
+            var coat = new LowPolyMeshBuilder();
+
+            coat.AppendRepainted(source, PaletteSwatch.WarmAccent, PaletteSwatch.FadedAccent, 0.005f);
+
+            Assert.AreEqual(12, coat.TriangleCount);
+            Assert.Greater(coat.Bounds.min.x, 1.49f, "only the orange box");
+            Assert.AreEqual(1.01f, coat.Bounds.size.x, 1e-4f, "lifted out of every face");
+            CollectionAssert.AreEqual(new[] { PaletteSwatch.FadedAccent }, MeshChecks.Swatches(coat));
+        }
+
+        [Test]
+        public void AppendBelow_CutsTheShapeAtTheTideLine()
+        {
+            var source = new LowPolyMeshBuilder();
+            source.Box(Matrix4x4.identity, new Vector3(1f, 2f, 1f), PaletteSwatch.Cream);
+            var tide = new LowPolyMeshBuilder();
+
+            tide.AppendBelow(source, -0.4f, 0f, PaletteSwatch.CakedDust);
+
+            MeshChecks.AssertWellFormed(tide);
+            Assert.AreEqual(-1f, tide.Bounds.min.y, 1e-5f);
+            Assert.AreEqual(-0.4f, tide.Bounds.max.y, 1e-5f, "cut exactly at the line");
+            float area = 0f;
+            for (int v = 0; v < tide.VertexCount; v += 3)
+            {
+                area += Vector3.Cross(tide.Positions[v + 1] - tide.Positions[v], tide.Positions[v + 2] -
+                    tide.Positions[v]).magnitude * 0.5f;
+            }
+
+            Assert.AreEqual(1f + 4f * 0.6f, area, 1e-4f, "the bottom and the lower 0.6 m of four sides");
+        }
+
+        [Test]
+        public void ColouredBuilder_StartsEachFaceInItsSwatchColour_AndWritesVertexColours()
+        {
+            LowPolyMeshBuilder skin = LowPolyMeshBuilder.WithVertexColours();
+            skin.Box(Matrix4x4.identity, Vector3.one, PaletteSwatch.Cream);
+            var plain = new LowPolyMeshBuilder();
+            plain.Box(Matrix4x4.identity, Vector3.one, PaletteSwatch.Cream);
+
+            Assert.IsTrue(skin.HasVertexColours);
+            Assert.IsFalse(plain.HasVertexColours);
+            Assert.AreEqual(skin.VertexCount, skin.Colours.Count);
+            Assert.IsEmpty(plain.Colours);
+            foreach (Color32 colour in skin.Colours)
+            {
+                Assert.AreEqual(Palette.GetSurface(PaletteSwatch.Cream), colour);
+            }
+
+            Mesh mesh = skin.ToMesh("Skin");
+            Assert.AreEqual(skin.VertexCount, mesh.colors32.Length, "the skin carries its colours");
+            Assert.IsEmpty(plain.ToMesh("Plain").colors32, "a plain mesh carries none");
+            UnityEngine.Object.DestroyImmediate(mesh);
+        }
+
+        [Test]
+        public void Shading_MovesColoursTowardsATarget_ByHeight_AndByFacing()
+        {
+            LowPolyMeshBuilder skin = LowPolyMeshBuilder.WithVertexColours();
+            MeshRange box = skin.Box(Place.At(0f, 0.5f, 0f), Vector3.one, PaletteSwatch.Cream);
+            Color32 cream = Palette.GetSurface(PaletteSwatch.Cream);
+            var black = new Color32(0, 0, 0, 255);
+
+            skin.ShadeByHeight(box, black, 0f, 1f, 1f);
+            for (int v = 0; v < skin.VertexCount; v++)
+            {
+                float y = skin.Positions[v].y;
+                Assert.AreEqual(cream.r * y, skin.Colours[v].r, 1.01f, "full at the bottom, nothing at the top");
+            }
+
+            LowPolyMeshBuilder top = LowPolyMeshBuilder.WithVertexColours();
+            MeshRange cube = top.Box(Matrix4x4.identity, Vector3.one, PaletteSwatch.Cream);
+            top.ShadeFacing(cube, Vector3.up, 0.9f, black, 1f);
+            for (int v = 0; v < top.VertexCount; v++)
+            {
+                bool up = top.Normals[v].y > 0.9f;
+                Assert.AreEqual(up ? black : cream, top.Colours[v], "only the faces turned to the sky");
+            }
+
+            Assert.Throws<InvalidOperationException>(() => new LowPolyMeshBuilder().Shade(new MeshRange(0, 0), black,
+                1f), "a plain builder has no colours to shade");
+        }
+
+        [Test]
+        public void ColouredCopies_KeepTheirColours_AndNeverLoseThem()
+        {
+            LowPolyMeshBuilder source = LowPolyMeshBuilder.WithVertexColours();
+            MeshRange box = source.Box(Place.At(0f, 1f, 0f), new Vector3(1f, 2f, 1f), PaletteSwatch.Cream);
+            var stain = new Color32(10, 20, 30, 255);
+            source.Shade(box, stain, 1f);
+
+            LowPolyMeshBuilder skin = LowPolyMeshBuilder.WithVertexColours();
+            MeshRange lower = skin.AppendBelow(source, 0.5f, 0.01f);
+            MeshRange picked = skin.AppendWhere(source, t => source.Normals[t * 3].y > 0.9f, 0.01f);
+            skin.Append(source, Place.At(5f, 0f, 0f));
+
+            MeshChecks.AssertWellFormed(skin);
+            Assert.AreEqual(0.5f, skin.GetBounds(lower).max.y, 1e-4f, "cut at the line (the walls lift sideways)");
+            Assert.AreEqual(2, picked.TriangleCount, "only the top");
+            foreach (Color32 colour in skin.Colours)
+            {
+                Assert.AreEqual(stain, colour, "copies keep their colours");
+            }
+
+            Assert.Throws<InvalidOperationException>(() => new LowPolyMeshBuilder().Append(source,
+                Matrix4x4.identity), "a coloured skin cannot go into a plain builder");
+        }
+
+        [Test]
+        public void Polygon_FacesTheWayItIsTold()
+        {
+            LowPolyMeshBuilder skin = LowPolyMeshBuilder.WithVertexColours();
+            Vector3[] square = { Vector3.zero, Vector3.right, new Vector3(1f, 1f, 0f), Vector3.up };
+
+            MeshRange front = skin.Polygon(square, Vector3.forward, PaletteSwatch.Rust);
+            MeshRange back = skin.Polygon(square, Vector3.back, PaletteSwatch.Rust);
+
+            Assert.AreEqual(2, front.TriangleCount);
+            Assert.AreEqual(2, back.TriangleCount);
+            Assert.Greater(skin.Normals[0].z, 0.99f);
+            Assert.Less(skin.Normals[front.EndTriangle * 3].z, -0.99f);
+            Assert.AreEqual(PaletteSwatch.Rust, skin.SwatchOf(0));
+        }
+
+        [Test]
         public void Clear_EmptiesTheBuilder()
         {
             var builder = new LowPolyMeshBuilder();

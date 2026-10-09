@@ -5,9 +5,11 @@ namespace MoonProject.Art.Editor
 {
     /// <summary>
     /// Kenji's workbench (docs/STORY.md: he fixed everything, 07 seven times): a sturdy honey-topped bench with a
-    /// pegboard of wrenches and seven tally marks, a sage vice, a toolbox, a coffee mug with a chip, a hanging work
-    /// lamp, a "07 PIT CREW" sticker on the apron, spare coil and a spare 07 wheel he hid "for next time". Built in its
-    /// own space: origin on the ground at the bench centre, +Z = the front where 07 parks, 2.3 m wide.
+    /// pegboard of painted tool outlines (the tools went with the crew, one small wrench stayed) and seven tally
+    /// marks, a sage vice, a toolbox, a coffee mug with a chip, a hanging work lamp, a "07 PIT CREW" sticker on the
+    /// apron, spare coil and a spare 07 wheel he hid "for next time". A human bench, so only a remnant now: it is
+    /// part of the Rover Bay's frame, beside it, its lamp long dark. Built in its own space: origin on the ground at
+    /// the bench centre, +Z = the front, 2.3 m wide.
     /// </summary>
     internal static class WorkbenchMeshes
     {
@@ -15,11 +17,8 @@ namespace MoonProject.Art.Editor
         public const float Depth = 0.9f;
         public const float WorktopHeight = 0.95f;
 
-        /// <summary>Centre of the work lamp's bulb: the pivot of the Lights glow renderer.</summary>
-        public static readonly Vector3 LampBulb = new Vector3(0.55f, 2.02f, 0.18f);
-
-        /// <summary>Between the vice jaws, where upgrade sparks fly (+Z out of the bench front).</summary>
-        public static readonly Vector3 Sparks = new Vector3(-0.82f, WorktopHeight + 0.19f, 0.32f);
+        // Where the hanging work lamp's (dark) bulb hangs.
+        private static readonly Vector3 LampBulb = new Vector3(0.55f, 2.02f, 0.18f);
 
         private const float LegInset = 0.12f;
         private const float BoardZ = -0.42f;
@@ -51,11 +50,21 @@ namespace MoonProject.Art.Editor
             return b;
         }
 
-        /// <summary>The work lamp's bulb (the Lights glow renderer); origin = bulb centre.</summary>
-        public static LowPolyMeshBuilder LampBulbMesh()
+        /// <summary>The bench's rust: collars at the leg feet and streaks down the apron from its bolts.</summary>
+        public static LowPolyMeshBuilder Rust()
         {
-            var b = new LowPolyMeshBuilder(80);
-            b.Icosphere(Matrix4x4.identity, 0.065f, 1, PaletteSwatch.WarmLamp);
+            var b = new LowPolyMeshBuilder(300);
+            float x = Width * 0.5f - LegInset;
+            float z = Depth * 0.5f - LegInset;
+            for (int i = 0; i < 4; i++)
+            {
+                Weathering.Collar(b, At(i % 2 == 0 ? -x : x, 0.1f, i < 2 ? z : -z), 0.075f, 0.12f);
+            }
+
+            Matrix4x4 apron = SiteKit.Face(new Vector3(0f, 0f, Depth * 0.5f - 0.01f + Weathering.RustLift),
+                Vector3.forward, Vector3.up);
+            SiteKit.RustStreak(b, apron, -0.9f, WorktopHeight - 0.1f, 0.2f);
+            SiteKit.RustStreak(b, apron, 0.95f, WorktopHeight - 0.1f, 0.16f);
             return b;
         }
 
@@ -94,16 +103,18 @@ namespace MoonProject.Art.Editor
             b.Box(At(0f, BoardTop - 0.06f, BoardZ + 0.035f), new Vector3(Width - 0.24f, 0.07f, 0.012f),
                 PaletteSwatch.WarmAccent);
             float face = BoardZ + 0.04f;
+            // The tools left with the crew; their painted outlines stay, and one small wrench nobody took.
             for (int i = 0; i < 4; i++)
             {
                 float length = 0.36f - i * 0.05f;
+                bool stayed = i == 3;
                 Wrench(b, At(new Vector3(-0.78f + i * 0.17f, 1.72f - (0.36f - length) * 0.5f, face), Vector3.zero),
-                    length);
+                    length, stayed ? PaletteSwatch.Metal : PaletteSwatch.Charcoal, stayed ? 0.012f : 0.004f);
             }
 
-            Matrix4x4 hammer = At(new Vector3(0.05f, 1.7f, face + 0.015f), new Vector3(0f, 0f, -8f));
-            b.Box(hammer, new Vector3(0.035f, 0.4f, 0.03f), PaletteSwatch.Honey);
-            b.Box(hammer * At(0f, 0.2f, 0f), new Vector3(0.16f, 0.06f, 0.05f), PaletteSwatch.Metal, 0.008f);
+            Matrix4x4 hammer = At(new Vector3(0.05f, 1.7f, face + 0.002f), new Vector3(0f, 0f, -8f));
+            b.Box(hammer, new Vector3(0.035f, 0.4f, 0.004f), PaletteSwatch.Charcoal);
+            b.Box(hammer * At(0f, 0.2f, 0f), new Vector3(0.16f, 0.06f, 0.004f), PaletteSwatch.Charcoal);
             // Seven tally marks, one per time Kenji fixed 07: a crossed five, one more, and the latest in orange.
             for (int i = 0; i < 4; i++)
             {
@@ -122,19 +133,21 @@ namespace MoonProject.Art.Editor
             }
         }
 
-        /// <summary>A flat open-ended wrench hanging on the board, pointing down.</summary>
-        private static void Wrench(LowPolyMeshBuilder b, Matrix4x4 at, float length)
+        /// <summary>
+        /// A flat open-ended wrench on the board, pointing down: the tool itself in metal, or its painted outline
+        /// (thin, in charcoal) where the tool used to hang.
+        /// </summary>
+        private static void Wrench(LowPolyMeshBuilder b, Matrix4x4 at, float length, PaletteSwatch swatch, float depth)
         {
-            b.Box(at, new Vector3(0.03f, length, 0.012f), PaletteSwatch.Metal);
+            b.Box(at, new Vector3(0.03f, length, depth), swatch);
             Vector2[] jaw =
             {
                 new Vector2(-0.045f, -0.03f), new Vector2(-0.015f, -0.03f), new Vector2(-0.015f, 0.01f),
                 new Vector2(0.015f, 0.01f), new Vector2(0.015f, -0.03f), new Vector2(0.045f, -0.03f),
                 new Vector2(0.045f, 0.03f), new Vector2(-0.045f, 0.03f),
             };
-            b.Extrude(at * At(0f, -length * 0.5f - 0.02f, 0f), jaw, 0.012f, PaletteSwatch.Metal);
-            b.Prism(at * At(new Vector3(0f, length * 0.5f + 0.02f, 0f), AlongZ), 0.035f, 0.012f, 8,
-                PaletteSwatch.Metal);
+            b.Extrude(at * At(0f, -length * 0.5f - 0.02f, 0f), jaw, depth, swatch);
+            b.Prism(at * At(new Vector3(0f, length * 0.5f + 0.02f, 0f), AlongZ), 0.035f, depth, 8, swatch);
         }
 
         /// <summary>An old sage bench vice with a T-handle screw, bolted at the front-left corner.</summary>

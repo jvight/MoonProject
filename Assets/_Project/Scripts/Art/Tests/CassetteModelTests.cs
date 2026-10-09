@@ -9,9 +9,10 @@ namespace MoonProject.Art.Tests
     /// <summary>M3-05 cassettes, Bell's tape rack and Ro's log cache.</summary>
     public sealed class CassetteModelTests
     {
-        private const float TapeWidth = 0.35f;
-        private const float TapeHeight = 0.22f;
-        private const float TapeThickness = 0.07f;
+        // True size (VISION ruling 13): about twice a real cassette.
+        private const float TapeWidth = 0.18f;
+        private const float TapeHeight = 0.22f * TapeWidth / 0.35f;
+        private const float TapeThickness = 0.07f * TapeWidth / 0.35f;
 
         [Test]
         public void Cassettes_OnePrefabPerStyle_PivotedOnTheirCentreOfMass()
@@ -40,9 +41,9 @@ namespace MoonProject.Art.Tests
                 LowPolyMeshBuilder tape = CassetteModelBuilder.CreateCassette(style.Id).Mesh.Geometry;
                 Bounds bounds = tape.Bounds;
 
-                Assert.That(bounds.size.x, Is.InRange(0.33f, 0.37f), "about 0.35 m wide");
-                Assert.That(bounds.size.y, Is.InRange(0.2f, 0.24f));
-                Assert.That(bounds.size.z, Is.InRange(0.06f, 0.1f), "chunky");
+                Assert.AreEqual(TapeWidth, bounds.size.x, 0.006f, "about 0.18 m wide");
+                Assert.AreEqual(TapeHeight, bounds.size.y, 0.006f);
+                Assert.That(bounds.size.z, Is.InRange(TapeThickness, TapeThickness + 0.015f), "chunky");
                 Assert.AreEqual(-TapeHeight * 0.5f, bounds.min.y, 0.01f, "bottom edge half a tape below the pivot");
                 Assert.AreEqual(0f, bounds.center.x, 0.01f);
                 foreach (PaletteSwatch swatch in MeshChecks.Swatches(tape))
@@ -102,7 +103,9 @@ namespace MoonProject.Art.Tests
             }
 
             Assert.AreEqual("CassetteShelf", shelf.Name);
-            CollectionAssert.AreEqual(Enumerable.Range(0, 8).Select(i => $"Slot_{i}").ToArray(),
+            CollectionAssert.AreEqual(
+                Enumerable.Range(0, 8).Select(i => $"Slot_{i}").Concat(new[] { "Weather_Paint",
+                "Weather_Rust", "Weather_Dust" }).ToArray(),
                 shelf.Children.Select(child => child.Name).ToArray());
             for (int row = 0; row < 4; row++)
             {
@@ -128,7 +131,7 @@ namespace MoonProject.Art.Tests
         {
             ModelNode shelf = BaseModelBuilder.CreateCassetteShelf();
             LowPolyMeshBuilder rack = shelf.Mesh.Geometry;
-            foreach (ModelNode slot in shelf.Children)
+            foreach (ModelNode slot in shelf.Children.Where(child => child.Name.StartsWith("Slot_")))
             {
                 Vector3 bottom = slot.LocalPosition;
                 var tape = new Bounds(bottom + Vector3.up * (TapeHeight * 0.5f),

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using UnityEngine;
@@ -5,11 +6,13 @@ using MoonProject.Art.Editor;
 
 namespace MoonProject.Art.Tests
 {
-    /// <summary>M3-03 art: Kenji's workbench on the lander's WorkshopAnchor and the Hover-Jump coils on 07.</summary>
+    /// <summary>
+    /// M3-03 art: the lander's WorkshopAnchor (Kenji's Rover Bay stands on it, clear of the museum shelf) and the
+    /// Hover-Jump coils on 07.
+    /// </summary>
     public sealed class WorkshopModelTests
     {
-        private static readonly Vector3 ShopPadCentre = new Vector3(12.5f, 0f, 1.2f);
-        private const float ShopPadRadius = 2.4f;
+        private const float ShelfClearance = 0.2f;
 
         [Test]
         public void Lander_HasTheWorkshopAnchor_WhereGameplayExpectsIt()
@@ -22,41 +25,21 @@ namespace MoonProject.Art.Tests
         }
 
         [Test]
-        public void Workbench_HasItsGlowAndSparkNodes_AndStandsOnItsPivot()
+        public void RoverBay_OnItsAnchor_StandsClearOfTheShelf()
         {
-            ModelNode bench = BaseModelBuilder.CreateWorkbench();
-
-            Assert.AreEqual("Workbench", bench.Name);
-            CollectionAssert.AreEqual(new[] { "Lights", "SparkSocket" }, bench.Children.Select(c => c.Name).ToArray());
-            Assert.IsNull(bench.GetDescendant("SparkSocket").Mesh);
-            LowPolyMeshBuilder lights = bench.GetDescendant("Lights").Mesh.Geometry;
-            for (int t = 0; t < lights.TriangleCount; t++)
+            var shelf = new Bounds(BaseModelBuilder.ShelfAnchor, Vector3.zero);
+            foreach (Vector3 p in MeshChecks.Points(BaseModelBuilder.CreateShelf(),
+                Matrix4x4.Translate(BaseModelBuilder.ShelfAnchor), false))
             {
-                Assert.IsTrue(Palette.IsEmissive(MeshChecks.SwatchOf(lights, t)), "Lights only glows");
+                shelf.Encapsulate(p);
             }
 
-            LowPolyMeshBuilder geometry = bench.Mesh.Geometry;
-            MeshChecks.AssertWellFormed(geometry);
-            Assert.AreEqual(0f, geometry.Bounds.min.y, 1e-3f);
-            Assert.That(geometry.Bounds.size.x, Is.GreaterThan(2f), "reads from 40 m");
-            Assert.That(geometry.Bounds.max.y, Is.GreaterThan(2f), "pegboard and lamp stand tall");
-            Assert.That(geometry.TriangleCount, Is.InRange(2000, 6000), "triangle budget");
-        }
-
-        [Test]
-        public void Workbench_OnItsAnchor_StaysOffTheShopPad_AndClearOfTheShelf()
-        {
-            ModelNode bench = BaseModelBuilder.CreateWorkbench();
-            Vector3 anchor = BaseModelBuilder.WorkshopAnchor;
-            float shelfRight = BaseModelBuilder.ShelfAnchor.x + BaseModelBuilder.ShelfWidth * 0.5f + 0.2f;
-
-            foreach (Vector3 local in MeshChecks.Points(bench, Matrix4x4.identity))
+            shelf.Expand(new Vector3(ShelfClearance, 0f, ShelfClearance) * 2f);
+            foreach (Vector3 p in MeshChecks.Points(BaseModelBuilder.CreateRoverBay(),
+                Matrix4x4.Translate(BaseModelBuilder.WorkshopAnchor), false))
             {
-                Vector3 p = anchor + local;
-                Assert.LessOrEqual(p.z, -1.2f, "bench front edge stays behind z = -1.2");
-                float fromPad = new Vector2(p.x - ShopPadCentre.x, p.z - ShopPadCentre.z).magnitude;
-                Assert.GreaterOrEqual(fromPad, ShopPadRadius, "nothing stands on the shop pad");
-                Assert.Greater(p.x, shelfRight, "clear of the museum shelf");
+                bool onShelf = p.x > shelf.min.x && p.x < shelf.max.x && p.z > shelf.min.z && p.z < shelf.max.z;
+                Assert.IsFalse(onShelf, $"the bay reaches the museum shelf at {p}");
             }
         }
 
@@ -90,7 +73,13 @@ namespace MoonProject.Art.Tests
             ModelNode socket = rover.GetDescendant("CoilSocket");
             Assert.IsNull(socket.Mesh);
             Assert.AreEqual(Quaternion.identity, socket.LocalRotation);
-            Assert.AreEqual("CoilSocket", rover.Children[rover.Children.Count - 1].Name, "appended last");
+            var names = new List<string>();
+            foreach (ModelNode child in rover.Children)
+            {
+                names.Add(child.Name);
+            }
+
+            Assert.Greater(names.IndexOf("CoilSocket"), names.IndexOf("DustSocket_R"), "appended after the M1 rig");
 
             foreach (Vector3 local in MeshChecks.Points(RoverModelBuilder.CreateHoverCoils(), Matrix4x4.identity))
             {

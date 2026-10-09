@@ -10,16 +10,23 @@ namespace MoonProject.Art.Tests
     {
         private static readonly string[] ContractPaths =
         {
-            "Body", "Bogie_L", "Bogie_R",
-            "Wheel_FL", "Wheel_FR", "Wheel_ML", "Wheel_MR", "Wheel_RL", "Wheel_RR",
+            "Body", "Body/Decal07Fresh", "Body/Weather_Paint", "Body/Weather_Rust", "Body/Weather_Dust",
+            "Bogie_L", "Bogie_L/Weather_Rust", "Bogie_L/Weather_Dust", "Bogie_R", "Bogie_R/Weather_Rust",
+            "Bogie_R/Weather_Dust",
+            "Wheel_FL", "Wheel_FL/Weather_Dust", "Wheel_FR", "Wheel_FR/Weather_Dust", "Wheel_ML",
+            "Wheel_ML/Weather_Dust", "Wheel_MR", "Wheel_MR/Weather_Dust", "Wheel_RL", "Wheel_RL/Weather_Dust",
+            "Wheel_RR", "Wheel_RR/Weather_Dust",
             "Neck", "Neck/Head", "Neck/Head/Eye", "Neck/Head/Eye/TetherOrigin", "Neck/Head/Eyelid",
-            "SolarWing", "Antenna", "Antenna/AntennaTip",
-            "HeadlampSocket", "CargoSocket", "DustSocket_L", "DustSocket_R", "CoilSocket",
+            "Neck/Head/Weather_Paint", "Neck/Head/Weather_Dust",
+            "SolarWing", "SolarWing/CellFilled", "Antenna", "Antenna/AntennaTip", "Antenna/Pennant",
+            "HeadlampSocket", "CargoSocket", "DustSocket_L", "DustSocket_R", "CoilSocket", "DrumSocket_L",
+            "DrumSocket_R",
         };
 
         private static readonly string[] EmptyNodes =
         {
             "TetherOrigin", "HeadlampSocket", "CargoSocket", "DustSocket_L", "DustSocket_R", "CoilSocket",
+            "DrumSocket_L", "DrumSocket_R",
         };
 
         private ModelNode _rover;
@@ -112,7 +119,7 @@ namespace MoonProject.Art.Tests
             Assert.That(size.z, Is.InRange(2.1f, 2.4f), "length");
             Assert.That(size.x, Is.InRange(1.4f, 1.7f), "width");
             Assert.That(max.y, Is.InRange(1.35f, 1.8f), "height (the hooded head and whip antenna top it)");
-            Assert.That(triangles, Is.InRange(3000, 6500), "triangle budget");
+            Assert.That(triangles, Is.InRange(3000, 15000), "triangle budget (the hidden gifts and weather included)");
         }
 
         [Test]

@@ -74,8 +74,8 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
-    /// A friend's ability found something for 07 (Tilly's spotter: a soft ping over an undiscovered relic, part or
-    /// scrap cluster).
+    /// A friend's ability found something for 07 (Tilly's spotter: a soft ping over an undiscovered site, relic or
+    /// part).
     /// </summary>
     public readonly struct FriendSpotted
     {

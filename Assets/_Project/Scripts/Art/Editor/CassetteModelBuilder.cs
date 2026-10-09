@@ -9,7 +9,7 @@ namespace MoonProject.Art.Editor
     /// <summary>
     /// Ro's cassettes (docs/features/M3-05-bell-radio-cassettes.md) as pickups:
     /// Generated/Art/Pickups/Cassette_&lt;id&gt;.prefab, one single-node model per <see cref="Styles"/> entry,
-    /// pivoted at the centre of mass (about 0.11 m above the tape's bottom edge), standing upright with the label
+    /// pivoted at the centre of mass (about 0.057 m above the tape's bottom edge), standing upright with the label
     /// facing +Z. On Bell's shelf a tape stands on a slot with the slot's rotation, its bottom edge on the slot.
     /// </summary>
     public static class CassetteModelBuilder

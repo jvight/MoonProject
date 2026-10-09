@@ -31,9 +31,6 @@ namespace MoonProject.Rover
         [Tooltip("RoverModel 'Antenna' node (pivot at its base).")]
         [SerializeField] private Transform _antenna;
 
-        [Tooltip("Warm spot light under RoverModel 'HeadlampSocket'.")]
-        [SerializeField] private Light _headlamp;
-
         private RoverController _rover;
         private BodyAttitude _attitude;
         private ChassisJelly _jelly;
@@ -68,7 +65,6 @@ namespace MoonProject.Rover
             _attitude = new BodyAttitude(_tuning);
             _jelly = new ChassisJelly(_tuning);
             CacheRestPose();
-            ApplyHeadlamp();
             Snap(Vector3.up);
             return true;
         }
@@ -79,7 +75,6 @@ namespace MoonProject.Rover
                 & Require(_chassis != null, "Chassis transform is not assigned.")
                 & Require(_antenna != null, "Antenna node is not assigned.")
                 & Require(_bogieLeft != null && _bogieRight != null, "Bogie_L/Bogie_R nodes are not assigned.")
-                & Require(_headlamp != null, "Headlamp light is not assigned.")
                 & Require(_wheels != null && _wheels.Length == RoverModelNodes.WheelCount,
                     $"Exactly {RoverModelNodes.WheelCount} wheels are required.");
             if (_wheels != null)
@@ -131,15 +126,6 @@ namespace MoonProject.Rover
             _antennaRestRotation = _antenna.localRotation;
             _bogieLeftRestRotation = _bogieLeft.localRotation;
             _bogieRightRestRotation = _bogieRight.localRotation;
-        }
-
-        private void ApplyHeadlamp()
-        {
-            _headlamp.type = LightType.Spot;
-            _headlamp.intensity = _tuning.HeadlampIntensity;
-            _headlamp.range = _tuning.HeadlampRange;
-            _headlamp.spotAngle = _tuning.HeadlampSpotAngle;
-            _headlamp.innerSpotAngle = _tuning.HeadlampInnerSpotAngle;
         }
 
         /// <summary>

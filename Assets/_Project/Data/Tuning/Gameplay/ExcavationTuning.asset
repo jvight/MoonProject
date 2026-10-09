@@ -10,13 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8e9f6ba87e43d8242a11c910c146655b, type: 3}
-  m_Name: ExcavationTuning
+  m_Name: 
   m_EditorClassIdentifier: 
   _reachRadius: 5
   _reachHysteresis: 1.3
   _engageSpeed: 1.2
-  _baseDuration: 4.5
-  _secondsPerKg: 0.12
+  _baseDuration: 2.5
+  _secondsPerKg: 0.06
   _presentDistance: 3.2
   _presentHeight: 1.3
   _riseSpin: 40
@@ -27,10 +27,10 @@ MonoBehaviour:
   _beamFadeIn: 0.3
   _beamFadeOut: 0.45
   _beamRadius: 0.9
-  _dustRate: 30
+  _dustRate: 18
   _dustLifetime: {x: 1.2, y: 2.2}
-  _dustSize: {x: 0.25, y: 0.6}
-  _dustRadius: 1.3
-  _dustSwirl: 1.4
+  _dustSize: {x: 0.2, y: 0.45}
+  _dustRadius: 1
+  _dustSwirl: 1.1
   _dustRise: 0.5
-  _maxDust: 120
+  _maxDust: 80

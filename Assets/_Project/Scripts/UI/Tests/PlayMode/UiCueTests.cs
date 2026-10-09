@@ -145,6 +145,30 @@ namespace MoonProject.UI.PlayModeTests
             CollectionAssert.AreEqual(new[] { UiCueKind.HoldFill, UiCueKind.HoldComplete }, _cues);
         }
 
+        [UnityTest]
+        public IEnumerator BenchCues_ATapIsAFocusMove_NeverAHoldSwell()
+        {
+            Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
+            Boot();
+            yield return null;
+            _rig.Fakes.Bench = _rig.TestBench(new Recipe(2, 1, 0), new Recipe(3, 2, 0), new Recipe(1, 2, 2));
+            _rig.Fakes.SetMaterials(20, 20, 20);
+            _rig.Fakes.AtStation = true;
+            yield return new WaitForSecondsRealtime(1.5f);
+            _cues.Clear();
+            yield return Tap(keyboard.eKey);
+            yield return new WaitForSecondsRealtime(0.3f);
+            CollectionAssert.AreEqual(new[] { UiCueKind.FocusMove }, _cues, "a tap picks, it does not swell");
+
+            _cues.Clear();
+            Press(keyboard.eKey);
+            yield return new WaitForSecondsRealtime(_rig.Tuning.TowerPanel.TapSeconds +
+                                                    _rig.Tuning.TowerPanel.HoldSeconds + 0.3f);
+            Release(keyboard.eKey);
+            yield return null;
+            CollectionAssert.AreEqual(new[] { UiCueKind.HoldFill, UiCueKind.HoldComplete }, _cues);
+        }
+
         private EventBus Events => _rig.Bootstrap.Context.Events;
 
         private void Boot()

@@ -10,6 +10,19 @@
 2. **Full game (M3 → M5)**: nâng cấp rover, mở rộng thế giới, sự kiện Nhật thực / Bão mặt trời, Biodome,
    sửa chảo vệ tinh trên đỉnh núi, phát bản nhạc cuối về Trái Đất.
 
+## Lộ trình theo phiên bản (chủ dự án, 2026-10-08): xong hẳn một phase mới sang phase sau
+Mỗi phase kết thúc bằng một bản build chơi thử, đã kiểm chứng đầy đủ, bạn chơi và góp ý xong mới mở phase kế.
+Không mở rộng nội dung khi phần nhìn của phase hiện tại chưa chỉn chu.
+
+| Phiên bản | Chủ đề | Gồm | TT |
+|---|---|---|---|
+| **0.4 — "Nhìn cho đúng"** | Phần nhìn chỉn chu, mọi thứ hợp logic | M3-14 (xây cho 07: trạm sửa xe với cánh tay máy, cổng bảo trì tháp, dock sạc, thang nâng, tỉ lệ thật, bánh dự phòng, trống tụ điện) · M3-12 (phong hoá: gỉ, sơn phai, bụi cho căn cứ và 07) · đánh bóng hình còn tồn (quầng sáng nhà, Trái Đất bớt rực, đọc bộ phận ở 30 m, bóng cho nhãn tên) · âm thanh và UI đi kèm · preview trong Scene view | 🟦 |
+| 0.5 — "Căn cứ sống" | Hoàn thiện lòng hố | M3-07 bản đồ vẽ tay trong lander (lên bằng thang nâng) · M3-08 mặt trăng trôi khi vắng mặt (mảnh vệ tinh mới rơi) · M3-09 màn hình tiêu đề, bộ sưu tập ở căn cứ · nhật ký phi hành đoàn còn lại trong vùng | ⬜ |
+| 0.6 — "Rim Terraces" | Mở rộng bản đồ #1 | Magnetic Treads (bánh to có gai) · vùng Rim Terraces · Atlas · bãi trục vớt mới, cột relay mới | ⬜ |
+| 0.7 — "Shadowed Crater" | Mở rộng bản đồ #2 | vùng hố tối · Moss + Biodome · Wide Sonar · sự kiện Nhật thực | ⬜ |
+| 0.8 — "The Peak" | Kết thúc | leo The Peak · sửa chảo lớn · phát sóng bản nhạc cuối · Trái Đất đáp lại | ⬜ |
+| 1.0 | Phát hành | đánh bóng, cài đặt, tay cầm, hiệu năng, bản build phát hành | ⬜ |
+
 ## Các box (agent) và vùng sở hữu
 | Box | Sở hữu | Ghi chú |
 |---|---|---|
@@ -95,9 +108,10 @@
 | M3-08 | "Mặt Trăng trôi khi bạn vắng mặt": mưa sao băng (scrap mới), tín hiệu mới — không FOMO | gameplay | ⬜ |
 | M3-09 | Màn hình tiêu đề (Continue/Settings), bộ sưu tập hiển thị ở căn cứ | ui | ⬜ |
 | M3-10 | **Cô đơn & bình yên — đợt trau chuốt không khí** (trụ cột 6 trong VISION): hình (chân trời xa mờ, tương phản sáng tối, bóng dài, bầu trời sống, grading/bloom/vignette/grain) · camera (lùi ra toàn cảnh khi đứng yên, bụi lơ lửng trong đèn 07) · âm thanh (radio mỏng dần theo khoảng cách → gần như im lặng, tiếng máy nhỏ của 07) | world + rover + audio | 🟩 |
-| M3-11 | **Tiến trình nhìn thấy được** (luật 11): mỗi nâng cấp có một bộ phận hiện trên 07 — bánh to có gai (Magnetic Treads), giỏ hàng sau (Cargo Cradle), chảo/ăng-ten lớn (Wide Sonar), giàn đèn có lồng (Warm Headlamp), hai trống tụ điện (Boost Coils); quà của bạn bè chữa dần "dấu hiệu cô đơn" (ô pin mặt trời, vá sơn, số 07 sơn lại); khoảnh khắc lắp đặt ở bàn Kenji (xem `docs/DESIGN.md` "Visible progression") | art + rover + gameplay | ⬜ |
+| M3-11 | **Tiến trình nhìn thấy được** (luật 11): mỗi nâng cấp có một bộ phận hiện trên 07 — bánh to có gai (Magnetic Treads), giỏ hàng sau (Cargo Cradle), chảo/ăng-ten lớn (Wide Sonar), giàn đèn có lồng (Warm Headlamp), hai trống tụ điện (Boost Coils); quà của bạn bè chữa dần "dấu hiệu cô đơn" (ô pin mặt trời, vá sơn, số 07 sơn lại); khoảnh khắc lắp đặt ở bàn Kenji (đặc tả `docs/features/M3-11-visible-progression.md`: Warm Headlamp, Boost Coils, Cargo Cradle + quà của bạn bè + khoảnh khắc lắp đặt) | art + rover + gameplay | 🟩 |
 | M3-12 | **Bỏ hoang lâu năm → được chăm lại** (luật 12): bộ "phong hoá" low-poly (sơn phai, gỉ chảy từ đinh tán, bụi dồn chân, dây chùng, biển nghiêng) cho lander, tháp, xưởng, kệ, cột relay và cả 07; kiến trúc cho xe: thang nâng tời cạnh thang người ở lander, dốc lên mọi bệ, bệ sạc/đỗ của 07 thay tấm thảm; mỗi bước khôi phục làm sạch một phần căn cứ | art + gameplay + world | ⬜ |
-| M3-13 | **Bãi trục vớt thay cho scrap rải đầy đất** (ý chủ dự án): mảnh vệ tinh rơi, kho tiếp tế đổ, giàn khoan, gara cũ, tàu hàng rơi trong hẻm → cắt/cạy bằng tia sáng lấy Kim loại / Dây điện / Quang học → chế tạo ở bàn Kenji; relic nằm trong "trái tim" mỗi bãi; bãi trống dần thành bộ khung — đặc tả `docs/features/M3-13-salvage-sites.md`. **Ưu tiên ngay sau M3-06, trước M3-11/M3-12** | world + art + gameplay + audio + ui + rover | ⬜ |
+| M3-13 | **Bãi trục vớt thay cho scrap rải đầy đất** (ý chủ dự án): mảnh vệ tinh rơi, kho tiếp tế đổ, giàn khoan, gara cũ, tàu hàng rơi trong hẻm → cắt/cạy bằng tia sáng lấy Kim loại / Dây điện / Quang học → chế tạo ở bàn Kenji; relic nằm trong "trái tim" mỗi bãi; bãi trống dần thành bộ khung — đặc tả `docs/features/M3-13-salvage-sites.md`. **Ưu tiên ngay sau M3-06, trước M3-11/M3-12** | world + art + gameplay + audio + ui + rover | 🟩 |
+| M3-14 | **Xây cho 07 — chỉnh logic & tỉ lệ** (luật 12–14, ý chủ dự án): 07 không có tay → bàn chế tạo thành **Trạm sửa xe của Kenji** (cánh tay giàn treo lắp đồ, phễu nạp vật liệu bằng tia sáng); tháp radio có cổng bảo trì ngang tầm xe; dock sạc thay tấm thảm; thang nâng tời; thu nhỏ relic/cassette về đúng tỉ lệ; bánh dự phòng không còn trông như lỗi; nâng trống tụ điện — đặc tả `docs/features/M3-14-built-for-07.md`. **Ưu tiên ngay** | art + gameplay + rover + audio + ui | ⬜ |
 
 ## M4 — Thế giới mở rộng, sự kiện & kết thúc
 Magnetic Treads + **Rim Terraces** + **Atlas**; Warm Headlamp + **Shadowed Crater** + **Moss** + Biodome; sự kiện

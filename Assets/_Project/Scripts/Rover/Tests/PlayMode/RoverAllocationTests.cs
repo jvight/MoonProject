@@ -7,16 +7,18 @@ using UnityEngine.InputSystem;
 using UnityEngine.TestTools;
 using Unity.Profiling;
 using MoonProject.Core;
+using MoonProject.Core.Events;
 using Object = UnityEngine.Object;
 
 namespace MoonProject.Rover.PlayModeTests
 {
     /// <summary>
     /// Steady-state zero-GC check: while 07 drives (tracks, dust, jelly, gaze all live) charging a Hover-Jump (coils
-    /// squashing and glowing), and again while it rests in the opening wide shot (stillness, daydream, lamp motes), one
-    /// frame additionally runs every per-frame method of the rover, rig, effects, body language and camera 600 times.
-    /// Unity's "GC Allocated In Frame" counter for the quietest of three such frames must stay at the level of plain
-    /// frames; a control frame proves the counter sees allocations at all.
+    /// squashing and glowing), while it rests in the opening wide shot (stillness, daydream, lamp motes), fully kitted
+    /// and boosting, while the Rover Bay fits a piece (arms, turntable, the bay's view) and while it rests on the
+    /// charging dock, one frame additionally runs every per-frame method of the rover, rig, effects, body language and
+    /// camera 600 times. Unity's "GC Allocated In Frame" counter for the quietest of three such frames must stay at
+    /// the level of plain frames; a control frame proves the counter sees allocations at all.
     /// </summary>
     public sealed class RoverAllocationTests : InputTestFixture
     {
@@ -36,9 +38,13 @@ namespace MoonProject.Rover.PlayModeTests
         /// <summary>A shortened rest before the wide shot opens (s).</summary>
         private const float WideShotDelay = 1f;
 
+        /// <summary>Time scale while measuring the bay fitting, so the extra updates stay inside it.</summary>
+        private const float SlowTime = 0.02f;
+
         private LunarTestPhysics _physics;
         private TestWorld _world;
         private TestRover _rover;
+        private TestRoverBay _bay;
 
         public override void Setup()
         {
@@ -48,8 +54,11 @@ namespace MoonProject.Rover.PlayModeTests
 
         public override void TearDown()
         {
+            Time.timeScale = 1f;
             _rover?.Dispose();
             _rover = null;
+            _bay?.Dispose();
+            _bay = null;
             _world?.Dispose();
             _world = null;
             _physics.Dispose();
@@ -92,6 +101,87 @@ namespace MoonProject.Rover.PlayModeTests
 
             Assert.IsTrue(_rover.CameraRig.WideShot.IsOpen, "Measure while the wide shot opens.");
             Assert.Greater(_rover.LampMotes.System.particleCount, 0, "And motes hang in the lamp.");
+            yield return MeasurePerFrameMethods(_rover);
+        }
+
+        /// <summary>Fully kitted (loaded), Bell's gift on, boosting straight down the plain.</summary>
+        [UnityTest]
+        public IEnumerator PerFrameMethods_FullyKitted_Boosting_DoNotAllocate()
+        {
+            _world = new TestWorld();
+            _rover = TestRover.Spawn(_world, TestWorld.Point(0f, -300f), 0f);
+            IRoverAbilities abilities = _rover.Context.Get<IRoverAbilities>();
+            abilities.Grant(RoverAbility.WarmHeadlamp);
+            abilities.Grant(RoverAbility.BoostCoils);
+            abilities.Grant(RoverAbility.CargoCradle);
+            _rover.Friends.Bell.Activity = FriendActivity.Home;
+            _rover.Drive.Drive = new Vector2(0f, 1f);
+            float until = Time.time + 5f;
+            while (Time.time < until)
+            {
+                yield return null;
+            }
+
+            Assert.IsTrue(_rover.Controller.IsBoosting, "Measure while boosting.");
+            yield return MeasurePerFrameMethods(_rover);
+        }
+
+        /// <summary>
+        /// Parked in the Rover Bay (its view on the camera) as it fits the bought capacitor drums: two arms carry
+        /// them while 07 watches. Time runs slow while measuring, so the extra updates stay inside the fitting.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator PerFrameMethods_InTheBay_Fitting_DoNotAllocate()
+        {
+            _world = new TestWorld();
+            Vector3 centre = TestWorld.Point(0f, -300f);
+            _bay = TestRoverBay.Build(centre, 0f, _world.Material);
+            _rover = TestRover.Spawn(_world, centre, 0f);
+            _rover.Context.Register<IRoverBay>(_bay);
+            float until = Time.time + 1.5f;
+            while (Time.time < until)
+            {
+                yield return null;
+            }
+
+            _rover.Context.Get<IRoverAbilities>().Grant(RoverAbility.BoostCoils);
+            _rover.Context.Events.Publish(new UpgradePurchased("rover.boost_coils", 1));
+            _rover.Context.Events.Publish(new RoverBayFitting("rover.boost_coils"));
+            until = Time.time + 0.8f;
+            while (Time.time < until)
+            {
+                yield return null;
+            }
+
+            Assert.IsTrue(_rover.Kit.IsFitting, "Measure while the bay fits the drums...");
+            Assert.Greater(_rover.CameraRig.MomentWeight, 0.5f, "...in the bay's view.");
+            Time.timeScale = SlowTime;
+            yield return MeasurePerFrameMethods(_rover);
+            Time.timeScale = 1f;
+            Assert.IsTrue(_rover.Kit.IsFitting, "Still fitting after the measured frames.");
+        }
+
+        /// <summary>Resting on the charging dock: eased onto it, its lamp dimmed.</summary>
+        [UnityTest]
+        public IEnumerator PerFrameMethods_Docked_DoNotAllocate()
+        {
+            _world = new TestWorld();
+            _rover = TestRover.Spawn(_world, TestWorld.Point(0f, -300f), 0f);
+            float until = Time.time + 1f;
+            while (Time.time < until)
+            {
+                yield return null;
+            }
+
+            Vector3 anchor = _rover.Controller.Position + new Vector3(0.3f, 0f, 0.4f);
+            _rover.Context.Events.Publish(new RoverDockChanged(true, anchor, Quaternion.Euler(0f, 12f, 0f)));
+            until = Time.time + 0.5f;
+            while (Time.time < until)
+            {
+                yield return null;
+            }
+
+            Assert.IsTrue(_rover.Controller.IsDocked, "Measure while docked.");
             yield return MeasurePerFrameMethods(_rover);
         }
 

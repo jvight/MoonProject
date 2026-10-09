@@ -11,9 +11,10 @@ namespace MoonProject.Gameplay
     /// lamps light the ground as 07 comes home and dim to a light left on while it is away, but the windows never dim
     /// (a little brighter far away) and a soft amber <see cref="HomeHalo"/> over the lander grows in with distance, so
     /// from far away home is a small amber cluster. It keeps the museum: a relic let go near the shelf (or one that
-    /// rolls there and rests) floats onto the nearest free slot and settles with a soft overshoot:
-    /// <see cref="RelicDeposited"/> and a save. While a towed relic is in reach of the shelf, a warm glow marks the
-    /// slot it will take. Displayed relics turn slowly.
+    /// rolls there and rests, or one set down from 07's Cargo Cradle) floats onto the nearest free slot and settles
+    /// with a soft overshoot: <see cref="RelicDeposited"/> and a save. While a towed or cradled relic is in reach of
+    /// the shelf, a warm glow marks the slot it will take. Displayed relics turn slowly. In front of the lander the
+    /// <see cref="ChargingDock"/> is where 07 rests at home.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class HomeBase : MonoBehaviour
@@ -44,6 +45,12 @@ namespace MoonProject.Gameplay
         [Tooltip("The shelf's Slot_0..5, in order.")]
         [SerializeField] private Transform[] _slots = Array.Empty<Transform>();
 
+        [Tooltip("The lander's DockAnchor: where 07 rests on the charging dock (its pivot, facing the lander).")]
+        [SerializeField] private Transform _dockAnchor;
+
+        [Tooltip("The lander's DockGlow renderer (the charging dock's contacts and strip).")]
+        [SerializeField] private Renderer _dockGlow;
+
         private EventBus _events;
         private IRoverState _rover;
         private ITerrainQuery _terrain;
@@ -56,6 +63,7 @@ namespace MoonProject.Gameplay
         private EmissionGlow _windowGlow;
         private EmissionGlow _shelfGlow;
         private HomeHalo _halo;
+        private ChargingDock _dock;
         private Transform _hint;
         private GlowRenderer _hintGlow;
         private Vector3[] _slotPositions = Array.Empty<Vector3>();
@@ -80,6 +88,9 @@ namespace MoonProject.Gameplay
         /// <summary>The halo over home (tests and debugging views).</summary>
         internal HomeHalo Halo => _halo;
 
+        /// <summary>The charging dock where 07 rests at home.</summary>
+        public ChargingDock Dock => _dock;
+
         public Vector3 ShelfPosition => _shelf.position;
 
         /// <summary>Which way the shelf's front faces.</summary>
@@ -95,7 +106,7 @@ namespace MoonProject.Gameplay
         public BaseTuning Tuning => _tuning;
 
         internal void Wire(BaseTuning tuning, Transform root, Renderer windows, Transform[] lampSockets,
-            Transform shelf, Renderer shelfLights, Transform[] slots)
+            Transform shelf, Renderer shelfLights, Transform[] slots, Transform dockAnchor, Renderer dockGlow)
         {
             _tuning = tuning;
             _root = root;
@@ -104,6 +115,8 @@ namespace MoonProject.Gameplay
             _shelf = shelf;
             _shelfLights = shelfLights;
             _slots = slots;
+            _dockAnchor = dockAnchor;
+            _dockGlow = dockGlow;
         }
 
         /// <summary>True when <paramref name="position"/> is close enough to the shelf to deposit there.</summary>
@@ -119,6 +132,7 @@ namespace MoonProject.Gameplay
                 : _root == null || _shelf == null ? "the base root or the shelf is not assigned."
                 : _windows == null || _shelfLights == null ? "the lander windows or shelf lights are not assigned."
                 : _slots.Length == 0 ? "the shelf has no slots."
+                : _dockAnchor == null || _dockGlow == null ? "the lander's DockAnchor or DockGlow is not assigned."
                 : null;
             if (problem != null)
             {
@@ -140,6 +154,7 @@ namespace MoonProject.Gameplay
             _windowGlow = new EmissionGlow(_windows);
             _shelfGlow = new EmissionGlow(_shelfLights);
             _halo = new HomeHalo(transform, services.Meshes.Quad, services.Visuals.HomeHalo, _tuning, _root);
+            _dock = new ChargingDock(_dockAnchor, _dockGlow, _tuning, _events);
             _lamps = new Light[_lampSockets.Length];
             for (int i = 0; i < _lamps.Length; i++)
             {
@@ -243,6 +258,7 @@ namespace MoonProject.Gameplay
             float deltaTime = Time.deltaTime;
             float now = Time.time;
             UpdateWarmth(deltaTime);
+            _dock.Step(_rover, now, deltaTime);
             for (int i = 0; i < _relics.Relics.Count; i++)
             {
                 Relic relic = _relics.Relics[i];
@@ -280,12 +296,27 @@ namespace MoonProject.Gameplay
             _halo.Boost = boost;
         }
 
-        private void BeginDeposit(Relic relic)
+        /// <summary>
+        /// A relic riding in the Cargo Cradle is set down here: true when it is in reach of the shelf and a slot is
+        /// free (it then floats onto the shelf like any deposit).
+        /// </summary>
+        internal bool TakeFromCradle(Relic relic)
+        {
+            if (relic == null)
+            {
+                throw new ArgumentNullException(nameof(relic));
+            }
+
+            return relic.State == RelicState.Cradled && InDepositZone(relic.transform.position) && BeginDeposit(relic);
+        }
+
+        /// <returns>False when every slot is taken (the relic stays where it is).</returns>
+        private bool BeginDeposit(Relic relic)
         {
             int slot = ShelfSlots.Nearest(relic.transform.position, _slotPositions, _taken);
             if (slot < 0)
             {
-                return;
+                return false;
             }
 
             _taken[slot] = true;
@@ -294,6 +325,7 @@ namespace MoonProject.Gameplay
             _carryFrom[index] = relic.transform.position;
             _carryFromRotation[index] = relic.transform.rotation;
             relic.BeginCarry(RelicState.Depositing, slot);
+            return true;
         }
 
         private void StepDeposit(Relic relic, float deltaTime)
@@ -331,9 +363,9 @@ namespace MoonProject.Gameplay
 
         private void UpdateHint(float deltaTime)
         {
-            Relic towed = _tether.Towed;
-            HintedSlot = towed != null && InDepositZone(towed.transform.position)
-                ? ShelfSlots.Nearest(towed.transform.position, _slotPositions, _taken)
+            Relic incoming = Incoming();
+            HintedSlot = incoming != null && InDepositZone(incoming.transform.position)
+                ? ShelfSlots.Nearest(incoming.transform.position, _slotPositions, _taken)
                 : -1;
             if (HintedSlot >= 0)
             {
@@ -342,6 +374,26 @@ namespace MoonProject.Gameplay
 
             float target = HintedSlot >= 0 ? _tuning.SlotHintIntensity : 0f;
             _hintGlow.Apply(Damp.Toward(_hintGlow.Intensity, target, _tuning.SlotHintEase, deltaTime));
+        }
+
+        /// <summary>The relic on its way to the shelf: on the tether, else in the cradle, or null.</summary>
+        private Relic Incoming()
+        {
+            Relic towed = _tether.Towed;
+            if (towed != null)
+            {
+                return towed;
+            }
+
+            for (int i = 0; i < _relics.Relics.Count; i++)
+            {
+                if (_relics.Relics[i].State == RelicState.Cradled)
+                {
+                    return _relics.Relics[i];
+                }
+            }
+
+            return null;
         }
 
         private Vector3 SlotPose(Relic relic, int slot)

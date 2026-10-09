@@ -19,7 +19,6 @@ MonoBehaviour:
   _depositLift: 0.9
   _depositHover: 0.25
   _settleOvershoot: 1.4
-  _depositGift: 10
   _slotHintRadius: 0.2
   _slotHintIntensity: 0.55
   _slotHintEase: 0.25

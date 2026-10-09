@@ -9,6 +9,11 @@ namespace MoonProject.Rover.Editor
         /// <summary>The art box's Hover-Jump coils, mounted on RoverModel 'CoilSocket'. Required.</summary>
         public const string HoverCoils = "Assets/_Project/Generated/Art/Rover/HoverCoils.prefab";
 
+        /// <summary>The art box's visible kit (M3-11), each parented to its RoverModel socket. Required.</summary>
+        public const string KitLampBar = "Assets/_Project/Generated/Art/Rover/Kit_LampBar.prefab";
+        public const string KitCapacitorDrum = "Assets/_Project/Generated/Art/Rover/Kit_CapacitorDrum.prefab";
+        public const string KitCargoRack = "Assets/_Project/Generated/Art/Rover/Kit_CargoRack.prefab";
+
         public const string GeneratedRoot = "Assets/_Project/Generated/Rover";
         public const string RoverPrefab = GeneratedRoot + "/Rover.prefab";
         public const string CameraRigPrefab = GeneratedRoot + "/RoverCameraRig.prefab";

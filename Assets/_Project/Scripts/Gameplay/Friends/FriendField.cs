@@ -62,6 +62,9 @@ namespace MoonProject.Gameplay
         private SonarSystem _sonar;
         private PickupGlints _glints;
         private RepairBeam _beam;
+        private RepairBeam _dialBeam;
+        private float _tapStart = float.NegativeInfinity;
+        private bool _tapping;
         private IDisposable _relicSubscription;
         private RadioCabinetBody _cabinet;
         private bool[] _spottedSites = Array.Empty<bool>();
@@ -81,6 +84,12 @@ namespace MoonProject.Gameplay
 
         /// <summary>07 is parked in front of Bell's dial at home and could turn it now.</summary>
         public bool CanTune { get; private set; }
+
+        /// <summary>True while 07's beam taps Bell's tuning knob, before she turns it.</summary>
+        public bool TappingDial => _tapping;
+
+        /// <summary>Current brightness of the dial-tapping beam (tests and debugging views).</summary>
+        public float DialBeamLevel => _dialBeam != null ? _dialBeam.Level : 0f;
 
         public FriendTuning Tuning => _tuning;
 
@@ -189,6 +198,7 @@ namespace MoonProject.Gameplay
                 Layers.Pickup);
             _beam = new RepairBeam("RepairBeam", transform, services.Visuals.TetherBeam, _tuning.StitchRate,
                 _tuning.StitchSpread);
+            _dialBeam = new RepairBeam("DialBeam", transform, services.Visuals.TetherBeam, 0f, 0f);
             if (_cabinet != null)
             {
                 _relicSubscription = _events.Subscribe<RelicDeposited>(OnRelicDeposited);
@@ -570,7 +580,7 @@ namespace MoonProject.Gameplay
 
             _glints.End();
             StepRepairInput(deltaTime);
-            StepTune(now);
+            StepTune(now, deltaTime);
             StepBeam(repairing, now, deltaTime);
             StepGaze(repairing);
         }
@@ -764,8 +774,12 @@ namespace MoonProject.Gameplay
             }
         }
 
-        /// <summary>Parked in front of Bell at home with her dial: a press of Interact turns it one detent.</summary>
-        private void StepTune(float now)
+        /// <summary>
+        /// Parked in front of Bell at home with her dial: a press of Interact sends 07's beam to tap her tuning knob,
+        /// and a beat later she turns it one detent, the knob turning with the needle (07 has no hands, VISION ruling
+        /// 14).
+        /// </summary>
+        private void StepTune(float now, float deltaTime)
         {
             bool held = _input.ExcavateHeld;
             bool pressed = held && !_interactHeld;
@@ -773,10 +787,23 @@ namespace MoonProject.Gameplay
             CanTune = _cabinet != null && _radio.DialUnlocked && _cabinet.IsHome && RepairCandidate == null &&
                       _rover.Speed <= _bellTuning.TuneMaxSpeed &&
                       SurfaceRules.HorizontalDistance(_rover.Position, _cabinet.DialFront) <= _bellTuning.TuneRadius;
-            if (CanTune && pressed && _radio.TurnDial())
+            if (CanTune && pressed && !_tapping)
             {
-                _cabinet.DialTurned(now);
+                _tapping = true;
+                _tapStart = now;
             }
+
+            if (_tapping && now - _tapStart >= _bellTuning.DialTapTime)
+            {
+                _tapping = false;
+                if (_cabinet.IsHome && _radio.TurnDial())
+                {
+                    _cabinet.DialTurned(now);
+                }
+            }
+
+            _dialBeam.Step(_tapping, _cabinet != null, _rig.TetherOrigin.position,
+                _cabinet != null ? _cabinet.Knob : Vector3.zero, now, deltaTime);
         }
 
         private void OnRelicDeposited(RelicDeposited deposited)

@@ -37,7 +37,14 @@ namespace MoonProject.Art.Editor
         public static readonly Vector3 LidHinge = new Vector3(0f, BodyTop, -Depth * 0.5f);
 
         /// <summary>Hub of the needle at the centre of the dial's flat bottom edge (DialFace pivot).</summary>
-        public static readonly Vector3 DialCentre = new Vector3(0f, 0.43f, FaceFront);
+        public static readonly Vector3 DialCentre = new Vector3(0f, DialY, FaceFront);
+
+        /// <summary>
+        /// The tuning knob's pivot in the dial's space (Knob): on its axis at the face plate, right of the dial as
+        /// seen from the front and a little over the needle hub, where 07's beam taps it. +Z out; Bell turns it about
+        /// local Z.
+        /// </summary>
+        public static readonly Vector3 KnobCentre = new Vector3(-KnobX, KnobY - DialY, FacePlate - FaceFront);
 
         /// <summary>Centre of the speaker cone (Speaker pivot).</summary>
         public static readonly Vector3 SpeakerCentre = new Vector3(0.2f, 0.21f, FaceFront + 0.018f);
@@ -49,11 +56,17 @@ namespace MoonProject.Art.Editor
         public static readonly Vector3 AntennaBase = new Vector3(-Width * 0.5f - 0.012f, 0.6f, -0.15f);
 
         private const float FaceFront = Depth * 0.5f + 0.012f;
+        private const float FacePlate = Depth * 0.5f + 0.006f;
+        private const float DialY = 0.43f;
         private const float BodyChamfer = 0.03f;
         private const float PlateHeight = 0.03f;
         private const float LampY = 0.37f;
         private const float KnobY = 0.5f;
         private const float KnobX = 0.31f;
+        private const float KnobRadius = 0.07f;
+        private const float KnobDepth = 0.06f;
+        private const float KnobSkirt = 0.09f;
+        private const float SkirtDepth = 0.008f;
         private const int ValveCount = 4;
         private const int MissingValve = 2;
         private const int ArcSegments = 12;
@@ -81,8 +94,8 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
-        /// The cabinet as repaired, or as found in the canyon: valves dark (one pulled), the tuning knob gone to a
-        /// bare shaft, dust on whatever faces the sky in her broken <paramref name="pose"/>.
+        /// The cabinet as repaired, or as found in the canyon: valves dark (one pulled), dust on whatever faces the sky
+        /// in her broken <paramref name="pose"/>. The tuning knob is its own node (<see cref="Knob"/>).
         /// </summary>
         public static LowPolyMeshBuilder Body(bool broken, Quaternion pose)
         {
@@ -97,7 +110,7 @@ namespace MoonProject.Art.Editor
 
             b.Box(At(0f, PlateHeight * 0.5f, 0f), new Vector3(Width - 0.1f, PlateHeight, Depth - 0.1f),
                 PaletteSwatch.Metal, 0.008f);
-            Face(b, broken);
+            Face(b);
             Deck(b, broken);
             Back(b);
             Matrix4x4 side = At(new Vector3(Width * 0.5f + 0.001f, 0.36f, 0.06f), new Vector3(0f, 90f, 0f));
@@ -186,6 +199,56 @@ namespace MoonProject.Art.Editor
             return b;
         }
 
+        /// <summary>
+        /// The tuning knob (Knob; origin on its axis at the face plate, +Z out): a chunky ridged bakelite knob on a
+        /// cream scale skirt, a brass cap and an orange pointer, straight up at rest, that shows every turn.
+        /// </summary>
+        public static LowPolyMeshBuilder Knob()
+        {
+            var b = new LowPolyMeshBuilder(500);
+            Matrix4x4 axis = Matrix4x4.Rotate(Rotation(AlongZ));
+            Skirt(b, axis);
+            float middle = SkirtDepth + KnobDepth * 0.5f;
+            b.Frustum(axis * At(0f, middle, 0f), KnobRadius, KnobRadius * 0.85f, KnobDepth, 12, PaletteSwatch.Charcoal);
+            for (int ridge = 0; ridge < 12; ridge++)
+            {
+                Matrix4x4 turn = Matrix4x4.Rotate(Rotation(new Vector3(0f, ridge * 30f + 15f, 0f)));
+                b.Box(axis * turn * At(new Vector3(0f, middle, KnobRadius * 0.925f), new Vector3(-8f, 0f, 0f)),
+                    new Vector3(0.016f, KnobDepth * 0.95f, 0.016f), PaletteSwatch.Charcoal, 0.003f);
+            }
+
+            float top = SkirtDepth + KnobDepth;
+            b.Prism(axis * At(0f, top + 0.004f, 0f), KnobRadius * 0.6f, 0.008f, 12, PaletteSwatch.Honey);
+            b.Box(axis * At(0f, top + 0.009f, -KnobRadius * 0.4f), new Vector3(0.014f, 0.004f, KnobRadius * 0.75f),
+                PaletteSwatch.WarmAccent);
+            return b;
+        }
+
+        /// <summary>
+        /// The broken cabinet's Knob: the knob itself long lost (it is a pickup now), a bare shaft on its skirt.
+        /// </summary>
+        public static LowPolyMeshBuilder KnobShaft()
+        {
+            var b = new LowPolyMeshBuilder(120);
+            Matrix4x4 axis = Matrix4x4.Rotate(Rotation(AlongZ));
+            Skirt(b, axis);
+            b.Prism(axis * At(0f, SkirtDepth + 0.018f, 0f), 0.01f, 0.036f, 6, PaletteSwatch.Metal);
+            return b;
+        }
+
+        /// <summary>The tuning knob's cream scale skirt with its ticks (in the knob's axis frame, +Y out).</summary>
+        private static void Skirt(LowPolyMeshBuilder b, Matrix4x4 axis)
+        {
+            b.Prism(axis * At(0f, SkirtDepth * 0.5f, 0f), KnobSkirt, SkirtDepth, 16, PaletteSwatch.Cream);
+            for (int tick = 0; tick < 10; tick++)
+            {
+                Matrix4x4 turn = Matrix4x4.Rotate(Rotation(new Vector3(0f, tick * 36f, 0f)));
+                float length = tick % 5 == 0 ? 0.014f : 0.008f;
+                b.Box(axis * turn * At(0f, SkirtDepth + 0.001f, KnobSkirt - 0.003f - length * 0.5f),
+                    new Vector3(0.006f, 0.003f, length), PaletteSwatch.Charcoal);
+            }
+        }
+
         /// <summary>The needle at rest (origin on the hub): at the left end of the band, an orange tip.</summary>
         public static LowPolyMeshBuilder Needle()
         {
@@ -264,27 +327,27 @@ namespace MoonProject.Art.Editor
             return b;
         }
 
-        /// <summary>Cream enamel face: speaker well, cassette door, knobs and the bezels of the part lamps.</summary>
-        private static void Face(LowPolyMeshBuilder b, bool broken)
+        /// <summary>The cream enamel face: speaker well, cassette door, volume knob, the part lamps' bezels.</summary>
+        private static void Face(LowPolyMeshBuilder b)
         {
-            const float plate = Depth * 0.5f + 0.006f;
-            b.Box(At(0f, 0.37f, plate - 0.003f), new Vector3(Width - 0.1f, 0.56f, 0.012f), PaletteSwatch.Enamel,
+            b.Box(At(0f, 0.37f, FacePlate - 0.003f), new Vector3(Width - 0.1f, 0.56f, 0.012f), PaletteSwatch.Enamel,
                 0.004f);
-            b.Box(At(0f, 0.088f, plate), new Vector3(Width - 0.1f, 0.01f, 0.006f), PaletteSwatch.Honey);
+            b.Box(At(0f, 0.088f, FacePlate), new Vector3(Width - 0.1f, 0.01f, 0.006f), PaletteSwatch.Honey);
 
             Vector3 well = SpeakerCentre;
-            b.Prism(At(new Vector3(well.x, well.y, plate + 0.001f), AlongZ), SpeakerRadius + 0.004f, 0.006f, 16,
+            b.Prism(At(new Vector3(well.x, well.y, FacePlate + 0.001f), AlongZ), SpeakerRadius + 0.004f, 0.006f, 16,
                 PaletteSwatch.Charcoal);
 
             Vector3 door = TapeSlot;
-            b.Box(At(door.x, door.y, plate + 0.002f), new Vector3(0.3f, 0.125f, 0.01f), PaletteSwatch.Metal, 0.004f);
-            b.Box(At(door.x, door.y + 0.005f, plate + 0.006f), new Vector3(0.25f, 0.075f, 0.006f),
+            b.Box(At(door.x, door.y, FacePlate + 0.002f), new Vector3(0.3f, 0.125f, 0.01f), PaletteSwatch.Metal,
+                0.004f);
+            b.Box(At(door.x, door.y + 0.005f, FacePlate + 0.006f), new Vector3(0.25f, 0.075f, 0.006f),
                 PaletteSwatch.SkyHorizon);
-            b.Box(At(door.x + 0.04f, door.y - 0.048f, plate + 0.008f), new Vector3(0.05f, 0.016f, 0.012f),
+            b.Box(At(door.x + 0.04f, door.y - 0.048f, FacePlate + 0.008f), new Vector3(0.05f, 0.016f, 0.012f),
                 PaletteSwatch.Honey, 0.003f);
             for (int reel = -1; reel <= 1; reel += 2)
             {
-                b.Prism(At(new Vector3(door.x + reel * 0.055f, door.y + 0.005f, plate + 0.01f), AlongZ), 0.018f,
+                b.Prism(At(new Vector3(door.x + reel * 0.055f, door.y + 0.005f, FacePlate + 0.01f), AlongZ), 0.018f,
                     0.004f, 6, PaletteSwatch.Cream);
             }
 
@@ -293,30 +356,23 @@ namespace MoonProject.Art.Editor
                 Vector3 lamp = PartLampPosition(i);
                 if (i == PartLampCount - 1)
                 {
-                    b.Box(At(lamp.x, lamp.y, plate), new Vector3(0.064f, 0.04f, 0.008f), PaletteSwatch.Charcoal,
+                    b.Box(At(lamp.x, lamp.y, FacePlate), new Vector3(0.064f, 0.04f, 0.008f), PaletteSwatch.Charcoal,
                         0.003f);
                 }
                 else
                 {
-                    b.Prism(At(new Vector3(lamp.x, lamp.y, plate), AlongZ), 0.027f, 0.008f, 8,
+                    b.Prism(At(new Vector3(lamp.x, lamp.y, FacePlate), AlongZ), 0.027f, 0.008f, 8,
                         PaletteSwatch.Charcoal);
                 }
             }
 
-            Knob(b, new Vector3(KnobX, KnobY, plate), 0.042f, false);
-            Knob(b, new Vector3(-KnobX, KnobY, plate), 0.056f, broken);
+            VolumeKnob(b, new Vector3(KnobX, KnobY, FacePlate), 0.042f);
         }
 
         /// <summary>A bakelite knob with a cream pointer, or just its bare shaft once the knob is lost.</summary>
-        private static void Knob(LowPolyMeshBuilder b, Vector3 at, float radius, bool missing)
+        private static void VolumeKnob(LowPolyMeshBuilder b, Vector3 at, float radius)
         {
             b.Prism(At(at + Vector3.forward * 0.002f, AlongZ), radius + 0.012f, 0.004f, 12, PaletteSwatch.Metal);
-            if (missing)
-            {
-                b.Prism(At(at + Vector3.forward * 0.02f, AlongZ), 0.008f, 0.036f, 6, PaletteSwatch.Metal);
-                return;
-            }
-
             b.Frustum(At(at + Vector3.forward * 0.024f, AlongZ), radius, radius * 0.82f, 0.04f, 12,
                 PaletteSwatch.Charcoal);
             b.Box(At(at + new Vector3(0f, radius * 0.45f, 0.045f)), new Vector3(0.008f, radius * 0.7f, 0.004f),

@@ -227,6 +227,10 @@ namespace MoonProject.Gameplay
         [Tooltip("Seconds of that kick.")]
         [Range(0.05f, 2f)] [SerializeField] private float _clickDuration = 0.35f;
 
+        [Tooltip("Degrees her tuning knob turns per degree the needle moves between detents (its click kick " +
+                 "included, her crackle's jiggle not): the knob turns with each detent.")]
+        [Range(0f, 4f)] [SerializeField] private float _knobTurn = 1f;
+
         [Tooltip("07 parks this many metres in front of her dial to turn it (art: 2 m keeps off the tower pad).")]
         [Range(0.5f, 6f)] [SerializeField] private float _tuneFront = 2f;
 
@@ -235,6 +239,9 @@ namespace MoonProject.Gameplay
 
         [Tooltip("07 counts as parked below this speed (m/s).")]
         [Range(0.05f, 3f)] [SerializeField] private float _tuneMaxSpeed = 0.8f;
+
+        [Tooltip("Seconds 07's beam taps her dial before she turns it (07 has no hands, VISION ruling 14).")]
+        [Range(0.05f, 1.5f)] [SerializeField] private float _dialTapTime = 0.35f;
 
         [Header("Signal pillar")]
         [Tooltip("Brightness of her amber signal pillar (warm, persistent).")]
@@ -331,9 +338,11 @@ namespace MoonProject.Gameplay
         public float NeedleEase => _needleEase;
         public float ClickKick => _clickKick;
         public float ClickDuration => _clickDuration;
+        public float KnobTurn => _knobTurn;
         public float TuneFront => _tuneFront;
         public float TuneRadius => _tuneRadius;
         public float TuneMaxSpeed => _tuneMaxSpeed;
+        public float DialTapTime => _dialTapTime;
         public float PillarGlow => _pillarGlow;
         public float PillarRingGlow => _pillarRingGlow;
         public float PillarRise => _pillarRise;

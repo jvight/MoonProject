@@ -5,8 +5,9 @@ namespace MoonProject.Art.Editor
 {
     /// <summary>
     /// The six relics: precious, slightly worn memories of Earth, drawn to match the memory each one carries in
-    /// its RelicDefinition. Each is built upright on y = 0 facing +Z at a toy-like scale (0.5-1.2 m) so it reads
-    /// at 15 m; the builder then moves the pivot to the centre of mass.
+    /// its RelicDefinition. Each is drawn upright on y = 0 facing +Z at a large working size with chunky details;
+    /// the builder scales it to its true size (VISION ruling 13: a duck stays a duck) and moves the pivot to the
+    /// centre of mass. Details are drawn thick enough to survive that shrink.
     /// </summary>
     internal static class RelicMeshes
     {
@@ -18,12 +19,12 @@ namespace MoonProject.Art.Editor
             b.Box(At(0f, 0.2f, 0.07f), new Vector3(0.5f, 0.34f, 0.02f), PaletteSwatch.Metal, 0.006f);
             b.Box(At(-0.03f, 0.21f, 0.083f), new Vector3(0.36f, 0.21f, 0.012f), PaletteSwatch.Charcoal);
             b.Box(At(-0.03f, 0.285f, 0.09f), new Vector3(0.3f, 0.055f, 0.006f), PaletteSwatch.Cream);
-            b.Box(At(new Vector3(-0.05f, 0.285f, 0.094f), new Vector3(0f, 0f, 3f)), new Vector3(0.2f, 0.012f, 0.004f),
+            b.Box(At(new Vector3(-0.05f, 0.285f, 0.094f), new Vector3(0f, 0f, 3f)), new Vector3(0.2f, 0.026f, 0.004f),
                 PaletteSwatch.WarmAccent);
             foreach (float x in new[] { -0.12f, 0.06f })
             {
                 b.Prism(At(new Vector3(x, 0.195f, 0.09f), AlongZ), 0.045f, 0.01f, 10, PaletteSwatch.Cream);
-                b.Prism(At(new Vector3(x, 0.195f, 0.096f), AlongZ), 0.015f, 0.008f, 6, PaletteSwatch.Charcoal);
+                b.Prism(At(new Vector3(x, 0.195f, 0.096f), AlongZ), 0.022f, 0.008f, 6, PaletteSwatch.Charcoal);
             }
 
             for (int i = 0; i < 4; i++)
@@ -65,7 +66,7 @@ namespace MoonProject.Art.Editor
                 PaletteSwatch.WarmAccent);
             for (int side = -1; side <= 1; side += 2)
             {
-                b.Icosphere(At(side * 0.095f, 0.62f, 0.345f), 0.032f, 1, PaletteSwatch.Charcoal);
+                b.Icosphere(At(side * 0.095f, 0.62f, 0.34f), 0.045f, 1, PaletteSwatch.Charcoal);
             }
 
             return b;
@@ -79,23 +80,23 @@ namespace MoonProject.Art.Editor
             b.Box(At(0f, centreY, -0.03f), new Vector3(0.86f, 0.86f, 0.035f), PaletteSwatch.Metal, 0.015f);
             b.Box(At(0f, 0.03f, -0.12f), new Vector3(0.5f, 0.06f, 0.24f), PaletteSwatch.Metal, 0.015f);
             var pulsar = new Vector3(-0.22f, centreY - 0.22f, -0.01f);
-            for (int i = 0; i < 7; i++)
+            for (int i = 0; i < 5; i++)
             {
-                float angle = (i * 51f + 10f) * Mathf.Deg2Rad;
-                float length = 0.09f + (i % 3) * 0.04f;
+                float angle = (i * 72f + 10f) * Mathf.Deg2Rad;
+                float length = 0.1f + (i % 3) * 0.045f;
                 Vector3 end = pulsar + new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0f) * length;
-                b.Box(Along(pulsar, end), new Vector3(0.008f, 0.004f, length), PaletteSwatch.Charcoal);
+                b.Box(Along(pulsar, end), new Vector3(0.02f, 0.006f, length), PaletteSwatch.Charcoal);
             }
 
-            b.Torus(At(new Vector3(-0.25f, centreY + 0.25f, -0.01f), AlongZ), 0.06f, 0.008f, 10, 3,
+            b.Torus(At(new Vector3(-0.25f, centreY + 0.25f, -0.01f), AlongZ), 0.065f, 0.016f, 10, 3,
                 PaletteSwatch.Charcoal);
-            b.Box(At(-0.25f, centreY + 0.08f, -0.01f), new Vector3(0.14f, 0.008f, 0.004f), PaletteSwatch.Charcoal);
+            b.Box(At(-0.25f, centreY + 0.08f, -0.01f), new Vector3(0.16f, 0.02f, 0.006f), PaletteSwatch.Charcoal);
 
             var disc = new Vector3(0.12f, centreY, 0.012f);
             b.Prism(At(disc, AlongZ), 0.4f, 0.025f, 24, PaletteSwatch.Honey);
             foreach (float ring in new[] { 0.33f, 0.24f })
             {
-                b.Torus(At(disc + new Vector3(0f, 0f, 0.012f), AlongZ), ring, 0.006f, 24, 3, PaletteSwatch.Charcoal);
+                b.Torus(At(disc + new Vector3(0f, 0f, 0.012f), AlongZ), ring, 0.013f, 24, 3, PaletteSwatch.Charcoal);
             }
 
             b.Prism(At(disc + new Vector3(0f, 0f, 0.014f), AlongZ), 0.11f, 0.008f, 14, PaletteSwatch.Cream);
@@ -146,8 +147,8 @@ namespace MoonProject.Art.Editor
             Vector3 dent = new Vector3(0.65f, 0.25f, 0.72f).normalized;
             b.Shave(body, dent, b.Support(body, dent) - 0.035f);
 
-            b.Torus(At(0f, 0.012f, 0f), 0.205f, 0.014f, 14, 3, PaletteSwatch.Charcoal);
-            b.Torus(At(0f, 0.448f, 0f), 0.14f, 0.014f, 14, 3, PaletteSwatch.Charcoal);
+            b.Torus(At(0f, 0.016f, 0f), 0.205f, 0.024f, 14, 3, PaletteSwatch.Charcoal);
+            b.Torus(At(0f, 0.448f, 0f), 0.14f, 0.022f, 14, 3, PaletteSwatch.Charcoal);
             b.Frustum(At(0f, 0.475f, 0f), 0.06f, 0.035f, 0.04f, 8, PaletteSwatch.Charcoal);
             b.Icosphere(At(0f, 0.52f, 0f), 0.045f, 1, PaletteSwatch.Cream);
 
@@ -155,7 +156,7 @@ namespace MoonProject.Art.Editor
             Vector3 spoutTip = spoutBase + new Vector3(0f, 0.766f, 0.643f) * 0.3f;
             b.Frustum(Along(spoutBase, spoutTip) * Matrix4x4.Rotate(Rotation(AlongZ)), 0.065f, 0.032f, 0.3f, 8,
                 PaletteSwatch.Sage);
-            b.Torus(At(spoutTip + new Vector3(0f, 0.005f, 0.004f), new Vector3(-40f, 0f, 0f)), 0.034f, 0.009f, 8, 3,
+            b.Torus(At(spoutTip + new Vector3(0f, 0.005f, 0.004f), new Vector3(-40f, 0f, 0f)), 0.034f, 0.015f, 8, 3,
                 PaletteSwatch.Charcoal);
             b.Torus(At(new Vector3(0f, 0.25f, -0.3f), AlongX), 0.13f, 0.024f, 12, 5, PaletteSwatch.Charcoal);
 
@@ -195,7 +196,7 @@ namespace MoonProject.Art.Editor
             b.Icosphere(At(0f, 0.54f, 0.14f), 0.035f, 1, PaletteSwatch.WarmAccent);
             for (int side = -1; side <= 1; side += 2)
             {
-                b.Icosphere(At(side * 0.045f, 0.585f, 0.115f), 0.016f, 0, PaletteSwatch.Charcoal);
+                b.Icosphere(At(side * 0.045f, 0.585f, 0.115f), 0.022f, 0, PaletteSwatch.Charcoal);
             }
 
             b.Torus(At(0f, 0.64f, 0f), 0.125f, 0.022f, 12, 4, PaletteSwatch.WarmAccent);

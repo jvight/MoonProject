@@ -5,7 +5,7 @@ namespace MoonProject.Core.Save
     /// </summary>
     public interface ISaveSection
     {
-        /// <summary>Stable unique key such as "gameplay.scrap". Never rename it: it identifies the data in old saves.</summary>
+        /// <summary>Stable unique key such as "gameplay.wallet". Never rename it: it identifies the data in old saves.</summary>
         string Key { get; }
 
         /// <summary>

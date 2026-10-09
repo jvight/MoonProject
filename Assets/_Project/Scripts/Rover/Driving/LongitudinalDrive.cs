@@ -18,6 +18,16 @@ namespace MoonProject.Rover
         /// <summary>Acceleration (m/s^2, + = forward) for the signed forward speed and eased throttle.</summary>
         public static float Acceleration(DriveSettings settings, float forwardSpeed, float throttle, float deltaTime)
         {
+            return Acceleration(settings, forwardSpeed, throttle, 0f, deltaTime);
+        }
+
+        /// <summary>
+        /// Acceleration with the forward top speed raised by <paramref name="extraTopSpeed"/> (m/s, the Boost Coils):
+        /// the same eased curve settles on the higher target, and letting the boost go coasts back down softly.
+        /// </summary>
+        public static float Acceleration(DriveSettings settings, float forwardSpeed, float throttle,
+            float extraTopSpeed, float deltaTime)
+        {
             float speed = Mathf.Abs(forwardSpeed);
             float motion = forwardSpeed >= 0f ? 1f : -1f;
             float input = Mathf.Abs(throttle);
@@ -37,7 +47,7 @@ namespace MoonProject.Rover
             }
 
             bool forward = inputDirection > 0f;
-            float top = forward ? settings.TopSpeed : settings.ReverseTopSpeed;
+            float top = forward ? settings.TopSpeed + Mathf.Max(0f, extraTopSpeed) : settings.ReverseTopSpeed;
             float peak = forward ? settings.ForwardAcceleration : settings.ReverseAcceleration;
             float target = input * top;
 

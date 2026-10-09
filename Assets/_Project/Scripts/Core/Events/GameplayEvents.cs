@@ -2,38 +2,6 @@ using UnityEngine;
 
 namespace MoonProject.Core.Events
 {
-    /// <summary>A scrap piece reached the rover. <see cref="ComboStep"/> climbs while pickups chain (melody step).</summary>
-    public readonly struct ScrapCollected
-    {
-        public ScrapCollected(Vector3 position, int value, int comboStep)
-        {
-            Position = position;
-            Value = value;
-            ComboStep = comboStep;
-        }
-
-        public Vector3 Position { get; }
-
-        public int Value { get; }
-
-        /// <summary>0 for the first pickup of a chain, +1 for each pickup that follows within the combo window.</summary>
-        public int ComboStep { get; }
-    }
-
-    /// <summary>The scrap balance changed (pickup, purchase, refund).</summary>
-    public readonly struct CurrencyChanged
-    {
-        public CurrencyChanged(int total, int delta)
-        {
-            Total = total;
-            Delta = delta;
-        }
-
-        public int Total { get; }
-
-        public int Delta { get; }
-    }
-
     /// <summary>The rover emitted a sonar ping from <see cref="Origin"/>.</summary>
     public readonly struct SonarPinged
     {
@@ -176,6 +144,24 @@ namespace MoonProject.Core.Events
         public int DisplayedCount { get; }
     }
 
+    /// <summary>
+    /// A relic settled into 07's Cargo Cradle (docs/features/M3-11): it rides home in the rear rack instead of on the
+    /// tether.
+    /// </summary>
+    public readonly struct RelicStowed
+    {
+        public RelicStowed(string relicId, Vector3 position)
+        {
+            RelicId = relicId;
+            Position = position;
+        }
+
+        public string RelicId { get; }
+
+        /// <summary>Where it rests in the rack (the cargo seat).</summary>
+        public Vector3 Position { get; }
+    }
+
     /// <summary>An upgrade (rover or base) was bought.</summary>
     public readonly struct UpgradePurchased
     {
@@ -188,6 +174,91 @@ namespace MoonProject.Core.Events
         public string UpgradeId { get; }
 
         public int Level { get; }
+    }
+
+    /// <summary>
+    /// A beat of a station's crafting that Audio voices (docs/features/M3-14, VISION ruling 14: 07 has no hands): see
+    /// <see cref="StationCued"/>.
+    /// </summary>
+    public enum StationCue
+    {
+        /// <summary>
+        /// 07's beam reaches the station's hopper and the recipe's bundles start flying in (a feed rattle).
+        /// </summary>
+        FeedStarted = 0,
+
+        /// <summary>The last bundle dropped into the hopper (a soft clunk): the station takes over from here.</summary>
+        Fed = 1,
+
+        /// <summary>The radio tower's service hatch swings open (a hinge creak).</summary>
+        HatchOpened = 2,
+
+        /// <summary>07's beam starts stitching up the tower while its new section rises.</summary>
+        StitchStarted = 3,
+
+        /// <summary>The stitching beam lets go and the tower's hatch swings shut (a latch click).</summary>
+        HatchClosed = 4,
+    }
+
+    /// <summary>
+    /// A station (Kenji's Rover Bay, the radio tower's service port) did something worth a sound while crafting
+    /// <see cref="UpgradeId"/>, which was bought just before (<see cref="UpgradePurchased"/>).
+    /// </summary>
+    public readonly struct StationCued
+    {
+        public StationCued(StationCue cue, string upgradeId, Vector3 position)
+        {
+            Cue = cue;
+            UpgradeId = upgradeId;
+            Position = position;
+        }
+
+        public StationCue Cue { get; }
+
+        public string UpgradeId { get; }
+
+        /// <summary>The hopper's mouth (feed beats), the hatch (hatch beats) or the stitch's start.</summary>
+        public Vector3 Position { get; }
+    }
+
+    /// <summary>
+    /// Kenji's Rover Bay starts fitting the kit piece of <see cref="UpgradeId"/> onto 07, parked on its turntable,
+    /// now that 07's beam has fed the hopper (docs/features/M3-14). The install moment plays from here: the Rover
+    /// domain drives the bay's arms through <see cref="IRoverBay"/> to lower the piece onto 07, and the turntable
+    /// turns 07 to show it. The bay throws its weld sparks from the arms' SparkSockets as this is published, so they
+    /// follow the tips wherever the arms are driven.
+    /// </summary>
+    public readonly struct RoverBayFitting
+    {
+        public RoverBayFitting(string upgradeId)
+        {
+            UpgradeId = upgradeId;
+        }
+
+        public string UpgradeId { get; }
+    }
+
+    /// <summary>
+    /// 07 came to rest on the charging dock at home (<see cref="Docked"/> true), or left it (false): docked once it
+    /// has stood still on the dock's pad for a moment with no drive input; any drive input undocks it at once
+    /// (docs/features/M3-14). The rover settles 07 gently onto <see cref="Position"/> and <see cref="Rotation"/> (the
+    /// lander's DockAnchor: 07's pivot, facing the lander), dims its lamp and lets go when undocked; the dock's glow
+    /// warms meanwhile.
+    /// </summary>
+    public readonly struct RoverDockChanged
+    {
+        public RoverDockChanged(bool docked, Vector3 position, Quaternion rotation)
+        {
+            Docked = docked;
+            Position = position;
+            Rotation = rotation;
+        }
+
+        public bool Docked { get; }
+
+        public Vector3 Position { get; }
+
+        public Quaternion Rotation { get; }
     }
 
     /// <summary>The radio tower's clear-signal radius changed (tower upgrade, load).</summary>
@@ -465,7 +536,7 @@ namespace MoonProject.Core.Events
         /// <summary>07 picked up a mast's relay part (drawn in like a friend's part).</summary>
         PartCollected = 0,
 
-        /// <summary>07's beam starts stitching the mast (the scrap is paid).</summary>
+        /// <summary>07's beam starts stitching the mast (the recipe is paid).</summary>
         Stitched = 1,
 
         /// <summary>The relay part clicks into the mast's junction box.</summary>

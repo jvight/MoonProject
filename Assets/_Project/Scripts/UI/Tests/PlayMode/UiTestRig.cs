@@ -29,6 +29,10 @@ namespace MoonProject.UI.PlayModeTests
         public const string UpgradePath = "Assets/_Project/Data/Content/Upgrades/Upgrade_radio_tower.asset";
         public const string WorkbenchUpgradePath =
             "Assets/_Project/Data/Content/Upgrades/Upgrade_rover_hover_jump.asset";
+        public const string CradleUpgradePath =
+            "Assets/_Project/Data/Content/Upgrades/Upgrade_rover_cargo_cradle.asset";
+        public const string HeadlampUpgradePath =
+            "Assets/_Project/Data/Content/Upgrades/Upgrade_rover_warm_headlamp.asset";
         public const string TillyPath = "Assets/_Project/Data/Content/Friends/Friend_tilly.asset";
         public const string EnglishPath = "Assets/_Project/Data/Localization/en.json";
         public const string VietnamesePath = "Assets/_Project/Data/Localization/vi.json";
@@ -126,6 +130,20 @@ namespace MoonProject.UI.PlayModeTests
         public UpgradeDefinition TestTower()
         {
             return UpgradeCosting(UpgradePath, new Recipe(2, 1, 0), new Recipe(4, 2, 1), new Recipe(6, 4, 2));
+        }
+
+        /// <summary>
+        /// Kenji's bench selling the Hover-Jump, the Cargo Cradle and the Warm Headlamp, in that order, at exactly
+        /// these recipes (copies destroyed with the rig).
+        /// </summary>
+        public UpgradeDefinition[] TestBench(Recipe hoverJump, Recipe cargoCradle, Recipe warmHeadlamp)
+        {
+            return new[]
+            {
+                UpgradeCosting(WorkbenchUpgradePath, hoverJump),
+                UpgradeCosting(CradleUpgradePath, cargoCradle),
+                UpgradeCosting(HeadlampUpgradePath, warmHeadlamp),
+            };
         }
 
         /// <summary>

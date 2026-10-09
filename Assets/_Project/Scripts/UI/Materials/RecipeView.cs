@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine.UIElements;
 using MoonProject.Core;
 using MoonProject.Gameplay;
@@ -9,14 +10,15 @@ namespace MoonProject.UI
     /// A recipe in materials (docs/features/M3-13), the way the tower panel, Kenji's bench and the relay price tag show
     /// it: the icon and number of each material it uses, the ones 07 has enough of reading normally and the short ones
     /// dimmed, with one quiet need line ("ui.recipe.need") naming the first short material
-    /// (<see cref="RecipeStatus"/>). No other words. Text is formatted only when the recipe, the stock or the language
-    /// changes.
+    /// (<see cref="RecipeStatus"/>). No other words. Each need line is formatted once per language and then reused, so
+    /// picking between recipes (Kenji's bench) or a changing stock writes text without allocating.
     /// </summary>
     internal sealed class RecipeView
     {
         private readonly MaterialSlots _slots;
         private readonly Label _need;
         private readonly ILocalization _localization;
+        private readonly Dictionary<int, string> _needLines = new Dictionary<int, string>();
         private Recipe _shownRecipe;
         private int _shownMetal;
         private int _shownWiring;
@@ -53,20 +55,13 @@ namespace MoonProject.UI
             }
 
             var status = new RecipeStatus(recipe, metal, wiring, optics);
-            for (int i = 0; i < Materials.Count; i++)
-            {
-                SalvageMaterial material = Materials.At(i);
-                _slots.SetShown(material, status.Uses(material));
-                _slots.SetCount(material, recipe.Of(material));
-                _slots.SetShort(material, status.IsShort(material));
-            }
+            _slots.ShowRecipe(recipe, status);
 
             IsAffordable = status.IsAffordable;
             bool needed = status.TryGetNeed(out SalvageMaterial lacking, out int missing);
             if (needed)
             {
-                _need.text = string.Format(_localization.Get(UiKeys.RecipeNeed), missing,
-                    _localization.Get(UiKeys.MaterialName(lacking)));
+                _need.text = NeedLine(lacking, missing);
             }
 
             SetNeedShown(needed);
@@ -80,7 +75,21 @@ namespace MoonProject.UI
         /// <summary>A new language: the next <see cref="Show"/> re-reads the words.</summary>
         public void Relocalize()
         {
+            _needLines.Clear();
             _stale = true;
+        }
+
+        private string NeedLine(SalvageMaterial material, int missing)
+        {
+            int key = missing * Materials.Count + (int)material;
+            if (!_needLines.TryGetValue(key, out string line))
+            {
+                line = string.Format(_localization.Get(UiKeys.RecipeNeed), missing,
+                    _localization.Get(UiKeys.MaterialName(material)));
+                _needLines.Add(key, line);
+            }
+
+            return line;
         }
 
         private void SetNeedShown(bool shown)

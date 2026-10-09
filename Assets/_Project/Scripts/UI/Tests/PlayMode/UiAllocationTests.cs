@@ -5,20 +5,23 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.TestTools;
+using UnityEngine.TestTools.Constraints;
 using Unity.Profiling;
 using MoonProject.Core.Events;
 using MoonProject.Gameplay;
 using MoonProject.Testing;
 using Object = UnityEngine.Object;
+using Is = UnityEngine.TestTools.Constraints.Is;
 
 namespace MoonProject.UI.PlayModeTests
 {
     /// <summary>
     /// Steady-state zero-GC check of the UI: with a prompt following a moving point under the reticle, with the tower
-    /// panel and its pinned chip, with a ticker line resting, with the hop list over a moving fade, with the salvage
-    /// ring filling under the materials chip, and with the pause menu open, one frame additionally runs the UI's Update
-    /// 600 times. Unity's "GC Allocated In Frame" for the quietest of three such frames must stay at the level of plain
-    /// frames; a control frame proves the counter sees allocations at all.
+    /// panel and its pinned chip, with Kenji's bench resting with a piece picked (and its update allocation-free while
+    /// picking as the stock changes), with a kit name resting, with a ticker line resting, with the hop list over a
+    /// moving fade, with the salvage ring filling under the materials chip, and with the pause menu open, one frame
+    /// additionally runs the UI's Update 600 times. Unity's "GC Allocated In Frame" for the quietest of three such
+    /// frames must stay at the level of plain frames; a control frame proves the counter sees allocations at all.
     /// </summary>
     public sealed class UiAllocationTests : InputTestFixture
     {
@@ -30,6 +33,8 @@ namespace MoonProject.UI.PlayModeTests
         private const long Tolerance = 2048L;
         private const string AllocatedInFrame = "GC Allocated In Frame";
         private const float LongHoldSeconds = 1000f;
+        private const int PickEvery = 40;
+        private const int StockEvery = 150;
 
         private string _slot;
         private InputActionAsset _controls;
@@ -90,6 +95,55 @@ namespace MoonProject.UI.PlayModeTests
             yield return new WaitForSecondsRealtime(2f);
             Assert.IsTrue(_rig.Ui.Tower.IsVisible && _rig.Ui.Chip.IsVisible);
             yield return Measure(Bind(_rig.Ui, "Update"), "tower panel with the pinned chip");
+        }
+
+        [UnityTest]
+        public IEnumerator BenchPickingAsTheStockChanges_DoesNotAllocate_AndRestsQuietly()
+        {
+            InputSystem.AddDevice<Keyboard>();
+            _rig = UiTestRig.Boot(_controls, _slot);
+            _rig.Fakes.Bench = _rig.TestBench(new Recipe(2, 1, 0), new Recipe(3, 2, 0), new Recipe(1, 2, 2));
+            _rig.Fakes.SetMaterials(4, 3, 0);
+            _rig.Fakes.AtStation = true;
+            yield return new WaitForSecondsRealtime(2f);
+            Assert.IsTrue(_rig.Ui.Tower.IsVisible && _rig.Ui.Tower.IsChoosing && _rig.Ui.Chip.IsVisible);
+
+            Action update = Bind(_rig.Ui, "Update");
+            Action picking = () =>
+            {
+                _step++;
+                if (_step % PickEvery == 0)
+                {
+                    _rig.Ui.Tower.Choices.Step(1);
+                }
+
+                if (_step % StockEvery == 0)
+                {
+                    _rig.Fakes.SetMaterials(4, 3, (_step / StockEvery) % 2 * 2);
+                }
+
+                update();
+            };
+            Run(picking, WarmUpCalls * PickEvery);
+            Assert.That(() => Run(picking, MeasuredCalls), Is.Not.AllocatingGCMemory(),
+                "picking at the bench while the stock changes allocates nothing in the UI's update");
+            yield return null;
+            yield return Measure(update, "bench resting with a piece picked");
+        }
+
+        [UnityTest]
+        public IEnumerator KitNameResting_DoesNotAllocate()
+        {
+            InputSystem.AddDevice<Keyboard>();
+            _rig = UiTestRig.Boot(_controls, _slot);
+            _rig.Tune("_kitTitle._holdSeconds", LongHoldSeconds);
+            var gift = new RoverKitFitted(RoverKitPiece.SolarCell, true, string.Empty);
+            _rig.Bootstrap.Context.Events.Publish(gift);
+            yield return new WaitForSecondsRealtime(_rig.Tuning.KitTitle.Delay + _rig.Tuning.KitTitle.Reveal.FadeIn +
+                                                    0.5f);
+            Assert.IsTrue(_rig.Ui.KitTitle.IsVisible);
+            yield return Measure(Bind(_rig.Ui, "Update"), "a kit name resting");
+            Assert.IsTrue(_rig.Ui.KitTitle.IsVisible, "the name rested through the whole measurement");
         }
 
         [UnityTest]

@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace MoonProject.Rover
 {
@@ -187,6 +188,11 @@ namespace MoonProject.Rover
         [Range(0f, 1f)]
         [SerializeField] private float _wingIdleOpen = 0.16f;
 
+        [Tooltip("How far (0..1) the wing settles open while daydreaming once Tilly has replaced its missing cell: "
+            + "wider, proud of its mended panel.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _wingIdleOpenMended = 0.45f;
+
         [Tooltip("Spring frequency (Hz) of the wing. Slow: a sigh, not a flap.")]
         [Range(0.05f, 3f)]
         [SerializeField] private float _wingFrequency = 0.3f;
@@ -221,17 +227,20 @@ namespace MoonProject.Rover
         [SerializeField] private float _snapSigh = 0.8f;
 
         [Header("Gameplay reactions")]
-        [Tooltip("Perk-up strength for a single scrap pickup.")]
+        [Tooltip("Perk-up strength for a single salvaged piece or trail bit.")]
         [Range(0f, 1f)]
-        [SerializeField] private float _scrapPerk = 0.18f;
+        [FormerlySerializedAs("_scrapPerk")]
+        [SerializeField] private float _salvagePerk = 0.18f;
 
-        [Tooltip("Extra perk-up strength per combo step, so chained pickups feel happier.")]
+        [Tooltip("Extra perk-up strength per salvage combo step, so chained pieces feel happier.")]
         [Range(0f, 0.5f)]
-        [SerializeField] private float _scrapComboPerk = 0.07f;
+        [FormerlySerializedAs("_scrapComboPerk")]
+        [SerializeField] private float _salvageComboPerk = 0.07f;
 
-        [Tooltip("Strongest perk-up a scrap chain can give.")]
+        [Tooltip("Strongest perk-up a salvage chain can give.")]
         [Range(0f, 1f)]
-        [SerializeField] private float _scrapPerkMax = 0.6f;
+        [FormerlySerializedAs("_scrapPerkMax")]
+        [SerializeField] private float _salvagePerkMax = 0.6f;
 
         [Tooltip("Perk-up strength when a buried relic answers the sonar.")]
         [Range(0f, 1f)]
@@ -274,7 +283,7 @@ namespace MoonProject.Rover
         [Range(0f, 10f)]
         [SerializeField] private float _relayLookSeconds = 6f;
 
-        [Tooltip("Gaze priority of that look up: above 07's idle and its own glances (-1) and passing scrap (0), so "
+        [Tooltip("Gaze priority of that look up: above 07's idle and its own glances (-1) and passing salvage (0), so "
             + "the lamp holds its attention; hands-on gameplay requests (2) still win.")]
         [SerializeField] private int _relayLookPriority = 1;
 
@@ -305,6 +314,14 @@ namespace MoonProject.Rover
         [Tooltip("How far (deg) the head lifts while looking around, scanning the horizon.")]
         [Range(0f, 30f)]
         [SerializeField] private float _lookAroundLift = 6f;
+
+        [Tooltip("Perk-up strength of 07's proud pose once the Rover Bay has fitted a new kit piece and lets it go.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _kitProudPerk = 0.95f;
+
+        [Tooltip("Perk-up strength as a friend's gift appears on 07 (softer than new kit).")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _giftPerk = 0.55f;
 
         [Tooltip("Perk-up strength as 07 lands from a radio-hop and looks around.")]
         [Range(0f, 1f)]
@@ -508,11 +525,11 @@ namespace MoonProject.Rover
 
         public float SnapSigh => _snapSigh;
 
-        public float ScrapPerk => _scrapPerk;
+        public float SalvagePerk => _salvagePerk;
 
-        public float ScrapComboPerk => _scrapComboPerk;
+        public float SalvageComboPerk => _salvageComboPerk;
 
-        public float ScrapPerkMax => _scrapPerkMax;
+        public float SalvagePerkMax => _salvagePerkMax;
 
         public float RelicAnsweredPerk => _relicAnsweredPerk;
 
@@ -543,6 +560,12 @@ namespace MoonProject.Rover
         public float LookAroundLift => _lookAroundLift;
 
         public float HopArrivalPerk => _hopArrivalPerk;
+
+        public float KitProudPerk => _kitProudPerk;
+
+        public float GiftPerk => _giftPerk;
+
+        public float WingIdleOpenMended => _wingIdleOpenMended;
 
         public float RecoveryPerk => _recoveryPerk;
 

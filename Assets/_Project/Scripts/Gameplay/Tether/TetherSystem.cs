@@ -13,8 +13,9 @@ namespace MoonProject.Gameplay
     /// holding Tether latches a glowing beam from 07's eye onto it (<see cref="TetherAttached"/>). A PD spring floats
     /// it along behind 07 at the winch length, mass and all. Letting go releases it where it is; if it gets caught or
     /// falls far behind, the tether lets go softly by itself and it stays right there (<see cref="TetherReleased"/>,
-    /// snapped). A drag piece pulled clear of its wreck is let go softly too (not snapped). 07 looks at what it aims at
-    /// and fixes on what it tows.
+    /// snapped). A drag piece pulled clear of its wreck is let go softly too (not snapped). With the Cargo Cradle
+    /// fitted and empty, the press lifts an aimed relic into the rack instead (<see cref="CargoCradle"/>), and at the
+    /// museum shelf it sets the carried relic down. 07 looks at what it aims at and fixes on what it tows.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class TetherSystem : MonoBehaviour, ITetherAim
@@ -31,6 +32,7 @@ namespace MoonProject.Gameplay
         private IViewCamera _view;
         private ITerrainQuery _terrain;
         private ITowable[] _towables = Array.Empty<ITowable>();
+        private CargoCradle _cradle;
         private WinchControl _winch;
         private TetherSnapRule _snap;
         private LineRenderer _line;
@@ -124,8 +126,17 @@ namespace MoonProject.Gameplay
             _points = new Vector3[_tuning.BeamPoints];
             _line = CreateLine(services.Visuals.TetherBeam);
             _glow = new GlowRenderer(_line);
-            _initialized = true;
             return true;
+        }
+
+        /// <summary>
+        /// The Cargo Cradle shares the Tether press (connected once both are initialised); the tether runs from then
+        /// on.
+        /// </summary>
+        internal void Connect(CargoCradle cradle)
+        {
+            _cradle = cradle != null ? cradle : throw new ArgumentNullException(nameof(cradle));
+            _initialized = true;
         }
 
         private LineRenderer CreateLine(Material material)
@@ -156,7 +167,8 @@ namespace MoonProject.Gameplay
             bool held = _input.TetherHeld;
             if (held && !_wasHeld)
             {
-                _armed = true;
+                // At the shelf, the press sets down the relic riding in the cradle rather than reaching for another.
+                _armed = !_cradle.TryUnload();
             }
 
             _wasHeld = held;
@@ -174,7 +186,16 @@ namespace MoonProject.Gameplay
                 SetHovered(FindTarget());
                 if (_armed && _hovered != null)
                 {
-                    Attach(_hovered);
+                    if (_cradle.TryStow(_hovered))
+                    {
+                        // Into the rack instead of onto the tether; the held button must not grab anything else.
+                        _armed = false;
+                        SetHovered(null);
+                    }
+                    else
+                    {
+                        Attach(_hovered);
+                    }
                 }
             }
             else

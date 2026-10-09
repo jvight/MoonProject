@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.IO;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -15,7 +16,9 @@ namespace MoonProject.Testing
     /// Builds a <see cref="GameBootstrap"/> at runtime the way MainSceneBuilder wires it in Main.unity (Controls asset +
     /// ordered system list through the serialized fields), then activates it so Awake initialises the systems and
     /// loads the save. Every bootstrap gets its own save slot (never the player's "main"), so tests cannot touch real
-    /// progress; delete the slot's files with <see cref="DeleteSaveFiles"/>. For PlayMode tests running in the editor.
+    /// progress; delete the slot's files with <see cref="DeleteSaveFiles"/>. Every worktree's batch editor saves under
+    /// the same persistentDataPath, so a slot shared between runs is never fixed: see <see cref="ProcessSlot"/>. For
+    /// PlayMode tests running in the editor.
     /// </summary>
     public static class BootstrapHarness
     {
@@ -38,6 +41,19 @@ namespace MoonProject.Testing
 #else
             throw new NotSupportedException("BootstrapHarness loads assets through the editor's AssetDatabase.");
 #endif
+        }
+
+        /// <summary>
+        /// The save slot "<paramref name="name"/>-&lt;process id&gt;" of a scratch copy of the real scene: the same
+        /// throughout this editor process (the copy's bootstrap, the test and both cleanups agree on it), never the
+        /// same as a batch editor running that test on another worktree at the same time.
+        /// </summary>
+        public static string ProcessSlot(string name)
+        {
+            using (System.Diagnostics.Process process = System.Diagnostics.Process.GetCurrentProcess())
+            {
+                return name + "-" + process.Id.ToString(CultureInfo.InvariantCulture);
+            }
         }
 
         /// <summary>A fresh save slot name for one test ("test-&lt;guid&gt;").</summary>

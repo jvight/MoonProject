@@ -6,8 +6,9 @@ namespace MoonProject.Gameplay
 {
     /// <summary>
     /// Home: where the lander stands, how relics are taken onto the museum shelf, how the base lights the ground as 07
-    /// approaches, and how it carries across the basin while 07 is far away (windows that never dim, a soft amber
-    /// halo). Created by the Gameplay/Tuning builder; runtime code only reads it.
+    /// approaches, how it carries across the basin while 07 is far away (windows that never dim, a soft amber halo),
+    /// and when 07 comes to rest on the charging dock. Created by the Gameplay/Tuning builder; runtime code only reads
+    /// it.
     /// </summary>
     public sealed class BaseTuning : ScriptableObject
     {
@@ -97,6 +98,36 @@ namespace MoonProject.Gameplay
         [Tooltip("Brightness at full glow: soft, under the bloom threshold (the windows are the bright points).")]
         [Range(0f, 2f)] [SerializeField] private float _haloGlow = 0.55f;
 
+        [Header("Charging dock")]
+        [Tooltip("07 rests on the dock when its centre stops within this many metres (horizontal) of the dock's " +
+                 "anchor; it leaves the rest if it is moved further than this.")]
+        [Range(0.2f, 4f)] [SerializeField] private float _dockRadius = 1.3f;
+
+        [Tooltip("07 counts as stopped on the dock below this speed (m/s).")]
+        [Range(0f, 2f)] [SerializeField] private float _dockMaxSpeed = 0.3f;
+
+        [Tooltip("Seconds 07 stands still on the dock with no drive input before it settles in to rest. Never " +
+                 "forced: any drive input leaves at once.")]
+        [Range(0f, 10f)] [SerializeField] private float _dockDelay = 1.2f;
+
+        [Tooltip("Drive input (0..1, steer or throttle) below this counts as none.")]
+        [Range(0f, 0.5f)] [SerializeField] private float _dockInputDeadZone = 0.08f;
+
+        [Tooltip("The dock's glow while it waits (linear emission multiplier, 1 = as authored).")]
+        [Range(0f, 3f)] [SerializeField] private float _dockIdleGlow = 0.25f;
+
+        [Tooltip("The dock's glow while 07 rests and charges on it (linear emission multiplier); it breathes.")]
+        [Range(0f, 4f)] [SerializeField] private float _dockChargingGlow = 1.3f;
+
+        [Tooltip("Seconds per breath of the charging glow.")]
+        [Range(0.5f, 10f)] [SerializeField] private float _dockBreathPeriod = 3.6f;
+
+        [Tooltip("How deeply the charging glow breathes (0 = steady).")]
+        [Range(0f, 1f)] [SerializeField] private float _dockBreathDepth = 0.3f;
+
+        [Tooltip("Seconds (time constant) for the dock's glow to warm up or cool down.")]
+        [Range(0f, 4f)] [SerializeField] private float _dockGlowEase = 0.8f;
+
         public Vector3 LanderOffset => _landerOffset;
         public float DepositRadius => _depositRadius;
         public float DepositHeight => _depositHeight;
@@ -122,6 +153,15 @@ namespace MoonProject.Gameplay
         public float HaloFull => Mathf.Max(_haloFull, _haloAppear + 1f);
         public float HaloRadius => _haloRadius;
         public float HaloGlow => _haloGlow;
+        public float DockRadius => _dockRadius;
+        public float DockMaxSpeed => _dockMaxSpeed;
+        public float DockDelay => _dockDelay;
+        public float DockInputDeadZone => _dockInputDeadZone;
+        public float DockIdleGlow => _dockIdleGlow;
+        public float DockChargingGlow => _dockChargingGlow;
+        public float DockBreathPeriod => _dockBreathPeriod;
+        public float DockBreathDepth => _dockBreathDepth;
+        public float DockGlowEase => _dockGlowEase;
 
         /// <summary>0 while 07 is home .. 1 once it is <see cref="WarmFar"/> or more from the lander.</summary>
         public float FarnessAt(float distance)

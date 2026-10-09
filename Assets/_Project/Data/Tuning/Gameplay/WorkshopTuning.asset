@@ -12,8 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c8dc59cd78a0c944dbe8136a68512358, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _padOffset: {x: 0, y: 0, z: 3.2}
-  _padRadius: 2.4
+  _padRadius: 1.8
   _padRingWidth: 0.35
   _padIdle: 0.22
   _padInviting: 0.65
@@ -24,10 +23,16 @@ MonoBehaviour:
   _padEase: 0.4
   _padSegments: 48
   _padFlare: 2.4
+  _feedBeamLead: 0.15
+  _feedFlight: 0.55
+  _feedStagger: 0.15
+  _feedLift: 0.45
+  _feedGrowShare: 0.25
   _lampIdle: 0.15
   _lampOccupied: 0.75
   _lampFlare: 4.7
   _lampEase: 0.35
+  _signGlow: 0.6
   _sparkBursts: 3
   _sparkCount: 18
   _sparkInterval: 0.16

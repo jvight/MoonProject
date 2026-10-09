@@ -141,8 +141,8 @@ namespace MoonProject.Gameplay.Tests
             Assert.AreEqual(6, relays.CostAfter(3).Total);
             Assert.AreEqual(6, relays.CostAfter(9).Total, "past the last price the last one holds");
             Recipe all = relays.TotalCost(Ids.Length);
-            Assert.AreEqual(12, all.Metal);
-            Assert.AreEqual(6, all.Wiring);
+            Assert.AreEqual(13, all.Metal);
+            Assert.AreEqual(5, all.Wiring);
             Assert.AreEqual(0, all.Optics);
             Assert.IsNull(relays.Validate(Ids.Length));
             StringAssert.Contains("prices", relays.Validate(Ids.Length + 1));

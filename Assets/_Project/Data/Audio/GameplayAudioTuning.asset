@@ -19,7 +19,6 @@ MonoBehaviour:
   _answerNearCutoff: 16000
   _answerFarCutoff: 2200
   _answerMinDistance: 25
-  _scrapTopWindow: 4
   _tetherHumFadeIn: 0.3
   _tetherHumFadeOut: 0.5
   _tetherHumVolume: 1

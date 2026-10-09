@@ -66,6 +66,11 @@ namespace MoonProject.UI.PlayModeTests
         private const float SiteShotHeight = 3.2f;
         private const float CutHeight = 0.8f;
         private const float CutHeld = 0.55f;
+        private const string RelicPrefabPath = "Assets/_Project/Generated/Art/Relics/Relic_cassette_player.prefab";
+        private const float RelicShotAhead = 10f;
+        private const float RelicShotSide = 2.2f;
+        private const float RelicShotYaw = 35f;
+        private const float KitSettleSeconds = 1.1f;
 
         private string _slot;
         private GameObject _uiHost;
@@ -78,8 +83,9 @@ namespace MoonProject.UI.PlayModeTests
         private GameObject _bellStandIn;
         private GameObject _mastCamera;
         private GameObject _siteCamera;
+        private GameObject _relicStandIn;
         private UpgradeDefinition _tower;
-        private UpgradeDefinition _bench;
+        private UpgradeDefinition[] _benchKit = Array.Empty<UpgradeDefinition>();
 
         public override void TearDown()
         {
@@ -88,8 +94,13 @@ namespace MoonProject.UI.PlayModeTests
             Object.DestroyImmediate(_bellStandIn);
             Object.DestroyImmediate(_mastCamera);
             Object.DestroyImmediate(_siteCamera);
+            Object.DestroyImmediate(_relicStandIn);
             Object.DestroyImmediate(_tower);
-            Object.DestroyImmediate(_bench);
+            foreach (UpgradeDefinition kit in _benchKit)
+            {
+                Object.DestroyImmediate(kit);
+            }
+
             Object.DestroyImmediate(_uiHost);
             Object.DestroyImmediate(_fakesHost);
             Object.DestroyImmediate(_panel);
@@ -249,16 +260,18 @@ namespace MoonProject.UI.PlayModeTests
             yield return Capture(camera, folder, "21_dial_readout");
             yield return new WaitForSecondsRealtime(ReadoutExit());
 
-            fakes.Upgrade = _bench;
-            fakes.SetMaterials(12, 7, 2);
+            fakes.Bench = _benchKit;
+            fakes.SetMaterials(12, 7, 0);
             fakes.AtStation = true;
             yield return new WaitForSecondsRealtime(1.8f);
-            yield return Capture(camera, folder, "22_bench_affordable_and_ticker");
-            fakes.SetMaterials(12, 3, 0);
-            yield return new WaitForSecondsRealtime(1f);
-            yield return Capture(camera, folder, "22b_bench_short");
+            yield return Tap(keyboard.eKey);
+            yield return new WaitForSecondsRealtime(0.4f);
+            yield return Capture(camera, folder, "22_bench_choosing");
+            yield return Tap(keyboard.eKey);
+            yield return new WaitForSecondsRealtime(0.4f);
+            yield return Capture(camera, folder, "22b_bench_short_pick");
             fakes.AtStation = false;
-            fakes.Upgrade = _tower;
+            fakes.Bench = null;
             yield return new WaitForSecondsRealtime(1f);
 
             if (!context.Get<IWorldAnchors>().TryGet(DepotSite, out MoonProject.Core.WorldAnchor depot))
@@ -293,6 +306,33 @@ namespace MoonProject.UI.PlayModeTests
             fakes.Camera = camera;
             yield return new WaitForSecondsRealtime(_tuning.Salvage.SiteNameHoldSeconds +
                                                     _tuning.Salvage.SiteName.FadeOut + 0.3f);
+
+            Vector3 relic = SurfacedRelic(context.Get<ITerrainQuery>(), camera);
+            fakes.PrimaryHint = new InteractionHint(InteractionKind.Stow, relic, true);
+            yield return new WaitForSecondsRealtime(_tuning.Prompts.Find(InteractionKind.Stow).DwellSeconds +
+                                                    _tuning.Prompts.Reveal.FadeIn + 0.8f);
+            yield return Capture(camera, folder, "43_stow_prompt");
+            fakes.PrimaryHint = InteractionHint.None;
+            yield return new WaitForSecondsRealtime(_tuning.Prompts.Reveal.FadeOut + 0.3f);
+            Object.DestroyImmediate(_relicStandIn);
+
+            fakes.Bench = _benchKit;
+            context.Events.Publish(new UpgradePurchased(_benchKit[1].Id, 1));
+            context.Events.Publish(new RoverKitInstalling(RoverKitPiece.CargoRack, false));
+            yield return new WaitForSecondsRealtime(KitSettleSeconds);
+            context.Events.Publish(new RoverKitFitted(RoverKitPiece.CargoRack, false, _benchKit[1].Id));
+            yield return new WaitForSecondsRealtime(_tuning.KitTitle.Delay + _tuning.KitTitle.Reveal.FadeIn + 0.4f);
+            yield return Capture(camera, folder, "44_kit_title_crafted");
+            yield return new WaitForSecondsRealtime(_tuning.KitTitle.HoldSeconds + _tuning.KitTitle.Reveal.FadeOut +
+                                                    0.3f);
+            context.Events.Publish(new RoverKitInstalling(RoverKitPiece.SolarCell, true));
+            yield return new WaitForSecondsRealtime(KitSettleSeconds);
+            context.Events.Publish(new RoverKitFitted(RoverKitPiece.SolarCell, true, string.Empty));
+            yield return new WaitForSecondsRealtime(_tuning.KitTitle.Delay + _tuning.KitTitle.Reveal.FadeIn + 0.4f);
+            yield return Capture(camera, folder, "45_kit_title_gift");
+            fakes.Bench = null;
+            yield return new WaitForSecondsRealtime(_tuning.KitTitle.HoldSeconds + _tuning.KitTitle.Reveal.FadeOut +
+                                                    0.3f);
 
             Transform socket = DarkMastSocket(context.Get<IWorldAnchors>());
             Camera mastCamera = MastCamera(socket, camera);
@@ -497,6 +537,27 @@ namespace MoonProject.UI.PlayModeTests
             throw new InvalidOperationException("Every relay mast is lit in the loaded save: no dark mast to capture.");
         }
 
+        /// <summary>
+        /// A relic lying loose on the ground ahead of <paramref name="view"/> and a little to the side (its art model,
+        /// placed for the shot) for the Stow prompt to float over. Returns where it rests.
+        /// </summary>
+        private Vector3 SurfacedRelic(ITerrainQuery terrain, Camera view)
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(RelicPrefabPath);
+            if (prefab == null)
+            {
+                throw new InvalidOperationException($"{RelicPrefabPath} is missing: run the Art builders.");
+            }
+
+            Transform eye = view.transform;
+            Vector3 ahead = Vector3.ProjectOnPlane(eye.forward, Vector3.up).normalized;
+            Vector3 spot = eye.position + ahead * RelicShotAhead + eye.right * RelicShotSide;
+            spot.y = terrain.SampleHeight(spot.x, spot.z);
+            _relicStandIn = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+            _relicStandIn.transform.SetPositionAndRotation(spot, Quaternion.Euler(0f, RelicShotYaw, 0f));
+            return spot;
+        }
+
         /// <summary>A camera on a site's approach lane, a few metres out, looking at its heart.</summary>
         private Camera SiteCamera(MoonProject.Core.WorldAnchor site, Camera reference)
         {
@@ -640,7 +701,12 @@ namespace MoonProject.UI.PlayModeTests
             fakes = _fakesHost.AddComponent<FakeGameServices>();
             _tower = UiTestRig.CopyCosting(UiTestRig.UpgradePath, new Recipe(2, 1, 0), new Recipe(4, 2, 1),
                 new Recipe(6, 4, 2));
-            _bench = UiTestRig.CopyCosting(UiTestRig.WorkbenchUpgradePath, new Recipe(10, 6, 2));
+            _benchKit = new[]
+            {
+                UiTestRig.CopyCosting(UiTestRig.WorkbenchUpgradePath, new Recipe(6, 3, 0)),
+                UiTestRig.CopyCosting(UiTestRig.CradleUpgradePath, new Recipe(4, 3, 0)),
+                UiTestRig.CopyCosting(UiTestRig.HeadlampUpgradePath, new Recipe(3, 4, 2)),
+            };
             fakes.Upgrade = _tower;
             fakes.Friend = AssetDatabase.LoadAssetAtPath<FriendDefinition>(UiTestRig.TillyPath);
             fakes.Camera = context.Get<IViewCamera>().Camera;

@@ -9,9 +9,11 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// <summary>
     /// Records every gameplay event (and the rover's Hover-Jump events) with the time it was published, for order and
     /// timing assertions. The radio and story events of M3-05 (cassettes, radio program, crew logs, Bell's signals
-    /// and cues, ticker lines) and the relay network's of M3-06 (relay cues and restorations, the radio-hop) are
-    /// recorded too but kept out of <see cref="Order"/>: the radio announces itself at every boot, and the order
-    /// assertions follow the play loop.
+    /// and cues, ticker lines), the relay network's of M3-06 (relay cues and restorations, the radio-hop) and the
+    /// stations' and charging dock's of M3-14 (station cues, the bay's fitting, a kit piece set on, the dock rest) are
+    /// recorded too but
+    /// kept out of <see cref="Order"/>: the radio announces itself at every boot, and the order assertions follow the
+    /// play loop.
     /// </summary>
     public sealed class EventRecorder : IDisposable
     {
@@ -31,6 +33,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Listen(events, RelicSurfaced);
             Listen(events, TetherAttached);
             Listen(events, TetherReleased);
+            Listen(events, RelicStowed);
             Listen(events, RelicDeposited);
             Listen(events, UpgradePurchased);
             Listen(events, SignalRadiusChanged);
@@ -54,6 +57,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             Listen(events, RadioHopListChanged, false);
             Listen(events, RadioHopStarted, false);
             Listen(events, RadioHopFinished, false);
+            Listen(events, StationCued, false);
+            Listen(events, RoverBayFitting, false);
+            Listen(events, RoverKitFitted, false);
+            Listen(events, RoverDockChanged, false);
         }
 
         /// <summary>Event type names in publish order.</summary>
@@ -74,6 +81,8 @@ namespace MoonProject.Gameplay.PlayModeTests
         public List<Timed<RelicSurfaced>> RelicSurfaced { get; } = new List<Timed<RelicSurfaced>>();
         public List<Timed<TetherAttached>> TetherAttached { get; } = new List<Timed<TetherAttached>>();
         public List<Timed<TetherReleased>> TetherReleased { get; } = new List<Timed<TetherReleased>>();
+        public List<Timed<RelicStowed>> RelicStowed { get; } = new List<Timed<RelicStowed>>();
+
         public List<Timed<RelicDeposited>> RelicDeposited { get; } = new List<Timed<RelicDeposited>>();
         public List<Timed<UpgradePurchased>> UpgradePurchased { get; } = new List<Timed<UpgradePurchased>>();
 
@@ -114,6 +123,14 @@ namespace MoonProject.Gameplay.PlayModeTests
         public List<Timed<RadioHopStarted>> RadioHopStarted { get; } = new List<Timed<RadioHopStarted>>();
 
         public List<Timed<RadioHopFinished>> RadioHopFinished { get; } = new List<Timed<RadioHopFinished>>();
+
+        public List<Timed<StationCued>> StationCued { get; } = new List<Timed<StationCued>>();
+
+        public List<Timed<RoverBayFitting>> RoverBayFitting { get; } = new List<Timed<RoverBayFitting>>();
+
+        public List<Timed<RoverKitFitted>> RoverKitFitted { get; } = new List<Timed<RoverKitFitted>>();
+
+        public List<Timed<RoverDockChanged>> RoverDockChanged { get; } = new List<Timed<RoverDockChanged>>();
 
         public void Dispose()
         {

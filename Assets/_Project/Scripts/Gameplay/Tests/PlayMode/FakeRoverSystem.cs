@@ -6,12 +6,13 @@ namespace MoonProject.Gameplay.PlayModeTests
 {
     /// <summary>
     /// Stands in for the Rover domain: a kinematic body the test moves directly, with an eye (TetherOrigin), a cargo
-    /// socket and a following camera. Registers IRoverState, IRoverRig, IViewCamera, IRoverAbilities and
-    /// IRoverPlacement, and records every gaze and hold-still request, every ability granted and every placement so
-    /// tests can assert 07's attention, upgrades and radio-hops.
+    /// socket, a cargo seat on its back (fitted with the Cargo Cradle ability) and a following camera. Registers
+    /// IRoverState, IRoverRig, IViewCamera, IRoverAbilities, IRoverPlacement and IRoverCargoSeat, and records every
+    /// gaze and hold-still request, every ability granted and every placement so tests can assert 07's attention,
+    /// upgrades and radio-hops.
     /// </summary>
     public sealed class FakeRoverSystem : MonoBehaviour, IGameSystem, IRoverState, IRoverRig, IViewCamera,
-        IRoverAbilities, IRoverPlacement
+        IRoverAbilities, IRoverPlacement, IRoverCargoSeat
     {
         private readonly Dictionary<object, GazeRequest> _gaze = new Dictionary<object, GazeRequest>();
         private readonly HashSet<object> _holders = new HashSet<object>();
@@ -19,6 +20,8 @@ namespace MoonProject.Gameplay.PlayModeTests
         private Vector3 _lastPosition;
         private Transform _eye;
         private Transform _cargo;
+        private Transform _seat;
+        private bool _registersCargoSeat;
         private Rigidbody _body;
         private Camera _camera;
 
@@ -32,7 +35,8 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         public float NormalizedSpeed => Mathf.Clamp01(Speed / 8f);
 
-        public Vector2 DriveInput => Vector2.zero;
+        /// <summary>The drive input 07 reports (zero unless a test sets it: a player touching the stick).</summary>
+        public Vector2 DriveInput { get; set; }
 
         public bool IsGrounded => true;
 
@@ -48,6 +52,18 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         public Camera Camera => _camera;
 
+        /// <summary>The rack's RelicSeat stand-in, on top of the shell at the back.</summary>
+        public Transform CargoSeat => _seat;
+
+        /// <summary>Takes the Cargo Cradle off 07 even though the ability is owned (a test of "never lost").</summary>
+        public bool SeatRemoved { get; set; }
+
+        public bool IsFitted => Has(RoverAbility.CargoCradle) && !SeatRemoved;
+
+        Vector3 IRoverCargoSeat.Position => _seat.position;
+
+        Quaternion IRoverCargoSeat.Rotation => _seat.rotation;
+
         /// <summary>Owners currently asking 07 to hold still.</summary>
         public int HoldStillCount => _holders.Count;
 
@@ -60,11 +76,13 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>PlaceAt calls received (one per radio-hop).</summary>
         public int Placements { get; private set; }
 
-        public static FakeRoverSystem Create(Vector3 position, float yaw)
+        /// <param name="cargoSeat">False for a rover that registers no cargo seat (a test of the boot check).</param>
+        public static FakeRoverSystem Create(Vector3 position, float yaw, bool cargoSeat)
         {
             var host = new GameObject("FakeRover");
             host.transform.SetPositionAndRotation(position, Quaternion.Euler(0f, yaw, 0f));
             var rover = host.AddComponent<FakeRoverSystem>();
+            rover._registersCargoSeat = cargoSeat;
             rover.Build();
             return rover;
         }
@@ -76,6 +94,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             context.Register<IViewCamera>(this);
             context.Register<IRoverAbilities>(this);
             context.Register<IRoverPlacement>(this);
+            if (_registersCargoSeat)
+            {
+                context.Register<IRoverCargoSeat>(this);
+            }
         }
 
         public bool Has(RoverAbility ability)
@@ -178,6 +200,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             _lastPosition = transform.position;
             _eye = Child("TetherOrigin", new Vector3(0f, 1.3f, 0.7f));
             _cargo = Child("CargoSocket", new Vector3(0f, 1.05f, -0.4f));
+            _seat = Child("RelicSeat", new Vector3(0f, 1.15f, -0.85f));
 
             var body = new GameObject("PhysicsSphere") { layer = Layers.Rover };
             body.transform.SetParent(transform, false);

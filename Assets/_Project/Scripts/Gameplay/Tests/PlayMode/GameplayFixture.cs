@@ -51,11 +51,27 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         private static readonly float[] RelicMasses = { 6f, 3f, 5f, 9f, 7f, 14f };
 
+        /// <summary>
+        /// Each relic stand-in's size (m) at true scale, gently exaggerated (VISION ruling 13, the art report): the
+        /// cassette player 0.25, the duck 0.20, the golden record 0.40, the boot 0.40, the teapot 0.35, the gnome 0.50.
+        /// </summary>
+        private static readonly Vector3[] RelicSizes =
+        {
+            new Vector3(0.25f, 0.16f, 0.08f), new Vector3(0.16f, 0.2f, 0.14f), new Vector3(0.4f, 0.4f, 0.06f),
+            new Vector3(0.18f, 0.4f, 0.3f), new Vector3(0.35f, 0.24f, 0.22f), new Vector3(0.22f, 0.5f, 0.2f),
+        };
+
+        /// <summary>A cassette stand-in's size (m): 0.18 m across, as the art rescaled them.</summary>
+        private static readonly Vector3 CassetteSize = new Vector3(0.18f, 0.115f, 0.03f);
+
         private readonly List<Object> _created = new List<Object>();
         private readonly InputActionAsset _controls;
 
-        private GameplayFixture(InputActionAsset controls, string saveSlot)
+        private readonly bool _cargoSeat;
+
+        private GameplayFixture(InputActionAsset controls, string saveSlot, bool cargoSeat)
         {
+            _cargoSeat = cargoSeat;
             _controls = controls;
             SaveSlot = saveSlot;
         }
@@ -94,6 +110,12 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         public UpgradeDefinition HoverJumpUpgrade { get; private set; }
 
+        public UpgradeDefinition CargoCradleUpgrade { get; private set; }
+
+        public UpgradeDefinition WarmHeadlampUpgrade { get; private set; }
+
+        public UpgradeDefinition BoostCoilsUpgrade { get; private set; }
+
         public FriendTuning FriendTuning { get; private set; }
 
         public FriendDefinition Tilly { get; private set; }
@@ -120,9 +142,10 @@ namespace MoonProject.Gameplay.PlayModeTests
         public RelayTuning RelayTuning { get; private set; }
 
         /// <summary>Builds and boots everything; 07 starts at the base facing +Z.</summary>
-        public static GameplayFixture Boot(InputActionAsset controls, string saveSlot = null)
+        /// <param name="cargoSeat">False boots a rover that registers no cargo seat (the boot check's test).</param>
+        public static GameplayFixture Boot(InputActionAsset controls, string saveSlot = null, bool cargoSeat = true)
         {
-            var fixture = new GameplayFixture(controls, saveSlot ?? BootstrapHarness.NewTestSlot());
+            var fixture = new GameplayFixture(controls, saveSlot ?? BootstrapHarness.NewTestSlot(), cargoSeat);
             fixture.Build();
             return fixture;
         }
@@ -210,7 +233,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         private void Build()
         {
             World = Track(FlatWorldSystem.Create());
-            Rover = Track(FakeRoverSystem.Create(Vector3.zero, 0f));
+            Rover = Track(FakeRoverSystem.Create(Vector3.zero, 0f, _cargoSeat));
 
             GlintTuning = Asset<GlintTuning>();
             SonarTuning = Asset<SonarTuning>();
@@ -222,7 +245,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             RadioTowerUpgrade = Asset<UpgradeDefinition>();
             RadioTowerUpgrade.Populate("radio_tower", UpgradeStationKind.RadioTower, 60f, new[]
             {
-                new UpgradeLevel(new Recipe(0, 1, 1), 110f, 1.25f), new UpgradeLevel(new Recipe(0, 2, 1), 170f, 1.5f),
+                new UpgradeLevel(new Recipe(0, 1, 1), 110f, 1.25f), new UpgradeLevel(new Recipe(0, 1, 2), 170f, 1.5f),
                 new UpgradeLevel(new Recipe(0, 2, 2), 260f, 1.8f),
             });
             WorkshopTuning = Asset<WorkshopTuning>();
@@ -231,6 +254,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             {
                 new UpgradeLevel(new Recipe(4, 2, 1), RoverAbility.HoverJump),
             });
+            CargoCradleUpgrade = RoverKit("rover.cargo_cradle", new Recipe(4, 0, 0), RoverAbility.CargoCradle);
+            WarmHeadlampUpgrade = RoverKit("rover.warm_headlamp", new Recipe(1, 0, 3), RoverAbility.WarmHeadlamp);
+            BoostCoilsUpgrade = RoverKit("rover.boost_coils", new Recipe(1, 2, 1), RoverAbility.BoostCoils);
 
             var relicCatalog = Asset<RelicCatalog>();
             var definitions = new RelicDefinition[RelicIds.Length];
@@ -238,7 +264,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             {
                 definitions[i] = Asset<RelicDefinition>();
                 definitions[i].Populate(RelicIds[i], RelicMasses[i],
-                    Template("Relic_" + RelicIds[i], new Vector3(0.7f, 0.6f, 0.5f)), i,
+                    Template("Relic_" + RelicIds[i], RelicSizes[i]), i,
                     WorldAnchorIds.SitePrefix + RelicSites[i], i == RelicIds.Length - 1 ? new Vector2(1.2f, 0f)
                         : Vector2.zero);
             }
@@ -266,6 +292,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             var excavation = Child<ExcavationSystem>(root, "Excavation");
             var tether = Child<TetherSystem>(root, "Tether");
             var home = Child<HomeBase>(root, "Home");
+            var cradle = Child<CargoCradle>(root, "CargoCradle");
             var tower = Child<RadioTower>(root, "RadioTower");
             var workshop = Child<Workshop>(root, "Workshop");
             var friends = Child<FriendField>(root, "Friends");
@@ -285,8 +312,11 @@ namespace MoonProject.Gameplay.PlayModeTests
             sonar.Wire(SonarTuning);
             excavation.Wire(ExcavationTuning);
             tether.Wire(TetherTuning);
-            Gameplay.Wire(visuals, GlintTuning, new[] { RadioTowerUpgrade, HoverJumpUpgrade }, salvage, relics,
-                sonar, excavation, tether, home, tower, workshop, friends, cassettes, logs, signals, shelf, relays);
+            Gameplay.Wire(visuals, GlintTuning, new[]
+                {
+                    RadioTowerUpgrade, HoverJumpUpgrade, CargoCradleUpgrade, WarmHeadlampUpgrade, BoostCoilsUpgrade,
+                }, salvage, relics, sonar, excavation, tether, home, cradle, tower, workshop, friends, cassettes, logs,
+                signals, shelf, relays);
             root.SetActive(true);
 
             Bootstrap = BootstrapHarness.Create(_controls, SaveSlot, World, Rover, Gameplay);
@@ -294,8 +324,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// A stand-in for Art's lander, shelf, tower stages and tape rack with the contract's node names and positions,
-        /// wired the way the scene contributor wires the real prefabs.
+        /// A stand-in for Art's lander (with its charging dock), shelf, tower stages (with their service ports), Rover
+        /// Bay and tape rack with the contract's node names and positions, wired the way the scene contributor wires
+        /// the real prefabs.
         /// </summary>
         private CassetteShelf BuildBase(Transform parent, HomeBase home, RadioTower tower, Workshop workshop)
         {
@@ -312,11 +343,11 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             Transform shelf = Node("MuseumShelf", Node("ShelfAnchor", lander, new Vector3(6f, 0f, 1.2f)),
                 Vector3.zero);
-            Transform shelfLights = Block(shelf, new Vector3(0f, 2.4f, 0f), new Vector3(4.2f, 0.1f, 0.6f));
+            Transform shelfLights = Block(shelf, new Vector3(0f, 1.75f, 0f), new Vector3(2.7f, 0.1f, 0.6f));
             var slots = new Transform[6];
             for (int i = 0; i < slots.Length; i++)
             {
-                slots[i] = Node("Slot_" + i, shelf, new Vector3(-1.37f + 1.37f * (i % 3), i < 3 ? 0.38f : 1.78f,
+                slots[i] = Node("Slot_" + i, shelf, new Vector3(-0.86f + 0.86f * (i % 3), i < 3 ? 0.33f : 1.03f,
                     0.04f));
             }
 
@@ -325,6 +356,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             var stages = new GameObject[3];
             var lights = new Renderer[3];
             var beacons = new Transform[3];
+            var hoppers = new Transform[3];
+            var hatches = new Transform[3];
             for (int i = 0; i < 3; i++)
             {
                 Transform stage = Node("RadioTower_L" + (i + 1), anchor, Vector3.zero);
@@ -332,35 +365,104 @@ namespace MoonProject.Gameplay.PlayModeTests
                 lights[i] = Block(stage, new Vector3(0f, heights[i] * 0.8f, 0.35f), new Vector3(0.3f, 0.3f, 0.05f))
                     .GetComponent<Renderer>();
                 beacons[i] = Node("BeaconSocket", stage, new Vector3(0f, heights[i], 0f));
+                hoppers[i] = Node("HopperMouth", stage, new Vector3(0.5f, 1.12f, 1.25f));
+                hoppers[i].localRotation = Quaternion.Euler(-40f, 0f, 0f);
+                hatches[i] = Node("ServiceHatch", stage, new Vector3(-0.72f, 0.62f, 1.08f));
+                Block(hatches[i], new Vector3(0.21f, 0f, 0.01f), new Vector3(0.42f, 0.5f, 0.02f));
                 stages[i] = stage.gameObject;
             }
 
+            Transform dock = Node("DockAnchor", lander, new Vector3(0f, 0.05f, 4.15f));
+            dock.localRotation = Quaternion.Euler(0f, 180f, 0f);
+            Transform dockGlow = Named(Block(lander, new Vector3(0f, 0.02f, 4.15f), new Vector3(1.6f, 0.04f, 2.4f)),
+                "DockGlow");
             home.Wire(BaseTuning, baseRoot, windows.GetComponent<Renderer>(), sockets, shelf,
-                shelfLights.GetComponent<Renderer>(), slots);
-            tower.Wire(TowerTuning, RadioTowerUpgrade, anchor, stages, lights, beacons);
-            Transform workbench = Node("Workbench", Node("WorkshopAnchor", lander, new Vector3(12.5f, 0f, -2f)),
-                Vector3.zero);
-            Block(workbench, new Vector3(0f, 0.47f, 0f), new Vector3(2.3f, 0.95f, 0.9f));
-            Transform lamp = Block(workbench, new Vector3(0.55f, 2.02f, 0.18f), Vector3.one * 0.12f);
-            workshop.Wire(WorkshopTuning, new[] { HoverJumpUpgrade }, workbench.parent, lamp.GetComponent<Renderer>(),
-                Node("SparkSocket", workbench, new Vector3(-0.82f, 1.14f, 0.32f)));
+                shelfLights.GetComponent<Renderer>(), slots, dock, dockGlow.GetComponent<Renderer>());
+            tower.Wire(TowerTuning, RadioTowerUpgrade, anchor, stages, lights, beacons, hoppers, hatches);
+            BuildBay(Node("WorkshopAnchor", lander, new Vector3(12.5f, 0f, -2f)), workshop);
             TillyPerch = Node("FriendSocket_tilly", lander, new Vector3(-1.6f, 3.3f, 0.9f));
             BellCorner = Node("BellCorner", anchor, new Vector3(-4.9f, 0f, 0.4f));
             BellCorner.localRotation = Quaternion.Euler(0f, 74f, 0f);
             Transform rack = Node("CassetteShelf", Node("CassetteShelfAnchor", anchor, new Vector3(-4.6f, 0f, -2.75f)),
                 Vector3.zero);
             rack.parent.localRotation = Quaternion.Euler(0f, 60f, 0f);
-            Block(rack, new Vector3(0f, 0.6f, -0.05f), new Vector3(0.6f, 1.2f, 0.1f)).name = "Rack";
+            Block(rack, new Vector3(0f, 0.58f, -0.05f), new Vector3(0.56f, 1.16f, 0.1f)).name = "Rack";
             ShelfSlots = new Transform[8];
             for (int i = 0; i < ShelfSlots.Length; i++)
             {
-                ShelfSlots[i] = Node("Slot_" + i, rack, new Vector3(i % 2 == 0 ? 0.2f : -0.2f,
-                    1.033f - 0.27f * (i / 2), 0.01f));
+                ShelfSlots[i] = Node("Slot_" + i, rack, new Vector3(i % 2 == 0 ? 0.12f : -0.12f,
+                    1.003f - 0.16f * (i / 2), 0.006f));
             }
 
             var tapes = rack.gameObject.AddComponent<CassetteShelf>();
             tapes.Wire(ShelfSlots);
             return tapes;
+        }
+
+        /// <summary>
+        /// A stand-in Rover Bay with the art contract's nodes and positions (docs/ARCHITECTURE.md: Turntable, three
+        /// arms Yaw/Upper/Lower/Tip down to their SparkSockets folded along the rail in the rest pose with the
+        /// contract's link lengths, the floor arm FloorLift/FloorTip, HopperMouth in the back-right corner, Lamp_0/1,
+        /// BaySign), wired as the scene contributor wires the real one.
+        /// </summary>
+        private void BuildBay(Transform anchor, Workshop workshop)
+        {
+            Transform bay = Node("RoverBay", anchor, Vector3.zero);
+            Transform turntable = Node("Turntable", bay, new Vector3(0f, 0.15f, -0.35f));
+            turntable.localRotation = Quaternion.Euler(0f, 180f, 0f);
+            Block(turntable, new Vector3(0f, -0.05f, 0f), new Vector3(3.5f, 0.1f, 3.5f));
+            Vector3[] shoulders = { new Vector3(-1.3f, 3.08f, -0.35f), new Vector3(0f, 3.08f, -1.65f),
+                new Vector3(1.3f, 3.08f, -0.35f) };
+            float[] yaws = { 90f, 0f, -90f };
+            float[] restYaws = { -90f, -90f, 90f };
+            var armYaws = new Transform[shoulders.Length];
+            var uppers = new Transform[shoulders.Length];
+            var lowers = new Transform[shoulders.Length];
+            var tips = new Transform[shoulders.Length];
+            var sockets = new Transform[shoulders.Length];
+            for (int i = 0; i < shoulders.Length; i++)
+            {
+                Transform arm = Node("Arm_" + i, bay, shoulders[i]);
+                arm.localRotation = Quaternion.Euler(0f, yaws[i], 0f);
+                armYaws[i] = Node("Yaw", arm, Vector3.zero);
+                armYaws[i].localRotation = Quaternion.Euler(0f, restYaws[i], 0f);
+                uppers[i] = Node("Upper", armYaws[i], Vector3.zero);
+                uppers[i].localRotation = Quaternion.Euler(-90f, 0f, 0f);
+                lowers[i] = Node("Lower", uppers[i], new Vector3(0f, -1.3f, 0f));
+                lowers[i].localRotation = Quaternion.Euler(170f, 0f, 0f);
+                tips[i] = Node("Tip", lowers[i], new Vector3(0f, -1.2f, 0f));
+                tips[i].localRotation = Quaternion.Euler(-80f, 0f, 0f);
+                sockets[i] = Node("SparkSocket", tips[i], new Vector3(0f, -0.26f, 0.06f));
+                sockets[i].localRotation = Quaternion.Euler(90f, 180f, 0f);
+            }
+
+            Transform floorArm = Node("FloorArm", bay, new Vector3(0f, 0f, -0.35f));
+            Transform floorLift = Node("FloorLift", floorArm, new Vector3(0f, 0.105f, 0f));
+            Transform floorTip = Node("FloorTip", floorLift, new Vector3(0f, 0.03f, 0f));
+
+            Transform mouth = Node("HopperMouth", bay, new Vector3(1.55f, 1.15f, -1.85f));
+            mouth.localRotation = Quaternion.Euler(-40f, -45.9f, 0f);
+            Renderer[] lamps =
+            {
+                Named(Block(bay, new Vector3(-1.55f, 3.08f, 1.65f), Vector3.one * 0.25f), "Lamp_0")
+                    .GetComponent<Renderer>(),
+                Named(Block(bay, new Vector3(1.55f, 3.08f, 1.65f), Vector3.one * 0.25f), "Lamp_1")
+                    .GetComponent<Renderer>(),
+            };
+            Transform sign = Named(Block(bay, new Vector3(0f, 4.02f, 1.92f), new Vector3(0.8f, 0.42f, 0.04f)),
+                "BaySign");
+            workshop.Wire(WorkshopTuning,
+                new[] { HoverJumpUpgrade, CargoCradleUpgrade, WarmHeadlampUpgrade, BoostCoilsUpgrade }, bay,
+                turntable, mouth, lamps, sign.GetComponent<Renderer>(), sockets);
+            workshop.WireArms(armYaws, uppers, lowers, tips, floorLift, floorTip);
+        }
+
+        /// <summary>A one-level rover ability sold at the bench, as in the content builder.</summary>
+        private UpgradeDefinition RoverKit(string id, Recipe recipe, RoverAbility ability)
+        {
+            var upgrade = Asset<UpgradeDefinition>();
+            upgrade.Populate(id, UpgradeStationKind.Workshop, 0f, new[] { new UpgradeLevel(recipe, ability) });
+            return upgrade;
         }
 
         /// <summary>
@@ -461,9 +563,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// A stand-in Bell with her rig contract's nodes under their parents (Body with Lid, DialFace/Needle/DialLamp,
-        /// Speaker, TapeSlot, Antenna and PartLamp_0..3; Leg_* at the hips with their Shin_*); the broken one tipped
-        /// back with her lid open.
+        /// A stand-in Bell with her rig contract's nodes under their parents (Body with Lid,
+        /// DialFace/Needle/DialLamp/Knob, Speaker, TapeSlot, Antenna and PartLamp_0..3; Leg_* at the hips with their
+        /// Shin_*); the broken one tipped back with her lid open.
         /// </summary>
         private GameObject BellModel(string name, bool broken)
         {
@@ -477,6 +579,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Transform dial = Node("DialFace", body, new Vector3(0f, 0.43f, 0.262f));
             Named(Block(dial, new Vector3(0.05f, 0.05f, 0.01f), new Vector3(0.12f, 0.01f, 0.01f)), BellRig.NeedleNode);
             Named(Block(dial, Vector3.zero, new Vector3(0.3f, 0.15f, 0.01f)), BellRig.DialLampNode);
+            Named(Block(dial, new Vector3(-0.31f, 0.07f, -0.006f), new Vector3(0.1f, 0.1f, 0.06f)), BellRig.KnobNode);
             Named(Block(body, new Vector3(0.2f, 0.21f, 0.28f), new Vector3(0.2f, 0.2f, 0.02f)), BellRig.SpeakerNode);
             Node(BellRig.TapeSlotNode, body, new Vector3(-0.16f, 0.21f, 0.274f));
             Named(Block(body, new Vector3(-0.46f, 0.8f, -0.15f), new Vector3(0.02f, 0.4f, 0.02f)), "Antenna");
@@ -568,7 +671,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         private CassetteDefinition Cassette(string id, CassetteSiteRule site, AnchorSpot anchor, AbilityGate gate)
         {
             var cassette = Asset<CassetteDefinition>();
-            cassette.Populate(id, Template("Cassette_" + id, new Vector3(0.35f, 0.22f, 0.07f)), site, anchor, 73,
+            cassette.Populate(id, Template("Cassette_" + id, CassetteSize), site, anchor, 73,
                 gate);
             return cassette;
         }

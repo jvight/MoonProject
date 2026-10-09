@@ -12,7 +12,8 @@ namespace MoonProject.Art
     /// <see cref="Palette.Uv"/> of the face's swatch as UV0. Primitives are centred on their local origin; round ones
     /// use local +Y as their axis (see <see cref="Place.AlongX"/> / <see cref="Place.AlongZ"/>).
     /// Buffers are reused across <see cref="Clear"/>, so one builder can produce many meshes without garbage beyond
-    /// the output meshes. Not thread-safe.
+    /// the output meshes. A builder made <see cref="WithVertexColours"/> also gives every vertex an sRGB colour
+    /// (weather skins), starting at its swatch's <see cref="Palette.GetSurface"/> colour. Not thread-safe.
     /// </summary>
     public sealed class LowPolyMeshBuilder
     {
@@ -25,17 +26,35 @@ namespace MoonProject.Art
         private readonly List<Vector3> _positions;
         private readonly List<Vector3> _normals;
         private readonly List<Vector2> _uvs;
+        private readonly List<Color32> _colours;
         private readonly List<int> _indices = new List<int>();
         private readonly IndexedShape _shape = new IndexedShape();
         private Vector3 _min;
         private Vector3 _max;
 
         public LowPolyMeshBuilder(int triangleCapacity = 256)
+            : this(triangleCapacity, false)
+        {
+        }
+
+        private LowPolyMeshBuilder(int triangleCapacity, bool vertexColours)
         {
             int vertexCapacity = Math.Max(3, triangleCapacity * 3);
             _positions = new List<Vector3>(vertexCapacity);
             _normals = new List<Vector3>(vertexCapacity);
             _uvs = new List<Vector2>(vertexCapacity);
+            _colours = vertexColours ? new List<Color32>(vertexCapacity) : null;
+        }
+
+        /// <summary>
+        /// A builder whose vertices also carry an sRGB colour, written as the mesh's vertex colours: the weather skins
+        /// drawn by the LofiWeather shader, which shows that colour instead of the palette cell. Every face starts in
+        /// its swatch's <see cref="Palette.GetSurface"/> colour (appended skins keep theirs) and can be shaded from
+        /// there (<see cref="Shade"/>, <see cref="ShadeByHeight"/>).
+        /// </summary>
+        public static LowPolyMeshBuilder WithVertexColours(int triangleCapacity = 256)
+        {
+            return new LowPolyMeshBuilder(triangleCapacity, true);
         }
 
         public int TriangleCount => _positions.Count / 3;
@@ -51,6 +70,12 @@ namespace MoonProject.Art
         /// <summary>Palette UV per vertex (identical on the three vertices of a triangle).</summary>
         public IReadOnlyList<Vector2> Uvs => _uvs;
 
+        /// <summary>True when every vertex also carries a colour (see <see cref="WithVertexColours"/>).</summary>
+        public bool HasVertexColours => _colours != null;
+
+        /// <summary>The sRGB colour per vertex (empty unless <see cref="HasVertexColours"/>).</summary>
+        public IReadOnlyList<Color32> Colours => _colours ?? (IReadOnlyList<Color32>)Array.Empty<Color32>();
+
         /// <summary>Axis-aligned bounds of everything added so far (zero-size at the origin when empty).</summary>
         public Bounds Bounds => VertexCount == 0 ? new Bounds(Vector3.zero, Vector3.zero) : FromMinMax(_min, _max);
 
@@ -59,6 +84,7 @@ namespace MoonProject.Art
             _positions.Clear();
             _normals.Clear();
             _uvs.Clear();
+            _colours?.Clear();
         }
 
         /// <summary>The range from <paramref name="firstTriangle"/> to the current end (groups primitives).</summary>
@@ -215,7 +241,11 @@ namespace MoonProject.Art
             return Emit(placement, paint, default, displacement, true);
         }
 
-        /// <summary>Copies every triangle of <paramref name="source"/> (with colours) through a placement.</summary>
+        /// <summary>
+        /// Copies every triangle of <paramref name="source"/> (with its swatches, and its vertex colours into a
+        /// coloured builder) through a placement. A coloured source cannot go into a plain builder: its colours would
+        /// be lost.
+        /// </summary>
         public MeshRange Append(LowPolyMeshBuilder source, Matrix4x4 placement)
         {
             if (source == null)
@@ -228,6 +258,11 @@ namespace MoonProject.Art
                 throw new ArgumentException("Cannot append a builder to itself.", nameof(source));
             }
 
+            if (source.HasVertexColours && !HasVertexColours)
+            {
+                throw new InvalidOperationException("A coloured skin cannot be appended to a plain builder.");
+            }
+
             int first = TriangleCount;
             bool mirrored = Determinant3x3(placement) < 0f;
             for (int v = 0; v < source.VertexCount; v += 3)
@@ -235,15 +270,214 @@ namespace MoonProject.Art
                 Vector3 a = placement.MultiplyPoint3x4(source._positions[v]);
                 Vector3 b = placement.MultiplyPoint3x4(source._positions[v + 1]);
                 Vector3 c = placement.MultiplyPoint3x4(source._positions[v + 2]);
+                Color32 ca = HasVertexColours ? source.ColourAt(v) : default;
+                Color32 cb = HasVertexColours ? source.ColourAt(v + 1) : default;
+                Color32 cc = HasVertexColours ? source.ColourAt(v + 2) : default;
                 if (mirrored)
+                {
+                    (b, c) = (c, b);
+                    (cb, cc) = (cc, cb);
+                }
+
+                AddFlatTriangle(a, b, c, source._uvs[v], ca, cb, cc);
+            }
+
+            return new MeshRange(first, TriangleCount - first);
+        }
+
+        /// <summary>
+        /// Copies the triangles of <paramref name="source"/> that <paramref name="keepTriangle"/> picks (by triangle
+        /// index), each pushed <paramref name="lift"/> out along its own normal and keeping its paint: a skin over
+        /// part of another mesh, ready to be shaded. Glowing faces are skipped.
+        /// </summary>
+        public MeshRange AppendWhere(LowPolyMeshBuilder source, Predicate<int> keepTriangle, float lift)
+        {
+            RequireOverlaySource(source);
+            if (keepTriangle == null)
+            {
+                throw new ArgumentNullException(nameof(keepTriangle));
+            }
+
+            int first = TriangleCount;
+            for (int t = 0; t < source.TriangleCount; t++)
+            {
+                int v = t * 3;
+                if (!IsGlowing(source._uvs[v]) && keepTriangle(t))
+                {
+                    Vector3 offset = source._normals[v] * lift;
+                    AddFlatTriangle(source._positions[v] + offset, source._positions[v + 1] + offset,
+                        source._positions[v + 2] + offset, source._uvs[v], source.ColourAt(v), source.ColourAt(v + 1),
+                        source.ColourAt(v + 2));
+                }
+            }
+
+            return new MeshRange(first, TriangleCount - first);
+        }
+
+        /// <summary>
+        /// Copies the triangles of <paramref name="source"/> whose normal n satisfies dot(n, direction) &gt;=
+        /// <paramref name="minDot"/>, each pushed <paramref name="lift"/> out along its own normal and painted
+        /// <paramref name="swatch"/>: a skin over part of another mesh (dust settled on its top faces), built as its
+        /// own mesh so it can be shown or removed on its own. Glowing faces are skipped.
+        /// </summary>
+        public MeshRange AppendFacing(LowPolyMeshBuilder source, Vector3 direction, float minDot, float lift,
+            PaletteSwatch swatch)
+        {
+            RequireOverlaySource(source);
+            Vector3 axis = direction.normalized;
+            Vector2 uv = Palette.Uv(swatch);
+            int first = TriangleCount;
+            for (int v = 0; v < source.VertexCount; v += 3)
+            {
+                if (Vector3.Dot(source._normals[v], axis) >= minDot && !IsGlowing(source._uvs[v]))
+                {
+                    AddLifted(source._positions[v], source._positions[v + 1], source._positions[v + 2],
+                        source._normals[v], lift, uv);
+                }
+            }
+
+            return new MeshRange(first, TriangleCount - first);
+        }
+
+        /// <summary>
+        /// Copies the triangles of <paramref name="source"/> painted <paramref name="from"/>, each pushed
+        /// <paramref name="lift"/> out along its own normal and repainted <paramref name="to"/>: a coat over that paint
+        /// (sun-bleached enamel over the clean enamel), its own mesh so the clean paint can come back.
+        /// </summary>
+        public MeshRange AppendRepainted(LowPolyMeshBuilder source, PaletteSwatch from, PaletteSwatch to, float lift)
+        {
+            RequireOverlaySource(source);
+            Vector2 match = Palette.Uv(from);
+            Vector2 uv = Palette.Uv(to);
+            int first = TriangleCount;
+            for (int v = 0; v < source.VertexCount; v += 3)
+            {
+                if (source._uvs[v] == match)
+                {
+                    AddLifted(source._positions[v], source._positions[v + 1], source._positions[v + 2],
+                        source._normals[v], lift, uv);
+                }
+            }
+
+            return new MeshRange(first, TriangleCount - first);
+        }
+
+        /// <summary>
+        /// Copies the part of <paramref name="source"/> below <paramref name="height"/> (triangles crossing it are
+        /// cut at that level), pushed <paramref name="lift"/> out along each face's normal and painted
+        /// <paramref name="swatch"/>: a crisp tide line of dust round the foot of anything standing in it. Glowing
+        /// faces are skipped.
+        /// </summary>
+        public MeshRange AppendBelow(LowPolyMeshBuilder source, float height, float lift, PaletteSwatch swatch)
+        {
+            RequireOverlaySource(source);
+            return ClipBelow(source, height, lift, Palette.Uv(swatch));
+        }
+
+        /// <summary>
+        /// As the painting overload, but the copy keeps the source's paint (and colours, which are interpolated where
+        /// a triangle is cut): the lower part of a model as a skin, ready to be shaded towards the dust.
+        /// </summary>
+        public MeshRange AppendBelow(LowPolyMeshBuilder source, float height, float lift)
+        {
+            RequireOverlaySource(source);
+            return ClipBelow(source, height, lift, null);
+        }
+
+        /// <summary>
+        /// A flat convex polygon (a fan from its first point), each triangle wound to face along
+        /// <paramref name="facing"/>: pieces of a panel cut out of another mesh's face, a stain laid on it.
+        /// </summary>
+        public MeshRange Polygon(IReadOnlyList<Vector3> points, Vector3 facing, PaletteSwatch swatch)
+        {
+            if (points == null)
+            {
+                throw new ArgumentNullException(nameof(points));
+            }
+
+            Vector2 uv = Palette.Uv(swatch);
+            int first = TriangleCount;
+            for (int i = 2; i < points.Count; i++)
+            {
+                Vector3 a = points[0];
+                Vector3 b = points[i - 1];
+                Vector3 c = points[i];
+                if (Vector3.Dot(Vector3.Cross(b - a, c - a), facing) < 0f)
                 {
                     (b, c) = (c, b);
                 }
 
-                AddFlatTriangle(a, b, c, source._uvs[v]);
+                AddFlatTriangle(a, b, c, uv);
             }
 
             return new MeshRange(first, TriangleCount - first);
+        }
+
+        /// <summary>The swatch triangle <paramref name="triangle"/> is painted with.</summary>
+        public PaletteSwatch SwatchOf(int triangle)
+        {
+            if (triangle < 0 || triangle >= TriangleCount)
+            {
+                throw new ArgumentOutOfRangeException(nameof(triangle));
+            }
+
+            return SwatchAt(_uvs[triangle * 3]);
+        }
+
+        /// <summary>
+        /// Moves the colours of the range <paramref name="amount"/> (0..1) of the way towards
+        /// <paramref name="toward"/> (sRGB): bleaching, darkening, staining.
+        /// </summary>
+        public void Shade(MeshRange range, Color32 toward, float amount)
+        {
+            RequireColouredRange(range);
+            for (int v = range.FirstTriangle * 3; v < range.EndTriangle * 3; v++)
+            {
+                _colours[v] = Color32.Lerp(_colours[v], toward, amount);
+            }
+        }
+
+        /// <summary>
+        /// Shades the triangles of the range whose normal n satisfies dot(n, direction) &gt;= minDot towards
+        /// <paramref name="toward"/> by <paramref name="amount"/>: dust caked on the faces turned to the sky.
+        /// </summary>
+        public void ShadeFacing(MeshRange range, Vector3 direction, float minDot, Color32 toward, float amount)
+        {
+            RequireColouredRange(range);
+            Vector3 axis = direction.normalized;
+            for (int t = range.FirstTriangle; t < range.EndTriangle; t++)
+            {
+                int v = t * 3;
+                if (Vector3.Dot(_normals[v], axis) < minDot)
+                {
+                    continue;
+                }
+
+                for (int corner = 0; corner < 3; corner++)
+                {
+                    _colours[v + corner] = Color32.Lerp(_colours[v + corner], toward, amount);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Shades each vertex of the range towards <paramref name="toward"/> by <paramref name="amount"/> at or below
+        /// <paramref name="bottom"/>, fading to nothing at <paramref name="top"/>: dust rising from the ground, rust
+        /// creeping up a leg, a stain running out down a panel.
+        /// </summary>
+        public void ShadeByHeight(MeshRange range, Color32 toward, float bottom, float top, float amount)
+        {
+            RequireColouredRange(range);
+            if (!(top > bottom))
+            {
+                throw new ArgumentException("The fade's top must lie above its bottom.", nameof(top));
+            }
+
+            for (int v = range.FirstTriangle * 3; v < range.EndTriangle * 3; v++)
+            {
+                float fade = Mathf.InverseLerp(top, bottom, _positions[v].y);
+                _colours[v] = Color32.Lerp(_colours[v], toward, amount * fade);
+            }
         }
 
         /// <summary>Recolours every triangle in <paramref name="range"/>.</summary>
@@ -251,9 +485,14 @@ namespace MoonProject.Art
         {
             RequireRange(range);
             Vector2 uv = Palette.Uv(swatch);
+            Color32 colour = Palette.GetSurface(swatch);
             for (int v = range.FirstTriangle * 3; v < range.EndTriangle * 3; v++)
             {
                 _uvs[v] = uv;
+                if (_colours != null)
+                {
+                    _colours[v] = colour;
+                }
             }
         }
 
@@ -265,14 +504,20 @@ namespace MoonProject.Art
             RequireRange(range);
             Vector3 axis = direction.normalized;
             Vector2 uv = Palette.Uv(swatch);
+            Color32 colour = Palette.GetSurface(swatch);
             for (int t = range.FirstTriangle; t < range.EndTriangle; t++)
             {
                 int v = t * 3;
                 if (Vector3.Dot(_normals[v], axis) >= minDot)
                 {
-                    _uvs[v] = uv;
-                    _uvs[v + 1] = uv;
-                    _uvs[v + 2] = uv;
+                    for (int corner = 0; corner < 3; corner++)
+                    {
+                        _uvs[v + corner] = uv;
+                        if (_colours != null)
+                        {
+                            _colours[v + corner] = colour;
+                        }
+                    }
                 }
             }
         }
@@ -347,12 +592,16 @@ namespace MoonProject.Art
                 _positions[write] = a;
                 _positions[write + 1] = b;
                 _positions[write + 2] = c;
-                _normals[write] = normal;
-                _normals[write + 1] = normal;
-                _normals[write + 2] = normal;
-                _uvs[write] = uv;
-                _uvs[write + 1] = uv;
-                _uvs[write + 2] = uv;
+                for (int corner = 0; corner < 3; corner++)
+                {
+                    _normals[write + corner] = normal;
+                    _uvs[write + corner] = uv;
+                    if (_colours != null)
+                    {
+                        _colours[write + corner] = _colours[v + corner];
+                    }
+                }
+
                 write += 3;
             }
 
@@ -360,6 +609,7 @@ namespace MoonProject.Art
             _positions.RemoveRange(write, removed);
             _normals.RemoveRange(write, removed);
             _uvs.RemoveRange(write, removed);
+            _colours?.RemoveRange(write, removed);
             RecalculateBounds();
             return new MeshRange(range.FirstTriangle, TriangleCount - range.FirstTriangle);
         }
@@ -465,6 +715,11 @@ namespace MoonProject.Art
             mesh.SetVertices(_positions);
             mesh.SetNormals(_normals);
             mesh.SetUVs(0, _uvs);
+            if (_colours != null)
+            {
+                mesh.SetColors(_colours);
+            }
+
             mesh.SetIndices(_indices, 0, VertexCount, MeshTopology.Triangles, 0, false);
             mesh.bounds = Bounds;
         }
@@ -543,7 +798,119 @@ namespace MoonProject.Art
             return new MeshRange(first, TriangleCount - first);
         }
 
+        private void AddLifted(Vector3 a, Vector3 b, Vector3 c, Vector3 normal, float lift, Vector2 uv)
+        {
+            Vector3 offset = normal * lift;
+            AddFlatTriangle(a + offset, b + offset, c + offset, uv);
+        }
+
+        /// <summary>
+        /// The part of every non-glowing source triangle below <paramref name="height"/>, lifted along its normal; in
+        /// <paramref name="paint"/>'s swatch when given, otherwise in the source's own paint (colours interpolated
+        /// along the cut edges).
+        /// </summary>
+        private MeshRange ClipBelow(LowPolyMeshBuilder source, float height, float lift, Vector2? paint)
+        {
+            int first = TriangleCount;
+            var polygon = new List<Vector3>(4);
+            var colours = new List<Color32>(4);
+            for (int v = 0; v < source.VertexCount; v += 3)
+            {
+                if (IsGlowing(source._uvs[v]))
+                {
+                    continue;
+                }
+
+                polygon.Clear();
+                colours.Clear();
+                for (int e = 0; e < 3; e++)
+                {
+                    Vector3 from = source._positions[v + e];
+                    Vector3 to = source._positions[v + (e + 1) % 3];
+                    Color32 fromColour = source.ColourAt(v + e);
+                    bool fromBelow = from.y <= height;
+                    if (fromBelow)
+                    {
+                        polygon.Add(from);
+                        colours.Add(fromColour);
+                    }
+
+                    if (fromBelow != (to.y <= height))
+                    {
+                        float cut = (height - from.y) / (to.y - from.y);
+                        polygon.Add(Vector3.Lerp(from, to, cut));
+                        colours.Add(Color32.Lerp(fromColour, source.ColourAt(v + (e + 1) % 3), cut));
+                    }
+                }
+
+                Vector3 offset = source._normals[v] * lift;
+                Vector2 uv = paint ?? source._uvs[v];
+                for (int i = 2; i < polygon.Count; i++)
+                {
+                    if (paint.HasValue)
+                    {
+                        AddFlatTriangle(polygon[0] + offset, polygon[i - 1] + offset, polygon[i] + offset, uv);
+                    }
+                    else
+                    {
+                        AddFlatTriangle(polygon[0] + offset, polygon[i - 1] + offset, polygon[i] + offset, uv,
+                            colours[0], colours[i - 1], colours[i]);
+                    }
+                }
+            }
+
+            return new MeshRange(first, TriangleCount - first);
+        }
+
+        /// <summary>Glowing glass is never dusted over: a lamp under dust would read as a dead one.</summary>
+        private static bool IsGlowing(Vector2 uv)
+        {
+            return Palette.IsEmissive(SwatchAt(uv));
+        }
+
+        /// <summary>The swatch whose cell <paramref name="uv"/> points at (faces carry their cell's centre).</summary>
+        private static PaletteSwatch SwatchAt(Vector2 uv)
+        {
+            int column = Mathf.FloorToInt(uv.x * Palette.Columns);
+            int row = Mathf.FloorToInt(uv.y * Palette.Rows);
+            return (PaletteSwatch)(row * Palette.Columns + column);
+        }
+
+        /// <summary>A vertex's colour: its own in a coloured builder, otherwise its swatch's surface colour.</summary>
+        private Color32 ColourAt(int vertex)
+        {
+            return _colours != null ? _colours[vertex] : Palette.GetSurface(SwatchAt(_uvs[vertex]));
+        }
+
+        private void RequireColouredRange(MeshRange range)
+        {
+            RequireRange(range);
+            if (_colours == null)
+            {
+                throw new InvalidOperationException("Only a builder made WithVertexColours can be shaded.");
+            }
+        }
+
+        private void RequireOverlaySource(LowPolyMeshBuilder source)
+        {
+            if (source == null)
+            {
+                throw new ArgumentNullException(nameof(source));
+            }
+
+            if (ReferenceEquals(source, this))
+            {
+                throw new ArgumentException("A builder cannot overlay itself.", nameof(source));
+            }
+        }
+
         private void AddFlatTriangle(Vector3 a, Vector3 b, Vector3 c, Vector2 uv)
+        {
+            Color32 colour = _colours != null ? Palette.GetSurface(SwatchAt(uv)) : default;
+            AddFlatTriangle(a, b, c, uv, colour, colour, colour);
+        }
+
+        private void AddFlatTriangle(Vector3 a, Vector3 b, Vector3 c, Vector2 uv, Color32 ca, Color32 cb, Color32 cc)
         {
             Vector3 cross = Vector3.Cross(b - a, c - a);
             float sqr = cross.sqrMagnitude;
@@ -552,10 +919,17 @@ namespace MoonProject.Art
                 return;
             }
 
-            AddVertices(a, b, c, cross / Mathf.Sqrt(sqr), uv);
+            AddVertices(a, b, c, cross / Mathf.Sqrt(sqr), uv, ca, cb, cc);
         }
 
         private void AddVertices(Vector3 a, Vector3 b, Vector3 c, Vector3 normal, Vector2 uv)
+        {
+            Color32 colour = _colours != null ? Palette.GetSurface(SwatchAt(uv)) : default;
+            AddVertices(a, b, c, normal, uv, colour, colour, colour);
+        }
+
+        private void AddVertices(Vector3 a, Vector3 b, Vector3 c, Vector3 normal, Vector2 uv, Color32 ca, Color32 cb,
+            Color32 cc)
         {
             if (VertexCount == 0)
             {
@@ -574,6 +948,12 @@ namespace MoonProject.Art
             _uvs.Add(uv);
             _uvs.Add(uv);
             _uvs.Add(uv);
+            if (_colours != null)
+            {
+                _colours.Add(ca);
+                _colours.Add(cb);
+                _colours.Add(cc);
+            }
         }
 
         private static Vector3 ShaveVertex(Vector3 position, Vector3 axis, float distance)

@@ -8,17 +8,17 @@ namespace MoonProject.Gameplay.Editor
     /// <summary>
     /// The Gameplay domain's part of Main.unity: under [Gameplay], the <see cref="GameplaySystem"/> (one system,
     /// initialised after World and Rover) and its parts, wired to the tuning, content and material assets, plus the
-    /// home base built from Art's prefabs (lander, museum shelf on its ShelfAnchor, the three radio tower stages on its
-    /// TowerAnchor, Kenji's workbench on its WorkshopAnchor). Art's base prefabs are meshes only, so gameplay makes
-    /// them solid here: a static mesh collider on each body, on the Prop layer, so 07 drives around them and the camera
-    /// never slips inside. Each friend's home socket is the lander's node, or for a radio tower home (Bell's corner) a
-    /// fixed empty under the TowerAnchor at the socket every tower stage carries, so stage swaps never move it; the
-    /// cassette shelf stands the same way on the stages' CassetteShelfAnchor. The
-    /// base is stood beside the pad here for the editor view and re-seated on the real ground at boot; the salvage
-    /// sites (Art's wrecks on the World's site anchors, the relics in their hearts) and Kestrel-3's trail bits, the
-    /// friends, cassettes, log caches and the relay masts (Art's RelayMast and RelayMast_Broken on the World's relay
-    /// anchors, with their relay parts) are placed from the World's surface and anchors at boot. Fails loudly when a
-    /// required asset or prefab node is missing.
+    /// home base built from Art's prefabs (lander with its charging dock, museum shelf on its ShelfAnchor, the three
+    /// radio tower stages with their service ports on its TowerAnchor, Kenji's Rover Bay on its WorkshopAnchor). Art's
+    /// base prefabs are meshes only, so gameplay makes them solid here: a static mesh collider on each body, on the
+    /// Prop layer, so 07 drives around them (and up the bay's ramp onto its floor) and the camera never slips inside.
+    /// Each friend's home socket is the lander's node, or for a radio tower home (Bell's corner) a fixed empty under
+    /// the TowerAnchor at the socket every tower stage carries, so stage swaps never move it; the cassette shelf stands
+    /// the same way on the stages' CassetteShelfAnchor. The base is stood beside the pad here for the editor view and
+    /// re-seated on the real ground at boot; the salvage sites (Art's wrecks on the World's site anchors, the relics in
+    /// their hearts) and Kestrel-3's trail bits, the friends, cassettes, log caches and the relay masts (Art's
+    /// RelayMast and RelayMast_Broken on the World's relay anchors, with their relay parts) are placed from the World's
+    /// surface and anchors at boot. Fails loudly when a required asset or prefab node is missing.
     /// </summary>
     public sealed class GameplaySceneContributor : ISceneContributor
     {
@@ -27,6 +27,8 @@ namespace MoonProject.Gameplay.Editor
         private const int TowerStages = 3;
         private const int CassetteSlots = 8;
         private const string CassetteShelfAnchor = "CassetteShelfAnchor";
+        private const int BayLamps = 2;
+        private const int BayArms = 3;
 
         /// <summary>Metres a socket may differ between tower stages and still be the same spot.</summary>
         private const float SocketTolerance = 0.01f;
@@ -46,6 +48,10 @@ namespace MoonProject.Gameplay.Editor
             var relicCatalog = context.LoadAsset<RelicCatalog>(GameplayAssetPaths.RelicCatalog);
             var radioTower = context.LoadAsset<UpgradeDefinition>(GameplayAssetPaths.RadioTowerUpgrade);
             var hoverJump = context.LoadAsset<UpgradeDefinition>(GameplayAssetPaths.HoverJumpUpgrade);
+            var cargoCradle = context.LoadAsset<UpgradeDefinition>(GameplayAssetPaths.CargoCradleUpgrade);
+            var warmHeadlamp = context.LoadAsset<UpgradeDefinition>(GameplayAssetPaths.WarmHeadlampUpgrade);
+            var boostCoils = context.LoadAsset<UpgradeDefinition>(GameplayAssetPaths.BoostCoilsUpgrade);
+            UpgradeDefinition[] benchKit = { hoverJump, cargoCradle, warmHeadlamp, boostCoils };
             var friendTuning = context.LoadAsset<FriendTuning>(GameplayAssetPaths.FriendTuning);
             var friendCatalog = context.LoadAsset<FriendCatalog>(GameplayAssetPaths.FriendCatalog);
             var cassetteTuning = context.LoadAsset<CassetteTuning>(GameplayAssetPaths.CassetteTuning);
@@ -66,7 +72,10 @@ namespace MoonProject.Gameplay.Editor
             Require(salvageCatalog.Validate(), nameof(SalvageCatalog));
             Require(relicCatalog.Validate(), nameof(RelicCatalog));
             Require(radioTower.Validate(), nameof(UpgradeDefinition));
-            Require(hoverJump.Validate(), nameof(UpgradeDefinition));
+            foreach (UpgradeDefinition kit in benchKit)
+            {
+                Require(kit.Validate(), nameof(UpgradeDefinition));
+            }
             Require(friendCatalog.Validate(), nameof(FriendCatalog));
             Require(cassetteCatalog.Validate(), nameof(CassetteCatalog));
             Require(logCacheCatalog.Validate(), nameof(LogCacheCatalog));
@@ -80,6 +89,7 @@ namespace MoonProject.Gameplay.Editor
             var excavation = Part<ExcavationSystem>(context, host, "Excavation");
             var tether = Part<TetherSystem>(context, host, "Tether");
             var home = Part<HomeBase>(context, host, "Home");
+            var cradle = Part<CargoCradle>(context, host, "CargoCradle");
             var tower = Part<RadioTower>(context, host, "RadioTower");
             var workshop = Part<Workshop>(context, host, "Workshop");
             var friends = Part<FriendField>(context, host, "Friends");
@@ -101,12 +111,16 @@ namespace MoonProject.Gameplay.Editor
             var stages = new GameObject[TowerStages];
             var stageLights = new Renderer[TowerStages];
             var beacons = new Transform[TowerStages];
+            var hoppers = new Transform[TowerStages];
+            var hatches = new Transform[TowerStages];
             for (int i = 0; i < TowerStages; i++)
             {
                 stages[i] = context.InstantiatePrefab(GameplayAssetPaths.RadioTowerStage(i + 1), towerAnchor);
                 MakeSolid(stages[i].transform);
                 stageLights[i] = Glow(stages[i].transform);
                 beacons[i] = Child(stages[i].transform, "BeaconSocket");
+                hoppers[i] = Child(stages[i].transform, "HopperMouth");
+                hatches[i] = Child(stages[i].transform, "ServiceHatch");
             }
 
             Transform shelfAnchor = TowerSocket(context, CassetteShelfAnchor, towerAnchor, stages);
@@ -116,9 +130,30 @@ namespace MoonProject.Gameplay.Editor
             var tapeRack = cassetteShelf.gameObject.AddComponent<CassetteShelf>();
             tapeRack.Wire(Children(cassetteShelf, "Slot_", CassetteSlots));
 
-            Transform workshopAnchor = Child(lander, "WorkshopAnchor");
-            Transform workbench = context.InstantiatePrefab(GameplayAssetPaths.Workbench, workshopAnchor).transform;
-            MakeSolid(workbench);
+            Transform bay = context.InstantiatePrefab(GameplayAssetPaths.RoverBay, Child(lander, "WorkshopAnchor"))
+                .transform;
+            MakeSolid(bay);
+            var bayLamps = new Renderer[BayLamps];
+            for (int i = 0; i < BayLamps; i++)
+            {
+                bayLamps[i] = Renderer(Child(bay, "Lamp_" + i));
+            }
+
+            var armYaws = new Transform[BayArms];
+            var armUppers = new Transform[BayArms];
+            var armLowers = new Transform[BayArms];
+            var armTips = new Transform[BayArms];
+            var weldSockets = new Transform[BayArms];
+            for (int i = 0; i < BayArms; i++)
+            {
+                armYaws[i] = Child(Child(bay, "Arm_" + i), "Yaw");
+                armUppers[i] = Child(armYaws[i], "Upper");
+                armLowers[i] = Child(armUppers[i], "Lower");
+                armTips[i] = Child(armLowers[i], "Tip");
+                weldSockets[i] = Child(armTips[i], "SparkSocket");
+            }
+
+            Transform floorLift = Child(Child(bay, "FloorArm"), "FloorLift");
 
             salvage.Wire(salvageTuning, salvageCatalog);
             relics.Wire(relicCatalog, relicTuning);
@@ -126,10 +161,12 @@ namespace MoonProject.Gameplay.Editor
             excavation.Wire(excavationTuning);
             tether.Wire(tetherTuning);
             home.Wire(baseTuning, baseRoot.transform, Renderer(Child(lander, "Windows")),
-                Children(lander, "LampSocket_", LampSockets), shelf, Glow(shelf), Children(shelf, "Slot_", ShelfSlots));
-            tower.Wire(towerTuning, radioTower, towerAnchor, stages, stageLights, beacons);
-            workshop.Wire(workshopTuning, new[] { hoverJump }, workshopAnchor, Glow(workbench),
-                Child(workbench, "SparkSocket"));
+                Children(lander, "LampSocket_", LampSockets), shelf, Glow(shelf), Children(shelf, "Slot_", ShelfSlots),
+                Child(lander, "DockAnchor"), Renderer(Child(lander, "DockGlow")));
+            tower.Wire(towerTuning, radioTower, towerAnchor, stages, stageLights, beacons, hoppers, hatches);
+            workshop.Wire(workshopTuning, benchKit, bay, Child(bay, "Turntable"), Child(bay, "HopperMouth"), bayLamps,
+                Renderer(Child(bay, "BaySign")), weldSockets);
+            workshop.WireArms(armYaws, armUppers, armLowers, armTips, floorLift, Child(floorLift, "FloorTip"));
             var homes = new Transform[friendCatalog.Friends.Count];
             for (int i = 0; i < homes.Length; i++)
             {
@@ -140,8 +177,9 @@ namespace MoonProject.Gameplay.Editor
             cassettes.Wire(cassetteCatalog, cassetteTuning);
             logs.Wire(logCacheCatalog, logCacheTuning);
             relays.Wire(relayTuning, relayMast, relayMastBroken, relayPart);
-            gameplay.Wire(visuals, glintTuning, new[] { radioTower, hoverJump }, salvage, relics, sonar, excavation,
-                tether, home, tower, workshop, friends, cassettes, logs, signals, tapeRack, relays);
+            gameplay.Wire(visuals, glintTuning,
+                new[] { radioTower, hoverJump, cargoCradle, warmHeadlamp, boostCoils }, salvage, relics, sonar,
+                excavation, tether, home, cradle, tower, workshop, friends, cassettes, logs, signals, tapeRack, relays);
             context.AddSystem(gameplay);
         }
 

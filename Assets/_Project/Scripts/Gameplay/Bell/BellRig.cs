@@ -17,6 +17,7 @@ namespace MoonProject.Gameplay
         public const string BodyNode = "Body";
         public const string LidNode = "Lid";
         public const string NeedleNode = "Needle";
+        public const string KnobNode = "Knob";
         public const string DialLampNode = "DialLamp";
         public const string SpeakerNode = "Speaker";
         public const string TapeSlotNode = "TapeSlot";
@@ -34,12 +35,14 @@ namespace MoonProject.Gameplay
         private readonly Transform _body;
         private readonly Transform _lid;
         private readonly Transform _needle;
+        private readonly Transform _knob;
         private readonly Transform _speaker;
         private readonly Transform[] _legs = new Transform[BellPose.Legs];
         private readonly Transform[] _shins = new Transform[BellPose.Legs];
         private readonly int _bodyIndex;
         private readonly int _lidIndex;
         private readonly int _needleIndex;
+        private readonly int _knobIndex;
         private readonly int _speakerIndex;
         private readonly int[] _legIndex = new int[BellPose.Legs];
         private readonly int[] _shinIndex = new int[BellPose.Legs];
@@ -55,10 +58,12 @@ namespace MoonProject.Gameplay
             _bodyIndex = _pose.IndexOf(BodyNode);
             _lidIndex = _pose.IndexOf(LidNode);
             _needleIndex = _pose.IndexOf(NeedleNode);
+            _knobIndex = _pose.IndexOf(KnobNode);
             _speakerIndex = _pose.IndexOf(SpeakerNode);
             _body = _pose.Node(_bodyIndex);
             _lid = _pose.Node(_lidIndex);
             _needle = _pose.Node(_needleIndex);
+            _knob = _pose.Node(_knobIndex);
             _speaker = _pose.Node(_speakerIndex);
             TapeSlot = _pose.Node(_pose.IndexOf(TapeSlotNode));
             for (int leg = 0; leg < BellPose.Legs; leg++)
@@ -73,6 +78,7 @@ namespace MoonProject.Gameplay
             _animated[_bodyIndex] = true;
             _animated[_lidIndex] = true;
             _animated[_needleIndex] = true;
+            _animated[_knobIndex] = true;
             _animated[_speakerIndex] = true;
             for (int leg = 0; leg < BellPose.Legs; leg++)
             {
@@ -92,6 +98,9 @@ namespace MoonProject.Gameplay
 
         /// <summary>The cassette door on her front (+Z out): where 07's beam slides the tape in.</summary>
         public Transform TapeSlot { get; }
+
+        /// <summary>Her chunky tuning knob beside the dial: 07's beam taps it to tune her.</summary>
+        public Transform Knob => _knob;
 
         public bool Visible
         {
@@ -162,6 +171,7 @@ namespace MoonProject.Gameplay
             _body.localRotation = _pose.Rotation(_bodyIndex) * Quaternion.Euler(pose.Pitch, 0f, pose.Roll);
             _lid.localRotation = _pose.Rotation(_lidIndex) * Quaternion.Euler(pose.Lid, 0f, 0f);
             _needle.localRotation = _pose.Rotation(_needleIndex) * Quaternion.Euler(0f, 0f, pose.Needle);
+            _knob.localRotation = _pose.Rotation(_knobIndex) * Quaternion.Euler(0f, 0f, pose.Knob);
             _speaker.localPosition = _pose.Position(_speakerIndex) + Vector3.forward * pose.Speaker;
             for (int leg = 0; leg < BellPose.Legs; leg++)
             {

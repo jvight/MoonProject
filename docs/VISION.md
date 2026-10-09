@@ -119,6 +119,17 @@ Each ruling removes friction the original pitch would have caused. Boxes impleme
     rover-height hatches, docking and charging pads, never stairs or ladders on 07's path. Human-scale things (the
     crew's ladder, a chair, a mug) stay only as remnants that tell of their absence. Everything starts looking left
     alone for a very long time, and restoring it visibly cleans and repairs it (ruling 11).
+13. **True scale, gently exaggerated.** The crew's world is human scale (a person is 1.75 m; doors, ladders,
+    benches and shelves fit people), and 07 is a 2.3 m rover inside it. Small personal things are at most about 2x
+    their real size, so a duck stays a duck and a teapot stays a teapot, and never bigger than about 0.5 m.
+    Readability comes from glow, outline, pillars and sound, never from giant props. Anything that looks like a
+    rendering error (an unlit-looking pale part, a mismatched scale) is a bug, even when it was meant as
+    character: intentional wear must read as intentional at first glance.
+14. **07 has no hands.** Everything 07 does, it does with its wheels, its one beam (lift, tow, cut, dig, stitch,
+    nudge), its head (look, scan, glow) or its friends. Everything else is done *for* it by machines the crew built
+    for a rover: Kenji's Rover Bay with gantry arms that fit kit, hoppers 07 feeds with its beam, service ports at
+    rover height, a cable lift, a charging dock. No human action is ever implied: no pressing buttons, carrying,
+    climbing or using a workbench. Every interaction must answer "how does 07 physically do this?" on screen.
 
 ## World concept
 The playable space is the floor of a **vast ancient crater basin** (~600 m across for the vertical slice).

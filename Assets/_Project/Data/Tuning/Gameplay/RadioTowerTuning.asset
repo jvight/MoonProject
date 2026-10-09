@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dbc4d79adbde218489cdae7aa246abad, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _padOffset: {x: 0, y: 0, z: 3.4}
+  _padOffset: {x: 0, y: 0, z: 4.1}
   _padRadius: 2.4
   _padRingWidth: 0.35
   _padIdle: 0.22
@@ -23,6 +23,15 @@ MonoBehaviour:
   _padBreathDepth: 0.35
   _padEase: 0.4
   _padSegments: 48
+  _feedBeamLead: 0.15
+  _feedFlight: 0.55
+  _feedStagger: 0.15
+  _feedLift: 0.45
+  _feedGrowShare: 0.25
+  _hatchAngle: 70
+  _hatchTime: 0.45
+  _stitchRate: 2.5
+  _stitchSpread: 0.2
   _beaconColor: {r: 1, g: 0.70980394, b: 0.2784314, a: 1}
   _beaconRadius: 0.35
   _beaconGlow: 0.8

@@ -30,7 +30,9 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// hold. Then Tilly (M3-02): find her with a ping, gather her three parts, repair her, drive home with her, be
     /// greeted, and let her spot a salvage site on the next trip. Then the workshop (M3-03): find that holding Jump
     /// does nothing yet, craft Hover-Jump at Kenji's workbench through the same hold, and take the first full-charge
-    /// leap on the base pad. Then Bell (M3-04/05): drive up the mouth lane, leap the chasm, find her lying at the
+    /// leap on the base pad. Then the Cargo Cradle (M3-11): craft it at the bench, dig Kenji's duck out of the garage's
+    /// heart, lift it into the rack with the tether button, drive home and set it down on the shelf from the rack.
+    /// Then Bell (M3-04/05): drive up the mouth lane, leap the chasm, find her lying at the
     /// terminus with Ro's log cache and her tape, gather her three parts from the alcoves, repair her (the tape slides
     /// in, her dial wakes, she stands), drive home by the one-way exit while she makes her own way, be greeted by her,
     /// turn her dial through every station, and follow her first signal to the basin tape onto her rack. Then the
@@ -46,6 +48,7 @@ namespace MoonProject.Gameplay.PlayModeTests
     {
         private const string Tower = "radio_tower";
         private const string HoverJump = "rover.hover_jump";
+        private const string CargoCradle = "rover.cargo_cradle";
         private const string TillyId = "tilly";
         private const string BellId = "bell";
         private const string AfterDark = "after_dark_1";
@@ -93,11 +96,28 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float WitnessDistance = 4f;
         private const float WitnessHeight = 1.5f;
 
-        /// <summary>Where the review camera stands to watch the bench's sparks (m out in front of it, m up).</summary>
-        private const float BenchViewDistance = 6.5f;
-        private const float BenchViewHeight = 2.2f;
-        private const float BenchViewSide = 2.5f;
+        /// <summary>Where the review camera stands to watch the Rover Bay (m out in front of it, m aside, m up).
+        /// </summary>
+        private const float BayViewDistance = 7.5f;
+        private const float BayViewSide = 3f;
+        private const float BayViewHeight = 2.6f;
         private const float SparkDelay = 0.3f;
+
+        /// <summary>Seconds the bay's arms may take to set a bought piece on 07 (the rover's install moment).</summary>
+        private const float BayFitTimeout = 25f;
+
+        /// <summary>07 lines up this far (m) in front of the turntable to drive in; it backs out as far.</summary>
+        private const float BayApproach = 6f;
+
+        /// <summary>Close enough (m) to the turntable's centre to stop on it; the gentle throttle in and out.</summary>
+        private const float BayParkRadius = 0.6f;
+        private const float BayThrottle = 0.4f;
+
+        /// <summary>Where the review camera stands to watch the tower's service port (m out in front, aside, up).
+        /// </summary>
+        private const float PortViewDistance = 5.5f;
+        private const float PortViewSide = 3f;
+        private const float PortViewHeight = 2.5f;
         private const float StopSpeed = 0.4f;
         private const float ApproachOffset = 3f;
         private const float RetreatDistance = 16f;
@@ -140,6 +160,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>07 digs a relic from this far (m) from the heart, within the beam's reach.</summary>
         private const float DigStandOff = 3.5f;
 
+        /// <summary>Metres nearer the meant relic than any other in its heart that 07 parks to dig.</summary>
+        private const float HeartMargin = 0.5f;
+
         /// <summary>Sphere (m) that must be free of the wreck where 07 parks to dig.</summary>
         private const float ParkClearance = 1.6f;
 
@@ -152,8 +175,19 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>How far past the mound relay (m, away from home) 07 drives to find home still in reach.</summary>
         private static readonly Vector2 PastTheMast = new Vector2(55f, 95f);
 
+        /// <summary>07 lines up this far (m) in front of the charging dock, then stops this close to its anchor.
+        /// </summary>
+        private const float DockApproach = 5f;
+        private const float DockParkRadius = 0.5f;
+
         /// <summary>Close enough (m) to a hop pad's centre to park on it.</summary>
         private const float PadArrive = 1f;
+
+        /// <summary>
+        /// A drive whose line passes this close (m) to the lander's centre goes round it, by a point this far out.
+        /// </summary>
+        private const float LanderKeepOut = 9f;
+        private const float LanderDetour = 13f;
 
         /// <summary>Close enough (m) to the base pad centre to turn toward the shelf or the tower.</summary>
         private const float PadArrival = 5f;
@@ -222,6 +256,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return Ping(depot);
             yield return SalvageTheDepot(depot);
             yield return Excavate(depot, relic);
+            Assert.IsFalse(depot.AnswersSonar, "picked clean and its relic lifted: the depot falls silent");
             yield return LatchTether(relic);
             yield return TowHome(depot, relic);
             yield return Deposit(relic);
@@ -232,6 +267,12 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return DriveHomeWithTilly();
             yield return TillySpotsOnTheNextTrip();
             yield return BuyHoverJumpAtTheBench();
+            yield return CraftTheCargoCradle();
+            SalvageSite garage = _gameplay.Salvage.Find(WorldAnchorIds.SitePrefix + "garage");
+            Relic duck = garage.Relics[0];
+            yield return Excavate(garage, duck);
+            yield return StowInTheCradle(duck);
+            yield return CarryHomeInTheCradle(garage, duck);
             yield return FirstLeap();
             yield return DriveToTheCanyon();
             yield return LeapTheChasm();
@@ -244,6 +285,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return RestoreTheMoundRelay();
             yield return DriveOutInReach();
             yield return HopHomeAndBack();
+            yield return RestOnTheDock();
 
             float total = Time.time - started;
             WriteReport(total);
@@ -467,7 +509,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 bool open = !Physics.CheckSphere(new Vector3(spot.x, ground + ParkClearance + 0.2f, spot.z),
                     ParkClearance, Layers.PropMask, QueryTriggerInteraction.Ignore);
                 float distance = SurfaceRules.HorizontalDistance(spot, _rover.Position);
-                if (open && distance < best)
+                if (open && NearestOfItsHeart(site, relic, spot) && distance < best)
                 {
                     best = distance;
                     park = spot;
@@ -475,26 +517,25 @@ namespace MoonProject.Gameplay.PlayModeTests
                 }
             }
 
-            Assert.Less(best, float.MaxValue, "open ground to dig from round the depot's heart");
+            Assert.Less(best, float.MaxValue, $"open ground to dig from round the heart of {site.Id}");
             yield return CircleTo(site, Flat(heart + outward * CutLineUp), 0f);
             yield return DriveTo(Flat(heart + outward * CutLineUp), 2f, 0.6f, 40f, "a line-up facing the heart");
-            yield return DriveTo(park, 1f, 0.35f, 30f, "the depot's heart");
-            yield return Until(() => _gameplay.Excavation.Candidate == relic, 4f, "the walkman is in the beam's reach");
+            yield return DriveTo(park, 1f, 0.35f, 30f, "the site's heart");
+            yield return Until(() => _gameplay.Excavation.Candidate == relic, 4f, "the relic is in the beam's reach");
             Press(_keyboard.eKey);
             yield return Until(() => _events.ExcavationStarted.Count > 0, 6f, "the tractor beam takes hold");
             Assert.IsTrue(_rover.IsHeldStill, "07 is asked to hold still while the beam is held");
             float duration = _gameplay.Excavation.Tuning.DurationFor(relic.Definition.Mass);
             yield return new WaitForSeconds(duration * 0.5f);
-            Capture("03-excavating");
+            Capture("03-excavating-" + relic.Definition.Id);
             yield return Until(() => Surfaced(relic.Definition.Id), duration + 8f, "the relic surfaces");
             Release(_keyboard.eKey);
             yield return null;
             yield return null;
             Assert.IsFalse(_rover.IsHeldStill, "07 is free again once the relic is up");
             Assert.AreEqual(RelicState.Loose, relic.State);
-            Assert.IsFalse(site.AnswersSonar, "picked clean and its relic lifted: the depot falls silent");
             yield return new WaitForSeconds(1.5f);
-            End("Dig the walkman from the depot's heart",
+            End($"Dig '{relic.Definition.Id}' from the heart of {site.Id}",
                 $"lift took {duration:F1} s of beam for {relic.Definition.Mass:F0} kg");
         }
 
@@ -607,6 +648,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsTrue(_gameplay.Hints.TryGet(InteractionKind.Upgrade, out InteractionHint hint));
             Assert.IsTrue(hint.Ready, "the depot's materials cover the first level");
             int purchasesBefore = _events.SignalRadiusChanged.Count;
+            int cues = _events.StationCued.Count;
             Press(_keyboard.eKey);
             yield return Until(() => _events.UpgradePurchased.Count > 0, 15f, "holding confirm buys the level");
             Release(_keyboard.eKey);
@@ -616,7 +658,22 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.Greater(_events.SignalRadiusChanged.Count, purchasesBefore);
             float radius = _events.SignalRadiusChanged[_events.SignalRadiusChanged.Count - 1].Value.Radius;
             Assert.AreEqual(_gameplay.Upgrades.Find(Tower).SignalRadiusAt(1), radius, 1e-3f);
-            yield return new WaitForSeconds(2.5f);
+            Assert.IsTrue(tower.Feeding, "07's beam feeds the service port's hopper");
+            yield return new WaitForSeconds(0.4f);
+            Vector3 port = tower.HopperMouth;
+            Vector3 front = Flat(tower.PadCentre - port).normalized;
+            Vector3 aside = Vector3.Cross(Vector3.up, front);
+            Review(port + front * PortViewDistance + aside * PortViewSide + Vector3.up * PortViewHeight, port,
+                "07a-tower-port-feed");
+            yield return Until(() => Cued(StationCue.StitchStarted, cues), 6f, "the hatch opens and the beam stitches");
+            yield return new WaitForSeconds(tower.Tuning.FlareDuration);
+            Review(port + front * PortViewDistance * 1.6f + aside * PortViewSide + Vector3.up * PortViewHeight,
+                Vector3.Lerp(port, tower.BeaconPosition, 0.5f), "07b-tower-port-stitch");
+            yield return Until(() => !tower.Crafting, 6f, "the hatch shuts and the moment ends");
+            AssertCues(cues, Tower, StationCue.FeedStarted, StationCue.Fed, StationCue.HatchOpened,
+                StationCue.StitchStarted, StationCue.HatchClosed);
+            Assert.IsTrue(_gameplay.Workshop.Powered, "the base has power now: the Rover Bay's sign is lit");
+            yield return new WaitForSeconds(1f);
             Capture("07-tower-awake");
             End("Park on the pad and craft tower level 1", $"signal radius {radius:F0} m, recipe " +
                                                           $"{_gameplay.Upgrades.Find(Tower).Levels[0].Recipe}");
@@ -770,12 +827,11 @@ namespace MoonProject.Gameplay.PlayModeTests
             Begin();
             Workshop bench = _gameplay.Workshop;
             var abilities = _context.Get<IRoverAbilities>();
-            Assert.IsFalse(abilities.Has(RoverAbility.HoverJump), "07 cannot leap before the workbench");
+            Assert.IsFalse(abilities.Has(RoverAbility.HoverJump), "07 cannot leap before the bay");
             yield return DriveTo(_context.Get<IWorldLayout>().BasePosition, PadArrival, 0.8f, 90f,
                 "the base pad, clear of the lander");
-            yield return DriveTo(bench.PadCentre, 1f, 0.6f, 60f, "the workbench pad");
-            yield return Until(() => bench.Occupied, 3f, "07 is parked on the bench's pad");
-            Assert.AreSame(bench.Definition, _gameplay.Shop.StationUpgrade, "the bench offers Hover-Jump");
+            yield return DriveIntoTheBay(bench);
+            Assert.AreSame(bench.Definition, _gameplay.Shop.StationUpgrade, "the bay offers Hover-Jump");
             Assert.AreEqual(UpgradeStationKind.Workshop, _gameplay.Shop.StationUpgrade.Station);
 
             int charges = _events.RoverJumpCharged.Count;
@@ -783,12 +839,14 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return new WaitForSeconds(_rover.Tuning.HoverJump.ChargeTime + ChargeMargin);
             _pilot.JumpHeld = false;
             yield return new WaitForSeconds(0.5f);
-            Assert.AreEqual(charges, _events.RoverJumpCharged.Count, "holding Jump does nothing before the bench");
+            Assert.AreEqual(charges, _events.RoverJumpCharged.Count, "holding Jump does nothing before the bay");
             Assert.AreEqual(0, _events.RoverJumped.Count);
 
             Assert.IsTrue(_gameplay.Hints.TryGet(InteractionKind.Upgrade, out InteractionHint hint));
             Assert.IsTrue(hint.Ready, "the depot's materials cover Hover-Jump");
             int purchases = _events.UpgradePurchased.Count;
+            int cues = _events.StationCued.Count;
+            int fittings = _events.RoverBayFitting.Count;
             Press(_keyboard.eKey);
             yield return Until(() => _events.UpgradePurchased.Count > purchases, 15f, "holding confirm buys it");
             Release(_keyboard.eKey);
@@ -796,20 +854,166 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(HoverJump, purchase.UpgradeId);
             Assert.AreEqual(1, purchase.Level);
             Assert.IsTrue(abilities.Has(RoverAbility.HoverJump), "07 can leap now");
-            Assert.IsFalse(_gameplay.Hints.TryGet(InteractionKind.Upgrade, out _), "the bench has nothing left");
+            Assert.AreEqual(CargoCradle, bench.Definition.Id, "the bay offers the Cargo Cradle next");
+            Assert.IsTrue(bench.Feeding, "07's beam feeds the bay's hopper");
+            yield return new WaitForSeconds(0.45f);
+            Assert.Greater(bench.BundlesInFlight, 0, "the recipe's bundles fly into the hopper");
+            ReviewBay(bench, "13a-bay-hopper-feed");
+            yield return Until(() => _events.RoverBayFitting.Count > fittings, 3f, "the bay starts fitting the kit");
+            AssertCues(cues, HoverJump, StationCue.FeedStarted, StationCue.Fed);
+            Assert.AreEqual(HoverJump, _events.RoverBayFitting[_events.RoverBayFitting.Count - 1].Value.UpgradeId);
+            Assert.IsTrue(bench.Working, "the bay works: its lights are up");
+            Assert.AreEqual(0, bench.SparkCount, "no sparks while the arms are folded");
+            yield return Until(() => Fitted(HoverJump), BayFitTimeout, "the floor arm sets the coils on 07");
             yield return new WaitForSeconds(SparkDelay);
-            Assert.Greater(bench.SparkCount, 0, "sparks fly from between the vice jaws");
-            Vector3 front = bench.PadCentre - bench.BenchPosition;
-            front.y = 0f;
-            Vector3 side = Vector3.Cross(Vector3.up, front.normalized);
-            Review(bench.BenchPosition + front.normalized * BenchViewDistance + side * BenchViewSide +
-                   Vector3.up * BenchViewHeight, bench.BenchPosition + Vector3.up, "13b-workbench-sparks");
+            Assert.Greater(bench.FloorSparkCount, 0, "weld sparks fly from the floor arm's tip as the coils go on");
+            Assert.Greater(bench.LightLevel, bench.Tuning.LightIdle * 2f, "the work lights light the bay");
+            ReviewBay(bench, "13b-bay-sparks");
             yield return new WaitForSeconds(1.5f);
-            Capture("13-workbench-hover-jump");
+            Capture("13-bay-hover-jump");
             IMaterialStock stock = _gameplay.Materials;
-            End("Park at the workbench and craft Hover-Jump", $"recipe " +
+            End("Park in Kenji's Rover Bay and craft Hover-Jump", $"recipe " +
                 $"{_gameplay.Upgrades.Find(HoverJump).Levels[0].Recipe}, stock metal {stock.Metal}, wiring " +
                 $"{stock.Wiring}, optics {stock.Optics}");
+        }
+
+        /// <summary>
+        /// Still in the bay: craft the Cargo Cradle from the depot's metal, see the rack on 07 and back out.
+        /// </summary>
+        private IEnumerator CraftTheCargoCradle()
+        {
+            Begin();
+            Workshop bench = _gameplay.Workshop;
+            var seat = _context.Get<IRoverCargoSeat>();
+            Assert.IsFalse(seat.IsFitted, "no rack on 07 yet");
+            yield return Until(() => bench.Occupied, 3f, "07 is parked on the bay's turntable");
+            Assert.AreSame(bench.Definition, _gameplay.Shop.StationUpgrade, "the bay offers the Cargo Cradle");
+            Assert.IsTrue(_gameplay.Hints.TryGet(InteractionKind.Upgrade, out InteractionHint hint));
+            Assert.IsTrue(hint.Ready, "the depot's metal covers the Cargo Cradle");
+            int purchases = _events.UpgradePurchased.Count;
+            Press(_keyboard.eKey);
+            yield return Until(() => _events.UpgradePurchased.Count > purchases, 15f, "holding confirm crafts it");
+            Release(_keyboard.eKey);
+            Assert.AreEqual(CargoCradle, _events.UpgradePurchased[_events.UpgradePurchased.Count - 1].Value.UpgradeId);
+            Assert.IsTrue(_context.Get<IRoverAbilities>().Has(RoverAbility.CargoCradle));
+            yield return Until(() => Fitted(CargoCradle), BayFitTimeout, "an arm sets the rack on 07");
+            yield return new WaitForSeconds(SparkDelay);
+            Assert.Greater(bench.SparkCount - bench.FloorSparkCount, 0, "weld sparks fly from the fitting arm's tip");
+            yield return Until(() => seat.IsFitted, 6f, "the rack is fitted on 07");
+            yield return new WaitForSeconds(1.5f);
+            Vector3 back = -Flat(_rover.Rotation * Vector3.forward).normalized;
+            Review(_rover.Position + back * 5f + Vector3.up * 2.5f, seat.Position, "13c-cargo-cradle-fitted");
+            yield return Until(() => !bench.Feeding, 3f, "the bay has fitted the rack");
+            yield return BackOutOfTheBay(bench);
+            IMaterialStock stock = _gameplay.Materials;
+            End("Craft the Cargo Cradle in the bay", $"recipe " +
+                $"{_gameplay.Upgrades.Find(CargoCradle).Levels[0].Recipe}, stock metal {stock.Metal}, wiring " +
+                $"{stock.Wiring}, optics {stock.Optics}");
+        }
+
+        /// <summary>
+        /// The duck hopped out in front of 07: back out, turn and creep up on it with the tether button held, which now
+        /// lifts it gently into the rack instead of towing it.
+        /// </summary>
+        private IEnumerator StowInTheCradle(Relic relic)
+        {
+            Begin();
+            CargoCradle cradle = _gameplay.Cradle;
+            int tethers = _events.TetherAttached.Count;
+            Vector3 back = Flat(_rover.Position - relic.transform.position).normalized;
+            yield return DriveTo(Flat(relic.transform.position + back * RetreatDistance), 3f, 0.6f, 40f,
+                "a spot to turn back and aim from");
+            Press(_mouse.rightButton);
+            float deadline = Time.time + LatchTimeout;
+            while (cradle.Carried != relic && Time.time < deadline)
+            {
+                _pilot.GoTo(relic.transform.position, LatchReach, 0.45f);
+                yield return null;
+            }
+
+            _pilot.Target = null;
+            Release(_mouse.rightButton);
+            Assert.AreSame(relic, cradle.Carried, $"the press lifts the relic into the rack ({relic.State}, " +
+                $"{Vector3.Distance(relic.transform.position, _rover.Position):F1} m from 07)");
+            Assert.AreEqual(tethers, _events.TetherAttached.Count, "instead of towing it");
+            yield return new WaitForSeconds(0.3f);
+            Capture("13d-cradle-lifting");
+            yield return Until(() => cradle.IsSettled, 6f, "it settles into the rack");
+            Assert.AreEqual(relic.Definition.Id, _events.RelicStowed[_events.RelicStowed.Count - 1].Value.RelicId);
+            Witness(relic.transform.position, "13e-relic-in-the-cradle");
+            End("Lift it into the Cargo Cradle", "a press of the tether button, a gentle float, a soft settle");
+        }
+
+        /// <summary>
+        /// Home with the relic riding in the rack: out round the wreck, across the basin, up to the shelf, and a press
+        /// sets it down onto it.
+        /// </summary>
+        private IEnumerator CarryHomeInTheCradle(SalvageSite site, Relic relic)
+        {
+            Begin();
+            CargoCradle cradle = _gameplay.Cradle;
+            var seat = _context.Get<IRoverCargoSeat>();
+            Vector3 home = _context.Get<IWorldLayout>().BasePosition;
+            Vector3 toHome = Flat(home - site.Position).normalized;
+            yield return CircleTo(site, Flat(site.Position + toHome * RetreatDistance), 0f);
+            HomeBase homeBase = _gameplay.Home;
+            Vector3 shelf = homeBase.ShelfPosition;
+            Vector3 front = Flat(home - shelf).normalized;
+            float distance = SurfaceRules.HorizontalDistance(_rover.Position, shelf);
+            _pilot.GoTo(home, PadArrival, 0.9f);
+            float deadline = Time.time + 90f;
+            bool captured = false;
+            while (!_pilot.Arrived && Time.time < deadline)
+            {
+                Assert.AreSame(relic, cradle.Carried, "it rides home in the rack, over every bump");
+                if (!captured && _pilot.Distance < distance * 0.5f)
+                {
+                    Capture("13f-carrying-home");
+                    captured = true;
+                }
+
+                yield return null;
+            }
+
+            _pilot.Target = null;
+            yield return Until(() => _rover.Speed < StopSpeed, 6f, "07 comes to rest on the base pad");
+            yield return null;
+            Assert.Less(Vector3.Distance(relic.transform.position,
+                seat.Position + seat.Rotation * Vector3.up * relic.RestHeight), 0.01f, "seated in the rack");
+            yield return DriveTo(shelf + front * ShelfStandOff, 1.5f, 0.5f, 60f, "the museum shelf");
+            yield return Until(() => cradle.CanUnload, 3f, "the rack is in reach of the shelf");
+            Assert.IsTrue(_gameplay.Hints.TryGet(InteractionKind.Deposit, out _), "the Deposit prompt is offered");
+            int deposits = _events.RelicDeposited.Count;
+            Press(_mouse.rightButton);
+            yield return Until(() => _events.RelicDeposited.Count > deposits, 8f,
+                "a press sets it down onto the shelf");
+            Release(_mouse.rightButton);
+            Assert.AreEqual(relic.Definition.Id, _events.RelicDeposited[deposits].Value.RelicId);
+            Assert.AreEqual(RelicState.Displayed, relic.State);
+            Assert.IsNull(cradle.Carried, "the rack is empty again");
+            yield return new WaitForSeconds(1f);
+            Capture("13g-duck-on-the-shelf");
+            End($"Carry it home in the Cargo Cradle ({distance:F0} m)",
+                $"{_events.RelicDeposited[deposits].Value.DisplayedCount} memories on display");
+        }
+
+        /// <summary>
+        /// The park spot <paramref name="spot"/> is nearer <paramref name="relic"/> than any other relic still in the
+        /// same heart, so the beam takes the one meant.
+        /// </summary>
+        private static bool NearestOfItsHeart(SalvageSite site, Relic relic, Vector3 spot)
+        {
+            float mine = SurfaceRules.HorizontalDistance(spot, relic.Site.Position);
+            foreach (Relic other in site.Relics)
+            {
+                if (other != relic && other.CanBeLifted &&
+                    SurfaceRules.HorizontalDistance(spot, other.Site.Position) < mine + HeartMargin)
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private IEnumerator FirstLeap()
@@ -1038,11 +1242,22 @@ namespace MoonProject.Gameplay.PlayModeTests
             var heard = new List<string>();
             for (int turn = 0; turn < 3; turn++)
             {
+                int cues = _events.BellCued.Count;
                 Press(_keyboard.eKey, queueEventOnly: true);
                 yield return null;
                 yield return null;
                 Release(_keyboard.eKey);
-                yield return new WaitForSeconds(DialPause);
+                Assert.IsTrue(_gameplay.Friends.TappingDial, "07's beam taps her dial first");
+                if (turn == 0)
+                {
+                    yield return new WaitForSeconds(0.15f);
+                    Transform corner = bell.Home;
+                    Review(corner.position + corner.forward * 2.2f + corner.right * 1.4f + Vector3.up * 1.6f,
+                        corner.position + Vector3.up * 1.1f, "26a-dial-tap");
+                }
+
+                yield return new WaitForSeconds(_gameplay.Friends.BellTuning.DialTapTime + DialPause);
+                Assert.AreEqual(BellCue.DialTurned, _events.BellCued[cues].Value.Cue, "then she turns it");
                 heard.Add(radio.Channel == RadioChannel.TapeDeck ? radio.Channel + " (" + radio.SelectedTape + ")"
                     : radio.Channel.ToString());
                 Assert.AreEqual(_gameplay.Friends.BellTuning.Detent(radio.Channel), cabinet.Life.Needle, 2f,
@@ -1185,6 +1400,38 @@ namespace MoonProject.Gameplay.PlayModeTests
             Capture("36-hopped-back");
             End("Radio-hop home and back", $"{_events.RadioHopFinished.Count} hops, about " +
                                            $"{HopSequence.For(_gameplay.Relays.Tuning).Duration:F1} s each");
+        }
+
+        /// <summary>
+        /// Home at last: hop home, drive up to the charging dock in front of the lander, stop on it and let go of the
+        /// wheel; 07 settles in to rest and the dock's glow warms. A touch of the throttle leaves.
+        /// </summary>
+        private IEnumerator RestOnTheDock()
+        {
+            Begin();
+            yield return Hop(_context.Get<IRadioHop>(), StationReach.HomeId);
+            ChargingDock dock = _gameplay.Home.Dock;
+            BaseTuning tuning = _gameplay.Home.Tuning;
+            Vector3 facing = Flat(dock.Rotation * Vector3.forward).normalized;
+            int rests = _events.RoverDockChanged.Count;
+            yield return DriveTo(Flat(dock.Position) - facing * DockApproach, 1.5f, 0.6f, 60f,
+                "the front of the charging dock");
+            yield return DriveTo(Flat(dock.Position), DockParkRadius, 0.35f, 30f, "the charging dock");
+            yield return Until(() => dock.Docked, tuning.DockDelay + 3f, "07 settles in to rest on the dock");
+            RoverDockChanged rest = _events.RoverDockChanged[rests].Value;
+            Assert.IsTrue(rest.Docked);
+            float off = SurfaceRules.HorizontalDistance(_rover.Position, dock.Position);
+            yield return new WaitForSeconds(tuning.DockGlowEase * 3f);
+            Assert.Greater(dock.GlowLevel, tuning.DockIdleGlow * 2f, "the dock glows warm while 07 charges");
+            Vector3 aside = Vector3.Cross(Vector3.up, facing);
+            Review(Flat(dock.Position) - facing * 6f + aside * 3f + Vector3.up * 2.5f,
+                dock.Position + Vector3.up * 0.6f, "37-resting-on-the-dock");
+            _pilot.Reverse = BayThrottle;
+            yield return Until(() => !dock.Docked, 2f, "a touch of the throttle leaves the dock");
+            _pilot.Reverse = 0f;
+            Assert.IsFalse(_events.RoverDockChanged[_events.RoverDockChanged.Count - 1].Value.Docked);
+            yield return Until(() => _rover.Speed < StopSpeed, 6f, "07 stops off the dock");
+            End("Rest on the charging dock", $"settled {off:F2} m from its anchor, glow {dock.GlowLevel:F2}");
         }
 
         /// <summary>Opens the hop list on 07's pad, steps to <paramref name="to"/> and holds Interact to go.</summary>
@@ -1347,10 +1594,125 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         private IEnumerator DriveTo(Vector3 target, float arriveRadius, float maxThrottle, float timeout, string what)
         {
+            if (TryDetourRoundTheLander(target, out Vector3 detour))
+            {
+                _pilot.GoTo(detour, WaypointArrive, maxThrottle);
+                yield return Until(() => _pilot.Arrived, timeout, "07 drives round the lander toward " + what);
+            }
+
             _pilot.GoTo(target, arriveRadius, maxThrottle);
             yield return Until(() => _pilot.Arrived, timeout, "07 reaches " + what);
             _pilot.Target = null;
             yield return Until(() => _rover.Speed < StopSpeed, 6f, "07 comes to rest at " + what);
+        }
+
+        /// <summary>
+        /// A long drive whose straight line would cross the lander (its porch, dock and lift stand out from it) goes
+        /// round it by a point beside it instead. Drives that start or end at home, next to the lander, go straight.
+        /// </summary>
+        private bool TryDetourRoundTheLander(Vector3 target, out Vector3 detour)
+        {
+            detour = Vector3.zero;
+            Vector3 lander = Flat(_gameplay.Home.LanderPosition);
+            Vector3 from = Flat(_rover.Position);
+            Vector3 to = Flat(target);
+            if (Vector3.Distance(from, lander) < LanderKeepOut || Vector3.Distance(to, lander) < LanderKeepOut)
+            {
+                return false;
+            }
+
+            Vector3 line = to - from;
+            float length = line.magnitude;
+            if (length < 1e-3f)
+            {
+                return false;
+            }
+
+            Vector3 direction = line / length;
+            float along = Mathf.Clamp(Vector3.Dot(lander - from, direction), 0f, length);
+            Vector3 closest = from + direction * along;
+            Vector3 away = closest - lander;
+            if (away.magnitude >= LanderKeepOut)
+            {
+                return false;
+            }
+
+            Vector3 side = away.sqrMagnitude > 1e-4f ? away.normalized : Vector3.Cross(Vector3.up, direction);
+            detour = lander + side * LanderDetour;
+            return true;
+        }
+
+        /// <summary>
+        /// Lines 07 up in front of the Rover Bay, drives in up its ramp and stops on the turntable, facing in.
+        /// </summary>
+        private IEnumerator DriveIntoTheBay(Workshop bay)
+        {
+            Vector3 entrance = Flat(bay.PadCentre) + Flat(bay.BayForward).normalized * BayApproach;
+            yield return DriveTo(entrance, 1.5f, 0.6f, 60f, "the mouth of Kenji's Rover Bay");
+            yield return DriveTo(Flat(bay.PadCentre), BayParkRadius, BayThrottle, 30f, "the bay's turntable");
+            yield return Until(() => bay.Occupied, 3f, "07 is parked on the bay's turntable");
+        }
+
+        /// <summary>Backs 07 straight out of the Rover Bay the way it drove in, until it is clear of it.</summary>
+        private IEnumerator BackOutOfTheBay(Workshop bay)
+        {
+            Vector3 front = Flat(bay.BayForward).normalized;
+            _pilot.Target = null;
+            _pilot.Reverse = BayThrottle;
+            yield return Until(() => Vector3.Dot(Flat(_rover.Position - bay.PadCentre), front) >= BayApproach, 20f,
+                "07 backs out of the bay");
+            _pilot.Reverse = 0f;
+            yield return Until(() => _rover.Speed < StopSpeed, 6f, "07 stops clear of the bay");
+        }
+
+        /// <summary>A review capture of the Rover Bay from out in front of it, a little aside.</summary>
+        private void ReviewBay(Workshop bay, string name)
+        {
+            Vector3 front = Flat(bay.BayForward).normalized;
+            Vector3 aside = Vector3.Cross(Vector3.up, front);
+            Review(bay.BayPosition + front * BayViewDistance + aside * BayViewSide + Vector3.up * BayViewHeight,
+                bay.BayPosition + Vector3.up, name);
+        }
+
+        /// <summary>True once the bay has set a piece bought as <paramref name="upgradeId"/> on 07.</summary>
+        private bool Fitted(string upgradeId)
+        {
+            for (int i = 0; i < _events.RoverKitFitted.Count; i++)
+            {
+                RoverKitFitted fitted = _events.RoverKitFitted[i].Value;
+                if (!fitted.Gift && fitted.UpgradeId == upgradeId)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>True once a station cued <paramref name="cue"/> after the first <paramref name="from"/>.</summary>
+        private bool Cued(StationCue cue, int from)
+        {
+            for (int i = from; i < _events.StationCued.Count; i++)
+            {
+                if (_events.StationCued[i].Value.Cue == cue)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>The station cues after the first <paramref name="from"/> are exactly these, all for it.</summary>
+        private void AssertCues(int from, string upgradeId, params StationCue[] expected)
+        {
+            Assert.AreEqual(from + expected.Length, _events.StationCued.Count, "the station's beats, once each");
+            for (int i = 0; i < expected.Length; i++)
+            {
+                StationCued cued = _events.StationCued[from + i].Value;
+                Assert.AreEqual(expected[i], cued.Cue, $"beat {i}");
+                Assert.AreEqual(upgradeId, cued.UpgradeId, $"beat {i} is for {upgradeId}");
+            }
         }
 
         private IEnumerator Until(Func<bool> condition, float timeout, string what)

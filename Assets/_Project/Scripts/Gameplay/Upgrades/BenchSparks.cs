@@ -5,8 +5,9 @@ using UnityEngine.Rendering;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// The workbench's upgrade sparks: a few soft bursts of warm streaks from between the vice jaws, drifting down in
-    /// lunar gravity. One particle system, built once at initialisation; idle (and free) until a purchase plays it.
+    /// The Rover Bay's weld sparks at one gantry arm's tip: a few soft bursts of warm streaks, drifting down in lunar
+    /// gravity and following the tip wherever the arm is driven. One particle system, built once at initialisation;
+    /// idle (and free) until a fitting plays it.
     /// </summary>
     public sealed class BenchSparks
     {
@@ -27,7 +28,7 @@ namespace MoonProject.Gameplay
                 throw new ArgumentNullException(nameof(tuning));
             }
 
-            var host = new GameObject("BenchSparks");
+            var host = new GameObject("WeldSparks");
             host.transform.SetParent(socket, false);
             _particles = host.AddComponent<ParticleSystem>();
             _particles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);

@@ -10,10 +10,12 @@ namespace MoonProject.Art.Editor
     /// <summary>
     /// Bell (docs/features/M3-05-bell-radio-cassettes.md) in Generated/Art/Friends: <c>Bell</c> standing in her rest
     /// pose, <c>Bell_Broken</c> (the same nodes tipped back against a canyon wall: lid open, a rear leg folded under,
-    /// the others splayed out with their feet found on the ground, needle slumped, antenna bent, speaker cone gone)
-    /// and her part pickups <c>Part_BellKnob|Cone|Valve</c>. The root stands on the ground between her feet, +Z = the
-    /// dial face. DialLamp and PartLamp_0..3 are their own renderers on the glow-off material, lit at runtime through
-    /// a MaterialPropertyBlock _EmissionColor. Legs are root children (not Body's), so Body can sway on its hips.
+    /// the others splayed out with their feet found on the ground, needle slumped, antenna bent, speaker cone gone,
+    /// the tuning knob lost to a bare shaft) and her part pickups <c>Part_BellKnob|Cone|Valve</c>. The root stands on
+    /// the ground between her feet, +Z = the dial face. The tuning Knob under DialFace turns about its local Z at
+    /// rover-beam height (07's beam taps it on Tune). DialLamp and PartLamp_0..3 are their own renderers on the
+    /// glow-off material, lit at runtime through a MaterialPropertyBlock _EmissionColor. Legs are root children (not
+    /// Body's), so Body can sway on its hips.
     /// </summary>
     public static class BellModelBuilder
     {
@@ -245,6 +247,7 @@ namespace MoonProject.Art.Editor
             dial.Add(new ModelNode("Needle", Vector3.zero, pose.NeedleRotation, meshes.Needle));
             dial.Add(new ModelNode("DialLamp", Vector3.zero, Quaternion.identity, meshes.DialLamp,
                 ModelMaterial.PaletteGlowOff));
+            dial.Add(new ModelNode("Knob", BellMeshes.KnobCentre, meshes.Knob));
             body.Add(new ModelNode("Speaker", BellMeshes.SpeakerCentre, meshes.Speaker));
             body.Add(new ModelNode("TapeSlot", BellMeshes.TapeSlot));
             body.Add(new ModelNode("Antenna", BellMeshes.AntennaBase, meshes.Antenna));
@@ -300,6 +303,7 @@ namespace MoonProject.Art.Editor
                 DialFace = new ModelMesh(BellName + "_DialFace", BellMeshes.DialFace());
                 Needle = new ModelMesh(BellName + "_Needle", BellMeshes.Needle());
                 DialLamp = new ModelMesh(BellName + "_DialLamp", BellMeshes.DialLamp());
+                Knob = new ModelMesh(variant + "_Knob", broken ? BellMeshes.KnobShaft() : BellMeshes.Knob());
                 Speaker = new ModelMesh(variant + "_Speaker", BellMeshes.Speaker(broken));
                 Antenna = new ModelMesh(variant + "_Antenna",
                     broken ? BellMeshes.BentAntenna() : BellMeshes.Antenna());
@@ -324,6 +328,8 @@ namespace MoonProject.Art.Editor
             public ModelMesh Needle { get; }
 
             public ModelMesh DialLamp { get; }
+
+            public ModelMesh Knob { get; }
 
             public ModelMesh Speaker { get; }
 
