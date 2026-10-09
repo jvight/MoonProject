@@ -106,7 +106,7 @@ namespace MoonProject.UI.PlayModeTests
             Events.Publish(new FriendRepaired("tilly"));
             yield return Seconds(1.5f);
             Assert.IsTrue(_rig.Ui.FriendName.IsVisible);
-            Assert.AreEqual("Tilly", _rig.Ui.Layout.FriendName.text);
+            Assert.AreEqual("Tilly", _rig.Ui.Layout.FriendNameText.text);
             Assert.IsTrue(_rig.Ui.Card.IsVisible);
             Assert.AreEqual("tilly", _rig.Ui.Card.Current);
             Assert.AreEqual("From Tilly's memory", _rig.Ui.Layout.MemoryCardCaption.text);

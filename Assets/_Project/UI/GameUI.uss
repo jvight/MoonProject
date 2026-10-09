@@ -30,8 +30,7 @@
 .caption,
 .section-label,
 .chip__number,
-.friend-name,
-.kit-title__name,
+.name-tag__name,
 .bay-row__name,
 .hop-list__glyph,
 .dial-readout__station,
@@ -309,9 +308,31 @@ Label {
 }
 
 /*
- * A fitted piece of kit's name (crafted at Kenji's Rover Bay, or a friend's gift): high and quiet, clear of 07, on a
- * soft dusk of shadow so it reads even over the bright Earth.
+ * Floating names (a fitted piece of kit, a friend waking, a site answering the sonar): cream type on a soft dusk of
+ * shadow and no plate, so each reads even over the bright Earth or a lit sky. One look for every name.
  */
+
+.name-tag {
+    align-items: center;
+    padding: 4px 10px 6px 10px;
+}
+
+.soft-shadow--name {
+    --shadow-offset: 0;
+    --shadow-radius: 30;
+    --shadow-spread: 56;
+    --shadow-layers: 10;
+}
+
+.name-tag__name {
+    font-size: 30px;
+    letter-spacing: 4px;
+    color: var(--moon-cream);
+    -unity-text-align: middle-center;
+    text-shadow: 0 2px 14px var(--moon-shadow);
+}
+
+/* A fitted piece of kit's name (crafted at Kenji's Rover Bay, or a friend's gift): high and quiet, clear of 07 */
 
 .kit-title {
     position: absolute;
@@ -319,26 +340,6 @@ Label {
     right: 0;
     top: 12%;
     align-items: center;
-}
-
-.kit-title__body {
-    align-items: center;
-    padding: 4px 10px 6px 10px;
-}
-
-.soft-shadow--title {
-    --shadow-offset: 0;
-    --shadow-radius: 30;
-    --shadow-spread: 56;
-    --shadow-layers: 10;
-}
-
-.kit-title__name {
-    font-size: 30px;
-    letter-spacing: 4px;
-    color: var(--moon-cream);
-    -unity-text-align: middle-center;
-    text-shadow: 0 2px 14px var(--moon-shadow);
 }
 
 .kit-title__rule {
@@ -432,16 +433,6 @@ Label {
     height: 8px;
     border-radius: 4px;
     background-color: var(--moon-warm-lamp);
-}
-
-/* A friend's name, the first time it wakes */
-
-.friend-name {
-    font-size: 30px;
-    letter-spacing: 4px;
-    color: var(--moon-cream);
-    -unity-text-align: middle-center;
-    text-shadow: 0 2px 14px var(--moon-shadow);
 }
 
 /* Materials chip: the stock, drifting in only when it changes */

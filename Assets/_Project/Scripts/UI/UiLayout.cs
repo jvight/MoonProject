@@ -35,7 +35,9 @@ namespace MoonProject.UI
             FriendReadoutShadow = Require<VisualElement>("friend-readout-shadow");
             FriendPips = Require<VisualElement>("friend-pips");
             FriendNameAnchor = Require<VisualElement>("friend-name-anchor");
-            FriendName = Require<Label>("friend-name");
+            FriendName = Require<VisualElement>("friend-name");
+            FriendNameShadow = Require<VisualElement>("friend-name-shadow");
+            FriendNameText = Require<Label>("friend-name-text");
 
             MaterialsChip = Require<VisualElement>("materials-chip");
             MaterialsChipShadow = Require<VisualElement>("materials-chip-shadow");
@@ -44,7 +46,9 @@ namespace MoonProject.UI
             SalvageRingAnchor = Require<VisualElement>("salvage-ring-anchor");
             SalvageRing = Require<VisualElement>("salvage-ring");
             SiteNameAnchor = Require<VisualElement>("site-name-anchor");
-            SiteName = Require<Label>("site-name");
+            SiteName = Require<VisualElement>("site-name");
+            SiteNameShadow = Require<VisualElement>("site-name-shadow");
+            SiteNameText = Require<Label>("site-name-text");
 
             MemoryCard = Require<VisualElement>("memory-card");
             MemoryCardShadow = Require<VisualElement>("memory-card-shadow");
@@ -173,7 +177,11 @@ namespace MoonProject.UI
 
         public VisualElement FriendNameAnchor { get; }
 
-        public Label FriendName { get; }
+        public VisualElement FriendName { get; }
+
+        public VisualElement FriendNameShadow { get; }
+
+        public Label FriendNameText { get; }
 
         public VisualElement MaterialsChip { get; }
 
@@ -187,7 +195,11 @@ namespace MoonProject.UI
 
         public VisualElement SiteNameAnchor { get; }
 
-        public Label SiteName { get; }
+        public VisualElement SiteName { get; }
+
+        public VisualElement SiteNameShadow { get; }
+
+        public Label SiteNameText { get; }
 
         public VisualElement MemoryCard { get; }
 

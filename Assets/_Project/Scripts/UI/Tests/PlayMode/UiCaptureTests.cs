@@ -73,6 +73,14 @@ namespace MoonProject.UI.PlayModeTests
         private const float KitSettleSeconds = 1.1f;
         private const float LineShotSeconds = 0.5f;
         private const float TowerStitchDelay = 1.3f;
+        private const float SceneSettleSeconds = 4f;
+        private const string TillyId = "tilly";
+        private const string BellPath = "Assets/_Project/Data/Content/Friends/Friend_bell.asset";
+        private const float TillyRise = 1.5f;
+        private const float EarthShotReach = 6.5f;
+        private const float EarthShotNearest = 2.5f;
+        private const float EarthShotStep = 0.25f;
+        private const float EarthShotClearance = 0.4f;
 
         private string _slot;
         private GameObject _uiHost;
@@ -86,6 +94,7 @@ namespace MoonProject.UI.PlayModeTests
         private GameObject _mastCamera;
         private GameObject _siteCamera;
         private GameObject _relicStandIn;
+        private GameObject _earthCamera;
         private UpgradeDefinition _tower;
         private UpgradeDefinition[] _bayKit = Array.Empty<UpgradeDefinition>();
 
@@ -97,6 +106,7 @@ namespace MoonProject.UI.PlayModeTests
             Object.DestroyImmediate(_mastCamera);
             Object.DestroyImmediate(_siteCamera);
             Object.DestroyImmediate(_relicStandIn);
+            Object.DestroyImmediate(_earthCamera);
             Object.DestroyImmediate(_tower);
             foreach (UpgradeDefinition kit in _bayKit)
             {
@@ -137,14 +147,7 @@ namespace MoonProject.UI.PlayModeTests
 #if UNITY_EDITOR
             Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
             InputSystem.AddDevice<Mouse>();
-            AsyncOperation loading = EditorSceneManager.LoadSceneAsyncInPlayMode(MainScene,
-                new LoadSceneParameters(LoadSceneMode.Single));
-            while (!loading.isDone)
-            {
-                yield return null;
-            }
-
-            yield return new WaitForSecondsRealtime(4f);
+            yield return LoadMain();
             GameBootstrap bootstrap = FindBootstrap();
             GameContext context = bootstrap.Context;
             Camera camera = context.Get<IViewCamera>().Camera;
@@ -483,7 +486,125 @@ namespace MoonProject.UI.PlayModeTests
 #endif
         }
 
+        /// <summary>
+        /// The floating names at their hardest: Tilly's as she wakes, Bell's in her home corner (her canyon hides
+        /// Earth), and a site's as it answers, each
+        /// seen from below with the bright Earth right behind it. Quick to rerun on its own:
+        /// <c>python tools/unity_batch.py tests --platform playmode --filter CaptureFloatingNames_OverEarth</c>.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator CaptureFloatingNames_OverEarth()
+        {
 #if UNITY_EDITOR
+            yield return LoadMain();
+            GameContext context = FindBootstrap().Context;
+            UISystem ui = BuildUi(context, out FakeGameServices fakes, out _);
+            yield return null;
+            string folder = Path.GetFullPath(OutputFolder);
+            Directory.CreateDirectory(folder);
+            Vector3 earth = context.Get<IWorldLayout>().EarthDirection;
+            var terrain = context.Get<ITerrainQuery>();
+            var friends = context.Get<IFriendStatuses>();
+            float nameLift = _tuning.Friends.NameLiftMetres;
+
+            Vector3 tilly = FriendPosition(friends, TillyId) + Vector3.up * TillyRise;
+            Camera tillyCamera = EarthCamera(tilly + Vector3.up * nameLift, earth, terrain, context);
+            fakes.Camera = tillyCamera;
+            fakes.TillyStatus = new FriendStatus(FriendState.Awake, 3, 3, true, false, tilly);
+            context.Events.Publish(new FriendRepaired(TillyId));
+            yield return new WaitForSecondsRealtime(_tuning.Friends.Name.FadeIn + 0.5f);
+            yield return Capture(tillyCamera, folder, "50_tilly_name_over_earth");
+            ui.Card.Dismiss();
+            yield return new WaitForSecondsRealtime(_tuning.Friends.NameHoldSeconds + _tuning.Friends.Name.FadeOut +
+                                                    0.3f);
+
+            Vector3 bell = BellAtHome(context).position;
+            Camera bellCamera = EarthCamera(bell + Vector3.up * nameLift, earth, terrain, context);
+            fakes.Camera = bellCamera;
+            fakes.Friend = AssetDatabase.LoadAssetAtPath<FriendDefinition>(BellPath);
+            fakes.TillyStatus = new FriendStatus(FriendState.Awake, 3, 3, true, false, bell);
+            context.Events.Publish(new FriendRepaired(BellId));
+            yield return new WaitForSecondsRealtime(_tuning.Friends.Name.FadeIn + 0.5f);
+            yield return Capture(bellCamera, folder, "51_bell_name_over_earth");
+            ui.Card.Dismiss();
+            yield return new WaitForSecondsRealtime(_tuning.Friends.NameHoldSeconds + _tuning.Friends.Name.FadeOut +
+                                                    0.3f);
+
+            if (!context.Get<IWorldAnchors>().TryGet(DepotSite, out MoonProject.Core.WorldAnchor depot))
+            {
+                throw new InvalidOperationException($"The world has no '{DepotSite}' anchor.");
+            }
+
+            Camera siteCamera = EarthCamera(depot.Position + Vector3.up * _tuning.Salvage.SiteNameLiftMetres, earth,
+                terrain, context);
+            fakes.Camera = siteCamera;
+            context.Events.Publish(new SiteAnswered(DepotSite, depot.Position, 30f, true));
+            yield return new WaitForSecondsRealtime(_tuning.Salvage.SiteName.FadeIn + 0.5f);
+            yield return Capture(siteCamera, folder, "52_site_name_over_earth");
+            Assert.IsTrue(ui.SiteName.IsVisible, "the site's name was up for its shot");
+#else
+            Assert.Ignore("Captures need the editor.");
+            yield break;
+#endif
+        }
+
+#if UNITY_EDITOR
+        private static IEnumerator LoadMain()
+        {
+            AsyncOperation loading = EditorSceneManager.LoadSceneAsyncInPlayMode(MainScene,
+                new LoadSceneParameters(LoadSceneMode.Single));
+            while (!loading.isDone)
+            {
+                yield return null;
+            }
+
+            yield return new WaitForSecondsRealtime(SceneSettleSeconds);
+        }
+
+        private static Vector3 FriendPosition(IFriendStatuses friends, string id)
+        {
+            for (int i = 0; i < friends.Count; i++)
+            {
+                if (friends.Definition(i).Id == id)
+                {
+                    return friends.Status(i).Position;
+                }
+            }
+
+            throw new InvalidOperationException($"The friends have no '{id}'.");
+        }
+
+        /// <summary>
+        /// A camera looking straight at Earth through <paramref name="namePoint"/>, as far back along that line as the
+        /// ground allows (so the name sits on Earth's disc), never closer than a couple of metres.
+        /// </summary>
+        private Camera EarthCamera(Vector3 namePoint, Vector3 earth, ITerrainQuery terrain, GameContext context)
+        {
+            Vector3 position = namePoint - earth * EarthShotNearest;
+            for (float reach = EarthShotReach; reach > EarthShotNearest; reach -= EarthShotStep)
+            {
+                Vector3 candidate = namePoint - earth * reach;
+                if (candidate.y >= terrain.SampleHeight(candidate.x, candidate.z) + EarthShotClearance)
+                {
+                    position = candidate;
+                    break;
+                }
+            }
+
+            position.y = Mathf.Max(position.y, terrain.SampleHeight(position.x, position.z) + EarthShotClearance);
+            if (_earthCamera == null)
+            {
+                _earthCamera = new GameObject("EarthCaptureCamera");
+                var added = _earthCamera.AddComponent<Camera>();
+                added.CopyFrom(context.Get<IViewCamera>().Camera);
+                added.fieldOfView = FriendShotFov;
+                added.GetUniversalAdditionalCameraData().renderPostProcessing = true;
+            }
+
+            _earthCamera.transform.SetPositionAndRotation(position, Quaternion.LookRotation(earth, Vector3.up));
+            return _earthCamera.GetComponent<Camera>();
+        }
+
         private static GameBootstrap FindBootstrap()
         {
             foreach (GameObject root in SceneManager.GetSceneByPath(MainScene).GetRootGameObjects())
