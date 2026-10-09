@@ -14,6 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _neckYawLimit: 110
   _headPitchUpLimit: 55
+  _stargazeHeadPitch: 45
+  _stargazeWingOpen: 0.25
+  _stargazeEyeGlow: 0.4
   _headPitchDownLimit: 25
   _lookIntoTurn: 22
   _travelHeadPitch: -6
@@ -21,6 +24,15 @@ MonoBehaviour:
   _targetGazeFrequency: 1.1
   _idleGazeFrequency: 0.22
   _gazeDamping: 0.92
+  _sleepOnBoot: 1
+  _wakeDelay: 1.5
+  _wakeDuration: 5
+  _wakeEyesOpenBy: 0.55
+  _wakeGlanceFrom: 0.25
+  _wakeGlanceUntil: 0.8
+  _hurriedWakeHalfLife: 0.12
+  _sleepHeadBow: 14
+  _awakenedPerk: 0.35
   _stillSpeed: 0.25
   _activityInput: 0.1
   _idleDelay: 4
@@ -46,15 +58,52 @@ MonoBehaviour:
   _eyeLightRange: 1.6
   _wingOpenAngle: 110
   _wingIdleOpen: 0.16
+  _wingIdleOpenMended: 0.45
   _wingFrequency: 0.3
   _wingDamping: 0.6
   _wingSighAmount: 0.14
-  _wingSighFrequency: 0.2
+  _sighFrequency: 0.2
+  _sighHeadDrop: 7
+  _sighLidDroop: 0.2
+  _daydreamSigh: 1
+  _snapSigh: 0.8
+  _salvagePerk: 0.18
+  _salvageComboPerk: 0.07
+  _salvagePerkMax: 0.6
+  _relicAnsweredPerk: 0.5
+  _relicSurfacedPerk: 1
+  _relicGlanceSeconds: 2.5
+  _reactionGazePriority: -1
+  _recoveryPerk: 0.5
+  _depositNod: 1
+  _nodFrequency: 0.9
+  _nodDepth: 9
+  _relayRestoredPerk: 0.6
+  _relayLookSeconds: 6
+  _relayLookPriority: 1
+  _signalGlanceRange: 300
+  _signalGlanceLift: 4
+  _signalGlanceSeconds: 2
+  _lookAroundDelay: 0.3
+  _lookAroundSeconds: 3.4
+  _lookAroundYaw: 50
+  _lookAroundLift: 6
+  _kitProudPerk: 0.95
+  _giftPerk: 0.55
+  _hopArrivalPerk: 0.3
   _perkFrequency: 0.65
   _perkHeadLift: 8
   _perkAntennaKick: 140
   _wakePerk: 0.8
   _softLandingPerk: 0.45
+  _effortSquint: 0.35
+  _effortHeadDip: 6
+  _effortHalfLife: 0.08
+  _hopPerk: 0.3
+  _leapPerk: 0.9
+  _flightLandingJoy: 0.9
+  _joyAirTimeFrom: 1
+  _joyAirTimeFull: 3
   _oofImpactSpeed: 3.2
   _oofFullImpact: 5
   _oofMinStrength: 0.5
@@ -64,3 +113,4 @@ MonoBehaviour:
   _tipBlinkPeriod: 2.8
   _tipBlinkDuration: 0.6
   _tipRestGlow: 0.01
+  _tipPeakGlow: 0.55

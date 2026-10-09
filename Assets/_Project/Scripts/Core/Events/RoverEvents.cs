@@ -205,4 +205,18 @@ namespace MoonProject.Core.Events
         /// <summary>True as the frame starts to open, false as it starts to come back to the chase view.</summary>
         public bool Wide { get; }
     }
+
+    /// <summary>
+    /// The stargazing beat began or ended: 07 rests while the player looks up at the sky. UI fades the HUD and audio
+    /// thins the music while it is on; any drive input ends it.
+    /// </summary>
+    public readonly struct StargazingChanged
+    {
+        public StargazingChanged(bool isStargazing)
+        {
+            IsStargazing = isStargazing;
+        }
+
+        public bool IsStargazing { get; }
+    }
 }

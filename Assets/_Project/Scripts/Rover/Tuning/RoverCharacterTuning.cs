@@ -20,6 +20,18 @@ namespace MoonProject.Rover
         [Range(0f, 89f)]
         [SerializeField] private float _headPitchUpLimit = 55f;
 
+        [Tooltip("Head pitch (deg up) 07 lifts to while gazing at the stars with the player.")]
+        [Range(0f, 55f)]
+        [SerializeField] private float _stargazeHeadPitch = 45f;
+
+        [Tooltip("How far the solar wing opens (share of its full open angle) while 07 gazes at the stars.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _stargazeWingOpen = 0.25f;
+
+        [Tooltip("Eye glow (share of its usual glow) while 07 gazes at the stars: a soft glow, letting the sky shine.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _stargazeEyeGlow = 0.4f;
+
         [Tooltip("How far (deg) the head can tilt down.")]
         [Range(0f, 89f)]
         [SerializeField] private float _headPitchDownLimit = 25f;
@@ -426,6 +438,12 @@ namespace MoonProject.Rover
         public float NeckYawLimit => _neckYawLimit;
 
         public float HeadPitchUpLimit => _headPitchUpLimit;
+
+        public float StargazeHeadPitch => Mathf.Min(_stargazeHeadPitch, _headPitchUpLimit);
+
+        public float StargazeWingOpen => _stargazeWingOpen;
+
+        public float StargazeEyeGlow => _stargazeEyeGlow;
 
         public float HeadPitchDownLimit => _headPitchDownLimit;
 
