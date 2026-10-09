@@ -33,7 +33,7 @@ namespace MoonProject.UI.Tests
 
         public int StationUpgradeCount => Catalog.Length;
 
-        /// <summary>A piece of bench kit: one level costing <paramref name="cost"/>, granting an ability.</summary>
+        /// <summary>A piece of bay kit: one level costing <paramref name="cost"/>, granting an ability.</summary>
         public UpgradeDefinition Kit(string id, Recipe cost)
         {
             return Make(id, UpgradeStationKind.Workshop, true, cost);

@@ -10,7 +10,7 @@ namespace MoonProject.UI
     /// bought out, it moves to the one that took its place. Stepping wraps around. Allocation-free once its buffers
     /// have grown to the station's size.
     /// </summary>
-    internal sealed class BenchChoice
+    internal sealed class BayChoice
     {
         private UpgradeDefinition[] _choices = Array.Empty<UpgradeDefinition>();
         private int[] _levels = Array.Empty<int>();

@@ -15,12 +15,12 @@ namespace MoonProject.UI
     /// title while 07 wakes, context prompts only the first few times, a reticle only while aiming, the materials chip
     /// only when the stock changes, the hold ring at a salvage cut and a site's name the first time it answers the
     /// sonar, a story card per relic brought home, crew log found and cassette collected, the station upgrade panel
-    /// with its recipe (a list to pick from at Kenji's bench), the name of each piece of kit as it settles onto 07, a
-    /// few warm pips over a broken friend while 07 is near, its name and its crew log when it wakes,
-    /// the radio's ticker line along the bottom, the station's name when Bell's dial is turned, the relay network's
-    /// price tag, hop list and soft hop fade, and the pause menu with settings. It registers
-    /// <see cref="ILocalization"/> and owns the cursor and the UI's save sections. Everything animates on unscaled time
-    /// so the menu stays alive while the game is paused.
+    /// with its recipe (a list to pick from at Kenji's Rover Bay), the name of each piece of kit as it settles onto
+    /// 07, a few warm pips over a broken friend while 07 is near, its name and its crew log when it wakes, the radio's
+    /// ticker line along the bottom, the station's name when Bell's dial is turned, the relay network's price tag, hop
+    /// list and soft hop fade, and the pause menu with settings. It registers <see cref="ILocalization"/> and owns the
+    /// cursor and the UI's save sections. Everything animates on unscaled time so the menu stays alive while the game
+    /// is paused.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class UISystem : MonoBehaviour, IGameSystem

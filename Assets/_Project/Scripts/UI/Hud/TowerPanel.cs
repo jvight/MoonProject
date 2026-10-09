@@ -9,7 +9,7 @@ using MoonProject.Gameplay;
 namespace MoonProject.UI
 {
     /// <summary>
-    /// While 07 is parked on an upgrade station's pad (the radio tower or Kenji's workbench) and something is left to
+    /// While 07 is parked on an upgrade station's pad (the radio tower or Kenji's Rover Bay) and something is left to
     /// buy, a compact panel offers it. Its header says where 07 is ("ui.station.&lt;station&gt;", with the station's
     /// own accent and lamp) and, for an upgrade with several levels, which level is next, or else the upgrade's name.
     /// Below: the level's title and what it does in plain words (the localized "upgrade.&lt;id&gt;.&lt;level&gt;.*"
@@ -19,10 +19,10 @@ namespace MoonProject.UI
     /// <see cref="IUpgradeShop"/>; the panel glows a moment, then shows the next level or bows out when all are bought.
     /// The ring starting and completing are published as <see cref="UiCue"/>s.
     /// <para>
-    /// While the station has more than one thing left to sell (Kenji's bench, docs/features/M3-11), the panel lists
-    /// them instead (<see cref="BenchList"/>): a tap of Interact or the Winch picks (<see cref="BenchPick"/>, a
-    /// <see cref="UiCueKind.FocusMove"/> each), the hold crafts the picked one, and a faint "ui.bench.pick" line says
-    /// how to choose. The radio tower, and the bench's last piece, keep the single offer.
+    /// While the station has more than one thing left to sell (Kenji's Rover Bay, docs/features/M3-11), the panel lists
+    /// them instead (<see cref="BayList"/>): a tap of Interact or the Winch picks (<see cref="BayPick"/>, a
+    /// <see cref="UiCueKind.FocusMove"/> each), the hold crafts the picked one, and a faint "ui.bay.pick" line says
+    /// how to choose. The radio tower, and the bay's last piece, keep the single offer.
     /// </para>
     /// </summary>
     internal sealed class TowerPanel
@@ -44,9 +44,9 @@ namespace MoonProject.UI
         private readonly HoldToConfirm _hold;
         private readonly ProgressRingPainter _ring;
         private readonly UiLayout _layout;
-        private readonly BenchChoice _choices = new BenchChoice();
-        private readonly BenchPick _pick;
-        private readonly BenchList _list;
+        private readonly BayChoice _choices = new BayChoice();
+        private readonly BayPick _pick;
+        private readonly BayList _list;
         private readonly GlyphView _pickGlyph;
         private bool _listed;
         private UpgradeDefinition _shownUpgrade;
@@ -72,10 +72,10 @@ namespace MoonProject.UI
             _ring = new ProgressRingPainter(layout.TowerRing);
             new ShadowPainter(layout.TowerPanelShadow);
             layout.TowerHoldWord.text = localization.Get(UiKeys.TowerHold);
-            _pick = new BenchPick(settings);
-            _list = new BenchList(layout.TowerChoices, localization, numbers);
+            _pick = new BayPick(settings);
+            _list = new BayList(layout.TowerChoices, localization, numbers);
             _pickGlyph = new GlyphView(layout.TowerPickGlyph, layout.TowerPickGlyphLabel);
-            layout.TowerPickWord.text = localization.Get(UiKeys.BenchPick);
+            layout.TowerPickWord.text = localization.Get(UiKeys.BayPick);
             WriteListed(false);
         }
 
@@ -108,15 +108,15 @@ namespace MoonProject.UI
         public bool IsChoosing => _listed;
 
         /// <summary>What the station still sells and which is picked (tests and captures).</summary>
-        public BenchChoice Choices => _choices;
+        public BayChoice Choices => _choices;
 
-        /// <summary>The bench's rows (tests and captures).</summary>
-        public BenchList List => _list;
+        /// <summary>The bay's rows (tests and captures).</summary>
+        public BayList List => _list;
 
         /// <param name="deltaTime">Unscaled seconds; pass 0 while paused.</param>
         /// <param name="gateOpen">False while paused.</param>
         /// <param name="confirmHeld">True while the confirm (Interact) button is held.</param>
-        /// <param name="winch">The Winch axis (-1..1, + up): steps between the bench's choices.</param>
+        /// <param name="winch">The Winch axis (-1..1, + up): steps between the bay's choices.</param>
         /// <param name="towing">Something is on the tether: the Winch reels, so it does not pick.</param>
         /// <param name="confirmGlyph">The confirm control's label for the active device.</param>
         /// <param name="device">The active device (key cap or round glyph).</param>
@@ -195,7 +195,7 @@ namespace MoonProject.UI
         public void Relocalize()
         {
             _layout.TowerHoldWord.text = _localization.Get(IsCelebrating ? UiKeys.TowerPurchased : UiKeys.TowerHold);
-            _layout.TowerPickWord.text = _localization.Get(UiKeys.BenchPick);
+            _layout.TowerPickWord.text = _localization.Get(UiKeys.BayPick);
             _recipe.Relocalize();
             _list.Relocalize();
             _shownUpgrade = null;

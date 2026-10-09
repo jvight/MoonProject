@@ -23,7 +23,7 @@ namespace MoonProject.UI
         public const string PauseCassettes = "ui.pause.cassettes";
         public const string PauseRelays = "ui.pause.relays";
         public const string RecipeNeed = "ui.recipe.need";
-        public const string BenchPick = "ui.bench.pick";
+        public const string BayPick = "ui.bay.pick";
 
         /// <summary>"hint.excavate": the one word of the prompt teaching <paramref name="kind"/>.</summary>
         public static string Hint(InteractionKind kind)
