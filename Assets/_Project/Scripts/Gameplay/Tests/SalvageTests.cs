@@ -111,50 +111,129 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void Sites_FollowTheContract_AndYieldAtLeastTwiceEveryRecipe()
+        public void Sites_GiveAtLeastTwiceWhatStepsZeroToEightNeed_EachLeaningOnItsSignature()
         {
             var tuning = Create<SalvageTuning>();
-            var yield = new int[3];
+            Recipe yield = Trail(tuning);
             foreach (string name in SalvageEconomy.SiteNames)
             {
-                int[] site = SiteYield(name, tuning);
-                for (int i = 0; i < yield.Length; i++)
-                {
-                    yield[i] += site[i];
-                }
+                Recipe site = SiteYield(name, tuning);
+                yield = yield.Plus(site);
+                TestContext.WriteLine($"{name}: metal {site.Metal}, wiring {site.Wiring}, optics {site.Optics}");
             }
 
-            foreach (string bit in SalvageEconomy.TrailBits)
+            Recipe needs = StepsZeroToEight();
+            TestContext.WriteLine($"All: {yield}; steps 0-8 take {needs}.");
+            foreach (SalvageMaterial material in Materials)
             {
-                Assert.IsNotNull(AssetDatabase.LoadAssetAtPath<GameObject>(GameplayAssetPaths.DebrisPrefab(bit)), bit);
-                Assert.IsTrue(SalvagePieceName.TryParseDebris(bit, out SalvageMaterial material), bit);
-                yield[(int)material] += tuning.TrailYield;
+                Assert.GreaterOrEqual(yield.Of(material), 2 * needs.Of(material),
+                    $"VISION ruling 5 (M3-16 P9): the moon gives at least twice the {material} steps 0-8 take");
             }
 
-            var relays = Create<RelayTuning>();
-            Recipe costs = SalvageEconomy.HoverJump.Plus(relays.TotalCost(RelayMasts))
-                .Plus(SalvageEconomy.CargoCradle).Plus(SalvageEconomy.WarmHeadlamp).Plus(SalvageEconomy.BoostCoils);
-            foreach (Recipe level in SalvageEconomy.RadioTower)
-            {
-                costs = costs.Plus(level);
-            }
-
-            TestContext.WriteLine($"Yield metal {yield[0]}, wiring {yield[1]}, optics {yield[2]}; recipes take " +
-                                  $"metal {costs.Metal}, wiring {costs.Wiring}, optics {costs.Optics}.");
-            foreach (SalvageMaterial material in new[]
-                     {
-                         SalvageMaterial.Metal, SalvageMaterial.Wiring, SalvageMaterial.Optics,
-                     })
-            {
-                Assert.GreaterOrEqual(yield[(int)material], 2 * costs.Of(material),
-                    $"VISION ruling 5: the sites give at least twice every recipe's {material}");
-            }
-
-            Assert.GreaterOrEqual(yield[0] + yield[1] + yield[2], 2 * costs.Total, "and at least twice in all");
+            AssertSignature("garage", SalvageMaterial.Wiring, tuning);
+            AssertSignature("kestrel", SalvageMaterial.Optics, tuning);
+            AssertSignature("depot", SalvageMaterial.Metal, tuning);
         }
 
-        /// <summary>Units of each material Art's site prefab <paramref name="name"/> gives (its contract checked).</summary>
-        private static int[] SiteYield(string name, SalvageTuning tuning)
+        [Test]
+        public void Depot_HasFourCuts_AndPaysTheTowersFirstLevel_WithALittleOver()
+        {
+            var tuning = Create<SalvageTuning>();
+            Recipe depot = SiteYield("depot", tuning);
+            Assert.AreEqual(4, Pieces("depot"), "P10: four good cuts, the last one reveals the heart");
+            Assert.IsTrue(Covers(depot, SalvageEconomy.RadioTower[0]), "the depot alone wakes home");
+            Assert.LessOrEqual(depot.Total, 2 * (SalvageEconomy.RadioTower[0].Total + SalvageEconomy.HoverJump.Total),
+                "but no more than a little over: the moon is out there");
+        }
+
+        [Test]
+        public void TheGoldenPathsOrder_IsAffordableStepByStep()
+        {
+            var tuning = Create<SalvageTuning>();
+            var relays = Create<RelayTuning>();
+            Recipe stock = SiteYield("depot", tuning);
+            stock = Spend(stock, SalvageEconomy.RadioTower[0], "tower L1 from the depot");
+            stock = stock.Plus(SiteYield("garage", tuning));
+            stock = Spend(stock, SalvageEconomy.RadioTower[1], "tower L2 after the garage");
+            stock = Spend(stock, SalvageEconomy.HoverJump, "Hover-Jump");
+            stock = Spend(stock, SalvageEconomy.CargoCradle, "the Cargo Cradle");
+            stock = Spend(stock, relays.CostAfter(0), "the first relay mast (step 7)");
+            stock = stock.Plus(SiteYield("kestrel", tuning)).Plus(Trail(tuning));
+            Spend(stock, SalvageEconomy.RadioTower[2], "tower L3 after the Kestrel (step 8)");
+        }
+
+        private static readonly SalvageMaterial[] Materials =
+        {
+            SalvageMaterial.Metal, SalvageMaterial.Wiring, SalvageMaterial.Optics,
+        };
+
+        /// <summary>
+        /// What steps 0-8 of the wake-up take (M3-16): the tower's three levels, Hover-Jump, the Cargo Cradle and the
+        /// first relay mast.
+        /// </summary>
+        private Recipe StepsZeroToEight()
+        {
+            Recipe needs = SalvageEconomy.HoverJump.Plus(SalvageEconomy.CargoCradle)
+                .Plus(Create<RelayTuning>().CostAfter(0));
+            foreach (Recipe level in SalvageEconomy.RadioTower)
+            {
+                needs = needs.Plus(level);
+            }
+
+            return needs;
+        }
+
+        private static Recipe Spend(Recipe stock, Recipe cost, string what)
+        {
+            Assert.IsTrue(Covers(stock, cost), $"{what}: {cost} from a stock of {stock}");
+            return new Recipe(stock.Metal - cost.Metal, stock.Wiring - cost.Wiring, stock.Optics - cost.Optics);
+        }
+
+        private static bool Covers(Recipe stock, Recipe cost)
+        {
+            return stock.Metal >= cost.Metal && stock.Wiring >= cost.Wiring && stock.Optics >= cost.Optics;
+        }
+
+        private static void AssertSignature(string name, SalvageMaterial signature, SalvageTuning tuning)
+        {
+            Recipe site = SiteYield(name, tuning);
+            foreach (SalvageMaterial other in Materials)
+            {
+                if (other != signature)
+                {
+                    Assert.Greater(site.Of(signature), site.Of(other), $"{name} leans on its signature {signature}");
+                }
+            }
+        }
+
+        private static Recipe Trail(SalvageTuning tuning)
+        {
+            var units = new int[3];
+            foreach (string bit in SalvageEconomy.TrailBits)
+            {
+                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(GameplayAssetPaths.DebrisPrefab(bit));
+                Assert.IsNotNull(prefab, bit);
+                Assert.IsTrue(SalvagePieceName.TryParseDebris(bit, out SalvageMaterial material), bit);
+                units[(int)material] += tuning.TrailYield;
+            }
+
+            return new Recipe(units[0], units[1], units[2]);
+        }
+
+        private static int Pieces(string name)
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(GameplayAssetPaths.SitePrefab(name));
+            int pieces = 0;
+            foreach (Transform node in prefab.transform)
+            {
+                pieces += SalvagePieceName.TryParsePiece(node.name, out _, out _, out _) ? 1 : 0;
+            }
+
+            return pieces;
+        }
+
+        /// <summary>What Art's site prefab <paramref name="name"/> gives (its contract checked).</summary>
+        private static Recipe SiteYield(string name, SalvageTuning tuning)
         {
             var yield = new int[3];
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(GameplayAssetPaths.SitePrefab(name));
@@ -177,18 +256,7 @@ namespace MoonProject.Gameplay.Tests
             }
 
             Assert.That(pieces, Is.InRange(4, 8), $"{name}: 4 to 8 salvage points");
-            return yield;
-        }
-
-        [Test]
-        public void Depot_AlonePaysTheTowersFirstTwoLevels_AndHoverJump()
-        {
-            int[] depot = SiteYield("depot", Create<SalvageTuning>());
-            Recipe first = SalvageEconomy.RadioTower[0].Plus(SalvageEconomy.RadioTower[1])
-                .Plus(SalvageEconomy.HoverJump);
-            Assert.GreaterOrEqual(depot[0], first.Metal, "M3-16: L1, L2 (the bay wakes), then the first kit");
-            Assert.GreaterOrEqual(depot[1], first.Wiring);
-            Assert.GreaterOrEqual(depot[2], first.Optics);
+            return new Recipe(yield[0], yield[1], yield[2]);
         }
 
         [Test]
