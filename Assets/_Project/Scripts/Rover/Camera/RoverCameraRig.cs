@@ -109,6 +109,9 @@ namespace MoonProject.Rover
 
         public CameraOrbit Orbit => _orbitState;
 
+        /// <summary>The fresh game's first shot on 07's lens (inactive on a loaded save).</summary>
+        public WakeOpening Opening => _opening;
+
         public float SkyLift => _stargaze != null ? Mathf.Max(_stargaze.Lift, _wakeLift) : 0f;
 
         /// <summary>The lonely wide shot's state (quiet time, weight, frame), for tests and tooling.</summary>
@@ -629,9 +632,9 @@ namespace MoonProject.Rover
 
             float earth = WideShotComposer.Bearing(_world.EarthDirection);
             float heading = RoverYaw();
-            float left = Mathf.Abs(Mathf.DeltaAngle(heading - _tuning.WakeYaw, earth));
-            float right = Mathf.Abs(Mathf.DeltaAngle(heading + _tuning.WakeYaw, earth));
-            _wakeYaw = right <= left ? _tuning.WakeYaw : -_tuning.WakeYaw;
+            float positive = Mathf.Abs(Mathf.DeltaAngle(heading - _tuning.WakeYaw, earth));
+            float negative = Mathf.Abs(Mathf.DeltaAngle(heading + _tuning.WakeYaw, earth));
+            _wakeYaw = positive <= negative ? _tuning.WakeYaw : -_tuning.WakeYaw;
             _opening.Begin();
             _wakeLift = 0f;
             PlaceTarget();

@@ -59,6 +59,11 @@ namespace MoonProject.Rover.PlayModeTests
         private const float MinCameraClearance = 0.2f;
         private const string DockAnchorName = "DockAnchor";
 
+        /// <summary>The wake opening: when the held frame of 07 looking up is taken, and the frame mid-ease.</summary>
+        private const float WakeLookUpSeconds = 4f;
+        private const float WakeEaseFrameSeconds = 1.8f;
+        private const float WakeEaseTimeout = 8f;
+
         private static readonly string CaptureFolder =
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "rover-captures"));
 
@@ -131,6 +136,45 @@ namespace MoonProject.Rover.PlayModeTests
             Debug.Log("[rover-stargaze] " + _report);
         }
 
+        [UnityTest]
+        [Timeout(300000)]
+        [PrebuildSetup(typeof(RoverSessionScene))]
+        [PostBuildCleanup(typeof(RoverSessionScene))]
+        public IEnumerator FreshGame_OpensOn07sLensLookingUp_ThenEasesToTheChase()
+        {
+            yield return Boot(true);
+            _report.AppendLine("# The wake opening (real Main scene, fresh game)");
+            _report.AppendLine();
+            _report.AppendLine("| Capture | Orbit elevation (deg) | Camera above dust (m) | 07's gaze | Beat |");
+            _report.AppendLine("|---|---:|---:|---:|---|");
+            WakeOpening opening = _cameraRig.Opening;
+            Assert.IsTrue(opening.IsActive && !opening.IsEasing, "A fresh game opens on 07's lens.");
+            Capture("wake-1-lens");
+
+            yield return Wait(WakeLookUpSeconds);
+            Assert.IsFalse(opening.IsEasing, "Still holding before any input.");
+            Assert.Greater(_cameraRig.SkyLift, 0.8f, "07 has looked up.");
+            Capture("wake-2-looking-up");
+
+            Set(_gamepad.rightStick, new Vector2(LookStick, 0f));
+            yield return Wait(StickProbeSeconds);
+            Set(_gamepad.rightStick, Vector2.zero);
+            Assert.IsTrue(opening.IsEasing, "Any input starts the ease to the chase frame.");
+            yield return Wait(WakeEaseFrameSeconds);
+            Assert.That(opening.Weight, Is.InRange(0.05f, 0.95f), "Midway through the ease.");
+            Capture("wake-3-easing");
+
+            float timeout = Time.time + WakeEaseTimeout;
+            while (opening.IsActive)
+            {
+                Assert.Less(Time.time, timeout, "The opening hands over to the chase frame.");
+                yield return null;
+            }
+
+            Directory.CreateDirectory(CaptureFolder);
+            File.WriteAllText(Path.Combine(CaptureFolder, "wake.md"), _report.ToString());
+        }
+
         private IEnumerator Stargaze(string name, Vector3 ground, float yaw)
         {
             _context.Get<IRoverPlacement>().PlaceAt(ground, Quaternion.Euler(0f, yaw, 0f));
@@ -177,7 +221,8 @@ namespace MoonProject.Rover.PlayModeTests
             yield return Wait(SettleSeconds);
         }
 
-        private IEnumerator Boot()
+        /// <param name="freshGame">Publish the base waking from nothing, as Gameplay does loading a fresh game.</param>
+        private IEnumerator Boot(bool freshGame = false)
         {
             Directory.CreateDirectory(SaveService.DefaultDirectory);
             _gamepad = InputSystem.AddDevice<Gamepad>();
@@ -210,6 +255,10 @@ namespace MoonProject.Rover.PlayModeTests
                 _context.Events.Subscribe<RoverAwoke>(_ => _awake = true),
                 _context.Events.Subscribe<StargazingChanged>(changed => _stargazing = changed.IsStargazing),
             };
+            if (freshGame)
+            {
+                _context.Events.Publish(new BasePowerChanged(BasePowerStage.Asleep, true));
+            }
 
             float started = Time.time;
             while (!_awake)
@@ -218,7 +267,10 @@ namespace MoonProject.Rover.PlayModeTests
                 yield return null;
             }
 
-            yield return Wait(SettleSeconds);
+            if (!freshGame)
+            {
+                yield return Wait(SettleSeconds);
+            }
         }
 
         private void Capture(string name)
