@@ -26,7 +26,7 @@ namespace MoonProject.UI
         private float _writtenGrain = -1f;
         private int _writtenGrainRevision = -1;
 
-        public HopFade(UiLayout layout, RelaySettings settings, IRadioHop hop)
+        public HopFade(UiLayout layout, RelayUiSettings settings, IRadioHop hop)
         {
             if (layout == null)
             {

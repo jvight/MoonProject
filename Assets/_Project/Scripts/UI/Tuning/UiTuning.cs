@@ -20,7 +20,7 @@ namespace MoonProject.UI
         [SerializeField] private FriendUiSettings _friends = new FriendUiSettings();
         [SerializeField] private TickerSettings _ticker = new TickerSettings();
         [SerializeField] private DialReadoutSettings _dialReadout = new DialReadoutSettings();
-        [SerializeField] private RelaySettings _relays = new RelaySettings();
+        [SerializeField] private RelayUiSettings _relays = new RelayUiSettings();
         [SerializeField] private SalvageSettings _salvage = new SalvageSettings();
         [SerializeField] private StargazeSettings _stargaze = new StargazeSettings();
         [SerializeField] private GuidanceSettings _guidance = new GuidanceSettings();
@@ -47,7 +47,7 @@ namespace MoonProject.UI
 
         public DialReadoutSettings DialReadout => _dialReadout;
 
-        public RelaySettings Relays => _relays;
+        public RelayUiSettings Relays => _relays;
 
         public SalvageSettings Salvage => _salvage;
 
