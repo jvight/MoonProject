@@ -202,7 +202,7 @@ namespace MoonProject.Gameplay
                 !_signals.Initialize(services, _friends, _cassettes, _logs, _relics, abilities, _sonar.Tuning) ||
                 !_shelf.Initialize(Radio, _cassettes.Catalog, _friends.BellTuning) ||
                 !_relays.Initialize(services, Upgrades, _tower, _tether, _friends.Tuning, Placement(context)) ||
-                !_progression.Initialize(services, Power, _home, _workshop, _sonar.Tuning, _friends, _relays,
+                !_progression.Initialize(services, Power, _home, _workshop, _sonar, _friends, _relays,
                     Upgrades) ||
                 !_plotter.Initialize(services, Blueprints, _workshop, _progression.Tuning, Upgrades))
             {
@@ -319,7 +319,7 @@ namespace MoonProject.Gameplay
             try
             {
                 return new TowerPartField(TowerParts, transform, services, _salvage, _relays.Reach, _tower,
-                    _friends.Tuning, _progression.Tuning);
+                    _friends.Tuning, _progression.Tuning, () => _progression.ChasmSeen);
             }
             catch (InvalidOperationException exception)
             {

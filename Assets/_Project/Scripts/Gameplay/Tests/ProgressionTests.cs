@@ -38,6 +38,48 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
+        public void DockEvening_OpensOnceOnAHomecomingWithNews_ThenTheSweepRunsAfterTheShotSettles()
+        {
+            var opened = new List<DockEveningOpened>();
+            _events.Subscribe<DockEveningOpened>(opened.Add);
+            var dock = new Vector3(1f, 0f, 2f);
+            using (var evening = new DockEvening(_events, 4f))
+            {
+                _events.Publish(new RoverDockChanged(true, dock, Quaternion.identity));
+                Assert.IsFalse(evening.Tick(0f));
+                Assert.AreEqual(0, opened.Count, "waking on the dock with nothing new: no evening");
+
+                _events.Publish(new RoverDockChanged(false, dock, Quaternion.identity));
+                _events.Publish(new BasePowerChanged(BasePowerStage.Home, true));
+                _events.Publish(new StoryPartFound("Part_TowerCoil", 1, Vector3.zero, true));
+                Assert.IsFalse(evening.HasNews, "a load's announcements are not news");
+                _events.Publish(new StoryPartFound("Part_TowerCoil", 1, Vector3.zero, false));
+                Assert.IsTrue(evening.HasNews);
+                Assert.IsFalse(evening.Tick(1f), "out on the trip: nothing yet");
+                _events.Publish(new RoverDockChanged(true, dock, Quaternion.identity));
+                Assert.IsFalse(evening.Tick(2f));
+                Assert.AreEqual(1, opened.Count, "home with news: the evening opens");
+                Assert.AreEqual(dock, opened[0].DockPosition);
+                Assert.IsFalse(evening.Tick(5.9f), "the wide shot settles first");
+                Assert.IsTrue(evening.Tick(6f), "then the tower's sweep raises a pillar");
+                Assert.IsFalse(evening.Tick(7f), "once");
+
+                _events.Publish(new RoverDockChanged(false, dock, Quaternion.identity));
+                _events.Publish(new RoverDockChanged(true, dock, Quaternion.identity));
+                evening.Tick(8f);
+                Assert.AreEqual(1, opened.Count, "at most once per return: no news, no second evening");
+
+                _events.Publish(new RoverDockChanged(false, dock, Quaternion.identity));
+                _events.Publish(new FriendRepaired("tilly"));
+                _events.Publish(new RoverDockChanged(true, dock, Quaternion.identity));
+                evening.Tick(9f);
+                Assert.AreEqual(2, opened.Count);
+                _events.Publish(new RoverDockChanged(false, dock, Quaternion.identity));
+                Assert.IsFalse(evening.Tick(20f), "07 drove off before the shot settled: the sweep lets it go");
+            }
+        }
+
+        [Test]
         public void ASleepingStation_AnswersNotYet_WhenTheRingReachesIt_AndAWokenOneStaysQuiet()
         {
             bool bayAsleep = true;

@@ -327,3 +327,8 @@ MonoBehaviour:
       _springFrequency: 1
       _springDamping: 0.7
     _placeHoldSeconds: 4
+  _backdrop:
+    _blurStartMetres: 0
+    _blurEndMetres: 4
+    _blurRadius: 1.5
+    _saturation: -30

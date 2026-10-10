@@ -25,6 +25,12 @@ account) can continue without the old conversation.
       0579f46b). Rover was asked to fix it first.
     - One is in gameplay: BaseAndSaveSessions.Deposit_TowedRelic…; gameplay was asked.
   - Nothing was pushed.
+- **verify on 85bb390f, final result:**
+  - Playthrough PASS: the golden path still runs end to end with the garage fix and every tip.
+  - PlayMode FAIL, only from the rover rig.
+- **M3-18 look baseline** (main 094c35e3, `tools/look_report.py capture`):
+  - the p5–p95 spread is 0.23–0.28 on all six frames (target ≥ 0.40);
+  - ground flatness is 0.21–0.62 (target ≤ 0.30).
 - **Sessions running (2026-10-11 ~01:10).**
   - Build boxes: gameplay (P2, P6, P9, Playthrough 0–8), rover (rig fix, carried part, the lift slice, motes), art
     (lift props, then M3-18), ui (voice, V11, NeedsPart), world (M3-18), tools (lint and box_check landed; land
@@ -32,6 +38,13 @@ account) can continue without the old conversation.
   - Design: game design (done; waits for the end-to-end first-hour review) and story & flow (game-flow.md, then
     amendments to the M3-07 and M3-09 drafts).
   - Every box runs `tools/box_check.py <box>` before it reports.
+- **Text from story & flow, ready to port** (`docs/design/text/`: crew-logs, radio-letters, crew-map,
+  title-and-collections):
+  - ui ports it into the tables and checks that Be Vietnam Pro has ♪ and ✓;
+  - gameplay (after its Playthrough item) places the 3 new log caches (garage, drill, supply lander) and
+    releases the letters, one per mast for the first 4 masts, then 2;
+  - world registers region.peak and region.terraces with M3-07's MapSheet;
+  - the owner's native read of the Vietnamese is welcome.
 - **Audio has no session; its queue:** dock_evening_swell on DockEveningOpened; cues for StoryPartFound and
   StoryPartDelivered; the lint renames SignalField and FakeRoverSystem (gameplay renames its copies instead).
 - **Lint duplicate-type fixes still to assign** (report-only in tools/lint.py until the list is empty; give each box

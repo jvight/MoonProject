@@ -98,16 +98,18 @@ flowchart LR
 "Session" means a natural stopping point that ends on the dock's evening. A first-time player usually plays two in a
 sitting. Minutes are cumulative within each version.
 
-### 0.5 "Lumen wakes" (~110 min): M3-16 steps 0–8 (~60 min) plus the rest of the basin
+### 0.5 "Lumen wakes" (~100 min): M3-16 steps 0–8 (~70 min) plus the rest of the basin
+Step 8 lands at ~70 min, a little over M3-16's 50–60, because P1's story parts and P2's chasm visit each add a
+short trip. That is content, not padding.
 
 | # | Min | New to discover | Home changes | 07 changes | The reason to come back |
 |---|---|---|---|---|---|
-| S1 | 0–20 | the opening (07's own eye); the depot answers the ping; 4 cuts, and the last panel falls to reveal the coil (P10, P1); feed and stitch the tower | **L1:** cabin windows, porch lamps, the HOME sign straightens, the **radio clears** for the first time; the pilot blink gives way to a lit tower | its eye opens, nothing else yet: 07's arc starts at its most tired | the tower hears a chirp: Tilly's pillar rises in the dock's evening |
-| S2 | 20–40 | Tilly broken, her 3 parts, the stitch, she wakes; Tilly spots a glint: the duck, the first memory, towed home | Tilly's perch lamp; **the memory shelf wakes** with its lamp and the duck | Tilly's gift: the solar wing's missing cell is replaced | Tilly spots a warm light **across the chasm** |
-| S3 | 40–55 | the chasm: 07 can't cross, sees Bell's light (P2); Tilly spots the garage: the transformer, the cassette player, the Cradle tube; **L2: the bay's shutter**; the plotter draws the Cradle sheet; Hover-Jump is fitted (the long first install) | the bay lit: its "07" sign, the arms, the plotter with 2 sheets; a 2nd memory | **hover coils** under the belly, glowing when charged | the chasm, now crossable |
-| S4 | 55–80 | the leap; inside the canyon: the ledge tape (Slow Orbit); Bell at the terminus with Ro's first log and Vol. 1; Bell's parts, her repair; out by the one-way exit; **relay.2 at the canyon mouth is the first mast**, its spare part is L3's story part, and the first radio-hop takes 07 home instead of a 4-min drive | **Bell's corner** and dial; the tape rack with 2 tapes; one lit mast on the horizon; **the station jingle plays clear: the opening's ghost** | Bell's gift: the "07" freshly stencilled and a radio pennant | Bell picks up a signal (Dust & Honey) and the jammed lift now has its part |
-| S5 | 80–95 | Bell's signal leads to a tape in the basin; L3 powers the lift; restore the winch; **the ride and the lookout**; the crew's map (M3-07) | the lift runs, the deck lamp, the map board lit; L3's cable | the Cargo Cradle if the player built it (the rear rack, straps parallel, P3) | the map shows Kestrel, the drill, three dark masts, and Ines's pencil notes beyond the rim |
-| S6 | 95–110+ | Kestrel-3 (the golden record, the Headlamp tube); the drill (Ines's boot, the Boost Coils tube); relay.0, relay.1, relay.3; with the Headlamp, the dark hollow (Theo's first log and a tape); Kenji's first log in the garage heart | the shelf holds all 6 memories; the plotter 4 sheets; **four masts lit: the basin is home**, the radio clear everywhere in it | **lamp bar** and **capacitor drums** (the player's order) | from the lookout, a pillar at the foot of the terrace wall, and Ines's note "Atlas parked here." 0.5 ends on that promise. |
+| S1 | 0–15 | the opening (07's own eye); the depot answers the ping; 4 cuts, and the last panel falls to reveal the coil (P10, P1); feed and stitch the tower | **L1:** cabin windows, porch lamps, the HOME sign straightens, the **radio clears** for the first time; the pilot blink gives way to a lit tower | its eye opens, nothing else yet: 07's arc starts at its most tired | the tower hears a chirp: Tilly's pillar rises in the dock's evening |
+| S2 | 15–30 | Tilly broken, her 3 parts, the stitch, she wakes; Tilly spots a glint: the duck, the first memory, towed home | Tilly's perch lamp; **the memory shelf wakes** with its lamp and the duck | Tilly's gift: the solar wing's missing cell is replaced | Tilly spots a warm light **across the chasm** |
+| S3 | 30–42 | the chasm: 07 can't cross, sees Bell's light (P2); Tilly spots the garage: the transformer, the cassette player, the Cradle tube; **L2: the bay's shutter**; the plotter draws the Cradle sheet; Hover-Jump is fitted (the long first install) | the bay lit: its "07" sign, the arms, the plotter with 2 sheets; a 2nd memory | **hover coils** under the belly, glowing when charged | the chasm, now crossable |
+| S4 | 42–60 | the leap; inside the canyon: the ledge tape (Slow Orbit); Bell at the terminus with Ro's first log and Vol. 1; Bell's parts, her repair; out by the one-way exit; **relay.2 at the canyon mouth is the first mast**, its spare part is L3's story part, and the first radio-hop takes 07 home instead of a 4-min drive | **Bell's corner** and dial; the tape rack with 2 tapes; one lit mast on the horizon; **the station jingle plays clear: the opening's ghost** | Bell's gift: the "07" freshly stencilled and a radio pennant | Bell picks up a signal (Dust & Honey) and the jammed lift now has its part |
+| S5 | 60–72 | Bell's signal leads to a tape in the basin; L3 powers the lift; restore the winch; **the ride and the lookout**; the crew's map (M3-07) | the lift runs, the deck lamp, the map board lit; L3's cable | the Cargo Cradle if the player built it (the rear rack, straps parallel, P3) | the map shows Kestrel, the drill, three dark masts, and Ines's pencil notes beyond the rim |
+| S6 | 72–100 | Kestrel-3 (the golden record, the Headlamp tube); the drill (Ines's boot, the Boost Coils tube); relay.0, relay.1, relay.3; with the Headlamp, the dark hollow (Theo's first log and a tape); Kenji's first log in the garage heart | the shelf holds all 6 memories; the plotter 4 sheets; **four masts lit: the basin is home**, the radio clear everywhere in it | **lamp bar** and **capacitor drums** (the player's order) | from the lookout, a pillar at the foot of the terrace wall, and Ines's note "Atlas parked here." 0.5 ends on that promise. |
 
 ### 0.6 "Rim Terraces" (~75 min)
 | # | Min | New to discover | Home changes | 07 changes | The reason to come back |
@@ -127,10 +129,10 @@ sitting. Minutes are cumulative within each version.
 | S11 | 0–35 | the last mast at the Peak's foot; the Peak road (walls, gaps, Atlas clears the rockfall); Ro's last letters; Ro's set and her final log, "I left the radio on for you, 07." | **all four bunk windows lit** | fully cared for: no sign of solitude left except the half-lidded eye | the great dish lies broken on the summit |
 | S12 | 35–60 | 07 lifts Ro's mixtape from the shelf into Bell's deck; Atlas lifts the dish, 07 stitches; **the broadcast and Earth's answer**; credits | Bell plays Side B; the Peak's beacon turns amber: the Peak becomes a home light | — | Ro writes back (§7) |
 
-**Main arc ≈ 5.6 h** (DESIGN target 5–7 h). Completion (all 24 memories, 8 tapes, 12 logs, the events, paint) adds
+**Main arc ≈ 5.4 h** (DESIGN target 5–7 h). Completion (all 24 memories, 8 tapes, 12 logs, the events, paint) adds
 about 4 h (DESIGN target 10–12 h total).
 
-**1.0** adds no new region. It polishes, adds the title screen's full collections (M3-09 draft), Settings ("Gentle
+**1.0** adds no new region. It polishes, adds the title screen's full collections (M3-09), Settings ("Gentle
 camera", the next line), controller support, photo mode and paint, and the after-ending letters.
 
 ## 5. The crew's mystery: when each piece is revealed
@@ -157,9 +159,9 @@ heard Ro: the masts could only listen, and only the great dish can talk back.
 
 **Logs by version.** STORY plans 12 logs, three per crew member; on main there is one log cache (Ro's, at the canyon
 terminus) plus Bell's repair log. Proposed placement: 0.5 has each crew member's **first** log (Ro: terminus, built;
-Kenji: the garage heart; Theo: the dark hollow; Ines: the drill). Their second logs come with their regions (Ines 0.6,
-Theo 0.7, Ro and Kenji 0.6–0.8). Every **third** log is the reward for completing that crew member's set (DESIGN
-collections).
+Kenji: the garage; Theo: the canyon supply lander, beside his teapot; Ines: the drill). Their second logs come with
+their regions (Ro, Ines and Kenji in 0.6, Theo in 0.7). Every **third** log is the reward for completing that crew
+member's set (DESIGN collections). The texts and exact spots: `docs/design/text/crew-logs.md`.
 
 ## 6. The excitement curve
 Rule: **never more than 3 minutes without something new in view** (a landmark, a glint, a pillar, a friend's beat)
@@ -172,28 +174,28 @@ to 5 (a peak). Cozy means many 2s and 3s, regular 4s and a 5 about every 20 minu
 |---|---|---|---|
 | 0 | the opening, the blink | wonder, tenderness | 4 |
 | 3 | the depot answers the ping | curiosity | 2 |
-| 8 | the last cut falls and the coil glints | small surprise | 3 |
-| 12 | **L1: home wakes, the radio clears** | warmth | **5** |
-| 15 | the tower hears Tilly | curiosity | 3 |
-| 20 | Tilly wakes and looks at 07 | joy | 4 |
-| 24 | Tilly home, her perch lights, the solar cell | warmth | 4 |
-| 30 | the duck is dug, the shelf wakes | tenderness, humour | 3 |
-| 36 | the chasm: Bell's light across | longing | 3 |
-| 42 | the garage's heart: the tube and the transformer | small surprise | 3 |
-| 47 | **L2: the bay's shutter** | pride | **5** |
-| 50 | the first install, the coils glow | pride | 4 |
-| 56 | **the leap** | exhilaration | **5** |
-| 62 | inside the canyon, the ledge tape | discovery | 3 |
-| 66 | Bell found, Ro's first log | melancholy | 4 |
-| 72 | Bell stands up, her two-step | joy | 4 |
-| 76 | the first mast lights, the first radio-hop | relief, wonder | 3 |
-| 78 | **Bell home: the jingle is the opening's music** | recognition | **5** |
-| 85 | Bell's signal leads to a tape | curiosity | 2 |
-| 90 | L3, the lift restored | anticipation | 3 |
-| 92 | **the ride and the lookout** | awe, scale | **5** |
-| 95 | the crew's map | discovery | 4 |
-| 100–110 | Kestrel, the drill, the hollow, the masts: the chain of lights | mastery, warmth | 3–4 |
-| 110 | the terrace promise from the lookout | longing | 3 |
+| 7 | the last cut falls and the coil glints | small surprise | 3 |
+| 10 | **L1: home wakes, the radio clears** | warmth | **5** |
+| 12 | the tower hears Tilly | curiosity | 3 |
+| 16 | Tilly wakes and looks at 07 | joy | 4 |
+| 19 | Tilly home, her perch lights, the solar cell | warmth | 4 |
+| 24 | the duck is dug, the shelf wakes | tenderness, humour | 3 |
+| 30 | the chasm: Bell's light across | longing | 3 |
+| 35 | the garage's heart: the tube and the transformer | small surprise | 3 |
+| 38 | **L2: the bay's shutter** | pride | **5** |
+| 41 | the first install, the coils glow | pride | 4 |
+| 45 | **the leap** | exhilaration | **5** |
+| 49 | inside the canyon, the ledge tape | discovery | 3 |
+| 52 | Bell found, Ro's first log | melancholy | 4 |
+| 56 | Bell stands up, her two-step | joy | 4 |
+| 59 | the first mast lights, the first radio-hop | relief, wonder | 3 |
+| 61 | **Bell home: the jingle is the opening's music** | recognition | **5** |
+| 64 | Bell's signal leads to a tape | curiosity | 2 |
+| 67 | L3, the lift restored | anticipation | 3 |
+| 69 | **the ride and the lookout** | awe, scale | **5** |
+| 72 | the crew's map | discovery | 4 |
+| 75–95 | Kestrel, the drill, the hollow, the masts: the chain of lights | mastery, warmth | 3–4 |
+| 100 | the terrace promise from the lookout | longing | 3 |
 
 **Later versions follow the same shape:** a promise seen → a find → a kit fitted (4) → the gate crossed (5) → the
 friend (4) → its mast and the letters (4) → a crew window (5) → the next promise.
@@ -222,7 +224,7 @@ friend (4) → its mast and the letters (4) → a crew window (5) → the next p
   - the Peak's beacon is amber;
   - Ro's **letters keep coming**: one new letter on the ticker per later session, about ten in all, written as one
     side of a correspondence with a rover. A gentle reason to come back, finite, never time-limited;
-  - the title screen shows the lit home and the amber beacon (M3-09 draft).
+  - the title screen shows the lit home and the amber beacon (M3-09 draft: the title is the live world).
 - **Free roam holds:** any memories, tapes and logs not yet found; moon drift and the events (Eclipse, Solar Flare,
   Earthrise); photo mode; 07's paint and stickers; base decorations on snap points.
 
@@ -232,15 +234,15 @@ friend (4) → its mast and the letters (4) → a crew window (5) → the next p
 |---|---|---|---|
 | 1 | VISION ruling 5 vs M3-16 | Ruling 5: "all three tower levels in 15–20 min". M3-16 puts L3 at step 8, ~50–60 min. | Amend ruling 5's last sentence: "Target: each version's steps need about half of its materials; the tower's three levels land across the first hour." |
 | 2 | STORY vs M3-16 step 2 | STORY: a crew member's window lights when their set completes. M3-16: L1 lights the lander's windows one by one. | L1 lights the cabin windows and porch lamps. The four small **bunk windows** stay dark until each set completes (cutscenes §2). Art builds bunk windows as separate renderers. |
-| 3 | VISION ruling 8 and M3-16 P5 vs the owner's brief | The first frame is the chase frame; the owner wants a first-person opening. | The text in cutscenes §1.4. |
+| 3 | VISION ruling 8 and M3-16 P5 vs the owner's brief | The first frame is the chase frame; the owner wants a first-person opening. | Adopted on main (5e7f3a43): ruling 8, the camera bullet, the call sign, M3-16 P5 and step 0. |
 | 4 | DESIGN regions vs M3-16 blueprints | The Warm Headlamp gates the Shadowed Crater (0.7), but its tube ships in 0.5 at Kestrel, and DESIGN says every traversal kit opens a region and a nearby secret. In 0.5 it opens nothing. | Keep the tube in 0.5 and add **the dark hollow** near Kestrel's crater: a short lava tube, dark until the Headlamp, holding Theo's first log and a tape. The crater stays 0.7. |
 | 5 | DESIGN map vs M3-06 vs M3-16 step 8 | DESIGN: POIs light up "once visited". M3-06: the map draws itself within reach. M3-16: "the crew's map inside opens new regions", but no region opens in 0.5. | M3-07 draft: the crew's paper map already shows everything in Ines's pencil. The station's survey plotter inks what lies within reach, places visited get a stamp, and regions beyond are promises in pencil. It opens no region; it points at them. |
 | 6 | STORY collections vs content | STORY: 12 logs, 24 memories, 8 tapes. Built: 1 log cache + Bell's repair log, 6 memories, 3 tapes. ROADMAP 0.5 lists "remaining crew logs in the region". | §5's log placement (4 first logs in 0.5). Memories: +6 per version for 0.6, 0.7 and 0.8. Tapes: 0.6 +2, 0.7 +2, 0.8 +1 (STORY "the other five"). STORY needs the 11 remaining log texts (M3-01 is still 🟦); the story session can draft them. |
 | 7 | STORY ending vs the finale's logic | The ending plays "the last song on Ro's mixtape", but the mixtape is a memory on the shelf at home, and the broadcast happens on the Peak. | Before the last climb, 07's beam lifts the tape into Bell's deck. Bell plays Side B and the relay chain carries it up to the dish (cutscenes F2). That makes the chain the reason the ending works. |
 | 8 | STORY ending vs setup | "Three short, one long, the station's old call sign" is never taught. | 07's antenna tip blinks it at rest all game; Kenji's first log names it (cutscenes §1.5). |
-| 9 | ROADMAP 0.5 row vs ROADMAP M3-09 row | One says the title has New Game; the other says Continue/Settings. | The title has **Continue, New Game, Settings, Quit** (M3-09 draft). |
-| 10 | DESIGN collections vs the pause menu | DESIGN: collections show "at the base, never in a spreadsheet menu". The pause menu shows tape and relay counts (`ui.pause.cassettes`, `ui.pause.relays`). | M3-09 draft: every collection has a home at the base, and the pause menu keeps at most one quiet line of counts. |
-| 11 | The opening's trigger in code | `RoverCameraRig.OnBasePowerChanged` starts the opening on any load at stage Asleep, so a player who quits before L1 sees it again. | Core `SessionStarted(freshGame)` (cutscenes §1.7). |
+| 9 | ROADMAP 0.5 row vs ROADMAP M3-09 row | One says the title has New Game; the other says Continue/Settings. | The M3-09 draft: **Continue, New Game, Settings, Quit**. The pause menu's New game becomes \"Quit to title\". |
+| 10 | DESIGN collections vs the pause menu | DESIGN: collections show "at the base, never in a spreadsheet menu". The pause menu shows tape and relay counts (`ui.pause.cassettes`, `ui.pause.relays`). | The M3-09 draft: every collection has a home at the base, and the pause card's counts are removed. |
+| 11 | The opening's trigger in code | `RoverCameraRig.OnBasePowerChanged` starts the opening on any load at stage Asleep, so a player who quits before L1 sees it again. | Core `SessionStarted(freshGame)` (cutscenes §1.8). |
 | 12 | DESIGN friends table vs what is built | Bell is "found on a canyon shelf" (built: the canyon terminus). Tilly is "the scientist's surveyor" (STORY: Ines, the geologist). | Update DESIGN's friends table to match STORY and the build. |
 | 13 | DESIGN Atlas vs the rule of the find | Atlas "carries relics home automatically from marked spots", which would remove the homecoming from later trips. | Atlas carries only **heavy** things (the dish, rockfalls, a crew window's part). Memories still ride home with 07. |
 | 14 | P6 vs the short wake | Both happen on the dock. A session that starts on the dock could show the short wake and an evening back to back. | The dock's evening never plays in the first minute of a session; the short wake's glance does its job. |

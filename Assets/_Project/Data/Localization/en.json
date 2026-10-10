@@ -96,23 +96,27 @@
         },
         {
             "key": "next.relic",
-            "text": "Something glints out there. Bring it home."
+            "text": "Something glints out there. Home has room for it."
+        },
+        {
+            "key": "next.chasm",
+            "text": "A light across the chasm. Too far to cross, for now."
         },
         {
             "key": "next.bay",
-            "text": "The bay has power. Park on the turntable."
+            "text": "The bay has power. The turntable is waiting."
         },
         {
             "key": "next.leap",
-            "text": "The chasm waits. Charge a leap."
+            "text": "The chasm waits. A charged leap could clear it."
         },
         {
             "key": "next.relay",
-            "text": "A dark mast. Bring it back."
+            "text": "A dark mast, waiting to be lit."
         },
         {
             "key": "next.lift",
-            "text": "The lift has power. Mend it and ride up."
+            "text": "The lift has power. Mended, it could carry 07 up."
         },
         {
             "key": "notyet.tower",
@@ -303,6 +307,10 @@
             "text": "Power the tired antenna and home wakes: the lander's windows glow again."
         },
         {
+            "key": "upgrade.radio_tower.1.needs_part",
+            "text": "The tower is waiting for its coil."
+        },
+        {
             "key": "upgrade.radio_tower.2.title",
             "text": "Raise the mast"
         },
@@ -311,12 +319,20 @@
             "text": "A taller mast carries power to Kenji's bay, and the radio stays clear far out."
         },
         {
+            "key": "upgrade.radio_tower.2.needs_part",
+            "text": "The tower is waiting for its transformer."
+        },
+        {
             "key": "upgrade.radio_tower.3.title",
             "text": "Light the whole basin"
         },
         {
             "key": "upgrade.radio_tower.3.effect",
             "text": "The tower sings across the basin and wakes the crew's lift; home glows like a lantern."
+        },
+        {
+            "key": "upgrade.radio_tower.3.needs_part",
+            "text": "The tower is waiting for a spare from the relays."
         },
         {
             "key": "upgrade.rover.hover_jump.name",
@@ -604,7 +620,7 @@
         },
         {
             "key": "ticker.relay.waiting",
-            "text": "Relay restored. It is listening for a lit neighbour."
+            "text": "Relay restored. It listens for a lit neighbour."
         },
         {
             "key": "hop.node.home",
@@ -725,6 +741,254 @@
         {
             "key": "ui.bay.pick",
             "text": "tap for the next"
+        },
+        {
+            "key": "log.kenji_1",
+            "text": "Fixed the old survey rover today, the seventh thing on this week's list, so it's 07 now. I taught its antenna our call sign, three short, one long, and it blinks it at me whenever I walk past. — Kenji"
+        },
+        {
+            "key": "log.ines_1",
+            "text": "Core sample 41: grey dust, grey dust, one blue pebble. Logged it as \"anomalous\". Kept it as \"mine\". — Ines"
+        },
+        {
+            "key": "log.theo_1",
+            "text": "Named every seedling in tray four; the mint is Gerald. Gerald is the best mint on the Moon, which is a low bar, but he's clearing it. — Theo"
+        },
+        {
+            "key": "log.ro_2",
+            "text": "Read the storm warning on air tonight, tucked between two slow songs so it wouldn't sound so scary. 07 rolled right up to the speaker and stayed there. — Ro"
+        },
+        {
+            "key": "log.ines_2",
+            "text": "My call as mission lead: all four of us leave on the morning shuttle. It's the right call, and I've never hated being right so much. — Ines"
+        },
+        {
+            "key": "log.kenji_2",
+            "text": "Hid a spare wheel for 07 under the tarp in the crawler. Next time I'll give it six matching ones, not just patch the odd one out. — Kenji"
+        },
+        {
+            "key": "log.theo_2",
+            "text": "Ten minutes to pack. I left Moss the watering schedule, and Moss hummed at me as if I'd insulted the tomatoes. — Theo"
+        },
+        {
+            "key": "log.ro_3",
+            "text": "Last show before the shuttle. I left the radio on for you, 07. Keep it playing, and we'll find you by the music. — Ro"
+        },
+        {
+            "key": "log.ines_3",
+            "text": "We were coming back, 07. I need you to know we tried. — Ines"
+        },
+        {
+            "key": "log.theo_3",
+            "text": "Left the last tray by the window. If anything grows, tell me. — Theo"
+        },
+        {
+            "key": "log.kenji_3",
+            "text": "They asked me what to do with the rover, and I said leave it switched on. Don't let anyone retire you, 07. — Kenji"
+        },
+        {
+            "key": "ticker.radio.weather",
+            "text": "…weather tonight: clear skies over the Sea of Tranquility, as always…"
+        },
+        {
+            "key": "letter.mast_1",
+            "text": "Lumen Station, this is Houston relay. All four crew landed safely. Program review postponed. Stand by."
+        },
+        {
+            "key": "letter.mast_2",
+            "text": "Lumen Station, this is Houston relay. A return window is under study. Keep station systems on standby."
+        },
+        {
+            "key": "letter.mast_3",
+            "text": "Lumen Station, this is Houston relay. Return window cancelled. Program review continues."
+        },
+        {
+            "key": "letter.mast_4",
+            "text": "Lumen Station, this is Houston relay. Program closed. This channel will no longer be monitored. Thank you, Lumen."
+        },
+        {
+            "key": "letter.mast_5",
+            "text": "07, it's Ro. They say nobody's listening up there. I'm sending this anyway. — Ro"
+        },
+        {
+            "key": "letter.mast_6",
+            "text": "Ines took a desk job. She still walks round the block every morning to check Earth is still there. — Ro"
+        },
+        {
+            "key": "letter.mast_7",
+            "text": "Theo says the basil on my windowsill isn't as good as yours was. Don't tell him I agree. — Ro"
+        },
+        {
+            "key": "letter.mast_8",
+            "text": "Kenji fixed my kettle with a paperclip and a long speech about tolerances. He says hello to the duck. — Ro"
+        },
+        {
+            "key": "letter.mast_9",
+            "text": "It's been twenty years. I still play the long-drive tape on Sundays. — Ro"
+        },
+        {
+            "key": "letter.mast_10",
+            "text": "If that old dish ever wakes up, I'll be listening on the station's frequency. You know how to find me: three short, one long. — Ro"
+        },
+        {
+            "key": "ticker.ending.answer",
+            "text": "I heard you, 07. I'm still here. — Ro"
+        },
+        {
+            "key": "letter.after_1",
+            "text": "Told the others. Theo cried, then blamed hay fever. — Ro"
+        },
+        {
+            "key": "letter.after_2",
+            "text": "Ines went out at midnight to look at the Moon. She says it's still there. — Ro"
+        },
+        {
+            "key": "letter.after_3",
+            "text": "Kenji asked if you still have the odd wheel. I told him all six match now, and he had to sit down. — Ro"
+        },
+        {
+            "key": "letter.after_4",
+            "text": "Played your song on my show tonight. Audience: two neighbours and a very old cat. Best audience since you. — Ro"
+        },
+        {
+            "key": "letter.after_5",
+            "text": "I told Theo about the dome. He's been unbearable all week. — Ro"
+        },
+        {
+            "key": "letter.after_6",
+            "text": "Weather tonight: rain over Lagos. It's always clear where you are, isn't it? — Ro"
+        },
+        {
+            "key": "letter.after_7",
+            "text": "Ines's daughter wants to be an astronaut. Ines is pretending to be worried. — Ro"
+        },
+        {
+            "key": "letter.after_8",
+            "text": "The four of us wrote to the agency together. Don't hold your breath; you don't breathe anyway. — Ro"
+        },
+        {
+            "key": "letter.after_9",
+            "text": "Kenji's grandson won a rubber duck at the fair. Kenji says it's a sign. — Ro"
+        },
+        {
+            "key": "letter.after_10",
+            "text": "Goodnight, 07. Keep the radio on. We'll keep ours on too. — Ro"
+        },
+        {
+            "key": "map.sheet.title",
+            "text": "Lumen basin, surveyed on foot. — I. Kalani"
+        },
+        {
+            "key": "map.tally.label",
+            "text": "Checked:"
+        },
+        {
+            "key": "map.complete.note",
+            "text": "Checked: the Moon is still there. — I."
+        },
+        {
+            "key": "map.state.heart_waiting",
+            "text": "Something still waits in its heart."
+        },
+        {
+            "key": "map.state.picked_clean",
+            "text": "Picked clean."
+        },
+        {
+            "key": "map.state.mast_dark",
+            "text": "Dark. Waiting to be lit."
+        },
+        {
+            "key": "map.state.mast_lit",
+            "text": "Lit. Home reaches this far."
+        },
+        {
+            "key": "ui.title.subtitle",
+            "text": "a radio left on"
+        },
+        {
+            "key": "ui.title.continue",
+            "text": "Continue"
+        },
+        {
+            "key": "ui.title.new_game",
+            "text": "New Game"
+        },
+        {
+            "key": "ui.title.settings",
+            "text": "Settings"
+        },
+        {
+            "key": "ui.title.quit",
+            "text": "Quit"
+        },
+        {
+            "key": "ui.title.new_game_question",
+            "text": "Put this moon away and start again?"
+        },
+        {
+            "key": "ui.title.new_game_aside",
+            "text": "Your old moon is kept."
+        },
+        {
+            "key": "ui.title.new_game_keep",
+            "text": "Keep this moon"
+        },
+        {
+            "key": "ui.title.new_game_confirm",
+            "text": "Start again"
+        },
+        {
+            "key": "ui.pause.quit_to_title",
+            "text": "Quit to title"
+        },
+        {
+            "key": "crew.ro.plate",
+            "text": "Ro, on air"
+        },
+        {
+            "key": "crew.theo.plate",
+            "text": "Theo & the seedlings"
+        },
+        {
+            "key": "crew.ines.plate",
+            "text": "I. Kalani, Lead"
+        },
+        {
+            "key": "crew.kenji.plate",
+            "text": "Kenji (ask the duck)"
+        },
+        {
+            "key": "ticker.set.ro.filling",
+            "text": "Ro's shelf is filling up. It already sounds like her."
+        },
+        {
+            "key": "ticker.set.theo.filling",
+            "text": "Theo's shelf is filling up. Something on it is almost growing."
+        },
+        {
+            "key": "ticker.set.ines.filling",
+            "text": "Ines's shelf is filling up, everything in neat rows."
+        },
+        {
+            "key": "ticker.set.kenji.filling",
+            "text": "Kenji's shelf is filling up. The duck approves."
+        },
+        {
+            "key": "ticker.set.ro.complete",
+            "text": "Ro's window is lit again."
+        },
+        {
+            "key": "ticker.set.theo.complete",
+            "text": "Theo's window is lit again."
+        },
+        {
+            "key": "ticker.set.ines.complete",
+            "text": "Ines's window is lit again."
+        },
+        {
+            "key": "ticker.set.kenji.complete",
+            "text": "Kenji's window is lit again."
         }
     ]
 }

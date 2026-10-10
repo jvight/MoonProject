@@ -9,7 +9,11 @@ namespace MoonProject.Gameplay
     /// Waking Lumen Station step by step (docs/features/M3-16). Each frame it notes whether 07 has woken and gone out,
     /// greets 07 at each place the first time (<see cref="PlaceApproaches"/>), lets the sleeping bay, lift and memory
     /// shelf answer the sonar with "not yet" (<see cref="DormantAnswers"/>) and keeps the soft "next" line on the
-    /// first step not yet done (<see cref="StepFlow"/>). Saved as "gameplay.progression".
+    /// first step not yet done (<see cref="StepFlow"/>). The chasm comes before the bay (P2): once Tilly is home and the
+    /// first memory is on the shelf, she spots Bell's light across the chasm (Bell's warm pillar rises); the first
+    /// time 07 reaches the lip without Hover-Jump it holds still and looks across while the light pulses. Coming home
+    /// to the dock with news opens the dock's evening (<see cref="DockEvening"/>, P6), whose listening sweep raises
+    /// the next signal pillar. Saved as "gameplay.progression".
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class BaseProgression : MonoBehaviour
@@ -24,9 +28,9 @@ namespace MoonProject.Gameplay
         private const int TowerSpot = 4;
         private const int StepTower = 2;
         private const int StepRelic = 4;
-        private const int StepBay = 5;
-        private const int StepLeap = 6;
-        private const int StepLift = 8;
+        private const int StepBay = 6;
+        private const int StepLeap = 7;
+        private const int StepLift = 9;
 
         [Tooltip("The wake-up's tuning (Assets/_Project/Data/Tuning/Gameplay/ProgressionTuning.asset).")]
         [SerializeField] private ProgressionTuning _tuning;
@@ -39,8 +43,21 @@ namespace MoonProject.Gameplay
         [SerializeField] private Transform _lift;
 
         private IRoverState _rover;
+        private IRoverRig _rig;
+        private SonarSystem _sonar;
+        private Friend _signal;
+        private Friend _leap;
+        private int _leapIndex;
+        private HomeBase _home;
+        private UpgradeService _upgrades;
+        private Vector3 _lip;
+        private bool _bellLit;
+        private bool _chasmSeen;
+        private float _lookUntil = float.NegativeInfinity;
+        private bool _looking;
         private PlaceApproaches _approaches;
         private DormantAnswers _answers;
+        private DockEvening _evening;
         private StepFlow _steps;
         private IDisposable _salvage;
         private Vector3 _dock;
@@ -53,6 +70,15 @@ namespace MoonProject.Gameplay
         /// <summary>The current "next" line key (empty once every step is done).</summary>
         public string NextStep => _steps != null ? _steps.Current : string.Empty;
 
+        /// <summary>07 has looked across the chasm at Bell's light (P2): the bay's power may follow.</summary>
+        public bool ChasmSeen => _chasmSeen;
+
+        /// <summary>True while 07 holds still at the lip, looking across.</summary>
+        public bool LookingAcross => _looking;
+
+        /// <summary>The dock's evening (tests and debugging views).</summary>
+        public DockEvening Evening => _evening;
+
         internal void Wire(ProgressionTuning tuning, Transform[] places, Transform lift)
         {
             _tuning = tuning;
@@ -61,9 +87,13 @@ namespace MoonProject.Gameplay
         }
 
         internal bool Initialize(GameplayServices services, BasePower power, HomeBase home, Workshop bay,
-            SonarTuning sonar, FriendField friends, IRelayStatus relays, UpgradeService upgrades)
+            SonarSystem sonar, FriendField friends, IRelayStatus relays, UpgradeService upgrades)
         {
             string problem = WiringProblem();
+            WorldAnchor lip = default;
+            problem = problem ?? (services.Anchors.TryGet(WorldAnchorIds.CanyonLip, out lip)
+                ? null
+                : $"no world anchor '{WorldAnchorIds.CanyonLip}' for {ProgressionKeys.NextChasm}.");
             Friend signal = problem == null ? FindFriend(friends, _tuning.SignalFriend) : null;
             Friend leap = problem == null ? FindFriend(friends, _tuning.LeapFriend) : null;
             problem = problem
@@ -80,6 +110,14 @@ namespace MoonProject.Gameplay
             }
 
             _rover = services.Rover;
+            _rig = services.Rig;
+            _sonar = sonar;
+            _signal = signal;
+            _leap = leap;
+            _leapIndex = IndexOf(friends, leap);
+            _home = home;
+            _upgrades = upgrades;
+            _lip = lip.Position;
             _dock = _places[0].position;
             _approaches = new PlaceApproaches(services.Events, _tuning.PlaceLineGap);
             _steps = new StepFlow(services.Events);
@@ -89,7 +127,7 @@ namespace MoonProject.Gameplay
                     Speaks(Places[i], bay, leap));
             }
 
-            _answers = new DormantAnswers(services.Events, sonar);
+            _answers = new DormantAnswers(services.Events, sonar.Tuning);
             Func<bool> homePowered = () => power.HasReached(BasePowerStage.Home);
             _answers.Add(ProgressionKeys.NotYetTower, _places[TowerSpot].position, () => !homePowered());
             _answers.Add(ProgressionKeys.NotYetBay, bay.transform.position, () => homePowered() && !bay.Awake);
@@ -98,12 +136,14 @@ namespace MoonProject.Gameplay
             _answers.Add(ProgressionKeys.NotYetShelf, home.ShelfPosition,
                 () => homePowered() && home.DisplayedCount == 0);
             _salvage = services.Events.Subscribe<MaterialSalvaged>(_ => _salvaged = true);
+            _evening = new DockEvening(services.Events, _tuning.EveningSweepDelay);
 
             _steps.Add(ProgressionKeys.NextWake, () => _woke);
             _steps.Add(ProgressionKeys.NextSalvage, () => _salvaged || power.HasReached(BasePowerStage.Home));
             _steps.Add(ProgressionKeys.NextTower, () => power.HasReached(BasePowerStage.Home));
             _steps.Add(ProgressionKeys.NextSignal, () => signal.Progress.State == FriendState.Awake);
             _steps.Add(ProgressionKeys.NextRelic, () => home.DisplayedCount > 0);
+            _steps.Add(ProgressionKeys.NextChasm, () => _chasmSeen || upgrades.LevelOf(_tuning.FirstKit) > 0);
             _steps.Add(ProgressionKeys.NextBay, () => upgrades.LevelOf(_tuning.FirstKit) > 0);
             _steps.Add(ProgressionKeys.NextLeap, () => leap.Progress.State == FriendState.Awake);
             _steps.Add(ProgressionKeys.NextRelay, () => relays.LitMasts > 0);
@@ -114,13 +154,17 @@ namespace MoonProject.Gameplay
 
         internal ProgressionSaveData Capture()
         {
-            return new ProgressionSaveData { woke = _woke, salvaged = _salvaged, places = _approaches.Capture() };
+            return new ProgressionSaveData
+            {
+                woke = _woke, salvaged = _salvaged, chasmSeen = _chasmSeen, places = _approaches.Capture(),
+            };
         }
 
         internal void Restore(ProgressionSaveData data)
         {
             _woke = data.woke;
             _salvaged = data.salvaged;
+            _chasmSeen = data.chasmSeen;
             _approaches.Restore(data.places);
         }
 
@@ -136,7 +180,60 @@ namespace MoonProject.Gameplay
             _woke |= SurfaceRules.HorizontalDistance(rover, _dock) > _tuning.WakeDistance;
             _approaches.Tick(rover, now);
             _answers.Tick(now);
+            StepChasm(rover, now);
+            if (_evening.Tick(now))
+            {
+                _sonar.RevealNextUnheard(_dock, _tuning.EveningPillarBrightness);
+            }
+
             _steps.Tick();
+        }
+
+        /// <summary>Tilly spots Bell's light once the first memory is home; 07 looks across from the lip once.</summary>
+        private void StepChasm(Vector3 rover, float now)
+        {
+            bool bellAway = _leap.Progress.State != FriendState.Awake;
+            if (!_bellLit && bellAway && _signal.Progress.State == FriendState.Awake && _home.DisplayedCount > 0)
+            {
+                _bellLit = true;
+                _sonar.RevealFriend(_leapIndex, _tuning.BellLightBrightness);
+            }
+
+            if (_bellLit && !_chasmSeen && bellAway && _upgrades.LevelOf(_tuning.FirstKit) == 0 &&
+                SurfaceRules.HorizontalDistance(rover, _lip) <= _tuning.ChasmLookRadius)
+            {
+                _chasmSeen = true;
+                _looking = true;
+                _lookUntil = now + _tuning.ChasmLookSeconds;
+                _sonar.RevealFriend(_leapIndex, _tuning.BellLightBrightness);
+                _rig.SetGazeTarget(this, _leap.Site.Position, GazePriorities.Focus);
+                _rig.SetHoldStill(this, true);
+            }
+
+            if (_looking && now >= _lookUntil)
+            {
+                EndLook();
+            }
+        }
+
+        private void EndLook()
+        {
+            _looking = false;
+            _rig.ClearGazeTarget(this);
+            _rig.SetHoldStill(this, false);
+        }
+
+        private static int IndexOf(FriendField friends, Friend friend)
+        {
+            for (int i = 0; i < friends.Friends.Count; i++)
+            {
+                if (friends.Friends[i] == friend)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
         }
 
         /// <summary>
@@ -200,6 +297,11 @@ namespace MoonProject.Gameplay
         {
             _salvage?.Dispose();
             _answers?.Dispose();
+            _evening?.Dispose();
+            if (_looking)
+            {
+                EndLook();
+            }
         }
     }
 }
