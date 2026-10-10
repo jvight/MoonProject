@@ -75,7 +75,10 @@ account) can continue without the old conversation.
     - Gap: a tube carried across a save/load is not restored. Gameplay should re-publish BlueprintFound for
       carried-but-undelivered tubes on load.
     - Next: the ladder look, then the lift station and ride (Gameplay/Lift/**, authorised).
-  - **gameplay 9f7f9216+.** Waiting on art's garage fix to re-run the Playthrough, then P7 (carried find) and P1.
+  - **gameplay c0ed4f94+.**
+    - P7 is done: BlueprintFound means the tube rides on 07. Delivery happens within PlotterReach of the plotter while the bay is awake: it publishes BlueprintDelivered, pins the kit and the plotter draws 8 rows over 6 s.
+    - Asked to add Core `BlueprintsCarriedRestored(int count)` on load, so rover's TubeCarry restores the tube after a load.
+    - Next: re-run the Playthrough with art's garage fix, then pads, then P1 (plan approved).
   - **art.** The garage fix (all cuttable, 7,7,2), then the three story-part prefabs, then the QA pass.
 
 - **After landing 0.5's first batch:**
