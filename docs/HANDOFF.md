@@ -276,6 +276,9 @@ account) can continue without the old conversation.
     older saves are moved to `<slot>.old-<stamp>.json`, never deleted.
   - Tests seed saves with `"contentVersion":"0.4.1"`.
   - Each test process uses its own slot (`BootstrapHarness.ProcessSlot`).
+- **Title in tests:** the game boots into the title (the scene builder sets `_showTitle`). Every editor test run
+  boots straight into play instead (`Editor/Automation/TestRunTitleSkip`), so fixtures need nothing. A test of the
+  title clears `GameBootstrap.TestRunSkipsTitleKey` for its own boot (see `TitleFlowSessionTests`).
 
 ## 5. Recipes the Director needs
 - **Write new tuning fields into an asset.** When the merge only added fields, use script-execute with a C# body that

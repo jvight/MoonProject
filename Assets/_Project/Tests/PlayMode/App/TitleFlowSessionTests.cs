@@ -40,6 +40,8 @@ namespace MoonProject.Tests.PlayMode.App
             SceneManager.sceneLoaded -= OnLoaded;
             _started?.Dispose();
             _started = null;
+            _sessions = 0;
+            _freshGame = false;
 #if UNITY_EDITOR
             SessionState.SetBool(GameBootstrap.TestRunSkipsTitleKey, true);
 #endif
