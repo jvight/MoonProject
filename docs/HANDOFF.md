@@ -25,6 +25,12 @@ account) can continue without the old conversation.
       0579f46b). Rover was asked to fix it first.
     - One is in gameplay: BaseAndSaveSessions.Deposit_TowedRelic…; gameplay was asked.
   - Nothing was pushed.
+- **verify on 85bb390f, final result:**
+  - Playthrough PASS: the golden path still runs end to end with the garage fix and every tip.
+  - PlayMode FAIL, only from the rover rig.
+- **M3-18 look baseline** (main 094c35e3, `tools/look_report.py capture`):
+  - the p5–p95 spread is 0.23–0.28 on all six frames (target ≥ 0.40);
+  - ground flatness is 0.21–0.62 (target ≤ 0.30).
 - **Sessions running (2026-10-11 ~01:10).**
   - Build boxes: gameplay (P2, P6, P9, Playthrough 0–8), rover (rig fix, carried part, the lift slice, motes), art
     (lift props, then M3-18), ui (voice, V11, NeedsPart), world (M3-18), tools (lint and box_check landed; land

@@ -158,3 +158,19 @@ Checked against `docs/design/cutscenes.md` §1 (the opening, now VISION ruling 8
    separate from L1's cabin windows (game-flow #2, cutscenes §2). Its moment is cutscenes §8.
 10. **One radio profile.** The fresh title's "out-of-tune crackle" and the opening's static with the ghost chord are
     the same Asleep profile in audio, so the seam in point 1 can't be heard.
+
+## Director decisions on the amendments (2026-10-11)
+- **Adopted in full:**
+  - the fresh title frame is O10's lens shot with the lid shut, and New Game pushes into the closed lens, whose
+    black is O1;
+  - with a save, the windows go dark first;
+  - the reload hides inside that black, behind a one-shot boot intent;
+  - Continue is the short wake;
+  - TitleCard's drift retires;
+  - outlines and pins only for content in the current build;
+  - one Asleep radio profile.
+- **`SessionStarted(freshGame)`:**
+  - App publishes it on Title -> Playing once the title exists.
+  - Until then, Gameplay publishes it when the save is applied (the opening slice). The title work moves the
+    publish to App.
+- **The letters' home** is Bell's paper-strip spike.
