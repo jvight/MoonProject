@@ -73,6 +73,14 @@ namespace MoonProject.Gameplay
             _glow.Apply(Level);
         }
 
+        /// <summary>A dormant station shows no pad: nobody is on it and the ring eases out.</summary>
+        public void Rest(float deltaTime)
+        {
+            Occupied = false;
+            Level = Damp.Toward(Level, 0f, _look.Ease, deltaTime);
+            _glow.Apply(Level);
+        }
+
         /// <summary>Flares the ring to <paramref name="level"/> (a purchase); it eases back by itself.</summary>
         public void Flare(float level)
         {

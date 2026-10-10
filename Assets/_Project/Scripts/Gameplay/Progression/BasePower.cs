@@ -26,7 +26,7 @@ namespace MoonProject.Gameplay
             return Stage >= stage;
         }
 
-        /// <summary>The stage tower level <paramref name="towerLevel"/> powers (levels count like the stages).</summary>
+        /// <summary>The stage tower level <paramref name="towerLevel"/> powers (levels count like stages).</summary>
         public static BasePowerStage StageFor(int towerLevel)
         {
             return towerLevel <= 0 ? BasePowerStage.Asleep
@@ -34,7 +34,7 @@ namespace MoonProject.Gameplay
                 : (BasePowerStage)towerLevel;
         }
 
-        /// <summary>The tower shows <paramref name="towerLevel"/> in play: a new stage wakes (announced once).</summary>
+        /// <summary>The tower shows <paramref name="towerLevel"/> in play: a new stage wakes, once.</summary>
         public void Show(int towerLevel)
         {
             BasePowerStage stage = StageFor(towerLevel);

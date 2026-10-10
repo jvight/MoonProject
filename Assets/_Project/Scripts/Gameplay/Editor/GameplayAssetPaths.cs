@@ -25,6 +25,7 @@ namespace MoonProject.Gameplay.Editor
         public const string RelayTuning = TuningFolder + "/RelayTuning.asset";
         public const string GlintTuning = TuningFolder + "/GlintTuning.asset";
         public const string SalvageTuning = TuningFolder + "/SalvageTuning.asset";
+        public const string ProgressionTuning = TuningFolder + "/ProgressionTuning.asset";
 
         public const string ContentFolder = "Assets/_Project/Data/Content";
         public const string RelicFolder = ContentFolder + "/Relics";

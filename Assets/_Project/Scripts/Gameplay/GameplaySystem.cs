@@ -49,6 +49,7 @@ namespace MoonProject.Gameplay
         [SerializeField] private SignalField _signals;
         [SerializeField] private CassetteShelf _shelf;
         [SerializeField] private RelayField _relays;
+        [SerializeField] private BaseProgression _progression;
 
         private readonly List<IDisposable> _saveTokens = new List<IDisposable>();
         private GlowMeshSet _meshes;
@@ -96,11 +97,13 @@ namespace MoonProject.Gameplay
 
         public RelayField Relays => _relays;
 
+        public BaseProgression Progression => _progression;
+
         internal void Wire(GameplayVisuals visuals, GlintTuning glints, UpgradeDefinition[] upgradeDefinitions,
             SalvageField salvage, RelicField relics, SonarSystem sonar, ExcavationSystem excavation,
             TetherSystem tether, HomeBase home, CargoCradle cradle, RadioTower tower, Workshop workshop,
             FriendField friends, CassetteField cassettes, LogCacheField logs, SignalField signals, CassetteShelf shelf,
-            RelayField relays)
+            RelayField relays, BaseProgression progression)
         {
             _visuals = visuals;
             _glints = glints;
@@ -120,6 +123,7 @@ namespace MoonProject.Gameplay
             _signals = signals;
             _shelf = shelf;
             _relays = relays;
+            _progression = progression;
         }
 
         public void Initialize(GameContext context)
@@ -163,13 +167,14 @@ namespace MoonProject.Gameplay
                 !_home.Initialize(services, _relics, _tether, Upgrades) ||
                 !_cradle.Initialize(services, seat, _relics, _home) ||
                 !_tower.Initialize(services, Upgrades, _salvage.Catalog) ||
-                !_workshop.Initialize(services, Upgrades, _salvage.Catalog, _tower) ||
+                !_workshop.Initialize(services, Upgrades, _salvage.Catalog, _tower, Power) ||
                 !_friends.Initialize(services, Radio, _cassettes.Catalog, _relics, _salvage, _home) ||
                 !_cassettes.Initialize(services, Radio, KeepClearOfCassettes()) || !_logs.Initialize(services) ||
                 !_sonar.Initialize(services, _relics, _friends, _salvage, abilities) ||
                 !_signals.Initialize(services, _friends, _cassettes, _logs, _relics, abilities, _sonar.Tuning) ||
                 !_shelf.Initialize(Radio, _cassettes.Catalog, _friends.BellTuning) ||
-                !_relays.Initialize(services, Upgrades, _tower, _tether, _friends.Tuning, Placement(context)))
+                !_relays.Initialize(services, Upgrades, _tower, _tether, _friends.Tuning, Placement(context)) ||
+                !_progression.Initialize(services, Power, _home, _workshop, _sonar.Tuning, _friends, _relays, Upgrades))
             {
                 enabled = false;
                 return;
@@ -230,6 +235,8 @@ namespace MoonProject.Gameplay
                 GameplaySaveKeys.BellSignalsVersion, _signals.Capture, _signals.Restore)));
             _saveTokens.Add(save.Register(new SaveSection<RelaysSaveData>(GameplaySaveKeys.Relays,
                 GameplaySaveKeys.RelaysVersion, _relays.Capture, _relays.Restore)));
+            _saveTokens.Add(save.Register(new SaveSection<ProgressionSaveData>(GameplaySaveKeys.Progression,
+                GameplaySaveKeys.ProgressionVersion, _progression.Capture, _progression.Restore)));
         }
 
         /// <summary>Core's rover placement for the radio-hop, or null while no domain registers it.</summary>
@@ -343,6 +350,7 @@ namespace MoonProject.Gameplay
                 : _signals == null ? "SignalField is not assigned."
                 : _shelf == null ? "CassetteShelf is not assigned."
                 : _relays == null ? "RelayField is not assigned."
+                : _progression == null ? "BaseProgression is not assigned."
                 : null;
         }
 
