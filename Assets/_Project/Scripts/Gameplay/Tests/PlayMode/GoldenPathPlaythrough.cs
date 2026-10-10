@@ -209,12 +209,11 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float PadArrival = 5f;
 
         /// <summary>
-        /// Seconds the golden path may take. The last measured run took 1021 s against 1100. P1 and P2 replace the
-        /// depot walkman's dig and tow (~70 s) with the coil's pick-up, the duck's tow home from the garage (~100 s),
-        /// a drive to the chasm's lip and back to the garage for the transformer (~95 s) and the parts handed to the
-        /// tower; the dock's evening waits for its sweep. About 1175 s, with the same ~8% margin as before.
+        /// Seconds the golden path may take: steps 0-8 end to end measured 1241 s on 2026-10-11 (P1's parts, P2's
+        /// chasm and garage return, P6's evening, and step 8's level 3, lift restore and ride, ~56 s), with the same
+        /// ~8% margin the path has always had.
         /// </summary>
-        private const float TotalBudget = 1270f;
+        private const float TotalBudget = 1340f;
 
         /// <summary>Close enough (m) to a part resting on a mast's pad to draw it in.</summary>
         private const float PartArrive = 1.5f;
