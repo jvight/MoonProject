@@ -207,7 +207,8 @@ namespace MoonProject.World.Tests
         public void LitDust_StaysUnderTheBloomThreshold()
         {
             Vector3 toLight = WorldAtmosphere.LightSourceDirection(_atmosphere, _sky);
-            var painter = new TerrainPainter(new TerrainPaintSettings(), WorldSettings.DefaultSeed, toLight);
+            var painter = new TerrainPainter(new TerrainPaintSettings(), WorldSettings.DefaultSeed, toLight,
+                _surface.PadRadius);
             Color light = _atmosphere.LightColor.linear * _atmosphere.LightIntensity + _atmosphere.AmbientSky.linear;
             float brightest = 0f;
             for (float z = -FloorRadius; z <= FloorRadius; z += DustStep)
