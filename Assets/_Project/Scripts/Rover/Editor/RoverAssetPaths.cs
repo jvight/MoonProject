@@ -13,6 +13,7 @@ namespace MoonProject.Rover.Editor
         public const string KitLampBar = "Assets/_Project/Generated/Art/Rover/Kit_LampBar.prefab";
         public const string KitCapacitorDrum = "Assets/_Project/Generated/Art/Rover/Kit_CapacitorDrum.prefab";
         public const string KitCargoRack = "Assets/_Project/Generated/Art/Rover/Kit_CargoRack.prefab";
+        public const string BlueprintTube = "Assets/_Project/Generated/Art/Pickups/BlueprintTube.prefab";
 
         public const string GeneratedRoot = "Assets/_Project/Generated/Rover";
         public const string RoverPrefab = GeneratedRoot + "/Rover.prefab";
