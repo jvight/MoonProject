@@ -205,10 +205,14 @@ account) can continue without the old conversation.
   - edit only their own domain folder;
   - never merge into main, never push, never commit `.meta` files.
   Authorised cross-domain edits (a Core event, a test seed) are named in the task and listed in the report.
-- **Before reporting, a box runs `python tools/box_check.py <box>`** in its worktree. It runs:
+- **Before reporting, a box runs `python tools/box_check.py <box>`** in its worktree, on a trial merge of main
+  (aborted at the end; the tip must be committed). It runs:
   - compile_check (with lint);
   - the box's builders and the Main Scene build in one headless Unity;
-  - the box's default EditMode assembly (`--filter`, `--assembly`, `--platform playmode` override it).
+  - the box's EditMode assembly, then its PlayMode assembly.
+
+  Options: `--fast` skips PlayMode for quick iterations; `--filter` / `--assembly` / `--platform playmode` run
+  other tests instead; `--no-merge` tests the working tree as it is.
 
   It then restores Generated/ and Main.unity and moves the batch-made metas to `Logs/box_check/`. Last, it appends
   a PASS/FAIL block to `MoonProject-wt/.board/<box>.md`, which `director.py status` prints.
