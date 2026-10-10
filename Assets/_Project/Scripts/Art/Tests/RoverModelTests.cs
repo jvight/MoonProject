@@ -20,13 +20,13 @@ namespace MoonProject.Art.Tests
             "Neck/Head/Weather_Paint", "Neck/Head/Weather_Dust",
             "SolarWing", "SolarWing/CellFilled", "Antenna", "Antenna/AntennaTip", "Antenna/Pennant",
             "HeadlampSocket", "CargoSocket", "DustSocket_L", "DustSocket_R", "CoilSocket", "DrumSocket_L",
-            "DrumSocket_R", "TubeSocket",
+            "DrumSocket_R", "TubeSocket", "PartSocket",
         };
 
         private static readonly string[] EmptyNodes =
         {
             "TetherOrigin", "HeadlampSocket", "CargoSocket", "DustSocket_L", "DustSocket_R", "CoilSocket",
-            "DrumSocket_L", "DrumSocket_R", "TubeSocket",
+            "DrumSocket_L", "DrumSocket_R", "TubeSocket", "PartSocket",
         };
 
         private ModelNode _rover;
@@ -175,6 +175,17 @@ namespace MoonProject.Art.Tests
             {
                 Accumulate(child, world, ref min, ref max, ref triangles);
             }
+        }
+
+        [Test]
+        public void PartSocket_StandsOnTheLid_ApartFromTheTube_SoBothReadFromTheChase()
+        {
+            Vector3 part = _rover.GetDescendant(RoverModelBuilder.PartSocketName).LocalPosition;
+            Vector3 tube = _rover.GetDescendant(RoverModelBuilder.TubeSocketName).LocalPosition;
+            Assert.AreEqual(RoverModelBuilder.NeckBase.y, part.y, 0.02f, "a part stands on the lid");
+            Assert.Greater(new Vector2(part.x - tube.x, part.z - tube.z).magnitude, 0.5f,
+                "a part and a tube carried together never overlap");
+            Assert.Greater(part.z, tube.z, "the part rides ahead of the tube, seen over the lid from the chase");
         }
 
         private static HashSet<PaletteSwatch> Swatches(LowPolyMeshBuilder geometry)
