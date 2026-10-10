@@ -99,7 +99,7 @@ namespace MoonProject.World
 
         [Tooltip("Haze density at its base, per metre of view: thin, so ground within play distance stays crisp.")]
         [Range(0f, 0.01f)]
-        [SerializeField] private float _hazeDensity = 0.0012f;
+        [SerializeField] private float _hazeDensity = 0.0007f;
 
         [Tooltip("Height over which the haze thins by e (metres): it lies low, so the rim's crest stays above it.")]
         [Range(0.5f, 40f)]

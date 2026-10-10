@@ -30,10 +30,10 @@ namespace MoonProject.World.Tests
         private const float ShadowStep = 4f;
         private const float DustStep = 6f;
 
-        // The basin haze, seen from 07's chase height: under a few per cent at play distance, a real layer over the far
-        // floor, and the rim's crest (well above the haze's height scale) left nearly clear.
+        // The basin haze, seen from 07's chase height: a light veil at play distance (like the fog's), a real layer
+        // over the far floor, and the rim's crest (well above the haze's height scale) left nearly clear.
         private const float HazeEyeHeight = 3.5f;
-        private const float MaxNearHaze = 0.05f;
+        private const float MaxNearHaze = 0.08f;
         private const float MinFarFloorHaze = 0.2f;
         private const float CrestHeight = 60f;
         private const float MaxCrestHazeShare = 0.2f;
