@@ -80,11 +80,11 @@
         },
         {
             "key": "next.wake",
-            "text": "Ngoài kia có thể có gì đó đáp lại. Thử phát sóng xem."
+            "text": "Ngoài kia có lẽ có gì đó sẽ đáp lại tiếng dò."
         },
         {
             "key": "next.salvage",
-            "text": "Cắt lấy những gì còn dùng được ở kho."
+            "text": "Kho cũ vẫn còn kim loại đáng để cắt."
         },
         {
             "key": "next.tower",
@@ -92,7 +92,7 @@
         },
         {
             "key": "next.signal",
-            "text": "Một tín hiệu yếu. Hãy đi theo nó."
+            "text": "Một tín hiệu yếu. Có ai đó ngoài kia."
         },
         {
             "key": "next.relic",
@@ -115,16 +115,20 @@
             "text": "Thang nâng đã có điện. Sửa nó rồi lên cao."
         },
         {
+            "key": "notyet.tower",
+            "text": "Đang ngủ. Có kim loại và một cuộn dây là nó sẽ thức."
+        },
+        {
             "key": "notyet.bay",
-            "text": "Không có điện. Tháp cấp điện cho nó."
+            "text": "Chưa có điện. Tháp mạnh lên thì nó sẽ thức."
         },
         {
             "key": "notyet.lift",
-            "text": "Chưa có điện. Tháp cấp điện cho nó."
+            "text": "Chưa có điện. Tháp mạnh lên thì nó sẽ thức."
         },
         {
             "key": "notyet.shelf",
-            "text": "Còn trống. Nó chờ đồ của phi hành đoàn."
+            "text": "Còn trống. Kệ đang chờ kỷ vật của phi hành đoàn."
         },
         {
             "key": "place.dock.name",
@@ -132,7 +136,7 @@
         },
         {
             "key": "place.dock.job",
-            "text": "Nơi 07 nghỉ. Nghỉ ngơi giữ lại một ngày."
+            "text": "Nơi 07 nghỉ ngơi. Nghỉ ở đây, ngày hôm nay được giữ lại."
         },
         {
             "key": "place.lander.name",
@@ -140,7 +144,7 @@
         },
         {
             "key": "place.lander.job",
-            "text": "Nhà của phi hành đoàn. Cửa sổ cho thấy nơi này còn sống."
+            "text": "Nhà của phi hành đoàn. Cửa sổ sáng dần khi nơi này thức dậy."
         },
         {
             "key": "place.shelf.name",
@@ -152,11 +156,11 @@
         },
         {
             "key": "place.tower.name",
-            "text": "Tháp vô tuyến"
+            "text": "Tháp radio"
         },
         {
             "key": "place.tower.job",
-            "text": "Trái tim của nhà: điện và tín hiệu."
+            "text": "Trái tim của căn nhà: điện và tín hiệu."
         },
         {
             "key": "place.bay.name",
@@ -204,7 +208,7 @@
         },
         {
             "key": "ui.blueprint.delivered",
-            "text": "Máy vẽ của Kenji vẽ lại."
+            "text": "Máy vẽ của Kenji đang vẽ lại."
         },
         {
             "key": "ui.settings.sound",
@@ -256,7 +260,7 @@
         },
         {
             "key": "ui.tower.level",
-            "text": "Cấp {0} trên {1}"
+            "text": "Cấp {0}/{1}"
         },
         {
             "key": "ui.tower.hold",
@@ -264,7 +268,7 @@
         },
         {
             "key": "ui.tower.purchased",
-            "text": "Sóng radio đã vươn xa hơn"
+            "text": "Tín hiệu vươn xa hơn"
         },
         {
             "key": "hint.ping",
@@ -288,7 +292,7 @@
         },
         {
             "key": "upgrade.radio_tower.name",
-            "text": "Tháp Radio"
+            "text": "Tháp radio"
         },
         {
             "key": "upgrade.radio_tower.1.title",
@@ -296,7 +300,7 @@
         },
         {
             "key": "upgrade.radio_tower.1.effect",
-            "text": "Cấp điện cho chiếc anten mỏi mệt: đèn hiệu sáng trở lại và tiếng nhạc vang xa hơn."
+            "text": "Cấp điện cho chiếc anten mỏi mệt, và nhà thức dậy: cửa sổ tàu đổ bộ lại sáng đèn."
         },
         {
             "key": "upgrade.radio_tower.2.title",
@@ -304,7 +308,7 @@
         },
         {
             "key": "upgrade.radio_tower.2.effect",
-            "text": "Cột cao hơn, đèn ấm hơn: radio vẫn trong trẻo dù bạn đi sâu vào những đụn cát."
+            "text": "Cột cao hơn đưa điện tới khoang xe của Kenji, và radio vẫn trong trẻo dù đi xa."
         },
         {
             "key": "upgrade.radio_tower.3.title",
@@ -312,7 +316,7 @@
         },
         {
             "key": "upgrade.radio_tower.3.effect",
-            "text": "Tháp ngân nga khắp miệng núi lửa; căn nhà nhỏ rực sáng như chiếc đèn lồng giữa đêm đông."
+            "text": "Tháp ngân nga khắp lòng chảo, đánh thức thang nâng; căn nhà rực sáng như chiếc đèn lồng."
         },
         {
             "key": "upgrade.rover.hover_jump.name",
@@ -448,7 +452,7 @@
         },
         {
             "key": "hint.repair",
-            "text": "Sửa chữa"
+            "text": "Sửa"
         },
         {
             "key": "ui.card.log_caption",
@@ -556,7 +560,7 @@
         },
         {
             "key": "ui.station.workshop",
-            "text": "Trạm sửa xe của Kenji"
+            "text": "Khoang xe của Kenji"
         },
         {
             "key": "ticker.radio.now_playing",
@@ -640,7 +644,7 @@
         },
         {
             "key": "material.optics",
-            "text": "Quang học"
+            "text": "Thấu kính"
         },
         {
             "key": "site.depot.name",

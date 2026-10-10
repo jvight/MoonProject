@@ -12,26 +12,20 @@ namespace MoonProject.Gameplay
     {
         [Header("Pad")]
         [Tooltip("Pad centre relative to the lander's tower anchor, in lander space (m): in front of the tower's " +
-                 "service port, its ring clear of the port's plate (which reaches 1.4 m out from the tower).")]
+                 "service port, the pad clear of the port's plate (which reaches 1.4 m out from the tower).")]
         [SerializeField] private Vector3 _padOffset = new Vector3(0f, 0f, 4.1f);
 
         [Tooltip("07 counts as parked on the pad within this many metres of its centre.")]
         [Range(0.5f, 6f)] [SerializeField] private float _padRadius = 2.4f;
 
-        [Tooltip("Width (m) of the pad's ring of light.")]
-        [Range(0.05f, 2f)] [SerializeField] private float _padRingWidth = 0.35f;
-
-        [Tooltip("Pad brightness with nothing to buy yet (it breathes softly).")]
+        [Tooltip("Pad lamps' brightness with nothing to buy yet (it breathes softly).")]
         [Range(0f, 3f)] [SerializeField] private float _padIdle = 0.22f;
 
-        [Tooltip("Pad brightness when the next level is affordable: an invitation.")]
+        [Tooltip("Pad lamps' brightness when the next level is affordable: an invitation.")]
         [Range(0f, 3f)] [SerializeField] private float _padInviting = 0.65f;
 
-        [Tooltip("Pad brightness while 07 is parked on it.")]
+        [Tooltip("Pad lamps' brightness while 07 is parked on it.")]
         [Range(0f, 3f)] [SerializeField] private float _padOccupied = 1f;
-
-        [Tooltip("Pad brightness once the tower is fully upgraded.")]
-        [Range(0f, 3f)] [SerializeField] private float _padDone = 0.12f;
 
         [Tooltip("Seconds per breath of the pad and the beacon.")]
         [Range(0.5f, 10f)] [SerializeField] private float _breathPeriod = 3.2f;
@@ -41,9 +35,6 @@ namespace MoonProject.Gameplay
 
         [Tooltip("Seconds (time constant) for the pad to brighten or dim.")]
         [Range(0f, 3f)] [SerializeField] private float _padEase = 0.4f;
-
-        [Tooltip("Segments of the pad ring.")]
-        [Range(8, 128)] [SerializeField] private int _padSegments = 48;
 
         [Header("Service port")]
         [Tooltip("Seconds 07's beam reaches the port's hopper before the first bundle of materials leaves 07.")]
@@ -168,8 +159,8 @@ namespace MoonProject.Gameplay
 
         public FeedLook FeedLook => new FeedLook(_feedBeamLead, _feedFlight, _feedStagger, _feedLift, _feedGrowShare);
 
-        public PadLook PadLook => new PadLook(_padRadius, _padRingWidth, _padSegments, _padIdle, _padInviting,
-            _padOccupied, _padDone, _breathPeriod, _padBreathDepth, _padEase);
+        public PadLook PadLook => new PadLook(_padRadius, _padIdle, _padInviting, _padOccupied, _breathPeriod,
+            _padBreathDepth, _padEase);
 
         /// <summary>Beacon brightness at <paramref name="level"/> (dark before the first purchase).</summary>
         public float BeaconGlowAt(int level)

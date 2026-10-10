@@ -19,6 +19,20 @@ account) can continue without the old conversation.
   - Audio and world have no session:
     - audio waits for gameplay's DockEveningOpened (it wires dock_evening_swell);
     - the Director re-runs world's wake capture.
+- **verify on 85bb390f.**
+  - EditMode passed. PlayMode failed 50 of 251:
+    - 49 of them are in Rover and share one root cause: TestRover.Spawn does not wire RoverKit's BlueprintTube (from
+      0579f46b). Rover was asked to fix it first.
+    - One is in gameplay: BaseAndSaveSessions.Deposit_TowedRelic…; gameplay was asked.
+  - Nothing was pushed.
+- **Lint duplicate-type fixes still to assign** (report-only in tools/lint.py until the list is empty; give each box
+  its line at its next report):
+  - rover: LiftCue (in queue), RoverBayTests and RoverKitTests vs art, StargazeTests vs ui;
+  - art: SalvageMaterial (Core vs Art.Editor);
+  - audio/gameplay: SignalField, FakeRoverSystem;
+  - ui/world: RelaySettings;
+  - gameplay/ui: MotionTests;
+  - ui: FriendUiTests (EditMode vs PlayMode).
 - **Tokens.** The cap for 2026-10-11 is 25% of the weekly limit (the week resets at 02:00 local). A cron guard runs
   every 10 min.
 

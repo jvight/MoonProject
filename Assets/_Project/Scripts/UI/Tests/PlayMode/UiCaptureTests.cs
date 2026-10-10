@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using NUnit.Framework;
 using UnityEngine;
@@ -306,8 +307,13 @@ namespace MoonProject.UI.PlayModeTests
             fakes.CutProgress = 0f;
             fakes.PrimaryHint = InteractionHint.None;
             context.Events.Publish(new SiteAnswered(DepotSite, depot.Position, 30f, true));
+            Vector3 namePoint = depot.Position + Vector3.up * _tuning.Salvage.SiteNameLiftMetres;
+            siteCamera.transform.rotation = Quaternion.LookRotation(
+                Vector3.Lerp(cut, namePoint, 0.5f) - siteCamera.transform.position, Vector3.up);
+            yield return new WaitForSecondsRealtime(_tuning.Prompts.Reveal.FadeOut);
             yield return new WaitForSecondsRealtime(_tuning.Salvage.SiteName.FadeIn + 0.5f);
             yield return Capture(siteCamera, folder, "42_site_name");
+            Assert.IsTrue(ui.SiteName.IsVisible, "the site's name was up for its shot");
             fakes.Camera = camera;
             yield return new WaitForSecondsRealtime(_tuning.Salvage.SiteNameHoldSeconds +
                                                     _tuning.Salvage.SiteName.FadeOut + 0.3f);
@@ -505,10 +511,8 @@ namespace MoonProject.UI.PlayModeTests
             Vector3 earth = context.Get<IWorldLayout>().EarthDirection;
             var terrain = context.Get<ITerrainQuery>();
             var friends = context.Get<IFriendStatuses>();
-            float nameLift = _tuning.Friends.NameLiftMetres;
-
             Vector3 tilly = FriendPosition(friends, TillyId) + Vector3.up * TillyRise;
-            Camera tillyCamera = EarthCamera(tilly + Vector3.up * nameLift, earth, terrain, context);
+            Camera tillyCamera = EarthCamera(tilly + Vector3.up * _tuning.Friends.NameLiftFor(TillyId), earth, terrain, context);
             fakes.Camera = tillyCamera;
             fakes.TillyStatus = new FriendStatus(FriendState.Awake, 3, 3, true, false, tilly);
             context.Events.Publish(new FriendRepaired(TillyId));
@@ -519,7 +523,7 @@ namespace MoonProject.UI.PlayModeTests
                                                     0.3f);
 
             Vector3 bell = BellAtHome(context).position;
-            Camera bellCamera = EarthCamera(bell + Vector3.up * nameLift, earth, terrain, context);
+            Camera bellCamera = EarthCamera(bell + Vector3.up * _tuning.Friends.NameLiftFor(BellId), earth, terrain, context);
             fakes.Camera = bellCamera;
             fakes.Friend = AssetDatabase.LoadAssetAtPath<FriendDefinition>(BellPath);
             fakes.TillyStatus = new FriendStatus(FriendState.Awake, 3, 3, true, false, bell);
@@ -594,6 +598,7 @@ namespace MoonProject.UI.PlayModeTests
             GameContext context = FindBootstrap().Context;
             Camera camera = context.Get<IViewCamera>().Camera;
             UISystem ui = BuildUi(context, out _, out _);
+            TuneQuickPatience();
             yield return null;
             string folder = Path.GetFullPath(OutputFolder);
             Directory.CreateDirectory(folder);
@@ -614,7 +619,145 @@ namespace MoonProject.UI.PlayModeTests
 #endif
         }
 
+        /// <summary>
+        /// Quality check of the first ten minutes (M3-16 "one voice at a time"): the opening's cards, lines and prompts
+        /// replayed in order over the Main scene, every frame checked so that no two voices (title, place or blueprint
+        /// card, story card, kit title, ticker, prompt, site name, Look up) share the screen, and each moment
+        /// captured as 6x_*. The quiet next line may stay under them. Rerun with --filter CaptureFirstMinutes.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator CaptureFirstMinutes_OneVoiceAtATime()
+        {
 #if UNITY_EDITOR
+            yield return LoadMain();
+            GameContext context = FindBootstrap().Context;
+            Camera camera = context.Get<IViewCamera>().Camera;
+            UISystem ui = BuildUi(context, out FakeGameServices fakes, out _);
+            TuneQuickPatience();
+            yield return null;
+            string folder = Path.GetFullPath(OutputFolder);
+            Directory.CreateDirectory(folder);
+            var overlaps = new List<string>();
+            EventBus events = context.Events;
+            fakes.SetMaterials(0, 0, 0);
+
+            events.Publish(new RoverAwoke(Vector3.zero, false));
+            events.Publish(new NextStepChanged("next.wake"));
+            yield return Watch(ui, overlaps, _tuning.Title.Delay + _tuning.Title.Reveal.FadeIn + 0.3f);
+            yield return Capture(camera, folder, "60_title");
+            events.Publish(new PlaceFirstApproached("place.dock"));
+            yield return Watch(ui, overlaps, _tuning.Title.Hold + _tuning.Title.Reveal.FadeOut + 1.6f);
+            yield return Capture(camera, folder, "61_dock_card");
+
+            fakes.PrimaryHint = new InteractionHint(InteractionKind.Ping, fakes.Position, true);
+            yield return Watch(ui, overlaps, _tuning.Guidance.PlaceHoldSeconds + _tuning.Guidance.Place.FadeOut +
+                                             _tuning.Prompts.Find(InteractionKind.Ping).DwellSeconds + 1.5f);
+            yield return Capture(camera, folder, "62_ping_prompt");
+            events.Publish(new SonarPinged());
+            fakes.PrimaryHint = InteractionHint.None;
+            if (!context.Get<IWorldAnchors>().TryGet(DepotSite, out MoonProject.Core.WorldAnchor depot))
+            {
+                throw new InvalidOperationException($"The world has no '{DepotSite}' anchor.");
+            }
+
+            events.Publish(new SiteAnswered(DepotSite, depot.Position, 30f, true));
+            yield return Watch(ui, overlaps, _tuning.Salvage.SiteName.FadeIn + 0.5f);
+            yield return Capture(camera, folder, "63_site_answers");
+
+            yield return Watch(ui, overlaps, _tuning.Salvage.SiteNameHoldSeconds + _tuning.Salvage.SiteName.FadeOut);
+            fakes.SetMaterials(3, 1, 0);
+            events.Publish(new NextStepChanged("next.tower"));
+            events.Publish(new BlueprintFound("rover.cargo_cradle", DepotSite, depot.Position));
+            events.Publish(new PlaceFirstApproached("place.tower"));
+            yield return Watch(ui, overlaps, _tuning.Guidance.Place.FadeIn + 0.5f);
+            yield return Capture(camera, folder, "64_blueprint_card");
+            events.Publish(new BlueprintDelivered("rover.cargo_cradle"));
+            yield return Watch(ui, overlaps, _tuning.Guidance.PlaceHoldSeconds + _tuning.Guidance.Place.FadeOut +
+                                             _tuning.Guidance.Place.FadeIn + 0.5f);
+            yield return Capture(camera, folder, "65_tower_card");
+            yield return Watch(ui, overlaps, _tuning.Guidance.PlaceHoldSeconds + _tuning.Guidance.Place.FadeOut +
+                                             TickerEntrance());
+            yield return Capture(camera, folder, "66_plotter_line");
+            yield return Watch(ui, overlaps, _tuning.Ticker.Reveal.FadeOut + 12f);
+            yield return Capture(camera, folder, "67_next_line");
+            Assert.IsEmpty(overlaps, "one voice at a time:\n" + string.Join("\n", overlaps));
+#else
+            Assert.Ignore("Captures need the editor.");
+            yield break;
+#endif
+        }
+
+#if UNITY_EDITOR
+        /// <summary>The step patience shortened so a capture sees the next line without two minutes' wait.</summary>
+        private void TuneQuickPatience()
+        {
+            var serialized = new SerializedObject(_tuning);
+            serialized.FindProperty("_guidance._stepPatienceSeconds").floatValue = 1f;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        /// <summary>Waits <paramref name="seconds"/>, noting every frame where more than one voice speaks.</summary>
+        private static IEnumerator Watch(UISystem ui, List<string> overlaps, float seconds)
+        {
+            float end = Time.realtimeSinceStartup + seconds;
+            while (Time.realtimeSinceStartup < end)
+            {
+                string voices = Voices(ui);
+                if (voices.IndexOf('+') >= 0 && !overlaps.Contains(voices))
+                {
+                    overlaps.Add(voices);
+                }
+
+                yield return null;
+            }
+        }
+
+        private static string Voices(UISystem ui)
+        {
+            var on = new List<string>();
+            if (ui.Title.IsPlaying)
+            {
+                on.Add("title");
+            }
+
+            if (ui.PlaceCard.IsVisible)
+            {
+                on.Add("card " + ui.PlaceCard.Current);
+            }
+
+            if (ui.Card.IsVisible)
+            {
+                on.Add("story card");
+            }
+
+            if (ui.KitTitle.IsVisible)
+            {
+                on.Add("kit title");
+            }
+
+            if (ui.Ticker.IsVisible)
+            {
+                on.Add("ticker");
+            }
+
+            if (ui.Prompt.IsVisible)
+            {
+                on.Add("prompt");
+            }
+
+            if (ui.SiteName.IsVisible)
+            {
+                on.Add("site name");
+            }
+
+            if (ui.LookUp.IsVisible)
+            {
+                on.Add("look up");
+            }
+
+            return string.Join(" + ", on);
+        }
+
         private static IEnumerator LoadMain()
         {
             AsyncOperation loading = EditorSceneManager.LoadSceneAsyncInPlayMode(MainScene,

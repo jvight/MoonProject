@@ -9,7 +9,8 @@ namespace MoonProject.UI
     /// The first time in a session that a salvage site answers the sonar, its name ("site.&lt;id&gt;.name") drifts up
     /// over it, rests a moment and fades away, like a friend's name when it wakes (a <see cref="FloatingName"/>). One
     /// name at a time: a site that answers while another name is up keeps its turn for its next answer, so nothing
-    /// queues up or stacks. Hidden while the site is off screen.
+    /// queues up or stacks. Hidden while the site is off screen, and it waits for a prompt or card on screen to go
+    /// first (one voice at a time).
     /// </summary>
     internal sealed class SiteNameTag
     {
@@ -19,6 +20,7 @@ namespace MoonProject.UI
         private readonly HashSet<string> _named = new HashSet<string>(StringComparer.Ordinal);
         private string _siteId;
         private Vector3 _point;
+        private bool _pending;
 
         public SiteNameTag(UiLayout layout, SalvageSettings settings, PromptSettings anchoring,
             ILocalization localization, IViewCamera view)
@@ -36,6 +38,9 @@ namespace MoonProject.UI
 
         public bool IsVisible => _name.IsVisible;
 
+        /// <summary>A site answered and its name waits for the screen to clear.</summary>
+        public bool IsWaiting => _pending;
+
         /// <summary>The site whose name is up (null when none).</summary>
         public string Current => _siteId;
 
@@ -49,13 +54,13 @@ namespace MoonProject.UI
 
             _siteId = siteId;
             _point = position + Vector3.up * _settings.SiteNameLiftMetres;
-            _name.Show(_localization.Get(UiKeys.SiteName(siteId)), _settings.SiteNameHoldSeconds);
+            _pending = true;
         }
 
         /// <summary>Re-reads the name on screen in the new language.</summary>
         public void Relocalize()
         {
-            if (_siteId != null)
+            if (_siteId != null && !_pending)
             {
                 _name.Rename(_localization.Get(UiKeys.SiteName(_siteId)));
             }
@@ -63,11 +68,23 @@ namespace MoonProject.UI
 
         /// <param name="deltaTime">Unscaled seconds; 0 while paused, so the name waits too.</param>
         /// <param name="panelSize">Size of the UI panel.</param>
-        public void Tick(float deltaTime, Vector2 panelSize)
+        /// <param name="open">False while a prompt or a card speaks: a name that is waiting does not start yet.</param>
+        public void Tick(float deltaTime, Vector2 panelSize, bool open)
         {
             if (_siteId == null)
             {
                 return;
+            }
+
+            if (_pending)
+            {
+                if (!open)
+                {
+                    return;
+                }
+
+                _pending = false;
+                _name.Show(_localization.Get(UiKeys.SiteName(_siteId)), _settings.SiteNameHoldSeconds);
             }
 
             _name.Tick(_point, deltaTime, panelSize);

@@ -65,6 +65,25 @@ namespace MoonProject.Gameplay
             new BlueprintTube("rover.boost_coils", "site.drill"),
         };
 
+        [Header("The tower's story parts (P1)")]
+        [Tooltip("One part per tower level, needed besides materials: the coil in the depot's heart (L1), the " +
+                 "transformer in the garage's heart (L2), the relay spare at the first restored mast (L3).")]
+        [SerializeField] private TowerPart[] _towerParts =
+        {
+            new TowerPart("Part_TowerCoil", 1, TowerPartSource.SiteHeart, "site.depot", Vector2.zero),
+            new TowerPart("Part_Transformer", 2, TowerPartSource.SiteHeart, "site.garage", new Vector2(0f, 1.3f)),
+            new TowerPart("Part_RelaySpare", 3, TowerPartSource.FirstRestoredMast, string.Empty, Vector2.zero),
+        };
+
+        [Tooltip("Seconds a story part takes to ease into view once it is there to be found.")]
+        [Range(0.1f, 4f)] [SerializeField] private float _partAppearSeconds = 1.2f;
+
+        [Tooltip("Seconds a story part glides from 07's back into the tower's port hopper.")]
+        [Range(0.3f, 5f)] [SerializeField] private float _partFeedSeconds = 1.6f;
+
+        [Tooltip("Height (m) of the arc a story part glides along into the hopper.")]
+        [Range(0f, 3f)] [SerializeField] private float _partFeedArc = 0.8f;
+
         [Header("Kenji's pen plotter (P7)")]
         [Tooltip("07 hands a blueprint tube to the plotter within this many metres (horizontal) of it.")]
         [Range(1f, 15f)] [SerializeField] private float _plotterReach = 6f;
@@ -102,6 +121,14 @@ namespace MoonProject.Gameplay
         public string FirstKit => _firstKit;
 
         public IReadOnlyList<BlueprintTube> Tubes => _tubes;
+
+        public IReadOnlyList<TowerPart> TowerParts => _towerParts;
+
+        public float PartAppearSeconds => _partAppearSeconds;
+
+        public float PartFeedSeconds => _partFeedSeconds;
+
+        public float PartFeedArc => _partFeedArc;
 
         /// <summary>The first-approach radius of the place <paramref name="placeId"/>.</summary>
         public float RadiusOf(string placeId)
