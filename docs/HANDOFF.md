@@ -59,6 +59,12 @@ account) can continue without the old conversation.
     releases the letters, one per mast for the first 4 masts, then 2;
   - world registers region.peak and region.terraces with M3-07's MapSheet;
   - the owner's native read of the Vietnamese is welcome.
+- **Small follow-ups:**
+  - The lift's restore must hide `LiftPlatform/JamProps` (art's OUT OF ORDER board and cable end) together with
+    `LiftCableR_Snapped` (Gameplay/Lift, the next lift session).
+  - Rover moves the story parts to art's PartSocket once it lands.
+  - The input-event discard fix in the shared harness (tools d2427c96) still needs its proof runs reported and
+    landing.
 - **Audio has no session; its queue:** dock_evening_swell on DockEveningOpened; cues for StoryPartFound and
   StoryPartDelivered; the lint renames SignalField and FakeRoverSystem (gameplay renames its copies instead).
 - **Lint duplicate-type fixes still to assign** (report-only in tools/lint.py until the list is empty; give each box
