@@ -8,6 +8,7 @@ using UnityEngine.TestTools;
 using UnityEngine.UIElements;
 using MoonProject.Core;
 using MoonProject.Core.Events;
+using MoonProject.Core.Save;
 using MoonProject.Testing;
 
 namespace MoonProject.UI.PlayModeTests
@@ -38,7 +39,7 @@ namespace MoonProject.UI.PlayModeTests
             _rig = null;
             foreach (string slot in _slots)
             {
-                BootstrapHarness.DeleteSaveFiles(slot);
+                UiTestRig.DeleteSlotFiles(slot);
             }
 
             Object.Destroy(_controls);
@@ -142,6 +143,55 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual(2f, _rig.Fakes.Sensitivity, 1e-5f, "look speed comes back");
             Assert.IsTrue(_rig.Fakes.InvertY);
             Assert.AreEqual("Tiếp tục", _rig.Ui.Layout.ResumeButton.text, "and so does the language");
+        }
+
+        [UnityTest]
+        public IEnumerator Settings_SurviveANewGame_SoTheLanguageStays()
+        {
+            Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
+            string slot = BootstrapHarness.NewTestSlot();
+            Boot(slot);
+            yield return null;
+            yield return Tap(keyboard.escapeKey);
+            yield return new WaitForSecondsRealtime(Settle);
+            Submit(_rig.Ui.Layout.SettingsButton);
+            yield return new WaitForSecondsRealtime(Settle);
+            Submit(_rig.Ui.Layout.LanguageButton);
+            yield return Tap(keyboard.escapeKey);
+            yield return Tap(keyboard.escapeKey);
+            _rig.Bootstrap.Context.Get<ISaveService>().PutAway();
+
+            _rig.Dispose();
+            _rig = null;
+            yield return null;
+            Boot(slot);
+            yield return null;
+            Assert.AreEqual("vi", _rig.Bootstrap.Context.Get<ILocalization>().Language,
+                "a new moon, the same player: still Vietnamese");
+        }
+
+        [UnityTest]
+        public IEnumerator Settings_InAnOlderSave_MoveIntoTheSettingsFileOnce()
+        {
+            string slot = BootstrapHarness.NewTestSlot();
+            _slots.Add(slot);
+            var old = new SaveService(SaveService.DefaultDirectory, slot);
+            var data = new SettingsSaveData { language = "vi", music = 0.3f };
+            using (old.Register(new SaveSection<SettingsSaveData>(UiSaveKeys.Settings, UiSaveKeys.SettingsVersion,
+                       () => data, _ => { })))
+            {
+                old.Load();
+                Assert.IsTrue(old.SaveNow());
+            }
+
+            var settings = new SettingsFile(SaveService.DefaultDirectory, slot);
+            Assert.IsFalse(settings.TryRead(out _), "an older save: no settings file yet");
+            _rig = UiTestRig.Boot(_controls, slot);
+            yield return null;
+            Assert.AreEqual("vi", _rig.Bootstrap.Context.Get<ILocalization>().Language);
+            Assert.AreEqual(0.3f, _rig.Fakes.GetVolume(AudioBus.Music), 1e-5f);
+            Assert.IsTrue(settings.TryRead(out string json), "the settings moved into their own file");
+            StringAssert.Contains("\"vi\"", json);
         }
 
         [UnityTest]
