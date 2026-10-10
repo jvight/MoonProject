@@ -56,6 +56,16 @@ namespace MoonProject.Art.Editor
         public const string RoverBayName = "RoverBay";
 
         /// <summary>
+        /// The bay's roll-up shutter (M3-16 dormant look), pivoted at its roller: local Y scale 1 = down (the bay
+        /// asleep), <see cref="ShutterRolledScale"/> = rolled up into its box (tower L2 has powered it). Gameplay eases
+        /// between the two.
+        /// </summary>
+        public const string ShutterName = "Shutter";
+
+        /// <summary>The Shutter node's local Y scale when rolled up.</summary>
+        public const float ShutterRolledScale = 0.05f;
+
+        /// <summary>
         /// Inside the Rover Bay, in bay space: from the top of its floor up to its eaves, between its posts' centres
         /// (side to side and back to front). Its arms fold away within it.
         /// </summary>
@@ -233,6 +243,8 @@ namespace MoonProject.Art.Editor
             AddFloorArm(bay);
             bay.Add(new ModelNode("HopperMouth", RoverBayMeshes.HopperMouth,
                 Place.Rotation(RoverBayMeshes.HopperFacing)));
+            bay.Add(new ModelNode(ShutterName, RoverBayMeshes.ShutterRoller,
+                new ModelMesh(RoverBayName + "_" + ShutterName, RoverBayMeshes.Shutter())));
             bay.Add(new ModelNode("BaySign", Vector3.zero, Quaternion.identity,
                 new ModelMesh(RoverBayName + "_BaySign", RoverBayMeshes.SignGlow()), ModelMaterial.PaletteGlowOff));
             var glass = new ModelMesh(RoverBayName + "_LampGlass", RoverBayMeshes.LampGlassMesh());

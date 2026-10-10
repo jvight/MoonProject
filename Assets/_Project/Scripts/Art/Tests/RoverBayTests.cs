@@ -61,7 +61,7 @@ namespace MoonProject.Art.Tests
             var expected = new List<string>
             {
                 "Turntable", "FloorArm", "FloorArm/FloorLift", "FloorArm/FloorLift/FloorTip", "HopperMouth",
-                "BaySign", "Lamp_0", "Lamp_1",
+                "Shutter", "BaySign", "Lamp_0", "Lamp_1",
             };
             for (int i = 0; i < 3; i++)
             {
@@ -242,8 +242,9 @@ namespace MoonProject.Art.Tests
             corridor.SetMinMax(
                 new Vector3(-_roverBounds.extents.x - SideRoom, padTop + 0.05f, turntable.LocalPosition.z),
                 new Vector3(_roverBounds.extents.x + SideRoom, padTop + _roverBounds.max.y + 0.1f, front));
+            // The shutter blocks the way only while the bay sleeps; rolled up it clears it (its own test).
             foreach (ModelNode node in Nodes(_bay).Where(node => node.Mesh != null && node.Name != "Turntable"
-                && !node.Name.StartsWith("Weather_")))
+                && node.Name != BaseModelBuilder.ShutterName && !node.Name.StartsWith("Weather_")))
             {
                 Matrix4x4 world = WorldOf(node) * node.LocalMatrix;
                 IReadOnlyList<Vector3> points = node.Mesh.Geometry.Positions;
@@ -255,6 +256,20 @@ namespace MoonProject.Art.Tests
                     Assert.IsFalse(corridor.Intersects(face), $"{node.Name} blocks the way in at {face.center}");
                 }
             }
+        }
+
+        [Test]
+        public void Shutter_ClosesTheArchDown_AndClears07RolledUp()
+        {
+            ModelNode shutter = _bay.GetDescendant(BaseModelBuilder.ShutterName);
+            Bounds down = shutter.Mesh.Geometry.Bounds;
+            down.center += shutter.LocalPosition;
+            float padTop = _bay.GetDescendant("Turntable").LocalPosition.y;
+            Assert.LessOrEqual(down.min.y, 0.01f, "down, the curtain reaches the ground");
+            Assert.GreaterOrEqual(down.extents.x, _roverBounds.extents.x + SideRoom, "and spans the way in");
+            float rolledBottom = shutter.LocalPosition.y + shutter.Mesh.Geometry.Bounds.min.y
+                * BaseModelBuilder.ShutterRolledScale;
+            Assert.Greater(rolledBottom, padTop + _roverBounds.max.y + HeadRoom, "rolled up, it clears 07");
         }
 
         [Test]
