@@ -72,6 +72,25 @@ namespace MoonProject.Art.Editor
         /// </summary>
         public const string HomeSignName = "HomeSign";
 
+        /// <summary>
+        /// The crew's lift, jammed until tower L3 powers it and 07 restores it (M3-16): LiftPlatform is built hanging
+        /// from its left cable, rolled down to the right (<see cref="LiftPlatformLevel"/> is its restored, level
+        /// rotation at any height between LiftBottom and LiftTop); LiftCable_R (taut, hidden while jammed) and
+        /// LiftCableR_Snapped (a stub and a coil on the dust, shown while jammed) swap when it is restored; WinchLamp
+        /// is a dark glow renderer to light then; LiftHopperMouth is where 07 feeds the winch. Each cable hangs from
+        /// its drum along local -Y: scale its local Y by the cable length the platform's height needs over
+        /// <see cref="LiftCableBuiltLength"/>.
+        /// </summary>
+        public const string LiftSnappedCableName = "LiftCableR_Snapped";
+
+        public const string WinchLampName = "WinchLamp";
+
+        public const string LiftHopperMouthName = "LiftHopperMouth";
+
+        public static Quaternion LiftPlatformLevel => Quaternion.identity;
+
+        public static float LiftCableBuiltLength => CableLiftMeshes.CableLength(CableLiftMeshes.Jammed);
+
         public static Quaternion HomeSignUpright => Place.Rotation(LanderMeshes.HomeSignUpright);
 
         /// <summary>
@@ -236,7 +255,8 @@ namespace MoonProject.Art.Editor
             lander.Add(new ModelNode("LiftTop", CableLiftMeshes.Top));
             LowPolyMeshBuilder deck = CableLiftMeshes.Platform();
             string prefix = LanderName + "_LiftPlatform";
-            ModelNode platform = lander.Add(new ModelNode("LiftPlatform", CableLiftMeshes.Jammed,
+            ModelNode platform = lander.Add(new ModelNode("LiftPlatform", CableLiftMeshes.JammedTilted,
+                CableLiftMeshes.JamTilt,
                 new ModelMesh(prefix, deck)));
             platform.Add(new ModelNode("RoverSpot", CableLiftMeshes.RoverSpot,
                 Place.Rotation(CableLiftMeshes.RoverSpotEuler)));
@@ -245,7 +265,15 @@ namespace MoonProject.Art.Editor
             var cable = new ModelMesh(LanderName + "_LiftCable",
                 CableLiftMeshes.Cable(CableLiftMeshes.CableLength(CableLiftMeshes.Jammed)));
             lander.Add(new ModelNode("LiftCable_L", CableLiftMeshes.CableTop(-1), cable));
-            lander.Add(new ModelNode("LiftCable_R", CableLiftMeshes.CableTop(1), cable));
+            lander.Add(new ModelNode("LiftCable_R", CableLiftMeshes.CableTop(1), Quaternion.identity, cable,
+                ModelMaterial.Palette, false));
+            lander.Add(new ModelNode(LiftSnappedCableName, CableLiftMeshes.CableTop(1),
+                new ModelMesh(LanderName + "_" + LiftSnappedCableName, CableLiftMeshes.SnappedCable())));
+            lander.Add(new ModelNode(WinchLampName, CableLiftMeshes.WinchLamp, Quaternion.identity,
+                new ModelMesh(LanderName + "_" + WinchLampName, CableLiftMeshes.WinchLampGlass()),
+                ModelMaterial.PaletteGlowOff));
+            lander.Add(new ModelNode(LiftHopperMouthName, CableLiftMeshes.HopperMouth,
+                Place.Rotation(CableLiftMeshes.HopperFacing)));
         }
 
         public static ModelNode CreateShelf()

@@ -58,6 +58,27 @@ namespace MoonProject.Art.Tests
         }
 
         [Test]
+        public void CrewsLift_ReadsJammed_AndCarriesItsRestoredParts()
+        {
+            ModelNode lander = BaseModelBuilder.CreateLander();
+            ModelNode platform = lander.GetDescendant("LiftPlatform");
+            Assert.Greater(Quaternion.Angle(platform.LocalRotation, BaseModelBuilder.LiftPlatformLevel), 8f,
+                "jammed, the platform hangs tilted on one cable");
+            ModelNode left = lander.GetDescendant("LiftCable_L");
+            Vector3 cableFoot = left.LocalPosition + Vector3.down * BaseModelBuilder.LiftCableBuiltLength;
+            Vector3 shackle = platform.LocalPosition + platform.LocalRotation * new Vector3(-0.84f, 1f, -1.29f);
+            Assert.Less(new Vector2(cableFoot.x - shackle.x, cableFoot.z - shackle.z).magnitude, 0.02f,
+                "the left cable still hangs plumb to its shackle");
+            Assert.IsFalse(lander.GetDescendant("LiftCable_R").Active, "the taut right cable waits for the repair");
+            Assert.IsTrue(lander.GetDescendant(BaseModelBuilder.LiftSnappedCableName).Active,
+                "the snapped one hangs and coils on the dust");
+            ModelNode lamp = lander.GetDescendant(BaseModelBuilder.WinchLampName);
+            Assert.AreEqual(ModelMaterial.PaletteGlowOff, lamp.Material, "the winch lamp starts dark");
+            Assert.That(lander.GetDescendant(BaseModelBuilder.LiftHopperMouthName).LocalPosition.y,
+                Is.InRange(0.9f, 1.5f), "07's beam reaches the winch hopper");
+        }
+
+        [Test]
         public void Anchors_LeaveRoomAroundTheLander()
         {
             ModelNode lander = BaseModelBuilder.CreateLander();

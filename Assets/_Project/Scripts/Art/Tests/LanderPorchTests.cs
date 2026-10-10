@@ -95,13 +95,18 @@ namespace MoonProject.Art.Tests
             Assert.That(bottom.y, Is.InRange(0.02f, 0.25f), "07 drives on from the dust, over the ramp lip");
             Assert.AreEqual(BaseModelBuilder.LanderDeckTop, top.y, 1e-4f, "level with the deck at the top");
             Assert.AreEqual(new Vector2(bottom.x, bottom.z), new Vector2(top.x, top.z), "straight up");
-            Assert.Less(Vector3.Distance(platform.LocalPosition, Vector3.Lerp(bottom, top, 0.5f)), 1e-4f, "jammed");
-            Assert.AreEqual(Quaternion.identity, platform.LocalRotation);
+            // Jammed halfway, hanging from its left cable alone: its left shackle is where a level platform's would be.
+            var shackle = new Vector3(-0.84f, 1f, -1.29f);
+            Vector3 hanging = platform.LocalPosition + platform.LocalRotation * shackle;
+            Assert.Less(Vector3.Distance(hanging, Vector3.Lerp(bottom, top, 0.5f) + shackle), 1e-3f, "jammed");
+            Assert.Greater((platform.LocalRotation * Vector3.forward).z, 0.999f,
+                "it only rolls, still facing the lander");
             Assert.Less((platform.GetDescendant("RoverSpot").LocalRotation * Vector3.forward).z, -0.99f,
                 "07 rides facing the lander");
 
             List<Vector3> deck = Solid(platform, string.Empty);
-            foreach (string name in new[] { "LiftCable_L", "LiftCable_R" })
+            // While jammed only the left cable holds it; the right one hangs snapped until the repair.
+            foreach (string name in new[] { "LiftCable_L" })
             {
                 ModelNode cable = _lander.GetDescendant(name);
                 Vector3 end = cable.LocalPosition + Vector3.up * cable.Mesh.Geometry.Bounds.min.y;

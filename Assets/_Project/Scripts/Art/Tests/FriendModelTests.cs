@@ -126,7 +126,8 @@ namespace MoonProject.Art.Tests
             {
                 "Windows", "ShelfAnchor", "TowerAnchor", "LampSocket_0", "LampSocket_1", "LampSocket_2",
                 "LampSocket_3", "FriendSocket_tilly", "WorkshopAnchor", "DockAnchor", "DockGlow", "LiftBottom",
-                "LiftTop", "LiftPlatform", "LiftCable_L", "LiftCable_R", "HomeSign", "Weather_Paint", "Weather_Rust",
+                "LiftTop", "LiftPlatform", "LiftCable_L", "LiftCable_R", "LiftCableR_Snapped", "WinchLamp",
+                "LiftHopperMouth", "HomeSign", "Weather_Paint", "Weather_Rust",
                 "Weather_Dust",
             };
 
