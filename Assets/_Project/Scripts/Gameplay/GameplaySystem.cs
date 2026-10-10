@@ -63,6 +63,9 @@ namespace MoonProject.Gameplay
 
         public RadioProgram Radio { get; private set; }
 
+        /// <summary>How far power has come back through the base (docs/features/M3-16).</summary>
+        public BasePower Power { get; private set; }
+
         public SalvageField Salvage => _salvage;
 
         public RelicField Relics => _relics;
@@ -151,6 +154,7 @@ namespace MoonProject.Gameplay
             var abilities = context.Get<IRoverAbilities>();
             Upgrades = new UpgradeService(context.Events, Materials, abilities, _upgradeDefinitions);
             Radio = new RadioProgram(context.Events, _cassettes.Catalog.Ids());
+            Power = new BasePower(context.Events);
 
             Vector3 lander = HomeBase.LanderSpot(services.Terrain, services.Layout.BasePosition, _home.Tuning);
             if (!_salvage.Initialize(services) || !_relics.Initialize(services, _salvage) ||
@@ -199,6 +203,7 @@ namespace MoonProject.Gameplay
             context.Register<IStationReach>(_relays.Reach);
             context.Register<IRadioHop>(_relays.Hop);
             context.Register<IRelayStatus>(_relays);
+            context.Register<IBasePower>(Power);
             Upgrades.PublishSignals();
             RegisterSaveSections(save);
         }
@@ -237,6 +242,12 @@ namespace MoonProject.Gameplay
         private void Start()
         {
             Radio.Announce();
+            Power.Announce();
+        }
+
+        private void Update()
+        {
+            Power.Show(_tower.ShownLevel);
         }
 
         private void RestoreRadio(RadioSaveData data)
@@ -276,6 +287,7 @@ namespace MoonProject.Gameplay
         {
             Upgrades.Restore(data);
             _tower.ShowLevel(Upgrades.LevelOf(_tower.Definition.Id));
+            Power.Restore(_tower.ShownLevel);
         }
 
         /// <summary>The id of an upgrade no station sells (it could never be bought), or null.</summary>
