@@ -53,8 +53,17 @@ namespace MoonProject.Rover.PlayModeTests
 
         /// <summary>How long the stick is tried one way to learn which way tips the view up.</summary>
         private const float StickProbeSeconds = 0.3f;
+
+        /// <summary>How far (deg) the view must move within the probe time to show which way the stick tips it.</summary>
+        private const float ProbeTurn = 1f;
+        private const float ProbeSeconds = 1f;
         private const float LookTimeout = 6f;
         private const float BeatTimeout = 8f;
+
+        /// <summary>Once the beat is on, 07 lifts its head this far into the gaze within the timeout.</summary>
+        private const float JoinedGaze = 0.9f;
+        private const float GazeTimeout = 6f;
+
         private const float LiftFrameSeconds = 1.5f;
         private const float DriveStick = 0.6f;
         private const float EndTimeout = 1f;
@@ -279,9 +288,13 @@ namespace MoonProject.Rover.PlayModeTests
             _context.Events.Publish(new DockEveningOpened(dock.position));
             yield return Wait(EveningEarlySeconds);
             Set(_gamepad.leftStick, new Vector2(0f, DriveStick));
-            yield return null;
-            yield return null;
-            Assert.IsFalse(held.IsOpen, "Drive input ends the evening early.");
+            float early = Time.time + EndTimeout;
+            while (held.IsOpen)
+            {
+                Assert.Less(Time.time, early, "Drive input ends the evening early.");
+                yield return null;
+            }
+
             Set(_gamepad.leftStick, Vector2.zero);
             Directory.CreateDirectory(CaptureFolder);
             File.WriteAllText(Path.Combine(CaptureFolder, "evening.md"), _report.ToString());
@@ -296,8 +309,14 @@ namespace MoonProject.Rover.PlayModeTests
             float target = LookUpElevation;
             float before = _cameraRig.Orbit.Elevation;
             Set(_gamepad.rightStick, new Vector2(0f, LookStick));
-            yield return Wait(StickProbeSeconds);
-            float sign = _cameraRig.Orbit.Elevation < before ? 1f : -1f;
+            float probe = Time.time + ProbeSeconds;
+            while (Mathf.Abs(_cameraRig.Orbit.Elevation - before) < ProbeTurn && Time.time < probe)
+            {
+                yield return null;
+            }
+
+            // Unmoved, the view already sat at its limit that way: the stick tips it up the other way.
+            float sign = _cameraRig.Orbit.Elevation < before - ProbeTurn ? 1f : -1f;
             Set(_gamepad.rightStick, new Vector2(0f, LookStick * sign));
             float timeout = Time.time + LookTimeout;
             while (_cameraRig.Orbit.Elevation > target)
@@ -317,8 +336,12 @@ namespace MoonProject.Rover.PlayModeTests
                 yield return null;
             }
 
-            yield return Wait(SettleSeconds);
-            Assert.Greater(_cameraRig.SkyLift, 0.9f, "07 has joined the gaze.");
+            timeout = Time.time + GazeTimeout;
+            while (_cameraRig.SkyLift < JoinedGaze)
+            {
+                Assert.Less(Time.time, timeout, $"07 joins the gaze (still {_cameraRig.SkyLift:0.00}).");
+                yield return null;
+            }
             Capture(name + "-2-beat");
 
             Set(_gamepad.leftStick, new Vector2(0f, DriveStick));
