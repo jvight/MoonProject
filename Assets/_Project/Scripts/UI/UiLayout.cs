@@ -18,6 +18,10 @@ namespace MoonProject.UI
             NextLine = Require<VisualElement>("next-line");
             NextLineShadow = Require<VisualElement>("next-line-shadow");
             NextLineText = Require<Label>("next-line-text");
+            PlaceCard = Require<VisualElement>("place-card");
+            PlaceCardShadow = Require<VisualElement>("place-card-shadow");
+            PlaceCardName = Require<Label>("place-card-name");
+            PlaceCardJob = Require<Label>("place-card-job");
             KitTitle = Require<VisualElement>("kit-title");
             KitTitleName = Require<Label>("kit-title-name");
             KitTitleShadow = Require<VisualElement>("kit-title-shadow");
@@ -163,6 +167,14 @@ namespace MoonProject.UI
         public VisualElement NextLineShadow { get; }
 
         public Label NextLineText { get; }
+
+        public VisualElement PlaceCard { get; }
+
+        public VisualElement PlaceCardShadow { get; }
+
+        public Label PlaceCardName { get; }
+
+        public Label PlaceCardJob { get; }
 
         public VisualElement KitTitle { get; }
 

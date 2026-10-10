@@ -57,6 +57,7 @@ namespace MoonProject.UI
         private LookUpChip _lookUpChip;
         private NextStepLine _nextStep;
         private NextLineView _nextLine;
+        private PlaceCard _placeCard;
         private TitleCard _title;
         private TetherReticle _reticle;
         private ContextPrompt _prompt;
@@ -224,6 +225,7 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<RoverAwoke>(OnRoverAwoke));
             _tokens.Add(events.Subscribe<StargazingChanged>(OnStargazingChanged));
             _tokens.Add(events.Subscribe<NextStepChanged>(OnNextStepChanged));
+            _tokens.Add(events.Subscribe<PlaceFirstApproached>(OnPlaceFirstApproached));
             _tokens.Add(events.Subscribe<RoverWideShotChanged>(OnWideShotChanged));
             _tokens.Add(events.Subscribe<SonarPinged>(OnSonarPinged));
             _tokens.Add(events.Subscribe<SiteAnswered>(OnSiteAnswered));
@@ -285,6 +287,7 @@ namespace MoonProject.UI
             _lookUpChip = new LookUpChip(_layout, _tuning.Stargaze, _localization);
             _nextStep = new NextStepLine(_tuning.Guidance);
             _nextLine = new NextLineView(_layout, _tuning.Guidance, _localization);
+            _placeCard = new PlaceCard(_layout, _tuning.Guidance, _localization);
             _title = new TitleCard(_layout.Title, _tuning.Title);
             _reticle = new TetherReticle(_layout.Reticle, _layout.ReticleRest, _layout.ReticleHover, _tuning.Reticle);
             _prompt = new ContextPrompt(_layout, _tuning.Prompts, _director, services.View, _glyphs, _localization,
@@ -418,8 +421,10 @@ namespace MoonProject.UI
             _lookUpHint.Tick(hudTime);
             _lookUpChip.Tick(deltaTime, !paused && _lookUpHint.WantsShown, device);
             _nextStep.Tick(hudTime, _services.Rover.Speed, _player.Guidance);
+            _placeCard.Tick(hudTime, _awake && !_title.IsPlaying && !_kitTitle.IsVisible && !_card.IsVisible);
             _nextLine.Tick(deltaTime, _nextStep, !paused && _awake && !_title.IsPlaying && !_card.IsVisible &&
-                                                 !_tower.IsVisible && !_stargaze.IsVeiled);
+                                                 !_tower.IsVisible && !_stargaze.IsVeiled &&
+                                                 !_placeCard.IsVisible);
         }
 
         private void Quit()
@@ -477,6 +482,11 @@ namespace MoonProject.UI
                 _stargaze.SetStargazing(changed.IsStargazing);
                 _lookUpHint.SetStargazing(changed.IsStargazing);
             }
+        }
+
+        private void OnPlaceFirstApproached(PlaceFirstApproached approached)
+        {
+            _placeCard.Approached(approached.PlaceId);
         }
 
         private void OnNextStepChanged(NextStepChanged changed)
@@ -623,6 +633,7 @@ namespace MoonProject.UI
             _ticker.Relocalize();
             _lookUpChip.Relocalize();
             _nextLine.Relocalize();
+            _placeCard.Relocalize();
             _dial.Relocalize();
             _hopList.Relocalize();
             _friendName.Relocalize();

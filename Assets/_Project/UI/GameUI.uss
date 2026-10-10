@@ -350,6 +350,24 @@ Label {
     text-shadow: 0 2px 12px var(--moon-shadow);
 }
 
+/* A place's card, the first time 07 comes near: its name and its one job, below where kit titles rest */
+
+.place-card {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 20%;
+    align-items: center;
+}
+
+.place-card__job {
+    margin-top: 8px;
+    font-size: 19px;
+    color: var(--moon-text);
+    -unity-text-align: middle-center;
+    text-shadow: 0 2px 12px var(--moon-shadow);
+}
+
 /* A fitted piece of kit's name (crafted at Kenji's Rover Bay, or a friend's gift): high and quiet, clear of 07 */
 
 .kit-title {
