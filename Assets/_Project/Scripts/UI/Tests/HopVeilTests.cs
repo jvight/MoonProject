@@ -14,13 +14,13 @@ namespace MoonProject.UI.Tests
         private const float Dark = 0.6f;
         private const float FadeIn = 0.8f;
 
-        private RelaySettings _settings;
+        private RelayUiSettings _settings;
         private HopVeil _veil;
 
         [SetUp]
         public void SetUp()
         {
-            _settings = new RelaySettings();
+            _settings = new RelayUiSettings();
             _veil = new HopVeil(_settings);
         }
 

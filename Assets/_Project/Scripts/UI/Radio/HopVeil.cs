@@ -5,8 +5,8 @@ namespace MoonProject.UI
 {
     /// <summary>
     /// The radio-hop's soft dark as numbers (pure logic, EditMode-tested). It follows gameplay's eased fade exactly
-    /// while that changes no faster than <see cref="RelaySettings.VeilMaxChangePerSecond"/>, so a value that jumps (a
-    /// hop cut short) still eases instead of cutting; it never goes past <see cref="RelaySettings.VeilMaxDarkness"/>,
+    /// while that changes no faster than <see cref="RelayUiSettings.VeilMaxChangePerSecond"/>, so a value that jumps (a
+    /// hop cut short) still eases instead of cutting; it never goes past <see cref="RelayUiSettings.VeilMaxDarkness"/>,
     /// so the dark stays soft. A faint static grain rises
     /// and resolves with it and crawls to a new place a few times a second (a seeded sequence, so captures repeat).
     /// </summary>
@@ -14,12 +14,12 @@ namespace MoonProject.UI
     {
         private const uint GrainSeed = 0x9E3779B9u;
 
-        private readonly RelaySettings _settings;
+        private readonly RelayUiSettings _settings;
         private uint _state = GrainSeed;
         private float _level;
         private float _grainClock;
 
-        public HopVeil(RelaySettings settings)
+        public HopVeil(RelayUiSettings settings)
         {
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
         }

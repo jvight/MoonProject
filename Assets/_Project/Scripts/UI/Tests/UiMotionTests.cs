@@ -6,7 +6,7 @@ namespace MoonProject.UI.Tests
     /// <summary>
     /// The easing building blocks: nothing pops, reversals are continuous, numbers count, time eases.
     /// </summary>
-    public sealed class MotionTests
+    public sealed class UiMotionTests
     {
         private const float Frame = 1f / 60f;
 

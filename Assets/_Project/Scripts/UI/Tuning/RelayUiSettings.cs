@@ -8,7 +8,7 @@ namespace MoonProject.UI
     /// price tag at a dark mast.
     /// </summary>
     [Serializable]
-    public sealed class RelaySettings
+    public sealed class RelayUiSettings
     {
         [Tooltip("Fastest the veil may darken or lighten, per second. Gameplay's eased hop fade changes more slowly "
             + "and is followed exactly; anything faster (a hop cut short) still eases over a moment, never a cut.")]

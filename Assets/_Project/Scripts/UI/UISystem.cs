@@ -76,6 +76,7 @@ namespace MoonProject.UI
         private FriendReadout _friendReadout;
         private FriendNameTag _friendName;
         private PauseMenu _pause;
+        private BackdropBlur _backdrop;
         private bool _composed;
         private bool _bound;
         private bool _awake;
@@ -129,6 +130,8 @@ namespace MoonProject.UI
         internal PlaceCard PlaceCard => _placeCard;
 
         internal LookUpChip LookUp => _lookUpChip;
+
+        internal BackdropBlur Backdrop => _backdrop;
 
         internal NextLineView NextLine => _nextLine;
 
@@ -322,6 +325,7 @@ namespace MoonProject.UI
             _kitTitle = new KitTitle(_layout, _tuning.KitTitle, _localization);
             _pause = new PauseMenu(_layout, _tuning.Pause, _player, _localization, services.Input, services.Events,
                 services.Save, services.Materials, services.Radio, services.Relays, _numbers, _cursor, Quit);
+            _backdrop = new BackdropBlur(transform, _tuning.Backdrop);
             _bound = true;
             if (_awake)
             {
@@ -365,6 +369,7 @@ namespace MoonProject.UI
             }
 
             _pause.Tick(deltaTime);
+            _backdrop.Set(_pause.Openness);
             bool paused = _pause.IsOpen;
             float hudTime = paused ? 0f : deltaTime;
             _hud.Set(!paused);
@@ -380,7 +385,7 @@ namespace MoonProject.UI
             _title.Tick(hudTime);
             _reticle.Tick(deltaTime, _services.Tether.State, input.TetherHeld);
             _card.Tick(hudTime, _glyphs.Cancel(device), device,
-                !_ticker.IsVisible && !hopping && !_hopList.IsBusy && !_placeCard.IsVisible);
+                !_ticker.IsVisible && !hopping && !_hopList.IsBusy && !_placeCard.IsVisible && !_prompt.IsVisible);
             _tower.Tick(hudTime, !paused, input.ExcavateHeld, input.Winch,
                 _services.Tether.State == TetherAimState.Towing, _glyphs.For(RoverAction.Excavate, device), device);
             _kitTitle.Tick(hudTime);
@@ -407,9 +412,9 @@ namespace MoonProject.UI
             _friendName.Tick(hudTime, panelSize);
             _siteName.Tick(hudTime, panelSize, !_prompt.IsVisible && !_placeCard.IsVisible &&
                                                !_lookUpChip.IsVisible && !_ticker.IsVisible && !_kitTitle.IsVisible);
-            // A standing prompt gives way to a waiting place card or site name: those moments pass, the prompt returns.
+            // A standing prompt gives way to a waiting card or site name: those moments pass, the prompt returns.
             bool promptsOpen = !paused && _awake && _sinceAwake >= _tuning.Prompts.StartDelay && !_title.IsPlaying &&
-                               !_card.IsVisible && !_tower.IsVisible && !_dial.IsBusy && !_hopList.IsBusy && !hopping &&
+                               !_card.IsBusy && !_tower.IsVisible && !_dial.IsBusy && !_hopList.IsBusy && !hopping &&
                                !_placeCard.IsVisible && !_placeCard.IsWaiting && !_siteName.IsVisible &&
                                !_siteName.IsWaiting && !_lookUpChip.IsVisible && !_kitTitle.IsVisible;
             _prompt.Tick(deltaTime, promptsOpen, _services.Hints.Primary, device, panelSize);
@@ -710,6 +715,7 @@ namespace MoonProject.UI
 
                 _pause.RestoreTime();
                 _hopFade.Dispose();
+                _backdrop.Dispose();
             }
 
             _services.Input.Menu.Disable();
