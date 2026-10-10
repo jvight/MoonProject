@@ -75,6 +75,130 @@
             "text": "Mouse"
         },
         {
+            "key": "ui.settings.guidance",
+            "text": "Guidance"
+        },
+        {
+            "key": "next.wake",
+            "text": "Something out there may answer. Try a ping."
+        },
+        {
+            "key": "next.salvage",
+            "text": "Cut what you can from the depot."
+        },
+        {
+            "key": "next.tower",
+            "text": "The tower needs metal."
+        },
+        {
+            "key": "next.signal",
+            "text": "A faint signal. Follow it."
+        },
+        {
+            "key": "next.relic",
+            "text": "Something glints out there. Bring it home."
+        },
+        {
+            "key": "next.bay",
+            "text": "The bay has power. Park on the turntable."
+        },
+        {
+            "key": "next.leap",
+            "text": "The chasm waits. Charge a leap."
+        },
+        {
+            "key": "next.relay",
+            "text": "A dark mast. Bring it back."
+        },
+        {
+            "key": "next.lift",
+            "text": "The lift has power. Mend it and ride up."
+        },
+        {
+            "key": "notyet.bay",
+            "text": "No power. The tower feeds it."
+        },
+        {
+            "key": "notyet.lift",
+            "text": "No power yet. The tower feeds it."
+        },
+        {
+            "key": "notyet.shelf",
+            "text": "Empty for now. It waits for the crew's things."
+        },
+        {
+            "key": "place.dock.name",
+            "text": "Charging Dock"
+        },
+        {
+            "key": "place.dock.job",
+            "text": "Where 07 rests. Resting keeps the day."
+        },
+        {
+            "key": "place.lander.name",
+            "text": "The Lander"
+        },
+        {
+            "key": "place.lander.job",
+            "text": "The crew's home. Its windows show how alive it is."
+        },
+        {
+            "key": "place.shelf.name",
+            "text": "Memory Shelf"
+        },
+        {
+            "key": "place.shelf.job",
+            "text": "The crew's things, each one a story."
+        },
+        {
+            "key": "place.tower.name",
+            "text": "Radio Tower"
+        },
+        {
+            "key": "place.tower.job",
+            "text": "The heart of home: power and signals."
+        },
+        {
+            "key": "place.bay.name",
+            "text": "Kenji's Rover Bay"
+        },
+        {
+            "key": "place.bay.job",
+            "text": "Where new kit is fitted to 07."
+        },
+        {
+            "key": "place.board.name",
+            "text": "Blueprint Board"
+        },
+        {
+            "key": "place.board.job",
+            "text": "One sheet for every kit the bay can build."
+        },
+        {
+            "key": "place.ladder.name",
+            "text": "Crew's Ladder"
+        },
+        {
+            "key": "place.ladder.job",
+            "text": "The crew's ladder. Not made for wheels."
+        },
+        {
+            "key": "place.lift.name",
+            "text": "Crew's Lift"
+        },
+        {
+            "key": "place.lift.job",
+            "text": "Carries 07 up to the lander deck."
+        },
+        {
+            "key": "place.rack.name",
+            "text": "Tape Rack"
+        },
+        {
+            "key": "place.rack.job",
+            "text": "Music, and the crew's voices."
+        },
+        {
             "key": "ui.settings.sound",
             "text": "Sound"
         },
