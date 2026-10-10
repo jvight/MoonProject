@@ -85,6 +85,16 @@ namespace MoonProject.World.Editor
             AssetDatabase.SaveAssets();
         }
 
+        /// <summary>The radio tower's warm pilot blink while the base sleeps (M3-16): a WarmLamp halo.</summary>
+        [MoonBuilder("World/Tower Pilot", 245)]
+        public static void BuildTowerPilot()
+        {
+            var material = new Material(FindShader(WorldPaths.BeaconHaloShader));
+            material.SetColor("_Color", Palette.Get(PaletteSwatch.WarmLamp));
+            GeneratedAssets.CreateOrReplace(material, WorldPaths.TowerPilotMaterial);
+            AssetDatabase.SaveAssets();
+        }
+
         [MoonBuilder("World/Post Processing", 220)]
         public static void BuildVolumeProfile()
         {

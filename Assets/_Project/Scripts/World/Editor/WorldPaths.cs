@@ -15,6 +15,7 @@ namespace MoonProject.World.Editor
         public const string BeaconHaloMaterial = BeaconFolder + "/M_BeaconHalo.mat";
         public const string BeaconHaloShader = "MoonProject/World/LofiBeaconHalo";
         public const string CanyonGlowMaterial = GeneratedRoot + "/Canyon/M_CanyonGlow.mat";
+        public const string TowerPilotMaterial = GeneratedRoot + "/Beacon/M_TowerPilot.mat";
         public const string SkyShader = "MoonProject/World/LofiSky";
         public const string EarthShader = "MoonProject/World/LofiEarth";
         public const string GroundShader = "MoonProject/World/LofiTerrain";
