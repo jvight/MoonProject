@@ -7,7 +7,7 @@ namespace MoonProject.World
     /// The filmic lofi finish (pillar 6), written into the URP Volume profile
     /// (Generated/World/WorldVolumeProfile.asset) by the World builder: gentle tonemapping, soft bloom for the warm
     /// lights that are alive, cool shadows and warm highlights, a light vignette and very fine film grain. Nothing
-    /// sharp, nothing harsh.
+    /// sharp, nothing harsh. The ambient occlusion goes into the PC renderer's SSAO feature, through the same builder.
     /// </summary>
     [Serializable]
     public sealed class PostProcessSettings
@@ -60,6 +60,21 @@ namespace MoonProject.World
         [Range(-100f, 100f)]
         [SerializeField] private float _splitBalance = -10f;
 
+        [Header("Ambient occlusion")]
+        [Tooltip("SSAO strength. Strong enough that every foot, leg and wheel sits in a dark crease and stops floating.")]
+        [Range(0f, 4f)]
+        [SerializeField] private float _occlusionIntensity = 1.2f;
+
+        [Tooltip("SSAO sampling radius, metres. Sized for the chase camera's 10-30 m: smaller vanishes into a few " +
+            "pixels, larger greys whole walls.")]
+        [Range(0.05f, 3f)]
+        [SerializeField] private float _occlusionRadius = 1.2f;
+
+        [Tooltip("How much the occlusion also darkens directly lit faces (0 = ambient only). Enough that a prop's " +
+            "lit foot still reads as grounded.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _occlusionDirectLighting = 0.55f;
+
         [Header("Lens")]
         [Tooltip("Vignette strength.")]
         [Range(0f, 1f)]
@@ -93,6 +108,9 @@ namespace MoonProject.World
         public Color SplitShadows => _splitShadows;
         public Color SplitHighlights => _splitHighlights;
         public float SplitBalance => _splitBalance;
+        public float OcclusionIntensity => _occlusionIntensity;
+        public float OcclusionRadius => _occlusionRadius;
+        public float OcclusionDirectLighting => _occlusionDirectLighting;
         public float VignetteIntensity => _vignetteIntensity;
         public float VignetteSmoothness => _vignetteSmoothness;
         public Color VignetteColor => _vignetteColor;

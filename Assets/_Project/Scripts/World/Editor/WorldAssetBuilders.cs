@@ -10,12 +10,14 @@ using MoonProject.Editor.Builders;
 namespace MoonProject.World.Editor
 {
     /// <summary>
-    /// World content builders: the tuning asset (created once, never overwritten), the sky and Earth materials and
-    /// the post-processing Volume profile generated from <see cref="PostProcessSettings"/>. Terrain and Earth meshes
+    /// World content builders: the tuning asset (created once, never overwritten), the sky and Earth materials, and
+    /// from <see cref="PostProcessSettings"/> the post-processing Volume profile and the PC renderer's SSAO. Terrain and Earth meshes
     /// are not assets: <see cref="WorldSystem"/> generates them at boot.
     /// </summary>
     public static class WorldAssetBuilders
     {
+        private const string OcclusionFeature = "ScreenSpaceAmbientOcclusion";
+
         [MoonBuilder("World/Settings", 200)]
         public static void BuildSettings()
         {
@@ -144,6 +146,53 @@ namespace MoonProject.World.Editor
 
             EditorUtility.SetDirty(profile);
             AssetDatabase.SaveAssets();
+        }
+
+        /// <summary>
+        /// The PC renderer's screen-space ambient occlusion from <see cref="PostProcessSettings"/> (M3-18 V1). URP keeps
+        /// the feature and its settings internal, so they are written through their serialized fields.
+        /// </summary>
+        [MoonBuilder("World/Render Pipeline", 225)]
+        public static void BuildRenderPipeline()
+        {
+            PostProcessSettings post = LoadSettings().PostProcessing;
+            var renderer = AssetDatabase.LoadAssetAtPath<UniversalRendererData>(WorldPaths.PcRenderer);
+            if (renderer == null)
+            {
+                throw new InvalidOperationException($"No URP renderer at {WorldPaths.PcRenderer}.");
+            }
+
+            ScriptableRendererFeature occlusion = null;
+            foreach (ScriptableRendererFeature feature in renderer.rendererFeatures)
+            {
+                occlusion = feature != null && feature.GetType().Name == OcclusionFeature ? feature : occlusion;
+            }
+
+            if (occlusion == null)
+            {
+                throw new InvalidOperationException($"{WorldPaths.PcRenderer} has no {OcclusionFeature} feature.");
+            }
+
+            var serialized = new SerializedObject(occlusion);
+            SetFloat(serialized, "m_Settings.Intensity", post.OcclusionIntensity);
+            SetFloat(serialized, "m_Settings.Radius", post.OcclusionRadius);
+            SetFloat(serialized, "m_Settings.DirectLightingStrength", post.OcclusionDirectLighting);
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            occlusion.SetActive(true);
+            EditorUtility.SetDirty(occlusion);
+            EditorUtility.SetDirty(renderer);
+            AssetDatabase.SaveAssets();
+        }
+
+        private static void SetFloat(SerializedObject serialized, string path, float value)
+        {
+            SerializedProperty property = serialized.FindProperty(path);
+            if (property == null)
+            {
+                throw new InvalidOperationException($"{serialized.targetObject.name} has no serialized '{path}'.");
+            }
+
+            property.floatValue = value;
         }
 
         private static T Override<T>(VolumeProfile profile) where T : VolumeComponent

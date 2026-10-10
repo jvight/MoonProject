@@ -9,6 +9,8 @@ namespace MoonProject.World.Editor
         public const string EarthMaterial = GeneratedRoot + "/M_Earth.mat";
         public const string GroundMaterial = GeneratedRoot + "/M_Ground.mat";
         public const string VolumeProfile = GeneratedRoot + "/WorldVolumeProfile.asset";
+        /// <summary>The PC quality level's renderer: World's builder writes its SSAO from the post settings.</summary>
+        public const string PcRenderer = "Assets/Settings/PC_Renderer.asset";
         public const string BeaconFolder = GeneratedRoot + "/Beacon";
         public const string BeaconModelPrefab = BeaconFolder + "/PeakBeaconModel.prefab";
         public const string BeaconHaloMesh = BeaconFolder + "/BeaconHaloQuad.asset";
