@@ -24,6 +24,7 @@ namespace MoonProject.UI
         [SerializeField] private SalvageSettings _salvage = new SalvageSettings();
         [SerializeField] private StargazeSettings _stargaze = new StargazeSettings();
         [SerializeField] private GuidanceSettings _guidance = new GuidanceSettings();
+        [SerializeField] private BackdropSettings _backdrop = new BackdropSettings();
 
         public PauseSettings Pause => _pause;
 
@@ -55,13 +56,15 @@ namespace MoonProject.UI
 
         public GuidanceSettings Guidance => _guidance;
 
+        public BackdropSettings Backdrop => _backdrop;
+
         /// <summary>Null when the tuning is usable, else the first problem.</summary>
         public string Validate()
         {
             if (_pause == null || _title == null || _prompts == null || _reticle == null || _materialsChip == null ||
                 _memoryCard == null || _towerPanel == null || _kitTitle == null || _friends == null ||
                 _ticker == null || _dialReadout == null || _relays == null || _salvage == null ||
-                _stargaze == null || _guidance == null)
+                _stargaze == null || _guidance == null || _backdrop == null)
             {
                 return "a settings section is missing";
             }

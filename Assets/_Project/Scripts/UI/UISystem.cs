@@ -76,6 +76,7 @@ namespace MoonProject.UI
         private FriendReadout _friendReadout;
         private FriendNameTag _friendName;
         private PauseMenu _pause;
+        private BackdropBlur _backdrop;
         private bool _composed;
         private bool _bound;
         private bool _awake;
@@ -129,6 +130,8 @@ namespace MoonProject.UI
         internal PlaceCard PlaceCard => _placeCard;
 
         internal LookUpChip LookUp => _lookUpChip;
+
+        internal BackdropBlur Backdrop => _backdrop;
 
         internal NextLineView NextLine => _nextLine;
 
@@ -322,6 +325,7 @@ namespace MoonProject.UI
             _kitTitle = new KitTitle(_layout, _tuning.KitTitle, _localization);
             _pause = new PauseMenu(_layout, _tuning.Pause, _player, _localization, services.Input, services.Events,
                 services.Save, services.Materials, services.Radio, services.Relays, _numbers, _cursor, Quit);
+            _backdrop = new BackdropBlur(transform, _tuning.Backdrop);
             _bound = true;
             if (_awake)
             {
@@ -365,6 +369,7 @@ namespace MoonProject.UI
             }
 
             _pause.Tick(deltaTime);
+            _backdrop.Set(_pause.Openness);
             bool paused = _pause.IsOpen;
             float hudTime = paused ? 0f : deltaTime;
             _hud.Set(!paused);
@@ -710,6 +715,7 @@ namespace MoonProject.UI
 
                 _pause.RestoreTime();
                 _hopFade.Dispose();
+                _backdrop.Dispose();
             }
 
             _services.Input.Menu.Disable();

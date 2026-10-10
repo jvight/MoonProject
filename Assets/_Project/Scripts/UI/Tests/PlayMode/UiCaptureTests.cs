@@ -421,10 +421,10 @@ namespace MoonProject.UI.PlayModeTests
             yield return Tap(keyboard.escapeKey);
             yield return new WaitForSecondsRealtime(1f);
 
-
             yield return Tap(keyboard.escapeKey);
             yield return new WaitForSecondsRealtime(1.2f);
             yield return Capture(camera, folder, "12_pause");
+            Assert.AreEqual(1f, ui.Backdrop.Weight, 0.01f, "the frame behind the pause menu is blurred");
             Submit(ui.Layout.SettingsButton);
             yield return new WaitForSecondsRealtime(1f);
             yield return Capture(camera, folder, "13_pause_settings");
