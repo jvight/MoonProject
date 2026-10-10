@@ -11,8 +11,9 @@ namespace MoonProject.Gameplay
     /// shelf answer the sonar with "not yet" (<see cref="DormantAnswers"/>) and keeps the soft "next" line on the
     /// first step not yet done (<see cref="StepFlow"/>). The chasm comes before the bay (P2): once Tilly is home and the
     /// first memory is on the shelf, she spots Bell's light across the chasm (Bell's warm pillar rises); the first
-    /// time 07 reaches the lip without Hover-Jump it holds still and looks across while the light pulses. Saved as
-    /// "gameplay.progression".
+    /// time 07 reaches the lip without Hover-Jump it holds still and looks across while the light pulses. Coming home
+    /// to the dock with news opens the dock's evening (<see cref="DockEvening"/>, P6), whose listening sweep raises
+    /// the next signal pillar. Saved as "gameplay.progression".
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class BaseProgression : MonoBehaviour
@@ -56,6 +57,7 @@ namespace MoonProject.Gameplay
         private bool _looking;
         private PlaceApproaches _approaches;
         private DormantAnswers _answers;
+        private DockEvening _evening;
         private StepFlow _steps;
         private IDisposable _salvage;
         private Vector3 _dock;
@@ -73,6 +75,9 @@ namespace MoonProject.Gameplay
 
         /// <summary>True while 07 holds still at the lip, looking across.</summary>
         public bool LookingAcross => _looking;
+
+        /// <summary>The dock's evening (tests and debugging views).</summary>
+        public DockEvening Evening => _evening;
 
         internal void Wire(ProgressionTuning tuning, Transform[] places, Transform lift)
         {
@@ -131,6 +136,7 @@ namespace MoonProject.Gameplay
             _answers.Add(ProgressionKeys.NotYetShelf, home.ShelfPosition,
                 () => homePowered() && home.DisplayedCount == 0);
             _salvage = services.Events.Subscribe<MaterialSalvaged>(_ => _salvaged = true);
+            _evening = new DockEvening(services.Events, _tuning.EveningSweepDelay);
 
             _steps.Add(ProgressionKeys.NextWake, () => _woke);
             _steps.Add(ProgressionKeys.NextSalvage, () => _salvaged || power.HasReached(BasePowerStage.Home));
@@ -175,6 +181,11 @@ namespace MoonProject.Gameplay
             _approaches.Tick(rover, now);
             _answers.Tick(now);
             StepChasm(rover, now);
+            if (_evening.Tick(now))
+            {
+                _sonar.RevealNextUnheard(_dock, _tuning.EveningPillarBrightness);
+            }
+
             _steps.Tick();
         }
 
@@ -286,6 +297,7 @@ namespace MoonProject.Gameplay
         {
             _salvage?.Dispose();
             _answers?.Dispose();
+            _evening?.Dispose();
             if (_looking)
             {
                 EndLook();

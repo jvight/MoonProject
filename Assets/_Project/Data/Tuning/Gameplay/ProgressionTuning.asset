@@ -29,6 +29,8 @@ MonoBehaviour:
   _chasmLookRadius: 14
   _chasmLookSeconds: 3.5
   _bellLightBrightness: 0.8
+  _eveningSweepDelay: 4.5
+  _eveningPillarBrightness: 0.7
   _tubes:
   - _kitId: rover.cargo_cradle
     _siteId: site.garage

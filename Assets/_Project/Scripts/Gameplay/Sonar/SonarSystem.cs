@@ -280,6 +280,53 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
+        /// The tower's listening sweep at the dock's evening (M3-16 P6): the nearest salvage site to
+        /// <paramref name="home"/> that still has something to find and has not been heard yet raises its pillar, or,
+        /// with none left, the nearest broken friend not heard yet. False when nothing is left unheard.
+        /// </summary>
+        internal bool RevealNextUnheard(Vector3 home, float brightness)
+        {
+            int site = -1;
+            float best = float.PositiveInfinity;
+            for (int i = 0; i < _salvage.Sites.Count; i++)
+            {
+                SalvageSite candidate = _salvage.Sites[i];
+                float distance = SurfaceRules.HorizontalDistance(home, candidate.Position);
+                if (!candidate.Discovered && candidate.AnswersSonar && distance < best)
+                {
+                    site = i;
+                    best = distance;
+                }
+            }
+
+            if (site >= 0)
+            {
+                RevealSite(site, brightness);
+                return true;
+            }
+
+            int friend = -1;
+            for (int i = 0; i < _friends.Friends.Count; i++)
+            {
+                Friend candidate = _friends.Friends[i];
+                float distance = SurfaceRules.HorizontalDistance(home, candidate.Site.Position);
+                if (!candidate.Progress.Discovered && candidate.Progress.AnswersSonar && distance < best)
+                {
+                    friend = i;
+                    best = distance;
+                }
+            }
+
+            if (friend < 0)
+            {
+                return false;
+            }
+
+            RevealFriend(friend, brightness);
+            return true;
+        }
+
+        /// <summary>
         /// A spotter friend saw friend <paramref name="friendIndex"/>'s light from afar (M3-16 P2): its warm pillar
         /// rises without a ping, and rises again (a pulse) each time this is called.
         /// </summary>

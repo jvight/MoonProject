@@ -67,6 +67,14 @@ namespace MoonProject.Gameplay
         [Tooltip("Brightness of Bell's warm pillar when Tilly spots it and when it pulses as 07 looks across.")]
         [Range(0.1f, 2f)] [SerializeField] private float _bellLightBrightness = 0.8f;
 
+        [Header("The dock's evening (P6)")]
+        [Tooltip("Seconds docked after the evening opens (Rover's wide shot settling) before the tower's listening " +
+                 "sweep raises the next signal pillar.")]
+        [Range(0.5f, 15f)] [SerializeField] private float _eveningSweepDelay = 4.5f;
+
+        [Tooltip("Brightness of the pillar the evening's sweep raises on the horizon.")]
+        [Range(0.1f, 2f)] [SerializeField] private float _eveningPillarBrightness = 0.7f;
+
         [Header("Blueprints")]
         [Tooltip("Where the other kits' blueprint tubes lie: each in a salvage site's heart, found with its relic.")]
         [SerializeField] private BlueprintTube[] _tubes =
@@ -119,6 +127,10 @@ namespace MoonProject.Gameplay
         public float ChasmLookSeconds => _chasmLookSeconds;
 
         public float BellLightBrightness => _bellLightBrightness;
+
+        public float EveningSweepDelay => _eveningSweepDelay;
+
+        public float EveningPillarBrightness => _eveningPillarBrightness;
 
         public float PlotterReach => _plotterReach;
 
