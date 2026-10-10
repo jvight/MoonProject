@@ -24,7 +24,22 @@ account) can continue without the old conversation.
   | ui | Done, 583ec3cc: next line, Guidance toggle, place cards, HUD verbs, Look-up hint waits for cards. UiTuning `_guidance` needs a re-serialise after landing. |
   | audio | Done, 93fd84f4: wake stingers per stage, the "not yet" tone. StationAudioTuning has 2 new fields. StationNotYet is also in box/gameplay with an identical diff. |
   | rover | P5 two-beat wake done, tip c53e3681. Beat 1 is the lens looking up at the stars. Beat 2 is an over-the-shoulder shot with Earth in the upper third, then it eases to the chase. Approved. RoverCameraTuning has the `_wake*` fields; reset or re-serialise them after landing. Metas: WakeOpening.cs and its tests. |
-  | art | Dormant items 1–4 done, 5af92d4: bay shutter, lander glows, HOME sign, blueprint board (pegboard). Queued: P3 first (07's rear must not read as a face), then P7 (the pen plotter replaces the pegboard), then the lift states, pads and power cables. |
+  | art | ALL M3-16 art done, tip c9c95b3:
+  - bay shutter, lander glows, HOME sign;
+  - lift jammed and restored states with the winch hopper;
+  - StationPad prefabs with pad lamps;
+  - PowerCable_Home/Bay/Lift glow segments;
+  - P3 (rear is not a face);
+  - P9 site yields (depot 5,2,2 in 4 cuts, garage 7,7,2, Kestrel 2,2,9, drill 7,7,2);
+  - P7: Plotter with PenCarriage, PenHead, PlotterSheet and PlotterLamp; Blueprint_<Ability> sheets on a cord;
+    TubeSocket on 07's lid.
+  Still to wire, by gameplay and rover:
+  - the plotter drawing a sheet when a tube arrives;
+  - the tube riding on 07's back;
+  - the lift station and ride;
+  - pads replacing the neon rings;
+  - cables lighting with BasePowerChanged.
+  New RoverModel node TubeSocket: check Rover's node lists when landing. |
   | world | Its part is landed. |
 
 - **After landing 0.5's first batch:**
