@@ -47,9 +47,23 @@ namespace MoonProject.World
         [Range(0.8f, 4f)]
         [SerializeField] private float _starPowerLaw = 1.5f;
 
-        [Tooltip("Core size of a faint star in screen pixels; brighter stars are a little larger.")]
-        [Range(0.5f, 4f)]
-        [SerializeField] private float _starSize = 0.9f;
+        [Tooltip("Radius of a faint star's round core in screen pixels; brighter stars are larger (see size spread).")]
+        [Range(0.2f, 4f)]
+        [SerializeField] private float _starSize = 0.45f;
+
+        [Tooltip("How fast a star's size grows with its brightness (a power of it): a few big stars among many fine " +
+            "ones, never a field of same-sized dots.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _starSizeSpread = 0.35f;
+
+        [Tooltip("Brightness cap of the brightest stars. Times the star brightness, only these few clear the bloom " +
+            "threshold.")]
+        [Range(1f, 10f)]
+        [SerializeField] private float _starBrightest = 4.5f;
+
+        [Tooltip("Brightness from which a star carries a soft glow: only the brightest few.")]
+        [Range(0f, 10f)]
+        [SerializeField] private float _starGlowFrom = 2.8f;
 
         [Tooltip("Soft glow around the brightest stars (0 = none). Gentle, never a flare.")]
         [Range(0f, 1f)]
@@ -81,11 +95,11 @@ namespace MoonProject.World
 
         [Tooltip("Angular half-width of the band, radians.")]
         [Range(0.02f, 0.6f)]
-        [SerializeField] private float _milkyWayWidth = 0.17f;
+        [SerializeField] private float _milkyWayWidth = 0.2f;
 
-        [Tooltip("Strength of the milky way haze.")]
+        [Tooltip("Strength of the milky way haze: a band you notice at once, the sky's widest soft light.")]
         [Range(0f, 2f)]
-        [SerializeField] private float _milkyWayIntensity = 0.45f;
+        [SerializeField] private float _milkyWayIntensity = 0.8f;
 
         [Header("Earth")]
         [Tooltip("Bearing of Earth from the base, degrees clockwise from +Z. The rover starts facing +Z.")]
@@ -185,6 +199,9 @@ namespace MoonProject.World
         public float StarPowerLaw => _starPowerLaw;
         public float StarSize => _starSize;
         public float StarGlow => _starGlow;
+        public float StarSizeSpread => _starSizeSpread;
+        public float StarBrightest => _starBrightest;
+        public float StarGlowFrom => _starGlowFrom;
         public float TwinkleShare => _twinkleShare;
         public float TwinkleSpeed => _twinkleSpeed;
         public float TwinkleDepth => _twinkleDepth;
