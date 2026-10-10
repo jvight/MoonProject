@@ -246,6 +246,10 @@ namespace MoonProject.World
         [Tooltip("Ground shaped for the salvage sites and relay.0's mound, and Kestrel-3's impact (M3-13).")]
         [SerializeField] private SiteSettings _sites = new SiteSettings();
 
+        [Header("Crater field")]
+        [Tooltip("The small craters on the open plains (M3-18 V4), added once the world anchors are known.")]
+        [SerializeField] private CraterFieldSettings _craterField = new CraterFieldSettings();
+
         [Header("Far field")]
         [Tooltip("Radius where the distant ranges beyond the rim start rising.")]
         [Range(500f, 4000f)]
@@ -319,6 +323,7 @@ namespace MoonProject.World
         public BowlPlacement[] Bowls => _bowls;
         public CanyonSettings Canyon => _canyon;
         public SiteSettings Sites => _sites;
+        public CraterFieldSettings CraterField => _craterField;
         public float FarRangeStart => _farRangeStart;
         public float FarRangeFull => _farRangeFull;
         public float FarRangeHeight => _farRangeHeight;
@@ -375,7 +380,7 @@ namespace MoonProject.World
                 return "Rim mountains, gullies, crags or far ranges could rise above The Peak; lower them or raise it.";
             }
 
-            return _canyon.Validate() ?? _sites.Validate();
+            return _canyon.Validate() ?? _sites.Validate() ?? _craterField.Validate();
         }
     }
 }

@@ -49,6 +49,9 @@ namespace MoonProject.World
 
         // Gullies drift sideways once per this many gully spacings down the wall, so they are not perfectly radial.
         private const float GullyRadialDrift = 2f;
+
+        // A big crater's bowl or rim weight above which no small crater lies (its walls are already steep).
+        private const float OpenPlainCraterWeight = 0.15f;
         private const uint CraterSalt = 0x7FEB352Du;
 
         private readonly GradientNoise _hillNoise;
@@ -92,6 +95,7 @@ namespace MoonProject.World
         private readonly float _invStrataSpacing;
         private readonly float _strataStrength;
         private readonly float _strataRiser;
+        private CraterField _craterField;
         private readonly float _peakX;
         private readonly float _peakZ;
         private readonly float _peakHeight;
@@ -373,6 +377,20 @@ namespace MoonProject.World
         }
 
         /// <summary>Height plus region weights at world XZ.</summary>
+        /// <summary>
+        /// Adds the basin's small craters (M3-18 V4). Call once, after the world anchors were found on the surface
+        /// without them (the field keeps clear of their ground) and before anything meshes or scatters on it.
+        /// </summary>
+        public void AttachCraterField(CraterField field)
+        {
+            if (_craterField != null)
+            {
+                throw new InvalidOperationException("The crater field is already attached.");
+            }
+
+            _craterField = field ?? throw new ArgumentNullException(nameof(field));
+        }
+
         public SurfaceSample Sample(float x, float z)
         {
             SurfaceSample world = SampleWorld(x, z);
@@ -433,6 +451,19 @@ namespace MoonProject.World
                 height += CraterHeights(x, z, ref calm, ref craterBowl, ref craterRim);
                 height += RampHeights(x, z, ref calm);
                 height += floorWeight * _kestrel.Sample(x, z, ref calm, out scorch);
+                if (_craterField != null)
+                {
+                    // Ramps, play bowls, Kestrel-3's impact and the big craters' walls and rims are left to themselves:
+                    // the small craters lie on the open plains.
+                    float open = 1f - SmoothMath.Smootherstep(0f, OpenPlainCraterWeight,
+                        Mathf.Max(Mathf.Max(craterBowl, craterRim), scorch));
+                    float small = floorWeight * calm * open;
+                    float smallBowl = 0f;
+                    float smallRim = 0f;
+                    height += small * _craterField.Sample(x, z, ref smallBowl, ref smallRim);
+                    craterBowl = Mathf.Max(craterBowl, small * smallBowl);
+                    craterRim = Mathf.Max(craterRim, small * smallRim);
+                }
                 float floorDetail = floorWeight * SmoothMath.Smootherstep(_padRadius, _padBlendEnd, r);
                 if (floorDetail > 0f)
                 {
