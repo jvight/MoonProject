@@ -199,6 +199,14 @@
             "text": "Music, and the crew's voices."
         },
         {
+            "key": "ui.blueprint.found",
+            "text": "Blueprint found"
+        },
+        {
+            "key": "ui.blueprint.delivered",
+            "text": "Kenji's plotter draws it."
+        },
+        {
             "key": "ui.settings.sound",
             "text": "Sound"
         },

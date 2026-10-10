@@ -42,6 +42,7 @@ namespace MoonProject.Rover
         public const string CoilSocket = "CoilSocket";
         public const string DrumSocketLeft = "DrumSocket_L";
         public const string DrumSocketRight = "DrumSocket_R";
+        public const string TubeSocket = "TubeSocket";
 
         /// <summary>Friend gifts on RoverModel, hidden until given (SolarWing/, Body/ and Antenna/ children).</summary>
         public const string CellFilled = "CellFilled";

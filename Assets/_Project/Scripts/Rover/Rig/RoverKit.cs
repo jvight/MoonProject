@@ -37,6 +37,9 @@ namespace MoonProject.Rover
         /// <summary>Glow changes smaller than this are not worth a new property block.</summary>
         private const float GlowEpsilon = 1e-4f;
 
+        /// <summary>Below this scale share the tube is hidden rather than drawn as a speck.</summary>
+        private const float TubeVisibleScale = 0.01f;
+
         private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
 
         [Tooltip("Rig tuning (Assets/_Project/Data/Tuning/RoverRigTuning.asset): 'Visible kit and gifts', 'Headlamp'.")]
@@ -72,6 +75,9 @@ namespace MoonProject.Rover
         [Tooltip("RoverModel 'Antenna/Pennant': Bell's radio pennant (hidden until her gift).")]
         [SerializeField] private Transform _pennant;
 
+        [Tooltip("Art's BlueprintTube on TubeSocket: shown while 07 carries a scanned blueprint home.")]
+        [SerializeField] private Transform _tube;
+
         private readonly KitFit[] _fits = new KitFit[PieceCount];
         private readonly FriendGift _tillyGift = new FriendGift();
         private readonly FriendGift _bellGift = new FriendGift();
@@ -86,6 +92,10 @@ namespace MoonProject.Rover
         private IFriendState _tilly;
         private IFriendState _bell;
         private IDisposable _purchases;
+        private IDisposable _tubesFound;
+        private IDisposable _tubesDelivered;
+        private TubeCarry _tubes;
+        private Vector3 _tubeScale;
         private IDisposable _fittings;
         private MaterialPropertyBlock _glowBlock;
         private BayFitting _bayFitting;
@@ -174,6 +184,11 @@ namespace MoonProject.Rover
             HideAll();
             _purchases = _events.Subscribe<UpgradePurchased>(OnUpgradePurchased);
             _fittings = _events.Subscribe<RoverBayFitting>(OnBayFitting);
+            _tubes = new TubeCarry(_tuning.TubeHalfLife);
+            _tubeScale = _tube.localScale;
+            _tube.gameObject.SetActive(false);
+            _tubesFound = _events.Subscribe<BlueprintFound>(found => _tubes.Found(found.KitId));
+            _tubesDelivered = _events.Subscribe<BlueprintDelivered>(delivered => _tubes.Delivered(delivered.KitId));
             return true;
         }
 
@@ -183,12 +198,30 @@ namespace MoonProject.Rover
                 & Require(_headlamp != null, "Headlamp light is not assigned.")
                 & Require(_lampBar != null && _cargoRack != null && _relicSeat != null,
                     "Lamp bar, cargo rack or its RelicSeat is not assigned.")
+                & Require(_tube != null, "The BlueprintTube on TubeSocket is not assigned.")
                 & Require(_solarCell != null && _freshSerial != null && _pennant != null,
                     "A gift node (CellFilled, Decal07Fresh, Pennant) is not assigned.")
                 & Require(AllSet(_lamps, RoverModelNodes.KitLampCount), "The lamp bar needs its three glasses.")
                 & Require(AllSet(_drums, DrumCount) && AllSet(_drumGlows, DrumCount),
                     "Both capacitor drums and their glow bands are required.");
             return ok;
+        }
+
+        /// <summary>The tube on 07's back follows the carried blueprints, popping on and off.</summary>
+        private void StepTube(float deltaTime)
+        {
+            _tubes.Step(deltaTime);
+            float scale = _tubes.Scale;
+            bool shown = scale > TubeVisibleScale;
+            if (_tube.gameObject.activeSelf != shown)
+            {
+                _tube.gameObject.SetActive(shown);
+            }
+
+            if (shown)
+            {
+                _tube.localScale = _tubeScale * scale;
+            }
         }
 
         private static bool AllSet<T>(T[] items, int count) where T : UnityEngine.Object
@@ -335,6 +368,7 @@ namespace MoonProject.Rover
             _lampLevel = Smoothing.Damp(_lampLevel, _docked ? dock.LampDim : 1f, dock.LampHalfLife, deltaTime);
             ApplyWarmth(_fits[(int)RoverKitPiece.LampBar].Lights);
             ApplyDrumGlow();
+            StepTube(deltaTime);
             _started = true;
         }
 
@@ -632,6 +666,8 @@ namespace MoonProject.Rover
         {
             _purchases?.Dispose();
             _fittings?.Dispose();
+            _tubesFound?.Dispose();
+            _tubesDelivered?.Dispose();
         }
     }
 }

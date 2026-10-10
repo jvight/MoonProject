@@ -126,6 +126,12 @@ namespace MoonProject.UI
 
         internal FriendNameTag FriendName => _friendName;
 
+        internal PlaceCard PlaceCard => _placeCard;
+
+        internal LookUpChip LookUp => _lookUpChip;
+
+        internal NextLineView NextLine => _nextLine;
+
         internal UiLayout Layout => _layout;
 
         internal CursorPolicy Cursor => _cursor;
@@ -226,6 +232,8 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<StargazingChanged>(OnStargazingChanged));
             _tokens.Add(events.Subscribe<NextStepChanged>(OnNextStepChanged));
             _tokens.Add(events.Subscribe<PlaceFirstApproached>(OnPlaceFirstApproached));
+            _tokens.Add(events.Subscribe<BlueprintFound>(OnBlueprintFound));
+            _tokens.Add(events.Subscribe<BlueprintDelivered>(OnBlueprintDelivered));
             _tokens.Add(events.Subscribe<RoverWideShotChanged>(OnWideShotChanged));
             _tokens.Add(events.Subscribe<SonarPinged>(OnSonarPinged));
             _tokens.Add(events.Subscribe<SiteAnswered>(OnSiteAnswered));
@@ -310,7 +318,7 @@ namespace MoonProject.UI
             _relayTag = new RelayTag(_layout, _tuning.Relays, _tuning.Prompts, services.Hints, services.Relays,
                 services.Materials, _localization, services.View, _numbers);
             _tower = new TowerPanel(_layout, _tuning.TowerPanel, _localization, services.Events, services.Shop,
-                services.Materials, services.Hints, _numbers);
+                services.Board, services.Materials, services.Hints, _numbers);
             _kitTitle = new KitTitle(_layout, _tuning.KitTitle, _localization);
             _pause = new PauseMenu(_layout, _tuning.Pause, _player, _localization, services.Input, services.Events,
                 services.Save, services.Materials, services.Radio, services.Relays, _numbers, _cursor, Quit);
@@ -494,6 +502,16 @@ namespace MoonProject.UI
         private void OnPlaceFirstApproached(PlaceFirstApproached approached)
         {
             _placeCard.Approached(approached.PlaceId);
+        }
+
+        private void OnBlueprintFound(BlueprintFound found)
+        {
+            _placeCard.BlueprintFound(found.KitId);
+        }
+
+        private void OnBlueprintDelivered(BlueprintDelivered delivered)
+        {
+            _tickerLines.Enqueue(new TickerLine(UiKeys.BlueprintDelivered));
         }
 
         private void OnNextStepChanged(NextStepChanged changed)

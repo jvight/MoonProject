@@ -50,6 +50,7 @@ namespace MoonProject.Gameplay
         [SerializeField] private CassetteShelf _shelf;
         [SerializeField] private RelayField _relays;
         [SerializeField] private BaseProgression _progression;
+        [SerializeField] private BlueprintPlotter _plotter;
 
         private readonly List<IDisposable> _saveTokens = new List<IDisposable>();
         private GlowMeshSet _meshes;
@@ -102,11 +103,13 @@ namespace MoonProject.Gameplay
 
         public BaseProgression Progression => _progression;
 
+        public BlueprintPlotter Plotter => _plotter;
+
         internal void Wire(GameplayVisuals visuals, GlintTuning glints, UpgradeDefinition[] upgradeDefinitions,
             SalvageField salvage, RelicField relics, SonarSystem sonar, ExcavationSystem excavation,
             TetherSystem tether, HomeBase home, CargoCradle cradle, RadioTower tower, Workshop workshop,
             FriendField friends, CassetteField cassettes, LogCacheField logs, SignalField signals, CassetteShelf shelf,
-            RelayField relays, BaseProgression progression)
+            RelayField relays, BaseProgression progression, BlueprintPlotter plotter)
         {
             _visuals = visuals;
             _glints = glints;
@@ -127,6 +130,7 @@ namespace MoonProject.Gameplay
             _shelf = shelf;
             _relays = relays;
             _progression = progression;
+            _plotter = plotter;
         }
 
         public void Initialize(GameContext context)
@@ -191,7 +195,9 @@ namespace MoonProject.Gameplay
                 !_signals.Initialize(services, _friends, _cassettes, _logs, _relics, abilities, _sonar.Tuning) ||
                 !_shelf.Initialize(Radio, _cassettes.Catalog, _friends.BellTuning) ||
                 !_relays.Initialize(services, Upgrades, _tower, _tether, _friends.Tuning, Placement(context)) ||
-                !_progression.Initialize(services, Power, _home, _workshop, _sonar.Tuning, _friends, _relays, Upgrades))
+                !_progression.Initialize(services, Power, _home, _workshop, _sonar.Tuning, _friends, _relays,
+                    Upgrades) ||
+                !_plotter.Initialize(services, Blueprints, _workshop, _progression.Tuning, Upgrades))
             {
                 enabled = false;
                 return;
@@ -265,11 +271,18 @@ namespace MoonProject.Gameplay
             _saveTokens.Add(save.Register(new SaveSection<ProgressionSaveData>(GameplaySaveKeys.Progression,
                 GameplaySaveKeys.ProgressionVersion, _progression.Capture, _progression.Restore)));
             _saveTokens.Add(save.Register(new SaveSection<BlueprintsSaveData>(GameplaySaveKeys.Blueprints,
-                GameplaySaveKeys.BlueprintsVersion, () => new BlueprintsSaveData { found = Blueprints.Capture() },
-                data => Blueprints.Restore(data.found))));
+                GameplaySaveKeys.BlueprintsVersion,
+                () => new BlueprintsSaveData { found = Blueprints.Capture(), carried = Blueprints.CaptureCarried() },
+                RestoreBlueprints)));
         }
 
         /// <summary>Core's rover placement for the radio-hop, or null while no domain registers it.</summary>
+        private void RestoreBlueprints(BlueprintsSaveData data)
+        {
+            Blueprints.Restore(data.found, data.carried);
+            _plotter.SyncSheets();
+        }
+
         /// <summary>The board over the bay's kits, or null (logged) when its tubes are miswired.</summary>
         private Blueprints NewBlueprints(EventBus events)
         {
@@ -439,6 +452,7 @@ namespace MoonProject.Gameplay
                 : _relays == null ? "RelayField is not assigned."
                 : _progression == null ? "BaseProgression is not assigned."
                 : _progression.Tuning == null ? "BaseProgression has no ProgressionTuning."
+                : _plotter == null ? "BlueprintPlotter is not assigned."
                 : null;
         }
 

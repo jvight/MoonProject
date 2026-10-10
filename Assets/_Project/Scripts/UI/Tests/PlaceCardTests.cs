@@ -23,7 +23,8 @@ namespace MoonProject.UI.Tests
         private static readonly string[] Lines =
         {
             "next.wake", "next.salvage", "next.tower", "next.signal", "next.relic", "next.bay", "next.leap",
-            "next.relay", "next.lift", "notyet.bay", "notyet.lift", "notyet.shelf",
+            "next.relay", "next.lift", "notyet.bay", "notyet.lift", "notyet.shelf", UiKeys.BlueprintFound,
+            UiKeys.BlueprintDelivered,
         };
 
         [Test]
@@ -47,15 +48,34 @@ namespace MoonProject.UI.Tests
             Assert.IsNull(card.Current, "waits while the screen is busy");
 
             card.Tick(Step, true);
-            Assert.AreEqual("place.dock", card.Current);
+            Assert.AreEqual("place.dock.name", card.Current);
             Assert.AreEqual("Charging Dock", layout.PlaceCardName.text);
             Assert.AreEqual("Where 07 rests.", layout.PlaceCardJob.text);
             Ticks(card, settings.Place.FadeIn + settings.PlaceHoldSeconds + settings.Place.FadeOut + 0.5f);
-            Assert.AreEqual("place.ladder", card.Current, "the next place waited its turn");
+            Assert.AreEqual("place.ladder.name", card.Current, "the next place waited its turn");
             Assert.AreEqual("Not made for wheels.", layout.PlaceCardJob.text);
             Ticks(card, settings.Place.FadeIn + settings.PlaceHoldSeconds + settings.Place.FadeOut + 0.5f);
             Assert.IsNull(card.Current, "the dock was named once, not twice");
             Assert.IsFalse(card.IsVisible);
+        }
+
+        [Test]
+        public void AFoundBlueprint_GetsTheSameQuietCard_OncePerKit()
+        {
+            var uxml = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(UiAssetPaths.Uxml);
+            var layout = new UiLayout(uxml.Instantiate());
+            ILocalization localization = TestTables.Localization(new EventBus(),
+                UiKeys.UpgradeName("rover.cargo_cradle"), "Cargo Cradle", "Giá chở hàng",
+                UiKeys.BlueprintFound, "Blueprint found", "Tìm thấy bản vẽ");
+            var settings = new GuidanceSettings();
+            var card = new PlaceCard(layout, settings, localization);
+            card.BlueprintFound("rover.cargo_cradle");
+            card.BlueprintFound("rover.cargo_cradle");
+            card.Tick(Step, true);
+            Assert.AreEqual("Cargo Cradle", layout.PlaceCardName.text);
+            Assert.AreEqual("Blueprint found", layout.PlaceCardJob.text);
+            Ticks(card, settings.Place.FadeIn + settings.PlaceHoldSeconds + settings.Place.FadeOut + 0.5f);
+            Assert.IsNull(card.Current, "once per kit");
         }
 
         [Test]

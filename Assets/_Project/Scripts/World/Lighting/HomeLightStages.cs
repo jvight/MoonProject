@@ -6,8 +6,9 @@ namespace MoonProject.World
 {
     /// <summary>
     /// Maps the base's power stage to how lit each of home's warm points is (0..1, linear glow scale). A fresh game is
-    /// Asleep: only the dock glows. When a stage arrives, its warm points wake one by one, eased; a restored stage
-    /// (on load) is applied at once. Plain logic, allocation-free: poll <see cref="Level"/> every frame.
+    /// Asleep: only the dock glows and the tower's pilot blinks. When a stage arrives, power runs along its ground
+    /// cable from the tower, then its warm points wake one by one, eased; a restored stage (on load) is applied at
+    /// once. Plain logic, allocation-free: poll every frame.
     /// </summary>
     public sealed class HomeLightStages
     {
@@ -71,8 +72,38 @@ namespace MoonProject.World
                 return 1f;
             }
 
-            float delay = OrderInStage(light) * _settings.WakeStagger;
+            float delay = _settings.CableTravel + OrderInStage(light) * _settings.WakeStagger;
             return Mathf.SmoothStep(0f, 1f, (time - _wokeAt - delay) / _settings.WakeFade);
+        }
+
+        /// <summary>
+        /// How lit segment <paramref name="segment"/> of <paramref name="count"/> is on the ground cable that carries
+        /// <paramref name="stage"/>'s power (segment 0 at the tower).
+        /// </summary>
+        public float CableLevel(BasePowerStage stage, int segment, int count, float time)
+        {
+            if (stage > _stage)
+            {
+                return 0f;
+            }
+
+            if (stage != _wakingStage)
+            {
+                return 1f;
+            }
+
+            float arrives = _settings.CableTravel * segment / Mathf.Max(1, count);
+            return Mathf.SmoothStep(0f, 1f, (time - _wokeAt - arrives) / _settings.CableSegmentFade);
+        }
+
+        /// <summary>
+        /// The tower's pilot light (0..1): a slow, short blink while the base sleeps, fading out as home's windows
+        /// wake.
+        /// </summary>
+        public float PilotLevel(float time)
+        {
+            float wave = 0.5f + 0.5f * Mathf.Cos(2f * Mathf.PI * time / _settings.PilotPeriod);
+            return Mathf.Pow(wave, _settings.PilotSharpness) * (1f - Level(HomeLight.Windows, time));
         }
 
         private static int OrderInStage(HomeLight light)

@@ -4,13 +4,14 @@ namespace MoonProject.UI
 {
     /// <summary>
     /// The soft "next" line's rule (docs/features/M3-16 "Gentle guidance"): Gameplay names the current step's
-    /// invitation; it shows only once 07 has been still a moment, never while driving, and not at all with Guidance
-    /// switched off or no step to suggest.
+    /// invitation; it shows only after a long while on the same step without progress, and then only once 07 has
+    /// been still a moment, never while driving, and not at all with Guidance switched off or no step to suggest.
     /// </summary>
     internal sealed class NextStepLine
     {
         private readonly GuidanceSettings _settings;
         private float _still;
+        private float _onStep;
 
         public NextStepLine(GuidanceSettings settings)
         {
@@ -24,7 +25,13 @@ namespace MoonProject.UI
 
         public void SetKey(string key)
         {
-            Key = key ?? string.Empty;
+            key = key ?? string.Empty;
+            if (!string.Equals(key, Key, StringComparison.Ordinal))
+            {
+                _onStep = 0f;
+            }
+
+            Key = key;
         }
 
         /// <param name="deltaTime">Unscaled seconds; 0 while paused.</param>
@@ -32,8 +39,10 @@ namespace MoonProject.UI
         /// <param name="guidance">The player's Guidance setting.</param>
         public void Tick(float deltaTime, float speed, bool guidance)
         {
+            _onStep += deltaTime;
             _still = speed < _settings.StillSpeed ? _still + deltaTime : 0f;
-            WantsShown = guidance && Key.Length > 0 && _still >= _settings.StillSeconds;
+            WantsShown = guidance && Key.Length > 0 && _onStep >= _settings.StepPatienceSeconds &&
+                         _still >= _settings.StillSeconds;
         }
     }
 }

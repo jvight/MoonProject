@@ -21,7 +21,7 @@ namespace MoonProject.Art.Editor
     /// python tools/unity_batch.py exec --method MoonProject.Art.Editor.ArtLightingPreview.Capture
     ///     [--arg scene=rover|base|towers|relics|shadow|grit|friends|workshop|bell|bellbroken|pickups|bellcorner|
     ///                  warmpoints|relaysbroken|relayslit|sites|sitesclean|salvagebits|kit|kitmain|home|homeclean|
-    ///                  builtfor07]
+    ///                  builtfor07|wake_dark|wake_home|wake_bay|wake_lift|wake_pads]
     /// </code>
     /// (default rover; a ';'-separated list captures several scenes in one run)
     /// rover: 07 at rest (half-lidded, head lowered, wing ajar) with its headlamp. base: the lander with the shelf
@@ -49,7 +49,12 @@ namespace MoonProject.Art.Editor
     /// the friends' gifts, and "minute one versus hour five" side by side from the chase camera and at 30 m. kitmain:
     /// the same comparison in Main.unity under its own grade: minute one beside fully kitted at the spawn, travelling,
     /// with play's road lights and glow levels, from the chase camera and at 30 m, each 07 from its own chase camera,
-    /// and the lamp bar close. home:
+    /// and the lamp bar close. wake_dark .. wake_pads: Main.unity's base waking step by step (M3-16), each stage on
+    /// top of the last: dark (only the dock, 07's eye and the tower's pilot warm), home (windows, porch bulbs, the HOME
+    /// sign straightened, its cable lit), bay (shutter rolled up, sign, lamps and plotter lamp lit, its cable), lift
+    /// (restored: level at the bottom stop, both cables taut, winch lamp and its cable lit), pads (capture-placed
+    /// station pads lit at the tower, the bay and the lift); from the spawn, the owner's view from the dock side
+    /// (lander, lift and ladder), the chase camera behind a 07 facing the lift, and the bay. home:
     /// the base as Main.unity has it (its own grading), from the spawn view, the lander close and three-quarter, the
     /// tower, the shelf area, a 07 parked in front from the chase camera and close, and Kenji's Rover Bay (sign lit)
     /// from the front and the quarter; homeclean: the same with every Weather_* layer hidden, as restoration will
@@ -120,6 +125,9 @@ namespace MoonProject.Art.Editor
         private const float DrumIdleGlow = 0.05f;
 
         private static readonly Color WarmLightColor = new Color(1f, 0.62f, 0.33f);
+
+        /// <summary>The base's wake stages the wake_* scenes capture, each on top of the last (M3-16).</summary>
+        private static readonly string[] WakeStages = { "dark", "home", "bay", "lift", "pads" };
 
         /// <summary>The ground Bell keeps clear for her dance and for 07 parking at her dial.</summary>
         private const float BellClearRadius = 2.5f;
@@ -252,6 +260,13 @@ namespace MoonProject.Art.Editor
                     case "kitmain":
                         poses = KitMainScene(temporary);
                         break;
+                    case "wake_dark":
+                    case "wake_home":
+                    case "wake_bay":
+                    case "wake_lift":
+                    case "wake_pads":
+                        poses = WakeScene(temporary, Array.IndexOf(WakeStages, scene.Substring(5)));
+                        break;
                     case "home":
                         poses = HomeScene(temporary, true);
                         break;
@@ -265,7 +280,7 @@ namespace MoonProject.Art.Editor
                         Debug.LogError($"ArtLightingPreview: unknown scene '{scene}' " +
                             "(rover|base|towers|relics|shadow|grit|friends|workshop|bell|bellbroken|pickups|" +
                             "bellcorner|warmpoints|relaysbroken|relayslit|sites|sitesclean|salvagebits|kit|kitmain|" +
-                            "home|homeclean|builtfor07).");
+                            "home|homeclean|builtfor07|wake_dark|wake_home|wake_bay|wake_lift|wake_pads).");
                         return false;
                 }
 
@@ -896,6 +911,143 @@ namespace MoonProject.Art.Editor
                     Point(kitted.TransformPoint(new Vector3(0f, 1.1f, 0.7f))), 45f),
             };
             return new CameraPoseSet { width = 1920, height = 1080, postProcessing = true, poses = poses.ToArray() };
+        }
+
+        /// <summary>
+        /// Opens Main.unity (never saved), hides the scene's own 07, parks a resting 07 on its dock and another in
+        /// front of the lift facing it, and wakes the base up to <paramref name="stage"/> (see the class summary).
+        /// </summary>
+        private static CameraPoseSet WakeScene(TemporaryObjects temporary, int stage)
+        {
+            EditorSceneManager.OpenScene(CaptureAutomation.MainScenePath, OpenSceneMode.Single);
+            SceneObject("[Rover]").gameObject.SetActive(false);
+            Transform lander = SceneObject(BaseModelBuilder.LanderName);
+            Transform bay = SceneObject(BaseModelBuilder.RoverBayName);
+            Transform dock = Descendant(lander, "DockAnchor");
+            TravellingRover(temporary, dock.position, dock.rotation, false);
+            SetGlow(lander, "DockGlow", new[] { string.Empty }, 1f);
+            Transform tower = SceneObjectStartingWith(BaseModelBuilder.TowerPrefix);
+            SetGlow(tower, "Lights", new[] { string.Empty }, 1f);
+            Quaternion toLift = lander.rotation * Quaternion.Euler(0f, 180f, 0f);
+            Vector3 front = lander.TransformPoint(new Vector3(2f, 0f, 9.2f));
+            TravellingRover(temporary, front, toLift, false);
+            if (stage >= 1)
+            {
+                SetGlow(lander, "Windows", new[] { string.Empty }, 1f);
+                SetGlow(lander, BaseModelBuilder.PanePrefix, new[] { "1", "2" }, 1f);
+                SetGlow(lander, BaseModelBuilder.PortholeName, new[] { string.Empty }, 1f);
+                foreach (Transform socket in ParentsOf(lander, BaseModelBuilder.BulbName))
+                {
+                    SetGlow(socket, BaseModelBuilder.BulbName, new[] { string.Empty }, 1f);
+                }
+
+                Descendant(lander, BaseModelBuilder.HomeSignName).localRotation = BaseModelBuilder.HomeSignUpright;
+                LightCable(lander, "Home");
+            }
+
+            if (stage >= 2)
+            {
+                Transform shutter = Descendant(bay, BaseModelBuilder.ShutterName);
+                shutter.localScale = new Vector3(1f, BaseModelBuilder.ShutterRolledScale, 1f);
+                LightBay(bay, temporary);
+                SetGlow(bay, BaseModelBuilder.PlotterLampName, new[] { string.Empty }, 1f);
+                LightCable(lander, "Bay");
+            }
+
+            if (stage >= 3)
+            {
+                Transform platform = Descendant(lander, "LiftPlatform");
+                platform.SetLocalPositionAndRotation(Descendant(lander, "LiftBottom").localPosition,
+                    BaseModelBuilder.LiftPlatformLevel);
+                foreach (string cable in new[] { "LiftCable_L", "LiftCable_R" })
+                {
+                    Transform hoist = Descendant(lander, cable);
+                    hoist.gameObject.SetActive(true);
+                    hoist.localScale = new Vector3(1f, LiftCableScale(hoist, platform), 1f);
+                }
+
+                Descendant(lander, BaseModelBuilder.LiftSnappedCableName).gameObject.SetActive(false);
+                SetGlow(lander, BaseModelBuilder.WinchLampName, new[] { string.Empty }, 1f);
+                LightCable(lander, "Lift");
+            }
+
+            if (stage >= 4)
+            {
+                PlacePad(temporary, 1, tower.position + tower.forward * TowerPadOffset, tower.rotation);
+                PlacePad(temporary, 2, bay.TransformPoint(new Vector3(0f, 0f, 4.2f)), bay.rotation);
+                PlacePad(temporary, 0, lander.TransformPoint(new Vector3(2f, 0f, 7.4f)), lander.rotation);
+            }
+
+            var poses = new List<CameraPose>
+            {
+                new CameraPose { name = "spawn_first_frame", position = new[] { 0.78f, 4f, -8.97f },
+                    euler = new[] { 6f, -5f, 0f }, fov = 60f },
+                Pose("dock_side_lander_lift_ladder", Point(lander.TransformPoint(new Vector3(-2.2f, 1.7f, 9.5f))),
+                    Point(lander.TransformPoint(new Vector3(1.4f, 2.4f, 3.2f))), 55f),
+                ChasePose("lift_from_chase", front, toLift, ChaseDistance, 0f),
+                ChasePose("lift_from_chase_quarter", front, toLift, ChaseDistance, ChaseQuarterYaw),
+                Pose("bay_front", Point(bay.TransformPoint(new Vector3(1.5f, 2.8f, 9f))),
+                    Point(bay.TransformPoint(new Vector3(0f, 1.6f, 0f))), 55f),
+                Pose("base_wide", Point(lander.TransformPoint(new Vector3(-14f, 9f, 22f))),
+                    Point(lander.TransformPoint(new Vector3(2f, 1.5f, 0f))), 50f),
+            };
+            return new CameraPoseSet { width = 1920, height = 1080, postProcessing = true, poses = poses.ToArray() };
+        }
+
+        /// <summary>
+        /// The Y scale that lets a hoist cable hang from its drum to the platform's carriage (1 m over its deck).
+        /// </summary>
+        private static float LiftCableScale(Transform hoist, Transform platform)
+        {
+            float length = hoist.localPosition.y - (platform.localPosition.y + 1f);
+            return length / BaseModelBuilder.LiftCableBuiltLength;
+        }
+
+        /// <summary>Lights every glass segment of the ground cable to <paramref name="target"/>.</summary>
+        private static void LightCable(Transform lander, string target)
+        {
+            Transform cable = Descendant(lander, BaseModelBuilder.PowerCablePrefix + target);
+            SetGlow(cable, BaseModelBuilder.CableGlowPrefix, cable.childCount, 1f);
+        }
+
+        /// <summary>Stands a station pad of size <paramref name="size"/> on the ground with its lamps lit.</summary>
+        private static void PlacePad(TemporaryObjects temporary, int size, Vector3 at, Quaternion turn)
+        {
+            GameObject pad = Instantiate(BaseModelBuilder.PadName(size), temporary);
+            pad.transform.SetPositionAndRotation(new Vector3(at.x, 0f, at.z), turn);
+            SetGlow(pad.transform, BaseModelBuilder.PadLampPrefix, 6, 1f);
+        }
+
+        /// <summary>The parent of every descendant of <paramref name="root"/> called <paramref name="name"/>.</summary>
+        private static List<Transform> ParentsOf(Transform root, string name)
+        {
+            var found = new List<Transform>();
+            foreach (Transform node in root.GetComponentsInChildren<Transform>(true))
+            {
+                if (node.name == name)
+                {
+                    found.Add(node.parent);
+                }
+            }
+
+            return found;
+        }
+
+        /// <summary>The first object in the open scene whose name starts with <paramref name="prefix"/>.</summary>
+        private static Transform SceneObjectStartingWith(string prefix)
+        {
+            foreach (GameObject root in SceneManager.GetActiveScene().GetRootGameObjects())
+            {
+                foreach (Transform node in root.GetComponentsInChildren<Transform>(true))
+                {
+                    if (node.name.StartsWith(prefix, StringComparison.Ordinal) && node.gameObject.activeInHierarchy)
+                    {
+                        return node;
+                    }
+                }
+            }
+
+            throw new InvalidOperationException($"The open scene has no active object named {prefix}*.");
         }
 
         /// <summary>

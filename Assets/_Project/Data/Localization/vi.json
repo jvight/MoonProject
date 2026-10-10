@@ -199,6 +199,14 @@
             "text": "Âm nhạc, và giọng nói của phi hành đoàn."
         },
         {
+            "key": "ui.blueprint.found",
+            "text": "Tìm thấy bản vẽ"
+        },
+        {
+            "key": "ui.blueprint.delivered",
+            "text": "Máy vẽ của Kenji vẽ lại."
+        },
+        {
             "key": "ui.settings.sound",
             "text": "Âm thanh"
         },

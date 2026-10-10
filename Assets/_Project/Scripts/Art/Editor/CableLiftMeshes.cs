@@ -96,7 +96,7 @@ namespace MoonProject.Art.Editor
 
         public const float HopperSize = 0.34f;
 
-        private const float JamRoll = 12f;
+        private const float JamRoll = 22f;
 
         private static Vector3 Motor => new Vector3(Centre.x + PostHalfSpan + 0.25f, DrumHeight, Centre.z + PostZ);
 

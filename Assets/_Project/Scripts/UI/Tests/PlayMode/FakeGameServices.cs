@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using MoonProject.Core;
@@ -13,7 +14,7 @@ namespace MoonProject.UI.PlayModeTests
     /// </summary>
     public sealed class FakeGameServices : MonoBehaviour, IGameSystem, IViewCamera, IAudioSettings, ILookSettings,
         IMaterialStock, ITetherAim, IInteractionHints, IUpgradeShop, IRoverState, IFriendStatuses, IRadioProgram,
-        IRadioHop, IRelayStatus, ISalvageStatus
+        IRadioHop, IRelayStatus, ISalvageStatus, IBlueprintBoard
     {
         private readonly float[] _volumes = { 1f, 1f, 1f, 1f };
         private readonly List<string> _tapes = new List<string>();
@@ -177,6 +178,7 @@ namespace MoonProject.UI.PlayModeTests
             context.Register<ITetherAim>(this);
             context.Register<IInteractionHints>(this);
             context.Register<IUpgradeShop>(this);
+            context.Register<IBlueprintBoard>(this);
             context.Register<IRoverState>(this);
             context.Register<IFriendStatuses>(this);
             context.Register<IRadioProgram>(this);
@@ -349,6 +351,14 @@ namespace MoonProject.UI.PlayModeTests
             bool maxed = level >= upgrade.MaxLevel;
             offer = new UpgradeOffer(upgrade, level, !maxed && Has(upgrade.Levels[level].Recipe));
             return true;
+        }
+
+        /// <summary>Kits the bay has no blueprint for yet (every other kit is pinned).</summary>
+        public HashSet<string> Unpinned { get; } = new HashSet<string>(StringComparer.Ordinal);
+
+        public bool IsPinned(string upgradeId)
+        {
+            return !Unpinned.Contains(upgradeId);
         }
 
         public PurchaseResult Purchase(string upgradeId)

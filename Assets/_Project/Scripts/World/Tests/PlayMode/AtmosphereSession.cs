@@ -70,6 +70,15 @@ namespace MoonProject.World.PlayModeTests
         private static readonly Vector3 LanderCloseLook = new Vector3(0f, 2.6f, 0f);
         private const float LanderCloseFov = 55f;
 
+        // After power reaches Home (seconds since the previous frame): the cable halfway, the windows half-lit with
+        // the porch lamps starting, and home settled.
+        private static readonly (float Wait, string Name)[] WakeFrames =
+        {
+            (0.8f, "wake-1-cable"),
+            (2.4f, "wake-2-windows"),
+            (8f, "wake-3-home"),
+        };
+
         private static readonly string CaptureFolder =
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "world-captures"));
 
@@ -190,6 +199,78 @@ namespace MoonProject.World.PlayModeTests
             File.WriteAllText(Path.Combine(CaptureFolder, "atmosphere.md"), report.ToString());
             Debug.Log("[atmosphere] " + report);
             Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
+        /// <summary>
+        /// The dark start and home's wake (M3-16), from the game camera's own spawn view on a fresh save: asleep (only
+        /// the dock, 07's eye and the tower's pilot warm), power travelling the cable, the windows waking, and home
+        /// settled. Writes Logs/world-captures/wake-*.png.
+        /// </summary>
+        [UnityTest]
+        [Timeout(600000)]
+        [PrebuildSetup(typeof(CanyonSessionScene))]
+        [PostBuildCleanup(typeof(CanyonSessionScene))]
+        public IEnumerator HomeWake_IsCapturedFromTheSpawnView()
+        {
+            BootstrapHarness.DeleteSaveFiles(CanyonSessionScene.SaveSlot);
+#if UNITY_EDITOR
+            AsyncOperation loading = EditorSceneManager.LoadSceneAsyncInPlayMode(CanyonSessionScene.ScenePath,
+                new LoadSceneParameters(LoadSceneMode.Single));
+            while (!loading.isDone)
+            {
+                yield return null;
+            }
+#else
+            throw new NotSupportedException("The atmosphere session loads the scene through the editor.");
+#endif
+            GameBootstrap bootstrap = null;
+            foreach (GameObject root in SceneManager.GetSceneByPath(CanyonSessionScene.ScenePath).GetRootGameObjects())
+            {
+                bootstrap = bootstrap != null ? bootstrap : root.GetComponent<GameBootstrap>();
+            }
+
+            Assert.IsNotNull(bootstrap, "the scene has its bootstrap");
+            GameContext context = bootstrap.Context;
+            _awoke = context.Events.Subscribe<RoverAwoke>(_ => _awake = true);
+            float started = Time.time;
+            while (!_awake)
+            {
+                Assert.Less(Time.time - started, WakeTimeout, "07 wakes up");
+                yield return null;
+            }
+
+            yield return new WaitForSeconds(SettleSeconds);
+            Camera view = context.Get<IViewCamera>().Camera;
+            Assert.AreEqual(0f, context.Get<IHomeLights>().Level(HomeLight.Windows), "a fresh game starts asleep");
+            Capture(view, "wake-0-asleep");
+
+            context.Events.Publish(new BasePowerChanged(BasePowerStage.Home, false));
+            foreach ((float wait, string name) in WakeFrames)
+            {
+                yield return new WaitForSeconds(wait);
+                Capture(view, name);
+            }
+
+            Assert.AreEqual(1f, context.Get<IHomeLights>().Level(HomeLight.Halo), "home has settled");
+            Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
+        private static void Capture(Camera view, string name)
+        {
+            var host = new GameObject("WakeReviewCamera");
+            try
+            {
+                var camera = host.AddComponent<Camera>();
+                camera.CopyFrom(view);
+                camera.enabled = false;
+                CopyPipelineSettings(view, camera);
+                FrameCapture.SavePng(camera, CaptureWidth, CaptureHeight,
+                    Path.Combine(CaptureFolder, name + ".png"));
+            }
+            finally
+            {
+                Object.Destroy(host);
+            }
         }
 
         /// <summary>The game camera's URP settings (post-processing, anti-aliasing); CopyFrom skips them.</summary>

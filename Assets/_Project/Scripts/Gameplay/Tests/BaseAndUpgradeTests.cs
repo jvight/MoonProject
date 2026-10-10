@@ -333,10 +333,12 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void Blueprints_PinTheirKitWhenTheSitesHeartRelicSurfaces_OnceAndAcrossALoad()
+        public void Blueprints_AreFoundWithTheSitesHeartRelic_RideHome_AndArePinnedOnDelivery()
         {
             var found = new List<BlueprintFound>();
+            var delivered = new List<BlueprintDelivered>();
             _events.Subscribe<BlueprintFound>(found.Add);
+            _events.Subscribe<BlueprintDelivered>(delivered.Add);
             string[] kits = { "rover.hover_jump", "rover.cargo_cradle", "rover.boost_coils" };
             var tubes = new[]
             {
@@ -357,13 +359,22 @@ namespace MoonProject.Gameplay.Tests
                 Assert.AreEqual(1, found.Count, "the garage's tube, once; the lander's heart holds none");
                 Assert.AreEqual("rover.cargo_cradle", found[0].KitId);
                 Assert.AreEqual("site.garage", found[0].SiteId);
-                Assert.IsTrue(board.IsPinned("rover.cargo_cradle"));
+                Assert.IsFalse(board.IsPinned("rover.cargo_cradle"), "found, the tube still rides home on 07");
+                Assert.IsTrue(board.IsCarrying);
+                CollectionAssert.AreEqual(new[] { "rover.cargo_cradle" }, board.CaptureCarried());
+
+                Assert.AreEqual("rover.cargo_cradle", board.Deliver());
+                Assert.AreEqual("rover.cargo_cradle", delivered[0].KitId);
+                Assert.IsTrue(board.IsPinned("rover.cargo_cradle"), "delivered to the plotter: pinned");
+                Assert.IsFalse(board.IsCarrying);
+                Assert.IsNull(board.Deliver(), "nothing more to deliver");
                 Assert.IsFalse(board.IsPinned("rover.boost_coils"));
                 CollectionAssert.AreEqual(new[] { "rover.cargo_cradle" }, board.Capture());
 
-                board.Restore(new[] { "rover.boost_coils", "rover.unknown" });
+                board.Restore(new[] { "rover.boost_coils", "rover.unknown" }, new[] { "rover.cargo_cradle" });
                 Assert.IsTrue(board.IsPinned("rover.boost_coils"));
                 Assert.IsFalse(board.IsPinned("rover.cargo_cradle"), "a load replaces the board");
+                Assert.IsTrue(board.IsCarrying, "and puts the carried tube back on 07");
                 Assert.IsTrue(board.IsPinned("rover.hover_jump"));
             }
 

@@ -40,7 +40,7 @@ namespace MoonProject.World.Tests
         public void Home_WakesWindowsThenPorchLampsThenHalo_Eased()
         {
             _stages.SetStage(BasePowerStage.Home, false, Start);
-            float mid = Start + _settings.WakeStagger + _settings.WakeFade * 0.5f;
+            float mid = Start + _settings.CableTravel + _settings.WakeStagger + _settings.WakeFade * 0.5f;
             float windows = _stages.Level(HomeLight.Windows, mid);
             float porch = _stages.Level(HomeLight.PorchLamps, mid);
             float halo = _stages.Level(HomeLight.Halo, mid);
@@ -50,7 +50,7 @@ namespace MoonProject.World.Tests
             Assert.AreEqual(0f, _stages.Level(HomeLight.Windows, Start), "no frame-one jump");
             Assert.AreEqual(0f, _stages.Level(HomeLight.BayLamps, mid), "the bay waits for its own stage");
 
-            float done = Start + 2f * _settings.WakeStagger + _settings.WakeFade;
+            float done = Start + _settings.CableTravel + 2f * _settings.WakeStagger + _settings.WakeFade;
             Assert.AreEqual(1f, _stages.Level(HomeLight.Halo, done), Tolerance);
         }
 
@@ -59,13 +59,39 @@ namespace MoonProject.World.Tests
         {
             _stages.SetStage(BasePowerStage.Home, true, Start);
             _stages.SetStage(BasePowerStage.Bay, false, Start);
-            float done = Start + _settings.WakeFade;
+            float done = Start + _settings.CableTravel + _settings.WakeFade;
             Assert.AreEqual(1f, _stages.Level(HomeLight.Windows, Start), "home stays lit");
             Assert.AreEqual(1f, _stages.Level(HomeLight.BayLamps, done), Tolerance);
             Assert.AreEqual(0f, _stages.Level(HomeLight.LiftLamps, done));
 
             _stages.SetStage(BasePowerStage.Lift, false, done);
-            Assert.AreEqual(1f, _stages.Level(HomeLight.LiftLamps, done + _settings.WakeFade), Tolerance);
+            Assert.AreEqual(1f, _stages.Level(HomeLight.LiftLamps, done + _settings.CableTravel + _settings.WakeFade),
+                Tolerance);
+        }
+
+        [Test]
+        public void Cable_CarriesPowerFromTheTower_BeforeThePlaceWakes()
+        {
+            const int Segments = 6;
+            _stages.SetStage(BasePowerStage.Home, false, Start);
+            float halfway = Start + _settings.CableTravel * 0.5f;
+            Assert.AreEqual(1f, _stages.CableLevel(BasePowerStage.Home, 0, Segments, halfway), Tolerance,
+                "the tower end is lit by halfway");
+            Assert.AreEqual(0f, _stages.CableLevel(BasePowerStage.Home, Segments - 1, Segments, halfway),
+                "the far end waits");
+            Assert.AreEqual(0f, _stages.Level(HomeLight.Windows, halfway), "windows wait for the cable");
+            Assert.AreEqual(0f, _stages.CableLevel(BasePowerStage.Bay, 0, Segments, halfway), "the bay cable sleeps");
+            float arrived = Start + _settings.CableTravel + _settings.CableSegmentFade;
+            Assert.AreEqual(1f, _stages.CableLevel(BasePowerStage.Home, Segments - 1, Segments, arrived), Tolerance);
+        }
+
+        [Test]
+        public void Pilot_BlinksWhileAsleep_AndRestsOnceHomeIsLit()
+        {
+            Assert.AreEqual(1f, _stages.PilotLevel(0f), Tolerance, "a blink's peak");
+            Assert.Less(_stages.PilotLevel(_settings.PilotPeriod * 0.25f), 0.1f, "short blinks in a long dark");
+            _stages.SetStage(BasePowerStage.Home, true, Start);
+            Assert.AreEqual(0f, _stages.PilotLevel(_settings.PilotPeriod * 10f), "home's lights take over");
         }
 
         [Test]
@@ -76,6 +102,8 @@ namespace MoonProject.World.Tests
             {
                 Assert.AreEqual(1f, _stages.Level(light, Start), light.ToString());
             }
+
+            Assert.AreEqual(1f, _stages.CableLevel(BasePowerStage.Lift, 3, 4, Start), "cables are lit at once");
         }
 
         [Test]

@@ -687,4 +687,33 @@ namespace MoonProject.Core.Events
 
         public Vector3 Position { get; }
     }
+
+    /// <summary>A beat of the crew's lift that Audio voices (docs/features/M3-16 step 8): see <see cref="LiftCued"/>.
+    /// The lift's feed and stitch use <see cref="StationCued"/>.</summary>
+    public enum LiftCue
+    {
+        /// <summary>07 comes near the jammed winch (once per approach, at the winch): an old creak.</summary>
+        WinchCreaked = 0,
+
+        /// <summary>The platform starts moving (at the platform): a ratchet and a soft motor hum while it rides.
+        /// </summary>
+        RideStarted = 1,
+
+        /// <summary>The platform reaches a stop (at the platform): a clunk, and the ride's sound lets go.</summary>
+        RideStopped = 2,
+    }
+
+    /// <summary>The crew's lift did something worth a sound at <see cref="Position"/>.</summary>
+    public readonly struct LiftCued
+    {
+        public LiftCued(LiftCue cue, Vector3 position)
+        {
+            Cue = cue;
+            Position = position;
+        }
+
+        public LiftCue Cue { get; }
+
+        public Vector3 Position { get; }
+    }
 }
