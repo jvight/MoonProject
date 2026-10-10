@@ -109,3 +109,23 @@ and every early frame already depends on them.
   crater rim.
 - **Home is a readable warm point** from every site and from the canyon exit (`home_from_*` poses).
 - **Re-run `design_views.json`** with the changes and add the poses to the Director's look set.
+
+## 6. Hand-off to M3-07 (the crew's map), for the story & flow session
+How L4 and L5 should feed the map, whatever form the map takes:
+- **The lookout's "seen" sweep (L5) is the map's input, not a separate feature.** Every place that blinks during the
+  sweep becomes "seen" for the map: drawn faintly, unnamed, a promise rather than a record. Recommended: Gameplay owns
+  one seen/visited record per place id, reusing the anchor ids (`site.*`, `relay.*`, `canyon.*`). The sweep, a sonar
+  answer and the dock's evening pillar (P6) all write to that one record, so the map never needs to know which source
+  revealed a place.
+- **The sweep runs before the map opens** on the first lift ride. The player sees the lights from the deck, then
+  finds those same places sketched on paper. The map confirms the world. It never introduces something the player
+  hasn't seen.
+- **Bell's lantern (L4) is the map's first "?".** It is seen from the canyon mouth and from the deck's east view long
+  before 07 can reach it, so it should be the first unreached place the map draws. When Bell comes home, the lantern
+  goes dark and the map's mark for it turns into the visited form. This one object closes the loop from "promise"
+  to "kept".
+- **Visited outside reach vs. inside reach:** the level layout makes relay.2 (the canyon mouth) the mast that brings
+  the canyon into reach. If the map distinguishes in-reach places, then the canyon, the bridge and Bell's terminus
+  should change on the map when relay.2 lights. That is the moment the relay network's purpose becomes visible.
+- **The sightline query:** World's lookout sweep needs "which anchors are visible from the deck camera". The same
+  query can also serve the map's "seen from home" state, so World should expose it once.
