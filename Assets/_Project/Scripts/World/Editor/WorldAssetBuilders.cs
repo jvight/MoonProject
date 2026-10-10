@@ -65,6 +65,19 @@ namespace MoonProject.World.Editor
             AssetDatabase.SaveAssets();
         }
 
+        /// <summary>The marks pressed into the dust (M3-18 V4): the rover's track shader with World's tint and fade.</summary>
+        [MoonBuilder("World/Ground Mark Material", 206)]
+        public static void BuildGroundMarkMaterial()
+        {
+            GroundMarkSettings marks = LoadSettings().GroundMarks;
+            var material = new Material(FindShader(WorldPaths.GroundMarkShader));
+            material.SetColor("_Color", marks.Tint);
+            material.SetFloat("_FadeNear", marks.FadeNear);
+            material.SetFloat("_FadeFar", marks.FadeFar);
+            GeneratedAssets.CreateOrReplace(material, WorldPaths.GroundMarkMaterial);
+            AssetDatabase.SaveAssets();
+        }
+
         [MoonBuilder("World/Sky Materials", 210)]
         public static void BuildSkyMaterials()
         {
