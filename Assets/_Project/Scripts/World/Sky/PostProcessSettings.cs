@@ -35,16 +35,20 @@ namespace MoonProject.World
         [Range(-3f, 3f)]
         [SerializeField] private float _postExposure = 0.12f;
 
-        [Tooltip("Contrast (-100..100). Low keeps the night soft.")]
-        [Range(-100f, 100f)]
-        [SerializeField] private float _contrast = 10f;
+        [Tooltip("Grade in HDR, before tonemapping (the PC pipeline asset's grading mode), so the warm windows grade " +
+            "with their full range and the shadows keep a real black.")]
+        [SerializeField] private bool _gradeInHdr = true;
 
-        [Tooltip("Saturation (-100..100).")]
+        [Tooltip("Contrast (-100..100). Enough for a real black and a real highlight; the night stays calm.")]
         [Range(-100f, 100f)]
-        [SerializeField] private float _saturation = -12f;
+        [SerializeField] private float _contrast = 20f;
 
-        [Tooltip("Lift: tints the shadows (rgb) and raises them (w). A cool lift gives the lofi, faded-print feel.")]
-        [SerializeField] private Vector4 _lift = new Vector4(0.96f, 0.97f, 1.08f, 0.01f);
+        [Tooltip("Saturation (-100..100). Only a touch under neutral: split toning already carries the hue.")]
+        [Range(-100f, 100f)]
+        [SerializeField] private float _saturation = -5f;
+
+        [Tooltip("Lift: tints the shadows (rgb) and raises them (w). Cool, but never raised: the frame keeps a black.")]
+        [SerializeField] private Vector4 _lift = new Vector4(0.96f, 0.97f, 1.08f, 0f);
 
         [Tooltip("Gamma: tints and shifts the midtones (rgb, w).")]
         [SerializeField] private Vector4 _gamma = new Vector4(1f, 1f, 1f, 0f);
@@ -77,6 +81,12 @@ namespace MoonProject.World
         [Range(0f, 1f)]
         [SerializeField] private float _occlusionDirectLighting = 0.55f;
 
+        [Header("Home's grade")]
+        [Tooltip("Split toning balance the grade reaches once the whole base is awake (the Lift). Each power stage " +
+            "moves it a step from the balance above, so more of the frame takes the warm highlight hue as home wakes.")]
+        [Range(-100f, 100f)]
+        [SerializeField] private float _wokenSplitBalance = 8f;
+
         [Header("Lens")]
         [Tooltip("Vignette strength.")]
         [Range(0f, 1f)]
@@ -101,6 +111,7 @@ namespace MoonProject.World
         public float BloomIntensity => _bloomIntensity;
         public float BloomScatter => _bloomScatter;
         public Color BloomTint => _bloomTint;
+        public bool GradeInHdr => _gradeInHdr;
         public float PostExposure => _postExposure;
         public float Contrast => _contrast;
         public float Saturation => _saturation;
@@ -110,6 +121,7 @@ namespace MoonProject.World
         public Color SplitShadows => _splitShadows;
         public Color SplitHighlights => _splitHighlights;
         public float SplitBalance => _splitBalance;
+        public float WokenSplitBalance => _wokenSplitBalance;
         public float OcclusionIntensity => _occlusionIntensity;
         public float OcclusionRadius => _occlusionRadius;
         public float OcclusionDirectLighting => _occlusionDirectLighting;

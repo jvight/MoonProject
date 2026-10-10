@@ -32,6 +32,11 @@ namespace MoonProject.World.Editor
             var volume = context.CreateChild("Post Processing", root).AddComponent<Volume>();
             volume.isGlobal = true;
             volume.sharedProfile = profile;
+            var homeGrade = context.CreateChild("Home Grade", root).AddComponent<Volume>();
+            homeGrade.isGlobal = true;
+            homeGrade.priority = volume.priority + 1f;
+            homeGrade.weight = 0f;
+            homeGrade.sharedProfile = context.LoadAsset<VolumeProfile>(WorldPaths.HomeGradeProfile);
 
             RenderSettings.skybox = skyMaterial;
             WorldAtmosphere.Apply(settings.Atmosphere, settings.Sky, earthlight, fill);
@@ -56,6 +61,7 @@ namespace MoonProject.World.Editor
             var homeLighting = context.CreateChild("Home Lighting", root).AddComponent<HomeLightingSystem>();
             var lighting = new SerializedObject(homeLighting);
             Assign(lighting, "_settings", settings);
+            Assign(lighting, "_homeGrade", homeGrade);
             lighting.ApplyModifiedPropertiesWithoutUndo();
             context.AddSystem(homeLighting);
         }

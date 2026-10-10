@@ -14,6 +14,9 @@ namespace MoonProject.World
     {
         private static readonly int LightCount = Enum.GetValues(typeof(HomeLight)).Length;
 
+        // The first warm point each stage after Asleep wakes: the grade warms a step with each of them.
+        private static readonly HomeLight[] StageLeads = { HomeLight.Windows, HomeLight.BayLamps, HomeLight.LiftLamps };
+
         private readonly HomeLightingSettings _settings;
         private BasePowerStage _stage = BasePowerStage.Asleep;
         private BasePowerStage _wakingStage = BasePowerStage.Asleep;
@@ -94,6 +97,21 @@ namespace MoonProject.World
 
             float arrives = _settings.CableTravel * segment / Mathf.Max(1, count);
             return Mathf.SmoothStep(0f, 1f, (time - _wokeAt - arrives) / _settings.CableSegmentFade);
+        }
+
+        /// <summary>
+        /// How far home's grade has warmed at <paramref name="time"/>: 0 asleep, 1 with the whole base awake. Each
+        /// stage adds an equal step, eased in with the first warm point it wakes.
+        /// </summary>
+        public float GradeWarmth(float time)
+        {
+            float warmth = 0f;
+            foreach (HomeLight lead in StageLeads)
+            {
+                warmth += Level(lead, time);
+            }
+
+            return warmth / StageLeads.Length;
         }
 
         /// <summary>

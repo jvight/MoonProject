@@ -55,6 +55,24 @@ namespace MoonProject.World.Tests
         }
 
         [Test]
+        public void Grade_WarmsAStepWithEachStage_Eased()
+        {
+            Assert.AreEqual(0f, _stages.GradeWarmth(Start), "a sleeping base keeps the cold grade");
+            _stages.SetStage(BasePowerStage.Home, false, Start);
+            Assert.AreEqual(0f, _stages.GradeWarmth(Start), "no frame-one jump");
+            float woken = Start + _settings.CableTravel + _settings.WakeFade;
+            float home = _stages.GradeWarmth(woken);
+            Assert.AreEqual(1f / 3f, home, Tolerance, "home is a third of the way");
+
+            _stages.SetStage(BasePowerStage.Bay, false, woken);
+            float easing = _stages.GradeWarmth(woken + _settings.CableTravel + _settings.WakeFade * 0.5f);
+            Assert.That(easing, Is.GreaterThan(home).And.LessThan(2f / 3f), "the bay's step eases in");
+
+            _stages.SetStage(BasePowerStage.Lift, true, woken);
+            Assert.AreEqual(1f, _stages.GradeWarmth(woken), Tolerance, "a restored Lift is fully warm at once");
+        }
+
+        [Test]
         public void LaterStages_LightTheBayThenTheLift()
         {
             _stages.SetStage(BasePowerStage.Home, true, Start);

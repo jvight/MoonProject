@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.Rendering;
 using MoonProject.Core;
 using MoonProject.Core.Events;
 
@@ -8,8 +9,9 @@ namespace MoonProject.World
     /// <summary>
     /// Registers <see cref="IHomeLights"/> (docs/features/M3-16): follows <see cref="BasePowerChanged"/> and tells
     /// whoever drives home's lamps how lit each warm point is now. It drives World's own parts of the wake itself: the
-    /// glass segments of Art's ground power cables (lit from the tower outward) and the tower's pilot blink while the
-    /// base sleeps. Thin: the timing lives in <see cref="HomeLightStages"/>.
+    /// glass segments of Art's ground power cables (lit from the tower outward), the tower's pilot blink while the
+    /// base sleeps and home's grade, which warms a step with each stage. Thin: the timing lives in
+    /// <see cref="HomeLightStages"/>.
     /// </summary>
     public sealed class HomeLightingSystem : MonoBehaviour, IGameSystem, IHomeLights
     {
@@ -32,12 +34,17 @@ namespace MoonProject.World
         [Tooltip("The pilot light's halo at the top of the radio tower (LofiBeaconHalo).")]
         [SerializeField] private Renderer _pilot;
 
+        [Tooltip("Global Volume with home's warm grade (Generated/World/HomeGradeProfile); its weight follows the " +
+            "power stages.")]
+        [SerializeField] private Volume _homeGrade;
+
         private MaterialPropertyBlock _block;
         private HomeLightStages _stages;
         private IDisposable _powerChanged;
         private float[] _homeApplied;
         private float[] _bayApplied;
         private float[] _liftApplied;
+        private float _gradeApplied = -1f;
 
         public void Initialize(GameContext context)
         {
@@ -83,6 +90,12 @@ namespace MoonProject.World
             _block.SetFloat(IntensityId, pilot * tuning.PilotIntensity);
             _block.SetFloat(RadiusId, tuning.PilotRadius);
             _pilot.SetPropertyBlock(_block);
+            float warmth = _stages.GradeWarmth(time);
+            if (!Mathf.Approximately(warmth, _gradeApplied))
+            {
+                _gradeApplied = warmth;
+                _homeGrade.weight = warmth;
+            }
         }
 
         private void ApplyCable(BasePowerStage stage, Renderer[] segments, float[] applied, float time)
@@ -153,7 +166,12 @@ namespace MoonProject.World
                 return "Home, Bay and Lift cable segments must be assigned (the scene build wires Art's Glow_ nodes).";
             }
 
-            return _pilot == null ? "The tower's pilot halo is not assigned." : null;
+            if (_pilot == null)
+            {
+                return "The tower's pilot halo is not assigned.";
+            }
+
+            return _homeGrade == null ? "Home's grade Volume is not assigned." : null;
         }
     }
 }

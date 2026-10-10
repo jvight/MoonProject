@@ -101,13 +101,7 @@ namespace MoonProject.World.Editor
         public static void BuildVolumeProfile()
         {
             PostProcessSettings post = LoadSettings().PostProcessing;
-            var profile = AssetDatabase.LoadAssetAtPath<VolumeProfile>(WorldPaths.VolumeProfile);
-            if (profile == null)
-            {
-                GeneratedAssets.EnsureFolder(WorldPaths.GeneratedRoot);
-                profile = ScriptableObject.CreateInstance<VolumeProfile>();
-                AssetDatabase.CreateAsset(profile, WorldPaths.VolumeProfile);
-            }
+            VolumeProfile profile = LoadOrCreateProfile(WorldPaths.VolumeProfile);
 
             // Overrides are updated in place (never re-created) so the asset's sub-object IDs stay stable.
             Override<Tonemapping>(profile).mode.Override(TonemappingMode.Neutral);
@@ -149,8 +143,23 @@ namespace MoonProject.World.Editor
         }
 
         /// <summary>
-        /// The PC renderer's screen-space ambient occlusion from <see cref="PostProcessSettings"/> (M3-18 V1). URP keeps
-        /// the feature and its settings internal, so they are written through their serialized fields.
+        /// Home's warm grade (M3-18 V9): only the split toning balance, which <see cref="HomeLightingSystem"/> blends in
+        /// over the main profile a step per power stage.
+        /// </summary>
+        [MoonBuilder("World/Home Grade", 221)]
+        public static void BuildHomeGradeProfile()
+        {
+            PostProcessSettings post = LoadSettings().PostProcessing;
+            VolumeProfile profile = LoadOrCreateProfile(WorldPaths.HomeGradeProfile);
+            Override<SplitToning>(profile).balance.Override(post.WokenSplitBalance);
+            EditorUtility.SetDirty(profile);
+            AssetDatabase.SaveAssets();
+        }
+
+        /// <summary>
+        /// The PC renderer's screen-space ambient occlusion (M3-18 V1) and the PC pipeline's colour grading mode (V9)
+        /// from <see cref="PostProcessSettings"/>. URP keeps the SSAO feature and its settings internal, so they are
+        /// written through their serialized fields.
         /// </summary>
         [MoonBuilder("World/Render Pipeline", 225)]
         public static void BuildRenderPipeline()
@@ -181,7 +190,30 @@ namespace MoonProject.World.Editor
             occlusion.SetActive(true);
             EditorUtility.SetDirty(occlusion);
             EditorUtility.SetDirty(renderer);
+
+            var pipeline = AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>(WorldPaths.PcPipeline);
+            if (pipeline == null)
+            {
+                throw new InvalidOperationException($"No URP pipeline asset at {WorldPaths.PcPipeline}.");
+            }
+
+            pipeline.colorGradingMode = post.GradeInHdr ? ColorGradingMode.HighDynamicRange
+                : ColorGradingMode.LowDynamicRange;
+            EditorUtility.SetDirty(pipeline);
             AssetDatabase.SaveAssets();
+        }
+
+        private static VolumeProfile LoadOrCreateProfile(string path)
+        {
+            var profile = AssetDatabase.LoadAssetAtPath<VolumeProfile>(path);
+            if (profile == null)
+            {
+                GeneratedAssets.EnsureFolder(WorldPaths.GeneratedRoot);
+                profile = ScriptableObject.CreateInstance<VolumeProfile>();
+                AssetDatabase.CreateAsset(profile, path);
+            }
+
+            return profile;
         }
 
         private static void SetFloat(SerializedObject serialized, string path, float value)
