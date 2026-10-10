@@ -85,6 +85,12 @@ namespace MoonProject.Art.Editor
         private const float ShutterSlat = 0.16f;
         private const float ShutterThickness = 0.03f;
 
+        // Decades on the shutter: dust caked up its lowest slats, one slat knocked in, one half torn away.
+        private const int DustySlats = 2;
+        private const int DentedSlat = 9;
+        private const int TornSlat = 4;
+        private const float DentTilt = 7f;
+
         public static readonly Vector3 SignCentre = new Vector3(0f, EaveHeight + 0.62f, FrontZ + 0.02f);
 
         private const float SignHeight = 0.42f;
@@ -527,8 +533,19 @@ namespace MoonProject.Art.Editor
                 ShutterThickness * 0.5f), PaletteSwatch.Charcoal);
             for (int i = 0; i < slats; i++)
             {
-                b.Box(At(0f, -(i + 0.5f) * pitch, 0f), new Vector3(2f * halfWidth, pitch - 0.014f, ShutterThickness),
-                    PaletteSwatch.FadedPaint, 0.004f);
+                float y = -(i + 0.5f) * pitch;
+                PaletteSwatch paint = i >= slats - DustySlats ? PaletteSwatch.CakedDust : PaletteSwatch.FadedPaint;
+                if (i == TornSlat)
+                {
+                    // Half of this slat was torn away long ago: the dark bay shows through the gap.
+                    b.Box(At(-halfWidth * 0.45f, y, 0f), new Vector3(halfWidth * 1.1f, pitch - 0.014f,
+                        ShutterThickness), paint, 0.004f);
+                    continue;
+                }
+
+                Vector3 dent = i == DentedSlat ? new Vector3(DentTilt, 0f, 0f) : Vector3.zero;
+                b.Box(At(new Vector3(0f, y, i == DentedSlat ? 0.012f : 0f), dent), new Vector3(2f * halfWidth,
+                    pitch - 0.014f, ShutterThickness), paint, 0.004f);
             }
 
             b.Box(At(0f, -drop + 0.05f, 0.005f), new Vector3(2f * halfWidth + 0.04f, 0.1f, ShutterThickness + 0.02f),
@@ -536,9 +553,11 @@ namespace MoonProject.Art.Editor
             b.Box(At(0f, -drop + 0.16f, ShutterThickness), new Vector3(0.22f, 0.04f, 0.04f), PaletteSwatch.Metal,
                 0.008f);
             Matrix4x4 face = SiteKit.Face(new Vector3(0f, 0f, ShutterThickness * 0.5f), Vector3.forward, Vector3.up);
-            SiteKit.RustSeam(b, face, -halfWidth + 0.1f, halfWidth - 0.1f, -0.25f, drop * 0.6f, 0.9f, 251);
-            SiteKit.RustPatch(b, face, -0.9f, -drop + 0.12f, 0.22f);
-            SiteKit.RustPatch(b, face, 0.6f, -drop + 0.1f, 0.16f);
+            SiteKit.RustSeam(b, face, -halfWidth + 0.1f, halfWidth - 0.1f, -0.25f, drop * 0.6f, 1.4f, 251);
+            SiteKit.RustSeam(b, face, -halfWidth + 0.1f, halfWidth - 0.1f, -drop * 0.45f, drop * 0.4f, 1.2f, 252);
+            SiteKit.RustPatch(b, face, -0.9f, -drop + 0.16f, 0.34f);
+            SiteKit.RustPatch(b, face, 0.75f, -drop + 0.14f, 0.26f);
+            SiteKit.RustPatch(b, face, 1.2f, -drop * 0.55f, 0.14f);
             return b;
         }
 
