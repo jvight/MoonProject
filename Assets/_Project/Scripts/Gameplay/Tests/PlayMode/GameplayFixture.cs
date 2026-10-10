@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using MoonProject.App;
 using MoonProject.Core;
+using MoonProject.Gameplay.Lift;
 using MoonProject.Testing;
 using Object = UnityEngine.Object;
 #if UNITY_EDITOR
@@ -105,6 +106,11 @@ namespace MoonProject.Gameplay.PlayModeTests
         public BaseTuning BaseTuning { get; private set; }
 
         public RadioTowerTuning TowerTuning { get; private set; }
+
+        public LiftTuning LiftTuning { get; private set; }
+
+        /// <summary>The stand-in crew's lift beside the lander.</summary>
+        public LiftStation Lift { get; private set; }
 
         public UpgradeDefinition RadioTowerUpgrade { get; private set; }
 
@@ -341,6 +347,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             var relays = Child<RelayField>(root, "Relays");
             var progression = Child<BaseProgression>(root, "Progression");
             var plotter = Child<BlueprintPlotter>(root, "Plotter");
+            Lift = Child<LiftStation>(root, "CrewLift");
             CassetteShelf shelf = BuildBase(root.transform, home, tower, workshop, progression, plotter);
             BuildFriends(friends);
             BuildCassettes(cassettes);
@@ -357,7 +364,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 {
                     RadioTowerUpgrade, HoverJumpUpgrade, CargoCradleUpgrade, WarmHeadlampUpgrade, BoostCoilsUpgrade,
                 }, salvage, relics, sonar, excavation, tether, home, cradle, tower, workshop, friends, cassettes, logs,
-                signals, shelf, relays, progression, plotter);
+                signals, shelf, relays, progression, plotter, Lift);
             root.SetActive(true);
 
             Bootstrap = BootstrapHarness.Create(_controls, SaveSlot, World, Rover, Gameplay);
@@ -454,7 +461,7 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             var tapes = rack.gameObject.AddComponent<CassetteShelf>();
             tapes.Wire(ShelfSlots);
-            Transform lift = Node("LiftPlatform", lander, new Vector3(2.4f, 0.2f, 3.2f));
+            Transform lift = BuildLift(lander, dock);
             ProgressionTuning = Asset<ProgressionTuning>();
             progression.Wire(ProgressionTuning, new[] { dock, lander, dock, lift, anchor, shelf, bay, board, rack },
                 lift);
@@ -799,6 +806,38 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             return root;
+        }
+
+        /// <summary>
+        /// A stand-in crew's lift with the art contract's nodes (LiftBottom, LiftTop, LiftPlatform jammed and tilted
+        /// with its RoverSpot, the cables, WinchLamp, LiftHopperMouth), its platform a kinematic deck as the scene
+        /// contributor makes it, wired to <see cref="Lift"/>. Returns the platform.
+        /// </summary>
+        private Transform BuildLift(Transform lander, Transform dock)
+        {
+            Transform bottom = Node("LiftBottom", lander, new Vector3(3.6f, 0.15f, 3.2f));
+            Transform top = Node("LiftTop", lander, new Vector3(3.6f, 3.2f, 3.2f));
+            Transform platform = Node("LiftPlatform", lander, new Vector3(3.6f, 1.6f, 3.2f));
+            platform.localRotation = Quaternion.Euler(0f, 0f, -12f);
+            platform.gameObject.layer = Layers.Prop;
+            var deck = platform.gameObject.AddComponent<BoxCollider>();
+            deck.size = new Vector3(1.8f, 0.1f, 1.8f);
+            var body = platform.gameObject.AddComponent<Rigidbody>();
+            body.isKinematic = true;
+            body.interpolation = RigidbodyInterpolation.Interpolate;
+            Transform spot = Node("RoverSpot", platform, new Vector3(0f, 0.05f, 0f));
+            Transform cableLeft = Node("LiftCable_L", lander, new Vector3(2.9f, 4f, 3.2f));
+            Transform cableRight = Node("LiftCable_R", lander, new Vector3(4.3f, 4f, 3.2f));
+            cableRight.gameObject.SetActive(false);
+            Transform snapped = Node("LiftCableR_Snapped", lander, new Vector3(4.3f, 4f, 3.2f));
+            Transform lamp = Block(lander, new Vector3(2.4f, 3.4f, 3.2f), Vector3.one * 0.15f);
+            lamp.name = "WinchLamp";
+            Transform mouth = Node("LiftHopperMouth", lander, new Vector3(2.3f, 0.8f, 2.4f));
+            mouth.localRotation = Quaternion.Euler(0f, 180f, 0f);
+            LiftTuning = Asset<LiftTuning>();
+            Lift.Wire(LiftTuning, TowerTuning, lander, platform, body, spot, bottom, top, cableLeft, cableRight,
+                snapped, lamp.GetComponent<Renderer>(), mouth, dock, 2.4f);
+            return platform;
         }
 
         private static Transform Node(string name, Transform parent, Vector3 localPosition)
