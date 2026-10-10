@@ -18,6 +18,8 @@ CBUFFER_START(UnityPerMaterial)
     // x: rim brightness (linear), y: fresnel exponent, z: up-facing normal (world y) where the rim is gone,
     // w: how far the rim's hue leans from the earthlight toward the sky's horizon glow (0..1).
     half4 _MoonRim;
+    // The colour a grounded model's foot fades toward (DustShadow, linear) by its baked ground occlusion (UV1.x).
+    half4 _MoonAoTint;
     UNITY_TEXTURE_STREAMING_DEBUG_VARS;
 CBUFFER_END
 

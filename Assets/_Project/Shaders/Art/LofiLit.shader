@@ -14,6 +14,7 @@ Shader "MoonProject/Art/LofiLit"
         [HDR] _EmissionColor("Emission Color", Color) = (1, 1, 1, 1)
         _Surface("Surface", Float) = 0.0
         _MoonRim("Rim (brightness, exponent, up cutoff, horizon lean)", Vector) = (0, 3, 0.6, 0.6)
+        _MoonAoTint("Foot occlusion tint", Color) = (0.3, 0.3, 0.4, 1)
     }
 
     SubShader
@@ -60,6 +61,7 @@ Shader "MoonProject/Art/LofiLit"
             {
                 float4 positionOS : POSITION;
                 float3 normalOS : NORMAL;
+                float2 occlusion : TEXCOORD1;
                 float2 uv : TEXCOORD0;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
@@ -71,6 +73,7 @@ Shader "MoonProject/Art/LofiLit"
                 half3 normalWS : TEXCOORD1;
                 float2 uv : TEXCOORD2;
                 half4 fogFactorAndVertexLight : TEXCOORD3;
+                half occlusion : TEXCOORD4;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
                 UNITY_VERTEX_OUTPUT_STEREO
             };
@@ -87,6 +90,7 @@ Shader "MoonProject/Art/LofiLit"
                 output.positionCS = positions.positionCS;
                 output.positionWS = positions.positionWS;
                 output.normalWS = normalWS;
+                output.occlusion = (half)input.occlusion.x;
                 output.uv = TRANSFORM_TEX(input.uv, _BaseMap);
                 half3 vertexLight = half3(0, 0, 0);
                 #if defined(_ADDITIONAL_LIGHTS_VERTEX)
@@ -108,6 +112,7 @@ Shader "MoonProject/Art/LofiLit"
                 surface.albedo = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv).rgb * _BaseColor.rgb;
                 surface.emission = SAMPLE_TEXTURE2D(_EmissionMap, sampler_EmissionMap, input.uv).rgb
                     * _EmissionColor.rgb;
+                surface.albedo = lerp(surface.albedo, _MoonAoTint.rgb, input.occlusion);
                 surface.vertexLight = input.fogFactorAndVertexLight.yzw;
                 surface.fogFactor = input.fogFactorAndVertexLight.x;
                 return half4(LofiLit(surface), 1.0);

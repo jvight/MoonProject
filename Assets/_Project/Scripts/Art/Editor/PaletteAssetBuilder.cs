@@ -61,7 +61,7 @@ namespace MoonProject.Art.Editor
             var material = new Material(shader);
             material.SetColor("_BaseColor", Color.white);
             material.SetColor("_EmissionColor", Color.black);
-            SetRim(material);
+            SetLook(material);
             material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
             material.enableInstancing = true;
             return material;
@@ -109,7 +109,7 @@ namespace MoonProject.Art.Editor
             // MaterialPropertyBlock _EmissionColor (ARCHITECTURE.md, "Glow modulation").
             material.SetColor("_EmissionColor", glowOff ? Color.black : Color.white);
             material.SetFloat("_Surface", 0f);
-            SetRim(material);
+            SetLook(material);
             material.globalIlluminationFlags = glowOff
                 ? MaterialGlobalIlluminationFlags.RealtimeEmissive
                 : MaterialGlobalIlluminationFlags.BakedEmissive;
@@ -129,11 +129,15 @@ namespace MoonProject.Art.Editor
             return shader;
         }
 
-        /// <summary>The silhouette rim both Lofi lit shaders read (see Palette.RimBrightness).</summary>
-        private static void SetRim(Material material)
+        /// <summary>
+        /// What both Lofi lit shaders read beyond the palette: the silhouette rim (see Palette.RimBrightness) and the
+        /// DustShadow a grounded model's foot fades toward (GroundOcclusion).
+        /// </summary>
+        private static void SetLook(Material material)
         {
             material.SetVector("_MoonRim", new Vector4(Palette.RimBrightness, Palette.RimExponent, Palette.RimUpCutoff,
                 Palette.RimHorizonLean));
+            material.SetColor("_MoonAoTint", Palette.GetSurface(PaletteSwatch.DustShadow));
         }
 
         /// <summary>Base map pixels (sRGB surface colours), row 0 at the bottom; unused cells are black.</summary>

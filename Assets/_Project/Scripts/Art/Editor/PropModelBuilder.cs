@@ -15,7 +15,7 @@ namespace MoonProject.Art.Editor
         [MoonBuilder("Art/Props", 175)]
         public static void Build()
         {
-            ModelPrefabWriter.Write(CreateLogCache(), ArtPaths.PropFolder, PaletteAssetBuilder.LoadMaterial());
+            ModelPrefabWriter.Write(GroundOcclusion.Ground(CreateLogCache()), ArtPaths.PropFolder, PaletteAssetBuilder.LoadMaterial());
             AssetDatabase.SaveAssets();
         }
 

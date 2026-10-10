@@ -301,13 +301,13 @@ namespace MoonProject.Art.Editor
             Material material = PaletteAssetBuilder.LoadMaterial();
             Material glowOff = PaletteAssetBuilder.LoadGlowOffMaterial();
             Material weather = PaletteAssetBuilder.LoadWeatherMaterial();
-            ModelPrefabWriter.Write(CreateLander(), ArtPaths.BaseFolder, material, glowOff, weather);
-            ModelPrefabWriter.Write(CreateShelf(), ArtPaths.BaseFolder, material, glowOff, weather);
-            ModelPrefabWriter.Write(CreateRoverBay(), ArtPaths.BaseFolder, material, glowOff, weather);
-            ModelPrefabWriter.Write(CreateCassetteShelf(), ArtPaths.BaseFolder, material, glowOff, weather);
+            ModelPrefabWriter.Write(GroundOcclusion.Ground(CreateLander()), ArtPaths.BaseFolder, material, glowOff, weather);
+            ModelPrefabWriter.Write(GroundOcclusion.Ground(CreateShelf()), ArtPaths.BaseFolder, material, glowOff, weather);
+            ModelPrefabWriter.Write(GroundOcclusion.Ground(CreateRoverBay()), ArtPaths.BaseFolder, material, glowOff, weather);
+            ModelPrefabWriter.Write(GroundOcclusion.Ground(CreateCassetteShelf()), ArtPaths.BaseFolder, material, glowOff, weather);
             for (int level = RadioTowerMeshes.MinLevel; level <= RadioTowerMeshes.MaxLevel; level++)
             {
-                ModelPrefabWriter.Write(CreateTower(level), ArtPaths.BaseFolder, material, glowOff, weather);
+                ModelPrefabWriter.Write(GroundOcclusion.Ground(CreateTower(level)), ArtPaths.BaseFolder, material, glowOff, weather);
             }
 
             for (int i = 0; i < PadRadii.Length; i++)

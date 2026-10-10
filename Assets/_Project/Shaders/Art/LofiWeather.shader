@@ -17,6 +17,7 @@ Shader "MoonProject/Art/LofiWeather"
         _EmissionColor("Emission Color", Color) = (0, 0, 0, 1)
         _Surface("Surface", Float) = 0.0
         _MoonRim("Rim (brightness, exponent, up cutoff, horizon lean)", Vector) = (0, 3, 0.6, 0.6)
+        _MoonAoTint("Foot occlusion tint", Color) = (0.3, 0.3, 0.4, 1)
     }
 
     SubShader
@@ -63,6 +64,7 @@ Shader "MoonProject/Art/LofiWeather"
             {
                 float4 positionOS : POSITION;
                 float3 normalOS : NORMAL;
+                float2 occlusion : TEXCOORD1;
                 half4 color : COLOR;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
@@ -74,6 +76,7 @@ Shader "MoonProject/Art/LofiWeather"
                 half3 normalWS : TEXCOORD1;
                 half3 albedo : TEXCOORD2;
                 half4 fogFactorAndVertexLight : TEXCOORD3;
+                half occlusion : TEXCOORD4;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
                 UNITY_VERTEX_OUTPUT_STEREO
             };
@@ -90,6 +93,7 @@ Shader "MoonProject/Art/LofiWeather"
                 output.positionCS = positions.positionCS;
                 output.positionWS = positions.positionWS;
                 output.normalWS = normalWS;
+                output.occlusion = (half)input.occlusion.x;
                 output.albedo = SRGBToLinear(input.color.rgb);
                 half3 vertexLight = half3(0, 0, 0);
                 #if defined(_ADDITIONAL_LIGHTS_VERTEX)
@@ -110,6 +114,7 @@ Shader "MoonProject/Art/LofiWeather"
                 surface.positionCS = input.positionCS;
                 surface.albedo = input.albedo;
                 surface.emission = half3(0, 0, 0);
+                surface.albedo = lerp(surface.albedo, _MoonAoTint.rgb, input.occlusion);
                 surface.vertexLight = input.fogFactorAndVertexLight.yzw;
                 surface.fogFactor = input.fogFactorAndVertexLight.x;
                 return half4(LofiLit(surface), 1.0);

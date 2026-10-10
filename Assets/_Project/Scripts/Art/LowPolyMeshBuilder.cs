@@ -27,6 +27,7 @@ namespace MoonProject.Art
         private readonly List<Vector3> _normals;
         private readonly List<Vector2> _uvs;
         private readonly List<Color32> _colours;
+        private readonly List<Vector2> _occlusion = new List<Vector2>();
         private readonly List<int> _indices = new List<int>();
         private readonly IndexedShape _shape = new IndexedShape();
         private Vector3 _min;
@@ -76,6 +77,12 @@ namespace MoonProject.Art
         /// <summary>The sRGB colour per vertex (empty unless <see cref="HasVertexColours"/>).</summary>
         public IReadOnlyList<Color32> Colours => _colours ?? (IReadOnlyList<Color32>)Array.Empty<Color32>();
 
+        /// <summary>
+        /// Per-vertex ground occlusion in x (0 none .. 1 fully toward DustShadow), written to UV channel 1 for the Lofi
+        /// lit shaders; vertices never occluded (and those added after the last <see cref="Occlude"/>) read 0.
+        /// </summary>
+        public IReadOnlyList<Vector2> Occlusion => _occlusion;
+
         /// <summary>Axis-aligned bounds of everything added so far (zero-size at the origin when empty).</summary>
         public Bounds Bounds => VertexCount == 0 ? new Bounds(Vector3.zero, Vector3.zero) : FromMinMax(_min, _max);
 
@@ -85,6 +92,20 @@ namespace MoonProject.Art
             _normals.Clear();
             _uvs.Clear();
             _colours?.Clear();
+            _occlusion.Clear();
+        }
+
+        /// <summary>Raises vertex <paramref name="vertex"/>'s ground occlusion to at least <paramref name="amount"/>.</summary>
+        public void Occlude(int vertex, float amount)
+        {
+            if (vertex < 0 || vertex >= VertexCount)
+            {
+                throw new ArgumentOutOfRangeException(nameof(vertex));
+            }
+
+            PadOcclusion();
+            float kept = Math.Max(_occlusion[vertex].x, Mathf.Clamp01(amount));
+            _occlusion[vertex] = new Vector2(kept, 0f);
         }
 
         /// <summary>The range from <paramref name="firstTriangle"/> to the current end (groups primitives).</summary>
@@ -715,6 +736,8 @@ namespace MoonProject.Art
             mesh.SetVertices(_positions);
             mesh.SetNormals(_normals);
             mesh.SetUVs(0, _uvs);
+            PadOcclusion();
+            mesh.SetUVs(1, _occlusion);
             if (_colours != null)
             {
                 mesh.SetColors(_colours);
@@ -722,6 +745,14 @@ namespace MoonProject.Art
 
             mesh.SetIndices(_indices, 0, VertexCount, MeshTopology.Triangles, 0, false);
             mesh.bounds = Bounds;
+        }
+
+        private void PadOcclusion()
+        {
+            while (_occlusion.Count < VertexCount)
+            {
+                _occlusion.Add(Vector2.zero);
+            }
         }
 
         private MeshRange LatheInternal(Matrix4x4 placement, ReadOnlySpan<Vector2> profile, int segments, Paint paint,
