@@ -28,10 +28,11 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// it is picked clean, dig the walkman out of its heart, tow it home (round by the base pad, since the lander is
     /// solid), put it on the shelf, park on the tower pad and craft level 1 from the depot's materials through the UI's
     /// hold. Then Tilly (M3-02): find her with a ping, gather her three parts, repair her, drive home with her, be
-    /// greeted, and let her spot a salvage site on the next trip. Then the workshop (M3-03): find that holding Jump
-    /// does nothing yet, craft Hover-Jump at Kenji's workbench through the same hold, and take the first full-charge
-    /// leap on the base pad. Then the Cargo Cradle (M3-11): craft it at the bench, dig Kenji's duck out of the garage's
-    /// heart, lift it into the rack with the tether button, drive home and set it down on the shelf from the rack.
+    /// greeted, and let her spot a salvage site on the next trip. Dig Kenji's duck out of the garage's heart, which
+    /// holds the Cargo Cradle's blueprint. Find the Rover Bay still asleep (no pad, no prompt, a "not yet" answer to a
+    /// ping), craft tower level 2 to wake it, find that holding Jump does nothing yet, craft Hover-Jump in the bay
+    /// through the same hold and the Cargo Cradle from its new blueprint, go back for the duck, lift it into the rack
+    /// with the tether button, drive home and set it down on the shelf from the rack, and take the first leap.
     /// Then Bell (M3-04/05): drive up the mouth lane, leap the chasm, find her lying at the
     /// terminus with Ro's log cache and her tape, gather her three parts from the alcoves, repair her (the tape slides
     /// in, her dial wakes, she stands), drive home by the one-way exit while she makes her own way, be greeted by her,
@@ -39,8 +40,10 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// relay network (M3-06): pick up the mound relay's part, restore it at its foot with materials and watch it come
     /// online, drive out past the tower's reach and find home still reaching 07 there, then radio-hop home from the
     /// mast's pad and back. Inside the canyon 07 drives a line found over drivable ground (the same planner Bell walks
-    /// by). Every step is timed (Logs/gameplay-captures/playthrough.md) and captured, with review frames of every
-    /// M3-05 placement; any error or exception in the log fails it. Slow: run on demand with --category Playthrough.
+    /// by). The base wakes step by step (M3-16): it opens fully dark, power comes back with each tower level, and
+    /// the soft "next" line follows steps 0-7, ending on the lift, which stays jammed. Every step is timed
+    /// (Logs/gameplay-captures/playthrough.md) and captured, with review frames of every M3-05 placement; any error
+    /// or exception in the log fails it. Slow: run on demand with --category Playthrough.
     /// </summary>
     [Explicit("Slow end-to-end playthrough of the real Main scene; run on demand with --category Playthrough.")]
     [Category("Playthrough")]
@@ -254,29 +257,40 @@ namespace MoonProject.Gameplay.PlayModeTests
             float started = Time.time;
             yield return Boot();
             yield return WakeUp();
+            AssertAsleep();
+            yield return ExpectStep(ProgressionKeys.NextWake, "07 has just woken on its dock");
 
             SalvageSite depot = _gameplay.Salvage.Find(WorldAnchorIds.SitePrefix + "depot");
             Assert.IsNotNull(depot, "the supply depot stands near home");
             Relic relic = depot.Relics[0];
             yield return DriveToSite(depot);
+            yield return ExpectStep(ProgressionKeys.NextSalvage, "out on the basin: salvage comes next");
             yield return Ping(depot);
             yield return SalvageTheDepot(depot);
+            yield return ExpectStep(ProgressionKeys.NextTower, "materials in the stock: the tower needs them");
             yield return Excavate(depot, relic);
             Assert.IsFalse(depot.AnswersSonar, "picked clean and its relic lifted: the depot falls silent");
             yield return LatchTether(relic);
             yield return TowHome(depot, relic);
             yield return Deposit(relic);
-            yield return BuyTowerLevel();
+            yield return BuyTowerLevel(1);
+            yield return ExpectStep(ProgressionKeys.NextSignal, "home is powered: the tower hears Tilly");
             yield return FindTilly();
             yield return GatherTillyParts();
             yield return RepairTilly();
             yield return DriveHomeWithTilly();
+            yield return ExpectStep(ProgressionKeys.NextBay, "Tilly is home and a memory is on the shelf");
             yield return TillySpotsOnTheNextTrip();
-            yield return BuyHoverJumpAtTheBench();
-            yield return CraftTheCargoCradle();
             SalvageSite garage = _gameplay.Salvage.Find(WorldAnchorIds.SitePrefix + "garage");
             Relic duck = garage.Relics[0];
             yield return Excavate(garage, duck);
+            Assert.IsTrue(_gameplay.Blueprints.IsPinned(CargoCradle), "the garage's heart held the Cradle's blueprint");
+            yield return TheBaySleepsUntilTheTowerWakesIt();
+            yield return BuyTowerLevel(2);
+            yield return BuyHoverJumpAtTheBench();
+            yield return ExpectStep(ProgressionKeys.NextLeap, "07 can leap: the canyon opens");
+            yield return CraftTheCargoCradle();
+            yield return BackToTheRelic(garage, duck);
             yield return StowInTheCradle(duck);
             yield return CarryHomeInTheCradle(garage, duck);
             yield return FirstLeap();
@@ -288,7 +302,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return HomeByTheExit();
             yield return TurnBellsDial();
             yield return FollowBellsSignal();
+            yield return ExpectStep(ProgressionKeys.NextRelay, "Bell is home: the network comes next");
             yield return RestoreTheMoundRelay();
+            yield return ExpectStep(ProgressionKeys.NextLift, "a mast is lit: the crew's lift waits for power");
+            Assert.IsFalse(_gameplay.Power.HasReached(BasePowerStage.Lift), "the lift stays jammed before its step");
             yield return DriveOutInReach();
             yield return HopHomeAndBack();
             yield return RestOnTheDock();
@@ -643,46 +660,138 @@ namespace MoonProject.Gameplay.PlayModeTests
             End("Deposit on the shelf", $"{deposited.DisplayedCount} memory on display");
         }
 
-        private IEnumerator BuyTowerLevel()
+        private IEnumerator BuyTowerLevel(int level)
         {
             Begin();
             RadioTower tower = _gameplay.Tower;
+            Assert.AreEqual(BasePower.StageFor(level - 1), _gameplay.Power.Stage, "power stops where the tower stands");
             yield return DriveTo(_context.Get<IWorldLayout>().BasePosition, PadArrival, 0.6f, 60f,
                 "the base pad, clear of the lander");
             yield return DriveTo(tower.PadCentre, 1f, 0.6f, 60f, "the tower pad");
             yield return Until(() => _gameplay.Shop.IsAtStation, 3f, "07 is parked on the pad");
             Assert.IsTrue(_gameplay.Hints.TryGet(InteractionKind.Upgrade, out InteractionHint hint));
-            Assert.IsTrue(hint.Ready, "the depot's materials cover the first level");
+            Assert.IsTrue(hint.Ready, $"the materials so far cover level {level}");
             int purchasesBefore = _events.SignalRadiusChanged.Count;
+            int purchases = _events.UpgradePurchased.Count;
             int cues = _events.StationCued.Count;
             Press(_keyboard.eKey);
-            yield return Until(() => _events.UpgradePurchased.Count > 0, 15f, "holding confirm buys the level");
+            yield return Until(() => _events.UpgradePurchased.Count > purchases, 15f,
+                "holding confirm buys the level");
             Release(_keyboard.eKey);
-            UpgradePurchased purchase = _events.UpgradePurchased[0].Value;
+            UpgradePurchased purchase = _events.UpgradePurchased[_events.UpgradePurchased.Count - 1].Value;
             Assert.AreEqual(Tower, purchase.UpgradeId);
-            Assert.AreEqual(1, purchase.Level);
+            Assert.AreEqual(level, purchase.Level);
             Assert.Greater(_events.SignalRadiusChanged.Count, purchasesBefore);
             float radius = _events.SignalRadiusChanged[_events.SignalRadiusChanged.Count - 1].Value.Radius;
-            Assert.AreEqual(_gameplay.Upgrades.Find(Tower).SignalRadiusAt(1), radius, 1e-3f);
+            Assert.AreEqual(_gameplay.Upgrades.Find(Tower).SignalRadiusAt(level), radius, 1e-3f);
             Assert.IsTrue(tower.Feeding, "07's beam feeds the service port's hopper");
             yield return new WaitForSeconds(0.4f);
             Vector3 port = tower.HopperMouth;
             Vector3 front = Flat(tower.PadCentre - port).normalized;
             Vector3 aside = Vector3.Cross(Vector3.up, front);
             Review(port + front * PortViewDistance + aside * PortViewSide + Vector3.up * PortViewHeight, port,
-                "07a-tower-port-feed");
+                $"07a-tower-port-feed-l{level}");
             yield return Until(() => Cued(StationCue.StitchStarted, cues), 6f, "the hatch opens and the beam stitches");
             yield return new WaitForSeconds(tower.Tuning.FlareDuration);
             Review(port + front * PortViewDistance * 1.6f + aside * PortViewSide + Vector3.up * PortViewHeight,
-                Vector3.Lerp(port, tower.BeaconPosition, 0.5f), "07b-tower-port-stitch");
+                Vector3.Lerp(port, tower.BeaconPosition, 0.5f), $"07b-tower-port-stitch-l{level}");
             yield return Until(() => !tower.Crafting, 6f, "the hatch shuts and the moment ends");
-            AssertCues(cues, Tower, StationCue.FeedStarted, StationCue.BundleDropped, StationCue.BundleDropped,
-                StationCue.Fed, StationCue.HatchOpened, StationCue.StitchStarted, StationCue.HatchClosed);
-            Assert.IsTrue(_gameplay.Workshop.Powered, "the base has power now: the Rover Bay's sign is lit");
+            Recipe recipe = _gameplay.Upgrades.Find(Tower).Levels[level - 1].Recipe;
+            var beats = new List<StationCue> { StationCue.FeedStarted };
+            foreach (int units in new[] { recipe.Metal, recipe.Wiring, recipe.Optics })
+            {
+                if (units > 0)
+                {
+                    beats.Add(StationCue.BundleDropped);
+                }
+            }
+
+            beats.Add(StationCue.Fed);
+            beats.Add(StationCue.HatchOpened);
+            beats.Add(StationCue.StitchStarted);
+            beats.Add(StationCue.HatchClosed);
+            AssertCues(cues, Tower, beats.ToArray());
+            Assert.AreEqual(BasePower.StageFor(level), _gameplay.Power.Stage, "power reaches one stage further");
+            Assert.AreEqual(level >= 2, _gameplay.Workshop.Awake, "the Rover Bay wakes with the second level only");
             yield return new WaitForSeconds(1f);
-            Capture("07-tower-awake");
-            End("Park on the pad and craft tower level 1", $"signal radius {radius:F0} m, recipe " +
-                                                          $"{_gameplay.Upgrades.Find(Tower).Levels[0].Recipe}");
+            Capture($"07-tower-awake-l{level}");
+            End($"Park on the pad and craft tower level {level}", $"signal radius {radius:F0} m, recipe {recipe}, " +
+                                                                 $"power {_gameplay.Power.Stage}");
+        }
+
+        /// <summary>
+        /// The base as a fresh game opens (docs/features/M3-16): no power, the bay asleep with its lamps dark, only
+        /// Hover-Jump's sheet on Kenji's board, nothing to buy.
+        /// </summary>
+        private void AssertAsleep()
+        {
+            Assert.AreEqual(BasePowerStage.Asleep, _gameplay.Power.Stage, "a fresh game opens fully dark");
+            Assert.IsFalse(_gameplay.Workshop.Awake, "the Rover Bay sleeps");
+            Assert.AreEqual(0f, _gameplay.Workshop.LampLevel, 1e-3f, "its lamps are dark");
+            Assert.IsTrue(_gameplay.Blueprints.IsPinned(HoverJump), "Kenji left Hover-Jump's sheet pinned");
+            Assert.IsFalse(_gameplay.Blueprints.IsPinned(CargoCradle), "the Cradle's sheet is still out there");
+            Assert.AreEqual(PurchaseResult.NotAtStation, _gameplay.Shop.Purchase(HoverJump), "nothing to buy yet");
+        }
+
+        /// <summary>The soft "next" line shows <paramref name="key"/> (M3-16 step flow).</summary>
+        private IEnumerator ExpectStep(string key, string why)
+        {
+            yield return Until(() => _gameplay.Progression.NextStep == key, 2f,
+                $"the next line is '{key}' ({why})");
+        }
+
+        /// <summary>
+        /// Home is powered but the bay is not: at its mouth it offers nothing (no pad, no prompt, no panel), and a
+        /// ping finds it answering "not yet".
+        /// </summary>
+        private IEnumerator TheBaySleepsUntilTheTowerWakesIt()
+        {
+            Begin();
+            Workshop bay = _gameplay.Workshop;
+            yield return DriveTo(_context.Get<IWorldLayout>().BasePosition, PadArrival, 0.8f, 90f,
+                "the base pad, clear of the lander");
+            Vector3 entrance = Flat(bay.PadCentre) + Flat(bay.BayForward).normalized * BayApproach;
+            yield return DriveTo(entrance, 1.5f, 0.6f, 60f, "the mouth of the sleeping Rover Bay");
+            Assert.IsFalse(bay.Awake, "tower level 1 powers home, not the bay");
+            Assert.IsFalse(_gameplay.Shop.IsAtStation, "no panel");
+            Assert.IsFalse(_gameplay.Hints.TryGet(InteractionKind.Upgrade, out _), "no prompt");
+            Assert.AreEqual(PurchaseResult.NotAtStation, _gameplay.Shop.Purchase(HoverJump), "nothing to buy");
+            int answers = _events.StationNotYet.Count;
+            int pings = _events.SonarPinged.Count;
+            Press(_keyboard.spaceKey, queueEventOnly: true);
+            yield return null;
+            Release(_keyboard.spaceKey);
+            yield return Until(() => _events.SonarPinged.Count > pings, 2f, "space pings");
+            yield return Until(() => AnsweredNotYet(answers, ProgressionKeys.NotYetBay),
+                _gameplay.Sonar.Tuning.RingDuration + 2f, "the sleeping bay answers 'not yet'");
+            End("The Rover Bay sleeps until the tower wakes it", "no pad, no prompt, a soft 'not yet'");
+        }
+
+        /// <summary>
+        /// Back out to the relic left lying at <paramref name="site"/> while the bay built the rack: round the wreck to
+        /// its open side, then up to it from out there, facing it, as 07 stood when it dug it out.
+        /// </summary>
+        private IEnumerator BackToTheRelic(SalvageSite site, Relic relic)
+        {
+            Begin();
+            Vector3 outward = Flat(relic.transform.position - site.Position).normalized;
+            Vector3 lineUp = Flat(relic.transform.position + outward * CutLineUp);
+            yield return CircleTo(site, lineUp, 0f);
+            yield return DriveTo(lineUp, 2f, 0.6f, 60f, "the open side of the relic left lying");
+            End("Back to the relic", $"{relic.Definition.Id} at {site.Id}");
+        }
+
+        private bool AnsweredNotYet(int from, string reasonKey)
+        {
+            for (int i = from; i < _events.StationNotYet.Count; i++)
+            {
+                if (_events.StationNotYet[i].Value.ReasonKey == reasonKey)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private IEnumerator FindTilly()
