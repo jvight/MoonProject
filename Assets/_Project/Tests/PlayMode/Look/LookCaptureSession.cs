@@ -11,18 +11,20 @@ using UnityEngine.UIElements;
 using MoonProject.App;
 using MoonProject.Core;
 using MoonProject.Core.Events;
+using MoonProject.Core.Save;
 using MoonProject.Testing;
 using Object = UnityEngine.Object;
 #if UNITY_EDITOR
+using UnityEditor;
 using UnityEditor.SceneManagement;
 #endif
 
 namespace MoonProject.Tests.PlayMode.Look
 {
     /// <summary>
-    /// The fixed "look" capture set of docs/features/M3-18 ("Process"): boots the built Main scene on a fresh save,
-    /// lets 07 wake, shoots the title with its UI overlay, wakes home's power, waits for it to settle and shoots every
-    /// other frame of look_set.json with the game camera's own lens, post-processing and anti-aliasing. Writes
+    /// The fixed "look" capture set of docs/features/M3-18 ("Process"): shoots the M3-09 title screen with its UI over
+    /// a save, then boots the built Main scene on a fresh save, lets 07 wake, wakes home's power, waits for it to
+    /// settle and shoots every other frame of look_set.json with the game camera's own lens, post-processing and anti-aliasing. Writes
     /// Logs/look-captures/&lt;stamp&gt;/&lt;frame&gt;.png; tools/look_report.py measures them. Needs a GPU: run with
     /// <c>python tools/look_report.py capture</c> (unity_batch tests --platform playmode --category LookCapture).
     /// </summary>
@@ -36,12 +38,21 @@ namespace MoonProject.Tests.PlayMode.Look
         private static readonly string OutputRoot =
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "look-captures"));
 
+        // A save with no sections, so the title opens on its menu (Continue) rather than the first boot's language step.
+        private const string EmptySave =
+            "{\"formatVersion\":1,\"contentVersion\":\"" + SaveService.OldestCompatibleContent + "\"," +
+            "\"savedAtUtc\":\"2026-10-11T00:00:00Z\",\"sections\":[]}";
+
         private readonly LookCaptureScene _scene = new LookCaptureScene();
+        private GameBootstrap _bootstrap;
         private readonly List<string> _problems = new List<string>();
         private IDisposable _awoke;
         private bool _awake;
         private RenderTexture _uiTarget;
         private PanelSettings _uiSettings;
+        private RenderTexture _uiPreviousTarget;
+        private bool _uiPreviousClear;
+        private Color _uiPreviousClearValue;
 
         [SetUp]
         public void SetUp()
@@ -54,6 +65,9 @@ namespace MoonProject.Tests.PlayMode.Look
         {
             Application.logMessageReceived -= OnLog;
             _awoke?.Dispose();
+#if UNITY_EDITOR
+            SessionState.SetBool(GameBootstrap.TestRunSkipsTitleKey, true);
+#endif
             Scene scene = SceneManager.GetSceneByPath(_scene.ScenePath);
             if (scene.IsValid() && scene.isLoaded)
             {
@@ -63,7 +77,14 @@ namespace MoonProject.Tests.PlayMode.Look
                 }
             }
 
-            Object.Destroy(_uiSettings);
+            if (_uiSettings != null)
+            {
+                _uiSettings.targetTexture = _uiPreviousTarget;
+                _uiSettings.clearColor = _uiPreviousClear;
+                _uiSettings.colorClearValue = _uiPreviousClearValue;
+                _uiSettings = null;
+            }
+
             if (_uiTarget != null)
             {
                 _uiTarget.Release();
@@ -82,29 +103,17 @@ namespace MoonProject.Tests.PlayMode.Look
             LookSet set = JsonUtility.FromJson<LookSet>(File.ReadAllText(SetPath));
             Assert.IsNotEmpty(set.frames, $"{SetPath} lists frames");
             string folder = Path.Combine(OutputRoot, DateTime.Now.ToString("yyyyMMdd-HHmmss"));
-            BootstrapHarness.DeleteSaveFiles(_scene.SaveSlot);
-#if UNITY_EDITOR
-            AsyncOperation loading = EditorSceneManager.LoadSceneAsyncInPlayMode(_scene.ScenePath,
-                new LoadSceneParameters(LoadSceneMode.Single));
-            while (!loading.isDone)
+            foreach (LookFrame frame in set.frames)
             {
-                yield return null;
-            }
-#else
-            throw new NotSupportedException("The look capture loads the scene through the editor.");
-#endif
-            GameBootstrap bootstrap = null;
-            UIDocument document = null;
-            foreach (GameObject root in SceneManager.GetSceneByPath(_scene.ScenePath).GetRootGameObjects())
-            {
-                bootstrap = bootstrap != null ? bootstrap : root.GetComponent<GameBootstrap>();
-                document = document != null ? document : root.GetComponentInChildren<UIDocument>(true);
+                if (frame.kind == "title")
+                {
+                    yield return CaptureTitleScreen(set, Path.Combine(folder, frame.name + ".png"));
+                }
             }
 
-            Assert.IsNotNull(bootstrap, "the scene has its bootstrap");
-            Assert.IsNotNull(document, "the scene has its UI document");
-            RedirectUi(document, set.width, set.height);
-            GameContext context = bootstrap.Context;
+            BootstrapHarness.DeleteSaveFiles(_scene.SaveSlot);
+            yield return Load(set);
+            GameContext context = _bootstrap.Context;
             _awoke = context.Events.Subscribe<RoverAwoke>(_ => _awake = true);
             float started = Time.time;
             while (!_awake)
@@ -114,17 +123,6 @@ namespace MoonProject.Tests.PlayMode.Look
             }
 
             Camera view = context.Get<IViewCamera>().Camera;
-            float awoke = Time.time;
-            foreach (LookFrame frame in set.frames)
-            {
-                if (frame.kind == "title")
-                {
-                    yield return new WaitForSeconds(Mathf.Max(0f, set.titleSeconds - (Time.time - awoke)));
-                    yield return null;
-                    CaptureWithUi(view, set, Path.Combine(folder, frame.name + ".png"));
-                }
-            }
-
             context.Events.Publish(new BasePowerChanged(BasePowerStage.Home, false));
             yield return new WaitForSeconds(set.homeSettleSeconds);
             var host = new GameObject("LookCaptureCamera");
@@ -156,16 +154,78 @@ namespace MoonProject.Tests.PlayMode.Look
         }
 
         /// <summary>
-        /// Points the UI at an offscreen target through a copy of its PanelSettings (the asset stays untouched), so
-        /// the title can be composited over the game camera's render: a batch editor has no screen to grab.
+        /// The M3-09 title screen as a returning player sees it: boots over a save with the title on (a test run
+        /// otherwise skips it, see MoonProject.Editor.Automation.TestRunTitleSkip), lets the menu settle and shoots it
+        /// with its UI. The rest of the set then boots fresh, as before.
+        /// </summary>
+        private IEnumerator CaptureTitleScreen(LookSet set, string path)
+        {
+#if UNITY_EDITOR
+            SessionState.SetBool(GameBootstrap.TestRunSkipsTitleKey, false);
+#endif
+            Directory.CreateDirectory(SaveService.DefaultDirectory);
+            File.WriteAllText(Path.Combine(SaveService.DefaultDirectory, _scene.SaveSlot + SaveService.Extension),
+                EmptySave);
+            yield return Load(set);
+            Assert.AreEqual(GameFlowState.Title, _bootstrap.Context.Get<IGameFlow>().State, "the game boots into the title");
+            yield return new WaitForSecondsRealtime(set.titleSeconds);
+            CaptureWithUi(_bootstrap.Context.Get<IViewCamera>().Camera, set, path);
+#if UNITY_EDITOR
+            SessionState.SetBool(GameBootstrap.TestRunSkipsTitleKey, true);
+#endif
+        }
+
+        /// <summary>Loads the scene copy (replacing any loaded one) and points its UI at the offscreen target.</summary>
+        private IEnumerator Load(LookSet set)
+        {
+#if UNITY_EDITOR
+            AsyncOperation loading = EditorSceneManager.LoadSceneAsyncInPlayMode(_scene.ScenePath,
+                new LoadSceneParameters(LoadSceneMode.Single));
+            while (!loading.isDone)
+            {
+                yield return null;
+            }
+#else
+            throw new NotSupportedException("The look capture loads the scene through the editor.");
+#endif
+            _bootstrap = null;
+            UIDocument document = null;
+            foreach (GameObject root in SceneManager.GetSceneByPath(_scene.ScenePath).GetRootGameObjects())
+            {
+                _bootstrap = _bootstrap != null ? _bootstrap : root.GetComponent<GameBootstrap>();
+                document = document != null ? document : root.GetComponentInChildren<UIDocument>(true);
+            }
+
+            Assert.IsNotNull(_bootstrap, "the scene has its bootstrap");
+            Assert.IsNotNull(document, "the scene has its UI document");
+            RedirectUi(document, set.width, set.height);
+        }
+
+        /// <summary>
+        /// Points the scene's PanelSettings at an offscreen target, in memory only (never saved; TearDown puts it
+        /// back), so the title can be composited over the game camera's render: a batch editor has no screen to grab.
+        /// The panel does not clear the screen it draws on, so the target is cleared to transparent each frame here;
+        /// otherwise the curtain drawn opaque at boot stays under everything drawn after it.
         /// </summary>
         private void RedirectUi(UIDocument document, int width, int height)
         {
-            _uiTarget = new RenderTexture(width, height, 24, RenderTextureFormat.ARGB32);
-            _uiTarget.Create();
-            _uiSettings = Object.Instantiate(document.panelSettings);
+            if (_uiTarget == null)
+            {
+                _uiTarget = new RenderTexture(width, height, 24, RenderTextureFormat.ARGB32);
+                _uiTarget.Create();
+            }
+
+            if (_uiSettings == null)
+            {
+                _uiSettings = document.panelSettings;
+                _uiPreviousTarget = _uiSettings.targetTexture;
+                _uiPreviousClear = _uiSettings.clearColor;
+                _uiPreviousClearValue = _uiSettings.colorClearValue;
+            }
+
+            _uiSettings.clearColor = true;
+            _uiSettings.colorClearValue = Color.clear;
             _uiSettings.targetTexture = _uiTarget;
-            document.panelSettings = _uiSettings;
         }
 
         private void CaptureWithUi(Camera view, LookSet set, string path)

@@ -1,7 +1,7 @@
 {
   "width": 1600,
   "height": 900,
-  "titleSeconds": 4.3,
+  "titleSeconds": 3.0,
   "homeSettleSeconds": 11.2,
   "frames": [
     {"name": "title", "kind": "title"},
