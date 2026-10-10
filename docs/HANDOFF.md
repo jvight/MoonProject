@@ -79,7 +79,18 @@ account) can continue without the old conversation.
     - P7 is done: BlueprintFound means the tube rides on 07. Delivery happens within PlotterReach of the plotter while the bay is awake: it publishes BlueprintDelivered, pins the kit and the plotter draws 8 rows over 6 s.
     - Asked to add Core `BlueprintsCarriedRestored(int count)` on load, so rover's TubeCarry restores the tube after a load.
     - Next: re-run the Playthrough with art's garage fix, then pads, then P1 (plan approved).
-  - **art.** The garage fix (all cuttable, 7,7,2), then the three story-part prefabs, then the QA pass.
+  - **art eb423a5.**
+    - The QA pass is done:
+      - the shutter is weathered and torn;
+      - the cables are sunk sheaths with glass beads;
+      - the jam is rolled to 22° (the maximum before it hits 07 at the dock);
+      - capture scenes wake_dark/home/bay/lift/pads; compare shots in Logs/captures/wake-compare/;
+      - Art.Tests 258/258.
+    - Queued, in order:
+      1. the garage fix (all cuttable, 7,7,2; it blocks gameplay's Playthrough);
+      2. Part_TowerCoil, Part_Transformer, Part_RelaySpare;
+      3. lift readability props (a crew tag "OUT OF ORDER — K." on the rail, the snapped cable's end over the
+         deck). Rover frames the lift from the dock side during the ladder look.
 
 - **After landing 0.5's first batch:**
   - Run `^(Art|Rover|Gameplay|UI|Audio)/` builders and the scene.
