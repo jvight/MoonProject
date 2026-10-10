@@ -6,7 +6,8 @@ namespace MoonProject.Gameplay.Editor
     /// The six lost memories of the vertical slice (ids from the M2 content contract), each resting in the heart of a
     /// salvage site (docs/features/M3-13). Order is the catalog order. The depot's heart holds the tower's coil, not a
     /// memory (M3-16 P1), so the first memory is the bath duck in Kenji's garage, towed home at step 4; beside it
-    /// lie the garden gnome he kept for luck and the walkman; the golden record lies in Kestrel-3's crater with a view
+    /// lie the garden gnome he kept for luck and, toward the door, the walkman (clear of the duck's side, so 07 can
+    /// dig the duck alone); the golden record lies in Kestrel-3's crater with a view
     /// of The Peak, where the last broadcast will one day be sent from; the boot is under the tipped drill rig and the
     /// teapot in the canyon lander, past the Hover-Jump gate. Answer notes climb the D major pentatonic ladder from
     /// D5 (0 = D5, 1 = E5, 2 = F#5, 3 = A5, 4 = B5, 5 = D6). Names and memory texts live in the localization tables
@@ -16,7 +17,7 @@ namespace MoonProject.Gameplay.Editor
     {
         public static readonly RelicRecipe[] All =
         {
-            new RelicRecipe("cassette_player", 6f, 3, "garage", new Vector2(-1.2f, 0f)),
+            new RelicRecipe("cassette_player", 6f, 3, "garage", new Vector2(0f, -1.3f)),
             new RelicRecipe("rubber_duck", 3f, 5, "garage", Vector2.zero),
             new RelicRecipe("golden_record", 5f, 0, "kestrel", Vector2.zero),
             new RelicRecipe("astronaut_boot", 9f, 1, "drill", Vector2.zero),

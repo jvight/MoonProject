@@ -195,7 +195,7 @@ namespace MoonProject.Gameplay.Editor
             var caches = new[]
             {
                 GeneratedAssets.CreateOrReplace(ro, GameplayAssetPaths.LogCacheDefinition("ro_1")),
-                CrewTin("kenji_1", "garage", new Vector2(-1.7f, 4.3f), AbilityGate.Open),
+                CrewTin("kenji_1", "garage", new Vector2(-0.8f, 4.6f), AbilityGate.Open),
                 CrewTin("ines_1", "drill", new Vector2(3.7f, 1.9f), AbilityGate.Open),
                 CrewTin("theo_1", "lander", new Vector2(1.6f, 1.15f), new AbilityGate(true, RoverAbility.HoverJump)),
             };

@@ -16,7 +16,7 @@ MonoBehaviour:
   _prefab: {fileID: 5629825537466304280, guid: 075706db5b69e114ca62b809c974d6f7, type: 3}
   _anchor:
     _anchorId: site.garage
-    _offset: {x: -1.7, y: 4.3}
+    _offset: {x: -0.8, y: 4.6}
   _gate:
     _gated: 0
     _ability: 0

@@ -314,6 +314,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Relic walkman = RelicIn(garage, Walkman);
             yield return SalvageTheGarage(garage);
             yield return Excavate(garage, duck);
+            Assert.IsTrue(LogFound("kenji_1"), "Kenji's log tin by his bench opens while 07 digs");
             Assert.IsTrue(_gameplay.Blueprints.IsCarrying, "the garage's heart held the Cradle's blueprint tube");
             Assert.IsFalse(_gameplay.Blueprints.IsPinned(CargoCradle), "it rides home to Kenji's plotter first");
             Assert.IsFalse(_gameplay.TowerPartField.IsResting(TransformerPart), "the transformer waits for the chasm");
@@ -718,6 +719,19 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(BasePowerStage.Bay, _gameplay.Power.Stage);
             Assert.AreEqual(TowerPartState.Carried, _gameplay.TowerParts.StateOf(SparePart));
             Assert.AreEqual(ProgressionKeys.NextLift, _gameplay.Progression.NextStep);
+        }
+
+        private bool LogFound(string logId)
+        {
+            foreach (EventRecorder.Timed<CrewLogFound> found in _events.CrewLogFound)
+            {
+                if (found.Value.LogId == logId)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static Relic RelicIn(SalvageSite site, string id)
@@ -1450,8 +1464,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 "19c-bell-against-the-wall");
             float travelled = 0f;
             yield return DriveAlong(terminus.Position, "the terminus", value => travelled = value);
-            yield return Until(() => _events.CrewLogFound.Count > 0, 3f, "Ro's log cache opens beside her");
-            Assert.AreEqual("ro_1", _events.CrewLogFound[0].Value.LogId);
+            yield return Until(() => LogFound("ro_1"), 3f, "Ro's log cache opens beside her");
             yield return Until(() => Collected(AfterDark), 6f, "Lumen After Dark, Vol. 1 drifts into 07");
             yield return Until(() => bell.Progress.ItemsCollected == 1, 1f,
                 "her tape lights her fourth lamp: it is the fourth thing she needs");
