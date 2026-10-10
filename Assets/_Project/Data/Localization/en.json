@@ -99,6 +99,10 @@
             "text": "Something glints out there. Home has room for it."
         },
         {
+            "key": "next.chasm",
+            "text": "A light across the chasm. Too far to cross, for now."
+        },
+        {
             "key": "next.bay",
             "text": "The bay has power. The turntable is waiting."
         },
