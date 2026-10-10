@@ -52,7 +52,7 @@ RULES = {r.id: r for r in (
                            "event)", True),
     Rule("unity-api-in-initializer", "Unity object or API in a MonoBehaviour/ScriptableObject field initializer "
                                      "(Unity refuses it inside the constructor)", True),
-    Rule("duplicate-type", "public type name declared in two MoonProject namespaces", False),
+    Rule("duplicate-type", "public type name declared in two MoonProject namespaces", True),
 )}
 
 # Box that owns each folder under Assets/_Project (docs/ROADMAP.md "Các box (agent) và vùng sở hữu").
