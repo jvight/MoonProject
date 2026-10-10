@@ -94,7 +94,8 @@ namespace MoonProject.Art.Editor
                 Matrix4x4 panel = SiteKit.Face(normal * (halfWidth + 0.06f + Weathering.RustLift), normal, Vector3.up);
                 foreach (float shelfTop in new[] { UpperShelfTop, Top })
                 {
-                    SiteKit.RustStreak(b, panel, side * 0.12f, shelfTop - PlankThickness * 0.5f, 0.22f);
+                    SiteKit.RustSeam(b, panel, -0.3f, 0.3f, shelfTop - PlankThickness * 0.5f, 0.35f, 2f,
+                        Mathf.RoundToInt(shelfTop * 100f) + side);
                 }
             }
 

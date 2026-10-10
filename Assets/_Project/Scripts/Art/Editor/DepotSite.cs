@@ -21,6 +21,9 @@ namespace MoonProject.Art.Editor
         private const float BeamSize = 0.14f;
 
         // The collapsed left roof, hinged on the middle posts and lying on the ground past the left posts (x, y).
+        // Rust causes per metre along the wall panels' top seams (few, at random gaps).
+        private const float PanelRunsPerMetre = 1.4f;
+
         private static readonly Vector2 SlopeTop = new Vector2(0f, 2.95f);
         private static readonly Vector2 SlopeFoot = new Vector2(-4.3f, 0.18f);
 
@@ -129,8 +132,8 @@ namespace MoonProject.Art.Editor
                 Matrix4x4 wall = SiteKit.Face(new Vector3(Side + 0.1f, Floor + height * 0.5f, z), Vector3.right,
                     Vector3.up);
                 SiteKit.Sheet(b, wall, panel - 0.02f, height, PaletteSwatch.FadedPaint);
-                SiteKit.RustStreak(b, wall * At(0f, 0f, 0.05f), -0.3f, height * 0.42f, 0.9f);
-                SiteKit.RustStreak(b, wall * At(0f, 0f, 0.05f), 0.35f, height * 0.42f, 0.6f);
+                SiteKit.RustSeam(b, wall * At(0f, 0f, 0.05f), -panel * 0.5f, panel * 0.5f, height * 0.42f,
+                    height * 0.85f, PanelRunsPerMetre, 300 + i);
             }
 
             Matrix4x4 back = SiteKit.Face(new Vector3(Side * 0.5f, Floor + height * 0.5f, Back + 0.1f), Vector3.forward,

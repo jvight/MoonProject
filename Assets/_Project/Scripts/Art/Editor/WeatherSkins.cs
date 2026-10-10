@@ -6,8 +6,9 @@ namespace MoonProject.Art.Editor
 {
     /// <summary>
     /// The generated part of the weather skins (VISION ruling 12, "left alone for a very long time"): a model's faces
-    /// grouped into planes; every big flat face broken into tired panels of patchwork paint; rust running down from
-    /// each panel's top edge and darkening bare metal towards the ground; and the dust rising from the ground and
+    /// grouped into planes; every big flat face broken into tired panels of patchwork paint, laid like bricks of
+    /// uneven sizes so they never alternate; a few rust runs hanging from causes along the seams (see
+    /// <see cref="RustRunPlan"/>) and bare metal darkening towards the ground; and the dust rising from the ground and
     /// lying on every face turned to the sky. Big flat facets with smooth vertex-colour fades, never texture grime.
     /// </summary>
     internal static class WeatherSkins
@@ -34,13 +35,12 @@ namespace MoonProject.Art.Editor
         // Rust runs hang only on walls (|n.y| under this) at least this wide and tall.
         private const float WallSlope = 0.35f;
         private const float MinRunWall = 0.2f;
-        private const float RunMargin = 0.05f;
         private const float RunTopGap = 0.012f;
-        private const float MinRunWidth = 0.045f;
-        private const float MaxRunWidth = 0.11f;
         private const float RunTaper = 0.25f;
-        private const float MinRunLength = 0.35f;
-        private const float MaxRunLength = 1f;
+
+        // Panels vary between these shares of the profile's panel size, each row of a wall at its own widths.
+        private const float MinPanelShare = 0.55f;
+        private const float MaxPanelShare = 1.5f;
 
         // How far down its length a run fades into the paint it runs over.
         private const float RunFade = 0.85f;
@@ -142,10 +142,13 @@ namespace MoonProject.Art.Editor
                         flat.Add(plane.Project(corners[i]));
                     }
 
-                    grid.Cells(flat, out int i0, out int i1, out int j0, out int j1);
-                    for (int i = i0; i <= i1; i++)
+                    Vector2 low = Vector2.Min(flat[0], Vector2.Min(flat[1], flat[2]));
+                    Vector2 high = Vector2.Max(flat[0], Vector2.Max(flat[1], flat[2]));
+                    grid.RowRange(low.y, high.y, out int j0, out int j1);
+                    for (int j = j0; j <= j1; j++)
                     {
-                        for (int j = j0; j <= j1; j++)
+                        grid.ColumnRange(j, low.x, high.x, out int i0, out int i1);
+                        for (int i = i0; i <= i1; i++)
                         {
                             piece.Clear();
                             piece.AddRange(flat);
@@ -165,8 +168,9 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
-        /// Rust runs hanging from the top edge of every panel on every wall of <paramref name="surface"/>, each with a
-        /// dark bloom at its bolt, fading down its length into the panel's paint and cut to the wall's outline.
+        /// Rust along every seam of every wall of <paramref name="surface"/>: a share of the panels rusted along their
+        /// bottom edge, and a few runs planned along each panel row's top seam (<see cref="RustRunPlan"/>), each with
+        /// a dark bloom at its cause fading down its length into the paint it runs over, cut to the wall's outline.
         /// </summary>
         public static void RustRuns(LowPolyMeshBuilder skin, LowPolyMeshBuilder surface, List<SkinPlane> planes,
             WeatherProfile profile, float lift)
@@ -177,6 +181,7 @@ namespace MoonProject.Art.Editor
             var run = new List<Vector2>(8);
             var scratch = new List<Vector2>(8);
             var points = new List<Vector3>(8);
+            var plan = new List<RustRunPlan.Run>();
             foreach (SkinPlane plane in planes)
             {
                 Vector2 size = plane.Max - plane.Min;
@@ -187,49 +192,22 @@ namespace MoonProject.Art.Editor
                 }
 
                 var grid = new PanelGrid(plane, profile);
-                for (int i = 0; i < grid.Columns; i++)
+                for (int j = 0; j < grid.Rows; j++)
                 {
-                    for (int j = 0; j < grid.Rows; j++)
+                    for (int i = 0; i < grid.Columns(j); i++)
                     {
-                        Vector2[] cell = grid.Cell(i, j);
-                        EdgeRust(skin, surface, plane, cell, i, j, profile, lift, corners, flat, run, scratch,
-                            points);
-                        float width = cell[1].x - cell[0].x;
-                        int runs = Mathf.RoundToInt(width * profile.RunsPerMetre
-                            * (0.4f + 1.2f * Roll(plane.Key, i, j, 1, profile.Seed)));
-                        for (int k = 0; k < runs; k++)
-                        {
-                            float x = Mathf.Lerp(cell[0].x + RunMargin, cell[1].x - RunMargin,
-                                Roll(plane.Key, i, j, 10 + 3 * k, profile.Seed));
-                            float w = Mathf.Lerp(MinRunWidth, MaxRunWidth, Roll(plane.Key, i, j, 11 + 3 * k,
-                                profile.Seed));
-                            float top = cell[2].y - RunTopGap;
-                            float length = Mathf.Lerp(MinRunLength, MaxRunLength, Roll(plane.Key, i, j, 12 + 3 * k,
-                                profile.Seed)) * (top - plane.Min.y - RunTopGap);
-                            int foot = grid.Row(top - length);
-                            Color32 fadeTo = ToneColour(plane.Swatch, Roll(plane.Key, i, foot, 0, profile.Seed),
-                                profile);
-                            int first = skin.TriangleCount;
-                            run.Clear();
-                            run.Add(new Vector2(x - w * 0.5f, top));
-                            run.Add(new Vector2(x - w * 0.5f * RunTaper, top - length));
-                            run.Add(new Vector2(x + w * 0.5f * RunTaper, top - length));
-                            run.Add(new Vector2(x + w * 0.5f, top));
-                            Lay(skin, surface, plane, run, corners, flat, scratch, points, lift, PaletteSwatch.Rust);
-                            MeshRange stain = skin.RangeFrom(first);
-                            if (stain.TriangleCount > 0)
-                            {
-                                Bounds reach = skin.GetBounds(stain);
-                                skin.ShadeByHeight(stain, fadeTo, reach.min.y, reach.max.y, RunFade);
-                            }
+                        EdgeRust(skin, surface, plane, grid.Cell(i, j), i, j, profile, lift, corners, flat, run,
+                            scratch, points);
+                    }
 
-                            int bolt = skin.TriangleCount;
-                            run.Clear();
-                            Bloom(run, new Vector2(x, top - w * 0.6f), w * 0.75f);
-                            Lay(skin, surface, plane, run, corners, flat, scratch, points, lift + 0.001f,
-                                PaletteSwatch.Rust);
-                            skin.Shade(skin.RangeFrom(bolt), dark, 1f);
-                        }
+                    float seam = grid.Cell(0, j)[2].y - RunTopGap;
+                    plan.Clear();
+                    RustRunPlan.Plan(plane.Min.x, plane.Max.x, seam, seam - plane.Min.y - RunTopGap,
+                        profile.RunsPerMetre, Hash(plane.Key, j, profile.Seed), plan);
+                    foreach (RustRunPlan.Run stain in plan)
+                    {
+                        Hang(skin, surface, plane, grid, stain, profile, lift, dark, corners, flat, run, scratch,
+                            points);
                     }
                 }
             }
@@ -283,6 +261,40 @@ namespace MoonProject.Art.Editor
 
                 skin.ShadeFacing(range, Vector3.up, SkyFacing, dust, profile.TopDust);
             }
+        }
+
+        /// <summary>
+        /// One run: a tapering stain from its cause down its length, faded into the paint of the panel at its foot,
+        /// and a dark bloom at the cause.
+        /// </summary>
+        private static void Hang(LowPolyMeshBuilder skin, LowPolyMeshBuilder surface, SkinPlane plane, PanelGrid grid,
+            RustRunPlan.Run stain, WeatherProfile profile, float lift, Color32 dark, Vector3[] corners,
+            List<Vector2> flat, List<Vector2> run, List<Vector2> scratch, List<Vector3> points)
+        {
+            float foot = stain.Top - stain.Length;
+            int row = grid.Row(foot);
+            grid.ColumnRange(row, stain.X, stain.X, out int column, out _);
+            Color32 fadeTo = ToneColour(plane.Swatch, Roll(plane.Key, column, row, 0, profile.Seed), profile);
+            float half = stain.Width * 0.5f;
+            int first = skin.TriangleCount;
+            run.Clear();
+            run.Add(new Vector2(stain.X - half, stain.Top));
+            run.Add(new Vector2(stain.X - half * RunTaper, foot));
+            run.Add(new Vector2(stain.X + half * RunTaper, foot));
+            run.Add(new Vector2(stain.X + half, stain.Top));
+            Lay(skin, surface, plane, run, corners, flat, scratch, points, lift, PaletteSwatch.Rust);
+            MeshRange streak = skin.RangeFrom(first);
+            if (streak.TriangleCount > 0)
+            {
+                Bounds reach = skin.GetBounds(streak);
+                skin.ShadeByHeight(streak, fadeTo, reach.min.y, reach.max.y, RunFade);
+            }
+
+            int bolt = skin.TriangleCount;
+            run.Clear();
+            Bloom(run, new Vector2(stain.X, stain.Top - stain.Width * 0.6f), stain.Width * 0.75f);
+            Lay(skin, surface, plane, run, corners, flat, scratch, points, lift + 0.001f, PaletteSwatch.Rust);
+            skin.Shade(skin.RangeFrom(bolt), dark, 1f);
         }
 
         /// <summary>
@@ -488,6 +500,12 @@ namespace MoonProject.Art.Editor
             }
         }
 
+        /// <summary>A repeatable seed from a plane, a row and a profile seed.</summary>
+        private static int Hash(int key, int row, int seed)
+        {
+            return (int)(Roll(key, row, 7, 0, seed) * int.MaxValue);
+        }
+
         /// <summary>A repeatable roll in [0, 1) from a few integers (a small integer hash).</summary>
         private static float Roll(int a, int b, int c, int d, int seed)
         {
@@ -507,48 +525,105 @@ namespace MoonProject.Art.Editor
             }
         }
 
-        /// <summary>The panels a plane's paint breaks into: a grid over it, cells close to the panel size.</summary>
+        /// <summary>
+        /// The panels a plane's paint breaks into: rows of uneven heights, each row cut into panels of its own uneven
+        /// widths (like bricks), so seams never line up into a grid and tones never alternate.
+        /// </summary>
         private sealed class PanelGrid
         {
-            private readonly Vector2 _min;
-            private readonly Vector2 _cell;
+            private readonly float[] _rows;
+            private readonly float[][] _columns;
 
             public PanelGrid(SkinPlane plane, WeatherProfile profile)
             {
-                Vector2 size = plane.Max - plane.Min;
-                Columns = Math.Max(1, Mathf.RoundToInt(size.x / profile.PanelWidth));
-                Rows = Math.Max(1, Mathf.RoundToInt(size.y / profile.PanelHeight));
-                _min = plane.Min;
-                _cell = new Vector2(size.x / Columns, size.y / Rows);
+                _rows = Edges(plane.Min.y, plane.Max.y, profile.PanelHeight, plane.Key, -1, profile.Seed);
+                _columns = new float[_rows.Length - 1][];
+                for (int j = 0; j < _columns.Length; j++)
+                {
+                    _columns[j] = Edges(plane.Min.x, plane.Max.x, profile.PanelWidth, plane.Key, j, profile.Seed);
+                }
             }
 
-            public int Columns { get; }
+            public int Rows => _rows.Length - 1;
 
-            public int Rows { get; }
+            public int Columns(int row)
+            {
+                return _columns[row].Length - 1;
+            }
 
             /// <summary>Cell (i, j) as a counter-clockwise rectangle.</summary>
             public Vector2[] Cell(int i, int j)
             {
-                var low = new Vector2(_min.x + i * _cell.x, _min.y + j * _cell.y);
-                Vector2 high = low + _cell;
+                float[] columns = _columns[j];
+                var low = new Vector2(columns[i], _rows[j]);
+                var high = new Vector2(columns[i + 1], _rows[j + 1]);
                 return new[] { low, new Vector2(high.x, low.y), high, new Vector2(low.x, high.y) };
             }
 
             /// <summary>The row holding height <paramref name="v"/> on the plane.</summary>
             public int Row(float v)
             {
-                return Mathf.Clamp(Mathf.FloorToInt((v - _min.y) / _cell.y), 0, Rows - 1);
+                return Find(_rows, v);
             }
 
-            /// <summary>The range of cells a flat triangle overlaps.</summary>
-            public void Cells(List<Vector2> flat, out int i0, out int i1, out int j0, out int j1)
+            /// <summary>The rows a span of heights overlaps.</summary>
+            public void RowRange(float low, float high, out int j0, out int j1)
             {
-                Vector2 low = Vector2.Min(flat[0], Vector2.Min(flat[1], flat[2]));
-                Vector2 high = Vector2.Max(flat[0], Vector2.Max(flat[1], flat[2]));
-                i0 = Mathf.Clamp(Mathf.FloorToInt((low.x - _min.x) / _cell.x), 0, Columns - 1);
-                i1 = Mathf.Clamp(Mathf.FloorToInt((high.x - _min.x) / _cell.x), 0, Columns - 1);
-                j0 = Mathf.Clamp(Mathf.FloorToInt((low.y - _min.y) / _cell.y), 0, Rows - 1);
-                j1 = Mathf.Clamp(Mathf.FloorToInt((high.y - _min.y) / _cell.y), 0, Rows - 1);
+                j0 = Find(_rows, low);
+                j1 = Find(_rows, high);
+            }
+
+            /// <summary>The panels of row <paramref name="row"/> a span across the plane overlaps.</summary>
+            public void ColumnRange(int row, float low, float high, out int i0, out int i1)
+            {
+                i0 = Find(_columns[row], low);
+                i1 = Find(_columns[row], high);
+            }
+
+            /// <summary>Edges from <paramref name="from"/> to <paramref name="to"/>, steps of uneven sizes.</summary>
+            private static float[] Edges(float from, float to, float size, int key, int row, int seed)
+            {
+                var steps = new List<float>();
+                float total = 0f;
+                float span = to - from;
+                while (total < span || steps.Count == 0)
+                {
+                    float step = size * Mathf.Lerp(MinPanelShare, MaxPanelShare,
+                        Roll(key, row, steps.Count, 9, seed));
+                    steps.Add(step);
+                    total += step;
+                }
+
+                if (steps.Count > 1 && total - span > steps[steps.Count - 1] * 0.5f)
+                {
+                    total -= steps[steps.Count - 1];
+                    steps.RemoveAt(steps.Count - 1);
+                }
+
+                var edges = new float[steps.Count + 1];
+                edges[0] = from;
+                float scale = span / total;
+                for (int k = 0; k < steps.Count; k++)
+                {
+                    edges[k + 1] = edges[k] + steps[k] * scale;
+                }
+
+                edges[steps.Count] = to;
+                return edges;
+            }
+
+            private static int Find(float[] edges, float v)
+            {
+                int last = edges.Length - 2;
+                for (int k = 0; k < last; k++)
+                {
+                    if (v < edges[k + 1])
+                    {
+                        return k;
+                    }
+                }
+
+                return last;
             }
         }
     }

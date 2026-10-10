@@ -40,6 +40,9 @@ namespace MoonProject.World
         [Tooltip("Earthlight, ambient and fog.")]
         [SerializeField] private AtmosphereSettings _atmosphere = new AtmosphereSettings();
 
+        [Tooltip("How home's warm points wake with the base's power stages (M3-16).")]
+        [SerializeField] private HomeLightingSettings _homeLighting = new HomeLightingSettings();
+
         [Tooltip("Camera look, written into the URP Volume profile by the World builder.")]
         [SerializeField] private PostProcessSettings _postProcessing = new PostProcessSettings();
 
@@ -62,6 +65,8 @@ namespace MoonProject.World
         public AtmosphereSettings Atmosphere => _atmosphere;
 
         public PostProcessSettings PostProcessing => _postProcessing;
+
+        public HomeLightingSettings HomeLighting => _homeLighting;
 
         /// <summary>Builds the analytic surface for these settings (throws on invalid settings).</summary>
         public MoonSurface CreateSurface()

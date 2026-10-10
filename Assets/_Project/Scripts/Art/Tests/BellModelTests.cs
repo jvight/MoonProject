@@ -191,7 +191,8 @@ namespace MoonProject.Art.Tests
                 }
                 else
                 {
-                    Assert.AreEqual(ModelMaterial.Palette, node.Material, node.Name);
+                    Assert.AreEqual(Weathered(node) ? ModelMaterial.PaletteWeather : ModelMaterial.Palette,
+                        node.Material, node.Name);
                 }
             }
         }
@@ -304,12 +305,18 @@ namespace MoonProject.Art.Tests
 
         private static void CollectParents(ModelNode node, Dictionary<string, string> parents)
         {
-            foreach (ModelNode child in node.Children)
+            foreach (ModelNode child in node.Children.Where(child => !Weathered(child)))
             {
                 Assert.IsFalse(parents.ContainsKey(child.Name), $"{child.Name} appears twice");
                 parents.Add(child.Name, node.Name);
                 CollectParents(child, parents);
             }
+        }
+
+        /// <summary>Bell's weather skins (on her body, as on everything left alone): outside her node contract.</summary>
+        private static bool Weathered(ModelNode node)
+        {
+            return node.Name.StartsWith("Weather_", System.StringComparison.Ordinal);
         }
 
         private static IEnumerable<ModelNode> Nodes(ModelNode node)

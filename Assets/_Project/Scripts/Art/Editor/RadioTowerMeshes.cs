@@ -137,7 +137,8 @@ namespace MoonProject.Art.Editor
             {
                 Vector3 normal = Rotation(new Vector3(0f, side * 90f, 0f)) * Vector3.forward;
                 Matrix4x4 plinth = SiteKit.Face(normal * (PlinthSize * 0.5f + Weathering.RustLift), normal, Vector3.up);
-                SiteKit.RustStreak(b, plinth, side % 2 == 0 ? 0.45f : -0.5f, PlinthHeight - 0.03f, 0.1f);
+                SiteKit.RustSeam(b, plinth, -PlinthSize * 0.45f, PlinthSize * 0.45f, PlinthHeight - 0.03f,
+                    PlinthHeight * 0.8f, 1.2f, 230 + side);
             }
 
             ServiceKit.HopperRust(b, PortHopperMouth, PortHopperFacing, PortHopperSize);

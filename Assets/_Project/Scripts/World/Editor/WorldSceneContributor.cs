@@ -10,7 +10,7 @@ namespace MoonProject.World.Editor
     /// <summary>
     /// The World's part of Main.unity: the earthlight and its fill, the post-processing volume, the skybox, fog and
     /// ambient (saved into the scene), The Peak's beacon, and the <see cref="WorldSystem"/> that generates the
-    /// terrain, the rocks and Earth at boot.
+    /// terrain, the rocks and Earth at boot, and the <see cref="HomeLightingSystem"/> that wakes home's warm points.
     /// Runs first (order 200) because rover, audio and gameplay read ITerrainQuery and IWorldLayout.
     /// </summary>
     public sealed class WorldSceneContributor : ISceneContributor
@@ -52,6 +52,12 @@ namespace MoonProject.World.Editor
             Assign(serialized, "_peakBeacon", beacon);
             serialized.ApplyModifiedPropertiesWithoutUndo();
             context.AddSystem(world);
+
+            var homeLighting = context.CreateChild("Home Lighting", root).AddComponent<HomeLightingSystem>();
+            var lighting = new SerializedObject(homeLighting);
+            Assign(lighting, "_settings", settings);
+            lighting.ApplyModifiedPropertiesWithoutUndo();
+            context.AddSystem(homeLighting);
         }
 
         /// <summary>
