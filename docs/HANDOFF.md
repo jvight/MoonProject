@@ -15,32 +15,27 @@ account) can continue without the old conversation.
     IHomeLights;
   - World's HomeLightingSystem (registers IHomeLights);
   - the design review (`docs/design/review-2026-10-10.md`) and the adopted amendments in M3-16.
-- **0.5 in flight on box branches (not merged).** Land gameplay + ui + audio + rover + art together, only after
-  gameplay's part F (the Playthrough follows steps 0–8) passes:
+- **0.5 FIRST BATCH LANDED on main** (2026-10-10 evening; merges up to 951d6db6, outputs 4d9d7646, BlueprintDelivered
+  09d8cc0e, 3 batch slots 3e3a1a63). NOT verified and NOT pushed: the Playthrough still needs gameplay's P9 run. It
+  contains:
+  - gameplay A–F, P4, P9/P10 groundwork;
+  - all M3-16 art: dormant base, lift states, pads, cables, plotter, P3, P9 sites, TubeSocket;
+  - ui guidance and place cards;
+  - audio wake and not-yet sounds;
+  - rover's two-beat wake;
+  - world's home lighting.
+  Tuning assets were re-serialised.
+- **Speed-mode assignments in flight** (each session merged main 09d8cc0e+ and works on its box branch):
 
-  | Box | State |
+  | Session | Queue |
   |---|---|
-  | gameplay | A–F done, tip 1b2ba6cd: power stages, dormancy, steps, places, blueprints (BlueprintFound), IHomeLights wired, P4. The Playthrough runs in step order but FAILS at step 7 (the relay is unaffordable). P9 (2× economy, a signature material per site, the path via depot, garage and Kestrel) + P10 (4 depot cuts) were in progress to fix it. Then P1, P2, P8. New ProgressionTuning asset; metas for Progression/*. |
-  | ui | Done, 583ec3cc: next line, Guidance toggle, place cards, HUD verbs, Look-up hint waits for cards. UiTuning `_guidance` needs a re-serialise after landing. |
-  | audio | Done, 93fd84f4: wake stingers per stage, the "not yet" tone. StationAudioTuning has 2 new fields. StationNotYet is also in box/gameplay with an identical diff. |
-  | rover | P5 two-beat wake done, tip c53e3681. Beat 1 is the lens looking up at the stars. Beat 2 is an over-the-shoulder shot with Earth in the upper third, then it eases to the chase. Approved. RoverCameraTuning has the `_wake*` fields; reset or re-serialise them after landing. Metas: WakeOpening.cs and its tests. |
-  | art | ALL M3-16 art done, tip c9c95b3:
-  - bay shutter, lander glows, HOME sign;
-  - lift jammed and restored states with the winch hopper;
-  - StationPad prefabs with pad lamps;
-  - PowerCable_Home/Bay/Lift glow segments;
-  - P3 (rear is not a face);
-  - P9 site yields (depot 5,2,2 in 4 cuts, garage 7,7,2, Kestrel 2,2,9, drill 7,7,2);
-  - P7: Plotter with PenCarriage, PenHead, PlotterSheet and PlotterLamp; Blueprint_<Ability> sheets on a cord;
-    TubeSocket on 07's lid.
-  Still to wire, by gameplay and rover:
-  - the plotter drawing a sheet when a tube arrives;
-  - the tube riding on 07's back;
-  - the lift station and ride;
-  - pads replacing the neon rings;
-  - cables lighting with BasePowerChanged.
-  New RoverModel node TubeSocket: check Rover's node lists when landing. |
-  | world | Its part is landed. |
+  | gameplay | Playthrough with the real sites (P9/P10) → P1 story parts per tower level → P2 the chasm before the bay → P7 logic (BlueprintDelivered drives the plotter; pin on delivery) → pads replace the neon rings → P6 the dock's evening (event for rover, audio and ui) |
+  | rover | FEATURE SLICE "the crew's lift", authorised in Gameplay/Lift/**: station restore, ride, lookout, ladder look, tube on 07's back |
+  | world | power cables light from the tower out; the tower pilot blink (P5); dark-start quality captures |
+  | ui | P8 (next line after ~120 s, never while stargazing or waking); blueprint found and delivered lines; first-10-min one-voice QA |
+  | audio | lift creak, ratchet, hum and clunk; plotter scratch; tube chime; dock-evening swell |
+  | art | quality pass in the real Main scene (dark start, wakes, the owner's angle), jammed lift readable |
+  | game design | idle; ask it to review the merged 0.5 once it plays end to end |
 
 - **After landing 0.5's first batch:**
   - Run `^(Art|Rover|Gameplay|UI|Audio)/` builders and the scene.
@@ -110,7 +105,7 @@ account) can continue without the old conversation.
   - Keep the Profiler's Record off in the main editor.
 - **`python tools/director.py status`:** every box against main, unpushed commits, batch slots, editor idle or busy.
 - **`python tools/compile_check.py`:** must print `RESULT: PASS` before every commit.
-- **`python tools/unity_batch.py tests|exec|status`:** headless Unity on a worktree. At most two run machine-wide
+- **`python tools/unity_batch.py tests|exec|status`:** headless Unity on a worktree. At most three run machine-wide
   (`MOON_BATCH_SLOTS`, default 3 since 2026-10-10; drop to 2 if RAM runs short); PlayMode defaults to a 2400 s timeout.
   - Playthrough: `--category Playthrough --timeout 2700`.
   - Builders on a worktree: `exec --method MoonProject.Editor.Automation.BuildAutomation.RunBuilders --arg filter=^Art/`.
