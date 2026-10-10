@@ -133,3 +133,15 @@ Director to accept or refuse, one by one.
    `LanderMeshes`). Once it swings open, the doorway should frame the light table, not the porthole. Rover confirms
    07's lens height on the deck, and art sets the table to it.
 10. **Text.** The story & flow session can draft Ines's `map.*` names and notes (EN, then VI) in STORY's voice.
+
+## Director decisions on the amendments (2026-10-11)
+- **Adopted:**
+  - the trimmed beyond-the-rim notes;
+  - the end hook on the last basin mast's dock evening;
+  - letting the lookout breathe before the map;
+  - a tally with no total;
+  - the light table as a home light;
+  - checking the 0.8 x 1.85 m doorway framing.
+- **The "mark the next light" option for P6 waits** until P6 is landed and played.
+- **Kestrel's dark hollow is 0.6** (ROADMAP backlog), so the map has no hollow note in 0.5. Only the Peak and the
+  terraces get pencil notes beyond reach.
