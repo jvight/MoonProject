@@ -31,9 +31,9 @@ namespace MoonProject.World
         [SerializeField] private Color _bloomTint = new Color(1f, 0.93f, 0.86f);
 
         [Header("Colour")]
-        [Tooltip("Exposure offset in EV.")]
+        [Tooltip("Exposure offset in EV. Lifts the lit faces and the warm lights while the shadows keep their black.")]
         [Range(-3f, 3f)]
-        [SerializeField] private float _postExposure = 0.12f;
+        [SerializeField] private float _postExposure = 0.5f;
 
         [Tooltip("Grade in HDR, before tonemapping (the PC pipeline asset's grading mode), so the warm windows grade " +
             "with their full range and the shadows keep a real black.")]
