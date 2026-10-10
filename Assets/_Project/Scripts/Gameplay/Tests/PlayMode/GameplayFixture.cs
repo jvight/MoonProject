@@ -298,6 +298,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 GlowMaterial(shader, GlowRole.FriendPillar), GlowMaterial(shader, GlowRole.Spark),
                 GlowMaterial(shader, GlowRole.HomeHalo), GlowMaterial(shader, GlowRole.LinkPulse));
 
+            visuals.PopulatePads(new[] { Pad(1.6f), Pad(2.4f), Pad(3f) }, new[] { 1.6f, 2.4f, 3f });
             var root = new GameObject("[Gameplay]");
             root.SetActive(false);
             Gameplay = root.AddComponent<GameplaySystem>();
@@ -338,6 +339,21 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             Bootstrap = BootstrapHarness.Create(_controls, SaveSlot, World, Rover, Gameplay);
             Events = new EventRecorder(Bootstrap.Context.Events);
+        }
+
+        /// <summary>A stand-in for Art's StationPad_&lt;cm&gt;: a flat disc and its six PadLamp_n glow lamps.</summary>
+        private GameObject Pad(float radius)
+        {
+            GameObject pad = Template("StationPad_" + Mathf.RoundToInt(radius * 100f),
+                new Vector3(radius * 2f, 0.01f, radius * 2f));
+            for (int i = 0; i < StationPad.LampCount; i++)
+            {
+                float angle = i * Mathf.PI * 2f / StationPad.LampCount;
+                Block(pad.transform, new Vector3(Mathf.Cos(angle), 0.02f, Mathf.Sin(angle)) * (radius - 0.2f),
+                    Vector3.one * 0.08f).name = StationPad.LampPrefix + i;
+            }
+
+            return pad;
         }
 
         /// <summary>

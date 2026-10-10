@@ -145,13 +145,15 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.Less(tower.HatchOpenAngle, 0.5f, "its service hatch is shut");
             Vector3 port = tower.HopperMouth;
             float clear = SurfaceRules.HorizontalDistance(tower.PadCentre, port) - tuning.PadRadius;
-            Assert.Greater(clear, 0.2f, "the pad's ring stays clear of the service port");
+            Assert.Greater(clear, 0.2f, "the pad stays clear of the service port");
+            Assert.IsFalse(tower.PadShown, "nothing to feed it yet: the pilot blink is the tower's only light");
 
             _fixture.GiveMaterials(1, 3, 1);
             Assert.AreEqual(PurchaseResult.NotAtStation, shop.Purchase(Tower), "bought on the pad, not anywhere");
             _fixture.Rover.Place(tower.PadCentre, Yaw(Flat(port) - Flat(tower.PadCentre)));
             yield return null;
             yield return null;
+            Assert.IsTrue(tower.PadShown, "with materials in hand the tower's pad shows");
             Assert.IsTrue(shop.IsAtStation);
             Assert.AreSame(_fixture.RadioTowerUpgrade, shop.StationUpgrade);
             Assert.IsTrue(_fixture.Gameplay.Hints.TryGet(InteractionKind.Upgrade, out InteractionHint hint));
@@ -250,6 +252,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return null;
             yield return null;
             Assert.IsFalse(bay.Occupied, "a sleeping bay has no pad");
+            Assert.IsFalse(bay.PadShown, "not even painted lamps");
             Assert.AreEqual(0f, bay.PadLevel, 1e-3f);
             Assert.IsFalse(shop.IsAtStation, "no panel");
             Assert.IsFalse(_fixture.Gameplay.Hints.TryGet(InteractionKind.Upgrade, out _), "no prompt");
@@ -260,6 +263,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return new WaitForSeconds(tuning.LightEase * 5f);
             Assert.IsTrue(bay.Awake);
             Assert.IsTrue(bay.Powered);
+            Assert.IsTrue(bay.PadShown, "awake with a kit to fit, its pad shows");
             Assert.AreEqual(tuning.SignGlow, bay.SignLevel, 1e-3f, "woken by a loaded tower, its sign is simply lit");
             Assert.AreEqual(tuning.LampIdle, bay.LampLevel, 0.05f, "Kenji's work lamps come on");
             Assert.AreEqual(tuning.LightIdle, bay.LightLevel, 0.05f, "a low warm glow lights the bay inside");
@@ -421,11 +425,12 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             yield return new WaitForSeconds(tuning.SparkInterval * tuning.SparkBursts + tuning.SparkLifetime.y + 0.5f);
             Assert.AreEqual(0, bay.SparkCount, "the sparks die out (an idle bay costs nothing)");
-            Assert.Less(bay.PadLevel, look.Occupied * 0.5f, "an empty bay's pad rests dim");
+            Assert.Less(bay.PadLevel, look.Occupied * 0.5f, "a finished bay's pad lamps ease out");
             Assert.AreEqual(tuning.LampOccupied, bay.LampLevel, 0.05f, "the lamps settle back");
             Assert.AreEqual(0, _fixture.Rover.HoldStillCount);
             yield return new WaitForSeconds(tuning.WorkLinger + tuning.LightEase * 5f);
             Assert.IsFalse(bay.Working, "every piece is on");
+            Assert.IsFalse(bay.PadShown, "a finished bay shows no pad");
 
             _fixture.Dispose(true);
             yield return null;

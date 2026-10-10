@@ -8,9 +8,10 @@ using Object = UnityEngine.Object;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// The base's radio tower and its upgrade station. A ring of warm light on the ground in front of its service port
-    /// is the shop (<see cref="StationPad"/>): it breathes softly, glows inviting when the next level is affordable and
-    /// brightly while 07 is parked on it.
+    /// The base's radio tower and its upgrade station. Art's pad on the ground in front of its service port is the shop
+    /// (<see cref="StationPad"/>). It stays put away until 07 first holds materials to feed (before that the stub's
+    /// pilot blink is the tower's only light, M3-16 P5); then its lamps breathe softly, glow inviting when the next
+    /// level is affordable and brightly while 07 is parked on it, and it goes away once the tower is whole.
     /// Before the first purchase the old mast stands dark; each level lights the beacon brighter. Buying one plays the
     /// port's moment (docs/features/M3-14, VISION ruling 14: 07 has no hands): 07, held still, feeds the port's hopper
     /// the recipe along its beam (<see cref="HopperFeed"/>), the service hatch swings open, and 07's beam stitches up
@@ -21,6 +22,9 @@ namespace MoonProject.Gameplay
     [DisallowMultipleComponent]
     public sealed class RadioTower : MonoBehaviour, IUpgradeStation
     {
+        /// <summary>Metres the signal bloom's ring floats above the dust.</summary>
+        private const float BloomLift = 0.06f;
+
         [Tooltip("Tower tuning (Assets/_Project/Data/Tuning/Gameplay/RadioTowerTuning.asset).")]
         [SerializeField] private RadioTowerTuning _tuning;
 
@@ -50,6 +54,7 @@ namespace MoonProject.Gameplay
         private IRoverRig _rig;
         private ITerrainQuery _terrain;
         private UpgradeService _upgrades;
+        private MaterialStock _materials;
         private IDisposable _purchases;
         private EmissionGlow[] _lights = Array.Empty<EmissionGlow>();
         private Quaternion[] _hatchRest = Array.Empty<Quaternion>();
@@ -90,6 +95,9 @@ namespace MoonProject.Gameplay
         public float BeaconLevel => _beaconGlow != null ? _beaconGlow.Intensity : 0f;
 
         public float PadLevel => _pad != null ? _pad.Level : 0f;
+
+        /// <summary>True while Art's pad shows in front of the port (07 has had something to feed it).</summary>
+        public bool PadShown => _pad != null && _pad.Shown;
 
         /// <summary>Where the beacon glows: the BeaconSocket of the stage currently standing.</summary>
         public Vector3 BeaconPosition => _beaconSockets[ActiveStage].position;
@@ -189,6 +197,7 @@ namespace MoonProject.Gameplay
             _rig = services.Rig;
             _terrain = services.Terrain;
             _upgrades = upgrades;
+            _materials = services.Materials;
             _lights = new EmissionGlow[_stageLights.Length];
             _hatchRest = new Quaternion[_hatches.Length];
             for (int i = 0; i < _lights.Length; i++)
@@ -199,7 +208,7 @@ namespace MoonProject.Gameplay
 
             BuildBeacon(services);
             _pad = new StationPad("TowerPad", transform, _terrain, _anchor.TransformPoint(_tuning.PadOffset),
-                _tuning.PadLook, services.Visuals.WarmRing);
+                _tuning.PadLook, services.Visuals);
             _feed = new HopperFeed("PortFeed", transform, services.Visuals.TetherBeam, bundles, _tuning.FeedLook,
                 services.Events);
             _stitch = new RepairBeam("TowerStitch", transform, services.Visuals.TetherBeam, _tuning.StitchRate,
@@ -320,8 +329,16 @@ namespace MoonProject.Gameplay
             StepMoment(now, deltaTime);
             float flare = StepSwap(now - _swapStart);
             UpdateBeacon(now, flare);
-            bool affordable = _upgrades.TryGetOffer(_definition.Id, out UpgradeOffer offer) && offer.CanAfford;
-            _pad.Tick(_rover.Position, ShownLevel >= _definition.MaxLevel, affordable, now, deltaTime);
+            if (_upgrades.LevelOf(_definition.Id) > 0 || _materials.Total > 0)
+            {
+                bool affordable = _upgrades.TryGetOffer(_definition.Id, out UpgradeOffer offer) && offer.CanAfford;
+                _pad.Tick(_rover.Position, ShownLevel >= _definition.MaxLevel, affordable, now, deltaTime);
+            }
+            else
+            {
+                _pad.Rest(deltaTime);
+            }
+
             UpdateBloom(now);
         }
 
@@ -472,7 +489,7 @@ namespace MoonProject.Gameplay
             float progress = t / _tuning.BloomDuration;
             float radius = _bloomRadius * Ease.OutQuad(progress);
             float half = _tuning.BloomWidth * 0.5f;
-            _bloomRing.Rebuild(_terrain, _bloomCentre, radius - half, radius + half, StationPad.RingLift);
+            _bloomRing.Rebuild(_terrain, _bloomCentre, radius - half, radius + half, BloomLift);
             _bloomGlow.Apply(_tuning.BloomGlow * Mathf.Pow(1f - progress, _tuning.BloomFadeCurve));
         }
 

@@ -1,6 +1,7 @@
 using System;
 using UnityEditor;
 using UnityEngine;
+using MoonProject.Art.Editor;
 using MoonProject.Editor.Builders;
 
 namespace MoonProject.Gameplay.Editor
@@ -14,6 +15,35 @@ namespace MoonProject.Gameplay.Editor
     {
         public const string BuilderPath = "Gameplay/Materials";
         public const int BuilderOrder = 505;
+
+        /// <summary>
+        /// Art's station pads, one per <see cref="BaseModelBuilder.PadRadii"/> size, each checked for the lamps
+        /// <see cref="StationPad"/> lights.
+        /// </summary>
+        private static GameObject[] Pads()
+        {
+            var pads = new GameObject[BaseModelBuilder.PadRadii.Length];
+            for (int i = 0; i < pads.Length; i++)
+            {
+                string path = ArtPaths.BaseFolder + "/" + BaseModelBuilder.PadName(i) + ".prefab";
+                pads[i] = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                if (pads[i] == null)
+                {
+                    throw new InvalidOperationException($"{BuilderPath}: Art's pad {path} is missing (run Art/Base).");
+                }
+
+                for (int lamp = 0; lamp < StationPad.LampCount; lamp++)
+                {
+                    if (pads[i].transform.Find(StationPad.LampPrefix + lamp) == null)
+                    {
+                        throw new InvalidOperationException(
+                            $"{BuilderPath}: Art's pad {path} has no {StationPad.LampPrefix}{lamp}.");
+                    }
+                }
+            }
+
+            return pads;
+        }
 
         [MoonBuilder(BuilderPath, BuilderOrder)]
         private static void Build()
@@ -32,6 +62,7 @@ namespace MoonProject.Gameplay.Editor
                     GameplayAssetPaths.PartGlintMaterial), Write(shader, GlowRole.FriendPillar),
                 Write(shader, GlowRole.Spark), Write(shader, GlowRole.HomeHalo),
                 Write(shader, GlowRole.LinkPulse));
+            visuals.PopulatePads(Pads(), BaseModelBuilder.PadRadii);
             GeneratedAssets.CreateOrReplace(visuals, GameplayAssetPaths.Visuals);
             AssetDatabase.SaveAssets();
             Debug.Log($"{BuilderPath}: wrote {Enum.GetValues(typeof(GlowRole)).Length + 2} materials and " +
