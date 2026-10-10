@@ -58,11 +58,13 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         private static readonly string[] FarPoses = { "base_from_150m", "base_from_300m" };
 
-        // Bell (FriendState.Awake = 3, every part and item held) home at her corner, welcomed: the same save the
-        // world's atmosphere session seeds, in Core's envelope and Gameplay's friends section format (version 2).
+        // Bell (FriendState.Awake = 3, every part and item held) home at her corner, welcomed, and the tower at its
+        // first level so home is powered and lit (M3-16: a fresh base is dark, its halo too), in Core's envelope and
+        // Gameplay's upgrades (version 1) and friends (version 2) section formats.
         private const string BellHomeSave =
-            "{\"formatVersion\":1,\"contentVersion\":\"0.4.1\",\"savedAtUtc\":\"2026-10-08T00:00:00Z\"," +
-            "\"sections\":[{\"key\":\"gameplay.friends\"," +
+            "{\"formatVersion\":1,\"contentVersion\":\"0.5.0\",\"savedAtUtc\":\"2026-10-08T00:00:00Z\"," +
+            "\"sections\":[{\"key\":\"gameplay.upgrades\",\"version\":1,\"json\":\"{\\\"upgrades\\\":[" +
+            "{\\\"id\\\":\\\"radio_tower\\\",\\\"level\\\":1}]}\"},{\"key\":\"gameplay.friends\"," +
             "\"version\":2,\"json\":\"{\\\"friends\\\":[{\\\"id\\\":\\\"bell\\\",\\\"state\\\":3," +
             "\\\"parts\\\":15,\\\"items\\\":15,\\\"discovered\\\":true,\\\"welcomed\\\":true}]}\"}]}";
 

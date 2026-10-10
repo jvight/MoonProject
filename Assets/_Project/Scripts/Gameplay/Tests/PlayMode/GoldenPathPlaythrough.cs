@@ -12,6 +12,7 @@ using UnityEngine.TestTools;
 using MoonProject.App;
 using MoonProject.Core;
 using MoonProject.Core.Events;
+using MoonProject.Gameplay.Lift;
 using MoonProject.Rover;
 using MoonProject.Testing;
 using Object = UnityEngine.Object;
@@ -45,8 +46,9 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// evening opens and the tower's sweep raises the next pillar (P6). Inside the canyon 07 drives a line found over
     /// drivable ground (the same planner Bell walks by). The base wakes step by step (M3-16): it opens fully dark,
     /// power comes back with each tower level, no station is usable before its step, and the soft "next" line follows
-    /// steps 0-7, ending on the lift, which stays jammed: step 8 is the rover session's lift slice, and the run ends
-    /// where it begins (<see cref="AssertReadyForTheLift"/>). Every step is timed
+    /// steps 0-8. Step 8: with the rest of the basin's salvage stood in (<see cref="WinchAllowance"/>), hand the relay
+    /// spare to the tower and craft level 3, rest on the lift's feed pad while 07 restores the winch, ride the
+    /// platform up to the deck lookout and come down with a drive key: 0.5's wake-up, end to end. Every step is timed
     /// (Logs/gameplay-captures/playthrough.md) and captured, with review frames of every M3-05 placement; any error
     /// or exception in the log fails it. Slow: run on demand with --category Playthrough.
     /// </summary>
@@ -207,12 +209,11 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float PadArrival = 5f;
 
         /// <summary>
-        /// Seconds the golden path may take. The last measured run took 1021 s against 1100. P1 and P2 replace the
-        /// depot walkman's dig and tow (~70 s) with the coil's pick-up, the duck's tow home from the garage (~100 s),
-        /// a drive to the chasm's lip and back to the garage for the transformer (~95 s) and the parts handed to the
-        /// tower; the dock's evening waits for its sweep. About 1175 s, with the same ~8% margin as before.
+        /// Seconds the golden path may take: steps 0-8 end to end measured 1241 s on 2026-10-11 (P1's parts, P2's
+        /// chasm and garage return, P6's evening, and step 8's level 3, lift restore and ride, ~56 s), with the same
+        /// ~8% margin the path has always had.
         /// </summary>
-        private const float TotalBudget = 1270f;
+        private const float TotalBudget = 1340f;
 
         /// <summary>Close enough (m) to a part resting on a mast's pad to draw it in.</summary>
         private const float PartArrive = 1.5f;
@@ -224,6 +225,25 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const int TransformerPart = 1;
         private const int SparePart = 2;
         private const string Duck = "rubber_duck";
+
+        /// <summary>
+        /// What the rest of the basin (the Kestrel, the drill, the trail; the golden path does not drive there) has
+        /// given by step 8, on top of the tower's third level: enough for the lift's winch. The economy test holds
+        /// the moon's real yield at about twice what steps 0-8 take.
+        /// </summary>
+        private static readonly Recipe WinchAllowance = new Recipe(6, 6, 0);
+
+        /// <summary>07 lines up this far (m) behind the lift platform, then drives up its ramp onto it.</summary>
+        private const float LiftLineUp = 5f;
+
+        /// <summary>Close enough (m) to the platform's ride spot to stop on it.</summary>
+        private const float BoardRadius = 0.5f;
+
+        /// <summary>Seconds the lift may take between two of its phases.</summary>
+        private const float LiftPhaseTimeout = 40f;
+
+        /// <summary>Seconds 07 looks out from the deck before coming down.</summary>
+        private const float LookoutSeconds = 4f;
         private const string Walkman = "cassette_player";
 
         private static readonly string ReportPath = Path.Combine(GameplayFixture.CaptureFolder, "playthrough.md");
@@ -314,6 +334,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Relic walkman = RelicIn(garage, Walkman);
             yield return SalvageTheGarage(garage);
             yield return Excavate(garage, duck);
+            Assert.IsTrue(LogFound("kenji_1"), "Kenji's log tin by his bench opens while 07 digs");
             Assert.IsTrue(_gameplay.Blueprints.IsCarrying, "the garage's heart held the Cradle's blueprint tube");
             Assert.IsFalse(_gameplay.Blueprints.IsPinned(CargoCradle), "it rides home to Kenji's plotter first");
             Assert.IsFalse(_gameplay.TowerPartField.IsResting(TransformerPart), "the transformer waits for the chasm");
@@ -353,6 +374,11 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return HopHomeAndBack();
             yield return RestOnTheDock();
             AssertReadyForTheLift();
+            yield return StockUpForTheLift();
+            yield return BuyTowerLevel(3);
+            yield return RestoreTheLift();
+            yield return RideTheLiftUpAndDown();
+            yield return ExpectStep(string.Empty, "the lift is ridden: every step of the wake-up is done");
 
             float total = Time.time - started;
             WriteReport(total);
@@ -718,6 +744,80 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(BasePowerStage.Bay, _gameplay.Power.Stage);
             Assert.AreEqual(TowerPartState.Carried, _gameplay.TowerParts.StateOf(SparePart));
             Assert.AreEqual(ProgressionKeys.NextLift, _gameplay.Progression.NextStep);
+        }
+
+        private bool LogFound(string logId)
+        {
+            foreach (EventRecorder.Timed<CrewLogFound> found in _events.CrewLogFound)
+            {
+                if (found.Value.LogId == logId)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// The salvage of the rest of the basin, which the golden path skips: the stock is topped up to the tower's
+        /// third level and the winch's allowance (<see cref="WinchAllowance"/>).
+        /// </summary>
+        private IEnumerator StockUpForTheLift()
+        {
+            Begin();
+            Recipe need = _gameplay.Upgrades.Find(Tower).Levels[2].Recipe.Plus(WinchAllowance);
+            IMaterialStock stock = _gameplay.Materials;
+            var topUp = new Recipe(Mathf.Max(0, need.Metal - stock.Metal), Mathf.Max(0, need.Wiring - stock.Wiring),
+                Mathf.Max(0, need.Optics - stock.Optics));
+            _gameplay.Materials.Add(SalvageMaterial.Metal, topUp.Metal);
+            _gameplay.Materials.Add(SalvageMaterial.Wiring, topUp.Wiring);
+            _gameplay.Materials.Add(SalvageMaterial.Optics, topUp.Optics);
+            yield return null;
+            End("The rest of the basin's salvage (not driven)", $"topped up by {topUp} to {need}");
+        }
+
+        /// <summary>Power reaches the jammed lift: rest on its feed pad while 07 feeds and stitches the winch.</summary>
+        private IEnumerator RestoreTheLift()
+        {
+            Begin();
+            LiftStation lift = _gameplay.Lift;
+            Assert.IsTrue(_gameplay.Power.HasReached(BasePowerStage.Lift), "the tower's third level powers the lift");
+            yield return Until(() => lift.Phase == LiftPhase.Jammed, LiftPhaseTimeout, "the jammed lift wakes");
+            yield return DriveTo(_context.Get<IWorldLayout>().BasePosition, PadArrival, 0.6f, 60f,
+                "the base pad, clear of the lander");
+            yield return DriveTo(Flat(lift.FeedPadCentre), 1f, 0.5f, 60f, "the lift's feed pad");
+            yield return Until(() => lift.Phase == LiftPhase.Ready, LiftPhaseTimeout,
+                "resting on the feed pad, 07 feeds and stitches the winch");
+            Capture("38-lift-restored");
+            End("Restore the crew's lift", "fed and stitched from the feed pad");
+        }
+
+        /// <summary>
+        /// Up the platform's ramp and stop on it: the lift carries 07 up to the deck lookout; a drive key brings it
+        /// back down. The autopilot drives 07 without the input reader, so the key goes through the real keyboard.
+        /// </summary>
+        private IEnumerator RideTheLiftUpAndDown()
+        {
+            Begin();
+            LiftStation lift = _gameplay.Lift;
+            Vector3 heading = Flat(lift.RideHeading).normalized;
+            yield return DriveTo(Flat(lift.RideSpot - heading * LiftLineUp), 1f, 0.5f, 60f, "the foot of the ramp");
+            yield return DriveTo(Flat(lift.RideSpot), BoardRadius, 0.35f, 30f, "the lift platform");
+            float started = Time.time;
+            yield return Until(() => lift.Phase == LiftPhase.Top, LiftPhaseTimeout,
+                "resting on the platform carries 07 up to the deck");
+            float up = Time.time - started;
+            Assert.Greater(_rover.Position.y, lift.RideSpot.y + 1f, "07 is up on the deck");
+            yield return new WaitForSeconds(LookoutSeconds);
+            Capture("39-deck-lookout");
+            Press(_keyboard.wKey);
+            yield return Until(() => lift.Phase == LiftPhase.Lowering, LiftPhaseTimeout,
+                "a drive key at the deck brings the lift down");
+            Release(_keyboard.wKey);
+            yield return Until(() => lift.Phase == LiftPhase.Ready, LiftPhaseTimeout,
+                "the platform settles at the bottom stop");
+            End("Ride the lift up to the deck and back", $"up in {up:F1} s, a look out over the basin, down again");
         }
 
         private static Relic RelicIn(SalvageSite site, string id)
@@ -1450,8 +1550,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 "19c-bell-against-the-wall");
             float travelled = 0f;
             yield return DriveAlong(terminus.Position, "the terminus", value => travelled = value);
-            yield return Until(() => _events.CrewLogFound.Count > 0, 3f, "Ro's log cache opens beside her");
-            Assert.AreEqual("ro_1", _events.CrewLogFound[0].Value.LogId);
+            yield return Until(() => LogFound("ro_1"), 3f, "Ro's log cache opens beside her");
             yield return Until(() => Collected(AfterDark), 6f, "Lumen After Dark, Vol. 1 drifts into 07");
             yield return Until(() => bell.Progress.ItemsCollected == 1, 1f,
                 "her tape lights her fourth lamp: it is the fourth thing she needs");

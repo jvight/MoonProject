@@ -17,4 +17,4 @@ MonoBehaviour:
   _prefab: {fileID: 5725939882801279510, guid: 3b2b56b08a265fa46ae671be2e1445c8, type: 3}
   _answerNote: 3
   _siteId: site.garage
-  _heartOffset: {x: -1.2, y: 0}
+  _heartOffset: {x: 0, y: -1.3}
