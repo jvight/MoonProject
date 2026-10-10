@@ -88,6 +88,10 @@ namespace MoonProject.World
         private readonly float _gullyHalfWidth;
         private readonly float _gullyAngularScale;
         private readonly float _invGullyRadial;
+        private readonly float _strataSpacing;
+        private readonly float _invStrataSpacing;
+        private readonly float _strataStrength;
+        private readonly float _strataRiser;
         private readonly float _peakX;
         private readonly float _peakZ;
         private readonly float _peakHeight;
@@ -187,6 +191,10 @@ namespace MoonProject.World
             _gullyHalfWidth = (_crestRadius - gullyStart) * 0.5f;
             _gullyAngularScale = settings.WallGullyCount / TwoPi;
             _invGullyRadial = settings.WallGullyCount / (TwoPi * _crestRadius * GullyRadialDrift);
+            _strataSpacing = settings.StrataSpacing;
+            _invStrataSpacing = 1f / settings.StrataSpacing;
+            _strataStrength = settings.StrataStrength;
+            _strataRiser = settings.StrataRiser;
 
             Vector2 peakDirection = BearingToDirection(settings.PeakBearing);
             _peakX = peakDirection.x * settings.PeakDistance;
@@ -405,6 +413,7 @@ namespace MoonProject.World
                 height += RimProfile(rw);
                 height += Mountains(x, z, rw);
                 height += WallGullies(x, z, r, rw);
+                height = Strata(height, rw);
             }
 
             if (r > _farRangeStart)
@@ -494,6 +503,25 @@ namespace MoonProject.World
             float ridges = _gullyNoise.Ridged(x * inverse * _gullyAngularScale + rw * _invGullyRadial,
                 z * inverse * _gullyAngularScale, 2, 2f, 0.5f, _ridgeSoftness);
             return _gullyHeight * mask * (2f * ridges - 1f);
+        }
+
+        /// <summary>
+        /// Horizontal strata on the inner wall: the height is pulled toward a flat bench every strata spacing, with a
+        /// short steep riser between benches, strongest mid-wall and gone at the floor and the crest, so the wall reads
+        /// as stacked layers of rock under a natural crest.
+        /// </summary>
+        private float Strata(float height, float rw)
+        {
+            float mask = SmoothMath.Bump((rw - _gullyCenter) / _gullyHalfWidth);
+            if (mask <= 0f)
+            {
+                return height;
+            }
+
+            float layers = height * _invStrataSpacing;
+            float bench = (float)Math.Floor(layers);
+            float stepped = (bench + SmoothMath.Smootherstep(1f - _strataRiser, 1f, layers - bench)) * _strataSpacing;
+            return height + (stepped - height) * _strataStrength * mask;
         }
 
         private float CraterHeights(float x, float z, ref float calm, ref float bowl, ref float rim)

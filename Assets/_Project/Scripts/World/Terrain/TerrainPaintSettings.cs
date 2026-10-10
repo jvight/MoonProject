@@ -136,11 +136,17 @@ namespace MoonProject.World
         [Range(0f, 1f)]
         [SerializeField] private float _scorchMottle = 0.25f;
 
-        [Header("Rim value")]
-        [Tooltip("How much darker the rim's rock face is than its own swatch (0..1): the rim steps back behind the " +
-            "near ground instead of standing as the brightest wall in frame.")]
+        [Header("Dust value")]
+        [Tooltip("How far every dust tone leans toward the shadow dust (0..1): ~0.2 makes the lit dust about a tenth " +
+            "darker, so it reads as grey regolith, not snow.")]
         [Range(0f, 1f)]
-        [SerializeField] private float _rimFaceShade = 0.25f;
+        [SerializeField] private float _dustDarken = 0.2f;
+
+        [Header("Rim value")]
+        [Tooltip("How far the rim's rock face leans from its swatch toward charcoal (0..1): ~0.45 is about a quarter " +
+            "darker, so the rim steps back behind the near ground instead of standing as the brightest wall in frame.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _rimFaceShade = 0.45f;
 
         [Tooltip("Rim zone (0 = floor, 1 = crest) where the crest's lit edge begins: rock above it keeps its full " +
             "value.")]
@@ -180,6 +186,7 @@ namespace MoonProject.World
         public float ScorchShade => _scorchShade;
         public float ScorchCharcoal => _scorchCharcoal;
         public float ScorchMottle => _scorchMottle;
+        public float DustDarken => _dustDarken;
         public float RimFaceShade => _rimFaceShade;
         public float CrestZone => _crestZone;
         public float CrestBlend => _crestBlend;

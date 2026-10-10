@@ -92,11 +92,24 @@ namespace MoonProject.World
 
         [Tooltip("Depth of the gullies and buttresses ribbing the inner rim wall, metres.")]
         [Range(0f, 30f)]
-        [SerializeField] private float _wallGullyHeight = 9f;
+        [SerializeField] private float _wallGullyHeight = 4f;
 
         [Tooltip("Approximate number of gullies around the whole rim.")]
         [Range(8f, 200f)]
         [SerializeField] private float _wallGullyCount = 70f;
+
+        [Tooltip("Height of one rock layer on the inner rim wall, metres: the wall steps in flat benches and short " +
+            "risers, so it reads as horizontal strata.")]
+        [Range(2f, 30f)]
+        [SerializeField] private float _strataSpacing = 9f;
+
+        [Tooltip("How far the wall is pulled onto its strata (0 = smooth wall, 1 = hard terraces).")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _strataStrength = 0.5f;
+
+        [Tooltip("Share of each layer's height that is the steep riser (the rest is the bench).")]
+        [Range(0.05f, 1f)]
+        [SerializeField] private float _strataRiser = 0.4f;
 
         [Header("The Peak")]
         [Tooltip("Bearing of The Peak from the base, degrees clockwise from +Z. The rover starts facing +Z.")]
@@ -270,6 +283,9 @@ namespace MoonProject.World
         public float SaddleDepth => _saddleDepth;
         public float SaddleWavelength => _saddleWavelength;
         public float WallGullyHeight => _wallGullyHeight;
+        public float StrataSpacing => _strataSpacing;
+        public float StrataStrength => _strataStrength;
+        public float StrataRiser => _strataRiser;
         public float WallGullyCount => _wallGullyCount;
         public float PeakBearing => _peakBearing;
         public float PeakDistance => _peakDistance;

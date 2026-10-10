@@ -92,12 +92,10 @@ namespace MoonProject.World
                 + (center.y - _settings.RockLightHeight) / _settings.RockHeightBlend
                 + Patch(center) * _settings.RockMottle + faceFacing * _settings.RockFacing
                 + Hashing.ToSigned(hash) * _settings.RockDither;
-            Color tone = rock > 0f ? _rockLight : _rockDark;
             float face = SmoothMath.Smootherstep(0f, _settings.RimZoneStart, region.RimZone)
                 * (1f - SmoothMath.Smootherstep(_settings.CrestZone - _settings.CrestBlend,
                     _settings.CrestZone + _settings.CrestBlend, region.RimZone));
-            float value = 1f - _settings.RimFaceShade * face;
-            return new Color(tone.r * value, tone.g * value, tone.b * value, tone.a);
+            return Color.Lerp(rock > 0f ? _rockLight : _rockDark, _charcoal, _settings.RimFaceShade * face);
         }
 
         /// <summary>The dust colour at a vertex.</summary>
@@ -135,7 +133,7 @@ namespace MoonProject.World
             Color canyon = Color.Lerp(_shadowDust, _midDust, canyonTone);
             dust = Color.Lerp(dust, canyon, region.CanyonFloor);
             dust = Color.Lerp(dust, _charcoal, SmoothMath.Smootherstep(0f, _settings.ChasmDark, region.Chasm));
-            return dust;
+            return Color.Lerp(dust, _shadowDust, _settings.DustDarken);
         }
 
         private float Patch(Vector3 position)
