@@ -1,116 +1,120 @@
-# M3-09 (draft): the title screen, and the collections kept at home
+# M3-09: Title screen and collections at the base (draft)
 
-> **Draft** by the story & flow session for the Director, in the style of M3-16. Not adopted until the Director says
-> so. Rulings 6, 11, 14 and pillar 6 apply, plus DESIGN reason 7 ("every collection shows progress at the base,
-> never in a spreadsheet menu"). Related: `docs/design/cutscenes.md` §1 (the opening, the short wake),
-> `docs/design/game-flow.md` §7 and gaps #9 and #10.
+> Draft by the game design session for the Director. Not adopted until the Director moves it to `docs/features/`.
+> ROADMAP 0.5: "title screen (New Game / Continue / Settings), collections shown at the base".
+> Today:
+> - the game opens straight into play, with a "Lofi Lunar" wordmark drifting in over the wake (`UI/Hud/TitleCard`,
+>   `ui-captures/01_title`);
+> - New Game lives in the pause menu (`NewGameRequested`, `ISaveService.PutAway`);
+> - collection counts sit in the pause card (`12_pause`).
 >
-> Today on main: the game boots straight into play, and `UI/Hud/TitleCard` drifts the "Lofi Lunar" wordmark in while
-> 07 wakes ("no menus before play"). The pause menu has Resume, Settings, New game (put the save away, never deleted)
-> and Quit, plus count lines for tapes and relays (`ui.pause.cassettes`, `ui.pause.relays`).
+> DESIGN #7 applies: "every collection shows progress at the base, never in a spreadsheet menu". So do rulings 6, 11
+> and 14, pillar 6 and the Steam bar (VISION product decisions).
 
-## Part A: the title screen
+## Part A: the title screen is the world
 
-### The idea
-**The title screen is home tonight.** It is the live Main scene behind a small menu, seen from a slow, high drone
-drift round the base, in the save's real state:
-- a new player sees the dark, sleeping home with three warm points;
-- a returning player sees the windows they lit, their friends at their spots and their masts on the horizon;
-- after the ending, the Peak's beacon is amber.
+### The rule
+**No separate menu scene, no loading screen.** The title is the live game world, loaded from the save, framed by a
+still camera, with three words over it. The world behind the menu *is* the player's progress. A returning player sees
+their own base, windows lit as they left them. A new player sees the dark base and a sleeping rover.
 
-The title shows how far you've come before you press anything (ruling 11).
+### The frames
+- **Fresh install (no save):** the camera holds the P5 stargaze composition, low and front three-quarter on 07's
+  closed lens, with Earth and the Peak's red blink behind. The base is dark. The radio crackles quietly, out of tune.
+- **With a save:** the camera holds a high, wide shot of home from the south-east (the dock's-evening framing, P6).
+  The lit windows, pools and masts are the save's real state. 07 sleeps on the dock, lens half-lidded. The radio
+  plays the save's station softly.
+- The wordmark is the new title treatment (see below). The menu sits low-left, small and calm, with blur-behind on the
+  lower third only (visual review V11).
+- **Idle:** after ~20 s untouched, the menu fades out and the camera drifts slowly (stillness is a reward). Any input
+  brings it back.
 
 ### The menu
-| Item | Shown | Does |
+| Item | Shown when | Does |
 |---|---|---|
-| **Continue** | only when a save exists; focused by default | eases the camera down from the drift to the chase frame on the dock, then the short wake (cutscenes §1.6, without its fade from black) |
-| **New Game** | always; focused when there is no save | no save: starts the opening at once. A save: asks once ("Start a new journey? Your current one is kept, put away beside it."), then puts the save away as today (`NewGameRequested`) |
-| **Settings** | always | the same Settings page as the pause menu (volumes, look, invert, language, the next line, Gentle camera) |
-| **Quit** | always | quits; no question at the title |
+| **Continue** | a save exists (default focus) | the menu fades and the camera eases from the title frame into the chase frame behind 07 in ~2.5 s. 07 wakes with a short stretch. Control returns when the blend ends. |
+| **New Game** | always (default focus when no save) | no save: the camera stays on the stargaze and the M3-16 step-0 wake plays from here, with "Look up" as the first prompt. With a save: a confirm card, "Put this moon away and start again? Your old moon is kept." Safe answer focused. Yes runs `PutAway()`. The windows go dark one by one (~3 s, reversing M3-16 step 2), then the wake plays. Never a hard cut. |
+| **Settings** | always | the same pages as the pause menu (audio, look, next-line toggle, language, display, controls), one implementation |
+| **Quit** | always | a soft fade; the radio's static tails out |
 
-- **Under Continue,** one quiet line in the crew's voice: the last dock evening's "next" line, e.g. "Something was
-  calling from the west." It reminds the player where they were going, and it is never a stat.
-- **The wordmark:** small, top left, "Lofi Lunar". `TitleCard`'s big drifting wordmark moves to the end of the
-  opening, as the cold open's title card over the first chase frame (cutscenes O13), once per new game.
-- **Sound:** the radio as the save left it. For a fresh game that is static with the ghost chord; for a lit home it is
-  the station, clear, a little low. Menu moves click softly in key; choosing plays one rising note.
-- **Input:** mouse, keyboard and gamepad. The focus ring is warm, never neon. No splash beyond Unity's required one.
+- **First boot only:** before the title, one quiet language choice (English / Tiếng Việt), shown as two words, no
+  flags. Remembered in settings, changeable later.
+- The pause menu keeps Resume, Settings and Quit. Its **New Game moves to the title** ("Quit to title" replaces it),
+  so starting over is never one mis-press away mid-session.
+- The pause card's counts are removed; collections live at the base (Part B).
 
-### Transitions (always eased)
-- **New Game:** the drift glides down toward 07 asleep on its dock, and the picture fades to black over 2 s while the
-  static rises: that black **is** the opening's O1.
-- **Continue:** the drift eases straight into the chase frame (no black), then 07's lid opens in one move and it blinks.
-- **Pause → Quit** returns to the desktop as today. A "Back to title" item is not needed.
+### The title treatment
+The current wordmark is evenly spaced type with a thin rule: tidy, but anonymous. Proposal:
+- "Lofi Lunar" in Be Vietnam Pro, with one small diegetic touch: a thin crescent drawn as the dot of the "i". It is
+  the only ornament.
+- Cream (#F4E6C8) with a very soft warm bloom. It sits in the sky area, never over 07.
+- A one-line subtitle under it in small caps, localized: "a radio left on" / "một chiếc radio vẫn bật".
 
-### Boot flow
-1. App boots Main and applies the save (or none) as today, so the scene shows the real state.
-2. The title opens. Gameplay holds the session: no step flow, no prompts, no wake. Rover flies the drift. 07 sleeps
-   with its lid closed (fresh) or half-lidded on the dock (a save).
-3. The player chooses. New Game with a save reloads the scene (today's flow). That reload must not show the title
-   again, so App keeps a **one-shot boot intent** beside the save ("newGame"), read and deleted at the next boot (no
-   static state). The game then starts with `SessionStarted(freshGame: true)` and the opening.
+### Rules
+- **No frame-one snaps:** every transition is a camera blend or a fade (anti-goal).
+- **The title loads the save once.** Continue is instant because the world is already there.
+- **The title never shows a number,** a percentage or a play time. The base *is* the summary.
+- **Steam bar:** controller and mouse both work, with focus always visible. Esc / B always backs out to the safe
+  answer.
 
-## Part B: collections, kept at home
-Every collection has a physical home at the base, visible from the dock's evening shot, and its progress is something
-you **see**: lit slots, empty slots, a full rack. Re-reading anything is 07 looking at it and pressing Interact, the
-same verb as everything else.
+## Part B: collections at the base
 
-| Collection (full game) | Its home | Progress you see | Re-read (ruling 14) |
-|---|---|---|---|
-| **Memories** (24: 4 crew × 6) | the memory shelf, one shelf per crew member, 6 slots each, a small lamp per slot | lit slot = found; an empty slot is dark, with a blank paper tag (nothing spoiled) | 07 aims at a memory (the generous aim cone, ruling 2), Interact: its memory card opens again |
-| **A crew member's set** | their bunk window in the lander (4) | the window lights when the set is complete (cutscenes §8) | — |
-| **Logs** (12: 4 × 3) | a log tin at the end of each crew member's shelf | the tin's lid sits higher as cards fill it: one, two, three | 07 aims at the tin, Interact: that crew member's found logs as a short card list (at most 3) |
-| **Tapes** (8) | the tape rack in Bell's corner (built, 8 slots) | lit spines; dark empty slots | Bell's dial plays them (built); aiming at a spine + Interact shows Ro's liner note |
-| **Letters** (the radio's fragments and Ro's letters) | a spike on Bell's side where Bell prints each fragment on a thin paper strip: a literal ticker tape | the stack of strips grows | aim at the spike, Interact: the letters in order, newest last |
-| **Kits** | Kenji's plotter board (built, P7) | pinned sheets; empty pins | the bay's choice list (built) |
-| **Friends** | their spots at home: Tilly's perch, Bell's corner, Atlas by the bay, Moss in the biodome | a friend is there, or a spot is dark | — |
-| **Places** | the crew's map (M3-07) | ink and stamps | the map |
+Every collection has one physical home that changes as it grows, visible from the default camera and at 30 m (ruling
+11). 07 browses with its lens: park in front, look, and the nearest item focuses (ruling 2's soft cone), with a
+one-line card. No hands (ruling 14).
 
-**The pause menu** keeps Resume, Settings, New game and Quit. The two count lines (`ui.pause.cassettes`,
-`ui.pause.relays`) become **one** quiet line of found counts with small icons and **no totals** ("6 memories · 3 tapes
-· 2 masts"). Totals are what the empty slots at home are for. That keeps DESIGN's "never a spreadsheet" and still helps
-a completionist.
+| Collection | 0.5 size | Its home at the base | How it shows progress | Complete |
+|---|---|---|---|---|
+| **Relics** (24 in 4 crew sets of 6; 0.5 ships the slice's 6) | 6 | the memory shelf, reorganised into **four crew bays**, each with the crew member's name in their own handwriting on a plate | Each empty slot holds a **dust outline** of the object that stood there (ruling 12 remnant, not a "?"). A placed relic wipes its outline clean and lights its slot lamp. | That crew member's lander window lights for good, and their last log plays on the radio (DESIGN). |
+| **Crew logs** (12, 3 per crew) | as many as 0.5 places | clipped as small paper cards to the **same crew bay**, under the relics | Found cards hang there. Focusing one replays it as a ticker line. | Counts toward the crew bay feeling full; no separate meter. |
+| **Cassettes** (8; 0.5 ships 3) | 3 | Bell's tape rack | Eight spine slots. Empty ones are blank cream spines; found tapes show their title in Ro's hand. Focusing one shows Ro's liner note. Bell plays it. | All 8: Bell's corner gets a small hand-lettered "Lumen After Dark" sign that lights. |
+| **Blueprints** | 3 in 0.5 | Kenji's plotter board (M3-16 P7) | Drawn sheets, plus empty pins with their kit's silhouette pencilled. | All pinned: the board's lamp goes from dim to full. |
+| **Places** | all anchors | the crew's map (M3-07) | ink vs pencil; Ines's corner tally | all inked: Ines's "checked the Moon was still there ✓" note appears |
+| **Friends** | Tilly, Bell | their corners at home | the friend is there, idling | — |
 
-## Steps
-| # | Step | Box |
-|---|---|---|
-| 1 | Core contracts below land | Director |
-| 2 | Title shell: the menu, the Continue line, Settings reuse, focus and sounds; `TitleCard` moved to O13 | ui |
-| 3 | Boot hold and the one-shot intent; `ISaveSummary` | App (Director) + gameplay |
-| 4 | The title drift camera and both transitions | rover |
-| 5 | Re-read interactions: shelf memories, log tins, tape spines, the letter spike | gameplay |
-| 6 | Shelf restructure (4 × 6 slots with lamps and blank tags), log tins, Bell's letter spike and strips | art |
-| 7 | Slot lamps and the letter strip as home lights where they are warm | world |
-| 8 | Title radio mix; menu clicks; the letter-strip print sound (a tiny dot-matrix purr in rhythm) | audio |
-| 9 | Pause count line; the log list card; the letters card | ui |
-| 10 | Playthrough: boot → title → New Game → opening → ... → quit → boot → title → Continue → the short wake | gameplay + Director |
+### Browse rules
+- **One verb:** park near a collection, and the first time, a context prompt reads "Look". Look input moves focus
+  between items. Leaving the radius ends browsing.
+- **Card:** the name plus at most two sentences (STORY writing rules), placed beside the item, never full-screen.
+- **Camera:** a gentle ease to a three-quarter view of the bay or rack and back. Depth of field only while browsing
+  (visual review V10).
+- **The first time a set gains its second item,** the ticker says once, e.g. "Ro's shelf is filling up."
 
-## Core contracts (landed first by the Director)
-- **`TitleChanged(bool open)`:** UI publishes it. Rover flies the drift while open; Gameplay holds the session; Audio
-  sets the title mix.
-- **`TitleChoice` {Continue, NewGame} and `TitleChosen(TitleChoice choice)`:** UI publishes it. App handles NewGame
-  with a save (the intent and `NewGameRequested`). Gameplay then publishes `SessionStarted(freshGame)` (cutscenes
-  §1.7) for Continue, or NewGame without a save.
-- **`ISaveSummary`** (read-only, registered by Gameplay before the title opens): HasSave, and the last "next" line
-  key for the Continue line.
-- **`KeepsakeKind` {Memory, Log, Tape, Letter} and `KeepsakeRecalled(KeepsakeKind kind, string id)`:** Gameplay
-  publishes it on a re-read; UI opens the matching card. Memories reuse the existing memory card.
-- Localization: `ui.title.continue`, `ui.title.new_game`, `ui.title.settings`, `ui.title.quit`,
-  `ui.title.new_game_question`, `ui.title.new_game_aside`, `ui.pause.found_line` (en + vi).
+## Contracts (Core, landed first)
+- **`GameFlowState`:** Title, Playing. **`IGameFlow`** (State) is registered by App.
+  - **`TitleShown(hasSave)`**, **`ContinueRequested`**, **`QuitToTitleRequested`**; the existing
+    **`NewGameRequested`** is reused.
+  - App owns the flow. Gameplay, Rover and UI read `IGameFlow` to hold input and the HUD while in Title.
+- **`ICollections`** (registered by Gameplay):
+  - `GetSet(collectionId)` returns (found, total) for `relics.<crew>`, `logs.<crew>`, `cassettes`, `blueprints`,
+    `places`;
+  - `IsFound(itemId)`.
+  - It is read by UI (cards), Art (outlines and slot lamps through Gameplay) and Audio. Allocation-free.
+- **`CollectionItemFocused(itemId)`** and **`CollectionBrowseEnded`:** published by Gameplay while 07 browses.
+  UI shows the card. Rover eases the camera. Audio plays a soft tick in key.
+- **`CrewSetCompleted(crewId)`:** published once per save. World lights that crew's window for good. Gameplay queues
+  the last log on the radio.
+- **Localization:** `title.*` (menu, confirm, subtitle), `crew.<id>.plate`, and the existing `relic.*`, `log.*`,
+  `cassette.*` keys.
+
+## Split
+| Box | Delivers |
+|---|---|
+| app / foundation | the boot flow into Title (world loaded, input held), Continue / New Game / Quit to title, the first-boot language step, `IGameFlow` |
+| ui | the title menu, wordmark and subtitle, confirm card, blur-behind, idle fade, shared settings pages, "Quit to title" in pause, the collection cards, pause counts removed |
+| rover | the two title frames (stargaze, home-wide), the Continue blend into chase, the idle drift, the browse camera |
+| gameplay | `ICollections`, browse focus (soft cone), `CrewSetCompleted`, the "set filling up" ticker line, the New Game windows-dark sequence trigger |
+| art | four crew bays on the shelf with handwriting plates, dust outlines per relic, log card clips, tape rack spines, plotter pin silhouettes, the Bell sign |
+| world | windows going dark on New Game (reverse of the home light stages), crew windows lit on set completion |
+| audio | title ambience (radio out of tune, or the save's station), menu ticks in key, the browse tick, the windows-dark sequence |
+| Director (story) | crew plates, subtitle, "set filling up" lines, EN and VI |
 
 ## Acceptance
-- First launch with no save: the title shows the dark home and three warm points; New Game reaches the opening's
-  black in ≤ 2.5 s and never shows the title again in that boot.
-- With a save: the title shows that save's lit home. Continue reaches the chase frame and 07's blink in ≤ 5 s.
-- New Game with a save asks once, keeps the old save beside the slot, and the next boot starts the opening, not the
-  title.
-- Every collection in the table has a home that reads from the dock's evening shot, and every found item can be
-  re-read by looking at it and pressing Interact. Nothing in the world shows a total of things not yet found.
-- The pause menu shows found counts on one line and no totals.
-- Zero GC while the title is open; the drift camera never clips into the base.
-
-## Open questions for the Director
-1. This draft moves the big wordmark to the end of the opening. The alternative keeps it on the title only; the
-   opening would then have no title card.
-2. Re-reading logs opens a short card list (at most 3 cards). Is that within "never a spreadsheet", or should the tin
-   cycle one card per Interact instead?
+- A fresh install boots to the stargaze title with no save, in under ~10 s on the target PC. New Game flows into the
+  M3-16 wake with no cut.
+- With a save, the title shows that save's real base state. Continue hands control to the player in ≤ 3 s with an
+  eased blend and no loading screen.
+- New Game from a save asks once, archives the save (never deletes it) and darkens the base before waking.
+- Every collection's progress is readable at the base from the default camera, and no menu shows a collection count.
+- A playtester can find "how many of Ro's things are home" by driving to the shelf, without opening any menu.
+- 60 fps and zero per-frame GC on the title and while browsing.

@@ -1,108 +1,97 @@
-# M3-07 (draft): the crew's map, inked by the station's reach
+# M3-07: The crew's map (draft)
 
-> **Draft** by the story & flow session for the Director, in the style of M3-16. Not adopted until the Director says
-> so. Rulings 11, 12, 13 and 14 and pillar 6 apply. Related: M3-06 ("the map draws itself" within reach), M3-16 step 8
-> (the lift up to the deck), `docs/design/cutscenes.md` §6 (the lookout and the hatch) and `docs/design/game-flow.md`
-> (§3, S5 and gap #5).
->
-> Owner's brief (2026-10-11): "a hand-drawn map pinned inside the lander, reached by the lift, drawing itself within the
-> station's reach."
+> Draft by the game design session for the Director. Not adopted until the Director moves it to `docs/features/`.
+> ROADMAP 0.5: "a hand-drawn map pinned inside the lander (reached by the lift), drawing itself within the station's
+> reach (M3-06)". DESIGN "Collections: Map" and "Station reach: inside reach the map draws itself". It builds on
+> M3-16 step 8 (the lift and the deck lookout) and the level review's L5 (the lookout's "seen" sweep).
+> Rulings 6, 11, 12 and 14 and pillar 6 apply.
 
-## The idea in three lines
-1. **The crew already drew the whole moon, in pencil.** Ines walked the rim every morning and sketched it all: the
-   basin, the canyon, the terraces, a black crater, the Peak. Her notes are in the margins. That is the crew's
-   knowledge, faded and approximate.
-2. **The station inks what it can hear.** A small survey plotter, a cousin of Kenji's pen plotter, sits on the chart
-   table. Wherever the station's reach covers (the tower's circle and every lit mast's), it traces the true ground in
-   blue ink and stamps what 07 has found there. The map "draws itself" literally: a pen moves.
-3. **The map opens no region; it points at them.** In 0.5, the next regions are promises in pencil with Ines's notes.
-   Its one job: **show where everything is, and let 07 choose its next light.**
+## The fantasy in one line
+Ines drew the basin by hand, and the station still remembers where 07 has been. Up on the deck, 07 looks through
+the hatch at her map, and finds that the station has been drawing in the places 07 brought home.
 
-## Why it fixes the conflicts (game-flow §8 #5)
-- DESIGN says points of interest light up "once visited". M3-06 says the map draws itself within reach. Here, both
-  are layers of one sheet: ink = reach; a stamp = visited **and** in reach.
-- M3-16 step 8 says "the crew's map inside opens new regions", but 0.5 has no new region. Here, the map shows the
-  regions to come as pencil sketches and notes, with no ink until a mast reaches them.
+## How 07 does it (ruling 14)
+- The map hangs **inside the lander, on the back of the deck hatch**: Ines's chart, pinned to a light table.
+- When tower L3 wakes the lift (M3-16 step 8), the hatch's motor wakes too. When 07 settles on the deck, the hatch
+  swings open by itself, and its window frames the map at 07's lens height.
+- **07 looks.** That's all it ever does here. Its lens light falls on the paper. No hands, no pins.
+- The station draws. Behind the paper, Kenji's **chart pen**, a small XY pen gantry wired to the station's radio,
+  inks what the station knows. The chart pen reuses the plotter's arm parts and scratchy in-key pen sound (M3-16 P7).
+  It is a sibling of the plotter, not a copy: smaller, brass and on a light table.
+- The light table glows warm through the paper where the station reaches. Home's reach is literally a warm area on
+  the map.
 
-## How 07 physically uses it (ruling 14)
-- The lander's hatch is human-sized (`LanderMeshes`: 0.8 × 1.85 m), so 07 can never go inside.
-- The crew left the hatch **ajar** in their hurry. The first time, 07's beam nudges it open (a beam "nudge", one of
-  ruling 14's verbs).
-- 07 parks at the doorway and **peers in with its head**: its neck carries the lens to about 1.6 m, inside the
-  door's height.
-- The chart table stands against the cabin's back wall, facing the hatch, lit by one warm work lamp. The map is pinned
-  flat on it, with the survey plotter's gantry over it.
-- To choose a place, 07 shines its **headlamp spot** on the paper: the warm circle of light is the cursor. Look input
-  moves the head, and so the spot. 07 never touches anything.
-
-## The sheet: what is on it
-| Layer | What it shows | When |
+## What the map shows (three states per place, no markers)
+| State | How it looks | When |
 |---|---|---|
-| **Pencil** (Ines) | the whole region's outline: rim, canyon, terraces, crater, the Peak; margin notes in her hand; small crew doodles (Kenji's duck in a corner, a coffee ring, Ro's sticker "Lumen After Dark: tune in") | always, from the first look |
-| **Ink** (the station) | the true ground's shapes in blue: flat-shaded contour bands taken from the terrain, drawn as a pen would draw them, 1 line per 4 m of height | only inside the station's reach (`IStationReach.IsInReach`) |
-| **Stamps** (the station) | one small icon per thing 07 has found and the station can hear: a site (whole, or a skeleton once picked clean), a friend's spot (dark, or lit once home), a mast (dark or lit), a memory's dot where it was found, the dock | visited and inside reach |
-| **The spot** (07's headlamp) | the warm circle 07 shines on the paper | while 07 is looking at the map |
+| **Ines's sketch** | faint pencil: the rim, the Peak, the canyon and her handwritten names for places the crew knew ("the depot", "Kestrel-3, poor thing", "Kenji's garage") | always: the crew drew it |
+| **Seen** | a small pencil ring with no name, and a pencil "?" for a place whose light the player has seen but not reached | the lookout's sweep (L5), a sonar answer, or the dock's evening pillar (P6) |
+| **Inked** | the chart pen inks the outline in warm brown ink. Its name is written in the crew's hand, plus a tiny icon of what 07 did there (a relic, a friend, a blueprint, a lit mast) | 07 visited it **and** it lies inside the station's reach (`IStationReach.IsInReach`) |
 
-**What is never on it:** an unfound thing as a marker, a checklist, a percentage, an arrow or a quest. Pencil notes may
-*hint* at what lies beyond, as a person would write it: "Atlas parked here?", "Moss's garden: crater floor. Dark.",
-"The dish. Kenji's job, after the storm." These are localization keys (`map.note.<id>`), in the crew's voice (STORY
-writing rules).
+- A place 07 visited outside reach stays pencil until a mast brings it into reach. Then the pen inks it the next time
+  07 looks. This is the "drawing itself" the owner asked for, and it makes the relay network (the second axis)
+  visible on paper.
+- No "you are here", no objectives, no arrows (M3-16 "No markers on the map"). The map is a memory, not a GPS.
+- Collections show here too: a small tally in Ines's hand in the corner (places found / places on the crew's
+  list). That's the DESIGN "map discovery" collection without a spreadsheet menu.
 
 ## The steps
-| # | Step | What happens | Feel |
+| # | Step | What happens | What the player learns |
 |---|---|---|---|
-| 1 | **The first look** (game-flow S5) | After the lookout (cutscenes §6), 07 turns to the hatch: a crack of warm light. Driving near it shows the place card "The crew's map: where everything is." 07's beam nudges the hatch open, and it peers in. | the door's slow creak; inside, the room tone is close and warm, and the radio is muffled behind 07 |
-| 2 | **The plotter wakes** | The camera eases over 07's head into the doorway until the sheet fills the frame (Moment tier). The plotter's lamp lights, its gantry homes with a zip, then it **inks everything currently in reach**: the basin's inner circle in blue, line by line, about 6 s, and stamps each place found so far. | a scratchy, in-key pen sound (reusing the P7 plotter's voice), one soft tick per stamp, climbing D E F# A B |
-| 3 | **Choose a light** | 07's headlamp spot rests on the paper. Over a stamp or a pencil note, the spot warms and that place's name shows once, small, at the paper's edge (UI). Holding Interact on it **marks** it: the plotter draws a small ring round it, and outside, that place's pillar rises on the horizon and stays until 07 reaches it. One mark at a time; a new one replaces it. | a held hum while marking; the pillar's answer note (high E) heard faintly from outside |
-| 4 | **Coming back** | When reach has grown since the last visit (a mast lit), the plotter catches up: it inks only the new ground and stamps the new finds (2–6 s). With nothing new, it rests, and the map is just there to look at. | the same pen voice, shorter |
-| 5 | **Leaving** | Any drive input: 07 backs out of the doorway and the camera eases back to the chase frame on the deck. | the room tone gives way to the deck's wide hush |
+| 1 | **First look** (end of M3-16 step 8, ~55 min) | 07 reaches the deck. The lookout camera (L5) rises and sweeps; places in view blink once. The hatch opens and the view eases into the map. The chart pen inks, in order: home, then every visited place in reach, ~0.6 s each, with a pen sound climbing the pentatonic scale. | "Everything I did is written down. Home has been keeping track." |
+| 2 | **The reach glows** | The light table warms under home's circle and each lit mast's circle. Unlit masts are pencil crosses. | "The masts make home bigger." This answers M3-16 step 7's weak "why relays". |
+| 3 | **What's left** | The camera drifts to the edge of the paper: Ines's pencil notes beyond the rim, e.g. "Theo's garden crater: dark, bring a lamp" or "the terraces: too steep for wheels". | the next regions (0.6+), as the end-of-phase hook |
+| 4 | **Any time after** | Riding the lift again opens the map. New ink since the last look draws first, then the view rests. | coming home includes "let's see what the station drew" |
 
-**Marking and the dock's evening (P6).** The dock's evening raises the tower's chosen next pillar. If the player has
-marked a place, that mark is respected: the evening shows the marked pillar, so the player's choice wins.
+Leaving: any input. The view eases back to the deck and 07 rides down (M3-16 lift rules).
 
-## Where it fits in the flow
-- **0.5:** the map opens at S5 (after the lift and the lookout). Ink covers the tower's circle and grows with relay.0–3
-  until the basin is inked. The terraces, the crater and the Peak stay in pencil with Ines's notes, and the 0.5 ending
-  promise (the terraces' foot) shows as a stamp once 07 has seen the crawler wreck from the lookout.
-- **0.6–0.8:** each region's mast inks it. The Peak is inked last, when its foot's mast lights: the whole sheet is blue.
-- **After the ending:** the plotter draws a small "07" at the Peak's summit, the only time it writes a word.
+## Interaction (map view)
+- **Look** pans the paper slowly. **Zoom** has two levels: the whole basin, and a closer view.
+- **Interact** on a place shows its one-line card: its name, its job or memory, and what is still there ("a heart
+  not yet found", if the site's heart isn't opened).
+- The view focuses the nearest place by a soft aim cone (ruling 2), the same rule as the tether.
+- Controller-first. UI glyphs come only from the prompt system. No cursor.
+
+## Design rules
+- **One sound family:** pencil hiss for "seen", pen scratch in key for "inked", a warm hum while the light table
+  warms. Nothing above mezzo-piano.
+- **No reading walls:** a place card is at most one line plus its name.
+- **The map never lies:** a place is inked only if the save says visited and the station says in reach.
+- **0.5 promise rule:** pencil notes for regions that don't ship in 0.5 are allowed only at the paper's edge, in the
+  "beyond the rim" area, and they never show a "?" ring. The Director may cut step 3 if it promises too much.
+
+## Contracts (Core, landed first)
+- **`MapPlaceState`:** Sketched, Seen, Visited. Inked is derived as Visited + in reach.
+- **`IMapKnowledge`** (registered by Gameplay): `GetState(placeId)`, `IsInked(placeId)`, `PlaceCount`,
+  `GetPlace(index)` (id, world position, kind), `InkedSinceLastLook` (count).
+  - Place ids reuse the anchors: `site.*`, `relay.*`, `canyon.*`, friends' sites `friend.<id>`, home's `place.*`.
+  - Map keys: `map.<placeId>.name` and `map.<placeId>.note` for Ines's notes.
+- **`MapPlaceSeen(placeId)`** and **`MapPlaceVisited(placeId)`:** published by Gameplay once per save per place.
+- **`MapLookStarted` / `MapLookEnded`:** published by Gameplay's lift flow when the hatch view opens and closes.
+  UI shows the map. Rover holds 07 still.
+- **`MapInkCued(placeId, position)`:** the chart pen drew one place. Audio plays the pen. UI animates the stroke.
+- **Map geometry:** World writes a `MapSheet` asset in its builder. It holds polylines in basin coordinates
+  (contours every 5 m, the rim crest, the canyon walls, the chasm, crater rims) plus the anchors' positions. UI draws
+  it with its Drawing module, in ink on Cream (#F4E6C8) with a seeded hand wobble. No baked texture.
+- **Save:** Gameplay's map section stores per-place Seen/Visited and which places were already inked when last
+  looked at. The content floor is unchanged: older 0.5 saves derive Visited from existing site/relay/friend state.
 
 ## Split
 | Box | Delivers |
 |---|---|
-| gameplay | the map station: the hatch (ajar → nudged open, saved), the peer-in spot at the doorway, the mark (one at a time, saved, raises its pillar via the existing pillar system), the "seen ink" record so the catch-up draws only what is new, the place card `place.map`; tests for the mark rules and the catch-up set |
-| ui | the map's drawing: a render texture on the sheet with three layers (pencil art, the ink built from `ITerrainQuery` contours clipped to `IStationReach`, the stamps); the stroke-by-stroke reveal driven by the plotter's progress; the name at the paper's edge; all `map.note.*` and `place.map.*` keys (en + vi). ROADMAP already gives M3-07 to ui. |
-| art | the chart table and its work lamp; the survey plotter (reuse P7's plotter rig at a smaller size); the hatch's ajar and open states; the pencil base sheet (Ines's sketch of the whole region, drawn from world's layout); doodles |
-| rover | peering in (neck reach to the doorway), the headlamp spot as a cursor (07's lamp aimed by the look input, soft-limited to the sheet), the camera's ease into the doorway and back |
-| world | the lamp inside the cabin as a home light (it shows through the porthole from outside once the map is awake); the pencil base needs the regions' rough outlines: export them from `IWorldLayout` for art |
-| audio | the hatch creak, the pen's scratch (reuse), stamp ticks in key, the cabin's close room tone, the marking hum |
-
-## Core contracts (landed first by the Director)
-- **`MapViewChanged(bool viewing)`:** Gameplay publishes it when 07 starts or stops peering in. Rover frames the
-  shot, UI shows the sheet's interaction and hides the HUD, Audio swaps to the cabin room tone.
-- **`MapPlotted(int strokes, bool catchUp)`:** Gameplay publishes it as the plotter starts drawing (first look or
-  catch-up). UI reveals the strokes over the plotter's time; Audio voices the pen.
-- **`MapPlaceMarked(string placeId, Vector3 position)`:** Gameplay publishes it (empty id = unmarked). Gameplay's
-  pillar system raises the pillar; UI rings the stamp.
-- **`IMapSheet`** (read-only, registered by Gameplay): the stamps (place id, kind, position, state), the current mark,
-  and the inked-so-far set. UI draws from it.
-- **Place id:** `place.map` (`place.map.name`, `place.map.job`), joining M3-16's list.
+| gameplay | `IMapKnowledge`, seen/visited tracking (site answered, entered radius, sweep, pillar), the lift's hatch step, `MapLookStarted/Ended`, `MapInkCued` order, save section |
+| ui | the map view: paper, contours, pencil/ink drawing, light-table glow from `IStationReach`, place cards, pan/zoom/focus, Ines's notes, the corner tally, blur-behind (visual review V11) |
+| world | the `MapSheet` builder (polylines from the generated surface), the sightline query for the lookout sweep |
+| art | the hatch (dormant and awake), the light table, the chart pen gantry (reusing the plotter's parts) |
+| rover | the deck pose (lens on the hatch window), the lookout camera rise (L5), the ease into and out of the map view |
+| audio | pencil hiss, in-key pen scratch (shared with the plotter), light-table hum, the hatch motor |
+| story (Director) | Ines's names and notes (`map.*` keys), EN and VI |
 
 ## Acceptance
-- From the deck, a playtester can say what the map is for in one sentence ("it shows where things are, and I can
-  pick where to go").
-- The first look inks only what is inside the station's reach; a place outside reach shows only Ines's pencil, even
-  if 07 has been there.
-- Lighting a mast and coming back to the map draws only the new ground, in ≤ 6 s.
-- Marking a place raises its pillar outside within 2 s; the next dock's evening shows that pillar, not another.
-- Nothing on the sheet names or marks a thing the player hasn't found, except Ines's handwritten notes.
-- Ruling 14 holds on screen: the hatch opens by the beam's nudge, 07 peers in with its head, and the headlamp spot
-  is the only cursor.
-- The sheet reads at 1080p from the doorway shot: pencil, ink and stamps are distinct at a glance.
-- Steady-state zero GC while viewing; the ink texture is rebuilt only when reach changes.
-
-## Open questions for the Director
-1. Should the map also be reachable from anywhere through a pause-menu view of the same sheet? This draft says **no**:
-   the trip home to look at it is part of the ritual, and radio-hop makes home close.
-2. The pencil sheet needs the 0.6–0.8 regions' rough shapes now. If world's layout for them isn't fixed yet, Ines's
-   sketch may be deliberately loose: she drew it by eye.
+- From a 0.5 golden-path save, the first look inks every visited in-reach place in order with a climbing pen sound.
+  The light table glows exactly over home's and the lit masts' reach.
+- Lighting a new mast and coming back inks the places that just entered reach, and only those.
+- A playtester can say in one sentence what the masts are for after the first look.
+- No place is inked that the save hasn't visited. Nothing on the map points anywhere (no arrows, no "you are here").
+- Ruling 14: 07 never touches anything. The hatch, pen and light table are machines.
+- The map view runs at 60 fps with zero per-frame GC (strokes pre-built at load, revealed by a parameter).

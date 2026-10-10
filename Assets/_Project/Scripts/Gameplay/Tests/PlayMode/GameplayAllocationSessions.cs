@@ -158,6 +158,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return Waits.Until(() => !bay.Feeding, 2f);
 
             RadioTower tower = gameplay.Tower;
+            _fixture.DeliverTowerParts();
             _fixture.Rover.Place(tower.PadCentre, 0f);
             yield return null;
             yield return null;

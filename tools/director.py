@@ -11,7 +11,8 @@ Usage:
   python tools/director.py verify [--skip-playthrough] [--parallel] [--push]
 
 status   every box branch against main (ahead, behind, uncommitted files in its worktree), main against origin and
-         the verification worktree, the batch slots and whether the main editor is idle.
+         the verification worktree, the batch slots, whether the main editor is idle, and the last status block of
+         each board in MoonProject-wt/.board (written by tools/box_check.py).
 land     merges the box branches into main (several boxes land as one merge), requires compile_check PASS before
          the merge is committed (otherwise the merge is aborted), then hot-reloads the main editor: assets-refresh,
          wait until it is idle with no console errors, run the boxes' own builders (e.g. ^(Art|Rover)/, or
@@ -43,6 +44,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+import box_check  # noqa: E402
 import unity_mcp  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -213,6 +215,11 @@ def cmd_status(_args):
         say(f"{branch[len(BOX_PREFIX):]:<10}{ahead:>6}{behind:>7}{dirty:>6}  {last[:90]}")
     subprocess.run([sys.executable, str(ROOT / "tools" / "unity_batch.py"), "status", "--project", str(ROOT)])
     say(f"editor    {describe_editor(editor_state())}")
+    for board in sorted(box_check.board_dir(ROOT).glob("*.md")):
+        block = box_check.last_block(board.read_text(encoding="utf-8"))
+        if block:
+            say(f"board {board.stem}:")
+            print(block)
 
 
 def cmd_land(args):
