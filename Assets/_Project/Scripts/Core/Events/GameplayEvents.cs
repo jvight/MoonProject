@@ -769,4 +769,22 @@ namespace MoonProject.Core.Events
         /// <summary>The platform's position.</summary>
         public Vector3 Position { get; }
     }
+
+    /// <summary>
+    /// 07's look up the crew's ladder (docs/features/M3-16 "Each place"): the first time near it, 07 looks up the
+    /// ladder to the deck, then at the lift. Published as each look begins (<see cref="Looking"/>, toward
+    /// <see cref="Subject"/>) and once more when it ends; Rover frames each look.
+    /// </summary>
+    public readonly struct LadderLookChanged
+    {
+        public LadderLookChanged(bool looking, Vector3 subject)
+        {
+            Looking = looking;
+            Subject = subject;
+        }
+
+        public bool Looking { get; }
+
+        public Vector3 Subject { get; }
+    }
 }
