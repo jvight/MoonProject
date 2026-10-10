@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using MoonProject.Core;
 using MoonProject.Core.Save;
+using MoonProject.Gameplay.Lift;
 
 namespace MoonProject.Gameplay
 {
@@ -51,6 +52,7 @@ namespace MoonProject.Gameplay
         [SerializeField] private RelayField _relays;
         [SerializeField] private BaseProgression _progression;
         [SerializeField] private BlueprintPlotter _plotter;
+        [SerializeField] private LiftStation _lift;
 
         private readonly List<IDisposable> _saveTokens = new List<IDisposable>();
         private GlowMeshSet _meshes;
@@ -105,11 +107,13 @@ namespace MoonProject.Gameplay
 
         public BlueprintPlotter Plotter => _plotter;
 
+        public LiftStation Lift => _lift;
+
         internal void Wire(GameplayVisuals visuals, GlintTuning glints, UpgradeDefinition[] upgradeDefinitions,
             SalvageField salvage, RelicField relics, SonarSystem sonar, ExcavationSystem excavation,
             TetherSystem tether, HomeBase home, CargoCradle cradle, RadioTower tower, Workshop workshop,
             FriendField friends, CassetteField cassettes, LogCacheField logs, SignalField signals, CassetteShelf shelf,
-            RelayField relays, BaseProgression progression, BlueprintPlotter plotter)
+            RelayField relays, BaseProgression progression, BlueprintPlotter plotter, LiftStation lift)
         {
             _visuals = visuals;
             _glints = glints;
@@ -131,6 +135,7 @@ namespace MoonProject.Gameplay
             _relays = relays;
             _progression = progression;
             _plotter = plotter;
+            _lift = lift;
         }
 
         public void Initialize(GameContext context)
@@ -197,7 +202,9 @@ namespace MoonProject.Gameplay
                 !_relays.Initialize(services, Upgrades, _tower, _tether, _friends.Tuning, Placement(context)) ||
                 !_progression.Initialize(services, Power, _home, _workshop, _sonar.Tuning, _friends, _relays,
                     Upgrades) ||
-                !_plotter.Initialize(services, Blueprints, _workshop, _progression.Tuning, Upgrades))
+                !_plotter.Initialize(services, Blueprints, _workshop, _progression.Tuning, Upgrades) ||
+                !_lift.Initialize(services, Power, _salvage.Catalog, context.Get<IRoverStillness>()))
+
             {
                 enabled = false;
                 return;
@@ -274,6 +281,8 @@ namespace MoonProject.Gameplay
                 GameplaySaveKeys.BlueprintsVersion,
                 () => new BlueprintsSaveData { found = Blueprints.Capture(), carried = Blueprints.CaptureCarried() },
                 RestoreBlueprints)));
+            _saveTokens.Add(save.Register(new SaveSection<LiftSaveData>(GameplaySaveKeys.Lift,
+                GameplaySaveKeys.LiftVersion, _lift.Capture, _lift.Restore)));
         }
 
         /// <summary>Core's rover placement for the radio-hop, or null while no domain registers it.</summary>

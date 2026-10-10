@@ -3,6 +3,7 @@ using UnityEngine;
 using MoonProject.Art.Editor;
 using MoonProject.Core;
 using MoonProject.Editor.SceneBuild;
+using MoonProject.Gameplay.Lift;
 
 namespace MoonProject.Gameplay.Editor
 {
@@ -66,6 +67,7 @@ namespace MoonProject.Gameplay.Editor
             var glintTuning = context.LoadAsset<GlintTuning>(GameplayAssetPaths.GlintTuning);
             var salvageTuning = context.LoadAsset<SalvageTuning>(GameplayAssetPaths.SalvageTuning);
             var progressionTuning = context.LoadAsset<ProgressionTuning>(GameplayAssetPaths.ProgressionTuning);
+            var liftTuning = context.LoadAsset<LiftTuning>(GameplayAssetPaths.LiftTuning);
             var salvageCatalog = context.LoadAsset<SalvageCatalog>(GameplayAssetPaths.SalvageCatalog);
             var relayMast = context.LoadAsset<GameObject>(GameplayAssetPaths.RelayMast);
             var relayMastBroken = context.LoadAsset<GameObject>(GameplayAssetPaths.RelayMastBroken);
@@ -95,6 +97,7 @@ namespace MoonProject.Gameplay.Editor
             var home = Part<HomeBase>(context, host, "Home");
             var cradle = Part<CargoCradle>(context, host, "CargoCradle");
             var tower = Part<RadioTower>(context, host, "RadioTower");
+            var liftStation = Part<LiftStation>(context, host, "CrewLift");
             var workshop = Part<Workshop>(context, host, "Workshop");
             var friends = Part<FriendField>(context, host, "Friends");
             var cassettes = Part<CassetteField>(context, host, "Cassettes");
@@ -196,10 +199,11 @@ namespace MoonProject.Gameplay.Editor
                 BaseModelBuilder.PlotterDrawWidth, BaseModelBuilder.PlotterDrawHeight);
             progression.Wire(progressionTuning,
                 PlaceSpots(dock, lander, lift, towerAnchor, shelf, bay, plotterRoot, cassetteShelf), lift);
+            WireLift(liftStation, liftTuning, towerTuning, lander, lift, dock);
             gameplay.Wire(visuals, glintTuning,
                 new[] { radioTower, hoverJump, cargoCradle, warmHeadlamp, boostCoils }, salvage, relics, sonar,
                 excavation, tether, home, cradle, tower, workshop, friends, cassettes, logs, signals, tapeRack, relays,
-                progression, plotter);
+                progression, plotter, liftStation);
             context.AddSystem(gameplay);
         }
 
@@ -282,6 +286,33 @@ namespace MoonProject.Gameplay.Editor
 
             prefab.gameObject.layer = Layers.Prop;
             prefab.gameObject.AddComponent<MeshCollider>().sharedMesh = body.sharedMesh;
+        }
+
+        /// <summary>
+        /// The crew's lift on the lander: its platform made a kinematic deck 07 can ride (a box over the platform mesh
+        /// on the Prop layer, which 07 drives on), and the art nodes the station moves and lights.
+        /// </summary>
+        private static void WireLift(LiftStation station, LiftTuning tuning, RadioTowerTuning looks, Transform lander,
+            Transform platform, Transform dock)
+        {
+            if (!platform.TryGetComponent(out MeshFilter deck) || deck.sharedMesh == null)
+            {
+                throw new InvalidOperationException("Gameplay scene build: LiftPlatform has no mesh (M3-16 lift "
+                                                    + "contract).");
+            }
+
+            platform.gameObject.layer = Layers.Prop;
+            var box = platform.gameObject.AddComponent<BoxCollider>();
+            box.center = deck.sharedMesh.bounds.center;
+            box.size = deck.sharedMesh.bounds.size;
+            var body = platform.gameObject.AddComponent<Rigidbody>();
+            body.isKinematic = true;
+            body.interpolation = RigidbodyInterpolation.Interpolate;
+            station.Wire(tuning, looks, lander, platform, body, Child(platform, "RoverSpot"),
+                Child(lander, "LiftBottom"), Child(lander, "LiftTop"), Child(lander, "LiftCable_L"),
+                Child(lander, "LiftCable_R"), Child(lander, BaseModelBuilder.LiftSnappedCableName),
+                Renderer(Child(lander, BaseModelBuilder.WinchLampName)),
+                Child(lander, BaseModelBuilder.LiftHopperMouthName), dock, BaseModelBuilder.LiftCableBuiltLength);
         }
 
         private static T Part<T>(SceneBuildContext context, GameObject host, string name) where T : Component

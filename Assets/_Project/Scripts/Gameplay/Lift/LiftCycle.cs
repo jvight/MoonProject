@@ -35,7 +35,7 @@ namespace MoonProject.Gameplay.Lift
         /// <summary>Whether 07 is held still on the platform (riding or at the lookout).</summary>
         public bool Holds07 => Phase >= LiftPhase.Rising;
 
-        /// <summary>Starts from a save: restored at the bottom stop, or dormant (the power decides on the next step).</summary>
+        /// <summary>Starts from a save: restored at the bottom stop, or dormant (power decides next step).</summary>
         public void Restore(bool restored)
         {
             Phase = restored ? LiftPhase.Ready : LiftPhase.Dormant;

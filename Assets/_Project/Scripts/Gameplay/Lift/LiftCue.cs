@@ -1,6 +1,6 @@
 namespace MoonProject.Gameplay.Lift
 {
-    /// <summary>What one step of the lift's cycle started or finished (the station turns these into its beats).</summary>
+    /// <summary>What one step of the lift's cycle started or finished (the station plays these as beats).</summary>
     public enum LiftCue
     {
         None = 0,
