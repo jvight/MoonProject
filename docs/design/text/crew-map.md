@@ -5,6 +5,9 @@
 > - Names (`map.<placeId>.name`) are written in Ines's hand when the chart pen inks a place.
 > - Notes (`map.<placeId>.note`) are her pencil margin notes: one short line each, dry and precise, secretly fond.
 > - Ines writes "tôi". She calls Tilly "con bé", and Ro "cô ấy".
+> - **One name per place.** Where the tables already name a place (`site.<id>.name`, `hop.node.relay.<n>`), the map
+>   uses that exact name in both languages, so the player recognises it everywhere. Ines's personal touch lives
+>   in the notes.
 
 ## The sheet itself
 | Key | English | Tiếng Việt |
@@ -19,18 +22,18 @@ If Be Vietnam Pro has no ✓ (U+2713), the art pencils the tick instead of the f
 ## Places in the basin (0.5)
 | Place id | Name (EN) | Note (EN) | Name (VI) | Note (VI) |
 |---|---|---|---|---|
-| `place.lander` | Home | Population: four, one rover, one very proud basil. | Nhà | Dân số: bốn người, một rover, một chậu húng quế rất tự hào. |
-| `site.depot` | The depot | Spare everything. Mostly bolts. | Kho tiếp tế | Đồ dự phòng đủ cả. Chủ yếu là bu-lông. |
+| `place.lander` | The Lander | Home. Population: four, one rover, one very proud basil. | Tàu đổ bộ | Nhà. Dân số: bốn người, một rover, một chậu húng quế rất tự hào. |
+| `site.depot` | Supply Depot | Spare everything. Mostly bolts. | Kho tiếp tế | Đồ dự phòng đủ cả. Chủ yếu là bu-lông. |
 | `site.kestrel` | Kestrel-3 | Poor thing. It came down still pointing at Earth. | Kestrel-3 | Tội nghiệp. Lúc rơi xuống nó vẫn chĩa về Trái Đất. |
 | `trail.kestrel` | Kestrel's skid | I paced it. Twice. | Vệt trượt của Kestrel | Tôi đã đi bộ đo nó. Hai lần. |
-| `site.drill` | My drill | Core 41 came from here. The blue one. | Máy khoan của tôi | Mẫu lõi 41 lấy ở đây. Viên màu xanh. |
-| `site.garage` | Kenji's garage | No entry without Kenji. Kenji: no entry without a helmet. | Gara của Kenji | Không vào nếu không có Kenji. Kenji: không vào nếu không đội mũ. |
-| `site.lander` | The supply lander | Brought Theo's seed trays. Landed… firmly. | Tàu tiếp tế | Chở khay hạt giống của Theo. Hạ cánh hơi… mạnh tay. |
+| `site.drill` | Drill Rig | My drill. Core 41 came from here, the blue one. | Giàn khoan | Máy khoan của tôi. Mẫu lõi 41 lấy ở đây, viên màu xanh. |
+| `site.garage` | Kenji's Garage | No entry without Kenji. Kenji: no entry without a helmet. | Gara của Kenji | Không vào nếu không có Kenji. Kenji: không vào nếu không đội mũ. |
+| `site.lander` | Canyon Supply Lander | Brought Theo's seed trays. Landed… firmly. | Tàu tiếp tế trong hẻm | Chở khay hạt giống của Theo. Hạ cánh hơi… mạnh tay. |
 | `friend.tilly` | Tilly's crater | Where she sulks when I walk too fast. | Hố của Tilly | Chỗ con bé dỗi mỗi khi tôi đi nhanh quá. |
-| `relay.0` | Mound mast | Ro calls it the little one. | Cột trên gò | Ro gọi nó là "bé út". |
-| `relay.1` | Shoulder mast | Longest shadows in the basin. | Cột vai núi | Bóng đổ dài nhất lòng chảo. |
-| `relay.2` | Canyon-mouth mast | Everything echoes here. Even the static. | Cột cửa hẻm | Ở đây cái gì cũng vang. Cả tiếng rè. |
-| `relay.3` | Ledge mast | Right above Ro's chamber. Of course. | Cột trên gờ đá | Ngay trên căn phòng của Ro. Đương nhiên rồi. |
+| `relay.0` | Mound relay | Ro calls it the little one. | Trạm trên gò | Ro gọi nó là "bé út". |
+| `relay.1` | Rim shoulder relay | Longest shadows in the basin. | Trạm vai vành hố | Bóng đổ dài nhất lòng chảo. |
+| `relay.2` | Canyon mouth relay | Everything echoes here. Even the static. | Trạm miệng hẻm | Ở đây cái gì cũng vang. Cả tiếng rè. |
+| `relay.3` | Terminus relay | Right above Ro's chamber. Of course. | Trạm cuối hẻm | Ngay trên căn phòng của Ro. Đương nhiên rồi. |
 | `canyon.mouth` | Whispering Canyon | Say something. It says it back, quieter. | Hẻm Thì Thầm | Nói gì đó đi. Nó sẽ nói lại, nhỏ hơn. |
 | `canyon.lip` | The chasm | Too wide to cross. Kenji says "for now". | Vực sâu | Quá rộng để qua. Kenji bảo "tạm thời thôi". |
 | `canyon.landing` | The far side | Someone always leaves a light on over here. | Bờ bên kia | Bên này lúc nào cũng có người để đèn. |
@@ -48,7 +51,7 @@ Region ids are proposed. They need anchors in `WorldAnchorIds` (Director) before
 | Place id | Ships | Name (EN) | Note (EN) | Name (VI) | Note (VI) |
 |---|---|---|---|---|---|
 | `region.peak` | 0.5 | The Peak | The dish. Kenji's job, after the storm. | Đỉnh núi | Chảo ăng-ten. Việc của Kenji, sau cơn bão. |
-| `region.terraces` | 0.5 | The terraces | Too steep for wheels. Atlas parked up here? | Bậc thềm vành núi | Quá dốc cho bánh xe. Atlas đỗ ở trên này à? |
+| `region.terraces` | 0.5 | The terraces | Too steep for wheels. Atlas parked up here? | Bậc thềm vành hố | Quá dốc cho bánh xe. Atlas đỗ ở trên này à? |
 | `region.crater` | 0.6+ | Theo's crater | Theo wants a garden down there. It's dark. Bring a lamp. | Hố của Theo | Theo muốn làm vườn dưới đó. Tối lắm. Mang đèn theo. |
 | `region.hollow` | 0.6 (backlog) | Kestrel's hollow | Something glints at the back. Too dark to tell. | Hốc tối cạnh Kestrel | Có gì đó lấp lánh tít trong. Tối quá, không nhìn rõ. |
 
