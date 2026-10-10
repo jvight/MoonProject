@@ -11,9 +11,10 @@ namespace MoonProject.Art.Editor
     /// Generated/Art/Sites, its root on the ground at the site anchor (+Z = the anchor's Forward), holding the
     /// weathered <c>Skeleton</c> that stays forever, 4-8 detachable <c>Salvage_&lt;n&gt;_&lt;Material&gt;[_Drag]</c>
     /// pieces pivoted at their attach points (each with a <c>CutPoint</c> whose +Z leaves the cut face) and the
-    /// <c>Heart</c> where the site's relic rests; the Kestrel trail's loose
-    /// <c>Debris_&lt;Material&gt;_&lt;n&gt;</c> bits beside them; and the three material bundles
-    /// <c>Material_&lt;Material&gt;</c> in Generated/Art/Pickups. Meshes only, M_LowPoly, nothing glows.
+    /// <c>Heart</c> where the site's relic rests, and (M3-18 L1) the depot's, Kestrel's, drill's and garage's tall
+    /// <c>Landmark</c> with its <c>LandmarkPilot</c> lamp (M_LowPolyGlowOff: dark until gameplay lights it once the
+    /// heart is found); the Kestrel trail's loose <c>Debris_&lt;Material&gt;_&lt;n&gt;</c> bits beside them; and the
+    /// three material bundles <c>Material_&lt;Material&gt;</c> in Generated/Art/Pickups. Meshes only, M_LowPoly.
     /// </summary>
     public static class SiteModelBuilder
     {
@@ -21,6 +22,11 @@ namespace MoonProject.Art.Editor
         public const string CutPointName = "CutPoint";
         public const string HeartName = "Heart";
         public const string DragSuffix = "_Drag";
+        public const string LandmarkName = "Landmark";
+        public const string LandmarkPilotName = "LandmarkPilot";
+
+        /// <summary>How far outside the skeleton's back-left corner a landmark stands (metres).</summary>
+        private const float LandmarkClearance = 2f;
 
         /// <summary>The site ids of the contract (site.&lt;id&gt; anchors, Site_&lt;id&gt; prefabs).</summary>
         public static IReadOnlyList<string> Ids => new[] { "depot", "kestrel", "drill", "garage", "lander" };
@@ -35,9 +41,11 @@ namespace MoonProject.Art.Editor
         public static void Build()
         {
             Material material = PaletteAssetBuilder.LoadMaterial();
+            Material glowOff = PaletteAssetBuilder.LoadGlowOffMaterial();
             foreach (string id in Ids)
             {
-                ModelPrefabWriter.Write(GroundOcclusion.Ground(CreateSite(id)), ArtPaths.SitesFolder, material);
+                ModelPrefabWriter.Write(GroundOcclusion.Ground(CreateSite(id)), ArtPaths.SitesFolder, material,
+                    glowOff);
             }
 
             foreach (string name in DebrisNames)
@@ -114,6 +122,17 @@ namespace MoonProject.Art.Editor
             }
 
             root.Add(new ModelNode(HeartName, recipe.Heart));
+            if (SiteLandmarkMeshes.HasLandmark(id))
+            {
+                Bounds skeleton = recipe.Skeleton.Bounds;
+                var foot = new Vector3(skeleton.min.x - LandmarkClearance, 0f, skeleton.min.z - LandmarkClearance);
+                ModelNode landmark = root.Add(new ModelNode(LandmarkName, foot,
+                    new ModelMesh($"{name}_{LandmarkName}", SiteLandmarkMeshes.Landmark(id))));
+                landmark.Add(new ModelNode(LandmarkPilotName, SiteLandmarkMeshes.PilotTop(id), Quaternion.identity,
+                    new ModelMesh($"{name}_{LandmarkPilotName}", SiteLandmarkMeshes.Pilot()),
+                    ModelMaterial.PaletteGlowOff));
+            }
+
             return root;
         }
 

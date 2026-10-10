@@ -75,7 +75,9 @@ namespace MoonProject.Art.Tests
             CollectionAssert.IsEmpty(heart.Children);
 
             List<ModelNode> pieces = Pieces(site);
-            Assert.AreEqual(site.Children.Count - 2, pieces.Count, "only Skeleton, Salvage_* and Heart");
+            int landmarks = SiteLandmarkMeshes.HasLandmark(id) ? 1 : 0;
+            Assert.AreEqual(site.Children.Count - 2 - landmarks, pieces.Count,
+                "only Skeleton, Salvage_*, Heart and the landmark");
             Assert.That(pieces.Count, Is.InRange(MinPieces, MaxPieces));
             Assert.LessOrEqual(pieces.Count(IsDrag), 1, "at most one drag piece");
             for (int i = 0; i < pieces.Count; i++)
@@ -164,6 +166,28 @@ namespace MoonProject.Art.Tests
             ModelNode site = SiteModelBuilder.CreateSite("kestrel");
             float top = site.GetDescendant("Skeleton").Mesh.Geometry.Bounds.max.y;
             Assert.GreaterOrEqual(top, KestrelLandmark, "the base must see Kestrel-3 at 185 m");
+        }
+
+        [TestCaseSource(nameof(Ids))]
+        public void Landmark_StandsTallBesideTheSite_WithADarkPilotOnTop(string id)
+        {
+            ModelNode site = SiteModelBuilder.CreateSite(id);
+            ModelNode landmark = site.GetDescendant(SiteModelBuilder.LandmarkName);
+            Assert.AreEqual(SiteLandmarkMeshes.HasLandmark(id), landmark != null);
+            if (landmark == null)
+            {
+                return;
+            }
+
+            Assert.GreaterOrEqual(landmark.Mesh.Geometry.Bounds.max.y, SiteLandmarkMeshes.MinHeight,
+                "it reads from across the basin");
+            Assert.AreEqual(0f, landmark.LocalPosition.y, "it stands on the ground");
+            Assert.Less(landmark.LocalPosition.z, site.GetDescendant("Skeleton").Mesh.Geometry.Bounds.min.z,
+                "it stands behind the wreck, clear of 07's way in");
+            ModelNode pilot = landmark.GetDescendant(SiteModelBuilder.LandmarkPilotName);
+            Assert.AreEqual(ModelMaterial.PaletteGlowOff, pilot.Material, "dark until the heart is found");
+            CollectionAssert.Contains(MeshChecks.Swatches(pilot.Mesh.Geometry), PaletteSwatch.LampGlass);
+            Assert.Greater(pilot.LocalPosition.y, landmark.Mesh.Geometry.Bounds.max.y - 1f, "the pilot crowns it");
         }
 
         [TestCaseSource(nameof(Ids))]
