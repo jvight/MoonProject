@@ -38,6 +38,10 @@ namespace MoonProject.World
         [Tooltip("Material drawing Earth (Generated/World/M_Earth.mat, shader MoonProject/World/LofiEarth).")]
         [SerializeField] private Material _earthMaterial;
 
+        [Tooltip("Material of the marks pressed into the dust (Generated/World/M_GroundMarks, the rover's track " +
+            "shader).")]
+        [SerializeField] private Material _groundMarkMaterial;
+
         [Tooltip("The beacon on The Peak; placed on the summit and breathed by the beacon settings.")]
         [SerializeField] private PeakBeacon _peakBeacon;
 
@@ -56,6 +60,7 @@ namespace MoonProject.World
         private readonly CanyonGateBuilder _gateBuilder = new CanyonGateBuilder();
         private GameObject _generatedRoot;
         private Mesh _earthMesh;
+        private Mesh _tracksMesh;
 
         public MoonSurface Surface { get; private set; }
 
@@ -136,6 +141,7 @@ namespace MoonProject.World
             LastScatter = _scatterBuilder.Build(_generatedRoot.transform, scatterPlan.GetAwaiter().GetResult(),
                 scatterSettings, _settings.Mesh.ChunkSize, _pebbleRocks, _boulderRocks, _paletteMaterial, hideFlags);
             BuildEarth(hideFlags);
+            BuildWornTracks(hideFlags);
             _peakBeacon.transform.position = Layout.PeakPosition;
             _peakBeacon.Configure(_settings.Beacon);
         }
@@ -162,6 +168,42 @@ namespace MoonProject.World
             meshRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
         }
 
+        /// <summary>07's worn tracks from home out to the places it goes (M3-18 V4), following the ground.</summary>
+        private void BuildWornTracks(HideFlags hideFlags)
+        {
+            GroundMarkSettings settings = _settings.GroundMarks;
+            var marks = new GroundMarkMesh();
+            Vector3 home = Layout.BasePosition;
+            MoonSurface surface = Surface;
+            System.Func<float, float, float> height = (x, z) => surface.Sample(x, z).Height;
+            for (int i = 0; i < settings.Destinations.Length; i++)
+            {
+                string id = settings.Destinations[i];
+                if (!Anchors.TryGet(id, out WorldAnchor anchor))
+                {
+                    Debug.LogError($"{nameof(WorldSystem)}: worn track destination '{id}' is not a world anchor.", this);
+                    continue;
+                }
+
+                var from = new Vector2(home.x, home.z);
+                var to = new Vector2(anchor.Position.x, anchor.Position.z);
+                to -= (to - from).normalized * anchor.Radius;
+                GroundMarks.AddTrack(marks, from, to, settings, Hashing.Mix((uint)(_settings.Seed + i)), height);
+            }
+
+            _tracksMesh = marks.ToMesh("WornTracks");
+            _tracksMesh.hideFlags = hideFlags;
+            var tracks = new GameObject("WornTracks") { hideFlags = hideFlags };
+            tracks.transform.SetParent(_generatedRoot.transform, false);
+            tracks.AddComponent<MeshFilter>().sharedMesh = _tracksMesh;
+            var meshRenderer = tracks.AddComponent<MeshRenderer>();
+            meshRenderer.sharedMaterial = _groundMarkMaterial;
+            meshRenderer.shadowCastingMode = ShadowCastingMode.Off;
+            meshRenderer.receiveShadows = false;
+            meshRenderer.lightProbeUsage = LightProbeUsage.Off;
+            meshRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+        }
+
         private void DestroyGenerated()
         {
             if (_generatedRoot != null)
@@ -173,6 +215,13 @@ namespace MoonProject.World
             {
                 Release(_earthMesh);
             }
+
+            if (_tracksMesh != null)
+            {
+                Release(_tracksMesh);
+            }
+
+            _tracksMesh = null;
 
             _generatedRoot = null;
             _earthMesh = null;
@@ -235,9 +284,10 @@ namespace MoonProject.World
                 return "World Settings is not assigned.";
             }
 
-            if (_groundMaterial == null || _paletteMaterial == null || _earthMaterial == null)
+            if (_groundMaterial == null || _paletteMaterial == null || _earthMaterial == null
+                || _groundMarkMaterial == null)
             {
-                return "Ground Material, Palette Material and Earth Material must be assigned.";
+                return "Ground Material, Palette Material, Earth Material and Ground Mark Material must be assigned.";
             }
 
             string rocks = RockProblem(_pebbleRocks, "Pebble Rocks") ?? RockProblem(_boulderRocks, "Boulder Rocks");
