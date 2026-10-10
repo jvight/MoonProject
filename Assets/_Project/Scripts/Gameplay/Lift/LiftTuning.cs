@@ -59,6 +59,10 @@ namespace MoonProject.Gameplay.Lift
         [Range(0f, 3f)]
         [SerializeField] private float _settleSeconds = 0.8f;
 
+        [Tooltip("How far out (m) over the basin, straight away from the lander, 07 gazes from the deck lookout.")]
+        [Range(5f, 300f)]
+        [SerializeField] private float _lookoutGazeDistance = 80f;
+
         [Header("The ladder look")]
         [Tooltip("Seconds 07 looks up the crew's ladder the first time it comes near.")]
         [Range(0.5f, 6f)]
@@ -93,6 +97,8 @@ namespace MoonProject.Gameplay.Lift
         public float RideSeconds => _rideSeconds;
 
         public float SettleSeconds => _settleSeconds;
+
+        public float LookoutGazeDistance => _lookoutGazeDistance;
 
         public float LadderLookSeconds => _ladderLookSeconds;
 

@@ -288,6 +288,36 @@ namespace MoonProject.Rover
             + "the sky (VISION pillar 6), and hands back on any drive or look input.")]
         [SerializeField] private WideShotSettings _wideShot = new WideShotSettings();
 
+        [Header("Lift lookout and the dock's evening")]
+        [Tooltip("The crew's lift settled at the lander deck: the camera eases out and up to a high wide frame with 07 "
+            + "small at the deck's edge and the basin beyond, held until any input brings the lift down (only the "
+            + "timing, frame, lens, ground fit and breathing fields apply).")]
+        [SerializeField] private WideShotSettings _lookoutShot = new WideShotSettings(6f, 1.6f, 16f, 18f, 0.2f, 6f);
+
+        [Tooltip("How far (deg) the lookout turns off looking straight out from the lander, toward Earth's side, so "
+            + "the camera clears the lander and the deck's edge shares the frame.")]
+        [Range(0f, 120f)]
+        [SerializeField] private float _lookoutSide = 55f;
+
+        [Tooltip("07 parked at its dock after a trip: the camera eases out to a wide shot from the dock looking at "
+            + "home's newly lit lamps, holds, then eases back (only the timing, frame, lens, ground fit and breathing "
+            + "fields apply).")]
+        [SerializeField] private WideShotSettings _eveningShot = new WideShotSettings(4f, 3f, 17f, 8f, 0.26f, 6f);
+
+        [Tooltip("Gap (m) the lookout and evening cameras keep from solid scenery (the lander, the bay) between them "
+            + "and 07: blocked, the frame comes in short of it.")]
+        [Range(0.1f, 2f)]
+        [SerializeField] private float _heldShotClearance = 0.5f;
+
+        [Tooltip("Step (deg) the lookout and evening frames turn either way, when scenery blocks the view, to find a "
+            + "clear one.")]
+        [Range(5f, 60f)]
+        [SerializeField] private float _heldShotYawStep = 25f;
+
+        [Tooltip("Seconds from the evening shot opening until it eases back (any drive or look input ends it early).")]
+        [Range(3f, 30f)]
+        [SerializeField] private float _eveningHoldSeconds = 11f;
+
         [Header("Cinemachine damping")]
         [Tooltip("Orbital follow position damping (x, y, z): high = floaty drone.")]
         [SerializeField] private Vector3 _positionDamping = new Vector3(1.1f, 0.9f, 1.3f);
@@ -450,6 +480,18 @@ namespace MoonProject.Rover
         public float MomentBlendHalfLife => _momentBlendHalfLife;
 
         public WideShotSettings WideShot => _wideShot;
+
+        public WideShotSettings LookoutShot => _lookoutShot;
+
+        public float LookoutSide => _lookoutSide;
+
+        public WideShotSettings EveningShot => _eveningShot;
+
+        public float EveningHoldSeconds => _eveningHoldSeconds;
+
+        public float HeldShotClearance => _heldShotClearance;
+
+        public float HeldShotYawStep => _heldShotYawStep;
 
         public Vector3 PositionDamping => _positionDamping;
 

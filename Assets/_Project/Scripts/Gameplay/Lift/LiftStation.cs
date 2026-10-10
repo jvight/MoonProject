@@ -263,6 +263,7 @@ namespace MoonProject.Gameplay.Lift
                     break;
                 case LiftStep.RideStarted:
                 case LiftStep.Descending:
+                    ClearGaze();
                     _events.Publish(new LiftCued(LiftCue.RideStarted, _platform.position));
                     _events.Publish(new LiftRideChanged(true, false, _platform.position));
                     break;
@@ -270,6 +271,8 @@ namespace MoonProject.Gameplay.Lift
                     _events.Publish(new LiftCued(LiftCue.RideStopped, _platform.position));
                     break;
                 case LiftStep.ReachedTop:
+                    _rig.SetGazeTarget(this, LookoutGaze(), _tuning.GazePriority);
+                    _gazing = true;
                     _events.Publish(new LiftRideChanged(false, true, _platform.position));
                     break;
                 case LiftStep.ReachedBottom:
@@ -361,6 +364,14 @@ namespace MoonProject.Gameplay.Lift
                 _cableRight.gameObject.SetActive(restored);
                 _cableSnapped.gameObject.SetActive(!restored);
             }
+        }
+
+        /// <summary>At the deck lookout 07 gazes out over the basin, straight away from the lander.</summary>
+        private Vector3 LookoutGaze()
+        {
+            Vector3 platform = _platform.position;
+            Vector3 outward = Vector3.ProjectOnPlane(platform - _lander.position, Vector3.up).normalized;
+            return platform + outward * _tuning.LookoutGazeDistance;
         }
 
         /// <summary>The rover spot's place when the platform rests level at the bottom stop.</summary>

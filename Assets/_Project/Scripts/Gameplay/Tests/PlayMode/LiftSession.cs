@@ -28,9 +28,10 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// and a little metal and wiring: 07 rests on the feed pad and the lift is restored (platform level, cable taut,
     /// lamp lit, saved as restored); 07 drives onto the platform and is carried up to the deck, where the lookout
     /// opens; a drive key at the deck brings it back down. A second session greets the ladder as progression does at
-    /// step 8 (07 wakes beside it) and catches 07's look up it, then at the lift (Logs/gameplay-captures/ladder-*.png). Frames from the game camera at each stage go to
-    /// Logs/gameplay-captures/lift-*.png, with lift.md recording 07's height and the lift's phase. Any error in the
-    /// log fails it. Slow and needs a GPU: run on demand with --category LiftSession.
+    /// step 8 (07 wakes beside it) and catches 07's look up it, then at the lift (Logs/gameplay-captures/ladder-*.png).
+    /// Frames from the game camera at each stage go to Logs/gameplay-captures/lift-*.png, with lift.md recording
+    /// 07's height and the lift's phase. Any error in the log fails it. Slow and needs a GPU: run on demand with
+    /// --category LiftSession.
     /// </summary>
     [Explicit("Slow session in the real Main scene; run on demand with --category LiftSession.")]
     [Category("LiftSession")]
@@ -45,7 +46,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float DriveTimeout = 40f;
         private const float StopSpeed = 0.2f;
         private const float StopTimeout = 8f;
-        private const float LookoutSettleSeconds = 4f;
+        private const float LookoutSettleSeconds = 7f;
 
         /// <summary>How far (m) in front of the platform's ramp 07 lines up before it drives on.</summary>
         private const float LineUp = 5f;
