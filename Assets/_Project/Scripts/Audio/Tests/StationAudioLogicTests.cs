@@ -1,6 +1,7 @@
 using System;
 using NUnit.Framework;
 using UnityEngine;
+using MoonProject.Core;
 using MoonProject.Core.Events;
 using Object = UnityEngine.Object;
 
@@ -45,6 +46,28 @@ namespace MoonProject.Audio.Tests
                 Assert.IsTrue(StationSounds.TryGetOneShot(cue, out _), $"{cue} needs a sound in StationSounds");
                 Assert.Less((int)cue, size, $"{cue} fits the beat table");
             }
+        }
+
+        [TestCase(BasePowerStage.Asleep, null)]
+        [TestCase(BasePowerStage.Home, "home")]
+        [TestCase(BasePowerStage.Bay, "bay")]
+        [TestCase(BasePowerStage.Lift, "lift")]
+        public void EachPlaceWaking_PlaysItsPhrase(BasePowerStage stage, string expected)
+        {
+            Assert.AreEqual(expected, BaseWakeSounds.LabelOf(stage));
+        }
+
+        [Test]
+        public void EveryWakingStage_HasAPhrase()
+        {
+            foreach (BasePowerStage stage in (BasePowerStage[])Enum.GetValues(typeof(BasePowerStage)))
+            {
+                Assert.AreEqual(stage == BasePowerStage.Asleep, BaseWakeSounds.LabelOf(stage) == null,
+                    $"{stage} needs a wake phrase in BaseWakeSounds (only Asleep has none)");
+            }
+
+            Assert.AreEqual("base_wake", AudioCueIds.BaseWake);
+            Assert.AreEqual("station_not_yet", AudioCueIds.StationNotYet);
         }
 
         [Test]
