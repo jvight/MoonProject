@@ -100,11 +100,19 @@ namespace MoonProject.Gameplay
         /// </summary>
         public bool HeartRevealed => !_heartUnderPieces || IsPickedClean;
 
-        /// <summary>A relic still waits in its heart (not yet lifted free).</summary>
+        /// <summary>
+        /// A relic still waits in its heart (not yet lifted free) and the heart is revealed: a hidden heart neither
+        /// answers the sonar nor warms the site's answer (M3-16 P10).
+        /// </summary>
         public bool HoldsRelic
         {
             get
             {
+                if (!HeartRevealed)
+                {
+                    return false;
+                }
+
                 for (int i = 0; i < _relics.Count; i++)
                 {
                     if (_relics[i].CanBeLifted)
