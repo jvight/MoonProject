@@ -24,12 +24,13 @@ namespace MoonProject.Tests.PlayMode.Input
             yield return null;
             double entered = TestRunInputGuard.EnterPlayModeTime;
             Assume.That(entered, Is.GreaterThan(0d), "the Input System saw play mode entered");
-            Assert.AreEqual(0d, TestRunInputGuard.ExitEditModeTime, "the guard cleared the edit-mode window");
 
             // The fixture's own clock reaches the old window, as it does after enough frames of a long session.
             currentTime = entered - WindowMargin;
             Set(gamepad.leftStick, Drive);
+            yield return null;
             Assert.AreEqual(Drive.y, gamepad.leftStick.ReadValue().y, 0.05f, "the event reaches the device");
+            Assert.AreEqual(0d, TestRunInputGuard.ExitEditModeTime, "the guard cleared the edit-mode window");
         }
     }
 }
