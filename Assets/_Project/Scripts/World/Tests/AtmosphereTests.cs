@@ -104,10 +104,10 @@ namespace MoonProject.World.Tests
         [Test]
         public void Earthlight_StaysAtOrUnderArtsReferenceLight()
         {
-            // Art darkens bright surfaces until they stay under the bloom threshold in this light: brighter
-            // earthlight would make cream panels glow like lamps.
+            // Art darkens bright surfaces until they stay under its bloom threshold in this light: a brighter
+            // earthlight than the threshold allows would make cream panels glow like lamps.
             Color light = _atmosphere.LightColor.linear * _atmosphere.LightIntensity + _atmosphere.AmbientSky.linear;
-            Color reference = Palette.ReferenceLight;
+            Color reference = ReferenceLight();
             Assert.LessOrEqual(light.r, reference.r + ReferenceTolerance, "red");
             Assert.LessOrEqual(light.g, reference.g + ReferenceTolerance, "green");
             Assert.LessOrEqual(light.b, reference.b + ReferenceTolerance, "blue");
@@ -135,7 +135,7 @@ namespace MoonProject.World.Tests
             // Art caps its surfaces against the earthlight square-on: no face may gather more from both lights.
             Vector3 toLight = WorldAtmosphere.LightSourceDirection(_atmosphere, _sky);
             Vector3 toFill = WorldAtmosphere.FillSourceDirection(_atmosphere, _sky);
-            Color reference = Palette.ReferenceLight;
+            Color reference = ReferenceLight();
             for (float pitch = -90f; pitch <= 90f; pitch += NormalStep)
             {
                 for (float yaw = 0f; yaw < 360f; yaw += NormalStep)
@@ -203,6 +203,15 @@ namespace MoonProject.World.Tests
 
             Assert.Less(brightest, new PostProcessSettings().BloomThreshold,
                 "dust facing the earthlight would bloom; only the warm lights may");
+        }
+
+        /// <summary>
+        /// Art's reference light scaled by how far World's bloom threshold sits above Art's: a surface Art caps just
+        /// under its threshold stays just under World's in this much light.
+        /// </summary>
+        private static Color ReferenceLight()
+        {
+            return Palette.ReferenceLight * (new PostProcessSettings().BloomThreshold / Palette.BloomThreshold);
         }
 
         private Color Earthlight()

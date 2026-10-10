@@ -13,9 +13,11 @@ namespace MoonProject.World
     public sealed class PostProcessSettings
     {
         [Header("Bloom")]
-        [Tooltip("Brightness above which pixels bloom. Palette emissives (lamps, eye, Earth) sit just above it.")]
+        [Tooltip("Brightness above which pixels bloom. It scales with the earthlight: Art caps lit surfaces just under " +
+            "its own threshold in its reference light, so a key that much brighter needs a threshold that much " +
+            "higher. Palette emissives (lamps, eye, Earth) sit above it.")]
         [Range(0f, 2f)]
-        [SerializeField] private float _bloomThreshold = 1f;
+        [SerializeField] private float _bloomThreshold = 1.25f;
 
         [Tooltip("Bloom strength. Soft: a glow, not a flare.")]
         [Range(0f, 3f)]
