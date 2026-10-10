@@ -94,6 +94,11 @@ Không mở rộng nội dung khi phần nhìn của phase hiện tại chưa ch
 - Audio đợt 3: radio rè bật lúc `RoverAwoke`; âm "nhấc bổng" khi `RoverRecovering`; hạ tiếng động cơ khi `PauseChanged`; mỗi relic đáp sonar bằng nốt riêng (cần thêm `RelicId` vào `RelicAnswered`).
 - Camera blend chậm khi relic trồi lên / khi nâng cấp tháp (rover).
 - World chuyển đá cuội sang `RockStyle.Grit` (16–20 tam giác) của art.
+- Từ kịch bản trọn game (`docs/design/game-flow.md` §8, 2026-10-11):
+  - 0.5 nếu rẻ, sau Playthrough bước 0–8: khi Continue, Tilly đã tìm thấy một ánh lấp lánh mới gần nhà qua đêm, và cảnh thức ngắn nhìn về phía đó (gameplay + rover).
+  - 0.6: "hốc tối" gần hố Kestrel (ống dung nham ngắn, tối cho tới khi có Warm Headlamp, chứa nhật ký đầu tiên của Theo và một băng) để Headlamp mở được một bí mật (world + art + gameplay).
+  - Bốn ô cửa sổ giường tầng của phi hành đoàn là renderer riêng, tối cho tới khi bộ kỷ vật của người đó đầy (art; world thắp ở M3-09).
+  - 0.8: tia của 07 đặt băng của Ro vào máy Bell trước lần leo cuối; chuỗi cột relay đưa bài hát lên chảo lớn.
 - Sau 0.4 (từ báo cáo các phiên, 2026-10-09):
   - Chuyển `PrefabWriter` / `HierarchyComparison` của rover vào `Editor/Builders` dùng chung, để mọi builder prefab chỉ lưu khi đổi (rover).
   - Mỗi người bạn có độ nâng nhãn tên riêng: tên Bell đang đè lên mặt cô (ui). Ảnh `42_site_name` của UiCapture không hiện tên khu (ui).
@@ -111,9 +116,9 @@ Không mở rộng nội dung khi phần nhìn của phase hiện tại chưa ch
 | M3-04 | Vùng **Whispering Canyon** (mở bằng Hover-Jump) + bí mật nhìn thấy được từ căn cứ — world 🟩 (khe 18,5 m, lối ra một chiều); còn: nội dung gameplay, âm thanh hẻm, trang trí miệng hẻm (art) | world + art + gameplay + audio | 🟩 |
 | M3-05 | **Bell** + núm dò đài (3 đài) + tín hiệu của Bell (dẫn đường tới thứ chưa tìm) + 3 băng cassette (bài mới + ghi chú của Ro) — đặc tả `docs/features/M3-05-bell-radio-cassettes.md` | art + gameplay + music + audio + ui | 🟩 |
 | M3-06 | **Mạng tiếp sóng**: sửa các cột relay tắt của trạm → vùng phủ sóng lan dần (radio rõ, sonar xa hơn, "radio-hop" giữa các cột đã sáng, bản đồ tự vẽ); căn cứ ấm dần (đặc tả `docs/features/M3-06-relay-network.md`) | world + art + gameplay + audio + ui | 🟩 |
-| M3-07 | Bản đồ vẽ tay ghim trong lander (tự vẽ trong vùng phủ sóng của M3-06) | ui | ⬜ |
+| M3-07 | Bản đồ vẽ tay ghim trong lander (tự vẽ trong vùng phủ sóng của M3-06) — đặc tả `docs/features/M3-07-crew-map.md` (duyệt 2026-10-11) | gameplay + ui + world + art + rover + audio | ⬜ sau thang nâng |
 | M3-08 | "Mặt Trăng trôi khi bạn vắng mặt": mưa sao băng (scrap mới), tín hiệu mới — không FOMO | gameplay | ⬜ |
-| M3-09 | Màn hình tiêu đề (Continue/Settings), bộ sưu tập hiển thị ở căn cứ | ui | ⬜ |
+| M3-09 | Màn hình tiêu đề là chính thế giới (Continue / New Game / Settings / Quit), mỗi bộ sưu tập có chỗ ở căn cứ — đặc tả `docs/features/M3-09-title-collections.md` (duyệt 2026-10-11) | app + ui + rover + gameplay + art + world + audio | ⬜ |
 | M3-10 | **Cô đơn & bình yên — đợt trau chuốt không khí** (trụ cột 6 trong VISION): hình (chân trời xa mờ, tương phản sáng tối, bóng dài, bầu trời sống, grading/bloom/vignette/grain) · camera (lùi ra toàn cảnh khi đứng yên, bụi lơ lửng trong đèn 07) · âm thanh (radio mỏng dần theo khoảng cách → gần như im lặng, tiếng máy nhỏ của 07) | world + rover + audio | 🟩 |
 | M3-11 | **Tiến trình nhìn thấy được** (luật 11): mỗi nâng cấp có một bộ phận hiện trên 07 — bánh to có gai (Magnetic Treads), giỏ hàng sau (Cargo Cradle), chảo/ăng-ten lớn (Wide Sonar), giàn đèn có lồng (Warm Headlamp), hai trống tụ điện (Boost Coils); quà của bạn bè chữa dần "dấu hiệu cô đơn" (ô pin mặt trời, vá sơn, số 07 sơn lại); khoảnh khắc lắp đặt ở bàn Kenji (đặc tả `docs/features/M3-11-visible-progression.md`: Warm Headlamp, Boost Coils, Cargo Cradle + quà của bạn bè + khoảnh khắc lắp đặt) | art + rover + gameplay | 🟩 |
 | M3-12 | **Bỏ hoang lâu năm → được chăm lại** (luật 12): bộ "phong hoá" low-poly (sơn phai, gỉ chảy từ đinh tán, bụi dồn chân, dây chùng, biển nghiêng) cho lander, tháp, xưởng, kệ, cột relay và cả 07; kiến trúc cho xe: thang nâng tời cạnh thang người ở lander, dốc lên mọi bệ, bệ sạc/đỗ của 07 thay tấm thảm; mỗi bước khôi phục làm sạch một phần căn cứ | art + gameplay + world | 🟩 |

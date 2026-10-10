@@ -1,6 +1,6 @@
-# M3-09: Title screen and collections at the base (draft)
+# M3-09: Title screen and collections at the base
 
-> Draft by the game design session for the Director. Not adopted until the Director moves it to `docs/features/`.
+> **Approved by the Director on 2026-10-11** (drafted by the game design and story & flow sessions).
 > ROADMAP 0.5: "title screen (New Game / Continue / Settings), collections shown at the base".
 > Today:
 > - the game opens straight into play, with a "Lofi Lunar" wordmark drifting in over the wake (`UI/Hud/TitleCard`,
