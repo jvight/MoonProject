@@ -56,6 +56,17 @@ namespace MoonProject.Gameplay
         [Tooltip("The kit fitted in the bay first (step 5); its blueprint is pinned on Kenji's board from the start.")]
         [SerializeField] private string _firstKit = "rover.hover_jump";
 
+        [Header("The chasm before the bay (P2)")]
+        [Tooltip("07 has looked across the chasm once it comes this many metres (horizontal) from the lip without " +
+                 "Hover-Jump.")]
+        [Range(3f, 60f)] [SerializeField] private float _chasmLookRadius = 14f;
+
+        [Tooltip("Seconds 07 holds still and looks across at Bell's light.")]
+        [Range(1f, 10f)] [SerializeField] private float _chasmLookSeconds = 3.5f;
+
+        [Tooltip("Brightness of Bell's warm pillar when Tilly spots it and when it pulses as 07 looks across.")]
+        [Range(0.1f, 2f)] [SerializeField] private float _bellLightBrightness = 0.8f;
+
         [Header("Blueprints")]
         [Tooltip("Where the other kits' blueprint tubes lie: each in a salvage site's heart, found with its relic.")]
         [SerializeField] private BlueprintTube[] _tubes =
@@ -71,7 +82,8 @@ namespace MoonProject.Gameplay
         [SerializeField] private TowerPart[] _towerParts =
         {
             new TowerPart("Part_TowerCoil", 1, TowerPartSource.SiteHeart, "site.depot", Vector2.zero),
-            new TowerPart("Part_Transformer", 2, TowerPartSource.SiteHeart, "site.garage", new Vector2(0f, 1.3f)),
+            new TowerPart("Part_Transformer", 2, TowerPartSource.SiteHeart, "site.garage", new Vector2(0f, 1.3f),
+                true),
             new TowerPart("Part_RelaySpare", 3, TowerPartSource.FirstRestoredMast, string.Empty, Vector2.zero),
         };
 
@@ -101,6 +113,12 @@ namespace MoonProject.Gameplay
         [Range(0.05f, 3f)] [SerializeField] private float _plotterLampEase = 0.4f;
 
         public float WakeDistance => _wakeDistance;
+
+        public float ChasmLookRadius => _chasmLookRadius;
+
+        public float ChasmLookSeconds => _chasmLookSeconds;
+
+        public float BellLightBrightness => _bellLightBrightness;
 
         public float PlotterReach => _plotterReach;
 

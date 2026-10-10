@@ -283,6 +283,64 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator Chasm_TillySpotsBellsLight_07LooksAcrossFromTheLip_ThenTheTransformerShows()
+        {
+            _fixture = GameplayFixture.Boot(_controls);
+            yield return null;
+            GameplaySystem gameplay = _fixture.Gameplay;
+            BaseProgression progression = gameplay.Progression;
+            TowerPartField field = gameplay.TowerPartField;
+            Friend tilly = FindFriend("tilly");
+            Friend bell = FindFriend("bell");
+            Assert.IsFalse(field.IsResting(1), "the garage's transformer waits for the chasm (P2)");
+            Assert.IsFalse(bell.Progress.Discovered);
+
+            tilly.Progress.Restore(new FriendSaveData { id = "tilly", state = (int)FriendState.Awake, parts = -1,
+                items = -1 });
+            HomeBase home = gameplay.Home;
+            Vector3 towardPad = (Vector3.zero - home.ShelfPosition).normalized;
+            Loose(Duck, home.ShelfPosition + towardPad * 3f + Vector3.up * 0.6f);
+            yield return new WaitForSeconds(_fixture.BaseTuning.DepositDuration + 0.5f);
+            Assert.AreEqual(1, home.DisplayedCount, "the first memory is on the shelf");
+            Assert.IsTrue(bell.Progress.Discovered, "Tilly spots Bell's light across the chasm");
+            Assert.IsFalse(progression.ChasmSeen);
+
+            Assert.IsTrue(_fixture.Bootstrap.Context.Get<IWorldAnchors>()
+                .TryGet(WorldAnchorIds.CanyonLip, out WorldAnchor lip));
+            _fixture.Rover.Place(lip.Position - lip.Forward * 5f, Yaw(Flat(lip.Forward)));
+            yield return null;
+            yield return null;
+            Assert.IsTrue(progression.ChasmSeen, "07 reached the lip without Hover-Jump");
+            Assert.IsTrue(progression.LookingAcross, "it looks across at Bell's light");
+            Assert.AreEqual(1, _fixture.Rover.HoldStillCount, "holding still while it looks");
+            yield return new WaitForSeconds(_fixture.ProgressionTuning.ChasmLookSeconds + 0.5f);
+            Assert.IsFalse(progression.LookingAcross);
+            Assert.AreEqual(0, _fixture.Rover.HoldStillCount, "then it is free to drive");
+            Assert.IsTrue(field.IsResting(1), "now Tilly spots the transformer in the garage's heart");
+
+            _fixture.Rover.Place(lip.Position - lip.Forward * 30f, 0f);
+            yield return null;
+            _fixture.Rover.Place(lip.Position - lip.Forward * 5f, 0f);
+            yield return null;
+            yield return null;
+            Assert.IsFalse(progression.LookingAcross, "the look happens once");
+        }
+
+        private Friend FindFriend(string id)
+        {
+            foreach (Friend friend in _fixture.Gameplay.Friends.Friends)
+            {
+                if (friend.Id == id)
+                {
+                    return friend;
+                }
+            }
+
+            Assert.Fail($"no friend '{id}' in the fixture");
+            return null;
+        }
+
+        [UnityTest]
         public IEnumerator Bay_SellsItsKitInOrderOnItsTurntable_07FeedsItsHopper_ThenItFits_AndGrantsItAgainOnLoad()
         {
             string slot = BootstrapHarness.NewTestSlot();

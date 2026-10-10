@@ -279,6 +279,17 @@ namespace MoonProject.Gameplay
             _markers[SiteMarkerStart + siteIndex].Answer(site.Position, brightness, Time.time);
         }
 
+        /// <summary>
+        /// A spotter friend saw friend <paramref name="friendIndex"/>'s light from afar (M3-16 P2): its warm pillar
+        /// rises without a ping, and rises again (a pulse) each time this is called.
+        /// </summary>
+        internal void RevealFriend(int friendIndex, float brightness)
+        {
+            Friend friend = _friends.Friends[friendIndex];
+            friend.Progress.MarkDiscovered();
+            _markers[_relics.Relics.Count + friendIndex].Answer(friend.Site.Position, brightness, Time.time);
+        }
+
         private void Answer(int index, float distance, float now)
         {
             Vector3 position;
