@@ -4,6 +4,29 @@ Read this, then `CLAUDE.md`, then `docs/VISION.md`, `docs/DESIGN.md`, `docs/ARCH
 It records how the project is run, where it stands, and what comes next, so a new Director session (on any
 account) can continue without the old conversation.
 
+## 0. FINAL STATE when the old account hit its limit (2026-10-10 ~23:58)
+- **main e8066680** holds the 0.5 first batch and docs. It is NOT verified and NOT pushed (origin is at 370bfc9c, 53
+  commits behind). Push only after `director.py verify --push` passes; try `--parallel`.
+- **Box tips and uncommitted work.** The sessions were stopped mid-turn, so worktrees can hold uncommitted, unfinished
+  edits. Review each `git status` before continuing: finish and commit, or discard.
+
+  | Box | Tip | Uncommitted files | Latest |
+  |---|---|---|---|
+  | art | 2cf00c36 | 3 | the tower's three story parts (P1); before that the garage fix 413f532 and the QA pass eb423a5. Next: the lift's OUT OF ORDER tag |
+  | gameplay | c0ed4f94 | 12 | P7 plotter delivery. In progress: BlueprintsCarriedRestored, the Playthrough with art 413f532, pads, P1 |
+  | rover | 7bf4f722 | 10 | the lift cycle (dormant → restored) in Gameplay/Lift; the tube on 07's back (0579f46b). Next: the ladder look with lift framing, the ride and the lookout |
+  | ui | 90f48074 | 3 | P8 (the next line waits 2 min); blueprint lines. Its PlayMode batch was still running |
+  | audio | 7da01984 | 0 | lift, plotter, chime and evening sounds; tests confirmed. Next: wire DockEveningOpened |
+  | world | 1f93d242 | 0 | cables and the tower pilot; re-run the wake capture (commands below) |
+
+- **First moves for the new Director:**
+  1. Run `python tools/director.py status`.
+  2. Clean or commit each worktree.
+  3. Land boxes as they reach clean, tested tips.
+  4. Re-run the golden-path Playthrough with gameplay and art.
+  5. Run `verify --parallel --push`.
+  6. Ask the game-design session to review the merged 0.5 once it plays end to end.
+
 ## 1. Where it stands (updated 2026-10-10 evening, account at ~95% of its weekly limit)
 - **Shipped and pushed:**
   - 0.4.0: 50990e8.
