@@ -7,13 +7,17 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// <summary>
     /// Stands in for the Rover domain: a kinematic body the test moves directly, with an eye (TetherOrigin), a cargo
     /// socket, a cargo seat on its back (fitted with the Cargo Cradle ability) and a following camera. Registers
-    /// IRoverState, IRoverRig, IViewCamera, IRoverAbilities, IRoverPlacement and IRoverCargoSeat, and records every
+    /// IRoverState, IRoverRig, IViewCamera, IRoverAbilities, IRoverPlacement, IRoverCargoSeat and IRoverStillness
+    /// (counting up while it stands still, as the Rover does; any move or placement resets it), and records every
     /// gaze and hold-still request, every ability granted and every placement so tests can assert 07's attention,
     /// upgrades and radio-hops.
     /// </summary>
     public sealed class GameplayFakeRover : MonoBehaviour, IGameSystem, IRoverState, IRoverRig, IViewCamera,
-        IRoverAbilities, IRoverPlacement, IRoverCargoSeat
+        IRoverAbilities, IRoverPlacement, IRoverCargoSeat, IRoverStillness
     {
+        /// <summary>Below this speed (m/s) the fake stands still.</summary>
+        private const float StillSpeed = 0.05f;
+
         private readonly Dictionary<object, GazeRequest> _gaze = new Dictionary<object, GazeRequest>();
         private readonly HashSet<object> _holders = new HashSet<object>();
         private readonly HashSet<RoverAbility> _abilities = new HashSet<RoverAbility>();
@@ -32,6 +36,8 @@ namespace MoonProject.Gameplay.PlayModeTests
         public Vector3 Velocity { get; private set; }
 
         public float Speed => new Vector3(Velocity.x, 0f, Velocity.z).magnitude;
+
+        public float StillSeconds { get; private set; }
 
         public float NormalizedSpeed => Mathf.Clamp01(Speed / 8f);
 
@@ -94,6 +100,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             context.Register<IViewCamera>(this);
             context.Register<IRoverAbilities>(this);
             context.Register<IRoverPlacement>(this);
+            context.Register<IRoverStillness>(this);
             if (_registersCargoSeat)
             {
                 context.Register<IRoverCargoSeat>(this);
@@ -117,6 +124,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             transform.SetPositionAndRotation(position, Quaternion.Euler(0f, yaw, 0f));
             _lastPosition = position;
             Velocity = Vector3.zero;
+            StillSeconds = 0f;
         }
 
         public void PlaceAt(Vector3 position, Quaternion rotation)
@@ -246,6 +254,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             _lastPosition = transform.position;
+            StillSeconds = Speed < StillSpeed ? StillSeconds + deltaTime : 0f;
         }
 
         private readonly struct GazeRequest
