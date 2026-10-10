@@ -96,23 +96,23 @@
         },
         {
             "key": "next.relic",
-            "text": "Something glints out there. Bring it home."
+            "text": "Something glints out there. Home has room for it."
         },
         {
             "key": "next.bay",
-            "text": "The bay has power. Park on the turntable."
+            "text": "The bay has power. The turntable is waiting."
         },
         {
             "key": "next.leap",
-            "text": "The chasm waits. Charge a leap."
+            "text": "The chasm waits. A charged leap could clear it."
         },
         {
             "key": "next.relay",
-            "text": "A dark mast. Bring it back."
+            "text": "A dark mast, waiting to be lit."
         },
         {
             "key": "next.lift",
-            "text": "The lift has power. Mend it and ride up."
+            "text": "The lift has power. Mended, it could carry 07 up."
         },
         {
             "key": "notyet.tower",
@@ -604,7 +604,7 @@
         },
         {
             "key": "ticker.relay.waiting",
-            "text": "Relay restored. It is listening for a lit neighbour."
+            "text": "Relay restored. It listens for a lit neighbour."
         },
         {
             "key": "hop.node.home",
