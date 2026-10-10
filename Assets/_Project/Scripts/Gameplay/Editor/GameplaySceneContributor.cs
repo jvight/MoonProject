@@ -289,8 +289,8 @@ namespace MoonProject.Gameplay.Editor
         }
 
         /// <summary>
-        /// The crew's lift on the lander: its platform made a kinematic deck 07 can ride (a box over the platform mesh
-        /// on the Prop layer, which 07 drives on), and the art nodes the station moves and lights.
+        /// The crew's lift on the lander: its platform made a kinematic deck 07 can ride (on the Prop layer, which 07
+        /// drives on), and the art nodes the station moves and lights.
         /// </summary>
         private static void WireLift(LiftStation station, LiftTuning tuning, RadioTowerTuning looks, Transform lander,
             Transform platform, Transform dock)
@@ -301,18 +301,51 @@ namespace MoonProject.Gameplay.Editor
                                                     + "contract).");
             }
 
+            Transform spot = Child(platform, "RoverSpot");
             platform.gameObject.layer = Layers.Prop;
-            var box = platform.gameObject.AddComponent<BoxCollider>();
-            box.center = deck.sharedMesh.bounds.center;
-            box.size = deck.sharedMesh.bounds.size;
+            AddDeckColliders(platform, deck.sharedMesh.bounds, spot.localPosition.y);
             var body = platform.gameObject.AddComponent<Rigidbody>();
             body.isKinematic = true;
             body.interpolation = RigidbodyInterpolation.Interpolate;
-            station.Wire(tuning, looks, lander, platform, body, Child(platform, "RoverSpot"),
+            station.Wire(tuning, looks, lander, platform, body, spot,
                 Child(lander, "LiftBottom"), Child(lander, "LiftTop"), Child(lander, "LiftCable_L"),
                 Child(lander, "LiftCable_R"), Child(lander, BaseModelBuilder.LiftSnappedCableName),
                 Renderer(Child(lander, BaseModelBuilder.WinchLampName)),
                 Child(lander, BaseModelBuilder.LiftHopperMouthName), dock, BaseModelBuilder.LiftCableBuiltLength);
+        }
+
+        /// <summary>
+        /// The platform's solid deck: a slab from the deck's surface (where 07's RoverSpot rests) down to the mesh's
+        /// foot, and a ramp from the deck's front edge down to the tip of the mesh's front wedge, so 07 drives up onto
+        /// it. The railings and carriage stay visual only: a box over the whole mesh would be a block 07 cannot climb.
+        /// The deck is symmetric front to back, so its front edge mirrors its back one (the mesh's back).
+        /// </summary>
+        private static void AddDeckColliders(Transform platform, Bounds mesh, float surface)
+        {
+            float back = mesh.min.z;
+            float front = -back;
+            float rise = surface - mesh.min.y;
+            float run = mesh.max.z - front;
+            if (rise <= 0f || run <= 0f)
+            {
+                throw new InvalidOperationException($"Gameplay scene build: LiftPlatform's mesh has no deck under "
+                                                    + $"its RoverSpot or no front ramp (bounds {mesh}).");
+            }
+
+            var slab = platform.gameObject.AddComponent<BoxCollider>();
+            slab.center = new Vector3(mesh.center.x, surface - rise * 0.5f, 0.5f * (back + front));
+            slab.size = new Vector3(mesh.size.x, rise, front - back);
+
+            var ramp = new GameObject("LiftRamp").transform;
+            ramp.SetParent(platform, false);
+            ramp.gameObject.layer = Layers.Prop;
+            float slope = Mathf.Atan2(rise, run);
+            ramp.localRotation = Quaternion.Euler(slope * Mathf.Rad2Deg, 0f, 0f);
+            float thickness = rise * Mathf.Cos(slope);
+            Vector3 middle = new Vector3(mesh.center.x, surface - rise * 0.5f, front + run * 0.5f);
+            ramp.localPosition = middle - ramp.localRotation * Vector3.up * (thickness * 0.5f);
+            var incline = ramp.gameObject.AddComponent<BoxCollider>();
+            incline.size = new Vector3(mesh.size.x, thickness, Mathf.Sqrt(rise * rise + run * run));
         }
 
         private static T Part<T>(SceneBuildContext context, GameObject host, string name) where T : Component

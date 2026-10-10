@@ -46,16 +46,19 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float StopTimeout = 8f;
         private const float LookoutSettleSeconds = 4f;
 
+        /// <summary>How far (m) in front of the platform's ramp 07 lines up before it drives on.</summary>
+        private const float LineUp = 5f;
+
         /// <summary>07 is carried: its height at the top within this of the deck's (m).</summary>
         private const float CarriedTolerance = 0.6f;
 
         // The tower at its third level (the lift stage) and enough metal and wiring for the winch, in Core's envelope
-        // and Gameplay's upgrades (version 1) and materials (version 2) section formats.
+        // and Gameplay's upgrades (version 1) and wallet ("gameplay.wallet", version 2) section formats.
         private const string LiftPoweredSave =
             "{\"formatVersion\":1,\"contentVersion\":\"0.5.0\",\"savedAtUtc\":\"2026-10-10T00:00:00Z\"," +
             "\"sections\":[{\"key\":\"gameplay.upgrades\",\"version\":1,\"json\":\"{\\\"upgrades\\\":[" +
             "{\\\"id\\\":\\\"radio_tower\\\",\\\"level\\\":3}]}\"}," +
-            "{\"key\":\"gameplay.materials\",\"version\":2,\"json\":\"{\\\"metal\\\":12,\\\"wiring\\\":12," +
+            "{\"key\":\"gameplay.wallet\",\"version\":2,\"json\":\"{\\\"metal\\\":12,\\\"wiring\\\":12," +
             "\\\"optics\\\":4}\"}]}";
 
         private readonly List<string> _problems = new List<string>();
@@ -120,6 +123,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             bool atLookout = false;
             using (_context.Events.Subscribe<LiftRideChanged>(ride => atLookout = ride.AtLookout))
             {
+                yield return DriveTo(lift.RideSpot - lift.RideHeading * LineUp, BoardRadius, "the ramp's foot");
                 yield return DriveTo(lift.RideSpot, BoardRadius, "the platform");
                 float bottom = _rover.Position.y;
                 yield return WaitFor(lift, LiftPhase.Top, "Resting on the platform carries 07 up to the deck.");

@@ -77,6 +77,9 @@ namespace MoonProject.Gameplay.Lift
         /// <summary>Where 07 rests on the platform to ride it, at the bottom stop.</summary>
         public Vector3 RideSpot => _ridePad.Centre;
 
+        /// <summary>The way 07 faces parked on the platform (it drives on along it, up the platform's ramp).</summary>
+        public Vector3 RideHeading => _lander.rotation * _roverSpot.localRotation * Vector3.forward;
+
         /// <summary>Where the rover spot stands with the platform at the top stop, by the deck.</summary>
         public Vector3 TopSpot => _lander.TransformPoint(_top.localPosition + _roverSpot.localPosition);
 
