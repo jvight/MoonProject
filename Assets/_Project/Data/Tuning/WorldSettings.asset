@@ -333,6 +333,9 @@ MonoBehaviour:
     _ambientGround: {r: 0.06, g: 0.055, b: 0.12, a: 1}
     _fogColor: {r: 0.27, g: 0.21, b: 0.45, a: 1}
     _fogDensity: 0.002
+  _homeLighting:
+    _wakeStagger: 1.2
+    _wakeFade: 2.4
   _postProcessing:
     _bloomThreshold: 1
     _bloomIntensity: 1.1
