@@ -60,7 +60,7 @@ namespace MoonProject.World
         // The antenna farm stands at about 270 degrees, 120 m out (the level review's L7), on a small clear patch.
         private const float AntennaFarmBearing = 270f;
         private const float AntennaFarmDistance = 120f;
-        private const float AntennaFarmRadius = 9f;
+        private const float AntennaFarmRadius = 6f;
 
         private readonly WorldAnchor[] _anchors;
         private readonly Dictionary<string, int> _byId = new Dictionary<string, int>(StringComparer.Ordinal);
