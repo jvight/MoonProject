@@ -17,5 +17,8 @@ namespace MoonProject.Gameplay
 
         /// <summary>No upgrade with that id.</summary>
         Unknown = 4,
+
+        /// <summary>A kit whose blueprint is not pinned on Kenji's board yet (docs/features/M3-16).</summary>
+        NotPinned = 5,
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace MoonProject.Gameplay
@@ -52,8 +53,17 @@ namespace MoonProject.Gameplay
         [Tooltip("The friend brought home over the chasm (step 6).")]
         [SerializeField] private string _leapFriend = "bell";
 
-        [Tooltip("The kit fitted in the bay first (step 5).")]
+        [Tooltip("The kit fitted in the bay first (step 5); its blueprint is pinned on Kenji's board from the start.")]
         [SerializeField] private string _firstKit = "rover.hover_jump";
+
+        [Header("Blueprints")]
+        [Tooltip("Where the other kits' blueprint tubes lie: each in a salvage site's heart, found with its relic.")]
+        [SerializeField] private BlueprintTube[] _tubes =
+        {
+            new BlueprintTube("rover.cargo_cradle", "site.garage"),
+            new BlueprintTube("rover.warm_headlamp", "site.kestrel"),
+            new BlueprintTube("rover.boost_coils", "site.drill"),
+        };
 
         public float WakeDistance => _wakeDistance;
 
@@ -64,6 +74,8 @@ namespace MoonProject.Gameplay
         public string LeapFriend => _leapFriend;
 
         public string FirstKit => _firstKit;
+
+        public IReadOnlyList<BlueprintTube> Tubes => _tubes;
 
         /// <summary>The first-approach radius of the place <paramref name="placeId"/>.</summary>
         public float RadiusOf(string placeId)

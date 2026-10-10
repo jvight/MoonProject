@@ -303,7 +303,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(1, _fixture.Events.UpgradePurchased[0].Value.Level);
             Assert.IsTrue(_fixture.Rover.Has(RoverAbility.HoverJump), "07 can leap now");
             Assert.Greater(bay.PadLevel, look.Occupied, "the purchase flares the pad");
-            Assert.AreSame(_fixture.CargoCradleUpgrade, bay.Definition, "then the bay offers the Cargo Cradle");
+            Assert.AreSame(_fixture.HoverJumpUpgrade, bay.Definition, "no other blueprint yet: it rests on Hover-Jump");
+            _fixture.Gameplay.Blueprints.Restore(new[] { _fixture.CargoCradleUpgrade.Id });
+            Assert.AreSame(_fixture.CargoCradleUpgrade, bay.Definition, "the Cargo Cradle's sheet pinned, it offers it");
             Assert.IsTrue(_fixture.Gameplay.Hints.TryGet(InteractionKind.Upgrade, out hint));
             Assert.IsFalse(hint.Ready, "4 metal it does not have yet");
             Assert.AreEqual(PurchaseResult.Maxed, shop.Purchase(HoverJump));
@@ -380,6 +382,8 @@ namespace MoonProject.Gameplay.PlayModeTests
                 _fixture.CargoCradleUpgrade, _fixture.WarmHeadlampUpgrade, _fixture.BoostCoilsUpgrade,
             };
             RoverAbility[] abilities = { RoverAbility.CargoCradle, RoverAbility.WarmHeadlamp, RoverAbility.BoostCoils };
+            Assert.AreEqual(PurchaseResult.NotPinned, shop.Purchase(kit[1].Id), "no blueprint, no kit (M3-16)");
+            _fixture.Gameplay.Blueprints.Restore(new[] { kit[0].Id, kit[1].Id, kit[2].Id });
             for (int i = 0; i < kit.Length; i++)
             {
                 Assert.AreSame(kit[i], bay.Definition, "the bay offers its kit in order");

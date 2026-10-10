@@ -652,4 +652,25 @@ namespace MoonProject.Core.Events
 
         public float Distance { get; }
     }
+
+    /// <summary>
+    /// 07 scanned a blueprint tube in a salvage site's heart (docs/features/M3-16 "Blueprints"): the kit
+    /// <see cref="KitId"/> is pinned on Kenji's board and the bay can build it from now on.
+    /// </summary>
+    public readonly struct BlueprintFound
+    {
+        public BlueprintFound(string kitId, string siteId, Vector3 position)
+        {
+            KitId = kitId;
+            SiteId = siteId;
+            Position = position;
+        }
+
+        public string KitId { get; }
+
+        /// <summary>The salvage site whose heart held the tube ("site.garage", ...).</summary>
+        public string SiteId { get; }
+
+        public Vector3 Position { get; }
+    }
 }

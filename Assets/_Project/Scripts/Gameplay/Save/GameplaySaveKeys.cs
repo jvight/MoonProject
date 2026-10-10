@@ -35,5 +35,7 @@ namespace MoonProject.Gameplay
         public const int SalvageVersion = 1;
         public const string Progression = "gameplay.progression";
         public const int ProgressionVersion = 1;
+        public const string Blueprints = "gameplay.blueprints";
+        public const int BlueprintsVersion = 1;
     }
 }

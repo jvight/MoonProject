@@ -12,12 +12,16 @@ namespace MoonProject.Gameplay
         private readonly UpgradeService _service;
         private readonly IUpgradeStation[] _stations;
         private readonly ISaveService _save;
+        private readonly IBlueprintBoard _board;
 
-        public UpgradeShop(UpgradeService service, IUpgradeStation[] stations, ISaveService save)
+        /// <param name="board">Kenji's board: a kit is built only once its blueprint is pinned.</param>
+        public UpgradeShop(UpgradeService service, IUpgradeStation[] stations, ISaveService save,
+            IBlueprintBoard board)
         {
             _service = service ?? throw new ArgumentNullException(nameof(service));
             _stations = stations ?? throw new ArgumentNullException(nameof(stations));
             _save = save ?? throw new ArgumentNullException(nameof(save));
+            _board = board ?? throw new ArgumentNullException(nameof(board));
         }
 
         public bool IsAtStation => StationUpgrade != null;
@@ -60,6 +64,11 @@ namespace MoonProject.Gameplay
             if (definition == null)
             {
                 return PurchaseResult.Unknown;
+            }
+
+            if (!_board.IsPinned(upgradeId))
+            {
+                return PurchaseResult.NotPinned;
             }
 
             for (int i = 0; i < _stations.Length; i++)

@@ -67,6 +67,9 @@ namespace MoonProject.Gameplay
         /// <summary>How far power has come back through the base (docs/features/M3-16).</summary>
         public BasePower Power { get; private set; }
 
+        /// <summary>Kenji's blueprint board: which kits the bay can build (docs/features/M3-16).</summary>
+        public Blueprints Blueprints { get; private set; }
+
         public SalvageField Salvage => _salvage;
 
         public RelicField Relics => _relics;
@@ -159,6 +162,12 @@ namespace MoonProject.Gameplay
             Upgrades = new UpgradeService(context.Events, Materials, abilities, _upgradeDefinitions);
             Radio = new RadioProgram(context.Events, _cassettes.Catalog.Ids());
             Power = new BasePower(context.Events);
+            Blueprints = NewBlueprints(context.Events);
+            if (Blueprints == null)
+            {
+                enabled = false;
+                return;
+            }
 
             Vector3 lander = HomeBase.LanderSpot(services.Terrain, services.Layout.BasePosition, _home.Tuning);
             if (!_salvage.Initialize(services) || !_relics.Initialize(services, _salvage) ||
@@ -167,7 +176,7 @@ namespace MoonProject.Gameplay
                 !_home.Initialize(services, _relics, _tether, Upgrades) ||
                 !_cradle.Initialize(services, seat, _relics, _home) ||
                 !_tower.Initialize(services, Upgrades, _salvage.Catalog) ||
-                !_workshop.Initialize(services, Upgrades, _salvage.Catalog, _tower, Power) ||
+                !_workshop.Initialize(services, Upgrades, _salvage.Catalog, _tower, Power, Blueprints) ||
                 !_friends.Initialize(services, Radio, _cassettes.Catalog, _relics, _salvage, _home) ||
                 !_cassettes.Initialize(services, Radio, KeepClearOfCassettes()) || !_logs.Initialize(services) ||
                 !_sonar.Initialize(services, _relics, _friends, _salvage, abilities) ||
@@ -193,7 +202,16 @@ namespace MoonProject.Gameplay
             _salvage.Connect(_excavation);
             _tether.Connect(_cradle);
 
-            Shop = new UpgradeShop(Upgrades, stations, save);
+            string tubeSite = UnknownTubeSite();
+            if (tubeSite != null)
+            {
+                Debug.LogError($"{nameof(GameplaySystem)}: a blueprint tube lies at '{tubeSite}', which is no " +
+                               "salvage site.", this);
+                enabled = false;
+                return;
+            }
+
+            Shop = new UpgradeShop(Upgrades, stations, save, Blueprints);
             Hints = new InteractionHints(services.Rover, _sonar, _excavation, _salvage, _tether, _cradle, _home,
                 stations, Upgrades, _friends, _relays);
             context.Register<IMaterialStock>(Materials);
@@ -209,6 +227,7 @@ namespace MoonProject.Gameplay
             context.Register<IRadioHop>(_relays.Hop);
             context.Register<IRelayStatus>(_relays);
             context.Register<IBasePower>(Power);
+            context.Register<IBlueprintBoard>(Blueprints);
             Upgrades.PublishSignals();
             RegisterSaveSections(save);
         }
@@ -237,9 +256,69 @@ namespace MoonProject.Gameplay
                 GameplaySaveKeys.RelaysVersion, _relays.Capture, _relays.Restore)));
             _saveTokens.Add(save.Register(new SaveSection<ProgressionSaveData>(GameplaySaveKeys.Progression,
                 GameplaySaveKeys.ProgressionVersion, _progression.Capture, _progression.Restore)));
+            _saveTokens.Add(save.Register(new SaveSection<BlueprintsSaveData>(GameplaySaveKeys.Blueprints,
+                GameplaySaveKeys.BlueprintsVersion, () => new BlueprintsSaveData { found = Blueprints.Capture() },
+                data => Blueprints.Restore(data.found))));
         }
 
         /// <summary>Core's rover placement for the radio-hop, or null while no domain registers it.</summary>
+        /// <summary>The board over the bay's kits, or null (logged) when its tubes are miswired.</summary>
+        private Blueprints NewBlueprints(EventBus events)
+        {
+            var kits = new List<string>();
+            foreach (UpgradeDefinition definition in _upgradeDefinitions)
+            {
+                if (_workshop.Sells(definition))
+                {
+                    kits.Add(definition.Id);
+                }
+            }
+
+            try
+            {
+                return new Blueprints(events, kits, _progression.Tuning.FirstKit, _progression.Tuning.Tubes,
+                    SiteOfRelic);
+            }
+            catch (ArgumentException exception)
+            {
+                Debug.LogError($"{nameof(GameplaySystem)}: {exception.Message}", this);
+                return null;
+            }
+        }
+
+        /// <summary>The salvage site whose heart held relic <paramref name="relicId"/>, or null.</summary>
+        private string SiteOfRelic(string relicId)
+        {
+            foreach (Relic relic in _relics.Relics)
+            {
+                if (relic.Definition.Id == relicId)
+                {
+                    return relic.Home != null ? relic.Home.Id : null;
+                }
+            }
+
+            return null;
+        }
+
+        private string UnknownTubeSite()
+        {
+            foreach (BlueprintTube tube in _progression.Tuning.Tubes)
+            {
+                bool found = false;
+                foreach (SalvageSite site in _salvage.Sites)
+                {
+                    found |= site.Id == tube.SiteId;
+                }
+
+                if (!found)
+                {
+                    return tube.SiteId;
+                }
+            }
+
+            return null;
+        }
+
         private static IRoverPlacement Placement(GameContext context)
         {
             return context.TryGet(out IRoverPlacement placement) ? placement : null;
@@ -351,6 +430,7 @@ namespace MoonProject.Gameplay
                 : _shelf == null ? "CassetteShelf is not assigned."
                 : _relays == null ? "RelayField is not assigned."
                 : _progression == null ? "BaseProgression is not assigned."
+                : _progression.Tuning == null ? "BaseProgression has no ProgressionTuning."
                 : null;
         }
 
@@ -362,6 +442,7 @@ namespace MoonProject.Gameplay
             }
 
             _saveTokens.Clear();
+            Blueprints?.Dispose();
             _meshes?.Dispose();
         }
     }

@@ -41,6 +41,8 @@ namespace MoonProject.Gameplay
         private bool _salvaged;
         private bool _initialized;
 
+        public ProgressionTuning Tuning => _tuning;
+
         /// <summary>The current "next" line key (empty once every step is done).</summary>
         public string NextStep => _steps != null ? _steps.Current : string.Empty;
 

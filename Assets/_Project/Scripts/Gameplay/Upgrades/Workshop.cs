@@ -91,6 +91,7 @@ namespace MoonProject.Gameplay
         private float _pitLevel;
         private RadioTower _tower;
         private IBasePower _power;
+        private IBlueprintBoard _board;
         private IDisposable _fittings;
         private float _lightLevel;
         private bool _lightShadows;
@@ -106,9 +107,11 @@ namespace MoonProject.Gameplay
         private bool _holding;
         private bool _initialized;
 
-        /// <summary>What the bay offers now: its first piece not yet bought (its last once all are).</summary>
+        /// <summary>
+        /// What the bay offers now: its first pinned piece not yet bought (the last pinned once those are all built).
+        /// </summary>
         public UpgradeDefinition Definition => _definitions.Length == 0 ? null
-            : _definitions[_upgrades == null ? 0 : OfferIndex(_definitions, _upgrades)];
+            : _definitions[_upgrades == null ? 0 : OfferIndex(_definitions, _upgrades, _board)];
 
         /// <summary>True while 07 is parked on the turntable.</summary>
         public bool Occupied => _pad != null && _pad.Occupied;
@@ -260,8 +263,9 @@ namespace MoonProject.Gameplay
         /// The base's power: until it reaches the bay (tower L2, docs/features/M3-16) the bay is dormant: dark, no pad,
         /// no prompt, no panel.
         /// </param>
+        /// <param name="board">Kenji's board: the bay offers only kits whose blueprint is pinned.</param>
         internal bool Initialize(GameplayServices services, UpgradeService upgrades, SalvageCatalog bundles,
-            RadioTower tower, IBasePower power)
+            RadioTower tower, IBasePower power, IBlueprintBoard board)
         {
             if (upgrades == null)
             {
@@ -270,6 +274,7 @@ namespace MoonProject.Gameplay
 
             _tower = tower != null ? tower : throw new ArgumentNullException(nameof(tower));
             _power = power ?? throw new ArgumentNullException(nameof(power));
+            _board = board ?? throw new ArgumentNullException(nameof(board));
 
             if (bundles == null)
             {
@@ -445,18 +450,25 @@ namespace MoonProject.Gameplay
         /// Index of what a station selling <paramref name="definitions"/> (in order) offers now: the first not yet
         /// fully bought, or the last once all are.
         /// </summary>
-        internal static int OfferIndex(UpgradeDefinition[] definitions, UpgradeService upgrades)
+        internal static int OfferIndex(UpgradeDefinition[] definitions, UpgradeService upgrades, IBlueprintBoard board)
         {
-            int last = definitions.Length - 1;
-            for (int i = 0; i < last; i++)
+            int lastPinned = 0;
+            for (int i = 0; i < definitions.Length; i++)
             {
+                if (!board.IsPinned(definitions[i].Id))
+                {
+                    continue;
+                }
+
                 if (upgrades.LevelOf(definitions[i].Id) < definitions[i].MaxLevel)
                 {
                     return i;
                 }
+
+                lastPinned = i;
             }
 
-            return last;
+            return lastPinned;
         }
 
         private void OnPurchased(UpgradePurchased purchase)
