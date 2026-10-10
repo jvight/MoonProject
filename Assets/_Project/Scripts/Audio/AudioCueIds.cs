@@ -80,6 +80,12 @@ namespace MoonProject.Audio
         public const string StargazeSwell = "stargaze_swell";
         public const string BaseWake = "base_wake";
         public const string StationNotYet = "station_not_yet";
+        public const string LiftWinchCreak = "lift_winch_creak";
+        public const string LiftRide = "lift_ride";
+        public const string LiftStopClunk = "lift_stop_clunk";
+        public const string PlotterDraw = "plotter_draw";
+        public const string BlueprintFound = "blueprint_found";
+        public const string DockEveningSwell = "dock_evening_swell";
         public const string PortHatchOpen = "port_hatch_open";
         public const string PortHatchClose = "port_hatch_close";
         public const string DockConnect = "dock_connect";
