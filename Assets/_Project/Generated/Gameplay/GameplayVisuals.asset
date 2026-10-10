@@ -28,3 +28,15 @@ MonoBehaviour:
   _spark: {fileID: 2100000, guid: 94b2acb381f20094e847454e82d34847, type: 2}
   _homeHalo: {fileID: 2100000, guid: 4b4c8a73f5f09384b9c46bf0b8f06413, type: 2}
   _linkPulse: {fileID: 2100000, guid: 4a167f2be8259a14bbe1c2ad51b5c191, type: 2}
+  _pads:
+  - {fileID: 4787985358432548162, guid: 0390a58189554f54d99131facf350145, type: 3}
+  - {fileID: 1990579749909035574, guid: 5879b7d5f8068624e825ae290690d7da, type: 3}
+  - {fileID: 5758296614982328227, guid: 8e1c470c81889d34f848594c572db082, type: 3}
+  _padRadii:
+  - 1.6
+  - 2.4
+  - 3
+  _storyParts:
+  - {fileID: 3359185789678253492, guid: 746e59bdc859c6341a23c70adaab062a, type: 3}
+  - {fileID: 1487543907107486613, guid: bcee7385b8b911344b262ebb5912cfe9, type: 3}
+  - {fileID: 9012445354524032910, guid: 933e6346ec9a2db43a474ca1764a4a44, type: 3}
