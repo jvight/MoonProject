@@ -114,6 +114,10 @@ namespace MoonProject.App
             {
                 Context.Events.Publish(new TitleShown(_flow.HasSave));
             }
+            else
+            {
+                Context.Events.Publish(new SessionStarted(!_flow.HasSave));
+            }
         }
 
         private void OnApplicationPause(bool paused)
@@ -142,6 +146,7 @@ namespace MoonProject.App
             if (_flow.TryContinue())
             {
                 _input.Enable();
+                Context.Events.Publish(new SessionStarted(false));
             }
         }
 
@@ -160,6 +165,7 @@ namespace MoonProject.App
             if (_flow.TryStartHere())
             {
                 _input.Enable();
+                Context.Events.Publish(new SessionStarted(true));
                 return;
             }
 
