@@ -154,7 +154,8 @@ namespace MoonProject.Art.Editor
 
             Matrix4x4 back = SiteKit.Face(new Vector3(0f, 0f, BodyBack - 0.004f), Vector3.back, Vector3.up);
             SiteKit.RustPatch(b, back, -0.14f, 0.42f, 0.09f);
-            SiteKit.RustPatch(b, back, 0.13f, 0.55f, 0.08f);
+            // Low under the hatch, never level with the tail lamp: the two must not pair into eyes (P3).
+            SiteKit.RustPatch(b, back, 0.02f, 0.36f, 0.07f);
             SiteKit.RustPatch(b, back, 0.3f, 0.4f, 0.07f);
             Matrix4x4 front = SiteKit.Face(new Vector3(0f, 0f, BodyFront + 0.004f), Vector3.forward, Vector3.up);
             SiteKit.RustStreak(b, front, -0.2f, LampHeight - 0.04f, 0.09f, SpotWidth);

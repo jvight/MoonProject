@@ -332,5 +332,46 @@ namespace MoonProject.Art.Tests
 
             return areas.OrderByDescending(pair => pair.Value).First().Key;
         }
+
+        // Gameplay's salvage yields (SalvageTuning asset): a piece's size by its mesh's bounds volume (m³), the units
+        // each size gives, and a drag piece's units; and the totals each site must give (M3-16 P9: Metal, Wiring,
+        // Optics), each with a signature material.
+        private const float SmallVolume = 1f;
+        private const float MediumVolume = 3f;
+        private const int SmallYield = 2;
+        private const int MediumYield = 3;
+        private const int LargeYield = 4;
+        private const int DragYield = 4;
+
+        private static readonly Dictionary<string, int[]> Yields = new Dictionary<string, int[]>
+        {
+            { "depot", new[] { 5, 2, 2 } }, { "garage", new[] { 7, 7, 2 } }, { "kestrel", new[] { 2, 2, 9 } },
+            { "drill", new[] { 7, 7, 2 } },
+        };
+
+        [TestCase("depot")]
+        [TestCase("garage")]
+        [TestCase("kestrel")]
+        [TestCase("drill")]
+        public void Site_YieldsItsSignatureMaterials(string id)
+        {
+            ModelNode site = SiteModelBuilder.CreateSite(id);
+            var totals = new int[3];
+            foreach (ModelNode piece in site.Children.Where(node => node.Name.StartsWith("Salvage_")))
+            {
+                Vector3 size = piece.Mesh.Geometry.Bounds.size;
+                float volume = size.x * size.y * size.z;
+                bool drag = piece.Name.EndsWith(SiteModelBuilder.DragSuffix);
+                int units = drag ? DragYield
+                    : volume < SmallVolume ? SmallYield
+                    : volume < MediumVolume ? MediumYield
+                    : LargeYield;
+                string material = piece.Name.Split('_')[2];
+                totals[(int)System.Enum.Parse(typeof(SalvageMaterial), material)] += units;
+                TestContext.WriteLine($"{id} {piece.Name}: {volume:F2} m³, {units} units");
+            }
+
+            CollectionAssert.AreEqual(Yields[id], totals, $"{id} yields Metal, Wiring, Optics");
+        }
     }
 }

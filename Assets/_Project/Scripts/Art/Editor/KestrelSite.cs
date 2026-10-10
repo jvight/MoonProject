@@ -43,6 +43,8 @@ namespace MoonProject.Art.Editor
             SiteKit.Drift(b, new Vector3(-1.3f, 0f, 2.2f), 2.6f, 1.1f, 0.45f, 10f, 32);
             SiteKit.Drift(b, new Vector3(-2.6f, 0f, 4.7f), 1.8f, 1.6f, 0.35f, 40f, 33);
 
+            // M3-16 P9: optics its signature: Optics drag, M, S, Metal S, Wiring S = (2, 2, 9), plus the trail bits;
+            // the foil panel and the avionics stay as scenery.
             StandingWing(site);
             FramePanel(site);
             SmallDish(site);
@@ -207,6 +209,7 @@ namespace MoonProject.Art.Editor
             Matrix4x4 face = SiteKit.Face(centre, normal, new Vector3(0.95f, 0f, -0.32f)) *
                 Matrix4x4.Rotate(Rotation(new Vector3(8f, 0f, 0f)));
             SiteKit.SolarPanel(piece.Geometry, face, 1.1f, 1.05f, false);
+            piece.Resize(1.15f);
         }
 
         /// <summary>A small dish knocked off the bus, leaning against its right side.</summary>
@@ -218,6 +221,7 @@ namespace MoonProject.Art.Editor
                 back + opening.normalized * 0.45f, opening);
             SiteKit.Dish(piece.Geometry, SiteKit.Face(back, Vector3.Cross(opening, Vector3.up), opening), 0.62f,
                 PaletteSwatch.SkyHorizon);
+            piece.Resize(0.9f);
         }
 
         /// <summary>A hull panel bent double, gold foil up, thrown ahead of the bus.</summary>
@@ -236,6 +240,7 @@ namespace MoonProject.Art.Editor
                 new Vector3(1.3f, 0.06f, 0.8f), foilFront);
             b.Prism(At(crease, new Vector3(0f, 25f, 90f)), 0.07f, 1.32f, 6, PaletteSwatch.Metal);
             SiteKit.DustCap(b, b.RangeFrom(first));
+            site.Settle(piece);
         }
 
         private static void Tank(SiteRecipe site)
@@ -254,6 +259,7 @@ namespace MoonProject.Art.Editor
                 tilt.MultiplyPoint3x4(new Vector3(0.1f, 0.85f, 0.05f)), 0.06f, 6, PaletteSwatch.Metal);
             SiteKit.RustPatch(b, SiteKit.Face(centre + new Vector3(0.18f, 0.1f, -0.58f), new Vector3(0.3f, 0.15f, -1f),
                 Vector3.up), 0f, 0f, 0.35f);
+            piece.Resize(0.68f);
         }
 
         /// <summary>
@@ -278,6 +284,7 @@ namespace MoonProject.Art.Editor
                     foot + offset + new Vector3(0.05f, 1.6f, 0.3f),
                 }, 0.05f, i == 1 ? PaletteSwatch.Charcoal : PaletteSwatch.WarmAccent);
             }
+            piece.Resize(0.8f);
         }
 
         /// <summary>The avionics box in the split, its cables spilling out over the lip into the dust.</summary>
@@ -300,6 +307,7 @@ namespace MoonProject.Art.Editor
                 SiteKit.Cable(b, new[] { start, lip + new Vector3(i * 0.15f, 0.04f, 0f), end }, 0.035f,
                     i == 1 ? PaletteSwatch.Charcoal : PaletteSwatch.WarmAccent);
             }
+            site.Settle(piece);
         }
     }
 }

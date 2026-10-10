@@ -48,6 +48,8 @@ namespace MoonProject.Art.Editor
             SiteKit.Drift(b, new Vector3(4.35f, 0f, 3.6f), 2.6f, 0.9f, 0.4f, 0f, 14);
             SiteKit.Drift(b, new Vector3(4.1f, 0f, -0.2f), 1.8f, 0.8f, 0.3f, 70f, 15);
 
+            // M3-16 P9-P10: four cuts, metal its signature: Metal M, Metal S, Wiring S, Optics S = (5, 2, 2); the
+            // collapsed sheet and the drum stay as scenery.
             CollapsedSheet(site);
             HangingPanel(site);
             ToppledPod(site);
@@ -228,6 +230,7 @@ namespace MoonProject.Art.Editor
             SiteKit.RustStreak(piece.Geometry, face * At(0f, 0f, 0.05f), -0.7f, 1.05f, 0.8f);
             SiteKit.RustStreak(piece.Geometry, face * At(0f, 0f, 0.05f), 0.6f, 1.05f, 1.1f);
             SiteKit.RustPatch(piece.Geometry, face * At(0f, 0f, 0.05f), 0.2f, -0.3f, 0.6f);
+            site.Settle(piece);
         }
 
         /// <summary>
@@ -245,6 +248,7 @@ namespace MoonProject.Art.Editor
             SiteKit.Sheet(piece.Geometry, hang, 4f / 3f - 0.02f, height, PaletteSwatch.FadedPaint);
             SiteKit.RustStreak(piece.Geometry, hang * At(0f, 0f, 0.05f), 0.2f, height * 0.4f, 1.2f);
             SiteKit.RustPatch(piece.Geometry, hang * At(0f, 0f, 0.05f), -0.2f, -0.6f, 0.5f);
+            piece.Resize(0.5f);
         }
 
         private static void ToppledPod(SiteRecipe site)
@@ -257,6 +261,7 @@ namespace MoonProject.Art.Editor
             SiteKit.Pod(piece.Geometry, frame, 0.55f, 1.9f, false);
             Matrix4x4 axis = frame * Matrix4x4.Rotate(Rotation(AlongZ));
             piece.Geometry.Prism(axis * At(0f, -0.25f, 0f), 0.57f, 0.1f, 10, PaletteSwatch.Rust, false);
+            piece.Resize(0.8f);
         }
 
         private static void JunctionBox(SiteRecipe site)
@@ -274,6 +279,7 @@ namespace MoonProject.Art.Editor
             SalvagePieceRecipe piece = site.Piece(SalvageMaterial.Wiring, centre, centre + new Vector3(0.45f, 0f, 0f),
                 new Vector3(0.6f, 0.2f, -0.8f));
             SiteKit.Drum(piece.Geometry, At(centre, new Vector3(0f, 12f, 0f)), 0.55f, 0.75f, PaletteSwatch.WarmAccent);
+            site.Settle(piece);
         }
 
         private static void Solar(SiteRecipe site)
