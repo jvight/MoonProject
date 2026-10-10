@@ -49,6 +49,10 @@ namespace MoonProject.Art.Editor
         // Rust on 07 is drawn finer than on the wrecks: it is seen close, from the chase camera.
         private const float SpotWidth = 0.025f;
 
+        // 07's single tail lamp, up and to the right of the hatch.
+        private const float TailLampX = 0.28f;
+        private const float TailLampY = 0.64f;
+
         // 07's lid runs are drawn this much finer than a building's (it is seen close).
         private const float LidRunWidth = 0.4f;
         internal const float BodyBack = -0.62f;
@@ -663,17 +667,17 @@ namespace MoonProject.Art.Editor
                 PaletteSwatch.WarmLamp);
         }
 
-        /// <summary>Back: two soft tail lamps and a little hatch with a handle (where cargo attaches).</summary>
+        /// <summary>
+        /// Back: one small soft tail lamp off-centre (a pair would read as a second face; the lens is 07's only one)
+        /// and a little hatch with a handle (where cargo attaches).
+        /// </summary>
         private static void Rear(LowPolyMeshBuilder b)
         {
             const float face = BodyBack;
-            for (int side = -1; side <= 1; side += 2)
-            {
-                b.Prism(At(new Vector3(side * 0.2f, 0.6f, face - 0.012f), AlongZ), 0.05f, 0.03f, 10,
-                    PaletteSwatch.Charcoal);
-                b.Frustum(At(new Vector3(side * 0.2f, 0.6f, face - 0.034f), AlongZ), 0.038f, 0.028f, 0.016f, 10,
-                    PaletteSwatch.PilotLight);
-            }
+            var lamp = new Vector3(TailLampX, TailLampY, 0f);
+            b.Prism(At(lamp + Vector3.forward * (face - 0.012f), AlongZ), 0.034f, 0.03f, 10, PaletteSwatch.Charcoal);
+            b.Frustum(At(lamp + Vector3.forward * (face - 0.034f), AlongZ), 0.026f, 0.019f, 0.016f, 10,
+                PaletteSwatch.PilotLight);
 
             const float hatchY = 0.48f;
             b.Box(At(0f, hatchY + 0.07f, face - 0.002f), new Vector3(0.26f, 0.012f, 0.012f), PaletteSwatch.Charcoal);

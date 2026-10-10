@@ -619,6 +619,36 @@ namespace MoonProject.Art.Tests
         }
 
         [Test]
+        public void Rear_IsNotAFace_OneOffCentreTailLamp_AndStrapsThatNeverDrawAV()
+        {
+            var lamps = new List<Vector3>();
+            var rest = new List<Vector3>();
+            SplitBody(PaletteSwatch.PilotLight, p => p.z < 0f, lamps, rest);
+            Bounds lamp = Envelope(lamps);
+            Assert.Less(lamp.size.x, 0.1f, "a single small tail lamp, not a pair of eyes");
+            Assert.Greater(Mathf.Abs(lamp.center.x), 0.15f, "and off-centre, so the back never reads as a face");
+
+            LowPolyMeshBuilder rack = RoverKitBuilder.CreateCargoRack().Mesh.Geometry;
+            for (int t = 0; t < rack.TriangleCount; t++)
+            {
+                if (MeshChecks.SwatchOf(rack, t) != PaletteSwatch.WarmAccent)
+                {
+                    continue;
+                }
+
+                for (int k = 0; k < 3; k++)
+                {
+                    Vector3 edge = rack.Positions[t * 3 + (k + 1) % 3] - rack.Positions[t * 3 + k];
+                    if (edge.magnitude > 0.1f && Mathf.Abs(edge.y) > 0.01f)
+                    {
+                        Assert.Less(Mathf.Abs(edge.x), 0.2f * edge.magnitude,
+                            "a strap that falls runs fore and aft, never across into a V seen from behind");
+                    }
+                }
+            }
+        }
+
+        [Test]
         public void KittedRover_StillFitsKenjisTurntable()
         {
             float radius = BaseModelBuilder.CreateRoverBay().GetDescendant("Turntable").Mesh.Geometry.Bounds.extents.x;
