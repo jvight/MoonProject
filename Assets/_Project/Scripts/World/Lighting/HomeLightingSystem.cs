@@ -10,8 +10,8 @@ namespace MoonProject.World
     /// Registers <see cref="IHomeLights"/> (docs/features/M3-16): follows <see cref="BasePowerChanged"/> and tells
     /// whoever drives home's lamps how lit each warm point is now. It drives World's own parts of the wake itself: the
     /// glass segments of Art's ground power cables (lit from the tower outward), the tower's pilot blink while the
-    /// base sleeps and home's grade, which warms a step with each stage. Thin: the timing lives in
-    /// <see cref="HomeLightStages"/>.
+    /// base sleeps, the warm light pools on the ground under home's warm points and home's grade, which warms a step
+    /// with each stage. Thin: the timing lives in <see cref="HomeLightStages"/>.
     /// </summary>
     public sealed class HomeLightingSystem : MonoBehaviour, IGameSystem, IHomeLights
     {
@@ -38,6 +38,10 @@ namespace MoonProject.World
             "power stages.")]
         [SerializeField] private Volume _homeGrade;
 
+        [Tooltip("The warm pools' point lights, one per Home Lighting pool, in the same order (the scene build hangs " +
+            "them from their anchors in the base).")]
+        [SerializeField] private Light[] _pools = new Light[0];
+
         private MaterialPropertyBlock _block;
         private HomeLightStages _stages;
         private IDisposable _powerChanged;
@@ -45,6 +49,7 @@ namespace MoonProject.World
         private float[] _bayApplied;
         private float[] _liftApplied;
         private float _gradeApplied = -1f;
+        private float[] _poolsApplied;
 
         public void Initialize(GameContext context)
         {
@@ -62,6 +67,8 @@ namespace MoonProject.World
             _homeApplied = Unapplied(_homeCable.Length);
             _bayApplied = Unapplied(_bayCable.Length);
             _liftApplied = Unapplied(_liftCable.Length);
+            _poolsApplied = Unapplied(_pools.Length);
+            SetUpPools();
             _powerChanged = context.Events.Subscribe<BasePowerChanged>(OnPowerChanged);
             context.Register<IHomeLights>(this);
         }
@@ -90,6 +97,7 @@ namespace MoonProject.World
             _block.SetFloat(IntensityId, pilot * tuning.PilotIntensity);
             _block.SetFloat(RadiusId, tuning.PilotRadius);
             _pilot.SetPropertyBlock(_block);
+            ApplyPools(tuning, time);
             float warmth = _stages.GradeWarmth(time);
             if (!Mathf.Approximately(warmth, _gradeApplied))
             {
@@ -112,6 +120,40 @@ namespace MoonProject.World
                 _block.Clear();
                 _block.SetVector(EmissionColorId, new Vector4(level, level, level, 1f));
                 segments[i].SetPropertyBlock(_block);
+            }
+        }
+
+        private void SetUpPools()
+        {
+            HomeLightingSettings tuning = _settings.HomeLighting;
+            for (int i = 0; i < _pools.Length; i++)
+            {
+                LightPoolTuning pool = tuning.Pools[i];
+                Light light = _pools[i];
+                light.type = LightType.Point;
+                light.color = tuning.PoolColor;
+                light.range = pool.Range;
+                light.shadows = LightShadows.None;
+                light.intensity = 0f;
+                light.enabled = false;
+                light.transform.localPosition = pool.Offset;
+            }
+        }
+
+        private void ApplyPools(HomeLightingSettings tuning, float time)
+        {
+            for (int i = 0; i < _pools.Length; i++)
+            {
+                LightPoolTuning pool = tuning.Pools[i];
+                float level = _stages.Level(pool.WakesWith, time);
+                if (Mathf.Approximately(level, _poolsApplied[i]))
+                {
+                    continue;
+                }
+
+                _poolsApplied[i] = level;
+                _pools[i].intensity = level * pool.Intensity;
+                _pools[i].enabled = level > 0f;
             }
         }
 
@@ -169,6 +211,20 @@ namespace MoonProject.World
             if (_pilot == null)
             {
                 return "The tower's pilot halo is not assigned.";
+            }
+
+            if (_pools == null || _pools.Length != _settings.HomeLighting.Pools.Count)
+            {
+                return $"Light pools must match Home Lighting's {_settings.HomeLighting.Pools.Count} pools (the " +
+                    "scene build hangs them from the base).";
+            }
+
+            foreach (Light pool in _pools)
+            {
+                if (pool == null)
+                {
+                    return "A light pool is missing.";
+                }
             }
 
             return _homeGrade == null ? "Home's grade Volume is not assigned." : null;

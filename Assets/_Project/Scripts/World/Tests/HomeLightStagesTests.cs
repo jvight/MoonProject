@@ -12,6 +12,9 @@ namespace MoonProject.World.Tests
         private const float Start = 10f;
         private const float Tolerance = 1e-4f;
 
+        // Forward+ takes many lights, but each pool costs per-pixel work across the base: a handful.
+        private const int MaxPools = 8;
+
         private HomeLightingSettings _settings;
         private HomeLightStages _stages;
 
@@ -52,6 +55,25 @@ namespace MoonProject.World.Tests
 
             float done = Start + _settings.CableTravel + 2f * _settings.WakeStagger + _settings.WakeFade;
             Assert.AreEqual(1f, _stages.Level(HomeLight.Halo, done), Tolerance);
+        }
+
+        [Test]
+        public void EveryStage_AddsAWarmPool_WithinTheLightBudget()
+        {
+            var pooled = new bool[(int)BasePowerStage.Lift + 1];
+            foreach (LightPoolTuning pool in _settings.Pools)
+            {
+                pooled[(int)HomeLightStages.WakesWith(pool.WakesWith)] = true;
+                Assert.That(pool.Intensity, Is.GreaterThan(0f), pool.Anchor);
+                Assert.That(pool.Offset.y, Is.GreaterThan(0f), pool.Anchor + " hangs above the ground");
+            }
+
+            for (int stage = 0; stage < pooled.Length; stage++)
+            {
+                Assert.IsTrue(pooled[stage], $"{(BasePowerStage)stage} widens home's warm floor");
+            }
+
+            Assert.LessOrEqual(_settings.Pools.Count, MaxPools, "each pool is a per-pixel light at the base");
         }
 
         [Test]
