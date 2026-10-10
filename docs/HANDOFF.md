@@ -25,6 +25,20 @@ account) can continue without the old conversation.
       0579f46b). Rover was asked to fix it first.
     - One is in gameplay: BaseAndSaveSessions.Deposit_TowedRelic…; gameplay was asked.
   - Nothing was pushed.
+- **MILESTONE, main 8b4c0e51 (~03:20):** the golden-path Playthrough follows M3-16 steps 0–8 end to end, the lift
+  included, in 1241 s (budget 1340 s). 0.5's core acceptance is met.
+  - Blockers before a verified push:
+    - LiftSession: the deck ignores drive input after ~7 s at rest (rover);
+    - NewGameSession must boot with the title on (gameplay);
+    - the shared input harness against focus resets (tools).
+  - Then run `verify --parallel --push`.
+  - Still to build in 0.5:
+    - art's M3-18 half (shader rim, vertex AO, skirts, V8, the L1/L2/L4/L7 meshes, PartSocket);
+    - the opening slice (chip offered);
+    - M3-07 the map slice (chip offered);
+    - M3-09 Part B, the collections;
+    - audio's queue;
+    - the layout pass (L3, L8, L9, V5).
 - **verify on 85bb390f, final result:**
   - Playthrough PASS: the golden path still runs end to end with the garage fix and every tip.
   - PlayMode FAIL, only from the rover rig.
