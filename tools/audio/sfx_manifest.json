@@ -2663,6 +2663,66 @@
       "notes": "07 stargazing: a soft low D2/A2/D3 pad with a faint A3, swelling in under airy noise."
     },
     {
+      "id": "base_wake",
+      "category": "stinger_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/base_wake_home.wav",
+        "Assets/_Project/Audio/SFX/2D/base_wake_bay.wav",
+        "Assets/_Project/Audio/SFX/2D/base_wake_lift.wav"
+      ],
+      "variantLabels": [
+        "home",
+        "bay",
+        "lift"
+      ],
+      "sha256": [
+        "540376952f292dffd96fcdd13ed5efef0bb405ee2f6b7187e47b2af5f2aaee70",
+        "63760d8c874fe0bef78861184f904b48d40e5e5b020c85b8826c69b6a34924db",
+        "73b5e7438f358f654cd4a4fb0f7ea8d711a5d53027266c1c246a746f1d93032e"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -20.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "A place of the base waking: low hum rising A1 to D2 into a gentle kalimba phrase per place."
+    },
+    {
+      "id": "station_not_yet",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/station_not_yet.wav"
+      ],
+      "variantLabels": [
+        "station_not_yet"
+      ],
+      "sha256": [
+        "40d55925eb4da73235ffcebce07f0785e00b24bea9d349d0991c19a6c6371951"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "A dormant station answering a ping: one muffled D3 bell over a felt knock, asleep."
+    },
+    {
       "id": "bay_turntable",
       "category": "loop_3d",
       "milestone": "M3",

@@ -654,6 +654,20 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
+    /// A blueprint tube 07 carried home reached Kenji's pen plotter (docs/features/M3-16 P7): the tube leaves 07's back,
+    /// the plotter draws the sheet and the kit is pinned. Rover hides the tube; Art/Audio play the drawing.
+    /// </summary>
+    public readonly struct BlueprintDelivered
+    {
+        public BlueprintDelivered(string kitId)
+        {
+            KitId = kitId;
+        }
+
+        public string KitId { get; }
+    }
+
+    /// <summary>
     /// 07 scanned a blueprint tube in a salvage site's heart (docs/features/M3-16 "Blueprints"): the kit
     /// <see cref="KitId"/> is pinned on Kenji's board and the bay can build it from now on.
     /// </summary>

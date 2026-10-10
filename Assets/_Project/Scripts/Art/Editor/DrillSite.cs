@@ -37,6 +37,8 @@ namespace MoonProject.Art.Editor
             SiteKit.Drift(b, new Vector3(4.4f, 0f, 3.2f), 3.4f, 1f, 0.35f, 64f, 53);
             SiteKit.Drift(b, new Vector3(5.4f, 0f, 5.3f), 1.6f, 1.2f, 0.3f, 20f, 54);
 
+            // M3-16 P9: metal and wiring: Metal L, Metal M, Wiring L, Wiring M, Optics S = (7, 7, 2); the pipes stay
+            // as scenery.
             DrillHead(site);
             Pipes(site);
             Generator(site);
@@ -188,6 +190,7 @@ namespace MoonProject.Art.Editor
             {
                 b.Torus(At(centre + new Vector3(x, 0.08f, 0f), alongX), 0.37f, 0.03f, 8, 3, PaletteSwatch.Charcoal);
             }
+            site.Settle(piece);
         }
 
         /// <summary>The rusted generator on the skid: grille, exhaust stack, fuel cap.</summary>
@@ -212,6 +215,7 @@ namespace MoonProject.Art.Editor
             RecipeKit.Rod(b, body.MultiplyPoint3x4(new Vector3(0.5f, 0.45f, 0.25f)),
                 body.MultiplyPoint3x4(new Vector3(0.55f, 1.1f, 0.3f)), 0.06f, 6, PaletteSwatch.Charcoal);
             b.Prism(body * At(-0.45f, 0.48f, -0.2f), 0.08f, 0.08f, 6, PaletteSwatch.Metal);
+            piece.Resize(1.15f);
         }
 
         /// <summary>The control cabinet at the derrick end of the skid, its door hanging open, cables cut.</summary>
@@ -238,6 +242,7 @@ namespace MoonProject.Art.Editor
                     new Vector3(start.x + 0.1f * i, Deck + 0.03f, start.z - 0.75f - i * 0.1f),
                 }, 0.03f, i == 1 ? PaletteSwatch.Charcoal : PaletteSwatch.WarmAccent);
             }
+            piece.Resize(1.25f);
         }
 
         /// <summary>A cable reel on its side by the borehole, its copper end run out into the dust.</summary>

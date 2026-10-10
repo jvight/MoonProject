@@ -23,7 +23,7 @@ captures and anything else the run writes. `exec` forwards -moonOutDir <that fol
 `-moonArg key=value`; read them in C# with MoonProject.Editor.Automation.BatchArgs.
 
 Exit code: 0 = success; 1 = failure (tests failed, compile errors, timeout, or the exec method's own exit code).
-At most MOON_BATCH_SLOTS (default 2) batch editors run machine-wide; extra runs wait for a free slot.
+At most MOON_BATCH_SLOTS (default 3) batch editors run machine-wide; extra runs wait for a free slot.
 """
 import argparse
 import datetime
@@ -249,9 +249,9 @@ def cmd_status(args):
 
 def slot_count():
     try:
-        return max(1, int(os.environ.get("MOON_BATCH_SLOTS", "2")))
+        return max(1, int(os.environ.get("MOON_BATCH_SLOTS", "3")))
     except ValueError:
-        return 2
+        return 3
 
 
 def main():

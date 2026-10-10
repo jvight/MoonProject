@@ -313,7 +313,9 @@ namespace MoonProject.Art.Tests
             }
         }
 
-        /// <summary>Bell's weather skins (on her body, as on everything left alone): outside her node contract.</summary>
+        /// <summary>
+        /// Bell's weather skins (on her body, as on everything left alone): outside her node contract.
+        /// </summary>
         private static bool Weathered(ModelNode node)
         {
             return node.Name.StartsWith("Weather_", System.StringComparison.Ordinal);

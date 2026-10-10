@@ -139,6 +139,21 @@ namespace MoonProject.Audio.PlayModeTests
         }
 
         [Test]
+        public void PowerReturning_WakesEachPlace_ButNotOnARestore_AndAsleepStationsAnswerSoftly()
+        {
+            _rig.Events.Publish(new BasePowerChanged(BasePowerStage.Bay, false));
+            Assert.AreEqual("base_wake_bay", LastClip, "the bay breathes awake");
+            int plays = _rig.Director.PlayCount;
+            _rig.Events.Publish(new BasePowerChanged(BasePowerStage.Lift, true));
+            Assert.AreEqual(plays, _rig.Director.PlayCount, "a save restoring power is silent");
+
+            var lift = new Vector3(40f, 2f, -30f);
+            _rig.Events.Publish(new StationNotYet("notyet.lift", lift, 52f));
+            Assert.AreEqual("station_not_yet", LastClip);
+            Assert.Less(Vector3.Distance(_rig.Director.LastVoice.transform.position, lift), 1e-4f, "where it sleeps");
+        }
+
+        [Test]
         public void BellsKnobTap_TicksAtHerDial()
         {
             var dial = new Vector3(-3f, 1f, 7f);

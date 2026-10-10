@@ -75,6 +75,130 @@
             "text": "Chuột"
         },
         {
+            "key": "ui.settings.guidance",
+            "text": "Gợi ý"
+        },
+        {
+            "key": "next.wake",
+            "text": "Ngoài kia có thể có gì đó đáp lại. Thử phát sóng xem."
+        },
+        {
+            "key": "next.salvage",
+            "text": "Cắt lấy những gì còn dùng được ở kho."
+        },
+        {
+            "key": "next.tower",
+            "text": "Tháp cần kim loại."
+        },
+        {
+            "key": "next.signal",
+            "text": "Một tín hiệu yếu. Hãy đi theo nó."
+        },
+        {
+            "key": "next.relic",
+            "text": "Có gì đó lấp lánh ngoài kia. Mang nó về nhà."
+        },
+        {
+            "key": "next.bay",
+            "text": "Khoang đã có điện. Đỗ lên bàn xoay."
+        },
+        {
+            "key": "next.leap",
+            "text": "Vực sâu đang chờ. Tích lực để nhảy."
+        },
+        {
+            "key": "next.relay",
+            "text": "Một cột tối. Hãy thắp nó lên."
+        },
+        {
+            "key": "next.lift",
+            "text": "Thang nâng đã có điện. Sửa nó rồi lên cao."
+        },
+        {
+            "key": "notyet.bay",
+            "text": "Không có điện. Tháp cấp điện cho nó."
+        },
+        {
+            "key": "notyet.lift",
+            "text": "Chưa có điện. Tháp cấp điện cho nó."
+        },
+        {
+            "key": "notyet.shelf",
+            "text": "Còn trống. Nó chờ đồ của phi hành đoàn."
+        },
+        {
+            "key": "place.dock.name",
+            "text": "Trạm sạc"
+        },
+        {
+            "key": "place.dock.job",
+            "text": "Nơi 07 nghỉ. Nghỉ ngơi giữ lại một ngày."
+        },
+        {
+            "key": "place.lander.name",
+            "text": "Tàu đổ bộ"
+        },
+        {
+            "key": "place.lander.job",
+            "text": "Nhà của phi hành đoàn. Cửa sổ cho thấy nơi này còn sống."
+        },
+        {
+            "key": "place.shelf.name",
+            "text": "Kệ kỷ niệm"
+        },
+        {
+            "key": "place.shelf.job",
+            "text": "Đồ của phi hành đoàn, mỗi món một câu chuyện."
+        },
+        {
+            "key": "place.tower.name",
+            "text": "Tháp vô tuyến"
+        },
+        {
+            "key": "place.tower.job",
+            "text": "Trái tim của nhà: điện và tín hiệu."
+        },
+        {
+            "key": "place.bay.name",
+            "text": "Khoang xe của Kenji"
+        },
+        {
+            "key": "place.bay.job",
+            "text": "Nơi lắp bộ đồ mới cho 07."
+        },
+        {
+            "key": "place.board.name",
+            "text": "Bảng bản vẽ"
+        },
+        {
+            "key": "place.board.job",
+            "text": "Mỗi tờ cho một bộ đồ khoang có thể làm."
+        },
+        {
+            "key": "place.ladder.name",
+            "text": "Thang của phi hành đoàn"
+        },
+        {
+            "key": "place.ladder.job",
+            "text": "Thang của phi hành đoàn. Không làm cho bánh xe."
+        },
+        {
+            "key": "place.lift.name",
+            "text": "Thang nâng"
+        },
+        {
+            "key": "place.lift.job",
+            "text": "Đưa 07 lên boong tàu đổ bộ."
+        },
+        {
+            "key": "place.rack.name",
+            "text": "Kệ băng"
+        },
+        {
+            "key": "place.rack.job",
+            "text": "Âm nhạc, và giọng nói của phi hành đoàn."
+        },
+        {
             "key": "ui.settings.sound",
             "text": "Âm thanh"
         },

@@ -55,6 +55,9 @@ namespace MoonProject.UI
         private StargazeVeil _stargaze;
         private LookUpHint _lookUpHint;
         private LookUpChip _lookUpChip;
+        private NextStepLine _nextStep;
+        private NextLineView _nextLine;
+        private PlaceCard _placeCard;
         private TitleCard _title;
         private TetherReticle _reticle;
         private ContextPrompt _prompt;
@@ -221,6 +224,8 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<RelicStowed>(OnRelicStowed));
             _tokens.Add(events.Subscribe<RoverAwoke>(OnRoverAwoke));
             _tokens.Add(events.Subscribe<StargazingChanged>(OnStargazingChanged));
+            _tokens.Add(events.Subscribe<NextStepChanged>(OnNextStepChanged));
+            _tokens.Add(events.Subscribe<PlaceFirstApproached>(OnPlaceFirstApproached));
             _tokens.Add(events.Subscribe<RoverWideShotChanged>(OnWideShotChanged));
             _tokens.Add(events.Subscribe<SonarPinged>(OnSonarPinged));
             _tokens.Add(events.Subscribe<SiteAnswered>(OnSiteAnswered));
@@ -280,6 +285,9 @@ namespace MoonProject.UI
                 _layout.TickerLine);
             _lookUpHint = new LookUpHint(_tuning.Stargaze, _ledger);
             _lookUpChip = new LookUpChip(_layout, _tuning.Stargaze, _localization);
+            _nextStep = new NextStepLine(_tuning.Guidance);
+            _nextLine = new NextLineView(_layout, _tuning.Guidance, _localization);
+            _placeCard = new PlaceCard(_layout, _tuning.Guidance, _localization);
             _title = new TitleCard(_layout.Title, _tuning.Title);
             _reticle = new TetherReticle(_layout.Reticle, _layout.ReticleRest, _layout.ReticleHover, _tuning.Reticle);
             _prompt = new ContextPrompt(_layout, _tuning.Prompts, _director, services.View, _glyphs, _localization,
@@ -367,7 +375,8 @@ namespace MoonProject.UI
             _tower.Tick(hudTime, !paused, input.ExcavateHeld, input.Winch,
                 _services.Tether.State == TetherAimState.Towing, _glyphs.For(RoverAction.Excavate, device), device);
             _kitTitle.Tick(hudTime);
-            _chip.SetPinned(_tower.IsVisible || _relayTag.IsVisible);
+            bool materialMet = _ledger.Met(HudVerb.Material) || _services.Materials.Total > 0;
+            _chip.SetPinned(materialMet && (_tower.IsVisible || _relayTag.IsVisible));
             _chip.Tick(deltaTime);
             bool cutting = _services.Salvage.IsCutting;
             if (cutting && !_wasCutting)
@@ -410,8 +419,14 @@ namespace MoonProject.UI
                               !hopping;
             _ticker.Tick(hudTime, tickerOpen);
             _hopFade.Tick(deltaTime);
-            _lookUpHint.Tick(hudTime);
+            _lookUpHint.Tick(hudTime, !_placeCard.IsVisible && !_card.IsVisible && !_tower.IsVisible &&
+                                      !_kitTitle.IsVisible && !_dial.IsBusy && !_hopList.IsBusy);
             _lookUpChip.Tick(deltaTime, !paused && _lookUpHint.WantsShown, device);
+            _nextStep.Tick(hudTime, _services.Rover.Speed, _player.Guidance);
+            _placeCard.Tick(hudTime, _awake && !_title.IsPlaying && !_kitTitle.IsVisible && !_card.IsVisible);
+            _nextLine.Tick(deltaTime, _nextStep, !paused && _awake && !_title.IsPlaying && !_card.IsVisible &&
+                                                 !_tower.IsVisible && !_stargaze.IsVeiled &&
+                                                 !_placeCard.IsVisible);
         }
 
         private void Quit()
@@ -423,6 +438,11 @@ namespace MoonProject.UI
         {
             if (_bound)
             {
+                if (changed.Metal + changed.Wiring + changed.Optics > 0)
+                {
+                    _ledger.RecordMet(HudVerb.Material);
+                }
+
                 _chip.Change(changed.Metal, changed.Wiring, changed.Optics);
             }
         }
@@ -471,6 +491,16 @@ namespace MoonProject.UI
             }
         }
 
+        private void OnPlaceFirstApproached(PlaceFirstApproached approached)
+        {
+            _placeCard.Approached(approached.PlaceId);
+        }
+
+        private void OnNextStepChanged(NextStepChanged changed)
+        {
+            _nextStep.SetKey(changed.LineKey);
+        }
+
         private void OnWideShotChanged(RoverWideShotChanged changed)
         {
             if (_bound)
@@ -505,6 +535,7 @@ namespace MoonProject.UI
 
         private void OnCassetteCollected(CassetteCollected collected)
         {
+            _ledger.RecordMet(HudVerb.Tape);
             if (_bound)
             {
                 _card.EnqueueCassette(collected.CassetteId, collected.Collected, collected.Total);
@@ -522,6 +553,7 @@ namespace MoonProject.UI
         private void OnRelayRestored(RelayRestored restored)
         {
             _director.NotifyUsed(InteractionKind.Restore);
+            _ledger.RecordMet(HudVerb.LitMast);
         }
 
         private void OnRadioHopListChanged(RadioHopListChanged changed)
@@ -609,6 +641,8 @@ namespace MoonProject.UI
             _card.Relocalize();
             _ticker.Relocalize();
             _lookUpChip.Relocalize();
+            _nextLine.Relocalize();
+            _placeCard.Relocalize();
             _dial.Relocalize();
             _hopList.Relocalize();
             _friendName.Relocalize();

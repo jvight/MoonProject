@@ -32,6 +32,13 @@ namespace MoonProject.Audio
         [Tooltip("Random pitch wobble on each clunk (keep it under half the step so later drops always land higher).")]
         [Range(0f, 0.05f)] [SerializeField] private float _dropPitchWobble = 0.012f;
 
+        [Header("The base waking (M3-16)")]
+        [Tooltip("Volume scale of a place's wake phrase as power returns to it.")]
+        [Range(0f, 1f)] [SerializeField] private float _wakeVolume = 0.8f;
+
+        [Tooltip("Volume scale of a dormant station's soft 'not yet' answer to the sonar.")]
+        [Range(0f, 1f)] [SerializeField] private float _notYetVolume = 0.7f;
+
         [Header("The bay's arms")]
         [Tooltip("Tip speed (m/s) below which an arm's servo is silent.")]
         [Range(0f, 2f)] [SerializeField] private float _armDeadSpeed = 0.05f;
@@ -117,6 +124,8 @@ namespace MoonProject.Audio
         public float DropVolume => _dropVolume;
         public float DropPitchStep => _dropPitchStep;
         public float DropPitchWobble => _dropPitchWobble;
+        public float WakeVolume => _wakeVolume;
+        public float NotYetVolume => _notYetVolume;
         public float ArmDeadSpeed => _armDeadSpeed;
         public float ArmFullSpeed => Mathf.Max(_armFullSpeed, _armDeadSpeed + MinSpan);
         public float ArmPlacedSpeed => _armPlacedSpeed;

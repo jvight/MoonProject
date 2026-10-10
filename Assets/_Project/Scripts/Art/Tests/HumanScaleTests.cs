@@ -37,7 +37,7 @@ namespace MoonProject.Art.Tests
         {
             ModelNode lander = BaseModelBuilder.CreateLander();
             float deck = BaseModelBuilder.LanderDeckTop;
-            Bounds porthole = Faces(lander.GetDescendant("Windows").Mesh.Geometry, PaletteSwatch.WarmLamp,
+            Bounds porthole = Faces(lander.GetDescendant("Porthole").Mesh.Geometry, PaletteSwatch.LampGlass,
                 p => Mathf.Abs(p.x) < 0.3f && p.z > DoorNear && p.z < PortholeFar);
             Assert.That(porthole.center.y - deck, Is.InRange(1.4f, 1.65f), "the door's porthole at eye height");
 

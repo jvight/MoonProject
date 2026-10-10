@@ -18,6 +18,8 @@ MonoBehaviour:
   _dropVolume: 0.7
   _dropPitchStep: 0.035
   _dropPitchWobble: 0.012
+  _wakeVolume: 0.8
+  _notYetVolume: 0.7
   _armDeadSpeed: 0.05
   _armFullSpeed: 0.8
   _armPlacedSpeed: 10

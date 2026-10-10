@@ -58,6 +58,14 @@ namespace MoonProject.Art.Editor
 
         public const string Decal07FreshName = "Decal07Fresh";
 
+        /// <summary>
+        /// Where a found blueprint tube rides home strapped on 07's lid (M3-16 P7): right of the solar wing, ahead of
+        /// the antenna; its +X runs fore and aft, along the tube (the BlueprintTube prefab lies along its X).
+        /// </summary>
+        public const string TubeSocketName = "TubeSocket";
+
+        public static readonly Vector3 TubeSocket = new Vector3(0.25f, RoverMeshes.LidTop + 0.055f, -0.25f);
+
         // 07 weathered as itself, just old (VISION ruling 11): no mismatched panels, rust low down and at the bolts,
         // dust on the lid and lower body; its skins stand off by a hair so Bell's fresh "07" sits over all of them.
         // 07's head: tired paint and dust on the hood, no rust; it is off the ground.
@@ -144,6 +152,7 @@ namespace MoonProject.Art.Editor
             root.Add(new ModelNode("CoilSocket", CoilSocket));
             root.Add(new ModelNode("DrumSocket_L", MirrorX(DrumSocket), Place.Rotation(new Vector3(0f, 180f, 0f))));
             root.Add(new ModelNode("DrumSocket_R", DrumSocket));
+            root.Add(new ModelNode(TubeSocketName, TubeSocket, Place.Rotation(new Vector3(0f, 90f, 0f))));
             return root;
         }
 

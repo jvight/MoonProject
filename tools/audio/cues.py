@@ -1830,6 +1830,34 @@ def stargaze_swell(_variant, gen):
     return mix
 
 
+BASE_WAKE_PLACES = ("home", "bay", "lift")
+BASE_WAKE_CHIMES = {"home": ("F#4", "A4", "D5"), "bay": ("A4", "D5"), "lift": ("D5", "E5", "A5")}
+
+
+def base_wake(variant, gen):
+    """Power returning to a place of the base: a low hum breathes up from A1 onto D2, then a gentle kalimba phrase
+    settles on top (home F#4-A4-D5, bay A4-D5, lift D5-E5-A5)."""
+    n = samples(4.0)
+    mix = np.zeros((n, 2))
+    rise = osc.glide(n, note_freq("A1"), note_freq("D2"), time_constant=0.5)
+    hum = osc.additive(n, rise, [(1, 1.0), (2, 0.3), (3, 0.08)])
+    hum = filters.lowpass(hum, 900.0) * envelope.segments(
+        n, [(0.0, 0.0), (1.2, 1.0), (2.0, 0.6), (4.0, 0.0)], shape="smooth")
+    place(mix, pan(0.22 * hum, 0.0), 0)
+    for i, note in enumerate(BASE_WAKE_CHIMES[BASE_WAKE_PLACES[variant]]):
+        place(mix, pan(instruments.kalimba(note_freq(note), 2.2, gen, decay=1.4), -0.15 + 0.15 * i),
+              samples(1.0 + 0.28 * i), 0.55)
+    return mix
+
+
+def station_not_yet(_variant, gen):
+    """A dormant station answering the sonar: one soft, muffled D3 bell with a felt-soft knock under it, asleep."""
+    n = samples(1.6)
+    bell = filters.lowpass(instruments.soft_bell(note_freq("D3"), 1.6, decay=1.0, attack=0.03), 700.0)
+    knock = osc.sine(n, osc.glide(n, 140.0, 110.0, time_constant=0.04)) * envelope.ar(n, 0.004, 0.12)
+    return 0.5 * bell[:n] + 0.15 * knock
+
+
 BAY_TURNTABLE_LOOP_S = 3.0
 
 
@@ -2136,6 +2164,11 @@ CUES = (
         tonal=True, notes="'Done for 07': A4 resolving onto D5, felt-soft kalimba over a faint D4 pad."),
     Cue("stargaze_swell", "stinger_2d", stargaze_swell, volume=(0.5, 0.5), fade_out=0.6, milestone="M3",
         tonal=True, notes="07 stargazing: a soft low D2/A2/D3 pad with a faint A3, swelling in under airy noise."),
+    Cue("base_wake", "stinger_2d", base_wake, variants=len(BASE_WAKE_PLACES), variant_labels=BASE_WAKE_PLACES,
+        volume=(0.6, 0.6), fade_out=0.4, milestone="M3", tonal=True,
+        notes="A place of the base waking: low hum rising A1 to D2 into a gentle kalimba phrase per place."),
+    Cue("station_not_yet", "oneshot_3d", station_not_yet, volume=(0.5, 0.5), fade_out=0.2, milestone="M3",
+        tonal=True, notes="A dormant station answering a ping: one muffled D3 bell over a felt knock, asleep."),
     Cue("bay_turntable", "loop_3d", bay_turntable, loop=True, file_stem="bay_turntable_loop", volume=(0.5, 0.5),
         milestone="M3", tonal=True, hf_cutoff=6000.0, hf_max_db=-40.0,
         notes="The turntable turning 07: low roller rumble + bearing hum on D2."),

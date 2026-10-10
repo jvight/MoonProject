@@ -15,6 +15,13 @@ namespace MoonProject.UI
             Hud = Require<VisualElement>("hud");
 
             Title = Require<VisualElement>("title");
+            NextLine = Require<VisualElement>("next-line");
+            NextLineShadow = Require<VisualElement>("next-line-shadow");
+            NextLineText = Require<Label>("next-line-text");
+            PlaceCard = Require<VisualElement>("place-card");
+            PlaceCardShadow = Require<VisualElement>("place-card-shadow");
+            PlaceCardName = Require<Label>("place-card-name");
+            PlaceCardJob = Require<Label>("place-card-job");
             KitTitle = Require<VisualElement>("kit-title");
             KitTitleName = Require<Label>("kit-title-name");
             KitTitleShadow = Require<VisualElement>("kit-title-shadow");
@@ -144,6 +151,7 @@ namespace MoonProject.UI
             LookSlider = Require<SliderInt>("slider-look");
             LookValue = Require<Label>("look-value");
             InvertToggle = Require<Toggle>("toggle-invert");
+            GuidanceToggle = Require<Toggle>("toggle-guidance");
             LanguageButton = Require<Button>("button-language");
             SettingsBackButton = Require<Button>("button-settings-back");
         }
@@ -153,6 +161,20 @@ namespace MoonProject.UI
         public VisualElement Hud { get; }
 
         public VisualElement Title { get; }
+
+        public VisualElement NextLine { get; }
+
+        public VisualElement NextLineShadow { get; }
+
+        public Label NextLineText { get; }
+
+        public VisualElement PlaceCard { get; }
+
+        public VisualElement PlaceCardShadow { get; }
+
+        public Label PlaceCardName { get; }
+
+        public Label PlaceCardJob { get; }
 
         public VisualElement KitTitle { get; }
 
@@ -383,6 +405,8 @@ namespace MoonProject.UI
         public Label LookValue { get; }
 
         public Toggle InvertToggle { get; }
+
+        public Toggle GuidanceToggle { get; }
 
         public Button LanguageButton { get; }
 

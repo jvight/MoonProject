@@ -45,6 +45,8 @@ namespace MoonProject.Art.Editor
             SiteKit.Drift(b, new Vector3(1.3f, 0f, 5.7f), 2.6f, 2f, 0.7f, 30f, 63);
             SiteKit.Drift(b, new Vector3(-2.7f, 0f, -0.9f), 1.5f, 1f, 0.4f, 60f, 64);
 
+            // M3-16 P9: wiring its signature: Wiring L, Wiring M, Metal M, Metal drag, Optics S = (7, 7, 2); the
+            // skylight stays as scenery.
             FallenRoof(site);
             RockerArm(site);
             ChargingPost(site);
@@ -260,6 +262,7 @@ namespace MoonProject.Art.Editor
             b.Box(At(foot + new Vector3(-0.7f, 0.07f, -0.62f), new Vector3(0f, 25f, 0f)),
                 new Vector3(0.16f, 0.12f, 0.22f),
                 PaletteSwatch.Charcoal);
+            piece.Resize(1.25f);
         }
 
         /// <summary>A spare 07 headlamp on the floor by the bench: faded hood, big violet lens.</summary>
@@ -291,6 +294,7 @@ namespace MoonProject.Art.Editor
                 PaletteSwatch.WarmAccent);
             SiteKit.Cable(b, new[] { centre + new Vector3(0.2f, -0.25f, 0f), centre + new Vector3(0.3f, -0.8f, -0.1f) },
                 0.04f, PaletteSwatch.WarmAccent);
+            piece.Resize(1.6f);
         }
 
         /// <summary>
@@ -312,6 +316,7 @@ namespace MoonProject.Art.Editor
                 length * 0.42f, PaletteSwatch.SkyHorizon);
             SiteKit.ArcSheet(b, Bay(2) * At(0f, 0f, length * 0.25f), Radius + lift + 0.03f, 136f, 154f, 1,
                 length * 0.42f, PaletteSwatch.Charcoal);
+            site.Settle(piece);
         }
     }
 }

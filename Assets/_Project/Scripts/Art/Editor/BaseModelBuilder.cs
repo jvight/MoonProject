@@ -56,6 +56,166 @@ namespace MoonProject.Art.Editor
         public const string RoverBayName = "RoverBay";
 
         /// <summary>
+        /// Home's warm points as it wakes (M3-16), each its own dark glow renderer lit through the linear
+        /// MaterialPropertyBlock contract so World or Gameplay can light them one by one: the lander's "Windows" (the
+        /// left pane) with its children Pane_1 (right), Pane_2 (back) and Porthole, and each LampSocket_n's Bulb.
+        /// </summary>
+        public const string PanePrefix = "Pane_";
+
+        public const string PortholeName = "Porthole";
+
+        public const string BulbName = "Bulb";
+
+        /// <summary>
+        /// The lander's HOME sign (M3-16), pivoted at its post's foot: built leaning with the years (home asleep);
+        /// <see cref="HomeSignUpright"/> is its local rotation set straight once home wakes. Gameplay eases between.
+        /// </summary>
+        public const string HomeSignName = "HomeSign";
+
+        /// <summary>
+        /// The station pads (M3-16, M3-15 §4): StationPad_&lt;radius in cm&gt; for each of these radii (metres),
+        /// a worn painted circle with PadLamp_0..5 round its rim, dark glow renderers Gameplay lights while the
+        /// station is awake and has something for 07 to do. Gameplay hides the pad (or leaves it dark) otherwise.
+        /// </summary>
+        public static readonly float[] PadRadii = { 1.6f, 2.4f, 3f };
+
+        /// <summary>
+        /// The ground power cables (M3-16), children of the lander: PowerCable_Home, PowerCable_Bay and
+        /// PowerCable_Lift run from the radio tower's foot to what each wakes, each with Glow_0..n glass segments in
+        /// order from the tower out, dark glow renderers Gameplay lights one after another as power reaches the place.
+        /// </summary>
+        public const string PowerCablePrefix = "PowerCable_";
+
+        public const string CableGlowPrefix = "Glow_";
+
+        public const string PadPrefix = "StationPad_";
+
+        // Seeds the pads' broken paint, one size apart, so no two pads wear alike.
+        private const int PadSeed = 70;
+
+        public const string PadLampPrefix = "PadLamp_";
+
+        public static string PadName(int size)
+        {
+            return PadPrefix + Mathf.RoundToInt(PadRadii[size] * 100f).ToString(CultureInfo.InvariantCulture);
+        }
+
+        /// <summary>Kenji's pen plotter beside his bench, with its moving carriage and pen (see PlotterName).</summary>
+        private static void AddPlotter(ModelNode bay, Quaternion benchTurn)
+        {
+            Vector3 place = RoverBayMeshes.BenchPosition + benchTurn * BlueprintMeshes.PlotterPlace;
+            ModelNode plotter = bay.Add(new ModelNode(PlotterName, place, benchTurn,
+                new ModelMesh(RoverBayName + "_" + PlotterName, BlueprintMeshes.Plotter())));
+            Quaternion bedTurn = Place.Rotation(BlueprintMeshes.BedTilt);
+            ModelNode carriage = plotter.Add(new ModelNode(PenCarriageName, BlueprintMeshes.CarriageHome, bedTurn,
+                new ModelMesh(RoverBayName + "_" + PenCarriageName, BlueprintMeshes.Carriage())));
+            carriage.Add(new ModelNode(PenHeadName, Vector3.zero,
+                new ModelMesh(RoverBayName + "_" + PenHeadName, BlueprintMeshes.PenHead())));
+            plotter.Add(new ModelNode(PlotterSheetName, BlueprintMeshes.Bed.MultiplyPoint3x4(new Vector3(0f, 0f,
+                0.001f)), bedTurn, new ModelMesh(RoverBayName + "_" + PlotterSheetName, BlueprintMeshes.BedSheet()),
+                ModelMaterial.Palette, false));
+            plotter.Add(new ModelNode(PlotterLampName, BlueprintMeshes.PlotterLamp, Quaternion.identity,
+                new ModelMesh(RoverBayName + "_" + PlotterLampName, BlueprintMeshes.LampGlass()),
+                ModelMaterial.PaletteGlowOff));
+        }
+
+        /// <summary>The ground power cables from the tower's foot, each with its glass segments (see above).</summary>
+        private static void AddPowerCables(ModelNode lander)
+        {
+            for (int i = 0; i < PowerCableMeshes.Targets.Length; i++)
+            {
+                string name = PowerCablePrefix + PowerCableMeshes.Targets[i];
+                ModelNode cable = lander.Add(new ModelNode(name, Vector3.zero,
+                    new ModelMesh(LanderName + "_" + name, PowerCableMeshes.Sheath(i))));
+                List<LowPolyMeshBuilder> glow = PowerCableMeshes.Glow(i);
+                for (int k = 0; k < glow.Count; k++)
+                {
+                    string segment = CableGlowPrefix + k.ToString(CultureInfo.InvariantCulture);
+                    cable.Add(new ModelNode(segment, Vector3.zero, Quaternion.identity,
+                        new ModelMesh(LanderName + "_" + name + "_" + segment, glow[k]), ModelMaterial.PaletteGlowOff));
+                }
+            }
+        }
+
+        public static ModelNode CreateStationPad(int size)
+        {
+            float radius = PadRadii[size];
+            string name = PadName(size);
+            var pad = new ModelNode(name, Vector3.zero,
+                new ModelMesh(name, StationPadMeshes.Pad(radius, PadSeed + size)));
+            var glass = new ModelMesh(name + "_LampGlass", StationPadMeshes.LampGlass());
+            for (int i = 0; i < StationPadMeshes.LampCount; i++)
+            {
+                pad.Add(new ModelNode(PadLampPrefix + i.ToString(CultureInfo.InvariantCulture),
+                    StationPadMeshes.Lamp(radius, i), Quaternion.identity, glass, ModelMaterial.PaletteGlowOff));
+            }
+
+            return pad;
+        }
+
+        /// <summary>
+        /// The crew's lift, jammed until tower L3 powers it and 07 restores it (M3-16): LiftPlatform is built hanging
+        /// from its left cable, rolled down to the right (<see cref="LiftPlatformLevel"/> is its restored, level
+        /// rotation at any height between LiftBottom and LiftTop); LiftCable_R (taut, hidden while jammed) and
+        /// LiftCableR_Snapped (a stub and a coil on the dust, shown while jammed) swap when it is restored; WinchLamp
+        /// is a dark glow renderer to light then; LiftHopperMouth is where 07 feeds the winch. Each cable hangs from
+        /// its drum along local -Y: scale its local Y by the cable length the platform's height needs over
+        /// <see cref="LiftCableBuiltLength"/>.
+        /// </summary>
+        public const string LiftSnappedCableName = "LiftCableR_Snapped";
+
+        public const string WinchLampName = "WinchLamp";
+
+        public const string LiftHopperMouthName = "LiftHopperMouth";
+
+        public static Quaternion LiftPlatformLevel => Quaternion.identity;
+
+        public static float LiftCableBuiltLength => CableLiftMeshes.CableLength(CableLiftMeshes.Jammed);
+
+        public static Quaternion HomeSignUpright => Place.Rotation(LanderMeshes.HomeSignUpright);
+
+        /// <summary>
+        /// The bay's roll-up shutter (M3-16 dormant look), pivoted at its roller: local Y scale 1 = down (the bay
+        /// asleep), <see cref="ShutterRolledScale"/> = rolled up into its box (tower L2 has powered it). Gameplay eases
+        /// between the two.
+        /// </summary>
+        public const string ShutterName = "Shutter";
+
+        /// <summary>
+        /// Kenji's blueprints (M3-16 P7): RoverBay/Blueprints, the cord of pegs along his bench's pegboard, holds one
+        /// sheet per kit, Blueprint_&lt;RoverAbility name&gt; (HoverJump, CargoCradle, WarmHeadlamp, BoostCoils). Only
+        /// Hover-Jump's hangs there at the start (Kenji left it); Gameplay shows each other one once the plotter has
+        /// drawn it.
+        /// </summary>
+        public const string BlueprintsName = "Blueprints";
+
+        public const string BlueprintPrefix = "Blueprint_";
+
+        /// <summary>
+        /// Kenji's pen plotter beside his bench (M3-16 P7): it draws a kit's sheet when 07 brings its tube home.
+        /// Plotter/PenCarriage rides across the tilted bed along its local X from 0 to <see cref="PlotterDrawWidth"/>;
+        /// its child PenHead moves along local Y from 0 to <see cref="PlotterDrawHeight"/>; Plotter/PlotterSheet
+        /// (hidden) is the sheet on the bed while it is drawn; Plotter/PlotterLamp is a dark glow renderer, its ready
+        /// light.
+        /// </summary>
+        public const string PlotterName = "Plotter";
+
+        public const string PenCarriageName = "PenCarriage";
+
+        public const string PenHeadName = "PenHead";
+
+        public const string PlotterSheetName = "PlotterSheet";
+
+        public const string PlotterLampName = "PlotterLamp";
+
+        public const float PlotterDrawWidth = BlueprintMeshes.DrawWidth;
+
+        public const float PlotterDrawHeight = BlueprintMeshes.DrawHeight;
+
+        /// <summary>The Shutter node's local Y scale when rolled up.</summary>
+        public const float ShutterRolledScale = 0.05f;
+
+        /// <summary>
         /// Inside the Rover Bay, in bay space: from the top of its floor up to its eaves, between its posts' centres
         /// (side to side and back to front). Its arms fold away within it.
         /// </summary>
@@ -143,6 +303,11 @@ namespace MoonProject.Art.Editor
                 ModelPrefabWriter.Write(CreateTower(level), ArtPaths.BaseFolder, material, glowOff, weather);
             }
 
+            for (int i = 0; i < PadRadii.Length; i++)
+            {
+                ModelPrefabWriter.Write(CreateStationPad(i), ArtPaths.BaseFolder, material, glowOff);
+            }
+
             AssetDatabase.SaveAssets();
         }
 
@@ -150,14 +315,26 @@ namespace MoonProject.Art.Editor
         {
             LowPolyMeshBuilder hull = LanderMeshes.Hull();
             var lander = new ModelNode(LanderName, Vector3.zero, new ModelMesh(LanderName, hull));
-            lander.Add(new ModelNode("Windows", Vector3.zero,
-                new ModelMesh(LanderName + "_Windows", LanderMeshes.Windows())));
+            ModelNode windows = lander.Add(new ModelNode("Windows", Vector3.zero, Quaternion.identity,
+                new ModelMesh(LanderName + "_Windows", LanderMeshes.Pane(0)), ModelMaterial.PaletteGlowOff));
+            for (int i = 1; i < LanderMeshes.PaneCount; i++)
+            {
+                windows.Add(new ModelNode(PanePrefix + i.ToString(CultureInfo.InvariantCulture), Vector3.zero,
+                    Quaternion.identity, new ModelMesh(LanderName + "_Pane" + i.ToString(CultureInfo.InvariantCulture),
+                        LanderMeshes.Pane(i)), ModelMaterial.PaletteGlowOff));
+            }
+
+            windows.Add(new ModelNode(PortholeName, Vector3.zero, Quaternion.identity,
+                new ModelMesh(LanderName + "_Porthole", LanderMeshes.Porthole()), ModelMaterial.PaletteGlowOff));
             lander.Add(new ModelNode("ShelfAnchor", ShelfAnchor));
             lander.Add(new ModelNode("TowerAnchor", TowerAnchor));
+            var bulb = new ModelMesh(LanderName + "_Bulb", LanderMeshes.Bulb());
             for (int i = 0; i < LanderMeshes.LampCount; i++)
             {
-                lander.Add(new ModelNode("LampSocket_" + i.ToString(CultureInfo.InvariantCulture),
+                ModelNode socket = lander.Add(new ModelNode("LampSocket_" + i.ToString(CultureInfo.InvariantCulture),
                     LanderMeshes.LampPosition(i)));
+                socket.Add(new ModelNode(BulbName, Vector3.zero, Quaternion.identity, bulb,
+                    ModelMaterial.PaletteGlowOff));
             }
 
             lander.Add(new ModelNode("FriendSocket_tilly", LanderMeshes.TillyPerch));
@@ -167,6 +344,10 @@ namespace MoonProject.Art.Editor
             lander.Add(new ModelNode("DockGlow", Vector3.zero, Quaternion.identity,
                 new ModelMesh(LanderName + "_DockGlow", ChargingDockMeshes.Glow()), ModelMaterial.PaletteGlowOff));
             AddLift(lander);
+            lander.Add(new ModelNode(HomeSignName, LanderMeshes.HomeSignFoot,
+                Place.Rotation(LanderMeshes.HomeSignLean),
+                new ModelMesh(LanderName + "_" + HomeSignName, LanderMeshes.HomeSign())));
+            AddPowerCables(lander);
             Weathering.Weather(lander, LanderName, hull, LanderWeather, LanderMeshes.Rust(), LanderMeshes.Drifts());
             return lander;
         }
@@ -182,7 +363,8 @@ namespace MoonProject.Art.Editor
             lander.Add(new ModelNode("LiftTop", CableLiftMeshes.Top));
             LowPolyMeshBuilder deck = CableLiftMeshes.Platform();
             string prefix = LanderName + "_LiftPlatform";
-            ModelNode platform = lander.Add(new ModelNode("LiftPlatform", CableLiftMeshes.Jammed,
+            ModelNode platform = lander.Add(new ModelNode("LiftPlatform", CableLiftMeshes.JammedTilted,
+                CableLiftMeshes.JamTilt,
                 new ModelMesh(prefix, deck)));
             platform.Add(new ModelNode("RoverSpot", CableLiftMeshes.RoverSpot,
                 Place.Rotation(CableLiftMeshes.RoverSpotEuler)));
@@ -191,7 +373,15 @@ namespace MoonProject.Art.Editor
             var cable = new ModelMesh(LanderName + "_LiftCable",
                 CableLiftMeshes.Cable(CableLiftMeshes.CableLength(CableLiftMeshes.Jammed)));
             lander.Add(new ModelNode("LiftCable_L", CableLiftMeshes.CableTop(-1), cable));
-            lander.Add(new ModelNode("LiftCable_R", CableLiftMeshes.CableTop(1), cable));
+            lander.Add(new ModelNode("LiftCable_R", CableLiftMeshes.CableTop(1), Quaternion.identity, cable,
+                ModelMaterial.Palette, false));
+            lander.Add(new ModelNode(LiftSnappedCableName, CableLiftMeshes.CableTop(1),
+                new ModelMesh(LanderName + "_" + LiftSnappedCableName, CableLiftMeshes.SnappedCable())));
+            lander.Add(new ModelNode(WinchLampName, CableLiftMeshes.WinchLamp, Quaternion.identity,
+                new ModelMesh(LanderName + "_" + WinchLampName, CableLiftMeshes.WinchLampGlass()),
+                ModelMaterial.PaletteGlowOff));
+            lander.Add(new ModelNode(LiftHopperMouthName, CableLiftMeshes.HopperMouth,
+                Place.Rotation(CableLiftMeshes.HopperFacing)));
         }
 
         public static ModelNode CreateShelf()
@@ -233,6 +423,19 @@ namespace MoonProject.Art.Editor
             AddFloorArm(bay);
             bay.Add(new ModelNode("HopperMouth", RoverBayMeshes.HopperMouth,
                 Place.Rotation(RoverBayMeshes.HopperFacing)));
+            Quaternion benchTurn = Place.Rotation(RoverBayMeshes.BenchEuler);
+            ModelNode board = bay.Add(new ModelNode(BlueprintsName, RoverBayMeshes.BenchPosition, benchTurn));
+            for (int i = 0; i < BlueprintMeshes.Kits.Length; i++)
+            {
+                string kit = BlueprintMeshes.Kits[i];
+                board.Add(new ModelNode(BlueprintPrefix + kit, BlueprintMeshes.Slot(i), Quaternion.identity,
+                    new ModelMesh(RoverBayName + "_" + BlueprintPrefix + kit, BlueprintMeshes.Sheet(kit)),
+                    ModelMaterial.Palette, i == 0));
+            }
+
+            AddPlotter(bay, benchTurn);
+            bay.Add(new ModelNode(ShutterName, RoverBayMeshes.ShutterRoller,
+                new ModelMesh(RoverBayName + "_" + ShutterName, RoverBayMeshes.Shutter())));
             bay.Add(new ModelNode("BaySign", Vector3.zero, Quaternion.identity,
                 new ModelMesh(RoverBayName + "_BaySign", RoverBayMeshes.SignGlow()), ModelMaterial.PaletteGlowOff));
             var glass = new ModelMesh(RoverBayName + "_LampGlass", RoverBayMeshes.LampGlassMesh());

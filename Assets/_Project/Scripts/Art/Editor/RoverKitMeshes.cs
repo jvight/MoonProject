@@ -67,7 +67,7 @@ namespace MoonProject.Art.Editor
 
         // The cargo rack, body space: a crate-like basket behind the hatch, its boarded sides standing well over the
         // rear wheels, its back low so the chase camera's lines to the back "07" and the tail lamps pass over it (even
-        // from 30 m), its straps slung across the top.
+        // from 30 m), its straps running fore and aft so from behind they never draw a V (07's rear is not a face).
         private const float RackFloor = 0.5f;
         private const float RackTop = 0.84f;
         private const float RackBackTop = 0.68f;
@@ -88,7 +88,11 @@ namespace MoonProject.Art.Editor
 
         private static readonly float[] BackBoards = { 0.575f };
 
-        private static readonly float[] StrapRows = { -0.85f, -1.03f };
+        // The straps' lanes across the rack (off-centre, never mirrored, clear of the back "07") and where the loose
+        // end hangs.
+        private static readonly float[] StrapLanes = { -0.33f, 0.36f };
+
+        private const float HangingZ = -1.03f;
 
         /// <summary>Body space to HeadlampSocket space (the socket sits low on the front, pitched down).</summary>
         private static Matrix4x4 BodyToLampSocket =>
@@ -212,9 +216,9 @@ namespace MoonProject.Art.Editor
         /// <summary>
         /// The cargo cradle: a crate-like rear rack basket on two short arms from the hatch (their plates rusted on), a
         /// metal tube frame with rust collars at the post feet, three wooden boards along each side standing well over
-        /// the rear wheels and one low across the back, a floor of wooden slats, and two worn orange straps slung slack
-        /// across the top, one buckle hanging. Its back stays under the chase camera's lines to the back "07" and the
-        /// tail lamps.
+        /// the rear wheels and one low across the back, a floor of wooden slats, and two worn orange straps slung
+        /// slack fore and aft over the top, off-centre (from behind they never draw a V), one buckle hanging. Its back
+        /// stays under the chase camera's lines to the back "07" and the tail lamp.
         /// </summary>
         public static LowPolyMeshBuilder CargoRack()
         {
@@ -275,14 +279,15 @@ namespace MoonProject.Art.Editor
                     new Vector3(0.15f, SlatThickness, RackFront - RackBack - 0.02f), PaletteSwatch.Wood, 0.004f);
             }
 
-            foreach (float z in StrapRows)
+            float middle = (RackFront + RackBack) * 0.5f;
+            foreach (float x in StrapLanes)
             {
-                Strap(b, new Vector3(-RackHalfWidth, RackTop + 0.02f, z), new Vector3(0f, StrapSag, z + 0.01f));
-                Strap(b, new Vector3(0f, StrapSag, z + 0.01f), new Vector3(RackHalfWidth, RackTop + 0.02f, z));
+                Strap(b, new Vector3(x, RackTop + 0.02f, RackFront), new Vector3(x, StrapSag, middle));
+                Strap(b, new Vector3(x, StrapSag, middle), new Vector3(x, RackBackTop + 0.02f, RackBack));
             }
 
             // The loose end hangs flat against the side boards, clear of the rear wheel at full travel and steer.
-            float hanging = StrapRows[1];
+            const float hanging = HangingZ;
             Strap(b, new Vector3(RackHalfWidth + 0.015f, RackTop + 0.01f, hanging),
                 new Vector3(RackHalfWidth + 0.02f, RackTop - 0.12f, hanging));
             b.Box(At(RackPoint(new Vector3(RackHalfWidth + 0.022f, RackTop - 0.14f, hanging))),

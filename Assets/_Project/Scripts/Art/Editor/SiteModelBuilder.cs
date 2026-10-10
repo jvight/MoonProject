@@ -50,8 +50,11 @@ namespace MoonProject.Art.Editor
                 ModelPrefabWriter.Write(CreateBundle(bundle), ArtPaths.PickupFolder, material);
             }
 
+            ModelPrefabWriter.Write(CreateBlueprintTube(), ArtPaths.PickupFolder, material);
             AssetDatabase.SaveAssets();
         }
+
+        public const string BlueprintTubeName = "BlueprintTube";
 
         public static string SiteName(string id)
         {
@@ -104,6 +107,16 @@ namespace MoonProject.Art.Editor
 
             string name = BundleName(material);
             return new ModelNode(name, Vector3.zero, new ModelMesh(name, RecipeKit.CentredOnMass(geometry)));
+        }
+
+        /// <summary>
+        /// The blueprint tube a salvage site's heart holds (M3-16): Gameplay places it and pins its kit's sheet on
+        /// Kenji's board once 07 scans it.
+        /// </summary>
+        public static ModelNode CreateBlueprintTube()
+        {
+            return new ModelNode(BlueprintTubeName, Vector3.zero,
+                new ModelMesh(BlueprintTubeName, BlueprintMeshes.Tube()));
         }
 
         public static ModelNode CreateDebris(string name)

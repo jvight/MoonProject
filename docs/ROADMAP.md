@@ -100,6 +100,7 @@ Không mở rộng nội dung khi phần nhìn của phase hiện tại chưa ch
   - Đặt đèn đường ấm trước kính `Lamp_1` vài cm. Ghi khối `_kit` vào `RoverRigTuning.asset` (rover).
   - Từ góc 3/4 sau, trống tụ điện che ~25% số "07" bên hông (art).
   - Thêm biến thể tiếng "cộp" thứ ba cho phễu để 3 bó không lặp mẫu (audio).
+  - `ExcavationAndTetherSessions.Tether_CaughtBehindAWall_LetsGoSoftly…` chập chờn khi máy bận (không bắt được dây trong LatchTimeout lúc chạy cả bộ PlayMode, chạy riêng thì qua): làm test chờ theo trạng thái thay vì thời gian (gameplay).
 
 ## M3 — "Trạm thức giấc": chiều sâu phần 1 (xem `docs/DESIGN.md`)
 | ID | Việc | Box | TT |

@@ -305,3 +305,21 @@ MonoBehaviour:
       _springDamping: 0.6
     _hintDelay: 2
     _hintHoldSeconds: 6
+  _guidance:
+    _line:
+      _fadeIn: 0.9
+      _fadeOut: 0.5
+      _slide: 6
+      _scaleFrom: 1
+      _springFrequency: 1.4
+      _springDamping: 0.6
+    _stillSpeed: 0.4
+    _stillSeconds: 1.2
+    _place:
+      _fadeIn: 1
+      _fadeOut: 1.4
+      _slide: 12
+      _scaleFrom: 0.94
+      _springFrequency: 1
+      _springDamping: 0.7
+    _placeHoldSeconds: 4

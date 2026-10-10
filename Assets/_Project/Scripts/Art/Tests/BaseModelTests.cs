@@ -37,6 +37,93 @@ namespace MoonProject.Art.Tests
         }
 
         [Test]
+        public void LanderWindows_AndPorchLamps_AreEachTheirOwnDarkGlow_ToWakeOneByOne()
+        {
+            ModelNode lander = BaseModelBuilder.CreateLander();
+            ModelNode windows = lander.GetDescendant("Windows");
+            var glows = new List<ModelNode> { windows };
+            glows.AddRange(windows.Children);
+            CollectionAssert.AreEqual(new[] { "Pane_1", "Pane_2", "Porthole" }, windows.Children.Select(c => c.Name));
+            foreach (ModelNode socket in lander.Children.Where(c => c.Name.StartsWith("LampSocket_")))
+            {
+                glows.Add(socket.Children.Single(c => c.Name == BaseModelBuilder.BulbName));
+            }
+
+            foreach (ModelNode glow in glows)
+            {
+                Assert.AreEqual(ModelMaterial.PaletteGlowOff, glow.Material, $"{glow.Name} starts dark");
+                CollectionAssert.AreEqual(new[] { PaletteSwatch.LampGlass }, MeshChecks.Swatches(glow.Mesh.Geometry),
+                    glow.Name);
+            }
+        }
+
+        [Test]
+        public void CrewsLift_ReadsJammed_AndCarriesItsRestoredParts()
+        {
+            ModelNode lander = BaseModelBuilder.CreateLander();
+            ModelNode platform = lander.GetDescendant("LiftPlatform");
+            Assert.Greater(Quaternion.Angle(platform.LocalRotation, BaseModelBuilder.LiftPlatformLevel), 8f,
+                "jammed, the platform hangs tilted on one cable");
+            ModelNode left = lander.GetDescendant("LiftCable_L");
+            Vector3 cableFoot = left.LocalPosition + Vector3.down * BaseModelBuilder.LiftCableBuiltLength;
+            Vector3 shackle = platform.LocalPosition + platform.LocalRotation * new Vector3(-0.84f, 1f, -1.29f);
+            Assert.Less(new Vector2(cableFoot.x - shackle.x, cableFoot.z - shackle.z).magnitude, 0.02f,
+                "the left cable still hangs plumb to its shackle");
+            Assert.IsFalse(lander.GetDescendant("LiftCable_R").Active, "the taut right cable waits for the repair");
+            Assert.IsTrue(lander.GetDescendant(BaseModelBuilder.LiftSnappedCableName).Active,
+                "the snapped one hangs and coils on the dust");
+            ModelNode lamp = lander.GetDescendant(BaseModelBuilder.WinchLampName);
+            Assert.AreEqual(ModelMaterial.PaletteGlowOff, lamp.Material, "the winch lamp starts dark");
+            Assert.That(lander.GetDescendant(BaseModelBuilder.LiftHopperMouthName).LocalPosition.y,
+                Is.InRange(0.9f, 1.5f), "07's beam reaches the winch hopper");
+        }
+
+        [Test]
+        public void StationPads_LieFlat_InBrokenPaint_WithDarkLampsRoundTheRim()
+        {
+            for (int size = 0; size < BaseModelBuilder.PadRadii.Length; size++)
+            {
+                ModelNode pad = BaseModelBuilder.CreateStationPad(size);
+                Bounds paint = pad.Mesh.Geometry.Bounds;
+                Assert.Less(paint.max.y, 0.05f, $"{pad.Name} lies on the dust");
+                Assert.AreEqual(BaseModelBuilder.PadRadii[size], paint.extents.x, 0.15f, $"{pad.Name}'s radius");
+                MeshChecks.AssertWellFormed(pad.Mesh.Geometry);
+                CollectionAssert.AreEqual(Enumerable.Range(0, 6).Select(i => "PadLamp_" + i),
+                    pad.Children.Select(c => c.Name));
+                foreach (ModelNode lamp in pad.Children)
+                {
+                    Assert.AreEqual(ModelMaterial.PaletteGlowOff, lamp.Material, $"{lamp.Name} starts dark");
+                    Assert.Less(new Vector2(lamp.LocalPosition.x, lamp.LocalPosition.z).magnitude,
+                        BaseModelBuilder.PadRadii[size], "inside the circle");
+                }
+            }
+        }
+
+        [Test]
+        public void PowerCables_RunFromTheTowersFoot_OnTheDust_AndLightInOrder()
+        {
+            ModelNode lander = BaseModelBuilder.CreateLander();
+            foreach (string target in new[] { "Home", "Bay", "Lift" })
+            {
+                ModelNode cable = lander.GetDescendant(BaseModelBuilder.PowerCablePrefix + target);
+                Bounds sheath = cable.Mesh.Geometry.Bounds;
+                Assert.Less(sheath.min.y, 0.02f, $"{cable.Name} lies half sunk in the dust");
+                Assert.Greater(cable.Children.Count, 1, $"{cable.Name} lights along its length");
+                Vector3 previous = BaseModelBuilder.TowerAnchor;
+                float link = 2.5f;
+                foreach (ModelNode glow in cable.Children)
+                {
+                    Assert.AreEqual(ModelMaterial.PaletteGlowOff, glow.Material, $"{glow.Name} starts dark");
+                    Vector3 centre = glow.Mesh.Geometry.Bounds.center;
+                    Assert.Less(new Vector2(centre.x - previous.x, centre.z - previous.z).magnitude, link,
+                        $"{cable.Name}/{glow.Name} follows on from the one before, from the tower out");
+                    previous = centre;
+                    link = 2.2f;
+                }
+            }
+        }
+
+        [Test]
         public void Anchors_LeaveRoomAroundTheLander()
         {
             ModelNode lander = BaseModelBuilder.CreateLander();

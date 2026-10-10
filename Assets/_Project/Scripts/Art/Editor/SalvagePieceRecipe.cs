@@ -29,13 +29,24 @@ namespace MoonProject.Art.Editor
         public Vector3 Pivot { get; }
 
         /// <summary>Where the beam aims and sparks, in site space.</summary>
-        public Vector3 CutPoint { get; }
+        public Vector3 CutPoint { get; private set; }
 
         /// <summary>Out of the cut face, in site space (the CutPoint's +Z).</summary>
         public Vector3 CutNormal { get; }
 
         /// <summary>A big piece that must be tethered clear before it can be cut.</summary>
         public bool Drag { get; }
+
+        /// <summary>
+        /// Scales the drawn piece about its pivot (its cut point with it), so it falls in the size class its site's
+        /// yield needs (Gameplay sizes a piece by its mesh's bounds volume).
+        /// </summary>
+        public void Resize(float scale)
+        {
+            Geometry.Transform(Geometry.RangeFrom(0),
+                Matrix4x4.Translate(Pivot) * Matrix4x4.Scale(Vector3.one * scale) * Matrix4x4.Translate(-Pivot));
+            CutPoint = Pivot + (CutPoint - Pivot) * scale;
+        }
 
         /// <summary>The piece's mesh, built in site space (the builder moves it onto the pivot).</summary>
         public LowPolyMeshBuilder Geometry { get; } = new LowPolyMeshBuilder(400);
