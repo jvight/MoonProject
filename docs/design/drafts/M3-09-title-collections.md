@@ -118,3 +118,43 @@ one-line card. No hands (ruling 14).
 - Every collection's progress is readable at the base from the default camera, and no menu shows a collection count.
 - A playtester can find "how many of Ro's things are home" by driving to the shelf, without opening any menu.
 - 60 fps and zero per-frame GC on the title and while browsing.
+
+## Amendments proposed by the story & flow session (2026-10-11)
+Checked against `docs/design/cutscenes.md` §1 (the opening, now VISION ruling 8) and `docs/design/game-flow.md`
+§5, §7 and §8. For the Director to accept or refuse, one by one.
+1. **The title meets the opening through the lens** (cutscenes §1.7). The fresh title frame, low and front
+   three-quarter on 07's closed lens, is the same shot the opening lands on in O10.
+   - New Game: the menu fades (0.5 s) and the camera pushes into the closed lens (2 s). The black inside is the
+     opening's O1, and the title's quiet static carries on into it with no gap.
+   - So "the M3-16 step-0 wake plays from here" becomes "the first-person opening plays from here". The first prompt
+     follows cutscenes O14: "Look up" only if the player didn't look during the first-person part, otherwise "Drive".
+2. **The fresh title's idle drift stays near the lens shot:** within ~10° of it, easing back (≤ 1 s) when New Game is
+   chosen. An orbit would have to fly back first.
+3. **New Game with a save, and the scene reload.** Keep the windows going dark (~3 s). Then:
+   - the camera moves to the fresh frame and pushes into the lens;
+   - the reload that puts the save away (today `NewGameRequested` reloads Main) happens **inside O1's black**. If
+     loading takes longer than O1's 3 s, the black and the static hold. There is no loading screen and no hard cut;
+   - App keeps a one-shot "new game" boot intent beside the save, so the reloaded boot skips the title and starts the
+     opening.
+4. **Continue is the short wake** (cutscenes §1.6). The "short stretch" is 07's lid opening, one blink and the wing
+   easing open. Then a 2 s glance, which never holds control, at the newest pillar: Tilly's overnight glint
+   (game-flow #15), or Earth. Control returns in ≤ 3 s, as written.
+5. **One wordmark.** The title owns it, with the new treatment. Retire `TitleCard`'s drift over the wake: it would
+   sit over 07's own eye during the first-person part.
+6. **Contracts.** Keep `IGameFlow`. Add `SessionStarted(bool freshGame)`, published by App on Title → Playing
+   (cutscenes §1.8). Rover plays the opening or the short wake from it. It also fixes today's bug, where any load at
+   stage Asleep replays the opening (`RoverCameraRig.OnBasePowerChanged`, game-flow #11).
+7. **The letters need a home.** Part B has no place for the radio's fragments and Ro's letters, which game-flow §5
+   and §7 make a collection: each mast plays back the letters it caught, and about ten more arrive after the ending.
+   - Proposal: Bell prints each one on a thin paper strip onto a spike at her corner, a literal ticker tape. The
+     stack grows, and focusing the spike replays them in order.
+   - Add the row, plus `letters` to `ICollections`.
+8. **Promise only what this version holds.** Dust outlines and pencilled pin silhouettes appear only for the relics
+   and kits in the build's catalogues:
+   - in 0.5: 6 outlines, and the plotter board with Hover-Jump plus 3 tubes' pins (Cradle, Headlamp, Boost Coils);
+   - the rest of each crew bay is plain, dusty shelf;
+   - this follows the 2026-10-10 review's rule against a found promise that can't be kept in the same phase.
+9. **The crew windows are the bunk windows.** `CrewSetCompleted` lights a crew member's bunk window, which must stay
+   separate from L1's cabin windows (game-flow #2, cutscenes §2). Its moment is cutscenes §8.
+10. **One radio profile.** The fresh title's "out-of-tune crackle" and the opening's static with the ghost chord are
+    the same Asleep profile in audio, so the seam in point 1 can't be heard.
