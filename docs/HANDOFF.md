@@ -52,6 +52,29 @@ account) can continue without the old conversation.
   - **Art was asked for** Part_TowerCoil, Part_Transformer and Part_RelaySpare under Generated/Art/Pickups, carried on
     07's back.
 
+  Latest box tips reported before this account ran out (check `director.py status` for anything newer):
+  - **world 1f93d242.**
+    - Done: cables light outward from the tower (~1.5 s), with home's lights starting when the cable arrives; the
+      tower pilot blinks while Asleep; WorldHomeWiringContributor; builder World/Tower Pilot.
+    - Its tests and captures (Logs/world-captures/wake-0..3) were still running when it committed: re-run and
+      critique them.
+    - After merging: ResetSettings (new `_homeLighting` cable and pilot fields). Revert the rebuilt Main.unity and
+      Generated files and the untracked metas in that worktree before merging.
+  - **audio 7da01984.**
+    - Done: Core LiftCue/LiftCued; the lift creak, ride and clunk, the plotter draw, the blueprint chime and the dock
+      evening swell (generated); runtime for the lift, the plotter and the chime.
+    - Its tests were NOT confirmed: re-run them.
+    - Next: wire dock_evening_swell to Core.Events.DockEveningOpened(Vector3 DockPosition) once gameplay adds it.
+    - After landing: the Audio builders and a StationAudioTuning re-serialise.
+  - **rover 0579f46b.**
+    - Done: the tube rides on 07's TubeSocket (TubeCarry, RoverRigTuning._tubeHalfLife).
+    - After landing: run the Rover/Rover builder.
+    - Gap: a tube carried across a save/load is not restored. Gameplay should re-publish BlueprintFound for
+      carried-but-undelivered tubes on load.
+    - Next: the ladder look, then the lift station and ride (Gameplay/Lift/**, authorised).
+  - **gameplay 9f7f9216+.** Waiting on art's garage fix to re-run the Playthrough, then P7 (carried find) and P1.
+  - **art.** The garage fix (all cuttable, 7,7,2), then the three story-part prefabs, then the QA pass.
+
 - **After landing 0.5's first batch:**
   - Run `^(Art|Rover|Gameplay|UI|Audio)/` builders and the scene.
   - Re-serialise the tuning assets.
