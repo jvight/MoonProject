@@ -21,6 +21,13 @@ namespace MoonProject.Gameplay
             ProgressionKeys.PlaceBoard, ProgressionKeys.PlaceRack,
         };
 
+        private const int TowerSpot = 4;
+        private const int StepTower = 2;
+        private const int StepRelic = 4;
+        private const int StepBay = 5;
+        private const int StepLeap = 6;
+        private const int StepLift = 8;
+
         [Tooltip("The wake-up's tuning (Assets/_Project/Data/Tuning/Gameplay/ProgressionTuning.asset).")]
         [SerializeField] private ProgressionTuning _tuning;
 
@@ -75,19 +82,23 @@ namespace MoonProject.Gameplay
             _rover = services.Rover;
             _dock = _places[0].position;
             _approaches = new PlaceApproaches(services.Events, _tuning.PlaceLineGap);
+            _steps = new StepFlow(services.Events);
             for (int i = 0; i < Places.Length; i++)
             {
                 _approaches.Add(Places[i], _places[i].position, _tuning.RadiusOf(Places[i]),
-                    Presence(Places[i], bay, leap));
+                    Speaks(Places[i], bay, leap));
             }
 
             _answers = new DormantAnswers(services.Events, sonar);
-            _answers.Add(ProgressionKeys.NotYetBay, bay.transform.position, () => !bay.Awake);
-            _answers.Add(ProgressionKeys.NotYetLift, _lift.position, () => !power.HasReached(BasePowerStage.Lift));
-            _answers.Add(ProgressionKeys.NotYetShelf, home.ShelfPosition, () => home.DisplayedCount == 0);
+            Func<bool> homePowered = () => power.HasReached(BasePowerStage.Home);
+            _answers.Add(ProgressionKeys.NotYetTower, _places[TowerSpot].position, () => !homePowered());
+            _answers.Add(ProgressionKeys.NotYetBay, bay.transform.position, () => homePowered() && !bay.Awake);
+            _answers.Add(ProgressionKeys.NotYetLift, _lift.position,
+                () => homePowered() && !power.HasReached(BasePowerStage.Lift));
+            _answers.Add(ProgressionKeys.NotYetShelf, home.ShelfPosition,
+                () => homePowered() && home.DisplayedCount == 0);
             _salvage = services.Events.Subscribe<MaterialSalvaged>(_ => _salvaged = true);
 
-            _steps = new StepFlow(services.Events);
             _steps.Add(ProgressionKeys.NextWake, () => _woke);
             _steps.Add(ProgressionKeys.NextSalvage, () => _salvaged || power.HasReached(BasePowerStage.Home));
             _steps.Add(ProgressionKeys.NextTower, () => power.HasReached(BasePowerStage.Home));
@@ -129,15 +140,23 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// Kenji's board is seen once the bay's shutter is up; Bell's tape rack stands only once Bell is home.
+        /// Only the next thing speaks (M3-16 P4): a place greets 07 once the steps have come to it, the step it
+        /// belongs to (0 wake: the dock; 2 tower: the lander and the tower; 4 relic: the shelf; 5 bay: the bay and,
+        /// its shutter up, Kenji's board; 6 leap: Bell's rack, once she is home; 8 lift: the ladder and the lift).
         /// </summary>
-        private static Func<bool> Presence(string placeId, Workshop bay, Friend bell)
+        private Func<bool> Speaks(string placeId, Workshop bay, Friend bell)
         {
             switch (placeId)
             {
-                case ProgressionKeys.PlaceBoard: return () => bay.Awake;
-                case ProgressionKeys.PlaceRack: return () => bell.Progress.State == FriendState.Awake;
-                default: return null;
+                case ProgressionKeys.PlaceDock: return null;
+                case ProgressionKeys.PlaceLander:
+                case ProgressionKeys.PlaceTower: return () => _steps.CurrentIndex >= StepTower;
+                case ProgressionKeys.PlaceShelf: return () => _steps.CurrentIndex >= StepRelic;
+                case ProgressionKeys.PlaceBay: return () => _steps.CurrentIndex >= StepBay;
+                case ProgressionKeys.PlaceBoard: return () => _steps.CurrentIndex >= StepBay && bay.Awake;
+                case ProgressionKeys.PlaceRack:
+                    return () => _steps.CurrentIndex >= StepLeap && bell.Progress.State == FriendState.Awake;
+                default: return () => _steps.CurrentIndex >= StepLift;
             }
         }
 

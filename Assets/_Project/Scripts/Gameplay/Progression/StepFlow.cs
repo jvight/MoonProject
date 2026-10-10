@@ -23,6 +23,9 @@ namespace MoonProject.Gameplay
             _events = events ?? throw new ArgumentNullException(nameof(events));
         }
 
+        /// <summary>The index of the current step (the step count once every step is done).</summary>
+        public int CurrentIndex { get; private set; }
+
         /// <summary>The current line key, or empty when every step is done.</summary>
         public string Current { get; private set; } = string.Empty;
 
@@ -41,14 +44,18 @@ namespace MoonProject.Gameplay
         public void Tick()
         {
             string key = string.Empty;
+            int index = _keys.Count;
             for (int i = 0; i < _keys.Count; i++)
             {
                 if (!_done[i]())
                 {
                     key = _keys[i];
+                    index = i;
                     break;
                 }
             }
+
+            CurrentIndex = index;
 
             if (_announced && key == Current)
             {

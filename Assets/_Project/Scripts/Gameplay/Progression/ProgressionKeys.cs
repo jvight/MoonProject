@@ -45,6 +45,9 @@ namespace MoonProject.Gameplay
         /// <summary>Step 8: power the crew's lift (tower L3).</summary>
         public const string NextLift = "next.lift";
 
+        /// <summary>The tower before its first level: the only sleeper that answers then (M3-16 P4).</summary>
+        public const string NotYetTower = "notyet.tower";
+
         public const string NotYetBay = "notyet.bay";
         public const string NotYetLift = "notyet.lift";
         public const string NotYetShelf = "notyet.shelf";
