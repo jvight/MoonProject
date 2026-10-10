@@ -97,7 +97,10 @@ namespace MoonProject.Testing
 #endif
         }
 
-        /// <summary>Deletes every file of <paramref name="saveSlot"/> (save, backup, temp, set-aside corrupt files).</summary>
+        /// <summary>
+        /// Deletes every file of <paramref name="saveSlot"/>: the save and the player settings file
+        /// (<see cref="SettingsFile"/>), each with its backup, temp and set-aside corrupt files.
+        /// </summary>
         public static void DeleteSaveFiles(string saveSlot)
         {
             string directory = SaveService.DefaultDirectory;
@@ -106,9 +109,12 @@ namespace MoonProject.Testing
                 return;
             }
 
-            foreach (string file in Directory.GetFiles(directory, saveSlot + SaveService.Extension + "*"))
+            foreach (string prefix in new[] { saveSlot, saveSlot + SettingsFile.Suffix })
             {
-                File.Delete(file);
+                foreach (string file in Directory.GetFiles(directory, prefix + SaveService.Extension + "*"))
+                {
+                    File.Delete(file);
+                }
             }
         }
     }
