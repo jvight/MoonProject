@@ -33,6 +33,10 @@ namespace MoonProject.Rover.PlayModeTests
         private const float DrumSocketX = 0.47f;
         private const float DrumSocketY = 0.87f;
         private const float DrumSocketZ = -0.12f;
+
+        /// <summary>The blueprint tube stand-in's socket on 07's back (art's TubeSocket).</summary>
+        private const float TubeSocketY = 1.1f;
+        private const float TubeSocketZ = -0.6f;
         private const float SeatHeight = 0.045f;
         private const float SeatBack = -0.26f;
 
@@ -282,6 +286,10 @@ namespace MoonProject.Rover.PlayModeTests
             Transform pennant = Shape(PrimitiveType.Cube, antenna, new Vector3(0f, 0.6f, -0.05f),
                 new Vector3(0.01f, 0.06f, 0.1f), material);
             pennant.name = RoverModelNodes.Pennant;
+            Transform tubeSocket = Node(RoverModelNodes.TubeSocket, model, new Vector3(0f, TubeSocketY, TubeSocketZ));
+            Transform tube = Shape(PrimitiveType.Cylinder, tubeSocket, Vector3.zero, new Vector3(0.08f, 0.3f, 0.08f),
+                material);
+            tube.name = "BlueprintTube";
             var kit = visual.gameObject.AddComponent<RoverKit>();
             var moteSystem = Particles("LampMotes", headlamp.transform, material);
             var lampMotes = moteSystem.gameObject.AddComponent<RoverLampMotes>();
@@ -293,7 +301,8 @@ namespace MoonProject.Rover.PlayModeTests
             Assign(rig, ("_tuning", rigTuning), ("_chassis", chassis), ("_bogieLeft", bogieLeft),
                 ("_bogieRight", bogieRight), ("_antenna", antenna));
             Assign(kit, ("_tuning", rigTuning), ("_headlamp", headlamp), ("_lampBar", lampBar), ("_cargoRack", rack),
-                ("_relicSeat", seat), ("_solarCell", cell), ("_freshSerial", serial), ("_pennant", pennant));
+                ("_relicSeat", seat), ("_solarCell", cell), ("_freshSerial", serial), ("_pennant", pennant),
+                ("_tube", tube));
             AssignArray(kit, "_lamps", lamps);
             AssignArray(kit, "_drums", drums);
             AssignArray(kit, "_drumGlows", drumGlows);

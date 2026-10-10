@@ -4,7 +4,7 @@ using UnityEngine;
 namespace MoonProject.Rover.Tests
 {
     /// <summary>Stargazing: 07 slowly joins the look up, the beat waits for rest, and driving ends it gently.</summary>
-    public sealed class StargazeTests
+    public sealed class RoverStargazeTests
     {
         private const float Step = 1f / 60f;
 
