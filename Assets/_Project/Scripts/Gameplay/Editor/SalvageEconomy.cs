@@ -26,7 +26,7 @@ namespace MoonProject.Gameplay.Editor
         /// <summary>The radio tower's three levels: wiring and optics, a little more each time.</summary>
         public static IReadOnlyList<Recipe> RadioTower { get; } = new[]
         {
-            new Recipe(0, 1, 1), new Recipe(0, 1, 2), new Recipe(0, 2, 2),
+            new Recipe(0, 1, 1), new Recipe(1, 2, 0), new Recipe(0, 2, 2),
         };
 
         /// <summary>The salvage sites in catalog order (Art's Site_&lt;name&gt; on site.&lt;name&gt;).</summary>

@@ -117,26 +117,11 @@ namespace MoonProject.Gameplay.Tests
             var yield = new int[3];
             foreach (string name in SalvageEconomy.SiteNames)
             {
-                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(GameplayAssetPaths.SitePrefab(name));
-                Assert.IsNotNull(prefab, $"Art's site prefab for '{name}'");
-                Assert.IsNotNull(prefab.transform.Find("Skeleton"), $"{name} has its skeleton");
-                Assert.IsNotNull(prefab.transform.Find("Heart"), $"{name} has its heart");
-                int pieces = 0;
-                foreach (Transform node in prefab.transform)
+                int[] site = SiteYield(name, tuning);
+                for (int i = 0; i < yield.Length; i++)
                 {
-                    if (!SalvagePieceName.TryParsePiece(node.name, out _, out SalvageMaterial material, out bool drag))
-                    {
-                        continue;
-                    }
-
-                    Assert.IsNotNull(node.Find("CutPoint"), $"{name}/{node.name} has its cut point");
-                    Mesh mesh = node.GetComponent<MeshFilter>().sharedMesh;
-                    yield[(int)material] += SalvageYield.Units(Vector3.Scale(mesh.bounds.size, node.localScale), drag,
-                        tuning);
-                    pieces++;
+                    yield[i] += site[i];
                 }
-
-                Assert.That(pieces, Is.InRange(4, 8), $"{name}: 4 to 8 salvage points");
             }
 
             foreach (string bit in SalvageEconomy.TrailBits)
@@ -166,6 +151,44 @@ namespace MoonProject.Gameplay.Tests
             }
 
             Assert.GreaterOrEqual(yield[0] + yield[1] + yield[2], 2 * costs.Total, "and at least twice in all");
+        }
+
+        /// <summary>Units of each material Art's site prefab <paramref name="name"/> gives (its contract checked).</summary>
+        private static int[] SiteYield(string name, SalvageTuning tuning)
+        {
+            var yield = new int[3];
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(GameplayAssetPaths.SitePrefab(name));
+            Assert.IsNotNull(prefab, $"Art's site prefab for '{name}'");
+            Assert.IsNotNull(prefab.transform.Find("Skeleton"), $"{name} has its skeleton");
+            Assert.IsNotNull(prefab.transform.Find("Heart"), $"{name} has its heart");
+            int pieces = 0;
+            foreach (Transform node in prefab.transform)
+            {
+                if (!SalvagePieceName.TryParsePiece(node.name, out _, out SalvageMaterial material, out bool drag))
+                {
+                    continue;
+                }
+
+                Assert.IsNotNull(node.Find("CutPoint"), $"{name}/{node.name} has its cut point");
+                Mesh mesh = node.GetComponent<MeshFilter>().sharedMesh;
+                yield[(int)material] += SalvageYield.Units(Vector3.Scale(mesh.bounds.size, node.localScale), drag,
+                    tuning);
+                pieces++;
+            }
+
+            Assert.That(pieces, Is.InRange(4, 8), $"{name}: 4 to 8 salvage points");
+            return yield;
+        }
+
+        [Test]
+        public void Depot_AlonePaysTheTowersFirstTwoLevels_AndHoverJump()
+        {
+            int[] depot = SiteYield("depot", Create<SalvageTuning>());
+            Recipe first = SalvageEconomy.RadioTower[0].Plus(SalvageEconomy.RadioTower[1])
+                .Plus(SalvageEconomy.HoverJump);
+            Assert.GreaterOrEqual(depot[0], first.Metal, "M3-16: L1, L2 (the bay wakes), then the first kit");
+            Assert.GreaterOrEqual(depot[1], first.Wiring);
+            Assert.GreaterOrEqual(depot[2], first.Optics);
         }
 
         [Test]
