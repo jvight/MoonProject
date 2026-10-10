@@ -70,6 +70,23 @@ to do. Dormant and finished stations show nothing.
 ## Save compatibility
 A save from before this progression is put away (SaveService content floor raised to this release), as in M3-15 §1.
 
+## Contracts (Core, landed first)
+- **`BasePowerStage`:** Asleep, Home, Bay, Lift.
+  - `IBasePower` (Stage, HasReached) is registered by Gameplay.
+  - `BasePowerChanged(stage, restored)` is published by Gameplay when a tower level lands, and once on load with
+    restored = true.
+  - Tower L1 → Home, L2 → Bay, L3 → Lift. A fresh game is Asleep.
+- **`NextStepChanged(lineKey)`:** Gameplay's step flow sets the soft "next" line. UI shows it while 07 is still. An
+  empty key hides it.
+- **`PlaceFirstApproached(placeId)`:** Gameplay publishes it once per save per place. UI shows the place's name and
+  its job line. Place ids:
+  - `place.dock`, `place.lander`, `place.shelf`, `place.tower`, `place.bay`, `place.board`, `place.ladder`,
+    `place.lift`, `place.rack`;
+  - localization keys `place.<id>.name` and `place.<id>.job`.
+- **Dormant visuals.** Art builds both states into its prefabs: an awake child and a dormant child, or a component
+  with a `SetAwake(bool, bool instant)`. Gameplay switches them from `IBasePower`. World lights home's warm points
+  from the stage.
+
 ## Split
 | Box | Delivers |
 |---|---|

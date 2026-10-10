@@ -586,4 +586,49 @@ namespace MoonProject.Core.Events
     public readonly struct NewGameRequested
     {
     }
+
+    /// <summary>
+    /// Power reached a new stage of the base (docs/features/M3-16), or was restored on load
+    /// (<see cref="Restored"/> = true: apply the state at once, with no wake moment).
+    /// </summary>
+    public readonly struct BasePowerChanged
+    {
+        public BasePowerChanged(BasePowerStage stage, bool restored)
+        {
+            Stage = stage;
+            Restored = restored;
+        }
+
+        public BasePowerStage Stage { get; }
+
+        public bool Restored { get; }
+    }
+
+    /// <summary>
+    /// The gentle "what next" line changed (docs/features/M3-16): a localization key for the current step's invitation,
+    /// or empty when there is nothing to suggest. UI shows it under the compass while 07 is still.
+    /// </summary>
+    public readonly struct NextStepChanged
+    {
+        public NextStepChanged(string lineKey)
+        {
+            LineKey = lineKey;
+        }
+
+        public string LineKey { get; }
+    }
+
+    /// <summary>
+    /// 07 came near a place for the first time this save (docs/features/M3-16 "Each place and its one job"). UI shows the
+    /// place's name and its one-line job once; <see cref="PlaceId"/> is a <see cref="WorldAnchorIds"/>-style id.
+    /// </summary>
+    public readonly struct PlaceFirstApproached
+    {
+        public PlaceFirstApproached(string placeId)
+        {
+            PlaceId = placeId;
+        }
+
+        public string PlaceId { get; }
+    }
 }
