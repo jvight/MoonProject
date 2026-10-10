@@ -198,11 +198,11 @@ class DuplicateTypeTests(unittest.TestCase):
                                                                   "Moved { } }\n")
         self.assertEqual([f.rule for f in lint.lint_sources([a, b])], ["duplicate-type", "duplicate-type"])
 
-    def test_the_rule_is_report_only_while_main_breaks_it(self):
-        self.assertFalse(lint.RULES["duplicate-type"].enforced)
+    def test_the_rule_is_enforced_now_that_main_is_clean(self):
+        self.assertTrue(lint.RULES["duplicate-type"].enforced)
         a = lint.SourceFile("Assets/_Project/Scripts/UI/A.cs", "namespace MoonProject.UI { public class X { } }")
         b = lint.SourceFile("Assets/_Project/Scripts/Art/B.cs", "namespace MoonProject.Art { public class X { } }")
-        self.assertTrue(all("(report-only)" in f.format() for f in lint.lint_sources([a, b])))
+        self.assertTrue(all(f.enforced and "(report-only)" not in f.format() for f in lint.lint_sources([a, b])))
 
 
 class OwnershipAndLoadingTests(unittest.TestCase):
