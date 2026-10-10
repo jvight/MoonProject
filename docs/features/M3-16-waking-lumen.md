@@ -70,6 +70,37 @@ to do. Dormant and finished stations show nothing.
 ## Save compatibility
 A save from before this progression is put away (SaveService content floor raised to this release), as in M3-15 §1.
 
+## Amendments adopted from the design review (2026-10-10, `docs/design/review-2026-10-10.md`)
+The Director adopted all ten proposals. The step table above stands, with these changes:
+- **P1: a story part per tower level.** Each level needs one story part as well as materials:
+  - L1: the coil in the depot's heart (the cassette player moves to Tilly's glint).
+  - L2: a transformer Tilly spots at the garage.
+  - L3: Bell's frequency, or a relay part.
+  Power is earned by a find, not just paid for.
+- **P2: the chasm before the bay.** Tilly spots Bell's light across the chasm. The player sees they can't cross, then
+  L2 wakes the bay with the Hover-Jump sheet.
+- **P3: 07's rear is not a face.** One small off-centre tail lamp, and Cradle straps that never form a V. The lens is
+  07's only face.
+- **P4: only the next thing speaks.** Before L1 only the tower answers "not yet". Place cards come one at a time and
+  only near the current step's place.
+- **P5: the wake is a stargaze.**
+  - The first beat is a front three-quarter shot on the lens: 07 looks up at Earth, then the camera eases to the
+    chase frame. The first prompt is "Look up".
+  - There are three warm points: the dock, 07's eye and a slow tower pilot blink. This replaces the "lit port hopper".
+- **P6: the dock's evening.** Parking at the dock after a trip gives a wide shot of the day's newly lit lamps. Then
+  the tower's listening sweep raises one new signal pillar on the horizon. This is the homecoming and the
+  "one more trip" hook.
+- **P7: Kenji's pen plotter.**
+  - The blueprint board is an old pen plotter.
+  - A scanned tube rides home on 07's back, and the plotter draws the sheet.
+  - This keeps ruling 14: no hands pin anything.
+- **P8: the next line waits.** It shows only after ~2 min without progress, and never while stargazing.
+- **P9: the economy at 2×.** Each site has a signature material. Total materials ≈ 2× what the steps need (ruling 5).
+- **P10: fewer, better cuts.** The depot has 4 cuts, not 6, and the last cut reveals the site's heart.
+- **Wider Sonar is out of 0.5.** It has no asset and belongs to 0.7. The blueprint tubes are Cargo Cradle (garage),
+  Warm Headlamp (Kestrel) and Boost Coils (drill).
+- **Length.** Steps 0–8 take about 50–60 min. Do not pad them to 90.
+
 ## Contracts (Core, landed first)
 - **`BasePowerStage`:** Asleep, Home, Bay, Lift.
   - `IBasePower` (Stage, HasReached) is registered by Gameplay.
