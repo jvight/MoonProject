@@ -64,6 +64,17 @@ namespace MoonProject.Art.Editor
 
         public const string PortholeName = "Porthole";
 
+        /// <summary>
+        /// The deck hatch (M3-07), pivoted on its hinge: shut (<see cref="DeckHatchShut"/>) while the station sleeps,
+        /// swung out by its motor to <see cref="DeckHatchOpen"/> once the map wakes. DeckHatch/Porthole is its glass
+        /// (a dark glow renderer on the MaterialPropertyBlock contract); DeckHatch/Weather_* its own dust and rust.
+        /// </summary>
+        public const string DeckHatchName = "DeckHatch";
+
+        public static Quaternion DeckHatchShut => Quaternion.identity;
+
+        public static Quaternion DeckHatchOpen => DeckHatchMeshes.Open;
+
         public const string BulbName = "Bulb";
 
         /// <summary>
@@ -261,6 +272,10 @@ namespace MoonProject.Art.Editor
             panelWidth: 0.7f, panelHeight: 0.62f, paintWear: 1f, mismatched: true, runsPerMetre: 3f, rustHeight: 2.4f,
             metalRust: 0.8f, paintRust: 0.45f, tide: 2.1f, groundDust: 0.95f, topDust: 0.9f);
 
+        private static readonly WeatherProfile HatchWeather = new WeatherProfile(seed: 83, lift: 0.004f,
+            panelWidth: 0.4f, panelHeight: 0.62f, paintWear: 0.8f, mismatched: false, runsPerMetre: 2f, rustHeight: 0f,
+            metalRust: 0.5f, paintRust: 0f, tide: 0f, groundDust: 0f, topDust: 0.9f);
+
         private static readonly WeatherProfile LiftPlatformWeather = new WeatherProfile(seed: 71, lift: 0.006f,
             panelWidth: 0.6f, panelHeight: 0.6f, paintWear: 1f, mismatched: true, runsPerMetre: 2.2f, rustHeight: 0f,
             metalRust: 0f, paintRust: 0f, tide: 0f, groundDust: 0f, topDust: 0.8f);
@@ -336,8 +351,6 @@ namespace MoonProject.Art.Editor
                         LanderMeshes.Pane(i)), ModelMaterial.PaletteGlowOff));
             }
 
-            windows.Add(new ModelNode(PortholeName, Vector3.zero, Quaternion.identity,
-                new ModelMesh(LanderName + "_Porthole", LanderMeshes.Porthole()), ModelMaterial.PaletteGlowOff));
             lander.Add(new ModelNode("ShelfAnchor", ShelfAnchor));
             lander.Add(new ModelNode("TowerAnchor", TowerAnchor));
             var bulb = new ModelMesh(LanderName + "_Bulb", LanderMeshes.Bulb());
@@ -360,8 +373,25 @@ namespace MoonProject.Art.Editor
                 Place.Rotation(LanderMeshes.HomeSignLean),
                 new ModelMesh(LanderName + "_" + HomeSignName, LanderMeshes.HomeSign())));
             AddPowerCables(lander);
+            AddDeckHatch(lander);
             Weathering.Weather(lander, LanderName, hull, LanderWeather, LanderMeshes.Rust(), LanderMeshes.Drifts());
             return lander;
+        }
+
+        /// <summary>
+        /// The deck hatch (M3-07) on its hinge, shut and dusty while the station sleeps, with the porthole's glass as
+        /// its own dark glow renderer and its own weather skins (the dust can go once the motor wakes).
+        /// </summary>
+        private static void AddDeckHatch(ModelNode lander)
+        {
+            string prefix = LanderName + "_" + DeckHatchName;
+            LowPolyMeshBuilder door = DeckHatchMeshes.Hatch();
+            ModelNode hatch = lander.Add(new ModelNode(DeckHatchName, DeckHatchMeshes.Hinge, DeckHatchShut,
+                new ModelMesh(prefix, door)));
+            hatch.Add(new ModelNode(PortholeName, Vector3.zero, Quaternion.identity,
+                new ModelMesh(prefix + "_" + PortholeName, DeckHatchMeshes.Porthole()), ModelMaterial.PaletteGlowOff));
+            Weathering.Weather(hatch, prefix, door, HatchWeather, DeckHatchMeshes.HatchRust(),
+                new LowPolyMeshBuilder(0));
         }
 
         /// <summary>

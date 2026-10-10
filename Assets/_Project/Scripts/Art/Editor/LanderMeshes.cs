@@ -32,27 +32,26 @@ namespace MoonProject.Art.Editor
         public static readonly Vector3 TillyPerch = new Vector3(-1.62f, StageTop + 0.52f, 0.95f);
 
         private const float StageRadius = 2.1f;
-        private const float CabinRadius = 1.45f;
-        private const float CabinBottom = StageTop + 0.04f;
+        internal const float CabinRadius = 1.45f;
+        internal const float CabinBottom = StageTop + 0.04f;
         private const float HipRadius = 1.75f;
         private const float FootRadius = 3.4f;
         private const float DeckEdge = 1.92f;
 
         // Sized for the crew (VISION ruling 13: a person is 1.75 m): a door they walk through upright, its porthole
         // and the cabin's windows at their eye height, a handle at hand height, a porch rail at their waist.
-        private const float DoorWidth = 0.8f;
-        private const float DoorHeight = 1.85f;
-        private const float DoorBottom = DeckTop + 0.03f;
-        private const float HatchCentreY = DoorBottom + DoorHeight * 0.5f;
-        private const float EyeHeight = 1.5f;
-        private const float HandHeight = 1f;
+        internal const float DoorWidth = 0.8f;
+        internal const float DoorHeight = 1.85f;
+        internal const float DoorBottom = DeckTop + 0.03f;
+        internal const float EyeHeight = 1.5f;
+        internal const float HandHeight = 1f;
         private const float RailHeight = 1f;
         private const float WindowHeight = DeckTop + 1.3f;
 
         // The cabin's worn orange band, near the top of its walls.
-        private const float BandY = CabinTop - 0.28f;
+        internal const float BandY = CabinTop - 0.28f;
 
-        private static readonly float CabinApothem = CabinRadius * Mathf.Cos(Mathf.PI / 8f);
+        internal static readonly float CabinApothem = CabinRadius * Mathf.Cos(Mathf.PI / 8f);
         private static readonly float StageApothem = StageRadius * Mathf.Cos(Mathf.PI / 8f);
 
         // Which stage panels (by quarter turn from the hatch side) took the years worst.
@@ -220,15 +219,6 @@ namespace MoonProject.Art.Editor
             return b;
         }
 
-        /// <summary>The hatch's porthole at a person's eye height, in lander space.</summary>
-        public static LowPolyMeshBuilder Porthole()
-        {
-            var b = new LowPolyMeshBuilder(40);
-            b.Prism(At(new Vector3(0f, DoorBottom + EyeHeight, CabinApothem + 0.1f), AlongZ), 0.13f, 0.03f, 10,
-                PaletteSwatch.LampGlass);
-            return b;
-        }
-
         /// <summary>A porch lamp's bulb, centred on its LampSocket.</summary>
         public static LowPolyMeshBuilder Bulb()
         {
@@ -330,7 +320,10 @@ namespace MoonProject.Art.Editor
         private static void Cabin(LowPolyMeshBuilder b)
         {
             float height = CabinTop - CabinBottom;
-            b.Prism(At(0f, CabinBottom + height * 0.5f, 0f), CabinRadius, height, 8, PaletteSwatch.Enamel);
+            // The hatch side's wall is left out and rebuilt round the open doorway (DeckHatchMeshes.Doorway).
+            var shell = new LowPolyMeshBuilder(40);
+            shell.Prism(At(0f, CabinBottom + height * 0.5f, 0f), CabinRadius, height, 8, PaletteSwatch.Enamel);
+            b.AppendWhere(shell, t => shell.Normals[t * 3].z < DeckHatchMeshes.HatchFaceDot, 0f);
             b.Prism(At(0f, BandY, 0f), CabinRadius + 0.012f, 0.16f, 8, PaletteSwatch.WarmAccent);
             b.Prism(At(0f, CabinBottom + 0.05f, 0f), CabinRadius + 0.03f, 0.1f, 8, PaletteSwatch.Charcoal);
 
@@ -347,16 +340,7 @@ namespace MoonProject.Art.Editor
             b.Torus(At(new Vector3(0f, WindowHeight, -CabinApothem - 0.03f), new Vector3(90f, 180f, 0f)), 0.25f,
                 0.045f, 12, 4, PaletteSwatch.Charcoal);
 
-            float face = CabinApothem;
-            const float frameTop = DoorBottom + DoorHeight + 0.1f;
-            b.Box(At(0f, (DeckTop + frameTop) * 0.5f, face + 0.03f), new Vector3(DoorWidth + 0.2f, frameTop - DeckTop,
-                0.06f), PaletteSwatch.Charcoal, 0.02f);
-            b.Box(At(0f, HatchCentreY, face + 0.07f), new Vector3(DoorWidth, DoorHeight, 0.05f), PaletteSwatch.Metal,
-                0.02f);
-            b.Torus(At(new Vector3(0f, DoorBottom + EyeHeight, face + 0.1f), AlongZ), 0.15f, 0.03f, 10, 4,
-                PaletteSwatch.Charcoal);
-            b.Box(At(DoorWidth * 0.5f - 0.1f, DoorBottom + HandHeight, face + 0.11f), new Vector3(0.05f, 0.2f, 0.04f),
-                PaletteSwatch.Charcoal, 0.01f);
+            DeckHatchMeshes.Doorway(b);
         }
 
         /// <summary>Four small reaction-control nozzles on a block, facing out of the cabin along a yaw.</summary>

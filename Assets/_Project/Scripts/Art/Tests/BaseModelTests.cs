@@ -43,7 +43,9 @@ namespace MoonProject.Art.Tests
             ModelNode windows = lander.GetDescendant("Windows");
             var glows = new List<ModelNode> { windows };
             glows.AddRange(windows.Children);
-            CollectionAssert.AreEqual(new[] { "Pane_1", "Pane_2", "Porthole" }, windows.Children.Select(c => c.Name));
+            CollectionAssert.AreEqual(new[] { "Pane_1", "Pane_2" }, windows.Children.Select(c => c.Name));
+            ModelNode hatch = lander.GetDescendant(BaseModelBuilder.DeckHatchName);
+            glows.Add(hatch.GetDescendant(BaseModelBuilder.PortholeName));
             foreach (ModelNode socket in lander.Children.Where(c => c.Name.StartsWith("LampSocket_")))
             {
                 glows.Add(socket.Children.Single(c => c.Name == BaseModelBuilder.BulbName));
@@ -55,6 +57,27 @@ namespace MoonProject.Art.Tests
                 CollectionAssert.AreEqual(new[] { PaletteSwatch.LampGlass }, MeshChecks.Swatches(glow.Mesh.Geometry),
                     glow.Name);
             }
+        }
+
+        [Test]
+        public void DeckHatch_IsACrewDoorOnItsHinge_ThatItsMotorSwingsOut()
+        {
+            ModelNode lander = BaseModelBuilder.CreateLander();
+            ModelNode hatch = lander.GetDescendant(BaseModelBuilder.DeckHatchName);
+            Assert.IsTrue(lander.Children.Contains(hatch), "the hatch hangs right under the lander");
+            Assert.AreEqual(BaseModelBuilder.DeckHatchShut, hatch.LocalRotation, "shut while the station sleeps");
+            Bounds door = hatch.Mesh.Geometry.Bounds;
+            Assert.AreEqual(0.8f, door.size.x, 0.03f, "a crew door, 0.8 m wide");
+            Assert.AreEqual(1.85f, door.size.y, 0.03f, "and 1.85 m tall");
+            float deck = lander.GetDescendant("LiftTop").LocalPosition.y;
+            Assert.AreEqual(deck, hatch.LocalPosition.y, 0.05f, "it opens onto the deck, where the lift stops");
+            Vector3 farEdge = new Vector3(door.max.x, 0f, door.max.z);
+            Vector3 shut = hatch.LocalPosition + farEdge;
+            Vector3 open = hatch.LocalPosition + BaseModelBuilder.DeckHatchOpen * farEdge;
+            Assert.Greater(open.z, shut.z + 0.6f, "the motor swings it out onto the deck, clearing the doorway");
+            Vector3 glass = hatch.GetDescendant(BaseModelBuilder.PortholeName).Mesh.Geometry.Bounds.center;
+            Assert.AreEqual(1.5f, glass.y, 0.05f, "the porthole sits at a person's eye height");
+            Assert.IsNotNull(hatch.GetDescendant("Weather_Dust"), "dusty while it sleeps");
         }
 
         [Test]
