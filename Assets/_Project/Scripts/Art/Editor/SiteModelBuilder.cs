@@ -37,7 +37,7 @@ namespace MoonProject.Art.Editor
             Material material = PaletteAssetBuilder.LoadMaterial();
             foreach (string id in Ids)
             {
-                ModelPrefabWriter.Write(CreateSite(id), ArtPaths.SitesFolder, material);
+                ModelPrefabWriter.Write(GroundOcclusion.Ground(CreateSite(id)), ArtPaths.SitesFolder, material);
             }
 
             foreach (string name in DebrisNames)

@@ -158,9 +158,10 @@ namespace MoonProject.Art.Editor
             var b = new LowPolyMeshBuilder(900);
             float halfWidth = PlatformWidth * 0.5f;
             float halfLength = PlatformLength * 0.5f;
-            b.Box(At(0f, -0.04f, 0f), new Vector3(PlatformWidth, 0.08f, PlatformLength), PaletteSwatch.Metal, 0.015f);
+            b.Box(At(0f, -0.04f, 0f), new Vector3(PlatformWidth, 0.08f, PlatformLength), PaletteSwatch.WornPanel,
+                0.015f);
             b.Wedge(At(0f, -BottomStop * 0.5f, halfLength + 0.225f),
-                new Vector3(PlatformWidth - 0.1f, BottomStop, 0.45f), PaletteSwatch.Metal);
+                new Vector3(PlatformWidth - 0.1f, BottomStop, 0.45f), PaletteSwatch.WornPanel);
             for (int side = -1; side <= 1; side += 2)
             {
                 b.Box(At(side * (halfWidth - 0.04f), -0.13f, 0f), new Vector3(0.08f, 0.1f, PlatformLength),

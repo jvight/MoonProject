@@ -29,8 +29,8 @@ namespace MoonProject.Art.Editor
         {
             Material material = PaletteAssetBuilder.LoadMaterial();
             Material glowOff = PaletteAssetBuilder.LoadGlowOffMaterial();
-            ModelPrefabWriter.Write(CreateMast(false), ArtPaths.RelayFolder, material, glowOff);
-            ModelPrefabWriter.Write(CreateMast(true), ArtPaths.RelayFolder, material, glowOff);
+            ModelPrefabWriter.Write(GroundOcclusion.Ground(CreateMast(false)), ArtPaths.RelayFolder, material, glowOff);
+            ModelPrefabWriter.Write(GroundOcclusion.Ground(CreateMast(true)), ArtPaths.RelayFolder, material, glowOff);
             ModelPrefabWriter.Write(CreatePart(), ArtPaths.RelayFolder, material);
             AssetDatabase.SaveAssets();
         }

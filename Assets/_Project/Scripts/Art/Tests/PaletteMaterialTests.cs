@@ -65,13 +65,16 @@ namespace MoonProject.Art.Tests
 
         [TestCase(false)]
         [TestCase(true)]
-        public void Materials_KeepEmissionEnabled_SoPropertyBlocksCanModulateIt(bool glowOff)
+        public void Materials_AlwaysGlowThroughTheEmissionMap_SoPropertyBlocksCanModulateIt(bool glowOff)
         {
             Material material = PaletteAssetBuilder.CreateMaterial(PaletteAssetBuilder.LoadShader(), null, null,
                 glowOff);
             try
             {
-                Assert.IsTrue(material.IsKeywordEnabled("_EMISSION"), "emission must stay compiled in");
+                Assert.IsTrue(material.HasProperty("_EmissionMap") && material.HasProperty("_EmissionColor"),
+                    "LofiLit always samples the emission map times _EmissionColor");
+                Assert.AreEqual(Palette.RimBrightness, material.GetVector("_MoonRim").x, 1e-5f,
+                    "the silhouette rim comes from the palette");
                 Assert.AreEqual(glowOff ? Color.black : Color.white, material.GetColor("_EmissionColor"),
                     "authored white x 1 is the HDR glow of the emission map (the MaterialPropertyBlock contract)");
                 Assert.IsTrue(material.enableInstancing);

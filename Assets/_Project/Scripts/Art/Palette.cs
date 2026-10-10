@@ -14,14 +14,32 @@ namespace MoonProject.Art
         public const int Columns = 8;
         public const int Rows = 4;
 
-        /// <summary>Linear brightness above which the game's bloom picks a pixel up (World's grade).</summary>
-        public const float BloomThreshold = 1f;
+        /// <summary>
+        /// Linear brightness above which the game's bloom picks a pixel up (World's grade, scaled with M3-18's
+        /// brighter earthlight).
+        /// </summary>
+        public const float BloomThreshold = 1.25f;
 
         /// <summary>
-        /// The brightest a lit surface may get under <see cref="ReferenceLight"/>: just under the bloom threshold,
-        /// where the world keeps its lit dust, so cream panels and orange stripes never glow like lamps.
+        /// The brightest a lit surface may get under <see cref="ReferenceLight"/>: under the bloom threshold, with room
+        /// for the silhouette rim, so cream panels and orange stripes never glow like lamps.
         /// </summary>
         public const float LitCeiling = 0.95f;
+
+        /// <summary>
+        /// Brightness (linear) of the Lofi lit shaders' silhouette rim at grazing view (M3-18 V2): a thin cool edge
+        /// that lifts 07, the lander and the tower off the dark ground, far under the lamps.
+        /// </summary>
+        public const float RimBrightness = 0.16f;
+
+        /// <summary>The rim's fresnel exponent: higher keeps it to a thinner edge.</summary>
+        public const float RimExponent = 3f;
+
+        /// <summary>The up-facing normal (world y) where the rim is gone, so tops keep the earthlight's own value.</summary>
+        public const float RimUpCutoff = 0.6f;
+
+        /// <summary>How far the rim's hue leans from the earthlight toward the sky's horizon glow (0..1).</summary>
+        public const float RimHorizonLean = 0.6f;
 
         /// <summary>
         /// Glow of the home lamps (windows, bulbs, 07's eye) and of far signal lamps (relay masts) at intensity 1: well
@@ -42,12 +60,11 @@ namespace MoonProject.Art
         public const float CyanGlow = 1.45f;
 
         /// <summary>
-        /// The most light a lit face receives in the game, in linear RGB: the low earthlight square-on plus the sky's
-        /// ambient (World's AtmosphereSettings: colour (0.86, 0.85, 1) at intensity 1.75, ambient sky
-        /// (0.17, 0.155, 0.33)). Surfaces are darkened against it, hue kept, until they sit under
-        /// <see cref="LitCeiling"/>.
+        /// The most light a lit face receives in the game, in linear RGB: M3-18's paler cyan-white earthlight
+        /// square-on plus the sky's ambient (World's AtmosphereSettings). Surfaces are darkened against it, hue kept,
+        /// until they sit under <see cref="LitCeiling"/>.
         /// </summary>
-        public static readonly Color ReferenceLight = new Color(1.27f, 1.24f, 1.84f);
+        public static readonly Color ReferenceLight = new Color(1.26f, 1.55f, 2f);
 
         // The game's Neutral tonemapper compresses each channel on its own, so a bright WarmLamp drifts towards lemon:
         // warm glows keep less green and blue than the swatch to still read amber once graded.
@@ -92,6 +109,7 @@ namespace MoonProject.Art
             new Color32(0xB8, 0xAF, 0xA2, 0xFF), // FadedPaint: crew enamel bleached chalky by decades of sun
             new Color32(0xA8, 0xA6, 0xC4, 0xFF), // CakedDust: dust caked on the top faces of wrecks, paler than metal
             new Color32(0xC6, 0x8F, 0x76, 0xFF), // FadedAccent: 07's orange stripe after decades of sun, chalky
+            new Color32(0x86, 0x7F, 0x77, 0xFF), // WornPanel: big crew panels weathered to a warm mid grey (V8)
         };
 
         private static readonly bool[] Emissive =
@@ -116,6 +134,7 @@ namespace MoonProject.Art
             false, // FadedPaint
             false, // CakedDust
             false, // FadedAccent
+            false, // WornPanel
         };
 
         public static int Count => Colors.Length;

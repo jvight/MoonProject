@@ -118,7 +118,7 @@ namespace MoonProject.Art.Editor
             // What is left of the right roof: one sheet over the back, rusted through.
             Matrix4x4 roof = SiteKit.Face(new Vector3(1.8f, Eave + 0.21f, 4.05f), Vector3.up, Vector3.back);
             int first = b.TriangleCount;
-            SiteKit.Sheet(b, roof, 3.7f, 2.3f, PaletteSwatch.FadedPaint);
+            SiteKit.Sheet(b, roof, 3.7f, 2.3f, PaletteSwatch.WornPanel);
             SiteKit.DustCap(b, b.RangeFrom(first));
             SiteKit.RustPatch(b, roof * At(0f, 0f, 0.05f), -0.6f, 0.2f, 1.1f);
         }
@@ -133,19 +133,19 @@ namespace MoonProject.Art.Editor
                 float z = Front + (i + 0.5f) * panel;
                 Matrix4x4 wall = SiteKit.Face(new Vector3(Side + 0.1f, Floor + height * 0.5f, z), Vector3.right,
                     Vector3.up);
-                SiteKit.Sheet(b, wall, panel - 0.02f, height, PaletteSwatch.FadedPaint);
+                SiteKit.Sheet(b, wall, panel - 0.02f, height, PaletteSwatch.WornPanel);
                 SiteKit.RustSeam(b, wall * At(0f, 0f, 0.05f), -panel * 0.5f, panel * 0.5f, height * 0.42f,
                     height * 0.85f, PanelRunsPerMetre, 300 + i);
             }
 
             Matrix4x4 back = SiteKit.Face(new Vector3(Side * 0.5f, Floor + height * 0.5f, Back + 0.1f), Vector3.forward,
                 Vector3.up);
-            SiteKit.Sheet(b, back, Side, height, PaletteSwatch.FadedPaint);
+            SiteKit.Sheet(b, back, Side, height, PaletteSwatch.WornPanel);
             SiteKit.RustPatch(b, back * At(0f, 0f, 0.05f), 0.6f, -0.4f, 0.8f);
 
             Matrix4x4 crumpled = SiteKit.Face(new Vector3(-1.6f, 0.75f, Back + 0.35f), new Vector3(0f, 0.55f, 1f),
                 new Vector3(0.3f, 1f, 0f));
-            SiteKit.Sheet(b, crumpled, 2.4f, 1.3f, PaletteSwatch.FadedPaint);
+            SiteKit.Sheet(b, crumpled, 2.4f, 1.3f, PaletteSwatch.WornPanel);
         }
 
         /// <summary>
@@ -179,7 +179,7 @@ namespace MoonProject.Art.Editor
             Vector3 along = to - from;
             Vector3 normal = Vector3.Cross(Vector3.right, along);
             Matrix4x4 face = SiteKit.Face((from + to) * 0.5f, normal, along);
-            b.Box(face, new Vector3(width, along.magnitude + 0.04f, 0.03f), PaletteSwatch.FadedPaint);
+            b.Box(face, new Vector3(width, along.magnitude + 0.04f, 0.03f), PaletteSwatch.WornPanel);
         }
 
         /// <summary>A crew shelf against the back wall, stripped bare (a human-scale remnant).</summary>
@@ -225,7 +225,7 @@ namespace MoonProject.Art.Editor
             SalvagePieceRecipe piece = site.Piece(SalvageMaterial.Metal, pivot, OnSlope(0.14f, 3.1f, 0.26f), normal);
             Matrix4x4 face = SiteKit.Face(centre, normal,
                 upSlope) * Matrix4x4.Rotate(Rotation(new Vector3(0f, 0f, 4f)));
-            SiteKit.Sheet(piece.Geometry, face, 2.7f, 2.5f, PaletteSwatch.FadedPaint);
+            SiteKit.Sheet(piece.Geometry, face, 2.7f, 2.5f, PaletteSwatch.WornPanel);
             SiteKit.DustCap(piece.Geometry, piece.Geometry.RangeFrom(0));
             SiteKit.RustStreak(piece.Geometry, face * At(0f, 0f, 0.05f), -0.7f, 1.05f, 0.8f);
             SiteKit.RustStreak(piece.Geometry, face * At(0f, 0f, 0.05f), 0.6f, 1.05f, 1.1f);
@@ -245,7 +245,7 @@ namespace MoonProject.Art.Editor
             Matrix4x4 hang = At(bolt) * Matrix4x4.Rotate(Rotation(new Vector3(-15f, 0f, 18f)))
                 * SiteKit.Face(new Vector3(0f, -height * 0.5f + 0.08f, -(4f / 3f) * 0.5f + 0.06f), Vector3.right,
                     Vector3.up);
-            SiteKit.Sheet(piece.Geometry, hang, 4f / 3f - 0.02f, height, PaletteSwatch.FadedPaint);
+            SiteKit.Sheet(piece.Geometry, hang, 4f / 3f - 0.02f, height, PaletteSwatch.WornPanel);
             SiteKit.RustStreak(piece.Geometry, hang * At(0f, 0f, 0.05f), 0.2f, height * 0.4f, 1.2f);
             SiteKit.RustPatch(piece.Geometry, hang * At(0f, 0f, 0.05f), -0.2f, -0.6f, 0.5f);
             piece.Resize(0.5f);
