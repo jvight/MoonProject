@@ -1,7 +1,10 @@
 namespace MoonProject.Gameplay.Lift
 {
-    /// <summary>What one step of the lift's cycle started or finished (the station plays these as beats).</summary>
-    public enum LiftCue
+    /// <summary>
+    /// What one step of the lift's cycle started or finished (the station plays these as beats; Audio's sound beats
+    /// are Core's <see cref="MoonProject.Core.Events.LiftCue"/>).
+    /// </summary>
+    public enum LiftStep
     {
         None = 0,
 
@@ -25,5 +28,8 @@ namespace MoonProject.Gameplay.Lift
 
         /// <summary>At the bottom and settled: let 07 go.</summary>
         ReachedBottom = 7,
+
+        /// <summary>The platform reached a stop, top or bottom; it settles there before the reached step.</summary>
+        Arrived = 8,
     }
 }

@@ -16,6 +16,8 @@ namespace MoonProject.Gameplay.Lift
     /// <item>The ride: 07 rests on the platform and is carried up (a kinematic platform it stands on, 07 held still)
     /// to the deck, where <see cref="LiftRideChanged"/> opens the lookout; any input brings it back down.</item>
     /// <item>The ladder look: the first time near the crew's ladder, 07 looks up it, then at the lift.</item>
+    /// <item>Audio's beats (<see cref="LiftCued"/>): the powered, jammed winch creaks as 07 comes near; the platform
+    /// starts moving and reaches each stop.</item>
     /// </list>
     /// </summary>
     public sealed class LiftStation : MonoBehaviour
@@ -39,6 +41,7 @@ namespace MoonProject.Gameplay.Lift
         [SerializeField] private Transform _dock;
         [SerializeField] private float _cableBuiltLength = 1f;
 
+        private readonly ApproachLatch _creak = new ApproachLatch();
         private LiftCycle _cycle;
         private BasePower _power;
         private MaterialStock _materials;
@@ -191,7 +194,8 @@ namespace MoonProject.Gameplay.Lift
                 && _feed.Step(eye, _rig.CargoSocket.position, _hopperMouth.position, now, deltaTime);
             var input = new LiftInput(_power.HasReached(BasePowerStage.Lift), _materials.Has(_tuning.FeedRecipe),
                 _feedPad.Occupied, OnPlatform(), _stillness.StillSeconds, feedDone, PlayerInput());
-            Cue(_cycle.Step(input, deltaTime), feedDone, now);
+            Play(_cycle.Step(input, deltaTime), feedDone, now);
+            StepCreak();
 
             bool stitching = _cycle.Phase == LiftPhase.Stitching;
             _stitch.Step(stitching, true, eye, _platform.position, now, deltaTime);
@@ -220,7 +224,7 @@ namespace MoonProject.Gameplay.Lift
             _platformBody.MoveRotation(_poseRotation);
         }
 
-        private void Cue(LiftCue cue, bool fed, float now)
+        private void Play(LiftStep step, bool fed, float now)
         {
             if (fed)
             {
@@ -228,9 +232,9 @@ namespace MoonProject.Gameplay.Lift
                 _events.Publish(new StationCued(StationCue.StitchStarted, FeedId, _hopperMouth.position));
             }
 
-            switch (cue)
+            switch (step)
             {
-                case LiftCue.FeedStarted:
+                case LiftStep.FeedStarted:
                     if (!_materials.TrySpend(_tuning.FeedRecipe))
                     {
                         _cycle.Restore(false);
@@ -242,22 +246,40 @@ namespace MoonProject.Gameplay.Lift
                     _gazing = true;
                     _events.Publish(new StationCued(StationCue.FeedStarted, FeedId, _hopperMouth.position));
                     break;
-                case LiftCue.Restored:
+                case LiftStep.Restored:
                     ClearGaze();
                     _events.Publish(new StationCued(StationCue.HatchClosed, FeedId, _hopperMouth.position));
                     break;
-                case LiftCue.RideStarted:
+                case LiftStep.RideStarted:
+                case LiftStep.Descending:
+                    _events.Publish(new LiftCued(LiftCue.RideStarted, _platform.position));
                     _events.Publish(new LiftRideChanged(true, false, _platform.position));
                     break;
-                case LiftCue.ReachedTop:
+                case LiftStep.Arrived:
+                    _events.Publish(new LiftCued(LiftCue.RideStopped, _platform.position));
+                    break;
+                case LiftStep.ReachedTop:
                     _events.Publish(new LiftRideChanged(false, true, _platform.position));
                     break;
-                case LiftCue.Descending:
-                    _events.Publish(new LiftRideChanged(true, false, _platform.position));
-                    break;
-                case LiftCue.ReachedBottom:
+                case LiftStep.ReachedBottom:
                     _events.Publish(new LiftRideChanged(false, false, _platform.position));
                     break;
+            }
+        }
+
+        /// <summary>
+        /// The powered, jammed winch creaks once each time 07 comes near it (Audio's <see cref="LiftCue.WinchCreaked"/>),
+        /// a nudge toward the lift before it is restored.
+        /// </summary>
+        private void StepCreak()
+        {
+            Vector3 winch = _winchLamp.transform.position;
+            Vector3 rover = _rover.Position;
+            float distance = Vector2.Distance(new Vector2(winch.x, winch.z), new Vector2(rover.x, rover.z));
+            bool jammed = _cycle.Phase == LiftPhase.Jammed;
+            if (_creak.Step(jammed ? distance : float.PositiveInfinity, _tuning.CreakRadius, _tuning.CreakRearm))
+            {
+                _events.Publish(new LiftCued(LiftCue.WinchCreaked, winch));
             }
         }
 

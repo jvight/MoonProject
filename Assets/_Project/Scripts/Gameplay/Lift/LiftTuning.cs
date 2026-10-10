@@ -34,6 +34,14 @@ namespace MoonProject.Gameplay.Lift
         [Range(0f, 8f)]
         [SerializeField] private float _lampGlow = 2.5f;
 
+        [Tooltip("How close (m, across the ground) 07 comes to the powered, jammed winch before it creaks.")]
+        [Range(1f, 15f)]
+        [SerializeField] private float _creakRadius = 5f;
+
+        [Tooltip("How much further out (m) 07 must go before the winch can creak again.")]
+        [Range(0.5f, 10f)]
+        [SerializeField] private float _creakRearm = 3f;
+
         [Header("Ride")]
         [Tooltip("How close (m) to the platform's rover spot 07 must be to count as on the platform.")]
         [Range(0.2f, 3f)]
@@ -73,6 +81,10 @@ namespace MoonProject.Gameplay.Lift
         public float StitchSeconds => _stitchSeconds;
 
         public float LampGlow => _lampGlow;
+
+        public float CreakRadius => _creakRadius;
+
+        public float CreakRearm => _creakRearm;
 
         public float PlatformRadius => _platformRadius;
 

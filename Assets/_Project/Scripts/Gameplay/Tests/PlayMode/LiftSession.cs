@@ -105,6 +105,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             _report.AppendLine();
             _report.AppendLine("| Capture | Phase | 07's height (m) |");
             _report.AppendLine("|---|---|---:|");
+            var beats = new int[3];
+            using IDisposable sounds = _context.Events.Subscribe<LiftCued>(cued => beats[(int)cued.Cue]++);
             yield return WaitFor(lift, LiftPhase.Jammed, "The tower's third level powers the jammed lift.");
 
             _context.Get<IRoverPlacement>().PlaceAt(lift.FeedPadCentre, Quaternion.identity);
@@ -134,6 +136,10 @@ namespace MoonProject.Gameplay.PlayModeTests
                 yield return WaitFor(lift, LiftPhase.Ready, "The platform settles at the bottom stop.");
                 Capture("lift-3-down", lift);
             }
+
+            Assert.AreEqual(1, beats[(int)LiftCue.WinchCreaked], "The jammed winch creaked once as 07 came near.");
+            Assert.AreEqual(2, beats[(int)LiftCue.RideStarted], "The platform started moving up, then down.");
+            Assert.AreEqual(2, beats[(int)LiftCue.RideStopped], "The platform reached the top stop, then the bottom.");
 
             Directory.CreateDirectory(GameplayFixture.CaptureFolder);
             File.WriteAllText(Path.Combine(GameplayFixture.CaptureFolder, "lift.md"), _report.ToString());
