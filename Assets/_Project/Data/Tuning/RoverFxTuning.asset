@@ -26,12 +26,38 @@ MonoBehaviour:
   _dustLifetime: 1
   _dustSize: 0.2
   _dustSpeed: 1.3
+  _dustDrag: 3
+  _dustOpacity: 0.5
   _dustGravity: 0.3
   _landingMinImpact: 0.5
   _landingFullImpact: 4
+  _landingRingAirTimeFrom: 1
+  _landingRingAirTimeFull: 3.5
   _landingMinCount: 10
   _landingMaxCount: 36
   _landingMinSpeed: 1.2
   _landingMaxSpeed: 3
   _landingMinSize: 0.2
   _landingMaxSize: 0.42
+  _landingLifetime: 1.3
+  _landingDrag: 2.2
+  _landingOpacity: 0.6
+  _moteCount: 40
+  _moteLifetime: 10
+  _moteFade: 0.25
+  _moteMinSize: 0.012
+  _moteMaxSize: 0.03
+  _moteDrift: 0.035
+  _moteWander: 0.03
+  _moteWanderFrequency: 0.35
+  _moteSpread: 22
+  _moteReach: 2.6
+  _moteNearFade: 0.3
+  _moteFalloff: 0.75
+  _moteOpacity: 0.5
+  _moteBrightness: 1
+  _moteFadeSpeed: 0.3
+  _moteGoneSpeed: 2.5
+  _moteVisibilityHalfLife: 0.6
+  _moteGlintDepth: 0.45
+  _moteGlintPeriod: 5
