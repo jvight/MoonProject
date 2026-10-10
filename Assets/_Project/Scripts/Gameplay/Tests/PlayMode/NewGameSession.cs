@@ -17,8 +17,10 @@ using UnityEditor;
 namespace MoonProject.Gameplay.PlayModeTests
 {
     /// <summary>
-    /// New game (M3-15 §1): mid-game, with an ability earned, materials in the stock and the progress saved,
-    /// <see cref="NewGameRequested"/> puts the save away and reloads the built Main scene (the playthrough's copy on
+    /// New game (M3-15 §1, M3-09's title): the scene boots with the title on (a test run skips it, and App ignores New
+    /// Game without one, so this session turns it on for its boot and puts the run's setting back after). On the
+    /// title with no save, New Game starts play right there. Then mid-game, with an ability earned, materials in the
+    /// stock and the progress saved, <see cref="NewGameRequested"/> puts the save away and reloads the built Main scene (the playthrough's copy on
     /// its own slot) into a clean fresh boot: one bootstrap, nothing doubled in DontDestroyOnLoad, no ability, an empty
     /// stock, nothing loaded, and the old journey kept as &lt;slot&gt;.old-&lt;stamp&gt;.json.
     /// </summary>
@@ -28,12 +30,27 @@ namespace MoonProject.Gameplay.PlayModeTests
     {
         private const float ReloadTimeout = 30f;
 
+#if UNITY_EDITOR
+        private bool _skippedTitle;
+#endif
+
         [UnityTest]
         public IEnumerator NewGameRequested_PutsTheSaveAway_AndBootsAFreshGame()
         {
+#if UNITY_EDITOR
+            _skippedTitle = SessionState.GetBool(GameBootstrap.TestRunSkipsTitleKey, false);
+            SessionState.SetBool(GameBootstrap.TestRunSkipsTitleKey, false);
+#endif
             GameBootstrap first = null;
             yield return Boot(found => first = found);
             GameContext context = first.Context;
+            IGameFlow flow = context.Get<IGameFlow>();
+            Assert.AreEqual(GameFlowState.Title, flow.State, "the game boots into the title");
+            Assert.IsFalse(flow.HasSave, "with no save to continue");
+            context.Events.Publish(new NewGameRequested());
+            yield return null;
+            Assert.AreEqual(GameFlowState.Playing, flow.State, "on the title with no save, New Game starts play here");
+            Assert.AreSame(first, FindBootstrap(), "without a reload");
             int persistent = PersistentRoots();
             context.Get<IRoverAbilities>().Grant(RoverAbility.HoverJump);
             ((MaterialStock)context.Get<IMaterialStock>()).Add(SalvageMaterial.Metal, 20);
@@ -76,6 +93,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         [TearDown]
         public void TearDown()
         {
+#if UNITY_EDITOR
+            SessionState.SetBool(GameBootstrap.TestRunSkipsTitleKey, _skippedTitle);
+#endif
             Scene scene = SceneManager.GetSceneByPath(PlaythroughScene.ScenePath);
             if (!scene.IsValid() || !scene.isLoaded)
             {
