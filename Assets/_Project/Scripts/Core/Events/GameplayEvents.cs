@@ -668,8 +668,39 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
-    /// 07 scanned a blueprint tube in a salvage site's heart (docs/features/M3-16 "Blueprints"): the kit
-    /// <see cref="KitId"/> is pinned on Kenji's board and the bay can build it from now on.
+    /// On load, how many blueprint tubes 07 had scanned but not yet delivered to Kenji's plotter (docs/features/M3-16
+    /// P7). Gameplay publishes it once after the save is applied, also when <see cref="Count"/> is 0; Rover shows that
+    /// many tubes on 07's back at once, with no ride-in.
+    /// </summary>
+    public readonly struct BlueprintsCarriedRestored
+    {
+        public BlueprintsCarriedRestored(int count)
+        {
+            Count = count;
+        }
+
+        public int Count { get; }
+    }
+
+    /// <summary>
+    /// 07 parked on its charging dock after a trip on which something new woke or was found (docs/features/M3-16 P6,
+    /// "the dock's evening"). Rover eases out to a wide shot of home's newly lit lamps and Audio swells the evening
+    /// tone; once the shot has settled, Gameplay's tower sweep raises the next signal pillar. Published by Gameplay at
+    /// most once per return home.
+    /// </summary>
+    public readonly struct DockEveningOpened
+    {
+        public DockEveningOpened(Vector3 dockPosition)
+        {
+            DockPosition = dockPosition;
+        }
+
+        public Vector3 DockPosition { get; }
+    }
+
+    /// <summary>
+    /// 07 scanned a blueprint tube in a salvage site's heart (docs/features/M3-16 "Blueprints", P7): the tube rides home
+    /// on 07's back until <see cref="BlueprintDelivered"/> at Kenji's plotter pins the kit <see cref="KitId"/>.
     /// </summary>
     public readonly struct BlueprintFound
     {
