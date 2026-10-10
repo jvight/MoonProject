@@ -131,7 +131,8 @@ namespace MoonProject.World.Tests
             Assert.AreEqual(1f, _stages.PilotLevel(0f), Tolerance, "a blink's peak");
             Assert.Less(_stages.PilotLevel(_settings.PilotPeriod * 0.25f), 0.1f, "short blinks in a long dark");
             _stages.SetStage(BasePowerStage.Home, true, Start);
-            Assert.AreEqual(0f, _stages.PilotLevel(_settings.PilotPeriod * 10f), "home's lights take over");
+            Assert.AreEqual(_settings.TopLightLevel, _stages.PilotLevel(_settings.PilotPeriod * 10.3f), Tolerance,
+                "a woken home keeps a steady warm top light");
         }
 
         [Test]

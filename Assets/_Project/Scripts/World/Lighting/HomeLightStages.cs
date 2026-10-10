@@ -115,13 +115,14 @@ namespace MoonProject.World
         }
 
         /// <summary>
-        /// The tower's pilot light (0..1): a slow, short blink while the base sleeps, fading out as home's windows
-        /// wake.
+        /// The tower's top light (0..1): a slow, short blink while the base sleeps, easing into a steady warm glow as
+        /// home's windows wake, so home stays a readable warm dot from far across the basin.
         /// </summary>
         public float PilotLevel(float time)
         {
             float wave = 0.5f + 0.5f * Mathf.Cos(2f * Mathf.PI * time / _settings.PilotPeriod);
-            return Mathf.Pow(wave, _settings.PilotSharpness) * (1f - Level(HomeLight.Windows, time));
+            float blink = Mathf.Pow(wave, _settings.PilotSharpness);
+            return Mathf.Lerp(blink, _settings.TopLightLevel, Level(HomeLight.Windows, time));
         }
 
         private static int OrderInStage(HomeLight light)
