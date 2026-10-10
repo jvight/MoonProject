@@ -81,6 +81,16 @@ namespace MoonProject.Art.Editor
         /// </summary>
         public const string ShutterName = "Shutter";
 
+        /// <summary>
+        /// Kenji's blueprint board on his old bench's pegboard (M3-16): RoverBay/Blueprints holds one sheet per kit,
+        /// Blueprint_&lt;RoverAbility name&gt; (HoverJump, CargoCradle, WarmHeadlamp, BoostCoils, WideSonar). Only
+        /// Hover-Jump's is shown (Kenji left it pinned); Gameplay shows each other one when its blueprint is found.
+        /// Empty pins wait on the board under every slot.
+        /// </summary>
+        public const string BlueprintsName = "Blueprints";
+
+        public const string BlueprintPrefix = "Blueprint_";
+
         /// <summary>The Shutter node's local Y scale when rolled up.</summary>
         public const float ShutterRolledScale = 0.05f;
 
@@ -277,6 +287,16 @@ namespace MoonProject.Art.Editor
             AddFloorArm(bay);
             bay.Add(new ModelNode("HopperMouth", RoverBayMeshes.HopperMouth,
                 Place.Rotation(RoverBayMeshes.HopperFacing)));
+            ModelNode board = bay.Add(new ModelNode(BlueprintsName, RoverBayMeshes.BenchPosition,
+                Place.Rotation(RoverBayMeshes.BenchEuler)));
+            for (int i = 0; i < BlueprintMeshes.Kits.Length; i++)
+            {
+                string kit = BlueprintMeshes.Kits[i];
+                board.Add(new ModelNode(BlueprintPrefix + kit, BlueprintMeshes.Slot(i), Quaternion.identity,
+                    new ModelMesh(RoverBayName + "_" + BlueprintPrefix + kit, BlueprintMeshes.Sheet(kit)),
+                    ModelMaterial.Palette, i == 0));
+            }
+
             bay.Add(new ModelNode(ShutterName, RoverBayMeshes.ShutterRoller,
                 new ModelMesh(RoverBayName + "_" + ShutterName, RoverBayMeshes.Shutter())));
             bay.Add(new ModelNode("BaySign", Vector3.zero, Quaternion.identity,

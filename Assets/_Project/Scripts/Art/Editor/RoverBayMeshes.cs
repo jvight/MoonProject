@@ -105,8 +105,14 @@ namespace MoonProject.Art.Editor
         private const float FloorColumn = 0.6f;
 
         // Kenji's remnant bench, left of the bay.
-        private static Matrix4x4 BenchPlacement =>
-            At(new Vector3(-HalfWidth - 1.95f, 0f, 0.9f), new Vector3(0f, 12f, 0f));
+        private static Matrix4x4 BenchPlacement => At(BenchPosition, BenchEuler);
+
+        /// <summary>
+        /// Kenji's bench (and its blueprint board) in bay space: its centre on the ground, and its turn.
+        /// </summary>
+        public static Vector3 BenchPosition => new Vector3(-HalfWidth - 1.95f, 0f, 0.9f);
+
+        public static readonly Vector3 BenchEuler = new Vector3(0f, 12f, 0f);
 
         /// <summary>
         /// Shoulder <paramref name="index"/> on the overhead rail: left, back and right of the turntable.
@@ -196,6 +202,7 @@ namespace MoonProject.Art.Editor
             }
 
             b.Append(WorkbenchMeshes.Bench(), BenchPlacement);
+            b.Append(BlueprintMeshes.Pins(), BenchPlacement);
             return b;
         }
 

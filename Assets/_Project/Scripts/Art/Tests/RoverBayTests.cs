@@ -61,6 +61,8 @@ namespace MoonProject.Art.Tests
             var expected = new List<string>
             {
                 "Turntable", "FloorArm", "FloorArm/FloorLift", "FloorArm/FloorLift/FloorTip", "HopperMouth",
+                "Blueprints", "Blueprints/Blueprint_HoverJump", "Blueprints/Blueprint_CargoCradle",
+                "Blueprints/Blueprint_WarmHeadlamp", "Blueprints/Blueprint_BoostCoils", "Blueprints/Blueprint_WideSonar",
                 "Shutter", "BaySign", "Lamp_0", "Lamp_1",
             };
             for (int i = 0; i < 3; i++)
@@ -256,6 +258,24 @@ namespace MoonProject.Art.Tests
                     Assert.IsFalse(corridor.Intersects(face), $"{node.Name} blocks the way in at {face.center}");
                 }
             }
+        }
+
+        [Test]
+        public void BlueprintBoard_ShowsOnlyHoverJumpsSheet_UntilOthersAreFound_AndTheTubeIsSmall()
+        {
+            ModelNode board = _bay.GetDescendant(BaseModelBuilder.BlueprintsName);
+            Assert.IsNull(board.Mesh, "the board's node is an empty: its pins are on Kenji's bench");
+            Assert.AreEqual(5, board.Children.Count, "one sheet per kit");
+            foreach (ModelNode sheet in board.Children)
+            {
+                Assert.AreEqual(sheet.Name == "Blueprint_HoverJump", sheet.Active, $"{sheet.Name}: found or not yet");
+                Assert.IsFalse(MeshChecks.Swatches(sheet.Mesh.Geometry).Any(Palette.IsEmissive), sheet.Name);
+                MeshChecks.AssertWellFormed(sheet.Mesh.Geometry);
+            }
+
+            Bounds tube = SiteModelBuilder.CreateBlueprintTube().Mesh.Geometry.Bounds;
+            Assert.LessOrEqual(Mathf.Max(tube.size.x, Mathf.Max(tube.size.y, tube.size.z)), 0.5f,
+                "a small personal thing stays small (ruling 13)");
         }
 
         [Test]
