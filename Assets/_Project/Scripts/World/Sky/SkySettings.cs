@@ -59,15 +59,15 @@ namespace MoonProject.World
         [Tooltip("Brightness cap of the brightest stars. Times the star brightness, only these few clear the bloom " +
             "threshold.")]
         [Range(1f, 10f)]
-        [SerializeField] private float _starBrightest = 4.5f;
+        [SerializeField] private float _starBrightest = 3.0f;
 
         [Tooltip("Brightness from which a star carries a soft glow: only the brightest few.")]
         [Range(0f, 10f)]
-        [SerializeField] private float _starGlowFrom = 2.8f;
+        [SerializeField] private float _starGlowFrom = 1.8f;
 
         [Tooltip("Soft glow around the brightest stars (0 = none). Gentle, never a flare.")]
         [Range(0f, 1f)]
-        [SerializeField] private float _starGlow = 0.22f;
+        [SerializeField] private float _starGlow = 0.3f;
 
         [Tooltip("Share of the stars that twinkle (0..1). Only a few.")]
         [Range(0f, 1f)]

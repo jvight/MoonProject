@@ -36,6 +36,7 @@ namespace MoonProject.Tests.PlayMode.Look
         private static readonly string OutputRoot =
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "look-captures"));
 
+        private readonly LookCaptureScene _scene = new LookCaptureScene();
         private readonly List<string> _problems = new List<string>();
         private IDisposable _awoke;
         private bool _awake;
@@ -53,7 +54,7 @@ namespace MoonProject.Tests.PlayMode.Look
         {
             Application.logMessageReceived -= OnLog;
             _awoke?.Dispose();
-            Scene scene = SceneManager.GetSceneByPath(LookCaptureScene.ScenePath);
+            Scene scene = SceneManager.GetSceneByPath(_scene.ScenePath);
             if (scene.IsValid() && scene.isLoaded)
             {
                 foreach (GameObject root in scene.GetRootGameObjects())
@@ -69,7 +70,7 @@ namespace MoonProject.Tests.PlayMode.Look
                 Object.Destroy(_uiTarget);
             }
 
-            BootstrapHarness.DeleteSaveFiles(LookCaptureScene.SaveSlot);
+            BootstrapHarness.DeleteSaveFiles(_scene.SaveSlot);
         }
 
         [UnityTest]
@@ -81,9 +82,9 @@ namespace MoonProject.Tests.PlayMode.Look
             LookSet set = JsonUtility.FromJson<LookSet>(File.ReadAllText(SetPath));
             Assert.IsNotEmpty(set.frames, $"{SetPath} lists frames");
             string folder = Path.Combine(OutputRoot, DateTime.Now.ToString("yyyyMMdd-HHmmss"));
-            BootstrapHarness.DeleteSaveFiles(LookCaptureScene.SaveSlot);
+            BootstrapHarness.DeleteSaveFiles(_scene.SaveSlot);
 #if UNITY_EDITOR
-            AsyncOperation loading = EditorSceneManager.LoadSceneAsyncInPlayMode(LookCaptureScene.ScenePath,
+            AsyncOperation loading = EditorSceneManager.LoadSceneAsyncInPlayMode(_scene.ScenePath,
                 new LoadSceneParameters(LoadSceneMode.Single));
             while (!loading.isDone)
             {
@@ -94,7 +95,7 @@ namespace MoonProject.Tests.PlayMode.Look
 #endif
             GameBootstrap bootstrap = null;
             UIDocument document = null;
-            foreach (GameObject root in SceneManager.GetSceneByPath(LookCaptureScene.ScenePath).GetRootGameObjects())
+            foreach (GameObject root in SceneManager.GetSceneByPath(_scene.ScenePath).GetRootGameObjects())
             {
                 bootstrap = bootstrap != null ? bootstrap : root.GetComponent<GameBootstrap>();
                 document = document != null ? document : root.GetComponentInChildren<UIDocument>(true);

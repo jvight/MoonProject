@@ -40,6 +40,16 @@ namespace MoonProject.World
         [Range(1f, 16f)]
         [SerializeField] private float _pilotSharpness = 6f;
 
+        [Tooltip("Steady level of the tower's top light once home is awake (0..1 of the pilot intensity): home " +
+            "stays a warm dot from across the basin.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _topLightLevel = 0.6f;
+
+        [Tooltip("Smallest apparent radius of the tower's top light, degrees (the Peak beacon's trick), so home " +
+            "never shrinks below a readable warm dot at 300 m.")]
+        [Range(0f, 2f)]
+        [SerializeField] private float _pilotMinAngle = 0.4f;
+
         [Tooltip("Halo intensity of the pilot light at the top of a blink (LofiBeaconHalo _Intensity).")]
         [Range(0f, 4f)]
         [SerializeField] private float _pilotIntensity = 1.4f;
@@ -72,6 +82,8 @@ namespace MoonProject.World
         public float PilotSharpness => _pilotSharpness;
         public float PilotIntensity => _pilotIntensity;
         public float PilotRadius => _pilotRadius;
+        public float TopLightLevel => _topLightLevel;
+        public float PilotMinAngle => _pilotMinAngle;
         public Color PoolColor => _poolColor;
         public IReadOnlyList<LightPoolTuning> Pools => _pools;
     }

@@ -158,10 +158,12 @@ namespace MoonProject.UI.PlayModeTests
             string folder = Path.GetFullPath(OutputFolder);
             Directory.CreateDirectory(folder);
 
-            context.Events.Publish(new RoverAwoke(Vector3.zero, false));
-            yield return new WaitForSecondsRealtime(_tuning.Title.Delay + _tuning.Title.Reveal.FadeIn + 0.5f);
+            context.Events.Publish(new TitleShown(true));
+            yield return new WaitForSecondsRealtime(_tuning.Title.Curtain.FadeOut + _tuning.Title.Reveal.FadeIn + 0.5f);
             yield return Capture(camera, folder, "01_title");
-            yield return new WaitForSecondsRealtime(_tuning.Title.Hold + _tuning.Title.Reveal.FadeOut + 0.5f);
+            Submit(ui.Layout.ResumeButton);
+            context.Events.Publish(new RoverAwoke(Vector3.zero, false));
+            yield return new WaitForSecondsRealtime(_tuning.Title.Reveal.FadeOut + 0.5f);
 
             Transform view = camera.transform;
             Vector3 site = view.position + Vector3.ProjectOnPlane(view.forward, Vector3.up).normalized * 9f +
@@ -553,7 +555,7 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         /// <summary>
-        /// The pause menu's New game question, resting on Keep going. Rerun on its own:
+        /// The title's New Game question over a save, resting on Keep this moon. Rerun on its own:
         /// <c>python tools/unity_batch.py tests --platform playmode --filter CaptureNewGameQuestion</c>.
         /// </summary>
         [UnityTest]
@@ -568,18 +570,15 @@ namespace MoonProject.UI.PlayModeTests
             yield return null;
             string folder = Path.GetFullPath(OutputFolder);
             Directory.CreateDirectory(folder);
-            context.Events.Publish(new RoverAwoke(Vector3.zero, false));
-            yield return new WaitForSecondsRealtime(1f);
-
-            yield return Tap(keyboard.escapeKey);
-            yield return new WaitForSecondsRealtime(1.2f);
+            context.Events.Publish(new TitleShown(true));
+            yield return new WaitForSecondsRealtime(_tuning.Title.Curtain.FadeOut + _tuning.Title.Reveal.FadeIn);
             Submit(ui.Layout.NewGameButton);
             yield return new WaitForSecondsRealtime(1f);
             Assert.IsTrue(ui.Pause.IsAskingNewGame);
-            yield return Capture(camera, folder, "39_pause_new_game");
+            yield return Capture(camera, folder, "39_title_new_game");
             yield return Tap(keyboard.escapeKey);
             yield return new WaitForSecondsRealtime(0.5f);
-            Assert.IsTrue(ui.Pause.IsOpen && !ui.Pause.IsAskingNewGame, "Esc keeps going, back to the menu");
+            Assert.IsTrue(ui.Pause.IsTitle && !ui.Pause.IsAskingNewGame, "Esc keeps this moon, back to the menu");
 #else
             Assert.Ignore("Captures need the editor.");
             yield break;
@@ -603,8 +602,7 @@ namespace MoonProject.UI.PlayModeTests
             string folder = Path.GetFullPath(OutputFolder);
             Directory.CreateDirectory(folder);
             context.Events.Publish(new RoverAwoke(Vector3.zero, false));
-            yield return new WaitForSecondsRealtime(_tuning.Title.Delay + _tuning.Title.Reveal.FadeIn +
-                                                    _tuning.Title.Hold + _tuning.Title.Reveal.FadeOut + 0.5f);
+            yield return new WaitForSecondsRealtime(0.5f);
 
             context.Events.Publish(new NextStepChanged("next.tower"));
             context.Events.Publish(new PlaceFirstApproached("place.tower"));
@@ -642,12 +640,14 @@ namespace MoonProject.UI.PlayModeTests
             EventBus events = context.Events;
             fakes.SetMaterials(0, 0, 0);
 
+            events.Publish(new TitleShown(true));
+            yield return Watch(ui, overlaps, _tuning.Title.Curtain.FadeOut + _tuning.Title.Reveal.FadeIn + 0.3f);
+            yield return Capture(camera, folder, "60_title");
+            Submit(ui.Layout.ResumeButton);
             events.Publish(new RoverAwoke(Vector3.zero, false));
             events.Publish(new NextStepChanged("next.wake"));
-            yield return Watch(ui, overlaps, _tuning.Title.Delay + _tuning.Title.Reveal.FadeIn + 0.3f);
-            yield return Capture(camera, folder, "60_title");
             events.Publish(new PlaceFirstApproached("place.dock"));
-            yield return Watch(ui, overlaps, _tuning.Title.Hold + _tuning.Title.Reveal.FadeOut + 1.6f);
+            yield return Watch(ui, overlaps, _tuning.Title.Reveal.FadeOut + _tuning.Guidance.Place.FadeIn + 1.6f);
             yield return Capture(camera, folder, "61_dock_card");
 
             fakes.PrimaryHint = new InteractionHint(InteractionKind.Ping, fakes.Position, true);
@@ -738,7 +738,7 @@ namespace MoonProject.UI.PlayModeTests
         private static string Voices(UISystem ui)
         {
             var on = new List<string>();
-            if (ui.Title.IsPlaying)
+            if (ui.Pause.IsTitle)
             {
                 on.Add("title");
             }
@@ -1125,7 +1125,7 @@ namespace MoonProject.UI.PlayModeTests
             save = new SaveService(SaveService.DefaultDirectory, _slot);
             ui.Initialize(new UiServices(context.Events, context.Input, fakes, fakes, context.Get<IAudioSettings>(),
                 context.Get<ILookSettings>(), save, fakes, fakes, fakes, fakes, fakes, fakes, fakes, fakes, fakes,
-                fakes));
+                fakes, context.Get<IGameFlow>()));
             save.Load();
             return ui;
         }

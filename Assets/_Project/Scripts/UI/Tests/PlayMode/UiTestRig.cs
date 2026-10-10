@@ -237,10 +237,10 @@ namespace MoonProject.UI.PlayModeTests
             UiTuning tuning = Object.Instantiate(Load<UiTuning>(TuningPath));
             tuning.Prompts.AddMissingDefaults();
             var serialized = new SerializedObject(tuning);
-            serialized.FindProperty("_title._delay").floatValue = 0f;
-            serialized.FindProperty("_title._hold").floatValue = 0.1f;
             serialized.FindProperty("_title._reveal._fadeIn").floatValue = 0.1f;
             serialized.FindProperty("_title._reveal._fadeOut").floatValue = 0.1f;
+            serialized.FindProperty("_title._curtain._fadeIn").floatValue = 0.1f;
+            serialized.FindProperty("_title._curtain._fadeOut").floatValue = 0.1f;
             serialized.FindProperty("_prompts._startDelay").floatValue = 0f;
             serialized.FindProperty("_memoryCard._appearDelay").floatValue = 0.1f;
             serialized.FindProperty("_memoryCard._reveal._fadeIn").floatValue = 0.2f;

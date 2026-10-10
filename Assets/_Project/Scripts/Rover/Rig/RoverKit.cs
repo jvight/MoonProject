@@ -78,6 +78,9 @@ namespace MoonProject.Rover
         [Tooltip("Art's BlueprintTube on TubeSocket: shown while 07 carries a scanned blueprint home.")]
         [SerializeField] private Transform _tube;
 
+        [Tooltip("Art's tower story parts on TubeSocket, each named as its part's id: the one 07 carries shows.")]
+        [SerializeField] private Transform[] _storyParts = new Transform[0];
+
         private readonly KitFit[] _fits = new KitFit[PieceCount];
         private readonly FriendGift _tillyGift = new FriendGift();
         private readonly FriendGift _bellGift = new FriendGift();
@@ -95,6 +98,9 @@ namespace MoonProject.Rover
         private IDisposable _tubesFound;
         private IDisposable _tubesDelivered;
         private IDisposable _tubesRestored;
+        private IDisposable _partsFound;
+        private IDisposable _partsDelivered;
+        private Vector3[] _storyPartScales;
         private TubeCarry _tubes;
         private Vector3 _tubeScale;
         private IDisposable _fittings;
@@ -191,6 +197,15 @@ namespace MoonProject.Rover
             _tubesFound = _events.Subscribe<BlueprintFound>(found => _tubes.Found(found.KitId));
             _tubesDelivered = _events.Subscribe<BlueprintDelivered>(delivered => _tubes.Delivered(delivered.KitId));
             _tubesRestored = _events.Subscribe<BlueprintsCarriedRestored>(restored => _tubes.Restore(restored.Count));
+            _storyPartScales = new Vector3[_storyParts.Length];
+            for (int i = 0; i < _storyParts.Length; i++)
+            {
+                _storyPartScales[i] = _storyParts[i].localScale;
+                _storyParts[i].gameObject.SetActive(false);
+            }
+
+            _partsFound = _events.Subscribe<StoryPartFound>(found => _tubes.PartFound(found.PartId, found.Restored));
+            _partsDelivered = _events.Subscribe<StoryPartDelivered>(delivered => _tubes.PartDelivered(delivered.PartId));
             return true;
         }
 
@@ -201,6 +216,7 @@ namespace MoonProject.Rover
                 & Require(_lampBar != null && _cargoRack != null && _relicSeat != null,
                     "Lamp bar, cargo rack or its RelicSeat is not assigned.")
                 & Require(_tube != null, "The BlueprintTube on TubeSocket is not assigned.")
+                & Require(StoryPartsWired(), "A tower story part on TubeSocket is not assigned (Part_TowerCoil...).")
                 & Require(_solarCell != null && _freshSerial != null && _pennant != null,
                     "A gift node (CellFilled, Decal07Fresh, Pennant) is not assigned.")
                 & Require(AllSet(_lamps, RoverModelNodes.KitLampCount), "The lamp bar needs its three glasses.")
@@ -224,6 +240,47 @@ namespace MoonProject.Rover
             {
                 _tube.localScale = _tubeScale * scale;
             }
+
+            StepParts();
+        }
+
+        /// <summary>The story part 07 carries shows on TubeSocket, eased on and off; the others stay hidden.</summary>
+        private void StepParts()
+        {
+            string carried = _tubes.Part;
+            float scale = _tubes.PartScale;
+            for (int i = 0; i < _storyParts.Length; i++)
+            {
+                Transform part = _storyParts[i];
+                bool shown = scale > TubeVisibleScale && string.Equals(part.name, carried, StringComparison.Ordinal);
+                if (part.gameObject.activeSelf != shown)
+                {
+                    part.gameObject.SetActive(shown);
+                }
+
+                if (shown)
+                {
+                    part.localScale = _storyPartScales[i] * scale;
+                }
+            }
+        }
+
+        private bool StoryPartsWired()
+        {
+            if (_storyParts == null || _storyParts.Length == 0)
+            {
+                return false;
+            }
+
+            foreach (Transform part in _storyParts)
+            {
+                if (part == null)
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private static bool AllSet<T>(T[] items, int count) where T : UnityEngine.Object
@@ -671,6 +728,8 @@ namespace MoonProject.Rover
             _tubesFound?.Dispose();
             _tubesDelivered?.Dispose();
             _tubesRestored?.Dispose();
+            _partsFound?.Dispose();
+            _partsDelivered?.Dispose();
         }
     }
 }
