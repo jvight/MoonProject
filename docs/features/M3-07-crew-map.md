@@ -96,3 +96,40 @@ Leaving: any input. The view eases back to the deck and 07 rides down (M3-16 lif
 - No place is inked that the save hasn't visited. Nothing on the map points anywhere (no arrows, no "you are here").
 - Ruling 14: 07 never touches anything. The hatch, pen and light table are machines.
 - The map view runs at 60 fps with zero per-frame GC (strokes pre-built at load, revealed by a parameter).
+
+## Amendments proposed by the story & flow session (2026-10-11)
+Checked against `docs/design/game-flow.md` (S5–S6, §8 #4 and #5) and `docs/design/cutscenes.md` §6. For the
+Director to accept or refuse, one by one.
+1. **Step 3, "what's left": keep it, trimmed.** On the first look, the paper's edge carries only notes about things
+   the player has already seen from the world (the level review's own rule: the map confirms the world):
+   - the Peak: "The dish. Kenji's job, after the storm." (seen since the first frame; it restates the arc);
+   - the terraces: "The terraces: too steep for wheels." (seen from the deck; the 0.6 promise);
+   - Kestrel's hollow: "Kestrel's hollow: dark, bring a lamp." (0.5's Warm Headlamp secret, game-flow #4, so the lamp
+     keeps its promise inside 0.5).
+
+   Cut "Theo's garden crater" until 0.6, when it is seen from the terraces.
+2. **The first look is not the end of 0.5.** With P1 and P2 the lift lands at ~70 min (game-flow S5), and Kestrel,
+   the drill, relays 0, 1 and 3 and the hollow are still ahead (S6). So the first look's real job is the basin's
+   "seen" rings from the sweep. The 0.5 end hook is the dock's evening after the last basin mast, which raises the
+   pillar at the terraces' foot. The next look then shows that note ringed.
+3. **Bell's lantern will already be kept** by the first look: Bell comes home in S4, before the lift. The map's first
+   "?" will be Kestrel, the drill and the dark masts. The lantern's promise-to-kept loop plays out in the world, so
+   don't build an acceptance test around it on paper.
+4. **Let the lookout breathe** (pillar 6). On the first ride, don't chain the map straight after the sweep. The hatch
+   swings open as the sweep ends, and the view eases into the map when the player looks at the hatch, or after ~6 s
+   of stillness. On later rides the hatch is already open and step 4 runs as written.
+5. **Optional: choose the next light.** Holding Interact on a seen or visited place marks it, and the chart pen rings
+   it. The next dock's evening (P6) raises that place's pillar instead of the tower's pick. The map still never
+   points; the player does. One mark at a time. Contract: `MapPlaceMarked(placeId)` (empty = none), read by
+   Gameplay's P6 sweep first.
+6. **The tally counts without a total.** Ines tallies found places in pencil strokes, with no "of N": the crew's list
+   would reveal how many places exist that the player hasn't found (M3-09: "never a number"). Completion stays her ✓
+   note.
+7. **A home light.** Once the map is awake, the light table's glow shows through the hatch's porthole from outside.
+   World registers it in `IHomeLights`, so it joins home's warm points in the dock's evening.
+8. **The lens rhyme.** As the view eases into the map, 07's lens re-hunts focus once on the paper (~0.5 s, the
+   opening's O4).
+9. **Check the framing.** The hatch is a crew door (0.8 × 1.85 m, its porthole at a person's 1.5 m eye height,
+   `LanderMeshes`). Once it swings open, the doorway should frame the light table, not the porthole. Rover confirms
+   07's lens height on the deck, and art sets the table to it.
+10. **Text.** The story & flow session can draft Ines's `map.*` names and notes (EN, then VI) in STORY's voice.

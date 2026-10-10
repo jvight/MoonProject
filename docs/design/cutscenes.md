@@ -63,7 +63,7 @@ POV = the camera sits at 07's lens socket and turns with its neck. Lid % = how o
 
 | # | Time | Picture and camera | 07's body | Sound and music | UI |
 |---|---|---|---|---|---|
-| O1 | 0:00–0:03 | **Darkness.** Pure black, held. | asleep: lid 0, eye dark, head bowed | 0.8 s of silence. A felted power-on thump, then the radio's crackle swells. Inside the static, a ghost of a Rhodes chord (D–A–E) surfaces for one bar and sinks again. | none |
+| O1 | 0:00–0:03 | **Darkness.** Pure black, held. | asleep: lid 0, eye dark, head bowed | the title's quiet static carries on with no gap (§1.7). A felted power-on thump, then the radio's crackle swells. Inside the static, a ghost of a Rhodes chord (D–A–E) surfaces for one bar and sinks again. | none |
 | O2 | 0:03–0:05.5 | **Lid, stage 1.** The black lifts from the bottom of the frame: a soft-edged slit, fully blurred, filled with the dock's warm glow (the first colour in the game is warm). It stalls there. | lid 0 → 12, stall | one felted servo tick, low (A2) | none |
 | O3 | 0:05.5–0:08 | **Lid, stage 2.** The lid rises to 40% with a small eased shudder (three soft wobbles of about 2%). Everything is soft: lavender ground, a dark mass to the left (the lander). | lid 12 → 40 | a second tick (D3); the servo strains a breath longer | none |
 | O4 | 0:08–0:11.5 | **The lens hunts.** Focus sweeps too near (the dock pad's painted edge sharp, the world mush), overshoots to far, swings back and settles at infinity. A **dust speck** on the glass passes through sharpness during the near sweep: a soft dark disc with a pale rim, upper left. It slides slowly down the glass and out of the frame over the rest of the opening. | the neck holds still; only the lens works | a small lens-motor whine gliding E4 → F#4, a soft tick (A4) as focus lands | none |
@@ -138,14 +138,30 @@ first, so the payoff would land on a stranger. Proposal:
 - In the finale, Earth answers with the same blink, and the player recognises it before the ticker line says a word.
 
 ### 1.6 The short wake (Continue)
-- **Trigger:** a save loads, and the opening has been seen.
-- **Shots:** black fades up over 1.5 s on the crackle, straight into the chase frame on the dock. 07's lid opens in
-  one eased move (0.8 s), with one blink. Then 07 glances (Glance tier, 2 s) at the newest pillar on the horizon or,
-  if none, at Earth.
-- **Length:** ~5 s. Any input hurries it.
+- **Trigger:** Continue on the title (M3-09 draft), for a save whose opening has been seen.
+- **Shots:** the camera eases from the title's home-wide frame into the chase frame on the dock (~2.5 s, no black).
+  07's lid opens in one eased move (0.8 s), with one blink. Then 07 glances (Glance tier, 2 s) at the newest pillar
+  on the horizon: Tilly's overnight glint (`game-flow.md` §8 #15) or, if none, Earth.
+- **Length:** ~5 s. Control returns when the blend ends (≤ 3 s, M3-09's acceptance); the glance never holds it.
 - **UI:** the "next" line may show once, if P8's conditions hold.
 
-### 1.7 Build split and contracts
+### 1.7 From the title into the opening (M3-09 draft)
+The fresh title frame (M3-09: "low and front three-quarter on 07's closed lens") is **the same shot the opening
+lands on in O10**, with the lid shut. The opening becomes a round trip through the lens: the player sees the closed
+eye on the title, goes inside it, and comes back out to the same frame with the eye open.
+- **New Game, no save:** the menu fades (0.5 s). The camera pushes slowly into the closed lens (2 s, the reverse of
+  O10). The glass and the hood pass, and the picture is black: that black is O1.
+- **Sound across the seam:** the title's quiet, out-of-tune static carries on into O1 with no gap. O1's 0.8 s of
+  silence is cut. The felted power-on thump is 07's own systems starting, inside the black.
+- **New Game with a save:** after the confirm, the windows go dark one by one (M3-09 draft, ~3 s). The camera moves
+  to the fresh title frame and pushes into the lens as above. The scene reload that puts the save away happens
+  **inside O1's black**: if loading takes longer than O1's 3 s, the black and the static simply hold. There is never
+  a loading screen. App keeps a one-shot "new game" boot intent beside the save, so the reload starts the opening
+  and never shows the title again.
+- **The wordmark:** only on the title (M3-09's new treatment). `TitleCard`'s drifting wordmark over the wake is
+  retired: a wordmark over 07's own eye would break the first-person spell.
+
+### 1.8 Build split and contracts
 | Box | Builds |
 |---|---|
 | rover | the POV camera at the lens socket; the gaze, with its attention list (lander, tower pilot, Peak beacon, Earth) and soft limits; the lid stages, the focus and flicker curves driven through `ILensView`; the pull-out path into the existing WakeOpening beat 1; the blink, tilt, wing and antenna call sign; the input rules in §1.3 |
@@ -260,18 +276,19 @@ bunk windows as separate renderers), audio (the stingers, the radio's clear), ui
 - **Shots:**
   1. **The ride** (~6 s): a crane shot that rises with the platform along the lander's flank. 07 is in profile, the
      weathered panels slide past, and the crew's ladder is beside it: the ladder 07 could never climb.
-  2. **The rail** (~3 s): at the clunk of `RideStopped`, 07 rolls forward to the deck's rail. The camera eases behind
-     and above it and widens.
-  3. **The lookout** (hold): the whole basin. Lit masts, the cleaned sites' skeletons, Kestrel's long trail, the
-     canyon's slit and the Peak. 07 scans slowly left to right, and the lens re-hunts once at the far rim (the
-     opening's rhyme). Look input pans the view; drive input ends the hold.
-  4. **The hatch** (0.5, M3-07): the first time, after 4 s of stillness, 07 turns its head toward the lander's deck
-     hatch, open a crack with warm light. That is the only invitation to the map (see the M3-07 draft).
+  2. **The rise** (level review L5, ~6 s): at the clunk of `RideStopped`, 07 settles on the deck. The camera rises
+     to ~14 m above the deck, pulled back toward the lander, with a slow 360° settle.
+  3. **The seen sweep** (L5): every place in view that 07 hasn't visited answers once with a faint pilot blink, in
+     turn. 07's head follows each blink, and the lens re-hunts once at the far rim (the opening's rhyme). Then the
+     lookout holds while 07 is still: look input pans the view, and drive input ends the hold.
+  4. **The hatch** (M3-07 draft): the hatch's motor wakes with the lift and the hatch swings open by itself. Its warm
+     light falls on the deck, and the view eases into the map (M3-07's amendments time this).
 - **Sound:** the ride's ratchet and hum (`LiftCue`), the clunk. At the top the radio is a touch clearer and the room
   tone wider; the music thins to its pads.
 - **UI:** nothing. The place card for the lift has already shown at L3.
-- **Builds:** rover (the ride and lookout shots, already in its queue), gameplay (the ride and first-time flag), art
-  (deck rail, hatch with its warm crack), audio (exists), world (the hatch's warm light).
+- **Builds:** rover (the ride, the L5 rise and the ease into the map), gameplay (the ride, the first-time flag, the
+  sweep's order), world (the sightline query for the sweep, the hatch's warm light), art (the deck rail, the hatch's
+  states), audio (exists, plus the hatch motor).
 
 ## 7. The dock's evening (M3-16 P6)
 - **Trigger:** `DockEveningOpened` (on main), at most once per return home when something new woke or was found.
