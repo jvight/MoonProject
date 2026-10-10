@@ -9,9 +9,7 @@ account) can continue without the old conversation.
   - 0.4.0: 50990e8.
   - 0.4.1 (New game, stargazing): 98f6edd.
   - Playtest zips are in `Builds/`.
-- **0.4.2 (rust with causes, M3-15 §3):** cut at 1ba05a59 (version 0.4.2). `director.py verify --push` and
-  `build_player` were running. Check `Logs/director-verify-042.log`, `Logs/director-build-042.log` and
-  `Builds/LofiLunar-0.4.2-*.zip`. If they are missing, re-run `python tools/director.py verify --push` and build.
+- **0.4.2 SHIPPED** (rust with causes, M3-15 §3): pushed 5a293e8, verified with EditMode 1179, PlayMode 232 (13 skipped) and the Playthrough. Build: `Builds/LofiLunar-0.4.2-20261010-5a293e84.zip`.
 - **0.5 groundwork already on main** (inert until gameplay lands):
   - Core contracts: BasePowerStage, IBasePower, BasePowerChanged, NextStepChanged, PlaceFirstApproached, HomeLight,
     IHomeLights;
