@@ -339,6 +339,11 @@ sidebar group and title it "MoonProject · <box>". Its prompt must stand alone:
   Changed defaults never reach an existing asset by themselves.
 - **Metas.** Workers' batch-made metas are deleted. The main editor generates the real ones, which `outputs`
   commits.
+- **Queued messages can be lost** (2026-10-11: ui's (a)–(c) and rover's rig fix never arrived).
+  - Check that a critical message arrived with list_events.
+  - Restate open items in the next message after each land, and ask for a one-line acknowledgement.
+- **Reset tuning before you rebuild the scene.** Run ResetSettings or the re-serialise first, then `refresh
+  --scene`, so the scene wires what the new settings declare (e.g. home lighting's pools).
 - **Read captures yourself.** Judge feel and visuals on the captures, not on the numbers alone. The owner judges the
   game by screenshots.
 
