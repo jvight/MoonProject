@@ -19,6 +19,7 @@ namespace MoonProject.World
         private static readonly int HorizonBand = Shader.PropertyToID("_MoonHorizonBand");
         private static readonly int StarParams = Shader.PropertyToID("_MoonStarParams");
         private static readonly int StarTwinkle = Shader.PropertyToID("_MoonStarTwinkle");
+        private static readonly int StarShape = Shader.PropertyToID("_MoonStarShape");
         private static readonly int MilkyWayAxis = Shader.PropertyToID("_MoonMilkyWayAxis");
         private static readonly int MilkyWayColor = Shader.PropertyToID("_MoonMilkyWayColor");
         private static readonly int EarthDirection = Shader.PropertyToID("_MoonEarthDirection");
@@ -46,6 +47,8 @@ namespace MoonProject.World
                 new Vector4(sky.StarDensity, sky.StarBrightness, sky.StarPowerLaw, sky.StarSize));
             Shader.SetGlobalVector(StarTwinkle,
                 new Vector4(sky.TwinkleShare, sky.TwinkleSpeed, sky.TwinkleDepth, sky.StarGlow));
+            Shader.SetGlobalVector(StarShape,
+                new Vector4(sky.StarSizeSpread, sky.StarBrightest, sky.StarGlowFrom, 0f));
             Shader.SetGlobalVector(MilkyWayAxis, WithAlpha(sky.MilkyWayAxis, sky.MilkyWayIntensity));
             Shader.SetGlobalVector(MilkyWayColor, WithAlpha(sky.MilkyWayColor.linear, sky.MilkyWayWidth));
 

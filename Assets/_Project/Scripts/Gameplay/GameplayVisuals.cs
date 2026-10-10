@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace MoonProject.Gameplay
@@ -56,6 +57,15 @@ namespace MoonProject.Gameplay
         [Tooltip("The pulse running along the ground from a newly lit relay mast toward home (WarmLamp, additive).")]
         [SerializeField] private Material _linkPulse;
 
+        [Tooltip("Art's station pads (Generated/Art/Base/StationPad_<cm>), one per size.")]
+        [SerializeField] private GameObject[] _pads = Array.Empty<GameObject>();
+
+        [Tooltip("Each pad's radius in metres (Art's PadRadii), matching the pads above.")]
+        [SerializeField] private float[] _padRadii = Array.Empty<float>();
+
+        [Tooltip("Art's tower story parts (Generated/Art/Pickups/Part_*), each named as the part's id.")]
+        [SerializeField] private GameObject[] _storyParts = Array.Empty<GameObject>();
+
         public Material SonarRing => _sonarRing;
         public Material SiteRing => _siteRing;
         public Material SitePillar => _sitePillar;
@@ -72,6 +82,32 @@ namespace MoonProject.Gameplay
         public Material Spark => _spark;
         public Material HomeHalo => _homeHalo;
         public Material LinkPulse => _linkPulse;
+
+        /// <summary>Art's station pad (StationPad_&lt;cm&gt;) whose radius is nearest <paramref name="radius"/>.</summary>
+        public GameObject PadFor(float radius)
+        {
+            int best = 0;
+            for (int i = 1; i < _pads.Length; i++)
+            {
+                best = Mathf.Abs(_padRadii[i] - radius) < Mathf.Abs(_padRadii[best] - radius) ? i : best;
+            }
+
+            return _pads[best];
+        }
+
+        /// <summary>Art's model of the tower story part <paramref name="partId"/> (its prefab name), or null.</summary>
+        public GameObject StoryPart(string partId)
+        {
+            for (int i = 0; i < _storyParts.Length; i++)
+            {
+                if (_storyParts[i] != null && _storyParts[i].name == partId)
+                {
+                    return _storyParts[i];
+                }
+            }
+
+            return null;
+        }
 
         /// <summary>Null when every material is assigned, else the first missing one.</summary>
         public string Validate()
@@ -92,7 +128,22 @@ namespace MoonProject.Gameplay
                 : _spark == null ? "spark material is missing"
                 : _homeHalo == null ? "home halo material is missing"
                 : _linkPulse == null ? "link pulse material is missing"
+                : _pads == null || _pads.Length == 0 || _padRadii == null || _padRadii.Length != _pads.Length ||
+                  Array.IndexOf(_pads, null) >= 0 ? "Art's station pads are missing (run Gameplay/Materials)"
+                : _storyParts == null || Array.IndexOf(_storyParts, null) >= 0
+                    ? "Art's tower story parts are missing (run Gameplay/Materials)"
                 : null;
+        }
+
+        internal void PopulatePads(GameObject[] pads, float[] radii)
+        {
+            _pads = pads;
+            _padRadii = radii;
+        }
+
+        internal void PopulateStoryParts(GameObject[] parts)
+        {
+            _storyParts = parts;
         }
 
         internal void Populate(Material sonarRing, Material siteRing, Material sitePillar, Material tractorBeam,

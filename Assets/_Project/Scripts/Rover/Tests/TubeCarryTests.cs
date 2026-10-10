@@ -33,6 +33,68 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
+        public void Restore_PutsTheTubesBackAtOnce_AndAnyDeliveryTakesOneOff()
+        {
+            var carry = new TubeCarry(HalfLife);
+            carry.Restore(2);
+            Assert.AreEqual(1f, carry.Scale, "No ride-in after a load.");
+            carry.Step(Step);
+            Assert.AreEqual(1f, carry.Scale, 1e-4f);
+
+            carry.Delivered("rover.cargo_cradle");
+            Assert.IsTrue(carry.IsCarrying, "One of the two is left.");
+            carry.Delivered("rover.boost_coils");
+            Assert.IsFalse(carry.IsCarrying);
+            carry.Delivered("rover.boost_coils");
+            Assert.IsFalse(carry.IsCarrying, "A stray delivery takes nothing below none.");
+        }
+
+        [Test]
+        public void RestoreNone_ClearsTheBackAtOnce()
+        {
+            var carry = new TubeCarry(HalfLife);
+            carry.Found("rover.cargo_cradle");
+            Run(carry, 2f);
+            carry.Restore(0);
+            Assert.IsFalse(carry.IsCarrying);
+            Assert.AreEqual(0f, carry.Scale, "A load with nothing carried shows nothing, with no ride-out.");
+        }
+
+        [Test]
+        public void StoryPart_EasesOn_AndEasesOffStillNamedAfterDelivery()
+        {
+            var carry = new TubeCarry(HalfLife);
+            Assert.IsNull(carry.Part);
+            carry.PartFound("Part_TowerCoil", false);
+            Assert.AreEqual("Part_TowerCoil", carry.Part);
+            carry.Step(Step);
+            Assert.That(carry.PartScale, Is.InRange(0.001f, 0.2f), "Pops on, eased.");
+            Assert.AreEqual(0f, carry.Scale, "No tube rides with it.");
+            Run(carry, 2f);
+            Assert.Greater(carry.PartScale, 0.99f);
+
+            carry.PartDelivered("Part_TowerCoil");
+            carry.Step(Step);
+            Assert.AreEqual("Part_TowerCoil", carry.Part, "Still named while it eases off.");
+            Run(carry, 2f);
+            Assert.Less(carry.PartScale, 0.01f);
+        }
+
+        [Test]
+        public void StoryParts_ShowTheFirstCarried_AndARestoredOneAtOnce()
+        {
+            var carry = new TubeCarry(HalfLife);
+            carry.PartFound("Part_Transformer", true);
+            Assert.AreEqual(1f, carry.PartScale, "No ride-in after a load.");
+            carry.PartFound("Part_TowerCoil", false);
+            Assert.AreEqual("Part_Transformer", carry.Part, "The first picked up stays on show.");
+            carry.PartDelivered("Part_Transformer");
+            Assert.AreEqual("Part_TowerCoil", carry.Part);
+            carry.Restore(0);
+            Assert.AreEqual(1f, carry.PartScale, "A tube restore leaves the parts alone.");
+        }
+
+        [Test]
         public void TwoTubes_StayUntilBothAreDelivered()
         {
             var carry = new TubeCarry(HalfLife);

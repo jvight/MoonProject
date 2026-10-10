@@ -26,6 +26,11 @@ MonoBehaviour:
   _signalFriend: tilly
   _leapFriend: bell
   _firstKit: rover.hover_jump
+  _chasmLookRadius: 14
+  _chasmLookSeconds: 3.5
+  _bellLightBrightness: 0.8
+  _eveningSweepDelay: 4.5
+  _eveningPillarBrightness: 0.7
   _tubes:
   - _kitId: rover.cargo_cradle
     _siteId: site.garage
@@ -33,6 +38,28 @@ MonoBehaviour:
     _siteId: site.kestrel
   - _kitId: rover.boost_coils
     _siteId: site.drill
+  _towerParts:
+  - _partId: Part_TowerCoil
+    _towerLevel: 1
+    _source: 0
+    _siteId: site.depot
+    _heartOffset: {x: 0, y: 0}
+    _afterTheChasm: 0
+  - _partId: Part_Transformer
+    _towerLevel: 2
+    _source: 0
+    _siteId: site.garage
+    _heartOffset: {x: 0, y: 1.3}
+    _afterTheChasm: 1
+  - _partId: Part_RelaySpare
+    _towerLevel: 3
+    _source: 1
+    _siteId: 
+    _heartOffset: {x: 0, y: 0}
+    _afterTheChasm: 0
+  _partAppearSeconds: 1.2
+  _partFeedSeconds: 1.6
+  _partFeedArc: 0.8
   _plotterReach: 6
   _plotterDrawSeconds: 6
   _plotterRows: 8

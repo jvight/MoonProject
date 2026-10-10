@@ -143,9 +143,9 @@ namespace MoonProject.Gameplay.Lift
             Vector3 mouth = _hopperMouth.position;
             Vector3 outward = Vector3.ProjectOnPlane(_hopperMouth.forward, Vector3.up).normalized;
             _feedPad = new StationPad("LiftFeedPad", transform, services.Terrain,
-                mouth + outward * _tuning.FeedPadDistance, _looks.PadLook, services.Visuals.WarmRing);
+                mouth + outward * _tuning.FeedPadDistance, _looks.PadLook, services.Visuals);
             _ridePad = StationPad.OnDeck("LiftRidePad", transform, BottomSpot(), _looks.PadLook,
-                services.Visuals.WarmRing);
+                services.Visuals);
             _lamp = new EmissionGlow(_winchLamp);
             _approaches = _events.Subscribe<PlaceFirstApproached>(OnPlaceFirstApproached);
             _cycle.Restore(false);

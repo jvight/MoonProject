@@ -126,14 +126,17 @@ namespace MoonProject.UI.Tests
             Assert.AreEqual(version, choices.Version);
             choices.Step(1);
 
-            Assert.That(() =>
+            TestDelegate choosing = () =>
             {
                 for (int i = 0; i < 200; i++)
                 {
                     choices.Refresh(_shop, _shop);
                     choices.Step(1);
                 }
-            }, Is.Not.AllocatingGCMemory(), "choosing allocates nothing");
+            };
+            // One run first, so JIT and first-use runtime caches are paid outside the measured run in any test order.
+            choosing();
+            Assert.That(choosing, Is.Not.AllocatingGCMemory(), "choosing allocates nothing");
             byte[] proof = null;
             Assert.That(() => { proof = new byte[ControlBytes]; },
                 Is.AllocatingGCMemory(), "the allocation check sees allocations");

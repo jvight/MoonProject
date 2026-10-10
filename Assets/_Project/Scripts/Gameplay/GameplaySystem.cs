@@ -47,7 +47,7 @@ namespace MoonProject.Gameplay
         [SerializeField] private FriendField _friends;
         [SerializeField] private CassetteField _cassettes;
         [SerializeField] private LogCacheField _logs;
-        [SerializeField] private SignalField _signals;
+        [SerializeField] private BellSignalField _signals;
         [SerializeField] private CassetteShelf _shelf;
         [SerializeField] private RelayField _relays;
         [SerializeField] private BaseProgression _progression;
@@ -73,6 +73,12 @@ namespace MoonProject.Gameplay
         /// <summary>Kenji's blueprint board: which kits the bay can build (docs/features/M3-16).</summary>
         public Blueprints Blueprints { get; private set; }
 
+        /// <summary>The tower's story parts, one per level (docs/features/M3-16 P1).</summary>
+        public TowerParts TowerParts { get; private set; }
+
+        /// <summary>The story parts in the world: waiting, flying into 07, fed to the tower's port.</summary>
+        public TowerPartField TowerPartField { get; private set; }
+
         public SalvageField Salvage => _salvage;
 
         public RelicField Relics => _relics;
@@ -97,7 +103,7 @@ namespace MoonProject.Gameplay
 
         public LogCacheField Logs => _logs;
 
-        public SignalField Signals => _signals;
+        public BellSignalField Signals => _signals;
 
         public CassetteShelf Shelf => _shelf;
 
@@ -112,8 +118,9 @@ namespace MoonProject.Gameplay
         internal void Wire(GameplayVisuals visuals, GlintTuning glints, UpgradeDefinition[] upgradeDefinitions,
             SalvageField salvage, RelicField relics, SonarSystem sonar, ExcavationSystem excavation,
             TetherSystem tether, HomeBase home, CargoCradle cradle, RadioTower tower, Workshop workshop,
-            FriendField friends, CassetteField cassettes, LogCacheField logs, SignalField signals, CassetteShelf shelf,
-            RelayField relays, BaseProgression progression, BlueprintPlotter plotter, LiftStation lift)
+            FriendField friends, CassetteField cassettes, LogCacheField logs, BellSignalField signals,
+            CassetteShelf shelf, RelayField relays, BaseProgression progression, BlueprintPlotter plotter,
+            LiftStation lift)
         {
             _visuals = visuals;
             _glints = glints;
@@ -180,7 +187,8 @@ namespace MoonProject.Gameplay
             Radio = new RadioProgram(context.Events, _cassettes.Catalog.Ids());
             Power = new BasePower(context.Events);
             Blueprints = NewBlueprints(context.Events);
-            if (Blueprints == null)
+            TowerParts = NewTowerParts(context.Events);
+            if (Blueprints == null || TowerParts == null)
             {
                 enabled = false;
                 return;
@@ -192,7 +200,7 @@ namespace MoonProject.Gameplay
                 !_tether.Initialize(services, _relics, _salvage) ||
                 !_home.Initialize(services, _relics, _tether, Upgrades, lights) ||
                 !_cradle.Initialize(services, seat, _relics, _home) ||
-                !_tower.Initialize(services, Upgrades, _salvage.Catalog) ||
+                !_tower.Initialize(services, Upgrades, _salvage.Catalog, TowerParts) ||
                 !_workshop.Initialize(services, Upgrades, _salvage.Catalog, _tower, Power, Blueprints, lights) ||
                 !_friends.Initialize(services, Radio, _cassettes.Catalog, _relics, _salvage, _home) ||
                 !_cassettes.Initialize(services, Radio, KeepClearOfCassettes()) || !_logs.Initialize(services) ||
@@ -200,7 +208,7 @@ namespace MoonProject.Gameplay
                 !_signals.Initialize(services, _friends, _cassettes, _logs, _relics, abilities, _sonar.Tuning) ||
                 !_shelf.Initialize(Radio, _cassettes.Catalog, _friends.BellTuning) ||
                 !_relays.Initialize(services, Upgrades, _tower, _tether, _friends.Tuning, Placement(context)) ||
-                !_progression.Initialize(services, Power, _home, _workshop, _sonar.Tuning, _friends, _relays,
+                !_progression.Initialize(services, Power, _home, _workshop, _sonar, _friends, _relays,
                     Upgrades) ||
                 !_plotter.Initialize(services, Blueprints, _workshop, _progression.Tuning, Upgrades) ||
                 !_lift.Initialize(services, Power, _salvage.Catalog, context.Get<IRoverStillness>()))
@@ -232,9 +240,16 @@ namespace MoonProject.Gameplay
                 return;
             }
 
-            Shop = new UpgradeShop(Upgrades, stations, save, Blueprints);
+            TowerPartField = NewTowerPartField(services);
+            if (TowerPartField == null)
+            {
+                enabled = false;
+                return;
+            }
+
+            Shop = new UpgradeShop(Upgrades, stations, save, Blueprints, TowerParts);
             Hints = new InteractionHints(services.Rover, _sonar, _excavation, _salvage, _tether, _cradle, _home,
-                stations, Upgrades, _friends, _relays);
+                stations, Upgrades, TowerParts, _friends, _relays);
             context.Register<IMaterialStock>(Materials);
             context.Register<ISalvageStatus>(_salvage);
             context.Register<ITetherAim>(_tether);
@@ -283,9 +298,46 @@ namespace MoonProject.Gameplay
                 RestoreBlueprints)));
             _saveTokens.Add(save.Register(new SaveSection<LiftSaveData>(GameplaySaveKeys.Lift,
                 GameplaySaveKeys.LiftVersion, _lift.Capture, _lift.Restore)));
+            _saveTokens.Add(save.Register(new SaveSection<TowerPartsSaveData>(GameplaySaveKeys.TowerParts,
+                GameplaySaveKeys.TowerPartsVersion, TowerParts.Capture, RestoreTowerParts)));
         }
 
-        /// <summary>Core's rover placement for the radio-hop, or null while no domain registers it.</summary>
+        private void RestoreTowerParts(TowerPartsSaveData data)
+        {
+            TowerParts.Restore(data);
+            TowerPartField.Sync();
+        }
+
+        /// <summary>The tower's story parts, or null (logged) when the content is broken.</summary>
+        private TowerParts NewTowerParts(EventBus events)
+        {
+            try
+            {
+                return new TowerParts(events, _tower.Definition != null ? _tower.Definition.Id : null,
+                    _progression.Tuning.TowerParts);
+            }
+            catch (ArgumentException exception)
+            {
+                Debug.LogError($"{nameof(GameplaySystem)}: {exception.Message}", this);
+                return null;
+            }
+        }
+
+        /// <summary>The story parts in the world, or null (logged) when a part's model or site is missing.</summary>
+        private TowerPartField NewTowerPartField(GameplayServices services)
+        {
+            try
+            {
+                return new TowerPartField(TowerParts, transform, services, _salvage, _relays.Reach, _tower,
+                    _friends.Tuning, _progression.Tuning, () => _progression.ChasmSeen);
+            }
+            catch (InvalidOperationException exception)
+            {
+                Debug.LogError($"{nameof(GameplaySystem)}: {exception.Message}", this);
+                return null;
+            }
+        }
+
         private void RestoreBlueprints(BlueprintsSaveData data)
         {
             Blueprints.Restore(data.found, data.carried);
@@ -349,21 +401,28 @@ namespace MoonProject.Gameplay
             return null;
         }
 
+        /// <summary>Core's rover placement for the radio-hop, or null while no domain registers it.</summary>
         private static IRoverPlacement Placement(GameContext context)
         {
             return context.TryGet(out IRoverPlacement placement) ? placement : null;
         }
 
-        /// <summary>The save is loaded (Start runs after it): Audio and UI start from the real radio program.</summary>
+        /// <summary>
+        /// The save is loaded (Start runs after it): Audio and UI start from the real radio program, and Rover puts the
+        /// carried blueprint tubes and story parts on 07's back.
+        /// </summary>
         private void Start()
         {
             Radio.Announce();
             Power.Announce();
+            Blueprints.Announce();
+            TowerParts.Announce();
         }
 
         private void Update()
         {
             Power.Show(_tower.ShownLevel);
+            TowerPartField.Step(Time.time);
         }
 
         private void RestoreRadio(RadioSaveData data)
@@ -456,7 +515,7 @@ namespace MoonProject.Gameplay
                 : _cassettes.Catalog == null ? "CassetteField has no CassetteCatalog."
                 : _cassettes.Catalog.Validate() != null ? "CassetteCatalog " + _cassettes.Catalog.Validate() + "."
                 : _logs == null ? "LogCacheField is not assigned."
-                : _signals == null ? "SignalField is not assigned."
+                : _signals == null ? "BellSignalField is not assigned."
                 : _shelf == null ? "CassetteShelf is not assigned."
                 : _relays == null ? "RelayField is not assigned."
                 : _progression == null ? "BaseProgression is not assigned."
@@ -474,6 +533,7 @@ namespace MoonProject.Gameplay
 
             _saveTokens.Clear();
             Blueprints?.Dispose();
+            TowerPartField?.Dispose();
             _meshes?.Dispose();
         }
     }

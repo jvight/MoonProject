@@ -52,13 +52,11 @@ MonoBehaviour:
   _pulseFade: 0.35
   _chainDelay: 0.9
   _padRadius: 3
-  _padRingWidth: 0.3
   _padInviting: 0.3
   _padOccupied: 0.8
   _padBreathPeriod: 3.6
   _padBreathDepth: 0.35
   _padEase: 0.5
-  _padSegments: 48
   _hopMaxSpeed: 0.8
   _hopConfirmHold: 0.7
   _hopCancelDrive: 0.35

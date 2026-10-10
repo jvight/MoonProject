@@ -141,6 +141,9 @@ namespace MoonProject.Gameplay
         /// <summary>Current pad brightness (tests and debugging views).</summary>
         public float PadLevel => _pad != null ? _pad.Level : 0f;
 
+        /// <summary>True while Art's pad shows on the turntable (the bay awake with something to fit).</summary>
+        public bool PadShown => _pad != null && _pad.Shown;
+
         /// <summary>Current work lamp brightness (tests and debugging views).</summary>
         public float LampLevel => _lampLevel;
 
@@ -298,7 +301,7 @@ namespace MoonProject.Gameplay
             _upgrades = upgrades;
             _turntableRest = _turntable.rotation;
             _pad = StationPad.OnDeck("BayPad", transform, _turntable.position, _tuning.PadLook,
-                services.Visuals.WarmRing);
+                services.Visuals);
             _lampGlows = new EmissionGlow[_lamps.Length];
             for (int i = 0; i < _lamps.Length; i++)
             {

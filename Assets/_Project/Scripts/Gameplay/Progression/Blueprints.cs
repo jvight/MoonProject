@@ -133,6 +133,15 @@ namespace MoonProject.Gameplay
             }
         }
 
+        /// <summary>
+        /// Tells Rover how many tubes ride on 07 as the game starts (<see cref="BlueprintsCarriedRestored"/>, also when
+        /// none do), so they are on its back at once with no ride-in.
+        /// </summary>
+        public void Announce()
+        {
+            _events.Publish(new BlueprintsCarriedRestored(_carried.Count));
+        }
+
         public void Dispose()
         {
             _surfaced.Dispose();

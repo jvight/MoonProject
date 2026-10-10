@@ -7,7 +7,7 @@ namespace MoonProject.UI.Tests
     /// While 07 stargazes the ambient HUD slowly leaves and soon comes back; the Look up hint shows once per save, the
     /// first time 07 rests under the sky, and steps aside when the player looks up.
     /// </summary>
-    public sealed class StargazeTests
+    public sealed class UiStargazeTests
     {
         private const float Step = 0.1f;
 

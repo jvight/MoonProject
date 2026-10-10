@@ -19,7 +19,7 @@ namespace MoonProject.UI
     {
         private const float RaiseEpsilon = 0.5f;
 
-        private readonly RelaySettings _settings;
+        private readonly RelayUiSettings _settings;
         private readonly IInteractionHints _hints;
         private readonly IRelayStatus _relays;
         private readonly IMaterialStock _materials;
@@ -30,7 +30,7 @@ namespace MoonProject.UI
         private readonly ProgressRingPainter _ring;
         private float _writtenRaise = -1f;
 
-        public RelayTag(UiLayout layout, RelaySettings settings, PromptSettings anchoring, IInteractionHints hints,
+        public RelayTag(UiLayout layout, RelayUiSettings settings, PromptSettings anchoring, IInteractionHints hints,
             IRelayStatus relays, IMaterialStock materials, ILocalization localization, IViewCamera view,
             IntText numbers)
         {

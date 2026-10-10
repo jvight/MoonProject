@@ -580,8 +580,9 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
-    /// The player chose to start over (the pause menu's New game, once confirmed). The App puts the save away as
-    /// &lt;slot&gt;.old-&lt;stamp&gt;.json (never deleted) and reloads the scene, so the game boots fresh.
+    /// The player chose to start over (the title's New Game, confirmed when a save exists). The App puts the save away
+    /// as &lt;slot&gt;.old-&lt;stamp&gt;.json (never deleted) and reloads the scene, which boots straight into a fresh
+    /// game (no title) once.
     /// </summary>
     public readonly struct NewGameRequested
     {
@@ -680,6 +681,53 @@ namespace MoonProject.Core.Events
         }
 
         public int Count { get; }
+    }
+
+    /// <summary>
+    /// 07 picked up one of the tower's story parts (docs/features/M3-16 P1): the part tower level
+    /// <see cref="TowerLevel"/> needs besides materials. <see cref="PartId"/> is Art's model name (Part_TowerCoil,
+    /// Part_Transformer, Part_RelaySpare). It rides on 07's back until <see cref="StoryPartDelivered"/>. Restored is
+    /// true when a loaded game puts it back on 07 (once, after the save is applied): shown at once, no ride-in.
+    /// </summary>
+    public readonly struct StoryPartFound
+    {
+        public StoryPartFound(string partId, int towerLevel, Vector3 position, bool restored)
+        {
+            PartId = partId;
+            TowerLevel = towerLevel;
+            Position = position;
+            Restored = restored;
+        }
+
+        public string PartId { get; }
+
+        public int TowerLevel { get; }
+
+        /// <summary>Where 07 picked it up.</summary>
+        public Vector3 Position { get; }
+
+        public bool Restored { get; }
+    }
+
+    /// <summary>
+    /// 07 handed story part <see cref="PartId"/> to the tower's port hopper at <see cref="Position"/>
+    /// (docs/features/M3-16 P1): it leaves 07's back and glides in, and tower level <see cref="TowerLevel"/> can now be
+    /// built.
+    /// </summary>
+    public readonly struct StoryPartDelivered
+    {
+        public StoryPartDelivered(string partId, int towerLevel, Vector3 position)
+        {
+            PartId = partId;
+            TowerLevel = towerLevel;
+            Position = position;
+        }
+
+        public string PartId { get; }
+
+        public int TowerLevel { get; }
+
+        public Vector3 Position { get; }
     }
 
     /// <summary>

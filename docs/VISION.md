@@ -57,7 +57,8 @@ A small, old survey rover that has been alone on the moon for a very long time. 
 - **Face**: a slender neck carries a hooded sensor head with **one large round lens-eye** (warm amber glow) under
   a brow/shutter that can lower. Resting state is *half-lidded* — that is where the melancholy lives.
 - **Signs of solitude**: one folded solar panel on its back like a single tired wing (a cell missing), a slightly
-  bent whip antenna with a faint blinking tip, a patched panel in a mismatched colour, one replacement wheel that
+  bent whip antenna whose faint tip blinks the station's old call sign (three short, one long; it pays off in the
+  finale), a patched panel in a mismatched colour, one replacement wheel that
   doesn't match the others.
 - **Body language** (procedural, subtle, slow — never cartoony): the head looks at whatever it interacts with
   (tether target, pinged relic, glinting scrap). Left idle, after a few seconds it slowly turns its head up toward
@@ -95,16 +96,25 @@ Each ruling removes friction the original pitch would have caused. Boxes impleme
 4. **Progress is kept.** Releasing excavation early keeps progress; a snapped tether leaves the relic right where it
    was; nothing resets.
 5. **No grind.** The basin holds at least 2× the scrap the slice's upgrades cost, and each deposited relic also
-   gives a scrap gift, so exploring for memories funds the radio tower. Target: all three tower levels in 15–20 min.
+   gives a scrap gift, so exploring for memories funds the radio tower. Target: each version's steps need about half of its materials, and the tower's three levels land across the first hour (M3-16).
 6. **Teach by doing.** No tutorial screens. Context prompts (key/button glyph + one word) fade in only near a usable
    thing, only the first few times (remembered in the save), then never again. A pause menu offers resume,
    volumes, look sensitivity, invert Y and quit.
 7. **Never stuck.** If 07 is wedged or not progressing for a few seconds while the player is trying to move, it is
    automatically lifted on a soft arc to the nearest open, drivable spot and set down — no prompt, no penalty, no
    teleport flash.
-8. **The first frame is the hook.** 07 spawns at the base facing bearing 355° so Earth and The Peak (with its slow
-   red beacon) share the opening frame; the camera pitches down no more than ~6°. 07 starts with its eye closed and
-   wakes as the radio crackles on — the first five seconds should make people say "aww".
+8. **The first look is the hook** (owner, 2026-10-11).
+   - A new game opens in darkness on the radio's crackle, then through 07's own eye as it opens: the lid lifts in
+     stages, the lens hunts for focus, and 07 looks around at the sleeping home, the tower's pilot blink, The Peak's
+     red light and, last, Earth.
+   - The camera then eases out of the lens to a front three-quarter shot of 07's eye looking up at Earth, and on to
+     the chase frame: 07 on its dock facing bearing 355°, Earth and The Peak (with its slow red beacon) sharing the
+     frame, the camera pitched down no more than ~6°.
+   - Only the dock, 07's eye and the tower's pilot are warm.
+   - Any drive input reaches the chase frame within ~4 s; control is never held. A loaded game opens with the short
+     wake.
+   - The first five seconds should make people lean in; 07's first blink should make them say "aww".
+   Storyboard: `docs/design/cutscenes.md` §1.
 9. **Ground variation is patchy, never confetti.** Colour changes on the floor follow low-frequency patches and
    facet tilt; isolated bright triangles on flat ground read as paper scraps and are not allowed.
 10. **Gates are real, exits are one-way.** An ability gate must actually need the ability, not just shortcut a
@@ -183,6 +193,8 @@ Restored things lose their dust caps, get a patch of fresh paint and light up; t
 - Floaty drone: high positional damping, slower rotational damping, auto-recenter behind the rover after idle.
 - Slight FOV widening with speed; gentle lift when going downhill; never clips into terrain.
 - Cinematic moments (relic surfacing, tower upgrade) use slow, eased blends — never cuts.
+- 07's eye is the only first-person view in the game: the opening, and the finale's answer. Everything else is the
+  floaty third-person drone. The catalogue of moments is `docs/design/cutscenes.md`.
 
 ## The feel checklist (Director signs off a feature only when all are true)
 - [ ] Starts and stops with easing; no frame-one snaps.

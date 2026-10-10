@@ -63,6 +63,9 @@ namespace MoonProject.UI.PlayModeTests
         /// </summary>
         public bool AnnouncesPurchases { get; set; } = true;
 
+        /// <summary>True while the next level waits for a story part the tower has not been fed.</summary>
+        public bool AwaitingPart { get; set; }
+
         public int Purchases { get; private set; }
 
         public InteractionHint PrimaryHint { get; set; } = InteractionHint.None;
@@ -381,6 +384,11 @@ namespace MoonProject.UI.PlayModeTests
             if (!offer.CanAfford)
             {
                 return PurchaseResult.CannotAfford;
+            }
+
+            if (AwaitingPart)
+            {
+                return PurchaseResult.NeedsPart;
             }
 
             Purchases++;

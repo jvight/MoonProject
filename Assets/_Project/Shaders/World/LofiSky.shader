@@ -32,6 +32,7 @@ Shader "MoonProject/World/LofiSky"
             float4 _MoonHorizonBand;     // rgb thin band along the horizon (linear), a band height
             float4 _MoonStarParams;      // x density, y brightness, z power-law exponent, w core size in pixels
             float4 _MoonStarTwinkle;     // x share that twinkles, y speed (rad/s), z depth, w glow of bright stars
+            float4 _MoonStarShape;       // x size spread (power of brightness), y brightest cap, z glow from
             float4 _MoonMilkyWayAxis;    // xyz band plane normal, w intensity
             float4 _MoonMilkyWayColor;   // rgb haze colour (linear), a angular half-width
             float4 _MoonEarthDirection;  // xyz unit direction to Earth, w angular radius (radians)
@@ -88,8 +89,9 @@ Shader "MoonProject/World/LofiSky"
 
             // One layer of stars: at most one star per 3D cell of the direction scaled by `cells`. A star is kept
             // only when its projection on the sphere lies well inside its own cell, so no star is cut by a border.
-            // Its brightness follows a power law from `faintest` up (N(>b) ~ b^-exponent, capped), its core grows a
-            // little with brightness, the brightest carry a soft glow, and only a few twinkle, slowly.
+            // Its brightness follows a power law from `faintest` up (N(>b) ~ b^-exponent, capped), its size follows
+            // the brightness (a few big stars among many fine ones), its core is a round anti-aliased disc, only the
+            // brightest few carry a soft glow (and clear the bloom threshold), and only a few twinkle, slowly.
             float3 StarLayer(float3 dir, float cells, float density, float pixel, float faintest, float seed)
             {
                 float3 p = dir * cells;
@@ -108,13 +110,15 @@ Shader "MoonProject/World/LofiSky"
                 }
 
                 // The glow is a Gaussian a few pixels wide, so it has faded to nothing long before the cell's edge.
-                float brightness = min(faintest * pow(max(h.y, 1e-3), -1.0 / _MoonStarParams.z), 2.5);
+                float brightness = min(faintest * pow(max(h.y, 1e-3), -1.0 / _MoonStarParams.z), _MoonStarShape.y);
                 float distancePx = length(p - star) / cells / pixel;
-                float radius = _MoonStarParams.w * (0.65 + 0.45 * sqrt(brightness));
-                float core = saturate(1.0 - distancePx / radius);
-                core *= core;
+                // Sizes are relative to a faint star of brightness 0.1, the sky's typical dust.
+                float radius = _MoonStarParams.w * pow(brightness * 10.0, _MoonStarShape.x);
+                // A star smaller than a pixel lights one pixel in proportion to its area: faint stars stay fine dust.
+                float coverage = saturate(radius * 2.0);
+                float core = saturate(max(radius, 0.5) + 0.5 - distancePx) * coverage * coverage;
                 float spread = distancePx / (radius * 2.5);
-                float glow = exp(-spread * spread) * _MoonStarTwinkle.w * saturate(brightness - 0.8);
+                float glow = exp(-spread * spread) * _MoonStarTwinkle.w * saturate(brightness - _MoonStarShape.z);
 
                 float twinkle = 1.0;
                 if (frac(h.z * 7.13) < _MoonStarTwinkle.x)
