@@ -73,6 +73,68 @@ namespace MoonProject.Art.Editor
         public const string HomeSignName = "HomeSign";
 
         /// <summary>
+        /// The station pads (M3-16, M3-15 §4): StationPad_&lt;radius in cm&gt; for each of these radii (metres),
+        /// a worn painted circle with PadLamp_0..5 round its rim, dark glow renderers Gameplay lights while the
+        /// station is awake and has something for 07 to do. Gameplay hides the pad (or leaves it dark) otherwise.
+        /// </summary>
+        public static readonly float[] PadRadii = { 1.6f, 2.4f, 3f };
+
+        /// <summary>
+        /// The ground power cables (M3-16), children of the lander: PowerCable_Home, PowerCable_Bay and
+        /// PowerCable_Lift run from the radio tower's foot to what each wakes, each with Glow_0..n glass segments in
+        /// order from the tower out, dark glow renderers Gameplay lights one after another as power reaches the place.
+        /// </summary>
+        public const string PowerCablePrefix = "PowerCable_";
+
+        public const string CableGlowPrefix = "Glow_";
+
+        public const string PadPrefix = "StationPad_";
+
+        // Seeds the pads' broken paint, one size apart, so no two pads wear alike.
+        private const int PadSeed = 70;
+
+        public const string PadLampPrefix = "PadLamp_";
+
+        public static string PadName(int size)
+        {
+            return PadPrefix + Mathf.RoundToInt(PadRadii[size] * 100f).ToString(CultureInfo.InvariantCulture);
+        }
+
+        /// <summary>The ground power cables from the tower's foot, each with its glass segments (see above).</summary>
+        private static void AddPowerCables(ModelNode lander)
+        {
+            for (int i = 0; i < PowerCableMeshes.Targets.Length; i++)
+            {
+                string name = PowerCablePrefix + PowerCableMeshes.Targets[i];
+                ModelNode cable = lander.Add(new ModelNode(name, Vector3.zero,
+                    new ModelMesh(LanderName + "_" + name, PowerCableMeshes.Sheath(i))));
+                List<LowPolyMeshBuilder> glow = PowerCableMeshes.Glow(i);
+                for (int k = 0; k < glow.Count; k++)
+                {
+                    string segment = CableGlowPrefix + k.ToString(CultureInfo.InvariantCulture);
+                    cable.Add(new ModelNode(segment, Vector3.zero, Quaternion.identity,
+                        new ModelMesh(LanderName + "_" + name + "_" + segment, glow[k]), ModelMaterial.PaletteGlowOff));
+                }
+            }
+        }
+
+        public static ModelNode CreateStationPad(int size)
+        {
+            float radius = PadRadii[size];
+            string name = PadName(size);
+            var pad = new ModelNode(name, Vector3.zero,
+                new ModelMesh(name, StationPadMeshes.Pad(radius, PadSeed + size)));
+            var glass = new ModelMesh(name + "_LampGlass", StationPadMeshes.LampGlass());
+            for (int i = 0; i < StationPadMeshes.LampCount; i++)
+            {
+                pad.Add(new ModelNode(PadLampPrefix + i.ToString(CultureInfo.InvariantCulture),
+                    StationPadMeshes.Lamp(radius, i), Quaternion.identity, glass, ModelMaterial.PaletteGlowOff));
+            }
+
+            return pad;
+        }
+
+        /// <summary>
         /// The crew's lift, jammed until tower L3 powers it and 07 restores it (M3-16): LiftPlatform is built hanging
         /// from its left cable, rolled down to the right (<see cref="LiftPlatformLevel"/> is its restored, level
         /// rotation at any height between LiftBottom and LiftTop); LiftCable_R (taut, hidden while jammed) and
@@ -201,6 +263,11 @@ namespace MoonProject.Art.Editor
                 ModelPrefabWriter.Write(CreateTower(level), ArtPaths.BaseFolder, material, glowOff, weather);
             }
 
+            for (int i = 0; i < PadRadii.Length; i++)
+            {
+                ModelPrefabWriter.Write(CreateStationPad(i), ArtPaths.BaseFolder, material, glowOff);
+            }
+
             AssetDatabase.SaveAssets();
         }
 
@@ -240,6 +307,7 @@ namespace MoonProject.Art.Editor
             lander.Add(new ModelNode(HomeSignName, LanderMeshes.HomeSignFoot,
                 Place.Rotation(LanderMeshes.HomeSignLean),
                 new ModelMesh(LanderName + "_" + HomeSignName, LanderMeshes.HomeSign())));
+            AddPowerCables(lander);
             Weathering.Weather(lander, LanderName, hull, LanderWeather, LanderMeshes.Rust(), LanderMeshes.Drifts());
             return lander;
         }
