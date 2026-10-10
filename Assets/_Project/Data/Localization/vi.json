@@ -303,6 +303,10 @@
             "text": "Cấp điện cho chiếc anten mỏi mệt, và nhà thức dậy: cửa sổ tàu đổ bộ lại sáng đèn."
         },
         {
+            "key": "upgrade.radio_tower.1.needs_part",
+            "text": "Tháp đang chờ cuộn dây của nó."
+        },
+        {
             "key": "upgrade.radio_tower.2.title",
             "text": "Nâng cao cột anten"
         },
@@ -311,12 +315,20 @@
             "text": "Cột cao hơn đưa điện tới khoang xe của Kenji, và radio vẫn trong trẻo dù đi xa."
         },
         {
+            "key": "upgrade.radio_tower.2.needs_part",
+            "text": "Tháp đang chờ bộ biến áp."
+        },
+        {
             "key": "upgrade.radio_tower.3.title",
             "text": "Thắp sáng cả lòng hố"
         },
         {
             "key": "upgrade.radio_tower.3.effect",
             "text": "Tháp ngân nga khắp lòng hố, đánh thức thang nâng; căn nhà rực sáng như chiếc đèn lồng."
+        },
+        {
+            "key": "upgrade.radio_tower.3.needs_part",
+            "text": "Tháp đang chờ một linh kiện dự phòng từ trạm tiếp sóng."
         },
         {
             "key": "upgrade.rover.hover_jump.name",

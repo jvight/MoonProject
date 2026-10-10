@@ -57,6 +57,7 @@ namespace MoonProject.UI
         private int _shownLevel = -1;
         private bool _shownAffordable;
         private string _shownGlyph;
+        private string _partLine;
         private readonly StationWork _work;
 
         public TowerPanel(UiLayout layout, TowerPanelSettings settings, ILocalization localization, EventBus events,
@@ -239,6 +240,15 @@ namespace MoonProject.UI
         private void Buy(UpgradeDefinition upgrade)
         {
             PurchaseResult result = _shop.Purchase(upgrade.Id);
+            if (result == PurchaseResult.NeedsPart)
+            {
+                _partLine = UiKeys.UpgradeNeedsPart(upgrade.Id, _shownLevel + 1);
+                _hold.Reset();
+                _layout.TowerHoldWord.text = HoldWord();
+                _events.Publish(new UiCue(UiCueKind.HoldRelease));
+                return;
+            }
+
             if (result != PurchaseResult.Purchased)
             {
                 Debug.LogWarning($"{nameof(TowerPanel)}: buying '{upgrade.Id}' returned {result}; nothing changed.");
@@ -269,7 +279,12 @@ namespace MoonProject.UI
                 return _localization.Get(UiKeys.StationLine(_work.Station));
             }
 
-            return _work.IsWorking ? string.Empty : _localization.Get(UiKeys.TowerHold);
+            if (_work.IsWorking)
+            {
+                return string.Empty;
+            }
+
+            return _localization.Get(_partLine ?? UiKeys.TowerHold);
         }
 
         private void DressFor(UpgradeStationKind station)
@@ -319,6 +334,11 @@ namespace MoonProject.UI
                 }
 
                 _shownAffordable = !offer.CanAfford;
+                if (_partLine != null)
+                {
+                    _partLine = null;
+                    _layout.TowerHoldWord.text = HoldWord();
+                }
             }
 
             if (listed)

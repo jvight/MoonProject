@@ -181,5 +181,14 @@ namespace MoonProject.UI
         {
             return "upgrade." + upgradeId + "." + level + ".effect";
         }
+
+        /// <summary>
+        /// "upgrade.radio_tower.1.needs_part": the quiet line when level <paramref name="level"/> still waits for its
+        /// story part (the coil, the transformer, the relay spare).
+        /// </summary>
+        public static string UpgradeNeedsPart(string upgradeId, int level)
+        {
+            return "upgrade." + upgradeId + "." + level + ".needs_part";
+        }
     }
 }
