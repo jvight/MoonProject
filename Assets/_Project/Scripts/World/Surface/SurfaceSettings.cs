@@ -101,11 +101,11 @@ namespace MoonProject.World
         [Tooltip("Height of one rock layer on the inner rim wall, metres: the wall steps in flat benches and short " +
             "risers, so it reads as horizontal strata.")]
         [Range(2f, 30f)]
-        [SerializeField] private float _strataSpacing = 9f;
+        [SerializeField] private float _strataSpacing = 14f;
 
         [Tooltip("How far the wall is pulled onto its strata (0 = smooth wall, 1 = hard terraces).")]
         [Range(0f, 1f)]
-        [SerializeField] private float _strataStrength = 0.5f;
+        [SerializeField] private float _strataStrength = 0.4f;
 
         [Tooltip("Share of each layer's height that is the steep riser (the rest is the bench).")]
         [Range(0.05f, 1f)]

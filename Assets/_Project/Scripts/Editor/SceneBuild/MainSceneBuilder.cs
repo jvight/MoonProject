@@ -30,6 +30,7 @@ namespace MoonProject.Editor.SceneBuild
 
         private const string InputActionsField = "_inputActions";
         private const string SystemsField = "_systems";
+        private const string ShowTitleField = "_showTitle";
 
         public static void BuildMainScene()
         {
@@ -147,6 +148,7 @@ namespace MoonProject.Editor.SceneBuild
             SerializedProperty actions = RequireProperty(serialized, InputActionsField);
             SerializedProperty list = RequireProperty(serialized, SystemsField);
             actions.objectReferenceValue = controls;
+            RequireProperty(serialized, ShowTitleField).boolValue = true;
             list.arraySize = systems.Count;
             for (int i = 0; i < systems.Count; i++)
             {

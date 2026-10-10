@@ -2,10 +2,6 @@
     <Style src="GameUI.uss" />
     <ui:VisualElement name="moon-root" class="moon-root" picking-mode="Ignore">
         <ui:VisualElement name="hud" class="hud" picking-mode="Ignore">
-            <ui:VisualElement name="title" class="title" picking-mode="Ignore">
-                <ui:Label name="title-wordmark" class="title__wordmark loc" text="ui.title.wordmark" />
-                <ui:VisualElement name="title-rule" class="title__rule" />
-            </ui:VisualElement>
             <ui:VisualElement name="kit-title" class="kit-title" picking-mode="Ignore">
                 <ui:VisualElement class="name-tag" picking-mode="Ignore">
                     <ui:VisualElement name="kit-title-shadow" class="soft-shadow soft-shadow--name" />
@@ -181,6 +177,10 @@
         </ui:VisualElement>
         <ui:VisualElement name="pause" class="pause" picking-mode="Ignore">
             <ui:VisualElement name="pause-veil" class="pause__veil" />
+            <ui:VisualElement name="title-screen" class="title-screen" picking-mode="Ignore">
+                <ui:Label name="title-wordmark" class="title-screen__wordmark loc" text="ui.title.wordmark" />
+                <ui:Label name="title-subtitle" class="title-screen__subtitle loc" text="ui.title.subtitle" />
+            </ui:VisualElement>
             <ui:VisualElement name="pause-frame" class="pause__frame" picking-mode="Ignore">
                 <ui:VisualElement name="pause-stack" class="pause__stack" picking-mode="Ignore">
                     <ui:VisualElement name="pause-main" class="pause__main" picking-mode="Ignore">
@@ -204,21 +204,24 @@
                             </ui:VisualElement>
                             <ui:VisualElement class="pause__pages">
                                 <ui:VisualElement name="page-main" class="pause__page">
-                                    <ui:Button name="button-resume" class="menu-button loc" text="ui.pause.resume" />
+                                    <ui:Button name="button-resume" class="menu-button" />
+                                    <ui:Button name="button-new-game" class="menu-button loc"
+                                               text="ui.title.new_game" />
                                     <ui:Button name="button-settings" class="menu-button loc"
                                                text="ui.pause.settings" />
-                                    <ui:Button name="button-new-game" class="menu-button loc"
-                                               text="ui.pause.new_game" />
+                                    <ui:Button name="button-quit-to-title" class="menu-button loc"
+                                               text="ui.pause.quit_to_title" />
                                     <ui:Button name="button-quit" class="menu-button loc" text="ui.pause.quit" />
                                 </ui:VisualElement>
                                 <ui:VisualElement name="page-new-game" class="pause__page">
-                                    <ui:Label class="pause__question loc" text="ui.pause.new_game_question" />
-                                    <ui:Label class="pause__aside loc" text="ui.pause.new_game_aside" />
+                                    <ui:Label class="pause__question loc" text="ui.title.new_game_question" />
+                                    <ui:Label class="pause__aside loc" text="ui.title.new_game_aside" />
                                     <ui:Button name="button-new-game-keep" class="menu-button loc"
-                                               text="ui.pause.new_game_keep" />
+                                               text="ui.title.new_game_keep" />
                                     <ui:Button name="button-new-game-confirm" class="menu-button menu-button--quiet loc"
-                                               text="ui.pause.new_game_confirm" />
+                                               text="ui.title.new_game_confirm" />
                                 </ui:VisualElement>
+                                <ui:VisualElement name="page-language" class="pause__page" />
                                 <ui:VisualElement name="page-quit" class="pause__page">
                                     <ui:Label class="pause__question loc" text="ui.pause.quit_question" />
                                     <ui:Label class="pause__aside loc" text="ui.pause.quit_aside" />
@@ -275,5 +278,6 @@
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
+        <ui:VisualElement name="curtain" class="curtain" picking-mode="Ignore" />
     </ui:VisualElement>
 </ui:UXML>

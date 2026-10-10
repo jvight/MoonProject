@@ -89,6 +89,8 @@ namespace MoonProject.World.Tests
             serialized.FindProperty("_groundMaterial").objectReferenceValue = Load<Material>(WorldPaths.GroundMaterial);
             serialized.FindProperty("_paletteMaterial").objectReferenceValue = Load<Material>(ArtPaths.LowPolyMaterial);
             serialized.FindProperty("_earthMaterial").objectReferenceValue = Load<Material>(WorldPaths.EarthMaterial);
+            serialized.FindProperty("_groundMarkMaterial").objectReferenceValue =
+                Load<Material>(WorldPaths.GroundMarkMaterial);
             serialized.FindProperty("_earthlight").objectReferenceValue = light;
             serialized.FindProperty("_fillLight").objectReferenceValue = fill;
             serialized.FindProperty("_peakBeacon").objectReferenceValue = CreateBeaconHost(BeaconName);
@@ -169,7 +171,7 @@ namespace MoonProject.World.Tests
             {
                 if (mesh.name.StartsWith(ChunkPrefix) || mesh.name.StartsWith("TerrainBackdrop") || mesh.name == "Earth"
                     || mesh.name.StartsWith("Pebbles_") || mesh.name.StartsWith("Boulders_")
-                    || mesh.name.StartsWith("CanyonGate_"))
+                    || mesh.name.StartsWith("CanyonGate_") || mesh.name == "WornTracks")
                 {
                     count++;
                 }

@@ -15,7 +15,8 @@ namespace MoonProject.UI.PlayModeTests
     /// <summary>
     /// The pause menu end to end with scripted devices: game time eases to a stop and back, the rover controls turn
     /// off and on, the cursor is freed and recaptured, settings drive the services and survive a reload, and the
-    /// language changes live.
+    /// language changes live. The same menu as the title (M3-09): Continue, New Game asking once over a save, the first
+    /// boot's language step, the quiet rest, and the dark drawn before App is asked to reload.
     /// </summary>
     public sealed class PauseMenuTests : InputTestFixture
     {
@@ -171,7 +172,7 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual(string.Format(_rig.Ui.Localization.Get(UiKeys.PauseCassettes), 2, 3),
                 layout.PauseCassettesCount.text);
             StringAssert.Contains("2/3", layout.PauseCassettesCount.text, "and in Vietnamese at once");
-            Assert.AreEqual("vi", _rig.Ui.Localization.Language);
+            Assert.AreEqual("vi", _rig.Bootstrap.Context.Get<ILocalization>().Language);
         }
 
         [UnityTest]
@@ -215,11 +216,130 @@ namespace MoonProject.UI.PlayModeTests
             yield return Navigate(NavigationMoveEvent.Direction.Down);
             Assert.AreSame(layout.SettingsButton, Focused(), "down moves to the next button");
             yield return Navigate(NavigationMoveEvent.Direction.Down);
-            Assert.AreSame(layout.NewGameButton, Focused());
-            yield return Navigate(NavigationMoveEvent.Direction.Down);
-            Assert.AreSame(layout.QuitButton, Focused());
+            Assert.AreSame(layout.QuitButton, Focused(), "no New Game in the pause, and no title to quit to here");
+            Assert.AreEqual(DisplayStyle.None, layout.NewGameButton.resolvedStyle.display);
+            Assert.AreEqual(DisplayStyle.None, layout.QuitToTitleButton.resolvedStyle.display);
             yield return Navigate(NavigationMoveEvent.Direction.Up);
-            Assert.AreSame(layout.NewGameButton, Focused(), "and up moves back");
+            Assert.AreSame(layout.SettingsButton, Focused(), "and up moves back");
+        }
+
+        [UnityTest]
+        public IEnumerator Title_Quit_DrawsTheDark_ThenQuitsOnce()
+        {
+            Boot(BootstrapHarness.NewTestSlot());
+            int quits = 0;
+            _rig.Ui.QuitAction = () => quits++;
+            yield return null;
+            _rig.Bootstrap.Context.Events.Publish(new TitleShown(true));
+            yield return new WaitForSecondsRealtime(Settle);
+            Submit(_rig.Ui.Layout.QuitButton);
+            Submit(_rig.Ui.Layout.QuitButton);
+            yield return null;
+            Assert.AreEqual(0, quits, "the dark comes first, and the title never asks");
+            Assert.IsFalse(_rig.Ui.Pause.IsAskingToQuit);
+            yield return new WaitForSecondsRealtime(_rig.Tuning.Title.Curtain.FadeIn + 0.5f);
+            Assert.AreEqual(1, quits, "once, however often it is pressed");
+        }
+
+        [UnityTest]
+        public IEnumerator Title_WithASave_RestsOnContinue_WhichHandsOverToPlay()
+        {
+            Boot(BootstrapHarness.NewTestSlot());
+            int continued = 0;
+            _rig.Bootstrap.Context.Events.Subscribe<ContinueRequested>(_ => continued++);
+            yield return null;
+            _rig.Bootstrap.Context.Events.Publish(new TitleShown(true));
+            yield return new WaitForSecondsRealtime(Settle);
+            UiLayout layout = _rig.Ui.Layout;
+            Assert.IsTrue(_rig.Ui.Pause.IsTitle);
+            Assert.AreSame(layout.ResumeButton, Focused(), "Continue is the default");
+            Assert.AreEqual("Continue", layout.ResumeButton.text);
+            Assert.AreEqual(DisplayStyle.Flex, layout.NewGameButton.resolvedStyle.display);
+            Assert.AreEqual(DisplayStyle.None, layout.QuitToTitleButton.resolvedStyle.display);
+            Assert.AreEqual(1f, Time.timeScale, "the world keeps living behind the title");
+
+            _rig.Ui.Pause.Back();
+            Assert.IsTrue(_rig.Ui.Pause.IsTitle, "Esc never backs out of the title");
+            Submit(layout.ResumeButton);
+            Assert.AreEqual(1, continued);
+            Assert.IsFalse(_rig.Ui.Pause.IsOpen);
+        }
+
+        [UnityTest]
+        public IEnumerator Title_NewGameOverASave_AsksOnce_OnTheSafeAnswer_ThenDrawsTheDark()
+        {
+            Boot(BootstrapHarness.NewTestSlot());
+            int asked = 0;
+            _rig.Bootstrap.Context.Events.Subscribe<NewGameRequested>(_ => asked++);
+            yield return null;
+            _rig.Bootstrap.Context.Events.Publish(new TitleShown(true));
+            yield return new WaitForSecondsRealtime(Settle);
+            UiLayout layout = _rig.Ui.Layout;
+            Submit(layout.NewGameButton);
+            yield return new WaitForSecondsRealtime(Settle);
+            Assert.IsTrue(_rig.Ui.Pause.IsAskingNewGame);
+            Assert.AreSame(layout.NewGameKeepButton, Focused(), "the safe answer has focus");
+            Assert.AreEqual("Put this moon away and start again?",
+                layout.PageNewGame.Q<Label>(className: "pause__question").text);
+            _rig.Ui.Pause.Back();
+            yield return new WaitForSecondsRealtime(Settle);
+            Assert.IsFalse(_rig.Ui.Pause.IsAskingNewGame);
+            Assert.AreSame(layout.NewGameButton, Focused(), "back to the button that asked");
+
+            Submit(layout.NewGameButton);
+            yield return new WaitForSecondsRealtime(Settle);
+            Submit(layout.NewGameConfirmButton);
+            yield return null;
+            Assert.AreEqual(0, asked, "the dark comes first");
+            yield return new WaitForSecondsRealtime(_rig.Tuning.Title.Curtain.FadeIn + 0.5f);
+            Assert.AreEqual(1, asked);
+        }
+
+        [UnityTest]
+        public IEnumerator Title_FirstBoot_AsksTheLanguage_ThenNewGameStartsRightThere()
+        {
+            Boot(BootstrapHarness.NewTestSlot());
+            int asked = 0;
+            _rig.Bootstrap.Context.Events.Subscribe<NewGameRequested>(_ => asked++);
+            yield return null;
+            _rig.Bootstrap.Context.Events.Publish(new TitleShown(false));
+            yield return new WaitForSecondsRealtime(Settle);
+            UiLayout layout = _rig.Ui.Layout;
+            Assert.IsTrue(_rig.Ui.Pause.IsChoosingLanguage);
+            var english = (Button)layout.PageLanguage[0];
+            var vietnamese = (Button)layout.PageLanguage[1];
+            Assert.AreSame(english, Focused());
+            Assert.AreEqual("Tiếng Việt", vietnamese.text, "each language in its own words");
+
+            Submit(vietnamese);
+            yield return new WaitForSecondsRealtime(Settle);
+            Assert.IsFalse(_rig.Ui.Pause.IsChoosingLanguage);
+            Assert.AreEqual("vi", _rig.Bootstrap.Context.Get<ILocalization>().Language);
+            Assert.AreEqual(DisplayStyle.None, layout.ResumeButton.resolvedStyle.display, "nothing to continue");
+            Assert.AreSame(layout.NewGameButton, Focused(), "New Game is the default with no save");
+            Assert.AreEqual("Trò chơi mới", layout.NewGameButton.text);
+
+            Submit(layout.NewGameButton);
+            Assert.AreEqual(1, asked, "no question and no dark: the world behind the title is already fresh");
+            Assert.IsFalse(_rig.Ui.Pause.IsOpen);
+        }
+
+        [UnityTest]
+        public IEnumerator Title_RestsWhenUntouched_AndAnyStepBringsItBack()
+        {
+            Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
+            Boot(BootstrapHarness.NewTestSlot());
+            var tuning = new UnityEditor.SerializedObject(_rig.Tuning);
+            tuning.FindProperty("_title._idleSeconds").floatValue = 0.5f;
+            tuning.ApplyModifiedPropertiesWithoutUndo();
+            yield return null;
+            _rig.Bootstrap.Context.Events.Publish(new TitleShown(true));
+            yield return new WaitForSecondsRealtime(Settle);
+            Assert.IsTrue(_rig.Ui.Pause.IsResting, "left alone, the menu leaves the world to itself");
+            yield return Tap(keyboard.downArrowKey);
+            yield return new WaitForSecondsRealtime(Settle * 0.5f);
+            Assert.IsFalse(_rig.Ui.Pause.IsResting);
+            Assert.IsTrue(_rig.Ui.Pause.IsTitle);
         }
 
         [UnityTest]

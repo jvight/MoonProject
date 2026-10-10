@@ -30,4 +30,19 @@ namespace MoonProject.Core.Events
     public readonly struct QuitToTitleRequested
     {
     }
+
+    /// <summary>
+    /// Play begins (Title -> Playing, or a boot that goes straight into play). Published once per session by App, its
+    /// only publisher (docs/design/cutscenes.md §1.8). <see cref="FreshGame"/> is true when there is no progress yet
+    /// (New Game, or a first boot): Rover plays the opening; otherwise the short wake.
+    /// </summary>
+    public readonly struct SessionStarted
+    {
+        public SessionStarted(bool freshGame)
+        {
+            FreshGame = freshGame;
+        }
+
+        public bool FreshGame { get; }
+    }
 }

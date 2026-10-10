@@ -46,6 +46,9 @@ namespace MoonProject.World
         [Tooltip("Camera look, written into the URP Volume profile by the World builder.")]
         [SerializeField] private PostProcessSettings _postProcessing = new PostProcessSettings();
 
+        [Tooltip("Marks pressed into the dust: 07's worn tracks, the landing-blast scar, bootprints (M3-18 V4).")]
+        [SerializeField] private GroundMarkSettings _groundMarks = new GroundMarkSettings();
+
         public int Seed => _seed;
 
         public SurfaceSettings Surface => _surface;
@@ -67,6 +70,8 @@ namespace MoonProject.World
         public PostProcessSettings PostProcessing => _postProcessing;
 
         public HomeLightingSettings HomeLighting => _homeLighting;
+
+        public GroundMarkSettings GroundMarks => _groundMarks;
 
         /// <summary>Builds the analytic surface for these settings (throws on invalid settings).</summary>
         public MoonSurface CreateSurface()
