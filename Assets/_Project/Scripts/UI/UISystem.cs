@@ -379,7 +379,8 @@ namespace MoonProject.UI
             bool hopping = _services.Hop.Phase >= RadioHopPhase.Leaving || _hopFade.IsVisible;
             _title.Tick(hudTime);
             _reticle.Tick(deltaTime, _services.Tether.State, input.TetherHeld);
-            _card.Tick(hudTime, _glyphs.Cancel(device), device, !_ticker.IsVisible && !hopping && !_hopList.IsBusy);
+            _card.Tick(hudTime, _glyphs.Cancel(device), device,
+                !_ticker.IsVisible && !hopping && !_hopList.IsBusy && !_placeCard.IsVisible);
             _tower.Tick(hudTime, !paused, input.ExcavateHeld, input.Winch,
                 _services.Tether.State == TetherAimState.Towing, _glyphs.For(RoverAction.Excavate, device), device);
             _kitTitle.Tick(hudTime);
@@ -399,14 +400,18 @@ namespace MoonProject.UI
                 _director.NotifyUsed(InteractionKind.Reel);
             }
 
-            bool promptsOpen = !paused && _awake && _sinceAwake >= _tuning.Prompts.StartDelay && !_title.IsPlaying &&
-                               !_card.IsVisible && !_tower.IsVisible && !_dial.IsBusy && !_hopList.IsBusy && !hopping;
             Rect panel = _layout.Root.layout;
             Vector2 panelSize = float.IsNaN(panel.width) ? Vector2.zero : panel.size;
             _friendReadout.Tick(deltaTime, !paused, panelSize,
                 _prompt.StackHeight(InteractionKind.Repair, _tuning.Friends.StackGap));
             _friendName.Tick(hudTime, panelSize);
-            _siteName.Tick(hudTime, panelSize);
+            _siteName.Tick(hudTime, panelSize, !_prompt.IsVisible && !_placeCard.IsVisible &&
+                                               !_lookUpChip.IsVisible && !_ticker.IsVisible && !_kitTitle.IsVisible);
+            // A standing prompt gives way to a waiting place card or site name: those moments pass, the prompt returns.
+            bool promptsOpen = !paused && _awake && _sinceAwake >= _tuning.Prompts.StartDelay && !_title.IsPlaying &&
+                               !_card.IsVisible && !_tower.IsVisible && !_dial.IsBusy && !_hopList.IsBusy && !hopping &&
+                               !_placeCard.IsVisible && !_placeCard.IsWaiting && !_siteName.IsVisible &&
+                               !_siteName.IsWaiting && !_lookUpChip.IsVisible && !_kitTitle.IsVisible;
             _prompt.Tick(deltaTime, promptsOpen, _services.Hints.Primary, device, panelSize);
             bool tagOpen = !paused && _awake && !_title.IsPlaying && !_card.IsVisible && !_tower.IsVisible &&
                            !_hopList.IsBusy && !hopping;
@@ -424,14 +429,18 @@ namespace MoonProject.UI
             _dial.Tick(hudTime, !_prompt.IsVisible && !_hopList.IsBusy);
             bool tickerOpen = _awake && !_title.IsPlaying && !_card.IsBusy && !_digging && !cutting &&
                               !_prompt.IsVisible && !_reticle.IsVisible && !_dial.IsBusy && !_hopList.IsBusy &&
-                              !hopping;
+                              !hopping && !_placeCard.IsVisible && !_siteName.IsVisible && !_lookUpChip.IsVisible &&
+                              !_kitTitle.IsVisible;
             _ticker.Tick(hudTime, tickerOpen);
             _hopFade.Tick(deltaTime);
             _lookUpHint.Tick(hudTime, !_placeCard.IsVisible && !_card.IsVisible && !_tower.IsVisible &&
-                                      !_kitTitle.IsVisible && !_dial.IsBusy && !_hopList.IsBusy);
+                                      !_kitTitle.IsVisible && !_dial.IsBusy && !_hopList.IsBusy &&
+                                      !_prompt.IsVisible && !_siteName.IsVisible && !_ticker.IsVisible);
             _lookUpChip.Tick(deltaTime, !paused && _lookUpHint.WantsShown, device);
             _nextStep.Tick(hudTime, _services.Rover.Speed, _player.Guidance);
-            _placeCard.Tick(hudTime, _awake && !_title.IsPlaying && !_kitTitle.IsVisible && !_card.IsVisible);
+            _placeCard.Tick(hudTime, _awake && !_title.IsPlaying && !_kitTitle.IsVisible && !_card.IsVisible &&
+                                     !_prompt.IsVisible && !_ticker.IsVisible && !_siteName.IsVisible &&
+                                     !_lookUpChip.IsVisible);
             _nextLine.Tick(deltaTime, _nextStep, !paused && _awake && !_title.IsPlaying && !_card.IsVisible &&
                                                  !_tower.IsVisible && !_stargaze.IsVeiled &&
                                                  !_placeCard.IsVisible);
