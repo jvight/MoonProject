@@ -4,7 +4,25 @@ Read this, then `CLAUDE.md`, then `docs/VISION.md`, `docs/DESIGN.md`, `docs/ARCH
 It records how the project is run, where it stands, and what comes next, so a new Director session (on any
 account) can continue without the old conversation.
 
-## 0. FINAL STATE when the old account hit its limit (2026-10-10 ~23:58)
+## 0. Current state on the new account (2026-10-11 ~00:50)
+- **main 85bb390f.** It holds:
+  - every box tip from the old account (merge 029b4807);
+  - world's scene-build fix (1db8604b). HomeLightingSystem made its MaterialPropertyBlock in a field initializer,
+    which Unity refuses inside a MonoBehaviour constructor, so Main.unity could not be built;
+  - the outputs and the tuning written out (505ac8b4, 0fdefef4);
+  - the Core contracts BlueprintsCarriedRestored and DockEveningOpened (85bb390f).
+
+  `verify --parallel --push` was started on 85bb390f.
+- **The cut-off sessions' uncommitted edits are still in their worktrees.** New sessions start by finishing or
+  discarding them. They were offered as chips: gameplay, rover (the lift slice), art and ui.
+  - gameplay owns Rover/Rig/TubeCarry.cs for P1 and for the tube after a load.
+  - Audio and world have no session:
+    - audio waits for gameplay's DockEveningOpened (it wires dock_evening_swell);
+    - the Director re-runs world's wake capture.
+- **Tokens.** The cap for 2026-10-11 is 25% of the weekly limit (the week resets at 02:00 local). A cron guard runs
+  every 10 min.
+
+## 0a. FINAL STATE when the old account hit its limit (2026-10-10 ~23:58)
 - **main e8066680** holds the 0.5 first batch and docs. It is NOT verified and NOT pushed (origin is at 370bfc9c, 53
   commits behind). Push only after `director.py verify --push` passes; try `--parallel`.
 - **Box tips and uncommitted work.** The sessions were stopped mid-turn, so worktrees can hold uncommitted, unfinished
@@ -127,12 +145,9 @@ account) can continue without the old conversation.
   - also in 0.5: M3-07 map and M3-09 title.
 
 ## 2. What comes next (owner-approved order)
-1. **0.4.2:** M3-15 §3 "rust v3", art only (`docs/features/M3-15-logic-pass.md`).
-   - Runs start only at a cause (rivet, seam, bolt), few per panel, with random length, spacing and width.
-   - Brown fading out; irregular patchwork.
-   - Weather Bell, the tape rack, the depot panels and the Kestrel capsule too.
-   - Acceptance: a test that no two adjacent runs share length and spacing, plus chase-camera captures.
-2. **0.5 "Căn cứ thức dậy":** the core is **M3-16** (`docs/features/M3-16-waking-lumen.md`), approved 2026-10-09:
+1. **0.4.2, DONE:** M3-15 §3 "rust v3" shipped as 5a293e84 (see §1). Its captures are in
+   `MoonProject-wt/art/Logs/captures/rust-0.4.2/`.
+2. **0.5 "Căn cứ thức dậy" (in progress):** the core is **M3-16** (`docs/features/M3-16-waking-lumen.md`), approved 2026-10-09:
    - a fresh game opens fully dark (only the dock and 07's eye are lit);
    - tower levels return power: L1 home, L2 Kenji's Rover Bay, L3 the crew's lift;
    - one verb per step, and every place has one job shown in one line;
