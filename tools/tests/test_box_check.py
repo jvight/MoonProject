@@ -23,37 +23,50 @@ class BuilderFilterTests(unittest.TestCase):
 
 
 class TestCommandTests(unittest.TestCase):
+    ROOT = Path("D:/wt/world")
+
     def args(self, box, **kw):
-        values = dict(box=box, filter=None, assembly=None, platform="editmode")
+        values = dict(box=box, filter=None, assembly=None, platform="editmode", fast=False)
         values.update(kw)
         return argparse.Namespace(**values)
 
-    def test_default_assembly_filter_and_missing_default(self):
-        root = Path("D:/wt/world")
-        cmd, label = box_check.test_command(root, self.args("world"))
-        self.assertEqual(cmd[-2:], ["--assembly", "MoonProject.World.Tests"])
-        self.assertEqual(label, "editmode MoonProject.World.Tests")
-        cmd, _ = box_check.test_command(root, self.args("world", filter="LiftTests"))
-        self.assertEqual(cmd[-2:], ["--filter", "LiftTests"])
-        self.assertNotIn("--assembly", cmd)
-        self.assertIsNone(box_check.test_command(root, self.args("music"))[0])
+    def test_default_is_editmode_then_the_box_playmode_assembly(self):
+        planned = box_check.test_commands(self.ROOT, self.args("world"))
+        self.assertEqual([label for label, _ in planned],
+                         ["editmode MoonProject.World.Tests", "playmode MoonProject.World.PlayModeTests"])
+        self.assertEqual(planned[1][1][-3:], ["playmode", "--assembly", "MoonProject.World.PlayModeTests"])
+
+    def test_fast_skips_playmode_and_art_has_no_playmode(self):
+        self.assertEqual([l for l, _ in box_check.test_commands(self.ROOT, self.args("world", fast=True))],
+                         ["editmode MoonProject.World.Tests"])
+        self.assertEqual(len(box_check.test_commands(self.ROOT, self.args("art"))), 1)
+
+    def test_filter_or_assembly_is_one_custom_step_and_unknown_boxes_have_none(self):
+        planned = box_check.test_commands(self.ROOT, self.args("world", filter="LiftTests"))
+        self.assertEqual(len(planned), 1)
+        self.assertEqual(planned[0][1][-2:], ["--filter", "LiftTests"])
+        planned = box_check.test_commands(self.ROOT, self.args("ui", platform="playmode", assembly=["A", "B"]))
+        self.assertEqual(planned[0][1][-5:], ["playmode", "--assembly", "A", "--assembly", "B"])
+        self.assertEqual(box_check.test_commands(self.ROOT, self.args("music")), [])
 
 
 class BoardTests(unittest.TestCase):
     def test_block_verdict_and_last_block(self):
-        first = box_check.format_block("20261011-100000", "world", "box/world", "abc1234",
-                                       [("compile_check", True, "Logs/c.log")], ["restored 3"])
-        second = box_check.format_block("20261011-110000", "world", "box/world", "def5678",
-                                        [("compile_check", True, ""), ("builders", False, "Logs/b.log")], [])
-        self.assertTrue(first.startswith("## 20261011-100000 box_check world: PASS (box/world @ abc1234)"))
-        self.assertIn("- PASS compile_check (log Logs/c.log)", first)
-        self.assertIn("- FAIL builders (log Logs/b.log)", second)
+        first = box_check.format_block("20261011-100000", "world", "box/world @ abc1234 + main @ 1111111, trial merge",
+                                       [("compile_check", True, "Logs/c.log", 41.2)], ["restored 3"])
+        second = box_check.format_block("20261011-110000", "world", "box/world @ def5678, contains main",
+                                        [("compile_check", True, "", 40.0), ("builders", False, "Logs/b.log", 95.6)],
+                                        [])
+        self.assertTrue(first.startswith("## 20261011-100000 box_check world: PASS (box/world @ abc1234 + main @ "
+                                         "1111111, trial merge)"))
+        self.assertIn("- PASS compile_check 41 s (log Logs/c.log)", first)
+        self.assertIn("- FAIL builders 96 s (log Logs/b.log)", second)
         self.assertEqual(box_check.last_block("\n" + first + "\n" + second), second.strip())
         self.assertEqual(box_check.last_block(first), first.strip())
         self.assertEqual(box_check.last_block("no blocks yet\n"), "")
 
     def test_no_steps_is_a_failure(self):
-        self.assertIn(": FAIL (", box_check.format_block("s", "ui", "box/ui", "1", [], []))
+        self.assertIn(": FAIL (", box_check.format_block("s", "ui", "box/ui @ 1", [], []))
 
 
 if __name__ == "__main__":
