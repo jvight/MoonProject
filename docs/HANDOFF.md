@@ -38,6 +38,13 @@ account) can continue without the old conversation.
   - Design: game design (done; waits for the end-to-end first-hour review) and story & flow (game-flow.md, then
     amendments to the M3-07 and M3-09 drafts).
   - Every box runs `tools/box_check.py <box>` before it reports.
+- **Text from story & flow, ready to port** (`docs/design/text/`: crew-logs, radio-letters, crew-map,
+  title-and-collections):
+  - ui ports it into the tables and checks that Be Vietnam Pro has ♪ and ✓;
+  - gameplay (after its Playthrough item) places the 3 new log caches (garage, drill, supply lander) and
+    releases the letters, one per mast for the first 4 masts, then 2;
+  - world registers region.peak and region.terraces with M3-07's MapSheet;
+  - the owner's native read of the Vietnamese is welcome.
 - **Audio has no session; its queue:** dock_evening_swell on DockEveningOpened; cues for StoryPartFound and
   StoryPartDelivered; the lint renames SignalField and FakeRoverSystem (gameplay renames its copies instead).
 - **Lint duplicate-type fixes still to assign** (report-only in tools/lint.py until the list is empty; give each box

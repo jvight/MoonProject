@@ -580,8 +580,9 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
-    /// The player chose to start over (the pause menu's New game, once confirmed). The App puts the save away as
-    /// &lt;slot&gt;.old-&lt;stamp&gt;.json (never deleted) and reloads the scene, so the game boots fresh.
+    /// The player chose to start over (the title's New Game, confirmed when a save exists). The App puts the save away
+    /// as &lt;slot&gt;.old-&lt;stamp&gt;.json (never deleted) and reloads the scene, which boots straight into a fresh
+    /// game (no title) once.
     /// </summary>
     public readonly struct NewGameRequested
     {
