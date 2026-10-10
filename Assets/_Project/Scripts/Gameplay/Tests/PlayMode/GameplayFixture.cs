@@ -188,6 +188,23 @@ namespace MoonProject.Gameplay.PlayModeTests
             Gameplay.Tower.ShowLevel(towerLevel);
         }
 
+        /// <summary>
+        /// Every tower story part already fed to the port (docs/features/M3-16 P1), for sessions about something else
+        /// that buy tower levels: as a load would leave them, silently.
+        /// </summary>
+        public void DeliverTowerParts()
+        {
+            TowerParts parts = Gameplay.TowerParts;
+            var delivered = new string[parts.Count];
+            for (int i = 0; i < delivered.Length; i++)
+            {
+                delivered[i] = parts.PartAt(i).PartId;
+            }
+
+            parts.Restore(new TowerPartsSaveData { delivered = delivered });
+            Gameplay.TowerPartField.Sync();
+        }
+
         /// <summary>Puts materials in 07's stock, as salvage would.</summary>
         public void GiveMaterials(int metal, int wiring, int optics)
         {
@@ -299,6 +316,12 @@ namespace MoonProject.Gameplay.PlayModeTests
                 GlowMaterial(shader, GlowRole.HomeHalo), GlowMaterial(shader, GlowRole.LinkPulse));
 
             visuals.PopulatePads(new[] { Pad(1.6f), Pad(2.4f), Pad(3f) }, new[] { 1.6f, 2.4f, 3f });
+            visuals.PopulateStoryParts(new[]
+            {
+                Template("Part_TowerCoil", new Vector3(0.5f, 0.6f, 0.5f)),
+                Template("Part_Transformer", new Vector3(0.6f, 0.5f, 0.45f)),
+                Template("Part_RelaySpare", new Vector3(0.4f, 0.3f, 0.5f)),
+            });
             var root = new GameObject("[Gameplay]");
             root.SetActive(false);
             Gameplay = root.AddComponent<GameplaySystem>();

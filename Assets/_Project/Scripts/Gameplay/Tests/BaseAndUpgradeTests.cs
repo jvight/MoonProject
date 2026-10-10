@@ -150,7 +150,7 @@ namespace MoonProject.Gameplay.Tests
             var service = Service(_tower);
             var station = new TestStation { Definition = _tower };
             var save = new CountingSave();
-            var shop = new UpgradeShop(service, new IUpgradeStation[] { station }, save, new Board());
+            var shop = new UpgradeShop(service, new IUpgradeStation[] { station }, save, new Board(), NoParts());
             Give(0, 3, 2);
             Assert.IsFalse(shop.IsAtStation);
             Assert.IsNull(shop.StationUpgrade);
@@ -239,7 +239,7 @@ namespace MoonProject.Gameplay.Tests
             var tower = new TestStation { Definition = _tower };
             var bench = new TestStation { Definition = _hoverJump };
             var shop = new UpgradeShop(service, new IUpgradeStation[] { tower, bench }, new CountingSave(),
-                new Board());
+                new Board(), NoParts());
             Give(10, 10, 10);
 
             tower.Occupied = true;
@@ -267,7 +267,7 @@ namespace MoonProject.Gameplay.Tests
             var tower = new TestStation { Definition = _tower };
             var bench = new TestStation { Definition = _hoverJump, Catalog = new[] { _hoverJump, headlamp } };
             var shop = new UpgradeShop(service, new IUpgradeStation[] { tower, bench }, new CountingSave(),
-                new Board());
+                new Board(), NoParts());
             Assert.AreEqual(0, shop.StationUpgradeCount, "not parked: nothing listed");
             Assert.Throws<InvalidOperationException>(() => shop.StationUpgradeAt(0));
 
@@ -320,7 +320,7 @@ namespace MoonProject.Gameplay.Tests
             var sold = new[] { _hoverJump, cradle };
             var board = new Board("rover.cargo_cradle");
             var station = new TestStation { Definition = cradle, Occupied = true };
-            var shop = new UpgradeShop(service, new IUpgradeStation[] { station }, new CountingSave(), board);
+            var shop = new UpgradeShop(service, new IUpgradeStation[] { station }, new CountingSave(), board, NoParts());
             Give(6, 3, 2);
 
             Assert.AreEqual(PurchaseResult.NotPinned, shop.Purchase("rover.cargo_cradle"));
@@ -402,6 +402,95 @@ namespace MoonProject.Gameplay.Tests
             }
 
             CollectionAssert.AreEqual(new[] { 0, 2 }, restored, "a fresh game says none; a load says how many");
+        }
+
+        [Test]
+        public void TowerParts_ArePickedUp_RideOn07_AndAreFedToThePort_ThenTheirLevelCanBeBuilt()
+        {
+            var found = new List<StoryPartFound>();
+            var delivered = new List<StoryPartDelivered>();
+            _events.Subscribe<StoryPartFound>(found.Add);
+            _events.Subscribe<StoryPartDelivered>(delivered.Add);
+            var parts = new TowerParts(_events, "radio_tower", new[]
+            {
+                new TowerPart("Part_Transformer", 2, TowerPartSource.SiteHeart, "site.garage", Vector2.up),
+                new TowerPart("Part_TowerCoil", 1, TowerPartSource.SiteHeart, "site.depot", Vector2.zero),
+            });
+            Assert.AreEqual("Part_TowerCoil", parts.PartAt(0).PartId, "kept in level order");
+            Assert.IsTrue(parts.NeedsPart("radio_tower", 1));
+            Assert.IsTrue(parts.NeedsPart("radio_tower", 2));
+            Assert.IsFalse(parts.NeedsPart("radio_tower", 3), "a level with no part needs none");
+            Assert.IsFalse(parts.NeedsPart("rover.hover_jump", 1), "only the tower's levels need parts");
+            Assert.AreEqual(-1, parts.FirstCarried());
+
+            parts.PickUp(1, Vector3.one);
+            parts.PickUp(1, Vector3.one);
+            parts.PickUp(0, Vector3.zero);
+            Assert.AreEqual(2, found.Count, "each part is picked up once");
+            Assert.AreEqual("Part_Transformer", found[0].PartId);
+            Assert.AreEqual(2, found[0].TowerLevel);
+            Assert.IsFalse(found[0].Restored);
+            Assert.AreEqual(0, parts.FirstCarried(), "the lowest level is fed first");
+            Assert.IsTrue(parts.NeedsPart("radio_tower", 1), "carried is not delivered");
+
+            parts.Deliver(0, Vector3.up);
+            parts.Deliver(0, Vector3.up);
+            Assert.AreEqual(1, delivered.Count);
+            Assert.AreEqual("Part_TowerCoil", delivered[0].PartId);
+            Assert.AreEqual(Vector3.up, delivered[0].Position);
+            Assert.IsFalse(parts.NeedsPart("radio_tower", 1), "fed to the port: L1 can be built");
+            Assert.AreEqual(1, parts.FirstCarried());
+
+            TowerPartsSaveData saved = parts.Capture();
+            CollectionAssert.AreEqual(new[] { "Part_Transformer" }, saved.carried);
+            CollectionAssert.AreEqual(new[] { "Part_TowerCoil" }, saved.delivered);
+            parts.Restore(new TowerPartsSaveData());
+            Assert.AreEqual(TowerPartState.Waiting, parts.StateOf(0), "a load replaces every part's state");
+            parts.Restore(saved);
+            Assert.AreEqual(TowerPartState.Delivered, parts.StateOf(0));
+            Assert.AreEqual(TowerPartState.Carried, parts.StateOf(1));
+            Assert.AreEqual(2, found.Count, "a load is silent");
+            parts.Announce();
+            Assert.AreEqual(3, found.Count, "until the game announces the parts still on 07");
+            Assert.IsTrue(found[2].Restored);
+            Assert.AreEqual("Part_Transformer", found[2].PartId);
+        }
+
+        [Test]
+        public void TowerParts_RejectBrokenContent()
+        {
+            Assert.Throws<ArgumentException>(() => new TowerParts(_events, "radio_tower", new[]
+            {
+                new TowerPart("Part_TowerCoil", 1, TowerPartSource.SiteHeart, "site.depot", Vector2.zero),
+                new TowerPart("Part_Transformer", 1, TowerPartSource.SiteHeart, "site.garage", Vector2.zero),
+            }), "two parts for one level");
+            Assert.Throws<ArgumentException>(() => new TowerParts(_events, "radio_tower", new[]
+            {
+                new TowerPart("Part_TowerCoil", 1, TowerPartSource.SiteHeart, string.Empty, Vector2.zero),
+            }), "a heart part names no site");
+            Assert.Throws<ArgumentException>(() => new TowerParts(_events, string.Empty, Array.Empty<TowerPart>()));
+        }
+
+        [Test]
+        public void Shop_BuildsATowerLevelOnlyOnceItsStoryPartIsFedToThePort()
+        {
+            var service = Service(_tower);
+            var station = new TestStation { Definition = _tower, Occupied = true };
+            var parts = new TowerParts(_events, "radio_tower", new[]
+            {
+                new TowerPart("Part_TowerCoil", 1, TowerPartSource.SiteHeart, "site.depot", Vector2.zero),
+            });
+            var shop = new UpgradeShop(service, new IUpgradeStation[] { station }, new CountingSave(), new Board(),
+                parts);
+            Give(10, 10, 10);
+            Assert.AreEqual(PurchaseResult.NeedsPart, shop.Purchase("radio_tower"), "materials alone do not do it");
+            Assert.AreEqual(0, shop.LevelOf("radio_tower"));
+
+            parts.PickUp(0, Vector3.zero);
+            Assert.AreEqual(PurchaseResult.NeedsPart, shop.Purchase("radio_tower"), "on 07's back is not in the port");
+            parts.Deliver(0, Vector3.zero);
+            Assert.AreEqual(PurchaseResult.Purchased, shop.Purchase("radio_tower"));
+            Assert.AreEqual(PurchaseResult.Purchased, shop.Purchase("radio_tower"), "L2 has no part here");
         }
 
         [Test]
@@ -583,6 +672,11 @@ namespace MoonProject.Gameplay.Tests
             var asset = ScriptableObject.CreateInstance<T>();
             _created.Add(asset);
             return asset;
+        }
+
+        private TowerParts NoParts()
+        {
+            return new TowerParts(_events, "radio_tower", Array.Empty<TowerPart>());
         }
 
         private sealed class TestStation : IUpgradeStation

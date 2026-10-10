@@ -9,9 +9,10 @@ namespace MoonProject.Gameplay
 {
     /// <summary>
     /// The base's radio tower and its upgrade station. Art's pad on the ground in front of its service port is the shop
-    /// (<see cref="StationPad"/>). It stays put away until 07 first holds materials to feed (before that the stub's
-    /// pilot blink is the tower's only light, M3-16 P5); then its lamps breathe softly, glow inviting when the next
-    /// level is affordable and brightly while 07 is parked on it, and it goes away once the tower is whole.
+    /// (<see cref="StationPad"/>). It stays put away until 07 first holds materials or a story part to feed (before
+    /// that the stub's pilot blink is the tower's only light, M3-16 P5); then its lamps breathe softly, glow inviting
+    /// when the next level is affordable and its story part delivered (P1), brightly while 07 is parked on it, and it
+    /// goes away once the tower is whole.
     /// Before the first purchase the old mast stands dark; each level lights the beacon brighter. Buying one plays the
     /// port's moment (docs/features/M3-14, VISION ruling 14: 07 has no hands): 07, held still, feeds the port's hopper
     /// the recipe along its beam (<see cref="HopperFeed"/>), the service hatch swings open, and 07's beam stitches up
@@ -55,6 +56,7 @@ namespace MoonProject.Gameplay
         private ITerrainQuery _terrain;
         private UpgradeService _upgrades;
         private MaterialStock _materials;
+        private TowerParts _parts;
         private IDisposable _purchases;
         private EmissionGlow[] _lights = Array.Empty<EmissionGlow>();
         private Quaternion[] _hatchRest = Array.Empty<Quaternion>();
@@ -177,12 +179,15 @@ namespace MoonProject.Gameplay
             _hatches = hatches;
         }
 
-        internal bool Initialize(GameplayServices services, UpgradeService upgrades, SalvageCatalog bundles)
+        internal bool Initialize(GameplayServices services, UpgradeService upgrades, SalvageCatalog bundles,
+            TowerParts parts)
         {
             if (bundles == null)
             {
                 throw new ArgumentNullException(nameof(bundles));
             }
+
+            _parts = parts ?? throw new ArgumentNullException(nameof(parts));
 
             string problem = WiringProblem(upgrades);
             if (problem != null)
@@ -329,9 +334,11 @@ namespace MoonProject.Gameplay
             StepMoment(now, deltaTime);
             float flare = StepSwap(now - _swapStart);
             UpdateBeacon(now, flare);
-            if (_upgrades.LevelOf(_definition.Id) > 0 || _materials.Total > 0)
+            int level = _upgrades.LevelOf(_definition.Id);
+            if (level > 0 || _materials.Total > 0 || _parts.FirstCarried() >= 0)
             {
-                bool affordable = _upgrades.TryGetOffer(_definition.Id, out UpgradeOffer offer) && offer.CanAfford;
+                bool affordable = _upgrades.TryGetOffer(_definition.Id, out UpgradeOffer offer) && offer.CanAfford &&
+                                  !_parts.NeedsPart(_definition.Id, level + 1);
                 _pad.Tick(_rover.Position, ShownLevel >= _definition.MaxLevel, affordable, now, deltaTime);
             }
             else

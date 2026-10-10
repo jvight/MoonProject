@@ -71,6 +71,12 @@ namespace MoonProject.Gameplay
         /// <summary>Kenji's blueprint board: which kits the bay can build (docs/features/M3-16).</summary>
         public Blueprints Blueprints { get; private set; }
 
+        /// <summary>The tower's story parts, one per level (docs/features/M3-16 P1).</summary>
+        public TowerParts TowerParts { get; private set; }
+
+        /// <summary>The story parts in the world: waiting, flying into 07, fed to the tower's port.</summary>
+        public TowerPartField TowerPartField { get; private set; }
+
         public SalvageField Salvage => _salvage;
 
         public RelicField Relics => _relics;
@@ -175,7 +181,8 @@ namespace MoonProject.Gameplay
             Radio = new RadioProgram(context.Events, _cassettes.Catalog.Ids());
             Power = new BasePower(context.Events);
             Blueprints = NewBlueprints(context.Events);
-            if (Blueprints == null)
+            TowerParts = NewTowerParts(context.Events);
+            if (Blueprints == null || TowerParts == null)
             {
                 enabled = false;
                 return;
@@ -187,7 +194,7 @@ namespace MoonProject.Gameplay
                 !_tether.Initialize(services, _relics, _salvage) ||
                 !_home.Initialize(services, _relics, _tether, Upgrades, lights) ||
                 !_cradle.Initialize(services, seat, _relics, _home) ||
-                !_tower.Initialize(services, Upgrades, _salvage.Catalog) ||
+                !_tower.Initialize(services, Upgrades, _salvage.Catalog, TowerParts) ||
                 !_workshop.Initialize(services, Upgrades, _salvage.Catalog, _tower, Power, Blueprints, lights) ||
                 !_friends.Initialize(services, Radio, _cassettes.Catalog, _relics, _salvage, _home) ||
                 !_cassettes.Initialize(services, Radio, KeepClearOfCassettes()) || !_logs.Initialize(services) ||
@@ -225,9 +232,16 @@ namespace MoonProject.Gameplay
                 return;
             }
 
-            Shop = new UpgradeShop(Upgrades, stations, save, Blueprints);
+            TowerPartField = NewTowerPartField(services);
+            if (TowerPartField == null)
+            {
+                enabled = false;
+                return;
+            }
+
+            Shop = new UpgradeShop(Upgrades, stations, save, Blueprints, TowerParts);
             Hints = new InteractionHints(services.Rover, _sonar, _excavation, _salvage, _tether, _cradle, _home,
-                stations, Upgrades, _friends, _relays);
+                stations, Upgrades, TowerParts, _friends, _relays);
             context.Register<IMaterialStock>(Materials);
             context.Register<ISalvageStatus>(_salvage);
             context.Register<ITetherAim>(_tether);
@@ -274,6 +288,44 @@ namespace MoonProject.Gameplay
                 GameplaySaveKeys.BlueprintsVersion,
                 () => new BlueprintsSaveData { found = Blueprints.Capture(), carried = Blueprints.CaptureCarried() },
                 RestoreBlueprints)));
+            _saveTokens.Add(save.Register(new SaveSection<TowerPartsSaveData>(GameplaySaveKeys.TowerParts,
+                GameplaySaveKeys.TowerPartsVersion, TowerParts.Capture, RestoreTowerParts)));
+        }
+
+        private void RestoreTowerParts(TowerPartsSaveData data)
+        {
+            TowerParts.Restore(data);
+            TowerPartField.Sync();
+        }
+
+        /// <summary>The tower's story parts, or null (logged) when the content is broken.</summary>
+        private TowerParts NewTowerParts(EventBus events)
+        {
+            try
+            {
+                return new TowerParts(events, _tower.Definition != null ? _tower.Definition.Id : null,
+                    _progression.Tuning.TowerParts);
+            }
+            catch (ArgumentException exception)
+            {
+                Debug.LogError($"{nameof(GameplaySystem)}: {exception.Message}", this);
+                return null;
+            }
+        }
+
+        /// <summary>The story parts in the world, or null (logged) when a part's model or site is missing.</summary>
+        private TowerPartField NewTowerPartField(GameplayServices services)
+        {
+            try
+            {
+                return new TowerPartField(TowerParts, transform, services, _salvage, _relays.Reach, _tower,
+                    _friends.Tuning, _progression.Tuning);
+            }
+            catch (InvalidOperationException exception)
+            {
+                Debug.LogError($"{nameof(GameplaySystem)}: {exception.Message}", this);
+                return null;
+            }
         }
 
         private void RestoreBlueprints(BlueprintsSaveData data)
@@ -347,18 +399,20 @@ namespace MoonProject.Gameplay
 
         /// <summary>
         /// The save is loaded (Start runs after it): Audio and UI start from the real radio program, and Rover puts the
-        /// carried blueprint tubes on 07's back.
+        /// carried blueprint tubes and story parts on 07's back.
         /// </summary>
         private void Start()
         {
             Radio.Announce();
             Power.Announce();
             Blueprints.Announce();
+            TowerParts.Announce();
         }
 
         private void Update()
         {
             Power.Show(_tower.ShownLevel);
+            TowerPartField.Step(Time.time);
         }
 
         private void RestoreRadio(RadioSaveData data)
@@ -469,6 +523,7 @@ namespace MoonProject.Gameplay
 
             _saveTokens.Clear();
             Blueprints?.Dispose();
+            TowerPartField?.Dispose();
             _meshes?.Dispose();
         }
     }
