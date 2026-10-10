@@ -256,6 +256,7 @@ namespace MoonProject.Gameplay
             context.Register<IRelayStatus>(_relays);
             context.Register<IBasePower>(Power);
             context.Register<IBlueprintBoard>(Blueprints);
+            context.Register<IStoryPartGate>(TowerParts);
             Upgrades.PublishSignals();
             RegisterSaveSections(save);
         }
