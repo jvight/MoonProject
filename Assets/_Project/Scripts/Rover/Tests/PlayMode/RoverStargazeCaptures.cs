@@ -25,7 +25,9 @@ namespace MoonProject.Rover.PlayModeTests
     /// the player tips the view up with the gamepad until the camera sits under 07 looking at the sky, then rests.
     /// Frames before, while 07 lifts its head, and once the stargazing beat began go to Logs/rover-captures/*.png, with
     /// stargaze.md recording the orbit elevation, the camera's height above the dust, 07's share of the gaze and the
-    /// beat. Drive input then ends the beat. Slow and needs a GPU: run on demand with --category RoverStargazeCaptures.
+    /// beat. Drive input then ends the beat. The dock's evening (M3-16 P6) is caught the same way: 07 parked on its
+    /// dock, the wide shot of home's lamps, its ease back, and drive input ending it early (evening-*.png).
+    /// Slow and needs a GPU: run on demand with --category RoverStargazeCaptures.
     /// </summary>
     [Explicit("Slow real-game capture session; run on demand with --category RoverStargazeCaptures.")]
     [Category("RoverStargazeCaptures")]
@@ -66,6 +68,13 @@ namespace MoonProject.Rover.PlayModeTests
         private const float UpperThird = 2f / 3f;
         private const float WakeEaseFrameSeconds = 1.8f;
         private const float WakeEaseTimeout = 8f;
+
+        /// <summary>The dock's evening: seconds to the settled frame, the frame mid-ease back, and timeouts.</summary>
+        private const float EveningSettleSeconds = 5f;
+        private const float EveningSettled = 0.9f;
+        private const float EveningBackFrameSeconds = 1f;
+        private const float EveningEndTimeout = 20f;
+        private const float EveningEarlySeconds = 2f;
 
         /// <summary>How far (m) along Earth's direction a point is projected to find Earth on screen.</summary>
         private const float EarthProbeDistance = 1000f;
@@ -212,6 +221,70 @@ namespace MoonProject.Rover.PlayModeTests
 
             Directory.CreateDirectory(CaptureFolder);
             File.WriteAllText(Path.Combine(CaptureFolder, "wake.md"), _report.ToString());
+        }
+
+        [UnityTest]
+        [Timeout(300000)]
+        [PrebuildSetup(typeof(RoverSessionScene))]
+        [PostBuildCleanup(typeof(RoverSessionScene))]
+        public IEnumerator DockEvening_EasesOutToHomesLamps_HoldsThenEasesBack()
+        {
+            yield return Boot();
+            _report.AppendLine("# The dock's evening (real Main scene)");
+            _report.AppendLine();
+            _report.AppendLine("| Capture | Orbit elevation (deg) | Camera above dust (m) | 07's gaze | Beat |");
+            _report.AppendLine("|---|---:|---:|---:|---|");
+            Set(_gamepad.rightStick, new Vector2(LookStick, 0f));
+            yield return Wait(StickProbeSeconds);
+            Set(_gamepad.rightStick, Vector2.zero);
+            float opening = Time.time + WakeEaseTimeout;
+            while (_cameraRig.Opening.IsActive)
+            {
+                Assert.Less(Time.time, opening, "The wake hands over first (the evening comes after a trip).");
+                yield return null;
+            }
+
+            Transform dock = FindNode(DockAnchorName);
+            Assert.IsNotNull(dock, "The lander carries the charging dock's DockAnchor.");
+            _context.Get<IRoverPlacement>().PlaceAt(dock.position, dock.rotation);
+            yield return Wait(SettleSeconds);
+            Capture("evening-0-parked");
+            HeldShot held = _cameraRig.Held;
+            _context.Events.Publish(new DockEveningOpened(dock.position));
+            Assert.IsTrue(held.IsOpen, "The evening shot opens.");
+            yield return Wait(EveningSettleSeconds);
+            Assert.Greater(held.Weight, EveningSettled, "Settled on the wide shot of home.");
+            Capture("evening-1-wide");
+            WideShotFrame frame = held.Frame;
+            _report.AppendLine(string.Format(CultureInfo.InvariantCulture,
+                "\nevening-1: frame yaw {0:0} deg, elevation {1:0.0} deg, distance {2:0.0} m; camera {3:0.0} m off",
+                frame.Yaw, frame.Elevation, frame.Distance,
+                Vector3.Distance(_view.transform.position, _rover.Position)));
+            float timeout = Time.time + EveningEndTimeout;
+            while (held.IsOpen)
+            {
+                Assert.Less(Time.time, timeout, "The hold runs out and the view eases back.");
+                yield return null;
+            }
+
+            yield return Wait(EveningBackFrameSeconds);
+            Assert.That(held.Weight, Is.InRange(0.05f, 0.95f), "Easing back, never a cut.");
+            Capture("evening-2-easing-back");
+            while (held.Weight > 0f)
+            {
+                Assert.Less(Time.time, timeout + EveningEndTimeout, "Back on the chase frame.");
+                yield return null;
+            }
+
+            _context.Events.Publish(new DockEveningOpened(dock.position));
+            yield return Wait(EveningEarlySeconds);
+            Set(_gamepad.leftStick, new Vector2(0f, DriveStick));
+            yield return null;
+            yield return null;
+            Assert.IsFalse(held.IsOpen, "Drive input ends the evening early.");
+            Set(_gamepad.leftStick, Vector2.zero);
+            Directory.CreateDirectory(CaptureFolder);
+            File.WriteAllText(Path.Combine(CaptureFolder, "evening.md"), _report.ToString());
         }
 
         private IEnumerator Stargaze(string name, Vector3 ground, float yaw)

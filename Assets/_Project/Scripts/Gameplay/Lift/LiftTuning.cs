@@ -34,6 +34,14 @@ namespace MoonProject.Gameplay.Lift
         [Range(0f, 8f)]
         [SerializeField] private float _lampGlow = 2.5f;
 
+        [Tooltip("How close (m, across the ground) 07 comes to the powered, jammed winch before it creaks.")]
+        [Range(1f, 15f)]
+        [SerializeField] private float _creakRadius = 5f;
+
+        [Tooltip("How much further out (m) 07 must go before the winch can creak again.")]
+        [Range(0.5f, 10f)]
+        [SerializeField] private float _creakRearm = 3f;
+
         [Header("Ride")]
         [Tooltip("How close (m) to the platform's rover spot 07 must be to count as on the platform.")]
         [Range(0.2f, 3f)]
@@ -50,6 +58,10 @@ namespace MoonProject.Gameplay.Lift
         [Tooltip("Seconds the platform settles at a stop before the lookout opens or 07 is let go.")]
         [Range(0f, 3f)]
         [SerializeField] private float _settleSeconds = 0.8f;
+
+        [Tooltip("How far out (m) over the basin, straight away from the lander, 07 gazes from the deck lookout.")]
+        [Range(5f, 300f)]
+        [SerializeField] private float _lookoutGazeDistance = 80f;
 
         [Header("The ladder look")]
         [Tooltip("Seconds 07 looks up the crew's ladder the first time it comes near.")]
@@ -74,6 +86,10 @@ namespace MoonProject.Gameplay.Lift
 
         public float LampGlow => _lampGlow;
 
+        public float CreakRadius => _creakRadius;
+
+        public float CreakRearm => _creakRearm;
+
         public float PlatformRadius => _platformRadius;
 
         public float BoardDelay => _boardDelay;
@@ -81,6 +97,8 @@ namespace MoonProject.Gameplay.Lift
         public float RideSeconds => _rideSeconds;
 
         public float SettleSeconds => _settleSeconds;
+
+        public float LookoutGazeDistance => _lookoutGazeDistance;
 
         public float LadderLookSeconds => _ladderLookSeconds;
 

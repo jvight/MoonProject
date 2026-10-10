@@ -253,6 +253,12 @@ namespace MoonProject.Rover
         [SerializeField] private CameraMomentSettings _relayMoment =
             new CameraMomentSettings(3f, 2.6f, 2.6f, 0.22f, 3f, 0.5f, 26f, 40f, -13f, 0.65f, 40f);
 
+        [Tooltip("07's first look up the crew's ladder, then at the lift: the camera eases low and a little back, "
+            + "looking up past 07 at the ladder to the deck, follows the gaze across to the lift, and returns once "
+            + "the look ends (held while 07 looks).")]
+        [SerializeField] private CameraMomentSettings _ladderMoment =
+            new CameraMomentSettings(1.6f, 0.8f, 2f, 0.35f, 2.5f, 0.6f, 20f, 50f, -12f, 0.35f, 30f);
+
         [Tooltip("07 in Kenji's Rover Bay: the camera eases to a fixed view in through the open front and holds it "
             + "(whole yaw share, any swing) while 07 stays in, a little farther than the chase camera and at the bay "
             + "framing's own elevation, so the arms show over 07. The install moment plays inside this view.")]
@@ -281,6 +287,36 @@ namespace MoonProject.Rover
         [Tooltip("Resting a while: the camera drifts out to a wide, lonely frame with 07 small against the land and "
             + "the sky (VISION pillar 6), and hands back on any drive or look input.")]
         [SerializeField] private WideShotSettings _wideShot = new WideShotSettings();
+
+        [Header("Lift lookout and the dock's evening")]
+        [Tooltip("The crew's lift settled at the lander deck: the camera eases out and up to a high wide frame with 07 "
+            + "small at the deck's edge and the basin beyond, held until any input brings the lift down (only the "
+            + "timing, frame, lens, ground fit and breathing fields apply).")]
+        [SerializeField] private WideShotSettings _lookoutShot = new WideShotSettings(6f, 1.6f, 16f, 18f, 0.2f, 6f);
+
+        [Tooltip("How far (deg) the lookout turns off looking straight out from the lander, toward Earth's side, so "
+            + "the camera clears the lander and the deck's edge shares the frame.")]
+        [Range(0f, 120f)]
+        [SerializeField] private float _lookoutSide = 55f;
+
+        [Tooltip("07 parked at its dock after a trip: the camera eases out to a wide shot from the dock looking at "
+            + "home's newly lit lamps, holds, then eases back (only the timing, frame, lens, ground fit and breathing "
+            + "fields apply).")]
+        [SerializeField] private WideShotSettings _eveningShot = new WideShotSettings(4f, 3f, 17f, 8f, 0.26f, 6f);
+
+        [Tooltip("Gap (m) the lookout and evening cameras keep from solid scenery (the lander, the bay) between them "
+            + "and 07: blocked, the frame comes in short of it.")]
+        [Range(0.1f, 2f)]
+        [SerializeField] private float _heldShotClearance = 0.5f;
+
+        [Tooltip("Step (deg) the lookout and evening frames turn either way, when scenery blocks the view, to find a "
+            + "clear one.")]
+        [Range(5f, 60f)]
+        [SerializeField] private float _heldShotYawStep = 25f;
+
+        [Tooltip("Seconds from the evening shot opening until it eases back (any drive or look input ends it early).")]
+        [Range(3f, 30f)]
+        [SerializeField] private float _eveningHoldSeconds = 11f;
 
         [Header("Cinemachine damping")]
         [Tooltip("Orbital follow position damping (x, y, z): high = floaty drone.")]
@@ -425,6 +461,8 @@ namespace MoonProject.Rover
 
         public CameraMomentSettings RelayMoment => _relayMoment;
 
+        public CameraMomentSettings LadderMoment => _ladderMoment;
+
         public CameraMomentSettings BayMoment => _bayMoment;
 
         public BayFramingSettings BayFraming => _bayFraming;
@@ -442,6 +480,18 @@ namespace MoonProject.Rover
         public float MomentBlendHalfLife => _momentBlendHalfLife;
 
         public WideShotSettings WideShot => _wideShot;
+
+        public WideShotSettings LookoutShot => _lookoutShot;
+
+        public float LookoutSide => _lookoutSide;
+
+        public WideShotSettings EveningShot => _eveningShot;
+
+        public float EveningHoldSeconds => _eveningHoldSeconds;
+
+        public float HeldShotClearance => _heldShotClearance;
+
+        public float HeldShotYawStep => _heldShotYawStep;
 
         public Vector3 PositionDamping => _positionDamping;
 
