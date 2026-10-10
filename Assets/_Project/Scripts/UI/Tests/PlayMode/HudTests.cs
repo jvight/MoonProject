@@ -41,7 +41,7 @@ namespace MoonProject.UI.PlayModeTests
         {
             _rig?.Dispose();
             _rig = null;
-            BootstrapHarness.DeleteSaveFiles(_slot);
+            UiTestRig.DeleteSlotFiles(_slot);
             Object.Destroy(_controls);
             base.TearDown();
         }

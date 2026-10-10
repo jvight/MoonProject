@@ -84,6 +84,7 @@ namespace MoonProject.App
             }
 
             Context.Register<ISaveService>(_save);
+            Context.Register<ISettingsFile>(new SettingsFile(SaveService.DefaultDirectory, slot));
             Context.Register<IGameFlow>(_flow);
             _intent = new BootIntent(SaveService.DefaultDirectory, slot);
             Debug.Log($"{nameof(GameBootstrap)}: save slot '{slot}' (from the {slotSource}): {_save.FilePath}", this);

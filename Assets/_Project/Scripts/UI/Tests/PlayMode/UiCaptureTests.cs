@@ -135,7 +135,7 @@ namespace MoonProject.UI.PlayModeTests
 
             if (_slot != null)
             {
-                BootstrapHarness.DeleteSaveFiles(_slot);
+                UiTestRig.DeleteSlotFiles(_slot);
             }
 
             Time.timeScale = 1f;
@@ -1125,7 +1125,7 @@ namespace MoonProject.UI.PlayModeTests
             save = new SaveService(SaveService.DefaultDirectory, _slot);
             ui.Initialize(new UiServices(context.Events, context.Input, fakes, fakes, context.Get<IAudioSettings>(),
                 context.Get<ILookSettings>(), save, fakes, fakes, fakes, fakes, fakes, fakes, fakes, fakes, fakes,
-                fakes, context.Get<IGameFlow>()));
+                fakes, context.Get<IGameFlow>(), new SettingsFile(SaveService.DefaultDirectory, _slot)));
             save.Load();
             return ui;
         }
