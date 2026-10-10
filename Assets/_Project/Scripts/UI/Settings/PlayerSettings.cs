@@ -17,6 +17,7 @@ namespace MoonProject.UI
         private readonly ILookSettings _look;
         private readonly ILocalization _localization;
         private readonly PauseSettings _settings;
+        private bool _guidance = true;
 
         public PlayerSettings(IAudioSettings audio, ILookSettings look, ILocalization localization,
             PauseSettings settings)
@@ -74,6 +75,17 @@ namespace MoonProject.UI
             }
         }
 
+        /// <summary>The soft "next" line is wanted (on unless the player switched it off).</summary>
+        public bool Guidance
+        {
+            get => _guidance;
+            set
+            {
+                _guidance = value;
+                IsDirty = true;
+            }
+        }
+
         public string Language => _localization.Language;
 
         /// <summary>
@@ -110,6 +122,7 @@ namespace MoonProject.UI
                 ambience = _audio.GetVolume(AudioBus.Ambience),
                 lookSensitivity = _look.Sensitivity,
                 invertY = _look.InvertY,
+                guidanceOff = !_guidance,
                 language = _localization.Language,
             };
         }
@@ -130,6 +143,7 @@ namespace MoonProject.UI
             _audio.SetVolume(AudioBus.Ambience, Volume(data.ambience));
             _look.Sensitivity = data.lookSensitivity;
             _look.InvertY = data.invertY;
+            _guidance = !data.guidanceOff;
             RestoreLanguage(data.language);
             IsDirty = false;
         }
