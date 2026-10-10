@@ -24,15 +24,12 @@ namespace MoonProject.Testing
         /// <summary>Editor SessionState key, true while the editor runs tests.</summary>
         public const string SessionKey = "MoonProject.TestRunIgnoresFocus";
 
+        // Installed on every play-mode entry in the editor: a test run marks itself only after play mode has begun, so
+        // the step checks the mark each frame and does nothing outside a run.
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void Install()
         {
 #if UNITY_EDITOR
-            if (!SessionState.GetBool(SessionKey, false))
-            {
-                return;
-            }
-
             PlayerLoopSystem loop = PlayerLoop.GetCurrentPlayerLoop();
             for (int i = 0; i < loop.subSystemList.Length; i++)
             {
