@@ -14,6 +14,22 @@ namespace MoonProject.Rover
     [Serializable]
     public sealed class WideShotSettings
     {
+        public WideShotSettings()
+        {
+        }
+
+        /// <summary>A held shot's look (the lift's lookout, the dock's evening); the rest keep defaults.</summary>
+        public WideShotSettings(float openSeconds, float handBackSeconds, float distance, float elevation,
+            float screenY, float fovWiden)
+        {
+            _openSeconds = openSeconds;
+            _handBackSeconds = handBackSeconds;
+            _distance = distance;
+            _elevation = elevation;
+            _screenY = screenY;
+            _fovWiden = fovWiden;
+        }
+
         [Header("Timing")]
         [Tooltip("Seconds of uninterrupted rest (IRoverStillness, nothing else going on) before the frame opens.")]
         [Range(2f, 60f)]

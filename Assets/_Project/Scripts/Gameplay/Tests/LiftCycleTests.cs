@@ -28,17 +28,17 @@ namespace MoonProject.Gameplay.Tests
             Object.DestroyImmediate(_tuning);
         }
 
-        /// <summary>Steps for <paramref name="seconds"/>; returns the first cue other than None (or None).</summary>
-        private LiftCue Run(float seconds, bool powered = true, bool affordable = true, bool onFeedPad = false,
+        /// <summary>Steps for <paramref name="seconds"/>; returns the first step other than None (or None).</summary>
+        private LiftStep Run(float seconds, bool powered = true, bool affordable = true, bool onFeedPad = false,
             bool onPlatform = false, bool feedDone = false, bool anyInput = false)
         {
-            LiftCue first = LiftCue.None;
+            LiftStep first = LiftStep.None;
             for (float t = 0f; t < seconds; t += Frame)
             {
                 _still = anyInput ? 0f : _still + Frame;
                 var input = new LiftInput(powered, affordable, onFeedPad, onPlatform, _still, feedDone, anyInput);
-                LiftCue cue = _lift.Step(input, Frame);
-                first = first == LiftCue.None ? cue : first;
+                LiftStep step = _lift.Step(input, Frame);
+                first = first == LiftStep.None ? step : first;
             }
 
             return first;
@@ -55,19 +55,19 @@ namespace MoonProject.Gameplay.Tests
         [Test]
         public void Unpowered_StaysDormant_EvenWith07OnThePad()
         {
-            Assert.AreEqual(LiftCue.None, Run(5f, false, onFeedPad: true));
+            Assert.AreEqual(LiftStep.None, Run(5f, false, onFeedPad: true));
             Assert.AreEqual(LiftPhase.Dormant, _lift.Phase);
         }
 
         [Test]
         public void Powered_FeedsOnlyOnceRestedOnThePad_WithTheMaterials()
         {
-            Assert.AreEqual(LiftCue.Powered, Run(Frame));
-            Assert.AreEqual(LiftCue.None, Run(5f, affordable: false, onFeedPad: true), "Nothing to feed it.");
-            Assert.AreEqual(LiftCue.None, Run(5f), "Not on the pad.");
+            Assert.AreEqual(LiftStep.Powered, Run(Frame));
+            Assert.AreEqual(LiftStep.None, Run(5f, affordable: false, onFeedPad: true), "Nothing to feed it.");
+            Assert.AreEqual(LiftStep.None, Run(5f), "Not on the pad.");
             _still = 0f;
-            Assert.AreEqual(LiftCue.None, Run(_tuning.FeedDelay - 0.1f, onFeedPad: true), "Not rested yet.");
-            Assert.AreEqual(LiftCue.FeedStarted, Run(0.2f, onFeedPad: true));
+            Assert.AreEqual(LiftStep.None, Run(_tuning.FeedDelay - 0.1f, onFeedPad: true), "Not rested yet.");
+            Assert.AreEqual(LiftStep.FeedStarted, Run(0.2f, onFeedPad: true));
             Assert.AreEqual(LiftPhase.Feeding, _lift.Phase);
         }
 
@@ -80,7 +80,7 @@ namespace MoonProject.Gameplay.Tests
             Assert.AreEqual(LiftPhase.Stitching, _lift.Phase);
             Run(0.5f * _tuning.StitchSeconds);
             Assert.That(_lift.Level, Is.InRange(0.3f, 0.7f), "Halfway level, eased.");
-            Assert.AreEqual(LiftCue.Restored, Run(0.5f * _tuning.StitchSeconds + 0.1f));
+            Assert.AreEqual(LiftStep.Restored, Run(0.5f * _tuning.StitchSeconds + 0.1f));
             Assert.IsTrue(_lift.IsRestored);
             Assert.AreEqual(1f, _lift.Level);
         }
@@ -90,19 +90,21 @@ namespace MoonProject.Gameplay.Tests
         {
             Restore();
             _still = 0f;
-            Assert.AreEqual(LiftCue.None, Run(_tuning.BoardDelay - 0.1f, onPlatform: true), "Not rested yet.");
-            Assert.AreEqual(LiftCue.RideStarted, Run(0.1f + Frame, onPlatform: true));
+            Assert.AreEqual(LiftStep.None, Run(_tuning.BoardDelay - 0.1f, onPlatform: true), "Not rested yet.");
+            Assert.AreEqual(LiftStep.RideStarted, Run(0.1f + Frame, onPlatform: true));
             Assert.IsTrue(_lift.Holds07);
             Run(0.5f * _tuning.RideSeconds, onPlatform: true);
             Assert.That(_lift.Height, Is.InRange(0.3f, 0.7f));
-            Assert.AreEqual(LiftCue.ReachedTop,
-                Run(0.5f * _tuning.RideSeconds + _tuning.SettleSeconds + 0.1f, onPlatform: true));
-            Assert.AreEqual(LiftCue.None, Run(20f, onPlatform: true), "The lookout holds while 07 rests.");
+            Assert.AreEqual(LiftStep.Arrived, Run(0.5f * _tuning.RideSeconds + Frame, onPlatform: true),
+                "The platform reaches the top stop ...");
+            Assert.AreEqual(LiftStep.ReachedTop, Run(_tuning.SettleSeconds + 0.1f, onPlatform: true),
+                "... and settles there before the lookout opens.");
+            Assert.AreEqual(LiftStep.None, Run(20f, onPlatform: true), "The lookout holds while 07 rests.");
             Assert.AreEqual(1f, _lift.Height);
 
-            Assert.AreEqual(LiftCue.Descending, Run(Frame, onPlatform: true, anyInput: true));
-            Assert.AreEqual(LiftCue.ReachedBottom,
-                Run(_tuning.RideSeconds + _tuning.SettleSeconds + 0.1f, onPlatform: true));
+            Assert.AreEqual(LiftStep.Descending, Run(Frame, onPlatform: true, anyInput: true));
+            Assert.AreEqual(LiftStep.Arrived, Run(_tuning.RideSeconds + Frame, onPlatform: true));
+            Assert.AreEqual(LiftStep.ReachedBottom, Run(_tuning.SettleSeconds + 0.1f, onPlatform: true));
             Assert.AreEqual(0f, _lift.Height);
             Assert.IsFalse(_lift.Holds07);
         }
@@ -115,10 +117,10 @@ namespace MoonProject.Gameplay.Tests
             Run(_tuning.RideSeconds + _tuning.SettleSeconds + 0.1f, onPlatform: true);
             Run(Frame, onPlatform: true, anyInput: true);
             Run(_tuning.RideSeconds + _tuning.SettleSeconds + 0.1f, onPlatform: true);
-            Assert.AreEqual(LiftCue.None, Run(10f, onPlatform: true), "Still on it after the ride: stays down.");
+            Assert.AreEqual(LiftStep.None, Run(10f, onPlatform: true), "Still on it after the ride: stays down.");
             Run(Frame);
             _still = 0f;
-            Assert.AreEqual(LiftCue.RideStarted, Run(_tuning.BoardDelay + 0.1f, onPlatform: true));
+            Assert.AreEqual(LiftStep.RideStarted, Run(_tuning.BoardDelay + 0.1f, onPlatform: true));
         }
 
         [Test]
