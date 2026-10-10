@@ -11,24 +11,18 @@ namespace MoonProject.Gameplay
     public sealed class WorkshopTuning : ScriptableObject
     {
         [Header("Pad")]
-        [Tooltip("07 counts as parked on the bay's turntable within this many metres of its centre (the ring of " +
-                 "light lies on the turntable at this radius; the turntable is 1.75 m across).")]
+        [Tooltip("07 counts as parked on the bay's turntable within this many metres of its centre (Art's pad " +
+                 "nearest this radius lies on the turntable; the turntable is 1.75 m across).")]
         [Range(0.5f, 6f)] [SerializeField] private float _padRadius = 1.8f;
 
-        [Tooltip("Width (m) of the pad's ring of light.")]
-        [Range(0.05f, 2f)] [SerializeField] private float _padRingWidth = 0.35f;
-
-        [Tooltip("Pad brightness while the next ability is not affordable yet (it breathes softly).")]
+        [Tooltip("Pad lamps' brightness while the next ability is not affordable yet (it breathes softly).")]
         [Range(0f, 3f)] [SerializeField] private float _padIdle = 0.22f;
 
-        [Tooltip("Pad brightness when the next ability is affordable: an invitation.")]
+        [Tooltip("Pad lamps' brightness when the next ability is affordable: an invitation.")]
         [Range(0f, 3f)] [SerializeField] private float _padInviting = 0.65f;
 
-        [Tooltip("Pad brightness while 07 is parked on it.")]
+        [Tooltip("Pad lamps' brightness while 07 is parked on it.")]
         [Range(0f, 3f)] [SerializeField] private float _padOccupied = 1f;
-
-        [Tooltip("Pad brightness once every piece of kit in the bay is bought.")]
-        [Range(0f, 3f)] [SerializeField] private float _padDone = 0.12f;
 
         [Tooltip("Seconds per breath of the waiting pad.")]
         [Range(0.5f, 10f)] [SerializeField] private float _breathPeriod = 3.2f;
@@ -39,10 +33,7 @@ namespace MoonProject.Gameplay
         [Tooltip("Seconds (time constant) for the pad to brighten or dim; a purchase flare fades the same way.")]
         [Range(0f, 3f)] [SerializeField] private float _padEase = 0.4f;
 
-        [Tooltip("Segments of the pad ring.")]
-        [Range(8, 128)] [SerializeField] private int _padSegments = 48;
-
-        [Tooltip("Pad brightness the moment an ability is bought; it eases back down by itself.")]
+        [Tooltip("Pad lamps' brightness the moment an ability is bought; it eases back down by itself.")]
         [Range(0f, 6f)] [SerializeField] private float _padFlare = 2.4f;
 
         [Header("Hopper feed")]
@@ -211,8 +202,8 @@ namespace MoonProject.Gameplay
 
         public FeedLook FeedLook => new FeedLook(_feedBeamLead, _feedFlight, _feedStagger, _feedLift, _feedGrowShare);
 
-        public PadLook PadLook => new PadLook(_padRadius, _padRingWidth, _padSegments, _padIdle, _padInviting,
-            _padOccupied, _padDone, _breathPeriod, _padBreathDepth, _padEase);
+        public PadLook PadLook => new PadLook(_padRadius, _padIdle, _padInviting, _padOccupied, _breathPeriod,
+            _padBreathDepth, _padEase);
 
         /// <summary>A (min, max) range that is never inverted or negative.</summary>
         private static Vector2 Ordered(Vector2 range)

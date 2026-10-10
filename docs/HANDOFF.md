@@ -25,6 +25,15 @@ account) can continue without the old conversation.
       0579f46b). Rover was asked to fix it first.
     - One is in gameplay: BaseAndSaveSessions.Deposit_TowedRelic…; gameplay was asked.
   - Nothing was pushed.
+- **Sessions running (2026-10-11 ~01:10).**
+  - Build boxes: gameplay (P2, P6, P9, Playthrough 0–8), rover (rig fix, carried part, the lift slice, motes), art
+    (lift props, then M3-18), ui (voice, V11, NeedsPart), world (M3-18), tools (lint and box_check landed; land
+    --batch and the look set next), opening (slice, cutscenes §1; chip offered).
+  - Design: game design (done; waits for the end-to-end first-hour review) and story & flow (game-flow.md, then
+    amendments to the M3-07 and M3-09 drafts).
+  - Every box runs `tools/box_check.py <box>` before it reports.
+- **Audio has no session; its queue:** dock_evening_swell on DockEveningOpened; cues for StoryPartFound and
+  StoryPartDelivered; the lint renames SignalField and FakeRoverSystem (gameplay renames its copies instead).
 - **Lint duplicate-type fixes still to assign** (report-only in tools/lint.py until the list is empty; give each box
   its line at its next report):
   - rover: LiftCue (in queue), RoverBayTests and RoverKitTests vs art, StargazeTests vs ui;

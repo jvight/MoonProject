@@ -25,12 +25,13 @@ namespace MoonProject.Gameplay
         private readonly HomeBase _home;
         private readonly IUpgradeStation[] _stations;
         private readonly UpgradeService _upgrades;
+        private readonly IStoryPartGate _parts;
         private readonly FriendField _friends;
         private readonly RelayField _relays;
 
         public InteractionHints(IRoverState rover, SonarSystem sonar, ExcavationSystem excavation,
             SalvageField salvage, TetherSystem tether, CargoCradle cradle, HomeBase home, IUpgradeStation[] stations,
-            UpgradeService upgrades, FriendField friends, RelayField relays)
+            UpgradeService upgrades, IStoryPartGate parts, FriendField friends, RelayField relays)
         {
             _rover = rover ?? throw new ArgumentNullException(nameof(rover));
             _sonar = sonar != null ? sonar : throw new ArgumentNullException(nameof(sonar));
@@ -41,6 +42,7 @@ namespace MoonProject.Gameplay
             _home = home != null ? home : throw new ArgumentNullException(nameof(home));
             _stations = stations ?? throw new ArgumentNullException(nameof(stations));
             _upgrades = upgrades ?? throw new ArgumentNullException(nameof(upgrades));
+            _parts = parts ?? throw new ArgumentNullException(nameof(parts));
             _friends = friends != null ? friends : throw new ArgumentNullException(nameof(friends));
             _relays = relays != null ? relays : throw new ArgumentNullException(nameof(relays));
         }
@@ -130,7 +132,9 @@ namespace MoonProject.Gameplay
                         if (station.Occupied && _upgrades.TryGetOffer(station.Definition.Id, out UpgradeOffer offer) &&
                             !offer.IsMaxed)
                         {
-                            hint = new InteractionHint(kind, station.PadCentre, offer.CanAfford);
+                            bool ready = offer.CanAfford &&
+                                         !_parts.NeedsPart(offer.Definition.Id, offer.CurrentLevel + 1);
+                            hint = new InteractionHint(kind, station.PadCentre, ready);
                             return true;
                         }
                     }
