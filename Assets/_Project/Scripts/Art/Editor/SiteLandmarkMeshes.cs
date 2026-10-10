@@ -39,12 +39,34 @@ namespace MoonProject.Art.Editor
 
         private const float MastHeight = 9.2f;
         private const float MastRadius = 0.12f;
-        private const float GuyRadius = 3.6f;
+        private const float GuyRadius = 2.5f;
 
         /// <summary>The sites that have a landmark (the lander site is home's own wreck, seen from the base).</summary>
         public static bool HasLandmark(string id)
         {
             return id == "garage" || id == "drill" || id == "kestrel" || id == "depot";
+        }
+
+        /// <summary>
+        /// Where <paramref name="id"/>'s landmark stands in site space and how it is turned (yaw, degrees): on the
+        /// approach side's left, clear of the 3 m approach lane down -Z and of the wreck, every part of it inside the
+        /// site's footprint. The crane's jib and the Kestrel's fin reach along +Z beside the wreck.
+        /// </summary>
+        public static (Vector3 Foot, float Yaw) Placement(string id)
+        {
+            switch (id)
+            {
+                case "garage":
+                    return (new Vector3(-5f, 0f, -0.5f), -90f);
+                case "drill":
+                    return (new Vector3(-5f, 0f, -3.5f), 0f);
+                case "kestrel":
+                    return (new Vector3(-5f, 0f, -1f), -90f);
+                case "depot":
+                    return (new Vector3(-5.5f, 0f, -3.4f), 0f);
+                default:
+                    throw new System.ArgumentException($"No landmark for site '{id}'.", nameof(id));
+            }
         }
 
         /// <summary>Where the pilot lamp sits on <paramref name="id"/>'s landmark (landmark space).</summary>
@@ -100,7 +122,7 @@ namespace MoonProject.Art.Editor
         private static LowPolyMeshBuilder Crane()
         {
             var b = new LowPolyMeshBuilder(1400);
-            Lattice(b, Vector3.zero, CraneMast, CraneHalf, CraneHalf, 1.1f);
+            Lattice(b, Vector3.zero, CraneMast, CraneHalf, CraneHalf, 1.45f);
             b.Box(At(0f, 0.12f, 0f), new Vector3(1.1f, 0.24f, 1.1f), PaletteSwatch.WornPanel, 0.03f);
             var cab = new Vector3(0f, CraneMast + 0.3f, 0f);
             b.Box(At(cab), new Vector3(0.9f, 0.55f, 0.8f), PaletteSwatch.FadedAccent, 0.03f);
@@ -157,7 +179,7 @@ namespace MoonProject.Art.Editor
             }
 
             Vector3 crown = lean.MultiplyPoint3x4(new Vector3(0f, DerrickHeight, 0f));
-            SiteKit.Cable(b, SiteKit.Sag(crown, new Vector3(4.2f, 0.02f, 1.6f), 0.5f, 5), CableRadius,
+            SiteKit.Cable(b, SiteKit.Sag(crown, new Vector3(-2.6f, 0.02f, 2.2f), 0.5f, 5), CableRadius,
                 PaletteSwatch.Charcoal);
             return b;
         }

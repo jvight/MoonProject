@@ -25,8 +25,6 @@ namespace MoonProject.Art.Editor
         public const string LandmarkName = "Landmark";
         public const string LandmarkPilotName = "LandmarkPilot";
 
-        /// <summary>How far outside the skeleton's back-left corner a landmark stands (metres).</summary>
-        private const float LandmarkClearance = 2f;
 
         /// <summary>The site ids of the contract (site.&lt;id&gt; anchors, Site_&lt;id&gt; prefabs).</summary>
         public static IReadOnlyList<string> Ids => new[] { "depot", "kestrel", "drill", "garage", "lander" };
@@ -124,9 +122,9 @@ namespace MoonProject.Art.Editor
             root.Add(new ModelNode(HeartName, recipe.Heart));
             if (SiteLandmarkMeshes.HasLandmark(id))
             {
-                Bounds skeleton = recipe.Skeleton.Bounds;
-                var foot = new Vector3(skeleton.min.x - LandmarkClearance, 0f, skeleton.min.z - LandmarkClearance);
+                (Vector3 foot, float yaw) = SiteLandmarkMeshes.Placement(id);
                 ModelNode landmark = root.Add(new ModelNode(LandmarkName, foot,
+                    Place.Rotation(new Vector3(0f, yaw, 0f)),
                     new ModelMesh($"{name}_{LandmarkName}", SiteLandmarkMeshes.Landmark(id))));
                 landmark.Add(new ModelNode(LandmarkPilotName, SiteLandmarkMeshes.PilotTop(id), Quaternion.identity,
                     new ModelMesh($"{name}_{LandmarkPilotName}", SiteLandmarkMeshes.Pilot()),

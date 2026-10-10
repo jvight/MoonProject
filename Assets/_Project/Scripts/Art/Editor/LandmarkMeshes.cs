@@ -44,9 +44,8 @@ namespace MoonProject.Art.Editor
         public static LowPolyMeshBuilder RoutePost()
         {
             var b = new LowPolyMeshBuilder(160);
-            MeshRange post = b.Box(At(0f, PostHeight * 0.5f, 0f), new Vector3(PostSide, PostHeight, PostSide),
-                PaletteSwatch.WornPanel, 0.015f);
-            SiteKit.DustCap(b, post);
+            b.Box(At(0f, PostHeight * 0.5f, 0f), new Vector3(PostSide, PostHeight, PostSide), PaletteSwatch.WornPanel,
+                0.015f);
             b.Box(At(0f, PostHeight - 0.42f, 0f), new Vector3(PostSide + 0.01f, 0.12f, PostSide + 0.01f),
                 PaletteSwatch.FadedAccent);
             b.Box(At(0f, 0.06f, 0f), new Vector3(PostSide + 0.06f, 0.12f, PostSide + 0.06f), PaletteSwatch.Rust,

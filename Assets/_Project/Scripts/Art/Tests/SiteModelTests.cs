@@ -182,8 +182,11 @@ namespace MoonProject.Art.Tests
             Assert.GreaterOrEqual(landmark.Mesh.Geometry.Bounds.max.y, SiteLandmarkMeshes.MinHeight,
                 "it reads from across the basin");
             Assert.AreEqual(0f, landmark.LocalPosition.y, "it stands on the ground");
-            Assert.Less(landmark.LocalPosition.z, site.GetDescendant("Skeleton").Mesh.Geometry.Bounds.min.z,
-                "it stands behind the wreck, clear of 07's way in");
+            Bounds wreck = site.GetDescendant("Skeleton").Mesh.Geometry.Bounds;
+            Vector3 foot = landmark.LocalPosition;
+            bool insideWreck = foot.x > wreck.min.x && foot.x < wreck.max.x && foot.z > wreck.min.z
+                && foot.z < wreck.max.z;
+            Assert.IsFalse(insideWreck, "it stands beside the wreck, not in it");
             ModelNode pilot = landmark.GetDescendant(SiteModelBuilder.LandmarkPilotName);
             Assert.AreEqual(ModelMaterial.PaletteGlowOff, pilot.Material, "dark until the heart is found");
             CollectionAssert.Contains(MeshChecks.Swatches(pilot.Mesh.Geometry), PaletteSwatch.LampGlass);
