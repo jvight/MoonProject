@@ -13,6 +13,8 @@ namespace MoonProject.App
         /// <summary>Known once the save has loaded, before any Start() runs.</summary>
         public bool HasSave { get; private set; }
 
+        public bool ShowsTitle { get; private set; }
+
         /// <summary>
         /// The save is loaded. A boot armed by New Game (<paramref name="startFresh"/>) goes straight into a fresh game;
         /// a boot without the title (<paramref name="showTitle"/> false) goes straight into play on its save.
@@ -20,6 +22,7 @@ namespace MoonProject.App
         public void Loaded(bool hasSave, bool startFresh, bool showTitle)
         {
             HasSave = hasSave && !startFresh;
+            ShowsTitle = showTitle;
             State = startFresh || !showTitle ? GameFlowState.Playing : GameFlowState.Title;
         }
 
@@ -41,7 +44,7 @@ namespace MoonProject.App
         /// </summary>
         public bool TryStartHere()
         {
-            if (State != GameFlowState.Title || HasSave)
+            if (!CanStartOver || State != GameFlowState.Title || HasSave)
             {
                 return false;
             }
@@ -50,7 +53,10 @@ namespace MoonProject.App
             return true;
         }
 
-        /// <summary>"Quit to title": true when play may save and reload into the title.</summary>
-        public bool CanQuitToTitle => State == GameFlowState.Playing;
+        /// <summary>"Quit to title": true when play may save and reload into the title (only a game with one).</summary>
+        public bool CanQuitToTitle => ShowsTitle && State == GameFlowState.Playing;
+
+        /// <summary>New Game: only a game with a title starts over (the title is where it is chosen).</summary>
+        public bool CanStartOver => ShowsTitle;
     }
 }

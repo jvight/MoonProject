@@ -23,6 +23,12 @@ namespace MoonProject.UI
         public const string TapeCount = "ui.card.tape_count";
         public const string PauseCassettes = "ui.pause.cassettes";
         public const string PauseRelays = "ui.pause.relays";
+        public const string PauseResume = "ui.pause.resume";
+        public const string PauseSettings = "ui.pause.settings";
+        public const string PauseQuit = "ui.pause.quit";
+        public const string TitleContinue = "ui.title.continue";
+        public const string TitleSettings = "ui.title.settings";
+        public const string TitleQuit = "ui.title.quit";
         public const string JourneyPutAway = "ui.journey.put_away";
         public const string LookUp = "ui.hint.look_up";
         public const string BlueprintFound = "ui.blueprint.found";

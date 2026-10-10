@@ -157,7 +157,7 @@ namespace MoonProject.App
         /// </summary>
         private void OnNewGameRequested(NewGameRequested request)
         {
-            if (_reloading)
+            if (_reloading || !_flow.CanStartOver)
             {
                 return;
             }

@@ -107,6 +107,13 @@ namespace MoonProject.UI
             IsDirty = true;
         }
 
+        /// <summary>The first boot's language step: <paramref name="language"/> is one of the tables' codes.</summary>
+        public void ChooseLanguage(string language)
+        {
+            _localization.SetLanguage(language);
+            IsDirty = true;
+        }
+
         public void MarkSaved()
         {
             IsDirty = false;

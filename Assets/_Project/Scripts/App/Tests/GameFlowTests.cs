@@ -65,6 +65,9 @@ namespace MoonProject.App.Tests
             flow.Loaded(true, false, false);
             Assert.AreEqual(GameFlowState.Playing, flow.State);
             Assert.IsTrue(flow.HasSave);
+            Assert.IsFalse(flow.ShowsTitle);
+            Assert.IsFalse(flow.CanQuitToTitle, "no title to return to");
+            Assert.IsFalse(flow.CanStartOver, "a new game is chosen on the title");
         }
 
         [Test]
