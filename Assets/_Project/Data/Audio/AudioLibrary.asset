@@ -1239,6 +1239,34 @@ MonoBehaviour:
     _volumeMax: 0.5
     _pitchMin: 1
     _pitchMax: 1
+  - _id: base_wake
+    _clips:
+    - {fileID: 8300000, guid: 09c0e45529864ac469db1dc6a94bb398, type: 3}
+    - {fileID: 8300000, guid: 4b7f1f0042a9a634280b0b0b30efc71b, type: 3}
+    - {fileID: 8300000, guid: 2e0ffd8aad87cfa49b50bf6a7169fb8a, type: 3}
+    _variantLabels:
+    - home
+    - bay
+    - lift
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.6
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: station_not_yet
+    _clips:
+    - {fileID: 8300000, guid: f0c1c13ce93ccaa43b67be3769e41b21, type: 3}
+    _variantLabels:
+    - station_not_yet
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.5
+    _volumeMax: 0.5
+    _pitchMin: 1
+    _pitchMax: 1
   - _id: bay_turntable
     _clips:
     - {fileID: 8300000, guid: 89b834fb45150ea4b8c4488f9d27c4fa, type: 3}

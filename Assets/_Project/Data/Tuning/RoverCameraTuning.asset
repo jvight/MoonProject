@@ -26,6 +26,17 @@ MonoBehaviour:
   _maxPitch: 60
   _lowestCameraHeight: 0.6
   _maxLookUpTilt: 10
+  _wakeYaw: 145
+  _wakeElevation: -15
+  _wakeDistance: 3.2
+  _wakeScreenY: 0.22
+  _wakeLensSeconds: 3.5
+  _wakeTurnSeconds: 3
+  _wakeEarthElevation: 15
+  _wakeEarthDistance: 2.4
+  _wakeEarthHeight: 0.75
+  _wakeHoldSeconds: 10
+  _wakeEaseSeconds: 4
   _stargazeStartElevation: 0
   _stargazeFullElevation: -20
   _stargazeRiseHalfLife: 1.2

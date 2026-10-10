@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7054344e588a041478159b14442320b8, type: 3}
+  m_Name: ProgressionTuning
+  m_EditorClassIdentifier: 
+  _wakeDistance: 15
+  _dockRadius: 4
+  _landerRadius: 9
+  _shelfRadius: 4
+  _towerRadius: 6
+  _bayRadius: 7
+  _boardRadius: 4
+  _ladderRadius: 3
+  _liftRadius: 4
+  _rackRadius: 4
+  _placeLineGap: 6
+  _signalFriend: tilly
+  _leapFriend: bell
+  _firstKit: rover.hover_jump
+  _tubes:
+  - _kitId: rover.cargo_cradle
+    _siteId: site.garage
+  - _kitId: rover.warm_headlamp
+    _siteId: site.kestrel
+  - _kitId: rover.boost_coils
+    _siteId: site.drill
