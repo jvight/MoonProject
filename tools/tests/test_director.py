@@ -42,5 +42,37 @@ class WorktreeLockTests(unittest.TestCase):
                 self.assertIn("land --batch", (path / director.WORKTREE_LOCK).read_text())
 
 
+class PlayModeShardTests(unittest.TestCase):
+    TIMES = {"A": 408.0, "B": 256.0, "C": 170.0, "D": 14.0, "E": 1.0}
+
+    def test_longest_first_onto_the_lightest_shard(self):
+        self.assertEqual(director.shard(list(self.TIMES), self.TIMES, 2), [["A", "D", "E"], ["B", "C"]])
+        self.assertEqual(director.shard(list(self.TIMES), self.TIMES, 3), [["A"], ["B"], ["C", "D", "E"]])
+
+    def test_one_shard_more_shards_than_assemblies_and_unknown_times(self):
+        self.assertEqual(director.shard(["A", "B"], {}, 1), [["A", "B"]])
+        self.assertEqual(len(director.shard(["A", "B"], {}, 3)), 2)
+        self.assertEqual(director.shard(["A", "B", "New"], {"A": 10.0, "B": 2.0}, 2), [["A", "B"], ["New"]])
+
+    def test_assembly_seconds_from_results_xml(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "results.xml"
+            path.write_text('<test-run><test-suite type="Assembly" name="MoonProject.UI.PlayModeTests.dll" '
+                            'duration="170.5"/><test-suite type="TestFixture" name="X" duration="3"/></test-run>',
+                            encoding="utf-8")
+            self.assertEqual(director.assembly_seconds(path), {"MoonProject.UI.PlayModeTests": 170.5})
+            self.assertEqual(director.assembly_seconds(Path(tmp) / "missing.xml"), {})
+
+    def test_shard_worktrees_leave_director2_to_a_parallel_playthrough(self):
+        def pool(parallel, shards, skip=False):
+            args = argparse.Namespace(parallel=parallel, shards=shards, skip_playthrough=skip)
+            return [path for path, _ in director.shard_worktrees(args)]
+
+        self.assertEqual(pool(False, 1), [director.VERIFY_WORKTREE])
+        self.assertEqual(pool(False, 2), [director.VERIFY_WORKTREE, director.VERIFY_WORKTREE_2])
+        self.assertNotIn(director.VERIFY_WORKTREE_2, pool(True, 3))
+        self.assertIn(director.VERIFY_WORKTREE_2, pool(True, 2, skip=True))
+
+
 if __name__ == "__main__":
     unittest.main()

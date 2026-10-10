@@ -11,7 +11,7 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// gaze and hold-still request, every ability granted and every placement so tests can assert 07's attention,
     /// upgrades and radio-hops.
     /// </summary>
-    public sealed class FakeRoverSystem : MonoBehaviour, IGameSystem, IRoverState, IRoverRig, IViewCamera,
+    public sealed class GameplayFakeRover : MonoBehaviour, IGameSystem, IRoverState, IRoverRig, IViewCamera,
         IRoverAbilities, IRoverPlacement, IRoverCargoSeat
     {
         private readonly Dictionary<object, GazeRequest> _gaze = new Dictionary<object, GazeRequest>();
@@ -77,11 +77,11 @@ namespace MoonProject.Gameplay.PlayModeTests
         public int Placements { get; private set; }
 
         /// <param name="cargoSeat">False for a rover that registers no cargo seat (a test of the boot check).</param>
-        public static FakeRoverSystem Create(Vector3 position, float yaw, bool cargoSeat)
+        public static GameplayFakeRover Create(Vector3 position, float yaw, bool cargoSeat)
         {
             var host = new GameObject("FakeRover");
             host.transform.SetPositionAndRotation(position, Quaternion.Euler(0f, yaw, 0f));
-            var rover = host.AddComponent<FakeRoverSystem>();
+            var rover = host.AddComponent<GameplayFakeRover>();
             rover._registersCargoSeat = cargoSeat;
             rover.Build();
             return rover;

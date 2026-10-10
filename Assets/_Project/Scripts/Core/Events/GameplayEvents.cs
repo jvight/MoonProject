@@ -795,4 +795,44 @@ namespace MoonProject.Core.Events
 
         public Vector3 Position { get; }
     }
+
+    /// <summary>
+    /// The crew's lift (docs/features/M3-16 step 8) started or finished carrying 07: <see cref="Riding"/> while it
+    /// moves, <see cref="AtLookout"/> once it settled at the lander deck (Rover opens the lookout shot; any input
+    /// brings it back down).
+    /// </summary>
+    public readonly struct LiftRideChanged
+    {
+        public LiftRideChanged(bool riding, bool atLookout, Vector3 position)
+        {
+            Riding = riding;
+            AtLookout = atLookout;
+            Position = position;
+        }
+
+        public bool Riding { get; }
+
+        public bool AtLookout { get; }
+
+        /// <summary>The platform's position.</summary>
+        public Vector3 Position { get; }
+    }
+
+    /// <summary>
+    /// 07's look up the crew's ladder (docs/features/M3-16 "Each place"): the first time near it, 07 looks up the
+    /// ladder to the deck, then at the lift. Published as each look begins (<see cref="Looking"/>, toward
+    /// <see cref="Subject"/>) and once more when it ends; Rover frames each look.
+    /// </summary>
+    public readonly struct LadderLookChanged
+    {
+        public LadderLookChanged(bool looking, Vector3 subject)
+        {
+            Looking = looking;
+            Subject = subject;
+        }
+
+        public bool Looking { get; }
+
+        public Vector3 Subject { get; }
+    }
 }

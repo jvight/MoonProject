@@ -1,6 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 using MoonProject.Editor.Builders;
+using MoonProject.Gameplay.Lift;
 
 namespace MoonProject.Gameplay.Editor
 {
@@ -31,6 +32,7 @@ namespace MoonProject.Gameplay.Editor
             EnsureExists<GlintTuning>(GameplayAssetPaths.GlintTuning);
             EnsureExists<SalvageTuning>(GameplayAssetPaths.SalvageTuning);
             EnsureExists<ProgressionTuning>(GameplayAssetPaths.ProgressionTuning);
+            EnsureExists<LiftTuning>(GameplayAssetPaths.LiftTuning);
         }
 
         private static void EnsureExists<T>(string path) where T : ScriptableObject

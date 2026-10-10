@@ -38,6 +38,42 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
+        public void RadioLetters_PlayInTimeOrder_OnePerMastForTheFirstFour_ThenTwo_AndTheWeatherOnceAtLevelOne()
+        {
+            var lines = new List<string>();
+            _events.Subscribe<TickerLine>(line => lines.Add(line.Key));
+            using (var letters = new RadioLetters(_events, 4, 2, 10))
+            {
+                _events.Publish(new BasePowerChanged(BasePowerStage.Home, true));
+                Assert.IsEmpty(lines, "a load replays nothing");
+                _events.Publish(new BasePowerChanged(BasePowerStage.Home, false));
+                _events.Publish(new BasePowerChanged(BasePowerStage.Bay, false));
+                CollectionAssert.AreEqual(new[] { "ticker.radio.weather" }, lines, "the weather loop, once, at L1");
+
+                lines.Clear();
+                var seen = new List<string>();
+                for (int mast = 1; mast <= 8; mast++)
+                {
+                    _events.Publish(new RelayRestored("relay." + (mast - 1), Vector3.zero, mast, 8, "home", 1f));
+                    Assert.IsEmpty(lines, "after the mast's own online line, on the next tick");
+                    letters.Tick();
+                    Assert.AreEqual(letters.LettersBy(mast) - letters.LettersBy(mast - 1), lines.Count,
+                        $"mast {mast}'s share");
+                    seen.AddRange(lines);
+                    lines.Clear();
+                }
+
+                CollectionAssert.AreEqual(new[]
+                {
+                    "letter.mast_1", "letter.mast_2", "letter.mast_3", "letter.mast_4", "letter.mast_5",
+                    "letter.mast_6", "letter.mast_7", "letter.mast_8", "letter.mast_9", "letter.mast_10",
+                }, seen, "one each for masts 1-4, two each for 5-7, then the letters have run out");
+                Assert.AreEqual(4, letters.LettersBy(4));
+                Assert.AreEqual(10, letters.LettersBy(12));
+            }
+        }
+
+        [Test]
         public void DockEvening_OpensOnceOnAHomecomingWithNews_ThenTheSweepRunsAfterTheShotSettles()
         {
             var opened = new List<DockEveningOpened>();

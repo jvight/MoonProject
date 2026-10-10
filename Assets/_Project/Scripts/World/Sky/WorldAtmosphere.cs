@@ -6,13 +6,18 @@ using UnityEngine.Rendering.Universal;
 namespace MoonProject.World
 {
     /// <summary>
-    /// Applies <see cref="AtmosphereSettings"/> to the scene: trilight ambient, exponential-squared fog, the
+    /// Applies <see cref="AtmosphereSettings"/> to the scene: trilight ambient, exponential-squared fog, the basin haze
+    /// and distance desaturation (shader globals for LofiAtmosphere.hlsl), the
     /// directional earthlight shining from Earth's side of the sky and the shadowless fill opposite it. Used by the
     /// scene build (saved into the scene) and by <see cref="WorldSystem"/> (so play mode always matches the tuning
     /// asset).
     /// </summary>
     public static class WorldAtmosphere
     {
+        private static readonly int HazeColorId = Shader.PropertyToID("_MoonHazeColor");
+        private static readonly int HazeId = Shader.PropertyToID("_MoonHaze");
+        private static readonly int DesaturateId = Shader.PropertyToID("_MoonDesaturate");
+
         public static void Apply(AtmosphereSettings atmosphere, SkySettings sky, Light earthlight, Light fill)
         {
             if (atmosphere == null || sky == null || earthlight == null || fill == null)
@@ -35,6 +40,13 @@ namespace MoonProject.World
             RenderSettings.fogColor = atmosphere.FogColor;
             RenderSettings.fogDensity = atmosphere.FogDensity;
             RenderSettings.sun = earthlight;
+            Color haze = atmosphere.HazeColor.linear;
+            Shader.SetGlobalVector(HazeColorId, new Vector4(haze.r, haze.g, haze.b, atmosphere.HazeMax));
+            Shader.SetGlobalVector(HazeId,
+                new Vector4(atmosphere.HazeDensity, 1f / atmosphere.HazeHeight, atmosphere.HazeBase, 0f));
+            Shader.SetGlobalVector(DesaturateId, new Vector4(atmosphere.DesaturateStart,
+                1f / Mathf.Max(atmosphere.DesaturateEnd - atmosphere.DesaturateStart, 1f),
+                atmosphere.DesaturateAmount, 0f));
 
             // URP lights with the ambient probe, which is only re-derived from the trilight colours on request.
             DynamicGI.UpdateEnvironment();

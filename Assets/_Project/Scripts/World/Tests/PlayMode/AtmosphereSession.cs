@@ -70,6 +70,10 @@ namespace MoonProject.World.PlayModeTests
         private static readonly Vector3 LanderCloseLook = new Vector3(0f, 2.6f, 0f);
         private const float LanderCloseFov = 55f;
 
+        // The Playthrough's step-16 review frame: from 3 m above the pad toward the canyon lip (2 m up), game lens.
+        private const float CanyonViewEyeHeight = 3f;
+        private const float CanyonViewLookHeight = 2f;
+
         // After power reaches Home (seconds since the previous frame): the cable halfway, the windows half-lit with
         // the porch lamps starting, and home settled.
         private static readonly (float Wait, string Name)[] WakeFrames =
@@ -78,6 +82,9 @@ namespace MoonProject.World.PlayModeTests
             (2.4f, "wake-2-windows"),
             (8f, "wake-3-home"),
         };
+
+        // The whole base awake (the owner's frame is the woken base at night): power stepped to the Lift, settled.
+        private const float LiftSettleSeconds = 8f;
 
         private static readonly string CaptureFolder =
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "world-captures"));
@@ -164,6 +171,11 @@ namespace MoonProject.World.PlayModeTests
                 lander.TransformPoint(LanderCloseLook), LanderCloseFov));
             poses.Add(BellPose(bellCorner, "bell_corner_near"));
             poses.Add(BellPose(bellCorner, null));
+            Assert.IsTrue(context.Get<IWorldAnchors>().TryGet(WorldAnchorIds.CanyonLip, out WorldAnchor lip),
+                "the World has the canyon lip");
+            poses.Add(LookPose("toward_the_canyon",
+                context.Get<IWorldLayout>().BasePosition + Vector3.up * CanyonViewEyeHeight,
+                lip.Position + Vector3.up * CanyonViewLookHeight, view.fieldOfView));
             var report = new StringBuilder();
             report.AppendLine("# Atmosphere session (real Main scene)");
             report.AppendLine();
@@ -204,7 +216,7 @@ namespace MoonProject.World.PlayModeTests
         /// <summary>
         /// The dark start and home's wake (M3-16), from the game camera's own spawn view on a fresh save: asleep (only
         /// the dock, 07's eye and the tower's pilot warm), power travelling the cable, the windows waking, and home
-        /// settled. Writes Logs/world-captures/wake-*.png.
+        /// settled, then the whole base awake at the Lift. Writes Logs/world-captures/wake-*.png.
         /// </summary>
         [UnityTest]
         [Timeout(600000)]
@@ -252,6 +264,9 @@ namespace MoonProject.World.PlayModeTests
             }
 
             Assert.AreEqual(1f, context.Get<IHomeLights>().Level(HomeLight.Halo), "home has settled");
+            context.Events.Publish(new BasePowerChanged(BasePowerStage.Lift, false));
+            yield return new WaitForSeconds(LiftSettleSeconds);
+            Capture(view, "wake-4-lift");
             Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
         }
 

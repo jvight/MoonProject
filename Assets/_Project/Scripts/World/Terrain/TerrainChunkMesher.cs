@@ -139,7 +139,7 @@ namespace MoonProject.World
                 (r0.CraterRim + r1.CraterRim + r2.CraterRim) / 3f, (r0.RimZone + r1.RimZone + r2.RimZone) / 3f,
                 (r0.CanyonFloor + r1.CanyonFloor + r2.CanyonFloor) / 3f, (r0.Chasm + r1.Chasm + r2.Chasm) / 3f);
             bool rock = _painter.IsRock(normal, region);
-            Color32 face = rock ? _painter.Rock(normal, (p0 + p1 + p2) / 3f, hash) : default;
+            Color32 face = rock ? _painter.Rock(normal, (p0 + p1 + p2) / 3f, region, hash) : default;
 
             indices[written] = i0;
             vertices[written++] = new TerrainVertex(p0 - origin, normal, rock ? face : groundColors[i0]);

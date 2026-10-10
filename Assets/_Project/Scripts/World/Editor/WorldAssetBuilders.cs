@@ -10,12 +10,14 @@ using MoonProject.Editor.Builders;
 namespace MoonProject.World.Editor
 {
     /// <summary>
-    /// World content builders: the tuning asset (created once, never overwritten), the sky and Earth materials and
-    /// the post-processing Volume profile generated from <see cref="PostProcessSettings"/>. Terrain and Earth meshes
+    /// World content builders: the tuning asset (created once, never overwritten), the sky and Earth materials, and
+    /// from <see cref="PostProcessSettings"/> the post-processing Volume profile and the PC renderer's SSAO. Terrain and Earth meshes
     /// are not assets: <see cref="WorldSystem"/> generates them at boot.
     /// </summary>
     public static class WorldAssetBuilders
     {
+        private const string OcclusionFeature = "ScreenSpaceAmbientOcclusion";
+
         [MoonBuilder("World/Settings", 200)]
         public static void BuildSettings()
         {
@@ -63,6 +65,19 @@ namespace MoonProject.World.Editor
             AssetDatabase.SaveAssets();
         }
 
+        /// <summary>The marks pressed into the dust (M3-18 V4): the rover's track shader with World's tint and fade.</summary>
+        [MoonBuilder("World/Ground Mark Material", 206)]
+        public static void BuildGroundMarkMaterial()
+        {
+            GroundMarkSettings marks = LoadSettings().GroundMarks;
+            var material = new Material(FindShader(WorldPaths.GroundMarkShader));
+            material.SetColor("_Color", marks.Tint);
+            material.SetFloat("_FadeNear", marks.FadeNear);
+            material.SetFloat("_FadeFar", marks.FadeFar);
+            GeneratedAssets.CreateOrReplace(material, WorldPaths.GroundMarkMaterial);
+            AssetDatabase.SaveAssets();
+        }
+
         [MoonBuilder("World/Sky Materials", 210)]
         public static void BuildSkyMaterials()
         {
@@ -99,13 +114,7 @@ namespace MoonProject.World.Editor
         public static void BuildVolumeProfile()
         {
             PostProcessSettings post = LoadSettings().PostProcessing;
-            var profile = AssetDatabase.LoadAssetAtPath<VolumeProfile>(WorldPaths.VolumeProfile);
-            if (profile == null)
-            {
-                GeneratedAssets.EnsureFolder(WorldPaths.GeneratedRoot);
-                profile = ScriptableObject.CreateInstance<VolumeProfile>();
-                AssetDatabase.CreateAsset(profile, WorldPaths.VolumeProfile);
-            }
+            VolumeProfile profile = LoadOrCreateProfile(WorldPaths.VolumeProfile);
 
             // Overrides are updated in place (never re-created) so the asset's sub-object IDs stay stable.
             Override<Tonemapping>(profile).mode.Override(TonemappingMode.Neutral);
@@ -144,6 +153,91 @@ namespace MoonProject.World.Editor
 
             EditorUtility.SetDirty(profile);
             AssetDatabase.SaveAssets();
+        }
+
+        /// <summary>
+        /// Home's warm grade (M3-18 V9): only the split toning balance, which <see cref="HomeLightingSystem"/> blends in
+        /// over the main profile a step per power stage.
+        /// </summary>
+        [MoonBuilder("World/Home Grade", 221)]
+        public static void BuildHomeGradeProfile()
+        {
+            PostProcessSettings post = LoadSettings().PostProcessing;
+            VolumeProfile profile = LoadOrCreateProfile(WorldPaths.HomeGradeProfile);
+            Override<SplitToning>(profile).balance.Override(post.WokenSplitBalance);
+            EditorUtility.SetDirty(profile);
+            AssetDatabase.SaveAssets();
+        }
+
+        /// <summary>
+        /// The PC renderer's screen-space ambient occlusion (M3-18 V1) and the PC pipeline's colour grading mode (V9)
+        /// from <see cref="PostProcessSettings"/>. URP keeps the SSAO feature and its settings internal, so they are
+        /// written through their serialized fields.
+        /// </summary>
+        [MoonBuilder("World/Render Pipeline", 225)]
+        public static void BuildRenderPipeline()
+        {
+            PostProcessSettings post = LoadSettings().PostProcessing;
+            var renderer = AssetDatabase.LoadAssetAtPath<UniversalRendererData>(WorldPaths.PcRenderer);
+            if (renderer == null)
+            {
+                throw new InvalidOperationException($"No URP renderer at {WorldPaths.PcRenderer}.");
+            }
+
+            ScriptableRendererFeature occlusion = null;
+            foreach (ScriptableRendererFeature feature in renderer.rendererFeatures)
+            {
+                occlusion = feature != null && feature.GetType().Name == OcclusionFeature ? feature : occlusion;
+            }
+
+            if (occlusion == null)
+            {
+                throw new InvalidOperationException($"{WorldPaths.PcRenderer} has no {OcclusionFeature} feature.");
+            }
+
+            var serialized = new SerializedObject(occlusion);
+            SetFloat(serialized, "m_Settings.Intensity", post.OcclusionIntensity);
+            SetFloat(serialized, "m_Settings.Radius", post.OcclusionRadius);
+            SetFloat(serialized, "m_Settings.DirectLightingStrength", post.OcclusionDirectLighting);
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            occlusion.SetActive(true);
+            EditorUtility.SetDirty(occlusion);
+            EditorUtility.SetDirty(renderer);
+
+            var pipeline = AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>(WorldPaths.PcPipeline);
+            if (pipeline == null)
+            {
+                throw new InvalidOperationException($"No URP pipeline asset at {WorldPaths.PcPipeline}.");
+            }
+
+            pipeline.colorGradingMode = post.GradeInHdr ? ColorGradingMode.HighDynamicRange
+                : ColorGradingMode.LowDynamicRange;
+            EditorUtility.SetDirty(pipeline);
+            AssetDatabase.SaveAssets();
+        }
+
+        private static VolumeProfile LoadOrCreateProfile(string path)
+        {
+            var profile = AssetDatabase.LoadAssetAtPath<VolumeProfile>(path);
+            if (profile == null)
+            {
+                GeneratedAssets.EnsureFolder(WorldPaths.GeneratedRoot);
+                profile = ScriptableObject.CreateInstance<VolumeProfile>();
+                AssetDatabase.CreateAsset(profile, path);
+            }
+
+            return profile;
+        }
+
+        private static void SetFloat(SerializedObject serialized, string path, float value)
+        {
+            SerializedProperty property = serialized.FindProperty(path);
+            if (property == null)
+            {
+                throw new InvalidOperationException($"{serialized.targetObject.name} has no serialized '{path}'.");
+            }
+
+            property.floatValue = value;
         }
 
         private static T Override<T>(VolumeProfile profile) where T : VolumeComponent

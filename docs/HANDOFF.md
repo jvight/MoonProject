@@ -205,35 +205,60 @@ account) can continue without the old conversation.
   - edit only their own domain folder;
   - never merge into main, never push, never commit `.meta` files.
   Authorised cross-domain edits (a Core event, a test seed) are named in the task and listed in the report.
-- **Reports.** A box reports to the Director with `send_message`: tip SHA, compile_check, the targeted tests and
-  captures it ran (paths), tuning fields added or changed, new scripts needing metas, limitations.
+- **Before reporting, a box runs `python tools/box_check.py <box>`** in its worktree. It runs:
+  - compile_check (with lint);
+  - the box's builders and the Main Scene build in one headless Unity;
+  - the box's default EditMode assembly (`--filter`, `--assembly`, `--platform playmode` override it).
+
+  It then restores Generated/ and Main.unity and moves the batch-made metas to `Logs/box_check/`. Last, it appends
+  a PASS/FAIL block to `MoonProject-wt/.board/<box>.md`, which `director.py status` prints.
+- **Reports.** A box reports to the Director with `send_message`: tip SHA, its box_check block, the targeted tests
+  and captures it ran (paths), tuning fields added or changed, new scripts needing metas, limitations.
 - **Tests.** Boxes run only the tests and captures that cover their change (`--filter`, `--assembly`,
-  `--category`). The full PlayMode suite and the Playthrough are the Director's, on the merged main.
+  `--category`). The full PlayMode suite and the Playthrough are the Director's, on the merged main. A box that
+  changes the look also runs `python tools/look_report.py capture` before and after (M3-18).
 - **Director loop for each report:**
   1. Review the diff: `git diff main box/<box>`.
-  2. `python tools/director.py land <box> [<box>...] -m "merge: ..." -m "Co-Authored-By: ..."`. It merges with a
-     compile_check gate (and aborts on failure). Then it hot-reloads the main editor: refresh, the box's builders,
-     Main.unity.
-  3. Reset or write the tuning assets the merge touched (§5).
-  4. `python tools/director.py outputs -m "build: ..." -m "Co-Authored-By: ..."` commits the regenerated assets and
-     metas.
-  5. When a version's work is all landed, run `python tools/director.py verify --push`. It runs compile_check,
+  2. `python tools/director.py land --batch <box> [<box>...] -m "merge: ..." -m "Co-Authored-By: ..."`, the
+     default. The merge, compile_check, the boxes' builders and the Main Scene build all run in
+     `MoonProject-wt/director` (unity_batch exec, which also writes the new scripts' metas). Only if everything
+     passes does it commit the merge and a "build: outputs and metas" commit there and fast-forward main. On any
+     failure main is untouched. No main editor is needed; `--dry-run` stops before main.
+     - The old path still works: `land <box>` merges in the main checkout with a compile_check gate, then
+       hot-reloads the open main editor (refresh, the box's builders, Main.unity). Then run `outputs -m ...` to
+       commit the regenerated assets and metas.
+  3. Reset or write the tuning assets the merge touched (§5); land prints a NOTE for each touched schema.
+  4. When a version's work is all landed, run `python tools/director.py verify --push`. It runs compile_check,
      EditMode, PlayMode and the Playthrough in `D:/Project/MoonProject-wt/director` and pushes only a commit that
-     passed all four. Run it in the background (~1 h); it costs almost no tokens.
-  6. Build: `cd D:/Project/MoonProject-wt/director && python tools/build_player.py`. Then copy the zip to
+     passed all of them.
+     - PlayMode is sharded by test assembly across `director`, `director2` and the spare `landtest` worktree,
+       balanced on the last run's assembly times (`--shards N`; 1 = one Unity).
+     - `--parallel` moves the Playthrough to `director2` alongside them.
+     - verify and land --batch lock the worktrees they use (`Logs/director.lock`).
+     - Run it in the background; it costs almost no tokens.
+  5. Build: `cd D:/Project/MoonProject-wt/director && python tools/build_player.py`. Then copy the zip to
      `D:/Project/MoonProject/Builds/` and give the owner the path.
 - **Feature specs** go in `docs/features/M?-??-*.md`, written by the Director before assigning work. The ROADMAP
   version table and task rows are updated as work lands. The ROADMAP is in Vietnamese; the other docs are in English.
 
 ## 4. Tools and environment
 - **Unity:** 6000.0.78f1 at `C:/Program Files/Unity/Hub/Editor/6000.0.78f1/Editor/Unity.exe`, URP.
-  - The main project `D:/Project/MoonProject` must be open in the editor for `land` and `refresh`; the owner opens it
-    from the Hub.
+  - The main project `D:/Project/MoonProject` needs to be open in the editor only for the old `land` path and
+    `refresh`; `land --batch` does not need it. The owner opens it from the Hub.
   - Its MCP server (ai-game-developer) listens on `localhost:25906`. If native MCP tools fail, use
     `python tools/unity_mcp.py call <tool> '<json>'` or `@file.json`.
   - Keep the Profiler's Record off in the main editor.
-- **`python tools/director.py status`:** every box against main, unpushed commits, batch slots, editor idle or busy.
+- **`python tools/director.py status`:** every box against main, unpushed commits, batch slots, editor idle or busy,
+  and the last block of each board in `MoonProject-wt/.board/`.
 - **`python tools/compile_check.py`:** must print `RESULT: PASS` before every commit.
+  - It runs `tools/lint.py` first: the CLAUDE.md debt rules plus Unity pitfalls. One example is a Unity object
+    made in a MonoBehaviour field initializer.
+  - `python tools/lint.py` lists every finding with its owning box. Rules that main still breaks are report-only
+    until the owning boxes have fixed them.
+- **`python tools/box_check.py <box>`:** a box's gate before it reports (§3).
+- **`python tools/look_report.py capture|report|diff`:** the fixed look capture set (M3-18). It writes PNGs under
+  `Logs/look-captures/<stamp>/` and measures each frame: luminance spread, ground flatness and the brightest 1%.
+- **Tool tests:** `python -m unittest discover -s tools/tests -t tools`.
 - **`python tools/unity_batch.py tests|exec|status`:** headless Unity on a worktree. At most three run machine-wide
   (`MOON_BATCH_SLOTS`, default 3 since 2026-10-10; drop to 2 if RAM runs short); PlayMode defaults to a 2400 s timeout.
   - Playthrough: `--category Playthrough --timeout 2700`.
@@ -314,6 +339,11 @@ sidebar group and title it "MoonProject · <box>". Its prompt must stand alone:
   Changed defaults never reach an existing asset by themselves.
 - **Metas.** Workers' batch-made metas are deleted. The main editor generates the real ones, which `outputs`
   commits.
+- **Queued messages can be lost** (2026-10-11: ui's (a)–(c) and rover's rig fix never arrived).
+  - Check that a critical message arrived with list_events.
+  - Restate open items in the next message after each land, and ask for a one-line acknowledgement.
+- **Reset tuning before you rebuild the scene.** Run ResetSettings or the re-serialise first, then `refresh
+  --scene`, so the scene wires what the new settings declare (e.g. home lighting's pools).
 - **Read captures yourself.** Judge feel and visuals on the captures, not on the numbers alone. The owner judges the
   game by screenshots.
 
@@ -338,7 +368,7 @@ Diagnosis:
   - verification ~45–60 min, serial;
   - a flaky test forces a full re-run;
   - sessions wait on each other's answers;
-  - every land needs the Director's turn and the open main editor.
+  - every land needs the Director's turn (it no longer needs the open main editor).
 
 Do first on the new account:
 1. **`director.py verify --parallel` (built, NOT yet exercised).** It runs the Playthrough in a second worktree
@@ -359,15 +389,15 @@ Do first on the new account:
    - A vertical feature (e.g. the lift: art + gameplay + audio + ui) goes to ONE session allowed in those folders.
    - Per-domain boxes stay for domain-wide work.
    - This removes most hand-offs and waiting.
-6. **Land without the main editor.**
-   - Build `director.py land --batch`: merge in the verification worktree, run the builders there with
-     `unity_batch exec`, which also generates the metas, and commit the outputs from there.
-   - The main editor is then only for the owner's viewing; nobody has to keep Unity open.
+6. **Land without the main editor (built 2026-10-11).** `director.py land --batch` (§3). The main editor is now
+   only for the owner's viewing; nobody has to keep Unity open.
 7. **Faster, steadier tests.**
    - Fix the flaky tether test (it should wait on state, not time).
-   - Shard PlayMode by assembly across the two slots.
+   - Shard PlayMode by assembly (built 2026-10-11): `verify` runs one Unity per shard worktree, so the suite takes
+     the longest shard's time instead of the sum. First trial: two shards of 779 s and 713 s ran side by side
+     (1492 s summed). Two Unitys at once slow each other, so balance on the shard times of real runs.
    - Split the Playthrough into chapters that start from seeded saves, so a late failure re-runs one chapter, not
      15 minutes.
-8. **Reports as files, not messages.** Sessions append a status block to `MoonProject-wt/.board/<box>.md` at each
-   milestone, and `director.py status` prints the board. The Director reads one board per turn instead of being woken
+8. **Reports as files, not messages (built 2026-10-11).** `box_check.py` appends a status block to
+   `MoonProject-wt/.board/<box>.md`, and `director.py status` prints the last block of each board. The Director reads one board per turn instead of being woken
    by every message.

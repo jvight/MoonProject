@@ -33,8 +33,11 @@ MonoBehaviour:
     _ridgeSoftness: 0.08
     _saddleDepth: 0.6
     _saddleWavelength: 330
-    _wallGullyHeight: 9
+    _wallGullyHeight: 4
     _wallGullyCount: 70
+    _strataSpacing: 14
+    _strataStrength: 0.4
+    _strataRiser: 0.4
     _peakBearing: 12
     _peakDistance: 440
     _peakHeight: 150
@@ -178,6 +181,18 @@ MonoBehaviour:
         _gougeHalfWidth: 2
         _scorchReach: 8
         _clearMargin: 4
+    _craterField:
+      _cellSize: 18
+      _density: 0.7
+      _fieldWavelength: 170
+      _fieldThreshold: -0.05
+      _radius: {x: 2.5, y: 6}
+      _sizePower: 2.2
+      _depth: 0.045
+      _rimHeight: 0.015
+      _rimWidth: 0.7
+      _bowlShade: 0.65
+      _clearance: 6
     _farRangeStart: 950
     _farRangeFull: 1700
     _farRangeHeight: 105
@@ -228,6 +243,10 @@ MonoBehaviour:
     _scorchShade: 0.85
     _scorchCharcoal: 0.6
     _scorchMottle: 0.25
+    _dustDarken: 0.2
+    _rimFaceShade: 0.45
+    _crestZone: 0.88
+    _crestBlend: 0.05
   _scatter:
     _extentRadius: 370
     _padClearance: 12
@@ -252,7 +271,7 @@ MonoBehaviour:
     _boulderSize: {x: 1.4, y: 3.8}
     _boulderDensity: 0.11
     _craterRimBoulders: 0.55
-    _talusBoulders: 0.8
+    _talusBoulders: 1
     _talusOffset: 8
     _talusHalfWidth: 26
     _boulderMaxSlope: 24
@@ -267,16 +286,19 @@ MonoBehaviour:
     _starDensity: 0.45
     _starBrightness: 0.45
     _starPowerLaw: 1.5
-    _starSize: 0.9
-    _starGlow: 0.22
+    _starSize: 0.45
+    _starSizeSpread: 0.35
+    _starBrightest: 3
+    _starGlowFrom: 1.8
+    _starGlow: 0.3
     _twinkleShare: 0.15
     _twinkleSpeed: 0.45
     _twinkleDepth: 0.35
     _milkyWayBearing: 120
     _milkyWayTilt: 35
     _milkyWayColor: {r: 0.36, g: 0.3, b: 0.6, a: 1}
-    _milkyWayWidth: 0.17
-    _milkyWayIntensity: 0.45
+    _milkyWayWidth: 0.2
+    _milkyWayIntensity: 0.8
     _earthBearing: 338
     _earthElevation: 16
     _earthDiameter: 13
@@ -317,8 +339,8 @@ MonoBehaviour:
     _mouthArc: -2
     _mouthLateral: 12
   _atmosphere:
-    _lightColor: {r: 0.86, g: 0.85, b: 1, a: 1}
-    _lightIntensity: 1.75
+    _lightColor: {r: 0.82, g: 0.9, b: 1, a: 1}
+    _lightIntensity: 1.95
     _lightElevation: 19
     _lightBearingOffset: -60
     _shadowStrength: 0.88
@@ -328,11 +350,19 @@ MonoBehaviour:
     _fillIntensity: 0.3
     _fillElevation: 6
     _fillBearingOffset: 232
-    _ambientSky: {r: 0.17, g: 0.155, b: 0.33, a: 1}
-    _ambientEquator: {r: 0.13, g: 0.115, b: 0.25, a: 1}
-    _ambientGround: {r: 0.06, g: 0.055, b: 0.12, a: 1}
+    _ambientSky: {r: 0.1, g: 0.095, b: 0.26, a: 1}
+    _ambientEquator: {r: 0.075, g: 0.07, b: 0.2, a: 1}
+    _ambientGround: {r: 0.02, g: 0.018, b: 0.05, a: 1}
     _fogColor: {r: 0.27, g: 0.21, b: 0.45, a: 1}
     _fogDensity: 0.002
+    _hazeColor: {r: 0.33, g: 0.28, b: 0.52, a: 1}
+    _hazeDensity: 0.0007
+    _hazeHeight: 6
+    _hazeBase: 0
+    _hazeMax: 0.55
+    _desaturateStart: 120
+    _desaturateEnd: 650
+    _desaturateAmount: 0.45
   _homeLighting:
     _wakeStagger: 1.2
     _wakeFade: 2.4
@@ -340,24 +370,91 @@ MonoBehaviour:
     _cableSegmentFade: 0.35
     _pilotPeriod: 3.5
     _pilotSharpness: 6
+    _topLightLevel: 0.6
+    _pilotMinAngle: 0.4
     _pilotIntensity: 1.4
     _pilotRadius: 0.35
+    _poolColor: {r: 1, g: 0.70980394, b: 0.2784314, a: 1}
+    _pools:
+    - _wakesWith: 0
+      _anchor: DockAnchor
+      _offset: {x: 0, y: 2.4, z: 0.8}
+      _range: 6.5
+      _intensity: 4
+    - _wakesWith: 2
+      _anchor: Lander
+      _offset: {x: 0, y: 3.2, z: 4.5}
+      _range: 11
+      _intensity: 6
+    - _wakesWith: 1
+      _anchor: Lander
+      _offset: {x: -3.6, y: 2.6, z: 0.5}
+      _range: 9
+      _intensity: 4
+    - _wakesWith: 4
+      _anchor: RoverBay
+      _offset: {x: 0, y: 2.8, z: 4}
+      _range: 10
+      _intensity: 6
+    - _wakesWith: 5
+      _anchor: LiftTop
+      _offset: {x: 0, y: 2, z: 0}
+      _range: 6
+      _intensity: 3.5
+    - _wakesWith: 5
+      _anchor: LiftBottom
+      _offset: {x: 0, y: 2.4, z: 1.4}
+      _range: 7
+      _intensity: 3.5
   _postProcessing:
-    _bloomThreshold: 1
+    _bloomThreshold: 1.25
     _bloomIntensity: 1.1
     _bloomScatter: 0.7
     _bloomTint: {r: 1, g: 0.93, b: 0.86, a: 1}
-    _postExposure: 0.12
-    _contrast: 10
-    _saturation: -12
-    _lift: {x: 0.96, y: 0.97, z: 1.08, w: 0.01}
+    _postExposure: 0.5
+    _gradeInHdr: 1
+    _contrast: 20
+    _saturation: -5
+    _lift: {x: 0.96, y: 0.97, z: 1.08, w: 0}
     _gamma: {x: 1, y: 1, z: 1, w: 0}
     _gain: {x: 1.04, y: 1, z: 0.95, w: 0}
     _splitShadows: {r: 0.32, g: 0.35, b: 0.55, a: 1}
     _splitHighlights: {r: 1, g: 0.86, b: 0.68, a: 1}
     _splitBalance: -10
+    _occlusionIntensity: 1.2
+    _occlusionRadius: 1.2
+    _occlusionDirectLighting: 0.55
+    _wokenSplitBalance: 8
     _vignetteIntensity: 0.3
     _vignetteSmoothness: 0.5
     _vignetteColor: {r: 0.05, g: 0.03, b: 0.12, a: 1}
     _grainIntensity: 0.12
     _grainResponse: 0.8
+  _groundMarks:
+    _destinations:
+    - site.depot
+    - canyon.mouth
+    _trackGauge: 1.4
+    _rutHalfWidth: 0.22
+    _step: 1.5
+    _wander: 3.5
+    _wanderWavelength: 45
+    _strength: 0.85
+    _patchiness: 0.8
+    _patchWavelength: 9
+    _endFade: 8
+    _lift: 0.05
+    _tint: {r: 0.62, g: 0.62, b: 0.76, a: 1}
+    _fadeNear: 45
+    _fadeFar: 130
+    _scarRadius: 13
+    _scarInner: 1.5
+    _scarStreaks: 32
+    _scarStreakHalfWidth: 0.6
+    _scarStrength: 0.75
+    _bootprintStart: {x: 1.6, y: 0, z: 3.2}
+    _bootprintHeading: 55
+    _bootprintCount: 9
+    _bootprintStride: 0.75
+    _bootprintSize: {x: 0.16, y: 0.07}
+    _bootprintStrength: 0.5

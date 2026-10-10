@@ -92,9 +92,10 @@ namespace MoonProject.World
         [Range(0f, 1f)]
         [SerializeField] private float _craterRimBoulders = 0.55f;
 
-        [Tooltip("Extra boulder chance in the talus band at the foot of the rim.")]
+        [Tooltip("Extra boulder chance in the talus band at the foot of the rim: a boulder apron, so the wall " +
+            "stands on its own fallen rock.")]
         [Range(0f, 1f)]
-        [SerializeField] private float _talusBoulders = 0.8f;
+        [SerializeField] private float _talusBoulders = 1f;
 
         [Tooltip("Centre of the talus band: metres outside the floor edge (negative = on the floor).")]
         [Range(-60f, 60f)]

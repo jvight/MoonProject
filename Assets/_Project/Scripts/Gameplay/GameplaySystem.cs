@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using MoonProject.Core;
 using MoonProject.Core.Save;
+using MoonProject.Gameplay.Lift;
 
 namespace MoonProject.Gameplay
 {
@@ -46,11 +47,12 @@ namespace MoonProject.Gameplay
         [SerializeField] private FriendField _friends;
         [SerializeField] private CassetteField _cassettes;
         [SerializeField] private LogCacheField _logs;
-        [SerializeField] private SignalField _signals;
+        [SerializeField] private BellSignalField _signals;
         [SerializeField] private CassetteShelf _shelf;
         [SerializeField] private RelayField _relays;
         [SerializeField] private BaseProgression _progression;
         [SerializeField] private BlueprintPlotter _plotter;
+        [SerializeField] private LiftStation _lift;
 
         private readonly List<IDisposable> _saveTokens = new List<IDisposable>();
         private GlowMeshSet _meshes;
@@ -101,7 +103,7 @@ namespace MoonProject.Gameplay
 
         public LogCacheField Logs => _logs;
 
-        public SignalField Signals => _signals;
+        public BellSignalField Signals => _signals;
 
         public CassetteShelf Shelf => _shelf;
 
@@ -111,11 +113,14 @@ namespace MoonProject.Gameplay
 
         public BlueprintPlotter Plotter => _plotter;
 
+        public LiftStation Lift => _lift;
+
         internal void Wire(GameplayVisuals visuals, GlintTuning glints, UpgradeDefinition[] upgradeDefinitions,
             SalvageField salvage, RelicField relics, SonarSystem sonar, ExcavationSystem excavation,
             TetherSystem tether, HomeBase home, CargoCradle cradle, RadioTower tower, Workshop workshop,
-            FriendField friends, CassetteField cassettes, LogCacheField logs, SignalField signals, CassetteShelf shelf,
-            RelayField relays, BaseProgression progression, BlueprintPlotter plotter)
+            FriendField friends, CassetteField cassettes, LogCacheField logs, BellSignalField signals,
+            CassetteShelf shelf, RelayField relays, BaseProgression progression, BlueprintPlotter plotter,
+            LiftStation lift)
         {
             _visuals = visuals;
             _glints = glints;
@@ -137,6 +142,7 @@ namespace MoonProject.Gameplay
             _relays = relays;
             _progression = progression;
             _plotter = plotter;
+            _lift = lift;
         }
 
         public void Initialize(GameContext context)
@@ -204,7 +210,9 @@ namespace MoonProject.Gameplay
                 !_relays.Initialize(services, Upgrades, _tower, _tether, _friends.Tuning, Placement(context)) ||
                 !_progression.Initialize(services, Power, _home, _workshop, _sonar, _friends, _relays,
                     Upgrades) ||
-                !_plotter.Initialize(services, Blueprints, _workshop, _progression.Tuning, Upgrades))
+                !_plotter.Initialize(services, Blueprints, _workshop, _progression.Tuning, Upgrades) ||
+                !_lift.Initialize(services, Power, _salvage.Catalog, context.Get<IRoverStillness>()))
+
             {
                 enabled = false;
                 return;
@@ -256,6 +264,7 @@ namespace MoonProject.Gameplay
             context.Register<IRelayStatus>(_relays);
             context.Register<IBasePower>(Power);
             context.Register<IBlueprintBoard>(Blueprints);
+            context.Register<IStoryPartGate>(TowerParts);
             Upgrades.PublishSignals();
             RegisterSaveSections(save);
         }
@@ -288,6 +297,8 @@ namespace MoonProject.Gameplay
                 GameplaySaveKeys.BlueprintsVersion,
                 () => new BlueprintsSaveData { found = Blueprints.Capture(), carried = Blueprints.CaptureCarried() },
                 RestoreBlueprints)));
+            _saveTokens.Add(save.Register(new SaveSection<LiftSaveData>(GameplaySaveKeys.Lift,
+                GameplaySaveKeys.LiftVersion, _lift.Capture, _lift.Restore)));
             _saveTokens.Add(save.Register(new SaveSection<TowerPartsSaveData>(GameplaySaveKeys.TowerParts,
                 GameplaySaveKeys.TowerPartsVersion, TowerParts.Capture, RestoreTowerParts)));
         }
@@ -505,7 +516,7 @@ namespace MoonProject.Gameplay
                 : _cassettes.Catalog == null ? "CassetteField has no CassetteCatalog."
                 : _cassettes.Catalog.Validate() != null ? "CassetteCatalog " + _cassettes.Catalog.Validate() + "."
                 : _logs == null ? "LogCacheField is not assigned."
-                : _signals == null ? "SignalField is not assigned."
+                : _signals == null ? "BellSignalField is not assigned."
                 : _shelf == null ? "CassetteShelf is not assigned."
                 : _relays == null ? "RelayField is not assigned."
                 : _progression == null ? "BaseProgression is not assigned."
