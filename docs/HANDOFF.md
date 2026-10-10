@@ -4,21 +4,39 @@ Read this, then `CLAUDE.md`, then `docs/VISION.md`, `docs/DESIGN.md`, `docs/ARCH
 It records how the project is run, where it stands, and what comes next, so a new Director session (on any
 account) can continue without the old conversation.
 
-## 1. Where it stands
-- **Shipped:**
-  - 0.4.0 "look right": pushed 50990e8.
-  - 0.4.1: New game and stargazing. Pushed 98f6edd. Verified with EditMode 1173, PlayMode 232 (13 skipped,
-    0 failed) and the Playthrough.
-  - Playtest zips are in `Builds/` (git-ignored): `LofiLunar-0.4.1-20261009-98f6edd.zip` is the latest.
-- **main:** after 98f6edd there are only docs commits: the M3-16 spec, the owner's approvals and this file.
-- **Nothing in flight.** Every box branch is merged into main and every box worktree is clean. Both batch slots are
-  free.
-- **The owner's review of 0.4.x found:**
-  - rust runs read like a printed pattern;
-  - the lift does nothing;
-  - everything is laid out and lit from minute one;
-  - the old bench and "home" have no clear job.
-  These are planned below.
+## 1. Where it stands (updated 2026-10-10 evening, account at ~95% of its weekly limit)
+- **Shipped and pushed:**
+  - 0.4.0: 50990e8.
+  - 0.4.1 (New game, stargazing): 98f6edd.
+  - Playtest zips are in `Builds/`.
+- **0.4.2 SHIPPED** (rust with causes, M3-15 §3): pushed 5a293e8, verified with EditMode 1179, PlayMode 232 (13 skipped) and the Playthrough. Build: `Builds/LofiLunar-0.4.2-20261010-5a293e84.zip`.
+- **0.5 groundwork already on main** (inert until gameplay lands):
+  - Core contracts: BasePowerStage, IBasePower, BasePowerChanged, NextStepChanged, PlaceFirstApproached, HomeLight,
+    IHomeLights;
+  - World's HomeLightingSystem (registers IHomeLights);
+  - the design review (`docs/design/review-2026-10-10.md`) and the adopted amendments in M3-16.
+- **0.5 in flight on box branches (not merged).** Land gameplay + ui + audio + rover + art together, only after
+  gameplay's part F (the Playthrough follows steps 0–8) passes:
+
+  | Box | State |
+  |---|---|
+  | gameplay | A–F done, tip 1b2ba6cd: power stages, dormancy, steps, places, blueprints (BlueprintFound), IHomeLights wired, P4. The Playthrough runs in step order but FAILS at step 7 (the relay is unaffordable). P9 (2× economy, a signature material per site, the path via depot, garage and Kestrel) + P10 (4 depot cuts) were in progress to fix it. Then P1, P2, P8. New ProgressionTuning asset; metas for Progression/*. |
+  | ui | Done, 583ec3cc: next line, Guidance toggle, place cards, HUD verbs, Look-up hint waits for cards. UiTuning `_guidance` needs a re-serialise after landing. |
+  | audio | Done, 93fd84f4: wake stingers per stage, the "not yet" tone. StationAudioTuning has 2 new fields. StationNotYet is also in box/gameplay with an identical diff. |
+  | rover | P5 two-beat wake done, tip c53e3681. Beat 1 is the lens looking up at the stars. Beat 2 is an over-the-shoulder shot with Earth in the upper third, then it eases to the chase. Approved. RoverCameraTuning has the `_wake*` fields; reset or re-serialise them after landing. Metas: WakeOpening.cs and its tests. |
+  | art | Dormant items 1–4 done, 5af92d4: bay shutter, lander glows, HOME sign, blueprint board (pegboard). Queued: P3 first (07's rear must not read as a face), then P7 (the pen plotter replaces the pegboard), then the lift states, pads and power cables. |
+  | world | Its part is landed. |
+
+- **After landing 0.5's first batch:**
+  - Run `^(Art|Rover|Gameplay|UI|Audio)/` builders and the scene.
+  - Re-serialise the tuning assets.
+  - Raise `SaveService.OldestCompatibleContent` and the version to 0.5.0 at release (M3-16 breaks old progress).
+- **Remaining 0.5 work** (M3-16 "Amendments adopted"):
+  - gameplay: P1 story parts per tower level, P2 the chasm before the bay, P4, P6 the dock's evening, P8, P9 the 2×
+    economy with signature materials, P10;
+  - the lift station and ride, once Art's lift lands;
+  - rover: the ladder look and riding the lift;
+  - also in 0.5: M3-07 map and M3-09 title.
 
 ## 2. What comes next (owner-approved order)
 1. **0.4.2:** M3-15 §3 "rust v3", art only (`docs/features/M3-15-logic-pass.md`).

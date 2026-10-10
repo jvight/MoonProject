@@ -138,8 +138,11 @@ def wait_editor_idle():
         time.sleep(EDITOR_POLL_SECONDS)
 
 
-def editor_errors():
-    text = mcp_text("console-get-logs", {"logTypeFilter": "Error", "maxEntries": 20}, EDITOR_STATE_TIMEOUT)
+def editor_errors(since):
+    """Errors the editor logged since <since> (time.monotonic()), rounded up to whole minutes."""
+    minutes = int((time.monotonic() - since) // 60) + 1
+    text = mcp_text("console-get-logs", {"logTypeFilter": "Error", "maxEntries": 20, "lastMinutes": minutes},
+                    EDITOR_STATE_TIMEOUT)
     return json.loads(text).get("result") or []
 
 
@@ -155,11 +158,11 @@ def run_editor(command, filter_pattern=""):
 def hot_reload(filter_pattern, scene):
     if editor_state() is None:
         fail("the main editor is unreachable; open the main project in Unity first")
-    say("editor: clearing the console and refreshing assets")
-    mcp_text("console-clear-logs", {}, EDITOR_STATE_TIMEOUT)
+    say("editor: refreshing assets")
+    started = time.monotonic()
     mcp_text("assets-refresh", {}, BUILD_TIMEOUT)
     wait_editor_idle()
-    errors = editor_errors()
+    errors = editor_errors(started)
     if errors:
         print(json.dumps(errors, indent=2, ensure_ascii=False))
         fail("the main editor logged errors after the refresh")
