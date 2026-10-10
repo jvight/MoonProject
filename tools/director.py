@@ -10,7 +10,7 @@ Usage:
                                 [--dry-run] [--worktree PATH]
   python tools/director.py refresh [--filter REGEX] [--scene]
   python tools/director.py outputs -m MESSAGE [-m MESSAGE ...]
-  python tools/director.py verify [--skip-playthrough] [--parallel] [--push]
+  python tools/director.py verify [--skip-playthrough] [--parallel] [--shards N] [--push]
 
 status   every box branch against main (ahead, behind, uncommitted files in its worktree), main against origin and
          the verification worktree, the batch slots, whether the main editor is idle, and the last status block of
@@ -30,13 +30,17 @@ outputs  commits what the builders regenerated under Assets/ and reports any oth
 verify   fast-forwards the verification worktree to main and runs compile_check, EditMode, PlayMode and the
          Playthrough golden path there through tools/unity_batch.py, stopping at the first failure. --parallel runs
          the Playthrough in a second worktree (MoonProject-wt/director2, created on first use) alongside EditMode and
-         PlayMode, using both batch slots (~25 min instead of ~45). --push pushes the verified commit to origin/main
-         when every step passed.
+         PlayMode, using both batch slots (~25 min instead of ~45). PlayMode is sharded by test assembly across
+         the shard worktrees (director, then director2 unless it runs the Playthrough, then landtest; each must
+         exist, except director2 which is created on first use), balanced on the assembly times of the last full
+         run, so it takes the longest shard's time, not the sum; --shards N caps it (1 = one Unity, as before).
+         --push pushes the verified commit to origin/main when every step passed.
 
 Each -m is one paragraph of the commit message, as with git.
 """
 import argparse
 import collections
+import contextlib
 import datetime
 import json
 import os
@@ -47,6 +51,7 @@ import sys
 import threading
 import time
 import urllib.error
+import xml.etree.ElementTree as ElementTree
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -61,6 +66,8 @@ VERIFY_BRANCH = "director/verify"
 VERIFY_WORKTREE_2 = ROOT.parent / "MoonProject-wt" / "director2"
 VERIFY_BRANCH_2 = "director/verify2"
 WORKTREE_LOCK = Path("Logs") / "director.lock"
+SPARE_WORKTREE = ROOT.parent / "MoonProject-wt" / "landtest"
+MAX_SHARDS = 3
 BOX_PREFIX = "box/"
 BUILDER_DOMAINS = {"art": "Art", "world": "World", "rover": "Rover", "gameplay": "Gameplay", "audio": "Audio",
                    "ui": "UI"}
@@ -437,17 +444,83 @@ def ready_worktree(path, branch):
     return git("rev-parse", "HEAD", cwd=path)
 
 
+def playmode_assemblies(worktree):
+    """Names of the PlayMode test assemblies: test asmdefs for every platform that reference the test runner."""
+    names = []
+    for path in sorted((worktree / "Assets" / "_Project").rglob("*.asmdef")):
+        data = json.loads(path.read_text(encoding="utf-8-sig"))
+        if ("UNITY_INCLUDE_TESTS" in data.get("defineConstraints", []) and not data.get("includePlatforms")
+                and "UnityEngine.TestRunner" in data.get("references", [])):
+            names.append(data["name"])
+    return names
+
+
+def assembly_seconds(results_xml):
+    """{assembly name: seconds} from an NUnit results.xml, or {} when it cannot be read."""
+    try:
+        root = ElementTree.parse(results_xml).getroot()
+    except (OSError, ElementTree.ParseError):
+        return {}
+    return {suite.get("name", "").removesuffix(".dll"): float(suite.get("duration", 0))
+            for suite in root.iter("test-suite") if suite.get("type") == "Assembly"}
+
+
+def last_playmode_seconds(worktree):
+    """Assembly times of the newest PlayMode run in <worktree> that covered more than one assembly."""
+    for run in sorted((worktree / "Logs" / "batch").glob("*-tests-playmode"), reverse=True):
+        seconds = assembly_seconds(run / "results.xml")
+        if len(seconds) > 1:
+            return seconds
+    return {}
+
+
+def shard(assemblies, seconds, count):
+    """Splits <assemblies> into at most <count> non-empty shards, longest first onto the lightest shard. Unknown
+    assemblies weigh the median known time (1 s when none is known)."""
+    known = sorted(seconds[a] for a in assemblies if a in seconds)
+    default = known[len(known) // 2] if known else 1.0
+    weights = {a: seconds.get(a, default) for a in assemblies}
+    shards = [[] for _ in range(max(1, min(count, len(assemblies))))]
+    totals = [0.0] * len(shards)
+    for name in sorted(assemblies, key=lambda a: (-weights[a], a)):
+        lightest = totals.index(min(totals))
+        shards[lightest].append(name)
+        totals[lightest] += weights[name]
+    return [sorted(s) for s in shards]
+
+
+def shard_worktrees(args):
+    """Worktrees PlayMode shards run in: director first, director2 when it is not running the Playthrough, then the
+    spare landtest worktree when it exists."""
+    pool = [(VERIFY_WORKTREE, VERIFY_BRANCH)]
+    if not (args.parallel and not args.skip_playthrough):
+        pool.append((VERIFY_WORKTREE_2, VERIFY_BRANCH_2))
+    if SPARE_WORKTREE.exists():
+        pool.append((SPARE_WORKTREE, f"director/{SPARE_WORKTREE.name}"))
+    return pool[:max(1, min(args.shards, MAX_SHARDS))]
+
+
 def cmd_verify(args):
     if not VERIFY_WORKTREE.exists():
         fail(f"no verification worktree at {VERIFY_WORKTREE}")
-    with WorktreeLock(VERIFY_WORKTREE, "verify"):
+    with contextlib.ExitStack() as locks:
+        used = [path for path, _ in shard_worktrees(args)]
+        for path in dict.fromkeys(used + [VERIFY_WORKTREE_2]):
+            if path.exists():
+                locks.enter_context(WorktreeLock(path, "verify"))
         verify(args)
 
 
 def verify(args):
     sha = ready_worktree(VERIFY_WORKTREE, VERIFY_BRANCH)
     batch = [sys.executable, "tools/unity_batch.py", "tests", "--platform"]
-    tests = [("editmode", batch + ["editmode"]), ("playmode", batch + ["playmode"])]
+    pool = shard_worktrees(args)
+    for path, branch in pool[1:]:
+        if ready_worktree(path, branch) != sha:
+            fail(f"{path} is not at {sha[:7]}")
+    shards = shard(playmode_assemblies(VERIFY_WORKTREE), last_playmode_seconds(VERIFY_WORKTREE), len(pool))
+    playmode = [(f"playmode {' '.join(a.removeprefix('MoonProject.') for a in names)}",
+                 batch + ["playmode"] + [arg for name in names for arg in ("--assembly", name)]) for names in shards]
     playthrough = [("playthrough", batch + ["playmode", "--category", "Playthrough", "--timeout",
                                             str(PLAYTHROUGH_TIMEOUT)])]
     out_dir = ROOT / "Logs" / "director"
@@ -458,22 +531,27 @@ def verify(args):
     run_chain([("compile_check", [sys.executable, "tools/compile_check.py"])], VERIFY_WORKTREE,
               base.with_suffix(".compile.log"), True, results)
     if results[-1][1]:
-        if args.parallel and not args.skip_playthrough:
+        parallel = args.parallel and not args.skip_playthrough
+        chains = [(path, [step], base.with_name(f"{base.name}.shard{i}.log"))
+                  for i, ((path, _), step) in enumerate(zip(pool, playmode))]
+        chains[0] = (VERIFY_WORKTREE, [("editmode", batch + ["editmode"])] + chains[0][1],
+                     base.with_suffix(".tests.log"))
+        if parallel:
             if ready_worktree(VERIFY_WORKTREE_2, VERIFY_BRANCH_2) != sha:
                 fail(f"{VERIFY_WORKTREE_2} is not at {sha[:7]}")
-            say(f"verify: EditMode + PlayMode in {VERIFY_WORKTREE.name} alongside the Playthrough in "
-                f"{VERIFY_WORKTREE_2.name} (logs {base.name}.*.log)")
-            chains = [threading.Thread(target=run_chain, args=(tests, VERIFY_WORKTREE, base.with_suffix(".tests.log"),
-                                                               False, results)),
-                      threading.Thread(target=run_chain, args=(playthrough, VERIFY_WORKTREE_2,
-                                                               base.with_suffix(".playthrough.log"), False, results))]
-            for chain in chains:
-                chain.start()
-            for chain in chains:
-                chain.join()
-        else:
-            steps = tests if args.skip_playthrough else tests + playthrough
-            run_chain(steps, VERIFY_WORKTREE, base.with_suffix(".tests.log"), True, results)
+            chains.append((VERIFY_WORKTREE_2, playthrough, base.with_suffix(".playthrough.log")))
+        say(f"verify: EditMode, then PlayMode in {len(playmode)} shard(s) on "
+            f"{', '.join(path.name for path, _ in pool[:len(playmode)])}"
+            + (f", alongside the Playthrough in {VERIFY_WORKTREE_2.name}" if parallel else "")
+            + f" (logs {base.name}.*.log)")
+        threads = [threading.Thread(target=run_chain, args=(steps, path, log, len(chains) == 1, results))
+                   for path, steps, log in chains]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+        if not parallel and not args.skip_playthrough and all(ok for _, ok, _ in results):
+            run_chain(playthrough, VERIFY_WORKTREE, base.with_suffix(".playthrough.log"), True, results)
     summary = [f"verify {sha} ({stamp})"]
     for name, ok, tail in results:
         summary.append(f"{'PASS' if ok else 'FAIL'}  {name}")
@@ -481,7 +559,7 @@ def verify(args):
             summary += ["      " + line for line in tail]
     base.with_suffix(".txt").write_text("\n".join(summary) + "\n", encoding="utf-8")
     print("\n".join(summary))
-    expected = 3 if args.skip_playthrough else 4
+    expected = 2 + len(playmode) + (0 if args.skip_playthrough else 1)
     if len(results) != expected or not all(ok for _, ok, _ in results):
         fail(f"{sha[:7]} did not verify")
     say(f"VERIFIED {sha[:7]}")
@@ -523,6 +601,8 @@ def main():
     verify.add_argument("--push", action="store_true", help="push the verified commit to origin/main")
     verify.add_argument("--parallel", action="store_true",
                         help="run the Playthrough in a second verification worktree alongside the suites")
+    verify.add_argument("--shards", type=int, default=MAX_SHARDS,
+                        help=f"PlayMode shards, one Unity each (default and maximum {MAX_SHARDS}; 1 = unsharded)")
     args = ap.parse_args()
     {"status": cmd_status, "land": cmd_land, "refresh": cmd_refresh, "outputs": cmd_outputs,
      "verify": cmd_verify}[args.cmd](args)
