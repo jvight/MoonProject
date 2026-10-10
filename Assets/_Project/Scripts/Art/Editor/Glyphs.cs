@@ -5,7 +5,7 @@ namespace MoonProject.Art.Editor
     /// <summary>
     /// Hand-painted block letters for signs and stickers: simple polygons in a 0.14 x 0.2 cell (origin bottom-left,
     /// x right, y up), ready for <see cref="LowPolyMeshBuilder.Extrude"/>. Each call returns a fresh array. Letters
-    /// with a hole (0, O, P, R) are solid outlines whose counter is painted over in the paper colour.
+    /// with a hole (0, D, O, P, R) are solid outlines whose counter is painted over in the paper colour.
     /// </summary>
     internal static class Glyphs
     {
@@ -48,7 +48,10 @@ namespace MoonProject.Art.Editor
             }
         }
 
-        /// <summary>The outline of <paramref name="letter"/> (upper case, digits 0 and 7).</summary>
+        /// <summary>
+        /// The outline of <paramref name="letter"/> (the upper-case letters signs need, digits 0 and 7, a dash and a
+        /// full stop).
+        /// </summary>
         public static Vector2[] For(char letter)
         {
             switch (letter)
@@ -80,6 +83,21 @@ namespace MoonProject.Art.Editor
                     return T();
                 case 'W':
                     return W();
+                case 'U':
+                    return Outline(0f, 0.03f, 0.03f, 0f, 0.11f, 0f, 0.14f, 0.03f, 0.14f, 0.2f, 0.1f, 0.2f, 0.1f, 0.04f,
+                        0.04f, 0.04f, 0.04f, 0.2f, 0f, 0.2f);
+                case 'F':
+                    return Outline(0f, 0f, 0.04f, 0f, 0.04f, 0.08f, 0.11f, 0.08f, 0.11f, 0.12f, 0.04f, 0.12f, 0.04f,
+                        0.16f, 0.13f, 0.16f, 0.13f, 0.2f, 0f, 0.2f);
+                case 'D':
+                    return Outline(0f, 0f, 0.1f, 0f, 0.14f, 0.04f, 0.14f, 0.16f, 0.1f, 0.2f, 0f, 0.2f);
+                case 'K':
+                    return Outline(0f, 0f, 0.04f, 0f, 0.04f, 0.07f, 0.1f, 0f, 0.14f, 0f, 0.07f, 0.1f, 0.14f, 0.2f,
+                        0.095f, 0.2f, 0.04f, 0.13f, 0.04f, 0.2f, 0f, 0.2f);
+                case '-':
+                    return Outline(0.02f, 0.085f, 0.12f, 0.085f, 0.12f, 0.115f, 0.02f, 0.115f);
+                case '.':
+                    return Outline(0.05f, 0f, 0.09f, 0f, 0.09f, 0.04f, 0.05f, 0.04f);
                 default:
                     throw new System.ArgumentException($"No glyph for '{letter}'.", nameof(letter));
             }
@@ -92,6 +110,7 @@ namespace MoonProject.Art.Editor
             {
                 case '0':
                 case 'O':
+                case 'D':
                     counter = new Rect(0.045f, 0.045f, 0.05f, 0.11f);
                     return true;
                 case 'P':
@@ -102,6 +121,18 @@ namespace MoonProject.Art.Editor
                     counter = default;
                     return false;
             }
+        }
+
+        /// <summary>A glyph outline from (x, y) pairs, counter-clockwise, in cell units.</summary>
+        private static Vector2[] Outline(params float[] xy)
+        {
+            var points = new Vector2[xy.Length / 2];
+            for (int i = 0; i < points.Length; i++)
+            {
+                points[i] = new Vector2(xy[2 * i], xy[2 * i + 1]);
+            }
+
+            return points;
         }
 
         public static Vector2[] Zero()

@@ -98,6 +98,20 @@ namespace MoonProject.Art.Editor
 
         private const float JamRoll = 22f;
 
+        /// <summary>The crew's OUT OF ORDER board (width along the rail, height, thickness), a little over A3.</summary>
+        private static readonly Vector3 JamBoardSize = new Vector3(0.46f, 0.31f, 0.012f);
+
+        /// <summary>Where the board hangs along the dock-side rail, between its middle and front posts.</summary>
+        private const float JamBoardZ = 0.55f;
+
+        /// <summary>How far the board hangs askew on its stretched tie (degrees).</summary>
+        private const float JamBoardAskew = -9f;
+
+        private const float JamLetterHeight = 0.07f;
+
+        /// <summary>How far the snapped cable's frayed end hangs below the deck's front lip.</summary>
+        private const float JamCableHang = 0.42f;
+
         private static Vector3 Motor => new Vector3(Centre.x + PostHalfSpan + 0.25f, DrumHeight, Centre.z + PostZ);
 
         /// <summary>
@@ -194,6 +208,63 @@ namespace MoonProject.Art.Editor
 
             RecipeKit.Rod(b, ground + new Vector3(radii[0], 0f, 0f), ground + new Vector3(0.62f, -0.01f, 0.18f), 0.014f,
                 6, PaletteSwatch.Charcoal);
+            return b;
+        }
+
+        /// <summary>
+        /// What says "jammed" at a glance, in platform space (M3-16): the crew's board hung on the outside of the
+        /// dock-side rail between its front posts, askew on one stretched tie, "OUT OF ORDER" in marker with Kenji's
+        /// "- K."; and the snapped cable's lower end, fallen from its shackle, slid down the sagging side of the deck
+        /// and hanging frayed over the front lip, where the ladder look and the approach both see it. Hidden once the
+        /// lift is restored.
+        /// </summary>
+        public static LowPolyMeshBuilder JamProps()
+        {
+            var b = new LowPolyMeshBuilder(1400);
+            float rail = -PlatformWidth * 0.5f + 0.04f;
+            var centre = new Vector3(rail - 0.025f - JamBoardSize.z * 0.5f, RailHeight - 0.18f, JamBoardZ);
+            Matrix4x4 board = SiteKit.Face(centre, Vector3.left, Vector3.up)
+                * Matrix4x4.Rotate(Rotation(new Vector3(0f, 0f, JamBoardAskew)));
+            b.Box(board, JamBoardSize, PaletteSwatch.Enamel, 0.004f);
+            float face = JamBoardSize.z * 0.5f + 0.001f;
+            Glyphs.Write(b, board * At(0f, 0.07f, face), "OUT OF", JamLetterHeight, PaletteSwatch.Charcoal,
+                PaletteSwatch.Enamel);
+            Glyphs.Write(b, board * At(0f, -0.025f, face), "ORDER", JamLetterHeight, PaletteSwatch.Charcoal,
+                PaletteSwatch.Enamel);
+            Glyphs.Write(b, board * At(-0.11f, -0.11f, face), "- K.", JamLetterHeight * 0.55f, PaletteSwatch.Rust,
+                PaletteSwatch.Enamel);
+            for (int corner = -1; corner <= 1; corner += 2)
+            {
+                Vector3 hole = board.MultiplyPoint3x4(new Vector3(corner * (JamBoardSize.x * 0.5f - 0.03f),
+                    JamBoardSize.y * 0.5f - 0.025f, 0f));
+                RecipeKit.Rod(b, hole, new Vector3(rail, RailHeight + 0.02f, hole.z), 0.005f, 4,
+                    PaletteSwatch.Charcoal);
+            }
+
+            var fallen = new[]
+            {
+                new Vector3(CarriageHalfWidth, CarriageHeight + 0.06f, CarriageZ),
+                new Vector3(CarriageHalfWidth - 0.03f, 0.4f, CarriageZ + 0.16f),
+                new Vector3(0.76f, 0.015f, -0.8f),
+                new Vector3(0.74f, 0.015f, 0.2f),
+                new Vector3(0.66f, 0.015f, 1.1f),
+                new Vector3(0.62f, -0.01f, PlatformLength * 0.5f + 0.02f),
+                new Vector3(0.6f, -0.2f, PlatformLength * 0.5f + 0.05f),
+                new Vector3(0.62f, -JamCableHang, PlatformLength * 0.5f + 0.04f),
+            };
+            for (int i = 1; i < fallen.Length; i++)
+            {
+                RecipeKit.Rod(b, fallen[i - 1], fallen[i], 0.014f, 6, PaletteSwatch.Charcoal);
+                b.Icosphere(At(fallen[i]), 0.0145f, 0, PaletteSwatch.Charcoal);
+            }
+
+            Vector3 frayed = fallen[fallen.Length - 1];
+            for (int k = -1; k <= 1; k++)
+            {
+                RecipeKit.Rod(b, frayed, frayed + new Vector3(0.012f * k, -0.05f, 0.01f * k), 0.004f, 4,
+                    PaletteSwatch.Rust);
+            }
+
             return b;
         }
 

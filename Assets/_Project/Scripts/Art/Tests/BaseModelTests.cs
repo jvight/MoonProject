@@ -72,6 +72,8 @@ namespace MoonProject.Art.Tests
             Assert.IsFalse(lander.GetDescendant("LiftCable_R").Active, "the taut right cable waits for the repair");
             Assert.IsTrue(lander.GetDescendant(BaseModelBuilder.LiftSnappedCableName).Active,
                 "the snapped one hangs and coils on the dust");
+            Assert.IsTrue(platform.GetDescendant(BaseModelBuilder.LiftJamPropsName).Active,
+                "the crew's out-of-order card and the cable's loose end say jammed at a glance");
             ModelNode lamp = lander.GetDescendant(BaseModelBuilder.WinchLampName);
             Assert.AreEqual(ModelMaterial.PaletteGlowOff, lamp.Material, "the winch lamp starts dark");
             Assert.That(lander.GetDescendant(BaseModelBuilder.LiftHopperMouthName).LocalPosition.y,

@@ -967,6 +967,7 @@ namespace MoonProject.Art.Editor
                 }
 
                 Descendant(lander, BaseModelBuilder.LiftSnappedCableName).gameObject.SetActive(false);
+                Descendant(platform, BaseModelBuilder.LiftJamPropsName).gameObject.SetActive(false);
                 SetGlow(lander, BaseModelBuilder.WinchLampName, new[] { string.Empty }, 1f);
                 LightCable(lander, "Lift");
             }
