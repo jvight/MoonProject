@@ -42,10 +42,10 @@ namespace MoonProject.Art.Editor
         {
             float length = PadFront - PadBack;
             float middle = (PadBack + PadFront) * 0.5f;
-            b.Box(At(0f, PadTop * 0.5f, middle), new Vector3(PadHalfWidth * 2f, PadTop, length), PaletteSwatch.Metal,
-                0.015f);
+            b.Box(At(0f, PadTop * 0.5f, middle), new Vector3(PadHalfWidth * 2f, PadTop, length),
+                PaletteSwatch.WornPanel, 0.015f);
             b.Wedge(At(0f, PadTop * 0.5f, PadFront + 0.12f), new Vector3(PadHalfWidth * 2f - 0.1f, PadTop, 0.24f),
-                PaletteSwatch.Metal);
+                PaletteSwatch.WornPanel);
             for (int side = -1; side <= 1; side += 2)
             {
                 b.Box(At(side * LaneX, PadTop + 0.003f, middle + 0.1f), new Vector3(0.1f, 0.006f, length - 0.6f),

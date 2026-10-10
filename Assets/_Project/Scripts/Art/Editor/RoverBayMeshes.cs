@@ -519,8 +519,8 @@ namespace MoonProject.Art.Editor
         public static Vector3 ShutterRoller => new Vector3(0f, ArchY(0f) + ShutterRollerGap, FrontZ + ShutterAhead);
 
         /// <summary>
-        /// The roll-up shutter's curtain in Shutter space, hanging from the roller (origin) to the ground: faded slats
-        /// with dark seams between them, a metal bottom bar with a handle, rust from its seams and a rusted foot.
+        /// The roll-up shutter's curtain in Shutter space, hanging from the roller (origin) to the ground: worn mid-grey
+        /// slats with dark seams between them, a metal bottom bar with a handle, rust from its seams and a rusted foot.
         /// </summary>
         public static LowPolyMeshBuilder Shutter()
         {
@@ -534,7 +534,7 @@ namespace MoonProject.Art.Editor
             for (int i = 0; i < slats; i++)
             {
                 float y = -(i + 0.5f) * pitch;
-                PaletteSwatch paint = i >= slats - DustySlats ? PaletteSwatch.CakedDust : PaletteSwatch.FadedPaint;
+                PaletteSwatch paint = i >= slats - DustySlats ? PaletteSwatch.CakedDust : PaletteSwatch.WornPanel;
                 if (i == TornSlat)
                 {
                     // Half of this slat was torn away long ago: the dark bay shows through the gap.

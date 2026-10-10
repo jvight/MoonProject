@@ -37,5 +37,11 @@ namespace MoonProject.Art
         FadedPaint = 27,
         CakedDust = 28,
         FadedAccent = 29,
+
+        /// <summary>
+        /// A big crew panel weathered to a mid value (M3-18 V8): shutters, sheet walls, decks and pads that would
+        /// otherwise be the brightest thing in a dark base. Pale stays for 07's cream and for labels.
+        /// </summary>
+        WornPanel = 30,
     }
 }
