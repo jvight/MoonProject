@@ -99,7 +99,7 @@ namespace MoonProject.Gameplay.Editor
             var friends = Part<FriendField>(context, host, "Friends");
             var cassettes = Part<CassetteField>(context, host, "Cassettes");
             var logs = Part<LogCacheField>(context, host, "LogCaches");
-            var signals = Part<SignalField>(context, host, "BellSignals");
+            var signals = Part<BellSignalField>(context, host, "BellSignals");
             var relays = Part<RelayField>(context, host, "Relays");
             var progression = Part<BaseProgression>(context, host, "Progression");
             var plotter = Part<BlueprintPlotter>(context, host, "Plotter");

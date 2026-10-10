@@ -170,7 +170,7 @@ namespace MoonProject.UI
         /// <param name="deltaTime">Unscaled seconds; pass 0 while paused so reading time waits too.</param>
         /// <param name="closeGlyph">The cancel control's label for the active device.</param>
         /// <param name="device">The active device (key cap or round glyph).</param>
-        /// <param name="stageClear">False while the radio ticker's line is still easing away: the card waits.</param>
+        /// <param name="stageClear">False while a ticker line, place card or prompt is still easing away: the card waits.</param>
         public void Tick(float deltaTime, string closeGlyph, InputDeviceKind device, bool stageClear)
         {
             _glyph.Set(closeGlyph, device);

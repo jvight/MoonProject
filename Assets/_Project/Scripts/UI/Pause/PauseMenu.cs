@@ -102,6 +102,9 @@ namespace MoonProject.UI
 
         public bool IsOpen { get; private set; }
 
+        /// <summary>How far the veil behind the menu has eased in (0..1).</summary>
+        public float Openness => _veil.Visibility;
+
         /// <summary>True while the settings panel is (easing) open.</summary>
         public bool IsSettingsOpen => _settingsPanel.Target;
 

@@ -13,7 +13,7 @@ namespace MoonProject.Gameplay
     /// is never yanked away). The current target and the found count are saved ("gameplay.bell_signals").
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class SignalField : MonoBehaviour
+    public sealed class BellSignalField : MonoBehaviour
     {
         private BellTuning _tuning;
         private FriendField _friends;
@@ -35,8 +35,8 @@ namespace MoonProject.Gameplay
             _friends = friends != null ? friends : throw new ArgumentNullException(nameof(friends));
             if (friends.DialFriend == null || friends.BellTuning == null)
             {
-                Debug.LogError($"{nameof(SignalField)}: no friend brings the radio dial (Bell), so nobody picks up " +
-                               "signals. Check the friend catalog.", this);
+                Debug.LogError($"{nameof(BellSignalField)}: no friend brings the radio dial (Bell), so nobody picks " +
+                               "up signals. Check the friend catalog.", this);
                 enabled = false;
                 return false;
             }

@@ -94,6 +94,7 @@ namespace MoonProject.Rover
         private IDisposable _purchases;
         private IDisposable _tubesFound;
         private IDisposable _tubesDelivered;
+        private IDisposable _tubesRestored;
         private TubeCarry _tubes;
         private Vector3 _tubeScale;
         private IDisposable _fittings;
@@ -189,6 +190,7 @@ namespace MoonProject.Rover
             _tube.gameObject.SetActive(false);
             _tubesFound = _events.Subscribe<BlueprintFound>(found => _tubes.Found(found.KitId));
             _tubesDelivered = _events.Subscribe<BlueprintDelivered>(delivered => _tubes.Delivered(delivered.KitId));
+            _tubesRestored = _events.Subscribe<BlueprintsCarriedRestored>(restored => _tubes.Restore(restored.Count));
             return true;
         }
 
@@ -668,6 +670,7 @@ namespace MoonProject.Rover
             _fittings?.Dispose();
             _tubesFound?.Dispose();
             _tubesDelivered?.Dispose();
+            _tubesRestored?.Dispose();
         }
     }
 }

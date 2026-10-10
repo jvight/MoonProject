@@ -13,15 +13,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _padRadius: 1.8
-  _padRingWidth: 0.35
   _padIdle: 0.22
   _padInviting: 0.65
   _padOccupied: 1
-  _padDone: 0.12
   _breathPeriod: 3.2
   _padBreathDepth: 0.35
   _padEase: 0.4
-  _padSegments: 48
   _padFlare: 2.4
   _feedBeamLead: 0.15
   _feedFlight: 0.55
@@ -32,7 +29,24 @@ MonoBehaviour:
   _lampOccupied: 0.75
   _lampFlare: 4.7
   _lampEase: 0.35
+  _lightColor: {r: 1, g: 0.70980394, b: 0.2784314, a: 1}
+  _lightIdle: 0.25
+  _lightWorking: 3
+  _lightEase: 0.5
+  _lightRange: 6
+  _lightOffset: 0.25
+  _lightShadows: 1
+  _workLinger: 3
+  _pitTrigger: 0.02
+  _pitLightIntensity: 2.5
+  _pitLightRange: 2.5
+  _pitLightLift: 0.1
+  _tipLightIntensity: 1.5
+  _tipLightRange: 1.2
   _signGlow: 0.6
+  _signFlickerDuration: 1.6
+  _signFlickers: 4
+  _signFlickerDepth: 0.85
   _sparkBursts: 3
   _sparkCount: 18
   _sparkInterval: 0.16
@@ -43,3 +57,4 @@ MonoBehaviour:
   _sparkTilt: 35
   _sparkGravity: 0.17
   _sparkStreak: 0.05
+  _weldArmTravel: 0.12

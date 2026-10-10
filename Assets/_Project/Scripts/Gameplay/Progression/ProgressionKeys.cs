@@ -33,6 +33,9 @@ namespace MoonProject.Gameplay
         /// <summary>Step 4: dig, tow and place the first relic.</summary>
         public const string NextRelic = "next.relic";
 
+        /// <summary>Step 4b (P2): Tilly spots Bell's light across the chasm; drive there and look across.</summary>
+        public const string NextChasm = "next.chasm";
+
         /// <summary>Step 5: power the bay (tower L2), park on the turntable, fit a kit.</summary>
         public const string NextBay = "next.bay";
 

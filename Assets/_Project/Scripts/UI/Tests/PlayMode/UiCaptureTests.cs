@@ -421,10 +421,10 @@ namespace MoonProject.UI.PlayModeTests
             yield return Tap(keyboard.escapeKey);
             yield return new WaitForSecondsRealtime(1f);
 
-
             yield return Tap(keyboard.escapeKey);
             yield return new WaitForSecondsRealtime(1.2f);
             yield return Capture(camera, folder, "12_pause");
+            Assert.AreEqual(1f, ui.Backdrop.Weight, 0.01f, "the frame behind the pause menu is blurred");
             Submit(ui.Layout.SettingsButton);
             yield return new WaitForSecondsRealtime(1f);
             yield return Capture(camera, folder, "13_pause_settings");
@@ -623,7 +623,8 @@ namespace MoonProject.UI.PlayModeTests
         /// Quality check of the first ten minutes (M3-16 "one voice at a time"): the opening's cards, lines and prompts
         /// replayed in order over the Main scene, every frame checked so that no two voices (title, place or blueprint
         /// card, story card, kit title, ticker, prompt, site name, Look up) share the screen, and each moment
-        /// captured as 6x_*. The quiet next line may stay under them. Rerun with --filter CaptureFirstMinutes.
+        /// captured as 6x_*. Ends on Tilly's repair: her story card waits for the repair prompt's fade. The quiet next
+        /// line may stay under them. Rerun with --filter CaptureFirstMinutes.
         /// </summary>
         [UnityTest]
         public IEnumerator CaptureFirstMinutes_OneVoiceAtATime()
@@ -680,6 +681,28 @@ namespace MoonProject.UI.PlayModeTests
             yield return Capture(camera, folder, "66_plotter_line");
             yield return Watch(ui, overlaps, _tuning.Ticker.Reveal.FadeOut + 12f);
             yield return Capture(camera, folder, "67_next_line");
+
+            // A card with no delay of its own must still wait for the repair prompt to finish fading.
+            var serialized = new SerializedObject(_tuning);
+            serialized.FindProperty("_memoryCard._appearDelay").floatValue = 0f;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            Vector3 tilly = context.Get<IFriendStatuses>().Status(0).Position;
+            Camera friendCamera = FriendCamera(tilly, context.Get<ITerrainQuery>(), camera);
+            fakes.Camera = friendCamera;
+            fakes.Position = tilly + (friendCamera.transform.position - tilly).normalized * 5f;
+            fakes.TillyStatus = new FriendStatus(FriendState.PartsGathering, 3, 3, true, true, tilly);
+            fakes.PrimaryHint = new InteractionHint(InteractionKind.Repair, tilly, true);
+            yield return Watch(ui, overlaps, _tuning.Prompts.Find(InteractionKind.Repair).DwellSeconds +
+                                             _tuning.Prompts.Reveal.FadeIn + 0.5f);
+            Assert.IsTrue(ui.Prompt.IsVisible, "the repair prompt was up before the repair");
+            yield return Capture(friendCamera, folder, "68_repair_prompt");
+            fakes.PrimaryHint = InteractionHint.None;
+            events.Publish(new FriendRepairStarted(TillyId));
+            fakes.TillyStatus = new FriendStatus(FriendState.Awake, 3, 3, true, false, tilly + Vector3.up * TillyRise);
+            events.Publish(new FriendRepaired(TillyId));
+            yield return Watch(ui, overlaps, _tuning.Prompts.Reveal.FadeOut + _tuning.MemoryCard.Reveal.FadeIn + 0.5f);
+            yield return Capture(friendCamera, folder, "69_tilly_card");
+            Assert.IsTrue(ui.Card.IsVisible, "Tilly's card came once the prompt had gone");
             Assert.IsEmpty(overlaps, "one voice at a time:\n" + string.Join("\n", overlaps));
 #else
             Assert.Ignore("Captures need the editor.");

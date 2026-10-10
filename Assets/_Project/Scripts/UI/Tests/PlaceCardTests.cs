@@ -33,10 +33,10 @@ namespace MoonProject.UI.Tests
             var uxml = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(UiAssetPaths.Uxml);
             var layout = new UiLayout(uxml.Instantiate());
             ILocalization localization = TestTables.Localization(new EventBus(),
-                "place.dock.name", "Charging Dock", "Trạm sạc",
+                "place.dock.name", "Charging Dock", "Đế sạc",
                 "place.dock.job", "Where 07 rests.", "Nơi 07 nghỉ.",
                 "place.ladder.name", "Crew's Ladder", "Thang",
-                "place.ladder.job", "Not made for wheels.", "Không làm cho bánh xe.");
+                "place.ladder.job", "Not made for wheels.", "Không dành cho bánh xe.");
             var settings = new GuidanceSettings();
             var card = new PlaceCard(layout, settings, localization);
             Assert.AreSame(layout.PlaceCard, layout.PlaceCardShadow.parent, "the shadow fades with the card");
