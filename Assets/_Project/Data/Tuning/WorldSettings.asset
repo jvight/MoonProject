@@ -336,6 +336,12 @@ MonoBehaviour:
   _homeLighting:
     _wakeStagger: 1.2
     _wakeFade: 2.4
+    _cableTravel: 1.5
+    _cableSegmentFade: 0.35
+    _pilotPeriod: 3.5
+    _pilotSharpness: 6
+    _pilotIntensity: 1.4
+    _pilotRadius: 0.35
   _postProcessing:
     _bloomThreshold: 1
     _bloomIntensity: 1.1

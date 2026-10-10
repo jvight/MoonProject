@@ -39,6 +39,55 @@ MonoBehaviour:
   _heavePerAcceleration: 0.0025
   _maxHeave: 0.14
   _accelerationLimit: 200
+  _crouchDepth: 0.12
+  _crouchLean: 4
+  _hoverCoils:
+    _chargeSquash: 0.35
+    _springFrequency: 4.5
+    _springDamping: 0.3
+    _tapKick: 5
+    _leapKick: 15
+    _maxStretch: 1.45
+    _glowPeak: 1.7
+    _glowCurve: 2.2
+    _glowRiseHalfLife: 0.04
+    _glowFallHalfLife: 0.18
+    _lightIntensity: 1.2
+    _lightRange: 3
+  _kit:
+    _fitGrowFrequency: 3
+    _lightsOnHalfLife: 0.35
+    _bay:
+      _centreSeconds: 0.5
+      _halfTurnSeconds: 1.2
+      _reachSeconds: 0.9
+      _hover: 0.4
+      _descendSeconds: 0.6
+      _weldSeconds: 0.4
+      _liftSeconds: 0.8
+      _pickScale: 0.6
+      _floorAlign: 0.25
+      _seatHeaveKick: 0.35
+      _seatAntennaKick: 60
+      _watchPriority: 2
+      _showLampBar: 180
+      _showDrums: 90
+      _showRack: 0
+      _showCoils: 90
+    _giftDelay: 0.9
+    _giftFrequency: 1.4
+    _giftDamping: 0.6
+    _giftHomeRadius: 22
+    _giftMaxSpeed: 2.5
+    _lampBarGlow: 0.7
+    _warmIntensity: 42
+    _warmRange: 24
+    _warmSpotAngle: 90
+    _warmInnerSpotAngle: 48
+    _warmColor: {r: 1, g: 0.62, b: 0.33, a: 1}
+    _drumGlow: 1.4
+    _drumIdleGlow: 0.05
+  _tubeHalfLife: 0.2
   _antennaFrequency: 2.4
   _antennaDamping: 0.15
   _antennaDegreesPerAcceleration: 2.2

@@ -33,3 +33,8 @@ MonoBehaviour:
     _siteId: site.kestrel
   - _kitId: rover.boost_coils
     _siteId: site.drill
+  _plotterReach: 6
+  _plotterDrawSeconds: 6
+  _plotterRows: 8
+  _plotterLampGlow: 1.5
+  _plotterLampEase: 0.4
