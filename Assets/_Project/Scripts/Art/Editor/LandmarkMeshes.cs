@@ -89,7 +89,7 @@ namespace MoonProject.Art.Editor
             }
 
             SiteKit.Bar(b, new Vector3(-AnchorSpan * 0.5f, AnchorHeight - 0.4f, 0f),
-                new Vector3(AnchorSpan * 0.5f, AnchorHeight - 0.4f, 0f), 0.1f, PaletteSwatch.FadedAccent);
+                new Vector3(AnchorSpan * 0.5f, AnchorHeight - 0.4f, 0f), 0.1f, PaletteSwatch.WornPanel);
             return b;
         }
 
