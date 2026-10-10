@@ -37,6 +37,27 @@ namespace MoonProject.Art.Tests
         }
 
         [Test]
+        public void LanderWindows_AndPorchLamps_AreEachTheirOwnDarkGlow_ToWakeOneByOne()
+        {
+            ModelNode lander = BaseModelBuilder.CreateLander();
+            ModelNode windows = lander.GetDescendant("Windows");
+            var glows = new List<ModelNode> { windows };
+            glows.AddRange(windows.Children);
+            CollectionAssert.AreEqual(new[] { "Pane_1", "Pane_2", "Porthole" }, windows.Children.Select(c => c.Name));
+            foreach (ModelNode socket in lander.Children.Where(c => c.Name.StartsWith("LampSocket_")))
+            {
+                glows.Add(socket.Children.Single(c => c.Name == BaseModelBuilder.BulbName));
+            }
+
+            foreach (ModelNode glow in glows)
+            {
+                Assert.AreEqual(ModelMaterial.PaletteGlowOff, glow.Material, $"{glow.Name} starts dark");
+                CollectionAssert.AreEqual(new[] { PaletteSwatch.LampGlass }, MeshChecks.Swatches(glow.Mesh.Geometry),
+                    glow.Name);
+            }
+        }
+
+        [Test]
         public void Anchors_LeaveRoomAroundTheLander()
         {
             ModelNode lander = BaseModelBuilder.CreateLander();

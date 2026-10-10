@@ -200,27 +200,44 @@ namespace MoonProject.Art.Editor
             return b;
         }
 
-        /// <summary>Everything that glows warm: window panes, the hatch porthole and the lamp bulbs.</summary>
-        public static LowPolyMeshBuilder Windows()
+        /// <summary>The window panes that light one by one as home wakes (M3-16): left, right, back.</summary>
+        public const int PaneCount = 3;
+
+        /// <summary>
+        /// Window pane <paramref name="index"/> in lander space (0 left, 1 right, 2 back), dark glass that glows warm
+        /// when lit.
+        /// </summary>
+        public static LowPolyMeshBuilder Pane(int index)
         {
-            var b = new LowPolyMeshBuilder(400);
-            for (int side = -1; side <= 1; side += 2)
+            var b = new LowPolyMeshBuilder(60);
+            if (index == PaneCount - 1)
             {
-                float yaw = side * 45f;
-                Vector3 normal = Rotation(new Vector3(0f, yaw, 0f)) * Vector3.forward;
-                Vector3 centre = normal * (CabinApothem + 0.03f) + Vector3.up * WindowHeight;
-                b.Prism(At(centre, new Vector3(90f, yaw, 0f)), 0.27f, 0.03f, 12, PaletteSwatch.WarmLamp);
+                b.Prism(At(new Vector3(0f, WindowHeight, -CabinApothem - 0.03f), new Vector3(90f, 180f, 0f)), 0.22f,
+                    0.03f, 12, PaletteSwatch.LampGlass);
+                return b;
             }
 
-            b.Prism(At(new Vector3(0f, WindowHeight, -CabinApothem - 0.03f), new Vector3(90f, 180f, 0f)), 0.22f,
-                0.03f, 12, PaletteSwatch.WarmLamp);
+            float yaw = (index == 0 ? -1f : 1f) * 45f;
+            Vector3 normal = Rotation(new Vector3(0f, yaw, 0f)) * Vector3.forward;
+            Vector3 centre = normal * (CabinApothem + 0.03f) + Vector3.up * WindowHeight;
+            b.Prism(At(centre, new Vector3(90f, yaw, 0f)), 0.27f, 0.03f, 12, PaletteSwatch.LampGlass);
+            return b;
+        }
+
+        /// <summary>The hatch's porthole at a person's eye height, in lander space.</summary>
+        public static LowPolyMeshBuilder Porthole()
+        {
+            var b = new LowPolyMeshBuilder(40);
             b.Prism(At(new Vector3(0f, DoorBottom + EyeHeight, CabinApothem + 0.1f), AlongZ), 0.13f, 0.03f, 10,
-                PaletteSwatch.WarmLamp);
-            for (int i = 0; i < LampCount; i++)
-            {
-                b.Icosphere(At(LampPosition(i)), 0.075f, 1, PaletteSwatch.WarmLamp);
-            }
+                PaletteSwatch.LampGlass);
+            return b;
+        }
 
+        /// <summary>A porch lamp's bulb, centred on its LampSocket.</summary>
+        public static LowPolyMeshBuilder Bulb()
+        {
+            var b = new LowPolyMeshBuilder(80);
+            b.Icosphere(Matrix4x4.identity, 0.075f, 1, PaletteSwatch.LampGlass);
             return b;
         }
 

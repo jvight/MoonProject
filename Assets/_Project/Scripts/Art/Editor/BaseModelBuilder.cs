@@ -56,6 +56,17 @@ namespace MoonProject.Art.Editor
         public const string RoverBayName = "RoverBay";
 
         /// <summary>
+        /// Home's warm points as it wakes (M3-16), each its own dark glow renderer lit through the linear
+        /// MaterialPropertyBlock contract so World or Gameplay can light them one by one: the lander's "Windows" (the
+        /// left pane) with its children Pane_1 (right), Pane_2 (back) and Porthole, and each LampSocket_n's Bulb.
+        /// </summary>
+        public const string PanePrefix = "Pane_";
+
+        public const string PortholeName = "Porthole";
+
+        public const string BulbName = "Bulb";
+
+        /// <summary>
         /// The bay's roll-up shutter (M3-16 dormant look), pivoted at its roller: local Y scale 1 = down (the bay
         /// asleep), <see cref="ShutterRolledScale"/> = rolled up into its box (tower L2 has powered it). Gameplay eases
         /// between the two.
@@ -160,14 +171,26 @@ namespace MoonProject.Art.Editor
         {
             LowPolyMeshBuilder hull = LanderMeshes.Hull();
             var lander = new ModelNode(LanderName, Vector3.zero, new ModelMesh(LanderName, hull));
-            lander.Add(new ModelNode("Windows", Vector3.zero,
-                new ModelMesh(LanderName + "_Windows", LanderMeshes.Windows())));
+            ModelNode windows = lander.Add(new ModelNode("Windows", Vector3.zero, Quaternion.identity,
+                new ModelMesh(LanderName + "_Windows", LanderMeshes.Pane(0)), ModelMaterial.PaletteGlowOff));
+            for (int i = 1; i < LanderMeshes.PaneCount; i++)
+            {
+                windows.Add(new ModelNode(PanePrefix + i.ToString(CultureInfo.InvariantCulture), Vector3.zero,
+                    Quaternion.identity, new ModelMesh(LanderName + "_Pane" + i.ToString(CultureInfo.InvariantCulture),
+                        LanderMeshes.Pane(i)), ModelMaterial.PaletteGlowOff));
+            }
+
+            windows.Add(new ModelNode(PortholeName, Vector3.zero, Quaternion.identity,
+                new ModelMesh(LanderName + "_Porthole", LanderMeshes.Porthole()), ModelMaterial.PaletteGlowOff));
             lander.Add(new ModelNode("ShelfAnchor", ShelfAnchor));
             lander.Add(new ModelNode("TowerAnchor", TowerAnchor));
+            var bulb = new ModelMesh(LanderName + "_Bulb", LanderMeshes.Bulb());
             for (int i = 0; i < LanderMeshes.LampCount; i++)
             {
-                lander.Add(new ModelNode("LampSocket_" + i.ToString(CultureInfo.InvariantCulture),
+                ModelNode socket = lander.Add(new ModelNode("LampSocket_" + i.ToString(CultureInfo.InvariantCulture),
                     LanderMeshes.LampPosition(i)));
+                socket.Add(new ModelNode(BulbName, Vector3.zero, Quaternion.identity, bulb,
+                    ModelMaterial.PaletteGlowOff));
             }
 
             lander.Add(new ModelNode("FriendSocket_tilly", LanderMeshes.TillyPerch));
