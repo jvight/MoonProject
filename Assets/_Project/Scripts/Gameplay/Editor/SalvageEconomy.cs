@@ -35,6 +35,9 @@ namespace MoonProject.Gameplay.Editor
             "depot", "kestrel", "drill", "garage", "lander",
         };
 
+        /// <summary>The site whose last cut reveals its heart (M3-16 P10: the supply depot).</summary>
+        public const string HeartUnderPiecesSite = "depot";
+
         /// <summary>The site standing past the Hover-Jump gate (the canyon supply lander).</summary>
         public const string GatedSite = "lander";
 

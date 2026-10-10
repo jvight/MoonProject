@@ -498,7 +498,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             {
                 string name = SiteNames[i];
                 sites[i] = new SalvageSiteEntry(WorldAnchorIds.SitePrefix + name, SiteModel(name, name == "depot"),
-                    name == "lander" ? new AbilityGate(true, RoverAbility.HoverJump) : AbilityGate.Open);
+                    name == "lander" ? new AbilityGate(true, RoverAbility.HoverJump) : AbilityGate.Open, false);
             }
 
             var trail = new SalvageTrailBit[TrailBits.Length];

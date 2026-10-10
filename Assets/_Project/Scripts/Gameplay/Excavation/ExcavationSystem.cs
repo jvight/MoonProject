@@ -144,7 +144,7 @@ namespace MoonProject.Gameplay
             for (int i = 0; i < _relics.Relics.Count; i++)
             {
                 Relic relic = _relics.Relics[i];
-                if (!relic.CanBeLifted)
+                if (!relic.CanBeLifted || !relic.Home.HeartRevealed)
                 {
                     continue;
                 }

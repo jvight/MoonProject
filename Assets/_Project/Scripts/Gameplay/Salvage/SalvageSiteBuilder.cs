@@ -49,7 +49,7 @@ namespace MoonProject.Gameplay
             }
 
             var built = new SalvageSite(index, entry.AnchorId, root, anchor.Radius, heart.position, entry.Gate,
-                new ComboCounter(tuning.ChainWindow));
+                new ComboCounter(tuning.ChainWindow), entry.HeartUnderPieces);
             var wreck = new List<Collider> { skeletonCollider };
             int firstDrag = drags.Count;
             for (int i = 0; i < root.childCount; i++)

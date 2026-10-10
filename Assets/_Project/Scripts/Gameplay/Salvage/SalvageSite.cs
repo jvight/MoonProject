@@ -14,9 +14,12 @@ namespace MoonProject.Gameplay
         private readonly List<SalvagePiece> _pieces = new List<SalvagePiece>();
         private readonly List<Relic> _relics = new List<Relic>();
 
+        private readonly bool _heartUnderPieces;
+
         internal SalvageSite(int index, string id, Transform root, float radius, Vector3 heart, AbilityGate gate,
-            ComboCounter combo)
+            ComboCounter combo, bool heartUnderPieces)
         {
+            _heartUnderPieces = heartUnderPieces;
             Index = index;
             Id = id ?? throw new ArgumentNullException(nameof(id));
             Root = root != null ? root : throw new ArgumentNullException(nameof(root));
@@ -90,6 +93,12 @@ namespace MoonProject.Gameplay
                 return true;
             }
         }
+
+        /// <summary>
+        /// The heart can be dug: always, or for a site whose heart lies under its pieces (M3-16 P10), once the last
+        /// piece is cut.
+        /// </summary>
+        public bool HeartRevealed => !_heartUnderPieces || IsPickedClean;
 
         /// <summary>A relic still waits in its heart (not yet lifted free).</summary>
         public bool HoldsRelic
