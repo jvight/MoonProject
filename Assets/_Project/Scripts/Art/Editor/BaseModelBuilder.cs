@@ -301,7 +301,10 @@ namespace MoonProject.Art.Editor
             Material material = PaletteAssetBuilder.LoadMaterial();
             Material glowOff = PaletteAssetBuilder.LoadGlowOffMaterial();
             Material weather = PaletteAssetBuilder.LoadWeatherMaterial();
-            var grounded = new List<ModelNode> { CreateLander(), CreateShelf(), CreateRoverBay(), CreateCassetteShelf() };
+            var grounded = new List<ModelNode>
+            {
+                CreateLander(), CreateShelf(), CreateRoverBay(), CreateCassetteShelf(),
+            };
             for (int level = RadioTowerMeshes.MinLevel; level <= RadioTowerMeshes.MaxLevel; level++)
             {
                 grounded.Add(CreateTower(level));

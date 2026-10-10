@@ -519,8 +519,9 @@ namespace MoonProject.Art.Editor
         public static Vector3 ShutterRoller => new Vector3(0f, ArchY(0f) + ShutterRollerGap, FrontZ + ShutterAhead);
 
         /// <summary>
-        /// The roll-up shutter's curtain in Shutter space, hanging from the roller (origin) to the ground: worn mid-grey
-        /// slats with dark seams between them, a metal bottom bar with a handle, rust from its seams and a rusted foot.
+        /// The roll-up shutter's curtain in Shutter space, hanging from the roller (origin) to the ground: worn
+        /// mid-grey slats with dark seams between them, a metal bottom bar with a handle, rust from its seams and a
+        /// rusted foot.
         /// </summary>
         public static LowPolyMeshBuilder Shutter()
         {

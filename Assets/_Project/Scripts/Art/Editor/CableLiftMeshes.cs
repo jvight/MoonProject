@@ -98,7 +98,7 @@ namespace MoonProject.Art.Editor
 
         private const float JamRoll = 22f;
 
-        /// <summary>The crew's OUT OF ORDER board (width along the rail, height, thickness), a little over A3.</summary>
+        /// <summary>The crew's OUT OF ORDER board (along the rail, height, thickness), a little over A3.</summary>
         private static readonly Vector3 JamBoardSize = new Vector3(0.46f, 0.31f, 0.012f);
 
         /// <summary>Where the board hangs along the dock-side rail, between its middle and front posts.</summary>
