@@ -552,32 +552,28 @@ namespace MoonProject.Art.Tests
             }
 
             // The back "07" is who the chase camera follows; the flank ones are read from the side (Bell's fresh paint
-            // moment). From the rear three-quarter the near drum overlaps the top of the flank numbers: logged only.
+            // moment) and from the rear three-quarter, past the near drum's end cap.
             var serials = new[]
             {
-                ("back", (System.Func<Vector3, bool>)(p => p.z < -0.5f), new[] { 0f, -ChaseYaw, ChaseYaw },
-                    new float[0]),
-                ("right flank", p => p.x > 0.3f, new[] { Broadside }, new[] { ChaseYaw }),
-                ("left flank", p => p.x < -0.3f, new[] { -Broadside }, new[] { -ChaseYaw }),
+                ("back", (System.Func<Vector3, bool>)(p => p.z < -0.5f), new[] { 0f, -ChaseYaw, ChaseYaw }),
+                ("right flank", p => p.x > 0.3f, new[] { Broadside, ChaseYaw }),
+                ("left flank", p => p.x < -0.3f, new[] { -Broadside, -ChaseYaw }),
             };
             var kept = new List<(string, float, int, int)>();
-            foreach ((string where, System.Func<Vector3, bool> region, float[] read, float[] logged) in serials)
+            foreach ((string where, System.Func<Vector3, bool> region, float[] read) in serials)
             {
                 var serial = new List<Vector3>();
                 var rest = new List<Vector3>();
                 SplitSerial(region, serial, rest);
                 var kitted = new List<Vector3>(rest);
                 kitted.AddRange(kit);
-                foreach (float yaw in read.Concat(logged))
+                foreach (float yaw in read)
                 {
                     SilhouetteCamera camera = Chase(ChaseDistance, yaw);
                     int bare = SilhouetteCamera.Count(Owners(camera, rest, serial), 2);
                     int fitted = SilhouetteCamera.Count(Owners(camera, kitted, serial), 2);
                     TestContext.WriteLine($"the {where} \"07\" shows {fitted} of {bare} px with the kit, yaw {yaw}");
-                    if (System.Array.IndexOf(read, yaw) >= 0)
-                    {
-                        kept.Add((where, yaw, bare, fitted));
-                    }
+                    kept.Add((where, yaw, bare, fitted));
                 }
             }
 
