@@ -35,8 +35,8 @@ MonoBehaviour:
     _saddleWavelength: 330
     _wallGullyHeight: 4
     _wallGullyCount: 70
-    _strataSpacing: 9
-    _strataStrength: 0.5
+    _strataSpacing: 14
+    _strataStrength: 0.4
     _strataRiser: 0.4
     _peakBearing: 12
     _peakDistance: 440
@@ -288,9 +288,9 @@ MonoBehaviour:
     _starPowerLaw: 1.5
     _starSize: 0.45
     _starSizeSpread: 0.35
-    _starBrightest: 4.5
-    _starGlowFrom: 2.8
-    _starGlow: 0.22
+    _starBrightest: 3
+    _starGlowFrom: 1.8
+    _starGlow: 0.3
     _twinkleShare: 0.15
     _twinkleSpeed: 0.45
     _twinkleDepth: 0.35
@@ -370,6 +370,8 @@ MonoBehaviour:
     _cableSegmentFade: 0.35
     _pilotPeriod: 3.5
     _pilotSharpness: 6
+    _topLightLevel: 0.6
+    _pilotMinAngle: 0.4
     _pilotIntensity: 1.4
     _pilotRadius: 0.35
     _poolColor: {r: 1, g: 0.70980394, b: 0.2784314, a: 1}
@@ -428,3 +430,31 @@ MonoBehaviour:
     _vignetteColor: {r: 0.05, g: 0.03, b: 0.12, a: 1}
     _grainIntensity: 0.12
     _grainResponse: 0.8
+  _groundMarks:
+    _destinations:
+    - site.depot
+    - canyon.mouth
+    _trackGauge: 1.4
+    _rutHalfWidth: 0.22
+    _step: 1.5
+    _wander: 3.5
+    _wanderWavelength: 45
+    _strength: 0.85
+    _patchiness: 0.8
+    _patchWavelength: 9
+    _endFade: 8
+    _lift: 0.05
+    _tint: {r: 0.62, g: 0.62, b: 0.76, a: 1}
+    _fadeNear: 45
+    _fadeFar: 130
+    _scarRadius: 13
+    _scarInner: 1.5
+    _scarStreaks: 32
+    _scarStreakHalfWidth: 0.6
+    _scarStrength: 0.75
+    _bootprintStart: {x: 1.6, y: 0, z: 3.2}
+    _bootprintHeading: 55
+    _bootprintCount: 9
+    _bootprintStride: 0.75
+    _bootprintSize: {x: 0.16, y: 0.07}
+    _bootprintStrength: 0.5
