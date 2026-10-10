@@ -152,6 +152,14 @@ namespace MoonProject.Gameplay
                 return;
             }
 
+            if (!context.TryGet(out IHomeLights lights))
+            {
+                Debug.LogError($"{nameof(GameplaySystem)}: no {nameof(IHomeLights)} is registered. The World domain " +
+                               "registers home's warm points (docs/features/M3-16).", this);
+                enabled = false;
+                return;
+            }
+
             _meshes = new GlowMeshSet();
             Materials = new MaterialStock(context.Events);
             var save = context.Get<ISaveService>();
@@ -173,10 +181,10 @@ namespace MoonProject.Gameplay
             if (!_salvage.Initialize(services) || !_relics.Initialize(services, _salvage) ||
                 !_excavation.Initialize(services, _relics, _salvage) ||
                 !_tether.Initialize(services, _relics, _salvage) ||
-                !_home.Initialize(services, _relics, _tether, Upgrades) ||
+                !_home.Initialize(services, _relics, _tether, Upgrades, lights) ||
                 !_cradle.Initialize(services, seat, _relics, _home) ||
                 !_tower.Initialize(services, Upgrades, _salvage.Catalog) ||
-                !_workshop.Initialize(services, Upgrades, _salvage.Catalog, _tower, Power, Blueprints) ||
+                !_workshop.Initialize(services, Upgrades, _salvage.Catalog, _tower, Power, Blueprints, lights) ||
                 !_friends.Initialize(services, Radio, _cassettes.Catalog, _relics, _salvage, _home) ||
                 !_cassettes.Initialize(services, Radio, KeepClearOfCassettes()) || !_logs.Initialize(services) ||
                 !_sonar.Initialize(services, _relics, _friends, _salvage, abilities) ||

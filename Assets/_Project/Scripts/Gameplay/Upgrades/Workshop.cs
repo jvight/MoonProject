@@ -92,6 +92,7 @@ namespace MoonProject.Gameplay
         private RadioTower _tower;
         private IBasePower _power;
         private IBlueprintBoard _board;
+        private IHomeLights _homeLights;
         private IDisposable _fittings;
         private float _lightLevel;
         private bool _lightShadows;
@@ -264,8 +265,9 @@ namespace MoonProject.Gameplay
         /// no prompt, no panel.
         /// </param>
         /// <param name="board">Kenji's board: the bay offers only kits whose blueprint is pinned.</param>
+        /// <param name="lights">Home's warm points (World): the bay's lamps and lights glow at its share.</param>
         internal bool Initialize(GameplayServices services, UpgradeService upgrades, SalvageCatalog bundles,
-            RadioTower tower, IBasePower power, IBlueprintBoard board)
+            RadioTower tower, IBasePower power, IBlueprintBoard board, IHomeLights lights)
         {
             if (upgrades == null)
             {
@@ -275,6 +277,7 @@ namespace MoonProject.Gameplay
             _tower = tower != null ? tower : throw new ArgumentNullException(nameof(tower));
             _power = power ?? throw new ArgumentNullException(nameof(power));
             _board = board ?? throw new ArgumentNullException(nameof(board));
+            _homeLights = lights ?? throw new ArgumentNullException(nameof(lights));
 
             if (bundles == null)
             {
@@ -620,7 +623,7 @@ namespace MoonProject.Gameplay
             _lightShadows = shadows;
             for (int i = 0; i < _lights.Length; i++)
             {
-                _lights[i].intensity = _lightLevel;
+                _lights[i].intensity = _lightLevel * _homeLights.Level(HomeLight.BayLamps);
                 if (changed)
                 {
                     _lights[i].shadows = mode;
@@ -656,7 +659,7 @@ namespace MoonProject.Gameplay
         {
             for (int i = 0; i < _lampGlows.Length; i++)
             {
-                _lampGlows[i].Apply(_lampLevel);
+                _lampGlows[i].Apply(_lampLevel * _homeLights.Level(HomeLight.BayLamps));
             }
 
             float flicker = SignFlicker.Level(now - _poweredAt, _tuning.SignFlickerDuration, _tuning.SignFlickers,

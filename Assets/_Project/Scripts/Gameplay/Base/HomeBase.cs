@@ -63,6 +63,7 @@ namespace MoonProject.Gameplay
         private EmissionGlow _windowGlow;
         private EmissionGlow _shelfGlow;
         private HomeHalo _halo;
+        private IHomeLights _lights;
         private ChargingDock _dock;
         private Transform _hint;
         private GlowRenderer _hintGlow;
@@ -125,8 +126,12 @@ namespace MoonProject.Gameplay
             return ShelfSlots.InZone(position, _shelf.position, _tuning.DepositRadius, _tuning.DepositHeight);
         }
 
+        /// <param name="lights">
+        /// How lit home's warm points are as power returns (World, docs/features/M3-16): the windows, porch lamps and
+        /// halo glow at their share of it.
+        /// </param>
         internal bool Initialize(GameplayServices services, RelicField relics, TetherSystem tether,
-            UpgradeService upgrades)
+            UpgradeService upgrades, IHomeLights lights)
         {
             string problem = _tuning == null ? "BaseTuning is not assigned."
                 : _root == null || _shelf == null ? "the base root or the shelf is not assigned."
@@ -148,6 +153,7 @@ namespace MoonProject.Gameplay
             _relics = relics ?? throw new ArgumentNullException(nameof(relics));
             _tether = tether ?? throw new ArgumentNullException(nameof(tether));
             _upgrades = upgrades ?? throw new ArgumentNullException(nameof(upgrades));
+            _lights = lights ?? throw new ArgumentNullException(nameof(lights));
             _relicTuning = relics.Tuning;
             PlaceLander(services.Layout.BasePosition);
 
@@ -285,15 +291,15 @@ namespace MoonProject.Gameplay
             _farness = Damp.Toward(_farness, target, _tuning.WarmEase, deltaTime);
             float boost = _upgrades.LightBoost;
             float warmth = _tuning.LampWarmth(_farness);
-            float lamp = _tuning.LampIntensity * warmth * boost;
+            float lamp = _tuning.LampIntensity * warmth * boost * _lights.Level(HomeLight.PorchLamps);
             for (int i = 0; i < _lamps.Length; i++)
             {
                 _lamps[i].intensity = lamp;
             }
 
-            _windowGlow.Apply(_tuning.WindowGlowAt(_farness) * boost);
+            _windowGlow.Apply(_tuning.WindowGlowAt(_farness) * boost * _lights.Level(HomeLight.Windows));
             _shelfGlow.Apply(_tuning.ShelfGlow * warmth * boost);
-            _halo.Boost = boost;
+            _halo.Boost = boost * _lights.Level(HomeLight.Halo);
         }
 
         /// <summary>
