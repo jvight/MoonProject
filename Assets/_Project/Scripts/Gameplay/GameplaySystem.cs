@@ -46,7 +46,7 @@ namespace MoonProject.Gameplay
         [SerializeField] private FriendField _friends;
         [SerializeField] private CassetteField _cassettes;
         [SerializeField] private LogCacheField _logs;
-        [SerializeField] private SignalField _signals;
+        [SerializeField] private BellSignalField _signals;
         [SerializeField] private CassetteShelf _shelf;
         [SerializeField] private RelayField _relays;
         [SerializeField] private BaseProgression _progression;
@@ -101,7 +101,7 @@ namespace MoonProject.Gameplay
 
         public LogCacheField Logs => _logs;
 
-        public SignalField Signals => _signals;
+        public BellSignalField Signals => _signals;
 
         public CassetteShelf Shelf => _shelf;
 
@@ -114,8 +114,8 @@ namespace MoonProject.Gameplay
         internal void Wire(GameplayVisuals visuals, GlintTuning glints, UpgradeDefinition[] upgradeDefinitions,
             SalvageField salvage, RelicField relics, SonarSystem sonar, ExcavationSystem excavation,
             TetherSystem tether, HomeBase home, CargoCradle cradle, RadioTower tower, Workshop workshop,
-            FriendField friends, CassetteField cassettes, LogCacheField logs, SignalField signals, CassetteShelf shelf,
-            RelayField relays, BaseProgression progression, BlueprintPlotter plotter)
+            FriendField friends, CassetteField cassettes, LogCacheField logs, BellSignalField signals,
+            CassetteShelf shelf, RelayField relays, BaseProgression progression, BlueprintPlotter plotter)
         {
             _visuals = visuals;
             _glints = glints;
@@ -505,7 +505,7 @@ namespace MoonProject.Gameplay
                 : _cassettes.Catalog == null ? "CassetteField has no CassetteCatalog."
                 : _cassettes.Catalog.Validate() != null ? "CassetteCatalog " + _cassettes.Catalog.Validate() + "."
                 : _logs == null ? "LogCacheField is not assigned."
-                : _signals == null ? "SignalField is not assigned."
+                : _signals == null ? "BellSignalField is not assigned."
                 : _shelf == null ? "CassetteShelf is not assigned."
                 : _relays == null ? "RelayField is not assigned."
                 : _progression == null ? "BaseProgression is not assigned."

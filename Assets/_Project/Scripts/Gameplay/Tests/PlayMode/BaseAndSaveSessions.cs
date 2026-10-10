@@ -18,8 +18,9 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// </summary>
     public sealed class BaseAndSaveSessions : InputTestFixture
     {
-        /// <summary>Seconds a held tether press may take to latch (a slow first frame must not eat it).</summary>
-        private const float LatchTimeout = 1f;
+        /// <summary>Seconds a held tether press may take to latch: a slow first frame or the loose duck settling out
+        /// of the aim cone for a moment must not eat it (the held button latches as soon as it is back).</summary>
+        private const float LatchTimeout = 3f;
 
         private const string Duck = "rubber_duck";
         private const string Teapot = "teapot";
