@@ -54,6 +54,9 @@ namespace MoonProject.Rover
         private const int HeldShotTurns = 2;
         private const int HeldShotLifts = 3;
 
+        /// <summary>07 rides the lift facing the lander: straight out from it is 07's heading turned round.</summary>
+        private const float HalfTurn = 180f;
+
         [Tooltip("Camera tuning (Assets/_Project/Data/Tuning/RoverCameraTuning.asset).")]
         [SerializeField] private RoverCameraTuning _tuning;
 
@@ -787,9 +790,9 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// The crew's lift settled at the deck (M3-16 step 8): the camera eases out and up to the lookout, turned off
-        /// the line straight out from the lander toward Earth's side so it clears the lander; leaving the deck (any
-        /// input brings the lift down) eases it back.
+        /// The crew's lift settled at the deck (M3-16 step 8, M3-18 L5): the camera rises slowly to the lookout, pulled
+        /// back over the lander looking straight out (07 rides facing the lander), turned toward Earth's side by
+        /// the tuned amount; leaving the deck (any input brings the lift down) eases it back.
         /// </summary>
         private void OnLiftRideChanged(LiftRideChanged ride)
         {
@@ -804,7 +807,7 @@ namespace MoonProject.Rover
             }
 
             Vector3 follow = _rover.Position + Vector3.up * _tuning.TargetHeight;
-            float outward = WideShotComposer.Bearing(ride.Position - _world.BasePosition);
+            float outward = RoverYaw() + HalfTurn;
             float earth = WideShotComposer.Bearing(_world.EarthDirection);
             float side = Mathf.DeltaAngle(outward, earth) >= 0f ? _tuning.LookoutSide : -_tuning.LookoutSide;
             OpenHeldShot(_tuning.LookoutShot, follow, outward + side, 0f);

@@ -46,7 +46,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float DriveTimeout = 40f;
         private const float StopSpeed = 0.2f;
         private const float StopTimeout = 8f;
-        private const float LookoutSettleSeconds = 7f;
+        private const float LookoutSettleSeconds = 10f;
 
         /// <summary>How far (m) in front of the platform's ramp 07 lines up before it drives on.</summary>
         private const float LineUp = 5f;
