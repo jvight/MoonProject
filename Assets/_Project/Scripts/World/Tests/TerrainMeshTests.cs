@@ -22,6 +22,12 @@ namespace MoonProject.World.Tests
         private const float MaxOpenFacetStep = 0.06f;
         private const float MaxFacetStep = 0.25f;
 
+        // The base pad's own patches, sampled a fine facet apart, against a ring of open dust beyond its edge band.
+        private const float PadStep = 2f;
+        private const float MinPadSpread = 0.02f;
+        private const float OpenRingRadius = 60f;
+        private const int OpenRingSamples = 24;
+
         private static readonly PaletteSwatch[] TerrainSwatches =
         {
             PaletteSwatch.DustLight, PaletteSwatch.DustMid, PaletteSwatch.DustShadow, PaletteSwatch.RockLight,
@@ -41,7 +47,8 @@ namespace MoonProject.World.Tests
             _surface = new MoonSurface(new SurfaceSettings(), WorldSettings.DefaultSeed);
             _settings = new TerrainMeshSettings();
             Vector3 toLight = WorldAtmosphere.LightSourceDirection(new AtmosphereSettings(), new SkySettings());
-            _painter = new TerrainPainter(new TerrainPaintSettings(), WorldSettings.DefaultSeed, toLight);
+            _painter = new TerrainPainter(new TerrainPaintSettings(), WorldSettings.DefaultSeed, toLight,
+                _surface.PadRadius);
             var mesher = new TerrainChunkMesher(_surface, _painter, _settings);
             _plans = TerrainChunkPlanner.Plan(_settings, _surface.Canyon.Touches);
             _chunks = new TerrainMeshData[_plans.Length];
@@ -127,6 +134,51 @@ namespace MoonProject.World.Tests
         }
 
         [Test]
+        public void BasePad_IsCompactedRegolith_InAFewLargePatches_NeverAsConfetti()
+        {
+            // M3-18: the pad is a place of its own, a little darker than the open floor, in two to four soft patches,
+            // held to the open floor's bar for change between neighbouring vertices (ruling 9).
+            float pad = _surface.PadRadius;
+            var tones = new List<float>();
+            float steepest = 0f;
+            for (float z = -pad; z <= pad; z += PadStep)
+            {
+                for (float x = -pad; x <= pad; x += PadStep)
+                {
+                    if (x * x + z * z > pad * pad)
+                    {
+                        continue;
+                    }
+
+                    float here = PadLuminance(x, z);
+                    tones.Add(here);
+                    steepest = Mathf.Max(steepest, Mathf.Abs(here - PadLuminance(x + PadStep, z)),
+                        Mathf.Abs(here - PadLuminance(x, z + PadStep)));
+                }
+            }
+
+            float open = 0f;
+            for (int i = 0; i < OpenRingSamples; i++)
+            {
+                float angle = i * Mathf.PI * 2f / OpenRingSamples;
+                open += PadLuminance(Mathf.Cos(angle) * OpenRingRadius, Mathf.Sin(angle) * OpenRingRadius);
+            }
+
+            tones.Sort();
+            float mean = 0f;
+            foreach (float tone in tones)
+            {
+                mean += tone;
+            }
+
+            mean /= tones.Count;
+            Assert.Less(mean, open / OpenRingSamples, "the pad's compacted regolith is darker than the open dust");
+            Assert.Greater(tones[tones.Count * 9 / 10] - tones[tones.Count / 10], MinPadSpread,
+                "the pad varies in large patches, not one flat plate");
+            Assert.LessOrEqual(steepest, MaxOpenFacetStep, "a pad facet changes tone sharply (confetti)");
+        }
+
+        [Test]
         public void FloorDust_ChangesValueGently_InPatches_NeverAsConfetti()
         {
             // Design ruling 9 and pillar 6: the floor varies in broad patches, and a facet never jumps out of its
@@ -173,6 +225,12 @@ namespace MoonProject.World.Tests
             Assert.Greater(spread, MinFloorSpread, "the floor should still vary in patches");
             Assert.LessOrEqual(steepestOpen, MaxOpenFacetStep, "an open-floor facet changes tone sharply (paper cut)");
             Assert.LessOrEqual(steepest, MaxFacetStep, "a facet changes tone too sharply");
+        }
+
+        private float PadLuminance(float x, float z)
+        {
+            SurfaceSample sample = _surface.Sample(x, z);
+            return Luminance(_painter.Ground(new Vector3(x, sample.Height, z), sample));
         }
 
         private bool OnOpenFloor(TerrainMeshData chunk, int triangle)
