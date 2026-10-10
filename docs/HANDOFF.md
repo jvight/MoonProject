@@ -57,7 +57,10 @@ account) can continue without the old conversation.
     - Done: cables light outward from the tower (~1.5 s), with home's lights starting when the cable arrives; the
       tower pilot blinks while Asleep; WorldHomeWiringContributor; builder World/Tower Pilot.
     - Its tests and captures (Logs/world-captures/wake-0..3) were still running when it committed: re-run and
-      critique them.
+      critique them. Update: EditMode 7/7 passed. The capture never ran (a shell-quoting error), so in the world
+      worktree run, in order:
+      1. `python tools/unity_batch.py exec --method MoonProject.Editor.Automation.BuildAutomation.RunBuilders --arg "filter=^(World/|Main Scene$)"`
+      2. `python tools/unity_batch.py tests --platform playmode --filter HomeWake_IsCapturedFromTheSpawnView`
     - After merging: ResetSettings (new `_homeLighting` cable and pilot fields). Revert the rebuilt Main.unity and
       Generated files and the untracked metas in that worktree before merging.
   - **audio 7da01984.**
