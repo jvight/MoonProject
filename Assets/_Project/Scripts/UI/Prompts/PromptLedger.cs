@@ -7,13 +7,15 @@ namespace MoonProject.UI
     /// <summary>
     /// Remembers, per action, how many times its prompt was shown and how many times the player did it. A prompt is
     /// retired for good once it was shown the shared number of times or done as often as its entry says (design
-    /// ruling 6: only the first few times). The Look up hint, shown once per save, is remembered here too. Saved.
+    /// ruling 6: only the first few times). The Look up hint, shown once per save, and the HUD verbs met so far
+    /// (<see cref="HudVerb"/>: each HUD piece shows only once its verb is met) are remembered here too. Saved.
     /// </summary>
     internal sealed class PromptLedger
     {
         private readonly PromptSettings _settings;
         private readonly int[] _shown;
         private readonly int[] _used;
+        private readonly bool[] _met = new bool[Enum.GetValues(typeof(HudVerb)).Length];
 
         public PromptLedger(PromptSettings settings)
         {
@@ -60,6 +62,17 @@ namespace MoonProject.UI
         /// <summary>True once the Look up hint has been shown in this save.</summary>
         public bool LookUpHinted { get; private set; }
 
+        /// <summary>True once the player has met <paramref name="verb"/> in this save.</summary>
+        public bool Met(HudVerb verb)
+        {
+            return _met[(int)verb];
+        }
+
+        public void RecordMet(HudVerb verb)
+        {
+            _met[(int)verb] = true;
+        }
+
         public void RecordLookUpHinted()
         {
             LookUpHinted = true;
@@ -87,7 +100,19 @@ namespace MoonProject.UI
                 }
             }
 
-            return new PromptsSaveData { kinds = kinds.ToArray(), lookUpHinted = LookUpHinted };
+            var met = new List<string>();
+            for (int i = 0; i < _met.Length; i++)
+            {
+                if (_met[i])
+                {
+                    met.Add(((HudVerb)i).ToString());
+                }
+            }
+
+            return new PromptsSaveData
+            {
+                kinds = kinds.ToArray(), lookUpHinted = LookUpHinted, metVerbs = met.ToArray(),
+            };
         }
 
         /// <summary>Applies saved counts; entries naming a kind this build does not know are skipped.</summary>
@@ -95,7 +120,19 @@ namespace MoonProject.UI
         {
             Array.Clear(_shown, 0, _shown.Length);
             Array.Clear(_used, 0, _used.Length);
+            Array.Clear(_met, 0, _met.Length);
             LookUpHinted = data != null && data.lookUpHinted;
+            if (data?.metVerbs != null)
+            {
+                foreach (string name in data.metVerbs)
+                {
+                    if (Enum.TryParse(name, false, out HudVerb verb) && (int)verb < _met.Length)
+                    {
+                        _met[(int)verb] = true;
+                    }
+                }
+            }
+
             if (data?.kinds == null)
             {
                 return;

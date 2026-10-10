@@ -375,7 +375,8 @@ namespace MoonProject.UI
             _tower.Tick(hudTime, !paused, input.ExcavateHeld, input.Winch,
                 _services.Tether.State == TetherAimState.Towing, _glyphs.For(RoverAction.Excavate, device), device);
             _kitTitle.Tick(hudTime);
-            _chip.SetPinned(_tower.IsVisible || _relayTag.IsVisible);
+            bool materialMet = _ledger.Met(HudVerb.Material) || _services.Materials.Total > 0;
+            _chip.SetPinned(materialMet && (_tower.IsVisible || _relayTag.IsVisible));
             _chip.Tick(deltaTime);
             bool cutting = _services.Salvage.IsCutting;
             if (cutting && !_wasCutting)
@@ -436,6 +437,11 @@ namespace MoonProject.UI
         {
             if (_bound)
             {
+                if (changed.Metal + changed.Wiring + changed.Optics > 0)
+                {
+                    _ledger.RecordMet(HudVerb.Material);
+                }
+
                 _chip.Change(changed.Metal, changed.Wiring, changed.Optics);
             }
         }
@@ -505,6 +511,7 @@ namespace MoonProject.UI
         private void OnSonarPinged(SonarPinged pinged)
         {
             _director.NotifyUsed(InteractionKind.Ping);
+            _ledger.RecordMet(HudVerb.Ping);
         }
 
         private void OnExcavationStarted(ExcavationStarted started)
@@ -528,6 +535,7 @@ namespace MoonProject.UI
 
         private void OnCassetteCollected(CassetteCollected collected)
         {
+            _ledger.RecordMet(HudVerb.Tape);
             if (_bound)
             {
                 _card.EnqueueCassette(collected.CassetteId, collected.Collected, collected.Total);
@@ -545,6 +553,7 @@ namespace MoonProject.UI
         private void OnRelayRestored(RelayRestored restored)
         {
             _director.NotifyUsed(InteractionKind.Restore);
+            _ledger.RecordMet(HudVerb.LitMast);
         }
 
         private void OnRadioHopListChanged(RadioHopListChanged changed)
