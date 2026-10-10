@@ -58,6 +58,7 @@ namespace MoonProject.Gameplay
         private PlaceApproaches _approaches;
         private DormantAnswers _answers;
         private DockEvening _evening;
+        private RadioLetters _letters;
         private StepFlow _steps;
         private IDisposable _salvage;
         private Vector3 _dock;
@@ -137,6 +138,8 @@ namespace MoonProject.Gameplay
                 () => homePowered() && home.DisplayedCount == 0);
             _salvage = services.Events.Subscribe<MaterialSalvaged>(_ => _salvaged = true);
             _evening = new DockEvening(services.Events, _tuning.EveningSweepDelay);
+            _letters = new RadioLetters(services.Events, _tuning.SingleLetterMasts, _tuning.LettersAfter,
+                _tuning.LetterCount);
 
             _steps.Add(ProgressionKeys.NextWake, () => _woke);
             _steps.Add(ProgressionKeys.NextSalvage, () => _salvaged || power.HasReached(BasePowerStage.Home));
@@ -181,6 +184,7 @@ namespace MoonProject.Gameplay
             _approaches.Tick(rover, now);
             _answers.Tick(now);
             StepChasm(rover, now);
+            _letters.Tick();
             if (_evening.Tick(now))
             {
                 _sonar.RevealNextUnheard(_dock, _tuning.EveningPillarBrightness);
@@ -298,6 +302,7 @@ namespace MoonProject.Gameplay
             _salvage?.Dispose();
             _answers?.Dispose();
             _evening?.Dispose();
+            _letters?.Dispose();
             if (_looking)
             {
                 EndLook();

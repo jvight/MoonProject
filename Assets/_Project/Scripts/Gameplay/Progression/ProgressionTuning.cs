@@ -75,6 +75,16 @@ namespace MoonProject.Gameplay
         [Tooltip("Brightness of the pillar the evening's sweep raises on the horizon.")]
         [Range(0.1f, 2f)] [SerializeField] private float _eveningPillarBrightness = 0.7f;
 
+        [Header("The masts' letters (radio-letters text)")]
+        [Tooltip("The first this many lit masts play one letter each (the relay's official messages)...")]
+        [Range(0, 12)] [SerializeField] private int _singleLetterMasts = 4;
+
+        [Tooltip("...and every later mast plays this many (Ro's own letters).")]
+        [Range(1, 4)] [SerializeField] private int _lettersAfter = 2;
+
+        [Tooltip("Letters there are to play, letter.mast_1 to letter.mast_n.")]
+        [Range(0, 40)] [SerializeField] private int _letterCount = 10;
+
         [Header("Blueprints")]
         [Tooltip("Where the other kits' blueprint tubes lie: each in a salvage site's heart, found with its relic.")]
         [SerializeField] private BlueprintTube[] _tubes =
@@ -129,6 +139,12 @@ namespace MoonProject.Gameplay
         public float BellLightBrightness => _bellLightBrightness;
 
         public float EveningSweepDelay => _eveningSweepDelay;
+
+        public int SingleLetterMasts => _singleLetterMasts;
+
+        public int LettersAfter => _lettersAfter;
+
+        public int LetterCount => _letterCount;
 
         public float EveningPillarBrightness => _eveningPillarBrightness;
 

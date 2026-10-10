@@ -109,8 +109,8 @@ namespace MoonProject.Gameplay.PlayModeTests
                 1e-3f, "home's lamp is the tower's beacon");
             Assert.AreEqual(_fixture.RadioTowerUpgrade.SignalRadiusAt(0), reach.GetNode(0).Radius,
                 "home's reach is the dark tower's");
-            TickerLine line = _fixture.Events.TickerLine[_fixture.Events.TickerLine.Count - 1].Value;
-            Assert.AreEqual("ticker.relay.online", line.Key);
+            TickerLine line = LastTicker("ticker.relay.online");
+            Assert.AreEqual("ticker.relay.online", line.Key, "the mast's own line, before its letter");
             Assert.AreEqual("1", line.Argument);
             CollectionAssert.AreEqual(
                 new[]
@@ -304,6 +304,19 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             return cues;
+        }
+
+        private TickerLine LastTicker(string key)
+        {
+            for (int i = _fixture.Events.TickerLine.Count - 1; i >= 0; i--)
+            {
+                if (_fixture.Events.TickerLine[i].Value.Key == key)
+                {
+                    return _fixture.Events.TickerLine[i].Value;
+                }
+            }
+
+            return default;
         }
 
         private TickerLine LastTicker()
