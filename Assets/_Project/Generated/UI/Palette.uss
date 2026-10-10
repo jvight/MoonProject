@@ -14,7 +14,7 @@
     --moon-text-faint: rgba(244, 230, 200, 0.46);
     --moon-glass: rgba(11, 14, 42, 0.84);
     --moon-glass-edge: rgba(167, 169, 204, 0.16);
-    --moon-veil: rgba(11, 14, 42, 0.18);
+    --moon-veil: rgba(11, 14, 42, 0.42);
     --moon-shadow: rgba(11, 14, 42, 0.5);
     --moon-track: rgba(244, 230, 200, 0.16);
     --moon-cream-glow: rgba(244, 230, 200, 0.1);
