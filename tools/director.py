@@ -8,7 +8,7 @@ Usage:
   python tools/director.py land <box> [<box> ...] -m MESSAGE [-m MESSAGE ...] [--filter REGEX] [--no-scene]
   python tools/director.py refresh [--filter REGEX] [--scene]
   python tools/director.py outputs -m MESSAGE [-m MESSAGE ...]
-  python tools/director.py verify [--skip-playthrough] [--push]
+  python tools/director.py verify [--skip-playthrough] [--parallel] [--push]
 
 status   every box branch against main (ahead, behind, uncommitted files in its worktree), main against origin and
          the verification worktree, the batch slots and whether the main editor is idle.
@@ -20,8 +20,10 @@ land     merges the box branches into main (several boxes land as one merge), re
 refresh  the same editor hot reload without a merge.
 outputs  commits what the builders regenerated under Assets/ and reports any other change it left unstaged.
 verify   fast-forwards the verification worktree to main and runs compile_check, EditMode, PlayMode and the
-         Playthrough golden path there through tools/unity_batch.py, stopping at the first failure. --push pushes the
-         verified commit to origin/main when every step passed.
+         Playthrough golden path there through tools/unity_batch.py, stopping at the first failure. --parallel runs
+         the Playthrough in a second worktree (MoonProject-wt/director2, created on first use) alongside EditMode and
+         PlayMode, using both batch slots (~25 min instead of ~45). --push pushes the verified commit to origin/main
+         when every step passed.
 
 Each -m is one paragraph of the commit message, as with git.
 """
@@ -34,6 +36,7 @@ import re
 import socket
 import subprocess
 import sys
+import threading
 import time
 import urllib.error
 from pathlib import Path
@@ -44,6 +47,9 @@ import unity_mcp  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 VERIFY_WORKTREE = ROOT.parent / "MoonProject-wt" / "director"
+VERIFY_BRANCH = "director/verify"
+VERIFY_WORKTREE_2 = ROOT.parent / "MoonProject-wt" / "director2"
+VERIFY_BRANCH_2 = "director/verify2"
 BOX_PREFIX = "box/"
 BUILDER_DOMAINS = {"art": "Art", "world": "World", "rover": "Rover", "gameplay": "Gameplay", "audio": "Audio",
                    "ui": "UI"}
@@ -257,49 +263,81 @@ def cmd_outputs(args):
         print(leftover)
 
 
-def run_step(name, cmd, log):
-    """Runs one verification step in the verification worktree, echoing its output; returns (passed, tail)."""
-    say(f"verify: {name}")
+def run_step(name, cmd, log, cwd, echo):
+    """Runs one verification step in <cwd>, logging (and optionally echoing) its output; returns (passed, tail)."""
+    say(f"verify: {name} ({cwd.name})")
     tail = collections.deque(maxlen=TAIL_LINES)
-    with subprocess.Popen(cmd, cwd=VERIFY_WORKTREE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+    with subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
                           encoding="utf-8", errors="replace") as proc:
         for line in proc.stdout:
-            print(line, end="", flush=True)
+            if echo:
+                print(line, end="", flush=True)
             log.write(line)
             tail.append(line.rstrip())
     return proc.returncode == 0, list(tail)
 
 
+def run_chain(steps, cwd, log_path, echo, results):
+    """Runs <steps> in order in <cwd>, stopping at the first failure; appends (name, passed, tail) to <results>."""
+    with open(log_path, "w", encoding="utf-8") as log:
+        for name, cmd in steps:
+            ok, tail = run_step(name, cmd, log, cwd, echo)
+            results.append((name, ok, tail))
+            if not ok:
+                return
+
+
+def ready_worktree(path, branch):
+    """Fast-forwards a clean verification worktree to main (creating it on <branch> if missing); returns its HEAD."""
+    if not path.exists():
+        git("worktree", "add", "-B", branch, str(path), "main")
+    if tracked_changes(path):
+        fail(f"{path} has local changes")
+    git("merge", "--ff-only", "main", cwd=path)
+    return git("rev-parse", "HEAD", cwd=path)
+
+
 def cmd_verify(args):
     if not VERIFY_WORKTREE.exists():
         fail(f"no verification worktree at {VERIFY_WORKTREE}")
-    if tracked_changes(VERIFY_WORKTREE):
-        fail(f"{VERIFY_WORKTREE} has local changes")
-    git("merge", "--ff-only", "main", cwd=VERIFY_WORKTREE)
-    sha = git("rev-parse", "HEAD", cwd=VERIFY_WORKTREE)
+    sha = ready_worktree(VERIFY_WORKTREE, VERIFY_BRANCH)
     batch = [sys.executable, "tools/unity_batch.py", "tests", "--platform"]
-    steps = [("compile_check", [sys.executable, "tools/compile_check.py"]),
-             ("editmode", batch + ["editmode"]),
-             ("playmode", batch + ["playmode"])]
-    if not args.skip_playthrough:
-        steps.append(("playthrough", batch + ["playmode", "--category", "Playthrough", "--timeout",
-                                              str(PLAYTHROUGH_TIMEOUT)]))
+    tests = [("editmode", batch + ["editmode"]), ("playmode", batch + ["playmode"])]
+    playthrough = [("playthrough", batch + ["playmode", "--category", "Playthrough", "--timeout",
+                                            str(PLAYTHROUGH_TIMEOUT)])]
     out_dir = ROOT / "Logs" / "director"
     out_dir.mkdir(parents=True, exist_ok=True)
     stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    base = out_dir / f"{stamp}-verify-{sha[:7]}"
+    results = []
+    run_chain([("compile_check", [sys.executable, "tools/compile_check.py"])], VERIFY_WORKTREE,
+              base.with_suffix(".compile.log"), True, results)
+    if results[-1][1]:
+        if args.parallel and not args.skip_playthrough:
+            if ready_worktree(VERIFY_WORKTREE_2, VERIFY_BRANCH_2) != sha:
+                fail(f"{VERIFY_WORKTREE_2} is not at {sha[:7]}")
+            say(f"verify: EditMode + PlayMode in {VERIFY_WORKTREE.name} alongside the Playthrough in "
+                f"{VERIFY_WORKTREE_2.name} (logs {base.name}.*.log)")
+            chains = [threading.Thread(target=run_chain, args=(tests, VERIFY_WORKTREE, base.with_suffix(".tests.log"),
+                                                               False, results)),
+                      threading.Thread(target=run_chain, args=(playthrough, VERIFY_WORKTREE_2,
+                                                               base.with_suffix(".playthrough.log"), False, results))]
+            for chain in chains:
+                chain.start()
+            for chain in chains:
+                chain.join()
+        else:
+            steps = tests if args.skip_playthrough else tests + playthrough
+            run_chain(steps, VERIFY_WORKTREE, base.with_suffix(".tests.log"), True, results)
     summary = [f"verify {sha} ({stamp})"]
-    passed = True
-    with open(out_dir / f"{stamp}-verify-{sha[:7]}.log", "w", encoding="utf-8") as log:
-        for name, cmd in steps:
-            ok, tail = run_step(name, cmd, log)
-            summary.append(f"{'PASS' if ok else 'FAIL'}  {name}")
-            if not ok:
-                summary += ["      " + line for line in tail]
-                passed = False
-                break
-    (out_dir / f"{stamp}-verify-{sha[:7]}.txt").write_text("\n".join(summary) + "\n", encoding="utf-8")
+    for name, ok, tail in results:
+        summary.append(f"{'PASS' if ok else 'FAIL'}  {name}")
+        if not ok:
+            summary += ["      " + line for line in tail]
+    base.with_suffix(".txt").write_text("\n".join(summary) + "\n", encoding="utf-8")
     print("\n".join(summary))
-    if not passed:
+    expected = 3 if args.skip_playthrough else 4
+    if len(results) != expected or not all(ok for _, ok, _ in results):
         fail(f"{sha[:7]} did not verify")
     say(f"VERIFIED {sha[:7]}")
     if args.push:
@@ -334,6 +372,8 @@ def main():
     verify = sub.add_parser("verify", help="run the verification ladder on main in the verification worktree")
     verify.add_argument("--skip-playthrough", action="store_true", help="stop after the full PlayMode suite")
     verify.add_argument("--push", action="store_true", help="push the verified commit to origin/main")
+    verify.add_argument("--parallel", action="store_true",
+                        help="run the Playthrough in a second verification worktree alongside the suites")
     args = ap.parse_args()
     {"status": cmd_status, "land": cmd_land, "refresh": cmd_refresh, "outputs": cmd_outputs,
      "verify": cmd_verify}[args.cmd](args)

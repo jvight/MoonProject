@@ -206,3 +206,44 @@ The old account's auto-memory lives in `C:/Users/jvigh/.claude/projects/D--Proje
 
 Everything essential from them is in this file. If the new account uses the same Windows user and project folder, the
 memory may simply carry over. Check `resume-point` against §1 here and trust this file and git if they differ.
+
+## 10. Speed-ups (owner asked 2026-10-10: "too slow, optimise the process")
+Diagnosis:
+- **The weekly token quota is the real throughput limit.** Speed comes from spending fewer tokens per unit of work.
+- **Fixed waits:**
+  - verification ~45–60 min, serial;
+  - a flaky test forces a full re-run;
+  - sessions wait on each other's answers;
+  - every land needs the Director's turn and the open main editor.
+
+Do first on the new account:
+1. **`director.py verify --parallel` (built, NOT yet exercised).** It runs the Playthrough in a second worktree
+   (`MoonProject-wt/director2`, created on first use with a first-import cost) alongside EditMode and PlayMode.
+   Expected ~25 min instead of ~45. Try it once and fix it if needed.
+2. **Keep contexts small.**
+   - Start a fresh Director session per version; HANDOFF.md makes that safe.
+   - Give box sessions a fresh session per task instead of reviving a long one. A 400k-token context costs more
+     per turn than the work itself.
+3. **Cheaper models for mechanical work.** Sonnet for asset resets, test fixes, data tables and captures; Opus for
+   design-heavy and cross-system work.
+4. **Contracts and defaults up front.**
+   - The Director writes every Core contract and a dependency map before dispatching.
+   - Each prompt pre-decides the defaults: "if blocked by another domain, stub it, continue, and list it in the
+     report"; "economy: tune within ±X yourself".
+   - Sessions should never sit waiting for an answer.
+5. **Feature-slice sessions.**
+   - A vertical feature (e.g. the lift: art + gameplay + audio + ui) goes to ONE session allowed in those folders.
+   - Per-domain boxes stay for domain-wide work.
+   - This removes most hand-offs and waiting.
+6. **Land without the main editor.**
+   - Build `director.py land --batch`: merge in the verification worktree, run the builders there with
+     `unity_batch exec`, which also generates the metas, and commit the outputs from there.
+   - The main editor is then only for the owner's viewing; nobody has to keep Unity open.
+7. **Faster, steadier tests.**
+   - Fix the flaky tether test (it should wait on state, not time).
+   - Shard PlayMode by assembly across the two slots.
+   - Split the Playthrough into chapters that start from seeded saves, so a late failure re-runs one chapter, not
+     15 minutes.
+8. **Reports as files, not messages.** Sessions append a status block to `MoonProject-wt/.board/<box>.md` at each
+   milestone, and `director.py status` prints the board. The Director reads one board per turn instead of being woken
+   by every message.
