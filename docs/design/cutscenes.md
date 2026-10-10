@@ -316,8 +316,8 @@ bunk windows as separate renderers), audio (the stingers, the radio's clear), ui
 | # | Picture and camera | 07 | Sound and music |
 |---|---|---|---|
 | F1 | **The dish turns** (~8 s). From low beside 07, the dish swings on its mount toward Earth, groaning. The Peak's red beacon, which the player has looked at the whole game, fades from red to warm amber: the Peak becomes a home light. | 07 watches the dish, then the beacon | a long low creak; the beacon's colour change on a held D |
-| F2 | **The chain** (~12 s). The camera rises and pulls back over the rim. From the Peak, every lit mast pulses in turn down across the basin to home, and home's tower answers. The whole network is a line of warm points in a cold field. | small, far below | each mast a note of a slow descending phrase, ending on the tower's low D |
-| F3 | **The song** (the reserved final track, Ro's "for when we come home", Side B of the mixtape). The camera returns to 07 at the dish and slowly pushes past its head toward Earth over the song's first minute. For the first time the radio is clear everywhere, with no static at any distance. | looks up at Earth; the wing fully open | the final track, then its fade |
+| F2 | **The chain** (~12 s). The camera rises and pulls back over the rim, looking down the basin. Far away at home, Bell starts Side B of Ro's mixtape (07 lifted it into her deck before the climb; `game-flow.md` §8 #7). A pulse leaves home's tower and runs mast by mast up across the basin to the Peak. The whole network is a line of warm points in a cold field. | small, far below | the song's first notes, thin and far at home, growing clearer with each mast; each mast adds a note of a slow rising phrase, ending on the dish's high D |
+| F3 | **The song** (the reserved final track, Ro's "for when we come home"). The pulse reaches the dish and the song plays in full. The camera returns to 07 at the dish and slowly pushes past its head toward Earth over the song's first minute. For the first time the radio is clear everywhere, with no static at any distance. | looks up at Earth; the wing fully open | the final track, then its fade |
 | F4 | **Silence** (~6 s). Earth, held. The song has ended; only the soft room tone. | still | near silence |
 | F5 | **Into the lens.** The camera pushes into 07's lens, the reverse of O10, and the player sees through 07's eye again. The lens hunts for focus on Earth's night side. | lid 70 | the lens whine from O4, once |
 | F6 | **The answer.** One small light on Earth's night side blinks: three short, one long. The lid opens to **100% for the first and only time.** | lid 70 → 100 | each blink a soft high E; the long one a held A |
@@ -338,7 +338,8 @@ bunk windows as separate renderers), audio (the stingers, the radio's clear), ui
 1. VISION ruling 8: replace with the text in §1.4.
 2. VISION camera direction: add the first-person bullet in §1.4.
 3. M3-16 P5, first bullet, and step 0's warm points: the edits in §1.4.
-4. STORY "The ending": add the call sign's setup (§1.5) and the beacon turning amber (F1).
+4. STORY "The ending": add the call sign's setup (§1.5), the beacon turning amber (F1), and Bell playing Side B up
+   the relay chain (F2).
 5. Core: `SessionStarted`, `WakeBeat` and `RoverWakeBeatReached`, `ILensView` (0.5); `BroadcastStarted`,
    `EarthAnswered`, `CreditsFinished` (0.8).
 6. Optional, to keep moments cheap: one Rover event, `CinematicChanged(kind, active)`, so UI fades the HUD and audio
