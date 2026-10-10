@@ -55,9 +55,13 @@ namespace MoonProject.Gameplay.PlayModeTests
             Vector3 lander = home.LanderPosition;
             _fixture.Rover.Place(lander + new Vector3(8f, 0f, 0f), 0f);
             yield return new WaitForSeconds(tuning.WarmEase * 3f);
+            Assert.AreEqual(0f, home.WindowLevel, 1e-3f, "asleep, home's windows are dark (M3-16)");
+            _fixture.PowerTo(1);
+            yield return new WaitForSeconds(tuning.WarmEase * 3f);
             float homeWindows = home.WindowLevel;
             float homeWarmth = home.Warmth;
-            Assert.AreEqual(tuning.WindowGlow, homeWindows, 0.05f, "the windows at their glow while 07 is home");
+            Assert.AreEqual(tuning.WindowGlow * _fixture.Gameplay.Upgrades.LightBoost, homeWindows, 0.05f,
+                "powered, the windows at their glow (with the tower's boost) while 07 is home");
             Assert.AreEqual(1f, homeWarmth, 0.05f, "the lamps light the ground");
             RenderTheView();
             Assert.AreEqual(0f, home.Halo.Level, "no halo over the base while 07 is there");
@@ -143,7 +147,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             float clear = SurfaceRules.HorizontalDistance(tower.PadCentre, port) - tuning.PadRadius;
             Assert.Greater(clear, 0.2f, "the pad's ring stays clear of the service port");
 
-            _fixture.GiveMaterials(0, 2, 3);
+            _fixture.GiveMaterials(1, 3, 1);
             Assert.AreEqual(PurchaseResult.NotAtStation, shop.Purchase(Tower), "bought on the pad, not anywhere");
             _fixture.Rover.Place(tower.PadCentre, Yaw(Flat(port) - Flat(tower.PadCentre)));
             yield return null;
