@@ -78,6 +78,8 @@ namespace MoonProject.Audio
         public const string BayWeld = "bay_weld";
         public const string BayFittedChime = "bay_fitted_chime";
         public const string StargazeSwell = "stargaze_swell";
+        public const string BaseWake = "base_wake";
+        public const string StationNotYet = "station_not_yet";
         public const string PortHatchOpen = "port_hatch_open";
         public const string PortHatchClose = "port_hatch_close";
         public const string DockConnect = "dock_connect";

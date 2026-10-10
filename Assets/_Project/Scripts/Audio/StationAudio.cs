@@ -18,13 +18,16 @@ namespace MoonProject.Audio
     /// <item>the radio tower's hatch opens, the beam's stitching rises with the new section, the hatch shuts;</item>
     /// <item>the charging dock clunks as 07 settles on it, hums very softly while charging and plays a gentle tone
     /// when full; leaving it is a tiny release (<see cref="RoverDockChanged"/>).</item>
+    /// <item>power returning to home, the bay or the lift plays that place's wake phrase
+    /// (<see cref="BasePowerChanged"/>, never on a restore from a save), and a dormant station answers the sonar with
+    /// a soft "not yet" where it stands (<see cref="StationNotYet"/>, published as the ping's ring reaches it).</item>
     /// </list>
     /// Game-time loops duck while paused. Initialised by <see cref="AudioDirector"/>.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class StationAudio : MonoBehaviour
     {
-        private const int SubscriptionCount = 3;
+        private const int SubscriptionCount = 5;
         private const uint DropSeedSalt = 0x68E31DA4u;
         private const float CentsPerSemitone = 100f;
         private const float CentsPerOctave = 1200f;
@@ -37,6 +40,9 @@ namespace MoonProject.Audio
         private readonly LoopFader _stitch = new LoopFader();
         private readonly ServoWhir _turn = new ServoWhir();
         private CueHandle[] _beats = Array.Empty<CueHandle>();
+        private int[] _wakeVariants = Array.Empty<int>();
+        private CueHandle _wake;
+        private CueHandle _notYet;
         private AudioDirector _director;
         private IRoverState _rover;
         private BundleDrops _drops;
@@ -98,9 +104,12 @@ namespace MoonProject.Audio
             _dockConnect = director.Resolve(AudioCueIds.DockConnect);
             _dockFull = director.Resolve(AudioCueIds.DockFull);
             _dockRelease = director.Resolve(AudioCueIds.DockRelease);
+            _wake = director.Resolve(AudioCueIds.BaseWake);
+            _notYet = director.Resolve(AudioCueIds.StationNotYet);
             if (!feed.IsValid || !servo.IsValid || !turn.IsValid || !stitch.IsValid || !charge.IsValid ||
                 !_sigh.IsValid || !_weld.IsValid || !_chime.IsValid || !_dockConnect.IsValid || !_dockFull.IsValid ||
-                !_dockRelease.IsValid || !TryResolveBeats(director))
+                !_dockRelease.IsValid || !_wake.IsValid || !_notYet.IsValid || !TryResolveBeats(director) ||
+                !TryResolveWakes(director.Library.GetCue(_wake)))
             {
                 enabled = false;
                 return;
@@ -130,6 +139,8 @@ namespace MoonProject.Audio
             _subscriptions[0] = events.Subscribe<StationCued>(OnStationCued);
             _subscriptions[1] = events.Subscribe<RoverKitFitted>(OnKitFitted);
             _subscriptions[2] = events.Subscribe<RoverDockChanged>(OnDockChanged);
+            _subscriptions[3] = events.Subscribe<BasePowerChanged>(OnBasePowerChanged);
+            _subscriptions[4] = events.Subscribe<StationNotYet>(OnStationNotYet);
         }
 
         internal void Wire(StationAudioTuning tuning)
@@ -252,6 +263,22 @@ namespace MoonProject.Audio
             }
         }
 
+        private void OnBasePowerChanged(BasePowerChanged changed)
+        {
+            int stage = (int)changed.Stage;
+            if (changed.Restored || stage < 0 || stage >= _wakeVariants.Length || _wakeVariants[stage] < 0)
+            {
+                return;
+            }
+
+            _director.PlayVariant2D(_wake, _wakeVariants[stage], _tuning.WakeVolume);
+        }
+
+        private void OnStationNotYet(StationNotYet notYet)
+        {
+            _director.PlayAt(_notYet, notYet.Position, _tuning.NotYetVolume);
+        }
+
         private Vector3 NearestTip(Vector3 from)
         {
             Vector3 nearest = from;
@@ -310,6 +337,43 @@ namespace MoonProject.Audio
             }
 
             return true;
+        }
+
+        private bool TryResolveWakes(AudioCue wake)
+        {
+            int size = 0;
+            foreach (BasePowerStage stage in (BasePowerStage[])Enum.GetValues(typeof(BasePowerStage)))
+            {
+                size = Math.Max(size, (int)stage + 1);
+            }
+
+            _wakeVariants = new int[size];
+            foreach (BasePowerStage stage in (BasePowerStage[])Enum.GetValues(typeof(BasePowerStage)))
+            {
+                string label = BaseWakeSounds.LabelOf(stage);
+                _wakeVariants[(int)stage] = label == null ? -1 : VariantOf(wake, label);
+                if (label != null && _wakeVariants[(int)stage] < 0)
+                {
+                    Debug.LogError($"{nameof(StationAudio)}: cue '{wake.Id}' has no '{label}' variant for " +
+                                   $"{stage}. Re-run tools/audio/build_sfx.py and the Audio builders.", this);
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static int VariantOf(AudioCue cue, string label)
+        {
+            for (int i = 0; i < cue.ClipCount; i++)
+            {
+                if (cue.GetVariantLabel(i) == label)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
         }
 
         private static void Drive(AudioSource loop, float volume, float pitch)

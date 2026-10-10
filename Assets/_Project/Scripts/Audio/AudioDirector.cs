@@ -230,6 +230,13 @@ namespace MoonProject.Audio
             Remember(entry.GetClip(clipIndex));
         }
 
+        /// <summary>Plays variant <paramref name="variant"/> (clamped to the cue's clips) of <paramref name="cue"/>
+        /// flat, e.g. the wake phrase of the place that woke.</summary>
+        public void PlayVariant2D(CueHandle cue, int variant, float volumeScale = 1f)
+        {
+            Play(cue, _flat, Vector3.zero, volumeScale, 1f, Mathf.Max(0, variant), 0f, 0f);
+        }
+
         /// <summary>Plays a random variant of <paramref name="cue"/> flat (UI, stingers).</summary>
         public void Play2D(CueHandle cue, float volumeScale = 1f, float pitchScale = 1f)
         {
