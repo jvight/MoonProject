@@ -136,6 +136,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         {
             _fixture = GameplayFixture.Boot(_controls);
             yield return null;
+            _fixture.DeliverTowerParts();
             RadioTower tower = _fixture.Gameplay.Tower;
             RadioTowerTuning tuning = _fixture.TowerTuning;
             IUpgradeShop shop = _fixture.Bootstrap.Context.Get<IUpgradeShop>();
@@ -145,13 +146,15 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.Less(tower.HatchOpenAngle, 0.5f, "its service hatch is shut");
             Vector3 port = tower.HopperMouth;
             float clear = SurfaceRules.HorizontalDistance(tower.PadCentre, port) - tuning.PadRadius;
-            Assert.Greater(clear, 0.2f, "the pad's ring stays clear of the service port");
+            Assert.Greater(clear, 0.2f, "the pad stays clear of the service port");
+            Assert.IsFalse(tower.PadShown, "nothing to feed it yet: the pilot blink is the tower's only light");
 
             _fixture.GiveMaterials(1, 3, 1);
             Assert.AreEqual(PurchaseResult.NotAtStation, shop.Purchase(Tower), "bought on the pad, not anywhere");
             _fixture.Rover.Place(tower.PadCentre, Yaw(Flat(port) - Flat(tower.PadCentre)));
             yield return null;
             yield return null;
+            Assert.IsTrue(tower.PadShown, "with materials in hand the tower's pad shows");
             Assert.IsTrue(shop.IsAtStation);
             Assert.AreSame(_fixture.RadioTowerUpgrade, shop.StationUpgrade);
             Assert.IsTrue(_fixture.Gameplay.Hints.TryGet(InteractionKind.Upgrade, out InteractionHint hint));
@@ -231,6 +234,55 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator TowerCoil_WaitsInTheDepotsHeart_RidesOn07_IsFedToThePort_ThenTheFirstLevelCanBeBuilt()
+        {
+            _fixture = GameplayFixture.Boot(_controls);
+            yield return null;
+            yield return null;
+            GameplaySystem gameplay = _fixture.Gameplay;
+            TowerParts parts = gameplay.TowerParts;
+            TowerPartField field = gameplay.TowerPartField;
+            RadioTower tower = gameplay.Tower;
+            IUpgradeShop shop = _fixture.Bootstrap.Context.Get<IUpgradeShop>();
+            var found = new List<StoryPartFound>();
+            var delivered = new List<StoryPartDelivered>();
+            _fixture.Bootstrap.Context.Events.Subscribe<StoryPartFound>(found.Add);
+            _fixture.Bootstrap.Context.Events.Subscribe<StoryPartDelivered>(delivered.Add);
+            Assert.AreEqual("Part_TowerCoil", parts.PartAt(0).PartId);
+            Assert.IsTrue(field.IsResting(0), "the depot's heart is open: the tower's coil waits in it");
+            Assert.Less(SurfaceRules.HorizontalDistance(field.RestPosition(0), _fixture.FindSite("depot").Heart),
+                1e-3f);
+            Assert.IsFalse(field.IsResting(2), "no mast is restored yet, so no relay spare");
+
+            _fixture.GiveMaterials(30, 30, 30);
+            _fixture.Rover.Place(tower.PadCentre, 0f);
+            yield return null;
+            yield return null;
+            Assert.AreEqual(PurchaseResult.NeedsPart, shop.Purchase(Tower), "materials alone do not wake the tower");
+            Assert.IsTrue(_fixture.Gameplay.Hints.TryGet(InteractionKind.Upgrade, out InteractionHint hint));
+            Assert.IsFalse(hint.Ready, "the prompt waits for the coil");
+
+            _fixture.Rover.Place(field.RestPosition(0), 0f);
+            yield return Waits.Until(() => found.Count > 0, 5f);
+            Assert.AreEqual("Part_TowerCoil", found[0].PartId);
+            Assert.AreEqual(1, found[0].TowerLevel);
+            Assert.AreEqual(TowerPartState.Carried, parts.StateOf(0), "it rides home on 07's back");
+            Assert.IsFalse(field.IsResting(0));
+            Assert.AreEqual(PurchaseResult.NotAtStation, shop.Purchase(Tower));
+
+            _fixture.Rover.Place(tower.PadCentre, 0f);
+            yield return Waits.Until(() => delivered.Count > 0, 2f);
+            Assert.AreEqual("Part_TowerCoil", delivered[0].PartId);
+            Assert.AreEqual(0, field.Feeding, "parked on the pad, 07 hands the coil to the port");
+            yield return Waits.Until(() => field.Feeding < 0, _fixture.ProgressionTuning.PartFeedSeconds + 1f);
+            Assert.AreEqual(TowerPartState.Delivered, parts.StateOf(0));
+            Assert.IsTrue(_fixture.Gameplay.Hints.TryGet(InteractionKind.Upgrade, out hint));
+            Assert.IsTrue(hint.Ready);
+            Assert.AreEqual(PurchaseResult.Purchased, shop.Purchase(Tower));
+            Assert.AreEqual(1, delivered.Count, "the transformer is not on 07");
+        }
+
+        [UnityTest]
         public IEnumerator Bay_SellsItsKitInOrderOnItsTurntable_07FeedsItsHopper_ThenItFits_AndGrantsItAgainOnLoad()
         {
             string slot = BootstrapHarness.NewTestSlot();
@@ -250,6 +302,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return null;
             yield return null;
             Assert.IsFalse(bay.Occupied, "a sleeping bay has no pad");
+            Assert.IsFalse(bay.PadShown, "not even painted lamps");
             Assert.AreEqual(0f, bay.PadLevel, 1e-3f);
             Assert.IsFalse(shop.IsAtStation, "no panel");
             Assert.IsFalse(_fixture.Gameplay.Hints.TryGet(InteractionKind.Upgrade, out _), "no prompt");
@@ -260,6 +313,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return new WaitForSeconds(tuning.LightEase * 5f);
             Assert.IsTrue(bay.Awake);
             Assert.IsTrue(bay.Powered);
+            Assert.IsTrue(bay.PadShown, "awake with a kit to fit, its pad shows");
             Assert.AreEqual(tuning.SignGlow, bay.SignLevel, 1e-3f, "woken by a loaded tower, its sign is simply lit");
             Assert.AreEqual(tuning.LampIdle, bay.LampLevel, 0.05f, "Kenji's work lamps come on");
             Assert.AreEqual(tuning.LightIdle, bay.LightLevel, 0.05f, "a low warm glow lights the bay inside");
@@ -421,11 +475,12 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             yield return new WaitForSeconds(tuning.SparkInterval * tuning.SparkBursts + tuning.SparkLifetime.y + 0.5f);
             Assert.AreEqual(0, bay.SparkCount, "the sparks die out (an idle bay costs nothing)");
-            Assert.Less(bay.PadLevel, look.Occupied * 0.5f, "an empty bay's pad rests dim");
+            Assert.Less(bay.PadLevel, look.Occupied * 0.5f, "a finished bay's pad lamps ease out");
             Assert.AreEqual(tuning.LampOccupied, bay.LampLevel, 0.05f, "the lamps settle back");
             Assert.AreEqual(0, _fixture.Rover.HoldStillCount);
             yield return new WaitForSeconds(tuning.WorkLinger + tuning.LightEase * 5f);
             Assert.IsFalse(bay.Working, "every piece is on");
+            Assert.IsFalse(bay.PadShown, "a finished bay shows no pad");
 
             _fixture.Dispose(true);
             yield return null;
@@ -450,6 +505,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Workshop bay = _fixture.Gameplay.Workshop;
             RadioTower tower = _fixture.Gameplay.Tower;
             WorkshopTuning tuning = _fixture.WorkshopTuning;
+            _fixture.DeliverTowerParts();
             _fixture.PowerTo(1);
             yield return new WaitForSeconds(0.5f);
             Assert.IsFalse(bay.Powered);
@@ -613,6 +669,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return null;
             GameplaySystem gameplay = _fixture.Gameplay;
             _fixture.GiveMaterials(3, 3, 3);
+            _fixture.DeliverTowerParts();
 
             HomeBase home = gameplay.Home;
             Vector3 towardPad = (Vector3.zero - home.ShelfPosition).normalized;
@@ -652,6 +709,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsTrue(teapotAgain.Discovered);
             Assert.Less(Vector3.Distance(teapotAgain.transform.position, halfway), 0.1f);
             Assert.AreEqual(1, gameplay.Upgrades.LevelOf(Tower));
+            Assert.IsFalse(gameplay.TowerParts.NeedsPart(Tower, 2), "the tower's story parts stay in its port");
             Assert.AreEqual(1, gameplay.Tower.ShownLevel);
             Assert.AreEqual(0, _fixture.Events.UpgradePurchased.Count, "a load is never a purchase");
             yield return new WaitForSeconds(0.5f);

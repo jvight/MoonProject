@@ -13,15 +13,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _padRadius: 1.8
-  _padRingWidth: 0.35
   _padIdle: 0.22
   _padInviting: 0.65
   _padOccupied: 1
-  _padDone: 0.12
   _breathPeriod: 3.2
   _padBreathDepth: 0.35
   _padEase: 0.4
-  _padSegments: 48
   _padFlare: 2.4
   _feedBeamLead: 0.15
   _feedFlight: 0.55

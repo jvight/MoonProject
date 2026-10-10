@@ -195,7 +195,7 @@ namespace MoonProject.Gameplay
             for (int node = 0; node < _reach.NodeCount; node++)
             {
                 _pads[node] = new StationPad("HopPad_" + _reach.Id(node), transform, services.Terrain,
-                    _reach.Position(node), _tuning.PadLook, services.Visuals.WarmRing);
+                    _reach.Position(node), _tuning.PadLook, services.Visuals);
                 labels[node] = HopLabelPrefix + _reach.Id(node);
                 facings[node] = node == StationReach.Home
                     ? Facing(services.Layout.PeakPosition - home)
