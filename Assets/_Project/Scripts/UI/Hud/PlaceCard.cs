@@ -36,6 +36,9 @@ namespace MoonProject.UI
 
         public bool IsVisible => !_reveal.IsHidden;
 
+        /// <summary>A card is queued and waits for the screen to clear.</summary>
+        public bool IsWaiting => Current == null && _waiting.Count > 0;
+
         /// <summary>The title key of the card that is up (or easing), or null.</summary>
         public string Current { get; private set; }
 

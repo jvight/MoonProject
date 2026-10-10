@@ -13,6 +13,9 @@ Two configurations are compiled:
 
 Warnings are errors: the project keeps a zero-warning policy.
 
+tools/lint.py runs first: findings of its enforced rules count as problems, report-only rules print a one-line
+summary (`python tools/lint.py` lists them with their owning box).
+
 Usage:
   python tools/compile_check.py                 # check the git worktree you are in
   python tools/compile_check.py --root <path>   # check another checkout
@@ -29,6 +32,8 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+
+import lint
 
 ASM_PREFIX = "MoonProject"
 SOURCE_ROOT = Path("Assets/_Project")
@@ -213,6 +218,17 @@ def compile_config(config, root, main, editor, asmdefs, out_dir):
     return problems
 
 
+def run_lint(root):
+    findings = lint.lint_root(root)
+    enforced = [f for f in findings if f.enforced]
+    for f in enforced:
+        print("  [lint] " + f.format())
+    reported = [f for f in findings if not f.enforced]
+    summary = f"; report-only: {lint.summarize(reported)} (python tools/lint.py lists them)" if reported else ""
+    print(f"  [lint] {len(enforced)} enforced finding(s){summary}")
+    return len(enforced)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--root", help="checkout to compile (default: current git worktree)")
@@ -228,7 +244,8 @@ def main():
     out_dir = Path(tempfile.gettempdir()) / "moon_compile_check" / hashlib.sha1(str(root).encode()).hexdigest()[:10]
     print(f"compile_check: {root}  (Unity {editor.parent.name}, refs from {main_proj})")
     configs = ["editor", "player"] if args.config == "both" else [args.config]
-    problems = sum(compile_config(c, root, main_proj, editor, asmdefs, out_dir) for c in configs)
+    problems = run_lint(root)
+    problems += sum(compile_config(c, root, main_proj, editor, asmdefs, out_dir) for c in configs)
     print("RESULT: " + ("PASS" if problems == 0 else f"FAIL ({problems} problem(s))"))
     sys.exit(0 if problems == 0 else 1)
 

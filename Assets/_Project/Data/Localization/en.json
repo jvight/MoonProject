@@ -80,11 +80,11 @@
         },
         {
             "key": "next.wake",
-            "text": "Something out there may answer. Try a ping."
+            "text": "Something out there might answer a ping."
         },
         {
             "key": "next.salvage",
-            "text": "Cut what you can from the depot."
+            "text": "The old depot still has metal worth cutting."
         },
         {
             "key": "next.tower",
@@ -92,7 +92,7 @@
         },
         {
             "key": "next.signal",
-            "text": "A faint signal. Follow it."
+            "text": "A faint signal. Someone is out there."
         },
         {
             "key": "next.relic",
@@ -115,12 +115,16 @@
             "text": "The lift has power. Mend it and ride up."
         },
         {
+            "key": "notyet.tower",
+            "text": "Asleep. Metal and a coil will wake it."
+        },
+        {
             "key": "notyet.bay",
-            "text": "No power. The tower feeds it."
+            "text": "No power yet. It wakes with the tower."
         },
         {
             "key": "notyet.lift",
-            "text": "No power yet. The tower feeds it."
+            "text": "No power yet. It wakes with the tower."
         },
         {
             "key": "notyet.shelf",
@@ -132,7 +136,7 @@
         },
         {
             "key": "place.dock.job",
-            "text": "Where 07 rests. Resting keeps the day."
+            "text": "Where 07 rests. A rest here keeps the day."
         },
         {
             "key": "place.lander.name",
@@ -140,7 +144,7 @@
         },
         {
             "key": "place.lander.job",
-            "text": "The crew's home. Its windows show how alive it is."
+            "text": "The crew's home. Its windows light as it wakes."
         },
         {
             "key": "place.shelf.name",
@@ -296,7 +300,7 @@
         },
         {
             "key": "upgrade.radio_tower.1.effect",
-            "text": "Power the tired antenna: its beacon glows again and the music reaches farther."
+            "text": "Power the tired antenna and home wakes: the lander's windows glow again."
         },
         {
             "key": "upgrade.radio_tower.2.title",
@@ -304,7 +308,7 @@
         },
         {
             "key": "upgrade.radio_tower.2.effect",
-            "text": "A taller mast and a warmer lamp: the radio stays clear deep into the dunes."
+            "text": "A taller mast carries power to Kenji's bay, and the radio stays clear far out."
         },
         {
             "key": "upgrade.radio_tower.3.title",
@@ -312,7 +316,7 @@
         },
         {
             "key": "upgrade.radio_tower.3.effect",
-            "text": "The tower sings across the crater; home glows like a lantern on a winter night."
+            "text": "The tower sings across the basin and wakes the crew's lift; home glows like a lantern."
         },
         {
             "key": "upgrade.rover.hover_jump.name",
@@ -448,7 +452,7 @@
         },
         {
             "key": "hint.repair",
-            "text": "Repair"
+            "text": "Mend"
         },
         {
             "key": "ui.card.log_caption",
