@@ -35,6 +35,7 @@ namespace MoonProject.Art.Editor
         public const string PropFolder = Root + "/Props";
         public const string RelayFolder = Root + "/Relay";
         public const string SitesFolder = Root + "/Sites";
+        public const string LandmarksFolder = Root + "/Landmarks";
 
         /// <summary>
         /// The Lofi lit shader (M3-18 V2): URP's Blinn-Phong with no specular plus the palette emission map, a cool
