@@ -208,7 +208,7 @@ namespace MoonProject.Art.Editor
         {
             var target = new Vector3(1.6f, 1.25f, 4.6f);
             Vector3 upper = target + new Vector3(1.3f, 0.35f, 0f);
-            SalvagePieceRecipe piece = site.Piece(SalvageMaterial.Metal, target, upper,
+            SalvagePieceRecipe piece = site.Piece(SalvagePieceMaterial.Metal, target, upper,
                 new Vector3(-0.4f, 1f, -0.5f));
             LowPolyMeshBuilder b = piece.Geometry;
             Vector3 mid = OnArch(120f, 0f, 0f) - new Vector3(0f, Centre, 0f);
@@ -227,7 +227,8 @@ namespace MoonProject.Art.Editor
         private static void RockerArm(SiteRecipe site)
         {
             var boss = new Vector3(-1.95f, 0.85f, 1.2f);
-            SalvagePieceRecipe piece = site.Piece(SalvageMaterial.Metal, boss, boss + new Vector3(0.12f, 0f, -0.1f),
+            SalvagePieceRecipe piece = site.Piece(SalvagePieceMaterial.Metal,
+                boss, boss + new Vector3(0.12f, 0f, -0.1f),
                 new Vector3(0.6f, 0.2f, -0.8f));
             LowPolyMeshBuilder b = piece.Geometry;
             var low = new Vector3(-1.55f, Floor + 0.18f, 0.55f);
@@ -243,7 +244,7 @@ namespace MoonProject.Art.Editor
         private static void ChargingPost(SiteRecipe site)
         {
             var foot = new Vector3(2.3f, 0f, -1.4f);
-            SalvagePieceRecipe piece = site.Piece(SalvageMaterial.Wiring, foot + Vector3.up * 0.12f,
+            SalvagePieceRecipe piece = site.Piece(SalvagePieceMaterial.Wiring, foot + Vector3.up * 0.12f,
                 foot + new Vector3(0f, 0.18f, -0.1f), new Vector3(-0.3f, 0.2f, -1f));
             LowPolyMeshBuilder b = piece.Geometry;
             b.Box(At(foot + Vector3.up * 0.05f), new Vector3(0.4f, 0.1f, 0.4f), PaletteSwatch.Metal);
@@ -270,7 +271,8 @@ namespace MoonProject.Art.Editor
         {
             var centre = new Vector3(-0.75f, Floor + 0.24f, 4.3f);
             var facing = new Vector3(0.3f, 0.35f, -0.9f);
-            SalvagePieceRecipe piece = site.Piece(SalvageMaterial.Optics, centre, centre + facing.normalized * 0.22f,
+            SalvagePieceRecipe piece = site.Piece(SalvagePieceMaterial.Optics,
+                centre, centre + facing.normalized * 0.22f,
                 facing);
             LowPolyMeshBuilder b = piece.Geometry;
             Matrix4x4 lamp = SiteKit.Face(centre, facing, Vector3.up);
@@ -284,7 +286,7 @@ namespace MoonProject.Art.Editor
         private static void HangingCoil(SiteRecipe site)
         {
             Vector3 hook = OnArch(64f, Ribs[2], -0.1f);
-            SalvagePieceRecipe piece = site.Piece(SalvageMaterial.Wiring, hook + Vector3.down * 0.12f,
+            SalvagePieceRecipe piece = site.Piece(SalvagePieceMaterial.Wiring, hook + Vector3.down * 0.12f,
                 hook + Vector3.down * 0.05f, new Vector3(-0.4f, -0.2f, -1f));
             LowPolyMeshBuilder b = piece.Geometry;
             SiteKit.Bar(b, hook, hook + Vector3.down * 0.2f, 0.04f, PaletteSwatch.Metal);
@@ -304,7 +306,7 @@ namespace MoonProject.Art.Editor
         {
             const float lift = 0.12f;
             Vector3 hinge = OnArch(112.5f, (Ribs[2] + Ribs[3]) * 0.5f, lift);
-            SalvagePieceRecipe piece = site.Piece(SalvageMaterial.Optics,
+            SalvagePieceRecipe piece = site.Piece(SalvagePieceMaterial.Optics,
                 OnArch(116f, (Ribs[2] + Ribs[3]) * 0.5f, lift),
                 hinge + new Vector3(0f, 0.08f, -0.5f), OnArch(112.5f, 0f, 0f) - OnArch(112.5f, 0f, -1f));
             LowPolyMeshBuilder b = piece.Geometry;

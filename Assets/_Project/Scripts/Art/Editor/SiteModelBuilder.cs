@@ -53,7 +53,7 @@ namespace MoonProject.Art.Editor
                 ModelPrefabWriter.Write(CreateDebris(name), ArtPaths.SitesFolder, material);
             }
 
-            foreach (SalvageMaterial bundle in Enum.GetValues(typeof(SalvageMaterial)))
+            foreach (SalvagePieceMaterial bundle in Enum.GetValues(typeof(SalvagePieceMaterial)))
             {
                 ModelPrefabWriter.Write(CreateBundle(bundle), ArtPaths.PickupFolder, material);
             }
@@ -99,7 +99,7 @@ namespace MoonProject.Art.Editor
             return "Site_" + id;
         }
 
-        public static string BundleName(SalvageMaterial material)
+        public static string BundleName(SalvagePieceMaterial material)
         {
             return "Material_" + material;
         }
@@ -136,18 +136,18 @@ namespace MoonProject.Art.Editor
             return root;
         }
 
-        public static ModelNode CreateBundle(SalvageMaterial material)
+        public static ModelNode CreateBundle(SalvagePieceMaterial material)
         {
             LowPolyMeshBuilder geometry;
             switch (material)
             {
-                case SalvageMaterial.Metal:
+                case SalvagePieceMaterial.Metal:
                     geometry = SalvageBitMeshes.MetalBundle();
                     break;
-                case SalvageMaterial.Wiring:
+                case SalvagePieceMaterial.Wiring:
                     geometry = SalvageBitMeshes.WiringBundle();
                     break;
-                case SalvageMaterial.Optics:
+                case SalvagePieceMaterial.Optics:
                     geometry = SalvageBitMeshes.OpticsBundle();
                     break;
                 default:

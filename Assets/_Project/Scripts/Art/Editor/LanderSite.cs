@@ -157,7 +157,7 @@ namespace MoonProject.Art.Editor
             const float along = 0.4f;
             Matrix4x4 module = ModuleFrame;
             Vector3 seam = module.MultiplyPoint3x4(Arc(100f) * radius + Vector3.forward * along);
-            SalvagePieceRecipe piece = site.Piece(SalvageMaterial.Metal, seam + new Vector3(0f, -0.04f, -0.05f),
+            SalvagePieceRecipe piece = site.Piece(SalvagePieceMaterial.Metal, seam + new Vector3(0f, -0.04f, -0.05f),
                 seam + new Vector3(0.1f, 0.05f, -0.05f), new Vector3(0f, 0.6f, -0.8f));
             LowPolyMeshBuilder b = piece.Geometry;
             Matrix4x4 peel = At(seam) * Matrix4x4.Rotate(Rotation(new Vector3(65f, 0f, 0f))) * At(-seam);
@@ -185,7 +185,7 @@ namespace MoonProject.Art.Editor
             var snap = new Vector3(-1.4f, 0.18f, 3.55f);
             var knee = new Vector3(-2.45f, 0.16f, 4.15f);
             var foot = new Vector3(-3.3f, 0.12f, 3.6f);
-            SalvagePieceRecipe piece = site.Piece(SalvageMaterial.Metal, snap + new Vector3(-0.08f, 0f, 0.04f),
+            SalvagePieceRecipe piece = site.Piece(SalvagePieceMaterial.Metal, snap + new Vector3(-0.08f, 0f, 0.04f),
                 snap + new Vector3(0.05f, 0.08f, -0.05f), new Vector3(0.6f, 0.4f, -0.7f));
             LowPolyMeshBuilder b = piece.Geometry;
             SiteKit.Bar(b, snap, knee, 0.16f, PaletteSwatch.Metal);
@@ -199,7 +199,7 @@ namespace MoonProject.Art.Editor
         private static void Avionics(SiteRecipe site)
         {
             Vector3 back = Stage + new Vector3(0.1f, 0.25f, -StageRadius * 0.924f - 0.02f);
-            SalvagePieceRecipe piece = site.Piece(SalvageMaterial.Wiring, back + new Vector3(0f, 0f, -0.08f),
+            SalvagePieceRecipe piece = site.Piece(SalvagePieceMaterial.Wiring, back + new Vector3(0f, 0f, -0.08f),
                 back + new Vector3(0f, 0.36f, -0.06f), new Vector3(0f, 0.4f, -1f));
             SiteKit.JunctionBox(piece.Geometry, SiteKit.Face(back, Vector3.back, Vector3.up),
                 new Vector3(0.62f, 0.58f, 0.26f));
@@ -211,7 +211,7 @@ namespace MoonProject.Art.Editor
             Matrix4x4 module = ModuleFrame;
             Vector3 root = module.MultiplyPoint3x4(new Vector3(0.35f, 0.55f, ModuleLength * 0.5f + 0.3f));
             var facing = new Vector3(0.5f, 0.3f, -0.8f);
-            SalvagePieceRecipe piece = site.Piece(SalvageMaterial.Optics, root + facing.normalized * 0.1f,
+            SalvagePieceRecipe piece = site.Piece(SalvagePieceMaterial.Optics, root + facing.normalized * 0.1f,
                 root + new Vector3(0f, -0.05f, 0f), new Vector3(0.7f, 0.2f, -0.7f));
             LowPolyMeshBuilder b = piece.Geometry;
             Vector3 head = root + facing.normalized * 0.4f;
@@ -225,7 +225,7 @@ namespace MoonProject.Art.Editor
         private static void SpilledCrate(SiteRecipe site)
         {
             var centre = new Vector3(3.6f, 0.38f, -0.9f);
-            SalvagePieceRecipe piece = site.Piece(SalvageMaterial.Metal, centre,
+            SalvagePieceRecipe piece = site.Piece(SalvagePieceMaterial.Metal, centre,
                 centre + new Vector3(-0.2f, 0.42f, -0.3f),
                 new Vector3(-0.3f, 0.6f, -0.7f));
             SiteKit.Crate(piece.Geometry, At(centre, new Vector3(6f, -38f, -9f)), new Vector3(1f, 0.8f, 0.8f));
@@ -235,7 +235,7 @@ namespace MoonProject.Art.Editor
         private static void Spools(SiteRecipe site)
         {
             var centre = new Vector3(-3.2f, 0.32f, -1.9f);
-            SalvagePieceRecipe piece = site.Piece(SalvageMaterial.Wiring, centre,
+            SalvagePieceRecipe piece = site.Piece(SalvagePieceMaterial.Wiring, centre,
                 centre + new Vector3(0.45f, 0.3f, -0.1f),
                 new Vector3(0.4f, 0.5f, -0.8f));
             LowPolyMeshBuilder b = piece.Geometry;
@@ -259,7 +259,7 @@ namespace MoonProject.Art.Editor
         {
             var centre = new Vector3(1f, 0.14f, 3.6f);
             Vector3 knuckle = centre + new Vector3(-0.85f, 0.08f, -0.7f);
-            SalvagePieceRecipe piece = site.Piece(SalvageMaterial.Metal, centre, knuckle,
+            SalvagePieceRecipe piece = site.Piece(SalvagePieceMaterial.Metal, centre, knuckle,
                 new Vector3(-0.4f, 0.6f, -0.7f),
                 true);
             LowPolyMeshBuilder b = piece.Geometry;

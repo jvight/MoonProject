@@ -187,7 +187,7 @@ namespace MoonProject.Art.Editor
             var root = new Vector3(-3.6f, 0.3f, 2.4f);
             Vector3 along = new Vector3(-0.32f, 0.94f, 0.08f).normalized;
             var normal = new Vector3(0.2f, 0f, -1f);
-            SalvagePieceRecipe piece = site.Piece(SalvageMaterial.Optics, root,
+            SalvagePieceRecipe piece = site.Piece(SalvagePieceMaterial.Optics, root,
                 root + new Vector3(0.05f, 0.15f, -0.25f), new Vector3(0.2f, 0.25f, -1f), true);
             Matrix4x4 face = SiteKit.Face(root + along * 2.25f, normal, along);
             SiteKit.SolarPanel(piece.Geometry, face, 1.6f, 4.4f, true);
@@ -204,7 +204,8 @@ namespace MoonProject.Art.Editor
             var centre = new Vector3(5.25f, 0.24f, 0.35f);
             var normal = new Vector3(-0.1f, 1f, -0.12f);
             var hinge = new Vector3(4.75f, 0.24f, -0.1f);
-            SalvagePieceRecipe piece = site.Piece(SalvageMaterial.Optics, hinge, hinge + new Vector3(0f, 0.05f, 0f),
+            SalvagePieceRecipe piece = site.Piece(SalvagePieceMaterial.Optics,
+                hinge, hinge + new Vector3(0f, 0.05f, 0f),
                 new Vector3(-0.3f, 0.6f, -0.75f));
             Matrix4x4 face = SiteKit.Face(centre, normal, new Vector3(0.95f, 0f, -0.32f)) *
                 Matrix4x4.Rotate(Rotation(new Vector3(8f, 0f, 0f)));
@@ -217,7 +218,7 @@ namespace MoonProject.Art.Editor
         {
             var back = new Vector3(1.75f, 0.55f, 0f);
             var opening = new Vector3(0.55f, 0.45f, -0.7f);
-            SalvagePieceRecipe piece = site.Piece(SalvageMaterial.Optics, back + opening.normalized * 0.12f,
+            SalvagePieceRecipe piece = site.Piece(SalvagePieceMaterial.Optics, back + opening.normalized * 0.12f,
                 back + opening.normalized * 0.45f, opening);
             SiteKit.Dish(piece.Geometry, SiteKit.Face(back, Vector3.Cross(opening, Vector3.up), opening), 0.62f,
                 PaletteSwatch.SkyHorizon);
@@ -228,7 +229,8 @@ namespace MoonProject.Art.Editor
         private static void FoilPanel(SiteRecipe site)
         {
             var crease = new Vector3(3.3f, 0.22f, 3.7f);
-            SalvagePieceRecipe piece = site.Piece(SalvageMaterial.Metal, crease, crease + new Vector3(0f, 0.1f, -0.1f),
+            SalvagePieceRecipe piece = site.Piece(SalvagePieceMaterial.Metal,
+                crease, crease + new Vector3(0f, 0.1f, -0.1f),
                 new Vector3(-0.3f, 0.7f, -0.6f));
             LowPolyMeshBuilder b = piece.Geometry;
             int first = b.TriangleCount;
@@ -246,7 +248,7 @@ namespace MoonProject.Art.Editor
         private static void Tank(SiteRecipe site)
         {
             var centre = new Vector3(-2.5f, 0.42f, 4.7f);
-            SalvagePieceRecipe piece = site.Piece(SalvageMaterial.Metal, centre,
+            SalvagePieceRecipe piece = site.Piece(SalvagePieceMaterial.Metal, centre,
                 centre + new Vector3(0.4f, 0.35f, -0.25f),
                 new Vector3(0.5f, 0.5f, -0.7f));
             LowPolyMeshBuilder b = piece.Geometry;
@@ -269,7 +271,7 @@ namespace MoonProject.Art.Editor
         {
             Matrix4x4 bus = Bus;
             Vector3 connector = bus.MultiplyPoint3x4(new Vector3(0.35f, HalfY + 0.12f, -0.75f));
-            SalvagePieceRecipe piece = site.Piece(SalvageMaterial.Wiring, connector,
+            SalvagePieceRecipe piece = site.Piece(SalvagePieceMaterial.Wiring, connector,
                 connector + new Vector3(0f, 0.15f, -0.05f), new Vector3(0f, 0.6f, -0.8f));
             LowPolyMeshBuilder b = piece.Geometry;
             b.Box(At(connector, BusEuler), new Vector3(0.42f, 0.24f, 0.32f), PaletteSwatch.Sage, 0.03f);
@@ -292,7 +294,7 @@ namespace MoonProject.Art.Editor
         {
             Matrix4x4 bus = Bus;
             Vector3 mount = bus.MultiplyPoint3x4(new Vector3(-0.45f, -HalfY + Wall + 0.25f, -0.75f));
-            SalvagePieceRecipe piece = site.Piece(SalvageMaterial.Wiring, mount,
+            SalvagePieceRecipe piece = site.Piece(SalvagePieceMaterial.Wiring, mount,
                 bus.MultiplyPoint3x4(new Vector3(-0.45f, -HalfY + Wall + 0.52f, -1.05f)),
                 bus.MultiplyVector(new Vector3(0f, 0.5f, -1f)));
             LowPolyMeshBuilder b = piece.Geometry;

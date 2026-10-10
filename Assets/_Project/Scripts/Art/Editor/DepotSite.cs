@@ -222,7 +222,8 @@ namespace MoonProject.Art.Editor
             Vector3 upSlope = new Vector3(SlopeTop.x - SlopeFoot.x, SlopeTop.y - SlopeFoot.y, 0f);
             Vector3 centre = OnSlope(0.38f, 3.75f, 0.21f);
             Vector3 pivot = OnSlope(0.16f, 3.75f, 0.22f);
-            SalvagePieceRecipe piece = site.Piece(SalvageMaterial.Metal, pivot, OnSlope(0.14f, 3.1f, 0.26f), normal);
+            SalvagePieceRecipe piece = site.Piece(SalvagePieceMaterial.Metal,
+                pivot, OnSlope(0.14f, 3.1f, 0.26f), normal);
             Matrix4x4 face = SiteKit.Face(centre, normal,
                 upSlope) * Matrix4x4.Rotate(Rotation(new Vector3(0f, 0f, 4f)));
             SiteKit.Sheet(piece.Geometry, face, 2.7f, 2.5f, PaletteSwatch.WornPanel);
@@ -239,7 +240,8 @@ namespace MoonProject.Art.Editor
         private static void HangingPanel(SiteRecipe site)
         {
             var bolt = new Vector3(Side + 0.12f, Eave - 0.1f, Front + 4f / 3f - 0.08f);
-            SalvagePieceRecipe piece = site.Piece(SalvageMaterial.Metal, bolt + new Vector3(0.05f, -0.1f, -0.1f), bolt,
+            SalvagePieceRecipe piece = site.Piece(SalvagePieceMaterial.Metal,
+                bolt + new Vector3(0.05f, -0.1f, -0.1f), bolt,
                 new Vector3(1f, 0f, -0.4f));
             float height = Eave - Floor;
             Matrix4x4 hang = At(bolt) * Matrix4x4.Rotate(Rotation(new Vector3(-15f, 0f, 18f)))
@@ -254,7 +256,7 @@ namespace MoonProject.Art.Editor
         private static void ToppledPod(SiteRecipe site)
         {
             var centre = new Vector3(4.5f, 0.5f, -1f);
-            SalvagePieceRecipe piece = site.Piece(SalvageMaterial.Metal, centre,
+            SalvagePieceRecipe piece = site.Piece(SalvagePieceMaterial.Metal, centre,
                 centre + new Vector3(-0.3f, 0.52f, -0.2f),
                 new Vector3(-0.4f, 0.6f, -0.7f));
             Matrix4x4 frame = At(centre, new Vector3(0f, 65f, 8f));
@@ -267,7 +269,7 @@ namespace MoonProject.Art.Editor
         private static void JunctionBox(SiteRecipe site)
         {
             var back = new Vector3(Side, 1.3f, Front - Post * 0.5f - 0.02f);
-            SalvagePieceRecipe piece = site.Piece(SalvageMaterial.Wiring, back + new Vector3(0f, 0f, -0.08f),
+            SalvagePieceRecipe piece = site.Piece(SalvagePieceMaterial.Wiring, back + new Vector3(0f, 0f, -0.08f),
                 back + new Vector3(0f, 0.33f, -0.05f), new Vector3(0f, 0.3f, -1f));
             SiteKit.JunctionBox(piece.Geometry, SiteKit.Face(back, Vector3.back, Vector3.up),
                 new Vector3(0.5f, 0.6f, 0.22f));
@@ -276,7 +278,8 @@ namespace MoonProject.Art.Editor
         private static void Drum(SiteRecipe site)
         {
             var centre = new Vector3(1.6f, Floor + 0.56f, 3.7f);
-            SalvagePieceRecipe piece = site.Piece(SalvageMaterial.Wiring, centre, centre + new Vector3(0.45f, 0f, 0f),
+            SalvagePieceRecipe piece = site.Piece(SalvagePieceMaterial.Wiring,
+                centre, centre + new Vector3(0.45f, 0f, 0f),
                 new Vector3(0.6f, 0.2f, -0.8f));
             SiteKit.Drum(piece.Geometry, At(centre, new Vector3(0f, 12f, 0f)), 0.55f, 0.75f, PaletteSwatch.WarmAccent);
             site.Settle(piece);
@@ -287,7 +290,7 @@ namespace MoonProject.Art.Editor
             var normal = new Vector3(0f, 0.87f, -0.5f);
             var up = new Vector3(0f, 0.5f, 0.87f);
             var centre = new Vector3(-6f, 0.98f, 0.62f);
-            SalvagePieceRecipe piece = site.Piece(SalvageMaterial.Optics, centre + up * 0.4f,
+            SalvagePieceRecipe piece = site.Piece(SalvagePieceMaterial.Optics, centre + up * 0.4f,
                 centre + up * 0.48f + new Vector3(0.62f, 0f, 0f) + normal * 0.04f, normal);
             SiteKit.SolarPanel(piece.Geometry, SiteKit.Face(centre, normal, up), 1.6f, 1f, true);
         }

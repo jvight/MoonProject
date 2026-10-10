@@ -237,10 +237,10 @@ namespace MoonProject.Art.Tests
             MeshChecks.AssertSameModel(SiteModelBuilder.CreateSite(id), SiteModelBuilder.CreateSite(id));
         }
 
-        [TestCase(SalvageMaterial.Metal)]
-        [TestCase(SalvageMaterial.Wiring)]
-        [TestCase(SalvageMaterial.Optics)]
-        public void Bundle_IsAPickupSizedSingleMesh_PivotedAtItsCentreOfMass(SalvageMaterial material)
+        [TestCase(SalvagePieceMaterial.Metal)]
+        [TestCase(SalvagePieceMaterial.Wiring)]
+        [TestCase(SalvagePieceMaterial.Optics)]
+        public void Bundle_IsAPickupSizedSingleMesh_PivotedAtItsCentreOfMass(SalvagePieceMaterial material)
         {
             ModelNode bundle = SiteModelBuilder.CreateBundle(material);
             Assert.AreEqual("Material_" + material, bundle.Name);
@@ -257,9 +257,9 @@ namespace MoonProject.Art.Tests
         [Test]
         public void Bundles_ReadApart_ByColourAndSilhouette()
         {
-            LowPolyMeshBuilder metal = SiteModelBuilder.CreateBundle(SalvageMaterial.Metal).Mesh.Geometry;
-            LowPolyMeshBuilder wiring = SiteModelBuilder.CreateBundle(SalvageMaterial.Wiring).Mesh.Geometry;
-            LowPolyMeshBuilder optics = SiteModelBuilder.CreateBundle(SalvageMaterial.Optics).Mesh.Geometry;
+            LowPolyMeshBuilder metal = SiteModelBuilder.CreateBundle(SalvagePieceMaterial.Metal).Mesh.Geometry;
+            LowPolyMeshBuilder wiring = SiteModelBuilder.CreateBundle(SalvagePieceMaterial.Wiring).Mesh.Geometry;
+            LowPolyMeshBuilder optics = SiteModelBuilder.CreateBundle(SalvagePieceMaterial.Optics).Mesh.Geometry;
             Assert.AreEqual(PaletteSwatch.WarmAccent, Dominant(wiring), "copper coil");
             Assert.AreEqual(PaletteSwatch.SkyHorizon, Dominant(optics, Vector3.up), "violet cells seen from above");
             CollectionAssert.DoesNotContain(MeshChecks.Swatches(metal), PaletteSwatch.WarmAccent);
@@ -391,7 +391,7 @@ namespace MoonProject.Art.Tests
                     : volume < MediumVolume ? MediumYield
                     : LargeYield;
                 string material = piece.Name.Split('_')[2];
-                totals[(int)System.Enum.Parse(typeof(SalvageMaterial), material)] += units;
+                totals[(int)System.Enum.Parse(typeof(SalvagePieceMaterial), material)] += units;
                 TestContext.WriteLine($"{id} {piece.Name}: {volume:F2} m³, {units} units");
             }
 

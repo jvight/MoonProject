@@ -13,7 +13,7 @@ namespace MoonProject.Art.Tests
     /// roof and clear above 07, a clear way in, a hopper a parked 07's beam can see, dark work lamps and repeatable
     /// builds.
     /// </summary>
-    public sealed class RoverBayTests
+    public sealed class ArtRoverBayTests
     {
         private const float TurntableRoom = 0.25f;
         private const float HeadRoom = 0.3f;

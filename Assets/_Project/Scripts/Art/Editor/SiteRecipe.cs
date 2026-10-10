@@ -56,8 +56,8 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>Adds a salvage piece; draw its geometry into the returned recipe in site space.</summary>
-        public SalvagePieceRecipe Piece(SalvageMaterial material, Vector3 pivot, Vector3 cutPoint, Vector3 cutNormal,
-            bool drag = false)
+        public SalvagePieceRecipe Piece(SalvagePieceMaterial material, Vector3 pivot, Vector3 cutPoint,
+            Vector3 cutNormal, bool drag = false)
         {
             var piece = new SalvagePieceRecipe(material, pivot, cutPoint, cutNormal, drag);
             _pieces.Add(piece);

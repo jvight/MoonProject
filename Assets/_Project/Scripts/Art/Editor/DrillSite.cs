@@ -151,7 +151,7 @@ namespace MoonProject.Art.Editor
         private static void DrillHead(SiteRecipe site)
         {
             var centre = new Vector3(5.5f, 0.42f, 5.1f);
-            SalvagePieceRecipe piece = site.Piece(SalvageMaterial.Metal, centre,
+            SalvagePieceRecipe piece = site.Piece(SalvagePieceMaterial.Metal, centre,
                 centre + new Vector3(-0.55f, 0.15f, -0.2f),
                 new Vector3(-0.8f, 0.3f, -0.5f));
             LowPolyMeshBuilder b = piece.Geometry;
@@ -169,7 +169,7 @@ namespace MoonProject.Art.Editor
         private static void Pipes(SiteRecipe site)
         {
             var centre = new Vector3(-3f, 0.42f, -1.4f);
-            SalvagePieceRecipe piece = site.Piece(SalvageMaterial.Metal, centre,
+            SalvagePieceRecipe piece = site.Piece(SalvagePieceMaterial.Metal, centre,
                 centre + new Vector3(0.9f, 0.2f, -0.18f),
                 new Vector3(0.2f, 0.4f, -1f));
             LowPolyMeshBuilder b = piece.Geometry;
@@ -197,7 +197,7 @@ namespace MoonProject.Art.Editor
         private static void Generator(SiteRecipe site)
         {
             var foot = new Vector3(-2.1f, Deck + 0.02f, 1.05f);
-            SalvagePieceRecipe piece = site.Piece(SalvageMaterial.Metal, foot + Vector3.up * 0.1f,
+            SalvagePieceRecipe piece = site.Piece(SalvagePieceMaterial.Metal, foot + Vector3.up * 0.1f,
                 foot + new Vector3(0.72f, 0.12f, -0.3f), new Vector3(0.6f, 0.2f, -0.8f));
             LowPolyMeshBuilder b = piece.Geometry;
             Matrix4x4 body = At(foot + Vector3.up * 0.46f, new Vector3(0f, 4f, -1.2f));
@@ -222,7 +222,7 @@ namespace MoonProject.Art.Editor
         private static void Cabinet(SiteRecipe site)
         {
             var foot = new Vector3(-0.45f, Deck, 1.75f);
-            SalvagePieceRecipe piece = site.Piece(SalvageMaterial.Wiring, foot + Vector3.up * 0.1f,
+            SalvagePieceRecipe piece = site.Piece(SalvagePieceMaterial.Wiring, foot + Vector3.up * 0.1f,
                 foot + new Vector3(0f, 0.15f, -0.3f), new Vector3(0f, 0.3f, -1f));
             LowPolyMeshBuilder b = piece.Geometry;
             Matrix4x4 body = At(foot + Vector3.up * 0.56f, new Vector3(0f, 0f, -1.2f));
@@ -249,7 +249,8 @@ namespace MoonProject.Art.Editor
         private static void Reel(SiteRecipe site)
         {
             var centre = new Vector3(2.75f, 0.52f, -1.35f);
-            SalvagePieceRecipe piece = site.Piece(SalvageMaterial.Wiring, centre, centre + new Vector3(0f, 0f, -0.36f),
+            SalvagePieceRecipe piece = site.Piece(SalvagePieceMaterial.Wiring,
+                centre, centre + new Vector3(0f, 0f, -0.36f),
                 new Vector3(-0.3f, 0.2f, -1f));
             SiteKit.Drum(piece.Geometry, At(centre, new Vector3(0f, 78f, 0f)), 0.52f, 0.62f, PaletteSwatch.WarmAccent);
         }
@@ -260,7 +261,8 @@ namespace MoonProject.Art.Editor
         private static void WorkLamp(SiteRecipe site)
         {
             var normal = new Vector3(0.45f, -0.35f, -0.82f);
-            SalvagePieceRecipe piece = site.Piece(SalvageMaterial.Optics, PoleTop + new Vector3(0.05f, 0.08f, -0.05f),
+            SalvagePieceRecipe piece = site.Piece(SalvagePieceMaterial.Optics,
+                PoleTop + new Vector3(0.05f, 0.08f, -0.05f),
                 PoleTop + new Vector3(0.12f, 0.02f, -0.14f), normal);
             LowPolyMeshBuilder b = piece.Geometry;
             Matrix4x4 head = SiteKit.Face(PoleTop + new Vector3(0.18f, 0.22f, -0.2f), normal, Vector3.up);
