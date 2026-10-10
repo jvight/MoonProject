@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 16d101f8fbdc375408875467cac921b8, type: 3}
+  m_Name: LiftTuning
+  m_EditorClassIdentifier: 
+  _feedMetal: 2
+  _feedWiring: 2
+  _feedDelay: 1
+  _feedPadDistance: 2.4
+  _stitchSeconds: 3.5
+  _lampGlow: 2.5
+  _creakRadius: 5
+  _creakRearm: 3
+  _platformRadius: 1
+  _boardDelay: 1.5
+  _rideSeconds: 6
+  _settleSeconds: 0.8
+  _lookoutGazeDistance: 80
+  _ladderLookSeconds: 2.5
+  _liftLookSeconds: 2
+  _gazePriority: 6
