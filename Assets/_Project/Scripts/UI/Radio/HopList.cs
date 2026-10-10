@@ -33,7 +33,7 @@ namespace MoonProject.UI
         private string _glyph;
         private InputDeviceKind _device = InputDeviceKind.KeyboardMouse;
 
-        public HopList(UiLayout layout, RelaySettings settings, ILocalization localization, IRadioHop hop)
+        public HopList(UiLayout layout, RelayUiSettings settings, ILocalization localization, IRadioHop hop)
         {
             if (layout == null)
             {

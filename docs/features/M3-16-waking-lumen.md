@@ -27,7 +27,7 @@ to whatever just woke.
 ## The steps (fresh game, ~90 min)
 | # | Step | What wakes or opens | Verb taught | What the player learns |
 |---|---|---|---|---|
-| 0 | **Waking** (0–3 min) | 07 wakes on its charging dock; the dock's glow and 07's eye are the only warm lights | drive, look | "Home. 07 rests here." Everything else is asleep. |
+| 0 | **Waking** (0–3 min) | 07 wakes on its charging dock, seen first through its own eye; the dock, 07's eye and the tower's pilot are the only warm lights | drive, look | "Home. 07 rests here." Everything else is asleep. |
 | 1 | **First salvage** (3–8) | the supply depot beside home answers the ping | sonar ping, beam cut | materials come from the wrecks of the old base |
 | 2 | **The tower wakes** (8–15) | tower L1 (port hopper, stitch). Power returns home: lander windows light one by one, porch lamps, the HOME sign straightens, the radio crackles | feed a hopper, stitch | the tower is the heart; feeding it wakes things |
 | 3 | **A faint signal** (15–22) | the tower hears Tilly; her signal pillar rises | follow a signal, stitch a friend | friends come home and help |
@@ -84,8 +84,10 @@ The Director adopted all ten proposals. The step table above stands, with these 
 - **P4: only the next thing speaks.** Before L1 only the tower answers "not yet". Place cards come one at a time and
   only near the current step's place.
 - **P5: the wake is a stargaze.**
-  - The first beat is a front three-quarter shot on the lens: 07 looks up at Earth, then the camera eases to the
-    chase frame. The first prompt is "Look up".
+  - The wake opens through 07's own eye (`docs/design/cutscenes.md` §1): darkness and the radio's crackle, the lid
+    opening in stages, the lens finding focus, a look round the sleeping home, the pilot, the Peak and Earth. Then
+    the camera eases out of the lens to the front three-quarter shot on the eye, 07 blinks, and the camera eases to
+    the chase frame. The first prompt is "Look up" if the player hasn't looked yet, otherwise "Drive".
   - There are three warm points: the dock, 07's eye and a slow tower pilot blink. This replaces the "lit port hopper".
 - **P6: the dock's evening.** Parking at the dock after a trip gives a wide shot of the day's newly lit lamps. Then
   the tower's listening sweep raises one new signal pillar on the horizon. This is the homecoming and the

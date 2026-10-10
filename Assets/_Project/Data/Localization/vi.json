@@ -96,23 +96,23 @@
         },
         {
             "key": "next.relic",
-            "text": "Có gì đó lấp lánh ngoài kia. Mang nó về nhà."
+            "text": "Có gì đó lấp lánh ngoài kia. Ở nhà còn chỗ cho nó."
         },
         {
             "key": "next.bay",
-            "text": "Khoang đã có điện. Đỗ lên bàn xoay."
+            "text": "Khoang xe đã có điện. Bàn xoay đang chờ."
         },
         {
             "key": "next.leap",
-            "text": "Vực sâu đang chờ. Tích lực để nhảy."
+            "text": "Vực sâu đang chờ. Một cú nhảy tích đủ lực sẽ đưa 07 qua."
         },
         {
             "key": "next.relay",
-            "text": "Một cột tối. Hãy thắp nó lên."
+            "text": "Một cột anten tối, đang chờ được thắp sáng."
         },
         {
             "key": "next.lift",
-            "text": "Thang nâng đã có điện. Sửa nó rồi lên cao."
+            "text": "Thang nâng đã có điện. Sửa xong, nó sẽ đưa 07 lên cao."
         },
         {
             "key": "notyet.tower",
@@ -132,7 +132,7 @@
         },
         {
             "key": "place.dock.name",
-            "text": "Trạm sạc"
+            "text": "Đế sạc"
         },
         {
             "key": "place.dock.job",
@@ -184,7 +184,7 @@
         },
         {
             "key": "place.ladder.job",
-            "text": "Thang của phi hành đoàn. Không làm cho bánh xe."
+            "text": "Thang của phi hành đoàn. Không dành cho bánh xe."
         },
         {
             "key": "place.lift.name",
@@ -312,11 +312,11 @@
         },
         {
             "key": "upgrade.radio_tower.3.title",
-            "text": "Thắp sáng cả lòng chảo"
+            "text": "Thắp sáng cả lòng hố"
         },
         {
             "key": "upgrade.radio_tower.3.effect",
-            "text": "Tháp ngân nga khắp lòng chảo, đánh thức thang nâng; căn nhà rực sáng như chiếc đèn lồng."
+            "text": "Tháp ngân nga khắp lòng hố, đánh thức thang nâng; căn nhà rực sáng như chiếc đèn lồng."
         },
         {
             "key": "upgrade.rover.hover_jump.name",
@@ -604,7 +604,7 @@
         },
         {
             "key": "ticker.relay.waiting",
-            "text": "Trạm tiếp sóng đã sửa xong. Nó đang lắng nghe một trạm sáng bên cạnh."
+            "text": "Trạm tiếp sóng đã sửa xong. Nó đang lắng nghe một trạm sáng gần đó."
         },
         {
             "key": "hop.node.home",
