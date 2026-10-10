@@ -42,6 +42,9 @@ namespace MoonProject.World
             "shader).")]
         [SerializeField] private Material _groundMarkMaterial;
 
+        [Tooltip("Art's landmark kit (Generated/Art/Landmarks): route posts, the chasm bridge, the dish frames.")]
+        [SerializeField] private LandmarkPrefabs _landmarkPrefabs = new LandmarkPrefabs();
+
         [Tooltip("The beacon on The Peak; placed on the summit and breathed by the beacon settings.")]
         [SerializeField] private PeakBeacon _peakBeacon;
 
@@ -142,6 +145,8 @@ namespace MoonProject.World
                 scatterSettings, _settings.Mesh.ChunkSize, _pebbleRocks, _boulderRocks, _paletteMaterial, hideFlags);
             BuildEarth(hideFlags);
             BuildWornTracks(hideFlags);
+            LandmarkPlacer.Build(_generatedRoot.transform, surface, Anchors, _settings.Landmarks, _settings.Seed,
+                _landmarkPrefabs, hideFlags);
             _peakBeacon.transform.position = Layout.PeakPosition;
             _peakBeacon.Configure(_settings.Beacon);
         }
@@ -290,7 +295,8 @@ namespace MoonProject.World
                 return "Ground Material, Palette Material, Earth Material and Ground Mark Material must be assigned.";
             }
 
-            string rocks = RockProblem(_pebbleRocks, "Pebble Rocks") ?? RockProblem(_boulderRocks, "Boulder Rocks");
+            string rocks = RockProblem(_pebbleRocks, "Pebble Rocks") ?? RockProblem(_boulderRocks, "Boulder Rocks")
+                ?? _landmarkPrefabs.Problem();
             if (rocks != null)
             {
                 return rocks;

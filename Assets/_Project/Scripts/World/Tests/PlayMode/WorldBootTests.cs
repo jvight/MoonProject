@@ -24,6 +24,8 @@ namespace MoonProject.World.PlayModeTests
         private const string SettingsPath = "Assets/_Project/Data/Tuning/WorldSettings.asset";
         private const string GroundMaterialPath = "Assets/_Project/Generated/World/M_Ground.mat";
         private const string GroundMarkMaterialPath = "Assets/_Project/Generated/World/M_GroundMarks.mat";
+        private const string LandmarkFolder = "Assets/_Project/Generated/Art/Landmarks/";
+        private static readonly string[] DishFrames = { "DishFrame_0", "DishFrame_1", "DishFrame_2" };
         private const string PaletteMaterialPath = "Assets/_Project/Generated/Art/Palette/M_LowPoly.mat";
         private const string EarthMaterialPath = "Assets/_Project/Generated/World/M_Earth.mat";
         private const string ControlsPath = "Assets/_Project/Data/Input/Controls.inputactions";
@@ -67,6 +69,17 @@ namespace MoonProject.World.PlayModeTests
             serialized.FindProperty("_earthMaterial").objectReferenceValue = Load<Material>(EarthMaterialPath);
             serialized.FindProperty("_groundMarkMaterial").objectReferenceValue =
                 Load<Material>(GroundMarkMaterialPath);
+            AssignLandmark(serialized, "_routePost", "RoutePost");
+            AssignLandmark(serialized, "_bridgeNear", "ChasmBridge_Near");
+            AssignLandmark(serialized, "_bridgeFar", "ChasmBridge_Far");
+            AssignLandmark(serialized, "_bridgeCable", "ChasmBridge_Cable");
+            SerializedProperty frames = serialized.FindProperty("_landmarkPrefabs._dishFrames");
+            frames.arraySize = DishFrames.Length;
+            for (int i = 0; i < DishFrames.Length; i++)
+            {
+                frames.GetArrayElementAtIndex(i).objectReferenceValue =
+                    Load<GameObject>(LandmarkFolder + DishFrames[i] + ".prefab");
+            }
             serialized.FindProperty("_earthlight").objectReferenceValue = light;
             serialized.FindProperty("_fillLight").objectReferenceValue = fill;
             _beacon = CreateBeaconHost("PeakBeacon");
@@ -204,6 +217,12 @@ namespace MoonProject.World.PlayModeTests
             {
                 property.GetArrayElementAtIndex(i).objectReferenceValue = Load<Mesh>(RockFolder + names[i] + ".asset");
             }
+        }
+
+        private static void AssignLandmark(SerializedObject world, string field, string prefab)
+        {
+            world.FindProperty("_landmarkPrefabs." + field).objectReferenceValue =
+                Load<GameObject>(LandmarkFolder + prefab + ".prefab");
         }
 
         private static T Load<T>(string path) where T : Object

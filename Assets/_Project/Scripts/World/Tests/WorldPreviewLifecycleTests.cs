@@ -91,6 +91,7 @@ namespace MoonProject.World.Tests
             serialized.FindProperty("_earthMaterial").objectReferenceValue = Load<Material>(WorldPaths.EarthMaterial);
             serialized.FindProperty("_groundMarkMaterial").objectReferenceValue =
                 Load<Material>(WorldPaths.GroundMarkMaterial);
+            WorldPaths.AssignLandmarks(serialized);
             serialized.FindProperty("_earthlight").objectReferenceValue = light;
             serialized.FindProperty("_fillLight").objectReferenceValue = fill;
             serialized.FindProperty("_peakBeacon").objectReferenceValue = CreateBeaconHost(BeaconName);

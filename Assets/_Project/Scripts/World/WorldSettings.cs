@@ -49,6 +49,9 @@ namespace MoonProject.World
         [Tooltip("Marks pressed into the dust: 07's worn tracks, the landing-blast scar, bootprints (M3-18 V4).")]
         [SerializeField] private GroundMarkSettings _groundMarks = new GroundMarkSettings();
 
+        [Tooltip("Where the crew's remnants from Art's landmark kit stand (M3-18 L2, L4, L7).")]
+        [SerializeField] private LandmarkSettings _landmarks = new LandmarkSettings();
+
         public int Seed => _seed;
 
         public SurfaceSettings Surface => _surface;
@@ -72,6 +75,8 @@ namespace MoonProject.World
         public HomeLightingSettings HomeLighting => _homeLighting;
 
         public GroundMarkSettings GroundMarks => _groundMarks;
+
+        public LandmarkSettings Landmarks => _landmarks;
 
         /// <summary>Builds the analytic surface for these settings (throws on invalid settings).</summary>
         public MoonSurface CreateSurface()
