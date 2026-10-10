@@ -96,7 +96,7 @@ Each ruling removes friction the original pitch would have caused. Boxes impleme
 4. **Progress is kept.** Releasing excavation early keeps progress; a snapped tether leaves the relic right where it
    was; nothing resets.
 5. **No grind.** The basin holds at least 2× the scrap the slice's upgrades cost, and each deposited relic also
-   gives a scrap gift, so exploring for memories funds the radio tower. Target: all three tower levels in 15–20 min.
+   gives a scrap gift, so exploring for memories funds the radio tower. Target: each version's steps need about half of its materials, and the tower's three levels land across the first hour (M3-16).
 6. **Teach by doing.** No tutorial screens. Context prompts (key/button glyph + one word) fade in only near a usable
    thing, only the first few times (remembered in the save), then never again. A pause menu offers resume,
    volumes, look sensitivity, invert Y and quit.

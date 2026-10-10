@@ -1,6 +1,7 @@
-# M3-07: The crew's map (draft)
+# M3-07: The crew's map
 
-> Draft by the game design session for the Director. Not adopted until the Director moves it to `docs/features/`.
+> **Approved by the Director on 2026-10-11** (drafted by the game design and story & flow sessions). Step 3, Ines's
+> pencil notes beyond the rim, stays: it is 0.5's end-of-phase hook toward the 0.6+ regions.
 > ROADMAP 0.5: "a hand-drawn map pinned inside the lander (reached by the lift), drawing itself within the station's
 > reach (M3-06)". DESIGN "Collections: Map" and "Station reach: inside reach the map draws itself". It builds on
 > M3-16 step 8 (the lift and the deck lookout) and the level review's L5 (the lookout's "seen" sweep).
