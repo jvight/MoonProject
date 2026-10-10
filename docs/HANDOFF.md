@@ -37,6 +37,21 @@ account) can continue without the old conversation.
   | art | quality pass in the real Main scene (dark start, wakes, the owner's angle), jammed lift readable |
   | game design | idle; ask it to review the merged 0.5 once it plays end to end |
 
+  Decisions taken while in flight (2026-10-10, late):
+  - **Garage yields.** All cuttable, no drag piece: Wiring L, Wiring M, Metal L, Metal M, Optics S = (7,7,2). Art was
+    asked to do this; the Playthrough failed at the Cradle with the drag version.
+  - **The golden path passes end to end** with gameplay 9f7f9216 and the old art (1052.8 s / budget 1100 s).
+    Re-run it with art's fixed garage.
+  - **Gameplay order:** P7 first, built as a generic "carried find" (found → rides on 07's back → delivered at a home
+    station). Then P1 uses it:
+    - L1 coil: in the depot's heart after the last cut, delivered at the tower.
+    - L2 transformer: in the garage's heart.
+    - L3 relay spare: from the first restored mast.
+    - The shop returns PurchaseResult.NeedsPart.
+    - The cassette player moves to the garage heart. The duck is the step-4 first memory, towed home.
+  - **Art was asked for** Part_TowerCoil, Part_Transformer and Part_RelaySpare under Generated/Art/Pickups, carried on
+    07's back.
+
 - **After landing 0.5's first batch:**
   - Run `^(Art|Rover|Gameplay|UI|Audio)/` builders and the scene.
   - Re-serialise the tuning assets.
