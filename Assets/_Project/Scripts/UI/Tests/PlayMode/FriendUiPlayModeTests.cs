@@ -14,7 +14,7 @@ namespace MoonProject.UI.PlayModeTests
     /// Meeting Tilly end to end: warm pips over her while 07 is near, filling as parts come back; the repair prompt the
     /// first times; and when she wakes, her name over her and Ines's log on the story card.
     /// </summary>
-    public sealed class FriendUiTests : InputTestFixture
+    public sealed class FriendUiPlayModeTests : InputTestFixture
     {
         private static readonly Vector3 Site = new Vector3(0f, 0f, 10f);
 
