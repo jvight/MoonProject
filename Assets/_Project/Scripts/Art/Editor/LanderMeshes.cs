@@ -126,9 +126,6 @@ namespace MoonProject.Art.Editor
                 Weathering.Collar(b, At(foot + Vector3.up * 0.1f), 0.12f, 0.12f);
             }
 
-            Matrix4x4 sign = HomeSignFrame * At(0f, 0.95f, 0.035f + 0.02f + Weathering.RustLift);
-            SiteKit.RustStreak(b, sign, -0.36f, 0.12f, 0.16f);
-            SiteKit.RustStreak(b, sign, 0.36f, 0.12f, 0.22f);
             ChargingDockMeshes.Rust(b);
             CableLiftMeshes.FrameRust(b);
             return b;
@@ -194,7 +191,6 @@ namespace MoonProject.Art.Editor
                 LampFixture(b, LampPosition(i));
             }
 
-            HomeSign(b);
             MissionPatch(b);
             Perch(b);
             return b;
@@ -506,18 +502,31 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
-        /// A little hand-painted "HOME" sign planted in the dust beside 07's dock, leaning with the years.
+        /// Where the HOME sign's post stands in the dust beside 07's dock (the HomeSign node's pivot).
         /// </summary>
-        private static void HomeSign(LowPolyMeshBuilder b)
-        {
-            Matrix4x4 sign = HomeSignFrame;
-            b.Box(sign * At(0f, 0.46f, 0f), new Vector3(0.06f, 0.9f, 0.05f), PaletteSwatch.Metal);
-            b.Box(sign * At(0f, 0.95f, 0.035f), new Vector3(0.92f, 0.36f, 0.04f), PaletteSwatch.Enamel, 0.012f);
-            Glyphs.Write(b, sign * At(0f, 0.95f, 0.055f), "HOME", 0.2f, PaletteSwatch.WarmAccent, PaletteSwatch.Enamel);
-        }
+        public static readonly Vector3 HomeSignFoot = new Vector3(-1.35f, 0f, 4.75f);
 
-        /// <summary>The HOME sign's lean: back and to the side, sunk a little in the dust.</summary>
-        private static Matrix4x4 HomeSignFrame => At(new Vector3(-1.35f, 0f, 4.75f), new Vector3(-9f, -17f, 13f));
+        /// <summary>The HOME sign leaning with the years: back and to the side (the node's built rotation).</summary>
+        public static readonly Vector3 HomeSignLean = new Vector3(-9f, -17f, 13f);
+
+        /// <summary>The HOME sign set straight again once home wakes (M3-16), still facing the dock.</summary>
+        public static readonly Vector3 HomeSignUpright = new Vector3(0f, -17f, 0f);
+
+        /// <summary>
+        /// A little hand-painted "HOME" sign on a post, in its own space (the post's foot at the origin), rust weeping
+        /// from the bolts that hold its board.
+        /// </summary>
+        public static LowPolyMeshBuilder HomeSign()
+        {
+            var b = new LowPolyMeshBuilder(400);
+            b.Box(At(0f, 0.46f, 0f), new Vector3(0.06f, 0.9f, 0.05f), PaletteSwatch.Metal);
+            b.Box(At(0f, 0.95f, 0.035f), new Vector3(0.92f, 0.36f, 0.04f), PaletteSwatch.Enamel, 0.012f);
+            Glyphs.Write(b, At(0f, 0.95f, 0.055f), "HOME", 0.2f, PaletteSwatch.WarmAccent, PaletteSwatch.Enamel);
+            Matrix4x4 board = At(0f, 0.95f, 0.035f + 0.02f + Weathering.RustLift);
+            SiteKit.RustStreak(b, board, -0.36f, 0.12f, 0.16f);
+            SiteKit.RustStreak(b, board, 0.36f, 0.12f, 0.22f);
+            return b;
+        }
 
         /// <summary>
         /// A face frame on a vertical octagon wall facing <paramref name="yaw"/>, <paramref name="distance"/> out.

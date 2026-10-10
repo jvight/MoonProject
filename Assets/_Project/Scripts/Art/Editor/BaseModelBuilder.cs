@@ -67,6 +67,14 @@ namespace MoonProject.Art.Editor
         public const string BulbName = "Bulb";
 
         /// <summary>
+        /// The lander's HOME sign (M3-16), pivoted at its post's foot: built leaning with the years (home asleep);
+        /// <see cref="HomeSignUpright"/> is its local rotation set straight once home wakes. Gameplay eases between.
+        /// </summary>
+        public const string HomeSignName = "HomeSign";
+
+        public static Quaternion HomeSignUpright => Place.Rotation(LanderMeshes.HomeSignUpright);
+
+        /// <summary>
         /// The bay's roll-up shutter (M3-16 dormant look), pivoted at its roller: local Y scale 1 = down (the bay
         /// asleep), <see cref="ShutterRolledScale"/> = rolled up into its box (tower L2 has powered it). Gameplay eases
         /// between the two.
@@ -200,6 +208,9 @@ namespace MoonProject.Art.Editor
             lander.Add(new ModelNode("DockGlow", Vector3.zero, Quaternion.identity,
                 new ModelMesh(LanderName + "_DockGlow", ChargingDockMeshes.Glow()), ModelMaterial.PaletteGlowOff));
             AddLift(lander);
+            lander.Add(new ModelNode(HomeSignName, LanderMeshes.HomeSignFoot,
+                Place.Rotation(LanderMeshes.HomeSignLean),
+                new ModelMesh(LanderName + "_" + HomeSignName, LanderMeshes.HomeSign())));
             Weathering.Weather(lander, LanderName, hull, LanderWeather, LanderMeshes.Rust(), LanderMeshes.Drifts());
             return lander;
         }
