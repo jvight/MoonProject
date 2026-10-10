@@ -8,6 +8,7 @@ namespace MoonProject.UI
     /// The first time 07 comes near a place (docs/features/M3-16 "Each place and its one job"), its name and its one
     /// job drift in high on screen on the floating names' soft shadow, rest, and fade away. Each place once; places
     /// met while a card is up wait their turn, and a card waits while the screen is busy (a kit title, a story card).
+    /// A blueprint found in a wreck gets the same quiet card: the kit's name over "Blueprint found".
     /// </summary>
     internal sealed class PlaceCard
     {
@@ -18,8 +19,10 @@ namespace MoonProject.UI
         private readonly ILocalization _localization;
         private readonly Reveal _reveal;
         private readonly Queue<string> _waiting = new Queue<string>();
+        private readonly Queue<string> _waitingLines = new Queue<string>();
         private readonly HashSet<string> _seen = new HashSet<string>(StringComparer.Ordinal);
         private float _rest;
+        private string _lineKey;
 
         public PlaceCard(UiLayout layout, GuidanceSettings settings, ILocalization localization)
         {
@@ -33,7 +36,7 @@ namespace MoonProject.UI
 
         public bool IsVisible => !_reveal.IsHidden;
 
-        /// <summary>The place whose card is up (or easing), or null.</summary>
+        /// <summary>The title key of the card that is up (or easing), or null.</summary>
         public string Current { get; private set; }
 
         /// <summary>"place.dock" (or "dock") → "place.dock".</summary>
@@ -47,7 +50,18 @@ namespace MoonProject.UI
         {
             if (!string.IsNullOrEmpty(placeId) && _seen.Add(KeyBase(placeId)))
             {
-                _waiting.Enqueue(KeyBase(placeId));
+                _waiting.Enqueue(KeyBase(placeId) + ".name");
+                _waitingLines.Enqueue(KeyBase(placeId) + ".job");
+            }
+        }
+
+        /// <summary>Queues "Blueprint found" under the kit's name, once per kit.</summary>
+        public void BlueprintFound(string kitId)
+        {
+            if (!string.IsNullOrEmpty(kitId) && _seen.Add(UiKeys.UpgradeName(kitId)))
+            {
+                _waiting.Enqueue(UiKeys.UpgradeName(kitId));
+                _waitingLines.Enqueue(UiKeys.BlueprintFound);
             }
         }
 
@@ -66,6 +80,7 @@ namespace MoonProject.UI
             if (Current == null && open && _waiting.Count > 0)
             {
                 Current = _waiting.Dequeue();
+                _lineKey = _waitingLines.Dequeue();
                 Write();
                 _rest = _settings.PlaceHoldSeconds;
                 _reveal.Show();
@@ -89,8 +104,8 @@ namespace MoonProject.UI
 
         private void Write()
         {
-            _layout.PlaceCardName.text = _localization.Get(Current + ".name");
-            _layout.PlaceCardJob.text = _localization.Get(Current + ".job");
+            _layout.PlaceCardName.text = _localization.Get(Current);
+            _layout.PlaceCardJob.text = _localization.Get(_lineKey);
         }
     }
 }

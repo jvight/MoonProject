@@ -25,6 +25,8 @@ namespace MoonProject.UI
         public const string PauseRelays = "ui.pause.relays";
         public const string JourneyPutAway = "ui.journey.put_away";
         public const string LookUp = "ui.hint.look_up";
+        public const string BlueprintFound = "ui.blueprint.found";
+        public const string BlueprintDelivered = "ui.blueprint.delivered";
         public const string RecipeNeed = "ui.recipe.need";
         public const string BayPick = "ui.bay.pick";
 

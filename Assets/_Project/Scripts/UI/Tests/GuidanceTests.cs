@@ -4,8 +4,8 @@ using MoonProject.Core;
 namespace MoonProject.UI.Tests
 {
     /// <summary>
-    /// The soft "next" line shows the current step only while 07 is still, never while driving, and not with Guidance
-    /// off; Guidance is on by default (older saves too) and saved.
+    /// The soft "next" line waits a long while on the same step first (P8), then shows only while 07 is still, never
+    /// while driving, and not with Guidance off; Guidance is on by default (older saves too) and saved.
     /// </summary>
     public sealed class GuidanceTests
     {
@@ -17,8 +17,16 @@ namespace MoonProject.UI.Tests
             var settings = new GuidanceSettings();
             var line = new NextStepLine(settings);
             line.SetKey("next.tower");
-            Ticks(line, settings.StillSeconds + 1f, 3f, true);
+            Ticks(line, settings.StepPatienceSeconds - 1f, 0f, true);
+            Assert.IsFalse(line.WantsShown, "patience first: a player finding their own way never sees it");
+            line.SetKey("next.signal");
+            Ticks(line, settings.StepPatienceSeconds - 1f, 0f, true);
+            Assert.IsFalse(line.WantsShown, "progress to a new step starts the wait again");
+            line.SetKey("next.signal");
+            Ticks(line, 1f + settings.StillSeconds, 3f, true);
             Assert.IsFalse(line.WantsShown, "hidden while driving");
+            line.SetKey("next.tower");
+            Ticks(line, settings.StepPatienceSeconds, 3f, true);
 
             Ticks(line, settings.StillSeconds * 0.5f, 0f, true);
             Assert.IsFalse(line.WantsShown, "a moment of stillness first");
