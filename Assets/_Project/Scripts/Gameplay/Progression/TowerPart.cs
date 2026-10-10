@@ -23,8 +23,14 @@ namespace MoonProject.Gameplay
                  "forward), clear of the heart's relics.")]
         [SerializeField] private Vector2 _heartOffset;
 
-        public TowerPart(string partId, int towerLevel, TowerPartSource source, string siteId, Vector2 heartOffset)
+        [Tooltip("Tilly spots it only once 07 has looked across the chasm at Bell's light (M3-16 P2): the bay's " +
+                 "power waits on that look.")]
+        [SerializeField] private bool _afterTheChasm;
+
+        public TowerPart(string partId, int towerLevel, TowerPartSource source, string siteId, Vector2 heartOffset,
+            bool afterTheChasm = false)
         {
+            _afterTheChasm = afterTheChasm;
             _partId = partId;
             _towerLevel = towerLevel;
             _source = source;
@@ -41,5 +47,7 @@ namespace MoonProject.Gameplay
         public string SiteId => _siteId;
 
         public Vector2 HeartOffset => _heartOffset;
+
+        public bool AfterTheChasm => _afterTheChasm;
     }
 }

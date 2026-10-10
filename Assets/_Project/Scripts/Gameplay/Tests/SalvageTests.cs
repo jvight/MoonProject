@@ -111,7 +111,7 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void Sites_GiveAtLeastTwiceWhatStepsZeroToEightNeed_EachLeaningOnItsSignature()
+        public void Sites_GiveAboutTwiceWhatStepsZeroToEightNeed_EachLeaningOnItsSignature()
         {
             var tuning = Create<SalvageTuning>();
             Recipe yield = Trail(tuning);
@@ -128,11 +128,15 @@ namespace MoonProject.Gameplay.Tests
             {
                 Assert.GreaterOrEqual(yield.Of(material), 2 * needs.Of(material),
                     $"VISION ruling 5 (M3-16 P9): the moon gives at least twice the {material} steps 0-8 take");
+                Assert.LessOrEqual(yield.Of(material), MostOverTwice * needs.Of(material),
+                    $"P9: about twice, so collecting still matters: not much more {material} than that");
             }
 
-            AssertSignature("garage", SalvageMaterial.Wiring, tuning);
-            AssertSignature("kestrel", SalvageMaterial.Optics, tuning);
             AssertSignature("depot", SalvageMaterial.Metal, tuning);
+            AssertSignature("kestrel", SalvageMaterial.Optics, tuning);
+            AssertSignature("drill", SalvageMaterial.Metal, tuning);
+            AssertSignature("garage", SalvageMaterial.Wiring, tuning);
+            AssertSignature("lander", SalvageMaterial.Metal, tuning);
         }
 
         [Test]
@@ -161,6 +165,9 @@ namespace MoonProject.Gameplay.Tests
             stock = stock.Plus(CutYield("kestrel", tuning)).Plus(Trail(tuning));
             Spend(stock, SalvageEconomy.RadioTower[2], "tower L3 after the Kestrel (step 8)");
         }
+
+        /// <summary>About twice (ruling 5, P9): a material's yield stays under this many times its need.</summary>
+        private const float MostOverTwice = 2.5f;
 
         private static readonly SalvageMaterial[] Materials =
         {

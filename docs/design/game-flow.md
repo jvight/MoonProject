@@ -159,9 +159,9 @@ heard Ro: the masts could only listen, and only the great dish can talk back.
 
 **Logs by version.** STORY plans 12 logs, three per crew member; on main there is one log cache (Ro's, at the canyon
 terminus) plus Bell's repair log. Proposed placement: 0.5 has each crew member's **first** log (Ro: terminus, built;
-Kenji: the garage heart; Theo: the dark hollow; Ines: the drill). Their second logs come with their regions (Ines 0.6,
-Theo 0.7, Ro and Kenji 0.6–0.8). Every **third** log is the reward for completing that crew member's set (DESIGN
-collections).
+Kenji: the garage; Theo: the canyon supply lander, beside his teapot; Ines: the drill). Their second logs come with
+their regions (Ro, Ines and Kenji in 0.6, Theo in 0.7). Every **third** log is the reward for completing that crew
+member's set (DESIGN collections). The texts and exact spots: `docs/design/text/crew-logs.md`.
 
 ## 6. The excitement curve
 Rule: **never more than 3 minutes without something new in view** (a landmark, a glint, a pillar, a friend's beat)

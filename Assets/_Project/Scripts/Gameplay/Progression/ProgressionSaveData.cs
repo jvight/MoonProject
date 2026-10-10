@@ -12,6 +12,9 @@ namespace MoonProject.Gameplay
     {
         public bool woke;
         public bool salvaged;
+
+        /// <summary>07 has stood at the chasm's lip and looked across at Bell's light (M3-16 P2).</summary>
+        public bool chasmSeen;
         public string[] places = Array.Empty<string>();
     }
 }
