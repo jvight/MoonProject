@@ -23,6 +23,9 @@ namespace MoonProject.Art.Editor
         /// The weather skins' material (LofiWeather): each vertex's own colour, lit exactly like M_LowPoly.
         /// </summary>
         public const string LowPolyWeatherMaterial = PaletteFolder + "/M_LowPolyWeather.mat";
+
+        /// <summary>The warm light-decal disc's additive material (LightPoolBuilder, M3-18 V3).</summary>
+        public const string LightPoolMaterial = PaletteFolder + "/M_LightPool.mat";
         public const string RoverFolder = Root + "/Rover";
         public const string RockFolder = Root + "/Rocks";
         public const string BaseFolder = Root + "/Base";
@@ -41,5 +44,8 @@ namespace MoonProject.Art.Editor
 
         /// <summary>The Art domain's vertex-coloured variant of the palette shader for the weather skins.</summary>
         public const string WeatherShader = "Assets/_Project/Shaders/Art/LofiWeather.shader";
+
+        /// <summary>The additive pool of warm light on the ground (M3-18 V3).</summary>
+        public const string LightPoolShader = "Assets/_Project/Shaders/Art/LofiLightPool.shader";
     }
 }
