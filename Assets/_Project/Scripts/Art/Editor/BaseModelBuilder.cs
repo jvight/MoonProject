@@ -100,6 +100,25 @@ namespace MoonProject.Art.Editor
             return PadPrefix + Mathf.RoundToInt(PadRadii[size] * 100f).ToString(CultureInfo.InvariantCulture);
         }
 
+        /// <summary>Kenji's pen plotter beside his bench, with its moving carriage and pen (see PlotterName).</summary>
+        private static void AddPlotter(ModelNode bay, Quaternion benchTurn)
+        {
+            Vector3 place = RoverBayMeshes.BenchPosition + benchTurn * BlueprintMeshes.PlotterPlace;
+            ModelNode plotter = bay.Add(new ModelNode(PlotterName, place, benchTurn,
+                new ModelMesh(RoverBayName + "_" + PlotterName, BlueprintMeshes.Plotter())));
+            Quaternion bedTurn = Place.Rotation(BlueprintMeshes.BedTilt);
+            ModelNode carriage = plotter.Add(new ModelNode(PenCarriageName, BlueprintMeshes.CarriageHome, bedTurn,
+                new ModelMesh(RoverBayName + "_" + PenCarriageName, BlueprintMeshes.Carriage())));
+            carriage.Add(new ModelNode(PenHeadName, Vector3.zero,
+                new ModelMesh(RoverBayName + "_" + PenHeadName, BlueprintMeshes.PenHead())));
+            plotter.Add(new ModelNode(PlotterSheetName, BlueprintMeshes.Bed.MultiplyPoint3x4(new Vector3(0f, 0f,
+                0.001f)), bedTurn, new ModelMesh(RoverBayName + "_" + PlotterSheetName, BlueprintMeshes.BedSheet()),
+                ModelMaterial.Palette, false));
+            plotter.Add(new ModelNode(PlotterLampName, BlueprintMeshes.PlotterLamp, Quaternion.identity,
+                new ModelMesh(RoverBayName + "_" + PlotterLampName, BlueprintMeshes.LampGlass()),
+                ModelMaterial.PaletteGlowOff));
+        }
+
         /// <summary>The ground power cables from the tower's foot, each with its glass segments (see above).</summary>
         private static void AddPowerCables(ModelNode lander)
         {
@@ -163,14 +182,35 @@ namespace MoonProject.Art.Editor
         public const string ShutterName = "Shutter";
 
         /// <summary>
-        /// Kenji's blueprint board on his old bench's pegboard (M3-16): RoverBay/Blueprints holds one sheet per kit,
-        /// Blueprint_&lt;RoverAbility name&gt; (HoverJump, CargoCradle, WarmHeadlamp, BoostCoils, WideSonar). Only
-        /// Hover-Jump's is shown (Kenji left it pinned); Gameplay shows each other one when its blueprint is found.
-        /// Empty pins wait on the board under every slot.
+        /// Kenji's blueprints (M3-16 P7): RoverBay/Blueprints, the cord of pegs along his bench's pegboard, holds one
+        /// sheet per kit, Blueprint_&lt;RoverAbility name&gt; (HoverJump, CargoCradle, WarmHeadlamp, BoostCoils). Only
+        /// Hover-Jump's hangs there at the start (Kenji left it); Gameplay shows each other one once the plotter has
+        /// drawn it.
         /// </summary>
         public const string BlueprintsName = "Blueprints";
 
         public const string BlueprintPrefix = "Blueprint_";
+
+        /// <summary>
+        /// Kenji's pen plotter beside his bench (M3-16 P7): it draws a kit's sheet when 07 brings its tube home.
+        /// Plotter/PenCarriage rides across the tilted bed along its local X from 0 to <see cref="PlotterDrawWidth"/>;
+        /// its child PenHead moves along local Y from 0 to <see cref="PlotterDrawHeight"/>; Plotter/PlotterSheet
+        /// (hidden) is the sheet on the bed while it is drawn; Plotter/PlotterLamp is a dark glow renderer, its ready
+        /// light.
+        /// </summary>
+        public const string PlotterName = "Plotter";
+
+        public const string PenCarriageName = "PenCarriage";
+
+        public const string PenHeadName = "PenHead";
+
+        public const string PlotterSheetName = "PlotterSheet";
+
+        public const string PlotterLampName = "PlotterLamp";
+
+        public const float PlotterDrawWidth = BlueprintMeshes.DrawWidth;
+
+        public const float PlotterDrawHeight = BlueprintMeshes.DrawHeight;
 
         /// <summary>The Shutter node's local Y scale when rolled up.</summary>
         public const float ShutterRolledScale = 0.05f;
@@ -383,8 +423,8 @@ namespace MoonProject.Art.Editor
             AddFloorArm(bay);
             bay.Add(new ModelNode("HopperMouth", RoverBayMeshes.HopperMouth,
                 Place.Rotation(RoverBayMeshes.HopperFacing)));
-            ModelNode board = bay.Add(new ModelNode(BlueprintsName, RoverBayMeshes.BenchPosition,
-                Place.Rotation(RoverBayMeshes.BenchEuler)));
+            Quaternion benchTurn = Place.Rotation(RoverBayMeshes.BenchEuler);
+            ModelNode board = bay.Add(new ModelNode(BlueprintsName, RoverBayMeshes.BenchPosition, benchTurn));
             for (int i = 0; i < BlueprintMeshes.Kits.Length; i++)
             {
                 string kit = BlueprintMeshes.Kits[i];
@@ -393,6 +433,7 @@ namespace MoonProject.Art.Editor
                     ModelMaterial.Palette, i == 0));
             }
 
+            AddPlotter(bay, benchTurn);
             bay.Add(new ModelNode(ShutterName, RoverBayMeshes.ShutterRoller,
                 new ModelMesh(RoverBayName + "_" + ShutterName, RoverBayMeshes.Shutter())));
             bay.Add(new ModelNode("BaySign", Vector3.zero, Quaternion.identity,

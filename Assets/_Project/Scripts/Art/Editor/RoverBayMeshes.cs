@@ -108,7 +108,8 @@ namespace MoonProject.Art.Editor
         private static Matrix4x4 BenchPlacement => At(BenchPosition, BenchEuler);
 
         /// <summary>
-        /// Kenji's bench (and its blueprint board) in bay space: its centre on the ground, and its turn.
+        /// Kenji's bench (with its cord of blueprints and his pen plotter) in bay space: its centre on the ground,
+        /// and its turn.
         /// </summary>
         public static Vector3 BenchPosition => new Vector3(-HalfWidth - 1.95f, 0f, 0.9f);
 
@@ -202,7 +203,7 @@ namespace MoonProject.Art.Editor
             }
 
             b.Append(WorkbenchMeshes.Bench(), BenchPlacement);
-            b.Append(BlueprintMeshes.Pins(), BenchPlacement);
+            b.Append(BlueprintMeshes.Cord(), BenchPlacement);
             return b;
         }
 

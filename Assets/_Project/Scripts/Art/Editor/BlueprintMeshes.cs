@@ -4,56 +4,96 @@ using static MoonProject.Art.Place;
 namespace MoonProject.Art.Editor
 {
     /// <summary>
-    /// Kenji's blueprints (M3-16, "the bench's purpose"): his old human bench's pegboard becomes the board of kits the
-    /// bay can build, one pinned sheet per kit over an empty pin, each a slate-blue sheet with the kit drawn in chalky
-    /// cream lines (no words: the world carries no text to translate). Plus the blueprint tube 07 finds in a wreck's
-    /// heart. Sheets are in their own space (centre at the origin, facing +Z); slots and pins in the bench's space.
+    /// Kenji's blueprints (M3-16 P7): an old upright pen plotter beside his bench draws a kit's sheet when 07 brings a
+    /// blueprint tube home, and the drawn sheets hang from wooden pegs on a cord along the bench's pegboard, one per
+    /// kit (no hands pin anything, ruling 14). Each sheet is slate-blue paper with the kit drawn in chalky cream lines
+    /// (no words). Plus the blueprint tube found in a wreck's heart. Sheets are in their own space (centre at the
+    /// origin, facing +Z); the cord and slots in the bench's space; the plotter in its own space (origin on the
+    /// ground at its centre, +Z its front).
     /// </summary>
     internal static class BlueprintMeshes
     {
         /// <summary>
-        /// The kits with a sheet, in the order of their slots from the left, named as Core's RoverAbility members (Art
+        /// The kits with a sheet, in the order of their pegs from the left, named as Core's RoverAbility members (Art
         /// does not reference Core; Gameplay maps the names).
         /// </summary>
-        public static readonly string[] Kits =
-        {
-            "HoverJump", "CargoCradle", "WarmHeadlamp", "BoostCoils", "WideSonar",
-        };
+        public static readonly string[] Kits = { "HoverJump", "CargoCradle", "WarmHeadlamp", "BoostCoils" };
+
+        /// <summary>Where the plotter stands in bench space: past the bench's left end, facing out with it.</summary>
+        public static readonly Vector3 PlotterPlace = new Vector3(-1.9f, 0f, 0.1f);
+
+        /// <summary>The plotter's bed: its centre and tilt (leaning back) in plotter space.</summary>
+        public static readonly Vector3 BedCentre = new Vector3(0f, 1.15f, 0f);
+
+        public static readonly Vector3 BedTilt = new Vector3(-30f, 0f, 0f);
+
+        /// <summary>
+        /// The drawing area on the bed (metres): the pen carriage travels its width, the pen its height.
+        /// </summary>
+        public const float DrawWidth = 0.86f;
+
+        public const float DrawHeight = 0.58f;
+
+        /// <summary>The plotter's ready lamp (plotter space).</summary>
+        public static readonly Vector3 PlotterLamp = new Vector3(0.62f, 1.0f, 0.17f);
 
         private const float SheetWidth = 0.3f;
         private const float SheetHeight = 0.36f;
         private const float SheetThickness = 0.004f;
         private const float Line = 0.008f;
-        private const float SlotSpacing = 0.4f;
-        private const float SlotHeight = 1.78f;
+        private const float SlotSpacing = 0.45f;
+        private const float CordHeight = 2.12f;
+        private const float CordZ = -0.34f;
+        private const float CordHalfSpan = 0.98f;
 
-        // The pegboard's face in bench space (WorkbenchMeshes), and how far a sheet stands proud of it.
-        private const float BoardFace = -0.38f;
-        private const float SheetProud = 0.006f;
+        private const float BedWidth = 1f;
+        private const float BedHeight = 0.74f;
+        private const float LegHalfSpan = 0.48f;
 
         private const float TubeRadius = 0.045f;
         private const float TubeLength = 0.42f;
 
-        /// <summary>Where slot <paramref name="index"/>'s sheet hangs on the pegboard, in bench space.</summary>
+        /// <summary>The plotter's bed frame (local X across, Y up the bed, Z out of it), in plotter space.</summary>
+        public static Matrix4x4 Bed => At(BedCentre, BedTilt);
+
+        /// <summary>The pen carriage's home: the drawing area's bottom-left corner, in plotter space.</summary>
+        public static Vector3 CarriageHome =>
+            Bed.MultiplyPoint3x4(new Vector3(-DrawWidth * 0.5f, -DrawHeight * 0.5f, 0.03f));
+
+        /// <summary>Where sheet <paramref name="index"/> hangs from its peg on the cord, in bench space.</summary>
         public static Vector3 Slot(int index)
         {
-            return new Vector3((index - (Kits.Length - 1) * 0.5f) * SlotSpacing, SlotHeight, BoardFace + SheetProud);
+            return new Vector3((index - (Kits.Length - 1) * 0.5f) * SlotSpacing,
+                CordHeight - SheetHeight * 0.5f - 0.02f, CordZ);
         }
 
-        /// <summary>The empty pins waiting on the pegboard, one at every slot's top (bench space).</summary>
-        public static LowPolyMeshBuilder Pins()
+        /// <summary>
+        /// The cord along the pegboard, its hooks, and an empty peg waiting at every slot (bench space).
+        /// </summary>
+        public static LowPolyMeshBuilder Cord()
         {
-            var b = new LowPolyMeshBuilder(120);
+            var b = new LowPolyMeshBuilder(300);
+            var left = new Vector3(-CordHalfSpan, CordHeight, CordZ);
+            var right = new Vector3(CordHalfSpan, CordHeight, CordZ);
+            SiteKit.Cable(b, SiteKit.Sag(left, right, 0.03f, 6), 0.005f, PaletteSwatch.Charcoal);
+            for (int side = -1; side <= 1; side += 2)
+            {
+                b.Prism(At(new Vector3(side * CordHalfSpan, CordHeight, CordZ - 0.02f), AlongZ), 0.01f, 0.04f, 6,
+                    PaletteSwatch.Metal);
+            }
+
             for (int i = 0; i < Kits.Length; i++)
             {
-                Pin(b, Slot(i) + new Vector3(0f, SheetHeight * 0.5f - 0.03f, -SheetProud));
+                b.Box(At(new Vector3(Slot(i).x, CordHeight - 0.01f, CordZ + 0.01f)), new Vector3(0.016f, 0.07f, 0.02f),
+                    PaletteSwatch.Wood, 0.003f);
             }
 
             return b;
         }
 
         /// <summary>
-        /// One blueprint sheet: slate-blue paper with a chalky border, the kit drawn in cream lines, and its pin.
+        /// One blueprint sheet: slate-blue paper with a chalky border and the kit drawn in cream lines, its top edge
+        /// held by its peg on the cord.
         /// </summary>
         public static LowPolyMeshBuilder Sheet(string kit)
         {
@@ -61,10 +101,7 @@ namespace MoonProject.Art.Editor
             b.Box(Matrix4x4.identity, new Vector3(SheetWidth, SheetHeight, SheetThickness), PaletteSwatch.DustShadow);
             float x = SheetWidth * 0.5f - 0.02f;
             float y = SheetHeight * 0.5f - 0.02f;
-            Draw(b, new Vector2(-x, -y), new Vector2(x, -y));
-            Draw(b, new Vector2(x, -y), new Vector2(x, y));
-            Draw(b, new Vector2(x, y), new Vector2(-x, y));
-            Draw(b, new Vector2(-x, y), new Vector2(-x, -y));
+            Box(b, new Vector2(-x, -y), new Vector2(x, y));
             switch (kit)
             {
                 case "HoverJump":
@@ -88,7 +125,7 @@ namespace MoonProject.Art.Editor
                     }
 
                     break;
-                case "BoostCoils":
+                default:
                     for (int i = -1; i <= 1; i += 2)
                     {
                         Box(b, new Vector2(-0.1f, i * 0.045f - 0.025f), new Vector2(0.1f, i * 0.045f + 0.025f));
@@ -96,14 +133,95 @@ namespace MoonProject.Art.Editor
                     }
 
                     break;
-                default:
-                    Ring(b, new Vector2(0f, 0.04f), 0.07f);
-                    Draw(b, new Vector2(0f, 0.04f), new Vector2(0f, -0.1f));
-                    Draw(b, new Vector2(-0.06f, -0.1f), new Vector2(0.06f, -0.1f));
-                    break;
             }
 
-            Pin(b, new Vector3(0f, SheetHeight * 0.5f - 0.03f, SheetThickness * 0.5f));
+            return b;
+        }
+
+        /// <summary>
+        /// The pen plotter's body in plotter space: two legs with rusty feet and a crossbar, a sage bed leaning back
+        /// with a faded drawing surface, the carriage's two rails across it, the paper roll over its top, and a
+        /// charcoal control box at its side holding the ready lamp, rust weeping from its bolt.
+        /// </summary>
+        public static LowPolyMeshBuilder Plotter()
+        {
+            var b = new LowPolyMeshBuilder(800);
+            Matrix4x4 bed = Bed;
+            for (int side = -1; side <= 1; side += 2)
+            {
+                Vector3 top = bed.MultiplyPoint3x4(new Vector3(side * LegHalfSpan, -BedHeight * 0.35f, -0.04f));
+                var foot = new Vector3(top.x, 0f, top.z + 0.18f);
+                SiteKit.Bar(b, foot + Vector3.up * 0.02f, top, 0.05f, PaletteSwatch.Metal);
+                b.Prism(At(foot + Vector3.up * 0.04f), 0.04f, 0.03f, 8, PaletteSwatch.Rust);
+                b.Box(At(foot + Vector3.up * 0.01f), new Vector3(0.12f, 0.02f, 0.2f), PaletteSwatch.Metal, 0.004f);
+            }
+
+            SiteKit.Bar(b, new Vector3(-LegHalfSpan, 0.35f, 0.15f), new Vector3(LegHalfSpan, 0.35f, 0.15f), 0.04f,
+                PaletteSwatch.Metal);
+            b.Box(bed * At(0f, 0f, -0.03f), new Vector3(BedWidth, BedHeight, 0.04f), PaletteSwatch.Sage, 0.01f);
+            b.Box(bed * At(0f, 0f, -0.006f), new Vector3(DrawWidth + 0.04f, DrawHeight + 0.04f, 0.008f),
+                PaletteSwatch.FadedPaint);
+            for (int k = -1; k <= 1; k += 2)
+            {
+                float y = k * (DrawHeight * 0.5f + 0.04f);
+                RecipeKit.Rod(b, bed.MultiplyPoint3x4(new Vector3(-BedWidth * 0.5f, y, 0.02f)),
+                    bed.MultiplyPoint3x4(new Vector3(BedWidth * 0.5f, y, 0.02f)), 0.012f, 6, PaletteSwatch.Metal);
+            }
+
+            Vector3 roll = bed.MultiplyPoint3x4(new Vector3(0f, BedHeight * 0.5f + 0.05f, 0.02f));
+            b.Prism(At(roll, AlongX), 0.05f, BedWidth - 0.06f, 10, PaletteSwatch.FadedPaint);
+            b.Prism(At(roll, AlongX), 0.02f, BedWidth + 0.04f, 6, PaletteSwatch.Metal);
+            var box = new Vector3(0.62f, 0.9f, 0.04f);
+            b.Box(At(box), new Vector3(0.18f, 0.32f, 0.22f), PaletteSwatch.Charcoal, 0.012f);
+            b.Prism(At(PlotterLamp + Vector3.back * 0.02f, AlongZ), 0.03f, 0.03f, 8, PaletteSwatch.Metal);
+            SiteKit.RustStreak(b, SiteKit.Face(box + new Vector3(0f, 0f, 0.112f), Vector3.forward, Vector3.up), -0.04f,
+                0.08f, 0.12f, 0.016f);
+            return b;
+        }
+
+        /// <summary>
+        /// The pen carriage in its own space (origin at the drawing area's bottom-left corner on the bed, X across the
+        /// bed, Y up it): an upright bar spanning the drawing area, riding the two rails on charcoal blocks.
+        /// </summary>
+        public static LowPolyMeshBuilder Carriage()
+        {
+            var b = new LowPolyMeshBuilder(120);
+            b.Box(At(0f, DrawHeight * 0.5f, 0.045f), new Vector3(0.04f, DrawHeight + 0.12f, 0.025f),
+                PaletteSwatch.Metal, 0.004f);
+            for (int k = 0; k <= 1; k++)
+            {
+                b.Box(At(0f, k * DrawHeight + (k == 0 ? -0.04f : 0.04f), 0.03f), new Vector3(0.07f, 0.05f, 0.05f),
+                    PaletteSwatch.Charcoal, 0.006f);
+            }
+
+            return b;
+        }
+
+        /// <summary>
+        /// The pen head in its own space, on the carriage's bar: a small block holding a worn orange pen.
+        /// </summary>
+        public static LowPolyMeshBuilder PenHead()
+        {
+            var b = new LowPolyMeshBuilder(80);
+            b.Box(At(0f, 0f, 0.07f), new Vector3(0.06f, 0.05f, 0.04f), PaletteSwatch.Charcoal, 0.005f);
+            b.Prism(At(new Vector3(0f, 0f, 0.035f), AlongZ), 0.01f, 0.05f, 6, PaletteSwatch.WarmAccent);
+            b.Prism(At(new Vector3(0f, 0f, 0.008f), AlongZ), 0.004f, 0.012f, 4, PaletteSwatch.Metal);
+            return b;
+        }
+
+        /// <summary>The sheet being drawn, lying on the bed (bed frame), the size of the drawing area.</summary>
+        public static LowPolyMeshBuilder BedSheet()
+        {
+            var b = new LowPolyMeshBuilder(20);
+            b.Box(Matrix4x4.identity, new Vector3(DrawWidth, DrawHeight, SheetThickness), PaletteSwatch.DustShadow);
+            return b;
+        }
+
+        /// <summary>The plotter's ready lamp, a small glass dome facing out of the control box.</summary>
+        public static LowPolyMeshBuilder LampGlass()
+        {
+            var b = new LowPolyMeshBuilder(40);
+            b.Prism(Matrix4x4.Rotate(Rotation(AlongZ)), 0.022f, 0.012f, 8, PaletteSwatch.LampGlass);
             return b;
         }
 
@@ -168,12 +286,6 @@ namespace MoonProject.Art.Editor
             var a = new Vector3(from.x, from.y, SheetThickness * 0.5f);
             var c = new Vector3(to.x, to.y, SheetThickness * 0.5f);
             b.Box(Along(a, c), new Vector3(Line, Line, Vector3.Distance(a, c) + Line), PaletteSwatch.Cream);
-        }
-
-        private static void Pin(LowPolyMeshBuilder b, Vector3 at)
-        {
-            b.Prism(At(at + Vector3.forward * 0.006f, AlongZ), 0.004f, 0.012f, 6, PaletteSwatch.Metal);
-            b.Prism(At(at + Vector3.forward * 0.014f, AlongZ), 0.012f, 0.008f, 8, PaletteSwatch.WarmAccent);
         }
     }
 }

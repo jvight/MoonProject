@@ -62,8 +62,8 @@ namespace MoonProject.Art.Tests
             {
                 "Turntable", "FloorArm", "FloorArm/FloorLift", "FloorArm/FloorLift/FloorTip", "HopperMouth",
                 "Blueprints", "Blueprints/Blueprint_HoverJump", "Blueprints/Blueprint_CargoCradle",
-                "Blueprints/Blueprint_WarmHeadlamp", "Blueprints/Blueprint_BoostCoils",
-                "Blueprints/Blueprint_WideSonar",
+                "Blueprints/Blueprint_WarmHeadlamp", "Blueprints/Blueprint_BoostCoils", "Plotter",
+                "Plotter/PenCarriage", "Plotter/PenCarriage/PenHead", "Plotter/PlotterSheet", "Plotter/PlotterLamp",
                 "Shutter", "BaySign", "Lamp_0", "Lamp_1",
             };
             for (int i = 0; i < 3; i++)
@@ -90,7 +90,7 @@ namespace MoonProject.Art.Tests
             {
                 MeshChecks.AssertWellFormed(node.Mesh.Geometry);
                 bool lamp = node.Name.StartsWith("Lamp_");
-                bool sign = node.Name == "BaySign";
+                bool sign = node.Name == "BaySign" || node.Name == BaseModelBuilder.PlotterLampName;
                 bool weather = node.Name.StartsWith("Weather_");
                 ModelMaterial material = lamp || sign ? ModelMaterial.PaletteGlowOff
                     : weather ? ModelMaterial.PaletteWeather : ModelMaterial.Palette;
@@ -262,17 +262,23 @@ namespace MoonProject.Art.Tests
         }
 
         [Test]
-        public void BlueprintBoard_ShowsOnlyHoverJumpsSheet_UntilOthersAreFound_AndTheTubeIsSmall()
+        public void Blueprints_OnlyHoverJumpsHangs_UntilThePlotterDrawsMore_AndTheTubeIsSmall()
         {
             ModelNode board = _bay.GetDescendant(BaseModelBuilder.BlueprintsName);
-            Assert.IsNull(board.Mesh, "the board's node is an empty: its pins are on Kenji's bench");
-            Assert.AreEqual(5, board.Children.Count, "one sheet per kit");
+            Assert.IsNull(board.Mesh, "the sheets' node is an empty: their cord and pegs are on Kenji's bench");
+            Assert.AreEqual(4, board.Children.Count, "one sheet per 0.5 kit (Wider Sonar waits for 0.7)");
             foreach (ModelNode sheet in board.Children)
             {
                 Assert.AreEqual(sheet.Name == "Blueprint_HoverJump", sheet.Active, $"{sheet.Name}: found or not yet");
                 Assert.IsFalse(MeshChecks.Swatches(sheet.Mesh.Geometry).Any(Palette.IsEmissive), sheet.Name);
                 MeshChecks.AssertWellFormed(sheet.Mesh.Geometry);
             }
+
+            ModelNode plotter = _bay.GetDescendant(BaseModelBuilder.PlotterName);
+            Assert.IsFalse(plotter.GetDescendant(BaseModelBuilder.PlotterSheetName).Active, "nothing on the bed yet");
+            Assert.AreEqual(ModelMaterial.PaletteGlowOff,
+                plotter.GetDescendant(BaseModelBuilder.PlotterLampName).Material, "the plotter sleeps dark");
+            Assert.AreEqual(ModelMaterial.Palette, plotter.GetDescendant(BaseModelBuilder.PenHeadName).Material);
 
             Bounds tube = SiteModelBuilder.CreateBlueprintTube().Mesh.Geometry.Bounds;
             Assert.LessOrEqual(Mathf.Max(tube.size.x, Mathf.Max(tube.size.y, tube.size.z)), 0.5f,
