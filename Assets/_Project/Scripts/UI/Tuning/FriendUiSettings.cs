@@ -45,6 +45,9 @@ namespace MoonProject.UI
         [Range(0f, 5f)]
         [SerializeField] private float _nameLiftMetres = 1.1f;
 
+        [Tooltip("Friends whose face sits above the shared lift float their name at their own height (Bell's dial).")]
+        [SerializeField] private FriendNameLift[] _nameLifts = { new FriendNameLift("bell", 2f) };
+
         public RevealSettings Readout => _readout;
 
         public float ShowDistance => _showDistance;
@@ -61,6 +64,18 @@ namespace MoonProject.UI
 
         public float NameHoldSeconds => _nameHoldSeconds;
 
-        public float NameLiftMetres => _nameLiftMetres;
+        /// <summary>Metres above friend <paramref name="friendId"/> where its name floats.</summary>
+        public float NameLiftFor(string friendId)
+        {
+            for (int i = 0; i < _nameLifts.Length; i++)
+            {
+                if (string.Equals(_nameLifts[i].FriendId, friendId, StringComparison.Ordinal))
+                {
+                    return _nameLifts[i].LiftMetres;
+                }
+            }
+
+            return _nameLiftMetres;
+        }
     }
 }

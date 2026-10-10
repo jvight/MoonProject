@@ -307,8 +307,13 @@ namespace MoonProject.UI.PlayModeTests
             fakes.CutProgress = 0f;
             fakes.PrimaryHint = InteractionHint.None;
             context.Events.Publish(new SiteAnswered(DepotSite, depot.Position, 30f, true));
+            Vector3 namePoint = depot.Position + Vector3.up * _tuning.Salvage.SiteNameLiftMetres;
+            siteCamera.transform.rotation = Quaternion.LookRotation(
+                Vector3.Lerp(cut, namePoint, 0.5f) - siteCamera.transform.position, Vector3.up);
+            yield return new WaitForSecondsRealtime(_tuning.Prompts.Reveal.FadeOut);
             yield return new WaitForSecondsRealtime(_tuning.Salvage.SiteName.FadeIn + 0.5f);
             yield return Capture(siteCamera, folder, "42_site_name");
+            Assert.IsTrue(ui.SiteName.IsVisible, "the site's name was up for its shot");
             fakes.Camera = camera;
             yield return new WaitForSecondsRealtime(_tuning.Salvage.SiteNameHoldSeconds +
                                                     _tuning.Salvage.SiteName.FadeOut + 0.3f);
@@ -506,10 +511,8 @@ namespace MoonProject.UI.PlayModeTests
             Vector3 earth = context.Get<IWorldLayout>().EarthDirection;
             var terrain = context.Get<ITerrainQuery>();
             var friends = context.Get<IFriendStatuses>();
-            float nameLift = _tuning.Friends.NameLiftMetres;
-
             Vector3 tilly = FriendPosition(friends, TillyId) + Vector3.up * TillyRise;
-            Camera tillyCamera = EarthCamera(tilly + Vector3.up * nameLift, earth, terrain, context);
+            Camera tillyCamera = EarthCamera(tilly + Vector3.up * _tuning.Friends.NameLiftFor(TillyId), earth, terrain, context);
             fakes.Camera = tillyCamera;
             fakes.TillyStatus = new FriendStatus(FriendState.Awake, 3, 3, true, false, tilly);
             context.Events.Publish(new FriendRepaired(TillyId));
@@ -520,7 +523,7 @@ namespace MoonProject.UI.PlayModeTests
                                                     0.3f);
 
             Vector3 bell = BellAtHome(context).position;
-            Camera bellCamera = EarthCamera(bell + Vector3.up * nameLift, earth, terrain, context);
+            Camera bellCamera = EarthCamera(bell + Vector3.up * _tuning.Friends.NameLiftFor(BellId), earth, terrain, context);
             fakes.Camera = bellCamera;
             fakes.Friend = AssetDatabase.LoadAssetAtPath<FriendDefinition>(BellPath);
             fakes.TillyStatus = new FriendStatus(FriendState.Awake, 3, 3, true, false, bell);
