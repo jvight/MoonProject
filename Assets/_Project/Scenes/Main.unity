@@ -403,7 +403,7 @@ MonoBehaviour:
   - {fileID: 3862199457335471885}
   - {fileID: 1984517004378207405}
   _saveSlot: main
-  _showTitle: 0
+  _showTitle: 1
 --- !u!4 &259499029097732218
 Transform:
   m_ObjectHideFlags: 0
