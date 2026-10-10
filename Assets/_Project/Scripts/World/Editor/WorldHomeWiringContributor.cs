@@ -40,7 +40,28 @@ namespace MoonProject.World.Editor
             AssignCable(serialized, "_bayCable", Segments(gameplay, CablePrefix + "Bay"));
             AssignCable(serialized, "_liftCable", Segments(gameplay, CablePrefix + "Lift"));
             serialized.FindProperty("_pilot").objectReferenceValue = CreatePilot(context, gameplay);
+            AssignPools(context, serialized, gameplay);
             serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        /// <summary>One shadowless light per Home Lighting pool, hung from its anchor in the base (M3-18 V3).</summary>
+        private static void AssignPools(SceneBuildContext context, SerializedObject serialized, Transform gameplay)
+        {
+            IReadOnlyList<LightPoolTuning> pools =
+                context.LoadAsset<WorldSettings>(WorldPaths.Settings).HomeLighting.Pools;
+            SerializedProperty property = serialized.FindProperty("_pools");
+            property.arraySize = pools.Count;
+            for (int i = 0; i < pools.Count; i++)
+            {
+                GameObject host = context.CreateChild("LightPool_" + i, Find(gameplay, pools[i].Anchor));
+                host.transform.localPosition = pools[i].Offset;
+                var light = host.AddComponent<Light>();
+                light.type = LightType.Point;
+                light.shadows = LightShadows.None;
+                light.intensity = 0f;
+                light.enabled = false;
+                property.GetArrayElementAtIndex(i).objectReferenceValue = light;
+            }
         }
 
         private static Renderer CreatePilot(SceneBuildContext context, Transform gameplay)

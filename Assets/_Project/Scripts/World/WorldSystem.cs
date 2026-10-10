@@ -118,6 +118,7 @@ namespace MoonProject.World
             Surface = surface;
             Layout = new WorldLayout(surface, _settings.Sky);
             Anchors = new WorldAnchors(surface, _settings.Surface.Canyon, _settings.Relays);
+            surface.AttachCraterField(CreateCraterField(surface));
 
             // Scatter planning only reads the analytic surface: it runs on a worker while the terrain is meshed.
             ScatterSettings scatterSettings = _settings.Scatter;
@@ -137,6 +138,13 @@ namespace MoonProject.World
             BuildEarth(hideFlags);
             _peakBeacon.transform.position = Layout.PeakPosition;
             _peakBeacon.Configure(_settings.Beacon);
+        }
+
+        private CraterField CreateCraterField(MoonSurface surface)
+        {
+            SurfaceSettings ground = _settings.Surface;
+            return new CraterField(ground.CraterField, _settings.Seed, ground.FloorRadius - ground.RimWarpAmplitude,
+                ground.PadRadius + ground.PadBlend, Anchors, surface.Canyon.Bounds);
         }
 
         private void BuildEarth(HideFlags hideFlags)

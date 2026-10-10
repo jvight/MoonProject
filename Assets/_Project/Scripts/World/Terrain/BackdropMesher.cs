@@ -106,7 +106,7 @@ namespace MoonProject.World
             var region = new SurfaceSample(0f, 0f, 0f,
                 (regions[i0].RimZone + regions[i1].RimZone + regions[i2].RimZone) / 3f);
             bool rock = painter.IsRock(normal, region);
-            Color32 face = rock ? painter.Rock(normal, (p0 + p1 + p2) / 3f, hash) : default;
+            Color32 face = rock ? painter.Rock(normal, (p0 + p1 + p2) / 3f, region, hash) : default;
             vertices[written++] = new TerrainVertex(p0, normal, rock ? face : groundColors[i0]);
             vertices[written++] = new TerrainVertex(p1, normal, rock ? face : groundColors[i1]);
             vertices[written++] = new TerrainVertex(p2, normal, rock ? face : groundColors[i2]);
