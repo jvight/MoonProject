@@ -2,7 +2,8 @@
 // colour is the vertex colour (sRGB, painted by MoonProject.World.TerrainPainter): one flat tone per rock facet,
 // gentle continuous tones on the dust, so large patches carry soft value changes instead of paper-cut edges.
 // Lighting is plain Lambert from the earthlight with its soft shadows, the trilight ambient (with SSAO), Forward+
-// additional punctual lights (07's lamp, the base) and the scene's fog, which fades distant ground toward the horizon.
+// additional punctual lights (07's lamp, the base) and the shared lofi atmosphere (LofiAtmosphere.hlsl): a thin basin
+// haze, distance desaturation and the scene's fog, which fades distant ground toward the horizon.
 // The light loop walks only the punctual lights: the earthlight's directional fill is left out on purpose, so it lifts
 // the shadow sides of built things while the dunes' shadow sides and the long shadows stay deep (pillar 6).
 Shader "MoonProject/World/LofiTerrain"
@@ -44,6 +45,7 @@ Shader "MoonProject/World/LofiTerrain"
             #pragma multi_compile_fog
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+            #include "LofiAtmosphere.hlsl"
 
             struct Attributes
             {
@@ -113,7 +115,7 @@ Shader "MoonProject/World/LofiTerrain"
                 #endif
 
                 half3 color = input.albedo * light;
-                color = MixFog(color, InitializeInputDataFog(float4(positionWS, 1.0), input.fogFactor));
+                color = MoonAtmosphere(color, positionWS, input.fogFactor);
                 return half4(color, 1.0);
             }
             ENDHLSL

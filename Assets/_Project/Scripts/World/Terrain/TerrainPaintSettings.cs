@@ -136,6 +136,21 @@ namespace MoonProject.World
         [Range(0f, 1f)]
         [SerializeField] private float _scorchMottle = 0.25f;
 
+        [Header("Rim value")]
+        [Tooltip("How much darker the rim's rock face is than its own swatch (0..1): the rim steps back behind the " +
+            "near ground instead of standing as the brightest wall in frame.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _rimFaceShade = 0.25f;
+
+        [Tooltip("Rim zone (0 = floor, 1 = crest) where the crest's lit edge begins: rock above it keeps its full " +
+            "value.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _crestZone = 0.88f;
+
+        [Tooltip("Half-width (in rim zone) of the soft band between the darker face and the lit crest.")]
+        [Range(0.01f, 0.3f)]
+        [SerializeField] private float _crestBlend = 0.05f;
+
         public float RockSlope => _rockSlope;
         public float RimRockSlope => _rimRockSlope;
         public float RimZoneStart => _rimZoneStart;
@@ -165,5 +180,8 @@ namespace MoonProject.World
         public float ScorchShade => _scorchShade;
         public float ScorchCharcoal => _scorchCharcoal;
         public float ScorchMottle => _scorchMottle;
+        public float RimFaceShade => _rimFaceShade;
+        public float CrestZone => _crestZone;
+        public float CrestBlend => _crestBlend;
     }
 }

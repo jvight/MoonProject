@@ -77,11 +77,14 @@ namespace MoonProject.World
             return faceNormal.y <= _rockCos || (onRim && faceNormal.y <= _rimRockCos);
         }
 
-        /// <summary>The one flat tone of a rock facet.</summary>
+        /// <summary>
+        /// The one flat tone of a rock facet, a step darker on the rim's face below its lit crest.
+        /// </summary>
         /// <param name="faceNormal">Unit normal of the triangle itself.</param>
         /// <param name="center">World-space triangle centre.</param>
+        /// <param name="region">Averaged region weights of the triangle's corners.</param>
         /// <param name="hash">Per-triangle seeded hash.</param>
-        public Color32 Rock(Vector3 faceNormal, Vector3 center, uint hash)
+        public Color32 Rock(Vector3 faceNormal, Vector3 center, SurfaceSample region, uint hash)
         {
             float slope = Mathf.Acos(Mathf.Clamp(faceNormal.y, -1f, 1f)) * Mathf.Rad2Deg;
             float faceFacing = faceNormal.x * _lightX + faceNormal.z * _lightZ;
@@ -89,7 +92,12 @@ namespace MoonProject.World
                 + (center.y - _settings.RockLightHeight) / _settings.RockHeightBlend
                 + Patch(center) * _settings.RockMottle + faceFacing * _settings.RockFacing
                 + Hashing.ToSigned(hash) * _settings.RockDither;
-            return rock > 0f ? _rockLight : _rockDark;
+            Color tone = rock > 0f ? _rockLight : _rockDark;
+            float face = SmoothMath.Smootherstep(0f, _settings.RimZoneStart, region.RimZone)
+                * (1f - SmoothMath.Smootherstep(_settings.CrestZone - _settings.CrestBlend,
+                    _settings.CrestZone + _settings.CrestBlend, region.RimZone));
+            float value = 1f - _settings.RimFaceShade * face;
+            return new Color(tone.r * value, tone.g * value, tone.b * value, tone.a);
         }
 
         /// <summary>The dust colour at a vertex.</summary>

@@ -30,6 +30,14 @@ namespace MoonProject.World.Tests
         private const float ShadowStep = 4f;
         private const float DustStep = 6f;
 
+        // The basin haze, seen from 07's chase height: under a few per cent at play distance, a real layer over the far
+        // floor, and the rim's crest (well above the haze's height scale) left nearly clear.
+        private const float HazeEyeHeight = 3.5f;
+        private const float MaxNearHaze = 0.05f;
+        private const float MinFarFloorHaze = 0.2f;
+        private const float CrestHeight = 60f;
+        private const float MaxCrestHazeShare = 0.2f;
+
         // Art rounds its reference light to two decimals.
         private const float ReferenceTolerance = 0.01f;
 
@@ -66,6 +74,18 @@ namespace MoonProject.World.Tests
             Assert.LessOrEqual(Fog(NearDistance), MaxNearFog, "the base must stay crisp at play distances");
             Assert.GreaterOrEqual(Fog(RimDistance), MinRimFog, "the far rim and The Peak should dissolve");
             Assert.GreaterOrEqual(Fog(EdgeDistance), MinEdgeFog, "the world's edge must disappear");
+        }
+
+        [Test]
+        public void Haze_LiesLowInTheBasin_LeavingNearGroundCrispAndTheCrestClear()
+        {
+            var eye = new Vector3(0f, HazeEyeHeight, 0f);
+            Assert.LessOrEqual(_atmosphere.HazeAmount(eye, new Vector3(0f, 0f, NearDistance)), MaxNearHaze,
+                "the base must stay crisp at play distances");
+            float farFloor = _atmosphere.HazeAmount(eye, new Vector3(0f, 0f, RimDistance));
+            Assert.GreaterOrEqual(farFloor, MinFarFloorHaze, "the far floor should sink into the haze");
+            float crest = _atmosphere.HazeAmount(eye, new Vector3(0f, CrestHeight, RimDistance));
+            Assert.Less(crest, farFloor * MaxCrestHazeShare, "the rim's crest stays above the haze");
         }
 
         [Test]

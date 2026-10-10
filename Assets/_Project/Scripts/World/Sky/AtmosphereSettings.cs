@@ -14,6 +14,9 @@ namespace MoonProject.World
     [Serializable]
     public sealed class AtmosphereSettings
     {
+        // Below this rise (in haze height scales) a view ray counts as level: its mean density is the eye's own.
+        private const float HazeLevelRise = 1e-3f;
+
         [Header("Earthlight")]
         [Tooltip("Colour of the directional earthlight: a pale cyan-white, because Earth is blue-green. It differs " +
             "from the indigo ambient in hue and value, so lit faces and shade faces split.")]
@@ -89,6 +92,40 @@ namespace MoonProject.World
         [Range(0f, 0.01f)]
         [SerializeField] private float _fogDensity = 0.002f;
 
+        [Header("Basin haze")]
+        [Tooltip("Colour of the thin haze lying in the basin: a violet a little lighter than the fog, so the far " +
+            "floor and the foot of the rim sink into one calm plane.")]
+        [SerializeField] private Color _hazeColor = new Color(0.33f, 0.28f, 0.52f);
+
+        [Tooltip("Haze density at its base, per metre of view: thin, so ground within play distance stays crisp.")]
+        [Range(0f, 0.01f)]
+        [SerializeField] private float _hazeDensity = 0.0012f;
+
+        [Tooltip("Height over which the haze thins by e (metres): it lies low, so the rim's crest stays above it.")]
+        [Range(0.5f, 40f)]
+        [SerializeField] private float _hazeHeight = 6f;
+
+        [Tooltip("World height of the haze's base: the basin floor.")]
+        [Range(-20f, 20f)]
+        [SerializeField] private float _hazeBase = 0f;
+
+        [Tooltip("The most the haze may cover (0..1).")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _hazeMax = 0.55f;
+
+        [Header("Distance desaturation")]
+        [Tooltip("Distance (metres) where colour starts to drain from far things.")]
+        [Range(0f, 1000f)]
+        [SerializeField] private float _desaturateStart = 120f;
+
+        [Tooltip("Distance (metres) where far things are as grey as they get.")]
+        [Range(1f, 2000f)]
+        [SerializeField] private float _desaturateEnd = 650f;
+
+        [Tooltip("How grey far things get (0..1): far hills become calm planes of value, not colour.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _desaturateAmount = 0.45f;
+
         public Color LightColor => _lightColor;
         public float LightIntensity => _lightIntensity;
         public float LightElevation => _lightElevation;
@@ -105,5 +142,30 @@ namespace MoonProject.World
         public Color AmbientGround => _ambientGround;
         public Color FogColor => _fogColor;
         public float FogDensity => _fogDensity;
+        public Color HazeColor => _hazeColor;
+        public float HazeDensity => _hazeDensity;
+        public float HazeHeight => _hazeHeight;
+        public float HazeBase => _hazeBase;
+        public float HazeMax => _hazeMax;
+        public float DesaturateStart => _desaturateStart;
+        public float DesaturateEnd => _desaturateEnd;
+        public float DesaturateAmount => _desaturateAmount;
+
+        /// <summary>
+        /// How much of the view from <paramref name="eye"/> to <paramref name="point"/> the basin haze covers (0..1):
+        /// density times the ray's length times the mean of exp(-height / scale) along it. LofiAtmosphere.hlsl's
+        /// MoonHazeAmount is the same formula.
+        /// </summary>
+        public float HazeAmount(Vector3 eye, Vector3 point)
+        {
+            Vector3 ray = point - eye;
+            float falloff = 1f / _hazeHeight;
+            float eyeHeight = (eye.y - _hazeBase) * falloff;
+            float rise = ray.y * falloff;
+            float mean = Mathf.Abs(rise) > HazeLevelRise
+                ? (Mathf.Exp(-eyeHeight) - Mathf.Exp(-eyeHeight - rise)) / rise
+                : Mathf.Exp(-eyeHeight);
+            return Mathf.Min(1f - Mathf.Exp(-_hazeDensity * ray.magnitude * mean), _hazeMax);
+        }
     }
 }
