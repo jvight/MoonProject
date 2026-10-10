@@ -8,7 +8,8 @@ namespace MoonProject.Gameplay
 {
     /// <summary>
     /// The tower's story parts in the world (docs/features/M3-16 P1), Art's Part_* models. A part in a site's heart
-    /// eases into view once the heart is revealed (the depot's last cut); the relay spare on the pad of the first mast
+    /// eases into view once the heart is revealed (the depot's last cut; the garage's transformer only once 07 has
+    /// looked across the chasm, P2); the relay spare on the pad of the first mast
     /// 07 restores. Waiting, a part hovers, bobs, turns and glints like a friend's part; driven through, it is drawn
     /// into 07 and rides home on its back (<see cref="TowerParts.PickUp"/>; Rover shows it). Parked on the tower's
     /// pad, 07 hands each carried part to the port, lowest level first: it leaves 07's back
@@ -32,6 +33,7 @@ namespace MoonProject.Gameplay
         private readonly RadioTower _tower;
         private readonly FriendTuning _friends;
         private readonly ProgressionTuning _tuning;
+        private readonly Func<bool> _chasmSeen;
         private readonly IRoverState _rover;
         private readonly IRoverRig _rig;
         private readonly ITerrainQuery _terrain;
@@ -49,8 +51,9 @@ namespace MoonProject.Gameplay
 
         /// <exception cref="InvalidOperationException">A part's model or site is missing (broken content).</exception>
         public TowerPartField(TowerParts parts, Transform parent, GameplayServices services, SalvageField salvage,
-            StationReach reach, RadioTower tower, FriendTuning friends, ProgressionTuning tuning)
+            StationReach reach, RadioTower tower, FriendTuning friends, ProgressionTuning tuning, Func<bool> chasmSeen)
         {
+            _chasmSeen = chasmSeen ?? throw new ArgumentNullException(nameof(chasmSeen));
             _parts = parts ?? throw new ArgumentNullException(nameof(parts));
             if (services == null)
             {
@@ -272,7 +275,7 @@ namespace MoonProject.Gameplay
                 Transform root = site.Root;
                 Vector3 heart = site.Heart + root.right * part.HeartOffset.x + root.forward * part.HeartOffset.y;
                 rest = SurfaceRules.OnSurface(_terrain, heart.x, heart.z);
-                return site.HeartRevealed;
+                return site.HeartRevealed && (!part.AfterTheChasm || _chasmSeen());
             }
 
             for (int node = 0; node < _reach.NodeCount; node++)

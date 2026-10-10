@@ -35,6 +35,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Listen(events, TetherReleased);
             Listen(events, RelicStowed);
             Listen(events, RelicDeposited);
+            Listen(events, DockEveningOpened);
             Listen(events, UpgradePurchased);
             Listen(events, SignalRadiusChanged);
             Listen(events, FriendAnswered);
@@ -87,6 +88,8 @@ namespace MoonProject.Gameplay.PlayModeTests
         public List<Timed<RelicStowed>> RelicStowed { get; } = new List<Timed<RelicStowed>>();
 
         public List<Timed<RelicDeposited>> RelicDeposited { get; } = new List<Timed<RelicDeposited>>();
+
+        public List<Timed<DockEveningOpened>> DockEveningOpened { get; } = new List<Timed<DockEveningOpened>>();
         public List<Timed<UpgradePurchased>> UpgradePurchased { get; } = new List<Timed<UpgradePurchased>>();
 
         public List<Timed<SignalRadiusChanged>> SignalRadiusChanged { get; } =

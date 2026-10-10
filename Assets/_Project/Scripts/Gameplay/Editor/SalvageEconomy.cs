@@ -6,8 +6,9 @@ namespace MoonProject.Gameplay.Editor
     /// <summary>
     /// The salvage economy's content (docs/features/M3-13): what 07 crafts at the stations takes, and where the
     /// materials come from (the sites and the trail bits). The content builder writes it into the upgrade definitions
-    /// and the salvage catalog, and the economy test holds the recipes against the yield (VISION ruling 5: the sites
-    /// give at least twice every recipe). The relay masts' recipes live in the relay tuning.
+    /// and the salvage catalog, and the economy test holds the recipes against the yield (VISION ruling 5, M3-16 P9:
+    /// the moon gives about twice what steps 0-8 take, each site leaning on a signature material). The relay masts'
+    /// recipes live in the relay tuning.
     /// </summary>
     internal static class SalvageEconomy
     {
@@ -23,10 +24,13 @@ namespace MoonProject.Gameplay.Editor
         /// <summary>The Boost Coils (M3-11): wound coils in two capacitor drums with a glow window.</summary>
         public static Recipe BoostCoils => new Recipe(1, 2, 1);
 
-        /// <summary>The radio tower's three levels: wiring and optics, a little more each time.</summary>
+        /// <summary>
+        /// The radio tower's three levels, more each time: L1 from the depot alone, L2 once the garage is cut, and L3,
+        /// the big one (its lift winch is heavy metal), from the Kestrel's optics and what the rest of the basin gives.
+        /// </summary>
         public static IReadOnlyList<Recipe> RadioTower { get; } = new[]
         {
-            new Recipe(0, 1, 1), new Recipe(1, 2, 0), new Recipe(0, 2, 2),
+            new Recipe(1, 1, 1), new Recipe(1, 3, 1), new Recipe(4, 5, 6),
         };
 
         /// <summary>The salvage sites in catalog order (Art's Site_&lt;name&gt; on site.&lt;name&gt;).</summary>
