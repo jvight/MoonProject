@@ -668,8 +668,39 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
-    /// 07 scanned a blueprint tube in a salvage site's heart (docs/features/M3-16 "Blueprints"): the kit
-    /// <see cref="KitId"/> is pinned on Kenji's board and the bay can build it from now on.
+    /// On load, how many blueprint tubes 07 had scanned but not yet delivered to Kenji's plotter (docs/features/M3-16
+    /// P7). Gameplay publishes it once after the save is applied, also when <see cref="Count"/> is 0; Rover shows that
+    /// many tubes on 07's back at once, with no ride-in.
+    /// </summary>
+    public readonly struct BlueprintsCarriedRestored
+    {
+        public BlueprintsCarriedRestored(int count)
+        {
+            Count = count;
+        }
+
+        public int Count { get; }
+    }
+
+    /// <summary>
+    /// 07 parked on its charging dock after a trip on which something new woke or was found (docs/features/M3-16 P6,
+    /// "the dock's evening"). Rover eases out to a wide shot of home's newly lit lamps and Audio swells the evening
+    /// tone; once the shot has settled, Gameplay's tower sweep raises the next signal pillar. Published by Gameplay at
+    /// most once per return home.
+    /// </summary>
+    public readonly struct DockEveningOpened
+    {
+        public DockEveningOpened(Vector3 dockPosition)
+        {
+            DockPosition = dockPosition;
+        }
+
+        public Vector3 DockPosition { get; }
+    }
+
+    /// <summary>
+    /// 07 scanned a blueprint tube in a salvage site's heart (docs/features/M3-16 "Blueprints", P7): the tube rides home
+    /// on 07's back until <see cref="BlueprintDelivered"/> at Kenji's plotter pins the kit <see cref="KitId"/>.
     /// </summary>
     public readonly struct BlueprintFound
     {
@@ -684,6 +715,35 @@ namespace MoonProject.Core.Events
 
         /// <summary>The salvage site whose heart held the tube ("site.garage", ...).</summary>
         public string SiteId { get; }
+
+        public Vector3 Position { get; }
+    }
+
+    /// <summary>A beat of the crew's lift that Audio voices (docs/features/M3-16 step 8): see <see cref="LiftCued"/>.
+    /// The lift's feed and stitch use <see cref="StationCued"/>.</summary>
+    public enum LiftCue
+    {
+        /// <summary>07 comes near the jammed winch (once per approach, at the winch): an old creak.</summary>
+        WinchCreaked = 0,
+
+        /// <summary>The platform starts moving (at the platform): a ratchet and a soft motor hum while it rides.
+        /// </summary>
+        RideStarted = 1,
+
+        /// <summary>The platform reaches a stop (at the platform): a clunk, and the ride's sound lets go.</summary>
+        RideStopped = 2,
+    }
+
+    /// <summary>The crew's lift did something worth a sound at <see cref="Position"/>.</summary>
+    public readonly struct LiftCued
+    {
+        public LiftCued(LiftCue cue, Vector3 position)
+        {
+            Cue = cue;
+            Position = position;
+        }
+
+        public LiftCue Cue { get; }
 
         public Vector3 Position { get; }
     }

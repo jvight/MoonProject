@@ -39,6 +39,26 @@ namespace MoonProject.Audio
         [Tooltip("Volume scale of a dormant station's soft 'not yet' answer to the sonar.")]
         [Range(0f, 1f)] [SerializeField] private float _notYetVolume = 0.7f;
 
+        [Header("The crew's lift (M3-16)")]
+        [Tooltip("Seconds for the ride's ratchet and hum to come in as the platform starts moving.")]
+        [Range(0.01f, 2f)] [SerializeField] private float _liftRideFadeIn = 0.4f;
+
+        [Tooltip("Seconds for the ride's sound to let go at a stop.")]
+        [Range(0.01f, 2f)] [SerializeField] private float _liftRideFadeOut = 0.3f;
+
+        [Tooltip("Volume scale of the ride's ratchet and hum.")]
+        [Range(0f, 1f)] [SerializeField] private float _liftRideVolume = 0.7f;
+
+        [Tooltip("Volume scale of the jammed winch's creak and the clunk at each stop.")]
+        [Range(0f, 1f)] [SerializeField] private float _liftBeatVolume = 0.8f;
+
+        [Header("Kenji's blueprints (M3-16 P7)")]
+        [Tooltip("Volume scale of the pen plotter drawing a delivered sheet.")]
+        [Range(0f, 1f)] [SerializeField] private float _plotterVolume = 0.7f;
+
+        [Tooltip("Volume scale of the tiny chime as a blueprint tube is found.")]
+        [Range(0f, 1f)] [SerializeField] private float _blueprintFoundVolume = 0.7f;
+
         [Header("The bay's arms")]
         [Tooltip("Tip speed (m/s) below which an arm's servo is silent.")]
         [Range(0f, 2f)] [SerializeField] private float _armDeadSpeed = 0.05f;
@@ -126,6 +146,12 @@ namespace MoonProject.Audio
         public float DropPitchWobble => _dropPitchWobble;
         public float WakeVolume => _wakeVolume;
         public float NotYetVolume => _notYetVolume;
+        public float LiftRideFadeIn => _liftRideFadeIn;
+        public float LiftRideFadeOut => _liftRideFadeOut;
+        public float LiftRideVolume => _liftRideVolume;
+        public float LiftBeatVolume => _liftBeatVolume;
+        public float PlotterVolume => _plotterVolume;
+        public float BlueprintFoundVolume => _blueprintFoundVolume;
         public float ArmDeadSpeed => _armDeadSpeed;
         public float ArmFullSpeed => Mathf.Max(_armFullSpeed, _armDeadSpeed + MinSpan);
         public float ArmPlacedSpeed => _armPlacedSpeed;

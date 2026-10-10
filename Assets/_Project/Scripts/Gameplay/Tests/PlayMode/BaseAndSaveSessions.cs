@@ -308,7 +308,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsTrue(_fixture.Rover.Has(RoverAbility.HoverJump), "07 can leap now");
             Assert.Greater(bay.PadLevel, look.Occupied, "the purchase flares the pad");
             Assert.AreSame(_fixture.HoverJumpUpgrade, bay.Definition, "no other blueprint yet: it rests on Hover-Jump");
-            _fixture.Gameplay.Blueprints.Restore(new[] { _fixture.CargoCradleUpgrade.Id });
+            _fixture.Gameplay.Blueprints.Restore(new[] { _fixture.CargoCradleUpgrade.Id }, null);
             Assert.AreSame(_fixture.CargoCradleUpgrade, bay.Definition, "the Cargo Cradle's sheet pinned, it offers it");
             Assert.IsTrue(_fixture.Gameplay.Hints.TryGet(InteractionKind.Upgrade, out hint));
             Assert.IsFalse(hint.Ready, "4 metal it does not have yet");
@@ -387,7 +387,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             };
             RoverAbility[] abilities = { RoverAbility.CargoCradle, RoverAbility.WarmHeadlamp, RoverAbility.BoostCoils };
             Assert.AreEqual(PurchaseResult.NotPinned, shop.Purchase(kit[1].Id), "no blueprint, no kit (M3-16)");
-            _fixture.Gameplay.Blueprints.Restore(new[] { kit[0].Id, kit[1].Id, kit[2].Id });
+            _fixture.Gameplay.Blueprints.Restore(new[] { kit[0].Id, kit[1].Id, kit[2].Id }, null);
             for (int i = 0; i < kit.Length; i++)
             {
                 Assert.AreSame(kit[i], bay.Definition, "the bay offers its kit in order");
@@ -495,6 +495,49 @@ namespace MoonProject.Gameplay.PlayModeTests
             bay = _fixture.Gameplay.Workshop;
             Assert.IsTrue(bay.Powered, "the base keeps its power across a load");
             Assert.AreEqual(tuning.SignGlow, bay.SignLevel, 1e-3f, "and the sign is simply lit, no flicker");
+        }
+
+        [UnityTest]
+        public IEnumerator BlueprintTube_RidesHome_IsDeliveredToThePlotter_WhichDrawsItsSheet_ThenItIsPinned()
+        {
+            string slot = BootstrapHarness.NewTestSlot();
+            _fixture = GameplayFixture.Boot(_controls, slot);
+            yield return null;
+            BlueprintPlotter plotter = _fixture.Gameplay.Plotter;
+            Blueprints board = _fixture.Gameplay.Blueprints;
+            string cradle = _fixture.CargoCradleUpgrade.Id;
+            Assert.IsTrue(plotter.ShowsSheet(_fixture.HoverJumpUpgrade.Id), "Kenji left Hover-Jump's sheet up");
+            Assert.IsFalse(plotter.ShowsSheet(cradle));
+            Relic duck = null;
+            foreach (Relic relic in _fixture.Gameplay.Relics.Relics)
+            {
+                duck = duck == null && relic.Home != null && relic.Home.Id == "site.garage" ? relic : duck;
+            }
+
+            _fixture.Bootstrap.Context.Events.Publish(new RelicSurfaced(duck.transform.position, duck.Definition.Id));
+            Assert.IsTrue(board.IsCarrying, "the garage's tube rides home on 07");
+            Assert.IsFalse(board.IsPinned(cradle));
+
+            _fixture.Rover.Place(_fixture.Gameplay.Workshop.PadCentre, 0f);
+            yield return new WaitForSeconds(0.3f);
+            Assert.IsTrue(board.IsCarrying, "the plotter sleeps in the dark bay: nothing is delivered");
+            _fixture.PowerTo(2);
+            yield return Waits.Until(() => plotter.Drawing, 2f);
+            Assert.IsTrue(plotter.Drawing, "awake, the plotter takes the tube and draws");
+            Assert.IsTrue(board.IsPinned(cradle), "pinned on delivery");
+            Assert.AreEqual(1, _fixture.Events.BlueprintDelivered.Count);
+            Assert.AreEqual(cradle, _fixture.Events.BlueprintDelivered[0].Value.KitId);
+            Assert.IsFalse(plotter.ShowsSheet(cradle), "the sheet is still on the bed");
+            yield return Waits.Until(() => !plotter.Drawing, _fixture.ProgressionTuning.PlotterDrawSeconds + 2f);
+            Assert.IsTrue(plotter.ShowsSheet(cradle), "drawn, it hangs on Kenji's pegboard");
+
+            _fixture.Dispose(true);
+            yield return null;
+            _fixture = GameplayFixture.Boot(_controls, slot);
+            yield return null;
+            yield return null;
+            Assert.IsTrue(_fixture.Gameplay.Blueprints.IsPinned(cradle), "pinned across a load");
+            Assert.IsTrue(_fixture.Gameplay.Plotter.ShowsSheet(cradle), "and simply shown");
         }
 
         [UnityTest]

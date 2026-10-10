@@ -153,6 +153,26 @@ namespace MoonProject.Audio.PlayModeTests
             Assert.Less(Vector3.Distance(_rig.Director.LastVoice.transform.position, lift), 1e-4f, "where it sleeps");
         }
 
+        [UnityTest]
+        public IEnumerator TheLift_CreaksRidesAndClunks_AndKenjisPlotterDraws()
+        {
+            var winch = new Vector3(30f, 1f, -20f);
+            _rig.Events.Publish(new LiftCued(LiftCue.WinchCreaked, winch));
+            StringAssert.StartsWith("lift_winch_creak", LastClip);
+            _rig.Events.Publish(new LiftCued(LiftCue.RideStarted, winch));
+            yield return new WaitForSeconds(0.6f);
+            Assert.IsTrue(Stations.LiftSource.isPlaying, "the ride ratchets and hums");
+            _rig.Events.Publish(new LiftCued(LiftCue.RideStopped, winch + Vector3.up * 8f));
+            Assert.AreEqual("lift_stop_clunk", LastClip);
+            yield return new WaitForSeconds(0.5f);
+            Assert.IsFalse(Stations.LiftSource.isPlaying, "and lets go at the stop");
+
+            _rig.Events.Publish(new BlueprintDelivered("kit.cargo"));
+            Assert.AreEqual("plotter_draw", LastClip);
+            _rig.Events.Publish(new BlueprintFound("kit.cargo", "site.garage", winch));
+            Assert.AreEqual("blueprint_found", LastClip);
+        }
+
         [Test]
         public void BellsKnobTap_TicksAtHerDial()
         {

@@ -1858,6 +1858,87 @@ def station_not_yet(_variant, gen):
     return 0.5 * bell[:n] + 0.15 * knock
 
 
+def lift_winch_creak(variant, gen):
+    """The crew's jammed winch as 07 comes near: a slow, low metal creak that leans and settles, never a squeal."""
+    n = samples(1.8)
+    start, end = ((260.0, 330.0), (300.0, 240.0))[variant]
+    creak = filters.swept(noise.pink(n, gen), "bandpass", osc.glide(n, start, end, time_constant=0.6), q=9.0)
+    creak = creak / max(float(np.std(creak)), 1e-9) * envelope.segments(
+        n, [(0.0, 0.0), (0.25, 1.0), (0.9, 0.7), (1.8, 0.0)], shape="smooth")
+    groan = osc.sine(n, osc.glide(n, note_freq("A1"), note_freq("D2"), time_constant=0.5)) * envelope.ar(n, 0.2, 1.0)
+    return filters.lowpass(0.06 * creak + 0.12 * groan, 2200.0)
+
+
+LIFT_RIDE_LOOP_S = 2.0
+
+
+def lift_ride(_variant, gen):
+    """The crew's lift riding: a patient ratchet ticking over a soft D2/A2 motor hum. Seamless."""
+    n = samples(LIFT_RIDE_LOOP_S)
+    hum = osc.additive(n, loop_freq(note_freq("D2"), n), [(1, 1.0), (2, 0.3), (3, 0.08)])
+    hum = hum + 0.4 * osc.sine(n, loop_freq(note_freq("A2"), n), phase=0.3)
+    ticks = np.zeros(n)
+    tick_len = samples(0.05)
+    for k in range(8):
+        click = filters.bandpass(noise.white(tick_len, gen), 1600.0, 2.5) * envelope.ar(tick_len, 0.001, 0.03)
+        start = k * n // 8
+        ticks[start:start + tick_len] += (0.8 + 0.2 * (k % 2)) * click
+    mix = 0.12 * hum + 0.05 * ticks / max(float(np.max(np.abs(ticks))), 1e-9)
+    return periodic(mix, lambda x: filters.highpass(filters.lowpass(x, 3500.0), 50.0))
+
+
+def lift_stop_clunk(_variant, gen):
+    """The lift reaching a stop: a deep, padded clunk of the platform seating and a short settle of its cables."""
+    n = samples(1.0)
+    clunk = osc.sine(n, osc.glide(n, 120.0, 75.0, time_constant=0.04)) * envelope.ar(n, 0.003, 0.3)
+    thud = filters.lowpass(noise.white(n, gen), 400.0) * envelope.ar(n, 0.001, 0.08)
+    rattle = _grains(n, gen, 20.0, (0.002, 0.005), (0.0005, 0.001), (0.01, 0.02), 0.5, 0.5)
+    rattle = filters.lowpass(filters.bandpass(rattle, 1100.0, 1.0), 2500.0) * envelope.segments(
+        n, [(0.0, 0.0), (0.06, 1.0), (0.4, 0.2), (1.0, 0.0)], shape="smooth")
+    mix = 0.6 * clunk + 0.25 * thud / max(float(np.max(np.abs(thud))), 1e-9) + 0.3 * rattle
+    return filters.lowpass(mix, 3500.0)
+
+
+def plotter_draw(_variant, gen):
+    """Kenji's pen plotter drawing a sheet (~3 s): the carriage whirs between strokes and the pen scratches softly
+    along each line."""
+    n = samples(3.2)
+    strokes = ((0.15, 0.7), (0.85, 1.35), (1.5, 2.2), (2.35, 2.9))
+    pen_gate = np.zeros(n)
+    whirr_gate = np.zeros(n)
+    for a, b in strokes:
+        seg = samples(b - a)
+        pen_gate[samples(a):samples(a) + seg] = envelope.segments(
+            seg, [(0.0, 0.0), (0.05, 1.0), (b - a - 0.05, 1.0), (b - a, 0.0)], shape="smooth")
+    for a, b in zip((0.0,) + tuple(s[1] for s in strokes), tuple(s[0] for s in strokes) + (3.2,)):
+        seg = samples(b - a)
+        whirr_gate[samples(a):samples(a) + seg] = envelope.segments(
+            seg, [(0.0, 0.0), (0.04, 1.0), (max(0.05, b - a - 0.04), 1.0), (b - a, 0.0)], shape="smooth")[:seg]
+    pen = filters.bandpass(noise.pink(n, gen), 3200.0, 1.4)
+    pen = pen / max(float(np.std(pen)), 1e-9) * (0.7 + 0.3 * envelope.lfo(n, 23.0, 1.0)) * pen_gate
+    whirr = filters.bandpass(noise.pink(n, gen), 700.0, 3.0)
+    whirr = whirr / max(float(np.std(whirr)), 1e-9) + 0.5 * osc.sine(n, note_freq("A3"))
+    mix = 0.025 * filters.lowpass(pen, 6000.0) + 0.05 * whirr * whirr_gate
+    return envelope.fade_out(filters.lowpass(mix, 7000.0), 0.1)
+
+
+def blueprint_found(_variant, gen):
+    """A blueprint tube found in a site's heart: a tiny two-note glass chime, A5 then D6."""
+    mix = np.zeros((samples(1.6), 2))
+    place(mix, pan(instruments.glass_chime(note_freq("A5"), 1.2, decay=0.8), -0.1), 0, 0.5)
+    place(mix, pan(instruments.glass_chime(note_freq("D6"), 1.4, decay=1.0), 0.1), samples(0.14), 0.55)
+    return mix
+
+
+def dock_evening_swell(_variant, gen):
+    """The dock's evening: a warm, low swell under the wide shot of the day's lamps, D3/F#3/A3 over a D2 root."""
+    n = samples(6.0)
+    mix = np.zeros((n, 2))
+    for note, gain, side in (("D2", 0.45, 0.0), ("D3", 0.3, -0.2), ("F#3", 0.18, 0.25), ("A3", 0.16, -0.1)):
+        place(mix, pan(gain * instruments.soft_pad(note_freq(note), 6.0, 2.0, 2.6, hold=1.0), side), 0, 0.3)
+    return mix
+
+
 BAY_TURNTABLE_LOOP_S = 3.0
 
 
@@ -2169,6 +2250,18 @@ CUES = (
         notes="A place of the base waking: low hum rising A1 to D2 into a gentle kalimba phrase per place."),
     Cue("station_not_yet", "oneshot_3d", station_not_yet, volume=(0.5, 0.5), fade_out=0.2, milestone="M3",
         tonal=True, notes="A dormant station answering a ping: one muffled D3 bell over a felt knock, asleep."),
+    Cue("lift_winch_creak", "oneshot_3d", lift_winch_creak, variants=2, volume=(0.5, 0.55), fade_out=0.2,
+        milestone="M3", notes="The crew's jammed winch as 07 comes near: a slow low metal creak over a soft groan."),
+    Cue("lift_ride", "loop_3d", lift_ride, loop=True, file_stem="lift_ride_loop", volume=(0.5, 0.5), milestone="M3",
+        tonal=True, notes="The crew's lift riding: a patient ratchet over a soft D2/A2 motor hum."),
+    Cue("lift_stop_clunk", "oneshot_3d", lift_stop_clunk, volume=(0.6, 0.6), fade_out=0.1, milestone="M3",
+        notes="The lift reaching a stop: a deep padded clunk and a short cable settle."),
+    Cue("plotter_draw", "stinger_2d", plotter_draw, volume=(0.55, 0.55), fade_out=0.1, milestone="M3",
+        notes="Kenji's pen plotter drawing a sheet: soft pen scratches between carriage whirrs, ~3 s."),
+    Cue("blueprint_found", "oneshot_3d", blueprint_found, volume=(0.5, 0.5), fade_out=0.2, milestone="M3",
+        tonal=True, notes="A blueprint tube found: a tiny two-note glass chime, A5 then D6."),
+    Cue("dock_evening_swell", "stinger_2d", dock_evening_swell, volume=(0.5, 0.5), fade_out=0.6, milestone="M3",
+        tonal=True, notes="The dock's evening: a warm low D-major swell under the wide shot of the lamps."),
     Cue("bay_turntable", "loop_3d", bay_turntable, loop=True, file_stem="bay_turntable_loop", volume=(0.5, 0.5),
         milestone="M3", tonal=True, hf_cutoff=6000.0, hf_max_db=-40.0,
         notes="The turntable turning 07: low roller rumble + bearing hum on D2."),

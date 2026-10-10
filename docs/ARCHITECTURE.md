@@ -330,7 +330,7 @@ A missing anchor is a wiring bug: consumers `Debug.LogError` with context, never
 1. `python tools/compile_check.py` — editor + player configs, zero warnings. Mandatory before every commit.
 2. EditMode tests (`Assets/_Project/Tests/EditMode`) for pure logic: mesh kit, event bus, economy, save, curves.
 3. `python tools/unity_batch.py` — headless Unity run on a worktree: run builders, capture screenshots,
-   run scripted play sessions and print metrics. At most two batch editors run machine-wide, so boxes run the
+   run scripted play sessions and print metrics. At most three batch editors run machine-wide (MOON_BATCH_SLOTS), so boxes run the
    tests and captures that cover their change (`--filter`, `--assembly`, `--category`); the full PlayMode suite and
    the Playthrough golden path are the Director's, on the merged main.
 4. Director integration: `python tools/director.py land <box> -m ...` merges a box (compile_check gates the merge)

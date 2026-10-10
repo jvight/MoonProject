@@ -4,6 +4,47 @@ Read this, then `CLAUDE.md`, then `docs/VISION.md`, `docs/DESIGN.md`, `docs/ARCH
 It records how the project is run, where it stands, and what comes next, so a new Director session (on any
 account) can continue without the old conversation.
 
+## 0. Current state on the new account (2026-10-11 ~00:50)
+- **main 85bb390f.** It holds:
+  - every box tip from the old account (merge 029b4807);
+  - world's scene-build fix (1db8604b). HomeLightingSystem made its MaterialPropertyBlock in a field initializer,
+    which Unity refuses inside a MonoBehaviour constructor, so Main.unity could not be built;
+  - the outputs and the tuning written out (505ac8b4, 0fdefef4);
+  - the Core contracts BlueprintsCarriedRestored and DockEveningOpened (85bb390f).
+
+  `verify --parallel --push` was started on 85bb390f.
+- **The cut-off sessions' uncommitted edits are still in their worktrees.** New sessions start by finishing or
+  discarding them. They were offered as chips: gameplay, rover (the lift slice), art and ui.
+  - gameplay owns Rover/Rig/TubeCarry.cs for P1 and for the tube after a load.
+  - Audio and world have no session:
+    - audio waits for gameplay's DockEveningOpened (it wires dock_evening_swell);
+    - the Director re-runs world's wake capture.
+- **Tokens.** The cap for 2026-10-11 is 25% of the weekly limit (the week resets at 02:00 local). A cron guard runs
+  every 10 min.
+
+## 0a. FINAL STATE when the old account hit its limit (2026-10-10 ~23:58)
+- **main e8066680** holds the 0.5 first batch and docs. It is NOT verified and NOT pushed (origin is at 370bfc9c, 53
+  commits behind). Push only after `director.py verify --push` passes; try `--parallel`.
+- **Box tips and uncommitted work.** The sessions were stopped mid-turn, so worktrees can hold uncommitted, unfinished
+  edits. Review each `git status` before continuing: finish and commit, or discard.
+
+  | Box | Tip | Uncommitted files | Latest |
+  |---|---|---|---|
+  | art | 2cf00c36 | 3 | the tower's three story parts (P1); before that the garage fix 413f532 and the QA pass eb423a5. Next: the lift's OUT OF ORDER tag |
+  | gameplay | c0ed4f94 | 12 | P7 plotter delivery. In progress: BlueprintsCarriedRestored, the Playthrough with art 413f532, pads, P1 |
+  | rover | 7bf4f722 | 10 | the lift cycle (dormant → restored) in Gameplay/Lift; the tube on 07's back (0579f46b). Next: the ladder look with lift framing, the ride and the lookout |
+  | ui | 90f48074 | 3 | P8 (the next line waits 2 min); blueprint lines. Its PlayMode batch was still running |
+  | audio | 7da01984 | 0 | lift, plotter, chime and evening sounds; tests confirmed. Next: wire DockEveningOpened |
+  | world | 1f93d242 | 0 | cables and the tower pilot; re-run the wake capture (commands below) |
+
+- **First moves for the new Director:**
+  1. Run `python tools/director.py status`.
+  2. Clean or commit each worktree.
+  3. Land boxes as they reach clean, tested tips.
+  4. Re-run the golden-path Playthrough with gameplay and art.
+  5. Run `verify --parallel --push`.
+  6. Ask the game-design session to review the merged 0.5 once it plays end to end.
+
 ## 1. Where it stands (updated 2026-10-10 evening, account at ~95% of its weekly limit)
 - **Shipped and pushed:**
   - 0.4.0: 50990e8.
@@ -15,32 +56,82 @@ account) can continue without the old conversation.
     IHomeLights;
   - World's HomeLightingSystem (registers IHomeLights);
   - the design review (`docs/design/review-2026-10-10.md`) and the adopted amendments in M3-16.
-- **0.5 in flight on box branches (not merged).** Land gameplay + ui + audio + rover + art together, only after
-  gameplay's part F (the Playthrough follows steps 0–8) passes:
+- **0.5 FIRST BATCH LANDED on main** (2026-10-10 evening; merges up to 951d6db6, outputs 4d9d7646, BlueprintDelivered
+  09d8cc0e, 3 batch slots 3e3a1a63). NOT verified and NOT pushed: the Playthrough still needs gameplay's P9 run. It
+  contains:
+  - gameplay A–F, P4, P9/P10 groundwork;
+  - all M3-16 art: dormant base, lift states, pads, cables, plotter, P3, P9 sites, TubeSocket;
+  - ui guidance and place cards;
+  - audio wake and not-yet sounds;
+  - rover's two-beat wake;
+  - world's home lighting.
+  Tuning assets were re-serialised.
+- **Speed-mode assignments in flight** (each session merged main 09d8cc0e+ and works on its box branch):
 
-  | Box | State |
+  | Session | Queue |
   |---|---|
-  | gameplay | A–F done, tip 1b2ba6cd: power stages, dormancy, steps, places, blueprints (BlueprintFound), IHomeLights wired, P4. The Playthrough runs in step order but FAILS at step 7 (the relay is unaffordable). P9 (2× economy, a signature material per site, the path via depot, garage and Kestrel) + P10 (4 depot cuts) were in progress to fix it. Then P1, P2, P8. New ProgressionTuning asset; metas for Progression/*. |
-  | ui | Done, 583ec3cc: next line, Guidance toggle, place cards, HUD verbs, Look-up hint waits for cards. UiTuning `_guidance` needs a re-serialise after landing. |
-  | audio | Done, 93fd84f4: wake stingers per stage, the "not yet" tone. StationAudioTuning has 2 new fields. StationNotYet is also in box/gameplay with an identical diff. |
-  | rover | P5 two-beat wake done, tip c53e3681. Beat 1 is the lens looking up at the stars. Beat 2 is an over-the-shoulder shot with Earth in the upper third, then it eases to the chase. Approved. RoverCameraTuning has the `_wake*` fields; reset or re-serialise them after landing. Metas: WakeOpening.cs and its tests. |
-  | art | ALL M3-16 art done, tip c9c95b3:
-  - bay shutter, lander glows, HOME sign;
-  - lift jammed and restored states with the winch hopper;
-  - StationPad prefabs with pad lamps;
-  - PowerCable_Home/Bay/Lift glow segments;
-  - P3 (rear is not a face);
-  - P9 site yields (depot 5,2,2 in 4 cuts, garage 7,7,2, Kestrel 2,2,9, drill 7,7,2);
-  - P7: Plotter with PenCarriage, PenHead, PlotterSheet and PlotterLamp; Blueprint_<Ability> sheets on a cord;
-    TubeSocket on 07's lid.
-  Still to wire, by gameplay and rover:
-  - the plotter drawing a sheet when a tube arrives;
-  - the tube riding on 07's back;
-  - the lift station and ride;
-  - pads replacing the neon rings;
-  - cables lighting with BasePowerChanged.
-  New RoverModel node TubeSocket: check Rover's node lists when landing. |
-  | world | Its part is landed. |
+  | gameplay | Playthrough with the real sites (P9/P10) → P1 story parts per tower level → P2 the chasm before the bay → P7 logic (BlueprintDelivered drives the plotter; pin on delivery) → pads replace the neon rings → P6 the dock's evening (event for rover, audio and ui) |
+  | rover | FEATURE SLICE "the crew's lift", authorised in Gameplay/Lift/**: station restore, ride, lookout, ladder look, tube on 07's back |
+  | world | power cables light from the tower out; the tower pilot blink (P5); dark-start quality captures |
+  | ui | P8 (next line after ~120 s, never while stargazing or waking); blueprint found and delivered lines; first-10-min one-voice QA |
+  | audio | lift creak, ratchet, hum and clunk; plotter scratch; tube chime; dock-evening swell |
+  | art | quality pass in the real Main scene (dark start, wakes, the owner's angle), jammed lift readable |
+  | game design | idle; ask it to review the merged 0.5 once it plays end to end |
+
+  Decisions taken while in flight (2026-10-10, late):
+  - **Garage yields.** All cuttable, no drag piece: Wiring L, Wiring M, Metal L, Metal M, Optics S = (7,7,2). Art was
+    asked to do this; the Playthrough failed at the Cradle with the drag version.
+  - **The golden path passes end to end** with gameplay 9f7f9216 and the old art (1052.8 s / budget 1100 s).
+    Re-run it with art's fixed garage.
+  - **Gameplay order:** P7 first, built as a generic "carried find" (found → rides on 07's back → delivered at a home
+    station). Then P1 uses it:
+    - L1 coil: in the depot's heart after the last cut, delivered at the tower.
+    - L2 transformer: in the garage's heart.
+    - L3 relay spare: from the first restored mast.
+    - The shop returns PurchaseResult.NeedsPart.
+    - The cassette player moves to the garage heart. The duck is the step-4 first memory, towed home.
+  - **Art was asked for** Part_TowerCoil, Part_Transformer and Part_RelaySpare under Generated/Art/Pickups, carried on
+    07's back.
+
+  Latest box tips reported before this account ran out (check `director.py status` for anything newer):
+  - **world 1f93d242.**
+    - Done: cables light outward from the tower (~1.5 s), with home's lights starting when the cable arrives; the
+      tower pilot blinks while Asleep; WorldHomeWiringContributor; builder World/Tower Pilot.
+    - Its tests and captures (Logs/world-captures/wake-0..3) were still running when it committed: re-run and
+      critique them. Update: EditMode 7/7 passed. The capture never ran (a shell-quoting error), so in the world
+      worktree run, in order:
+      1. `python tools/unity_batch.py exec --method MoonProject.Editor.Automation.BuildAutomation.RunBuilders --arg "filter=^(World/|Main Scene$)"`
+      2. `python tools/unity_batch.py tests --platform playmode --filter HomeWake_IsCapturedFromTheSpawnView`
+    - After merging: ResetSettings (new `_homeLighting` cable and pilot fields). Revert the rebuilt Main.unity and
+      Generated files and the untracked metas in that worktree before merging.
+  - **audio 7da01984.**
+    - Done: Core LiftCue/LiftCued; the lift creak, ride and clunk, the plotter draw, the blueprint chime and the dock
+      evening swell (generated); runtime for the lift, the plotter and the chime.
+    - Tests confirmed: Audio EditMode 159/159; PlayMode AudioRuntimeTests|StationAudioTests 15/15, including zero GC.
+    - Next: wire dock_evening_swell to Core.Events.DockEveningOpened(Vector3 DockPosition) once gameplay adds it.
+    - After landing: the Audio builders and a StationAudioTuning re-serialise.
+  - **rover 0579f46b.**
+    - Done: the tube rides on 07's TubeSocket (TubeCarry, RoverRigTuning._tubeHalfLife).
+    - After landing: run the Rover/Rover builder.
+    - Gap: a tube carried across a save/load is not restored. Gameplay should re-publish BlueprintFound for
+      carried-but-undelivered tubes on load.
+    - Next: the ladder look, then the lift station and ride (Gameplay/Lift/**, authorised).
+  - **gameplay c0ed4f94+.**
+    - P7 is done: BlueprintFound means the tube rides on 07. Delivery happens within PlotterReach of the plotter while the bay is awake: it publishes BlueprintDelivered, pins the kit and the plotter draws 8 rows over 6 s.
+    - Asked to add Core `BlueprintsCarriedRestored(int count)` on load, so rover's TubeCarry restores the tube after a load.
+    - Next: re-run the Playthrough with art's garage fix, then pads, then P1 (plan approved).
+  - **art eb423a5.**
+    - The QA pass is done:
+      - the shutter is weathered and torn;
+      - the cables are sunk sheaths with glass beads;
+      - the jam is rolled to 22° (the maximum before it hits 07 at the dock);
+      - capture scenes wake_dark/home/bay/lift/pads; compare shots in Logs/captures/wake-compare/;
+      - Art.Tests 258/258.
+    - Queued, in order:
+      1. the garage fix (all cuttable, 7,7,2; it blocks gameplay's Playthrough);
+      2. Part_TowerCoil, Part_Transformer, Part_RelaySpare;
+      3. lift readability props (a crew tag "OUT OF ORDER — K." on the rail, the snapped cable's end over the
+         deck). Rover frames the lift from the dock side during the ladder look.
 
 - **After landing 0.5's first batch:**
   - Run `^(Art|Rover|Gameplay|UI|Audio)/` builders and the scene.
@@ -54,12 +145,9 @@ account) can continue without the old conversation.
   - also in 0.5: M3-07 map and M3-09 title.
 
 ## 2. What comes next (owner-approved order)
-1. **0.4.2:** M3-15 §3 "rust v3", art only (`docs/features/M3-15-logic-pass.md`).
-   - Runs start only at a cause (rivet, seam, bolt), few per panel, with random length, spacing and width.
-   - Brown fading out; irregular patchwork.
-   - Weather Bell, the tape rack, the depot panels and the Kestrel capsule too.
-   - Acceptance: a test that no two adjacent runs share length and spacing, plus chase-camera captures.
-2. **0.5 "Căn cứ thức dậy":** the core is **M3-16** (`docs/features/M3-16-waking-lumen.md`), approved 2026-10-09:
+1. **0.4.2, DONE:** M3-15 §3 "rust v3" shipped as 5a293e84 (see §1). Its captures are in
+   `MoonProject-wt/art/Logs/captures/rust-0.4.2/`.
+2. **0.5 "Căn cứ thức dậy" (in progress):** the core is **M3-16** (`docs/features/M3-16-waking-lumen.md`), approved 2026-10-09:
    - a fresh game opens fully dark (only the dock and 07's eye are lit);
    - tower levels return power: L1 home, L2 Kenji's Rover Bay, L3 the crew's lift;
    - one verb per step, and every place has one job shown in one line;
@@ -110,8 +198,8 @@ account) can continue without the old conversation.
   - Keep the Profiler's Record off in the main editor.
 - **`python tools/director.py status`:** every box against main, unpushed commits, batch slots, editor idle or busy.
 - **`python tools/compile_check.py`:** must print `RESULT: PASS` before every commit.
-- **`python tools/unity_batch.py tests|exec|status`:** headless Unity on a worktree. At most two run machine-wide
-  (`MOON_BATCH_SLOTS`); PlayMode defaults to a 2400 s timeout.
+- **`python tools/unity_batch.py tests|exec|status`:** headless Unity on a worktree. At most three run machine-wide
+  (`MOON_BATCH_SLOTS`, default 3 since 2026-10-10; drop to 2 if RAM runs short); PlayMode defaults to a 2400 s timeout.
   - Playthrough: `--category Playthrough --timeout 2700`.
   - Builders on a worktree: `exec --method MoonProject.Editor.Automation.BuildAutomation.RunBuilders --arg filter=^Art/`.
   - Idempotency: `exec --method MoonProject.Editor.Automation.BuildAutomation.CheckIdempotency`.

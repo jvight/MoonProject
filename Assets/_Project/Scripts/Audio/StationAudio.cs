@@ -21,13 +21,17 @@ namespace MoonProject.Audio
     /// <item>power returning to home, the bay or the lift plays that place's wake phrase
     /// (<see cref="BasePowerChanged"/>, never on a restore from a save), and a dormant station answers the sonar with
     /// a soft "not yet" where it stands (<see cref="StationNotYet"/>, published as the ping's ring reaches it).</item>
+    /// <item>the crew's lift: the jammed winch creaks as 07 comes near, the ride ratchets and hums while it moves and
+    /// clunks at each stop (<see cref="LiftCued"/>, <see cref="LiftSounds"/>);</item>
+    /// <item>Kenji's pen plotter draws a delivered sheet (<see cref="BlueprintDelivered"/>) and a found blueprint
+    /// tube chimes where it was found (<see cref="BlueprintFound"/>).</item>
     /// </list>
     /// Game-time loops duck while paused. Initialised by <see cref="AudioDirector"/>.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class StationAudio : MonoBehaviour
     {
-        private const int SubscriptionCount = 5;
+        private const int SubscriptionCount = 8;
         private const uint DropSeedSalt = 0x68E31DA4u;
         private const float CentsPerSemitone = 100f;
         private const float CentsPerOctave = 1200f;
@@ -38,11 +42,17 @@ namespace MoonProject.Audio
         private readonly IDisposable[] _subscriptions = new IDisposable[SubscriptionCount];
         private readonly LoopFader _feed = new LoopFader();
         private readonly LoopFader _stitch = new LoopFader();
+        private readonly LoopFader _liftRide = new LoopFader();
         private readonly ServoWhir _turn = new ServoWhir();
         private CueHandle[] _beats = Array.Empty<CueHandle>();
         private int[] _wakeVariants = Array.Empty<int>();
         private CueHandle _wake;
         private CueHandle _notYet;
+        private CueHandle[] _liftBeats = Array.Empty<CueHandle>();
+        private CueHandle _plotter;
+        private CueHandle _found;
+        private AudioSource _liftLoop;
+        private float _liftCueVolume;
         private AudioDirector _director;
         private IRoverState _rover;
         private BundleDrops _drops;
@@ -79,6 +89,8 @@ namespace MoonProject.Audio
 
         internal AudioSource ChargeSource => _chargeHum;
 
+        internal AudioSource LiftSource => _liftLoop;
+
         internal AudioSource ArmSource(int index) => _armSources[index];
 
         /// <summary>The bay's arm tips the servos follow: every arm's Tip, then the floor arm's.</summary>
@@ -106,9 +118,13 @@ namespace MoonProject.Audio
             _dockRelease = director.Resolve(AudioCueIds.DockRelease);
             _wake = director.Resolve(AudioCueIds.BaseWake);
             _notYet = director.Resolve(AudioCueIds.StationNotYet);
+            CueHandle liftRide = director.Resolve(AudioCueIds.LiftRide);
+            _plotter = director.Resolve(AudioCueIds.PlotterDraw);
+            _found = director.Resolve(AudioCueIds.BlueprintFound);
             if (!feed.IsValid || !servo.IsValid || !turn.IsValid || !stitch.IsValid || !charge.IsValid ||
                 !_sigh.IsValid || !_weld.IsValid || !_chime.IsValid || !_dockConnect.IsValid || !_dockFull.IsValid ||
-                !_dockRelease.IsValid || !_wake.IsValid || !_notYet.IsValid || !TryResolveBeats(director) ||
+                !_dockRelease.IsValid || !_wake.IsValid || !_notYet.IsValid || !liftRide.IsValid ||
+                !_plotter.IsValid || !_found.IsValid || !TryResolveBeats(director) || !TryResolveLiftBeats(director) ||
                 !TryResolveWakes(director.Library.GetCue(_wake)))
             {
                 enabled = false;
@@ -130,6 +146,8 @@ namespace MoonProject.Audio
             _turnRumble = director.CreateLoopSource(transform, "Turntable", turn, 1f);
             _stitchLoop = director.CreateLoopSource(transform, "TowerStitch", stitch, 1f);
             _chargeHum = director.CreateLoopSource(transform, "ChargeHum", charge, 1f);
+            _liftCueVolume = library.GetCue(liftRide).VolumeMax;
+            _liftLoop = director.CreateLoopSource(transform, "LiftRide", liftRide, 1f);
             BuildArms(bay, servo);
             _turntable = bay.Turntable;
             _lastFacing = _turntable.forward;
@@ -141,6 +159,9 @@ namespace MoonProject.Audio
             _subscriptions[2] = events.Subscribe<RoverDockChanged>(OnDockChanged);
             _subscriptions[3] = events.Subscribe<BasePowerChanged>(OnBasePowerChanged);
             _subscriptions[4] = events.Subscribe<StationNotYet>(OnStationNotYet);
+            _subscriptions[5] = events.Subscribe<LiftCued>(OnLiftCued);
+            _subscriptions[6] = events.Subscribe<BlueprintDelivered>(OnBlueprintDelivered);
+            _subscriptions[7] = events.Subscribe<BlueprintFound>(OnBlueprintFound);
         }
 
         internal void Wire(StationAudioTuning tuning)
@@ -173,6 +194,9 @@ namespace MoonProject.Audio
             float rise = Mathf.SmoothStep(0f, 1f, _stitchTime / _tuning.StitchRiseTime);
             Drive(_stitchLoop, _stitch.Gain * _tuning.StitchVolume * _stitchCueVolume * sfx,
                 Mathf.Pow(2f, rise * _tuning.StitchRise * CentsPerSemitone / CentsPerOctave));
+
+            _liftRide.Step(dt, _tuning.LiftRideFadeIn, _tuning.LiftRideFadeOut);
+            Drive(_liftLoop, _liftRide.Gain * _tuning.LiftRideVolume * _liftCueVolume * sfx, 1f);
 
             _charge.Step(dt);
             Drive(_chargeHum, _charge.Hum * _tuning.ChargeVolume * _chargeCueVolume * sfx, 1f);
@@ -274,6 +298,37 @@ namespace MoonProject.Audio
             _director.PlayVariant2D(_wake, _wakeVariants[stage], _tuning.WakeVolume);
         }
 
+        private void OnLiftCued(LiftCued cued)
+        {
+            switch (cued.Cue)
+            {
+                case LiftCue.RideStarted:
+                    _liftLoop.transform.position = cued.Position;
+                    _liftRide.FadeIn();
+                    break;
+                case LiftCue.RideStopped:
+                    _liftLoop.transform.position = cued.Position;
+                    _liftRide.FadeOut();
+                    break;
+            }
+
+            int beat = (int)cued.Cue;
+            if (beat >= 0 && beat < _liftBeats.Length && _liftBeats[beat].IsValid)
+            {
+                _director.PlayAt(_liftBeats[beat], cued.Position, _tuning.LiftBeatVolume);
+            }
+        }
+
+        private void OnBlueprintDelivered(BlueprintDelivered delivered)
+        {
+            _director.Play2D(_plotter, _tuning.PlotterVolume);
+        }
+
+        private void OnBlueprintFound(BlueprintFound found)
+        {
+            _director.PlayAt(_found, found.Position, _tuning.BlueprintFoundVolume);
+        }
+
         private void OnStationNotYet(StationNotYet notYet)
         {
             _director.PlayAt(_notYet, notYet.Position, _tuning.NotYetVolume);
@@ -331,6 +386,39 @@ namespace MoonProject.Audio
 
                 _beats[(int)cue] = director.Resolve(id);
                 if (!_beats[(int)cue].IsValid)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private bool TryResolveLiftBeats(AudioDirector director)
+        {
+            int size = 0;
+            foreach (LiftCue cue in (LiftCue[])Enum.GetValues(typeof(LiftCue)))
+            {
+                size = Math.Max(size, (int)cue + 1);
+            }
+
+            _liftBeats = new CueHandle[size];
+            foreach (LiftCue cue in (LiftCue[])Enum.GetValues(typeof(LiftCue)))
+            {
+                if (!LiftSounds.TryGetOneShot(cue, out string id))
+                {
+                    Debug.LogWarning($"{nameof(StationAudio)}: lift beat {cue} has no sound in " +
+                                     $"{nameof(LiftSounds)} yet; it plays silently.", this);
+                    continue;
+                }
+
+                if (id == null)
+                {
+                    continue;
+                }
+
+                _liftBeats[(int)cue] = director.Resolve(id);
+                if (!_liftBeats[(int)cue].IsValid)
                 {
                     return false;
                 }

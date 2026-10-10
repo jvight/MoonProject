@@ -2723,6 +2723,171 @@
       "notes": "A dormant station answering a ping: one muffled D3 bell over a felt knock, asleep."
     },
     {
+      "id": "lift_winch_creak",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/lift_winch_creak_01.wav",
+        "Assets/_Project/Audio/SFX/lift_winch_creak_02.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02"
+      ],
+      "sha256": [
+        "c5121c4871752c82285ff03d9d85d1ba4361c9cc31ecb85afaf0bcb3193504c0",
+        "607093e71a0eb1905b754450d84a0e977b04946d4ad42646f4d8cced40237762"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "The crew's jammed winch as 07 comes near: a slow low metal creak over a soft groan."
+    },
+    {
+      "id": "lift_ride",
+      "category": "loop_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/SFX/lift_ride_loop.wav"
+      ],
+      "variantLabels": [
+        "lift_ride"
+      ],
+      "sha256": [
+        "28222c2719d06ae308e1ee5fd4d388506d1daed759390d8a99734d2d58f4e8a1"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "The crew's lift riding: a patient ratchet over a soft D2/A2 motor hum."
+    },
+    {
+      "id": "lift_stop_clunk",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/lift_stop_clunk.wav"
+      ],
+      "variantLabels": [
+        "lift_stop_clunk"
+      ],
+      "sha256": [
+        "9bcc9912629387ecb41eda699df0897a8d4eed34001e24d7977e9692ab0ac324"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "The lift reaching a stop: a deep padded clunk and a short cable settle."
+    },
+    {
+      "id": "plotter_draw",
+      "category": "stinger_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/plotter_draw.wav"
+      ],
+      "variantLabels": [
+        "plotter_draw"
+      ],
+      "sha256": [
+        "91db2c5ab1ab4d96a15143be7da71d22167f353ac7d5c681691ba65ede3c33de"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -20.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "Kenji's pen plotter drawing a sheet: soft pen scratches between carriage whirrs, ~3 s."
+    },
+    {
+      "id": "blueprint_found",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/blueprint_found.wav"
+      ],
+      "variantLabels": [
+        "blueprint_found"
+      ],
+      "sha256": [
+        "2ad71e1feb016bc06d3268ffd1081f093f8b085e7cb1a1bb388fa8f638eceb82"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "A blueprint tube found: a tiny two-note glass chime, A5 then D6."
+    },
+    {
+      "id": "dock_evening_swell",
+      "category": "stinger_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/dock_evening_swell.wav"
+      ],
+      "variantLabels": [
+        "dock_evening_swell"
+      ],
+      "sha256": [
+        "f2575b281df6a5e70054dffd185e769e072fee6d106587d2dd7c9d758f6ecbb8"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -20.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "The dock's evening: a warm low D-major swell under the wide shot of the lamps."
+    },
+    {
       "id": "bay_turntable",
       "category": "loop_3d",
       "milestone": "M3",

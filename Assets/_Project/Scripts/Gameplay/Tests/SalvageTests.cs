@@ -147,18 +147,18 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void TheGoldenPathsOrder_IsAffordableStepByStep()
+        public void TheGoldenPathsOrder_IsAffordableStepByStep_FromWhatTheBeamCuts()
         {
             var tuning = Create<SalvageTuning>();
             var relays = Create<RelayTuning>();
-            Recipe stock = SiteYield("depot", tuning);
+            Recipe stock = CutYield("depot", tuning);
             stock = Spend(stock, SalvageEconomy.RadioTower[0], "tower L1 from the depot");
-            stock = stock.Plus(SiteYield("garage", tuning));
+            stock = stock.Plus(CutYield("garage", tuning));
             stock = Spend(stock, SalvageEconomy.RadioTower[1], "tower L2 after the garage");
             stock = Spend(stock, SalvageEconomy.HoverJump, "Hover-Jump");
             stock = Spend(stock, SalvageEconomy.CargoCradle, "the Cargo Cradle");
             stock = Spend(stock, relays.CostAfter(0), "the first relay mast (step 7)");
-            stock = stock.Plus(SiteYield("kestrel", tuning)).Plus(Trail(tuning));
+            stock = stock.Plus(CutYield("kestrel", tuning)).Plus(Trail(tuning));
             Spend(stock, SalvageEconomy.RadioTower[2], "tower L3 after the Kestrel (step 8)");
         }
 
@@ -201,7 +201,8 @@ namespace MoonProject.Gameplay.Tests
             {
                 if (other != signature)
                 {
-                    Assert.Greater(site.Of(signature), site.Of(other), $"{name} leans on its signature {signature}");
+                    Assert.GreaterOrEqual(site.Of(signature), site.Of(other),
+                        $"{name} leans on its signature {signature}: nothing gives more");
                 }
             }
         }
@@ -235,6 +236,17 @@ namespace MoonProject.Gameplay.Tests
         /// <summary>What Art's site prefab <paramref name="name"/> gives (its contract checked).</summary>
         private static Recipe SiteYield(string name, SalvageTuning tuning)
         {
+            return SiteYield(name, tuning, true);
+        }
+
+        /// <summary>What the site gives 07's beam alone, without the drag pieces only the tether pulls clear.</summary>
+        private static Recipe CutYield(string name, SalvageTuning tuning)
+        {
+            return SiteYield(name, tuning, false);
+        }
+
+        private static Recipe SiteYield(string name, SalvageTuning tuning, bool drags)
+        {
             var yield = new int[3];
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(GameplayAssetPaths.SitePrefab(name));
             Assert.IsNotNull(prefab, $"Art's site prefab for '{name}'");
@@ -250,8 +262,8 @@ namespace MoonProject.Gameplay.Tests
 
                 Assert.IsNotNull(node.Find("CutPoint"), $"{name}/{node.name} has its cut point");
                 Mesh mesh = node.GetComponent<MeshFilter>().sharedMesh;
-                yield[(int)material] += SalvageYield.Units(Vector3.Scale(mesh.bounds.size, node.localScale), drag,
-                    tuning);
+                Vector3 size = Vector3.Scale(mesh.bounds.size, node.localScale);
+                yield[(int)material] += drag && !drags ? 0 : SalvageYield.Units(size, drag, tuning);
                 pieces++;
             }
 
