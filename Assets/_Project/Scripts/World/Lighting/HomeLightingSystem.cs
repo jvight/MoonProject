@@ -32,7 +32,7 @@ namespace MoonProject.World
         [Tooltip("The pilot light's halo at the top of the radio tower (LofiBeaconHalo).")]
         [SerializeField] private Renderer _pilot;
 
-        private readonly MaterialPropertyBlock _block = new MaterialPropertyBlock();
+        private MaterialPropertyBlock _block;
         private HomeLightStages _stages;
         private IDisposable _powerChanged;
         private float[] _homeApplied;
@@ -49,6 +49,8 @@ namespace MoonProject.World
                 return;
             }
 
+            // Unity refuses to create a property block while it constructs a MonoBehaviour (a field initializer).
+            _block = new MaterialPropertyBlock();
             _stages = new HomeLightStages(_settings.HomeLighting);
             _homeApplied = Unapplied(_homeCable.Length);
             _bayApplied = Unapplied(_bayCable.Length);
