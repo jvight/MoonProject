@@ -1267,6 +1267,80 @@ MonoBehaviour:
     _volumeMax: 0.5
     _pitchMin: 1
     _pitchMax: 1
+  - _id: lift_winch_creak
+    _clips:
+    - {fileID: 8300000, guid: 8add81f95ce6429479e0a9ccba482b3d, type: 3}
+    - {fileID: 8300000, guid: 1ddfc4e40b699b64e954458be081821b, type: 3}
+    _variantLabels:
+    - 01
+    - 02
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.5
+    _volumeMax: 0.55
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: lift_ride
+    _clips:
+    - {fileID: 8300000, guid: 9fc44dac9694fce459cc6684bf98470d, type: 3}
+    _variantLabels:
+    - lift_ride
+    _bus: 2
+    _spatial: 1
+    _loop: 1
+    _volumeMin: 0.5
+    _volumeMax: 0.5
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: lift_stop_clunk
+    _clips:
+    - {fileID: 8300000, guid: 0a7e595d9f08616449ee77d7ad710328, type: 3}
+    _variantLabels:
+    - lift_stop_clunk
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.6
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: plotter_draw
+    _clips:
+    - {fileID: 8300000, guid: ccc5cdc3c02c92440a45a4925fbbdb36, type: 3}
+    _variantLabels:
+    - plotter_draw
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.55
+    _volumeMax: 0.55
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: blueprint_found
+    _clips:
+    - {fileID: 8300000, guid: 520e7962942727f42a4d640f0f60d95a, type: 3}
+    _variantLabels:
+    - blueprint_found
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.5
+    _volumeMax: 0.5
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: dock_evening_swell
+    _clips:
+    - {fileID: 8300000, guid: a4182170b897fcd46afe38a32c833608, type: 3}
+    _variantLabels:
+    - dock_evening_swell
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.5
+    _volumeMax: 0.5
+    _pitchMin: 1
+    _pitchMax: 1
   - _id: bay_turntable
     _clips:
     - {fileID: 8300000, guid: 89b834fb45150ea4b8c4488f9d27c4fa, type: 3}
