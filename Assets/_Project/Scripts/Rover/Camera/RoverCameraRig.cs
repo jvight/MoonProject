@@ -180,6 +180,7 @@ namespace MoonProject.Rover
                 context.Events.Subscribe<ExcavationStopped>(OnExcavationStopped),
                 context.Events.Subscribe<RelicSurfaced>(OnRelicSurfaced),
                 context.Events.Subscribe<RelayRestored>(OnRelayRestored),
+                context.Events.Subscribe<LadderLookChanged>(OnLadderLookChanged),
                 context.Events.Subscribe<UpgradePurchased>(OnUpgradePurchased),
                 context.Events.Subscribe<RoverJumped>(OnJumped),
                 context.Events.Subscribe<TetherAttached>(OnTetherAttached),
@@ -835,6 +836,22 @@ namespace MoonProject.Rover
         private void OnRelayRestored(RelayRestored relay)
         {
             _moment.Start(_tuning.RelayMoment, relay.Position, false);
+        }
+
+        /// <summary>
+        /// 07's first look up the crew's ladder, then at the lift (M3-16 "Each place"): one held moment, low, looking
+        /// up, that eases from the ladder across to the lift as 07's gaze moves and lets go once the look ends.
+        /// </summary>
+        private void OnLadderLookChanged(LadderLookChanged look)
+        {
+            if (look.Looking)
+            {
+                _moment.Start(_tuning.LadderMoment, look.Subject, true);
+            }
+            else if (_moment.IsActive && ReferenceEquals(_moment.Settings, _tuning.LadderMoment))
+            {
+                _moment.Release();
+            }
         }
 
         /// <summary>A real leap (not a hop) lifts the camera and looks ahead to the landing until 07 is down.</summary>

@@ -27,7 +27,8 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// The crew's lift in the real Main scene (docs/features/M3-16 step 8), seeded with the tower at its third level
     /// and a little metal and wiring: 07 rests on the feed pad and the lift is restored (platform level, cable taut,
     /// lamp lit, saved as restored); 07 drives onto the platform and is carried up to the deck, where the lookout
-    /// opens; a drive key at the deck brings it back down. Frames from the game camera at each stage go to
+    /// opens; a drive key at the deck brings it back down. A second session greets the ladder as progression does at
+    /// step 8 (07 wakes beside it) and catches 07's look up it, then at the lift (Logs/gameplay-captures/ladder-*.png). Frames from the game camera at each stage go to
     /// Logs/gameplay-captures/lift-*.png, with lift.md recording 07's height and the lift's phase. Any error in the
     /// log fails it. Slow and needs a GPU: run on demand with --category LiftSession.
     /// </summary>
@@ -49,6 +50,12 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>How far (m) in front of the platform's ramp 07 lines up before it drives on.</summary>
         private const float LineUp = 5f;
 
+        /// <summary>Seconds into each look the frame is taken (the moment has eased most of the way in).</summary>
+        private const float LookFrameSeconds = 1.8f;
+
+        /// <summary>The ladder's look is up it: its subject this far (m) above 07 at least.</summary>
+        private const float LadderAbove = 1.5f;
+
         /// <summary>07 is carried: its height at the top within this of the deck's (m).</summary>
         private const float CarriedTolerance = 0.6f;
 
@@ -60,6 +67,12 @@ namespace MoonProject.Gameplay.PlayModeTests
             "{\\\"id\\\":\\\"radio_tower\\\",\\\"level\\\":3}]}\"}," +
             "{\"key\":\"gameplay.wallet\",\"version\":2,\"json\":\"{\\\"metal\\\":12,\\\"wiring\\\":12," +
             "\\\"optics\\\":4}\"}]}";
+
+        // The tower at its first level: home awake (no wake opening), the lift still dormant.
+        private const string HomeAwakeSave =
+            "{\"formatVersion\":1,\"contentVersion\":\"0.5.0\",\"savedAtUtc\":\"2026-10-10T00:00:00Z\"," +
+            "\"sections\":[{\"key\":\"gameplay.upgrades\",\"version\":1,\"json\":\"{\\\"upgrades\\\":[" +
+            "{\\\"id\\\":\\\"radio_tower\\\",\\\"level\\\":1}]}\"}]}";
 
         private readonly List<string> _problems = new List<string>();
         private readonly StringBuilder _report = new StringBuilder();
@@ -102,7 +115,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         [PostBuildCleanup(typeof(PlaythroughScene))]
         public IEnumerator TheLift_IsRestored_RiddenUpToTheLookout_AndDown()
         {
-            yield return Boot();
+            yield return Boot(LiftPoweredSave);
             LiftStation lift = _gameplay.Lift;
             _report.AppendLine("# The crew's lift (real Main scene)");
             _report.AppendLine();
@@ -151,6 +164,59 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
         }
 
+        [UnityTest]
+        [Timeout(300000)]
+        [PrebuildSetup(typeof(PlaythroughScene))]
+        [PostBuildCleanup(typeof(PlaythroughScene))]
+        public IEnumerator TheLadderLook_LooksUpTheLadder_ThenAtTheLift()
+        {
+            yield return Boot(HomeAwakeSave);
+            LiftStation lift = _gameplay.Lift;
+            _report.AppendLine("# The ladder look (real Main scene)");
+            _report.AppendLine();
+            _report.AppendLine("| Capture | Phase | 07's height (m) |");
+            _report.AppendLine("|---|---|---:|");
+            var looks = new List<Vector3>();
+            bool ended = false;
+            using (_context.Events.Subscribe<LadderLookChanged>(look =>
+            {
+                if (look.Looking)
+                {
+                    looks.Add(look.Subject);
+                }
+                else
+                {
+                    ended = true;
+                }
+            }))
+            {
+                _context.Events.Publish(new PlaceFirstApproached(ProgressionKeys.PlaceLadder));
+                yield return WaitUntil(() => looks.Count >= 1, PhaseTimeout, "07 looks up the crew's ladder");
+                yield return new WaitForSeconds(LookFrameSeconds);
+                Capture("ladder-1-up", lift);
+                Assert.Greater(looks[0].y, _rover.Position.y + LadderAbove, "The first look is up the ladder.");
+                yield return WaitUntil(() => looks.Count >= 2, PhaseTimeout, "then at the lift");
+                yield return new WaitForSeconds(LookFrameSeconds);
+                Capture("ladder-2-lift", lift);
+                yield return WaitUntil(() => ended, PhaseTimeout, "The look ends");
+            }
+
+            Assert.AreEqual(2, looks.Count, "Two looks, once.");
+            Directory.CreateDirectory(GameplayFixture.CaptureFolder);
+            File.WriteAllText(Path.Combine(GameplayFixture.CaptureFolder, "ladder.md"), _report.ToString());
+            Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
+        private static IEnumerator WaitUntil(Func<bool> done, float timeout, string what)
+        {
+            float deadline = Time.time + timeout;
+            while (!done())
+            {
+                Assert.Less(Time.time, deadline, what);
+                yield return null;
+            }
+        }
+
         private static float LiftRise(LiftStation lift)
         {
             return lift.TopSpot.y - lift.RideSpot.y;
@@ -166,11 +232,11 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
         }
 
-        private IEnumerator Boot()
+        private IEnumerator Boot(string save)
         {
             Directory.CreateDirectory(SaveService.DefaultDirectory);
             File.WriteAllText(Path.Combine(SaveService.DefaultDirectory,
-                PlaythroughScene.SaveSlot + SaveService.Extension), LiftPoweredSave);
+                PlaythroughScene.SaveSlot + SaveService.Extension), save);
 #if UNITY_EDITOR
             AsyncOperation loading = EditorSceneManager.LoadSceneAsyncInPlayMode(PlaythroughScene.ScenePath,
                 new LoadSceneParameters(LoadSceneMode.Single));

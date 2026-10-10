@@ -25,6 +25,13 @@ namespace MoonProject.Gameplay.Lift
         private const string FeedId = "lift";
         private const float InputEpsilon = 1e-4f;
 
+        private enum LadderLook
+        {
+            None,
+            Ladder,
+            Lift,
+        }
+
         [SerializeField] private LiftTuning _tuning;
         [SerializeField] private RadioTowerTuning _looks;
         [SerializeField] private Transform _lander;
@@ -64,6 +71,7 @@ namespace MoonProject.Gameplay.Lift
         private Vector3 _cableRightScale;
         private float _lampLevel;
         private float _ladderLookStarted = float.NegativeInfinity;
+        private LadderLook _ladderLook;
         private bool _gazing;
         private bool _holding;
         private bool _initialized;
@@ -271,7 +279,7 @@ namespace MoonProject.Gameplay.Lift
         }
 
         /// <summary>
-        /// The powered, jammed winch creaks once each time 07 comes near it (Audio's <see cref="LiftCue.WinchCreaked"/>),
+        /// The powered, jammed winch creaks once each time 07 comes near it (<see cref="LiftCue.WinchCreaked"/>),
         /// a nudge toward the lift before it is restored.
         /// </summary>
         private void StepCreak()
@@ -374,30 +382,49 @@ namespace MoonProject.Gameplay.Lift
             }
         }
 
+        /// <summary>
+        /// Up the ladder, then at the lift, each look published as it begins (Rover frames it) and once more as the
+        /// look ends; feeding or stitching the winch cuts it short (that gaze takes over).
+        /// </summary>
         private void StepLadderLook(float now)
         {
             float looked = now - _ladderLookStarted;
-            if (looked < 0f || float.IsInfinity(looked) || _cycle.Phase == LiftPhase.Feeding
-                || _cycle.Phase == LiftPhase.Stitching)
+            bool busy = _cycle.Phase == LiftPhase.Feeding || _cycle.Phase == LiftPhase.Stitching;
+            LadderLook look = LadderLook.None;
+            if (!busy && looked >= 0f)
             {
+                look = looked < _tuning.LadderLookSeconds ? LadderLook.Ladder
+                    : looked < _tuning.LadderLookSeconds + _tuning.LiftLookSeconds ? LadderLook.Lift
+                    : LadderLook.None;
+            }
+
+            if (look == LadderLook.None)
+            {
+                if (_ladderLook != LadderLook.None)
+                {
+                    _ladderLookStarted = float.NegativeInfinity;
+                    if (!busy)
+                    {
+                        ClearGaze();
+                    }
+
+                    _events.Publish(new LadderLookChanged(false, _platform.position));
+                }
+
+                _ladderLook = LadderLook.None;
                 return;
             }
 
-            if (looked < _tuning.LadderLookSeconds)
+            Vector3 dock = _dock.position;
+            Vector3 subject = look == LadderLook.Ladder
+                ? new Vector3(dock.x, _top.position.y, dock.z)
+                : _platform.position;
+            _rig.SetGazeTarget(this, subject, _tuning.GazePriority);
+            _gazing = true;
+            if (look != _ladderLook)
             {
-                Vector3 dock = _dock.position;
-                _rig.SetGazeTarget(this, new Vector3(dock.x, _top.position.y, dock.z), _tuning.GazePriority);
-                _gazing = true;
-            }
-            else if (looked < _tuning.LadderLookSeconds + _tuning.LiftLookSeconds)
-            {
-                _rig.SetGazeTarget(this, _platform.position, _tuning.GazePriority);
-                _gazing = true;
-            }
-            else
-            {
-                _ladderLookStarted = float.NegativeInfinity;
-                ClearGaze();
+                _ladderLook = look;
+                _events.Publish(new LadderLookChanged(true, subject));
             }
         }
 

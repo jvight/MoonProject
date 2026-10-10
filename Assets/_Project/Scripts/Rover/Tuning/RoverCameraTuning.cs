@@ -253,6 +253,12 @@ namespace MoonProject.Rover
         [SerializeField] private CameraMomentSettings _relayMoment =
             new CameraMomentSettings(3f, 2.6f, 2.6f, 0.22f, 3f, 0.5f, 26f, 40f, -13f, 0.65f, 40f);
 
+        [Tooltip("07's first look up the crew's ladder, then at the lift: the camera eases low and a little back, "
+            + "looking up past 07 at the ladder to the deck, follows the gaze across to the lift, and returns once "
+            + "the look ends (held while 07 looks).")]
+        [SerializeField] private CameraMomentSettings _ladderMoment =
+            new CameraMomentSettings(1.6f, 0.8f, 2f, 0.35f, 2.5f, 0.6f, 20f, 50f, -12f, 0.35f, 30f);
+
         [Tooltip("07 in Kenji's Rover Bay: the camera eases to a fixed view in through the open front and holds it "
             + "(whole yaw share, any swing) while 07 stays in, a little farther than the chase camera and at the bay "
             + "framing's own elevation, so the arms show over 07. The install moment plays inside this view.")]
@@ -424,6 +430,8 @@ namespace MoonProject.Rover
         public CameraMomentSettings LeapMoment => _leapMoment;
 
         public CameraMomentSettings RelayMoment => _relayMoment;
+
+        public CameraMomentSettings LadderMoment => _ladderMoment;
 
         public CameraMomentSettings BayMoment => _bayMoment;
 
