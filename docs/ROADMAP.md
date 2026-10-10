@@ -94,6 +94,7 @@ Không mở rộng nội dung khi phần nhìn của phase hiện tại chưa ch
 - Audio đợt 3: radio rè bật lúc `RoverAwoke`; âm "nhấc bổng" khi `RoverRecovering`; hạ tiếng động cơ khi `PauseChanged`; mỗi relic đáp sonar bằng nốt riêng (cần thêm `RelicId` vào `RelicAnswered`).
 - Camera blend chậm khi relic trồi lên / khi nâng cấp tháp (rover).
 - World chuyển đá cuội sang `RockStyle.Grit` (16–20 tam giác) của art.
+- `BayTests.Refresh_ReportsOnlyChanges_AndAllocatesNothing` thỉnh thoảng lỗi zero-GC khi chạy cả bộ, kể cả sau khi đã warm-up: cần chụp profiler để tìm chỗ cấp phát (ui).
 - Từ kịch bản trọn game (`docs/design/game-flow.md` §8, 2026-10-11):
   - 0.5 nếu rẻ, sau Playthrough bước 0–8: khi Continue, Tilly đã tìm thấy một ánh lấp lánh mới gần nhà qua đêm, và cảnh thức ngắn nhìn về phía đó (gameplay + rover).
   - 0.6: "hốc tối" gần hố Kestrel (ống dung nham ngắn, tối cho tới khi có Warm Headlamp, chứa nhật ký đầu tiên của Theo và một băng) để Headlamp mở được một bí mật (world + art + gameplay).

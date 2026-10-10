@@ -15,6 +15,14 @@ namespace MoonProject.Rover.Editor
         public const string KitCargoRack = "Assets/_Project/Generated/Art/Rover/Kit_CargoRack.prefab";
         public const string BlueprintTube = "Assets/_Project/Generated/Art/Pickups/BlueprintTube.prefab";
 
+        /// <summary>The art box's tower story parts (M3-16 P1), each prefab named as its part's id. Required.</summary>
+        public static readonly string[] StoryParts =
+        {
+            "Assets/_Project/Generated/Art/Pickups/Part_TowerCoil.prefab",
+            "Assets/_Project/Generated/Art/Pickups/Part_Transformer.prefab",
+            "Assets/_Project/Generated/Art/Pickups/Part_RelaySpare.prefab",
+        };
+
         public const string GeneratedRoot = "Assets/_Project/Generated/Rover";
         public const string RoverPrefab = GeneratedRoot + "/Rover.prefab";
         public const string CameraRigPrefab = GeneratedRoot + "/RoverCameraRig.prefab";

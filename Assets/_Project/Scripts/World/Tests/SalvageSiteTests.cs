@@ -236,7 +236,8 @@ namespace MoonProject.World.Tests
         [Test]
         public void Kestrel_ScorchedDust_ReadsDarkerThanTheFloorAround()
         {
-            var painter = new TerrainPainter(new TerrainPaintSettings(), WorldSettings.DefaultSeed, PainterLight);
+            var painter = new TerrainPainter(new TerrainPaintSettings(), WorldSettings.DefaultSeed, PainterLight,
+                new SurfaceSettings().PadRadius);
             KestrelImpact kestrel = _surface.Kestrel;
             float scorched = 0f;
             float around = 0f;

@@ -243,6 +243,10 @@ MonoBehaviour:
     _scorchShade: 0.85
     _scorchCharcoal: 0.6
     _scorchMottle: 0.25
+    _padEdge: 8
+    _padDarken: 0.4
+    _padMottle: 0.3
+    _padPatchWavelength: 20
     _dustDarken: 0.2
     _rimFaceShade: 0.45
     _crestZone: 0.88

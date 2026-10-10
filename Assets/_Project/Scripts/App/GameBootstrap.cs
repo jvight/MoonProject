@@ -30,8 +30,14 @@ namespace MoonProject.App
                  "The -saveSlot <name> command-line argument overrides it (playtests, smoke runs).")]
         [SerializeField] private string _saveSlot = "main";
 
-        [Tooltip("Boot into the title over the loaded world (M3-09). Off boots straight into play on the save, as " +
-                 "PlayMode fixtures that drive 07 from the first frame expect.")]
+        /// <summary>
+        /// Editor SessionState key that is true while the editor runs tests (set by the test-run hook in
+        /// MoonProject.Editor.Automation): fixtures drive 07 from the first frame, so every boot skips the title then.
+        /// </summary>
+        public const string TestRunSkipsTitleKey = "MoonProject.TestRunSkipsTitle";
+
+        [Tooltip("Boot into the title over the loaded world (M3-09); the Main scene builder turns it on. Off boots " +
+                 "straight into play on the save. Test runs in the editor always boot straight into play.")]
         [SerializeField] private bool _showTitle;
 
         private readonly GameFlow _flow = new GameFlow();
@@ -98,7 +104,13 @@ namespace MoonProject.App
             _save.Load();
             bool hasSave = _save.LoadResult == SaveLoadResult.Loaded ||
                            _save.LoadResult == SaveLoadResult.RecoveredFromBackup;
-            _flow.Loaded(hasSave, _intent.TryConsume(), _showTitle);
+            bool showTitle = _showTitle && !TestRunSkipsTitle();
+            if (_showTitle && !showTitle)
+            {
+                Debug.Log($"{nameof(GameBootstrap)}: a test run boots straight into play; the title is skipped.", this);
+            }
+
+            _flow.Loaded(hasSave, _intent.TryConsume(), showTitle);
             if (_flow.State == GameFlowState.Playing)
             {
                 _input.Enable();
@@ -192,6 +204,15 @@ namespace MoonProject.App
             _reloading = true;
             _save.SaveNow();
             SceneManager.LoadScene(gameObject.scene.buildIndex, LoadSceneMode.Single);
+        }
+
+        private static bool TestRunSkipsTitle()
+        {
+#if UNITY_EDITOR
+            return UnityEditor.SessionState.GetBool(TestRunSkipsTitleKey, false);
+#else
+            return false;
+#endif
         }
 
         private bool CanReload(string reason)
