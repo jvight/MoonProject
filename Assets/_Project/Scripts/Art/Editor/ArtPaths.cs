@@ -34,10 +34,10 @@ namespace MoonProject.Art.Editor
         public const string SitesFolder = Root + "/Sites";
 
         /// <summary>
-        /// URP Simple Lit: Lambert diffuse (no specular sheen on flat palette faces) plus an emission map, with every
-        /// URP light, shadow, fog, Forward+, SRP Batcher and instancing path maintained by Unity.
+        /// The Lofi lit shader (M3-18 V2): URP's Blinn-Phong with no specular plus the palette emission map, a cool
+        /// silhouette rim and the basin's air, SRP Batcher compatible.
         /// </summary>
-        public const string LowPolyShader = "Packages/com.unity.render-pipelines.universal/Shaders/SimpleLit.shader";
+        public const string LowPolyShader = "Assets/_Project/Shaders/Art/LofiLit.shader";
 
         /// <summary>The Art domain's vertex-coloured variant of the palette shader for the weather skins.</summary>
         public const string WeatherShader = "Assets/_Project/Shaders/Art/LofiWeather.shader";

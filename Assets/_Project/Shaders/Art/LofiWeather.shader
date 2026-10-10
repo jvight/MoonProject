@@ -1,21 +1,22 @@
 // Lofi Lunar weather skins (VISION ruling 12): the removable layers of decades laid over home and 07 (tired patchwork
 // paint, rust runs and blooms, dust settling on top faces and rising from the ground). Each face's colour is its
 // vertex colour (sRGB, baked by the Art builders from palette swatches, so a stain can fade down a panel and the dust
-// can climb a leg), lit the way M_LowPoly is lit (URP Simple Lit's Blinn-Phong path with no specular, the same
-// keywords, ambient, SSAO, shadows and fog): a skin painted in a swatch's surface colour matches the surface under it
-// exactly, so a fading stain shows no seam. Shadows and depth come from Simple Lit's own passes.
+// can climb a leg), lit exactly as M_LowPoly is lit (LofiLitCore: the same light, rim and air), so a skin painted in a
+// swatch's surface colour matches the surface under it and a fading stain shows no seam. Shadows and depth come from
+// LofiLit's passes, which share this shader's per-material layout (LofiLitInput).
 Shader "MoonProject/Art/LofiWeather"
 {
     Properties
     {
-        // Simple Lit's per-material values: unused by the colour pass, kept so the borrowed shadow and depth passes
-        // share one SRP Batcher layout with it.
+        // LofiLit's per-material values: the colour pass reads only the rim; the rest keeps the borrowed shadow and
+        // depth passes on one SRP Batcher layout.
         [MainTexture] _BaseMap("Base Map", 2D) = "white" {}
         [MainColor] _BaseColor("Base Color", Color) = (1, 1, 1, 1)
         _Cutoff("Alpha Cutoff", Range(0.0, 1.0)) = 0.5
         _SpecColor("Specular Color", Color) = (0, 0, 0, 0)
         _EmissionColor("Emission Color", Color) = (0, 0, 0, 1)
         _Surface("Surface", Float) = 0.0
+        _MoonRim("Rim (brightness, exponent, up cutoff, horizon lean)", Vector) = (0, 3, 0.6, 0.6)
     }
 
     SubShader
@@ -55,8 +56,8 @@ Shader "MoonProject/Art/LofiWeather"
             #pragma multi_compile_fog
             #pragma multi_compile_instancing
 
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/SimpleLitInput.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+            #include "LofiLitInput.hlsl"
+            #include "LofiLitCore.hlsl"
 
             struct Attributes
             {
@@ -103,37 +104,22 @@ Shader "MoonProject/Art/LofiWeather"
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
-                InputData inputData = (InputData)0;
-                inputData.positionWS = input.positionWS;
-                inputData.normalWS = NormalizeNormalPerPixel(input.normalWS);
-                inputData.viewDirectionWS = SafeNormalize(GetWorldSpaceNormalizeViewDir(input.positionWS));
-                #if defined(MAIN_LIGHT_CALCULATE_SHADOWS)
-                inputData.shadowCoord = TransformWorldToShadowCoord(input.positionWS);
-                #else
-                inputData.shadowCoord = float4(0, 0, 0, 0);
-                #endif
-                inputData.fogCoord = InitializeInputDataFog(float4(input.positionWS, 1.0),
-                    input.fogFactorAndVertexLight.x);
-                inputData.vertexLighting = input.fogFactorAndVertexLight.yzw;
-                inputData.normalizedScreenSpaceUV = GetNormalizedScreenSpaceUV(input.positionCS);
-                inputData.bakedGI = SampleSH(inputData.normalWS);
-                inputData.shadowMask = half4(1, 1, 1, 1);
-
-                SurfaceData surfaceData = (SurfaceData)0;
-                surfaceData.albedo = input.albedo;
-                surfaceData.alpha = 1.0;
-                surfaceData.occlusion = 1.0;
-
-                half4 color = UniversalFragmentBlinnPhong(inputData, surfaceData);
-                color.rgb = MixFog(color.rgb, inputData.fogCoord);
-                return half4(color.rgb, 1.0);
+                LofiSurface surface;
+                surface.positionWS = input.positionWS;
+                surface.normalWS = input.normalWS;
+                surface.positionCS = input.positionCS;
+                surface.albedo = input.albedo;
+                surface.emission = half3(0, 0, 0);
+                surface.vertexLight = input.fogFactorAndVertexLight.yzw;
+                surface.fogFactor = input.fogFactorAndVertexLight.x;
+                return half4(LofiLit(surface), 1.0);
             }
             ENDHLSL
         }
 
-        UsePass "Universal Render Pipeline/Simple Lit/SHADOWCASTER"
-        UsePass "Universal Render Pipeline/Simple Lit/DEPTHONLY"
-        UsePass "Universal Render Pipeline/Simple Lit/DEPTHNORMALS"
+        UsePass "MoonProject/Art/LofiLit/SHADOWCASTER"
+        UsePass "MoonProject/Art/LofiLit/DEPTHONLY"
+        UsePass "MoonProject/Art/LofiLit/DEPTHNORMALS"
     }
 
     Fallback Off

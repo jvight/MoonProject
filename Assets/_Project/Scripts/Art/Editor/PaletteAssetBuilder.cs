@@ -1,6 +1,5 @@
 using System;
 using UnityEditor;
-using UnityEditor.Rendering.Universal.ShaderGUI;
 using UnityEngine;
 using MoonProject.Editor.Builders;
 
@@ -62,6 +61,7 @@ namespace MoonProject.Art.Editor
             var material = new Material(shader);
             material.SetColor("_BaseColor", Color.white);
             material.SetColor("_EmissionColor", Color.black);
+            SetRim(material);
             material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
             material.enableInstancing = true;
             return material;
@@ -94,9 +94,8 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
-        /// A palette material (not saved). Glow-off authors _EmissionColor black but keeps _EMISSION enabled
-        /// (realtime-emissive GI flags stop URP from stripping it for a black colour), so a MaterialPropertyBlock
-        /// can still light it.
+        /// A palette material (not saved). Glow-off authors _EmissionColor black; LofiLit always samples the emission
+        /// map, so a MaterialPropertyBlock can still light it.
         /// </summary>
         public static Material CreateMaterial(Shader shader, Texture baseMap, Texture emissionMap, bool glowOff)
         {
@@ -109,29 +108,32 @@ namespace MoonProject.Art.Editor
             // Authored white: the emission map alone sets each swatch's glow, and renderers scale it at runtime with a
             // MaterialPropertyBlock _EmissionColor (ARCHITECTURE.md, "Glow modulation").
             material.SetColor("_EmissionColor", glowOff ? Color.black : Color.white);
-            material.SetFloat("_SpecularHighlights", (float)SimpleLitGUI.SpecularSource.NoSpecular);
             material.SetFloat("_Surface", 0f);
-            material.SetFloat("_AlphaClip", 0f);
-            material.SetFloat("_ReceiveShadows", 1f);
-            material.SetFloat("_Cull", 2f);
+            SetRim(material);
             material.globalIlluminationFlags = glowOff
                 ? MaterialGlobalIlluminationFlags.RealtimeEmissive
                 : MaterialGlobalIlluminationFlags.BakedEmissive;
             material.enableInstancing = true;
-            BaseShaderGUI.SetMaterialKeywords(material, SimpleLitGUI.SetMaterialKeywords);
             return material;
         }
 
-        /// <summary>The URP Simple Lit shader every palette material uses.</summary>
+        /// <summary>The Lofi lit shader every palette material uses.</summary>
         public static Shader LoadShader()
         {
             var shader = AssetDatabase.LoadAssetAtPath<Shader>(ArtPaths.LowPolyShader);
             if (shader == null)
             {
-                throw new InvalidOperationException($"URP Simple Lit shader not found at {ArtPaths.LowPolyShader}.");
+                throw new InvalidOperationException($"The Lofi lit shader is missing at {ArtPaths.LowPolyShader}.");
             }
 
             return shader;
+        }
+
+        /// <summary>The silhouette rim both Lofi lit shaders read (see Palette.RimBrightness).</summary>
+        private static void SetRim(Material material)
+        {
+            material.SetVector("_MoonRim", new Vector4(Palette.RimBrightness, Palette.RimExponent, Palette.RimUpCutoff,
+                Palette.RimHorizonLean));
         }
 
         /// <summary>Base map pixels (sRGB surface colours), row 0 at the bottom; unused cells are black.</summary>
