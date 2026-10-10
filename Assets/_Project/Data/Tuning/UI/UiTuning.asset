@@ -221,6 +221,9 @@ MonoBehaviour:
       _springDamping: 0.7
     _nameHoldSeconds: 3.5
     _nameLiftMetres: 1.1
+    _nameLifts:
+    - _friendId: bell
+      _liftMetres: 2
   _ticker:
     _reveal:
       _fadeIn: 0.9

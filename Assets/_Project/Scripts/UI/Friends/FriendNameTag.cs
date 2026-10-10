@@ -17,6 +17,7 @@ namespace MoonProject.UI
         private readonly ILocalization _localization;
         private readonly FloatingName _name;
         private int _friend = FriendFocus.None;
+        private float _lift;
 
         public FriendNameTag(UiLayout layout, FriendUiSettings settings, PromptSettings anchoring,
             IFriendStatuses friends, ILocalization localization, IViewCamera view)
@@ -39,7 +40,9 @@ namespace MoonProject.UI
         public void Show(int index)
         {
             _friend = index;
-            _name.Show(_localization.Get(UiKeys.FriendName(_friends.Definition(index).Id)), _settings.NameHoldSeconds);
+            string id = _friends.Definition(index).Id;
+            _lift = _settings.NameLiftFor(id);
+            _name.Show(_localization.Get(UiKeys.FriendName(id)), _settings.NameHoldSeconds);
         }
 
         /// <summary>Re-reads the name in the new language (a name on screen changes in place).</summary>
@@ -61,7 +64,7 @@ namespace MoonProject.UI
             }
 
             FriendStatus status = _friends.Status(_friend);
-            _name.Tick(status.Position + Vector3.up * _settings.NameLiftMetres, deltaTime, panelSize);
+            _name.Tick(status.Position + Vector3.up * _lift, deltaTime, panelSize);
             if (!_name.IsUp)
             {
                 _friend = FriendFocus.None;
