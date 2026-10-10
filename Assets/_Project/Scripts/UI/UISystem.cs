@@ -385,7 +385,7 @@ namespace MoonProject.UI
             _title.Tick(hudTime);
             _reticle.Tick(deltaTime, _services.Tether.State, input.TetherHeld);
             _card.Tick(hudTime, _glyphs.Cancel(device), device,
-                !_ticker.IsVisible && !hopping && !_hopList.IsBusy && !_placeCard.IsVisible);
+                !_ticker.IsVisible && !hopping && !_hopList.IsBusy && !_placeCard.IsVisible && !_prompt.IsVisible);
             _tower.Tick(hudTime, !paused, input.ExcavateHeld, input.Winch,
                 _services.Tether.State == TetherAimState.Towing, _glyphs.For(RoverAction.Excavate, device), device);
             _kitTitle.Tick(hudTime);
@@ -412,9 +412,9 @@ namespace MoonProject.UI
             _friendName.Tick(hudTime, panelSize);
             _siteName.Tick(hudTime, panelSize, !_prompt.IsVisible && !_placeCard.IsVisible &&
                                                !_lookUpChip.IsVisible && !_ticker.IsVisible && !_kitTitle.IsVisible);
-            // A standing prompt gives way to a waiting place card or site name: those moments pass, the prompt returns.
+            // A standing prompt gives way to a waiting card or site name: those moments pass, the prompt returns.
             bool promptsOpen = !paused && _awake && _sinceAwake >= _tuning.Prompts.StartDelay && !_title.IsPlaying &&
-                               !_card.IsVisible && !_tower.IsVisible && !_dial.IsBusy && !_hopList.IsBusy && !hopping &&
+                               !_card.IsBusy && !_tower.IsVisible && !_dial.IsBusy && !_hopList.IsBusy && !hopping &&
                                !_placeCard.IsVisible && !_placeCard.IsWaiting && !_siteName.IsVisible &&
                                !_siteName.IsWaiting && !_lookUpChip.IsVisible && !_kitTitle.IsVisible;
             _prompt.Tick(deltaTime, promptsOpen, _services.Hints.Primary, device, panelSize);
