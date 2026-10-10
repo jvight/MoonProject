@@ -13,6 +13,8 @@ namespace MoonProject.Tests.PlayMode.Input
     /// </summary>
     public sealed class TestRunInputGuardTests : InputTestFixture
     {
+        private const double WindowMargin = 0.001;
+
         private static readonly Vector2 Drive = new Vector2(0f, 1f);
 
         [UnityTest]
@@ -24,7 +26,9 @@ namespace MoonProject.Tests.PlayMode.Input
             Assume.That(entered, Is.GreaterThan(0d), "the Input System saw play mode entered");
             Assert.AreEqual(0d, TestRunInputGuard.ExitEditModeTime, "the guard cleared the edit-mode window");
 
-            Set(gamepad.leftStick, Drive, time: entered - 0.001);
+            // The fixture's own clock reaches the old window, as it does after enough frames of a long session.
+            currentTime = entered - WindowMargin;
+            Set(gamepad.leftStick, Drive);
             Assert.AreEqual(Drive.y, gamepad.leftStick.ReadValue().y, 0.05f, "the event reaches the device");
         }
     }
