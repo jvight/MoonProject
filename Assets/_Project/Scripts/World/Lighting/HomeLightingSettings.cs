@@ -66,12 +66,12 @@ namespace MoonProject.World
             "and the windows' spill at Home, the bay's apron at Bay, the deck and the lift's foot at Lift.")]
         [SerializeField] private LightPoolTuning[] _pools =
         {
-            new LightPoolTuning(HomeLight.Dock, "DockAnchor", new Vector3(0f, 2.4f, 0.8f), 6.5f, 4f),
-            new LightPoolTuning(HomeLight.PorchLamps, "Lander", new Vector3(0f, 3.2f, 4.5f), 11f, 6f),
-            new LightPoolTuning(HomeLight.Windows, "Lander", new Vector3(-3.6f, 2.6f, 0.5f), 9f, 4f),
-            new LightPoolTuning(HomeLight.BayLamps, "RoverBay", new Vector3(0f, 2.8f, 4f), 10f, 6f),
-            new LightPoolTuning(HomeLight.LiftLamps, "LiftTop", new Vector3(0f, 2f, 0f), 6f, 3.5f),
-            new LightPoolTuning(HomeLight.LiftLamps, "LiftBottom", new Vector3(0f, 2.4f, 1.4f), 7f, 3.5f),
+            new LightPoolTuning(HomeLight.Dock, "DockAnchor", new Vector3(0f, -0.02f, 0.8f), 5f, 1f, true),
+            new LightPoolTuning(HomeLight.PorchLamps, "Lander", new Vector3(0f, 3.2f, 4.5f), 11f, 6f, false),
+            new LightPoolTuning(HomeLight.Windows, "Lander", new Vector3(-3.6f, 2.6f, 0.5f), 9f, 4f, false),
+            new LightPoolTuning(HomeLight.BayLamps, "RoverBay", new Vector3(0f, 0.03f, 4f), 7f, 1f, true),
+            new LightPoolTuning(HomeLight.LiftLamps, "LiftTop", new Vector3(0f, 2f, 0f), 6f, 3.5f, false),
+            new LightPoolTuning(HomeLight.LiftLamps, "LiftBottom", new Vector3(0f, -0.17f, 1.4f), 5f, 1f, true),
         };
 
         public float WakeStagger => _wakeStagger;
