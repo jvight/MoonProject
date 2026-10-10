@@ -7,6 +7,7 @@ using System.Text;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
+using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using MoonProject.App;
@@ -42,7 +43,7 @@ namespace MoonProject.Rover.PlayModeTests
     /// </summary>
     [Explicit("Slow real-game capture session; run on demand with --category RoverLonelySession.")]
     [Category("RoverLonelySession")]
-    public sealed class RoverLonelySession
+    public sealed class RoverLonelySession : InputTestFixture
     {
         private const int CaptureWidth = 1600;
         private const int CaptureHeight = 900;
@@ -192,15 +193,18 @@ namespace MoonProject.Rover.PlayModeTests
         private RoverCameraRig _cameraRig;
         private Camera _view;
 
-        [SetUp]
-        public void SetUp()
+        /// <summary>
+        /// An input test fixture although the session gives no input: run on the real input system, booting the real
+        /// scene here left the next fixtures' virtual gamepads unread (RoverStargazeCaptures' wake and evening).
+        /// </summary>
+        public override void Setup()
         {
+            base.Setup();
             Application.logMessageReceived += OnLog;
             Time.captureDeltaTime = FrameTime;
         }
 
-        [TearDown]
-        public void TearDown()
+        public override void TearDown()
         {
             Time.captureDeltaTime = 0f;
             Application.logMessageReceived -= OnLog;
@@ -215,6 +219,7 @@ namespace MoonProject.Rover.PlayModeTests
             }
 
             BootstrapHarness.DeleteSaveFiles(RoverSessionScene.SaveSlot);
+            base.TearDown();
         }
 
         [UnityTest]
