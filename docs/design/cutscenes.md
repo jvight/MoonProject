@@ -327,8 +327,8 @@ bunk windows as separate renderers), audio (the stingers, the radio's clear), ui
 | F10 | **After.** Ease to the chase frame on the Peak. The HUD returns. The game saves as "after the ending". Free roam (see `game-flow.md` §7). | — | — |
 
 - **Skip and hold:** F1–F8 cannot be skipped the first time; Pause works. Credits can be left by holding Pause for 2 s
-  (a small filling ring is the only UI). Later, the scene replays from the title screen's collections (M3-09 draft) and
-  is skippable.
+  (a small filling ring is the only UI). After the ending, the dish can broadcast again whenever 07 parks at its port:
+  a short, skippable version (F1, the first verse of F3, F6), and Bell's rack keeps Side B to play at home.
 - **Builds (0.8):** gameplay (trigger, the after-ending save state), rover (every shot, the second POV), world
   (beacon colour, the chain pulse, Earth's night-side light), art (the dish and its mount, the service port), music
   (the final track), audio (stingers, the silence), ui (the line, credits, the hold ring).
