@@ -64,6 +64,9 @@ namespace MoonProject.Rover.PlayModeTests
         private const float WakeEaseFrameSeconds = 1.8f;
         private const float WakeEaseTimeout = 8f;
 
+        /// <summary>How far (m) along Earth's direction a point is projected to find Earth on screen.</summary>
+        private const float EarthProbeDistance = 1000f;
+
         private static readonly string CaptureFolder =
             Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "rover-captures"));
 
@@ -155,6 +158,17 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.IsFalse(opening.IsEasing, "Still holding before any input.");
             Assert.Greater(_cameraRig.SkyLift, 0.8f, "07 has looked up.");
             Capture("wake-2-looking-up");
+            Vector3 lens = _context.Get<IRoverRig>().TetherOrigin.position;
+            Vector3 earth = _context.Get<IWorldLayout>().EarthDirection;
+            Vector3 camera = _view.transform.position;
+            Vector3 earthOnScreen = _view.WorldToViewportPoint(camera + earth * EarthProbeDistance);
+            Vector3 lensOnScreen = _view.WorldToViewportPoint(lens);
+            _report.AppendLine(string.Format(CultureInfo.InvariantCulture,
+                "\nwake-2: Earth on screen ({0:0.00}, {1:0.00}), lens on screen ({2:0.00}, {3:0.00}), lens facing {4:0.00}",
+                earthOnScreen.x, earthOnScreen.y, lensOnScreen.x, lensOnScreen.y,
+                Vector3.Dot(earth, (camera - lens).normalized)));
+            Assert.IsTrue(WakeFrame.IsFramed(earthOnScreen, lensOnScreen),
+                $"Earth in the upper third ({earthOnScreen}) and the lens in frame ({lensOnScreen}).");
 
             Set(_gamepad.rightStick, new Vector2(LookStick, 0f));
             yield return Wait(StickProbeSeconds);

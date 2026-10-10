@@ -73,14 +73,19 @@ namespace MoonProject.Rover
         [SerializeField] private float _maxLookUpTilt = 10f;
 
         [Header("Wake opening (fresh game)")]
-        [Tooltip("Orbit angle (deg from straight behind 07) of the first shot: a front three-quarter view of the lens. "
-            + "The side that faces Earth is used.")]
-        [Range(90f, 180f)]
-        [SerializeField] private float _wakeYaw = 145f;
+        [Tooltip("Step (deg) of the search round 07 for the first shot's angle: Earth in the upper third, the lens in "
+            + "frame and as face-on as the sky allows.")]
+        [Range(2f, 30f)]
+        [SerializeField] private float _wakeSearchStep = 10f;
 
-        [Tooltip("Orbit elevation (deg) of the first shot: low, looking up past 07's lens at Earth.")]
+        [Tooltip("Lowest orbit elevation (deg) the first shot's search tries: low, looking up past 07's lens.")]
         [Range(-40f, 30f)]
-        [SerializeField] private float _wakeElevation = -15f;
+        [SerializeField] private float _wakeMinElevation = -15f;
+
+        [Tooltip("Highest orbit elevation (deg) the first shot's search tries (Earth low in the sky needs a level "
+            + "view to sit in the upper third).")]
+        [Range(-20f, 60f)]
+        [SerializeField] private float _wakeMaxElevation = 25f;
 
         [Tooltip("Camera distance (m) from 07 in the first shot: close on the lens.")]
         [Range(1.5f, 10f)]
@@ -324,9 +329,11 @@ namespace MoonProject.Rover
 
         public float MaxLookUpTilt => _maxLookUpTilt;
 
-        public float WakeYaw => _wakeYaw;
+        public float WakeSearchStep => _wakeSearchStep;
 
-        public float WakeElevation => _wakeElevation;
+        public float WakeMinElevation => _wakeMinElevation;
+
+        public float WakeMaxElevation => Mathf.Max(_wakeMinElevation, _wakeMaxElevation);
 
         public float WakeDistance => _wakeDistance;
 
