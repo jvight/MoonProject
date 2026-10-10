@@ -231,13 +231,13 @@ MonoBehaviour:
     _breathDistancePeriod: 29
   _lookoutShot:
     _delay: 9
-    _openSeconds: 6
+    _openSeconds: 9
     _handBackSeconds: 1.6
     _cardQuietSeconds: 14
     _interactionQuietSeconds: 8
-    _distance: 16
-    _elevation: 18
-    _screenY: 0.2
+    _distance: 28
+    _elevation: 30
+    _screenY: 0.3
     _fovWiden: 6
     _yawShare: 0.85
     _maxYawSwing: 40
@@ -262,7 +262,7 @@ MonoBehaviour:
     _breathElevationPeriod: 23
     _breathDistance: 0.04
     _breathDistancePeriod: 29
-  _lookoutSide: 55
+  _lookoutSide: 0
   _eveningShot:
     _delay: 9
     _openSeconds: 4

@@ -186,9 +186,10 @@ namespace MoonProject.Rover
         [Range(0f, 1f)]
         [SerializeField] private float _moteOpacity = 0.5f;
 
-        [Tooltip("Brightness of the motes' warm light (linear HDR multiplier; above ~1 they catch a little bloom).")]
+        [Tooltip("Brightness of the motes' warm light (linear HDR multiplier). Kept under the grade's bloom threshold "
+            + "(~1.25) so motes never bloom like stars and read as snowfall (M3-18 V7).")]
         [Range(0f, 8f)]
-        [SerializeField] private float _moteBrightness = 1.4f;
+        [SerializeField] private float _moteBrightness = 1f;
 
         [Tooltip("Speed (m/s) above which the motes begin to fade: they belong to stillness and crawling.")]
         [Range(0f, 5f)]
