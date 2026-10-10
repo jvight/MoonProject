@@ -144,7 +144,7 @@ namespace MoonProject.Art.Editor
             return b;
         }
 
-        /// <summary>The cluster whose footprint lies within <see cref="ContactMerge"/> of <paramref name="p"/>.</summary>
+        /// <summary>The cluster with a footprint within <see cref="ContactMerge"/> of <paramref name="p"/>.</summary>
         private static int Nearest(List<Vector2> min, List<Vector2> max, Vector2 p)
         {
             for (int c = 0; c < min.Count; c++)

@@ -75,7 +75,9 @@ namespace MoonProject.Art.Tests
             CollectionAssert.IsEmpty(heart.Children);
 
             List<ModelNode> pieces = Pieces(site);
-            Assert.AreEqual(site.Children.Count - 2, pieces.Count, "only Skeleton, Salvage_* and Heart");
+            int landmarks = SiteLandmarkMeshes.HasLandmark(id) ? 1 : 0;
+            Assert.AreEqual(site.Children.Count - 2 - landmarks, pieces.Count,
+                "only Skeleton, Salvage_*, Heart and the landmark");
             Assert.That(pieces.Count, Is.InRange(MinPieces, MaxPieces));
             Assert.LessOrEqual(pieces.Count(IsDrag), 1, "at most one drag piece");
             for (int i = 0; i < pieces.Count; i++)
@@ -167,6 +169,31 @@ namespace MoonProject.Art.Tests
         }
 
         [TestCaseSource(nameof(Ids))]
+        public void Landmark_StandsTallBesideTheSite_WithADarkPilotOnTop(string id)
+        {
+            ModelNode site = SiteModelBuilder.CreateSite(id);
+            ModelNode landmark = site.GetDescendant(SiteModelBuilder.LandmarkName);
+            Assert.AreEqual(SiteLandmarkMeshes.HasLandmark(id), landmark != null);
+            if (landmark == null)
+            {
+                return;
+            }
+
+            Assert.GreaterOrEqual(landmark.Mesh.Geometry.Bounds.max.y, SiteLandmarkMeshes.MinHeight,
+                "it reads from across the basin");
+            Assert.AreEqual(0f, landmark.LocalPosition.y, "it stands on the ground");
+            Bounds wreck = site.GetDescendant("Skeleton").Mesh.Geometry.Bounds;
+            Vector3 foot = landmark.LocalPosition;
+            bool insideWreck = foot.x > wreck.min.x && foot.x < wreck.max.x && foot.z > wreck.min.z
+                && foot.z < wreck.max.z;
+            Assert.IsFalse(insideWreck, "it stands beside the wreck, not in it");
+            ModelNode pilot = landmark.GetDescendant(SiteModelBuilder.LandmarkPilotName);
+            Assert.AreEqual(ModelMaterial.PaletteGlowOff, pilot.Material, "dark until the heart is found");
+            CollectionAssert.Contains(MeshChecks.Swatches(pilot.Mesh.Geometry), PaletteSwatch.LampGlass);
+            Assert.Greater(pilot.LocalPosition.y, landmark.Mesh.Geometry.Bounds.max.y - 1f, "the pilot crowns it");
+        }
+
+        [TestCaseSource(nameof(Ids))]
         public void Skeleton_IsWeathered_AndPiecesShowWhatTheyYield(string id)
         {
             ModelNode site = SiteModelBuilder.CreateSite(id);
@@ -213,10 +240,10 @@ namespace MoonProject.Art.Tests
             MeshChecks.AssertSameModel(SiteModelBuilder.CreateSite(id), SiteModelBuilder.CreateSite(id));
         }
 
-        [TestCase(SalvageMaterial.Metal)]
-        [TestCase(SalvageMaterial.Wiring)]
-        [TestCase(SalvageMaterial.Optics)]
-        public void Bundle_IsAPickupSizedSingleMesh_PivotedAtItsCentreOfMass(SalvageMaterial material)
+        [TestCase(SalvagePieceMaterial.Metal)]
+        [TestCase(SalvagePieceMaterial.Wiring)]
+        [TestCase(SalvagePieceMaterial.Optics)]
+        public void Bundle_IsAPickupSizedSingleMesh_PivotedAtItsCentreOfMass(SalvagePieceMaterial material)
         {
             ModelNode bundle = SiteModelBuilder.CreateBundle(material);
             Assert.AreEqual("Material_" + material, bundle.Name);
@@ -233,9 +260,9 @@ namespace MoonProject.Art.Tests
         [Test]
         public void Bundles_ReadApart_ByColourAndSilhouette()
         {
-            LowPolyMeshBuilder metal = SiteModelBuilder.CreateBundle(SalvageMaterial.Metal).Mesh.Geometry;
-            LowPolyMeshBuilder wiring = SiteModelBuilder.CreateBundle(SalvageMaterial.Wiring).Mesh.Geometry;
-            LowPolyMeshBuilder optics = SiteModelBuilder.CreateBundle(SalvageMaterial.Optics).Mesh.Geometry;
+            LowPolyMeshBuilder metal = SiteModelBuilder.CreateBundle(SalvagePieceMaterial.Metal).Mesh.Geometry;
+            LowPolyMeshBuilder wiring = SiteModelBuilder.CreateBundle(SalvagePieceMaterial.Wiring).Mesh.Geometry;
+            LowPolyMeshBuilder optics = SiteModelBuilder.CreateBundle(SalvagePieceMaterial.Optics).Mesh.Geometry;
             Assert.AreEqual(PaletteSwatch.WarmAccent, Dominant(wiring), "copper coil");
             Assert.AreEqual(PaletteSwatch.SkyHorizon, Dominant(optics, Vector3.up), "violet cells seen from above");
             CollectionAssert.DoesNotContain(MeshChecks.Swatches(metal), PaletteSwatch.WarmAccent);
@@ -367,7 +394,7 @@ namespace MoonProject.Art.Tests
                     : volume < MediumVolume ? MediumYield
                     : LargeYield;
                 string material = piece.Name.Split('_')[2];
-                totals[(int)System.Enum.Parse(typeof(SalvageMaterial), material)] += units;
+                totals[(int)System.Enum.Parse(typeof(SalvagePieceMaterial), material)] += units;
                 TestContext.WriteLine($"{id} {piece.Name}: {volume:F2} m³, {units} units");
             }
 

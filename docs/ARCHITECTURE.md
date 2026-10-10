@@ -160,6 +160,8 @@ Generated/Art/Rover/Kit_CargoRack.prefab     strapped rear rack basket, root at 
   RelicSeat                                  empty where a carried relic rests (+Y up)
 RoverModel additions:
   DrumSocket_L, DrumSocket_R                 empties on the flanks, +X outward
+  TubeSocket                                 empty on the lid right of the wing, +X fore and aft (the BlueprintTube)
+  PartSocket                                 empty on the lid right of the neck, ahead of the tube, +Y up (a story part)
   SolarWing/CellFilled                       the replacement cell, hidden until Tilly's gift
   Body/Decal07Fresh                          a freshly stencilled "07", hidden until Bell's gift (the faded one hides then)
   Antenna/Pennant                            small radio pennant, hidden until Bell's gift

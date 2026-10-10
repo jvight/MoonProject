@@ -8,7 +8,7 @@ namespace MoonProject.Art.Editor
     /// </summary>
     internal sealed class SalvagePieceRecipe
     {
-        public SalvagePieceRecipe(SalvageMaterial material, Vector3 pivot, Vector3 cutPoint, Vector3 cutNormal,
+        public SalvagePieceRecipe(SalvagePieceMaterial material, Vector3 pivot, Vector3 cutPoint, Vector3 cutNormal,
             bool drag)
         {
             if (cutNormal.sqrMagnitude < 1e-6f)
@@ -23,7 +23,7 @@ namespace MoonProject.Art.Editor
             Drag = drag;
         }
 
-        public SalvageMaterial Material { get; }
+        public SalvagePieceMaterial Material { get; }
 
         /// <summary>The attach point in site space; the piece's node pivots here.</summary>
         public Vector3 Pivot { get; }

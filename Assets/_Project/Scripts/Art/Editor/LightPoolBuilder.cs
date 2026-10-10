@@ -16,7 +16,7 @@ namespace MoonProject.Art.Editor
     {
         public const string PoolName = "LightPool";
 
-        /// <summary>Corners of the disc's rim: the falloff is per pixel, so a few are enough for a round pool.</summary>
+        /// <summary>Corners of the disc's rim: the falloff is per pixel, so a few make a round pool.</summary>
         public const int RimCorners = 16;
 
         /// <summary>

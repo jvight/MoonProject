@@ -95,7 +95,7 @@ namespace MoonProject.Art
             _occlusion.Clear();
         }
 
-        /// <summary>Raises vertex <paramref name="vertex"/>'s ground occlusion to at least <paramref name="amount"/>.</summary>
+        /// <summary>Raises a vertex's ground occlusion to at least <paramref name="amount"/>.</summary>
         public void Occlude(int vertex, float amount)
         {
             if (vertex < 0 || vertex >= VertexCount)

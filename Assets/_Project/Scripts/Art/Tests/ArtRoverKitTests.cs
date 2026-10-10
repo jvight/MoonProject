@@ -14,7 +14,7 @@ namespace MoonProject.Art.Tests
     /// read, the kit clear of the wheels at full travel and steer, of the face at every head pose and of the solar
     /// wing, a kitted 07 still on Kenji's turntable, rust at the kit's bolts and seams, and repeatable builds.
     /// </summary>
-    public sealed class RoverKitTests
+    public sealed class ArtRoverKitTests
     {
         // The default chase camera (RoverCameraTuning asset): 7.5 m out, 16 degrees up, looking at 1.1 m through a
         // 52 degree lens; straight behind once it recentres, or swung to the rear three-quarter on either side.

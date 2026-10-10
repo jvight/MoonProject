@@ -35,7 +35,7 @@ namespace MoonProject.Art
         /// <summary>The rim's fresnel exponent: higher keeps it to a thinner edge.</summary>
         public const float RimExponent = 3f;
 
-        /// <summary>The up-facing normal (world y) where the rim is gone, so tops keep the earthlight's own value.</summary>
+        /// <summary>The up-facing normal (world y) where the rim is gone: tops keep the earthlight's value.</summary>
         public const float RimUpCutoff = 0.6f;
 
         /// <summary>How far the rim's hue leans from the earthlight toward the sky's horizon glow (0..1).</summary>

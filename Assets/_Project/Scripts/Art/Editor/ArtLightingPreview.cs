@@ -717,8 +717,8 @@ namespace MoonProject.Art.Editor
 
             Ground(Instantiate(CassetteModelBuilder.PrefabName("after_dark_1"), temporary, ArtPaths.PickupFolder),
                 new Vector3(0.35f, 0f, 2.7f));
-            Ground(Instantiate(SiteModelBuilder.BundleName(SalvageMaterial.Wiring), temporary, ArtPaths.PickupFolder),
-                new Vector3(0.95f, 0f, 2.6f));
+            Ground(Instantiate(SiteModelBuilder.BundleName(SalvagePieceMaterial.Wiring), temporary,
+                ArtPaths.PickupFolder), new Vector3(0.95f, 0f, 2.6f));
             return Poses(
                 Pose("eyes", Stage(0f, 1.5f, 1.2f), Stage(0f, 1.15f, -3f), 50f),
                 Pose("friends", Stage(0f, 1.4f, 4.4f), Stage(0f, 1f, 0.5f), 45f),
@@ -1235,11 +1235,12 @@ namespace MoonProject.Art.Editor
         /// <summary>The three material bundles in a row by 07, the trail's loose bits strewn behind them.</summary>
         private static CameraPoseSet SalvageBitsScene(TemporaryObjects temporary)
         {
-            Array materials = Enum.GetValues(typeof(SalvageMaterial));
+            Array materials = Enum.GetValues(typeof(SalvagePieceMaterial));
             for (int i = 0; i < materials.Length; i++)
             {
-                GameObject bundle = Instantiate(SiteModelBuilder.BundleName((SalvageMaterial)materials.GetValue(i)),
-                    temporary, ArtPaths.PickupFolder);
+                var material = (SalvagePieceMaterial)materials.GetValue(i);
+                GameObject bundle = Instantiate(SiteModelBuilder.BundleName(material), temporary,
+                    ArtPaths.PickupFolder);
                 float lift = bundle.transform.position.y - RendererBounds(bundle).min.y;
                 bundle.transform.SetPositionAndRotation(new Vector3((i - 1) * 0.6f, lift, 1.6f),
                     Quaternion.Euler(0f, 20f, 0f));

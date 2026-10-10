@@ -4,7 +4,7 @@ using MoonProject.Art.Editor;
 
 namespace MoonProject.Art.Tests
 {
-    /// <summary>M3-18 V1: grounded models get a dark foot and a dust skirt round each place they touch the ground.</summary>
+    /// <summary>M3-18 V1: grounded models get a dark foot and a dust skirt round each ground contact.</summary>
     public sealed class GroundOcclusionTests
     {
         [Test]
