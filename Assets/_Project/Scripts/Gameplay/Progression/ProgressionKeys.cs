@@ -33,6 +33,12 @@ namespace MoonProject.Gameplay
         /// <summary>Step 4: dig, tow and place the first relic.</summary>
         public const string NextRelic = "next.relic";
 
+        /// <summary>The station's automated weather loop, once, as tower level 1 clears the radio.</summary>
+        public const string RadioWeather = "ticker.radio.weather";
+
+        /// <summary>The masts' letters in time order: letter.mast_1, letter.mast_2...</summary>
+        public const string LetterPrefix = "letter.mast_";
+
         /// <summary>Step 4b (P2): Tilly spots Bell's light across the chasm; drive there and look across.</summary>
         public const string NextChasm = "next.chasm";
 
