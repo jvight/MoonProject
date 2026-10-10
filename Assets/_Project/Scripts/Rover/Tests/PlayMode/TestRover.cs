@@ -37,6 +37,10 @@ namespace MoonProject.Rover.PlayModeTests
         /// <summary>The blueprint tube stand-in's socket on 07's back (art's TubeSocket).</summary>
         private const float TubeSocketY = 1.1f;
         private const float TubeSocketZ = -0.6f;
+
+        /// <summary>Art's tower story part names (stand-ins on TubeSocket).</summary>
+        public static readonly string[] StoryParts = { "Part_TowerCoil", "Part_Transformer", "Part_RelaySpare" };
+
         private const float SeatHeight = 0.045f;
         private const float SeatBack = -0.26f;
 
@@ -116,6 +120,9 @@ namespace MoonProject.Rover.PlayModeTests
         public Renderer[] Lamps { get; private set; }
 
         public Transform CargoRack { get; private set; }
+
+        /// <summary>The tower story part stand-ins on TubeSocket, in <see cref="StoryParts"/> order.</summary>
+        public Transform[] StoryPartNodes { get; private set; }
 
         public Transform RelicSeat { get; private set; }
 
@@ -290,6 +297,12 @@ namespace MoonProject.Rover.PlayModeTests
             Transform tube = Shape(PrimitiveType.Cylinder, tubeSocket, Vector3.zero, new Vector3(0.08f, 0.3f, 0.08f),
                 material);
             tube.name = "BlueprintTube";
+            var parts = new Transform[StoryParts.Length];
+            for (int i = 0; i < parts.Length; i++)
+            {
+                parts[i] = Shape(PrimitiveType.Cube, tubeSocket, Vector3.zero, Vector3.one * 0.2f, material);
+                parts[i].name = StoryParts[i];
+            }
             var kit = visual.gameObject.AddComponent<RoverKit>();
             var moteSystem = Particles("LampMotes", headlamp.transform, material);
             var lampMotes = moteSystem.gameObject.AddComponent<RoverLampMotes>();
@@ -304,6 +317,7 @@ namespace MoonProject.Rover.PlayModeTests
                 ("_relicSeat", seat), ("_solarCell", cell), ("_freshSerial", serial), ("_pennant", pennant),
                 ("_tube", tube));
             AssignArray(kit, "_lamps", lamps);
+            AssignArray(kit, "_storyParts", parts);
             AssignArray(kit, "_drums", drums);
             AssignArray(kit, "_drumGlows", drumGlows);
             AssignArray(rig, "_wheels", wheels);
@@ -357,6 +371,7 @@ namespace MoonProject.Rover.PlayModeTests
                 Drums = drums,
                 DrumGlows = drumGlows,
                 CargoRack = rack,
+                StoryPartNodes = parts,
                 RelicSeat = seat,
                 CellFilled = cell,
                 FreshSerial = serial,
