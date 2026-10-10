@@ -65,7 +65,33 @@ namespace MoonProject.Gameplay
             new BlueprintTube("rover.boost_coils", "site.drill"),
         };
 
+        [Header("Kenji's pen plotter (P7)")]
+        [Tooltip("07 hands a blueprint tube to the plotter within this many metres (horizontal) of it.")]
+        [Range(1f, 15f)] [SerializeField] private float _plotterReach = 6f;
+
+        [Tooltip("Seconds the plotter takes to draw a delivered sheet.")]
+        [Range(1f, 20f)] [SerializeField] private float _plotterDrawSeconds = 6f;
+
+        [Tooltip("Rows the pen sweeps across the bed while drawing.")]
+        [Range(1, 24)] [SerializeField] private int _plotterRows = 8;
+
+        [Tooltip("Glow of the plotter's ready lamp while it draws.")]
+        [Range(0f, 4f)] [SerializeField] private float _plotterLampGlow = 1.5f;
+
+        [Tooltip("Ease time (seconds) of the ready lamp coming on and going off.")]
+        [Range(0.05f, 3f)] [SerializeField] private float _plotterLampEase = 0.4f;
+
         public float WakeDistance => _wakeDistance;
+
+        public float PlotterReach => _plotterReach;
+
+        public float PlotterDrawSeconds => _plotterDrawSeconds;
+
+        public int PlotterRows => _plotterRows;
+
+        public float PlotterLampGlow => _plotterLampGlow;
+
+        public float PlotterLampEase => _plotterLampEase;
 
         public float PlaceLineGap => _placeLineGap;
 

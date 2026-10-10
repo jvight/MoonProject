@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using MoonProject.Art.Editor;
 using MoonProject.Core;
 using MoonProject.Editor.SceneBuild;
 
@@ -101,6 +102,7 @@ namespace MoonProject.Gameplay.Editor
             var signals = Part<SignalField>(context, host, "BellSignals");
             var relays = Part<RelayField>(context, host, "Relays");
             var progression = Part<BaseProgression>(context, host, "Progression");
+            var plotter = Part<BlueprintPlotter>(context, host, "Plotter");
 
             GameObject baseRoot = context.CreateChild("Base", host.transform);
             Vector3 offset = baseTuning.LanderOffset;
@@ -185,24 +187,31 @@ namespace MoonProject.Gameplay.Editor
             relays.Wire(relayTuning, relayMast, relayMastBroken, relayPart);
             Transform dock = Child(lander, "DockAnchor");
             Transform lift = Child(lander, "LiftPlatform");
+            Transform plotterRoot = Child(bay, BaseModelBuilder.PlotterName);
+            Transform carriage = Child(plotterRoot, BaseModelBuilder.PenCarriageName);
+            plotter.Wire(plotterRoot, carriage, Child(carriage, BaseModelBuilder.PenHeadName),
+                Child(plotterRoot, BaseModelBuilder.PlotterSheetName).gameObject,
+                Renderer(Child(plotterRoot, BaseModelBuilder.PlotterLampName)),
+                Child(bay, BaseModelBuilder.BlueprintsName),
+                BaseModelBuilder.PlotterDrawWidth, BaseModelBuilder.PlotterDrawHeight);
             progression.Wire(progressionTuning,
-                PlaceSpots(dock, lander, lift, towerAnchor, shelf, bay, cassetteShelf), lift);
+                PlaceSpots(dock, lander, lift, towerAnchor, shelf, bay, plotterRoot, cassetteShelf), lift);
             gameplay.Wire(visuals, glintTuning,
                 new[] { radioTower, hoverJump, cargoCradle, warmHeadlamp, boostCoils }, salvage, relics, sonar,
                 excavation, tether, home, cradle, tower, workshop, friends, cassettes, logs, signals, tapeRack, relays,
-                progression);
+                progression, plotter);
             context.AddSystem(gameplay);
         }
 
         /// <summary>
         /// The places' spots in BaseProgression's place order. The dock stands at the foot of the crew's
-        /// ladder (Art's ChargingDockMeshes), so the ladder is greeted there; Kenji's blueprint board is the old bench
-        /// inside the bay, greeted at the bay until Art gives the board its own node.
+        /// ladder (Art's ChargingDockMeshes), so the ladder is greeted there; Kenji's board is greeted at his pen
+        /// plotter, which draws its sheets.
         /// </summary>
         private static Transform[] PlaceSpots(Transform dock, Transform lander, Transform lift, Transform tower,
-            Transform shelf, Transform bay, Transform rack)
+            Transform shelf, Transform bay, Transform board, Transform rack)
         {
-            return new[] { dock, lander, dock, lift, tower, shelf, bay, bay, rack };
+            return new[] { dock, lander, dock, lift, tower, shelf, bay, board, rack };
         }
 
         private static Transform HomeSocket(SceneBuildContext context, FriendDefinition friend, Transform lander,

@@ -316,7 +316,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             var signals = Child<SignalField>(root, "BellSignals");
             var relays = Child<RelayField>(root, "Relays");
             var progression = Child<BaseProgression>(root, "Progression");
-            CassetteShelf shelf = BuildBase(root.transform, home, tower, workshop, progression);
+            var plotter = Child<BlueprintPlotter>(root, "Plotter");
+            CassetteShelf shelf = BuildBase(root.transform, home, tower, workshop, progression, plotter);
             BuildFriends(friends);
             BuildCassettes(cassettes);
             BuildLogCaches(logs);
@@ -332,7 +333,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 {
                     RadioTowerUpgrade, HoverJumpUpgrade, CargoCradleUpgrade, WarmHeadlampUpgrade, BoostCoilsUpgrade,
                 }, salvage, relics, sonar, excavation, tether, home, cradle, tower, workshop, friends, cassettes, logs,
-                signals, shelf, relays, progression);
+                signals, shelf, relays, progression, plotter);
             root.SetActive(true);
 
             Bootstrap = BootstrapHarness.Create(_controls, SaveSlot, World, Rover, Gameplay);
@@ -345,7 +346,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// the real prefabs.
         /// </summary>
         private CassetteShelf BuildBase(Transform parent, HomeBase home, RadioTower tower, Workshop workshop,
-            BaseProgression progression)
+            BaseProgression progression, BlueprintPlotter plotter)
         {
             var baseRoot = new GameObject("Base").transform;
             baseRoot.SetParent(parent, false);
@@ -397,7 +398,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 shelfLights.GetComponent<Renderer>(), slots, dock, dockGlow.GetComponent<Renderer>());
             tower.Wire(TowerTuning, RadioTowerUpgrade, anchor, stages, lights, beacons, hoppers, hatches);
             Transform bay = Node("WorkshopAnchor", lander, new Vector3(12.5f, 0f, -2f));
-            BuildBay(bay, workshop);
+            Transform board = BuildBay(bay, workshop, plotter);
             TillyPerch = Node("FriendSocket_tilly", lander, new Vector3(-1.6f, 3.3f, 0.9f));
             BellCorner = Node("BellCorner", anchor, new Vector3(-4.9f, 0f, 0.4f));
             BellCorner.localRotation = Quaternion.Euler(0f, 74f, 0f);
@@ -416,7 +417,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             tapes.Wire(ShelfSlots);
             Transform lift = Node("LiftPlatform", lander, new Vector3(2.4f, 0.2f, 3.2f));
             ProgressionTuning = Asset<ProgressionTuning>();
-            progression.Wire(ProgressionTuning, new[] { dock, lander, dock, lift, anchor, shelf, bay, bay, rack }, lift);
+            progression.Wire(ProgressionTuning, new[] { dock, lander, dock, lift, anchor, shelf, bay, board, rack },
+                lift);
             return tapes;
         }
 
@@ -426,7 +428,10 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// contract's link lengths, the floor arm FloorLift/FloorTip, HopperMouth in the back-right corner, Lamp_0/1,
         /// BaySign), wired as the scene contributor wires the real one.
         /// </summary>
-        private void BuildBay(Transform anchor, Workshop workshop)
+        /// <returns>
+        /// Kenji's pen plotter (Plotter/PenCarriage/PenHead, PlotterSheet, PlotterLamp) beside the bench.
+        /// </returns>
+        private Transform BuildBay(Transform anchor, Workshop workshop, BlueprintPlotter plotter)
         {
             Transform bay = Node("RoverBay", anchor, Vector3.zero);
             Transform turntable = Node("Turntable", bay, new Vector3(0f, 0.15f, -0.35f));
@@ -476,6 +481,22 @@ namespace MoonProject.Gameplay.PlayModeTests
                 new[] { HoverJumpUpgrade, CargoCradleUpgrade, WarmHeadlampUpgrade, BoostCoilsUpgrade }, bay,
                 turntable, mouth, lamps, sign.GetComponent<Renderer>(), sockets);
             workshop.WireArms(armYaws, uppers, lowers, tips, floorLift, floorTip);
+            Transform plotterRoot = Node("Plotter", bay, new Vector3(-2.2f, 0f, -1.2f));
+            Transform carriage = Node("PenCarriage", plotterRoot, new Vector3(0f, 0.9f, 0f));
+            Transform head = Node("PenHead", carriage, Vector3.zero);
+            Transform sheet = Block(plotterRoot, new Vector3(0.25f, 0.88f, 0f), new Vector3(0.5f, 0.01f, 0.35f));
+            sheet.name = "PlotterSheet";
+            Transform lamp = Block(plotterRoot, new Vector3(0.6f, 1f, 0.17f), new Vector3(0.05f, 0.05f, 0.05f));
+            lamp.name = "PlotterLamp";
+            Transform board = Node("Blueprints", bay, new Vector3(-2.2f, 1.6f, -1.6f));
+            foreach (string ability in new[] { "HoverJump", "CargoCradle", "WarmHeadlamp", "BoostCoils" })
+            {
+                Block(board, Vector3.zero, new Vector3(0.3f, 0.4f, 0.01f)).name = "Blueprint_" + ability;
+            }
+
+            plotter.Wire(plotterRoot, carriage, head, sheet.gameObject, lamp.GetComponent<Renderer>(), board, 0.5f,
+                0.35f);
+            return plotterRoot;
         }
 
         /// <summary>A one-level rover ability sold at the bench, as in the content builder.</summary>

@@ -52,6 +52,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Listen(events, BellSignalFound, false);
             Listen(events, StationNotYet, false);
             Listen(events, BlueprintFound, false);
+            Listen(events, BlueprintDelivered, false);
             Listen(events, TickerLine, false);
             Listen(events, BellCued, false);
             Listen(events, RelayCued, false);
@@ -114,6 +115,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         public List<Timed<BellSignalFound>> BellSignalFound { get; } = new List<Timed<BellSignalFound>>();
         public List<Timed<StationNotYet>> StationNotYet { get; } = new List<Timed<StationNotYet>>();
         public List<Timed<BlueprintFound>> BlueprintFound { get; } = new List<Timed<BlueprintFound>>();
+
+        public List<Timed<BlueprintDelivered>> BlueprintDelivered { get; } =
+            new List<Timed<BlueprintDelivered>>();
         public List<Timed<TickerLine>> TickerLine { get; } = new List<Timed<TickerLine>>();
         public List<Timed<BellCued>> BellCued { get; } = new List<Timed<BellCued>>();
 

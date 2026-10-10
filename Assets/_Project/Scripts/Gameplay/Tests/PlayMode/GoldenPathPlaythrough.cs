@@ -288,7 +288,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             Relic duck = garage.Relics[0];
             yield return SalvageTheGarage(garage);
             yield return Excavate(garage, duck);
-            Assert.IsTrue(_gameplay.Blueprints.IsPinned(CargoCradle), "the garage's heart held the Cradle's blueprint");
+            Assert.IsTrue(_gameplay.Blueprints.IsCarrying, "the garage's heart held the Cradle's blueprint tube");
+            Assert.IsFalse(_gameplay.Blueprints.IsPinned(CargoCradle), "it rides home to Kenji's plotter first");
             yield return TheBaySleepsUntilTheTowerWakesIt();
             yield return BuyTowerLevel(2);
             yield return BuyHoverJumpAtTheBench();
@@ -973,6 +974,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return DriveTo(_context.Get<IWorldLayout>().BasePosition, PadArrival, 0.8f, 90f,
                 "the base pad, clear of the lander");
             yield return DriveIntoTheBay(bench);
+            yield return Until(() => _gameplay.Blueprints.IsPinned(CargoCradle), 3f,
+                "in the woken bay, the plotter takes the Cradle's tube (P7)");
+            Assert.AreEqual(CargoCradle, _events.BlueprintDelivered[0].Value.KitId, "and tells everyone");
             Assert.AreSame(bench.Definition, _gameplay.Shop.StationUpgrade, "the bay offers Hover-Jump");
             Assert.AreEqual(UpgradeStationKind.Workshop, _gameplay.Shop.StationUpgrade.Station);
 
