@@ -80,7 +80,7 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         public FlatWorldSystem World { get; private set; }
 
-        public FakeRoverSystem Rover { get; private set; }
+        public GameplayFakeRover Rover { get; private set; }
 
         public GameplaySystem Gameplay { get; private set; }
 
@@ -265,7 +265,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         private void Build()
         {
             World = Track(FlatWorldSystem.Create());
-            Rover = Track(FakeRoverSystem.Create(Vector3.zero, 0f, _cargoSeat));
+            Rover = Track(GameplayFakeRover.Create(Vector3.zero, 0f, _cargoSeat));
 
             GlintTuning = Asset<GlintTuning>();
             SonarTuning = Asset<SonarTuning>();
@@ -337,7 +337,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             var friends = Child<FriendField>(root, "Friends");
             var cassettes = Child<CassetteField>(root, "Cassettes");
             var logs = Child<LogCacheField>(root, "LogCaches");
-            var signals = Child<SignalField>(root, "BellSignals");
+            var signals = Child<BellSignalField>(root, "BellSignals");
             var relays = Child<RelayField>(root, "Relays");
             var progression = Child<BaseProgression>(root, "Progression");
             var plotter = Child<BlueprintPlotter>(root, "Plotter");
