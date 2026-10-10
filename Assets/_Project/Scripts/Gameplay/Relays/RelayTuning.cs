@@ -106,10 +106,7 @@ namespace MoonProject.Gameplay
         [Tooltip("07 counts as parked on a node's pad within this many metres of its centre (World's pads: 3 m).")]
         [Range(1f, 6f)] [SerializeField] private float _padRadius = 3f;
 
-        [Tooltip("Width (m) of the pad's ring of light.")]
-        [Range(0.05f, 2f)] [SerializeField] private float _padRingWidth = 0.3f;
-
-        [Tooltip("Pad brightness when a hop is possible from it.")]
+        [Tooltip("Pad lamps' brightness when a hop is possible from it.")]
         [Range(0f, 3f)] [SerializeField] private float _padInviting = 0.3f;
 
         [Tooltip("Pad brightness while 07 is parked on it.")]
@@ -123,9 +120,6 @@ namespace MoonProject.Gameplay
 
         [Tooltip("Seconds (time constant) for a pad to brighten or dim.")]
         [Range(0f, 3f)] [SerializeField] private float _padEase = 0.5f;
-
-        [Tooltip("Segments of a pad ring.")]
-        [Range(8, 128)] [SerializeField] private int _padSegments = 48;
 
         [Header("Radio-hop")]
         [Tooltip("07 counts as parked below this speed (m/s).")]
@@ -182,8 +176,8 @@ namespace MoonProject.Gameplay
         public float HopFadeIn => _hopFadeIn;
 
         /// <summary>The hop pads' look: invisible with nowhere to go, breathing when a hop is possible.</summary>
-        public PadLook PadLook => new PadLook(_padRadius, _padRingWidth, _padSegments, 0f, _padInviting,
-            _padOccupied, 0f, _padBreathPeriod, _padBreathDepth, _padEase);
+        public PadLook PadLook => new PadLook(_padRadius, 0f, _padInviting, _padOccupied, _padBreathPeriod,
+            _padBreathDepth, _padEase);
 
         /// <summary>The recipe of the restoration that follows <paramref name="restored"/> earlier ones.</summary>
         public Recipe CostAfter(int restored)

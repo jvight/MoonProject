@@ -51,10 +51,10 @@ and a small light on Earth's night side blinks back. Bittersweet, warm, hopeful:
 ### Friends (the spine) — 4 companions
 | Friend | Who they were | Found | Repair needs | At the base | Gift to 07 |
 |---|---|---|---|---|---|
-| **Tilly** — a tiny hover-drone | the scientist's surveyor | a crater on the basin floor (M3 first) | 3 parts nearby | flits around the lander, follows 07 on short trips | spots glints → scrap and relic signals within range show on 07's sonar without pinging |
+| **Tilly** — a tiny hover-drone | Ines's surveyor (the geologist) | a crater on the basin floor (M3 first) | 3 parts nearby | flits around the lander, follows 07 on short trips | spots glints → scrap and relic signals within range show on 07's sonar without pinging |
 | **Moss** — a slow garden bot | the botanist's gardener | the shadowed crater (needs headlamp+) | parts + a seed | tends the biodome, hums | grows the biodome; gifts small decorations |
-| **Bell** — an old radio cabinet on legs | the radio operator's DJ machine | a canyon shelf (needs Hover-Jump) | parts + a cassette | runs the station, "announces" tracks via the ticker | unlocks the radio station dial (choose playlists/stations) |
-| **Atlas** — a big, gentle hauler | the engineer's crane | the rim terraces (needs Magnetic Treads) | heavy parts | rests by the workshop | carries relics home automatically from marked spots; needed to lift the great dish |
+| **Bell** — an old radio cabinet on legs | the radio operator's DJ machine | the canyon terminus (needs Hover-Jump) | parts + a cassette | runs the station, "announces" tracks via the ticker | unlocks the radio station dial (choose playlists/stations) |
+| **Atlas** — a big, gentle hauler | the engineer's crane | the rim terraces (needs Magnetic Treads) | heavy parts | rests by the workshop | carries only heavy things (the great dish, rockfalls, a crew window's part); memories always ride home with 07 |
 Each friend: a small set of idle behaviours, a greeting when 07 returns, a reaction to new relics, and a sleep spot.
 
 ### How 07 does things (VISION ruling 14: 07 has no hands)

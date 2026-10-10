@@ -4,6 +4,7 @@
     "references": [
         "MoonProject.Core",
         "MoonProject.Art",
+        "Unity.RenderPipelines.Core.Runtime",
         "Unity.RenderPipelines.Universal.Runtime"
     ],
     "includePlatforms": [],

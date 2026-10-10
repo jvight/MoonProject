@@ -173,8 +173,19 @@ namespace MoonProject.Gameplay.Editor
 
         /// <summary>
         /// Ro's battered tin box at the canyon terminus beside Bell, holding her first log (log.ro_1) and the first
-        /// tape; past the chasm, so it needs Hover-Jump.
+        /// tape; past the chasm, so it needs Hover-Jump. The other three crew each left a tin beside a site's heart
+        /// (docs/design/text/crew-logs.md), where 07 stands to dig: Kenji's by his bench in the garage, Ines's at the
+        /// foot of her tipped drill by her boot, and Theo's in the canyon supply lander by his teapot (past the gate).
+        /// Offsets are in the site's frame, from the Art site models' Heart nodes.
         /// </summary>
+        private static LogCacheDefinition CrewTin(string logId, string site, Vector2 offset, AbilityGate gate)
+        {
+            var tin = ScriptableObject.CreateInstance<LogCacheDefinition>();
+            tin.Populate(logId, LoadArt(GameplayAssetPaths.LogCache),
+                new AnchorSpot(SalvageEconomy.SiteId(site), offset), gate);
+            return GeneratedAssets.CreateOrReplace(tin, GameplayAssetPaths.LogCacheDefinition(logId));
+        }
+
         private static void BuildLogCaches()
         {
             var ro = ScriptableObject.CreateInstance<LogCacheDefinition>();
@@ -184,6 +195,9 @@ namespace MoonProject.Gameplay.Editor
             var caches = new[]
             {
                 GeneratedAssets.CreateOrReplace(ro, GameplayAssetPaths.LogCacheDefinition("ro_1")),
+                CrewTin("kenji_1", "garage", new Vector2(-0.8f, 4.6f), AbilityGate.Open),
+                CrewTin("ines_1", "drill", new Vector2(3.7f, 1.9f), AbilityGate.Open),
+                CrewTin("theo_1", "lander", new Vector2(1.6f, 1.15f), new AbilityGate(true, RoverAbility.HoverJump)),
             };
 
             var catalog = ScriptableObject.CreateInstance<LogCacheCatalog>();

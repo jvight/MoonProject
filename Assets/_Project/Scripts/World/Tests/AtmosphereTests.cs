@@ -30,6 +30,14 @@ namespace MoonProject.World.Tests
         private const float ShadowStep = 4f;
         private const float DustStep = 6f;
 
+        // The basin haze, seen from 07's chase height: a light veil at play distance (like the fog's), a real layer
+        // over the far floor, and the rim's crest (well above the haze's height scale) left nearly clear.
+        private const float HazeEyeHeight = 3.5f;
+        private const float MaxNearHaze = 0.08f;
+        private const float MinFarFloorHaze = 0.2f;
+        private const float CrestHeight = 60f;
+        private const float MaxCrestHazeShare = 0.2f;
+
         // Art rounds its reference light to two decimals.
         private const float ReferenceTolerance = 0.01f;
 
@@ -69,6 +77,18 @@ namespace MoonProject.World.Tests
         }
 
         [Test]
+        public void Haze_LiesLowInTheBasin_LeavingNearGroundCrispAndTheCrestClear()
+        {
+            var eye = new Vector3(0f, HazeEyeHeight, 0f);
+            Assert.LessOrEqual(_atmosphere.HazeAmount(eye, new Vector3(0f, 0f, NearDistance)), MaxNearHaze,
+                "the base must stay crisp at play distances");
+            float farFloor = _atmosphere.HazeAmount(eye, new Vector3(0f, 0f, RimDistance));
+            Assert.GreaterOrEqual(farFloor, MinFarFloorHaze, "the far floor should sink into the haze");
+            float crest = _atmosphere.HazeAmount(eye, new Vector3(0f, CrestHeight, RimDistance));
+            Assert.Less(crest, farFloor * MaxCrestHazeShare, "the rim's crest stays above the haze");
+        }
+
+        [Test]
         public void Earthlight_IsLow_YetLeavesMostOfTheFloorLit()
         {
             Assert.That(_atmosphere.LightElevation, Is.InRange(MinLightElevation, MaxLightElevation));
@@ -104,10 +124,10 @@ namespace MoonProject.World.Tests
         [Test]
         public void Earthlight_StaysAtOrUnderArtsReferenceLight()
         {
-            // Art darkens bright surfaces until they stay under the bloom threshold in this light: brighter
-            // earthlight would make cream panels glow like lamps.
+            // Art darkens bright surfaces until they stay under its bloom threshold in this light: a brighter
+            // earthlight than the threshold allows would make cream panels glow like lamps.
             Color light = _atmosphere.LightColor.linear * _atmosphere.LightIntensity + _atmosphere.AmbientSky.linear;
-            Color reference = Palette.ReferenceLight;
+            Color reference = ReferenceLight();
             Assert.LessOrEqual(light.r, reference.r + ReferenceTolerance, "red");
             Assert.LessOrEqual(light.g, reference.g + ReferenceTolerance, "green");
             Assert.LessOrEqual(light.b, reference.b + ReferenceTolerance, "blue");
@@ -135,7 +155,7 @@ namespace MoonProject.World.Tests
             // Art caps its surfaces against the earthlight square-on: no face may gather more from both lights.
             Vector3 toLight = WorldAtmosphere.LightSourceDirection(_atmosphere, _sky);
             Vector3 toFill = WorldAtmosphere.FillSourceDirection(_atmosphere, _sky);
-            Color reference = Palette.ReferenceLight;
+            Color reference = ReferenceLight();
             for (float pitch = -90f; pitch <= 90f; pitch += NormalStep)
             {
                 for (float yaw = 0f; yaw < 360f; yaw += NormalStep)
@@ -187,7 +207,8 @@ namespace MoonProject.World.Tests
         public void LitDust_StaysUnderTheBloomThreshold()
         {
             Vector3 toLight = WorldAtmosphere.LightSourceDirection(_atmosphere, _sky);
-            var painter = new TerrainPainter(new TerrainPaintSettings(), WorldSettings.DefaultSeed, toLight);
+            var painter = new TerrainPainter(new TerrainPaintSettings(), WorldSettings.DefaultSeed, toLight,
+                _surface.PadRadius);
             Color light = _atmosphere.LightColor.linear * _atmosphere.LightIntensity + _atmosphere.AmbientSky.linear;
             float brightest = 0f;
             for (float z = -FloorRadius; z <= FloorRadius; z += DustStep)
@@ -203,6 +224,15 @@ namespace MoonProject.World.Tests
 
             Assert.Less(brightest, new PostProcessSettings().BloomThreshold,
                 "dust facing the earthlight would bloom; only the warm lights may");
+        }
+
+        /// <summary>
+        /// Art's reference light scaled by how far World's bloom threshold sits above Art's: a surface Art caps just
+        /// under its threshold stays just under World's in this much light.
+        /// </summary>
+        private static Color ReferenceLight()
+        {
+            return Palette.ReferenceLight * (new PostProcessSettings().BloomThreshold / Palette.BloomThreshold);
         }
 
         private Color Earthlight()

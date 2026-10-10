@@ -23,6 +23,12 @@ namespace MoonProject.UI
         public const string TapeCount = "ui.card.tape_count";
         public const string PauseCassettes = "ui.pause.cassettes";
         public const string PauseRelays = "ui.pause.relays";
+        public const string PauseResume = "ui.pause.resume";
+        public const string PauseSettings = "ui.pause.settings";
+        public const string PauseQuit = "ui.pause.quit";
+        public const string TitleContinue = "ui.title.continue";
+        public const string TitleSettings = "ui.title.settings";
+        public const string TitleQuit = "ui.title.quit";
         public const string JourneyPutAway = "ui.journey.put_away";
         public const string LookUp = "ui.hint.look_up";
         public const string BlueprintFound = "ui.blueprint.found";
@@ -180,6 +186,15 @@ namespace MoonProject.UI
         public static string UpgradeEffect(string upgradeId, int level)
         {
             return "upgrade." + upgradeId + "." + level + ".effect";
+        }
+
+        /// <summary>
+        /// "upgrade.radio_tower.1.needs_part": the quiet line when level <paramref name="level"/> still waits for its
+        /// story part (the coil, the transformer, the relay spare).
+        /// </summary>
+        public static string UpgradeNeedsPart(string upgradeId, int level)
+        {
+            return "upgrade." + upgradeId + "." + level + ".needs_part";
         }
     }
 }

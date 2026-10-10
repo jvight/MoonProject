@@ -14,6 +14,9 @@ namespace MoonProject.World
     {
         private static readonly int LightCount = Enum.GetValues(typeof(HomeLight)).Length;
 
+        // The first warm point each stage after Asleep wakes: the grade warms a step with each of them.
+        private static readonly HomeLight[] StageLeads = { HomeLight.Windows, HomeLight.BayLamps, HomeLight.LiftLamps };
+
         private readonly HomeLightingSettings _settings;
         private BasePowerStage _stage = BasePowerStage.Asleep;
         private BasePowerStage _wakingStage = BasePowerStage.Asleep;
@@ -97,13 +100,29 @@ namespace MoonProject.World
         }
 
         /// <summary>
-        /// The tower's pilot light (0..1): a slow, short blink while the base sleeps, fading out as home's windows
-        /// wake.
+        /// How far home's grade has warmed at <paramref name="time"/>: 0 asleep, 1 with the whole base awake. Each
+        /// stage adds an equal step, eased in with the first warm point it wakes.
+        /// </summary>
+        public float GradeWarmth(float time)
+        {
+            float warmth = 0f;
+            foreach (HomeLight lead in StageLeads)
+            {
+                warmth += Level(lead, time);
+            }
+
+            return warmth / StageLeads.Length;
+        }
+
+        /// <summary>
+        /// The tower's top light (0..1): a slow, short blink while the base sleeps, easing into a steady warm glow as
+        /// home's windows wake, so home stays a readable warm dot from far across the basin.
         /// </summary>
         public float PilotLevel(float time)
         {
             float wave = 0.5f + 0.5f * Mathf.Cos(2f * Mathf.PI * time / _settings.PilotPeriod);
-            return Mathf.Pow(wave, _settings.PilotSharpness) * (1f - Level(HomeLight.Windows, time));
+            float blink = Mathf.Pow(wave, _settings.PilotSharpness);
+            return Mathf.Lerp(blink, _settings.TopLightLevel, Level(HomeLight.Windows, time));
         }
 
         private static int OrderInStage(HomeLight light)

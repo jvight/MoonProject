@@ -1,4 +1,5 @@
-# Python dependencies for tools/ (audio + music synthesis). Install: python -m pip install -r tools/requirements.txt
+# Python dependencies for tools/ (audio + music synthesis, look_report). Install: python -m pip install -r tools/requirements.txt
 numpy==2.4.4
 scipy==1.18.0
 soundfile==0.14.0
+pillow==12.2.0

@@ -4,7 +4,6 @@ using UnityEngine.UIElements;
 using MoonProject.Core;
 using MoonProject.Core.Events;
 using MoonProject.Core.Input;
-using MoonProject.Core.Save;
 using MoonProject.Gameplay;
 
 namespace MoonProject.UI
@@ -21,21 +20,29 @@ namespace MoonProject.UI
     /// a cassette, a quiet line under the heading counts them against every tape in the game (both numbers from
     /// <see cref="IRadioProgram"/>, so a loaded save is counted right); once a relay mast is lit, another counts the
     /// lit masts against them all (<see cref="IRelayStatus"/>). Neither shows before the world has shown the thing.
+    /// The same menu is the title's over the live world (M3-09, <see cref="OpenTitle"/>): Continue in place of Resume,
+    /// New Game (asking once when a save exists), the same settings and Quit, under the wordmark; game time keeps
+    /// running, and the menu rests out of sight when left untouched. A first boot opens on a language step. The pause
+    /// offers "Quit to title" instead of New Game. New Game, Quit to title and Quit draw a soft dark first, so the
+    /// scene never cuts.
     /// </summary>
     internal sealed class PauseMenu
     {
         private const float MoveEpsilon = 0.1f;
+        private const string TitleClass = "pause--title";
 
         private readonly UiLayout _layout;
         private readonly PauseSettings _settings;
+        private readonly TitleSettings _title;
         private readonly PlayerSettings _player;
         private readonly ILocalization _localization;
         private readonly InputReader _input;
         private readonly EventBus _events;
-        private readonly ISaveService _save;
+        private readonly SettingsStore _settingsStore;
         private readonly IMaterialStock _materials;
         private readonly IRadioProgram _radio;
         private readonly IRelayStatus _relays;
+        private readonly IGameFlow _flow;
         private readonly MaterialSlots _stock;
         private readonly CursorPolicy _cursor;
         private readonly Action _quit;
@@ -46,6 +53,10 @@ namespace MoonProject.UI
         private readonly Reveal _mainPage;
         private readonly Reveal _quitPage;
         private readonly Reveal _newGamePage;
+        private readonly Reveal _languagePage;
+        private readonly Reveal _titleScreen;
+        private readonly Reveal _curtain;
+        private readonly Button[] _languageButtons;
         private readonly PausePages _pages = new PausePages();
         private readonly string[] _lookTexts;
         private Focusable _pendingFocus;
@@ -53,21 +64,27 @@ namespace MoonProject.UI
         private bool _pointerPressed;
         private float _resumeScale = 1f;
         private float _writtenShift = float.NaN;
+        private Leaving _leaving;
+        private float _untouched;
+        private bool _resting;
 
-        public PauseMenu(UiLayout layout, PauseSettings settings, PlayerSettings player, ILocalization localization,
-            InputReader input, EventBus events, ISaveService save, IMaterialStock materials, IRadioProgram radio,
-            IRelayStatus relays, IntText numbers, CursorPolicy cursor, Action quit)
+        public PauseMenu(UiLayout layout, PauseSettings settings, TitleSettings title, PlayerSettings player,
+            ILocalization localization, InputReader input, EventBus events, SettingsStore settingsStore,
+            IMaterialStock materials,
+            IRadioProgram radio, IRelayStatus relays, IGameFlow flow, IntText numbers, CursorPolicy cursor, Action quit)
         {
             _layout = layout ?? throw new ArgumentNullException(nameof(layout));
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+            _title = title ?? throw new ArgumentNullException(nameof(title));
             _player = player ?? throw new ArgumentNullException(nameof(player));
             _localization = localization ?? throw new ArgumentNullException(nameof(localization));
             _input = input ?? throw new ArgumentNullException(nameof(input));
             _events = events ?? throw new ArgumentNullException(nameof(events));
-            _save = save ?? throw new ArgumentNullException(nameof(save));
+            _settingsStore = settingsStore ?? throw new ArgumentNullException(nameof(settingsStore));
             _materials = materials ?? throw new ArgumentNullException(nameof(materials));
             _radio = radio ?? throw new ArgumentNullException(nameof(radio));
             _relays = relays ?? throw new ArgumentNullException(nameof(relays));
+            _flow = flow ?? throw new ArgumentNullException(nameof(flow));
             _stock = new MaterialSlots(layout.PauseMaterials, numbers, false);
             _cursor = cursor ?? throw new ArgumentNullException(nameof(cursor));
             _quit = quit ?? throw new ArgumentNullException(nameof(quit));
@@ -79,12 +96,19 @@ namespace MoonProject.UI
             _mainPage = new Reveal(layout.PageMain, settings.Page);
             _quitPage = new Reveal(layout.PageQuit, settings.Page);
             _newGamePage = new Reveal(layout.PageNewGame, settings.Page);
+            _languagePage = new Reveal(layout.PageLanguage, settings.Page);
+            _titleScreen = new Reveal(layout.TitleScreen, title.Reveal);
+            _curtain = new Reveal(layout.Curtain, title.Curtain);
+            _languageButtons = LanguageButtons(layout.PageLanguage, localization);
             _veil.Snap(false);
             _main.Snap(false);
             _settingsPanel.Snap(false);
             _mainPage.Snap(true);
             _quitPage.Snap(false);
             _newGamePage.Snap(false);
+            _languagePage.Snap(false);
+            _titleScreen.Snap(false);
+            _curtain.Snap(false);
             new ShadowPainter(layout.PauseMainShadow);
             new ShadowPainter(layout.PauseSettingsShadow);
             new CassetteIconPainter(layout.PauseCassetteIcon);
@@ -101,6 +125,18 @@ namespace MoonProject.UI
         }
 
         public bool IsOpen { get; private set; }
+
+        /// <summary>How much of the menu blur the world takes now (0..1): all of it paused, less on the title.</summary>
+        public float Openness => _pages.IsTitle ? _main.Visibility * _title.BackdropWeight : _veil.Visibility;
+
+        /// <summary>True while the menu is the title's (from <see cref="OpenTitle"/> until Continue or New Game).</summary>
+        public bool IsTitle => IsOpen && _pages.IsTitle;
+
+        /// <summary>True while the title's menu rests out of sight, left untouched.</summary>
+        public bool IsResting => _resting;
+
+        /// <summary>True while the first boot's language step is up.</summary>
+        public bool IsChoosingLanguage => _pages.Current == PausePage.Language;
 
         /// <summary>True while the settings panel is (easing) open.</summary>
         public bool IsSettingsOpen => _settingsPanel.Target;
@@ -130,9 +166,8 @@ namespace MoonProject.UI
 
             IsOpen = true;
             _pages.Reset();
-            _mainPage.Snap(true);
-            _quitPage.Snap(false);
-            _newGamePage.Snap(false);
+            SnapPages();
+            WriteMode();
             _clock.Pause();
             _input.Disable();
             _cursor.Menu();
@@ -170,12 +205,20 @@ namespace MoonProject.UI
         /// <summary>Esc / B: one level back (a question or settings to the menu, the menu to the game).</summary>
         public void Back()
         {
-            if (!IsOpen)
+            if (!IsOpen || _leaving != Leaving.None)
             {
                 return;
             }
 
-            if (_pages.Back(out PauseFocus focus))
+            if (_resting)
+            {
+                Rest(false);
+            }
+            else if (_pages.Current == PausePage.Language)
+            {
+                ChooseLanguage(0);
+            }
+            else if (_pages.Back(out PauseFocus focus))
             {
                 _pendingFocus = Button(focus);
                 Cue(UiCueKind.Back);
@@ -185,10 +228,36 @@ namespace MoonProject.UI
                 CloseSettings();
                 Cue(UiCueKind.Back);
             }
-            else
+            else if (!_pages.IsTitle)
             {
                 Resume();
             }
+        }
+
+        /// <summary>
+        /// The title over the live world: the wordmark and the menu ease in as the dark of a boot lifts. Continue is
+        /// offered when <paramref name="hasSave"/>; the first boot (<paramref name="chooseLanguage"/>) asks for a
+        /// language first. The rover's controls are already held by App; game time keeps running.
+        /// </summary>
+        public void OpenTitle(bool hasSave, bool chooseLanguage)
+        {
+            if (IsOpen)
+            {
+                return;
+            }
+
+            IsOpen = true;
+            _pages.ResetForTitle(hasSave, chooseLanguage);
+            SnapPages();
+            WriteMode();
+            _cursor.Menu();
+            _main.Show();
+            _titleScreen.Show();
+            _curtain.Snap(true);
+            _curtain.Hide();
+            _untouched = 0f;
+            _resting = false;
+            _pendingFocus = DefaultFocus();
         }
 
         /// <param name="unscaledDeltaTime">Real seconds since the last tick.</param>
@@ -200,6 +269,7 @@ namespace MoonProject.UI
             }
 
             SwapPages();
+            TickTitle(unscaledDeltaTime);
 
             _veil.Tick(unscaledDeltaTime);
             _main.Tick(unscaledDeltaTime);
@@ -207,9 +277,17 @@ namespace MoonProject.UI
             _mainPage.Tick(unscaledDeltaTime);
             _quitPage.Tick(unscaledDeltaTime);
             _newGamePage.Tick(unscaledDeltaTime);
+            _languagePage.Tick(unscaledDeltaTime);
+            _titleScreen.Tick(unscaledDeltaTime);
+            _curtain.Tick(unscaledDeltaTime);
             ShiftForSettings();
+            if (_leaving != Leaving.None && _curtain.IsShown)
+            {
+                Go();
+            }
 
-            if (IsOpen)
+
+            if (IsOpen && !_resting)
             {
                 if (_pendingFocus == null && _input.Menu.NavigatePressed && FocusedElement() == null)
                 {
@@ -232,6 +310,7 @@ namespace MoonProject.UI
         public void Relocalize()
         {
             _layout.LanguageButton.text = _localization.GetLanguageName(_localization.Language);
+            WriteMode();
             WriteCassettes();
             WriteRelays();
         }
@@ -249,6 +328,7 @@ namespace MoonProject.UI
             _layout.NewGameButton.clicked += OnNewGameClicked;
             _layout.NewGameKeepButton.clicked += OnKeepGoingClicked;
             _layout.NewGameConfirmButton.clicked += OnNewGameConfirmed;
+            _layout.QuitToTitleButton.clicked += OnQuitToTitleClicked;
             _layout.QuitButton.clicked += OnQuitClicked;
             _layout.QuitStayButton.clicked += OnStayClicked;
             _layout.QuitConfirmButton.clicked += OnQuitConfirmed;
@@ -345,7 +425,7 @@ namespace MoonProject.UI
         private void SwapPages()
         {
             bool clear = Leave(_mainPage, PausePage.Main) & Leave(_quitPage, PausePage.Quit) &
-                         Leave(_newGamePage, PausePage.NewGame);
+                         Leave(_newGamePage, PausePage.NewGame) & Leave(_languagePage, PausePage.Language);
             if (clear)
             {
                 Page(_pages.Current).Show();
@@ -371,6 +451,8 @@ namespace MoonProject.UI
                     return _quitPage;
                 case PausePage.NewGame:
                     return _newGamePage;
+                case PausePage.Language:
+                    return _languagePage;
                 default:
                     return _mainPage;
             }
@@ -388,6 +470,8 @@ namespace MoonProject.UI
                     return _layout.QuitStayButton;
                 case PauseFocus.NewGameKeep:
                     return _layout.NewGameKeepButton;
+                case PauseFocus.Language:
+                    return _languageButtons[0];
                 default:
                     return _layout.ResumeButton;
             }
@@ -396,7 +480,7 @@ namespace MoonProject.UI
         /// <summary>Asks <paramref name="question"/> in place of the main buttons, focused on its safe answer.</summary>
         private void Ask(PausePage question)
         {
-            if (!IsOpen || !_pages.Ask(question))
+            if (!IsOpen || _leaving != Leaving.None || !_pages.Ask(question))
             {
                 return;
             }
@@ -422,10 +506,7 @@ namespace MoonProject.UI
 
         private void SaveIfChanged()
         {
-            if (_player.IsDirty && _save.SaveNow())
-            {
-                _player.MarkSaved();
-            }
+            _settingsStore.SaveIfChanged();
         }
 
         private void ShiftForSettings()
@@ -503,9 +584,20 @@ namespace MoonProject.UI
 
         private void OnResumeClicked()
         {
-            if (IsOpen && _pages.Current == PausePage.Main)
+            if (!IsOpen || _leaving != Leaving.None || _pages.Current != PausePage.Main)
+            {
+                return;
+            }
+
+            if (!_pages.IsTitle)
             {
                 Resume();
+            }
+            else if (_pages.HasSave)
+            {
+                CloseTitle();
+                Cue(UiCueKind.Confirm);
+                _events.Publish(new ContinueRequested());
             }
         }
 
@@ -520,7 +612,27 @@ namespace MoonProject.UI
 
         private void OnQuitClicked()
         {
-            Ask(PausePage.Quit);
+            if (!_pages.IsTitle)
+            {
+                Ask(PausePage.Quit);
+            }
+            else if (IsOpen && _pages.Current == PausePage.Main && _leaving == Leaving.None)
+            {
+                SaveIfChanged();
+                Cue(UiCueKind.Confirm);
+                Draw(Leaving.Quit);
+            }
+        }
+
+        /// <summary>Quit to title: saved, then the dark, then App reloads into the title.</summary>
+        private void OnQuitToTitleClicked()
+        {
+            if (IsOpen && !_pages.IsTitle && _pages.Current == PausePage.Main && _leaving == Leaving.None)
+            {
+                SaveIfChanged();
+                Cue(UiCueKind.Confirm);
+                Draw(Leaving.ToTitle);
+            }
         }
 
         private void OnStayClicked()
@@ -528,9 +640,22 @@ namespace MoonProject.UI
             Answer(PausePage.Quit);
         }
 
+        /// <summary>
+        /// The title's New Game: over a save it asks once; with none, the world behind the title is already fresh, so
+        /// play begins right here.
+        /// </summary>
         private void OnNewGameClicked()
         {
-            Ask(PausePage.NewGame);
+            if (!_pages.IsTitle || _pages.HasSave)
+            {
+                Ask(PausePage.NewGame);
+            }
+            else if (IsOpen && _pages.Current == PausePage.Main && _leaving == Leaving.None)
+            {
+                CloseTitle();
+                Cue(UiCueKind.Confirm);
+                _events.Publish(new NewGameRequested());
+            }
         }
 
         private void OnKeepGoingClicked()
@@ -539,16 +664,15 @@ namespace MoonProject.UI
         }
 
         /// <summary>
-        /// Start over: game time comes back first (Time.timeScale is global and outlives the reload), then the App is
-        /// asked for a new game. Once only, however often the button is pressed before the scene goes.
+        /// Start over: once the dark is drawn, the App is asked for a new game (it puts the save away and reloads).
+        /// Once only, however often the button is pressed before the scene goes.
         /// </summary>
         private void OnNewGameConfirmed()
         {
-            if (IsOpen && _pages.ConfirmNewGame())
+            if (IsOpen && _leaving == Leaving.None && _pages.ConfirmNewGame())
             {
                 Cue(UiCueKind.Confirm);
-                RestoreTime();
-                _events.Publish(new NewGameRequested());
+                Draw(Leaving.NewGame);
             }
         }
 
@@ -580,6 +704,158 @@ namespace MoonProject.UI
             }
         }
 
+        /// <summary>Snaps every page to the current one (the menu opening).</summary>
+        private void SnapPages()
+        {
+            _mainPage.Snap(_pages.Current == PausePage.Main);
+            _quitPage.Snap(false);
+            _newGamePage.Snap(false);
+            _languagePage.Snap(_pages.Current == PausePage.Language);
+        }
+
+        /// <summary>The buttons the menu offers as the pause or as the title, and their words.</summary>
+        private void WriteMode()
+        {
+            bool title = _pages.IsTitle;
+            _layout.Pause.EnableInClassList(TitleClass, title);
+            _layout.ResumeButton.text = _localization.Get(title ? UiKeys.TitleContinue : UiKeys.PauseResume);
+            _layout.SettingsButton.text = _localization.Get(title ? UiKeys.TitleSettings : UiKeys.PauseSettings);
+            _layout.QuitButton.text = _localization.Get(title ? UiKeys.TitleQuit : UiKeys.PauseQuit);
+            Display(_layout.ResumeButton, !title || _pages.HasSave);
+            Display(_layout.NewGameButton, title);
+            Display(_layout.QuitToTitleButton, !title && _flow.ShowsTitle);
+        }
+
+        private static void Display(VisualElement element, bool shown)
+        {
+            element.style.display = shown ? DisplayStyle.Flex : DisplayStyle.None;
+        }
+
+        /// <summary>Continue, or a New Game with no save: the title eases away and play begins under it.</summary>
+        private void CloseTitle()
+        {
+            IsOpen = false;
+            _pendingFocus = null;
+            _resting = false;
+            Blur();
+            SaveIfChanged();
+            _main.Hide();
+            _titleScreen.Hide();
+            _settingsPanel.Hide();
+            _cursor.Drive();
+        }
+
+        /// <summary>
+        /// Counts the title's untouched time: after a while the menu and the wordmark rest out of sight (stillness is a
+        /// reward); a step, a click or Esc brings them back.
+        /// </summary>
+        private void TickTitle(float unscaledDeltaTime)
+        {
+            if (!IsTitle || _leaving != Leaving.None)
+            {
+                return;
+            }
+
+            MenuInput menu = _input.Menu;
+            bool touched = menu.NavigatePressed || menu.ClickPressed;
+            if (_resting)
+            {
+                if (touched)
+                {
+                    Rest(false);
+                }
+
+                return;
+            }
+
+            _untouched = touched || _settingsPanel.Target ? 0f : _untouched + unscaledDeltaTime;
+            if (_untouched >= _title.IdleSeconds)
+            {
+                Rest(true);
+            }
+        }
+
+        private void Rest(bool resting)
+        {
+            _resting = resting;
+            _untouched = 0f;
+            if (resting)
+            {
+                Blur();
+                _main.Hide();
+                _titleScreen.Hide();
+                return;
+            }
+
+            _main.Show();
+            _titleScreen.Show();
+            _pendingFocus = DefaultFocus();
+        }
+
+        /// <summary>Draws the dark; once it is drawn, <see cref="Go"/> does what was chosen.</summary>
+        private void Draw(Leaving leaving)
+        {
+            _leaving = leaving;
+            _pendingFocus = null;
+            Blur();
+            _curtain.Show();
+        }
+
+        /// <summary>
+        /// The dark is drawn. Game time comes back first (Time.timeScale is global and outlives a reload), then the
+        /// App is asked to reload, or the game quits.
+        /// </summary>
+        private void Go()
+        {
+            Leaving leaving = _leaving;
+            _leaving = Leaving.Gone;
+            switch (leaving)
+            {
+                case Leaving.NewGame:
+                    RestoreTime();
+                    _events.Publish(new NewGameRequested());
+                    break;
+                case Leaving.ToTitle:
+                    RestoreTime();
+                    _events.Publish(new QuitToTitleRequested());
+                    break;
+                case Leaving.Quit:
+                    _quit();
+                    break;
+            }
+        }
+
+        private Button[] LanguageButtons(VisualElement page, ILocalization localization)
+        {
+            var buttons = new Button[localization.Languages.Count];
+            for (int i = 0; i < buttons.Length; i++)
+            {
+                int index = i;
+                var button = new Button(() => ChooseLanguage(index))
+                {
+                    text = localization.GetLanguageName(localization.Languages[i]),
+                };
+                button.AddToClassList("menu-button");
+                page.Add(button);
+                buttons[i] = button;
+            }
+
+            return buttons;
+        }
+
+        /// <summary>The first boot's language step: the language is set and the title's buttons come up.</summary>
+        private void ChooseLanguage(int index)
+        {
+            if (!IsOpen || !_pages.LanguageChosen())
+            {
+                return;
+            }
+
+            _player.ChooseLanguage(_localization.Languages[index]);
+            _pendingFocus = Button(_pages.DefaultFocus);
+            Cue(UiCueKind.Confirm);
+        }
+
         private void OnLookChanged(ChangeEvent<int> evt)
         {
             _player.SetLookStep(evt.newValue);
@@ -598,6 +874,18 @@ namespace MoonProject.UI
         {
             _player.Guidance = evt.newValue;
             Cue(UiCueKind.Confirm);
+        }
+
+        /// <summary>What the dark is drawn for.</summary>
+        private enum Leaving
+        {
+            None,
+            NewGame,
+            ToTitle,
+            Quit,
+
+            /// <summary>Done: the scene is going (or the game is quitting).</summary>
+            Gone,
         }
     }
 }

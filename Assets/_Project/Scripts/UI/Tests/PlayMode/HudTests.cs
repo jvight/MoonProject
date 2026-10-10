@@ -41,7 +41,7 @@ namespace MoonProject.UI.PlayModeTests
         {
             _rig?.Dispose();
             _rig = null;
-            BootstrapHarness.DeleteSaveFiles(_slot);
+            UiTestRig.DeleteSlotFiles(_slot);
             Object.Destroy(_controls);
             base.TearDown();
         }
@@ -174,6 +174,32 @@ namespace MoonProject.UI.PlayModeTests
             yield return Seconds(1.5f);
             Assert.IsFalse(_rig.Ui.Card.IsVisible, "Esc closes the topmost thing first");
             Assert.IsFalse(_rig.Ui.Pause.IsOpen, "and does not also open the pause menu");
+        }
+
+        [UnityTest]
+        public IEnumerator TowerPanel_SaysWhichPartTheTowerWaitsFor()
+        {
+            Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
+            Boot();
+            yield return null;
+            _rig.Fakes.Upgrade = _rig.TestTower();
+            _rig.Fakes.SetMaterials(3, 1, 0);
+            _rig.Fakes.AwaitingPart = true;
+            _rig.Fakes.AtStation = true;
+            yield return Seconds(2f);
+            Press(keyboard.eKey);
+            yield return Seconds(_rig.Tuning.TowerPanel.HoldSeconds + 0.5f);
+            Release(keyboard.eKey);
+            yield return null;
+            Assert.AreEqual(0, _rig.Fakes.Purchases, "nothing is bought without the coil");
+            Assert.IsFalse(_rig.Ui.Tower.IsWorking);
+            Assert.AreEqual("The tower is waiting for its coil.", _rig.Ui.Layout.TowerHoldWord.text);
+            Assert.AreEqual(Text(UiKeys.UpgradeNeedsPart("radio_tower", 1)), _rig.Ui.Layout.TowerHoldWord.text);
+
+            _rig.Fakes.AwaitingPart = false;
+            Press(keyboard.eKey);
+            yield return Seconds(_rig.Tuning.TowerPanel.HoldSeconds + 0.5f);
+            Assert.AreEqual(1, _rig.Fakes.Purchases, "once the coil is in, the same hold wakes the tower");
         }
 
         [UnityTest]

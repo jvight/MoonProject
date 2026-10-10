@@ -18,6 +18,7 @@ namespace MoonProject.World
     {
         private const uint PatchSalt = 0x632BE59Bu;
         private const uint DetailPatchSalt = 0x9E6C63D0u;
+        private const uint PadPatchSalt = 0x7FEB352Du;
 
         // Half-widths of the soft bands around the crater and highland thresholds (in their 0..1 weights).
         private const float CraterBand = 0.15f;
@@ -26,6 +27,8 @@ namespace MoonProject.World
         private readonly TerrainPaintSettings _settings;
         private readonly GradientNoise _patchNoise;
         private readonly GradientNoise _detailPatchNoise;
+        private readonly GradientNoise _padNoise;
+        private readonly float _padRadius;
         private readonly float _invPatchWavelength;
         private readonly float _invDetailPatchWavelength;
         private readonly float _rockCos;
@@ -41,11 +44,14 @@ namespace MoonProject.World
         private readonly Color32 _rockDark;
 
         /// <param name="lightDirection">Direction toward the earthlight (only its horizontal part is used).</param>
-        public TerrainPainter(TerrainPaintSettings settings, int seed, Vector3 lightDirection)
+        /// <param name="padRadius">Radius of the base pad around the world origin (its compacted regolith).</param>
+        public TerrainPainter(TerrainPaintSettings settings, int seed, Vector3 lightDirection, float padRadius)
         {
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _patchNoise = new GradientNoise(Hashing.Mix((uint)seed ^ PatchSalt));
             _detailPatchNoise = new GradientNoise(Hashing.Mix((uint)seed ^ DetailPatchSalt));
+            _padNoise = new GradientNoise(Hashing.Mix((uint)seed ^ PadPatchSalt));
+            _padRadius = padRadius;
             _invPatchWavelength = 1f / settings.PatchWavelength;
             _invDetailPatchWavelength = 1f / settings.DetailPatchWavelength;
             _rockCos = Mathf.Cos(settings.RockSlope * Mathf.Deg2Rad);
@@ -77,11 +83,14 @@ namespace MoonProject.World
             return faceNormal.y <= _rockCos || (onRim && faceNormal.y <= _rimRockCos);
         }
 
-        /// <summary>The one flat tone of a rock facet.</summary>
+        /// <summary>
+        /// The one flat tone of a rock facet, a step darker on the rim's face below its lit crest.
+        /// </summary>
         /// <param name="faceNormal">Unit normal of the triangle itself.</param>
         /// <param name="center">World-space triangle centre.</param>
+        /// <param name="region">Averaged region weights of the triangle's corners.</param>
         /// <param name="hash">Per-triangle seeded hash.</param>
-        public Color32 Rock(Vector3 faceNormal, Vector3 center, uint hash)
+        public Color32 Rock(Vector3 faceNormal, Vector3 center, SurfaceSample region, uint hash)
         {
             float slope = Mathf.Acos(Mathf.Clamp(faceNormal.y, -1f, 1f)) * Mathf.Rad2Deg;
             float faceFacing = faceNormal.x * _lightX + faceNormal.z * _lightZ;
@@ -89,7 +98,10 @@ namespace MoonProject.World
                 + (center.y - _settings.RockLightHeight) / _settings.RockHeightBlend
                 + Patch(center) * _settings.RockMottle + faceFacing * _settings.RockFacing
                 + Hashing.ToSigned(hash) * _settings.RockDither;
-            return rock > 0f ? _rockLight : _rockDark;
+            float face = SmoothMath.Smootherstep(0f, _settings.RimZoneStart, region.RimZone)
+                * (1f - SmoothMath.Smootherstep(_settings.CrestZone - _settings.CrestBlend,
+                    _settings.CrestZone + _settings.CrestBlend, region.RimZone));
+            return Color.Lerp(rock > 0f ? _rockLight : _rockDark, _charcoal, _settings.RimFaceShade * face);
         }
 
         /// <summary>The dust colour at a vertex.</summary>
@@ -127,7 +139,23 @@ namespace MoonProject.World
             Color canyon = Color.Lerp(_shadowDust, _midDust, canyonTone);
             dust = Color.Lerp(dust, canyon, region.CanyonFloor);
             dust = Color.Lerp(dust, _charcoal, SmoothMath.Smootherstep(0f, _settings.ChasmDark, region.Chasm));
-            return dust;
+            dust = Color.Lerp(dust, Pad(position), PadWeight(position));
+            return Color.Lerp(dust, _shadowDust, _settings.DustDarken);
+        }
+
+        /// <summary>1 on the base pad, easing to 0 across its edge band.</summary>
+        public float PadWeight(Vector3 position)
+        {
+            float fromBase = Mathf.Sqrt(position.x * position.x + position.z * position.z);
+            return 1f - SmoothMath.Smootherstep(_padRadius, _padRadius + _settings.PadEdge, fromBase);
+        }
+
+        /// <summary>The pad's compacted regolith: a little darker than the open dust, in a few large soft patches.</summary>
+        private Color Pad(Vector3 position)
+        {
+            float inverse = 1f / _settings.PadPatchWavelength;
+            float patch = _padNoise.Fractal(position.x * inverse, position.z * inverse, 2, 2f, 0.5f);
+            return Color.Lerp(_midDust, _shadowDust, Mathf.Clamp01(_settings.PadDarken + _settings.PadMottle * patch));
         }
 
         private float Patch(Vector3 position)

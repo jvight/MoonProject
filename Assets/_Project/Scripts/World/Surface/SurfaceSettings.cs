@@ -92,11 +92,24 @@ namespace MoonProject.World
 
         [Tooltip("Depth of the gullies and buttresses ribbing the inner rim wall, metres.")]
         [Range(0f, 30f)]
-        [SerializeField] private float _wallGullyHeight = 9f;
+        [SerializeField] private float _wallGullyHeight = 4f;
 
         [Tooltip("Approximate number of gullies around the whole rim.")]
         [Range(8f, 200f)]
         [SerializeField] private float _wallGullyCount = 70f;
+
+        [Tooltip("Height of one rock layer on the inner rim wall, metres: the wall steps in flat benches and short " +
+            "risers, so it reads as horizontal strata.")]
+        [Range(2f, 30f)]
+        [SerializeField] private float _strataSpacing = 14f;
+
+        [Tooltip("How far the wall is pulled onto its strata (0 = smooth wall, 1 = hard terraces).")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _strataStrength = 0.4f;
+
+        [Tooltip("Share of each layer's height that is the steep riser (the rest is the bench).")]
+        [Range(0.05f, 1f)]
+        [SerializeField] private float _strataRiser = 0.4f;
 
         [Header("The Peak")]
         [Tooltip("Bearing of The Peak from the base, degrees clockwise from +Z. The rover starts facing +Z.")]
@@ -233,6 +246,10 @@ namespace MoonProject.World
         [Tooltip("Ground shaped for the salvage sites and relay.0's mound, and Kestrel-3's impact (M3-13).")]
         [SerializeField] private SiteSettings _sites = new SiteSettings();
 
+        [Header("Crater field")]
+        [Tooltip("The small craters on the open plains (M3-18 V4), added once the world anchors are known.")]
+        [SerializeField] private CraterFieldSettings _craterField = new CraterFieldSettings();
+
         [Header("Far field")]
         [Tooltip("Radius where the distant ranges beyond the rim start rising.")]
         [Range(500f, 4000f)]
@@ -270,6 +287,9 @@ namespace MoonProject.World
         public float SaddleDepth => _saddleDepth;
         public float SaddleWavelength => _saddleWavelength;
         public float WallGullyHeight => _wallGullyHeight;
+        public float StrataSpacing => _strataSpacing;
+        public float StrataStrength => _strataStrength;
+        public float StrataRiser => _strataRiser;
         public float WallGullyCount => _wallGullyCount;
         public float PeakBearing => _peakBearing;
         public float PeakDistance => _peakDistance;
@@ -303,6 +323,7 @@ namespace MoonProject.World
         public BowlPlacement[] Bowls => _bowls;
         public CanyonSettings Canyon => _canyon;
         public SiteSettings Sites => _sites;
+        public CraterFieldSettings CraterField => _craterField;
         public float FarRangeStart => _farRangeStart;
         public float FarRangeFull => _farRangeFull;
         public float FarRangeHeight => _farRangeHeight;
@@ -359,7 +380,7 @@ namespace MoonProject.World
                 return "Rim mountains, gullies, crags or far ranges could rise above The Peak; lower them or raise it.";
             }
 
-            return _canyon.Validate() ?? _sites.Validate();
+            return _canyon.Validate() ?? _sites.Validate() ?? _craterField.Validate();
         }
     }
 }

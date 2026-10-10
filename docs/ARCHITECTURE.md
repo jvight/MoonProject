@@ -327,16 +327,22 @@ canyon.exit       top of the no-jump way back to the basin, facing down it
 A missing anchor is a wiring bug: consumers `Debug.LogError` with context, never invent a fallback position.
 
 ## Verification ladder
-1. `python tools/compile_check.py` — editor + player configs, zero warnings. Mandatory before every commit.
+1. `python tools/compile_check.py` — editor + player configs, zero warnings, and `tools/lint.py` (CLAUDE.md debt
+   rules plus Unity pitfalls the compiler cannot see). Mandatory before every commit.
 2. EditMode tests (`Assets/_Project/Tests/EditMode`) for pure logic: mesh kit, event bus, economy, save, curves.
 3. `python tools/unity_batch.py` — headless Unity run on a worktree: run builders, capture screenshots,
    run scripted play sessions and print metrics. At most three batch editors run machine-wide (MOON_BATCH_SLOTS), so boxes run the
    tests and captures that cover their change (`--filter`, `--assembly`, `--category`); the full PlayMode suite and
-   the Playthrough golden path are the Director's, on the merged main.
-4. Director integration: `python tools/director.py land <box> -m ...` merges a box (compile_check gates the merge)
-   and hot-reloads the main editor (refresh, the box's builders, Main.unity); `outputs` commits regenerated assets;
-   `verify --push` runs compile_check, EditMode, PlayMode and the Playthrough on main in the verification worktree
-   and pushes only a commit that passed all four. Then real play mode and a feel review against `docs/VISION.md`.
+   the Playthrough golden path are the Director's, on the merged main. A box's gate before it reports is
+   `python tools/box_check.py <box>`. It runs compile_check, the box's builders and the Main Scene build in batch
+   Unity, and its targeted tests. It restores the builder outputs and writes a status block to
+   `MoonProject-wt/.board/<box>.md`.
+4. Director integration: `python tools/director.py land --batch <box> -m ...` merges a box in the verification
+   worktree. There, compile_check, the box's builders and the Main Scene build gate it, and it commits the
+   regenerated outputs and metas. Only then does it fast-forward main; no main editor is needed. The old
+   `land <box>` (merge in the main checkout, hot-reload the open editor, then `outputs`) still works.
+   `verify --push` runs compile_check, EditMode, PlayMode (sharded by assembly across the verification worktrees)
+   and the Playthrough on main, and pushes only a commit that passed them all. Then real play mode and a feel review against `docs/VISION.md`.
 
 ## Performance budget (PC target, 1080p)
 - 60 fps on mid-range GPU; < 1.5 ms CPU per gameplay system per frame.

@@ -14,7 +14,6 @@ namespace MoonProject.UI
             Root = root ?? throw new ArgumentNullException(nameof(root));
             Hud = Require<VisualElement>("hud");
 
-            Title = Require<VisualElement>("title");
             NextLine = Require<VisualElement>("next-line");
             NextLineShadow = Require<VisualElement>("next-line-shadow");
             NextLineText = Require<Label>("next-line-text");
@@ -136,10 +135,14 @@ namespace MoonProject.UI
             ResumeButton = Require<Button>("button-resume");
             SettingsButton = Require<Button>("button-settings");
             NewGameButton = Require<Button>("button-new-game");
+            QuitToTitleButton = Require<Button>("button-quit-to-title");
             QuitButton = Require<Button>("button-quit");
             QuitStayButton = Require<Button>("button-quit-stay");
             QuitConfirmButton = Require<Button>("button-quit-confirm");
             PageNewGame = Require<VisualElement>("page-new-game");
+            PageLanguage = Require<VisualElement>("page-language");
+            TitleScreen = Require<VisualElement>("title-screen");
+            Curtain = Require<VisualElement>("curtain");
             NewGameKeepButton = Require<Button>("button-new-game-keep");
             NewGameConfirmButton = Require<Button>("button-new-game-confirm");
             PauseSettings = Require<VisualElement>("pause-settings");
@@ -159,8 +162,6 @@ namespace MoonProject.UI
         public VisualElement Root { get; }
 
         public VisualElement Hud { get; }
-
-        public VisualElement Title { get; }
 
         public VisualElement NextLine { get; }
 
@@ -376,6 +377,8 @@ namespace MoonProject.UI
 
         public Button NewGameButton { get; }
 
+        public Button QuitToTitleButton { get; }
+
         public Button QuitButton { get; }
 
         public Button QuitStayButton { get; }
@@ -383,6 +386,15 @@ namespace MoonProject.UI
         public Button QuitConfirmButton { get; }
 
         public VisualElement PageNewGame { get; }
+
+        /// <summary>The first boot's language step: one button per language, made from code.</summary>
+        public VisualElement PageLanguage { get; }
+
+        /// <summary>The title's wordmark and subtitle, shown while the pause menu is the title's.</summary>
+        public VisualElement TitleScreen { get; }
+
+        /// <summary>A soft dark over everything, drawn before the scene reloads (New Game, Quit to title, Quit).</summary>
+        public VisualElement Curtain { get; }
 
         public Button NewGameKeepButton { get; }
 

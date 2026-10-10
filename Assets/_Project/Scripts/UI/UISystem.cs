@@ -46,6 +46,7 @@ namespace MoonProject.UI
         private PromptLedger _ledger;
         private PromptDirector _director;
         private PlayerSettings _player;
+        private SettingsStore _settings;
         private CursorPolicy _cursor;
         private GlyphLabels _glyphs;
         private IntText _numbers;
@@ -58,7 +59,6 @@ namespace MoonProject.UI
         private NextStepLine _nextStep;
         private NextLineView _nextLine;
         private PlaceCard _placeCard;
-        private TitleCard _title;
         private TetherReticle _reticle;
         private ContextPrompt _prompt;
         private MaterialsChip _chip;
@@ -76,9 +76,12 @@ namespace MoonProject.UI
         private FriendReadout _friendReadout;
         private FriendNameTag _friendName;
         private PauseMenu _pause;
+        private BackdropBlur _backdrop;
         private bool _composed;
         private bool _bound;
         private bool _awake;
+        private bool _titleWaiting;
+        private bool _titleHasSave;
         private bool _digging;
         private bool _wasCutting;
         private float _sinceAwake;
@@ -120,7 +123,6 @@ namespace MoonProject.UI
 
         internal KitTitle KitTitle => _kitTitle;
 
-        internal TitleCard Title => _title;
 
         internal FriendReadout FriendReadout => _friendReadout;
 
@@ -129,6 +131,8 @@ namespace MoonProject.UI
         internal PlaceCard PlaceCard => _placeCard;
 
         internal LookUpChip LookUp => _lookUpChip;
+
+        internal BackdropBlur Backdrop => _backdrop;
 
         internal NextLineView NextLine => _nextLine;
 
@@ -218,9 +222,11 @@ namespace MoonProject.UI
             _glyphs = new GlyphLabels(services.Input, _localization);
             _tickerLines = new TickerQueue(_tuning.Ticker, new TickerText(_localization));
 
+            _settings = new SettingsStore(_player, services.Settings);
+            _settings.Load();
             ISaveService save = services.Save;
             _tokens.Add(save.Register(new SaveSection<SettingsSaveData>(UiSaveKeys.Settings,
-                UiSaveKeys.SettingsVersion, _player.Capture, _player.Restore)));
+                UiSaveKeys.SettingsVersion, _player.Capture, _settings.Migrate)));
             _tokens.Add(save.Register(new SaveSection<PromptsSaveData>(UiSaveKeys.Prompts,
                 UiSaveKeys.PromptsVersion, _ledger.Capture, _ledger.Restore)));
 
@@ -229,6 +235,7 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<RelicDeposited>(OnRelicDeposited));
             _tokens.Add(events.Subscribe<RelicStowed>(OnRelicStowed));
             _tokens.Add(events.Subscribe<RoverAwoke>(OnRoverAwoke));
+            _tokens.Add(events.Subscribe<TitleShown>(OnTitleShown));
             _tokens.Add(events.Subscribe<StargazingChanged>(OnStargazingChanged));
             _tokens.Add(events.Subscribe<NextStepChanged>(OnNextStepChanged));
             _tokens.Add(events.Subscribe<PlaceFirstApproached>(OnPlaceFirstApproached));
@@ -296,7 +303,6 @@ namespace MoonProject.UI
             _nextStep = new NextStepLine(_tuning.Guidance);
             _nextLine = new NextLineView(_layout, _tuning.Guidance, _localization);
             _placeCard = new PlaceCard(_layout, _tuning.Guidance, _localization);
-            _title = new TitleCard(_layout.Title, _tuning.Title);
             _reticle = new TetherReticle(_layout.Reticle, _layout.ReticleRest, _layout.ReticleHover, _tuning.Reticle);
             _prompt = new ContextPrompt(_layout, _tuning.Prompts, _director, services.View, _glyphs, _localization,
                 services.Events);
@@ -320,12 +326,15 @@ namespace MoonProject.UI
             _tower = new TowerPanel(_layout, _tuning.TowerPanel, _localization, services.Events, services.Shop,
                 services.Board, services.Materials, services.Hints, _numbers);
             _kitTitle = new KitTitle(_layout, _tuning.KitTitle, _localization);
-            _pause = new PauseMenu(_layout, _tuning.Pause, _player, _localization, services.Input, services.Events,
-                services.Save, services.Materials, services.Radio, services.Relays, _numbers, _cursor, Quit);
+            _pause = new PauseMenu(_layout, _tuning.Pause, _tuning.Title, _player, _localization, services.Input,
+                services.Events, _settings, services.Materials, services.Radio, services.Relays, services.Flow,
+                _numbers, _cursor, Quit);
+            _backdrop = new BackdropBlur(transform, _tuning.Backdrop);
             _bound = true;
-            if (_awake)
+            if (_titleWaiting)
             {
-                _title.Play();
+                _titleWaiting = false;
+                _pause.OpenTitle(_titleHasSave, !_titleHasSave);
             }
         }
 
@@ -365,6 +374,7 @@ namespace MoonProject.UI
             }
 
             _pause.Tick(deltaTime);
+            _backdrop.Set(_pause.Openness);
             bool paused = _pause.IsOpen;
             float hudTime = paused ? 0f : deltaTime;
             _hud.Set(!paused);
@@ -377,9 +387,9 @@ namespace MoonProject.UI
 
             InputDeviceKind device = input.ActiveDevice;
             bool hopping = _services.Hop.Phase >= RadioHopPhase.Leaving || _hopFade.IsVisible;
-            _title.Tick(hudTime);
             _reticle.Tick(deltaTime, _services.Tether.State, input.TetherHeld);
-            _card.Tick(hudTime, _glyphs.Cancel(device), device, !_ticker.IsVisible && !hopping && !_hopList.IsBusy);
+            _card.Tick(hudTime, _glyphs.Cancel(device), device,
+                !_ticker.IsVisible && !hopping && !_hopList.IsBusy && !_placeCard.IsVisible && !_prompt.IsVisible);
             _tower.Tick(hudTime, !paused, input.ExcavateHeld, input.Winch,
                 _services.Tether.State == TetherAimState.Towing, _glyphs.For(RoverAction.Excavate, device), device);
             _kitTitle.Tick(hudTime);
@@ -399,16 +409,20 @@ namespace MoonProject.UI
                 _director.NotifyUsed(InteractionKind.Reel);
             }
 
-            bool promptsOpen = !paused && _awake && _sinceAwake >= _tuning.Prompts.StartDelay && !_title.IsPlaying &&
-                               !_card.IsVisible && !_tower.IsVisible && !_dial.IsBusy && !_hopList.IsBusy && !hopping;
             Rect panel = _layout.Root.layout;
             Vector2 panelSize = float.IsNaN(panel.width) ? Vector2.zero : panel.size;
             _friendReadout.Tick(deltaTime, !paused, panelSize,
                 _prompt.StackHeight(InteractionKind.Repair, _tuning.Friends.StackGap));
             _friendName.Tick(hudTime, panelSize);
-            _siteName.Tick(hudTime, panelSize);
+            _siteName.Tick(hudTime, panelSize, !_prompt.IsVisible && !_placeCard.IsVisible &&
+                                               !_lookUpChip.IsVisible && !_ticker.IsVisible && !_kitTitle.IsVisible);
+            // A standing prompt gives way to a waiting card or site name: those moments pass, the prompt returns.
+            bool promptsOpen = !paused && _awake && _sinceAwake >= _tuning.Prompts.StartDelay &&
+                               !_card.IsBusy && !_tower.IsVisible && !_dial.IsBusy && !_hopList.IsBusy && !hopping &&
+                               !_placeCard.IsVisible && !_placeCard.IsWaiting && !_siteName.IsVisible &&
+                               !_siteName.IsWaiting && !_lookUpChip.IsVisible && !_kitTitle.IsVisible;
             _prompt.Tick(deltaTime, promptsOpen, _services.Hints.Primary, device, panelSize);
-            bool tagOpen = !paused && _awake && !_title.IsPlaying && !_card.IsVisible && !_tower.IsVisible &&
+            bool tagOpen = !paused && _awake && !_card.IsVisible && !_tower.IsVisible &&
                            !_hopList.IsBusy && !hopping;
             _relayTag.Tick(deltaTime, tagOpen, panelSize,
                 _prompt.StackHeight(InteractionKind.Restore, _tuning.Relays.TagStackGap));
@@ -422,17 +436,21 @@ namespace MoonProject.UI
             _hopList.Tick(deltaTime, !_dial.IsVisible && !_prompt.IsVisible, _glyphs.For(RoverAction.Excavate, device),
                 device);
             _dial.Tick(hudTime, !_prompt.IsVisible && !_hopList.IsBusy);
-            bool tickerOpen = _awake && !_title.IsPlaying && !_card.IsBusy && !_digging && !cutting &&
+            bool tickerOpen = _awake && !_card.IsBusy && !_digging && !cutting &&
                               !_prompt.IsVisible && !_reticle.IsVisible && !_dial.IsBusy && !_hopList.IsBusy &&
-                              !hopping;
+                              !hopping && !_placeCard.IsVisible && !_siteName.IsVisible && !_lookUpChip.IsVisible &&
+                              !_kitTitle.IsVisible;
             _ticker.Tick(hudTime, tickerOpen);
             _hopFade.Tick(deltaTime);
             _lookUpHint.Tick(hudTime, !_placeCard.IsVisible && !_card.IsVisible && !_tower.IsVisible &&
-                                      !_kitTitle.IsVisible && !_dial.IsBusy && !_hopList.IsBusy);
+                                      !_kitTitle.IsVisible && !_dial.IsBusy && !_hopList.IsBusy &&
+                                      !_prompt.IsVisible && !_siteName.IsVisible && !_ticker.IsVisible);
             _lookUpChip.Tick(deltaTime, !paused && _lookUpHint.WantsShown, device);
             _nextStep.Tick(hudTime, _services.Rover.Speed, _player.Guidance);
-            _placeCard.Tick(hudTime, _awake && !_title.IsPlaying && !_kitTitle.IsVisible && !_card.IsVisible);
-            _nextLine.Tick(deltaTime, _nextStep, !paused && _awake && !_title.IsPlaying && !_card.IsVisible &&
+            _placeCard.Tick(hudTime, _awake && !_kitTitle.IsVisible && !_card.IsVisible &&
+                                     !_prompt.IsVisible && !_ticker.IsVisible && !_siteName.IsVisible &&
+                                     !_lookUpChip.IsVisible);
+            _nextLine.Tick(deltaTime, _nextStep, !paused && _awake && !_card.IsVisible &&
                                                  !_tower.IsVisible && !_stargaze.IsVeiled &&
                                                  !_placeCard.IsVisible);
         }
@@ -482,12 +500,27 @@ namespace MoonProject.UI
             _awake = true;
             if (_bound)
             {
-                _title.Play();
                 if (_journey.TryTake(_services.Save.LoadResult, out TickerLine line))
                 {
                     _tickerLines.Enqueue(line);
                 }
             }
+        }
+
+        /// <summary>
+        /// App put the title up: the menu opens as the title's, on the language step when there is no save yet (a first
+        /// boot: the player's language lives in the save).
+        /// </summary>
+        private void OnTitleShown(TitleShown shown)
+        {
+            if (_bound)
+            {
+                _pause.OpenTitle(shown.HasSave, !shown.HasSave);
+                return;
+            }
+
+            _titleWaiting = true;
+            _titleHasSave = shown.HasSave;
         }
 
         private void OnStargazingChanged(StargazingChanged changed)
@@ -701,6 +734,7 @@ namespace MoonProject.UI
 
                 _pause.RestoreTime();
                 _hopFade.Dispose();
+                _backdrop.Dispose();
             }
 
             _services.Input.Menu.Disable();

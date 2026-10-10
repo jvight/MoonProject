@@ -123,6 +123,18 @@ MonoBehaviour:
     _lift: -13
     _pullBack: 0.65
     _maxFocusDistance: 40
+  _ladderMoment:
+    _easeIn: 1.6
+    _hold: 0.8
+    _easeOut: 2
+    _lookShare: 0.35
+    _yawShare: 0.6
+    _maxLookShift: 2.5
+    _minYawSwing: 20
+    _maxYawSwing: 50
+    _lift: -12
+    _pullBack: 0.35
+    _maxFocusDistance: 30
   _bayMoment:
     _easeIn: 1.4
     _hold: 0
@@ -217,6 +229,76 @@ MonoBehaviour:
     _breathElevationPeriod: 23
     _breathDistance: 0.04
     _breathDistancePeriod: 29
+  _lookoutShot:
+    _delay: 9
+    _openSeconds: 9
+    _handBackSeconds: 1.6
+    _cardQuietSeconds: 14
+    _interactionQuietSeconds: 8
+    _distance: 28
+    _elevation: 30
+    _screenY: 0.3
+    _fovWiden: 6
+    _yawShare: 0.85
+    _maxYawSwing: 40
+    _maxSubjectAngle: 110
+    _earthPreference: 15
+    _skylineRadius: 20
+    _skylineSamples: 12
+    _openSkyline: 6
+    _shutInSkyline: 25
+    _shutInDistance: 11
+    _shutInElevation: 5
+    _shutInScreenY: 0.28
+    _clearance: 1.5
+    _sightClearance: 0.6
+    _terrainSamples: 16
+    _maxElevation: 30
+    _minDistance: 11
+    _distanceSteps: 8
+    _breathYaw: 1.6
+    _breathYawPeriod: 37
+    _breathElevation: 0.7
+    _breathElevationPeriod: 23
+    _breathDistance: 0.04
+    _breathDistancePeriod: 29
+  _lookoutSide: 0
+  _eveningShot:
+    _delay: 9
+    _openSeconds: 4
+    _handBackSeconds: 3
+    _cardQuietSeconds: 14
+    _interactionQuietSeconds: 8
+    _distance: 17
+    _elevation: 8
+    _screenY: 0.26
+    _fovWiden: 6
+    _yawShare: 0.85
+    _maxYawSwing: 40
+    _maxSubjectAngle: 110
+    _earthPreference: 15
+    _skylineRadius: 20
+    _skylineSamples: 12
+    _openSkyline: 6
+    _shutInSkyline: 25
+    _shutInDistance: 11
+    _shutInElevation: 5
+    _shutInScreenY: 0.28
+    _clearance: 1.5
+    _sightClearance: 0.6
+    _terrainSamples: 16
+    _maxElevation: 30
+    _minDistance: 11
+    _distanceSteps: 8
+    _breathYaw: 1.6
+    _breathYawPeriod: 37
+    _breathElevation: 0.7
+    _breathElevationPeriod: 23
+    _breathDistance: 0.04
+    _breathDistancePeriod: 29
+  _heldShotClearance: 0.5
+  _heldShotYawStep: 25
+  _eveningHoldSeconds: 11
   _positionDamping: {x: 1.1, y: 0.9, z: 1.3}
   _yawDamping: 1.8
   _aimDamping: {x: 0.6, y: 0.5}

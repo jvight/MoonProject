@@ -1,0 +1,15 @@
+{
+  "width": 1600,
+  "height": 900,
+  "titleSeconds": 3.0,
+  "homeSettleSeconds": 11.2,
+  "frames": [
+    {"name": "title", "kind": "title"},
+    {"name": "owner", "kind": "view"},
+    {"name": "base_from_150m", "kind": "fixed", "position": [56.19, 5.2, -139.08], "lookAt": [0, 2.5, 0], "fov": 50},
+    {"name": "canyon_drive", "kind": "fromBase", "anchor": "canyon.lip", "eyeHeight": 3, "lookHeight": 2, "fov": 0},
+    {"name": "depot_cut", "kind": "fromAnchor", "anchor": "site.depot", "eyeOffset": 9, "eyeHeight": 3.5,
+     "lookHeight": 1, "fov": 0},
+    {"name": "lift_lookout", "kind": "fixed", "position": [3, 4.6, 0], "lookAt": [200, 3, 0], "fov": 70}
+  ]
+}

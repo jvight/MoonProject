@@ -136,6 +136,45 @@ namespace MoonProject.World
         [Range(0f, 1f)]
         [SerializeField] private float _scorchMottle = 0.25f;
 
+        [Header("Base pad")]
+        [Tooltip("Width (metres) of the soft band where the base pad's compacted regolith meets the open dust.")]
+        [Range(1f, 30f)]
+        [SerializeField] private float _padEdge = 8f;
+
+        [Tooltip("How far the pad's regolith sits from the mid dust toward the shadow dust (0..1): compacted by " +
+            "years of 07's wheels, a little darker than the open floor.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _padDarken = 0.4f;
+
+        [Tooltip("How much the pad's large patches move its tone either way (0..1 of the mid-to-shadow range).")]
+        [Range(0f, 0.5f)]
+        [SerializeField] private float _padMottle = 0.3f;
+
+        [Tooltip("Size of the pad's patches, metres: two to four across the pad, never a single facet.")]
+        [Range(5f, 80f)]
+        [SerializeField] private float _padPatchWavelength = 20f;
+
+        [Header("Dust value")]
+        [Tooltip("How far every dust tone leans toward the shadow dust (0..1): ~0.2 makes the lit dust about a tenth " +
+            "darker, so it reads as grey regolith, not snow.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _dustDarken = 0.2f;
+
+        [Header("Rim value")]
+        [Tooltip("How far the rim's rock face leans from its swatch toward charcoal (0..1): ~0.45 is about a quarter " +
+            "darker, so the rim steps back behind the near ground instead of standing as the brightest wall in frame.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _rimFaceShade = 0.45f;
+
+        [Tooltip("Rim zone (0 = floor, 1 = crest) where the crest's lit edge begins: rock above it keeps its full " +
+            "value.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _crestZone = 0.88f;
+
+        [Tooltip("Half-width (in rim zone) of the soft band between the darker face and the lit crest.")]
+        [Range(0.01f, 0.3f)]
+        [SerializeField] private float _crestBlend = 0.05f;
+
         public float RockSlope => _rockSlope;
         public float RimRockSlope => _rimRockSlope;
         public float RimZoneStart => _rimZoneStart;
@@ -165,5 +204,13 @@ namespace MoonProject.World
         public float ScorchShade => _scorchShade;
         public float ScorchCharcoal => _scorchCharcoal;
         public float ScorchMottle => _scorchMottle;
+        public float DustDarken => _dustDarken;
+        public float PadEdge => _padEdge;
+        public float PadDarken => _padDarken;
+        public float PadMottle => _padMottle;
+        public float PadPatchWavelength => _padPatchWavelength;
+        public float RimFaceShade => _rimFaceShade;
+        public float CrestZone => _crestZone;
+        public float CrestBlend => _crestBlend;
     }
 }

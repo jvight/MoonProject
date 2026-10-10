@@ -56,6 +56,35 @@ namespace MoonProject.Gameplay
         [Tooltip("The kit fitted in the bay first (step 5); its blueprint is pinned on Kenji's board from the start.")]
         [SerializeField] private string _firstKit = "rover.hover_jump";
 
+        [Header("The chasm before the bay (P2)")]
+        [Tooltip("07 has looked across the chasm once it comes this many metres (horizontal) from the lip without " +
+                 "Hover-Jump.")]
+        [Range(3f, 60f)] [SerializeField] private float _chasmLookRadius = 14f;
+
+        [Tooltip("Seconds 07 holds still and looks across at Bell's light.")]
+        [Range(1f, 10f)] [SerializeField] private float _chasmLookSeconds = 3.5f;
+
+        [Tooltip("Brightness of Bell's warm pillar when Tilly spots it and when it pulses as 07 looks across.")]
+        [Range(0.1f, 2f)] [SerializeField] private float _bellLightBrightness = 0.8f;
+
+        [Header("The dock's evening (P6)")]
+        [Tooltip("Seconds docked after the evening opens (Rover's wide shot settling) before the tower's listening " +
+                 "sweep raises the next signal pillar.")]
+        [Range(0.5f, 15f)] [SerializeField] private float _eveningSweepDelay = 4.5f;
+
+        [Tooltip("Brightness of the pillar the evening's sweep raises on the horizon.")]
+        [Range(0.1f, 2f)] [SerializeField] private float _eveningPillarBrightness = 0.7f;
+
+        [Header("The masts' letters (radio-letters text)")]
+        [Tooltip("The first this many lit masts play one letter each (the relay's official messages)...")]
+        [Range(0, 12)] [SerializeField] private int _singleLetterMasts = 4;
+
+        [Tooltip("...and every later mast plays this many (Ro's own letters).")]
+        [Range(1, 4)] [SerializeField] private int _lettersAfter = 2;
+
+        [Tooltip("Letters there are to play, letter.mast_1 to letter.mast_n.")]
+        [Range(0, 40)] [SerializeField] private int _letterCount = 10;
+
         [Header("Blueprints")]
         [Tooltip("Where the other kits' blueprint tubes lie: each in a salvage site's heart, found with its relic.")]
         [SerializeField] private BlueprintTube[] _tubes =
@@ -64,6 +93,26 @@ namespace MoonProject.Gameplay
             new BlueprintTube("rover.warm_headlamp", "site.kestrel"),
             new BlueprintTube("rover.boost_coils", "site.drill"),
         };
+
+        [Header("The tower's story parts (P1)")]
+        [Tooltip("One part per tower level, needed besides materials: the coil in the depot's heart (L1), the " +
+                 "transformer in the garage's heart (L2), the relay spare at the first restored mast (L3).")]
+        [SerializeField] private TowerPart[] _towerParts =
+        {
+            new TowerPart("Part_TowerCoil", 1, TowerPartSource.SiteHeart, "site.depot", Vector2.zero),
+            new TowerPart("Part_Transformer", 2, TowerPartSource.SiteHeart, "site.garage", new Vector2(0f, 1.3f),
+                true),
+            new TowerPart("Part_RelaySpare", 3, TowerPartSource.FirstRestoredMast, string.Empty, Vector2.zero),
+        };
+
+        [Tooltip("Seconds a story part takes to ease into view once it is there to be found.")]
+        [Range(0.1f, 4f)] [SerializeField] private float _partAppearSeconds = 1.2f;
+
+        [Tooltip("Seconds a story part glides from 07's back into the tower's port hopper.")]
+        [Range(0.3f, 5f)] [SerializeField] private float _partFeedSeconds = 1.6f;
+
+        [Tooltip("Height (m) of the arc a story part glides along into the hopper.")]
+        [Range(0f, 3f)] [SerializeField] private float _partFeedArc = 0.8f;
 
         [Header("Kenji's pen plotter (P7)")]
         [Tooltip("07 hands a blueprint tube to the plotter within this many metres (horizontal) of it.")]
@@ -82,6 +131,22 @@ namespace MoonProject.Gameplay
         [Range(0.05f, 3f)] [SerializeField] private float _plotterLampEase = 0.4f;
 
         public float WakeDistance => _wakeDistance;
+
+        public float ChasmLookRadius => _chasmLookRadius;
+
+        public float ChasmLookSeconds => _chasmLookSeconds;
+
+        public float BellLightBrightness => _bellLightBrightness;
+
+        public float EveningSweepDelay => _eveningSweepDelay;
+
+        public int SingleLetterMasts => _singleLetterMasts;
+
+        public int LettersAfter => _lettersAfter;
+
+        public int LetterCount => _letterCount;
+
+        public float EveningPillarBrightness => _eveningPillarBrightness;
 
         public float PlotterReach => _plotterReach;
 
@@ -102,6 +167,14 @@ namespace MoonProject.Gameplay
         public string FirstKit => _firstKit;
 
         public IReadOnlyList<BlueprintTube> Tubes => _tubes;
+
+        public IReadOnlyList<TowerPart> TowerParts => _towerParts;
+
+        public float PartAppearSeconds => _partAppearSeconds;
+
+        public float PartFeedSeconds => _partFeedSeconds;
+
+        public float PartFeedArc => _partFeedArc;
 
         /// <summary>The first-approach radius of the place <paramref name="placeId"/>.</summary>
         public float RadiusOf(string placeId)

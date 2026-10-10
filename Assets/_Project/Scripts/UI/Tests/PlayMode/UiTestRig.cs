@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
 using MoonProject.App;
+using MoonProject.Core.Save;
 using MoonProject.Gameplay;
 using MoonProject.Testing;
 using Object = UnityEngine.Object;
@@ -205,6 +207,18 @@ namespace MoonProject.UI.PlayModeTests
 #endif
         }
 
+        /// <summary>
+        /// Deletes a test slot's save and its settings file (the harness knows the save; the settings file is the
+        /// UI's, beside it).
+        /// </summary>
+        public static void DeleteSlotFiles(string slot)
+        {
+            BootstrapHarness.DeleteSaveFiles(slot);
+            var settings = new SettingsFile(SaveService.DefaultDirectory, slot);
+            File.Delete(settings.FilePath);
+            File.Delete(settings.BackupPath);
+        }
+
         public void Dispose()
         {
             Object.DestroyImmediate(_ui);
@@ -237,10 +251,10 @@ namespace MoonProject.UI.PlayModeTests
             UiTuning tuning = Object.Instantiate(Load<UiTuning>(TuningPath));
             tuning.Prompts.AddMissingDefaults();
             var serialized = new SerializedObject(tuning);
-            serialized.FindProperty("_title._delay").floatValue = 0f;
-            serialized.FindProperty("_title._hold").floatValue = 0.1f;
             serialized.FindProperty("_title._reveal._fadeIn").floatValue = 0.1f;
             serialized.FindProperty("_title._reveal._fadeOut").floatValue = 0.1f;
+            serialized.FindProperty("_title._curtain._fadeIn").floatValue = 0.1f;
+            serialized.FindProperty("_title._curtain._fadeOut").floatValue = 0.1f;
             serialized.FindProperty("_prompts._startDelay").floatValue = 0f;
             serialized.FindProperty("_memoryCard._appearDelay").floatValue = 0.1f;
             serialized.FindProperty("_memoryCard._reveal._fadeIn").floatValue = 0.2f;

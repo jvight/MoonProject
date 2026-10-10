@@ -4,7 +4,75 @@ Read this, then `CLAUDE.md`, then `docs/VISION.md`, `docs/DESIGN.md`, `docs/ARCH
 It records how the project is run, where it stands, and what comes next, so a new Director session (on any
 account) can continue without the old conversation.
 
-## 0. FINAL STATE when the old account hit its limit (2026-10-10 ~23:58)
+## 0. Current state on the new account (2026-10-11 ~00:50)
+- **main 85bb390f.** It holds:
+  - every box tip from the old account (merge 029b4807);
+  - world's scene-build fix (1db8604b). HomeLightingSystem made its MaterialPropertyBlock in a field initializer,
+    which Unity refuses inside a MonoBehaviour constructor, so Main.unity could not be built;
+  - the outputs and the tuning written out (505ac8b4, 0fdefef4);
+  - the Core contracts BlueprintsCarriedRestored and DockEveningOpened (85bb390f).
+
+  `verify --parallel --push` was started on 85bb390f.
+- **The cut-off sessions' uncommitted edits are still in their worktrees.** New sessions start by finishing or
+  discarding them. They were offered as chips: gameplay, rover (the lift slice), art and ui.
+  - gameplay owns Rover/Rig/TubeCarry.cs for P1 and for the tube after a load.
+  - Audio and world have no session:
+    - audio waits for gameplay's DockEveningOpened (it wires dock_evening_swell);
+    - the Director re-runs world's wake capture.
+- **verify on 85bb390f.**
+  - EditMode passed. PlayMode failed 50 of 251:
+    - 49 of them are in Rover and share one root cause: TestRover.Spawn does not wire RoverKit's BlueprintTube (from
+      0579f46b). Rover was asked to fix it first.
+    - One is in gameplay: BaseAndSaveSessions.Deposit_TowedRelic…; gameplay was asked.
+  - Nothing was pushed.
+- **MILESTONE, main 8b4c0e51 (~03:20):** the golden-path Playthrough follows M3-16 steps 0–8 end to end, the lift
+  included, in 1241 s (budget 1340 s). 0.5's core acceptance is met.
+  - Blockers before a verified push:
+    - LiftSession: the deck ignores drive input after ~7 s at rest (rover);
+    - NewGameSession must boot with the title on (gameplay);
+    - the shared input harness against focus resets (tools).
+  - Then run `verify --parallel --push`.
+  - Still to build in 0.5:
+    - art's M3-18 half (shader rim, vertex AO, skirts, V8, the L1/L2/L4/L7 meshes, PartSocket);
+    - the opening slice (chip offered);
+    - M3-07 the map slice (chip offered);
+    - M3-09 Part B, the collections;
+    - audio's queue;
+    - the layout pass (L3, L8, L9, V5).
+- **verify on 85bb390f, final result:**
+  - Playthrough PASS: the golden path still runs end to end with the garage fix and every tip.
+  - PlayMode FAIL, only from the rover rig.
+- **M3-18 look baseline** (main 094c35e3, `tools/look_report.py capture`):
+  - the p5–p95 spread is 0.23–0.28 on all six frames (target ≥ 0.40);
+  - ground flatness is 0.21–0.62 (target ≤ 0.30).
+- **Sessions running (2026-10-11 ~01:10).**
+  - Build boxes: gameplay (P2, P6, P9, Playthrough 0–8), rover (rig fix, carried part, the lift slice, motes), art
+    (lift props, then M3-18), ui (voice, V11, NeedsPart), world (M3-18), tools (lint and box_check landed; land
+    --batch and the look set next), opening (slice, cutscenes §1; chip offered).
+  - Design: game design (done; waits for the end-to-end first-hour review) and story & flow (game-flow.md, then
+    amendments to the M3-07 and M3-09 drafts).
+  - Every box runs `tools/box_check.py <box>` before it reports.
+- **Text from story & flow, ready to port** (`docs/design/text/`: crew-logs, radio-letters, crew-map,
+  title-and-collections):
+  - ui ports it into the tables and checks that Be Vietnam Pro has ♪ and ✓;
+  - gameplay (after its Playthrough item) places the 3 new log caches (garage, drill, supply lander) and
+    releases the letters, one per mast for the first 4 masts, then 2;
+  - world registers region.peak and region.terraces with M3-07's MapSheet;
+  - the owner's native read of the Vietnamese is welcome.
+- **Audio has no session; its queue:** dock_evening_swell on DockEveningOpened; cues for StoryPartFound and
+  StoryPartDelivered; the lint renames SignalField and FakeRoverSystem (gameplay renames its copies instead).
+- **Lint duplicate-type fixes still to assign** (report-only in tools/lint.py until the list is empty; give each box
+  its line at its next report):
+  - rover: LiftCue (in queue), RoverBayTests and RoverKitTests vs art, StargazeTests vs ui;
+  - art: SalvageMaterial (Core vs Art.Editor);
+  - audio/gameplay: SignalField, FakeRoverSystem;
+  - ui/world: RelaySettings;
+  - gameplay/ui: MotionTests;
+  - ui: FriendUiTests (EditMode vs PlayMode).
+- **Tokens.** The cap for 2026-10-11 is 25% of the weekly limit (the week resets at 02:00 local). A cron guard runs
+  every 10 min.
+
+## 0a. FINAL STATE when the old account hit its limit (2026-10-10 ~23:58)
 - **main e8066680** holds the 0.5 first batch and docs. It is NOT verified and NOT pushed (origin is at 370bfc9c, 53
   commits behind). Push only after `director.py verify --push` passes; try `--parallel`.
 - **Box tips and uncommitted work.** The sessions were stopped mid-turn, so worktrees can hold uncommitted, unfinished
@@ -127,12 +195,9 @@ account) can continue without the old conversation.
   - also in 0.5: M3-07 map and M3-09 title.
 
 ## 2. What comes next (owner-approved order)
-1. **0.4.2:** M3-15 §3 "rust v3", art only (`docs/features/M3-15-logic-pass.md`).
-   - Runs start only at a cause (rivet, seam, bolt), few per panel, with random length, spacing and width.
-   - Brown fading out; irregular patchwork.
-   - Weather Bell, the tape rack, the depot panels and the Kestrel capsule too.
-   - Acceptance: a test that no two adjacent runs share length and spacing, plus chase-camera captures.
-2. **0.5 "Căn cứ thức dậy":** the core is **M3-16** (`docs/features/M3-16-waking-lumen.md`), approved 2026-10-09:
+1. **0.4.2, DONE:** M3-15 §3 "rust v3" shipped as 5a293e84 (see §1). Its captures are in
+   `MoonProject-wt/art/Logs/captures/rust-0.4.2/`.
+2. **0.5 "Căn cứ thức dậy" (in progress):** the core is **M3-16** (`docs/features/M3-16-waking-lumen.md`), approved 2026-10-09:
    - a fresh game opens fully dark (only the dock and 07's eye are lit);
    - tower levels return power: L1 home, L2 Kenji's Rover Bay, L3 the crew's lift;
    - one verb per step, and every place has one job shown in one line;
@@ -154,35 +219,64 @@ account) can continue without the old conversation.
   - edit only their own domain folder;
   - never merge into main, never push, never commit `.meta` files.
   Authorised cross-domain edits (a Core event, a test seed) are named in the task and listed in the report.
-- **Reports.** A box reports to the Director with `send_message`: tip SHA, compile_check, the targeted tests and
-  captures it ran (paths), tuning fields added or changed, new scripts needing metas, limitations.
+- **Before reporting, a box runs `python tools/box_check.py <box>`** in its worktree, on a trial merge of main
+  (aborted at the end; the tip must be committed). It runs:
+  - compile_check (with lint);
+  - the box's builders and the Main Scene build in one headless Unity;
+  - the box's EditMode assembly, then its PlayMode assembly.
+
+  Options: `--fast` skips PlayMode for quick iterations; `--filter` / `--assembly` / `--platform playmode` run
+  other tests instead; `--no-merge` tests the working tree as it is.
+
+  It then restores Generated/ and Main.unity and moves the batch-made metas to `Logs/box_check/`. Last, it appends
+  a PASS/FAIL block to `MoonProject-wt/.board/<box>.md`, which `director.py status` prints.
+- **Reports.** A box reports to the Director with `send_message`: tip SHA, its box_check block, the targeted tests
+  and captures it ran (paths), tuning fields added or changed, new scripts needing metas, limitations.
 - **Tests.** Boxes run only the tests and captures that cover their change (`--filter`, `--assembly`,
-  `--category`). The full PlayMode suite and the Playthrough are the Director's, on the merged main.
+  `--category`). The full PlayMode suite and the Playthrough are the Director's, on the merged main. A box that
+  changes the look also runs `python tools/look_report.py capture` before and after (M3-18).
 - **Director loop for each report:**
   1. Review the diff: `git diff main box/<box>`.
-  2. `python tools/director.py land <box> [<box>...] -m "merge: ..." -m "Co-Authored-By: ..."`. It merges with a
-     compile_check gate (and aborts on failure). Then it hot-reloads the main editor: refresh, the box's builders,
-     Main.unity.
-  3. Reset or write the tuning assets the merge touched (§5).
-  4. `python tools/director.py outputs -m "build: ..." -m "Co-Authored-By: ..."` commits the regenerated assets and
-     metas.
-  5. When a version's work is all landed, run `python tools/director.py verify --push`. It runs compile_check,
+  2. `python tools/director.py land --batch <box> [<box>...] -m "merge: ..." -m "Co-Authored-By: ..."`, the
+     default. The merge, compile_check, the boxes' builders and the Main Scene build all run in
+     `MoonProject-wt/director` (unity_batch exec, which also writes the new scripts' metas). Only if everything
+     passes does it commit the merge and a "build: outputs and metas" commit there and fast-forward main. On any
+     failure main is untouched. No main editor is needed; `--dry-run` stops before main.
+     - The old path still works: `land <box>` merges in the main checkout with a compile_check gate, then
+       hot-reloads the open main editor (refresh, the box's builders, Main.unity). Then run `outputs -m ...` to
+       commit the regenerated assets and metas.
+  3. Reset or write the tuning assets the merge touched (§5); land prints a NOTE for each touched schema.
+  4. When a version's work is all landed, run `python tools/director.py verify --push`. It runs compile_check,
      EditMode, PlayMode and the Playthrough in `D:/Project/MoonProject-wt/director` and pushes only a commit that
-     passed all four. Run it in the background (~1 h); it costs almost no tokens.
-  6. Build: `cd D:/Project/MoonProject-wt/director && python tools/build_player.py`. Then copy the zip to
+     passed all of them.
+     - PlayMode is sharded by test assembly across `director`, `director2` and the spare `landtest` worktree,
+       balanced on the last run's assembly times (`--shards N`; 1 = one Unity).
+     - `--parallel` moves the Playthrough to `director2` alongside them.
+     - verify and land --batch lock the worktrees they use (`Logs/director.lock`).
+     - Run it in the background; it costs almost no tokens.
+  5. Build: `cd D:/Project/MoonProject-wt/director && python tools/build_player.py`. Then copy the zip to
      `D:/Project/MoonProject/Builds/` and give the owner the path.
 - **Feature specs** go in `docs/features/M?-??-*.md`, written by the Director before assigning work. The ROADMAP
   version table and task rows are updated as work lands. The ROADMAP is in Vietnamese; the other docs are in English.
 
 ## 4. Tools and environment
 - **Unity:** 6000.0.78f1 at `C:/Program Files/Unity/Hub/Editor/6000.0.78f1/Editor/Unity.exe`, URP.
-  - The main project `D:/Project/MoonProject` must be open in the editor for `land` and `refresh`; the owner opens it
-    from the Hub.
+  - The main project `D:/Project/MoonProject` needs to be open in the editor only for the old `land` path and
+    `refresh`; `land --batch` does not need it. The owner opens it from the Hub.
   - Its MCP server (ai-game-developer) listens on `localhost:25906`. If native MCP tools fail, use
     `python tools/unity_mcp.py call <tool> '<json>'` or `@file.json`.
   - Keep the Profiler's Record off in the main editor.
-- **`python tools/director.py status`:** every box against main, unpushed commits, batch slots, editor idle or busy.
+- **`python tools/director.py status`:** every box against main, unpushed commits, batch slots, editor idle or busy,
+  and the last block of each board in `MoonProject-wt/.board/`.
 - **`python tools/compile_check.py`:** must print `RESULT: PASS` before every commit.
+  - It runs `tools/lint.py` first: the CLAUDE.md debt rules plus Unity pitfalls. One example is a Unity object
+    made in a MonoBehaviour field initializer.
+  - `python tools/lint.py` lists every finding with its owning box. Rules that main still breaks are report-only
+    until the owning boxes have fixed them.
+- **`python tools/box_check.py <box>`:** a box's gate before it reports (§3).
+- **`python tools/look_report.py capture|report|diff`:** the fixed look capture set (M3-18). It writes PNGs under
+  `Logs/look-captures/<stamp>/` and measures each frame: luminance spread, ground flatness and the brightest 1%.
+- **Tool tests:** `python -m unittest discover -s tools/tests -t tools`.
 - **`python tools/unity_batch.py tests|exec|status`:** headless Unity on a worktree. At most three run machine-wide
   (`MOON_BATCH_SLOTS`, default 3 since 2026-10-10; drop to 2 if RAM runs short); PlayMode defaults to a 2400 s timeout.
   - Playthrough: `--category Playthrough --timeout 2700`.
@@ -200,6 +294,9 @@ account) can continue without the old conversation.
     older saves are moved to `<slot>.old-<stamp>.json`, never deleted.
   - Tests seed saves with `"contentVersion":"0.4.1"`.
   - Each test process uses its own slot (`BootstrapHarness.ProcessSlot`).
+- **Title in tests:** the game boots into the title (the scene builder sets `_showTitle`). Every editor test run
+  boots straight into play instead (`Editor/Automation/TestRunTitleSkip`), so fixtures need nothing. A test of the
+  title clears `GameBootstrap.TestRunSkipsTitleKey` for its own boot (see `TitleFlowSessionTests`).
 
 ## 5. Recipes the Director needs
 - **Write new tuning fields into an asset.** When the merge only added fields, use script-execute with a C# body that
@@ -263,6 +360,11 @@ sidebar group and title it "MoonProject · <box>". Its prompt must stand alone:
   Changed defaults never reach an existing asset by themselves.
 - **Metas.** Workers' batch-made metas are deleted. The main editor generates the real ones, which `outputs`
   commits.
+- **Queued messages can be lost** (2026-10-11: ui's (a)–(c) and rover's rig fix never arrived).
+  - Check that a critical message arrived with list_events.
+  - Restate open items in the next message after each land, and ask for a one-line acknowledgement.
+- **Reset tuning before you rebuild the scene.** Run ResetSettings or the re-serialise first, then `refresh
+  --scene`, so the scene wires what the new settings declare (e.g. home lighting's pools).
 - **Read captures yourself.** Judge feel and visuals on the captures, not on the numbers alone. The owner judges the
   game by screenshots.
 
@@ -287,7 +389,7 @@ Diagnosis:
   - verification ~45–60 min, serial;
   - a flaky test forces a full re-run;
   - sessions wait on each other's answers;
-  - every land needs the Director's turn and the open main editor.
+  - every land needs the Director's turn (it no longer needs the open main editor).
 
 Do first on the new account:
 1. **`director.py verify --parallel` (built, NOT yet exercised).** It runs the Playthrough in a second worktree
@@ -308,15 +410,15 @@ Do first on the new account:
    - A vertical feature (e.g. the lift: art + gameplay + audio + ui) goes to ONE session allowed in those folders.
    - Per-domain boxes stay for domain-wide work.
    - This removes most hand-offs and waiting.
-6. **Land without the main editor.**
-   - Build `director.py land --batch`: merge in the verification worktree, run the builders there with
-     `unity_batch exec`, which also generates the metas, and commit the outputs from there.
-   - The main editor is then only for the owner's viewing; nobody has to keep Unity open.
+6. **Land without the main editor (built 2026-10-11).** `director.py land --batch` (§3). The main editor is now
+   only for the owner's viewing; nobody has to keep Unity open.
 7. **Faster, steadier tests.**
    - Fix the flaky tether test (it should wait on state, not time).
-   - Shard PlayMode by assembly across the two slots.
+   - Shard PlayMode by assembly (built 2026-10-11): `verify` runs one Unity per shard worktree, so the suite takes
+     the longest shard's time instead of the sum. First trial: two shards of 779 s and 713 s ran side by side
+     (1492 s summed). Two Unitys at once slow each other, so balance on the shard times of real runs.
    - Split the Playthrough into chapters that start from seeded saves, so a late failure re-runs one chapter, not
      15 minutes.
-8. **Reports as files, not messages.** Sessions append a status block to `MoonProject-wt/.board/<box>.md` at each
-   milestone, and `director.py status` prints the board. The Director reads one board per turn instead of being woken
+8. **Reports as files, not messages (built 2026-10-11).** `box_check.py` appends a status block to
+   `MoonProject-wt/.board/<box>.md`, and `director.py status` prints the last block of each board. The Director reads one board per turn instead of being woken
    by every message.
