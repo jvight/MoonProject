@@ -309,6 +309,13 @@ namespace MoonProject.Rover.PlayModeTests
             float target = LookUpElevation;
             float before = _cameraRig.Orbit.Elevation;
             Set(_gamepad.rightStick, new Vector2(0f, LookStick));
+            float arrive = Time.time + LookTimeout;
+            while (_context.Input.LookRate.sqrMagnitude <= 0f)
+            {
+                Assert.Less(Time.time, arrive, "The stick reaches 07's look input. " + InputState());
+                yield return null;
+            }
+
             float probe = Time.time + ProbeSeconds;
             while (Mathf.Abs(_cameraRig.Orbit.Elevation - before) < ProbeTurn && Time.time < probe)
             {
@@ -440,6 +447,36 @@ namespace MoonProject.Rover.PlayModeTests
             }
 
             return null;
+        }
+
+        /// <summary>The input system as the look step sees it, for a failure message.</summary>
+        private string InputState()
+        {
+            var state = new StringBuilder();
+            state.Append("stick ").Append(_gamepad.rightStick.ReadValue()).Append(" gamepad added ")
+                .Append(_gamepad.added).Append(" enabled ").Append(_gamepad.enabled).Append(" devices");
+            foreach (InputDevice device in InputSystem.devices)
+            {
+                state.Append(' ').Append(device.name).Append(device.enabled ? "+" : "-");
+            }
+
+            state.Append("; reader enabled ").Append(_context.Input.Enabled).Append(", enabled LookRate controls:");
+            foreach (InputAction action in InputSystem.ListEnabledActions())
+            {
+                if (action.name != "LookRate")
+                {
+                    continue;
+                }
+
+                foreach (InputControl control in action.controls)
+                {
+                    state.Append(' ').Append(control.path);
+                }
+            }
+
+            state.Append("; update ").Append(InputSystem.settings.updateMode).Append(", timeScale ")
+                .Append(Time.timeScale).Append(", focused ").Append(Application.isFocused);
+            return state.ToString();
         }
 
         private static IEnumerator Wait(float seconds)
