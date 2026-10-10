@@ -132,7 +132,7 @@
         },
         {
             "key": "place.dock.name",
-            "text": "Trạm sạc"
+            "text": "Đế sạc"
         },
         {
             "key": "place.dock.job",
@@ -312,11 +312,11 @@
         },
         {
             "key": "upgrade.radio_tower.3.title",
-            "text": "Thắp sáng cả lòng chảo"
+            "text": "Thắp sáng cả lòng hố"
         },
         {
             "key": "upgrade.radio_tower.3.effect",
-            "text": "Tháp ngân nga khắp lòng chảo, đánh thức thang nâng; căn nhà rực sáng như chiếc đèn lồng."
+            "text": "Tháp ngân nga khắp lòng hố, đánh thức thang nâng; căn nhà rực sáng như chiếc đèn lồng."
         },
         {
             "key": "upgrade.rover.hover_jump.name",
