@@ -46,6 +46,7 @@ namespace MoonProject.UI
         private PromptLedger _ledger;
         private PromptDirector _director;
         private PlayerSettings _player;
+        private SettingsStore _settings;
         private CursorPolicy _cursor;
         private GlyphLabels _glyphs;
         private IntText _numbers;
@@ -221,9 +222,11 @@ namespace MoonProject.UI
             _glyphs = new GlyphLabels(services.Input, _localization);
             _tickerLines = new TickerQueue(_tuning.Ticker, new TickerText(_localization));
 
+            _settings = new SettingsStore(_player, services.Settings);
+            _settings.Load();
             ISaveService save = services.Save;
             _tokens.Add(save.Register(new SaveSection<SettingsSaveData>(UiSaveKeys.Settings,
-                UiSaveKeys.SettingsVersion, _player.Capture, _player.Restore)));
+                UiSaveKeys.SettingsVersion, _player.Capture, _settings.Migrate)));
             _tokens.Add(save.Register(new SaveSection<PromptsSaveData>(UiSaveKeys.Prompts,
                 UiSaveKeys.PromptsVersion, _ledger.Capture, _ledger.Restore)));
 
@@ -324,7 +327,7 @@ namespace MoonProject.UI
                 services.Board, services.Materials, services.Hints, _numbers);
             _kitTitle = new KitTitle(_layout, _tuning.KitTitle, _localization);
             _pause = new PauseMenu(_layout, _tuning.Pause, _tuning.Title, _player, _localization, services.Input,
-                services.Events, services.Save, services.Materials, services.Radio, services.Relays, services.Flow,
+                services.Events, _settings, services.Materials, services.Radio, services.Relays, services.Flow,
                 _numbers, _cursor, Quit);
             _backdrop = new BackdropBlur(transform, _tuning.Backdrop);
             _bound = true;

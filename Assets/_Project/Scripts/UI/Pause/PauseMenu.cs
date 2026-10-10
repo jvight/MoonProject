@@ -4,7 +4,6 @@ using UnityEngine.UIElements;
 using MoonProject.Core;
 using MoonProject.Core.Events;
 using MoonProject.Core.Input;
-using MoonProject.Core.Save;
 using MoonProject.Gameplay;
 
 namespace MoonProject.UI
@@ -39,7 +38,7 @@ namespace MoonProject.UI
         private readonly ILocalization _localization;
         private readonly InputReader _input;
         private readonly EventBus _events;
-        private readonly ISaveService _save;
+        private readonly SettingsStore _settingsStore;
         private readonly IMaterialStock _materials;
         private readonly IRadioProgram _radio;
         private readonly IRelayStatus _relays;
@@ -70,7 +69,8 @@ namespace MoonProject.UI
         private bool _resting;
 
         public PauseMenu(UiLayout layout, PauseSettings settings, TitleSettings title, PlayerSettings player,
-            ILocalization localization, InputReader input, EventBus events, ISaveService save, IMaterialStock materials,
+            ILocalization localization, InputReader input, EventBus events, SettingsStore settingsStore,
+            IMaterialStock materials,
             IRadioProgram radio, IRelayStatus relays, IGameFlow flow, IntText numbers, CursorPolicy cursor, Action quit)
         {
             _layout = layout ?? throw new ArgumentNullException(nameof(layout));
@@ -80,7 +80,7 @@ namespace MoonProject.UI
             _localization = localization ?? throw new ArgumentNullException(nameof(localization));
             _input = input ?? throw new ArgumentNullException(nameof(input));
             _events = events ?? throw new ArgumentNullException(nameof(events));
-            _save = save ?? throw new ArgumentNullException(nameof(save));
+            _settingsStore = settingsStore ?? throw new ArgumentNullException(nameof(settingsStore));
             _materials = materials ?? throw new ArgumentNullException(nameof(materials));
             _radio = radio ?? throw new ArgumentNullException(nameof(radio));
             _relays = relays ?? throw new ArgumentNullException(nameof(relays));
@@ -506,10 +506,7 @@ namespace MoonProject.UI
 
         private void SaveIfChanged()
         {
-            if (_player.IsDirty && _save.SaveNow())
-            {
-                _player.MarkSaved();
-            }
+            _settingsStore.SaveIfChanged();
         }
 
         private void ShiftForSettings()

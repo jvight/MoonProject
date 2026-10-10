@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
 using MoonProject.App;
+using MoonProject.Core.Save;
 using MoonProject.Gameplay;
 using MoonProject.Testing;
 using Object = UnityEngine.Object;
@@ -203,6 +205,18 @@ namespace MoonProject.UI.PlayModeTests
 #else
             throw new NotSupportedException("Tuning overrides go through the editor's SerializedObject.");
 #endif
+        }
+
+        /// <summary>
+        /// Deletes a test slot's save and its settings file (the harness knows the save; the settings file is the
+        /// UI's, beside it).
+        /// </summary>
+        public static void DeleteSlotFiles(string slot)
+        {
+            BootstrapHarness.DeleteSaveFiles(slot);
+            var settings = new SettingsFile(SaveService.DefaultDirectory, slot);
+            File.Delete(settings.FilePath);
+            File.Delete(settings.BackupPath);
         }
 
         public void Dispose()
