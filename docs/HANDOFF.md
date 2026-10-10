@@ -66,7 +66,7 @@ account) can continue without the old conversation.
   - **audio 7da01984.**
     - Done: Core LiftCue/LiftCued; the lift creak, ride and clunk, the plotter draw, the blueprint chime and the dock
       evening swell (generated); runtime for the lift, the plotter and the chime.
-    - Its tests were NOT confirmed: re-run them.
+    - Tests confirmed: Audio EditMode 159/159; PlayMode AudioRuntimeTests|StationAudioTests 15/15, including zero GC.
     - Next: wire dock_evening_swell to Core.Events.DockEveningOpened(Vector3 DockPosition) once gameplay adds it.
     - After landing: the Audio builders and a StationAudioTuning re-serialise.
   - **rover 0579f46b.**
