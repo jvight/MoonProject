@@ -22,6 +22,12 @@ namespace MoonProject.Art.Editor
         public const string BellName = "Bell";
         public const string BellBrokenName = "Bell_Broken";
 
+        // Bell's cabinet left alone for decades like everything else (VISION ruling 12, M3-15 §3): faded, uneven
+        // paint, a few rust stains from its fittings, dust on the top; heights are in the cabinet's own space.
+        private static readonly WeatherProfile CabinetWeather = new WeatherProfile(seed: 61, lift: 0.0012f,
+            panelWidth: 0.22f, panelHeight: 0.2f, paintWear: 0.6f, mismatched: false, runsPerMetre: 2.5f,
+            rustHeight: 0.15f, metalRust: 0.5f, paintRust: 0.3f, tide: 0.2f, groundDust: 0.5f, topDust: 0.6f);
+
         /// <summary>
         /// Needle angle at rest (local Z rotation 0), measured from Body +X towards +Y: the left end of the band as
         /// seen from the front. A positive local Z rotation sweeps it right, to the band's end at
@@ -73,8 +79,9 @@ namespace MoonProject.Art.Editor
         {
             Material material = PaletteAssetBuilder.LoadMaterial();
             Material glowOff = PaletteAssetBuilder.LoadGlowOffMaterial();
-            ModelPrefabWriter.Write(CreateBell(false), ArtPaths.FriendFolder, material, glowOff);
-            ModelPrefabWriter.Write(CreateBell(true), ArtPaths.FriendFolder, material, glowOff);
+            Material weather = PaletteAssetBuilder.LoadWeatherMaterial();
+            ModelPrefabWriter.Write(CreateBell(false), ArtPaths.FriendFolder, material, glowOff, weather);
+            ModelPrefabWriter.Write(CreateBell(true), ArtPaths.FriendFolder, material, glowOff, weather);
             foreach (string part in PartNames)
             {
                 ModelPrefabWriter.Write(CreatePart(part), ArtPaths.FriendFolder, material);
@@ -242,6 +249,7 @@ namespace MoonProject.Art.Editor
         private static ModelNode BodyNode(Meshes meshes, Pose pose)
         {
             var body = new ModelNode("Body", pose.BodyPosition, pose.BodyRotation, meshes.Body);
+            Weathering.Weather(body, meshes.Body.Name, meshes.Body.Geometry, CabinetWeather, null, null);
             body.Add(new ModelNode("Lid", BellMeshes.LidHinge, pose.LidRotation, meshes.Lid));
             ModelNode dial = body.Add(new ModelNode("DialFace", BellMeshes.DialCentre, meshes.DialFace));
             dial.Add(new ModelNode("Needle", Vector3.zero, pose.NeedleRotation, meshes.Needle));

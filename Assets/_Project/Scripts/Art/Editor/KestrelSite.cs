@@ -18,6 +18,11 @@ namespace MoonProject.Art.Editor
         private const float HalfZ = 1.3f;
         private const float Wall = 0.09f;
 
+        // The capsule's painted plates rust from their rivets: this many causes per metre along their top seam,
+        // standing this far off the dented plate so the stains ride over its bumps.
+        private const float PlateRunsPerMetre = 1.6f;
+        private const float PlateRustLift = 0.03f;
+
         private static readonly Vector3 BusCentre = new Vector3(0.4f, 0.8f, 1.9f);
 
         // Nose down along the fall line, slewed and rolled by the impact.
@@ -69,6 +74,10 @@ namespace MoonProject.Art.Editor
                 b.Box(plate, new Vector3(Wall, HalfY * 2f - 0.08f, HalfZ * 2f - 0.1f),
                     Paint.Facing(PaletteSwatch.Honey, PaletteSwatch.Metal, outward, 0.6f), 0.03f,
                     new Displacement(42 + side, 0.07f, 1.4f));
+                Matrix4x4 skin = plate * SiteKit.Face(new Vector3(side * (Wall * 0.5f + PlateRustLift), 0f, 0f),
+                    Vector3.right * side, Vector3.up);
+                SiteKit.RustSeam(b, skin, -HalfZ + 0.15f, HalfZ - 0.15f, HalfY - 0.12f, HalfY * 1.5f,
+                    PlateRunsPerMetre, 320 + side);
             }
 
             Vector2[] flap =

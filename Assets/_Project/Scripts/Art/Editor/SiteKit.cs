@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using static MoonProject.Art.Place;
 
@@ -135,6 +136,29 @@ namespace MoonProject.Art.Editor
             b.Box(face * At(x, y - length * 0.5f, 0.004f), new Vector3(width, length, 0.008f), PaletteSwatch.Rust);
             b.Box(face * At(x, y - length - 0.03f * scale, 0.004f), new Vector3(width * 0.6f, 0.08f * scale, 0.008f),
                 PaletteSwatch.Rust);
+        }
+
+        /// <summary>
+        /// Rust along one seam of a face frame (M3-15 §3): a few streaks from bolts and the seam at height
+        /// <paramref name="seam"/> between <paramref name="left"/> and <paramref name="right"/>, planned by
+        /// <see cref="RustRunPlan"/> so neighbours never share a length or a spacing; some only a stain at the bolt.
+        /// </summary>
+        public static void RustSeam(LowPolyMeshBuilder b, Matrix4x4 face, float left, float right, float seam,
+            float drop, float perMetre, int seed)
+        {
+            RustSeam(b, face, left, right, seam, drop, perMetre, seed, 1f);
+        }
+
+        /// <summary>As the other overload, every stain <paramref name="widthScale"/> as wide (finer on 07).</summary>
+        public static void RustSeam(LowPolyMeshBuilder b, Matrix4x4 face, float left, float right, float seam,
+            float drop, float perMetre, int seed, float widthScale)
+        {
+            var runs = new List<RustRunPlan.Run>();
+            RustRunPlan.Plan(left, right, seam, drop, perMetre, seed, runs);
+            foreach (RustRunPlan.Run run in runs)
+            {
+                RustStreak(b, face, run.X, run.Top, run.Length, run.Width * widthScale);
+            }
         }
 
         /// <summary>An irregular rust patch on a face frame, centred at (x, y).</summary>

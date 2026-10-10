@@ -48,6 +48,9 @@ namespace MoonProject.Art.Editor
 
         // Rust on 07 is drawn finer than on the wrecks: it is seen close, from the chase camera.
         private const float SpotWidth = 0.025f;
+
+        // 07's lid runs are drawn this much finer than a building's (it is seen close).
+        private const float LidRunWidth = 0.4f;
         internal const float BodyBack = -0.62f;
         private const float TubBottom = 0.34f;
         private const float TubTop = 0.84f;
@@ -133,10 +136,10 @@ namespace MoonProject.Art.Editor
                     Vector3.up);
                 foreach (float z in new[] { -0.28f, 0.2f, 0.44f })
                 {
-                    float along = side > 0 ? -z : z;
-                    SiteKit.RustPatch(b, lid, along, 0.87f, 0.065f);
-                    SiteKit.RustStreak(b, stripe, along, 0.835f, 0.14f, SpotWidth * 1.4f);
+                    SiteKit.RustPatch(b, lid, side > 0 ? -z : z, 0.87f, 0.065f);
                 }
+
+                SiteKit.RustSeam(b, stripe, -0.5f, 0.5f, 0.835f, 0.22f, 2.5f, 240 + side, LidRunWidth);
 
                 foreach (float z in new[] { -0.5f, 0.02f, 0.52f })
                 {

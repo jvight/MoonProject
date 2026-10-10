@@ -13,6 +13,11 @@ namespace MoonProject.Art.Tests
     /// </summary>
     public sealed class WeatheringTests
     {
+        // Rust run plans sampled over many seams: their density, and how short a run that is only a stain is.
+        private const int SeamSamples = 200;
+        private const float SeamRunsPerMetre = 2f;
+        private const float StainLength = 0.08f;
+
         private static readonly string[] Layers = { "Weather_Paint", "Weather_Rust", "Weather_Dust" };
 
         // How far a skin may spread past its model's own bounds: drifts and debris lie round the feet.
@@ -124,6 +129,49 @@ namespace MoonProject.Art.Tests
             float low = MeanDistance(dust, caked, y => y < 0.2f);
             float high = MeanDistance(dust, caked, y => y > 0.8f && y < 1.2f);
             Assert.Less(low, high, "nearer the ground, nearer the dust's colour");
+        }
+
+        [Test]
+        public void RustRuns_NeverRepeat_NeighboursDifferInLengthAndSpacing_SomeAreJustStains()
+        {
+            var runs = new List<RustRunPlan.Run>();
+            int stains = 0;
+            int total = 0;
+            float shortest = float.MaxValue;
+            float longest = 0f;
+            for (int seed = 0; seed < SeamSamples; seed++)
+            {
+                float width = 0.8f + (seed % 7) * 0.9f;
+                float drop = 0.3f + (seed % 5) * 0.4f;
+                runs.Clear();
+                RustRunPlan.Plan(0f, width, drop, drop, SeamRunsPerMetre, seed, runs);
+                Assert.LessOrEqual(runs.Count, Mathf.CeilToInt(width * SeamRunsPerMetre * 1.25f) + 1,
+                    $"seed {seed}: a few runs per seam, not a row");
+                for (int i = 0; i < runs.Count; i++)
+                {
+                    RustRunPlan.Run run = runs[i];
+                    total++;
+                    stains += run.Length <= StainLength ? 1 : 0;
+                    shortest = Mathf.Min(shortest, run.Length);
+                    longest = Mathf.Max(longest, run.Length);
+                    Assert.LessOrEqual(run.Top, drop, $"seed {seed}: runs start at the seam or a bolt under it");
+                    if (i == 0)
+                    {
+                        continue;
+                    }
+
+                    Assert.IsTrue(RustRunPlan.Contrasts(run.Length, runs[i - 1].Length),
+                        $"seed {seed}: runs {i - 1} and {i} share a length");
+                    if (i >= 2)
+                    {
+                        Assert.IsTrue(RustRunPlan.Contrasts(run.X - runs[i - 1].X, runs[i - 1].X - runs[i - 2].X),
+                            $"seed {seed}: runs {i - 2}..{i} repeat a spacing");
+                    }
+                }
+            }
+
+            Assert.Greater(stains, total / 10, "some runs are only a stain at the bolt");
+            Assert.Greater(longest / shortest, 8f, "run lengths vary widely");
         }
 
         [Test]

@@ -13,6 +13,9 @@ namespace MoonProject.Art.Editor
     /// </summary>
     internal static class LanderMeshes
     {
+        // Rust causes per metre along the band's and windows' seams (few, at random gaps; M3-15 §3).
+        private const float SeamRunsPerMetre = 1.5f;
+
         public const float StageBottom = 1.45f;
         public const float StageTop = 2.75f;
         public const float CabinTop = 4.95f;
@@ -88,8 +91,8 @@ namespace MoonProject.Art.Editor
             for (int side = -1; side <= 1; side += 2)
             {
                 Matrix4x4 window = Face(side * 45f, face);
-                SiteKit.RustStreak(b, window, -0.12f, WindowHeight - 0.32f, 0.42f);
-                SiteKit.RustStreak(b, window, 0.15f, WindowHeight - 0.3f, 0.28f);
+                SiteKit.RustSeam(b, window, -0.4f, 0.4f, WindowHeight - 0.3f, 0.6f, SeamRunsPerMetre,
+                    200 + side);
                 Matrix4x4 flank = Face(side * 90f, face);
                 SiteKit.RustStreak(b, flank, 0.3f, BandY - 0.11f, 0.55f);
                 SiteKit.RustPatch(b, flank, -0.25f, BandY, 0.16f);
@@ -105,8 +108,8 @@ namespace MoonProject.Art.Editor
             float stage = StageApothem + Weathering.RustLift;
             for (int i = 0; i < 8; i++)
             {
-                Matrix4x4 panel = Face(i * 45f, stage);
-                SiteKit.RustStreak(b, panel, i % 2 == 0 ? -0.35f : 0.25f, StageTop - 0.12f, 0.45f + (i % 3) * 0.2f);
+                SiteKit.RustSeam(b, Face(i * 45f, stage), -0.45f, 0.45f, StageTop - 0.12f, 0.9f, SeamRunsPerMetre,
+                    210 + i);
             }
 
             SiteKit.RustPatch(b, Face(DentedPanel * 90f, StageApothem + 0.035f), 0.1f, 2.0f, 0.22f);
