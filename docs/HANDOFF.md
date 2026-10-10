@@ -111,7 +111,7 @@ account) can continue without the old conversation.
 - **`python tools/director.py status`:** every box against main, unpushed commits, batch slots, editor idle or busy.
 - **`python tools/compile_check.py`:** must print `RESULT: PASS` before every commit.
 - **`python tools/unity_batch.py tests|exec|status`:** headless Unity on a worktree. At most two run machine-wide
-  (`MOON_BATCH_SLOTS`); PlayMode defaults to a 2400 s timeout.
+  (`MOON_BATCH_SLOTS`, default 3 since 2026-10-10; drop to 2 if RAM runs short); PlayMode defaults to a 2400 s timeout.
   - Playthrough: `--category Playthrough --timeout 2700`.
   - Builders on a worktree: `exec --method MoonProject.Editor.Automation.BuildAutomation.RunBuilders --arg filter=^Art/`.
   - Idempotency: `exec --method MoonProject.Editor.Automation.BuildAutomation.CheckIdempotency`.
