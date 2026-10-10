@@ -11,7 +11,7 @@ namespace MoonProject.UI.Tests
     /// Upgrade definitions and a small shop made in the test (whatever the shipped content says), destroyed by
     /// <see cref="Dispose"/>.
     /// </summary>
-    internal sealed class TestUpgrades : IDisposable, IUpgradeShop, IMaterialStock
+    internal sealed class TestUpgrades : IDisposable, IUpgradeShop, IMaterialStock, IBlueprintBoard
     {
         private readonly List<UpgradeDefinition> _made = new List<UpgradeDefinition>();
         private readonly Dictionary<string, int> _levels = new Dictionary<string, int>();
@@ -27,7 +27,15 @@ namespace MoonProject.UI.Tests
 
         public int Total => Metal + Wiring + Optics;
 
+        /// <summary>Kits the bay has no blueprint for yet (every other kit is pinned).</summary>
+        public HashSet<string> Unpinned { get; } = new HashSet<string>(StringComparer.Ordinal);
+
         public bool IsAtStation => Catalog.Length > 0;
+
+        public bool IsPinned(string upgradeId)
+        {
+            return !Unpinned.Contains(upgradeId);
+        }
 
         public UpgradeDefinition StationUpgrade => Catalog.Length > 0 ? Catalog[0] : null;
 

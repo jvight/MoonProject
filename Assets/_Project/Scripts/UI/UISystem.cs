@@ -310,7 +310,7 @@ namespace MoonProject.UI
             _relayTag = new RelayTag(_layout, _tuning.Relays, _tuning.Prompts, services.Hints, services.Relays,
                 services.Materials, _localization, services.View, _numbers);
             _tower = new TowerPanel(_layout, _tuning.TowerPanel, _localization, services.Events, services.Shop,
-                services.Materials, services.Hints, _numbers);
+                services.Board, services.Materials, services.Hints, _numbers);
             _kitTitle = new KitTitle(_layout, _tuning.KitTitle, _localization);
             _pause = new PauseMenu(_layout, _tuning.Pause, _player, _localization, services.Input, services.Events,
                 services.Save, services.Materials, services.Radio, services.Relays, _numbers, _cursor, Quit);

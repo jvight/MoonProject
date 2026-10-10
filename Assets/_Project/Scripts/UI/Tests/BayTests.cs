@@ -50,7 +50,7 @@ namespace MoonProject.UI.Tests
         {
             _shop.Purchase(_hover.Id);
             var choices = new BayChoice();
-            Assert.IsTrue(choices.Refresh(_shop));
+            Assert.IsTrue(choices.Refresh(_shop, _shop));
             Assert.AreEqual(3, choices.Count, "bought kit is left out");
             Assert.AreSame(_cradle, choices.At(0));
             Assert.AreSame(_headlamp, choices.At(1));
@@ -61,26 +61,42 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
+        public void TheChoices_ArePinnedKitsOnly_AndABlueprintFoundAddsItsKit()
+        {
+            _shop.Unpinned.Add(_cradle.Id);
+            _shop.Unpinned.Add(_coils.Id);
+            var choices = new BayChoice();
+            Assert.IsTrue(choices.Refresh(_shop, _shop));
+            Assert.AreEqual(2, choices.Count, "no blueprint, no choice");
+            Assert.AreSame(_hover, choices.At(0));
+            Assert.AreSame(_headlamp, choices.At(1));
+
+            _shop.Unpinned.Remove(_cradle.Id);
+            Assert.IsTrue(choices.Refresh(_shop, _shop));
+            Assert.AreSame(_cradle, choices.At(1), "the found blueprint takes its place in the station's order");
+        }
+
+        [Test]
         public void ThePick_StaysOnItsPiece_AndMovesToTheOneThatTookItsPlace()
         {
             var choices = new BayChoice();
-            choices.Refresh(_shop);
+            choices.Refresh(_shop, _shop);
             Assert.IsTrue(choices.Step(1));
             Assert.AreSame(_cradle, choices.Current);
 
             _shop.Purchase(_hover.Id);
-            Assert.IsTrue(choices.Refresh(_shop));
+            Assert.IsTrue(choices.Refresh(_shop, _shop));
             Assert.AreSame(_cradle, choices.Current, "a piece leaving the list does not move the pick");
             Assert.AreEqual(0, choices.Selected);
 
             _shop.Purchase(_cradle.Id);
-            choices.Refresh(_shop);
+            choices.Refresh(_shop, _shop);
             Assert.AreSame(_headlamp, choices.Current, "the picked piece was crafted: the next one takes its place");
 
             choices.Step(-1);
             Assert.AreSame(_coils, choices.Current, "stepping back from the first wraps to the last");
             _shop.Purchase(_coils.Id);
-            choices.Refresh(_shop);
+            choices.Refresh(_shop, _shop);
             Assert.AreSame(_headlamp, choices.Current, "the last one crafted: the pick falls back to what is left");
             Assert.IsFalse(choices.Step(1), "one choice is no choice");
         }
@@ -89,7 +105,7 @@ namespace MoonProject.UI.Tests
         public void Stepping_WrapsBothWays()
         {
             var choices = new BayChoice();
-            choices.Refresh(_shop);
+            choices.Refresh(_shop, _shop);
             choices.Step(1);
             choices.Step(1);
             choices.Step(1);
@@ -104,9 +120,9 @@ namespace MoonProject.UI.Tests
         public void Refresh_ReportsOnlyChanges_AndAllocatesNothing()
         {
             var choices = new BayChoice();
-            Assert.IsTrue(choices.Refresh(_shop));
+            Assert.IsTrue(choices.Refresh(_shop, _shop));
             int version = choices.Version;
-            Assert.IsFalse(choices.Refresh(_shop));
+            Assert.IsFalse(choices.Refresh(_shop, _shop));
             Assert.AreEqual(version, choices.Version);
             choices.Step(1);
 
@@ -114,7 +130,7 @@ namespace MoonProject.UI.Tests
             {
                 for (int i = 0; i < 200; i++)
                 {
-                    choices.Refresh(_shop);
+                    choices.Refresh(_shop, _shop);
                     choices.Step(1);
                 }
             }, Is.Not.AllocatingGCMemory(), "choosing allocates nothing");
@@ -128,16 +144,16 @@ namespace MoonProject.UI.Tests
         public void Clear_ForgetsThePick_SoTheNextVisitStartsAtTheFirst()
         {
             var choices = new BayChoice();
-            choices.Refresh(_shop);
+            choices.Refresh(_shop, _shop);
             choices.Step(2);
             choices.Clear();
             Assert.AreEqual(0, choices.Count);
             Assert.IsNull(choices.Current);
-            choices.Refresh(_shop);
+            choices.Refresh(_shop, _shop);
             Assert.AreSame(_hover, choices.Current);
 
             _shop.Catalog = Array.Empty<UpgradeDefinition>();
-            Assert.IsTrue(choices.Refresh(_shop), "07 left the pad");
+            Assert.IsTrue(choices.Refresh(_shop, _shop), "07 left the pad");
             Assert.AreEqual(-1, choices.Selected);
         }
 
@@ -228,7 +244,7 @@ namespace MoonProject.UI.Tests
             _shop.Wiring = 2;
             _shop.Optics = 0;
             var choices = new BayChoice();
-            choices.Refresh(_shop);
+            choices.Refresh(_shop, _shop);
             choices.Step(1);
 
             list.Show(choices, _shop);
