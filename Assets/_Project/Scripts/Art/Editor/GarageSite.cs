@@ -45,8 +45,8 @@ namespace MoonProject.Art.Editor
             SiteKit.Drift(b, new Vector3(1.3f, 0f, 5.7f), 2.6f, 2f, 0.7f, 30f, 63);
             SiteKit.Drift(b, new Vector3(-2.7f, 0f, -0.9f), 1.5f, 1f, 0.4f, 60f, 64);
 
-            // M3-16 P9: wiring its signature: Wiring L, Wiring M, Metal M, Metal drag, Optics S = (7, 7, 2); the
-            // skylight stays as scenery.
+            // M3-16 P9: wiring its signature, every piece cut (the golden path never drags here): Wiring L, Wiring M,
+            // Metal L (the fallen roof), Metal M, Optics S = (7, 7, 2); the skylight stays as scenery.
             FallenRoof(site);
             RockerArm(site);
             ChargingPost(site);
@@ -209,7 +209,7 @@ namespace MoonProject.Art.Editor
             var target = new Vector3(1.6f, 1.25f, 4.6f);
             Vector3 upper = target + new Vector3(1.3f, 0.35f, 0f);
             SalvagePieceRecipe piece = site.Piece(SalvageMaterial.Metal, target, upper,
-                new Vector3(-0.4f, 1f, -0.5f), true);
+                new Vector3(-0.4f, 1f, -0.5f));
             LowPolyMeshBuilder b = piece.Geometry;
             Vector3 mid = OnArch(120f, 0f, 0f) - new Vector3(0f, Centre, 0f);
             MeshRange skin = SiteKit.ArcSheet(b, At(target - mid), Radius, 90f, 150f, 3, 1.4f,
