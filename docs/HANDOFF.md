@@ -22,7 +22,7 @@ account) can continue without the old conversation.
 
   | Box | State |
   |---|---|
-  | gameplay | Parts A–E done (power stages, dormancy, step flow, places, blueprints pinned when a site's heart surfaces). Part F (GoldenPathPlaythrough in step order) was in progress. Interim economy: tower L2 = 1 metal + 2 wiring. HomeBase must multiply its glows by IHomeLights.Level (asked; check it was done). |
+  | gameplay | A–F done, tip 1b2ba6cd: power stages, dormancy, steps, places, blueprints (BlueprintFound), IHomeLights wired, P4. The Playthrough runs in step order but FAILS at step 7 (the relay is unaffordable). P9 (2× economy, a signature material per site, the path via depot, garage and Kestrel) + P10 (4 depot cuts) were in progress to fix it. Then P1, P2, P8. New ProgressionTuning asset; metas for Progression/*. |
   | ui | Done, 583ec3cc: next line, Guidance toggle, place cards, HUD verbs, Look-up hint waits for cards. UiTuning `_guidance` needs a re-serialise after landing. |
   | audio | Done, 93fd84f4: wake stingers per stage, the "not yet" tone. StationAudioTuning has 2 new fields. StationNotYet is also in box/gameplay with an identical diff. |
   | rover | P5 wake opening done, 991094bd. A follow-up (head turns to Earth, Earth in frame, asserted in the capture) was in progress. RoverCameraTuning has 6 new `_wake*` fields. |
