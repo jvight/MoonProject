@@ -52,7 +52,11 @@ namespace MoonProject.Art.Tests
             Assert.AreEqual(ModelMaterial.PaletteGlowOff, glow.Material, "dark until 07 charges");
             Assert.IsTrue(MeshChecks.Swatches(glow.Mesh.Geometry).SequenceEqual(new[] { PaletteSwatch.LampGlass }));
             ModelNode platform = _lander.GetDescendant("LiftPlatform");
-            CollectionAssert.AreEqual(new[] { "RoverSpot", "Weather_Paint", "Weather_Rust", "Weather_Dust" },
+            CollectionAssert.AreEqual(
+                new[]
+                {
+                    BaseModelBuilder.LiftJamPropsName, "RoverSpot", "Weather_Paint", "Weather_Rust", "Weather_Dust",
+                },
                 platform.Children.Select(child => child.Name));
             Assert.IsNull(platform.GetDescendant("RoverSpot").Mesh);
             var moving = new[] { platform, _lander.GetDescendant("LiftCable_L"), _lander.GetDescendant("LiftCable_R") };
@@ -120,7 +124,8 @@ namespace MoonProject.Art.Tests
         {
             ModelNode platform = _lander.GetDescendant("LiftPlatform");
             Matrix4x4 spot = platform.GetDescendant("RoverSpot").LocalMatrix;
-            List<Vector3> deck = Solid(platform, string.Empty, Matrix4x4.identity);
+            // The jam's board and loose cable are hidden once the lift is restored, before it ever carries 07.
+            List<Vector3> deck = Solid(platform, BaseModelBuilder.LiftJamPropsName, Matrix4x4.identity);
             List<Vector3> fixedParts = Solid(_lander, "Lift");
             Vector3 bottom = _lander.GetDescendant("LiftBottom").LocalPosition;
             Vector3 top = _lander.GetDescendant("LiftTop").LocalPosition;

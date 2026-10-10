@@ -166,6 +166,13 @@ namespace MoonProject.Art.Editor
 
         public const string WinchLampName = "WinchLamp";
 
+        /// <summary>
+        /// LiftPlatform/JamProps: the crew's "OUT OF ORDER - K." board on the dock-side rail and the snapped cable's
+        /// end hanging over the deck's front lip, saying "jammed" at a glance. Gameplay hides it once the lift is
+        /// restored.
+        /// </summary>
+        public const string LiftJamPropsName = "JamProps";
+
         public const string LiftHopperMouthName = "LiftHopperMouth";
 
         public static Quaternion LiftPlatformLevel => Quaternion.identity;
@@ -366,6 +373,8 @@ namespace MoonProject.Art.Editor
             ModelNode platform = lander.Add(new ModelNode("LiftPlatform", CableLiftMeshes.JammedTilted,
                 CableLiftMeshes.JamTilt,
                 new ModelMesh(prefix, deck)));
+            platform.Add(new ModelNode(LiftJamPropsName, Vector3.zero,
+                new ModelMesh(prefix + "_" + LiftJamPropsName, CableLiftMeshes.JamProps())));
             platform.Add(new ModelNode("RoverSpot", CableLiftMeshes.RoverSpot,
                 Place.Rotation(CableLiftMeshes.RoverSpotEuler)));
             Weathering.Weather(platform, prefix, deck, LiftPlatformWeather, CableLiftMeshes.PlatformRust(),

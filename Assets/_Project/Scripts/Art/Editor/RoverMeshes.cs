@@ -61,6 +61,12 @@ namespace MoonProject.Art.Editor
         private const float BodyCorner = 0.16f;
         internal const float StripeY = 0.75f;
         internal const float StripeHeight = 0.1f;
+
+        /// <summary>
+        /// Where the flank "07"s are centred along the body: under the drum sockets' back half, so the chase camera's
+        /// rear three-quarter looks past the drum's end cap at them and the broadside under it.
+        /// </summary>
+        internal const float FlankSerialZ = -0.11f;
         internal const float PaintProud = 0.0035f;
         internal const float PaintThickness = 0.012f;
 
@@ -110,8 +116,8 @@ namespace MoonProject.Art.Editor
 
             Stripes(b);
             Dents(b);
-            SerialOnFlank(b, 1f, 0.13f, 0.21f);
-            SerialOnFlank(b, -1f, 0.21f, 0.13f);
+            SerialOnFlank(b, 1f, FlankSerialZ - 0.04f, FlankSerialZ + 0.04f);
+            SerialOnFlank(b, -1f, FlankSerialZ + 0.04f, FlankSerialZ - 0.04f);
             SerialOnBack(b);
             Patch(b);
             RadioFace(b);
@@ -532,8 +538,8 @@ namespace MoonProject.Art.Editor
         private static void Stripes(LowPolyMeshBuilder b)
         {
             float flankX = BodyHalfWidth + PaintProud;
-            FlankStripe(b, flankX, -0.46f, -0.1f);
-            FlankStripe(b, flankX, -0.05f, 0.3f);
+            FlankStripe(b, flankX, -0.46f, -0.3f);
+            FlankStripe(b, flankX, -0.25f, 0.3f);
             FlankStripe(b, flankX, 0.35f, 0.52f);
             FlankStripe(b, -flankX, -0.46f, 0.04f);
             FlankStripe(b, -flankX, 0.09f, 0.52f);
@@ -637,7 +643,7 @@ namespace MoonProject.Art.Editor
         private static void Patch(LowPolyMeshBuilder b)
         {
             const float x = -(BodyHalfWidth + 0.009f);
-            Matrix4x4 plate = At(new Vector3(x, 0.74f, -0.3f), new Vector3(-5f, 0f, 0f));
+            Matrix4x4 plate = At(new Vector3(x, 0.74f, -0.34f), new Vector3(-5f, 0f, 0f));
             b.Box(plate, new Vector3(0.012f, 0.16f, 0.22f), PaletteSwatch.Sage);
             for (int corner = 0; corner < 4; corner++)
             {

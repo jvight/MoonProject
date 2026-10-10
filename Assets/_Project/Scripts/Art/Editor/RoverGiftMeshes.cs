@@ -37,7 +37,7 @@ namespace MoonProject.Art.Editor
             var b = new LowPolyMeshBuilder(900);
             const float lift = RoverMeshes.PaintProud + RoverMeshes.PaintThickness * 0.5f + PatchThickness * 0.5f;
             const float flank = RoverMeshes.BodyHalfWidth + lift;
-            const float serialZ = 0.17f;
+            const float serialZ = RoverMeshes.FlankSerialZ;
             Serial(b, SiteKit.Face(new Vector3(flank, RoverMeshes.StripeY, serialZ), Vector3.right, Vector3.up),
                 PatchLength);
             Serial(b, SiteKit.Face(new Vector3(-flank, RoverMeshes.StripeY, serialZ), Vector3.left, Vector3.up),
