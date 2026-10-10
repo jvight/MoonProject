@@ -355,10 +355,11 @@ namespace MoonProject.Rover
                 frequency = Mathf.Lerp(_tuning.TravelGazeFrequency, _tuning.IdleGazeFrequency, idle);
             }
 
-            if (sky > 0f)
+            aim.y = Mathf.Lerp(aim.y, _tuning.StargazeHeadPitch, sky);
+            float earthTurn = _sky != null ? _sky.EarthTurn : 0f;
+            if (earthTurn > 0f)
             {
-                float earthYaw = Aim(frame.InverseTransformDirection(_world.EarthDirection)).x;
-                aim = new Vector2(Mathf.Lerp(aim.x, earthYaw, sky), Mathf.Lerp(aim.y, _tuning.StargazeHeadPitch, sky));
+                aim.x = Mathf.Lerp(aim.x, Aim(frame.InverseTransformDirection(_world.EarthDirection)).x, earthTurn);
             }
             _yaw.Step(aim.x, frequency, _tuning.GazeDamping, deltaTime);
             _pitch.Step(aim.y, frequency, _tuning.GazeDamping, deltaTime);

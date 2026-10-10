@@ -73,33 +73,49 @@ namespace MoonProject.Rover
         [SerializeField] private float _maxLookUpTilt = 10f;
 
         [Header("Wake opening (fresh game)")]
-        [Tooltip("Step (deg) of the search round 07 for the first shot's angle: Earth in the upper third, the lens in "
-            + "frame and as face-on as the sky allows.")]
-        [Range(2f, 30f)]
-        [SerializeField] private float _wakeSearchStep = 10f;
+        [Tooltip("Beat 1, the lens: orbit angle (deg from straight behind 07), a low front three-quarter view.")]
+        [Range(90f, 180f)]
+        [SerializeField] private float _wakeYaw = 145f;
 
-        [Tooltip("Lowest orbit elevation (deg) the first shot's search tries: low, looking up past 07's lens.")]
+        [Tooltip("Beat 1, the lens: orbit elevation (deg), low, looking up past the lens at the stars.")]
         [Range(-40f, 30f)]
-        [SerializeField] private float _wakeMinElevation = -15f;
+        [SerializeField] private float _wakeElevation = -15f;
 
-        [Tooltip("Highest orbit elevation (deg) the first shot's search tries (Earth low in the sky needs a level "
-            + "view to sit in the upper third).")]
-        [Range(-20f, 60f)]
-        [SerializeField] private float _wakeMaxElevation = 25f;
-
-        [Tooltip("Camera distance (m) from 07 in the first shot: close on the lens.")]
+        [Tooltip("Beat 1, the lens: camera distance (m) from 07, close on the lens.")]
         [Range(1.5f, 10f)]
         [SerializeField] private float _wakeDistance = 3.2f;
 
-        [Tooltip("Where 07 sits on screen in the first shot (+ = lower), leaving the sky and Earth above it.")]
+        [Tooltip("Beat 1, the lens: where 07 sits on screen (+ = lower), leaving the sky above it.")]
         [Range(-0.4f, 0.4f)]
         [SerializeField] private float _wakeScreenY = 0.22f;
 
-        [Tooltip("Seconds the first shot holds before easing to the chase frame on its own (any input eases sooner).")]
-        [Range(1f, 30f)]
-        [SerializeField] private float _wakeHoldSeconds = 8f;
+        [Tooltip("Seconds beat 1 holds on the lens before the camera turns round to Earth.")]
+        [Range(0.5f, 15f)]
+        [SerializeField] private float _wakeLensSeconds = 3.5f;
 
-        [Tooltip("Seconds the first shot takes to ease into the chase frame (ruling 8).")]
+        [Tooltip("Seconds the camera takes to ease round from the lens to over 07's shoulder, as 07 turns to Earth.")]
+        [Range(0.5f, 10f)]
+        [SerializeField] private float _wakeTurnSeconds = 3f;
+
+        [Tooltip("Beat 2, Earth: orbit elevation (deg) of the shot over 07's shoulder, opposite Earth's bearing.")]
+        [Range(-10f, 40f)]
+        [SerializeField] private float _wakeEarthElevation = 15f;
+
+        [Tooltip("Beat 2, Earth: camera distance (m) behind 07.")]
+        [Range(1.5f, 10f)]
+        [SerializeField] private float _wakeEarthDistance = 2.4f;
+
+        [Tooltip("Beat 2, Earth: viewport height (0 = bottom, 1 = top) Earth is framed at, in the upper third; 07's "
+            + "head and lens rim sit as a silhouette below.")]
+        [Range(0.67f, 0.95f)]
+        [SerializeField] private float _wakeEarthHeight = 0.75f;
+
+        [Tooltip("Seconds the opening holds (both beats) before easing to the chase frame on its own; any input eases "
+            + "sooner. Never shorter than the lens beat plus the turn.")]
+        [Range(1f, 30f)]
+        [SerializeField] private float _wakeHoldSeconds = 10f;
+
+        [Tooltip("Seconds the opening takes to ease into the chase frame (ruling 8).")]
         [Range(0.5f, 10f)]
         [SerializeField] private float _wakeEaseSeconds = 4f;
 
@@ -329,17 +345,25 @@ namespace MoonProject.Rover
 
         public float MaxLookUpTilt => _maxLookUpTilt;
 
-        public float WakeSearchStep => _wakeSearchStep;
+        public float WakeYaw => _wakeYaw;
 
-        public float WakeMinElevation => _wakeMinElevation;
-
-        public float WakeMaxElevation => Mathf.Max(_wakeMinElevation, _wakeMaxElevation);
+        public float WakeElevation => _wakeElevation;
 
         public float WakeDistance => _wakeDistance;
 
         public float WakeScreenY => _wakeScreenY;
 
-        public float WakeHoldSeconds => _wakeHoldSeconds;
+        public float WakeLensSeconds => _wakeLensSeconds;
+
+        public float WakeTurnSeconds => _wakeTurnSeconds;
+
+        public float WakeEarthElevation => _wakeEarthElevation;
+
+        public float WakeEarthDistance => _wakeEarthDistance;
+
+        public float WakeEarthHeight => _wakeEarthHeight;
+
+        public float WakeHoldSeconds => Mathf.Max(_wakeHoldSeconds, _wakeLensSeconds + _wakeTurnSeconds);
 
         public float WakeEaseSeconds => _wakeEaseSeconds;
 

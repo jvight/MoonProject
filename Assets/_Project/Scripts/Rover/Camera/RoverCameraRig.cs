@@ -38,8 +38,8 @@ namespace MoonProject.Rover
         /// <summary>Drive input below this (stick magnitude) is drift, not the player driving.</summary>
         private const float DriveEpsilon = 0.05f;
 
-        /// <summary>How far (m) along Earth's direction a point is projected to find Earth on screen.</summary>
-        private const float EarthProbeDistance = 1000f;
+        /// <summary>Furthest the composer may put 07 from the frame's centre (viewport, either way).</summary>
+        private const float MaxScreenOffset = 0.45f;
 
         /// <summary>Subjects nearer than this (m, ground plane) have no meaningful direction to turn to.</summary>
         private const float MinSubjectDistance = 0.5f;
@@ -104,9 +104,9 @@ namespace MoonProject.Rover
         private Stargaze _stargaze;
         private WakeOpening _opening;
         private float _wakeYaw;
-        private float _wakeElevation;
+        private float _wakeEarthYaw;
+        private float _wakeEarthScreenY;
         private float _wakeLift;
-        private IRoverRig _roverRig;
         private LookSettings _look;
         private DampedSpring _bumpSpring;
         private IDisposable[] _subscriptions;
@@ -118,6 +118,8 @@ namespace MoonProject.Rover
         public WakeOpening Opening => _opening;
 
         public float SkyLift => _stargaze != null ? Mathf.Max(_stargaze.Lift, _wakeLift) : 0f;
+
+        public float EarthTurn => _opening != null ? _opening.Turn * _wakeLift : 0f;
 
         /// <summary>The lonely wide shot's state (quiet time, weight, frame), for tests and tooling.</summary>
         public WideShot WideShot => _wide;
@@ -161,7 +163,6 @@ namespace MoonProject.Rover
             _rover = context.Get<IRoverState>();
             _world = context.Get<IWorldLayout>();
             _stillness = context.Get<IRoverStillness>();
-            _roverRig = context.Get<IRoverRig>();
             _fit = context.Get<IBayFitView>();
             _terrain = context.Get<ITerrainQuery>();
             _events = context.Events;
@@ -580,10 +581,13 @@ namespace MoonProject.Rover
             float wake = _opening.Weight;
             if (wake > 0f)
             {
-                yaw += Mathf.DeltaAngle(yaw, _wakeYaw) * wake;
-                elevation = Mathf.Lerp(elevation, _wakeElevation, wake);
-                radius = Mathf.Lerp(radius, _tuning.WakeDistance, wake);
-                screen.y = Mathf.Lerp(screen.y, _tuning.WakeScreenY, wake);
+                float turn = _opening.Turn;
+                float shotYaw = _wakeYaw + Mathf.DeltaAngle(_wakeYaw, _wakeEarthYaw) * turn;
+                yaw += Mathf.DeltaAngle(yaw, shotYaw) * wake;
+                elevation = Mathf.Lerp(elevation,
+                    Mathf.Lerp(_tuning.WakeElevation, _tuning.WakeEarthElevation, turn), wake);
+                radius = Mathf.Lerp(radius, Mathf.Lerp(_tuning.WakeDistance, _tuning.WakeEarthDistance, turn), wake);
+                screen.y = Mathf.Lerp(screen.y, Mathf.Lerp(_tuning.WakeScreenY, _wakeEarthScreenY, turn), wake);
             }
 
             if (_shotWeight > 0f)
@@ -626,8 +630,8 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// The fresh game's first beat (M3-16 P5): the base wakes from nothing, so the camera opens on 07's lens from
-        /// the front three-quarter side facing Earth, 07 looking up; a loaded save keeps the usual wake.
+        /// The fresh game's first beats (M3-16 P5): the base wakes from nothing, so the camera opens on 07's lens as
+        /// it looks up at the stars, then turns round over its shoulder to Earth; a loaded save keeps the usual wake.
         /// </summary>
         private void OnBasePowerChanged(BasePowerChanged power)
         {
@@ -639,53 +643,30 @@ namespace MoonProject.Rover
             _opening.Begin();
             _wakeLift = 0f;
             PlaceTarget();
-            SolveWakeShot();
+            FrameWakeShots();
             ApplyOrbit();
             _camera.PreviousStateIsValid = false;
         }
 
         /// <summary>
-        /// Tries the first shot from every angle and elevation round 07 (where the camera would sit and look, see
-        /// <see cref="WakeFrame.Camera"/>) and keeps the best by <see cref="WakeFrame"/>: Earth in the upper third and
-        /// the lens in frame, as face-on as the sky allows given that 07 turns its head toward Earth.
+        /// The two beats' framing, fixed once 07 rests on its dock. Beat 1 sits on the front three-quarter side of the
+        /// lens; beat 2 looks along Earth's bearing from behind 07 (the orbit looks along the target's yaw plus its
+        /// axis value), raised so Earth sits at the tuned height in the frame.
         /// </summary>
-        private void SolveWakeShot()
+        private void FrameWakeShots()
         {
-            Vector3 lens = _roverRig.TetherOrigin.position;
             Vector3 earth = _world.EarthDirection;
-            float bestYaw = 0f;
-            float bestElevation = _tuning.WakeMinElevation;
-            float bestScore = float.MinValue;
-            Vector3 follow = _target.position;
-            float radius = _tuning.WakeDistance;
-            float floor = LowOrbit.Floor(radius, _tuning.TargetHeight, _tuning.LowestCameraHeight);
-            float fov = _orbitState.FieldOfView;
-            float aspect = _viewCamera.aspect;
-            float step = _tuning.WakeSearchStep;
-            for (float elevation = _tuning.WakeMinElevation; elevation <= _tuning.WakeMaxElevation; elevation += step)
-            {
-                for (float yaw = -180f; yaw < 180f; yaw += step)
-                {
-                    float asked = Mathf.Clamp(elevation, _tuning.MinPitch, _tuning.MaxPitch);
-                    float held = Mathf.Max(asked, floor);
-                    float lift = LowOrbit.AimLift(floor, Mathf.Min(held - asked, _tuning.MaxLookUpTilt), radius);
-                    Pose camera = WakeFrame.Camera(follow, _targetYaw + yaw, held, radius, lift,
-                        _tuning.WakeScreenY, fov);
-                    float facing = Vector3.Dot(earth, (camera.position - lens).normalized);
-                    float score = WakeFrame.Score(
-                        WakeFrame.Viewport(camera, camera.position + earth * EarthProbeDistance, fov, aspect),
-                        WakeFrame.Viewport(camera, lens, fov, aspect), facing);
-                    if (score > bestScore)
-                    {
-                        bestScore = score;
-                        bestYaw = yaw;
-                        bestElevation = elevation;
-                    }
-                }
-            }
-
-            _wakeYaw = bestYaw;
-            _wakeElevation = bestElevation;
+            float bearing = WideShotComposer.Bearing(earth);
+            float heading = RoverYaw();
+            float positive = Mathf.Abs(Mathf.DeltaAngle(heading - _tuning.WakeYaw, bearing));
+            float negative = Mathf.Abs(Mathf.DeltaAngle(heading + _tuning.WakeYaw, bearing));
+            _wakeYaw = positive <= negative ? _tuning.WakeYaw : -_tuning.WakeYaw;
+            _wakeEarthYaw = Mathf.DeltaAngle(_targetYaw, bearing);
+            float floor = LowOrbit.Floor(_tuning.WakeEarthDistance, _tuning.TargetHeight, _tuning.LowestCameraHeight);
+            float elevation = Mathf.Max(_tuning.WakeEarthElevation, floor);
+            float earthElevation = Mathf.Asin(Mathf.Clamp(earth.y, -1f, 1f)) * Mathf.Rad2Deg;
+            _wakeEarthScreenY = Mathf.Clamp(WakeOpening.EarthScreenY(earthElevation, elevation,
+                _tuning.WakeEarthHeight, _orbitState.FieldOfView), -MaxScreenOffset, MaxScreenOffset);
         }
 
         /// <summary>Holds the first shot until any input or the hold runs out; 07 lifts its gaze with it.</summary>

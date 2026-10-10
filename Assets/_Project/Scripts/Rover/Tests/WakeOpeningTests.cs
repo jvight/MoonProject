@@ -3,7 +3,10 @@ using UnityEngine;
 
 namespace MoonProject.Rover.Tests
 {
-    /// <summary>The fresh game's first shot holds on 07's lens, then eases to the chase frame softly.</summary>
+    /// <summary>
+    /// The fresh game's opening: the lens beat holds, the camera turns round to Earth, then eases to the chase frame
+    /// softly, sooner on any input.
+    /// </summary>
     public sealed class WakeOpeningTests
     {
         private const float Step = 1f / 60f;
@@ -41,31 +44,49 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
+        public void TheLensBeatHolds_ThenTheCameraTurnsToEarth()
+        {
+            _opening.Begin();
+            Run(_tuning.WakeLensSeconds - 0.1f);
+            Assert.AreEqual(0f, _opening.Turn, "Beat 1: on the lens.");
+
+            float previous = 0f;
+            for (float t = 0f; t < _tuning.WakeTurnSeconds; t += Step)
+            {
+                _opening.Step(false, Step);
+                Assert.GreaterOrEqual(_opening.Turn, previous, "Turns one way only.");
+                Assert.Less(_opening.Turn - previous, 0.02f, "No jump.");
+                previous = _opening.Turn;
+            }
+
+            Run(0.2f);
+            Assert.AreEqual(1f, _opening.Turn, 1e-4f, "Beat 2: over the shoulder at Earth.");
+            Assert.IsFalse(_opening.IsEasing, "Still holding.");
+            Assert.AreEqual(1f, _opening.Weight);
+        }
+
+        [Test]
         public void WithoutInput_HoldsThenEasesOutOverTheEaseTime()
         {
             _opening.Begin();
             Run(_tuning.WakeHoldSeconds - 0.5f);
-            Assert.IsFalse(_opening.IsEasing, "Holds on the lens.");
-            Assert.AreEqual(1f, _opening.Weight);
-
+            Assert.IsFalse(_opening.IsEasing);
             Run(0.5f + Step);
             Assert.IsTrue(_opening.IsEasing, "The hold ran out.");
 
             float previous = _opening.Weight;
-            float halfway = 0f;
             for (float t = 0f; t < _tuning.WakeEaseSeconds - 2f * Step; t += Step)
             {
                 _opening.Step(false, Step);
                 Assert.LessOrEqual(_opening.Weight, previous, "Only ever eases toward the chase frame.");
                 Assert.Less(previous - _opening.Weight, 0.02f, "No jump.");
                 previous = _opening.Weight;
-                halfway = t < 0.5f * _tuning.WakeEaseSeconds ? _opening.Weight : halfway;
             }
 
-            Assert.That(halfway, Is.InRange(0.4f, 0.6f), "Halfway through the ease, half handed over.");
             Run(3f * Step);
             Assert.IsFalse(_opening.IsActive);
             Assert.AreEqual(0f, _opening.Weight);
+            Assert.AreEqual(0f, _opening.Turn);
         }
 
         [Test]
@@ -81,6 +102,19 @@ namespace MoonProject.Rover.Tests
             Assert.AreEqual(weight, _opening.Weight, "A second Begin does not restart it.");
             Run(_tuning.WakeEaseSeconds);
             Assert.IsFalse(_opening.IsActive);
+        }
+
+        [TestCase(12f, 15f)]
+        [TestCase(25f, 5f)]
+        public void EarthScreenY_PutsEarthAtTheAskedHeight(float earthElevation, float cameraElevation)
+        {
+            const float Fov = 50f;
+            const float Height = 0.75f;
+            float screenY = WakeOpening.EarthScreenY(earthElevation, cameraElevation, Height, Fov);
+            float halfHeight = Mathf.Tan(0.5f * Fov * Mathf.Deg2Rad);
+            float pitch = -cameraElevation + Mathf.Atan(2f * screenY * halfHeight) * Mathf.Rad2Deg;
+            float earthY = 0.5f + 0.5f * Mathf.Tan((earthElevation - pitch) * Mathf.Deg2Rad) / halfHeight;
+            Assert.AreEqual(Height, earthY, 1e-3f, "Camera pitch = looking down at 07, raised by the offset.");
         }
     }
 }

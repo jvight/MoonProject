@@ -59,8 +59,11 @@ namespace MoonProject.Rover.PlayModeTests
         private const float MinCameraClearance = 0.2f;
         private const string DockAnchorName = "DockAnchor";
 
-        /// <summary>The wake opening: when the held frame of 07 looking up is taken, and the frame mid-ease.</summary>
-        private const float WakeLookUpSeconds = 4f;
+        /// <summary>The wake opening: the gaze share the lens frame waits for, waits, and the mid-ease frame.</summary>
+        private const float WakeLensLift = 0.6f;
+        private const float WakeBeatTimeout = 12f;
+        private const float WakeEarthSettleSeconds = 1f;
+        private const float UpperThird = 2f / 3f;
         private const float WakeEaseFrameSeconds = 1.8f;
         private const float WakeEaseTimeout = 8f;
 
@@ -143,7 +146,7 @@ namespace MoonProject.Rover.PlayModeTests
         [Timeout(300000)]
         [PrebuildSetup(typeof(RoverSessionScene))]
         [PostBuildCleanup(typeof(RoverSessionScene))]
-        public IEnumerator FreshGame_OpensOn07sLensLookingUp_ThenEasesToTheChase()
+        public IEnumerator FreshGame_OpensOnTheLens_TurnsToEarth_ThenEasesToTheChase()
         {
             yield return Boot(true);
             _report.AppendLine("# The wake opening (real Main scene, fresh game)");
@@ -151,24 +154,46 @@ namespace MoonProject.Rover.PlayModeTests
             _report.AppendLine("| Capture | Orbit elevation (deg) | Camera above dust (m) | 07's gaze | Beat |");
             _report.AppendLine("|---|---:|---:|---:|---|");
             WakeOpening opening = _cameraRig.Opening;
-            Assert.IsTrue(opening.IsActive && !opening.IsEasing, "A fresh game opens on 07's lens.");
-            Capture("wake-1-lens");
-
-            yield return Wait(WakeLookUpSeconds);
-            Assert.IsFalse(opening.IsEasing, "Still holding before any input.");
-            Assert.Greater(_cameraRig.SkyLift, 0.8f, "07 has looked up.");
-            Capture("wake-2-looking-up");
-            Vector3 lens = _context.Get<IRoverRig>().TetherOrigin.position;
+            Transform lens = _context.Get<IRoverRig>().TetherOrigin;
             Vector3 earth = _context.Get<IWorldLayout>().EarthDirection;
-            Vector3 camera = _view.transform.position;
-            Vector3 earthOnScreen = _view.WorldToViewportPoint(camera + earth * EarthProbeDistance);
-            Vector3 lensOnScreen = _view.WorldToViewportPoint(lens);
+            Assert.IsTrue(opening.IsActive && !opening.IsEasing, "A fresh game opens on 07's lens.");
+            float timeout = Time.time + WakeBeatTimeout;
+            while (_cameraRig.SkyLift < WakeLensLift)
+            {
+                Assert.Less(Time.time, timeout, "07 looks up at the stars.");
+                yield return null;
+            }
+
+            Assert.Less(opening.Turn, 0.01f, "Still beat 1, on the lens.");
+            Capture("wake-1-lens");
+            Vector3 eye = _view.transform.position;
+            Vector3 lensOnScreen = _view.WorldToViewportPoint(lens.position);
+            float facing = Vector3.Dot(lens.forward, (eye - lens.position).normalized);
             _report.AppendLine(string.Format(CultureInfo.InvariantCulture,
-                "\nwake-2: Earth on screen ({0:0.00}, {1:0.00}), lens on screen ({2:0.00}, {3:0.00}), lens facing {4:0.00}",
-                earthOnScreen.x, earthOnScreen.y, lensOnScreen.x, lensOnScreen.y,
-                Vector3.Dot(earth, (camera - lens).normalized)));
-            Assert.IsTrue(WakeFrame.IsFramed(earthOnScreen, lensOnScreen),
-                $"Earth in the upper third ({earthOnScreen}) and the lens in frame ({lensOnScreen}).");
+                "\nwake-1: lens on screen ({0:0.00}, {1:0.00}), lens facing the camera {2:0.00}", lensOnScreen.x,
+                lensOnScreen.y, facing));
+            Assert.IsTrue(InFrame(lensOnScreen, 0f, 1f) && facing > 0f,
+                $"Beat 1 sees the lens: on screen {lensOnScreen}, facing {facing:0.00}.");
+
+            timeout = Time.time + WakeBeatTimeout;
+            while (opening.Turn < 1f)
+            {
+                Assert.Less(Time.time, timeout, "The camera turns round to Earth.");
+                yield return null;
+            }
+
+            yield return Wait(WakeEarthSettleSeconds);
+            Assert.IsFalse(opening.IsEasing, "Still holding before any input.");
+            Capture("wake-2-earth");
+            eye = _view.transform.position;
+            Vector3 earthOnScreen = _view.WorldToViewportPoint(eye + earth * EarthProbeDistance);
+            lensOnScreen = _view.WorldToViewportPoint(lens.position);
+            _report.AppendLine(string.Format(CultureInfo.InvariantCulture,
+                "\nwake-2: Earth on screen ({0:0.00}, {1:0.00}), lens ({2:0.00}, {3:0.00})", earthOnScreen.x,
+                earthOnScreen.y, lensOnScreen.x, lensOnScreen.y));
+            Assert.IsTrue(InFrame(earthOnScreen, UpperThird, 1f),
+                $"Beat 2 frames Earth in the upper third: on screen {earthOnScreen}.");
+            Assert.Less(lensOnScreen.y, earthOnScreen.y, "07's head sits below Earth.");
 
             Set(_gamepad.rightStick, new Vector2(LookStick, 0f));
             yield return Wait(StickProbeSeconds);
@@ -178,7 +203,7 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.That(opening.Weight, Is.InRange(0.05f, 0.95f), "Midway through the ease.");
             Capture("wake-3-easing");
 
-            float timeout = Time.time + WakeEaseTimeout;
+            timeout = Time.time + WakeEaseTimeout;
             while (opening.IsActive)
             {
                 Assert.Less(Time.time, timeout, "The opening hands over to the chase frame.");
@@ -296,6 +321,12 @@ namespace MoonProject.Rover.PlayModeTests
             _report.AppendLine(string.Format(CultureInfo.InvariantCulture,
                 "| {0} | {1:0.0} | {2:0.00} | {3:0.00} | {4} |", name, _cameraRig.Orbit.Elevation, clearance,
                 _cameraRig.SkyLift, _stargazing ? "on" : "off"));
+        }
+
+        /// <summary>In front of the camera, inside the frame across, and between the heights given.</summary>
+        private static bool InFrame(Vector3 viewport, float minY, float maxY)
+        {
+            return viewport.z > 0f && viewport.x > 0f && viewport.x < 1f && viewport.y >= minY && viewport.y < maxY;
         }
 
         private static Transform FindNode(string name)
