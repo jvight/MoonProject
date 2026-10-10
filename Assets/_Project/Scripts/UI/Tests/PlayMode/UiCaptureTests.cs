@@ -582,6 +582,38 @@ namespace MoonProject.UI.PlayModeTests
 #endif
         }
 
+        /// <summary>
+        /// A place's card the first time 07 comes near, then the soft next line once 07 rests. Rerun on its own:
+        /// <c>python tools/unity_batch.py tests --platform playmode --filter CaptureGuidance</c>.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator CaptureGuidance()
+        {
+#if UNITY_EDITOR
+            yield return LoadMain();
+            GameContext context = FindBootstrap().Context;
+            Camera camera = context.Get<IViewCamera>().Camera;
+            UISystem ui = BuildUi(context, out _, out _);
+            yield return null;
+            string folder = Path.GetFullPath(OutputFolder);
+            Directory.CreateDirectory(folder);
+            context.Events.Publish(new RoverAwoke(Vector3.zero, false));
+            yield return new WaitForSecondsRealtime(_tuning.Title.Delay + _tuning.Title.Reveal.FadeIn +
+                                                    _tuning.Title.Hold + _tuning.Title.Reveal.FadeOut + 0.5f);
+
+            context.Events.Publish(new NextStepChanged("next.tower"));
+            context.Events.Publish(new PlaceFirstApproached("place.tower"));
+            yield return new WaitForSecondsRealtime(_tuning.Guidance.Place.FadeIn + 0.5f);
+            yield return Capture(camera, folder, "48_place_card_tower");
+            yield return new WaitForSecondsRealtime(_tuning.Guidance.PlaceHoldSeconds +
+                                                    _tuning.Guidance.Place.FadeOut + _tuning.Guidance.Line.FadeIn + 0.5f);
+            yield return Capture(camera, folder, "49_next_line");
+#else
+            Assert.Ignore("Captures need the editor.");
+            yield break;
+#endif
+        }
+
 #if UNITY_EDITOR
         private static IEnumerator LoadMain()
         {
