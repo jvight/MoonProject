@@ -54,7 +54,7 @@ namespace MoonProject.UI.Tests
             Assert.IsTrue(ledger.LookUpHinted);
 
             hint.SetStargazing(true);
-            hint.Tick(Step);
+            hint.Tick(Step, true);
             Assert.IsFalse(hint.WantsShown, "looking up is the answer");
             hint.SetStargazing(false);
             hint.SetWide(false);
@@ -68,6 +68,26 @@ namespace MoonProject.UI.Tests
             next.SetWide(true);
             Ticks(next, settings.HintDelay + 1f);
             Assert.IsFalse(next.WantsShown, "the save remembers it was shown");
+        }
+
+        [Test]
+        public void TheLookUpHint_WaitsWhileACardHoldsTheScreen_AndIsNotSpentUnseen()
+        {
+            var settings = new StargazeSettings();
+            var ledger = new PromptLedger(new PromptSettings());
+            var hint = new LookUpHint(settings, ledger);
+            hint.SetWide(true);
+            for (float t = 0f; t < settings.HintDelay + 1f; t += Step)
+            {
+                hint.Tick(Step, false);
+            }
+
+            Assert.IsFalse(hint.WantsShown, "one message at a time");
+            Assert.IsFalse(ledger.LookUpHinted, "not spent while nobody could see it");
+            hint.Tick(Step, true);
+            Assert.IsTrue(hint.WantsShown, "the card gone, it has its turn");
+            hint.Tick(Step, false);
+            Assert.IsFalse(hint.WantsShown, "a card arriving sends it away");
         }
 
         [Test]
@@ -94,7 +114,7 @@ namespace MoonProject.UI.Tests
         {
             for (float t = 0f; t < seconds; t += Step)
             {
-                hint.Tick(Step);
+                hint.Tick(Step, true);
             }
         }
     }

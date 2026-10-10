@@ -150,7 +150,7 @@ namespace MoonProject.Gameplay.Tests
             var service = Service(_tower);
             var station = new TestStation { Definition = _tower };
             var save = new CountingSave();
-            var shop = new UpgradeShop(service, new IUpgradeStation[] { station }, save);
+            var shop = new UpgradeShop(service, new IUpgradeStation[] { station }, save, new Board());
             Give(0, 3, 2);
             Assert.IsFalse(shop.IsAtStation);
             Assert.IsNull(shop.StationUpgrade);
@@ -238,7 +238,8 @@ namespace MoonProject.Gameplay.Tests
             var service = Service(_tower, _hoverJump);
             var tower = new TestStation { Definition = _tower };
             var bench = new TestStation { Definition = _hoverJump };
-            var shop = new UpgradeShop(service, new IUpgradeStation[] { tower, bench }, new CountingSave());
+            var shop = new UpgradeShop(service, new IUpgradeStation[] { tower, bench }, new CountingSave(),
+                new Board());
             Give(10, 10, 10);
 
             tower.Occupied = true;
@@ -265,7 +266,8 @@ namespace MoonProject.Gameplay.Tests
             var service = Service(_tower, _hoverJump, headlamp);
             var tower = new TestStation { Definition = _tower };
             var bench = new TestStation { Definition = _hoverJump, Catalog = new[] { _hoverJump, headlamp } };
-            var shop = new UpgradeShop(service, new IUpgradeStation[] { tower, bench }, new CountingSave());
+            var shop = new UpgradeShop(service, new IUpgradeStation[] { tower, bench }, new CountingSave(),
+                new Board());
             Assert.AreEqual(0, shop.StationUpgradeCount, "not parked: nothing listed");
             Assert.Throws<InvalidOperationException>(() => shop.StationUpgradeAt(0));
 
@@ -295,14 +297,78 @@ namespace MoonProject.Gameplay.Tests
             });
             var service = Service(_hoverJump, cradle);
             var sold = new[] { _hoverJump, cradle };
-            Assert.AreEqual(0, Workshop.OfferIndex(sold, service));
+            Assert.AreEqual(0, Workshop.OfferIndex(sold, service, new Board()));
 
             Give(6, 3, 2);
             service.Purchase("rover.hover_jump");
-            Assert.AreEqual(1, Workshop.OfferIndex(sold, service));
+            Assert.AreEqual(1, Workshop.OfferIndex(sold, service, new Board()));
             service.Purchase("rover.cargo_cradle");
-            Assert.AreEqual(1, Workshop.OfferIndex(sold, service), "everything bought: it rests on the last");
+            Assert.AreEqual(1, Workshop.OfferIndex(sold, service, new Board()),
+                "everything bought: it rests on the last");
             Assert.IsTrue(_abilities.Has(RoverAbility.CargoCradle));
+        }
+
+        [Test]
+        public void Workshop_OffersOnlyPinnedKits_AndTheShopBuildsNoKitWithoutItsBlueprint()
+        {
+            var cradle = Create<UpgradeDefinition>();
+            cradle.Populate("rover.cargo_cradle", UpgradeStationKind.Workshop, 0f, new[]
+            {
+                new UpgradeLevel(new Recipe(2, 1, 1), RoverAbility.CargoCradle),
+            });
+            var service = Service(_hoverJump, cradle);
+            var sold = new[] { _hoverJump, cradle };
+            var board = new Board("rover.cargo_cradle");
+            var station = new TestStation { Definition = cradle, Occupied = true };
+            var shop = new UpgradeShop(service, new IUpgradeStation[] { station }, new CountingSave(), board);
+            Give(6, 3, 2);
+
+            Assert.AreEqual(PurchaseResult.NotPinned, shop.Purchase("rover.cargo_cradle"));
+            Assert.IsFalse(_abilities.Has(RoverAbility.CargoCradle));
+            service.Purchase("rover.hover_jump");
+            Assert.AreEqual(0, Workshop.OfferIndex(sold, service, board), "nothing new pinned: it rests on Hover-Jump");
+            board.Pin("rover.cargo_cradle");
+            Assert.AreEqual(1, Workshop.OfferIndex(sold, service, board), "the board grows, so does the bay's offer");
+            Assert.AreEqual(PurchaseResult.Purchased, shop.Purchase("rover.cargo_cradle"));
+        }
+
+        [Test]
+        public void Blueprints_PinTheirKitWhenTheSitesHeartRelicSurfaces_OnceAndAcrossALoad()
+        {
+            var found = new List<BlueprintFound>();
+            _events.Subscribe<BlueprintFound>(found.Add);
+            string[] kits = { "rover.hover_jump", "rover.cargo_cradle", "rover.boost_coils" };
+            var tubes = new[]
+            {
+                new BlueprintTube("rover.cargo_cradle", "site.garage"),
+                new BlueprintTube("rover.boost_coils", "site.drill"),
+            };
+            using (var board = new Blueprints(_events, kits, "rover.hover_jump", tubes,
+                       relic => relic == "rubber_duck" ? "site.garage" : relic == "teapot" ? "site.lander" : null))
+            {
+                Assert.IsTrue(board.IsPinned("rover.hover_jump"), "Kenji left Hover-Jump's sheet pinned");
+                Assert.IsFalse(board.IsPinned("rover.cargo_cradle"));
+                Assert.IsTrue(board.IsPinned("radio_tower"), "the tower is no kit of the board");
+
+                _events.Publish(new RelicSurfaced(Vector3.one, "teapot"));
+                _events.Publish(new RelicSurfaced(Vector3.one, "rubber_duck"));
+                _events.Publish(new RelicSurfaced(Vector3.one, "rubber_duck"));
+
+                Assert.AreEqual(1, found.Count, "the garage's tube, once; the lander's heart holds none");
+                Assert.AreEqual("rover.cargo_cradle", found[0].KitId);
+                Assert.AreEqual("site.garage", found[0].SiteId);
+                Assert.IsTrue(board.IsPinned("rover.cargo_cradle"));
+                Assert.IsFalse(board.IsPinned("rover.boost_coils"));
+                CollectionAssert.AreEqual(new[] { "rover.cargo_cradle" }, board.Capture());
+
+                board.Restore(new[] { "rover.boost_coils", "rover.unknown" });
+                Assert.IsTrue(board.IsPinned("rover.boost_coils"));
+                Assert.IsFalse(board.IsPinned("rover.cargo_cradle"), "a load replaces the board");
+                Assert.IsTrue(board.IsPinned("rover.hover_jump"));
+            }
+
+            Assert.Throws<ArgumentException>(() => new Blueprints(_events, kits, "rover.hover_jump",
+                new[] { new BlueprintTube("rover.hover_jump", "site.garage") }, _ => null), "a tube for the start kit");
         }
 
         [Test]
@@ -525,6 +591,27 @@ namespace MoonProject.Gameplay.Tests
             {
                 Grants++;
                 _granted.Add(ability);
+            }
+        }
+
+        /// <summary>A blueprint board with every kit pinned except <c>unpinned</c>.</summary>
+        private sealed class Board : IBlueprintBoard
+        {
+            private readonly HashSet<string> _unpinned;
+
+            public Board(params string[] unpinned)
+            {
+                _unpinned = new HashSet<string>(unpinned);
+            }
+
+            public bool IsPinned(string upgradeId)
+            {
+                return !_unpinned.Contains(upgradeId);
+            }
+
+            public void Pin(string upgradeId)
+            {
+                _unpinned.Remove(upgradeId);
             }
         }
 

@@ -25,9 +25,9 @@ MonoBehaviour:
     _grantsAbility: 0
     _ability: 0
   - _recipe:
-      _metal: 0
-      _wiring: 1
-      _optics: 2
+      _metal: 1
+      _wiring: 2
+      _optics: 0
     _signalRadius: 170
     _lightBoost: 1.5
     _grantsAbility: 0

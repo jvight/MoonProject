@@ -5,7 +5,8 @@ namespace MoonProject.UI
     /// <summary>
     /// The first time 07 rests under the open sky (the camera's wide shot opens), a gentle hint asks the player to look
     /// up with the camera. Once per save (the prompts ledger remembers): it leaves when they do look up (stargazing
-    /// begins), when the wide shot ends, or after a while.
+    /// begins), when the wide shot ends, or after a while. It waits while a card or panel holds the screen: one message
+    /// at a time, and a hint nobody saw is not spent.
     /// </summary>
     internal sealed class LookUpHint
     {
@@ -35,12 +36,13 @@ namespace MoonProject.UI
         }
 
         /// <param name="deltaTime">Unscaled seconds; pass 0 while paused.</param>
-        public void Tick(float deltaTime)
+        /// <param name="open">False while a place card, a story card or a panel holds the screen.</param>
+        public void Tick(float deltaTime, bool open)
         {
             if (WantsShown)
             {
                 _timer += deltaTime;
-                if (!_wide || _stargazing || _timer >= _settings.HintHoldSeconds)
+                if (!open || !_wide || _stargazing || _timer >= _settings.HintHoldSeconds)
                 {
                     WantsShown = false;
                 }
@@ -54,7 +56,7 @@ namespace MoonProject.UI
             }
 
             _timer += deltaTime;
-            if (_timer >= _settings.HintDelay)
+            if (open && _timer >= _settings.HintDelay)
             {
                 WantsShown = true;
                 _timer = 0f;

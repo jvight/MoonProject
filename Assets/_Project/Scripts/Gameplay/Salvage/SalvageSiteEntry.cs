@@ -20,11 +20,16 @@ namespace MoonProject.Gameplay
         [Tooltip("The rover ability reaching it needs (the canyon lander stands past the Hover-Jump gate).")]
         [SerializeField] private AbilityGate _gate = AbilityGate.Open;
 
-        public SalvageSiteEntry(string anchorId, GameObject prefab, AbilityGate gate)
+        [Tooltip("Its heart lies under its pieces: the relic there can be dug only once the last piece is cut " +
+                 "(docs/features/M3-16 P10, the supply depot).")]
+        [SerializeField] private bool _heartUnderPieces;
+
+        public SalvageSiteEntry(string anchorId, GameObject prefab, AbilityGate gate, bool heartUnderPieces)
         {
             _anchorId = anchorId;
             _prefab = prefab;
             _gate = gate ?? throw new ArgumentNullException(nameof(gate));
+            _heartUnderPieces = heartUnderPieces;
         }
 
         /// <summary>The site's id everywhere (saves, events, relic definitions): its anchor id.</summary>
@@ -33,6 +38,8 @@ namespace MoonProject.Gameplay
         public GameObject Prefab => _prefab;
 
         public AbilityGate Gate => _gate;
+
+        public bool HeartUnderPieces => _heartUnderPieces;
 
         /// <summary>Null when the entry is complete, else what is wrong with it.</summary>
         public string Validate()

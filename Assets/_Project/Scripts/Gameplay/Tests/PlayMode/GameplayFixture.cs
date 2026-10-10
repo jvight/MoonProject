@@ -92,6 +92,8 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         public SalvageTuning SalvageTuning { get; private set; }
 
+        public ProgressionTuning ProgressionTuning { get; private set; }
+
         public SonarTuning SonarTuning { get; private set; }
 
         public RelicTuning RelicTuning { get; private set; }
@@ -173,6 +175,19 @@ namespace MoonProject.Gameplay.PlayModeTests
             return relic;
         }
 
+        /// <summary>
+        /// Brings the base's power as far as tower level <paramref name="towerLevel"/> powers it (docs/features/M3-16),
+        /// the way a loaded game would: the tower stands at that level, no moment.
+        /// </summary>
+        public void PowerTo(int towerLevel)
+        {
+            Gameplay.Upgrades.Restore(new UpgradesSaveData
+            {
+                upgrades = new[] { new UpgradeSaveData { id = RadioTowerUpgrade.Id, level = towerLevel } },
+            });
+            Gameplay.Tower.ShowLevel(towerLevel);
+        }
+
         /// <summary>Puts materials in 07's stock, as salvage would.</summary>
         public void GiveMaterials(int metal, int wiring, int optics)
         {
@@ -245,7 +260,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             RadioTowerUpgrade = Asset<UpgradeDefinition>();
             RadioTowerUpgrade.Populate("radio_tower", UpgradeStationKind.RadioTower, 60f, new[]
             {
-                new UpgradeLevel(new Recipe(0, 1, 1), 110f, 1.25f), new UpgradeLevel(new Recipe(0, 1, 2), 170f, 1.5f),
+                new UpgradeLevel(new Recipe(0, 1, 1), 110f, 1.25f), new UpgradeLevel(new Recipe(1, 2, 0), 170f, 1.5f),
                 new UpgradeLevel(new Recipe(0, 2, 2), 260f, 1.8f),
             });
             WorkshopTuning = Asset<WorkshopTuning>();
@@ -300,7 +315,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             var logs = Child<LogCacheField>(root, "LogCaches");
             var signals = Child<SignalField>(root, "BellSignals");
             var relays = Child<RelayField>(root, "Relays");
-            CassetteShelf shelf = BuildBase(root.transform, home, tower, workshop);
+            var progression = Child<BaseProgression>(root, "Progression");
+            CassetteShelf shelf = BuildBase(root.transform, home, tower, workshop, progression);
             BuildFriends(friends);
             BuildCassettes(cassettes);
             BuildLogCaches(logs);
@@ -316,7 +332,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 {
                     RadioTowerUpgrade, HoverJumpUpgrade, CargoCradleUpgrade, WarmHeadlampUpgrade, BoostCoilsUpgrade,
                 }, salvage, relics, sonar, excavation, tether, home, cradle, tower, workshop, friends, cassettes, logs,
-                signals, shelf, relays);
+                signals, shelf, relays, progression);
             root.SetActive(true);
 
             Bootstrap = BootstrapHarness.Create(_controls, SaveSlot, World, Rover, Gameplay);
@@ -328,7 +344,8 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// Bay and tape rack with the contract's node names and positions, wired the way the scene contributor wires
         /// the real prefabs.
         /// </summary>
-        private CassetteShelf BuildBase(Transform parent, HomeBase home, RadioTower tower, Workshop workshop)
+        private CassetteShelf BuildBase(Transform parent, HomeBase home, RadioTower tower, Workshop workshop,
+            BaseProgression progression)
         {
             var baseRoot = new GameObject("Base").transform;
             baseRoot.SetParent(parent, false);
@@ -379,7 +396,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             home.Wire(BaseTuning, baseRoot, windows.GetComponent<Renderer>(), sockets, shelf,
                 shelfLights.GetComponent<Renderer>(), slots, dock, dockGlow.GetComponent<Renderer>());
             tower.Wire(TowerTuning, RadioTowerUpgrade, anchor, stages, lights, beacons, hoppers, hatches);
-            BuildBay(Node("WorkshopAnchor", lander, new Vector3(12.5f, 0f, -2f)), workshop);
+            Transform bay = Node("WorkshopAnchor", lander, new Vector3(12.5f, 0f, -2f));
+            BuildBay(bay, workshop);
             TillyPerch = Node("FriendSocket_tilly", lander, new Vector3(-1.6f, 3.3f, 0.9f));
             BellCorner = Node("BellCorner", anchor, new Vector3(-4.9f, 0f, 0.4f));
             BellCorner.localRotation = Quaternion.Euler(0f, 74f, 0f);
@@ -396,6 +414,9 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             var tapes = rack.gameObject.AddComponent<CassetteShelf>();
             tapes.Wire(ShelfSlots);
+            Transform lift = Node("LiftPlatform", lander, new Vector3(2.4f, 0.2f, 3.2f));
+            ProgressionTuning = Asset<ProgressionTuning>();
+            progression.Wire(ProgressionTuning, new[] { dock, lander, dock, lift, anchor, shelf, bay, bay, rack }, lift);
             return tapes;
         }
 
@@ -477,7 +498,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             {
                 string name = SiteNames[i];
                 sites[i] = new SalvageSiteEntry(WorldAnchorIds.SitePrefix + name, SiteModel(name, name == "depot"),
-                    name == "lander" ? new AbilityGate(true, RoverAbility.HoverJump) : AbilityGate.Open);
+                    name == "lander" ? new AbilityGate(true, RoverAbility.HoverJump) : AbilityGate.Open, false);
             }
 
             var trail = new SalvageTrailBit[TrailBits.Length];

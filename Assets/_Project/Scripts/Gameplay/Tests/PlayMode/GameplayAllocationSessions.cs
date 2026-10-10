@@ -142,7 +142,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             {
                 friends = new[] { new FriendSaveData { id = "bell", state = (int)FriendState.Awake, welcomed = true } },
             });
-            _fixture.GiveMaterials(9, 6, 6);
+            _fixture.PowerTo(2);
+            _fixture.GiveMaterials(30, 30, 30);
             IUpgradeShop shop = _fixture.Bootstrap.Context.Get<IUpgradeShop>();
 
             Workshop bay = gameplay.Workshop;

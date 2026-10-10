@@ -268,6 +268,7 @@ namespace MoonProject.UI
             look.fill = true;
             look.RegisterValueChangedCallback(OnLookChanged);
             _layout.InvertToggle.RegisterValueChangedCallback(OnInvertChanged);
+            _layout.GuidanceToggle.RegisterValueChangedCallback(OnGuidanceChanged);
         }
 
         /// <summary>Allocates (it formats): only when the menu opens or the language changes.</summary>
@@ -326,6 +327,7 @@ namespace MoonProject.UI
             _layout.LookSlider.SetValueWithoutNotify(look);
             _layout.LookValue.text = _lookTexts[look];
             _layout.InvertToggle.SetValueWithoutNotify(_player.InvertY);
+            _layout.GuidanceToggle.SetValueWithoutNotify(_player.Guidance);
             _settingsPanel.Show();
             _pendingFocus = _layout.MasterSlider;
         }
@@ -589,6 +591,12 @@ namespace MoonProject.UI
         private void OnInvertChanged(ChangeEvent<bool> evt)
         {
             _player.InvertY = evt.newValue;
+            Cue(UiCueKind.Confirm);
+        }
+
+        private void OnGuidanceChanged(ChangeEvent<bool> evt)
+        {
+            _player.Guidance = evt.newValue;
             Cue(UiCueKind.Confirm);
         }
     }

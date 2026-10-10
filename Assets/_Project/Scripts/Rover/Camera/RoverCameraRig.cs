@@ -38,6 +38,9 @@ namespace MoonProject.Rover
         /// <summary>Drive input below this (stick magnitude) is drift, not the player driving.</summary>
         private const float DriveEpsilon = 0.05f;
 
+        /// <summary>Furthest the composer may put 07 from the frame's centre (viewport, either way).</summary>
+        private const float MaxScreenOffset = 0.45f;
+
         /// <summary>Subjects nearer than this (m, ground plane) have no meaningful direction to turn to.</summary>
         private const float MinSubjectDistance = 0.5f;
 
@@ -99,6 +102,11 @@ namespace MoonProject.Rover
         private InputReader _input;
         private CameraOrbit _orbitState;
         private Stargaze _stargaze;
+        private WakeOpening _opening;
+        private float _wakeYaw;
+        private float _wakeEarthYaw;
+        private float _wakeEarthScreenY;
+        private float _wakeLift;
         private LookSettings _look;
         private DampedSpring _bumpSpring;
         private IDisposable[] _subscriptions;
@@ -106,7 +114,12 @@ namespace MoonProject.Rover
 
         public CameraOrbit Orbit => _orbitState;
 
-        public float SkyLift => _stargaze != null ? _stargaze.Lift : 0f;
+        /// <summary>The fresh game's first shot on 07's lens (inactive on a loaded save).</summary>
+        public WakeOpening Opening => _opening;
+
+        public float SkyLift => _stargaze != null ? Mathf.Max(_stargaze.Lift, _wakeLift) : 0f;
+
+        public float EarthTurn => _opening != null ? _opening.Turn * _wakeLift : 0f;
 
         /// <summary>The lonely wide shot's state (quiet time, weight, frame), for tests and tooling.</summary>
         public WideShot WideShot => _wide;
@@ -156,6 +169,7 @@ namespace MoonProject.Rover
             _input = context.Input;
             _orbitState = new CameraOrbit(_tuning);
             _stargaze = new Stargaze(_tuning);
+            _opening = new WakeOpening(_tuning);
             _wide = new WideShot(_tuning.WideShot);
             _look = new LookSettings(_tuning);
             ApplyCinemachineSettings();
@@ -176,6 +190,7 @@ namespace MoonProject.Rover
                 context.Events.Subscribe<RadioHopListChanged>(OnHopListChanged),
                 context.Events.Subscribe<RoverPlaced>(OnPlaced),
                 context.Events.Subscribe<RoverKitInstalling>(OnKitInstalling),
+                context.Events.Subscribe<BasePowerChanged>(OnBasePowerChanged),
             };
             context.Register<IViewCamera>(this);
             context.Register<ILookSettings>(this);
@@ -281,6 +296,7 @@ namespace MoonProject.Rover
                 _bayDismissed |= _inBay;
             }
 
+            StepWakeOpening(look, deltaTime);
             ReleaseLeapOnTouchdown();
             StepBay();
             StepShot(deltaTime);
@@ -562,6 +578,18 @@ namespace MoonProject.Rover
                 screen.y = Mathf.Lerp(screen.y, frame.ScreenY, wide);
             }
 
+            float wake = _opening.Weight;
+            if (wake > 0f)
+            {
+                float turn = _opening.Turn;
+                float shotYaw = _wakeYaw + Mathf.DeltaAngle(_wakeYaw, _wakeEarthYaw) * turn;
+                yaw += Mathf.DeltaAngle(yaw, shotYaw) * wake;
+                elevation = Mathf.Lerp(elevation,
+                    Mathf.Lerp(_tuning.WakeElevation, _tuning.WakeEarthElevation, turn), wake);
+                radius = Mathf.Lerp(radius, Mathf.Lerp(_tuning.WakeDistance, _tuning.WakeEarthDistance, turn), wake);
+                screen.y = Mathf.Lerp(screen.y, Mathf.Lerp(_tuning.WakeScreenY, _wakeEarthScreenY, turn), wake);
+            }
+
             if (_shotWeight > 0f)
             {
                 BlendShot(ref yaw, ref elevation, ref radius);
@@ -588,7 +616,8 @@ namespace MoonProject.Rover
         /// </summary>
         private void StepWideShot(float deltaTime)
         {
-            bool busy = _moment.IsActive || _leapHeld || _tethered || _hopListOpen || _inBay || _stargaze.LookUp > 0f;
+            bool busy = _moment.IsActive || _leapHeld || _tethered || _hopListOpen || _inBay || _stargaze.LookUp > 0f
+                || _opening.IsActive;
             switch (_wide.Step(_stillness.StillSeconds, busy, _paused, deltaTime))
             {
                 case WideShotCue.Open:
@@ -601,6 +630,57 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
+        /// The fresh game's first beats (M3-16 P5): the base wakes from nothing, so the camera opens on 07's lens as
+        /// it looks up at the stars, then turns round over its shoulder to Earth; a loaded save keeps the usual wake.
+        /// </summary>
+        private void OnBasePowerChanged(BasePowerChanged power)
+        {
+            if (!power.Restored || power.Stage != BasePowerStage.Asleep || _opening.IsActive)
+            {
+                return;
+            }
+
+            _opening.Begin();
+            _wakeLift = 0f;
+            PlaceTarget();
+            FrameWakeShots();
+            ApplyOrbit();
+            _camera.PreviousStateIsValid = false;
+        }
+
+        /// <summary>
+        /// The two beats' framing, fixed once 07 rests on its dock. Beat 1 sits on the front three-quarter side of the
+        /// lens; beat 2 looks along Earth's bearing from behind 07 (the orbit looks along the target's yaw plus its
+        /// axis value), raised so Earth sits at the tuned height in the frame.
+        /// </summary>
+        private void FrameWakeShots()
+        {
+            Vector3 earth = _world.EarthDirection;
+            float bearing = WideShotComposer.Bearing(earth);
+            float heading = RoverYaw();
+            float positive = Mathf.Abs(Mathf.DeltaAngle(heading - _tuning.WakeYaw, bearing));
+            float negative = Mathf.Abs(Mathf.DeltaAngle(heading + _tuning.WakeYaw, bearing));
+            _wakeYaw = positive <= negative ? _tuning.WakeYaw : -_tuning.WakeYaw;
+            _wakeEarthYaw = Mathf.DeltaAngle(_targetYaw, bearing);
+            float floor = LowOrbit.Floor(_tuning.WakeEarthDistance, _tuning.TargetHeight, _tuning.LowestCameraHeight);
+            float elevation = Mathf.Max(_tuning.WakeEarthElevation, floor);
+            float earthElevation = Mathf.Asin(Mathf.Clamp(earth.y, -1f, 1f)) * Mathf.Rad2Deg;
+            _wakeEarthScreenY = Mathf.Clamp(WakeOpening.EarthScreenY(earthElevation, elevation,
+                _tuning.WakeEarthHeight, _orbitState.FieldOfView), -MaxScreenOffset, MaxScreenOffset);
+        }
+
+        /// <summary>Holds the first shot until any input or the hold runs out; 07 lifts its gaze with it.</summary>
+        private void StepWakeOpening(Vector2 look, float deltaTime)
+        {
+            bool input = look.sqrMagnitude > LookEpsilon * LookEpsilon
+                || _rover.DriveInput.sqrMagnitude > DriveEpsilon * DriveEpsilon;
+            _opening.Step(input, deltaTime);
+            float target = _opening.Weight;
+            float halfLife = target > _wakeLift ? _tuning.StargazeRiseHalfLife : _tuning.StargazeFallHalfLife;
+            _wakeLift = Smoothing.Damp(_wakeLift, target, halfLife, deltaTime);
+        }
+
+        /// <summary>
         /// Looking up with 07 at rest: 07 joins the gaze, and after a rest the stargazing beat begins (published so UI
         /// and audio can quiet down); drive input or the view dropping ends it.
         /// </summary>
@@ -609,7 +689,7 @@ namespace MoonProject.Rover
             bool moving = _rover.DriveInput.sqrMagnitude > DriveEpsilon * DriveEpsilon
                 || _rover.Speed > _tuning.StargazeMaxSpeed;
             bool free = !_moment.IsActive && _wide.Weight <= 0f && _shotWeight <= 0f && !_inBay && !_tethered
-                && !_leapHeld;
+                && !_leapHeld && !_opening.IsActive;
             if (_stargaze.Step(_orbitState.Elevation, _stillness.StillSeconds, moving, free, deltaTime))
             {
                 _events.Publish(new StargazingChanged(_stargaze.IsActive));

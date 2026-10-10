@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using MoonProject.Core;
+using MoonProject.Core.Events;
 
 namespace MoonProject.Gameplay.PlayModeTests
 {
@@ -86,11 +87,20 @@ namespace MoonProject.Gameplay.PlayModeTests
             return world;
         }
 
+        private StageLights _lights;
+
         public void Initialize(GameContext context)
         {
             context.Register<ITerrainQuery>(this);
             context.Register<IWorldLayout>(this);
             context.Register<IWorldAnchors>(this);
+            _lights = new StageLights(context.Events);
+            context.Register<IHomeLights>(_lights);
+        }
+
+        private void OnDestroy()
+        {
+            _lights?.Dispose();
         }
 
         public WorldAnchor Get(int index)
@@ -150,6 +160,35 @@ namespace MoonProject.Gameplay.PlayModeTests
         public Vector3 SampleNormal(float x, float z)
         {
             return Vector3.up;
+        }
+    
+        /// <summary>
+        /// Home's warm points as World lights them (IHomeLights): each fully lit once power reaches its stage, the
+        /// dock always; no easing, the sessions read the levels directly.
+        /// </summary>
+        private sealed class StageLights : IHomeLights, IDisposable
+        {
+            private readonly IDisposable _changes;
+            private BasePowerStage _stage;
+
+            public StageLights(EventBus events)
+            {
+                _changes = events.Subscribe<BasePowerChanged>(change => _stage = change.Stage);
+            }
+
+            public float Level(HomeLight light)
+            {
+                BasePowerStage needs = light == HomeLight.Dock ? BasePowerStage.Asleep
+                    : light == HomeLight.BayLamps ? BasePowerStage.Bay
+                    : light == HomeLight.LiftLamps ? BasePowerStage.Lift
+                    : BasePowerStage.Home;
+                return _stage >= needs ? 1f : 0f;
+            }
+
+            public void Dispose()
+            {
+                _changes.Dispose();
+            }
         }
     }
 }

@@ -64,6 +64,7 @@ namespace MoonProject.Gameplay.Editor
             var relayTuning = context.LoadAsset<RelayTuning>(GameplayAssetPaths.RelayTuning);
             var glintTuning = context.LoadAsset<GlintTuning>(GameplayAssetPaths.GlintTuning);
             var salvageTuning = context.LoadAsset<SalvageTuning>(GameplayAssetPaths.SalvageTuning);
+            var progressionTuning = context.LoadAsset<ProgressionTuning>(GameplayAssetPaths.ProgressionTuning);
             var salvageCatalog = context.LoadAsset<SalvageCatalog>(GameplayAssetPaths.SalvageCatalog);
             var relayMast = context.LoadAsset<GameObject>(GameplayAssetPaths.RelayMast);
             var relayMastBroken = context.LoadAsset<GameObject>(GameplayAssetPaths.RelayMastBroken);
@@ -99,6 +100,7 @@ namespace MoonProject.Gameplay.Editor
             var logs = Part<LogCacheField>(context, host, "LogCaches");
             var signals = Part<SignalField>(context, host, "BellSignals");
             var relays = Part<RelayField>(context, host, "Relays");
+            var progression = Part<BaseProgression>(context, host, "Progression");
 
             GameObject baseRoot = context.CreateChild("Base", host.transform);
             Vector3 offset = baseTuning.LanderOffset;
@@ -181,10 +183,26 @@ namespace MoonProject.Gameplay.Editor
             cassettes.Wire(cassetteCatalog, cassetteTuning);
             logs.Wire(logCacheCatalog, logCacheTuning);
             relays.Wire(relayTuning, relayMast, relayMastBroken, relayPart);
+            Transform dock = Child(lander, "DockAnchor");
+            Transform lift = Child(lander, "LiftPlatform");
+            progression.Wire(progressionTuning,
+                PlaceSpots(dock, lander, lift, towerAnchor, shelf, bay, cassetteShelf), lift);
             gameplay.Wire(visuals, glintTuning,
                 new[] { radioTower, hoverJump, cargoCradle, warmHeadlamp, boostCoils }, salvage, relics, sonar,
-                excavation, tether, home, cradle, tower, workshop, friends, cassettes, logs, signals, tapeRack, relays);
+                excavation, tether, home, cradle, tower, workshop, friends, cassettes, logs, signals, tapeRack, relays,
+                progression);
             context.AddSystem(gameplay);
+        }
+
+        /// <summary>
+        /// The places' spots in BaseProgression's place order. The dock stands at the foot of the crew's
+        /// ladder (Art's ChargingDockMeshes), so the ladder is greeted there; Kenji's blueprint board is the old bench
+        /// inside the bay, greeted at the bay until Art gives the board its own node.
+        /// </summary>
+        private static Transform[] PlaceSpots(Transform dock, Transform lander, Transform lift, Transform tower,
+            Transform shelf, Transform bay, Transform rack)
+        {
+            return new[] { dock, lander, dock, lift, tower, shelf, bay, bay, rack };
         }
 
         private static Transform HomeSocket(SceneBuildContext context, FriendDefinition friend, Transform lander,

@@ -12,5 +12,8 @@ namespace MoonProject.UI
 
         /// <summary>The one-time Look up hint has been shown in this save.</summary>
         public bool lookUpHinted;
+
+        /// <summary>The HUD verbs met in this save (<see cref="HudVerb"/> names).</summary>
+        public string[] metVerbs = Array.Empty<string>();
     }
 }

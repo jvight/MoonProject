@@ -89,7 +89,10 @@ namespace MoonProject.Gameplay
         private Light _pitLight;
         private Light _tipLight;
         private float _pitLevel;
-        private RadioTower _power;
+        private RadioTower _tower;
+        private IBasePower _power;
+        private IBlueprintBoard _board;
+        private IHomeLights _homeLights;
         private IDisposable _fittings;
         private float _lightLevel;
         private bool _lightShadows;
@@ -105,9 +108,11 @@ namespace MoonProject.Gameplay
         private bool _holding;
         private bool _initialized;
 
-        /// <summary>What the bay offers now: its first piece not yet bought (its last once all are).</summary>
+        /// <summary>
+        /// What the bay offers now: its first pinned piece not yet bought (the last pinned once those are all built).
+        /// </summary>
         public UpgradeDefinition Definition => _definitions.Length == 0 ? null
-            : _definitions[_upgrades == null ? 0 : OfferIndex(_definitions, _upgrades)];
+            : _definitions[_upgrades == null ? 0 : OfferIndex(_definitions, _upgrades, _board)];
 
         /// <summary>True while 07 is parked on the turntable.</summary>
         public bool Occupied => _pad != null && _pad.Occupied;
@@ -254,16 +259,25 @@ namespace MoonProject.Gameplay
             _floorTip = floorTip;
         }
 
-        /// <param name="power">The radio tower: its first level brings the base's power, which lights the sign.</param>
+        /// <param name="tower">The radio tower: the bay wakes as its level lands (the sign flickers on then).</param>
+        /// <param name="power">
+        /// The base's power: until it reaches the bay (tower L2, docs/features/M3-16) the bay is dormant: dark, no pad,
+        /// no prompt, no panel.
+        /// </param>
+        /// <param name="board">Kenji's board: the bay offers only kits whose blueprint is pinned.</param>
+        /// <param name="lights">Home's warm points (World): the bay's lamps and lights glow at its share.</param>
         internal bool Initialize(GameplayServices services, UpgradeService upgrades, SalvageCatalog bundles,
-            RadioTower power)
+            RadioTower tower, IBasePower power, IBlueprintBoard board, IHomeLights lights)
         {
             if (upgrades == null)
             {
                 throw new ArgumentNullException(nameof(upgrades));
             }
 
-            _power = power != null ? power : throw new ArgumentNullException(nameof(power));
+            _tower = tower != null ? tower : throw new ArgumentNullException(nameof(tower));
+            _power = power ?? throw new ArgumentNullException(nameof(power));
+            _board = board ?? throw new ArgumentNullException(nameof(board));
+            _homeLights = lights ?? throw new ArgumentNullException(nameof(lights));
 
             if (bundles == null)
             {
@@ -292,8 +306,8 @@ namespace MoonProject.Gameplay
             }
 
             _signGlow = new EmissionGlow(_sign);
-            _lampLevel = _tuning.LampIdle;
-            _powered = _power.ShownLevel > 0;
+            _powered = Awake;
+            _lampLevel = _powered ? _tuning.LampIdle : 0f;
             ApplyLamps(Time.time);
             _sparks = new BenchSparks[_sparkSockets.Length];
             _socketRest = new Vector3[_sparkSockets.Length];
@@ -334,7 +348,7 @@ namespace MoonProject.Gameplay
                 _lights[i] = light;
             }
 
-            _lightLevel = _tuning.LightIdle;
+            _lightLevel = _powered ? _tuning.LightIdle : 0f;
             ApplyLights(false);
             _pitLight = PitLight("PitLight", _floorLift.parent, Vector3.up * _tuning.PitLightLift,
                 _tuning.PitLightRange);
@@ -439,18 +453,25 @@ namespace MoonProject.Gameplay
         /// Index of what a station selling <paramref name="definitions"/> (in order) offers now: the first not yet
         /// fully bought, or the last once all are.
         /// </summary>
-        internal static int OfferIndex(UpgradeDefinition[] definitions, UpgradeService upgrades)
+        internal static int OfferIndex(UpgradeDefinition[] definitions, UpgradeService upgrades, IBlueprintBoard board)
         {
-            int last = definitions.Length - 1;
-            for (int i = 0; i < last; i++)
+            int lastPinned = 0;
+            for (int i = 0; i < definitions.Length; i++)
             {
+                if (!board.IsPinned(definitions[i].Id))
+                {
+                    continue;
+                }
+
                 if (upgrades.LevelOf(definitions[i].Id) < definitions[i].MaxLevel)
                 {
                     return i;
                 }
+
+                lastPinned = i;
             }
 
-            return last;
+            return lastPinned;
         }
 
         private void OnPurchased(UpgradePurchased purchase)
@@ -536,33 +557,53 @@ namespace MoonProject.Gameplay
             StepFeed(now, deltaTime);
             UpgradeDefinition offer = Definition;
             _upgrades.TryGetOffer(offer.Id, out UpgradeOffer current);
-            _pad.Tick(_rover.Position, current.IsMaxed, current.CanAfford, now, deltaTime);
+            bool awake = Awake;
+            if (awake)
+            {
+                _pad.Tick(_rover.Position, current.IsMaxed, current.CanAfford, now, deltaTime);
+            }
+            else
+            {
+                _pad.Rest(deltaTime);
+            }
+
             Working = _feed.Feeding || _waiting.Count > 0 || _fitting > 0 || now - _lastWeld < _tuning.WorkLinger;
-            float light = Working ? _tuning.LightWorking : _tuning.LightIdle;
+            float light = !awake ? 0f : Working ? _tuning.LightWorking : _tuning.LightIdle;
             _lightLevel = Damp.Toward(_lightLevel, light, _tuning.LightEase, deltaTime);
             ApplyLights(Working && _tuning.LightCastsShadows);
             bool rising = Vector3.Distance(_floorTip.position, _floorRest) > _tuning.PitTrigger;
             _pitLevel = Damp.Toward(_pitLevel, rising ? 1f : 0f, _tuning.LightEase, deltaTime);
             ApplyPitLight();
-            float lamp = _pad.Occupied || Working ? _tuning.LampOccupied : _tuning.LampIdle;
+            float lamp = !awake ? 0f : _pad.Occupied || Working ? _tuning.LampOccupied : _tuning.LampIdle;
             _lampLevel = Damp.Toward(_lampLevel, lamp, _tuning.LampEase, deltaTime);
             StepPower(now);
             ApplyLamps(now);
         }
 
+        /// <summary>True once power has come back to the bay (tower L2).</summary>
+        public bool Awake => _power.HasReached(BasePowerStage.Bay);
+
         /// <summary>
-        /// The base gets its power as the radio tower's first level shows. Bought in play, the sign flickers on;
-        /// loaded with power, it is simply lit.
+        /// The bay wakes as power reaches it. Woken by the tower's level in play, the sign flickers on and the lights
+        /// ease up; loaded with power, it is simply lit.
         /// </summary>
         private void StepPower(float now)
         {
-            if (_powered || _power.ShownLevel <= 0)
+            if (_powered || !Awake)
             {
                 return;
             }
 
             _powered = true;
-            _poweredAt = _power.Crafting ? now : float.NegativeInfinity;
+            if (_tower.Crafting)
+            {
+                _poweredAt = now;
+                return;
+            }
+
+            _poweredAt = float.NegativeInfinity;
+            _lightLevel = _tuning.LightIdle;
+            _lampLevel = _tuning.LampIdle;
         }
 
         /// <summary>The pit and tip lights at the floor arm's share of their glow; off (and free) when dark.</summary>
@@ -582,7 +623,7 @@ namespace MoonProject.Gameplay
             _lightShadows = shadows;
             for (int i = 0; i < _lights.Length; i++)
             {
-                _lights[i].intensity = _lightLevel;
+                _lights[i].intensity = _lightLevel * _homeLights.Level(HomeLight.BayLamps);
                 if (changed)
                 {
                     _lights[i].shadows = mode;
@@ -618,7 +659,7 @@ namespace MoonProject.Gameplay
         {
             for (int i = 0; i < _lampGlows.Length; i++)
             {
-                _lampGlows[i].Apply(_lampLevel);
+                _lampGlows[i].Apply(_lampLevel * _homeLights.Level(HomeLight.BayLamps));
             }
 
             float flicker = SignFlicker.Level(now - _poweredAt, _tuning.SignFlickerDuration, _tuning.SignFlickers,

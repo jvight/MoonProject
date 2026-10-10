@@ -77,6 +77,14 @@ namespace MoonProject.Art.Editor
         public const float ArchSpring = 1.7f;
 
         /// <summary>The lit "07" sign on the roof over the arch: its centre and the numerals' height.</summary>
+        // The roll-up shutter: its roller sits this far over the arch's crown and in front of the facade, its curtain
+        // a little wider than the arch, in slats this tall.
+        private const float ShutterRollerGap = 0.1f;
+        private const float ShutterAhead = 0.14f;
+        private const float ShutterOverlap = 0.12f;
+        private const float ShutterSlat = 0.16f;
+        private const float ShutterThickness = 0.03f;
+
         public static readonly Vector3 SignCentre = new Vector3(0f, EaveHeight + 0.62f, FrontZ + 0.02f);
 
         private const float SignHeight = 0.42f;
@@ -97,8 +105,15 @@ namespace MoonProject.Art.Editor
         private const float FloorColumn = 0.6f;
 
         // Kenji's remnant bench, left of the bay.
-        private static Matrix4x4 BenchPlacement =>
-            At(new Vector3(-HalfWidth - 1.95f, 0f, 0.9f), new Vector3(0f, 12f, 0f));
+        private static Matrix4x4 BenchPlacement => At(BenchPosition, BenchEuler);
+
+        /// <summary>
+        /// Kenji's bench (with its cord of blueprints and his pen plotter) in bay space: its centre on the ground,
+        /// and its turn.
+        /// </summary>
+        public static Vector3 BenchPosition => new Vector3(-HalfWidth - 1.95f, 0f, 0.9f);
+
+        public static readonly Vector3 BenchEuler = new Vector3(0f, 12f, 0f);
 
         /// <summary>
         /// Shoulder <paramref name="index"/> on the overhead rail: left, back and right of the turntable.
@@ -167,6 +182,7 @@ namespace MoonProject.Art.Editor
             Roof(b);
             Walls(b);
             Facade(b);
+            ShutterHousing(b);
             Floor(b);
             Hopper(b);
             SiteKit.Drum(b, At(new Vector3(-HalfWidth - 0.45f, 0.56f, -1.4f), new Vector3(0f, 90f, 0f)), 0.5f, 0.6f,
@@ -187,6 +203,7 @@ namespace MoonProject.Art.Editor
             }
 
             b.Append(WorkbenchMeshes.Bench(), BenchPlacement);
+            b.Append(BlueprintMeshes.Cord(), BenchPlacement);
             return b;
         }
 
@@ -492,6 +509,54 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>The arch's height over <paramref name="x"/> (its springing height outside the span).</summary>
+        /// <summary>The Shutter node's pivot: its roller, centred over the arch in front of the facade.</summary>
+        public static Vector3 ShutterRoller => new Vector3(0f, ArchY(0f) + ShutterRollerGap, FrontZ + ShutterAhead);
+
+        /// <summary>
+        /// The roll-up shutter's curtain in Shutter space, hanging from the roller (origin) to the ground: faded slats
+        /// with dark seams between them, a metal bottom bar with a handle, rust from its seams and a rusted foot.
+        /// </summary>
+        public static LowPolyMeshBuilder Shutter()
+        {
+            var b = new LowPolyMeshBuilder(600);
+            float drop = ShutterRoller.y;
+            float halfWidth = ArchHalfSpan + ShutterOverlap;
+            int slats = Mathf.CeilToInt(drop / ShutterSlat);
+            float pitch = drop / slats;
+            b.Box(At(0f, -drop * 0.5f, -ShutterThickness * 0.25f), new Vector3(2f * halfWidth - 0.02f, drop,
+                ShutterThickness * 0.5f), PaletteSwatch.Charcoal);
+            for (int i = 0; i < slats; i++)
+            {
+                b.Box(At(0f, -(i + 0.5f) * pitch, 0f), new Vector3(2f * halfWidth, pitch - 0.014f, ShutterThickness),
+                    PaletteSwatch.FadedPaint, 0.004f);
+            }
+
+            b.Box(At(0f, -drop + 0.05f, 0.005f), new Vector3(2f * halfWidth + 0.04f, 0.1f, ShutterThickness + 0.02f),
+                PaletteSwatch.Metal, 0.01f);
+            b.Box(At(0f, -drop + 0.16f, ShutterThickness), new Vector3(0.22f, 0.04f, 0.04f), PaletteSwatch.Metal,
+                0.008f);
+            Matrix4x4 face = SiteKit.Face(new Vector3(0f, 0f, ShutterThickness * 0.5f), Vector3.forward, Vector3.up);
+            SiteKit.RustSeam(b, face, -halfWidth + 0.1f, halfWidth - 0.1f, -0.25f, drop * 0.6f, 0.9f, 251);
+            SiteKit.RustPatch(b, face, -0.9f, -drop + 0.12f, 0.22f);
+            SiteKit.RustPatch(b, face, 0.6f, -drop + 0.1f, 0.16f);
+            return b;
+        }
+
+        /// <summary>
+        /// The shutter's static parts on the facade: its roller box and the two guide rails it runs in.
+        /// </summary>
+        private static void ShutterHousing(LowPolyMeshBuilder b)
+        {
+            Vector3 roller = ShutterRoller;
+            float halfWidth = ArchHalfSpan + ShutterOverlap;
+            b.Box(At(roller), new Vector3(2f * halfWidth + 0.16f, 0.24f, 0.26f), PaletteSwatch.Charcoal, 0.02f);
+            for (int side = -1; side <= 1; side += 2)
+            {
+                b.Box(At(side * (halfWidth + 0.03f), roller.y * 0.5f, roller.z), new Vector3(0.07f, roller.y, 0.09f),
+                    PaletteSwatch.Metal, 0.01f);
+            }
+        }
+
         private static float ArchY(float x)
         {
             return ArchSpring + Mathf.Sqrt(Mathf.Max(0f, ArchHalfSpan * ArchHalfSpan - x * x));

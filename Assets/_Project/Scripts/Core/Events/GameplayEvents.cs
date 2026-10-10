@@ -631,4 +631,46 @@ namespace MoonProject.Core.Events
 
         public string PlaceId { get; }
     }
+
+    /// <summary>
+    /// A dormant station answered the sonar (docs/features/M3-16 rule 1): a soft low "not yet" tone for Audio and one
+    /// line for UI saying what wakes it (<see cref="ReasonKey"/>: "notyet.bay", "notyet.lift", "notyet.shelf").
+    /// Published when the ping's ring reaches it.
+    /// </summary>
+    public readonly struct StationNotYet
+    {
+        public StationNotYet(string reasonKey, Vector3 position, float distance)
+        {
+            ReasonKey = reasonKey;
+            Position = position;
+            Distance = distance;
+        }
+
+        public string ReasonKey { get; }
+
+        public Vector3 Position { get; }
+
+        public float Distance { get; }
+    }
+
+    /// <summary>
+    /// 07 scanned a blueprint tube in a salvage site's heart (docs/features/M3-16 "Blueprints"): the kit
+    /// <see cref="KitId"/> is pinned on Kenji's board and the bay can build it from now on.
+    /// </summary>
+    public readonly struct BlueprintFound
+    {
+        public BlueprintFound(string kitId, string siteId, Vector3 position)
+        {
+            KitId = kitId;
+            SiteId = siteId;
+            Position = position;
+        }
+
+        public string KitId { get; }
+
+        /// <summary>The salvage site whose heart held the tube ("site.garage", ...).</summary>
+        public string SiteId { get; }
+
+        public Vector3 Position { get; }
+    }
 }

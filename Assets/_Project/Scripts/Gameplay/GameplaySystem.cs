@@ -49,6 +49,7 @@ namespace MoonProject.Gameplay
         [SerializeField] private SignalField _signals;
         [SerializeField] private CassetteShelf _shelf;
         [SerializeField] private RelayField _relays;
+        [SerializeField] private BaseProgression _progression;
 
         private readonly List<IDisposable> _saveTokens = new List<IDisposable>();
         private GlowMeshSet _meshes;
@@ -62,6 +63,12 @@ namespace MoonProject.Gameplay
         public IInteractionHints Hints { get; private set; }
 
         public RadioProgram Radio { get; private set; }
+
+        /// <summary>How far power has come back through the base (docs/features/M3-16).</summary>
+        public BasePower Power { get; private set; }
+
+        /// <summary>Kenji's blueprint board: which kits the bay can build (docs/features/M3-16).</summary>
+        public Blueprints Blueprints { get; private set; }
 
         public SalvageField Salvage => _salvage;
 
@@ -93,11 +100,13 @@ namespace MoonProject.Gameplay
 
         public RelayField Relays => _relays;
 
+        public BaseProgression Progression => _progression;
+
         internal void Wire(GameplayVisuals visuals, GlintTuning glints, UpgradeDefinition[] upgradeDefinitions,
             SalvageField salvage, RelicField relics, SonarSystem sonar, ExcavationSystem excavation,
             TetherSystem tether, HomeBase home, CargoCradle cradle, RadioTower tower, Workshop workshop,
             FriendField friends, CassetteField cassettes, LogCacheField logs, SignalField signals, CassetteShelf shelf,
-            RelayField relays)
+            RelayField relays, BaseProgression progression)
         {
             _visuals = visuals;
             _glints = glints;
@@ -117,6 +126,7 @@ namespace MoonProject.Gameplay
             _signals = signals;
             _shelf = shelf;
             _relays = relays;
+            _progression = progression;
         }
 
         public void Initialize(GameContext context)
@@ -142,6 +152,14 @@ namespace MoonProject.Gameplay
                 return;
             }
 
+            if (!context.TryGet(out IHomeLights lights))
+            {
+                Debug.LogError($"{nameof(GameplaySystem)}: no {nameof(IHomeLights)} is registered. The World domain " +
+                               "registers home's warm points (docs/features/M3-16).", this);
+                enabled = false;
+                return;
+            }
+
             _meshes = new GlowMeshSet();
             Materials = new MaterialStock(context.Events);
             var save = context.Get<ISaveService>();
@@ -151,21 +169,29 @@ namespace MoonProject.Gameplay
             var abilities = context.Get<IRoverAbilities>();
             Upgrades = new UpgradeService(context.Events, Materials, abilities, _upgradeDefinitions);
             Radio = new RadioProgram(context.Events, _cassettes.Catalog.Ids());
+            Power = new BasePower(context.Events);
+            Blueprints = NewBlueprints(context.Events);
+            if (Blueprints == null)
+            {
+                enabled = false;
+                return;
+            }
 
             Vector3 lander = HomeBase.LanderSpot(services.Terrain, services.Layout.BasePosition, _home.Tuning);
             if (!_salvage.Initialize(services) || !_relics.Initialize(services, _salvage) ||
                 !_excavation.Initialize(services, _relics, _salvage) ||
                 !_tether.Initialize(services, _relics, _salvage) ||
-                !_home.Initialize(services, _relics, _tether, Upgrades) ||
+                !_home.Initialize(services, _relics, _tether, Upgrades, lights) ||
                 !_cradle.Initialize(services, seat, _relics, _home) ||
                 !_tower.Initialize(services, Upgrades, _salvage.Catalog) ||
-                !_workshop.Initialize(services, Upgrades, _salvage.Catalog, _tower) ||
+                !_workshop.Initialize(services, Upgrades, _salvage.Catalog, _tower, Power, Blueprints, lights) ||
                 !_friends.Initialize(services, Radio, _cassettes.Catalog, _relics, _salvage, _home) ||
                 !_cassettes.Initialize(services, Radio, KeepClearOfCassettes()) || !_logs.Initialize(services) ||
                 !_sonar.Initialize(services, _relics, _friends, _salvage, abilities) ||
                 !_signals.Initialize(services, _friends, _cassettes, _logs, _relics, abilities, _sonar.Tuning) ||
                 !_shelf.Initialize(Radio, _cassettes.Catalog, _friends.BellTuning) ||
-                !_relays.Initialize(services, Upgrades, _tower, _tether, _friends.Tuning, Placement(context)))
+                !_relays.Initialize(services, Upgrades, _tower, _tether, _friends.Tuning, Placement(context)) ||
+                !_progression.Initialize(services, Power, _home, _workshop, _sonar.Tuning, _friends, _relays, Upgrades))
             {
                 enabled = false;
                 return;
@@ -184,7 +210,16 @@ namespace MoonProject.Gameplay
             _salvage.Connect(_excavation);
             _tether.Connect(_cradle);
 
-            Shop = new UpgradeShop(Upgrades, stations, save);
+            string tubeSite = UnknownTubeSite();
+            if (tubeSite != null)
+            {
+                Debug.LogError($"{nameof(GameplaySystem)}: a blueprint tube lies at '{tubeSite}', which is no " +
+                               "salvage site.", this);
+                enabled = false;
+                return;
+            }
+
+            Shop = new UpgradeShop(Upgrades, stations, save, Blueprints);
             Hints = new InteractionHints(services.Rover, _sonar, _excavation, _salvage, _tether, _cradle, _home,
                 stations, Upgrades, _friends, _relays);
             context.Register<IMaterialStock>(Materials);
@@ -199,6 +234,8 @@ namespace MoonProject.Gameplay
             context.Register<IStationReach>(_relays.Reach);
             context.Register<IRadioHop>(_relays.Hop);
             context.Register<IRelayStatus>(_relays);
+            context.Register<IBasePower>(Power);
+            context.Register<IBlueprintBoard>(Blueprints);
             Upgrades.PublishSignals();
             RegisterSaveSections(save);
         }
@@ -225,9 +262,71 @@ namespace MoonProject.Gameplay
                 GameplaySaveKeys.BellSignalsVersion, _signals.Capture, _signals.Restore)));
             _saveTokens.Add(save.Register(new SaveSection<RelaysSaveData>(GameplaySaveKeys.Relays,
                 GameplaySaveKeys.RelaysVersion, _relays.Capture, _relays.Restore)));
+            _saveTokens.Add(save.Register(new SaveSection<ProgressionSaveData>(GameplaySaveKeys.Progression,
+                GameplaySaveKeys.ProgressionVersion, _progression.Capture, _progression.Restore)));
+            _saveTokens.Add(save.Register(new SaveSection<BlueprintsSaveData>(GameplaySaveKeys.Blueprints,
+                GameplaySaveKeys.BlueprintsVersion, () => new BlueprintsSaveData { found = Blueprints.Capture() },
+                data => Blueprints.Restore(data.found))));
         }
 
         /// <summary>Core's rover placement for the radio-hop, or null while no domain registers it.</summary>
+        /// <summary>The board over the bay's kits, or null (logged) when its tubes are miswired.</summary>
+        private Blueprints NewBlueprints(EventBus events)
+        {
+            var kits = new List<string>();
+            foreach (UpgradeDefinition definition in _upgradeDefinitions)
+            {
+                if (_workshop.Sells(definition))
+                {
+                    kits.Add(definition.Id);
+                }
+            }
+
+            try
+            {
+                return new Blueprints(events, kits, _progression.Tuning.FirstKit, _progression.Tuning.Tubes,
+                    SiteOfRelic);
+            }
+            catch (ArgumentException exception)
+            {
+                Debug.LogError($"{nameof(GameplaySystem)}: {exception.Message}", this);
+                return null;
+            }
+        }
+
+        /// <summary>The salvage site whose heart held relic <paramref name="relicId"/>, or null.</summary>
+        private string SiteOfRelic(string relicId)
+        {
+            foreach (Relic relic in _relics.Relics)
+            {
+                if (relic.Definition.Id == relicId)
+                {
+                    return relic.Home != null ? relic.Home.Id : null;
+                }
+            }
+
+            return null;
+        }
+
+        private string UnknownTubeSite()
+        {
+            foreach (BlueprintTube tube in _progression.Tuning.Tubes)
+            {
+                bool found = false;
+                foreach (SalvageSite site in _salvage.Sites)
+                {
+                    found |= site.Id == tube.SiteId;
+                }
+
+                if (!found)
+                {
+                    return tube.SiteId;
+                }
+            }
+
+            return null;
+        }
+
         private static IRoverPlacement Placement(GameContext context)
         {
             return context.TryGet(out IRoverPlacement placement) ? placement : null;
@@ -237,6 +336,12 @@ namespace MoonProject.Gameplay
         private void Start()
         {
             Radio.Announce();
+            Power.Announce();
+        }
+
+        private void Update()
+        {
+            Power.Show(_tower.ShownLevel);
         }
 
         private void RestoreRadio(RadioSaveData data)
@@ -276,6 +381,7 @@ namespace MoonProject.Gameplay
         {
             Upgrades.Restore(data);
             _tower.ShowLevel(Upgrades.LevelOf(_tower.Definition.Id));
+            Power.Restore(_tower.ShownLevel);
         }
 
         /// <summary>The id of an upgrade no station sells (it could never be bought), or null.</summary>
@@ -331,6 +437,8 @@ namespace MoonProject.Gameplay
                 : _signals == null ? "SignalField is not assigned."
                 : _shelf == null ? "CassetteShelf is not assigned."
                 : _relays == null ? "RelayField is not assigned."
+                : _progression == null ? "BaseProgression is not assigned."
+                : _progression.Tuning == null ? "BaseProgression has no ProgressionTuning."
                 : null;
         }
 
@@ -342,6 +450,7 @@ namespace MoonProject.Gameplay
             }
 
             _saveTokens.Clear();
+            Blueprints?.Dispose();
             _meshes?.Dispose();
         }
     }

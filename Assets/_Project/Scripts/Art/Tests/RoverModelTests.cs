@@ -20,13 +20,13 @@ namespace MoonProject.Art.Tests
             "Neck/Head/Weather_Paint", "Neck/Head/Weather_Dust",
             "SolarWing", "SolarWing/CellFilled", "Antenna", "Antenna/AntennaTip", "Antenna/Pennant",
             "HeadlampSocket", "CargoSocket", "DustSocket_L", "DustSocket_R", "CoilSocket", "DrumSocket_L",
-            "DrumSocket_R",
+            "DrumSocket_R", "TubeSocket",
         };
 
         private static readonly string[] EmptyNodes =
         {
             "TetherOrigin", "HeadlampSocket", "CargoSocket", "DustSocket_L", "DustSocket_R", "CoilSocket",
-            "DrumSocket_L", "DrumSocket_R",
+            "DrumSocket_L", "DrumSocket_R", "TubeSocket",
         };
 
         private ModelNode _rover;

@@ -16,6 +16,9 @@ namespace MoonProject.UI
         public float lookSensitivity = 1f;
         public bool invertY;
 
+        /// <summary>The Guidance setting switched off (stored inverted so older saves keep it on).</summary>
+        public bool guidanceOff;
+
         /// <summary>Language code ("en", "vi"); empty in saves written before a language was chosen.</summary>
         public string language = string.Empty;
     }

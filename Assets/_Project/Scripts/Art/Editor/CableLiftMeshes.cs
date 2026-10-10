@@ -59,6 +59,48 @@ namespace MoonProject.Art.Editor
         public static Vector3 Jammed => Vector3.Lerp(Bottom, Top, 0.5f);
 
         /// <summary>
+        /// The jammed platform's roll (M3-16): its right cable snapped long ago, so it hangs from the left one alone,
+        /// its right side sagging down.
+        /// </summary>
+        public static Quaternion JamTilt => Rotation(new Vector3(0f, 0f, -JamRoll));
+
+        /// <summary>
+        /// Where the jammed platform's node sits (base space): turned by <see cref="JamTilt"/> about its left
+        /// shackle, which stays right under the left cable.
+        /// </summary>
+        public static Vector3 JammedTilted
+        {
+            get
+            {
+                var shackle = new Vector3(-CarriageHalfWidth, CarriageHeight, CarriageZ);
+                return Jammed + shackle - JamTilt * shackle;
+            }
+        }
+
+        /// <summary>The length of the stub left hanging from the drum where the right cable snapped.</summary>
+        public const float SnappedLength = 0.7f;
+
+        /// <summary>
+        /// The winch's lamp, on top of its motor housing (base space): dark until the lift is restored.
+        /// </summary>
+        public static Vector3 WinchLamp => Motor + new Vector3(0f, 0.27f, 0f);
+
+        /// <summary>
+        /// The winch hopper's mouth (base space), at 07's beam height beside the right post, facing out.
+        /// </summary>
+        public static Vector3 HopperMouth =>
+            new Vector3(Centre.x + PostHalfSpan + 0.7f, 1.15f, Centre.z + PostZ + 0.5f);
+
+        /// <summary>The hopper mouth's turn: tilted up to 07's beam, facing away from the lander.</summary>
+        public static Vector3 HopperFacing => new Vector3(-ServiceKit.MouthTilt, 0f, 0f);
+
+        public const float HopperSize = 0.34f;
+
+        private const float JamRoll = 12f;
+
+        private static Vector3 Motor => new Vector3(Centre.x + PostHalfSpan + 0.25f, DrumHeight, Centre.z + PostZ);
+
+        /// <summary>
         /// Where hoist cable <paramref name="side"/> (-1 left, +1 right) leaves the drum (base space): it hangs
         /// straight down from here to the carriage's top bar.
         /// </summary>
@@ -125,6 +167,41 @@ namespace MoonProject.Art.Editor
             SiteKit.Bar(b, barLeft, barRight, 0.06f, PaletteSwatch.FadedPaint);
             RecipeKit.Rod(b, new Vector3(-CarriageHalfWidth, 0.5f, CarriageZ), new Vector3(CarriageHalfWidth, 0.5f,
                 CarriageZ), 0.025f, 6, PaletteSwatch.FadedAccent);
+            return b;
+        }
+
+        /// <summary>
+        /// The right cable as decades left it, in the cable's space (the drum at the origin): a frayed stub hanging
+        /// from the drum, and the rest of it coiled slack on the dust below, rust at its broken end.
+        /// </summary>
+        public static LowPolyMeshBuilder SnappedCable()
+        {
+            var b = new LowPolyMeshBuilder(300);
+            RecipeKit.Rod(b, Vector3.zero, Vector3.down * SnappedLength, 0.014f, 6, PaletteSwatch.Charcoal);
+            for (int i = 0; i < 3; i++)
+            {
+                b.Prism(At(Vector3.down * (SnappedLength + 0.01f + i * 0.012f) + new Vector3(i * 0.006f - 0.006f, 0f,
+                    0f)), 0.006f, 0.04f, 4, PaletteSwatch.Rust);
+            }
+
+            var ground = new Vector3(0.25f, 0.025f - DrumHeight, 0.35f);
+            float[] radii = { 0.24f, 0.2f, 0.17f };
+            for (int i = 0; i < radii.Length; i++)
+            {
+                b.Torus(At(ground + new Vector3(i * 0.03f, i * 0.02f, -i * 0.02f), new Vector3(0f, i * 25f, 4f)),
+                    radii[i], 0.014f, 12, 3, PaletteSwatch.Charcoal);
+            }
+
+            RecipeKit.Rod(b, ground + new Vector3(radii[0], 0f, 0f), ground + new Vector3(0.62f, -0.01f, 0.18f), 0.014f,
+                6, PaletteSwatch.Charcoal);
+            return b;
+        }
+
+        /// <summary>The winch lamp's glass, a little dome centred on <see cref="WinchLamp"/>.</summary>
+        public static LowPolyMeshBuilder WinchLampGlass()
+        {
+            var b = new LowPolyMeshBuilder(80);
+            b.Icosphere(Matrix4x4.identity, 0.055f, 1, PaletteSwatch.LampGlass);
             return b;
         }
 
@@ -246,8 +323,11 @@ namespace MoonProject.Art.Editor
                 }
             }
 
-            var motor = new Vector3(Centre.x + PostHalfSpan + 0.25f, DrumHeight, z);
+            Vector3 motor = Motor;
             b.Box(At(motor), new Vector3(0.36f, 0.4f, 0.4f), PaletteSwatch.FadedPaint, 0.03f);
+            b.Prism(At(WinchLamp + Vector3.down * 0.06f), 0.07f, 0.05f, 8, PaletteSwatch.Metal);
+            b.Torus(At(WinchLamp), 0.07f, 0.008f, 8, 3, PaletteSwatch.Metal);
+            ServiceKit.Hopper(b, HopperMouth, HopperFacing, HopperSize);
             b.Box(At(motor + new Vector3(0.19f, 0f, 0f)), new Vector3(0.02f, 0.24f, 0.26f), PaletteSwatch.Charcoal);
             SiteKit.Cable(b, SiteKit.Sag(drum + new Vector3(-0.66f, -0.1f, -DrumRadius),
                 drum + new Vector3(-0.38f, -0.12f, -DrumRadius - 0.02f), 0.75f, 6), 0.014f, PaletteSwatch.Charcoal);

@@ -126,9 +126,6 @@ namespace MoonProject.Art.Editor
                 Weathering.Collar(b, At(foot + Vector3.up * 0.1f), 0.12f, 0.12f);
             }
 
-            Matrix4x4 sign = HomeSignFrame * At(0f, 0.95f, 0.035f + 0.02f + Weathering.RustLift);
-            SiteKit.RustStreak(b, sign, -0.36f, 0.12f, 0.16f);
-            SiteKit.RustStreak(b, sign, 0.36f, 0.12f, 0.22f);
             ChargingDockMeshes.Rust(b);
             CableLiftMeshes.FrameRust(b);
             return b;
@@ -194,33 +191,49 @@ namespace MoonProject.Art.Editor
                 LampFixture(b, LampPosition(i));
             }
 
-            HomeSign(b);
             MissionPatch(b);
             Perch(b);
             return b;
         }
 
-        /// <summary>Everything that glows warm: window panes, the hatch porthole and the lamp bulbs.</summary>
-        public static LowPolyMeshBuilder Windows()
+        /// <summary>The window panes that light one by one as home wakes (M3-16): left, right, back.</summary>
+        public const int PaneCount = 3;
+
+        /// <summary>
+        /// Window pane <paramref name="index"/> in lander space (0 left, 1 right, 2 back), dark glass that glows warm
+        /// when lit.
+        /// </summary>
+        public static LowPolyMeshBuilder Pane(int index)
         {
-            var b = new LowPolyMeshBuilder(400);
-            for (int side = -1; side <= 1; side += 2)
+            var b = new LowPolyMeshBuilder(60);
+            if (index == PaneCount - 1)
             {
-                float yaw = side * 45f;
-                Vector3 normal = Rotation(new Vector3(0f, yaw, 0f)) * Vector3.forward;
-                Vector3 centre = normal * (CabinApothem + 0.03f) + Vector3.up * WindowHeight;
-                b.Prism(At(centre, new Vector3(90f, yaw, 0f)), 0.27f, 0.03f, 12, PaletteSwatch.WarmLamp);
+                b.Prism(At(new Vector3(0f, WindowHeight, -CabinApothem - 0.03f), new Vector3(90f, 180f, 0f)), 0.22f,
+                    0.03f, 12, PaletteSwatch.LampGlass);
+                return b;
             }
 
-            b.Prism(At(new Vector3(0f, WindowHeight, -CabinApothem - 0.03f), new Vector3(90f, 180f, 0f)), 0.22f,
-                0.03f, 12, PaletteSwatch.WarmLamp);
+            float yaw = (index == 0 ? -1f : 1f) * 45f;
+            Vector3 normal = Rotation(new Vector3(0f, yaw, 0f)) * Vector3.forward;
+            Vector3 centre = normal * (CabinApothem + 0.03f) + Vector3.up * WindowHeight;
+            b.Prism(At(centre, new Vector3(90f, yaw, 0f)), 0.27f, 0.03f, 12, PaletteSwatch.LampGlass);
+            return b;
+        }
+
+        /// <summary>The hatch's porthole at a person's eye height, in lander space.</summary>
+        public static LowPolyMeshBuilder Porthole()
+        {
+            var b = new LowPolyMeshBuilder(40);
             b.Prism(At(new Vector3(0f, DoorBottom + EyeHeight, CabinApothem + 0.1f), AlongZ), 0.13f, 0.03f, 10,
-                PaletteSwatch.WarmLamp);
-            for (int i = 0; i < LampCount; i++)
-            {
-                b.Icosphere(At(LampPosition(i)), 0.075f, 1, PaletteSwatch.WarmLamp);
-            }
+                PaletteSwatch.LampGlass);
+            return b;
+        }
 
+        /// <summary>A porch lamp's bulb, centred on its LampSocket.</summary>
+        public static LowPolyMeshBuilder Bulb()
+        {
+            var b = new LowPolyMeshBuilder(80);
+            b.Icosphere(Matrix4x4.identity, 0.075f, 1, PaletteSwatch.LampGlass);
             return b;
         }
 
@@ -489,18 +502,31 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
-        /// A little hand-painted "HOME" sign planted in the dust beside 07's dock, leaning with the years.
+        /// Where the HOME sign's post stands in the dust beside 07's dock (the HomeSign node's pivot).
         /// </summary>
-        private static void HomeSign(LowPolyMeshBuilder b)
-        {
-            Matrix4x4 sign = HomeSignFrame;
-            b.Box(sign * At(0f, 0.46f, 0f), new Vector3(0.06f, 0.9f, 0.05f), PaletteSwatch.Metal);
-            b.Box(sign * At(0f, 0.95f, 0.035f), new Vector3(0.92f, 0.36f, 0.04f), PaletteSwatch.Enamel, 0.012f);
-            Glyphs.Write(b, sign * At(0f, 0.95f, 0.055f), "HOME", 0.2f, PaletteSwatch.WarmAccent, PaletteSwatch.Enamel);
-        }
+        public static readonly Vector3 HomeSignFoot = new Vector3(-1.35f, 0f, 4.75f);
 
-        /// <summary>The HOME sign's lean: back and to the side, sunk a little in the dust.</summary>
-        private static Matrix4x4 HomeSignFrame => At(new Vector3(-1.35f, 0f, 4.75f), new Vector3(-9f, -17f, 13f));
+        /// <summary>The HOME sign leaning with the years: back and to the side (the node's built rotation).</summary>
+        public static readonly Vector3 HomeSignLean = new Vector3(-9f, -17f, 13f);
+
+        /// <summary>The HOME sign set straight again once home wakes (M3-16), still facing the dock.</summary>
+        public static readonly Vector3 HomeSignUpright = new Vector3(0f, -17f, 0f);
+
+        /// <summary>
+        /// A little hand-painted "HOME" sign on a post, in its own space (the post's foot at the origin), rust weeping
+        /// from the bolts that hold its board.
+        /// </summary>
+        public static LowPolyMeshBuilder HomeSign()
+        {
+            var b = new LowPolyMeshBuilder(400);
+            b.Box(At(0f, 0.46f, 0f), new Vector3(0.06f, 0.9f, 0.05f), PaletteSwatch.Metal);
+            b.Box(At(0f, 0.95f, 0.035f), new Vector3(0.92f, 0.36f, 0.04f), PaletteSwatch.Enamel, 0.012f);
+            Glyphs.Write(b, At(0f, 0.95f, 0.055f), "HOME", 0.2f, PaletteSwatch.WarmAccent, PaletteSwatch.Enamel);
+            Matrix4x4 board = At(0f, 0.95f, 0.035f + 0.02f + Weathering.RustLift);
+            SiteKit.RustStreak(b, board, -0.36f, 0.12f, 0.16f);
+            SiteKit.RustStreak(b, board, 0.36f, 0.12f, 0.22f);
+            return b;
+        }
 
         /// <summary>
         /// A face frame on a vertical octagon wall facing <paramref name="yaw"/>, <paramref name="distance"/> out.

@@ -55,9 +55,13 @@ namespace MoonProject.Gameplay.PlayModeTests
             Vector3 lander = home.LanderPosition;
             _fixture.Rover.Place(lander + new Vector3(8f, 0f, 0f), 0f);
             yield return new WaitForSeconds(tuning.WarmEase * 3f);
+            Assert.AreEqual(0f, home.WindowLevel, 1e-3f, "asleep, home's windows are dark (M3-16)");
+            _fixture.PowerTo(1);
+            yield return new WaitForSeconds(tuning.WarmEase * 3f);
             float homeWindows = home.WindowLevel;
             float homeWarmth = home.Warmth;
-            Assert.AreEqual(tuning.WindowGlow, homeWindows, 0.05f, "the windows at their glow while 07 is home");
+            Assert.AreEqual(tuning.WindowGlow * _fixture.Gameplay.Upgrades.LightBoost, homeWindows, 0.05f,
+                "powered, the windows at their glow (with the tower's boost) while 07 is home");
             Assert.AreEqual(1f, homeWarmth, 0.05f, "the lamps light the ground");
             RenderTheView();
             Assert.AreEqual(0f, home.Halo.Level, "no halo over the base while 07 is there");
@@ -143,7 +147,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             float clear = SurfaceRules.HorizontalDistance(tower.PadCentre, port) - tuning.PadRadius;
             Assert.Greater(clear, 0.2f, "the pad's ring stays clear of the service port");
 
-            _fixture.GiveMaterials(0, 2, 3);
+            _fixture.GiveMaterials(1, 3, 1);
             Assert.AreEqual(PurchaseResult.NotAtStation, shop.Purchase(Tower), "bought on the pad, not anywhere");
             _fixture.Rover.Place(tower.PadCentre, Yaw(Flat(port) - Flat(tower.PadCentre)));
             yield return null;
@@ -238,12 +242,29 @@ namespace MoonProject.Gameplay.PlayModeTests
             PadLook look = _fixture.WorkshopTuning.PadLook;
             WorkshopTuning tuning = _fixture.WorkshopTuning;
             Assert.AreSame(_fixture.HoverJumpUpgrade, bay.Definition, "the bay's first offer");
-            Assert.AreEqual(tuning.LampIdle, bay.LampLevel, 1e-3f, "Kenji's work lamps are left on");
-            Assert.AreEqual(tuning.LightIdle, bay.LightLevel, 1e-3f, "a low warm glow lights the bay inside");
+            Assert.IsFalse(bay.Awake, "asleep until the tower's second level powers it (M3-16)");
+            Assert.AreEqual(0f, bay.LampLevel, 1e-3f, "its work lamps are dark");
+            Assert.AreEqual(0f, bay.LightLevel, 1e-3f, "and so is the bay inside");
+            Assert.AreEqual(0f, bay.SignLevel, 1e-3f, "the bay's sign is dark until power reaches it");
+            _fixture.Rover.Place(Flat(bay.PadCentre), Yaw(-bay.BayForward));
+            yield return null;
+            yield return null;
+            Assert.IsFalse(bay.Occupied, "a sleeping bay has no pad");
+            Assert.AreEqual(0f, bay.PadLevel, 1e-3f);
+            Assert.IsFalse(shop.IsAtStation, "no panel");
+            Assert.IsFalse(_fixture.Gameplay.Hints.TryGet(InteractionKind.Upgrade, out _), "no prompt");
+            Assert.AreEqual(PurchaseResult.NotAtStation, shop.Purchase(HoverJump), "nothing to buy");
+
+            _fixture.Rover.Place(tower.PadCentre, 0f);
+            _fixture.PowerTo(2);
+            yield return new WaitForSeconds(tuning.LightEase * 5f);
+            Assert.IsTrue(bay.Awake);
+            Assert.IsTrue(bay.Powered);
+            Assert.AreEqual(tuning.SignGlow, bay.SignLevel, 1e-3f, "woken by a loaded tower, its sign is simply lit");
+            Assert.AreEqual(tuning.LampIdle, bay.LampLevel, 0.05f, "Kenji's work lamps come on");
+            Assert.AreEqual(tuning.LightIdle, bay.LightLevel, 0.05f, "a low warm glow lights the bay inside");
             Assert.AreEqual(0f, bay.PitLevel, "the pit under the turntable is dark");
             Assert.IsFalse(bay.Working);
-            Assert.IsFalse(bay.Powered);
-            Assert.AreEqual(0f, bay.SignLevel, 1e-3f, "the bay's sign is dark until the base has power");
             Assert.AreEqual(0, bay.SparkCount, "no sparks before a purchase");
             Assert.IsFalse(_fixture.Rover.Has(RoverAbility.HoverJump));
             Assert.Greater(SurfaceRules.HorizontalDistance(bay.PadCentre, tower.PadCentre),
@@ -286,7 +307,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(1, _fixture.Events.UpgradePurchased[0].Value.Level);
             Assert.IsTrue(_fixture.Rover.Has(RoverAbility.HoverJump), "07 can leap now");
             Assert.Greater(bay.PadLevel, look.Occupied, "the purchase flares the pad");
-            Assert.AreSame(_fixture.CargoCradleUpgrade, bay.Definition, "then the bay offers the Cargo Cradle");
+            Assert.AreSame(_fixture.HoverJumpUpgrade, bay.Definition, "no other blueprint yet: it rests on Hover-Jump");
+            _fixture.Gameplay.Blueprints.Restore(new[] { _fixture.CargoCradleUpgrade.Id });
+            Assert.AreSame(_fixture.CargoCradleUpgrade, bay.Definition, "the Cargo Cradle's sheet pinned, it offers it");
             Assert.IsTrue(_fixture.Gameplay.Hints.TryGet(InteractionKind.Upgrade, out hint));
             Assert.IsFalse(hint.Ready, "4 metal it does not have yet");
             Assert.AreEqual(PurchaseResult.Maxed, shop.Purchase(HoverJump));
@@ -363,6 +386,8 @@ namespace MoonProject.Gameplay.PlayModeTests
                 _fixture.CargoCradleUpgrade, _fixture.WarmHeadlampUpgrade, _fixture.BoostCoilsUpgrade,
             };
             RoverAbility[] abilities = { RoverAbility.CargoCradle, RoverAbility.WarmHeadlamp, RoverAbility.BoostCoils };
+            Assert.AreEqual(PurchaseResult.NotPinned, shop.Purchase(kit[1].Id), "no blueprint, no kit (M3-16)");
+            _fixture.Gameplay.Blueprints.Restore(new[] { kit[0].Id, kit[1].Id, kit[2].Id });
             for (int i = 0; i < kit.Length; i++)
             {
                 Assert.AreSame(kit[i], bay.Definition, "the bay offers its kit in order");
@@ -417,7 +442,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator BaySign_LightsWithTheBasePower_FlickeringOnTheFirstTime_AndIsLitOnLoad()
+        public IEnumerator BaySign_LightsWhenPowerReachesTheBay_FlickeringOnTheFirstTime_AndIsLitOnLoad()
         {
             string slot = BootstrapHarness.NewTestSlot();
             _fixture = GameplayFixture.Boot(_controls, slot);
@@ -425,11 +450,12 @@ namespace MoonProject.Gameplay.PlayModeTests
             Workshop bay = _fixture.Gameplay.Workshop;
             RadioTower tower = _fixture.Gameplay.Tower;
             WorkshopTuning tuning = _fixture.WorkshopTuning;
+            _fixture.PowerTo(1);
             yield return new WaitForSeconds(0.5f);
             Assert.IsFalse(bay.Powered);
-            Assert.AreEqual(0f, bay.SignLevel, 1e-3f, "dark: the base has no power yet");
+            Assert.AreEqual(0f, bay.SignLevel, 1e-3f, "dark: the tower's first level powers home, not the bay");
 
-            _fixture.GiveMaterials(0, 1, 1);
+            _fixture.GiveMaterials(30, 30, 30);
             _fixture.Rover.Place(tower.PadCentre, 0f);
             yield return null;
             yield return null;
@@ -437,8 +463,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return null;
             Assert.IsFalse(bay.Powered, "not while 07 is still feeding the tower");
             yield return Waits.Until(() => bay.Powered, 5f);
-            Assert.IsTrue(bay.Powered, "the tower's first level brings the base its power");
-            Assert.AreEqual(1, tower.ShownLevel);
+            Assert.IsTrue(bay.Powered, "the tower's second level brings the bay its power");
+            Assert.AreEqual(2, tower.ShownLevel);
             var levels = new List<float>();
             float start = Time.time;
             while (Time.time - start < tuning.SignFlickerDuration)

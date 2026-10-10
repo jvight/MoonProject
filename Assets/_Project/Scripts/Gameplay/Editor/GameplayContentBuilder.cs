@@ -226,7 +226,8 @@ namespace MoonProject.Gameplay.Editor
                     ? new AbilityGate(true, RoverAbility.HoverJump)
                     : AbilityGate.Open;
                 sites[i] = new SalvageSiteEntry(SalvageEconomy.SiteId(names[i]),
-                    LoadArt(GameplayAssetPaths.SitePrefab(names[i])), gate);
+                    LoadArt(GameplayAssetPaths.SitePrefab(names[i])), gate,
+                    names[i] == SalvageEconomy.HeartUnderPiecesSite);
             }
 
             IReadOnlyList<string> bits = SalvageEconomy.TrailBits;
