@@ -72,6 +72,32 @@ namespace MoonProject.Rover
         [Range(0f, 30f)]
         [SerializeField] private float _maxLookUpTilt = 10f;
 
+        [Header("Wake opening (fresh game)")]
+        [Tooltip("Orbit angle (deg from straight behind 07) of the first shot: a front three-quarter view of the lens. "
+            + "The side that faces Earth is used.")]
+        [Range(90f, 180f)]
+        [SerializeField] private float _wakeYaw = 145f;
+
+        [Tooltip("Orbit elevation (deg) of the first shot: low, looking up past 07's lens at Earth.")]
+        [Range(-40f, 30f)]
+        [SerializeField] private float _wakeElevation = -15f;
+
+        [Tooltip("Camera distance (m) from 07 in the first shot: close on the lens.")]
+        [Range(1.5f, 10f)]
+        [SerializeField] private float _wakeDistance = 3.2f;
+
+        [Tooltip("Where 07 sits on screen in the first shot (+ = lower), leaving the sky and Earth above it.")]
+        [Range(-0.4f, 0.4f)]
+        [SerializeField] private float _wakeScreenY = 0.22f;
+
+        [Tooltip("Seconds the first shot holds before easing to the chase frame on its own (any input eases sooner).")]
+        [Range(1f, 30f)]
+        [SerializeField] private float _wakeHoldSeconds = 8f;
+
+        [Tooltip("Seconds the first shot takes to ease into the chase frame (ruling 8).")]
+        [Range(0.5f, 10f)]
+        [SerializeField] private float _wakeEaseSeconds = 4f;
+
         [Header("Stargazing")]
         [Tooltip("Orbit elevation (deg) where looking up begins to count: 07 starts lifting its head toward the sky.")]
         [Range(-10f, 20f)]
@@ -297,6 +323,18 @@ namespace MoonProject.Rover
         public float LowestCameraHeight => _lowestCameraHeight;
 
         public float MaxLookUpTilt => _maxLookUpTilt;
+
+        public float WakeYaw => _wakeYaw;
+
+        public float WakeElevation => _wakeElevation;
+
+        public float WakeDistance => _wakeDistance;
+
+        public float WakeScreenY => _wakeScreenY;
+
+        public float WakeHoldSeconds => _wakeHoldSeconds;
+
+        public float WakeEaseSeconds => _wakeEaseSeconds;
 
         public float StargazeStartElevation => _stargazeStartElevation;
 
