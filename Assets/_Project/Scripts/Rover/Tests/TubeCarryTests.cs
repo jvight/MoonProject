@@ -33,6 +33,34 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
+        public void Restore_PutsTheTubesBackAtOnce_AndAnyDeliveryTakesOneOff()
+        {
+            var carry = new TubeCarry(HalfLife);
+            carry.Restore(2);
+            Assert.AreEqual(1f, carry.Scale, "No ride-in after a load.");
+            carry.Step(Step);
+            Assert.AreEqual(1f, carry.Scale, 1e-4f);
+
+            carry.Delivered("rover.cargo_cradle");
+            Assert.IsTrue(carry.IsCarrying, "One of the two is left.");
+            carry.Delivered("rover.boost_coils");
+            Assert.IsFalse(carry.IsCarrying);
+            carry.Delivered("rover.boost_coils");
+            Assert.IsFalse(carry.IsCarrying, "A stray delivery takes nothing below none.");
+        }
+
+        [Test]
+        public void RestoreNone_ClearsTheBackAtOnce()
+        {
+            var carry = new TubeCarry(HalfLife);
+            carry.Found("rover.cargo_cradle");
+            Run(carry, 2f);
+            carry.Restore(0);
+            Assert.IsFalse(carry.IsCarrying);
+            Assert.AreEqual(0f, carry.Scale, "A load with nothing carried shows nothing, with no ride-out.");
+        }
+
+        [Test]
         public void TwoTubes_StayUntilBothAreDelivered()
         {
             var carry = new TubeCarry(HalfLife);

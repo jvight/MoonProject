@@ -383,6 +383,28 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
+        public void Blueprints_AnnounceTheTubesStillRidingOn07_AlsoWhenThereAreNone()
+        {
+            var restored = new List<int>();
+            _events.Subscribe<BlueprintsCarriedRestored>(evt => restored.Add(evt.Count));
+            string[] kits = { "rover.hover_jump", "rover.cargo_cradle", "rover.boost_coils" };
+            var tubes = new[]
+            {
+                new BlueprintTube("rover.cargo_cradle", "site.garage"),
+                new BlueprintTube("rover.boost_coils", "site.drill"),
+            };
+            using (var board = new Blueprints(_events, kits, "rover.hover_jump", tubes, _ => null))
+            {
+                board.Announce();
+                board.Restore(Array.Empty<string>(), new[] { "rover.cargo_cradle", "rover.boost_coils" });
+                Assert.AreEqual(1, restored.Count, "a load is silent until the game announces it");
+                board.Announce();
+            }
+
+            CollectionAssert.AreEqual(new[] { 0, 2 }, restored, "a fresh game says none; a load says how many");
+        }
+
+        [Test]
         public void Definition_ReportsEffectsPerLevel_AndValidates()
         {
             Assert.AreEqual(60f, _tower.SignalRadiusAt(0));

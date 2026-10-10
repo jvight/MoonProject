@@ -276,7 +276,6 @@ namespace MoonProject.Gameplay
                 RestoreBlueprints)));
         }
 
-        /// <summary>Core's rover placement for the radio-hop, or null while no domain registers it.</summary>
         private void RestoreBlueprints(BlueprintsSaveData data)
         {
             Blueprints.Restore(data.found, data.carried);
@@ -340,16 +339,21 @@ namespace MoonProject.Gameplay
             return null;
         }
 
+        /// <summary>Core's rover placement for the radio-hop, or null while no domain registers it.</summary>
         private static IRoverPlacement Placement(GameContext context)
         {
             return context.TryGet(out IRoverPlacement placement) ? placement : null;
         }
 
-        /// <summary>The save is loaded (Start runs after it): Audio and UI start from the real radio program.</summary>
+        /// <summary>
+        /// The save is loaded (Start runs after it): Audio and UI start from the real radio program, and Rover puts the
+        /// carried blueprint tubes on 07's back.
+        /// </summary>
         private void Start()
         {
             Radio.Announce();
             Power.Announce();
+            Blueprints.Announce();
         }
 
         private void Update()
