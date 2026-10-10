@@ -23,7 +23,7 @@
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/BeVietnamPro-Regular.asset");
 }
 
-.title__wordmark,
+.title-screen__wordmark,
 .pause__heading,
 .memory-card__name,
 .tower-panel__title,
@@ -281,30 +281,60 @@ Label {
     --icon-color: var(--moon-amber-edge);
 }
 
-/* Opening title */
+/* The title over the live world (M3-09): the wordmark in the sky, a quiet subtitle, the menu low and left */
 
-.title {
+.title-screen {
     position: absolute;
     left: 0;
     right: 0;
-    bottom: 8%;
+    top: 11%;
     align-items: center;
 }
 
-.title__wordmark {
-    font-size: 76px;
+.title-screen__wordmark {
+    font-size: 84px;
     letter-spacing: 16px;
     color: var(--moon-cream);
     -unity-text-align: middle-center;
-    text-shadow: 0 4px 22px var(--moon-shadow);
+    text-shadow: 0 0 28px var(--moon-amber-soft);
 }
 
-.title__rule {
-    width: 132px;
-    height: 2px;
-    margin-top: 16px;
-    border-radius: 1px;
-    background-color: var(--moon-amber-edge);
+.title-screen__subtitle {
+    margin-top: 10px;
+    font-size: 19px;
+    letter-spacing: 4px;
+    color: var(--moon-text-dim);
+    -unity-text-align: middle-center;
+}
+
+.pause--title .pause__veil,
+.pause--title .pause__header {
+    display: none;
+}
+
+.pause--title .pause__frame {
+    justify-content: flex-end;
+    align-items: flex-start;
+    padding-left: 7%;
+    padding-bottom: 9%;
+}
+
+.pause--title .pause__stack {
+    width: 340px;
+}
+
+.pause--title .pause__question,
+.pause--title .pause__aside {
+    white-space: normal;
+}
+
+.curtain {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--moon-sky-top);
 }
 
 /*
