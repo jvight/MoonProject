@@ -218,6 +218,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         private Autopilot _pilot;
         private EventRecorder _events;
         private IDisposable _awoke;
+        private int _cuts;
         private float _awokeAt = -1f;
         private float _stepStart;
 
@@ -265,8 +266,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             Relic relic = depot.Relics[0];
             yield return DriveToSite(depot);
             yield return ExpectStep(ProgressionKeys.NextSalvage, "out on the basin: salvage comes next");
+            Assert.IsFalse(depot.HeartRevealed, "the depot's heart lies under its pieces (P10)");
             yield return Ping(depot);
             yield return SalvageTheDepot(depot);
+            Assert.IsTrue(depot.HeartRevealed, "the last cut reveals it");
             yield return ExpectStep(ProgressionKeys.NextTower, "materials in the stock: the tower needs them");
             yield return Excavate(depot, relic);
             Assert.IsFalse(depot.AnswersSonar, "picked clean and its relic lifted: the depot falls silent");
@@ -283,6 +286,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return TillySpotsOnTheNextTrip();
             SalvageSite garage = _gameplay.Salvage.Find(WorldAnchorIds.SitePrefix + "garage");
             Relic duck = garage.Relics[0];
+            yield return SalvageTheGarage(garage);
             yield return Excavate(garage, duck);
             Assert.IsTrue(_gameplay.Blueprints.IsPinned(CargoCradle), "the garage's heart held the Cradle's blueprint");
             yield return TheBaySleepsUntilTheTowerWakesIt();
@@ -410,8 +414,34 @@ namespace MoonProject.Gameplay.PlayModeTests
         private IEnumerator SalvageTheDepot(SalvageSite site)
         {
             Begin();
+            yield return CutPieces(site, "02");
+            int cuts = _cuts;
+            Assert.IsTrue(site.IsPickedClean, "every piece of the depot is salvaged");
+            Assert.IsTrue(site.Root.Find("Skeleton").gameObject.activeSelf, "its weathered skeleton stays");
+            int topStep = 0;
+            foreach (EventRecorder.Timed<MaterialSalvaged> piece in _events.MaterialSalvaged)
+            {
+                Assert.AreEqual(site.Id, piece.Value.SiteId);
+                topStep = Mathf.Max(topStep, piece.Value.ComboStep);
+            }
+
+            Assert.Greater(topStep, 0, "consecutive pieces climb the salvage melody");
+            IMaterialStock stock = _gameplay.Materials;
+            Review(site.Position - Flat(site.Root.forward) * 16f + Vector3.up * 6f, site.Position + Vector3.up,
+                "02d-depot-picked-clean");
+            End("Salvage the depot", $"{site.Pieces.Count} pieces in {cuts} cuts, melody up to step {topStep}; " +
+                                     $"stock metal {stock.Metal}, wiring {stock.Wiring}, optics {stock.Optics}");
+        }
+
+        /// <summary>
+        /// Cuts every piece of <paramref name="site"/> the beam can cut (drag pieces wait for the tether), capturing
+        /// the first cut as <paramref name="capture"/>; the cuts started are left in <see cref="_cuts"/>.
+        /// </summary>
+        private IEnumerator CutPieces(SalvageSite site, string capture)
+        {
             SalvageField salvage = _gameplay.Salvage;
-            int cuts = 0;
+            int started = _events.SalvageCutStarted.Count;
+            int cuts = started;
             bool captured = false;
             for (int pass = 0; pass < 2 && !site.IsPickedClean; pass++)
             {
@@ -443,9 +473,9 @@ namespace MoonProject.Gameplay.PlayModeTests
                     if (!captured)
                     {
                         yield return new WaitForSeconds(cutSeconds * 0.5f);
-                        Capture("02b-salvage-cut");
+                        Capture(capture + "b-salvage-cut");
                         Witness(salvage.Cutting != null ? salvage.Cutting.CutPosition : site.Position,
-                            "02c-salvage-cut-closeup");
+                            capture + "c-salvage-cut-closeup");
                         captured = true;
                     }
 
@@ -458,21 +488,18 @@ namespace MoonProject.Gameplay.PlayModeTests
                 }
             }
 
-            Assert.IsTrue(site.IsPickedClean, "every piece of the depot is salvaged");
-            Assert.IsTrue(site.Root.Find("Skeleton").gameObject.activeSelf, "its weathered skeleton stays");
-            int topStep = 0;
-            foreach (EventRecorder.Timed<MaterialSalvaged> piece in _events.MaterialSalvaged)
-            {
-                Assert.AreEqual(site.Id, piece.Value.SiteId);
-                topStep = Mathf.Max(topStep, piece.Value.ComboStep);
-            }
+            _cuts = cuts - started;
+        }
 
-            Assert.Greater(topStep, 0, "consecutive pieces climb the salvage melody");
+        /// <summary>The garage on the way to the duck: its wiring pays the tower's second level (M3-16 P9).</summary>
+        private IEnumerator SalvageTheGarage(SalvageSite site)
+        {
+            Begin();
+            yield return DriveToSite(site);
+            yield return CutPieces(site, "11");
             IMaterialStock stock = _gameplay.Materials;
-            Review(site.Position - Flat(site.Root.forward) * 16f + Vector3.up * 6f, site.Position + Vector3.up,
-                "02d-depot-picked-clean");
-            End("Salvage the depot", $"{site.Pieces.Count} pieces in {cuts} cuts, melody up to step {topStep}; " +
-                                     $"stock metal {stock.Metal}, wiring {stock.Wiring}, optics {stock.Optics}");
+            End($"Salvage {site.Id}", $"{_cuts} cuts; stock metal {stock.Metal}, wiring {stock.Wiring}, " +
+                                      $"optics {stock.Optics}");
         }
 
         /// <summary>Circles the wreck to the piece's side, lines up in front of its cut and eases in.</summary>
