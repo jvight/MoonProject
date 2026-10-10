@@ -7,8 +7,7 @@ namespace MoonProject.UI
     internal enum HudVerb
     {
         Material = 0,
-        Ping = 1,
-        LitMast = 2,
-        Tape = 3,
+        LitMast = 1,
+        Tape = 2,
     }
 }

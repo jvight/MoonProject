@@ -12,7 +12,7 @@ namespace MoonProject.UI.Tests
         public void Verbs_StartUnmet_AreRememberedOnceMet_AndRoundTripThroughTheSave()
         {
             var ledger = new PromptLedger(new PromptSettings());
-            foreach (HudVerb verb in new[] { HudVerb.Material, HudVerb.Ping, HudVerb.LitMast, HudVerb.Tape })
+            foreach (HudVerb verb in new[] { HudVerb.Material, HudVerb.LitMast, HudVerb.Tape })
             {
                 Assert.IsFalse(ledger.Met(verb), verb.ToString());
             }
@@ -23,11 +23,11 @@ namespace MoonProject.UI.Tests
             CollectionAssert.AreEquivalent(new[] { "Material", "LitMast" }, data.metVerbs);
 
             var loaded = new PromptLedger(new PromptSettings());
-            data.metVerbs = new[] { "Material", "LitMast", "SomethingFromTheFuture" };
+            data.metVerbs = new[] { "Material", "LitMast", "Ping" };
             loaded.Restore(data);
             Assert.IsTrue(loaded.Met(HudVerb.Material));
             Assert.IsTrue(loaded.Met(HudVerb.LitMast));
-            Assert.IsFalse(loaded.Met(HudVerb.Ping));
+            Assert.IsFalse(loaded.Met(HudVerb.Tape), "names this build does not know are skipped");
 
             loaded.Restore(new PromptsSaveData());
             Assert.IsFalse(loaded.Met(HudVerb.Material), "a save from before the verbs has met none");

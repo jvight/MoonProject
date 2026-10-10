@@ -419,7 +419,8 @@ namespace MoonProject.UI
                               !hopping;
             _ticker.Tick(hudTime, tickerOpen);
             _hopFade.Tick(deltaTime);
-            _lookUpHint.Tick(hudTime);
+            _lookUpHint.Tick(hudTime, !_placeCard.IsVisible && !_card.IsVisible && !_tower.IsVisible &&
+                                      !_kitTitle.IsVisible && !_dial.IsBusy && !_hopList.IsBusy);
             _lookUpChip.Tick(deltaTime, !paused && _lookUpHint.WantsShown, device);
             _nextStep.Tick(hudTime, _services.Rover.Speed, _player.Guidance);
             _placeCard.Tick(hudTime, _awake && !_title.IsPlaying && !_kitTitle.IsVisible && !_card.IsVisible);
@@ -511,7 +512,6 @@ namespace MoonProject.UI
         private void OnSonarPinged(SonarPinged pinged)
         {
             _director.NotifyUsed(InteractionKind.Ping);
-            _ledger.RecordMet(HudVerb.Ping);
         }
 
         private void OnExcavationStarted(ExcavationStarted started)
