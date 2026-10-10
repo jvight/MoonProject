@@ -25,7 +25,7 @@ account) can continue without the old conversation.
   | gameplay | A–F done, tip 1b2ba6cd: power stages, dormancy, steps, places, blueprints (BlueprintFound), IHomeLights wired, P4. The Playthrough runs in step order but FAILS at step 7 (the relay is unaffordable). P9 (2× economy, a signature material per site, the path via depot, garage and Kestrel) + P10 (4 depot cuts) were in progress to fix it. Then P1, P2, P8. New ProgressionTuning asset; metas for Progression/*. |
   | ui | Done, 583ec3cc: next line, Guidance toggle, place cards, HUD verbs, Look-up hint waits for cards. UiTuning `_guidance` needs a re-serialise after landing. |
   | audio | Done, 93fd84f4: wake stingers per stage, the "not yet" tone. StationAudioTuning has 2 new fields. StationNotYet is also in box/gameplay with an identical diff. |
-  | rover | P5 wake opening done, 991094bd. A follow-up (head turns to Earth, Earth in frame, asserted in the capture) was in progress. RoverCameraTuning has 6 new `_wake*` fields. |
+  | rover | P5 two-beat wake done, tip c53e3681. Beat 1 is the lens looking up at the stars. Beat 2 is an over-the-shoulder shot with Earth in the upper third, then it eases to the chase. Approved. RoverCameraTuning has the `_wake*` fields; reset or re-serialise them after landing. Metas: WakeOpening.cs and its tests. |
   | art | Dormant items 1–4 done, 5af92d4: bay shutter, lander glows, HOME sign, blueprint board (pegboard). Queued: P3 first (07's rear must not read as a face), then P7 (the pen plotter replaces the pegboard), then the lift states, pads and power cables. |
   | world | Its part is landed. |
 
