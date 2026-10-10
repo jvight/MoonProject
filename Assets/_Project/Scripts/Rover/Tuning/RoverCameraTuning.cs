@@ -289,15 +289,16 @@ namespace MoonProject.Rover
         [SerializeField] private WideShotSettings _wideShot = new WideShotSettings();
 
         [Header("Lift lookout and the dock's evening")]
-        [Tooltip("The crew's lift settled at the lander deck: the camera eases out and up to a high wide frame with 07 "
-            + "small at the deck's edge and the basin beyond, held until any input brings the lift down (only the "
-            + "timing, frame, lens, ground fit and breathing fields apply).")]
-        [SerializeField] private WideShotSettings _lookoutShot = new WideShotSettings(6f, 1.6f, 16f, 18f, 0.2f, 6f);
+        [Tooltip("The crew's lift settled at the lander deck (M3-18 L5, a real lookout): the camera rises slowly to "
+            + "~14 m above the deck (distance x sin elevation), pulled back over the lander, looking out past 07 at "
+            + "the whole basin, held until any input brings the lift down (only the timing, frame, lens, ground fit "
+            + "and breathing fields apply).")]
+        [SerializeField] private WideShotSettings _lookoutShot = new WideShotSettings(9f, 1.6f, 28f, 30f, 0.3f, 6f);
 
-        [Tooltip("How far (deg) the lookout turns off looking straight out from the lander, toward Earth's side, so "
-            + "the camera clears the lander and the deck's edge shares the frame.")]
+        [Tooltip("How far (deg) the lookout turns off looking straight out from the lander, toward Earth's side "
+            + "(0: pulled straight back over the lander; blocked views still turn by the held-shot yaw step).")]
         [Range(0f, 120f)]
-        [SerializeField] private float _lookoutSide = 55f;
+        [SerializeField] private float _lookoutSide;
 
         [Tooltip("07 parked at its dock after a trip: the camera eases out to a wide shot from the dock looking at "
             + "home's newly lit lamps, holds, then eases back (only the timing, frame, lens, ground fit and breathing "
