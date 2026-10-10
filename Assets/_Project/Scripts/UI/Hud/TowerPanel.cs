@@ -40,6 +40,7 @@ namespace MoonProject.UI
         private readonly ILocalization _localization;
         private readonly EventBus _events;
         private readonly IUpgradeShop _shop;
+        private readonly IBlueprintBoard _board;
         private readonly IMaterialStock _materials;
         private readonly IInteractionHints _hints;
         private readonly RecipeView _recipe;
@@ -59,13 +60,15 @@ namespace MoonProject.UI
         private readonly StationWork _work;
 
         public TowerPanel(UiLayout layout, TowerPanelSettings settings, ILocalization localization, EventBus events,
-            IUpgradeShop shop, IMaterialStock materials, IInteractionHints hints, IntText numbers)
+            IUpgradeShop shop, IBlueprintBoard board, IMaterialStock materials, IInteractionHints hints,
+            IntText numbers)
         {
             _layout = layout ?? throw new ArgumentNullException(nameof(layout));
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _localization = localization ?? throw new ArgumentNullException(nameof(localization));
             _events = events ?? throw new ArgumentNullException(nameof(events));
             _shop = shop ?? throw new ArgumentNullException(nameof(shop));
+            _board = board ?? throw new ArgumentNullException(nameof(board));
             _materials = materials ?? throw new ArgumentNullException(nameof(materials));
             _hints = hints ?? throw new ArgumentNullException(nameof(hints));
             _recipe = new RecipeView(layout.TowerRecipe, layout.TowerNeed, localization, numbers);
@@ -148,7 +151,7 @@ namespace MoonProject.UI
             bool busy = _work.IsBusy;
             if (offered && !busy)
             {
-                _choices.Refresh(_shop);
+                _choices.Refresh(_shop, _board);
             }
 
             UpgradeOffer offer = default;

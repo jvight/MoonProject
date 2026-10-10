@@ -373,5 +373,22 @@ namespace MoonProject.Art.Tests
 
             CollectionAssert.AreEqual(Yields[id], totals, $"{id} yields Metal, Wiring, Optics");
         }
+
+        [Test]
+        public void StoryParts_AreSmallWeatheredPickups()
+        {
+            foreach (string name in SiteModelBuilder.StoryPartNames)
+            {
+                ModelNode part = SiteModelBuilder.CreateStoryPart(name);
+                LowPolyMeshBuilder mesh = part.Mesh.Geometry;
+                MeshChecks.AssertWellFormed(mesh);
+                Vector3 size = mesh.Bounds.size;
+                Assert.LessOrEqual(Mathf.Max(size.x, Mathf.Max(size.y, size.z)), 0.5f, $"{name} at true scale");
+                Assert.Greater(Mathf.Max(size.x, Mathf.Max(size.y, size.z)), 0.25f, $"{name} reads on 07's back");
+                List<PaletteSwatch> swatches = MeshChecks.Swatches(mesh);
+                CollectionAssert.Contains(swatches, PaletteSwatch.Rust, $"{name} left alone for decades");
+                Assert.IsFalse(swatches.Any(Palette.IsEmissive), $"{name} does not glow");
+            }
+        }
     }
 }

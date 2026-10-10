@@ -50,12 +50,20 @@ namespace MoonProject.UI
             return _choices[index].Levels[_levels[index]].Recipe;
         }
 
-        /// <summary>Re-reads what <paramref name="shop"/> offers. Returns true when anything changed.</summary>
-        public bool Refresh(IUpgradeShop shop)
+        /// <summary>
+        /// Re-reads what <paramref name="shop"/> offers, keeping only the kits pinned on Kenji's board (the bay builds
+        /// nothing it has no blueprint for). Returns true when anything changed.
+        /// </summary>
+        public bool Refresh(IUpgradeShop shop, IBlueprintBoard board)
         {
             if (shop == null)
             {
                 throw new ArgumentNullException(nameof(shop));
+            }
+
+            if (board == null)
+            {
+                throw new ArgumentNullException(nameof(board));
             }
 
             int total = shop.StationUpgradeCount;
@@ -65,7 +73,8 @@ namespace MoonProject.UI
             for (int i = 0; i < total; i++)
             {
                 UpgradeDefinition upgrade = shop.StationUpgradeAt(i);
-                if (!shop.TryGetOffer(upgrade.Id, out UpgradeOffer offer) || offer.IsMaxed)
+                if (!board.IsPinned(upgrade.Id) || !shop.TryGetOffer(upgrade.Id, out UpgradeOffer offer) ||
+                    offer.IsMaxed)
                 {
                     continue;
                 }

@@ -70,6 +70,28 @@ namespace MoonProject.Audio.Tests
             Assert.AreEqual("station_not_yet", AudioCueIds.StationNotYet);
         }
 
+        [TestCase(LiftCue.WinchCreaked, "lift_winch_creak")]
+        [TestCase(LiftCue.RideStarted, null)]
+        [TestCase(LiftCue.RideStopped, "lift_stop_clunk")]
+        public void EachLiftBeat_PlaysItsSound(LiftCue cue, string expected)
+        {
+            Assert.IsTrue(LiftSounds.TryGetOneShot(cue, out string id));
+            Assert.AreEqual(expected, id);
+        }
+
+        [Test]
+        public void EveryLiftBeat_HasASound()
+        {
+            foreach (LiftCue cue in (LiftCue[])Enum.GetValues(typeof(LiftCue)))
+            {
+                Assert.IsTrue(LiftSounds.TryGetOneShot(cue, out _), $"{cue} needs a sound in LiftSounds");
+            }
+
+            Assert.IsFalse(LiftSounds.TryGetOneShot((LiftCue)99, out _), "an unknown beat is silent, not an error");
+            Assert.AreEqual("plotter_draw", AudioCueIds.PlotterDraw);
+            Assert.AreEqual("blueprint_found", AudioCueIds.BlueprintFound);
+        }
+
         [Test]
         public void AnUnknownBeat_IsSilent_NotAnError()
         {

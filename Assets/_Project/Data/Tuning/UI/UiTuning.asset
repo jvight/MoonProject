@@ -313,6 +313,7 @@ MonoBehaviour:
       _scaleFrom: 1
       _springFrequency: 1.4
       _springDamping: 0.6
+    _stepPatienceSeconds: 120
     _stillSpeed: 0.4
     _stillSeconds: 1.2
     _place:

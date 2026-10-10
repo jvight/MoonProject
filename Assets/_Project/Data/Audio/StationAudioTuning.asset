@@ -20,6 +20,12 @@ MonoBehaviour:
   _dropPitchWobble: 0.012
   _wakeVolume: 0.8
   _notYetVolume: 0.7
+  _liftRideFadeIn: 0.4
+  _liftRideFadeOut: 0.3
+  _liftRideVolume: 0.7
+  _liftBeatVolume: 0.8
+  _plotterVolume: 0.7
+  _blueprintFoundVolume: 0.7
   _armDeadSpeed: 0.05
   _armFullSpeed: 0.8
   _armPlacedSpeed: 10

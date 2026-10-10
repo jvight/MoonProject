@@ -137,6 +137,10 @@ namespace MoonProject.Rover
         [Header("Visible kit and gifts")]
         [SerializeField] private KitSettings _kit = new KitSettings();
 
+        [Tooltip("Half-life (s) of a blueprint tube popping on to, or off, 07's back.")]
+        [Range(0.02f, 2f)]
+        [SerializeField] private float _tubeHalfLife = 0.2f;
+
         [Header("Antenna")]
         [Tooltip("Spring frequency (Hz) of the antenna wobble.")]
         [Range(0.2f, 10f)]
@@ -233,6 +237,8 @@ namespace MoonProject.Rover
         public HoverCoilSettings HoverCoils => _hoverCoils;
 
         public KitSettings Kit => _kit;
+
+        public float TubeHalfLife => _tubeHalfLife;
 
         public float AntennaFrequency => _antennaFrequency;
 

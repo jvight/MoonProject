@@ -51,10 +51,40 @@ namespace MoonProject.Art.Editor
             }
 
             ModelPrefabWriter.Write(CreateBlueprintTube(), ArtPaths.PickupFolder, material);
+            foreach (string part in StoryPartNames)
+            {
+                ModelPrefabWriter.Write(CreateStoryPart(part), ArtPaths.PickupFolder, material);
+            }
             AssetDatabase.SaveAssets();
         }
 
         public const string BlueprintTubeName = "BlueprintTube";
+
+        /// <summary>
+        /// The tower's story parts (M3-16 P1), pickups 07 carries home on its TubeSocket and feeds to the tower's port.
+        /// </summary>
+        public static readonly string[] StoryPartNames = { "Part_TowerCoil", "Part_Transformer", "Part_RelaySpare" };
+
+        public static ModelNode CreateStoryPart(string name)
+        {
+            LowPolyMeshBuilder geometry;
+            switch (name)
+            {
+                case "Part_TowerCoil":
+                    geometry = StoryPartMeshes.TowerCoil();
+                    break;
+                case "Part_Transformer":
+                    geometry = StoryPartMeshes.Transformer();
+                    break;
+                case "Part_RelaySpare":
+                    geometry = StoryPartMeshes.RelaySpare();
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(name), name, "Unknown story part.");
+            }
+
+            return new ModelNode(name, Vector3.zero, new ModelMesh(name, geometry));
+        }
 
         public static string SiteName(string id)
         {
