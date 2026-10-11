@@ -135,6 +135,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float PortViewSide = 3f;
         private const float PortViewHeight = 2.5f;
         private const float StopSpeed = 0.4f;
+
+        /// <summary>Metres in one frame that can only be a radio-hop's placement, never driving.</summary>
+        private const float HopJump = 3f;
         private const float ApproachOffset = 3f;
         private const float RetreatDistance = 16f;
         private const float ShelfStandOff = 4f;
@@ -248,8 +251,8 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         private static readonly string ReportPath = Path.Combine(GameplayFixture.CaptureFolder, "playthrough.md");
 
-        private readonly List<(string Step, float Seconds, string Notes, float Charge)> _steps =
-            new List<(string, float, string, float)>();
+        private readonly List<(string Step, float Seconds, string Notes, Vector3 Battery)> _steps =
+            new List<(string, float, string, Vector3)>();
 
         /// <summary>The range lessons' charges (docs/features/M3-20 §6, §12): where, the charge, the target.</summary>
         private readonly List<(string Where, float Charge, Vector2 Target)> _lessons =
@@ -268,6 +271,8 @@ namespace MoonProject.Gameplay.PlayModeTests
         private IDisposable _awoke;
         private IDisposable _crawled;
         private int _crawls;
+        private float _stepMetres;
+        private float _stepBeam;
         private int _cuts;
         private float _awokeAt = -1f;
         private float _stepStart;
@@ -402,6 +407,24 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsEmpty(_problems, "no errors or exceptions anywhere in the log during the playthrough");
         }
 
+        /// <summary>
+        /// What each step asks of the battery (docs/features/M3-20 §3): metres on the ground and seconds of beam work,
+        /// counted every frame for the report's tuning columns (a radio-hop's jump is not driving).
+        /// </summary>
+        private IEnumerator TrackTheBattery(IBeamStatus beam)
+        {
+            Vector3 last = _rover.Position;
+            while (true)
+            {
+                yield return null;
+                Vector3 now = _rover.Position;
+                float metres = SurfaceRules.HorizontalDistance(now, last);
+                last = now;
+                _stepMetres += _rover.IsGrounded && metres < HopJump ? metres : 0f;
+                _stepBeam += beam.Working ? Time.deltaTime : 0f;
+            }
+        }
+
         private void OnLowPower(LowPowerChanged lowPower)
         {
             _crawls += lowPower.LowPower && !lowPower.Restored ? 1 : 0;
@@ -480,6 +503,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             _events = new EventRecorder(_context.Events);
             _awoke = _context.Events.Subscribe<RoverAwoke>(_ => _awokeAt = Time.time);
             _crawled = _context.Events.Subscribe<LowPowerChanged>(OnLowPower);
+            _gameplay.StartCoroutine(TrackTheBattery(_context.Get<IBeamStatus>()));
             _pilot = new Autopilot(_rover);
             _rover.SetDriveSource(_pilot);
             Assert.AreEqual(0, _gameplay.Materials.Total, "a fresh game (its own save slot)");
@@ -2279,13 +2303,18 @@ namespace MoonProject.Gameplay.PlayModeTests
         private void Begin()
         {
             _stepStart = Time.time;
+            _stepMetres = 0f;
+            _stepBeam = 0f;
         }
 
         private void End(string step, string notes)
         {
             float seconds = Time.time - _stepStart;
-            _steps.Add((step, seconds, notes, _gameplay != null ? _gameplay.Battery.Model.Charge01 : 1f));
-            Debug.Log($"[playthrough] {step}: {seconds:F1} s ({notes})");
+            float charge = _gameplay != null ? _gameplay.Battery.Model.Charge01 : 1f;
+            _steps.Add((step, seconds, notes, new Vector3(charge, _stepMetres, _stepBeam)));
+            Debug.Log(string.Format(CultureInfo.InvariantCulture,
+                "[playthrough] {0}: {1:F1} s ({2}); charge {3:P0}, {4:F0} m on the ground, {5:F1} s of beam", step,
+                seconds, notes, charge, _stepMetres, _stepBeam));
         }
 
         private void Capture(string name)
@@ -2330,16 +2359,18 @@ namespace MoonProject.Gameplay.PlayModeTests
             var report = new StringBuilder();
             report.AppendLine("# Golden-path playthrough (real Main scene)");
             report.AppendLine();
-            report.AppendLine("| Step | Seconds | Notes | Charge |");
-            report.AppendLine("|---|---:|---|---:|");
-            foreach ((string step, float seconds, string notes, float charge) in _steps)
+            report.AppendLine("| Step | Seconds | Notes | Charge | Ground m | Beam s |");
+            report.AppendLine("|---|---:|---|---:|---:|---:|");
+            foreach ((string step, float seconds, string notes, Vector3 battery) in _steps)
             {
-                report.AppendLine(string.Format(CultureInfo.InvariantCulture, "| {0} | {1:F1} | {2} | {3:P0} |",
-                    step, seconds, notes, charge));
+                report.AppendLine(string.Format(CultureInfo.InvariantCulture,
+                    "| {0} | {1:F1} | {2} | {3:P0} | {4:F0} | {5:F1} |", step, seconds, notes, battery.x, battery.y,
+                    battery.z));
             }
 
             report.AppendLine(string.Format(CultureInfo.InvariantCulture,
-                "| **Total** | **{0:F1}** | budget {1:F0} s; {2} error(s), {3} warning(s) in the log; {4} crawl(s) | |",
+                "| **Total** | **{0:F1}** | budget {1:F0} s; {2} error(s), {3} warning(s) in the log; " +
+                "{4} crawl(s) | | | |",
                 total, TotalBudget, _problems.Count, _warnings, _crawls));
             report.AppendLine();
             report.AppendLine("Range lessons (docs/features/M3-20 §6):");
