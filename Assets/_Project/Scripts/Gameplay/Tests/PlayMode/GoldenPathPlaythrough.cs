@@ -368,8 +368,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             Lesson("home after Tilly's parts", 0.2f, 0.35f);
             yield return ChargeAtTheDock("the dock charges");
             yield return ExpectStep(ProgressionKeys.NextRelic, "Tilly is home: the first memory comes next");
-            yield return TillySpotsOnTheNextTrip();
             SalvageSite garage = _gameplay.Salvage.Find(WorldAnchorIds.SitePrefix + "garage");
+            yield return TillySpotsOnTheNextTrip(garage);
             Relic duck = RelicIn(garage, Duck);
             Relic walkman = RelicIn(garage, Walkman);
             yield return SalvageTheGarage(garage);
@@ -1497,24 +1497,14 @@ namespace MoonProject.Gameplay.PlayModeTests
             End($"Drive home with Tilly ({distance:F0} m)", $"she stayed within {farthest:F0} m of 07, then greeted");
         }
 
-        private IEnumerator TillySpotsOnTheNextTrip()
+        private IEnumerator TillySpotsOnTheNextTrip(SalvageSite undiscovered)
         {
             Begin();
-            SalvageSite undiscovered = null;
             Vector3 home = _context.Get<IWorldLayout>().BasePosition;
-            var abilities = _context.Get<IRoverAbilities>();
-            foreach (SalvageSite site in _gameplay.Salvage.Sites)
-            {
-                bool hidden = site.AnswersSonar && !site.Discovered && site.Gate.IsOpen(abilities);
-                if (hidden && (undiscovered == null ||
-                               SurfaceRules.HorizontalDistance(site.Position, home) <
-                               SurfaceRules.HorizontalDistance(undiscovered.Position, home)))
-                {
-                    undiscovered = site;
-                }
-            }
-
-            Assert.IsNotNull(undiscovered, "a salvage site is still waiting to be found");
+            Assert.IsNotNull(undiscovered, "the garage stands out on the basin");
+            Assert.IsTrue(undiscovered.AnswersSonar && !undiscovered.Discovered &&
+                          undiscovered.Gate.IsOpen(_context.Get<IRoverAbilities>()),
+                "the garage still waits to be found, open to 07 as it is");
             Vector3 toSite = undiscovered.Position - home;
             toSite.y = 0f;
             Vector3 stand = undiscovered.Position - toSite.normalized * SpotStandOff;
