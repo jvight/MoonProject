@@ -23,9 +23,7 @@ namespace MoonProject.UI.Tests
         {
             var uxml = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(UiAssetPaths.Uxml);
             var layout = new UiLayout(uxml.Instantiate());
-            ILocalization localization = TestTables.Localization(new EventBus(),
-                "recovery.power.name", "Power the station", "Cấp điện cho trạm",
-                "tech.hover_jump.name", "Hover-Jump", "Bật nhảy");
+            ILocalization localization = new LocalizationService(new EventBus(), RealTables());
             var settings = new LabHudSettings();
             var game = new Game();
             var board = new RecoveryBoard(layout.LabHud, settings.Board, localization, game, game);
@@ -94,6 +92,18 @@ namespace MoonProject.UI.Tests
                     Assert.IsTrue(table.Contains(key), $"{asset.name} has no '{key}'");
                 }
             }
+        }
+
+        private static StringTable[] RealTables()
+        {
+            TextAsset[] assets = StringTableAssets.Load();
+            var tables = new StringTable[assets.Length];
+            for (int i = 0; i < assets.Length; i++)
+            {
+                tables[i] = StringTable.Parse(assets[i].text, assets[i].name);
+            }
+
+            return tables;
         }
 
         private static void Ticks(RecoveryBoard board, float seconds, bool shown)
