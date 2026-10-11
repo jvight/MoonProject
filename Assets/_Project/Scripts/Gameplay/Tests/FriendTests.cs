@@ -269,6 +269,35 @@ namespace MoonProject.Gameplay.Tests
             Assert.AreEqual(FriendBehaviour.Mode.Following, brain.Current, "then back to 07");
         }
 
+        [Test]
+        public void Behaviour_LeadsACrawlHome_AheadOf07WithItsLamp_ThenLetsGo()
+        {
+            TestWorld world = TestWorld.Flat();
+            var brain = new FriendBehaviour(_tuning, world, new FakeSpots(), 9);
+            var rover = new Vector3(0f, 0f, 160f);
+            var charger = new Vector3(0f, 0f, 80f);
+            FriendSenses senses = Senses(rover, 0f);
+            brain.Wake(senses);
+            brain.Step(senses, 0.02f);
+            Assert.AreEqual(FriendBehaviour.Mode.Following, brain.Current);
+
+            senses.Lead = true;
+            senses.LeadToward = charger;
+            FriendIntent intent = brain.Step(senses, 0.02f);
+            Assert.AreEqual(FriendBehaviour.Mode.Leading, brain.Current);
+            Assert.AreEqual(rover.z - _tuning.LeadAhead, intent.Target.z, 1e-3f, "ahead of 07, toward the charger");
+            Assert.AreEqual(_tuning.LeadHeight, intent.Target.y, 1e-3f);
+            Assert.AreEqual(_tuning.LeadLamp, intent.Cone, "it leads with its lamp");
+
+            senses.Rover = charger + Vector3.forward * 4f;
+            intent = brain.Step(senses, 0.02f);
+            Assert.AreEqual(charger.z, intent.Target.z, 1e-3f, "close to the charger, it waits over it");
+
+            senses.Lead = false;
+            brain.Step(senses, 0.02f);
+            Assert.AreEqual(FriendBehaviour.Mode.Following, brain.Current, "07 charges: back to its own life");
+        }
+
         private static FriendSenses Senses(Vector3 rover, float now)
         {
             return new FriendSenses

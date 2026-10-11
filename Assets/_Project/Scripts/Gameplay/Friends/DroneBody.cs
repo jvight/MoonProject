@@ -46,6 +46,8 @@ namespace MoonProject.Gameplay
         private float _eyeLevel;
         private float _coneLevel;
         private Vector3 _liftPosition;
+        private bool _lead;
+        private Vector3 _leadToward;
         private float _liftYaw;
 
         public DroneBody(FriendTuning tuning, ITerrainQuery terrain, IRoverState rover, IViewCamera view,
@@ -214,6 +216,16 @@ namespace MoonProject.Gameplay
             host.localScale = new Vector3(_tuning.SpotConeRadius, _tuning.SpotConeRadius, length);
         }
 
+        /// <summary>
+        /// Leads a crawl home toward <paramref name="toward"/> while <paramref name="lead"/> is true (the battery sends
+        /// it out, docs/features/M3-20); false lets it go back to its own life.
+        /// </summary>
+        public void Lead(bool lead, Vector3 toward)
+        {
+            _lead = lead;
+            _leadToward = toward;
+        }
+
         private FriendSenses Senses(float now)
         {
             return new FriendSenses
@@ -228,6 +240,8 @@ namespace MoonProject.Gameplay
                 PerchForward = _perch.forward,
                 Shelf = _home.ShelfPosition,
                 ShelfForward = _home.ShelfForward,
+                Lead = _lead,
+                LeadToward = _leadToward,
             };
         }
 
@@ -237,6 +251,7 @@ namespace MoonProject.Gameplay
             {
                 case FriendBehaviour.Mode.Following:
                 case FriendBehaviour.Mode.Greeting:
+                case FriendBehaviour.Mode.Leading:
                     return FriendActivity.Following;
                 case FriendBehaviour.Mode.Spotting:
                     return FriendActivity.Spotting;

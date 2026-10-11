@@ -75,6 +75,9 @@ namespace MoonProject.Gameplay
         [Tooltip("Seconds of crawl before Tilly (once she is home) flies out by herself to lead.")]
         [Range(0f, 30f)] [SerializeField] private float _leadDelay = 5f;
 
+        [Tooltip("The friend (its id) who flies out to lead a crawl once home, and whose gift is the solar cell.")]
+        [SerializeField] private string _leadFriend = "tilly";
+
         [Tooltip("Cells of charge that end the crawl, so it never flickers on and off at empty.")]
         [Range(0.05f, 1f)] [SerializeField] private float _exitMargin = 0.25f;
 
@@ -141,6 +144,7 @@ namespace MoonProject.Gameplay
         public float LeadCap => _leadCap;
         public float CapEase => _capEase;
         public float LeadDelay => _leadDelay;
+        public string LeadFriend => _leadFriend;
         public float ExitMargin => _exitMargin;
         public float TrickleSecondsPerCell => _trickleSecondsPerCell;
         public float TrickleCap => _trickleCap;

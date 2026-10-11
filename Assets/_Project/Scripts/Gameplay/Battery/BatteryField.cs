@@ -13,8 +13,9 @@ namespace MoonProject.Gameplay
     /// or a lit relay mast's 4 m ring at walking pace) and steps <see cref="BatteryModel"/>, which other domains read as
     /// <see cref="IRoverBattery"/>. Leaps are paid as they happen. While 07 crawls, new beam work sleeps. The Low
     /// warning raises the nearest charger's pillar (lit or dormant: a dormant mast's pillar is the "masts charge"
-    /// promise) and, the first few times, a ticker line naming home or a lit charger only. A finished charge keeps
-    /// the day (saves). Allocation-free per frame.
+    /// promise) and, the first few times, a ticker line naming home or a lit charger only. Once Tilly is home her
+    /// repaired solar cell trickles a still 07 back up, and a few seconds into a crawl she flies out to lead toward
+    /// the nearest lit charger until 07 charges. A finished charge keeps the day (saves). Allocation-free per frame.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class BatteryField : MonoBehaviour
@@ -44,6 +45,9 @@ namespace MoonProject.Gameplay
         private ChargingDock _dock;
         private BellTuning _pillarLook;
         private SignalPillar _pillar;
+        private Friend _leader;
+        private DroneBody _leaderBody;
+        private Vector3 _nearestLit;
         private string[] _nodeNames = Array.Empty<string>();
         private Vector3 _lastPosition;
         private float _pillarUntil;
@@ -85,6 +89,16 @@ namespace MoonProject.Gameplay
             _dock = home != null ? home.Dock : throw new ArgumentNullException(nameof(home));
             _abilities = abilities ?? throw new ArgumentNullException(nameof(abilities));
             _pillarLook = friends != null ? friends.BellTuning : throw new ArgumentNullException(nameof(friends));
+            _leader = friends.Find(_tuning.LeadFriend);
+            _leaderBody = _leader != null ? _leader.Body as DroneBody : null;
+            if (_leaderBody == null)
+            {
+                Debug.LogError($"{nameof(BatteryField)}: no flying friend '{_tuning.LeadFriend}' to lead a crawl " +
+                               "and give the solar cell (BatteryTuning's lead friend).", this);
+                enabled = false;
+                return false;
+            }
+
             _events = services.Events;
             _rover = services.Rover;
             _save = services.Save;
@@ -138,6 +152,7 @@ namespace MoonProject.Gameplay
             float deltaTime = Time.deltaTime;
             Model.Step(Sample(), deltaTime);
             _beam.SetAsleep(Model.IsLowPower);
+            _leaderBody.Lead(Model.FriendLeads && !Model.IsCharging, _nearestLit);
             StepPillar(Time.time, deltaTime);
         }
 
@@ -152,7 +167,8 @@ namespace MoonProject.Gameplay
             _lastPosition = position;
 
             int charger = ChargerUnder(position);
-            int nearestLit = NearestCharger(position, true);
+            _nearestLit = ChargerPosition(NearestCharger(position, true));
+            bool friendHome = _leader.Progress.State == FriendState.Awake;
             return new BatteryStep
             {
                 GroundDistance = counted ? travel.magnitude : 0f,
@@ -162,11 +178,13 @@ namespace MoonProject.Gameplay
                 Boosting = _boosting,
                 BeamSeconds = _beam.Take(),
                 Still = _rover.Speed <= _tuning.StillSpeed,
+                SolarFitted = friendHome,
                 DrumsFitted = _abilities.Has(RoverAbility.BoostCoils),
+                FriendCanLead = friendHome,
                 OnCharger = charger != NoCharger,
                 Charger = charger == Dock ? ChargerKind.Dock : ChargerKind.Mast,
                 ChargerPosition = charger != NoCharger ? ChargerPosition(charger) : Vector3.zero,
-                NearestLitCharger = ChargerPosition(nearestLit),
+                NearestLitCharger = _nearestLit,
             };
         }
 

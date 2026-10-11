@@ -24,5 +24,11 @@ namespace MoonProject.Gameplay
         public Vector3 Shelf { get; set; }
 
         public Vector3 ShelfForward { get; set; }
+
+        /// <summary>07 crawls home on its reserve and this friend leads it (docs/features/M3-20).</summary>
+        public bool Lead { get; set; }
+
+        /// <summary>The charger it leads 07 toward (valid while <see cref="Lead"/>).</summary>
+        public Vector3 LeadToward { get; set; }
     }
 }
