@@ -2002,18 +2002,19 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// Home at last: hop home, drive up to the charging dock in front of the lander, stop on it and let go of the
-        /// wheel; 07 settles in to rest and the dock's glow warms. A touch of the throttle leaves.
+        /// Home at last: hop home, drive up to the charging dock on the base pad, stop on it and let go of the wheel;
+        /// 07 settles in to rest and the dock's glow warms. A touch of the throttle leaves. The hop home lands 07 on
+        /// the dock's pad, so it may rest there first: the rest and the evening are counted from before the hop.
         /// </summary>
         private IEnumerator RestOnTheDock()
         {
             Begin();
+            int rests = _events.RoverDockChanged.Count;
+            int evenings = _events.DockEveningOpened.Count;
             yield return Hop(_context.Get<IRadioHop>(), StationReach.HomeId);
             ChargingDock dock = _gameplay.Home.Dock;
             BaseTuning tuning = _gameplay.Home.Tuning;
             Vector3 facing = Flat(dock.Rotation * Vector3.forward).normalized;
-            int rests = _events.RoverDockChanged.Count;
-            int evenings = _events.DockEveningOpened.Count;
             yield return DriveTo(Flat(dock.Position) - facing * DockApproach, 1.5f, 0.6f, 60f,
                 "the front of the charging dock");
             yield return DriveTo(Flat(dock.Position), DockParkRadius, 0.35f, 30f, "the charging dock");
