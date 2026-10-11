@@ -4223,6 +4223,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _settings: {fileID: 11400000, guid: 3c7a28d294b9986468e4aeb35b23d7c1, type: 2}
   _shader: {fileID: 4800000, guid: 9d5b9ba22991ddc40b45f481cc4f19b9, type: 3}
+  _readoutFont: {fileID: 12800000, guid: 9f483a25d5034b141ad83eafb87f45e1, type: 3}
 --- !u!114 &3431222175418784101
 MonoBehaviour:
   m_ObjectHideFlags: 0
