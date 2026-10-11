@@ -216,6 +216,12 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// </summary>
         private const float LanderKeepOut = 9f;
 
+        /// <summary>
+        /// A long tow reels its relic in this far (m) out from home, on open ground, so it follows 07's own line past
+        /// the Rover Bay and the lander instead of swinging wide into them.
+        /// </summary>
+        private const float TowReelIn = 25f;
+
         /// <summary>Home by radio-hop, 07 rolls this far (m) out from the dock, away from the tower, to look out.</summary>
         private const float LookOutDistance = 10f;
         private const float LanderDetour = 13f;
@@ -1215,10 +1221,13 @@ namespace MoonProject.Gameplay.PlayModeTests
             LiftStation lift = _gameplay.Lift;
             Vector3 stand = Flat(lift.RideSpot - Flat(lift.RideHeading).normalized * LiftLineUp);
             float distance = SurfaceRules.HorizontalDistance(_rover.Position, stand);
-            yield return DriveTo(_context.Get<IWorldLayout>().BasePosition, PadArrival, 0.8f, 60f,
-                "the base pad, clear of the lander");
-            AssertTowHolds("on the way to the base pad");
+            Vector3 basePad = _context.Get<IWorldLayout>().BasePosition;
+            Vector3 outside = Flat(basePad) + Flat(_rover.Position - basePad).normalized * TowReelIn;
+            yield return DriveTo(outside, WaypointArrive, 0.8f, 60f, "open ground just out from home");
+            AssertTowHolds("on the long tow across the basin");
             yield return Reel(1f, ReelSeconds);
+            yield return DriveTo(basePad, PadArrival, 0.6f, 60f, "the base pad, clear of the lander");
+            AssertTowHolds("on the way to the base pad");
             _pilot.GoTo(stand, 2.5f, 0.6f);
             float deadline = Time.time + 90f;
             bool captured = false;
