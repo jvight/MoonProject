@@ -121,17 +121,21 @@ tower raises the next pillar. Those blinks are what the chart draws as "seen" (`
 | Saves | content floor raised to this release (the lander's places changed), as in M3-16. |
 
 ## 10. Contracts (Core)
-Landed by the Director: `ITechTree`, `TechNodeId`, `TechNodeState`, `TechNodeChanged` (M3-21).
-Made by the lab-systems slice (authorised Core edits, listed in its report):
-- `BasePowerStage.Lift` → `Chart` (same ordinal), with every usage in all domains (a mechanical rename).
-- `HomeLight`: `LiftLamps` becomes the belly lamp and hatch rim; add the lab's lamps if World needs a separate entry.
-- `LiftRideChanged.AtLookout` → `Inside`; `LiftCue` gains `HatchOpened` and `HatchClosed`.
-- `ILabInterior` (registered by Gameplay): `IsInside`, `Facing` (`LabStation`: Chart, Reader, Board, Keepsakes).
-- Events: `LabEntered` / `LabLeft` (Rover switches cameras, UI hides the HUD, Audio swaps to the room tone);
-  `LabStationFaced(station)` on each turntable stop; `FindDecoded(kitId)` when the reader finishes, and
-  `DecodeHandOff(from, to)` for the lamp pulse (World and Art light it; the plotter starts on its arrival).
-- Place ids: `place.lab` replaces `place.shelf` and `place.board`; `place.lift`'s line becomes "The crew's lift: up
-  into the lab." Localization keys follow (en + vi).
+Landed by the Director (2026-10-11):
+- `ITechTree`, `TechNodeId`, `TechNodeState`, `TechNodeChanged`, `IRecoveryProgress`, `RecoveryProgressChanged`
+  (M3-21);
+- `ILabInterior` (registered by Gameplay): `IsInside`, `Facing` (`LabStation`: Chart, Reader, Board, Keepsakes);
+- `Core/Events/LabEvents.cs`: `LabEntered(facing)` / `LabLeft` (Rover switches cameras, UI hides the HUD, Audio swaps
+  to the room tone); `LabStationFaced(station)` on each turntable stop; `FindDecoded(kitId)` when the reader finishes;
+  `DecodeHandOff(kitId, seconds)` for the lamp pulse (World and Art light it; the plotter starts on its arrival).
+
+Made by the slices (authorised Core edits, listed in their reports):
+- lab-systems: `BasePowerStage.Lift` → `Chart` (same ordinal), with every usage in all domains (a mechanical rename);
+  `LiftRideChanged.AtLookout` → `Inside`; `LiftCue` gains `HatchOpened` and `HatchClosed`.
+- lab-build: `HomeLight` entries: `LiftLamps` becomes the belly lamp and hatch rim; the lab's lamps and the light
+  table's glow get entries if World needs them.
+- Place ids (lab-systems): `place.lab` replaces `place.shelf` and `place.board`; `place.lift`'s line becomes "The
+  crew's lift: up into the lab." Localization keys follow (en + vi).
 
 **Art → Gameplay/Rover node names** (the lab-build slice publishes the exact list in `docs/ARCHITECTURE.md`, a new
 "Contract: the lab (M3-19)" section, before the systems slice wires it): `BellyLift/Platform`, `BellyLift/HatchLeafL`,
