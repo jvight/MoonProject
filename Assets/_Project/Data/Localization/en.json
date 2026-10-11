@@ -799,6 +799,22 @@
             "text": "{0} more {1} to salvage"
         },
         {
+            "key": "ui.recipecard.needs",
+            "text": "NEEDS"
+        },
+        {
+            "key": "ui.recipecard.have",
+            "text": "HAVE"
+        },
+        {
+            "key": "ui.recipecard.tower",
+            "text": "Park on the tower's pad and feed its hopper."
+        },
+        {
+            "key": "ui.recipecard.blueprint",
+            "text": "Blueprint decoded. Park on the bay's turntable to build it."
+        },
+        {
             "key": "upgrade.rover.cargo_cradle.name",
             "text": "Cargo Cradle"
         },

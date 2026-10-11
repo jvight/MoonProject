@@ -39,6 +39,9 @@ namespace MoonProject.UI
         [Range(0f, 10f)]
         [SerializeField] private float _towerCardDelay = 4f;
 
+        [Tooltip("The recipe card easing in while 07 looks at the tower's hopper or a board sheet, and out after.")]
+        [SerializeField] private RevealSettings _recipe = new RevealSettings(0.45f, 0.6f, 8f, 0.96f, 1.4f, 0.7f);
+
         [Tooltip("The recovery protocol's readout in 07's lens at the end of the full opening, easing in and out.")]
         [SerializeField] private RevealSettings _protocol = new RevealSettings(0.8f, 1.1f, 6f, 0.97f, 1f, 0.8f);
 
@@ -59,6 +62,8 @@ namespace MoonProject.UI
         public float PlaceHoldSeconds => _placeHoldSeconds;
 
         public float TowerCardDelay => _towerCardDelay;
+
+        public RevealSettings Recipe => _recipe;
 
         public RevealSettings Protocol => _protocol;
 

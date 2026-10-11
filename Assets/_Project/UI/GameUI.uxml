@@ -27,6 +27,22 @@
                 <ui:Label name="protocol-title" class="recovery-board__title protocol-readout__title" picking-mode="Ignore" />
                 <ui:VisualElement name="protocol-rows" class="recovery-board__rows" picking-mode="Ignore" />
             </ui:VisualElement>
+            <ui:VisualElement name="recipe-card" class="recipe-card" picking-mode="Ignore">
+                <ui:VisualElement name="recipe-card-shadow" class="soft-shadow soft-shadow--name" />
+                <ui:Label name="recipe-card-title" class="recipe-card__title" picking-mode="Ignore" />
+                <ui:Label name="recipe-card-level" class="recipe-card__level" picking-mode="Ignore" />
+                <ui:VisualElement class="recipe-card__row" picking-mode="Ignore">
+                    <ui:Label name="recipe-card-needs-word" class="recipe-card__word" picking-mode="Ignore" />
+                    <ui:VisualElement name="recipe-card-needs" class="recipe" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <ui:VisualElement class="recipe-card__row" picking-mode="Ignore">
+                    <ui:Label name="recipe-card-have-word" class="recipe-card__word" picking-mode="Ignore" />
+                    <ui:VisualElement name="recipe-card-have" class="recipe" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <ui:Label name="recipe-card-short" class="recipe__need recipe-card__line" picking-mode="Ignore" />
+                <ui:Label name="recipe-card-part" class="recipe-card__line" picking-mode="Ignore" />
+                <ui:Label name="recipe-card-where" class="recipe-card__where" picking-mode="Ignore" />
+            </ui:VisualElement>
             <ui:VisualElement name="reticle" class="reticle" picking-mode="Ignore">
                 <ui:VisualElement name="reticle-rest" class="reticle__ring reticle__ring--rest" />
                 <ui:VisualElement name="reticle-hover" class="reticle__ring reticle__ring--hover" />

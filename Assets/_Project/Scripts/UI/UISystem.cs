@@ -77,6 +77,7 @@ namespace MoonProject.UI
         private bool _arcRevealed;
         private PlaceCard _placeCard;
         private ProtocolReadout _protocol;
+        private RecipeCard _recipeCard;
         private TetherReticle _reticle;
         private ContextPrompt _prompt;
         private MaterialsChip _chip;
@@ -151,6 +152,10 @@ namespace MoonProject.UI
         internal FriendNameTag FriendName => _friendName;
 
         internal PlaceCard PlaceCard => _placeCard;
+
+        internal ProtocolReadout Protocol => _protocol;
+
+        internal RecipeCard RecipeCard => _recipeCard;
 
         internal LookUpChip LookUp => _lookUpChip;
 
@@ -384,6 +389,8 @@ namespace MoonProject.UI
             _batteryArc = new BatteryArc(_layout, _tuning.Battery, services.Battery, services.Beam);
             _placeCard = new PlaceCard(_layout, _tuning.Guidance, _localization);
             _protocol = new ProtocolReadout(_layout.Hud, _tuning.Guidance, _localization, services.Recovery);
+            _recipeCard = new RecipeCard(_layout.Hud, _tuning.Guidance.Recipe, _localization, _numbers, services.Shop,
+                services.Materials, services.RecipeLook);
             _reticle = new TetherReticle(_layout.Reticle, _layout.ReticleRest, _layout.ReticleHover, _tuning.Reticle);
             _prompt = new ContextPrompt(_layout, _tuning.Prompts, _director, services.View, _glyphs, _localization,
                 services.Events);
@@ -535,6 +542,9 @@ namespace MoonProject.UI
             _ticker.Tick(hudTime, tickerOpen);
             _hopFade.Tick(deltaTime);
             _protocol.Tick(hudTime);
+            _recipeCard.Tick(hudTime, !paused && _awake && !_protocol.IsVisible && !_placeCard.IsVisible &&
+                                      !_card.IsVisible && !_tower.IsVisible && !_kitTitle.IsVisible &&
+                                      !_stargaze.IsVeiled);
             bool hintOpen = !_protocol.IsVisible && !_placeCard.IsVisible && !_card.IsVisible && !_tower.IsVisible &&
                             !_kitTitle.IsVisible &&
                             !_dial.IsBusy && !_hopList.IsBusy && !_prompt.IsVisible && !_siteName.IsVisible &&
@@ -856,6 +866,7 @@ namespace MoonProject.UI
             _nextLine.Relocalize();
             _placeCard.Relocalize();
             _protocol.Relocalize();
+            _recipeCard.Relocalize();
             _labHud.Relocalize();
             _board.Relocalize();
             _dial.Relocalize();

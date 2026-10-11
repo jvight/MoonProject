@@ -799,6 +799,22 @@
             "text": "Cần trục vớt thêm {0} {1}"
         },
         {
+            "key": "ui.recipecard.needs",
+            "text": "CẦN"
+        },
+        {
+            "key": "ui.recipecard.have",
+            "text": "CÓ"
+        },
+        {
+            "key": "ui.recipecard.tower",
+            "text": "Đỗ lên bệ của tháp và nạp vào phễu."
+        },
+        {
+            "key": "ui.recipecard.blueprint",
+            "text": "Bản vẽ đã giải mã. Đỗ lên bàn xoay của khoang xe để chế tạo."
+        },
+        {
             "key": "upgrade.rover.cargo_cradle.name",
             "text": "Giỏ chở đồ"
         },

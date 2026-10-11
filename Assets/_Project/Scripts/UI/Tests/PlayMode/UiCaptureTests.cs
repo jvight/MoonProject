@@ -586,7 +586,8 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         /// <summary>
-        /// A place's card the first time 07 comes near, then the soft next line once 07 rests. Rerun on its own:
+        /// A place's card the first time 07 comes near, then the soft next line once 07 rests, the opening's protocol
+        /// readout and a recipe card while looking at the tower's hopper (M3-24 B). Rerun on its own:
         /// <c>python tools/unity_batch.py tests --platform playmode --filter CaptureGuidance</c>.
         /// </summary>
         [UnityTest]
@@ -596,7 +597,7 @@ namespace MoonProject.UI.PlayModeTests
             yield return LoadMain();
             GameContext context = FindBootstrap().Context;
             Camera camera = context.Get<IViewCamera>().Camera;
-            UISystem ui = BuildUi(context, out _, out _);
+            UISystem ui = BuildUi(context, out FakeGameServices fakes, out _);
             TuneQuickPatience();
             yield return null;
             string folder = Path.GetFullPath(OutputFolder);
@@ -612,6 +613,27 @@ namespace MoonProject.UI.PlayModeTests
             yield return new WaitForSecondsRealtime(_tuning.Guidance.PlaceHoldSeconds +
                                                     _tuning.Guidance.Place.FadeOut + _tuning.Guidance.Line.FadeIn + 0.5f);
             yield return Capture(camera, folder, "49_next_line");
+
+            context.Events.Publish(new RoverWakeBeatReached(WakeBeat.Crackle, false));
+            context.Events.Publish(new RoverWakeBeatReached(WakeBeat.GazeEarth, false));
+            yield return new WaitForSecondsRealtime(_tuning.Guidance.Protocol.FadeIn + 0.5f);
+            Assert.IsTrue(ui.Protocol.IsVisible, "the protocol readout shows at Earth's gaze (M3-24 B)");
+            yield return Capture(camera, folder, "49b_protocol_readout");
+            yield return new WaitForSecondsRealtime(_tuning.Guidance.ProtocolHoldSeconds +
+                                                    _tuning.Guidance.Protocol.FadeOut + 0.5f);
+            Assert.IsFalse(ui.Protocol.IsVisible, "and fades by itself");
+
+            fakes.Upgrade = _tower;
+            fakes.AtStation = false;
+            fakes.AwaitingPart = true;
+            fakes.SetMaterials(1, 0, 0);
+            fakes.Looked = _tower.Id;
+            yield return new WaitForSecondsRealtime(_tuning.Guidance.Recipe.FadeIn + 0.5f);
+            Assert.AreEqual(_tower.Id, ui.RecipeCard.Shown, "looking at the tower's hopper shows its recipe card");
+            yield return Capture(camera, folder, "49c_recipe_card");
+            fakes.Looked = null;
+            yield return new WaitForSecondsRealtime(_tuning.Guidance.Recipe.FadeOut + 0.5f);
+            Assert.IsFalse(ui.RecipeCard.IsVisible, "looking away hides it");
 #else
             Assert.Ignore("Captures need the editor.");
             yield break;
@@ -1127,7 +1149,7 @@ namespace MoonProject.UI.PlayModeTests
             ui.Initialize(new UiServices(context.Events, context.Input, fakes, fakes, context.Get<IAudioSettings>(),
                 context.Get<ILookSettings>(), save, fakes, fakes, fakes, fakes, fakes, fakes, fakes, fakes, fakes,
                 fakes, context.Get<IGameFlow>(), new SettingsFile(SaveService.DefaultDirectory, _slot), fakes, fakes,
-                fakes, fakes));
+                fakes, fakes, fakes));
             save.Load();
             return ui;
         }
