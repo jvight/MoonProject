@@ -76,9 +76,10 @@ namespace MoonProject.Rover
         [Range(-180f, 180f)]
         [SerializeField] private float _showRack;
 
-        [Tooltip("The battery spine: its flank to the open front.")]
+        [Tooltip("The battery spine: 07 turned to face the open front, the spine on its lid toward the chase camera, " +
+                 "so it drives straight out.")]
         [Range(-180f, 180f)]
-        [SerializeField] private float _showSpine = -90f;
+        [SerializeField] private float _showSpine = 180f;
 
         [Tooltip("The Hover-Jump coils: a flank to the open front.")]
         [Range(-180f, 180f)]
