@@ -139,7 +139,7 @@ namespace MoonProject.World
         [Header("Base pad")]
         [Tooltip("Width (metres) of the soft band where the base pad's compacted regolith meets the open dust.")]
         [Range(1f, 30f)]
-        [SerializeField] private float _padEdge = 8f;
+        [SerializeField] private float _padEdge = 14f;
 
         [Tooltip("How far the pad's regolith sits from the mid dust toward the shadow dust (0..1): compacted by " +
             "years of 07's wheels, a little darker than the open floor.")]
@@ -153,6 +153,15 @@ namespace MoonProject.World
         [Tooltip("Size of the pad's patches, metres: two to four across the pad, never a single facet.")]
         [Range(5f, 80f)]
         [SerializeField] private float _padPatchWavelength = 20f;
+
+        [Tooltip("Distance from home (metres) to which the pad's patch language carries over the open dust, fading " +
+            "out: the ground around home is a place too, never one lit plane.")]
+        [Range(0f, 200f)]
+        [SerializeField] private float _apronReach = 70f;
+
+        [Tooltip("How strongly the apron takes the pad's patch tone over the open dust at the pad's edge (0..1).")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _apronShare = 0.3f;
 
         [Header("Dust value")]
         [Tooltip("How far every dust tone leans toward the shadow dust (0..1): ~0.2 makes the lit dust about a tenth " +
@@ -209,6 +218,8 @@ namespace MoonProject.World
         public float PadDarken => _padDarken;
         public float PadMottle => _padMottle;
         public float PadPatchWavelength => _padPatchWavelength;
+        public float ApronReach => _apronReach;
+        public float ApronShare => _apronShare;
         public float RimFaceShade => _rimFaceShade;
         public float CrestZone => _crestZone;
         public float CrestBlend => _crestBlend;

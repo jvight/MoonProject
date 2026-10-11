@@ -22,9 +22,20 @@ namespace MoonProject.World
         /// <param name="strength">Mark strength (0..1) at each point.</param>
         public void AddStrip(IReadOnlyList<Vector3> points, IReadOnlyList<float> strength, float halfWidth)
         {
-            if (points == null || strength == null || points.Count != strength.Count)
+            AddStrip(points, strength, strength, halfWidth);
+        }
+
+        /// <summary>
+        /// A strip whose two edges wear on their own: <paramref name="leftStrength"/> and
+        /// <paramref name="rightStrength"/> per point, so the mark varies across as well as along.
+        /// </summary>
+        public void AddStrip(IReadOnlyList<Vector3> points, IReadOnlyList<float> leftStrength,
+            IReadOnlyList<float> rightStrength, float halfWidth)
+        {
+            if (points == null || leftStrength == null || rightStrength == null || points.Count != leftStrength.Count
+                || points.Count != rightStrength.Count)
             {
-                throw new ArgumentException("A strip needs one strength per point.", nameof(strength));
+                throw new ArgumentException("A strip needs one strength per point and edge.", nameof(leftStrength));
             }
 
             if (points.Count < 2)
@@ -40,9 +51,8 @@ namespace MoonProject.World
                 ahead.y = 0f;
                 Vector3 side = Vector3.Cross(Vector3.up, ahead.normalized) * halfWidth;
                 along += i > 0 ? Vector3.Distance(points[i], points[i - 1]) : 0f;
-                Color32 color = Strength(strength[i]);
-                Add(points[i] - side, new Vector2(0f, along), color);
-                Add(points[i] + side, new Vector2(1f, along), color);
+                Add(points[i] - side, new Vector2(0f, along), Strength(leftStrength[i]));
+                Add(points[i] + side, new Vector2(1f, along), Strength(rightStrength[i]));
                 if (i > 0)
                 {
                     int a = first + (i - 1) * 2;
