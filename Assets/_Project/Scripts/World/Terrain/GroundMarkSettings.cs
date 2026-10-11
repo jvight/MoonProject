@@ -13,10 +13,10 @@ namespace MoonProject.World
     public sealed class GroundMarkSettings
     {
         [Header("Worn tracks")]
-        [Tooltip("Anchors 07's worn tracks run out to from home (the depot, the canyon road).")]
+        [Tooltip("Anchors 07's worn tracks run out to from home (the depot, the canyon road, Kenji's garage).")]
         [SerializeField] private string[] _destinations =
         {
-            WorldAnchorIds.SitePrefix + "depot", WorldAnchorIds.CanyonMouth,
+            WorldAnchorIds.SitePrefix + "depot", WorldAnchorIds.CanyonMouth, WorldAnchorIds.SitePrefix + "garage",
         };
 
         [Tooltip("Distance between the centres of 07's two ruts, metres.")]

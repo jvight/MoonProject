@@ -33,9 +33,9 @@ MonoBehaviour:
   _siteRule: 0
   _placement:
     _seed: 41
-    _siteDistance: {x: 60, y: 110}
-    _siteBearing: 90
-    _siteBearingSpread: 55
+    _siteDistance: {x: 80, y: 110}
+    _siteBearing: 77.5
+    _siteBearingSpread: 17.5
     _craterDepth: {x: 0.3, y: 2.5}
     _craterRadius: 10
     _visibleFromBase: 1

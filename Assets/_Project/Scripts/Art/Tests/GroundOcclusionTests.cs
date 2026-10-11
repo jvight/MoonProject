@@ -58,5 +58,30 @@ namespace MoonProject.Art.Tests
 
             Assert.AreEqual(0, ringsBetween, "two feet 4 m apart get two skirts, not one plinth under the gate");
         }
+
+        [Test]
+        public void Skirt_IsShadeOnTheGround_DarkestAtTheFoot()
+        {
+            var geometry = new LowPolyMeshBuilder();
+            geometry.Box(Matrix4x4.Translate(new Vector3(0f, 1f, 0f)), new Vector3(0.2f, 2f, 0.2f),
+                PaletteSwatch.Metal);
+            var root = new ModelNode("Post", Vector3.zero, new ModelMesh("Post", geometry));
+
+            GroundOcclusion.Ground(root);
+
+            LowPolyMeshBuilder skirt = root.GetDescendant(GroundOcclusion.SkirtName).Mesh.Geometry;
+            Assert.Greater(skirt.VertexCount, 0);
+            for (int v = 0; v < skirt.VertexCount; v++)
+            {
+                float shade = skirt.Occlusion[v].x;
+                Assert.GreaterOrEqual(shade, GroundOcclusion.SkirtEdgeShade - 1e-5f, "no part of a skirt is pale");
+                Assert.LessOrEqual(shade, GroundOcclusion.SkirtCoreShade + 1e-5f);
+                Vector3 p = skirt.Positions[v];
+                if (new Vector2(p.x, p.z).magnitude < 1e-4f)
+                {
+                    Assert.AreEqual(GroundOcclusion.SkirtCoreShade, shade, 1e-4f, "the skirt is darkest at the foot");
+                }
+            }
+        }
     }
 }

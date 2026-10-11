@@ -40,6 +40,15 @@ namespace MoonProject.Art.Editor
         private const float SkirtHeight = 0.035f;
         private const int SkirtSegments = 14;
 
+        /// <summary>
+        /// How far a skirt's outer edge leans toward DustShadow: past the base pad's compacted dust, so the drift reads
+        /// as shade on every ground it sits on and never as a pale pile.
+        /// </summary>
+        public const float SkirtEdgeShade = 0.6f;
+
+        /// <summary>How far a skirt leans toward DustShadow where it meets the model: the darkest of the foot.</summary>
+        public const float SkirtCoreShade = 0.85f;
+
         private static readonly Vector2[] SkirtProfile =
         {
             new Vector2(1f, -0.01f), new Vector2(0.7f, SkirtHeight * 0.85f), new Vector2(0f, SkirtHeight),
@@ -138,10 +147,25 @@ namespace MoonProject.Art.Editor
                 var radii = new Vector3(Mathf.Max(half.x + SkirtMargin, SkirtMinRadius), 1f,
                     Mathf.Max(half.y + SkirtMargin, SkirtMinRadius));
                 Matrix4x4 placement = Matrix4x4.TRS(new Vector3(centre.x, 0f, centre.y), Quaternion.identity, radii);
+                int first = b.VertexCount;
                 b.Lathe(placement, SkirtProfile, SkirtSegments, PaletteSwatch.DustMid);
+                ShadeSkirt(b, first, centre, radii);
             }
 
             return b;
+        }
+
+        /// <summary>
+        /// Darkens one skirt from <see cref="SkirtCoreShade"/> at its centre to <see cref="SkirtEdgeShade"/> at its rim.
+        /// </summary>
+        private static void ShadeSkirt(LowPolyMeshBuilder b, int first, Vector2 centre, Vector3 radii)
+        {
+            IReadOnlyList<Vector3> positions = b.Positions;
+            for (int v = first; v < b.VertexCount; v++)
+            {
+                var offset = new Vector2((positions[v].x - centre.x) / radii.x, (positions[v].z - centre.y) / radii.z);
+                b.Occlude(v, Mathf.Lerp(SkirtCoreShade, SkirtEdgeShade, Mathf.Clamp01(offset.magnitude)));
+            }
         }
 
         /// <summary>The cluster with a footprint within <see cref="ContactMerge"/> of <paramref name="p"/>.</summary>
