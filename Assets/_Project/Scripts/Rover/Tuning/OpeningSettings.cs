@@ -228,7 +228,7 @@ namespace MoonProject.Rover
         [Header("Lens camera")]
         [Tooltip("The POV camera sits this far (m) in front of the lens centre, clear of the glass.")]
         [Range(0f, 0.3f)]
-        [SerializeField] private float _lensForward = 0.06f;
+        [SerializeField] private float _lensForward = 0.15f;
 
         [Tooltip("Near clip (m) of the lens camera.")]
         [Range(0.01f, 0.3f)]

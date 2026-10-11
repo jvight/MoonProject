@@ -122,8 +122,11 @@ namespace MoonProject.Rover
         /// <summary>07's body: 1 asleep (head bowed, eye dark) .. 0 awake.</summary>
         public float Sleep { get; private set; }
 
-        /// <summary>07's own lid openness (shut while pushing in), and how much the wake holds it.</summary>
-        public float BodyLid => Phase == OpeningPhase.PushIn ? 0f : Lid01;
+        /// <summary>
+        /// 07's own lid openness, and how much the wake holds it: shut while pushing in; fully open while the camera
+        /// is inside the lens, where the lens view draws the lid and the real brow-shutter would cover the camera.
+        /// </summary>
+        public float BodyLid => Phase == OpeningPhase.PushIn ? 0f : InLens ? 1f : Lid01;
         public float BodyLidWeight { get; private set; }
 
         /// <summary>The O11 head tilt (deg); it eases back out even after the chase frame.</summary>
