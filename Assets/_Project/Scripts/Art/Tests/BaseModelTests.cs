@@ -9,8 +9,9 @@ namespace MoonProject.Art.Tests
     /// <summary>The base part of the M2 content contract: names, anchors, sockets and pivots.</summary>
     public sealed class BaseModelTests
     {
-        // A base model costs at most this many triangles (the lander, carrying 07's dock and the lift, is the most).
-        private const int TriangleBudget = 8000;
+        // A base model costs at most this many triangles (the lander, carrying 07's dock, the lift and since M3-07 the
+        // deck hatch with Ines's light table and chart pen behind it, is the most).
+        private const int TriangleBudget = 8600;
 
         // The removable weather skins (patchwork paint over every face, rust, dust over both) cost at most this much
         // more on top of a model: about three times the lander they cover.
