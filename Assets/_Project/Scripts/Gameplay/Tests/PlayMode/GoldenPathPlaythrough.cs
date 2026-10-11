@@ -1348,7 +1348,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsFalse(bay.Awake, "tower level 1 powers home, not the bay");
             Assert.IsFalse(_gameplay.Shop.IsAtStation, "no panel");
             Assert.IsFalse(_gameplay.Hints.TryGet(InteractionKind.Upgrade, out _), "no prompt");
-            Assert.AreEqual(PurchaseResult.NotAtStation, _gameplay.Shop.Purchase(HoverJump), "nothing to buy");
+            Assert.AreEqual(PurchaseResult.NotAtStation, _gameplay.Shop.Purchase(CargoCradle), "nothing to buy");
             int answers = _events.StationNotYet.Count;
             int pings = _events.SonarPinged.Count;
             Press(_keyboard.spaceKey, queueEventOnly: true);
