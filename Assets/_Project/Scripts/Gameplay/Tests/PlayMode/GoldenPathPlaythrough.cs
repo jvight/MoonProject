@@ -856,7 +856,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             End("The rest of the basin's salvage (not driven)", $"topped up by {topUp} to {need}");
         }
 
-        /// <summary>Power reaches the jammed lift: rest on its feed pad while 07 feeds and stitches the winch.</summary>
+        /// <summary>
+        /// Power reaches the jammed lift: rest on its feed pad while 07 feeds and stitches the winch.
+        /// </summary>
         private IEnumerator RestoreTheLift()
         {
             Begin();

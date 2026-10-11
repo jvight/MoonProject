@@ -24,10 +24,14 @@ namespace MoonProject.Gameplay
     /// </summary>
     public sealed class BatteryModel : IRoverBattery
     {
-        /// <summary>Flank lamp sockets on 07's stripe: the most cells a battery can hold (Cell Pack III's eight).</summary>
+        /// <summary>
+        /// Flank lamp sockets on 07's stripe: the most cells a battery can hold (Cell Pack III's eight).
+        /// </summary>
         public const int MaxCells = 8;
 
-        /// <summary>Charge (cells) treated as a whole cell, so float sums never miss a boundary or the empty mark.</summary>
+        /// <summary>
+        /// Charge (cells) treated as a whole cell, so float sums never miss a boundary or the empty mark.
+        /// </summary>
         private const float CellEpsilon = 1e-4f;
 
         private readonly BatteryTuning _tuning;
@@ -83,7 +87,9 @@ namespace MoonProject.Gameplay
         /// <summary>Seconds of the current crawl (0 when not crawling).</summary>
         public float CrawlTime => _crawlTime;
 
-        /// <summary>The charge is spent but a verb is still finishing on the reserve; the crawl starts after it.</summary>
+        /// <summary>
+        /// The charge is spent but a verb is still finishing on the reserve; the crawl starts after it.
+        /// </summary>
         public bool OnReserve => !IsLowPower && Charge <= CellEpsilon;
 
         /// <summary>The HUD arc has revealed itself in this game.</summary>
@@ -193,7 +199,9 @@ namespace MoonProject.Gameplay
             Rearm();
         }
 
-        /// <summary>Tells everyone the battery the game starts with (Restored = true: shown at once, silently).</summary>
+        /// <summary>
+        /// Tells everyone the battery the game starts with (Restored = true: shown at once, silently).
+        /// </summary>
         public void Announce()
         {
             _events.Publish(new BatteryChanged(_fullCells, Cells, false, true));
@@ -204,7 +212,9 @@ namespace MoonProject.Gameplay
             }
         }
 
-        /// <summary>The slope's cost multiplier eases toward the ground under the travel, held while 07 stands.</summary>
+        /// <summary>
+        /// The slope's cost multiplier eases toward the ground under the travel, held while 07 stands.
+        /// </summary>
         private void StepSlope(in BatteryStep step, float deltaTime)
         {
             if (step.GroundDistance <= 0f)
@@ -236,7 +246,9 @@ namespace MoonProject.Gameplay
             Charge = Mathf.Max(0f, Charge - drive - beam);
         }
 
-        /// <summary>What the drums cannot pay of <paramref name="cost"/> (cells); the drums pay what they hold.</summary>
+        /// <summary>
+        /// What the drums cannot pay of <paramref name="cost"/> (cells); the drums pay what they hold.
+        /// </summary>
         private float PayFromDrums(float cost)
         {
             float paid = Mathf.Min(Drums, cost);

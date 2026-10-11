@@ -44,7 +44,8 @@ namespace MoonProject.UI
 
         /// <param name="deltaTime">Unscaled seconds.</param>
         /// <param name="revealed">The arc has revealed itself in this game.</param>
-        /// <param name="open">False while something else needs the screen (pause, a card, the title, stargazing).</param>
+        /// <param name="open">False while something else needs the screen (pause, a card, the title,
+        /// stargazing).</param>
         public void Tick(float deltaTime, bool revealed, bool open)
         {
             int cells = _battery.Cells;

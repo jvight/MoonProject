@@ -3,7 +3,9 @@ using MoonProject.Core;
 
 namespace MoonProject.Gameplay
 {
-    /// <summary>One frame of what <see cref="BatteryModel"/> needs to know, gathered by <see cref="BatteryField"/>.</summary>
+    /// <summary>
+    /// One frame of what <see cref="BatteryModel"/> needs to know, gathered by <see cref="BatteryField"/>.
+    /// </summary>
     public struct BatteryStep
     {
         /// <summary>Metres 07 travelled on the ground this frame (horizontal; airborne metres are free).</summary>
@@ -21,7 +23,9 @@ namespace MoonProject.Gameplay
         /// <summary>The Boost Coils are engaged.</summary>
         public bool Boosting { get; set; }
 
-        /// <summary>Seconds of active beam work (cut, dig, stitch, feed) this frame; above 0 a verb is mid-work.</summary>
+        /// <summary>
+        /// Seconds of active beam work (cut, dig, stitch, feed) this frame; above 0 a verb is mid-work.
+        /// </summary>
         public float BeamSeconds { get; set; }
 
         /// <summary>07 is still and nothing is happening (the solar trickle's condition).</summary>

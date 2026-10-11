@@ -78,7 +78,8 @@ namespace MoonProject.World
                 _pads[i] = anchor.Position;
                 GameObject disc = Instantiate(_discPrefab, transform);
                 disc.name = "ChargerPool_" + anchor.Id;
-                disc.transform.SetPositionAndRotation(anchor.Position + Vector3.up * settings.Lift, Quaternion.identity);
+                disc.transform.SetPositionAndRotation(anchor.Position + Vector3.up * settings.Lift,
+                    Quaternion.identity);
                 disc.transform.localScale = Vector3.one * settings.Radius;
                 _discs[i] = disc.GetComponent<Renderer>();
                 _discs[i].enabled = false;
@@ -95,10 +96,11 @@ namespace MoonProject.World
 
             ChargerPoolSettings settings = _settings.ChargerPools;
             float deltaTime = Time.deltaTime;
+            float near = settings.Radius * settings.Radius;
             for (int i = 0; i < _discs.Length; i++)
             {
                 bool lit = _nodes[i] >= 0 && _reach.GetNode(_nodes[i]).Lit;
-                bool charging = _chargingNow && (_chargingAt - _pads[i]).sqrMagnitude < settings.Radius * settings.Radius;
+                bool charging = _chargingNow && (_chargingAt - _pads[i]).sqrMagnitude < near;
                 float target = !lit ? 0f : charging ? settings.ChargingGlow : settings.LitGlow;
                 float level = _levels[i] + (target - _levels[i]) * (1f - Mathf.Exp(-deltaTime / settings.Ease));
                 if (Mathf.Approximately(level, _levels[i]))

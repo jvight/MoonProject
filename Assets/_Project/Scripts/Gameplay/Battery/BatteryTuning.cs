@@ -14,7 +14,8 @@ namespace MoonProject.Gameplay
         [Range(1, BatteryModel.MaxCells)] [SerializeField] private int _startingCells = 4;
 
         [Header("Driving")]
-        [Tooltip("Metres driven on the ground at cruise, on the flat, that one cell pays for. Airborne metres are free.")]
+        [Tooltip("Metres driven on the ground at cruise, on the flat, that one cell pays for. Airborne metres are " +
+                 "free.")]
         [Range(30f, 400f)] [SerializeField] private float _metresPerCell = 120f;
 
         [Tooltip("Driving cost multiplier on an uphill at or steeper than the full slope.")]
@@ -112,7 +113,8 @@ namespace MoonProject.Gameplay
                  "the eye dims, the nearest charger's pillar, a ticker line.")]
         [Range(0.05f, 0.9f)] [SerializeField] private float _lowThreshold = 0.3f;
 
-        [Tooltip("Charge (share of capacity) below which 07 glances toward the nearest lit charger, once per discharge.")]
+        [Tooltip("Charge (share of capacity) below which 07 glances toward the nearest lit charger, once per " +
+                 "discharge.")]
         [Range(0.01f, 0.5f)] [SerializeField] private float _veryLowThreshold = 0.15f;
 
         [Tooltip("The HUD arc reveals itself the first time the charge drops below this share of capacity.")]
