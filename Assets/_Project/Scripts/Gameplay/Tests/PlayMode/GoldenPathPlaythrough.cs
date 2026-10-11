@@ -211,6 +211,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float LanderKeepOut = 9f;
         private const float LanderDetour = 13f;
 
+        /// <summary>Height (m) over 07 of the review frame taken when a wait times out.</summary>
+        private const float StuckReviewHeight = 9f;
+
         /// <summary>Close enough (m) to the base pad centre to turn toward the shelf or the tower.</summary>
         private const float PadArrival = 5f;
 
@@ -2347,10 +2350,12 @@ namespace MoonProject.Gameplay.PlayModeTests
             if (!condition())
             {
                 Capture("timed-out");
+                Review(_rover.Position + Vector3.up * StuckReviewHeight + Vector3.back, _rover.Position,
+                    "timed-out-above");
             }
 
             Assert.IsTrue(condition(), $"timed out after {timeout:F0} s waiting until {what} (07 at {_rover.Position}, " +
-                $"{_rover.Speed:F1} m/s)");
+                $"heading {_rover.Rotation.eulerAngles.y:F0}, {_rover.Speed:F1} m/s, steering for {_pilot.Target})");
         }
 
         /// <summary>Holds the winch in (+1) or out (-1) for <paramref name="seconds"/>, like a held scroll.</summary>
