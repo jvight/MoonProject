@@ -173,26 +173,25 @@ namespace MoonProject.Audio.Tests
         public void Charging_HumsSoftly_ThenIsFullOnce_AndTheHumSettles()
         {
             var charge = new ChargeModel(_tuning);
-            charge.Dock();
-            int fulls = 0;
-            float fullAt = -1f;
-            float t = 0f;
+            charge.Begin();
             float peak = 0f;
-            while (t < _tuning.ChargeSeconds + _tuning.ChargeFadeOut + 1f)
+            for (float t = 0f; t < _tuning.ChargeFadeIn * 4f; t += Frame)
             {
                 charge.Step(Frame);
-                t += Frame;
                 peak = Mathf.Max(peak, charge.Hum);
-                if (charge.TakeFull())
-                {
-                    fulls++;
-                    fullAt = t;
-                }
+                Assert.IsFalse(charge.TakeFull(), "not full while the cells fill");
+            }
+
+            charge.End(true);
+            int fulls = 0;
+            for (float t = 0f; t < _tuning.ChargeFadeOut + 1f; t += Frame)
+            {
+                charge.Step(Frame);
+                fulls += charge.TakeFull() ? 1 : 0;
             }
 
             Assert.AreEqual(1f, peak, 1e-4f, "the hum came in");
-            Assert.AreEqual(1, fulls);
-            Assert.AreEqual(_tuning.ChargeSeconds, fullAt, 2f * Frame);
+            Assert.AreEqual(1, fulls, "the last cell plays 'full' once");
             Assert.IsFalse(charge.HumAudible, "full: the hum has settled away");
         }
 
@@ -200,15 +199,15 @@ namespace MoonProject.Audio.Tests
         public void LeavingTheDockEarly_LetsTheHumGo_WithoutAFullTone()
         {
             var charge = new ChargeModel(_tuning);
-            charge.Dock();
+            charge.Begin();
             for (int i = 0; i < 120; i++)
             {
                 charge.Step(Frame);
             }
 
-            charge.Undock();
+            charge.End(false);
             bool full = false;
-            for (float t = 0f; t < _tuning.ChargeSeconds; t += Frame)
+            for (float t = 0f; t < _tuning.ChargeFadeOut + 1f; t += Frame)
             {
                 charge.Step(Frame);
                 full |= charge.TakeFull();
