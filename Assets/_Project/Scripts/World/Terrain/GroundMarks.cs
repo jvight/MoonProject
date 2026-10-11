@@ -18,6 +18,9 @@ namespace MoonProject.World
         // The scar's streaks reach between this share of the scar radius and all of it.
         private const float ShortestStreak = 0.55f;
 
+        // Most gradient noise lies within this much of zero; the wear stretches it to its full range.
+        private const float NoiseReach = 0.3f;
+
         // The four rut edges sample the scuff noise this far apart, so none of them wear alike.
         private const float ScuffEdgeApart = 3.7f;
 
@@ -64,13 +67,13 @@ namespace MoonProject.World
                 float fade = Mathf.Min(SmoothMath.Smootherstep(0f, settings.EndFade, along),
                     SmoothMath.Smootherstep(0f, settings.EndFade, length - along));
                 float wear = 1f - settings.Patchiness
-                    * (0.5f + 0.5f * patches.Sample(along / settings.PatchWavelength, 0.5f));
+                    * Contrast(patches.Sample(along / settings.PatchWavelength, 0.5f));
                 float worn = settings.Strength * fade * wear;
                 for (int e = 0; e < edges.Length; e++)
                 {
                     // Each rut edge scuffs on its own at a short scale: the dust is pressed unevenly, along and across.
                     float scuff = scuffs.Sample(along / settings.ScuffWavelength, e * ScuffEdgeApart);
-                    edges[e].Add(worn * Mathf.Clamp01(1f - settings.Scuff * (0.5f + 0.5f * scuff)));
+                    edges[e].Add(worn * (1f - settings.Scuff * Contrast(scuff)));
                 }
 
                 left.Add(OnGround(centre - side * halfGauge, settings.Lift, groundHeight));
@@ -119,6 +122,14 @@ namespace MoonProject.World
                 marks.AddQuad(centre, heading, settings.BootprintSize.x, settings.BootprintSize.y,
                     settings.BootprintStrength * Mathf.Lerp(FaintestBootprint, 1f, age));
             }
+        }
+
+        /// <summary>
+        /// Gradient noise mostly stays within a few tenths of zero: stretched to 0..1 so the wear really comes and goes.
+        /// </summary>
+        private static float Contrast(float noise)
+        {
+            return SmoothMath.Smootherstep(-NoiseReach, NoiseReach, noise);
         }
 
         private static Vector3 OnGround(Vector2 point, float lift, Func<float, float, float> groundHeight)

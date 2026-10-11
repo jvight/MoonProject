@@ -20,6 +20,9 @@ namespace MoonProject.World
         private const uint DetailPatchSalt = 0x9E6C63D0u;
         private const uint PadPatchSalt = 0x7FEB352Du;
 
+        // Most of the pad noise lies within this much of zero.
+        private const float PadNoiseReach = 0.35f;
+
         // Half-widths of the soft bands around the crater and highland thresholds (in their 0..1 weights).
         private const float CraterBand = 0.15f;
         private const float HighlandBand = 0.15f;
@@ -160,7 +163,9 @@ namespace MoonProject.World
         private Color Pad(Vector3 position)
         {
             float inverse = 1f / _settings.PadPatchWavelength;
-            float patch = _padNoise.Fractal(position.x * inverse, position.z * inverse, 2, 2f, 0.5f);
+            // Stretched from the noise's few tenths to -1..1, so the pad's patches really differ.
+            float patch = 2f * SmoothMath.Smootherstep(-PadNoiseReach, PadNoiseReach,
+                _padNoise.Fractal(position.x * inverse, position.z * inverse, 2, 2f, 0.5f)) - 1f;
             return Color.Lerp(_midDust, _shadowDust, Mathf.Clamp01(_settings.PadDarken + _settings.PadMottle * patch));
         }
 

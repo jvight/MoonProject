@@ -148,11 +148,11 @@ namespace MoonProject.World
 
         [Tooltip("How much the pad's large patches move its tone either way (0..1 of the mid-to-shadow range).")]
         [Range(0f, 0.5f)]
-        [SerializeField] private float _padMottle = 0.42f;
+        [SerializeField] private float _padMottle = 0.27f;
 
         [Tooltip("Size of the pad's patches, metres: two to four across the pad, never a single facet.")]
         [Range(5f, 80f)]
-        [SerializeField] private float _padPatchWavelength = 26f;
+        [SerializeField] private float _padPatchWavelength = 32f;
 
         [Tooltip("Distance from home (metres) to which the pad's patch language carries over the open dust, fading " +
             "out: the ground around home is a place too, never one lit plane.")]
