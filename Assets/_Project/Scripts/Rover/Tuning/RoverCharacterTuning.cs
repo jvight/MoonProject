@@ -363,6 +363,10 @@ namespace MoonProject.Rover
         [Range(0f, 1f)]
         [SerializeField] private float _softLandingPerk = 0.45f;
 
+        [Header("The battery (M3-20)")]
+        [Tooltip("The tired look at low charge, the quieter crawl, the charging perk and the battery's glances.")]
+        [SerializeField] private BatteryMoodSettings _battery = new BatteryMoodSettings();
+
         [Header("Hover-Jump")]
         [Tooltip("Lid squint (0..1) at a full Hover-Jump charge: effort.")]
         [Range(0f, 1f)]
@@ -662,5 +666,7 @@ namespace MoonProject.Rover
         public float TipRestGlow => _tipRestGlow;
 
         public float TipPeakGlow => _tipPeakGlow;
+
+        public BatteryMoodSettings Battery => _battery;
     }
 }

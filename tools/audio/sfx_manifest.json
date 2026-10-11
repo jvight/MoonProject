@@ -3575,6 +3575,162 @@
       "notes": "Charged: soft bell on D5 with A5 blooming above it."
     },
     {
+      "id": "battery_cell",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/battery_cell_D5.wav",
+        "Assets/_Project/Audio/SFX/battery_cell_E5.wav",
+        "Assets/_Project/Audio/SFX/battery_cell_Fs5.wav",
+        "Assets/_Project/Audio/SFX/battery_cell_A5.wav",
+        "Assets/_Project/Audio/SFX/battery_cell_B5.wav",
+        "Assets/_Project/Audio/SFX/battery_cell_D6.wav",
+        "Assets/_Project/Audio/SFX/battery_cell_E6.wav",
+        "Assets/_Project/Audio/SFX/battery_cell_Fs6.wav"
+      ],
+      "variantLabels": [
+        "D5",
+        "E5",
+        "Fs5",
+        "A5",
+        "B5",
+        "D6",
+        "E6",
+        "Fs6"
+      ],
+      "sha256": [
+        "3ce469d21ead2bdef9a54dee7dc0c88a3f6819e89f0d64bc27c55dc12bd4502d",
+        "aa5cbb748f7046d1e0da3c1ad4e37c4077679c8804cdca1c7f5a8690a40293d6",
+        "73c56f399ff3b3bcbe7d10b7e7ab6aee6a7c2e59423897046f16a46a0c102c07",
+        "a25ece81bb578b277883dadc54cf68b178aad01af9d24c50ab7d9ec8ded607a5",
+        "b7764b2febb146087373e7116e823f5c2cace8d576fad241dc2cd4a0c1afde92",
+        "e8ff41344c7760797b0737c5e712e4fa5338b8585e35972598c7bec5ef2f1c79",
+        "f16307a11a80c64aed8c32c8e151961a2f92ac44f75c683066f1fa9e95f8b95f",
+        "f3ee94f324bd4bfc00f73d67691e4de7aaef5fd33a8fb9a9cf2621c756fe736e"
+      ],
+      "volumeMin": 0.45,
+      "volumeMax": 0.45,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "A cell filling (and a flank lamp waking): a small warm chime, D5 E5 F#5 A5 B5 then up an octave."
+    },
+    {
+      "id": "battery_low",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/battery_low.wav"
+      ],
+      "variantLabels": [
+        "battery_low"
+      ],
+      "sha256": [
+        "ecf5429f7d5e4fbc784e028559729d70f801ecc703c9d93dac1785fda3809c26"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "The Low warning (30%): one soft falling two-note A4 -> F#4, round bells, never an alarm."
+    },
+    {
+      "id": "battery_sigh",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/battery_sigh.wav"
+      ],
+      "variantLabels": [
+        "battery_sigh"
+      ],
+      "sha256": [
+        "fde78dcf8ad9375cb7818bde9651d1725e99a9d6401b7a231b457bd29ea53fcb"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "The battery empties: a soft power-down sigh, D4 gliding to A2 under a breath of air."
+    },
+    {
+      "id": "lamp_tick",
+      "category": "tick_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/lamp_tick.wav"
+      ],
+      "variantLabels": [
+        "lamp_tick"
+      ],
+      "sha256": [
+        "f6347342b39fa11b58ca6d7441d647560a34d3a5cbf57592a68462c3feaa844a"
+      ],
+      "volumeMin": 0.45,
+      "volumeMax": 0.45,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -26.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "A flank lamp lighting as 07 wakes: a tiny relay tick with a breath of filament on D6."
+    },
+    {
+      "id": "leap_fizzle",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/leap_fizzle.wav"
+      ],
+      "variantLabels": [
+        "leap_fizzle"
+      ],
+      "sha256": [
+        "ca44147d2984a3fd610f26f90c42f11aa2b44738c319fbc4035076535d4236c5"
+      ],
+      "volumeMin": 0.4,
+      "volumeMax": 0.4,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "A leap the battery can't pay for: the coils fizzle softly under the belly, a crackle and a small buzz."
+    },
+    {
       "id": "dock_release",
       "category": "tick_3d",
       "milestone": "M3",

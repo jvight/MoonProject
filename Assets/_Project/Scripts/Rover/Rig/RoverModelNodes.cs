@@ -65,6 +65,34 @@ namespace MoonProject.Rover
             return "Lamp_" + index;
         }
 
+        /// <summary>
+        /// Flank lamp sockets per side along the orange stripe, one per battery cell (docs/features/M3-20): Body
+        /// children 'FlankLamp_L0..7' / 'FlankLamp_R0..7' (front to back), each with its glass 'FlankGlass_*'.
+        /// </summary>
+        public const int FlankLampCount = 8;
+
+        /// <summary>Flank lamp housing <paramref name="index"/> on the left (<paramref name="right"/> false) flank.</summary>
+        public static string FlankLamp(bool right, int index)
+        {
+            return "FlankLamp_" + FlankSocket(right, index);
+        }
+
+        /// <summary>The glass of a flank lamp: its own glow renderer on M_LowPolyGlowOff (WarmLamp).</summary>
+        public static string FlankGlass(bool right, int index)
+        {
+            return "FlankGlass_" + FlankSocket(right, index);
+        }
+
+        private static string FlankSocket(bool right, int index)
+        {
+            if (index < 0 || index >= FlankLampCount)
+            {
+                throw new ArgumentOutOfRangeException(nameof(index), index, "Flank lamp index is 0..7.");
+            }
+
+            return (right ? "R" : "L") + index;
+        }
+
         /// <summary>Springs of art's HoverCoils prefab (mounted on <see cref="CoilSocket"/>).</summary>
         public const int CoilCount = 4;
 

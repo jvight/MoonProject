@@ -37,6 +37,7 @@ namespace MoonProject.Audio
 
         [Tooltip("Hover-Jump charge, leap, airborne wind and cushioned landing.")]
         [SerializeField] private JumpAudio _jump;
+        [SerializeField] private BatteryAudio _battery;
 
         [Tooltip("Friend machines' voices (chirps, rotors, repair).")]
         [SerializeField] private FriendAudio _friends;
@@ -169,6 +170,7 @@ namespace MoonProject.Audio
             _salvage.Initialize(context, this);
             _stations.Initialize(context, this);
             _lab.Initialize(context, this);
+            _battery.Initialize(context, this);
         }
 
         /// <summary>Resolves a cue id once (call at initialisation); logs and returns an invalid handle if
@@ -287,6 +289,12 @@ namespace MoonProject.Audio
 
             // The canyon's echo is for sounds in the world; the radio, UI and ambience beds stay dry.
             source.bypassReverbZones = spatialBlend <= 0f;
+        }
+
+        /// <summary>07's battery sounds (docs/features/M3-20).</summary>
+        internal void WireBattery(BatteryAudio battery)
+        {
+            _battery = battery;
         }
 
         internal void Wire(AudioLibrary library, AudioMixTuning mixTuning, RoverAudio roverAudio,
@@ -447,6 +455,7 @@ namespace MoonProject.Audio
             ok &= Require(_salvage, nameof(_salvage));
             ok &= Require(_stations, nameof(_stations));
             ok &= Require(_lab, nameof(_lab));
+            ok &= Require(_battery, nameof(_battery));
             if (_library != null)
             {
                 string problem = _library.FindProblem();

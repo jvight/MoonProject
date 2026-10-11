@@ -14,8 +14,8 @@ namespace MoonProject.Gameplay.Lift
     /// <list type="bullet">
     /// <item>Dormant until home has power, then jammed (built in its tilt, one side low) and silent. The first time 07
     /// comes home carrying something for the lab (a relic or a blueprint tube) the platform creaks and its pad ring
-    /// lights; 07 rests on it and stitches the cable (no feeding): the platform eases level, the jam and the dust drift
-    /// go and the second cable hangs taut. Saved.</item>
+    /// lights; 07 rests just off its edge, facing it, and stitches the cable (no feeding): the platform eases level,
+    /// the jam and the dust drift go and the second cable hangs taut. Saved.</item>
     /// <item>The ride: 07 rests on the platform and after a breath it rises by itself (ruling 14: no button). The hatch
     /// leaves slide open, the platform rises eased at both ends along the shaft and a relic 07 was towing rides up
     /// beside it. Rover holds 07 on the platform (<see cref="LiftRideChanged"/>) and flies its camera up through the
@@ -158,8 +158,11 @@ namespace MoonProject.Gameplay.Lift
 
         public LiftTuning Tuning => _tuning;
 
-        /// <summary>Where 07 rests on the platform, to stitch it and to ride it, at the bottom stop.</summary>
+        /// <summary>Where 07 rests on the platform to ride it, at the bottom stop.</summary>
         public Vector3 RideSpot => _frame.TransformPoint(_down.localPosition);
+
+        /// <summary>Where 07 rests by the jammed platform to stitch it: just off its edge, toward the dock.</summary>
+        public Vector3 StitchSpot => RideSpot - RideHeading * _tuning.StitchStandOff;
 
         /// <summary>Where the platform's top rests up in the lab, flush with the cabin floor.</summary>
         public Vector3 InsideSpot => _frame.TransformPoint(_up.localPosition);
@@ -357,8 +360,8 @@ namespace MoonProject.Gameplay.Lift
                 ? _commands.Step(_input.Drive, _tuning.CommandPress, _tuning.CommandRelease)
                 : LabCommand.None;
             bool down = Command(command, now);
-            var input = new LiftInput(_power.HasReached(BasePowerStage.Home), Carrying() && NearHome(), OnPlatform(),
-                _stillness.StillSeconds, down);
+            var input = new LiftInput(_power.HasReached(BasePowerStage.Home), Carrying() && NearHome(),
+                AtStitchSpot(), OnPlatform(), _stillness.StillSeconds, down);
             Play(_cycle.Step(input, deltaTime), now);
 
             bool stitching = _cycle.Phase == LiftPhase.Stitching;
@@ -640,6 +643,11 @@ namespace MoonProject.Gameplay.Lift
 
             _rider.Release();
             _rider = null;
+        }
+
+        private bool AtStitchSpot()
+        {
+            return SurfaceRules.HorizontalDistance(_rover.Position, StitchSpot) <= _tuning.StitchRadius;
         }
 
         private bool OnPlatform()

@@ -137,6 +137,10 @@ namespace MoonProject.Rover
         [Header("Visible kit and gifts")]
         [SerializeField] private KitSettings _kit = new KitSettings();
 
+        [Header("Flank lamps (the battery)")]
+        [Tooltip("The amber lamps along the stripe, one per cell (docs/features/M3-20).")]
+        [SerializeField] private FlankLampSettings _flankLamps = new FlankLampSettings();
+
         [Tooltip("Half-life (s) of a blueprint tube popping on to, or off, 07's back.")]
         [Range(0.02f, 2f)]
         [SerializeField] private float _tubeHalfLife = 0.2f;
@@ -237,6 +241,8 @@ namespace MoonProject.Rover
         public HoverCoilSettings HoverCoils => _hoverCoils;
 
         public KitSettings Kit => _kit;
+
+        public FlankLampSettings FlankLamps => _flankLamps;
 
         public float TubeHalfLife => _tubeHalfLife;
 

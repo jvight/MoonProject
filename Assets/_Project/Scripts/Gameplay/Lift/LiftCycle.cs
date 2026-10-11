@@ -5,12 +5,12 @@ namespace MoonProject.Gameplay.Lift
 {
     /// <summary>
     /// The crew's belly lift as plain logic (docs/features/M3-19 §4). Dormant until home has power; then jammed and
-    /// silent until 07 first comes home carrying something for the lab, when it asks for the stitch: 07 rests on the
-    /// platform's lit pad and stitches, and the platform eases level. From then on 07 rests on the platform to ride up
-    /// into the lab (a breath after the stitch, the first ride follows by itself), where it stays until Back brings it
+    /// silent until 07 first comes home carrying something for the lab, when it asks for the stitch (its pad ring
+    /// lights): 07 rests by the platform and stitches, and the platform eases level. From then on 07 rests on the
+    /// platform to ride up into the lab (at least a breath after the stitch), where it stays until Back brings it
     /// down. <see cref="Level"/> takes the platform from its jammed pose to level;
-    /// <see cref="Height"/> from the bottom stop to the lab. After a ride down 07 must leave the platform before it
-    /// can board again.
+    /// <see cref="Height"/> from the bottom stop to the lab. After a ride down 07 must leave the platform before it can
+    /// board again.
     /// </summary>
     public sealed class LiftCycle
     {
@@ -62,7 +62,7 @@ namespace MoonProject.Gameplay.Lift
                 case LiftPhase.Jammed:
                     return input.CarryingHome ? Enter(LiftPhase.Called, LiftStep.Called) : LiftStep.None;
                 case LiftPhase.Called:
-                    bool rested = input.OnPlatform && input.StillSeconds >= _tuning.StitchDelay;
+                    bool rested = input.AtStitchSpot && input.StillSeconds >= _tuning.StitchDelay;
                     return rested ? Enter(LiftPhase.Stitching, LiftStep.StitchStarted) : LiftStep.None;
                 case LiftPhase.Stitching:
                     Level = Ease(_elapsed, _tuning.StitchSeconds);

@@ -23,6 +23,7 @@ namespace MoonProject.Gameplay.Editor
         public const string LogCacheTuning = TuningFolder + "/LogCacheTuning.asset";
         public const string BellTuning = TuningFolder + "/BellTuning.asset";
         public const string RelayTuning = TuningFolder + "/RelayTuning.asset";
+        public const string BatteryTuning = TuningFolder + "/BatteryTuning.asset";
         public const string GlintTuning = TuningFolder + "/GlintTuning.asset";
         public const string SalvageTuning = TuningFolder + "/SalvageTuning.asset";
         public const string ProgressionTuning = TuningFolder + "/ProgressionTuning.asset";

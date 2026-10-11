@@ -1543,6 +1543,80 @@ MonoBehaviour:
     _volumeMax: 0.5
     _pitchMin: 1
     _pitchMax: 1
+  - _id: battery_cell
+    _clips:
+    - {fileID: 8300000, guid: 3b32f9c88a5351648b3b7eee0437e882, type: 3}
+    - {fileID: 8300000, guid: df3abc7cdc8cdfb4fb9a60f2fc49b2dd, type: 3}
+    - {fileID: 8300000, guid: 9e5fd57595c383641998befa2a62e0c6, type: 3}
+    - {fileID: 8300000, guid: a0ae2b7bb55a320498000bd248d1885c, type: 3}
+    - {fileID: 8300000, guid: 9088e36597e860d4a82c844c16213acb, type: 3}
+    - {fileID: 8300000, guid: 263526fee1ad3054ea11c84cc8fdcb93, type: 3}
+    - {fileID: 8300000, guid: 6c6b1bb039a118041934621e3b90c849, type: 3}
+    - {fileID: 8300000, guid: 9a23138ce12c07c4f94ba30d066e4ed5, type: 3}
+    _variantLabels:
+    - D5
+    - E5
+    - Fs5
+    - A5
+    - B5
+    - D6
+    - E6
+    - Fs6
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.45
+    _volumeMax: 0.45
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: battery_low
+    _clips:
+    - {fileID: 8300000, guid: b062f010bf1c1734dbde791b3b18dc8c, type: 3}
+    _variantLabels:
+    - battery_low
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.5
+    _volumeMax: 0.5
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: battery_sigh
+    _clips:
+    - {fileID: 8300000, guid: bc8c50625cc039040b52b366fba59637, type: 3}
+    _variantLabels:
+    - battery_sigh
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.5
+    _volumeMax: 0.5
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: lamp_tick
+    _clips:
+    - {fileID: 8300000, guid: a015c003f6f6ef2488542b8264185fc6, type: 3}
+    _variantLabels:
+    - lamp_tick
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.45
+    _volumeMax: 0.45
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: leap_fizzle
+    _clips:
+    - {fileID: 8300000, guid: 399e74ea22f38ea46aeb7a6e6a923f61, type: 3}
+    _variantLabels:
+    - leap_fizzle
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.4
+    _volumeMax: 0.4
+    _pitchMin: 1
+    _pitchMax: 1
   - _id: dock_release
     _clips:
     - {fileID: 8300000, guid: a5c3eb4d3c6d8fa4e9ef6ba16af24c53, type: 3}

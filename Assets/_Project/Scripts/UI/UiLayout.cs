@@ -16,6 +16,7 @@ namespace MoonProject.UI
             LabHud = Require<VisualElement>("lab-hud");
 
             NextLine = Require<VisualElement>("next-line");
+            BatteryArc = Require<VisualElement>("battery-arc");
             NextLineShadow = Require<VisualElement>("next-line-shadow");
             NextLineText = Require<Label>("next-line-text");
             PlaceCard = Require<VisualElement>("place-card");
@@ -168,6 +169,9 @@ namespace MoonProject.UI
         public VisualElement LabHud { get; }
 
         public VisualElement NextLine { get; }
+
+        /// <summary>The battery's segmented arc, high and centred above the "next" line (docs/features/M3-20).</summary>
+        public VisualElement BatteryArc { get; }
 
         public VisualElement NextLineShadow { get; }
 

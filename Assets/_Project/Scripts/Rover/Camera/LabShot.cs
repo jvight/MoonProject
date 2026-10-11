@@ -50,21 +50,24 @@ namespace MoonProject.Rover
 
         /// <summary>
         /// The crane path at <paramref name="t"/> (0..1, eased by the caller) through <paramref name="from"/>, under
-        /// the belly, through the hatch and on to <paramref name="to"/>: a smooth curve through the four points.
+        /// the belly, up the shaft's gap from under the stage to just over the cabin floor and on to
+        /// <paramref name="to"/>: a smooth curve through the five points, a quarter of the way per stretch.
         /// </summary>
-        public static Vector3 Crane(Vector3 from, Vector3 underBelly, Vector3 hatch, Vector3 to, float t)
+        public static Vector3 Crane(Vector3 from, Vector3 underBelly, Vector3 shaft, Vector3 floor, Vector3 to, float t)
         {
-            float span = Mathf.Clamp01(t) * 3f;
-            int segment = Mathf.Min(2, (int)span);
+            float span = Mathf.Clamp01(t) * 4f;
+            int segment = Mathf.Min(3, (int)span);
             float local = span - segment;
             switch (segment)
             {
                 case 0:
-                    return CatmullRom(from, from, underBelly, hatch, local);
+                    return CatmullRom(from, from, underBelly, shaft, local);
                 case 1:
-                    return CatmullRom(from, underBelly, hatch, to, local);
+                    return CatmullRom(from, underBelly, shaft, floor, local);
+                case 2:
+                    return CatmullRom(underBelly, shaft, floor, to, local);
                 default:
-                    return CatmullRom(underBelly, hatch, to, to, local);
+                    return CatmullRom(shaft, floor, to, to, local);
             }
         }
 
@@ -77,11 +80,13 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// The point in the hatch's opening the crane rises through, a little out toward the ring pose.
+        /// The point at <paramref name="height"/> in the shaft's gap the crane rises through, out from the shaft's
+        /// <paramref name="axis"/> toward the ring pose.
         /// </summary>
-        public static Vector3 Hatch(Vector3 hatchCentre, Vector3 ring, LabCameraSettings settings)
+        public static Vector3 Shaft(Vector3 axis, float height, Vector3 ring, LabCameraSettings settings)
         {
-            return hatchCentre + Outward(hatchCentre, ring) * settings.HatchOut;
+            Vector3 point = axis + Outward(axis, ring) * settings.ShaftOut;
+            return new Vector3(point.x, height, point.z);
         }
 
         /// <summary>Smoothstep: eased at both ends.</summary>

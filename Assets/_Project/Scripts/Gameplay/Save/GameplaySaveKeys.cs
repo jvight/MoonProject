@@ -43,5 +43,7 @@ namespace MoonProject.Gameplay
         public const int TowerPartsVersion = 1;
         public const string Map = "gameplay.map";
         public const int MapVersion = 1;
+        public const string Battery = "gameplay.battery";
+        public const int BatteryVersion = 1;
     }
 }

@@ -54,8 +54,6 @@ namespace MoonProject.Rover.Editor
             Assign(serialized, "_platform", Child(shaft, BaseModelBuilder.PlatformName));
             Assign(serialized, "_shaft", shaft);
             Assign(serialized, "_ringRail", Child(lab, BaseModelBuilder.RingRailName));
-            Assign(serialized, "_hatchLeft", Child(shaft, BaseModelBuilder.HatchLeafLeftName));
-            Assign(serialized, "_hatchRight", Child(shaft, BaseModelBuilder.HatchLeafRightName));
             SerializedProperty frames = Property(serialized, "_stations");
             frames.arraySize = stations.Length;
             for (int i = 0; i < stations.Length; i++)

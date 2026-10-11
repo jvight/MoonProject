@@ -32,14 +32,14 @@ namespace MoonProject.Gameplay.Tests
         }
 
         /// <summary>Steps for <paramref name="seconds"/>; returns the first step other than None (or None).</summary>
-        private LiftStep Run(float seconds, bool powered = true, bool carryingHome = false, bool onPlatform = false,
-            bool down = false, bool moving = false)
+        private LiftStep Run(float seconds, bool powered = true, bool carryingHome = false, bool atStitchSpot = false,
+            bool onPlatform = false, bool down = false, bool moving = false)
         {
             LiftStep first = LiftStep.None;
             for (float t = 0f; t < seconds; t += Frame)
             {
                 _still = moving ? 0f : _still + Frame;
-                var input = new LiftInput(powered, carryingHome, onPlatform, _still, down);
+                var input = new LiftInput(powered, carryingHome, atStitchSpot, onPlatform, _still, down);
                 LiftStep step = _lift.Step(input, Frame);
                 first = first == LiftStep.None ? step : first;
             }
@@ -51,14 +51,14 @@ namespace MoonProject.Gameplay.Tests
         {
             Run(Frame);
             Run(Frame, carryingHome: true);
-            Run(_tuning.StitchDelay + 0.1f, onPlatform: true);
-            Run(_tuning.StitchSeconds + 0.1f, onPlatform: true);
+            Run(_tuning.StitchDelay + 0.1f, atStitchSpot: true);
+            Run(_tuning.StitchSeconds + 0.1f, atStitchSpot: true);
         }
 
         [Test]
         public void WithoutHomesPower_StaysDormant_EvenCarryingARelicOnThePlatform()
         {
-            Assert.AreEqual(LiftStep.None, Run(5f, false, true, true));
+            Assert.AreEqual(LiftStep.None, Run(5f, false, true, true, true));
             Assert.AreEqual(LiftPhase.Dormant, _lift.Phase);
         }
 
@@ -66,7 +66,7 @@ namespace MoonProject.Gameplay.Tests
         public void HomesPower_WakesItJammedAndSilent_UntilSomethingForTheLabComesHome()
         {
             Assert.AreEqual(LiftStep.Powered, Run(Frame));
-            Assert.AreEqual(LiftStep.None, Run(5f, onPlatform: true), "Nothing for the lab: no stitch asked for.");
+            Assert.AreEqual(LiftStep.None, Run(5f, atStitchSpot: true), "Nothing for the lab: no stitch asked for.");
             Assert.AreEqual(LiftPhase.Jammed, _lift.Phase);
             Assert.AreEqual(LiftStep.Called, Run(Frame, carryingHome: true));
             Assert.AreEqual(LiftPhase.Called, _lift.Phase);
@@ -75,29 +75,31 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void TheStitch_StartsOnceRestedOnThePlatform_EasesItLevel_ThenRestores()
+        public void TheStitch_StartsOnceRestedByThePlatform_EasesItLevel_ThenRestores()
         {
             Run(Frame);
             Run(Frame, carryingHome: true);
             _still = 0f;
-            Assert.AreEqual(LiftStep.None, Run(_tuning.StitchDelay - 0.1f, onPlatform: true), "Not rested yet.");
-            Assert.AreEqual(LiftStep.StitchStarted, Run(0.2f, onPlatform: true));
+            Assert.AreEqual(LiftStep.None, Run(5f, onPlatform: true), "On the jammed platform is not where it stitches.");
+            _still = 0f;
+            Assert.AreEqual(LiftStep.None, Run(_tuning.StitchDelay - 0.1f, atStitchSpot: true), "Not rested yet.");
+            Assert.AreEqual(LiftStep.StitchStarted, Run(0.2f, atStitchSpot: true));
             Assert.AreEqual(LiftPhase.Stitching, _lift.Phase);
-            Run(0.5f * _tuning.StitchSeconds - 0.1f, onPlatform: true);
+            Run(0.5f * _tuning.StitchSeconds - 0.1f, atStitchSpot: true);
             Assert.That(_lift.Level, Is.InRange(0.3f, 0.7f), "Halfway level, eased.");
-            Assert.AreEqual(LiftStep.Restored, Run(0.5f * _tuning.StitchSeconds + 0.1f, onPlatform: true));
+            Assert.AreEqual(LiftStep.Restored, Run(0.5f * _tuning.StitchSeconds + 0.1f, atStitchSpot: true));
             Assert.IsTrue(_lift.IsRestored);
             Assert.AreEqual(1f, _lift.Level);
         }
 
         [Test]
-        public void AfterTheStitch_TheFirstRideFollowsAfterABreath()
+        public void AfterTheStitch_TheFirstRideWaitsABreath()
         {
             Restore();
             Assert.AreEqual(LiftPhase.Ready, _lift.Phase);
-            Assert.AreEqual(LiftStep.None, Run(_tuning.BoardDelay - 0.1f, onPlatform: true),
+            Assert.AreEqual(LiftStep.None, Run(0.5f * _tuning.BoardDelay, onPlatform: true),
                 "07 has been still all along, but the platform breathes first.");
-            Assert.AreEqual(LiftStep.RideStarted, Run(0.2f, onPlatform: true));
+            Assert.AreEqual(LiftStep.RideStarted, Run(_tuning.BoardDelay, onPlatform: true));
         }
 
         [Test]

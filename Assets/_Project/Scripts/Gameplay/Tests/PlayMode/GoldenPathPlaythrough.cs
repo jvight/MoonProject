@@ -31,32 +31,30 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// 07 hands the coil to the port, then crafts level 1 from the depot's materials through the UI's hold. Then Tilly
     /// (M3-02): find her with a ping, gather her three parts, repair her, drive home with her, be greeted, and let her
     /// spot a salvage site on the next trip. Dig Kenji's duck out of the garage's heart, which holds the Cargo Cradle's
-    /// blueprint, and tow it home, where the jammed belly lift asks for its stitch (M3-19): stitch it from its pad, ride
-    /// up with the duck beside 07, let the lab's reader decode the Cradle's tube (its hand-off pulse waits at the
+    /// blueprint, and tow it home, where the jammed belly lift asks for its stitch (M3-19): stitch it from beside it,
+    /// ride up with the duck beside 07, let the lab's reader decode the Cradle's tube (its hand-off pulse waits at the
     /// sleeping bay) and place the duck on the keepsake shelf: the first memory (step 4), then ride down facing out.
-    /// Tilly spots Bell's light across the chasm (P2): drive to
-    /// the lip, look across with no way over, then back to the garage, where the transformer now shows. Find the Rover
-    /// Bay still asleep (no pad, no prompt, a "not yet" answer to a ping), hand in the transformer and craft tower
-    /// level 2 to wake it (its plotter draws the Cradle's waiting sheet), find that holding Jump does nothing yet, craft
-    /// Hover-Jump in the bay through the same hold and the Cargo Cradle from its new blueprint, dig the walkman from the
-    /// garage, lift it into the rack with the tether button, drive home, ride the lift up and set it down on the
-    /// keepsake shelf from the rack, and take the first leap.
-    /// Then Bell (M3-04/05): drive up the mouth lane, leap the chasm, find her lying at the
-    /// terminus with Ro's log cache and her tape, gather her three parts from the alcoves, repair her (the tape slides
-    /// in, her dial wakes, she stands), drive home by the one-way exit while she makes her own way, be greeted by her,
-    /// turn her dial through every station, and follow her first signal to the basin tape onto her rack. Then the
-    /// relay network (M3-06): pick up the mound relay's part, restore it at its foot with materials and watch it come
-    /// online, pick up the relay spare on its pad (level 3's part), drive out past the tower's reach and find home
-    /// still reaching 07 there, then radio-hop home from the mast's pad and back, and rest on the dock: the dock's
-    /// evening opens, the places home can see blink seen on the crew's map, and the tower's sweep raises the next
-    /// pillar (P6). Inside the canyon 07 drives a line found over drivable ground (the same planner Bell walks by). The
-    /// base wakes step by step (M3-16, M3-19 §7): it opens fully dark, power comes back with each tower level, no
-    /// station is usable before its step, and the soft "next" line follows steps 0-8. Step 8: with the rest of the
-    /// basin's salvage stood in, hand the relay spare to the tower and craft level 3, which wakes the lab's survey
-    /// chart; ride up, where the map opens by itself and the chart pen inks what 07 has visited in reach, come away
-    /// and ride down: 0.5's wake-up, end to end. Every step is timed
-    /// (Logs/gameplay-captures/playthrough.md) and captured, with review frames of every M3-05 placement; any error
-    /// or exception in the log fails it. Slow: run on demand with --category Playthrough.
+    /// Tilly spots Bell's light across the chasm (P2): drive to the lip, look across with no way over, then back to the
+    /// garage, where the transformer now shows. Find the Rover Bay still asleep (no pad, no prompt, a "not yet" answer
+    /// to a ping), hand in the transformer and craft tower level 2 to wake it (its plotter draws the Cradle's waiting
+    /// sheet), find that holding Jump does nothing yet, craft Hover-Jump in the bay through the same hold and the Cargo
+    /// Cradle from its new blueprint, dig the walkman from the garage, lift it into the rack with the tether button,
+    /// drive home, ride the lift up and set it down on the keepsake shelf from the rack, and take the first leap. Then
+    /// Bell (M3-04/05): drive up the mouth lane, leap the chasm, find her lying at the terminus with Ro's log cache and
+    /// her tape, gather her three parts from the alcoves, repair her (the tape slides in, her dial wakes, she stands),
+    /// drive home by the one-way exit while she makes her own way, be greeted by her, turn her dial through every
+    /// station, and follow her first signal to the basin tape onto her rack. Then the relay network (M3-06): pick up
+    /// the mound relay's part, restore it at its foot with materials and watch it come online, pick up the relay spare
+    /// on its pad (level 3's part), drive out past the tower's reach and find home still reaching 07 there, then
+    /// radio-hop home from the mast's pad and back, and rest on the dock: the dock's evening opens, the places home can
+    /// see blink seen on the crew's map, and the tower's sweep raises the next pillar (P6). Inside the canyon 07 drives
+    /// a line found over drivable ground (the same planner Bell walks by). The base wakes step by step (M3-16, M3-19
+    /// §7): it opens fully dark, power comes back with each tower level, no station is usable before its step, and the
+    /// soft "next" line follows steps 0-8. Step 8: with the rest of the basin's salvage stood in, hand the relay spare
+    /// to the tower and craft level 3, which wakes the lab's survey chart; ride up, where the map opens by itself and
+    /// the chart pen inks what 07 has visited in reach, come away and ride down: 0.5's wake-up, end to end. Every step
+    /// is timed (Logs/gameplay-captures/playthrough.md) and captured, with review frames of every M3-05 placement; any
+    /// error or exception in the log fails it. Slow: run on demand with --category Playthrough.
     /// </summary>
     [Explicit("Slow end-to-end playthrough of the real Main scene; run on demand with --category Playthrough.")]
     [Category("Playthrough")]
@@ -141,6 +139,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float PortViewSide = 3f;
         private const float PortViewHeight = 2.5f;
         private const float StopSpeed = 0.4f;
+
+        /// <summary>Metres in one frame that can only be a radio-hop's placement, never driving.</summary>
+        private const float HopJump = 3f;
         private const float ApproachOffset = 3f;
         private const float RetreatDistance = 16f;
         private const float ReelFrom = 12f;
@@ -258,8 +259,12 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         private static readonly string ReportPath = Path.Combine(GameplayFixture.CaptureFolder, "playthrough.md");
 
-        private readonly List<(string Step, float Seconds, string Notes)> _steps =
-            new List<(string, float, string)>();
+        private readonly List<(string Step, float Seconds, string Notes, Vector3 Battery)> _steps =
+            new List<(string, float, string, Vector3)>();
+
+        /// <summary>The range lessons' charges (docs/features/M3-20 §6, §12): where, the charge, the target.</summary>
+        private readonly List<(string Where, float Charge, Vector2 Target)> _lessons =
+            new List<(string, float, Vector2)>();
 
         private readonly List<string> _problems = new List<string>();
         private int _warnings;
@@ -272,6 +277,10 @@ namespace MoonProject.Gameplay.PlayModeTests
         private Autopilot _pilot;
         private EventRecorder _events;
         private IDisposable _awoke;
+        private IDisposable _crawled;
+        private int _crawls;
+        private float _stepMetres;
+        private float _stepBeam;
         private int _cuts;
         private float _awokeAt = -1f;
         private float _stepStart;
@@ -290,6 +299,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             _rover?.SetDriveSource(null);
             _events?.Dispose();
             _awoke?.Dispose();
+            _crawled?.Dispose();
             Scene scene = SceneManager.GetSceneByPath(PlaythroughScene.ScenePath);
             if (scene.IsValid() && scene.isLoaded)
             {
@@ -337,12 +347,15 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return GatherTillyParts();
             yield return RepairTilly();
             yield return DriveHomeWithTilly();
+            Lesson("home after Tilly's parts", 0.2f, 0.35f);
+            yield return ChargeAtTheDock("the dock charges");
             yield return ExpectStep(ProgressionKeys.NextRelic, "Tilly is home: the first memory comes next");
             yield return TillySpotsOnTheNextTrip();
             SalvageSite garage = _gameplay.Salvage.Find(WorldAnchorIds.SitePrefix + "garage");
             Relic duck = RelicIn(garage, Duck);
             Relic walkman = RelicIn(garage, Walkman);
             yield return SalvageTheGarage(garage);
+            Lesson("the garage's last cut", 0.25f, 0.4f);
             yield return Excavate(garage, duck);
             Assert.IsTrue(LogFound("kenji_1"), "Kenji's log tin by his bench opens while 07 digs");
             Assert.IsTrue(_gameplay.Blueprints.IsCarrying, "the garage's heart held the Cradle's blueprint tube");
@@ -353,20 +366,24 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return TowHome(garage, duck);
             yield return StitchTheLift();
             yield return RideUpWithTheFirstFinds(duck);
+            yield return ChargeAtTheDock("before the canyon");
             yield return ExpectStep(ProgressionKeys.NextChasm, "the first memory is home: Tilly sees Bell's light");
             AssertNotYetPastTheChasm();
             yield return DriveToTheCanyon();
             yield return LookAcrossTheChasm();
+            Lesson("the chasm lip", 0.3f, 0.45f);
             yield return ExpectStep(ProgressionKeys.NextBay, "the chasm is seen: now the bay");
             yield return BackToTheGarageForTheTransformer(garage);
             yield return TheBaySleepsUntilTheTowerWakesIt();
             yield return BuyTowerLevel(2);
+            yield return ChargeAtTheDock("home with the transformer");
             yield return BuyHoverJumpAtTheBench();
             yield return ExpectStep(ProgressionKeys.NextLeap, "07 can leap: the canyon opens");
             yield return CraftTheCargoCradle();
             yield return Excavate(garage, walkman);
             yield return StowInTheCradle(walkman);
             yield return CarryHomeInTheCradle(garage, walkman);
+            yield return ChargeAtTheDock("before the leap");
             yield return FirstLeap();
             yield return DriveToTheCanyon();
             yield return LeapTheChasm();
@@ -374,6 +391,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return GatherBellsParts();
             yield return RepairBell();
             yield return HomeByTheExit();
+            yield return ChargeAtTheDock("home from the canyon");
             yield return TurnBellsDial();
             yield return FollowBellsSignal();
             yield return ExpectStep(ProgressionKeys.NextRelay, "Bell is home: the network comes next");
@@ -393,8 +411,65 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             float total = Time.time - started;
             WriteReport(total);
+            Assert.AreEqual(0, _crawls, "the golden path never runs the battery down to a crawl (M3-20 §12)");
             Assert.Less(total, TotalBudget, "the whole golden path fits a generous time budget");
             Assert.IsEmpty(_problems, "no errors or exceptions anywhere in the log during the playthrough");
+        }
+
+        /// <summary>
+        /// What each step asks of the battery (docs/features/M3-20 §3): metres on the ground and seconds of beam work,
+        /// counted every frame for the report's tuning columns (a radio-hop's jump is not driving).
+        /// </summary>
+        private IEnumerator TrackTheBattery(IBeamStatus beam)
+        {
+            Vector3 last = _rover.Position;
+            while (true)
+            {
+                yield return null;
+                Vector3 now = _rover.Position;
+                float metres = SurfaceRules.HorizontalDistance(now, last);
+                last = now;
+                _stepMetres += _rover.IsGrounded && metres < HopJump ? metres : 0f;
+                _stepBeam += beam.Working ? Time.deltaTime : 0f;
+            }
+        }
+
+        private void OnLowPower(LowPowerChanged lowPower)
+        {
+            _crawls += lowPower.LowPower && !lowPower.Restored ? 1 : 0;
+        }
+
+        /// <summary>Notes the charge at one of the range lessons (docs/features/M3-20 §6) for the report.</summary>
+        private void Lesson(string where, float from, float to)
+        {
+            _lessons.Add((where, _gameplay.Battery.Model.Charge01, new Vector2(from, to)));
+        }
+
+        /// <summary>
+        /// Home from a trip: drive onto the charging dock, rest while it fills the cells (each a rising note), and
+        /// leave as soon as they are full, before the evening's sweep (the dock's evening still opens with news).
+        /// </summary>
+        private IEnumerator ChargeAtTheDock(string why)
+        {
+            Begin();
+            BatteryModel battery = _gameplay.Battery.Model;
+            float before = battery.Charge01;
+            ChargingDock dock = _gameplay.Home.Dock;
+            Vector3 facing = Flat(dock.Rotation * Vector3.forward).normalized;
+            yield return DriveTo(Flat(dock.Position) - facing * DockApproach, 1.5f, 0.6f, 60f,
+                "the front of the charging dock");
+            yield return DriveTo(Flat(dock.Position), DockParkRadius, 0.35f, 30f, "the charging dock");
+            yield return Until(() => dock.Docked, _gameplay.Home.Tuning.DockDelay + 3f, "07 rests on the dock");
+            float docked = Time.time;
+            yield return Until(() => battery.FullCells == battery.Cells && !battery.IsCharging,
+                _gameplay.Battery.Tuning.DockFill + 2f, "the dock fills the cells");
+            float fill = Time.time - docked;
+            _pilot.Reverse = BayThrottle;
+            yield return Until(() => !dock.Docked, 2f, "a touch of the throttle leaves the dock");
+            _pilot.Reverse = 0f;
+            yield return Until(() => _rover.Speed < StopSpeed, 6f, "07 stops off the dock");
+            End($"Charge at the dock ({why})", string.Format(CultureInfo.InvariantCulture,
+                "{0:P0} -> {1:P0} in {2:F1} s", before, battery.Charge01, fill));
         }
 
         private void OnLog(string message, string stackTrace, LogType type)
@@ -436,6 +511,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             _rover = (RoverController)_context.Get<IRoverRig>();
             _events = new EventRecorder(_context.Events);
             _awoke = _context.Events.Subscribe<RoverAwoke>(_ => _awokeAt = Time.time);
+            _crawled = _context.Events.Subscribe<LowPowerChanged>(OnLowPower);
+            _gameplay.StartCoroutine(TrackTheBattery(_context.Get<IBeamStatus>()));
             _pilot = new Autopilot(_rover);
             _rover.SetDriveSource(_pilot);
             Assert.AreEqual(0, _gameplay.Materials.Total, "a fresh game (its own save slot)");
@@ -789,8 +866,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// Home with the duck in tow and the Cradle's tube on its back, the jammed belly lift asked for its stitch: onto
-        /// its lit pad, the duck still in tow, and rest while 07's beam stitches the cable and the platform levels.
+        /// Home with the duck in tow and the Cradle's tube on its back, the jammed belly lift asked for its stitch: to
+        /// the spot just off its lit platform, the duck still in tow, and rest while 07's beam stitches the cable and
+        /// the platform levels.
         /// </summary>
         private IEnumerator StitchTheLift()
         {
@@ -798,19 +876,19 @@ namespace MoonProject.Gameplay.PlayModeTests
             LiftStation lift = _gameplay.Lift;
             Assert.AreEqual(LiftPhase.Called, lift.Phase, "home with finds for the lab: the lift asks for the stitch");
             yield return ExpectStep(ProgressionKeys.NextLiftStitch, "the lift is stuck: stitch the cable");
-            yield return DriveOntoTheLift("the jammed platform's lit pad");
+            yield return DriveTo(Flat(lift.StitchSpot), 1f, 0.5f, 60f, "the spot by the jammed platform");
             yield return Until(() => lift.Phase >= LiftPhase.Ready, LiftPhaseTimeout,
-                "resting on the pad, 07 stitches the cable and the platform eases level");
+                "resting by it, 07 stitches the cable and the platform eases level");
             Assert.IsTrue(lift.Capture().restored, "the restored lift is saved");
             Capture("05-lift-stitched");
-            End("Stitch the belly lift", "from its lit pad, the duck still in tow");
+            End("Stitch the belly lift", "from beside its lit platform, the duck still in tow");
         }
 
         /// <summary>
-        /// The first ride: a breath after the stitch the platform carries 07 up into the lab with the duck beside it.
-        /// The turntable turns to the reader, which takes the Cradle's tube and decodes it (its hand-off pulse runs to
-        /// the bay, still asleep), then to the keepsake shelf, where the press places the duck: the first memory. Back
-        /// brings the platform down, turned so 07 drives out toward the dock.
+        /// The first ride: up the ramp onto the restored platform, which carries 07 up into the lab with the duck
+        /// beside it. The turntable turns to the reader, which takes the Cradle's tube and decodes it (its hand-off
+        /// pulse runs to the bay, still asleep), then to the keepsake shelf, where the press places the duck: the first
+        /// memory. Back brings the platform down, turned so 07 drives out toward the dock.
         /// </summary>
         private IEnumerator RideUpWithTheFirstFinds(Relic duck)
         {
@@ -821,8 +899,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             using IDisposable finds = _context.Events.Subscribe<FindDecoded>(find =>
                 decoded += find.KitId == CargoCradle ? 1 : 0);
             using IDisposable pulses = _context.Events.Subscribe<DecodeHandOff>(_ => handOffs++);
+            yield return DriveTo(Flat(lift.RideSpot), BoardRadius, 0.35f, 30f, "up its ramp onto the platform");
             yield return Until(() => lift.Phase == LiftPhase.Inside, LiftPhaseTimeout,
-                "a breath after the stitch, the platform carries 07 up into the lab");
+                "resting on the platform, it carries 07 up into the lab");
             Assert.AreSame(duck, lift.Rider, "the towed duck rode up beside 07");
             Assert.IsNull(_gameplay.Tether.Towed, "the tether let it go aboard");
             yield return ExpectStep(ProgressionKeys.NextLiftRide, "up in the lab, the duck waits to be placed");
@@ -840,7 +919,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             End("Ride up with the first finds", "the tube decoded at the reader, the duck on the keepsake shelf");
         }
 
-        /// <summary>Back the stick, as a player does, and wait for the platform to settle down, 07 facing out.</summary>
+        /// <summary>Back the stick, as a player does, and wait for the platform to settle down, 07 facing
+        /// out.</summary>
         private IEnumerator RideDown(string capture)
         {
             LiftStation lift = _gameplay.Lift;
@@ -2320,13 +2400,18 @@ namespace MoonProject.Gameplay.PlayModeTests
         private void Begin()
         {
             _stepStart = Time.time;
+            _stepMetres = 0f;
+            _stepBeam = 0f;
         }
 
         private void End(string step, string notes)
         {
             float seconds = Time.time - _stepStart;
-            _steps.Add((step, seconds, notes));
-            Debug.Log($"[playthrough] {step}: {seconds:F1} s ({notes})");
+            float charge = _gameplay != null ? _gameplay.Battery.Model.Charge01 : 1f;
+            _steps.Add((step, seconds, notes, new Vector3(charge, _stepMetres, _stepBeam)));
+            Debug.Log(string.Format(CultureInfo.InvariantCulture,
+                "[playthrough] {0}: {1:F1} s ({2}); charge {3:P0}, {4:F0} m on the ground, {5:F1} s of beam", step,
+                seconds, notes, charge, _stepMetres, _stepBeam));
         }
 
         private void Capture(string name)
@@ -2371,17 +2456,26 @@ namespace MoonProject.Gameplay.PlayModeTests
             var report = new StringBuilder();
             report.AppendLine("# Golden-path playthrough (real Main scene)");
             report.AppendLine();
-            report.AppendLine("| Step | Seconds | Notes |");
-            report.AppendLine("|---|---:|---|");
-            foreach ((string step, float seconds, string notes) in _steps)
+            report.AppendLine("| Step | Seconds | Notes | Charge | Ground m | Beam s |");
+            report.AppendLine("|---|---:|---|---:|---:|---:|");
+            foreach ((string step, float seconds, string notes, Vector3 battery) in _steps)
             {
-                report.AppendLine(string.Format(CultureInfo.InvariantCulture, "| {0} | {1:F1} | {2} |", step,
-                    seconds, notes));
+                report.AppendLine(string.Format(CultureInfo.InvariantCulture,
+                    "| {0} | {1:F1} | {2} | {3:P0} | {4:F0} | {5:F1} |", step, seconds, notes, battery.x, battery.y,
+                    battery.z));
             }
 
             report.AppendLine(string.Format(CultureInfo.InvariantCulture,
-                "| **Total** | **{0:F1}** | budget {1:F0} s; {2} error(s), {3} warning(s) in the log |", total,
-                TotalBudget, _problems.Count, _warnings));
+                "| **Total** | **{0:F1}** | budget {1:F0} s; {2} error(s), {3} warning(s) in the log; " +
+                "{4} crawl(s) | | | |",
+                total, TotalBudget, _problems.Count, _warnings, _crawls));
+            report.AppendLine();
+            report.AppendLine("Range lessons (docs/features/M3-20 §6):");
+            foreach ((string where, float charge, Vector2 target) in _lessons)
+            {
+                report.AppendLine(string.Format(CultureInfo.InvariantCulture, "- {0}: {1:P0} (target {2:P0}-{3:P0})",
+                    where, charge, target.x, target.y));
+            }
             Directory.CreateDirectory(GameplayFixture.CaptureFolder);
             File.WriteAllText(ReportPath, report.ToString());
             Debug.Log("[playthrough] report: " + ReportPath + "\n" + report);

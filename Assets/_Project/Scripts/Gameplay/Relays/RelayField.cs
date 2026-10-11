@@ -51,6 +51,7 @@ namespace MoonProject.Gameplay
         private readonly List<RelayMast> _masts = new List<RelayMast>();
         private EventBus _events;
         private InputReader _input;
+        private BeamWork _beamWork;
         private IRoverState _rover;
         private IRoverRig _rig;
         private IViewCamera _view;
@@ -148,6 +149,7 @@ namespace MoonProject.Gameplay
 
             _events = services.Events;
             _input = services.Input;
+            _beamWork = services.Beam;
             _rover = services.Rover;
             _rig = services.Rig;
             _view = services.View;
@@ -374,6 +376,11 @@ namespace MoonProject.Gameplay
             _glints.End();
             StepRestoreInput(now, deltaTime);
             bool beaming = _restoring != null && _beat.Beaming(now - _restoring.RestoreStart);
+            if (beaming)
+            {
+                _beamWork.Work(deltaTime);
+            }
+
             _beam.Step(beaming, _restoring != null, _rig.TetherOrigin.position,
                 _restoring != null ? _restoring.Shown.BeamPoint.position : Vector3.zero, now, deltaTime);
             SetHold(beaming);
@@ -436,7 +443,7 @@ namespace MoonProject.Gameplay
 
         private void StepRestoreInput(float now, float deltaTime)
         {
-            if (_candidate == null || !_input.ExcavateHeld || !_stock.Has(NextCost))
+            if (_candidate == null || !_input.ExcavateHeld || !_stock.Has(NextCost) || !_beamWork.MayStart)
             {
                 _holdTime = 0f;
                 return;

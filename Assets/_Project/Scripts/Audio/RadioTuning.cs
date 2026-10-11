@@ -21,6 +21,10 @@ namespace MoonProject.Audio
         [Tooltip("Seconds (time constant) smoothing the clarity the player hears.")]
         [Min(0f)] [SerializeField] private float _claritySmoothing = 0.8f;
 
+        [Tooltip("Metres the radio sounds farther from home while 07 crawls on its reserve (docs/features/M3-20): it "
+            + "thins a little, and comes back as 07 charges.")]
+        [Range(0f, 200f)] [SerializeField] private float _crawlDistance = 60f;
+
         [Header("Clarity -> sound")]
         [Tooltip("Low-pass cutoff (Hz) with no signal: warm, muffled haze.")]
         [Range(200f, 4000f)] [SerializeField] private float _minCutoff = 800f;
@@ -145,6 +149,8 @@ namespace MoonProject.Audio
 
         public float SignalRadius => _signalRadius;
         public float FalloffWidth => _falloffWidth;
+
+        public float CrawlDistance => _crawlDistance;
         public float RadiusEaseTime => _radiusEaseTime;
         public float ClaritySmoothing => _claritySmoothing;
         public float MinCutoff => _minCutoff;

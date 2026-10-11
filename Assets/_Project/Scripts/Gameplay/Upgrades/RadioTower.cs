@@ -51,6 +51,7 @@ namespace MoonProject.Gameplay
         [SerializeField] private Transform[] _hatches = Array.Empty<Transform>();
 
         private EventBus _events;
+        private BeamWork _beamWork;
         private IRoverState _rover;
         private IRoverRig _rig;
         private ITerrainQuery _terrain;
@@ -198,6 +199,7 @@ namespace MoonProject.Gameplay
             }
 
             _events = services.Events;
+            _beamWork = services.Beam;
             _rover = services.Rover;
             _rig = services.Rig;
             _terrain = services.Terrain;
@@ -367,6 +369,11 @@ namespace MoonProject.Gameplay
             Vector3 stitchPoint = Vector3.Lerp(HatchPosition, BeaconPosition,
                 TowerPortMoment.Climb(t, hatchTime, stitchDuration));
             _stitch.Step(stitching, true, eye, stitchPoint, now, deltaTime);
+            if (_feed.Feeding || stitching)
+            {
+                _beamWork.Work(deltaTime);
+            }
+
             if (_crafting == null || float.IsInfinity(t))
             {
                 return;

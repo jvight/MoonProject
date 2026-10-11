@@ -40,17 +40,21 @@ namespace MoonProject.Rover.Tests
         {
             var chase = new Vector3(0f, 2f, 9f);
             var under = new Vector3(0f, 1.3f, 2.4f);
-            var hatch = new Vector3(0f, 2.6f, 0.9f);
             var ring = new Vector3(0.5f, 5.7f, -2.3f);
-            Assert.Less(Vector3.Distance(chase, LabShot.Crane(chase, under, hatch, ring, 0f)), 1e-4f,
+            Vector3 entry = LabShot.Shaft(Vector3.zero, 2.3f, ring, _settings);
+            Vector3 floor = LabShot.Shaft(Vector3.zero, 4.2f, ring, _settings);
+            Assert.AreEqual(_settings.ShaftOut, new Vector3(entry.x, 0f, entry.z).magnitude, 1e-4f,
+                "it rises through the shaft's gap, beside the platform");
+            Assert.Less(Vector3.Distance(chase, LabShot.Crane(chase, under, entry, floor, ring, 0f)), 1e-4f,
                 "the crane starts exactly where the chase camera stood");
-            Assert.Less(Vector3.Distance(under, LabShot.Crane(chase, under, hatch, ring, 1f / 3f)), 1e-4f);
-            Assert.Less(Vector3.Distance(hatch, LabShot.Crane(chase, under, hatch, ring, 2f / 3f)), 1e-4f);
-            Assert.Less(Vector3.Distance(ring, LabShot.Crane(chase, under, hatch, ring, 1f)), 1e-4f);
+            Assert.Less(Vector3.Distance(under, LabShot.Crane(chase, under, entry, floor, ring, 0.25f)), 1e-4f);
+            Assert.Less(Vector3.Distance(entry, LabShot.Crane(chase, under, entry, floor, ring, 0.5f)), 1e-4f);
+            Assert.Less(Vector3.Distance(floor, LabShot.Crane(chase, under, entry, floor, ring, 0.75f)), 1e-4f);
+            Assert.Less(Vector3.Distance(ring, LabShot.Crane(chase, under, entry, floor, ring, 1f)), 1e-4f);
             Vector3 previous = chase;
             for (int i = 1; i <= 60; i++)
             {
-                Vector3 next = LabShot.Crane(chase, under, hatch, ring, i / 60f);
+                Vector3 next = LabShot.Crane(chase, under, entry, floor, ring, i / 60f);
                 Assert.Less(Vector3.Distance(previous, next), 0.6f, "a smooth path, no jumps");
                 previous = next;
             }

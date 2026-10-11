@@ -7,7 +7,8 @@ namespace MoonProject.Rover
     /// The Hover-Jump, stepped once per physics step:
     /// <list type="bullet">
     /// <item>Ready -> Charging when Jump is pressed on the ground (and the post-landing cooldown is over). The charge
-    /// reports progress at its start and at each of ChargeSteps equal steps until full.</item>
+    /// reports progress at its start and at each of ChargeSteps equal steps until full. When the battery can't pay
+    /// for a full leap the press is refused instead and the coils never charge, so a leap never fails mid-air.</item>
     /// <item>Charging -> Ready with a leap when Jump is released: strength eases with the charge (a tap is a small
     /// hop, a full charge a big leap). Leaving the ground while charging, or losing the ability, cancels
     /// quietly.</item>
@@ -72,6 +73,16 @@ namespace MoonProject.Rover
         /// </summary>
         public HoverJumpEvent Step(bool enabled, bool held, bool grounded, float deltaTime)
         {
+            return Step(enabled, held, grounded, true, deltaTime);
+        }
+
+        /// <summary>
+        /// Advances one physics step like <see cref="Step(bool, bool, bool, float)"/>; with
+        /// <paramref name="affordable"/> false (the battery can't pay for a full leap) a press is
+        /// <see cref="HoverJumpEvent.Refused"/> and never starts a charge.
+        /// </summary>
+        public HoverJumpEvent Step(bool enabled, bool held, bool grounded, bool affordable, float deltaTime)
+        {
             bool pressed = held && !_wasHeld;
             bool released = !held && _wasHeld;
             _wasHeld = held;
@@ -89,6 +100,11 @@ namespace MoonProject.Rover
                 if (!pressed || _cooldown > 0f)
                 {
                     return HoverJumpEvent.None;
+                }
+
+                if (!affordable)
+                {
+                    return HoverJumpEvent.Refused;
                 }
 
                 IsCharging = true;
