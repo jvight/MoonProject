@@ -18,7 +18,9 @@ namespace MoonProject.Rover
     /// a radio-hop, 07 rouses and looks around (<see cref="LookAround"/>). Once the Rover Bay has fitted a kit piece
     /// (<see cref="RoverKitFitted"/>) and lets 07 go, turned to show it, 07 strikes a proud pose (head up, eye bright,
     /// antenna wiggle); a friend's gift gets a softer one as it settles; with Tilly's cell in its wing the wing settles
-    /// open wider.
+    /// open wider. Its battery shows in it too (docs/features/M3-20): at low charge the eye dims a little, the head
+    /// bows and the wing stays flatter, quieter still while it crawls on the reserve; a charger perks it up; a
+    /// refused leap gets a glance at its flank lamps and the VeryLow warning a look toward the nearest lit charger.
     /// Needs <see cref="IWorldLayout"/>, so it must be initialised after the World systems.
     /// </summary>
     [DefaultExecutionOrder(10)]
@@ -80,6 +82,9 @@ namespace MoonProject.Rover
         private Quaternion _wingRest;
         private bool _proudPending;
         private float _wakeTilt;
+        private BatteryLink _battery;
+        private float _tired;
+        private float _crawl;
         private bool _initialized;
 
         /// <summary>Read-only view of the mood, for audio/debug tooling.</summary>
@@ -98,6 +103,7 @@ namespace MoonProject.Rover
             _mood = new RoverMood(_tuning, MoodSeed, _tuning.SleepOnBoot);
             _lookAround = new LookAround(_tuning);
             _glowBlock = new MaterialPropertyBlock();
+            _battery = new BatteryLink(context);
             _neckRest = _neck.localRotation;
             _headRest = _head.localRotation;
             _eyelidRest = _eyelid.localRotation;
@@ -125,6 +131,9 @@ namespace MoonProject.Rover
                 events.Subscribe<BellSignalPicked>(OnBellSignalPicked),
                 events.Subscribe<RadioHopFinished>(OnRadioHopFinished),
                 events.Subscribe<RoverKitFitted>(OnKitFitted),
+                events.Subscribe<ChargingChanged>(OnChargingChanged),
+                events.Subscribe<BatteryWarned>(OnBatteryWarned),
+                events.Subscribe<RoverLeapRefused>(OnLeapRefused),
             };
             _initialized = true;
             Apply(0f);
@@ -300,6 +309,32 @@ namespace MoonProject.Rover
             }
         }
 
+        /// <summary>A charger started filling the cells: 07 perks up (head lift, brighter eye, antenna wiggle).</summary>
+        private void OnChargingChanged(ChargingChanged charging)
+        {
+            if (charging.Charging)
+            {
+                PerkUp(_tuning.Battery.ChargePerk);
+            }
+        }
+
+        /// <summary>The VeryLow warning: 07 looks toward the nearest charger that works, a gentle "home is there".</summary>
+        private void OnBatteryWarned(BatteryWarned warned)
+        {
+            if (warned.Warning == BatteryWarning.VeryLow)
+            {
+                BatteryMoodSettings battery = _tuning.Battery;
+                Glance(warned.NearestLitCharger + Vector3.up * battery.ChargerGlanceLift,
+                    _tuning.ReactionGazePriority, battery.ChargerGlanceSeconds);
+            }
+        }
+
+        /// <summary>The coils fizzled at the lip: 07 glances at its flank lamps, "not enough".</summary>
+        private void OnLeapRefused(RoverLeapRefused refused)
+        {
+            Glance(_rover.FlankLamps.GlancePoint, _tuning.ReactionGazePriority, _tuning.Battery.LampGlanceSeconds);
+        }
+
         /// <summary>Landed from a radio-hop: 07 rouses from any daydream and looks around, "where am I?".</summary>
         private void OnRadioHopFinished(RadioHopFinished hop)
         {
@@ -357,10 +392,20 @@ namespace MoonProject.Rover
                 _glanceEnds = -1f;
             }
 
+            StepBattery(deltaTime);
             _lookAround.Step(deltaTime);
             float sky = SkyLift();
             StepGaze(sky, deltaTime);
             Apply(sky);
+        }
+
+        /// <summary>The tired look below the Low share and the quieter crawl, each eased in and out.</summary>
+        private void StepBattery(float deltaTime)
+        {
+            BatteryMoodSettings battery = _tuning.Battery;
+            bool tired = _battery.Charge01 < battery.LowShare;
+            _tired = Smoothing.Damp(_tired, tired ? 1f : 0f, battery.HalfLife, deltaTime);
+            _crawl = Smoothing.Damp(_crawl, _battery.IsLowPower ? 1f : 0f, battery.HalfLife, deltaTime);
         }
 
         /// <summary>
@@ -423,18 +468,22 @@ namespace MoonProject.Rover
         private void Apply(float sky)
         {
             float breathing = _tuning.IdleHeadBreath * _mood.Idle * (2f * _mood.Breath - 1f);
-            float pitch = _pitch.Value + _mood.HeadPitchOffset + breathing;
+            BatteryMoodSettings battery = _tuning.Battery;
+            float bow = _tired * battery.LowHeadBow + _crawl * battery.CrawlHeadBow;
+            float pitch = _pitch.Value + _mood.HeadPitchOffset + breathing - bow;
 
             _neck.localRotation = _neckRest * Quaternion.AngleAxis(_yaw.Value, Vector3.up);
             _head.localRotation = _headRest * Quaternion.AngleAxis(-pitch, Vector3.right)
                 * Quaternion.AngleAxis(_wakeTilt, Vector3.forward);
             _eyelid.localRotation = _eyelidRest
                 * Quaternion.AngleAxis(_mood.LidClosure * _tuning.EyelidClosedAngle, Vector3.right);
-            float wingOpen = Mathf.Max(_mood.WingOpen, sky * _tuning.StargazeWingOpen);
+            float wingOpen = Mathf.Max(_mood.WingOpen * Mathf.Lerp(1f, battery.LowWingOpen, _tired),
+                sky * _tuning.StargazeWingOpen);
             _solarWing.localRotation = _wingRest
                 * Quaternion.AngleAxis(wingOpen * _tuning.WingOpenAngle, Vector3.right);
 
-            float eyeGlow = _mood.EyeGlow * Mathf.Lerp(1f, _tuning.StargazeEyeGlow, sky);
+            float eyeGlow = _mood.EyeGlow * Mathf.Lerp(1f, _tuning.StargazeEyeGlow, sky)
+                * Mathf.Lerp(1f, battery.LowEyeGlow, _tired) * Mathf.Lerp(1f, battery.CrawlEyeGlow, _crawl);
             SetGlow(_eyeRenderer, eyeGlow);
             SetGlow(_antennaTipRenderer, _mood.TipGlow);
             _eyeLight.intensity = _tuning.EyeLightIntensity * eyeGlow;

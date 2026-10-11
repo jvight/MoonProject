@@ -79,6 +79,8 @@ namespace MoonProject.Rover
         private bool _tethered;
         private bool _hopListOpen;
         private bool _paused;
+        private bool _crawling;
+        private float _crawl;
         private float _momentYaw;
         private float _momentLift;
         private float _momentPullBack;
@@ -209,6 +211,7 @@ namespace MoonProject.Rover
                 context.Events.Subscribe<RadioHopListChanged>(OnHopListChanged),
                 context.Events.Subscribe<RoverPlaced>(OnPlaced),
                 context.Events.Subscribe<RoverKitInstalling>(OnKitInstalling),
+                context.Events.Subscribe<LowPowerChanged>(OnLowPowerChanged),
             };
             context.Register<IViewCamera>(this);
             context.Register<ILookSettings>(this);
@@ -332,6 +335,7 @@ namespace MoonProject.Rover
             StepStargaze(deltaTime);
 
             _bumpSpring.Step(0f, _tuning.BumpFrequency, _tuning.BumpDamping, deltaTime);
+            _crawl = Smoothing.Damp(_crawl, _crawling ? 1f : 0f, _tuning.CrawlHalfLife, deltaTime);
             ApplyOrbit();
         }
 
@@ -565,8 +569,8 @@ namespace MoonProject.Rover
         private void ApplyOrbit()
         {
             float yaw = _orbitState.YawOffset * (1f - _moment.Weight);
-            float elevation = _orbitState.Elevation + _momentLift;
-            float radius = _tuning.Distance * (1f + _momentPullBack);
+            float elevation = _orbitState.Elevation + _momentLift - _crawl * _tuning.CrawlLower;
+            float radius = _tuning.Distance * (1f + _momentPullBack) * (1f + _crawl * _tuning.CrawlPullBack);
             if (IsBayMoment)
             {
                 float follow = _rover.Position.y + _tuning.TargetHeight + _momentShift.y;
@@ -957,6 +961,19 @@ namespace MoonProject.Rover
         /// 07 jumped somewhere else while the view was dark: the wide shot and any moment end at once and the camera
         /// snaps behind 07, so nothing lerps across from the old spot.
         /// </summary>
+        /// <summary>
+        /// 07 crawls home on its reserve (docs/features/M3-20): the chase eases wider and a touch lower, a quiet frame;
+        /// a loaded crawl starts framed.
+        /// </summary>
+        private void OnLowPowerChanged(LowPowerChanged lowPower)
+        {
+            _crawling = lowPower.LowPower;
+            if (lowPower.Restored)
+            {
+                _crawl = _crawling ? 1f : 0f;
+            }
+        }
+
         private void OnPlaced(RoverPlaced placed)
         {
             bool wasWide = _wide.IsOpen || _held.IsOpen;
