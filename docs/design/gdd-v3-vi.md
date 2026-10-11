@@ -255,3 +255,50 @@ bốn bài học. Chúng áp dụng từ 0.6; **phạm vi 0.5 giữ nguyên**.
 tàu khổng lồ hiện dần trong đèn pha, 0.7); Atlas kéo một trạm sạc di động như căn cứ di động (ý Cyclops, 0.7).
 
 **Không học:** đói khát, quái vật, mất đồ khi thất bại, cày tài nguyên, xây tự do với giao diện rối.
+
+## 13. Viết lại cốt truyện: "im lặng dài" (chủ dự án, 2026-10-11)
+**Thay cho cái kết ở phần 8 và quyết định 6 ("Ro trả lời").** Ban đầu tưởng như trên Trái Đất con người vẫn còn,
+nhưng dần dần người chơi nhận ra loài người đã diệt vong từ lâu. Mọi tín hiệu 07 bắt được là bản ghi âm cũ, trạm tự
+động, hoặc máy móc nói chuyện với máy móc. Ở cuối game, sau khi người chơi chọn phát sóng, một tàu đổ bộ mới đến Mặt
+Trăng, và lúc đó mới rõ: không có con người nào cả, chỉ có robot.
+
+**Lựa chọn của chủ dự án:** kết tăm tối, bỏ ngỏ (đó là end game, các chi tiết đã được khám phá dần trên đường đi);
+giọng Ro chỉ còn là bản ghi âm cuối; người bước xuống tàu mới là một rover trẻ hơn, **08**.
+
+### 13.1 Luật cho sự tăm tối
+- **Lối chơi vẫn êm** (luật 15, trụ cột 2). Tăm tối nằm ở những gì người chơi tự ghép lại, không bao giờ ở nguy hiểm,
+  đếm giờ hay mất mát.
+- **Không bao giờ cho thấy, không bao giờ giải thích.** Không nêu, không vẽ nguyên nhân: không đổ nát trên Trái Đất,
+  không xác người, không cảnh thảm hoạ. Người chơi tự suy ra từ khoảng trống, ngày tháng, sự lặp lại.
+- **Manh mối thuộc tầng 2** (luật 16): thư, nhật ký, kỷ vật, tín hiệu, tìm thấy khi đi khám phá, theo thứ tự nào cũng
+  được. Bốn mục tiêu chính không đổi. Ai bỏ qua manh mối vẫn tới được cái kết; ai tìm đủ thì hiểu trước khi nó xảy ra.
+- **Mỗi manh mối nhỏ và cụ thể:** một ngày tháng, một câu lặp lại, một giọng nói không bao giờ thở.
+
+### 13.2 Hé lộ theo từng phiên bản
+| Bản | Người chơi có thể nhận ra |
+|---|---|
+| 0.5 | Nhạc hiệu đánh thức 07 là một vòng lặp: đêm nào cũng y hệt. Dòng "EARTH SIGNAL · DETECTED" nói *tín hiệu*, chưa bao giờ nói *liên lạc*. Thư của Ro có ngày tháng, và khoảng cách giữa các lá thư dài dần. |
+| 0.6 | Thư của Ro dừng sau năm thứ hai mươi. Sau đó các cột relay chỉ bắt được tín hiệu tự động: thời tiết, giờ chuẩn, mã trạm, không có giọng người. Một cột phát lại đúng vòng nhạc hiệu ấy, khớp từng giây. Các vết chì A3 chỉ tới những nơi các tín hiệu tự động này nhắc tới. |
+| 0.7 | Khoảnh khắc A4 giữa game: Trái Đất vài giây, và giọng nói là một bản ghi có dấu thời gian từ mấy chục năm trước. Khoang kín của Kestrel-3 (A2) giữ thông báo cuối của chương trình: một thông báo tự động rằng trạm được "giữ lại để phục hồi sau này". Trong tiếng rè xuất hiện những cái bắt tay giữa máy với máy: thứ gì đó trên Trái Đất vẫn trả lời ping, không bằng lời. |
+| 0.8 | Đường lên của chảo lớn chạm tới Trái Đất. Các câu trả lời đến với nhịp của máy. Người chơi chọn phát sóng (mục tiêu Answer). |
+
+### 13.3 Cái kết (thay cho phần 8)
+1. 07 phát sóng. Im lặng. Căn cứ trở về một đêm bình thường, người chơi vẫn điều khiển.
+2. Vài đêm sau (buổi tối ở dock kế tiếp), một đốm sáng băng qua trời và một tàu đổ bộ nhỏ hạ xuống sân trước.
+3. Cầu dốc hạ xuống. Một rover trẻ hơn lăn xuống: **08**, cùng dòng với 07, sạch hơn, ít dấu hiệu cô đơn hơn. Ăng-ten
+   của nó nháy call sign của trạm: ba ngắn, một dài.
+4. Từ loa của 08, bản ghi âm cuối của Ro vang lên: "I heard you, 07. I'm still here." Bút vẽ bản đồ trong lab đóng
+   ngày tháng bên cạnh: mấy chục năm trước.
+5. Không ai khác bước xuống. Ống kính của 07 mở hết cỡ, lần đầu tiên, nhìn 08.
+6. Camera vượt qua Đỉnh núi lên tới mặt đêm của Trái Đất: tối đen, không một ánh đèn thành phố. Cắt sang đen. Không
+   giải thích.
+7. Sau credit, Mặt Trăng vẫn mở để chơi tiếp. 08 và tàu của nó ở lại căn cứ, lặng im. Không điều gì được giải thích.
+
+### 13.4 Mỗi chức năng đều hiện trên 07 (chủ dự án, mở rộng luật 11 và mục 4.4)
+Mở khoá một chức năng là thêm hoặc đổi một bộ phận nhìn thấy được cho nó, đúng khe của nó, và ống kính của 07 không bao
+giờ đổi. Mới trong lần này:
+- **Survey Scanner** (0.6, cần cho việc quét mảnh bản vẽ A1): một trục gập mảnh trên **khe cổ** mới, bên cạnh đầu,
+  không bao giờ che ống kính. Khi 07 quét, trục mở ra và một quạt sáng mảnh lướt qua mảnh vỡ. Bản vẽ của nó tìm thấy
+  trong lòng hố ở 0.6.
+- Các bộ khác giữ khe cũ (mục 4.4). Mọi chức năng sau này (Star Tracker, Anchor Line…) phải nêu bộ phận của nó trước
+  khi làm.
