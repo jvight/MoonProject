@@ -187,7 +187,8 @@ namespace MoonProject.Art.Editor
                 PaletteSwatch.Cream);
             for (int i = -2; i <= 2; i++)
             {
-                b.Box(front * At(i * half * 0.45f, LabStationMeshes.TapeHeight, 0.006f), new Vector3(0.03f, 0.07f, 0.01f),
+                b.Box(front * At(i * half * 0.45f, LabStationMeshes.TapeHeight, 0.006f),
+                    new Vector3(0.03f, 0.07f, 0.01f),
                     PaletteSwatch.Metal);
             }
         }

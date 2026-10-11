@@ -5,11 +5,11 @@ namespace MoonProject.Art.Editor
 {
     /// <summary>
     /// The habitat lander's belly lift (docs/features/M3-19 §4): a round platform that is also the lab's turntable,
-    /// hanging on two hoist cables from sheaves on short winch posts beside the shaft's top in the cabin floor, between four guide
-    /// posts so its job reads from the apron; the floor hatch's two sliding leaves under the belly with their lamps,
-    /// the belly's work lamp, and what jammed it decades ago (the right cable snapped and coiled slack on the platform,
-    /// its frayed end hanging out of the shaft, the crew's tag on the post). Lift space is lander space: the origin on
-    /// the ground under the shaft, +Z the front where 07 drives on.
+    /// hanging on two hoist cables from sheaves on short winch posts beside the shaft's top in the cabin floor, between
+    /// four guide posts so its job reads from the apron; the floor hatch's two sliding leaves under the belly with
+    /// their lamps, the belly's work lamp, and what jammed it decades ago (the right cable snapped and coiled slack on
+    /// the platform, its frayed end hanging out of the shaft, the crew's tag on the post). Lift space is lander space:
+    /// the origin on the ground under the shaft, +Z the front where 07 drives on.
     /// </summary>
     internal static class BellyLiftMeshes
     {
@@ -25,8 +25,11 @@ namespace MoonProject.Art.Editor
         /// <summary>How much lower the jammed side hangs than the other, across the platform.</summary>
         public const float JamDrop = 0.3f;
 
-        /// <summary>The hatch leaves' slide out of the shaft's mouth along ±X, clear of the rising platform.</summary>
-        public const float HatchLeafTravel = 1.75f;
+        /// <summary>
+        /// The hatch leaves' slide out of the shaft's mouth along ±X into their pockets in the stage, clear of the
+        /// rising platform and its cable eyes.
+        /// </summary>
+        public const float HatchLeafTravel = 1.85f;
 
         // Where the hoist cables run, either side of the shaft: just inside its flats, clear of the platform's rim,
         // from sheaves on winch posts standing on the cabin floor, so the platform rises flush under them.
@@ -36,10 +39,12 @@ namespace MoonProject.Art.Editor
         private const float EyeDrop = 0.08f;
         private const float CableRadius = 0.022f;
 
+        // Each leaf is half an octagon a lip wider than the shaft, set just inside the stage's underside so it slides
+        // away into the stage's body.
         private const float LeafThickness = 0.06f;
-        private const float LeafDepth = 3.7f;
+        private const float LeafLip = 0.06f;
         private const float LeafOverlap = 0.03f;
-        private const float RailReach = 3.8f;
+        private const float LeafRecess = 0.02f;
 
         private const float GuideRadius = 1.98f;
 
@@ -51,26 +56,31 @@ namespace MoonProject.Art.Editor
         private const int RimLampCount = 8;
         private const float PadRingRadius = 1.2f;
 
-        // The hatch rim's lamps keep to the front and back arcs, where the sliding leaves never pass.
-        private static readonly float[] RimYaws = { -30f, -10f, 10f, 30f, 150f, 170f, 190f, 210f };
+        private const int HatchRimLamps = 12;
         private const float HatchRimRadius = 2.38f;
 
         private static readonly Vector3 BellyLampAt = new Vector3(0f, LanderMeshes.StageBottom - 0.2f, 2.75f);
 
-        /// <summary>The platform's roll in its jammed pose: the right (+X) side down, where its cable went slack.</summary>
+        /// <summary>
+        /// The platform's roll in its jammed pose: the right (+X) side down, where its cable went slack.
+        /// </summary>
         public static Quaternion JamTilt =>
             Rotation(new Vector3(0f, 0f, -Mathf.Asin(JamDrop / (PlatformRadius * 2f)) * Mathf.Rad2Deg));
 
         /// <summary>Where the jammed platform's top centre hangs: its low side resting on the ground stops.</summary>
         public static Vector3 JammedCentre => new Vector3(0f, DownY + JamDrop * 0.5f, 0f);
 
-        /// <summary>A hoist cable's top: its sheave on the winch post beside the shaft (side -1 left, +1 right).</summary>
+        /// <summary>
+        /// A hoist cable's top: its sheave on the winch post beside the shaft (side -1 left, +1 right).
+        /// </summary>
         public static Vector3 CableTop(int side)
         {
             return new Vector3(side * CableX, SheaveY, 0f);
         }
 
-        /// <summary>The cable's length in the built pose, from its sheave down to the jammed platform's left eye.</summary>
+        /// <summary>
+        /// The cable's length in the built pose, from its sheave down to the jammed platform's left eye.
+        /// </summary>
         public static float BuiltCableLength
         {
             get
@@ -82,15 +92,16 @@ namespace MoonProject.Art.Editor
 
         /// <summary>
         /// The static frame (appended to the lander's hull): the ring of ground stops the platform rests on, the four
-        /// guide posts from the ground to the belly with their hazard collars, the sheave blocks at the top of the
-        /// shaft, the hatch leaves' rails under the stage and the belly lamp's housing.
+        /// guide posts up toward the belly with their hazard collars, the winch posts and sheaves beside the shaft's
+        /// top in the cabin floor and the belly lamp's housing.
         /// </summary>
         public static void Frame(LowPolyMeshBuilder b)
         {
-            b.Torus(At(0f, 0.02f, 0f), PlatformRadius + 0.12f, 0.06f, 16, 3, PaletteSwatch.Charcoal);
+            b.Torus(At(0f, 0.05f, 0f), PlatformRadius + 0.2f, 0.05f, 16, 3, PaletteSwatch.Charcoal);
             for (int i = 0; i < 8; i++)
             {
-                Vector3 stop = Rotation(new Vector3(0f, 22.5f + i * 45f, 0f)) * Vector3.forward * (PlatformRadius - 0.3f);
+                Vector3 stop = Rotation(new Vector3(0f, 22.5f + i * 45f, 0f)) * Vector3.forward
+                    * (PlatformRadius - 0.3f);
                 b.Box(At(stop + Vector3.up * (DownY - PlatformThickness) * 0.5f, new Vector3(0f, 22.5f + i * 45f, 0f)),
                     new Vector3(0.22f, DownY - PlatformThickness, 0.22f), PaletteSwatch.Metal, 0.01f);
             }
@@ -99,7 +110,7 @@ namespace MoonProject.Art.Editor
             {
                 Vector3 foot = Rotation(new Vector3(0f, yaw, 0f)) * Vector3.forward * GuideRadius;
                 Vector3 top = foot + Vector3.up * GuideTop;
-                SiteKit.Bar(b, foot, top, GuideBar, PaletteSwatch.Metal);
+                SiteKit.Bar(b, foot + Vector3.up * (GuideBar * 0.5f), top, GuideBar, PaletteSwatch.Metal);
                 b.Box(At(top + Vector3.up * 0.03f, new Vector3(0f, yaw, 0f)), new Vector3(0.2f, 0.06f, 0.2f),
                     PaletteSwatch.Charcoal, 0.01f);
                 b.Box(At(foot + Vector3.up * 0.55f, new Vector3(0f, yaw, 0f)),
@@ -115,12 +126,6 @@ namespace MoonProject.Art.Editor
                 b.Box(At(side * (PostX - 0.06f), SheaveY + 0.04f, 0f), new Vector3(0.18f, 0.08f, 0.16f),
                     PaletteSwatch.Metal, 0.01f);
                 b.Prism(At(new Vector3(side * CableX, SheaveY, 0f), AlongZ), 0.07f, 0.06f, 8, PaletteSwatch.Metal);
-                for (int z = -1; z <= 1; z += 2)
-                {
-                    SiteKit.Bar(b, new Vector3(side * 0.1f, LanderMeshes.StageBottom - 0.05f, z * (LeafDepth * 0.5f + 0.06f)),
-                        new Vector3(side * RailReach, LanderMeshes.StageBottom - 0.05f, z * (LeafDepth * 0.5f + 0.06f)),
-                        0.06f, PaletteSwatch.Charcoal);
-                }
             }
 
             b.Box(At(BellyLampAt + Vector3.up * 0.09f), new Vector3(0.42f, 0.16f, 0.3f), PaletteSwatch.Charcoal, 0.03f);
@@ -170,7 +175,9 @@ namespace MoonProject.Art.Editor
             return b;
         }
 
-        /// <summary>The pad's ring of glass set into the deck (platform space): lit when the lift can be stitched.</summary>
+        /// <summary>
+        /// The pad's ring of glass set into the deck (platform space): lit when the lift can be stitched.
+        /// </summary>
         public static LowPolyMeshBuilder PadGlow()
         {
             var b = new LowPolyMeshBuilder(120);
@@ -201,33 +208,52 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
-        /// Hatch leaf <paramref name="side"/> (-1 left, +1 right) in lander space, shut: a plate under the shaft's
-        /// mouth covering its half, with a lip where the two meet and a grip along its outer edge.
+        /// Hatch leaf <paramref name="side"/> (-1 left, +1 right) in lander space, shut: half an octagon covering its
+        /// half of the shaft's mouth just inside the stage's underside, its edge overlapping the other leaf's, with
+        /// hazard stripes along the seam underneath.
         /// </summary>
         public static LowPolyMeshBuilder HatchLeaf(int side)
         {
             var b = new LowPolyMeshBuilder(80);
-            float width = LanderMeshes.ShaftRadius + 0.05f + LeafOverlap;
-            float y = LanderMeshes.StageBottom - LeafThickness * 0.5f - 0.02f;
-            float centre = side * (width * 0.5f - LeafOverlap);
-            b.Box(At(centre, y, 0f), new Vector3(width, LeafThickness, LeafDepth), PaletteSwatch.Metal, 0.01f);
-            b.Box(At(centre, y - LeafThickness * 0.5f - 0.005f, 0f), new Vector3(width - 0.3f, 0.01f, LeafDepth - 0.4f),
-                PaletteSwatch.WornPanel);
+            float radius = LanderMeshes.ShaftRadius + LeafLip;
+            var outline = new Vector2[6];
+            outline[0] = new Vector2(-LeafOverlap, LanderMeshes.Corner(0, radius, 0f).z);
+            for (int i = 0; i < 4; i++)
+            {
+                Vector3 corner = LanderMeshes.Corner(i, radius, 0f);
+                outline[i + 1] = new Vector2(corner.x, corner.z);
+            }
+
+            outline[5] = new Vector2(-LeafOverlap, -outline[0].y);
+            if (side < 0)
+            {
+                for (int i = 0; i < outline.Length; i++)
+                {
+                    outline[i].x = -outline[i].x;
+                }
+            }
+
+            float bottom = LanderMeshes.StageBottom + LeafRecess;
+            b.Extrude(At(new Vector3(0f, bottom + LeafThickness * 0.5f, 0f), new Vector3(90f, 0f, 0f)), outline,
+                LeafThickness, PaletteSwatch.Metal);
             for (int stripe = -2; stripe <= 2; stripe++)
             {
-                b.Box(At(side * 0.12f, y - LeafThickness * 0.5f - 0.008f, stripe * 0.5f), new Vector3(0.16f, 0.01f, 0.2f),
+                b.Box(At(side * 0.12f, bottom - 0.005f, stripe * 0.5f), new Vector3(0.16f, 0.01f, 0.2f),
                     PaletteSwatch.FadedAccent);
             }
 
             return b;
         }
 
-        /// <summary>The hatch rim's lamp glasses round the shaft's mouth on the stage's underside (lander space).</summary>
+        /// <summary>
+        /// The hatch rim's lamp glasses round the shaft's mouth on the stage's underside (lander space).
+        /// </summary>
         public static LowPolyMeshBuilder HatchRim()
         {
             var b = new LowPolyMeshBuilder(200);
-            foreach (float yaw in RimYaws)
+            for (int i = 0; i < HatchRimLamps; i++)
             {
+                float yaw = (i + 0.5f) * 360f / HatchRimLamps;
                 Vector3 at = Rotation(new Vector3(0f, yaw, 0f)) * Vector3.forward * HatchRimRadius
                     + Vector3.up * (LanderMeshes.StageBottom - 0.03f);
                 b.Prism(At(at), 0.06f, 0.04f, 8, PaletteSwatch.LampGlass);
@@ -289,7 +315,9 @@ namespace MoonProject.Art.Editor
             return b;
         }
 
-        /// <summary>The frayed end of the snapped cable below the belly: where 07's beam stitches it (lander space).</summary>
+        /// <summary>
+        /// The frayed end of the snapped cable below the belly: where 07's beam stitches it (lander space).
+        /// </summary>
         public static Vector3 StitchPoint => new Vector3(CableX, LanderMeshes.StageBottom - 0.45f, 0f);
 
         /// <summary>Rim lamp <paramref name="index"/>'s place on the platform's rim (platform space).</summary>

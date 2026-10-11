@@ -3,15 +3,17 @@ using UnityEngine;
 namespace MoonProject.World
 {
     /// <summary>
-    /// The hand-off's lamp pulse (docs/features/M3-19 §5): a soft bump of light that runs along the conduit's beads from
-    /// the reader to the bay over the hand-off's seconds, then a short afterglow at the bay end. Plain logic.
+    /// The hand-off's lamp pulse (docs/features/M3-19 §5): a soft bump of light that runs along the conduit's beads
+    /// from the reader to the bay over the hand-off's seconds, then a short afterglow at the bay end. Plain logic.
     /// </summary>
     public sealed class HandOffPulse
     {
         private float _startedAt = float.NegativeInfinity;
         private float _seconds = 1f;
 
-        /// <summary>A pulse starts at <paramref name="now"/> and reaches the bay <paramref name="seconds"/> later.</summary>
+        /// <summary>
+        /// A pulse starts at <paramref name="now"/> and reaches the bay <paramref name="seconds"/> later.
+        /// </summary>
         public void Begin(float now, float seconds)
         {
             _startedAt = now;
