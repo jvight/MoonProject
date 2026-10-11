@@ -75,6 +75,19 @@ namespace MoonProject.Art.Editor
 
         public static Quaternion DeckHatchOpen => DeckHatchMeshes.Open;
 
+        /// <summary>
+        /// Ines's light table in the alcove behind the hatch (M3-07), framed by the open doorway at 07's lens height.
+        /// Its space: +X across the top, +Y up its slope, +Z out of it toward the doorway, the origin at the top's
+        /// middle. LightTable/LightTableGlow is the lit panel under the paper, a dark glow renderer
+        /// (MaterialPropertyBlock contract) and the home light seen through the doorway; LightTable/MapSheet is the
+        /// paper.
+        /// </summary>
+        public const string LightTableName = "LightTable";
+
+        public const string LightTableGlowName = "LightTableGlow";
+
+        public const string MapSheetName = "MapSheet";
+
         public const string BulbName = "Bulb";
 
         /// <summary>
@@ -374,6 +387,7 @@ namespace MoonProject.Art.Editor
                 new ModelMesh(LanderName + "_" + HomeSignName, LanderMeshes.HomeSign())));
             AddPowerCables(lander);
             AddDeckHatch(lander);
+            AddLightTable(lander);
             Weathering.Weather(lander, LanderName, hull, LanderWeather, LanderMeshes.Rust(), LanderMeshes.Drifts());
             return lander;
         }
@@ -392,6 +406,21 @@ namespace MoonProject.Art.Editor
                 new ModelMesh(prefix + "_" + PortholeName, DeckHatchMeshes.Porthole()), ModelMaterial.PaletteGlowOff));
             Weathering.Weather(hatch, prefix, door, HatchWeather, DeckHatchMeshes.HatchRust(),
                 new LowPolyMeshBuilder(0));
+        }
+
+        /// <summary>
+        /// Ines's light table in the alcove behind the hatch (M3-07): the table, its lit panel as a dark glow renderer
+        /// and the chart paper on it.
+        /// </summary>
+        private static void AddLightTable(ModelNode lander)
+        {
+            string prefix = LanderName + "_" + LightTableName;
+            ModelNode table = lander.Add(new ModelNode(LightTableName, ChartTableMeshes.Centre,
+                ChartTableMeshes.Rotation, new ModelMesh(prefix, ChartTableMeshes.Table())));
+            table.Add(new ModelNode(LightTableGlowName, Vector3.zero, Quaternion.identity,
+                new ModelMesh(prefix + "_Glow", ChartTableMeshes.Glow()), ModelMaterial.PaletteGlowOff));
+            table.Add(new ModelNode(MapSheetName, Vector3.zero, new ModelMesh(prefix + "_" + MapSheetName,
+                ChartTableMeshes.Sheet())));
         }
 
         /// <summary>

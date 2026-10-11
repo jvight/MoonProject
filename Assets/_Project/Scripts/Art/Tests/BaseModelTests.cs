@@ -81,6 +81,30 @@ namespace MoonProject.Art.Tests
         }
 
         [Test]
+        public void LightTable_StandsInTheDoorway_AtTheLensHeight_LitFromUnderThePaper()
+        {
+            ModelNode lander = BaseModelBuilder.CreateLander();
+            ModelNode hatch = lander.GetDescendant(BaseModelBuilder.DeckHatchName);
+            ModelNode table = lander.GetDescendant(BaseModelBuilder.LightTableName);
+            Assert.IsTrue(lander.Children.Contains(table));
+            float deck = lander.GetDescendant("LiftTop").LocalPosition.y;
+            Vector3 centre = table.LocalPosition;
+            Assert.That(centre.y - deck, Is.InRange(0.8f, 1.3f), "07's lens on the deck looks onto it");
+            Assert.Less(Mathf.Abs(centre.x - (hatch.LocalPosition.x + 0.4f)), 0.05f, "centred in the doorway");
+            Assert.Less(centre.z, hatch.LocalPosition.z, "inside, behind the hatch");
+            Vector3 facing = table.LocalRotation * Vector3.forward;
+            Assert.Greater(facing.z, 0.5f, "its top faces out through the doorway");
+            Assert.Greater(facing.y, 0.3f, "tipped back so the lens looks down onto it");
+            ModelNode glow = table.GetDescendant(BaseModelBuilder.LightTableGlowName);
+            Assert.AreEqual(ModelMaterial.PaletteGlowOff, glow.Material, "dark until the map wakes");
+            CollectionAssert.AreEqual(new[] { PaletteSwatch.LampGlass }, MeshChecks.Swatches(glow.Mesh.Geometry));
+            Bounds panel = glow.Mesh.Geometry.Bounds;
+            Bounds sheet = table.GetDescendant(BaseModelBuilder.MapSheetName).Mesh.Geometry.Bounds;
+            Assert.GreaterOrEqual(sheet.min.z, panel.max.z - 1e-4f, "the paper lies on the lit panel");
+            Assert.Less(sheet.size.x, panel.size.x, "a rim of light shows round the paper");
+        }
+
+        [Test]
         public void CrewsLift_ReadsJammed_AndCarriesItsRestoredParts()
         {
             ModelNode lander = BaseModelBuilder.CreateLander();
