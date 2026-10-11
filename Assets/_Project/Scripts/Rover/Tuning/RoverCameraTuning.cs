@@ -293,30 +293,23 @@ namespace MoonProject.Rover
             + "the sky (VISION pillar 6), and hands back on any drive or look input.")]
         [SerializeField] private WideShotSettings _wideShot = new WideShotSettings();
 
-        [Header("Lift lookout and the dock's evening")]
-        [Tooltip("The crew's lift settled at the lander deck (M3-18 L5, a real lookout): the camera rises slowly to "
-            + "~14 m above the deck (distance x sin elevation), pulled back over the lander, looking out past 07 at "
-            + "the whole basin, held until any input brings the lift down (only the timing, frame, lens, ground fit "
-            + "and breathing fields apply).")]
-        [SerializeField] private WideShotSettings _lookoutShot = new WideShotSettings(9f, 1.6f, 28f, 30f, 0.3f, 6f);
+        [Header("The crew's lab")]
+        [Tooltip("The belly lift's crane path up through the hatch and the lab's ring-rail camera (docs/features/M3-19 "
+            + "§6).")]
+        [SerializeField] private LabCameraSettings _lab = new LabCameraSettings();
 
-        [Tooltip("How far (deg) the lookout turns off looking straight out from the lander, toward Earth's side "
-            + "(0: pulled straight back over the lander; blocked views still turn by the held-shot yaw step).")]
-        [Range(0f, 120f)]
-        [SerializeField] private float _lookoutSide;
-
+        [Header("The dock's evening")]
         [Tooltip("07 parked at its dock after a trip: the camera eases out to a wide shot from the dock looking at "
             + "home's newly lit lamps, holds, then eases back (only the timing, frame, lens, ground fit and breathing "
             + "fields apply).")]
         [SerializeField] private WideShotSettings _eveningShot = new WideShotSettings(4f, 3f, 17f, 8f, 0.26f, 6f);
 
-        [Tooltip("Gap (m) the lookout and evening cameras keep from solid scenery (the lander, the bay) between them "
-            + "and 07: blocked, the frame comes in short of it.")]
+        [Tooltip("Gap (m) the evening camera keeps from solid scenery (the lander, the bay) between it and 07: "
+            + "blocked, the frame comes in short of it.")]
         [Range(0.1f, 2f)]
         [SerializeField] private float _heldShotClearance = 0.5f;
 
-        [Tooltip("Step (deg) the lookout and evening frames turn either way, when scenery blocks the view, to find a "
-            + "clear one.")]
+        [Tooltip("Step (deg) the evening frame turns either way, when scenery blocks the view, to find a clear one.")]
         [Range(5f, 60f)]
         [SerializeField] private float _heldShotYawStep = 25f;
 
@@ -487,9 +480,7 @@ namespace MoonProject.Rover
 
         public WideShotSettings WideShot => _wideShot;
 
-        public WideShotSettings LookoutShot => _lookoutShot;
-
-        public float LookoutSide => _lookoutSide;
+        public LabCameraSettings Lab => _lab;
 
         public WideShotSettings EveningShot => _eveningShot;
 

@@ -4,6 +4,7 @@
     "references": [
         "MoonProject.Core",
         "MoonProject.Art",
+        "MoonProject.Art.Editor",
         "MoonProject.Rover",
         "MoonProject.Editor",
         "Unity.Cinemachine",

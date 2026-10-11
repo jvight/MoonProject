@@ -79,6 +79,14 @@
             "text": "Có gì đó lấp lánh ngoài kia. Ở nhà còn chỗ cho nó."
         },
         {
+            "key": "next.lift.stitch",
+            "text": "Thang nâng bị kẹt: khâu lại dây cáp."
+        },
+        {
+            "key": "next.lift.ride",
+            "text": "Đứng yên trên thang. Phòng thí nghiệm có kệ cho nó."
+        },
+        {
             "key": "next.chasm",
             "text": "Một ánh đèn bên kia vực sâu. Bây giờ thì chưa qua được."
         },
@@ -95,8 +103,12 @@
             "text": "Một cột anten tối, đang chờ được thắp sáng."
         },
         {
-            "key": "next.lift",
-            "text": "Thang nâng đã có điện. Sửa xong, nó sẽ đưa 07 lên cao."
+            "key": "next.chart",
+            "text": "Tầng thứ ba của tháp sẽ đánh thức tấm bản đồ của phi hành đoàn."
+        },
+        {
+            "key": "next.chart.look",
+            "text": "Bản đồ đã thức. Lên trên mà xem."
         },
         {
             "key": "notyet.tower",
@@ -107,12 +119,8 @@
             "text": "Chưa có điện. Tháp mạnh lên thì nó sẽ thức."
         },
         {
-            "key": "notyet.lift",
-            "text": "Chưa có điện. Tháp mạnh lên thì nó sẽ thức."
-        },
-        {
-            "key": "notyet.shelf",
-            "text": "Còn trống. Kệ đang chờ kỷ vật của phi hành đoàn."
+            "key": "notyet.chart",
+            "text": "Còn tối. Tháp mạnh lên thì nó sẽ thức."
         },
         {
             "key": "place.dock.name",
@@ -131,14 +139,6 @@
             "text": "Nhà của phi hành đoàn. Cửa sổ sáng dần khi nơi này thức dậy."
         },
         {
-            "key": "place.shelf.name",
-            "text": "Kệ kỷ niệm"
-        },
-        {
-            "key": "place.shelf.job",
-            "text": "Đồ của phi hành đoàn, mỗi món một câu chuyện."
-        },
-        {
             "key": "place.tower.name",
             "text": "Tháp radio"
         },
@@ -155,14 +155,6 @@
             "text": "Nơi lắp bộ đồ mới cho 07."
         },
         {
-            "key": "place.board.name",
-            "text": "Bảng bản vẽ"
-        },
-        {
-            "key": "place.board.job",
-            "text": "Mỗi tờ cho một bộ đồ khoang có thể làm."
-        },
-        {
             "key": "place.ladder.name",
             "text": "Thang của phi hành đoàn"
         },
@@ -176,7 +168,15 @@
         },
         {
             "key": "place.lift.job",
-            "text": "Đưa 07 lên boong tàu đổ bộ."
+            "text": "Thang nâng của phi hành đoàn: lên phòng thí nghiệm."
+        },
+        {
+            "key": "place.lab.name",
+            "text": "Phòng thí nghiệm"
+        },
+        {
+            "key": "place.lab.job",
+            "text": "Phòng thí nghiệm của phi hành đoàn: đồ tìm được thành hiểu biết."
         },
         {
             "key": "place.rack.name",
@@ -192,7 +192,7 @@
         },
         {
             "key": "ui.blueprint.delivered",
-            "text": "Máy vẽ của Kenji đang vẽ lại."
+            "text": "Máy đọc nhận ống bản vẽ."
         },
         {
             "key": "ui.settings.sound",
@@ -268,7 +268,7 @@
         },
         {
             "key": "hint.deposit",
-            "text": "Thả ra"
+            "text": "Đặt vào"
         },
         {
             "key": "hint.reel",
@@ -445,6 +445,42 @@
         {
             "key": "glyph.gamepad.start",
             "text": "Start"
+        },
+        {
+            "key": "glyph.lab.turn",
+            "text": "A  D"
+        },
+        {
+            "key": "glyph.lab.turn.pad",
+            "text": "←  →"
+        },
+        {
+            "key": "glyph.lab.look",
+            "text": "W"
+        },
+        {
+            "key": "glyph.lab.look.pad",
+            "text": "↑"
+        },
+        {
+            "key": "glyph.lab.down",
+            "text": "S"
+        },
+        {
+            "key": "glyph.lab.down.pad",
+            "text": "↓"
+        },
+        {
+            "key": "ui.lab.turn",
+            "text": "Xoay"
+        },
+        {
+            "key": "ui.lab.look",
+            "text": "Nhìn"
+        },
+        {
+            "key": "ui.lab.down",
+            "text": "Xuống"
         },
         {
             "key": "hint.repair",

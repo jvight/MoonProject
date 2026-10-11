@@ -2,14 +2,17 @@ using System;
 using UnityEngine;
 using MoonProject.Core;
 using MoonProject.Core.Events;
+using MoonProject.Gameplay.Lift;
 
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// Waking Lumen Station step by step (docs/features/M3-16). Each frame it notes whether 07 has woken and gone out,
-    /// greets 07 at each place the first time (<see cref="PlaceApproaches"/>), lets the sleeping bay, lift and memory
-    /// shelf answer the sonar with "not yet" (<see cref="DormantAnswers"/>) and keeps the soft "next" line on the
-    /// first step not yet done (<see cref="StepFlow"/>). The chasm comes before the bay (P2): once Tilly is home and the
+    /// Waking Lumen Station step by step (docs/features/M3-16, revised by M3-19 §7). Each frame it notes whether 07 has
+    /// woken and gone out, greets 07 at each place the first time (<see cref="PlaceApproaches"/>; the lab once 07 is
+    /// up in it), lets the sleeping tower and bay answer the sonar with "not yet" (<see cref="DormantAnswers"/>) and
+    /// keeps the soft "next" line on the first step not yet done (<see cref="StepFlow"/>). Step 4 brings the first
+    /// relic home, stitches the belly lift and rides it up to the keepsake shelf; step 8 is the survey chart, woken by
+    /// the tower's third level and looked at once. The chasm comes before the bay (P2): once Tilly is home and the
     /// first memory is on the shelf, she spots Bell's light across the chasm (Bell's warm pillar rises); the first
     /// time 07 reaches the lip without Hover-Jump it holds still and looks across while the light pulses. Coming home
     /// to the dock with news opens the dock's evening (<see cref="DockEvening"/>, P6), whose listening sweep raises
@@ -21,26 +24,22 @@ namespace MoonProject.Gameplay
         private static readonly string[] Places =
         {
             ProgressionKeys.PlaceDock, ProgressionKeys.PlaceLander, ProgressionKeys.PlaceLadder,
-            ProgressionKeys.PlaceLift, ProgressionKeys.PlaceTower, ProgressionKeys.PlaceShelf, ProgressionKeys.PlaceBay,
-            ProgressionKeys.PlaceBoard, ProgressionKeys.PlaceRack,
+            ProgressionKeys.PlaceLift, ProgressionKeys.PlaceTower, ProgressionKeys.PlaceLab, ProgressionKeys.PlaceBay,
+            ProgressionKeys.PlaceRack,
         };
 
         private const int TowerSpot = 4;
         private const int StepTower = 2;
-        private const int StepRelic = 4;
-        private const int StepBay = 6;
-        private const int StepLeap = 7;
-        private const int StepLift = 9;
+        private const int StepLiftStitch = 5;
+        private const int StepBay = 8;
+        private const int StepLeap = 9;
 
         [Tooltip("The wake-up's tuning (Assets/_Project/Data/Tuning/Gameplay/ProgressionTuning.asset).")]
         [SerializeField] private ProgressionTuning _tuning;
 
-        [Tooltip("Where each place stands, in the order of the place ids (dock, lander, ladder, lift, tower, shelf, " +
-                 "bay, board, rack).")]
+        [Tooltip("Where each place stands, in the order of the place ids (dock, lander, ladder, lift, tower, lab, " +
+                 "bay, rack).")]
         [SerializeField] private Transform[] _places = Array.Empty<Transform>();
-
-        [Tooltip("The crew's lift platform: it answers the sonar until power reaches it.")]
-        [SerializeField] private Transform _lift;
 
         private IRoverState _rover;
         private IRoverRig _rig;
@@ -51,6 +50,8 @@ namespace MoonProject.Gameplay
         private HomeBase _home;
         private UpgradeService _upgrades;
         private Vector3 _lip;
+        private LiftStation _lift;
+        private ISurveyChart _chart;
         private bool _bellLit;
         private bool _chasmSeen;
         private float _lookUntil = float.NegativeInfinity;
@@ -80,15 +81,14 @@ namespace MoonProject.Gameplay
         /// <summary>The dock's evening (tests and debugging views).</summary>
         public DockEvening Evening => _evening;
 
-        internal void Wire(ProgressionTuning tuning, Transform[] places, Transform lift)
+        internal void Wire(ProgressionTuning tuning, Transform[] places)
         {
             _tuning = tuning;
             _places = places;
-            _lift = lift;
         }
 
         internal bool Initialize(GameplayServices services, BasePower power, HomeBase home, Workshop bay,
-            SonarSystem sonar, FriendField friends, IRelayStatus relays, UpgradeService upgrades)
+            SonarSystem sonar, FriendField friends, IRelayStatus relays, UpgradeService upgrades, LiftStation lift)
         {
             string problem = WiringProblem();
             WorldAnchor lip = default;
@@ -112,6 +112,7 @@ namespace MoonProject.Gameplay
 
             _rover = services.Rover;
             _rig = services.Rig;
+            _lift = lift != null ? lift : throw new ArgumentNullException(nameof(lift));
             _sonar = sonar;
             _signal = signal;
             _leap = leap;
@@ -125,17 +126,13 @@ namespace MoonProject.Gameplay
             for (int i = 0; i < Places.Length; i++)
             {
                 _approaches.Add(Places[i], _places[i].position, _tuning.RadiusOf(Places[i]),
-                    Speaks(Places[i], bay, leap));
+                    Speaks(Places[i], leap));
             }
 
             _answers = new DormantAnswers(services.Events, sonar.Tuning);
             Func<bool> homePowered = () => power.HasReached(BasePowerStage.Home);
             _answers.Add(ProgressionKeys.NotYetTower, _places[TowerSpot].position, () => !homePowered());
             _answers.Add(ProgressionKeys.NotYetBay, bay.transform.position, () => homePowered() && !bay.Awake);
-            _answers.Add(ProgressionKeys.NotYetLift, _lift.position,
-                () => homePowered() && !power.HasReached(BasePowerStage.Chart));
-            _answers.Add(ProgressionKeys.NotYetShelf, home.ShelfPosition,
-                () => homePowered() && home.DisplayedCount == 0);
             _salvage = services.Events.Subscribe<MaterialSalvaged>(_ => _salvaged = true);
             _evening = new DockEvening(services.Events, _tuning.EveningSweepDelay);
             _letters = new RadioLetters(services.Events, _tuning.SingleLetterMasts, _tuning.LettersAfter,
@@ -145,14 +142,23 @@ namespace MoonProject.Gameplay
             _steps.Add(ProgressionKeys.NextSalvage, () => _salvaged || power.HasReached(BasePowerStage.Home));
             _steps.Add(ProgressionKeys.NextTower, () => power.HasReached(BasePowerStage.Home));
             _steps.Add(ProgressionKeys.NextSignal, () => signal.Progress.State == FriendState.Awake);
-            _steps.Add(ProgressionKeys.NextRelic, () => home.DisplayedCount > 0);
+            _steps.Add(ProgressionKeys.NextRelic, () => lift.Phase >= LiftPhase.Called || home.DisplayedCount > 0);
+            _steps.Add(ProgressionKeys.NextLiftStitch, () => lift.Phase >= LiftPhase.Ready || home.DisplayedCount > 0);
+            _steps.Add(ProgressionKeys.NextLiftRide, () => home.DisplayedCount > 0);
             _steps.Add(ProgressionKeys.NextChasm, () => _chasmSeen || upgrades.LevelOf(_tuning.FirstKit) > 0);
             _steps.Add(ProgressionKeys.NextBay, () => upgrades.LevelOf(_tuning.FirstKit) > 0);
             _steps.Add(ProgressionKeys.NextLeap, () => leap.Progress.State == FriendState.Awake);
             _steps.Add(ProgressionKeys.NextRelay, () => relays.LitMasts > 0);
-            _steps.Add(ProgressionKeys.NextLift, () => power.HasReached(BasePowerStage.Chart));
+            _steps.Add(ProgressionKeys.NextChart, () => power.HasReached(BasePowerStage.Chart));
+            _steps.Add(ProgressionKeys.NextChartLook, () => _chart != null && _chart.Looked);
             _initialized = true;
             return true;
+        }
+
+        /// <summary>The map system connects the survey chart once it is up (step 8's look waits on it).</summary>
+        internal void ConnectChart(ISurveyChart chart)
+        {
+            _chart = chart ?? throw new ArgumentNullException(nameof(chart));
         }
 
         internal ProgressionSaveData Capture()
@@ -242,22 +248,22 @@ namespace MoonProject.Gameplay
 
         /// <summary>
         /// Only the next thing speaks (M3-16 P4): a place greets 07 once the steps have come to it, the step it
-        /// belongs to (0 wake: the dock; 2 tower: the lander and the tower; 4 relic: the shelf; 5 bay: the bay and,
-        /// its shutter up, Kenji's board; 6 leap: Bell's rack, once she is home; 8 lift: the ladder and the lift).
+        /// belongs to (0 wake: the dock; 2 tower: the lander and the tower; 4 relic: the ladder and the lift once it
+        /// asks for the stitch, the lab the first time 07 is up in it; 5 bay: the bay; 6 leap: Bell's rack, once she is
+        /// home).
         /// </summary>
-        private Func<bool> Speaks(string placeId, Workshop bay, Friend bell)
+        private Func<bool> Speaks(string placeId, Friend bell)
         {
             switch (placeId)
             {
                 case ProgressionKeys.PlaceDock: return null;
                 case ProgressionKeys.PlaceLander:
                 case ProgressionKeys.PlaceTower: return () => _steps.CurrentIndex >= StepTower;
-                case ProgressionKeys.PlaceShelf: return () => _steps.CurrentIndex >= StepRelic;
+                case ProgressionKeys.PlaceLab: return () => _lift.Lab.IsInside;
                 case ProgressionKeys.PlaceBay: return () => _steps.CurrentIndex >= StepBay;
-                case ProgressionKeys.PlaceBoard: return () => _steps.CurrentIndex >= StepBay && bay.Awake;
                 case ProgressionKeys.PlaceRack:
                     return () => _steps.CurrentIndex >= StepLeap && bell.Progress.State == FriendState.Awake;
-                default: return () => _steps.CurrentIndex >= StepLift;
+                default: return () => _steps.CurrentIndex >= StepLiftStitch;
             }
         }
 
@@ -294,7 +300,7 @@ namespace MoonProject.Gameplay
                 }
             }
 
-            return _lift == null ? "the lift platform is not assigned." : null;
+            return null;
         }
 
         private void OnDestroy()

@@ -14,8 +14,9 @@ namespace MoonProject.Gameplay
     /// it along behind 07 at the winch length, mass and all. Letting go releases it where it is; if it gets caught or
     /// falls far behind, the tether lets go softly by itself and it stays right there (<see cref="TetherReleased"/>,
     /// snapped). A drag piece pulled clear of its wreck is let go softly too (not snapped). With the Cargo Cradle
-    /// fitted and empty, the press lifts an aimed relic into the rack instead (<see cref="CargoCradle"/>), and at the
-    /// museum shelf it sets the carried relic down. 07 looks at what it aims at and fixes on what it tows.
+    /// fitted and empty, the press lifts an aimed relic into the rack instead (<see cref="CargoCradle"/>); facing the
+    /// lab's keepsake shelf it places the relic that rode up the belly lift, or the one in the rack, and the belly lift
+    /// takes a towed relic aboard (<see cref="HandOver"/>). 07 looks at what it aims at and fixes on what it tows.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class TetherSystem : MonoBehaviour, ITetherAim
@@ -33,6 +34,7 @@ namespace MoonProject.Gameplay
         private ITerrainQuery _terrain;
         private ITowable[] _towables = Array.Empty<ITowable>();
         private CargoCradle _cradle;
+        private HomeBase _home;
         private WinchControl _winch;
         private TetherSnapRule _snap;
         private LineRenderer _line;
@@ -130,12 +132,13 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// The Cargo Cradle shares the Tether press (connected once both are initialised); the tether runs from then
-        /// on.
+        /// The Cargo Cradle and the lab's keepsake shelf share the Tether press (connected once all are initialised);
+        /// the tether runs from then on.
         /// </summary>
-        internal void Connect(CargoCradle cradle)
+        internal void Connect(CargoCradle cradle, HomeBase home)
         {
             _cradle = cradle != null ? cradle : throw new ArgumentNullException(nameof(cradle));
+            _home = home != null ? home : throw new ArgumentNullException(nameof(home));
             _initialized = true;
         }
 
@@ -167,8 +170,9 @@ namespace MoonProject.Gameplay
             bool held = _input.TetherHeld;
             if (held && !_wasHeld)
             {
-                // At the shelf, the press sets down the relic riding in the cradle rather than reaching for another.
-                _armed = !_cradle.TryUnload();
+                // Facing the lab's keepsake shelf, the press places the relic that rode up (or the one in the cradle)
+                // rather than reaching for another.
+                _armed = !_home.TryPlace() && !_cradle.TryUnload();
             }
 
             _wasHeld = held;
@@ -233,6 +237,23 @@ namespace MoonProject.Gameplay
                 _armed = false;
                 Release(false, true);
             }
+        }
+
+        /// <summary>
+        /// The belly lift takes the towed relic aboard (docs/features/M3-19 §4): the tether lets it go softly and the
+        /// held button must not latch onto anything else. Returns the relic, or null when nothing (or a salvage piece)
+        /// is towed.
+        /// </summary>
+        internal Relic HandOver()
+        {
+            if (!(_towed is Relic relic))
+            {
+                return null;
+            }
+
+            _armed = false;
+            Release(false, true);
+            return relic;
         }
 
         private ITowable FindTarget()

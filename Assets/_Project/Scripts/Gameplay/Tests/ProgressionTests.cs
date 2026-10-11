@@ -122,8 +122,8 @@ namespace MoonProject.Gameplay.Tests
             using (var answers = new DormantAnswers(_events, _sonar))
             {
                 answers.Add(ProgressionKeys.NotYetBay, new Vector3(10f, 0f, 0f), () => bayAsleep);
-                answers.Add(ProgressionKeys.NotYetLift, new Vector3(0f, 0f, 20f), () => false);
-                answers.Add(ProgressionKeys.NotYetShelf, new Vector3(_sonar.Range * 2f, 0f, 0f), () => true);
+                answers.Add(ProgressionKeys.NotYetTower, new Vector3(0f, 0f, 20f), () => false);
+                answers.Add(ProgressionKeys.NotYetChart, new Vector3(_sonar.Range * 2f, 0f, 0f), () => true);
 
                 _events.Publish(new SonarPinged(Vector3.zero, _sonar.Range));
                 answers.Tick(0f);

@@ -79,6 +79,14 @@
             "text": "Something glints out there. Home has room for it."
         },
         {
+            "key": "next.lift.stitch",
+            "text": "The lift is stuck: stitch the cable."
+        },
+        {
+            "key": "next.lift.ride",
+            "text": "Rest on the lift. The lab has a shelf for it."
+        },
+        {
             "key": "next.chasm",
             "text": "A light across the chasm. Too far to cross, for now."
         },
@@ -95,8 +103,12 @@
             "text": "A dark mast, waiting to be lit."
         },
         {
-            "key": "next.lift",
-            "text": "The lift has power. Mended, it could carry 07 up."
+            "key": "next.chart",
+            "text": "The tower's third level would wake the crew's chart."
+        },
+        {
+            "key": "next.chart.look",
+            "text": "The chart is awake. Ride up and look."
         },
         {
             "key": "notyet.tower",
@@ -107,12 +119,8 @@
             "text": "No power yet. It wakes with the tower."
         },
         {
-            "key": "notyet.lift",
-            "text": "No power yet. It wakes with the tower."
-        },
-        {
-            "key": "notyet.shelf",
-            "text": "Empty for now. It waits for the crew's things."
+            "key": "notyet.chart",
+            "text": "Dark. It wakes with the tower."
         },
         {
             "key": "place.dock.name",
@@ -131,14 +139,6 @@
             "text": "The crew's home. Its windows light as it wakes."
         },
         {
-            "key": "place.shelf.name",
-            "text": "Memory Shelf"
-        },
-        {
-            "key": "place.shelf.job",
-            "text": "The crew's things, each one a story."
-        },
-        {
             "key": "place.tower.name",
             "text": "Radio Tower"
         },
@@ -155,14 +155,6 @@
             "text": "Where new kit is fitted to 07."
         },
         {
-            "key": "place.board.name",
-            "text": "Blueprint Board"
-        },
-        {
-            "key": "place.board.job",
-            "text": "One sheet for every kit the bay can build."
-        },
-        {
             "key": "place.ladder.name",
             "text": "Crew's Ladder"
         },
@@ -176,7 +168,15 @@
         },
         {
             "key": "place.lift.job",
-            "text": "Carries 07 up to the lander deck."
+            "text": "The crew's lift: up into the lab."
+        },
+        {
+            "key": "place.lab.name",
+            "text": "Crew's Lab"
+        },
+        {
+            "key": "place.lab.job",
+            "text": "The crew's lab: finds become know-how."
         },
         {
             "key": "place.rack.name",
@@ -192,7 +192,7 @@
         },
         {
             "key": "ui.blueprint.delivered",
-            "text": "Kenji's plotter draws it."
+            "text": "The reader takes the tube."
         },
         {
             "key": "ui.settings.sound",
@@ -268,7 +268,7 @@
         },
         {
             "key": "hint.deposit",
-            "text": "Release"
+            "text": "Place"
         },
         {
             "key": "hint.reel",
@@ -445,6 +445,42 @@
         {
             "key": "glyph.gamepad.start",
             "text": "Start"
+        },
+        {
+            "key": "glyph.lab.turn",
+            "text": "A  D"
+        },
+        {
+            "key": "glyph.lab.turn.pad",
+            "text": "←  →"
+        },
+        {
+            "key": "glyph.lab.look",
+            "text": "W"
+        },
+        {
+            "key": "glyph.lab.look.pad",
+            "text": "↑"
+        },
+        {
+            "key": "glyph.lab.down",
+            "text": "S"
+        },
+        {
+            "key": "glyph.lab.down.pad",
+            "text": "↓"
+        },
+        {
+            "key": "ui.lab.turn",
+            "text": "Turn"
+        },
+        {
+            "key": "ui.lab.look",
+            "text": "Look"
+        },
+        {
+            "key": "ui.lab.down",
+            "text": "Down"
         },
         {
             "key": "hint.repair",

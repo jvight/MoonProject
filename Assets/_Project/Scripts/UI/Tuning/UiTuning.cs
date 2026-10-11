@@ -25,6 +25,7 @@ namespace MoonProject.UI
         [SerializeField] private StargazeSettings _stargaze = new StargazeSettings();
         [SerializeField] private GuidanceSettings _guidance = new GuidanceSettings();
         [SerializeField] private BackdropSettings _backdrop = new BackdropSettings();
+        [SerializeField] private LabHudSettings _lab = new LabHudSettings();
 
         public PauseSettings Pause => _pause;
 
@@ -57,6 +58,8 @@ namespace MoonProject.UI
         public GuidanceSettings Guidance => _guidance;
 
         public BackdropSettings Backdrop => _backdrop;
+
+        public LabHudSettings Lab => _lab;
 
         /// <summary>Null when the tuning is usable, else the first problem.</summary>
         public string Validate()

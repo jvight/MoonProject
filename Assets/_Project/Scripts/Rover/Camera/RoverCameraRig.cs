@@ -50,12 +50,9 @@ namespace MoonProject.Rover
         /// <summary>Smallest share of the orbit a moment leaves, so adopting the wide yaw never divides by 0.</summary>
         private const float MinOrbitShare = 0.05f;
 
-        /// <summary>Steps either way the lookout and evening frames turn, and raise, to find a clear view.</summary>
+        /// <summary>Steps either way the evening frame turns, and raises, to find a clear view.</summary>
         private const int HeldShotTurns = 2;
         private const int HeldShotLifts = 3;
-
-        /// <summary>07 rides the lift facing the lander: straight out from it is 07's heading turned round.</summary>
-        private const float HalfTurn = 180f;
 
         [Tooltip("Camera tuning (Assets/_Project/Data/Tuning/RoverCameraTuning.asset).")]
         [SerializeField] private RoverCameraTuning _tuning;
@@ -99,7 +96,7 @@ namespace MoonProject.Rover
         private IBayFitView _fit;
         private readonly PropSightLine _sight = new PropSightLine();
         private readonly HeldShot _held = new HeldShot();
-        private bool _lookout;
+        private bool _onLift;
         private bool _evening;
         private BayShot _shot;
         private bool _shotSolved;
@@ -130,7 +127,7 @@ namespace MoonProject.Rover
         /// <summary>The rig's own Cinemachine camera: the opening's lens camera leaves the lens toward its pose.</summary>
         public CinemachineCamera ChaseCamera => _camera;
 
-        /// <summary>The lift's lookout or the dock's evening, when one is open or easing (capture sessions).</summary>
+        /// <summary>The dock's evening, when it is open or easing (capture sessions).</summary>
         public HeldShot Held => _held;
 
         public float SkyLift => _stargaze != null ? Mathf.Max(_stargaze.Lift, _wakeLift) : 0f;
@@ -307,7 +304,8 @@ namespace MoonProject.Rover
                 return;
             }
 
-            Vector2 look = ReadLook(deltaTime);
+            // On the belly lift the lab camera has the view: looking round must not stir this hidden orbit.
+            Vector2 look = _onLift ? Vector2.zero : ReadLook(deltaTime);
             if (look.sqrMagnitude > LookEpsilon * LookEpsilon)
             {
                 _moment.Cancel(_tuning.MomentCancelEaseOut);
@@ -642,7 +640,7 @@ namespace MoonProject.Rover
         private void StepWideShot(float deltaTime)
         {
             bool busy = _moment.IsActive || _leapHeld || _tethered || _hopListOpen || _inBay || _stargaze.LookUp > 0f
-                || _opening.IsActive || _held.IsOpen;
+                || _opening.IsActive || _held.IsOpen || _onLift;
             switch (_wide.Step(_stillness.StillSeconds, busy, _paused, deltaTime))
             {
                 case WideShotCue.Open:
@@ -782,8 +780,8 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// The lookout or the dock's evening, blended like the wide shot: toward its world yaw, elevation, distance,
-        /// lens and 07's place on screen, breathing slowly once open.
+        /// The dock's evening, blended like the wide shot: toward its world yaw, elevation, distance, lens and 07's
+        /// place on screen, breathing slowly once open.
         /// </summary>
         private void BlendHeldShot(float weight, ref float yaw, ref float elevation, ref float radius, ref float fov,
             ref Vector2 screen)
@@ -816,28 +814,12 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// The crew's lift settled at the deck (M3-16 step 8, M3-18 L5): the camera rises slowly to the lookout, pulled
-        /// back over the lander looking straight out (07 rides facing the lander), turned toward Earth's side by
-        /// the tuned amount; leaving the deck (any input brings the lift down) eases it back.
+        /// The belly lift carries 07 from the moment it starts up until it has set 07 down again (docs/features/M3-19):
+        /// the lab camera has the view meanwhile, so the lonely wide shot stays away.
         /// </summary>
         private void OnLiftRideChanged(LiftRideChanged ride)
         {
-            if (!ride.Inside)
-            {
-                if (_lookout)
-                {
-                    CloseHeldShot();
-                }
-
-                return;
-            }
-
-            Vector3 follow = _rover.Position + Vector3.up * _tuning.TargetHeight;
-            float outward = RoverYaw() + HalfTurn;
-            float earth = WideShotComposer.Bearing(_world.EarthDirection);
-            float side = Mathf.DeltaAngle(outward, earth) >= 0f ? _tuning.LookoutSide : -_tuning.LookoutSide;
-            OpenHeldShot(_tuning.LookoutShot, follow, outward + side, 0f);
-            _lookout = true;
+            _onLift = ride.Riding || ride.Inside;
         }
 
         /// <summary>
@@ -865,7 +847,6 @@ namespace MoonProject.Rover
 
             bool wasOpen = _held.IsOpen;
             _held.Open(settings, ClearHeldFrame(settings, follow, yaw), holdSeconds);
-            _lookout = false;
             _evening = false;
             if (!wasOpen)
             {
@@ -933,7 +914,6 @@ namespace MoonProject.Rover
             float share = Mathf.Max(1f - _moment.Weight, MinOrbitShare);
             _orbitState.AdoptYaw(_orbit.HorizontalAxis.Value / share);
             _held.Close();
-            _lookout = false;
             _evening = false;
             _events.Publish(new RoverWideShotChanged(false));
         }
@@ -962,7 +942,6 @@ namespace MoonProject.Rover
             bool wasWide = _wide.IsOpen || _held.IsOpen;
             _wide.Close();
             _held.Reset();
-            _lookout = false;
             _evening = false;
             _wideSteersYaw = false;
             _moment.Clear();

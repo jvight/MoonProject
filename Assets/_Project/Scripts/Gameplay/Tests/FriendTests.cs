@@ -281,8 +281,8 @@ namespace MoonProject.Gameplay.Tests
                 Home = new Vector3(-10f, 0f, 8f),
                 Perch = new Vector3(-10f, 3.3f, 8f),
                 PerchForward = Vector3.right,
-                Shelf = new Vector3(-12f, 0f, 3f),
-                ShelfForward = Vector3.right,
+                Inspect = new Vector3(-12f, 0f, 3f),
+                InspectForward = Vector3.right,
             };
         }
 

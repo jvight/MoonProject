@@ -18,7 +18,7 @@ namespace MoonProject.Rover
         {
         }
 
-        /// <summary>A held shot's look (the lift's lookout, the dock's evening); the rest keep defaults.</summary>
+        /// <summary>A held shot's look (the dock's evening); the rest keep defaults.</summary>
         public WideShotSettings(float openSeconds, float handBackSeconds, float distance, float elevation,
             float screenY, float fovWiden)
         {

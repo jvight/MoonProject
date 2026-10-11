@@ -20,9 +20,9 @@ namespace MoonProject.Gameplay
         /// <summary>Which way the perch faces.</summary>
         public Vector3 PerchForward { get; set; }
 
-        /// <summary>The museum shelf and the way its front faces.</summary>
-        public Vector3 Shelf { get; set; }
+        /// <summary>The front of home a friend checks on (the charging dock), and the way she faces it from.</summary>
+        public Vector3 Inspect { get; set; }
 
-        public Vector3 ShelfForward { get; set; }
+        public Vector3 InspectForward { get; set; }
     }
 }

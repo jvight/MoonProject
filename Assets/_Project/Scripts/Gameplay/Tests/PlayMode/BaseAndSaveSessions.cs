@@ -7,14 +7,15 @@ using UnityEngine.TestTools;
 using MoonProject.Core;
 using MoonProject.Core.Events;
 using MoonProject.Core.Save;
+using MoonProject.Gameplay.Lift;
 using MoonProject.Testing;
 using Object = UnityEngine.Object;
 
 namespace MoonProject.Gameplay.PlayModeTests
 {
     /// <summary>
-    /// Scripted sessions for home carrying across the basin, the museum deposit, the radio tower shop and its service
-    /// port, Kenji's Rover Bay, the charging dock, the hint query and save/load.
+    /// Scripted sessions for home carrying across the basin, the keepsake deposit up in the lab, the radio tower shop
+    /// and its service port, Kenji's Rover Bay, the charging dock, the hint query and save/load.
     /// </summary>
     public sealed class BaseAndSaveSessions : InputTestFixture
     {
@@ -77,7 +78,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator Deposit_TowedRelicShowsItsSlot_ThenFloatsOntoTheShelfWithAGift()
+        public IEnumerator Deposit_ATowedRelicRidesUpBeside07_ShowsItsCubby_ThenThePressFloatsItOntoTheShelf()
         {
             _fixture = GameplayFixture.Boot(_controls);
             yield return null;
@@ -95,27 +96,47 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return Waits.Until(() => _fixture.Events.TetherAttached.Count > 0, LatchTimeout);
             Assert.AreEqual(1, _fixture.Events.TetherAttached.Count);
 
+            LiftStation lift = _fixture.Gameplay.Lift;
             Vector3 from = _fixture.Rover.Position;
-            Vector3 to = new Vector3(-14f, 0f, 6f);
+            Vector3 to = lift.RideSpot - lift.RideHeading * 3f;
             float began = Time.time;
             while (Time.time - began < 5f)
             {
-                _fixture.Rover.MoveTo(Vector3.Lerp(from, to, Ease.InOutSine((Time.time - began) / 4.5f)), -90f);
+                _fixture.Rover.MoveTo(Vector3.Lerp(from, to, Ease.InOutSine((Time.time - began) / 4.5f)),
+                    Yaw(Flat(to - from)));
                 yield return null;
             }
 
-            Assert.IsTrue(home.InDepositZone(duck.transform.position), "towed into reach of the shelf");
-            Assert.GreaterOrEqual(home.HintedSlot, 0, "a warm glow shows which slot it will take");
+            Assert.AreSame(duck, _fixture.Gameplay.Tether.Towed, "towed to the belly lift");
+            Assert.IsFalse(_fixture.Gameplay.Hints.TryGet(InteractionKind.Deposit, out _),
+                "nothing to place outside: the keepsakes are up in the lab");
+            yield return _fixture.RideIntoTheLab();
+            Assert.AreEqual(LiftPhase.Inside, lift.Phase, "the lift carried 07 up into the lab");
+            Assert.AreSame(duck, lift.Rider, "the towed duck rode up beside 07");
+            Assert.AreEqual(RelicState.Riding, duck.State);
+            Assert.IsNull(_fixture.Gameplay.Tether.Towed, "the tether let it go aboard");
+            Assert.AreEqual(LabStation.Keepsakes, lift.Lab.Facing, "the turntable turned to the shelf that wants it");
+            Assert.IsTrue(home.KeepsakesFaced);
+            yield return new WaitForSeconds(_fixture.BaseTuning.SlotHintEase * 4f);
+            Assert.GreaterOrEqual(home.HintedSlot, 0, "a warm glow shows which cubby it will take");
             Assert.Greater(home.HintLevel, 0.3f);
             Assert.IsTrue(_fixture.Gameplay.Hints.TryGet(InteractionKind.Deposit, out InteractionHint hint));
             Assert.AreEqual(InteractionKind.Deposit, _fixture.Gameplay.Hints.Primary.Kind);
             Assert.IsTrue(hint.Ready);
+            Assert.AreEqual(home.KeepsakesPosition, hint.Position);
             int slot = home.HintedSlot;
-            AimAtShelf(home);
             _fixture.Capture("08-deposit-hint");
 
             int before = _fixture.Events.Order.Count;
             Release(_mouse.rightButton);
+            yield return null;
+            Press(_mouse.rightButton, queueEventOnly: true);
+            yield return Waits.Until(() => duck.State == RelicState.Depositing, LatchTimeout);
+            Release(_mouse.rightButton);
+            Assert.AreEqual(RelicState.Depositing, duck.State, "the press lifts it into its outline");
+            Assert.IsNull(lift.Rider);
+            Assert.IsEmpty(_fixture.Events.TetherAttached.GetRange(1, _fixture.Events.TetherAttached.Count - 1),
+                "and reaches for nothing else");
             yield return new WaitForSeconds(_fixture.BaseTuning.DepositDuration + 0.4f);
             Assert.AreEqual(1, _fixture.Events.RelicDeposited.Count, "it floats onto the shelf");
             RelicDeposited deposited = _fixture.Events.RelicDeposited[0].Value;
@@ -124,7 +145,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(RelicState.Displayed, duck.State);
             Assert.AreEqual(slot, duck.Slot, "it took the slot that was shown");
             Assert.AreEqual(1, home.DisplayedCount);
-            Assert.AreEqual(nameof(TetherReleased), _fixture.Events.Order[before]);
+            Assert.AreEqual(nameof(RelicDeposited), _fixture.Events.Order[before]);
             Assert.IsEmpty(_fixture.Events.MaterialsChanged, "memories are not paid for: materials come from salvage");
             Assert.Less(Vector3.Distance(duck.transform.position, deposited.Position), 0.05f, "settled on its slot");
             Assert.IsTrue(System.IO.File.Exists(_fixture.Bootstrap.Context.Get<ISaveService>().FilePath),
@@ -299,9 +320,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             tilly.Progress.Restore(new FriendSaveData { id = "tilly", state = (int)FriendState.Awake, parts = -1,
                 items = -1 });
             HomeBase home = gameplay.Home;
-            Vector3 towardPad = (Vector3.zero - home.ShelfPosition).normalized;
-            Loose(Duck, home.ShelfPosition + towardPad * 3f + Vector3.up * 0.6f);
-            yield return new WaitForSeconds(_fixture.BaseTuning.DepositDuration + 0.5f);
+            _fixture.Display(_fixture.FindRelic(Duck), 0);
+            yield return null;
             Assert.AreEqual(1, home.DisplayedCount, "the first memory is on the shelf");
             Assert.IsTrue(bell.Progress.Discovered, "Tilly spots Bell's light across the chasm");
             Assert.IsFalse(progression.ChasmSeen);
@@ -421,7 +441,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsTrue(_fixture.Rover.Has(RoverAbility.HoverJump), "07 can leap now");
             Assert.Greater(bay.PadLevel, look.Occupied, "the purchase flares the pad");
             Assert.AreSame(_fixture.HoverJumpUpgrade, bay.Definition, "no other blueprint yet: it rests on Hover-Jump");
-            _fixture.Gameplay.Blueprints.Restore(new[] { _fixture.CargoCradleUpgrade.Id }, null);
+            _fixture.Gameplay.Blueprints.Restore(
+                new BlueprintsSaveData { found = new[] { _fixture.CargoCradleUpgrade.Id } });
             Assert.AreSame(_fixture.CargoCradleUpgrade, bay.Definition, "the Cargo Cradle's sheet pinned, it offers it");
             Assert.IsTrue(_fixture.Gameplay.Hints.TryGet(InteractionKind.Upgrade, out hint));
             Assert.IsFalse(hint.Ready, "4 metal it does not have yet");
@@ -500,7 +521,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             };
             RoverAbility[] abilities = { RoverAbility.CargoCradle, RoverAbility.WarmHeadlamp, RoverAbility.BoostCoils };
             Assert.AreEqual(PurchaseResult.NotPinned, shop.Purchase(kit[1].Id), "no blueprint, no kit (M3-16)");
-            _fixture.Gameplay.Blueprints.Restore(new[] { kit[0].Id, kit[1].Id, kit[2].Id }, null);
+            _fixture.Gameplay.Blueprints.Restore(
+                new BlueprintsSaveData { found = new[] { kit[0].Id, kit[1].Id, kit[2].Id } });
             for (int i = 0; i < kit.Length; i++)
             {
                 Assert.AreSame(kit[i], bay.Definition, "the bay offers its kit in order");
@@ -730,11 +752,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             _fixture.GiveMaterials(3, 3, 3);
             _fixture.DeliverTowerParts();
 
-            HomeBase home = gameplay.Home;
-            Vector3 towardPad = (Vector3.zero - home.ShelfPosition).normalized;
-            Relic duck = Loose(Duck, home.ShelfPosition + towardPad * 3f + Vector3.up * 0.6f);
-            yield return new WaitForSeconds(_fixture.BaseTuning.DepositDuration + 0.5f);
-            Assert.AreEqual(RelicState.Displayed, duck.State, "a relic resting by the shelf is taken in too");
+            Relic duck = _fixture.FindRelic(Duck);
+            _fixture.Display(duck, 2);
+            Assert.AreEqual(RelicState.Displayed, duck.State);
             int duckSlot = duck.Slot;
 
             Relic teapot = _fixture.FindRelic(Teapot);
@@ -759,7 +779,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(2, gameplay.Materials.Wiring);
             Assert.AreEqual(2, gameplay.Materials.Optics);
             Relic duckAgain = _fixture.FindRelic(Duck);
-            Assert.AreEqual(RelicState.Displayed, duckAgain.State, "the museum keeps its relics");
+            Assert.AreEqual(RelicState.Displayed, duckAgain.State, "the keepsake shelf keeps its relics");
             Assert.AreEqual(duckSlot, duckAgain.Slot);
             Assert.AreEqual(1, gameplay.Home.DisplayedCount);
             Relic teapotAgain = _fixture.FindRelic(Teapot);
@@ -773,8 +793,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(0, _fixture.Events.UpgradePurchased.Count, "a load is never a purchase");
             yield return new WaitForSeconds(0.5f);
             Assert.Greater(gameplay.Tower.BeaconLevel, 0.5f, "the beacon is lit straight away");
-            AimAtShelf(gameplay.Home);
-            _fixture.Capture("12-reloaded-museum");
+            Vector3 keepsakes = gameplay.Home.KeepsakesPosition;
+            _fixture.Rover.Aim(gameplay.Lift.StationPosition(LabStation.Chart), keepsakes);
+            _fixture.Capture("12-reloaded-keepsakes");
         }
 
         /// <summary>Stands in for the rover setting a piece on 07 in the bay (or a friend's gift appearing).</summary>
@@ -825,13 +846,6 @@ namespace MoonProject.Gameplay.PlayModeTests
         private static float Yaw(Vector3 direction)
         {
             return Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg;
-        }
-
-        private void AimAtShelf(HomeBase home)
-        {
-            Vector3 shelf = home.ShelfPosition;
-            Vector3 front = (Vector3.zero - shelf).normalized;
-            _fixture.Rover.Aim(shelf + front * 6f + Vector3.up * 2.5f, shelf + Vector3.up);
         }
 
         /// <summary>Renders 07's view once (the halo places itself for each camera as it renders).</summary>

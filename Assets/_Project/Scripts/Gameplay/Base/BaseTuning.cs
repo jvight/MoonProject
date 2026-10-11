@@ -5,10 +5,10 @@ using MoonProject.Art;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// Home: where the lander stands, how relics are taken onto the museum shelf, how the base lights the ground as 07
-    /// approaches, how it carries across the basin while 07 is far away (windows that never dim, a soft amber halo),
-    /// and when 07 comes to rest on the charging dock. Created by the Gameplay/Tuning builder; runtime code only reads
-    /// it.
+    /// Home: where the lander stands, how relics are placed on the lab's keepsake shelf, how the base lights the
+    /// ground as 07 approaches, how it carries across the basin while 07 is far away (windows that never dim, a soft
+    /// amber halo), and when 07 comes to rest on the charging dock. Created by the Gameplay/Tuning builder; runtime
+    /// code only reads it.
     /// </summary>
     public sealed class BaseTuning : ScriptableObject
     {
@@ -17,14 +17,8 @@ namespace MoonProject.Gameplay
                  "facing the centre, well inside the ~25 m pad.")]
         [SerializeField] private Vector3 _landerOffset = new Vector3(-10f, 0f, 8f);
 
-        [Header("Deposit")]
-        [Tooltip("A relic let go within this many metres (horizontal) of the shelf floats onto it.")]
-        [Range(1f, 20f)] [SerializeField] private float _depositRadius = 7f;
-
-        [Tooltip("...and no higher than this above the shelf's base (m).")]
-        [Range(1f, 20f)] [SerializeField] private float _depositHeight = 6f;
-
-        [Tooltip("Seconds a relic takes to float onto its slot.")]
+        [Header("Deposit (the lab's keepsake shelf)")]
+        [Tooltip("Seconds a relic takes to float from beside 07 into its outline on the shelf.")]
         [Range(0.3f, 6f)] [SerializeField] private float _depositDuration = 1.9f;
 
         [Tooltip("Height (m) of the arc it floats on.")]
@@ -36,7 +30,7 @@ namespace MoonProject.Gameplay
         [Tooltip("Overshoot of the final settle (0 = none, ~1.7 = classic back-ease).")]
         [Range(0f, 3f)] [SerializeField] private float _settleOvershoot = 1.4f;
 
-        [Tooltip("Radius (m) of the small warm glow that shows which slot a towed relic will take.")]
+        [Tooltip("Radius (m) of the small warm glow that shows which cubby the relic 07 brought up will take.")]
         [Range(0.1f, 2f)] [SerializeField] private float _slotHintRadius = 0.2f;
 
         [Tooltip("Brightness of that glow.")]
@@ -61,8 +55,8 @@ namespace MoonProject.Gameplay
         [Tooltip("...and from this distance (m) on 07 is far away.")]
         [Range(10f, 400f)] [SerializeField] private float _warmFar = 90f;
 
-        [Tooltip("Share of the lamps' light on the ground (and of the shelf strip) kept while 07 is far away: a " +
-                 "light left on. The windows do not dim.")]
+        [Tooltip("Share of the lamps' light on the ground kept while 07 is far away: a light left on. The windows do " +
+                 "not dim.")]
         [FormerlySerializedAs("_farWarmth")]
         [Range(0f, 1f)] [SerializeField] private float _farLampWarmth = 0.35f;
 
@@ -74,9 +68,6 @@ namespace MoonProject.Gameplay
 
         [Tooltip("The windows glow this many times brighter while 07 is far away: home calls it back.")]
         [Range(1f, 2f)] [SerializeField] private float _farWindowBoost = 1.2f;
-
-        [Tooltip("Shelf light strip glow while 07 is home (linear emission multiplier, 1 = as authored).")]
-        [Range(0f, 4f)] [SerializeField] private float _shelfGlow = 0.6f;
 
         [Header("Home halo")]
         [Tooltip("Centre of the soft amber glow over home, in lander space (m).")]
@@ -129,8 +120,6 @@ namespace MoonProject.Gameplay
         [Range(0f, 4f)] [SerializeField] private float _dockGlowEase = 0.8f;
 
         public Vector3 LanderOffset => _landerOffset;
-        public float DepositRadius => _depositRadius;
-        public float DepositHeight => _depositHeight;
         public float DepositDuration => _depositDuration;
         public float DepositLift => _depositLift;
         public float DepositHover => _depositHover;
@@ -147,7 +136,6 @@ namespace MoonProject.Gameplay
         public float WarmEase => _warmEase;
         public float WindowGlow => _windowGlow;
         public float FarWindowBoost => _farWindowBoost;
-        public float ShelfGlow => _shelfGlow;
         public Vector3 HaloCentre => _haloCentre;
         public float HaloAppear => _haloAppear;
         public float HaloFull => Mathf.Max(_haloFull, _haloAppear + 1f);

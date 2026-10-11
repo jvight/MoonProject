@@ -4,7 +4,7 @@ using UnityEngine;
 namespace MoonProject.Rover
 {
     /// <summary>
-    /// A framed view the game opens and closes rather than 07's rest (the lift's deck lookout, the dock's evening),
+    /// A framed view the game opens and closes rather than 07's rest (the dock's evening),
     /// independent of Cinemachine so it can be tested:
     /// <list type="bullet">
     /// <item><see cref="Open"/> eases out to its frame over its settings' open time; <see cref="Close"/> eases back

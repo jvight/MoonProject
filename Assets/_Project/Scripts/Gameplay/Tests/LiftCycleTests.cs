@@ -4,7 +4,10 @@ using MoonProject.Gameplay.Lift;
 
 namespace MoonProject.Gameplay.Tests
 {
-    /// <summary>The crew's lift: dormant until powered, fed and stitched once, then ridden up and down at rest.</summary>
+    /// <summary>
+    /// The crew's belly lift (docs/features/M3-19 §4): jammed and silent with home's power until 07 comes home with
+    /// something for the lab, stitched once, then ridden up into the lab and down again at rest.
+    /// </summary>
     public sealed class LiftCycleTests
     {
         private const float Frame = 1f / 60f;
@@ -29,14 +32,14 @@ namespace MoonProject.Gameplay.Tests
         }
 
         /// <summary>Steps for <paramref name="seconds"/>; returns the first step other than None (or None).</summary>
-        private LiftStep Run(float seconds, bool powered = true, bool affordable = true, bool onFeedPad = false,
-            bool onPlatform = false, bool feedDone = false, bool anyInput = false)
+        private LiftStep Run(float seconds, bool powered = true, bool carryingHome = false, bool onPlatform = false,
+            bool down = false, bool moving = false)
         {
             LiftStep first = LiftStep.None;
             for (float t = 0f; t < seconds; t += Frame)
             {
-                _still = anyInput ? 0f : _still + Frame;
-                var input = new LiftInput(powered, affordable, onFeedPad, onPlatform, _still, feedDone, anyInput);
+                _still = moving ? 0f : _still + Frame;
+                var input = new LiftInput(powered, carryingHome, onPlatform, _still, down);
                 LiftStep step = _lift.Step(input, Frame);
                 first = first == LiftStep.None ? step : first;
             }
@@ -47,48 +50,63 @@ namespace MoonProject.Gameplay.Tests
         private void Restore()
         {
             Run(Frame);
-            Run(_tuning.FeedDelay + 0.1f, onFeedPad: true);
-            Run(Frame, feedDone: true);
-            Run(_tuning.StitchSeconds + 0.1f);
+            Run(Frame, carryingHome: true);
+            Run(_tuning.StitchDelay + 0.1f, onPlatform: true);
+            Run(_tuning.StitchSeconds + 0.1f, onPlatform: true);
         }
 
         [Test]
-        public void Unpowered_StaysDormant_EvenWith07OnThePad()
+        public void WithoutHomesPower_StaysDormant_EvenCarryingARelicOnThePlatform()
         {
-            Assert.AreEqual(LiftStep.None, Run(5f, false, onFeedPad: true));
+            Assert.AreEqual(LiftStep.None, Run(5f, false, true, true));
             Assert.AreEqual(LiftPhase.Dormant, _lift.Phase);
         }
 
         [Test]
-        public void Powered_FeedsOnlyOnceRestedOnThePad_WithTheMaterials()
+        public void HomesPower_WakesItJammedAndSilent_UntilSomethingForTheLabComesHome()
         {
             Assert.AreEqual(LiftStep.Powered, Run(Frame));
-            Assert.AreEqual(LiftStep.None, Run(5f, affordable: false, onFeedPad: true), "Nothing to feed it.");
-            Assert.AreEqual(LiftStep.None, Run(5f), "Not on the pad.");
-            _still = 0f;
-            Assert.AreEqual(LiftStep.None, Run(_tuning.FeedDelay - 0.1f, onFeedPad: true), "Not rested yet.");
-            Assert.AreEqual(LiftStep.FeedStarted, Run(0.2f, onFeedPad: true));
-            Assert.AreEqual(LiftPhase.Feeding, _lift.Phase);
+            Assert.AreEqual(LiftStep.None, Run(5f, onPlatform: true), "Nothing for the lab: no stitch asked for.");
+            Assert.AreEqual(LiftPhase.Jammed, _lift.Phase);
+            Assert.AreEqual(LiftStep.Called, Run(Frame, carryingHome: true));
+            Assert.AreEqual(LiftPhase.Called, _lift.Phase);
+            Assert.AreEqual(LiftStep.None, Run(5f), "Called, it stays so after 07 drives off.");
+            Assert.AreEqual(LiftPhase.Called, _lift.Phase);
         }
 
         [Test]
-        public void TheStitch_EasesThePlatformLevel_ThenRestores()
+        public void TheStitch_StartsOnceRestedOnThePlatform_EasesItLevel_ThenRestores()
         {
             Run(Frame);
-            Run(_tuning.FeedDelay + 0.1f, onFeedPad: true);
-            Run(Frame, feedDone: true);
+            Run(Frame, carryingHome: true);
+            _still = 0f;
+            Assert.AreEqual(LiftStep.None, Run(_tuning.StitchDelay - 0.1f, onPlatform: true), "Not rested yet.");
+            Assert.AreEqual(LiftStep.StitchStarted, Run(0.2f, onPlatform: true));
             Assert.AreEqual(LiftPhase.Stitching, _lift.Phase);
-            Run(0.5f * _tuning.StitchSeconds);
+            Run(0.5f * _tuning.StitchSeconds - 0.1f, onPlatform: true);
             Assert.That(_lift.Level, Is.InRange(0.3f, 0.7f), "Halfway level, eased.");
-            Assert.AreEqual(LiftStep.Restored, Run(0.5f * _tuning.StitchSeconds + 0.1f));
+            Assert.AreEqual(LiftStep.Restored, Run(0.5f * _tuning.StitchSeconds + 0.1f, onPlatform: true));
             Assert.IsTrue(_lift.IsRestored);
             Assert.AreEqual(1f, _lift.Level);
         }
 
         [Test]
-        public void TheRide_RisesAtRest_HoldsAtTheTop_AndAnyInputBringsItDown()
+        public void AfterTheStitch_TheFirstRideFollowsAfterABreath()
         {
             Restore();
+            Assert.AreEqual(LiftPhase.Ready, _lift.Phase);
+            Assert.AreEqual(LiftStep.None, Run(_tuning.BoardDelay - 0.1f, onPlatform: true),
+                "07 has been still all along, but the platform breathes first.");
+            Assert.AreEqual(LiftStep.RideStarted, Run(0.2f, onPlatform: true));
+        }
+
+        [Test]
+        public void TheRide_RisesAtRest_HoldsInTheLab_AndOnlyDownBringsItDown()
+        {
+            Restore();
+            Run(Frame);
+            _still = 0f;
+            Run(_tuning.BoardDelay + 0.1f);
             _still = 0f;
             Assert.AreEqual(LiftStep.None, Run(_tuning.BoardDelay - 0.1f, onPlatform: true), "Not rested yet.");
             Assert.AreEqual(LiftStep.RideStarted, Run(0.1f + Frame, onPlatform: true));
@@ -96,16 +114,20 @@ namespace MoonProject.Gameplay.Tests
             Run(0.5f * _tuning.RideSeconds, onPlatform: true);
             Assert.That(_lift.Height, Is.InRange(0.3f, 0.7f));
             Assert.AreEqual(LiftStep.Arrived, Run(0.5f * _tuning.RideSeconds + Frame, onPlatform: true),
-                "The platform reaches the top stop ...");
-            Assert.AreEqual(LiftStep.ReachedTop, Run(_tuning.SettleSeconds + 0.1f, onPlatform: true),
-                "... and settles there before the lookout opens.");
-            Assert.AreEqual(LiftStep.None, Run(20f, onPlatform: true), "The lookout holds while 07 rests.");
+                "The platform reaches the cabin floor ...");
+            Assert.AreEqual(LiftStep.ReachedInside, Run(_tuning.SettleSeconds + 0.1f, onPlatform: true),
+                "... and settles there before the lab opens.");
+            Assert.AreEqual(LiftStep.None, Run(20f, onPlatform: true, moving: true),
+                "Turning and looking round the lab never brings it down.");
             Assert.AreEqual(1f, _lift.Height);
 
-            Assert.AreEqual(LiftStep.Descending, Run(Frame, onPlatform: true, anyInput: true));
-            Assert.AreEqual(LiftStep.Arrived, Run(_tuning.RideSeconds + Frame, onPlatform: true));
+            Assert.AreEqual(LiftStep.Descending, Run(Frame, onPlatform: true, down: true));
+            Run(0.5f * _tuning.RideSeconds, onPlatform: true);
+            Assert.That(_lift.Descent, Is.InRange(0.3f, 0.7f), "the turn toward the dock follows the descent");
+            Assert.AreEqual(LiftStep.Arrived, Run(0.5f * _tuning.RideSeconds + Frame, onPlatform: true));
             Assert.AreEqual(LiftStep.ReachedBottom, Run(_tuning.SettleSeconds + 0.1f, onPlatform: true));
             Assert.AreEqual(0f, _lift.Height);
+            Assert.AreEqual(0f, _lift.Descent);
             Assert.IsFalse(_lift.Holds07);
         }
 
@@ -115,7 +137,7 @@ namespace MoonProject.Gameplay.Tests
             _lift.Restore(true);
             Run(_tuning.BoardDelay + 0.1f, onPlatform: true);
             Run(_tuning.RideSeconds + _tuning.SettleSeconds + 0.1f, onPlatform: true);
-            Run(Frame, onPlatform: true, anyInput: true);
+            Run(Frame, onPlatform: true, down: true);
             Run(_tuning.RideSeconds + _tuning.SettleSeconds + 0.1f, onPlatform: true);
             Assert.AreEqual(LiftStep.None, Run(10f, onPlatform: true), "Still on it after the ride: stays down.");
             Run(Frame);

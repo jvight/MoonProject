@@ -3,7 +3,7 @@ using MoonProject.Rover;
 
 namespace MoonProject.Rover.Tests
 {
-    /// <summary>The lookout and the dock's evening: eased out and back, held until closed or for their hold.</summary>
+    /// <summary>The dock's evening: eased out and back, held until closed or for its hold.</summary>
     public sealed class HeldShotTests
     {
         private const float Frame = 1f / 60f;

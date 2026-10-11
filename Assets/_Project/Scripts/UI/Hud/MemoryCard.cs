@@ -10,7 +10,7 @@ using MoonProject.Gameplay;
 namespace MoonProject.UI
 {
     /// <summary>
-    /// The story card. When a relic settles on the museum shelf it tells its memory of Earth (the localized
+    /// The story card. When a relic settles on the keepsake shelf it tells its memory of Earth (the localized
     /// "relic.&lt;id&gt;.name" and "relic.&lt;id&gt;.memory" strings); when a friend wakes it shows the crew log the
     /// friend remembers ("friend.&lt;id&gt;.name" and "friend.&lt;id&gt;.repair_log"); a crew log found in the world
     /// shows its "log.&lt;id&gt;" text; a collected cassette turns it into a smaller, warmer liner-note card with the
@@ -300,7 +300,7 @@ namespace MoonProject.UI
 
         private enum MemoryKind
         {
-            /// <summary>A relic's memory of Earth, numbered among the museum's relics.</summary>
+            /// <summary>A relic's memory of Earth, numbered among the keepsakes.</summary>
             Relic,
 
             /// <summary>The crew log a friend remembers when it wakes.</summary>
