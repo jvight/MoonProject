@@ -25,17 +25,24 @@ namespace MoonProject.World
         [Range(1f, 20f)]
         [SerializeField] private float _range;
 
-        [Tooltip("Light intensity when the warm point is fully lit. Enough to warm lit dust, never to bloom it.")]
+        [Tooltip("Light intensity when the warm point is fully lit (for a disc: its strength, 1 = Art's authored " +
+            "pool). Enough to warm lit dust, never to bloom it.")]
         [Range(0f, 12f)]
         [SerializeField] private float _intensity;
 
-        public LightPoolTuning(HomeLight wakesWith, string anchor, Vector3 offset, float range, float intensity)
+        [Tooltip("Draw the pool as Art's additive light disc on the ground instead of a point light: cheaper, and it " +
+            "reads better where only the ground needs the warmth.")]
+        [SerializeField] private bool _disc;
+
+        public LightPoolTuning(HomeLight wakesWith, string anchor, Vector3 offset, float range, float intensity,
+            bool disc)
         {
             _wakesWith = wakesWith;
             _anchor = anchor;
             _offset = offset;
             _range = range;
             _intensity = intensity;
+            _disc = disc;
         }
 
         public HomeLight WakesWith => _wakesWith;
@@ -43,5 +50,6 @@ namespace MoonProject.World
         public Vector3 Offset => _offset;
         public float Range => _range;
         public float Intensity => _intensity;
+        public bool Disc => _disc;
     }
 }

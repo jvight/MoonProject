@@ -65,7 +65,7 @@ namespace MoonProject.World.Tests
             {
                 pooled[(int)HomeLightStages.WakesWith(pool.WakesWith)] = true;
                 Assert.That(pool.Intensity, Is.GreaterThan(0f), pool.Anchor);
-                Assert.That(pool.Offset.y, Is.GreaterThan(0f), pool.Anchor + " hangs above the ground");
+                Assert.That(pool.Disc || pool.Offset.y > 0f, Is.True, pool.Anchor + "'s light hangs above the ground");
             }
 
             for (int stage = 0; stage < pooled.Length; stage++)

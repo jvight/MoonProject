@@ -39,9 +39,12 @@ namespace MoonProject.World
             "power stages.")]
         [SerializeField] private Volume _homeGrade;
 
-        [Tooltip("The warm pools' point lights, one per Home Lighting pool, in the same order (the scene build hangs " +
-            "them from their anchors in the base).")]
+        [Tooltip("The warm pools' point lights, one slot per Home Lighting pool in the same order, empty for disc " +
+            "pools (the scene build hangs them from their anchors in the base).")]
         [SerializeField] private Light[] _pools = new Light[0];
+
+        [Tooltip("The warm pools' light discs (Art's LightPool), one slot per pool, empty for point-light pools.")]
+        [SerializeField] private Renderer[] _poolDiscs = new Renderer[0];
 
         private MaterialPropertyBlock _block;
         private HomeLightStages _stages;
@@ -131,6 +134,15 @@ namespace MoonProject.World
             for (int i = 0; i < _pools.Length; i++)
             {
                 LightPoolTuning pool = tuning.Pools[i];
+                if (pool.Disc)
+                {
+                    Transform disc = _poolDiscs[i].transform;
+                    disc.localPosition = pool.Offset;
+                    disc.localScale = Vector3.one * pool.Range;
+                    _poolDiscs[i].enabled = false;
+                    continue;
+                }
+
                 Light light = _pools[i];
                 light.type = LightType.Point;
                 light.color = tuning.PoolColor;
@@ -154,6 +166,16 @@ namespace MoonProject.World
                 }
 
                 _poolsApplied[i] = level;
+                if (pool.Disc)
+                {
+                    float strength = level * pool.Intensity;
+                    _block.Clear();
+                    _block.SetVector(EmissionColorId, new Vector4(strength, strength, strength, 1f));
+                    _poolDiscs[i].SetPropertyBlock(_block);
+                    _poolDiscs[i].enabled = level > 0f;
+                    continue;
+                }
+
                 _pools[i].intensity = level * pool.Intensity;
                 _pools[i].enabled = level > 0f;
             }
@@ -215,17 +237,19 @@ namespace MoonProject.World
                 return "The tower's pilot halo is not assigned.";
             }
 
-            if (_pools == null || _pools.Length != _settings.HomeLighting.Pools.Count)
+            int count = _settings.HomeLighting.Pools.Count;
+            if (_pools == null || _poolDiscs == null || _pools.Length != count || _poolDiscs.Length != count)
             {
-                return $"Light pools must match Home Lighting's {_settings.HomeLighting.Pools.Count} pools (the " +
-                    "scene build hangs them from the base).";
+                return $"Light pools and discs must match Home Lighting's {count} pools (the scene build hangs them " +
+                    "from the base).";
             }
 
-            foreach (Light pool in _pools)
+            for (int i = 0; i < count; i++)
             {
-                if (pool == null)
+                bool disc = _settings.HomeLighting.Pools[i].Disc;
+                if (disc ? _poolDiscs[i] == null : _pools[i] == null)
                 {
-                    return "A light pool is missing.";
+                    return $"Light pool {i} is missing its {(disc ? "disc" : "light")}.";
                 }
             }
 

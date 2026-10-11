@@ -102,9 +102,26 @@ namespace MoonProject.World.Editor
             IReadOnlyList<LightPoolTuning> pools =
                 context.LoadAsset<WorldSettings>(WorldPaths.Settings).HomeLighting.Pools;
             SerializedProperty property = serialized.FindProperty("_pools");
+            SerializedProperty discs = serialized.FindProperty("_poolDiscs");
             property.arraySize = pools.Count;
+            discs.arraySize = pools.Count;
+            var discPrefab = context.LoadAsset<GameObject>(WorldPaths.LightPoolPrefab);
             for (int i = 0; i < pools.Count; i++)
             {
+                property.GetArrayElementAtIndex(i).objectReferenceValue = null;
+                discs.GetArrayElementAtIndex(i).objectReferenceValue = null;
+                if (pools[i].Disc)
+                {
+                    GameObject disc = UnityEngine.Object.Instantiate(discPrefab, Find(gameplay, pools[i].Anchor), false);
+                    disc.name = "LightPoolDisc_" + i;
+                    disc.transform.localPosition = pools[i].Offset;
+                    disc.transform.localScale = Vector3.one * pools[i].Range;
+                    var discRenderer = disc.GetComponent<Renderer>();
+                    discRenderer.enabled = false;
+                    discs.GetArrayElementAtIndex(i).objectReferenceValue = discRenderer;
+                    continue;
+                }
+
                 GameObject host = context.CreateChild("LightPool_" + i, Find(gameplay, pools[i].Anchor));
                 host.transform.localPosition = pools[i].Offset;
                 var light = host.AddComponent<Light>();

@@ -36,6 +36,48 @@ namespace MoonProject.World.Editor
         /// <summary>Art rocks used as boulders: the jagged, big rounded and boulder shapes.</summary>
         public static readonly string[] BoulderRocks = { "Rock_02", "Rock_04", "Rock_05" };
 
+        /// <summary>Art's warm light-decal disc (1 m radius, additive) for the disc light pools.</summary>
+        public const string LightPoolPrefab = "Assets/_Project/Generated/Art/Props/LightPool.prefab";
+
+        /// <summary>Art's landmark kit World places (M3-18 L2, L4, L7).</summary>
+        public const string LandmarkFolder = "Assets/_Project/Generated/Art/Landmarks/";
+        public const string RoutePostPrefab = LandmarkFolder + "RoutePost.prefab";
+        public const string BridgeNearPrefab = LandmarkFolder + "ChasmBridge_Near.prefab";
+        public const string BridgeFarPrefab = LandmarkFolder + "ChasmBridge_Far.prefab";
+        public const string BridgeCablePrefab = LandmarkFolder + "ChasmBridge_Cable.prefab";
+        public static readonly string[] DishFramePrefabs =
+        {
+            LandmarkFolder + "DishFrame_0.prefab", LandmarkFolder + "DishFrame_1.prefab",
+            LandmarkFolder + "DishFrame_2.prefab",
+        };
+
+        /// <summary>Wires <see cref="LandmarkPrefabs"/> on a WorldSystem (scene build and test rigs).</summary>
+        public static void AssignLandmarks(UnityEditor.SerializedObject world)
+        {
+            Landmark(world, "_routePost", RoutePostPrefab);
+            Landmark(world, "_bridgeNear", BridgeNearPrefab);
+            Landmark(world, "_bridgeFar", BridgeFarPrefab);
+            Landmark(world, "_bridgeCable", BridgeCablePrefab);
+            UnityEditor.SerializedProperty frames = world.FindProperty("_landmarkPrefabs._dishFrames");
+            frames.arraySize = DishFramePrefabs.Length;
+            for (int i = 0; i < DishFramePrefabs.Length; i++)
+            {
+                frames.GetArrayElementAtIndex(i).objectReferenceValue = Require(DishFramePrefabs[i]);
+            }
+        }
+
+        private static void Landmark(UnityEditor.SerializedObject world, string field, string path)
+        {
+            world.FindProperty("_landmarkPrefabs." + field).objectReferenceValue = Require(path);
+        }
+
+        private static UnityEngine.GameObject Require(string path)
+        {
+            var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.GameObject>(path);
+            return prefab != null ? prefab
+                : throw new System.InvalidOperationException($"No landmark prefab at {path}; run Art/Landmarks.");
+        }
+
         public const string CapturePoses = "Assets/_Project/Scripts/World/Editor/Captures/world_views.json";
     }
 }
