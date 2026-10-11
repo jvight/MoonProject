@@ -968,6 +968,8 @@ namespace MoonProject.Art.Editor
 
                 Descendant(lander, BaseModelBuilder.LiftSnappedCableName).gameObject.SetActive(false);
                 Descendant(platform, BaseModelBuilder.LiftJamPropsName).gameObject.SetActive(false);
+                Descendant(lander, BaseModelBuilder.DeckHatchName).localRotation = BaseModelBuilder.DeckHatchOpen;
+                SetGlow(lander, BaseModelBuilder.LightTableGlowName, new[] { string.Empty }, 1f);
                 SetGlow(lander, BaseModelBuilder.WinchLampName, new[] { string.Empty }, 1f);
                 LightCable(lander, "Lift");
             }

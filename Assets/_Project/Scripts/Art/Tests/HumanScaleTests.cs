@@ -25,8 +25,10 @@ namespace MoonProject.Art.Tests
         [Test]
         public void LanderDoor_LetsAPersonThroughUpright()
         {
-            Bounds door = Faces(BaseModelBuilder.CreateLander().Mesh.Geometry, PaletteSwatch.Metal,
-                p => Mathf.Abs(p.x) < 0.6f && p.z > DoorNear && p.z < DoorFar && p.y > BaseModelBuilder.LanderDeckTop);
+            ModelNode hatch = BaseModelBuilder.CreateLander().GetDescendant(BaseModelBuilder.DeckHatchName);
+            Bounds door = Faces(hatch.Mesh.Geometry, PaletteSwatch.Metal, p => true);
+            door.center += hatch.LocalPosition;
+            Assert.That(door.center.z, Is.InRange(DoorNear, DoorFar), "the shut hatch sits in the cabin's wall");
             Assert.GreaterOrEqual(door.size.y, Person + 0.05f, "head room through the door");
             Assert.That(door.size.x, Is.InRange(0.7f, 1f), "a person's width with room");
             Assert.AreEqual(BaseModelBuilder.LanderDeckTop, door.min.y, 0.06f, "the door opens onto the deck");
@@ -37,8 +39,10 @@ namespace MoonProject.Art.Tests
         {
             ModelNode lander = BaseModelBuilder.CreateLander();
             float deck = BaseModelBuilder.LanderDeckTop;
-            Bounds porthole = Faces(lander.GetDescendant("Porthole").Mesh.Geometry, PaletteSwatch.LampGlass,
-                p => Mathf.Abs(p.x) < 0.3f && p.z > DoorNear && p.z < PortholeFar);
+            ModelNode hatch = lander.GetDescendant(BaseModelBuilder.DeckHatchName);
+            Bounds porthole = Faces(hatch.GetDescendant("Porthole").Mesh.Geometry, PaletteSwatch.LampGlass, p => true);
+            porthole.center += hatch.LocalPosition;
+            Assert.That(porthole.center.z, Is.InRange(DoorNear, PortholeFar), "the porthole is in the shut hatch");
             Assert.That(porthole.center.y - deck, Is.InRange(1.4f, 1.65f), "the door's porthole at eye height");
 
             // One rail was bent down long ago: the rails' tops still stand at a person's waist.

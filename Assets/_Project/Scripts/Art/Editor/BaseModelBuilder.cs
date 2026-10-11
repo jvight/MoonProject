@@ -64,6 +64,46 @@ namespace MoonProject.Art.Editor
 
         public const string PortholeName = "Porthole";
 
+        /// <summary>
+        /// The deck hatch (M3-07), pivoted on its hinge: shut (<see cref="DeckHatchShut"/>) while the station sleeps,
+        /// swung out by its motor to <see cref="DeckHatchOpen"/> once the map wakes. DeckHatch/Porthole is its glass
+        /// (a dark glow renderer on the MaterialPropertyBlock contract); DeckHatch/Weather_* its own dust and rust.
+        /// </summary>
+        public const string DeckHatchName = "DeckHatch";
+
+        public static Quaternion DeckHatchShut => Quaternion.identity;
+
+        public static Quaternion DeckHatchOpen => DeckHatchMeshes.Open;
+
+        /// <summary>
+        /// Ines's light table in the alcove behind the hatch (M3-07), framed by the open doorway at 07's lens height.
+        /// Its space: +X across the top, +Y up its slope, +Z out of it toward the doorway, the origin at the top's
+        /// middle. LightTable/LightTableGlow is the lit panel under the paper, a dark glow renderer
+        /// (MaterialPropertyBlock contract) and the home light seen through the doorway; LightTable/MapSheet is the
+        /// paper.
+        /// </summary>
+        public const string LightTableName = "LightTable";
+
+        public const string LightTableGlowName = "LightTableGlow";
+
+        public const string MapSheetName = "MapSheet";
+
+        /// <summary>
+        /// LightTable/ChartPen (M3-07), Kenji's chart pen, the plotter's smaller brass sibling on the light table:
+        /// ChartPen/ChartPenCarriage rides across the paper along its local X from 0 to <see cref="ChartDrawWidth"/>,
+        /// and its child ChartPenHead (the plotter's own pen head) moves along local Y from 0 to
+        /// <see cref="ChartDrawHeight"/>, its tip on the paper, as Plotter/PenCarriage and PenHead do.
+        /// </summary>
+        public const string ChartPenName = "ChartPen";
+
+        public const string ChartPenCarriageName = "ChartPenCarriage";
+
+        public const string ChartPenHeadName = "ChartPenHead";
+
+        public const float ChartDrawWidth = ChartTableMeshes.DrawWidth;
+
+        public const float ChartDrawHeight = ChartTableMeshes.DrawHeight;
+
         public const string BulbName = "Bulb";
 
         /// <summary>
@@ -261,6 +301,10 @@ namespace MoonProject.Art.Editor
             panelWidth: 0.7f, panelHeight: 0.62f, paintWear: 1f, mismatched: true, runsPerMetre: 3f, rustHeight: 2.4f,
             metalRust: 0.8f, paintRust: 0.45f, tide: 2.1f, groundDust: 0.95f, topDust: 0.9f);
 
+        private static readonly WeatherProfile HatchWeather = new WeatherProfile(seed: 83, lift: 0.004f,
+            panelWidth: 0.4f, panelHeight: 0.62f, paintWear: 0.8f, mismatched: false, runsPerMetre: 2f, rustHeight: 0f,
+            metalRust: 0.5f, paintRust: 0f, tide: 0f, groundDust: 0f, topDust: 0.9f);
+
         private static readonly WeatherProfile LiftPlatformWeather = new WeatherProfile(seed: 71, lift: 0.006f,
             panelWidth: 0.6f, panelHeight: 0.6f, paintWear: 1f, mismatched: true, runsPerMetre: 2.2f, rustHeight: 0f,
             metalRust: 0f, paintRust: 0f, tide: 0f, groundDust: 0f, topDust: 0.8f);
@@ -336,8 +380,6 @@ namespace MoonProject.Art.Editor
                         LanderMeshes.Pane(i)), ModelMaterial.PaletteGlowOff));
             }
 
-            windows.Add(new ModelNode(PortholeName, Vector3.zero, Quaternion.identity,
-                new ModelMesh(LanderName + "_Porthole", LanderMeshes.Porthole()), ModelMaterial.PaletteGlowOff));
             lander.Add(new ModelNode("ShelfAnchor", ShelfAnchor));
             lander.Add(new ModelNode("TowerAnchor", TowerAnchor));
             var bulb = new ModelMesh(LanderName + "_Bulb", LanderMeshes.Bulb());
@@ -360,8 +402,47 @@ namespace MoonProject.Art.Editor
                 Place.Rotation(LanderMeshes.HomeSignLean),
                 new ModelMesh(LanderName + "_" + HomeSignName, LanderMeshes.HomeSign())));
             AddPowerCables(lander);
+            AddDeckHatch(lander);
+            AddLightTable(lander);
             Weathering.Weather(lander, LanderName, hull, LanderWeather, LanderMeshes.Rust(), LanderMeshes.Drifts());
             return lander;
+        }
+
+        /// <summary>
+        /// The deck hatch (M3-07) on its hinge, shut and dusty while the station sleeps, with the porthole's glass as
+        /// its own dark glow renderer and its own weather skins (the dust can go once the motor wakes).
+        /// </summary>
+        private static void AddDeckHatch(ModelNode lander)
+        {
+            string prefix = LanderName + "_" + DeckHatchName;
+            LowPolyMeshBuilder door = DeckHatchMeshes.Hatch();
+            ModelNode hatch = lander.Add(new ModelNode(DeckHatchName, DeckHatchMeshes.Hinge, DeckHatchShut,
+                new ModelMesh(prefix, door)));
+            hatch.Add(new ModelNode(PortholeName, Vector3.zero, Quaternion.identity,
+                new ModelMesh(prefix + "_" + PortholeName, DeckHatchMeshes.Porthole()), ModelMaterial.PaletteGlowOff));
+            Weathering.Weather(hatch, prefix, door, HatchWeather, DeckHatchMeshes.HatchRust(),
+                new LowPolyMeshBuilder(0));
+        }
+
+        /// <summary>
+        /// Ines's light table in the alcove behind the hatch (M3-07): the table, its lit panel as a dark glow renderer
+        /// and the chart paper on it.
+        /// </summary>
+        private static void AddLightTable(ModelNode lander)
+        {
+            string prefix = LanderName + "_" + LightTableName;
+            ModelNode table = lander.Add(new ModelNode(LightTableName, ChartTableMeshes.Centre,
+                ChartTableMeshes.Rotation, new ModelMesh(prefix, ChartTableMeshes.Table())));
+            table.Add(new ModelNode(LightTableGlowName, Vector3.zero, Quaternion.identity,
+                new ModelMesh(prefix + "_Glow", ChartTableMeshes.Glow()), ModelMaterial.PaletteGlowOff));
+            table.Add(new ModelNode(MapSheetName, Vector3.zero, new ModelMesh(prefix + "_" + MapSheetName,
+                ChartTableMeshes.Sheet())));
+            ModelNode pen = table.Add(new ModelNode(ChartPenName, Vector3.zero,
+                new ModelMesh(prefix + "_" + ChartPenName, ChartTableMeshes.Gantry())));
+            ModelNode carriage = pen.Add(new ModelNode(ChartPenCarriageName, ChartTableMeshes.CarriageHome,
+                new ModelMesh(prefix + "_" + ChartPenCarriageName, ChartTableMeshes.Carriage())));
+            carriage.Add(new ModelNode(ChartPenHeadName, Vector3.zero,
+                new ModelMesh(prefix + "_" + ChartPenHeadName, BlueprintMeshes.PenHead())));
         }
 
         /// <summary>

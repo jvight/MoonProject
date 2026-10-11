@@ -9,8 +9,9 @@ namespace MoonProject.Art.Tests
     /// <summary>The base part of the M2 content contract: names, anchors, sockets and pivots.</summary>
     public sealed class BaseModelTests
     {
-        // A base model costs at most this many triangles (the lander, carrying 07's dock and the lift, is the most).
-        private const int TriangleBudget = 8000;
+        // A base model costs at most this many triangles (the lander, carrying 07's dock, the lift and since M3-07 the
+        // deck hatch with Ines's light table and chart pen behind it, is the most).
+        private const int TriangleBudget = 8600;
 
         // The removable weather skins (patchwork paint over every face, rust, dust over both) cost at most this much
         // more on top of a model: about three times the lander they cover.
@@ -43,7 +44,9 @@ namespace MoonProject.Art.Tests
             ModelNode windows = lander.GetDescendant("Windows");
             var glows = new List<ModelNode> { windows };
             glows.AddRange(windows.Children);
-            CollectionAssert.AreEqual(new[] { "Pane_1", "Pane_2", "Porthole" }, windows.Children.Select(c => c.Name));
+            CollectionAssert.AreEqual(new[] { "Pane_1", "Pane_2" }, windows.Children.Select(c => c.Name));
+            ModelNode hatch = lander.GetDescendant(BaseModelBuilder.DeckHatchName);
+            glows.Add(hatch.GetDescendant(BaseModelBuilder.PortholeName));
             foreach (ModelNode socket in lander.Children.Where(c => c.Name.StartsWith("LampSocket_")))
             {
                 glows.Add(socket.Children.Single(c => c.Name == BaseModelBuilder.BulbName));
@@ -55,6 +58,75 @@ namespace MoonProject.Art.Tests
                 CollectionAssert.AreEqual(new[] { PaletteSwatch.LampGlass }, MeshChecks.Swatches(glow.Mesh.Geometry),
                     glow.Name);
             }
+        }
+
+        [Test]
+        public void DeckHatch_IsACrewDoorOnItsHinge_ThatItsMotorSwingsOut()
+        {
+            ModelNode lander = BaseModelBuilder.CreateLander();
+            ModelNode hatch = lander.GetDescendant(BaseModelBuilder.DeckHatchName);
+            Assert.IsTrue(lander.Children.Contains(hatch), "the hatch hangs right under the lander");
+            Assert.AreEqual(BaseModelBuilder.DeckHatchShut, hatch.LocalRotation, "shut while the station sleeps");
+            Bounds door = hatch.Mesh.Geometry.Bounds;
+            Assert.AreEqual(0.8f, door.size.x, 0.03f, "a crew door, 0.8 m wide");
+            Assert.AreEqual(1.85f, door.size.y, 0.03f, "and 1.85 m tall");
+            float deck = lander.GetDescendant("LiftTop").LocalPosition.y;
+            Assert.AreEqual(deck, hatch.LocalPosition.y, 0.05f, "it opens onto the deck, where the lift stops");
+            Vector3 farEdge = new Vector3(door.max.x, 0f, door.max.z);
+            Vector3 shut = hatch.LocalPosition + farEdge;
+            Vector3 open = hatch.LocalPosition + BaseModelBuilder.DeckHatchOpen * farEdge;
+            Assert.Greater(open.z, shut.z + 0.6f, "the motor swings it out onto the deck, clearing the doorway");
+            Vector3 glass = hatch.GetDescendant(BaseModelBuilder.PortholeName).Mesh.Geometry.Bounds.center;
+            Assert.AreEqual(1.5f, glass.y, 0.05f, "the porthole sits at a person's eye height");
+            Assert.IsNotNull(hatch.GetDescendant("Weather_Dust"), "dusty while it sleeps");
+        }
+
+        [Test]
+        public void LightTable_StandsInTheDoorway_AtTheLensHeight_LitFromUnderThePaper()
+        {
+            ModelNode lander = BaseModelBuilder.CreateLander();
+            ModelNode hatch = lander.GetDescendant(BaseModelBuilder.DeckHatchName);
+            ModelNode table = lander.GetDescendant(BaseModelBuilder.LightTableName);
+            Assert.IsTrue(lander.Children.Contains(table));
+            float deck = lander.GetDescendant("LiftTop").LocalPosition.y;
+            Vector3 centre = table.LocalPosition;
+            Assert.That(centre.y - deck, Is.InRange(0.8f, 1.3f), "07's lens on the deck looks onto it");
+            Assert.Less(Mathf.Abs(centre.x - (hatch.LocalPosition.x + 0.4f)), 0.05f, "centred in the doorway");
+            Assert.Less(centre.z, hatch.LocalPosition.z, "inside, behind the hatch");
+            Vector3 facing = table.LocalRotation * Vector3.forward;
+            Assert.Greater(facing.z, 0.5f, "its top faces out through the doorway");
+            Assert.Greater(facing.y, 0.3f, "tipped back so the lens looks down onto it");
+            ModelNode glow = table.GetDescendant(BaseModelBuilder.LightTableGlowName);
+            Assert.AreEqual(ModelMaterial.PaletteGlowOff, glow.Material, "dark until the map wakes");
+            CollectionAssert.AreEqual(new[] { PaletteSwatch.LampGlass }, MeshChecks.Swatches(glow.Mesh.Geometry));
+            Bounds panel = glow.Mesh.Geometry.Bounds;
+            Bounds sheet = table.GetDescendant(BaseModelBuilder.MapSheetName).Mesh.Geometry.Bounds;
+            Assert.GreaterOrEqual(sheet.min.z, panel.max.z - 1e-4f, "the paper lies on the lit panel");
+            Assert.Less(sheet.size.x, panel.size.x, "a rim of light shows round the paper");
+        }
+
+        [Test]
+        public void ChartPen_DrawsAcrossThePaper_WithThePlottersOwnPenHead()
+        {
+            ModelNode table = BaseModelBuilder.CreateLander().GetDescendant(BaseModelBuilder.LightTableName);
+            ModelNode carriage = table.GetDescendant(BaseModelBuilder.ChartPenCarriageName);
+            ModelNode head = carriage.GetDescendant(BaseModelBuilder.ChartPenHeadName);
+            Bounds sheet = table.GetDescendant(BaseModelBuilder.MapSheetName).Mesh.Geometry.Bounds;
+            Vector3 start = carriage.LocalPosition;
+            Vector3 end = start + new Vector3(BaseModelBuilder.ChartDrawWidth, BaseModelBuilder.ChartDrawHeight, 0f);
+            foreach (Vector3 corner in new[] { start, end })
+            {
+                Assert.That(corner.x, Is.InRange(sheet.min.x, sheet.max.x), "the pen stays on the paper across");
+                Assert.That(corner.y, Is.InRange(sheet.min.y, sheet.max.y), "and up");
+            }
+
+            float tip = start.z + head.Mesh.Geometry.Bounds.min.z;
+            Assert.AreEqual(sheet.max.z, tip, 0.004f, "the pen's tip touches the paper");
+            ModelNode plotterHead = BaseModelBuilder.CreateRoverBay().GetDescendant(BaseModelBuilder.PenHeadName);
+            Assert.AreEqual(plotterHead.Mesh.Geometry.TriangleCount, head.Mesh.Geometry.TriangleCount,
+                "the chart pen reuses the plotter's pen head");
+            CollectionAssert.Contains(MeshChecks.Swatches(table.GetDescendant(BaseModelBuilder.ChartPenName).Mesh
+                .Geometry), PaletteSwatch.Honey, "brass, the plotter's smaller sibling");
         }
 
         [Test]
