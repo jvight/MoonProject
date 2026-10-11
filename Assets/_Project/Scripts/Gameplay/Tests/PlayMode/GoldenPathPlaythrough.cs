@@ -1497,14 +1497,24 @@ namespace MoonProject.Gameplay.PlayModeTests
             End($"Drive home with Tilly ({distance:F0} m)", $"she stayed within {farthest:F0} m of 07, then greeted");
         }
 
+        /// <summary>
+        /// Out toward the garage, the route's next trip: Tilly spots it on the way, unless it already shows on the
+        /// sonar (a ping, or Tilly on the way home, can find it first on the reshaped basin).
+        /// </summary>
         private IEnumerator TillySpotsOnTheNextTrip(SalvageSite undiscovered)
         {
             Begin();
             Vector3 home = _context.Get<IWorldLayout>().BasePosition;
             Assert.IsNotNull(undiscovered, "the garage stands out on the basin");
-            Assert.IsTrue(undiscovered.AnswersSonar && !undiscovered.Discovered &&
-                          undiscovered.Gate.IsOpen(_context.Get<IRoverAbilities>()),
-                "the garage still waits to be found, open to 07 as it is");
+            Assert.IsTrue(undiscovered.AnswersSonar, "the garage answers the sonar");
+            Assert.IsTrue(undiscovered.Gate.IsOpen(_context.Get<IRoverAbilities>()), "the garage is open to 07");
+            if (undiscovered.Discovered)
+            {
+                End("Next trip: the garage is already on the sonar",
+                    Spotted(undiscovered) ? "Tilly spotted it on the way home" : "a ping reached it");
+                yield break;
+            }
+
             Vector3 toSite = undiscovered.Position - home;
             toSite.y = 0f;
             Vector3 stand = undiscovered.Position - toSite.normalized * SpotStandOff;
