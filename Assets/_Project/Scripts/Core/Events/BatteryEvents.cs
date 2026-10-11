@@ -88,4 +88,20 @@ namespace MoonProject.Core.Events
         /// <summary>The pad of the nearest charger that works now: the dock or a lit mast.</summary>
         public Vector3 NearestLitCharger { get; }
     }
+
+    /// <summary>
+    /// The charge dropped below the reveal share for the first time in this game (docs/features/M3-20 "How 07 shows
+    /// it"): UI's HUD arc around the compass exists from now on (it still hides while the cells are full and while 07
+    /// works the beam). Published by Gameplay once, and once more at start with <see cref="Restored"/> true when a
+    /// loaded game had already revealed it.
+    /// </summary>
+    public readonly struct BatteryArcRevealed
+    {
+        public BatteryArcRevealed(bool restored)
+        {
+            Restored = restored;
+        }
+
+        public bool Restored { get; }
+    }
 }
