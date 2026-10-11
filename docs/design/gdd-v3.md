@@ -489,3 +489,21 @@ Also adopted from the review:
 - the calm crawl camera;
 - the lamp-pulse hand-off, and the porthole lamps per node;
 - the scoped 0.5.
+
+## 12. Amendments from Subnautica (owner, 2026-10-11)
+The owner pointed to Subnautica as a reference. Its spine is ours: a limited range (oxygen there, the battery here),
+upgrades to go farther, no minimap, landmarks and radio as guidance, a base that is truly home. The owner adopted four
+of its lessons. They change 0.6 onward; **0.5's scope is unchanged** (phased releases).
+
+| # | Lesson | Ours | Ver |
+|---|---|---|---|
+| A1 | **Blueprint fragments.** A blueprint is learned by scanning 2–4 fragments spread through a site, so every site is explored fully and "almost there" pulls the player on. | From 0.6, a kit's blueprint is split into 2–4 fragments in one site (or one region for big kits). 07 scans each with its lens (the sonar-and-look verb, no new button). The lab's reader shows the partial tape (1/3, 2/3) and decodes when the set is complete; the board's pin shows the count. 0.5's single tubes stay as they are. | 0.6 |
+| A2 | **A great wreck seen from the start and revisited with each new tool** (the Aurora). | **Kestrel-3 becomes our Aurora.** 0.5: its outer hull and the Warm Headlamp heart (built). 0.6: a sealed hatch is visible and named on the chart, a promise. 0.7: the Thermal Cutter opens the sealed vault (Circuitry, a sealed data core for Lab Reader II, a crew log). 0.8: its core holds the Power Cell's last part, so the Peak climb starts from the first wreck the player ever saw. | 0.6–0.8 |
+| A3 | **Radio that guides softly**: a caught signal gives a place without a quest log. | When the radio, Bell or a newly lit mast catches a signal, Kenji's chart pen draws a pencil mark on the survey chart (a cross, a circle, a small note in Ines's hand), and the place's pillar rises once. Never an arrow or HUD marker; tier-2 finds stay unnamed (ruling 16) — the mark is a place, not a task. | 0.6 |
+| A4 | **A mid-game emotional turn** (the Sunbeam). | Midway through the Link target, the half-repaired network catches Earth for a few seconds: static, a fragment of Ro's station jingle, a voice too faint to read, then gone. The lab's panel lights the Dish row's first lamp as a question mark. Sad but warm (pillar 6): it turns "repair the dish" from a task into a wish. No threat, no timer. | 0.7 |
+
+**Proposed, not yet decided** (backlog): each region's own light and sound identity with darkness as awe (a great
+wreck's silhouette slowly revealed in the floodlights, 0.7); Atlas towing a mobile charger as a moving base (the
+Cyclops idea, 0.7).
+
+**Not taken:** hunger and thirst, predators, losing items on failure, resource grind, free-form building UI.
