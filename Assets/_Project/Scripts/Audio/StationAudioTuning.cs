@@ -85,6 +85,9 @@ namespace MoonProject.Audio
         [Tooltip("Volume scale of the chime as a find is decoded.")]
         [Range(0f, 1f)] [SerializeField] private float _decodeChimeVolume = 0.7f;
 
+        [Tooltip("Volume scale of the warm chord as a recovery target's row completes (docs/features/M3-21).")]
+        [Range(0f, 1f)] [SerializeField] private float _rowChordVolume = 0.75f;
+
         [Tooltip("Volume scale of the pencil hiss as a place blinks seen on the crew's map.")]
         [Range(0f, 1f)] [SerializeField] private float _mapPencilVolume = 0.5f;
 
@@ -195,6 +198,7 @@ namespace MoonProject.Audio
         public float ReelVolume => _reelVolume;
         public float ReelFade => _reelFade;
         public float DecodeChimeVolume => _decodeChimeVolume;
+        public float RowChordVolume => _rowChordVolume;
         public float MapPencilVolume => _mapPencilVolume;
         public float MapPenVolume => _mapPenVolume;
         public float TableHumVolume => _tableHumVolume;
