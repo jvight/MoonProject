@@ -219,4 +219,21 @@ namespace MoonProject.Core.Events
 
         public bool IsStargazing { get; }
     }
+
+    /// <summary>
+    /// 07's wake reached a beat (docs/design/cutscenes.md §1): the opening on a fresh game, the short wake on a loaded
+    /// one. <see cref="Hurried"/> is true once the player's drive input has hurried the wake, so cues can be shorter.
+    /// </summary>
+    public readonly struct RoverWakeBeatReached
+    {
+        public RoverWakeBeatReached(WakeBeat beat, bool hurried)
+        {
+            Beat = beat;
+            Hurried = hurried;
+        }
+
+        public WakeBeat Beat { get; }
+
+        public bool Hurried { get; }
+    }
 }
