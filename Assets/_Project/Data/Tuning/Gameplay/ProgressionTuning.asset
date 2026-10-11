@@ -41,6 +41,8 @@ MonoBehaviour:
     _siteId: site.kestrel
   - _kitId: rover.boost_coils
     _siteId: site.drill
+  - _kitId: rover.cell_pack
+    _siteId: relay.2
   _towerParts:
   - _partId: Part_TowerCoil
     _towerLevel: 1

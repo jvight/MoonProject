@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 using MoonProject.Core;
 using MoonProject.Core.Events;
 
@@ -27,10 +28,14 @@ namespace MoonProject.Gameplay
         private readonly Func<string, string> _siteOfRelic;
         private readonly string _fromStart;
         private readonly IDisposable _surfaced;
+        private readonly IDisposable _restored;
 
         /// <param name="kits">Every kit the bay builds.</param>
         /// <param name="fromStart">The kit pinned from the start.</param>
-        /// <param name="tubes">Where the other kits' tubes lie.</param>
+        /// <param name="tubes">
+        /// Where the other kits' tubes lie: a salvage site (found as its heart's relic surfaces) or a relay mast (found
+        /// in its service cabinet as the mast comes back to life, <see cref="RelayRestored"/>).
+        /// </param>
         /// <param name="siteOfRelic">The salvage site whose heart held a relic (by relic id), or null.</param>
         public Blueprints(EventBus events, IEnumerable<string> kits, string fromStart, IEnumerable<BlueprintTube> tubes,
             Func<string, string> siteOfRelic)
@@ -59,6 +64,7 @@ namespace MoonProject.Gameplay
             _fromStart = fromStart;
             ResetKnown();
             _surfaced = events.Subscribe<RelicSurfaced>(OnSurfaced);
+            _restored = events.Subscribe<RelayRestored>(OnRelayRestored);
         }
 
         public bool IsPinned(string upgradeId)
@@ -194,6 +200,7 @@ namespace MoonProject.Gameplay
         public void Dispose()
         {
             _surfaced.Dispose();
+            _restored.Dispose();
         }
 
         private void ResetKnown()
@@ -233,7 +240,18 @@ namespace MoonProject.Gameplay
 
         private void OnSurfaced(RelicSurfaced surfaced)
         {
-            string site = _siteOfRelic(surfaced.RelicId);
+            Find(_siteOfRelic(surfaced.RelicId), surfaced.Position);
+        }
+
+        /// <summary>A mast comes back to life: its service cabinet opens on the tube it kept.</summary>
+        private void OnRelayRestored(RelayRestored restored)
+        {
+            Find(restored.RelayId, restored.Position);
+        }
+
+        /// <summary>The tube kept at <paramref name="site"/>, if any and not yet found, rides home on 07's back.</summary>
+        private void Find(string site, Vector3 position)
+        {
             if (site == null || !_kitAtSite.TryGetValue(site, out string kit) || _pinned.Contains(kit) ||
                 _carried.Contains(kit) || _reading.Contains(kit))
             {
@@ -241,7 +259,7 @@ namespace MoonProject.Gameplay
             }
 
             _carried.Add(kit);
-            _events.Publish(new BlueprintFound(kit, site, surfaced.Position));
+            _events.Publish(new BlueprintFound(kit, site, position));
         }
     }
 }

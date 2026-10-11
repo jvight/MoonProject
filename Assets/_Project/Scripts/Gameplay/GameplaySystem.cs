@@ -247,7 +247,7 @@ namespace MoonProject.Gameplay
             if (tubeSite != null)
             {
                 Debug.LogError($"{nameof(GameplaySystem)}: a blueprint tube lies at '{tubeSite}', which is no " +
-                               "salvage site.", this);
+                               "salvage site or relay mast.", this);
                 enabled = false;
                 return;
             }
@@ -404,7 +404,7 @@ namespace MoonProject.Gameplay
         {
             foreach (BlueprintTube tube in _progression.Tuning.Tubes)
             {
-                bool found = false;
+                bool found = _relays.Reach.IndexOf(tube.SiteId) > StationReach.Home;
                 foreach (SalvageSite site in _salvage.Sites)
                 {
                     found |= site.Id == tube.SiteId;

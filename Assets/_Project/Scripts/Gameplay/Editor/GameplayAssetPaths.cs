@@ -39,6 +39,7 @@ namespace MoonProject.Gameplay.Editor
         public const string CargoCradleUpgrade = UpgradeFolder + "/Upgrade_rover_cargo_cradle.asset";
         public const string WarmHeadlampUpgrade = UpgradeFolder + "/Upgrade_rover_warm_headlamp.asset";
         public const string BoostCoilsUpgrade = UpgradeFolder + "/Upgrade_rover_boost_coils.asset";
+        public const string CellPackUpgrade = UpgradeFolder + "/Upgrade_rover_cell_pack.asset";
         public const string FriendFolder = ContentFolder + "/Friends";
         public const string FriendCatalog = ContentFolder + "/FriendCatalog.asset";
         public const string CassetteFolder = ContentFolder + "/Cassettes";

@@ -69,6 +69,8 @@ namespace MoonProject.Gameplay.Editor
                 GameplayAssetPaths.WarmHeadlampUpgrade);
             RoverKit("rover.boost_coils", SalvageEconomy.BoostCoils, RoverAbility.BoostCoils,
                 GameplayAssetPaths.BoostCoilsUpgrade);
+            RoverKit("rover.cell_pack", SalvageEconomy.CellPack, RoverAbility.CellPack,
+                GameplayAssetPaths.CellPackUpgrade);
         }
 
         private static void RoverKit(string id, Recipe recipe, RoverAbility ability, string path)

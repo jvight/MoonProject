@@ -84,12 +84,14 @@ namespace MoonProject.Gameplay
         [Range(0, 40)] [SerializeField] private int _letterCount = 10;
 
         [Header("Blueprints")]
-        [Tooltip("Where the other kits' blueprint tubes lie: each in a salvage site's heart, found with its relic.")]
+        [Tooltip("Where the other kits' blueprint tubes lie: in a salvage site's heart, found with its relic, or in a " +
+                 "relay mast's service cabinet, which opens as the mast comes back to life.")]
         [SerializeField] private BlueprintTube[] _tubes =
         {
             new BlueprintTube("rover.cargo_cradle", "site.garage"),
             new BlueprintTube("rover.warm_headlamp", "site.kestrel"),
             new BlueprintTube("rover.boost_coils", "site.drill"),
+            new BlueprintTube("rover.cell_pack", "relay.2"),
         };
 
         [Header("The tower's story parts (P1)")]
