@@ -26,6 +26,8 @@ Material:
     m_Ints: []
     m_Floats:
     - _Intensity: 0.9
+    - _MinAngleFrom: 60
+    - _MinAngleFull: 80
     - _MinAngleTan: 0.0052360357
     - _Radius: 1.2
     m_Colors:

@@ -54,9 +54,6 @@ namespace MoonProject.World
         private const string Garage = WorldAnchorIds.SitePrefix + "garage";
         private const string Lander = WorldAnchorIds.SitePrefix + "lander";
 
-        /// <summary>The crew's antenna farm (M3-18 L7): toppled dish frames in the mid-west, a place for the lookout.</summary>
-        public const string AntennaFarm = "place.antenna_farm";
-
         // The antenna farm stands at about 270 degrees, 120 m out (the level review's L7), on a small clear patch.
         private const float AntennaFarmBearing = 270f;
         private const float AntennaFarmDistance = 120f;
@@ -138,7 +135,7 @@ namespace MoonProject.World
             float bayLateral = settings.ChasmHalfWidth + settings.LanderBayDepth - LanderRadius - LanderWallGap;
             anchors.Add(Make(surface, Lander, main.PointAt(bayArc) + intoBay * bayLateral, intoBay, LanderRadius));
             Vector2 farm = MoonSurface.BearingToDirection(AntennaFarmBearing) * AntennaFarmDistance;
-            anchors.Add(Make(surface, AntennaFarm, farm, farm, AntennaFarmRadius));
+            anchors.Add(Make(surface, WorldAnchorIds.PlaceAntennaFarm, farm, farm, AntennaFarmRadius));
 
             _anchors = anchors.ToArray();
             for (int i = 0; i < _anchors.Length; i++)
