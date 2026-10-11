@@ -66,31 +66,31 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// Flank lamp sockets per side along the orange stripe, one per battery cell (docs/features/M3-20): Body
-        /// children 'FlankLamp_L0..7' / 'FlankLamp_R0..7' (front to back), each with its glass 'FlankGlass_*'.
+        /// The battery light bar's segments, one per cell (docs/features/M3-20): Body children 'BatteryLamp_0..7'
+        /// (left to right along the lid's rear-top edge), each with its glass 'BatteryGlass_&lt;i&gt;'.
         /// </summary>
         public const int FlankLampCount = 8;
 
-        /// <summary>Flank lamp housing <paramref name="index"/> on the left (<paramref name="right"/> false) flank.</summary>
-        public static string FlankLamp(bool right, int index)
+        /// <summary>Light-bar segment <paramref name="index"/> (0..7, left first).</summary>
+        public static string FlankLamp(int index)
         {
-            return "FlankLamp_" + FlankSocket(right, index);
+            return "BatteryLamp_" + Segment(index);
         }
 
-        /// <summary>The glass of a flank lamp: its own glow renderer on M_LowPolyGlowOff (WarmLamp).</summary>
-        public static string FlankGlass(bool right, int index)
+        /// <summary>A segment's glass: its own glow renderer on M_LowPolyGlowOff (WarmLamp).</summary>
+        public static string FlankGlass(int index)
         {
-            return "FlankGlass_" + FlankSocket(right, index);
+            return "BatteryGlass_" + Segment(index);
         }
 
-        private static string FlankSocket(bool right, int index)
+        private static int Segment(int index)
         {
             if (index < 0 || index >= FlankLampCount)
             {
-                throw new ArgumentOutOfRangeException(nameof(index), index, "Flank lamp index is 0..7.");
+                throw new ArgumentOutOfRangeException(nameof(index), index, "Battery lamp index is 0..7.");
             }
 
-            return (right ? "R" : "L") + index;
+            return index;
         }
 
         /// <summary>Springs of art's HoverCoils prefab (mounted on <see cref="CoilSocket"/>).</summary>

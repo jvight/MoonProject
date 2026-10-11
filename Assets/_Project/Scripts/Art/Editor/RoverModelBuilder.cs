@@ -95,11 +95,11 @@ namespace MoonProject.Art.Editor
         public const string PennantName = "Pennant";
 
         /// <summary>
-        /// The battery's flank lamps (docs/features/M3-20): Body children "FlankLamp_L0..7" and "FlankLamp_R0..7"
-        /// (front to back), each holding its glass "FlankGlass_*" on the glow-off material.
+        /// The battery's light bar (docs/features/M3-20): Body children "BatteryLamp_0..7" (left to right along the
+        /// lid's rear-top edge), each holding its glass "BatteryGlass_<i>" on the glow-off material.
         /// </summary>
-        public const string FlankLampPrefix = "FlankLamp_";
-        public const string FlankGlassPrefix = "FlankGlass_";
+        public const string BatteryLampPrefix = "BatteryLamp_";
+        public const string BatteryGlassPrefix = "BatteryGlass_";
 
         /// <summary>Writes the rover meshes and prefab (the palette material must exist).</summary>
         [MoonBuilder("Art/Rover", 120)]
@@ -127,7 +127,7 @@ namespace MoonProject.Art.Editor
             ModelNode body = root.Add(new ModelNode("Body", Vector3.zero, new ModelMesh(ModelName + "_Body", shell)));
             body.Add(Gift(Decal07FreshName, Vector3.zero, ModelName + "_Decal07Fresh", RoverGiftMeshes.FreshSerial()));
             Weathering.Weather(body, ModelName, shell, BodyWeather, RoverMeshes.Rust(), RoverMeshes.DustPatches());
-            FlankLamps(body);
+            BatteryBar(body);
             var coats = new Dictionary<(ModelMesh, string), ModelMesh>();
             Grimed(root.Add(new ModelNode("Bogie_L", MirrorX(BogieHinge), bogieLeft)), coats);
             Grimed(root.Add(new ModelNode("Bogie_R", BogieHinge, bogieRight)), coats);
@@ -174,23 +174,17 @@ namespace MoonProject.Art.Editor
             return root;
         }
 
-        /// <summary>The battery's eight lamp sockets along each flank's stripe, front to back.</summary>
-        private static void FlankLamps(ModelNode body)
+        /// <summary>The battery's eight light-bar segments along the lid's rear-top edge, left to right.</summary>
+        private static void BatteryBar(ModelNode body)
         {
-            var housing = new ModelMesh(ModelName + "_FlankLamp", RoverFlankLampMeshes.Housing());
-            var glass = new ModelMesh(ModelName + "_FlankGlass", RoverFlankLampMeshes.Glass());
-            for (int side = 0; side < 2; side++)
+            var tray = new ModelMesh(ModelName + "_BatteryLamp", RoverBatteryBarMeshes.Tray());
+            var glass = new ModelMesh(ModelName + "_BatteryGlass", RoverBatteryBarMeshes.Glass());
+            for (int i = 0; i < RoverBatteryBarMeshes.SegmentCount; i++)
             {
-                bool right = side == 1;
-                string flank = right ? "R" : "L";
-                for (int i = 0; i < RoverFlankLampMeshes.LampCount; i++)
-                {
-                    ModelNode lamp = body.Add(new ModelNode(FlankLampPrefix + flank + i,
-                        RoverFlankLampMeshes.LampPosition(right, i), RoverFlankLampMeshes.LampRotation(right),
-                        housing));
-                    lamp.Add(new ModelNode(FlankGlassPrefix + flank + i, RoverFlankLampMeshes.GlassCentre,
-                        Quaternion.identity, glass, ModelMaterial.PaletteGlowOff));
-                }
+                ModelNode segment = body.Add(new ModelNode(BatteryLampPrefix + i,
+                    RoverBatteryBarMeshes.SegmentPosition(i), RoverBatteryBarMeshes.SegmentRotation, tray));
+                segment.Add(new ModelNode(BatteryGlassPrefix + i, RoverBatteryBarMeshes.GlassCentre,
+                    Quaternion.identity, glass, ModelMaterial.PaletteGlowOff));
             }
         }
 

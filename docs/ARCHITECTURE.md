@@ -165,10 +165,10 @@ RoverModel additions:
   SolarWing/CellFilled                       the replacement cell, hidden until Tilly's gift
   Body/Decal07Fresh                          a freshly stencilled "07", hidden until Bell's gift (the faded one hides then)
   Antenna/Pennant                            small radio pennant, hidden until Bell's gift
-  Body/FlankLamp_L0..7, Body/FlankLamp_R0..7 the battery's lamp sockets (M3-20), one per cell, front to back along
-                                             each lid edge above the stripe, facing up, a little out and back
-    FlankGlass_<side><i>                     each lamp's glass: own glow renderer on M_LowPolyGlowOff (LampGlass),
-                                             lit by Rover per cell; sockets past the battery's capacity stay hidden
+  Body/BatteryLamp_0..7                      the battery's light bar (M3-20): one segment per cell, left to right
+                                             along the lid's rear-top edge, facing up and tipped back
+    BatteryGlass_<i>                         each segment's glass: own glow renderer on M_LowPolyGlowOff (LampGlass),
+                                             lit by Rover per cell; segments past the battery's capacity stay hidden
 ```
 
 Renaming or re-pivoting any node is a contract change: coordinate through the Director.

@@ -304,18 +304,15 @@ namespace MoonProject.Rover.PlayModeTests
                 parts[i] = Shape(PrimitiveType.Cube, tubeSocket, Vector3.zero, Vector3.one * 0.2f, material);
                 parts[i].name = StoryParts[i];
             }
-            int flankCount = RoverModelNodes.FlankLampCount;
-            var flankLamps = new Transform[2 * flankCount];
-            var flankGlasses = new Renderer[2 * flankCount];
+            var flankLamps = new Transform[RoverModelNodes.FlankLampCount];
+            var flankGlasses = new Renderer[RoverModelNodes.FlankLampCount];
             for (int i = 0; i < flankLamps.Length; i++)
             {
-                bool right = i >= flankCount;
-                int socket = i % flankCount;
-                var at = new Vector3(right ? 0.66f : -0.66f, 0.8f, 0.5f - socket * FlankLampSpacing);
-                flankLamps[i] = Node(RoverModelNodes.FlankLamp(right, socket), bodyNode, at);
-                Transform glass = Shape(PrimitiveType.Sphere, flankLamps[i], Vector3.zero, Vector3.one * 0.05f,
+                var at = new Vector3(0.55f, 1.08f, -0.05f - i * FlankLampSpacing);
+                flankLamps[i] = Node(RoverModelNodes.FlankLamp(i), bodyNode, at);
+                Transform glass = Shape(PrimitiveType.Cube, flankLamps[i], Vector3.zero, new Vector3(0.04f, 0.01f, 0.05f),
                     material);
-                glass.name = RoverModelNodes.FlankGlass(right, socket);
+                glass.name = RoverModelNodes.FlankGlass(i);
                 flankGlasses[i] = glass.GetComponent<MeshRenderer>();
             }
 
