@@ -1,11 +1,11 @@
-# Lofi Lunar: Thiết kế game v3 (bản xem duyệt cho chủ dự án)
+# Lofi Lunar: Thiết kế game v3 (bản đã duyệt)
 
-> Bản tóm gọn bằng tiếng Việt của `docs/design/gdd-v3.md`, cùng cấu trúc 11 phần. Đây là bản nháp, chờ anh/chị duyệt.
-> Hai quyết định của anh/chị là nền móng cho mọi thứ dưới đây:
+> **Đã duyệt ngày 2026-10-11.** Bản tiếng Việt của `docs/design/gdd-v3.md`, cùng cấu trúc 11 phần, theo các câu trả lời
+> của anh/chị và bản nhận xét của phiên thiết kế game. Hai quyết định nền móng của anh/chị:
 > - **phát triển là trên hết:** nâng cấp 07, mở khoá và chế tạo công nghệ, đi ngày càng xa;
 > - **pin là nhiên liệu:** 07 phải về sạc, và nâng cấp giúp nó đi xa dần.
 >
-> Không khí êm đềm vẫn giữ nguyên: không chết, không mất đồ, không bị phạt.
+> Không khí êm đềm vẫn giữ nguyên.
 
 ## 1. Lời hứa và các trụ cột
 **Lời hứa:** một chiếc rover nhỏ, cũ và mệt, thức dậy trên một mặt trăng tối. Nó tự xây lại chính mình và trạm của
@@ -15,187 +15,226 @@ giờ thấy căng thẳng.
 **Trụ cột:**
 1. **Lớn lên và đi xa hơn:** chuyến đi nào cũng làm 07 hoặc căn cứ mạnh hơn.
 2. **Êm đềm:** hết pin không phải là thất bại.
-3. **Ấm áp giữa lạnh lẽo:** trạm sạc, nhà và bạn bè là những ánh đèn ấm.
-4. **Chạm đâu cũng thành nhạc:** cả lúc pin sạc đầy cũng có tiếng nhạc.
-5. **Khối hình rõ ràng:** món đồ nào lắp lên 07 cũng nhìn thấy từ 30 m.
-6. **Cô đơn mà bình yên:** chuẩn hình ảnh và âm thanh anh/chị đặt ra.
+3. **Tự do khám phá:** chỉ vài mục tiêu chính có đánh dấu tiến độ, còn lại đi đâu, làm gì trước cũng được.
+4. **Ấm áp giữa lạnh lẽo:** trạm sạc, nhà và bạn bè là những ánh đèn ấm.
+5. **Chạm đâu cũng thành nhạc, món nào cũng nhìn rõ:** đồ lắp lên 07 và công trình đều nhìn thấy từ 30 m.
+6. **Cô đơn mà bình yên.**
 
 ## 2. Vòng lặp chính
-- **Vài giây:** thấy một ánh sáng → dò sóng → lái tới → dùng tia cắt, đào, kéo → nhặt được đồ. Mỗi việc tốn một chút
-  pin, và đèn pin bên hông 07 tắt bớt một ô.
-- **Một chuyến (5–15 phút):** xem tầm pin và các trạm sạc trên bản đồ → ra ngoài → trục vớt vật liệu cùng "món chính"
-  của xác tàu (một bản vẽ hoặc một linh kiện) → ghé cột tiếp sóng để sạc thêm → về nhà, giải mã ở phòng lab, chế tạo ở
-  trạm sửa xe → buổi tối ở đế sạc: pin đầy, một ánh sáng mới hiện ở chân trời.
-- **Một buổi chơi (20–40 phút):** 2–3 chuyến, luôn có một bước nhảy về khả năng: món đồ mới, pin lớn hơn, một cột sạc
+- **Vài giây:** thấy ánh sáng → dò sóng → lái tới → dùng tia làm việc → nhặt được đồ. Đèn pin bên hông 07 tắt bớt dần.
+- **Một chuyến (5–15 phút):** xem tầm pin và trạm sạc trên bản đồ → ra ngoài → trục vớt vật liệu cùng "món chính" của
+  xác tàu (bản vẽ hoặc linh kiện) → ghé cột sạc → về nhà, giải mã ở phòng lab, chế tạo ở trạm sửa xe → buổi tối ở đế
+  sạc: pin đầy, một ánh sáng mới ở chân trời.
+- **Một buổi chơi:** 2–3 chuyến, luôn có một bước tiến lớn: món đồ mới, pin lớn hơn, một trạm sạc mới, một công trình
   mới hoặc một cấp tháp radio.
-- **Một phiên bản (1–2 giờ):** thấy vùng mới → cần công nghệ và tầm pin → chế tạo → vào vùng → thắp cột ở đó → vật
-  liệu bậc mới → thấy vùng kế tiếp.
-- **Cả game:** nhiệm vụ của 07 đi qua 5 chặng: **Điện → Mạng lưới → Tầm với → Đường truyền → Liên lạc**.
+- **Cả game:** bốn mục tiêu chính, **Điện → Nối mạng → Sửa chảo → Trả lời Trái Đất**, đi theo đường nào là do người
+  chơi chọn.
 
 ## 3. Pin và tầm đi
-- **Không bao giờ mắc kẹt.** Hết pin thì 07 chuyển sang chế độ bò chậm, im lặng, và luôn về được trạm sạc gần nhất.
-  Một ô pin dự phòng của Kenji giữ cho 07 không bao giờ dừng hẳn. Tilly có thể bay ra kéo 07 về nhanh hơn. Không mất
-  đồ, không bị phạt, chỉ tốn chút thời gian.
-- **Đứng yên không tốn pin:** ngắm sao và nghỉ đều miễn phí. Có cánh pin mặt trời thì đứng dưới nắng còn được sạc chậm.
-- **Cái gì tốn pin:** lái xe (một ô pin chạy được khoảng 150 m), dùng tia, nhảy, tăng tốc, bật đèn trong bóng tối. Dò
-  sóng gần như không tốn gì.
-- **Trạm sạc:** đế sạc ở nhà (đầy pin trong khoảng 4 giây) và **mọi cột tiếp sóng đã thắp**. Thắp thêm cột chính là
-  nới rộng tầm đi. Nhảy sóng giữa các cột đã sáng thì miễn phí.
-- **Nhìn thấy pin:** một dãy đèn nhỏ màu hổ phách dọc thân 07, mỗi đèn là một ô pin; pin to hơn thì có thêm đèn. Khi
-  pin yếu, mắt 07 mờ đi một chút và cánh pin rũ xuống. Trên màn hình chỉ có một vòng nhỏ quanh la bàn.
+**Luật êm đềm:**
+- **Không chết, không mất đồ.**
+- **Việc đang làm luôn được làm xong:** đang cắt, đang khâu, đang kéo mà hết pin thì vẫn xong việc rồi mới chuyển sang
+  bò chậm. Không đủ pin để nhảy thì 07 không tích lực, cuộn lò xo xèo nhẹ ở mép vực, không bao giờ rơi giữa chừng.
+- **Không bao giờ mắc kẹt:** hết pin thì 07 bò chậm (35% tốc độ) về trạm sạc gần nhất bằng ô pin dự phòng của Kenji,
+  ô pin không bao giờ cạn. Sau khoảng 5 giây, **Tilly tự bay ra, soi đèn dẫn đường**, và 07 đi nhanh hơn (55%). Không
+  cần dây kéo.
+- **Trạm sạc không bao giờ quá xa:** ở bản 0.5, mọi chỗ đều cách trạm sạc không quá 300 m; bò về lâu nhất khoảng 2
+  phút, có Tilly thì chưa tới 1 phút rưỡi.
+- **Đứng yên không tốn pin.** Đứng dưới nắng thì pin hồi chậm, nhưng **chỉ tới 1 ô**: đủ để về nhà, không bao giờ phải
+  ngồi chờ.
 - **Cảnh báo nhẹ và sớm:**
-  - 30%: một tiếng nhạc nhỏ, và cột sạc gần nhất sáng lên ở chân trời;
-  - 15%: 07 ngoái nhìn về phía trạm sạc;
-  - không có còi báo động, không có màu đỏ.
-- **Tầm đi theo phiên bản:**
-  - 0.5: 4 ô pin, quanh nhà khoảng 150 m; có thêm cột sạc và bộ pin II thì phủ cả lòng chảo và hẻm núi;
-  - 0.6: 8 ô, đi được bậc thềm vành hố;
-  - 0.7: 11 ô, xuống được hố tối;
-  - 0.8: 14 ô, đủ cho con đường dài nhất, lên đỉnh núi.
-- **Những lúc "cần thêm tầm" ở 0.5:**
-  - lần đầu đi tìm linh kiện cho Tilly: học được rằng đế sạc nạp pin;
-  - tới mép vực với ô pin cuối cùng: thắp cột ở cửa hẻm, học được rằng cột chính là trạm sạc, và trong tủ của cột có
-    bản vẽ bộ pin II.
+  - 30%: một tiếng nhạc nhỏ, và cột sạc gần nhất sáng lên ở chân trời. Lời nhắc chỉ nhắc tên những trạm đã thắp hoặc
+    nhà.
+  - 15%: 07 ngoái nhìn về phía trạm sạc.
+  - Không có còi, không có màu đỏ.
+
+**Con số:**
+- một ô pin chạy được khoảng 120 m; khởi đầu có 4 ô;
+- dùng tia khoảng 60 giây là hết một ô;
+- kéo đồ chỉ tốn như lái xe thêm một phần tư;
+- nhảy tốn một phần tư ô;
+- dò sóng gần như miễn phí.
+
+**Trạm sạc:**
+- đế sạc ở nhà (đầy pin trong khoảng 4 giây);
+- mọi cột tiếp sóng đã thắp, mỗi cột có một bệ sạc rộng 4 m;
+- từ 0.6, các **cột sạc dã chiến** do người chơi tự xây.
+
+**Nhìn thấy pin:**
+- một dãy tối đa 8 đèn nhỏ màu hổ phách dọc thân 07;
+- khi pin yếu, mắt 07 mờ đi và cánh pin rũ xuống;
+- trên màn hình có một vòng nhỏ quanh la bàn, và vòng này tự ẩn khi 07 đang làm việc.
+
+**Tầm đi:**
+- 0.5: khoảng 140 m lúc đầu, rồi 220 m từ bất kỳ trạm sạc nào;
+- 0.6: khoảng 370 m;
+- 0.7: khoảng 500 m;
+- 0.8: khoảng 650 m.
+
+**Những lúc "cần thêm tầm" ở 0.5:**
+- lúc đi tìm linh kiện cho Tilly: học được rằng đế sạc nạp pin;
+- tới mép vực: học được rằng cột sạc nạp pin;
+- xác vệ tinh Kestrel nằm ngoài tầm 4 ô pin: thắp cột gần đó, hoặc lắp bộ pin II.
 
 ## 4. Cây công nghệ, chế tạo và vật liệu
-- **Cách mở khoá một món:** tìm bản vẽ hoặc linh kiện trong lõi một xác tàu → mang về, đi thang nâng lên phòng lab →
-  máy đọc giải mã trong khoảng 4 giây, và một ô sáng lên trên bảng công nghệ → trạm sửa xe vẽ bản thiết kế, 07 nạp vật
-  liệu, cánh tay máy lắp đồ lên 07 → 07 thay đổi thấy rõ.
-- **Vật liệu 3 bậc:**
-  - phế liệu: kim loại, dây điện, quang học (0.5);
-  - hợp kim, mạch điện, tinh thể (0.6–0.7);
-  - siêu dẫn (0.8).
+**Cách mở khoá một món:**
+1. Tìm bản vẽ hoặc linh kiện trong xác tàu.
+2. Đi thang nâng lên phòng lab. Máy đọc giải mã trong khoảng 4 giây, một ô sáng lên trên bảng công nghệ, và ô cửa sổ
+   lớn của tàu có thêm một ngọn đèn.
+3. Một luồng sáng chạy dọc dây cáp sang trạm sửa xe, máy vẽ bắt đầu vẽ bản thiết kế.
+4. 07 nạp vật liệu, cánh tay máy lắp đồ lên.
 
-  Thêm vào đó là các linh kiện có tên riêng (cuộn dây, biến áp, động cơ servo, con quay, cụm thấu kính, tản nhiệt, ô
-  năng lượng). Từ 0.6, máy chế tạo ở nhà làm lại được những linh kiện đã từng tìm thấy, nên không bao giờ bị kẹt vì
-  thiếu một món.
-- **30 món nâng cấp trong 6 nhánh:**
-  - **Di chuyển:** nhảy xa, bánh từ tính leo vách, lướt;
-  - **Tia:** giỏ chở đồ, kéo vật nặng, cắt vỏ kín, tời neo;
-  - **Cảm biến:** đèn pha, sonar rộng, quét sâu, đèn pha mạnh, ống ngắm sao;
-  - **Năng lượng & tầm đi:** trống tụ điện, bộ pin II và III, bánh xe tiết kiệm điện, cánh pin đôi, gói pin mở rộng,
-    lõi năng lượng;
-  - **Bạn bè:** mô-đun trinh sát cho Tilly, bộ chở hàng cho Atlas, hai drone em gái;
-  - **Trạm:** tháp radio 3 cấp, mạng cột sạc, cánh tay trạm sửa xe II, máy chế tạo, máy đọc II, chảo ăng-ten lớn.
+**Vật liệu 3 bậc:**
+- phế liệu: kim loại, dây điện, quang học;
+- hợp kim, mạch điện, tinh thể;
+- siêu dẫn.
 
-  Mỗi phiên bản mở một tầng: 0.5 có 9 món (8 món đã làm xong), 0.6 có 9, 0.7 có 7, 0.8 có 5.
-- **07 lột xác dần:**
-  - lúc đầu: tàu thăm dò mệt mỏi, một cánh pin thiếu ô, ăng-ten cong, một bánh lạc loài;
-  - 0.6: cao hơn trên sáu bánh xích giống nhau, có chảo sonar;
-  - 0.7: **hai cánh pin**, đèn pha, cánh lướt;
-  - 0.8: tời neo và cửa sổ lõi năng lượng phát sáng. Một rover thám hiểm vững chãi.
+Thêm vào đó là linh kiện có tên riêng, và máy chế tạo làm lại được những linh kiện đã từng tìm thấy.
 
-  Gương mặt một mắt hiền lành không bao giờ đổi.
+**32 món nâng cấp trong 6 nhánh:**
+- **Di chuyển:** nhảy xa, bánh từ tính leo vách, lướt;
+- **Tia:** giỏ chở, kéo vật nặng, cắt vỏ kín, tời neo;
+- **Cảm biến:** đèn pha, sonar rộng, đèn pha mạnh, ống ngắm sao;
+- **Năng lượng & tầm đi:** trống tụ điện, bộ pin II và III, bánh tiết kiệm điện, cánh pin đôi, gói pin mở rộng, lõi
+  năng lượng;
+- **Bạn bè:** trinh sát cho Tilly, bộ chở hàng cho Atlas, hai drone em gái;
+- **Trạm và công trình:** tháp radio 3 cấp, mạng cột tiếp sóng, cột sạc dã chiến, máy chế tạo, cánh mở rộng cho trạm
+  sửa xe, giàn pin mặt trời, kho vật liệu, máy đọc II, chảo ăng-ten lớn.
 
-## 5. Khám phá và các vùng
-- **Mỗi vùng mở bằng một công nghệ:**
-  - hẻm Thì Thầm: nhảy xa (0.5);
-  - bậc thềm vành hố: bánh từ tính (0.6);
-  - hố tối: đèn pha mạnh (0.7);
-  - đường lên đỉnh núi: tời neo, cú lướt và Atlas dọn đá lở (0.8).
+**07 gọn gàng mà lột xác:** đồ lắp lên 07 chia vào 6 vị trí (mũi, nóc, lưng, hai bên hông, đuôi, bánh). Mỗi vị trí chỉ
+hiện một món; món sau thay thế hoặc nhập vào món trước, ví dụ đèn pha mạnh thay giàn đèn cũ, các bộ pin gộp thành một
+"xương sống pin" trên lưng. Cánh pin và cánh lướt gập lại khi chạy. 07 đi từ tàu thăm dò mệt mỏi thành rover thám hiểm
+vững chãi, gương mặt một mắt không bao giờ đổi.
 
-  Vùng nào cũng nhìn thấy được rất lâu trước khi vào được, và luôn có lối ra một chiều.
-- **Vì sao muốn đi xa hơn:**
-  - pin lớn dần;
-  - xác tàu càng xa càng giàu đồ quý;
-  - mỗi cột thắp lên là thêm một trạm sạc, một điểm nhảy sóng, radio trong trẻo và bản đồ được vẽ thêm;
-  - dụng cụ mới mở được cả những xác tàu cũ trong lòng chảo mà người chơi đã thấy từ đầu;
-  - ánh đèn đỏ trên đỉnh núi, mục tiêu cuối, luôn nằm trong tầm mắt.
+## 5. Khám phá, các vùng và thứ tự
+**Mỗi vùng mở bằng một công nghệ:**
+- hẻm Thì Thầm: nhảy xa;
+- bậc thềm vành hố: bánh từ tính;
+- hố tối: đèn pha mạnh;
+- đường lên đỉnh núi: tời neo, cú lướt và Atlas dọn đá lở.
 
-## 6. Căn cứ
-- **Đế sạc:** nạp đầy pin, lưu ngày chơi, và là "buổi tối ở đế sạc" chỉ ra ánh sáng tiếp theo.
-- **Tháp radio:** cấp điện cho nhà theo từng cấp.
-- **Tàu đổ bộ là phòng lab của phi hành đoàn.** Thang nâng dưới bụng tàu đưa 07 lên. Trong đó có:
-  - máy đọc để giải mã bản vẽ;
-  - bảng công nghệ: kế hoạch Kenji để lại cho 07, kèm bảng tiến độ của nhiệm vụ;
-  - bàn bản đồ của Ines, cho thấy tầm với và các trạm sạc;
-  - một góc nhỏ giữ kỷ vật.
+**Thứ tự do người chơi chọn:**
+- Trong mỗi vùng, xác tàu, đồ quý, bạn bè và bí mật làm trước sau tuỳ ý.
+- Sau hẻm núi, **đi bậc thềm hay hố tối trước đều được**: món mở hai vùng này chỉ cần đồ tìm ở lòng chảo và hẻm. (Các
+  bản thử 0.6 và 0.7 ra từng vùng một; đến bản 1.0 thì tự do hoàn toàn.)
+- Việc nối mạng tới đỉnh núi có hai đường, qua bậc thềm hoặc qua hố tối.
+- Đỉnh núi là chỗ duy nhất cần cả hai vùng: Atlas ở bậc thềm, cú lướt ở hố tối.
 
-  Một câu cho dễ nhớ: *nơi 07 biến những gì nó tìm được thành chính nó.*
-- **Trạm sửa xe của Kenji:** chế tạo và lắp đồ.
-- **Máy chế tạo (0.6):** làm linh kiện.
-- **Cột tiếp sóng:** trạm sạc, tầm với, nhảy sóng, và cả những lá thư chúng còn giữ.
-- **Mái vòm sinh thái (0.7, nhờ Moss):** trồng tinh thể.
-- **Chảo ăng-ten lớn (0.8):** đường truyền về Trái Đất.
-- Căn cứ lớn lên bằng máy móc, bạn bè và ánh đèn lan rộng, không phải bằng việc tự đặt thêm nhà.
+**Vì sao muốn đi xa:**
+- pin lớn dần;
+- xác tàu càng xa càng quý;
+- mỗi cột thắp và mỗi cột sạc tự xây biến chỗ xa thành gần;
+- dụng cụ mới mở được cả những xác tàu cũ đã thấy từ đầu;
+- ánh đèn đỏ trên đỉnh núi luôn trong tầm mắt.
+
+## 6. Căn cứ và công trình
+**Các trạm:**
+- đế sạc: sạc đầy, lưu ngày chơi;
+- tháp radio: cấp điện theo từng cấp;
+- **tàu đổ bộ là phòng lab của phi hành đoàn,** lên bằng thang nâng dưới bụng tàu. Trong đó có:
+  - máy đọc để giải mã;
+  - bảng công nghệ kèm **bảng tiến độ các mục tiêu chính**;
+  - bàn bản đồ, cho thấy tầm với, trạm sạc và các bệ xây;
+  - một góc kỷ vật nhỏ;
+- trạm sửa xe của Kenji: chế tạo và lắp đồ;
+- cột tiếp sóng: trạm sạc, nhảy sóng, thư cũ;
+- góc của Bell;
+- mái vòm của Moss;
+- chảo ăng-ten lớn.
+
+**Người chơi tự xây công trình trên các bệ xây có sẵn** (không đặt tự do). Bệ là một nền đá có thùng đồ Kenji đóng gói
+sẵn. 07 nạp vật liệu, khung tự bung ra, 07 khâu lại, rồi công trình sáng đèn.
+
+| Công trình | Bản | Đặt ở đâu | Để làm gì |
+|---|---|---|---|
+| Cột sạc dã chiến | 0.6 | khoảng 2 bệ mỗi vùng | sạc pin ở chỗ không có cột tiếp sóng; nâng cấp lên II ở 0.7 thì sạc nhanh gấp đôi |
+| Máy chế tạo | 0.6 | ở nhà, cạnh trạm sửa xe | làm lại linh kiện đã từng tìm thấy |
+| Cánh mở rộng trạm sửa xe | 0.6 | cạnh trạm sửa xe | lắp được đồ bậc 2 (bánh xích, cánh pin…) |
+| Giàn pin mặt trời | 0.7 | ở nhà và cạnh các cột sạc xa | cấp điện cho cột sạc nằm ngoài mạng lưới |
+| Kho vật liệu | 0.7 | một bệ mỗi vùng giữa, một ở nhà | bỏ đồ nặng lại đó thay vì kéo về; Atlas chở về kho nhà |
+| Nhà để drone | 0.8 | ở nhà | chỗ ở của hai drone em gái |
+| Phòng sơn | 1.0 | ở nhà | sơn và dán hình cho 07 |
+
+Cần cho mục tiêu chính chỉ có máy chế tạo và một cột sạc trên đường lên đỉnh núi; các công trình khác tuỳ ý.
 
 ## 7. Bạn bè
-- **Tilly (0.5):** phát hiện đồ quanh 07, **kéo 07 về khi hết pin**. Quà của cô bé: ô pin mặt trời. Về sau có mô-đun
-  trinh sát.
-- **Bell (0.5):** tín hiệu của cô dẫn tới bản vẽ và linh kiện; núm dò đài. Quà: sơn lại số 07.
-- **Atlas (0.6):** nâng đá lở và cả chảo ăng-ten lớn. Về sau chở vật liệu nặng về nhà.
-- **Moss (0.7):** trồng tinh thể ở mái vòm.
-- **Hai drone em gái (0.8):** tự gom phế liệu lặt vặt, đỡ việc vặt cho người chơi.
+- **Tilly:** phát hiện đồ quanh 07, **tự bay ra soi đèn dẫn đường khi 07 hết pin**. Quà: ô pin mặt trời. Về sau bay
+  trinh sát trước.
+- **Bell:** tín hiệu của cô dẫn tới bản vẽ và linh kiện. Quà: sơn lại số 07.
+- **Atlas:** nâng đá lở và chảo ăng-ten; chở đồ nặng từ các kho về nhà.
+- **Moss:** trồng tinh thể.
+- **Hai drone em gái:** tự gom phế liệu lặt vặt.
 
-## 8. Câu chuyện, kể lại
-- **Lý do 07 thức dậy:** khi sơ tán vì bão, phi hành đoàn để lại cho 07 hai thứ. Một là lời dặn "Cứ để radio bật".
-  Hai là một **quy trình khôi phục trạm** trong bộ nhớ: nếu còn nghe được tín hiệu từ Trái Đất, hãy dựng lại trạm và
-  trả lời.
-- Nhiều chục năm sau, một tín hiệu yếu từ Trái Đất (đoạn nhạc hiệu của Ro trong tiếng rè) đánh thức 07, và quy trình
-  bắt đầu: **Điện → Mạng lưới → Tầm với → Đường truyền → Liên lạc.**
-- Quy trình vốn tính cho cả một phi hành đoàn, nhưng 07 chỉ có một mình, nên 07 phải trở thành hơn những gì nó được
-  tạo ra, theo những bản kế hoạch dang dở của Kenji.
-- **Số phận phi hành đoàn chỉ là gia vị, hé lộ dọc đường:**
-  - các cột tiếp sóng còn giữ những tin nhắn cũ: phi hành đoàn về đến nơi an toàn, chương trình bị huỷ;
-  - rồi đến những lá thư Ro vẫn viết suốt hai mươi năm;
-  - kỷ vật và nhật ký nằm cạnh các món công nghệ.
-- **Kết thúc:** 07 leo lên đỉnh núi bằng tất cả những gì nó đã trở thành, Atlas nâng chảo ăng-ten, và đường truyền mở
-  ra. Sau một khoảng lặng, một đốm sáng trên Trái Đất nháy ba ngắn một dài: "Mình nghe thấy rồi, 07. Mình vẫn còn đây.
-  — Ro." Sau đó người chơi vẫn tiếp tục khám phá, và thư của Ro vẫn đến.
+## 8. Câu chuyện
+- **Lý do 07 thức dậy:** khi sơ tán vì bão, phi hành đoàn để lại cho 07 lời dặn "Cứ để radio bật" và một **quy trình
+  khôi phục trạm**. Nhiều chục năm sau, tín hiệu yếu từ Trái Đất đánh thức nó. Trong đoạn mở đầu, mắt 07 hiện vài chữ
+  khoảng 2 giây: "Phát hiện tín hiệu Trái Đất · Đường truyền tắt · Bắt đầu khôi phục".
+- **Bốn mục tiêu chính** có đánh dấu tiến độ trên bảng trong phòng lab: cấp điện cho trạm, nối mạng tới đỉnh núi, sửa
+  chảo ăng-ten, trả lời Trái Đất.
+- **Mọi thứ khác đều tự do,** không có danh sách nào. Thế giới tự chỉ đường: ánh lấp lánh, cột sáng, tín hiệu của Bell,
+  Tilly phát hiện.
+- **Số phận phi hành đoàn là gia vị:**
+  - các cột tiếp sóng giữ những tin nhắn cũ: phi hành đoàn về an toàn, chương trình bị huỷ;
+  - rồi đến thư Ro viết suốt hai mươi năm;
+  - kỷ vật và nhật ký nằm cạnh đồ công nghệ.
+
+  Câu cuối của Kenji, "Đừng để ai cho cậu nghỉ hưu", chính là lý do 07 nâng cấp.
+- **Kết thúc:** 07 lên đỉnh núi, Atlas nâng chảo, đường truyền mở ra. Một đốm sáng trên Trái Đất nháy ba ngắn một dài:
+  "Mình nghe thấy rồi, 07. Mình vẫn còn đây. — Ro." Sau đó người chơi vẫn tự do khám phá, và thư của Ro vẫn đến.
 
 ## 9. Nhịp chơi theo phiên bản
 - **Nguyên tắc:**
-  - không quá 3 phút mà không có gì mới trong tầm mắt;
-  - buổi chơi nào cũng có một bước nhảy về khả năng;
-  - phiên bản nào cũng có một động tác mới;
+  - không quá 3 phút không có gì mới;
+  - buổi nào cũng có bước tiến lớn;
+  - bản nào cũng có động tác mới;
   - không cày cuốc;
-  - không có chuyến đi nào vô ích.
-- **0.5 (~100 phút), Điện:** thức dậy; tháp cấp 1; Tilly; mép vực và cột sạc đầu tiên; bộ pin II; thang nâng và phòng
-  lab; trạm sửa xe; nhảy qua vực; Bell; bản đồ; bốn cột sáng khắp lòng chảo.
-- **0.6 (~75 phút), Tầm với 1:** bánh từ tính; bậc thềm vành hố; hợp kim; máy chế tạo; Atlas; lá thư đầu tiên của Ro.
-- **0.7 (~90 phút), Tầm với 2:** đèn pha mạnh; hố tối; Moss; hai cánh pin; cắt vỏ kín; gói pin mở rộng.
-- **0.8 (~60 phút), Đường truyền và Liên lạc:** tời neo; lõi năng lượng; đường lên đỉnh; chảo ăng-ten; phát sóng;
-  Trái Đất trả lời.
-- **1.0:** đánh bóng, cài đặt, tay cầm, chụp ảnh, sự kiện (bão mặt trời làm đầy mọi ô pin).
-- **Tổng:** cốt truyện chính khoảng 5,4 giờ; chơi trọn vẹn khoảng 9–10 giờ.
+  - không có chuyến vô ích.
+- **0.5 (~100 phút), Điện:** pin, trạm sạc, chế độ bò chậm, bộ pin II và phòng lab; Tilly; mép vực và cột sạc đầu tiên;
+  trạm sửa xe; nhảy qua vực; Bell; bản đồ; bốn cột sáng khắp lòng chảo. Chưa có công trình.
+- **0.6 (~80 phút), Nối mạng, đường thứ nhất:** các bệ xây xuất hiện (máy chế tạo, cánh mở rộng trạm sửa xe, cột sạc
+  đầu tiên); bánh từ tính; bậc thềm vành hố; Atlas; lá thư đầu tiên của Ro.
+- **0.7 (~90 phút), đường thứ hai:** đèn pha mạnh; hố tối; Moss; hai cánh pin; cắt vỏ kín; giàn pin mặt trời; kho vật
+  liệu.
+- **0.8 (~60 phút), Sửa chảo và Trả lời:** cột cuối ở chân núi; tời neo; lõi năng lượng; đường lên đỉnh; phát sóng.
+- **1.0:** tự do hoàn toàn thứ tự hai vùng giữa; đánh bóng, cài đặt, tay cầm, chụp ảnh, phòng sơn, sự kiện.
+- **Tổng:** cốt truyện chính khoảng 5,5 giờ, chơi trọn khoảng 9–10 giờ.
 
 ## 10. Giữ / Đổi / Bỏ so với những gì đã làm
 - **Giữ:**
-  - các bước của căn cứ thức dậy (điện về qua tháp);
-  - trạm sửa xe và máy vẽ bản thiết kế;
+  - các bước căn cứ thức dậy (điện về qua tháp, giờ là mục tiêu chính đầu tiên);
+  - trạm sửa xe;
   - thang nâng dưới bụng tàu;
-  - bản đồ của Ines (chuyển vào phòng lab);
-  - Tilly, Bell và quà của họ;
-  - các món đã làm (nhảy xa, giỏ chở, đèn pha, tăng tốc);
-  - đoạn mở đầu nhìn qua mắt 07, ngắm sao, radio trong dần theo khoảng cách.
+  - bản đồ (chuyển vào lab);
+  - Tilly, Bell;
+  - các món đã làm, giờ xếp vào 6 vị trí;
+  - đoạn mở đầu, có thêm vài chữ khởi động;
+  - ngắm sao.
 - **Đổi:**
   - "bộ phận câu chuyện" thành linh kiện;
-  - bản vẽ được giải mã ở phòng lab;
-  - bản vẽ nhảy xa được tìm thấy ở mép vực;
-  - bốn góc phi hành đoàn thành bốn khu của phòng lab;
-  - đế sạc giờ là nơi nạp pin;
-  - cột tiếp sóng có thêm bệ sạc;
-  - sonar rộng chuyển sang 0.6.
+  - bản vẽ giải mã ở lab, và bản vẽ nhảy xa tìm ở mép vực (bỏ tờ vẽ sẵn của Kenji);
+  - góc phi hành đoàn thành bốn khu lab;
+  - đế sạc nạp pin;
+  - cột tiếp sóng có bệ sạc 4 m;
+  - sonar rộng sang 0.6.
 - **Bỏ:**
-  - kệ kỷ niệm ngoài trời;
-  - đài quan sát trên boong;
-  - ý tưởng "ký ức là lý do để chơi".
-- **Mới trong 0.5:** hệ thống pin, trạm sạc, chế độ bò chậm, đèn pin trên thân 07, bộ pin II.
-- **Cần sửa văn bản gốc:**
+  - kệ kỷ niệm ngoài trời, đài quan sát trên boong;
+  - "ký ức là lý do để chơi";
+  - quy trình theo một đường thẳng;
+  - đặt nhà tự do.
+- **Mới trong 0.5:** pin, trạm sạc, chế độ bò chậm có Tilly dẫn đường, đèn pin trên thân, bộ pin II, phòng lab, bảng
+  mục tiêu chính.
+- **Văn bản gốc cần sửa:**
   - bỏ "nhiên liệu" khỏi danh sách cấm;
   - thêm luật 15 "pin là tầm đi, không phải mối đe doạ";
   - luật 7 thêm "không bao giờ mắc kẹt vì hết pin";
-  - phần "tầm phủ sóng" trong DESIGN.
+  - phần tầm phủ sóng và phần xây dựng trong DESIGN.
 
-## 11. Câu hỏi cho anh/chị
-1. Hết pin thì bò chậm về trạm gần nhất, và có thể gọi Tilly kéo về. Cảm giác vậy đã đúng chưa?
-2. Ở đoạn mở đầu, cho mắt 07 hiện vài chữ khởi động ("Phát hiện tín hiệu Trái Đất · Đường truyền tắt · Bắt đầu khôi
-   phục") để mục tiêu rõ ngay từ phút đầu, hay giữ hoàn toàn không chữ?
-3. Đứng dưới nắng được sạc chậm: giữ lại như một lựa chọn thư thả, hay bỏ đi để trạm sạc quan trọng hơn?
-4. Tầm pin ban đầu khoảng 150 m quanh nhà: hẹp quá hay vừa?
-5. "Quy trình khôi phục trạm" (Điện → Mạng lưới → Tầm với → Đường truyền → Liên lạc) đã đủ rõ và đủ hấp dẫn để làm lý do
-   phát triển chưa?
-6. Cái kết: giữ Ro trả lời (cảm xúc riêng tư), hay để "Trái Đất trả lời" nói chung?
-7. Căn cứ lớn lên bằng máy móc, bạn bè và cột sạc, không cho tự đặt thêm nhà (chỉ có đồ trang trí ở bản 1.0). Anh/chị
-   đồng ý chứ?
-8. Bốn vùng sau lòng chảo cho khoảng 5,4 giờ cốt truyện chính: đã đủ chưa?
+## 11. Quyết định của anh/chị (2026-10-11)
+1. Hết pin thì bò về, Tilly soi đèn dẫn đường: **đồng ý**.
+2. Mắt 07 hiện vài chữ khởi động khoảng 2 giây: **đồng ý**.
+3. Đứng dưới nắng hồi pin chậm, tối đa 1 ô: **đồng ý**.
+4. Con số pin theo bản nhận xét (120 m mỗi ô, 4 ô lúc đầu, không quá 300 m tới trạm sạc): **đồng ý**.
+5. Không đi theo một đường thẳng: **đã đổi**. Bốn mục tiêu chính có đánh dấu tiến độ, còn lại tự do.
+6. Ro trả lời: **đồng ý**.
+7. Được xây công trình trên bệ có sẵn: **đã đổi** (xem phần 6).
+8. Độ dài: **đồng ý**.
