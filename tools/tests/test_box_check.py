@@ -34,7 +34,9 @@ class TestCommandTests(unittest.TestCase):
         planned = box_check.test_commands(self.ROOT, self.args("world"))
         self.assertEqual([label for label, _ in planned],
                          ["editmode MoonProject.World.Tests", "playmode MoonProject.World.PlayModeTests"])
-        self.assertEqual(planned[1][1][-3:], ["playmode", "--assembly", "MoonProject.World.PlayModeTests"])
+        self.assertEqual(planned[0][1][-3:], ["editmode", "--assembly", "MoonProject.World.Tests"])
+        self.assertEqual(planned[1][1][-5:], ["playmode", "--assembly", "MoonProject.World.PlayModeTests",
+                                              "--category", "!Playthrough"])
 
     def test_fast_skips_playmode_and_art_has_no_playmode(self):
         self.assertEqual([l for l, _ in box_check.test_commands(self.ROOT, self.args("world", fast=True))],
@@ -46,8 +48,20 @@ class TestCommandTests(unittest.TestCase):
         self.assertEqual(len(planned), 1)
         self.assertEqual(planned[0][1][-2:], ["--filter", "LiftTests"])
         planned = box_check.test_commands(self.ROOT, self.args("ui", platform="playmode", assembly=["A", "B"]))
-        self.assertEqual(planned[0][1][-5:], ["playmode", "--assembly", "A", "--assembly", "B"])
+        self.assertEqual(planned[0][1][-7:], ["playmode", "--assembly", "A", "--assembly", "B",
+                                              "--category", "!Playthrough"])
         self.assertEqual(box_check.test_commands(self.ROOT, self.args("music")), [])
+
+    def test_no_playmode_step_runs_the_playthrough(self):
+        # 2026-10-11: --assembly MoonProject.Gameplay.PlayModeTests selected the [Explicit] Playthrough and hit the
+        # 40-minute PlayMode timeout.
+        for kw in ({}, dict(platform="playmode", assembly=["MoonProject.Gameplay.PlayModeTests"]),
+                   dict(platform="playmode", filter="Lift")):
+            for label, cmd in box_check.test_commands(self.ROOT, self.args("gameplay", **kw)):
+                if label.startswith("playmode"):
+                    self.assertEqual(cmd[-2:], ["--category", "!Playthrough"], label)
+                else:
+                    self.assertNotIn("--category", cmd, label)
 
 
 class BoardTests(unittest.TestCase):
