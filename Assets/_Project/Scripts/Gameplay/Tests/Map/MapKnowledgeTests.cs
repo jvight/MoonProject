@@ -2,10 +2,12 @@ using System;
 using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools.Constraints;
 using MoonProject.Core;
 using MoonProject.Core.Events;
 using MoonProject.Core.Map;
 using MoonProject.Gameplay.Map;
+using Is = UnityEngine.TestTools.Constraints.Is;
 
 namespace MoonProject.Gameplay.Tests.Map
 {
@@ -177,6 +179,27 @@ namespace MoonProject.Gameplay.Tests.Map
 
             Assert.IsTrue(data.hatchOpen);
             Assert.AreEqual(0, loaded.InkedSinceLastLook);
+        }
+
+        [Test]
+        public void PollingAndInking_AllocateNothing()
+        {
+            var quiet = new EventBus();
+            var map = new MapKnowledge(quiet, _reach, _places, _probes);
+            map.Poll(Vector3.zero, 0f, true, false);
+            var pen = new ChartPen(quiet, map);
+            pen.Begin(0f, 0f);
+            Vector3 rover = new Vector3(400f, 0f, 400f);
+            bool inked = false;
+            TestDelegate poll = () => map.Poll(rover, 2f, true, true);
+            TestDelegate stroke = () => pen.Tick(1f, Stroke);
+            TestDelegate query = () => inked = map.IsInked("site.depot");
+            poll();
+            query();
+            Assert.That(poll, Is.Not.AllocatingGCMemory());
+            Assert.That(query, Is.Not.AllocatingGCMemory());
+            Assert.That(stroke, Is.Not.AllocatingGCMemory(), "the pen's stroke, published to the bus");
+            Assert.IsFalse(inked);
         }
 
         [Test]

@@ -35,7 +35,6 @@ namespace MoonProject.Gameplay.Map
         private InputReader _input;
         private IRoverState _rover;
         private IRoverRig _rig;
-        private IRoverStillness _stillness;
         private IViewCamera _view;
         private LiftStation _lift;
         private MapKnowledge _knowledge;
@@ -47,6 +46,7 @@ namespace MoonProject.Gameplay.Map
         private GlowFlashPool _blinks;
         private IDisposable _saveToken;
         private float _nextPoll;
+        private float _lastLook;
         private bool _caughtUp;
         private bool _gazing;
         private bool _initialized;
@@ -74,7 +74,7 @@ namespace MoonProject.Gameplay.Map
             string problem = _gameplay == null ? "GameplaySystem is not assigned."
                 : _tuning == null ? "MapTuning is not assigned."
                 : _blinkMaterial == null ? "the blink material is not assigned."
-                : !_gameplay.isActiveAndEnabled || _gameplay.Lift == null || _gameplay.Relays.Reach == null
+                : !_gameplay.enabled || _gameplay.Lift == null || _gameplay.Relays.Reach == null
                     || _gameplay.Blueprints == null ? "GameplaySystem did not initialise (see its error)."
                 : null;
             if (problem != null)
@@ -88,7 +88,6 @@ namespace MoonProject.Gameplay.Map
             _input = context.Input;
             _rover = context.Get<IRoverState>();
             _rig = context.Get<IRoverRig>();
-            _stillness = context.Get<IRoverStillness>();
             _view = context.Get<IViewCamera>();
             _lift = _gameplay.Lift;
             var places = new List<MapPlace>();
@@ -159,7 +158,12 @@ namespace MoonProject.Gameplay.Map
         private void StepDeck(float now)
         {
             float deadzone = _tuning.LeaveDeadzone;
-            var input = new DeckLookInput(_lift.AtDeck, _sweep.IsFinished(now), LookingAtHatch(), _stillness.StillSeconds,
+            if (_input.LookDelta.sqrMagnitude > 0f || _input.LookRate.sqrMagnitude > 0f)
+            {
+                _lastLook = now;
+            }
+
+            var input = new DeckLookInput(_lift.AtDeck, _sweep.IsFinished(now), LookingAtHatch(), now - _lastLook,
                 _input.Drive.sqrMagnitude >= deadzone * deadzone, now);
             switch (_deck.Step(input))
             {

@@ -74,7 +74,7 @@ namespace MoonProject.Gameplay.Map
         [SerializeField] private int _blinkPool = 4;
 
         [Header("The hatch and the look")]
-        [Tooltip("First ride: seconds of stillness after the sweep before the view eases into the map by itself.")]
+        [Tooltip("First ride: seconds without look input after the sweep before the view eases into the map by itself.")]
         [Range(1f, 20f)]
         [SerializeField] private float _breatheSeconds = 6f;
 

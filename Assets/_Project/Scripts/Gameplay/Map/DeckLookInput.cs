@@ -23,7 +23,7 @@ namespace MoonProject.Gameplay.Map
         /// <summary>The view's centre is on the hatch window.</summary>
         public bool LookingAtHatch { get; }
 
-        /// <summary>Seconds since 07 last moved or the player gave input.</summary>
+        /// <summary>Seconds since the player last looked around (the lookout breathes while they rest).</summary>
         public float StillSeconds { get; }
 
         /// <summary>The player drives: leave the deck.</summary>

@@ -1,9 +1,11 @@
 using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools.Constraints;
 using MoonProject.Core;
 using MoonProject.Core.Map;
 using MoonProject.Gameplay.Map;
+using Is = UnityEngine.TestTools.Constraints.Is;
 
 namespace MoonProject.Gameplay.Tests.Map
 {
@@ -127,6 +129,22 @@ namespace MoonProject.Gameplay.Tests.Map
 
             sweep.Begin(map, sightline, Vector3.up * 14f, Vector3.right, false, _tuning, 0f, 1f);
             CollectionAssert.AreEqual(new[] { "east", "west" }, Blinks(map, sweep), "later rides: unseen places only");
+        }
+
+        [Test]
+        public void TheDeck_AllocatesNothingPerFrame()
+        {
+            var deck = new DeckLook(_tuning);
+            deck.Restore(true);
+            var sweep = new LookoutSweep();
+            DeckLookInput input = Input(true, false, 0f, 0f);
+            deck.Step(input);
+            TestDelegate step = () => deck.Step(input);
+            TestDelegate blink = () => sweep.Tick(1f, 1f);
+            step();
+            blink();
+            Assert.That(step, Is.Not.AllocatingGCMemory());
+            Assert.That(blink, Is.Not.AllocatingGCMemory());
         }
 
         private List<string> Blinks(MapKnowledge map, LookoutSweep sweep)
