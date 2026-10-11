@@ -85,6 +85,16 @@ namespace MoonProject.Rover.PlayModeTests
         [TearDown]
         public void CleanUp()
         {
+            // The booted Main stays loaded after the test; a leftover world doubles the next fixture's props.
+            Scene scene = SceneManager.GetSceneByPath(RoverSessionScene.ScenePath);
+            if (scene.IsValid() && scene.isLoaded)
+            {
+                foreach (GameObject root in scene.GetRootGameObjects())
+                {
+                    Object.DestroyImmediate(root);
+                }
+            }
+
             Dispose();
             _gamepad = null;
 #if UNITY_EDITOR
