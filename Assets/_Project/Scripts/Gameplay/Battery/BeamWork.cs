@@ -6,7 +6,7 @@ namespace MoonProject.Gameplay
     /// new work sleeps; work already under way always completes. One per game, shared through
     /// <see cref="GameplayServices.Beam"/>. Allocation-free.
     /// </summary>
-    public sealed class BeamWork
+    public sealed class BeamWork : IBeamStatus
     {
         private float _seconds;
 

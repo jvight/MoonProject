@@ -18,7 +18,8 @@ namespace MoonProject.Gameplay
     /// <see cref="ITetherAim"/>, <see cref="IUpgradeShop"/>, <see cref="IInteractionHints"/>,
     /// <see cref="IFriendRoster"/>, <see cref="IFriendStatuses"/>, <see cref="IRadioProgram"/>,
     /// <see cref="IStationReach"/>, <see cref="IRadioHop"/>, <see cref="IRelayStatus"/>, the workshop as
-    /// <see cref="IRoverBay"/>) and the save sections,
+    /// <see cref="IRoverBay"/>, 07's battery as <see cref="IRoverBattery"/> and its beam work as
+    /// <see cref="IBeamStatus"/>) and the save sections,
     /// announces the radio's signal radius and, once the save is loaded, the radio program, and owns the shared glow
     /// meshes. The radio-hop moves 07 through Core's <see cref="IRoverPlacement"/> when the Rover domain registers it;
     /// Core's <see cref="IRoverCargoSeat"/> (where a relic rides in the Cargo Cradle) is required at boot.
@@ -276,6 +277,7 @@ namespace MoonProject.Gameplay
             context.Register<IBlueprintBoard>(Blueprints);
             context.Register<IStoryPartGate>(TowerParts);
             context.Register<IRoverBattery>(_battery.Model);
+            context.Register<IBeamStatus>(services.Beam);
             Upgrades.PublishSignals();
             RegisterSaveSections(save);
         }
