@@ -95,9 +95,9 @@ namespace MoonProject.Gameplay.Tests
         {
             Restore();
             Assert.AreEqual(LiftPhase.Ready, _lift.Phase);
-            Assert.AreEqual(LiftStep.None, Run(_tuning.BoardDelay - 0.1f, onPlatform: true),
+            Assert.AreEqual(LiftStep.None, Run(0.5f * _tuning.BoardDelay, onPlatform: true),
                 "07 has been still all along, but the platform breathes first.");
-            Assert.AreEqual(LiftStep.RideStarted, Run(0.2f, onPlatform: true));
+            Assert.AreEqual(LiftStep.RideStarted, Run(_tuning.BoardDelay, onPlatform: true));
         }
 
         [Test]

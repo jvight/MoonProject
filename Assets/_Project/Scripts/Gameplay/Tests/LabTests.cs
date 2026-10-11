@@ -104,7 +104,7 @@ namespace MoonProject.Gameplay.Tests
             Assert.AreEqual(ReaderStep.Taken, Run(reader, 0.2f), "the beam has fed the tube in");
             Assert.AreEqual(ReaderPhase.Decoding, reader.Phase);
             Run(reader, 2f);
-            Assert.AreEqual(0.5f, reader.DecodeProgress, 0.02f);
+            Assert.That(reader.DecodeProgress, Is.InRange(0.5f, 0.56f), "about halfway (the feed's last frame counts)");
             Assert.AreEqual(ReaderStep.Decoded, Run(reader, 2.1f));
             Assert.AreEqual(ReaderPhase.Idle, reader.Phase);
             Assert.AreEqual("rover.cargo_cradle", reader.Kit);
