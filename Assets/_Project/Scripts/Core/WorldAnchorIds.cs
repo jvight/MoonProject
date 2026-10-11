@@ -47,5 +47,20 @@ namespace MoonProject.Core
         /// can name. Forward faces on from home.
         /// </summary>
         public const string PlaceAntennaFarm = "place.antenna_farm";
+
+        /// <summary>
+        /// Prefix of the places beyond the rim that the crew's map pencils at the paper's edge (docs/features/M3-07
+        /// step 3): <see cref="RegionPeak"/>, <see cref="RegionTerraces"/>.
+        /// </summary>
+        public const string RegionPrefix = "region.";
+
+        /// <summary>The Peak's summit plateau; the radius is the plateau's.</summary>
+        public const string RegionPeak = "region.peak";
+
+        /// <summary>
+        /// The foot of the rim terraces' wall (0.6's region), the last drivable floor below it; Forward points up the
+        /// wall. Where the dock's evening raises 0.5's last pillar.
+        /// </summary>
+        public const string RegionTerraces = "region.terraces";
     }
 }
