@@ -21,7 +21,7 @@ namespace MoonProject.Gameplay.PlayModeTests
 {
     /// <summary>
     /// The crawl home in the real Main scene (docs/features/M3-20 §2 and §12), from a seeded save with Tilly home and
-    /// the mound's mast lit: 07 drives out toward the mast, its battery runs dry and it sighs into the crawl at about a
+    /// the mound's mast lit: 07 drives out toward the mast, and short of it its battery runs dry and it sighs into the crawl at about a
     /// third of its pace; a few seconds later Tilly flies out to lead toward the mast and the crawl rises; 07 rolls
     /// onto the mast's 4 m ring, charges, and the crawl ends. Captures the crawl with Tilly leading and the charge on
     /// the ring.
@@ -95,8 +95,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             Vector3 outward = pad - home;
             outward.y = 0f;
             outward.Normalize();
-            _pilot.GoTo(pad + outward * StartDistance, 2f, 1f);
-            yield return Until(() => _pilot.Arrived, DriveTimeout, "07 drives out past the mound's mast");
+            _pilot.GoTo(pad - outward * StartDistance, 2f, 1f);
+            yield return Until(() => _pilot.Arrived, DriveTimeout, "07 drives out toward the mound's mast");
             Assert.IsFalse(battery.IsLowPower);
 
             var lowPower = new List<LowPowerChanged>();

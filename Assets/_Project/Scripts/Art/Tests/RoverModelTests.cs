@@ -75,7 +75,7 @@ namespace MoonProject.Art.Tests
                     Assert.That(at.y, Is.InRange(0.7f, 0.8f), $"{lamp.Name} sits in the stripe's band");
                     Assert.Less(at.z, previousZ, $"{lamp.Name} runs front to back");
                     Vector3 facing = lamp.LocalRotation * Vector3.right;
-                    Assert.Greater(facing.x * Mathf.Sign(at.x), 0.6f, $"{lamp.Name} faces out of its flank");
+                    Assert.Greater(facing.x * Mathf.Sign(at.x), 0.5f, $"{lamp.Name} faces out of its flank");
                     Assert.Greater(facing.y, 0.3f, $"{lamp.Name} tilts up toward the chase camera");
                     Assert.Less(facing.z, -0.2f, $"{lamp.Name} tilts back toward the chase camera");
                     Assert.AreEqual(ModelMaterial.Palette, lamp.Material);

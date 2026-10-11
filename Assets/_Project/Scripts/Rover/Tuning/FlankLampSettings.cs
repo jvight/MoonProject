@@ -13,7 +13,7 @@ namespace MoonProject.Rover
     {
         [Tooltip("Glow of a full cell's lamp (linear HDR multiplier; 1 = the authored glow).")]
         [Range(0f, 4f)]
-        [SerializeField] private float _litGlow = 1.6f;
+        [SerializeField] private float _litGlow = 2.6f;
 
         [Tooltip("Seconds per breath of the lamp whose cell is being drawn.")]
         [Range(0.5f, 8f)]
