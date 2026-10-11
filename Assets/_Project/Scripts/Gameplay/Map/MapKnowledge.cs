@@ -216,14 +216,14 @@ namespace MoonProject.Gameplay.Map
             return -1;
         }
 
-        public MapSaveData Capture(bool hatchOpen)
+        public MapSaveData Capture(bool looked)
         {
             return new MapSaveData
             {
                 seen = Ids(MapPlaceState.Seen, false),
                 visited = Ids(MapPlaceState.Visited, false),
                 inked = Ids(MapPlaceState.Visited, true),
-                hatchOpen = hatchOpen,
+                looked = looked,
             };
         }
 

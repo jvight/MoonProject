@@ -177,7 +177,7 @@ namespace MoonProject.Gameplay.Tests.Map
                 Assert.AreEqual(map.IsInkDrawn(_places[i].Id), loaded.IsInkDrawn(_places[i].Id), _places[i].Id);
             }
 
-            Assert.IsTrue(data.hatchOpen);
+            Assert.IsTrue(data.looked);
             Assert.AreEqual(0, loaded.InkedSinceLastLook);
         }
 

@@ -35,47 +35,28 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
-    /// The deck hatch's view opened on the crew's map (docs/features/M3-07): UI shows the map, Rover holds 07 still with
-    /// its lens on the hatch window at <see cref="Window"/>. Published by Gameplay's lift flow.
+    /// The view opened on the crew's map (docs/features/M3-07): UI shows the map, Rover holds 07 still and frames
+    /// <see cref="Position"/>. Published by Gameplay's map system when its trigger opens the look (where the map hangs
+    /// is decided by the lander's cabin spec); Audio warms the light table's hum.
     /// </summary>
     public readonly struct MapLookStarted
     {
-        public MapLookStarted(Vector3 window, bool firstLook)
+        public MapLookStarted(Vector3 position, bool firstLook)
         {
-            Window = window;
+            Position = position;
             FirstLook = firstLook;
         }
 
-        /// <summary>World position of the hatch window the map is seen through.</summary>
-        public Vector3 Window { get; }
+        /// <summary>World position of the map (its light table).</summary>
+        public Vector3 Position { get; }
 
         /// <summary>The first look this save: the view drifts to the paper's edge after the ink (step 3).</summary>
         public bool FirstLook { get; }
     }
 
-    /// <summary>The map's view closed (any input): UI hides the map, Rover eases back to the deck.</summary>
+    /// <summary>The map's view closed: UI hides the map, Rover eases back.</summary>
     public readonly struct MapLookEnded
     {
-    }
-
-    /// <summary>
-    /// The deck hatch is open (docs/features/M3-07, cutscenes §6 shot 4) and stays open. Published by Gameplay once
-    /// when its motor swings it open on the first ride (Audio plays the motor, Art swings the hatch and lights the
-    /// table behind it), and at load when the save already has it open (<see cref="Instant"/>: no sound, no swing).
-    /// </summary>
-    public readonly struct MapHatchOpened
-    {
-        public MapHatchOpened(Vector3 position, bool instant)
-        {
-            Position = position;
-            Instant = instant;
-        }
-
-        /// <summary>World position of the hatch window.</summary>
-        public Vector3 Position { get; }
-
-        /// <summary>Restored from the save: show it open at once.</summary>
-        public bool Instant { get; }
     }
 
     /// <summary>

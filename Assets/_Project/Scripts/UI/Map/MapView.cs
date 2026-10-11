@@ -10,7 +10,7 @@ using MoonProject.Core.Map;
 namespace MoonProject.UI.Map
 {
     /// <summary>
-    /// The crew's map seen through the deck hatch (docs/features/M3-07): Ines's pencil sheet on Cream traced from the
+    /// The crew's map, looked at on its light table (docs/features/M3-07): Ines's pencil sheet on Cream traced from the
     /// <see cref="MapSheet"/>, the light table glowing through it wherever the station reaches, a pencil ring and "?"
     /// for places only seen, pencil for places visited beyond reach, and the chart pen's warm ink (outline, the crew's
     /// name, tiny icons of what 07 did there) for places visited inside reach, drawn stroke by stroke as each

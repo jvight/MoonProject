@@ -72,7 +72,6 @@ namespace MoonProject.Gameplay.Lift
         private float _lampLevel;
         private float _ladderLookStarted = float.NegativeInfinity;
         private LadderLook _ladderLook;
-        private Func<bool> _deckHeld;
         private bool _gazing;
         private bool _holding;
         private bool _initialized;
@@ -91,21 +90,6 @@ namespace MoonProject.Gameplay.Lift
 
         /// <summary>Where the rover spot stands with the platform at the top stop, by the deck.</summary>
         public Vector3 TopSpot => _lander.TransformPoint(_top.localPosition + _roverSpot.localPosition);
-
-        /// <summary>07 rests at the deck lookout (docs/features/M3-07: the crew's map opens from here).</summary>
-        public bool AtDeck => _cycle != null && _cycle.Phase == LiftPhase.Top;
-
-        /// <summary>The lander's origin: the deck hatch lies in from <see cref="TopSpot"/> toward it.</summary>
-        public Vector3 LanderPosition => _lander.position;
-
-        /// <summary>
-        /// While <paramref name="held"/> says so, the player's input at the deck belongs to the lookout and the crew's
-        /// map (docs/features/M3-07): looking pans their view, and the lift rides down only once they let the deck go.
-        /// </summary>
-        internal void HoldDeckWith(Func<bool> held)
-        {
-            _deckHeld = held;
-        }
 
         internal void Wire(LiftTuning tuning, RadioTowerTuning looks, Transform lander, Transform platform,
             Rigidbody platformBody, Transform roverSpot, Transform bottom, Transform top, Transform cableLeft,
@@ -220,8 +204,7 @@ namespace MoonProject.Gameplay.Lift
             bool feedDone = _cycle.Phase == LiftPhase.Feeding
                 && _feed.Step(eye, _rig.CargoSocket.position, _hopperMouth.position, now, deltaTime);
             var input = new LiftInput(_power.HasReached(BasePowerStage.Lift), _materials.Has(_tuning.FeedRecipe),
-                _feedPad.Occupied, OnPlatform(), _stillness.StillSeconds, feedDone,
-                PlayerInput() && (_deckHeld == null || !_deckHeld()));
+                _feedPad.Occupied, OnPlatform(), _stillness.StillSeconds, feedDone, PlayerInput());
             Play(_cycle.Step(input, deltaTime), feedDone, now);
             StepCreak();
 

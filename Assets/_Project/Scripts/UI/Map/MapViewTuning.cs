@@ -23,7 +23,7 @@ namespace MoonProject.UI.Map
         [Tooltip("The chart pen's ink: warm brown.")]
         [SerializeField] private Color _ink = new Color(0.35f, 0.21f, 0.12f, 0.92f);
 
-        [Tooltip("A soft warm veil behind the paper, over the blurred deck.")]
+        [Tooltip("A soft warm veil behind the paper, over the blurred world behind it.")]
         [SerializeField] private Color _veil = new Color(0.1f, 0.08f, 0.06f, 0.3f);
 
         [Tooltip("The light table's warm glow through the paper where the station reaches.")]
@@ -83,7 +83,7 @@ namespace MoonProject.UI.Map
         [SerializeField] private float _tallyHeight = 30f;
 
         [Header("View")]
-        [Tooltip("Seconds the view takes to ease onto the map and back to the deck.")]
+        [Tooltip("Seconds the view takes to ease onto the map and back off it.")]
         [Range(0.1f, 4f)]
         [SerializeField] private float _openSeconds = 1.1f;
 

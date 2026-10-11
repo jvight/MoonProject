@@ -44,10 +44,9 @@ namespace MoonProject.Gameplay.Editor.Map
                 throw new InvalidOperationException("The Gameplay contributor added no GameplaySystem.");
             }
 
-            var visuals = context.LoadAsset<GameplayVisuals>(GameplayAssetPaths.Visuals);
             GameObject host = context.CreateChild("CrewMap", context.GameplayRoot.transform);
             var map = host.AddComponent<MapSystem>();
-            map.Wire(gameplay, EnsureTuning(), visuals.Flash);
+            map.Wire(gameplay, EnsureTuning());
             context.AddSystem(map);
         }
     }

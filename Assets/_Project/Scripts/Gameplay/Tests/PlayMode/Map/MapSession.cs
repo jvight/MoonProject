@@ -6,7 +6,6 @@ using System.IO;
 using System.Text;
 using NUnit.Framework;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using UnityEngine.UIElements;
@@ -15,7 +14,6 @@ using MoonProject.Core;
 using MoonProject.Core.Events;
 using MoonProject.Core.Map;
 using MoonProject.Core.Save;
-using MoonProject.Gameplay.Lift;
 using MoonProject.Gameplay.Map;
 using MoonProject.Testing;
 using Object = UnityEngine.Object;
@@ -26,65 +24,60 @@ using UnityEditor.SceneManagement;
 namespace MoonProject.Gameplay.PlayModeTests.Map
 {
     /// <summary>
-    /// The crew's map in the real Main scene (docs/features/M3-07), from a seeded mid-0.5 save: the lift restored, the
-    /// mound's mast lit, the depot, the garage and the drill visited, Kestrel-3 and the canyon's mouth only seen. 07
-    /// rides up; the lookout sweeps (the unvisited places in view blink and are pencilled as seen), the hatch swings
-    /// open, the lookout breathes, and the view eases onto the map, where the chart pen inks home and then every
-    /// visited place in reach, in order, and nothing else. Driving leaves, and a second ride opens straight onto the
-    /// map with nothing new to ink. Frames with the UI composited over the game camera go to
-    /// Logs/gameplay-captures/map-*.png with map.md recording the pen's order, frame times and the map's per-frame
+    /// The crew's map in the real Main scene (docs/features/M3-07), from a seeded mid-0.5 save: the mound's mast lit,
+    /// the depot, the garage and the drill visited, Kestrel-3 and the canyon's mouth only seen. The look is opened
+    /// through the map system's generic trigger (where the map hangs comes with the lander cabin's spec): the view
+    /// eases onto the map, where the chart pen inks home and then every visited place in reach, in order, and nothing
+    /// else; closing and opening again has nothing new to ink. Frames with the UI composited over the game camera go to
+    /// Logs/gameplay-captures/map-*.png with map.md recording the pen's order, frame times and the main thread's
     /// allocations. Any error in the log fails it. Slow and needs a GPU: run on demand with --category MapSession.
     /// </summary>
     [Explicit("Slow session in the real Main scene; run on demand with --category MapSession.")]
     [Category("MapSession")]
-    public sealed class MapSession : InputTestFixture
+    public sealed class MapSession
     {
         private const int CaptureWidth = 1600;
         private const int CaptureHeight = 900;
         private const float WakeTimeout = 20f;
         private const float SettleSeconds = 3f;
-        private const float PhaseTimeout = 40f;
+        private const float PhaseTimeout = 20f;
         private const float OpeningFrame = 0.6f;
         private const float InkTimeout = 30f;
         private const float EdgeFrame = 4f;
         private const int MeasuredFrames = 120;
 
-        // The tower at its third level, the lift restored, relay.0 restored and the map's own record (version 1).
+        // The tower at its third level, relay.0 restored and the map's own record (version 1).
         private const string SeededSave =
             "{\"formatVersion\":1,\"contentVersion\":\"0.5.0\",\"savedAtUtc\":\"2026-10-11T00:00:00Z\"," +
             "\"sections\":[" +
             "{\"key\":\"gameplay.upgrades\",\"version\":1,\"json\":\"{\\\"upgrades\\\":[" +
             "{\\\"id\\\":\\\"radio_tower\\\",\\\"level\\\":3}]}\"}," +
-            "{\"key\":\"gameplay.lift\",\"version\":1,\"json\":\"{\\\"restored\\\":true}\"}," +
             "{\"key\":\"gameplay.relays\",\"version\":1,\"json\":\"{\\\"masts\\\":[{\\\"id\\\":\\\"relay.0\\\"," +
             "\\\"part\\\":true,\\\"paid\\\":1,\\\"restored\\\":true}]}\"}," +
             "{\"key\":\"gameplay.map\",\"version\":1,\"json\":\"{\\\"seen\\\":[\\\"site.kestrel\\\"," +
             "\\\"canyon.mouth\\\"],\\\"visited\\\":[\\\"place.lander\\\",\\\"site.depot\\\",\\\"site.garage\\\"," +
-            "\\\"site.drill\\\"],\\\"inked\\\":[],\\\"hatchOpen\\\":false}\"}]}";
+            "\\\"site.drill\\\"],\\\"inked\\\":[],\\\"looked\\\":false}\"}]}";
 
         private readonly List<string> _problems = new List<string>();
         private readonly StringBuilder _report = new StringBuilder();
         private readonly List<string> _inked = new List<string>();
-        private readonly List<string> _seen = new List<string>();
         private GameContext _context;
         private GameplaySystem _gameplay;
         private MapSystem _map;
         private UIDocument _ui;
         private RenderTexture _target;
-        private Keyboard _keyboard;
         private bool _awake;
         private int _looks;
         private int _ended;
-        private int _hatches;
 
-        public override void Setup()
+        [SetUp]
+        public void Setup()
         {
-            base.Setup();
-            _keyboard = InputSystem.AddDevice<Keyboard>();
             Application.logMessageReceived += OnLog;
         }
 
-        public override void TearDown()
+        [TearDown]
+        public void TearDown()
         {
             Application.logMessageReceived -= OnLog;
             if (_ui != null && _ui.panelSettings != null)
@@ -108,7 +101,6 @@ namespace MoonProject.Gameplay.PlayModeTests.Map
             }
 
             BootstrapHarness.DeleteSaveFiles(PlaythroughScene.SaveSlot);
-            base.TearDown();
         }
 
         [UnityTest]
@@ -118,11 +110,9 @@ namespace MoonProject.Gameplay.PlayModeTests.Map
         public IEnumerator TheFirstLook_InksEveryVisitedPlaceInReach_InOrder_AndNothingElse()
         {
             yield return Boot();
-            LiftStation lift = _gameplay.Lift;
             MapKnowledge knowledge = _map.Knowledge;
             _report.AppendLine("# The crew's map (real Main scene, seeded mid-0.5 save)");
             _report.AppendLine();
-            Assert.AreEqual(LiftPhase.Ready, lift.Phase, "the seeded lift is restored");
             var expected = new List<string>();
             for (int i = 0; i < knowledge.PlaceCount; i++)
             {
@@ -135,31 +125,28 @@ namespace MoonProject.Gameplay.PlayModeTests.Map
 
             Assert.AreEqual(MapPlaces.HomeId, expected[0], "home is inked first");
             _report.AppendLine("Inked before the look (visited and in reach): " + string.Join(", ", expected));
-
+            bool first = false;
             using (_context.Events.Subscribe<MapInkCued>(cue => _inked.Add(cue.PlaceId)))
-            using (_context.Events.Subscribe<MapPlaceSeen>(seen => _seen.Add(seen.PlaceId)))
-            using (_context.Events.Subscribe<MapLookStarted>(_ => _looks++))
-            using (_context.Events.Subscribe<MapLookEnded>(_ => _ended++))
-            using (_context.Events.Subscribe<MapHatchOpened>(_ => _hatches++))
+            using (_context.Events.Subscribe<MapLookStarted>(look =>
             {
-                _context.Get<IRoverPlacement>().PlaceAt(lift.RideSpot, Quaternion.LookRotation(lift.RideHeading));
-                yield return WaitUntil(() => lift.Phase == LiftPhase.Top, "07 rides up to the deck");
-                yield return WaitUntil(() => _seen.Count > 0 || _map.Phase != DeckLookPhase.Sweeping,
-                    "the sweep blinks");
-                yield return Capture("map-0-sweep");
-                yield return WaitUntil(() => _hatches == 1, "the hatch swings open after the sweep");
-                yield return Capture("map-1-hatch");
-                yield return WaitUntil(() => _looks == 1, "the view eases onto the map");
+                _looks++;
+                first = look.FirstLook;
+            }))
+            using (_context.Events.Subscribe<MapLookEnded>(_ => _ended++))
+            {
+                _map.OpenLook(knowledge.GetPlace(0).Position);
+                Assert.AreEqual(1, _looks);
+                Assert.IsTrue(first, "the save's first look");
                 yield return new WaitForSeconds(OpeningFrame);
-                yield return Capture("map-2-opening");
+                yield return Capture("map-1-opening");
                 yield return WaitUntil(() => _inked.Count >= Mathf.Min(2, expected.Count), "the pen starts");
-                yield return Capture("map-3-inking");
+                yield return Capture("map-2-inking");
                 yield return WaitUntil(() => knowledge.InkedSinceLastLook == 0 && _inked.Count == expected.Count,
                     "the pen inks every visited place in reach", InkTimeout);
                 yield return new WaitForSeconds(1f);
-                yield return Capture("map-4-inked");
+                yield return Capture("map-3-inked");
                 yield return new WaitForSeconds(EdgeFrame);
-                yield return Capture("map-5-edge");
+                yield return Capture("map-4-edge");
                 yield return Measure();
 
                 CollectionAssert.AreEqual(expected, _inked, "home, then every visited place in reach, in order");
@@ -168,34 +155,20 @@ namespace MoonProject.Gameplay.PlayModeTests.Map
                     Assert.AreEqual(MapPlaceState.Visited, knowledge.GetState(id), $"{id} was inked unvisited");
                 }
 
-                foreach (string id in _seen)
-                {
-                    Assert.AreNotEqual(MapPlaceState.Visited, knowledge.GetState(id), $"{id} was swept but visited");
-                }
-
-                Press(_keyboard.wKey);
-                yield return WaitUntil(() => _ended == 1, "driving leaves the map");
-                yield return WaitUntil(() => lift.Phase == LiftPhase.Lowering, "and the lift rides down");
-                Release(_keyboard.wKey);
-                yield return WaitUntil(() => lift.Phase == LiftPhase.Ready, "the platform settles at the bottom");
-
-                _inked.Clear();
-                _context.Get<IRoverPlacement>().PlaceAt(lift.RideSpot - lift.RideHeading * 4f,
-                    Quaternion.LookRotation(lift.RideHeading));
+                _map.CloseLook();
+                Assert.AreEqual(1, _ended);
                 yield return new WaitForSeconds(SettleSeconds);
-                _context.Get<IRoverPlacement>().PlaceAt(lift.RideSpot, Quaternion.LookRotation(lift.RideHeading));
-                yield return WaitUntil(() => _looks == 2, "a second ride opens straight onto the map");
-                Assert.AreEqual(1, _hatches, "the hatch opened once");
+                _inked.Clear();
+                _map.OpenLook(knowledge.GetPlace(0).Position);
+                Assert.IsFalse(first, "the second look is not the first");
                 yield return new WaitForSeconds(SettleSeconds);
                 CollectionAssert.IsEmpty(_inked, "nothing new to ink on the second look");
-                yield return Capture("map-6-again");
-                Press(_keyboard.wKey);
-                yield return WaitUntil(() => _ended == 2, "driving leaves again");
-                Release(_keyboard.wKey);
+                yield return Capture("map-5-again");
+                _map.CloseLook();
+                Assert.AreEqual(2, _ended);
             }
 
             _report.AppendLine("Pen order: " + string.Join(", ", expected));
-            _report.AppendLine("Swept (pencilled as seen): " + string.Join(", ", _seen));
             Directory.CreateDirectory(GameplayFixture.CaptureFolder);
             File.WriteAllText(Path.Combine(GameplayFixture.CaptureFolder, "map.md"), _report.ToString());
             Debug.Log("[map] " + _report);
@@ -306,8 +279,8 @@ namespace MoonProject.Gameplay.PlayModeTests.Map
                 world.SetPixels32(background);
                 world.Apply(false);
                 FrameCapture.WritePng(world, Path.Combine(GameplayFixture.CaptureFolder, name + ".png"));
-                _report.AppendLine(string.Format(CultureInfo.InvariantCulture, "- {0}: deck {1}, {2} inked, {3} seen",
-                    name, _map.Phase, _inked.Count, _seen.Count));
+                _report.AppendLine(string.Format(CultureInfo.InvariantCulture, "- {0}: {1} inked", name,
+                    _inked.Count));
             }
             finally
             {
