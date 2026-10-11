@@ -70,8 +70,8 @@ namespace MoonProject.Art.Tests
                 Assert.Less(Mathf.Abs(at.x), 0.3f, $"{segment.Name} stays on the straight of the rear edge");
                 Assert.That(at.y, Is.InRange(0.9f, 1f), $"{segment.Name} sits on the lid");
                 Assert.Less(at.z, -0.56f, $"{segment.Name} sits behind the folded wing's end, on the rear edge");
-                Assert.Greater(facing.y, 0.8f, $"{segment.Name} faces up, where the chase camera looks down");
-                Assert.Less(facing.z, -0.3f, $"{segment.Name} tips back toward the chase camera");
+                Assert.Greater(facing.y, 0.5f, $"{segment.Name} faces up, where the chase camera looks down");
+                Assert.Less(facing.z, -0.7f, $"{segment.Name} tips well back toward the chase camera");
                 Assert.AreEqual(ModelMaterial.Palette, segment.Material);
                 Assert.AreEqual(ModelMaterial.PaletteGlowOff, glass.Material, glass.Name);
                 CollectionAssert.AreEqual(new[] { PaletteSwatch.LampGlass }, Swatches(glass.Mesh.Geometry));

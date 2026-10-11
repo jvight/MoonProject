@@ -17,19 +17,19 @@ namespace MoonProject.Art.Editor
         public const int SegmentCount = 8;
 
         /// <summary>Metres from one segment to the next across the bar; the trays touch into one rail.</summary>
-        private const float Pitch = 0.068f;
+        private const float Pitch = 0.072f;
 
         /// <summary>Metres the bar sits in from the lid's rear edge, clear of the folded wing's end.</summary>
         private const float RearInset = 0.035f;
 
         /// <summary>Degrees each segment tips back, so its glass faces the chase camera.</summary>
-        private const float TiltBack = 30f;
+        private const float TiltBack = 55f;
 
-        private const float TrayDepth = 0.05f;
-        private const float TrayHeight = 0.014f;
-        private const float GlassWidth = 0.054f;
-        private const float GlassDepth = 0.034f;
-        private const float GlassHeight = 0.009f;
+        private const float TrayDepth = 0.07f;
+        private const float TrayHeight = 0.016f;
+        private const float GlassWidth = 0.056f;
+        private const float GlassDepth = 0.062f;
+        private const float GlassHeight = 0.014f;
         private const float Bevel = 0.002f;
 
         /// <summary>Segment <paramref name="index"/>'s base on the lid's rear edge, in body space (left first).</summary>
