@@ -1,4 +1,4 @@
-# The first hour, v2: what 07 starts with, how the player is led, charging, legibility
+# The first hour, v2: what 07 starts with, how the player is led, charging, legibility, the camera
 
 > Game design review, 2026-10-12. Source: the owner's play-through of 0.5.0 (2026-10-12): "Is the Space function (sonar
 > ping) still needed? I can't tell what it's for. The lifting/towing is also given from the start. We really need to
@@ -19,6 +19,7 @@
   the first things to lift (the tape deck, then a keepsake) lie right beside it.
 - **Charging becomes a moment:** 4 s per cell at the dock, 5 s per cell at a mast, only while stopped, one note per
   cell. You can drive away at any time and keep what has filled.
+- **The camera stops making players dizzy** (§7): the view holds its world direction while 07 turns under it. It recenters only after 5 s without look input, while driving forward above 2 m/s, at most 30°/s. There is a recenter button, vehicle steering stays, and a Gentle camera setting is added.
 - **The UI grows and sits on glass:** lines 26 px, cards 22 px, nothing under 18 px at 1080p, a plate under every
   line, a cell row top-left instead of the thin arc, and a text-size setting.
 
@@ -33,7 +34,8 @@
   Lái đi lúc nào cũng được, phần đã sạc vẫn giữ.
 - **UI to hơn và có nền kính mờ:** dòng gợi ý 26 px, chữ trên thẻ 22 px, không chữ nào dưới 18 px (ở 1080p), dòng nào
   cũng có nền. Hàng ô pin ở góc trên bên trái thay cho vòng cung mảnh, và có cài đặt cỡ chữ.
-- §7 liệt kê việc cho từng slice của M3-24 (0.5.1) và những đoạn spec cần sửa.
+- **Camera hết gây chóng mặt** (§7): camera giữ nguyên hướng anh đặt, 07 rẽ bên dưới cũng không kéo khung hình theo. Camera chỉ tự về sau lưng khi đủ 5 giây không đụng chuột, 07 đang chạy tới trên 2 m/s và lệch quá 25°, và quay tối đa 30°/giây. Có nút về sau lưng (chuột giữa). Giữ kiểu lái xe. "Gentle camera" nằm trong cài đặt, tắt mặc định.
+- §8 liệt kê việc cho từng slice của M3-24 (0.5.1) và những đoạn spec cần sửa.
 
 ## 1. Owner decisions (2026-10-12)
 | # | Question | Decision |
@@ -42,6 +44,9 @@
 | 2 | Lift and tow | **Unlocked at Kenji's garage:** a rover-height service port fits Kenji's spare tether ring; the first things to lift lie beside it. |
 | 3 | Charging speed | **Slower:** 4 s per cell at the dock, 5 s per cell at a mast (4 cells from empty: 16 s and 20 s). |
 | 4 | UI legibility | **Bigger type on glass plates, a cell row top-left, a text-size setting** (§6). |
+| 5 | The camera | **The view holds its world direction and recenters slowly**, only after 5 s without look input and while driving forward above 2 m/s (§7). |
+| 6 | Steering | **Keep vehicle steering** (A/D turn 07). |
+| 7 | Gentle camera | **In Settings, off by default** (§7.4). |
 
 ## 2. What a fresh 0.5.0 game does today (facts)
 - **Every verb but the leap works from the first second.** Ping (Space), the beam (E: cut, dig, mend, restore) and
@@ -196,7 +201,7 @@ The world still carries meaning first: the flank lamps for charge, pillars for a
 ### 6.2 Contrast and plates
 - **Every line sits on a glass plate:** `rgba(11,14,42,0.72)`, radius 16 px, padding 10 px by 22 px, with the soft
   painted edge. Cards keep `--moon-glass` (0.84).
-- **Target ≥ 7:1** over the brightest dune (`#A7A9CC`) and over the starfield; UiCapture measures it (§7).
+- **Target ≥ 7:1** over the brightest dune (`#A7A9CC`) and over the starfield; UiCapture measures it (§8).
 - **Information is full cream.** Dim (74%) is only for secondary words inside a card. Faint (46%) never carries
   information.
 - **Amber text** (keys, lit things) is used only at 18 px or more, on glass.
@@ -240,8 +245,75 @@ text blocks at once.
 - **Pause → "07 can":** a short list of the verbs learned so far, each with its glyph, and nothing not yet learned.
   It is a reference, never a tutorial.
 
-## 7. What this changes
-### 7.1 M3-24 (0.5.1), tasks per slice
+## 7. The camera: no more dizziness
+The owner: "The controls make players dizzy: while I orbit the camera with the mouse, driving makes it swing back by
+itself to the rover's heading."
+
+### 7.1 What our camera does now (measured, `CameraOrbit.cs`, `RoverCameraRig.cs`, `RoverCameraTuning.asset`)
+- **The orbit is locked to 07's heading.** The follow target faces 07's heading, and the orbital follow binds with
+  `LockToTargetWithWorldUp` (`RoverCameraRig.cs:244`, `:551-555`). `YawOffset` is an angle *relative to 07*. So every
+  turn of 07 (70°/s pivoting, 105°/s at peak, damped by a 1.8 yaw damping) turns the whole view, even while the
+  player's hand is on the mouse. **This is the main source of the dizziness.**
+- **The camera recenters on its own, fast.** Look input is "idle" whenever the mouse is not moving this frame
+  (`CameraOrbit.cs:91-92`), so holding a view still counts as idle. After **3 s** idle, at **0.5 m/s** or more, the
+  pull fades in over **1.5 s** and then eases yaw and pitch back with a **0.9 s half-life**. A 150° look swings back at
+  up to ~115°/s.
+- **The rest:** the FOV widens by **+6°** at top speed (52° → 58°, 0.6 s half-life), and landings dip the camera (up
+  to 0.9 m/s, spring 1.4 Hz). The camera never rolls (no Dutch). Steering is vehicle-relative (A/D turn 07, W drives
+  along its heading).
+
+### 7.2 How well-regarded games handle it
+These are from the designer's knowledge of these games, not re-verified for this doc. The patterns are what matter.
+
+| Pattern | Seen in | Take for Lunarion |
+|---|---|---|
+| The camera holds its world direction while the player looks; the vehicle turns under it | Astroneer's rovers, Death Stranding's vehicles, most modern third-person games on foot | **yes**: the root fix |
+| Auto-recenter only after several seconds with no look input, only while moving forward at speed, and slowly | Death Stranding, the Uncharted and The Last of Us vehicles, open-world riding and driving | **yes**, with a speed cap and a deadzone |
+| No auto-recenter at all, plus a recenter button | Mario Odyssey, Astroneer | as the Gentle camera's behaviour, and the button for everyone |
+| A rigid chase camera with "free look while held" that snaps back | arcade racers (the Forza Horizon chase cams) | **no**: snapping breaks pillar 2 |
+| Comfort settings: auto-centre on/off, FOV, camera shake off, motion blur off | common in PC releases | **yes**: one "Gentle camera" switch (owner decision 7) |
+| Vehicle-relative steering for a heavy vehicle | Mudrunner, Death Stranding, Astroneer | **keep** (owner decision 6) |
+
+### 7.3 The rules (0.5.1)
+1. **The view is the player's.**
+   - The orbit's yaw is held as a **world bearing**, never relative to 07: 07 turning under the camera never turns the
+     view.
+   - The orbit follows 07's position only (bind in world space, or lazy follow), and the chase "behind 07" comes from
+     recentering alone.
+2. **"Looking" lasts.** Any look input, or a held view, counts as looking. The idle clock starts only when look input
+   stops, and it runs **5 s** (mouse) or **4 s** after the stick returns to centre.
+3. **Recenter only when all of these hold:**
+   - the idle clock has run out;
+   - 07 is **driving forward** (throttle > 0) above **2 m/s** for 1 s; never while reversing, crawling, parked, charging
+     or in a moment;
+   - the view is more than **25°** from behind 07. Smaller offsets are left alone, so there are no micro-swings.
+4. **Recenter slowly:** the pull fades in over **2 s**, and yaw moves at most **30°/s** with an ease-out over its last
+   20°. Pitch returns to its default at most **10°/s**. A 150° look takes ~6 s to come home.
+5. **Any look input cancels it at once** (as now): the camera stops easing, and nothing jumps.
+6. **Following without free look:** when the camera sits behind 07 and 07 turns, the camera's yaw follows at most at
+   **45°/s**, with the current damping. A pivot turn slides into view and never whips round.
+7. **A recenter button for everyone:** middle mouse, or the right stick's click. It eases behind 07 in **0.8 s**
+   (ease-in-out). It is listed in Pause → "07 can" once learned.
+8. **Moments keep their framing** (dig, relic, leap, bay, lab, crawl, wide shot), but each blends in and out over at
+   least **1.2 s**. When a moment ends, control returns at the player's last world bearing (as `AdoptYaw` already does
+   for the wide shot).
+9. **Comfort numbers (default):**
+   - the speed FOV boost goes from +6° to **+3°**;
+   - the landing dip is capped at **0.6 m/s**;
+   - **never roll** (no Dutch, horizon always level);
+   - **no camera shake** anywhere;
+   - mouse look keeps its 0.05 s smoothing; the stick rate stays 110°/s.
+
+### 7.4 The Gentle camera (Settings, off by default; owner decision 7)
+One switch, saved, en + vi: **"Gentle camera: steadier and slower, for players who feel motion sick."** When it is on:
+- **No auto-recenter:** only the button recenters.
+- **No speed FOV change** (stays at 52°), and **no landing dip**.
+- **Moments blend over at least 2 s,** and the leap camera's pull-back is halved.
+- **Look sensitivity** offers lower values: the floor goes from 0.25 to 0.15.
+- **The wide shot** still drifts, at half its speed.
+
+## 8. What this changes
+### 8.1 M3-24 (0.5.1), tasks per slice
 **ui-fit** (with A):
 1. The type scale and the 18 px floor (§6.1); Medium weight for lines; the text-size setting (Settings, saved,
    en + vi).
@@ -278,12 +350,24 @@ text blocks at once.
 10. **The golden path and the free-order test** follow §4 and fail if the tether works before the ring. Capture the
     first 30 minutes again.
 
+**camera** (Rover, a small new slice; the Director may fold it into clarity):
+1. The world-bearing orbit and the follow rules of §7.3 (rules 1, 2 and 6). `CameraOrbit` stays plain C# with EditMode tests for each of these:
+   - a turn under a held view changes no bearing;
+   - the idle clock;
+   - every recenter condition;
+   - the 30°/s and 45°/s caps.
+2. The recenter button: the input asset (middle mouse, the right stick's click), its glyph, and Pause → "07 can".
+3. Moment blends ≥ 1.2 s, and the return at the last bearing.
+4. The comfort numbers (§7.3, rule 9) in `RoverCameraTuning`.
+5. The Gentle camera setting (§7.4): saved, en + vi, applied live.
+6. A capture pair: orbit 120° to the side, then drive a 90° turn. The view's bearing must hold, logged per frame.
+
 **voice** (with C and the audio):
 1. Cell notes at the new 4–5 s cadence, a seamless charging hum and the full chord.
 2. The listening ring: the kalimba note at −6 dB, at most once per stop.
 3. The garage port: the arm, the install, the ring's first hum.
 
-### 7.2 Spec and doc text to change (the Director's)
+### 8.2 Spec and doc text to change (the Director's)
 - **VISION ruling 3:** "Pings leave a trail" becomes "Listening leaves a trail: an answer leaves a soft light pillar for
   ~20 s, 07 keeps glancing toward the nearest, and 07 listens by itself when it rests."
 - **VISION Audio:** "Sonar: a kalimba ping in key" becomes "Listening: a soft kalimba ring in key when 07 rests". The
@@ -307,9 +391,13 @@ text blocks at once.
   - §7: the Low rule;
   - §8: the cell row.
 - **M3-21 §3:** the teaching steps are §4's list.
-- **ARCHITECTURE input map:** Ping is removed and Jump moves to Space and the gamepad's South button.
+- **ARCHITECTURE input map:** Ping is removed, Jump moves to Space and the gamepad's South button, and Recenter is added
+  (middle mouse, the right stick's click).
+- **VISION Camera direction:** "auto-recenter behind the rover after idle" becomes "the view holds its world direction;
+  it recenters slowly, only while driving forward after 5 s without look input".
+- **GDD v3 §9 (1.0 Settings):** "Gentle camera" moves to 0.5.1, as §7.4.
 
-## 8. Acceptance
+## 9. Acceptance
 - **A fresh player, after 10 minutes,** can say what the game wants (power the station), what the tower does (powers
   home, level by level), and how to find things (pillars, and 07 listening when it rests), without having pressed a
   key that did nothing.
@@ -319,4 +407,7 @@ text blocks at once.
   the perk. No charging happens while moving. Driving off keeps what has filled.
 - **At 1080p** no text is under 18 px. Every line and card measures ≥ 7:1 in UiCapture, and the 150% setting lays out
   with no clipping and no "…".
+- **The camera:** with the view held 120° to the side, a 90° turn by 07 changes the view's bearing by less than 2°.
+  Recentering never starts within 5 s of look input or below 2 m/s, and never turns faster than 30°/s. The Gentle
+  camera never recenters by itself.
 - **The first 30 minutes of the Playthrough** follow §4's order, and every teaching line shows at once.
