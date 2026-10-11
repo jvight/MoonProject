@@ -23,6 +23,22 @@ namespace MoonProject.Art.Editor
         private const float SheetHeight = 0.38f;
         private const float SheetThickness = 0.003f;
         private const float LegBar = 0.035f;
+        private const float RailGap = 0.06f;
+        private const float RailBar = 0.018f;
+        private const float RailLift = 0.03f;
+        private const float BridgeLift = 0.045f;
+
+        /// <summary>How far the chart pen's carriage travels across the paper (table space X).</summary>
+        public const float DrawWidth = 0.5f;
+
+        /// <summary>How far the pen head travels along the carriage (table space Y).</summary>
+        public const float DrawHeight = 0.34f;
+
+        /// <summary>
+        /// ChartPenCarriage's place at the paper's lower left corner, where the plotter's pen head (reused as is)
+        /// puts its tip on the paper.
+        /// </summary>
+        public static Vector3 CarriageHome => new Vector3(-DrawWidth * 0.5f, -DrawHeight * 0.5f, SheetTop - 0.002f);
 
         /// <summary>
         /// Where the table's top sits in lander space: in the alcove, its middle a little under 07's lens on the deck
@@ -71,6 +87,48 @@ namespace MoonProject.Art.Editor
                     Vector3 foot = toTable.MultiplyPoint3x4(new Vector3(cornerInLander.x, floor, cornerInLander.z));
                     SiteKit.Bar(b, corner, foot, LegBar, PaletteSwatch.WornPanel);
                 }
+            }
+
+            return b;
+        }
+
+        /// <summary>
+        /// The chart pen's frame (table space): Kenji's smaller, brass sibling of the plotter's gantry, two rails
+        /// across the table above and below the paper on little posts at the rim.
+        /// </summary>
+        public static LowPolyMeshBuilder Gantry()
+        {
+            var b = new LowPolyMeshBuilder(120);
+            float halfRun = DrawWidth * 0.5f + 0.06f;
+            for (int side = -1; side <= 1; side += 2)
+            {
+                float y = side * (DrawHeight * 0.5f + RailGap);
+                SiteKit.Bar(b, new Vector3(-halfRun, y, RailLift), new Vector3(halfRun, y, RailLift), RailBar,
+                    PaletteSwatch.Honey);
+                for (int end = -1; end <= 1; end += 2)
+                {
+                    b.Box(At(end * halfRun, y, RailLift * 0.5f), new Vector3(0.03f, 0.03f, RailLift + 0.01f),
+                        PaletteSwatch.Charcoal, 0.004f);
+                }
+            }
+
+            return b;
+        }
+
+        /// <summary>
+        /// The chart pen's carriage (carriage space: its origin under the pen's tip at the bottom of its travel):
+        /// a brass bridge spanning the paper from rail to rail with a roller block on each.
+        /// </summary>
+        public static LowPolyMeshBuilder Carriage()
+        {
+            var b = new LowPolyMeshBuilder(60);
+            float low = -RailGap;
+            float high = DrawHeight + RailGap;
+            SiteKit.Bar(b, new Vector3(0f, low, BridgeLift), new Vector3(0f, high, BridgeLift), 0.02f,
+                PaletteSwatch.Honey);
+            foreach (float y in new[] { low, high })
+            {
+                b.Box(At(0f, y, RailLift + 0.01f), new Vector3(0.045f, 0.035f, 0.035f), PaletteSwatch.Charcoal, 0.005f);
             }
 
             return b;

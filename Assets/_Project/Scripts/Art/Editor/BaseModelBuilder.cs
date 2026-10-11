@@ -88,6 +88,22 @@ namespace MoonProject.Art.Editor
 
         public const string MapSheetName = "MapSheet";
 
+        /// <summary>
+        /// LightTable/ChartPen (M3-07), Kenji's chart pen, the plotter's smaller brass sibling on the light table:
+        /// ChartPen/ChartPenCarriage rides across the paper along its local X from 0 to <see cref="ChartDrawWidth"/>,
+        /// and its child ChartPenHead (the plotter's own pen head) moves along local Y from 0 to
+        /// <see cref="ChartDrawHeight"/>, its tip on the paper, as Plotter/PenCarriage and PenHead do.
+        /// </summary>
+        public const string ChartPenName = "ChartPen";
+
+        public const string ChartPenCarriageName = "ChartPenCarriage";
+
+        public const string ChartPenHeadName = "ChartPenHead";
+
+        public const float ChartDrawWidth = ChartTableMeshes.DrawWidth;
+
+        public const float ChartDrawHeight = ChartTableMeshes.DrawHeight;
+
         public const string BulbName = "Bulb";
 
         /// <summary>
@@ -421,6 +437,12 @@ namespace MoonProject.Art.Editor
                 new ModelMesh(prefix + "_Glow", ChartTableMeshes.Glow()), ModelMaterial.PaletteGlowOff));
             table.Add(new ModelNode(MapSheetName, Vector3.zero, new ModelMesh(prefix + "_" + MapSheetName,
                 ChartTableMeshes.Sheet())));
+            ModelNode pen = table.Add(new ModelNode(ChartPenName, Vector3.zero,
+                new ModelMesh(prefix + "_" + ChartPenName, ChartTableMeshes.Gantry())));
+            ModelNode carriage = pen.Add(new ModelNode(ChartPenCarriageName, ChartTableMeshes.CarriageHome,
+                new ModelMesh(prefix + "_" + ChartPenCarriageName, ChartTableMeshes.Carriage())));
+            carriage.Add(new ModelNode(ChartPenHeadName, Vector3.zero,
+                new ModelMesh(prefix + "_" + ChartPenHeadName, BlueprintMeshes.PenHead())));
         }
 
         /// <summary>

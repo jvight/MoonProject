@@ -105,6 +105,30 @@ namespace MoonProject.Art.Tests
         }
 
         [Test]
+        public void ChartPen_DrawsAcrossThePaper_WithThePlottersOwnPenHead()
+        {
+            ModelNode table = BaseModelBuilder.CreateLander().GetDescendant(BaseModelBuilder.LightTableName);
+            ModelNode carriage = table.GetDescendant(BaseModelBuilder.ChartPenCarriageName);
+            ModelNode head = carriage.GetDescendant(BaseModelBuilder.ChartPenHeadName);
+            Bounds sheet = table.GetDescendant(BaseModelBuilder.MapSheetName).Mesh.Geometry.Bounds;
+            Vector3 start = carriage.LocalPosition;
+            Vector3 end = start + new Vector3(BaseModelBuilder.ChartDrawWidth, BaseModelBuilder.ChartDrawHeight, 0f);
+            foreach (Vector3 corner in new[] { start, end })
+            {
+                Assert.That(corner.x, Is.InRange(sheet.min.x, sheet.max.x), "the pen stays on the paper across");
+                Assert.That(corner.y, Is.InRange(sheet.min.y, sheet.max.y), "and up");
+            }
+
+            float tip = start.z + head.Mesh.Geometry.Bounds.min.z;
+            Assert.AreEqual(sheet.max.z, tip, 0.004f, "the pen's tip touches the paper");
+            ModelNode plotterHead = BaseModelBuilder.CreateRoverBay().GetDescendant(BaseModelBuilder.PenHeadName);
+            Assert.AreEqual(plotterHead.Mesh.Geometry.TriangleCount, head.Mesh.Geometry.TriangleCount,
+                "the chart pen reuses the plotter's pen head");
+            CollectionAssert.Contains(MeshChecks.Swatches(table.GetDescendant(BaseModelBuilder.ChartPenName).Mesh
+                .Geometry), PaletteSwatch.Honey, "brass, the plotter's smaller sibling");
+        }
+
+        [Test]
         public void CrewsLift_ReadsJammed_AndCarriesItsRestoredParts()
         {
             ModelNode lander = BaseModelBuilder.CreateLander();
