@@ -248,8 +248,12 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         private static readonly string ReportPath = Path.Combine(GameplayFixture.CaptureFolder, "playthrough.md");
 
-        private readonly List<(string Step, float Seconds, string Notes)> _steps =
-            new List<(string, float, string)>();
+        private readonly List<(string Step, float Seconds, string Notes, float Charge)> _steps =
+            new List<(string, float, string, float)>();
+
+        /// <summary>The range lessons' charges (docs/features/M3-20 §6, §12): where, the charge, the target.</summary>
+        private readonly List<(string Where, float Charge, Vector2 Target)> _lessons =
+            new List<(string, float, Vector2)>();
 
         private readonly List<string> _problems = new List<string>();
         private int _warnings;
@@ -262,6 +266,8 @@ namespace MoonProject.Gameplay.PlayModeTests
         private Autopilot _pilot;
         private EventRecorder _events;
         private IDisposable _awoke;
+        private IDisposable _crawled;
+        private int _crawls;
         private int _cuts;
         private float _awokeAt = -1f;
         private float _stepStart;
@@ -280,6 +286,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             _rover?.SetDriveSource(null);
             _events?.Dispose();
             _awoke?.Dispose();
+            _crawled?.Dispose();
             Scene scene = SceneManager.GetSceneByPath(PlaythroughScene.ScenePath);
             if (scene.IsValid() && scene.isLoaded)
             {
@@ -327,12 +334,15 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return GatherTillyParts();
             yield return RepairTilly();
             yield return DriveHomeWithTilly();
+            Lesson("home after Tilly's parts", 0.2f, 0.35f);
+            yield return ChargeAtTheDock("the dock charges");
             yield return ExpectStep(ProgressionKeys.NextRelic, "Tilly is home: the first memory comes next");
             yield return TillySpotsOnTheNextTrip();
             SalvageSite garage = _gameplay.Salvage.Find(WorldAnchorIds.SitePrefix + "garage");
             Relic duck = RelicIn(garage, Duck);
             Relic walkman = RelicIn(garage, Walkman);
             yield return SalvageTheGarage(garage);
+            Lesson("the garage's last cut", 0.25f, 0.4f);
             yield return Excavate(garage, duck);
             Assert.IsTrue(LogFound("kenji_1"), "Kenji's log tin by his bench opens while 07 digs");
             Assert.IsTrue(_gameplay.Blueprints.IsCarrying, "the garage's heart held the Cradle's blueprint tube");
@@ -341,20 +351,24 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return LatchTether(duck);
             yield return TowHome(garage, duck);
             yield return Deposit(duck);
+            yield return ChargeAtTheDock("before the canyon");
             yield return ExpectStep(ProgressionKeys.NextChasm, "the first memory is home: Tilly sees Bell's light");
             AssertNotYetPastTheChasm();
             yield return DriveToTheCanyon();
             yield return LookAcrossTheChasm();
+            Lesson("the chasm lip", 0.3f, 0.45f);
             yield return ExpectStep(ProgressionKeys.NextBay, "the chasm is seen: now the bay");
             yield return BackToTheGarageForTheTransformer(garage);
             yield return TheBaySleepsUntilTheTowerWakesIt();
             yield return BuyTowerLevel(2);
+            yield return ChargeAtTheDock("home with the transformer");
             yield return BuyHoverJumpAtTheBench();
             yield return ExpectStep(ProgressionKeys.NextLeap, "07 can leap: the canyon opens");
             yield return CraftTheCargoCradle();
             yield return Excavate(garage, walkman);
             yield return StowInTheCradle(walkman);
             yield return CarryHomeInTheCradle(garage, walkman);
+            yield return ChargeAtTheDock("before the leap");
             yield return FirstLeap();
             yield return DriveToTheCanyon();
             yield return LeapTheChasm();
@@ -362,6 +376,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return GatherBellsParts();
             yield return RepairBell();
             yield return HomeByTheExit();
+            yield return ChargeAtTheDock("home from the canyon");
             yield return TurnBellsDial();
             yield return FollowBellsSignal();
             yield return ExpectStep(ProgressionKeys.NextRelay, "Bell is home: the network comes next");
@@ -382,8 +397,47 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             float total = Time.time - started;
             WriteReport(total);
+            Assert.AreEqual(0, _crawls, "the golden path never runs the battery down to a crawl (M3-20 §12)");
             Assert.Less(total, TotalBudget, "the whole golden path fits a generous time budget");
             Assert.IsEmpty(_problems, "no errors or exceptions anywhere in the log during the playthrough");
+        }
+
+        private void OnLowPower(LowPowerChanged lowPower)
+        {
+            _crawls += lowPower.LowPower && !lowPower.Restored ? 1 : 0;
+        }
+
+        /// <summary>Notes the charge at one of the range lessons (docs/features/M3-20 §6) for the report.</summary>
+        private void Lesson(string where, float from, float to)
+        {
+            _lessons.Add((where, _gameplay.Battery.Model.Charge01, new Vector2(from, to)));
+        }
+
+        /// <summary>
+        /// Home from a trip: drive onto the charging dock, rest while it fills the cells (each a rising note), and
+        /// leave as soon as they are full, before the evening's sweep (the dock's evening still opens with news).
+        /// </summary>
+        private IEnumerator ChargeAtTheDock(string why)
+        {
+            Begin();
+            BatteryModel battery = _gameplay.Battery.Model;
+            float before = battery.Charge01;
+            ChargingDock dock = _gameplay.Home.Dock;
+            Vector3 facing = Flat(dock.Rotation * Vector3.forward).normalized;
+            yield return DriveTo(Flat(dock.Position) - facing * DockApproach, 1.5f, 0.6f, 60f,
+                "the front of the charging dock");
+            yield return DriveTo(Flat(dock.Position), DockParkRadius, 0.35f, 30f, "the charging dock");
+            yield return Until(() => dock.Docked, _gameplay.Home.Tuning.DockDelay + 3f, "07 rests on the dock");
+            float docked = Time.time;
+            yield return Until(() => battery.FullCells == battery.Cells && !battery.IsCharging,
+                _gameplay.Battery.Tuning.DockFill + 2f, "the dock fills the cells");
+            float fill = Time.time - docked;
+            _pilot.Reverse = BayThrottle;
+            yield return Until(() => !dock.Docked, 2f, "a touch of the throttle leaves the dock");
+            _pilot.Reverse = 0f;
+            yield return Until(() => _rover.Speed < StopSpeed, 6f, "07 stops off the dock");
+            End($"Charge at the dock ({why})", string.Format(CultureInfo.InvariantCulture,
+                "{0:P0} -> {1:P0} in {2:F1} s", before, battery.Charge01, fill));
         }
 
         private void OnLog(string message, string stackTrace, LogType type)
@@ -425,6 +479,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             _rover = (RoverController)_context.Get<IRoverRig>();
             _events = new EventRecorder(_context.Events);
             _awoke = _context.Events.Subscribe<RoverAwoke>(_ => _awokeAt = Time.time);
+            _crawled = _context.Events.Subscribe<LowPowerChanged>(OnLowPower);
             _pilot = new Autopilot(_rover);
             _rover.SetDriveSource(_pilot);
             Assert.AreEqual(0, _gameplay.Materials.Total, "a fresh game (its own save slot)");
@@ -2229,7 +2284,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         private void End(string step, string notes)
         {
             float seconds = Time.time - _stepStart;
-            _steps.Add((step, seconds, notes));
+            _steps.Add((step, seconds, notes, _gameplay != null ? _gameplay.Battery.Model.Charge01 : 1f));
             Debug.Log($"[playthrough] {step}: {seconds:F1} s ({notes})");
         }
 
@@ -2275,17 +2330,24 @@ namespace MoonProject.Gameplay.PlayModeTests
             var report = new StringBuilder();
             report.AppendLine("# Golden-path playthrough (real Main scene)");
             report.AppendLine();
-            report.AppendLine("| Step | Seconds | Notes |");
-            report.AppendLine("|---|---:|---|");
-            foreach ((string step, float seconds, string notes) in _steps)
+            report.AppendLine("| Step | Seconds | Notes | Charge |");
+            report.AppendLine("|---|---:|---|---:|");
+            foreach ((string step, float seconds, string notes, float charge) in _steps)
             {
-                report.AppendLine(string.Format(CultureInfo.InvariantCulture, "| {0} | {1:F1} | {2} |", step,
-                    seconds, notes));
+                report.AppendLine(string.Format(CultureInfo.InvariantCulture, "| {0} | {1:F1} | {2} | {3:P0} |",
+                    step, seconds, notes, charge));
             }
 
             report.AppendLine(string.Format(CultureInfo.InvariantCulture,
-                "| **Total** | **{0:F1}** | budget {1:F0} s; {2} error(s), {3} warning(s) in the log |", total,
-                TotalBudget, _problems.Count, _warnings));
+                "| **Total** | **{0:F1}** | budget {1:F0} s; {2} error(s), {3} warning(s) in the log; {4} crawl(s) | |",
+                total, TotalBudget, _problems.Count, _warnings, _crawls));
+            report.AppendLine();
+            report.AppendLine("Range lessons (docs/features/M3-20 §6):");
+            foreach ((string where, float charge, Vector2 target) in _lessons)
+            {
+                report.AppendLine(string.Format(CultureInfo.InvariantCulture, "- {0}: {1:P0} (target {2:P0}-{3:P0})",
+                    where, charge, target.x, target.y));
+            }
             Directory.CreateDirectory(GameplayFixture.CaptureFolder);
             File.WriteAllText(ReportPath, report.ToString());
             Debug.Log("[playthrough] report: " + ReportPath + "\n" + report);
