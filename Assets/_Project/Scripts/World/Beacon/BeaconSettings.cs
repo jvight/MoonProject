@@ -43,6 +43,15 @@ namespace MoonProject.World
         [Range(0f, 2f)]
         [SerializeField] private float _haloMinAngle = 0.55f;
 
+        [Tooltip("Distance (metres) from which the halo's minimum size starts to fade in: on the summit the beacon " +
+            "keeps its own glow.")]
+        [Range(0f, 300f)]
+        [SerializeField] private float _haloMinFrom = 60f;
+
+        [Tooltip("Distance (metres) from which the halo keeps its full minimum size.")]
+        [Range(1f, 400f)]
+        [SerializeField] private float _haloMinFull = 80f;
+
         public float Period => _period;
         public float Sharpness => _sharpness;
         public float LampMinIntensity => _lampMinIntensity;
@@ -52,5 +61,7 @@ namespace MoonProject.World
         public float HaloMaxIntensity => _haloMaxIntensity;
         public float HaloRadius => _haloRadius;
         public float HaloMinAngle => _haloMinAngle;
+        public float HaloMinFrom => _haloMinFrom;
+        public float HaloMinFull => _haloMinFull;
     }
 }
