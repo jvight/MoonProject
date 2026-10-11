@@ -12,15 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 67c8ed8354544624b8751cbf220ccf73, type: 3}
   m_Name: BatteryTuning
   m_EditorClassIdentifier: 
-  _startingCells: 4
-  _metresPerCell: 120
+  _startingCells: 8
+  _metresPerCell: 400
   _uphillMultiplier: 1.5
   _downhillMultiplier: 0.5
   _fullSlope: 15
   _slopeEase: 0.5
   _towMultiplier: 1.25
   _boostMultiplier: 2
-  _beamSecondsPerCell: 60
+  _beamSecondsPerCell: 300
   _fullLeapCost: 0.25
   _tapLeapCost: 0.05
   _drumCells: 0.25
