@@ -29,6 +29,9 @@ namespace MoonProject.Art.Tests
             "DrumSocket_L", "DrumSocket_R", "TubeSocket", "PartSocket",
         };
 
+        /// <summary>Battery lamp sockets per flank (docs/features/M3-20).</summary>
+        private const int FlankLamps = 8;
+
         private ModelNode _rover;
 
         [OneTimeSetUp]
@@ -42,9 +45,43 @@ namespace MoonProject.Art.Tests
         {
             var paths = new List<string>();
             CollectPaths(_rover, string.Empty, paths);
+            var contract = new List<string>(ContractPaths);
+            foreach (string flank in new[] { "L", "R" })
+            {
+                for (int i = 0; i < FlankLamps; i++)
+                {
+                    string lamp = "Body/FlankLamp_" + flank + i;
+                    contract.Add(lamp);
+                    contract.Add(lamp + "/FlankGlass_" + flank + i);
+                }
+            }
 
             Assert.AreEqual(RoverModelBuilder.ModelName, _rover.Name);
-            CollectionAssert.AreEquivalent(ContractPaths, paths);
+            CollectionAssert.AreEquivalent(contract, paths);
+        }
+
+        [Test]
+        public void FlankLamps_SitOnTheStripe_FrontToBack_WithGlowingGlassesOfTheirOwn()
+        {
+            foreach (string flank in new[] { "L", "R" })
+            {
+                float previousZ = float.MaxValue;
+                for (int i = 0; i < FlankLamps; i++)
+                {
+                    ModelNode lamp = _rover.GetDescendant("FlankLamp_" + flank + i);
+                    ModelNode glass = _rover.GetDescendant("FlankGlass_" + flank + i);
+                    Vector3 at = lamp.LocalPosition;
+                    Assert.AreEqual(flank == "R", at.x > 0f, $"{lamp.Name} side");
+                    Assert.That(at.y, Is.InRange(0.7f, 0.8f), $"{lamp.Name} sits in the stripe's band");
+                    Assert.Less(at.z, previousZ, $"{lamp.Name} runs front to back");
+                    Assert.Greater((lamp.LocalRotation * Vector3.right).x * at.x, 0.99f * Mathf.Abs(at.x),
+                        $"{lamp.Name} faces out of its flank");
+                    Assert.AreEqual(ModelMaterial.Palette, lamp.Material);
+                    Assert.AreEqual(ModelMaterial.PaletteGlowOff, glass.Material, glass.Name);
+                    CollectionAssert.AreEqual(new[] { PaletteSwatch.LampGlass }, Swatches(glass.Mesh.Geometry));
+                    previousZ = at.z;
+                }
+            }
         }
 
         [Test]
