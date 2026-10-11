@@ -16,8 +16,10 @@ namespace MoonProject.Audio
     /// <item>a crafted piece set on 07 (<see cref="RoverKitFitted"/>) is welded at the nearest arm tip, then a
     /// resolved chime: done for 07;</item>
     /// <item>the radio tower's hatch opens, the beam's stitching rises with the new section, the hatch shuts;</item>
-    /// <item>the charging dock clunks as 07 settles on it, hums very softly while charging and plays a gentle tone
-    /// when full; leaving it is a tiny release (<see cref="RoverDockChanged"/>).</item>
+    /// <item>the charging dock clunks as 07 settles on it and leaving it is a tiny release
+    /// (<see cref="RoverDockChanged"/>); any charger (the dock, a lit mast's ring) hums very softly while it fills the
+    /// cells and plays a gentle tone as the last one fills (<see cref="ChargingChanged"/>, <see cref="BatteryChanged"/>,
+    /// docs/features/M3-20).</item>
     /// <item>power returning to home, the bay or the lift plays that place's wake phrase
     /// (<see cref="BasePowerChanged"/>, never on a restore from a save), and a dormant station answers the sonar with
     /// a soft "not yet" where it stands (<see cref="StationNotYet"/>, published as the ping's ring reaches it).</item>
@@ -31,7 +33,7 @@ namespace MoonProject.Audio
     [DisallowMultipleComponent]
     public sealed class StationAudio : MonoBehaviour
     {
-        private const int SubscriptionCount = 8;
+        private const int SubscriptionCount = 10;
         private const uint DropSeedSalt = 0x68E31DA4u;
         private const float CentsPerSemitone = 100f;
         private const float CentsPerOctave = 1200f;
@@ -73,7 +75,8 @@ namespace MoonProject.Audio
         private AudioSource _turnRumble;
         private AudioSource _stitchLoop;
         private AudioSource _chargeHum;
-        private Vector3 _dockPosition;
+        private Vector3 _chargerPosition;
+        private bool _full;
         private float _feedCueVolume;
         private float _servoCueVolume;
         private float _turnCueVolume;
@@ -162,6 +165,8 @@ namespace MoonProject.Audio
             _subscriptions[5] = events.Subscribe<LiftCued>(OnLiftCued);
             _subscriptions[6] = events.Subscribe<BlueprintDelivered>(OnBlueprintDelivered);
             _subscriptions[7] = events.Subscribe<BlueprintFound>(OnBlueprintFound);
+            _subscriptions[8] = events.Subscribe<ChargingChanged>(OnChargingChanged);
+            _subscriptions[9] = events.Subscribe<BatteryChanged>(OnBatteryChanged);
         }
 
         internal void Wire(StationAudioTuning tuning)
@@ -202,7 +207,7 @@ namespace MoonProject.Audio
             Drive(_chargeHum, _charge.Hum * _tuning.ChargeVolume * _chargeCueVolume * sfx, 1f);
             if (_charge.TakeFull())
             {
-                _director.PlayAt(_dockFull, _dockPosition);
+                _director.PlayAt(_dockFull, _chargerPosition);
             }
         }
 
@@ -273,18 +278,27 @@ namespace MoonProject.Audio
 
         private void OnDockChanged(RoverDockChanged changed)
         {
-            _dockPosition = changed.Position;
+            _director.PlayAt(changed.Docked ? _dockConnect : _dockRelease, changed.Position);
+        }
+
+        /// <summary>A charger started or stopped filling the cells: the hum follows it, "full" if the cells are.</summary>
+        private void OnChargingChanged(ChargingChanged changed)
+        {
+            _chargerPosition = changed.Position;
             _chargeHum.transform.position = changed.Position;
-            if (changed.Docked)
+            if (changed.Charging)
             {
-                _charge.Dock();
-                _director.PlayAt(_dockConnect, changed.Position);
+                _charge.Begin();
             }
             else
             {
-                _charge.Undock();
-                _director.PlayAt(_dockRelease, changed.Position);
+                _charge.End(_full);
             }
+        }
+
+        private void OnBatteryChanged(BatteryChanged changed)
+        {
+            _full = changed.FullCells >= changed.Cells;
         }
 
         private void OnBasePowerChanged(BasePowerChanged changed)

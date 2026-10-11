@@ -55,6 +55,9 @@ namespace MoonProject.World
         [Tooltip("The picture through 07's own eye in the opening (docs/design/cutscenes.md §1).")]
         [SerializeField] private LensViewSettings _lensView = new LensViewSettings();
 
+        [Tooltip("The warm pools on lit relay masts' charge rings (docs/features/M3-20).")]
+        [SerializeField] private ChargerPoolSettings _chargerPools = new ChargerPoolSettings();
+
         public int Seed => _seed;
 
         public SurfaceSettings Surface => _surface;
@@ -82,6 +85,8 @@ namespace MoonProject.World
         public LandmarkSettings Landmarks => _landmarks;
 
         public LensViewSettings LensView => _lensView;
+
+        public ChargerPoolSettings ChargerPools => _chargerPools;
 
         /// <summary>Builds the analytic surface for these settings (throws on invalid settings).</summary>
         public MoonSurface CreateSurface()

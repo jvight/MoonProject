@@ -102,6 +102,11 @@ namespace MoonProject.Audio
         public const string DockChargeHum = "dock_charge_hum";
         public const string DockFull = "dock_full";
         public const string DockRelease = "dock_release";
+        public const string BatteryCell = "battery_cell";
+        public const string BatteryLow = "battery_low";
+        public const string BatterySigh = "battery_sigh";
+        public const string LeapFizzle = "leap_fizzle";
+        public const string LampTick = "lamp_tick";
         public const string BellKnobTap = "bell_knob_tap";
 
         /// <summary>A friend's chirp cue, <c>&lt;friendId&gt;_&lt;mood&gt;</c> (e.g. tilly_curious). Builds a string:

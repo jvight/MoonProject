@@ -120,7 +120,7 @@
         },
         {
             "key": "place.dock.job",
-            "text": "Where 07 rests. A rest here keeps the day."
+            "text": "Where 07 charges. A rest here keeps the day."
         },
         {
             "key": "place.lander.name",
@@ -1149,6 +1149,14 @@
         {
             "key": "lens.boot.recovery",
             "text": "BEGIN RECOVERY"
+        },
+        {
+            "key": "battery.low.dock",
+            "text": "Charge is getting low. The dock can top you up."
+        },
+        {
+            "key": "battery.low.mast",
+            "text": "Charge is getting low. The {0} can top you up."
         }
     ]
 }

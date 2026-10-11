@@ -28,10 +28,14 @@ namespace MoonProject.Gameplay
         private readonly IStoryPartGate _parts;
         private readonly FriendField _friends;
         private readonly RelayField _relays;
+        private readonly BeamWork _beam;
 
+        /// <param name="beam">
+        /// 07's beam work: while new work sleeps (the crawl, docs/features/M3-20) a beam verb's hint shows as not ready.
+        /// </param>
         public InteractionHints(IRoverState rover, SonarSystem sonar, ExcavationSystem excavation,
             SalvageField salvage, TetherSystem tether, CargoCradle cradle, HomeBase home, IUpgradeStation[] stations,
-            UpgradeService upgrades, IStoryPartGate parts, FriendField friends, RelayField relays)
+            UpgradeService upgrades, IStoryPartGate parts, FriendField friends, RelayField relays, BeamWork beam)
         {
             _rover = rover ?? throw new ArgumentNullException(nameof(rover));
             _sonar = sonar != null ? sonar : throw new ArgumentNullException(nameof(sonar));
@@ -45,6 +49,7 @@ namespace MoonProject.Gameplay
             _parts = parts ?? throw new ArgumentNullException(nameof(parts));
             _friends = friends != null ? friends : throw new ArgumentNullException(nameof(friends));
             _relays = relays != null ? relays : throw new ArgumentNullException(nameof(relays));
+            _beam = beam ?? throw new ArgumentNullException(nameof(beam));
         }
 
         public InteractionHint Primary
@@ -74,12 +79,15 @@ namespace MoonProject.Gameplay
                 case InteractionKind.Excavate:
                     Relic candidate = _excavation.Candidate;
                     hint = candidate != null
-                        ? new InteractionHint(kind, candidate.Site.Position, true)
+                        ? new InteractionHint(kind, candidate.Site.Position,
+                            _excavation.Lifting != null || _beam.MayStart)
                         : InteractionHint.None;
                     return candidate != null;
                 case InteractionKind.Salvage:
                     SalvagePiece piece = _salvage.Cutting ?? _salvage.Candidate;
-                    hint = piece != null ? new InteractionHint(kind, piece.CutPosition, true) : InteractionHint.None;
+                    hint = piece != null
+                        ? new InteractionHint(kind, piece.CutPosition, _salvage.Cutting != null || _beam.MayStart)
+                        : InteractionHint.None;
                     return piece != null;
                 case InteractionKind.Stow:
                     Relic stowable = _cradle.CanStow ? _tether.Hovered : null;
@@ -101,7 +109,7 @@ namespace MoonProject.Gameplay
                 case InteractionKind.Repair:
                     Friend broken = _friends.RepairCandidate;
                     hint = broken != null
-                        ? new InteractionHint(kind, broken.Site.Position, true)
+                        ? new InteractionHint(kind, broken.Site.Position, _beam.MayStart)
                         : InteractionHint.None;
                     return broken != null;
                 case InteractionKind.Tune:
@@ -110,7 +118,9 @@ namespace MoonProject.Gameplay
                     return tune;
                 case InteractionKind.Restore:
                     bool restore = _relays.TryGetRestore(out Vector3 socket, out bool affordable);
-                    hint = restore ? new InteractionHint(kind, socket, affordable) : InteractionHint.None;
+                    hint = restore
+                        ? new InteractionHint(kind, socket, affordable && _beam.MayStart)
+                        : InteractionHint.None;
                     return restore;
                 case InteractionKind.Hop:
                     IRadioHop hop = _relays.Hop;

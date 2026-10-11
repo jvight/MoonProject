@@ -120,7 +120,7 @@
         },
         {
             "key": "place.dock.job",
-            "text": "Nơi 07 nghỉ ngơi. Nghỉ ở đây, ngày hôm nay được giữ lại."
+            "text": "Nơi 07 sạc pin. Nghỉ ở đây, ngày hôm nay được giữ lại."
         },
         {
             "key": "place.lander.name",
@@ -1149,6 +1149,14 @@
         {
             "key": "lens.boot.recovery",
             "text": "BẮT ĐẦU KHÔI PHỤC"
+        },
+        {
+            "key": "battery.low.dock",
+            "text": "Pin đang yếu dần. Đế sạc ở nhà có thể nạp đầy lại."
+        },
+        {
+            "key": "battery.low.mast",
+            "text": "Pin đang yếu dần. {0} có thể nạp đầy lại."
         }
     ]
 }

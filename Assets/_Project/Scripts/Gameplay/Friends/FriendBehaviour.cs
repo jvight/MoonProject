@@ -9,7 +9,8 @@ namespace MoonProject.Gameplay
     /// the base — naps on its perch, flits around the lander, inspects the museum shelf. When 07 leaves it comes
     /// along, beside and above 07, never between the camera and 07, catching up (or softly reappearing) if it falls
     /// behind; with the spotter gift it drifts to undiscovered things within reach and pings softly over them. When 07
-    /// comes home from away it circles 07 once in greeting.
+    /// comes home from away it circles 07 once in greeting. While 07 crawls home on its reserve it flies out ahead,
+    /// toward the nearest lit charger, and leads with its lamp (docs/features/M3-20) until 07 charges.
     /// </summary>
     public sealed class FriendBehaviour
     {
@@ -69,6 +70,7 @@ namespace MoonProject.Gameplay
             Following = 3,
             Spotting = 4,
             Greeting = 5,
+            Leading = 6,
         }
 
         private enum Fade
@@ -102,8 +104,16 @@ namespace MoonProject.Gameplay
         {
             var intent = new FriendIntent { Rotors = 1f, Eye = 1f, Speed = _tuning.CruiseSpeed };
             TrackHome(senses, ref intent);
+            if (senses.Lead != (_mode == Mode.Leading))
+            {
+                Begin(senses.Lead ? Mode.Leading : _homeWatch.Home ? Mode.Perched : Mode.Following, senses.Now);
+            }
+
             switch (_mode)
             {
+                case Mode.Leading:
+                    Lead(senses, ref intent);
+                    break;
                 case Mode.Greeting:
                     Greet(senses, ref intent);
                     break;
@@ -137,7 +147,13 @@ namespace MoonProject.Gameplay
 
         private void TrackHome(FriendSenses senses, ref FriendIntent intent)
         {
-            switch (_homeWatch.Step(senses.Rover, senses.Home, _tuning))
+            RoverHomeWatch.Change change = _homeWatch.Step(senses.Rover, senses.Home, _tuning);
+            if (_mode == Mode.Leading)
+            {
+                return;
+            }
+
+            switch (change)
             {
                 case RoverHomeWatch.Change.CameHome:
                     Vector3 from = senses.Position - senses.Rover;
@@ -191,6 +207,27 @@ namespace MoonProject.Gameplay
                     Begin(Mode.Spotting, senses.Now);
                 }
             }
+        }
+
+        /// <summary>
+        /// Ahead of 07 toward the charger (or over the charger once 07 is that close), its lamp a warm pool on the
+        /// ground: a friend's light to follow home, never a menu.
+        /// </summary>
+        private void Lead(FriendSenses senses, ref FriendIntent intent)
+        {
+            Vector3 toward = senses.LeadToward - senses.Rover;
+            toward.y = 0f;
+            float distance = toward.magnitude;
+            Vector3 ground = distance > _tuning.LeadAhead
+                ? senses.Rover + toward * (_tuning.LeadAhead / distance)
+                : senses.LeadToward;
+            intent.Target = new Vector3(ground.x, _terrain.SampleHeight(ground.x, ground.z) + _tuning.LeadHeight,
+                ground.z);
+            intent.Look = senses.LeadToward;
+            float gap = Vector3.Distance(senses.Position, intent.Target);
+            intent.Cone = gap <= _tuning.LeadLampReach ? _tuning.LeadLamp : 0f;
+            bool far = gap > _tuning.CatchUpDistance;
+            intent.Speed = far ? _tuning.CatchUpSpeed : _tuning.CruiseSpeed;
         }
 
         private void SpotOver(FriendSenses senses, ref FriendIntent intent)

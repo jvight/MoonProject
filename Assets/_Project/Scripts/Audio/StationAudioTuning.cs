@@ -129,9 +129,6 @@ namespace MoonProject.Audio
         [Tooltip("Seconds for the charging hum to come in once docked.")]
         [Range(0.1f, 5f)] [SerializeField] private float _chargeFadeIn = 1.5f;
 
-        [Tooltip("Seconds docked before 07 is full: the hum settles away and the 'full' tone plays.")]
-        [Range(1f, 120f)] [SerializeField] private float _chargeSeconds = 20f;
-
         [Tooltip("Seconds for the hum to fade once full or undocked.")]
         [Range(0.1f, 5f)] [SerializeField] private float _chargeFadeOut = 2f;
 
@@ -174,7 +171,6 @@ namespace MoonProject.Audio
         public float StitchRiseTime => _stitchRiseTime;
         public float StitchVolume => _stitchVolume;
         public float ChargeFadeIn => _chargeFadeIn;
-        public float ChargeSeconds => _chargeSeconds;
         public float ChargeFadeOut => _chargeFadeOut;
         public float ChargeVolume => _chargeVolume;
     }

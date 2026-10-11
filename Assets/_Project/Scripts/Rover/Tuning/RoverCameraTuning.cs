@@ -222,6 +222,20 @@ namespace MoonProject.Rover
         [Range(0.2f, 2f)]
         [SerializeField] private float _bumpDamping = 0.8f;
 
+        [Header("The crawl home (M3-20)")]
+        [Tooltip("Extra distance (share of the chase distance) while 07 crawls on its reserve: the frame eases wider.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _crawlPullBack = 0.22f;
+
+        [Tooltip("Degrees the chase camera eases lower while 07 crawls, so the horizon and the charger's pillar sit "
+            + "in frame.")]
+        [Range(0f, 15f)]
+        [SerializeField] private float _crawlLower = 4f;
+
+        [Tooltip("Half-life (s) of the crawl framing easing in and out; about three of them (~3 s) settle it.")]
+        [Range(0.1f, 3f)]
+        [SerializeField] private float _crawlHalfLife = 0.9f;
+
         [Header("Camera moments")]
         [Tooltip("Digging: while the excavation beam is on, ease to the side and up so the beam and the rising "
             + "relic are seen beside 07, not hidden behind it. Flows into the relic moment when it surfaces.")]
@@ -456,6 +470,12 @@ namespace MoonProject.Rover
         public float BumpFrequency => _bumpFrequency;
 
         public float BumpDamping => _bumpDamping;
+
+        public float CrawlPullBack => _crawlPullBack;
+
+        public float CrawlLower => _crawlLower;
+
+        public float CrawlHalfLife => _crawlHalfLife;
 
         public CameraMomentSettings DigMoment => _digMoment;
 

@@ -50,6 +50,7 @@ namespace MoonProject.Gameplay
         private readonly List<Friend> _friends = new List<Friend>();
         private EventBus _events;
         private InputReader _input;
+        private BeamWork _beamWork;
         private IRoverState _rover;
         private IRoverRig _rig;
         private IViewCamera _view;
@@ -163,6 +164,7 @@ namespace MoonProject.Gameplay
 
             _events = services.Events;
             _input = services.Input;
+            _beamWork = services.Beam;
             _rover = services.Rover;
             _rig = services.Rig;
             _view = services.View;
@@ -688,7 +690,7 @@ namespace MoonProject.Gameplay
 
         private void StepRepairInput(float deltaTime)
         {
-            if (RepairCandidate == null || !_input.ExcavateHeld)
+            if (RepairCandidate == null || !_input.ExcavateHeld || !_beamWork.MayStart)
             {
                 _holdTime = 0f;
                 return;
@@ -815,6 +817,11 @@ namespace MoonProject.Gameplay
         private void StepBeam(Friend repairing, float now, float deltaTime)
         {
             bool beaming = repairing != null && repairing.Body.Beaming(now - repairing.RepairStart);
+            if (beaming)
+            {
+                _beamWork.Work(deltaTime);
+            }
+
             _beam.Step(beaming, repairing != null, _rig.TetherOrigin.position,
                 repairing != null ? repairing.Body.BeamTarget : Vector3.zero, now, deltaTime);
         }

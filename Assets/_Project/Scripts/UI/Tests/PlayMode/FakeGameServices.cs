@@ -10,11 +10,11 @@ namespace MoonProject.UI.PlayModeTests
     /// <summary>
     /// Everything the UI reads from the World, Rover, Audio and Gameplay domains, as one scriptable stand-in system
     /// (initialised before the UI). Tests set the tether state, the gameplay hint, the material stock, the tower offer,
-    /// the radio program, the relay network, the radio-hop and the salvage cut.
+    /// the radio program, the relay network, the radio-hop, the salvage cut, the battery and the beam at work.
     /// </summary>
     public sealed class FakeGameServices : MonoBehaviour, IGameSystem, IViewCamera, IAudioSettings, ILookSettings,
         IMaterialStock, ITetherAim, IInteractionHints, IUpgradeShop, IRoverState, IFriendStatuses, IRadioProgram,
-        IRadioHop, IRelayStatus, ISalvageStatus, IBlueprintBoard
+        IRadioHop, IRelayStatus, ISalvageStatus, IBlueprintBoard, IRoverBattery, IBeamStatus
     {
         private readonly float[] _volumes = { 1f, 1f, 1f, 1f };
         private readonly List<string> _tapes = new List<string>();
@@ -171,6 +171,27 @@ namespace MoonProject.UI.PlayModeTests
 
         public float RestoreHold { get; set; }
 
+        public int Cells { get; set; } = 4;
+
+        public float Charge { get; set; } = 4f;
+
+        public float Charge01 => Charge / Cells;
+
+        public bool IsLowPower { get; set; }
+
+        public float DriveCap01 => 1f;
+
+        public bool CanLeap => true;
+
+        public float Drums01 => 0f;
+
+        public bool IsCharging => false;
+
+        public ChargerKind Charger => ChargerKind.Dock;
+
+        /// <summary>The beam is at work (the battery arc hides).</summary>
+        public bool Working { get; set; }
+
         public void Initialize(GameContext context)
         {
             _events = context.Events;
@@ -188,6 +209,8 @@ namespace MoonProject.UI.PlayModeTests
             context.Register<IRadioHop>(this);
             context.Register<IRelayStatus>(this);
             context.Register<ISalvageStatus>(this);
+            context.Register<IRoverBattery>(this);
+            context.Register<IBeamStatus>(this);
         }
 
         /// <summary>The lit nodes the list will offer (their name keys), home first.</summary>

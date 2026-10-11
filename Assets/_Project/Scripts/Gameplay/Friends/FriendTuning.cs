@@ -182,6 +182,19 @@ namespace MoonProject.Gameplay
         [Tooltip("Seconds of that fade out (and again in).")]
         [Range(0.1f, 3f)] [SerializeField] private float _reappearFade = 0.6f;
 
+        [Header("Leading a crawl home (M3-20)")]
+        [Tooltip("Metres ahead of 07, toward the nearest lit charger, where it leads a crawl home with its lamp.")]
+        [Range(2f, 30f)] [SerializeField] private float _leadAhead = 10f;
+
+        [Tooltip("Metres above the ground it leads at.")]
+        [Range(0.5f, 10f)] [SerializeField] private float _leadHeight = 2.5f;
+
+        [Tooltip("Its lamp (the spotting cone, 0..1) while it leads, once in place: a soft pool on the ground ahead.")]
+        [Range(0f, 1f)] [SerializeField] private float _leadLamp = 0.45f;
+
+        [Tooltip("Metres from its leading spot within which its lamp is on (never a long beam while it flies in).")]
+        [Range(0.5f, 10f)] [SerializeField] private float _leadLampReach = 3f;
+
         [Header("Home")]
         [Tooltip("07 is home within this distance (m) of the lander: friends live at the base.")]
         [Range(5f, 100f)] [SerializeField] private float _homeRadius = 30f;
@@ -350,6 +363,10 @@ namespace MoonProject.Gameplay
         public float CatchUpDistance => _catchUpDistance;
         public float ReappearDistance => _reappearDistance;
         public float ReappearFade => _reappearFade;
+        public float LeadAhead => _leadAhead;
+        public float LeadHeight => _leadHeight;
+        public float LeadLamp => _leadLamp;
+        public float LeadLampReach => _leadLampReach;
         public float HomeRadius => _homeRadius;
         public float LeaveRadius => Mathf.Max(_leaveRadius, _homeRadius + 1f);
         public float AwayRadius => Mathf.Max(_awayRadius, LeaveRadius);

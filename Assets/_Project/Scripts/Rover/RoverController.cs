@@ -53,6 +53,9 @@ namespace MoonProject.Rover
         [Tooltip("The Hover-Jump coils under the belly (shown only while 07 owns the ability).")]
         [SerializeField] private RoverHoverCoils _hoverCoils;
 
+        [Tooltip("The amber flank lamps along the stripe: 07's battery (docs/features/M3-20).")]
+        [SerializeField] private RoverFlankLamps _flankLamps;
+
         [Tooltip("RoverModel 'TetherOrigin' (lens centre of 07's eye, +Z = gaze).")]
         [SerializeField] private Transform _tetherOrigin;
 
@@ -68,6 +71,7 @@ namespace MoonProject.Rover
         private HoverJump _jump;
         private RoverStillness _stillness;
         private BoostDrive _boost;
+        private BatteryLink _battery;
         private IDisposable _dockChanges;
         private bool _docked;
         private bool _cradled;
@@ -202,6 +206,9 @@ namespace MoonProject.Rover
         /// <summary>The Hover-Jump coils under 07's belly.</summary>
         public RoverHoverCoils HoverCoils => _hoverCoils;
 
+        /// <summary>The battery's flank lamps (where 07 glances when a leap is refused).</summary>
+        public RoverFlankLamps FlankLamps => _flankLamps;
+
         /// <summary>How much of the Boost Coils' extra cruise is in, 0..1 (eased; the drums glow with it).</summary>
         public float BoostLevel => _boost.Level;
 
@@ -305,6 +312,7 @@ namespace MoonProject.Rover
             _jump = new HoverJump(_tuning.HoverJump);
             _stillness = new RoverStillness(_tuning.Stillness);
             _boost = new BoostDrive(_tuning.Boost);
+            _battery = new BatteryLink(context);
             _terrain = context.Get<ITerrainQuery>();
             PlaceOnTerrain(_terrain);
             ConfigureBody();
@@ -324,7 +332,8 @@ namespace MoonProject.Rover
             bool effectsReady = _wheelFx.Initialize(context, this);
             bool coilsReady = _hoverCoils.Initialize(context, this);
             bool motesReady = _lampMotes.Initialize(this);
-            _initialized = visualsReady && kitReady && effectsReady && coilsReady && motesReady;
+            bool lampsReady = _flankLamps.Initialize(context);
+            _initialized = visualsReady && kitReady && effectsReady && coilsReady && motesReady && lampsReady;
             enabled = _initialized;
         }
 
@@ -348,6 +357,7 @@ namespace MoonProject.Rover
             ok &= Require(_kit != null, "RoverKit is not assigned.");
             ok &= Require(_hoverCoils != null, "RoverHoverCoils is not assigned.");
             ok &= Require(_lampMotes != null, "RoverLampMotes is not assigned.");
+            ok &= Require(_flankLamps != null, "RoverFlankLamps is not assigned.");
             ok &= Require(_tetherOrigin != null && _cargoSocket != null, "TetherOrigin/CargoSocket are not assigned.");
             if (_body != null)
             {
@@ -679,14 +689,18 @@ namespace MoonProject.Rover
         /// <summary>
         /// Hover-Jump (M3-03): ignored unless 07 owns it, only on the ground and never while gameplay holds it still.
         /// A leap sets the take-off speed for the charged height, keeps the forward speed and leaves the ground
-        /// cleanly.
+        /// cleanly. When the battery can't pay for a full leap the press is refused at the lip: the coils never
+        /// charge and <see cref="RoverLeapRefused"/> lets the coils fizzle (docs/features/M3-20).
         /// </summary>
         private void StepHoverJump(Vector3 velocity, float dt)
         {
             bool enabled = Has(RoverAbility.HoverJump) && !_holds.IsHeld;
             bool grounded = _landing.IsGrounded && !_leaping && _liftoff <= 0f;
-            switch (_jump.Step(enabled, _jumpHeld, grounded, dt))
+            switch (_jump.Step(enabled, _jumpHeld, grounded, _battery.CanLeap, dt))
             {
+                case HoverJumpEvent.Refused:
+                    _events.Publish(new RoverLeapRefused(_visualRig.RootPosition));
+                    break;
                 case HoverJumpEvent.ChargeProgress:
                     _events.Publish(new RoverJumpCharged(_jump.LastStrength));
                     break;
@@ -709,14 +723,14 @@ namespace MoonProject.Rover
         /// <summary>
         /// The Boost Coils (M3-11): engaged while 07 owns them and cruises on open, flat-ish ground with Drive held,
         /// free of holds, leaps and lifts; the extra top speed eases in and out and <see cref="RoverBoostChanged"/>
-        /// marks each change.
+        /// marks each change. They sleep while 07 crawls on the reserve (docs/features/M3-20).
         /// </summary>
         private void StepBoost(float dt)
         {
             bool free = _hasContact && _landing.IsGrounded && !_holds.IsHeld && !_leaping && _liftoff <= 0f;
             float slope = Vector3.Angle(_contactNormal, Vector3.up);
-            var sample = new BoostSample(Has(RoverAbility.BoostCoils), _throttle, _steer, _forwardSpeed,
-                _tuning.Drive.TopSpeed, slope, free);
+            var sample = new BoostSample(Has(RoverAbility.BoostCoils) && !_battery.IsLowPower, _throttle, _steer,
+                _forwardSpeed, _tuning.Drive.TopSpeed, slope, free);
             if (_boost.Step(sample, dt))
             {
                 _events.Publish(new RoverBoostChanged(_boost.Engaged));
@@ -766,7 +780,8 @@ namespace MoonProject.Rover
             GroundSettings ground = _tuning.Ground;
             float drive = _holds.IsHeld
                 ? LongitudinalDrive.HoldAcceleration(_tuning.Drive, _forwardSpeed, dt)
-                : LongitudinalDrive.Acceleration(_tuning.Drive, _forwardSpeed, _throttle, _boost.ExtraSpeed, dt);
+                : LongitudinalDrive.Acceleration(_tuning.Drive, _forwardSpeed, _throttle, _boost.ExtraSpeed,
+                    _battery.DriveCap01, dt);
 
             if (_hasContact)
             {
@@ -830,6 +845,7 @@ namespace MoonProject.Rover
             _wheelFx.Tick();
             _hoverCoils.Tick(deltaTime);
             _lampMotes.Tick(deltaTime);
+            _flankLamps.Tick(deltaTime);
         }
 
         /// <summary>This frame's motion and the player's hands, as <see cref="RoverStillness"/> reads them.</summary>

@@ -13,5 +13,10 @@ namespace MoonProject.Rover
 
         /// <summary>A charge ended without a leap: 07 left the ground, the ability went away or 07 was held still.</summary>
         Cancelled = 3,
+
+        /// <summary>
+        /// Jump was pressed but the battery can't pay for a full leap: the coils never charge (docs/features/M3-20).
+        /// </summary>
+        Refused = 4,
     }
 }
