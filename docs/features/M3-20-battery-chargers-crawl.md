@@ -92,6 +92,11 @@ when Floodlights land with the dark crater.
 - Fitting it adds two lamps and fills them as part of the install moment (a two-note rise).
 
 ## 6. The range lessons on the critical path (GDD v3 §3.8)
+> **Measured on the reshaped golden path at spec (milestone B, 2026-10-12):** home after Tilly's parts 25%; the garage
+> cuts are split over two trips (lowest 17% and 33%); the duck's dig and tow from the garage at 232°/140 m runs to 10%
+> (accepted: the 30% warning fires within sight of home, so it teaches "the dock charges" a second time); 07 charges at
+> the mound mast (relay.0) on the way to the chasm, so **"masts charge" is taught at relay.0** and the chasm lip sits
+> near 55%. Items 2 and 3 below are superseded by these numbers.
 These come from the tuning above on the built basin; they are acceptance checks, not scripts.
 1. **Tilly and her parts:** about **28%** left on the way home, ~60 m from the dock. The 30% warning fires within
    sight of home. *The dock charges.*
@@ -158,8 +163,8 @@ section with defaults (full, 4 cells), so older 0.5 saves load full. A game load
 - **Calm:** in a 10-minute capture that includes a crawl home, nothing flashes red, nothing alarms, nothing is lost,
   and the crawl reads as a quiet moment (owner judges by screenshots: the crawl frame, the charge frame).
 - **Rules:** EditMode tests prove each rule in §2 and each number in §3 on the model (zero GC per step).
-- **Lessons:** the golden-path Playthrough logs the charge at: home after Tilly's parts (target 20–35%), the chasm lip
-  (30–45%), the garage's last cut (25–40%). It never crawls on the golden path, and it still finishes steps 0–8 within
+- **Lessons:** the golden-path Playthrough logs the lowest charge per trip: home after Tilly's parts (target 20–35%),
+  every trip ends above 5% with no crawl, and a mast is the charger on the way to the chasm. It never crawls on the golden path, and it still finishes steps 0–8 within
   budget with the dock and relay.2 charging.
 - **Crawl:** a PlayMode test empties the battery mid-cut: the cut completes, then the crawl starts at 35%, Tilly leads
   within ~6 s (55%), and 07 reaches the dock and charges.
