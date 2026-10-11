@@ -51,7 +51,7 @@ namespace MoonProject.Audio.Tests
         [TestCase(BasePowerStage.Asleep, null)]
         [TestCase(BasePowerStage.Home, "home")]
         [TestCase(BasePowerStage.Bay, "bay")]
-        [TestCase(BasePowerStage.Lift, "lift")]
+        [TestCase(BasePowerStage.Chart, "lift")]
         public void EachPlaceWaking_PlaysItsPhrase(BasePowerStage stage, string expected)
         {
             Assert.AreEqual(expected, BaseWakeSounds.LabelOf(stage));

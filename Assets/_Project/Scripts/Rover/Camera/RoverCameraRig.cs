@@ -822,7 +822,7 @@ namespace MoonProject.Rover
         /// </summary>
         private void OnLiftRideChanged(LiftRideChanged ride)
         {
-            if (!ride.AtLookout)
+            if (!ride.Inside)
             {
                 if (_lookout)
                 {

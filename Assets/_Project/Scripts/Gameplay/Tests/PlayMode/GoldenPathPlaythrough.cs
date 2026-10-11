@@ -368,7 +368,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsTrue(_gameplay.TowerParts.NeedsPart(Tower, 3), "level 3 waits for the relay spare");
             yield return RestoreTheMoundRelay();
             yield return ExpectStep(ProgressionKeys.NextLift, "a mast is lit: the crew's lift waits for power");
-            Assert.IsFalse(_gameplay.Power.HasReached(BasePowerStage.Lift), "the lift stays jammed before its step");
+            Assert.IsFalse(_gameplay.Power.HasReached(BasePowerStage.Chart), "the lift stays jammed before its step");
             yield return PickUpTheRelaySpare();
             yield return DriveOutInReach();
             yield return HopHomeAndBack();
@@ -782,7 +782,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         {
             Begin();
             LiftStation lift = _gameplay.Lift;
-            Assert.IsTrue(_gameplay.Power.HasReached(BasePowerStage.Lift), "the tower's third level powers the lift");
+            Assert.IsTrue(_gameplay.Power.HasReached(BasePowerStage.Chart), "the tower's third level powers the lift");
             yield return Until(() => lift.Phase == LiftPhase.Jammed, LiftPhaseTimeout, "the jammed lift wakes");
             yield return DriveTo(_context.Get<IWorldLayout>().BasePosition, PadArrival, 0.6f, 60f,
                 "the base pad, clear of the lander");

@@ -30,7 +30,7 @@ namespace MoonProject.Gameplay
         public static BasePowerStage StageFor(int towerLevel)
         {
             return towerLevel <= 0 ? BasePowerStage.Asleep
-                : towerLevel >= (int)BasePowerStage.Lift ? BasePowerStage.Lift
+                : towerLevel >= (int)BasePowerStage.Chart ? BasePowerStage.Chart
                 : (BasePowerStage)towerLevel;
         }
 

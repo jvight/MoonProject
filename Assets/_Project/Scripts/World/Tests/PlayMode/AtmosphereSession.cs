@@ -264,7 +264,7 @@ namespace MoonProject.World.PlayModeTests
             }
 
             Assert.AreEqual(1f, context.Get<IHomeLights>().Level(HomeLight.Halo), "home has settled");
-            context.Events.Publish(new BasePowerChanged(BasePowerStage.Lift, false));
+            context.Events.Publish(new BasePowerChanged(BasePowerStage.Chart, false));
             yield return new WaitForSeconds(LiftSettleSeconds);
             Capture(view, "wake-4-lift");
             Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));

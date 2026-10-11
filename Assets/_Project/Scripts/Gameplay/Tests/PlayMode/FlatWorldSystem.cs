@@ -180,7 +180,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             {
                 BasePowerStage needs = light == HomeLight.Dock ? BasePowerStage.Asleep
                     : light == HomeLight.BayLamps ? BasePowerStage.Bay
-                    : light == HomeLight.LiftLamps ? BasePowerStage.Lift
+                    : light == HomeLight.LiftLamps ? BasePowerStage.Chart
                     : BasePowerStage.Home;
                 return _stage >= needs ? 1f : 0f;
             }
