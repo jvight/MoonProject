@@ -7,6 +7,7 @@
 
 .moon-root,
 .hud,
+.lab-hud,
 .hop-veil,
 .hop-veil__dark,
 .pause,
@@ -1240,4 +1241,19 @@ Label {
 
 .pause .unity-toggle:checked .unity-toggle__checkmark {
     background-color: var(--moon-warm-lamp);
+}
+
+/* The crew's lab (M3-19): the HUD steps aside; the lab's place line and its few first-time prompts, low and centred */
+
+.lab-prompts {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 12%;
+    flex-direction: row;
+    justify-content: center;
+}
+
+.lab-prompts__chip {
+    margin: 0 10px;
 }

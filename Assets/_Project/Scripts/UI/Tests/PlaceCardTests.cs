@@ -17,13 +17,15 @@ namespace MoonProject.UI.Tests
 
         private static readonly string[] Places =
         {
-            "dock", "lander", "shelf", "tower", "bay", "board", "ladder", "lift", "rack",
+            "dock", "lander", "tower", "bay", "ladder", "lift", "lab", "rack",
         };
 
         private static readonly string[] Lines =
         {
-            "next.wake", "next.salvage", "next.tower", "next.signal", "next.relic", "next.bay", "next.leap",
-            "next.relay", "next.lift", "notyet.bay", "notyet.lift", "notyet.shelf", UiKeys.BlueprintFound,
+            "next.wake", "next.salvage", "next.tower", "next.signal", "next.relic", "next.lift.stitch",
+            "next.lift.ride", "next.bay", "next.leap", "next.relay", "next.chart", "next.chart.look", "notyet.bay",
+            "notyet.chart", "ui.lab.turn", "ui.lab.look", "ui.lab.down", "glyph.lab.turn", "glyph.lab.turn.pad",
+            "glyph.lab.look", "glyph.lab.look.pad", "glyph.lab.down", "glyph.lab.down.pad", UiKeys.BlueprintFound,
             UiKeys.BlueprintDelivered,
         };
 
