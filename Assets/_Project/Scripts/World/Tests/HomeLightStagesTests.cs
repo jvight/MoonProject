@@ -41,6 +41,33 @@ namespace MoonProject.World.Tests
         }
 
         [Test]
+        public void TheTowersPreview_RunsASlowLightDownEachDarkCable_InTurn_ThenGoesDark()
+        {
+            const int segments = 10;
+            Assert.AreEqual(0f, _stages.CableLevel(BasePowerStage.Home, 0, segments, Start), "dark while asleep");
+            _stages.Preview(Start);
+            float atFoot = Start + _settings.PreviewRise;
+            Assert.AreEqual(_settings.PreviewPeak, _stages.CableLevel(BasePowerStage.Home, 0, segments, atFoot),
+                Tolerance, "the light starts at the tower's foot");
+            Assert.AreEqual(0f, _stages.CableLevel(BasePowerStage.Home, segments - 1, segments, atFoot),
+                "and has not reached the lander yet");
+            Assert.AreEqual(0f, _stages.CableLevel(BasePowerStage.Bay, 0, segments, atFoot), "the bay's runs next");
+            float bayFoot = Start + _settings.PreviewStagger + _settings.PreviewRise;
+            Assert.That(_stages.CableLevel(BasePowerStage.Bay, 0, segments, bayFoot), Is.GreaterThan(0.5f));
+            float chartEnd = Start + 2f * _settings.PreviewStagger + _settings.PreviewTravel +
+                             _settings.PreviewRise + _settings.PreviewTail + 0.01f;
+            foreach (BasePowerStage stage in new[] { BasePowerStage.Home, BasePowerStage.Bay, BasePowerStage.Chart })
+            {
+                for (int i = 0; i < segments; i++)
+                {
+                    Assert.AreEqual(0f, _stages.CableLevel(stage, i, segments, chartEnd), $"{stage} {i}: dark again");
+                }
+            }
+
+            Assert.That(_settings.PreviewPeak, Is.LessThan(1f), "a promise, softer than real power");
+        }
+
+        [Test]
         public void Home_WakesWindowsThenPorchLampsThenHalo_Eased()
         {
             _stages.SetStage(BasePowerStage.Home, false, Start);
