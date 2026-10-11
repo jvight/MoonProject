@@ -71,6 +71,14 @@ namespace MoonProject.Gameplay.Editor
                 : throw new InvalidOperationException($"{BuilderPath}: Art's blueprint tube {path} is missing.");
         }
 
+        private static GameObject TapeDeckModel()
+        {
+            string path = ArtPaths.RoverFolder + "/" + RoverKitBuilder.TapeDeckName + ".prefab";
+            var deck = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            return deck != null ? deck
+                : throw new InvalidOperationException($"{BuilderPath}: Art's tape deck {path} is missing.");
+        }
+
         [MoonBuilder(BuilderPath, BuilderOrder)]
         private static void Build()
         {
@@ -91,6 +99,7 @@ namespace MoonProject.Gameplay.Editor
             visuals.PopulatePads(Pads(), BaseModelBuilder.PadRadii);
             visuals.PopulateComponents(ComponentModels());
             visuals.PopulateTube(TubeModel());
+            visuals.PopulateTapeDeck(TapeDeckModel());
             GeneratedAssets.CreateOrReplace(visuals, GameplayAssetPaths.Visuals);
             AssetDatabase.SaveAssets();
             Debug.Log($"{BuilderPath}: wrote {Enum.GetValues(typeof(GlowRole)).Length + 2} materials and " +

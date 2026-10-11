@@ -732,6 +732,24 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
+    /// 07 picked up the old tape deck Tilly spotted (docs/features/M3-24 C) at <see cref="Position"/>: Rover fits it on
+    /// 07's flank with the gift's soft moment. Restored is true when a loaded game already has it (once, after the save
+    /// is applied): it is there at once.
+    /// </summary>
+    public readonly struct TapeDeckFound
+    {
+        public TapeDeckFound(Vector3 position, bool restored)
+        {
+            Position = position;
+            Restored = restored;
+        }
+
+        public Vector3 Position { get; }
+
+        public bool Restored { get; }
+    }
+
+    /// <summary>
     /// 07 handed component <see cref="PartId"/> to the tower's port hopper at <see cref="Position"/>
     /// (docs/features/M3-16 P1): it leaves 07's back and glides in, and tower level <see cref="TowerLevel"/> can now be
     /// built.

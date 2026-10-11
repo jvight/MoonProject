@@ -87,6 +87,9 @@ namespace MoonProject.Gameplay
         /// <summary>The blueprint tubes waiting on the ground at world anchors (docs/features/M3-21).</summary>
         public GroundTubes GroundTubes { get; private set; }
 
+        /// <summary>Tilly's glint, the old tape deck on the ground (docs/features/M3-24 C).</summary>
+        public TapeDeckFind TapeDeck { get; private set; }
+
         /// <summary>What 07 and the station know and have built (docs/features/M3-21).</summary>
         public TechTree Tech { get; private set; }
 
@@ -270,7 +273,8 @@ namespace MoonProject.Gameplay
 
             TowerPartField = NewTowerPartField(services);
             GroundTubes = TowerPartField != null ? NewGroundTubes(services) : null;
-            if (GroundTubes == null || !NewGoals(context.Events))
+            TapeDeck = GroundTubes != null ? NewTapeDeck(services) : null;
+            if (TapeDeck == null || !NewGoals(context.Events))
             {
                 enabled = false;
                 return;
@@ -336,6 +340,8 @@ namespace MoonProject.Gameplay
                 GameplaySaveKeys.TowerPartsVersion, TowerParts.Capture, RestoreTowerParts)));
             _saveTokens.Add(save.Register(new SaveSection<BatterySaveData>(GameplaySaveKeys.Battery,
                 GameplaySaveKeys.BatteryVersion, _battery.Capture, _battery.Restore)));
+            _saveTokens.Add(save.Register(new SaveSection<TapeDeckSaveData>(GameplaySaveKeys.TapeDeck,
+                GameplaySaveKeys.TapeDeckVersion, TapeDeck.Capture, TapeDeck.Restore)));
         }
 
         private void RestoreTowerParts(TowerPartsSaveData data)
@@ -381,6 +387,20 @@ namespace MoonProject.Gameplay
             {
                 return new GroundTubes(Blueprints, Upgrades, _progression.Tuning.Tubes, transform, services,
                     _friends.Tuning, _progression.Tuning);
+            }
+            catch (InvalidOperationException exception)
+            {
+                Debug.LogError($"{nameof(GameplaySystem)}: {exception.Message}", this);
+                return null;
+            }
+        }
+
+        /// <summary>Tilly's tape deck on the ground, or null (logged) when its anchor is missing.</summary>
+        private TapeDeckFind NewTapeDeck(GameplayServices services)
+        {
+            try
+            {
+                return new TapeDeckFind(transform, services, _friends, _friends.Tuning, _progression.Tuning);
             }
             catch (InvalidOperationException exception)
             {
@@ -504,6 +524,7 @@ namespace MoonProject.Gameplay
             Blueprints.Announce();
             TowerParts.Announce();
             GroundTubes.Sync();
+            TapeDeck.Announce();
             Tech.Announce();
             Recovery.Announce();
         }
@@ -514,6 +535,7 @@ namespace MoonProject.Gameplay
             Power.Show(_tower.ShownLevel);
             TowerPartField.Step(now);
             GroundTubes.Step(now);
+            TapeDeck.Step(now);
             Tech.Refresh();
             Recovery.Refresh();
         }
@@ -635,6 +657,7 @@ namespace MoonProject.Gameplay
             Blueprints?.Dispose();
             TowerPartField?.Dispose();
             GroundTubes?.Dispose();
+            TapeDeck?.Dispose();
             _meshes?.Dispose();
         }
     }

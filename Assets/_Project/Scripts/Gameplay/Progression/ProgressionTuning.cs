@@ -101,6 +101,22 @@ namespace MoonProject.Gameplay
             new BlueprintTube("rover.cell_pack", "relay.2"),
         };
 
+        [Header("Tilly's glint: the old tape deck (M3-24 C)")]
+        [Tooltip("The world anchor the tape deck lies behind (along the anchor's back): the garage Tilly spots.")]
+        [SerializeField] private string _tapeDeckAnchor = "site.garage";
+
+        [Tooltip("Metres behind the anchor where the deck lies, clear of the site's pieces.")]
+        [Range(0f, 30f)] [SerializeField] private float _tapeDeckSetback = 9f;
+
+        [Tooltip("Height (m) of the deck's middle above the ground, so it lies half in the dust.")]
+        [Range(0f, 0.3f)] [SerializeField] private float _tapeDeckLift = 0.04f;
+
+        [Tooltip("How the deck lies in the dust (deg, relative to the anchor's heading): tipped on its side.")]
+        [SerializeField] private Vector3 _tapeDeckTilt = new Vector3(0f, 35f, 70f);
+
+        [Tooltip("The friend whose glint the deck is: it shows once she is awake and out with 07.")]
+        [SerializeField] private string _tapeDeckFriend = "tilly";
+
         [Header("Tech tree and recovery panel (M3-21)")]
         [Tooltip("The tech board's kit pins and the bay's upgrade that builds each; a kit node left out stays unknown.")]
         [SerializeField] private TechKit[] _techKits =
@@ -207,6 +223,16 @@ namespace MoonProject.Gameplay
         public string LeapKit => _leapKit;
 
         public IReadOnlyList<BlueprintTube> Tubes => _tubes;
+
+        public string TapeDeckAnchor => _tapeDeckAnchor;
+
+        public float TapeDeckSetback => _tapeDeckSetback;
+
+        public float TapeDeckLift => _tapeDeckLift;
+
+        public Vector3 TapeDeckTilt => _tapeDeckTilt;
+
+        public string TapeDeckFriend => _tapeDeckFriend;
 
         public IReadOnlyList<TechKit> TechKits => _techKits;
 

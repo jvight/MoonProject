@@ -70,6 +70,9 @@ namespace MoonProject.Gameplay
                  "a world anchor (docs/features/M3-21).")]
         [SerializeField] private GameObject _tube;
 
+        [Tooltip("Art's old tape deck (Generated/Art/Rover/Kit_TapeDeck.prefab): Tilly's glint on the ground (M3-24).")]
+        [SerializeField] private GameObject _tapeDeck;
+
         public Material SonarRing => _sonarRing;
         public Material SiteRing => _siteRing;
         public Material SitePillar => _sitePillar;
@@ -87,6 +90,7 @@ namespace MoonProject.Gameplay
         public Material HomeHalo => _homeHalo;
         public Material LinkPulse => _linkPulse;
         public GameObject Tube => _tube;
+        public GameObject TapeDeck => _tapeDeck;
 
         /// <summary>Art's station pad (StationPad_&lt;cm&gt;) whose radius is nearest <paramref name="radius"/>.</summary>
         public GameObject PadFor(float radius)
@@ -138,6 +142,7 @@ namespace MoonProject.Gameplay
                 : _components == null || Array.IndexOf(_components, null) >= 0
                     ? "Art's tower components are missing (run Gameplay/Materials)"
                 : _tube == null ? "Art's blueprint tube is missing (run Gameplay/Materials)"
+                : _tapeDeck == null ? "Art's tape deck is missing (run Gameplay/Materials)"
                 : null;
         }
 
@@ -155,6 +160,11 @@ namespace MoonProject.Gameplay
         internal void PopulateTube(GameObject tube)
         {
             _tube = tube;
+        }
+
+        internal void PopulateTapeDeck(GameObject deck)
+        {
+            _tapeDeck = deck;
         }
 
         internal void Populate(Material sonarRing, Material siteRing, Material sitePillar, Material tractorBeam,

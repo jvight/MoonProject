@@ -375,6 +375,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 Template("Part_RelaySpare", new Vector3(0.4f, 0.3f, 0.5f)),
             });
             visuals.PopulateTube(Template("BlueprintTube", new Vector3(0.7f, 0.14f, 0.14f)));
+            visuals.PopulateTapeDeck(Template("Kit_TapeDeck", new Vector3(0.1f, 0.14f, 0.28f)));
             var root = new GameObject("[Gameplay]");
             root.SetActive(false);
             Gameplay = root.AddComponent<GameplaySystem>();
