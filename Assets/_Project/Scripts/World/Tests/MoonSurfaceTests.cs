@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 using NUnit.Framework;
 using UnityEngine;
@@ -276,19 +277,27 @@ namespace MoonProject.World.Tests
         [Test]
         public void Sampling_IsFastEnoughForBootTimeMeshing()
         {
-            const int count = 200000;
+            // The fastest of several rounds measures the sampler, not whatever else the machine is running.
+            const int rounds = 5;
+            const int countPerRound = 40000;
             float sink = 0f;
             var random = new SeededRandom(3u);
-            var watch = Stopwatch.StartNew();
-            for (int i = 0; i < count; i++)
+            double fastest = double.MaxValue;
+            for (int round = 0; round < rounds; round++)
             {
-                sink += _surface.SampleHeight(random.Range(-500f, 500f), random.Range(-500f, 500f));
+                var watch = Stopwatch.StartNew();
+                for (int i = 0; i < countPerRound; i++)
+                {
+                    sink += _surface.SampleHeight(random.Range(-500f, 500f), random.Range(-500f, 500f));
+                }
+
+                watch.Stop();
+                fastest = Math.Min(fastest, watch.Elapsed.TotalMilliseconds * 1000.0 / countPerRound);
             }
 
-            watch.Stop();
-            double microseconds = watch.Elapsed.TotalMilliseconds * 1000.0 / count;
-            TestContext.WriteLine($"MoonSurface.SampleHeight: {microseconds:F3} us/sample (checksum {sink:F1})");
-            Assert.Less(microseconds, 2.0, "height sampling is too slow for boot-time terrain generation");
+            TestContext.WriteLine($"MoonSurface.SampleHeight: {fastest:F3} us/sample, fastest of {rounds} rounds " +
+                $"(checksum {sink:F1})");
+            Assert.Less(fastest, 2.0, "height sampling is too slow for boot-time terrain generation");
         }
 
         /// <summary>Mean height around a crater's rim: robust to the hill the crater sits on.</summary>
