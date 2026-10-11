@@ -203,7 +203,7 @@ namespace MoonProject.Gameplay.Lift
             Vector3 eye = _rig.TetherOrigin.position;
             bool feedDone = _cycle.Phase == LiftPhase.Feeding
                 && _feed.Step(eye, _rig.CargoSocket.position, _hopperMouth.position, now, deltaTime);
-            var input = new LiftInput(_power.HasReached(BasePowerStage.Lift), _materials.Has(_tuning.FeedRecipe),
+            var input = new LiftInput(_power.HasReached(BasePowerStage.Chart), _materials.Has(_tuning.FeedRecipe),
                 _feedPad.Occupied, OnPlatform(), _stillness.StillSeconds, feedDone, PlayerInput());
             Play(_cycle.Step(input, deltaTime), feedDone, now);
             StepCreak();

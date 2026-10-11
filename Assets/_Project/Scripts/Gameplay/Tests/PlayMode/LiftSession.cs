@@ -135,7 +135,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Capture("lift-1-restored", lift);
 
             bool atLookout = false;
-            using (_context.Events.Subscribe<LiftRideChanged>(ride => atLookout = ride.AtLookout))
+            using (_context.Events.Subscribe<LiftRideChanged>(ride => atLookout = ride.Inside))
             {
                 yield return DriveTo(lift.RideSpot - lift.RideHeading * LineUp, BoardRadius, "the ramp's foot");
                 yield return DriveTo(lift.RideSpot, BoardRadius, "the platform");

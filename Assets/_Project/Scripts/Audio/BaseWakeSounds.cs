@@ -17,7 +17,7 @@ namespace MoonProject.Audio
                     return "home";
                 case BasePowerStage.Bay:
                     return "bay";
-                case BasePowerStage.Lift:
+                case BasePowerStage.Chart:
                     return "lift";
                 default:
                     return null;
