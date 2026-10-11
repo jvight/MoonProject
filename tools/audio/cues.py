@@ -2035,7 +2035,163 @@ def bell_knob_tap(_variant, gen):
 
 # --------------------------------------------------------------------------------------------------- registry
 
+# ---- 07's wake through its own eye (docs/design/cutscenes.md section 1) ----
+
+ASLEEP_STATIC_LOOP_S = 8.0
+
+
+def asleep_static(_variant, gen):
+    """The radio asleep and out of tune, on the title and through 07's opening: soft hiss in an old set's narrow
+    band breathing slowly, a faint heterodyne whistle on A5 that wanders a few cents, and the odd crackle pop.
+    Seamless and quiet; the opening lets the ghost chord surface out of it."""
+    n = samples(ASLEEP_STATIC_LOOP_S)
+    loop_hz = 1.0 / ASLEEP_STATIC_LOOP_S
+    hiss = periodic(noise.white(n, gen), lambda x: filters.bandpass(noise.pink_filter(x), 1300.0, 0.6),
+                    warmup=samples(0.5))
+    hiss = hiss / max(float(np.std(hiss)), 1e-9) * envelope.lfo(n, 2.0 * loop_hz, 0.2, 0.8)
+    t = np.arange(n) / SAMPLE_RATE
+    wander = loop_freq(note_freq("A5"), n) * (1.0 + 0.003 * np.sin(2.0 * np.pi * loop_hz * t))
+    whistle = osc.sine(n, wander) * envelope.lfo(n, loop_hz, 0.5, 0.5, phase=0.25) ** 2
+    pops = np.zeros(n)
+    for start in noise.event_times(n, gen, 1.5):
+        length = samples(0.006)
+        grain = filters.bandpass(noise.white(length, gen), 2400.0, 1.2) * envelope.ar(length, 0.0004, 0.004)
+        place(pops, grain * gen.uniform(0.3, 1.0), int(start), wrap=True)
+    mix = 0.25 * hiss + 0.012 * whistle + 0.08 * pops
+    return periodic(mix, lambda x: filters.highpass(filters.lowpass(x, 4200.0), 260.0))
+
+
+GHOST_CHORD_LABELS = ("faint", "clearer", "long")
+GHOST_CHORD_NOTES = ("D3", "A3", "E4")
+GHOST_CHORD_BAR_S = 3.0
+GHOST_CHORD_BAND = {"faint": 1600.0, "clearer": 2200.0, "long": 2800.0}
+
+
+def _rhodes(freq, duration):
+    """A soft electric-piano tone: 2-op FM with a decaying bell index, plus a faint high tine."""
+    n = samples(duration)
+    body = two_op(n, freq, 1.0, 1.6 * envelope.exp_decay(n, 1.2), amp=envelope.exp_decay(n, 3.2))
+    tine = two_op(n, freq, 14.0, 0.4 * envelope.exp_decay(n, 0.15), amp=envelope.exp_decay(n, 0.4))
+    return (body + 0.05 * tine) * envelope.ar(n, 0.004, duration * 4.0)
+
+
+def ghost_chord(variant, gen):
+    """A ghost of the music inside the static (O1 faint, O7 a hair clearer, O9 two bars and clearest): a soft Rhodes
+    chord D-A-E heard through an old radio band with tape wow, surfacing out of nothing and sinking back."""
+    label = GHOST_CHORD_LABELS[variant]
+    bars = 2 if label == "long" else 1
+    duration = GHOST_CHORD_BAR_S * bars + 0.6
+    n = samples(duration)
+    chord = np.zeros(n)
+    for bar in range(bars):
+        for i, note in enumerate(GHOST_CHORD_NOTES):
+            strike = _rhodes(note_freq(note), duration - bar * GHOST_CHORD_BAR_S)
+            place(chord, (0.8 if bar else 1.0) * strike, samples(bar * GHOST_CHORD_BAR_S + 0.03 * i))
+    radio = filters.lowpass(filters.highpass(chord, 320.0), GHOST_CHORD_BAND[label])
+    radio = effects.wow_flutter(radio, wow_cents=9.0, wow_rate=0.5, flutter_cents=3.0, drift_cents=4.0, gen=gen)
+    surface = envelope.segments(n, [(0.0, 0.0), (0.45 * duration, 1.0), (0.6 * duration, 0.85), (duration, 0.0)],
+                                shape="smooth")
+    hiss = filters.bandpass(noise.pink(n, gen), 1300.0, 0.6)
+    hiss = hiss / max(float(np.std(hiss)), 1e-9)
+    return filters.butter(0.4 * radio * surface + 0.02 * hiss * surface, "lowpass", 3000.0, order=4)
+
+
+def wake_power_thump(_variant, gen):
+    """07's systems starting inside the black (O1): a felted low thump, a breath of air and a soft D2 hum easing
+    up under it, as if from inside the chassis."""
+    n = samples(1.6)
+    thump = osc.sine(n, osc.glide(n, 95.0, 52.0, time_constant=0.05)) * envelope.ar(n, 0.006, 0.35)
+    felt = filters.lowpass(noise.pink(n, gen), 420.0)
+    felt = felt / max(float(np.std(felt)), 1e-9) * envelope.ar(n, 0.003, 0.12)
+    hum = osc.additive(n, note_freq("D2"), [(1, 1.0), (2, 0.35), (3, 0.1)])
+    hum *= envelope.segments(n, [(0.0, 0.0), (0.15, 0.0), (0.7, 1.0), (1.6, 0.0)], shape="smooth")
+    return filters.lowpass(0.5 * thump + 0.05 * felt + 0.12 * hum, 1400.0)
+
+
+LID_TICK_NOTES = ("A2", "D3", "A4", "D5")
+LID_TICK_LABELS = ("a2", "d3", "a4", "d5")
+
+
+def lid_tick(variant, gen):
+    """One felted servo tick of 07's lid or lens: a soft click with a short ring on its note (A2 and D3 for the lid
+    stages, A4 as the focus lands, D5 for the blink's lid click)."""
+    freq = note_freq(LID_TICK_NOTES[variant])
+    n = samples(0.5)
+    ring = osc.additive(n, freq, [(1, 1.0), (2, 0.4), (3, 0.12)])
+    ring *= envelope.ar(n, 0.002, 0.22 if freq < 200.0 else 0.14)
+    click_n = samples(0.006)
+    click = filters.bandpass(noise.white(click_n, gen), 1800.0, 0.9) * envelope.ar(click_n, 0.0004, 0.004)
+    out = 0.35 * filters.lowpass(ring, 2600.0)
+    out[:click_n] += 0.08 * click
+    return out
+
+
+def lens_whine(_variant, gen):
+    """07's lens motor hunting for focus (O4): a small thin whine gliding E4 up to F#4 with a faint gear flutter."""
+    n = samples(2.4)
+    glide = osc.glide(n, note_freq("E4"), note_freq("F#4"), time_constant=0.9)
+    whine = osc.additive(n, glide, [(1, 1.0), (2, 0.25), (3, 0.08)])
+    whine *= 0.85 + 0.15 * np.sin(2.0 * np.pi * 34.0 * np.arange(n) / SAMPLE_RATE)
+    gears = filters.bandpass(noise.pink(n, gen), 900.0, 2.5)
+    gears = gears / max(float(np.std(gears)), 1e-9)
+    shape = envelope.segments(n, [(0.0, 0.0), (0.25, 1.0), (1.9, 0.8), (2.4, 0.0)], shape="smooth")
+    return filters.lowpass(0.12 * whine + 0.02 * gears, 3000.0) * shape
+
+
+def hum_dropout(_variant, gen):
+    """07 coming on (O5): its lamp hum on D3 falters, cuts out for a beat and comes back steady."""
+    n = samples(1.8)
+    hum = osc.additive(n, note_freq("D3"), [(1, 1.0), (2, 0.45), (3, 0.18)])
+    shape = envelope.segments(n, [(0.0, 0.0), (0.12, 0.7), (0.4, 0.55), (0.46, 0.0), (0.8, 0.0), (0.95, 1.0),
+                                  (1.3, 0.85), (1.8, 0.0)], shape="smooth")
+    buzz = filters.bandpass(noise.white(n, gen), 1150.0, 6.0)
+    buzz = buzz / max(float(np.std(buzz)), 1e-9)
+    return filters.lowpass(0.2 * hum * shape + 0.01 * buzz * shape, 2400.0)
+
+
+def neck_servo(_variant, gen):
+    """07's old neck turning its head (O6-O9): a soft servo whirr whose faint whine lifts from D5 to E5."""
+    n = samples(1.6)
+    whine = osc.additive(n, osc.glide(n, note_freq("D5"), note_freq("E5"), time_constant=0.5), [(1, 1.0), (2, 0.2)])
+    whirr = filters.bandpass(noise.pink(n, gen), 650.0, 2.5)
+    whirr = whirr / max(float(np.std(whirr)), 1e-9)
+    shape = envelope.segments(n, [(0.0, 0.0), (0.3, 1.0), (1.1, 0.8), (1.6, 0.0)], shape="smooth")
+    return filters.highpass(filters.lowpass(0.02 * whine + 0.1 * whirr, 3200.0), 120.0) * shape
+
+
+def hm_chirp(_variant, gen):
+    """07's first blink (O11): a small two-note hm?, A4 falling to F#4, soft and a little nasal."""
+    n = samples(0.75)
+    t = np.arange(n) / SAMPLE_RATE
+    high = note_freq("A4")
+    low = note_freq("F#4")
+    freq = np.where(t < 0.18, high, np.where(t < 0.3, high + (low - high) * (t - 0.18) / 0.12, low))
+    voice = filters.peaking(osc.additive(n, freq, [(1, 1.0), (2, 0.35), (3, 0.12)]), 1100.0, 5.0, 1.2)
+    shape = envelope.segments(n, [(0.0, 0.0), (0.04, 1.0), (0.17, 0.7), (0.22, 0.45), (0.32, 0.9), (0.55, 0.6),
+                                  (0.75, 0.0)], shape="smooth")
+    return 0.25 * filters.lowpass(voice, 2600.0) * shape
+
+
 CUES = (
+    Cue("asleep_static", "radio_2d", asleep_static, loop=True, file_stem="asleep_static_loop", volume=(0.6, 0.6),
+        milestone="M3", notes="The radio asleep, out of tune (title, 07's opening): narrow-band hiss, a faint "
+                              "wandering A5 whistle, odd crackle pops. 8 s seamless."),
+    Cue("ghost_chord", "radio_fx_2d", ghost_chord, variants=len(GHOST_CHORD_LABELS), variant_labels=GHOST_CHORD_LABELS,
+        volume=(0.6, 0.6), fade_out=0.4, milestone="M3", tonal=True,
+        notes="A ghost Rhodes chord D-A-E surfacing through the static: O1 faint, O7 clearer, O9 two bars."),
+    Cue("wake_power_thump", "stinger_2d", wake_power_thump, volume=(0.5, 0.5), fade_out=0.3, milestone="M3",
+        notes="O1: 07's systems thump on inside the black, a soft D2 hum easing up under it."),
+    Cue("lid_tick", "tick_2d", lid_tick, variants=len(LID_TICK_NOTES), variant_labels=LID_TICK_LABELS,
+        volume=(0.6, 0.6), fade_out=0.05, milestone="M3", tonal=True,
+        notes="Felted servo tick of 07's lid or lens: A2, D3 (lid stages), A4 (focus lands), D5 (the blink)."),
+    Cue("lens_whine", "tick_2d", lens_whine, volume=(0.5, 0.5), fade_out=0.2, milestone="M3",
+        notes="O4: 07's lens motor hunting, a thin whine gliding E4 to F#4 over a faint gear flutter."),
+    Cue("hum_dropout", "tick_2d", hum_dropout, volume=(0.6, 0.6), fade_out=0.2, milestone="M3", tonal=True,
+        notes="O5: 07's lamp hum on D3 falters, drops out for a beat and returns steady."),
+    Cue("neck_servo", "tick_2d", neck_servo, volume=(0.5, 0.5), fade_out=0.2, milestone="M3",
+        notes="O6-O9: 07's old neck turning, a soft whirr with a faint whine lifting D5 to E5."),
+    Cue("hm_chirp", "stinger_2d", hm_chirp, volume=(0.45, 0.45), fade_out=0.1, milestone="M3", tonal=True,
+        notes="O11: 07's first blink, a small two-note hm? from A4 falling to F#4."),
     Cue("rover_hum", "loop_3d", rover_hum, loop=True, file_stem="rover_hum_loop", volume=(0.55, 0.55),
         hf_cutoff=6000.0, hf_max_db=-45.0,
         tonal=True, notes="D2 electric hum, 4 s seamless; content < 3 kHz so AudioSource.pitch 0.5..2 stays clean."),

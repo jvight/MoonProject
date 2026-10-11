@@ -116,5 +116,52 @@ namespace MoonProject.Rover.Tests
             float earthY = 0.5f + 0.5f * Mathf.Tan((earthElevation - pitch) * Mathf.Deg2Rad) / halfHeight;
             Assert.AreEqual(Height, earthY, 1e-3f, "Camera pitch = looking down at 07, raised by the offset.");
         }
+
+        [Test]
+        public void Held_StaysOnTheLensShot_IgnoringInputAndTheClock()
+        {
+            _opening.Begin(true);
+            Run(_tuning.WakeHoldSeconds + 5f, true);
+
+            Assert.IsTrue(_opening.IsHeld && !_opening.IsEasing, "the title and the lens hold beat 1");
+            Assert.AreEqual(0f, _opening.Turn);
+            Assert.AreEqual(1f, _opening.Weight);
+        }
+
+        [Test]
+        public void StartTurn_GoesOverTheShoulder_AndEaseOutHandsToTheChase()
+        {
+            _opening.Begin(true);
+            _opening.StartTurn();
+            Run(_tuning.WakeTurnSeconds + Step);
+            Assert.AreEqual(1f, _opening.Turn, 1e-3f, "beat 2 over the shoulder");
+
+            _opening.EaseOut();
+            Run(_tuning.WakeEaseSeconds + Step);
+            Assert.IsFalse(_opening.IsActive, "handed to the chase frame");
+        }
+
+        [Test]
+        public void TitleDrift_StartsAfterAWhileUntouched_AndEasesBackWithinASecond()
+        {
+            OpeningSettings settings = _tuning.Opening;
+            _opening.Begin(true);
+            Run(settings.TitleDriftDelay - 1f);
+            Assert.AreEqual(0f, _opening.DriftYaw, "still before the delay");
+
+            float most = 0f;
+            for (float t = 0f; t < settings.TitleDriftPeriod; t += Step)
+            {
+                _opening.Step(false, Step);
+                most = Mathf.Max(most, Mathf.Abs(_opening.DriftYaw));
+            }
+
+            Assert.Greater(most, 0.5f * settings.TitleDriftYaw, "the lens shot drifts");
+            Assert.LessOrEqual(most, settings.TitleDriftYaw + 1e-4f, "within its swing");
+
+            _opening.StartTurn();
+            Run(1f + Step);
+            Assert.AreEqual(0f, _opening.DriftYaw, 1e-4f, "back within a second once a choice is made");
+        }
     }
 }

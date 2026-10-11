@@ -27,7 +27,7 @@ namespace MoonProject.Audio
     public sealed class RadioStation : MonoBehaviour
     {
         private const float MinPitch = 0.01f;
-        private const int SubscriptionCount = 6;
+        private const int SubscriptionCount = 7;
 
         [Tooltip("Assets/_Project/Data/Audio/RadioTuning.asset.")]
         [SerializeField] private RadioTuning _tuning;
@@ -44,6 +44,7 @@ namespace MoonProject.Audio
         private readonly RadioDeckMixer _mixer = new RadioDeckMixer();
         private readonly WowFlutter _wowFlutter = new WowFlutter();
         private readonly RadioWakeUp _wake = new RadioWakeUp();
+        private bool _openingHoldsRadio;
         private readonly NowPlayingLog _nowPlaying = new NowPlayingLog();
         private readonly EasedValue _staticPresence = new EasedValue(1f);
         private readonly RadioHop _hop = new RadioHop();
@@ -188,6 +189,7 @@ namespace MoonProject.Audio
             _subscriptions[3] = context.Events.Subscribe<RadioHopStarted>(OnRadioHopStarted);
             _subscriptions[4] = context.Events.Subscribe<RadioHopFinished>(OnRadioHopFinished);
             _subscriptions[5] = context.Events.Subscribe<RoverPlaced>(OnRoverPlaced);
+            _subscriptions[6] = context.Events.Subscribe<RoverWakeBeatReached>(OnWakeBeat);
         }
 
         internal void Wire(RadioTuning tuning, RadioPlaylist playlist, RadioTapeLibrary tapes)
@@ -467,13 +469,45 @@ namespace MoonProject.Audio
 
         private void OnRoverAwoke(RoverAwoke awoke)
         {
+            if (!_openingHoldsRadio)
+            {
+                WakeUp(awoke.WokenByPlayer);
+            }
+        }
+
+        /// <summary>
+        /// 07's opening (docs/design/cutscenes.md §1) keeps the set asleep: the Asleep static and the ghost chord are
+        /// heard from inside 07 instead, and the radio wakes as the camera turns over 07's shoulder (O12), or at the
+        /// chase frame when the player hurried it.
+        /// </summary>
+        private void OnWakeBeat(RoverWakeBeatReached reached)
+        {
+            switch (reached.Beat)
+            {
+                case WakeBeat.Crackle:
+                    _openingHoldsRadio = true;
+                    break;
+                case WakeBeat.OverShoulder:
+                case WakeBeat.ChaseFrame:
+                    if (_openingHoldsRadio)
+                    {
+                        _openingHoldsRadio = false;
+                        WakeUp(reached.Hurried);
+                    }
+
+                    break;
+            }
+        }
+
+        private void WakeUp(bool byPlayer)
+        {
             if (_wake.IsAwake)
             {
                 return;
             }
 
-            _wake.Begin(awoke.WokenByPlayer ? _tuning.PlayerWakeMusicDelay : _tuning.WakeMusicDelay,
-                awoke.WokenByPlayer ? _tuning.PlayerWakeMusicFade : _tuning.WakeMusicFade, _tuning.WakePowerTime);
+            _wake.Begin(byPlayer ? _tuning.PlayerWakeMusicDelay : _tuning.WakeMusicDelay,
+                byPlayer ? _tuning.PlayerWakeMusicFade : _tuning.WakeMusicFade, _tuning.WakePowerTime);
             _static.volume = 0f;
             _static.Play();
             if (_model.Station != RadioChannel.QuietHours)

@@ -5,6 +5,237 @@
   "audioRoot": "Assets/_Project/Audio",
   "cues": [
     {
+      "id": "asleep_static",
+      "category": "radio_2d",
+      "milestone": "M3",
+      "bus": "Music",
+      "spatial": false,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/asleep_static_loop.wav"
+      ],
+      "variantLabels": [
+        "asleep_static"
+      ],
+      "sha256": [
+        "466a89f46cb7874f7a0b019583ae57b180709398b37d453ceaa6401375237b9c"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -24.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "The radio asleep, out of tune (title, 07's opening): narrow-band hiss, a faint wandering A5 whistle, odd crackle pops. 8 s seamless."
+    },
+    {
+      "id": "ghost_chord",
+      "category": "radio_fx_2d",
+      "milestone": "M3",
+      "bus": "Music",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/ghost_chord_faint.wav",
+        "Assets/_Project/Audio/SFX/2D/ghost_chord_clearer.wav",
+        "Assets/_Project/Audio/SFX/2D/ghost_chord_long.wav"
+      ],
+      "variantLabels": [
+        "faint",
+        "clearer",
+        "long"
+      ],
+      "sha256": [
+        "de8e43ca34a4b7bb1792824a8ae6142b55cf618b0185f0d67362422ff8586317",
+        "70c3edfed40a5339afd1a337688c01700b9efd68e1b98c6b53731ae5326a83f6",
+        "cff26312a0cb53b0719ecb92b4ac6b20290be4172f781128c2c4fa127e09d106"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -24.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "A ghost Rhodes chord D-A-E surfacing through the static: O1 faint, O7 clearer, O9 two bars."
+    },
+    {
+      "id": "wake_power_thump",
+      "category": "stinger_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/wake_power_thump.wav"
+      ],
+      "variantLabels": [
+        "wake_power_thump"
+      ],
+      "sha256": [
+        "6c3349fb3f7a26cd31ac1035e73849944221de56055efa507a2b4e80c5aee793"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -20.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "O1: 07's systems thump on inside the black, a soft D2 hum easing up under it."
+    },
+    {
+      "id": "lid_tick",
+      "category": "tick_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/lid_tick_a2.wav",
+        "Assets/_Project/Audio/SFX/2D/lid_tick_d3.wav",
+        "Assets/_Project/Audio/SFX/2D/lid_tick_a4.wav",
+        "Assets/_Project/Audio/SFX/2D/lid_tick_d5.wav"
+      ],
+      "variantLabels": [
+        "a2",
+        "d3",
+        "a4",
+        "d5"
+      ],
+      "sha256": [
+        "e2699bd5c176b41aa2a2e661321f11bc8eb2b5efe579617a498179936d4d3010",
+        "58bed0c9eb8b3f90f69f1bb3547f5c409d09fbcef53ee887dedfc40af44efc27",
+        "578b478faa3d4c7194131613022476cc3315b1e0244585d162047e0f5fa3c264",
+        "51d32df454ddb3dd2b01f7e4d54a032525c93eac3f8422918f353afbd46a0dd9"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -28.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "Felted servo tick of 07's lid or lens: A2, D3 (lid stages), A4 (focus lands), D5 (the blink)."
+    },
+    {
+      "id": "lens_whine",
+      "category": "tick_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/lens_whine.wav"
+      ],
+      "variantLabels": [
+        "lens_whine"
+      ],
+      "sha256": [
+        "2a1284a2282e7f4fd84dc0b11445b54f72d671f5939510446a6c92f458008733"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -28.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "O4: 07's lens motor hunting, a thin whine gliding E4 to F#4 over a faint gear flutter."
+    },
+    {
+      "id": "hum_dropout",
+      "category": "tick_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/hum_dropout.wav"
+      ],
+      "variantLabels": [
+        "hum_dropout"
+      ],
+      "sha256": [
+        "674d7a3a913c56c57b379febf0640e3c7b23418f4173289dd6491ffad8940d23"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -28.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "O5: 07's lamp hum on D3 falters, drops out for a beat and returns steady."
+    },
+    {
+      "id": "neck_servo",
+      "category": "tick_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/neck_servo.wav"
+      ],
+      "variantLabels": [
+        "neck_servo"
+      ],
+      "sha256": [
+        "dd99734571bcf56de9e90caacf0be84162039803f1c59f8be1e59ae1645d016a"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -28.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "O6-O9: 07's old neck turning, a soft whirr with a faint whine lifting D5 to E5."
+    },
+    {
+      "id": "hm_chirp",
+      "category": "stinger_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/hm_chirp.wav"
+      ],
+      "variantLabels": [
+        "hm_chirp"
+      ],
+      "sha256": [
+        "13d81f9194be4bfe6d3f1348d1e5d098bd9376e3ae32b7cebb55fb41546335a4"
+      ],
+      "volumeMin": 0.45,
+      "volumeMax": 0.45,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -20.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "O11: 07's first blink, a small two-note hm? from A4 falling to F#4."
+    },
+    {
       "id": "rover_hum",
       "category": "loop_3d",
       "milestone": "M1",

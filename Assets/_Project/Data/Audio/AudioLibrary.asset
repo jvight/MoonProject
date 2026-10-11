@@ -13,6 +13,112 @@ MonoBehaviour:
   m_Name: AudioLibrary
   m_EditorClassIdentifier: 
   _cues:
+  - _id: asleep_static
+    _clips:
+    - {fileID: 8300000, guid: fa66184dfe918564ebd41a93eac0be4c, type: 3}
+    _variantLabels:
+    - asleep_static
+    _bus: 1
+    _spatial: 0
+    _loop: 1
+    _volumeMin: 0.6
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: ghost_chord
+    _clips:
+    - {fileID: 8300000, guid: f8d1755080f5cfa46b53ed213a39ddad, type: 3}
+    - {fileID: 8300000, guid: 3abf375a8184f954ebadde01c6c0504f, type: 3}
+    - {fileID: 8300000, guid: db7162202c5e90d4c8fadbc4964c7d42, type: 3}
+    _variantLabels:
+    - faint
+    - clearer
+    - long
+    _bus: 1
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.6
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: wake_power_thump
+    _clips:
+    - {fileID: 8300000, guid: 2c95d4f90afa20c40ab01ea868c8d409, type: 3}
+    _variantLabels:
+    - wake_power_thump
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.5
+    _volumeMax: 0.5
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: lid_tick
+    _clips:
+    - {fileID: 8300000, guid: a358b3bb27006c04a88db61dfb181577, type: 3}
+    - {fileID: 8300000, guid: cc299c1416d78d447bd0c79cef961c05, type: 3}
+    - {fileID: 8300000, guid: 3e91448c57e753744b58a969f57e346b, type: 3}
+    - {fileID: 8300000, guid: a0e470481f6311d4fbb1dee9143f2c40, type: 3}
+    _variantLabels:
+    - a2
+    - d3
+    - a4
+    - d5
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.6
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: lens_whine
+    _clips:
+    - {fileID: 8300000, guid: 0e51f323c44ccca4dbc8f42e1c215385, type: 3}
+    _variantLabels:
+    - lens_whine
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.5
+    _volumeMax: 0.5
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: hum_dropout
+    _clips:
+    - {fileID: 8300000, guid: 61279fd512e572542a134844098b5853, type: 3}
+    _variantLabels:
+    - hum_dropout
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.6
+    _volumeMax: 0.6
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: neck_servo
+    _clips:
+    - {fileID: 8300000, guid: 5bfc8210d2905e449ab05c80dbfb48d0, type: 3}
+    _variantLabels:
+    - neck_servo
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.5
+    _volumeMax: 0.5
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: hm_chirp
+    _clips:
+    - {fileID: 8300000, guid: 4285b387dafad48458a6160bcd647fde, type: 3}
+    _variantLabels:
+    - hm_chirp
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.45
+    _volumeMax: 0.45
+    _pitchMin: 1
+    _pitchMax: 1
   - _id: rover_hum
     _clips:
     - {fileID: 8300000, guid: d85af7b668f8a9f47bc6b8c952bb7c1b, type: 3}
