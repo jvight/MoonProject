@@ -242,6 +242,15 @@ namespace MoonProject.Rover
         [Range(0f, 2f)]
         [SerializeField] private float _pullOutReach = 0.7f;
 
+        [Tooltip("Share of the pull-out over which the view settles from the gaze onto Earth itself.")]
+        [Range(0.02f, 0.4f)]
+        [SerializeField] private float _pullOutOntoEarth = 0.15f;
+
+        [Tooltip("Share of the pull-out Earth stays the subject before the view turns round to 07: the turn then "
+            + "sweeps the sky between Earth and the lens, never the empty ground to the side.")]
+        [Range(0.1f, 0.8f)]
+        [SerializeField] private float _pullOutEarthHeld = 0.4f;
+
         [Tooltip("Share of the pull-out after which the lens view lets go (the glass has passed).")]
         [Range(0.05f, 0.6f)]
         [SerializeField] private float _lensReleaseAt = 0.2f;
@@ -366,6 +375,8 @@ namespace MoonProject.Rover
         public float LensNearClip => _lensNearClip;
         public float LensFov => _lensFov;
         public float PullOutReach => _pullOutReach;
+        public float PullOutOntoEarth => _pullOutOntoEarth;
+        public float PullOutEarthHeld => Mathf.Max(_pullOutEarthHeld, _pullOutOntoEarth);
         public float LensReleaseAt => _lensReleaseAt;
         public float HurryLidSeconds => _hurryLidSeconds;
         public float HurryPullOutSeconds => _hurryPullOutSeconds;
