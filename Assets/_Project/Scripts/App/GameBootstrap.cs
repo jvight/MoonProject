@@ -89,6 +89,7 @@ namespace MoonProject.App
                 return;
             }
 
+            LegacySaveMigration.Run();
             _input = new InputReader(_inputActions);
             Context = new GameContext(new EventBus(), _input);
             try
