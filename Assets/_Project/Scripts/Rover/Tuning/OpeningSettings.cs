@@ -148,6 +148,16 @@ namespace MoonProject.Rover
         [Range(0f, 1f)]
         [SerializeField] private float _secondDip = 0.8f;
 
+        [Header("Boot readout (O5, GDD v3 §8)")]
+        [Tooltip("Seconds the boot readout shows in the lens, from the start of the flicker; it is never shown when "
+            + "the player hurried the wake.")]
+        [Range(0.5f, 4f)]
+        [SerializeField] private float _readoutSeconds = 2f;
+
+        [Tooltip("Seconds the readout takes to fade in, and again to fade out.")]
+        [Range(0.1f, 1.5f)]
+        [SerializeField] private float _readoutFade = 0.4f;
+
         [Header("Dust speck (viewport units from the frame's centre)")]
         [Tooltip("Where the speck sits on the glass when the lens first hunts: left of centre, low enough to show "
             + "under the half-open lid.")]
@@ -241,6 +251,15 @@ namespace MoonProject.Rover
         [Tooltip("How far (m) the camera travels forward out of the lens before it swings round to face 07.")]
         [Range(0f, 2f)]
         [SerializeField] private float _pullOutReach = 0.7f;
+
+        [Tooltip("Share of the pull-out over which the view settles from the gaze onto Earth itself.")]
+        [Range(0.02f, 0.4f)]
+        [SerializeField] private float _pullOutOntoEarth = 0.15f;
+
+        [Tooltip("Share of the pull-out Earth stays the subject before the view turns round to 07: the turn then "
+            + "sweeps the sky between Earth and the lens, never the empty ground to the side.")]
+        [Range(0.1f, 0.8f)]
+        [SerializeField] private float _pullOutEarthHeld = 0.4f;
 
         [Tooltip("Share of the pull-out after which the lens view lets go (the glass has passed).")]
         [Range(0.05f, 0.6f)]
@@ -343,6 +362,8 @@ namespace MoonProject.Rover
         public float DipSeconds => _dipSeconds;
         public float DipGap => _dipGap;
         public float SecondDip => _secondDip;
+        public float ReadoutSeconds => _readoutSeconds;
+        public float ReadoutFade => Mathf.Min(_readoutFade, 0.5f * _readoutSeconds);
         public Vector2 SpeckStart => _speckStart;
         public Vector2 SpeckEnd => _speckEnd;
         public float BowedPitch => _bowedPitch;
@@ -366,6 +387,8 @@ namespace MoonProject.Rover
         public float LensNearClip => _lensNearClip;
         public float LensFov => _lensFov;
         public float PullOutReach => _pullOutReach;
+        public float PullOutOntoEarth => _pullOutOntoEarth;
+        public float PullOutEarthHeld => Mathf.Max(_pullOutEarthHeld, _pullOutOntoEarth);
         public float LensReleaseAt => _lensReleaseAt;
         public float HurryLidSeconds => _hurryLidSeconds;
         public float HurryPullOutSeconds => _hurryPullOutSeconds;

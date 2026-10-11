@@ -969,6 +969,18 @@
         {
             "key": "ticker.set.kenji.complete",
             "text": "Cửa sổ của Kenji lại sáng đèn."
+        },
+        {
+            "key": "lens.boot.signal",
+            "text": "TÍN HIỆU TRÁI ĐẤT · ĐÃ BẮT ĐƯỢC"
+        },
+        {
+            "key": "lens.boot.uplink",
+            "text": "ĐƯỜNG TRUYỀN LÊN · NGOẠI TUYẾN"
+        },
+        {
+            "key": "lens.boot.recovery",
+            "text": "BẮT ĐẦU KHÔI PHỤC"
         }
     ]
 }

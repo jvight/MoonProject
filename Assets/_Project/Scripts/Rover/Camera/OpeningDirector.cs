@@ -36,9 +36,6 @@ namespace MoonProject.Rover
         /// <summary>Drive input below this (stick magnitude) is drift, not the player driving.</summary>
         private const float DriveEpsilon = 0.05f;
 
-        /// <summary>Share of the pull-out before the camera starts to turn round toward 07.</summary>
-        private const float TurnFrom = 0.15f;
-
         [Tooltip("Camera tuning (Assets/_Project/Data/Tuning/RoverCameraTuning.asset); the opening is its Opening block.")]
         [SerializeField] private RoverCameraTuning _tuning;
 
@@ -388,7 +385,10 @@ namespace MoonProject.Rover
                 Vector3 reach = eye + gaze * Vector3.forward * settings.PullOutReach;
                 Vector3 end = chase.GetFinalPosition();
                 position = Vector3.Lerp(Vector3.Lerp(eye, reach, t), Vector3.Lerp(reach, end, t), t);
-                rotation = Quaternion.Slerp(gaze, chase.GetFinalOrientation(), Smoothing.SmoothStep(TurnFrom, 1f, t));
+                Quaternion earth = Quaternion.LookRotation(_world.EarthDirection);
+                Quaternion held = Quaternion.Slerp(gaze, earth, Smoothing.SmoothStep(0f, settings.PullOutOntoEarth, t));
+                float turn = Smoothing.SmoothStep(settings.PullOutEarthHeld, 1f, t);
+                rotation = Quaternion.Slerp(held, chase.GetFinalOrientation(), turn);
                 fov = Mathf.Lerp(settings.LensFov, chase.Lens.FieldOfView, t);
             }
 
@@ -433,7 +433,8 @@ namespace MoonProject.Rover
             if (phase == OpeningPhase.PushIn || phase == OpeningPhase.PullOut)
             {
                 float toLens = Vector3.Distance(_lensCamera.transform.position, _roverRig.TetherOrigin.position);
-                state = new LensViewState(state.Lid01, toLens, state.Flicker01, state.Warmth01, state.SpeckOffset);
+                state = new LensViewState(state.Lid01, toLens, state.Flicker01, state.Warmth01, state.SpeckOffset,
+                    state.Readout01);
             }
 
             _lens.Apply(state);
