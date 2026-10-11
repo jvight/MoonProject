@@ -59,17 +59,23 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
-    /// The deck hatch's motor swung it open for the first time this save (docs/features/M3-07, cutscenes §6 shot 4):
-    /// Audio plays the hatch motor, Art swings the hatch and lights the table behind it. It stays open after.
+    /// The deck hatch is open (docs/features/M3-07, cutscenes §6 shot 4) and stays open. Published by Gameplay once
+    /// when its motor swings it open on the first ride (Audio plays the motor, Art swings the hatch and lights the
+    /// table behind it), and at load when the save already has it open (<see cref="Instant"/>: no sound, no swing).
     /// </summary>
     public readonly struct MapHatchOpened
     {
-        public MapHatchOpened(Vector3 position)
+        public MapHatchOpened(Vector3 position, bool instant)
         {
             Position = position;
+            Instant = instant;
         }
 
+        /// <summary>World position of the hatch window.</summary>
         public Vector3 Position { get; }
+
+        /// <summary>Restored from the save: show it open at once.</summary>
+        public bool Instant { get; }
     }
 
     /// <summary>

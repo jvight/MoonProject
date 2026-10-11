@@ -57,7 +57,7 @@ namespace MoonProject.World
         private const string Lander = WorldAnchorIds.SitePrefix + "lander";
 
         /// <summary>The crew's antenna farm (M3-18 L7): toppled dish frames in the mid-west, a place for the lookout.</summary>
-        public const string AntennaFarm = "place.antenna_farm";
+        public const string AntennaFarm = WorldAnchorIds.AntennaFarm;
 
         // The antenna farm stands at about 270 degrees, 120 m out (the level review's L7), on a small clear patch.
         private const float AntennaFarmBearing = 270f;

@@ -5,11 +5,10 @@ using MoonProject.Core;
 namespace MoonProject.World.Map
 {
     /// <summary>
-    /// "Which places can be seen from here" (level review §6): the deck lookout's "seen" sweep asks whether the ground
-    /// hides a place's light from the eye. Marches the straight line over the analytic surface, so it needs no
+    /// The World's <see cref="ISightline"/>: marches the straight line over the analytic surface, so it needs no
     /// colliders and never allocates.
     /// </summary>
-    public sealed class Sightline
+    public sealed class Sightline : ISightline
     {
         private readonly ITerrainQuery _terrain;
 
@@ -18,12 +17,6 @@ namespace MoonProject.World.Map
             _terrain = terrain ?? throw new ArgumentNullException(nameof(terrain));
         }
 
-        /// <summary>
-        /// True when the ground nowhere rises more than <paramref name="clearance"/> metres above the straight line
-        /// from <paramref name="eye"/> to <paramref name="target"/>, sampled every <paramref name="step"/> metres
-        /// along it. The eye's own spot and the place's own ground (within <paramref name="targetRadius"/> metres of
-        /// the target) are not samples. Raise the target to the height of the light that should be seen.
-        /// </summary>
         public bool IsClear(Vector3 eye, Vector3 target, float targetRadius, float step, float clearance)
         {
             if (step <= 0f)

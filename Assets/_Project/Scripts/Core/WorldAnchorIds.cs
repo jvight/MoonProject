@@ -42,6 +42,9 @@ namespace MoonProject.Core
         /// </summary>
         public const string KestrelTrail = "trail.kestrel";
 
+        /// <summary>The crew's antenna farm (M3-18 L7): toppled dish frames in the mid-west, a place for the lookout.</summary>
+        public const string AntennaFarm = "place.antenna_farm";
+
         /// <summary>
         /// Prefix of the places beyond the rim that the crew's map pencils at the paper's edge (docs/features/M3-07
         /// step 3): <see cref="RegionPeak"/>, <see cref="RegionTerraces"/>.
