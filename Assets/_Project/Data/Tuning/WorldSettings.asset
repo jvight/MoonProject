@@ -394,15 +394,15 @@ MonoBehaviour:
       _disc: 1
     - _wakesWith: 2
       _anchor: Lander
-      _offset: {x: 0, y: 3.2, z: 4.5}
-      _range: 11
-      _intensity: 6
+      _offset: {x: 0, y: 2.2, z: 5.6}
+      _range: 9
+      _intensity: 4
       _disc: 0
     - _wakesWith: 1
       _anchor: Lander
-      _offset: {x: -3.6, y: 2.6, z: 0.5}
-      _range: 9
-      _intensity: 4
+      _offset: {x: 0, y: 2.9, z: 0}
+      _range: 10
+      _intensity: 3
       _disc: 0
     - _wakesWith: 4
       _anchor: RoverBay
@@ -411,17 +411,29 @@ MonoBehaviour:
       _intensity: 1
       _disc: 1
     - _wakesWith: 5
-      _anchor: LiftTop
-      _offset: {x: 0, y: 2, z: 0}
-      _range: 6
+      _anchor: BellyLift
+      _offset: {x: 0, y: 2.25, z: 1.2}
+      _range: 5.5
       _intensity: 3.5
       _disc: 0
-    - _wakesWith: 5
-      _anchor: LiftBottom
-      _offset: {x: 0, y: -0.17, z: 1.4}
-      _range: 5
-      _intensity: 1
-      _disc: 1
+    - _wakesWith: 6
+      _anchor: Lab
+      _offset: {x: 0, y: 1.9, z: 0}
+      _range: 4.5
+      _intensity: 2.2
+      _disc: 0
+    - _wakesWith: 7
+      _anchor: BigPorthole
+      _offset: {x: -3.3, y: 3.1, z: -3.3}
+      _range: 6
+      _intensity: 1.6
+      _disc: 0
+    - _wakesWith: 2
+      _anchor: TowerAnchor
+      _offset: {x: 0, y: 2.6, z: 2.2}
+      _range: 7.5
+      _intensity: 2.6
+      _disc: 0
   _postProcessing:
     _bloomThreshold: 1.25
     _bloomIntensity: 1.1
