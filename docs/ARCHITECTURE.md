@@ -312,6 +312,75 @@ Generated/Art/Base/RoverBay.prefab   on the lander's WorkshopAnchor (12.5, 0, -2
 ```
 Gameplay registers `Core/IRoverBay` from serialized references (never name lookups); Rover drives the joints with IK.
 
+## Contract: the lab (M3-19) (Art -> Gameplay, Rover, World)
+The habitat lander (docs/features/M3-19-the-lab.md): a garage-height belly, a round platform that lifts 07 through a
+floor hatch into an octagonal cabin, the crew's lab, where it turns on a turntable between four stations. Meshes
+only, `M_LowPoly`; every lamp is its own renderer on `M_LowPolyGlowOff` (lit via MaterialPropertyBlock, SetVector,
+linear). Numbers are `BaseModelBuilder` constants, never copied.
+```
+Generated/Art/Base/Lander.prefab   (kept GUID) root on the ground under the cabin's centre, +Z = the front where 07
+                                   drives in under the belly and the dock stands on the apron, +Y up
+  Windows, Windows/Pane_<n>        the cabin's front portholes (home light Windows), as before
+  LampSocket_0..3/Bulb, DockAnchor, DockGlow, TowerAnchor, WorkshopAnchor, FriendSocket_tilly, HomeSign
+                                   kept names; the anchors move to the three-mass layout (§8)
+  PowerCable_Home|Bay|Chart/Glow_<n>  ground cables from the tower's foot (PowerCable_Lift is now _Chart, D8)
+  BellyLift                        empty on the ground at the lift's axis (local Y = up the shaft)
+    PlatformDown, PlatformUp       empties: the platform's top resting on the ground / flush with the cabin floor
+    Platform                       the 3.4 m round platform, pivot at the middle of its top; built at PlatformDown
+                                   in its jammed tilt (one side ~0.3 m low); BellyPlatformLevel is its level rotation.
+                                   Rises along BellyLift's Y between the stops; turns about local Y (the turntable)
+      RoverSpot                    where 07 rests, +Z = 07's heading as it drives on (toward the lander's back)
+      RimLamps                     glow: the rover-height rim lamps
+      PadGlow                      glow: the pad's ring, lit when the lift can be stitched and once it is restored
+      Weather_Paint|Rust|Dust      the platform's own skins (the dust drift goes on restore)
+    HatchLeafL, HatchLeafR         the floor hatch's leaves, shut; slide out along local -X / +X by HatchLeafTravel
+    HatchRim                       glow: the hatch ring's lamps (home light LiftLamps, the belly lamp's partner)
+    BellyLamp                      glow: the work lamp under the belly
+    Cable_L, Cable_R               hoist cables hanging along local -Y from the winch drums in the stage; scale local
+                                   Y by length / BellyCableBuiltLength. Cable_R is hidden while jammed
+    CableJam                       the jam parts: Cable_R's slack coil on the platform, the snag at its drum and the
+                                   crew's tag; hide once stitched
+      StitchPoint                  empty at the snag, +Z toward 07 on the platform: the beam's stitch target
+  Lab                              the cabin interior, origin at the middle of the cabin floor (= PlatformUp), same
+                                   axes as the root; hide it while 07 is outside (the portholes glow on their own)
+    RingRail                       the camera's ring, centred on the axis at the rail's height; radius LabRingRadius
+                                   (0.4 m in from the wall, under the ceiling)
+    Station_Chart                  frame at each station's face: +Z out of the station toward the axis, +Y up, at
+    Station_Reader                 07's lens height; clockwise from above Chart, Reader, Board, Keepsakes (LabStation
+    Station_Board                  order), Chart on the wall that faces the Peak under the big porthole
+    Station_Keepsakes
+    Station_Chart/LightTable       Ines's table (M3-07 space: +X across, +Y up its slope, +Z out of it)
+      LightTableGlow               glow: the lit panel under the paper (home light ChartTable)
+      MapSheet                     the paper
+      ChartPen/ChartPenCarriage/ChartPenHead   as M3-07: carriage along local X 0..ChartDrawWidth, head along local
+                                   Y 0..ChartDrawHeight
+    Station_Reader/Slot            the tube slot at lens height, +Z out of its mouth: the beam feeds here
+    Station_Reader/Reel            the reel, spins about local Z
+    Station_Reader/Tape            the paper tape from the reel toward the board; its local X scale 0..1 is how much
+                                   has run out
+    Station_Board/Pin_<n>          one pin per 0.5 tech node, n = (int)TechNodeId
+    Station_Board/Sheet_<n>        the node's sheet, hidden until decoded
+    Station_Board/Lamp_<n>         glow: the node's lamp, lit once built
+    Station_Board/RecoveryPanel    the board's header; Row_<RecoveryTarget>/Lamp_<n> glows, one row per target
+    Station_Keepsakes/Slot_<n>     a cubby floor where a keepsake rests (+Y up, +Z out of the cubby)
+    Station_Keepsakes/ReadingLamp_<n>  glow: one warm lamp per crew section, brightening per keepsake
+    PortholeLamps/Lamp_<n>         glow: the 32 sockets round the big porthole, lit in n order, one per known node
+    CabinLamps                     glow: the lab's practical lamps (home light LabLamps)
+  HandOffPath                      the hand-off pulse's polyline (DecodeHandOff): Point_<n> empties in order from the
+                                   reader's slot down the leg and along the ground to the bay's back wall
+  HandOffCable/Glow_<n>            glow: the pulse's glass segments along the path, in the same order
+```
+- **Removed from the lander:** `LiftPlatform`, `LiftBottom`, `LiftTop`, `LiftCable_L|R`, `LiftCableR_Snapped`,
+  `WinchLamp`, `LiftHopperMouth`, `ShelfAnchor`, `DeckHatch` (the deck lookout is cut), `PowerCable_Lift`. The
+  `MuseumShelf` prefab is no longer built (its slots are the keepsake cubbies). Gameplay's scene wiring and Art's
+  lander must land together.
+- **The bay's back wall** (RoverBay.prefab): `Plotter/PenCarriage/PenHead`, `PlotterSheet` and `PlotterLamp` keep
+  their names and axes; the plotter hangs on the back wall above the turntable and the bench goes.
+- **Driven by World from events** (no Gameplay wiring needed): the porthole lamps, the board's sheets and lamps
+  (`TechNodeChanged`), the recovery rows (`RecoveryProgressChanged`), the light table's glow and the chart pen
+  (`MapLookStarted`, `MapInkCued`, `MapLookEnded`), the hand-off pulse (`DecodeHandOff`), and every lamp's
+  `IHomeLights` level. Gameplay moves the platform, the hatch leaves, the cables, the reel and the tape.
+
 ## Contract: world anchors (World -> Gameplay, Audio)
 World registers `Core/IWorldAnchors` (Count / Get(index) / TryGet(id)): named `WorldAnchor`s (id, surface position,
 horizontal forward, radius of clear drivable ground), deterministic for the world seed and fixed after initialisation.
