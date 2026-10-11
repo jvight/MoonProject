@@ -4,8 +4,9 @@ using MoonProject.Core;
 namespace MoonProject.World.Tests
 {
     /// <summary>
-    /// M3-16's opening and wake: a fresh game is dark but for the dock, Home wakes the windows, then the porch lamps,
-    /// then the halo, each eased; later stages light the bay and the lift; a restored stage applies at once.
+    /// M3-16's opening and wake (with M3-19's lander): a fresh game is dark but for the dock, Home wakes the windows,
+    /// then the porch lamps, then the halo, the belly lift's lamps and the lab, each eased; later stages light the bay
+    /// and the survey chart; a restored stage applies at once.
     /// </summary>
     public sealed class HomeLightStagesTests
     {
@@ -32,7 +33,7 @@ namespace MoonProject.World.Tests
             foreach (HomeLight light in new[]
                      {
                          HomeLight.Windows, HomeLight.PorchLamps, HomeLight.Halo, HomeLight.BayLamps,
-                         HomeLight.LiftLamps,
+                         HomeLight.LiftLamps, HomeLight.LabLamps, HomeLight.ChartTable,
                      })
             {
                 Assert.AreEqual(0f, _stages.Level(light, Start), light.ToString());
@@ -91,21 +92,22 @@ namespace MoonProject.World.Tests
             Assert.That(easing, Is.GreaterThan(home).And.LessThan(2f / 3f), "the bay's step eases in");
 
             _stages.SetStage(BasePowerStage.Chart, true, woken);
-            Assert.AreEqual(1f, _stages.GradeWarmth(woken), Tolerance, "a restored Lift is fully warm at once");
+            Assert.AreEqual(1f, _stages.GradeWarmth(woken), Tolerance, "a restored Chart is fully warm at once");
         }
 
         [Test]
-        public void LaterStages_LightTheBayThenTheLift()
+        public void LaterStages_LightTheBayThenTheChart()
         {
             _stages.SetStage(BasePowerStage.Home, true, Start);
             _stages.SetStage(BasePowerStage.Bay, false, Start);
             float done = Start + _settings.CableTravel + _settings.WakeFade;
             Assert.AreEqual(1f, _stages.Level(HomeLight.Windows, Start), "home stays lit");
             Assert.AreEqual(1f, _stages.Level(HomeLight.BayLamps, done), Tolerance);
-            Assert.AreEqual(0f, _stages.Level(HomeLight.LiftLamps, done));
+            Assert.AreEqual(0f, _stages.Level(HomeLight.ChartTable, done));
+            Assert.AreEqual(1f, _stages.Level(HomeLight.LiftLamps, done), "the belly lift woke with home");
 
             _stages.SetStage(BasePowerStage.Chart, false, done);
-            Assert.AreEqual(1f, _stages.Level(HomeLight.LiftLamps, done + _settings.CableTravel + _settings.WakeFade),
+            Assert.AreEqual(1f, _stages.Level(HomeLight.ChartTable, done + _settings.CableTravel + _settings.WakeFade),
                 Tolerance);
         }
 
@@ -153,7 +155,9 @@ namespace MoonProject.World.Tests
             Assert.AreEqual(BasePowerStage.Asleep, HomeLightStages.WakesWith(HomeLight.Dock));
             Assert.AreEqual(BasePowerStage.Home, HomeLightStages.WakesWith(HomeLight.Halo));
             Assert.AreEqual(BasePowerStage.Bay, HomeLightStages.WakesWith(HomeLight.BayLamps));
-            Assert.AreEqual(BasePowerStage.Chart, HomeLightStages.WakesWith(HomeLight.LiftLamps));
+            Assert.AreEqual(BasePowerStage.Home, HomeLightStages.WakesWith(HomeLight.LiftLamps));
+            Assert.AreEqual(BasePowerStage.Home, HomeLightStages.WakesWith(HomeLight.LabLamps));
+            Assert.AreEqual(BasePowerStage.Chart, HomeLightStages.WakesWith(HomeLight.ChartTable));
         }
     }
 }

@@ -43,6 +43,9 @@ namespace MoonProject.World
         [Tooltip("How home's warm points wake with the base's power stages (M3-16).")]
         [SerializeField] private HomeLightingSettings _homeLighting = new HomeLightingSettings();
 
+        [Tooltip("How the habitat lander's belly lift and the crew's lab glow (M3-19).")]
+        [SerializeField] private LabLightingSettings _labLighting = new LabLightingSettings();
+
         [Tooltip("Camera look, written into the URP Volume profile by the World builder.")]
         [SerializeField] private PostProcessSettings _postProcessing = new PostProcessSettings();
 
@@ -76,6 +79,8 @@ namespace MoonProject.World
         public PostProcessSettings PostProcessing => _postProcessing;
 
         public HomeLightingSettings HomeLighting => _homeLighting;
+
+        public LabLightingSettings LabLighting => _labLighting;
 
         public GroundMarkSettings GroundMarks => _groundMarks;
 

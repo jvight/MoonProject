@@ -15,7 +15,7 @@ namespace MoonProject.World
         private static readonly int LightCount = Enum.GetValues(typeof(HomeLight)).Length;
 
         // The first warm point each stage after Asleep wakes: the grade warms a step with each of them.
-        private static readonly HomeLight[] StageLeads = { HomeLight.Windows, HomeLight.BayLamps, HomeLight.LiftLamps };
+        private static readonly HomeLight[] StageLeads = { HomeLight.Windows, HomeLight.BayLamps, HomeLight.ChartTable };
 
         private readonly HomeLightingSettings _settings;
         private BasePowerStage _stage = BasePowerStage.Asleep;
@@ -39,10 +39,12 @@ namespace MoonProject.World
                 case HomeLight.Windows:
                 case HomeLight.PorchLamps:
                 case HomeLight.Halo:
+                case HomeLight.LiftLamps:
+                case HomeLight.LabLamps:
                     return BasePowerStage.Home;
                 case HomeLight.BayLamps:
                     return BasePowerStage.Bay;
-                case HomeLight.LiftLamps:
+                case HomeLight.ChartTable:
                     return BasePowerStage.Chart;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(light), light, null);

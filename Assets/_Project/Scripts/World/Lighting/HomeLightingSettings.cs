@@ -71,16 +71,21 @@ namespace MoonProject.World
         [Tooltip("Colour of the warm light pools on the ground: the lamps' own warm.")]
         [SerializeField] private Color _poolColor = Palette.Get(PaletteSwatch.WarmLamp);
 
-        [Tooltip("The warm pools on home's ground, growing with each stage: the dock while the base sleeps, the porch " +
-            "and the windows' spill at Home, the bay's apron at Bay, the deck and the lift's foot at Lift.")]
+        [Tooltip("The warm pools on home's ground, growing with each stage: the dock while the base sleeps; at Home " +
+            "the way in under the belly, the lander's own floor, the belly lift's spill, the lab inside and the " +
+            "tower's foot; the bay's apron at Bay; the chart's glow through the big porthole at Chart (M3-19: warm " +
+            "pools round the three masses).")]
         [SerializeField] private LightPoolTuning[] _pools =
         {
             new LightPoolTuning(HomeLight.Dock, "DockAnchor", new Vector3(0f, -0.02f, 0.8f), 5f, 1f, true),
-            new LightPoolTuning(HomeLight.PorchLamps, "Lander", new Vector3(0f, 3.2f, 4.5f), 11f, 6f, false),
-            new LightPoolTuning(HomeLight.Windows, "Lander", new Vector3(-3.6f, 2.6f, 0.5f), 9f, 4f, false),
+            new LightPoolTuning(HomeLight.PorchLamps, "Lander", new Vector3(0f, 2.2f, 5.6f), 9f, 4f, false),
+            new LightPoolTuning(HomeLight.Windows, "Lander", new Vector3(0f, 2.9f, 0f), 10f, 3f, false),
             new LightPoolTuning(HomeLight.BayLamps, "RoverBay", new Vector3(0f, 0.03f, 4f), 7f, 1f, true),
-            new LightPoolTuning(HomeLight.LiftLamps, "LiftTop", new Vector3(0f, 2f, 0f), 6f, 3.5f, false),
-            new LightPoolTuning(HomeLight.LiftLamps, "LiftBottom", new Vector3(0f, -0.17f, 1.4f), 5f, 1f, true),
+            new LightPoolTuning(HomeLight.LiftLamps, "BellyLift", new Vector3(0f, 2.25f, 1.2f), 5.5f, 3.5f, false),
+            new LightPoolTuning(HomeLight.LabLamps, "Lab", new Vector3(0f, 1.9f, 0f), 4.5f, 2.2f, false),
+            new LightPoolTuning(HomeLight.ChartTable, "BigPorthole", new Vector3(-3.3f, 3.1f, -3.3f), 6f, 1.6f,
+                false),
+            new LightPoolTuning(HomeLight.PorchLamps, "TowerAnchor", new Vector3(0f, 2.6f, 2.2f), 7.5f, 2.6f, false),
         };
 
         public float WakeStagger => _wakeStagger;
