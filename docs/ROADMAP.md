@@ -1,4 +1,4 @@
-# Lofi Lunar — Roadmap & bảng việc
+# Lunarion — Roadmap & bảng việc
 
 > Chủ sở hữu: **Director box** (session chính). Chỉ Director cập nhật file này.
 > Trạng thái: ⬜ chưa làm · 🟦 đang làm · 🟩 xong (đã merge + kiểm chứng) · 🟥 bị chặn

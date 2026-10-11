@@ -1,4 +1,4 @@
-# Lofi Lunar — Game Design v2 (depth & reasons to return)
+# Lunarion — Game Design v2 (depth & reasons to return)
 
 > Owner: Director (game designer). This document defines what the full game is beyond the vertical slice.
 > `docs/VISION.md` sets the feel and the rulings; this sets the structure. Music is seasoning, never the main hook:

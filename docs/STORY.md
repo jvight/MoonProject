@@ -1,4 +1,4 @@
-# Lofi Lunar — Story Bible
+# Lunarion — Story Bible
 
 > Owner: Director. English is the source text (localized via keys, see ARCHITECTURE "Localization").
 > Tone: warm, melancholic, hopeful. Told only through objects, short texts, the radio and the base — never cutscene

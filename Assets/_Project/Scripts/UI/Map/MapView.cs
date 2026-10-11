@@ -6,6 +6,7 @@ using MoonProject.Core;
 using MoonProject.Core.Events;
 using MoonProject.Core.Input;
 using MoonProject.Core.Map;
+using MoonProject.Gameplay.Map;
 
 namespace MoonProject.UI.Map
 {
@@ -17,7 +18,9 @@ namespace MoonProject.UI.Map
     /// <see cref="MapInkCued"/> arrives. Ines's tally (no total) and her notes beyond the rim. Look pans, the winch
     /// zooms between the whole basin and a closer view, the place nearest the view's centre is focused and Tether shows
     /// its one-line card. On the first look, once the ink rests, the view drifts close to each of Ines's notes beyond
-    /// the rim in turn (step 3) unless the player has taken the view. Nothing points anywhere. Every stroke is tessellated when the map is built or opened; the open
+    /// the rim in turn (step 3) unless the player has taken the view. Each charger's circle in soft pencil and the
+    /// Link's line in ink from home through each lit chain mast toward the Peak (docs/features/M3-21 §2): the only line
+    /// that points. Every stroke is tessellated when the map is built or opened; the open
     /// view only moves, reveals and fades, so a frame allocates nothing, and a closed map is not drawn at all.
     /// </summary>
     internal sealed class MapView : IDisposable
@@ -37,11 +40,15 @@ namespace MoonProject.UI.Map
         private const float TallyGroupGap = 0.6f;
         private const float TallySlash = 0.9f;
         private const uint MarkSeed = 0xA511E5u;
+        private const uint ChargerSeed = 0xC4A26Eu;
+        private const uint LinkSeed = 0x11D4C0u;
+        private const float ArrowAngle = 0.5f;
         private const int ContourIndexEvery = 5;
 
         private readonly MapViewTuning _tuning;
         private readonly IMapKnowledge _knowledge;
         private readonly IStationReach _reach;
+        private readonly IChartOverlay _overlay;
         private readonly ILocalization _text;
         private readonly InputReader _input;
         private readonly PaperSpace _space;
@@ -83,7 +90,7 @@ namespace MoonProject.UI.Map
         private MapMark _focus;
 
         public MapView(VisualElement before, MapSheet sheet, MapViewTuning tuning, IMapKnowledge knowledge,
-            IStationReach reach, ILocalization text, EventBus events, InputReader input)
+            IStationReach reach, IChartOverlay overlay, ILocalization text, EventBus events, InputReader input)
         {
             if (before == null || before.parent == null)
             {
@@ -93,6 +100,7 @@ namespace MoonProject.UI.Map
             _tuning = tuning != null ? tuning : throw new ArgumentNullException(nameof(tuning));
             _knowledge = knowledge ?? throw new ArgumentNullException(nameof(knowledge));
             _reach = reach ?? throw new ArgumentNullException(nameof(reach));
+            _overlay = overlay ?? throw new ArgumentNullException(nameof(overlay));
             _text = text ?? throw new ArgumentNullException(nameof(text));
             _input = input ?? throw new ArgumentNullException(nameof(input));
             if (sheet == null || sheet.Validate() != null)
@@ -112,6 +120,7 @@ namespace MoonProject.UI.Map
             _paper = Box("crew-map-paper", size);
             _paper.style.backgroundColor = tuning.Paper;
             _paper.style.transformOrigin = new TransformOrigin(0f, 0f);
+            _paper.style.overflow = Overflow.Hidden;
             viewport.Add(_paper);
             _paper.Add(Layer("crew-map-glow", size, _glow.Draw));
             _paper.Add(Layer("crew-map-sheet", size, _sheet.Draw));
@@ -322,6 +331,7 @@ namespace MoonProject.UI.Map
                 }
             }
 
+            DrawChargersAndLink();
             _pencil.Finish();
             _glow.Finish();
             BuildTally(found);
@@ -663,6 +673,46 @@ namespace MoonProject.UI.Map
                     buffer.AddLine(_scratch, false, width, ink, 0f, 1f, 0f, 0u);
                     Ring(buffer, at + new Vector2(0f, -half * 0.7f), half * 0.3f, width, ink, (uint)deed);
                     break;
+            }
+        }
+
+        /// <summary>
+        /// Each charger's circle in soft pencil (the dock and every lit mast: as far as 07 comfortably drives out and
+        /// back), then the Link's line in ink from home through each lit chain mast, carried on toward the Peak and
+        /// ending in a small arrowhead (docs/features/M3-21 §2).
+        /// </summary>
+        private void DrawChargersAndLink()
+        {
+            float radius = _overlay.ChargerRadius * _space.UnitsPerMetre;
+            for (int i = 0; i < _overlay.ChargerCount; i++)
+            {
+                Ring(_pencil, _space.ToPaper(_overlay.ChargerPosition(i)), radius, _tuning.ChargerWidth,
+                    _tuning.Charger, ChargerSeed + (uint)i);
+            }
+
+            _scratch.Clear();
+            for (int i = 0; i < _overlay.LinkPointCount; i++)
+            {
+                _scratch.Add(_space.ToPaper(_overlay.LinkPoint(i)));
+            }
+
+            Vector2 last = _scratch[_scratch.Count - 1];
+            Vector2 toPeak = _space.ToPaper(_overlay.Peak) - last;
+            Vector2 heading = toPeak.normalized;
+            Vector2 tip = last + heading * Mathf.Min(toPeak.magnitude, _tuning.LinkLead * _space.UnitsPerMetre);
+            _scratch.Add(tip);
+            _pencil.AddLine(_scratch, false, _tuning.LinkWidth, _tuning.Ink, _tuning.Wobble, _tuning.WobbleLength,
+                _tuning.Grain, LinkSeed);
+            Vector2 back = -heading * _tuning.ArrowSize;
+            for (int side = -1; side <= 1; side += 2)
+            {
+                float angle = side * ArrowAngle;
+                float cos = Mathf.Cos(angle);
+                float sin = Mathf.Sin(angle);
+                _scratch.Clear();
+                _scratch.Add(tip + new Vector2(back.x * cos - back.y * sin, back.x * sin + back.y * cos));
+                _scratch.Add(tip);
+                _pencil.AddLine(_scratch, false, _tuning.LinkWidth, _tuning.Ink, 0f, 1f, 0f, LinkSeed + (uint)(side + 2));
             }
         }
 

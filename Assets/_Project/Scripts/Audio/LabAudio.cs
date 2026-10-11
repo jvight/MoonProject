@@ -17,7 +17,9 @@ namespace MoonProject.Audio
     /// bay Kenji's plotter scratches as it draws the sheet (<see cref="BlueprintDrawing"/>);</item>
     /// <item>on the map, a pencil hiss as a place blinks seen (<see cref="MapPlaceSeen"/>), the chart pen's scratch
     /// climbing the scale place by place (<see cref="MapInkCued"/>) and the light table's warm hum while the map is
-    /// open (<see cref="MapLookStarted"/>, <see cref="MapLookEnded"/>).</item>
+    /// open (<see cref="MapLookStarted"/>, <see cref="MapLookEnded"/>);</item>
+    /// <item>wherever 07 is, a warm chord rises as a row of the lab's recovery panel completes, never on a load
+    /// (<see cref="RecoveryProgressChanged"/>, docs/features/M3-21).</item>
     /// </list>
     /// The lab's loops sit with 07 (the lab is one small room). Game-time loops duck while paused. Initialised by
     /// <see cref="AudioDirector"/>; nothing allocates per frame.
@@ -40,6 +42,7 @@ namespace MoonProject.Audio
         private CueHandle _detent;
         private CueHandle _take;
         private CueHandle _chime;
+        private CueHandle _rowChord;
         private CueHandle _plotter;
         private CueHandle _pencil;
         private CueHandle _pen;
@@ -77,11 +80,12 @@ namespace MoonProject.Audio
             _detent = director.Resolve(AudioCueIds.LabDetent);
             _take = director.Resolve(AudioCueIds.ReaderTake);
             _chime = director.Resolve(AudioCueIds.ReaderDecodeChime);
+            _rowChord = director.Resolve(AudioCueIds.RecoveryRowChord);
             _plotter = director.Resolve(AudioCueIds.PlotterDraw);
             _pencil = director.Resolve(AudioCueIds.MapPencil);
             _pen = director.Resolve(AudioCueIds.MapPen);
             if (!room.IsValid || !reel.IsValid || !table.IsValid || !_detent.IsValid || !_take.IsValid ||
-                !_chime.IsValid || !_plotter.IsValid || !_pencil.IsValid || !_pen.IsValid)
+                !_chime.IsValid || !_rowChord.IsValid || !_plotter.IsValid || !_pencil.IsValid || !_pen.IsValid)
             {
                 enabled = false;
                 return;
@@ -110,6 +114,7 @@ namespace MoonProject.Audio
                 events.Subscribe<MapInkCued>(OnInked),
                 events.Subscribe<MapLookStarted>(_ => _table.FadeIn()),
                 events.Subscribe<MapLookEnded>(_ => _table.FadeOut()),
+                events.Subscribe<RecoveryProgressChanged>(OnRecovery),
             };
         }
 
@@ -149,6 +154,14 @@ namespace MoonProject.Audio
         {
             _reel.FadeOut();
             _director.Play2D(_chime, _tuning.DecodeChimeVolume);
+        }
+
+        private void OnRecovery(RecoveryProgressChanged changed)
+        {
+            if (!changed.Restored && changed.Lamps > 0 && changed.LitLamps >= changed.Lamps)
+            {
+                _director.Play2D(_rowChord, _tuning.RowChordVolume);
+            }
         }
 
         private void OnDrawing(BlueprintDrawing drawing)

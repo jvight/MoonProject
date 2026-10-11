@@ -1,4 +1,4 @@
-# Lofi Lunar: Thiết kế game v3 (bản đã duyệt)
+# Lunarion: Thiết kế game v3 (bản đã duyệt)
 
 > **Đã duyệt ngày 2026-10-11.** Bản tiếng Việt của `docs/design/gdd-v3.md`, cùng cấu trúc 11 phần, theo các câu trả lời
 > của anh/chị và bản nhận xét của phiên thiết kế game. Hai quyết định nền móng của anh/chị:

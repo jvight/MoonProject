@@ -19,6 +19,10 @@ namespace MoonProject.UI
         [Tooltip("The lab's place line (its name and its one job) easing in and out.")]
         [SerializeField] private RevealSettings _place = new RevealSettings(0.8f, 1.2f, 10f, 0.95f, 1.4f, 0.7f);
 
+        [Tooltip("The tech board's labels (the recovery panel's rows, the known pins) easing in as 07 looks at the " +
+                 "board and out as it looks away (docs/features/M3-21).")]
+        [SerializeField] private RevealSettings _board = new RevealSettings(0.7f, 0.5f, 8f, 0.96f, 1.2f, 0.7f);
+
         [Tooltip("Seconds the lab's place line stays the first time 07 is up in the lab.")]
         [Range(1f, 12f)]
         [SerializeField] private float _placeSeconds = 5f;
@@ -37,6 +41,8 @@ namespace MoonProject.UI
         public RevealSettings Chip => _chip;
 
         public RevealSettings Place => _place;
+
+        public RevealSettings Board => _board;
 
         public float PlaceSeconds => _placeSeconds;
 

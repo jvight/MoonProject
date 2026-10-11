@@ -242,7 +242,7 @@ namespace MoonProject.UI
             PurchaseResult result = _shop.Purchase(upgrade.Id);
             if (result == PurchaseResult.NeedsPart)
             {
-                _partLine = UiKeys.UpgradeNeedsPart(upgrade.Id, _shownLevel + 1);
+                _partLine = UiKeys.ComponentNeeded(_shop.ComponentNeeded(upgrade.Id));
                 _hold.Reset();
                 _layout.TowerHoldWord.text = HoldWord();
                 _events.Publish(new UiCue(UiCueKind.HoldRelease));

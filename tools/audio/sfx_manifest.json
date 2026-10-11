@@ -3263,6 +3263,33 @@
       "notes": "A find decoded: felt glass chime rising D5, A5, D6."
     },
     {
+      "id": "recovery_row_chord",
+      "category": "stinger_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/recovery_row_chord.wav"
+      ],
+      "variantLabels": [
+        "recovery_row_chord"
+      ],
+      "sha256": [
+        "135ee8a6cd6480631de3be21bcd17ed5be6c011ccaac432be3740ff605e8b879"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -20.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "A recovery row completes: a warm D-major chord rising left to right under its lamps."
+    },
+    {
       "id": "map_pencil",
       "category": "tick_2d",
       "milestone": "M3",

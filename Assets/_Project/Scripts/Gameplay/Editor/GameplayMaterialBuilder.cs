@@ -45,8 +45,8 @@ namespace MoonProject.Gameplay.Editor
             return pads;
         }
 
-        /// <summary>Art's tower story parts (Part_TowerCoil, ...), each prefab named as its part's id.</summary>
-        private static GameObject[] StoryParts()
+        /// <summary>Art's tower components (Part_TowerCoil, ...), each prefab named as its part's id.</summary>
+        private static GameObject[] ComponentModels()
         {
             var parts = new GameObject[SiteModelBuilder.StoryPartNames.Length];
             for (int i = 0; i < parts.Length; i++)
@@ -55,11 +55,20 @@ namespace MoonProject.Gameplay.Editor
                 parts[i] = AssetDatabase.LoadAssetAtPath<GameObject>(path);
                 if (parts[i] == null)
                 {
-                    throw new InvalidOperationException($"{BuilderPath}: Art's story part {path} is missing.");
+                    throw new InvalidOperationException($"{BuilderPath}: Art's component {path} is missing.");
                 }
             }
 
             return parts;
+        }
+
+        /// <summary>Art's blueprint tube, for a tube waiting on the ground at a world anchor.</summary>
+        private static GameObject TubeModel()
+        {
+            string path = ArtPaths.PickupFolder + "/" + SiteModelBuilder.BlueprintTubeName + ".prefab";
+            var tube = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            return tube != null ? tube
+                : throw new InvalidOperationException($"{BuilderPath}: Art's blueprint tube {path} is missing.");
         }
 
         [MoonBuilder(BuilderPath, BuilderOrder)]
@@ -80,7 +89,8 @@ namespace MoonProject.Gameplay.Editor
                 Write(shader, GlowRole.Spark), Write(shader, GlowRole.HomeHalo),
                 Write(shader, GlowRole.LinkPulse));
             visuals.PopulatePads(Pads(), BaseModelBuilder.PadRadii);
-            visuals.PopulateStoryParts(StoryParts());
+            visuals.PopulateComponents(ComponentModels());
+            visuals.PopulateTube(TubeModel());
             GeneratedAssets.CreateOrReplace(visuals, GameplayAssetPaths.Visuals);
             AssetDatabase.SaveAssets();
             Debug.Log($"{BuilderPath}: wrote {Enum.GetValues(typeof(GlowRole)).Length + 2} materials and " +

@@ -1,6 +1,6 @@
 namespace MoonProject.Gameplay
 {
-    /// <summary>Where a tower story part waits for 07 (docs/features/M3-16 P1).</summary>
+    /// <summary>Where a tower component waits for 07 (docs/features/M3-16 P1).</summary>
     public enum TowerPartSource
     {
         /// <summary>In a salvage site's heart, once the heart is revealed.</summary>

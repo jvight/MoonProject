@@ -1,4 +1,4 @@
-# Lofi Lunar: Game Design v3
+# Lunarion: Game Design v3
 
 > **APPROVED by the owner on 2026-10-11.** Written by the story & flow session, reviewed by the game design session
 > (`docs/design/review-gdd-v3.md`), finalized with the owner's answers (§11). The Vietnamese edition is

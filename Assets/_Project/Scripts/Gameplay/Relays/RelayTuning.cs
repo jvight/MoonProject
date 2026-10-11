@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace MoonProject.Gameplay
@@ -102,6 +103,11 @@ namespace MoonProject.Gameplay
         [Tooltip("Seconds between masts lighting one after another when one restoration links a whole chain.")]
         [Range(0f, 5f)] [SerializeField] private float _chainDelay = 0.9f;
 
+        [Header("The Link toward the Peak (M3-21)")]
+        [Tooltip("The relay masts of the Link's chain from home toward the Peak's foot, nearest home first: each lit " +
+                 "one lights a lamp in the recovery panel's Link row and extends the chart's Link line.")]
+        [SerializeField] private string[] _linkChain = { "relay.0", "relay.1" };
+
         [Header("Hop pads")]
         [Tooltip("07 counts as parked on a node's pad within this many metres of its centre (World's pads: 3 m).")]
         [Range(1f, 6f)] [SerializeField] private float _padRadius = 3f;
@@ -167,6 +173,7 @@ namespace MoonProject.Gameplay
         public float PulseLift => _pulseLift;
         public float PulseFade => _pulseFade;
         public float ChainDelay => _chainDelay;
+        public IReadOnlyList<string> LinkChain => _linkChain;
         public float PadRadius => _padRadius;
         public float HopMaxSpeed => _hopMaxSpeed;
         public float HopConfirmHold => _hopConfirmHold;

@@ -229,7 +229,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// Every tower story part already fed to the port (docs/features/M3-16 P1), for sessions about something else
+        /// Every tower component already fed to the port (docs/features/M3-16 P1), for sessions about something else
         /// that buy tower levels: as a load would leave them, silently.
         /// </summary>
         public void DeliverTowerParts()
@@ -243,6 +243,15 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             parts.Restore(new TowerPartsSaveData { delivered = delivered });
             Gameplay.TowerPartField.Sync();
+        }
+
+        /// <summary>
+        /// The lab's reader has decoded <paramref name="kits"/>' blueprints, and only those (no sheet is pinned from the
+        /// start, docs/features/M3-21 §4): the bay can build them.
+        /// </summary>
+        public void Decode(params string[] kits)
+        {
+            Gameplay.Blueprints.Restore(new BlueprintsSaveData { found = kits });
         }
 
         /// <summary>Puts materials in 07's stock, as salvage would.</summary>
@@ -356,12 +365,13 @@ namespace MoonProject.Gameplay.PlayModeTests
                 GlowMaterial(shader, GlowRole.HomeHalo), GlowMaterial(shader, GlowRole.LinkPulse));
 
             visuals.PopulatePads(new[] { Pad(1.6f), Pad(2.4f), Pad(3f) }, new[] { 1.6f, 2.4f, 3f });
-            visuals.PopulateStoryParts(new[]
+            visuals.PopulateComponents(new[]
             {
                 Template("Part_TowerCoil", new Vector3(0.5f, 0.6f, 0.5f)),
                 Template("Part_Transformer", new Vector3(0.6f, 0.5f, 0.45f)),
                 Template("Part_RelaySpare", new Vector3(0.4f, 0.3f, 0.5f)),
             });
+            visuals.PopulateTube(Template("BlueprintTube", new Vector3(0.7f, 0.14f, 0.14f)));
             var root = new GameObject("[Gameplay]");
             root.SetActive(false);
             Gameplay = root.AddComponent<GameplaySystem>();

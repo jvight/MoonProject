@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace MoonProject.Gameplay
 {
-    /// <summary>A tower story part: what one tower level needs besides materials, and where 07 finds it.</summary>
+    /// <summary>A tower component: what one tower level needs besides materials, and where 07 finds it.</summary>
     [Serializable]
     public struct TowerPart
     {

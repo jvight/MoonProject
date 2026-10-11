@@ -146,6 +146,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             _fixture.GiveMaterials(30, 30, 30);
             IUpgradeShop shop = _fixture.Bootstrap.Context.Get<IUpgradeShop>();
 
+            _fixture.Decode("rover.hover_jump");
             Workshop bay = gameplay.Workshop;
             _fixture.Rover.Place(Flat(bay.PadCentre), 0f);
             yield return null;
