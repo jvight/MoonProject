@@ -104,6 +104,9 @@ namespace MoonProject.Art.Editor
         private const float ChaseTargetHeight = 1.1f;
         private const float ChaseFov = 52f;
         private const float ChaseQuarterYaw = 35f;
+
+        // The lab's station views look over 07's shoulder: this far round the ring rail from straight behind it.
+        private const float ShoulderYaw = 30f;
         private const float FarDistance = 30f;
         private const float SpawnYaw = 355f;
 
@@ -938,7 +941,7 @@ namespace MoonProject.Art.Editor
             Transform tower = SceneObjectStartingWith(BaseModelBuilder.TowerPrefix);
             SetGlow(tower, "Lights", new[] { string.Empty }, 1f);
             Quaternion toLift = lander.rotation * Quaternion.Euler(0f, 180f, 0f);
-            Vector3 front = lander.TransformPoint(new Vector3(2f, 0f, 9.2f));
+            Vector3 front = lander.TransformPoint(new Vector3(0f, 0f, 8.6f));
             TravellingRover(temporary, front, toLift, false);
             if (stage >= 1)
             {
@@ -1001,7 +1004,7 @@ namespace MoonProject.Art.Editor
         /// Main.unity (never saved) with home awake and the lift restored; the lab <paramref name="lit"/> or asleep.
         /// The owner's two frames first (behind 07 at the base, the lander from the ladder side, a 07 parked in front
         /// of the belly), returned for the usual capture; and a 07 up on the raised turntable facing each station in
-        /// turn, seen from the camera's ring rail opposite it just under the rail, captured here into
+        /// turn, seen over its shoulder from the camera's ring rail just under the rail, captured here into
         /// <paramref name="output"/> one station at a time (the one 07 turns between them).
         /// </summary>
         private static CameraPoseSet LabScene(TemporaryObjects temporary, bool lit, string output, string prefix)
@@ -1054,10 +1057,11 @@ namespace MoonProject.Art.Editor
                 Transform station = Descendant(lab, BaseModelBuilder.StationPrefix + LabMeshes.StationNames[i]);
                 Vector3 toStation = Vector3.ProjectOnPlane(station.position - spot.position, Vector3.up).normalized;
                 rover.rotation = Quaternion.LookRotation(toStation);
-                Vector3 rail = lab.position - toStation * (BaseModelBuilder.LabRingRadius - 0.05f)
-                    + Vector3.up * (LabMeshes.RingHeight - 0.08f);
+                Vector3 behind = Quaternion.Euler(0f, ShoulderYaw, 0f) * -toStation;
+                Vector3 rail = lab.position + behind * (BaseModelBuilder.LabRingRadius - 0.05f)
+                    + Vector3.up * (LabMeshes.RingHeight - 0.15f);
                 CameraPose view = Pose("inside_" + LabMeshes.StationNames[i].ToLowerInvariant(), Point(rail),
-                    Point(station.position + Vector3.down * 0.15f), 55f);
+                    Point(station.position), 55f);
                 CaptureAutomation.CapturePoses(new CameraPoseSet { width = 1920, height = 1080, postProcessing = true,
                     poses = new[] { view } }, output, prefix);
             }
