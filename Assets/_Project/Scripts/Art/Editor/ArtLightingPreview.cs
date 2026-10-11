@@ -941,7 +941,7 @@ namespace MoonProject.Art.Editor
             Transform tower = SceneObjectStartingWith(BaseModelBuilder.TowerPrefix);
             SetGlow(tower, "Lights", new[] { string.Empty }, 1f);
             Quaternion toLift = lander.rotation * Quaternion.Euler(0f, 180f, 0f);
-            Vector3 front = lander.TransformPoint(new Vector3(0f, 0f, 8.6f));
+            Vector3 front = lander.TransformPoint(new Vector3(-1.6f, 0f, 9.2f));
             TravellingRover(temporary, front, toLift, false);
             if (stage >= 1)
             {
