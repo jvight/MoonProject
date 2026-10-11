@@ -167,7 +167,8 @@ namespace MoonProject.Gameplay
         }
 
         /// <param name="placement">Core's rover placement for the hop, or null while no domain registers it.</param>
-        /// <param name="homePad">07's dock on the base pad: home's node, where a hop home sets 07 down to rest.</param>
+        /// <param name="homePad">07's dock on the base pad: home's hop pad, where a hop home sets 07 down to rest (home's
+        /// reach stays centred on the base pad).</param>
         internal bool Initialize(GameplayServices services, UpgradeService upgrades, RadioTower tower,
             ITetherAim tether, FriendTuning friends, IRoverPlacement placement, Vector3 homePad)
         {
@@ -202,7 +203,8 @@ namespace MoonProject.Gameplay
             }
 
             _beat = RelayBeat.For(_tuning);
-            Vector3 home = SurfaceRules.OnSurface(services.Terrain, homePad.x, homePad.z);
+            Vector3 home = SurfaceRules.OnSurface(services.Terrain, services.Layout.BasePosition.x,
+                services.Layout.BasePosition.z);
             var ids = new string[anchors.Count];
             var pads = new Vector3[anchors.Count];
             var lamps = new Vector3[anchors.Count];
@@ -242,19 +244,23 @@ namespace MoonProject.Gameplay
             _beam = new RepairBeam("RelayBeam", transform, services.Visuals.TetherBeam, _friends.StitchRate,
                 _friends.StitchSpread);
             _pads = new StationPad[_reach.NodeCount];
+            var hopPads = new Vector3[_reach.NodeCount];
             var facings = new Quaternion[_reach.NodeCount];
             var labels = new string[_reach.NodeCount];
             for (int node = 0; node < _reach.NodeCount; node++)
             {
+                hopPads[node] = node == StationReach.Home
+                    ? SurfaceRules.OnSurface(services.Terrain, homePad.x, homePad.z)
+                    : _reach.Position(node);
                 _pads[node] = new StationPad("HopPad_" + _reach.Id(node), transform, services.Terrain,
-                    _reach.Position(node), _tuning.PadLook, services.Visuals);
+                    hopPads[node], _tuning.PadLook, services.Visuals);
                 labels[node] = HopLabelPrefix + _reach.Id(node);
                 facings[node] = node == StationReach.Home
                     ? Facing(services.Layout.PeakPosition - home)
                     : Quaternion.LookRotation(-_masts[node - 1].Anchor.Forward);
             }
 
-            _hop = new RadioHop(_events, _reach, _tuning, _rover, _rig, placement, tether, facings, labels);
+            _hop = new RadioHop(_events, _reach, _tuning, _rover, _rig, placement, tether, hopPads, facings, labels);
             _counts = new string[_masts.Count + 1];
             for (int i = 0; i < _counts.Length; i++)
             {

@@ -212,8 +212,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return new WaitForSeconds(sequence.Duration - sequence.PlaceAt + 0.5f);
             Assert.AreEqual(1, _fixture.Rover.Placements);
             Assert.AreEqual("home", _fixture.Events.RadioHopFinished[0].Value.ToId);
-            Assert.Less(SurfaceRules.HorizontalDistance(_fixture.Rover.Position, Vector3.zero), 0.01f,
-                "on home's pad");
+            Assert.Less(SurfaceRules.HorizontalDistance(_fixture.Rover.Position, _fixture.Gameplay.Home.Dock.Position),
+                0.01f, "on home's hop pad, 07's dock");
             Assert.AreEqual(RadioHopPhase.Closed, hop.Phase);
             Assert.AreEqual(0f, hop.Fade);
             Assert.AreEqual(0, _fixture.Rover.HoldStillCount);
