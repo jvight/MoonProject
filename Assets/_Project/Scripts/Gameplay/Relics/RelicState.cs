@@ -12,7 +12,7 @@ namespace MoonProject.Gameplay
         /// <summary>A free physics body on the Relic layer: the tether can tow it.</summary>
         Loose = 2,
 
-        /// <summary>Floating onto its museum shelf slot.</summary>
+        /// <summary>Floating into its cubby on the lab's keepsake shelf.</summary>
         Depositing = 3,
 
         /// <summary>On display at the base.</summary>
@@ -23,5 +23,9 @@ namespace MoonProject.Gameplay
 
         /// <summary>Riding home in 07's Cargo Cradle (docs/features/M3-11), lifted in or settled in the rack.</summary>
         Cradled = 6,
+
+        /// <summary>Riding the belly lift beside 07 up into the lab, carried on the platform (docs/features/M3-19 §4).
+        /// </summary>
+        Riding = 7,
     }
 }

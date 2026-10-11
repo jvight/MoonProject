@@ -30,6 +30,8 @@ namespace MoonProject.Gameplay
         // this object's transform is gone) still has it.
         private Vector3 _knownPosition;
         private Quaternion _knownRotation = Quaternion.identity;
+        private Vector3 _boardedPosition;
+        private Quaternion _boardedRotation = Quaternion.identity;
 
         public RelicDefinition Definition { get; private set; }
 
@@ -49,7 +51,7 @@ namespace MoonProject.Gameplay
         /// <summary>True once the relic has answered a ping.</summary>
         public bool Discovered { get; private set; }
 
-        /// <summary>Museum shelf slot while depositing or displayed, else -1.</summary>
+        /// <summary>Keepsake shelf cubby while depositing or displayed, else -1.</summary>
         public int Slot { get; private set; } = -1;
 
         /// <summary>True while the tether holds this relic.</summary>
@@ -189,9 +191,15 @@ namespace MoonProject.Gameplay
         internal void BeginCarry(RelicState carryState, int slot)
         {
             if (carryState != RelicState.Depositing && carryState != RelicState.Returning &&
-                carryState != RelicState.Cradled)
+                carryState != RelicState.Cradled && carryState != RelicState.Riding)
             {
                 throw new ArgumentOutOfRangeException(nameof(carryState), carryState, "Not a carried state.");
+            }
+
+            if (carryState == RelicState.Riding)
+            {
+                _boardedPosition = transform.position;
+                _boardedRotation = transform.rotation;
             }
 
             State = carryState;
@@ -218,16 +226,21 @@ namespace MoonProject.Gameplay
             MakeLoose(Vector3.zero, Vector3.zero);
         }
 
+        /// <summary>
+        /// The relic's saved state. One riding the belly lift is saved loose where it boarded: a loaded game starts with
+        /// 07 outside, so it waits beside the lift rather than up in the lab.
+        /// </summary>
         internal RelicSaveData Capture()
         {
+            bool riding = State == RelicState.Riding;
             return new RelicSaveData
             {
                 id = Definition.Id,
-                state = (int)State,
+                state = (int)(riding ? RelicState.Loose : State),
                 progress = Progress,
                 discovered = Discovered,
-                position = _knownPosition,
-                rotation = _knownRotation,
+                position = riding ? _boardedPosition : _knownPosition,
+                rotation = riding ? _boardedRotation : _knownRotation,
                 slot = Slot,
             };
         }

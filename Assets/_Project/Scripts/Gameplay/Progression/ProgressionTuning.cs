@@ -5,9 +5,9 @@ using UnityEngine;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// The base's wake-up (docs/features/M3-16): when 07 counts as awake and away from its dock, how near each place
-    /// greets 07 the first time, how far apart those lines come, and which content the step flow waits on. Created by
-    /// the Gameplay/Tuning builder; runtime code only reads it.
+    /// The base's wake-up (docs/features/M3-16, M3-19): when 07 counts as awake and away from its dock, how near each
+    /// place greets 07 the first time, how far apart those lines come, and which content the step flow waits on.
+    /// Created by the Gameplay/Tuning builder; runtime code only reads it.
     /// </summary>
     public sealed class ProgressionTuning : ScriptableObject
     {
@@ -22,22 +22,20 @@ namespace MoonProject.Gameplay
         [Tooltip("The lander, home.")]
         [Range(1f, 40f)] [SerializeField] private float _landerRadius = 9f;
 
-        [Tooltip("The memory shelf.")]
-        [Range(1f, 30f)] [SerializeField] private float _shelfRadius = 4f;
-
         [Tooltip("The radio tower.")]
         [Range(1f, 30f)] [SerializeField] private float _towerRadius = 6f;
 
         [Tooltip("Kenji's Rover Bay.")]
         [Range(1f, 30f)] [SerializeField] private float _bayRadius = 7f;
 
-        [Tooltip("Kenji's blueprint board.")]
-        [Range(1f, 30f)] [SerializeField] private float _boardRadius = 4f;
+        [Tooltip("The crew's lab, greeted the first time the lift settles 07 inside (horizontal metres from the " +
+                 "platform's centre).")]
+        [Range(1f, 30f)] [SerializeField] private float _labRadius = 3f;
 
         [Tooltip("The crew's ladder.")]
         [Range(1f, 30f)] [SerializeField] private float _ladderRadius = 3f;
 
-        [Tooltip("The crew's lift.")]
+        [Tooltip("The crew's belly lift.")]
         [Range(1f, 30f)] [SerializeField] private float _liftRadius = 4f;
 
         [Tooltip("Bell's tape rack.")]
@@ -114,11 +112,22 @@ namespace MoonProject.Gameplay
         [Tooltip("Height (m) of the arc a story part glides along into the hopper.")]
         [Range(0f, 3f)] [SerializeField] private float _partFeedArc = 0.8f;
 
-        [Header("Kenji's pen plotter (P7)")]
-        [Tooltip("07 hands a blueprint tube to the plotter within this many metres (horizontal) of it.")]
-        [Range(1f, 15f)] [SerializeField] private float _plotterReach = 6f;
+        [Header("The lab's reader (M3-19)")]
+        [Tooltip("Seconds 07's beam takes to feed a blueprint tube into the reader's slot.")]
+        [Range(0.3f, 4f)] [SerializeField] private float _readerFeedSeconds = 1.2f;
 
-        [Tooltip("Seconds the plotter takes to draw a delivered sheet.")]
+        [Tooltip("Seconds the reader decodes a tube: a moment, not a timer.")]
+        [Range(1f, 10f)] [SerializeField] private float _readerDecodeSeconds = 4f;
+
+        [Tooltip("Turns per second of the reader's reel while it decodes.")]
+        [Range(0.1f, 4f)] [SerializeField] private float _reelTurnsPerSecond = 0.8f;
+
+        [Tooltip("Seconds the hand-off's lamp pulse takes from the reader down the leg and along the cable to the " +
+                 "bay.")]
+        [Range(0.5f, 10f)] [SerializeField] private float _handOffSeconds = 3f;
+
+        [Header("Kenji's pen plotter (P7)")]
+        [Tooltip("Seconds the plotter takes to draw a decoded sheet.")]
         [Range(1f, 20f)] [SerializeField] private float _plotterDrawSeconds = 6f;
 
         [Tooltip("Rows the pen sweeps across the bed while drawing.")]
@@ -148,7 +157,13 @@ namespace MoonProject.Gameplay
 
         public float EveningPillarBrightness => _eveningPillarBrightness;
 
-        public float PlotterReach => _plotterReach;
+        public float ReaderFeedSeconds => _readerFeedSeconds;
+
+        public float ReaderDecodeSeconds => _readerDecodeSeconds;
+
+        public float ReelTurnsPerSecond => _reelTurnsPerSecond;
+
+        public float HandOffSeconds => _handOffSeconds;
 
         public float PlotterDrawSeconds => _plotterDrawSeconds;
 
@@ -183,10 +198,9 @@ namespace MoonProject.Gameplay
             {
                 case ProgressionKeys.PlaceDock: return _dockRadius;
                 case ProgressionKeys.PlaceLander: return _landerRadius;
-                case ProgressionKeys.PlaceShelf: return _shelfRadius;
                 case ProgressionKeys.PlaceTower: return _towerRadius;
                 case ProgressionKeys.PlaceBay: return _bayRadius;
-                case ProgressionKeys.PlaceBoard: return _boardRadius;
+                case ProgressionKeys.PlaceLab: return _labRadius;
                 case ProgressionKeys.PlaceLadder: return _ladderRadius;
                 case ProgressionKeys.PlaceLift: return _liftRadius;
                 case ProgressionKeys.PlaceRack: return _rackRadius;

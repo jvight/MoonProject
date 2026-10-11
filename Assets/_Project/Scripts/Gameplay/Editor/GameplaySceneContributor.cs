@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using MoonProject.Art.Editor;
 using MoonProject.Core;
@@ -10,8 +11,9 @@ namespace MoonProject.Gameplay.Editor
     /// <summary>
     /// The Gameplay domain's part of Main.unity: under [Gameplay], the <see cref="GameplaySystem"/> (one system,
     /// initialised after World and Rover) and its parts, wired to the tuning, content and material assets, plus the
-    /// home base built from Art's prefabs (lander with its charging dock, museum shelf on its ShelfAnchor, the three
-    /// radio tower stages with their service ports on its TowerAnchor, Kenji's Rover Bay on its WorkshopAnchor). Art's
+    /// home base built from Art's prefabs (the habitat lander with its charging dock, its belly lift and the crew's lab
+    /// inside with the keepsake shelf, the three radio tower stages with their service ports on its TowerAnchor,
+    /// Kenji's Rover Bay on its WorkshopAnchor). Art's
     /// base prefabs are meshes only, so gameplay makes them solid here: a static mesh collider on each body, on the
     /// Prop layer, so 07 drives around them (and up the bay's ramp onto its floor) and the camera never slips inside.
     /// Each friend's home socket is the lander's node, or for a radio tower home (Bell's corner) a fixed empty under
@@ -27,7 +29,8 @@ namespace MoonProject.Gameplay.Editor
     public sealed class GameplaySceneContributor : ISceneContributor
     {
         private const int LampSockets = 4;
-        private const int ShelfSlots = 6;
+        private const string KeepsakeSlotPrefix = "Slot_";
+        private const string WeatherDustName = "Weather_Dust";
         private const int TowerStages = 3;
         private const int CassetteSlots = 8;
         private const string CassetteShelfAnchor = "CassetteShelfAnchor";
@@ -112,10 +115,9 @@ namespace MoonProject.Gameplay.Editor
             baseRoot.transform.SetPositionAndRotation(new Vector3(offset.x, 0f, offset.z),
                 Quaternion.LookRotation(new Vector3(-offset.x, 0f, -offset.z)));
             Transform lander = context.InstantiatePrefab(GameplayAssetPaths.Lander, baseRoot.transform).transform;
-            Transform shelf = context.InstantiatePrefab(GameplayAssetPaths.MuseumShelf,
-                Child(lander, "ShelfAnchor")).transform;
             MakeSolid(lander);
-            MakeSolid(shelf);
+            Transform lab = Child(lander, BaseModelBuilder.LabName);
+            Transform keepsakes = Station(lab, LabStation.Keepsakes);
             Transform towerAnchor = Child(lander, "TowerAnchor");
             var stages = new GameObject[TowerStages];
             var stageLights = new Renderer[TowerStages];
@@ -170,7 +172,7 @@ namespace MoonProject.Gameplay.Editor
             excavation.Wire(excavationTuning);
             tether.Wire(tetherTuning);
             home.Wire(baseTuning, baseRoot.transform, Renderer(Child(lander, "Windows")),
-                Children(lander, "LampSocket_", LampSockets), shelf, Glow(shelf), Children(shelf, "Slot_", ShelfSlots),
+                Children(lander, "LampSocket_", LampSockets), keepsakes, Cubbies(keepsakes, relicCatalog),
                 Child(lander, "DockAnchor"), Renderer(Child(lander, "DockGlow")));
             tower.Wire(towerTuning, radioTower, towerAnchor, stages, stageLights, beacons, hoppers, hatches);
             workshop.Wire(workshopTuning, benchKit, bay, Child(bay, "Turntable"), Child(bay, "HopperMouth"), bayLamps,
@@ -189,7 +191,8 @@ namespace MoonProject.Gameplay.Editor
             logs.Wire(logCacheCatalog, logCacheTuning);
             relays.Wire(relayTuning, relayMast, relayMastBroken, relayPart);
             Transform dock = Child(lander, "DockAnchor");
-            Transform lift = Child(lander, "LiftPlatform");
+            Transform belly = Child(lander, BaseModelBuilder.BellyLiftName);
+            Transform lift = Child(belly, BaseModelBuilder.PlatformDownName);
             Transform plotterRoot = Child(bay, BaseModelBuilder.PlotterName);
             Transform carriage = Child(plotterRoot, BaseModelBuilder.PenCarriageName);
             plotter.Wire(plotterRoot, carriage, Child(carriage, BaseModelBuilder.PenHeadName),
@@ -197,9 +200,8 @@ namespace MoonProject.Gameplay.Editor
                 Renderer(Child(plotterRoot, BaseModelBuilder.PlotterLampName)),
                 Child(bay, BaseModelBuilder.BlueprintsName),
                 BaseModelBuilder.PlotterDrawWidth, BaseModelBuilder.PlotterDrawHeight);
-            progression.Wire(progressionTuning,
-                PlaceSpots(dock, lander, lift, towerAnchor, shelf, bay, plotterRoot, cassetteShelf), lift);
-            WireLift(liftStation, liftTuning, towerTuning, lander, lift, dock);
+            progression.Wire(progressionTuning, PlaceSpots(dock, lander, lift, towerAnchor, bay, cassetteShelf));
+            WireLift(liftStation, liftTuning, towerTuning, belly, lab, dock);
             gameplay.Wire(visuals, glintTuning,
                 new[] { radioTower, hoverJump, cargoCradle, warmHeadlamp, boostCoils }, salvage, relics, sonar,
                 excavation, tether, home, cradle, tower, workshop, friends, cassettes, logs, signals, tapeRack, relays,
@@ -209,13 +211,41 @@ namespace MoonProject.Gameplay.Editor
 
         /// <summary>
         /// The places' spots in BaseProgression's place order. The dock stands at the foot of the crew's
-        /// ladder (Art's ChargingDockMeshes), so the ladder is greeted there; Kenji's board is greeted at his pen
-        /// plotter, which draws its sheets.
+        /// ladder (Art's ChargingDockMeshes), so the ladder is greeted there; the lab is greeted over the belly lift's
+        /// shaft, once 07 is up in it.
         /// </summary>
         private static Transform[] PlaceSpots(Transform dock, Transform lander, Transform lift, Transform tower,
-            Transform shelf, Transform bay, Transform board, Transform rack)
+            Transform bay, Transform rack)
         {
-            return new[] { dock, lander, dock, lift, tower, shelf, bay, board, rack };
+            return new[] { dock, lander, dock, lift, tower, lift, bay, rack };
+        }
+
+        /// <summary>The lab's station frame <paramref name="station"/> (Lab/Station_&lt;station&gt;).</summary>
+        private static Transform Station(Transform lab, LabStation station)
+        {
+            return Child(lab, BaseModelBuilder.StationPrefix + station);
+        }
+
+        /// <summary>
+        /// The keepsake shelf's cubbies, Slot_0 up in order; there must be one for every relic (every keepsake has its
+        /// outline).
+        /// </summary>
+        private static Transform[] Cubbies(Transform keepsakes, RelicCatalog relics)
+        {
+            var cubbies = new List<Transform>();
+            for (Transform cubby = keepsakes.Find(KeepsakeSlotPrefix + 0); cubby != null;
+                 cubby = keepsakes.Find(KeepsakeSlotPrefix + cubbies.Count))
+            {
+                cubbies.Add(cubby);
+            }
+
+            if (cubbies.Count < relics.Relics.Count)
+            {
+                throw new InvalidOperationException($"Gameplay scene build: the keepsake shelf has {cubbies.Count} " +
+                                                    $"cubbies for {relics.Relics.Count} relics (lab contract).");
+            }
+
+            return cubbies.ToArray();
         }
 
         private static Transform HomeSocket(SceneBuildContext context, FriendDefinition friend, Transform lander,
@@ -289,63 +319,60 @@ namespace MoonProject.Gameplay.Editor
         }
 
         /// <summary>
-        /// The crew's lift on the lander: its platform made a kinematic deck 07 can ride (on the Prop layer, which 07
-        /// drives on), and the art nodes the station moves and lights.
+        /// The crew's belly lift and the lab (docs/ARCHITECTURE.md "Contract: the lab"): its platform made a kinematic
+        /// deck 07 drives onto and rides (on the Prop layer, which 07 drives on), and the art nodes the station moves.
         /// </summary>
-        private static void WireLift(LiftStation station, LiftTuning tuning, RadioTowerTuning looks, Transform lander,
-            Transform platform, Transform dock)
+        private static void WireLift(LiftStation station, LiftTuning tuning, RadioTowerTuning looks, Transform belly,
+            Transform lab, Transform dock)
         {
+            Transform platform = Child(belly, BaseModelBuilder.PlatformName);
             if (!platform.TryGetComponent(out MeshFilter deck) || deck.sharedMesh == null)
             {
-                throw new InvalidOperationException("Gameplay scene build: LiftPlatform has no mesh (M3-16 lift "
+                throw new InvalidOperationException("Gameplay scene build: BellyLift/Platform has no mesh (lab "
                                                     + "contract).");
             }
 
-            Transform spot = Child(platform, "RoverSpot");
             platform.gameObject.layer = Layers.Prop;
-            AddDeckColliders(platform, deck.sharedMesh.bounds, spot.localPosition.y);
+            AddDeckCollider(platform, deck.sharedMesh.bounds);
             var body = platform.gameObject.AddComponent<Rigidbody>();
             body.isKinematic = true;
             body.interpolation = RigidbodyInterpolation.Interpolate;
-            station.Wire(tuning, looks, lander, platform, body, spot,
-                Child(lander, "LiftBottom"), Child(lander, "LiftTop"), Child(lander, "LiftCable_L"),
-                Child(lander, "LiftCable_R"), Child(lander, BaseModelBuilder.LiftSnappedCableName),
-                Renderer(Child(lander, BaseModelBuilder.WinchLampName)),
-                Child(lander, BaseModelBuilder.LiftHopperMouthName), dock, BaseModelBuilder.LiftCableBuiltLength);
+            Transform cableJam = Child(belly, BaseModelBuilder.CableJamName);
+            Transform reader = Station(lab, LabStation.Reader);
+            var stations = new Transform[LabInterior.StationCount];
+            for (int i = 0; i < stations.Length; i++)
+            {
+                stations[i] = Station(lab, (LabStation)i);
+            }
+
+            station.Wire(tuning, looks, platform, body, Child(belly, BaseModelBuilder.PlatformDownName),
+                Child(belly, BaseModelBuilder.PlatformUpName), BaseModelBuilder.BellyPlatformLevel,
+                Child(platform, BaseModelBuilder.RoverSpotName), Renderer(Child(platform, BaseModelBuilder.PadGlowName)),
+                Child(platform, WeatherDustName), Child(belly, BaseModelBuilder.HatchLeafLeftName),
+                Child(belly, BaseModelBuilder.HatchLeafRightName), BaseModelBuilder.HatchLeafTravel,
+                Child(belly, BaseModelBuilder.CableLeftName), Child(belly, BaseModelBuilder.CableRightName),
+                BaseModelBuilder.BellyCableBuiltLength, cableJam, Child(cableJam, BaseModelBuilder.StitchPointName),
+                lab, stations, Child(reader, BaseModelBuilder.ReaderSlotName),
+                Child(reader, BaseModelBuilder.ReaderReelName), Child(reader, BaseModelBuilder.ReaderTapeName), dock);
         }
 
         /// <summary>
-        /// The platform's solid deck: a slab from the deck's surface (where 07's RoverSpot rests) down to the mesh's
-        /// foot, and a ramp from the deck's front edge down to the tip of the mesh's front wedge, so 07 drives up onto
-        /// it. The railings and carriage stay visual only: a box over the whole mesh would be a block 07 cannot climb.
-        /// The deck is symmetric front to back, so its front edge mirrors its back one (the mesh's back).
+        /// The platform's solid deck: a slab under its top (the pivot) as wide as its mesh, so 07 drives straight on
+        /// from the ground it rests flush with. The rim lamps stay visual only.
         /// </summary>
-        private static void AddDeckColliders(Transform platform, Bounds mesh, float surface)
+        private static void AddDeckCollider(Transform platform, Bounds mesh)
         {
-            float back = mesh.min.z;
-            float front = -back;
-            float rise = surface - mesh.min.y;
-            float run = mesh.max.z - front;
-            if (rise <= 0f || run <= 0f)
+            float depth = -mesh.min.y;
+            if (depth <= 0f)
             {
-                throw new InvalidOperationException($"Gameplay scene build: LiftPlatform's mesh has no deck under "
-                                                    + $"its RoverSpot or no front ramp (bounds {mesh}).");
+                throw new InvalidOperationException("Gameplay scene build: BellyLift/Platform's mesh does not hang "
+                                                    + $"under its pivot (bounds {mesh}; lab contract: pivot at the "
+                                                    + "middle of its top).");
             }
 
             var slab = platform.gameObject.AddComponent<BoxCollider>();
-            slab.center = new Vector3(mesh.center.x, surface - rise * 0.5f, 0.5f * (back + front));
-            slab.size = new Vector3(mesh.size.x, rise, front - back);
-
-            var ramp = new GameObject("LiftRamp").transform;
-            ramp.SetParent(platform, false);
-            ramp.gameObject.layer = Layers.Prop;
-            float slope = Mathf.Atan2(rise, run);
-            ramp.localRotation = Quaternion.Euler(slope * Mathf.Rad2Deg, 0f, 0f);
-            float thickness = rise * Mathf.Cos(slope);
-            Vector3 middle = new Vector3(mesh.center.x, surface - rise * 0.5f, front + run * 0.5f);
-            ramp.localPosition = middle - ramp.localRotation * Vector3.up * (thickness * 0.5f);
-            var incline = ramp.gameObject.AddComponent<BoxCollider>();
-            incline.size = new Vector3(mesh.size.x, thickness, Mathf.Sqrt(rise * rise + run * run));
+            slab.center = new Vector3(mesh.center.x, -depth * 0.5f, mesh.center.z);
+            slab.size = new Vector3(mesh.size.x, depth, mesh.size.z);
         }
 
         private static T Part<T>(SceneBuildContext context, GameObject host, string name) where T : Component

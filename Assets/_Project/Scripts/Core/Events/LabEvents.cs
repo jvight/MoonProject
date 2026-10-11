@@ -35,6 +35,24 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
+    /// 07 looks at the station the turntable faces, or comes away from it (docs/features/M3-19 §5, §6): Rover eases the
+    /// ring camera in to the station and back, UI swaps the lab's prompts. Looking at the survey chart also opens the
+    /// map (<see cref="MapLookStarted"/>). Published by Gameplay.
+    /// </summary>
+    public readonly struct LabStationLooked
+    {
+        public LabStationLooked(LabStation station, bool looking)
+        {
+            Station = station;
+            Looking = looking;
+        }
+
+        public LabStation Station { get; }
+
+        public bool Looking { get; }
+    }
+
+    /// <summary>
     /// The lab's reader finished decoding the blueprint tube of kit <see cref="KitId"/> (docs/features/M3-19 §5): the
     /// paper tape stops and the board's sheet appears. Published by Gameplay; the tech tree marks the node decoded
     /// (docs/features/M3-21).

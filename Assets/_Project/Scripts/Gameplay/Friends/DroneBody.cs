@@ -226,8 +226,8 @@ namespace MoonProject.Gameplay
                 Home = _home.LanderPosition,
                 Perch = _perch.position,
                 PerchForward = _perch.forward,
-                Shelf = _home.ShelfPosition,
-                ShelfForward = _home.ShelfForward,
+                Inspect = _home.InspectPosition,
+                InspectForward = _home.InspectForward,
             };
         }
 

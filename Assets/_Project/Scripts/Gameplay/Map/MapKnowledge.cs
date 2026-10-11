@@ -92,6 +92,12 @@ namespace MoonProject.Gameplay.Map
             return index >= 0 ? _states[index] : MapPlaceState.Sketched;
         }
 
+        /// <summary>The place can be visited: it is in the basin, not one of Ines's notes beyond the rim.</summary>
+        public bool IsVisitable(int index)
+        {
+            return _probes[index].Visitable;
+        }
+
         public MapPlaceState GetState(int index)
         {
             return _states[index];

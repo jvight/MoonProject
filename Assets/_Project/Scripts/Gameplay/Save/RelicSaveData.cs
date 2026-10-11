@@ -24,7 +24,7 @@ namespace MoonProject.Gameplay
 
         public Quaternion rotation = Quaternion.identity;
 
-        /// <summary>Museum shelf slot of a displayed relic, -1 otherwise.</summary>
+        /// <summary>Keepsake shelf cubby of a displayed relic, -1 otherwise.</summary>
         public int slot = -1;
     }
 }

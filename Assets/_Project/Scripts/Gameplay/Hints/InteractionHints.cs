@@ -93,10 +93,8 @@ namespace MoonProject.Gameplay
                     hint = tow ? new InteractionHint(kind, hovered.Position, true) : InteractionHint.None;
                     return tow;
                 case InteractionKind.Deposit:
-                    Relic relic = _tether.Towed;
-                    bool deposit = (relic != null && _home.InDepositZone(relic.transform.position)) ||
-                                   _cradle.CanUnload;
-                    hint = deposit ? new InteractionHint(kind, _home.ShelfPosition, true) : InteractionHint.None;
+                    bool deposit = _home.CanPlace || _cradle.CanUnload;
+                    hint = deposit ? new InteractionHint(kind, _home.KeepsakesPosition, true) : InteractionHint.None;
                     return deposit;
                 case InteractionKind.Repair:
                     Friend broken = _friends.RepairCandidate;

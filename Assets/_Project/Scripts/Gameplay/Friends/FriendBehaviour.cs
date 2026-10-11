@@ -6,7 +6,7 @@ namespace MoonProject.Gameplay
 {
     /// <summary>
     /// An awake friend's little life, as a pure state machine: senses in, an intent out. While 07 is home it lives at
-    /// the base — naps on its perch, flits around the lander, inspects the museum shelf. When 07 leaves it comes
+    /// the base — naps on its perch, flits around the lander, checks on home's front. When 07 leaves it comes
     /// along, beside and above 07, never between the camera and 07, catching up (or softly reappearing) if it falls
     /// behind; with the spotter gift it drifts to undiscovered things within reach and pings softly over them. When 07
     /// comes home from away it circles 07 once in greeting.
@@ -268,11 +268,11 @@ namespace MoonProject.Gameplay
 
         private void Inspect(FriendSenses senses, ref FriendIntent intent)
         {
-            Vector3 front = senses.ShelfForward;
+            Vector3 front = senses.InspectForward;
             front.y = 0f;
             front = front.sqrMagnitude > 1e-6f ? front.normalized : Vector3.forward;
-            intent.Target = senses.Shelf + front * _tuning.InspectDistance + Vector3.up * InspectHeight;
-            intent.Look = senses.Shelf + Vector3.up * InspectHeight;
+            intent.Target = senses.Inspect + front * _tuning.InspectDistance + Vector3.up * InspectHeight;
+            intent.Look = senses.Inspect + Vector3.up * InspectHeight;
             intent.Speed = _tuning.CruiseSpeed * HomeSpeed;
             if (senses.Now >= _modeEnd)
             {

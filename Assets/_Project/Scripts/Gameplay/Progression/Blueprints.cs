@@ -6,19 +6,23 @@ using MoonProject.Core.Events;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// Kenji's blueprint board (docs/features/M3-16 "Blueprints", P7): the bay's kits are buildable only once their
-    /// sheet is pinned. One kit's sheet is pinned from the start (Kenji left it); each other kit's tube lies in a
+    /// The crew's blueprints (docs/features/M3-16 "Blueprints", M3-19 §5): the bay's kits are buildable only once
+    /// their tube is decoded. One kit's sheet is known from the start (Kenji left it); each other kit's tube lies in a
     /// salvage site's heart and is found with the heart's relic (<see cref="RelicSurfaced"/>, publishing
-    /// <see cref="BlueprintFound"/>). The tube rides home on 07's back; delivered to the pen plotter
-    /// (<see cref="Deliver"/>, publishing <see cref="BlueprintDelivered"/>) its kit is pinned. Ids that are not kits of
-    /// the board (the radio tower) are always buildable.
+    /// <see cref="BlueprintFound"/>). The tube rides home on 07's back and up the belly lift to the lab's reader,
+    /// which takes it (<see cref="Take"/>, publishing <see cref="BlueprintDelivered"/>) and decodes it
+    /// (<see cref="Decode"/>, publishing <see cref="FindDecoded"/>): the kit is pinned. Kenji's plotter in the bay
+    /// then draws the sheet (<see cref="MarkDrawn"/>). Ids that are not kits of the board (the radio tower) are always
+    /// buildable.
     /// </summary>
     public sealed class Blueprints : IBlueprintBoard, IDisposable
     {
         private readonly EventBus _events;
         private readonly HashSet<string> _kits = new HashSet<string>(StringComparer.Ordinal);
         private readonly HashSet<string> _pinned = new HashSet<string>(StringComparer.Ordinal);
+        private readonly HashSet<string> _drawn = new HashSet<string>(StringComparer.Ordinal);
         private readonly List<string> _carried = new List<string>();
+        private readonly List<string> _reading = new List<string>();
         private readonly Dictionary<string, string> _kitAtSite = new Dictionary<string, string>(StringComparer.Ordinal);
         private readonly Func<string, string> _siteOfRelic;
         private readonly string _fromStart;
@@ -53,7 +57,7 @@ namespace MoonProject.Gameplay
             }
 
             _fromStart = fromStart;
-            _pinned.Add(fromStart);
+            ResetKnown();
             _surfaced = events.Subscribe<RelicSurfaced>(OnSurfaced);
         }
 
@@ -65,14 +69,31 @@ namespace MoonProject.Gameplay
         /// <summary>Every kit the bay builds.</summary>
         public IEnumerable<string> Kits => _kits;
 
-        /// <summary>A found tube rides on 07's back, waiting to be delivered to the plotter.</summary>
+        /// <summary>A found tube rides on 07's back, waiting for the lab's reader.</summary>
         public bool IsCarrying => _carried.Count > 0;
 
+        /// <summary>The kit of the tube the reader would take next (null when 07 carries none).</summary>
+        public string NextCarried => _carried.Count > 0 ? _carried[0] : null;
+
+        /// <summary>The reader has decoded at least one found tube (Kenji's sheet from the start aside).</summary>
+        public bool AnyDecoded => _pinned.Count > 1;
+
+        /// <summary>The reader holds a tube it has taken but not finished decoding (null when none).</summary>
+        public string Reading => _reading.Count > 0 ? _reading[0] : null;
+
         /// <summary>
-        /// Hands the first carried tube to the plotter: its kit is pinned and <see cref="BlueprintDelivered"/>
-        /// published. Returns the kit, or null when 07 carries none.
+        /// True when <paramref name="kitId"/>'s sheet hangs in the bay (drawn by the plotter, or Kenji's).
         /// </summary>
-        public string Deliver()
+        public bool IsDrawn(string kitId)
+        {
+            return _drawn.Contains(kitId);
+        }
+
+        /// <summary>
+        /// The reader takes the first carried tube off 07's back (<see cref="BlueprintDelivered"/>). Returns its kit,
+        /// or null when 07 carries none.
+        /// </summary>
+        public string Take()
         {
             if (_carried.Count == 0)
             {
@@ -81,42 +102,67 @@ namespace MoonProject.Gameplay
 
             string kit = _carried[0];
             _carried.RemoveAt(0);
-            _pinned.Add(kit);
+            _reading.Add(kit);
             _events.Publish(new BlueprintDelivered(kit));
             return kit;
         }
 
-        /// <summary>The tubes still riding on 07 (saved).</summary>
-        public string[] CaptureCarried()
+        /// <summary>
+        /// The reader finished <paramref name="kitId"/>'s tube: its kit is pinned (<see cref="FindDecoded"/>).
+        /// </summary>
+        public void Decode(string kitId)
         {
-            return _carried.ToArray();
+            if (!_reading.Remove(kitId))
+            {
+                throw new InvalidOperationException($"The reader holds no tube of '{kitId}'.");
+            }
+
+            _pinned.Add(kitId);
+            _events.Publish(new FindDecoded(kitId));
         }
 
-        /// <summary>The pinned kits besides the one pinned from the start (saved).</summary>
-        public string[] Capture()
+        /// <summary>A decoded kit whose sheet the plotter has not drawn yet, or null.</summary>
+        public string NextToDraw()
         {
-            var found = new List<string>();
-            foreach (string kit in _kitAtSite.Values)
+            foreach (string kit in _pinned)
             {
-                if (_pinned.Contains(kit))
+                if (!_drawn.Contains(kit))
                 {
-                    found.Add(kit);
+                    return kit;
                 }
             }
 
-            return found.ToArray();
+            return null;
         }
 
-        /// <summary>
-        /// Pins <paramref name="found"/> and puts <paramref name="carried"/> back on 07 silently (a loaded game);
-        /// unknown ids are ignored.
-        /// </summary>
-        public void Restore(string[] found, string[] carried)
+        /// <summary>The plotter drew <paramref name="kitId"/>'s sheet.</summary>
+        public void MarkDrawn(string kitId)
         {
-            _pinned.Clear();
-            _pinned.Add(_fromStart);
+            if (!_pinned.Contains(kitId))
+            {
+                throw new InvalidOperationException($"'{kitId}' is not decoded; the plotter cannot draw it.");
+            }
+
+            _drawn.Add(kitId);
+        }
+
+        /// <summary>The state to save.</summary>
+        public BlueprintsSaveData Capture()
+        {
+            return new BlueprintsSaveData
+            {
+                found = Found(_pinned), carried = _carried.ToArray(), reading = _reading.ToArray(),
+                drawn = Found(_drawn),
+            };
+        }
+
+        /// <summary>Puts a loaded game's blueprints back silently; unknown ids are ignored.</summary>
+        public void Restore(BlueprintsSaveData data)
+        {
+            ResetKnown();
             _carried.Clear();
-            foreach (string kit in found ?? Array.Empty<string>())
+            _reading.Clear();
+            foreach (string kit in data.found ?? Array.Empty<string>())
             {
                 if (_kitAtSite.ContainsValue(kit))
                 {
@@ -124,13 +170,16 @@ namespace MoonProject.Gameplay
                 }
             }
 
-            foreach (string kit in carried ?? Array.Empty<string>())
+            foreach (string kit in data.drawn ?? Array.Empty<string>())
             {
-                if (_kitAtSite.ContainsValue(kit) && !_pinned.Contains(kit) && !_carried.Contains(kit))
+                if (_pinned.Contains(kit))
                 {
-                    _carried.Add(kit);
+                    _drawn.Add(kit);
                 }
             }
+
+            Restore(data.reading, _reading);
+            Restore(data.carried, _carried);
         }
 
         /// <summary>
@@ -147,11 +196,46 @@ namespace MoonProject.Gameplay
             _surfaced.Dispose();
         }
 
+        private void ResetKnown()
+        {
+            _pinned.Clear();
+            _drawn.Clear();
+            _pinned.Add(_fromStart);
+            _drawn.Add(_fromStart);
+        }
+
+        /// <summary>The found kits (not Kenji's from the start) among <paramref name="kits"/>.</summary>
+        private string[] Found(HashSet<string> kits)
+        {
+            var found = new List<string>();
+            foreach (string kit in _kitAtSite.Values)
+            {
+                if (kits.Contains(kit))
+                {
+                    found.Add(kit);
+                }
+            }
+
+            return found.ToArray();
+        }
+
+        private void Restore(string[] saved, List<string> into)
+        {
+            foreach (string kit in saved ?? Array.Empty<string>())
+            {
+                if (_kitAtSite.ContainsValue(kit) && !_pinned.Contains(kit) && !_carried.Contains(kit) &&
+                    !_reading.Contains(kit))
+                {
+                    into.Add(kit);
+                }
+            }
+        }
+
         private void OnSurfaced(RelicSurfaced surfaced)
         {
             string site = _siteOfRelic(surfaced.RelicId);
             if (site == null || !_kitAtSite.TryGetValue(site, out string kit) || _pinned.Contains(kit) ||
-                _carried.Contains(kit))
+                _carried.Contains(kit) || _reading.Contains(kit))
             {
                 return;
             }

@@ -333,12 +333,14 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void Blueprints_AreFoundWithTheSitesHeartRelic_RideHome_AndArePinnedOnDelivery()
+        public void Blueprints_AreFoundWithTheSitesHeartRelic_RideHome_AndArePinnedOnceTheReaderDecodesThem()
         {
             var found = new List<BlueprintFound>();
             var delivered = new List<BlueprintDelivered>();
+            var decoded = new List<FindDecoded>();
             _events.Subscribe<BlueprintFound>(found.Add);
             _events.Subscribe<BlueprintDelivered>(delivered.Add);
+            _events.Subscribe<FindDecoded>(decoded.Add);
             string[] kits = { "rover.hover_jump", "rover.cargo_cradle", "rover.boost_coils" };
             var tubes = new[]
             {
@@ -361,21 +363,44 @@ namespace MoonProject.Gameplay.Tests
                 Assert.AreEqual("site.garage", found[0].SiteId);
                 Assert.IsFalse(board.IsPinned("rover.cargo_cradle"), "found, the tube still rides home on 07");
                 Assert.IsTrue(board.IsCarrying);
-                CollectionAssert.AreEqual(new[] { "rover.cargo_cradle" }, board.CaptureCarried());
+                Assert.AreEqual("rover.cargo_cradle", board.NextCarried);
+                CollectionAssert.AreEqual(new[] { "rover.cargo_cradle" }, board.Capture().carried);
 
-                Assert.AreEqual("rover.cargo_cradle", board.Deliver());
+                Assert.AreEqual("rover.cargo_cradle", board.Take());
                 Assert.AreEqual("rover.cargo_cradle", delivered[0].KitId);
-                Assert.IsTrue(board.IsPinned("rover.cargo_cradle"), "delivered to the plotter: pinned");
+                Assert.IsFalse(board.IsPinned("rover.cargo_cradle"), "taken by the reader, not decoded yet");
+                Assert.AreEqual("rover.cargo_cradle", board.Reading);
                 Assert.IsFalse(board.IsCarrying);
-                Assert.IsNull(board.Deliver(), "nothing more to deliver");
-                Assert.IsFalse(board.IsPinned("rover.boost_coils"));
-                CollectionAssert.AreEqual(new[] { "rover.cargo_cradle" }, board.Capture());
+                Assert.IsNull(board.Take(), "nothing more to take");
 
-                board.Restore(new[] { "rover.boost_coils", "rover.unknown" }, new[] { "rover.cargo_cradle" });
+                board.Decode("rover.cargo_cradle");
+                Assert.AreEqual("rover.cargo_cradle", decoded[0].KitId);
+                Assert.IsTrue(board.IsPinned("rover.cargo_cradle"), "decoded: the bay can build it");
+                Assert.IsNull(board.Reading);
+                Assert.IsTrue(board.AnyDecoded);
+                Assert.IsFalse(board.IsDrawn("rover.cargo_cradle"), "the plotter has not drawn it yet");
+                Assert.AreEqual("rover.cargo_cradle", board.NextToDraw());
+                board.MarkDrawn("rover.cargo_cradle");
+                Assert.IsNull(board.NextToDraw());
+                Assert.IsTrue(board.IsDrawn("rover.hover_jump"), "Kenji's own sheet hangs from the start");
+                Assert.IsFalse(board.IsPinned("rover.boost_coils"));
+                CollectionAssert.AreEqual(new[] { "rover.cargo_cradle" }, board.Capture().found);
+                CollectionAssert.AreEqual(new[] { "rover.cargo_cradle" }, board.Capture().drawn);
+                Assert.Throws<InvalidOperationException>(() => board.Decode("rover.boost_coils"), "not in the reader");
+
+                board.Restore(new BlueprintsSaveData
+                {
+                    found = new[] { "rover.boost_coils", "rover.unknown" }, carried = new[] { "rover.cargo_cradle" },
+                });
                 Assert.IsTrue(board.IsPinned("rover.boost_coils"));
+                Assert.IsFalse(board.IsDrawn("rover.boost_coils"), "decoded before the bay woke: still to draw");
                 Assert.IsFalse(board.IsPinned("rover.cargo_cradle"), "a load replaces the board");
                 Assert.IsTrue(board.IsCarrying, "and puts the carried tube back on 07");
                 Assert.IsTrue(board.IsPinned("rover.hover_jump"));
+
+                board.Restore(new BlueprintsSaveData { reading = new[] { "rover.cargo_cradle" } });
+                Assert.AreEqual("rover.cargo_cradle", board.Reading, "a tube saved in the reader stays there");
+                Assert.IsFalse(board.IsCarrying);
             }
 
             Assert.Throws<ArgumentException>(() => new Blueprints(_events, kits, "rover.hover_jump",
@@ -396,7 +421,7 @@ namespace MoonProject.Gameplay.Tests
             using (var board = new Blueprints(_events, kits, "rover.hover_jump", tubes, _ => null))
             {
                 board.Announce();
-                board.Restore(Array.Empty<string>(), new[] { "rover.cargo_cradle", "rover.boost_coils" });
+                board.Restore(new BlueprintsSaveData { carried = new[] { "rover.cargo_cradle", "rover.boost_coils" } });
                 Assert.AreEqual(1, restored.Count, "a load is silent until the game announces it");
                 board.Announce();
             }
@@ -520,9 +545,6 @@ namespace MoonProject.Gameplay.Tests
             Assert.AreEqual(2, ShelfSlots.Nearest(new Vector3(0.2f, 0f, 1f), slots, taken));
             Assert.AreEqual(0, ShelfSlots.Nearest(new Vector3(-3f, 0f, 1f), slots, taken));
             Assert.AreEqual(-1, ShelfSlots.Nearest(Vector3.zero, slots, new[] { true, true, true }));
-            Assert.IsTrue(ShelfSlots.InZone(new Vector3(5f, 1f, 0f), Vector3.zero, 7f, 6f));
-            Assert.IsFalse(ShelfSlots.InZone(new Vector3(8f, 1f, 0f), Vector3.zero, 7f, 6f));
-            Assert.IsFalse(ShelfSlots.InZone(new Vector3(1f, 9f, 0f), Vector3.zero, 7f, 6f));
         }
 
         [Test]
