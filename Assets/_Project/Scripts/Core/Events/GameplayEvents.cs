@@ -767,7 +767,7 @@ namespace MoonProject.Core.Events
         public Vector3 Position { get; }
     }
 
-    /// <summary>A beat of the crew's lift that Audio voices (docs/features/M3-16 step 8): see <see cref="LiftCued"/>.
+    /// <summary>A beat of the crew's belly lift that Audio voices (docs/features/M3-19 §4): see <see cref="LiftCued"/>.
     /// The lift's feed and stitch use <see cref="StationCued"/>.</summary>
     public enum LiftCue
     {
@@ -780,6 +780,12 @@ namespace MoonProject.Core.Events
 
         /// <summary>The platform reaches a stop (at the platform): a clunk, and the ride's sound lets go.</summary>
         RideStopped = 2,
+
+        /// <summary>The belly hatch's leaves slide open above the rising platform (at the hatch): an A.</summary>
+        HatchOpened = 3,
+
+        /// <summary>The belly hatch's leaves close behind the lowered platform (at the hatch): a soft seat.</summary>
+        HatchClosed = 4,
     }
 
     /// <summary>The crew's lift did something worth a sound at <see cref="Position"/>.</summary>
@@ -797,22 +803,21 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
-    /// The crew's lift (docs/features/M3-16 step 8) started or finished carrying 07: <see cref="Riding"/> while it
-    /// moves, <see cref="AtLookout"/> once it settled at the lander deck (Rover opens the lookout shot; any input
-    /// brings it back down).
+    /// The crew's belly lift (docs/features/M3-19 §4) started or finished carrying 07: <see cref="Riding"/> while it
+    /// moves, <see cref="Inside"/> once it settled in the lab (the turntable takes over; Back brings it down).
     /// </summary>
     public readonly struct LiftRideChanged
     {
-        public LiftRideChanged(bool riding, bool atLookout, Vector3 position)
+        public LiftRideChanged(bool riding, bool inside, Vector3 position)
         {
             Riding = riding;
-            AtLookout = atLookout;
+            Inside = inside;
             Position = position;
         }
 
         public bool Riding { get; }
 
-        public bool AtLookout { get; }
+        public bool Inside { get; }
 
         /// <summary>The platform's position.</summary>
         public Vector3 Position { get; }

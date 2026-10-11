@@ -24,8 +24,8 @@ namespace MoonProject.Gameplay.Tests
         [TestCase(0, BasePowerStage.Asleep)]
         [TestCase(1, BasePowerStage.Home)]
         [TestCase(2, BasePowerStage.Bay)]
-        [TestCase(3, BasePowerStage.Lift)]
-        [TestCase(4, BasePowerStage.Lift)]
+        [TestCase(3, BasePowerStage.Chart)]
+        [TestCase(4, BasePowerStage.Chart)]
         public void EachTowerLevel_PowersItsStage(int level, BasePowerStage stage)
         {
             Assert.AreEqual(stage, BasePower.StageFor(level));
@@ -57,7 +57,7 @@ namespace MoonProject.Gameplay.Tests
             Assert.IsFalse(_changes[1].Restored);
             Assert.IsTrue(_power.HasReached(BasePowerStage.Home));
             Assert.IsTrue(_power.HasReached(BasePowerStage.Bay));
-            Assert.IsFalse(_power.HasReached(BasePowerStage.Lift));
+            Assert.IsFalse(_power.HasReached(BasePowerStage.Chart));
         }
 
         [Test]

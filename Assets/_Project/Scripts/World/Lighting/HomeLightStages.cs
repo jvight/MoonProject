@@ -43,7 +43,7 @@ namespace MoonProject.World
                 case HomeLight.BayLamps:
                     return BasePowerStage.Bay;
                 case HomeLight.LiftLamps:
-                    return BasePowerStage.Lift;
+                    return BasePowerStage.Chart;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(light), light, null);
             }

@@ -60,7 +60,7 @@ namespace MoonProject.World.Tests
         [Test]
         public void EveryStage_AddsAWarmPool_WithinTheLightBudget()
         {
-            var pooled = new bool[(int)BasePowerStage.Lift + 1];
+            var pooled = new bool[(int)BasePowerStage.Chart + 1];
             foreach (LightPoolTuning pool in _settings.Pools)
             {
                 pooled[(int)HomeLightStages.WakesWith(pool.WakesWith)] = true;
@@ -90,7 +90,7 @@ namespace MoonProject.World.Tests
             float easing = _stages.GradeWarmth(woken + _settings.CableTravel + _settings.WakeFade * 0.5f);
             Assert.That(easing, Is.GreaterThan(home).And.LessThan(2f / 3f), "the bay's step eases in");
 
-            _stages.SetStage(BasePowerStage.Lift, true, woken);
+            _stages.SetStage(BasePowerStage.Chart, true, woken);
             Assert.AreEqual(1f, _stages.GradeWarmth(woken), Tolerance, "a restored Lift is fully warm at once");
         }
 
@@ -104,7 +104,7 @@ namespace MoonProject.World.Tests
             Assert.AreEqual(1f, _stages.Level(HomeLight.BayLamps, done), Tolerance);
             Assert.AreEqual(0f, _stages.Level(HomeLight.LiftLamps, done));
 
-            _stages.SetStage(BasePowerStage.Lift, false, done);
+            _stages.SetStage(BasePowerStage.Chart, false, done);
             Assert.AreEqual(1f, _stages.Level(HomeLight.LiftLamps, done + _settings.CableTravel + _settings.WakeFade),
                 Tolerance);
         }
@@ -138,13 +138,13 @@ namespace MoonProject.World.Tests
         [Test]
         public void RestoredStage_AppliesAtOnce()
         {
-            _stages.SetStage(BasePowerStage.Lift, true, Start);
+            _stages.SetStage(BasePowerStage.Chart, true, Start);
             foreach (HomeLight light in System.Enum.GetValues(typeof(HomeLight)))
             {
                 Assert.AreEqual(1f, _stages.Level(light, Start), light.ToString());
             }
 
-            Assert.AreEqual(1f, _stages.CableLevel(BasePowerStage.Lift, 3, 4, Start), "cables are lit at once");
+            Assert.AreEqual(1f, _stages.CableLevel(BasePowerStage.Chart, 3, 4, Start), "cables are lit at once");
         }
 
         [Test]
@@ -153,7 +153,7 @@ namespace MoonProject.World.Tests
             Assert.AreEqual(BasePowerStage.Asleep, HomeLightStages.WakesWith(HomeLight.Dock));
             Assert.AreEqual(BasePowerStage.Home, HomeLightStages.WakesWith(HomeLight.Halo));
             Assert.AreEqual(BasePowerStage.Bay, HomeLightStages.WakesWith(HomeLight.BayLamps));
-            Assert.AreEqual(BasePowerStage.Lift, HomeLightStages.WakesWith(HomeLight.LiftLamps));
+            Assert.AreEqual(BasePowerStage.Chart, HomeLightStages.WakesWith(HomeLight.LiftLamps));
         }
     }
 }
