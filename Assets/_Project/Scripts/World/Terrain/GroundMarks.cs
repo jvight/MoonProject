@@ -12,10 +12,14 @@ namespace MoonProject.World
     public static class GroundMarks
     {
         private const uint PatchSalt = 0x1B873593u;
+        private const uint ScuffSalt = 0xCC9E2D51u;
         private const uint ScarSalt = 0x85EBCA6Bu;
 
         // The scar's streaks reach between this share of the scar radius and all of it.
         private const float ShortestStreak = 0.55f;
+
+        // The four rut edges sample the scuff noise this far apart, so none of them wear alike.
+        private const float ScuffEdgeApart = 3.7f;
 
         // Bootprints step alternately this share of the stride either side of the walking line.
         private const float StepSideShare = 0.18f;
@@ -40,10 +44,16 @@ namespace MoonProject.World
             var side = new Vector2(direction.y, -direction.x);
             var wander = new GradientNoise(seed);
             var patches = new GradientNoise(Hashing.Mix(seed ^ PatchSalt));
+            var scuffs = new GradientNoise(Hashing.Mix(seed ^ ScuffSalt));
             int steps = Mathf.CeilToInt(length / settings.Step);
             var left = new List<Vector3>(steps + 1);
             var right = new List<Vector3>(steps + 1);
-            var strength = new List<float>(steps + 1);
+            var edges = new List<float>[4];
+            for (int e = 0; e < edges.Length; e++)
+            {
+                edges[e] = new List<float>(steps + 1);
+            }
+
             float halfGauge = settings.TrackGauge * 0.5f;
             for (int i = 0; i <= steps; i++)
             {
@@ -55,13 +65,20 @@ namespace MoonProject.World
                     SmoothMath.Smootherstep(0f, settings.EndFade, length - along));
                 float wear = 1f - settings.Patchiness
                     * (0.5f + 0.5f * patches.Sample(along / settings.PatchWavelength, 0.5f));
-                strength.Add(settings.Strength * fade * wear);
+                float worn = settings.Strength * fade * wear;
+                for (int e = 0; e < edges.Length; e++)
+                {
+                    // Each rut edge scuffs on its own at a short scale: the dust is pressed unevenly, along and across.
+                    float scuff = scuffs.Sample(along / settings.ScuffWavelength, e * ScuffEdgeApart);
+                    edges[e].Add(worn * Mathf.Clamp01(1f - settings.Scuff * (0.5f + 0.5f * scuff)));
+                }
+
                 left.Add(OnGround(centre - side * halfGauge, settings.Lift, groundHeight));
                 right.Add(OnGround(centre + side * halfGauge, settings.Lift, groundHeight));
             }
 
-            marks.AddStrip(left, strength, settings.RutHalfWidth);
-            marks.AddStrip(right, strength, settings.RutHalfWidth);
+            marks.AddStrip(left, edges[0], edges[1], settings.RutHalfWidth);
+            marks.AddStrip(right, edges[2], edges[3], settings.RutHalfWidth);
         }
 
         /// <summary>The landing-blast scar around <paramref name="centre"/>: streaks swept out radially.</summary>
