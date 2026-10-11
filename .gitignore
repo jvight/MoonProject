@@ -80,3 +80,15 @@ Thumbs.db
 # Python bytecode (tools/)
 __pycache__/
 *.py[cod]
+
+# Per-process copies of Main made and deleted by PlayMode fixtures; never versioned
+/Assets/_Project/Generated/Gameplay/Playthrough/
+/Assets/_Project/Generated/Gameplay/Playthrough.meta
+/Assets/_Project/Generated/LookCapture/
+/Assets/_Project/Generated/LookCapture.meta
+/Assets/_Project/Generated/Rover/Session/
+/Assets/_Project/Generated/Rover/Session.meta
+/Assets/_Project/Generated/TitleFlow/
+/Assets/_Project/Generated/TitleFlow.meta
+/Assets/_Project/Generated/World/CanyonSession/
+/Assets/_Project/Generated/World/CanyonSession.meta
