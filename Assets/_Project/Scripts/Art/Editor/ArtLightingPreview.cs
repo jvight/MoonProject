@@ -21,12 +21,12 @@ namespace MoonProject.Art.Editor
     /// python tools/unity_batch.py exec --method MoonProject.Art.Editor.ArtLightingPreview.Capture
     ///     [--arg scene=rover|base|towers|relics|shadow|grit|friends|workshop|bell|bellbroken|pickups|bellcorner|
     ///                  warmpoints|relaysbroken|relayslit|sites|sitesclean|salvagebits|kit|kitmain|home|homeclean|
-    ///                  builtfor07|wake_dark|wake_home|wake_bay|wake_lift|wake_pads]
+    ///                  builtfor07|wake_dark|wake_home|wake_bay|wake_chart|wake_pads|lab_dark|lab_lit]
     /// </code>
     /// (default rover; a ';'-separated list captures several scenes in one run)
-    /// rover: 07 at rest (half-lidded, head lowered, wing ajar) with its headlamp. base: the lander with the shelf
-    /// and the L3 tower on their anchors, its lamp sockets lit, 07 coming home. towers: L1-L3 side by side seen
-    /// from 15 m and 55 m. relics: the six relics on the lit museum shelf, and seen from 15 m. shadow: 07's cast
+    /// rover: 07 at rest (half-lidded, head lowered, wing ajar) with its headlamp. base: the habitat lander and the
+    /// L3 tower on its anchor, its lamp sockets lit, 07 coming home. towers: L1-L3 side by side seen from 15 m and
+    /// 55 m. relics: the six relics in the lab's keepsake cubbies under their reading lamps, and in a row from 15 m. shadow: 07's cast
     /// shadow under a low (30 degree) earthlight from its side, seen from the gameplay camera's height. grit: a
     /// dense field of <see cref="RockStyle.Grit"/> pebbles batched into one mesh around 07. friends: Tilly
     /// hovering beside 07 (3/3 part lamps lit), and broken on the dust among her amber parts (1/3 lit), near and
@@ -50,17 +50,21 @@ namespace MoonProject.Art.Editor
     /// the same comparison in Main.unity under its own grade: minute one beside fully kitted at the spawn, travelling,
     /// with play's road lights and glow levels, from the chase camera and at 30 m, each 07 from its own chase camera,
     /// and the lamp bar close. wake_dark .. wake_pads: Main.unity's base waking step by step (M3-16), each stage on
-    /// top of the last: dark (only the dock, 07's eye and the tower's pilot warm), home (windows, porch bulbs, the HOME
-    /// sign straightened, its cable lit), bay (shutter rolled up, sign, lamps and plotter lamp lit, its cable), lift
-    /// (restored: level at the bottom stop, both cables taut, winch lamp and its cable lit), pads (capture-placed
-    /// station pads lit at the tower, the bay and the lift); from the spawn, the owner's view from the dock side
-    /// (lander, lift and ladder), the chase camera behind a 07 facing the lift, and the bay. home:
+    /// top of the last: dark (only the dock, 07's eye and the tower's pilot warm), home (windows, porch bulbs, the big
+    /// porthole, the belly lamp and hatch rim, the HOME sign straightened, its cable lit; the lift still jammed), bay
+    /// (shutter rolled up, sign, lamps and plotter lamp lit, its cable), chart (the lift restored: level on its stops,
+    /// both cables taut, pad and rim lit; the light table and its cable lit, the porthole's first lamps), pads
+    /// (capture-placed station pads lit at the tower, the bay and the lift); from the spawn, the owner's view from the
+    /// dock side, the chase camera behind a 07 facing the lift, and the bay. lab_dark / lab_lit: Main.unity's lab
+    /// asleep (only the earthlight through the portholes) and awake (its lamps, the board's, the recovery panel's and
+    /// the chart's lit, a few sheets pinned): the owner's two frames (behind 07 at the base, the lander from the
+    /// ladder side), then 07 on the raised turntable facing each station in turn, seen from the camera's ring rail. home:
     /// the base as Main.unity has it (its own grading), from the spawn view, the lander close and three-quarter, the
     /// tower, the shelf area, a 07 parked in front from the chase camera and close, and Kenji's Rover Bay (sign lit)
     /// from the front and the quarter; homeclean: the same with every Weather_* layer hidden, as restoration will
     /// leave it. builtfor07: Main.unity with the Rover Bay on the WorkshopAnchor and 07 parked on its turntable (lamps
     /// and sign lit, one arm lowered as if fitting), the true-size relics in a row beside 07 and a 1.75 m person (a
-    /// capture-only reference), 07's spare wheel close, the tower port, the dock, the lift and the human-scale
+    /// capture-only reference), 07's spare wheel close, the tower port, the dock, the belly lift and the human-scale
     /// checks.
     /// Glows are lit with the linear MaterialPropertyBlock contract.
     /// </summary>
@@ -127,7 +131,7 @@ namespace MoonProject.Art.Editor
         private static readonly Color WarmLightColor = new Color(1f, 0.62f, 0.33f);
 
         /// <summary>The base's wake stages the wake_* scenes capture, each on top of the last (M3-16).</summary>
-        private static readonly string[] WakeStages = { "dark", "home", "bay", "lift", "pads" };
+        private static readonly string[] WakeStages = { "dark", "home", "bay", "chart", "pads" };
 
         /// <summary>The ground Bell keeps clear for her dance and for 07 parking at her dial.</summary>
         private const float BellClearRadius = 2.5f;
@@ -263,9 +267,13 @@ namespace MoonProject.Art.Editor
                     case "wake_dark":
                     case "wake_home":
                     case "wake_bay":
-                    case "wake_lift":
+                    case "wake_chart":
                     case "wake_pads":
                         poses = WakeScene(temporary, Array.IndexOf(WakeStages, scene.Substring(5)));
+                        break;
+                    case "lab_dark":
+                    case "lab_lit":
+                        poses = LabScene(temporary, scene == "lab_lit", output, "night_" + scene);
                         break;
                     case "home":
                         poses = HomeScene(temporary, true);
@@ -280,7 +288,8 @@ namespace MoonProject.Art.Editor
                         Debug.LogError($"ArtLightingPreview: unknown scene '{scene}' " +
                             "(rover|base|towers|relics|shadow|grit|friends|workshop|bell|bellbroken|pickups|" +
                             "bellcorner|warmpoints|relaysbroken|relayslit|sites|sitesclean|salvagebits|kit|kitmain|" +
-                            "home|homeclean|builtfor07|wake_dark|wake_home|wake_bay|wake_lift|wake_pads).");
+                            "home|homeclean|builtfor07|wake_dark|wake_home|wake_bay|wake_chart|wake_pads|" +
+                            "lab_dark|lab_lit).");
                         return false;
                 }
 
@@ -343,7 +352,6 @@ namespace MoonProject.Art.Editor
         private static CameraPoseSet BaseScene(TemporaryObjects temporary)
         {
             GameObject lander = Instantiate(BaseModelBuilder.LanderName, temporary);
-            Instantiate(BaseModelBuilder.ShelfName, temporary).transform.position = BaseModelBuilder.ShelfAnchor;
             Instantiate(BaseModelBuilder.TowerPrefix + "3", temporary).transform.position =
                 BaseModelBuilder.TowerAnchor;
             for (int i = 0; i < 4; i++)
@@ -357,16 +365,16 @@ namespace MoonProject.Art.Editor
                 temporary.Add(lamp.gameObject);
             }
 
-            temporary.Add(Rover(temporary, new Vector3(2.4f, 0f, 9f), 195f).gameObject);
+            temporary.Add(Rover(temporary, new Vector3(0.4f, 0f, 11f), 185f).gameObject);
             Transform perch = Descendant(lander.transform, "FriendSocket_tilly");
             GameObject tilly = Instantiate(FriendModelBuilder.TillyName, temporary, ArtPaths.FriendFolder);
             tilly.transform.SetPositionAndRotation(perch.position, perch.rotation * Quaternion.Euler(0f, -30f, 0f));
             return Poses(
-                Pose("perch", new[] { -3.6f, 3.6f, 3.6f }, new[] { -1.6f, 3.2f, 0.9f }, 40f),
-                Pose("approach", new[] { 4f, 5f, 26f }, new[] { 0f, 2.5f, 0f }, 45f),
-                Pose("homecoming", new[] { 4.5f, 3.6f, 14.5f }, new[] { 1.5f, 1.8f, 4f }, 50f),
-                Pose("porch", new[] { -2.5f, 2.2f, 6.5f }, new[] { 0.2f, 2.6f, 1.5f }, 45f),
-                Pose("shelf", new[] { 6f, 2.4f, 6.5f }, new[] { 6f, 1.5f, 1.2f }, 45f),
+                Pose("perch", new[] { 3.8f, 4.8f, 6f }, new[] { 1.6f, 4.1f, 2.8f }, 40f),
+                Pose("approach", new[] { 4f, 6f, 28f }, new[] { 0f, 3.5f, 0f }, 45f),
+                Pose("homecoming", new[] { 4.5f, 3.6f, 16f }, new[] { 0.5f, 2.4f, 4f }, 50f),
+                Pose("belly", new[] { -1.5f, 1.4f, 8.5f }, new[] { 0f, 2f, 0f }, 50f),
+                Pose("porthole", new[] { -8f, 5.5f, -7f }, new[] { -2f, 5.2f, -2f }, 45f),
                 Pose("far55m", new[] { -18f, 9f, 52f }, new[] { -2f, 4f, 0f }, 40f));
         }
 
@@ -389,33 +397,36 @@ namespace MoonProject.Art.Editor
 
         private static CameraPoseSet RelicsScene(TemporaryObjects temporary)
         {
-            GameObject shelf = Instantiate(BaseModelBuilder.ShelfName, temporary);
+            Transform lander = Instantiate(BaseModelBuilder.LanderName, temporary).transform;
+            Transform shelf = Descendant(lander, BaseModelBuilder.StationPrefix + "Keepsakes");
             IReadOnlyList<string> ids = RelicModelBuilder.Ids;
             for (int i = 0; i < ids.Count; i++)
             {
-                Transform slot = Descendant(shelf.transform, "Slot_" + i);
+                Transform slot = Descendant(shelf, BaseModelBuilder.SlotPrefix + i);
                 GameObject relic = Instantiate(RelicModelBuilder.PrefabName(ids[i]), temporary, ArtPaths.RelicFolder);
                 float lift = relic.transform.position.y - RendererBounds(relic).min.y;
-                relic.transform.position = slot.position + Vector3.up * lift;
+                relic.transform.SetPositionAndRotation(slot.position + Vector3.up * lift, slot.rotation);
             }
 
+            SetGlow(shelf, BaseModelBuilder.ReadingLampPrefix, 4, 1f);
             for (int i = 0; i < ids.Count; i++)
             {
                 GameObject relic = Instantiate(RelicModelBuilder.PrefabName(ids[i]), temporary, ArtPaths.RelicFolder);
                 float lift = relic.transform.position.y - RendererBounds(relic).min.y;
-                relic.transform.SetPositionAndRotation(new Vector3((i - 2.5f) * 1.4f, lift, 4f),
+                relic.transform.SetPositionAndRotation(new Vector3((i - 2.5f) * 1.4f, lift, 9f),
                     Quaternion.Euler(0f, 20f, 0f));
             }
 
-            Light lamp = NewLight("ShelfLamp", LightType.Point, Palette.Get(PaletteSwatch.WarmLamp), 3f);
-            lamp.transform.position = new Vector3(0f, 2.6f, 2.6f);
+            WarmLamp(temporary, shelf.TransformPoint(new Vector3(0f, 0.7f, 0.6f)), 2f, 3.5f);
+            Light lamp = NewLight("RowLamp", LightType.Point, Palette.Get(PaletteSwatch.WarmLamp), 3f);
+            lamp.transform.position = new Vector3(0f, 2.6f, 7.6f);
             lamp.range = BaseLampRange;
-            lamp.shadows = LightShadows.Soft;
             temporary.Add(lamp.gameObject);
             return Poses(
-                Pose("shelf", new[] { 0.6f, 1.9f, 6.2f }, new[] { 0f, 1.45f, 0f }, 45f),
-                Pose("row", new[] { 0.5f, 1.6f, 7.5f }, new[] { 0f, 0.4f, 4f }, 50f),
-                Pose("far15m", new[] { 3f, 4f, 19f }, new[] { 0f, 0.6f, 4f }, 40f));
+                Pose("shelf", Point(shelf.TransformPoint(new Vector3(0.15f, 0.55f, 2.1f))),
+                    Point(shelf.TransformPoint(new Vector3(0f, -0.15f, -0.3f))), 55f),
+                Pose("row", new[] { 0.5f, 1.6f, 12.5f }, new[] { 0f, 0.4f, 9f }, 50f),
+                Pose("far15m", new[] { 3f, 4f, 24f }, new[] { 0f, 0.6f, 9f }, 40f));
         }
 
         private static CameraPoseSet ShadowScene(TemporaryObjects temporary)
@@ -455,7 +466,6 @@ namespace MoonProject.Art.Editor
         private static CameraPoseSet WorkshopScene(TemporaryObjects temporary)
         {
             GameObject lander = Instantiate(BaseModelBuilder.LanderName, temporary);
-            Instantiate(BaseModelBuilder.ShelfName, temporary).transform.position = BaseModelBuilder.ShelfAnchor;
             GameObject tower = Instantiate(BaseModelBuilder.TowerPrefix + "2", temporary);
             tower.transform.position = BaseModelBuilder.TowerAnchor;
             Transform anchor = Descendant(lander.transform, "WorkshopAnchor");
@@ -635,7 +645,6 @@ namespace MoonProject.Art.Editor
         private static CameraPoseSet BellCornerScene(Material material, TemporaryObjects temporary)
         {
             GameObject lander = Instantiate(BaseModelBuilder.LanderName, temporary);
-            Instantiate(BaseModelBuilder.ShelfName, temporary).transform.position = BaseModelBuilder.ShelfAnchor;
             GameObject tower = Instantiate(BaseModelBuilder.TowerPrefix + "3", temporary);
             tower.transform.position = BaseModelBuilder.TowerAnchor;
             for (int i = 0; i < 4; i++)
@@ -935,7 +944,10 @@ namespace MoonProject.Art.Editor
             {
                 SetGlow(lander, "Windows", new[] { string.Empty }, 1f);
                 SetGlow(lander, BaseModelBuilder.PanePrefix, new[] { "1", "2" }, 1f);
-                SetGlow(lander, BaseModelBuilder.PortholeName, new[] { string.Empty }, 1f);
+                SetGlow(lander, BaseModelBuilder.BigPortholeName, new[] { string.Empty }, 1f);
+                Transform belly = Descendant(lander, BaseModelBuilder.BellyLiftName);
+                SetGlow(belly, BaseModelBuilder.BellyLampName, new[] { string.Empty }, 1f);
+                SetGlow(belly, BaseModelBuilder.HatchRimName, new[] { string.Empty }, 1f);
                 foreach (Transform socket in ParentsOf(lander, BaseModelBuilder.BulbName))
                 {
                     SetGlow(socket, BaseModelBuilder.BulbName, new[] { string.Empty }, 1f);
@@ -956,22 +968,10 @@ namespace MoonProject.Art.Editor
 
             if (stage >= 3)
             {
-                Transform platform = Descendant(lander, "LiftPlatform");
-                platform.SetLocalPositionAndRotation(Descendant(lander, "LiftBottom").localPosition,
-                    BaseModelBuilder.LiftPlatformLevel);
-                foreach (string cable in new[] { "LiftCable_L", "LiftCable_R" })
-                {
-                    Transform hoist = Descendant(lander, cable);
-                    hoist.gameObject.SetActive(true);
-                    hoist.localScale = new Vector3(1f, LiftCableScale(hoist, platform), 1f);
-                }
-
-                Descendant(lander, BaseModelBuilder.LiftSnappedCableName).gameObject.SetActive(false);
-                Descendant(platform, BaseModelBuilder.LiftJamPropsName).gameObject.SetActive(false);
-                Descendant(lander, BaseModelBuilder.DeckHatchName).localRotation = BaseModelBuilder.DeckHatchOpen;
+                RestoreLift(lander);
                 SetGlow(lander, BaseModelBuilder.LightTableGlowName, new[] { string.Empty }, 1f);
-                SetGlow(lander, BaseModelBuilder.WinchLampName, new[] { string.Empty }, 1f);
-                LightCable(lander, "Lift");
+                SetGlow(Descendant(lander, BaseModelBuilder.PortholeLampsName), BaseModelBuilder.LampPrefix, 4, 1f);
+                LightCable(lander, "Chart");
             }
 
             if (stage >= 4)
@@ -998,12 +998,152 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
-        /// The Y scale that lets a hoist cable hang from its drum to the platform's carriage (1 m over its deck).
+        /// Main.unity (never saved) with home awake and the lift restored; the lab <paramref name="lit"/> or asleep.
+        /// The owner's two frames first (behind 07 at the base, the lander from the ladder side, a 07 parked in front
+        /// of the belly), returned for the usual capture; and a 07 up on the raised turntable facing each station in
+        /// turn, seen from the camera's ring rail opposite it just under the rail, captured here into
+        /// <paramref name="output"/> one station at a time (the one 07 turns between them).
         /// </summary>
-        private static float LiftCableScale(Transform hoist, Transform platform)
+        private static CameraPoseSet LabScene(TemporaryObjects temporary, bool lit, string output, string prefix)
         {
-            float length = hoist.localPosition.y - (platform.localPosition.y + 1f);
-            return length / BaseModelBuilder.LiftCableBuiltLength;
+            EditorSceneManager.OpenScene(CaptureAutomation.MainScenePath, OpenSceneMode.Single);
+            Transform spawn = SceneObject("[Rover]");
+            spawn.gameObject.SetActive(false);
+            TravellingRover(temporary, spawn.position, spawn.rotation, false);
+            Transform lander = SceneObject(BaseModelBuilder.LanderName);
+            SetGlow(lander, "Windows", new[] { string.Empty }, 1f);
+            SetGlow(lander, BaseModelBuilder.PanePrefix, new[] { "1", "2" }, 1f);
+            SetGlow(lander, "DockGlow", new[] { string.Empty }, 1f);
+            foreach (Transform socket in ParentsOf(lander, BaseModelBuilder.BulbName))
+            {
+                SetGlow(socket, BaseModelBuilder.BulbName, new[] { string.Empty }, 1f);
+            }
+
+            Transform belly = Descendant(lander, BaseModelBuilder.BellyLiftName);
+            SetGlow(belly, BaseModelBuilder.BellyLampName, new[] { string.Empty }, 1f);
+            SetGlow(belly, BaseModelBuilder.HatchRimName, new[] { string.Empty }, 1f);
+            RestoreLift(lander);
+            SetGlow(SceneObjectStartingWith(BaseModelBuilder.TowerPrefix), "Lights", new[] { string.Empty }, 1f);
+            Transform lab = Descendant(lander, BaseModelBuilder.LabName);
+            if (lit)
+            {
+                LightLab(lander, lab, temporary);
+            }
+
+            var poses = new List<CameraPose>
+            {
+                new CameraPose { name = "owner_frame", position = new[] { 0.78f, 4f, -8.97f },
+                    euler = new[] { 6f, -5f, 0f }, fov = 60f },
+                Pose("ladder_side", Point(lander.TransformPoint(new Vector3(-11f, 3.2f, 13f))),
+                    Point(lander.TransformPoint(new Vector3(0f, 3.4f, 0f))), 50f),
+            };
+            Quaternion inward = lander.rotation * Quaternion.Euler(0f, 180f, 0f);
+            Transform front = TravellingRover(temporary, lander.TransformPoint(new Vector3(0f, 0f, 5.2f)), inward,
+                false);
+            poses.Add(ChasePose("belly_from_chase", front.position, inward, ChaseDistance, 0f));
+            front.gameObject.SetActive(false);
+            RaisePlatform(belly, Descendant(belly, BaseModelBuilder.PlatformUpName).localPosition.y);
+            Descendant(belly, BaseModelBuilder.HatchLeafLeftName).localPosition =
+                Vector3.left * BaseModelBuilder.HatchLeafTravel;
+            Descendant(belly, BaseModelBuilder.HatchLeafRightName).localPosition =
+                Vector3.right * BaseModelBuilder.HatchLeafTravel;
+            Transform spot = Descendant(belly, BaseModelBuilder.RoverSpotName);
+            Transform rover = TravellingRover(temporary, spot.position, inward, false);
+            for (int i = 0; i < LabMeshes.StationNames.Length; i++)
+            {
+                Transform station = Descendant(lab, BaseModelBuilder.StationPrefix + LabMeshes.StationNames[i]);
+                Vector3 toStation = Vector3.ProjectOnPlane(station.position - spot.position, Vector3.up).normalized;
+                rover.rotation = Quaternion.LookRotation(toStation);
+                Vector3 rail = lab.position - toStation * (BaseModelBuilder.LabRingRadius - 0.05f)
+                    + Vector3.up * (LabMeshes.RingHeight - 0.08f);
+                CameraPose view = Pose("inside_" + LabMeshes.StationNames[i].ToLowerInvariant(), Point(rail),
+                    Point(station.position + Vector3.down * 0.15f), 55f);
+                CaptureAutomation.CapturePoses(new CameraPoseSet { width = 1920, height = 1080, postProcessing = true,
+                    poses = new[] { view } }, output, prefix);
+            }
+
+            return new CameraPoseSet { width = 1920, height = 1080, postProcessing = true, poses = poses.ToArray() };
+        }
+
+        /// <summary>
+        /// The lab awake as a mid-game save would show it: wall lamps, reading lamps, the light table and the big
+        /// porthole lit, warm point lights at the lamps (World drives them in play), six of the porthole's lamps for
+        /// six known nodes, the tower's three lamps on the board with their sheets, and the first recovery lamps.
+        /// </summary>
+        private static void LightLab(Transform lander, Transform lab, TemporaryObjects temporary)
+        {
+            SetGlow(lab, BaseModelBuilder.CabinLampsName, new[] { string.Empty }, 1f);
+            SetGlow(lander, BaseModelBuilder.BigPortholeName, new[] { string.Empty }, 1f);
+            SetGlow(lander, BaseModelBuilder.LightTableGlowName, new[] { string.Empty }, 1f);
+            SetGlow(Descendant(lander, BaseModelBuilder.PortholeLampsName), BaseModelBuilder.LampPrefix, 6, 1f);
+            Transform keepsakes = Descendant(lab, BaseModelBuilder.StationPrefix + "Keepsakes");
+            SetGlow(keepsakes, BaseModelBuilder.ReadingLampPrefix, 4, 0.7f);
+            Transform board = Descendant(lab, BaseModelBuilder.StationPrefix + "Board");
+            SetGlow(board, BaseModelBuilder.LampPrefix, 3, 1f);
+            for (int n = 0; n < 6; n++)
+            {
+                Descendant(board, BaseModelBuilder.SheetPrefix + n).gameObject.SetActive(true);
+            }
+
+            SetGlow(Descendant(board, BaseModelBuilder.RowPrefix + "Power"), BaseModelBuilder.LampPrefix, 3, 1f);
+            SetGlow(Descendant(board, BaseModelBuilder.RowPrefix + "Link"), BaseModelBuilder.LampPrefix, 2, 1f);
+            Renderer lamps = Descendant(lab, BaseModelBuilder.CabinLampsName).GetComponent<Renderer>();
+            for (int i = 0; i < 4; i++)
+            {
+                Vector3 toWall = Quaternion.Euler(0f, i * 90f, 0f) * Vector3.forward;
+                WarmLamp(temporary, lab.TransformPoint(toWall * 2.45f + Vector3.up * 1.95f), 1.4f, 3.6f);
+            }
+
+            WarmLamp(temporary, lamps.bounds.center + Vector3.up * 0.4f, 0.8f, 4.5f);
+            for (int i = 0; i < 4; i++)
+            {
+                Transform reading = Descendant(keepsakes, BaseModelBuilder.ReadingLampPrefix + i);
+                WarmLamp(temporary, reading.position + Vector3.down * 0.12f, 0.5f, 1.4f);
+            }
+        }
+
+        /// <summary>A warm practical lamp (a point light) where World lights the lab's lamps in play.</summary>
+        private static void WarmLamp(TemporaryObjects temporary, Vector3 position, float intensity, float range)
+        {
+            Light lamp = NewLight("LabLamp", LightType.Point, Palette.Get(PaletteSwatch.WarmLamp), intensity);
+            temporary.Add(lamp.gameObject);
+            lamp.range = range;
+            lamp.shadows = LightShadows.None;
+            lamp.transform.position = position;
+        }
+
+        /// <summary>
+        /// The belly lift as restored: the platform level on its ground stops, both hoist cables taut from their
+        /// sheaves to its eyes, the jam and the dust drift gone, its pad and rim lamps lit.
+        /// </summary>
+        private static void RestoreLift(Transform lander)
+        {
+            Transform belly = Descendant(lander, BaseModelBuilder.BellyLiftName);
+            RaisePlatform(belly, Descendant(belly, BaseModelBuilder.PlatformDownName).localPosition.y);
+            Transform platform = Descendant(belly, BaseModelBuilder.PlatformName);
+            Descendant(belly, BaseModelBuilder.CableJamName).gameObject.SetActive(false);
+            Descendant(platform, Weathering.DustName).gameObject.SetActive(false);
+            SetGlow(platform, BaseModelBuilder.PadGlowName, new[] { string.Empty }, 1f);
+            SetGlow(platform, BaseModelBuilder.RimLampsName, new[] { string.Empty }, 1f);
+        }
+
+        /// <summary>
+        /// Sets the belly platform level with its top at <paramref name="height"/> (lift space) and hangs both hoist
+        /// cables to its eyes (their built length reaches the jammed platform's left eye).
+        /// </summary>
+        private static void RaisePlatform(Transform belly, float height)
+        {
+            Transform platform = Descendant(belly, BaseModelBuilder.PlatformName);
+            float built = platform.localPosition.y + (platform.localRotation * Vector3.left).y * 1.77f;
+            platform.SetLocalPositionAndRotation(new Vector3(0f, height, 0f), BaseModelBuilder.BellyPlatformLevel);
+            foreach (string name in new[] { BaseModelBuilder.CableLeftName, BaseModelBuilder.CableRightName })
+            {
+                Transform hoist = Descendant(belly, name);
+                hoist.gameObject.SetActive(true);
+                float length = BaseModelBuilder.BellyCableBuiltLength - (height - built);
+                hoist.localScale = new Vector3(1f, Mathf.Max(0.01f, length) / BaseModelBuilder.BellyCableBuiltLength,
+                    1f);
+            }
         }
 
         /// <summary>Lights every glass segment of the ground cable to <paramref name="target"/>.</summary>
@@ -1138,7 +1278,8 @@ namespace MoonProject.Art.Editor
             GameObject rover = Instantiate(RoverModelBuilder.ModelName, temporary, ArtPaths.RoverFolder);
             rover.transform.SetPositionAndRotation(parked, lander.rotation * Quaternion.Euler(0f, 250f, 0f));
             Vector3 tower = lander.TransformPoint(BaseModelBuilder.TowerAnchor);
-            Vector3 shelf = lander.TransformPoint(BaseModelBuilder.ShelfAnchor);
+            Vector3 porthole = Descendant(lander, BaseModelBuilder.BigPortholeName).GetComponent<Renderer>().bounds
+                .center;
             Vector3 roverBack = rover.transform.TransformDirection(new Vector3(0.6f, 0f, -0.8f));
             Transform bay = SceneObject(BaseModelBuilder.RoverBayName);
             SetGlow(bay, "BaySign", new[] { string.Empty }, 1f);
@@ -1147,14 +1288,14 @@ namespace MoonProject.Art.Editor
             {
                 new CameraPose { name = "spawn_first_frame", position = new[] { 0.78f, 4f, -8.97f },
                     euler = new[] { 6f, -5f, 0f }, fov = 60f },
-                Pose("lander_close", Point(lander.TransformPoint(new Vector3(0.6f, 2.3f, 8.4f))),
-                    Point(lander.TransformPoint(new Vector3(0f, 2.6f, 0f))), 55f),
-                Pose("lander_quarter", Point(lander.TransformPoint(new Vector3(6.2f, 3.2f, 6.4f))),
-                    Point(lander.TransformPoint(new Vector3(0f, 2.2f, 0f))), 50f),
+                Pose("lander_close", Point(lander.TransformPoint(new Vector3(0.6f, 2.6f, 11f))),
+                    Point(lander.TransformPoint(new Vector3(0f, 3.4f, 0f))), 55f),
+                Pose("lander_quarter", Point(lander.TransformPoint(new Vector3(8.5f, 4f, 9f))),
+                    Point(lander.TransformPoint(new Vector3(0f, 3.2f, 0f))), 50f),
                 Pose("tower", Point(tower + lander.TransformDirection(new Vector3(4.5f, 3f, 8f))),
                     Point(tower + Vector3.up * 3.5f), 55f),
-                Pose("shelf_area", Point(shelf + lander.TransformDirection(new Vector3(1.8f, 2f, 5.5f))),
-                    Point(shelf + Vector3.up * 1.1f), 50f),
+                Pose("big_porthole", Point(porthole + lander.TransformDirection(new Vector3(-5.5f, -1.2f, -5.5f))),
+                    Point(porthole), 45f),
                 Pose("rover_chase", Point(parked + roverBack * 7.4f + Vector3.up * 2.2f), Point(parked + Vector3.up),
                     50f),
                 Pose("rover_close", Point(parked + roverBack * 3.2f + Vector3.up * 1.6f),
@@ -1327,8 +1468,10 @@ namespace MoonProject.Art.Editor
             poses.Add(Pose("bay_pit", Point(bay.TransformPoint(new Vector3(0.35f, 0.45f, 2.4f))),
                 Point(bay.TransformPoint(RoverBayMeshes.FloorArmBase + Vector3.up * 0.28f)), 40f));
             Person(material, temporary, bay.TransformPoint(new Vector3(-3.2f, 0f, 2.2f)), bay.rotation);
-            poses.Add(Pose("human_bench", Point(bay.TransformPoint(new Vector3(-1.2f, 1.6f, 6.4f))),
-                Point(bay.TransformPoint(new Vector3(-3.8f, 1f, 1f))), 45f));
+            poses.Add(Pose("human_bay", Point(bay.TransformPoint(new Vector3(-1.2f, 1.6f, 6.4f))),
+                Point(bay.TransformPoint(new Vector3(-3.4f, 1f, 1.6f))), 45f));
+            poses.Add(Pose("bay_back_wall", Point(bay.TransformPoint(new Vector3(0.6f, 2.2f, 1.6f))),
+                Point(bay.TransformPoint(RoverBayMeshes.PlotterOnWall + Vector3.up * 1.1f)), 55f));
         }
 
         /// <summary>The true-size relics in a row before 07 and a 1.75 m reference person; 07's spare wheel.</summary>
@@ -1378,8 +1521,8 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
-        /// 07 resting on its dock at the ladder's foot, nose to the contacts, the charging glow lit; the lift as it has
-        /// hung for decades.
+        /// 07 resting on its dock on the apron, nose to the contacts, the charging glow lit; the belly lift as it has
+        /// sat jammed for decades.
         /// </summary>
         private static void StageDockAndLift(Transform lander, TemporaryObjects temporary, List<CameraPose> poses)
         {
@@ -1387,29 +1530,31 @@ namespace MoonProject.Art.Editor
             GameObject rover = Instantiate(RoverModelBuilder.ModelName, temporary, ArtPaths.RoverFolder);
             rover.transform.SetPositionAndRotation(dock.position, dock.rotation);
             SetGlow(lander, "DockGlow", new[] { string.Empty }, 1f);
-            Vector3 lift = Descendant(lander, "LiftPlatform").position;
-            poses.Add(Pose("dock_rest", Point(lander.TransformPoint(new Vector3(1.8f, 2.2f, 10.5f))),
+            Vector3 lift = Descendant(lander, BaseModelBuilder.PlatformName).position;
+            poses.Add(Pose("dock_rest", Point(dock.TransformPoint(new Vector3(-1.2f, 2.2f, -6f))),
                 Point(dock.position + Vector3.up * 0.9f), 50f));
-            poses.Add(Pose("dock_close", Point(lander.TransformPoint(new Vector3(-1.3f, 1.3f, 2.35f))),
-                Point(lander.TransformPoint(new Vector3(0f, 0.6f, 3.35f))), 50f));
-            poses.Add(Pose("lift", Point(lander.TransformPoint(new Vector3(6.5f, 3.2f, 10f))),
-                Point(lift + Vector3.up * 0.8f), 50f));
-            poses.Add(Pose("lift_close", Point(lander.TransformPoint(new Vector3(4.2f, 2.4f, 7.2f))),
-                Point(lift + lander.TransformDirection(new Vector3(0f, 0.6f, -1f))), 45f));
+            poses.Add(Pose("dock_close", Point(dock.TransformPoint(new Vector3(1.3f, 1.3f, 2.2f))),
+                Point(dock.TransformPoint(new Vector3(0f, 0.6f, 1.2f))), 50f));
+            poses.Add(Pose("lift", Point(lander.TransformPoint(new Vector3(6.5f, 3f, 11f))),
+                Point(lift + Vector3.up * 1.2f), 50f));
+            poses.Add(Pose("lift_close", Point(lander.TransformPoint(new Vector3(3.2f, 1.6f, 5.5f))),
+                Point(lift + Vector3.up * 0.4f), 45f));
         }
 
-        /// <summary>The reference person on the lander's porch beside the door and beside the museum shelf.</summary>
+        /// <summary>
+        /// The reference person at the foot of the crew's ladder, and inside the lab beside the keepsake shelf (the
+        /// crew's cabin was theirs before it was 07's).
+        /// </summary>
         private static void StageHumanScale(Transform lander, Material material, TemporaryObjects temporary,
             List<CameraPose> poses)
         {
-            float deck = BaseModelBuilder.LanderDeckTop;
-            Person(material, temporary, lander.TransformPoint(new Vector3(0.62f, deck, 1.62f)), lander.rotation);
-            poses.Add(Pose("human_door", Point(lander.TransformPoint(new Vector3(-2.3f, deck + 1.1f, 6f))),
-                Point(lander.TransformPoint(new Vector3(0.2f, deck + 0.9f, 1.5f))), 45f));
-            Transform shelf = SceneObject(BaseModelBuilder.ShelfName);
-            Person(material, temporary, shelf.TransformPoint(new Vector3(-1.75f, 0f, 0.5f)), shelf.rotation);
-            poses.Add(Pose("human_shelf", Point(shelf.TransformPoint(new Vector3(0.6f, 1.3f, 4.8f))),
-                Point(shelf.TransformPoint(new Vector3(-0.4f, 0.9f, 0.3f))), 45f));
+            Person(material, temporary, lander.TransformPoint(new Vector3(-3.3f, 0f, 4.9f)), lander.rotation);
+            poses.Add(Pose("human_ladder", Point(lander.TransformPoint(new Vector3(-1.2f, 1.8f, 11f))),
+                Point(lander.TransformPoint(new Vector3(-3.4f, 1.6f, 4.2f))), 45f));
+            Transform shelf = Descendant(lander, BaseModelBuilder.StationPrefix + "Keepsakes");
+            Person(material, temporary, shelf.TransformPoint(new Vector3(-1.3f, -1.25f, 0.2f)), shelf.rotation);
+            poses.Add(Pose("human_lab", Point(shelf.TransformPoint(new Vector3(0f, 1.05f, 4.4f))),
+                Point(shelf.TransformPoint(new Vector3(-0.6f, -0.3f, 0f))), 55f));
         }
 
         /// <summary>Stands a capture-only 1.75 m reference person at <paramref name="position"/>.</summary>

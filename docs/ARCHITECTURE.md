@@ -320,9 +320,13 @@ linear). Numbers are `BaseModelBuilder` constants, never copied.
 ```
 Generated/Art/Base/Lander.prefab   (kept GUID) root on the ground under the cabin's centre, +Z = the front where 07
                                    drives in under the belly and the dock stands on the apron, +Y up
-  Windows, Windows/Pane_<n>        the cabin's front portholes (home light Windows), as before
+  Windows, Windows/Pane_<n>        the cabin's portholes, front, right and back (home light Windows), as before
   LampSocket_0..3/Bulb, DockAnchor, DockGlow, TowerAnchor, WorkshopAnchor, FriendSocket_tilly, HomeSign
-                                   kept names; the anchors move to the three-mass layout (§8)
+                                   kept names; the tower moves out to the three-mass layout (§8), the dock to the
+                                   apron right of the way in, Tilly's perch to the stage's front-right ledge
+  BigPorthole                      glow: the big porthole's glass over the survey chart (home light LabLamps)
+  PortholeLamps/Lamp_<n>           glow: the 32 sockets round the big porthole, clockwise from its top as seen from
+                                   outside, lit in n order, one per known tech node
   PowerCable_Home|Bay|Chart/Glow_<n>  ground cables from the tower's foot (PowerCable_Lift is now _Chart, D8)
   BellyLift                        empty on the ground at the lift's axis (local Y = up the shaft)
     PlatformDown, PlatformUp       empties: the platform's top resting on the ground / flush with the cabin floor
@@ -336,11 +340,12 @@ Generated/Art/Base/Lander.prefab   (kept GUID) root on the ground under the cabi
     HatchLeafL, HatchLeafR         the floor hatch's leaves, shut; slide out along local -X / +X by HatchLeafTravel
     HatchRim                       glow: the hatch ring's lamps (home light LiftLamps, the belly lamp's partner)
     BellyLamp                      glow: the work lamp under the belly
-    Cable_L, Cable_R               hoist cables hanging along local -Y from the winch drums in the stage; scale local
-                                   Y by length / BellyCableBuiltLength. Cable_R is hidden while jammed
-    CableJam                       the jam parts: Cable_R's slack coil on the platform, the snag at its drum and the
-                                   crew's tag; hide once stitched
-      StitchPoint                  empty at the snag, +Z toward 07 on the platform: the beam's stitch target
+    Cable_L, Cable_R               hoist cables hanging along local -Y from their sheaves on the winch posts beside the
+                                   shaft in the cabin floor; scale local Y by length / BellyCableBuiltLength (built
+                                   to the jammed platform's left eye). Cable_R is hidden while jammed
+    CableJam                       the jam parts: Cable_R's frayed end hanging out of the shaft, its slack coil on the
+                                   platform and the crew's tag on a guide post; hide once stitched
+      StitchPoint                  empty at the frayed end below the belly, +Z = the front: the beam's stitch target
   Lab                              the cabin interior, origin at the middle of the cabin floor (= PlatformUp), same
                                    axes as the root; hide it while 07 is outside (the portholes glow on their own)
     RingRail                       the camera's ring, centred on the axis at the rail's height; radius LabRingRadius
@@ -362,12 +367,13 @@ Generated/Art/Base/Lander.prefab   (kept GUID) root on the ground under the cabi
     Station_Board/Sheet_<n>        the node's sheet, hidden until decoded
     Station_Board/Lamp_<n>         glow: the node's lamp, lit once built
     Station_Board/RecoveryPanel    the board's header; Row_<RecoveryTarget>/Lamp_<n> glows, one row per target
-    Station_Keepsakes/Slot_<n>     a cubby floor where a keepsake rests (+Y up, +Z out of the cubby)
+    Station_Keepsakes/Slot_<n>     the 6 cubby floors where keepsakes rest (+Y up, +Z out of the cubby), left to right
+                                   as 07 looks: Ines 0, Ro 1-2, Theo 3-4, Kenji 5 (BaseModelBuilder.KeepsakeSection)
     Station_Keepsakes/ReadingLamp_<n>  glow: one warm lamp per crew section, brightening per keepsake
-    PortholeLamps/Lamp_<n>         glow: the 32 sockets round the big porthole, lit in n order, one per known node
-    CabinLamps                     glow: the lab's practical lamps (home light LabLamps)
+    CabinLamps                     glow: the lab's four wall lamps (home light LabLamps)
   HandOffPath                      the hand-off pulse's polyline (DecodeHandOff): Point_<n> empties in order from the
-                                   reader's slot down the leg and along the ground to the bay's back wall
+                                   reader's slot over the lab's ceiling, down the back-right leg and along the ground
+                                   to a junction box on the bay's back wall
   HandOffCable/Glow_<n>            glow: the pulse's glass segments along the path, in the same order
 ```
 - **Removed from the lander:** `LiftPlatform`, `LiftBottom`, `LiftTop`, `LiftCable_L|R`, `LiftCableR_Snapped`,
@@ -379,7 +385,9 @@ Generated/Art/Base/Lander.prefab   (kept GUID) root on the ground under the cabi
 - **Driven by World from events** (no Gameplay wiring needed): the porthole lamps, the board's sheets and lamps
   (`TechNodeChanged`), the recovery rows (`RecoveryProgressChanged`), the light table's glow and the chart pen
   (`MapLookStarted`, `MapInkCued`, `MapLookEnded`), the hand-off pulse (`DecodeHandOff`), and every lamp's
-  `IHomeLights` level. Gameplay moves the platform, the hatch leaves, the cables, the reel and the tape.
+  `IHomeLights` level (HomeLight: `LiftLamps` = the belly lamp and hatch rim and `LabLamps` wake with Home,
+  `ChartTable` with Chart). Gameplay moves the platform, the hatch leaves, the cables, the reel and the tape, shows
+  and hides `Lab` and the jam, and lights `PadGlow` and `RimLamps`.
 
 ## Contract: world anchors (World -> Gameplay, Audio)
 World registers `Core/IWorldAnchors` (Count / Get(index) / TryGet(id)): named `WorldAnchor`s (id, surface position,

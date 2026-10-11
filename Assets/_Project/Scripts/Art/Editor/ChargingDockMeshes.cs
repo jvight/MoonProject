@@ -4,8 +4,9 @@ using static MoonProject.Art.Place;
 namespace MoonProject.Art.Editor
 {
     /// <summary>
-    /// 07's charging dock at the foot of the crew's ladder, where the welcome mat used to lie (VISION rulings 12 and
-    /// 14): a low pad 07 drives onto nose first, towards the lander, with faded wheel lanes, and a squat charging post
+    /// 07's charging dock on the apron in front of the habitat lander's belly (M3-19 D3; VISION rulings 12 and 14),
+    /// to the right of the way in under the belly so the lift stays in plain sight: a low pad 07 drives onto nose
+    /// first, towards the lander, with faded wheel lanes, and a squat charging post
     /// whose sprung contacts meet 07's front at its own height. The post's lamp band and the pad's corner lenses are a
     /// separate glow layer, dark until 07 charges. Built in base space like the lander.
     /// </summary>
@@ -14,13 +15,13 @@ namespace MoonProject.Art.Editor
         public const float PadTop = 0.05f;
 
         /// <summary>07's rest point: its pivot on the pad, facing the lander (-Z), its nose at the contacts.</summary>
-        public static readonly Vector3 Anchor = new Vector3(0f, PadTop, 4.15f);
+        public static readonly Vector3 Anchor = new Vector3(2.4f, PadTop, 6.6f);
 
         public static readonly Vector3 AnchorEuler = new Vector3(0f, 180f, 0f);
 
         public const float PadHalfWidth = 0.86f;
-        public const float PadBack = 2.95f;
-        public const float PadFront = 5.55f;
+        public static readonly float PadBack = Anchor.z - 1.2f;
+        public static readonly float PadFront = Anchor.z + 1.4f;
 
         private const float LaneX = 0.64f;
         private const float PostHeight = 0.78f;
@@ -31,7 +32,10 @@ namespace MoonProject.Art.Editor
         // The contact faces stop this short of 07's nose (its painted front face) so nothing touches at rest.
         private const float ContactGap = 0.02f;
 
-        private static readonly Vector3 Post = new Vector3(0f, 0f, 3.1f);
+        // The dock is drawn in dock space (base space shifted to the anchor's x) and moved over as a whole.
+        private static readonly Vector3 Post = new Vector3(0f, 0f, Anchor.z - 1.05f);
+
+        private static Matrix4x4 ToBase => Matrix4x4.Translate(new Vector3(Anchor.x, 0f, 0f));
         private static readonly Vector3 PostSize = new Vector3(0.3f, PostHeight, 0.24f);
 
         private static float ContactFace =>
@@ -39,6 +43,13 @@ namespace MoonProject.Art.Editor
 
         /// <summary>The pad, its entry lip, the post with its contact head and the lead back under the stage.</summary>
         public static void Dock(LowPolyMeshBuilder b)
+        {
+            var dock = new LowPolyMeshBuilder(400);
+            DockParts(dock);
+            b.Append(dock, ToBase);
+        }
+
+        private static void DockParts(LowPolyMeshBuilder b)
         {
             float length = PadFront - PadBack;
             float middle = (PadBack + PadFront) * 0.5f;
@@ -71,7 +82,7 @@ namespace MoonProject.Art.Editor
             }
 
             SiteKit.Cable(b, SiteKit.Sag(new Vector3(0.12f, 0.12f, Post.z - PostSize.z * 0.5f),
-                new Vector3(0.9f, LanderMeshes.StageBottom, 1.6f), 0.25f, 5), 0.02f, PaletteSwatch.Charcoal);
+                new Vector3(-0.8f, LanderMeshes.StageBottom, 3f), 0.25f, 5), 0.02f, PaletteSwatch.Charcoal);
         }
 
         /// <summary>What glows while 07 charges: a band round the post's head and a lens at each pad corner.</summary>
@@ -87,16 +98,18 @@ namespace MoonProject.Art.Editor
                 b.Prism(At(x, PadTop + 0.01f, z), 0.045f, 0.02f, 6, PaletteSwatch.LampGlass);
             }
 
+            b.Transform(new MeshRange(0, b.TriangleCount), ToBase);
             return b;
         }
 
         /// <summary>The dock's rust: a streak under the contact yoke and a collar round the post's foot.</summary>
         public static void Rust(LowPolyMeshBuilder b)
         {
-            Matrix4x4 front = SiteKit.Face(Post + new Vector3(0f, 0f, PostSize.z * 0.5f + Weathering.RustLift),
+            Vector3 post = ToBase.MultiplyPoint3x4(Post);
+            Matrix4x4 front = SiteKit.Face(post + new Vector3(0f, 0f, PostSize.z * 0.5f + Weathering.RustLift),
                 Vector3.forward, Vector3.up);
             SiteKit.RustStreak(b, front, -0.11f, ContactHeight - 0.05f, 0.25f, 0.03f);
-            Weathering.Collar(b, At(Post + Vector3.up * 0.08f), 0.22f, 0.1f);
+            Weathering.Collar(b, At(post + Vector3.up * 0.08f), 0.22f, 0.1f);
         }
     }
 }

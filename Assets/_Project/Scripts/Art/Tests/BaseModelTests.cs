@@ -9,9 +9,14 @@ namespace MoonProject.Art.Tests
     /// <summary>The base part of the M2 content contract: names, anchors, sockets and pivots.</summary>
     public sealed class BaseModelTests
     {
-        // A base model costs at most this many triangles (the lander, carrying 07's dock, the lift and since M3-07 the
-        // deck hatch with Ines's light table and chart pen behind it, is the most).
-        private const int TriangleBudget = 8600;
+        // A base model costs at most this many triangles over its root and children (the habitat lander, riveted
+        // panel by panel and carrying 07's dock, the belly lift's frame, the porthole's lamps and the lab's room, is
+        // the most; the lab's stations under it have their own budget in LabModelTests).
+        private const int TriangleBudget = 14000;
+
+        // Home's three masses (the lander, the tower, the bay) keep at least this much open, lit ground between them
+        // (M3-19 D9).
+        private const float MassGap = 4f;
 
         // The removable weather skins (patchwork paint over every face, rust, dust over both) cost at most this much
         // more on top of a model: about three times the lander they cover.
@@ -23,10 +28,9 @@ namespace MoonProject.Art.Tests
             ModelNode lander = BaseModelBuilder.CreateLander();
 
             Assert.AreEqual("Lander", lander.Name);
-            AssertEmpty(lander, "ShelfAnchor");
             AssertEmpty(lander, "TowerAnchor");
-            Assert.AreEqual(0f, lander.GetDescendant("ShelfAnchor").LocalPosition.y, 1e-5f);
             Assert.AreEqual(0f, lander.GetDescendant("TowerAnchor").LocalPosition.y, 1e-5f);
+            Assert.IsNull(lander.GetDescendant("ShelfAnchor"), "the memory shelf went inside, to the lab");
             for (int i = 0; i < 4; i++)
             {
                 AssertEmpty(lander, $"LampSocket_{i}");
@@ -45,8 +49,7 @@ namespace MoonProject.Art.Tests
             var glows = new List<ModelNode> { windows };
             glows.AddRange(windows.Children);
             CollectionAssert.AreEqual(new[] { "Pane_1", "Pane_2" }, windows.Children.Select(c => c.Name));
-            ModelNode hatch = lander.GetDescendant(BaseModelBuilder.DeckHatchName);
-            glows.Add(hatch.GetDescendant(BaseModelBuilder.PortholeName));
+            glows.Add(lander.GetDescendant(BaseModelBuilder.BigPortholeName));
             foreach (ModelNode socket in lander.Children.Where(c => c.Name.StartsWith("LampSocket_")))
             {
                 glows.Add(socket.Children.Single(c => c.Name == BaseModelBuilder.BulbName));
@@ -58,51 +61,6 @@ namespace MoonProject.Art.Tests
                 CollectionAssert.AreEqual(new[] { PaletteSwatch.LampGlass }, MeshChecks.Swatches(glow.Mesh.Geometry),
                     glow.Name);
             }
-        }
-
-        [Test]
-        public void DeckHatch_IsACrewDoorOnItsHinge_ThatItsMotorSwingsOut()
-        {
-            ModelNode lander = BaseModelBuilder.CreateLander();
-            ModelNode hatch = lander.GetDescendant(BaseModelBuilder.DeckHatchName);
-            Assert.IsTrue(lander.Children.Contains(hatch), "the hatch hangs right under the lander");
-            Assert.AreEqual(BaseModelBuilder.DeckHatchShut, hatch.LocalRotation, "shut while the station sleeps");
-            Bounds door = hatch.Mesh.Geometry.Bounds;
-            Assert.AreEqual(0.8f, door.size.x, 0.03f, "a crew door, 0.8 m wide");
-            Assert.AreEqual(1.85f, door.size.y, 0.03f, "and 1.85 m tall");
-            float deck = lander.GetDescendant("LiftTop").LocalPosition.y;
-            Assert.AreEqual(deck, hatch.LocalPosition.y, 0.05f, "it opens onto the deck, where the lift stops");
-            Vector3 farEdge = new Vector3(door.max.x, 0f, door.max.z);
-            Vector3 shut = hatch.LocalPosition + farEdge;
-            Vector3 open = hatch.LocalPosition + BaseModelBuilder.DeckHatchOpen * farEdge;
-            Assert.Greater(open.z, shut.z + 0.6f, "the motor swings it out onto the deck, clearing the doorway");
-            Vector3 glass = hatch.GetDescendant(BaseModelBuilder.PortholeName).Mesh.Geometry.Bounds.center;
-            Assert.AreEqual(1.5f, glass.y, 0.05f, "the porthole sits at a person's eye height");
-            Assert.IsNotNull(hatch.GetDescendant("Weather_Dust"), "dusty while it sleeps");
-        }
-
-        [Test]
-        public void LightTable_StandsInTheDoorway_AtTheLensHeight_LitFromUnderThePaper()
-        {
-            ModelNode lander = BaseModelBuilder.CreateLander();
-            ModelNode hatch = lander.GetDescendant(BaseModelBuilder.DeckHatchName);
-            ModelNode table = lander.GetDescendant(BaseModelBuilder.LightTableName);
-            Assert.IsTrue(lander.Children.Contains(table));
-            float deck = lander.GetDescendant("LiftTop").LocalPosition.y;
-            Vector3 centre = table.LocalPosition;
-            Assert.That(centre.y - deck, Is.InRange(0.8f, 1.3f), "07's lens on the deck looks onto it");
-            Assert.Less(Mathf.Abs(centre.x - (hatch.LocalPosition.x + 0.4f)), 0.05f, "centred in the doorway");
-            Assert.Less(centre.z, hatch.LocalPosition.z, "inside, behind the hatch");
-            Vector3 facing = table.LocalRotation * Vector3.forward;
-            Assert.Greater(facing.z, 0.5f, "its top faces out through the doorway");
-            Assert.Greater(facing.y, 0.3f, "tipped back so the lens looks down onto it");
-            ModelNode glow = table.GetDescendant(BaseModelBuilder.LightTableGlowName);
-            Assert.AreEqual(ModelMaterial.PaletteGlowOff, glow.Material, "dark until the map wakes");
-            CollectionAssert.AreEqual(new[] { PaletteSwatch.LampGlass }, MeshChecks.Swatches(glow.Mesh.Geometry));
-            Bounds panel = glow.Mesh.Geometry.Bounds;
-            Bounds sheet = table.GetDescendant(BaseModelBuilder.MapSheetName).Mesh.Geometry.Bounds;
-            Assert.GreaterOrEqual(sheet.min.z, panel.max.z - 1e-4f, "the paper lies on the lit panel");
-            Assert.Less(sheet.size.x, panel.size.x, "a rim of light shows round the paper");
         }
 
         [Test]
@@ -130,29 +88,6 @@ namespace MoonProject.Art.Tests
         }
 
         [Test]
-        public void CrewsLift_ReadsJammed_AndCarriesItsRestoredParts()
-        {
-            ModelNode lander = BaseModelBuilder.CreateLander();
-            ModelNode platform = lander.GetDescendant("LiftPlatform");
-            Assert.Greater(Quaternion.Angle(platform.LocalRotation, BaseModelBuilder.LiftPlatformLevel), 8f,
-                "jammed, the platform hangs tilted on one cable");
-            ModelNode left = lander.GetDescendant("LiftCable_L");
-            Vector3 cableFoot = left.LocalPosition + Vector3.down * BaseModelBuilder.LiftCableBuiltLength;
-            Vector3 shackle = platform.LocalPosition + platform.LocalRotation * new Vector3(-0.84f, 1f, -1.29f);
-            Assert.Less(new Vector2(cableFoot.x - shackle.x, cableFoot.z - shackle.z).magnitude, 0.02f,
-                "the left cable still hangs plumb to its shackle");
-            Assert.IsFalse(lander.GetDescendant("LiftCable_R").Active, "the taut right cable waits for the repair");
-            Assert.IsTrue(lander.GetDescendant(BaseModelBuilder.LiftSnappedCableName).Active,
-                "the snapped one hangs and coils on the dust");
-            Assert.IsTrue(platform.GetDescendant(BaseModelBuilder.LiftJamPropsName).Active,
-                "the crew's out-of-order card and the cable's loose end say jammed at a glance");
-            ModelNode lamp = lander.GetDescendant(BaseModelBuilder.WinchLampName);
-            Assert.AreEqual(ModelMaterial.PaletteGlowOff, lamp.Material, "the winch lamp starts dark");
-            Assert.That(lander.GetDescendant(BaseModelBuilder.LiftHopperMouthName).LocalPosition.y,
-                Is.InRange(0.9f, 1.5f), "07's beam reaches the winch hopper");
-        }
-
-        [Test]
         public void StationPads_LieFlat_InBrokenPaint_WithDarkLampsRoundTheRim()
         {
             for (int size = 0; size < BaseModelBuilder.PadRadii.Length; size++)
@@ -177,7 +112,7 @@ namespace MoonProject.Art.Tests
         public void PowerCables_RunFromTheTowersFoot_OnTheDust_AndLightInOrder()
         {
             ModelNode lander = BaseModelBuilder.CreateLander();
-            foreach (string target in new[] { "Home", "Bay", "Lift" })
+            foreach (string target in new[] { "Home", "Bay", "Chart" })
             {
                 ModelNode cable = lander.GetDescendant(BaseModelBuilder.PowerCablePrefix + target);
                 Bounds sheath = cable.Mesh.Geometry.Bounds;
@@ -198,34 +133,30 @@ namespace MoonProject.Art.Tests
         }
 
         [Test]
-        public void Anchors_LeaveRoomAroundTheLander()
+        public void Home_IsThreeMasses_WithLitGroundBetween()
         {
             ModelNode lander = BaseModelBuilder.CreateLander();
-            Bounds hull = lander.Mesh.Geometry.Bounds;
-            float shelfHalfWidth = BaseModelBuilder.ShelfWidth * 0.5f + 0.4f;
-
-            Assert.Greater(BaseModelBuilder.ShelfAnchor.x - shelfHalfWidth, hull.max.x, "shelf clears the hull");
-            Assert.Less(BaseModelBuilder.TowerAnchor.x + BaseModelBuilder.TowerPlinthSize, hull.min.x,
-                "tower clears the hull");
+            Bounds hull = Footprint(lander.Mesh.Geometry.Positions.Where(p => p.y > 0.3f));
+            Bounds tower = Footprint(MeshChecks.Points(BaseModelBuilder.CreateTower(3),
+                Matrix4x4.Translate(BaseModelBuilder.TowerAnchor), false));
+            Bounds bay = Footprint(MeshChecks.Points(BaseModelBuilder.CreateRoverBay(),
+                Matrix4x4.Translate(BaseModelBuilder.WorkshopAnchor), false));
+            Assert.GreaterOrEqual(hull.min.x - tower.max.x, MassGap, "lit ground between the tower and the lander");
+            Assert.GreaterOrEqual(bay.min.x - hull.max.x, MassGap, "lit ground between the lander and the bay");
         }
 
         [Test]
-        public void Shelf_HasSixUprightSlots_OnItsTwoTiers()
+        public void Tower_StaysTheTallestThingAtHome()
         {
-            ModelNode shelf = BaseModelBuilder.CreateShelf();
-            var heights = new HashSet<float>();
-
-            for (int i = 0; i < 6; i++)
+            Bounds lander = BaseModelBuilder.CreateLander().Mesh.Geometry.Bounds;
+            Assert.Greater(lander.max.y, BaseModelBuilder.LanderRoofTop, "the dish stands on the roof");
+            for (int level = 1; level <= 3; level++)
             {
-                ModelNode slot = AssertEmpty(shelf, $"Slot_{i}");
-                Assert.AreEqual(Quaternion.identity, slot.LocalRotation, "slots are +Y up");
-                heights.Add(slot.LocalPosition.y);
+                float height = BaseModelBuilder.CreateTower(level).Mesh.Geometry.Bounds.max.y;
+                Assert.GreaterOrEqual(height, BaseModelBuilder.LanderRoofTop * 1.25f,
+                    $"L{level} stands 1.25 times the lander's height to its roof");
+                Assert.Greater(height, lander.max.y, $"L{level} tops even the lander's dish");
             }
-
-            Assert.IsNull(shelf.GetDescendant("Slot_6"));
-            Assert.AreEqual(2, heights.Count, "two tiers");
-            Assert.AreEqual(0f, shelf.Mesh.Geometry.Bounds.min.y, 1e-3f);
-            AssertGlowsOnly(shelf.GetDescendant("Lights"));
         }
 
         [Test]
@@ -253,7 +184,7 @@ namespace MoonProject.Art.Tests
         [Test]
         public void EveryBaseMesh_IsWellFormed_AndWithinBudget()
         {
-            var models = new List<ModelNode> { BaseModelBuilder.CreateLander(), BaseModelBuilder.CreateShelf() };
+            var models = new List<ModelNode> { BaseModelBuilder.CreateLander() };
             for (int level = 1; level <= 3; level++)
             {
                 models.Add(BaseModelBuilder.CreateTower(level));
@@ -305,6 +236,28 @@ namespace MoonProject.Art.Tests
                 Assert.That(hatch.LocalPosition.y + door.center.y, Is.InRange(0.3f, 1.2f), "the hatch at rover height");
                 Assert.Greater(hatch.LocalPosition.z, BaseModelBuilder.TowerPlinthSize * 0.5f, "before the plinth");
             }
+        }
+
+        /// <summary>The flat (x, z) extent of <paramref name="points"/>.</summary>
+        private static Bounds Footprint(IEnumerable<Vector3> points)
+        {
+            var bounds = new Bounds();
+            bool first = true;
+            foreach (Vector3 p in points)
+            {
+                var flat = new Vector3(p.x, 0f, p.z);
+                if (first)
+                {
+                    bounds = new Bounds(flat, Vector3.zero);
+                    first = false;
+                }
+                else
+                {
+                    bounds.Encapsulate(flat);
+                }
+            }
+
+            return bounds;
         }
 
         private static ModelNode AssertEmpty(ModelNode model, string name)

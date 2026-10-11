@@ -4,12 +4,12 @@ using static MoonProject.Art.Place;
 namespace MoonProject.Art.Editor
 {
     /// <summary>
-    /// Kenji's blueprints (M3-16 P7): an old upright pen plotter beside his bench draws a kit's sheet when 07 brings a
-    /// blueprint tube home, and the drawn sheets hang from wooden pegs on a cord along the bench's pegboard, one per
-    /// kit (no hands pin anything, ruling 14). Each sheet is slate-blue paper with the kit drawn in chalky cream lines
-    /// (no words). Plus the blueprint tube found in a wreck's heart. Sheets are in their own space (centre at the
-    /// origin, facing +Z); the cord and slots in the bench's space; the plotter in its own space (origin on the
-    /// ground at its centre, +Z its front).
+    /// Kenji's blueprints (M3-16 P7, M3-19 D7): an old pen plotter on brackets on the Rover Bay's back wall draws a
+    /// kit's sheet when the lab's reader hands a decoded tube off, and the drawn sheets hang from wooden pegs on a cord
+    /// along the bay's wall, one per kit (no hands pin anything, ruling 14). Each sheet is slate-blue paper with the
+    /// kit drawn in chalky cream lines (no words). Plus the blueprint tube found in a wreck's heart. Sheets are in their
+    /// own space (centre at the origin, facing +Z); the cord and slots in the cord's space (its pegs along X, the
+    /// wall behind -Z); the plotter in its own space (+Z its front, the wall behind it).
     /// </summary>
     internal static class BlueprintMeshes
     {
@@ -18,9 +18,6 @@ namespace MoonProject.Art.Editor
         /// does not reference Core; Gameplay maps the names).
         /// </summary>
         public static readonly string[] Kits = { "HoverJump", "CargoCradle", "WarmHeadlamp", "BoostCoils" };
-
-        /// <summary>Where the plotter stands in bench space: past the bench's left end, facing out with it.</summary>
-        public static readonly Vector3 PlotterPlace = new Vector3(-1.9f, 0f, 0.1f);
 
         /// <summary>The plotter's bed: its centre and tilt (leaning back) in plotter space.</summary>
         public static readonly Vector3 BedCentre = new Vector3(0f, 1.15f, 0f);
@@ -60,7 +57,7 @@ namespace MoonProject.Art.Editor
         public static Vector3 CarriageHome =>
             Bed.MultiplyPoint3x4(new Vector3(-DrawWidth * 0.5f, -DrawHeight * 0.5f, 0.03f));
 
-        /// <summary>Where sheet <paramref name="index"/> hangs from its peg on the cord, in bench space.</summary>
+        /// <summary>Where sheet <paramref name="index"/> hangs from its peg on the cord, in the cord's space.</summary>
         public static Vector3 Slot(int index)
         {
             return new Vector3((index - (Kits.Length - 1) * 0.5f) * SlotSpacing,
@@ -68,7 +65,7 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
-        /// The cord along the pegboard, its hooks, and an empty peg waiting at every slot (bench space).
+        /// The cord along the wall, its hooks, and an empty peg waiting at every slot (the cord's space).
         /// </summary>
         public static LowPolyMeshBuilder Cord()
         {
@@ -139,25 +136,26 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
-        /// The pen plotter's body in plotter space: two legs with rusty feet and a crossbar, a sage bed leaning back
-        /// with a faded drawing surface, the carriage's two rails across it, the paper roll over its top, and a
-        /// charcoal control box at its side holding the ready lamp, rust weeping from its bolt.
+        /// The pen plotter's body in plotter space, the wall <paramref name="wallZ"/> behind: a sage bed leaning back
+        /// on two brackets from the wall with a faded drawing surface, the carriage's two rails across it, the paper
+        /// roll over its top, and a charcoal control box on its own bracket at its side holding the ready lamp, rust
+        /// weeping from its bolt.
         /// </summary>
-        public static LowPolyMeshBuilder Plotter()
+        public static LowPolyMeshBuilder Plotter(float wallZ)
         {
             var b = new LowPolyMeshBuilder(800);
             Matrix4x4 bed = Bed;
             for (int side = -1; side <= 1; side += 2)
             {
-                Vector3 top = bed.MultiplyPoint3x4(new Vector3(side * LegHalfSpan, -BedHeight * 0.35f, -0.04f));
-                var foot = new Vector3(top.x, 0f, top.z + 0.18f);
-                SiteKit.Bar(b, foot + Vector3.up * 0.02f, top, 0.05f, PaletteSwatch.Metal);
-                b.Prism(At(foot + Vector3.up * 0.04f), 0.04f, 0.03f, 8, PaletteSwatch.Rust);
-                b.Box(At(foot + Vector3.up * 0.01f), new Vector3(0.12f, 0.02f, 0.2f), PaletteSwatch.Metal, 0.004f);
+                Vector3 low = bed.MultiplyPoint3x4(new Vector3(side * LegHalfSpan, -BedHeight * 0.35f, -0.05f));
+                Vector3 high = bed.MultiplyPoint3x4(new Vector3(side * LegHalfSpan, BedHeight * 0.35f, -0.05f));
+                SiteKit.Bar(b, low, new Vector3(low.x, low.y, wallZ), 0.04f, PaletteSwatch.Metal);
+                SiteKit.Bar(b, high, new Vector3(high.x, high.y, wallZ), 0.04f, PaletteSwatch.Metal);
+                b.Box(At(new Vector3(low.x, (low.y + high.y) * 0.5f, wallZ + 0.01f)), new Vector3(0.1f,
+                    high.y - low.y + 0.12f, 0.02f), PaletteSwatch.Charcoal, 0.004f);
+                b.Prism(At(new Vector3(low.x, low.y, wallZ + 0.03f), AlongZ), 0.02f, 0.02f, 6, PaletteSwatch.Rust);
             }
 
-            SiteKit.Bar(b, new Vector3(-LegHalfSpan, 0.35f, 0.15f), new Vector3(LegHalfSpan, 0.35f, 0.15f), 0.04f,
-                PaletteSwatch.Metal);
             b.Box(bed * At(0f, 0f, -0.03f), new Vector3(BedWidth, BedHeight, 0.04f), PaletteSwatch.Sage, 0.01f);
             b.Box(bed * At(0f, 0f, -0.006f), new Vector3(DrawWidth + 0.04f, DrawHeight + 0.04f, 0.008f),
                 PaletteSwatch.FadedPaint);
@@ -173,6 +171,8 @@ namespace MoonProject.Art.Editor
             b.Prism(At(roll, AlongX), 0.02f, BedWidth + 0.04f, 6, PaletteSwatch.Metal);
             var box = new Vector3(0.62f, 0.9f, 0.04f);
             b.Box(At(box), new Vector3(0.18f, 0.32f, 0.22f), PaletteSwatch.Charcoal, 0.012f);
+            SiteKit.Bar(b, box + new Vector3(0f, -0.1f, -0.11f), new Vector3(box.x, box.y - 0.1f, wallZ), 0.03f,
+                PaletteSwatch.Metal);
             b.Prism(At(PlotterLamp + Vector3.back * 0.02f, AlongZ), 0.03f, 0.03f, 8, PaletteSwatch.Metal);
             SiteKit.RustStreak(b, SiteKit.Face(box + new Vector3(0f, 0f, 0.112f), Vector3.forward, Vector3.up), -0.04f,
                 0.08f, 0.12f, 0.016f);

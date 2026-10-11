@@ -7,13 +7,11 @@ using MoonProject.Art.Editor;
 namespace MoonProject.Art.Tests
 {
     /// <summary>
-    /// M3-03 art: the lander's WorkshopAnchor (Kenji's Rover Bay stands on it, clear of the museum shelf) and the
+    /// M3-03 art: the lander's WorkshopAnchor (Kenji's Rover Bay stands on it, clear of the lander's legs) and the
     /// Hover-Jump coils on 07.
     /// </summary>
     public sealed class WorkshopModelTests
     {
-        private const float ShelfClearance = 0.2f;
-
         [Test]
         public void Lander_HasTheWorkshopAnchor_WhereGameplayExpectsIt()
         {
@@ -25,21 +23,14 @@ namespace MoonProject.Art.Tests
         }
 
         [Test]
-        public void RoverBay_OnItsAnchor_StandsClearOfTheShelf()
+        public void RoverBay_OnItsAnchor_StandsClearOfTheLander()
         {
-            var shelf = new Bounds(BaseModelBuilder.ShelfAnchor, Vector3.zero);
-            foreach (Vector3 p in MeshChecks.Points(BaseModelBuilder.CreateShelf(),
-                Matrix4x4.Translate(BaseModelBuilder.ShelfAnchor), false))
-            {
-                shelf.Encapsulate(p);
-            }
-
-            shelf.Expand(new Vector3(ShelfClearance, 0f, ShelfClearance) * 2f);
+            float lander = BaseModelBuilder.CreateLander().Mesh.Geometry.Positions.Where(p => p.y > 0.3f)
+                .Max(p => p.x);
             foreach (Vector3 p in MeshChecks.Points(BaseModelBuilder.CreateRoverBay(),
                 Matrix4x4.Translate(BaseModelBuilder.WorkshopAnchor), false))
             {
-                bool onShelf = p.x > shelf.min.x && p.x < shelf.max.x && p.z > shelf.min.z && p.z < shelf.max.z;
-                Assert.IsFalse(onShelf, $"the bay reaches the museum shelf at {p}");
+                Assert.Greater(p.x, lander, $"the bay reaches the lander at {p}");
             }
         }
 
