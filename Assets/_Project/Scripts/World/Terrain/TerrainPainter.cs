@@ -24,6 +24,10 @@ namespace MoonProject.World
         private const float CraterBand = 0.15f;
         private const float HighlandBand = 0.15f;
 
+        // Most gradient noise lies within this much of zero; the pad's patches stretch it to the full -1..1 that their
+        // mottle is measured in, so the compacted and the loose dust really differ.
+        private const float PadNoiseReach = 0.3f;
+
         private readonly TerrainPaintSettings _settings;
         private readonly GradientNoise _patchNoise;
         private readonly GradientNoise _detailPatchNoise;
@@ -160,7 +164,8 @@ namespace MoonProject.World
         private Color Pad(Vector3 position)
         {
             float inverse = 1f / _settings.PadPatchWavelength;
-            float patch = _padNoise.Fractal(position.x * inverse, position.z * inverse, 2, 2f, 0.5f);
+            float noise = _padNoise.Fractal(position.x * inverse, position.z * inverse, 2, 2f, 0.5f);
+            float patch = SmoothMath.Smootherstep(-PadNoiseReach, PadNoiseReach, noise) * 2f - 1f;
             return Color.Lerp(_midDust, _shadowDust, Mathf.Clamp01(_settings.PadDarken + _settings.PadMottle * patch));
         }
 
