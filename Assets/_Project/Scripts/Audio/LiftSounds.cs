@@ -3,8 +3,9 @@ using MoonProject.Core.Events;
 namespace MoonProject.Audio
 {
     /// <summary>
-    /// What each beat of the crew's lift plays once (M3-16 step 8): the jammed winch's creak and the clunk at each
-    /// stop. The ride's ratchet and hum is a loop that starts and stops on these beats.
+    /// What each beat of the crew's belly lift plays once (M3-19 §4): the jammed platform's creak as it asks for the
+    /// stitch, the clunk at each stop and the hatch sliding open (on an A) and shut. The ride's ratchet and D hum is a
+    /// loop that starts and stops on these beats.
     /// </summary>
     public static class LiftSounds
     {
@@ -24,6 +25,12 @@ namespace MoonProject.Audio
                     return true;
                 case LiftCue.RideStopped:
                     id = AudioCueIds.LiftStopClunk;
+                    return true;
+                case LiftCue.HatchOpened:
+                    id = AudioCueIds.LiftHatchOpen;
+                    return true;
+                case LiftCue.HatchClosed:
+                    id = AudioCueIds.LiftHatchClose;
                     return true;
                 default:
                     id = null;
