@@ -264,6 +264,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>Seconds 07 rests on the map while the chart pen inks before coming away.</summary>
         private const float MapSeconds = 4f;
 
+        /// <summary>Seconds the look at the tech board settles (the browse camera's ease, the labels' fade).</summary>
+        private const float BoardSeconds = 2.5f;
+
         /// <summary>07 faces out toward the dock after a ride down: its heading within this of the way out.</summary>
         private const float FacesOut = 0.9f;
 
@@ -1037,7 +1040,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>
         /// Step 8: the tower's third level woke the survey chart. Ride up carrying nothing: 07 arrives facing the chart
         /// and the Peak, the map opens by itself and the chart pen inks what 07 has visited in reach; back comes away
-        /// from the map and back again brings the platform down.
+        /// from the map, a look at the tech board's recovery panel (M3-21), and back again brings the platform down.
         /// </summary>
         private IEnumerator LookAtTheChart()
         {
@@ -1062,8 +1065,32 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return Tap(_keyboard.sKey);
             yield return Until(() => ended > 0, 3f, "back comes away from the map");
             Assert.AreEqual(LiftPhase.Inside, lift.Phase, "coming away from the map keeps 07 in the lab");
+            yield return LookAtTheBoard();
             yield return RideDown("40-down-from-the-chart");
             End("Look at the survey chart", $"the map opened by itself, {inks} places inked");
+        }
+
+        /// <summary>
+        /// Power 3/3 (M3-21): round to the tech board and look at it. The recovery panel's Power row is lit whole and
+        /// the Link row's first lamp too, the board's labels show; then come away again.
+        /// </summary>
+        private IEnumerator LookAtTheBoard()
+        {
+            LiftStation lift = _gameplay.Lift;
+            yield return Tap(_keyboard.dKey);
+            yield return Until(() => lift.Lab.Facing == LabStation.Reader && !lift.Turning, LabTurnTimeout,
+                "right turns the turntable to the reader");
+            yield return Tap(_keyboard.dKey);
+            yield return Until(() => lift.Lab.Facing == LabStation.Board && !lift.Turning, LabTurnTimeout,
+                "and on to the tech board");
+            yield return Tap(_keyboard.wKey);
+            Assert.IsTrue(lift.Lab.IsLooking, "forward looks at the board");
+            Assert.IsTrue(_gameplay.Recovery.IsComplete(RecoveryTarget.Power), "Power 3/3 on the recovery panel");
+            Assert.AreEqual(1, _gameplay.Recovery.LitLamps(RecoveryTarget.Link), "the mound mast's lamp: Link begins");
+            yield return new WaitForSeconds(BoardSeconds);
+            Capture("39b-the-tech-board");
+            yield return Tap(_keyboard.sKey);
+            Assert.IsFalse(lift.Lab.IsLooking, "back comes away from the board");
         }
 
         private static Relic RelicIn(SalvageSite site, string id)
