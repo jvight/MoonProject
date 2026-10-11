@@ -29,6 +29,9 @@ namespace MoonProject.Art.Tests
         // The belly clears 07 (about 2 m tall with its head up) with headroom to spare (M3-19 §3).
         private const float Headroom = 0.4f;
 
+        // Open ground between the dock out on the apron and the lander's belly.
+        private const float MassGap = 4f;
+
         // The platform and 07 keep at least this far from anything fixed on their way up the shaft and turning at
         // the top (the platform's path is a cylinder as wide as its widest part, 07's as wide as it turns).
         private const float PathClearance = 0.015f;
@@ -106,23 +109,26 @@ namespace MoonProject.Art.Tests
         {
             ModelNode anchor = _lander.GetDescendant("DockAnchor");
             Assert.That(anchor.LocalPosition.y, Is.InRange(0.02f, 0.1f), "a low pad");
-            Assert.Less((anchor.LocalRotation * Vector3.forward).z, -0.99f, "07 rests facing the lander");
+            Vector3 heading = anchor.LocalRotation * Vector3.forward;
+            Assert.Less(heading.x, -0.5f, "07 rests looking out past the lander's left, toward Earth and the Peak");
             Matrix4x4 pose = Matrix4x4.TRS(anchor.LocalPosition + Vector3.up * Rest, anchor.LocalRotation, Vector3.one);
             List<Vector3> rover = Posed(_rover, pose);
             AssertClear(rover, Solid(_lander, string.Empty), "07 at the dock");
-            Bounds docked = BoundsOf(rover, 0, rover.Count);
             float stageFront = HullPoints(PaletteSwatch.Honey).Where(p => p.y > 2f).Max(p => p.z);
-            Assert.Greater(docked.min.z, stageFront, "the dock stands out on the apron, clear in front of the belly");
-            Assert.Greater(Mathf.Abs(anchor.LocalPosition.x), 1.7f, "beside the way in under the belly");
+            Assert.Greater(BoundsOf(rover, 0, rover.Count).min.z, stageFront + MassGap,
+                "the dock stands out on the apron, with open ground between it and the belly");
 
-            Vector3 rest = anchor.LocalPosition;
-            List<Vector3> contacts = HullPoints(PaletteSwatch.Honey)
-                .Where(p => Mathf.Abs(p.x - rest.x) < ContactSpan && p.z < rest.z && p.z > rest.z - 1.2f).ToList();
+            // In dock space 07 faces +Z: its contacts stand just ahead of its nose, at its own height.
+            Matrix4x4 toDock = Matrix4x4.TRS(anchor.LocalPosition, anchor.LocalRotation, Vector3.one).inverse;
+            List<Vector3> contacts = HullPoints(PaletteSwatch.Honey).Select(p => toDock.MultiplyPoint3x4(p))
+                .Where(p => Mathf.Abs(p.x) < ContactSpan && p.z > 0f && p.z < 1.2f).ToList();
             Assert.IsNotEmpty(contacts, "brass contacts on the dock");
+            List<Vector3> nose = Posed(_rover, Matrix4x4.Translate(Vector3.up * Rest));
             foreach (Vector3 contact in contacts)
             {
-                Assert.That(contact.y - rest.y, Is.InRange(BodyBottom, BodyTop), "at 07's own height");
-                Assert.That(FrontOf(rover, contact) - contact.z, Is.InRange(0f, ContactReach), "the contacts reach 07");
+                Assert.That(contact.y, Is.InRange(BodyBottom, BodyTop), "at 07's own height");
+                Assert.That(contact.z - NoseOf(nose, contact), Is.InRange(0f, ContactReach),
+                    "the contacts reach 07");
             }
         }
 
@@ -229,19 +235,19 @@ namespace MoonProject.Art.Tests
         }
 
         /// <summary>
-        /// How near 07's front (posed facing -Z) comes to the lander in the column through <paramref name="point"/>:
-        /// the least z of its triangles that cover the point's x and y.
+        /// How far forward 07's front (in its own frame, facing +Z) reaches in the column through
+        /// <paramref name="point"/>: the greatest z of its triangles that cover the point's x and y.
         /// </summary>
-        private static float FrontOf(List<Vector3> rover, Vector3 point)
+        private static float NoseOf(List<Vector3> rover, Vector3 point)
         {
-            float front = float.MaxValue;
+            float front = float.MinValue;
             for (int i = 0; i < rover.Count; i += 3)
             {
                 Bounds face = BoundsOf(rover, i, 3);
                 if (Mathf.Abs(face.center.x - point.x) <= face.extents.x
                     && Mathf.Abs(face.center.y - point.y) <= face.extents.y)
                 {
-                    front = Mathf.Min(front, face.min.z);
+                    front = Mathf.Max(front, face.max.z);
                 }
             }
 

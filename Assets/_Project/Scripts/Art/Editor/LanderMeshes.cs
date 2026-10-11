@@ -602,13 +602,16 @@ namespace MoonProject.Art.Editor
         /// <summary>
         /// Where the HOME sign's post stands in the dust beside 07's dock (the HomeSign node's pivot).
         /// </summary>
-        public static readonly Vector3 HomeSignFoot = new Vector3(0.95f, 0f, 8.1f);
+        public static readonly Vector3 HomeSignFoot = ChargingDockMeshes.Beside(new Vector3(-1.45f, 0f, -0.4f));
+
+        // The sign faces back past 07 on its dock, toward the camera behind it, turned a little toward the lander.
+        private static readonly float HomeSignYaw = ChargingDockMeshes.AnchorEuler.y + 180f - 15f;
 
         /// <summary>The HOME sign leaning with the years: back and to the side (the node's built rotation).</summary>
-        public static readonly Vector3 HomeSignLean = new Vector3(-9f, 17f, 13f);
+        public static readonly Vector3 HomeSignLean = new Vector3(-9f, HomeSignYaw, 13f);
 
-        /// <summary>The HOME sign set straight again once home wakes (M3-16), still facing the way in.</summary>
-        public static readonly Vector3 HomeSignUpright = new Vector3(0f, 17f, 0f);
+        /// <summary>The HOME sign set straight again once home wakes (M3-16), still facing back past the dock.</summary>
+        public static readonly Vector3 HomeSignUpright = new Vector3(0f, HomeSignYaw, 0f);
 
         /// <summary>
         /// A little hand-painted "HOME" sign on a post, in its own space (the post's foot at the origin), rust weeping
