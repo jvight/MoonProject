@@ -15,5 +15,11 @@ namespace MoonProject.UI
 
         /// <summary>The HUD verbs met in this save (<see cref="HudVerb"/> names).</summary>
         public string[] metVerbs = Array.Empty<string>();
+
+        /// <summary>The opening's first prompt has taught "Look up" in this save (absent in older saves: false).</summary>
+        public bool lookTaught;
+
+        /// <summary>The opening's first prompt has taught "Drive" in this save (absent in older saves: false).</summary>
+        public bool driveTaught;
     }
 }

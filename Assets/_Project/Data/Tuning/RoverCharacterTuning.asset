@@ -96,6 +96,18 @@ MonoBehaviour:
   _perkAntennaKick: 140
   _wakePerk: 0.8
   _softLandingPerk: 0.45
+  _battery:
+    _lowShare: 0.3
+    _lowEyeGlow: 0.8
+    _crawlEyeGlow: 0.65
+    _lowHeadBow: 3
+    _crawlHeadBow: 6
+    _lowWingOpen: 0.4
+    _halfLife: 0.9
+    _chargePerk: 0.7
+    _lampGlanceSeconds: 1.2
+    _chargerGlanceSeconds: 2.5
+    _chargerGlanceLift: 2
   _effortSquint: 0.35
   _effortHeadDip: 6
   _effortHalfLife: 0.08

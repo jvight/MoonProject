@@ -4,6 +4,8 @@ Run: python -m unittest discover -s tools/tests -t tools
 """
 import argparse
 import re
+import subprocess
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -34,7 +36,9 @@ class TestCommandTests(unittest.TestCase):
         planned = box_check.test_commands(self.ROOT, self.args("world"))
         self.assertEqual([label for label, _ in planned],
                          ["editmode MoonProject.World.Tests", "playmode MoonProject.World.PlayModeTests"])
-        self.assertEqual(planned[1][1][-3:], ["playmode", "--assembly", "MoonProject.World.PlayModeTests"])
+        self.assertEqual(planned[0][1][-3:], ["editmode", "--assembly", "MoonProject.World.Tests"])
+        self.assertEqual(planned[1][1][-5:], ["playmode", "--assembly", "MoonProject.World.PlayModeTests",
+                                              "--category", "!Playthrough"])
 
     def test_fast_skips_playmode_and_art_has_no_playmode(self):
         self.assertEqual([l for l, _ in box_check.test_commands(self.ROOT, self.args("world", fast=True))],
@@ -46,8 +50,54 @@ class TestCommandTests(unittest.TestCase):
         self.assertEqual(len(planned), 1)
         self.assertEqual(planned[0][1][-2:], ["--filter", "LiftTests"])
         planned = box_check.test_commands(self.ROOT, self.args("ui", platform="playmode", assembly=["A", "B"]))
-        self.assertEqual(planned[0][1][-5:], ["playmode", "--assembly", "A", "--assembly", "B"])
+        self.assertEqual(planned[0][1][-7:], ["playmode", "--assembly", "A", "--assembly", "B",
+                                              "--category", "!Playthrough"])
         self.assertEqual(box_check.test_commands(self.ROOT, self.args("music")), [])
+
+    def test_no_playmode_step_runs_the_playthrough(self):
+        # 2026-10-11: --assembly MoonProject.Gameplay.PlayModeTests selected the [Explicit] Playthrough and hit the
+        # 40-minute PlayMode timeout.
+        for kw in ({}, dict(platform="playmode", assembly=["MoonProject.Gameplay.PlayModeTests"]),
+                   dict(platform="playmode", filter="Lift")):
+            for label, cmd in box_check.test_commands(self.ROOT, self.args("gameplay", **kw)):
+                if label.startswith("playmode"):
+                    self.assertEqual(cmd[-2:], ["--category", "!Playthrough"], label)
+                else:
+                    self.assertNotIn("--category", cmd, label)
+
+
+class TrialMergeAbortTests(unittest.TestCase):
+    def run_git(self, root, *args):
+        subprocess.run(["git", "-c", "safe.directory=*", "-c", "user.name=t", "-c", "user.email=t@t", *args],
+                       cwd=root, check=True, capture_output=True)
+
+    def repo(self, tmp):
+        root = Path(tmp)
+        self.run_git(root, "init", "-q", "-b", "main")
+        (root / "a.txt").write_text("a", encoding="utf-8")
+        self.run_git(root, "add", "a.txt")
+        self.run_git(root, "commit", "-q", "-m", "a")
+        self.run_git(root, "checkout", "-q", "-b", "box")
+        self.run_git(root, "checkout", "-q", "main")
+        (root / "b.txt").write_text("b", encoding="utf-8")
+        self.run_git(root, "add", "b.txt")
+        self.run_git(root, "commit", "-q", "-m", "b")
+        self.run_git(root, "checkout", "-q", "box")
+        return root
+
+    def test_a_merge_left_in_progress_is_ended_whatever_the_flag_says(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.repo(tmp)
+            self.assertEqual(box_check.trial_merge(root), "")
+            self.assertTrue(box_check.merge_in_progress(root))
+            self.assertEqual(box_check.abort_trial_merge(root), "")
+            self.assertFalse(box_check.merge_in_progress(root))
+            self.assertFalse((root / "b.txt").exists(), "main's files are gone again")
+            self.assertEqual(box_check.git(root, "status", "--porcelain"), "")
+
+    def test_nothing_to_abort_is_fine(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(box_check.abort_trial_merge(self.repo(tmp)), "")
 
 
 class BoardTests(unittest.TestCase):

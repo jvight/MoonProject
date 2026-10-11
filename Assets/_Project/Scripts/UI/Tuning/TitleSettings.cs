@@ -4,7 +4,7 @@ using UnityEngine;
 namespace MoonProject.UI
 {
     /// <summary>
-    /// The title over the live world (M3-09): the "Lofi Lunar" wordmark and subtitle, the menu's quiet idle, and the
+    /// The title over the live world (M3-09): the "Lunarion" wordmark and subtitle, the menu's quiet idle, and the
     /// soft dark drawn before the scene reloads.
     /// </summary>
     [Serializable]

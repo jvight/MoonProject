@@ -7,7 +7,8 @@ contains main), it runs, stopping at the first failure:
   2. the box's builders and the Main Scene build in one headless Unity (unity_batch exec), which catches what only
      Unity refuses (a Unity object made while a component is constructed, a builder throwing, a broken scene wiring);
   3. the box's EditMode test assembly, then its PlayMode assembly (the defaults below; --fast skips PlayMode;
-     --filter / --assembly / --platform run one custom tests step instead).
+     --filter / --assembly / --platform run one custom tests step instead). PlayMode steps never run the golden-path
+     Playthrough (category Playthrough), which is the Director's.
 Then it restores what the builders regenerated (Generated/ and Scenes/Main.unity are never hand-edited, the
 Director commits them after landing) and moves the untracked batch-made .meta files aside to Logs/box_check/, so
 `git merge main` keeps working. Last, it appends a status block to D:/Project/MoonProject-wt/.board/<box>.md, which
@@ -42,7 +43,8 @@ BUILDER_DOMAINS = {"art": "Art", "world": "World", "rover": "Rover", "gameplay":
                    "ui": "UI", "map": "World|Gameplay|UI", "opening": "Art|World|Rover|UI|Audio",
                    "battery": "Art|World|Rover|Gameplay|UI|Audio", "lab-build": "Art|World",
                    "lab-systems": "Art|World|Gameplay|Rover|UI|Audio", "goals": "Gameplay|UI|Audio",
-                   "look": "Art|World|Rover", "cleanup": "Art|World|Rover|Gameplay|UI|Audio"}
+                   "look": "Art|World|Rover", "cleanup": "Art|World|Rover|Gameplay|UI|Audio",
+                   "blender": "Art|UI"}
 # Targeted EditMode tests per box; the full PlayMode suite and the Playthrough are the Director's.
 DEFAULT_TESTS = {"art": "MoonProject.Art.Tests", "world": "MoonProject.World.Tests",
                  "rover": "MoonProject.Rover.Tests", "gameplay": "MoonProject.Gameplay.Tests",
@@ -60,7 +62,8 @@ DEFAULT_TESTS = {"art": "MoonProject.Art.Tests", "world": "MoonProject.World.Tes
                  "look": "MoonProject.Art.Tests;MoonProject.World.Tests;MoonProject.Rover.Tests",
                  "cleanup": "MoonProject.Gameplay.Tests;MoonProject.Rover.Tests;MoonProject.Art.Tests;"
                             "MoonProject.World.Tests;MoonProject.UI.Tests;MoonProject.Audio.Tests;"
-                            "MoonProject.Editor.Tests"}
+                            "MoonProject.Editor.Tests",
+                 "blender": "MoonProject.Art.Tests;MoonProject.UI.Tests"}
 # Each box's own PlayMode assembly (art has none; the Director's full suite runs in verify).
 DEFAULT_PLAYMODE = {"world": "MoonProject.World.PlayModeTests", "rover": "MoonProject.Rover.PlayModeTests",
                     "gameplay": "MoonProject.Gameplay.PlayModeTests", "audio": "MoonProject.Audio.PlayModeTests",
@@ -72,7 +75,11 @@ DEFAULT_PLAYMODE = {"world": "MoonProject.World.PlayModeTests", "rover": "MoonPr
                     "lab-systems": "MoonProject.Gameplay.PlayModeTests;MoonProject.Rover.PlayModeTests",
                     "goals": "MoonProject.Gameplay.PlayModeTests;MoonProject.UI.PlayModeTests",
                     "look": "MoonProject.World.PlayModeTests;MoonProject.Rover.PlayModeTests",
-                    "cleanup": "MoonProject.Gameplay.PlayModeTests;MoonProject.World.PlayModeTests"}
+                    "cleanup": "MoonProject.Gameplay.PlayModeTests;MoonProject.World.PlayModeTests",
+                    "blender": "MoonProject.UI.PlayModeTests"}
+# The Playthrough is [Explicit], yet an --assembly filter selects it (the runner counts a matching assembly as an
+# explicit match), and it outlasts the PlayMode timeout; verify runs it on the merged main.
+NO_PLAYTHROUGH = ["--category", "!Playthrough"]
 BOARD_HEADER = "## "
 
 
@@ -183,17 +190,22 @@ def last_block(text):
 
 def test_commands(root, args):
     """[(label, command)] of the tests steps: the box's EditMode then PlayMode assembly (no PlayMode with --fast), or
-    one custom step for --filter / --assembly; [] when the box has no default tests."""
+    one custom step for --filter / --assembly; [] when the box has no default tests. PlayMode excludes the
+    Playthrough."""
     base = [sys.executable, str(root / "tools" / "unity_batch.py"), "tests", "--project", str(root), "--platform"]
+
+    def command(platform, selection):
+        return base + [platform] + selection + (NO_PLAYTHROUGH if platform == "playmode" else [])
+
     if args.filter:
-        return [(f"{args.platform} --filter {args.filter}", base + [args.platform, "--filter", args.filter])]
+        return [(f"{args.platform} --filter {args.filter}", command(args.platform, ["--filter", args.filter]))]
     if args.assembly:
         return [(f"{args.platform} {' '.join(args.assembly)}",
-                 base + [args.platform] + [arg for name in args.assembly for arg in ("--assembly", name)])]
+                 command(args.platform, [arg for name in args.assembly for arg in ("--assembly", name)]))]
     defaults = [("editmode", DEFAULT_TESTS.get(args.box))]
     if not args.fast:
         defaults.append(("playmode", DEFAULT_PLAYMODE.get(args.box)))
-    return [(f"{platform} {name}", base + [platform, "--assembly", name]) for platform, name in defaults if name]
+    return [(f"{platform} {name}", command(platform, ["--assembly", name])) for platform, name in defaults if name]
 
 
 def needs_merge(root):
@@ -210,6 +222,21 @@ def trial_merge(root):
         git(root, "merge", "--abort", check=False)
         return (res.stdout + res.stderr).strip().splitlines()[-1] if (res.stdout + res.stderr).strip() else "failed"
     return ""
+
+
+def merge_in_progress(root):
+    return (Path(git(root, "rev-parse", "--absolute-git-dir")) / "MERGE_HEAD").exists()
+
+
+def abort_trial_merge(root):
+    """Ends a merge left in progress, whatever stopped the run; returns '' or why it is still there. Decided by
+    MERGE_HEAD, not by a flag: a half-aborted trial once left a box worktree with main's 93 files staged."""
+    if not merge_in_progress(root):
+        return ""
+    git(root, "merge", "--abort", check=False)
+    if merge_in_progress(root):
+        git(root, "reset", "--merge", check=False)
+    return "the trial merge of main is still in progress; run git merge --abort" if merge_in_progress(root) else ""
 
 
 def main():
@@ -277,8 +304,10 @@ def main():
         restored, new_outputs = restore_outputs(root, logs / "outputs")
         metas = move_untracked_metas(root, logs / "metas")
     finally:
-        if merge:
-            git(root, "merge", "--abort", check=False)
+        abort_problem = abort_trial_merge(root)
+    if abort_problem:
+        steps.append(("abort trial merge", False, "", 0.0))
+        notes.append(abort_problem)
     notes.append(f"restored {restored} builder output(s), moved {new_outputs} new output(s) and {metas} untracked "
                  f".meta(s) to {logs.relative_to(root).as_posix()}")
     leftover = [line[3:] for line in git(root, "status", "--porcelain").splitlines()]

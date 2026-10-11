@@ -51,6 +51,9 @@ MonoBehaviour:
   _pulseLift: 0.15
   _pulseFade: 0.35
   _chainDelay: 0.9
+  _linkChain:
+  - relay.0
+  - relay.1
   _padRadius: 3
   _padInviting: 0.3
   _padOccupied: 0.8

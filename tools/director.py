@@ -25,6 +25,9 @@ land     merges the box branches into main (several boxes land as one merge), re
          only if all pass is the merge committed there, with a second commit for the regenerated outputs and
          metas, and main fast-forwarded to it. On any failure the verification worktree goes back to main and main
          is untouched. --dry-run stops before main; --worktree lands in another worktree (created on first use).
+         The summary warns for each new ScriptableObject .asset whose script has no meta yet (a new tuning type
+         lands with its asset: the batch import gives the script a new GUID and the asset may reset to C#
+         defaults) and prints the asset's values from the box so they can be written back.
 refresh  the same editor hot reload without a merge.
 outputs  commits what the builders regenerated under Assets/ and reports any other change it left unstaged.
 verify   fast-forwards the verification worktree to main and runs compile_check, EditMode, PlayMode and the
@@ -74,7 +77,8 @@ BUILDER_DOMAINS = {"art": "Art", "world": "World", "rover": "Rover", "gameplay":
                    "ui": "UI", "map": "World|Gameplay|UI", "opening": "Art|World|Rover|UI|Audio",
                    "battery": "Art|World|Rover|Gameplay|UI|Audio", "lab-build": "Art|World",
                    "lab-systems": "Art|World|Gameplay|Rover|UI|Audio", "goals": "Gameplay|UI|Audio",
-                   "look": "Art|World|Rover", "cleanup": "Art|World|Rover|Gameplay|UI|Audio"}
+                   "look": "Art|World|Rover", "cleanup": "Art|World|Rover|Gameplay|UI|Audio",
+                   "blender": "Art|UI"}
 SCHEMA_TYPE = re.compile(r"(Tuning|Settings)\.cs$")
 EDITOR_IDLE_POLLS = 5
 EDITOR_POLL_SECONDS = 2
@@ -316,6 +320,67 @@ def discard(path, base):
     git("clean", "-fdq", "--", "Assets", cwd=path)
 
 
+SCRIPT_GUID = re.compile(r"^\s*m_Script: \{fileID: 11500000, guid: ([0-9a-f]{32}), type: 3\}", re.M)
+META_GUID = re.compile(r"^guid: ([0-9a-f]{32})", re.M)
+ASSET_FIELDS_AFTER = "m_EditorClassIdentifier:"
+ASSET_VALUE_LINES = 80
+PROJECT_ASSETS = Path("Assets") / "_Project"
+
+
+def script_guid(asset_text):
+    """The GUID of a ScriptableObject asset's script, or '' when the text names none."""
+    match = SCRIPT_GUID.search(asset_text)
+    return match.group(1) if match else ""
+
+
+def asset_values(asset_text):
+    """The serialized fields of an asset (the lines after its m_EditorClassIdentifier), capped for the summary."""
+    lines = asset_text.splitlines()
+    for index, line in enumerate(lines):
+        if line.strip().startswith(ASSET_FIELDS_AFTER):
+            lines = lines[index + 1:]
+            break
+    if len(lines) > ASSET_VALUE_LINES:
+        lines = lines[:ASSET_VALUE_LINES] + [f"  ... {len(lines) - ASSET_VALUE_LINES} more line(s)"]
+    return lines
+
+
+def script_guids(worktree):
+    """GUIDs the project's script metas give in <worktree> (before the batch Unity writes the new ones)."""
+    guids = set()
+    for meta in (worktree / PROJECT_ASSETS).rglob("*.cs.meta"):
+        guids.update(META_GUID.findall(meta.read_text(encoding="utf-8", errors="replace")))
+    return guids
+
+
+def orphaned_assets(worktree, added):
+    """[(asset path, its values)] for each added ScriptableObject .asset under Assets/_Project whose script has no
+    meta in <worktree> yet: Unity gives the new script a fresh GUID on import, the asset loads as missing and the
+    builders' EnsureExists recreates it at the C# defaults, losing the box's values."""
+    candidates = []
+    for rel in added:
+        if rel.endswith(".asset") and Path(rel).parts[:2] == PROJECT_ASSETS.parts:
+            text = (worktree / rel).read_text(encoding="utf-8", errors="replace")
+            guid = script_guid(text)
+            if guid:
+                candidates.append((rel, guid, text))
+    if not candidates:
+        return []
+    known = script_guids(worktree)
+    return [(rel, asset_values(text)) for rel, guid, text in candidates if guid not in known]
+
+
+def orphan_warnings(orphans):
+    """The summary lines for orphaned_assets(): one WARNING per asset, then its values to write back."""
+    lines = []
+    for rel, values in orphans:
+        lines.append(f"WARNING: {rel} is new and its script has no meta here; the batch import gives the script a "
+                     "new GUID, so the asset may come back at C# defaults. Its values in the box, to write back "
+                     "if they did not survive:")
+        lines += [f"    {value}" for value in values]
+    return lines
+
+
 def cmd_land_batch(args):
     worktree = Path(args.worktree).resolve() if args.worktree else VERIFY_WORKTREE
     branch = VERIFY_BRANCH if worktree == VERIFY_WORKTREE else f"director/{worktree.name}"
@@ -333,11 +398,12 @@ def cmd_land_batch(args):
         git("worktree", "add", "-B", branch, str(worktree), "main")
     with WorktreeLock(worktree, "land --batch"):
         base = ready_worktree(worktree, branch)
-        landed = merge_and_build(args, worktree, branches, base)
+        landed, warnings = merge_and_build(args, worktree, branches, base)
         if args.dry_run:
             print(git("log", "--stat", "--format=%h %s", f"{base}..{landed}", "--", "Assets", cwd=worktree))
             discard(worktree, base)
             say(f"dry run: {landed[:7]} passed in {worktree.name}; main untouched, {worktree.name} back on main")
+            print_warnings(warnings)
             return
         res = subprocess.run(["git", "-c", "safe.directory=*", "merge", "--ff-only", landed], cwd=checkout,
                              capture_output=True, text=True, encoding="utf-8", errors="replace")
@@ -350,11 +416,18 @@ def cmd_land_batch(args):
     for path in git("diff", "--name-only", base, landed).splitlines():
         if SCHEMA_TYPE.search(path):
             say(f"NOTE: the merge touched {path}; reset its saved assets if fields or defaults changed")
+    print_warnings(warnings)
+
+
+def print_warnings(warnings):
+    for line in warnings:
+        print(f"[director] {line}" if line.startswith("WARNING") else line, flush=True)
 
 
 def merge_and_build(args, worktree, branches, base):
     """Merges <branches> in <worktree>, gates it on compile_check and the batch builders, commits the merge and the
-    regenerated outputs there and returns the resulting sha; on failure the worktree goes back to <base>."""
+    regenerated outputs there and returns (the resulting sha, the orphaned-asset warning lines); on failure the
+    worktree goes back to <base>."""
     res = subprocess.run(["git", "-c", "safe.directory=*", "-c", "core.safecrlf=false", "merge", "--no-ff",
                           "--no-commit", *branches], cwd=worktree, capture_output=True, text=True, encoding="utf-8",
                          errors="replace")
@@ -362,6 +435,8 @@ def merge_and_build(args, worktree, branches, base):
         print(res.stdout + res.stderr)
         discard(worktree, base)
         fail("the merge did not apply cleanly; ask the box to merge main into its branch and resolve it there")
+    warnings = orphan_warnings(orphaned_assets(
+        worktree, git("diff", "--cached", "--name-only", "--diff-filter=A", cwd=worktree).splitlines()))
     say(f"compile_check on the merged tree in {worktree.name}")
     if not compile_check(worktree):
         discard(worktree, base)
@@ -394,7 +469,7 @@ def merge_and_build(args, worktree, branches, base):
                cwd=worktree)
     else:
         say("the builders changed nothing")
-    return git("rev-parse", "HEAD", cwd=worktree)
+    return git("rev-parse", "HEAD", cwd=worktree), warnings
 
 
 def cmd_refresh(args):
@@ -524,7 +599,8 @@ def verify(args):
             fail(f"{path} is not at {sha[:7]}")
     shards = shard(playmode_assemblies(VERIFY_WORKTREE), last_playmode_seconds(VERIFY_WORKTREE), len(pool))
     playmode = [(f"playmode {' '.join(a.removeprefix('MoonProject.') for a in names)}",
-                 batch + ["playmode"] + [arg for name in names for arg in ("--assembly", name)]) for names in shards]
+                 batch + ["playmode"] + [arg for name in names for arg in ("--assembly", name)]
+                 + ["--category", "!Playthrough"]) for names in shards]
     playthrough = [("playthrough", batch + ["playmode", "--category", "Playthrough", "--timeout",
                                             str(PLAYTHROUGH_TIMEOUT)])]
     out_dir = ROOT / "Logs" / "director"

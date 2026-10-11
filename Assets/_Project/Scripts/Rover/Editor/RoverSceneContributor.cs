@@ -5,8 +5,9 @@ using MoonProject.Editor.SceneBuild;
 namespace MoonProject.Rover.Editor
 {
     /// <summary>
-    /// Puts 07 and its camera into Main.unity. The rover stands on the base pad at the world origin, facing the spawn
-    /// yaw from <see cref="RoverTuning"/> (the camera starts behind it, so that yaw frames the first shot); its height
+    /// Puts 07 and its camera into Main.unity. The rover stands on its dock on the base pad, at the spawn position and
+    /// facing the spawn yaw from <see cref="RoverTuning"/> (the camera starts behind it, so that yaw frames the first
+    /// shot); its height
     /// is taken from the World's <c>ITerrainQuery</c> when it initialises, so it always spawns resting on the ground
     /// (no drop, no landing event, no guessing the pad height at build time).
     /// Systems, in initialisation order (after World): RoverController (registers IRoverState and IRoverRig),
@@ -21,6 +22,8 @@ namespace MoonProject.Rover.Editor
             Transform parent = context.RoverRoot.transform;
             var tuning = context.LoadAsset<RoverTuning>(RoverAssetPaths.RoverTuning);
             GameObject rover = context.InstantiatePrefab(RoverAssetPaths.RoverPrefab, parent);
+            Vector2 spawn = tuning.Spawn.Position;
+            rover.transform.localPosition = new Vector3(spawn.x, 0f, spawn.y);
             rover.transform.localRotation = Quaternion.Euler(0f, tuning.Spawn.Yaw, 0f);
             GameObject cameraRig = context.InstantiatePrefab(RoverAssetPaths.CameraRigPrefab, parent);
 

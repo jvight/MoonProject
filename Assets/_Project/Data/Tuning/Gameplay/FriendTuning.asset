@@ -68,6 +68,10 @@ MonoBehaviour:
   _catchUpDistance: 25
   _reappearDistance: 150
   _reappearFade: 0.6
+  _leadAhead: 10
+  _leadHeight: 2.5
+  _leadLamp: 0.45
+  _leadLampReach: 3
   _homeRadius: 30
   _leaveRadius: 40
   _awayRadius: 45

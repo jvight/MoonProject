@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Render the Lofi Lunar radio station, Ro's cassette tapes and Bell's station jingle.
+Render the Lunarion radio station, Ro's cassette tapes and Bell's station jingle.
 
   radio    every TrackSpec of tools/music/lofi/tracks.py PLAYLIST: a 48 kHz stereo Ogg Vorbis file in
            Assets/_Project/Audio/Music/Radio and the manifest tools/music/playlist.json (read by the audio box's

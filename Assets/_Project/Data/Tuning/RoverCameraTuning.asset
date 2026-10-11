@@ -61,6 +61,9 @@ MonoBehaviour:
   _maxBumpKick: 0.9
   _bumpFrequency: 1.4
   _bumpDamping: 0.8
+  _crawlPullBack: 0.22
+  _crawlLower: 4
+  _crawlHalfLife: 0.9
   _digMoment:
     _easeIn: 1.2
     _hold: 0
@@ -230,6 +233,8 @@ MonoBehaviour:
     _dipSeconds: 0.4
     _dipGap: 0.12
     _secondDip: 0.8
+    _readoutSeconds: 2
+    _readoutFade: 0.4
     _speckStart: {x: -0.2, y: 0}
     _speckEnd: {x: -0.34, y: -0.7}
     _bowedPitch: -15
@@ -253,6 +258,8 @@ MonoBehaviour:
     _lensNearClip: 0.02
     _lensFov: 58
     _pullOutReach: 0.7
+    _pullOutOntoEarth: 0.15
+    _pullOutEarthHeld: 0.4
     _lensReleaseAt: 0.2
     _hurryLidSeconds: 1.2
     _hurryPullOutSeconds: 2.5
@@ -302,40 +309,25 @@ MonoBehaviour:
     _breathElevationPeriod: 23
     _breathDistance: 0.04
     _breathDistancePeriod: 29
-  _lookoutShot:
-    _delay: 9
-    _openSeconds: 9
-    _handBackSeconds: 1.6
-    _cardQuietSeconds: 14
-    _interactionQuietSeconds: 8
-    _distance: 28
-    _elevation: 30
-    _screenY: 0.3
-    _fovWiden: 6
-    _yawShare: 0.85
-    _maxYawSwing: 40
-    _maxSubjectAngle: 110
-    _earthPreference: 15
-    _skylineRadius: 20
-    _skylineSamples: 12
-    _openSkyline: 6
-    _shutInSkyline: 25
-    _shutInDistance: 11
-    _shutInElevation: 5
-    _shutInScreenY: 0.28
-    _clearance: 1.5
-    _sightClearance: 0.6
-    _terrainSamples: 16
-    _maxElevation: 30
-    _minDistance: 11
-    _distanceSteps: 8
-    _breathYaw: 1.6
-    _breathYawPeriod: 37
-    _breathElevation: 0.7
-    _breathElevationPeriod: 23
-    _breathDistance: 0.04
-    _breathDistancePeriod: 29
-  _lookoutSide: 0
+  _lab:
+    _craneSeconds: 4.6
+    _underBellyOut: 2.4
+    _underBellyHeight: 1.3
+    _shaftOut: 1.82
+    _shaftEntryDepth: 1.3
+    _cabinRise: 0.6
+    _followAim: 0.2
+    _shoulder: 28
+    _railDrop: 0.15
+    _aimAhead: 0.8
+    _fov: 55
+    _nearClip: 0.05
+    _focusSeconds: 1.2
+    _focusDistance: 1.5
+    _focusSide: 0.55
+    _focusHeight: 0.3
+    _focusFov: 45
+    _centreSeconds: 0.8
   _eveningShot:
     _delay: 9
     _openSeconds: 4

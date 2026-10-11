@@ -46,11 +46,11 @@ namespace MoonProject.World
         [Header("site.garage: Kenji's half-buried rover garage")]
         [Tooltip("Bearing of the garage from the base, degrees.")]
         [Range(0f, 360f)]
-        [SerializeField] private float _garageBearing = 175f;
+        [SerializeField] private float _garageBearing = 232f;
 
         [Tooltip("Distance of the garage from the base, metres.")]
         [Range(60f, 280f)]
-        [SerializeField] private float _garageDistance = 125f;
+        [SerializeField] private float _garageDistance = 140f;
 
         [Tooltip("Radius of the garage's flat footprint, metres.")]
         [Range(4f, 20f)]

@@ -5,36 +5,46 @@ using Object = UnityEngine.Object;
 
 namespace MoonProject.Art.Tests
 {
-    /// <summary>M3-18 V3: the warm light-decal disc World lays under its lamps.</summary>
+    /// <summary>M3-18 V3: the warm light pool World lays under its lamps, projected inside a unit prism.</summary>
     public sealed class LightPoolTests
     {
         [Test]
-        public void Disc_IsAFlatUnitFan_FacingUp_WithUvAcrossIt()
+        public void Volume_IsAClosedPrism_RoundTheWholeUnitPool_FacingOut()
         {
-            Mesh disc = LightPoolBuilder.CreateDisc();
+            Mesh volume = LightPoolBuilder.CreateVolume();
             try
             {
-                Assert.AreEqual(LightPoolBuilder.RimCorners * 3, disc.triangles.Length);
-                Vector3[] vertices = disc.vertices;
-                Vector2[] uvs = disc.uv;
-                int[] triangles = disc.triangles;
+                Assert.AreEqual(LightPoolBuilder.RimCorners * 12, volume.triangles.Length, "sides and both caps");
+                Vector3[] vertices = volume.vertices;
+                int[] triangles = volume.triangles;
                 for (int t = 0; t < triangles.Length; t += 3)
                 {
                     Vector3 a = vertices[triangles[t]];
-                    Vector3 normal = Vector3.Cross(vertices[triangles[t + 1]] - a, vertices[triangles[t + 2]] - a);
-                    Assert.Greater(normal.y, 0f, "every triangle faces the sky");
+                    Vector3 b = vertices[triangles[t + 1]];
+                    Vector3 c = vertices[triangles[t + 2]];
+                    Vector3 normal = Vector3.Cross(b - a, c - a);
+                    Assert.Greater(Vector3.Dot(normal, (a + b + c) / 3f), 0f, "every face looks out of the prism");
                 }
 
-                for (int v = 0; v < vertices.Length; v++)
+                Bounds bounds = volume.bounds;
+                Assert.AreEqual(LightPoolBuilder.PoolBand, bounds.max.y, 1e-5f, "the band above the ground");
+                Assert.AreEqual(-LightPoolBuilder.PoolBand, bounds.min.y, 1e-5f, "the band below the ground");
+                for (int i = 0; i < LightPoolBuilder.RimCorners; i++)
                 {
-                    Assert.AreEqual(0f, vertices[v].y, "the disc lies flat on the ground");
-                    Assert.AreEqual(new Vector2(vertices[v].x, vertices[v].z), uvs[v], "uv runs -1..1 across it");
-                    Assert.LessOrEqual(vertices[v].magnitude, 1f + 1e-5f, "radius 1: World scales it to the pool");
+                    float angle = i * Mathf.PI * 2f / LightPoolBuilder.RimCorners;
+                    var edge = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle));
+                    float reach = 0f;
+                    foreach (Vector3 vertex in vertices)
+                    {
+                        reach = Mathf.Max(reach, Vector3.Dot(vertex, edge));
+                    }
+
+                    Assert.GreaterOrEqual(reach, 1f - 1e-5f, "the unit pool fits inside: World scales it to a radius");
                 }
             }
             finally
             {
-                Object.DestroyImmediate(disc);
+                Object.DestroyImmediate(volume);
             }
         }
 
@@ -49,6 +59,8 @@ namespace MoonProject.Art.Tests
                 Assert.Less(pool.maxColorComponent, Palette.BloomThreshold * 0.5f, "the lamp stays the bright point");
                 Assert.AreEqual(Vector4.one, material.GetVector("_EmissionColor"),
                     "authored at strength 1 for World's MaterialPropertyBlock multiplier");
+                Assert.AreEqual(LightPoolBuilder.PoolBand, material.GetFloat("_Band"), 1e-5f,
+                    "the shader fades the pool over the prism's own height");
             }
             finally
             {

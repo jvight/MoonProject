@@ -107,7 +107,9 @@ namespace MoonProject.Art
             new Color32(0xB4, 0x55, 0x2B, 0xFF), // Rust: decades of rust (ruling 12); saturated and warm enough
                                                  // to stay rust, not grey or violet, under the night grade
             new Color32(0xB8, 0xAF, 0xA2, 0xFF), // FadedPaint: crew enamel bleached chalky by decades of sun
-            new Color32(0xA8, 0xA6, 0xC4, 0xFF), // CakedDust: dust caked on the top faces of wrecks, paler than metal
+            new Color32(0x8A, 0x89, 0xAE, 0xFF), // CakedDust: dust caked on the top faces of wrecks, a touch over the
+                                                 // lit ground's value so a cap reads as the moon's dust, never as
+                                                 // the brightest panel in the frame (M3-18 V8)
             new Color32(0xC6, 0x8F, 0x76, 0xFF), // FadedAccent: 07's orange stripe after decades of sun, chalky
             new Color32(0x86, 0x7F, 0x77, 0xFF), // WornPanel: big crew panels weathered to a warm mid grey (V8)
         };

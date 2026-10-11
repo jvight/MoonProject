@@ -13,7 +13,8 @@ namespace MoonProject.Rover.Editor
     ///   PhysicsSphere  Rigidbody + SphereCollider (layer Rover, frictionless)
     ///   Visual         RoverVisualRig, RoverHoverCoils, RoverKit, RoverFlankLamps (the battery's light bar on Body)
     ///     Chassis      jelly lean / bob
-    ///       RoverModel (nested prefab; adds Headlamp spot under HeadlampSocket and EyeGlow point under Eye)
+    ///       RoverModel (nested prefab; adds Headlamp spot under HeadlampSocket, and EyeGlow point and the
+    ///                  LensGlass ring (nested prefab, the opening's Earth reflection) under Eye)
     ///         HeadlampSocket
     ///           Headlamp
     ///             LampMotes  RoverLampMotes: world-space dust motes in a cone along the beam
@@ -76,6 +77,7 @@ namespace MoonProject.Rover.Editor
             var model = BuildWiring.Require<GameObject>(RoverAssetPaths.RoverModel, "the Art box's rover builder");
             var coils = BuildWiring.Require<GameObject>(RoverAssetPaths.HoverCoils, "the Art box's rover builder");
             var lampBar = BuildWiring.Require<GameObject>(RoverAssetPaths.KitLampBar, "the Art box's kit builder");
+            var lensGlass = BuildWiring.Require<GameObject>(RoverAssetPaths.LensGlass, "the Art box's glass builder");
             var drum = BuildWiring.Require<GameObject>(RoverAssetPaths.KitCapacitorDrum, "the Art box's kit builder");
             var rack = BuildWiring.Require<GameObject>(RoverAssetPaths.KitCargoRack, "the Art box's kit builder");
             var spine = BuildWiring.Require<GameObject>(RoverAssetPaths.KitBatterySpine, "the Art box's kit builder");
@@ -121,6 +123,7 @@ namespace MoonProject.Rover.Editor
 
             Light headlamp = AddHeadlamp(scratch, BuildWiring.Node(m, RoverModelNodes.HeadlampSocket), rigTuning);
             Light eyeLight = AddEyeLight(scratch, BuildWiring.Node(m, RoverModelNodes.Eye), characterTuning);
+            Mount(scratch, lensGlass, BuildWiring.Node(m, RoverModelNodes.Eye)).gameObject.SetActive(true);
 
             var wheels = new Object[RoverModelNodes.WheelCount];
             for (int i = 0; i < wheels.Length; i++)

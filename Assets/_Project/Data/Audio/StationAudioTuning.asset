@@ -26,6 +26,19 @@ MonoBehaviour:
   _liftBeatVolume: 0.8
   _plotterVolume: 0.7
   _blueprintFoundVolume: 0.7
+  _labRoomVolume: 0.7
+  _labRoomFadeIn: 2
+  _labRoomFadeOut: 2.5
+  _detentVolume: 0.6
+  _readerTakeVolume: 0.7
+  _reelVolume: 0.6
+  _reelFade: 0.3
+  _decodeChimeVolume: 0.7
+  _rowChordVolume: 0.75
+  _mapPencilVolume: 0.5
+  _mapPenVolume: 0.6
+  _tableHumVolume: 0.5
+  _tableHumFade: 1
   _armDeadSpeed: 0.05
   _armFullSpeed: 0.8
   _armPlacedSpeed: 10
@@ -48,6 +61,5 @@ MonoBehaviour:
   _stitchRiseTime: 3
   _stitchVolume: 0.8
   _chargeFadeIn: 1.5
-  _chargeSeconds: 20
   _chargeFadeOut: 2
   _chargeVolume: 0.5

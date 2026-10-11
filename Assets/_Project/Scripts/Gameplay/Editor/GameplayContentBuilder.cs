@@ -102,7 +102,7 @@ namespace MoonProject.Gameplay.Editor
                     new FriendPart("cell", LoadArt(GameplayAssetPaths.FriendPrefab("Part_TillyCell"))),
                 }, Array.Empty<string>(), FriendHome.Lander, "FriendSocket_tilly", false,
                 FriendDefinition.SpotterAbility, 3.5f, "tilly",
-                new FriendPlacement(41, new Vector2(60f, 110f), 90f, 55f, new Vector2(0.3f, 2.5f), 10f, true,
+                new FriendPlacement(41, new Vector2(80f, 110f), 77.5f, 17.5f, new Vector2(0.3f, 2.5f), 10f, true,
                     new Vector2(30f, 60f)));
             var bell = ScriptableObject.CreateInstance<FriendDefinition>();
             bell.Populate("bell", LoadArt(GameplayAssetPaths.FriendPrefab("Bell_Broken")),

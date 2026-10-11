@@ -26,16 +26,39 @@ Pronouns as in `crew-logs.md`: Ro writes "mình", calls 07 "cậu", the crew "t�
 ## The masts' letters, in time order
 | Key | Released by | English | Tiếng Việt |
 |---|---|---|---|
-| `letter.mast_1` | 1st mast (0.5) | Lumen Station, this is Houston relay. All four crew landed safely. Program review postponed. Stand by. | Lumen Station, đây là trạm tiếp sóng Houston. Cả bốn thành viên đã hạ cánh an toàn. Việc xem xét chương trình được hoãn lại. Xin chờ. |
-| `letter.mast_2` | 2nd mast (0.5) | Lumen Station, this is Houston relay. A return window is under study. Keep station systems on standby. | Lumen Station, đây là trạm tiếp sóng Houston. Đang xem xét một đợt quay lại. Giữ các hệ thống của trạm ở chế độ chờ. |
-| `letter.mast_3` | 3rd mast (0.5) | Lumen Station, this is Houston relay. Return window cancelled. Program review continues. | Lumen Station, đây là trạm tiếp sóng Houston. Đợt quay lại đã bị huỷ. Việc xem xét chương trình vẫn tiếp tục. |
-| `letter.mast_4` | 4th mast (0.5) | Lumen Station, this is Houston relay. Program closed. This channel will no longer be monitored. Thank you, Lumen. | Lumen Station, đây là trạm tiếp sóng Houston. Chương trình đã khép lại. Kênh này sẽ không còn ai theo dõi. Cảm ơn, Lumen. |
-| `letter.mast_5` | 5th mast (0.6, the terraces) | 07, it's Ro. They say nobody's listening up there. I'm sending this anyway. — Ro | 07, Ro đây. Người ta bảo trên đó chẳng còn ai nghe. Mình vẫn cứ gửi. — Ro |
-| `letter.mast_6` | 5th mast | Ines took a desk job. She still walks round the block every morning to check Earth is still there. — Ro | Ines nhận một công việc bàn giấy. Sáng nào chị ấy vẫn đi một vòng quanh khu phố, để chắc rằng Trái Đất vẫn còn đó. — Ro |
-| `letter.mast_7` | 6th mast (0.7, the crater) | Theo says the basil on my windowsill isn't as good as yours was. Don't tell him I agree. — Ro | Theo bảo chậu húng quế trên bậu cửa sổ nhà mình không ngon bằng chậu trên đó. Đừng nói với anh ấy là mình cũng thấy vậy nhé. — Ro |
-| `letter.mast_8` | 6th mast | Kenji fixed my kettle with a paperclip and a long speech about tolerances. He says hello to the duck. — Ro | Kenji sửa ấm đun nước cho mình bằng một cái kẹp giấy và một bài giảng dài về dung sai. Anh ấy gửi lời chào chú vịt. — Ro |
-| `letter.mast_9` | 7th mast (0.8, the Peak's foot) | It's been twenty years. I still play the long-drive tape on Sundays. — Ro | Hai mươi năm rồi. Chủ nhật nào mình cũng vẫn mở cuộn băng cho chuyến đi dài. — Ro |
-| `letter.mast_10` | 7th mast | If that old dish ever wakes up, I'll be listening on the station's frequency. You know how to find me: three short, one long. — Ro | Nếu cái chảo cũ ấy có ngày thức dậy, mình sẽ nghe trên tần số của trạm. Cậu biết cách tìm mình mà: ba ngắn, một dài. — Ro |
+| `letter.mast_1` | 1st mast (0.5) | 17 MAR 2047 · Lumen Station, this is Houston relay. All four crew landed safely. Program review postponed. Stand by. | 17/03/2047 · Lumen Station, đây là trạm tiếp sóng Houston. Cả bốn thành viên đã hạ cánh an toàn. Việc xem xét chương trình được hoãn lại. Xin chờ. |
+| `letter.mast_2` | 2nd mast (0.5) | 2 APR 2047 · Lumen Station, this is Houston relay. A return window is under study. Keep station systems on standby. | 02/04/2047 · Lumen Station, đây là trạm tiếp sóng Houston. Đang xem xét một đợt quay lại. Giữ các hệ thống của trạm ở chế độ chờ. |
+| `letter.mast_3` | 3rd mast (0.5) | 11 MAY 2047 · Lumen Station, this is Houston relay. Return window cancelled. Program review continues. | 11/05/2047 · Lumen Station, đây là trạm tiếp sóng Houston. Đợt quay lại đã bị huỷ. Việc xem xét chương trình vẫn tiếp tục. |
+| `letter.mast_4` | 4th mast (0.5) | 29 SEP 2047 · Lumen Station, this is Houston relay. Program closed. This channel will no longer be monitored. Thank you, Lumen. | 29/09/2047 · Lumen Station, đây là trạm tiếp sóng Houston. Chương trình đã khép lại. Kênh này sẽ không còn ai theo dõi. Cảm ơn, Lumen. |
+| `letter.mast_5` | 5th mast (0.6, the terraces) | 07, it's Ro. They say nobody's listening up there. I'm sending this anyway. — Ro, 9 Jun 2048 | 07, Ro đây. Người ta bảo trên đó chẳng còn ai nghe. Mình vẫn cứ gửi. — Ro, 9/6/2048 |
+| `letter.mast_6` | 5th mast | Ines took a desk job. She still walks round the block every morning to check Earth is still there. — Ro, 14 Jul 2049 | Ines nhận một công việc bàn giấy. Sáng nào chị ấy vẫn đi một vòng quanh khu phố, để chắc rằng Trái Đất vẫn còn đó. — Ro, 14/7/2049 |
+| `letter.mast_7` | 6th mast (0.7, the crater) | Theo says the basil on my windowsill isn't as good as yours was. Don't tell him I agree. — Ro, 2 Aug 2051 | Theo bảo chậu húng quế trên bậu cửa sổ nhà mình không ngon bằng chậu trên đó. Đừng nói với anh ấy là mình cũng thấy vậy nhé. — Ro, 2/8/2051 |
+| `letter.mast_8` | 6th mast | Kenji fixed my kettle with a paperclip and a long speech about tolerances. He says hello to the duck. — Ro, 30 Oct 2054 | Kenji sửa ấm đun nước cho mình bằng một cái kẹp giấy và một bài giảng dài về dung sai. Anh ấy gửi lời chào chú vịt. — Ro, 30/10/2054 |
+| `letter.mast_9` | 7th mast (0.8, the Peak's foot) | If that old dish ever wakes up, I'll be listening on the station's frequency. You know how to find me: three short, one long. — Ro, 2 Jun 2059 | Nếu cái chảo cũ ấy có ngày thức dậy, mình sẽ nghe trên tần số của trạm. Cậu biết cách tìm mình mà: ba ngắn, một dài. — Ro, 2/6/2059 |
+| `letter.mast_10` | 7th mast | It's been twenty years. I still play the long-drive tape on Sundays. — Ro, 13 Mar 2067 | Hai mươi năm rồi. Chủ nhật nào mình cũng vẫn mở cuộn băng cho chuyến đi dài. — Ro, 13/3/2067 |
+
+## The dates (the 0.5 clue, GDD v3 §13.2)
+Every letter carries a date: the relay's four messages as a station stamp before the text, Ro's six as a
+signature after it. Nothing says what the dates mean; the player sees the gaps grow. The storm and the evacuation
+were on 14 Mar 2047, and the last letter lands on its twentieth anniversary (GDD §13.2, 0.6: Ro's letters stop after
+their twentieth year).
+
+| Key | Date | Gap since the last |
+|---|---|---|
+| `letter.mast_1` | 17 Mar 2047 | (3 days after the storm) |
+| `letter.mast_2` | 2 Apr 2047 | 16 days |
+| `letter.mast_3` | 11 May 2047 | 39 days |
+| `letter.mast_4` | 29 Sep 2047 | 141 days |
+| `letter.mast_5` | 9 Jun 2048 | 254 days |
+| `letter.mast_6` | 14 Jul 2049 | 400 days |
+| `letter.mast_7` | 2 Aug 2051 | 749 days |
+| `letter.mast_8` | 30 Oct 2054 | 1185 days |
+| `letter.mast_9` | 2 Jun 2059 | 1676 days |
+| `letter.mast_10` | 13 Mar 2067 | 2841 days |
+
+`letter.mast_9` and `letter.mast_10` swapped places: "It's been twenty years" has to be the last letter, or the
+gaps could not keep growing inside twenty years. The relay's stamps are numeric in Vietnamese (dd/mm/yyyy); Ro's
+signatures use d/m/yyyy. 0.5 plays only the four relay messages, so their stamps carry the clue there.
 
 `letter.mast_1`'s "all four crew landed safely" is deliberate. It settles the darkest question early, so the mystery
 stays bittersweet, never grim (STORY tone; ruling: never guilt).
