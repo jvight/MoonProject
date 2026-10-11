@@ -30,6 +30,7 @@ namespace MoonProject.Rover.PlayModeTests
 
         /// <summary>Kit stand-in dimensions (art's lamp bar, capacitor drums and rack, and their sockets).</summary>
         private const float LampSpacing = 0.27f;
+        private const float FlankLampSpacing = 0.06f;
         private const float DrumSocketX = 0.47f;
         private const float DrumSocketY = 0.87f;
         private const float DrumSocketZ = -0.12f;
@@ -303,6 +304,22 @@ namespace MoonProject.Rover.PlayModeTests
                 parts[i] = Shape(PrimitiveType.Cube, tubeSocket, Vector3.zero, Vector3.one * 0.2f, material);
                 parts[i].name = StoryParts[i];
             }
+            int flankCount = RoverModelNodes.FlankLampCount;
+            var flankLamps = new Transform[2 * flankCount];
+            var flankGlasses = new Renderer[2 * flankCount];
+            for (int i = 0; i < flankLamps.Length; i++)
+            {
+                bool right = i >= flankCount;
+                int socket = i % flankCount;
+                var at = new Vector3(right ? 0.66f : -0.66f, 0.8f, 0.5f - socket * FlankLampSpacing);
+                flankLamps[i] = Node(RoverModelNodes.FlankLamp(right, socket), bodyNode, at);
+                Transform glass = Shape(PrimitiveType.Sphere, flankLamps[i], Vector3.zero, Vector3.one * 0.05f,
+                    material);
+                glass.name = RoverModelNodes.FlankGlass(right, socket);
+                flankGlasses[i] = glass.GetComponent<MeshRenderer>();
+            }
+
+            var flank = visual.gameObject.AddComponent<RoverFlankLamps>();
             var kit = visual.gameObject.AddComponent<RoverKit>();
             var moteSystem = Particles("LampMotes", headlamp.transform, material);
             var lampMotes = moteSystem.gameObject.AddComponent<RoverLampMotes>();
@@ -331,8 +348,12 @@ namespace MoonProject.Rover.PlayModeTests
                 ("_dustRight", Particles("DustRight", fxHost, material)),
                 ("_landingDust", Particles("LandingDust", fxHost, material)));
             Assign(lampMotes, ("_tuning", fxTuning), ("_motes", moteSystem), ("_headlamp", headlamp));
+            Assign(flank, ("_tuning", rigTuning));
+            AssignArray(flank, "_lamps", flankLamps);
+            AssignArray(flank, "_glasses", flankGlasses);
             Assign(controller, ("_tuning", tuning), ("_body", rigidbody), ("_sphere", collider), ("_visualRig", rig),
                 ("_wheelFx", fx), ("_hoverCoils", hoverCoils), ("_lampMotes", lampMotes), ("_kit", kit),
+                ("_flankLamps", flank),
                 ("_tetherOrigin", tetherOrigin), ("_cargoSocket", cargo));
             Assign(body, ("_tuning", characterTuning), ("_rover", controller), ("_rig", rig), ("_neck", neck),
                 ("_head", head), ("_eyelid", eyelid), ("_solarWing", wing),

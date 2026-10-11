@@ -28,6 +28,16 @@ namespace MoonProject.Rover
         public static float Acceleration(DriveSettings settings, float forwardSpeed, float throttle,
             float extraTopSpeed, float deltaTime)
         {
+            return Acceleration(settings, forwardSpeed, throttle, extraTopSpeed, 1f, deltaTime);
+        }
+
+        /// <summary>
+        /// Acceleration with both top speeds scaled by <paramref name="topScale"/> (0..1, the battery's crawl cap): the
+        /// same eased curve settles on the lower target, and a 07 faster than it coasts down softly, never braked.
+        /// </summary>
+        public static float Acceleration(DriveSettings settings, float forwardSpeed, float throttle,
+            float extraTopSpeed, float topScale, float deltaTime)
+        {
             float speed = Mathf.Abs(forwardSpeed);
             float motion = forwardSpeed >= 0f ? 1f : -1f;
             float input = Mathf.Abs(throttle);
@@ -47,14 +57,15 @@ namespace MoonProject.Rover
             }
 
             bool forward = inputDirection > 0f;
-            float top = forward ? settings.TopSpeed + Mathf.Max(0f, extraTopSpeed) : settings.ReverseTopSpeed;
+            float top = (forward ? settings.TopSpeed + Mathf.Max(0f, extraTopSpeed) : settings.ReverseTopSpeed)
+                * Mathf.Clamp01(topScale);
             float peak = forward ? settings.ForwardAcceleration : settings.ReverseAcceleration;
             float target = input * top;
 
             // Signed speed in the input's direction; a slight roll the other way (below ReverseEngageSpeed) counts as
             // "behind" the target and is driven through smoothly.
             float along = forwardSpeed * inputDirection;
-            if (along <= target)
+            if (along <= target && target > 0f)
             {
                 float ratio = Mathf.Max(0f, along) / target;
                 return inputDirection * peak * input * (1f - ratio * ratio);
