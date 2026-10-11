@@ -77,7 +77,8 @@ BUILDER_DOMAINS = {"art": "Art", "world": "World", "rover": "Rover", "gameplay":
                    "ui": "UI", "map": "World|Gameplay|UI", "opening": "Art|World|Rover|UI|Audio",
                    "battery": "Art|World|Rover|Gameplay|UI|Audio", "lab-build": "Art|World",
                    "lab-systems": "Art|World|Gameplay|Rover|UI|Audio", "goals": "Gameplay|UI|Audio",
-                   "look": "Art|World|Rover", "cleanup": "Art|World|Rover|Gameplay|UI|Audio"}
+                   "look": "Art|World|Rover", "cleanup": "Art|World|Rover|Gameplay|UI|Audio",
+                   "blender": "Art|UI"}
 SCHEMA_TYPE = re.compile(r"(Tuning|Settings)\.cs$")
 EDITOR_IDLE_POLLS = 5
 EDITOR_POLL_SECONDS = 2

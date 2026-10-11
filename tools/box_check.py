@@ -43,7 +43,8 @@ BUILDER_DOMAINS = {"art": "Art", "world": "World", "rover": "Rover", "gameplay":
                    "ui": "UI", "map": "World|Gameplay|UI", "opening": "Art|World|Rover|UI|Audio",
                    "battery": "Art|World|Rover|Gameplay|UI|Audio", "lab-build": "Art|World",
                    "lab-systems": "Art|World|Gameplay|Rover|UI|Audio", "goals": "Gameplay|UI|Audio",
-                   "look": "Art|World|Rover", "cleanup": "Art|World|Rover|Gameplay|UI|Audio"}
+                   "look": "Art|World|Rover", "cleanup": "Art|World|Rover|Gameplay|UI|Audio",
+                   "blender": "Art|UI"}
 # Targeted EditMode tests per box; the full PlayMode suite and the Playthrough are the Director's.
 DEFAULT_TESTS = {"art": "MoonProject.Art.Tests", "world": "MoonProject.World.Tests",
                  "rover": "MoonProject.Rover.Tests", "gameplay": "MoonProject.Gameplay.Tests",
@@ -61,7 +62,8 @@ DEFAULT_TESTS = {"art": "MoonProject.Art.Tests", "world": "MoonProject.World.Tes
                  "look": "MoonProject.Art.Tests;MoonProject.World.Tests;MoonProject.Rover.Tests",
                  "cleanup": "MoonProject.Gameplay.Tests;MoonProject.Rover.Tests;MoonProject.Art.Tests;"
                             "MoonProject.World.Tests;MoonProject.UI.Tests;MoonProject.Audio.Tests;"
-                            "MoonProject.Editor.Tests"}
+                            "MoonProject.Editor.Tests",
+                 "blender": "MoonProject.Art.Tests;MoonProject.UI.Tests"}
 # Each box's own PlayMode assembly (art has none; the Director's full suite runs in verify).
 DEFAULT_PLAYMODE = {"world": "MoonProject.World.PlayModeTests", "rover": "MoonProject.Rover.PlayModeTests",
                     "gameplay": "MoonProject.Gameplay.PlayModeTests", "audio": "MoonProject.Audio.PlayModeTests",
@@ -73,7 +75,8 @@ DEFAULT_PLAYMODE = {"world": "MoonProject.World.PlayModeTests", "rover": "MoonPr
                     "lab-systems": "MoonProject.Gameplay.PlayModeTests;MoonProject.Rover.PlayModeTests",
                     "goals": "MoonProject.Gameplay.PlayModeTests;MoonProject.UI.PlayModeTests",
                     "look": "MoonProject.World.PlayModeTests;MoonProject.Rover.PlayModeTests",
-                    "cleanup": "MoonProject.Gameplay.PlayModeTests;MoonProject.World.PlayModeTests"}
+                    "cleanup": "MoonProject.Gameplay.PlayModeTests;MoonProject.World.PlayModeTests",
+                    "blender": "MoonProject.UI.PlayModeTests"}
 # The Playthrough is [Explicit], yet an --assembly filter selects it (the runner counts a matching assembly as an
 # explicit match), and it outlasts the PlayMode timeout; verify runs it on the merged main.
 NO_PLAYTHROUGH = ["--category", "!Playthrough"]
