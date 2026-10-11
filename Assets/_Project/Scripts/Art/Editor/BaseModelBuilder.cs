@@ -212,18 +212,6 @@ namespace MoonProject.Art.Editor
 
         public static Quaternion BellyPlatformLevel => Quaternion.identity;
 
-        /// <summary>
-        /// The cable lift's node names and cable length that main's Gameplay scene wiring still reads; they go with
-        /// the lab-systems slice's move of that wiring to the belly lift, which lands together with this lander.
-        /// </summary>
-        public const string LiftSnappedCableName = "LiftCableR_Snapped";
-
-        public const string WinchLampName = "WinchLamp";
-
-        public const string LiftHopperMouthName = "LiftHopperMouth";
-
-        public static float LiftCableBuiltLength => BellyLiftMeshes.BuiltCableLength;
-
         public const float HatchLeafTravel = BellyLiftMeshes.HatchLeafTravel;
 
         public static float BellyCableBuiltLength => BellyLiftMeshes.BuiltCableLength;
