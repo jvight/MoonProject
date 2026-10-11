@@ -260,7 +260,7 @@ namespace MoonProject.Gameplay
 
             Shop = new UpgradeShop(Upgrades, stations, save, Blueprints, TowerParts);
             Hints = new InteractionHints(services.Rover, _sonar, _excavation, _salvage, _tether, _cradle, _home,
-                stations, Upgrades, TowerParts, _friends, _relays);
+                stations, Upgrades, TowerParts, _friends, _relays, services.Beam);
             context.Register<IMaterialStock>(Materials);
             context.Register<ISalvageStatus>(_salvage);
             context.Register<ITetherAim>(_tether);
