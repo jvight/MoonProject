@@ -52,7 +52,14 @@ namespace MoonProject.UI
         [Range(0f, 1f)]
         [SerializeField] private float _lampMinOpacity = 0.45f;
 
+        [Tooltip("Seconds a voiced line's subtitle rests after its recording ends (the recording sets the rest " +
+            "when it is longer than the line's own).")]
+        [Min(0f)]
+        [SerializeField] private float _voiceTailSeconds = 1.5f;
+
         public RevealSettings Reveal => _reveal;
+
+        public float VoiceTailSeconds => _voiceTailSeconds;
 
         public float HoldBaseSeconds => _holdBaseSeconds;
 
