@@ -99,6 +99,12 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>A full-charge leap rises at least this high (m); the rover spec asks for ~6-8 m.</summary>
         private const float MinLeapApex = 5f;
 
+        /// <summary>
+        /// The first leap's spot (m) ahead of the charging dock, in 07's lane on the base pad: open ground, well past
+        /// the dock's rest radius, so standing still to charge the leap never docks 07.
+        /// </summary>
+        private const float LeapSpotAhead = 6f;
+
         /// <summary>Close enough (m) to ping Tilly's crater, and the stand-off 07 repairs her from.</summary>
         private const float TillyPingDistance = 35f;
         private const float RepairStandOff = 3f;
@@ -1610,8 +1616,10 @@ namespace MoonProject.Gameplay.PlayModeTests
         private IEnumerator FirstLeap()
         {
             Begin();
-            yield return DriveTo(_context.Get<IWorldLayout>().BasePosition, PadArrival, 0.6f, 60f,
-                "the open base pad");
+            ChargingDock dock = _gameplay.Home.Dock;
+            Vector3 lane = Flat(dock.Rotation * Vector3.forward).normalized;
+            yield return DriveTo(Flat(dock.Position) + lane * LeapSpotAhead, 1.5f, 0.6f, 60f,
+                "open ground on the base pad, ahead of the dock");
             float ground = _rover.Position.y;
             int charges = _events.RoverJumpCharged.Count;
             _pilot.JumpHeld = true;
