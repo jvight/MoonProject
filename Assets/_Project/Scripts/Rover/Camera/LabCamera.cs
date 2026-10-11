@@ -15,8 +15,8 @@ namespace MoonProject.Rover
     /// <item>Inside there is no free camera: it rides the ring rail under the ceiling, opposite the station 07 faces,
     /// over its shoulder, and goes round the ring as the turntable turns (it follows 07's heading, so with the same
     /// easing). Looking at a station (<see cref="LabStationLooked"/>) eases it in to a three-quarter view of the
-    /// station's face, with a narrower lens, and back out. The rail is inset from the walls and the near plane is close,
-    /// so it never clips.</item>
+    /// station's face, with a narrower lens, and back out. The rail is inset from the walls and the near plane is
+    /// close, so it never clips.</item>
     /// <item>On the way down the crane path reverses to where the chase camera now stands behind 07, which then takes
     /// the view back; the platform lets 07 go once it has set it down.</item>
     /// </list>
@@ -61,11 +61,6 @@ namespace MoonProject.Rover
         [Tooltip("Lab/RingRail: centred on the shaft at the rail's height.")]
         [SerializeField] private Transform _ringRail;
 
-        [Tooltip("BellyLift/HatchLeafL and HatchLeafR, shut: the hatch the crane rises through lies between them.")]
-        [SerializeField] private Transform _hatchLeft;
-
-        [SerializeField] private Transform _hatchRight;
-
         [Tooltip("Lab/Station_<n> in LabStation order: each station's face, +Z out toward the shaft.")]
         [SerializeField] private Transform[] _stations = Array.Empty<Transform>();
 
@@ -79,7 +74,6 @@ namespace MoonProject.Rover
         private float _elapsed;
         private Vector3 _from;
         private Vector3 _fromAim;
-        private Vector3 _hatch;
         private float _stationHeight;
         private float _stationReach;
         private float _focus;
@@ -105,7 +99,7 @@ namespace MoonProject.Rover
 
             string problem = _tuning == null || _rig == null || _rover == null || _camera == null
                 ? "tuning, the chase rig, 07 or the lab camera is not assigned"
-                : _platform == null || _shaft == null || _ringRail == null || _hatchLeft == null || _hatchRight == null
+                : _platform == null || _shaft == null || _ringRail == null || _ringRail.parent == null
                     ? "a belly lift or lab node is not assigned (docs/ARCHITECTURE.md \"Contract: the lab\")"
                     : _stations == null || _stations.Length != Enum.GetValues(typeof(LabStation)).Length
                       || Array.IndexOf(_stations, null) >= 0
@@ -129,7 +123,6 @@ namespace MoonProject.Rover
             lens.FieldOfView = _settings.Fov;
             _camera.Lens = lens;
             _camera.enabled = false;
-            _hatch = Vector3.Lerp(_hatchLeft.position, _hatchRight.position, 0.5f);
             Vector3 axis = _ringRail.position;
             foreach (Transform station in _stations)
             {
@@ -258,15 +251,17 @@ namespace MoonProject.Rover
 
         /// <summary>
         /// The crane path from <paramref name="outside"/> (the chase view) to <paramref name="inside"/> (the ring) at
-        /// <paramref name="t"/>: in under the belly toward the outside view's side, and up through the hatch.
+        /// <paramref name="t"/>: in under the belly toward the outside view's side, then up the shaft's gap beside
+        /// the platform, through the open floor hatch.
         /// </summary>
         private Vector3 Crane(Vector3 outside, Vector3 inside, float t)
         {
             Vector3 axis = _shaft.position;
             Vector3 under = LabShot.UnderBelly(axis, outside, _settings);
-            Vector3 hatch = LabShot.Shaft(axis, _hatch.y, inside, _settings);
-            Vector3 floor = LabShot.Shaft(axis, _ringRail.parent.position.y + _settings.CabinRise, inside, _settings);
-            return LabShot.Crane(outside, under, hatch, floor, inside, t);
+            float cabinFloor = _ringRail.parent.position.y;
+            Vector3 entry = LabShot.Shaft(axis, cabinFloor - _settings.ShaftEntryDepth, inside, _settings);
+            Vector3 floor = LabShot.Shaft(axis, cabinFloor + _settings.CabinRise, inside, _settings);
+            return LabShot.Crane(outside, under, entry, floor, inside, t);
         }
 
         /// <summary>07's lens, a little above: what the crane follows.</summary>

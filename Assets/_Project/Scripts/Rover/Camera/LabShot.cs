@@ -50,10 +50,10 @@ namespace MoonProject.Rover
 
         /// <summary>
         /// The crane path at <paramref name="t"/> (0..1, eased by the caller) through <paramref name="from"/>, under
-        /// the belly, up the shaft's gap from the hatch to just over the cabin floor and on to <paramref name="to"/>: a
-        /// smooth curve through the five points, a quarter of the way per stretch.
+        /// the belly, up the shaft's gap from under the stage to just over the cabin floor and on to
+        /// <paramref name="to"/>: a smooth curve through the five points, a quarter of the way per stretch.
         /// </summary>
-        public static Vector3 Crane(Vector3 from, Vector3 underBelly, Vector3 hatch, Vector3 floor, Vector3 to, float t)
+        public static Vector3 Crane(Vector3 from, Vector3 underBelly, Vector3 shaft, Vector3 floor, Vector3 to, float t)
         {
             float span = Mathf.Clamp01(t) * 4f;
             int segment = Mathf.Min(3, (int)span);
@@ -61,13 +61,13 @@ namespace MoonProject.Rover
             switch (segment)
             {
                 case 0:
-                    return CatmullRom(from, from, underBelly, hatch, local);
+                    return CatmullRom(from, from, underBelly, shaft, local);
                 case 1:
-                    return CatmullRom(from, underBelly, hatch, floor, local);
+                    return CatmullRom(from, underBelly, shaft, floor, local);
                 case 2:
-                    return CatmullRom(underBelly, hatch, floor, to, local);
+                    return CatmullRom(underBelly, shaft, floor, to, local);
                 default:
-                    return CatmullRom(hatch, floor, to, to, local);
+                    return CatmullRom(shaft, floor, to, to, local);
             }
         }
 
@@ -85,7 +85,7 @@ namespace MoonProject.Rover
         /// </summary>
         public static Vector3 Shaft(Vector3 axis, float height, Vector3 ring, LabCameraSettings settings)
         {
-            Vector3 point = axis + Outward(axis, ring) * settings.HatchOut;
+            Vector3 point = axis + Outward(axis, ring) * settings.ShaftOut;
             return new Vector3(point.x, height, point.z);
         }
 

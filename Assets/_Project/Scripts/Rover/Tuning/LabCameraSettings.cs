@@ -29,7 +29,12 @@ namespace MoonProject.Rover
         [Tooltip("How far (m) out from the shaft's axis the crane rises through it: in the gap between the platform's " +
                  "rim (1.7 m) and the shaft's wall (1.95 m), so it never passes through the rising platform.")]
         [Range(0f, 2.5f)]
-        [SerializeField] private float _hatchOut = 1.82f;
+        [SerializeField] private float _shaftOut = 1.82f;
+
+        [Tooltip("How far (m) below the cabin floor the crane enters the shaft's gap from under the belly (the " +
+                 "descent stage is about 1 m deep).")]
+        [Range(0.5f, 3f)]
+        [SerializeField] private float _shaftEntryDepth = 1.3f;
 
         [Tooltip("Height (m) above the cabin floor the crane climbs, still in the shaft's gap, before it swings out " +
                  "to the ring.")]
@@ -94,7 +99,9 @@ namespace MoonProject.Rover
 
         public float UnderBellyHeight => _underBellyHeight;
 
-        public float HatchOut => _hatchOut;
+        public float ShaftOut => _shaftOut;
+
+        public float ShaftEntryDepth => _shaftEntryDepth;
 
         public float CabinRise => _cabinRise;
 
