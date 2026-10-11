@@ -25,6 +25,14 @@ account) can continue without the old conversation.
       0579f46b). Rover was asked to fix it first.
     - One is in gameplay: BaseAndSaveSessions.Deposit_TowedRelic…; gameplay was asked.
   - Nothing was pushed.
+- **VERIFIED AND PUSHED 57fb8c1f (2026-10-11 ~08:50):**
+  - The steps passed: compile_check, EditMode, both PlayMode shards and the 0.5 golden path (steps 0–8).
+  - origin/main went from 370bfc9c (0.4.2) to 57fb8c1f.
+- **Owner review, morning:** the lift must go under the lander's belly and carry 07 inside. The draft is M3-19
+  (`docs/design/drafts/M3-19-inside-the-lander.md`, on box/design).
+  - The owner asked to see a blockout before approving, and art is building it on a sketch branch.
+  - Dock in front of the belly: chosen by the owner.
+  - The map slice's deck-hatch step is paused until M3-19 is decided.
 - **MILESTONE, main 8b4c0e51 (~03:20):** the golden-path Playthrough follows M3-16 steps 0–8 end to end, the lift
   included, in 1241 s (budget 1340 s). 0.5's core acceptance is met.
   - Blockers before a verified push:
