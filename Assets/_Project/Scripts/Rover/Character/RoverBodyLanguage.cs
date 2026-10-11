@@ -79,6 +79,7 @@ namespace MoonProject.Rover
         private Quaternion _eyelidRest;
         private Quaternion _wingRest;
         private bool _proudPending;
+        private float _wakeTilt;
         private bool _initialized;
 
         /// <summary>Read-only view of the mood, for audio/debug tooling.</summary>
@@ -127,6 +128,54 @@ namespace MoonProject.Rover
             };
             _initialized = true;
             Apply(0f);
+        }
+
+        /// <summary>
+        /// The title is up (docs/features/M3-09): 07 stays asleep, neither the settle delay nor the player's input
+        /// wakes it, until the opening or the short wake begins.
+        /// </summary>
+        public void HoldAsleep()
+        {
+            _mood.Wake.Hold();
+        }
+
+        /// <summary>No title in this game (fixtures, test runs): 07 wakes on its own, as it always did.</summary>
+        public void WakeOnItsOwn()
+        {
+            _mood.Wake.Release();
+        }
+
+        /// <summary>The opening or the short wake takes 07's wake over (RoverAwoke follows on the next frame).</summary>
+        public void BeginWake()
+        {
+            _mood.Wake.BeginScripted();
+        }
+
+        /// <summary>
+        /// The wake's pose this frame: <paramref name="sleep"/> bows the head and darkens the eye (1 asleep),
+        /// <paramref name="lidOpen"/> is the lid's openness taking over by <paramref name="lidWeight"/>, and
+        /// <paramref name="tilt"/> rolls the head (deg) to one side.
+        /// </summary>
+        public void PoseWake(float sleep, float lidOpen, float lidWeight, float tilt)
+        {
+            _mood.Wake.SetScriptedSleep(sleep);
+            _mood.SetWakeLid(lidOpen, lidWeight);
+            _wakeTilt = tilt;
+        }
+
+        /// <summary>The wake is done: the face and the head are 07's own again.</summary>
+        public void FinishWake()
+        {
+            _mood.Wake.FinishScripted();
+            _mood.SetWakeLid(0f, 0f);
+            _wakeTilt = 0f;
+        }
+
+        /// <summary>07's first blink (O11): the solar wing sighs and the antenna starts the call sign.</summary>
+        public void GreetWithBlink(float sigh)
+        {
+            _mood.Sigh(sigh);
+            _mood.RestartCallSign();
         }
 
         private bool ValidateWiring()
@@ -377,7 +426,8 @@ namespace MoonProject.Rover
             float pitch = _pitch.Value + _mood.HeadPitchOffset + breathing;
 
             _neck.localRotation = _neckRest * Quaternion.AngleAxis(_yaw.Value, Vector3.up);
-            _head.localRotation = _headRest * Quaternion.AngleAxis(-pitch, Vector3.right);
+            _head.localRotation = _headRest * Quaternion.AngleAxis(-pitch, Vector3.right)
+                * Quaternion.AngleAxis(_wakeTilt, Vector3.forward);
             _eyelid.localRotation = _eyelidRest
                 * Quaternion.AngleAxis(_mood.LidClosure * _tuning.EyelidClosedAngle, Vector3.right);
             float wingOpen = Mathf.Max(_mood.WingOpen, sky * _tuning.StargazeWingOpen);

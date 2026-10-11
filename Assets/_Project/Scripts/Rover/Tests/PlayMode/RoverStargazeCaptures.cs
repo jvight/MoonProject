@@ -70,12 +70,7 @@ namespace MoonProject.Rover.PlayModeTests
         private const float MinCameraClearance = 0.2f;
         private const string DockAnchorName = "DockAnchor";
 
-        /// <summary>The wake opening: the gaze share the lens frame waits for, waits, and the mid-ease frame.</summary>
-        private const float WakeLensLift = 0.6f;
-        private const float WakeBeatTimeout = 12f;
-        private const float WakeEarthSettleSeconds = 1f;
-        private const float UpperThird = 2f / 3f;
-        private const float WakeEaseFrameSeconds = 1.8f;
+        /// <summary>The longest the wake may still hold the camera before the evening is tried.</summary>
         private const float WakeEaseTimeout = 8f;
 
         /// <summary>The dock's evening: seconds to the settled frame, the frame mid-ease back, and timeouts.</summary>
@@ -158,78 +153,6 @@ namespace MoonProject.Rover.PlayModeTests
             Directory.CreateDirectory(CaptureFolder);
             File.WriteAllText(Path.Combine(CaptureFolder, "stargaze.md"), _report.ToString());
             Debug.Log("[rover-stargaze] " + _report);
-        }
-
-        [UnityTest]
-        [Timeout(300000)]
-        [PrebuildSetup(typeof(RoverSessionScene))]
-        [PostBuildCleanup(typeof(RoverSessionScene))]
-        public IEnumerator FreshGame_OpensOnTheLens_TurnsToEarth_ThenEasesToTheChase()
-        {
-            yield return Boot(true);
-            _report.AppendLine("# The wake opening (real Main scene, fresh game)");
-            _report.AppendLine();
-            _report.AppendLine("| Capture | Orbit elevation (deg) | Camera above dust (m) | 07's gaze | Beat |");
-            _report.AppendLine("|---|---:|---:|---:|---|");
-            WakeOpening opening = _cameraRig.Opening;
-            Transform lens = _context.Get<IRoverRig>().TetherOrigin;
-            Vector3 earth = _context.Get<IWorldLayout>().EarthDirection;
-            Assert.IsTrue(opening.IsActive && !opening.IsEasing, "A fresh game opens on 07's lens.");
-            float timeout = Time.time + WakeBeatTimeout;
-            while (_cameraRig.SkyLift < WakeLensLift)
-            {
-                Assert.Less(Time.time, timeout, "07 looks up at the stars.");
-                yield return null;
-            }
-
-            Assert.Less(opening.Turn, 0.01f, "Still beat 1, on the lens.");
-            Capture("wake-1-lens");
-            Vector3 eye = _view.transform.position;
-            Vector3 lensOnScreen = _view.WorldToViewportPoint(lens.position);
-            float facing = Vector3.Dot(lens.forward, (eye - lens.position).normalized);
-            _report.AppendLine(string.Format(CultureInfo.InvariantCulture,
-                "\nwake-1: lens on screen ({0:0.00}, {1:0.00}), lens facing the camera {2:0.00}", lensOnScreen.x,
-                lensOnScreen.y, facing));
-            Assert.IsTrue(InFrame(lensOnScreen, 0f, 1f) && facing > 0f,
-                $"Beat 1 sees the lens: on screen {lensOnScreen}, facing {facing:0.00}.");
-
-            timeout = Time.time + WakeBeatTimeout;
-            while (opening.Turn < 1f)
-            {
-                Assert.Less(Time.time, timeout, "The camera turns round to Earth.");
-                yield return null;
-            }
-
-            yield return Wait(WakeEarthSettleSeconds);
-            Assert.IsFalse(opening.IsEasing, "Still holding before any input.");
-            Capture("wake-2-earth");
-            eye = _view.transform.position;
-            Vector3 earthOnScreen = _view.WorldToViewportPoint(eye + earth * EarthProbeDistance);
-            lensOnScreen = _view.WorldToViewportPoint(lens.position);
-            _report.AppendLine(string.Format(CultureInfo.InvariantCulture,
-                "\nwake-2: Earth on screen ({0:0.00}, {1:0.00}), lens ({2:0.00}, {3:0.00})", earthOnScreen.x,
-                earthOnScreen.y, lensOnScreen.x, lensOnScreen.y));
-            Assert.IsTrue(InFrame(earthOnScreen, UpperThird, 1f),
-                $"Beat 2 frames Earth in the upper third: on screen {earthOnScreen}.");
-            Assert.Less(lensOnScreen.y, earthOnScreen.y, "07's head sits below Earth.");
-
-            Set(_gamepad.rightStick, new Vector2(LookStick, 0f));
-            yield return Wait(StickProbeSeconds);
-            Set(_gamepad.rightStick, Vector2.zero);
-            Assert.IsTrue(opening.IsEasing, "Any input starts the ease to the chase frame.");
-            yield return Wait(WakeEaseFrameSeconds);
-            Assert.That(opening.Weight, Is.InRange(0.05f, 0.95f), "Midway through the ease.");
-            Capture("wake-3-easing");
-
-            timeout = Time.time + WakeEaseTimeout;
-            while (opening.IsActive)
-            {
-                Assert.Less(Time.time, timeout, "The opening hands over to the chase frame.");
-                yield return null;
-            }
-
-            Directory.CreateDirectory(CaptureFolder);
-            File.WriteAllText(Path.Combine(CaptureFolder, "wake.md"), _report.ToString());
         }
 
         [UnityTest]
@@ -363,8 +286,7 @@ namespace MoonProject.Rover.PlayModeTests
             yield return Wait(SettleSeconds);
         }
 
-        /// <param name="freshGame">Publish the base waking from nothing, as Gameplay does loading a fresh game.</param>
-        private IEnumerator Boot(bool freshGame = false)
+        private IEnumerator Boot()
         {
             Directory.CreateDirectory(SaveService.DefaultDirectory);
             _gamepad = InputSystem.AddDevice<Gamepad>();
@@ -397,11 +319,6 @@ namespace MoonProject.Rover.PlayModeTests
                 _context.Events.Subscribe<RoverAwoke>(_ => _awake = true),
                 _context.Events.Subscribe<StargazingChanged>(changed => _stargazing = changed.IsStargazing),
             };
-            if (freshGame)
-            {
-                _context.Events.Publish(new BasePowerChanged(BasePowerStage.Asleep, true));
-            }
-
             float started = Time.time;
             while (!_awake)
             {
@@ -409,10 +326,7 @@ namespace MoonProject.Rover.PlayModeTests
                 yield return null;
             }
 
-            if (!freshGame)
-            {
-                yield return Wait(SettleSeconds);
-            }
+            yield return Wait(SettleSeconds);
         }
 
         private void Capture(string name)

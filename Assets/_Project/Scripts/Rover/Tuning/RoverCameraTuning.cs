@@ -283,6 +283,11 @@ namespace MoonProject.Rover
         [Range(0.02f, 1f)]
         [SerializeField] private float _momentBlendHalfLife = 0.3f;
 
+        [Header("Opening through 07's eye and the title")]
+        [Tooltip("The fresh game's wake through 07's own eye (cutscenes §1), the short wake and the title's frames "
+            + "(M3-09 Part A).")]
+        [SerializeField] private OpeningSettings _opening = new OpeningSettings();
+
         [Header("Wide shot")]
         [Tooltip("Resting a while: the camera drifts out to a wide, lonely frame with 07 small against the land and "
             + "the sky (VISION pillar 6), and hands back on any drive or look input.")]
@@ -511,5 +516,7 @@ namespace MoonProject.Rover
         public float OcclusionSmoothing => _occlusionSmoothing;
 
         public float TerrainProbe => _terrainProbe;
+
+        public OpeningSettings Opening => _opening;
     }
 }

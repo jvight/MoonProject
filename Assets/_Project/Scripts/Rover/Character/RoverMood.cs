@@ -31,7 +31,9 @@ namespace MoonProject.Rover
         private uint _random;
         private float _stillTime;
         private float _breathPhase;
-        private float _tipTime;
+        private readonly CallSign _callSign;
+        private float _wakeLidOpen;
+        private float _wakeLidWeight;
         private float _blinkCountdown;
         private float _blinkElapsed = -1f;
         private DampedSpring _perk;
@@ -49,6 +51,7 @@ namespace MoonProject.Rover
         {
             _tuning = tuning != null ? tuning : throw new ArgumentNullException(nameof(tuning));
             _wake = new WakeUpSequence(tuning, startAsleep);
+            _callSign = new CallSign(tuning);
             _random = seed == 0u ? 1u : seed;
             _blinkCountdown = NextBlinkInterval();
             ComposeFace();
@@ -147,7 +150,7 @@ namespace MoonProject.Rover
             Effort = Smoothing.Damp(Effort, _effortTarget, _tuning.EffortHalfLife, deltaTime);
             StepBreath(deltaTime);
             StepBlink(deltaTime);
-            StepTip(deltaTime);
+            StepTip(speed < _tuning.StillSpeed && !active, deltaTime);
             ComposeFace();
 
             if (waking != MoodTransition.None)
@@ -218,6 +221,23 @@ namespace MoonProject.Rover
             BlinkNow();
         }
 
+        /// <summary>
+        /// The wake's own lid (docs/design/cutscenes.md §1): <paramref name="openness"/> 0 shut .. 1 fully open, taking
+        /// over the face's lid by <paramref name="weight"/> (0 hands it back). The opening drives it beat by beat.
+        /// </summary>
+        public void SetWakeLid(float openness, float weight)
+        {
+            _wakeLidOpen = Mathf.Clamp01(openness);
+            _wakeLidWeight = Mathf.Clamp01(weight);
+            ComposeFace();
+        }
+
+        /// <summary>The antenna blinks the call sign from its first pulse now (07's first blink in the opening).</summary>
+        public void RestartCallSign()
+        {
+            _callSign.Restart();
+        }
+
         /// <summary>A whole-body sigh peaking at <paramref name="strength"/> (0..1).</summary>
         public void Sigh(float strength)
         {
@@ -280,11 +300,10 @@ namespace MoonProject.Rover
             Blink = _blinkElapsed >= 0f ? Pulse(_blinkElapsed / _tuning.BlinkDuration) : 0f;
         }
 
-        private void StepTip(float deltaTime)
+        private void StepTip(bool atRest, float deltaTime)
         {
-            _tipTime = Mathf.Repeat(_tipTime + deltaTime, _tuning.TipBlinkPeriod);
-            float pulse = _tipTime < _tuning.TipBlinkDuration ? Pulse(_tipTime / _tuning.TipBlinkDuration) : 0f;
-            TipGlow = Mathf.Lerp(_tuning.TipRestGlow, _tuning.TipPeakGlow, pulse);
+            _callSign.Step(atRest, deltaTime);
+            TipGlow = Mathf.Lerp(_tuning.TipRestGlow, _tuning.TipPeakGlow, _callSign.Glow);
         }
 
         private void ComposeFace()
@@ -295,7 +314,7 @@ namespace MoonProject.Rover
                 + _tuning.SighLidDroop * Sighing
                 + _tuning.EffortSquint * Effort;
             lid = Mathf.Lerp(Mathf.Clamp01(lid), 1f, _wake.Sleep);
-            LidClosure = lid + (1f - lid) * Blink;
+            LidClosure = Mathf.Lerp(lid + (1f - lid) * Blink, 1f - _wakeLidOpen, _wakeLidWeight);
 
             float depth = Mathf.Lerp(_tuning.ActiveBreathDepth, _tuning.IdleBreathDepth, EarthGaze);
             float glow = 1f + depth * (2f * Breath - 1f) - _tuning.IdleGlowDim * Idle + _tuning.PerkGlowBoost * Perk;

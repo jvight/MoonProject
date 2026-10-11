@@ -196,6 +196,79 @@ MonoBehaviour:
     _subjectDistance: 6
   _momentCancelEaseOut: 0.6
   _momentBlendHalfLife: 0.3
+  _opening:
+    _crackleSeconds: 3
+    _lidCrackSeconds: 2.5
+    _lidHalfSeconds: 2.5
+    _huntSeconds: 3.5
+    _flickerSeconds: 1
+    _gazeHomeSeconds: 4
+    _gazePilotSeconds: 3.5
+    _gazePeakSeconds: 4
+    _gazeEarthSeconds: 5
+    _pullOutSeconds: 4
+    _blinkShotSeconds: 3.5
+    _overShoulderSeconds: 3
+    _lidCrack: 0.12
+    _lidHalf: 0.4
+    _lidRest: 0.7
+    _lidWonder: 0.85
+    _lidRiseSeconds: 1.2
+    _lidSettleSeconds: 1.6
+    _shudderAmount: 0.02
+    _shudderWobbles: 3
+    _blinkDelay: 0.4
+    _blinkSeconds: 0.7
+    _blinkLow: 0.25
+    _blinkAfter: 0.75
+    _focusBlur: 2.5
+    _focusNear: 0.1
+    _focusOvershoot: 400
+    _focusSettle: 80
+    _rehuntNear: 25
+    _rehuntSeconds: 1.4
+    _dipSeconds: 0.4
+    _dipGap: 0.12
+    _secondDip: 0.8
+    _speckStart: {x: -0.2, y: 0}
+    _speckEnd: {x: -0.34, y: -0.7}
+    _bowedPitch: -15
+    _yawLimit: 70
+    _pitchDownLimit: -15
+    _pitchUpLimit: 50
+    _softZone: 18
+    _neckFrequency: 0.45
+    _lookShare: 0.6
+    _attentionResume: 2
+    _earthFoundAngle: 10
+    _earthFoundSeconds: 1
+    _seenAngle: 12
+    _hesitateAfter: 1.8
+    _hesitateYaw: 3
+    _peakLift: 1
+    _earthBelow: 4
+    _landerLookHeight: 3
+    _beaconHeight: 6
+    _lensForward: 0.15
+    _lensNearClip: 0.02
+    _lensFov: 58
+    _pullOutReach: 0.7
+    _lensReleaseAt: 0.2
+    _hurryLidSeconds: 1.2
+    _hurryPullOutSeconds: 2.5
+    _blinkTilt: 8
+    _tiltEaseSeconds: 0.6
+    _tiltHoldSeconds: 1.6
+    _blinkSigh: 0.5
+    _pushInSeconds: 2
+    _pushDarkFrom: 0.6
+    _titleDriftDelay: 20
+    _titleDriftYaw: 8
+    _titleDriftPeriod: 48
+    _titleDriftEase: 3
+    _shortLidSeconds: 0.8
+    _shortGlanceSeconds: 2
+    _gazePriority: 50
   _wideShot:
     _delay: 9
     _openSeconds: 8

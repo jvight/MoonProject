@@ -52,6 +52,9 @@ namespace MoonProject.World
         [Tooltip("Where the crew's remnants from Art's landmark kit stand (M3-18 L2, L4, L7).")]
         [SerializeField] private LandmarkSettings _landmarks = new LandmarkSettings();
 
+        [Tooltip("The picture through 07's own eye in the opening (docs/design/cutscenes.md §1).")]
+        [SerializeField] private LensViewSettings _lensView = new LensViewSettings();
+
         public int Seed => _seed;
 
         public SurfaceSettings Surface => _surface;
@@ -77,6 +80,8 @@ namespace MoonProject.World
         public GroundMarkSettings GroundMarks => _groundMarks;
 
         public LandmarkSettings Landmarks => _landmarks;
+
+        public LensViewSettings LensView => _lensView;
 
         /// <summary>Builds the analytic surface for these settings (throws on invalid settings).</summary>
         public MoonSurface CreateSurface()

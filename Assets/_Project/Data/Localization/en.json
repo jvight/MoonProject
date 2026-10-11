@@ -1137,6 +1137,18 @@
         {
             "key": "ticker.set.kenji.complete",
             "text": "Kenji's window is lit again."
+        },
+        {
+            "key": "lens.boot.signal",
+            "text": "EARTH SIGNAL · DETECTED"
+        },
+        {
+            "key": "lens.boot.uplink",
+            "text": "UPLINK · OFFLINE"
+        },
+        {
+            "key": "lens.boot.recovery",
+            "text": "BEGIN RECOVERY"
         }
     ]
 }

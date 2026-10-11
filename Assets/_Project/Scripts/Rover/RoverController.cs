@@ -162,6 +162,9 @@ namespace MoonProject.Rover
 
         public Vector2 DriveInput => new Vector2(_steer, _throttle);
 
+        /// <summary>The drive asked for (the player's, or a test's drive source), before holds and easing.</summary>
+        public Vector2 RequestedDrive => _driveSource != null ? _driveSource.Drive : _input.Drive;
+
         public bool IsGrounded => _landing.IsGrounded;
 
         public float AirTime => _landing.AirTime;

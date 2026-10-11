@@ -36,4 +36,35 @@ MonoBehaviour:
   _landingCreakDelay: 0.14
   _landingCreakMinImpact: 0.8
   _landingCreakFullImpact: 3.5
+  _wakeStartPitch: 0.55
+  _wakeHumTime: 0.8
+  _liftRiseSemitones: 2
+  _liftFadeIn: 0.4
+  _liftFadeOut: 0.35
+  _liftVolume: 1
+  _settleVolume: 1
+  _wake:
+    _titleStatic: 0.35
+    _openingStatic: 0.6
+    _titleFadeSeconds: 2.5
+    _swellSeconds: 1.2
+    _handOverSeconds: 2
+    _insideCutoff: 1100
+    _besideCutoff: 5000
+    _besidePan: 0.3
+    _narrowSeconds: 4
+    _crackleGhostDelay: 0.9
+    _pilotGhostDelay: 0.8
+    _ghostFaint: 0.4
+    _ghostClearer: 0.6
+    _ghostLong: 0.85
+    _thump: 0.8
+    _tick: 0.8
+    _whine: 0.7
+    _hum: 0.8
+    _servo: 0.6
+    _chirp: 0.8
+    _chirpDelay: 0.2
+    _stir: 0.5
+    _hurried: 0.7
   _loopSpatialBlend: 0.75

@@ -4,6 +4,52 @@ Read this, then `CLAUDE.md`, then `docs/VISION.md`, `docs/DESIGN.md`, `docs/ARCH
 It records how the project is run, where it stands, and what comes next, so a new Director session (on any
 account) can continue without the old conversation.
 
+## 00. NOW (2026-10-11 ~09:45): read this first
+- **origin/main = 57fb8c1f.** It passed the full verify (compile, EditMode, PlayMode in shards, the 0.5 golden path,
+  steps 0–8).
+  - Since then main has landed:
+    - world's halo, ruts, pad and lift_lookout fixes, with WorldSettings reset in batch (ea404ee9);
+    - the map and opening Core contracts;
+    - GDD v3 and its review (docs only).
+  - Land every change with `director.py land --batch`. For World tuning, then run in MoonProject-wt/director:
+    `unity_batch exec ResetSettings`, then RunBuilders `^(World/|Main Scene$)`, commit, and fast-forward main.
+- **Owner direction (overrides VISION and DESIGN until they are rewritten):**
+  - Progression first (07's growth, tech, crafting, going farther).
+  - The battery is fuel, under the calm rules.
+  - Not linear: a few main recovery targets with a marker; the rest is free exploration.
+  - Buildable operational structures on predefined pads (charge pylons, solar array, fabricator, store, bay
+    extensions).
+  - The lander's inside is the crew's lab, reached by M3-19's belly lift (the owner liked the sketch on
+    box/art-sketch-m319; art's 4 refinements apply: cabin about 5.6 x 2.5 m, octagonal weathered panels, tapered roof,
+    tower taller than the lander).
+  - Ro answers at the end, and the opening gets a ~2 s boot readout.
+- **GDD v3 APPROVED on main (565b49e1)** as `docs/design/gdd-v3.md` and `-vi.md`. §11 has the owner's answers, §10
+  the exact edits to VISION, DESIGN, M3-16, M3-06, M3-11, cutscenes and ROADMAP.
+- **0.5 scope:** the battery, chargers, the crawl with Tilly's lead, Cell Pack II, the lab (M3-19) and the recovery
+  panel. Structures and T2 are not in 0.5.
+- **The opening slice landed** (O1–O14, the lens view, the title camera and push-in, the short wake, the call sign,
+  the wake sounds). The opening session is now doing: O10's swing, the owner-approved boot readout in O5, and
+  pause ducking.
+  - Still to dispatch: art's lens glass ring (it reflects Earth during the pull-out); UI's O14 prompt rule ("Look
+    up" or "Drive") from WakeBeat.ChaseFrame; the save's station playing softly on the title.
+  - Backlog: World's MoonSurfaceTests.Sampling_IsFastEnoughForBootTimeMeshing flakes under load (a 2.0 s
+    wall-clock limit).
+- **Next for the Director:**
+  1. Land the approved GDD v3.
+  2. Rewrite VISION and DESIGN where GDD v3 §10 says so.
+  3. Write the specs: M3-20 battery, chargers and crawl; the final M3-19 (lab and belly lift); M3-21 the two-tier
+     objectives; M3-22 build pads and structures. Agree with the owner what is 0.5 and what is 0.6.
+  4. Dispatch: art (the final habitat lander), gameplay (battery, objectives), rover (gauge, crawl, the lift into the
+     lab), ui (battery HUD, objectives), world (charge pads), the map slice (map in the lab; its deck-hatch step was
+     paused), the opening slice (the boot readout).
+  5. Verify and push.
+- **Sessions** (group "moonproject"):
+  - live slices: opening (cutscenes §1 and the title camera), map (M3-07 generic parts);
+  - resting with large contexts: gameplay, rover, art, ui, world, tools. Start fresh sessions for new features rather
+    than reviving them;
+  - design: game design, story & flow.
+- **Cron guard is session-only:** recreate the token and stall guard in a new Director session (see §6 and §8).
+
 ## 0. Current state on the new account (2026-10-11 ~00:50)
 - **main 85bb390f.** It holds:
   - every box tip from the old account (merge 029b4807);

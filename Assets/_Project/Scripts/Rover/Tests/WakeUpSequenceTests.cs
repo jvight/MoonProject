@@ -168,5 +168,44 @@ namespace MoonProject.Rover.Tests
 
             Assert.IsTrue(mood.IsDaydreaming);
         }
+
+        [Test]
+        public void Held_NeitherTheDelayNorThePlayerWakes07()
+        {
+            var wake = new WakeUpSequence(_tuning, true);
+            wake.Hold();
+
+            Assert.AreEqual(MoodTransition.None, Run(wake, _tuning.WakeDelay + _tuning.WakeDuration + 1f, true));
+            Assert.AreEqual(WakePhase.Asleep, wake.Phase, "the title holds 07 asleep");
+            Assert.AreEqual(1f, wake.Sleep);
+        }
+
+        [Test]
+        public void Released_WakesOnItsOwnAgain()
+        {
+            var wake = new WakeUpSequence(_tuning, true);
+            wake.Hold();
+            wake.Release();
+
+            Assert.AreEqual(MoodTransition.BeganWaking, Run(wake, _tuning.WakeDelay + Frame, false));
+        }
+
+        [Test]
+        public void Scripted_BeginsOnce_FollowsTheScriptsSleep_AndFinishesQuietly()
+        {
+            var wake = new WakeUpSequence(_tuning, true);
+            wake.Hold();
+            wake.BeginScripted();
+
+            Assert.AreEqual(MoodTransition.BeganWaking, wake.Step(false, Frame), "the radio crackles on");
+            Assert.AreEqual(MoodTransition.None, Run(wake, _tuning.WakeDuration * 2f, true), "only the script moves it");
+            wake.SetScriptedSleep(0.4f);
+            Assert.AreEqual(0.4f, wake.Sleep, 1e-5f);
+
+            wake.FinishScripted();
+            Assert.AreEqual(WakePhase.Awake, wake.Phase);
+            Assert.AreEqual(0f, wake.Sleep);
+            Assert.AreEqual(MoodTransition.None, wake.Step(false, Frame));
+        }
     }
 }

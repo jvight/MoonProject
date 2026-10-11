@@ -127,6 +127,9 @@ namespace MoonProject.Rover
         /// <summary>The fresh game's first shot on 07's lens (inactive on a loaded save).</summary>
         public WakeOpening Opening => _opening;
 
+        /// <summary>The rig's own Cinemachine camera: the opening's lens camera leaves the lens toward its pose.</summary>
+        public CinemachineCamera ChaseCamera => _camera;
+
         /// <summary>The lift's lookout or the dock's evening, when one is open or easing (capture sessions).</summary>
         public HeldShot Held => _held;
 
@@ -206,7 +209,6 @@ namespace MoonProject.Rover
                 context.Events.Subscribe<RadioHopListChanged>(OnHopListChanged),
                 context.Events.Subscribe<RoverPlaced>(OnPlaced),
                 context.Events.Subscribe<RoverKitInstalling>(OnKitInstalling),
-                context.Events.Subscribe<BasePowerChanged>(OnBasePowerChanged),
             };
             context.Register<IViewCamera>(this);
             context.Register<ILookSettings>(this);
@@ -605,7 +607,7 @@ namespace MoonProject.Rover
             if (wake > 0f)
             {
                 float turn = _opening.Turn;
-                float shotYaw = _wakeYaw + Mathf.DeltaAngle(_wakeYaw, _wakeEarthYaw) * turn;
+                float shotYaw = _wakeYaw + Mathf.DeltaAngle(_wakeYaw, _wakeEarthYaw) * turn + _opening.DriftYaw;
                 yaw += Mathf.DeltaAngle(yaw, shotYaw) * wake;
                 elevation = Mathf.Lerp(elevation,
                     Mathf.Lerp(_tuning.WakeElevation, _tuning.WakeEarthElevation, turn), wake);
@@ -653,17 +655,18 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// The fresh game's first beats (M3-16 P5): the base wakes from nothing, so the camera opens on 07's lens as
-        /// it looks up at the stars, then turns round over its shoulder to Earth; a loaded save keeps the usual wake.
+        /// The lens shot on 07's eye (M3-16 P5, cutscenes §1): the fresh title holds it on the closed lens and the
+        /// opening's pull-out lands on it (<paramref name="held"/>); then it turns round over 07's shoulder to Earth
+        /// and eases into the chase frame. Started by the opening only, so a loaded save never replays it.
         /// </summary>
-        private void OnBasePowerChanged(BasePowerChanged power)
+        public void BeginWakeOpening(bool held)
         {
-            if (!power.Restored || power.Stage != BasePowerStage.Asleep || _opening.IsActive)
+            if (_opening.IsActive)
             {
                 return;
             }
 
-            _opening.Begin();
+            _opening.Begin(held);
             _wakeLift = 0f;
             PlaceTarget();
             FrameWakeShots();
@@ -692,13 +695,36 @@ namespace MoonProject.Rover
                 _tuning.WakeEarthHeight, _orbitState.FieldOfView), -MaxScreenOffset, MaxScreenOffset);
         }
 
-        /// <summary>Holds the first shot until any input or the hold runs out; 07 lifts its gaze with it.</summary>
+        /// <summary>
+        /// The title over a save (M3-09 Part A): the high, wide shot of home from behind 07 on its dock, the dock's
+        /// evening framing, held until <see cref="ReleaseTitleFrame"/>.
+        /// </summary>
+        public void HoldTitleFrame()
+        {
+            Vector3 follow = _rover.Position + Vector3.up * _tuning.TargetHeight;
+            float home = WideShotComposer.Bearing(_world.BasePosition - _rover.Position);
+            OpenHeldShot(_tuning.EveningShot, follow, home, 0f);
+        }
+
+        /// <summary>Continue: the title's wide frame eases back into the chase frame.</summary>
+        public void ReleaseTitleFrame()
+        {
+            if (_held.IsOpen)
+            {
+                CloseHeldShot();
+            }
+        }
+
+        /// <summary>
+        /// Holds the first shot until any input or the hold runs out; 07 lifts its gaze with it once the shot is no
+        /// longer held (asleep on the title and inside the lens, its head stays its own).
+        /// </summary>
         private void StepWakeOpening(Vector2 look, float deltaTime)
         {
             bool input = look.sqrMagnitude > LookEpsilon * LookEpsilon
                 || _rover.DriveInput.sqrMagnitude > DriveEpsilon * DriveEpsilon;
             _opening.Step(input, deltaTime);
-            float target = _opening.Weight;
+            float target = _opening.IsHeld ? 0f : _opening.Weight;
             float halfLife = target > _wakeLift ? _tuning.StargazeRiseHalfLife : _tuning.StargazeFallHalfLife;
             _wakeLift = Smoothing.Damp(_wakeLift, target, halfLife, deltaTime);
         }

@@ -111,6 +111,10 @@ namespace MoonProject.Audio
         [Tooltip("Volume scale of the settle when the lift sets 07 down.")]
         [Range(0f, 1f)] [SerializeField] private float _settleVolume = 1f;
 
+        [Header("07's wake")]
+        [Tooltip("The Asleep radio and 07's small cues as it wakes through its own eye (cutscenes §1).")]
+        [SerializeField] private WakeAudioSettings _wake = new WakeAudioSettings();
+
         [Header("Placement")]
         [Tooltip("3D amount of the hum/crunch loops (1 = fully positional, lower keeps them centred and close).")]
         [Range(0f, 1f)] [SerializeField] private float _loopSpatialBlend = 0.75f;
@@ -147,5 +151,7 @@ namespace MoonProject.Audio
         public float LiftFadeOut => _liftFadeOut;
         public float LiftVolume => _liftVolume;
         public float SettleVolume => _settleVolume;
+
+        public WakeAudioSettings Wake => _wake;
     }
 }
