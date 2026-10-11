@@ -5,8 +5,8 @@ namespace MoonProject.Art.Editor
 {
     /// <summary>
     /// 07's charging dock out on the apron in front of the habitat lander's belly (M3-19 D3; VISION rulings 8, 12 and
-    /// 14): the pad 07 wakes on in a fresh game, so the dock stands exactly on 07's spawn at the base pad's centre,
-    /// facing the way 07 first looks (bearing 355°, Earth and The Peak in frame). The pad is a worn plate flush with
+    /// 14): the pad 07 wakes on in a fresh game, so the dock stands exactly on 07's spawn, 4.5 m south of the base
+    /// pad's centre, facing the way 07 first looks (bearing 355°, Earth and The Peak in frame). The pad is a worn plate flush with
     /// the dust, with faded wheel lanes, so 07 rests on it and drives off it either way with nothing in its lane; the
     /// squat charging pylon stands beside the pad ahead of 07's left front wheel, on the lander's side, its lead
     /// running over the dust to the lander's front right leg without crossing 07's lane. The pylon's lamp band and the pad's corner lenses are a separate glow layer, dark
@@ -19,11 +19,12 @@ namespace MoonProject.Art.Editor
         public const float PadTop = 0.012f;
 
         /// <summary>
-        /// 07's rest point in base space: its pivot on the pad. Home stands 12.81 m from the base pad's centre (the
-        /// lander at (-10, 0, 8) facing it, Gameplay's BaseTuning), so the centre, where 07 spawns, lies straight
-        /// ahead of the lander's front at that distance.
+        /// 07's rest point in base space: its pivot on the pad. The lander stands at (-10, 0, 8) facing the base pad's
+        /// centre (Gameplay's BaseTuning), and 07 spawns at (0, 0, -4.5) (Rover's SpawnSettings), out of the lander's
+        /// long earthlight shadow, which falls east across the pad 3 to 10 m north of the centre: that point, in the
+        /// lander's frame, ahead of its belly and right of its front.
         /// </summary>
-        public static readonly Vector3 Anchor = new Vector3(0f, PadTop, 12.81f);
+        public static readonly Vector3 Anchor = new Vector3(3.514f, PadTop, 15.617f);
 
         /// <summary>
         /// 07's heading on the dock in base space: Rover's spawn bearing 355° (RoverTuning) less the lander's own
