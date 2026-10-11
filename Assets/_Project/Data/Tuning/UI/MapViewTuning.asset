@@ -45,3 +45,8 @@ MonoBehaviour:
   _cardNameSize: 26
   _cardLineSize: 20
   _cardFadeSeconds: 0.35
+  _charger: {r: 0.66, g: 0.45, b: 0.22, a: 0.42}
+  _chargerWidth: 1.6
+  _linkWidth: 3.4
+  _linkLead: 80
+  _arrowSize: 22

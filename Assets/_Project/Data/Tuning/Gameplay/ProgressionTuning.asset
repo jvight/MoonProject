@@ -29,6 +29,7 @@ MonoBehaviour:
   _chasmLookSeconds: 3.5
   _bellLightBrightness: 0.8
   _eveningSweepDelay: 4.5
+  _eveningCompletionHold: 2
   _eveningPillarBrightness: 0.7
   _singleLetterMasts: 4
   _lettersAfter: 2
@@ -50,6 +51,19 @@ MonoBehaviour:
     _siteId: site.drill
     _anchorId: 
     _setback: 0
+  _techKits:
+  - _node: 4
+    _kitId: rover.hover_jump
+  - _node: 5
+    _kitId: rover.cargo_cradle
+  - _node: 6
+    _kitId: rover.warm_headlamp
+  - _node: 7
+    _kitId: rover.boost_coils
+  _recoveryLamps:
+    _peakFoot: 1
+    _dish: 4
+    _answer: 1
   _towerParts:
   - _partId: Part_TowerCoil
     _towerLevel: 1

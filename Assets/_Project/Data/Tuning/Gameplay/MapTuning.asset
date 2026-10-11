@@ -26,3 +26,4 @@ MonoBehaviour:
   _sightClearance: 0.5
   _inkLead: 1.4
   _inkSeconds: 0.6
+  _chargerRangeShare: 0.3
