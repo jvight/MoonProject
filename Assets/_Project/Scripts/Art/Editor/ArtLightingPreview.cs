@@ -270,6 +270,11 @@ namespace MoonProject.Art.Editor
                     case "home":
                         poses = HomeScene(temporary, true);
                         break;
+                    case "habitat_before":
+                    case "habitat":
+                    case "habitat_inside":
+                        poses = HabitatScene(temporary, scene != "habitat_before", scene == "habitat_inside");
+                        break;
                     case "homeclean":
                         poses = HomeScene(temporary, false);
                         break;
@@ -911,6 +916,107 @@ namespace MoonProject.Art.Editor
                     Point(kitted.TransformPoint(new Vector3(0f, 1.1f, 0.7f))), 45f),
             };
             return new CameraPoseSet { width = 1920, height = 1080, postProcessing = true, poses = poses.ToArray() };
+        }
+
+        /// <summary>
+        /// The M3-19 sketch for the owner (draft): Main.unity (never saved) with home awake. With
+        /// <paramref name="sketch"/> the Lander and the memory shelf are hidden and the habitat lander sketch stands in
+        /// the Lander's place, its porthole, corner, table and dock lamps lit; without it the real Lander stays, for
+        /// the "before" half of each pair. 07 stands where the game spawns it, and in the sketch a second 07 waits on
+        /// the lift platform: down under the belly, or (<paramref name="inside"/>) up in the cabin on the turntable,
+        /// facing Ines's map table, seen from the camera's ring rail with the cabin's warm lamps lit.
+        /// </summary>
+        private static CameraPoseSet HabitatScene(TemporaryObjects temporary, bool sketch, bool inside)
+        {
+            EditorSceneManager.OpenScene(CaptureAutomation.MainScenePath, OpenSceneMode.Single);
+            Transform spawn = SceneObject("[Rover]");
+            spawn.gameObject.SetActive(false);
+            TravellingRover(temporary, spawn.position, spawn.rotation, false);
+            Transform lander = SceneObject(BaseModelBuilder.LanderName);
+            SetGlow(lander, "Windows", new[] { string.Empty }, 1f);
+            SetGlow(lander, BaseModelBuilder.PanePrefix, new[] { "1", "2" }, 1f);
+            SetGlow(lander, "DockGlow", new[] { string.Empty }, 1f);
+            foreach (Transform socket in ParentsOf(lander, BaseModelBuilder.BulbName))
+            {
+                SetGlow(socket, BaseModelBuilder.BulbName, new[] { string.Empty }, 1f);
+            }
+
+            Transform tower = SceneObjectStartingWith(BaseModelBuilder.TowerPrefix);
+            SetGlow(tower, "Lights", new[] { string.Empty }, 1f);
+            var poses = new List<CameraPose>
+            {
+                new CameraPose { name = "owner_frame", position = new[] { 0.78f, 4f, -8.97f },
+                    euler = new[] { 6f, -5f, 0f }, fov = 60f },
+                Pose("ladder_side", Point(lander.TransformPoint(new Vector3(-11f, 3.2f, 13f))),
+                    Point(lander.TransformPoint(new Vector3(0f, 3.6f, 0f))), 50f),
+                Pose("base_from_150m", new[] { 56.19f, 5.2f, -139.08f }, new[] { 0f, 2.5f, 0f }, 50f),
+            };
+            if (!sketch)
+            {
+                return HabitatPoses(poses);
+            }
+
+            lander.gameObject.SetActive(false);
+            SceneObject(BaseModelBuilder.ShelfName).gameObject.SetActive(false);
+            Transform habitat = Instantiate(HabitatSketchBuilder.SketchName, temporary, ArtPaths.SketchFolder)
+                .transform;
+            habitat.SetPositionAndRotation(lander.position, lander.rotation);
+            foreach (string glow in new[] { "Portholes", "CornerLamps", "LightTableGlow", "DockGlow" })
+            {
+                SetGlow(habitat, glow, new[] { string.Empty }, 1f);
+            }
+
+            Transform platform = Descendant(habitat, HabitatSketchBuilder.PlatformName);
+            SetGlow(platform, "RimLamps", new[] { string.Empty }, 1f);
+            WarmLamp(temporary, habitat.TransformPoint(new Vector3(0f, 2.3f, 1.2f)), 2.2f, 5f);
+            if (!inside)
+            {
+                Transform spot = Descendant(platform, HabitatSketchBuilder.RoverSpotName);
+                TravellingRover(temporary, spot.position, habitat.rotation, false);
+                poses.Add(Pose("under_belly_on_lift", Point(habitat.TransformPoint(new Vector3(2.4f, 1.5f, 9.5f))),
+                    Point(habitat.TransformPoint(new Vector3(0f, 1.3f, 0f))), 50f));
+                return HabitatPoses(poses);
+            }
+
+            Descendant(habitat, HabitatSketchBuilder.FloorHatchName).gameObject.SetActive(false);
+            platform.localPosition = new Vector3(0f, HabitatSketchBuilder.PlatformUpY, 0f);
+            Quaternion toTable = habitat.rotation * Quaternion.Euler(0f, 90f, 0f);
+            TravellingRover(temporary, Descendant(platform, HabitatSketchBuilder.RoverSpotName).position, toTable,
+                false);
+            float floor = HabitatSketchBuilder.FloorY;
+            foreach (Vector3 lamp in new[]
+            {
+                new Vector3(1.6f, floor + 1.9f, 1.6f), new Vector3(-1.6f, floor + 1.9f, 1.6f),
+                new Vector3(-1.6f, floor + 1.9f, -1.6f), new Vector3(1.6f, floor + 1.9f, -1.6f),
+                new Vector3(2.4f, floor + 1.5f, 0f),
+            })
+            {
+                WarmLamp(temporary, habitat.TransformPoint(lamp), 1.6f, 3.2f);
+            }
+
+            float ring = HabitatSketchBuilder.RingRadius;
+            float rail = HabitatSketchBuilder.RingHeight;
+            return HabitatPoses(new List<CameraPose>
+            {
+                Pose("inside_ring_rail", Point(habitat.TransformPoint(new Vector3(-ring, rail, 0f))),
+                    Point(habitat.TransformPoint(new Vector3(2.7f, floor + 1f, 0f))), 55f),
+                Pose("inside_ring_rail_corner", Point(habitat.TransformPoint(new Vector3(-1.9f, rail, -1.9f))),
+                    Point(habitat.TransformPoint(new Vector3(2f, floor + 1.1f, 2f))), 55f),
+            });
+        }
+
+        private static CameraPoseSet HabitatPoses(List<CameraPose> poses)
+        {
+            return new CameraPoseSet { width = 1920, height = 1080, postProcessing = true, poses = poses.ToArray() };
+        }
+
+        /// <summary>A warm practical lamp (a point light) for a sketch scene.</summary>
+        private static void WarmLamp(TemporaryObjects temporary, Vector3 position, float intensity, float range)
+        {
+            Light lamp = NewLight("SketchLamp", LightType.Point, new Color(1f, 0.73f, 0.44f), intensity);
+            temporary.Add(lamp.gameObject);
+            lamp.range = range;
+            lamp.transform.position = position;
         }
 
         /// <summary>

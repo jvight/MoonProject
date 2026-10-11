@@ -37,6 +37,9 @@ namespace MoonProject.Art.Editor
         public const string SitesFolder = Root + "/Sites";
         public const string LandmarksFolder = Root + "/Landmarks";
 
+        /// <summary>Design sketches for the owner to see before a draft is adopted (never wired into the game).</summary>
+        public const string SketchFolder = Root + "/Sketch";
+
         /// <summary>
         /// The Lofi lit shader (M3-18 V2): URP's Blinn-Phong with no specular plus the palette emission map, a cool
         /// silhouette rim and the basin's air, SRP Batcher compatible.
