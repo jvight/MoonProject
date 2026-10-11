@@ -112,22 +112,22 @@ namespace MoonProject.Art.Tests
             Vector3 heading = anchor.LocalRotation * Vector3.forward;
             Assert.Less(heading.x, -0.5f, "07 rests looking out past the lander's left, toward Earth and the Peak");
             Matrix4x4 pose = Matrix4x4.TRS(anchor.LocalPosition + Vector3.up * Rest, anchor.LocalRotation, Vector3.one);
-            List<Vector3> rover = Posed(_rover, pose);
-            AssertClear(rover, Solid(_lander, string.Empty), "07 at the dock");
             float stageFront = HullPoints(PaletteSwatch.Honey).Where(p => p.y > 2f).Max(p => p.z);
+            List<Vector3> rover = Posed(_rover, pose);
             Assert.Greater(BoundsOf(rover, 0, rover.Count).min.z, stageFront + MassGap,
                 "the dock stands out on the apron, with open ground between it and the belly");
 
-            // In dock space 07 faces +Z: its contacts stand just ahead of its nose, at its own height.
+            // In dock space 07 faces +Z, square to the dock: the clearance boxes and the contacts are measured there.
             Matrix4x4 toDock = Matrix4x4.TRS(anchor.LocalPosition, anchor.LocalRotation, Vector3.one).inverse;
+            List<Vector3> docked = Posed(_rover, Matrix4x4.Translate(Vector3.up * Rest));
+            AssertClear(docked, Posed(Solid(_lander, string.Empty), toDock), "07 at the dock");
             List<Vector3> contacts = HullPoints(PaletteSwatch.Honey).Select(p => toDock.MultiplyPoint3x4(p))
                 .Where(p => Mathf.Abs(p.x) < ContactSpan && p.z > 0f && p.z < 1.2f).ToList();
             Assert.IsNotEmpty(contacts, "brass contacts on the dock");
-            List<Vector3> nose = Posed(_rover, Matrix4x4.Translate(Vector3.up * Rest));
             foreach (Vector3 contact in contacts)
             {
                 Assert.That(contact.y, Is.InRange(BodyBottom, BodyTop), "at 07's own height");
-                Assert.That(contact.z - NoseOf(nose, contact), Is.InRange(0f, ContactReach),
+                Assert.That(contact.z - NoseOf(docked, contact), Is.InRange(0f, ContactReach),
                     "the contacts reach 07");
             }
         }
