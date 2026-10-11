@@ -883,6 +883,174 @@
             "text": "Lit. Home reaches this far."
         },
         {
+            "key": "map.place.lander.name",
+            "text": "The Lander"
+        },
+        {
+            "key": "map.place.lander.note",
+            "text": "Home. Population: four, one rover, one very proud basil."
+        },
+        {
+            "key": "map.site.depot.name",
+            "text": "Supply Depot"
+        },
+        {
+            "key": "map.site.depot.note",
+            "text": "Spare everything. Mostly bolts."
+        },
+        {
+            "key": "map.site.kestrel.name",
+            "text": "Kestrel-3"
+        },
+        {
+            "key": "map.site.kestrel.note",
+            "text": "Poor thing. It came down still pointing at Earth."
+        },
+        {
+            "key": "map.trail.kestrel.name",
+            "text": "Kestrel's skid"
+        },
+        {
+            "key": "map.trail.kestrel.note",
+            "text": "I paced it. Twice."
+        },
+        {
+            "key": "map.site.drill.name",
+            "text": "Drill Rig"
+        },
+        {
+            "key": "map.site.drill.note",
+            "text": "My drill. Core 41 came from here, the blue one."
+        },
+        {
+            "key": "map.site.garage.name",
+            "text": "Kenji's Garage"
+        },
+        {
+            "key": "map.site.garage.note",
+            "text": "No entry without Kenji. Kenji: no entry without a helmet."
+        },
+        {
+            "key": "map.site.lander.name",
+            "text": "Canyon Supply Lander"
+        },
+        {
+            "key": "map.site.lander.note",
+            "text": "Brought Theo's seed trays. Landed… firmly."
+        },
+        {
+            "key": "map.friend.tilly.name",
+            "text": "Tilly's crater"
+        },
+        {
+            "key": "map.friend.tilly.note",
+            "text": "Where she sulks when I walk too fast."
+        },
+        {
+            "key": "map.relay.0.name",
+            "text": "Mound relay"
+        },
+        {
+            "key": "map.relay.0.note",
+            "text": "Ro calls it the little one."
+        },
+        {
+            "key": "map.relay.1.name",
+            "text": "Rim shoulder relay"
+        },
+        {
+            "key": "map.relay.1.note",
+            "text": "Longest shadows in the basin."
+        },
+        {
+            "key": "map.relay.2.name",
+            "text": "Canyon mouth relay"
+        },
+        {
+            "key": "map.relay.2.note",
+            "text": "Everything echoes here. Even the static."
+        },
+        {
+            "key": "map.relay.3.name",
+            "text": "Terminus relay"
+        },
+        {
+            "key": "map.relay.3.note",
+            "text": "Right above Ro's chamber. Of course."
+        },
+        {
+            "key": "map.canyon.mouth.name",
+            "text": "Whispering Canyon"
+        },
+        {
+            "key": "map.canyon.mouth.note",
+            "text": "Say something. It says it back, quieter."
+        },
+        {
+            "key": "map.canyon.lip.name",
+            "text": "The chasm"
+        },
+        {
+            "key": "map.canyon.lip.note",
+            "text": "Too wide to cross. Kenji says \"for now\"."
+        },
+        {
+            "key": "map.canyon.landing.name",
+            "text": "The far side"
+        },
+        {
+            "key": "map.canyon.landing.note",
+            "text": "Someone always leaves a light on over here."
+        },
+        {
+            "key": "map.canyon.ledge.name",
+            "text": "Ro's ledge"
+        },
+        {
+            "key": "map.canyon.ledge.note",
+            "text": "She comes here to hear herself sing back."
+        },
+        {
+            "key": "map.canyon.terminus.name",
+            "text": "Ro's chamber"
+        },
+        {
+            "key": "map.canyon.terminus.note",
+            "text": "Best acoustics on the Moon. Her words, not mine."
+        },
+        {
+            "key": "map.canyon.exit.name",
+            "text": "The way out"
+        },
+        {
+            "key": "map.canyon.exit.note",
+            "text": "One way only. Don't try it upwards."
+        },
+        {
+            "key": "map.region.peak.name",
+            "text": "The Peak"
+        },
+        {
+            "key": "map.region.peak.note",
+            "text": "The dish. Kenji's job, after the storm."
+        },
+        {
+            "key": "map.region.terraces.name",
+            "text": "The terraces"
+        },
+        {
+            "key": "map.region.terraces.note",
+            "text": "Too steep for wheels. Atlas parked up here?"
+        },
+        {
+            "key": "map.place.antenna_farm.name",
+            "text": "Ro's antennas"
+        },
+        {
+            "key": "map.place.antenna_farm.note",
+            "text": "They hum in a solar storm. Ro calls it the choir."
+        },
+        {
             "key": "ui.title.subtitle",
             "text": "a radio left on"
         },

@@ -883,6 +883,174 @@
             "text": "Đã sáng. Nhà vươn tới tận đây."
         },
         {
+            "key": "map.place.lander.name",
+            "text": "Tàu đổ bộ"
+        },
+        {
+            "key": "map.place.lander.note",
+            "text": "Nhà. Dân số: bốn người, một rover, một chậu húng quế rất tự hào."
+        },
+        {
+            "key": "map.site.depot.name",
+            "text": "Kho tiếp tế"
+        },
+        {
+            "key": "map.site.depot.note",
+            "text": "Đồ dự phòng đủ cả. Chủ yếu là bu-lông."
+        },
+        {
+            "key": "map.site.kestrel.name",
+            "text": "Kestrel-3"
+        },
+        {
+            "key": "map.site.kestrel.note",
+            "text": "Tội nghiệp. Lúc rơi xuống nó vẫn chĩa về Trái Đất."
+        },
+        {
+            "key": "map.trail.kestrel.name",
+            "text": "Vệt trượt của Kestrel"
+        },
+        {
+            "key": "map.trail.kestrel.note",
+            "text": "Tôi đã đi bộ đo nó. Hai lần."
+        },
+        {
+            "key": "map.site.drill.name",
+            "text": "Giàn khoan"
+        },
+        {
+            "key": "map.site.drill.note",
+            "text": "Máy khoan của tôi. Mẫu lõi 41 lấy ở đây, viên màu xanh."
+        },
+        {
+            "key": "map.site.garage.name",
+            "text": "Gara của Kenji"
+        },
+        {
+            "key": "map.site.garage.note",
+            "text": "Không vào nếu không có Kenji. Kenji: không vào nếu không đội mũ."
+        },
+        {
+            "key": "map.site.lander.name",
+            "text": "Tàu tiếp tế trong hẻm"
+        },
+        {
+            "key": "map.site.lander.note",
+            "text": "Chở khay hạt giống của Theo. Hạ cánh hơi… mạnh tay."
+        },
+        {
+            "key": "map.friend.tilly.name",
+            "text": "Hố của Tilly"
+        },
+        {
+            "key": "map.friend.tilly.note",
+            "text": "Chỗ con bé dỗi mỗi khi tôi đi nhanh quá."
+        },
+        {
+            "key": "map.relay.0.name",
+            "text": "Trạm trên gò"
+        },
+        {
+            "key": "map.relay.0.note",
+            "text": "Ro gọi nó là \"bé út\"."
+        },
+        {
+            "key": "map.relay.1.name",
+            "text": "Trạm vai vành hố"
+        },
+        {
+            "key": "map.relay.1.note",
+            "text": "Bóng đổ dài nhất lòng chảo."
+        },
+        {
+            "key": "map.relay.2.name",
+            "text": "Trạm miệng hẻm"
+        },
+        {
+            "key": "map.relay.2.note",
+            "text": "Ở đây cái gì cũng vang. Cả tiếng rè."
+        },
+        {
+            "key": "map.relay.3.name",
+            "text": "Trạm cuối hẻm"
+        },
+        {
+            "key": "map.relay.3.note",
+            "text": "Ngay trên căn phòng của Ro. Đương nhiên rồi."
+        },
+        {
+            "key": "map.canyon.mouth.name",
+            "text": "Hẻm Thì Thầm"
+        },
+        {
+            "key": "map.canyon.mouth.note",
+            "text": "Nói gì đó đi. Nó sẽ nói lại, nhỏ hơn."
+        },
+        {
+            "key": "map.canyon.lip.name",
+            "text": "Vực sâu"
+        },
+        {
+            "key": "map.canyon.lip.note",
+            "text": "Quá rộng để qua. Kenji bảo \"tạm thời thôi\"."
+        },
+        {
+            "key": "map.canyon.landing.name",
+            "text": "Bờ bên kia"
+        },
+        {
+            "key": "map.canyon.landing.note",
+            "text": "Bên này lúc nào cũng có người để đèn."
+        },
+        {
+            "key": "map.canyon.ledge.name",
+            "text": "Gờ đá của Ro"
+        },
+        {
+            "key": "map.canyon.ledge.note",
+            "text": "Cô ấy ra đây để nghe tiếng mình hát vọng lại."
+        },
+        {
+            "key": "map.canyon.terminus.name",
+            "text": "Căn phòng của Ro"
+        },
+        {
+            "key": "map.canyon.terminus.note",
+            "text": "Âm thanh hay nhất Mặt Trăng. Lời cô ấy, không phải của tôi."
+        },
+        {
+            "key": "map.canyon.exit.name",
+            "text": "Lối ra"
+        },
+        {
+            "key": "map.canyon.exit.note",
+            "text": "Chỉ đi một chiều. Đừng thử leo ngược lên."
+        },
+        {
+            "key": "map.region.peak.name",
+            "text": "Đỉnh núi"
+        },
+        {
+            "key": "map.region.peak.note",
+            "text": "Chảo ăng-ten. Việc của Kenji, sau cơn bão."
+        },
+        {
+            "key": "map.region.terraces.name",
+            "text": "Bậc thềm vành hố"
+        },
+        {
+            "key": "map.region.terraces.note",
+            "text": "Quá dốc cho bánh xe. Atlas đỗ ở trên này à?"
+        },
+        {
+            "key": "map.place.antenna_farm.name",
+            "text": "Rừng ăng-ten của Ro"
+        },
+        {
+            "key": "map.place.antenna_farm.note",
+            "text": "Gặp bão mặt trời là chúng ngân lên. Ro gọi đó là dàn đồng ca."
+        },
+        {
             "key": "ui.title.subtitle",
             "text": "một chiếc radio vẫn bật"
         },

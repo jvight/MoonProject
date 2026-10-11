@@ -5,8 +5,10 @@ using UnityEngine.UIElements;
 using MoonProject.Core;
 using MoonProject.Core.Events;
 using MoonProject.Core.Input;
+using MoonProject.Core.Map;
 using MoonProject.Core.Save;
 using MoonProject.Gameplay;
+using MoonProject.UI.Map;
 
 namespace MoonProject.UI
 {
@@ -38,6 +40,12 @@ namespace MoonProject.UI
 
         [Tooltip("String tables (Assets/_Project/Data/Localization), the primary language (en) first.")]
         [SerializeField] private TextAsset[] _stringTables = Array.Empty<TextAsset>();
+
+        [Tooltip("The crew's map geometry (Generated/World/Map/MapSheet.asset, docs/features/M3-07).")]
+        [SerializeField] private MapSheet _mapSheet;
+
+        [Tooltip("The crew's map view (Assets/_Project/Data/Tuning/UI/MapViewTuning.asset).")]
+        [SerializeField] private MapViewTuning _mapTuning;
 
         private readonly List<IDisposable> _tokens = new List<IDisposable>();
         private readonly JourneyNotice _journey = new JourneyNotice();
@@ -77,6 +85,9 @@ namespace MoonProject.UI
         private FriendNameTag _friendName;
         private PauseMenu _pause;
         private BackdropBlur _backdrop;
+        private IMapKnowledge _mapKnowledge;
+        private IStationReach _mapReach;
+        private MapView _map;
         private bool _composed;
         private bool _bound;
         private bool _awake;
@@ -134,6 +145,9 @@ namespace MoonProject.UI
 
         internal BackdropBlur Backdrop => _backdrop;
 
+        /// <summary>The crew's map view, or null when composed without the map's services (tests).</summary>
+        internal MapView Map => _map;
+
         internal NextLineView NextLine => _nextLine;
 
         internal UiLayout Layout => _layout;
@@ -153,6 +167,13 @@ namespace MoonProject.UI
             _stringTables = stringTables;
         }
 
+        /// <summary>The crew's map (docs/features/M3-07): its sheet and its view's tuning.</summary>
+        internal void WireMap(MapSheet sheet, MapViewTuning tuning)
+        {
+            _mapSheet = sheet;
+            _mapTuning = tuning;
+        }
+
         public void Initialize(GameContext context)
         {
             if (context == null)
@@ -160,7 +181,7 @@ namespace MoonProject.UI
                 throw new ArgumentNullException(nameof(context));
             }
 
-            if (!ValidateWiring())
+            if (!ValidateWiring() || !ResolveMap(context))
             {
                 return;
             }
@@ -181,6 +202,34 @@ namespace MoonProject.UI
             {
                 Compose(services);
             }
+        }
+
+        /// <summary>
+        /// The crew's map's services from Gameplay. A rig with neither the map's assets nor its knowledge composes
+        /// without the map (UI's own test rigs); half of it is a wiring error.
+        /// </summary>
+        private bool ResolveMap(GameContext context)
+        {
+            bool known = context.TryGet(out _mapKnowledge);
+            if (!known && _mapSheet == null && _mapTuning == null)
+            {
+                return true;
+            }
+
+            string problem = _mapSheet == null ? "the MapSheet is not assigned (run World/Map Sheet)."
+                : _mapSheet.Validate() != null ? "MapSheet " + _mapSheet.Validate()
+                : _mapTuning == null ? "MapViewTuning is not assigned (run UI/Map Tuning)."
+                : !known ? "no IMapKnowledge is registered (Gameplay's MapSystem)."
+                : !context.TryGet(out _mapReach) ? "no IStationReach is registered."
+                : null;
+            if (problem == null)
+            {
+                return true;
+            }
+
+            Debug.LogError($"{nameof(UISystem)}: {problem}", this);
+            enabled = false;
+            return false;
         }
 
         private bool ValidateWiring()
@@ -330,6 +379,12 @@ namespace MoonProject.UI
                 services.Events, _settings, services.Materials, services.Radio, services.Relays, services.Flow,
                 _numbers, _cursor, Quit);
             _backdrop = new BackdropBlur(transform, _tuning.Backdrop);
+            if (_mapKnowledge != null)
+            {
+                _map = new MapView(root.Q("pause"), _mapSheet, _mapTuning, _mapKnowledge, _mapReach, _localization,
+                    services.Events, services.Input);
+            }
+
             _bound = true;
             if (_titleWaiting)
             {
@@ -374,10 +429,12 @@ namespace MoonProject.UI
             }
 
             _pause.Tick(deltaTime);
-            _backdrop.Set(_pause.Openness);
             bool paused = _pause.IsOpen;
+            _map?.Tick(deltaTime, paused);
+            bool onMap = _map != null && _map.IsOpen;
+            _backdrop.Set(Mathf.Max(_pause.Openness, _map != null ? _map.Openness : 0f));
             float hudTime = paused ? 0f : deltaTime;
-            _hud.Set(!paused);
+            _hud.Set(!paused && !onMap);
             _hud.Tick(deltaTime);
             _stargaze.Tick(deltaTime);
             if (_awake)
@@ -735,6 +792,7 @@ namespace MoonProject.UI
                 _pause.RestoreTime();
                 _hopFade.Dispose();
                 _backdrop.Dispose();
+                _map?.Dispose();
             }
 
             _services.Input.Menu.Disable();
