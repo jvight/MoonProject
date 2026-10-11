@@ -51,6 +51,14 @@
             "text": "Ngước nhìn lên"
         },
         {
+            "key": "ui.hint.drive",
+            "text": "Lái đi"
+        },
+        {
+            "key": "glyph.keyboard.wasd",
+            "text": "WASD"
+        },
+        {
             "key": "glyph.mouse.move",
             "text": "Chuột"
         },
