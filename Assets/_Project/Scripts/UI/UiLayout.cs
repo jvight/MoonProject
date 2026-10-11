@@ -144,6 +144,7 @@ namespace MoonProject.UI
             PageNewGame = Require<VisualElement>("page-new-game");
             PageLanguage = Require<VisualElement>("page-language");
             TitleScreen = Require<VisualElement>("title-screen");
+            TitleWordmark = Require<VisualElement>("title-wordmark");
             Curtain = Require<VisualElement>("curtain");
             NewGameKeepButton = Require<Button>("button-new-game-keep");
             NewGameConfirmButton = Require<Button>("button-new-game-confirm");
@@ -400,6 +401,9 @@ namespace MoonProject.UI
 
         /// <summary>The title's wordmark and subtitle, shown while the pause menu is the title's.</summary>
         public VisualElement TitleScreen { get; }
+
+        /// <summary>The drawn Lunarion wordmark (WordmarkPainter) inside <see cref="TitleScreen"/>.</summary>
+        public VisualElement TitleWordmark { get; }
 
         /// <summary>A soft dark over everything, drawn before the scene reloads (New Game, Quit to title, Quit).</summary>
         public VisualElement Curtain { get; }
