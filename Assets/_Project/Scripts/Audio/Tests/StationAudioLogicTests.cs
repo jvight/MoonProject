@@ -73,6 +73,8 @@ namespace MoonProject.Audio.Tests
         [TestCase(LiftCue.WinchCreaked, "lift_winch_creak")]
         [TestCase(LiftCue.RideStarted, null)]
         [TestCase(LiftCue.RideStopped, "lift_stop_clunk")]
+        [TestCase(LiftCue.HatchOpened, "lift_hatch_open")]
+        [TestCase(LiftCue.HatchClosed, "lift_hatch_close")]
         public void EachLiftBeat_PlaysItsSound(LiftCue cue, string expected)
         {
             Assert.IsTrue(LiftSounds.TryGetOneShot(cue, out string id));

@@ -2096,6 +2096,32 @@ def bell_knob_tap(_variant, gen):
     return filters.lowpass(0.25 * tick / max(float(np.max(np.abs(tick))), 1e-9) + 0.3 * knock, 4000.0)
 
 
+# ---- The crew's belly lift (docs/features/M3-19) ----
+
+
+def lift_hatch_open(_variant, gen):
+    """The belly hatch's leaves sliding open over the rising platform: a soft rail rumble and an A3/A4 bell as they
+    part."""
+    n = samples(1.6)
+    slide = filters.lowpass(noise.brown(n, gen), 500.0)
+    slide = slide / max(float(np.std(slide)), 1e-9) * envelope.segments(
+        n, [(0.0, 0.0), (0.15, 1.0), (1.0, 0.6), (1.4, 0.0)], shape="smooth")
+    bell = instruments.soft_bell(note_freq("A3"), 1.6, decay=1.2, attack=0.03)[:n]
+    bell += 0.5 * instruments.soft_bell(note_freq("A4"), 1.6, decay=1.0, attack=0.04)[:n]
+    return filters.lowpass(0.05 * slide + 0.35 * bell, 3000.0)
+
+
+def lift_hatch_close(_variant, gen):
+    """The belly hatch's leaves sliding shut behind the lowered platform: the same rail rumble and a soft seat on D3."""
+    n = samples(1.4)
+    slide = filters.lowpass(noise.brown(n, gen), 450.0)
+    slide = slide / max(float(np.std(slide)), 1e-9) * envelope.segments(
+        n, [(0.0, 0.0), (0.1, 0.8), (0.8, 0.6), (1.0, 0.0)], shape="smooth")
+    seat = osc.sine(n, note_freq("D3"))
+    seat = seat * envelope.segments(n, [(0.0, 0.0), (0.82, 0.0), (0.84, 1.0), (1.4, 0.0)], shape="smooth")
+    return filters.lowpass(0.05 * slide + 0.3 * seat, 2500.0)
+
+
 # --------------------------------------------------------------------------------------------------- registry
 
 # ---- 07's wake through its own eye (docs/design/cutscenes.md section 1) ----
@@ -2477,6 +2503,10 @@ CUES = (
         notes="The lift reaching a stop: a deep padded clunk and a short cable settle."),
     Cue("plotter_draw", "stinger_2d", plotter_draw, volume=(0.55, 0.55), fade_out=0.1, milestone="M3",
         notes="Kenji's pen plotter drawing a sheet: soft pen scratches between carriage whirrs, ~3 s."),
+    Cue("lift_hatch_open", "oneshot_3d", lift_hatch_open, volume=(0.55, 0.55), fade_out=0.2, milestone="M3",
+        tonal=True, notes="The belly hatch sliding open over the rising platform: rail rumble + A3/A4 bell."),
+    Cue("lift_hatch_close", "oneshot_3d", lift_hatch_close, volume=(0.55, 0.55), fade_out=0.15, milestone="M3",
+        tonal=True, notes="The belly hatch sliding shut behind the lowered platform: rail rumble + soft D3 seat."),
     Cue("blueprint_found", "oneshot_3d", blueprint_found, volume=(0.5, 0.5), fade_out=0.2, milestone="M3",
         tonal=True, notes="A blueprint tube found: a tiny two-note glass chime, A5 then D6."),
     Cue("dock_evening_swell", "stinger_2d", dock_evening_swell, volume=(0.5, 0.5), fade_out=0.6, milestone="M3",
