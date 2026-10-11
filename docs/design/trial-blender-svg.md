@@ -75,12 +75,18 @@ than a Unity batch run.
    that two runs give identical bytes, and the Blender path in HANDOFF §4.
 
 ## The wordmark
-- `tools/blender/wordmark.py` sets "Lunarion" in `Assets/_Project/UI/Fonts/BeVietnamPro-Regular.ttf` (OFL), reads
-  the outlines back as cubic Beziers and writes them as SVG paths, kerns the L closer to the u, and replaces the i's
-  dot with a thin crescent drawn as two arcs. The preview is rendered from the written SVG files, imported back.
-- Files: `docs/design/lunarion-wordmark-on-dark.svg` (cream #F4E6C8 on the night sky, the title's version),
-  `lunarion-wordmark-on-light.svg` (charcoal on cream, for light pages), `lunarion-wordmark-preview.png`.
-- The crescent bulges left with its horns to the right and stands nearly upright. Tilted further, it read as an
-  apostrophe. Opening upward, it would read as a breve, as in Vietnamese "ă".
-- Open for the owner: Regular (calm, chosen) or Medium (sturdier over bloom); cream or amber crescent. Not
-  integrated into the title until approved.
+- **v1** (`lunarion-wordmark-on-dark.svg`, `-on-light.svg`, `-preview.png` on flat colour): Be Vietnam Pro Regular
+  outlines read back from Blender as cubic Beziers, the L kerned closer, the i's dot replaced by a thin crescent.
+  Director's review: the right palette and idea, but it still read like a stock geometric font.
+- **v2** (`tools/blender/wordmark.py`, current): letters are grouped by their columns and spaced by hand (L-u closed,
+  r-i opened); an ink-coloured round stroke (0.016 em, `stroke-linejoin="round"`) adds a little weight and softens
+  every terminal; the crescent is twice the dot (1.5x v1), lifted clear of the stem and turned so its lit side faces
+  up and left like Earth's lit limb in the title frame. A variant adds a thin orbit round the "o", left out where it
+  passes behind the letter.
+  - SVGs: `docs/design/lunarion-wordmark-v2-{on-dark,on-light,orbit-on-dark,orbit-on-light}.svg`.
+  - Over the real title frame (Main scene, the spawn_chase pose, with post): `lunarion-wordmark-v2-title.jpg` and
+    `lunarion-wordmark-v2-orbit-title.jpg`. They are composited by `tools/blender/wordmark_preview.py` from the same
+    outlines, with the spec's soft warm bloom, in the open sky right of Earth and clear of 07 and The Peak's beacon.
+- The crescent must not tilt into an apostrophe or open upward into a breve (the Vietnamese "ă").
+- Open for the owner: plain or orbit; cream or amber crescent. Not integrated into the title until approved; the
+  v1 files go once a version is chosen.
