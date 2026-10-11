@@ -572,12 +572,12 @@ namespace MoonProject.Gameplay.Lift
         }
 
         /// <summary>
-        /// The station that wants what 07 carries: a tube the reader (until the beam has fed it in), a relic the
-        /// shelf; else the chart.
+        /// The station that wants what 07 carries: a tube the reader (until it has decoded, so the reel's run and the
+        /// chime are seen), a relic the shelf; else the chart.
         /// </summary>
         private LabStation Wanted()
         {
-            if (_reader.Wants || _reader.Feeding)
+            if (_reader.Wants || _reader.Busy)
             {
                 return LabStation.Reader;
             }

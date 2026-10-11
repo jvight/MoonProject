@@ -53,6 +53,9 @@ namespace MoonProject.Gameplay.Lift
         /// <summary>07's beam is feeding a tube in: 07 stays until it is in.</summary>
         public bool Feeding => _decode.Phase == ReaderPhase.Feeding;
 
+        /// <summary>A tube is going in or decoding: the turntable stays on the reader until the moment is done.</summary>
+        public bool Busy => _decode.Phase != ReaderPhase.Idle;
+
         /// <summary>A tube rides on 07's back and the reader is free to take it.</summary>
         public bool Wants => _blueprints.IsCarrying && _decode.Phase == ReaderPhase.Idle;
 
