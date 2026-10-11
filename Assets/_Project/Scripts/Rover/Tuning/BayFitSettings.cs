@@ -76,6 +76,10 @@ namespace MoonProject.Rover
         [Range(-180f, 180f)]
         [SerializeField] private float _showRack;
 
+        [Tooltip("The battery spine: its flank to the open front.")]
+        [Range(-180f, 180f)]
+        [SerializeField] private float _showSpine = -90f;
+
         [Tooltip("The Hover-Jump coils: a flank to the open front.")]
         [Range(-180f, 180f)]
         [SerializeField] private float _showCoils = 90f;
@@ -123,6 +127,8 @@ namespace MoonProject.Rover
                     return _showRack;
                 case RoverKitPiece.HoverCoils:
                     return _showCoils;
+                case RoverKitPiece.BatterySpine:
+                    return _showSpine;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(piece), piece,
                         "Only crafted kit is fitted in the bay.");

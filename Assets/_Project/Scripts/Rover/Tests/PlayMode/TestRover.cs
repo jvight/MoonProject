@@ -285,6 +285,9 @@ namespace MoonProject.Rover.PlayModeTests
             Transform rack = Node("Kit_CargoRack", cargo, Vector3.zero);
             Shape(PrimitiveType.Cube, rack, new Vector3(0f, 0.02f, SeatBack), new Vector3(0.7f, 0.04f, 0.5f), material);
             Transform seat = Node(RoverModelNodes.RelicSeat, rack, new Vector3(0f, SeatHeight, SeatBack));
+            Transform spineSocket = Node(RoverModelNodes.SpineSocket, model, new Vector3(0.55f, 1.05f, -0.2f));
+            Transform spine = Node("Kit_BatterySpine", spineSocket, Vector3.zero);
+            Shape(PrimitiveType.Cube, spine, new Vector3(0f, 0.06f, 0f), new Vector3(0.1f, 0.12f, 0.42f), material);
             Transform cell = Shape(PrimitiveType.Cube, wing, new Vector3(0.1f, 0.02f, -0.1f),
                 new Vector3(0.15f, 0.01f, 0.15f), material);
             cell.name = RoverModelNodes.CellFilled;
@@ -328,6 +331,7 @@ namespace MoonProject.Rover.PlayModeTests
             Assign(rig, ("_tuning", rigTuning), ("_chassis", chassis), ("_bogieLeft", bogieLeft),
                 ("_bogieRight", bogieRight), ("_antenna", antenna));
             Assign(kit, ("_tuning", rigTuning), ("_headlamp", headlamp), ("_lampBar", lampBar), ("_cargoRack", rack),
+                ("_spine", spine),
                 ("_relicSeat", seat), ("_solarCell", cell), ("_freshSerial", serial), ("_pennant", pennant),
                 ("_tube", tube));
             AssignArray(kit, "_lamps", lamps);

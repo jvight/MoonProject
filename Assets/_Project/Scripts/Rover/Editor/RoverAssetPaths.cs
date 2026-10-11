@@ -12,6 +12,7 @@ namespace MoonProject.Rover.Editor
         /// <summary>The art box's visible kit (M3-11), each parented to its RoverModel socket. Required.</summary>
         public const string KitLampBar = "Assets/_Project/Generated/Art/Rover/Kit_LampBar.prefab";
         public const string KitCapacitorDrum = "Assets/_Project/Generated/Art/Rover/Kit_CapacitorDrum.prefab";
+        public const string KitBatterySpine = "Assets/_Project/Generated/Art/Rover/Kit_BatterySpine.prefab";
         public const string KitCargoRack = "Assets/_Project/Generated/Art/Rover/Kit_CargoRack.prefab";
         public const string BlueprintTube = "Assets/_Project/Generated/Art/Pickups/BlueprintTube.prefab";
 

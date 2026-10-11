@@ -44,6 +44,9 @@ namespace MoonProject.Rover
         public const string DrumSocketRight = "DrumSocket_R";
         public const string TubeSocket = "TubeSocket";
 
+        /// <summary>Where Cell Pack II's battery spine stands on the lid's right edge (docs/features/M3-20).</summary>
+        public const string SpineSocket = "SpineSocket";
+
         /// <summary>Friend gifts on RoverModel, hidden until given (SolarWing/, Body/ and Antenna/ children).</summary>
         public const string CellFilled = "CellFilled";
         public const string Decal07Fresh = "Decal07Fresh";
