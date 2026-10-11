@@ -11,7 +11,9 @@ namespace MoonProject.World
     /// alcoves, terminus and the top of its one-way exit, the four relay masts of the station-reach network
     /// (M3-06: relay.0..3, whose Forward points home; relay.0 stands in the spawn first frame) and the five salvage
     /// sites (M3-13: site.depot, site.kestrel, site.drill, site.garage, site.lander) with trail.kestrel, the
-    /// home-side end of Kestrel-3's debris furrow. Every radius is flat, drivable, uncluttered ground.
+    /// home-side end of Kestrel-3's debris furrow, the crew's antenna farm, and the crew map's two places beyond
+    /// the rim (M3-07: region.peak on The Peak's summit plateau, region.terraces at the foot of the rim terraces).
+    /// Every radius is flat, drivable, uncluttered ground, except The Peak's (its summit plateau).
     /// <para>
     /// Forward is the way 07 travels when arriving into the space, so content faces -Forward to greet it: into the
     /// canyon at the mouth and the landing, across the chasm at the lip, into the bay at the ledge and into each
@@ -58,6 +60,12 @@ namespace MoonProject.World
         private const float AntennaFarmBearing = 270f;
         private const float AntennaFarmDistance = 120f;
         private const float AntennaFarmRadius = 6f;
+
+        // The rim terraces (0.6's region, docs/features/M3-07 step 3) rise in the empty south-west quadrant; their
+        // anchor is the last drivable floor at their foot, where the dock's evening raises 0.5's last pillar.
+        private const float TerracesBearing = 225f;
+        private const float TerracesRadius = 6f;
+        private const float TerracesSearchStep = 1f;
 
         private readonly WorldAnchor[] _anchors;
         private readonly Dictionary<string, int> _byId = new Dictionary<string, int>(StringComparer.Ordinal);
@@ -136,6 +144,10 @@ namespace MoonProject.World
             anchors.Add(Make(surface, Lander, main.PointAt(bayArc) + intoBay * bayLateral, intoBay, LanderRadius));
             Vector2 farm = MoonSurface.BearingToDirection(AntennaFarmBearing) * AntennaFarmDistance;
             anchors.Add(Make(surface, WorldAnchorIds.PlaceAntennaFarm, farm, farm, AntennaFarmRadius));
+            var summit = new Vector2(surface.PeakSummit.x, surface.PeakSummit.z);
+            anchors.Add(Make(surface, WorldAnchorIds.RegionPeak, summit, summit, surface.SummitRadius));
+            Vector2 up = MoonSurface.BearingToDirection(TerracesBearing);
+            anchors.Add(Make(surface, WorldAnchorIds.RegionTerraces, TerracesFoot(surface, up), up, TerracesRadius));
 
             _anchors = anchors.ToArray();
             for (int i = 0; i < _anchors.Length; i++)
@@ -169,6 +181,27 @@ namespace MoonProject.World
 
             anchor = default;
             return false;
+        }
+
+        /// <summary>
+        /// The centre of a <see cref="TerracesRadius"/> disc of floor at the foot of the rim wall along
+        /// <paramref name="up"/>: the last drivable point walking out from the basin floor, pulled back by the radius.
+        /// </summary>
+        private static Vector2 TerracesFoot(MoonSurface surface, Vector2 up)
+        {
+            float last = 0f;
+            for (float r = 0f; r <= surface.CrestRadius; r += TerracesSearchStep)
+            {
+                Vector2 point = up * r;
+                if (!surface.IsDrivable(point.x, point.y))
+                {
+                    break;
+                }
+
+                last = r;
+            }
+
+            return up * Mathf.Max(0f, last - TerracesRadius);
         }
 
         /// <summary>A shaped site footprint on the basin floor, facing on from home.</summary>

@@ -94,6 +94,8 @@ namespace MoonProject.World.Tests
 
             expected.Add(WorldAnchorIds.KestrelTrail);
             expected.Add(WorldAnchorIds.PlaceAntennaFarm);
+            expected.Add(WorldAnchorIds.RegionPeak);
+            expected.Add(WorldAnchorIds.RegionTerraces);
 
             Assert.AreEqual(expected.Count, _anchors.Count);
             var seen = new HashSet<string>();
@@ -135,6 +137,12 @@ namespace MoonProject.World.Tests
             for (int i = 0; i < _anchors.Count; i++)
             {
                 WorldAnchor anchor = _anchors.Get(i);
+                if (anchor.Id == WorldAnchorIds.RegionPeak)
+                {
+                    // The Peak's summit plateau is seen and pencilled, never driven (M3-07 step 3).
+                    continue;
+                }
+
                 foreach (float fraction in new[] { 0f, 0.5f, 1f })
                 {
                     for (int k = 0; k < RingDirections; k++)
