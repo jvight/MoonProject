@@ -2086,6 +2086,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             float partAway = SurfaceRules.HorizontalDistance(mast.PartRest, mast.Anchor.Position);
             yield return DriveTo(Flat(mast.PartRest), 1.5f, 0.7f, 120f, name + "'s part");
             yield return Until(() => mast.PartState == RelayPartState.Held, 8f, "the relay part flies into 07");
+            yield return AroundToTheFront(mast, name);
             Vector3 foot = mast.Broken.PartSocket.position + mast.Anchor.Forward * RelayFoot;
             yield return DriveTo(Flat(foot), 1.2f, 0.5f, 60f, name + "'s foot");
             yield return Until(() => _gameplay.Hints.TryGet(InteractionKind.Restore, out InteractionHint hint) &&
@@ -2098,6 +2099,27 @@ namespace MoonProject.Gameplay.PlayModeTests
                 name + " comes online, linked home");
             Assert.AreEqual(mast.Id, _events.RelayRestored[_events.RelayRestored.Count - 1].Value.RelayId);
             End($"Restore {name} ({mast.Id})", $"recipe {recipe}, its part {partAway:F0} m from the mast");
+        }
+
+        /// <summary>
+        /// From behind a mast (its part lay there), 07 swings out to the mast's side, on its own side of it, and on round
+        /// to the front of the pad, clear of the footing, the cabinet and the guy wires.
+        /// </summary>
+        private IEnumerator AroundToTheFront(RelayMast mast, string name)
+        {
+            Vector3 forward = Flat(mast.Anchor.Forward).normalized;
+            Vector3 fromMast = Flat(_rover.Position - mast.Anchor.Position);
+            if (Vector3.Dot(fromMast, forward) >= RelayFoot)
+            {
+                yield break;
+            }
+
+            Vector3 side = Vector3.Cross(Vector3.up, forward);
+            side *= Vector3.Dot(fromMast, side) < 0f ? -1f : 1f;
+            yield return DriveTo(Flat(mast.Anchor.Position + side * RelayAside), WaypointArrive, CanyonThrottle, 60f,
+                "the side of " + name);
+            yield return DriveTo(Flat(mast.Anchor.Position + (side + forward) * RelayAside * 0.5f), WaypointArrive,
+                CanyonThrottle, 60f, "the front of " + name + "'s pad");
         }
 
         /// <summary>
