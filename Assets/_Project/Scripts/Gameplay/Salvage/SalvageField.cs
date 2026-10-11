@@ -41,6 +41,7 @@ namespace MoonProject.Gameplay
         private readonly List<SalvageDrag> _drags = new List<SalvageDrag>();
         private EventBus _events;
         private InputReader _input;
+        private BeamWork _beamWork;
         private IRoverState _rover;
         private IRoverRig _rig;
         private IViewCamera _view;
@@ -131,6 +132,7 @@ namespace MoonProject.Gameplay
 
             _events = services.Events;
             _input = services.Input;
+            _beamWork = services.Beam;
             _rover = services.Rover;
             _rig = services.Rig;
             _view = services.View;
@@ -390,7 +392,7 @@ namespace MoonProject.Gameplay
         private void UpdateCut(float now, float deltaTime)
         {
             Candidate = _excavation.Lifting != null ? null : FindCandidate();
-            bool wantsBeam = _input.ExcavateHeld && Candidate != null;
+            bool wantsBeam = _input.ExcavateHeld && Candidate != null && (_cutting != null || _beamWork.MayStart);
             SetHold(wantsBeam);
             float engageSpeed = _cutting != null ? _tuning.EngageSpeed * _tuning.EngageHysteresis : _tuning.EngageSpeed;
             bool engaged = wantsBeam && _rover.Speed <= engageSpeed;
@@ -407,6 +409,7 @@ namespace MoonProject.Gameplay
             if (_cutting != null)
             {
                 StepCut(_cutting, deltaTime);
+                _beamWork.Work(deltaTime);
             }
 
             UpdateBeam(now, deltaTime);
