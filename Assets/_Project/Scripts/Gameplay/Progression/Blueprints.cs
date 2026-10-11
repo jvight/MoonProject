@@ -7,14 +7,15 @@ using MoonProject.Core.Events;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// The crew's blueprints (docs/features/M3-16 "Blueprints", M3-19 §5): the bay's kits are buildable only once
-    /// their tube is decoded. One kit's sheet is known from the start (Kenji left it); each other kit's tube lies in a
-    /// salvage site's heart and is found with the heart's relic (<see cref="RelicSurfaced"/>, publishing
-    /// <see cref="BlueprintFound"/>). The tube rides home on 07's back and up the belly lift to the lab's reader,
-    /// which takes it (<see cref="Take"/>, publishing <see cref="BlueprintDelivered"/>) and decodes it
-    /// (<see cref="Decode"/>, publishing <see cref="FindDecoded"/>): the kit is pinned. Kenji's plotter in the bay
-    /// then draws the sheet (<see cref="MarkDrawn"/>). Ids that are not kits of the board (the radio tower) are always
-    /// buildable.
+    /// The crew's blueprints (docs/features/M3-16 "Blueprints", M3-19 §5, M3-21 §4): the bay's kits are buildable only
+    /// once their tube is decoded. A kit's tube lies in a salvage site's heart and is found with the heart's relic
+    /// (<see cref="RelicSurfaced"/>), or in a relay mast's service cabinet, found as the restored mast straightens
+    /// (<see cref="RelayCued"/>), or waits on the ground at a world anchor until 07 drives through it
+    /// (<see cref="PickUp"/>); either way <see cref="BlueprintFound"/> is published. The tube rides home on 07's back
+    /// and up the belly lift to the lab's reader, which takes it (<see cref="Take"/>, publishing
+    /// <see cref="BlueprintDelivered"/>) and decodes it (<see cref="Decode"/>, publishing <see cref="FindDecoded"/>):
+    /// the kit is pinned. Kenji's plotter in the bay then draws the sheet (<see cref="MarkDrawn"/>). Ids that are not
+    /// kits of the board (the radio tower) are always buildable.
     /// </summary>
     public sealed class Blueprints : IBlueprintBoard, IDisposable
     {
@@ -25,44 +26,41 @@ namespace MoonProject.Gameplay
         private readonly List<string> _carried = new List<string>();
         private readonly List<string> _reading = new List<string>();
         private readonly Dictionary<string, string> _kitAtSite = new Dictionary<string, string>(StringComparer.Ordinal);
+        private readonly List<string> _tubeKits = new List<string>();
         private readonly Func<string, string> _siteOfRelic;
-        private readonly string _fromStart;
         private readonly IDisposable _surfaced;
         private readonly IDisposable _restored;
 
         /// <param name="kits">Every kit the bay builds.</param>
-        /// <param name="fromStart">The kit pinned from the start.</param>
         /// <param name="tubes">
-        /// Where the other kits' tubes lie: a salvage site (found as its heart's relic surfaces) or a relay mast (found
-        /// in its service cabinet as the restored mast straightens, <see cref="RelayCued"/>, linked home or not).
+        /// Where the kits' tubes lie, one tube per kit: a salvage site (found as its heart's relic surfaces), a relay mast
+        /// (found in its service cabinet as the restored mast straightens, <see cref="RelayCued"/>, linked home or not)
+        /// or a world anchor.
         /// </param>
         /// <param name="siteOfRelic">The salvage site whose heart held a relic (by relic id), or null.</param>
-        public Blueprints(EventBus events, IEnumerable<string> kits, string fromStart, IEnumerable<BlueprintTube> tubes,
+        public Blueprints(EventBus events, IEnumerable<string> kits, IEnumerable<BlueprintTube> tubes,
             Func<string, string> siteOfRelic)
         {
             _events = events ?? throw new ArgumentNullException(nameof(events));
             _siteOfRelic = siteOfRelic ?? throw new ArgumentNullException(nameof(siteOfRelic));
             _kits.UnionWith(kits ?? throw new ArgumentNullException(nameof(kits)));
-            if (!_kits.Contains(fromStart))
-            {
-                throw new ArgumentException($"'{fromStart}' is not a kit of the bay.", nameof(fromStart));
-            }
-
             foreach (BlueprintTube tube in tubes ?? throw new ArgumentNullException(nameof(tubes)))
             {
-                if (!_kits.Contains(tube.KitId) || tube.KitId == fromStart || string.IsNullOrEmpty(tube.SiteId) ||
-                    _kitAtSite.ContainsKey(tube.SiteId))
+                bool inHeart = !string.IsNullOrEmpty(tube.SiteId);
+                if (!_kits.Contains(tube.KitId) || _tubeKits.Contains(tube.KitId) || inHeart == tube.IsAtAnchor ||
+                    inHeart && _kitAtSite.ContainsKey(tube.SiteId))
                 {
-                    throw new ArgumentException($"Blueprint tube '{tube.KitId}' at '{tube.SiteId}' is not a kit of " +
-                                                "the bay found elsewhere, or its site already holds a tube.",
-                        nameof(tubes));
+                    throw new ArgumentException($"Blueprint tube '{tube.KitId}' is not one tube of a kit of the bay, " +
+                                                "in one site's heart or at one world anchor.", nameof(tubes));
                 }
 
-                _kitAtSite.Add(tube.SiteId, tube.KitId);
+                _tubeKits.Add(tube.KitId);
+                if (inHeart)
+                {
+                    _kitAtSite.Add(tube.SiteId, tube.KitId);
+                }
             }
 
-            _fromStart = fromStart;
-            ResetKnown();
             _surfaced = events.Subscribe<RelicSurfaced>(OnSurfaced);
             _restored = events.Subscribe<RelayCued>(OnRelayCued);
         }
@@ -81,18 +79,46 @@ namespace MoonProject.Gameplay
         /// <summary>The kit of the tube the reader would take next (null when 07 carries none).</summary>
         public string NextCarried => _carried.Count > 0 ? _carried[0] : null;
 
-        /// <summary>The reader has decoded at least one found tube (Kenji's sheet from the start aside).</summary>
-        public bool AnyDecoded => _pinned.Count > 1;
+        /// <summary>The reader has decoded at least one found tube.</summary>
+        public bool AnyDecoded => _pinned.Count > 0;
 
         /// <summary>The reader holds a tube it has taken but not finished decoding (null when none).</summary>
         public string Reading => _reading.Count > 0 ? _reading[0] : null;
 
+        /// <summary>True once the reader has decoded <paramref name="kitId"/>'s tube (false for a non-kit).</summary>
+        public bool IsDecoded(string kitId)
+        {
+            return _pinned.Contains(kitId);
+        }
+
         /// <summary>
-        /// True when <paramref name="kitId"/>'s sheet hangs in the bay (drawn by the plotter, or Kenji's).
+        /// True while <paramref name="kitId"/>'s tube still waits to be found: not on 07, in the reader or decoded.
         /// </summary>
+        public bool IsWaiting(string kitId)
+        {
+            return _tubeKits.Contains(kitId) && !_pinned.Contains(kitId) && !_carried.Contains(kitId) &&
+                   !_reading.Contains(kitId);
+        }
+
+        /// <summary>True when <paramref name="kitId"/>'s sheet hangs in the bay (drawn by the plotter).</summary>
         public bool IsDrawn(string kitId)
         {
             return _drawn.Contains(kitId);
+        }
+
+        /// <summary>
+        /// 07 drove through <paramref name="kitId"/>'s tube waiting at world anchor <paramref name="anchorId"/>: it
+        /// rides on 07's back from now on (<see cref="BlueprintFound"/>). Does nothing once the tube was found.
+        /// </summary>
+        public void PickUp(string kitId, string anchorId, Vector3 position)
+        {
+            if (!IsWaiting(kitId))
+            {
+                return;
+            }
+
+            _carried.Add(kitId);
+            _events.Publish(new BlueprintFound(kitId, anchorId, position));
         }
 
         /// <summary>
@@ -165,12 +191,13 @@ namespace MoonProject.Gameplay
         /// <summary>Puts a loaded game's blueprints back silently; unknown ids are ignored.</summary>
         public void Restore(BlueprintsSaveData data)
         {
-            ResetKnown();
+            _pinned.Clear();
+            _drawn.Clear();
             _carried.Clear();
             _reading.Clear();
             foreach (string kit in data.found ?? Array.Empty<string>())
             {
-                if (_kitAtSite.ContainsValue(kit))
+                if (_tubeKits.Contains(kit))
                 {
                     _pinned.Add(kit);
                 }
@@ -203,19 +230,11 @@ namespace MoonProject.Gameplay
             _restored.Dispose();
         }
 
-        private void ResetKnown()
-        {
-            _pinned.Clear();
-            _drawn.Clear();
-            _pinned.Add(_fromStart);
-            _drawn.Add(_fromStart);
-        }
-
-        /// <summary>The found kits (not Kenji's from the start) among <paramref name="kits"/>.</summary>
+        /// <summary>The tubes' kits among <paramref name="kits"/>, in the tubes' order.</summary>
         private string[] Found(HashSet<string> kits)
         {
             var found = new List<string>();
-            foreach (string kit in _kitAtSite.Values)
+            foreach (string kit in _tubeKits)
             {
                 if (kits.Contains(kit))
                 {
@@ -230,8 +249,7 @@ namespace MoonProject.Gameplay
         {
             foreach (string kit in saved ?? Array.Empty<string>())
             {
-                if (_kitAtSite.ContainsValue(kit) && !_pinned.Contains(kit) && !_carried.Contains(kit) &&
-                    !_reading.Contains(kit))
+                if (IsWaiting(kit))
                 {
                     into.Add(kit);
                 }
@@ -255,8 +273,7 @@ namespace MoonProject.Gameplay
         /// <summary>The tube kept at <paramref name="site"/>, if any and not yet found, rides home on 07's back.</summary>
         private void Find(string site, Vector3 position)
         {
-            if (site == null || !_kitAtSite.TryGetValue(site, out string kit) || _pinned.Contains(kit) ||
-                _carried.Contains(kit) || _reading.Contains(kit))
+            if (site == null || !_kitAtSite.TryGetValue(site, out string kit) || !IsWaiting(kit))
             {
                 return;
             }

@@ -706,14 +706,14 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
-    /// 07 picked up one of the tower's story parts (docs/features/M3-16 P1): the part tower level
+    /// 07 picked up one of the tower's components (docs/features/M3-16 P1, M3-21 §6): the component tower level
     /// <see cref="TowerLevel"/> needs besides materials. <see cref="PartId"/> is Art's model name (Part_TowerCoil,
-    /// Part_Transformer, Part_RelaySpare). It rides on 07's back until <see cref="StoryPartDelivered"/>. Restored is
+    /// Part_Transformer, Part_RelaySpare). It rides on 07's back until <see cref="ComponentDelivered"/>. Restored is
     /// true when a loaded game puts it back on 07 (once, after the save is applied): shown at once, no ride-in.
     /// </summary>
-    public readonly struct StoryPartFound
+    public readonly struct ComponentFound
     {
-        public StoryPartFound(string partId, int towerLevel, Vector3 position, bool restored)
+        public ComponentFound(string partId, int towerLevel, Vector3 position, bool restored)
         {
             PartId = partId;
             TowerLevel = towerLevel;
@@ -732,13 +732,13 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
-    /// 07 handed story part <see cref="PartId"/> to the tower's port hopper at <see cref="Position"/>
+    /// 07 handed component <see cref="PartId"/> to the tower's port hopper at <see cref="Position"/>
     /// (docs/features/M3-16 P1): it leaves 07's back and glides in, and tower level <see cref="TowerLevel"/> can now be
     /// built.
     /// </summary>
-    public readonly struct StoryPartDelivered
+    public readonly struct ComponentDelivered
     {
-        public StoryPartDelivered(string partId, int towerLevel, Vector3 position)
+        public ComponentDelivered(string partId, int towerLevel, Vector3 position)
         {
             PartId = partId;
             TowerLevel = towerLevel;
@@ -760,12 +760,19 @@ namespace MoonProject.Core.Events
     /// </summary>
     public readonly struct DockEveningOpened
     {
-        public DockEveningOpened(Vector3 dockPosition)
+        public DockEveningOpened(Vector3 dockPosition, float towerHold = 0f)
         {
             DockPosition = dockPosition;
+            TowerHold = towerHold;
         }
 
         public Vector3 DockPosition { get; }
+
+        /// <summary>
+        /// Seconds the wide shot rests on the tower beyond its usual hold: above zero on the first evening after a
+        /// recovery row completed (docs/features/M3-21 §2); the tower's sweep waits as long.
+        /// </summary>
+        public float TowerHold { get; }
     }
 
     /// <summary>
@@ -784,7 +791,10 @@ namespace MoonProject.Core.Events
 
         public string KitId { get; }
 
-        /// <summary>The salvage site whose heart held the tube ("site.garage", ...).</summary>
+        /// <summary>
+        /// The salvage site whose heart held the tube ("site.garage", ...), or the world anchor it lay at
+        /// ("canyon.lip").
+        /// </summary>
         public string SiteId { get; }
 
         public Vector3 Position { get; }

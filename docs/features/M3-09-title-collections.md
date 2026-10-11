@@ -3,7 +3,7 @@
 > **Approved by the Director on 2026-10-11** (drafted by the game design and story & flow sessions).
 > ROADMAP 0.5: "title screen (New Game / Continue / Settings), collections shown at the base".
 > Today:
-> - the game opens straight into play, with a "Lofi Lunar" wordmark drifting in over the wake (`UI/Hud/TitleCard`,
+> - the game opens straight into play, with a "Lunarion" wordmark (the game was "Lofi Lunar" until 2026-10-11) drifting in over the wake (`UI/Hud/TitleCard`,
 >   `ui-captures/01_title`);
 > - New Game lives in the pause menu (`NewGameRequested`, `ISaveService.PutAway`);
 > - collection counts sit in the pause card (`12_pause`).
@@ -45,7 +45,7 @@ their own base, windows lit as they left them. A new player sees the dark base a
 
 ### The title treatment
 The current wordmark is evenly spaced type with a thin rule: tidy, but anonymous. Proposal:
-- "Lofi Lunar" in Be Vietnam Pro, with one small diegetic touch: a thin crescent drawn as the dot of the "i". It is
+- "Lunarion" in Be Vietnam Pro, with one small diegetic touch: a thin crescent drawn as the dot of the "i". It is
   the only ornament.
 - Cream (#F4E6C8) with a very soft warm bloom. It sits in the sky area, never over 07.
 - A one-line subtitle under it in small caps, localized: "a radio left on" / "một chiếc radio vẫn bật".

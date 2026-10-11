@@ -194,7 +194,7 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual(0, _rig.Fakes.Purchases, "nothing is bought without the coil");
             Assert.IsFalse(_rig.Ui.Tower.IsWorking);
             Assert.AreEqual("The tower is waiting for its coil.", _rig.Ui.Layout.TowerHoldWord.text);
-            Assert.AreEqual(Text(UiKeys.UpgradeNeedsPart("radio_tower", 1)), _rig.Ui.Layout.TowerHoldWord.text);
+            Assert.AreEqual(Text(UiKeys.ComponentNeeded("Part_TowerCoil")), _rig.Ui.Layout.TowerHoldWord.text);
 
             _rig.Fakes.AwaitingPart = false;
             Press(keyboard.eKey);

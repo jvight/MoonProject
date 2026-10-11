@@ -1,4 +1,4 @@
-# MoonProject — "Lofi Lunar" agent handbook
+# MoonProject — "Lunarion" agent handbook
 
 Cozy low-poly lunar rover game (Unity 6000.0.78f1 LTS, URP). Read before doing anything:
 - `docs/VISION.md` — creative direction, feel pillars, palette, feel checklist

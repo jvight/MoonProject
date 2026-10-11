@@ -1,4 +1,4 @@
-# Lofi Lunar — Checklists
+# Lunarion — Checklists
 
 ## Before merging to main
 Run on the box branch with current `main` merged in, from the box's worktree (never the main project). Every step must

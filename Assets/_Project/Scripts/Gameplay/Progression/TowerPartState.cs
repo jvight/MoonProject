@@ -1,6 +1,6 @@
 namespace MoonProject.Gameplay
 {
-    /// <summary>Where a tower story part is in its journey (docs/features/M3-16 P1).</summary>
+    /// <summary>Where a tower component is in its journey (docs/features/M3-16 P1).</summary>
     public enum TowerPartState
     {
         /// <summary>Where it lies, not yet picked up.</summary>

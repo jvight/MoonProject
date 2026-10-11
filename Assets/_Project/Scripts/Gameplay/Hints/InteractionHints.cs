@@ -25,7 +25,7 @@ namespace MoonProject.Gameplay
         private readonly HomeBase _home;
         private readonly IUpgradeStation[] _stations;
         private readonly UpgradeService _upgrades;
-        private readonly IStoryPartGate _parts;
+        private readonly IComponentGate _parts;
         private readonly FriendField _friends;
         private readonly RelayField _relays;
         private readonly BeamWork _beam;
@@ -35,7 +35,7 @@ namespace MoonProject.Gameplay
         /// </param>
         public InteractionHints(IRoverState rover, SonarSystem sonar, ExcavationSystem excavation,
             SalvageField salvage, TetherSystem tether, CargoCradle cradle, HomeBase home, IUpgradeStation[] stations,
-            UpgradeService upgrades, IStoryPartGate parts, FriendField friends, RelayField relays, BeamWork beam)
+            UpgradeService upgrades, IComponentGate parts, FriendField friends, RelayField relays, BeamWork beam)
         {
             _rover = rover ?? throw new ArgumentNullException(nameof(rover));
             _sonar = sonar != null ? sonar : throw new ArgumentNullException(nameof(sonar));

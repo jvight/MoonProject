@@ -34,27 +34,30 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// blueprint, and tow it home, where the jammed belly lift asks for its stitch (M3-19): stitch it from beside it,
     /// ride up with the duck beside 07, let the lab's reader decode the Cradle's tube (its hand-off pulse waits at the
     /// sleeping bay) and place the duck on the keepsake shelf: the first memory (step 4), then ride down facing out.
-    /// Tilly spots Bell's light across the chasm (P2): drive to the lip, look across with no way over, then back to the
-    /// garage, where the transformer now shows. Find the Rover Bay still asleep (no pad, no prompt, a "not yet" answer
-    /// to a ping), hand in the transformer and craft tower level 2 to wake it (its plotter draws the Cradle's waiting
-    /// sheet), find that holding Jump does nothing yet, craft Hover-Jump in the bay through the same hold and the Cargo
-    /// Cradle from its new blueprint, dig the walkman from the garage, lift it into the rack with the tether button,
-    /// drive home, ride the lift up and set it down on the keepsake shelf from the rack, and take the first leap. Then
-    /// Bell (M3-04/05): drive up the mouth lane, leap the chasm, find her lying at the terminus with Ro's log cache and
-    /// her tape, gather her three parts from the alcoves, repair her (the tape slides in, her dial wakes, she stands),
-    /// drive home by the one-way exit while she makes her own way, be greeted by her, turn her dial through every
-    /// station, and follow her first signal to the basin tape onto her rack. Then the relay network (M3-06): pick up
-    /// the mound relay's part, restore it at its foot with materials and watch it come online, pick up the relay spare
-    /// on its pad (level 3's part), drive out past the tower's reach and find home still reaching 07 there, then
-    /// radio-hop home from the mast's pad and back, and rest on the dock: the dock's evening opens, the places home can
-    /// see blink seen on the crew's map, and the tower's sweep raises the next pillar (P6). Inside the canyon 07 drives
-    /// a line found over drivable ground (the same planner Bell walks by). The base wakes step by step (M3-16, M3-19
-    /// §7): it opens fully dark, power comes back with each tower level, no station is usable before its step, and the
-    /// soft "next" line follows steps 0-8. Step 8: with the rest of the basin's salvage stood in, hand the relay spare
-    /// to the tower and craft level 3, which wakes the lab's survey chart; ride up, where the map opens by itself and
-    /// the chart pen inks what 07 has visited in reach, come away and ride down: 0.5's wake-up, end to end. Every step
-    /// is timed (Logs/gameplay-captures/playthrough.md) and captured, with review frames of every M3-05 placement; any
-    /// error or exception in the log fails it. Slow: run on demand with --category Playthrough.
+    /// Tilly spots Bell's light across the chasm (P2): drive to the lip, look across with no way over, pick up
+    /// Hover-Jump's blueprint tube waiting there (M3-21), then back to the garage, where the transformer now shows.
+    /// Find the Rover Bay still asleep (no pad, no prompt, a "not yet" answer to a ping), hand in the transformer and
+    /// craft tower level 2 to wake it (its plotter draws the Cradle's waiting sheet), ride up for the reader to decode
+    /// Hover-Jump's tube, find that holding Jump does nothing yet, craft Hover-Jump in the bay through the same hold
+    /// and the Cargo Cradle from its new blueprint, dig the walkman from the garage, lift it into the rack with the
+    /// tether button, drive home, ride the lift up and set it down on the keepsake shelf from the rack, and take the
+    /// first leap. Then Bell (M3-04/05): drive up the mouth lane, leap the chasm, find her lying at the terminus with
+    /// Ro's log cache and her tape, gather her three parts from the alcoves, repair her (the tape slides in, her dial
+    /// wakes, she stands), drive home by the one-way exit while she makes her own way, be greeted by her, turn her dial
+    /// through every station, and follow her first signal to the basin tape onto her rack. Then the relay network
+    /// (M3-06): pick up the mound relay's part, restore it at its foot with materials and watch it come online, pick up
+    /// the relay spare on its pad (level 3's part), drive out past the tower's reach and find home still reaching 07
+    /// there, then radio-hop home from the mast's pad and back, and rest on the dock: the dock's evening opens, the
+    /// places home can see blink seen on the crew's map, and the tower's sweep raises the next pillar (P6). Inside the
+    /// canyon 07 drives a line found over drivable ground (the same planner Bell walks by). The base wakes step by step
+    /// (M3-16, M3-19 §7): it opens fully dark, power comes back with each tower level, no station is usable before its
+    /// step, and the soft "next" line teaches steps 0-5, then speaks only of the recovery targets, never of anything
+    /// found by roaming (M3-21): the panel's Power row lights at each tower level and its Link row at the mound mast.
+    /// Step 8: with the rest of the basin's salvage stood in, hand the relay spare to the tower and craft level 3,
+    /// which wakes the lab's survey chart; ride up, where the map opens by itself and the chart pen inks what 07 has
+    /// visited in reach, come away and ride down: 0.5's wake-up, end to end. Every step is timed
+    /// (Logs/gameplay-captures/playthrough.md) and captured, with review frames of every M3-05 placement; any error or
+    /// exception in the log fails it. Slow: run on demand with --category Playthrough.
     /// </summary>
     [Explicit("Slow end-to-end playthrough of the real Main scene; run on demand with --category Playthrough.")]
     [Category("Playthrough")]
@@ -224,9 +227,10 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>
         /// Seconds the golden path may take: steps 0-8 end to end measured 1323 s on 2026-10-11 (P1's parts, P2's
         /// chasm and garage return, P6's evening, the lab's stitch and three rides with the reader, the keepsake shelf
-        /// and the chart, and step 8's level 3), with the same ~8% margin the path has always had.
+        /// and the chart, and step 8's level 3), plus about 30 s for M3-21's ride up to decode Hover-Jump's tube, with
+        /// the same ~8% margin the path has always had.
         /// </summary>
-        private const float TotalBudget = 1430f;
+        private const float TotalBudget = 1460f;
 
         /// <summary>Close enough (m) to a part resting on a mast's pad to draw it in.</summary>
         private const float PartArrive = 1.5f;
@@ -258,6 +262,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>Seconds 07 rests on the map while the chart pen inks before coming away.</summary>
         private const float MapSeconds = 4f;
 
+        /// <summary>Seconds the look at the tech board settles (the browse camera's ease, the labels' fade).</summary>
+        private const float BoardSeconds = 2.5f;
+
         /// <summary>07 faces out toward the dock after a ride down: its heading within this of the way out.</summary>
         private const float FacesOut = 0.9f;
 
@@ -285,6 +292,8 @@ namespace MoonProject.Gameplay.PlayModeTests
         private EventRecorder _events;
         private IDisposable _awoke;
         private IDisposable _crawled;
+        private IDisposable _lines;
+        private readonly List<string> _tierTwoLines = new List<string>();
         private int _crawls;
         private float _stepMetres;
         private float _stepBeam;
@@ -307,6 +316,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             _events?.Dispose();
             _awoke?.Dispose();
             _crawled?.Dispose();
+            _lines?.Dispose();
             Scene scene = SceneManager.GetSceneByPath(PlaythroughScene.ScenePath);
             if (scene.IsValid() && scene.isLoaded)
             {
@@ -379,22 +389,29 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return ExpectStep(ProgressionKeys.NextChasm, "the first memory is home: Tilly sees Bell's light");
             AssertNotYetPastTheChasm();
             yield return StandInSalvage();
+            Assert.AreEqual(0, _gameplay.Recovery.LitLamps(RecoveryTarget.Link), "no chain mast is lit yet");
             yield return RestoreTheMoundRelay();
+            yield return Until(() => _gameplay.Recovery.LitLamps(RecoveryTarget.Link) == 1, 2f,
+                "the mound mast lights the Link row's first lamp: Link begins");
+            Assert.AreEqual(TechNodeState.Built, _gameplay.Tech.StateOf(TechNodeId.RelayNetwork));
             yield return ChargeOnTheRing(0);
             yield return ToTheRunUp();
             yield return LookAcrossTheChasm();
             Lesson("the chasm lip", 0.3f, 0.45f);
+            yield return PickUpTheLipTube();
+            yield return ExpectStep(ProgressionKeys.NextBayWake, "the chasm is seen: the bay waits for the tower");
             yield return RestoreTheMouthRelay();
             yield return ChargeOnTheRing(2);
             yield return HopFrom(WorldAnchorIds.RelayPrefix + 2, StationReach.HomeId);
-            yield return DecodeAtTheReader(CellPack);
+            yield return RideUpToDecodeTheTubes();
             yield return ChargeAtTheDock("home from the mouth relay");
             yield return BackToTheGarageForTheTransformer(garage);
             yield return TheBaySleepsUntilTheTowerWakesIt();
             yield return BuyTowerLevel(2);
+            yield return ExpectStep(ProgressionKeys.NextBay, "the bay has power: the turntable is waiting");
             yield return ChargeAtTheDock("home with the transformer");
             yield return BuyHoverJumpAtTheBench();
-            yield return ExpectStep(ProgressionKeys.NextLeap, "07 can leap: the canyon opens");
+            yield return ExpectStep(ProgressionKeys.NextPowerPart, "a kit is fitted: only the targets speak now");
             yield return CraftTheCargoCradle();
             yield return CraftTheCellPack();
             yield return Excavate(garage, walkman);
@@ -415,8 +432,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return ChargeAtTheDock("home from the canyon");
             yield return TurnBellsDial();
             yield return FollowBellsSignal();
+            yield return ExpectStep(ProgressionKeys.NextPowerPart, "Bell is home: the tower still needs its last part");
             Assert.IsTrue(_gameplay.TowerParts.NeedsPart(Tower, 3), "level 3 waits for the relay spare");
-            yield return ExpectStep(ProgressionKeys.NextChart, "masts are lit: the survey chart waits for power");
             yield return ToTheMoundRelay();
             Assert.IsFalse(_gameplay.Power.HasReached(BasePowerStage.Chart), "the chart stays dark before its step");
             yield return PickUpTheRelaySpare();
@@ -427,7 +444,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return StockUpForTheChart();
             yield return BuyTowerLevel(3);
             yield return LookAtTheChart();
-            yield return ExpectStep(string.Empty, "the chart is seen: every step of the wake-up is done");
+            yield return Until(
+                () => _gameplay.Progression.NextStep.StartsWith(ProgressionKeys.NextLink, StringComparison.Ordinal),
+                2f, "Power is restored: the line speaks of the masts toward the Peak");
+            CollectionAssert.IsEmpty(_tierTwoLines, "past the teaching steps the line names only the targets");
 
             float total = Time.time - started;
             WriteReport(total);
@@ -457,6 +477,15 @@ namespace MoonProject.Gameplay.PlayModeTests
         private void OnLowPower(LowPowerChanged lowPower)
         {
             _crawls += lowPower.LowPower && !lowPower.Restored ? 1 : 0;
+        }
+
+        /// <summary>Notes any line past the teaching steps that is not about a recovery target (M3-21 §3).</summary>
+        private void OnNextLine(NextStepChanged changed)
+        {
+            if (_gameplay.Progression.PastTeaching && !ProgressionKeys.SpeaksOfTargets(changed.LineKey))
+            {
+                _tierTwoLines.Add(changed.LineKey);
+            }
         }
 
         /// <summary>Notes the charge at one of the range lessons (docs/features/M3-20 §6) for the report.</summary>
@@ -532,6 +561,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             _events = new EventRecorder(_context.Events);
             _awoke = _context.Events.Subscribe<RoverAwoke>(_ => _awokeAt = Time.time);
             _crawled = _context.Events.Subscribe<LowPowerChanged>(OnLowPower);
+            _lines = _context.Events.Subscribe<NextStepChanged>(OnNextLine);
             _gameplay.StartCoroutine(TrackTheBattery(_context.Get<IBeamStatus>()));
             _pilot = new Autopilot(_rover);
             _rover.SetDriveSource(_pilot);
@@ -747,7 +777,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// The tower's story part <paramref name="index"/> waits in <paramref name="site"/>'s open heart: round the
+        /// The tower's component <paramref name="index"/> waits in <paramref name="site"/>'s open heart: round the
         /// wreck to open ground beside it and ease up until it spirals into 07 (P1).
         /// </summary>
         private IEnumerator PickUpPartInTheHeart(SalvageSite site, int index)
@@ -832,6 +862,54 @@ namespace MoonProject.Gameplay.PlayModeTests
             End("Look across the chasm at Bell's light", $"held still {progression.Tuning.ChasmLookSeconds:F1} s");
         }
 
+        /// <summary>
+        /// Hover-Jump's blueprint tube waits at the chasm's near lip (M3-21 §4), where 07 stopped to look across: drive
+        /// through it and it rides home on 07's back, for the lab's reader.
+        /// </summary>
+        private IEnumerator PickUpTheLipTube()
+        {
+            Begin();
+            GroundTubes tubes = _gameplay.GroundTubes;
+            if (tubes.IsResting(HoverJump))
+            {
+                yield return DriveTo(Flat(tubes.RestPosition(HoverJump)), PartArrive, 0.4f, 30f,
+                    "Hover-Jump's tube at the lip");
+            }
+
+            yield return Until(() => !_gameplay.Blueprints.IsWaiting(HoverJump), 8f, "the tube spirals into 07");
+            Assert.AreEqual(HoverJump, _gameplay.Blueprints.NextCarried, "it rides home to the lab's reader");
+            Assert.AreEqual(TechNodeState.Unknown, _gameplay.Tech.StateOf(TechNodeId.HoverJump), "not read yet");
+            Capture("08b-the-lip-tube");
+            End("Pick up Hover-Jump's tube at the chasm's lip", "no sheet was pinned from the start");
+        }
+
+        /// <summary>
+        /// Home from the mouth relay by radio-hop: up the belly lift with Hover-Jump's tube from the lip and Cell Pack
+        /// II's from relay.2's cabinet on 07's back. The turntable turns to the reader, which decodes one, then the
+        /// other, sending each hand-off pulse to the bay (still asleep); then back down (M3-19 §5, M3-20, M3-21 §4).
+        /// </summary>
+        private IEnumerator RideUpToDecodeTheTubes()
+        {
+            Begin();
+            LiftStation lift = _gameplay.Lift;
+            int decoded = 0;
+            using IDisposable finds = _context.Events.Subscribe<FindDecoded>(find =>
+                decoded += find.KitId == HoverJump || find.KitId == CellPack ? 1 : 0);
+            yield return DriveOntoTheLift("the belly lift's platform, the tubes on 07's back");
+            yield return Until(() => lift.Phase == LiftPhase.Inside, LiftPhaseTimeout,
+                "resting on the platform carries 07 up into the lab");
+            yield return Until(() => decoded > 1, LabTurnTimeout + 2f * ReaderTimeout,
+                "the turntable turns to the reader, whose beam feeds both tubes in to decode, one after the other");
+            Assert.IsTrue(_gameplay.Blueprints.IsPinned(HoverJump), "decoded: the bay can build Hover-Jump");
+            Assert.IsTrue(_gameplay.Blueprints.IsPinned(CellPack), "decoded: the bay can build Cell Pack II");
+            yield return null;
+            Assert.AreEqual(TechNodeState.Decoded, _gameplay.Tech.StateOf(TechNodeId.HoverJump),
+                "its sheet is on the tech board");
+            Assert.AreEqual(TechNodeState.Decoded, _gameplay.Tech.StateOf(TechNodeId.CellPackII));
+            yield return RideDown("08c-down-from-the-reader");
+            End("Ride up to decode the two tubes", "the reader decoded both; the hand-offs ran to the bay");
+        }
+
         /// <summary>Having seen the chasm, back to the garage: Tilly spots the transformer (P1, L2).</summary>
         private IEnumerator BackToTheGarageForTheTransformer(SalvageSite garage)
         {
@@ -851,7 +929,8 @@ namespace MoonProject.Gameplay.PlayModeTests
         {
             Assert.AreEqual(BasePowerStage.Bay, _gameplay.Power.Stage);
             Assert.AreEqual(TowerPartState.Carried, _gameplay.TowerParts.StateOf(SparePart));
-            Assert.AreEqual(ProgressionKeys.NextChart, _gameplay.Progression.NextStep);
+            Assert.AreEqual(ProgressionKeys.NextPowerCarried, _gameplay.Progression.NextStep,
+                "the tower's last part rides with 07");
         }
 
         private bool LogFound(string logId)
@@ -976,14 +1055,13 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>
         /// Step 8: the tower's third level woke the survey chart. Ride up carrying nothing: 07 arrives facing the chart
         /// and the Peak, the map opens by itself and the chart pen inks what 07 has visited in reach; back comes away
-        /// from the map and back again brings the platform down.
+        /// from the map, a look at the tech board's recovery panel (M3-21), and back again brings the platform down.
         /// </summary>
         private IEnumerator LookAtTheChart()
         {
             Begin();
             LiftStation lift = _gameplay.Lift;
             Assert.IsTrue(_gameplay.Power.HasReached(BasePowerStage.Chart), "the tower's third level wakes the chart");
-            yield return ExpectStep(ProgressionKeys.NextChartLook, "ride up and look at the survey chart");
             int looks = 0;
             int inks = 0;
             int ended = 0;
@@ -1002,8 +1080,35 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return Tap(_keyboard.sKey);
             yield return Until(() => ended > 0, 3f, "back comes away from the map");
             Assert.AreEqual(LiftPhase.Inside, lift.Phase, "coming away from the map keeps 07 in the lab");
+            yield return LookAtTheBoard();
             yield return RideDown("40-down-from-the-chart");
             End("Look at the survey chart", $"the map opened by itself, {inks} places inked");
+        }
+
+        /// <summary>
+        /// Power 3/3 (M3-21): round to the tech board, seen whole from the ring camera with the recovery panel at its
+        /// head, then looked at. The panel's Power row is lit whole and the Link row's first lamp too, the board's
+        /// labels show; then come away again.
+        /// </summary>
+        private IEnumerator LookAtTheBoard()
+        {
+            LiftStation lift = _gameplay.Lift;
+            yield return Tap(_keyboard.dKey);
+            yield return Until(() => lift.Lab.Facing == LabStation.Reader && !lift.Turning, LabTurnTimeout,
+                "right turns the turntable to the reader");
+            yield return Tap(_keyboard.dKey);
+            yield return Until(() => lift.Lab.Facing == LabStation.Board && !lift.Turning, LabTurnTimeout,
+                "and on to the tech board");
+            yield return new WaitForSeconds(BoardSeconds);
+            Capture("39a-the-recovery-panel");
+            yield return Tap(_keyboard.wKey);
+            Assert.IsTrue(lift.Lab.IsLooking, "forward looks at the board");
+            Assert.IsTrue(_gameplay.Recovery.IsComplete(RecoveryTarget.Power), "Power 3/3 on the recovery panel");
+            Assert.AreEqual(1, _gameplay.Recovery.LitLamps(RecoveryTarget.Link), "the mound mast's lamp: Link begins");
+            yield return new WaitForSeconds(BoardSeconds);
+            Capture("39b-the-tech-board");
+            yield return Tap(_keyboard.sKey);
+            Assert.IsFalse(lift.Lab.IsLooking, "back comes away from the board");
         }
 
         private static Relic RelicIn(SalvageSite site, string id)
@@ -1210,6 +1315,11 @@ namespace MoonProject.Gameplay.PlayModeTests
             AssertCues(cues, Tower, beats.ToArray());
             Assert.AreEqual(BasePower.StageFor(level), _gameplay.Power.Stage, "power reaches one stage further");
             Assert.AreEqual(level >= 2, _gameplay.Workshop.Awake, "the Rover Bay wakes with the second level only");
+            yield return null;
+            Assert.AreEqual(level, _gameplay.Recovery.LitLamps(RecoveryTarget.Power),
+                "the recovery panel's Power row lights a lamp per level");
+            Assert.AreEqual(level == _gameplay.Upgrades.Find(Tower).MaxLevel,
+                _gameplay.Recovery.IsComplete(RecoveryTarget.Power), "Power is restored with the last level only");
             yield return new WaitForSeconds(1f);
             Capture($"07-tower-awake-l{level}");
             End($"Park on the pad, hand in {part} and craft tower level {level}",
@@ -1217,17 +1327,21 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// The base as a fresh game opens (docs/features/M3-16): no power, the bay asleep with its lamps dark, only
-        /// Hover-Jump's sheet on Kenji's board, nothing to buy.
+        /// The base as a fresh game opens (docs/features/M3-16, M3-21): no power, the bay asleep with its lamps dark, no
+        /// sheet on Kenji's board (Hover-Jump's tube waits at the chasm's lip), the recovery panel dark, nothing to buy.
         /// </summary>
         private void AssertAsleep()
         {
             Assert.AreEqual(BasePowerStage.Asleep, _gameplay.Power.Stage, "a fresh game opens fully dark");
             Assert.IsFalse(_gameplay.Workshop.Awake, "the Rover Bay sleeps");
             Assert.AreEqual(0f, _gameplay.Workshop.LampLevel, 1e-3f, "its lamps are dark");
-            Assert.IsTrue(_gameplay.Blueprints.IsPinned(HoverJump), "Kenji left Hover-Jump's sheet pinned");
+            Assert.IsFalse(_gameplay.Blueprints.IsPinned(HoverJump), "no sheet is pinned from the start");
+            Assert.IsTrue(_gameplay.GroundTubes.IsResting(HoverJump), "Hover-Jump's tube glints at the chasm's lip");
+            Assert.AreEqual(0, _gameplay.Tech.KnownCount, "the porthole's lamps are dark");
+            Assert.AreEqual(0, _gameplay.Recovery.LitLamps(RecoveryTarget.Power), "the recovery panel is dark");
             Assert.IsFalse(_gameplay.Blueprints.IsPinned(CargoCradle), "the Cradle's sheet is still out there");
-            Assert.AreEqual(PurchaseResult.NotAtStation, _gameplay.Shop.Purchase(HoverJump), "nothing to buy yet");
+            Assert.AreEqual(PurchaseResult.NotPinned, _gameplay.Shop.Purchase(HoverJump), "no sheet, no kit");
+            Assert.AreEqual(PurchaseResult.NotAtStation, _gameplay.Shop.Purchase(Tower), "nothing to buy yet");
         }
 
         /// <summary>The soft "next" line shows <paramref name="key"/> (M3-16 step flow).</summary>
@@ -1252,7 +1366,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsFalse(bay.Awake, "tower level 1 powers home, not the bay");
             Assert.IsFalse(_gameplay.Shop.IsAtStation, "no panel");
             Assert.IsFalse(_gameplay.Hints.TryGet(InteractionKind.Upgrade, out _), "no prompt");
-            Assert.AreEqual(PurchaseResult.NotAtStation, _gameplay.Shop.Purchase(HoverJump), "nothing to buy");
+            Assert.AreEqual(PurchaseResult.NotAtStation, _gameplay.Shop.Purchase(CargoCradle), "nothing to buy");
             int answers = _events.StationNotYet.Count;
             int pings = _events.SonarPinged.Count;
             Press(_keyboard.spaceKey, queueEventOnly: true);
@@ -1984,25 +2098,6 @@ namespace MoonProject.Gameplay.PlayModeTests
                 name + " comes online, linked home");
             Assert.AreEqual(mast.Id, _events.RelayRestored[_events.RelayRestored.Count - 1].Value.RelayId);
             End($"Restore {name} ({mast.Id})", $"recipe {recipe}, its part {partAway:F0} m from the mast");
-        }
-
-        /// <summary>
-        /// Up the belly lift into the lab with a blueprint tube on its back: the reader decodes it, and down again
-        /// (M3-19's reader; docs/features/M3-20: Cell Pack II's tube from relay.2's cabinet).
-        /// </summary>
-        private IEnumerator DecodeAtTheReader(string kitId)
-        {
-            Begin();
-            LiftStation lift = _gameplay.Lift;
-            int decoded = 0;
-            using IDisposable finds = _context.Events.Subscribe<FindDecoded>(find =>
-                decoded += find.KitId == kitId ? 1 : 0);
-            yield return DriveOntoTheLift("onto the lift with the tube");
-            yield return Until(() => lift.Phase == LiftPhase.Inside, LiftPhaseTimeout, "the lift carries 07 up");
-            yield return Until(() => decoded > 0, LabTurnTimeout + ReaderTimeout, "the reader decodes the tube");
-            Assert.IsTrue(_gameplay.Blueprints.IsPinned(kitId), "decoded: the bay can build it");
-            yield return RideDown("08b-down-from-the-reader");
-            End($"Decode {kitId} at the lab's reader", "up the lift, the reader's beam, down again");
         }
 
         /// <summary>Back into the bay for Cell Pack II: the spine set on 07's back, two more lamps lit.</summary>

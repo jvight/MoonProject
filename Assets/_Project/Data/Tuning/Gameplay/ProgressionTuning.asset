@@ -25,7 +25,7 @@ MonoBehaviour:
   _placeLineGap: 6
   _signalFriend: tilly
   _leapFriend: bell
-  _firstKit: rover.hover_jump
+  _leapKit: rover.hover_jump
   _chasmLookRadius: 14
   _chasmLookSeconds: 3.5
   _bellLightBrightness: 0.8
@@ -35,14 +35,26 @@ MonoBehaviour:
   _lettersAfter: 2
   _letterCount: 10
   _tubes:
+  - _kitId: rover.hover_jump
+    _siteId: 
+    _anchorId: canyon.lip
+    _setback: 6
   - _kitId: rover.cargo_cradle
     _siteId: site.garage
+    _anchorId: 
+    _setback: 0
   - _kitId: rover.warm_headlamp
     _siteId: site.kestrel
+    _anchorId: 
+    _setback: 0
   - _kitId: rover.boost_coils
     _siteId: site.drill
+    _anchorId: 
+    _setback: 0
   - _kitId: rover.cell_pack
     _siteId: relay.2
+    _anchorId: 
+    _setback: 0
   _towerParts:
   - _partId: Part_TowerCoil
     _towerLevel: 1

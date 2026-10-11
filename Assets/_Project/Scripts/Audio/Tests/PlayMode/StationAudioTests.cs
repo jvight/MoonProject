@@ -196,6 +196,11 @@ namespace MoonProject.Audio.PlayModeTests
             Assert.IsTrue(_rig.Lab.ReelSource.isPlaying, "the reel turns while it decodes");
             _rig.Events.Publish(new FindDecoded("kit.cargo"));
             Assert.AreEqual("reader_decode_chime", LastClip);
+            _rig.Events.Publish(new RecoveryProgressChanged(RecoveryTarget.Power, 3, 3, true));
+            _rig.Events.Publish(new RecoveryProgressChanged(RecoveryTarget.Link, 1, 3, false));
+            Assert.AreEqual("reader_decode_chime", LastClip, "a load or a lamp alone plays no chord");
+            _rig.Events.Publish(new RecoveryProgressChanged(RecoveryTarget.Power, 3, 3, false));
+            Assert.AreEqual("recovery_row_chord", LastClip, "Power restored: the row's warm chord");
             yield return new WaitForSeconds(0.6f);
             Assert.IsFalse(_rig.Lab.ReelSource.isPlaying, "and stops once decoded");
             _rig.Events.Publish(new MapPlaceSeen("site.depot", Vector3.zero));

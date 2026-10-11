@@ -8,6 +8,7 @@ using MoonProject.Core.Input;
 using MoonProject.Core.Map;
 using MoonProject.Core.Save;
 using MoonProject.Gameplay;
+using MoonProject.Gameplay.Map;
 using MoonProject.UI.Map;
 
 namespace MoonProject.UI
@@ -62,6 +63,7 @@ namespace MoonProject.UI
         private StaticTextLocalizer _staticText;
         private Reveal _hud;
         private LabHud _labHud;
+        private RecoveryBoard _board;
         private StargazeVeil _stargaze;
         private LookUpHint _lookUpHint;
         private LookUpChip _lookUpChip;
@@ -90,6 +92,7 @@ namespace MoonProject.UI
         private BackdropBlur _backdrop;
         private IMapKnowledge _mapKnowledge;
         private IStationReach _mapReach;
+        private IChartOverlay _mapOverlay;
         private MapView _map;
         private bool _composed;
         private bool _bound;
@@ -226,6 +229,7 @@ namespace MoonProject.UI
                 : _mapTuning == null ? "MapViewTuning is not assigned (run UI/Map Tuning)."
                 : !known ? "no IMapKnowledge is registered (Gameplay's MapSystem)."
                 : !context.TryGet(out _mapReach) ? "no IStationReach is registered."
+                : !context.TryGet(out _mapOverlay) ? "no IChartOverlay is registered (Gameplay's MapSystem)."
                 : null;
             if (problem == null)
             {
@@ -294,7 +298,10 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<NextStepChanged>(OnNextStepChanged));
             _tokens.Add(events.Subscribe<PlaceFirstApproached>(OnPlaceFirstApproached));
             _tokens.Add(events.Subscribe<LabEntered>(_ => _labHud.Enter()));
-            _tokens.Add(events.Subscribe<LabLeft>(_ => _labHud.Leave()));
+            _tokens.Add(events.Subscribe<LabLeft>(OnLabLeft));
+            _tokens.Add(events.Subscribe<LabStationLooked>(OnLabStationLooked));
+            _tokens.Add(events.Subscribe<TechNodeChanged>(_ => _board?.MarkDirty()));
+            _tokens.Add(events.Subscribe<RecoveryProgressChanged>(OnRecoveryProgressChanged));
             _tokens.Add(events.Subscribe<BlueprintFound>(OnBlueprintFound));
             _tokens.Add(events.Subscribe<BlueprintDelivered>(OnBlueprintDelivered));
             _tokens.Add(events.Subscribe<RoverWideShotChanged>(OnWideShotChanged));
@@ -353,6 +360,8 @@ namespace MoonProject.UI
             _hud = new Reveal(_layout.Hud, _tuning.Pause.Hud);
             _hud.Snap(true);
             _labHud = new LabHud(_layout.LabHud, _tuning.Lab, _localization, _ledger);
+            _board = new RecoveryBoard(_layout.LabHud, _tuning.Lab.Board, _localization, services.Tech,
+                services.Recovery);
             _stargaze = new StargazeVeil(_tuning.Stargaze.Hud, _layout.PromptAnchor, _layout.FriendAnchor,
                 _layout.FriendNameAnchor, _layout.RelayTagAnchor, _layout.SalvageRingAnchor, _layout.SiteNameAnchor,
                 _layout.TickerLine);
@@ -391,8 +400,8 @@ namespace MoonProject.UI
             _backdrop = new BackdropBlur(transform, _tuning.Backdrop);
             if (_mapKnowledge != null)
             {
-                _map = new MapView(root.Q("pause"), _mapSheet, _mapTuning, _mapKnowledge, _mapReach, _localization,
-                    services.Events, services.Input);
+                _map = new MapView(root.Q("pause"), _mapSheet, _mapTuning, _mapKnowledge, _mapReach, _mapOverlay,
+                    _localization, services.Events, services.Input);
             }
 
             _bound = true;
@@ -455,6 +464,7 @@ namespace MoonProject.UI
             InputDeviceKind device = input.ActiveDevice;
             _labHud.Tick(deltaTime, !paused && !onMap, input.Drive,
                 _services.Hints.TryGet(InteractionKind.Deposit, out _), _glyphs.For(RoverAction.Tether, device), device);
+            _board.Tick(deltaTime, !paused);
             bool hopping = _services.Hop.Phase >= RadioHopPhase.Leaving || _hopFade.IsVisible;
             _reticle.Tick(deltaTime, _services.Tether.State, input.TetherHeld);
             _card.Tick(hudTime, _glyphs.Cancel(device), device,
@@ -623,6 +633,31 @@ namespace MoonProject.UI
             _placeCard.BlueprintFound(found.KitId);
         }
 
+        private void OnLabLeft(LabLeft left)
+        {
+            _labHud?.Leave();
+            _board?.Look(false);
+        }
+
+        /// <summary>Looking at the tech board shows its labels; looking away hides them (M3-21 §2).</summary>
+        private void OnLabStationLooked(LabStationLooked looked)
+        {
+            if (looked.Station == LabStation.Board)
+            {
+                _board?.Look(looked.Looking);
+            }
+        }
+
+        /// <summary>A completed row's quiet ticker line, never on a load ("Power restored.", M3-21 §2).</summary>
+        private void OnRecoveryProgressChanged(RecoveryProgressChanged changed)
+        {
+            _board?.MarkDirty();
+            if (!changed.Restored && changed.Lamps > 0 && changed.LitLamps >= changed.Lamps)
+            {
+                _tickerLines.Enqueue(new TickerLine(UiKeys.RecoveryComplete(changed.Target)));
+            }
+        }
+
         private void OnBlueprintDelivered(BlueprintDelivered delivered)
         {
             _tickerLines.Enqueue(new TickerLine(UiKeys.BlueprintDelivered));
@@ -776,6 +811,7 @@ namespace MoonProject.UI
             _nextLine.Relocalize();
             _placeCard.Relocalize();
             _labHud.Relocalize();
+            _board.Relocalize();
             _dial.Relocalize();
             _hopList.Relocalize();
             _friendName.Relocalize();
