@@ -15,6 +15,8 @@ namespace MoonProject.Gameplay
         private readonly List<Relic> _relics = new List<Relic>();
 
         private readonly bool _heartUnderPieces;
+        private EmissionGlow _pilotGlow;
+        private LandmarkPilotLevel _pilot;
 
         internal SalvageSite(int index, string id, Transform root, float radius, Vector3 heart, AbilityGate gate,
             ComboCounter combo, bool heartUnderPieces)
@@ -125,6 +127,12 @@ namespace MoonProject.Gameplay
             }
         }
 
+        /// <summary>True once the site was found and its heart can be dug: the landmark's pilot lights.</summary>
+        public bool HeartFound => Discovered && HeartRevealed;
+
+        /// <summary>Glow of the landmark pilot (0 without a landmark or before the heart is found).</summary>
+        public float PilotLevel => _pilot != null ? _pilot.Level : 0f;
+
         /// <summary>It answers a ping while something is left to find: a piece to cut or a relic to lift.</summary>
         public bool AnswersSonar => !IsPickedClean || HoldsRelic;
 
@@ -162,6 +170,31 @@ namespace MoonProject.Gameplay
             for (int i = 0; i < _relics.Count; i++)
             {
                 _relics[i].MarkDiscovered();
+            }
+        }
+
+        /// <summary>Wires the landmark's pilot lamp (dark until the heart is found).</summary>
+        internal void AttachPilot(Renderer lamp, SalvageTuning tuning)
+        {
+            _pilotGlow = new EmissionGlow(lamp);
+            _pilot = new LandmarkPilotLevel(tuning.LandmarkGlow, tuning.LandmarkEase);
+            _pilotGlow.Apply(0f);
+        }
+
+        internal void StepPilot(float deltaTime)
+        {
+            if (_pilot != null)
+            {
+                _pilotGlow.Apply(_pilot.Step(HeartFound, deltaTime));
+            }
+        }
+
+        /// <summary>Shows the settled pilot at once (after a load).</summary>
+        internal void SnapPilot()
+        {
+            if (_pilot != null)
+            {
+                _pilotGlow.Apply(_pilot.Snap(HeartFound));
             }
         }
 

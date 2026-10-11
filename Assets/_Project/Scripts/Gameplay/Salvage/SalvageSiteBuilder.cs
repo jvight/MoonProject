@@ -18,6 +18,8 @@ namespace MoonProject.Gameplay
         private const string HeartName = "Heart";
         private const string CutPointName = "CutPoint";
         private const string HaloName = "Halo";
+        private const string LandmarkName = "Landmark";
+        private const string LandmarkPilotName = "LandmarkPilot";
 
         /// <summary>
         /// Builds the site under <paramref name="parent"/> and adds its pieces and drag bodies to the lists. Null when
@@ -50,6 +52,19 @@ namespace MoonProject.Gameplay
 
             var built = new SalvageSite(index, entry.AnchorId, root, anchor.Radius, heart.position, entry.Gate,
                 new ComboCounter(tuning.ChainWindow), entry.HeartUnderPieces);
+            Transform landmark = Child(root, LandmarkName);
+            if (landmark != null)
+            {
+                Transform pilot = Child(landmark, LandmarkPilotName);
+                Renderer lamp = pilot != null ? pilot.GetComponent<Renderer>() : null;
+                if (lamp == null)
+                {
+                    return $"'{LandmarkName}' has no '{LandmarkPilotName}' node with a renderer";
+                }
+
+                built.AttachPilot(lamp, tuning);
+            }
+
             var wreck = new List<Collider> { skeletonCollider };
             int firstDrag = drags.Count;
             for (int i = 0; i < root.childCount; i++)
