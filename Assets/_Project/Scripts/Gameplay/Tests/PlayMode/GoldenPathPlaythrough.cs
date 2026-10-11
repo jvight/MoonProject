@@ -224,11 +224,11 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float PadArrival = 5f;
 
         /// <summary>
-        /// Seconds the golden path may take: steps 0-8 end to end measured 1241 s on 2026-10-11 (P1's parts, P2's
-        /// chasm and garage return, P6's evening, and step 8's level 3, lift restore and ride, ~56 s), with the same
-        /// ~8% margin the path has always had.
+        /// Seconds the golden path may take: steps 0-8 end to end measured 1323 s on 2026-10-11 (P1's parts, P2's
+        /// chasm and garage return, P6's evening, the lab's stitch and three rides with the reader, the keepsake shelf
+        /// and the chart, and step 8's level 3), with the same ~8% margin the path has always had.
         /// </summary>
-        private const float TotalBudget = 1340f;
+        private const float TotalBudget = 1430f;
 
         /// <summary>Close enough (m) to a part resting on a mast's pad to draw it in.</summary>
         private const float PartArrive = 1.5f;
