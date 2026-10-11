@@ -1,6 +1,8 @@
-# Lofi Lunar — Creative Vision
+# Lunarion — Creative Vision
 
 > Owner: Director box. Every box reads this before building anything a player will see, hear or touch.
+> **The game is called Lunarion** (owner, 2026-10-11; it was "Lofi Lunar"). Internal names (the MoonProject
+> namespaces, the Lofi* shaders) stay as they are.
 > The original pitch lives in `GDD.md`; this document is how we execute it.
 
 ## The one-sentence promise

@@ -1,4 +1,4 @@
-# Lofi Lunar — Technical Architecture
+# Lunarion — Technical Architecture
 
 > Owner: Director box. Changes to this document go through the Director.
 
