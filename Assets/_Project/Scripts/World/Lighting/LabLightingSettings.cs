@@ -17,9 +17,10 @@ namespace MoonProject.World
         [Range(0f, 8f)]
         [SerializeField] private float _bellyLampGlow = 3f;
 
-        [Tooltip("Glow of the floor hatch's rim lamps once home is lit.")]
+        [Tooltip("Glow of the floor hatch's lamp ring once home is lit: it reads from behind 07 on the apron, so the " +
+            "platform, the hatch and the lit cabin line up under the belly.")]
         [Range(0f, 8f)]
-        [SerializeField] private float _hatchRimGlow = 1.6f;
+        [SerializeField] private float _hatchRimGlow = 2.6f;
 
         [Header("Lab")]
         [Tooltip("Glow of the lab's four wall lamps.")]
