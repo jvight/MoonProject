@@ -705,7 +705,8 @@ namespace MoonProject.Rover
         {
             KitSettings settings = _tuning.Kit;
             float lit = _fits[(int)RoverKitPiece.CapacitorDrums].Lights;
-            float glow = lit * Mathf.Lerp(settings.DrumIdleGlow, settings.DrumGlow, _rover.BoostLevel);
+            float stored = settings.DrumIdleGlow * _battery.Drums01;
+            float glow = lit * Mathf.Lerp(stored, settings.DrumGlow, _rover.BoostLevel);
             if (Mathf.Abs(glow - _appliedDrumGlow) < GlowEpsilon)
             {
                 return;

@@ -45,5 +45,8 @@ namespace MoonProject.Rover
 
         /// <summary>Charge over capacity, 0..1 (1 without a battery).</summary>
         public float Charge01 => Battery != null ? Battery.Charge01 : 1f;
+
+        /// <summary>The capacitor drums' charge, 0..1 (full without a battery).</summary>
+        public float Drums01 => Battery != null ? Battery.Drums01 : 1f;
     }
 }
