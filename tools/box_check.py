@@ -221,6 +221,21 @@ def trial_merge(root):
     return ""
 
 
+def merge_in_progress(root):
+    return (Path(git(root, "rev-parse", "--absolute-git-dir")) / "MERGE_HEAD").exists()
+
+
+def abort_trial_merge(root):
+    """Ends a merge left in progress, whatever stopped the run; returns '' or why it is still there. Decided by
+    MERGE_HEAD, not by a flag: a half-aborted trial once left a box worktree with main's 93 files staged."""
+    if not merge_in_progress(root):
+        return ""
+    git(root, "merge", "--abort", check=False)
+    if merge_in_progress(root):
+        git(root, "reset", "--merge", check=False)
+    return "the trial merge of main is still in progress; run git merge --abort" if merge_in_progress(root) else ""
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("box", help="box name (art, world, rover, gameplay, audio, ui, foundation, ...)")
@@ -286,8 +301,10 @@ def main():
         restored, new_outputs = restore_outputs(root, logs / "outputs")
         metas = move_untracked_metas(root, logs / "metas")
     finally:
-        if merge:
-            git(root, "merge", "--abort", check=False)
+        abort_problem = abort_trial_merge(root)
+    if abort_problem:
+        steps.append(("abort trial merge", False, "", 0.0))
+        notes.append(abort_problem)
     notes.append(f"restored {restored} builder output(s), moved {new_outputs} new output(s) and {metas} untracked "
                  f".meta(s) to {logs.relative_to(root).as_posix()}")
     leftover = [line[3:] for line in git(root, "status", "--porcelain").splitlines()]
