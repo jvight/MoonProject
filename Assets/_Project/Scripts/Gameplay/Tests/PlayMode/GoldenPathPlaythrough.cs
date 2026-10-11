@@ -63,6 +63,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const string Tower = "radio_tower";
         private const string HoverJump = "rover.hover_jump";
         private const string CargoCradle = "rover.cargo_cradle";
+        private const string CellPack = "rover.cell_pack";
         private const string TillyId = "tilly";
         private const string BellId = "bell";
         private const string AfterDark = "after_dark_1";
@@ -86,9 +87,6 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>Canyon waypoints count as reached this close (m); the last one is driven to a stop.</summary>
         private const float WaypointArrive = 3f;
         private const float CanyonThrottle = 0.7f;
-
-        /// <summary>Metres past the exit anchor, down its step, onto the basin floor.</summary>
-        private const float BelowExit = 14f;
 
         /// <summary>Seconds between two turns of Bell's dial (the needle settles in between).</summary>
         private const float DialPause = 1.5f;
@@ -352,6 +350,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsFalse(depot.AnswersSonar, "picked clean and its coil taken: the depot falls silent");
             yield return BuyTowerLevel(1);
             yield return ExpectStep(ProgressionKeys.NextSignal, "home is powered: the tower hears Tilly");
+            yield return ChargeAtTheDock("before Tilly's crater");
             yield return FindTilly();
             yield return GatherTillyParts();
             yield return RepairTilly();
@@ -365,6 +364,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Relic walkman = RelicIn(garage, Walkman);
             yield return SalvageTheGarage(garage);
             Lesson("the garage's last cut", 0.25f, 0.4f);
+            yield return ChargeAtTheDock("between the garage's cuts and its heart");
             yield return Excavate(garage, duck);
             Assert.IsTrue(LogFound("kenji_1"), "Kenji's log tin by his bench opens while 07 digs");
             Assert.IsTrue(_gameplay.Blueprints.IsCarrying, "the garage's heart held the Cradle's blueprint tube");
@@ -375,13 +375,20 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return TowHome(garage, duck);
             yield return StitchTheLift();
             yield return RideUpWithTheFirstFinds(duck);
-            yield return ChargeAtTheDock("before the canyon");
+            yield return ChargeAtTheDock("before the mound relay");
             yield return ExpectStep(ProgressionKeys.NextChasm, "the first memory is home: Tilly sees Bell's light");
             AssertNotYetPastTheChasm();
-            yield return DriveToTheCanyon();
+            yield return StandInSalvage();
+            yield return RestoreTheMoundRelay();
+            yield return ChargeOnTheRing(0);
+            yield return ToTheRunUp();
             yield return LookAcrossTheChasm();
             Lesson("the chasm lip", 0.3f, 0.45f);
-            yield return ExpectStep(ProgressionKeys.NextBay, "the chasm is seen: now the bay");
+            yield return RestoreTheMouthRelay();
+            yield return ChargeOnTheRing(2);
+            yield return HopFrom(WorldAnchorIds.RelayPrefix + 2, StationReach.HomeId);
+            yield return DecodeAtTheReader(CellPack);
+            yield return ChargeAtTheDock("home from the mouth relay");
             yield return BackToTheGarageForTheTransformer(garage);
             yield return TheBaySleepsUntilTheTowerWakesIt();
             yield return BuyTowerLevel(2);
@@ -389,24 +396,28 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return BuyHoverJumpAtTheBench();
             yield return ExpectStep(ProgressionKeys.NextLeap, "07 can leap: the canyon opens");
             yield return CraftTheCargoCradle();
+            yield return CraftTheCellPack();
             yield return Excavate(garage, walkman);
             yield return StowInTheCradle(walkman);
             yield return CarryHomeInTheCradle(garage, walkman);
             yield return ChargeAtTheDock("before the leap");
             yield return FirstLeap();
-            yield return DriveToTheCanyon();
+            yield return HopFrom(StationReach.HomeId, WorldAnchorIds.RelayPrefix + 2);
+            yield return ChargeOnTheRing(2);
+            yield return ToTheRunUp();
             yield return LeapTheChasm();
             yield return FindBell();
+            yield return RestoreTheTerminusRelay();
+            yield return ChargeOnTheRing(3);
             yield return GatherBellsParts();
             yield return RepairBell();
-            yield return HomeByTheExit();
+            yield return HomeFromTheTerminus();
             yield return ChargeAtTheDock("home from the canyon");
             yield return TurnBellsDial();
             yield return FollowBellsSignal();
-            yield return ExpectStep(ProgressionKeys.NextRelay, "Bell is home: the network comes next");
             Assert.IsTrue(_gameplay.TowerParts.NeedsPart(Tower, 3), "level 3 waits for the relay spare");
-            yield return RestoreTheMoundRelay();
-            yield return ExpectStep(ProgressionKeys.NextChart, "a mast is lit: the survey chart waits for power");
+            yield return ExpectStep(ProgressionKeys.NextChart, "masts are lit: the survey chart waits for power");
+            yield return ToTheMoundRelay();
             Assert.IsFalse(_gameplay.Power.HasReached(BasePowerStage.Chart), "the chart stays dark before its step");
             yield return PickUpTheRelaySpare();
             yield return DriveOutInReach();
@@ -1655,20 +1666,6 @@ namespace MoonProject.Gameplay.PlayModeTests
             End("First Hover-Jump on the base pad", $"strength {strength:F2}, apex {apex:F1} m, hang {hang:F1} s");
         }
 
-        private IEnumerator DriveToTheCanyon()
-        {
-            Begin();
-            WorldAnchor lip = Anchor(WorldAnchorIds.CanyonLip);
-            Vector3 runStart = lip.Position - lip.Forward * RunUp;
-            yield return DriveTo(_context.Get<IWorldLayout>().BasePosition, PadArrival, 0.8f, 60f, "the base pad");
-            Review(_context.Get<IWorldLayout>().BasePosition + Vector3.up * 3f, lip.Position + Vector3.up * 2f,
-                "16-toward-the-canyon");
-            float distance = SurfaceRules.HorizontalDistance(_rover.Position, runStart);
-            yield return DriveTo(runStart, 2f, 1f, 90f, "the run-up on the mouth lane");
-            Capture("16b-at-the-run-up");
-            End($"Drive to the canyon ({distance:F0} m)", "up the mouth lane to the run-up");
-        }
-
         private IEnumerator LeapTheChasm()
         {
             Begin();
@@ -1803,31 +1800,6 @@ namespace MoonProject.Gameplay.PlayModeTests
                                $"{sequence.Duration - sequence.StitchEnd:F1} s");
         }
 
-        private IEnumerator HomeByTheExit()
-        {
-            Begin();
-            Friend bell = _gameplay.Friends.Find(BellId);
-            WorldAnchor exit = Anchor(WorldAnchorIds.CanyonExit);
-            float travelled = 0f;
-            yield return DriveAlong(exit.Position, "the top of the way out", value => travelled = value);
-            Vector3 below = exit.Position + exit.Forward * BelowExit;
-            yield return DriveTo(new Vector3(below.x, 0f, below.z), 2f, 0.6f, 30f, "the basin, down the exit step");
-            Vector3 home = _context.Get<IWorldLayout>().BasePosition;
-            travelled += SurfaceRules.HorizontalDistance(_rover.Position, home);
-            int greetings = CountGreetings(BellId);
-            yield return DriveTo(home, PadArrival, 1f, 120f, "home");
-            Assert.IsTrue(bell.IsHome, "Bell got home before 07, unseen");
-            Assert.Less(Vector3.Distance(bell.Position, _gameplay.Friends.Find(BellId).Home.position), 0.01f,
-                "in her corner by the radio tower");
-            yield return Until(() => CountGreetings(BellId) > greetings, _gameplay.Friends.BellTuning.WakeDuration + 6f,
-                "she wakes and greets 07 home");
-            Assert.IsTrue(Ticker("ticker.bell.home"), "Bell got home before you");
-            Transform corner = bell.Home;
-            Review(corner.position + corner.forward * 4.5f + corner.right * 1.5f + Vector3.up * 1.8f,
-                corner.position + Vector3.up * 0.8f, "25-bell-home");
-            End($"Drive home by the exit ({travelled:F0} m)", "Bell was already home, and greeted 07");
-        }
-
         private IEnumerator TurnBellsDial()
         {
             Begin();
@@ -1906,6 +1878,186 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// takes (still in the stock from the depot), a hold of Interact at its foot, and the whole beat until it comes
         /// online.
         /// </summary>
+        /// <summary>
+        /// The basin's other salvage, not driven (the drill, the Kestrel's trail): what the masts out to the
+        /// canyon (M3-06's escalating recipes) and Cell Pack II take, on top of the depot and the garage, as a player
+        /// gathers it between trips.
+        /// </summary>
+        private IEnumerator StandInSalvage()
+        {
+            Begin();
+            RelayTuning tuning = _gameplay.Relays.Tuning;
+            Recipe pack = _gameplay.Upgrades.Find(CellPack).Levels[0].Recipe;
+            Recipe need = tuning.CostAfter(0).Plus(tuning.CostAfter(1)).Plus(tuning.CostAfter(2)).Plus(pack);
+            _gameplay.Materials.Add(SalvageMaterial.Metal, need.Metal);
+            _gameplay.Materials.Add(SalvageMaterial.Wiring, need.Wiring);
+            _gameplay.Materials.Add(SalvageMaterial.Optics, need.Optics);
+            yield return null;
+            End("The drill's and the Kestrel's salvage (not driven)", $"{need} for three masts and Cell Pack II");
+        }
+
+        /// <summary>
+        /// Onto a lit mast's 4 m charge ring at walking pace, and rest until the cells (and drums) are full
+        /// (docs/features/M3-20 "Chargers").
+        /// </summary>
+        private IEnumerator ChargeOnTheRing(int index)
+        {
+            Begin();
+            RelayMast mast = _gameplay.Relays.Masts[index];
+            BatteryModel battery = _gameplay.Battery.Model;
+            float before = battery.Charge01;
+            yield return DriveTo(Flat(mast.Anchor.Position), PadArrive, 0.35f, 60f, mast.Id + "'s charge ring");
+            yield return Until(() => _rover.Speed < StopSpeed, 6f, "07 stops on the ring");
+            yield return Until(() => battery.FullCells == battery.Cells && !battery.IsCharging,
+                _gameplay.Battery.Tuning.MastFill + 3f, "the ring fills the cells");
+            End($"Charge on {mast.Id}'s ring", string.Format(CultureInfo.InvariantCulture, "{0:P0} -> {1:P0}",
+                before, battery.Charge01));
+        }
+
+        /// <summary>From wherever 07 is (a mast's pad by the mouth) up the mouth lane to the chasm's run-up.</summary>
+        private IEnumerator ToTheRunUp()
+        {
+            Begin();
+            WorldAnchor lip = Anchor(WorldAnchorIds.CanyonLip);
+            Vector3 runStart = lip.Position - lip.Forward * RunUp;
+            float distance = SurfaceRules.HorizontalDistance(_rover.Position, runStart);
+            yield return DriveTo(runStart, 2f, 1f, 90f, "the run-up on the mouth lane");
+            Capture("16b-at-the-run-up");
+            End($"To the chasm's run-up ({distance:F0} m)", "up the mouth lane");
+        }
+
+        /// <summary>A radio-hop from node <paramref name="from"/>'s pad (home or a lit mast) to node <paramref name="to"/>.</summary>
+        private IEnumerator HopFrom(string from, string to)
+        {
+            Begin();
+            yield return HopBetween(from, to);
+            End($"Radio-hop from {from} to {to}", "a free hop between lit pads");
+        }
+
+        private IEnumerator HopBetween(string from, string to)
+        {
+            StationReach reach = _gameplay.Relays.Reach;
+            yield return DriveTo(Flat(reach.Position(reach.IndexOf(from))), PadArrive, 0.5f, 90f, from + "'s pad");
+            yield return Hop(_context.Get<IRadioHop>(), to);
+        }
+
+        /// <summary>
+        /// relay.2 by the canyon's mouth, the second mast: its part, the stitch, and as it straightens its service
+        /// cabinet swings open on Cell Pack II's blueprint tube (docs/features/M3-20 §6).
+        /// </summary>
+        private IEnumerator RestoreTheMouthRelay()
+        {
+            int found = _events.BlueprintFound.Count;
+            yield return RestoreRelay(2, "the mouth relay");
+            yield return Until(() => _events.BlueprintFound.Count > found, 4f,
+                "the mast's cabinet gives Cell Pack II's tube");
+            Assert.AreEqual(CellPack, _events.BlueprintFound[_events.BlueprintFound.Count - 1].Value.KitId);
+        }
+
+        /// <summary>relay.3 at the terminus, beside Bell's wall: a charger at the canyon's far end.</summary>
+        private IEnumerator RestoreTheTerminusRelay()
+        {
+            yield return RestoreRelay(3, "the terminus relay");
+        }
+
+        /// <summary>A mast's part, then the stitch at its foot; done once it comes online, linked home.</summary>
+        private IEnumerator RestoreRelay(int index, string name)
+        {
+            RelayField relays = _gameplay.Relays;
+            RelayMast mast = relays.Masts[index];
+            Recipe recipe = relays.NextCost;
+            Assert.IsTrue(_gameplay.Materials.Has(recipe), $"the stock covers {name}");
+            Begin();
+            int online = _events.RelayRestored.Count;
+            float partAway = SurfaceRules.HorizontalDistance(mast.PartRest, mast.Anchor.Position);
+            yield return DriveTo(Flat(mast.PartRest), 1.5f, 0.7f, 120f, name + "'s part");
+            yield return Until(() => mast.PartState == RelayPartState.Held, 8f, "the relay part flies into 07");
+            Vector3 foot = mast.Broken.PartSocket.position + mast.Anchor.Forward * RelayFoot;
+            yield return DriveTo(Flat(foot), 1.2f, 0.5f, 60f, name + "'s foot");
+            yield return Until(() => _gameplay.Hints.TryGet(InteractionKind.Restore, out InteractionHint hint) &&
+                                     hint.Ready, 4f, "the restore prompt is ready");
+            Press(_keyboard.eKey);
+            yield return Until(() => mast.Restoring, 4f, "holding Interact begins the restoration");
+            Release(_keyboard.eKey);
+            RelayBeat beat = RelayBeat.For(relays.Tuning);
+            yield return Until(() => _events.RelayRestored.Count > online, beat.Duration + 2f,
+                name + " comes online, linked home");
+            Assert.AreEqual(mast.Id, _events.RelayRestored[_events.RelayRestored.Count - 1].Value.RelayId);
+            End($"Restore {name} ({mast.Id})", $"recipe {recipe}, its part {partAway:F0} m from the mast");
+        }
+
+        /// <summary>
+        /// Up the belly lift into the lab with a blueprint tube on its back: the reader decodes it, and down again
+        /// (M3-19's reader; docs/features/M3-20: Cell Pack II's tube from relay.2's cabinet).
+        /// </summary>
+        private IEnumerator DecodeAtTheReader(string kitId)
+        {
+            Begin();
+            LiftStation lift = _gameplay.Lift;
+            int decoded = 0;
+            using IDisposable finds = _context.Events.Subscribe<FindDecoded>(find =>
+                decoded += find.KitId == kitId ? 1 : 0);
+            yield return DriveOntoTheLift("onto the lift with the tube");
+            yield return Until(() => lift.Phase == LiftPhase.Inside, LiftPhaseTimeout, "the lift carries 07 up");
+            yield return Until(() => decoded > 0, LabTurnTimeout + ReaderTimeout, "the reader decodes the tube");
+            Assert.IsTrue(_gameplay.Blueprints.IsPinned(kitId), "decoded: the bay can build it");
+            yield return RideDown("08b-down-from-the-reader");
+            End($"Decode {kitId} at the lab's reader", "up the lift, the reader's beam, down again");
+        }
+
+        /// <summary>Back into the bay for Cell Pack II: the spine set on 07's back, two more lamps lit.</summary>
+        private IEnumerator CraftTheCellPack()
+        {
+            Begin();
+            Workshop bench = _gameplay.Workshop;
+            BatteryModel battery = _gameplay.Battery.Model;
+            yield return Until(() => _gameplay.Blueprints.IsDrawn(CellPack),
+                2f * _gameplay.Progression.Tuning.PlotterDrawSeconds + 3f, "the plotter draws Cell Pack II's sheet");
+            yield return DriveIntoTheBay(bench);
+            yield return Until(() => bench.Occupied, 3f, "07 is parked on the bay's turntable");
+            Assert.AreEqual(CellPack, _gameplay.Shop.StationUpgrade.Id, "the bay offers Cell Pack II");
+            int purchases = _events.UpgradePurchased.Count;
+            Press(_keyboard.eKey);
+            yield return Until(() => _events.UpgradePurchased.Count > purchases, 15f, "holding confirm crafts it");
+            Release(_keyboard.eKey);
+            Assert.IsTrue(_context.Get<IRoverAbilities>().Has(RoverAbility.CellPack));
+            yield return Until(() => Fitted(CellPack), BayFitTimeout, "an arm sets the battery spine on 07");
+            Assert.AreEqual(_gameplay.Battery.Tuning.CellPackCells, battery.Cells, "two more cells, arriving full");
+            yield return new WaitForSeconds(1.5f);
+            Vector3 back = -Flat(_rover.Rotation * Vector3.forward).normalized;
+            Review(_rover.Position + back * 5f + Vector3.up * 2.5f, _rover.Position + Vector3.up, "13h-battery-spine");
+            yield return Until(() => !bench.Feeding, 3f, "the bay has fitted the spine");
+            yield return BackOutOfTheBay(bench);
+            End("Craft Cell Pack II in the bay", $"{battery.Cells} cells, {battery.Charge01:P0}");
+        }
+
+        /// <summary>
+        /// Bell is stitched: back to the terminus relay's lit pad and hop home; Bell walks home by herself and greets 07
+        /// there.
+        /// </summary>
+        private IEnumerator HomeFromTheTerminus()
+        {
+            Begin();
+            Friend bell = _gameplay.Friends.Find(BellId);
+            int greetings = CountGreetings(BellId);
+            yield return HopBetween(WorldAnchorIds.RelayPrefix + 3, StationReach.HomeId);
+            yield return Until(() => bell.IsHome, _gameplay.Friends.BellTuning.WakeDuration + 60f,
+                "Bell walks home by the exit on her own");
+            yield return Until(() => CountGreetings(BellId) > greetings, _gameplay.Friends.BellTuning.WakeDuration + 6f,
+                "she greets 07 home");
+            End("Home from the terminus by radio-hop", "Bell walked home by herself and greeted 07");
+        }
+
+        /// <summary>Out to the mound relay's pad, where level 3's relay spare waits (it lit early on the way out).</summary>
+        private IEnumerator ToTheMoundRelay()
+        {
+            Begin();
+            RelayMast mast = _gameplay.Relays.Masts[0];
+            yield return DriveTo(Flat(mast.Anchor.Position + mast.Anchor.Forward * RelayFoot), WaypointArrive,
+                CanyonThrottle, 90f, "the front of the mound relay's pad");
+            End("Out to the mound relay", "its spare waits on the pad");
+        }
+
         private IEnumerator RestoreTheMoundRelay()
         {
             RelayField relays = _gameplay.Relays;
