@@ -606,7 +606,8 @@ namespace MoonProject.UI.PlayModeTests
 
             context.Events.Publish(new NextStepChanged("next.tower"));
             context.Events.Publish(new PlaceFirstApproached("place.tower"));
-            yield return new WaitForSecondsRealtime(_tuning.Guidance.Place.FadeIn + 0.5f);
+            yield return new WaitForSecondsRealtime(_tuning.Guidance.TowerCardDelay + _tuning.Guidance.Place.FadeIn +
+                                                    0.5f);
             yield return Capture(camera, folder, "48_place_card_tower");
             yield return new WaitForSecondsRealtime(_tuning.Guidance.PlaceHoldSeconds +
                                                     _tuning.Guidance.Place.FadeOut + _tuning.Guidance.Line.FadeIn + 0.5f);

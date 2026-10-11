@@ -34,6 +34,11 @@ namespace MoonProject.UI
         [Range(1f, 10f)]
         [SerializeField] private float _placeHoldSeconds = 4f;
 
+        [Tooltip("Seconds the radio tower's card waits after 07 first comes near, while World's slow light runs down "
+            + "each dark cable to what the tower will power (M3-24 B); its line then names the job.")]
+        [Range(0f, 10f)]
+        [SerializeField] private float _towerCardDelay = 4f;
+
         [Tooltip("The recovery protocol's readout in 07's lens at the end of the full opening, easing in and out.")]
         [SerializeField] private RevealSettings _protocol = new RevealSettings(0.8f, 1.1f, 6f, 0.97f, 1f, 0.8f);
 
@@ -52,6 +57,8 @@ namespace MoonProject.UI
         public RevealSettings Place => _place;
 
         public float PlaceHoldSeconds => _placeHoldSeconds;
+
+        public float TowerCardDelay => _towerCardDelay;
 
         public RevealSettings Protocol => _protocol;
 
