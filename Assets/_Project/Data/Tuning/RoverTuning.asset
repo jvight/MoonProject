@@ -21,6 +21,8 @@ MonoBehaviour:
     _coastEase: 0.5
     _brakeStopTime: 1.1
     _brakeEase: 0.35
+    _holdStopTime: 1.8
+    _holdEase: 0.35
     _throttleRiseHalfLife: 0.08
     _throttleFallHalfLife: 0.1
     _inputDeadZone: 0.05
@@ -55,3 +57,46 @@ MonoBehaviour:
     _coyoteTime: 0.1
     _minAirTime: 0.25
     _minImpactSpeed: 0.5
+  _spawn:
+    _yaw: 355
+  _recovery:
+    _tryingInput: 0.5
+    _progressRadius: 0.75
+    _stuckTime: 3.5
+    _searchMinRadius: 2.5
+    _searchRingStep: 1.5
+    _searchRings: 6
+    _searchDirections: 12
+    _maxSetDownSlope: 22
+    _clearance: 1.4
+    _liftHeight: 1.5
+    _liftDuration: 2.2
+  _hoverJump:
+    _chargeTime: 0.8
+    _tapHeight: 0.8
+    _fullHeight: 7
+    _cooldown: 0.4
+    _liftoffTime: 0.15
+    _airSteer: 0.2
+    _cushionProbe: 8
+    _cushionDeceleration: 6
+    _cushionLandingSpeed: 1.6
+    _chargeSteps: 4
+  _stillness:
+    _maxSpeed: 0.2
+    _driveDeadZone: 0.05
+    _lookMouseDeadZone: 0.5
+    _lookStickDeadZone: 0.1
+  _boost:
+    _extraSpeed: 1.6
+    _throttle: 0.9
+    _cruiseFraction: 0.85
+    _maxSteer: 0.35
+    _maxSlope: 8
+    _releaseDelay: 0.35
+    _riseHalfLife: 0.9
+    _fallHalfLife: 0.45
+  _dock:
+    _settleSeconds: 1
+    _lampDim: 0.3
+    _lampHalfLife: 0.5

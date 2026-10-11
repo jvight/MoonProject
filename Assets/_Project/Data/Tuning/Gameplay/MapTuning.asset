@@ -17,5 +17,12 @@ MonoBehaviour:
   _friendRadius: 8
   _friendMergeDistance: 15
   _pollSeconds: 0.5
+  _sweepDelay: 1.5
+  _sweepGap: 0.35
+  _sweepRange: 450
+  _sweepEyeHeight: 5
+  _sweepLightHeight: 3
+  _sightStep: 4
+  _sightClearance: 0.5
   _inkLead: 1.4
   _inkSeconds: 0.6

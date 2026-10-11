@@ -15,10 +15,9 @@ MonoBehaviour:
   _wakeDistance: 15
   _dockRadius: 4
   _landerRadius: 9
-  _shelfRadius: 4
   _towerRadius: 6
   _bayRadius: 7
-  _boardRadius: 4
+  _labRadius: 3
   _ladderRadius: 3
   _liftRadius: 4
   _rackRadius: 4
@@ -63,7 +62,10 @@ MonoBehaviour:
   _partAppearSeconds: 1.2
   _partFeedSeconds: 1.6
   _partFeedArc: 0.8
-  _plotterReach: 6
+  _readerFeedSeconds: 1.2
+  _readerDecodeSeconds: 4
+  _reelTurnsPerSecond: 0.8
+  _handOffSeconds: 3
   _plotterDrawSeconds: 6
   _plotterRows: 8
   _plotterLampGlow: 1.5

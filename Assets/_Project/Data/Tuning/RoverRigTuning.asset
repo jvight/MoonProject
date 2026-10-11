@@ -87,6 +87,14 @@ MonoBehaviour:
     _warmColor: {r: 1, g: 0.62, b: 0.33, a: 1}
     _drumGlow: 1.4
     _drumIdleGlow: 0.05
+  _flankLamps:
+    _litGlow: 2.6
+    _breathPeriod: 2.6
+    _breathDepth: 0.4
+    _reserveGlow: 0.18
+    _halfLife: 0.18
+    _crawlHeadlamp: 0.35
+    _wakeInterval: 0.4
   _tubeHalfLife: 0.2
   _antennaFrequency: 2.4
   _antennaDamping: 0.15

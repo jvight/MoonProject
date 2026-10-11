@@ -13,8 +13,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _landerOffset: {x: -10, y: 0, z: 8}
-  _depositRadius: 7
-  _depositHeight: 6
   _depositDuration: 1.9
   _depositLift: 0.9
   _depositHover: 0.25
@@ -31,10 +29,18 @@ MonoBehaviour:
   _warmEase: 1.5
   _windowGlow: 1
   _farWindowBoost: 1.2
-  _shelfGlow: 0.6
   _haloCentre: {x: 0, y: 3, z: 0}
   _haloAppear: 70
   _haloFull: 200
   _haloRadius: 5
   _haloGrowth: 0.035
   _haloGlow: 0.45
+  _dockRadius: 1.3
+  _dockMaxSpeed: 0.3
+  _dockDelay: 1.2
+  _dockInputDeadZone: 0.08
+  _dockIdleGlow: 0.25
+  _dockChargingGlow: 1.3
+  _dockBreathPeriod: 3.6
+  _dockBreathDepth: 0.3
+  _dockGlowEase: 0.8

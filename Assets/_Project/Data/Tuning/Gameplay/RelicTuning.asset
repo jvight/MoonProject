@@ -30,3 +30,9 @@ MonoBehaviour:
   _returnMargin: 6
   _returnHover: 1.2
   _returnDuration: 3.5
+  _stowDuration: 1.2
+  _stowPerMetre: 0.05
+  _stowLift: 1.1
+  _stowHover: 0.3
+  _stowOvershoot: 1.2
+  _cradleGlow: 0.25

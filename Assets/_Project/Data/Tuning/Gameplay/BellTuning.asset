@@ -81,9 +81,11 @@ MonoBehaviour:
   _needleEase: 0.3
   _clickKick: 7
   _clickDuration: 0.35
+  _knobTurn: 1
   _tuneFront: 2
   _tuneRadius: 1.6
   _tuneMaxSpeed: 0.8
+  _dialTapTime: 0.35
   _pillarGlow: 0.9
   _pillarRingGlow: 0.5
   _pillarRise: 2.5

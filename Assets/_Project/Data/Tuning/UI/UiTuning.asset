@@ -339,3 +339,36 @@ MonoBehaviour:
     _blurEndMetres: 4
     _blurRadius: 1.5
     _saturation: -30
+  _lab:
+    _prompts:
+      _fadeIn: 0.6
+      _fadeOut: 0.5
+      _slide: 10
+      _scaleFrom: 0.9
+      _springFrequency: 1.4
+      _springDamping: 0.6
+    _chip:
+      _fadeIn: 0.4
+      _fadeOut: 0.4
+      _slide: 6
+      _scaleFrom: 0.9
+      _springFrequency: 1.6
+      _springDamping: 0.7
+    _place:
+      _fadeIn: 0.8
+      _fadeOut: 1.2
+      _slide: 10
+      _scaleFrom: 0.95
+      _springFrequency: 1.4
+      _springDamping: 0.7
+    _placeSeconds: 5
+    _promptDelay: 1.5
+    _learnedPush: 0.6
+  _battery:
+    _reveal:
+      _fadeIn: 1.2
+      _fadeOut: 0.9
+      _slide: 4
+      _scaleFrom: 0.97
+      _springFrequency: 1.2
+      _springDamping: 0.7
