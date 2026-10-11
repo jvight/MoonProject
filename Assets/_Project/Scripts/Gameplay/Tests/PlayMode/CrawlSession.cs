@@ -37,6 +37,8 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float StartDistance = 45f;
         private const float RingArrive = 1f;
         private const float RingApproachThrottle = 0.3f;
+        private const float ChargeTimeout = 5f;
+        private const float LampSettle = 1f;
         private const int CaptureWidth = 1280;
         private const int CaptureHeight = 720;
 
@@ -125,6 +127,9 @@ namespace MoonProject.Gameplay.PlayModeTests
                 yield return Until(() => !battery.IsLowPower, 2f, "the charge ends the crawl");
                 Assert.AreEqual(2, lowPower.Count, "into the crawl once, out of it once");
                 yield return Until(() => !battery.FriendLeads, 1f, "Tilly lets go as 07 charges");
+                yield return Until(() => battery.FullCells == battery.Cells, ChargeTimeout, "the ring fills the cells");
+                yield return new WaitForSeconds(LampSettle);
+                Capture("charged-at-the-mound-mast");
             }
 
             Assert.IsEmpty(_problems, "no errors or exceptions in the log");
