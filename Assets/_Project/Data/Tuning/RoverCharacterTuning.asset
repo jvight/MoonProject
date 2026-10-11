@@ -110,7 +110,10 @@ MonoBehaviour:
   _oofFrequency: 1.1
   _oofHeadDip: 11
   _oofSquashKick: 0.6
-  _tipBlinkPeriod: 2.8
-  _tipBlinkDuration: 0.6
+  _callSignPeriod: 12
+  _callSignShort: 0.22
+  _callSignLong: 0.8
+  _callSignGap: 0.22
+  _callSignEdge: 0.06
   _tipRestGlow: 0.01
   _tipPeakGlow: 0.55
