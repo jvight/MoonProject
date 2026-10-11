@@ -30,6 +30,9 @@ namespace MoonProject.Art.Editor
         /// <summary>07's lens glass ring (LofiLensGlass): it shows only Earth's reflection (cutscenes O10).</summary>
         public const string LensGlassMaterial = PaletteFolder + "/M_LensGlass.mat";
         public const string RoverFolder = Root + "/Rover";
+
+        /// <summary>Rover 08, built by Blender from tools/blender/rover08.py (Rover08ModelBuilder).</summary>
+        public const string Rover08Folder = Root + "/Rover08";
         public const string RockFolder = Root + "/Rocks";
         public const string BaseFolder = Root + "/Base";
         public const string RelicFolder = Root + "/Relics";
