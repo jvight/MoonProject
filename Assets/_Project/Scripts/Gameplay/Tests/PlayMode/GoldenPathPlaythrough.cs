@@ -2072,8 +2072,21 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         private IEnumerator HopBetween(string from, string to)
         {
-            StationReach reach = _gameplay.Relays.Reach;
-            yield return DriveTo(Flat(reach.Position(reach.IndexOf(from))), PadArrive, 0.5f, 90f, from + "'s pad");
+            if (from == StationReach.HomeId)
+            {
+                ChargingDock dock = _gameplay.Home.Dock;
+                Vector3 facing = Flat(dock.Rotation * Vector3.forward).normalized;
+                yield return DriveTo(Flat(dock.Position) - facing * DockApproach, 1.5f, 0.6f, 60f,
+                    "the front of the charging dock, home's hop pad");
+                yield return DriveTo(Flat(dock.Position), DockParkRadius, 0.35f, 30f, "the charging dock");
+            }
+            else
+            {
+                StationReach reach = _gameplay.Relays.Reach;
+                yield return DriveTo(Flat(reach.Position(reach.IndexOf(from))), PadArrive, 0.5f, 90f,
+                    from + "'s pad");
+            }
+
             yield return Hop(_context.Get<IRadioHop>(), to);
         }
 
