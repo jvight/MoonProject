@@ -1978,7 +1978,11 @@ namespace MoonProject.Gameplay.PlayModeTests
                 "nearest lit node: in reach");
         }
 
-        /// <summary>From the mound relay's pad, the radio-hop home; then from home's pad, back to the mast.</summary>
+        /// <summary>
+        /// From the mound relay's pad, the radio-hop home, which sets 07 down on its dock on the base pad: home with
+        /// news (the lit mast), it rests, the dock's evening opens once (P6) and the tower's listening sweep raises a
+        /// pillar. Then from home's pad, back to the mast.
+        /// </summary>
         private IEnumerator HopHomeAndBack()
         {
             Begin();
@@ -1989,22 +1993,38 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return DriveTo(Flat(mast.Anchor.Position + mast.Anchor.Forward * RelayFoot), WaypointArrive,
                 CanyonThrottle, 60f, "the front of the mound relay's pad");
             yield return DriveTo(Flat(mast.Anchor.Position), PadArrive, 0.5f, 90f, "the mound relay's pad");
+            int evenings = _events.DockEveningOpened.Count;
             yield return Hop(hop, StationReach.HomeId);
             Vector3 home = _context.Get<IWorldLayout>().BasePosition;
             Assert.Less(SurfaceRules.HorizontalDistance(_rover.Position, home), 3f, "on home's pad");
+            ChargingDock dock = _gameplay.Home.Dock;
+            yield return Until(() => dock.Docked, _gameplay.Home.Tuning.DockDelay + 3f,
+                "07 rests on the dock it landed on");
+            yield return Until(() => _events.DockEveningOpened.Count > evenings, 1f,
+                "home with news: the dock's evening opens (P6)");
+            int heard = Heard();
+            int seen = 0;
+            using IDisposable blinks = _context.Events.Subscribe<MapPlaceSeen>(_ => seen++);
+            yield return new WaitForSeconds(_gameplay.Progression.Tuning.EveningSweepDelay + 0.5f);
+            Assert.AreEqual(evenings + 1, _events.DockEveningOpened.Count, "the evening opens once");
+            Assert.AreEqual(heard + (heard < Hearable() ? 1 : 0), Heard(),
+                "the tower's listening sweep raises one new pillar on the horizon, while any is left unheard");
             Capture("35-hopped-home");
             yield return Hop(hop, mast.Id);
             Assert.Less(SurfaceRules.HorizontalDistance(_rover.Position, mast.Anchor.Position), 3f,
                 "back on the mound relay's pad");
             Capture("36-hopped-back");
             End("Radio-hop home and back", $"{_events.RadioHopFinished.Count} hops, about " +
-                                           $"{HopSequence.For(_gameplay.Relays.Tuning).Duration:F1} s each");
+                                           $"{HopSequence.For(_gameplay.Relays.Tuning).Duration:F1} s each; home on " +
+                                           $"the dock, {seen} places blinked seen and the evening's sweep raised a " +
+                                           "pillar");
         }
 
         /// <summary>
         /// Home at last: hop home, drive up to the charging dock on the base pad, stop on it and let go of the wheel;
-        /// 07 settles in to rest and the dock's glow warms. A touch of the throttle leaves. The hop home lands 07 on
-        /// the dock's pad, so it may rest there first: the rest and the evening are counted from before the hop.
+        /// 07 settles in to rest and the dock's glow warms, with no second evening (nothing new since the last). A
+        /// touch of the throttle leaves. The hop home lands 07 on the dock's pad, so it may rest there first: the rest
+        /// and the evening are counted from before the hop.
         /// </summary>
         private IEnumerator RestOnTheDock()
         {
@@ -2024,14 +2044,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             float off = SurfaceRules.HorizontalDistance(_rover.Position, dock.Position);
             yield return new WaitForSeconds(tuning.DockGlowEase * 3f);
             Assert.Greater(dock.GlowLevel, tuning.DockIdleGlow * 2f, "the dock glows warm while 07 charges");
-            Assert.AreEqual(evenings + 1, _events.DockEveningOpened.Count,
-                "home with news: the dock's evening opens, once (P6)");
-            int heard = Heard();
-            int seen = 0;
-            using IDisposable blinks = _context.Events.Subscribe<MapPlaceSeen>(_ => seen++);
-            yield return new WaitForSeconds(_gameplay.Progression.Tuning.EveningSweepDelay + 0.5f);
-            Assert.AreEqual(heard + (heard < Hearable() ? 1 : 0), Heard(),
-                "the tower's listening sweep raises one new pillar on the horizon, while any is left unheard");
+            Assert.AreEqual(evenings, _events.DockEveningOpened.Count,
+                "nothing new since the hop home's evening: no second evening (P6)");
             Vector3 aside = Vector3.Cross(Vector3.up, facing);
             Review(Flat(dock.Position) - facing * 6f + aside * 3f + Vector3.up * 2.5f,
                 dock.Position + Vector3.up * 0.6f, "37-resting-on-the-dock");
@@ -2041,7 +2055,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsFalse(_events.RoverDockChanged[_events.RoverDockChanged.Count - 1].Value.Docked);
             yield return Until(() => _rover.Speed < StopSpeed, 6f, "07 stops off the dock");
             End("Rest on the charging dock", $"settled {off:F2} m from its anchor, glow {dock.GlowLevel:F2}; " +
-                                             $"{seen} places blinked seen and the evening's sweep raised a pillar");
+                                             "no second evening");
         }
 
         /// <summary>Salvage sites and friends there are to hear.</summary>
