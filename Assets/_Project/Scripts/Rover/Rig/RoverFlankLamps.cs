@@ -9,9 +9,9 @@ namespace MoonProject.Rover
     /// 07's battery on its flanks (docs/features/M3-20 "How 07 shows it"): a strip of small amber lamps along the
     /// orange stripe on each side, eight sockets built once and shown per capacity (four at the start, six with Cell
     /// Pack II), lit by <see cref="FlankLampStrip"/> from <see cref="IRoverBattery"/> and eased so a cell fills and
-    /// empties softly. In the opening the lamps stay dark until O5's flicker, then light one by one
-    /// (<see cref="FlankLampLit"/>, a quiet tick each). A scene without Gameplay has no battery: the strip stays hidden
-    /// there. Allocation-free per frame.
+    /// empties softly. 07 sleeps under the title with its lamps dark; in the opening they stay dark until O5's flicker,
+    /// then light one by one (<see cref="FlankLampLit"/>, a quiet tick each), and the short wake lights them at once. A
+    /// scene without Gameplay has no battery: the strip stays hidden there. Allocation-free per frame.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class RoverFlankLamps : MonoBehaviour
@@ -30,6 +30,7 @@ namespace MoonProject.Rover
         private BatteryLink _battery;
         private EventBus _events;
         private IDisposable _wake;
+        private IDisposable _title;
         private float _wakeStart = float.NegativeInfinity;
         private int _wakeLit = RoverModelNodes.FlankLampCount;
         private MaterialPropertyBlock _block;
@@ -64,6 +65,7 @@ namespace MoonProject.Rover
             _battery = new BatteryLink(context);
             _events = context.Events;
             _wake = _events.Subscribe<RoverWakeBeatReached>(OnWakeBeat);
+            _title = _events.Subscribe<TitleShown>(OnTitleShown);
             _block = new MaterialPropertyBlock();
             _levels = new float[RoverModelNodes.FlankLampCount];
             ShowCells(0);
@@ -110,14 +112,16 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// The opening's beats: dark from the push into the lens, lit one by one from O5's flicker (or, when a
-        /// hurried opening skips it, from the blink); the short wake lights them at once.
+        /// The opening's beats: dark from the push into the lens (or from O1's crackle, after New Game's reload under
+        /// the black), lit one by one from O5's flicker (or, when a hurried opening skips it, from the blink); the
+        /// short wake lights them at once.
         /// </summary>
         private void OnWakeBeat(RoverWakeBeatReached reached)
         {
             switch (reached.Beat)
             {
                 case WakeBeat.PushedIn:
+                case WakeBeat.Crackle:
                     _wakeLit = 0;
                     _wakeStart = float.PositiveInfinity;
                     break;
@@ -131,9 +135,17 @@ namespace MoonProject.Rover
             }
         }
 
+        /// <summary>07 sleeps under the title, fresh or over a save: dark until a wake beat lights the lamps.</summary>
+        private void OnTitleShown(TitleShown shown)
+        {
+            _wakeLit = 0;
+            _wakeStart = float.PositiveInfinity;
+        }
+
         private void OnDestroy()
         {
             _wake?.Dispose();
+            _title?.Dispose();
         }
 
         /// <summary>Shows one socket per cell on each flank (the rest stay hidden).</summary>
