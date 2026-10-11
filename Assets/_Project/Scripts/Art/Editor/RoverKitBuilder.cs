@@ -18,6 +18,7 @@ namespace MoonProject.Art.Editor
         public const string CapacitorDrumName = "Kit_CapacitorDrum";
         public const string CargoRackName = "Kit_CargoRack";
         public const string BatterySpineName = "Kit_BatterySpine";
+        public const string TapeDeckName = "Kit_TapeDeck";
         public const string LampPrefix = "Lamp_";
         public const string DrumGlowName = "Glow";
         public const string RelicSeatName = "RelicSeat";
@@ -31,6 +32,7 @@ namespace MoonProject.Art.Editor
             ModelPrefabWriter.Write(CreateCapacitorDrum(), ArtPaths.RoverFolder, material, glowOff);
             ModelPrefabWriter.Write(CreateCargoRack(), ArtPaths.RoverFolder, material);
             ModelPrefabWriter.Write(CreateBatterySpine(), ArtPaths.RoverFolder, material);
+            ModelPrefabWriter.Write(CreateTapeDeck(), ArtPaths.RoverFolder, material);
             AssetDatabase.SaveAssets();
         }
 
@@ -62,6 +64,12 @@ namespace MoonProject.Art.Editor
         {
             return new ModelNode(BatterySpineName, Vector3.zero,
                 new ModelMesh(BatterySpineName, RoverSpineMeshes.Spine()));
+        }
+
+        /// <summary>The old tape deck on DeckSocket (M3-24 C), also the find Tilly spots on the ground.</summary>
+        public static ModelNode CreateTapeDeck()
+        {
+            return new ModelNode(TapeDeckName, Vector3.zero, new ModelMesh(TapeDeckName, RoverDeckMeshes.Deck()));
         }
 
         public static ModelNode CreateCargoRack()
