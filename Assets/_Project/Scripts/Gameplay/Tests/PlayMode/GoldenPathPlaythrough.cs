@@ -236,12 +236,12 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float PadArrival = 5f;
 
         /// <summary>
-        /// Seconds the golden path may take: steps 0-8 end to end measured 1323 s on 2026-10-11 (P1's parts, P2's
-        /// chasm and garage return, P6's evening, the lab's stitch and three rides with the reader, the keepsake shelf
-        /// and the chart, and step 8's level 3), plus about 30 s for M3-21's ride up to decode Hover-Jump's tube, with
-        /// the same ~8% margin the path has always had.
+        /// Seconds the golden path may take: steps 0-8 end to end measured 1461 s on 2026-10-12 at the battery's spec
+        /// tuning (M3-20's charger-to-charger route: docks between trips, the garage's cuts over two trips, the mound,
+        /// mouth and terminus masts and their rings, Cell Pack II, the radio-hops), with the same ~8% margin the path
+        /// has always had.
         /// </summary>
-        private const float TotalBudget = 1460f;
+        private const float TotalBudget = 1580f;
 
         /// <summary>Close enough (m) to a part resting on a mast's pad to draw it in.</summary>
         private const float PartArrive = 1.5f;
