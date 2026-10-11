@@ -4,7 +4,33 @@ Read this, then `CLAUDE.md`, then `docs/VISION.md`, `docs/DESIGN.md`, `docs/ARCH
 It records how the project is run, where it stands, and what comes next, so a new Director session (on any
 account) can continue without the old conversation.
 
-## 00. NOW (2026-10-11 ~11:20): read this first
+## 00. NOW (2026-10-12 ~01:30): read this first
+- **Director session** "MoonProject · Quản lý" `local_39353459-ab44-4d1f-b1db-4b1fa0a39a36`. Cron guard v3 is session-only
+  (recreate it): usage log, wrap up at 46%, stop all at 48% — **the owner's HARD LIMIT is 50% of the weekly quota.**
+  Model/effort per task (memory `model-effort-policy`): Sonnet for mechanical work, Opus medium for slices, Opus high
+  for hard bugs; new chips start at Opus xhigh, so set them right after the owner clicks.
+- **origin/main = f1ac7fb2** (lab + battery A, verified). **main = 3dfd6e62**, landed since and NOT yet verified:
+  goals (M3-21), opening polish (light pools as decals, dock + spawn 4.5 m south, O1-O14, lens glass, first prompt,
+  title radio, title glint veil, hop home lands on the dock), cleanup (box_check/verify exclude the Playthrough from
+  PlayMode steps, trial-merge abort, orphan-asset warning in land, ReserializeAssets, Ro's letters dated, the
+  **Lunarion** rename with a one-time save copy from `.../Lofi Lunar`), look (M3-18 finish: skirts, caked dust, garage
+  232°/140 m, Tilly 60-95°/80-110 m), landmark pilots (L1), the Lunarion wordmark on the title (SVG → Painter2D).
+- **Verify on 673d38a9 failed twice, both assigned:** the golden path's tether snaps once on a tow home (battery owns
+  the route; fold into milestone B) and WorldBootTests counts 449 prop colliders instead of 195 (a Rover PlayMode test
+  leaves a scene behind; the look session is fixing the teardown). Re-run `verify --parallel --push` once both land.
+- **Running:** battery milestone B (light bar approved; Cell Pack II, mast ring, reshaped route at spec 4/120/60,
+  the tether snap). look (the teardown fix). Done and resting: goals, cleanup, opening polish, lab-build,
+  lab-systems, blender trial.
+- **Owner decisions today:** M3-22 is 0.6; GDD v3 §12 Subnautica lessons (fragments, Kestrel-3 as our Aurora, radio
+  pencil marks, the mid-game Earth moment); GDD v3 §13 "the long silence" (humanity long gone, signals are recordings
+  and machines, a dark open ending with rover 08 and Ro's last recording; every function shows on 07); the game is
+  **Lunarion**; Blender is parked until 0.8 (`box/blender` kept, `docs/design/trial-blender-svg.md`, Blender 4.5.9 at
+  `D:/Tools/Blender`); the v2 plain wordmark.
+- **0.5 still to do:** battery B (ship blocker: spec tuning + route), a full verify + push, then the release step
+  (bundleVersion 0.5.0, save floor, build zip `Lunarion-0.5.0.zip` to `D:/Project/MoonProject/Builds/`, owner review).
+  Backlog: M3-18's two open look targets (World grade + foreground), PlayMode test for landmark pilots, Mobile pools.
+
+## 00b. Earlier on 2026-10-11 (~11:20)
 - **Director session:** "MoonProject · Quản lý", id `local_39353459-ab44-4d1f-b1db-4b1fa0a39a36` (took over at ~10:45
   from `local_74e38880…`, which was told to delete its cron and stop). Its cron guard (every 10 min: usage log, wrap-up
   at 23%, stop at 24%, stall check) is session-only: recreate it in a new Director session (§6, §8).
