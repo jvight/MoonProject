@@ -3383,6 +3383,33 @@
       "notes": "The battery empties: a soft power-down sigh, D4 gliding to A2 under a breath of air."
     },
     {
+      "id": "lamp_tick",
+      "category": "tick_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/lamp_tick.wav"
+      ],
+      "variantLabels": [
+        "lamp_tick"
+      ],
+      "sha256": [
+        "f6347342b39fa11b58ca6d7441d647560a34d3a5cbf57592a68462c3feaa844a"
+      ],
+      "volumeMin": 0.45,
+      "volumeMax": 0.45,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -26.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "A flank lamp lighting as 07 wakes: a tiny relay tick with a breath of filament on D6."
+    },
+    {
       "id": "leap_fizzle",
       "category": "oneshot_3d",
       "milestone": "M3",

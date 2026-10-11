@@ -9,14 +9,15 @@ namespace MoonProject.Audio
     /// 07's battery heard (docs/features/M3-20), always soft and in key, never an alarm: each cell a charger fills (or
     /// a new cell pack brings) plays the next note of D E F# A B, then up an octave, at 07; the Low warning plays one
     /// falling two-note (A to F#); an empty battery a soft power-down sigh as the crawl begins; a leap the battery
-    /// can't pay for the coils' quiet fizzle under the belly. A loaded game's battery is shown silently. The charging
+    /// can't pay for the coils' quiet fizzle under the belly; each flank lamp waking in the opening a quiet tick
+    /// (<see cref="FlankLampLit"/>). A loaded game's battery is shown silently. The charging
     /// hum is the dock's, following whichever charger fills the cells (<see cref="StationAudio"/>).
     /// Initialised by <see cref="AudioDirector"/>.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class BatteryAudio : MonoBehaviour
     {
-        private const int SubscriptionCount = 4;
+        private const int SubscriptionCount = 5;
 
         private readonly IDisposable[] _subscriptions = new IDisposable[SubscriptionCount];
         private AudioDirector _director;
@@ -25,6 +26,7 @@ namespace MoonProject.Audio
         private CueHandle _low;
         private CueHandle _sigh;
         private CueHandle _fizzle;
+        private CueHandle _tick;
         private int _cellNotes;
         private int _fullCells = -1;
 
@@ -37,7 +39,8 @@ namespace MoonProject.Audio
             _low = director.Resolve(AudioCueIds.BatteryLow);
             _sigh = director.Resolve(AudioCueIds.BatterySigh);
             _fizzle = director.Resolve(AudioCueIds.LeapFizzle);
-            if (!_cell.IsValid || !_low.IsValid || !_sigh.IsValid || !_fizzle.IsValid)
+            _tick = director.Resolve(AudioCueIds.LampTick);
+            if (!_cell.IsValid || !_low.IsValid || !_sigh.IsValid || !_fizzle.IsValid || !_tick.IsValid)
             {
                 enabled = false;
                 return;
@@ -50,6 +53,7 @@ namespace MoonProject.Audio
             _subscriptions[1] = context.Events.Subscribe<BatteryWarned>(OnWarned);
             _subscriptions[2] = context.Events.Subscribe<LowPowerChanged>(OnLowPowerChanged);
             _subscriptions[3] = context.Events.Subscribe<RoverLeapRefused>(OnLeapRefused);
+            _subscriptions[4] = context.Events.Subscribe<FlankLampLit>(OnLampLit);
         }
 
         /// <summary>A rising cell plays its note: the cell's place in the run, D5 for the first.</summary>
@@ -86,6 +90,11 @@ namespace MoonProject.Audio
         private void OnLeapRefused(RoverLeapRefused refused)
         {
             _director.PlayAt(_fizzle, refused.Position);
+        }
+
+        private void OnLampLit(FlankLampLit lit)
+        {
+            _director.PlayAt(_tick, lit.Position);
         }
 
         private void OnDestroy()

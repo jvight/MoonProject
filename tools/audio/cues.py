@@ -2054,6 +2054,14 @@ def battery_sigh(_variant, gen):
     return _mono_reverb(filters.lowpass(0.4 * hum + breath, 2400.0), room=0.5, damping=0.7, wet=0.2, dry=1.0)
 
 
+def lamp_tick(_variant, gen):
+    """A flank lamp waking in the opening: a tiny relay tick and a breath of warm filament on D6, very quiet."""
+    n = samples(0.18)
+    tick = filters.bandpass(noise.white(n, gen), 2600.0, 1.8) * envelope.ar(n, 0.0004, 0.006)
+    glow = osc.sine(n, note_freq("D6")) * envelope.ar(n, 0.004, 0.09)
+    return filters.lowpass(0.22 * tick / max(float(np.max(np.abs(tick))), 1e-9) + 0.12 * glow, 5000.0)
+
+
 def leap_fizzle(_variant, gen):
     """A leap the battery can't pay for: the coils fizzle softly under the belly - a short sparse crackle and a
     tiny falling D4 buzz that never becomes a boing."""
@@ -2495,6 +2503,8 @@ CUES = (
         notes="The Low warning (30%): one soft falling two-note A4 -> F#4, round bells, never an alarm."),
     Cue("battery_sigh", "oneshot_3d", battery_sigh, volume=(0.5, 0.5), fade_out=0.25, milestone="M3",
         notes="The battery empties: a soft power-down sigh, D4 gliding to A2 under a breath of air."),
+    Cue("lamp_tick", "tick_3d", lamp_tick, volume=(0.45, 0.45), fade_out=0.03, milestone="M3",
+        notes="A flank lamp lighting as 07 wakes: a tiny relay tick with a breath of filament on D6."),
     Cue("leap_fizzle", "oneshot_3d", leap_fizzle, volume=(0.4, 0.4), fade_out=0.1, milestone="M3",
         notes="A leap the battery can't pay for: the coils fizzle softly under the belly, a crackle and a small buzz."),
     Cue("dock_release", "tick_3d", dock_release, volume=(0.5, 0.5), fade_out=0.03, milestone="M3",
