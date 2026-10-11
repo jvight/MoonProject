@@ -206,8 +206,8 @@ namespace MoonProject.Rover
                 _storyParts[i].gameObject.SetActive(false);
             }
 
-            _partsFound = _events.Subscribe<StoryPartFound>(found => _tubes.PartFound(found.PartId, found.Restored));
-            _partsDelivered = _events.Subscribe<StoryPartDelivered>(delivered => _tubes.PartDelivered(delivered.PartId));
+            _partsFound = _events.Subscribe<ComponentFound>(found => _tubes.PartFound(found.PartId, found.Restored));
+            _partsDelivered = _events.Subscribe<ComponentDelivered>(delivered => _tubes.PartDelivered(delivered.PartId));
             return true;
         }
 

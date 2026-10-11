@@ -28,5 +28,11 @@ namespace MoonProject.Gameplay
         bool TryGetOffer(string upgradeId, out UpgradeOffer offer);
 
         PurchaseResult Purchase(string upgradeId);
+
+        /// <summary>
+        /// The component (Art's model id, e.g. Part_TowerCoil) the next level of <paramref name="upgradeId"/> still
+        /// waits for at the tower's port, or null when it waits for none (docs/features/M3-16 P1, M3-21 Â§6).
+        /// </summary>
+        string ComponentNeeded(string upgradeId);
     }
 }

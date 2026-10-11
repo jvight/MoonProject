@@ -287,7 +287,7 @@
             "text": "Cấp điện cho chiếc anten mỏi mệt, và nhà thức dậy: cửa sổ tàu đổ bộ lại sáng đèn."
         },
         {
-            "key": "upgrade.radio_tower.1.needs_part",
+            "key": "component.Part_TowerCoil.needed",
             "text": "Tháp đang chờ cuộn dây của nó."
         },
         {
@@ -299,7 +299,7 @@
             "text": "Cột cao hơn đưa điện tới khoang xe của Kenji, và radio vẫn trong trẻo dù đi xa."
         },
         {
-            "key": "upgrade.radio_tower.2.needs_part",
+            "key": "component.Part_Transformer.needed",
             "text": "Tháp đang chờ bộ biến áp."
         },
         {
@@ -311,7 +311,7 @@
             "text": "Tháp ngân nga khắp lòng hố, đánh thức thang nâng; căn nhà rực sáng như chiếc đèn lồng."
         },
         {
-            "key": "upgrade.radio_tower.3.needs_part",
+            "key": "component.Part_RelaySpare.needed",
             "text": "Tháp đang chờ một linh kiện dự phòng từ trạm tiếp sóng."
         },
         {

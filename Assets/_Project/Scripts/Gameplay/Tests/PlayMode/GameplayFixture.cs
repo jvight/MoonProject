@@ -229,7 +229,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// Every tower story part already fed to the port (docs/features/M3-16 P1), for sessions about something else
+        /// Every tower component already fed to the port (docs/features/M3-16 P1), for sessions about something else
         /// that buy tower levels: as a load would leave them, silently.
         /// </summary>
         public void DeliverTowerParts()
@@ -356,7 +356,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 GlowMaterial(shader, GlowRole.HomeHalo), GlowMaterial(shader, GlowRole.LinkPulse));
 
             visuals.PopulatePads(new[] { Pad(1.6f), Pad(2.4f), Pad(3f) }, new[] { 1.6f, 2.4f, 3f });
-            visuals.PopulateStoryParts(new[]
+            visuals.PopulateComponents(new[]
             {
                 Template("Part_TowerCoil", new Vector3(0.5f, 0.6f, 0.5f)),
                 Template("Part_Transformer", new Vector3(0.6f, 0.5f, 0.45f)),

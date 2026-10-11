@@ -287,7 +287,7 @@
             "text": "Power the tired antenna and home wakes: the lander's windows glow again."
         },
         {
-            "key": "upgrade.radio_tower.1.needs_part",
+            "key": "component.Part_TowerCoil.needed",
             "text": "The tower is waiting for its coil."
         },
         {
@@ -299,7 +299,7 @@
             "text": "A taller mast carries power to Kenji's bay, and the radio stays clear far out."
         },
         {
-            "key": "upgrade.radio_tower.2.needs_part",
+            "key": "component.Part_Transformer.needed",
             "text": "The tower is waiting for its transformer."
         },
         {
@@ -311,7 +311,7 @@
             "text": "The tower sings across the basin and wakes the crew's lift; home glows like a lantern."
         },
         {
-            "key": "upgrade.radio_tower.3.needs_part",
+            "key": "component.Part_RelaySpare.needed",
             "text": "The tower is waiting for a spare from the relays."
         },
         {

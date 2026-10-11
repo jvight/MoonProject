@@ -89,6 +89,11 @@ namespace MoonProject.UI.Tests
             return false;
         }
 
+        public string ComponentNeeded(string upgradeId)
+        {
+            return null;
+        }
+
         public PurchaseResult Purchase(string upgradeId)
         {
             _levels[upgradeId] = LevelOf(upgradeId) + 1;

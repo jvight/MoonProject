@@ -75,10 +75,10 @@ namespace MoonProject.Gameplay
         /// <summary>Kenji's blueprint board: which kits the bay can build (docs/features/M3-16).</summary>
         public Blueprints Blueprints { get; private set; }
 
-        /// <summary>The tower's story parts, one per level (docs/features/M3-16 P1).</summary>
+        /// <summary>The tower's components, one per level (docs/features/M3-16 P1).</summary>
         public TowerParts TowerParts { get; private set; }
 
-        /// <summary>The story parts in the world: waiting, flying into 07, fed to the tower's port.</summary>
+        /// <summary>The components in the world: waiting, flying into 07, fed to the tower's port.</summary>
         public TowerPartField TowerPartField { get; private set; }
 
         public SalvageField Salvage => _salvage;
@@ -277,7 +277,7 @@ namespace MoonProject.Gameplay
             context.Register<IBasePower>(Power);
             context.Register<ILabInterior>(_lift.Lab);
             context.Register<IBlueprintBoard>(Blueprints);
-            context.Register<IStoryPartGate>(TowerParts);
+            context.Register<IComponentGate>(TowerParts);
             context.Register<IRoverBattery>(_battery.Model);
             context.Register<IBeamStatus>(services.Beam);
             Upgrades.PublishSignals();
@@ -325,7 +325,7 @@ namespace MoonProject.Gameplay
             TowerPartField.Sync();
         }
 
-        /// <summary>The tower's story parts, or null (logged) when the content is broken.</summary>
+        /// <summary>The tower's components, or null (logged) when the content is broken.</summary>
         private TowerParts NewTowerParts(EventBus events)
         {
             try
@@ -340,7 +340,7 @@ namespace MoonProject.Gameplay
             }
         }
 
-        /// <summary>The story parts in the world, or null (logged) when a part's model or site is missing.</summary>
+        /// <summary>The components in the world, or null (logged) when a part's model or site is missing.</summary>
         private TowerPartField NewTowerPartField(GameplayServices services)
         {
             try
@@ -427,7 +427,7 @@ namespace MoonProject.Gameplay
 
         /// <summary>
         /// The save is loaded (Start runs after it): Audio and UI start from the real radio program, and Rover puts the
-        /// carried blueprint tubes and story parts on 07's back.
+        /// carried blueprint tubes and components on 07's back.
         /// </summary>
         private void Start()
         {

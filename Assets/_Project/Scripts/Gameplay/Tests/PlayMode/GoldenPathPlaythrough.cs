@@ -736,7 +736,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// The tower's story part <paramref name="index"/> waits in <paramref name="site"/>'s open heart: round the
+        /// The tower's component <paramref name="index"/> waits in <paramref name="site"/>'s open heart: round the
         /// wreck to open ground beside it and ease up until it spirals into 07 (P1).
         /// </summary>
         private IEnumerator PickUpPartInTheHeart(SalvageSite site, int index)

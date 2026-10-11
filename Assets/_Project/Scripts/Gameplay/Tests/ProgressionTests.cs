@@ -87,9 +87,9 @@ namespace MoonProject.Gameplay.Tests
 
                 _events.Publish(new RoverDockChanged(false, dock, Quaternion.identity));
                 _events.Publish(new BasePowerChanged(BasePowerStage.Home, true));
-                _events.Publish(new StoryPartFound("Part_TowerCoil", 1, Vector3.zero, true));
+                _events.Publish(new ComponentFound("Part_TowerCoil", 1, Vector3.zero, true));
                 Assert.IsFalse(evening.HasNews, "a load's announcements are not news");
-                _events.Publish(new StoryPartFound("Part_TowerCoil", 1, Vector3.zero, false));
+                _events.Publish(new ComponentFound("Part_TowerCoil", 1, Vector3.zero, false));
                 Assert.IsTrue(evening.HasNews);
                 Assert.IsFalse(evening.Tick(1f), "out on the trip: nothing yet");
                 _events.Publish(new RoverDockChanged(true, dock, Quaternion.identity));

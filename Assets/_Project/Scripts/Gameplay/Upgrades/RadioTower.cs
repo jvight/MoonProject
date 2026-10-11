@@ -9,9 +9,9 @@ namespace MoonProject.Gameplay
 {
     /// <summary>
     /// The base's radio tower and its upgrade station. Art's pad on the ground in front of its service port is the shop
-    /// (<see cref="StationPad"/>). It stays put away until 07 first holds materials or a story part to feed (before
+    /// (<see cref="StationPad"/>). It stays put away until 07 first holds materials or a component to feed (before
     /// that the stub's pilot blink is the tower's only light, M3-16 P5); then its lamps breathe softly, glow inviting
-    /// when the next level is affordable and its story part delivered (P1), brightly while 07 is parked on it, and it
+    /// when the next level is affordable and its component delivered (P1), brightly while 07 is parked on it, and it
     /// goes away once the tower is whole.
     /// Before the first purchase the old mast stands dark; each level lights the beacon brighter. Buying one plays the
     /// port's moment (docs/features/M3-14, VISION ruling 14: 07 has no hands): 07, held still, feeds the port's hopper

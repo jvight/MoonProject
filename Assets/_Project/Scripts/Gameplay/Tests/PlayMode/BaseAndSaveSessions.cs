@@ -266,10 +266,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             TowerPartField field = gameplay.TowerPartField;
             RadioTower tower = gameplay.Tower;
             IUpgradeShop shop = _fixture.Bootstrap.Context.Get<IUpgradeShop>();
-            var found = new List<StoryPartFound>();
-            var delivered = new List<StoryPartDelivered>();
-            _fixture.Bootstrap.Context.Events.Subscribe<StoryPartFound>(found.Add);
-            _fixture.Bootstrap.Context.Events.Subscribe<StoryPartDelivered>(delivered.Add);
+            var found = new List<ComponentFound>();
+            var delivered = new List<ComponentDelivered>();
+            _fixture.Bootstrap.Context.Events.Subscribe<ComponentFound>(found.Add);
+            _fixture.Bootstrap.Context.Events.Subscribe<ComponentDelivered>(delivered.Add);
             Assert.AreEqual("Part_TowerCoil", parts.PartAt(0).PartId);
             Assert.IsTrue(field.IsResting(0), "the depot's heart is open: the tower's coil waits in it");
             Assert.Less(SurfaceRules.HorizontalDistance(field.RestPosition(0), _fixture.FindSite("depot").Heart),
@@ -794,7 +794,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsTrue(teapotAgain.Discovered);
             Assert.Less(Vector3.Distance(teapotAgain.transform.position, halfway), 0.1f);
             Assert.AreEqual(1, gameplay.Upgrades.LevelOf(Tower));
-            Assert.IsFalse(gameplay.TowerParts.NeedsPart(Tower, 2), "the tower's story parts stay in its port");
+            Assert.IsFalse(gameplay.TowerParts.NeedsPart(Tower, 2), "the tower's components stay in its port");
             Assert.AreEqual(1, gameplay.Tower.ShownLevel);
             Assert.AreEqual(0, _fixture.Events.UpgradePurchased.Count, "a load is never a purchase");
             yield return new WaitForSeconds(0.5f);

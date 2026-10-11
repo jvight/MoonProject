@@ -92,7 +92,7 @@ namespace MoonProject.Gameplay
             new BlueprintTube("rover.boost_coils", "site.drill"),
         };
 
-        [Header("The tower's story parts (P1)")]
+        [Header("The tower's components (P1)")]
         [Tooltip("One part per tower level, needed besides materials: the coil in the depot's heart (L1), the " +
                  "transformer in the garage's heart (L2), the relay spare at the first restored mast (L3).")]
         [SerializeField] private TowerPart[] _towerParts =
@@ -103,13 +103,13 @@ namespace MoonProject.Gameplay
             new TowerPart("Part_RelaySpare", 3, TowerPartSource.FirstRestoredMast, string.Empty, Vector2.zero),
         };
 
-        [Tooltip("Seconds a story part takes to ease into view once it is there to be found.")]
+        [Tooltip("Seconds a component takes to ease into view once it is there to be found.")]
         [Range(0.1f, 4f)] [SerializeField] private float _partAppearSeconds = 1.2f;
 
-        [Tooltip("Seconds a story part glides from 07's back into the tower's port hopper.")]
+        [Tooltip("Seconds a component glides from 07's back into the tower's port hopper.")]
         [Range(0.3f, 5f)] [SerializeField] private float _partFeedSeconds = 1.6f;
 
-        [Tooltip("Height (m) of the arc a story part glides along into the hopper.")]
+        [Tooltip("Height (m) of the arc a component glides along into the hopper.")]
         [Range(0f, 3f)] [SerializeField] private float _partFeedArc = 0.8f;
 
         [Header("The lab's reader (M3-19)")]

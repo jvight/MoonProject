@@ -189,12 +189,12 @@ namespace MoonProject.UI
         }
 
         /// <summary>
-        /// "upgrade.radio_tower.1.needs_part": the quiet line when level <paramref name="level"/> still waits for its
-        /// story part (the coil, the transformer, the relay spare).
+        /// "component.Part_TowerCoil.needed": the quiet line when the tower's next level still waits for component
+        /// <paramref name="componentId"/> (the coil, the transformer, the relay spare; docs/features/M3-21 Â§6).
         /// </summary>
-        public static string UpgradeNeedsPart(string upgradeId, int level)
+        public static string ComponentNeeded(string componentId)
         {
-            return "upgrade." + upgradeId + "." + level + ".needs_part";
+            return "component." + componentId + ".needed";
         }
     }
 }

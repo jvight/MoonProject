@@ -432,10 +432,10 @@ namespace MoonProject.Gameplay.Tests
         [Test]
         public void TowerParts_ArePickedUp_RideOn07_AndAreFedToThePort_ThenTheirLevelCanBeBuilt()
         {
-            var found = new List<StoryPartFound>();
-            var delivered = new List<StoryPartDelivered>();
-            _events.Subscribe<StoryPartFound>(found.Add);
-            _events.Subscribe<StoryPartDelivered>(delivered.Add);
+            var found = new List<ComponentFound>();
+            var delivered = new List<ComponentDelivered>();
+            _events.Subscribe<ComponentFound>(found.Add);
+            _events.Subscribe<ComponentDelivered>(delivered.Add);
             var parts = new TowerParts(_events, "radio_tower", new[]
             {
                 new TowerPart("Part_Transformer", 2, TowerPartSource.SiteHeart, "site.garage", Vector2.up),
@@ -497,7 +497,7 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void Shop_BuildsATowerLevelOnlyOnceItsStoryPartIsFedToThePort()
+        public void Shop_BuildsATowerLevelOnlyOnceItsComponentIsFedToThePort()
         {
             var service = Service(_tower);
             var station = new TestStation { Definition = _tower, Occupied = true };

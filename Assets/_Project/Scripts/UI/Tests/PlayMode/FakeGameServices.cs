@@ -63,7 +63,7 @@ namespace MoonProject.UI.PlayModeTests
         /// </summary>
         public bool AnnouncesPurchases { get; set; } = true;
 
-        /// <summary>True while the next level waits for a story part the tower has not been fed.</summary>
+        /// <summary>True while the next level waits for a component the tower has not been fed (the coil).</summary>
         public bool AwaitingPart { get; set; }
 
         public int Purchases { get; private set; }
@@ -385,6 +385,11 @@ namespace MoonProject.UI.PlayModeTests
         public bool IsPinned(string upgradeId)
         {
             return !Unpinned.Contains(upgradeId);
+        }
+
+        public string ComponentNeeded(string upgradeId)
+        {
+            return AwaitingPart ? "Part_TowerCoil" : null;
         }
 
         public PurchaseResult Purchase(string upgradeId)

@@ -31,7 +31,7 @@ namespace MoonProject.Gameplay
             _sweepDelay = sweepDelay;
             _subscriptions.Add(events.Subscribe<RoverDockChanged>(OnDock));
             _subscriptions.Add(events.Subscribe<BasePowerChanged>(evt => _news |= !evt.Restored));
-            _subscriptions.Add(events.Subscribe<StoryPartFound>(evt => _news |= !evt.Restored));
+            _subscriptions.Add(events.Subscribe<ComponentFound>(evt => _news |= !evt.Restored));
             _subscriptions.Add(events.Subscribe<BlueprintFound>(_ => _news = true));
             _subscriptions.Add(events.Subscribe<RelicDeposited>(_ => _news = true));
             _subscriptions.Add(events.Subscribe<FriendRepaired>(_ => _news = true));

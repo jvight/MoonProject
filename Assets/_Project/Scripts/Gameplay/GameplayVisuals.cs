@@ -63,8 +63,8 @@ namespace MoonProject.Gameplay
         [Tooltip("Each pad's radius in metres (Art's PadRadii), matching the pads above.")]
         [SerializeField] private float[] _padRadii = Array.Empty<float>();
 
-        [Tooltip("Art's tower story parts (Generated/Art/Pickups/Part_*), each named as the part's id.")]
-        [SerializeField] private GameObject[] _storyParts = Array.Empty<GameObject>();
+        [Tooltip("Art's tower components (Generated/Art/Pickups/Part_*), each named as the part's id.")]
+        [SerializeField] private GameObject[] _components = Array.Empty<GameObject>();
 
         public Material SonarRing => _sonarRing;
         public Material SiteRing => _siteRing;
@@ -95,14 +95,14 @@ namespace MoonProject.Gameplay
             return _pads[best];
         }
 
-        /// <summary>Art's model of the tower story part <paramref name="partId"/> (its prefab name), or null.</summary>
-        public GameObject StoryPart(string partId)
+        /// <summary>Art's model of the tower component <paramref name="partId"/> (its prefab name), or null.</summary>
+        public GameObject ComponentModel(string partId)
         {
-            for (int i = 0; i < _storyParts.Length; i++)
+            for (int i = 0; i < _components.Length; i++)
             {
-                if (_storyParts[i] != null && _storyParts[i].name == partId)
+                if (_components[i] != null && _components[i].name == partId)
                 {
-                    return _storyParts[i];
+                    return _components[i];
                 }
             }
 
@@ -130,8 +130,8 @@ namespace MoonProject.Gameplay
                 : _linkPulse == null ? "link pulse material is missing"
                 : _pads == null || _pads.Length == 0 || _padRadii == null || _padRadii.Length != _pads.Length ||
                   Array.IndexOf(_pads, null) >= 0 ? "Art's station pads are missing (run Gameplay/Materials)"
-                : _storyParts == null || Array.IndexOf(_storyParts, null) >= 0
-                    ? "Art's tower story parts are missing (run Gameplay/Materials)"
+                : _components == null || Array.IndexOf(_components, null) >= 0
+                    ? "Art's tower components are missing (run Gameplay/Materials)"
                 : null;
         }
 
@@ -141,9 +141,9 @@ namespace MoonProject.Gameplay
             _padRadii = radii;
         }
 
-        internal void PopulateStoryParts(GameObject[] parts)
+        internal void PopulateComponents(GameObject[] parts)
         {
-            _storyParts = parts;
+            _components = parts;
         }
 
         internal void Populate(Material sonarRing, Material siteRing, Material sitePillar, Material tractorBeam,
