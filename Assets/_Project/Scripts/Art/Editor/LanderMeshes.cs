@@ -602,9 +602,9 @@ namespace MoonProject.Art.Editor
         /// <summary>
         /// Where the HOME sign's post stands in the dust beside 07's dock (the HomeSign node's pivot).
         /// </summary>
-        public static readonly Vector3 HomeSignFoot = ChargingDockMeshes.Beside(new Vector3(-1.45f, 0f, -0.4f));
+        public static readonly Vector3 HomeSignFoot = ChargingDockMeshes.Beside(new Vector3(1.8f, 0f, -0.5f));
 
-        // The sign faces back past 07 on its dock, toward the camera behind it, turned a little toward the lander.
+        // The sign faces back past 07 on its dock, toward the camera behind it, turned a little in toward 07.
         private static readonly float HomeSignYaw = ChargingDockMeshes.AnchorEuler.y + 180f - 15f;
 
         /// <summary>The HOME sign leaning with the years: back and to the side (the node's built rotation).</summary>

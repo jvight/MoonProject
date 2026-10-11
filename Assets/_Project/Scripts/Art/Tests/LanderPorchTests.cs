@@ -18,13 +18,12 @@ namespace MoonProject.Art.Tests
         // 07 rides this far above whatever it stands on in the overlap checks, so resting wheels do not count.
         private const float Rest = 0.01f;
 
-        // The dock's contacts stop at most this short of 07's nose.
-        private const float ContactReach = 0.06f;
-
-        // 07's body spans these heights over its pivot; the dock's contacts lie within this reach of its middle.
-        private const float BodyBottom = 0.34f;
-        private const float BodyTop = 0.84f;
-        private const float ContactSpan = 0.4f;
+        // The dock's pad stands at most this proud of the dust, and 07's lane off it, as wide as 07 and this much
+        // more each side, runs this far back and this far ahead with nothing in it.
+        private const float PadStep = 0.02f;
+        private const float LaneMargin = 0.15f;
+        private const float LaneBehind = 5f;
+        private const float LaneAhead = 8f;
 
         // The belly clears 07 (about 2 m tall with its head up) with headroom to spare (M3-19 §3).
         private const float Headroom = 0.4f;
@@ -105,30 +104,28 @@ namespace MoonProject.Art.Tests
         }
 
         [Test]
-        public void Dock_Rests07_NoseToTheContacts_ClearOfEverything_InFrontOfTheBelly()
+        public void Dock_Rests07_OnAFlushPad_WithItsLaneClearBothWays_InFrontOfTheBelly()
         {
             ModelNode anchor = _lander.GetDescendant("DockAnchor");
-            Assert.That(anchor.LocalPosition.y, Is.InRange(0.02f, 0.1f), "a low pad");
+            Assert.That(anchor.LocalPosition.y, Is.InRange(0f, PadStep),
+                "a plate flush with the dust: 07 settles onto it from its spawn, with no step to climb");
             Vector3 heading = anchor.LocalRotation * Vector3.forward;
             Assert.Less(heading.x, -0.5f, "07 rests looking out past the lander's left, toward Earth and the Peak");
             Matrix4x4 pose = Matrix4x4.TRS(anchor.LocalPosition + Vector3.up * Rest, anchor.LocalRotation, Vector3.one);
-            List<Vector3> rover = Posed(_rover, pose);
-            AssertClear(rover, Solid(_lander, string.Empty), "07 at the dock");
             float stageFront = HullPoints(PaletteSwatch.Honey).Where(p => p.y > 2f).Max(p => p.z);
+            List<Vector3> rover = Posed(_rover, pose);
             Assert.Greater(BoundsOf(rover, 0, rover.Count).min.z, stageFront + MassGap,
                 "the dock stands out on the apron, with open ground between it and the belly");
 
-            // In dock space 07 faces +Z: its contacts stand just ahead of its nose, at its own height.
+            // In dock space 07 faces +Z, square to the dock: its rest and its lane are measured there.
             Matrix4x4 toDock = Matrix4x4.TRS(anchor.LocalPosition, anchor.LocalRotation, Vector3.one).inverse;
-            List<Vector3> contacts = HullPoints(PaletteSwatch.Honey).Select(p => toDock.MultiplyPoint3x4(p))
-                .Where(p => Mathf.Abs(p.x) < ContactSpan && p.z > 0f && p.z < 1.2f).ToList();
-            Assert.IsNotEmpty(contacts, "brass contacts on the dock");
-            List<Vector3> nose = Posed(_rover, Matrix4x4.Translate(Vector3.up * Rest));
-            foreach (Vector3 contact in contacts)
+            List<Vector3> fixedParts = Posed(Solid(_lander, string.Empty), toDock);
+            AssertClear(Posed(_rover, Matrix4x4.Translate(Vector3.up * Rest)), fixedParts, "07 at the dock");
+            float halfWidth = _rover.Max(p => Mathf.Abs(p.x)) + LaneMargin;
+            foreach (Vector3 p in fixedParts)
             {
-                Assert.That(contact.y, Is.InRange(BodyBottom, BodyTop), "at 07's own height");
-                Assert.That(contact.z - NoseOf(nose, contact), Is.InRange(0f, ContactReach),
-                    "the contacts reach 07");
+                bool inLane = Mathf.Abs(p.x) < halfWidth && p.z > -LaneBehind && p.z < LaneAhead && p.y > PadStep;
+                Assert.IsFalse(inLane, $"{p} stands in 07's lane off the dock (dock space)");
             }
         }
 
@@ -232,26 +229,6 @@ namespace MoonProject.Art.Tests
             }
 
             return parts;
-        }
-
-        /// <summary>
-        /// How far forward 07's front (in its own frame, facing +Z) reaches in the column through
-        /// <paramref name="point"/>: the greatest z of its triangles that cover the point's x and y.
-        /// </summary>
-        private static float NoseOf(List<Vector3> rover, Vector3 point)
-        {
-            float front = float.MinValue;
-            for (int i = 0; i < rover.Count; i += 3)
-            {
-                Bounds face = BoundsOf(rover, i, 3);
-                if (Mathf.Abs(face.center.x - point.x) <= face.extents.x
-                    && Mathf.Abs(face.center.y - point.y) <= face.extents.y)
-                {
-                    front = Mathf.Max(front, face.max.z);
-                }
-            }
-
-            return front;
         }
 
         /// <summary>The vertices of the lander hull's triangles painted <paramref name="swatch"/>.</summary>
