@@ -4,7 +4,56 @@ Read this, then `CLAUDE.md`, then `docs/VISION.md`, `docs/DESIGN.md`, `docs/ARCH
 It records how the project is run, where it stands, and what comes next, so a new Director session (on any
 account) can continue without the old conversation.
 
-## 00. NOW (2026-10-11 ~09:45): read this first
+## 00. NOW (2026-10-11 ~11:20): read this first
+- **Director session:** "MoonProject · Quản lý", id `local_39353459-ab44-4d1f-b1db-4b1fa0a39a36` (took over at ~10:45
+  from `local_74e38880…`, which was told to delete its cron and stop). Its cron guard (every 10 min: usage log, wrap-up
+  at 23%, stop at 24%, stall check) is session-only: recreate it in a new Director session (§6, §8).
+- **main = 4fe6a83e**, landed with `land --batch`:
+  - GDD v3 §10 edits: VISION (pillars as GDD §1, anti-goal, ruling 7, new **rulings 15 "the battery is range" and 16
+    "a few main targets, everything else free"**), DESIGN (why people come back, station reach and the battery,
+    regions, base life and pads), M3-06 charge pads, M3-11 kit slots, M3-16 dock line and amendment note, cutscenes
+    O5's boot readout;
+  - specs: `docs/features/M3-19-the-lab.md` (final; the draft is removed), `M3-20-battery-chargers-crawl.md`,
+    `M3-21-two-tier-goals.md`, `M3-22-build-pads-structures.md`; ROADMAP's version table per GDD v3 and rows
+    M3-19…M3-22;
+  - Core contracts: battery (`IRoverBattery`, `ChargerKind`, `BatteryWarning`, `BatteryEvents.cs`,
+    `RoverLeapRefused`), tech tree and goals (`TechNodeId`, `TechNodeState`, `ITechTree`, `RecoveryTarget`,
+    `IRecoveryProgress`, `ProgressEvents.cs`), the lab (`ILabInterior`, `LabStation`, `LabEvents.cs`);
+  - tools: box_check and land know the slices `battery`, `lab-build`, `lab-systems`, `goals`.
+- **`verify --parallel --shards 1 --push` started on 4fe6a83e** at ~11:20 (2 Unitys, leaving a batch slot for the
+  slices). origin/main was 57fb8c1f. Log: the Director's scratchpad `verify1.log`.
+- **Owner decision (2026-10-11): M3-22 (build pads, structures) is 0.6.** 0.5 = battery, chargers, crawl, Cell Pack
+  II, the lab (M3-19), the recovery panel and tech tree (M3-21). No structures, no T2.
+- **Dispatched as chips (fresh feature-slice sessions; the owner clicks them):**
+  1. `battery` (M3-20, all six domains, milestones A playable / B art, Cell Pack II, audio, world);
+  2. `lab-build` (M3-19 art + world: the habitat lander from `box/art-sketch-m319` with art's 4 refinements, the four
+     stations, porthole lamps, declutter, the map's art leftovers, HomeLight entries; publishes "Contract: the lab
+     (M3-19)" in ARCHITECTURE first);
+  3. `lab-systems` (M3-19 gameplay + rover + ui + audio: lift re-aim, turntable, reader decode and hand-off, cameras,
+     the map trigger and P6 MarkSeen; owns the Core renames `BasePowerStage.Lift→Chart`, `AtLookout→Inside`,
+     `LiftCue` hatch cues).
+  - When lab-build reports its ARCHITECTURE contract: land it at once (or tell lab-systems to merge box/lab-build's
+    commit) so lab-systems wires real node names.
+- **Next chips to offer:**
+  - `goals` (M3-21) once lab-systems has landed M3-19's reader (it needs `FindDecoded`): tech tree and recovery
+    services, two-tier next line, Hover-Jump tube at the chasm's near lip (pre-pinned sheet removed), Link flag on
+    relay content (relay.0, relay.1), the components rename, the chart's charger circles and Link line, the free-order
+    test.
+  - A small Sonnet `cleanup` session after battery's milestone A (to avoid rename conflicts): the lint duplicate-type
+    list (§0 below), World's flaky `MoonSurfaceTests.Sampling_IsFastEnoughForBootTimeMeshing` (wall clock), the
+    opening's leftovers (art's lens glass ring reflecting Earth on the pull-out; UI's O14 prompt rule "Look up"/"Drive"
+    from `WakeBeat.ChaseFrame`; the save's station playing softly on the title), and a `ReserializeAssets` automation
+    entry to write out `RoverCameraTuning`'s OpeningSettings and `WorldSettings.LensView` (new fields only, defaults
+    apply meanwhile).
+- **Sessions:** map and opening are closed and idle with large contexts (map 559k); do not wake them, their leftovers
+  are in the chips above. Resting with large contexts: gameplay, rover, art, ui, world, tools, game design, story &
+  flow. box/rover's 4 commits net to zero (two commits and their reverts); nothing to land.
+- **Tokens:** cap 25% of the weekly limit for 2026-10-11 (the week started 02:00 Sunday local). At takeover ~11:00 the
+  weekly meter read 12%.
+- **Release checklist for 0.5** (unchanged): raise the save floor, set the version to 0.5.0, verified build zip in
+  `D:/Project/MoonProject/Builds/`, owner review.
+
+## 00a. Before the takeover (2026-10-11 ~09:45)
 - **origin/main = 57fb8c1f.** It passed the full verify (compile, EditMode, PlayMode in shards, the 0.5 golden path,
   steps 0–8).
   - Since then main has landed:
