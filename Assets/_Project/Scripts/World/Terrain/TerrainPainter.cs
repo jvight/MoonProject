@@ -139,15 +139,21 @@ namespace MoonProject.World
             Color canyon = Color.Lerp(_shadowDust, _midDust, canyonTone);
             dust = Color.Lerp(dust, canyon, region.CanyonFloor);
             dust = Color.Lerp(dust, _charcoal, SmoothMath.Smootherstep(0f, _settings.ChasmDark, region.Chasm));
-            dust = Color.Lerp(dust, Pad(position), PadWeight(position));
+            float apron = (1f - SmoothMath.Smootherstep(_padRadius, _settings.ApronReach, Radius(position)))
+                * _settings.ApronShare;
+            dust = Color.Lerp(dust, Pad(position), Mathf.Max(PadWeight(position), apron));
             return Color.Lerp(dust, _shadowDust, _settings.DustDarken);
         }
 
         /// <summary>1 on the base pad, easing to 0 across its edge band.</summary>
         public float PadWeight(Vector3 position)
         {
-            float fromBase = Mathf.Sqrt(position.x * position.x + position.z * position.z);
-            return 1f - SmoothMath.Smootherstep(_padRadius, _padRadius + _settings.PadEdge, fromBase);
+            return 1f - SmoothMath.Smootherstep(_padRadius, _padRadius + _settings.PadEdge, Radius(position));
+        }
+
+        private static float Radius(Vector3 position)
+        {
+            return Mathf.Sqrt(position.x * position.x + position.z * position.z);
         }
 
         /// <summary>The pad's compacted regolith: a little darker than the open dust, in a few large soft patches.</summary>

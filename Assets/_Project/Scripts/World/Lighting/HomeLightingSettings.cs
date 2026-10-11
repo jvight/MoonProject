@@ -56,7 +56,16 @@ namespace MoonProject.World
 
         [Tooltip("Radius of the pilot light's halo, metres.")]
         [Range(0.05f, 2f)]
-        [SerializeField] private float _pilotRadius = 0.35f;
+        [SerializeField] private float _pilotRadius = 0.12f;
+
+        [Tooltip("Distance (metres) from which the top light's minimum-size halo starts to fade in. Closer, it is a " +
+            "small lamp with a tight glow on its housing.")]
+        [Range(0f, 300f)]
+        [SerializeField] private float _pilotHaloFrom = 60f;
+
+        [Tooltip("Distance (metres) from which the top light keeps its full minimum size: a warm dot for home.")]
+        [Range(1f, 400f)]
+        [SerializeField] private float _pilotHaloFull = 80f;
 
         [Header("Light pools")]
         [Tooltip("Colour of the warm light pools on the ground: the lamps' own warm.")]
@@ -84,6 +93,8 @@ namespace MoonProject.World
         public float PilotRadius => _pilotRadius;
         public float TopLightLevel => _topLightLevel;
         public float PilotMinAngle => _pilotMinAngle;
+        public float PilotHaloFrom => _pilotHaloFrom;
+        public float PilotHaloFull => _pilotHaloFull;
         public Color PoolColor => _poolColor;
         public IReadOnlyList<LightPoolTuning> Pools => _pools;
     }

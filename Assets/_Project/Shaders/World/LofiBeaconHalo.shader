@@ -1,6 +1,7 @@
 // Soft additive glow around The Peak's beacon lamp. Drawn on a unit quad (corners at +-1 in object XY): the quad
 // faces the camera, is sized max(_Radius, distance * _MinAngleTan) so the beacon never shrinks below a readable
-// dot, and is pulled toward the camera by its own size so the summit it sits on never cuts it. Unfogged: the
+// dot, and is pulled toward the camera by its own size so the summit it sits on never cuts it. The minimum size only
+// fades in between _MinAngleFrom and _MinAngleFull metres: up close a lamp keeps its own tight glow, never an orb. Unfogged: the
 // beacon is a promise on the horizon. _Color/_Intensity/_Radius/_MinAngleTan come from MoonProject.World.PeakBeacon
 // through a MaterialPropertyBlock.
 Shader "MoonProject/World/LofiBeaconHalo"
@@ -11,6 +12,8 @@ Shader "MoonProject/World/LofiBeaconHalo"
         _Intensity ("Intensity", Float) = 1
         _Radius ("Radius (m)", Float) = 2
         _MinAngleTan ("Min apparent radius (tan)", Float) = 0.007
+        _MinAngleFrom ("Min size fades in from (m)", Float) = 60
+        _MinAngleFull ("Min size full from (m)", Float) = 80
     }
 
     SubShader
@@ -43,6 +46,8 @@ Shader "MoonProject/World/LofiBeaconHalo"
                 float _Intensity;
                 float _Radius;
                 float _MinAngleTan;
+                float _MinAngleFrom;
+                float _MinAngleFull;
             CBUFFER_END
 
             struct Attributes
@@ -61,7 +66,8 @@ Shader "MoonProject/World/LofiBeaconHalo"
                 float3 center = TransformObjectToWorld(float3(0.0, 0.0, 0.0));
                 float3 toCamera = _WorldSpaceCameraPos - center;
                 float distance = max(length(toCamera), 1e-3);
-                float size = max(_Radius, distance * _MinAngleTan);
+                float far = smoothstep(_MinAngleFrom, max(_MinAngleFull, _MinAngleFrom + 1e-3), distance);
+                float size = max(_Radius, distance * _MinAngleTan * far);
                 float3 right = UNITY_MATRIX_V[0].xyz;
                 float3 up = UNITY_MATRIX_V[1].xyz;
                 float3 world = center + (right * input.positionOS.x + up * input.positionOS.y) * size

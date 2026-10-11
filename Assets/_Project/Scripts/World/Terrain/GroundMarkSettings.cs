@@ -51,6 +51,15 @@ namespace MoonProject.World
         [Range(2f, 100f)]
         [SerializeField] private float _patchWavelength = 9f;
 
+        [Tooltip("How much each rut edge scuffs on its own (0..1): close up a rut varies along and across, never a " +
+            "painted line.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _scuff = 0.7f;
+
+        [Tooltip("Length of a scuff along a rut, metres: a few rover lengths.")]
+        [Range(0.5f, 20f)]
+        [SerializeField] private float _scuffWavelength = 3f;
+
         [Tooltip("Length over which a track fades in and out at its ends, metres.")]
         [Range(0f, 40f)]
         [SerializeField] private float _endFade = 8f;
@@ -124,6 +133,8 @@ namespace MoonProject.World
         public float Patchiness => _patchiness;
         public float PatchWavelength => _patchWavelength;
         public float EndFade => _endFade;
+        public float Scuff => _scuff;
+        public float ScuffWavelength => _scuffWavelength;
         public float Lift => _lift;
         public Color Tint => _tint;
         public float FadeNear => _fadeNear;
