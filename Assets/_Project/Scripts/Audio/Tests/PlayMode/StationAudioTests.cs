@@ -144,7 +144,7 @@ namespace MoonProject.Audio.PlayModeTests
             _rig.Events.Publish(new BasePowerChanged(BasePowerStage.Bay, false));
             Assert.AreEqual("base_wake_bay", LastClip, "the bay breathes awake");
             int plays = _rig.Director.PlayCount;
-            _rig.Events.Publish(new BasePowerChanged(BasePowerStage.Lift, true));
+            _rig.Events.Publish(new BasePowerChanged(BasePowerStage.Chart, true));
             Assert.AreEqual(plays, _rig.Director.PlayCount, "a save restoring power is silent");
 
             var lift = new Vector3(40f, 2f, -30f);

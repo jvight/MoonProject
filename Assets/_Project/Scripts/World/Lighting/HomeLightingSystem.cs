@@ -94,7 +94,7 @@ namespace MoonProject.World
             float time = Time.time;
             ApplyCable(BasePowerStage.Home, _homeCable, _homeApplied, time);
             ApplyCable(BasePowerStage.Bay, _bayCable, _bayApplied, time);
-            ApplyCable(BasePowerStage.Lift, _liftCable, _liftApplied, time);
+            ApplyCable(BasePowerStage.Chart, _liftCable, _liftApplied, time);
 
             HomeLightingSettings tuning = _settings.HomeLighting;
             float pilot = _stages.PilotLevel(time);

@@ -133,7 +133,7 @@ namespace MoonProject.Gameplay
             _answers.Add(ProgressionKeys.NotYetTower, _places[TowerSpot].position, () => !homePowered());
             _answers.Add(ProgressionKeys.NotYetBay, bay.transform.position, () => homePowered() && !bay.Awake);
             _answers.Add(ProgressionKeys.NotYetLift, _lift.position,
-                () => homePowered() && !power.HasReached(BasePowerStage.Lift));
+                () => homePowered() && !power.HasReached(BasePowerStage.Chart));
             _answers.Add(ProgressionKeys.NotYetShelf, home.ShelfPosition,
                 () => homePowered() && home.DisplayedCount == 0);
             _salvage = services.Events.Subscribe<MaterialSalvaged>(_ => _salvaged = true);
@@ -150,7 +150,7 @@ namespace MoonProject.Gameplay
             _steps.Add(ProgressionKeys.NextBay, () => upgrades.LevelOf(_tuning.FirstKit) > 0);
             _steps.Add(ProgressionKeys.NextLeap, () => leap.Progress.State == FriendState.Awake);
             _steps.Add(ProgressionKeys.NextRelay, () => relays.LitMasts > 0);
-            _steps.Add(ProgressionKeys.NextLift, () => power.HasReached(BasePowerStage.Lift));
+            _steps.Add(ProgressionKeys.NextLift, () => power.HasReached(BasePowerStage.Chart));
             _initialized = true;
             return true;
         }
