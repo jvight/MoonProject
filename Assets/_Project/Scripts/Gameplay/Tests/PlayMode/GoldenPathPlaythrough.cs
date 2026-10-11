@@ -2344,7 +2344,13 @@ namespace MoonProject.Gameplay.PlayModeTests
                 yield return null;
             }
 
-            Assert.IsTrue(condition(), $"timed out after {timeout:F0} s waiting until {what}");
+            if (!condition())
+            {
+                Capture("timed-out");
+            }
+
+            Assert.IsTrue(condition(), $"timed out after {timeout:F0} s waiting until {what} (07 at {_rover.Position}, " +
+                $"{_rover.Speed:F1} m/s)");
         }
 
         /// <summary>Holds the winch in (+1) or out (-1) for <paramref name="seconds"/>, like a held scroll.</summary>
