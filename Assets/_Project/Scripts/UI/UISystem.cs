@@ -66,6 +66,7 @@ namespace MoonProject.UI
         private RecoveryBoard _board;
         private StargazeVeil _stargaze;
         private LookUpHint _lookUpHint;
+        private FirstPrompt _firstPrompt;
         private LookUpChip _lookUpChip;
         private NextStepLine _nextStep;
         private NextLineView _nextLine;
@@ -305,6 +306,7 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<BlueprintFound>(OnBlueprintFound));
             _tokens.Add(events.Subscribe<BlueprintDelivered>(OnBlueprintDelivered));
             _tokens.Add(events.Subscribe<RoverWideShotChanged>(OnWideShotChanged));
+            _tokens.Add(events.Subscribe<RoverWakeBeatReached>(OnWakeBeat));
             _tokens.Add(events.Subscribe<SonarPinged>(OnSonarPinged));
             _tokens.Add(events.Subscribe<SiteAnswered>(OnSiteAnswered));
             _tokens.Add(events.Subscribe<ExcavationStarted>(OnExcavationStarted));
@@ -366,6 +368,7 @@ namespace MoonProject.UI
                 _layout.FriendNameAnchor, _layout.RelayTagAnchor, _layout.SalvageRingAnchor, _layout.SiteNameAnchor,
                 _layout.TickerLine);
             _lookUpHint = new LookUpHint(_tuning.Stargaze, _ledger);
+            _firstPrompt = new FirstPrompt(_tuning.Stargaze, _ledger);
             _lookUpChip = new LookUpChip(_layout, _tuning.Stargaze, _localization);
             _nextStep = new NextStepLine(_tuning.Guidance);
             _nextLine = new NextLineView(_layout, _tuning.Guidance, _localization);
@@ -521,10 +524,16 @@ namespace MoonProject.UI
                               !_kitTitle.IsVisible;
             _ticker.Tick(hudTime, tickerOpen);
             _hopFade.Tick(deltaTime);
-            _lookUpHint.Tick(hudTime, !_placeCard.IsVisible && !_card.IsVisible && !_tower.IsVisible &&
-                                      !_kitTitle.IsVisible && !_dial.IsBusy && !_hopList.IsBusy &&
-                                      !_prompt.IsVisible && !_siteName.IsVisible && !_ticker.IsVisible);
-            _lookUpChip.Tick(deltaTime, !paused && _lookUpHint.WantsShown, device);
+            bool hintOpen = !_placeCard.IsVisible && !_card.IsVisible && !_tower.IsVisible && !_kitTitle.IsVisible &&
+                            !_dial.IsBusy && !_hopList.IsBusy && !_prompt.IsVisible && !_siteName.IsVisible &&
+                            !_ticker.IsVisible;
+            float stick = _tuning.Stargaze.FirstPromptStick * _tuning.Stargaze.FirstPromptStick;
+            bool looking = !paused && (input.LookDelta.sqrMagnitude > 0f || input.LookRate.sqrMagnitude > stick);
+            _firstPrompt.Tick(hudTime, hintOpen, looking, !paused && input.Drive.sqrMagnitude > stick);
+            _lookUpHint.Tick(hudTime, hintOpen && _firstPrompt.Word == HintWord.None);
+            HintWord hint = _firstPrompt.Word != HintWord.None ? _firstPrompt.Word
+                : _lookUpHint.WantsShown ? HintWord.LookUp : HintWord.None;
+            _lookUpChip.Tick(deltaTime, paused ? HintWord.None : hint, device);
             _nextStep.Tick(hudTime, _services.Rover.Speed, _player.Guidance);
             _placeCard.Tick(hudTime, _awake && !_kitTitle.IsVisible && !_card.IsVisible &&
                                      !_prompt.IsVisible && !_ticker.IsVisible && !_siteName.IsVisible &&
@@ -666,6 +675,24 @@ namespace MoonProject.UI
         private void OnNextStepChanged(NextStepChanged changed)
         {
             _nextStep.SetKey(changed.LineKey);
+        }
+
+        /// <summary>The full opening's crackle and its chase frame time the first prompt (cutscenes O14).</summary>
+        private void OnWakeBeat(RoverWakeBeatReached reached)
+        {
+            if (!_bound)
+            {
+                return;
+            }
+
+            if (reached.Beat == WakeBeat.Crackle)
+            {
+                _firstPrompt.OpeningBegan();
+            }
+            else if (reached.Beat == WakeBeat.ChaseFrame)
+            {
+                _firstPrompt.ChaseFrameReached();
+            }
         }
 
         private void OnWideShotChanged(RoverWideShotChanged changed)

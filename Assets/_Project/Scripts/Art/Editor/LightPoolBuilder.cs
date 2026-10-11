@@ -7,17 +7,26 @@ using MoonProject.Editor.Builders;
 namespace MoonProject.Art.Editor
 {
     /// <summary>
-    /// The warm light-decal disc for World's light pools (M3-18 V3): <c>Generated/Art/Props/LightPool.prefab</c>, one
-    /// flat 1 m radius disc on <c>M_LightPool</c> (LofiLightPool, additive), its root at the disc's centre on the
-    /// ground, +Y up, no shadows. World scales it to each pool's radius and eases its strength per renderer with a
+    /// The warm light pool for World's lamps (M3-18 V3): <c>Generated/Art/Props/LightPool.prefab</c>, one unit prism
+    /// (radius 1 round the pool, <see cref="PoolBand"/> above and below the ground) on <c>M_LightPool</c>
+    /// (LofiLightPool, additive), its root at the pool's centre on the ground, +Y up, no shadows. The shader projects
+    /// the pool onto the surfaces inside the prism from the scene's depth, so it follows the ground instead of laying a
+    /// flat disc that fights it. World scales it to each pool's radius and eases its strength per renderer with a
     /// MaterialPropertyBlock (SetVector _EmissionColor, linear; ARCHITECTURE.md "Glow modulation").
     /// </summary>
     public static class LightPoolBuilder
     {
         public const string PoolName = "LightPool";
 
-        /// <summary>Corners of the disc's rim: the falloff is per pixel, so a few make a round pool.</summary>
+        /// <summary>Sides of the prism: the falloff is per pixel, so a few make a round pool.</summary>
         public const int RimCorners = 16;
+
+        /// <summary>
+        /// The prism's half-height as a share of the pool's radius: the ground under a pool (the dock pad, the bay
+        /// apron, a relay's pad) is flat, so this keeps the pool on the ground and off 07's deck and the props'
+        /// tops (0.6 m for the dock's 5 m pool, 0.34 m for a 2.8 m charger pool).
+        /// </summary>
+        public const float PoolBand = 0.12f;
 
         /// <summary>
         /// How bright the pool's centre is at strength 1, as a share of the warm lamps' own surface colour: a faint
@@ -32,11 +41,13 @@ namespace MoonProject.Art.Editor
         public static void Build()
         {
             Material material = GeneratedAssets.CreateOrReplace(CreateMaterial(), ArtPaths.LightPoolMaterial);
-            Mesh disc = GeneratedAssets.CreateOrReplace(CreateDisc(), $"{ArtPaths.PropFolder}/{PoolName}_Disc.asset");
+            // The mesh keeps its first asset name (it was a flat disc) so its GUID and the prefab's reference stay.
+            Mesh volume = GeneratedAssets.CreateOrReplace(CreateVolume(),
+                $"{ArtPaths.PropFolder}/{PoolName}_Disc.asset");
             using (var scratch = new BuilderScratchScene())
             {
                 GameObject pool = scratch.Create(PoolName);
-                pool.AddComponent<MeshFilter>().sharedMesh = disc;
+                pool.AddComponent<MeshFilter>().sharedMesh = volume;
                 var renderer = pool.AddComponent<MeshRenderer>();
                 renderer.sharedMaterial = material;
                 renderer.shadowCastingMode = ShadowCastingMode.Off;
@@ -63,37 +74,58 @@ namespace MoonProject.Art.Editor
             material.SetColor("_BaseColor", warm.gamma);
             material.SetVector("_EmissionColor", Vector4.one);
             material.SetFloat("_Falloff", PoolFalloff);
+            material.SetFloat("_Band", PoolBand);
             material.enableInstancing = true;
             return material;
         }
 
-        /// <summary>A flat fan of <see cref="RimCorners"/> triangles, radius 1, facing up, uv = (x, z).</summary>
-        public static Mesh CreateDisc()
+        /// <summary>
+        /// A closed prism of <see cref="RimCorners"/> sides round the unit circle (its flat sides touch radius 1, so
+        /// the whole pool is inside), from -<see cref="PoolBand"/> to +<see cref="PoolBand"/>, faces outward.
+        /// </summary>
+        public static Mesh CreateVolume()
         {
-            var vertices = new Vector3[RimCorners + 1];
-            var uvs = new Vector2[RimCorners + 1];
-            var normals = new Vector3[RimCorners + 1];
-            var triangles = new int[RimCorners * 3];
-            normals[0] = Vector3.up;
+            float rim = 1f / Mathf.Cos(Mathf.PI / RimCorners);
+            var vertices = new Vector3[RimCorners * 2 + 2];
+            var triangles = new int[RimCorners * 12];
+            int top = RimCorners * 2;
+            int bottom = top + 1;
+            vertices[top] = new Vector3(0f, PoolBand, 0f);
+            vertices[bottom] = new Vector3(0f, -PoolBand, 0f);
             for (int i = 0; i < RimCorners; i++)
             {
-                float angle = i * Mathf.PI * 2f / RimCorners;
-                var rim = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
-                vertices[i + 1] = new Vector3(rim.x, 0f, rim.y);
-                uvs[i + 1] = rim;
-                normals[i + 1] = Vector3.up;
-                triangles[i * 3] = 0;
-                triangles[i * 3 + 1] = 1 + (i + 1) % RimCorners;
-                triangles[i * 3 + 2] = i + 1;
+                float angle = (i + 0.5f) * Mathf.PI * 2f / RimCorners;
+                var corner = new Vector3(Mathf.Cos(angle) * rim, 0f, Mathf.Sin(angle) * rim);
+                vertices[i * 2] = corner + Vector3.up * PoolBand;
+                vertices[i * 2 + 1] = corner - Vector3.up * PoolBand;
             }
 
-            var mesh = new Mesh { name = PoolName + "_Disc" };
+            for (int i = 0; i < RimCorners; i++)
+            {
+                int upper = i * 2;
+                int lower = upper + 1;
+                int nextUpper = (i + 1) % RimCorners * 2;
+                int nextLower = nextUpper + 1;
+                int t = i * 12;
+                SetTriangle(triangles, t, top, nextUpper, upper);
+                SetTriangle(triangles, t + 3, bottom, lower, nextLower);
+                SetTriangle(triangles, t + 6, upper, nextUpper, nextLower);
+                SetTriangle(triangles, t + 9, upper, nextLower, lower);
+            }
+
+            var mesh = new Mesh { name = PoolName + "_Volume" };
             mesh.SetVertices(vertices);
-            mesh.SetNormals(normals);
-            mesh.SetUVs(0, uvs);
             mesh.SetTriangles(triangles, 0);
+            mesh.RecalculateNormals();
             mesh.RecalculateBounds();
             return mesh;
+        }
+
+        private static void SetTriangle(int[] triangles, int at, int a, int b, int c)
+        {
+            triangles[at] = a;
+            triangles[at + 1] = b;
+            triangles[at + 2] = c;
         }
     }
 }

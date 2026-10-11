@@ -5,18 +5,23 @@ using MoonProject.Core.Input;
 namespace MoonProject.UI
 {
     /// <summary>
-    /// The "Look up" hint in the prompt chip's style, low and centred on screen: the camera control's glyph (the right
-    /// stick, or the mouse) and the word. <see cref="LookUpHint"/> decides when it shows.
+    /// The low look-hint chip in the prompt chip's style, centred on screen: a glyph and one word (<see cref="HintWord"/>).
+    /// "Look up" shows the camera control (the right stick, or the mouse), "Drive" the drive control (the left stick,
+    /// or WASD). <see cref="LookUpHint"/> and <see cref="FirstPrompt"/> decide when it shows; a new word waits until the
+    /// chip has faded out.
     /// </summary>
     internal sealed class LookUpChip
     {
         private const string PadGlyphKey = "glyph.gamepad.rightstick";
         private const string MouseGlyphKey = "glyph.mouse.move";
+        private const string DrivePadGlyphKey = "glyph.gamepad.leftstick";
+        private const string DriveKeysGlyphKey = "glyph.keyboard.wasd";
 
         private readonly UiLayout _layout;
         private readonly ILocalization _localization;
         private readonly Reveal _reveal;
         private readonly GlyphView _glyph;
+        private HintWord _word = HintWord.LookUp;
 
         public LookUpChip(UiLayout layout, StargazeSettings settings, ILocalization localization)
         {
@@ -37,13 +42,20 @@ namespace MoonProject.UI
         public bool IsVisible => !_reveal.IsHidden;
 
         /// <param name="deltaTime">Unscaled seconds.</param>
-        /// <param name="shown">True while the hint is wanted (and the game is not paused).</param>
-        /// <param name="device">The active device: its camera control is the glyph.</param>
-        public void Tick(float deltaTime, bool shown, InputDeviceKind device)
+        /// <param name="word">The word wanted (None to hide, and while the game is paused).</param>
+        /// <param name="device">The active device: its control for the word is the glyph.</param>
+        public void Tick(float deltaTime, HintWord word, InputDeviceKind device)
         {
+            if (word != HintWord.None && word != _word && _reveal.IsHidden)
+            {
+                _word = word;
+                Relocalize();
+            }
+
+            bool shown = word != HintWord.None && word == _word;
             if (shown)
             {
-                _glyph.Set(_localization.Get(device == InputDeviceKind.Gamepad ? PadGlyphKey : MouseGlyphKey), device);
+                _glyph.Set(_localization.Get(GlyphKey(device)), device);
             }
 
             _reveal.Set(shown);
@@ -52,7 +64,18 @@ namespace MoonProject.UI
 
         public void Relocalize()
         {
-            _layout.LookHintWord.text = _localization.Get(UiKeys.LookUp);
+            _layout.LookHintWord.text = _localization.Get(_word == HintWord.Drive ? UiKeys.Drive : UiKeys.LookUp);
+        }
+
+        private string GlyphKey(InputDeviceKind device)
+        {
+            bool pad = device == InputDeviceKind.Gamepad;
+            if (_word == HintWord.Drive)
+            {
+                return pad ? DrivePadGlyphKey : DriveKeysGlyphKey;
+            }
+
+            return pad ? PadGlyphKey : MouseGlyphKey;
         }
     }
 }

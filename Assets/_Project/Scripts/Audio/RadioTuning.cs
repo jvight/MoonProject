@@ -147,6 +147,22 @@ namespace MoonProject.Audio
         [Tooltip("Extra static while the radio is still finding the station (melts away as the music resolves).")]
         [Range(0f, 1f)] [SerializeField] private float _wakeStaticBoost = 0.55f;
 
+        [Header("Title over a save (the save's station, softly, under the menu)")]
+        [Tooltip("Level of the save's station under the title, as a share of its level in play: soft enough to sit " +
+            "under the menu and the wide shot of home.")]
+        [Range(0f, 1f)] [SerializeField] private float _titleGain = 0.35f;
+
+        [Tooltip("Seconds the station takes to resolve out of a faint crackle as the title comes up (no dial swish).")]
+        [Min(0.01f)] [SerializeField] private float _titleMusicFade = 3f;
+
+        [Tooltip("Time constant (s) of the level's rise: to the soft level as the title comes up, and to full as " +
+            "Continue eases the camera into the chase frame (about three time constants to settle).")]
+        [Min(0f)] [SerializeField] private float _titleRiseTime = 0.8f;
+
+        [Tooltip("Time constant (s) of the fall to silence as New Game puts the save away under the push into the " +
+            "lens.")]
+        [Min(0f)] [SerializeField] private float _titleFallTime = 0.5f;
+
         public float SignalRadius => _signalRadius;
         public float FalloffWidth => _falloffWidth;
 
@@ -191,5 +207,9 @@ namespace MoonProject.Audio
         public float PlayerWakeMusicFade => _playerWakeMusicFade;
         public float WakePowerTime => _wakePowerTime;
         public float WakeStaticBoost => _wakeStaticBoost;
+        public float TitleGain => _titleGain;
+        public float TitleMusicFade => _titleMusicFade;
+        public float TitleRiseTime => _titleRiseTime;
+        public float TitleFallTime => _titleFallTime;
     }
 }

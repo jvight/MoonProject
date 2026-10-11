@@ -77,7 +77,7 @@ namespace MoonProject.World
             "pools round the three masses).")]
         [SerializeField] private LightPoolTuning[] _pools =
         {
-            new LightPoolTuning(HomeLight.Dock, "DockAnchor", new Vector3(0f, -0.02f, 0.8f), 5f, 1f, true),
+            new LightPoolTuning(HomeLight.Dock, "DockAnchor", new Vector3(0f, -0.02f, 0.8f), 5f, 0.5f, true),
             new LightPoolTuning(HomeLight.PorchLamps, "Lander", new Vector3(0f, 2.2f, 5.6f), 9f, 4f, false),
             new LightPoolTuning(HomeLight.Windows, "Lander", new Vector3(0f, 2.9f, 0f), 10f, 3f, false),
             new LightPoolTuning(HomeLight.BayLamps, "RoverBay", new Vector3(0f, 0.03f, 4f), 7f, 1f, true),
