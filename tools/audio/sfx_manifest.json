@@ -356,6 +356,33 @@
       "notes": "Soft whump (98->47 Hz glide) + body + slow dust hiss; runtime scales by impact."
     },
     {
+      "id": "radio_carrier",
+      "category": "radio_2d",
+      "milestone": "M3",
+      "bus": "Music",
+      "spatial": false,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/radio_carrier_loop.wav"
+      ],
+      "variantLabels": [
+        "radio_carrier"
+      ],
+      "sha256": [
+        "75de32cfaaa808ada92c578c5a9320f536a4f6311e1b410a8525b79f38189552"
+      ],
+      "volumeMin": 1.0,
+      "volumeMax": 1.0,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -24.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "The Earth signal's carrier after tower L1 (M3-24): a steady soft D4 tone with a faint A4, breathing slowly over a trace of hiss. 8 s seamless; no music."
+    },
+    {
       "id": "radio_static",
       "category": "radio_2d",
       "milestone": "M1",

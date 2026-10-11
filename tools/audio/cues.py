@@ -2267,6 +2267,25 @@ def asleep_static(_variant, gen):
     return periodic(mix, lambda x: filters.highpass(filters.lowpass(x, 4200.0), 260.0))
 
 
+CARRIER_LOOP_S = 8.0
+
+
+def radio_carrier(_variant, gen):
+    """The Earth signal's carrier once tower level 1 clears the static (M3-24): no music and no words, just a steady
+    soft tone on D4 with its fifth A4 far beneath, breathing very slowly, over a thin trace of the old band's hiss.
+    The sound of something still transmitting. 8 s seamless."""
+    n = samples(CARRIER_LOOP_S)
+    loop_hz = 1.0 / CARRIER_LOOP_S
+    tone = (osc.sine(n, loop_freq(note_freq("D4"), n))
+            + 0.18 * osc.sine(n, loop_freq(note_freq("A4"), n))
+            + 0.08 * osc.sine(n, loop_freq(note_freq("D5"), n)))
+    tone *= envelope.lfo(n, loop_hz, 0.12, 0.88) * envelope.lfo(n, 3.0 * loop_hz, 0.05, 0.95, phase=0.3)
+    hiss = periodic(noise.white(n, gen), lambda x: filters.bandpass(noise.pink_filter(x), 1300.0, 0.6),
+                    warmup=samples(0.5))
+    hiss = hiss / max(float(np.std(hiss)), 1e-9)
+    return periodic(0.05 * tone + 0.03 * hiss, lambda x: filters.highpass(filters.lowpass(x, 3600.0), 200.0))
+
+
 GHOST_CHORD_LABELS = ("faint", "clearer", "long")
 GHOST_CHORD_NOTES = ("D3", "A3", "E4")
 GHOST_CHORD_BAR_S = 3.0
@@ -2408,6 +2427,9 @@ CUES = (
         notes="Soft rubbery stick-slip creak + quiet spring tone; no resonance above ~1.2 kHz (never squeaky)."),
     Cue("landing_thump", "oneshot_3d", landing_thump, variants=3, volume=(0.85, 1.0), pitch=(0.95, 1.05),
         fade_out=0.08, notes="Soft whump (98->47 Hz glide) + body + slow dust hiss; runtime scales by impact."),
+    Cue("radio_carrier", "radio_2d", radio_carrier, loop=True, file_stem="radio_carrier_loop", tonal=True,
+        milestone="M3", notes="The Earth signal's carrier after tower L1 (M3-24): a steady soft D4 tone with a faint "
+                              "A4, breathing slowly over a trace of hiss. 8 s seamless; no music."),
     Cue("radio_static", "radio_2d", radio_static, loop=True, file_stem="radio_static_loop",
         notes="Warm AM/vinyl static, 6 s seamless stereo; volume rises as radio clarity falls."),
     Cue("radio_tune", "radio_fx_2d", radio_tune, fade_out=0.1,
