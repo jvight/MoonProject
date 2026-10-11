@@ -1193,6 +1193,18 @@
         {
             "key": "battery.low.mast",
             "text": "Charge is getting low. The {0} can top you up."
+        },
+        {
+            "key": "upgrade.rover.cell_pack.name",
+            "text": "Cell Pack II"
+        },
+        {
+            "key": "upgrade.rover.cell_pack.1.title",
+            "text": "A battery spine"
+        },
+        {
+            "key": "upgrade.rover.cell_pack.1.effect",
+            "text": "Two more cells on 07's back: six lamps lit, and the far side of the basin in reach."
         }
     ]
 }
