@@ -109,6 +109,7 @@ namespace MoonProject.Gameplay
             new TechKit(TechNodeId.CargoCradle, "rover.cargo_cradle"),
             new TechKit(TechNodeId.WarmHeadlamp, "rover.warm_headlamp"),
             new TechKit(TechNodeId.CapacitorDrums, "rover.boost_coils"),
+            new TechKit(TechNodeId.CellPackII, "rover.cell_pack"),
         };
 
         [Tooltip("The recovery panel's lamps no built thing lights yet: the Peak's foot, the Dish, the Answer.")]
