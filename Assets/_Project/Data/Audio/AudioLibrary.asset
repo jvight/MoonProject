@@ -1513,6 +1513,18 @@ MonoBehaviour:
     _volumeMax: 0.55
     _pitchMin: 1
     _pitchMax: 1
+  - _id: recovery_row_chord
+    _clips:
+    - {fileID: 8300000, guid: b0f3e363ccaf0914b9cb77522aee5309, type: 3}
+    _variantLabels:
+    - recovery_row_chord
+    _bus: 2
+    _spatial: 0
+    _loop: 0
+    _volumeMin: 0.55
+    _volumeMax: 0.55
+    _pitchMin: 1
+    _pitchMax: 1
   - _id: map_pencil
     _clips:
     - {fileID: 8300000, guid: 935ffb83b153f894888e5c41a39e3f02, type: 3}

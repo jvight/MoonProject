@@ -36,7 +36,8 @@ MonoBehaviour:
   - 1.6
   - 2.4
   - 3
-  _storyParts:
+  _components:
   - {fileID: 3359185789678253492, guid: 746e59bdc859c6341a23c70adaab062a, type: 3}
   - {fileID: 1487543907107486613, guid: bcee7385b8b911344b262ebb5912cfe9, type: 3}
   - {fileID: 9012445354524032910, guid: 933e6346ec9a2db43a474ca1764a4a44, type: 3}
+  _tube: {fileID: 6406814405049052317, guid: 05d82a220aa0cad4baaa68355080287b, type: 3}
