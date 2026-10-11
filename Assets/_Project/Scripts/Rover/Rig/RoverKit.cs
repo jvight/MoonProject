@@ -128,6 +128,7 @@ namespace MoonProject.Rover
         private float _lampLevel = 1f;
         private float _appliedLampLevel = -1f;
         private bool _docked;
+        private BatteryLink _battery;
         private float _appliedDrumGlow = -1f;
         private bool _started;
 
@@ -174,6 +175,7 @@ namespace MoonProject.Rover
             _rover = rover;
             _rig = rig;
             _context = context;
+            _battery = new BatteryLink(context);
             _events = context.Events;
             _world = context.Get<IWorldLayout>();
             KitSettings settings = _tuning.Kit;
@@ -424,7 +426,8 @@ namespace MoonProject.Rover
 
             ApplyPieces();
             DockSettings dock = _rover.Tuning.Dock;
-            _lampLevel = Smoothing.Damp(_lampLevel, _docked ? dock.LampDim : 1f, dock.LampHalfLife, deltaTime);
+            float lamp = _docked ? dock.LampDim : _battery.IsLowPower ? _tuning.FlankLamps.CrawlHeadlamp : 1f;
+            _lampLevel = Smoothing.Damp(_lampLevel, lamp, dock.LampHalfLife, deltaTime);
             ApplyWarmth(_fits[(int)RoverKitPiece.LampBar].Lights);
             ApplyDrumGlow();
             StepTube(deltaTime);
@@ -702,7 +705,8 @@ namespace MoonProject.Rover
         {
             KitSettings settings = _tuning.Kit;
             float lit = _fits[(int)RoverKitPiece.CapacitorDrums].Lights;
-            float glow = lit * Mathf.Lerp(settings.DrumIdleGlow, settings.DrumGlow, _rover.BoostLevel);
+            float stored = settings.DrumIdleGlow * _battery.Drums01;
+            float glow = lit * Mathf.Lerp(stored, settings.DrumGlow, _rover.BoostLevel);
             if (Mathf.Abs(glow - _appliedDrumGlow) < GlowEpsilon)
             {
                 return;

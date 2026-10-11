@@ -4,16 +4,13 @@ using UnityEngine;
 namespace MoonProject.Audio
 {
     /// <summary>
-    /// The charging dock's sound over time (M3-14): docking brings in a very soft charging hum; after the charge time
-    /// 07 is full - a gentle tone, once, and the hum settles away; leaving the dock lets the hum go at once (with the
-    /// release click, the caller's). Allocation-free.
+    /// A charger's sound (M3-14, M3-20): while a charger fills 07's cells a very soft hum breathes; when the last cell
+    /// fills, a gentle "full" tone, once, and the hum settles away; driving off lets the hum go. Allocation-free.
     /// </summary>
     public sealed class ChargeModel
     {
         private readonly StationAudioTuning _tuning;
         private readonly LoopFader _hum = new LoopFader();
-        private float _docked;
-        private bool _charging;
         private bool _fullDue;
 
         public ChargeModel(StationAudioTuning tuning)
@@ -26,37 +23,25 @@ namespace MoonProject.Audio
 
         public bool HumAudible => _hum.IsAudible;
 
-        public void Dock()
+        /// <summary>A charger started filling the cells.</summary>
+        public void Begin()
         {
-            _docked = 0f;
-            _charging = true;
             _hum.FadeIn();
         }
 
-        public void Undock()
+        /// <summary>The charger stopped: <paramref name="full"/> when the cells are full, false when 07 drove off.</summary>
+        public void End(bool full)
         {
-            _charging = false;
+            _fullDue |= full;
             _hum.FadeOut();
         }
 
         public void Step(float deltaTime)
         {
-            float dt = Mathf.Max(0f, deltaTime);
-            if (_charging)
-            {
-                _docked += dt;
-                if (_docked >= _tuning.ChargeSeconds)
-                {
-                    _charging = false;
-                    _fullDue = true;
-                    _hum.FadeOut();
-                }
-            }
-
-            _hum.Step(dt, _tuning.ChargeFadeIn, _tuning.ChargeFadeOut);
+            _hum.Step(Mathf.Max(0f, deltaTime), _tuning.ChargeFadeIn, _tuning.ChargeFadeOut);
         }
 
-        /// <summary>True once when 07 has become full on the dock; clears it.</summary>
+        /// <summary>True once when 07 has become full on a charger; clears it.</summary>
         public bool TakeFull()
         {
             bool due = _fullDue;

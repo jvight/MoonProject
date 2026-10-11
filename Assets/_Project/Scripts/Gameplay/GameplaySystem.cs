@@ -18,7 +18,8 @@ namespace MoonProject.Gameplay
     /// <see cref="ITetherAim"/>, <see cref="IUpgradeShop"/>, <see cref="IInteractionHints"/>,
     /// <see cref="IFriendRoster"/>, <see cref="IFriendStatuses"/>, <see cref="IRadioProgram"/>,
     /// <see cref="IStationReach"/>, <see cref="IRadioHop"/>, <see cref="IRelayStatus"/>, the workshop as
-    /// <see cref="IRoverBay"/>) and the save sections,
+    /// <see cref="IRoverBay"/>, 07's battery as <see cref="IRoverBattery"/> and its beam work as
+    /// <see cref="IBeamStatus"/>) and the save sections,
     /// announces the radio's signal radius and, once the save is loaded, the radio program, and owns the shared glow
     /// meshes. The radio-hop moves 07 through Core's <see cref="IRoverPlacement"/> when the Rover domain registers it;
     /// Core's <see cref="IRoverCargoSeat"/> (where a relic rides in the Cargo Cradle) is required at boot.
@@ -53,6 +54,7 @@ namespace MoonProject.Gameplay
         [SerializeField] private BaseProgression _progression;
         [SerializeField] private BlueprintPlotter _plotter;
         [SerializeField] private LiftStation _lift;
+        [SerializeField] private BatteryField _battery;
 
         private readonly List<IDisposable> _saveTokens = new List<IDisposable>();
         private GlowMeshSet _meshes;
@@ -115,6 +117,9 @@ namespace MoonProject.Gameplay
 
         public LiftStation Lift => _lift;
 
+        /// <summary>07's battery: drains, chargers, the crawl and the warnings (docs/features/M3-20).</summary>
+        public BatteryField Battery => _battery;
+
         internal void Wire(GameplayVisuals visuals, GlintTuning glints, UpgradeDefinition[] upgradeDefinitions,
             SalvageField salvage, RelicField relics, SonarSystem sonar, ExcavationSystem excavation,
             TetherSystem tether, HomeBase home, CargoCradle cradle, RadioTower tower, Workshop workshop,
@@ -143,6 +148,11 @@ namespace MoonProject.Gameplay
             _progression = progression;
             _plotter = plotter;
             _lift = lift;
+        }
+
+        internal void WireBattery(BatteryField battery)
+        {
+            _battery = battery;
         }
 
         public void Initialize(GameContext context)
@@ -212,7 +222,8 @@ namespace MoonProject.Gameplay
                 !_relays.Initialize(services, Upgrades, _tower, _tether, _friends.Tuning, Placement(context)) ||
                 !_progression.Initialize(services, Power, _home, _workshop, _sonar, _friends, _relays,
                     Upgrades, _lift) ||
-                !_plotter.Initialize(services, Blueprints, _workshop, _progression.Tuning, Upgrades))
+                !_plotter.Initialize(services, Blueprints, _workshop, _progression.Tuning, Upgrades) ||
+                !_battery.Initialize(services, _relays.Reach, _tether, _home, abilities, _friends, _sonar.Tuning))
 
             {
                 enabled = false;
@@ -250,7 +261,7 @@ namespace MoonProject.Gameplay
 
             Shop = new UpgradeShop(Upgrades, stations, save, Blueprints, TowerParts);
             Hints = new InteractionHints(services.Rover, _sonar, _excavation, _salvage, _tether, _cradle, _home,
-                stations, Upgrades, TowerParts, _friends, _relays);
+                stations, Upgrades, TowerParts, _friends, _relays, services.Beam);
             context.Register<IMaterialStock>(Materials);
             context.Register<ISalvageStatus>(_salvage);
             context.Register<ITetherAim>(_tether);
@@ -267,6 +278,8 @@ namespace MoonProject.Gameplay
             context.Register<ILabInterior>(_lift.Lab);
             context.Register<IBlueprintBoard>(Blueprints);
             context.Register<IStoryPartGate>(TowerParts);
+            context.Register<IRoverBattery>(_battery.Model);
+            context.Register<IBeamStatus>(services.Beam);
             Upgrades.PublishSignals();
             RegisterSaveSections(save);
         }
@@ -302,6 +315,8 @@ namespace MoonProject.Gameplay
                 GameplaySaveKeys.LiftVersion, _lift.Capture, _lift.Restore)));
             _saveTokens.Add(save.Register(new SaveSection<TowerPartsSaveData>(GameplaySaveKeys.TowerParts,
                 GameplaySaveKeys.TowerPartsVersion, TowerParts.Capture, RestoreTowerParts)));
+            _saveTokens.Add(save.Register(new SaveSection<BatterySaveData>(GameplaySaveKeys.Battery,
+                GameplaySaveKeys.BatteryVersion, _battery.Capture, _battery.Restore)));
         }
 
         private void RestoreTowerParts(TowerPartsSaveData data)
@@ -524,6 +539,7 @@ namespace MoonProject.Gameplay
                 : _progression == null ? "BaseProgression is not assigned."
                 : _progression.Tuning == null ? "BaseProgression has no ProgressionTuning."
                 : _plotter == null ? "BlueprintPlotter is not assigned."
+                : _battery == null ? "BatteryField is not assigned."
                 : null;
         }
 

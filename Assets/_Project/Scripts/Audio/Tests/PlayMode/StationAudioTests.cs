@@ -122,16 +122,21 @@ namespace MoonProject.Audio.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator TheDock_ConnectsHumsAndReleases()
+        public IEnumerator TheDock_ConnectsHumsWhileItChargesAndReleases()
         {
             var dock = new Vector3(3f, 0f, -5f);
             _rig.Events.Publish(new RoverDockChanged(true, dock, Quaternion.identity));
             Assert.AreEqual("dock_connect", LastClip);
+            _rig.Events.Publish(new ChargingChanged(true, ChargerKind.Dock, dock));
             yield return new WaitForSeconds(2f);
             AudioSource hum = Stations.ChargeSource;
             Assert.IsTrue(hum.isPlaying, "a very soft charging hum");
             Assert.Less(Vector3.Distance(hum.transform.position, dock), 1e-4f);
 
+            _rig.Events.Publish(new BatteryChanged(4, 4, true, false));
+            _rig.Events.Publish(new ChargingChanged(false, ChargerKind.Dock, dock));
+            yield return null;
+            Assert.AreEqual("dock_full", LastClip, "the last cell filled: a gentle 'full' tone");
             _rig.Events.Publish(new RoverDockChanged(false, dock, Quaternion.identity));
             Assert.AreEqual("dock_release", LastClip);
             yield return new WaitForSeconds(2.5f);

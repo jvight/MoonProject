@@ -59,5 +59,11 @@ namespace MoonProject.Gameplay
         public GlintTuning Glints { get; }
 
         public GlowMeshSet Meshes { get; }
+
+        /// <summary>
+        /// 07's beam work for the battery: beam verbs report their working seconds and ask before starting new work
+        /// (docs/features/M3-20).
+        /// </summary>
+        public BeamWork Beam { get; } = new BeamWork();
     }
 }

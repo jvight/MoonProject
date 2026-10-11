@@ -27,7 +27,7 @@ namespace MoonProject.Audio
     public sealed class RadioStation : MonoBehaviour
     {
         private const float MinPitch = 0.01f;
-        private const int SubscriptionCount = 7;
+        private const int SubscriptionCount = 8;
 
         [Tooltip("Assets/_Project/Data/Audio/RadioTuning.asset.")]
         [SerializeField] private RadioTuning _tuning;
@@ -58,6 +58,7 @@ namespace MoonProject.Audio
         private AudioDirector _director;
         private Soundscape _soundscape;
         private RadioSignal _signal;
+        private bool _crawling;
         private RadioProgramModel _model;
         private PlaylistShuffler _shuffler;
         private RadioTrack[] _pool = Array.Empty<RadioTrack>();
@@ -190,6 +191,7 @@ namespace MoonProject.Audio
             _subscriptions[4] = context.Events.Subscribe<RadioHopFinished>(OnRadioHopFinished);
             _subscriptions[5] = context.Events.Subscribe<RoverPlaced>(OnRoverPlaced);
             _subscriptions[6] = context.Events.Subscribe<RoverWakeBeatReached>(OnWakeBeat);
+            _subscriptions[7] = context.Events.Subscribe<LowPowerChanged>(OnLowPowerChanged);
         }
 
         internal void Wire(RadioTuning tuning, RadioPlaylist playlist, RadioTapeLibrary tapes)
@@ -207,7 +209,7 @@ namespace MoonProject.Audio
             }
 
             float dt = Time.unscaledDeltaTime;
-            _signal.Step(ReachDistance(_listener.Position), dt);
+            _signal.Step(ReachDistance(_listener.Position) + (_crawling ? _tuning.CrawlDistance : 0f), dt);
             float hop = _hop.Step(dt, _tuning.HopOutTime, _tuning.HopDarkTime, _tuning.HopInTime, out bool landing);
             if (landing)
             {
@@ -454,6 +456,12 @@ namespace MoonProject.Audio
         private void OnRadioHopFinished(RadioHopFinished finished)
         {
             _hop.End();
+        }
+
+        /// <summary>07 crawls home on its reserve: the radio thins as if a little farther from home, eased.</summary>
+        private void OnLowPowerChanged(LowPowerChanged lowPower)
+        {
+            _crawling = lowPower.LowPower;
         }
 
         private void OnRoverPlaced(RoverPlaced placed)

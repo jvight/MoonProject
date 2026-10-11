@@ -78,6 +78,26 @@ namespace MoonProject.UI
             painter.Stroke();
         }
 
+        /// <summary>
+        /// An arc between two bearings in degrees, clockwise from twelve o'clock (<paramref name="from"/> before
+        /// <paramref name="to"/>), with round caps.
+        /// </summary>
+        public static void ArcBetween(Painter2D painter, Vector2 center, float radius, float width, float from,
+            float to, Color color)
+        {
+            if (to <= from)
+            {
+                return;
+            }
+
+            painter.lineWidth = width;
+            painter.strokeColor = color;
+            painter.lineCap = LineCap.Round;
+            painter.BeginPath();
+            painter.Arc(center, radius, Angle.Degrees(from - 90f), Angle.Degrees(to - 90f));
+            painter.Stroke();
+        }
+
         /// <summary>A filled disc.</summary>
         public static void Disc(Painter2D painter, Vector2 center, float radius, Color color)
         {

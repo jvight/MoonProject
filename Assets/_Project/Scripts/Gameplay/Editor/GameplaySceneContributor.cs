@@ -76,6 +76,7 @@ namespace MoonProject.Gameplay.Editor
             var salvageTuning = context.LoadAsset<SalvageTuning>(GameplayAssetPaths.SalvageTuning);
             var progressionTuning = context.LoadAsset<ProgressionTuning>(GameplayAssetPaths.ProgressionTuning);
             var liftTuning = context.LoadAsset<LiftTuning>(GameplayAssetPaths.LiftTuning);
+            var batteryTuning = context.LoadAsset<BatteryTuning>(GameplayAssetPaths.BatteryTuning);
             var salvageCatalog = context.LoadAsset<SalvageCatalog>(GameplayAssetPaths.SalvageCatalog);
             var relayMast = context.LoadAsset<GameObject>(GameplayAssetPaths.RelayMast);
             var relayMastBroken = context.LoadAsset<GameObject>(GameplayAssetPaths.RelayMastBroken);
@@ -114,6 +115,7 @@ namespace MoonProject.Gameplay.Editor
             var relays = Part<RelayField>(context, host, "Relays");
             var progression = Part<BaseProgression>(context, host, "Progression");
             var plotter = Part<BlueprintPlotter>(context, host, "Plotter");
+            var battery = Part<BatteryField>(context, host, "Battery");
 
             GameObject baseRoot = context.CreateChild("Base", host.transform);
             Vector3 offset = baseTuning.LanderOffset;
@@ -211,6 +213,8 @@ namespace MoonProject.Gameplay.Editor
                 new[] { radioTower, hoverJump, cargoCradle, warmHeadlamp, boostCoils }, salvage, relics, sonar,
                 excavation, tether, home, cradle, tower, workshop, friends, cassettes, logs, signals, tapeRack, relays,
                 progression, plotter, liftStation);
+            battery.Wire(batteryTuning);
+            gameplay.WireBattery(battery);
             context.AddSystem(gameplay);
         }
 

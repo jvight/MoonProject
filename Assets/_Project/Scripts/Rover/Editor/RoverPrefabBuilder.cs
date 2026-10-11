@@ -11,7 +11,7 @@ namespace MoonProject.Rover.Editor
     /// <code>
     /// Rover            RoverController, RoverBodyLanguage (both IGameSystems)
     ///   PhysicsSphere  Rigidbody + SphereCollider (layer Rover, frictionless)
-    ///   Visual         RoverVisualRig, RoverHoverCoils, RoverKit
+    ///   Visual         RoverVisualRig, RoverHoverCoils, RoverKit, RoverFlankLamps (the battery's lamps on Body)
     ///     Chassis      jelly lean / bob
     ///       RoverModel (nested prefab; adds Headlamp spot under HeadlampSocket and EyeGlow point under Eye)
     ///         HeadlampSocket
@@ -137,6 +137,7 @@ namespace MoonProject.Rover.Editor
             RoverKit kit = BuildKit(scratch, visual, m, headlamp, rigTuning, lampBar, drum, rack, tube,
                 parts);
 
+            RoverFlankLamps flankLamps = BuildFlankLamps(visual, m, rigTuning);
             RoverWheelFx wheelFx = BuildWheelFx(scratch, root.transform, m, fxTuning, trackMaterial, dustMaterial);
             RoverLampMotes lampMotes = BuildLampMotes(scratch, headlamp, fxTuning, moteMaterial);
 
@@ -148,6 +149,7 @@ namespace MoonProject.Rover.Editor
                 ("_wheelFx", wheelFx),
                 ("_hoverCoils", hoverCoils),
                 ("_lampMotes", lampMotes),
+                ("_flankLamps", flankLamps),
                 ("_kit", kit),
                 ("_tetherOrigin", BuildWiring.Node(m, RoverModelNodes.TetherOrigin)),
                 ("_cargoSocket", BuildWiring.Node(m, RoverModelNodes.CargoSocket)));
@@ -230,6 +232,26 @@ namespace MoonProject.Rover.Editor
             BuildWiring.AssignArray(hoverCoils, "_coils", springs);
             BuildWiring.AssignArray(hoverCoils, "_glows", glows);
             return hoverCoils;
+        }
+
+        /// <summary>The battery's flank lamps already in RoverModel (left strip, then right), shown per capacity.</summary>
+        private static RoverFlankLamps BuildFlankLamps(GameObject host, Transform model, RoverRigTuning tuning)
+        {
+            int count = RoverModelNodes.FlankLampCount;
+            var lamps = new Object[2 * count];
+            var glasses = new Object[2 * count];
+            for (int i = 0; i < lamps.Length; i++)
+            {
+                bool right = i >= count;
+                lamps[i] = BuildWiring.Node(model, RoverModelNodes.FlankLamp(right, i % count));
+                glasses[i] = BuildWiring.NodeComponent<MeshRenderer>(model, RoverModelNodes.FlankGlass(right, i % count));
+            }
+
+            var flankLamps = host.AddComponent<RoverFlankLamps>();
+            BuildWiring.Assign(flankLamps, ("_tuning", tuning));
+            BuildWiring.AssignArray(flankLamps, "_lamps", lamps);
+            BuildWiring.AssignArray(flankLamps, "_glasses", glasses);
+            return flankLamps;
         }
 
         private static RoverWheelFx BuildWheelFx(BuilderScratchScene scratch, Transform root, Transform model,

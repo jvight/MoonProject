@@ -67,6 +67,8 @@ namespace MoonProject.UI
         private LookUpChip _lookUpChip;
         private NextStepLine _nextStep;
         private NextLineView _nextLine;
+        private BatteryArc _batteryArc;
+        private bool _arcRevealed;
         private PlaceCard _placeCard;
         private TetherReticle _reticle;
         private ContextPrompt _prompt;
@@ -150,6 +152,8 @@ namespace MoonProject.UI
         internal MapView Map => _map;
 
         internal NextLineView NextLine => _nextLine;
+
+        internal BatteryArc BatteryArc => _batteryArc;
 
         internal UiLayout Layout => _layout;
 
@@ -310,6 +314,7 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<RadioHopListChanged>(OnRadioHopListChanged));
             _tokens.Add(events.Subscribe<StationCued>(OnStationCued));
             _tokens.Add(events.Subscribe<RoverKitFitted>(OnRoverKitFitted));
+            _tokens.Add(events.Subscribe<BatteryArcRevealed>(OnBatteryArcRevealed));
 
             services.Input.Menu.Enable();
             _cursor.Drive();
@@ -355,6 +360,7 @@ namespace MoonProject.UI
             _lookUpChip = new LookUpChip(_layout, _tuning.Stargaze, _localization);
             _nextStep = new NextStepLine(_tuning.Guidance);
             _nextLine = new NextLineView(_layout, _tuning.Guidance, _localization);
+            _batteryArc = new BatteryArc(_layout, _tuning.Battery, services.Battery, services.Beam);
             _placeCard = new PlaceCard(_layout, _tuning.Guidance, _localization);
             _reticle = new TetherReticle(_layout.Reticle, _layout.ReticleRest, _layout.ReticleHover, _tuning.Reticle);
             _prompt = new ContextPrompt(_layout, _tuning.Prompts, _director, services.View, _glyphs, _localization,
@@ -516,6 +522,14 @@ namespace MoonProject.UI
             _nextLine.Tick(deltaTime, _nextStep, !paused && _awake && !_card.IsVisible &&
                                                  !_tower.IsVisible && !_stargaze.IsVeiled &&
                                                  !_placeCard.IsVisible);
+            _batteryArc.Tick(deltaTime, _arcRevealed, !paused && _awake && !_card.IsVisible && !_tower.IsVisible &&
+                                                      !_stargaze.IsVeiled && !onMap);
+        }
+
+        /// <summary>The battery arc exists from the first time the charge dropped below its reveal share.</summary>
+        private void OnBatteryArcRevealed(BatteryArcRevealed revealed)
+        {
+            _arcRevealed = true;
         }
 
         private void Quit()

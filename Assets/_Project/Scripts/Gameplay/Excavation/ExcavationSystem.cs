@@ -27,6 +27,7 @@ namespace MoonProject.Gameplay
 
         private EventBus _events;
         private InputReader _input;
+        private BeamWork _beamWork;
         private IRoverState _rover;
         private IRoverRig _rig;
         private ITerrainQuery _terrain;
@@ -77,6 +78,7 @@ namespace MoonProject.Gameplay
 
             _events = services.Events;
             _input = services.Input;
+            _beamWork = services.Beam;
             _rover = services.Rover;
             _rig = services.Rig;
             _terrain = services.Terrain;
@@ -101,7 +103,7 @@ namespace MoonProject.Gameplay
 
             float deltaTime = Time.deltaTime;
             Candidate = _salvage.ClaimsHold ? null : NearestLiftable();
-            bool wantsBeam = _input.ExcavateHeld && Candidate != null;
+            bool wantsBeam = _input.ExcavateHeld && Candidate != null && (_lifting != null || _beamWork.MayStart);
             SetHold(wantsBeam);
 
             float engageSpeed = _lifting != null ? _tuning.EngageSpeed * EngageHysteresis : _tuning.EngageSpeed;
@@ -119,6 +121,7 @@ namespace MoonProject.Gameplay
             if (_lifting != null)
             {
                 StepLift(_lifting, deltaTime);
+                _beamWork.Work(deltaTime);
             }
 
             UpdateBeam(wantsBeam, deltaTime);

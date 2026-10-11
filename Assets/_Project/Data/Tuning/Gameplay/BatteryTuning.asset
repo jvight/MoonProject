@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 67c8ed8354544624b8751cbf220ccf73, type: 3}
+  m_Name: BatteryTuning
+  m_EditorClassIdentifier: 
+  _startingCells: 4
+  _metresPerCell: 120
+  _uphillMultiplier: 1.5
+  _downhillMultiplier: 0.5
+  _fullSlope: 15
+  _slopeEase: 0.5
+  _towMultiplier: 1.25
+  _boostMultiplier: 2
+  _beamSecondsPerCell: 60
+  _fullLeapCost: 0.25
+  _tapLeapCost: 0.05
+  _drumCells: 0.25
+  _drumRollSlope: 5
+  _drumRollSpeed: 3.5
+  _drumRollRefill: 0.01
+  _crawlCap: 0.35
+  _leadCap: 0.55
+  _capEase: 0.5
+  _leadDelay: 5
+  _leadFriend: tilly
+  _exitMargin: 0.25
+  _trickleSecondsPerCell: 180
+  _trickleCap: 1
+  _trickleStill: 3
+  _stillSpeed: 0.2
+  _dockFill: 4
+  _mastFill: 3
+  _ringRadius: 2
+  _ringMaxSpeed: 1.3
+  _lowThreshold: 0.3
+  _veryLowThreshold: 0.15
+  _arcReveal: 0.7
+  _lowLines: 3
+  _pillarSeconds: 20

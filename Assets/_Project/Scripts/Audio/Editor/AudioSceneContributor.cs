@@ -50,6 +50,7 @@ namespace MoonProject.Audio.Editor
             var salvage = context.CreateChild("SalvageAudio", root).AddComponent<SalvageAudio>();
             var stations = context.CreateChild("StationAudio", root).AddComponent<StationAudio>();
             var lab = context.CreateChild("LabAudio", root).AddComponent<LabAudio>();
+            var battery = context.CreateChild("BatteryAudio", root).AddComponent<BatteryAudio>();
 
             rover.Wire(roverTuning);
             gameplay.Wire(gameplayTuning);
@@ -66,6 +67,7 @@ namespace MoonProject.Audio.Editor
             lab.Wire(stationTuning);
             director.Wire(library, mixTuning, rover, jump, gameplay, friends, ui, radio, ambience, canyon, soundscape,
                 smallSounds, relays, salvage, stations, lab);
+            director.WireBattery(battery);
             context.AddSystem(director);
         }
     }

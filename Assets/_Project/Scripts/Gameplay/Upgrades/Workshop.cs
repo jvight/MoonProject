@@ -74,6 +74,7 @@ namespace MoonProject.Gameplay
         [SerializeField] private Transform _floorTip;
 
         private EventBus _events;
+        private BeamWork _beamWork;
         private IRoverState _rover;
         private IRoverRig _rig;
         private UpgradeService _upgrades;
@@ -296,6 +297,7 @@ namespace MoonProject.Gameplay
             }
 
             _events = services.Events;
+            _beamWork = services.Beam;
             _rover = services.Rover;
             _rig = services.Rig;
             _upgrades = upgrades;
@@ -644,6 +646,7 @@ namespace MoonProject.Gameplay
 
             if (_feed.Feeding)
             {
+                _beamWork.Work(deltaTime);
                 return;
             }
 

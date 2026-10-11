@@ -1125,7 +1125,7 @@ namespace MoonProject.UI.PlayModeTests
             save = new SaveService(SaveService.DefaultDirectory, _slot);
             ui.Initialize(new UiServices(context.Events, context.Input, fakes, fakes, context.Get<IAudioSettings>(),
                 context.Get<ILookSettings>(), save, fakes, fakes, fakes, fakes, fakes, fakes, fakes, fakes, fakes,
-                fakes, context.Get<IGameFlow>(), new SettingsFile(SaveService.DefaultDirectory, _slot)));
+                fakes, context.Get<IGameFlow>(), new SettingsFile(SaveService.DefaultDirectory, _slot), fakes, fakes));
             save.Load();
             return ui;
         }
