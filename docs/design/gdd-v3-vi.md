@@ -238,3 +238,20 @@ Cần cho mục tiêu chính chỉ có máy chế tạo và một cột sạc tr
 6. Ro trả lời: **đồng ý**.
 7. Được xây công trình trên bệ có sẵn: **đã đổi** (xem phần 6).
 8. Độ dài: **đồng ý**.
+
+## 12. Bổ sung từ Subnautica (chủ dự án, 2026-10-11)
+Chủ dự án lấy Subnautica làm tham khảo. Xương sống của nó giống mình: tầm đi có giới hạn (ở đó là oxy, ở mình là
+pin), nâng cấp để đi xa hơn, không minimap, định hướng bằng mốc lớn và radio, căn cứ là nhà thật sự. Chủ dự án chọn
+bốn bài học. Chúng áp dụng từ 0.6; **phạm vi 0.5 giữ nguyên**.
+
+| # | Bài học | Ở game mình | Bản |
+|---|---|---|---|
+| A1 | **Mảnh bản vẽ**: quét 2–4 mảnh rải trong một bãi mới học được bản vẽ, nên mỗi bãi được khám kỹ và cảm giác "sắp xong" kéo người chơi đi tiếp. | Từ 0.6, bản vẽ của một bộ đồ chia thành 2–4 mảnh trong một bãi (hoặc một vùng với bộ lớn). 07 quét từng mảnh bằng ống kính (động tác sonar và nhìn sẵn có, không thêm nút). Máy đọc trong lab hiện băng giấy dang dở (1/3, 2/3) và giải mã khi đủ bộ; ghim trên bảng hiện số mảnh. Ống bản vẽ đơn của 0.5 giữ nguyên. | 0.6 |
+| A2 | **Một xác tàu lớn thấy từ đầu, quay lại nhiều lần theo công cụ mới** (như Aurora). | **Kestrel-3 thành "Aurora" của mình.** 0.5: vỏ ngoài và lõi Warm Headlamp (đã có). 0.6: một cửa kín hiện ra và có tên trên bản đồ, như lời hứa. 0.7: Thermal Cutter mở khoang kín (Circuitry, lõi dữ liệu cho Lab Reader II, một nhật ký phi hành đoàn). 0.8: lõi tàu giữ phần cuối của Power Cell, nên chuyến leo Đỉnh núi bắt đầu từ xác tàu đầu tiên người chơi từng thấy. | 0.6–0.8 |
+| A3 | **Radio dẫn đường mềm**: bắt được tín hiệu là có một nơi để tới, không cần danh sách nhiệm vụ. | Khi radio, Bell hay một cột vừa thắp bắt được tín hiệu, bút vẽ của Kenji vẽ một vết chì lên bản đồ khảo sát (dấu chéo, vòng tròn, một dòng ghi chú nét chữ Ines), và cột sáng của nơi đó dâng lên một lần. Không mũi tên, không dấu trên HUD; đồ tầng 2 vẫn không được gọi tên (luật 16): vết chì là một nơi, không phải một việc. | 0.6 |
+| A4 | **Cú ngoặt cảm xúc giữa game** (như tàu Sunbeam). | Giữa mục tiêu Link, mạng lưới mới sửa một nửa bắt được Trái Đất trong vài giây: tiếng rè, một đoạn nhạc hiệu đài của Ro, một giọng nói quá mờ để nghe rõ, rồi mất. Bảng phục hồi trong lab thắp đèn đầu của hàng Dish như một dấu hỏi. Buồn nhưng ấm (trụ cột 6): "sửa chảo" từ một việc thành một mong ước. Không đe doạ, không đếm giờ. | 0.7 |
+
+**Đề xuất, chưa quyết** (backlog): mỗi vùng một bản sắc ánh sáng và âm thanh, bóng tối gợi kính sợ (bóng một xác
+tàu khổng lồ hiện dần trong đèn pha, 0.7); Atlas kéo một trạm sạc di động như căn cứ di động (ý Cyclops, 0.7).
+
+**Không học:** đói khát, quái vật, mất đồ khi thất bại, cày tài nguyên, xây tự do với giao diện rối.
