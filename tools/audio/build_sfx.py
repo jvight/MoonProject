@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render every Lofi Lunar sound cue deterministically with the shared ``synth`` core.
+"""Render every Lunarion sound cue deterministically with the shared ``synth`` core.
 
 Writes 48 kHz 16-bit WAVs into Assets/_Project/Audio/{SFX, SFX/2D, Ambience} and the cue manifest
 tools/audio/sfx_manifest.json (read by the Unity AudioLibrary builder). Every file is finished the same way:

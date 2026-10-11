@@ -4,7 +4,7 @@
     "entries": [
         {
             "key": "ui.title.wordmark",
-            "text": "Lofi Lunar"
+            "text": "Lunarion"
         },
         {
             "key": "ui.pause.heading",
@@ -904,43 +904,43 @@
         },
         {
             "key": "letter.mast_1",
-            "text": "Lumen Station, this is Houston relay. All four crew landed safely. Program review postponed. Stand by."
+            "text": "17 MAR 2047 · Lumen Station, this is Houston relay. All four crew landed safely. Program review postponed. Stand by."
         },
         {
             "key": "letter.mast_2",
-            "text": "Lumen Station, this is Houston relay. A return window is under study. Keep station systems on standby."
+            "text": "2 APR 2047 · Lumen Station, this is Houston relay. A return window is under study. Keep station systems on standby."
         },
         {
             "key": "letter.mast_3",
-            "text": "Lumen Station, this is Houston relay. Return window cancelled. Program review continues."
+            "text": "11 MAY 2047 · Lumen Station, this is Houston relay. Return window cancelled. Program review continues."
         },
         {
             "key": "letter.mast_4",
-            "text": "Lumen Station, this is Houston relay. Program closed. This channel will no longer be monitored. Thank you, Lumen."
+            "text": "29 SEP 2047 · Lumen Station, this is Houston relay. Program closed. This channel will no longer be monitored. Thank you, Lumen."
         },
         {
             "key": "letter.mast_5",
-            "text": "07, it's Ro. They say nobody's listening up there. I'm sending this anyway. — Ro"
+            "text": "07, it's Ro. They say nobody's listening up there. I'm sending this anyway. — Ro, 9 Jun 2048"
         },
         {
             "key": "letter.mast_6",
-            "text": "Ines took a desk job. She still walks round the block every morning to check Earth is still there. — Ro"
+            "text": "Ines took a desk job. She still walks round the block every morning to check Earth is still there. — Ro, 14 Jul 2049"
         },
         {
             "key": "letter.mast_7",
-            "text": "Theo says the basil on my windowsill isn't as good as yours was. Don't tell him I agree. — Ro"
+            "text": "Theo says the basil on my windowsill isn't as good as yours was. Don't tell him I agree. — Ro, 2 Aug 2051"
         },
         {
             "key": "letter.mast_8",
-            "text": "Kenji fixed my kettle with a paperclip and a long speech about tolerances. He says hello to the duck. — Ro"
+            "text": "Kenji fixed my kettle with a paperclip and a long speech about tolerances. He says hello to the duck. — Ro, 30 Oct 2054"
         },
         {
             "key": "letter.mast_9",
-            "text": "It's been twenty years. I still play the long-drive tape on Sundays. — Ro"
+            "text": "If that old dish ever wakes up, I'll be listening on the station's frequency. You know how to find me: three short, one long. — Ro, 2 Jun 2059"
         },
         {
             "key": "letter.mast_10",
-            "text": "If that old dish ever wakes up, I'll be listening on the station's frequency. You know how to find me: three short, one long. — Ro"
+            "text": "It's been twenty years. I still play the long-drive tape on Sundays. — Ro, 13 Mar 2067"
         },
         {
             "key": "ticker.ending.answer",

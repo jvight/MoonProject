@@ -23,6 +23,10 @@ MonoBehaviour:
   _stitchStartGain: 0.55
   _stitchRiseSemitones: 7
   _stitchRiseTime: 3.5
+  _stepStride: 0.45
+  _stepTeleportDistance: 3
+  _dozeFadeIn: 2.5
+  _dozeFadeOut: 0.8
   _followingChirpMin: 9
   _followingChirpMax: 22
   _homeChirpMin: 12

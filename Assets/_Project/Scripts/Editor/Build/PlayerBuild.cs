@@ -19,11 +19,11 @@ namespace MoonProject.Editor.Build
     /// runs first so the build always reflects source. Writes <c>build_info.txt</c> next to the exe.
     /// Normally run through <c>python tools/build_player.py</c>; directly:
     /// <code>python tools/unity_batch.py exec --method MoonProject.Editor.Build.PlayerBuild.BuildWindows
-    ///     [--arg out=Builds/LofiLunar-Windows] [--arg builders=false]</code>
+    ///     [--arg out=Builds/Lunarion-Windows] [--arg builders=false]</code>
     /// </summary>
     public static class PlayerBuild
     {
-        public const string DefaultOutput = "Builds/LofiLunar-Windows";
+        public const string DefaultOutput = "Builds/Lunarion-Windows";
         public const string InfoFileName = "build_info.txt";
 
         /// <summary>Suffix of folders Unity writes next to the player that must never ship (debug symbols).</summary>
@@ -111,7 +111,7 @@ namespace MoonProject.Editor.Build
             return true;
         }
 
-        /// <summary>Exe name: the product name without spaces or punctuation ("Lofi Lunar" -> "LofiLunar").</summary>
+        /// <summary>Exe name: the product name without spaces or punctuation ("Lunarion").</summary>
         public static string ExeName()
         {
             var name = new StringBuilder();

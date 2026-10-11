@@ -30,7 +30,7 @@ namespace MoonProject.UI
     {
         private const int CachedNumbers = 1000;
 
-        [Tooltip("The UIDocument showing GameUI.uxml with the Lofi Lunar PanelSettings.")]
+        [Tooltip("The UIDocument showing GameUI.uxml with the Lunarion PanelSettings.")]
         [SerializeField] private UIDocument _document;
 
         [Tooltip("UI timings and motion (Assets/_Project/Data/Tuning/UI/UiTuning.asset).")]

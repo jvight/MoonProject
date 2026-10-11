@@ -37,8 +37,13 @@ MonoBehaviour:
   _siteRingPulse: 1.6
   _siteRingPulseDuration: 4
   _discoveredGlow: 0.22
+  _discoveredBreathDepth: 0.4
   _breathPeriod: 4
+  _friendGlowScale: 0.55
   _siteRingSegments: 40
   _answerGaze: 2.5
   _glanceInterval: 6
   _glanceDuration: 1.6
+  _headlampCone: 22
+  _headlampLinger: 0.6
+  _headlampMaxLinger: 25

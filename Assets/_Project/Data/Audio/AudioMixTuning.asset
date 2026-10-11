@@ -29,4 +29,7 @@ MonoBehaviour:
   _thumpHardVolume: 1
   _thumpSoftPitch: 1.05
   _thumpHardPitch: 0.9
+  _pauseDuckTime: 0.4
+  _resumeTime: 0.8
+  _pausedWorldGain: 0
   _ambienceFadeIn: 4

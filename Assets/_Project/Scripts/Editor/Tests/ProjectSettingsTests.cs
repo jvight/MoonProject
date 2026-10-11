@@ -78,7 +78,7 @@ namespace MoonProject.Editor.Tests
         public void Player_IdentityColourSpaceAndInput()
         {
             Assert.AreEqual("MoonProject", PlayerSettings.companyName);
-            Assert.AreEqual("Lofi Lunar", PlayerSettings.productName);
+            Assert.AreEqual("Lunarion", PlayerSettings.productName);
             Assert.AreEqual(ColorSpace.Linear, PlayerSettings.colorSpace);
             var player = new SerializedObject(AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/ProjectSettings.asset")[0]);
             Assert.AreEqual(1, player.FindProperty("activeInputHandler").intValue, "Input System package only");

@@ -8,7 +8,7 @@ namespace MoonProject.UI.Editor
 {
     /// <summary>
     /// The UI domain's part of Main.unity: under [UI], one GameUI object with the UIDocument (GameUI.uxml on the
-    /// Lofi Lunar PanelSettings) and the <see cref="UISystem"/> (initialised last), wired to the UI tuning, the relic
+    /// Lunarion PanelSettings) and the <see cref="UISystem"/> (initialised last), wired to the UI tuning, the relic
     /// catalog and the string tables. Fails loudly when an asset is missing.
     /// </summary>
     public sealed class UISceneContributor : ISceneContributor

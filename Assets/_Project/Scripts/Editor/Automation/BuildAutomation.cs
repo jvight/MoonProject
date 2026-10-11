@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using UnityEditor;
 using MoonProject.Editor.Builders;
 
 namespace MoonProject.Editor.Automation
@@ -13,6 +14,8 @@ namespace MoonProject.Editor.Automation
     /// python tools/unity_batch.py exec --method MoonProject.Editor.Automation.BuildAutomation.ListBuilders
     /// python tools/unity_batch.py exec --method MoonProject.Editor.Automation.BuildAutomation.CheckIdempotency
     ///     [--arg filter=REGEX]   builds twice, requires byte-identical Generated/ and Scenes/ (see IdempotencyCheck)
+    /// python tools/unity_batch.py exec --method MoonProject.Editor.Automation.BuildAutomation.ReserializeAssets
+    ///     --arg filter=REGEX     required; rewrites matching assets under Assets/_Project/ so new fields are saved
     /// </code>
     /// </summary>
     public static class BuildAutomation
@@ -42,6 +45,28 @@ namespace MoonProject.Editor.Automation
                 Directory.CreateDirectory(args.OutputDirectory);
                 File.WriteAllText(Path.Combine(args.OutputDirectory, "idempotency.txt"), text);
                 return idempotent;
+            });
+        }
+
+        public static void ReserializeAssets()
+        {
+            BatchRunner.Run(nameof(ReserializeAssets), args =>
+            {
+                IReadOnlyList<string> paths = AssetReserializer.Select(
+                    AssetDatabase.GetAllAssetPaths(), args.GetRequiredString("filter"));
+                if (paths.Count == 0)
+                {
+                    UnityEngine.Debug.LogError("reserialize: no asset under Assets/_Project/ matches the filter");
+                    return false;
+                }
+
+                foreach (string path in paths)
+                {
+                    BatchRunner.Log("reserialize: " + path);
+                }
+
+                BatchRunner.Log($"reserialized {AssetReserializer.Reserialize(paths)} asset(s)");
+                return true;
             });
         }
 
