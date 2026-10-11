@@ -1,4 +1,4 @@
-"""Every sound cue of Lofi Lunar as a deterministic recipe on the shared ``synth`` core.
+"""Every sound cue of Lunarion as a deterministic recipe on the shared ``synth`` core.
 
 A recipe returns one signal (mono ``(n,)`` or stereo ``(n, 2)``) per variant; ``build_sfx.py`` handles DC
 removal, edge fades, loudness normalisation per category, the safety limiter and file output. All tonal

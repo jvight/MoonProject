@@ -2,13 +2,13 @@
 """
 Windows playtest build of YOUR worktree (git toplevel of the current directory; never the main project).
 
-  python tools/build_player.py [--out Builds/LofiLunar-Windows] [--skip-builders] [--no-smoke] [--no-build]
+  python tools/build_player.py [--out Builds/Lunarion-Windows] [--skip-builders] [--no-smoke] [--no-build]
 
 Steps:
   1. tools/unity_batch.py exec MoonProject.Editor.Build.PlayerBuild.BuildWindows: runs every builder (Main Scene
      last) so the build reflects source, then builds Main.unity for StandaloneWindows64 (Mono, release) and writes
      build_info.txt (version = <bundleVersion>-<commit date>-<short hash>[-dirty]) next to the exe.
-  2. Zips the build to Builds/LofiLunar-<version>.zip (Builds/ is git-ignored) and prints its size and path.
+  2. Zips the build to Builds/Lunarion-<version>.zip (Builds/ is git-ignored) and prints its size and path.
   3. Smoke check: launches the exe windowed (1280x720) with -logFile and -saveSlot smoke for --smoke-seconds,
      requires the bootstrap to confirm the smoke slot and the WorldSystem boot line, and no exceptions/errors in the
      player log, then closes it and reports boot time and sizes. The smoke slot's files are deleted before and
@@ -87,7 +87,7 @@ def build(root, out_dir, skip_builders, timeout):
 def make_zip(root, out_dir, version):
     builds = root / "Builds"
     builds.mkdir(exist_ok=True)
-    name = f"LofiLunar-{version}"
+    name = f"Lunarion-{version}"
     archive = builds / f"{name}.zip"
     if archive.exists():
         archive.unlink()
@@ -185,7 +185,7 @@ def player_problems(text):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--out", help="build folder (default Builds/LofiLunar-Windows in the worktree)")
+    ap.add_argument("--out", help="build folder (default Builds/Lunarion-Windows in the worktree)")
     ap.add_argument("--skip-builders", action="store_true", help="build the player without re-running builders")
     ap.add_argument("--no-build", action="store_true", help="reuse the existing build folder (zip + smoke only)")
     ap.add_argument("--no-smoke", action="store_true", help="skip launching the built player")
@@ -195,7 +195,7 @@ def main():
 
     root = git_toplevel()
     out_dir = (Path(args.out) if args.out and Path(args.out).is_absolute() else root / (args.out or
-               "Builds/LofiLunar-Windows")).resolve()
+               "Builds/Lunarion-Windows")).resolve()
     if not args.no_build and not build(root, out_dir, args.skip_builders, args.timeout):
         say("RESULT: FAIL (player build failed; see the unity_batch output above)")
         sys.exit(1)

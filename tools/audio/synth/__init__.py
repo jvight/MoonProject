@@ -1,4 +1,4 @@
-"""synth - Lofi Lunar's shared, deterministic DSP core (numpy + scipy + soundfile; see tools/requirements.txt).
+"""synth - Lunarion's shared, deterministic DSP core (numpy + scipy + soundfile; see tools/requirements.txt).
 
 Used by ``tools/audio`` (SFX and ambience) and ``tools/music`` (radio tracks). Import it by putting
 ``<repo>/tools/audio`` on ``sys.path``, then ``import synth`` or ``from synth import osc, filters``.

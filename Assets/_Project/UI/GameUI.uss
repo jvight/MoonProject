@@ -1,5 +1,5 @@
 /*
- * Lofi Lunar UI. Colours come from the palette tokens (--moon-*) that the UI/Theme builder generates from
+ * Lunarion UI. Colours come from the palette tokens (--moon-*) that the UI/Theme builder generates from
  * MoonProject.Art.Palette into the theme stylesheet. Indigo glass, cream text, warm amber for what can be done.
  * Type is Be Vietnam Pro (font assets built by the UI/Fonts builder): Regular for text, Medium for things you press,
  * SemiBold for names and headings. Motion is code-driven (Reveal), so nothing here transitions.

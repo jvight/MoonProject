@@ -7,7 +7,7 @@ namespace MoonProject.Core.Save.Tests
         [Test]
         public void ReadsTheValueAfterTheFlag()
         {
-            Assert.IsTrue(SaveSlotArgument.TryRead(new[] { "LofiLunar.exe", "-saveSlot", "smoke", "-logFile", "x" },
+            Assert.IsTrue(SaveSlotArgument.TryRead(new[] { "Lunarion.exe", "-saveSlot", "smoke", "-logFile", "x" },
                 out string slot));
             Assert.AreEqual("smoke", slot);
         }
@@ -22,7 +22,7 @@ namespace MoonProject.Core.Save.Tests
         [Test]
         public void AbsentFlag_ReturnsFalse()
         {
-            Assert.IsFalse(SaveSlotArgument.TryRead(new[] { "LofiLunar.exe", "-screen-width", "1280" },
+            Assert.IsFalse(SaveSlotArgument.TryRead(new[] { "Lunarion.exe", "-screen-width", "1280" },
                 out string slot));
             Assert.IsNull(slot);
         }
@@ -30,7 +30,7 @@ namespace MoonProject.Core.Save.Tests
         [Test]
         public void FlagWithoutValue_YieldsAnInvalidSlot()
         {
-            Assert.IsTrue(SaveSlotArgument.TryRead(new[] { "LofiLunar.exe", "-saveSlot" }, out string slot));
+            Assert.IsTrue(SaveSlotArgument.TryRead(new[] { "Lunarion.exe", "-saveSlot" }, out string slot));
             Assert.IsFalse(SaveService.IsValidSlot(slot));
             Assert.IsTrue(SaveSlotArgument.TryRead(new[] { "-saveSlot", "../main" }, out slot));
             Assert.IsFalse(SaveService.IsValidSlot(slot));
