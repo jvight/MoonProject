@@ -7,8 +7,9 @@ namespace MoonProject.Art.Editor
     /// 07's battery lamps (docs/features/M3-20 "How 07 shows it"): a strip of small amber lamps set into the orange
     /// stripe along each flank, eight sockets from the front corner back, one per cell. Each lamp is a riveted metal
     /// cup on the paint (its node's mesh) holding a domed glass (its own node, on the glow-off material, dark until
-    /// Rover lights it). In lamp space +X points out of the flank; the left flank's lamps turn half round, so one
-    /// pair of meshes serves both sides.
+    /// Rover lights it). In lamp space +X points out of the flank; each lamp tilts up and back so its glass faces
+    /// the chase camera behind and above 07, and the left flank's lamps turn half round, so one pair of meshes serves
+    /// both sides.
     /// </summary>
     internal static class RoverFlankLampMeshes
     {
@@ -34,6 +35,10 @@ namespace MoonProject.Art.Editor
         /// <summary>Eight sides: round at a lamp's size from the chase camera, and 16 lamps stay inside 07's budget.</summary>
         private const int Sides = 8;
 
+        /// <summary>Degrees each lamp tilts up and toward the rear, so the chase camera sees its glass.</summary>
+        private const float TiltUp = 35f;
+        private const float TiltBack = 25f;
+
         /// <summary>Points out of the flank (+X) from a prism's local Y.</summary>
         private static readonly Vector3 Outward = new Vector3(0f, 0f, -90f);
 
@@ -47,10 +52,13 @@ namespace MoonProject.Art.Editor
             return new Vector3(right ? StripeFace : -StripeFace, RoverMeshes.StripeY, FrontZ - index * Spacing);
         }
 
-        /// <summary>The left flank's lamps turn half round so their +X points out too.</summary>
+        /// <summary>
+        /// Out of the flank, tilted up and back toward the chase camera; the left flank's lamps turn half round so
+        /// their +X points out too.
+        /// </summary>
         public static Quaternion LampRotation(bool right)
         {
-            return right ? Quaternion.identity : Quaternion.Euler(0f, 180f, 0f);
+            return Quaternion.Euler(0f, right ? TiltBack : 180f - TiltBack, TiltUp);
         }
 
         /// <summary>Where the glass sits in the cup, in lamp space.</summary>
