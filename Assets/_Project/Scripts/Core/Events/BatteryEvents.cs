@@ -104,4 +104,23 @@ namespace MoonProject.Core.Events
 
         public bool Restored { get; }
     }
+
+    /// <summary>
+    /// One of 07's flank lamps lit as it wakes in the opening (docs/features/M3-20 "How 07 shows it": after O5's
+    /// flicker the cells' lamps light one by one). Published by Rover; Audio plays a quiet tick at
+    /// <see cref="Position"/>.
+    /// </summary>
+    public readonly struct FlankLampLit
+    {
+        public FlankLampLit(int index, Vector3 position)
+        {
+            Index = index;
+            Position = position;
+        }
+
+        /// <summary>The lamp, 0 for the front one.</summary>
+        public int Index { get; }
+
+        public Vector3 Position { get; }
+    }
 }
