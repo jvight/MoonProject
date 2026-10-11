@@ -4,7 +4,14 @@ Read this, then `CLAUDE.md`, then `docs/VISION.md`, `docs/DESIGN.md`, `docs/ARCH
 It records how the project is run, where it stands, and what comes next, so a new Director session (on any
 account) can continue without the old conversation.
 
-## 00. NOW (2026-10-12 ~01:30): read this first
+## 000. LATEST (2026-10-12 ~05:20)
+- **0.5.0 released for review:** origin/main = 13faaec7 (verified: compile, EditMode, both PlayMode shards, the
+  Playthrough at spec battery tuning, 1457 s, no crawl). Build `D:/Project/MoonProject/Builds/Lunarion-0.5.0-20261011-13faaec7.zip`
+  (smoke test passed). Save floor 0.5.0: older saves are put away to `.old-<stamp>.json`.
+- Waiting for the owner's play-through and review of 0.5 before 0.6 opens (phased releases). No slice is running.
+- The two verify failures of §00 were fixed (battery's tow snap, look's OpeningSessionTests teardown).
+
+## 00. NOW (2026-10-12 ~01:30)
 - **Director session** "MoonProject · Quản lý" `local_39353459-ab44-4d1f-b1db-4b1fa0a39a36`. Cron guard v3 is session-only
   (recreate it): usage log, wrap up at 46%, stop all at 48% — **the owner's HARD LIMIT is 50% of the weekly quota.**
   Model/effort per task (memory `model-effort-policy`): Sonnet for mechanical work, Opus medium for slices, Opus high
