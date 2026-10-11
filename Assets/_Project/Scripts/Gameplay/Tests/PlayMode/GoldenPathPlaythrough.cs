@@ -660,13 +660,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             bool captured = false;
             for (int pass = 0; pass < 2 && !site.IsPickedClean; pass++)
             {
-                foreach (SalvagePiece piece in site.Pieces)
+                foreach (SalvagePiece piece in InSweepOrder(site))
                 {
-                    if (!piece.IsCuttable)
-                    {
-                        continue;
-                    }
-
                     yield return FacePiece(site, piece);
                     float settle = Time.time + AimSettle;
                     while (salvage.Candidate == null && Time.time < settle)
@@ -704,6 +699,49 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             _cuts = cuts - started;
+        }
+
+        /// <summary>
+        /// The wreck's cuttable pieces in the order one sweep round it reaches them from where 07 stands, turning the
+        /// shorter way, as a player works round a wreck rather than criss-crossing it.
+        /// </summary>
+        private List<SalvagePiece> InSweepOrder(SalvageSite site)
+        {
+            Vector3 centre = Flat(site.Position);
+            float here = Bearing(_rover.Position - centre);
+            var pieces = new List<SalvagePiece>();
+            var offsets = new List<float>();
+            float lowest = 360f;
+            float highest = 0f;
+            foreach (SalvagePiece piece in site.Pieces)
+            {
+                if (!piece.IsCuttable)
+                {
+                    continue;
+                }
+
+                float offset = Mathf.Repeat(Bearing(piece.CutPosition - centre) - here, 360f);
+                pieces.Add(piece);
+                offsets.Add(offset);
+                lowest = Mathf.Min(lowest, offset);
+                highest = Mathf.Max(highest, offset);
+            }
+
+            bool clockwise = highest <= 360f - lowest;
+            var order = new List<int>();
+            for (int i = 0; i < pieces.Count; i++)
+            {
+                order.Add(i);
+            }
+
+            order.Sort((a, b) => clockwise ? offsets[a].CompareTo(offsets[b]) : offsets[b].CompareTo(offsets[a]));
+            var swept = new List<SalvagePiece>();
+            foreach (int i in order)
+            {
+                swept.Add(pieces[i]);
+            }
+
+            return swept;
         }
 
         /// <summary>The garage on the way to the duck: its wiring pays the tower's second level (M3-16 P9).</summary>
