@@ -86,6 +86,14 @@ namespace MoonProject.Audio
         public const string PlotterDraw = "plotter_draw";
         public const string BlueprintFound = "blueprint_found";
         public const string DockEveningSwell = "dock_evening_swell";
+        public const string AsleepStatic = "asleep_static";
+        public const string GhostChord = "ghost_chord";
+        public const string WakePowerThump = "wake_power_thump";
+        public const string LidTick = "lid_tick";
+        public const string LensWhine = "lens_whine";
+        public const string HumDropout = "hum_dropout";
+        public const string NeckServo = "neck_servo";
+        public const string HmChirp = "hm_chirp";
         public const string PortHatchOpen = "port_hatch_open";
         public const string PortHatchClose = "port_hatch_close";
         public const string DockConnect = "dock_connect";
