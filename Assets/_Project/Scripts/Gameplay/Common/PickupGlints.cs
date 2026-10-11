@@ -9,7 +9,8 @@ namespace MoonProject.Gameplay
     /// The glints that make pickups read from far away: one camera-facing star per resting pickup, all in a single
     /// dynamic mesh drawn with one material (one draw call, any camera). Each glint keeps a minimum on-screen size,
     /// twinkles on its own phase, and fades out close to the camera (where the model itself reads) and at the far end
-    /// of its range. Buffers are allocated once for every pickup; a frame of glints allocates nothing.
+    /// of its range, and all of them stay hidden while the title is up (<see cref="GlintVeil"/>). Buffers are
+    /// allocated once for every pickup; a frame of glints allocates nothing.
     /// </summary>
     public sealed class PickupGlints : IDisposable
     {
@@ -29,6 +30,7 @@ namespace MoonProject.Gameplay
         };
 
         private readonly GlintTuning _tuning;
+        private readonly GlintVeil _veil;
         private readonly Mesh _mesh;
         private readonly Vector3[] _centres;
         private readonly Vector2[] _sizeAndBrightness;
@@ -36,11 +38,14 @@ namespace MoonProject.Gameplay
         private Vector3 _camera;
         private float _minHalfSizePerMetre;
         private float _twinklePhase;
+        private float _veiled;
         private int _count;
 
-        public PickupGlints(Transform parent, Material material, GlintTuning tuning, int capacity, int layer)
+        public PickupGlints(Transform parent, Material material, GlintTuning tuning, GlintVeil veil, int capacity,
+            int layer)
         {
             _tuning = tuning != null ? tuning : throw new ArgumentNullException(nameof(tuning));
+            _veil = veil ?? throw new ArgumentNullException(nameof(veil));
             if (material == null)
             {
                 throw new ArgumentNullException(nameof(material));
@@ -103,6 +108,7 @@ namespace MoonProject.Gameplay
             _camera = cameraPosition;
             _minHalfSizePerMetre = Mathf.Tan(_tuning.GlintMinAngle * Mathf.Deg2Rad);
             _twinklePhase = 2f * Mathf.PI * _tuning.GlintTwinkleRate * time;
+            _veiled = _veil.Level(time, _tuning.GlintRevealSeconds);
             _count = 0;
             Brightest = 0f;
         }
@@ -110,7 +116,7 @@ namespace MoonProject.Gameplay
         /// <summary>Adds the glint of a pickup resting at <paramref name="piece"/>, on its own phase.</summary>
         public void Add(Vector3 piece, float phase)
         {
-            if (_count == _capacity)
+            if (_count == _capacity || _veiled <= 0f)
             {
                 return;
             }
@@ -125,7 +131,7 @@ namespace MoonProject.Gameplay
 
             float maxDistance = _tuning.GlintMaxDistance;
             float fade = Ease.Step(_tuning.GlintFadeNear, _tuning.GlintFadeFar, distance) *
-                         (1f - Ease.Step(maxDistance * FarFadeStart, maxDistance, distance));
+                         (1f - Ease.Step(maxDistance * FarFadeStart, maxDistance, distance)) * _veiled;
             if (fade <= 0f)
             {
                 return;

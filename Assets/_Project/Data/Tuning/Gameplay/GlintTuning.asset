@@ -17,8 +17,9 @@ MonoBehaviour:
   _glintIntensity: 1.2
   _glintLift: 0.12
   _glintPull: 0.6
-  _glintFadeNear: 4
-  _glintFadeFar: 12
+  _glintFadeNear: 25
+  _glintFadeFar: 35
   _glintMaxDistance: 170
   _glintTwinkleRate: 0.35
   _glintTwinkleDepth: 0.55
+  _glintRevealSeconds: 2.5

@@ -25,11 +25,12 @@ namespace MoonProject.Gameplay
         [Tooltip("Metres the glint is drawn toward the camera, so its own piece never hides it.")]
         [Range(0f, 2f)] [SerializeField] private float _glintPull = 0.6f;
 
-        [Tooltip("Closer than this (m) the glint is gone and the model itself takes over...")]
-        [Range(0f, 30f)] [SerializeField] private float _glintFadeNear = 4f;
+        [Tooltip("Closer than this (m) the glint is gone and the model itself takes over (a glint near the camera " +
+            "only reads as a blown-out disc, worst under a depth of field)...")]
+        [Range(0f, 40f)] [SerializeField] private float _glintFadeNear = 25f;
 
         [Tooltip("...and from this distance (m) on it shines fully.")]
-        [Range(1f, 60f)] [SerializeField] private float _glintFadeFar = 12f;
+        [Range(1f, 80f)] [SerializeField] private float _glintFadeFar = 35f;
 
         [Tooltip("Glints farther than this (m) from the camera fade out over the last fifth.")]
         [Range(20f, 600f)] [SerializeField] private float _glintMaxDistance = 170f;
@@ -39,6 +40,9 @@ namespace MoonProject.Gameplay
 
         [Tooltip("How much a glint dims between twinkles (0 = steady).")]
         [Range(0f, 1f)] [SerializeField] private float _glintTwinkleDepth = 0.55f;
+
+        [Tooltip("Seconds the glints take to ease back in when play begins after the title (hidden under it).")]
+        [Range(0f, 10f)] [SerializeField] private float _glintRevealSeconds = 2.5f;
 
         public float GlintSize => _glintSize;
         public float GlintMinAngle => _glintMinAngle;
@@ -50,5 +54,6 @@ namespace MoonProject.Gameplay
         public float GlintMaxDistance => _glintMaxDistance;
         public float GlintTwinkleRate => _glintTwinkleRate;
         public float GlintTwinkleDepth => _glintTwinkleDepth;
+        public float GlintRevealSeconds => _glintRevealSeconds;
     }
 }

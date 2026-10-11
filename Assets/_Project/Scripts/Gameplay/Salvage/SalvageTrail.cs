@@ -66,10 +66,11 @@ namespace MoonProject.Gameplay
         /// (with the problem) when a bit has no mesh to sink into the dust.
         /// </summary>
         public static SalvageTrail Lay(Transform parent, IReadOnlyList<SalvageTrailBit> bits, WorldAnchor anchor,
-            ITerrainQuery terrain, SalvageTuning tuning, Material glint, GlintTuning glints, out string problem)
+            ITerrainQuery terrain, SalvageTuning tuning, Material glint, GlintTuning glints, GlintVeil veil,
+            out string problem)
         {
             var trail = new SalvageTrail(tuning, bits.Count,
-                new PickupGlints(parent, glint, glints, Mathf.Max(1, bits.Count), Layers.Pickup));
+                new PickupGlints(parent, glint, glints, veil, Mathf.Max(1, bits.Count), Layers.Pickup));
             Vector3 forward = anchor.Forward;
             forward.y = 0f;
             forward = forward.sqrMagnitude > 1e-6f ? forward.normalized : Vector3.forward;

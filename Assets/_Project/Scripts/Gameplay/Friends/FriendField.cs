@@ -196,7 +196,8 @@ namespace MoonProject.Gameplay
                 partCount += definitions[i].Parts.Count;
             }
 
-            _glints = new PickupGlints(transform, services.Visuals.PartGlint, services.Glints, Mathf.Max(1, partCount),
+            _glints = new PickupGlints(transform, services.Visuals.PartGlint, services.Glints, services.GlintVeil,
+                Mathf.Max(1, partCount),
                 Layers.Pickup);
             _beam = new RepairBeam("RepairBeam", transform, services.Visuals.TetherBeam, _tuning.StitchRate,
                 _tuning.StitchSpread);

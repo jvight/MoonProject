@@ -187,7 +187,8 @@ namespace MoonProject.Gameplay
             _reach = new StationReach(home, _upgrades.SignalRadius, _tower.BeaconPosition, ids, pads, lamps,
                 _tuning.MastReach);
 
-            _glints = new PickupGlints(transform, services.Visuals.PartGlint, services.Glints, _masts.Count,
+            _glints = new PickupGlints(transform, services.Visuals.PartGlint, services.Glints, services.GlintVeil,
+                _masts.Count,
                 Layers.Pickup);
             _beam = new RepairBeam("RelayBeam", transform, services.Visuals.TetherBeam, _friends.StitchRate,
                 _friends.StitchSpread);
