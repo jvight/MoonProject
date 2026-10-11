@@ -240,7 +240,7 @@ namespace MoonProject.Rover
                 _phaseTime += deltaTime;
             }
 
-            TrackSeen();
+            TrackSeen(paused);
             if (gazing && wasPaused && !paused)
             {
                 ResumeAttention();
@@ -498,9 +498,11 @@ namespace MoonProject.Rover
             }
         }
 
-        private void TrackSeen()
+        /// <summary>A target counts as seen when the player's own look passes over it (the script's own looks count as
+        /// they begin).</summary>
+        private void TrackSeen(bool playerSteering)
         {
-            if (!AcceptsLook)
+            if (!AcceptsLook || !playerSteering)
             {
                 return;
             }
