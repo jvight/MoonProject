@@ -382,34 +382,40 @@ MonoBehaviour:
     _pools:
     - _wakesWith: 0
       _anchor: DockAnchor
-      _offset: {x: 0, y: 2.4, z: 0.8}
-      _range: 6.5
-      _intensity: 4
+      _offset: {x: 0, y: -0.02, z: 0.8}
+      _range: 5
+      _intensity: 1
+      _disc: 1
     - _wakesWith: 2
       _anchor: Lander
       _offset: {x: 0, y: 3.2, z: 4.5}
       _range: 11
       _intensity: 6
+      _disc: 0
     - _wakesWith: 1
       _anchor: Lander
       _offset: {x: -3.6, y: 2.6, z: 0.5}
       _range: 9
       _intensity: 4
+      _disc: 0
     - _wakesWith: 4
       _anchor: RoverBay
-      _offset: {x: 0, y: 2.8, z: 4}
-      _range: 10
-      _intensity: 6
+      _offset: {x: 0, y: 0.03, z: 4}
+      _range: 7
+      _intensity: 1
+      _disc: 1
     - _wakesWith: 5
       _anchor: LiftTop
       _offset: {x: 0, y: 2, z: 0}
       _range: 6
       _intensity: 3.5
+      _disc: 0
     - _wakesWith: 5
       _anchor: LiftBottom
-      _offset: {x: 0, y: 2.4, z: 1.4}
-      _range: 7
-      _intensity: 3.5
+      _offset: {x: 0, y: -0.17, z: 1.4}
+      _range: 5
+      _intensity: 1
+      _disc: 1
   _postProcessing:
     _bloomThreshold: 1.25
     _bloomIntensity: 1.1
@@ -462,3 +468,17 @@ MonoBehaviour:
     _bootprintStride: 0.75
     _bootprintSize: {x: 0.16, y: 0.07}
     _bootprintStrength: 0.5
+  _landmarks:
+    _routeBearing: 72
+    _routePostDistances:
+    - 70
+    - 115
+    - 160
+    - 205
+    - 250
+    - 275
+    _routePostSide: 2.6
+    _reflectorGlow: 0.3
+    _bridgeLampGlow: 1
+    _bridgeSide: 3.5
+    _dishSpread: 6.5
