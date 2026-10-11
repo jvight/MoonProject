@@ -847,6 +847,10 @@
             "text": "A fresh coat from Bell"
         },
         {
+            "key": "kit.tape_deck.name",
+            "text": "An old tape deck, found with Tilly"
+        },
+        {
             "key": "ui.bay.fitted",
             "text": "Fitted to 07"
         },

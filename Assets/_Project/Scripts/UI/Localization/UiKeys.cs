@@ -162,6 +162,9 @@ namespace MoonProject.UI
                 case RoverKitPiece.FreshPaint:
                     key = "kit.fresh_paint.name";
                     return true;
+                case RoverKitPiece.TapeDeck:
+                    key = "kit.tape_deck.name";
+                    return true;
                 default:
                     key = null;
                     return false;
