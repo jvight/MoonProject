@@ -76,6 +76,7 @@ namespace MoonProject.UI
         private BatteryArc _batteryArc;
         private bool _arcRevealed;
         private PlaceCard _placeCard;
+        private ProtocolReadout _protocol;
         private TetherReticle _reticle;
         private ContextPrompt _prompt;
         private MaterialsChip _chip;
@@ -382,6 +383,7 @@ namespace MoonProject.UI
             _nextLine = new NextLineView(_layout, _tuning.Guidance, _localization);
             _batteryArc = new BatteryArc(_layout, _tuning.Battery, services.Battery, services.Beam);
             _placeCard = new PlaceCard(_layout, _tuning.Guidance, _localization);
+            _protocol = new ProtocolReadout(_layout.Hud, _tuning.Guidance, _localization, services.Recovery);
             _reticle = new TetherReticle(_layout.Reticle, _layout.ReticleRest, _layout.ReticleHover, _tuning.Reticle);
             _prompt = new ContextPrompt(_layout, _tuning.Prompts, _director, services.View, _glyphs, _localization,
                 services.Events);
@@ -532,7 +534,9 @@ namespace MoonProject.UI
                               !_kitTitle.IsVisible;
             _ticker.Tick(hudTime, tickerOpen);
             _hopFade.Tick(deltaTime);
-            bool hintOpen = !_placeCard.IsVisible && !_card.IsVisible && !_tower.IsVisible && !_kitTitle.IsVisible &&
+            _protocol.Tick(hudTime);
+            bool hintOpen = !_protocol.IsVisible && !_placeCard.IsVisible && !_card.IsVisible && !_tower.IsVisible &&
+                            !_kitTitle.IsVisible &&
                             !_dial.IsBusy && !_hopList.IsBusy && !_prompt.IsVisible && !_siteName.IsVisible &&
                             !_ticker.IsVisible;
             float stick = _tuning.Stargaze.FirstPromptStick * _tuning.Stargaze.FirstPromptStick;
@@ -543,12 +547,12 @@ namespace MoonProject.UI
                 : _lookUpHint.WantsShown ? HintWord.LookUp : HintWord.None;
             _lookUpChip.Tick(deltaTime, paused ? HintWord.None : hint, device);
             _nextStep.Tick(hudTime, _services.Rover.Speed, _player.Guidance);
-            _placeCard.Tick(hudTime, _awake && !_kitTitle.IsVisible && !_card.IsVisible &&
+            _placeCard.Tick(hudTime, _awake && !_protocol.IsVisible && !_kitTitle.IsVisible && !_card.IsVisible &&
                                      !_prompt.IsVisible && !_ticker.IsVisible && !_siteName.IsVisible &&
                                      !_lookUpChip.IsVisible);
             _nextLine.Tick(deltaTime, _nextStep, !paused && _awake && !_card.IsVisible &&
                                                  !_tower.IsVisible && !_stargaze.IsVeiled &&
-                                                 !_placeCard.IsVisible);
+                                                 !_placeCard.IsVisible && !_protocol.IsVisible);
             _batteryArc.Tick(deltaTime, _arcRevealed, !paused && _awake && !_card.IsVisible && !_tower.IsVisible &&
                                                       !_stargaze.IsVeiled && !onMap);
         }
@@ -696,9 +700,15 @@ namespace MoonProject.UI
             if (reached.Beat == WakeBeat.Crackle)
             {
                 _firstPrompt.OpeningBegan();
+                _protocol.OpeningBegan();
+            }
+            else if (reached.Beat == WakeBeat.GazeEarth)
+            {
+                _protocol.Cue();
             }
             else if (reached.Beat == WakeBeat.ChaseFrame)
             {
+                _protocol.Cue();
                 _firstPrompt.ChaseFrameReached();
             }
         }
@@ -845,6 +855,7 @@ namespace MoonProject.UI
             _lookUpChip.Relocalize();
             _nextLine.Relocalize();
             _placeCard.Relocalize();
+            _protocol.Relocalize();
             _labHud.Relocalize();
             _board.Relocalize();
             _dial.Relocalize();

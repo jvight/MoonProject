@@ -147,6 +147,10 @@
             "text": "Trả lời Trái Đất"
         },
         {
+            "key": "protocol.power.need",
+            "text": "› tháp radio"
+        },
+        {
             "key": "ui.board.known",
             "text": "BẢN VẼ CỦA KENJI"
         },
@@ -220,7 +224,7 @@
         },
         {
             "key": "place.dock.job",
-            "text": "Nơi 07 sạc pin. Nghỉ ở đây, ngày hôm nay được giữ lại."
+            "text": "Đỗ ở đây để sạc pin. Nghỉ ở đây, ngày hôm nay được lưu lại."
         },
         {
             "key": "place.lander.name",
@@ -228,7 +232,7 @@
         },
         {
             "key": "place.lander.job",
-            "text": "Nhà của phi hành đoàn. Cửa sổ sáng dần khi nơi này thức dậy."
+            "text": "Nhà của phi hành đoàn. Điện từ tháp thắp sáng các ô cửa."
         },
         {
             "key": "place.tower.name",
@@ -236,7 +240,7 @@
         },
         {
             "key": "place.tower.job",
-            "text": "Trái tim của căn nhà: điện và tín hiệu."
+            "text": "Trái tim của trạm: mỗi tầng cấp điện cho thêm một phần căn nhà."
         },
         {
             "key": "place.bay.name",
@@ -244,7 +248,7 @@
         },
         {
             "key": "place.bay.job",
-            "text": "Nơi lắp bộ đồ mới cho 07."
+            "text": "Đỗ lên bàn xoay: các cánh tay lắp bộ đồ mới cho 07."
         },
         {
             "key": "place.ladder.name",
@@ -260,7 +264,7 @@
         },
         {
             "key": "place.lift.job",
-            "text": "Thang nâng của phi hành đoàn: lên phòng thí nghiệm."
+            "text": "Đứng yên trên bệ để lên phòng thí nghiệm."
         },
         {
             "key": "place.lab.name",
@@ -268,7 +272,7 @@
         },
         {
             "key": "place.lab.job",
-            "text": "Phòng thí nghiệm của phi hành đoàn: đồ tìm được thành hiểu biết."
+            "text": "Mang đồ tìm được lên đây: máy đọc biến chúng thành bản vẽ."
         },
         {
             "key": "place.rack.name",
@@ -276,7 +280,7 @@
         },
         {
             "key": "place.rack.job",
-            "text": "Âm nhạc, và giọng nói của phi hành đoàn."
+            "text": "Băng tìm được sẽ phát ở đây: nhạc và giọng nói của phi hành đoàn."
         },
         {
             "key": "ui.blueprint.found",

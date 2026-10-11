@@ -1350,3 +1350,31 @@ Label {
     color: var(--moon-text);
     opacity: 0.75;
 }
+
+/*
+ * The protocol readout (M3-24 B): the same panel in 07's lens at the end of the opening, high on the left over the
+ * dark sky. Power, the first target, reads brightest with its first need under it; the others wait, quieter.
+ */
+
+.protocol-readout {
+    top: 16%;
+}
+
+.protocol-readout__title {
+    color: var(--moon-warm-lamp);
+}
+
+.protocol-readout__row {
+    opacity: 0.6;
+}
+
+.protocol-readout__row--first {
+    opacity: 1;
+}
+
+.protocol-readout__need {
+    margin: 0 0 6px 18px;
+    font-size: 18px;
+    color: var(--moon-warm-lamp);
+    text-shadow: 0 2px 12px var(--moon-shadow);
+}

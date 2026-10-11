@@ -23,6 +23,10 @@
                     <ui:Label name="place-card-job" class="place-card__job" picking-mode="Ignore" />
                 </ui:VisualElement>
             </ui:VisualElement>
+            <ui:VisualElement name="protocol" class="recovery-board protocol-readout" picking-mode="Ignore">
+                <ui:Label name="protocol-title" class="recovery-board__title protocol-readout__title" picking-mode="Ignore" />
+                <ui:VisualElement name="protocol-rows" class="recovery-board__rows" picking-mode="Ignore" />
+            </ui:VisualElement>
             <ui:VisualElement name="reticle" class="reticle" picking-mode="Ignore">
                 <ui:VisualElement name="reticle-rest" class="reticle__ring reticle__ring--rest" />
                 <ui:VisualElement name="reticle-hover" class="reticle__ring reticle__ring--hover" />

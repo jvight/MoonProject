@@ -147,6 +147,10 @@
             "text": "Answer Earth"
         },
         {
+            "key": "protocol.power.need",
+            "text": "› the radio tower"
+        },
+        {
             "key": "ui.board.known",
             "text": "KENJI'S PLANS"
         },
@@ -220,7 +224,7 @@
         },
         {
             "key": "place.dock.job",
-            "text": "Where 07 charges. A rest here keeps the day."
+            "text": "Park here to charge. A rest here saves the day."
         },
         {
             "key": "place.lander.name",
@@ -228,7 +232,7 @@
         },
         {
             "key": "place.lander.job",
-            "text": "The crew's home. Its windows light as it wakes."
+            "text": "The crew's home. The tower's power lights its windows."
         },
         {
             "key": "place.tower.name",
@@ -236,7 +240,7 @@
         },
         {
             "key": "place.tower.job",
-            "text": "The heart of home: power and signals."
+            "text": "The station's heart: each level powers more of home."
         },
         {
             "key": "place.bay.name",
@@ -244,7 +248,7 @@
         },
         {
             "key": "place.bay.job",
-            "text": "Where new kit is fitted to 07."
+            "text": "Park on the turntable: the arms fit new kit on 07."
         },
         {
             "key": "place.ladder.name",
@@ -260,7 +264,7 @@
         },
         {
             "key": "place.lift.job",
-            "text": "The crew's lift: up into the lab."
+            "text": "Rest on the platform to ride up into the lab."
         },
         {
             "key": "place.lab.name",
@@ -268,7 +272,7 @@
         },
         {
             "key": "place.lab.job",
-            "text": "The crew's lab: finds become know-how."
+            "text": "Bring finds up here: the reader turns them into blueprints."
         },
         {
             "key": "place.rack.name",
@@ -276,7 +280,7 @@
         },
         {
             "key": "place.rack.job",
-            "text": "Music, and the crew's voices."
+            "text": "Tapes you find play here: music and the crew's voices."
         },
         {
             "key": "ui.blueprint.found",
