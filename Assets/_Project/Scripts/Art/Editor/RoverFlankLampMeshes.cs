@@ -31,8 +31,8 @@ namespace MoonProject.Art.Editor
         private const float GlassTopRadius = 0.013f;
         private const float GlassDepth = 0.01f;
 
-        /// <summary>Ten sides: round from the chase camera, a small share of 07's triangle budget for 16 lamps.</summary>
-        private const int Sides = 10;
+        /// <summary>Eight sides: round at a lamp's size from the chase camera, and 16 lamps stay inside 07's budget.</summary>
+        private const int Sides = 8;
 
         /// <summary>Points out of the flank (+X) from a prism's local Y.</summary>
         private static readonly Vector3 Outward = new Vector3(0f, 0f, -90f);
@@ -63,7 +63,7 @@ namespace MoonProject.Art.Editor
             b.Prism(At(new Vector3(CupDepth * 0.5f, 0f, 0f), Outward), CupRadius, CupDepth, Sides,
                 PaletteSwatch.Charcoal);
             b.Frustum(At(new Vector3(CupDepth + LipDepth * 0.5f, 0f, 0f), Outward), CupRadius, LipRadius, LipDepth,
-                Sides, PaletteSwatch.Metal);
+                Sides, PaletteSwatch.Metal, false);
             return b;
         }
 
