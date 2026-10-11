@@ -21,7 +21,7 @@ namespace MoonProject.Gameplay
         /// <summary>A kit whose blueprint is not pinned on Kenji's board yet (docs/features/M3-16).</summary>
         NotPinned = 5,
 
-        /// <summary>A tower level whose story part is not fed to the tower's port yet (docs/features/M3-16 P1).</summary>
+        /// <summary>A tower level whose component is not fed to the tower's port yet (docs/features/M3-16 P1).</summary>
         NeedsPart = 6,
     }
 }

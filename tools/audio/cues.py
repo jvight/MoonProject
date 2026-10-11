@@ -2186,6 +2186,23 @@ def reader_decode_chime(_variant, gen):
     return mix
 
 
+RECOVERY_CHORD_NOTES = ("D3", "A3", "D4", "F#4", "A4")
+
+
+def recovery_row_chord(_variant, gen):
+    """A recovery target's row completes ("Power restored."): as its lamps pulse once from left to right a warm chord
+    rises with them, D3, A3, D4, F#4 and A4 swelling in one after another from left to right, two soft bells (F#5,
+    A5) settling on top. Slow and low: a held breath, never a fanfare."""
+    mix = np.zeros((samples(5.6), 2))
+    for i, note in enumerate(RECOVERY_CHORD_NOTES):
+        place(mix, pan(instruments.soft_pad(note_freq(note), 4.6, 0.7, 2.2, hold=0.9), -0.5 + 0.25 * i),
+              samples(0.24 * i), 0.3)
+    for i, note in enumerate(("F#5", "A5")):
+        place(mix, pan(instruments.soft_bell(note_freq(note), 3.2, decay=1.8), 0.25 + 0.2 * i),
+              samples(1.0 + 0.24 * i), 0.12)
+    return mix
+
+
 def map_pencil(_variant, gen):
     """A place blinking seen on the crew's map: a short, soft pencil hiss on paper."""
     n = samples(0.5)
@@ -2617,6 +2634,8 @@ CUES = (
         notes="The reader taking a tube: paper-and-tin slide into the slot + soft latch."),
     Cue("reader_decode_chime", "stinger_2d", reader_decode_chime, volume=(0.55, 0.55), fade_out=0.3, milestone="M3",
         tonal=True, notes="A find decoded: felt glass chime rising D5, A5, D6."),
+    Cue("recovery_row_chord", "stinger_2d", recovery_row_chord, volume=(0.55, 0.55), fade_out=0.6, milestone="M3",
+        tonal=True, notes="A recovery row completes: a warm D-major chord rising left to right under its lamps."),
     Cue("map_pencil", "tick_2d", map_pencil, volume=(0.5, 0.5), fade_out=0.05, milestone="M3",
         notes="A place blinking seen on the crew's map: a short soft pencil hiss."),
     Cue("map_pen", "tick_2d", map_pen, variants=len(MAP_PEN_NOTES), volume=(0.55, 0.55), fade_out=0.1,

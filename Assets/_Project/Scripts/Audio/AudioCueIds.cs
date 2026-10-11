@@ -91,6 +91,7 @@ namespace MoonProject.Audio
         public const string ReaderReel = "reader_reel";
         public const string ReaderTake = "reader_take";
         public const string ReaderDecodeChime = "reader_decode_chime";
+        public const string RecoveryRowChord = "recovery_row_chord";
         public const string MapPencil = "map_pencil";
         public const string MapPen = "map_pen";
         public const string MapTableHum = "map_table_hum";

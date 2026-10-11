@@ -99,24 +99,112 @@
             "text": "Một ánh đèn bên kia vực sâu. Bây giờ thì chưa qua được."
         },
         {
+            "key": "next.bay.wake",
+            "text": "Khoang xe còn ngủ. Tầng thứ hai của tháp sẽ đánh thức nó."
+        },
+        {
             "key": "next.bay",
             "text": "Khoang xe đã có điện. Bàn xoay đang chờ."
         },
         {
-            "key": "next.leap",
-            "text": "Vực sâu đang chờ. Một cú nhảy tích đủ lực sẽ đưa 07 qua."
+            "key": "next.power.part",
+            "text": "Tháp cần linh kiện cuối cùng."
         },
         {
-            "key": "next.relay",
-            "text": "Một cột anten tối, đang chờ được thắp sáng."
+            "key": "next.power.carried",
+            "text": "Linh kiện cuối cùng của tháp đang theo 07. Cổng nạp đang chờ."
         },
         {
-            "key": "next.chart",
-            "text": "Tầng thứ ba của tháp sẽ đánh thức tấm bản đồ của phi hành đoàn."
+            "key": "next.power.build",
+            "text": "Linh kiện cuối đã vào. Giờ tháp cần vật liệu."
         },
         {
-            "key": "next.chart.look",
-            "text": "Bản đồ đã thức. Lên trên mà xem."
+            "key": "next.link.relay.0",
+            "text": "Trạm trên gò vẫn còn tối."
+        },
+        {
+            "key": "next.link.relay.1",
+            "text": "Trạm vai vành hố vẫn còn tối."
+        },
+        {
+            "key": "next.link",
+            "text": "Những trạm còn tối dẫn về phía Đỉnh núi."
+        },
+        {
+            "key": "ui.recovery.title",
+            "text": "GIAO THỨC PHỤC HỒI LUMEN"
+        },
+        {
+            "key": "recovery.power.name",
+            "text": "Cấp điện cho trạm"
+        },
+        {
+            "key": "recovery.link.name",
+            "text": "Nối mạng lưới tới Đỉnh núi"
+        },
+        {
+            "key": "recovery.dish.name",
+            "text": "Sửa chảo ăng-ten lớn"
+        },
+        {
+            "key": "recovery.answer.name",
+            "text": "Trả lời Trái Đất"
+        },
+        {
+            "key": "ui.board.known",
+            "text": "BẢN VẼ CỦA KENJI"
+        },
+        {
+            "key": "tech.tower_l1.name",
+            "text": "Tháp, tầng 1"
+        },
+        {
+            "key": "tech.tower_l2.name",
+            "text": "Tháp, tầng 2"
+        },
+        {
+            "key": "tech.tower_l3.name",
+            "text": "Tháp, tầng 3"
+        },
+        {
+            "key": "tech.relay_network.name",
+            "text": "Mạng trạm tiếp sóng"
+        },
+        {
+            "key": "tech.hover_jump.name",
+            "text": "Bật nhảy"
+        },
+        {
+            "key": "tech.cargo_cradle.name",
+            "text": "Giỏ chở đồ"
+        },
+        {
+            "key": "tech.warm_headlamp.name",
+            "text": "Đèn pha ấm"
+        },
+        {
+            "key": "tech.capacitor_drums.name",
+            "text": "Trống tụ điện"
+        },
+        {
+            "key": "tech.cell_pack_2.name",
+            "text": "Bộ pin II"
+        },
+        {
+            "key": "ticker.recovery.power",
+            "text": "Đã có điện trở lại."
+        },
+        {
+            "key": "ticker.recovery.link",
+            "text": "Mạng lưới đã nối tới Đỉnh núi."
+        },
+        {
+            "key": "ticker.recovery.dish",
+            "text": "Chảo ăng-ten lớn đã lành lại."
+        },
+        {
+            "key": "ticker.recovery.answer",
+            "text": "Trái Đất đã nghe thấy."
         },
         {
             "key": "notyet.tower",
@@ -295,7 +383,7 @@
             "text": "Cấp điện cho chiếc anten mỏi mệt, và nhà thức dậy: cửa sổ tàu đổ bộ lại sáng đèn."
         },
         {
-            "key": "upgrade.radio_tower.1.needs_part",
+            "key": "component.tower_coil.needed",
             "text": "Tháp đang chờ cuộn dây của nó."
         },
         {
@@ -307,7 +395,7 @@
             "text": "Cột cao hơn đưa điện tới khoang xe của Kenji, và radio vẫn trong trẻo dù đi xa."
         },
         {
-            "key": "upgrade.radio_tower.2.needs_part",
+            "key": "component.transformer.needed",
             "text": "Tháp đang chờ bộ biến áp."
         },
         {
@@ -319,7 +407,7 @@
             "text": "Tháp ngân nga khắp lòng hố, đánh thức thang nâng; căn nhà rực sáng như chiếc đèn lồng."
         },
         {
-            "key": "upgrade.radio_tower.3.needs_part",
+            "key": "component.relay_spare.needed",
             "text": "Tháp đang chờ một linh kiện dự phòng từ trạm tiếp sóng."
         },
         {

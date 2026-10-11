@@ -11,8 +11,9 @@ namespace MoonProject.Gameplay.Map
 {
     /// <summary>
     /// The crew's map (docs/features/M3-07), a system of its own initialised right after <see cref="GameplaySystem"/>:
-    /// builds the place list from Gameplay's parts, registers <see cref="IMapKnowledge"/> and the map's save section,
-    /// and marks places seen and visited. The map hangs on the lab's survey chart (docs/features/M3-19 §5): looking at
+    /// builds the place list from Gameplay's parts, registers <see cref="IMapKnowledge"/>, the chart's chargers and
+    /// Link line (<see cref="IChartOverlay"/>, docs/features/M3-21) and the map's save section, and marks places seen
+    /// and visited. The map hangs on the lab's survey chart (docs/features/M3-19 §5): looking at
     /// the chart once the tower's third level has woken it (<see cref="LabStationLooked"/>) opens the view
     /// (<see cref="OpenLook"/>: <see cref="MapLookStarted"/>, then the chart pen inks what is new,
     /// <see cref="MapInkCued"/>); looking away or riding down closes it (<see cref="CloseLook"/>,
@@ -54,6 +55,11 @@ namespace MoonProject.Gameplay.Map
         bool ISurveyChart.Looked => _looked;
 
         bool ISurveyChart.HasNews => _initialized && (!_looked || _knowledge.InkedSinceLastLook > 0);
+
+        bool ISurveyChart.HasSeen(string placeId)
+        {
+            return _initialized && _knowledge.GetState(placeId) >= MapPlaceState.Seen;
+        }
 
         internal void Wire(GameplaySystem gameplay, MapTuning tuning)
         {
@@ -101,6 +107,9 @@ namespace MoonProject.Gameplay.Map
             _knowledge = new MapKnowledge(_events, _gameplay.Relays.Reach, places, probes);
             _pen = new ChartPen(_events, _knowledge);
             context.Register<IMapKnowledge>(_knowledge);
+            context.Register<IChartOverlay>(new ChartOverlay(_gameplay.Relays.Reach, _gameplay.Relays,
+                _gameplay.Home.Dock, _gameplay.Battery.Model, _gameplay.Battery.Tuning.MetresPerCell,
+                _tuning.ChargerRangeShare, context.Get<IWorldLayout>().PeakPosition));
             _saveToken = context.Get<ISaveService>().Register(new SaveSection<MapSaveData>(GameplaySaveKeys.Map,
                 GameplaySaveKeys.MapVersion, () => _knowledge.Capture(_looked), Restore));
             _byBearing = CompareBearing;

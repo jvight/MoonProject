@@ -73,7 +73,8 @@ BOX_PREFIX = "box/"
 BUILDER_DOMAINS = {"art": "Art", "world": "World", "rover": "Rover", "gameplay": "Gameplay", "audio": "Audio",
                    "ui": "UI", "map": "World|Gameplay|UI", "opening": "Art|World|Rover|UI|Audio",
                    "battery": "Art|World|Rover|Gameplay|UI|Audio", "lab-build": "Art|World",
-                   "lab-systems": "Art|World|Gameplay|Rover|UI|Audio", "goals": "Gameplay|UI|Audio"}
+                   "lab-systems": "Art|World|Gameplay|Rover|UI|Audio", "goals": "Gameplay|UI|Audio",
+                   "look": "Art|World|Rover", "cleanup": "Art|World|Rover|Gameplay|UI|Audio"}
 SCHEMA_TYPE = re.compile(r"(Tuning|Settings)\.cs$")
 EDITOR_IDLE_POLLS = 5
 EDITOR_POLL_SECONDS = 2
@@ -523,7 +524,8 @@ def verify(args):
             fail(f"{path} is not at {sha[:7]}")
     shards = shard(playmode_assemblies(VERIFY_WORKTREE), last_playmode_seconds(VERIFY_WORKTREE), len(pool))
     playmode = [(f"playmode {' '.join(a.removeprefix('MoonProject.') for a in names)}",
-                 batch + ["playmode"] + [arg for name in names for arg in ("--assembly", name)]) for names in shards]
+                 batch + ["playmode"] + [arg for name in names for arg in ("--assembly", name)]
+                 + ["--category", "!Playthrough"]) for names in shards]
     playthrough = [("playthrough", batch + ["playmode", "--category", "Playthrough", "--timeout",
                                             str(PLAYTHROUGH_TIMEOUT)])]
     out_dir = ROOT / "Logs" / "director"

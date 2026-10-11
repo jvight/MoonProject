@@ -49,6 +49,7 @@ namespace MoonProject.Gameplay
         [SerializeField] private GameObject _partPrefab;
 
         private readonly List<RelayMast> _masts = new List<RelayMast>();
+        private RelayMast[] _chain = Array.Empty<RelayMast>();
         private EventBus _events;
         private InputReader _input;
         private BeamWork _beamWork;
@@ -102,6 +103,42 @@ namespace MoonProject.Gameplay
         }
 
         internal IReadOnlyList<RelayMast> Masts => _masts;
+
+        /// <summary>Masts of the Link's chain toward the Peak (docs/features/M3-21), nearest home first.</summary>
+        public int ChainMastCount => _chain.Length;
+
+        /// <summary>Masts of the Link's chain lit (linked home).</summary>
+        public int LitChainMasts
+        {
+            get
+            {
+                int lit = 0;
+                for (int i = 0; i < _chain.Length; i++)
+                {
+                    lit += _reach.IsLit(_chain[i].Node) ? 1 : 0;
+                }
+
+                return lit;
+            }
+        }
+
+        /// <summary>The id of the Link chain's mast <paramref name="index"/> (relay.0, ...).</summary>
+        public string ChainMastId(int index)
+        {
+            return _chain[index].Id;
+        }
+
+        /// <summary>Where the Link chain's mast <paramref name="index"/> stands (its pad, on the surface).</summary>
+        public Vector3 ChainMastPosition(int index)
+        {
+            return _chain[index].Anchor.Position;
+        }
+
+        /// <summary>True once the Link chain's mast <paramref name="index"/> is lit (linked home).</summary>
+        public bool IsChainMastLit(int index)
+        {
+            return _reach.IsLit(_chain[index].Node);
+        }
 
         private int PaidCount
         {
@@ -186,6 +223,18 @@ namespace MoonProject.Gameplay
 
             _reach = new StationReach(home, _upgrades.SignalRadius, _tower.BeaconPosition, ids, pads, lamps,
                 _tuning.MastReach);
+            _chain = new RelayMast[_tuning.LinkChain.Count];
+            for (int i = 0; i < _chain.Length; i++)
+            {
+                _chain[i] = Find(_tuning.LinkChain[i]);
+                if (_chain[i] == null)
+                {
+                    Debug.LogError($"{nameof(RelayField)}: RelayTuning's Link chain names " +
+                                   $"'{_tuning.LinkChain[i]}', which is no relay mast.", this);
+                    enabled = false;
+                    return false;
+                }
+            }
 
             _glints = new PickupGlints(transform, services.Visuals.PartGlint, services.Glints, services.GlintVeil,
                 _masts.Count,

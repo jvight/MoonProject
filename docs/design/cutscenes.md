@@ -1,4 +1,4 @@
-# Cutscenes: the cinematic moments of Lofi Lunar
+# Cutscenes: the cinematic moments of Lunarion
 
 > Author: the story & flow session ("MoonProject · story & flow"). This is a **proposal** to the Director. Nothing here
 > changes VISION, DESIGN, STORY or a feature spec until the Director accepts it. Exact ruling edits are in §1.4.

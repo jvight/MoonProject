@@ -7,7 +7,8 @@ contains main), it runs, stopping at the first failure:
   2. the box's builders and the Main Scene build in one headless Unity (unity_batch exec), which catches what only
      Unity refuses (a Unity object made while a component is constructed, a builder throwing, a broken scene wiring);
   3. the box's EditMode test assembly, then its PlayMode assembly (the defaults below; --fast skips PlayMode;
-     --filter / --assembly / --platform run one custom tests step instead).
+     --filter / --assembly / --platform run one custom tests step instead). PlayMode steps never run the golden-path
+     Playthrough (category Playthrough), which is the Director's.
 Then it restores what the builders regenerated (Generated/ and Scenes/Main.unity are never hand-edited, the
 Director commits them after landing) and moves the untracked batch-made .meta files aside to Logs/box_check/, so
 `git merge main` keeps working. Last, it appends a status block to D:/Project/MoonProject-wt/.board/<box>.md, which
@@ -41,7 +42,8 @@ RUN_BUILDERS = "MoonProject.Editor.Automation.BuildAutomation.RunBuilders"
 BUILDER_DOMAINS = {"art": "Art", "world": "World", "rover": "Rover", "gameplay": "Gameplay", "audio": "Audio",
                    "ui": "UI", "map": "World|Gameplay|UI", "opening": "Art|World|Rover|UI|Audio",
                    "battery": "Art|World|Rover|Gameplay|UI|Audio", "lab-build": "Art|World",
-                   "lab-systems": "Art|World|Gameplay|Rover|UI|Audio", "goals": "Gameplay|UI|Audio"}
+                   "lab-systems": "Art|World|Gameplay|Rover|UI|Audio", "goals": "Gameplay|UI|Audio",
+                   "look": "Art|World|Rover", "cleanup": "Art|World|Rover|Gameplay|UI|Audio"}
 # Targeted EditMode tests per box; the full PlayMode suite and the Playthrough are the Director's.
 DEFAULT_TESTS = {"art": "MoonProject.Art.Tests", "world": "MoonProject.World.Tests",
                  "rover": "MoonProject.Rover.Tests", "gameplay": "MoonProject.Gameplay.Tests",
@@ -55,7 +57,11 @@ DEFAULT_TESTS = {"art": "MoonProject.Art.Tests", "world": "MoonProject.World.Tes
                  "lab-build": "MoonProject.Art.Tests;MoonProject.World.Tests",
                  "lab-systems": "MoonProject.Gameplay.Tests;MoonProject.Rover.Tests;MoonProject.UI.Tests;"
                                 "MoonProject.Audio.Tests",
-                 "goals": "MoonProject.Gameplay.Tests;MoonProject.UI.Tests;MoonProject.Audio.Tests"}
+                 "goals": "MoonProject.Gameplay.Tests;MoonProject.UI.Tests;MoonProject.Audio.Tests",
+                 "look": "MoonProject.Art.Tests;MoonProject.World.Tests;MoonProject.Rover.Tests",
+                 "cleanup": "MoonProject.Gameplay.Tests;MoonProject.Rover.Tests;MoonProject.Art.Tests;"
+                            "MoonProject.World.Tests;MoonProject.UI.Tests;MoonProject.Audio.Tests;"
+                            "MoonProject.Editor.Tests"}
 # Each box's own PlayMode assembly (art has none; the Director's full suite runs in verify).
 DEFAULT_PLAYMODE = {"world": "MoonProject.World.PlayModeTests", "rover": "MoonProject.Rover.PlayModeTests",
                     "gameplay": "MoonProject.Gameplay.PlayModeTests", "audio": "MoonProject.Audio.PlayModeTests",
@@ -65,7 +71,12 @@ DEFAULT_PLAYMODE = {"world": "MoonProject.World.PlayModeTests", "rover": "MoonPr
                     "battery": "MoonProject.Gameplay.PlayModeTests;MoonProject.Rover.PlayModeTests",
                     "lab-build": "MoonProject.World.PlayModeTests",
                     "lab-systems": "MoonProject.Gameplay.PlayModeTests;MoonProject.Rover.PlayModeTests",
-                    "goals": "MoonProject.Gameplay.PlayModeTests;MoonProject.UI.PlayModeTests"}
+                    "goals": "MoonProject.Gameplay.PlayModeTests;MoonProject.UI.PlayModeTests",
+                    "look": "MoonProject.World.PlayModeTests;MoonProject.Rover.PlayModeTests",
+                    "cleanup": "MoonProject.Gameplay.PlayModeTests;MoonProject.World.PlayModeTests"}
+# The Playthrough is [Explicit], yet an --assembly filter selects it (the runner counts a matching assembly as an
+# explicit match), and it outlasts the PlayMode timeout; verify runs it on the merged main.
+NO_PLAYTHROUGH = ["--category", "!Playthrough"]
 BOARD_HEADER = "## "
 
 
@@ -176,17 +187,22 @@ def last_block(text):
 
 def test_commands(root, args):
     """[(label, command)] of the tests steps: the box's EditMode then PlayMode assembly (no PlayMode with --fast), or
-    one custom step for --filter / --assembly; [] when the box has no default tests."""
+    one custom step for --filter / --assembly; [] when the box has no default tests. PlayMode excludes the
+    Playthrough."""
     base = [sys.executable, str(root / "tools" / "unity_batch.py"), "tests", "--project", str(root), "--platform"]
+
+    def command(platform, selection):
+        return base + [platform] + selection + (NO_PLAYTHROUGH if platform == "playmode" else [])
+
     if args.filter:
-        return [(f"{args.platform} --filter {args.filter}", base + [args.platform, "--filter", args.filter])]
+        return [(f"{args.platform} --filter {args.filter}", command(args.platform, ["--filter", args.filter]))]
     if args.assembly:
         return [(f"{args.platform} {' '.join(args.assembly)}",
-                 base + [args.platform] + [arg for name in args.assembly for arg in ("--assembly", name)])]
+                 command(args.platform, [arg for name in args.assembly for arg in ("--assembly", name)]))]
     defaults = [("editmode", DEFAULT_TESTS.get(args.box))]
     if not args.fast:
         defaults.append(("playmode", DEFAULT_PLAYMODE.get(args.box)))
-    return [(f"{platform} {name}", base + [platform, "--assembly", name]) for platform, name in defaults if name]
+    return [(f"{platform} {name}", command(platform, ["--assembly", name])) for platform, name in defaults if name]
 
 
 def needs_merge(root):

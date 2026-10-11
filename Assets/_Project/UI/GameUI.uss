@@ -1273,3 +1273,80 @@ Label {
 .lab-prompts__chip {
     margin: 0 10px;
 }
+
+/*
+ * The tech board's labels while 07 looks at it (M3-21): the recovery panel's protocol and its four targets, each
+ * with its row of lamps (dark glass, warm amber when lit), then the pins Kenji's board knows. Left of the board,
+ * no plate: cream type on its own soft shadow, a decoded sheet quieter than a built one.
+ */
+
+.recovery-board {
+    position: absolute;
+    left: 5%;
+    top: 24%;
+    width: 30%;
+}
+
+.recovery-board__title {
+    margin-bottom: 12px;
+    font-size: 15px;
+    letter-spacing: 4px;
+    color: var(--moon-text);
+    text-shadow: 0 2px 12px var(--moon-shadow);
+}
+
+.recovery-board__row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    margin: 4px 0;
+}
+
+.recovery-board__target {
+    font-size: 20px;
+    color: var(--moon-cream);
+    text-shadow: 0 2px 12px var(--moon-shadow);
+}
+
+.recovery-board__lamps {
+    flex-direction: row;
+    margin-left: 16px;
+}
+
+.recovery-board__lamp {
+    width: 10px;
+    height: 10px;
+    margin-left: 6px;
+    border-radius: 5px;
+    background-color: var(--moon-track);
+}
+
+.recovery-board__lamp--lit {
+    background-color: var(--moon-warm-lamp);
+}
+
+.recovery-board__known {
+    margin-top: 18px;
+    margin-bottom: 4px;
+    font-size: 15px;
+    letter-spacing: 4px;
+    color: var(--moon-text);
+    text-shadow: 0 2px 12px var(--moon-shadow);
+}
+
+.recovery-board__nodes {
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.recovery-board__node {
+    margin-right: 14px;
+    font-size: 18px;
+    color: var(--moon-cream);
+    text-shadow: 0 2px 12px var(--moon-shadow);
+}
+
+.recovery-board__node--decoded {
+    color: var(--moon-text);
+    opacity: 0.75;
+}

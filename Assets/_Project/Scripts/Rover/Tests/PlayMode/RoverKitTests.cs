@@ -79,11 +79,11 @@ namespace MoonProject.Rover.PlayModeTests
             }
 
             EventBus events = _rover.Context.Events;
-            events.Publish(new StoryPartFound(TestRover.StoryParts[1], 2, Vector3.zero, false));
+            events.Publish(new ComponentFound(TestRover.StoryParts[1], 2, Vector3.zero, false));
             yield return Wait(1f);
             Assert.IsTrue(parts[1].gameObject.activeSelf, "The carried part rides on 07's back.");
             Assert.IsFalse(parts[0].gameObject.activeSelf || parts[2].gameObject.activeSelf, "Only that one.");
-            events.Publish(new StoryPartDelivered(TestRover.StoryParts[1], 2, Vector3.zero));
+            events.Publish(new ComponentDelivered(TestRover.StoryParts[1], 2, Vector3.zero));
             yield return Wait(2f);
             Assert.IsFalse(parts[1].gameObject.activeSelf, "Delivered, it eases off 07's back.");
         }
@@ -92,7 +92,7 @@ namespace MoonProject.Rover.PlayModeTests
         public IEnumerator ARestoredStoryPart_IsOn07AtOnce()
         {
             Spawn();
-            _rover.Context.Events.Publish(new StoryPartFound(TestRover.StoryParts[0], 1, Vector3.zero, true));
+            _rover.Context.Events.Publish(new ComponentFound(TestRover.StoryParts[0], 1, Vector3.zero, true));
             yield return null;
             yield return null;
             Assert.IsTrue(_rover.StoryPartNodes[0].gameObject.activeSelf, "A loaded game's part is there at once.");

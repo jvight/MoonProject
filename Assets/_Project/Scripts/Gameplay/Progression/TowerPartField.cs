@@ -7,7 +7,7 @@ using Object = UnityEngine.Object;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// The tower's story parts in the world (docs/features/M3-16 P1), Art's Part_* models. A part in a site's heart
+    /// The tower's components in the world (docs/features/M3-16 P1), Art's Part_* models. A part in a site's heart
     /// eases into view once the heart is revealed (the depot's last cut; the garage's transformer only once 07 has
     /// looked across the chasm, P2); the relay spare on the pad of the first mast
     /// 07 restores. Waiting, a part hovers, bobs, turns and glints like a friend's part; driven through, it is drawn
@@ -87,7 +87,7 @@ namespace MoonProject.Gameplay
                         $"Tower part '{part.PartId}' lies in '{part.SiteId}', which is not a salvage site.");
                 }
 
-                GameObject model = services.Visuals.StoryPart(part.PartId);
+                GameObject model = services.Visuals.ComponentModel(part.PartId);
                 if (model == null)
                 {
                     throw new InvalidOperationException($"Art's model for tower part '{part.PartId}' is not in " +

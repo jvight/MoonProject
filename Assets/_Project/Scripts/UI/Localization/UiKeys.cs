@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 using MoonProject.Core;
 using MoonProject.Core.Events;
 using MoonProject.Gameplay;
@@ -34,6 +35,9 @@ namespace MoonProject.UI
         public const string Drive = "ui.hint.drive";
         public const string BlueprintFound = "ui.blueprint.found";
         public const string BlueprintDelivered = "ui.blueprint.delivered";
+
+        /// <summary>Art's prefix on a component's model name (Part_TowerCoil), left out of its keys.</summary>
+        private const string ComponentModelPrefix = "Part_";
         public const string RecipeNeed = "ui.recipe.need";
         public const string BayPick = "ui.bay.pick";
 
@@ -190,12 +194,39 @@ namespace MoonProject.UI
         }
 
         /// <summary>
-        /// "upgrade.radio_tower.1.needs_part": the quiet line when level <paramref name="level"/> still waits for its
-        /// story part (the coil, the transformer, the relay spare).
+        /// "component.tower_coil.needed": the quiet line when the tower's next level still waits for component
+        /// <paramref name="componentId"/>, Art's model name (Part_TowerCoil, Part_Transformer, Part_RelaySpare) in
+        /// snake case without its prefix (docs/features/M3-21 §6). Built once per refused purchase, never per frame.
         /// </summary>
-        public static string UpgradeNeedsPart(string upgradeId, int level)
+        public static string ComponentNeeded(string componentId)
         {
-            return "upgrade." + upgradeId + "." + level + ".needs_part";
+            string name = componentId.StartsWith(ComponentModelPrefix, StringComparison.Ordinal)
+                ? componentId.Substring(ComponentModelPrefix.Length)
+                : componentId;
+            var key = new StringBuilder("component.", name.Length * 2 + 18);
+            for (int i = 0; i < name.Length; i++)
+            {
+                if (char.IsUpper(name[i]) && i > 0)
+                {
+                    key.Append('_');
+                }
+
+                key.Append(char.ToLowerInvariant(name[i]));
+            }
+
+            return key.Append(".needed").ToString();
+        }
+
+        /// <summary>The ticker's quiet line as a recovery target's row completes ("Power restored.", M3-21 §2).</summary>
+        public static string RecoveryComplete(RecoveryTarget target)
+        {
+            switch (target)
+            {
+                case RecoveryTarget.Power: return "ticker.recovery.power";
+                case RecoveryTarget.Link: return "ticker.recovery.link";
+                case RecoveryTarget.Dish: return "ticker.recovery.dish";
+                default: return "ticker.recovery.answer";
+            }
         }
     }
 }

@@ -435,7 +435,8 @@ account) can continue without the old conversation.
   - Push: `GIT_TERMINAL_PROMPT=0 git -c safe.directory=* -c credential.interactive=never push origin <sha>:main`.
     It uses the owner's GitHub sign-in in Git Credential Manager, not the Claude account.
   - Commits: Conventional Commits, scoped by domain, ending with the `Co-Authored-By` trailer the harness gives.
-- **Saves:** `%USERPROFILE%/AppData/LocalLow/MoonProject/Lofi Lunar/Saves/<slot>.json`.
+- **Saves:** `%USERPROFILE%/AppData/LocalLow/MoonProject/Lunarion/Saves/<slot>.json` once the rename lands (before:
+  `.../Lofi Lunar/...`; the rename moves old saves across once).
   - `SaveService.OldestCompatibleContent` is `"0.4.1"`. Raise it when a release breaks old progress (M3-16 will):
     older saves are moved to `<slot>.old-<stamp>.json`, never deleted.
   - Tests seed saves with `"contentVersion":"0.4.1"`.

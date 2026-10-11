@@ -180,6 +180,12 @@
                     <ui:Label name="lab-place-job" class="place-card__job" picking-mode="Ignore" />
                 </ui:VisualElement>
             </ui:VisualElement>
+            <ui:VisualElement name="lab-board" class="recovery-board" picking-mode="Ignore">
+                <ui:Label name="lab-board-title" class="recovery-board__title" picking-mode="Ignore" />
+                <ui:VisualElement name="lab-board-rows" class="recovery-board__rows" picking-mode="Ignore" />
+                <ui:Label name="lab-board-known" class="recovery-board__known" picking-mode="Ignore" />
+                <ui:VisualElement name="lab-board-nodes" class="recovery-board__nodes" picking-mode="Ignore" />
+            </ui:VisualElement>
             <ui:VisualElement name="lab-prompts" class="lab-prompts" picking-mode="Ignore">
                 <ui:VisualElement name="lab-place-prompt" class="chip lab-prompts__chip" picking-mode="Ignore">
                     <ui:VisualElement name="lab-place-glyph" class="glyph" picking-mode="Ignore">
