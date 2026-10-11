@@ -26,9 +26,15 @@ namespace MoonProject.Rover
         [Range(0.3f, 3f)]
         [SerializeField] private float _underBellyHeight = 1.3f;
 
-        [Tooltip("How far (m) out from the shaft the crane rises through the hatch (inside the hatch's opening).")]
-        [Range(0f, 2f)]
-        [SerializeField] private float _hatchOut = 0.9f;
+        [Tooltip("How far (m) out from the shaft's axis the crane rises through it: in the gap between the platform's " +
+                 "rim (1.7 m) and the shaft's wall (1.95 m), so it never passes through the rising platform.")]
+        [Range(0f, 2.5f)]
+        [SerializeField] private float _hatchOut = 1.82f;
+
+        [Tooltip("Height (m) above the cabin floor the crane climbs, still in the shaft's gap, before it swings out " +
+                 "to the ring.")]
+        [Range(0.1f, 2f)]
+        [SerializeField] private float _cabinRise = 0.6f;
 
         [Tooltip("Height (m) above 07's lens the crane looks while it follows 07 up.")]
         [Range(-1f, 2f)]
@@ -37,7 +43,7 @@ namespace MoonProject.Rover
         [Header("The ring rail")]
         [Tooltip("Degrees round the ring from straight behind 07: the camera looks over its shoulder.")]
         [Range(0f, 45f)]
-        [SerializeField] private float _shoulder = 16f;
+        [SerializeField] private float _shoulder = 28f;
 
         [Tooltip("Metres below the ring rail the camera hangs.")]
         [Range(0f, 0.6f)]
@@ -89,6 +95,8 @@ namespace MoonProject.Rover
         public float UnderBellyHeight => _underBellyHeight;
 
         public float HatchOut => _hatchOut;
+
+        public float CabinRise => _cabinRise;
 
         public float FollowAim => _followAim;
 

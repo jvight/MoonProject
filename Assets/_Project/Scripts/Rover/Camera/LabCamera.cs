@@ -26,6 +26,12 @@ namespace MoonProject.Rover
     [DisallowMultipleComponent]
     public sealed class LabCamera : MonoBehaviour, IGameSystem
     {
+        /// <summary>
+        /// Share of the crane's way at which its look turns from 07's lens to where it is going: as it enters the
+        /// shaft on the way up (from the ring on the way down, back toward 07 and then the chase view).
+        /// </summary>
+        private const float AimTurnStart = 0.5f;
+
         private enum Shot
         {
             Off,
@@ -208,7 +214,7 @@ namespace MoonProject.Rover
                 case Shot.Up:
                     float up = _elapsed / _settings.CraneSeconds;
                     position = Crane(_from, ring, LabShot.Ease(up));
-                    aim = Vector3.Lerp(Lens(), ringAim, LabShot.Ease((up - 0.6f) / 0.4f));
+                    aim = Vector3.Lerp(Lens(), ringAim, LabShot.Ease((up - AimTurnStart) / (1f - AimTurnStart)));
                     if (up >= 1f)
                     {
                         _shot = Shot.Ring;
@@ -221,8 +227,8 @@ namespace MoonProject.Rover
                     Vector3 home = chase.GetFinalPosition();
                     position = Crane(home, _from, 1f - LabShot.Ease(down));
                     Vector3 homeAim = home + chase.GetFinalOrientation() * Vector3.forward;
-                    aim = Vector3.Lerp(Vector3.Lerp(_fromAim, Lens(), LabShot.Ease(down / 0.4f)), homeAim,
-                        LabShot.Ease((down - 0.6f) / 0.4f));
+                    aim = Vector3.Lerp(Vector3.Lerp(_fromAim, Lens(), LabShot.Ease(down / (1f - AimTurnStart))),
+                        homeAim, LabShot.Ease((down - AimTurnStart) / (1f - AimTurnStart)));
                     fov = Mathf.Lerp(_settings.Fov, _rig.Camera.fieldOfView, LabShot.Ease(down));
                     if (down >= 1f && !_ride.Holding)
                     {
@@ -256,9 +262,11 @@ namespace MoonProject.Rover
         /// </summary>
         private Vector3 Crane(Vector3 outside, Vector3 inside, float t)
         {
-            Vector3 under = LabShot.UnderBelly(_shaft.position, outside, _settings);
-            Vector3 hatch = LabShot.Hatch(_hatch, inside, _settings);
-            return LabShot.Crane(outside, under, hatch, inside, t);
+            Vector3 axis = _shaft.position;
+            Vector3 under = LabShot.UnderBelly(axis, outside, _settings);
+            Vector3 hatch = LabShot.Shaft(axis, _hatch.y, inside, _settings);
+            Vector3 floor = LabShot.Shaft(axis, _ringRail.parent.position.y + _settings.CabinRise, inside, _settings);
+            return LabShot.Crane(outside, under, hatch, floor, inside, t);
         }
 
         /// <summary>07's lens, a little above: what the crane follows.</summary>
