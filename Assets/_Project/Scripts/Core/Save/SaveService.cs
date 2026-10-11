@@ -39,7 +39,7 @@ namespace MoonProject.Core.Save
         /// Saves written by content older than this are put away rather than loaded: raise it with a release whose
         /// content breaks older progress.
         /// </summary>
-        public const string OldestCompatibleContent = "0.4.1";
+        public const string OldestCompatibleContent = "0.5.0";
 
         private readonly Dictionary<string, ISaveSection> _sections =
             new Dictionary<string, ISaveSection>(StringComparer.Ordinal);
