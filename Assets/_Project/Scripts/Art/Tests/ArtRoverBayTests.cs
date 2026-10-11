@@ -62,7 +62,8 @@ namespace MoonProject.Art.Tests
             {
                 "Turntable", "FloorArm", "FloorArm/FloorLift", "FloorArm/FloorLift/FloorTip", "HopperMouth",
                 "Blueprints", "Blueprints/Blueprint_HoverJump", "Blueprints/Blueprint_CargoCradle",
-                "Blueprints/Blueprint_WarmHeadlamp", "Blueprints/Blueprint_BoostCoils", "Plotter",
+                "Blueprints/Blueprint_WarmHeadlamp", "Blueprints/Blueprint_BoostCoils",
+                "Blueprints/Blueprint_CellPack", "Plotter",
                 "Plotter/PenCarriage", "Plotter/PenCarriage/PenHead", "Plotter/PlotterSheet", "Plotter/PlotterLamp",
                 "Shutter", "BaySign", "Lamp_0", "Lamp_1",
             };

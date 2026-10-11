@@ -17,7 +17,7 @@ namespace MoonProject.Art.Editor
         /// The kits with a sheet, in the order of their pegs from the left, named as Core's RoverAbility members (Art
         /// does not reference Core; Gameplay maps the names).
         /// </summary>
-        public static readonly string[] Kits = { "HoverJump", "CargoCradle", "WarmHeadlamp", "BoostCoils" };
+        public static readonly string[] Kits = { "HoverJump", "CargoCradle", "WarmHeadlamp", "BoostCoils", "CellPack" };
 
         /// <summary>The plotter's bed: its centre and tilt (leaning back) in plotter space.</summary>
         public static readonly Vector3 BedCentre = new Vector3(0f, 1.15f, 0f);
@@ -38,7 +38,7 @@ namespace MoonProject.Art.Editor
         private const float SheetHeight = 0.36f;
         private const float SheetThickness = 0.004f;
         private const float Line = 0.008f;
-        private const float SlotSpacing = 0.45f;
+        private const float SlotSpacing = 0.38f;
         private const float CordHeight = 2.12f;
         private const float CordZ = -0.34f;
         private const float CordHalfSpan = 0.98f;
@@ -119,6 +119,16 @@ namespace MoonProject.Art.Editor
                     for (int i = -1; i <= 1; i++)
                     {
                         Ring(b, new Vector2(i * 0.075f, 0.025f), 0.03f);
+                    }
+
+                    break;
+                case "CellPack":
+                    Draw(b, new Vector2(-0.11f, -0.06f), new Vector2(0.11f, -0.06f));
+                    for (int i = -1; i <= 1; i += 2)
+                    {
+                        Box(b, new Vector2(i * 0.055f - 0.04f, -0.05f), new Vector2(i * 0.055f + 0.04f, 0.06f));
+                        Box(b, new Vector2(i * 0.055f - 0.012f, 0.06f), new Vector2(i * 0.055f + 0.012f, 0.08f));
+                        Draw(b, new Vector2(i * 0.055f - 0.04f, 0.035f), new Vector2(i * 0.055f + 0.04f, 0.035f));
                     }
 
                     break;
