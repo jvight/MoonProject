@@ -55,3 +55,7 @@ MonoBehaviour:
   _playerWakeMusicFade: 1.8
   _wakePowerTime: 0.3
   _wakeStaticBoost: 0.55
+  _titleGain: 0.35
+  _titleMusicFade: 3
+  _titleRiseTime: 0.8
+  _titleFallTime: 0.5

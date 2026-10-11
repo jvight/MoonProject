@@ -315,6 +315,9 @@ MonoBehaviour:
       _springDamping: 0.6
     _hintDelay: 2
     _hintHoldSeconds: 6
+    _firstPromptRestSeconds: 3
+    _firstPromptHoldSeconds: 6
+    _firstPromptStick: 0.2
   _guidance:
     _line:
       _fadeIn: 0.9

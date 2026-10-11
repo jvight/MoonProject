@@ -59,6 +59,7 @@ MonoBehaviour:
     _minImpactSpeed: 0.5
   _spawn:
     _yaw: 355
+    _position: {x: 0, y: -4.5}
   _recovery:
     _tryingInput: 0.5
     _progressRadius: 0.75
