@@ -149,8 +149,9 @@ namespace MoonProject.Rover
         [SerializeField] private float _secondDip = 0.8f;
 
         [Header("Dust speck (viewport units from the frame's centre)")]
-        [Tooltip("Where the speck sits on the glass when the lens first hunts (upper left).")]
-        [SerializeField] private Vector2 _speckStart = new Vector2(-0.24f, 0.26f);
+        [Tooltip("Where the speck sits on the glass when the lens first hunts: left of centre, low enough to show "
+            + "under the half-open lid.")]
+        [SerializeField] private Vector2 _speckStart = new Vector2(-0.2f, 0f);
 
         [Tooltip("Where it has slid to by the pull-out: down and out of the frame.")]
         [SerializeField] private Vector2 _speckEnd = new Vector2(-0.34f, -0.7f);
@@ -220,7 +221,7 @@ namespace MoonProject.Rover
         [Range(0f, 10f)]
         [SerializeField] private float _landerLookHeight = 3f;
 
-        [Tooltip("Height (m) above The Peak's summit of its red beacon.")]
+        [Tooltip("Height (m) of The Peak's red beacon above its summit (IWorldLayout.PeakPosition).")]
         [Range(0f, 30f)]
         [SerializeField] private float _beaconHeight = 6f;
 

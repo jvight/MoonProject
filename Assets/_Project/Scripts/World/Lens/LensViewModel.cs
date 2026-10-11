@@ -43,7 +43,8 @@ namespace MoonProject.World
         /// </summary>
         public static float EdgeFor(float lid01, LensViewSettings settings)
         {
-            return Mathf.Clamp01(lid01) * (1f + settings.LidSoftness + settings.LidCurve);
+            return Mathf.Pow(Mathf.Clamp01(lid01), settings.LidOpenGamma)
+                * (1f + settings.LidSoftness + settings.LidCurve);
         }
 
         public void Step(in LensViewState state, float deltaTime)

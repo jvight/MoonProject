@@ -770,7 +770,7 @@ namespace MoonProject.Rover
             FocusDistance = focus;
             Sleep = sleep;
             SpeckOffset = _speckClock < 0f
-                ? _settings.SpeckStart
+                ? (Phase == OpeningPhase.PushIn ? _settings.SpeckEnd : _settings.SpeckStart)
                 : Vector2.Lerp(_settings.SpeckStart, _settings.SpeckEnd, Smoothing.SmoothStep(0f, _speckSpan, _speckClock));
             if (Phase == OpeningPhase.GazePeak && !_farFocusLanded && t >= _settings.RehuntSeconds)
             {

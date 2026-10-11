@@ -59,9 +59,6 @@ namespace MoonProject.Rover
         [Tooltip("The radio tower's pilot light (the second gaze target).")]
         [SerializeField] private Transform _pilot;
 
-        [Tooltip("The Peak's beacon node on the summit (the third gaze target).")]
-        [SerializeField] private Transform _peakBeacon;
-
         private readonly object _owner = new object();
         private OpeningScript _script;
         private LookSettings _look;
@@ -138,11 +135,11 @@ namespace MoonProject.Rover
         private bool ValidateWiring()
         {
             bool ok = _tuning != null && _rig != null && _controller != null && _body != null && _lensCamera != null && _lander != null
-                && _pilot != null && _peakBeacon != null;
+                && _pilot != null;
             if (!ok)
             {
                 Debug.LogError($"{nameof(OpeningDirector)}: tuning, rig, rover, body, lens camera or a gaze target " +
-                    "(lander, pilot, Peak beacon) is not assigned; rebuild the Main scene.", this);
+                    "(lander, pilot) is not assigned; rebuild the Main scene.", this);
             }
 
             return ok;
@@ -228,7 +225,7 @@ namespace MoonProject.Rover
             Vector3 lens = _roverRig.TetherOrigin.position;
             Quaternion toLocal = Quaternion.Inverse(Heading());
             Vector3 lander = _lander.position + Vector3.up * settings.LanderLookHeight;
-            Vector3 beacon = _peakBeacon.position + Vector3.up * settings.BeaconHeight;
+            Vector3 beacon = _world.PeakPosition + Vector3.up * settings.BeaconHeight;
             _script.SetTargets(LensGaze.Angles(toLocal * (lander - lens)), LensGaze.Angles(toLocal * (_pilot.position - lens)),
                 LensGaze.Angles(toLocal * (beacon - lens)), LensGaze.Angles(toLocal * _world.EarthDirection));
         }

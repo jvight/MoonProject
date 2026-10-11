@@ -75,10 +75,18 @@ namespace MoonProject.Rover.PlayModeTests
         private bool _skippedTitle;
 #endif
 
+        [OneTimeSetUp]
+        public void StartReport()
+        {
+            Directory.CreateDirectory(CaptureFolder);
+            File.Delete(Path.Combine(CaptureFolder, "opening.md"));
+        }
+
         [TearDown]
         public void CleanUp()
         {
             Dispose();
+            _gamepad = null;
 #if UNITY_EDITOR
             SessionState.SetBool(GameBootstrap.TestRunSkipsTitleKey, _skippedTitle);
 #endif
@@ -87,6 +95,7 @@ namespace MoonProject.Rover.PlayModeTests
             {
                 Directory.CreateDirectory(CaptureFolder);
                 File.AppendAllText(Path.Combine(CaptureFolder, "opening.md"), _report.ToString());
+                _report.Clear();
             }
         }
 
@@ -96,7 +105,6 @@ namespace MoonProject.Rover.PlayModeTests
         [PostBuildCleanup(typeof(RoverSessionScene))]
         public IEnumerator FreshTitle_HoldsTheWake_ThenNewGamePlaysTheFullOpeningOnce()
         {
-            File.Delete(Path.Combine(CaptureFolder, "opening.md"));
             yield return Boot(true);
             _report.AppendLine("# The opening (real Main scene, title on, fresh game)").AppendLine();
             Assert.AreEqual(GameFlowState.Title, _context.Get<IGameFlow>().State, "a fresh install boots into the title");

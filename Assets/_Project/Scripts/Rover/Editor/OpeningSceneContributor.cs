@@ -9,15 +9,14 @@ namespace MoonProject.Rover.Editor
     /// <summary>
     /// Puts 07's opening into Main.unity (docs/design/cutscenes.md §1): the lens camera (a Cinemachine camera with no
     /// body or aim, placed each frame by the opening) and the <see cref="OpeningDirector"/>, wired to the rig, 07's
-    /// body language and the three gaze targets of the built home: the lander, the tower's pilot and The Peak's
-    /// beacon. Runs after the World's home wiring (order 650), which makes the pilot, and after Rover's own systems,
+    /// body language and the two gaze targets of the built home: the lander and the tower's pilot (The Peak and
+    /// Earth come from IWorldLayout). Runs after the World's home wiring (order 650), which makes the pilot, and after Rover's own systems,
     /// so the director initialises last of the three.
     /// </summary>
     public sealed class OpeningSceneContributor : ISceneContributor
     {
         private const string LanderName = "Lander";
         private const string PilotName = "TowerPilot";
-        private const string PeakBeaconName = "PeakBeacon";
 
         public int Order => 700;
 
@@ -52,7 +51,6 @@ namespace MoonProject.Rover.Editor
             Assign(serialized, "_lensCamera", lensCamera);
             Assign(serialized, "_lander", Find(context.GameplayRoot.transform, LanderName));
             Assign(serialized, "_pilot", Find(context.GameplayRoot.transform, PilotName));
-            Assign(serialized, "_peakBeacon", Find(context.WorldRoot.transform, PeakBeaconName));
             serialized.ApplyModifiedPropertiesWithoutUndo();
             context.AddSystem(director);
         }

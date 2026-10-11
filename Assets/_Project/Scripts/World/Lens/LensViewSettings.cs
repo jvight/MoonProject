@@ -24,6 +24,11 @@ namespace MoonProject.World
         [Range(0f, 0.4f)]
         [SerializeField] private float _lidCurve = 0.12f;
 
+        [Tooltip("How the lid's openness maps to its edge: below 1 the first stages already show more of the world "
+            + "(1 = linear).")]
+        [Range(0.3f, 1f)]
+        [SerializeField] private float _lidOpenGamma = 0.75f;
+
         [Tooltip("Deepest exposure dip of the old electronics (Flicker01 = 1), as a fraction of the light. " +
             "Photosensitivity: never above 30%.")]
         [Range(0f, 0.3f)]
@@ -95,6 +100,7 @@ namespace MoonProject.World
 
         public float LidSoftness => _lidSoftness;
         public float LidCurve => _lidCurve;
+        public float LidOpenGamma => _lidOpenGamma;
         public float MaxDip => _maxDip;
         public float RollBandHeight => _rollBandHeight;
         public float RollBandDarkness => _rollBandDarkness;
