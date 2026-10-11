@@ -163,6 +163,43 @@ namespace MoonProject.Audio
             "lens.")]
         [Min(0f)] [SerializeField] private float _titleFallTime = 0.5f;
 
+        [Header("Earned music (M3-24): static, then 07's tape deck, then Bell's station")]
+        [Tooltip("Static level near home before tower level 1, while the set finds no station (a fresh game hears " +
+            "only this and the room tone).")]
+        [Range(0f, 1f)] [SerializeField] private float _unclearedStaticFloor = 0.3f;
+
+        [Tooltip("Static under the Earth signal's carrier once tower level 1 clears it, as a share of its level.")]
+        [Range(0f, 1f)] [SerializeField] private float _carrierStaticGain = 0.35f;
+
+        [Tooltip("Level of the Earth signal's carrier (radio_carrier) while no music plays.")]
+        [Range(0f, 1f)] [SerializeField] private float _carrierVolume = 0.7f;
+
+        [Tooltip("Time constant (s) of the carrier easing in after tower level 1 and out when music comes.")]
+        [Min(0.01f)] [SerializeField] private float _carrierFadeTime = 2.5f;
+
+        [Tooltip("Level of the first tape on 07's deck as a share of the station's: soft, close, a little private.")]
+        [Range(0f, 1f)] [SerializeField] private float _deckMusicGain = 0.45f;
+
+        [Tooltip("Low-pass on the deck's tape (Hz): an old cassette's rounded top end.")]
+        [Range(1000f, 22000f)] [SerializeField] private float _deckCutoff = 6000f;
+
+        [Tooltip("Seconds the first tape takes to ease in after the deck is fitted (no dial swish: it is 07's own " +
+            "deck, not the radio).")]
+        [Min(0.01f)] [SerializeField] private float _deckFitFade = 6f;
+
+        [Tooltip("Time constant (s) of the move from the deck's soft level to the station's when Bell's dial opens.")]
+        [Min(0.01f)] [SerializeField] private float _deckBlendTime = 1.5f;
+
+        [Header("Voices (Ro's recordings, the automated station; tools/voice)")]
+        [Tooltip("Level of a voiced recording on the Sfx bus.")]
+        [Range(0f, 1f)] [SerializeField] private float _voiceVolume = 1f;
+
+        [Tooltip("Gain on the radio's music while a voice speaks, so the words stay clear.")]
+        [Range(0f, 1f)] [SerializeField] private float _voiceMusicDuck = 0.35f;
+
+        [Tooltip("Time constant (s) of the music ducking under a voice and coming back after it.")]
+        [Min(0.01f)] [SerializeField] private float _voiceDuckTime = 0.6f;
+
         public float SignalRadius => _signalRadius;
         public float FalloffWidth => _falloffWidth;
 
@@ -211,5 +248,16 @@ namespace MoonProject.Audio
         public float TitleMusicFade => _titleMusicFade;
         public float TitleRiseTime => _titleRiseTime;
         public float TitleFallTime => _titleFallTime;
+        public float UnclearedStaticFloor => _unclearedStaticFloor;
+        public float CarrierStaticGain => _carrierStaticGain;
+        public float CarrierVolume => _carrierVolume;
+        public float CarrierFadeTime => _carrierFadeTime;
+        public float DeckMusicGain => _deckMusicGain;
+        public float DeckCutoff => _deckCutoff;
+        public float DeckFitFade => _deckFitFade;
+        public float DeckBlendTime => _deckBlendTime;
+        public float VoiceVolume => _voiceVolume;
+        public float VoiceMusicDuck => _voiceMusicDuck;
+        public float VoiceDuckTime => _voiceDuckTime;
     }
 }
