@@ -28,6 +28,63 @@ class BatchBuilderFilterTests(unittest.TestCase):
         self.assertEqual(director.batch_builder_filter(self.args(["story"])), "(?:^Main Scene$)")
 
 
+ASSET = """%YAML 1.1
+--- !u!114 &11400000
+MonoBehaviour:
+  m_Script: {fileID: 11500000, guid: GUID, type: 3}
+  m_Name: BatteryTuning
+  m_EditorClassIdentifier: 
+  _cells: 8
+  _rangeMeters: 400
+"""
+OLD_GUID = "a" * 32
+NEW_GUID = "b" * 32
+
+
+class OrphanedAssetTests(unittest.TestCase):
+    def make(self, root, rel, text):
+        path = root / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+
+    def tree(self, root):
+        self.make(root, "Assets/_Project/Scripts/Gameplay/OldTuning.cs.meta", f"fileFormatVersion: 2\nguid: {OLD_GUID}\n")
+        self.make(root, "Assets/_Project/Data/Tuning/Old.asset", ASSET.replace("GUID", OLD_GUID))
+        self.make(root, "Assets/_Project/Data/Tuning/New.asset", ASSET.replace("GUID", NEW_GUID))
+        self.make(root, "Assets/Elsewhere/Foreign.asset", ASSET.replace("GUID", NEW_GUID))
+        self.make(root, "Assets/_Project/Data/Tuning/Plain.txt", "x")
+
+    def test_script_guid_and_values(self):
+        text = ASSET.replace("GUID", NEW_GUID)
+        self.assertEqual(director.script_guid(text), NEW_GUID)
+        self.assertEqual(director.script_guid("no script here"), "")
+        self.assertEqual(director.asset_values(text), ["  _cells: 8", "  _rangeMeters: 400"])
+
+    def test_values_are_capped(self):
+        text = "m_EditorClassIdentifier: \n" + "\n".join(f"  _f{i}: {i}" for i in range(200))
+        values = director.asset_values(text)
+        self.assertEqual(len(values), director.ASSET_VALUE_LINES + 1)
+        self.assertIn("120 more", values[-1])
+
+    def test_only_added_assets_whose_script_has_no_meta_are_orphans(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.tree(root)
+            added = ["Assets/_Project/Data/Tuning/Old.asset", "Assets/_Project/Data/Tuning/New.asset",
+                     "Assets/Elsewhere/Foreign.asset", "Assets/_Project/Data/Tuning/Plain.txt"]
+            orphans = director.orphaned_assets(root, added)
+            self.assertEqual([rel for rel, _ in orphans], ["Assets/_Project/Data/Tuning/New.asset"])
+            self.assertEqual(orphans[0][1], ["  _cells: 8", "  _rangeMeters: 400"])
+            self.assertEqual(director.orphaned_assets(root, added[:1]), [])
+            self.assertEqual(director.orphaned_assets(root, []), [])
+
+    def test_warning_lines_name_the_asset_and_list_its_values(self):
+        lines = director.orphan_warnings([("Assets/_Project/Data/Tuning/New.asset", ["  _cells: 8"])])
+        self.assertTrue(lines[0].startswith("WARNING: Assets/_Project/Data/Tuning/New.asset"))
+        self.assertEqual(lines[1], "      _cells: 8")
+        self.assertEqual(director.orphan_warnings([]), [])
+
+
 class WorktreeLockTests(unittest.TestCase):
     def test_a_live_holder_refuses_and_a_stale_one_is_replaced(self):
         with tempfile.TemporaryDirectory() as tmp:
