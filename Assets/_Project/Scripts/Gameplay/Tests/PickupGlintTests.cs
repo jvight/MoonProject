@@ -5,8 +5,8 @@ using Object = UnityEngine.Object;
 namespace MoonProject.Gameplay.Tests
 {
     /// <summary>
-    /// Pickup glints read from far away only: none near the camera (where one blows out into a disc, worst under the
-    /// title's depth of field), none while the title is up, easing back in as play begins.
+    /// Pickup glints read from far away: none right by the camera (the model reads there), none while the title is up
+    /// (its depth of field blew them into discs), easing back in as play begins.
     /// </summary>
     public sealed class PickupGlintTests
     {
@@ -40,7 +40,6 @@ namespace MoonProject.Gameplay.Tests
         [Test]
         public void AGlintNearTheCamera_IsGone_AndAFarOneShines()
         {
-            Assert.GreaterOrEqual(_tuning.GlintFadeNear, 20f, "glints fade in from about 25 m");
             Draw(Time0, _tuning.GlintFadeNear - 1f);
             Assert.AreEqual(0, _glints.Drawn, "a pickup nearer than the fade reads by its model alone");
             Draw(Time0, _tuning.GlintFadeFar + 5f);
