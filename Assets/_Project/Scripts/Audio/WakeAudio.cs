@@ -15,6 +15,7 @@ namespace MoonProject.Audio
     /// ghost chord D-A-E surfacing at O1, O7 and O9, the lid ticks, the lens whine, the hum's dropout, the neck servo,
     /// the blink's click and "hm?", the short wake's tick.</item>
     /// </list>
+    /// The pause menu ducks all of it with the world (<see cref="AudioDirector.WorldGain"/>), and delayed cues wait.
     /// Initialises after the <see cref="AudioDirector"/>, whose library it resolves its cues from.
     /// </summary>
     [DisallowMultipleComponent]
@@ -186,7 +187,7 @@ namespace MoonProject.Audio
 
         private void Play(WakeCueCall call)
         {
-            _director.PlayVariant2D(_cues[(int)call.Kind], call.Variant, call.Volume);
+            _director.PlayVariant2D(_cues[(int)call.Kind], call.Variant, call.Volume * _director.WorldGain);
         }
 
         private void Update()
@@ -216,7 +217,8 @@ namespace MoonProject.Audio
             float beside = _beside * _beside * (3f - 2f * _beside);
             _muffle.cutoffFrequency = Mathf.Lerp(_settings.InsideCutoff, _settings.BesideCutoff, beside);
             _static.panStereo = _settings.BesidePan * beside;
-            _static.volume = Mathf.Clamp01(_level * _staticCueVolume) * _director.Buses.Effective(AudioBus.Music);
+            _static.volume = Mathf.Clamp01(_level * _staticCueVolume) * _director.Buses.Effective(AudioBus.Music)
+                * _director.WorldGain;
             if (_level <= 0f && _target <= 0f && _static.isPlaying)
             {
                 _static.Stop();
