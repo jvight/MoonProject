@@ -19,6 +19,8 @@ namespace MoonProject.World
         private static readonly int IntensityId = Shader.PropertyToID("_Intensity");
         private static readonly int RadiusId = Shader.PropertyToID("_Radius");
         private static readonly int MinAngleTanId = Shader.PropertyToID("_MinAngleTan");
+        private static readonly int MinAngleFromId = Shader.PropertyToID("_MinAngleFrom");
+        private static readonly int MinAngleFullId = Shader.PropertyToID("_MinAngleFull");
 
         [Tooltip("World tuning (Assets/_Project/Data/Tuning/WorldSettings.asset); its Home Lighting block.")]
         [SerializeField] private WorldSettings _settings;
@@ -101,6 +103,8 @@ namespace MoonProject.World
             _block.SetFloat(IntensityId, pilot * tuning.PilotIntensity);
             _block.SetFloat(RadiusId, tuning.PilotRadius);
             _block.SetFloat(MinAngleTanId, Mathf.Tan(tuning.PilotMinAngle * Mathf.Deg2Rad));
+            _block.SetFloat(MinAngleFromId, tuning.PilotHaloFrom);
+            _block.SetFloat(MinAngleFullId, tuning.PilotHaloFull);
             _pilot.SetPropertyBlock(_block);
             ApplyPools(tuning, time);
             float warmth = _stages.GradeWarmth(time);

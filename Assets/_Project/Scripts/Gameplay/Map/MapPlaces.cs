@@ -59,7 +59,7 @@ namespace MoonProject.Gameplay.Map
             }
 
             entries.Add(AnchorEntry(anchors, WorldAnchorIds.KestrelTrail, MapPlaceKind.Trail));
-            entries.Add(AnchorEntry(anchors, WorldAnchorIds.AntennaFarm, MapPlaceKind.Landmark));
+            entries.Add(AnchorEntry(anchors, WorldAnchorIds.PlaceAntennaFarm, MapPlaceKind.Landmark));
             foreach (Friend friend in friends)
             {
                 AddFriend(entries, friend, tuning);

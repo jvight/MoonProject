@@ -93,7 +93,7 @@ namespace MoonProject.World.Tests
             }
 
             expected.Add(WorldAnchorIds.KestrelTrail);
-            expected.Add(WorldAnchors.AntennaFarm);
+            expected.Add(WorldAnchorIds.PlaceAntennaFarm);
             expected.Add(WorldAnchorIds.RegionPeak);
             expected.Add(WorldAnchorIds.RegionTerraces);
 

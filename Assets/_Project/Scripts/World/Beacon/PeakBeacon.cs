@@ -19,6 +19,8 @@ namespace MoonProject.World
         private static readonly int IntensityId = Shader.PropertyToID("_Intensity");
         private static readonly int RadiusId = Shader.PropertyToID("_Radius");
         private static readonly int MinAngleTanId = Shader.PropertyToID("_MinAngleTan");
+        private static readonly int MinAngleFromId = Shader.PropertyToID("_MinAngleFrom");
+        private static readonly int MinAngleFullId = Shader.PropertyToID("_MinAngleFull");
 
         [Tooltip("The lamp renderer (palette AlertSoft face on the shared low-poly material).")]
         [SerializeField] private Renderer _lamp;
@@ -64,6 +66,8 @@ namespace MoonProject.World
             _haloBlock.SetFloat(IntensityId, Mathf.Lerp(_settings.HaloMinIntensity, _settings.HaloMaxIntensity, pulse));
             _haloBlock.SetFloat(RadiusId, _settings.HaloRadius);
             _haloBlock.SetFloat(MinAngleTanId, Mathf.Tan(_settings.HaloMinAngle * Mathf.Deg2Rad));
+            _haloBlock.SetFloat(MinAngleFromId, _settings.HaloMinFrom);
+            _haloBlock.SetFloat(MinAngleFullId, _settings.HaloMinFull);
             _halo.SetPropertyBlock(_haloBlock);
         }
     }
