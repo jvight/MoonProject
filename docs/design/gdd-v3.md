@@ -507,3 +507,56 @@ wreck's silhouette slowly revealed in the floodlights, 0.7); Atlas towing a mobi
 Cyclops idea, 0.7).
 
 **Not taken:** hunger and thirst, predators, losing items on failure, resource grind, free-form building UI.
+
+## 13. Story revision: the long silence (owner, 2026-10-11)
+**Supersedes §8's ending and decision 6 ("Ro answers").** The owner wants a darker, open story: it first seems that
+people on Earth are still there, but piece by piece the player learns that humanity died out long ago. Every signal 07
+catches is an old recording, an automated station, or machines talking to machines. At the end, after the player
+chooses to answer, a new lander arrives on the Moon, and only then is it clear: no human is coming, only robots.
+
+**Owner's choices:** the ending is dark and open (it is the end of the game, and the clues are found along the way);
+Ro's voice survives only as her last recording; the one who steps off the new lander is a younger rover, **08**.
+
+### 13.1 Rules for the darkness
+- **Play stays calm** (ruling 15, pillar 2). The darkness lives in what the player pieces together, never in danger,
+  timers or loss.
+- **Never shown, never explained.** No cause of the end is named or pictured: no ruins on Earth, no bodies, no
+  disaster footage. The player infers it from gaps, dates and repetitions.
+- **Clues are tier 2** (ruling 16): letters, logs, keepsakes and signals, found by roaming in any order. The four main
+  targets don't change. A player who skips the clues still gets the ending; a player who finds them understands it
+  before it happens.
+- **Every clue is small and specific:** a date, a repeated phrase, a voice that never breathes.
+
+### 13.2 The reveal, version by version
+| Ver | What the player can notice |
+|---|---|
+| 0.5 | The jingle that wakes 07 is a loop: it plays identically every night. "EARTH SIGNAL · DETECTED" says *signal*, never *contact*. Ro's letters carry dates, and the gaps between them grow. |
+| 0.6 | Ro's letters stop after their twentieth year. Later traffic on the masts is automated: weather and time signals, a station ID, no human voice. A mast replays the same jingle loop, identical to the second. The A3 pencil marks point at places these automated signals name. |
+| 0.7 | The A4 mid-game moment: Earth for a few seconds, and the voice is a recording whose timestamp is decades old. Kestrel-3's sealed vault (A2) holds the program's last message, an automated notice that the station is "retained for future recovery". Machine-to-machine handshakes appear in the static: something on Earth is still answering pings, without words. |
+| 0.8 | The dish's uplink reaches Earth. The replies come in machine cadence. The player chooses to broadcast (the Answer target). |
+
+### 13.3 The ending (replaces §8's)
+1. 07 broadcasts. Silence. The base settles into an ordinary night, and the player keeps control.
+2. Some nights later (the next dock evening), a light crosses the sky and a small lander descends to the apron.
+3. Its ramp lowers. A younger rover rolls down: **08**, the same family as 07, cleaner, with fewer signs of solitude.
+   Its antenna blinks the station's call sign: three short, one long.
+4. From 08's speaker, Ro's last recording plays: "I heard you, 07. I'm still here." The lab's chart pen stamps its
+   date beside it, decades ago.
+5. Nobody else comes down the ramp. 07's lens opens fully, for the first time, looking at 08.
+6. The camera rises past the Peak to Earth's night side: dark, no city lights. Cut to black. No explanation.
+7. After the credits the Moon stays open. 08 and its lander stay at the base, quiet. Nothing is explained.
+
+### 13.4 Every function shows on 07 (owner, extends ruling 11 and §4.4)
+Unlocking a function adds or changes a visible part for it, in its slot, and 07's lens never changes. New for this
+revision:
+- **The Survey Scanner** (0.6, needed for A1's blueprint fragments): a slim folding boom on a new **neck slot**,
+  beside the head, never in front of the lens. While 07 scans, the boom unfolds and a thin fan of light sweeps the
+  fragment. Its blueprint is a 0.6 basin find.
+- The other kits keep their slots (§4.4). Any later function (Star Tracker, Anchor Line, …) must name its part before
+  it is built.
+
+### 13.5 What changes elsewhere
+- VISION's promise stays for play; DESIGN's "Story" paragraph and §8 of this document are superseded by §13.
+- Story & flow rewrites `docs/design/text/` (radio letters, crew logs) for the reveal ladder: 0.5 only adds dates to
+  Ro's letters; the rest comes with 0.6-0.8.
+- `docs/design/cutscenes.md` gains the ending (§13.3) when 0.8 opens.

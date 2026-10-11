@@ -45,6 +45,10 @@ warm again, and one small rover capable again.
 | After | free roam, completion, cosmetics, photo mode, moon-weather events | M4–M5 |
 
 ## Story (told, never explained)
+> **Superseded 2026-10-11 by GDD v3 §13 "the long silence"** (owner): humanity on Earth died out long ago; every
+> signal is an old recording or a machine; the ending is dark and open (a younger rover, 08, arrives with Ro's last
+> recording). The paragraph below is the original pitch, kept for history.
+
 The outpost **Lumen Station** was a tiny radio-relay and research base. Its four crew members left for Earth "until
 after the storm" and never came back. 07 kept the radio playing and waited. The relics are the crew's personal
 things, scattered by the storm. Each crew member has a set of relics, a broken companion machine they cared for, and
