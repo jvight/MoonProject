@@ -15,7 +15,7 @@ MonoBehaviour:
   _cues:
   - _id: asleep_static
     _clips:
-    - {fileID: 8300000, guid: fa66184dfe918564ebd41a93eac0be4c, type: 3}
+    - {fileID: 8300000, guid: da884908500710742aafe738a5bf956f, type: 3}
     _variantLabels:
     - asleep_static
     _bus: 1
@@ -27,9 +27,9 @@ MonoBehaviour:
     _pitchMax: 1
   - _id: ghost_chord
     _clips:
-    - {fileID: 8300000, guid: f8d1755080f5cfa46b53ed213a39ddad, type: 3}
-    - {fileID: 8300000, guid: 3abf375a8184f954ebadde01c6c0504f, type: 3}
-    - {fileID: 8300000, guid: db7162202c5e90d4c8fadbc4964c7d42, type: 3}
+    - {fileID: 8300000, guid: 107473ecf5e05d64487a97c83a6e8e31, type: 3}
+    - {fileID: 8300000, guid: 0972646efc677fe4c918fdcee6eba7a9, type: 3}
+    - {fileID: 8300000, guid: 1012565b780302c478b8aef7257b6cd6, type: 3}
     _variantLabels:
     - faint
     - clearer
@@ -43,7 +43,7 @@ MonoBehaviour:
     _pitchMax: 1
   - _id: wake_power_thump
     _clips:
-    - {fileID: 8300000, guid: 2c95d4f90afa20c40ab01ea868c8d409, type: 3}
+    - {fileID: 8300000, guid: bd3979c99574f834f979978a904dddb1, type: 3}
     _variantLabels:
     - wake_power_thump
     _bus: 2
@@ -55,10 +55,10 @@ MonoBehaviour:
     _pitchMax: 1
   - _id: lid_tick
     _clips:
-    - {fileID: 8300000, guid: a358b3bb27006c04a88db61dfb181577, type: 3}
-    - {fileID: 8300000, guid: cc299c1416d78d447bd0c79cef961c05, type: 3}
-    - {fileID: 8300000, guid: 3e91448c57e753744b58a969f57e346b, type: 3}
-    - {fileID: 8300000, guid: a0e470481f6311d4fbb1dee9143f2c40, type: 3}
+    - {fileID: 8300000, guid: 4cbbbda822002cf4d834a2ab09f705df, type: 3}
+    - {fileID: 8300000, guid: 4d5a17dd5a30c4c43831dde9ea3854be, type: 3}
+    - {fileID: 8300000, guid: 6c33dfd8cfb91d44d88f94047601049d, type: 3}
+    - {fileID: 8300000, guid: f69a38303ebbc8c43a5721206f327cb7, type: 3}
     _variantLabels:
     - a2
     - d3
@@ -73,7 +73,7 @@ MonoBehaviour:
     _pitchMax: 1
   - _id: lens_whine
     _clips:
-    - {fileID: 8300000, guid: 0e51f323c44ccca4dbc8f42e1c215385, type: 3}
+    - {fileID: 8300000, guid: a9c8c7ac1fde2b94e8121a5037375baf, type: 3}
     _variantLabels:
     - lens_whine
     _bus: 2
@@ -85,7 +85,7 @@ MonoBehaviour:
     _pitchMax: 1
   - _id: hum_dropout
     _clips:
-    - {fileID: 8300000, guid: 61279fd512e572542a134844098b5853, type: 3}
+    - {fileID: 8300000, guid: 7df4ed02c1fd6e745a1c2694f723a7b1, type: 3}
     _variantLabels:
     - hum_dropout
     _bus: 2
@@ -97,7 +97,7 @@ MonoBehaviour:
     _pitchMax: 1
   - _id: neck_servo
     _clips:
-    - {fileID: 8300000, guid: 5bfc8210d2905e449ab05c80dbfb48d0, type: 3}
+    - {fileID: 8300000, guid: cd153dc823f3392488c8997aef401c58, type: 3}
     _variantLabels:
     - neck_servo
     _bus: 2
@@ -109,7 +109,7 @@ MonoBehaviour:
     _pitchMax: 1
   - _id: hm_chirp
     _clips:
-    - {fileID: 8300000, guid: 4285b387dafad48458a6160bcd647fde, type: 3}
+    - {fileID: 8300000, guid: 3a800a90e5816e147805a8e8ac48e7f6, type: 3}
     _variantLabels:
     - hm_chirp
     _bus: 2
