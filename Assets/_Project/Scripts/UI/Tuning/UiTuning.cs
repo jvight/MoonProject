@@ -25,6 +25,7 @@ namespace MoonProject.UI
         [SerializeField] private StargazeSettings _stargaze = new StargazeSettings();
         [SerializeField] private GuidanceSettings _guidance = new GuidanceSettings();
         [SerializeField] private BackdropSettings _backdrop = new BackdropSettings();
+        [SerializeField] private LabHudSettings _lab = new LabHudSettings();
         [SerializeField] private BatteryArcSettings _battery = new BatteryArcSettings();
 
         public PauseSettings Pause => _pause;
@@ -59,6 +60,8 @@ namespace MoonProject.UI
 
         public BackdropSettings Backdrop => _backdrop;
 
+        public LabHudSettings Lab => _lab;
+
         public BatteryArcSettings Battery => _battery;
 
         /// <summary>Null when the tuning is usable, else the first problem.</summary>
@@ -67,7 +70,7 @@ namespace MoonProject.UI
             if (_pause == null || _title == null || _prompts == null || _reticle == null || _materialsChip == null ||
                 _memoryCard == null || _towerPanel == null || _kitTitle == null || _friends == null ||
                 _ticker == null || _dialReadout == null || _relays == null || _salvage == null ||
-                _stargaze == null || _guidance == null || _backdrop == null || _battery == null)
+                _stargaze == null || _guidance == null || _backdrop == null || _battery == null || _lab == null)
             {
                 return "a settings section is missing";
             }

@@ -13,6 +13,7 @@ namespace MoonProject.UI
         {
             Root = root ?? throw new ArgumentNullException(nameof(root));
             Hud = Require<VisualElement>("hud");
+            LabHud = Require<VisualElement>("lab-hud");
 
             NextLine = Require<VisualElement>("next-line");
             BatteryArc = Require<VisualElement>("battery-arc");
@@ -163,6 +164,9 @@ namespace MoonProject.UI
         public VisualElement Root { get; }
 
         public VisualElement Hud { get; }
+
+        /// <summary>The crew's lab's own quiet screen, shown instead of the HUD while 07 is up in the lab.</summary>
+        public VisualElement LabHud { get; }
 
         public VisualElement NextLine { get; }
 

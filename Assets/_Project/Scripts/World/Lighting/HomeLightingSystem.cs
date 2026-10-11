@@ -31,8 +31,9 @@ namespace MoonProject.World
         [Tooltip("Glass segments of the lander's PowerCable_Bay, ordered out from the tower.")]
         [SerializeField] private Renderer[] _bayCable = new Renderer[0];
 
-        [Tooltip("Glass segments of the lander's PowerCable_Lift, ordered out from the tower.")]
-        [SerializeField] private Renderer[] _liftCable = new Renderer[0];
+        [Tooltip("Glass segments of the lander's PowerCable_Chart (tower L3's, to the survey chart), ordered out " +
+            "from the tower.")]
+        [SerializeField] private Renderer[] _chartCable = new Renderer[0];
 
         [Tooltip("The pilot light's halo at the top of the radio tower (LofiBeaconHalo).")]
         [SerializeField] private Renderer _pilot;
@@ -53,7 +54,7 @@ namespace MoonProject.World
         private IDisposable _powerChanged;
         private float[] _homeApplied;
         private float[] _bayApplied;
-        private float[] _liftApplied;
+        private float[] _chartApplied;
         private float _gradeApplied = -1f;
         private float[] _poolsApplied;
 
@@ -72,7 +73,7 @@ namespace MoonProject.World
             _stages = new HomeLightStages(_settings.HomeLighting);
             _homeApplied = Unapplied(_homeCable.Length);
             _bayApplied = Unapplied(_bayCable.Length);
-            _liftApplied = Unapplied(_liftCable.Length);
+            _chartApplied = Unapplied(_chartCable.Length);
             _poolsApplied = Unapplied(_pools.Length);
             SetUpPools();
             _powerChanged = context.Events.Subscribe<BasePowerChanged>(OnPowerChanged);
@@ -94,7 +95,7 @@ namespace MoonProject.World
             float time = Time.time;
             ApplyCable(BasePowerStage.Home, _homeCable, _homeApplied, time);
             ApplyCable(BasePowerStage.Bay, _bayCable, _bayApplied, time);
-            ApplyCable(BasePowerStage.Chart, _liftCable, _liftApplied, time);
+            ApplyCable(BasePowerStage.Chart, _chartCable, _chartApplied, time);
 
             HomeLightingSettings tuning = _settings.HomeLighting;
             float pilot = _stages.PilotLevel(time);
@@ -231,9 +232,9 @@ namespace MoonProject.World
                 return "World Settings is not assigned.";
             }
 
-            if (HasEmpty(_homeCable) || HasEmpty(_bayCable) || HasEmpty(_liftCable))
+            if (HasEmpty(_homeCable) || HasEmpty(_bayCable) || HasEmpty(_chartCable))
             {
-                return "Home, Bay and Lift cable segments must be assigned (the scene build wires Art's Glow_ nodes).";
+                return "Home, Bay and Chart cable segments must be assigned (the scene build wires Art's Glow_ nodes).";
             }
 
             if (_pilot == null)

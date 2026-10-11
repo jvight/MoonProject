@@ -8,28 +8,31 @@ namespace MoonProject.Gameplay.Lift
     {
         None = 0,
 
-        /// <summary>The tower reached its third level: the lift is powered, still jammed.</summary>
+        /// <summary>Home has power: the lift wakes jammed.</summary>
         Powered = 1,
 
-        /// <summary>07 rests on the feed pad with enough materials: spend them and begin the feed.</summary>
-        FeedStarted = 2,
+        /// <summary>07 came home carrying something for the lab: light the pad and ask for the stitch.</summary>
+        Called = 2,
 
-        /// <summary>The stitch finished: platform level, cable taut, winch lamp lit. Save it.</summary>
-        Restored = 3,
+        /// <summary>07 rests on the pad: its beam starts the stitch.</summary>
+        StitchStarted = 3,
 
-        /// <summary>07 rests on the platform: hold it and rise.</summary>
-        RideStarted = 4,
+        /// <summary>The stitch finished: the platform is level and the cable taut. Save it.</summary>
+        Restored = 4,
 
-        /// <summary>At the deck and settled: open the lookout.</summary>
-        ReachedTop = 5,
+        /// <summary>07 rests on the platform: hold it, open the hatch and rise.</summary>
+        RideStarted = 5,
 
-        /// <summary>The player gave input at the top: go back down.</summary>
-        Descending = 6,
+        /// <summary>Settled in the lab: the turntable takes over.</summary>
+        ReachedInside = 6,
 
-        /// <summary>At the bottom and settled: let 07 go.</summary>
-        ReachedBottom = 7,
+        /// <summary>The player asked to go down: leave the lab.</summary>
+        Descending = 7,
+
+        /// <summary>Down and settled: let 07 go.</summary>
+        ReachedBottom = 8,
 
         /// <summary>The platform reached a stop, top or bottom; it settles there before the reached step.</summary>
-        Arrived = 8,
+        Arrived = 9,
     }
 }

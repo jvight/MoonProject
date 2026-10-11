@@ -7,6 +7,7 @@ using System.Text;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using MoonProject.App;
@@ -30,27 +31,30 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// 07 hands the coil to the port, then crafts level 1 from the depot's materials through the UI's hold. Then Tilly
     /// (M3-02): find her with a ping, gather her three parts, repair her, drive home with her, be greeted, and let her
     /// spot a salvage site on the next trip. Dig Kenji's duck out of the garage's heart, which holds the Cargo Cradle's
-    /// blueprint, and tow it home: the first memory (step 4). Tilly spots Bell's light across the chasm (P2): drive to
-    /// the lip, look across with no way over, then back to the garage, where the transformer now shows. Find the Rover
-    /// Bay still asleep (no pad, no prompt, a "not yet" answer to a ping), hand in the transformer and craft tower
-    /// level 2 to wake it, find that holding Jump does nothing yet, craft Hover-Jump in the bay through the same hold
-    /// and the Cargo Cradle from its new blueprint, dig the walkman from the garage, lift it into the rack with the
-    /// tether button, drive home and set it down on the shelf from the rack, and take the first leap.
-    /// Then Bell (M3-04/05): drive up the mouth lane, leap the chasm, find her lying at the
-    /// terminus with Ro's log cache and her tape, gather her three parts from the alcoves, repair her (the tape slides
-    /// in, her dial wakes, she stands), drive home by the one-way exit while she makes her own way, be greeted by her,
-    /// turn her dial through every station, and follow her first signal to the basin tape onto her rack. Then the
-    /// relay network (M3-06): pick up the mound relay's part, restore it at its foot with materials and watch it come
-    /// online, pick up the relay spare on its pad (level 3's part), drive out past the tower's reach and find home
-    /// still reaching 07 there, then radio-hop home from the mast's pad and back, and rest on the dock: the dock's
-    /// evening opens and the tower's sweep raises the next pillar (P6). Inside the canyon 07 drives a line found over
-    /// drivable ground (the same planner Bell walks by). The base wakes step by step (M3-16): it opens fully dark,
-    /// power comes back with each tower level, no station is usable before its step, and the soft "next" line follows
-    /// steps 0-8. Step 8: with the rest of the basin's salvage stood in (<see cref="WinchAllowance"/>), hand the relay
-    /// spare to the tower and craft level 3, rest on the lift's feed pad while 07 restores the winch, ride the
-    /// platform up to the deck lookout and come down with a drive key: 0.5's wake-up, end to end. Every step is timed
-    /// (Logs/gameplay-captures/playthrough.md) and captured, with review frames of every M3-05 placement; any error
-    /// or exception in the log fails it. Slow: run on demand with --category Playthrough.
+    /// blueprint, and tow it home, where the jammed belly lift asks for its stitch (M3-19): stitch it from beside it,
+    /// ride up with the duck beside 07, let the lab's reader decode the Cradle's tube (its hand-off pulse waits at the
+    /// sleeping bay) and place the duck on the keepsake shelf: the first memory (step 4), then ride down facing out.
+    /// Tilly spots Bell's light across the chasm (P2): drive to the lip, look across with no way over, then back to the
+    /// garage, where the transformer now shows. Find the Rover Bay still asleep (no pad, no prompt, a "not yet" answer
+    /// to a ping), hand in the transformer and craft tower level 2 to wake it (its plotter draws the Cradle's waiting
+    /// sheet), find that holding Jump does nothing yet, craft Hover-Jump in the bay through the same hold and the Cargo
+    /// Cradle from its new blueprint, dig the walkman from the garage, lift it into the rack with the tether button,
+    /// drive home, ride the lift up and set it down on the keepsake shelf from the rack, and take the first leap. Then
+    /// Bell (M3-04/05): drive up the mouth lane, leap the chasm, find her lying at the terminus with Ro's log cache and
+    /// her tape, gather her three parts from the alcoves, repair her (the tape slides in, her dial wakes, she stands),
+    /// drive home by the one-way exit while she makes her own way, be greeted by her, turn her dial through every
+    /// station, and follow her first signal to the basin tape onto her rack. Then the relay network (M3-06): pick up
+    /// the mound relay's part, restore it at its foot with materials and watch it come online, pick up the relay spare
+    /// on its pad (level 3's part), drive out past the tower's reach and find home still reaching 07 there, then
+    /// radio-hop home from the mast's pad and back, and rest on the dock: the dock's evening opens, the places home can
+    /// see blink seen on the crew's map, and the tower's sweep raises the next pillar (P6). Inside the canyon 07 drives
+    /// a line found over drivable ground (the same planner Bell walks by). The base wakes step by step (M3-16, M3-19
+    /// §7): it opens fully dark, power comes back with each tower level, no station is usable before its step, and the
+    /// soft "next" line follows steps 0-8. Step 8: with the rest of the basin's salvage stood in, hand the relay spare
+    /// to the tower and craft level 3, which wakes the lab's survey chart; ride up, where the map opens by itself and
+    /// the chart pen inks what 07 has visited in reach, come away and ride down: 0.5's wake-up, end to end. Every step
+    /// is timed (Logs/gameplay-captures/playthrough.md) and captured, with review frames of every M3-05 placement; any
+    /// error or exception in the log fails it. Slow: run on demand with --category Playthrough.
     /// </summary>
     [Explicit("Slow end-to-end playthrough of the real Main scene; run on demand with --category Playthrough.")]
     [Category("Playthrough")]
@@ -94,6 +98,12 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         /// <summary>A full-charge leap rises at least this high (m); the rover spec asks for ~6-8 m.</summary>
         private const float MinLeapApex = 5f;
+
+        /// <summary>
+        /// The first leap's spot (m) ahead of the charging dock, in 07's lane on the base pad: open ground, well past
+        /// the dock's rest radius, so standing still to charge the leap never docks 07.
+        /// </summary>
+        private const float LeapSpotAhead = 6f;
 
         /// <summary>Close enough (m) to ping Tilly's crater, and the stand-off 07 repairs her from.</summary>
         private const float TillyPingDistance = 35f;
@@ -140,7 +150,6 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float HopJump = 3f;
         private const float ApproachOffset = 3f;
         private const float RetreatDistance = 16f;
-        private const float ShelfStandOff = 4f;
         private const float ReelFrom = 12f;
 
         /// <summary>Seconds 07 may take to creep up on the surfaced relic and latch on.</summary>
@@ -208,15 +217,18 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float LanderKeepOut = 9f;
         private const float LanderDetour = 13f;
 
+        /// <summary>Height (m) over 07 of the review frame taken when a wait times out.</summary>
+        private const float StuckReviewHeight = 9f;
+
         /// <summary>Close enough (m) to the base pad centre to turn toward the shelf or the tower.</summary>
         private const float PadArrival = 5f;
 
         /// <summary>
-        /// Seconds the golden path may take: steps 0-8 end to end measured 1241 s on 2026-10-11 (P1's parts, P2's
-        /// chasm and garage return, P6's evening, and step 8's level 3, lift restore and ride, ~56 s), with the same
-        /// ~8% margin the path has always had.
+        /// Seconds the golden path may take: steps 0-8 end to end measured 1323 s on 2026-10-11 (P1's parts, P2's
+        /// chasm and garage return, P6's evening, the lab's stitch and three rides with the reader, the keepsake shelf
+        /// and the chart, and step 8's level 3), with the same ~8% margin the path has always had.
         /// </summary>
-        private const float TotalBudget = 1340f;
+        private const float TotalBudget = 1430f;
 
         /// <summary>Close enough (m) to a part resting on a mast's pad to draw it in.</summary>
         private const float PartArrive = 1.5f;
@@ -229,14 +241,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const int SparePart = 2;
         private const string Duck = "rubber_duck";
 
-        /// <summary>
-        /// What the rest of the basin (the Kestrel, the drill, the trail; the golden path does not drive there) has
-        /// given by step 8, on top of the tower's third level: enough for the lift's winch. The economy test holds
-        /// the moon's real yield at about twice what steps 0-8 take.
-        /// </summary>
-        private static readonly Recipe WinchAllowance = new Recipe(6, 6, 0);
-
-        /// <summary>07 lines up this far (m) behind the lift platform, then drives up its ramp onto it.</summary>
+        /// <summary>07 lines up this far (m) out from the belly lift, toward the dock, then drives onto it.</summary>
         private const float LiftLineUp = 5f;
 
         /// <summary>Close enough (m) to the platform's ride spot to stop on it.</summary>
@@ -245,8 +250,20 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>Seconds the lift may take between two of its phases.</summary>
         private const float LiftPhaseTimeout = 40f;
 
-        /// <summary>Seconds 07 looks out from the deck before coming down.</summary>
-        private const float LookoutSeconds = 4f;
+        /// <summary>Seconds the lab's turntable may take to come to rest at the station that wants what 07 carries.
+        /// </summary>
+        private const float LabTurnTimeout = 6f;
+
+        /// <summary>Seconds the reader may take to feed a tube in and decode it.</summary>
+        private const float ReaderTimeout = 12f;
+
+        /// <summary>Seconds 07 rests on the map while the chart pen inks before coming away.</summary>
+        private const float MapSeconds = 4f;
+
+        /// <summary>07 faces out toward the dock after a ride down: its heading within this of the way out.</summary>
+        private const float FacesOut = 0.9f;
+
+        private const float KeySeconds = 0.25f;
         private const string Walkman = "cassette_player";
 
         private static readonly string ReportPath = Path.Combine(GameplayFixture.CaptureFolder, "playthrough.md");
@@ -351,11 +368,13 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return Excavate(garage, duck);
             Assert.IsTrue(LogFound("kenji_1"), "Kenji's log tin by his bench opens while 07 digs");
             Assert.IsTrue(_gameplay.Blueprints.IsCarrying, "the garage's heart held the Cradle's blueprint tube");
-            Assert.IsFalse(_gameplay.Blueprints.IsPinned(CargoCradle), "it rides home to Kenji's plotter first");
+            Assert.IsFalse(_gameplay.Blueprints.IsPinned(CargoCradle), "it rides home to the lab's reader first");
             Assert.IsFalse(_gameplay.TowerPartField.IsResting(TransformerPart), "the transformer waits for the chasm");
+            Assert.AreEqual(LiftPhase.Jammed, _gameplay.Lift.Phase, "home's power woke the belly lift jammed, silent");
             yield return LatchTether(duck);
             yield return TowHome(garage, duck);
-            yield return Deposit(duck);
+            yield return StitchTheLift();
+            yield return RideUpWithTheFirstFinds(duck);
             yield return ChargeAtTheDock("before the canyon");
             yield return ExpectStep(ProgressionKeys.NextChasm, "the first memory is home: Tilly sees Bell's light");
             AssertNotYetPastTheChasm();
@@ -387,18 +406,17 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return ExpectStep(ProgressionKeys.NextRelay, "Bell is home: the network comes next");
             Assert.IsTrue(_gameplay.TowerParts.NeedsPart(Tower, 3), "level 3 waits for the relay spare");
             yield return RestoreTheMoundRelay();
-            yield return ExpectStep(ProgressionKeys.NextLift, "a mast is lit: the crew's lift waits for power");
-            Assert.IsFalse(_gameplay.Power.HasReached(BasePowerStage.Chart), "the lift stays jammed before its step");
+            yield return ExpectStep(ProgressionKeys.NextChart, "a mast is lit: the survey chart waits for power");
+            Assert.IsFalse(_gameplay.Power.HasReached(BasePowerStage.Chart), "the chart stays dark before its step");
             yield return PickUpTheRelaySpare();
             yield return DriveOutInReach();
             yield return HopHomeAndBack();
             yield return RestOnTheDock();
-            AssertReadyForTheLift();
-            yield return StockUpForTheLift();
+            AssertReadyForTheChart();
+            yield return StockUpForTheChart();
             yield return BuyTowerLevel(3);
-            yield return RestoreTheLift();
-            yield return RideTheLiftUpAndDown();
-            yield return ExpectStep(string.Empty, "the lift is ridden: every step of the wake-up is done");
+            yield return LookAtTheChart();
+            yield return ExpectStep(string.Empty, "the chart is seen: every step of the wake-up is done");
 
             float total = Time.time - started;
             WriteReport(total);
@@ -816,13 +834,13 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         /// <summary>
         /// Where step 8 begins (the crew's lift, the rover session's slice): home powered to the bay, the lift still
-        /// jammed, and level 3's relay spare riding on 07, ready to hand to the tower.
+        /// dark, and level 3's relay spare riding on 07, ready to hand to the tower.
         /// </summary>
-        private void AssertReadyForTheLift()
+        private void AssertReadyForTheChart()
         {
             Assert.AreEqual(BasePowerStage.Bay, _gameplay.Power.Stage);
             Assert.AreEqual(TowerPartState.Carried, _gameplay.TowerParts.StateOf(SparePart));
-            Assert.AreEqual(ProgressionKeys.NextLift, _gameplay.Progression.NextStep);
+            Assert.AreEqual(ProgressionKeys.NextChart, _gameplay.Progression.NextStep);
         }
 
         private bool LogFound(string logId)
@@ -840,12 +858,12 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         /// <summary>
         /// The salvage of the rest of the basin, which the golden path skips: the stock is topped up to the tower's
-        /// third level and the winch's allowance (<see cref="WinchAllowance"/>).
+        /// third level.
         /// </summary>
-        private IEnumerator StockUpForTheLift()
+        private IEnumerator StockUpForTheChart()
         {
             Begin();
-            Recipe need = _gameplay.Upgrades.Find(Tower).Levels[2].Recipe.Plus(WinchAllowance);
+            Recipe need = _gameplay.Upgrades.Find(Tower).Levels[2].Recipe;
             IMaterialStock stock = _gameplay.Materials;
             var topUp = new Recipe(Mathf.Max(0, need.Metal - stock.Metal), Mathf.Max(0, need.Wiring - stock.Wiring),
                 Mathf.Max(0, need.Optics - stock.Optics));
@@ -857,48 +875,124 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// Power reaches the jammed lift: rest on its feed pad while 07 feeds and stitches the winch.
+        /// Home with the duck in tow and the Cradle's tube on its back, the jammed belly lift asked for its stitch: to
+        /// the spot just off its lit platform, the duck still in tow, and rest while 07's beam stitches the cable and
+        /// the platform levels.
         /// </summary>
-        private IEnumerator RestoreTheLift()
+        private IEnumerator StitchTheLift()
         {
             Begin();
             LiftStation lift = _gameplay.Lift;
-            Assert.IsTrue(_gameplay.Power.HasReached(BasePowerStage.Chart), "the tower's third level powers the lift");
-            yield return Until(() => lift.Phase == LiftPhase.Jammed, LiftPhaseTimeout, "the jammed lift wakes");
-            yield return DriveTo(_context.Get<IWorldLayout>().BasePosition, PadArrival, 0.6f, 60f,
-                "the base pad, clear of the lander");
-            yield return DriveTo(Flat(lift.FeedPadCentre), 1f, 0.5f, 60f, "the lift's feed pad");
-            yield return Until(() => lift.Phase == LiftPhase.Ready, LiftPhaseTimeout,
-                "resting on the feed pad, 07 feeds and stitches the winch");
-            Capture("38-lift-restored");
-            End("Restore the crew's lift", "fed and stitched from the feed pad");
+            Assert.AreEqual(LiftPhase.Called, lift.Phase, "home with finds for the lab: the lift asks for the stitch");
+            yield return ExpectStep(ProgressionKeys.NextLiftStitch, "the lift is stuck: stitch the cable");
+            yield return DriveTo(Flat(lift.StitchSpot), 1f, 0.5f, 60f, "the spot by the jammed platform");
+            yield return Until(() => lift.Phase >= LiftPhase.Ready, LiftPhaseTimeout,
+                "resting by it, 07 stitches the cable and the platform eases level");
+            Assert.IsTrue(lift.Capture().restored, "the restored lift is saved");
+            Capture("05-lift-stitched");
+            End("Stitch the belly lift", "from beside its lit platform, the duck still in tow");
         }
 
         /// <summary>
-        /// Up the platform's ramp and stop on it: the lift carries 07 up to the deck lookout; a drive key brings it
-        /// back down. The autopilot drives 07 without the input reader, so the key goes through the real keyboard.
+        /// The first ride: up the ramp onto the restored platform, which carries 07 up into the lab with the duck
+        /// beside it. The turntable turns to the reader, which takes the Cradle's tube and decodes it (its hand-off
+        /// pulse runs to the bay, still asleep), then to the keepsake shelf, where the press places the duck: the first
+        /// memory. Back brings the platform down, turned so 07 drives out toward the dock.
         /// </summary>
-        private IEnumerator RideTheLiftUpAndDown()
+        private IEnumerator RideUpWithTheFirstFinds(Relic duck)
         {
             Begin();
             LiftStation lift = _gameplay.Lift;
-            Vector3 heading = Flat(lift.RideHeading).normalized;
-            yield return DriveTo(Flat(lift.RideSpot - heading * LiftLineUp), 1f, 0.5f, 60f, "the foot of the ramp");
-            yield return DriveTo(Flat(lift.RideSpot), BoardRadius, 0.35f, 30f, "the lift platform");
-            float started = Time.time;
-            yield return Until(() => lift.Phase == LiftPhase.Top, LiftPhaseTimeout,
-                "resting on the platform carries 07 up to the deck");
-            float up = Time.time - started;
-            Assert.Greater(_rover.Position.y, lift.RideSpot.y + 1f, "07 is up on the deck");
-            yield return new WaitForSeconds(LookoutSeconds);
-            Capture("39-deck-lookout");
-            Press(_keyboard.wKey);
-            yield return Until(() => lift.Phase == LiftPhase.Lowering, LiftPhaseTimeout,
-                "a drive key at the deck brings the lift down");
-            Release(_keyboard.wKey);
+            int decoded = 0;
+            int handOffs = 0;
+            using IDisposable finds = _context.Events.Subscribe<FindDecoded>(find =>
+                decoded += find.KitId == CargoCradle ? 1 : 0);
+            using IDisposable pulses = _context.Events.Subscribe<DecodeHandOff>(_ => handOffs++);
+            yield return DriveTo(Flat(lift.RideSpot), BoardRadius, 0.35f, 30f, "up its ramp onto the platform");
+            yield return Until(() => lift.Phase == LiftPhase.Inside, LiftPhaseTimeout,
+                "resting on the platform, it carries 07 up into the lab");
+            Assert.AreSame(duck, lift.Rider, "the towed duck rode up beside 07");
+            Assert.IsNull(_gameplay.Tether.Towed, "the tether let it go aboard");
+            yield return ExpectStep(ProgressionKeys.NextLiftRide, "up in the lab, the duck waits to be placed");
+            yield return Until(() => decoded > 0, LabTurnTimeout + ReaderTimeout,
+                "the turntable turns to the reader, whose beam feeds the Cradle's tube in to decode");
+            Capture("06-lab-reader");
+            Assert.AreEqual(CargoCradle, _events.BlueprintDelivered[0].Value.KitId, "the reader took the tube");
+            Assert.IsTrue(_gameplay.Blueprints.IsPinned(CargoCradle), "decoded: the bay can build the Cradle");
+            Assert.AreEqual(1, handOffs, "the hand-off pulse runs down to the bay");
+            Assert.IsFalse(_gameplay.Blueprints.IsDrawn(CargoCradle), "the bay sleeps: its sheet waits for level 2");
+            yield return Until(() => _gameplay.Home.KeepsakesFaced, LabTurnTimeout,
+                "then the turntable turns to the keepsake shelf, for the duck");
+            yield return Deposit(duck);
+            yield return RideDown("08-down-from-the-lab");
+            End("Ride up with the first finds", "the tube decoded at the reader, the duck on the keepsake shelf");
+        }
+
+        /// <summary>Back the stick, as a player does, and wait for the platform to settle down, 07 facing
+        /// out.</summary>
+        private IEnumerator RideDown(string capture)
+        {
+            LiftStation lift = _gameplay.Lift;
+            yield return Tap(_keyboard.sKey);
+            yield return Until(() => lift.Phase == LiftPhase.Lowering, LiftPhaseTimeout, "back brings the lift down");
             yield return Until(() => lift.Phase == LiftPhase.Ready, LiftPhaseTimeout,
                 "the platform settles at the bottom stop");
-            End("Ride the lift up to the deck and back", $"up in {up:F1} s, a look out over the basin, down again");
+            Vector3 heading = Flat(_rover.Rotation * Vector3.forward).normalized;
+            Assert.Greater(Vector3.Dot(heading, -Flat(lift.RideHeading).normalized), FacesOut,
+                "the platform turned while lowering: 07 faces out toward the dock");
+            yield return new WaitForSeconds(1f);
+            Capture(capture);
+        }
+
+        /// <summary>From the apron in front of the belly lift, onto its platform, and stop there.</summary>
+        private IEnumerator DriveOntoTheLift(string what)
+        {
+            LiftStation lift = _gameplay.Lift;
+            Vector3 heading = Flat(lift.RideHeading).normalized;
+            yield return DriveTo(Flat(lift.RideSpot - heading * LiftLineUp), 1f, 0.5f, 60f, "the apron before the lift");
+            yield return DriveTo(Flat(lift.RideSpot), BoardRadius, 0.35f, 30f, what);
+        }
+
+        /// <summary>A short press of <paramref name="key"/>, as a player taps the stick in the lab.</summary>
+        private IEnumerator Tap(KeyControl key)
+        {
+            Press(key);
+            yield return new WaitForSeconds(KeySeconds);
+            Release(key);
+            yield return new WaitForSeconds(KeySeconds);
+        }
+
+        /// <summary>
+        /// Step 8: the tower's third level woke the survey chart. Ride up carrying nothing: 07 arrives facing the chart
+        /// and the Peak, the map opens by itself and the chart pen inks what 07 has visited in reach; back comes away
+        /// from the map and back again brings the platform down.
+        /// </summary>
+        private IEnumerator LookAtTheChart()
+        {
+            Begin();
+            LiftStation lift = _gameplay.Lift;
+            Assert.IsTrue(_gameplay.Power.HasReached(BasePowerStage.Chart), "the tower's third level wakes the chart");
+            yield return ExpectStep(ProgressionKeys.NextChartLook, "ride up and look at the survey chart");
+            int looks = 0;
+            int inks = 0;
+            int ended = 0;
+            using IDisposable started = _context.Events.Subscribe<MapLookStarted>(_ => looks++);
+            using IDisposable inked = _context.Events.Subscribe<MapInkCued>(_ => inks++);
+            using IDisposable closed = _context.Events.Subscribe<MapLookEnded>(_ => ended++);
+            yield return DriveOntoTheLift("the belly lift's platform");
+            yield return Until(() => lift.Phase == LiftPhase.Inside, LiftPhaseTimeout,
+                "resting on the platform carries 07 up into the lab");
+            Assert.AreEqual(LabStation.Chart, lift.Lab.Facing, "carrying nothing, 07 arrives facing the chart");
+            yield return Until(() => looks > 0, lift.Tuning.ChartBreath + LabTurnTimeout,
+                "with news on it, the map opens by itself");
+            yield return Until(() => inks > 0, LabTurnTimeout, "the chart pen inks what 07 has visited in reach");
+            yield return new WaitForSeconds(MapSeconds);
+            Capture("39-the-survey-chart");
+            yield return Tap(_keyboard.sKey);
+            yield return Until(() => ended > 0, 3f, "back comes away from the map");
+            Assert.AreEqual(LiftPhase.Inside, lift.Phase, "coming away from the map keeps 07 in the lab");
+            yield return RideDown("40-down-from-the-chart");
+            End("Look at the survey chart", $"the map opened by itself, {inks} places inked");
         }
 
         private static Relic RelicIn(SalvageSite site, string id)
@@ -971,7 +1065,7 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         /// <summary>
         /// Reel the relic in close, pull it straight out from the wreck and round it, wide, to its home side; then home
-        /// and up to the shelf.
+        /// to the apron in front of the belly lift.
         /// </summary>
         private IEnumerator TowHome(SalvageSite site, Relic relic)
         {
@@ -986,18 +1080,15 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return CircleTo(site, centre + toHome * ring, TowRingExtra);
             Assert.AreEqual(0, _events.TetherReleased.Count, "the relic follows 07 out round the wreck");
             yield return Reel(-1f, ReelSeconds);
-            HomeBase homeBase = _gameplay.Home;
-            Vector3 shelf = homeBase.ShelfPosition;
-            Vector3 front = _context.Get<IWorldLayout>().BasePosition - shelf;
-            front.y = 0f;
-            Vector3 stand = shelf + front.normalized * ShelfStandOff;
+            LiftStation lift = _gameplay.Lift;
+            Vector3 stand = Flat(lift.RideSpot - Flat(lift.RideHeading).normalized * LiftLineUp);
             float distance = SurfaceRules.HorizontalDistance(_rover.Position, stand);
             yield return DriveTo(_context.Get<IWorldLayout>().BasePosition, PadArrival, 0.8f, 60f,
                 "the base pad, clear of the lander");
             _pilot.GoTo(stand, 2.5f, 0.6f);
             float deadline = Time.time + 90f;
             bool captured = false;
-            while ((!_pilot.Arrived || !homeBase.InDepositZone(relic.transform.position)) && Time.time < deadline)
+            while ((!_pilot.Arrived || lift.Phase != LiftPhase.Called) && Time.time < deadline)
             {
                 Assert.AreEqual(0, _events.TetherReleased.Count, "the tether holds all the way home");
                 if (_pilot.Distance < ReelFrom)
@@ -1015,20 +1106,29 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             _pilot.Target = null;
-            Assert.IsTrue(homeBase.InDepositZone(relic.transform.position),
-                "the relic is towed into the shelf's reach");
-            Assert.IsTrue(_gameplay.Hints.TryGet(InteractionKind.Deposit, out _), "the Deposit prompt is offered");
+            Assert.AreSame(relic, _gameplay.Tether.Towed, "the relic is towed home to the belly lift");
+            Assert.AreEqual(LiftPhase.Called, lift.Phase, "the lift asks for its stitch");
+            Assert.IsFalse(_gameplay.Hints.TryGet(InteractionKind.Deposit, out _),
+                "nothing to place outside: the keepsakes are up in the lab");
             yield return new WaitForSeconds(0.5f);
-            Capture("05-at-the-shelf");
+            Capture("05-at-the-lift");
             End($"Tow it home ({distance:F0} m)", $"tether at {_gameplay.Tether.Length:F1} m on arrival");
         }
 
+        /// <summary>
+        /// Facing the keepsake shelf, the Tether press lifts the relic that rode up into its outline (the button still
+        /// held from the tow comes up first).
+        /// </summary>
         private IEnumerator Deposit(Relic relic)
         {
             Begin();
             int materials = _events.MaterialsChanged.Count;
+            Assert.IsTrue(_gameplay.Hints.TryGet(InteractionKind.Deposit, out _), "the Deposit prompt is offered");
             Release(_mouse.rightButton);
+            yield return null;
+            Press(_mouse.rightButton);
             yield return Until(() => _events.RelicDeposited.Count > 0, 8f, "the relic floats onto the shelf");
+            Release(_mouse.rightButton);
             RelicDeposited deposited = _events.RelicDeposited[0].Value;
             Assert.AreEqual(Duck, deposited.RelicId, "Kenji's bath duck is the first memory (step 4)");
             Assert.AreEqual(relic.Definition.Id, deposited.RelicId);
@@ -1037,8 +1137,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return null;
             Assert.AreEqual(materials, _events.MaterialsChanged.Count, "memories are not paid for");
             yield return new WaitForSeconds(1f);
-            Capture("06-on-the-shelf");
-            End("Deposit on the shelf", $"{deposited.DisplayedCount} memory on display");
+            Capture("07-on-the-keepsake-shelf");
+            End("Place it on the keepsake shelf", $"{deposited.DisplayedCount} memory on display");
         }
 
         private IEnumerator BuyTowerLevel(int level)
@@ -1318,9 +1418,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return DriveTo(_context.Get<IWorldLayout>().BasePosition, PadArrival, 0.8f, 90f,
                 "the base pad, clear of the lander");
             yield return DriveIntoTheBay(bench);
-            yield return Until(() => _gameplay.Blueprints.IsPinned(CargoCradle), 3f,
-                "in the woken bay, the plotter takes the Cradle's tube (P7)");
-            Assert.AreEqual(CargoCradle, _events.BlueprintDelivered[0].Value.KitId, "and tells everyone");
+            yield return Until(() => _gameplay.Blueprints.IsDrawn(CargoCradle),
+                _gameplay.Progression.Tuning.PlotterDrawSeconds + 3f,
+                "the woken bay's plotter draws the Cradle's sheet that waited for it (M3-19)");
             Assert.AreSame(bench.Definition, _gameplay.Shop.StationUpgrade, "the bay offers Hover-Jump");
             Assert.AreEqual(UpgradeStationKind.Workshop, _gameplay.Shop.StationUpgrade.Station);
 
@@ -1451,10 +1551,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             Vector3 home = _context.Get<IWorldLayout>().BasePosition;
             Vector3 toHome = Flat(home - site.Position).normalized;
             yield return CircleTo(site, Flat(site.Position + toHome * RetreatDistance), 0f);
-            HomeBase homeBase = _gameplay.Home;
-            Vector3 shelf = homeBase.ShelfPosition;
-            Vector3 front = Flat(home - shelf).normalized;
-            float distance = SurfaceRules.HorizontalDistance(_rover.Position, shelf);
+            LiftStation lift = _gameplay.Lift;
+            float distance = SurfaceRules.HorizontalDistance(_rover.Position, lift.RideSpot);
             _pilot.GoTo(home, PadArrival, 0.9f);
             float deadline = Time.time + 90f;
             bool captured = false;
@@ -1475,8 +1573,11 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return null;
             Assert.Less(Vector3.Distance(relic.transform.position,
                 seat.Position + seat.Rotation * Vector3.up * relic.RestHeight), 0.01f, "seated in the rack");
-            yield return DriveTo(shelf + front * ShelfStandOff, 1.5f, 0.5f, 60f, "the museum shelf");
-            yield return Until(() => cradle.CanUnload, 3f, "the rack is in reach of the shelf");
+            yield return DriveOntoTheLift("the belly lift's platform");
+            yield return Until(() => lift.Phase == LiftPhase.Inside, LiftPhaseTimeout,
+                "resting on the platform carries 07 up into the lab, the walkman in the rack");
+            yield return Until(() => cradle.CanUnload, LabTurnTimeout,
+                "the turntable turns to the keepsake shelf: the rack is in reach of it");
             Assert.IsTrue(_gameplay.Hints.TryGet(InteractionKind.Deposit, out _), "the Deposit prompt is offered");
             int deposits = _events.RelicDeposited.Count;
             Press(_mouse.rightButton);
@@ -1488,7 +1589,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsNull(cradle.Carried, "the rack is empty again");
             yield return new WaitForSeconds(1f);
             Capture("13g-walkman-on-the-shelf");
-            End($"Carry it home in the Cargo Cradle ({distance:F0} m)",
+            yield return RideDown("13h-down-again");
+            End($"Carry it home in the Cargo Cradle and up the lift ({distance:F0} m)",
                 $"{_events.RelicDeposited[deposits].Value.DisplayedCount} memories on display");
         }
 
@@ -1514,8 +1616,10 @@ namespace MoonProject.Gameplay.PlayModeTests
         private IEnumerator FirstLeap()
         {
             Begin();
-            yield return DriveTo(_context.Get<IWorldLayout>().BasePosition, PadArrival, 0.6f, 60f,
-                "the open base pad");
+            ChargingDock dock = _gameplay.Home.Dock;
+            Vector3 lane = Flat(dock.Rotation * Vector3.forward).normalized;
+            yield return DriveTo(Flat(dock.Position) + lane * LeapSpotAhead, 1.5f, 0.6f, 60f,
+                "open ground on the base pad, ahead of the dock");
             float ground = _rover.Position.y;
             int charges = _events.RoverJumpCharged.Count;
             _pilot.JumpHeld = true;
@@ -1874,7 +1978,11 @@ namespace MoonProject.Gameplay.PlayModeTests
                 "nearest lit node: in reach");
         }
 
-        /// <summary>From the mound relay's pad, the radio-hop home; then from home's pad, back to the mast.</summary>
+        /// <summary>
+        /// From the mound relay's pad, the radio-hop home, which sets 07 down on its dock on the base pad: home with
+        /// news (the lit mast), it rests, the dock's evening opens once (P6) and the tower's listening sweep raises a
+        /// pillar. Then from home's pad, back to the mast.
+        /// </summary>
         private IEnumerator HopHomeAndBack()
         {
             Begin();
@@ -1885,31 +1993,48 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return DriveTo(Flat(mast.Anchor.Position + mast.Anchor.Forward * RelayFoot), WaypointArrive,
                 CanyonThrottle, 60f, "the front of the mound relay's pad");
             yield return DriveTo(Flat(mast.Anchor.Position), PadArrive, 0.5f, 90f, "the mound relay's pad");
+            int evenings = _events.DockEveningOpened.Count;
             yield return Hop(hop, StationReach.HomeId);
             Vector3 home = _context.Get<IWorldLayout>().BasePosition;
             Assert.Less(SurfaceRules.HorizontalDistance(_rover.Position, home), 3f, "on home's pad");
+            ChargingDock dock = _gameplay.Home.Dock;
+            yield return Until(() => dock.Docked, _gameplay.Home.Tuning.DockDelay + 3f,
+                "07 rests on the dock it landed on");
+            yield return Until(() => _events.DockEveningOpened.Count > evenings, 1f,
+                "home with news: the dock's evening opens (P6)");
+            int heard = Heard();
+            int seen = 0;
+            using IDisposable blinks = _context.Events.Subscribe<MapPlaceSeen>(_ => seen++);
+            yield return new WaitForSeconds(_gameplay.Progression.Tuning.EveningSweepDelay + 0.5f);
+            Assert.AreEqual(evenings + 1, _events.DockEveningOpened.Count, "the evening opens once");
+            Assert.AreEqual(heard + (heard < Hearable() ? 1 : 0), Heard(),
+                "the tower's listening sweep raises one new pillar on the horizon, while any is left unheard");
             Capture("35-hopped-home");
             yield return Hop(hop, mast.Id);
             Assert.Less(SurfaceRules.HorizontalDistance(_rover.Position, mast.Anchor.Position), 3f,
                 "back on the mound relay's pad");
             Capture("36-hopped-back");
             End("Radio-hop home and back", $"{_events.RadioHopFinished.Count} hops, about " +
-                                           $"{HopSequence.For(_gameplay.Relays.Tuning).Duration:F1} s each");
+                                           $"{HopSequence.For(_gameplay.Relays.Tuning).Duration:F1} s each; home on " +
+                                           $"the dock, {seen} places blinked seen and the evening's sweep raised a " +
+                                           "pillar");
         }
 
         /// <summary>
-        /// Home at last: hop home, drive up to the charging dock in front of the lander, stop on it and let go of the
-        /// wheel; 07 settles in to rest and the dock's glow warms. A touch of the throttle leaves.
+        /// Home at last: hop home, drive up to the charging dock on the base pad, stop on it and let go of the wheel;
+        /// 07 settles in to rest and the dock's glow warms, with no second evening (nothing new since the last). A
+        /// touch of the throttle leaves. The hop home lands 07 on the dock's pad, so it may rest there first: the rest
+        /// and the evening are counted from before the hop.
         /// </summary>
         private IEnumerator RestOnTheDock()
         {
             Begin();
+            int rests = _events.RoverDockChanged.Count;
+            int evenings = _events.DockEveningOpened.Count;
             yield return Hop(_context.Get<IRadioHop>(), StationReach.HomeId);
             ChargingDock dock = _gameplay.Home.Dock;
             BaseTuning tuning = _gameplay.Home.Tuning;
             Vector3 facing = Flat(dock.Rotation * Vector3.forward).normalized;
-            int rests = _events.RoverDockChanged.Count;
-            int evenings = _events.DockEveningOpened.Count;
             yield return DriveTo(Flat(dock.Position) - facing * DockApproach, 1.5f, 0.6f, 60f,
                 "the front of the charging dock");
             yield return DriveTo(Flat(dock.Position), DockParkRadius, 0.35f, 30f, "the charging dock");
@@ -1919,12 +2044,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             float off = SurfaceRules.HorizontalDistance(_rover.Position, dock.Position);
             yield return new WaitForSeconds(tuning.DockGlowEase * 3f);
             Assert.Greater(dock.GlowLevel, tuning.DockIdleGlow * 2f, "the dock glows warm while 07 charges");
-            Assert.AreEqual(evenings + 1, _events.DockEveningOpened.Count,
-                "home with news: the dock's evening opens, once (P6)");
-            int heard = Heard();
-            yield return new WaitForSeconds(_gameplay.Progression.Tuning.EveningSweepDelay + 0.5f);
-            Assert.AreEqual(heard + (heard < Hearable() ? 1 : 0), Heard(),
-                "the tower's listening sweep raises one new pillar on the horizon, while any is left unheard");
+            Assert.AreEqual(evenings, _events.DockEveningOpened.Count,
+                "nothing new since the hop home's evening: no second evening (P6)");
             Vector3 aside = Vector3.Cross(Vector3.up, facing);
             Review(Flat(dock.Position) - facing * 6f + aside * 3f + Vector3.up * 2.5f,
                 dock.Position + Vector3.up * 0.6f, "37-resting-on-the-dock");
@@ -1934,7 +2055,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsFalse(_events.RoverDockChanged[_events.RoverDockChanged.Count - 1].Value.Docked);
             yield return Until(() => _rover.Speed < StopSpeed, 6f, "07 stops off the dock");
             End("Rest on the charging dock", $"settled {off:F2} m from its anchor, glow {dock.GlowLevel:F2}; " +
-                                             "the evening's sweep raised a pillar");
+                                             "no second evening");
         }
 
         /// <summary>Salvage sites and friends there are to hear.</summary>
@@ -2249,7 +2370,15 @@ namespace MoonProject.Gameplay.PlayModeTests
                 yield return null;
             }
 
-            Assert.IsTrue(condition(), $"timed out after {timeout:F0} s waiting until {what}");
+            if (!condition())
+            {
+                Capture("timed-out");
+                Review(_rover.Position + Vector3.up * StuckReviewHeight + Vector3.back, _rover.Position,
+                    "timed-out-above");
+            }
+
+            Assert.IsTrue(condition(), $"timed out after {timeout:F0} s waiting until {what} (07 at {_rover.Position}, " +
+                $"heading {_rover.Rotation.eulerAngles.y:F0}, {_rover.Speed:F1} m/s, steering for {_pilot.Target})");
         }
 
         /// <summary>Holds the winch in (+1) or out (-1) for <paramref name="seconds"/>, like a held scroll.</summary>

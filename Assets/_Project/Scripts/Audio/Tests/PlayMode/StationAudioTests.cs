@@ -153,17 +153,19 @@ namespace MoonProject.Audio.PlayModeTests
             Assert.AreEqual(plays, _rig.Director.PlayCount, "a save restoring power is silent");
 
             var lift = new Vector3(40f, 2f, -30f);
-            _rig.Events.Publish(new StationNotYet("notyet.lift", lift, 52f));
+            _rig.Events.Publish(new StationNotYet("notyet.chart", lift, 52f));
             Assert.AreEqual("station_not_yet", LastClip);
             Assert.Less(Vector3.Distance(_rig.Director.LastVoice.transform.position, lift), 1e-4f, "where it sleeps");
         }
 
         [UnityTest]
-        public IEnumerator TheLift_CreaksRidesAndClunks_AndKenjisPlotterDraws()
+        public IEnumerator TheBellyLift_CreaksOpensRidesAndClunks_AndKenjisPlotterDraws()
         {
             var winch = new Vector3(30f, 1f, -20f);
             _rig.Events.Publish(new LiftCued(LiftCue.WinchCreaked, winch));
             StringAssert.StartsWith("lift_winch_creak", LastClip);
+            _rig.Events.Publish(new LiftCued(LiftCue.HatchOpened, winch + Vector3.up * 2.6f));
+            Assert.AreEqual("lift_hatch_open", LastClip);
             _rig.Events.Publish(new LiftCued(LiftCue.RideStarted, winch));
             yield return new WaitForSeconds(0.6f);
             Assert.IsTrue(Stations.LiftSource.isPlaying, "the ride ratchets and hums");
@@ -171,11 +173,38 @@ namespace MoonProject.Audio.PlayModeTests
             Assert.AreEqual("lift_stop_clunk", LastClip);
             yield return new WaitForSeconds(0.5f);
             Assert.IsFalse(Stations.LiftSource.isPlaying, "and lets go at the stop");
+            _rig.Events.Publish(new LiftCued(LiftCue.HatchClosed, winch + Vector3.up * 2.6f));
+            Assert.AreEqual("lift_hatch_close", LastClip);
 
-            _rig.Events.Publish(new BlueprintDelivered("kit.cargo"));
+            _rig.Events.Publish(new BlueprintDrawing("kit.cargo", winch, 6f));
             Assert.AreEqual("plotter_draw", LastClip);
             _rig.Events.Publish(new BlueprintFound("kit.cargo", "site.garage", winch));
             Assert.AreEqual("blueprint_found", LastClip);
+        }
+
+        [UnityTest]
+        public IEnumerator TheLab_HasItsRoomTone_DetentsInKey_TheReaderDecodes_AndTheMapInks()
+        {
+            _rig.Events.Publish(new LabEntered(LabStation.Reader));
+            yield return new WaitForSeconds(0.6f);
+            Assert.IsTrue(_rig.Lab.RoomSource.isPlaying, "the lab's room tone comes in");
+            _rig.Events.Publish(new LabStationFaced(LabStation.Board));
+            Assert.AreEqual("lab_detent_03", LastClip, "each station settles on its own pentatonic note");
+            _rig.Events.Publish(new BlueprintDelivered("kit.cargo"));
+            Assert.AreEqual("reader_take", LastClip);
+            yield return new WaitForSeconds(0.4f);
+            Assert.IsTrue(_rig.Lab.ReelSource.isPlaying, "the reel turns while it decodes");
+            _rig.Events.Publish(new FindDecoded("kit.cargo"));
+            Assert.AreEqual("reader_decode_chime", LastClip);
+            yield return new WaitForSeconds(0.6f);
+            Assert.IsFalse(_rig.Lab.ReelSource.isPlaying, "and stops once decoded");
+            _rig.Events.Publish(new MapPlaceSeen("site.depot", Vector3.zero));
+            Assert.AreEqual("map_pencil", LastClip);
+            _rig.Events.Publish(new MapInkCued("site.depot", Vector3.zero, 1));
+            Assert.AreEqual("map_pen_02", LastClip, "the pen climbs the scale place by place");
+            _rig.Events.Publish(new LabLeft());
+            yield return new WaitForSeconds(3f);
+            Assert.IsFalse(_rig.Lab.RoomSource.isPlaying, "the room tone lets go as 07 rides down");
         }
 
         [Test]

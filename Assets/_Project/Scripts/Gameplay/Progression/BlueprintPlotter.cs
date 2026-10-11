@@ -2,25 +2,26 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using MoonProject.Core;
+using MoonProject.Core.Events;
 using MoonProject.Core.Save;
 
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// Kenji's pen plotter (docs/features/M3-16 P7; ruling 14: no hands pin anything). When 07 comes near it with a
-    /// blueprint tube riding on its back and the bay is awake, the tube is delivered
-    /// (<see cref="Blueprints.Deliver"/>, pinning the kit) and the plotter draws the sheet: the pen carriage sweeps
-    /// the bed row by row while the ready lamp glows and the sheet lies on the bed; then the drawn sheet hangs on
-    /// Kenji's pegboard (Blueprint_&lt;Ability&gt;). A delivery is saved at once; a loaded game simply shows every
-    /// pinned sheet. Nothing allocates
-    /// per frame.
+    /// Kenji's pen plotter on the bay's back wall (docs/features/M3-16 P7, M3-19 D7 and §5; ruling 14: no hands pin
+    /// anything). When the lab's reader decodes a tube, its hand-off pulse runs down to the bay
+    /// (<see cref="DecodeHandOff"/>); as it arrives the plotter draws the sheet: the pen carriage sweeps the bed row by
+    /// row while the ready lamp glows and the sheet lies on the bed, then the drawn sheet hangs on Kenji's pegboard
+    /// (Blueprint_&lt;Ability&gt;), announced with <see cref="BlueprintDrawing"/>. A bay still asleep keeps the waiting
+    /// sheets and draws them one by one the moment the tower's second level wakes it. Each drawing is saved; a loaded
+    /// game shows every drawn sheet and draws the ones still waiting. Nothing allocates per frame.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class BlueprintPlotter : MonoBehaviour
     {
         private const string SheetPrefix = "Blueprint_";
 
-        [Tooltip("The plotter's root (RoverBay/Plotter): 07 delivers within reach of it.")]
+        [Tooltip("The plotter's root (RoverBay/Plotter).")]
         [SerializeField] private Transform _plotter;
 
         [Tooltip("Plotter/PenCarriage: rides along its local X across the bed.")]
@@ -46,12 +47,14 @@ namespace MoonProject.Gameplay
 
         private readonly Dictionary<string, GameObject> _sheets =
             new Dictionary<string, GameObject>(StringComparer.Ordinal);
+        private readonly Dictionary<string, float> _arrivals = new Dictionary<string, float>(StringComparer.Ordinal);
         private Blueprints _blueprints;
         private Workshop _bay;
-        private IRoverState _rover;
         private ISaveService _save;
+        private EventBus _events;
         private ProgressionTuning _tuning;
         private EmissionGlow _lampGlow;
+        private IDisposable _handOffs;
         private Vector3 _carriageRest;
         private Vector3 _headRest;
         private string _drawingKit;
@@ -59,8 +62,11 @@ namespace MoonProject.Gameplay
         private float _lampLevel;
         private bool _initialized;
 
-        /// <summary>True while the plotter draws a delivered sheet.</summary>
+        /// <summary>True while the plotter draws a decoded sheet.</summary>
         public bool Drawing => _drawingKit != null;
+
+        /// <summary>The kit whose sheet is on the bed, or null.</summary>
+        public string DrawingKit => _drawingKit;
 
         /// <summary>How far through the current drawing (0..1; 0 when idle).</summary>
         public float DrawProgress { get; private set; }
@@ -122,25 +128,34 @@ namespace MoonProject.Gameplay
                 return false;
             }
 
-            _rover = services.Rover;
             _save = services.Save;
+            _events = services.Events;
             _lampGlow = new EmissionGlow(_lamp);
             _carriageRest = _carriage.localPosition;
             _headRest = _head.localPosition;
             _sheet.SetActive(false);
             _lampGlow.Apply(0f);
+            _handOffs = services.Events.Subscribe<DecodeHandOff>(OnHandOff);
             SyncSheets();
             _initialized = true;
             return true;
         }
 
-        /// <summary>Shows exactly the pinned kits' sheets on the pegboard (boot, load).</summary>
+        /// <summary>Shows exactly the drawn kits' sheets on the pegboard (boot, load).</summary>
         internal void SyncSheets()
         {
             foreach (KeyValuePair<string, GameObject> sheet in _sheets)
             {
-                sheet.Value.SetActive(_blueprints.IsPinned(sheet.Key) && sheet.Key != _drawingKit);
+                sheet.Value.SetActive(_blueprints.IsDrawn(sheet.Key) && sheet.Key != _drawingKit);
             }
+        }
+
+        /// <summary>
+        /// The pulse for <paramref name="handOff"/>'s kit reaches the bay this many seconds from now.
+        /// </summary>
+        private void OnHandOff(DecodeHandOff handOff)
+        {
+            _arrivals[handOff.KitId] = Time.time + handOff.Seconds;
         }
 
         private void Update()
@@ -151,14 +166,9 @@ namespace MoonProject.Gameplay
             }
 
             float now = Time.time;
-            if (_drawingKit == null && _blueprints.IsCarrying && _bay.Awake &&
-                SurfaceRules.HorizontalDistance(_rover.Position, _plotter.position) <= _tuning.PlotterReach)
+            if (_drawingKit == null && _bay.Awake)
             {
-                _drawingKit = _blueprints.Deliver();
-                _save.SaveNow();
-                _drawStart = now;
-                _sheet.SetActive(true);
-                SyncSheets();
+                StartNext(now);
             }
 
             float lamp = _drawingKit != null ? _tuning.PlotterLampGlow : 0f;
@@ -186,9 +196,36 @@ namespace MoonProject.Gameplay
             _carriage.localPosition = _carriageRest;
             _head.localPosition = _headRest;
             _sheet.SetActive(false);
+            _blueprints.MarkDrawn(_drawingKit);
             _drawingKit = null;
             DrawProgress = 0f;
             SyncSheets();
+            _save.SaveNow();
+        }
+
+        /// <summary>
+        /// Starts on a decoded sheet not drawn yet whose pulse has arrived (one decoded before a load, or before the
+        /// bay woke, has long arrived).
+        /// </summary>
+        private void StartNext(float now)
+        {
+            string kit = _blueprints.NextToDraw();
+            if (kit == null || (_arrivals.TryGetValue(kit, out float arrives) && now < arrives))
+            {
+                return;
+            }
+
+            _arrivals.Remove(kit);
+            _drawingKit = kit;
+            _drawStart = now;
+            _sheet.SetActive(true);
+            SyncSheets();
+            _events.Publish(new BlueprintDrawing(kit, _plotter.position, _tuning.PlotterDrawSeconds));
+        }
+
+        private void OnDestroy()
+        {
+            _handOffs?.Dispose();
         }
     }
 }

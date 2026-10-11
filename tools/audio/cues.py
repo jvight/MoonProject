@@ -2096,7 +2096,9 @@ def bell_knob_tap(_variant, gen):
     return filters.lowpass(0.25 * tick / max(float(np.max(np.abs(tick))), 1e-9) + 0.3 * knock, 4000.0)
 
 
-# ---- The crew's belly lift (docs/features/M3-19) ----
+# ---- The crew's lab up the belly lift (docs/features/M3-19) and its map (M3-07) ----
+
+LAB_DETENT_NOTES = ("D5", "E5", "F#5", "A5")
 
 
 def lift_hatch_open(_variant, gen):
@@ -2120,6 +2122,104 @@ def lift_hatch_close(_variant, gen):
     seat = osc.sine(n, note_freq("D3"))
     seat = seat * envelope.segments(n, [(0.0, 0.0), (0.82, 0.0), (0.84, 1.0), (1.4, 0.0)], shape="smooth")
     return filters.lowpass(0.05 * slide + 0.3 * seat, 2500.0)
+
+
+def lab_detent(variant, gen):
+    """The lab's turntable settling at a station: a felt detent click with a tiny tine on one note of D major
+    pentatonic per station."""
+    n = samples(0.6)
+    click = filters.bandpass(noise.white(n, gen), 1800.0, 1.4) * envelope.ar(n, 0.0005, 0.012)
+    click = click / max(float(np.max(np.abs(click))), 1e-9)
+    tine = instruments.kalimba(note_freq(LAB_DETENT_NOTES[variant]), 0.6, gen, decay=0.35)
+    tine = (to_mono(tine) if tine.ndim > 1 else tine)[:n]
+    return filters.lowpass(0.15 * click + 0.4 * tine, 5000.0)
+
+
+LAB_ROOM_LOOP_S = 8.0
+
+
+def lab_room_tone(_variant, gen):
+    """The crew's lab around 07: a close, warm room, a lamp transformer's soft D2 hum and the faintest air. Seamless."""
+    n = samples(LAB_ROOM_LOOP_S)
+    air = periodic(noise.pink(n, gen), lambda x: filters.lowpass(filters.highpass(x, 120.0), 900.0))
+    air = air / max(float(np.std(air)), 1e-9)
+    hum = osc.additive(n, loop_freq(note_freq("D2"), n), [(1, 1.0), (2, 0.35), (3, 0.1)])
+    hum *= envelope.lfo(n, 1.0 / LAB_ROOM_LOOP_S, 0.15, 0.85)
+    return periodic(0.03 * air + 0.1 * hum, lambda x: filters.highpass(filters.lowpass(x, 1800.0), 40.0))
+
+
+READER_REEL_LOOP_S = 1.0
+
+
+def reader_reel(_variant, gen):
+    """The reader decoding: its reel turning with a soft cog purr and the paper tape ticking out, eight to the turn.
+    Seamless."""
+    n = samples(READER_REEL_LOOP_S)
+    purr = osc.additive(n, loop_freq(note_freq("A2"), n), [(1, 1.0), (2, 0.4), (3, 0.15)])
+    ticks = np.zeros(n)
+    tick_len = samples(0.03)
+    for k in range(8):
+        tick = filters.bandpass(noise.white(tick_len, gen), 2600.0, 2.0) * envelope.ar(tick_len, 0.0005, 0.015)
+        start = k * n // 8
+        ticks[start:start + tick_len] += (0.7 + 0.3 * (k % 2)) * tick
+    mix = 0.08 * purr + 0.05 * ticks / max(float(np.max(np.abs(ticks))), 1e-9)
+    return periodic(mix, lambda x: filters.highpass(filters.lowpass(x, 4000.0), 60.0))
+
+
+def reader_take(_variant, gen):
+    """The reader taking a blueprint tube: a paper-and-tin slide into the slot and a soft latch."""
+    n = samples(0.9)
+    slide = filters.bandpass(noise.pink(n, gen), 1400.0, 0.8)
+    slide = slide / max(float(np.std(slide)), 1e-9) * envelope.segments(
+        n, [(0.0, 0.0), (0.05, 1.0), (0.45, 0.4), (0.5, 0.0)], shape="smooth")
+    latch = filters.bandpass(noise.white(n, gen), 2200.0, 1.6) * envelope.segments(
+        n, [(0.0, 0.0), (0.5, 0.0), (0.501, 1.0), (0.53, 0.0)], shape="smooth")
+    return filters.lowpass(0.05 * slide + 0.15 * latch / max(float(np.max(np.abs(latch))), 1e-9), 5000.0)
+
+
+def reader_decode_chime(_variant, gen):
+    """A find decoded: the reel stops and a small felt chime rises D5, A5, D6, know-how gained."""
+    mix = np.zeros((samples(2.4), 2))
+    for i, note in enumerate(("D5", "A5", "D6")):
+        place(mix, pan(instruments.glass_chime(note_freq(note), 1.6, decay=1.0), -0.15 + 0.15 * i),
+              samples(0.16 * i), 0.45)
+    return mix
+
+
+def map_pencil(_variant, gen):
+    """A place blinking seen on the crew's map: a short, soft pencil hiss on paper."""
+    n = samples(0.5)
+    hiss = filters.bandpass(noise.pink(n, gen), 2200.0, 0.9)
+    hiss = hiss / max(float(np.std(hiss)), 1e-9) * envelope.segments(
+        n, [(0.0, 0.0), (0.04, 1.0), (0.3, 0.5), (0.5, 0.0)], shape="smooth")
+    return filters.butter(0.05 * hiss, "lowpass", 3800.0)
+
+
+MAP_PEN_NOTES = ("D5", "E5", "F#5", "A5", "B5", "D6")
+
+
+def map_pen(variant, gen):
+    """The chart pen inking one place: a scratch of nib on paper over a faint tine, climbing D major pentatonic place
+    by place."""
+    n = samples(0.8)
+    scratch = filters.bandpass(noise.white(n, gen), 2400.0, 1.2)
+    scratch = scratch / max(float(np.std(scratch)), 1e-9) * envelope.segments(
+        n, [(0.0, 0.0), (0.03, 1.0), (0.45, 0.6), (0.6, 0.0)], shape="smooth")
+    tine = instruments.glass_chime(note_freq(MAP_PEN_NOTES[variant]), 0.8, decay=0.6)
+    tine = (to_mono(tine) if tine.ndim > 1 else tine)[:n]
+    return filters.lowpass(0.03 * scratch + 0.3 * tine, 6000.0)
+
+
+MAP_TABLE_LOOP_S = 4.0
+
+
+def map_table_hum(_variant, gen):
+    """The light table glowing under Ines's chart: a warm, very soft lamp hum on D3 with its fifth. Seamless."""
+    n = samples(MAP_TABLE_LOOP_S)
+    d3 = loop_freq(note_freq("D3"), n)
+    hum = osc.additive(n, d3, [(1, 1.0), (2, 0.3)]) + 0.35 * osc.sine(n, loop_freq(note_freq("A3"), n), phase=0.2)
+    hum *= envelope.lfo(n, 1.0 / MAP_TABLE_LOOP_S, 0.2, 0.8)
+    return periodic(0.2 * hum, lambda x: filters.highpass(filters.lowpass(x, 1600.0), 90.0))
 
 
 # --------------------------------------------------------------------------------------------------- registry
@@ -2507,6 +2607,22 @@ CUES = (
         tonal=True, notes="The belly hatch sliding open over the rising platform: rail rumble + A3/A4 bell."),
     Cue("lift_hatch_close", "oneshot_3d", lift_hatch_close, volume=(0.55, 0.55), fade_out=0.15, milestone="M3",
         tonal=True, notes="The belly hatch sliding shut behind the lowered platform: rail rumble + soft D3 seat."),
+    Cue("lab_detent", "tick_3d", lab_detent, variants=len(LAB_DETENT_NOTES), volume=(0.55, 0.55), fade_out=0.05,
+        milestone="M3", tonal=True, notes="The lab's turntable settling at a station: felt click + a pentatonic tine."),
+    Cue("lab_room_tone", "ambience_2d", lab_room_tone, loop=True, file_stem="lab_room_tone_loop", volume=(0.7, 0.7),
+        milestone="M3", tonal=True, notes="The crew's lab: a close warm room, a soft D2 lamp hum and faint air."),
+    Cue("reader_reel", "loop_3d", reader_reel, loop=True, file_stem="reader_reel_loop", volume=(0.45, 0.45),
+        milestone="M3", tonal=True, notes="The reader decoding: reel purr on A2 + paper tape ticks."),
+    Cue("reader_take", "oneshot_3d", reader_take, volume=(0.5, 0.5), fade_out=0.08, milestone="M3",
+        notes="The reader taking a tube: paper-and-tin slide into the slot + soft latch."),
+    Cue("reader_decode_chime", "stinger_2d", reader_decode_chime, volume=(0.55, 0.55), fade_out=0.3, milestone="M3",
+        tonal=True, notes="A find decoded: felt glass chime rising D5, A5, D6."),
+    Cue("map_pencil", "tick_2d", map_pencil, volume=(0.5, 0.5), fade_out=0.05, milestone="M3",
+        notes="A place blinking seen on the crew's map: a short soft pencil hiss."),
+    Cue("map_pen", "tick_2d", map_pen, variants=len(MAP_PEN_NOTES), volume=(0.55, 0.55), fade_out=0.1,
+        milestone="M3", tonal=True, notes="The chart pen inking a place: nib scratch + tine climbing D pentatonic."),
+    Cue("map_table_hum", "loop_3d", map_table_hum, loop=True, file_stem="map_table_hum_loop", volume=(0.4, 0.4),
+        milestone="M3", tonal=True, notes="The light table glowing under the chart: soft D3/A3 lamp hum."),
     Cue("blueprint_found", "oneshot_3d", blueprint_found, volume=(0.5, 0.5), fade_out=0.2, milestone="M3",
         tonal=True, notes="A blueprint tube found: a tiny two-note glass chime, A5 then D6."),
     Cue("dock_evening_swell", "stinger_2d", dock_evening_swell, volume=(0.5, 0.5), fade_out=0.6, milestone="M3",

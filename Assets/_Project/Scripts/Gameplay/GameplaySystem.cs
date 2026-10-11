@@ -208,8 +208,10 @@ namespace MoonProject.Gameplay
             if (!_salvage.Initialize(services) || !_relics.Initialize(services, _salvage) ||
                 !_excavation.Initialize(services, _relics, _salvage) ||
                 !_tether.Initialize(services, _relics, _salvage) ||
-                !_home.Initialize(services, _relics, _tether, Upgrades, lights) ||
+                !_home.Initialize(services, _relics, Upgrades, lights, _lift) ||
                 !_cradle.Initialize(services, seat, _relics, _home) ||
+                !_lift.Initialize(services, Power, context.Get<IRoverStillness>(), _tether, _cradle, Blueprints,
+                    _progression.Tuning) ||
                 !_tower.Initialize(services, Upgrades, _salvage.Catalog, TowerParts) ||
                 !_workshop.Initialize(services, Upgrades, _salvage.Catalog, _tower, Power, Blueprints, lights) ||
                 !_friends.Initialize(services, Radio, _cassettes.Catalog, _relics, _salvage, _home) ||
@@ -219,9 +221,8 @@ namespace MoonProject.Gameplay
                 !_shelf.Initialize(Radio, _cassettes.Catalog, _friends.BellTuning) ||
                 !_relays.Initialize(services, Upgrades, _tower, _tether, _friends.Tuning, Placement(context)) ||
                 !_progression.Initialize(services, Power, _home, _workshop, _sonar, _friends, _relays,
-                    Upgrades) ||
+                    Upgrades, _lift) ||
                 !_plotter.Initialize(services, Blueprints, _workshop, _progression.Tuning, Upgrades) ||
-                !_lift.Initialize(services, Power, _salvage.Catalog, context.Get<IRoverStillness>()) ||
                 !_battery.Initialize(services, _relays.Reach, _tether, _home, abilities, _friends, _sonar.Tuning))
 
             {
@@ -240,7 +241,7 @@ namespace MoonProject.Gameplay
 
             _friends.Connect(_sonar);
             _salvage.Connect(_excavation);
-            _tether.Connect(_cradle);
+            _tether.Connect(_cradle, _home);
 
             string tubeSite = UnknownTubeSite();
             if (tubeSite != null)
@@ -274,6 +275,7 @@ namespace MoonProject.Gameplay
             context.Register<IRadioHop>(_relays.Hop);
             context.Register<IRelayStatus>(_relays);
             context.Register<IBasePower>(Power);
+            context.Register<ILabInterior>(_lift.Lab);
             context.Register<IBlueprintBoard>(Blueprints);
             context.Register<IStoryPartGate>(TowerParts);
             context.Register<IRoverBattery>(_battery.Model);
@@ -308,8 +310,7 @@ namespace MoonProject.Gameplay
                 GameplaySaveKeys.ProgressionVersion, _progression.Capture, _progression.Restore)));
             _saveTokens.Add(save.Register(new SaveSection<BlueprintsSaveData>(GameplaySaveKeys.Blueprints,
                 GameplaySaveKeys.BlueprintsVersion,
-                () => new BlueprintsSaveData { found = Blueprints.Capture(), carried = Blueprints.CaptureCarried() },
-                RestoreBlueprints)));
+                Blueprints.Capture, RestoreBlueprints)));
             _saveTokens.Add(save.Register(new SaveSection<LiftSaveData>(GameplaySaveKeys.Lift,
                 GameplaySaveKeys.LiftVersion, _lift.Capture, _lift.Restore)));
             _saveTokens.Add(save.Register(new SaveSection<TowerPartsSaveData>(GameplaySaveKeys.TowerParts,
@@ -356,7 +357,8 @@ namespace MoonProject.Gameplay
 
         private void RestoreBlueprints(BlueprintsSaveData data)
         {
-            Blueprints.Restore(data.found, data.carried);
+            Blueprints.Restore(data);
+            _lift.RestoreReader();
             _plotter.SyncSheets();
         }
 

@@ -49,8 +49,8 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
-        /// The outline of <paramref name="letter"/> (the upper-case letters signs need, digits 0 and 7, a dash and a
-        /// full stop).
+        /// The outline of <paramref name="letter"/> (the upper-case letters signs and name plates need, digits 0 and 7,
+        /// a dash and a full stop).
         /// </summary>
         public static Vector2[] For(char letter)
         {
@@ -94,6 +94,19 @@ namespace MoonProject.Art.Editor
                 case 'K':
                     return Outline(0f, 0f, 0.04f, 0f, 0.04f, 0.07f, 0.1f, 0f, 0.14f, 0f, 0.07f, 0.1f, 0.14f, 0.2f,
                         0.095f, 0.2f, 0.04f, 0.13f, 0.04f, 0.2f, 0f, 0.2f);
+                case 'A':
+                    return Outline(0f, 0f, 0.04f, 0f, 0.048f, 0.05f, 0.092f, 0.05f, 0.1f, 0f, 0.14f, 0f, 0.09f, 0.2f,
+                        0.05f, 0.2f);
+                case 'V':
+                    return Outline(0.05f, 0f, 0.09f, 0f, 0.14f, 0.2f, 0.1f, 0.2f, 0.07f, 0.07f, 0.04f, 0.2f, 0f, 0.2f);
+                case 'Y':
+                    return Outline(0.05f, 0f, 0.09f, 0f, 0.09f, 0.09f, 0.14f, 0.2f, 0.1f, 0.2f, 0.07f, 0.13f, 0.04f,
+                        0.2f, 0f, 0.2f, 0.05f, 0.09f);
+                case 'L':
+                    return Outline(0f, 0f, 0.13f, 0f, 0.13f, 0.04f, 0.04f, 0.04f, 0.04f, 0.2f, 0f, 0.2f);
+                case 'J':
+                    return Outline(0f, 0.03f, 0.03f, 0f, 0.1f, 0f, 0.13f, 0.03f, 0.13f, 0.2f, 0.09f, 0.2f, 0.09f,
+                        0.04f, 0.04f, 0.04f, 0.04f, 0.07f, 0f, 0.07f);
                 case '-':
                     return Outline(0.02f, 0.085f, 0.12f, 0.085f, 0.12f, 0.115f, 0.02f, 0.115f);
                 case '.':
@@ -116,6 +129,9 @@ namespace MoonProject.Art.Editor
                 case 'P':
                 case 'R':
                     counter = new Rect(0.04f, 0.12f, 0.06f, 0.045f);
+                    return true;
+                case 'A':
+                    counter = new Rect(0.058f, 0.09f, 0.024f, 0.06f);
                     return true;
                 default:
                     counter = default;

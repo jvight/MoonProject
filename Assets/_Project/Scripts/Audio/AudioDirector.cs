@@ -68,6 +68,7 @@ namespace MoonProject.Audio
 
         [Tooltip("The base's machines: hopper feed, Rover Bay arms and turntable, tower port, charging dock.")]
         [SerializeField] private StationAudio _stations;
+        [SerializeField] private LabAudio _lab;
 
         private readonly AudioBusMixer _buses = new AudioBusMixer();
         private readonly LoopFader _pause = new LoopFader();
@@ -168,6 +169,7 @@ namespace MoonProject.Audio
             _relays.Initialize(context, this);
             _salvage.Initialize(context, this);
             _stations.Initialize(context, this);
+            _lab.Initialize(context, this);
             _battery.Initialize(context, this);
         }
 
@@ -298,7 +300,7 @@ namespace MoonProject.Audio
         internal void Wire(AudioLibrary library, AudioMixTuning mixTuning, RoverAudio roverAudio,
             JumpAudio jump, GameplayAudio gameplay, FriendAudio friends, UiAudio ui, RadioStation radio,
             AmbienceBed ambience, CanyonAmbience canyon, Soundscape soundscape, RoverSmallSounds smallSounds,
-            RelayAudio relays, SalvageAudio salvage, StationAudio stations)
+            RelayAudio relays, SalvageAudio salvage, StationAudio stations, LabAudio lab)
         {
             _jump = jump;
             _friends = friends;
@@ -315,6 +317,7 @@ namespace MoonProject.Audio
             _relays = relays;
             _salvage = salvage;
             _stations = stations;
+            _lab = lab;
         }
 
         private void Update()
@@ -451,6 +454,7 @@ namespace MoonProject.Audio
             ok &= Require(_relays, nameof(_relays));
             ok &= Require(_salvage, nameof(_salvage));
             ok &= Require(_stations, nameof(_stations));
+            ok &= Require(_lab, nameof(_lab));
             ok &= Require(_battery, nameof(_battery));
             if (_library != null)
             {

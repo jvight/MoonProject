@@ -11,11 +11,11 @@ namespace MoonProject.Gameplay
     /// <see cref="IRoverCargoSeat"/>, from the Rover domain) and empty, the press that would latch the tether onto an
     /// aimed loose relic lifts it gently into the rear rack instead: it floats along a soft arc to the seat, pauses
     /// just above it and settles in with a small overshoot (<see cref="RelicStowed"/>, then a save). It then rides at
-    /// the seat every frame, never fighting physics, through bumps, leaps, recoveries and radio-hops alike. At the
-    /// museum shelf a press of the same button sets it down onto the shelf through the usual deposit. One relic at a
-    /// time: further relics and the big salvage drag pieces still go on the tether. A relic saved in the rack comes
-    /// back in it, and if the cradle is ever off 07 the relic is set down loose beside it (VISION ruling 1: nothing is
-    /// lost).
+    /// the seat every frame, never fighting physics, through bumps, leaps, recoveries and radio-hops alike. Facing the
+    /// lab's keepsake shelf (docs/features/M3-19) a press of the same button sets it down onto the shelf through the
+    /// usual deposit. One relic at a time: further relics and the big salvage drag pieces still go on the tether. A
+    /// relic saved in the rack comes back in it, and if the cradle is ever off 07 the relic is set down loose beside
+    /// it (VISION ruling 1: nothing is lost).
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class CargoCradle : MonoBehaviour
@@ -42,8 +42,10 @@ namespace MoonProject.Gameplay
         /// <summary>A press would lift an aimed relic into the rack: the cradle is on 07 and empty.</summary>
         public bool CanStow => _initialized && _carried == null && _seat.IsFitted;
 
-        /// <summary>A press would set the carried relic down on the museum shelf: settled, and in reach.</summary>
-        public bool CanUnload => IsSettled && _home.InDepositZone(_carried.transform.position);
+        /// <summary>
+        /// A press would set the carried relic down on the lab's keepsake shelf: settled, and facing it.
+        /// </summary>
+        public bool CanUnload => IsSettled && _home.KeepsakesFaced;
 
         internal bool Initialize(GameplayServices services, IRoverCargoSeat seat, RelicField relics, HomeBase home)
         {

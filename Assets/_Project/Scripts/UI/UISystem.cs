@@ -61,6 +61,7 @@ namespace MoonProject.UI
         private UiLayout _layout;
         private StaticTextLocalizer _staticText;
         private Reveal _hud;
+        private LabHud _labHud;
         private StargazeVeil _stargaze;
         private LookUpHint _lookUpHint;
         private LookUpChip _lookUpChip;
@@ -292,6 +293,8 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<StargazingChanged>(OnStargazingChanged));
             _tokens.Add(events.Subscribe<NextStepChanged>(OnNextStepChanged));
             _tokens.Add(events.Subscribe<PlaceFirstApproached>(OnPlaceFirstApproached));
+            _tokens.Add(events.Subscribe<LabEntered>(_ => _labHud.Enter()));
+            _tokens.Add(events.Subscribe<LabLeft>(_ => _labHud.Leave()));
             _tokens.Add(events.Subscribe<BlueprintFound>(OnBlueprintFound));
             _tokens.Add(events.Subscribe<BlueprintDelivered>(OnBlueprintDelivered));
             _tokens.Add(events.Subscribe<RoverWideShotChanged>(OnWideShotChanged));
@@ -349,6 +352,7 @@ namespace MoonProject.UI
             _staticText = new StaticTextLocalizer(root, _localization);
             _hud = new Reveal(_layout.Hud, _tuning.Pause.Hud);
             _hud.Snap(true);
+            _labHud = new LabHud(_layout.LabHud, _tuning.Lab, _localization, _ledger);
             _stargaze = new StargazeVeil(_tuning.Stargaze.Hud, _layout.PromptAnchor, _layout.FriendAnchor,
                 _layout.FriendNameAnchor, _layout.RelayTagAnchor, _layout.SalvageRingAnchor, _layout.SiteNameAnchor,
                 _layout.TickerLine);
@@ -440,7 +444,7 @@ namespace MoonProject.UI
             bool onMap = _map != null && _map.IsOpen;
             _backdrop.Set(Mathf.Max(_pause.Openness, _map != null ? _map.Openness : 0f));
             float hudTime = paused ? 0f : deltaTime;
-            _hud.Set(!paused && !onMap);
+            _hud.Set(!paused && !onMap && !_labHud.Inside);
             _hud.Tick(deltaTime);
             _stargaze.Tick(deltaTime);
             if (_awake)
@@ -449,6 +453,8 @@ namespace MoonProject.UI
             }
 
             InputDeviceKind device = input.ActiveDevice;
+            _labHud.Tick(deltaTime, !paused && !onMap, input.Drive,
+                _services.Hints.TryGet(InteractionKind.Deposit, out _), _glyphs.For(RoverAction.Tether, device), device);
             bool hopping = _services.Hop.Phase >= RadioHopPhase.Leaving || _hopFade.IsVisible;
             _reticle.Tick(deltaTime, _services.Tether.State, input.TetherHeld);
             _card.Tick(hudTime, _glyphs.Cancel(device), device,
@@ -603,9 +609,13 @@ namespace MoonProject.UI
             }
         }
 
+        /// <summary>A place's line, the first time near it; the lab's own shows on the lab's screen.</summary>
         private void OnPlaceFirstApproached(PlaceFirstApproached approached)
         {
-            _placeCard.Approached(approached.PlaceId);
+            if (!_labHud.TryShowPlace(approached.PlaceId))
+            {
+                _placeCard.Approached(approached.PlaceId);
+            }
         }
 
         private void OnBlueprintFound(BlueprintFound found)
@@ -765,6 +775,7 @@ namespace MoonProject.UI
             _lookUpChip.Relocalize();
             _nextLine.Relocalize();
             _placeCard.Relocalize();
+            _labHud.Relocalize();
             _dial.Relocalize();
             _hopList.Relocalize();
             _friendName.Relocalize();

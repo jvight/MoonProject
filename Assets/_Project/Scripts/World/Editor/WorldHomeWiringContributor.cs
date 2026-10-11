@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
+using MoonProject.Art.Editor;
 using MoonProject.Editor.Builders;
 using MoonProject.Editor.SceneBuild;
 
@@ -10,8 +11,10 @@ namespace MoonProject.World.Editor
 {
     /// <summary>
     /// Wires World's <see cref="HomeLightingSystem"/> to the base once Gameplay has built it (M3-16): the Glow_ glass
-    /// segments of Art's PowerCable_Home, _Bay and _Lift on the lander, ordered out from the tower, and a pilot halo
-    /// at the top of the first radio tower stage. Runs after the Gameplay contributor (order 500).
+    /// segments of Art's PowerCable_Home, _Bay and _Chart on the lander, ordered out from the tower, and a pilot halo
+    /// at the top of the first radio tower stage; and World's <see cref="LabLights"/> to the habitat lander's belly
+    /// lift and lab (docs/ARCHITECTURE.md, "Contract: the lab (M3-19)"). Runs after the Gameplay contributor (order
+    /// 500).
     /// </summary>
     public sealed class WorldHomeWiringContributor : ISceneContributor
     {
@@ -22,8 +25,11 @@ namespace MoonProject.World.Editor
         private const string LanderName = "Lander";
         private const string DockAnchor = "DockAnchor";
 
-        // Home's places 07 drives to from its dock (Art's lander anchors): the bay, the shelf, the tower.
-        private static readonly string[] HomeDestinations = { "WorkshopAnchor", "ShelfAnchor", "TowerAnchor" };
+        // Home's places 07 drives to from its dock (Art's lander nodes): the bay, the belly lift, the tower.
+        private static readonly string[] HomeDestinations =
+        {
+            "WorkshopAnchor", BaseModelBuilder.BellyLiftName, "TowerAnchor",
+        };
 
         // The lander faces the pad's centre: the dock's track runs this far forward to meet the outward tracks.
         private const float PadCentreReach = 10f;
@@ -33,25 +39,131 @@ namespace MoonProject.World.Editor
         public void Contribute(SceneBuildContext context)
         {
             HomeLightingSystem lighting = null;
+            LabLights lab = null;
             foreach (MonoBehaviour system in context.Systems)
             {
                 lighting = system as HomeLightingSystem ?? lighting;
+                lab = system as LabLights ?? lab;
             }
 
-            if (lighting == null)
+            if (lighting == null || lab == null)
             {
-                throw new InvalidOperationException("The World contributor added no HomeLightingSystem.");
+                throw new InvalidOperationException("The World contributor added no HomeLightingSystem or LabLights.");
             }
 
             Transform gameplay = context.GameplayRoot.transform;
             var serialized = new SerializedObject(lighting);
             AssignCable(serialized, "_homeCable", Segments(gameplay, CablePrefix + "Home"));
             AssignCable(serialized, "_bayCable", Segments(gameplay, CablePrefix + "Bay"));
-            AssignCable(serialized, "_liftCable", Segments(gameplay, CablePrefix + "Lift"));
+            AssignCable(serialized, "_chartCable", Segments(gameplay, CablePrefix + "Chart"));
             serialized.FindProperty("_pilot").objectReferenceValue = CreatePilot(context, gameplay);
             AssignPools(context, serialized, gameplay);
             serialized.ApplyModifiedPropertiesWithoutUndo();
+            WireLab(context, lab, Find(gameplay, LanderName));
             CreateHomeMarks(context, gameplay);
+        }
+
+        /// <summary>
+        /// Hands <see cref="LabLights"/> the lander's lab and belly lift nodes (Art's lab contract) and hangs the
+        /// hand-off pulse's travelling light on its path.
+        /// </summary>
+        private static void WireLab(SceneBuildContext context, LabLights lights, Transform lander)
+        {
+            var lab = new SerializedObject(lights);
+            Transform belly = Child(lander, BaseModelBuilder.BellyLiftName);
+            Transform room = Child(lander, BaseModelBuilder.LabName);
+            Transform board = Child(room, BaseModelBuilder.StationPrefix + "Board");
+            Transform keepsakes = Child(room, BaseModelBuilder.StationPrefix + "Keepsakes");
+            Transform table = Find(room, BaseModelBuilder.LightTableName);
+            Transform carriage = Find(table, BaseModelBuilder.ChartPenCarriageName);
+            lab.FindProperty("_home").objectReferenceValue = lander;
+            lab.FindProperty("_bellyLamp").objectReferenceValue = Glow(Child(belly, BaseModelBuilder.BellyLampName));
+            lab.FindProperty("_hatchRim").objectReferenceValue = Glow(Child(belly, BaseModelBuilder.HatchRimName));
+            lab.FindProperty("_cabinLamps").objectReferenceValue = Glow(Child(room, BaseModelBuilder.CabinLampsName));
+            lab.FindProperty("_bigPorthole").objectReferenceValue =
+                Glow(Child(lander, BaseModelBuilder.BigPortholeName));
+            lab.FindProperty("_tableGlow").objectReferenceValue = Glow(Child(table, BaseModelBuilder.LightTableGlowName));
+            lab.FindProperty("_penCarriage").objectReferenceValue = carriage;
+            lab.FindProperty("_penHead").objectReferenceValue = Child(carriage, BaseModelBuilder.ChartPenHeadName);
+            lab.FindProperty("_drawWidth").floatValue = BaseModelBuilder.ChartDrawWidth;
+            lab.FindProperty("_drawHeight").floatValue = BaseModelBuilder.ChartDrawHeight;
+            AssignGlows(lab, "_portholeLamps", Child(lander, BaseModelBuilder.PortholeLampsName),
+                BaseModelBuilder.LampPrefix, BaseModelBuilder.PortholeLampCount);
+            AssignGlows(lab, "_boardLamps", board, BaseModelBuilder.LampPrefix, BaseModelBuilder.BoardNodeCount);
+            SerializedProperty sheets = lab.FindProperty("_boardSheets");
+            sheets.arraySize = BaseModelBuilder.BoardNodeCount;
+            for (int i = 0; i < BaseModelBuilder.BoardNodeCount; i++)
+            {
+                sheets.GetArrayElementAtIndex(i).objectReferenceValue =
+                    Child(board, BaseModelBuilder.SheetPrefix + i).gameObject;
+            }
+
+            Transform panel = Child(board, BaseModelBuilder.RecoveryPanelName);
+            string[] rows = { "_powerRow", "_linkRow", "_dishRow", "_answerRow" };
+            for (int row = 0; row < rows.Length; row++)
+            {
+                AssignGlows(lab, rows[row], Child(panel, BaseModelBuilder.RecoveryRowName(row)),
+                    BaseModelBuilder.LampPrefix, BaseModelBuilder.RecoveryRowSockets(row));
+            }
+
+            AssignGlows(lab, "_readingLamps", keepsakes, BaseModelBuilder.ReadingLampPrefix,
+                BaseModelBuilder.ReadingLampCount);
+            SerializedProperty slots = lab.FindProperty("_keepsakeSlots");
+            SerializedProperty sections = lab.FindProperty("_slotSections");
+            slots.arraySize = BaseModelBuilder.KeepsakeSlotCount;
+            sections.arraySize = BaseModelBuilder.KeepsakeSlotCount;
+            for (int i = 0; i < BaseModelBuilder.KeepsakeSlotCount; i++)
+            {
+                slots.GetArrayElementAtIndex(i).objectReferenceValue = Child(keepsakes, BaseModelBuilder.SlotPrefix + i);
+                sections.GetArrayElementAtIndex(i).intValue = BaseModelBuilder.KeepsakeSection(i);
+            }
+
+            AssignCable(lab, "_handOffBeads", Segments(lander, BaseModelBuilder.HandOffCableName));
+            Transform path = Child(lander, BaseModelBuilder.HandOffPathName);
+            SerializedProperty points = lab.FindProperty("_handOffPath");
+            points.arraySize = path.childCount;
+            for (int i = 0; i < path.childCount; i++)
+            {
+                points.GetArrayElementAtIndex(i).objectReferenceValue =
+                    Child(path, BaseModelBuilder.HandOffPointPrefix + i);
+            }
+
+            GameObject pulse = context.CreateChild("HandOffLight", path);
+            var light = pulse.AddComponent<Light>();
+            light.type = LightType.Point;
+            light.shadows = LightShadows.None;
+            light.intensity = 0f;
+            light.enabled = false;
+            lab.FindProperty("_handOffLight").objectReferenceValue = light;
+            lab.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        /// <summary>Glow renderers <paramref name="prefix"/>0..count-1, direct children of <paramref name="parent"/>.</summary>
+        private static void AssignGlows(SerializedObject serialized, string field, Transform parent, string prefix,
+            int count)
+        {
+            SerializedProperty property = serialized.FindProperty(field);
+            property.arraySize = count;
+            for (int i = 0; i < count; i++)
+            {
+                property.GetArrayElementAtIndex(i).objectReferenceValue = Glow(Child(parent, prefix + i));
+            }
+        }
+
+        private static Renderer Glow(Transform node)
+        {
+            var renderer = node.GetComponent<Renderer>();
+            return renderer != null ? renderer
+                : throw new InvalidOperationException($"{node.name} has no renderer (Art's lab contract).");
+        }
+
+        /// <summary>The direct child <paramref name="name"/> of <paramref name="parent"/>, or a wiring error.</summary>
+        private static Transform Child(Transform parent, string name)
+        {
+            Transform child = parent.Find(name);
+            return child != null ? child
+                : throw new InvalidOperationException($"{parent.name} has no '{name}' (Art's lab contract, " +
+                                                      "docs/ARCHITECTURE.md): rebuild Art's base first.");
         }
 
         /// <summary>

@@ -4,7 +4,7 @@ using UnityEngine;
 namespace MoonProject.UI
 {
     /// <summary>
-    /// The memory card a relic tells once it rests on the museum shelf: read at a calm pace, never in the way.
+    /// The memory card a relic tells once it rests on the keepsake shelf: read at a calm pace, never in the way.
     /// </summary>
     [Serializable]
     public sealed class MemoryCardSettings

@@ -5,9 +5,11 @@ namespace MoonProject.Art.Editor
 {
     /// <summary>
     /// The base radio tower in three upgrade stages that read apart from 50 m by height, dish size and lights:
-    /// L1 a cobbled pole with a small dish and one bulb, L2 a lattice mast with a dish platform and four lamps,
-    /// L3 a tall lattice tower with two dishes, two platforms and rings of lamps. Every stage stands on the same
-    /// 1.6 m plinth with the old radio cabinet; origin on the ground at the plinth centre, +Z = the cabinet front.
+    /// L1 a tall cobbled pole on guy wires with a small dish and one bulb, L2 a lattice mast with a dish platform and
+    /// four lamps, L3 a tall lattice tower with two dishes, two platforms and rings of lamps. Even L1 stands 1.25
+    /// times the habitat lander's height to its roof, so the tower is always the tallest thing at home (M3-19
+    /// refinement 4). Every stage stands on the same 1.6 m plinth with the old radio cabinet; origin on the ground at
+    /// the plinth centre, +Z = the cabinet front.
     /// </summary>
     internal static class RadioTowerMeshes
     {
@@ -40,17 +42,33 @@ namespace MoonProject.Art.Editor
         /// <summary>Front edge (+Z) of the plate the port stands on: each stage's footprint reaches this far.</summary>
         public const float FootprintFront = 1.4f;
 
+        // Each stage's top: the pole's tip, the mast's and the tower's lattice tops.
+        private const float PoleTop = 9.1f;
+        private const float MastTop = 11.4f;
+        private const float TowerTop = 14.2f;
+
+        // L1's guy wires: where they leave the pole, and the plinth corners they are bolted to (the stage keeps to
+        // its plinth's footprint; the front left corner stays clear of the service box).
+        private const float GuyHeight = PoleTop - 1.7f;
+        private const float GuyInset = 0.06f;
+        private static readonly Vector2[] GuyCorners =
+        {
+            new Vector2(-1f, -1f), new Vector2(1f, -1f), new Vector2(1f, 0.85f),
+        };
+
+        private static readonly Vector3 PoleFoot = new Vector3(0f, PlinthHeight, -0.3f);
+
         /// <summary>Top of the tower: where the beacon (gameplay's signal light) sits.</summary>
         public static Vector3 BeaconPosition(int level)
         {
             switch (RequireLevel(level))
             {
                 case 1:
-                    return new Vector3(0f, 3.78f, -0.3f);
+                    return new Vector3(0f, PoleTop + 0.28f, PoleFoot.z);
                 case 2:
-                    return new Vector3(0f, 6.55f, 0f);
+                    return new Vector3(0f, MastTop + 0.35f, 0f);
                 default:
-                    return new Vector3(0f, 10f, 0f);
+                    return new Vector3(0f, TowerTop + 0.45f, 0f);
             }
         }
 
@@ -89,23 +107,26 @@ namespace MoonProject.Art.Editor
             switch (RequireLevel(level))
             {
                 case 1:
-                    b.Icosphere(At(0f, 3.62f, -0.3f), 0.07f, 1, PaletteSwatch.WarmLamp);
+                    b.Icosphere(At(0f, PoleTop + 0.12f, PoleFoot.z), 0.08f, 1, PaletteSwatch.WarmLamp);
                     break;
                 case 2:
-                    Corners(b, 3.55f, 0.6f, 0.085f, PaletteSwatch.WarmLamp);
-                    b.Icosphere(At(0f, 6.4f, 0f), 0.11f, 1, PaletteSwatch.WarmLamp);
+                    Corners(b, MastPlatform + 0.15f, LatticeHalf(MastPlatform, MastTop, 0.62f, 0.28f) + 0.02f, 0.09f,
+                        PaletteSwatch.WarmLamp);
+                    b.Icosphere(At(0f, MastTop + 0.2f, 0f), 0.12f, 1, PaletteSwatch.WarmLamp);
                     break;
                 default:
-                    Corners(b, 3.35f, 0.62f, 0.085f, PaletteSwatch.PilotLight);
-                    Corners(b, 6.75f, 0.58f, 0.1f, PaletteSwatch.WarmLamp);
+                    Corners(b, LowDeck + 0.15f, LatticeHalf(LowDeck, TowerTop, 0.66f, 0.22f) + 0.02f, 0.09f,
+                        PaletteSwatch.PilotLight);
+                    Corners(b, HighDeck + 0.15f, LatticeHalf(HighDeck, TowerTop, 0.66f, 0.22f) + 0.02f, 0.1f,
+                        PaletteSwatch.WarmLamp);
                     for (int i = 0; i < 8; i++)
                     {
                         float angle = i * Mathf.PI / 4f;
-                        b.Icosphere(At(0.42f * Mathf.Sin(angle), 9.45f, 0.42f * Mathf.Cos(angle)), 0.08f, 1,
+                        b.Icosphere(At(0.42f * Mathf.Sin(angle), TowerTop - 0.1f, 0.42f * Mathf.Cos(angle)), 0.08f, 1,
                             PaletteSwatch.PilotLight);
                     }
 
-                    b.Icosphere(At(0f, 9.87f, 0f), 0.13f, 1, PaletteSwatch.WarmLamp);
+                    b.Icosphere(At(0f, TowerTop + 0.32f, 0f), 0.14f, 1, PaletteSwatch.WarmLamp);
                     break;
             }
 
@@ -147,7 +168,12 @@ namespace MoonProject.Art.Editor
             SiteKit.RustStreak(b, box, 0.12f, 1.1f, 0.18f, 0.035f);
             if (RequireLevel(level) == 1)
             {
-                Weathering.Collar(b, At(new Vector3(0f, PlinthHeight + 0.08f, -0.3f)), 0.075f, 0.14f);
+                Weathering.Collar(b, At(PoleFoot + Vector3.up * 0.08f), 0.075f, 0.14f);
+                foreach (Vector2 corner in GuyCorners)
+                {
+                    Weathering.Collar(b, At(GuyStake(corner) + Vector3.up * 0.04f), 0.05f, 0.06f);
+                }
+
                 return b;
             }
 
@@ -212,77 +238,109 @@ namespace MoonProject.Art.Editor
                 new Vector3(0.012f, 0.06f, 0.01f), PaletteSwatch.Honey);
         }
 
-        /// <summary>L1: a cobbled pole with a cable wound down it, a small dish, a crossbar and one bulb.</summary>
+        // The mast's dish platform and the tower's two decks, a set share of their heights.
+        private const float MastPlatform = MastTop * 0.55f;
+        private const float LowDeck = TowerTop * 0.34f;
+        private const float HighDeck = TowerTop * 0.69f;
+
+        /// <summary>
+        /// L1: a tall cobbled pole, spliced from two lengths with collars, a cable wound down its foot, three guy wires
+        /// bolted to the plinth's corners, a small dish near the top, a crossbar and one bulb.
+        /// </summary>
         private static void Pole(LowPolyMeshBuilder b)
         {
-            var foot = new Vector3(0f, PlinthHeight, -0.3f);
-            var top = new Vector3(0f, 3.5f, -0.3f);
-            RecipeKit.Rod(b, foot, top, 0.06f, 8, PaletteSwatch.Metal);
-            RecipeKit.Rod(b, foot + new Vector3(0.09f, 0f, 0.02f), foot + new Vector3(0.07f, 1.7f, 0f), 0.035f, 6,
+            Vector3 foot = PoleFoot;
+            var top = new Vector3(0f, PoleTop, foot.z);
+            RecipeKit.Rod(b, foot, top, 0.07f, 8, PaletteSwatch.Metal);
+            RecipeKit.Rod(b, foot + new Vector3(0.1f, 0f, 0.02f), foot + new Vector3(0.08f, 2.2f, 0f), 0.04f, 6,
                 PaletteSwatch.Metal);
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < 4; i++)
             {
-                b.Torus(At(foot + Vector3.up * (0.6f + i * 0.5f)), 0.1f, 0.02f, 8, 3, PaletteSwatch.Charcoal);
+                b.Torus(At(foot + Vector3.up * (0.6f + i * 2.1f)), 0.11f, 0.022f, 8, 3, PaletteSwatch.Charcoal);
             }
 
-            Vector3 previous = foot + new Vector3(0.07f, 0.2f, 0.05f);
+            Vector3 previous = foot + new Vector3(0.08f, 0.2f, 0.05f);
             for (int i = 1; i <= 6; i++)
             {
                 float angle = i * 1.9f;
-                var offset = new Vector3(0.075f * Mathf.Sin(angle), 0.2f + i * 0.45f, 0.075f * Mathf.Cos(angle));
+                var offset = new Vector3(0.085f * Mathf.Sin(angle), 0.2f + i * 0.45f, 0.085f * Mathf.Cos(angle));
                 Vector3 next = foot + offset;
                 RecipeKit.Rod(b, previous, next, 0.015f, 5, PaletteSwatch.Charcoal);
                 previous = next;
             }
 
-            Dish(b, foot + new Vector3(0f, 2.45f, 0.12f), new Vector3(0f, 0f, 0f), 0.4f);
-            Vector3 bar = top + Vector3.down * 0.25f;
-            RecipeKit.Rod(b, bar + Vector3.left * 0.42f, bar + Vector3.right * 0.42f, 0.025f, 6, PaletteSwatch.Metal);
-            for (int side = -1; side <= 1; side += 2)
+            Vector3 collar = new Vector3(0f, GuyHeight, foot.z);
+            b.Torus(At(collar), 0.12f, 0.03f, 8, 3, PaletteSwatch.Metal);
+            foreach (Vector2 corner in GuyCorners)
             {
-                Vector3 end = bar + Vector3.right * (side * 0.4f);
-                RecipeKit.Rod(b, end, end + new Vector3(0f, -0.45f, 0.03f), 0.012f, 5, PaletteSwatch.Metal);
+                Vector3 stake = GuyStake(corner);
+                RecipeKit.Rod(b, collar, stake + Vector3.up * 0.06f, 0.008f, 4, PaletteSwatch.Charcoal);
+                b.Box(At(stake + Vector3.up * 0.04f), new Vector3(0.1f, 0.08f, 0.1f), PaletteSwatch.Metal, 0.01f);
             }
 
-            b.Frustum(At(top + Vector3.up * 0.2f), 0.13f, 0.05f, 0.08f, 8, PaletteSwatch.Charcoal);
+            Dish(b, foot + new Vector3(0f, PoleTop - 1.05f, 0.12f), new Vector3(0f, 0f, 0f), 0.45f);
+            Vector3 bar = top + Vector3.down * 0.25f;
+            RecipeKit.Rod(b, bar + Vector3.left * 0.46f, bar + Vector3.right * 0.46f, 0.028f, 6, PaletteSwatch.Metal);
+            for (int side = -1; side <= 1; side += 2)
+            {
+                Vector3 end = bar + Vector3.right * (side * 0.44f);
+                RecipeKit.Rod(b, end, end + new Vector3(0f, -0.5f, 0.03f), 0.012f, 5, PaletteSwatch.Metal);
+            }
+
+            b.Frustum(At(top + Vector3.up * 0.2f), 0.14f, 0.05f, 0.09f, 8, PaletteSwatch.Charcoal);
         }
 
-        /// <summary>L2: a four-leg lattice mast with a mid platform, a medium dish, lamps and a whip.</summary>
+        /// <summary>Where a guy wire of the L1 pole is bolted: on the plinth's top, near the given corner.</summary>
+        private static Vector3 GuyStake(Vector2 corner)
+        {
+            float half = PlinthSize * 0.5f - GuyInset;
+            return new Vector3(corner.x * half, PlinthHeight, corner.y * half);
+        }
+
+        /// <summary>L2: a four-leg lattice mast with a dish platform, a medium dish, lamps and a whip.</summary>
         private static void Mast(LowPolyMeshBuilder b)
         {
-            const float top = 6.2f;
-            Lattice(b, PlinthHeight, top, 0.62f, 0.28f, 4);
-            Platform(b, 3.4f, 0.66f);
-            Dish(b, new Vector3(0f, 4.05f, 0.75f), new Vector3(-8f, 0f, 0f), 0.62f);
-            b.Box(At(0f, top + 0.08f, 0f), new Vector3(0.7f, 0.12f, 0.7f), PaletteSwatch.Metal, 0.02f);
-            b.Frustum(At(0f, top + 0.27f, 0f), 0.14f, 0.06f, 0.1f, 8, PaletteSwatch.Charcoal);
-            b.Box(At(0f, 5.3f, 0.34f), new Vector3(0.42f, 0.16f, 0.012f), PaletteSwatch.WarmAccent);
-            RecipeKit.Rod(b, new Vector3(0.25f, top + 0.14f, -0.25f), new Vector3(0.3f, top + 1.1f, -0.3f), 0.015f, 5,
-                PaletteSwatch.Metal);
+            Lattice(b, PlinthHeight, MastTop, 0.62f, 0.28f, 7);
+            Platform(b, MastPlatform, LatticeHalf(MastPlatform, MastTop, 0.62f, 0.28f));
+            Dish(b, new Vector3(0f, MastPlatform + 0.65f, 0.7f), new Vector3(-8f, 0f, 0f), 0.68f);
+            b.Box(At(0f, MastTop + 0.08f, 0f), new Vector3(0.7f, 0.12f, 0.7f), PaletteSwatch.Metal, 0.02f);
+            b.Frustum(At(0f, MastTop + 0.27f, 0f), 0.15f, 0.06f, 0.1f, 8, PaletteSwatch.Charcoal);
+            b.Box(At(0f, MastTop * 0.85f, LatticeHalf(MastTop * 0.85f, MastTop, 0.62f, 0.28f) + 0.04f),
+                new Vector3(0.46f, 0.18f, 0.012f), PaletteSwatch.WarmAccent);
+            RecipeKit.Rod(b, new Vector3(0.25f, MastTop + 0.14f, -0.25f), new Vector3(0.3f, MastTop + 1.2f, -0.3f),
+                0.016f, 5, PaletteSwatch.Metal);
         }
 
-        /// <summary>L3: a tall tapering lattice tower, two platforms, two dishes and a lamp crown.</summary>
+        /// <summary>L3: a tall tapering lattice tower, two decks, two dishes and a lamp crown.</summary>
         private static void Tower(LowPolyMeshBuilder b)
         {
-            const float top = 9.55f;
-            Lattice(b, PlinthHeight, top, 0.66f, 0.22f, 6);
-            Platform(b, 3.2f, 0.7f);
-            Platform(b, 6.6f, 0.66f);
-            Dish(b, new Vector3(0f, 7.35f, 0.85f), new Vector3(-15f, 0f, 0f), 1f);
-            Dish(b, new Vector3(-0.72f, 3.75f, 0f), new Vector3(0f, -90f, 0f), 0.45f);
-            b.Box(At(0f, top + 0.06f, 0f), new Vector3(0.6f, 0.1f, 0.6f), PaletteSwatch.Metal, 0.02f);
-            b.Torus(At(0f, 9.45f, 0f), 0.42f, 0.025f, 12, 3, PaletteSwatch.Metal);
+            Lattice(b, PlinthHeight, TowerTop, 0.66f, 0.22f, 9);
+            Platform(b, LowDeck, LatticeHalf(LowDeck, TowerTop, 0.66f, 0.22f));
+            Platform(b, HighDeck, LatticeHalf(HighDeck, TowerTop, 0.66f, 0.22f));
+            Dish(b, new Vector3(0f, HighDeck + 0.75f, 0.8f), new Vector3(-15f, 0f, 0f), 1.05f);
+            Dish(b, new Vector3(-0.7f, LowDeck + 0.55f, 0f), new Vector3(0f, -90f, 0f), 0.48f);
+            b.Box(At(0f, TowerTop + 0.06f, 0f), new Vector3(0.6f, 0.1f, 0.6f), PaletteSwatch.Metal, 0.02f);
+            b.Torus(At(0f, TowerTop - 0.1f, 0f), 0.42f, 0.025f, 12, 3, PaletteSwatch.Metal);
             for (int i = 0; i < 4; i++)
             {
                 float angle = i * Mathf.PI * 0.5f + Mathf.PI * 0.25f;
-                var foot = new Vector3(0.24f * Mathf.Sin(angle), top + 0.1f, 0.24f * Mathf.Cos(angle));
-                RecipeKit.Rod(b, foot, new Vector3(0f, top + 0.45f, 0f), 0.018f, 5, PaletteSwatch.Metal);
+                var foot = new Vector3(0.24f * Mathf.Sin(angle), TowerTop + 0.1f, 0.24f * Mathf.Cos(angle));
+                RecipeKit.Rod(b, foot, new Vector3(0f, TowerTop + 0.45f, 0f), 0.018f, 5, PaletteSwatch.Metal);
             }
 
-            b.Frustum(At(0f, top + 0.5f, 0f), 0.16f, 0.07f, 0.1f, 8, PaletteSwatch.Charcoal);
-            b.Box(At(0f, 8.4f, 0.24f), new Vector3(0.46f, 0.18f, 0.012f), PaletteSwatch.WarmAccent);
-            RecipeKit.Rod(b, new Vector3(0.22f, top + 0.12f, -0.22f), new Vector3(0.28f, top + 1.5f, -0.28f), 0.016f,
-                5, PaletteSwatch.Metal);
+            b.Frustum(At(0f, TowerTop + 0.5f, 0f), 0.17f, 0.07f, 0.1f, 8, PaletteSwatch.Charcoal);
+            b.Box(At(0f, TowerTop * 0.88f, LatticeHalf(TowerTop * 0.88f, TowerTop, 0.66f, 0.22f) + 0.04f),
+                new Vector3(0.5f, 0.2f, 0.012f), PaletteSwatch.WarmAccent);
+            RecipeKit.Rod(b, new Vector3(0.22f, TowerTop + 0.12f, -0.22f), new Vector3(0.28f, TowerTop + 1.6f, -0.28f),
+                0.016f, 5, PaletteSwatch.Metal);
+        }
+
+        /// <summary>
+        /// The lattice's half-spread at height <paramref name="y"/> on a stage topping out at <paramref name="top"/>.
+        /// </summary>
+        private static float LatticeHalf(float y, float top, float bottomHalf, float topHalf)
+        {
+            return Mathf.Lerp(bottomHalf, topHalf, (y - PlinthHeight) / (top - PlinthHeight));
         }
 
         /// <summary>

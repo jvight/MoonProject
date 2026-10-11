@@ -6,8 +6,8 @@ namespace MoonProject.Art.Editor
 {
     /// <summary>
     /// The base's ground power cables (M3-16, "power comes back through the tower"): from the radio tower's foot to
-    /// home, Kenji's Rover Bay and the crew's lift, half sunk in the dust and wandering a little, each ending in a
-    /// junction box. Along each sits a row of small glass beads, dark until power reaches them, so the cable can
+    /// home (the ladder's leg), Kenji's Rover Bay and the survey chart (the leg under the big porthole, M3-19 D8),
+    /// half sunk in the dust and wandering a little, each ending in a junction box. Along each sits a row of small glass beads, dark until power reaches them, so the cable can
     /// light along its length from the tower outwards. Base (lander) space, metres, on the ground.
     /// </summary>
     internal static class PowerCableMeshes
@@ -15,30 +15,34 @@ namespace MoonProject.Art.Editor
         /// <summary>
         /// The cables, by name of the place they feed, with the waypoints of their routes from the tower.
         /// </summary>
-        public static readonly string[] Targets = { "Home", "Bay", "Lift" };
+        public static readonly string[] Targets = { "Home", "Bay", "Chart" };
 
         public const float SegmentLength = 1.2f;
 
-        private const float SheathRadius = 0.032f;
-        private const float SheathHeight = 0.012f;
+        public const float SheathRadius = 0.032f;
+        public const float SheathHeight = 0.012f;
         private const float BeadRadius = 0.016f;
         private const float BeadLength = 0.1f;
-        private const float BeadHeight = 0.038f;
-        private const float Wander = 0.12f;
+        public const float BeadHeight = 0.038f;
+        private const float WanderWidth = 0.12f;
         private const float StepLength = 1.5f;
 
         private static readonly Vector3[][] Routes =
         {
-            new[] { new Vector3(-5.15f, 0f, -0.6f), new Vector3(-4.1f, 0f, -0.7f), new Vector3(-3.05f, 0f, -0.9f) },
             new[]
             {
-                new Vector3(-6f, 0f, -1.85f), new Vector3(-5.3f, 0f, -4f), new Vector3(0f, 0f, -4.6f),
-                new Vector3(6f, 0f, -4.4f), new Vector3(9.4f, 0f, -2.8f), new Vector3(10.1f, 0f, -2.4f),
+                new Vector3(-10.65f, 0f, -0.9f), new Vector3(-8.2f, 0f, 0.9f), new Vector3(-6.1f, 0f, 3.2f),
+                new Vector3(-4.75f, 0f, 3.95f),
             },
             new[]
             {
-                new Vector3(-6f, 0f, -0.15f), new Vector3(-5.6f, 0f, 2.6f), new Vector3(-3.4f, 0f, 5.6f),
-                new Vector3(-0.8f, 0f, 7f), new Vector3(3.6f, 0f, 7f), new Vector3(3.75f, 0f, 3.95f),
+                new Vector3(-11.5f, 0f, -2.35f), new Vector3(-9.4f, 0f, -6.4f), new Vector3(-3f, 0f, -7.9f),
+                new Vector3(4f, 0f, -7.7f), new Vector3(8.6f, 0f, -6.2f), new Vector3(10.15f, 0f, -4.75f),
+            },
+            new[]
+            {
+                new Vector3(-10.75f, 0f, -2.2f), new Vector3(-8.4f, 0f, -3.6f), new Vector3(-5.75f, 0f, -4.55f),
+                new Vector3(-4.9f, 0f, -4.75f),
             },
         };
 
@@ -47,9 +51,17 @@ namespace MoonProject.Art.Editor
         /// </summary>
         public static List<Vector3> Path(int index)
         {
-            Vector3[] route = Routes[index];
+            return Wander(Routes[index], index);
+        }
+
+        /// <summary>
+        /// A path through <paramref name="route"/>'s waypoints in steps of about 1.5 m, each step nudged sideways a
+        /// little (its own pattern per <paramref name="seed"/>) so the cable never runs ruler-straight.
+        /// </summary>
+        public static List<Vector3> Wander(IReadOnlyList<Vector3> route, int seed)
+        {
             var path = new List<Vector3> { route[0] };
-            for (int i = 1; i < route.Length; i++)
+            for (int i = 1; i < route.Count; i++)
             {
                 Vector3 from = route[i - 1];
                 Vector3 to = route[i];
@@ -58,7 +70,7 @@ namespace MoonProject.Art.Editor
                 for (int k = 1; k <= steps; k++)
                 {
                     float t = (float)k / steps;
-                    float wander = k == steps ? 0f : Mathf.Sin((index * 7 + i * 3 + k) * 1.7f) * Wander;
+                    float wander = k == steps ? 0f : Mathf.Sin((seed * 7 + i * 3 + k) * 1.7f) * WanderWidth;
                     path.Add(Vector3.Lerp(from, to, t) + side * wander);
                 }
             }
@@ -93,7 +105,15 @@ namespace MoonProject.Art.Editor
         /// </summary>
         public static List<LowPolyMeshBuilder> Glow(int index)
         {
-            List<Vector3> path = Path(index);
+            return Beads(Path(index), BeadHeight);
+        }
+
+        /// <summary>
+        /// Glass beads one every <see cref="SegmentLength"/> along <paramref name="path"/> from its start, each a
+        /// small pill <paramref name="lift"/> above the path, in order.
+        /// </summary>
+        public static List<LowPolyMeshBuilder> Beads(IReadOnlyList<Vector3> path, float lift)
+        {
             var beads = new List<LowPolyMeshBuilder>();
             float travelled = 0f;
             float next = SegmentLength * 0.5f;
@@ -103,7 +123,7 @@ namespace MoonProject.Art.Editor
                 Vector3 along = (path[i] - path[i - 1]) / length;
                 while (next <= travelled + length)
                 {
-                    Vector3 at = path[i - 1] + along * (next - travelled) + Vector3.up * BeadHeight;
+                    Vector3 at = path[i - 1] + along * (next - travelled) + Vector3.up * lift;
                     var bead = new LowPolyMeshBuilder(40);
                     RecipeKit.Rod(bead, at - along * (BeadLength * 0.5f), at + along * (BeadLength * 0.5f), BeadRadius,
                         5, PaletteSwatch.LampGlass);

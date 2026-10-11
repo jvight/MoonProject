@@ -7,136 +7,193 @@ using MoonProject.Art.Editor;
 namespace MoonProject.Art.Tests
 {
     /// <summary>
-    /// What M3-14 built for 07 at the lander (VISION rulings 12 and 14): the charging dock 07 rests on with its nose
-    /// at the contacts, and the crew's cable lift that carries it up to the deck, jammed halfway. Contract nodes,
-    /// clearances for 07 at rest and along the lift's whole travel, a dark charging glow and repeatable builds.
+    /// What was built for 07 at the habitat lander (M3-14, M3-19; VISION rulings 12 and 14): the charging dock 07
+    /// rests on with its nose at the contacts, and the belly lift that carries it up through the floor hatch into the
+    /// crew's lab, jammed on its stops. Contract nodes, clearances for 07 at rest and along the lift's whole travel
+    /// and turning on the turntable at the top (the paths as cylinders through the shaft), dark glows and repeatable
+    /// builds.
     /// </summary>
     public sealed class LanderPorchTests
     {
         // 07 rides this far above whatever it stands on in the overlap checks, so resting wheels do not count.
         private const float Rest = 0.01f;
 
-        // The dock's contacts stop at most this short of 07's nose.
-        private const float ContactReach = 0.06f;
+        // The dock's pad stands at most this proud of the dust, and 07's lane off it, as wide as 07 and this much
+        // more each side, runs this far back and this far ahead with nothing in it.
+        private const float PadStep = 0.02f;
+        private const float LaneMargin = 0.15f;
+        private const float LaneBehind = 5f;
+        private const float LaneAhead = 8f;
 
-        // 07's body spans these heights over its pivot; the dock's contacts lie within this reach of its middle.
-        private const float BodyBottom = 0.34f;
-        private const float BodyTop = 0.84f;
-        private const float ContactSpan = 0.4f;
+        // The belly clears 07 (about 2 m tall with its head up) with headroom to spare (M3-19 §3).
+        private const float Headroom = 0.4f;
 
-        private static readonly float[] Travel = { 0f, 0.25f, 0.5f, 0.75f, 1f };
+        // Open ground between the dock out on the apron and the lander's belly.
+        private const float MassGap = 4f;
+
+        // The platform and 07 keep at least this far from anything fixed on their way up the shaft and turning at
+        // the top (the platform's path is a cylinder as wide as its widest part, 07's as wide as it turns).
+        private const float PathClearance = 0.015f;
 
         private ModelNode _lander;
+        private ModelNode _lift;
         private List<Vector3> _rover;
 
         [OneTimeSetUp]
         public void BuildOnce()
         {
             _lander = BaseModelBuilder.CreateLander();
+            _lift = _lander.GetDescendant(BaseModelBuilder.BellyLiftName);
             _rover = new List<Vector3>();
             SilhouetteCamera.CollectTriangles(RoverModelBuilder.CreateModel(), Matrix4x4.identity, _rover);
         }
 
         [Test]
-        public void Lander_HasTheDockAndLiftNodes()
+        public void Lander_HasTheDockAndBellyLiftNodes()
         {
-            foreach (string name in new[] { "DockAnchor", "LiftBottom", "LiftTop" })
-            {
-                ModelNode node = _lander.GetDescendant(name);
-                Assert.IsNotNull(node, name);
-                Assert.IsNull(node.Mesh, $"{name} is an empty");
-                Assert.IsTrue(_lander.Children.Contains(node), $"{name} sits right under the lander");
-            }
-
+            ModelNode dock = _lander.GetDescendant("DockAnchor");
+            Assert.IsNull(dock.Mesh, "DockAnchor is an empty");
+            Assert.IsTrue(_lander.Children.Contains(dock));
             ModelNode glow = _lander.GetDescendant("DockGlow");
             Assert.AreEqual(ModelMaterial.PaletteGlowOff, glow.Material, "dark until 07 charges");
             Assert.IsTrue(MeshChecks.Swatches(glow.Mesh.Geometry).SequenceEqual(new[] { PaletteSwatch.LampGlass }));
-            ModelNode platform = _lander.GetDescendant("LiftPlatform");
+
+            Assert.IsTrue(_lander.Children.Contains(_lift), "BellyLift sits right under the lander");
+            Assert.AreEqual(Vector3.zero, _lift.LocalPosition, "on the ground under the shaft's axis");
             CollectionAssert.AreEqual(
                 new[]
                 {
-                    BaseModelBuilder.LiftJamPropsName, "RoverSpot", "Weather_Paint", "Weather_Rust", "Weather_Dust",
+                    BaseModelBuilder.PlatformDownName, BaseModelBuilder.PlatformUpName, BaseModelBuilder.PlatformName,
+                    BaseModelBuilder.HatchLeafLeftName, BaseModelBuilder.HatchLeafRightName,
+                    BaseModelBuilder.HatchRimName, BaseModelBuilder.BellyLampName, BaseModelBuilder.CableLeftName,
+                    BaseModelBuilder.CableRightName, BaseModelBuilder.CableJamName,
+                },
+                _lift.Children.Select(child => child.Name));
+            ModelNode platform = _lift.GetDescendant(BaseModelBuilder.PlatformName);
+            CollectionAssert.AreEqual(
+                new[]
+                {
+                    BaseModelBuilder.RoverSpotName, BaseModelBuilder.RimLampsName, BaseModelBuilder.PadGlowName,
+                    "Weather_Paint", "Weather_Rust", "Weather_Dust",
                 },
                 platform.Children.Select(child => child.Name));
-            Assert.IsNull(platform.GetDescendant("RoverSpot").Mesh);
-            var moving = new[] { platform, _lander.GetDescendant("LiftCable_L"), _lander.GetDescendant("LiftCable_R") };
-            foreach (ModelNode node in moving)
+            foreach (string empty in new[] { BaseModelBuilder.PlatformDownName, BaseModelBuilder.PlatformUpName,
+                         BaseModelBuilder.RoverSpotName, BaseModelBuilder.StitchPointName })
             {
-                Assert.IsTrue(_lander.Children.Contains(node), $"{node.Name} sits right under the lander");
+                Assert.IsNull(_lift.GetDescendant(empty).Mesh, $"{empty} is an empty");
+            }
+
+            foreach (string lamp in new[] { BaseModelBuilder.RimLampsName, BaseModelBuilder.PadGlowName,
+                         BaseModelBuilder.HatchRimName, BaseModelBuilder.BellyLampName })
+            {
+                ModelNode node = _lift.GetDescendant(lamp);
+                Assert.AreEqual(ModelMaterial.PaletteGlowOff, node.Material, $"{lamp} starts dark");
+                CollectionAssert.AreEqual(new[] { PaletteSwatch.LampGlass }, MeshChecks.Swatches(node.Mesh.Geometry),
+                    lamp);
+            }
+
+            foreach (string moving in new[] { BaseModelBuilder.PlatformName, BaseModelBuilder.HatchLeafLeftName,
+                         BaseModelBuilder.HatchLeafRightName, BaseModelBuilder.CableLeftName,
+                         BaseModelBuilder.CableJamName })
+            {
+                ModelNode node = _lift.GetDescendant(moving);
                 MeshChecks.AssertWellFormed(node.Mesh.Geometry);
-                Assert.AreEqual(ModelMaterial.Palette, node.Material, node.Name);
-                Assert.IsFalse(MeshChecks.Swatches(node.Mesh.Geometry).Any(Palette.IsEmissive), node.Name);
+                Assert.AreEqual(ModelMaterial.Palette, node.Material, moving);
+                Assert.IsFalse(MeshChecks.Swatches(node.Mesh.Geometry).Any(Palette.IsEmissive), moving);
             }
         }
 
         [Test]
-        public void Dock_Rests07_NoseToTheContacts_ClearOfEverything()
+        public void Dock_Rests07_OnAFlushPad_WithItsLaneClearBothWays_InFrontOfTheBelly()
         {
             ModelNode anchor = _lander.GetDescendant("DockAnchor");
-            Assert.That(anchor.LocalPosition.y, Is.InRange(0.02f, 0.1f), "a low pad");
-            Assert.Less((anchor.LocalRotation * Vector3.forward).z, -0.99f, "07 rests facing the lander");
+            Assert.That(anchor.LocalPosition.y, Is.InRange(0f, PadStep),
+                "a plate flush with the dust: 07 settles onto it from its spawn, with no step to climb");
+            Vector3 heading = anchor.LocalRotation * Vector3.forward;
+            Assert.Less(heading.x, -0.5f, "07 rests looking out past the lander's left, toward Earth and the Peak");
             Matrix4x4 pose = Matrix4x4.TRS(anchor.LocalPosition + Vector3.up * Rest, anchor.LocalRotation, Vector3.one);
+            float stageFront = HullPoints(PaletteSwatch.Honey).Where(p => p.y > 2f).Max(p => p.z);
             List<Vector3> rover = Posed(_rover, pose);
-            AssertClear(rover, Solid(_lander, string.Empty), "07 at the dock");
+            Assert.Greater(BoundsOf(rover, 0, rover.Count).min.z, stageFront + MassGap,
+                "the dock stands out on the apron, with open ground between it and the belly");
 
-            Vector3 rest = anchor.LocalPosition;
-            List<Vector3> contacts = HullPoints(PaletteSwatch.Honey)
-                .Where(p => Mathf.Abs(p.x - rest.x) < ContactSpan && p.z < rest.z && p.z > rest.z - 1.2f).ToList();
-            Assert.IsNotEmpty(contacts, "brass contacts on the dock");
-            foreach (Vector3 contact in contacts)
+            // In dock space 07 faces +Z, square to the dock: its rest and its lane are measured there.
+            Matrix4x4 toDock = Matrix4x4.TRS(anchor.LocalPosition, anchor.LocalRotation, Vector3.one).inverse;
+            List<Vector3> fixedParts = Posed(Solid(_lander, string.Empty), toDock);
+            AssertClear(Posed(_rover, Matrix4x4.Translate(Vector3.up * Rest)), fixedParts, "07 at the dock");
+            float halfWidth = _rover.Max(p => Mathf.Abs(p.x)) + LaneMargin;
+            foreach (Vector3 p in fixedParts)
             {
-                Assert.That(contact.y - rest.y, Is.InRange(BodyBottom, BodyTop), "at 07's own height");
-                Assert.That(FrontOf(rover, contact) - contact.z, Is.InRange(0f, ContactReach), "the contacts reach 07");
+                bool inLane = Mathf.Abs(p.x) < halfWidth && p.z > -LaneBehind && p.z < LaneAhead && p.y > PadStep;
+                Assert.IsFalse(inLane, $"{p} stands in 07's lane off the dock (dock space)");
             }
         }
 
         [Test]
-        public void Lift_RisesFromTheDust_ToTheDeck_JammedHalfway()
+        public void Lift_RisesFromTheDust_IntoTheCabin_JammedOnItsStops()
         {
-            Vector3 bottom = _lander.GetDescendant("LiftBottom").LocalPosition;
-            Vector3 top = _lander.GetDescendant("LiftTop").LocalPosition;
-            ModelNode platform = _lander.GetDescendant("LiftPlatform");
-            Assert.That(bottom.y, Is.InRange(0.02f, 0.25f), "07 drives on from the dust, over the ramp lip");
-            Assert.AreEqual(BaseModelBuilder.LanderDeckTop, top.y, 1e-4f, "level with the deck at the top");
-            Assert.AreEqual(new Vector2(bottom.x, bottom.z), new Vector2(top.x, top.z), "straight up");
-            // Jammed halfway, hanging from its left cable alone: its left shackle is where a level platform's would be.
-            var shackle = new Vector3(-0.84f, 1f, -1.29f);
-            Vector3 hanging = platform.LocalPosition + platform.LocalRotation * shackle;
-            Assert.Less(Vector3.Distance(hanging, Vector3.Lerp(bottom, top, 0.5f) + shackle), 1e-3f, "jammed");
-            Assert.Greater((platform.LocalRotation * Vector3.forward).z, 0.999f,
-                "it only rolls, still facing the lander");
-            Assert.Less((platform.GetDescendant("RoverSpot").LocalRotation * Vector3.forward).z, -0.99f,
-                "07 rides facing the lander");
+            Vector3 bottom = _lift.GetDescendant(BaseModelBuilder.PlatformDownName).LocalPosition;
+            Vector3 top = _lift.GetDescendant(BaseModelBuilder.PlatformUpName).LocalPosition;
+            ModelNode platform = _lift.GetDescendant(BaseModelBuilder.PlatformName);
+            ModelNode lab = _lander.GetDescendant(BaseModelBuilder.LabName);
+            Assert.That(bottom.y, Is.InRange(0.15f, 0.35f), "07 drives on from the dust over a low rim");
+            Assert.AreEqual(lab.LocalPosition.y, top.y, 1e-4f, "flush with the cabin floor at the top");
+            Assert.AreEqual(new Vector2(bottom.x, bottom.z), new Vector2(top.x, top.z), "straight up the shaft");
+            Assert.That(Quaternion.Angle(platform.LocalRotation, BaseModelBuilder.BellyPlatformLevel),
+                Is.InRange(3f, 8f), "jammed: one side hangs about 0.3 m low");
+            Assert.Greater((platform.LocalRotation * Vector3.forward).z, 0.999f, "it only rolls");
+            Assert.Less(Vector3.Distance(platform.LocalPosition, bottom), 0.2f, "it sits on its stops");
+            Assert.Less((platform.GetDescendant(BaseModelBuilder.RoverSpotName).LocalRotation * Vector3.forward).z,
+                -0.99f, "07 drives on from the front, heading for the lander's back");
 
-            List<Vector3> deck = Solid(platform, string.Empty);
-            // While jammed only the left cable holds it; the right one hangs snapped until the repair.
-            foreach (string name in new[] { "LiftCable_L" })
-            {
-                ModelNode cable = _lander.GetDescendant(name);
-                Vector3 end = cable.LocalPosition + Vector3.up * cable.Mesh.Geometry.Bounds.min.y;
-                Assert.Less(deck.Min(p => Vector3.Distance(p, end)), 0.1f, $"{name} hangs down to the carriage");
-                Assert.Greater(cable.LocalPosition.y, top.y + 1.2f, $"{name} still hangs with the platform at the top");
-            }
+            ModelNode left = _lift.GetDescendant(BaseModelBuilder.CableLeftName);
+            Vector3 foot = left.LocalPosition + Vector3.down * BaseModelBuilder.BellyCableBuiltLength;
+            List<Vector3> deck = Solid(platform, BaseModelBuilder.RoverSpotName);
+            Assert.Less(deck.Min(p => Vector3.Distance(p, foot)), 0.08f, "the left cable hangs down to its eye");
+            Assert.Greater(left.LocalPosition.y, top.y, "the sheaves stand above the platform at the top");
+            Assert.IsFalse(_lift.GetDescendant(BaseModelBuilder.CableRightName).Active, "the right one snapped");
+            Assert.IsTrue(_lift.GetDescendant(BaseModelBuilder.CableJamName).Active, "the jam reads at a glance");
+            Vector3 stitch = _lift.GetDescendant(BaseModelBuilder.StitchPointName).LocalPosition;
+            Assert.Less(stitch.y, BaseModelBuilder.CreateLander().Mesh.Geometry.Bounds.max.y, "below the belly");
+            Assert.That(stitch.y, Is.InRange(1.6f, 2.6f), "the frayed end hangs out of the shaft in 07's sight");
         }
 
         [Test]
-        public void Lift_Carries07_ClearOfTheLander_AllTheWay()
+        public void Belly_Clears07_WithHeadroom()
         {
-            ModelNode platform = _lander.GetDescendant("LiftPlatform");
-            Matrix4x4 spot = platform.GetDescendant("RoverSpot").LocalMatrix;
-            // The jam's board and loose cable are hidden once the lift is restored, before it ever carries 07.
-            List<Vector3> deck = Solid(platform, BaseModelBuilder.LiftJamPropsName, Matrix4x4.identity);
-            List<Vector3> fixedParts = Solid(_lander, "Lift");
-            Vector3 bottom = _lander.GetDescendant("LiftBottom").LocalPosition;
-            Vector3 top = _lander.GetDescendant("LiftTop").LocalPosition;
-            foreach (float t in Travel)
+            Vector3 bottom = _lift.GetDescendant(BaseModelBuilder.PlatformDownName).LocalPosition;
+            ModelNode leaf = _lift.GetDescendant(BaseModelBuilder.HatchLeafLeftName);
+            float belly = leaf.Mesh.Geometry.Bounds.min.y;
+            float tallest = _rover.Max(p => p.y);
+            Assert.Greater(belly - (bottom.y + tallest), Headroom, "07 fits under the belly with room to spare");
+        }
+
+        [Test]
+        public void Lift_Carries07_ClearOfTheLander_AllTheWay_AndTurnsAtTheTop()
+        {
+            ModelNode platform = _lift.GetDescendant(BaseModelBuilder.PlatformName);
+            List<Vector3> deck = Solid(platform, string.Empty, Matrix4x4.identity);
+            float deckRadius = deck.Max(Flat);
+            float deckBelow = -deck.Min(p => p.y);
+            float down = _lift.GetDescendant(BaseModelBuilder.PlatformDownName).LocalPosition.y;
+            float up = _lift.GetDescendant(BaseModelBuilder.PlatformUpName).LocalPosition.y;
+            float deckAbove = deck.Max(p => p.y);
+            float roverRadius = _rover.Max(Flat);
+            float roverTop = _rover.Max(p => p.y);
+            Assert.Less(roverRadius, deckRadius, "07 turns within the turntable's own circle");
+            List<Vector3> fixedParts = Fixed();
+            for (int i = 0; i < fixedParts.Count; i += 3)
             {
-                Matrix4x4 at = Matrix4x4.Translate(Vector3.Lerp(bottom, top, t));
-                List<Vector3> carried = Posed(_rover, at * spot * Matrix4x4.Translate(Vector3.up * Rest));
-                List<Vector3> moved = Posed(deck, at);
-                AssertClear(moved, fixedParts, $"the platform at {t:P0} of its travel");
-                AssertClear(carried, fixedParts, $"07 on the lift at {t:P0} of its travel");
-                AssertClear(carried, moved, $"07 inside the platform's railings at {t:P0} of its travel");
+                foreach (Vector3 q in Samples(fixedParts[i], fixedParts[i + 1], fixedParts[i + 2]))
+                {
+                    float r = Flat(q);
+                    bool inDeckPath = r < deckRadius + PathClearance && q.y > down - deckBelow + Rest * 0.5f
+                                      && q.y < up + deckAbove + PathClearance;
+                    bool inRoverPath = r < roverRadius + PathClearance && q.y > down
+                                       && q.y < up + roverTop + PathClearance;
+                    Assert.IsFalse(inDeckPath, $"{q} stands in the platform's way up the shaft");
+                    Assert.IsFalse(inRoverPath, $"{q} stands in 07's way up the shaft or round the turntable");
+                }
             }
         }
 
@@ -147,23 +204,31 @@ namespace MoonProject.Art.Tests
         }
 
         /// <summary>
-        /// How near 07's front (posed facing -Z) comes to the lander in the column through <paramref name="point"/>:
-        /// the least z of its triangles that cover the point's x and y.
+        /// Everything that stays put while the lift runs: the lander and its lab, without the belly lift's moving
+        /// parts (the platform and its cables, the jam hidden once stitched) and with the hatch leaves slid open.
         /// </summary>
-        private static float FrontOf(List<Vector3> rover, Vector3 point)
+        private List<Vector3> Fixed()
         {
-            float front = float.MaxValue;
-            for (int i = 0; i < rover.Count; i += 3)
+            List<Vector3> parts = Solid(_lander, BaseModelBuilder.BellyLiftName);
+            foreach (ModelNode child in _lift.Children)
             {
-                Bounds face = BoundsOf(rover, i, 3);
-                if (Mathf.Abs(face.center.x - point.x) <= face.extents.x
-                    && Mathf.Abs(face.center.y - point.y) <= face.extents.y)
+                bool leaf = child.Name == BaseModelBuilder.HatchLeafLeftName
+                            || child.Name == BaseModelBuilder.HatchLeafRightName;
+                if (leaf)
                 {
-                    front = Mathf.Min(front, face.min.z);
+                    float side = child.Name == BaseModelBuilder.HatchLeafLeftName ? -1f : 1f;
+                    var open = new List<Vector3>();
+                    SilhouetteCamera.CollectTriangles(child,
+                        Matrix4x4.Translate(Vector3.right * (side * BaseModelBuilder.HatchLeafTravel)), open);
+                    parts.AddRange(open);
+                }
+                else if (child.Name == BaseModelBuilder.HatchRimName || child.Name == BaseModelBuilder.BellyLampName)
+                {
+                    SilhouetteCamera.CollectTriangles(child, Matrix4x4.identity, parts);
                 }
             }
 
-            return front;
+            return parts;
         }
 
         /// <summary>The vertices of the lander hull's triangles painted <paramref name="swatch"/>.</summary>
@@ -221,6 +286,23 @@ namespace MoonProject.Art.Tests
             {
                 triangles.Add(pose.MultiplyPoint3x4(p));
             }
+        }
+
+        private static float Flat(Vector3 p)
+        {
+            return new Vector2(p.x, p.z).magnitude;
+        }
+
+        /// <summary>A triangle's corners, its edges' midpoints and its centre.</summary>
+        private static IEnumerable<Vector3> Samples(Vector3 a, Vector3 b, Vector3 c)
+        {
+            yield return a;
+            yield return b;
+            yield return c;
+            yield return (a + b) * 0.5f;
+            yield return (b + c) * 0.5f;
+            yield return (c + a) * 0.5f;
+            yield return (a + b + c) / 3f;
         }
 
         private static List<Vector3> Posed(List<Vector3> points, Matrix4x4 pose)

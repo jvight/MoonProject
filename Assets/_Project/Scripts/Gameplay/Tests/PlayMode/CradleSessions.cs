@@ -6,6 +6,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.TestTools;
 using MoonProject.Core;
 using MoonProject.Core.Events;
+using MoonProject.Gameplay.Lift;
 using MoonProject.Testing;
 using Object = UnityEngine.Object;
 
@@ -107,21 +108,21 @@ namespace MoonProject.Gameplay.PlayModeTests
             _fixture.Capture("41-cradle-riding");
 
             HomeBase home = _fixture.Gameplay.Home;
-            Vector3 front = (Vector3.zero - home.ShelfPosition).normalized;
-            front.y = 0f;
-            Vector3 park = home.ShelfPosition + front * 4f;
-            _fixture.Rover.Place(new Vector3(park.x, 0f, park.z), Mathf.Atan2(-front.x, -front.z) * Mathf.Rad2Deg);
-            yield return null;
-            yield return null;
-            Assert.IsTrue(cradle.CanUnload, "parked by the shelf, the rack is in reach of it");
+            Assert.IsFalse(cradle.CanUnload, "out on the basin there is nowhere to set it down");
+            yield return _fixture.RideIntoTheLab();
+            Assert.AreEqual(LabStation.Keepsakes, _fixture.Gameplay.Lift.Lab.Facing,
+                "up in the lab, the turntable turns to the keepsake shelf");
+            AssertSeated(duck);
+            Assert.IsTrue(cradle.CanUnload, "facing the shelf, the rack is in reach of it");
             Assert.IsTrue(_fixture.Gameplay.Hints.TryGet(InteractionKind.Deposit, out InteractionHint deposit));
-            Assert.AreEqual(home.ShelfPosition, deposit.Position);
-            Assert.GreaterOrEqual(home.HintedSlot, 0, "its slot glows");
+            Assert.AreEqual(home.KeepsakesPosition, deposit.Position);
+            yield return new WaitForSeconds(_fixture.BaseTuning.SlotHintEase * 4f);
+            Assert.GreaterOrEqual(home.HintedSlot, 0, "its cubby glows");
 
             Press(_mouse.rightButton, queueEventOnly: true);
             yield return Waits.Until(() => cradle.Carried == null, PressTimeout);
             Release(_mouse.rightButton);
-            Assert.AreEqual(RelicState.Depositing, duck.State, "the press sets it down onto the shelf");
+            Assert.AreEqual(RelicState.Depositing, duck.State, "the press sets it down onto the keepsake shelf");
             Assert.IsEmpty(_fixture.Events.TetherAttached, "and reaches for nothing else");
             yield return Waits.Until(() => _fixture.Events.RelicDeposited.Count > 0,
                 _fixture.BaseTuning.DepositDuration + 2f);

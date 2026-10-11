@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
@@ -49,6 +50,15 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         /// <summary>Metres the trail bits spread over, as in the content builder.</summary>
         private const float TrailLength = 84f;
+
+        /// <summary>The stand-in lab's floor (m above the ground), its stations' lens height and distance from the axis.
+        /// </summary>
+        private const float LabFloor = 3.6f;
+        private const float LensHeight = 1.25f;
+        private const float StationRadius = 2.4f;
+
+        /// <summary>Seconds the turntable may take to come to rest after the ride (a half turn and its delay).</summary>
+        private const float LabTurnTimeout = 4f;
 
         private static readonly float[] RelicMasses = { 6f, 3f, 5f, 9f, 7f, 14f };
 
@@ -192,6 +202,30 @@ namespace MoonProject.Gameplay.PlayModeTests
                 upgrades = new[] { new UpgradeSaveData { id = RadioTowerUpgrade.Id, level = towerLevel } },
             });
             Gameplay.Tower.ShowLevel(towerLevel);
+        }
+
+        /// <summary>
+        /// Home powered and the belly lift restored, as a loaded game would show them; then 07 rests on the platform
+        /// (heading in from the dock) until it has carried 07 up into the lab and the turntable rests facing the station
+        /// that wants what 07 carries (docs/features/M3-19). The stand-in rover stays below: the lab's logic needs no
+        /// ride pose.
+        /// </summary>
+        public IEnumerator RideIntoTheLab()
+        {
+            PowerTo(Math.Max(1, Gameplay.Upgrades.LevelOf(RadioTowerUpgrade.Id)));
+            LiftStation lift = Gameplay.Lift;
+            lift.Restore(new LiftSaveData { restored = true });
+            Vector3 heading = lift.RideHeading;
+            Rover.Place(lift.RideSpot, Mathf.Atan2(heading.x, heading.z) * Mathf.Rad2Deg);
+            float timeout = LiftTuning.BoardDelay + LiftTuning.RideSeconds + LiftTuning.SettleSeconds + LabTurnTimeout;
+            yield return Waits.Until(() => lift.Phase == LiftPhase.Inside && !lift.Turning, timeout);
+        }
+
+        /// <summary>The relic stands on the keepsake shelf, as a loaded game shows it (no deposit, no news).</summary>
+        public void Display(Relic relic, int slot)
+        {
+            relic.Restore(RelicState.Displayed, 1f, true, relic.transform.position, Quaternion.identity, slot);
+            Gameplay.Home.SyncDisplays();
         }
 
         /// <summary>
@@ -408,16 +442,6 @@ namespace MoonProject.Gameplay.PlayModeTests
                 sockets[i] = Node("LampSocket_" + i, lander, new Vector3(-1.5f + i, 3.4f, 1.6f));
             }
 
-            Transform shelf = Node("MuseumShelf", Node("ShelfAnchor", lander, new Vector3(6f, 0f, 1.2f)),
-                Vector3.zero);
-            Transform shelfLights = Block(shelf, new Vector3(0f, 1.75f, 0f), new Vector3(2.7f, 0.1f, 0.6f));
-            var slots = new Transform[6];
-            for (int i = 0; i < slots.Length; i++)
-            {
-                slots[i] = Node("Slot_" + i, shelf, new Vector3(-0.86f + 0.86f * (i % 3), i < 3 ? 0.33f : 1.03f,
-                    0.04f));
-            }
-
             Transform anchor = Node("TowerAnchor", lander, new Vector3(-6f, 0f, -1f));
             float[] heights = { 3.78f, 6.55f, 10f };
             var stages = new GameObject[3];
@@ -443,11 +467,19 @@ namespace MoonProject.Gameplay.PlayModeTests
             dock.localRotation = Quaternion.Euler(0f, 180f, 0f);
             Transform dockGlow = Named(Block(lander, new Vector3(0f, 0.02f, 4.15f), new Vector3(1.6f, 0.04f, 2.4f)),
                 "DockGlow");
-            home.Wire(BaseTuning, baseRoot, windows.GetComponent<Renderer>(), sockets, shelf,
-                shelfLights.GetComponent<Renderer>(), slots, dock, dockGlow.GetComponent<Renderer>());
+            Transform lab = BuildLab(lander);
+            Transform keepsakes = lab.Find("Station_Keepsakes");
+            var slots = new Transform[6];
+            for (int i = 0; i < slots.Length; i++)
+            {
+                slots[i] = Node("Slot_" + i, keepsakes, new Vector3(-0.9f + 0.6f * i, 0.2f, 0.3f));
+            }
+
+            home.Wire(BaseTuning, baseRoot, windows.GetComponent<Renderer>(), sockets, keepsakes, slots, dock,
+                dockGlow.GetComponent<Renderer>());
             tower.Wire(TowerTuning, RadioTowerUpgrade, anchor, stages, lights, beacons, hoppers, hatches);
             Transform bay = Node("WorkshopAnchor", lander, new Vector3(12.5f, 0f, -2f));
-            Transform board = BuildBay(bay, workshop, plotter);
+            BuildBay(bay, workshop, plotter);
             TillyPerch = Node("FriendSocket_tilly", lander, new Vector3(-1.6f, 3.3f, 0.9f));
             BellCorner = Node("BellCorner", anchor, new Vector3(-4.9f, 0f, 0.4f));
             BellCorner.localRotation = Quaternion.Euler(0f, 74f, 0f);
@@ -464,10 +496,9 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             var tapes = rack.gameObject.AddComponent<CassetteShelf>();
             tapes.Wire(ShelfSlots);
-            Transform lift = BuildLift(lander, dock);
+            Transform lift = BuildLift(lander, lab, dock);
             ProgressionTuning = Asset<ProgressionTuning>();
-            progression.Wire(ProgressionTuning, new[] { dock, lander, dock, lift, anchor, shelf, bay, board, rack },
-                lift);
+            progression.Wire(ProgressionTuning, new[] { dock, lander, dock, lift, anchor, lift, bay, rack });
             return tapes;
         }
 
@@ -475,12 +506,10 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// A stand-in Rover Bay with the art contract's nodes and positions (docs/ARCHITECTURE.md: Turntable, three
         /// arms Yaw/Upper/Lower/Tip down to their SparkSockets folded along the rail in the rest pose with the
         /// contract's link lengths, the floor arm FloorLift/FloorTip, HopperMouth in the back-right corner, Lamp_0/1,
-        /// BaySign), wired as the scene contributor wires the real one.
+        /// BaySign) and Kenji's pen plotter (Plotter/PenCarriage/PenHead, PlotterSheet, PlotterLamp), wired as the scene
+        /// contributor wires the real one.
         /// </summary>
-        /// <returns>
-        /// Kenji's pen plotter (Plotter/PenCarriage/PenHead, PlotterSheet, PlotterLamp) beside the bench.
-        /// </returns>
-        private Transform BuildBay(Transform anchor, Workshop workshop, BlueprintPlotter plotter)
+        private void BuildBay(Transform anchor, Workshop workshop, BlueprintPlotter plotter)
         {
             Transform bay = Node("RoverBay", anchor, Vector3.zero);
             Transform turntable = Node("Turntable", bay, new Vector3(0f, 0.15f, -0.35f));
@@ -545,7 +574,6 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             plotter.Wire(plotterRoot, carriage, head, sheet.gameObject, lamp.GetComponent<Renderer>(), board, 0.5f,
                 0.35f);
-            return plotterRoot;
         }
 
         /// <summary>A one-level rover ability sold at the bench, as in the content builder.</summary>
@@ -812,35 +840,72 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// A stand-in crew's lift with the art contract's nodes (LiftBottom, LiftTop, LiftPlatform jammed and tilted
-        /// with its RoverSpot, the cables, WinchLamp, LiftHopperMouth), its platform a kinematic deck as the scene
-        /// contributor makes it, wired to <see cref="Lift"/>. Returns the platform.
+        /// A stand-in for the crew's lab in the lander's cabin (docs/ARCHITECTURE.md "Contract: the lab"): Lab at the
+        /// cabin floor's middle, 3.6 m up, with the four station frames round the axis at 07's lens height, +Z toward
+        /// the axis, clockwise from above from the front: Chart, Reader, Board, Keepsakes; the reader's Slot, Reel and
+        /// Tape.
         /// </summary>
-        private Transform BuildLift(Transform lander, Transform dock)
+        private static Transform BuildLab(Transform lander)
         {
-            Transform bottom = Node("LiftBottom", lander, new Vector3(3.6f, 0.15f, 3.2f));
-            Transform top = Node("LiftTop", lander, new Vector3(3.6f, 3.2f, 3.2f));
-            Transform platform = Node("LiftPlatform", lander, new Vector3(3.6f, 1.6f, 3.2f));
-            platform.localRotation = Quaternion.Euler(0f, 0f, -12f);
+            Transform lab = Node("Lab", lander, new Vector3(0f, LabFloor, 0f));
+            Node("RingRail", lab, new Vector3(0f, 2.3f, 0f));
+            string[] names = { "Station_Chart", "Station_Reader", "Station_Board", "Station_Keepsakes" };
+            for (int i = 0; i < names.Length; i++)
+            {
+                Quaternion round = Quaternion.Euler(0f, 90f * i, 0f);
+                Transform station = Node(names[i], lab, round * new Vector3(0f, LensHeight, StationRadius));
+                station.localRotation = round * Quaternion.Euler(0f, 180f, 0f);
+            }
+
+            Transform reader = lab.Find("Station_Reader");
+            Node("Slot", reader, new Vector3(0f, 0f, 0.1f));
+            Node("Reel", reader, new Vector3(0.4f, 0.2f, 0f));
+            Node("Tape", reader, new Vector3(-0.3f, -0.1f, 0f));
+            return lab;
+        }
+
+        /// <summary>
+        /// A stand-in belly lift with the art contract's nodes (BellyLift on the ground at the axis; PlatformDown and
+        /// PlatformUp; the Platform built at PlatformDown in its jammed tilt with RoverSpot, PadGlow and Weather_Dust;
+        /// the hatch leaves, the cables and CableJam with its StitchPoint), its platform a kinematic deck as the scene
+        /// contributor makes it, wired to <see cref="Lift"/>. Returns PlatformDown.
+        /// </summary>
+        private Transform BuildLift(Transform lander, Transform lab, Transform dock)
+        {
+            Transform belly = Node("BellyLift", lander, Vector3.zero);
+            Transform down = Node("PlatformDown", belly, Vector3.zero);
+            Transform up = Node("PlatformUp", belly, new Vector3(0f, LabFloor, 0f));
+            Transform platform = Node("Platform", belly, new Vector3(0f, -0.15f, 0f));
+            platform.localRotation = Quaternion.Euler(0f, 0f, -5f);
             platform.gameObject.layer = Layers.Prop;
             var deck = platform.gameObject.AddComponent<BoxCollider>();
-            deck.size = new Vector3(1.8f, 0.1f, 1.8f);
+            deck.center = new Vector3(0f, -0.1f, 0f);
+            deck.size = new Vector3(3.4f, 0.2f, 3.4f);
             var body = platform.gameObject.AddComponent<Rigidbody>();
             body.isKinematic = true;
             body.interpolation = RigidbodyInterpolation.Interpolate;
-            Transform spot = Node("RoverSpot", platform, new Vector3(0f, 0.05f, 0f));
-            Transform cableLeft = Node("LiftCable_L", lander, new Vector3(2.9f, 4f, 3.2f));
-            Transform cableRight = Node("LiftCable_R", lander, new Vector3(4.3f, 4f, 3.2f));
-            cableRight.gameObject.SetActive(false);
-            Transform snapped = Node("LiftCableR_Snapped", lander, new Vector3(4.3f, 4f, 3.2f));
-            Transform lamp = Block(lander, new Vector3(2.4f, 3.4f, 3.2f), Vector3.one * 0.15f);
-            lamp.name = "WinchLamp";
-            Transform mouth = Node("LiftHopperMouth", lander, new Vector3(2.3f, 0.8f, 2.4f));
-            mouth.localRotation = Quaternion.Euler(0f, 180f, 0f);
+            Transform spot = Node("RoverSpot", platform, Vector3.zero);
+            Transform pad = Block(platform, new Vector3(0f, 0.01f, 0f), new Vector3(3f, 0.02f, 3f));
+            pad.name = "PadGlow";
+            Transform dust = Node("Weather_Dust", platform, Vector3.zero);
+            Transform hatchLeft = Node("HatchLeafL", belly, new Vector3(-0.9f, 2.6f, 0f));
+            Transform hatchRight = Node("HatchLeafR", belly, new Vector3(0.9f, 2.6f, 0f));
+            Transform cableLeft = Node("Cable_L", belly, new Vector3(-1.3f, 3.4f, 0f));
+            Transform cableRight = Node("Cable_R", belly, new Vector3(1.3f, 3.4f, 0f));
+            Transform jam = Node("CableJam", belly, new Vector3(1.3f, 0.4f, 0f));
+            Transform stitch = Node("StitchPoint", jam, Vector3.zero);
+            Transform reader = lab.Find("Station_Reader");
+            var stations = new Transform[LabInterior.StationCount];
+            for (int i = 0; i < stations.Length; i++)
+            {
+                stations[i] = lab.Find("Station_" + (LabStation)i);
+            }
+
             LiftTuning = Asset<LiftTuning>();
-            Lift.Wire(LiftTuning, TowerTuning, lander, platform, body, spot, bottom, top, cableLeft, cableRight,
-                snapped, lamp.GetComponent<Renderer>(), mouth, dock, 2.4f);
-            return platform;
+            Lift.Wire(LiftTuning, TowerTuning, platform, body, down, up, Quaternion.identity, spot,
+                pad.GetComponent<Renderer>(), dust, hatchLeft, hatchRight, 1.2f, cableLeft, cableRight, 3.4f, jam,
+                stitch, lab, stations, reader.Find("Slot"), reader.Find("Reel"), reader.Find("Tape"), dock);
+            return down;
         }
 
         private static Transform Node(string name, Transform parent, Vector3 localPosition)

@@ -172,6 +172,41 @@
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
+        <ui:VisualElement name="lab-hud" class="lab-hud" picking-mode="Ignore">
+            <ui:VisualElement class="place-card" picking-mode="Ignore">
+                <ui:VisualElement name="lab-place" class="name-tag" picking-mode="Ignore">
+                    <ui:VisualElement name="lab-place-shadow" class="soft-shadow soft-shadow--name" />
+                    <ui:Label name="lab-place-name" class="name-tag__name" picking-mode="Ignore" />
+                    <ui:Label name="lab-place-job" class="place-card__job" picking-mode="Ignore" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="lab-prompts" class="lab-prompts" picking-mode="Ignore">
+                <ui:VisualElement name="lab-place-prompt" class="chip lab-prompts__chip" picking-mode="Ignore">
+                    <ui:VisualElement name="lab-place-glyph" class="glyph" picking-mode="Ignore">
+                        <ui:Label name="lab-place-glyph-label" class="glyph__label" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                    <ui:Label name="lab-place-word" class="chip__word" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <ui:VisualElement name="lab-turn" class="chip lab-prompts__chip" picking-mode="Ignore">
+                    <ui:VisualElement class="glyph" picking-mode="Ignore">
+                        <ui:Label name="lab-turn-glyph" class="glyph__label" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                    <ui:Label name="lab-turn-word" class="chip__word" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <ui:VisualElement name="lab-look" class="chip lab-prompts__chip" picking-mode="Ignore">
+                    <ui:VisualElement class="glyph" picking-mode="Ignore">
+                        <ui:Label name="lab-look-glyph" class="glyph__label" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                    <ui:Label name="lab-look-word" class="chip__word" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <ui:VisualElement name="lab-down" class="chip lab-prompts__chip" picking-mode="Ignore">
+                    <ui:VisualElement class="glyph" picking-mode="Ignore">
+                        <ui:Label name="lab-down-glyph" class="glyph__label" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                    <ui:Label name="lab-down-word" class="chip__word" picking-mode="Ignore" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
         <ui:VisualElement name="hop-veil" class="hop-veil" picking-mode="Ignore">
             <ui:VisualElement name="hop-veil-dark" class="hop-veil__dark" picking-mode="Ignore" />
             <ui:VisualElement name="hop-veil-grain" class="hop-veil__grain" picking-mode="Ignore" />

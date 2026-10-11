@@ -16,7 +16,9 @@ namespace MoonProject.Gameplay
         /// <summary>Hold to latch the tether onto the highlighted relic or drag piece.</summary>
         Tether = 3,
 
-        /// <summary>Let go here (or press, for a relic in the cradle): it will float onto the museum shelf.</summary>
+        /// <summary>
+        /// Press facing the lab's keepsake shelf: the relic that rode up (or the cradle's) floats into its cubby.
+        /// </summary>
         Deposit = 4,
 
         /// <summary>

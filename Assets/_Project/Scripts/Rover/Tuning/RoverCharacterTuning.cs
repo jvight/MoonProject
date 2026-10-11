@@ -277,7 +277,7 @@ namespace MoonProject.Rover
         [Range(0f, 1f)]
         [SerializeField] private float _recoveryPerk = 0.5f;
 
-        [Tooltip("Nod strength (0..1) when a relic is placed on a museum shelf.")]
+        [Tooltip("Nod strength (0..1) when a relic is placed on the keepsake shelf.")]
         [Range(0f, 1f)]
         [SerializeField] private float _depositNod = 1f;
 

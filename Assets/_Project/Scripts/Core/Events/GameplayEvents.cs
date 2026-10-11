@@ -655,8 +655,9 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
-    /// A blueprint tube 07 carried home reached Kenji's pen plotter (docs/features/M3-16 P7): the tube leaves 07's back,
-    /// the plotter draws the sheet and the kit is pinned. Rover hides the tube; Art/Audio play the drawing.
+    /// The lab's reader took a blueprint tube 07 carried up (docs/features/M3-19 §5): the tube leaves 07's back into the
+    /// slot and the reader starts decoding it (<see cref="FindDecoded"/> follows). Rover hides the tube; Audio plays
+    /// the slot taking it and the reel.
     /// </summary>
     public readonly struct BlueprintDelivered
     {
@@ -669,8 +670,29 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
-    /// On load, how many blueprint tubes 07 had scanned but not yet delivered to Kenji's plotter (docs/features/M3-16
-    /// P7). Gameplay publishes it once after the save is applied, also when <see cref="Count"/> is 0; Rover shows that
+    /// Kenji's pen plotter on the bay's back wall started drawing the sheet of decoded kit <see cref="KitId"/>
+    /// (docs/features/M3-19 §5): the hand-off pulse arrived, or the bay woke with sheets waiting. Audio plays the pen
+    /// scratch at <see cref="Position"/> while it draws for <see cref="Seconds"/>.
+    /// </summary>
+    public readonly struct BlueprintDrawing
+    {
+        public BlueprintDrawing(string kitId, Vector3 position, float seconds)
+        {
+            KitId = kitId;
+            Position = position;
+            Seconds = seconds;
+        }
+
+        public string KitId { get; }
+
+        public Vector3 Position { get; }
+
+        public float Seconds { get; }
+    }
+
+    /// <summary>
+    /// On load, how many blueprint tubes 07 had scanned but not yet fed to the lab's reader (docs/features/M3-16 P7,
+    /// M3-19). Gameplay publishes it once after the save is applied, also when <see cref="Count"/> is 0; Rover shows that
     /// many tubes on 07's back at once, with no ride-in.
     /// </summary>
     public readonly struct BlueprintsCarriedRestored
@@ -748,7 +770,8 @@ namespace MoonProject.Core.Events
 
     /// <summary>
     /// 07 scanned a blueprint tube in a salvage site's heart (docs/features/M3-16 "Blueprints", P7): the tube rides home
-    /// on 07's back until <see cref="BlueprintDelivered"/> at Kenji's plotter pins the kit <see cref="KitId"/>.
+    /// on 07's back until the lab's reader takes it (<see cref="BlueprintDelivered"/>) and decodes the kit
+    /// <see cref="KitId"/> (<see cref="FindDecoded"/>).
     /// </summary>
     public readonly struct BlueprintFound
     {

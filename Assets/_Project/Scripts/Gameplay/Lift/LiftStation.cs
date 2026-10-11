@@ -3,27 +3,36 @@ using UnityEngine;
 using MoonProject.Core;
 using MoonProject.Core.Events;
 using MoonProject.Core.Input;
+using MoonProject.Core.Save;
 
 namespace MoonProject.Gameplay.Lift
 {
     /// <summary>
-    /// The crew's lift on the lander (docs/features/M3-16 step 8 and "Each place"), driving <see cref="LiftCycle"/>:
+    /// The crew's belly lift and the lab it carries 07 into (docs/features/M3-19 §4, §5), driving
+    /// <see cref="LiftCycle"/>, the <see cref="Turntable"/> and the <see cref="LabInterior"/> on Art's nodes
+    /// (docs/ARCHITECTURE.md "Contract: the lab"):
     /// <list type="bullet">
-    /// <item>Dormant and jammed until the base power reaches the lift stage. Then 07 rests on the feed pad, its beam
-    /// feeds the winch hopper (<see cref="HopperFeed"/>, a little metal and wiring) and stitches the winch: the
-    /// platform eases level and down to the bottom stop, the taut cable replaces the snapped one and the winch lamp
-    /// lights. Restored is saved.</item>
-    /// <item>The ride: 07 rests on the platform and is carried up (a kinematic platform it stands on, 07 held still)
-    /// to the deck, where <see cref="LiftRideChanged"/> opens the lookout; any input brings it back down.</item>
-    /// <item>The ladder look: the first time near the crew's ladder, 07 looks up it, then at the lift.</item>
-    /// <item>Audio's beats (<see cref="LiftCued"/>): the powered, jammed winch creaks as 07 comes near; the platform
-    /// starts moving and reaches each stop.</item>
+    /// <item>Dormant until home has power, then jammed (built in its tilt, one side low) and silent. The first time 07
+    /// comes home carrying something for the lab (a relic or a blueprint tube) the platform creaks and its pad ring
+    /// lights; 07 rests just off its edge, facing it, and stitches the cable (no feeding): the platform eases level,
+    /// the jam and the dust drift go and the second cable hangs taut. Saved.</item>
+    /// <item>The ride: 07 rests on the platform and after a breath it rises by itself (ruling 14: no button). The hatch
+    /// leaves slide open, the platform rises eased at both ends along the shaft and a relic 07 was towing rides up
+    /// beside it. Rover holds 07 on the platform (<see cref="LiftRideChanged"/>) and flies its camera up through the
+    /// hatch. The lab is shown only while 07 rides or is up in it.</item>
+    /// <item>Inside, the platform is the turntable: it turns by itself to the station that wants what 07 carries (a
+    /// tube to the reader, a relic to the keepsake shelf; otherwise 07 arrives facing the survey chart), left and right
+    /// turn it softly to the next station, forward looks at the station and back comes away from a look or brings the
+    /// platform down, turning so 07 drives out forward toward the dock. The reader (<see cref="LabReader"/>) runs here
+    /// too; the keepsake shelf is <see cref="HomeBase"/>'s, the chart's map the map system's.</item>
+    /// <item>The ladder look: the first time near the crew's ladder, 07 looks up it, then down at the belly
+    /// lift.</item>
     /// </list>
+    /// Nothing allocates per frame.
     /// </summary>
     public sealed class LiftStation : MonoBehaviour
     {
-        private const string FeedId = "lift";
-        private const float InputEpsilon = 1e-4f;
+        private const string StitchId = "lift";
 
         private enum LadderLook
         {
@@ -34,42 +43,98 @@ namespace MoonProject.Gameplay.Lift
 
         [SerializeField] private LiftTuning _tuning;
         [SerializeField] private RadioTowerTuning _looks;
-        [SerializeField] private Transform _lander;
+
+        [Tooltip("BellyLift/Platform: pivot at the middle of its top, built at PlatformDown in its jammed tilt.")]
         [SerializeField] private Transform _platform;
+
         [SerializeField] private Rigidbody _platformBody;
+
+        [Tooltip("BellyLift/PlatformDown and PlatformUp: the platform's top on the ground, and flush with the cabin " +
+                 "floor.")]
+        [SerializeField] private Transform _down;
+
+        [SerializeField] private Transform _up;
+
+        [Tooltip("The platform's level rotation in BellyLift's space (Art's BellyPlatformLevel).")]
+        [SerializeField] private Quaternion _levelRotation = Quaternion.identity;
+
         [SerializeField] private Transform _roverSpot;
-        [SerializeField] private Transform _bottom;
-        [SerializeField] private Transform _top;
+        [SerializeField] private Renderer _padGlow;
+
+        [Tooltip("Platform/Weather_Dust: the dust drift, gone once restored.")]
+        [SerializeField] private Transform _dust;
+
+        [SerializeField] private Transform _hatchLeft;
+        [SerializeField] private Transform _hatchRight;
+
+        [Tooltip("Metres each hatch leaf slides out to open (Art's HatchLeafTravel).")]
+        [Min(0f)] [SerializeField] private float _hatchTravel = 1f;
+
         [SerializeField] private Transform _cableLeft;
         [SerializeField] private Transform _cableRight;
-        [SerializeField] private Transform _cableSnapped;
-        [SerializeField] private Renderer _winchLamp;
-        [SerializeField] private Transform _hopperMouth;
-        [SerializeField] private Transform _dock;
-        [SerializeField] private float _cableBuiltLength = 1f;
 
-        private readonly ApproachLatch _creak = new ApproachLatch();
+        [Tooltip("The cables' modelled length (Art's BellyCableBuiltLength).")]
+        [Min(0.01f)] [SerializeField] private float _cableBuiltLength = 1f;
+
+        [SerializeField] private Transform _cableJam;
+        [SerializeField] private Transform _stitchPoint;
+
+        [Tooltip("Lab: the cabin interior, shown while 07 rides or is up in it.")]
+        [SerializeField] private Transform _labRoot;
+
+        [Tooltip("The lab's stations in LabStation order: the survey chart, the reader, the tech board, the " +
+                 "keepsakes.")]
+        [SerializeField] private Transform[] _stations = Array.Empty<Transform>();
+
+        [SerializeField] private Transform _readerSlot;
+        [SerializeField] private Transform _readerReel;
+        [SerializeField] private Transform _readerTape;
+        [SerializeField] private Transform _dock;
+
+        private readonly LabCommandLatch _commands = new LabCommandLatch();
+        private readonly float[] _stationYaw = new float[LabInterior.StationCount];
         private LiftCycle _cycle;
+        private Turntable _turntable;
+        private LabInterior _lab;
+        private LabReader _reader;
+        private ISurveyChart _chart;
         private BasePower _power;
-        private MaterialStock _materials;
+        private Blueprints _blueprints;
+        private TetherSystem _tether;
+        private CargoCradle _cradle;
         private IRoverState _rover;
         private IRoverRig _rig;
         private IRoverStillness _stillness;
         private InputReader _input;
         private EventBus _events;
-        private HopperFeed _feed;
+        private ISaveService _save;
         private RepairBeam _stitch;
-        private StationPad _feedPad;
-        private StationPad _ridePad;
-        private EmissionGlow _lamp;
+        private EmissionGlow _pad;
         private IDisposable _approaches;
+        private Transform _frame;
         private Vector3 _jammedPosition;
         private Quaternion _jammedRotation;
-        private Vector3 _posePosition;
-        private Quaternion _poseRotation;
+        private Vector3 _hatchLeftRest;
+        private Vector3 _hatchRightRest;
         private Vector3 _cableLeftScale;
         private Vector3 _cableRightScale;
-        private float _lampLevel;
+        private Vector3 _posePosition;
+        private Quaternion _poseRotation;
+        private float _padLevel;
+        private float _hatch;
+        private float _hatchTarget;
+        private float _exitYaw;
+        private float _yawOffset;
+        private float _descentFrom;
+        private float _descentDelta;
+        private int _queuedTurn;
+        private bool _playerTurned;
+        private float _autoTurnAt = float.PositiveInfinity;
+        private float _chartAt = float.PositiveInfinity;
+        private Relic _rider;
+        private Vector3 _riderFrom;
+        private Quaternion _riderFromRotation;
+        private float _riderTime;
         private float _ladderLookStarted = float.NegativeInfinity;
         private LadderLook _ladderLook;
         private bool _gazing;
@@ -79,44 +144,89 @@ namespace MoonProject.Gameplay.Lift
         /// <summary>The lift's phase (tests and capture sessions).</summary>
         public LiftPhase Phase => _cycle != null ? _cycle.Phase : LiftPhase.Dormant;
 
-        /// <summary>Where 07 rests to feed the winch.</summary>
-        public Vector3 FeedPadCentre => _feedPad.Centre;
+        /// <summary>The lab as 07 sees it (registered as <see cref="ILabInterior"/>).</summary>
+        public LabInterior Lab => _lab;
+
+        /// <summary>The turntable is turning between stations.</summary>
+        public bool Turning => _turntable != null && _turntable.Turning;
+
+        /// <summary>The reader's phase (tests and capture sessions).</summary>
+        public ReaderPhase ReaderPhase => _reader != null ? _reader.Phase : ReaderPhase.Idle;
+
+        /// <summary>The relic that rode up beside 07 and waits to be placed, or null.</summary>
+        public Relic Rider => _rider;
+
+        public LiftTuning Tuning => _tuning;
 
         /// <summary>Where 07 rests on the platform to ride it, at the bottom stop.</summary>
-        public Vector3 RideSpot => _ridePad.Centre;
+        public Vector3 RideSpot => _frame.TransformPoint(_down.localPosition);
 
-        /// <summary>The way 07 faces parked on the platform (it drives on along it, up the platform's ramp).</summary>
-        public Vector3 RideHeading => _lander.rotation * _roverSpot.localRotation * Vector3.forward;
+        /// <summary>Where 07 rests by the jammed platform to stitch it: just off its edge, toward the dock.</summary>
+        public Vector3 StitchSpot => RideSpot - RideHeading * _tuning.StitchStandOff;
 
-        /// <summary>Where the rover spot stands with the platform at the top stop, by the deck.</summary>
-        public Vector3 TopSpot => _lander.TransformPoint(_top.localPosition + _roverSpot.localPosition);
+        /// <summary>Where the platform's top rests up in the lab, flush with the cabin floor.</summary>
+        public Vector3 InsideSpot => _frame.TransformPoint(_up.localPosition);
 
-        internal void Wire(LiftTuning tuning, RadioTowerTuning looks, Transform lander, Transform platform,
-            Rigidbody platformBody, Transform roverSpot, Transform bottom, Transform top, Transform cableLeft,
-            Transform cableRight, Transform cableSnapped, Renderer winchLamp, Transform hopperMouth, Transform dock,
-            float cableBuiltLength)
+        /// <summary>The way 07 drives onto the platform: from the dock, in under the belly.</summary>
+        public Vector3 RideHeading
+        {
+            get
+            {
+                Vector3 inward = RideSpot - _dock.position;
+                inward.y = 0f;
+                return inward.normalized;
+            }
+        }
+
+        /// <summary>Where <paramref name="station"/> stands in the lab (its face, at 07's lens height).</summary>
+        public Vector3 StationPosition(LabStation station)
+        {
+            return _stations[(int)station].position;
+        }
+
+        /// <summary>07 is in the lab with the turntable at rest facing <paramref name="station"/>.</summary>
+        public bool Faces(LabStation station)
+        {
+            return _initialized && _cycle.Phase == LiftPhase.Inside && _lab.Facing == station && !_turntable.Turning;
+        }
+
+        internal void Wire(LiftTuning tuning, RadioTowerTuning looks, Transform platform, Rigidbody platformBody,
+            Transform down, Transform up, Quaternion levelRotation, Transform roverSpot, Renderer padGlow,
+            Transform dust, Transform hatchLeft, Transform hatchRight, float hatchTravel, Transform cableLeft,
+            Transform cableRight, float cableBuiltLength, Transform cableJam, Transform stitchPoint, Transform labRoot,
+            Transform[] stations, Transform readerSlot, Transform readerReel, Transform readerTape, Transform dock)
         {
             _tuning = tuning;
             _looks = looks;
-            _lander = lander;
             _platform = platform;
             _platformBody = platformBody;
+            _down = down;
+            _up = up;
+            _levelRotation = levelRotation;
             _roverSpot = roverSpot;
-            _bottom = bottom;
-            _top = top;
+            _padGlow = padGlow;
+            _dust = dust;
+            _hatchLeft = hatchLeft;
+            _hatchRight = hatchRight;
+            _hatchTravel = hatchTravel;
             _cableLeft = cableLeft;
             _cableRight = cableRight;
-            _cableSnapped = cableSnapped;
-            _winchLamp = winchLamp;
-            _hopperMouth = hopperMouth;
-            _dock = dock;
             _cableBuiltLength = cableBuiltLength;
+            _cableJam = cableJam;
+            _stitchPoint = stitchPoint;
+            _labRoot = labRoot;
+            _stations = stations;
+            _readerSlot = readerSlot;
+            _readerReel = readerReel;
+            _readerTape = readerTape;
+            _dock = dock;
         }
 
-        internal bool Initialize(GameplayServices services, BasePower power, SalvageCatalog bundles,
-            IRoverStillness stillness)
+        /// <summary>Wires the lift once home stands in place (after <see cref="HomeBase"/>).</summary>
+        internal bool Initialize(GameplayServices services, BasePower power, IRoverStillness stillness,
+            TetherSystem tether, CargoCradle cradle, Blueprints blueprints, ProgressionTuning progression)
         {
-            string problem = WiringProblem(power, bundles, stillness);
+            string problem = WiringProblem(power, stillness, tether, cradle, blueprints, progression);
             if (problem != null)
             {
                 Debug.LogError($"{nameof(LiftStation)}: {problem}", this);
@@ -125,33 +235,47 @@ namespace MoonProject.Gameplay.Lift
             }
 
             _power = power;
-            _materials = services.Materials;
+            _blueprints = blueprints;
+            _tether = tether;
+            _cradle = cradle;
             _rover = services.Rover;
             _rig = services.Rig;
             _stillness = stillness;
             _input = services.Input;
             _events = services.Events;
+            _save = services.Save;
+            _frame = _platform.parent;
             _cycle = new LiftCycle(_tuning);
+            _turntable = new Turntable(_tuning.TurnSecondsPerQuarter, _tuning.TurnMinSeconds);
+            _lab = new LabInterior(_events);
+            _reader = new LabReader(transform, _readerSlot, _readerReel, _readerTape, services.Visuals.TetherBeam,
+                blueprints, progression, _events, _save);
             _jammedPosition = _platform.localPosition;
             _jammedRotation = _platform.localRotation;
+            _hatchLeftRest = _hatchLeft.localPosition;
+            _hatchRightRest = _hatchRight.localPosition;
             _cableLeftScale = _cableLeft.localScale;
             _cableRightScale = _cableRight.localScale;
-            _feed = new HopperFeed("LiftFeed", transform, services.Visuals.TetherBeam, bundles, _looks.FeedLook,
-                _events);
             _stitch = new RepairBeam("LiftStitch", transform, services.Visuals.TetherBeam, _looks.StitchRate,
                 _looks.StitchSpread);
-            Vector3 mouth = _hopperMouth.position;
-            Vector3 outward = Vector3.ProjectOnPlane(_hopperMouth.forward, Vector3.up).normalized;
-            _feedPad = new StationPad("LiftFeedPad", transform, services.Terrain,
-                mouth + outward * _tuning.FeedPadDistance, _looks.PadLook, services.Visuals);
-            _ridePad = StationPad.OnDeck("LiftRidePad", transform, BottomSpot(), _looks.PadLook,
-                services.Visuals);
-            _lamp = new EmissionGlow(_winchLamp);
+            _pad = new EmissionGlow(_padGlow);
+            Vector3 axis = _frame.TransformPoint(_up.localPosition);
+            for (int i = 0; i < _stationYaw.Length; i++)
+            {
+                _stationYaw[i] = FrameYaw(_stations[i].position - axis);
+            }
+
+            _exitYaw = FrameYaw(_dock.position - RideSpot);
             _approaches = _events.Subscribe<PlaceFirstApproached>(OnPlaceFirstApproached);
-            _cycle.Restore(false);
-            ApplyPose(true);
+            Restore(null);
             _initialized = true;
             return true;
+        }
+
+        /// <summary>The map system connects the survey chart once it is up.</summary>
+        internal void ConnectChart(ISurveyChart chart)
+        {
+            _chart = chart ?? throw new ArgumentNullException(nameof(chart));
         }
 
         internal LiftSaveData Capture()
@@ -161,33 +285,64 @@ namespace MoonProject.Gameplay.Lift
 
         internal void Restore(LiftSaveData data)
         {
-            _cycle.Restore(data != null && data.restored);
-            _lampLevel = _cycle.IsRestored ? _tuning.LampGlow : 0f;
+            bool restored = data != null && data.restored;
+            _cycle.Restore(restored);
+            _turntable.Snap(0f);
+            _cableJam.gameObject.SetActive(!restored);
+            _dust.gameObject.SetActive(!restored);
+            _labRoot.gameObject.SetActive(false);
+            _padLevel = restored ? _tuning.PadGlow : 0f;
+            _pad.Apply(_padLevel);
+            _hatch = 0f;
+            _hatchTarget = 0f;
             ApplyPose(true);
+            ApplyHatch();
         }
 
-        private string WiringProblem(BasePower power, SalvageCatalog bundles, IRoverStillness stillness)
+        /// <summary>
+        /// A loaded game: a tube the reader had taken decodes again (after the blueprints are restored).
+        /// </summary>
+        internal void RestoreReader()
+        {
+            _reader.Restore();
+        }
+
+        /// <summary>The keepsake shelf takes the relic that rode up.</summary>
+        internal void LetRiderGo(Relic relic)
+        {
+            if (relic != null && relic == _rider)
+            {
+                _rider = null;
+            }
+        }
+
+        private string WiringProblem(BasePower power, IRoverStillness stillness, TetherSystem tether,
+            CargoCradle cradle, Blueprints blueprints, ProgressionTuning progression)
         {
             if (_tuning == null || _looks == null)
             {
                 return "LiftTuning or the tower's looks are not assigned.";
             }
 
-            if (_lander == null || _platform == null || _platformBody == null || _roverSpot == null
-                || _bottom == null || _top == null || _cableLeft == null || _cableRight == null
-                || _cableSnapped == null || _winchLamp == null || _hopperMouth == null || _dock == null)
+            if (_platform == null || _platform.parent == null || _platformBody == null || _down == null || _up == null
+                || _roverSpot == null || _padGlow == null || _dust == null || _hatchLeft == null || _hatchRight == null
+                || _cableLeft == null || _cableRight == null || _cableJam == null || _stitchPoint == null
+                || _labRoot == null || _readerSlot == null || _readerReel == null || _readerTape == null
+                || _dock == null)
             {
-                return "a lift node of the lander is not assigned (LiftPlatform, its RoverSpot and body, LiftBottom, "
-                    + "LiftTop, the cables, WinchLamp, LiftHopperMouth, DockAnchor).";
+                return "a belly lift or lab node is not assigned (see docs/ARCHITECTURE.md \"Contract: the lab\").";
             }
 
-            if (_cableBuiltLength <= 0f)
+            if (_stations == null || _stations.Length != LabInterior.StationCount || Array.IndexOf(_stations, null) >= 0)
             {
-                return "the cables' built length is not set.";
+                return $"the lab needs its {LabInterior.StationCount} stations (Lab/Station_Chart, Station_Reader, "
+                    + "Station_Board, Station_Keepsakes).";
             }
 
-            return power == null || bundles == null || stillness == null
-                ? "the base power, salvage catalog or 07's stillness is missing."
+            return power == null || stillness == null || tether == null || cradle == null || blueprints == null
+                   || progression == null
+                ? "the base power, 07's stillness, the tether, the cradle, the blueprints or ProgressionTuning is "
+                  + "missing."
                 : null;
         }
 
@@ -201,27 +356,27 @@ namespace MoonProject.Gameplay.Lift
 
             float now = Time.time;
             Vector3 eye = _rig.TetherOrigin.position;
-            bool feedDone = _cycle.Phase == LiftPhase.Feeding
-                && _feed.Step(eye, _rig.CargoSocket.position, _hopperMouth.position, now, deltaTime);
-            var input = new LiftInput(_power.HasReached(BasePowerStage.Chart), _materials.Has(_tuning.FeedRecipe),
-                _feedPad.Occupied, OnPlatform(), _stillness.StillSeconds, feedDone, PlayerInput());
-            Play(_cycle.Step(input, deltaTime), feedDone, now);
-            StepCreak();
+            LabCommand command = _cycle.Phase == LiftPhase.Inside
+                ? _commands.Step(_input.Drive, _tuning.CommandPress, _tuning.CommandRelease)
+                : LabCommand.None;
+            bool down = Command(command, now);
+            var input = new LiftInput(_power.HasReached(BasePowerStage.Home), Carrying() && NearHome(),
+                AtStitchSpot(), OnPlatform(), _stillness.StillSeconds, down);
+            Play(_cycle.Step(input, deltaTime), now);
 
             bool stitching = _cycle.Phase == LiftPhase.Stitching;
-            _stitch.Step(stitching, true, eye, _platform.position, now, deltaTime);
-            if (stitching)
-            {
-                _rig.SetGazeTarget(this, _platform.position, _tuning.GazePriority);
-            }
-
-            StepPads(now, deltaTime);
+            _stitch.Step(stitching, true, eye, _stitchPoint.position, now, deltaTime);
+            StepLab(now, deltaTime);
+            _reader.Step(Faces(LabStation.Reader), eye, now, deltaTime);
             StepLadderLook(now);
-            Hold(_cycle.Phase == LiftPhase.Feeding || stitching || _cycle.Holds07);
-            _lampLevel = Damp.Toward(_lampLevel, _cycle.IsRestored ? _tuning.LampGlow : 0f, _tuning.SettleSeconds,
-                deltaTime);
-            _lamp.Apply(_lampLevel);
+            Hold(stitching || _cycle.Holds07);
+            bool lit = _cycle.Phase == LiftPhase.Called || _cycle.Phase == LiftPhase.Ready;
+            _padLevel = Damp.Toward(_padLevel, lit ? _tuning.PadGlow : 0f, _tuning.PadEase, deltaTime);
+            _pad.Apply(_padLevel);
+            _hatch = Mathf.MoveTowards(_hatch, _hatchTarget, deltaTime / _tuning.HatchSeconds);
+            ApplyHatch();
             ApplyPose(false);
+            StepRider(deltaTime);
         }
 
         private void FixedUpdate()
@@ -235,88 +390,264 @@ namespace MoonProject.Gameplay.Lift
             _platformBody.MoveRotation(_poseRotation);
         }
 
-        private void Play(LiftStep step, bool fed, float now)
+        /// <summary>Acts on the player's command in the lab; true when it asks to go down.</summary>
+        private bool Command(LabCommand command, float now)
         {
-            if (fed)
+            switch (command)
             {
-                _events.Publish(new StationCued(StationCue.Fed, FeedId, _hopperMouth.position));
-                _events.Publish(new StationCued(StationCue.StitchStarted, FeedId, _hopperMouth.position));
-            }
-
-            switch (step)
-            {
-                case LiftStep.FeedStarted:
-                    if (!_materials.TrySpend(_tuning.FeedRecipe))
+                case LabCommand.TurnLeft:
+                case LabCommand.TurnRight:
+                    int direction = command == LabCommand.TurnRight ? 1 : -1;
+                    _playerTurned = true;
+                    if (_turntable.Turning)
                     {
-                        _cycle.Restore(false);
-                        return;
+                        _queuedTurn = direction;
+                    }
+                    else
+                    {
+                        TurnTo(LabInterior.Next(_lab.Facing, direction), direction, now);
                     }
 
-                    _feed.Begin(_tuning.FeedRecipe, FeedId, now);
-                    _rig.SetGazeTarget(this, _hopperMouth.position, _tuning.GazePriority);
+                    return false;
+                case LabCommand.Look:
+                    if (!_turntable.Turning && !_lab.IsLooking)
+                    {
+                        LookAtFacing();
+                    }
+
+                    return false;
+                case LabCommand.Down:
+                    if (_lab.IsLooking)
+                    {
+                        _lab.Look(false);
+                        return false;
+                    }
+
+                    return !_reader.Feeding;
+                default:
+                    return false;
+            }
+        }
+
+        private void LookAtFacing()
+        {
+            LabStation facing = _lab.Facing;
+            if (facing == LabStation.Chart && !_power.HasReached(BasePowerStage.Chart))
+            {
+                _events.Publish(new StationNotYet(ProgressionKeys.NotYetChart, StationPosition(facing), 0f));
+            }
+
+            _lab.Look(true);
+        }
+
+        private void Play(LiftStep step, float now)
+        {
+            switch (step)
+            {
+                case LiftStep.Called:
+                    _events.Publish(new LiftCued(LiftCue.WinchCreaked, _stitchPoint.position));
+                    break;
+                case LiftStep.StitchStarted:
+                    _rig.SetGazeTarget(this, _stitchPoint.position, _tuning.GazePriority);
                     _gazing = true;
-                    _events.Publish(new StationCued(StationCue.FeedStarted, FeedId, _hopperMouth.position));
+                    _events.Publish(new StationCued(StationCue.StitchStarted, StitchId, _stitchPoint.position));
                     break;
                 case LiftStep.Restored:
                     ClearGaze();
-                    _events.Publish(new StationCued(StationCue.HatchClosed, FeedId, _hopperMouth.position));
+                    _cableJam.gameObject.SetActive(false);
+                    _dust.gameObject.SetActive(false);
+                    _events.Publish(new StationCued(StationCue.HatchClosed, StitchId, _stitchPoint.position));
+                    _save.SaveNow();
                     break;
                 case LiftStep.RideStarted:
-                case LiftStep.Descending:
                     ClearGaze();
+                    _yawOffset = Mathf.DeltaAngle(_turntable.Yaw, FrameYaw(_rover.Rotation * Vector3.forward));
+                    Board();
+                    _labRoot.gameObject.SetActive(true);
+                    _hatchTarget = 1f;
+                    _events.Publish(new LiftCued(LiftCue.HatchOpened, HatchCentre()));
                     _events.Publish(new LiftCued(LiftCue.RideStarted, _platform.position));
                     _events.Publish(new LiftRideChanged(true, false, _platform.position));
                     break;
                 case LiftStep.Arrived:
                     _events.Publish(new LiftCued(LiftCue.RideStopped, _platform.position));
                     break;
-                case LiftStep.ReachedTop:
-                    _rig.SetGazeTarget(this, LookoutGaze(), _tuning.GazePriority);
-                    _gazing = true;
+                case LiftStep.ReachedInside:
                     _events.Publish(new LiftRideChanged(false, true, _platform.position));
+                    Enter(now);
+                    break;
+                case LiftStep.Descending:
+                    _lab.Leave();
+                    ClearGaze();
+                    _descentFrom = _turntable.Yaw;
+                    _descentDelta = Mathf.DeltaAngle(_descentFrom, _exitYaw - _yawOffset);
+                    _queuedTurn = 0;
+                    _events.Publish(new LiftCued(LiftCue.RideStarted, _platform.position));
+                    _events.Publish(new LiftRideChanged(true, false, _platform.position));
                     break;
                 case LiftStep.ReachedBottom:
+                    _turntable.Snap(_descentFrom + _descentDelta);
+                    _hatchTarget = 0f;
+                    _labRoot.gameObject.SetActive(false);
+                    _events.Publish(new LiftCued(LiftCue.HatchClosed, HatchCentre()));
                     _events.Publish(new LiftRideChanged(false, false, _platform.position));
+                    SetRiderDown();
                     break;
             }
         }
 
         /// <summary>
-        /// The powered, jammed winch creaks once each time 07 comes near it (<see cref="LiftCue.WinchCreaked"/>),
-        /// a nudge toward the lift before it is restored.
+        /// The platform settled in the lab: it faces 07 toward the station that wants what it carries.
         /// </summary>
-        private void StepCreak()
+        private void Enter(float now)
         {
-            Vector3 winch = _winchLamp.transform.position;
-            Vector3 rover = _rover.Position;
-            float distance = Vector2.Distance(new Vector2(winch.x, winch.z), new Vector2(rover.x, rover.z));
-            bool jammed = _cycle.Phase == LiftPhase.Jammed;
-            if (_creak.Step(jammed ? distance : float.PositiveInfinity, _tuning.CreakRadius, _tuning.CreakRearm))
+            LabStation wanted = Wanted();
+            _commands.Disarm();
+            _playerTurned = false;
+            _queuedTurn = 0;
+            _lab.Enter(wanted);
+            TurnTo(wanted, 0, now);
+        }
+
+        private void StepLab(float now, float deltaTime)
+        {
+            if (_cycle.Phase != LiftPhase.Inside)
             {
-                _events.Publish(new LiftCued(LiftCue.WinchCreaked, winch));
+                return;
+            }
+
+            if (_turntable.Step(deltaTime))
+            {
+                Faced(now);
+            }
+
+            bool resting = !_turntable.Turning && !_lab.IsLooking;
+            if (resting && !_playerTurned && now >= _autoTurnAt)
+            {
+                LabStation wanted = Wanted();
+                if (wanted != LabStation.Chart && wanted != _lab.Facing)
+                {
+                    TurnTo(wanted, 0, now);
+                }
+            }
+
+            if (resting && now >= _chartAt && _lab.Facing == LabStation.Chart)
+            {
+                _chartAt = float.PositiveInfinity;
+                LookAtFacing();
+            }
+
+            _rig.SetGazeTarget(this, StationPosition(_lab.Facing), _tuning.GazePriority);
+            _gazing = true;
+        }
+
+        private void TurnTo(LabStation station, int direction, float now)
+        {
+            _lab.TurnTo(station);
+            _autoTurnAt = float.PositiveInfinity;
+            _chartAt = float.PositiveInfinity;
+            if (!_turntable.TurnTo(_stationYaw[(int)station] - _yawOffset, direction))
+            {
+                Faced(now);
             }
         }
 
-        private void StepPads(float now, float deltaTime)
+        /// <summary>
+        /// The turntable came to rest: announce it, then take a waiting turn or plan what comes next.
+        /// </summary>
+        private void Faced(float now)
         {
-            bool jammed = _cycle.Phase == LiftPhase.Jammed;
-            if (jammed || _cycle.Phase == LiftPhase.Feeding)
+            _lab.Faced();
+            if (_queuedTurn != 0)
             {
-                _feedPad.Tick(_rover.Position, false, _materials.Has(_tuning.FeedRecipe), now, deltaTime);
-            }
-            else
-            {
-                _feedPad.Rest(deltaTime);
+                int direction = _queuedTurn;
+                _queuedTurn = 0;
+                TurnTo(LabInterior.Next(_lab.Facing, direction), direction, now);
+                return;
             }
 
-            if (_cycle.Phase == LiftPhase.Ready)
+            _autoTurnAt = now + _tuning.AutoTurnDelay;
+            bool news = _chart != null && _chart.HasNews && _power.HasReached(BasePowerStage.Chart);
+            _chartAt = _lab.Facing == LabStation.Chart && news ? now + _tuning.ChartBreath : float.PositiveInfinity;
+        }
+
+        /// <summary>
+        /// The station that wants what 07 carries: a tube the reader (until it has decoded, so the reel's run and the
+        /// chime are seen), a relic the shelf; else the chart.
+        /// </summary>
+        private LabStation Wanted()
+        {
+            if (_reader.Wants || _reader.Busy)
             {
-                _ridePad.Tick(_rover.Position, false, true, now, deltaTime);
+                return LabStation.Reader;
             }
-            else
+
+            return _rider != null || _cradle.Carried != null ? LabStation.Keepsakes : LabStation.Chart;
+        }
+
+        /// <summary>07 carries something for the lab: a blueprint tube, a towed relic or one in the cradle.</summary>
+        private bool Carrying()
+        {
+            return _blueprints.IsCarrying || _tether.Towed != null || _cradle.Carried != null;
+        }
+
+        private bool NearHome()
+        {
+            return SurfaceRules.HorizontalDistance(_rover.Position, RideSpot) <= _tuning.CallRadius;
+        }
+
+        /// <summary>The towed relic comes aboard and floats to its place beside 07.</summary>
+        private void Board()
+        {
+            Relic relic = _tether.HandOver();
+            if (relic == null)
             {
-                _ridePad.Rest(deltaTime);
+                return;
             }
+
+            relic.BeginCarry(RelicState.Riding, -1);
+            _rider = relic;
+            _riderFrom = relic.transform.position;
+            _riderFromRotation = relic.transform.rotation;
+            _riderTime = 0f;
+        }
+
+        private void StepRider(float deltaTime)
+        {
+            if (_rider == null)
+            {
+                return;
+            }
+
+            if (_rider.State != RelicState.Riding)
+            {
+                _rider = null;
+                return;
+            }
+
+            _riderTime += deltaTime;
+            float t = Mathf.Clamp01(_riderTime / _tuning.RiderBoardSeconds);
+            float eased = t * t * (3f - 2f * t);
+            Vector3 seat = _platform.TransformPoint(_tuning.RiderOffset);
+            _rider.SetCarryPose(Vector3.Lerp(_riderFrom, seat, eased),
+                Quaternion.Slerp(_riderFromRotation, _platform.rotation, eased));
+        }
+
+        /// <summary>Down again with the relic still beside 07: it is set down loose on the platform.</summary>
+        private void SetRiderDown()
+        {
+            if (_rider == null)
+            {
+                return;
+            }
+
+            _rider.Release();
+            _rider = null;
+        }
+
+        private bool AtStitchSpot()
+        {
+            return SurfaceRules.HorizontalDistance(_rover.Position, StitchSpot) <= _tuning.StitchRadius;
         }
 
         private bool OnPlatform()
@@ -328,24 +659,24 @@ namespace MoonProject.Gameplay.Lift
             return dx * dx + dz * dz <= _tuning.PlatformRadius * _tuning.PlatformRadius;
         }
 
-        private bool PlayerInput()
-        {
-            return _input.Drive.sqrMagnitude > InputEpsilon || _input.LookDelta.sqrMagnitude > InputEpsilon
-                || _input.LookRate.sqrMagnitude > InputEpsilon;
-        }
-
         /// <summary>
-        /// The platform's pose between jammed, level at the bottom stop and the top stop (moved by its kinematic body
-        /// in <see cref="FixedUpdate"/> so 07 rides on it; set at once when <paramref name="instant"/>); the cables
-        /// stretch to it and swap once restored.
+        /// The platform's pose in BellyLift's space between its jammed tilt, level at the bottom stop and flush with
+        /// the cabin floor (moved by its kinematic body in <see cref="FixedUpdate"/> so 07 can drive onto it; set at
+        /// once when <paramref name="instant"/>). It turns about its own Y: the turntable's yaw, or on the way down
+        /// the turn toward the dock. The cables stretch to it, the second one taut once restored.
         /// </summary>
         private void ApplyPose(bool instant)
         {
             float level = _cycle.Level;
-            Vector3 travel = Vector3.Lerp(_bottom.localPosition, _top.localPosition, _cycle.Height);
+            Vector3 travel = Vector3.Lerp(_down.localPosition, _up.localPosition, _cycle.Height);
+            float yaw = _cycle.Phase == LiftPhase.Lowering
+                ? _descentFrom + _descentDelta * _cycle.Descent
+                : _turntable.Yaw;
+            Quaternion levelRotation = _levelRotation * Quaternion.Euler(0f, yaw, 0f);
             Vector3 local = Vector3.Lerp(_jammedPosition, travel, level);
-            _posePosition = _lander.TransformPoint(local);
-            _poseRotation = _lander.rotation * Quaternion.Slerp(_jammedRotation, Quaternion.identity, level);
+            Quaternion localRotation = Quaternion.Slerp(_jammedRotation, levelRotation, level);
+            _posePosition = _frame.TransformPoint(local);
+            _poseRotation = _frame.rotation * localRotation;
             if (instant)
             {
                 _platform.SetPositionAndRotation(_posePosition, _poseRotation);
@@ -353,37 +684,39 @@ namespace MoonProject.Gameplay.Lift
                 _platformBody.rotation = _poseRotation;
             }
 
-            float extra = _jammedPosition.y - local.y;
-            float stretch = (_cableBuiltLength + extra) / _cableBuiltLength;
-            _cableLeft.localScale = new Vector3(_cableLeftScale.x, _cableLeftScale.y * stretch, _cableLeftScale.z);
-            _cableRight.localScale = new Vector3(_cableRightScale.x, _cableRightScale.y * stretch,
-                _cableRightScale.z);
+            Stretch(_cableLeft, _cableLeftScale);
             bool restored = _cycle.IsRestored;
             if (_cableRight.gameObject.activeSelf != restored)
             {
                 _cableRight.gameObject.SetActive(restored);
-                _cableSnapped.gameObject.SetActive(!restored);
             }
+
+            Stretch(_cableRight, _cableRightScale);
         }
 
-        /// <summary>At the deck lookout 07 gazes out over the basin, straight away from the lander.</summary>
-        private Vector3 LookoutGaze()
+        /// <summary>A cable hangs down its local Y from its drum to the platform's top.</summary>
+        private void Stretch(Transform cable, Vector3 builtScale)
         {
-            Vector3 platform = _platform.position;
-            Vector3 outward = Vector3.ProjectOnPlane(platform - _lander.position, Vector3.up).normalized;
-            return platform + outward * _tuning.LookoutGazeDistance;
+            float length = Mathf.Max(0f, cable.position.y - _posePosition.y);
+            cable.localScale = new Vector3(builtScale.x, builtScale.y * length / _cableBuiltLength, builtScale.z);
         }
 
-        /// <summary>The rover spot's place when the platform rests level at the bottom stop.</summary>
-        private Vector3 BottomSpot()
+        /// <summary>The hatch leaves slide out along their local X (the left one toward -X), eased.</summary>
+        private void ApplyHatch()
         {
-            Vector3 local = _bottom.localPosition + _roverSpot.localPosition;
-            return _lander.TransformPoint(local);
+            float open = _hatch * _hatch * (3f - 2f * _hatch) * _hatchTravel;
+            _hatchLeft.localPosition = _hatchLeftRest + _hatchLeft.localRotation * Vector3.left * open;
+            _hatchRight.localPosition = _hatchRightRest + _hatchRight.localRotation * Vector3.right * open;
+        }
+
+        private Vector3 HatchCentre()
+        {
+            return _hatchLeft.parent.TransformPoint(Vector3.Lerp(_hatchLeftRest, _hatchRightRest, 0.5f));
         }
 
         /// <summary>
-        /// The first time near the crew's ladder (docs/features/M3-16 "Each place"), 07 looks up it (the dock stands at
-        /// its foot; the deck it climbs to is the lift's top stop), then at the lift.
+        /// The first time near the crew's ladder (docs/features/M3-16 "Each place", M3-19 §3), 07 looks up it toward
+        /// the roof hatch it leads to, then down at the belly lift.
         /// </summary>
         private void OnPlaceFirstApproached(PlaceFirstApproached approached)
         {
@@ -395,12 +728,12 @@ namespace MoonProject.Gameplay.Lift
 
         /// <summary>
         /// Up the ladder, then at the lift, each look published as it begins (Rover frames it) and once more as the
-        /// look ends; feeding or stitching the winch cuts it short (that gaze takes over).
+        /// look ends; the stitch or a ride cuts it short (their gaze takes over).
         /// </summary>
         private void StepLadderLook(float now)
         {
             float looked = now - _ladderLookStarted;
-            bool busy = _cycle.Phase == LiftPhase.Feeding || _cycle.Phase == LiftPhase.Stitching;
+            bool busy = _cycle.Phase == LiftPhase.Stitching || _cycle.Holds07;
             LadderLook look = LadderLook.None;
             if (!busy && looked >= 0f)
             {
@@ -426,9 +759,8 @@ namespace MoonProject.Gameplay.Lift
                 return;
             }
 
-            Vector3 dock = _dock.position;
             Vector3 subject = look == LadderLook.Ladder
-                ? new Vector3(dock.x, _top.position.y, dock.z)
+                ? _dock.position + Vector3.up * _tuning.LadderLookHeight
                 : _platform.position;
             _rig.SetGazeTarget(this, subject, _tuning.GazePriority);
             _gazing = true;
@@ -459,6 +791,13 @@ namespace MoonProject.Gameplay.Lift
             _rig.SetHoldStill(this, hold);
         }
 
+        /// <summary>The yaw (deg) of a world direction in BellyLift's space, about its Y.</summary>
+        private float FrameYaw(Vector3 direction)
+        {
+            Vector3 local = _frame.InverseTransformDirection(direction);
+            return Mathf.Atan2(local.x, local.z) * Mathf.Rad2Deg;
+        }
+
         private void OnDisable()
         {
             if (!_initialized)
@@ -473,8 +812,6 @@ namespace MoonProject.Gameplay.Lift
         private void OnDestroy()
         {
             _approaches?.Dispose();
-            _feedPad?.Dispose();
-            _ridePad?.Dispose();
         }
     }
 }

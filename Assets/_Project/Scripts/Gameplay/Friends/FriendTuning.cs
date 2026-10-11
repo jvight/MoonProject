@@ -229,7 +229,7 @@ namespace MoonProject.Gameplay
         [Tooltip("Seconds per flitting waypoint.")]
         [Range(0.5f, 10f)] [SerializeField] private float _flitHop = 2.5f;
 
-        [Tooltip("Seconds spent inspecting the museum shelf.")]
+        [Tooltip("Seconds spent checking on home's front (the charging dock).")]
         [Range(0.5f, 20f)] [SerializeField] private float _inspectDuration = 4f;
 
         [Tooltip("Metres in front of the shelf it hovers to inspect it.")]

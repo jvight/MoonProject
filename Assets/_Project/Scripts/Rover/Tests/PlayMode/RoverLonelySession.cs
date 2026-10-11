@@ -167,6 +167,12 @@ namespace MoonProject.Rover.PlayModeTests
         private const float DockShort = 0.7f;
         private const float DockSkew = 14f;
 
+        /// <summary>
+        /// 07 wakes resting on its dock (the dock stands on its spawn): it is first set down this far (m) behind the
+        /// anchor, off the pad, so that rest lets go before it is brought back to watch the dock take it.
+        /// </summary>
+        private const float DockClear = 3f;
+
         /// <summary>Seconds after the dock takes 07 at which the settling frames are taken.</summary>
         private static readonly float[] DockFrames = { 0.35f, 0.8f, 3f };
 
@@ -401,6 +407,10 @@ namespace MoonProject.Rover.PlayModeTests
             _report.AppendLine();
             _report.AppendLine("| Capture | 07 to the anchor (m) | Heading off the anchor (deg) | Road light |");
             _report.AppendLine("|---|---:|---:|---:|");
+            _context.Get<IRoverPlacement>().PlaceAt(anchor.position - anchor.forward * DockClear, anchor.rotation);
+            yield return null;
+            yield return null;
+            Assert.IsFalse(_rover.IsDocked, "Set down off the pad, 07 no longer rests on the dock it woke on.");
             bool docked = false;
             using (_context.Events.Subscribe<RoverDockChanged>(changed => docked = changed.Docked))
             {

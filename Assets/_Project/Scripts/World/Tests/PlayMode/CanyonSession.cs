@@ -51,7 +51,6 @@ namespace MoonProject.World.PlayModeTests
         /// <summary>A leap has made it across if it touches down no lower than this (m) below the apron.</summary>
         private const float LandingMargin = 1f;
 
-        private const float TeleportLift = 0.1f;
         private const float StopSpeed = 0.4f;
         private const float WaypointSpacing = 10f;
         private const float WaypointArrive = 4f;
@@ -390,15 +389,15 @@ namespace MoonProject.World.PlayModeTests
             _pilot.Release();
         }
 
+        /// <summary>
+        /// Sets 07 down at <paramref name="xz"/> keeping its heading, through the rover's own placement so a rest on
+        /// the dock (07 wakes on it) ends too, then waits for it to settle.
+        /// </summary>
         private IEnumerator Teleport(Vector2 xz)
         {
             _pilot.Release();
-            Rigidbody body = _rover.PhysicsBody;
-            var position = new Vector3(xz.x, _terrain.SampleHeight(xz.x, xz.y) + _rover.SphereRadius + TeleportLift,
-                xz.y);
-            body.linearVelocity = Vector3.zero;
-            body.position = position;
-            body.transform.position = position;
+            var position = new Vector3(xz.x, _terrain.SampleHeight(xz.x, xz.y), xz.y);
+            _rover.PlaceAt(position, Quaternion.Euler(0f, _rover.Heading, 0f));
             Physics.SyncTransforms();
             yield return Settle();
         }

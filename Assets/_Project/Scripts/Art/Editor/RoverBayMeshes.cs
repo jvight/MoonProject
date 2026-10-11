@@ -10,7 +10,7 @@ namespace MoonProject.Art.Editor
     /// central hole, three gantry arms on the crane rail (a yaw turret, two long links and a fitting tip each, folded
     /// along the rail under the roof at rest) and a floor arm that rises through the hole to fit kit under 07's belly,
     /// a material hopper inside the bay at rover height that 07's beam feeds, two work lamps, cable reels, a lit "07"
-    /// sign and Kenji's old human bench beside it as a remnant. Built in its own space: origin on the ground at
+    /// sign, Kenji's pen plotter on the back wall and his chipped mug on a shelf as the one remnant of him. Built in its own space: origin on the ground at
     /// WorkshopAnchor, +Z = the open front 07 drives in from. Long left alone (ruling 12): faded paint, a roof panel
     /// gone, rust and dust in its weather skins.
     /// </summary>
@@ -110,16 +110,28 @@ namespace MoonProject.Art.Editor
 
         private const float FloorColumn = 0.6f;
 
-        // Kenji's remnant bench, left of the bay.
-        private static Matrix4x4 BenchPlacement => At(BenchPosition, BenchEuler);
+        /// <summary>
+        /// Kenji's pen plotter on the back wall above the turntable (M3-19 D7), in bay space: the Plotter node's
+        /// place, facing into the bay.
+        /// </summary>
+        public static readonly Vector3 PlotterOnWall = new Vector3(0f, 1.05f, BackZ + 0.3f);
 
         /// <summary>
-        /// Kenji's bench (with its cord of blueprints and his pen plotter) in bay space: its centre on the ground,
-        /// and its turn.
+        /// The cord of blueprints (Blueprints node) along the left wall inside the bay, in bay space, turned to face
+        /// across the turntable.
         /// </summary>
-        public static Vector3 BenchPosition => new Vector3(-HalfWidth - 1.95f, 0f, 0.9f);
+        public static readonly Vector3 BlueprintsOnWall = new Vector3(-HalfWidth + 0.08f + 0.34f, 0.2f, -0.6f);
 
-        public static readonly Vector3 BenchEuler = new Vector3(0f, 12f, 0f);
+        public static readonly Vector3 BlueprintsEuler = new Vector3(0f, 90f, 0f);
+
+        // Kenji's one remnant: his chipped mug on a little shelf on the back wall, left of the plotter.
+        private static readonly Vector3 MugShelf = new Vector3(-1.4f, 1.55f, BackZ + 0.12f);
+
+        private static readonly Vector2[] MugProfile =
+        {
+            new Vector2(0f, 0f), new Vector2(0.05f, 0f), new Vector2(0.055f, 0.01f), new Vector2(0.055f, 0.11f),
+            new Vector2(0.045f, 0.11f), new Vector2(0.045f, 0.015f), new Vector2(0f, 0.015f),
+        };
 
         /// <summary>
         /// Shoulder <paramref name="index"/> on the overhead rail: left, back and right of the turntable.
@@ -179,7 +191,8 @@ namespace MoonProject.Art.Editor
         public static readonly Vector3 LampEuler = new Vector3(55f, 180f, 0f);
 
         /// <summary>
-        /// The frame, roof, walls, ramp, hopper, reel, board and Kenji's bench (everything that stays put).
+        /// The frame, roof, walls, ramp, hopper, reels, board, the blueprints' cord and Kenji's mug on its shelf
+        /// (everything that stays put).
         /// </summary>
         public static LowPolyMeshBuilder Frame()
         {
@@ -208,8 +221,8 @@ namespace MoonProject.Art.Editor
                     FrontZ), 0.025f, 5, PaletteSwatch.Metal);
             }
 
-            b.Append(WorkbenchMeshes.Bench(), BenchPlacement);
-            b.Append(BlueprintMeshes.Cord(), BenchPlacement);
+            b.Append(BlueprintMeshes.Cord(), At(BlueprintsOnWall, BlueprintsEuler));
+            Shelf(b);
             return b;
         }
 
@@ -406,7 +419,6 @@ namespace MoonProject.Art.Editor
             }
 
             ServiceKit.HopperRust(b, HopperMouth, HopperFacing, HopperSize);
-            b.Append(WorkbenchMeshes.Rust(), BenchPlacement);
             return b;
         }
 
@@ -698,6 +710,28 @@ namespace MoonProject.Art.Editor
                 float yaw = Mathf.Atan2(toPad.x, toPad.z) * Mathf.Rad2Deg;
                 return new Vector3(-ServiceKit.MouthTilt, yaw, 0f);
             }
+        }
+
+        /// <summary>
+        /// A little shelf on the back wall with Kenji's coffee mug on it, a chip out of its rim: the one thing of his
+        /// left out here once his bench went (M3-19 D7).
+        /// </summary>
+        private static void Shelf(LowPolyMeshBuilder b)
+        {
+            b.Box(At(MugShelf + new Vector3(0f, -0.02f, 0.02f)), new Vector3(0.42f, 0.03f, 0.2f), PaletteSwatch.Wood,
+                0.005f);
+            for (int side = -1; side <= 1; side += 2)
+            {
+                SiteKit.Bar(b, MugShelf + new Vector3(side * 0.15f, -0.04f, -0.06f),
+                    MugShelf + new Vector3(side * 0.15f, -0.16f, -0.06f), 0.02f, PaletteSwatch.Metal);
+            }
+
+            Vector3 at = MugShelf + new Vector3(0.06f, 0f, 0.03f);
+            MeshRange cup = b.Lathe(At(at), MugProfile, 12, PaletteSwatch.Enamel);
+            Vector3 chip = new Vector3(0.6f, 1f, 0.5f).normalized;
+            b.Shave(cup, chip, b.Support(cup, chip) - 0.012f);
+            b.Prism(At(at + new Vector3(0f, 0.06f, 0f)), 0.0565f, 0.025f, 12, PaletteSwatch.WarmAccent, false);
+            b.Torus(At(at + new Vector3(-0.065f, 0.058f, 0f), AlongZ), 0.026f, 0.008f, 8, 3, PaletteSwatch.Enamel);
         }
 
         /// <summary>The old hand-painted "PIT" board on the left pier, hung askew like the bench sticker.</summary>

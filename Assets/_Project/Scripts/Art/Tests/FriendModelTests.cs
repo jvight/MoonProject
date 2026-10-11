@@ -124,19 +124,17 @@ namespace MoonProject.Art.Tests
             ModelNode lander = BaseModelBuilder.CreateLander();
             string[] expected =
             {
-                "Windows", "ShelfAnchor", "TowerAnchor", "LampSocket_0", "LampSocket_1", "LampSocket_2",
-                "LampSocket_3", "FriendSocket_tilly", "WorkshopAnchor", "DockAnchor", "DockGlow", "LiftBottom",
-                "LiftTop", "LiftPlatform", "LiftCable_L", "LiftCable_R", "LiftCableR_Snapped", "WinchLamp",
-                "LiftHopperMouth", "HomeSign", "PowerCable_Home", "PowerCable_Bay",
-                "PowerCable_Lift", "DeckHatch", "LightTable", "Weather_Paint", "Weather_Rust",
-                "Weather_Dust",
+                "Windows", "TowerAnchor", "LampSocket_0", "LampSocket_1", "LampSocket_2", "LampSocket_3",
+                "FriendSocket_tilly", "WorkshopAnchor", "DockAnchor", "DockGlow", "HomeSign", "PowerCable_Home",
+                "PowerCable_Bay", "PowerCable_Chart", "BellyLift", "BigPorthole", "PortholeLamps", "Lab",
+                "HandOffPath", "HandOffCable", "Weather_Paint", "Weather_Rust", "Weather_Dust",
             };
 
             CollectionAssert.AreEqual(expected, lander.Children.Select(child => child.Name).ToArray());
             ModelNode perch = lander.GetDescendant("FriendSocket_tilly");
             Assert.IsNull(perch.Mesh);
-            Assert.AreEqual(Quaternion.identity, perch.LocalRotation, "+Y up, +Z = the hatch side");
-            Assert.Greater(perch.LocalPosition.y, 3f, "up on the porch");
+            Assert.AreEqual(Quaternion.identity, perch.LocalRotation, "+Y up, +Z = the front");
+            Assert.Greater(perch.LocalPosition.y, 3f, "up on the stage's ledge beside the cabin");
             Assert.AreEqual(perch.LocalPosition.y, Support(lander.Mesh.Geometry, perch.LocalPosition), 0.01f,
                 "the socket sits on the perch cushion");
         }
