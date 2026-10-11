@@ -281,6 +281,7 @@ namespace MoonProject.Gameplay
 
             if (IsCharging && (!step.OnCharger || !NeedsCharge()))
             {
+                PublishCells();
                 IsCharging = false;
                 _events.Publish(new ChargingChanged(false, Charger, _chargerPosition));
             }
