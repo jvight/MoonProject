@@ -34,6 +34,7 @@ namespace MoonProject.UI.Tests.Map
         private MapSheet _sheet;
         private MapViewTuning _tuning;
         private Reach _reach;
+        private Overlay _overlay;
         private MapKnowledge _knowledge;
         private VisualElement _pause;
         private MapView _view;
@@ -58,6 +59,7 @@ namespace MoonProject.UI.Tests.Map
                 new[] { new MapLine(MapLineKind.RimCrest, 0, 3, true, 40f) }, new string[0], new Vector2[0]);
             _tuning = ScriptableObject.CreateInstance<MapViewTuning>();
             _reach = new Reach();
+            _overlay = new Overlay();
             var places = new List<MapPlace>
             {
                 new MapPlace(MapPlaces.HomeId, Vector3.zero, MapPlaceKind.Home, 20f),
@@ -81,7 +83,8 @@ namespace MoonProject.UI.Tests.Map
             var root = new VisualElement();
             _pause = new VisualElement();
             root.Add(_pause);
-            _view = new MapView(_pause, _sheet, _tuning, _knowledge, _reach, _localization, _events, _reader);
+            _view = new MapView(_pause, _sheet, _tuning, _knowledge, _reach, _overlay, _localization, _events,
+                _reader);
         }
 
         [TearDown]
@@ -251,6 +254,47 @@ namespace MoonProject.UI.Tests.Map
 
             Assert.Fail($"no mark for {id}");
             return null;
+        }
+
+        [Test]
+        public void OpeningTheView_CirclesEachCharger_AndDrawsTheLinkFromHomeTowardThePeak()
+        {
+            Assert.AreEqual(0, _overlay.ChargersRead, "nothing is read before the view opens");
+            _events.Publish(new MapLookStarted(Vector3.zero, false));
+            Assert.AreEqual(_overlay.ChargerCount, _overlay.ChargersRead, "the dock and the lit mast are circled");
+            Assert.AreEqual(_overlay.LinkPointCount, _overlay.LinkPointsRead, "the Link runs home, then the lit mast");
+            _view.Tick(0.1f, false);
+            Assert.IsTrue(_view.IsOpen);
+        }
+
+        /// <summary>The dock and one lit chain mast west of home, the Peak to the north (M3-21).</summary>
+        private sealed class Overlay : IChartOverlay
+        {
+            private static readonly Vector3 Mast = new Vector3(-150f, 0f, 0f);
+
+            public int ChargersRead { get; private set; }
+
+            public int LinkPointsRead { get; private set; }
+
+            public int ChargerCount => 2;
+
+            public float ChargerRadius => 140f;
+
+            public int LinkPointCount => 2;
+
+            public Vector3 Peak => new Vector3(0f, 0f, 430f);
+
+            public Vector3 ChargerPosition(int index)
+            {
+                ChargersRead++;
+                return index == 0 ? Vector3.zero : Mast;
+            }
+
+            public Vector3 LinkPoint(int index)
+            {
+                LinkPointsRead++;
+                return index == 0 ? Vector3.zero : Mast;
+            }
         }
 
         /// <summary>Home's circle of reach, 100 m.</summary>

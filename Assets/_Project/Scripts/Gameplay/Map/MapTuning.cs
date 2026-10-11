@@ -70,6 +70,12 @@ namespace MoonProject.Gameplay.Map
         [Range(0.2f, 3f)]
         [SerializeField] private float _inkSeconds = 0.6f;
 
+        [Header("Chargers' circles (M3-21)")]
+        [Tooltip("Share of a full battery's flat-ground drive drawn as a charger's circle on the chart: out and back " +
+                 "with a margin and a site's work (GDD v3 §3.7: about 140 m on four cells).")]
+        [Range(0.1f, 0.5f)]
+        [SerializeField] private float _chargerRangeShare = 0.3f;
+
         public float VisitMargin => _visitMargin;
 
         public float HomeRadius => _homeRadius;
@@ -97,5 +103,7 @@ namespace MoonProject.Gameplay.Map
         public float InkLead => _inkLead;
 
         public float InkSeconds => _inkSeconds;
+
+        public float ChargerRangeShare => _chargerRangeShare;
     }
 }

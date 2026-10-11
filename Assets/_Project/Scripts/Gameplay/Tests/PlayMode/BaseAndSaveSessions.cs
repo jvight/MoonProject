@@ -266,10 +266,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             TowerPartField field = gameplay.TowerPartField;
             RadioTower tower = gameplay.Tower;
             IUpgradeShop shop = _fixture.Bootstrap.Context.Get<IUpgradeShop>();
-            var found = new List<StoryPartFound>();
-            var delivered = new List<StoryPartDelivered>();
-            _fixture.Bootstrap.Context.Events.Subscribe<StoryPartFound>(found.Add);
-            _fixture.Bootstrap.Context.Events.Subscribe<StoryPartDelivered>(delivered.Add);
+            var found = new List<ComponentFound>();
+            var delivered = new List<ComponentDelivered>();
+            _fixture.Bootstrap.Context.Events.Subscribe<ComponentFound>(found.Add);
+            _fixture.Bootstrap.Context.Events.Subscribe<ComponentDelivered>(delivered.Add);
             Assert.AreEqual("Part_TowerCoil", parts.PartAt(0).PartId);
             Assert.IsTrue(field.IsResting(0), "the depot's heart is open: the tower's coil waits in it");
             Assert.Less(SurfaceRules.HorizontalDistance(field.RestPosition(0), _fixture.FindSite("depot").Heart),
@@ -372,6 +372,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             IUpgradeShop shop = _fixture.Bootstrap.Context.Get<IUpgradeShop>();
             PadLook look = _fixture.WorkshopTuning.PadLook;
             WorkshopTuning tuning = _fixture.WorkshopTuning;
+            _fixture.Decode(HoverJump);
             Assert.AreSame(_fixture.HoverJumpUpgrade, bay.Definition, "the bay's first offer");
             Assert.IsFalse(bay.Awake, "asleep until the tower's second level powers it (M3-16)");
             Assert.AreEqual(0f, bay.LampLevel, 1e-3f, "its work lamps are dark");
@@ -441,8 +442,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsTrue(_fixture.Rover.Has(RoverAbility.HoverJump), "07 can leap now");
             Assert.Greater(bay.PadLevel, look.Occupied, "the purchase flares the pad");
             Assert.AreSame(_fixture.HoverJumpUpgrade, bay.Definition, "no other blueprint yet: it rests on Hover-Jump");
-            _fixture.Gameplay.Blueprints.Restore(
-                new BlueprintsSaveData { found = new[] { _fixture.CargoCradleUpgrade.Id } });
+            _fixture.Decode(HoverJump, _fixture.CargoCradleUpgrade.Id);
             Assert.AreSame(_fixture.CargoCradleUpgrade, bay.Definition, "the Cargo Cradle's sheet pinned, it offers it");
             Assert.IsTrue(_fixture.Gameplay.Hints.TryGet(InteractionKind.Upgrade, out hint));
             Assert.IsFalse(hint.Ready, "4 metal it does not have yet");
@@ -643,7 +643,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             BlueprintPlotter plotter = _fixture.Gameplay.Plotter;
             Blueprints board = _fixture.Gameplay.Blueprints;
             string cradle = _fixture.CargoCradleUpgrade.Id;
-            Assert.IsTrue(plotter.ShowsSheet(_fixture.HoverJumpUpgrade.Id), "Kenji left Hover-Jump's sheet up");
+            Assert.IsFalse(plotter.ShowsSheet(_fixture.HoverJumpUpgrade.Id), "no sheet hangs from the start (M3-21)");
             Assert.IsFalse(plotter.ShowsSheet(cradle));
             Relic duck = null;
             foreach (Relic relic in _fixture.Gameplay.Relics.Relics)
@@ -794,7 +794,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsTrue(teapotAgain.Discovered);
             Assert.Less(Vector3.Distance(teapotAgain.transform.position, halfway), 0.1f);
             Assert.AreEqual(1, gameplay.Upgrades.LevelOf(Tower));
-            Assert.IsFalse(gameplay.TowerParts.NeedsPart(Tower, 2), "the tower's story parts stay in its port");
+            Assert.IsFalse(gameplay.TowerParts.NeedsPart(Tower, 2), "the tower's components stay in its port");
             Assert.AreEqual(1, gameplay.Tower.ShownLevel);
             Assert.AreEqual(0, _fixture.Events.UpgradePurchased.Count, "a load is never a purchase");
             yield return new WaitForSeconds(0.5f);

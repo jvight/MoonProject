@@ -10,9 +10,10 @@ namespace MoonProject.Gameplay
     /// Waking Lumen Station step by step (docs/features/M3-16, revised by M3-19 §7). Each frame it notes whether 07 has
     /// woken and gone out, greets 07 at each place the first time (<see cref="PlaceApproaches"/>; the lab once 07 is
     /// up in it), lets the sleeping tower and bay answer the sonar with "not yet" (<see cref="DormantAnswers"/>) and
-    /// keeps the soft "next" line on the first step not yet done (<see cref="StepFlow"/>). Step 4 brings the first
-    /// relic home, stitches the belly lift and rides it up to the keepsake shelf; step 8 is the survey chart, woken by
-    /// the tower's third level and looked at once. The chasm comes before the bay (P2): once Tilly is home and the
+    /// keeps the soft "next" line in two tiers (<see cref="StepFlow"/>, docs/features/M3-21 §3): the teaching steps in
+    /// order, then only the recovery targets' needs, Power before Link, naming only what the station has seen. Step 4
+    /// brings the first relic home, stitches the belly lift and rides it up to the keepsake shelf; step 5 wakes the
+    /// bay with the tower's second level and fits a kit. The chasm comes before the bay (P2): once Tilly is home and the
     /// first memory is on the shelf, she spots Bell's light across the chasm (Bell's warm pillar rises); the first
     /// time 07 reaches the lip without Hover-Jump it holds still and looks across while the light pulses. Coming home
     /// to the dock with news opens the dock's evening (<see cref="DockEvening"/>, P6), whose listening sweep raises
@@ -32,7 +33,6 @@ namespace MoonProject.Gameplay
         private const int StepTower = 2;
         private const int StepLiftStitch = 5;
         private const int StepBay = 8;
-        private const int StepLeap = 9;
 
         [Tooltip("The wake-up's tuning (Assets/_Project/Data/Tuning/Gameplay/ProgressionTuning.asset).")]
         [SerializeField] private ProgressionTuning _tuning;
@@ -72,6 +72,9 @@ namespace MoonProject.Gameplay
         /// <summary>The current "next" line key (empty once every step is done).</summary>
         public string NextStep => _steps != null ? _steps.Current : string.Empty;
 
+        /// <summary>Every teaching step is done: the line speaks only of the recovery targets (M3-21 §3).</summary>
+        public bool PastTeaching => _steps != null && _steps.PastTeaching;
+
         /// <summary>07 has looked across the chasm at Bell's light (P2): the bay's power may follow.</summary>
         public bool ChasmSeen => _chasmSeen;
 
@@ -88,7 +91,8 @@ namespace MoonProject.Gameplay
         }
 
         internal bool Initialize(GameplayServices services, BasePower power, HomeBase home, Workshop bay,
-            SonarSystem sonar, FriendField friends, IRelayStatus relays, UpgradeService upgrades, LiftStation lift)
+            SonarSystem sonar, FriendField friends, RelayField relays, UpgradeService upgrades, LiftStation lift,
+            RadioTower tower, TowerParts components)
         {
             string problem = WiringProblem();
             WorldAnchor lip = default;
@@ -99,9 +103,9 @@ namespace MoonProject.Gameplay
             Friend leap = problem == null ? FindFriend(friends, _tuning.LeapFriend) : null;
             problem = problem
                 ?? (signal == null ? $"no friend '{_tuning.SignalFriend}' for {ProgressionKeys.NextSignal}."
-                    : leap == null ? $"no friend '{_tuning.LeapFriend}' for {ProgressionKeys.NextLeap}."
-                    : upgrades.Find(_tuning.FirstKit) == null
-                        ? $"no kit '{_tuning.FirstKit}' for {ProgressionKeys.NextBay}."
+                    : leap == null ? $"no friend '{_tuning.LeapFriend}' across the chasm."
+                    : upgrades.Find(_tuning.LeapKit) == null
+                        ? $"no kit '{_tuning.LeapKit}' for {ProgressionKeys.NextChasm}."
                         : null);
             if (problem != null)
             {
@@ -134,7 +138,7 @@ namespace MoonProject.Gameplay
             _answers.Add(ProgressionKeys.NotYetTower, _places[TowerSpot].position, () => !homePowered());
             _answers.Add(ProgressionKeys.NotYetBay, bay.transform.position, () => homePowered() && !bay.Awake);
             _salvage = services.Events.Subscribe<MaterialSalvaged>(_ => _salvaged = true);
-            _evening = new DockEvening(services.Events, _tuning.EveningSweepDelay);
+            _evening = new DockEvening(services.Events, _tuning.EveningSweepDelay, _tuning.EveningCompletionHold);
             _letters = new RadioLetters(services.Events, _tuning.SingleLetterMasts, _tuning.LettersAfter,
                 _tuning.LetterCount);
 
@@ -145,14 +149,75 @@ namespace MoonProject.Gameplay
             _steps.Add(ProgressionKeys.NextRelic, () => lift.Phase >= LiftPhase.Called || home.DisplayedCount > 0);
             _steps.Add(ProgressionKeys.NextLiftStitch, () => lift.Phase >= LiftPhase.Ready || home.DisplayedCount > 0);
             _steps.Add(ProgressionKeys.NextLiftRide, () => home.DisplayedCount > 0);
-            _steps.Add(ProgressionKeys.NextChasm, () => _chasmSeen || upgrades.LevelOf(_tuning.FirstKit) > 0);
-            _steps.Add(ProgressionKeys.NextBay, () => upgrades.LevelOf(_tuning.FirstKit) > 0);
-            _steps.Add(ProgressionKeys.NextLeap, () => leap.Progress.State == FriendState.Awake);
-            _steps.Add(ProgressionKeys.NextRelay, () => relays.LitMasts > 0);
-            _steps.Add(ProgressionKeys.NextChart, () => power.HasReached(BasePowerStage.Chart));
-            _steps.Add(ProgressionKeys.NextChartLook, () => _chart != null && _chart.Looked);
+            _steps.Add(ProgressionKeys.NextChasm, () => _chasmSeen || upgrades.LevelOf(_tuning.LeapKit) > 0);
+            _steps.Add(ProgressionKeys.NextBayWake, () => power.HasReached(BasePowerStage.Bay));
+            _steps.Add(ProgressionKeys.NextBay, AnyKitFitted(upgrades));
+            AddTargetNeeds(tower, components, relays);
             _initialized = true;
             return true;
+        }
+
+        /// <summary>
+        /// After the teaching steps, only the recovery targets speak (M3-21 §3): Power first (the tower's next level:
+        /// its component, then its materials), then Link (each seen chain mast still dark, nearest home first, else
+        /// the chain as a whole). The Peak's foot is out of reach in this version, so the line ends empty.
+        /// </summary>
+        private void AddTargetNeeds(RadioTower tower, TowerParts components, RelayField relays)
+        {
+            Func<bool> always = () => true;
+            Func<bool> powered = () => tower.ShownLevel >= tower.Definition.MaxLevel;
+            _steps.AddNeed(ProgressionKeys.NextPowerPart,
+                () => powered() || NextComponent(tower, components) != TowerPartState.Waiting, always);
+            _steps.AddNeed(ProgressionKeys.NextPowerCarried,
+                () => powered() || NextComponent(tower, components) == TowerPartState.Delivered, always);
+            _steps.AddNeed(ProgressionKeys.NextPowerBuild, powered, always);
+            for (int i = 0; i < relays.ChainMastCount; i++)
+            {
+                int mast = i;
+                string id = relays.ChainMastId(mast);
+                _steps.AddNeed(ProgressionKeys.NextLinkMastPrefix + id, () => relays.IsChainMastLit(mast),
+                    () => _chart != null && _chart.HasSeen(id));
+            }
+
+            _steps.AddNeed(ProgressionKeys.NextLink, () => relays.LitChainMasts >= relays.ChainMastCount, always);
+        }
+
+        /// <summary>Where the component of the tower's next level is (Delivered when that level needs none).</summary>
+        private static TowerPartState NextComponent(RadioTower tower, TowerParts components)
+        {
+            int level = tower.ShownLevel + 1;
+            for (int i = 0; i < components.Count; i++)
+            {
+                if (components.PartAt(i).TowerLevel == level)
+                {
+                    return components.StateOf(i);
+                }
+            }
+
+            return TowerPartState.Delivered;
+        }
+
+        /// <summary>True once the bay has fitted any of the tech board's kits (the bay step's verb, step 5).</summary>
+        private Func<bool> AnyKitFitted(UpgradeService upgrades)
+        {
+            var kits = new string[_tuning.TechKits.Count];
+            for (int i = 0; i < kits.Length; i++)
+            {
+                kits[i] = _tuning.TechKits[i].KitId;
+            }
+
+            return () =>
+            {
+                foreach (string kit in kits)
+                {
+                    if (upgrades.LevelOf(kit) > 0)
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            };
         }
 
         /// <summary>The map system connects the survey chart once it is up (step 8's look waits on it).</summary>
@@ -209,7 +274,7 @@ namespace MoonProject.Gameplay
                 _sonar.RevealFriend(_leapIndex, _tuning.BellLightBrightness);
             }
 
-            if (_bellLit && !_chasmSeen && bellAway && _upgrades.LevelOf(_tuning.FirstKit) == 0 &&
+            if (_bellLit && !_chasmSeen && bellAway && _upgrades.LevelOf(_tuning.LeapKit) == 0 &&
                 SurfaceRules.HorizontalDistance(rover, _lip) <= _tuning.ChasmLookRadius)
             {
                 _chasmSeen = true;
@@ -249,8 +314,8 @@ namespace MoonProject.Gameplay
         /// <summary>
         /// Only the next thing speaks (M3-16 P4): a place greets 07 once the steps have come to it, the step it
         /// belongs to (0 wake: the dock; 2 tower: the lander and the tower; 4 relic: the ladder and the lift once it
-        /// asks for the stitch, the lab the first time 07 is up in it; 5 bay: the bay; 6 leap: Bell's rack, once she is
-        /// home).
+        /// asks for the stitch, the lab the first time 07 is up in it; 5 bay: the bay; past the teaching steps: Bell's
+        /// rack, once she is home).
         /// </summary>
         private Func<bool> Speaks(string placeId, Friend bell)
         {
@@ -262,7 +327,7 @@ namespace MoonProject.Gameplay
                 case ProgressionKeys.PlaceLab: return () => _lift.Lab.IsInside;
                 case ProgressionKeys.PlaceBay: return () => _steps.CurrentIndex >= StepBay;
                 case ProgressionKeys.PlaceRack:
-                    return () => _steps.CurrentIndex >= StepLeap && bell.Progress.State == FriendState.Awake;
+                    return () => _steps.PastTeaching && bell.Progress.State == FriendState.Awake;
                 default: return () => _steps.CurrentIndex >= StepLiftStitch;
             }
         }

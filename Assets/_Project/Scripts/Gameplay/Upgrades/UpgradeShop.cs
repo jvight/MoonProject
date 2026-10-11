@@ -13,12 +13,12 @@ namespace MoonProject.Gameplay
         private readonly IUpgradeStation[] _stations;
         private readonly ISaveService _save;
         private readonly IBlueprintBoard _board;
-        private readonly IStoryPartGate _parts;
+        private readonly IComponentGate _parts;
 
         /// <param name="board">Kenji's board: a kit is built only once its blueprint is pinned.</param>
-        /// <param name="parts">The tower's story parts: a level that needs one is built only once it is delivered.</param>
+        /// <param name="parts">The tower's components: a level that needs one is built only once it is delivered.</param>
         public UpgradeShop(UpgradeService service, IUpgradeStation[] stations, ISaveService save,
-            IBlueprintBoard board, IStoryPartGate parts)
+            IBlueprintBoard board, IComponentGate parts)
         {
             _service = service ?? throw new ArgumentNullException(nameof(service));
             _stations = stations ?? throw new ArgumentNullException(nameof(stations));
@@ -94,6 +94,11 @@ namespace MoonProject.Gameplay
             }
 
             return result;
+        }
+
+        public string ComponentNeeded(string upgradeId)
+        {
+            return _parts.NeededComponent(upgradeId, _service.LevelOf(upgradeId) + 1);
         }
 
         /// <summary>The station 07 is parked at, or null.</summary>

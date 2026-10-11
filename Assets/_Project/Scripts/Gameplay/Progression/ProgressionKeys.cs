@@ -1,10 +1,10 @@
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// The keys of the base's wake-up (docs/features/M3-16, M3-19 §7): place ids for
+    /// The keys of the base's wake-up (docs/features/M3-16, M3-19 §7, M3-21 §3): place ids for
     /// <see cref="Core.Events.PlaceFirstApproached"/> (UI reads the id plus ".name" and ".job"), the "next" lines for
-    /// <see cref="Core.Events.NextStepChanged"/> in step order, and the "not yet" lines of a dormant station
-    /// (<see cref="Core.Events.StationNotYet"/>).
+    /// <see cref="Core.Events.NextStepChanged"/> (the teaching steps in order, then the recovery targets' needs), and
+    /// the "not yet" lines of a dormant station (<see cref="Core.Events.StationNotYet"/>).
     /// </summary>
     public static class ProgressionKeys
     {
@@ -47,20 +47,26 @@ namespace MoonProject.Gameplay
         /// <summary>Step 4b (P2): Tilly spots Bell's light across the chasm; drive there and look across.</summary>
         public const string NextChasm = "next.chasm";
 
-        /// <summary>Step 5: power the bay (tower L2), park on the turntable, fit a kit.</summary>
+        /// <summary>Step 5: the bay sleeps until the tower's second level wakes it.</summary>
+        public const string NextBayWake = "next.bay.wake";
+
+        /// <summary>Step 5, the last teaching step: the bay has power; park on the turntable, fit a kit.</summary>
         public const string NextBay = "next.bay";
 
-        /// <summary>Step 6: leap the chasm, bring Bell home.</summary>
-        public const string NextLeap = "next.leap";
+        /// <summary>Power: the tower's next level waits for its component, not found yet.</summary>
+        public const string NextPowerPart = "next.power.part";
 
-        /// <summary>Step 7: restore a relay mast.</summary>
-        public const string NextRelay = "next.relay";
+        /// <summary>Power: 07 carries the tower's component; feed it to the port.</summary>
+        public const string NextPowerCarried = "next.power.carried";
 
-        /// <summary>Step 8: the tower's third level wakes the lab's survey chart.</summary>
-        public const string NextChart = "next.chart";
+        /// <summary>Power: the component is in; the tower's level waits for its materials.</summary>
+        public const string NextPowerBuild = "next.power.build";
 
-        /// <summary>Step 8: ride up and look at the survey chart.</summary>
-        public const string NextChartLook = "next.chart.look";
+        /// <summary>Link: a seen chain mast still dark, by its id (next.link.relay.0...).</summary>
+        public const string NextLinkMastPrefix = "next.link.";
+
+        /// <summary>Link: the chain still has dark masts, none of them seen yet.</summary>
+        public const string NextLink = "next.link";
 
         /// <summary>The tower before its first level: the only sleeper that answers then (M3-16 P4).</summary>
         public const string NotYetTower = "notyet.tower";
@@ -69,5 +75,16 @@ namespace MoonProject.Gameplay
 
         /// <summary>The survey chart, looked at before the tower's third level.</summary>
         public const string NotYetChart = "notyet.chart";
+
+        /// <summary>
+        /// True for an empty line or one about a recovery target (Power or Link), the only lines after the teaching
+        /// steps (M3-21 §3).
+        /// </summary>
+        public static bool SpeaksOfTargets(string lineKey)
+        {
+            return string.IsNullOrEmpty(lineKey) || lineKey == NextPowerPart || lineKey == NextPowerCarried ||
+                   lineKey == NextPowerBuild || lineKey == NextLink ||
+                   lineKey.StartsWith(NextLinkMastPrefix, System.StringComparison.Ordinal);
+        }
     }
 }
