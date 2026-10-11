@@ -24,7 +24,6 @@
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/BeVietnamPro-Regular.asset");
 }
 
-.title-screen__wordmark,
 .pause__heading,
 .memory-card__name,
 .tower-panel__title,
@@ -284,20 +283,21 @@ Label {
 
 /* The title over the live world (M3-09): the wordmark in the sky, a quiet subtitle, the menu low and left */
 
+/* The open sky right of Earth and The Peak's beacon in the title frame, never over 07 */
 .title-screen {
     position: absolute;
-    left: 0;
-    right: 0;
-    top: 11%;
+    left: 66%;
+    right: 4%;
+    top: 3%;
     align-items: center;
 }
 
+/* Drawn by WordmarkPainter from the approved SVG; its height follows its width */
 .title-screen__wordmark {
-    font-size: 84px;
-    letter-spacing: 16px;
-    color: var(--moon-cream);
-    -unity-text-align: middle-center;
-    text-shadow: 0 0 28px var(--moon-amber-soft);
+    width: 100%;
+    --ink-color: var(--moon-cream);
+    --glow-color: var(--moon-amber-soft);
+    --glow-width: 18px;
 }
 
 .title-screen__subtitle {

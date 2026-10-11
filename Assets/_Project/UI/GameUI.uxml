@@ -220,7 +220,7 @@
         <ui:VisualElement name="pause" class="pause" picking-mode="Ignore">
             <ui:VisualElement name="pause-veil" class="pause__veil" />
             <ui:VisualElement name="title-screen" class="title-screen" picking-mode="Ignore">
-                <ui:Label name="title-wordmark" class="title-screen__wordmark loc" text="ui.title.wordmark" />
+                <ui:VisualElement name="title-wordmark" class="title-screen__wordmark" picking-mode="Ignore" />
                 <ui:Label name="title-subtitle" class="title-screen__subtitle loc" text="ui.title.subtitle" />
             </ui:VisualElement>
             <ui:VisualElement name="pause-frame" class="pause__frame" picking-mode="Ignore">

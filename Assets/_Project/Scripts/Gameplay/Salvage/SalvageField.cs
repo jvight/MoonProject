@@ -177,7 +177,7 @@ namespace MoonProject.Gameplay
             }
 
             _trail = SalvageTrail.Lay(transform, _catalog.Trail, trailAnchor, services.Terrain, _tuning,
-                services.Visuals.SalvageGlint, services.Glints, out problem);
+                services.Visuals.SalvageGlint, services.Glints, services.GlintVeil, out problem);
             if (_trail == null)
             {
                 Fail(problem + " (salvage site contract, docs/features/M3-13).");
@@ -351,6 +351,11 @@ namespace MoonProject.Gameplay
                 }
             }
 
+            for (int i = 0; i < _sites.Count; i++)
+            {
+                _sites[i].SnapPilot();
+            }
+
             foreach (int index in data.trail)
             {
                 if (index >= 0 && index < _trail.Count)
@@ -387,6 +392,10 @@ namespace MoonProject.Gameplay
             _inFlight += launched;
             UpdateGlance(_trail.Nearest);
             _flashes.Tick(deltaTime);
+            for (int i = 0; i < _sites.Count; i++)
+            {
+                _sites[i].StepPilot(deltaTime);
+            }
         }
 
         private void UpdateCut(float now, float deltaTime)

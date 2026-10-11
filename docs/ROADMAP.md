@@ -94,6 +94,10 @@ Không mở rộng nội dung khi phần nhìn của phase hiện tại chưa ch
 | M2-11 | Quy trình build Windows (zip) để chủ dự án chơi thử ngoài Unity | foundation | 🟩 |
 
 ## Backlog (đã ghi nhận, chưa giao)
+- **Blender cho model chính (chủ dự án 2026-10-12, dùng từ 0.8):** nhánh thử nghiệm `box/blender` (rover 08 dựng bằng script Blender 4.5.9 tại `D:/Tools/Blender`, báo cáo `docs/design/trial-blender-svg.md`) giữ lại, chưa land. Trước model Blender thứ hai: một module xuất file tất định dùng chung, một lớp quy tắc import cho `Generated/Art/Blender/`, test hai lần chạy ra cùng byte, đường dẫn Blender trong HANDOFF §4. 07, nhà đổ bộ và các model hiện có giữ dựng bằng code.
+- **M3-18 còn hai chỉ tiêu (World):** độ tương phản khung đêm ≥ 0,40 (cần chỉnh grade/exposure) và mặt đất gần camera bớt phẳng (thêm chi tiết tiền cảnh: vệt bánh dock → garage, sỏi trên bãi); vành hẻm còn sáng hơn mặt đất gần.
+- PlayMode test cho đèn mốc (L1) sáng lên thật; pool ánh sáng biến mất ở mức chất lượng Mobile (RP asset Mobile không có depth texture).
+
 - Bụi bánh xe trông như "đá trong suốt" bay lơ lửng → nhỏ hơn, mềm hơn, trong hơn, tan nhanh hơn (rover).
 - Audio đợt 3: radio rè bật lúc `RoverAwoke`; âm "nhấc bổng" khi `RoverRecovering`; hạ tiếng động cơ khi `PauseChanged`; mỗi relic đáp sonar bằng nốt riêng (cần thêm `RelicId` vào `RelicAnswered`).
 - Camera blend chậm khi relic trồi lên / khi nâng cấp tháp (rover).

@@ -74,3 +74,5 @@ MonoBehaviour:
   _flashDuration: 0.45
   _flashRadius: {x: 0.12, y: 0.5}
   _flashIntensity: 1.2
+  _landmarkGlow: 0.5
+  _landmarkEase: 2.5

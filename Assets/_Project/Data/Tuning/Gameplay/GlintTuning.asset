@@ -22,3 +22,4 @@ MonoBehaviour:
   _glintMaxDistance: 170
   _glintTwinkleRate: 0.35
   _glintTwinkleDepth: 0.55
+  _glintRevealSeconds: 2.5

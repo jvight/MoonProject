@@ -26,6 +26,7 @@ namespace MoonProject.Gameplay
         private readonly IRoverRig _rig;
         private readonly IRoverPlacement _placement;
         private readonly ITetherAim _tether;
+        private readonly Vector3[] _pads;
         private readonly Quaternion[] _facings;
         private readonly string[] _labels;
         private readonly int[] _choices;
@@ -40,10 +41,11 @@ namespace MoonProject.Gameplay
         private bool _gazing;
 
         /// <param name="placement">Core's rover placement, or null while no domain registers it.</param>
+        /// <param name="pads">Per node, the pad 07 parks on to hop and lands on (home's is 07's dock).</param>
         /// <param name="facings">Per node, how 07 faces when it arrives there (out, away from home).</param>
         /// <param name="labels">Per node, the localization key of its name.</param>
         public RadioHop(EventBus events, StationReach reach, RelayTuning tuning, IRoverState rover, IRoverRig rig,
-            IRoverPlacement placement, ITetherAim tether, Quaternion[] facings, string[] labels)
+            IRoverPlacement placement, ITetherAim tether, Vector3[] pads, Quaternion[] facings, string[] labels)
         {
             _events = events ?? throw new ArgumentNullException(nameof(events));
             _reach = reach ?? throw new ArgumentNullException(nameof(reach));
@@ -52,11 +54,12 @@ namespace MoonProject.Gameplay
             _rig = rig ?? throw new ArgumentNullException(nameof(rig));
             _placement = placement;
             _tether = tether ?? throw new ArgumentNullException(nameof(tether));
+            _pads = pads ?? throw new ArgumentNullException(nameof(pads));
             _facings = facings ?? throw new ArgumentNullException(nameof(facings));
             _labels = labels ?? throw new ArgumentNullException(nameof(labels));
-            if (facings.Length != reach.NodeCount || labels.Length != reach.NodeCount)
+            if (pads.Length != reach.NodeCount || facings.Length != reach.NodeCount || labels.Length != reach.NodeCount)
             {
-                throw new ArgumentException("Every node needs a facing and a label.");
+                throw new ArgumentException("Every node needs a pad, a facing and a label.");
             }
 
             _sequence = HopSequence.For(tuning);
@@ -223,7 +226,7 @@ namespace MoonProject.Gameplay
             for (int node = 0; node < _reach.NodeCount; node++)
             {
                 if (_reach.IsLit(node) &&
-                    SurfaceRules.HorizontalDistanceSquared(_rover.Position, _reach.Position(node)) <= padSq)
+                    SurfaceRules.HorizontalDistanceSquared(_rover.Position, _pads[node]) <= padSq)
                 {
                     return node;
                 }
@@ -284,7 +287,7 @@ namespace MoonProject.Gameplay
             {
                 _placed = true;
                 Phase = RadioHopPhase.Dark;
-                _placement.PlaceAt(_reach.Position(_to), _facings[_to]);
+                _placement.PlaceAt(_pads[_to], _facings[_to]);
             }
 
             if (!_finished && _time >= _sequence.FinishAt)
@@ -307,7 +310,7 @@ namespace MoonProject.Gameplay
         {
             if (Phase == RadioHopPhase.Choosing)
             {
-                _rig.SetGazeTarget(this, _reach.Position(_choices[Selected]), GazePriorities.Interest);
+                _rig.SetGazeTarget(this, _pads[_choices[Selected]], GazePriorities.Interest);
                 _gazing = true;
             }
             else if (_gazing)

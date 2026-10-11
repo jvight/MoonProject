@@ -3,10 +3,6 @@
     "name": "English",
     "entries": [
         {
-            "key": "ui.title.wordmark",
-            "text": "Lunarion"
-        },
-        {
             "key": "ui.pause.heading",
             "text": "Paused"
         },

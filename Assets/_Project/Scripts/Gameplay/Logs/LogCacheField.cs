@@ -104,7 +104,8 @@ namespace MoonProject.Gameplay
                 cache.name = "LogCache_" + caches[i].LogId;
             }
 
-            _glints = new PickupGlints(transform, services.Visuals.PartGlint, services.Glints, Mathf.Max(1, Count),
+            _glints = new PickupGlints(transform, services.Visuals.PartGlint, services.Glints, services.GlintVeil,
+                Mathf.Max(1, Count),
                 Layers.Prop);
             _flashes = new GlowFlashPool(transform, services.Meshes.Sphere, services.Visuals.WarmGlow,
                 FlashPoolSize, _tuning.FlashDuration, _tuning.FlashRadius, _tuning.FlashIntensity);

@@ -33,7 +33,7 @@ namespace MoonProject.UI.Editor
             document.panelSettings = panel;
             document.visualTreeAsset = layout;
             var system = host.AddComponent<UISystem>();
-            system.Wire(document, tuning, catalog, tables);
+            system.Wire(document, tuning, catalog, tables, context.LoadAsset<WordmarkShape>(UiAssetPaths.Wordmark));
             context.AddSystem(system);
         }
     }
