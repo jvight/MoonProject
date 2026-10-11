@@ -2255,7 +2255,9 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         /// <summary>
         /// A long drive whose straight line would cross the lander (its porch, dock and lift stand out from it) goes
-        /// round it by a point beside it instead. Drives that start or end at home, next to the lander, go straight.
+        /// round it by a point beside it instead, on the side away from the Rover Bay, which stands beside the lander
+        /// (a player rounds home on its open side, never through the bay). Drives that start or end at home, next to
+        /// the lander, go straight.
         /// </summary>
         private bool TryDetourRoundTheLander(Vector3 target, out Vector3 detour)
         {
@@ -2285,7 +2287,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             Vector3 side = away.sqrMagnitude > 1e-4f ? away.normalized : Vector3.Cross(Vector3.up, direction);
-            detour = lander + side * LanderDetour;
+            Vector3 bay = Flat(_gameplay.Workshop.PadCentre);
+            Vector3 near = lander + side * LanderDetour;
+            Vector3 far = lander - side * LanderDetour;
+            detour = Vector3.Distance(near, bay) >= Vector3.Distance(far, bay) ? near : far;
             return true;
         }
 
