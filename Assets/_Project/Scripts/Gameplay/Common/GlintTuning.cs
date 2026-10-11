@@ -40,6 +40,9 @@ namespace MoonProject.Gameplay
         [Tooltip("How much a glint dims between twinkles (0 = steady).")]
         [Range(0f, 1f)] [SerializeField] private float _glintTwinkleDepth = 0.55f;
 
+        [Tooltip("Seconds the glints take to ease back in when play begins after the title (hidden under it).")]
+        [Range(0f, 10f)] [SerializeField] private float _glintRevealSeconds = 2.5f;
+
         public float GlintSize => _glintSize;
         public float GlintMinAngle => _glintMinAngle;
         public float GlintIntensity => _glintIntensity;
@@ -50,5 +53,6 @@ namespace MoonProject.Gameplay
         public float GlintMaxDistance => _glintMaxDistance;
         public float GlintTwinkleRate => _glintTwinkleRate;
         public float GlintTwinkleDepth => _glintTwinkleDepth;
+        public float GlintRevealSeconds => _glintRevealSeconds;
     }
 }

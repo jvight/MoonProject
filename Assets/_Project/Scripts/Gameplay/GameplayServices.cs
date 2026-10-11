@@ -65,5 +65,8 @@ namespace MoonProject.Gameplay
         /// (docs/features/M3-20).
         /// </summary>
         public BeamWork Beam { get; } = new BeamWork();
+
+        /// <summary>Every pickup glint's veil: hidden while the title is up, eased back in as play begins.</summary>
+        public GlintVeil GlintVeil { get; } = new GlintVeil();
     }
 }

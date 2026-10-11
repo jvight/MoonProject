@@ -177,7 +177,7 @@ namespace MoonProject.Gameplay
             }
 
             _trail = SalvageTrail.Lay(transform, _catalog.Trail, trailAnchor, services.Terrain, _tuning,
-                services.Visuals.SalvageGlint, services.Glints, out problem);
+                services.Visuals.SalvageGlint, services.Glints, services.GlintVeil, out problem);
             if (_trail == null)
             {
                 Fail(problem + " (salvage site contract, docs/features/M3-13).");

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using MoonProject.Core;
+using MoonProject.Core.Events;
 using MoonProject.Core.Save;
 using MoonProject.Gameplay.Lift;
 
@@ -58,6 +59,7 @@ namespace MoonProject.Gameplay
         [SerializeField] private BatteryField _battery;
 
         private readonly List<IDisposable> _saveTokens = new List<IDisposable>();
+        private readonly List<IDisposable> _flowTokens = new List<IDisposable>();
         private GlowMeshSet _meshes;
 
         public MaterialStock Materials { get; private set; }
@@ -202,6 +204,9 @@ namespace MoonProject.Gameplay
             var services = new GameplayServices(context.Events, context.Input, context.Get<ITerrainQuery>(),
                 context.Get<IWorldLayout>(), context.Get<IWorldAnchors>(), context.Get<IRoverState>(),
                 context.Get<IRoverRig>(), context.Get<IViewCamera>(), save, Materials, _visuals, _glints, _meshes);
+            GlintVeil veil = services.GlintVeil;
+            _flowTokens.Add(context.Events.Subscribe<TitleShown>(_ => veil.Hide()));
+            _flowTokens.Add(context.Events.Subscribe<SessionStarted>(_ => veil.Show(Time.time)));
             var abilities = context.Get<IRoverAbilities>();
             Upgrades = new UpgradeService(context.Events, Materials, abilities, _upgradeDefinitions);
             Radio = new RadioProgram(context.Events, _cassettes.Catalog.Ids());
@@ -229,7 +234,8 @@ namespace MoonProject.Gameplay
                 !_sonar.Initialize(services, _relics, _friends, _salvage, abilities) ||
                 !_signals.Initialize(services, _friends, _cassettes, _logs, _relics, abilities, _sonar.Tuning) ||
                 !_shelf.Initialize(Radio, _cassettes.Catalog, _friends.BellTuning) ||
-                !_relays.Initialize(services, Upgrades, _tower, _tether, _friends.Tuning, Placement(context)) ||
+                !_relays.Initialize(services, Upgrades, _tower, _tether, _friends.Tuning, Placement(context),
+                    _home.Dock.Position) ||
                 !_progression.Initialize(services, Power, _home, _workshop, _sonar, _friends, _relays,
                     Upgrades, _lift, _tower, TowerParts) ||
                 !_plotter.Initialize(services, Blueprints, _workshop, _progression.Tuning, Upgrades) ||
@@ -620,6 +626,12 @@ namespace MoonProject.Gameplay
             }
 
             _saveTokens.Clear();
+            foreach (IDisposable token in _flowTokens)
+            {
+                token.Dispose();
+            }
+
+            _flowTokens.Clear();
             Blueprints?.Dispose();
             TowerPartField?.Dispose();
             GroundTubes?.Dispose();

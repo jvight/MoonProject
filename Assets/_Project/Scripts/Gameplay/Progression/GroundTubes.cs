@@ -92,7 +92,8 @@ namespace MoonProject.Gameplay
                 _models[i].gameObject.SetActive(false);
             }
 
-            _glints = new PickupGlints(parent, services.Visuals.PartGlint, services.Glints, Mathf.Max(1, count),
+            _glints = new PickupGlints(parent, services.Visuals.PartGlint, services.Glints, services.GlintVeil,
+                Mathf.Max(1, count),
                 Layers.Pickup);
             Sync();
         }

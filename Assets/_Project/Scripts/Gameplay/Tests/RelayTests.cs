@@ -357,15 +357,17 @@ namespace MoonProject.Gameplay.Tests
         private static RadioHop Hop(EventBus bus, StationReach reach, RelayTuning tuning, FakeRover rover,
             IRoverPlacement placement, FakeTether tether)
         {
+            var pads = new Vector3[reach.NodeCount];
             var facings = new Quaternion[reach.NodeCount];
             var labels = new string[reach.NodeCount];
             for (int node = 0; node < reach.NodeCount; node++)
             {
+                pads[node] = reach.Position(node);
                 facings[node] = Quaternion.identity;
                 labels[node] = "hop.node." + reach.Id(node);
             }
 
-            return new RadioHop(bus, reach, tuning, rover, rover, placement, tether, facings, labels);
+            return new RadioHop(bus, reach, tuning, rover, rover, placement, tether, pads, facings, labels);
         }
 
         private static void Step(RadioHop hop, float seconds, bool interact)
