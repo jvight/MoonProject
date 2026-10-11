@@ -643,7 +643,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             BlueprintPlotter plotter = _fixture.Gameplay.Plotter;
             Blueprints board = _fixture.Gameplay.Blueprints;
             string cradle = _fixture.CargoCradleUpgrade.Id;
-            Assert.IsTrue(plotter.ShowsSheet(_fixture.HoverJumpUpgrade.Id), "Kenji left Hover-Jump's sheet up");
+            Assert.IsFalse(plotter.ShowsSheet(_fixture.HoverJumpUpgrade.Id), "no sheet hangs from the start (M3-21)");
             Assert.IsFalse(plotter.ShowsSheet(cradle));
             Relic duck = null;
             foreach (Relic relic in _fixture.Gameplay.Relics.Relics)

@@ -1322,7 +1322,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(0, _gameplay.Tech.KnownCount, "the porthole's lamps are dark");
             Assert.AreEqual(0, _gameplay.Recovery.LitLamps(RecoveryTarget.Power), "the recovery panel is dark");
             Assert.IsFalse(_gameplay.Blueprints.IsPinned(CargoCradle), "the Cradle's sheet is still out there");
-            Assert.AreEqual(PurchaseResult.NotAtStation, _gameplay.Shop.Purchase(HoverJump), "nothing to buy yet");
+            Assert.AreEqual(PurchaseResult.NotPinned, _gameplay.Shop.Purchase(HoverJump), "no sheet, no kit");
+            Assert.AreEqual(PurchaseResult.NotAtStation, _gameplay.Shop.Purchase(Tower), "nothing to buy yet");
         }
 
         /// <summary>The soft "next" line shows <paramref name="key"/> (M3-16 step flow).</summary>
