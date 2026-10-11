@@ -1,6 +1,6 @@
 namespace MoonProject.Gameplay
 {
-    /// <summary>The tower's components as the shop sees them (docs/features/M3-16 P1, M3-21 Â§6).</summary>
+    /// <summary>The tower's components as the shop sees them (docs/features/M3-16 P1, M3-21 §6).</summary>
     public interface IComponentGate
     {
         /// <summary>

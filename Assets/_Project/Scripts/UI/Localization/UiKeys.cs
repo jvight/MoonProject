@@ -190,7 +190,7 @@ namespace MoonProject.UI
 
         /// <summary>
         /// "component.Part_TowerCoil.needed": the quiet line when the tower's next level still waits for component
-        /// <paramref name="componentId"/> (the coil, the transformer, the relay spare; docs/features/M3-21 Â§6).
+        /// <paramref name="componentId"/> (the coil, the transformer, the relay spare; docs/features/M3-21 §6).
         /// </summary>
         public static string ComponentNeeded(string componentId)
         {
