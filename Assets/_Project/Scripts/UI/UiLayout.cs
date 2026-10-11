@@ -13,6 +13,8 @@ namespace MoonProject.UI
         {
             Root = root ?? throw new ArgumentNullException(nameof(root));
             Hud = Require<VisualElement>("hud");
+            HudFrame = Require<VisualElement>("hud-frame");
+            MenuFrame = Require<VisualElement>("menu-frame");
             LabHud = Require<VisualElement>("lab-hud");
 
             NextLine = Require<VisualElement>("next-line");
@@ -165,6 +167,12 @@ namespace MoonProject.UI
         public VisualElement Root { get; }
 
         public VisualElement Hud { get; }
+
+        /// <summary>The HUD's static pieces, inside the safe frame (world-anchored ones sit in <see cref="Hud"/>).</summary>
+        public VisualElement HudFrame { get; }
+
+        /// <summary>The title's and the pause menu's pages, inside their own safe frame.</summary>
+        public VisualElement MenuFrame { get; }
 
         /// <summary>The crew's lab's own quiet screen, shown instead of the HUD while 07 is up in the lab.</summary>
         public VisualElement LabHud { get; }
