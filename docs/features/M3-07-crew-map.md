@@ -145,3 +145,24 @@ Director to accept or refuse, one by one.
 - **The "mark the next light" option for P6 waits** until P6 is landed and played.
 - **Kestrel's dark hollow is 0.6** (ROADMAP backlog), so the map has no hollow note in 0.5. Only the Peak and the
   terraces get pencil notes beyond reach.
+
+## Art nodes on main (2026-10-11, art 57a8800c)
+All of these are in `Generated/Art/Base/Lander.prefab`.
+- **`DeckHatch`:**
+  - It hinges at the doorway's −X jamb.
+  - Its rotation is `BaseModelBuilder.DeckHatchShut` while dormant and `DeckHatchOpen` (yaw −100°) once awake;
+    gameplay rotates it, eased.
+  - It has its own `Weather_Paint|Rust|Dust` skins; hide the dust on wake.
+  - `DeckHatch/Porthole` is a glow renderer at 1.5 m (it moved here from `Windows/Porthole`).
+- **`LightTable`:**
+  - It is tipped back 40°, with its top's middle 1.05 m above the deck, framed by the open doorway.
+  - Table space: +X across, +Y up the slope, +Z toward the doorway.
+  - `LightTable/LightTableGlow` is the lit panel on `M_LowPolyGlowOff`, a home light for IHomeLights.
+  - `LightTable/MapSheet` is the 0.56 × 0.38 m paper.
+- **`LightTable/ChartPen/ChartPenCarriage`:**
+  - It moves along local X over 0..`BaseModelBuilder.ChartDrawWidth` (0.5).
+  - `ChartPenCarriage/ChartPenHead` moves along local Y over 0..`ChartDrawHeight` (0.34), with its tip on the
+    paper.
+  - This mirrors the plotter's `PenCarriage/PenHead` contract.
+- **The table expects 07's lens about 1.25 m above the deck;** rover confirms it.
+
