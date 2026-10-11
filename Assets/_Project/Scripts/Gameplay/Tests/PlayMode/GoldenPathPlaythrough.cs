@@ -216,12 +216,6 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// A drive whose line passes this close (m) to the lander's centre goes round it, by a point this far out.
         /// </summary>
         private const float LanderKeepOut = 9f;
-
-        /// <summary>
-        /// A drive whose line passes this close (m) to the Rover Bay's centre goes round it, by a point this far out.
-        /// </summary>
-        private const float BayKeepOut = 6f;
-        private const float BayDetour = 10f;
         private const float LanderDetour = 13f;
 
         /// <summary>Height (m) over 07 of the review frame taken when a wait times out.</summary>
@@ -2522,12 +2516,6 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         private IEnumerator DriveTo(Vector3 target, float arriveRadius, float maxThrottle, float timeout, string what)
         {
-            if (TryDetourRoundTheBay(target, out Vector3 aside))
-            {
-                _pilot.GoTo(aside, WaypointArrive, maxThrottle);
-                yield return Until(() => _pilot.Arrived, timeout, "07 drives round the Rover Bay toward " + what);
-            }
-
             if (TryDetourRoundTheLander(target, out Vector3 detour))
             {
                 _pilot.GoTo(detour, WaypointArrive, maxThrottle);
@@ -2573,38 +2561,6 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             Vector3 side = away.sqrMagnitude > 1e-4f ? away.normalized : Vector3.Cross(Vector3.up, direction);
             detour = lander + side * LanderDetour;
-            return true;
-        }
-
-        /// <summary>
-        /// A drive out of home whose straight line would cross Kenji's Rover Bay (the dock stands before its mouth)
-        /// goes round it by a point beside it, on the target's side. Drives into the bay go straight.
-        /// </summary>
-        private bool TryDetourRoundTheBay(Vector3 target, out Vector3 detour)
-        {
-            detour = Vector3.zero;
-            Workshop bay = _gameplay.Workshop;
-            Vector3 centre = Flat(bay.BayPosition);
-            Vector3 from = Flat(_rover.Position);
-            Vector3 to = Flat(target);
-            Vector3 line = to - from;
-            float length = line.magnitude;
-            if (Vector3.Distance(to, centre) < BayDetour || bay.Occupied || length < 1e-3f)
-            {
-                return false;
-            }
-
-            Vector3 direction = line / length;
-            float along = Vector3.Dot(centre - from, direction);
-            if (along <= 0f || along >= length ||
-                Vector3.Distance(from + direction * along, centre) >= BayKeepOut)
-            {
-                return false;
-            }
-
-            Vector3 side = Vector3.Cross(Vector3.up, direction);
-            side *= Vector3.Dot(to - centre, side) < 0f ? -1f : 1f;
-            detour = centre + side * BayDetour;
             return true;
         }
 
