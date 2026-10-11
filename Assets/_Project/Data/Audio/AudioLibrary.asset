@@ -1423,6 +1423,30 @@ MonoBehaviour:
     _volumeMax: 0.55
     _pitchMin: 1
     _pitchMax: 1
+  - _id: lift_hatch_open
+    _clips:
+    - {fileID: 8300000, guid: fcb5a12fcad1d5c419cf386fc9b62058, type: 3}
+    _variantLabels:
+    - lift_hatch_open
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.55
+    _volumeMax: 0.55
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: lift_hatch_close
+    _clips:
+    - {fileID: 8300000, guid: 7d9fc97b1fb062a43ad73dec3bf53a16, type: 3}
+    _variantLabels:
+    - lift_hatch_close
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.55
+    _volumeMax: 0.55
+    _pitchMin: 1
+    _pitchMax: 1
   - _id: blueprint_found
     _clips:
     - {fileID: 8300000, guid: 520e7962942727f42a4d640f0f60d95a, type: 3}
