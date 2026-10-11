@@ -151,7 +151,6 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float HopJump = 3f;
         private const float ApproachOffset = 3f;
         private const float RetreatDistance = 16f;
-        private const float ReelFrom = 12f;
 
         /// <summary>Seconds 07 may take to creep up on the surfaced relic and latch on.</summary>
         private const float LatchTimeout = 40f;
@@ -1201,17 +1200,13 @@ namespace MoonProject.Gameplay.PlayModeTests
             float distance = SurfaceRules.HorizontalDistance(_rover.Position, stand);
             yield return DriveTo(_context.Get<IWorldLayout>().BasePosition, PadArrival, 0.8f, 60f,
                 "the base pad, clear of the lander");
+            yield return Reel(1f, ReelSeconds);
             _pilot.GoTo(stand, 2.5f, 0.6f);
             float deadline = Time.time + 90f;
             bool captured = false;
             while ((!_pilot.Arrived || lift.Phase != LiftPhase.Called) && Time.time < deadline)
             {
                 Assert.AreEqual(0, _events.TetherReleased.Count, "the tether holds all the way home");
-                if (_pilot.Distance < ReelFrom)
-                {
-                    Set(_mouse.scroll, new Vector2(0f, 1f));
-                }
-
                 if (!captured && _pilot.Distance < distance * 0.5f)
                 {
                     Capture("04-towing-home");
