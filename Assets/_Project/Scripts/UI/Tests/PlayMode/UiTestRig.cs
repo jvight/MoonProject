@@ -26,6 +26,7 @@ namespace MoonProject.UI.PlayModeTests
     {
         public const string PanelSettingsPath = "Assets/_Project/Generated/UI/LofiLunarPanel.asset";
         public const string UxmlPath = "Assets/_Project/UI/GameUI.uxml";
+        public const string WordmarkPath = "Assets/_Project/Generated/UI/Wordmark.asset";
         public const string TuningPath = "Assets/_Project/Data/Tuning/UI/UiTuning.asset";
         public const string CatalogPath = "Assets/_Project/Data/Content/RelicCatalog.asset";
         public const string UpgradePath = "Assets/_Project/Data/Content/Upgrades/Upgrade_radio_tower.asset";
@@ -107,7 +108,8 @@ namespace MoonProject.UI.PlayModeTests
             document.visualTreeAsset = Load<VisualTreeAsset>(UxmlPath);
             var system = ui.AddComponent<UISystem>();
             system.Wire(document, tuning, Load<RelicCatalog>(CatalogPath),
-                new[] { Load<TextAsset>(EnglishPath), Load<TextAsset>(VietnamesePath) });
+                new[] { Load<TextAsset>(EnglishPath), Load<TextAsset>(VietnamesePath) },
+                Load<WordmarkShape>(WordmarkPath));
             system.QuitAction = () => { };
             ui.SetActive(true);
 

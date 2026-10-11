@@ -48,6 +48,9 @@ namespace MoonProject.UI
         [Tooltip("The crew's map view (Assets/_Project/Data/Tuning/UI/MapViewTuning.asset).")]
         [SerializeField] private MapViewTuning _mapTuning;
 
+        [Tooltip("The title's Lunarion wordmark (Generated/UI/Wordmark.asset, built by UI/Wordmark).")]
+        [SerializeField] private WordmarkShape _wordmark;
+
         private readonly List<IDisposable> _tokens = new List<IDisposable>();
         private readonly JourneyNotice _journey = new JourneyNotice();
         private UiServices _services;
@@ -168,9 +171,11 @@ namespace MoonProject.UI
         /// <summary>What confirming Quit does; tests replace it so the editor keeps running.</summary>
         internal Action QuitAction { get; set; } = Application.Quit;
 
-        internal void Wire(UIDocument document, UiTuning tuning, RelicCatalog relics, TextAsset[] stringTables)
+        internal void Wire(UIDocument document, UiTuning tuning, RelicCatalog relics, TextAsset[] stringTables,
+            WordmarkShape wordmark)
         {
             _document = document;
+            _wordmark = wordmark;
             _tuning = tuning;
             _relics = relics;
             _stringTables = stringTables;
@@ -252,6 +257,8 @@ namespace MoonProject.UI
                 : _stringTables == null || _stringTables.Length == 0 ? "no string tables are assigned."
                 : Array.IndexOf(_stringTables, null) >= 0 ? "a string table slot is empty."
                 : _tuning.Validate() != null ? "UiTuning " + _tuning.Validate() + "."
+                : _wordmark == null ? "the WordmarkShape is not assigned (run UI/Wordmark)."
+                : _wordmark.Validate() != null ? "the wordmark " + _wordmark.Validate() + "."
                 : null;
             if (problem == null)
             {
@@ -358,6 +365,7 @@ namespace MoonProject.UI
         {
             UiServices services = _services;
             _layout = new UiLayout(root);
+            new WordmarkPainter(_layout.TitleWordmark, _wordmark);
             _staticText = new StaticTextLocalizer(root, _localization);
             _hud = new Reveal(_layout.Hud, _tuning.Pause.Hud);
             _hud.Snap(true);

@@ -1117,7 +1117,7 @@ namespace MoonProject.UI.PlayModeTests
                 {
                     AssetDatabase.LoadAssetAtPath<TextAsset>(UiTestRig.EnglishPath),
                     AssetDatabase.LoadAssetAtPath<TextAsset>(UiTestRig.VietnamesePath),
-                });
+                }, AssetDatabase.LoadAssetAtPath<WordmarkShape>(UiTestRig.WordmarkPath));
             ui.QuitAction = () => { };
             _uiHost.SetActive(true);
 
