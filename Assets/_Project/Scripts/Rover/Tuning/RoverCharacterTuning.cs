@@ -242,7 +242,7 @@ namespace MoonProject.Rover
         [SerializeField] private float _snapSigh = 0.8f;
 
         [Header("Gameplay reactions")]
-        [Tooltip("Perk-up strength for a single salvaged piece or trail bit.")]
+        [Tooltip("Perk-up strength for a single salvaged piece.")]
         [Range(0f, 1f)]
         [FormerlySerializedAs("_scrapPerk")]
         [SerializeField] private float _salvagePerk = 0.18f;

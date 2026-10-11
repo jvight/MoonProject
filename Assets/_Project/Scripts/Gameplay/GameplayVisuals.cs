@@ -39,9 +39,6 @@ namespace MoonProject.Gameplay
         [Tooltip("Warm glow ball: radio tower beacon (WarmLamp, additive, fresnel).")]
         [SerializeField] private Material _warmGlow;
 
-        [Tooltip("Camera-facing glints over loose salvage along a debris trail (Glint shader, TechGlow).")]
-        [SerializeField] private Material _salvageGlint;
-
         [Tooltip("Camera-facing glints over a friend's missing parts (Glint shader, WarmLamp amber).")]
         [SerializeField] private Material _partGlint;
 
@@ -83,7 +80,6 @@ namespace MoonProject.Gameplay
         public Material Dust => _dust;
         public Material WarmRing => _warmRing;
         public Material WarmGlow => _warmGlow;
-        public Material SalvageGlint => _salvageGlint;
         public Material PartGlint => _partGlint;
         public Material FriendPillar => _friendPillar;
         public Material Spark => _spark;
@@ -131,7 +127,6 @@ namespace MoonProject.Gameplay
                 : _dust == null ? "dust material is missing"
                 : _warmRing == null ? "warm ring material is missing"
                 : _warmGlow == null ? "warm glow material is missing"
-                : _salvageGlint == null ? "salvage glint material is missing"
                 : _partGlint == null ? "part glint material is missing"
                 : _friendPillar == null ? "friend pillar material is missing"
                 : _spark == null ? "spark material is missing"
@@ -169,8 +164,8 @@ namespace MoonProject.Gameplay
 
         internal void Populate(Material sonarRing, Material siteRing, Material sitePillar, Material tractorBeam,
             Material tetherBeam, Material flash, Material relicHalo, Material dust, Material warmRing,
-            Material warmGlow, Material salvageGlint, Material partGlint, Material friendPillar, Material spark,
-            Material homeHalo, Material linkPulse)
+            Material warmGlow, Material partGlint, Material friendPillar, Material spark, Material homeHalo,
+            Material linkPulse)
         {
             _sonarRing = sonarRing;
             _siteRing = siteRing;
@@ -182,7 +177,6 @@ namespace MoonProject.Gameplay
             _dust = dust;
             _warmRing = warmRing;
             _warmGlow = warmGlow;
-            _salvageGlint = salvageGlint;
             _partGlint = partGlint;
             _friendPillar = friendPillar;
             _spark = spark;

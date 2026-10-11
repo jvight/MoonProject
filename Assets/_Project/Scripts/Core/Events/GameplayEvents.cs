@@ -308,8 +308,8 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
-    /// Salvage reached 07 (a cut piece or a loose trail bit folded into its cargo). <see cref="ComboStep"/> climbs while
-    /// pieces chain at one site, for the salvage melody.
+    /// Salvage reached 07 (a cut piece folded into its cargo). <see cref="ComboStep"/> climbs while pieces chain at
+    /// one site, for the salvage melody.
     /// </summary>
     public readonly struct MaterialSalvaged
     {
@@ -328,7 +328,7 @@ namespace MoonProject.Core.Events
 
         public Vector3 Position { get; }
 
-        /// <summary>The site it came from ("site.kestrel", ...), or "trail.kestrel" for a loose trail bit.</summary>
+        /// <summary>The site it came from ("site.kestrel", ...).</summary>
         public string SiteId { get; }
 
         /// <summary>0 for the first piece in a chain, then 1, 2, ... (resets after a pause).</summary>

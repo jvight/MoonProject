@@ -8,7 +8,7 @@ using MoonProject.Editor.Builders;
 namespace MoonProject.Gameplay.Editor
 {
     /// <summary>
-    /// Writes the gameplay content from code recipes: the salvage catalog over Art's site, bundle and debris prefabs
+    /// Writes the gameplay content from code recipes: the salvage catalog over Art's site and bundle prefabs
     /// (<see cref="SalvageEconomy"/>), one RelicDefinition per <see cref="RelicRecipes"/> entry and the relic catalog,
     /// the radio tower and the Rover Bay's kit crafted from the <see cref="SalvageEconomy"/> recipes, the friends
     /// (Tilly and Bell) and their catalog, Ro's cassettes and their catalog, and the crew log caches and their catalog.
@@ -229,8 +229,7 @@ namespace MoonProject.Gameplay.Editor
 
         /// <summary>
         /// The salvage catalog: Art's five wreck sites on their World anchors (the canyon lander past the Hover-Jump
-        /// gate), the three material bundles cut pieces fold into, and Kestrel-3's loose trail bits spread evenly down
-        /// its debris furrow from the trail anchor toward the crater.
+        /// gate) and the three material bundles cut pieces fold into.
         /// </summary>
         private static void BuildSalvage()
         {
@@ -246,23 +245,10 @@ namespace MoonProject.Gameplay.Editor
                     names[i] == SalvageEconomy.HeartUnderPiecesSite);
             }
 
-            IReadOnlyList<string> bits = SalvageEconomy.TrailBits;
-            var trail = new SalvageTrailBit[bits.Count];
-            for (int i = 0; i < trail.Length; i++)
-            {
-                if (!SalvagePieceName.TryParseDebris(bits[i], out SalvageMaterial material))
-                {
-                    throw new InvalidOperationException($"{BuilderPath}: '{bits[i]}' is not a debris prefab name.");
-                }
-
-                float distance = trail.Length > 1 ? SalvageEconomy.TrailLength * i / (trail.Length - 1) : 0f;
-                trail[i] = new SalvageTrailBit(LoadArt(GameplayAssetPaths.DebrisPrefab(bits[i])), material, distance);
-            }
-
             var catalog = ScriptableObject.CreateInstance<SalvageCatalog>();
             catalog.Populate(sites, LoadArt(GameplayAssetPaths.BundlePrefab(SalvageMaterial.Metal)),
                 LoadArt(GameplayAssetPaths.BundlePrefab(SalvageMaterial.Wiring)),
-                LoadArt(GameplayAssetPaths.BundlePrefab(SalvageMaterial.Optics)), trail);
+                LoadArt(GameplayAssetPaths.BundlePrefab(SalvageMaterial.Optics)));
             catalog = GeneratedAssets.CreateOrReplace(catalog, GameplayAssetPaths.SalvageCatalog);
             string problem = catalog.Validate();
             if (problem != null)
@@ -270,8 +256,7 @@ namespace MoonProject.Gameplay.Editor
                 throw new InvalidOperationException($"{BuilderPath}: salvage catalog {problem}.");
             }
 
-            Debug.Log($"{BuilderPath}: wrote {GameplayAssetPaths.SalvageCatalog} ({sites.Length} sites, " +
-                      $"{trail.Length} trail bits)");
+            Debug.Log($"{BuilderPath}: wrote {GameplayAssetPaths.SalvageCatalog} ({sites.Length} sites)");
         }
 
         private static void BuildRelics()

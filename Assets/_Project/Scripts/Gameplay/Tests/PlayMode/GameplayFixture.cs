@@ -17,7 +17,7 @@ namespace MoonProject.Gameplay.PlayModeTests
 {
     /// <summary>
     /// A complete gameplay stack built in test code: a flat world with canyon, relay and salvage site anchors, a fake
-    /// 07, test content (salvage site, bundle, trail bit, relic, Tilly, Bell, cassette, log cache, tape rack, relay
+    /// 07, test content (salvage site, bundle, relic, Tilly, Bell, cassette, log cache, tape rack, relay
     /// mast and relay part stand-ins in place of the Art prefabs, with the contracts' node names; default tuning;
     /// SoftGlow materials) and the real gameplay components, wired the way the scene contributor wires them and booted
     /// through GameBootstrap with a private save slot.
@@ -42,14 +42,6 @@ namespace MoonProject.Gameplay.PlayModeTests
         };
 
         private static readonly string[] SiteNames = { "depot", "kestrel", "drill", "garage", "lander" };
-
-        private static readonly string[] TrailBits =
-        {
-            "Debris_Metal_0", "Debris_Optics_0", "Debris_Wiring_0", "Debris_Metal_1", "Debris_Optics_1",
-        };
-
-        /// <summary>Metres the trail bits spread over, as in the content builder.</summary>
-        private const float TrailLength = 84f;
 
         /// <summary>The stand-in lab's floor (m above the ground), its stations' lens height and distance from the axis.
         /// </summary>
@@ -362,7 +354,6 @@ namespace MoonProject.Gameplay.PlayModeTests
                 GlowMaterial(shader, GlowRole.TetherBeam), GlowMaterial(shader, GlowRole.Flash),
                 GlowMaterial(shader, GlowRole.RelicHalo), GlowMaterial(shader, GlowRole.Dust),
                 GlowMaterial(shader, GlowRole.WarmRing), GlowMaterial(shader, GlowRole.WarmGlow),
-                Track(GlintMaterials.CreateSalvage(LoadShader(GlintShaderPath))),
                 Track(GlintMaterials.CreatePart(LoadShader(GlintShaderPath))),
                 GlowMaterial(shader, GlowRole.FriendPillar), GlowMaterial(shader, GlowRole.Spark),
                 GlowMaterial(shader, GlowRole.HomeHalo), GlowMaterial(shader, GlowRole.LinkPulse));
@@ -601,7 +592,7 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         /// <summary>
         /// The five salvage sites as stand-in wrecks with the site contract's nodes (the canyon lander past the
-        /// Hover-Jump gate), the three material bundles and Kestrel-3's five trail bits, as in the content builder.
+        /// Hover-Jump gate) and the three material bundles, as in the content builder.
         /// </summary>
         private void BuildSalvage(SalvageField field)
         {
@@ -614,18 +605,9 @@ namespace MoonProject.Gameplay.PlayModeTests
                     name == "lander" ? new AbilityGate(true, RoverAbility.HoverJump) : AbilityGate.Open, false);
             }
 
-            var trail = new SalvageTrailBit[TrailBits.Length];
-            for (int i = 0; i < trail.Length; i++)
-            {
-                SalvagePieceName.TryParseDebris(TrailBits[i], out SalvageMaterial material);
-                trail[i] = new SalvageTrailBit(Template(TrailBits[i], Vector3.one * 0.5f), material,
-                    TrailLength * i / (trail.Length - 1));
-            }
-
             var catalog = Asset<SalvageCatalog>();
             catalog.Populate(sites, Template("Material_Metal", Vector3.one * 0.35f),
-                Template("Material_Wiring", Vector3.one * 0.35f), Template("Material_Optics", Vector3.one * 0.35f),
-                trail);
+                Template("Material_Wiring", Vector3.one * 0.35f), Template("Material_Optics", Vector3.one * 0.35f));
             field.Wire(SalvageTuning, catalog);
         }
 

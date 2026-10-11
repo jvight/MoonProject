@@ -5,8 +5,8 @@ using MoonProject.Art;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// Recipe of the glint materials (Glint shader): TechGlow over loose salvage, WarmLamp amber over friend parts. The
-    /// Gameplay/Materials builder writes them as assets; tests build the same materials in memory.
+    /// Recipe of the glint material (Glint shader): WarmLamp amber over pickups on the ground. The Gameplay/Materials
+    /// builder writes it as an asset; tests build the same material in memory.
     /// </summary>
     public static class GlintMaterials
     {
@@ -16,13 +16,7 @@ namespace MoonProject.Gameplay
 
         private static readonly int ColorId = Shader.PropertyToID("_Color");
 
-        /// <summary>The cyan glint over loose salvage along a debris trail.</summary>
-        public static Material CreateSalvage(Shader shader)
-        {
-            return Create(shader, "M_SalvageGlint", PaletteSwatch.TechGlow);
-        }
-
-        /// <summary>The amber glint over a friend's missing parts (not cyan like salvage).</summary>
+        /// <summary>The amber glint over a friend's missing parts and the other pickups on the ground.</summary>
         public static Material CreatePart(Shader shader)
         {
             return Create(shader, "M_PartGlint", PaletteSwatch.WarmLamp);

@@ -43,8 +43,8 @@ namespace MoonProject.Art.Editor
             SiteKit.Drift(b, new Vector3(-1.3f, 0f, 2.2f), 2.6f, 1.1f, 0.45f, 10f, 32);
             SiteKit.Drift(b, new Vector3(-2.6f, 0f, 4.7f), 1.8f, 1.6f, 0.35f, 40f, 33);
 
-            // M3-16 P9: optics its signature: Optics drag, M, S, Metal S, Wiring S = (2, 2, 9), plus the trail bits;
-            // the foil panel and the avionics stay as scenery.
+            // M3-16 P9, M3-24: optics its signature, and since the loose trail bits are gone (materials come only
+            // from wrecks) the foil panel and the avionics are cuts too: Optics drag, M, M, Metal S, S, Wiring S, S.
             StandingWing(site);
             FramePanel(site);
             SmallDish(site);
@@ -222,7 +222,7 @@ namespace MoonProject.Art.Editor
                 back + opening.normalized * 0.45f, opening);
             SiteKit.Dish(piece.Geometry, SiteKit.Face(back, Vector3.Cross(opening, Vector3.up), opening), 0.62f,
                 PaletteSwatch.SkyHorizon);
-            piece.Resize(0.9f);
+            piece.Resize(1.15f);
         }
 
         /// <summary>A hull panel bent double, gold foil up, thrown ahead of the bus.</summary>
@@ -242,7 +242,6 @@ namespace MoonProject.Art.Editor
                 new Vector3(1.3f, 0.06f, 0.8f), foilFront);
             b.Prism(At(crease, new Vector3(0f, 25f, 90f)), 0.07f, 1.32f, 6, PaletteSwatch.Metal);
             SiteKit.DustCap(b, b.RangeFrom(first));
-            site.Settle(piece);
         }
 
         private static void Tank(SiteRecipe site)
@@ -309,7 +308,6 @@ namespace MoonProject.Art.Editor
                 SiteKit.Cable(b, new[] { start, lip + new Vector3(i * 0.15f, 0.04f, 0f), end }, 0.035f,
                     i == 1 ? PaletteSwatch.Charcoal : PaletteSwatch.WarmAccent);
             }
-            site.Settle(piece);
         }
     }
 }

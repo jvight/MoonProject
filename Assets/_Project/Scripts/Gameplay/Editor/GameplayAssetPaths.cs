@@ -53,7 +53,6 @@ namespace MoonProject.Gameplay.Editor
 
         public const string Shader = "Assets/_Project/Shaders/Gameplay/SoftGlow.shader";
         public const string GlintShader = "Assets/_Project/Shaders/Gameplay/Glint.shader";
-        public const string SalvageGlintMaterial = MaterialFolder + "/M_SalvageGlint.mat";
         public const string PartGlintMaterial = MaterialFolder + "/M_PartGlint.mat";
 
         public const string ArtRelicFolder = ArtPaths.Root + "/Relics";
@@ -72,12 +71,6 @@ namespace MoonProject.Gameplay.Editor
         public static string SitePrefab(string name)
         {
             return ArtPaths.SitesFolder + "/Site_" + name + ".prefab";
-        }
-
-        /// <summary>Art's loose trail bit prefab (Debris_Metal_0...).</summary>
-        public static string DebrisPrefab(string name)
-        {
-            return ArtPaths.SitesFolder + "/" + name + ".prefab";
         }
 
         /// <summary>Art's bundle a cut piece of <paramref name="material"/> folds into.</summary>

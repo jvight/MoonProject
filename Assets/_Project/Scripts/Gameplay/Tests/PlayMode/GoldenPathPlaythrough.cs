@@ -584,14 +584,14 @@ namespace MoonProject.Gameplay.PlayModeTests
             _rover.SetDriveSource(_pilot);
             Assert.AreEqual(0, _gameplay.Materials.Total, "a fresh game (its own save slot)");
             SalvageField salvage = _gameplay.Salvage;
-            int units = salvage.TrailCount * salvage.Tuning.TrailYield;
+            int units = 0;
             foreach (SalvagePiece piece in salvage.Pieces)
             {
                 units += piece.Units;
             }
 
             End("Boot the real Main scene", $"{salvage.Sites.Count} salvage sites with {salvage.Pieces.Count} " +
-                                            $"pieces and {salvage.TrailCount} trail bits: {units} units of salvage");
+                                            $"pieces: {units} units of salvage");
         }
 
         private IEnumerator WakeUp()
@@ -2070,7 +2070,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// online.
         /// </summary>
         /// <summary>
-        /// The basin's other salvage, not driven (the drill, the Kestrel's trail): what the masts out to the
+        /// The basin's other salvage, not driven (the drill and the Kestrel): what the masts out to the
         /// canyon (M3-06's escalating recipes) and Cell Pack II take, on top of the depot and the garage, as a player
         /// gathers it between trips.
         /// </summary>
