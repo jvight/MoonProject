@@ -2100,7 +2100,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             End($"Restore {name} ({mast.Id})", $"recipe {recipe}, its part {partAway:F0} m from the mast");
         }
 
-        /// <summary>Back into the bay for Cell Pack II: the spine set on 07's back, two more lamps lit.</summary>
+        /// <summary>
+        /// Back into the bay for Cell Pack II: the spine set on 07's back, two more lamps lit; the turntable shows it
+        /// turned to the open front, and 07 drives straight out.
+        /// </summary>
         private IEnumerator CraftTheCellPack()
         {
             Begin();
@@ -2122,7 +2125,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             Vector3 back = -Flat(_rover.Rotation * Vector3.forward).normalized;
             Review(_rover.Position + back * 5f + Vector3.up * 2.5f, _rover.Position + Vector3.up, "13h-battery-spine");
             yield return Until(() => !bench.Feeding, 3f, "the bay has fitted the spine");
-            yield return BackOutOfTheBay(bench);
+            Assert.Greater(Vector3.Dot(Flat(_rover.Rotation * Vector3.forward).normalized,
+                Flat(bench.BayForward).normalized), 0.9f, "the turntable leaves 07 facing out of the open front");
+            yield return DriveTo(Flat(bench.PadCentre) + Flat(bench.BayForward).normalized * BayApproach, 1.5f,
+                BayThrottle, 20f, "out of the bay's open front");
             End("Craft Cell Pack II in the bay", $"{battery.Cells} cells, {battery.Charge01:P0}");
         }
 
