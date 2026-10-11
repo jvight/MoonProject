@@ -15,7 +15,10 @@ namespace MoonProject.World
         private static readonly int LightCount = Enum.GetValues(typeof(HomeLight)).Length;
 
         // The first warm point each stage after Asleep wakes: the grade warms a step with each of them.
-        private static readonly HomeLight[] StageLeads = { HomeLight.Windows, HomeLight.BayLamps, HomeLight.ChartTable };
+        private static readonly HomeLight[] StageLeads =
+        {
+            HomeLight.Windows, HomeLight.BayLamps, HomeLight.ChartTable,
+        };
 
         private readonly HomeLightingSettings _settings;
         private BasePowerStage _stage = BasePowerStage.Asleep;

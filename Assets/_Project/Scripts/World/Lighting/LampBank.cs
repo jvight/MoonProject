@@ -31,7 +31,9 @@ namespace MoonProject.World
             return _level[index];
         }
 
-        /// <summary>Aims lamp <paramref name="index"/> at <paramref name="target"/>; <paramref name="instant"/> jumps there.</summary>
+        /// <summary>
+        /// Aims lamp <paramref name="index"/> at <paramref name="target"/>; <paramref name="instant"/> jumps there.
+        /// </summary>
         public void Set(int index, float target, bool instant)
         {
             _target[index] = Mathf.Clamp01(target);

@@ -13,7 +13,9 @@ namespace MoonProject.World
             return endLamp && lamp == lamps - 1 ? sockets - 1 : lamp;
         }
 
-        /// <summary>Whether socket <paramref name="socket"/> holds one of the row's <paramref name="lamps"/> lamps.</summary>
+        /// <summary>
+        /// Whether socket <paramref name="socket"/> holds one of the row's <paramref name="lamps"/> lamps.
+        /// </summary>
         public static bool Shows(int socket, int lamps, int sockets, bool endLamp)
         {
             if (!endLamp || lamps <= 0)
@@ -24,7 +26,9 @@ namespace MoonProject.World
             return socket < lamps - 1 || socket == sockets - 1;
         }
 
-        /// <summary>Whether socket <paramref name="socket"/>'s lamp is lit with <paramref name="lit"/> lamps lit.</summary>
+        /// <summary>
+        /// Whether socket <paramref name="socket"/>'s lamp is lit with <paramref name="lit"/> lamps lit.
+        /// </summary>
         public static bool Lit(int socket, int lit, int lamps, int sockets, bool endLamp)
         {
             for (int lamp = 0; lamp < lit && lamp < lamps; lamp++)

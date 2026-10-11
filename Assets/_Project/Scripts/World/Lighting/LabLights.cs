@@ -464,8 +464,8 @@ namespace MoonProject.World
             if (_bellyLamp == null || _hatchRim == null || _cabinLamps == null || _bigPorthole == null ||
                 _tableGlow == null || _penCarriage == null || _penHead == null || _handOffLight == null)
             {
-                return "the belly lamp, hatch rim, cabin lamps, big porthole, light table, chart pen and hand-off light " +
-                       "must be assigned (the scene build wires Art's lab nodes).";
+                return "the belly lamp, hatch rim, cabin lamps, big porthole, light table, chart pen and hand-off " +
+                       "light must be assigned (the scene build wires Art's lab nodes).";
             }
 
             if (HasEmpty(_portholeLamps) || HasEmpty(_boardLamps) || HasEmpty(_readingLamps) ||
@@ -495,7 +495,8 @@ namespace MoonProject.World
             {
                 if (section < 0 || section >= _readingLamps.Length)
                 {
-                    return $"a keepsake slot names section {section}, but there are {_readingLamps.Length} reading lamps.";
+                    return $"a keepsake slot names section {section}, but there are {_readingLamps.Length} " +
+                           "reading lamps.";
                 }
             }
 
