@@ -2105,9 +2105,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return DriveTo(Flat(mast.Anchor.Position), PadArrive, 0.5f, 90f, "the mound relay's pad");
             int evenings = _events.DockEveningOpened.Count;
             yield return Hop(hop, StationReach.HomeId);
-            Vector3 home = _context.Get<IWorldLayout>().BasePosition;
-            Assert.Less(SurfaceRules.HorizontalDistance(_rover.Position, home), 3f, "on home's pad");
             ChargingDock dock = _gameplay.Home.Dock;
+            Assert.Less(SurfaceRules.HorizontalDistance(_rover.Position, dock.Position), 3f, "on home's dock");
             yield return Until(() => dock.Docked, _gameplay.Home.Tuning.DockDelay + 3f,
                 "07 rests on the dock it landed on");
             yield return Until(() => _events.DockEveningOpened.Count > evenings, 1f,

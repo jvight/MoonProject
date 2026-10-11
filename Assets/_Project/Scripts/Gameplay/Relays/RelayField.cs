@@ -167,8 +167,9 @@ namespace MoonProject.Gameplay
         }
 
         /// <param name="placement">Core's rover placement for the hop, or null while no domain registers it.</param>
+        /// <param name="homePad">07's dock on the base pad: home's node, where a hop home sets 07 down to rest.</param>
         internal bool Initialize(GameplayServices services, UpgradeService upgrades, RadioTower tower,
-            ITetherAim tether, FriendTuning friends, IRoverPlacement placement)
+            ITetherAim tether, FriendTuning friends, IRoverPlacement placement, Vector3 homePad)
         {
             List<WorldAnchor> anchors = services.Anchors != null ? RelayAnchors(services.Anchors) : null;
             string problem = _tuning == null ? "RelayTuning is not assigned."
@@ -201,8 +202,7 @@ namespace MoonProject.Gameplay
             }
 
             _beat = RelayBeat.For(_tuning);
-            Vector3 home = SurfaceRules.OnSurface(services.Terrain, services.Layout.BasePosition.x,
-                services.Layout.BasePosition.z);
+            Vector3 home = SurfaceRules.OnSurface(services.Terrain, homePad.x, homePad.z);
             var ids = new string[anchors.Count];
             var pads = new Vector3[anchors.Count];
             var lamps = new Vector3[anchors.Count];
