@@ -17,6 +17,13 @@ kit piece. On top of that come the visible friend gifts and the install moment.
 Hover-Jump's coils already show. Later upgrades follow the same rule: Magnetic Treads brings bigger treaded wheels,
 and Wide Sonar brings a sonar array and a straightened antenna.
 
+**Kit slots (GDD v3 §4.4, adopted 2026-10-11).** 07 has six slots: nose, roof, back, flanks, rear and wheels. Each
+shows one piece at a time, and later kits replace or merge into their slot's piece, so 07 stays small and readable
+through 0.8 (bounds grow at most 25% in height and 15% in width). The pieces above map to: the lamp bar on the nose
+(floodlights replace it in 0.7), the capacitor drums on the flanks (they now buffer charge, M3-20), the Cargo Cradle
+on the rear. The back carries the battery spine from Cell Pack II (M3-20). The hover coils stay under the belly, and
+wings and vanes fold flat while driving.
+
 ## Friend gifts (visible, no new mechanics)
 - **Tilly home:** 07's missing solar cell is replaced (the wing's gap fills in) and the wing opens fully when idle.
 - **Bell home:** the faded "07" is repainted fresh by Ro's stencil, and a small radio pennant appears on the antenna.

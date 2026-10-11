@@ -48,8 +48,11 @@ Later regions add theirs: rim terraces, shadowed crater, and the foot of The Pea
     transition: static rises, the screen eases to a soft dark, 07 is placed at the target node's pad, the static
     resolves and the view eases in. It takes about 2 s and is never instant or jarring. Not available while towing a
     relic, so relics still come home by road. Hops are free.
-- **Outside reach.** Everything works and nothing is lost or punished. It is only quieter: static, no map drawing,
-  no hop.
+- **Outside reach.** 07 runs on its battery; masts and pylons charge (VISION ruling 15, M3-20). Nothing is lost or
+  punished. It is quieter: static, no map drawing, no hop.
+- **Charge pads (M3-20, 2026-10-11).** Every mast has a 4 m charge pad at its foot: dust-capped while the mast is
+  dormant, warm under the mast's lamp once lit. A lit mast fills 07's cells in ~3 s. A radio-hop lands 07 on the
+  pad.
 
 ## Systems (Core contracts via the Director)
 - **`IStationReach`** (registered by Gameplay):
