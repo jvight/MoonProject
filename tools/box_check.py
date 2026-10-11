@@ -236,6 +236,10 @@ def abort_trial_merge(root):
     git(root, "merge", "--abort", check=False)
     if merge_in_progress(root):
         git(root, "reset", "--merge", check=False)
+    if merge_in_progress(root):
+        # The builders rewrite tracked assets the merge also touched, so both aborts refuse ("not uptodate"); the run
+        # started from a clean tracked tree, so HEAD is all there is to go back to.
+        git(root, "reset", "--hard", "HEAD", check=False)
     return "the trial merge of main is still in progress; run git merge --abort" if merge_in_progress(root) else ""
 
 

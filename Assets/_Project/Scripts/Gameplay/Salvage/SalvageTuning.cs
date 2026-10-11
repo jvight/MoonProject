@@ -207,6 +207,14 @@ namespace MoonProject.Gameplay
         [Tooltip("Peak brightness of a flash (around 1 stays cyan; higher blooms white).")]
         [Range(0f, 10f)] [SerializeField] private float _flashIntensity = 1.2f;
 
+        [Header("Landmark pilot (M3-18 L1)")]
+        [Tooltip("Brightness of a site's landmark pilot once its heart is found, as a multiple of the palette's " +
+                 "authored emission (dim and warm: well under 1).")]
+        [Range(0f, 2f)] [SerializeField] private float _landmarkGlow = 0.5f;
+
+        [Tooltip("Seconds (time constant) for the pilot to come up when the heart is found.")]
+        [Range(0.1f, 10f)] [SerializeField] private float _landmarkEase = 2.5f;
+
         public float ReachRadius => _reachRadius;
         public float ReachHysteresis => _reachHysteresis;
         public float AimCone => _aimCone;
@@ -269,6 +277,8 @@ namespace MoonProject.Gameplay
         public float FlashDuration => _flashDuration;
         public Vector2 FlashRadius => _flashRadius;
         public float FlashIntensity => _flashIntensity;
+        public float LandmarkGlow => _landmarkGlow;
+        public float LandmarkEase => _landmarkEase;
 
         private static Vector2 Ordered(Vector2 range)
         {
