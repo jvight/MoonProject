@@ -8,7 +8,9 @@ namespace MoonProject.Audio
 {
     /// <summary>
     /// The base's lofi radio. Silent until <see cref="RoverAwoke"/>: then it crackles on with a dial-tuning swish and
-    /// static that resolves into the music (quicker when the player woke 07). What it plays comes from
+    /// static that resolves into the music (quicker when the player woke 07). Under the title over a save it is
+    /// already on, playing the save's station softly (<see cref="TitleRadio"/>): Continue brings it up to full, New
+    /// Game lets it fall silent. What it plays comes from
     /// <see cref="IRadioProgram"/> (re-read on <see cref="RadioProgramChanged"/>): Lumen After Dark shuffles the base
     /// tracks plus every owned tape (no immediate repeats, a swish-and-static crossfade between tracks), Tape Deck
     /// loops the chosen cassette, Quiet Hours lets the music and static go and leaves the moon's ambience. Turning
@@ -27,7 +29,7 @@ namespace MoonProject.Audio
     public sealed class RadioStation : MonoBehaviour
     {
         private const float MinPitch = 0.01f;
-        private const int SubscriptionCount = 8;
+        private const int SubscriptionCount = 11;
 
         [Tooltip("Assets/_Project/Data/Audio/RadioTuning.asset.")]
         [SerializeField] private RadioTuning _tuning;
@@ -47,6 +49,7 @@ namespace MoonProject.Audio
         private bool _openingHoldsRadio;
         private readonly NowPlayingLog _nowPlaying = new NowPlayingLog();
         private readonly EasedValue _staticPresence = new EasedValue(1f);
+        private readonly TitleRadio _title = new TitleRadio();
         private readonly RadioHop _hop = new RadioHop();
         private readonly IDisposable[] _subscriptions = new IDisposable[SubscriptionCount];
         private readonly Dictionary<string, RadioTrack> _tapeTracks = new Dictionary<string, RadioTrack>(
@@ -192,6 +195,9 @@ namespace MoonProject.Audio
             _subscriptions[5] = context.Events.Subscribe<RoverPlaced>(OnRoverPlaced);
             _subscriptions[6] = context.Events.Subscribe<RoverWakeBeatReached>(OnWakeBeat);
             _subscriptions[7] = context.Events.Subscribe<LowPowerChanged>(OnLowPowerChanged);
+            _subscriptions[8] = context.Events.Subscribe<TitleShown>(OnTitleShown);
+            _subscriptions[9] = context.Events.Subscribe<SessionStarted>(OnSessionStarted);
+            _subscriptions[10] = context.Events.Subscribe<NewGameRequested>(OnNewGameRequested);
         }
 
         internal void Wire(RadioTuning tuning, RadioPlaylist playlist, RadioTapeLibrary tapes)
@@ -231,7 +237,8 @@ namespace MoonProject.Audio
             }
 
             float cabin = _director.CabinBlend;
-            float level = _director.Buses.Effective(AudioBus.Music) * _wake.Power;
+            float title = _title.Step(dt, _tuning.TitleRiseTime, _tuning.TitleFallTime);
+            float level = _director.Buses.Effective(AudioBus.Music) * _wake.Power * title;
             float music = mix.MusicVolume * level * _wake.MusicGain * Mathf.Lerp(1f, _tuning.CabinMusicGain, cabin) *
                           _soundscape.RadioGain * _soundscape.StargazeMusicGain *
                           Mathf.Lerp(1f, _tuning.HopMusicGain, hop);
@@ -473,6 +480,33 @@ namespace MoonProject.Audio
         private void OnSignalRadiusChanged(SignalRadiusChanged changed)
         {
             SetSignalRadius(changed.Radius);
+        }
+
+        /// <summary>
+        /// The title over a save: the set comes on at once with the save's station, resolving softly out of a faint
+        /// crackle with no dial swish (07 sleeps, the radio does not).
+        /// </summary>
+        private void OnTitleShown(TitleShown shown)
+        {
+            if (!shown.HasSave || _wake.IsAwake)
+            {
+                return;
+            }
+
+            _title.ShowOverSave(_tuning.TitleGain);
+            _wake.Begin(0f, _tuning.TitleMusicFade, _tuning.WakePowerTime);
+            _static.volume = 0f;
+            _static.Play();
+        }
+
+        private void OnSessionStarted(SessionStarted started)
+        {
+            _title.StartSession();
+        }
+
+        private void OnNewGameRequested(NewGameRequested request)
+        {
+            _title.PutAway();
         }
 
         private void OnRoverAwoke(RoverAwoke awoke)
