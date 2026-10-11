@@ -3065,6 +3065,60 @@
       "notes": "Kenji's pen plotter drawing a sheet: soft pen scratches between carriage whirrs, ~3 s."
     },
     {
+      "id": "lift_hatch_open",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/lift_hatch_open.wav"
+      ],
+      "variantLabels": [
+        "lift_hatch_open"
+      ],
+      "sha256": [
+        "a293cb1b9476f7727bc490cff06e79fca4327a720036e3b130187c13fd4eb9c4"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "The belly hatch sliding open over the rising platform: rail rumble + A3/A4 bell."
+    },
+    {
+      "id": "lift_hatch_close",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/lift_hatch_close.wav"
+      ],
+      "variantLabels": [
+        "lift_hatch_close"
+      ],
+      "sha256": [
+        "eeecf3cf17e2f7dd71fbd7de7992e1d6a9ce96369916bbf21c8feebfad14af12"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "The belly hatch sliding shut behind the lowered platform: rail rumble + soft D3 seat."
+    },
+    {
       "id": "blueprint_found",
       "category": "oneshot_3d",
       "milestone": "M3",
