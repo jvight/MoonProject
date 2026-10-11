@@ -23,8 +23,11 @@ account) can continue without the old conversation.
     box/art-sketch-m319; art's 4 refinements apply: cabin about 5.6 x 2.5 m, octagonal weathered panels, tapered roof,
     tower taller than the lander).
   - Ro answers at the end, and the opening gets a ~2 s boot readout.
-- **In flight:** story & flow is writing the APPROVED GDD v3 (`docs/design/gdd-v3.md` + `-vi.md`) from the owner's
-  answers and `docs/design/review-gdd-v3.md`.
+- **GDD v3 APPROVED on main (565b49e1)** as `docs/design/gdd-v3.md` and `-vi.md`. §11 has the owner's answers, §10
+  the exact edits to VISION, DESIGN, M3-16, M3-06, M3-11, cutscenes and ROADMAP.
+- **0.5 scope:** the battery, chargers, the crawl with Tilly's lead, Cell Pack II, the lab (M3-19) and the recovery
+  panel. Structures and T2 are not in 0.5.
+- Story & flow offers to write the boot readout into cutscenes O5.
 - **Next for the Director:**
   1. Land the approved GDD v3.
   2. Rewrite VISION and DESIGN where GDD v3 §10 says so.
