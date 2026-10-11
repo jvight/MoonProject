@@ -84,6 +84,16 @@ namespace MoonProject.Audio
         public const string LiftRide = "lift_ride";
         public const string LiftStopClunk = "lift_stop_clunk";
         public const string PlotterDraw = "plotter_draw";
+        public const string LiftHatchOpen = "lift_hatch_open";
+        public const string LiftHatchClose = "lift_hatch_close";
+        public const string LabDetent = "lab_detent";
+        public const string LabRoomTone = "lab_room_tone";
+        public const string ReaderReel = "reader_reel";
+        public const string ReaderTake = "reader_take";
+        public const string ReaderDecodeChime = "reader_decode_chime";
+        public const string MapPencil = "map_pencil";
+        public const string MapPen = "map_pen";
+        public const string MapTableHum = "map_table_hum";
         public const string BlueprintFound = "blueprint_found";
         public const string DockEveningSwell = "dock_evening_swell";
         public const string AsleepStatic = "asleep_static";

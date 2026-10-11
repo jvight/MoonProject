@@ -39,7 +39,7 @@ namespace MoonProject.Audio
         [Tooltip("Volume scale of a dormant station's soft 'not yet' answer to the sonar.")]
         [Range(0f, 1f)] [SerializeField] private float _notYetVolume = 0.7f;
 
-        [Header("The crew's lift (M3-16)")]
+        [Header("The crew's belly lift (M3-19)")]
         [Tooltip("Seconds for the ride's ratchet and hum to come in as the platform starts moving.")]
         [Range(0.01f, 2f)] [SerializeField] private float _liftRideFadeIn = 0.4f;
 
@@ -49,15 +49,53 @@ namespace MoonProject.Audio
         [Tooltip("Volume scale of the ride's ratchet and hum.")]
         [Range(0f, 1f)] [SerializeField] private float _liftRideVolume = 0.7f;
 
-        [Tooltip("Volume scale of the jammed winch's creak and the clunk at each stop.")]
+        [Tooltip("Volume scale of the jammed platform's creak, the clunk at each stop and the hatch opening and " +
+                 "shutting.")]
         [Range(0f, 1f)] [SerializeField] private float _liftBeatVolume = 0.8f;
 
         [Header("Kenji's blueprints (M3-16 P7)")]
-        [Tooltip("Volume scale of the pen plotter drawing a delivered sheet.")]
+        [Tooltip("Volume scale of the pen plotter drawing a decoded sheet.")]
         [Range(0f, 1f)] [SerializeField] private float _plotterVolume = 0.7f;
 
         [Tooltip("Volume scale of the tiny chime as a blueprint tube is found.")]
         [Range(0f, 1f)] [SerializeField] private float _blueprintFoundVolume = 0.7f;
+
+        [Header("The crew's lab (M3-19)")]
+        [Tooltip("Volume scale of the lab's room tone while 07 is up in the lab.")]
+        [Range(0f, 1f)] [SerializeField] private float _labRoomVolume = 0.7f;
+
+        [Tooltip("Seconds for the room tone to come in as the platform settles in the lab.")]
+        [Range(0.05f, 6f)] [SerializeField] private float _labRoomFadeIn = 2f;
+
+        [Tooltip("Seconds for the room tone to let go as the platform starts down.")]
+        [Range(0.05f, 6f)] [SerializeField] private float _labRoomFadeOut = 2.5f;
+
+        [Tooltip("Volume scale of the turntable's detent as it settles at a station.")]
+        [Range(0f, 1f)] [SerializeField] private float _detentVolume = 0.6f;
+
+        [Tooltip("Volume scale of the reader taking a tube into its slot.")]
+        [Range(0f, 1f)] [SerializeField] private float _readerTakeVolume = 0.7f;
+
+        [Tooltip("Volume scale of the reader's reel and tape while it decodes.")]
+        [Range(0f, 1f)] [SerializeField] private float _reelVolume = 0.6f;
+
+        [Tooltip("Seconds for the reel's sound to come in and to let go.")]
+        [Range(0.05f, 2f)] [SerializeField] private float _reelFade = 0.3f;
+
+        [Tooltip("Volume scale of the chime as a find is decoded.")]
+        [Range(0f, 1f)] [SerializeField] private float _decodeChimeVolume = 0.7f;
+
+        [Tooltip("Volume scale of the pencil hiss as a place blinks seen on the crew's map.")]
+        [Range(0f, 1f)] [SerializeField] private float _mapPencilVolume = 0.5f;
+
+        [Tooltip("Volume scale of the chart pen inking a place, climbing the pentatonic scale.")]
+        [Range(0f, 1f)] [SerializeField] private float _mapPenVolume = 0.6f;
+
+        [Tooltip("Volume scale of the light table's hum while the map is open.")]
+        [Range(0f, 1f)] [SerializeField] private float _tableHumVolume = 0.5f;
+
+        [Tooltip("Seconds for the table's hum to warm up and to let go.")]
+        [Range(0.05f, 4f)] [SerializeField] private float _tableHumFade = 1f;
 
         [Header("The bay's arms")]
         [Tooltip("Tip speed (m/s) below which an arm's servo is silent.")]
@@ -152,6 +190,18 @@ namespace MoonProject.Audio
         public float LiftBeatVolume => _liftBeatVolume;
         public float PlotterVolume => _plotterVolume;
         public float BlueprintFoundVolume => _blueprintFoundVolume;
+        public float LabRoomVolume => _labRoomVolume;
+        public float LabRoomFadeIn => _labRoomFadeIn;
+        public float LabRoomFadeOut => _labRoomFadeOut;
+        public float DetentVolume => _detentVolume;
+        public float ReaderTakeVolume => _readerTakeVolume;
+        public float ReelVolume => _reelVolume;
+        public float ReelFade => _reelFade;
+        public float DecodeChimeVolume => _decodeChimeVolume;
+        public float MapPencilVolume => _mapPencilVolume;
+        public float MapPenVolume => _mapPenVolume;
+        public float TableHumVolume => _tableHumVolume;
+        public float TableHumFade => _tableHumFade;
         public float ArmDeadSpeed => _armDeadSpeed;
         public float ArmFullSpeed => Mathf.Max(_armFullSpeed, _armDeadSpeed + MinSpan);
         public float ArmPlacedSpeed => _armPlacedSpeed;

@@ -3065,6 +3065,300 @@
       "notes": "Kenji's pen plotter drawing a sheet: soft pen scratches between carriage whirrs, ~3 s."
     },
     {
+      "id": "lift_hatch_open",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/lift_hatch_open.wav"
+      ],
+      "variantLabels": [
+        "lift_hatch_open"
+      ],
+      "sha256": [
+        "a293cb1b9476f7727bc490cff06e79fca4327a720036e3b130187c13fd4eb9c4"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "The belly hatch sliding open over the rising platform: rail rumble + A3/A4 bell."
+    },
+    {
+      "id": "lift_hatch_close",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/lift_hatch_close.wav"
+      ],
+      "variantLabels": [
+        "lift_hatch_close"
+      ],
+      "sha256": [
+        "eeecf3cf17e2f7dd71fbd7de7992e1d6a9ce96369916bbf21c8feebfad14af12"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "The belly hatch sliding shut behind the lowered platform: rail rumble + soft D3 seat."
+    },
+    {
+      "id": "lab_detent",
+      "category": "tick_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/lab_detent_01.wav",
+        "Assets/_Project/Audio/SFX/lab_detent_02.wav",
+        "Assets/_Project/Audio/SFX/lab_detent_03.wav",
+        "Assets/_Project/Audio/SFX/lab_detent_04.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02",
+        "03",
+        "04"
+      ],
+      "sha256": [
+        "944da4744631ad2623acb2cfaf6cc4b7f65da1eb5d46ba93e46d82d184c04845",
+        "c17f6d5f96077cbff503dd00bdb8247dca270aff2509ef9374714cd856a508ab",
+        "941bbaaa5db2b4af993cd27fdc0be85f5b88592e7963401fb88db3a37457c46d",
+        "cc5be6bef6a8d64758ff5fc831bae690a5d230a819ffee970a3ea143f9536fac"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -26.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "The lab's turntable settling at a station: felt click + a pentatonic tine."
+    },
+    {
+      "id": "lab_room_tone",
+      "category": "ambience_2d",
+      "milestone": "M3",
+      "bus": "Ambience",
+      "spatial": false,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/Ambience/lab_room_tone_loop.wav"
+      ],
+      "variantLabels": [
+        "lab_room_tone"
+      ],
+      "sha256": [
+        "622904c085348eb401404a4e53237c862e2bcfcc1dbb372eeba893bf197094af"
+      ],
+      "volumeMin": 0.7,
+      "volumeMax": 0.7,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -30.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "The crew's lab: a close warm room, a soft D2 lamp hum and faint air."
+    },
+    {
+      "id": "reader_reel",
+      "category": "loop_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/SFX/reader_reel_loop.wav"
+      ],
+      "variantLabels": [
+        "reader_reel"
+      ],
+      "sha256": [
+        "97530899cf06e604d952bc1770128849997c56b5e276c012fb1ed1f0e1d7cf98"
+      ],
+      "volumeMin": 0.45,
+      "volumeMax": 0.45,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "The reader decoding: reel purr on A2 + paper tape ticks."
+    },
+    {
+      "id": "reader_take",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/reader_take.wav"
+      ],
+      "variantLabels": [
+        "reader_take"
+      ],
+      "sha256": [
+        "1be0310034d1a7e8d7ee67c48c2c906564838d6faf1ac8f133ff57d89b4668bf"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "The reader taking a tube: paper-and-tin slide into the slot + soft latch."
+    },
+    {
+      "id": "reader_decode_chime",
+      "category": "stinger_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/reader_decode_chime.wav"
+      ],
+      "variantLabels": [
+        "reader_decode_chime"
+      ],
+      "sha256": [
+        "0ddf1b5272028f85405b9c5f9c2d513e51a46c9cbab8698192dc4800faa734fc"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -20.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "A find decoded: felt glass chime rising D5, A5, D6."
+    },
+    {
+      "id": "map_pencil",
+      "category": "tick_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/map_pencil.wav"
+      ],
+      "variantLabels": [
+        "map_pencil"
+      ],
+      "sha256": [
+        "c2431dddad7e3b8a0ab41ac4f3ff19e9c1e0aa730735575970396bc5b6a6316a"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -28.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "A place blinking seen on the crew's map: a short soft pencil hiss."
+    },
+    {
+      "id": "map_pen",
+      "category": "tick_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/map_pen_01.wav",
+        "Assets/_Project/Audio/SFX/2D/map_pen_02.wav",
+        "Assets/_Project/Audio/SFX/2D/map_pen_03.wav",
+        "Assets/_Project/Audio/SFX/2D/map_pen_04.wav",
+        "Assets/_Project/Audio/SFX/2D/map_pen_05.wav",
+        "Assets/_Project/Audio/SFX/2D/map_pen_06.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02",
+        "03",
+        "04",
+        "05",
+        "06"
+      ],
+      "sha256": [
+        "881bcfdd3365601bd5ee926b4ce4c3ef94c16e5c92f9a6edac13ef3be8f9c846",
+        "2d23c3f245055968bb36593653b7faeef169e7759669cb74a195912e0101daca",
+        "0dd4497e882e84e5ef82a9619bf27be2b084a2b895cad5920dc7ba90beb584da",
+        "e4c236ef02118fdab11ab646404a8cb54dc98ab07aade980d3cd3f689324bcc1",
+        "d6e7e60cf567c4317d6598a182d2293d065c070df94d59db41e1ba51cb82cfaa",
+        "e0a6f174647b8f9c9c189c783a2987e8297be23c7d4f4d4bcc4a4669d14e8b11"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -28.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "The chart pen inking a place: nib scratch + tine climbing D pentatonic."
+    },
+    {
+      "id": "map_table_hum",
+      "category": "loop_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/SFX/map_table_hum_loop.wav"
+      ],
+      "variantLabels": [
+        "map_table_hum"
+      ],
+      "sha256": [
+        "7ba1e9f517de25d643822d96efb9139538940ab99ec1e8f089100517b9c33795"
+      ],
+      "volumeMin": 0.4,
+      "volumeMax": 0.4,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "The light table glowing under the chart: soft D3/A3 lamp hum."
+    },
+    {
       "id": "blueprint_found",
       "category": "oneshot_3d",
       "milestone": "M3",

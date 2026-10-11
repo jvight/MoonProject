@@ -18,20 +18,21 @@ namespace MoonProject.Audio
     /// <item>the radio tower's hatch opens, the beam's stitching rises with the new section, the hatch shuts;</item>
     /// <item>the charging dock clunks as 07 settles on it, hums very softly while charging and plays a gentle tone
     /// when full; leaving it is a tiny release (<see cref="RoverDockChanged"/>).</item>
-    /// <item>power returning to home, the bay or the lift plays that place's wake phrase
+    /// <item>power returning to home, the bay or the lab's chart plays that place's wake phrase
     /// (<see cref="BasePowerChanged"/>, never on a restore from a save), and a dormant station answers the sonar with
     /// a soft "not yet" where it stands (<see cref="StationNotYet"/>, published as the ping's ring reaches it).</item>
-    /// <item>the crew's lift: the jammed winch creaks as 07 comes near, the ride ratchets and hums while it moves and
-    /// clunks at each stop (<see cref="LiftCued"/>, <see cref="LiftSounds"/>);</item>
-    /// <item>Kenji's pen plotter draws a delivered sheet (<see cref="BlueprintDelivered"/>) and a found blueprint
-    /// tube chimes where it was found (<see cref="BlueprintFound"/>).</item>
+    /// <item>the crew's belly lift: the jammed platform creaks as it asks for the stitch, the hatch slides open on an A
+    /// and shut, the ride ratchets and hums in D while it moves and clunks at each stop (<see cref="LiftCued"/>,
+    /// <see cref="LiftSounds"/>);</item>
+    /// <item>a found blueprint tube chimes where it was found (<see cref="BlueprintFound"/>); the lab's reader and
+    /// Kenji's plotter are <see cref="LabAudio"/>'s.</item>
     /// </list>
     /// Game-time loops duck while paused. Initialised by <see cref="AudioDirector"/>.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class StationAudio : MonoBehaviour
     {
-        private const int SubscriptionCount = 8;
+        private const int SubscriptionCount = 7;
         private const uint DropSeedSalt = 0x68E31DA4u;
         private const float CentsPerSemitone = 100f;
         private const float CentsPerOctave = 1200f;
@@ -49,7 +50,6 @@ namespace MoonProject.Audio
         private CueHandle _wake;
         private CueHandle _notYet;
         private CueHandle[] _liftBeats = Array.Empty<CueHandle>();
-        private CueHandle _plotter;
         private CueHandle _found;
         private AudioSource _liftLoop;
         private float _liftCueVolume;
@@ -119,12 +119,11 @@ namespace MoonProject.Audio
             _wake = director.Resolve(AudioCueIds.BaseWake);
             _notYet = director.Resolve(AudioCueIds.StationNotYet);
             CueHandle liftRide = director.Resolve(AudioCueIds.LiftRide);
-            _plotter = director.Resolve(AudioCueIds.PlotterDraw);
             _found = director.Resolve(AudioCueIds.BlueprintFound);
             if (!feed.IsValid || !servo.IsValid || !turn.IsValid || !stitch.IsValid || !charge.IsValid ||
                 !_sigh.IsValid || !_weld.IsValid || !_chime.IsValid || !_dockConnect.IsValid || !_dockFull.IsValid ||
                 !_dockRelease.IsValid || !_wake.IsValid || !_notYet.IsValid || !liftRide.IsValid ||
-                !_plotter.IsValid || !_found.IsValid || !TryResolveBeats(director) || !TryResolveLiftBeats(director) ||
+                !_found.IsValid || !TryResolveBeats(director) || !TryResolveLiftBeats(director) ||
                 !TryResolveWakes(director.Library.GetCue(_wake)))
             {
                 enabled = false;
@@ -160,8 +159,7 @@ namespace MoonProject.Audio
             _subscriptions[3] = events.Subscribe<BasePowerChanged>(OnBasePowerChanged);
             _subscriptions[4] = events.Subscribe<StationNotYet>(OnStationNotYet);
             _subscriptions[5] = events.Subscribe<LiftCued>(OnLiftCued);
-            _subscriptions[6] = events.Subscribe<BlueprintDelivered>(OnBlueprintDelivered);
-            _subscriptions[7] = events.Subscribe<BlueprintFound>(OnBlueprintFound);
+            _subscriptions[6] = events.Subscribe<BlueprintFound>(OnBlueprintFound);
         }
 
         internal void Wire(StationAudioTuning tuning)
@@ -317,11 +315,6 @@ namespace MoonProject.Audio
             {
                 _director.PlayAt(_liftBeats[beat], cued.Position, _tuning.LiftBeatVolume);
             }
-        }
-
-        private void OnBlueprintDelivered(BlueprintDelivered delivered)
-        {
-            _director.Play2D(_plotter, _tuning.PlotterVolume);
         }
 
         private void OnBlueprintFound(BlueprintFound found)
