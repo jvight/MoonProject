@@ -123,6 +123,82 @@
             "text": "Dark masts lead toward the Peak."
         },
         {
+            "key": "ui.recovery.title",
+            "text": "LUMEN RECOVERY PROTOCOL"
+        },
+        {
+            "key": "recovery.power.name",
+            "text": "Power the station"
+        },
+        {
+            "key": "recovery.link.name",
+            "text": "Link the network to the Peak"
+        },
+        {
+            "key": "recovery.dish.name",
+            "text": "Repair the great dish"
+        },
+        {
+            "key": "recovery.answer.name",
+            "text": "Answer Earth"
+        },
+        {
+            "key": "ui.board.known",
+            "text": "KENJI'S PLANS"
+        },
+        {
+            "key": "tech.tower_l1.name",
+            "text": "Tower, level 1"
+        },
+        {
+            "key": "tech.tower_l2.name",
+            "text": "Tower, level 2"
+        },
+        {
+            "key": "tech.tower_l3.name",
+            "text": "Tower, level 3"
+        },
+        {
+            "key": "tech.relay_network.name",
+            "text": "Relay network"
+        },
+        {
+            "key": "tech.hover_jump.name",
+            "text": "Hover-Jump"
+        },
+        {
+            "key": "tech.cargo_cradle.name",
+            "text": "Cargo Cradle"
+        },
+        {
+            "key": "tech.warm_headlamp.name",
+            "text": "Warm Headlamp"
+        },
+        {
+            "key": "tech.capacitor_drums.name",
+            "text": "Capacitor drums"
+        },
+        {
+            "key": "tech.cell_pack_2.name",
+            "text": "Cell Pack II"
+        },
+        {
+            "key": "ticker.recovery.power",
+            "text": "Power restored."
+        },
+        {
+            "key": "ticker.recovery.link",
+            "text": "The Link reaches the Peak."
+        },
+        {
+            "key": "ticker.recovery.dish",
+            "text": "The great dish is whole again."
+        },
+        {
+            "key": "ticker.recovery.answer",
+            "text": "Earth has heard us."
+        },
+        {
             "key": "notyet.tower",
             "text": "Asleep. Metal and a coil will wake it."
         },
@@ -299,7 +375,7 @@
             "text": "Power the tired antenna and home wakes: the lander's windows glow again."
         },
         {
-            "key": "component.Part_TowerCoil.needed",
+            "key": "component.tower_coil.needed",
             "text": "The tower is waiting for its coil."
         },
         {
@@ -311,7 +387,7 @@
             "text": "A taller mast carries power to Kenji's bay, and the radio stays clear far out."
         },
         {
-            "key": "component.Part_Transformer.needed",
+            "key": "component.transformer.needed",
             "text": "The tower is waiting for its transformer."
         },
         {
@@ -323,7 +399,7 @@
             "text": "The tower sings across the basin and wakes the crew's lift; home glows like a lantern."
         },
         {
-            "key": "component.Part_RelaySpare.needed",
+            "key": "component.relay_spare.needed",
             "text": "The tower is waiting for a spare from the relays."
         },
         {

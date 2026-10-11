@@ -142,6 +142,26 @@ namespace MoonProject.UI.Map
         [Range(0.05f, 2f)]
         [SerializeField] private float _cardFadeSeconds = 0.35f;
 
+        [Header("Chargers and the Link (M3-21)")]
+        [Tooltip("Colour of a charger's circle: a soft warm pencil, under the ink.")]
+        [SerializeField] private Color _charger = new Color(0.66f, 0.45f, 0.22f, 0.42f);
+
+        [Tooltip("Width (paper units) of a charger's circle.")]
+        [Range(0.5f, 6f)]
+        [SerializeField] private float _chargerWidth = 1.6f;
+
+        [Tooltip("Width (paper units) of the Link's ink line and its arrowhead.")]
+        [Range(0.5f, 8f)]
+        [SerializeField] private float _linkWidth = 3.4f;
+
+        [Tooltip("Metres the Link's line carries on past its last lit mast toward the Peak.")]
+        [Range(10f, 300f)]
+        [SerializeField] private float _linkLead = 80f;
+
+        [Tooltip("Length (paper units) of each stroke of the Link's arrowhead.")]
+        [Range(4f, 60f)]
+        [SerializeField] private float _arrowSize = 22f;
+
         public float PaperSize => _paperSize;
 
         public Color Paper => _paper;
@@ -207,5 +227,15 @@ namespace MoonProject.UI.Map
         public float CardLineSize => _cardLineSize;
 
         public float CardFadeSeconds => _cardFadeSeconds;
+
+        public Color Charger => _charger;
+
+        public float ChargerWidth => _chargerWidth;
+
+        public float LinkWidth => _linkWidth;
+
+        public float LinkLead => _linkLead;
+
+        public float ArrowSize => _arrowSize;
     }
 }

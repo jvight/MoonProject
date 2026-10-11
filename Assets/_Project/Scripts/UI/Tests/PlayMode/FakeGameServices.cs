@@ -14,8 +14,13 @@ namespace MoonProject.UI.PlayModeTests
     /// </summary>
     public sealed class FakeGameServices : MonoBehaviour, IGameSystem, IViewCamera, IAudioSettings, ILookSettings,
         IMaterialStock, ITetherAim, IInteractionHints, IUpgradeShop, IRoverState, IFriendStatuses, IRadioProgram,
-        IRadioHop, IRelayStatus, ISalvageStatus, IBlueprintBoard, IRoverBattery, IBeamStatus
+        IRadioHop, IRelayStatus, ISalvageStatus, IBlueprintBoard, IRoverBattery, IBeamStatus, ITechTree,
+        IRecoveryProgress
     {
+        private readonly TechNodeState[] _techStates = new TechNodeState[Enum.GetValues(typeof(TechNodeId)).Length];
+        private readonly int[] _litLamps = new int[Enum.GetValues(typeof(RecoveryTarget)).Length];
+        private readonly int[] _lamps = { 3, 3, 4, 1 };
+
         private readonly float[] _volumes = { 1f, 1f, 1f, 1f };
         private readonly List<string> _tapes = new List<string>();
         private readonly List<string> _hopChoices = new List<string>();
@@ -211,6 +216,54 @@ namespace MoonProject.UI.PlayModeTests
             context.Register<ISalvageStatus>(this);
             context.Register<IRoverBattery>(this);
             context.Register<IBeamStatus>(this);
+            context.Register<ITechTree>(this);
+            context.Register<IRecoveryProgress>(this);
+        }
+
+        public int KnownCount
+        {
+            get
+            {
+                int known = 0;
+                foreach (TechNodeState state in _techStates)
+                {
+                    known += state != TechNodeState.Unknown ? 1 : 0;
+                }
+
+                return known;
+            }
+        }
+
+        public TechNodeState StateOf(TechNodeId node)
+        {
+            return _techStates[(int)node];
+        }
+
+        /// <summary>Sets what the tech board knows of <paramref name="node"/>.</summary>
+        public void SetTech(TechNodeId node, TechNodeState state)
+        {
+            _techStates[(int)node] = state;
+        }
+
+        public int LitLamps(RecoveryTarget target)
+        {
+            return _litLamps[(int)target];
+        }
+
+        public int Lamps(RecoveryTarget target)
+        {
+            return _lamps[(int)target];
+        }
+
+        public bool IsComplete(RecoveryTarget target)
+        {
+            return _litLamps[(int)target] >= _lamps[(int)target];
+        }
+
+        /// <summary>Sets how many lamps of <paramref name="target"/>'s row are lit.</summary>
+        public void SetLitLamps(RecoveryTarget target, int lit)
+        {
+            _litLamps[(int)target] = lit;
         }
 
         /// <summary>The lit nodes the list will offer (their name keys), home first.</summary>

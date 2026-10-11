@@ -16,7 +16,7 @@ namespace MoonProject.UI
             ILookSettings look, ISaveService save, IMaterialStock materials, ITetherAim tether, IInteractionHints hints,
             IUpgradeShop shop, IBlueprintBoard board, IFriendStatuses friends, IRadioProgram radio, IRadioHop hop,
             IRelayStatus relays, ISalvageStatus salvage, IGameFlow flow, ISettingsFile settings, IRoverBattery battery,
-            IBeamStatus beam)
+            IBeamStatus beam, ITechTree tech, IRecoveryProgress recovery)
         {
             Events = events ?? throw new ArgumentNullException(nameof(events));
             Input = input ?? throw new ArgumentNullException(nameof(input));
@@ -38,6 +38,8 @@ namespace MoonProject.UI
             Flow = flow ?? throw new ArgumentNullException(nameof(flow));
             Settings = settings ?? throw new ArgumentNullException(nameof(settings));
             Battery = battery ?? throw new ArgumentNullException(nameof(battery));
+            Tech = tech ?? throw new ArgumentNullException(nameof(tech));
+            Recovery = recovery ?? throw new ArgumentNullException(nameof(recovery));
             Beam = beam ?? throw new ArgumentNullException(nameof(beam));
         }
 
@@ -85,6 +87,12 @@ namespace MoonProject.UI
         /// <summary>Whether 07's beam is at work: the HUD arc hides meanwhile.</summary>
         public IBeamStatus Beam { get; }
 
+        /// <summary>What the station knows and has built: the tech board's labels (docs/features/M3-21).</summary>
+        public ITechTree Tech { get; }
+
+        /// <summary>The four recovery targets' lamps: the recovery panel's labels.</summary>
+        public IRecoveryProgress Recovery { get; }
+
         /// <summary>
         /// Resolves every service; a missing one throws (a system is missing from the bootstrap order).
         /// </summary>
@@ -101,7 +109,7 @@ namespace MoonProject.UI
                 context.Get<IUpgradeShop>(), context.Get<IBlueprintBoard>(), context.Get<IFriendStatuses>(), context.Get<IRadioProgram>(),
                 context.Get<IRadioHop>(), context.Get<IRelayStatus>(), context.Get<ISalvageStatus>(),
                 context.Get<IGameFlow>(), context.Get<ISettingsFile>(), context.Get<IRoverBattery>(),
-                context.Get<IBeamStatus>());
+                context.Get<IBeamStatus>(), context.Get<ITechTree>(), context.Get<IRecoveryProgress>());
         }
     }
 }
