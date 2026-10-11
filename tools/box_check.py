@@ -41,7 +41,7 @@ RUN_BUILDERS = "MoonProject.Editor.Automation.BuildAutomation.RunBuilders"
 BUILDER_DOMAINS = {"art": "Art", "world": "World", "rover": "Rover", "gameplay": "Gameplay", "audio": "Audio",
                    "ui": "UI", "map": "World|Gameplay|UI", "opening": "World|Rover|Audio",
                    "battery": "Art|World|Rover|Gameplay|UI|Audio", "lab-build": "Art|World",
-                   "lab-systems": "Gameplay|Rover|UI|Audio", "goals": "Gameplay|UI|Audio"}
+                   "lab-systems": "Art|World|Gameplay|Rover|UI|Audio", "goals": "Gameplay|UI|Audio"}
 # Targeted EditMode tests per box; the full PlayMode suite and the Playthrough are the Director's.
 DEFAULT_TESTS = {"art": "MoonProject.Art.Tests", "world": "MoonProject.World.Tests",
                  "rover": "MoonProject.Rover.Tests", "gameplay": "MoonProject.Gameplay.Tests",
