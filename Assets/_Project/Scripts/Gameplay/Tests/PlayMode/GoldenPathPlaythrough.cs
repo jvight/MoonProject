@@ -305,6 +305,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         private int _crawls;
         private float _stepMetres;
         private float _stepBeam;
+        private float _stepLowest;
         private int _cuts;
         private float _awokeAt = -1f;
         private float _stepStart;
@@ -466,7 +467,8 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         /// <summary>
         /// What each step asks of the battery (docs/features/M3-20 §3): metres on the ground and seconds of beam work,
-        /// counted every frame for the report's tuning columns (a radio-hop's jump is not driving).
+        /// counted every frame for the report's tuning columns (a radio-hop's jump is not driving), and the lowest charge
+        /// within the step (a charger later in it hides a dip from its end charge).
         /// </summary>
         private IEnumerator TrackTheBattery(IBeamStatus beam)
         {
@@ -479,6 +481,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 last = now;
                 _stepMetres += _rover.IsGrounded && metres < HopJump ? metres : 0f;
                 _stepBeam += beam.Working ? Time.deltaTime : 0f;
+                _stepLowest = Mathf.Min(_stepLowest, _gameplay.Battery.Model.Charge01);
             }
         }
 
@@ -2753,6 +2756,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             _stepStart = Time.time;
             _stepMetres = 0f;
             _stepBeam = 0f;
+            _stepLowest = _gameplay != null ? _gameplay.Battery.Model.Charge01 : 1f;
         }
 
         private void End(string step, string notes)
@@ -2761,8 +2765,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             float charge = _gameplay != null ? _gameplay.Battery.Model.Charge01 : 1f;
             _steps.Add((step, seconds, notes, new Vector3(charge, _stepMetres, _stepBeam)));
             Debug.Log(string.Format(CultureInfo.InvariantCulture,
-                "[playthrough] {0}: {1:F1} s ({2}); charge {3:P0}, {4:F0} m on the ground, {5:F1} s of beam", step,
-                seconds, notes, charge, _stepMetres, _stepBeam));
+                "[playthrough] {0}: {1:F1} s ({2}); charge {3:P0} (lowest {6:P0}), {4:F0} m on the ground, {5:F1} s " +
+                "of beam", step, seconds, notes, charge, _stepMetres, _stepBeam, Mathf.Min(_stepLowest, charge)));
         }
 
         private void Capture(string name)
