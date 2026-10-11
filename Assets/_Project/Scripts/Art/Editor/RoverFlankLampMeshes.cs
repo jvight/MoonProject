@@ -4,11 +4,12 @@ using static MoonProject.Art.Place;
 namespace MoonProject.Art.Editor
 {
     /// <summary>
-    /// 07's battery lamps (docs/features/M3-20 "How 07 shows it"): a strip of small amber lamps set into the orange
-    /// stripe along each flank, eight sockets from the front corner back, one per cell. Each lamp is a riveted metal
-    /// cup on the paint (its node's mesh) holding a domed glass (its own node, on the glow-off material, dark until
-    /// Rover lights it). In lamp space +X points out of the flank; each lamp tilts up and back so its glass faces
-    /// the chase camera behind and above 07, and the left flank's lamps turn half round, so one pair of meshes serves
+    /// 07's battery lamps (docs/features/M3-20 "How 07 shows it"): a strip of small amber lamps along each flank,
+    /// on the lid's edge right above the orange stripe, eight sockets from the front corner back, one per cell. The
+    /// flanks themselves hide behind 07's big wheels from the chase camera, so the lamps sit on top and face up, a
+    /// little out and back, where the camera behind and above 07 sees them. Each lamp is a dark cup with a metal lip
+    /// (its node's mesh) holding a domed glass (its own node, on the glow-off material, dark until Rover lights it).
+    /// In lamp space +X is the glass's facing; the left flank's lamps turn half round, so one pair of meshes serves
     /// both sides.
     /// </summary>
     internal static class RoverFlankLampMeshes
@@ -18,8 +19,8 @@ namespace MoonProject.Art.Editor
         /// <summary>Metres between neighbouring lamps along the stripe.</summary>
         private const float Spacing = 0.062f;
 
-        /// <summary>Along-body position of the front lamp, just behind the flat flank's front edge.</summary>
-        private const float FrontZ = 0.48f;
+        /// <summary>Along-body position of the front lamp, where the flank's straight edge begins.</summary>
+        private const float FrontZ = 0.52f;
 
         private const float CupRadius = 0.031f;
         private const float CupDepth = 0.012f;
@@ -35,30 +36,32 @@ namespace MoonProject.Art.Editor
         /// <summary>Eight sides: round at a lamp's size from the chase camera, and 16 lamps stay inside 07's budget.</summary>
         private const int Sides = 8;
 
-        /// <summary>Degrees each lamp tilts up and toward the rear, so the chase camera sees its glass.</summary>
-        private const float TiltUp = 50f;
-        private const float TiltBack = 25f;
+        /// <summary>Degrees each lamp's glass leans out of the vertical and toward the rear, to the chase camera.</summary>
+        private const float TiltOut = 25f;
+        private const float TiltBack = 20f;
+
+        /// <summary>Metres the lamps sit in from the lid's outer edge, right above the stripe.</summary>
+        private const float EdgeInset = 0.05f;
 
         /// <summary>Points out of the flank (+X) from a prism's local Y.</summary>
         private static readonly Vector3 Outward = new Vector3(0f, 0f, -90f);
 
-        /// <summary>Outer face of the stripe's paint on the right flank (the left mirrors x).</summary>
-        private const float StripeFace = RoverMeshes.BodyHalfWidth + RoverMeshes.PaintProud +
-                                         RoverMeshes.PaintThickness * 0.5f;
+        /// <summary>The lamps' line on the right flank's lid edge (the left mirrors x).</summary>
+        private const float EdgeX = RoverMeshes.BodyHalfWidth - EdgeInset;
 
-        /// <summary>Lamp <paramref name="index"/>'s centre on the stripe, in body space (front lamp first).</summary>
+        /// <summary>Lamp <paramref name="index"/>'s base on the lid edge, in body space (front lamp first).</summary>
         public static Vector3 LampPosition(bool right, int index)
         {
-            return new Vector3(right ? StripeFace : -StripeFace, RoverMeshes.StripeY, FrontZ - index * Spacing);
+            return new Vector3(right ? EdgeX : -EdgeX, RoverMeshes.LidTop, FrontZ - index * Spacing);
         }
 
         /// <summary>
-        /// Out of the flank, tilted up and back toward the chase camera; the left flank's lamps turn half round so
-        /// their +X points out too.
+        /// Up, leaning a little out of its flank and back toward the chase camera; the left flank's lamps turn half
+        /// round so they lean out of theirs.
         /// </summary>
         public static Quaternion LampRotation(bool right)
         {
-            return Quaternion.Euler(0f, right ? TiltBack : 180f - TiltBack, TiltUp);
+            return Quaternion.Euler(0f, right ? TiltBack : 180f - TiltBack, 90f - TiltOut);
         }
 
         /// <summary>Where the glass sits in the cup, in lamp space.</summary>

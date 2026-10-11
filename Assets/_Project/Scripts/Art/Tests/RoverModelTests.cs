@@ -61,7 +61,7 @@ namespace MoonProject.Art.Tests
         }
 
         [Test]
-        public void FlankLamps_SitOnTheStripe_FrontToBack_WithGlowingGlassesOfTheirOwn()
+        public void FlankLamps_LineTheLidEdges_FrontToBack_FacingTheChaseCamera_WithGlowingGlasses()
         {
             foreach (string flank in new[] { "L", "R" })
             {
@@ -72,12 +72,12 @@ namespace MoonProject.Art.Tests
                     ModelNode glass = _rover.GetDescendant("FlankGlass_" + flank + i);
                     Vector3 at = lamp.LocalPosition;
                     Assert.AreEqual(flank == "R", at.x > 0f, $"{lamp.Name} side");
-                    Assert.That(at.y, Is.InRange(0.7f, 0.8f), $"{lamp.Name} sits in the stripe's band");
+                    Assert.That(at.y, Is.InRange(0.9f, 1f), $"{lamp.Name} sits on the lid, above the stripe");
                     Assert.Less(at.z, previousZ, $"{lamp.Name} runs front to back");
                     Vector3 facing = lamp.LocalRotation * Vector3.right;
-                    Assert.Greater(facing.x * Mathf.Sign(at.x), 0.5f, $"{lamp.Name} faces out of its flank");
-                    Assert.Greater(facing.y, 0.3f, $"{lamp.Name} tilts up toward the chase camera");
-                    Assert.Less(facing.z, -0.2f, $"{lamp.Name} tilts back toward the chase camera");
+                    Assert.Greater(facing.y, 0.8f, $"{lamp.Name} faces up, where the chase camera looks down");
+                    Assert.Greater(facing.x * Mathf.Sign(at.x), 0.2f, $"{lamp.Name} leans out of its flank");
+                    Assert.Less(facing.z, -0.05f, $"{lamp.Name} leans back toward the chase camera");
                     Assert.AreEqual(ModelMaterial.Palette, lamp.Material);
                     Assert.AreEqual(ModelMaterial.PaletteGlowOff, glass.Material, glass.Name);
                     CollectionAssert.AreEqual(new[] { PaletteSwatch.LampGlass }, Swatches(glass.Mesh.Geometry));
