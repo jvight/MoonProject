@@ -224,8 +224,9 @@ namespace MoonProject.Gameplay
             intent.Target = new Vector3(ground.x, _terrain.SampleHeight(ground.x, ground.z) + _tuning.LeadHeight,
                 ground.z);
             intent.Look = senses.LeadToward;
-            intent.Cone = _tuning.LeadLamp;
-            bool far = Vector3.Distance(senses.Position, intent.Target) > _tuning.CatchUpDistance;
+            float gap = Vector3.Distance(senses.Position, intent.Target);
+            intent.Cone = gap <= _tuning.LeadLampReach ? _tuning.LeadLamp : 0f;
+            bool far = gap > _tuning.CatchUpDistance;
             intent.Speed = far ? _tuning.CatchUpSpeed : _tuning.CruiseSpeed;
         }
 

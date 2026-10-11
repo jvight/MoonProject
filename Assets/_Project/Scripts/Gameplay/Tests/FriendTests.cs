@@ -287,7 +287,10 @@ namespace MoonProject.Gameplay.Tests
             Assert.AreEqual(FriendBehaviour.Mode.Leading, brain.Current);
             Assert.AreEqual(rover.z - _tuning.LeadAhead, intent.Target.z, 1e-3f, "ahead of 07, toward the charger");
             Assert.AreEqual(_tuning.LeadHeight, intent.Target.y, 1e-3f);
-            Assert.AreEqual(_tuning.LeadLamp, intent.Cone, "it leads with its lamp");
+            Assert.AreEqual(0f, intent.Cone, "no long beam while it flies in");
+            senses.Position = intent.Target;
+            intent = brain.Step(senses, 0.02f);
+            Assert.AreEqual(_tuning.LeadLamp, intent.Cone, "in place, it leads with its lamp");
 
             senses.Rover = charger + Vector3.forward * 4f;
             intent = brain.Step(senses, 0.02f);

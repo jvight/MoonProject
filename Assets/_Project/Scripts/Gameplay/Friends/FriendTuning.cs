@@ -189,8 +189,11 @@ namespace MoonProject.Gameplay
         [Tooltip("Metres above the ground it leads at.")]
         [Range(0.5f, 10f)] [SerializeField] private float _leadHeight = 2.5f;
 
-        [Tooltip("Its lamp (the spotting cone, 0..1) while it leads: a warm pool on the ground ahead of 07.")]
-        [Range(0f, 1f)] [SerializeField] private float _leadLamp = 0.8f;
+        [Tooltip("Its lamp (the spotting cone, 0..1) while it leads, once in place: a soft pool on the ground ahead.")]
+        [Range(0f, 1f)] [SerializeField] private float _leadLamp = 0.45f;
+
+        [Tooltip("Metres from its leading spot within which its lamp is on (never a long beam while it flies in).")]
+        [Range(0.5f, 10f)] [SerializeField] private float _leadLampReach = 3f;
 
         [Header("Home")]
         [Tooltip("07 is home within this distance (m) of the lander: friends live at the base.")]
@@ -363,6 +366,7 @@ namespace MoonProject.Gameplay
         public float LeadAhead => _leadAhead;
         public float LeadHeight => _leadHeight;
         public float LeadLamp => _leadLamp;
+        public float LeadLampReach => _leadLampReach;
         public float HomeRadius => _homeRadius;
         public float LeaveRadius => Mathf.Max(_leaveRadius, _homeRadius + 1f);
         public float AwayRadius => Mathf.Max(_awayRadius, LeaveRadius);
