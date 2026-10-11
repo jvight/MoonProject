@@ -34,7 +34,7 @@ namespace MoonProject.Gameplay
         /// <param name="fromStart">The kit pinned from the start.</param>
         /// <param name="tubes">
         /// Where the other kits' tubes lie: a salvage site (found as its heart's relic surfaces) or a relay mast (found
-        /// in its service cabinet as the mast comes back to life, <see cref="RelayRestored"/>).
+        /// in its service cabinet as the restored mast straightens, <see cref="RelayCued"/>, linked home or not).
         /// </param>
         /// <param name="siteOfRelic">The salvage site whose heart held a relic (by relic id), or null.</param>
         public Blueprints(EventBus events, IEnumerable<string> kits, string fromStart, IEnumerable<BlueprintTube> tubes,
@@ -64,7 +64,7 @@ namespace MoonProject.Gameplay
             _fromStart = fromStart;
             ResetKnown();
             _surfaced = events.Subscribe<RelicSurfaced>(OnSurfaced);
-            _restored = events.Subscribe<RelayRestored>(OnRelayRestored);
+            _restored = events.Subscribe<RelayCued>(OnRelayCued);
         }
 
         public bool IsPinned(string upgradeId)
@@ -243,10 +243,13 @@ namespace MoonProject.Gameplay
             Find(_siteOfRelic(surfaced.RelicId), surfaced.Position);
         }
 
-        /// <summary>A mast comes back to life: its service cabinet opens on the tube it kept.</summary>
-        private void OnRelayRestored(RelayRestored restored)
+        /// <summary>A restored mast straightens: its service cabinet swings open on the tube it kept.</summary>
+        private void OnRelayCued(RelayCued cued)
         {
-            Find(restored.RelayId, restored.Position);
+            if (cued.Cue == RelayCue.Straightened)
+            {
+                Find(cued.RelayId, cued.Position);
+            }
         }
 
         /// <summary>The tube kept at <paramref name="site"/>, if any and not yet found, rides home on 07's back.</summary>
