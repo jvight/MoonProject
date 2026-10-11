@@ -120,6 +120,7 @@ namespace MoonProject.UI.Map
             _paper = Box("crew-map-paper", size);
             _paper.style.backgroundColor = tuning.Paper;
             _paper.style.transformOrigin = new TransformOrigin(0f, 0f);
+            _paper.style.overflow = Overflow.Hidden;
             viewport.Add(_paper);
             _paper.Add(Layer("crew-map-glow", size, _glow.Draw));
             _paper.Add(Layer("crew-map-sheet", size, _sheet.Draw));

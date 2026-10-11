@@ -1071,8 +1071,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// Power 3/3 (M3-21): round to the tech board and look at it. The recovery panel's Power row is lit whole and
-        /// the Link row's first lamp too, the board's labels show; then come away again.
+        /// Power 3/3 (M3-21): round to the tech board, seen whole from the ring camera with the recovery panel at its
+        /// head, then looked at. The panel's Power row is lit whole and the Link row's first lamp too, the board's
+        /// labels show; then come away again.
         /// </summary>
         private IEnumerator LookAtTheBoard()
         {
@@ -1083,6 +1084,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return Tap(_keyboard.dKey);
             yield return Until(() => lift.Lab.Facing == LabStation.Board && !lift.Turning, LabTurnTimeout,
                 "and on to the tech board");
+            yield return new WaitForSeconds(BoardSeconds);
+            Capture("39a-the-recovery-panel");
             yield return Tap(_keyboard.wKey);
             Assert.IsTrue(lift.Lab.IsLooking, "forward looks at the board");
             Assert.IsTrue(_gameplay.Recovery.IsComplete(RecoveryTarget.Power), "Power 3/3 on the recovery panel");
