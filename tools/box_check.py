@@ -41,7 +41,8 @@ RUN_BUILDERS = "MoonProject.Editor.Automation.BuildAutomation.RunBuilders"
 BUILDER_DOMAINS = {"art": "Art", "world": "World", "rover": "Rover", "gameplay": "Gameplay", "audio": "Audio",
                    "ui": "UI", "map": "World|Gameplay|UI", "opening": "Art|World|Rover|UI|Audio",
                    "battery": "Art|World|Rover|Gameplay|UI|Audio", "lab-build": "Art|World",
-                   "lab-systems": "Art|World|Gameplay|Rover|UI|Audio", "goals": "Gameplay|UI|Audio"}
+                   "lab-systems": "Art|World|Gameplay|Rover|UI|Audio", "goals": "Gameplay|UI|Audio",
+                   "look": "Art|World|Rover", "cleanup": "Art|World|Rover|Gameplay|UI|Audio"}
 # Targeted EditMode tests per box; the full PlayMode suite and the Playthrough are the Director's.
 DEFAULT_TESTS = {"art": "MoonProject.Art.Tests", "world": "MoonProject.World.Tests",
                  "rover": "MoonProject.Rover.Tests", "gameplay": "MoonProject.Gameplay.Tests",
@@ -55,7 +56,11 @@ DEFAULT_TESTS = {"art": "MoonProject.Art.Tests", "world": "MoonProject.World.Tes
                  "lab-build": "MoonProject.Art.Tests;MoonProject.World.Tests",
                  "lab-systems": "MoonProject.Gameplay.Tests;MoonProject.Rover.Tests;MoonProject.UI.Tests;"
                                 "MoonProject.Audio.Tests",
-                 "goals": "MoonProject.Gameplay.Tests;MoonProject.UI.Tests;MoonProject.Audio.Tests"}
+                 "goals": "MoonProject.Gameplay.Tests;MoonProject.UI.Tests;MoonProject.Audio.Tests",
+                 "look": "MoonProject.Art.Tests;MoonProject.World.Tests;MoonProject.Rover.Tests",
+                 "cleanup": "MoonProject.Gameplay.Tests;MoonProject.Rover.Tests;MoonProject.Art.Tests;"
+                            "MoonProject.World.Tests;MoonProject.UI.Tests;MoonProject.Audio.Tests;"
+                            "MoonProject.Editor.Tests"}
 # Each box's own PlayMode assembly (art has none; the Director's full suite runs in verify).
 DEFAULT_PLAYMODE = {"world": "MoonProject.World.PlayModeTests", "rover": "MoonProject.Rover.PlayModeTests",
                     "gameplay": "MoonProject.Gameplay.PlayModeTests", "audio": "MoonProject.Audio.PlayModeTests",
@@ -65,7 +70,9 @@ DEFAULT_PLAYMODE = {"world": "MoonProject.World.PlayModeTests", "rover": "MoonPr
                     "battery": "MoonProject.Gameplay.PlayModeTests;MoonProject.Rover.PlayModeTests",
                     "lab-build": "MoonProject.World.PlayModeTests",
                     "lab-systems": "MoonProject.Gameplay.PlayModeTests;MoonProject.Rover.PlayModeTests",
-                    "goals": "MoonProject.Gameplay.PlayModeTests;MoonProject.UI.PlayModeTests"}
+                    "goals": "MoonProject.Gameplay.PlayModeTests;MoonProject.UI.PlayModeTests",
+                    "look": "MoonProject.World.PlayModeTests;MoonProject.Rover.PlayModeTests",
+                    "cleanup": "MoonProject.Gameplay.PlayModeTests;MoonProject.World.PlayModeTests"}
 BOARD_HEADER = "## "
 
 
