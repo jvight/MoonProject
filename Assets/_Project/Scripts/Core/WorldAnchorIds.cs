@@ -41,5 +41,11 @@ namespace MoonProject.Core
         /// salvage bits lie between it and <c>site.kestrel</c>. Not a site.
         /// </summary>
         public const string KestrelTrail = "trail.kestrel";
+
+        /// <summary>
+        /// The crew's antenna farm in the mid-west (M3-18 L7): toppled dish frames, a place the lookout and the map
+        /// can name. Forward faces on from home.
+        /// </summary>
+        public const string PlaceAntennaFarm = "place.antenna_farm";
     }
 }

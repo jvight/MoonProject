@@ -74,7 +74,7 @@ namespace MoonProject.World
         private static void PlaceAntennaFarm(Transform root, MoonSurface surface, IWorldAnchors anchors,
             LandmarkSettings settings, int seed, GameObject[] frames, HideFlags hideFlags)
         {
-            WorldAnchor farm = Require(anchors, WorldAnchors.AntennaFarm);
+            WorldAnchor farm = Require(anchors, WorldAnchorIds.PlaceAntennaFarm);
             uint dishSeed = Hashing.Mix((uint)seed ^ DishSalt);
             for (int i = 0; i < frames.Length; i++)
             {
