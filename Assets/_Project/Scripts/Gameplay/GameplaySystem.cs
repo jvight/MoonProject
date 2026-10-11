@@ -90,6 +90,9 @@ namespace MoonProject.Gameplay
         /// <summary>Tilly's glint, the old tape deck on the ground (docs/features/M3-24 C).</summary>
         public TapeDeckFind TapeDeck { get; private set; }
 
+        /// <summary>The recipe 07's view rests on: the tower's hopper or a board sheet (docs/features/M3-24 B).</summary>
+        public RecipeLook RecipeLook { get; private set; }
+
         /// <summary>What 07 and the station know and have built (docs/features/M3-21).</summary>
         public TechTree Tech { get; private set; }
 
@@ -281,12 +284,14 @@ namespace MoonProject.Gameplay
             }
 
             Shop = new UpgradeShop(Upgrades, stations, save, Blueprints, TowerParts);
+            RecipeLook = new RecipeLook(services.View, Shop, _tower, _plotter, Blueprints.Kits, _progression.Tuning);
             Hints = new InteractionHints(services.Rover, _sonar, _excavation, _salvage, _tether, _cradle, _home,
                 stations, Upgrades, TowerParts, _friends, _relays, services.Beam);
             context.Register<IMaterialStock>(Materials);
             context.Register<ISalvageStatus>(_salvage);
             context.Register<ITetherAim>(_tether);
             context.Register<IUpgradeShop>(Shop);
+            context.Register<IRecipeLook>(RecipeLook);
             context.Register<IInteractionHints>(Hints);
             context.Register<IFriendRoster>(_friends);
             context.Register<IRoverBay>(_workshop);
@@ -536,6 +541,7 @@ namespace MoonProject.Gameplay
             TowerPartField.Step(now);
             GroundTubes.Step(now);
             TapeDeck.Step(now);
+            RecipeLook.Step();
             Tech.Refresh();
             Recovery.Refresh();
         }

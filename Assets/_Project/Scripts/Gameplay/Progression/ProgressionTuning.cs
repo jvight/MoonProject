@@ -117,6 +117,16 @@ namespace MoonProject.Gameplay
         [Tooltip("The friend whose glint the deck is: it shows once she is awake and out with 07.")]
         [SerializeField] private string _tapeDeckFriend = "tilly";
 
+        [Header("Recipe cards (M3-24 B)")]
+        [Tooltip("Metres from the camera within which a hopper or a board sheet shows its recipe card when looked at.")]
+        [Range(2f, 40f)] [SerializeField] private float _recipeLookDistance = 18f;
+
+        [Tooltip("Degrees off the view's centre within which a hopper or a sheet counts as looked at.")]
+        [Range(1f, 30f)] [SerializeField] private float _recipeLookAngle = 9f;
+
+        [Tooltip("The card already shown holds until the view is this many times the angle away (no edge flicker).")]
+        [Range(1f, 3f)] [SerializeField] private float _recipeLookHold = 1.6f;
+
         [Header("Tech tree and recovery panel (M3-21)")]
         [Tooltip("The tech board's kit pins and the bay's upgrade that builds each; a kit node left out stays unknown.")]
         [SerializeField] private TechKit[] _techKits =
@@ -233,6 +243,12 @@ namespace MoonProject.Gameplay
         public Vector3 TapeDeckTilt => _tapeDeckTilt;
 
         public string TapeDeckFriend => _tapeDeckFriend;
+
+        public float RecipeLookDistance => _recipeLookDistance;
+
+        public float RecipeLookAngle => _recipeLookAngle;
+
+        public float RecipeLookHold => _recipeLookHold;
 
         public IReadOnlyList<TechKit> TechKits => _techKits;
 
