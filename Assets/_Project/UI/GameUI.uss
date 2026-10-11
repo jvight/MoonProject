@@ -380,6 +380,22 @@ Label {
     text-shadow: 0 2px 12px var(--moon-shadow);
 }
 
+/* 07's battery (docs/features/M3-20): a thin segmented arc bowed over the "next" line, a warm lamp on a faint track */
+
+.battery-arc {
+    position: absolute;
+    left: 50%;
+    top: 16px;
+    width: 172px;
+    height: 18px;
+    translate: -50% 0;
+    --track-color: var(--moon-track);
+    --fill-color: var(--moon-warm-lamp);
+    --arc-width: 3;
+    --arc-span: 44;
+    --segment-gap: 2.5;
+}
+
 /* A place's card, the first time 07 comes near: its name and its one job, below where kit titles rest */
 
 .place-card {

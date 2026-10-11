@@ -9,6 +9,7 @@
                     <ui:VisualElement name="kit-title-rule" class="kit-title__rule" picking-mode="Ignore" />
                 </ui:VisualElement>
             </ui:VisualElement>
+            <ui:VisualElement name="battery-arc" class="battery-arc" picking-mode="Ignore" />
             <ui:VisualElement class="next-line" picking-mode="Ignore">
                 <ui:VisualElement name="next-line" class="name-tag" picking-mode="Ignore">
                     <ui:VisualElement name="next-line-shadow" class="soft-shadow soft-shadow--name" />
