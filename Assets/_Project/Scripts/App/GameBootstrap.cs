@@ -36,6 +36,14 @@ namespace MoonProject.App
         /// </summary>
         public const string TestRunSkipsTitleKey = "MoonProject.TestRunSkipsTitle";
 
+        /// <summary>
+        /// Editor SessionState key that is true while the editor runs tests (set by the same hook): every boot then
+        /// runs on its own copy of the Controls asset. The project asset is one object shared by every test in a run,
+        /// and its action state stays resolved against an earlier test's input system, so a later boot's actions bind
+        /// no controls (a held W at the lift's deck read Drive (0, 0)).
+        /// </summary>
+        public const string TestRunCopiesControlsKey = "MoonProject.TestRunCopiesControls";
+
         [Tooltip("Boot into the title over the loaded world (M3-09); the Main scene builder turns it on. Off boots " +
                  "straight into play on the save. Test runs in the editor always boot straight into play.")]
         [SerializeField] private bool _showTitle;
@@ -48,6 +56,9 @@ namespace MoonProject.App
         private IDisposable _continue;
         private IDisposable _quitToTitle;
         private bool _reloading;
+#if UNITY_EDITOR
+        private InputActionAsset _controlsCopy;
+#endif
 
         public GameContext Context { get; private set; }
 
@@ -60,6 +71,7 @@ namespace MoonProject.App
                 return;
             }
 
+            UseTestRunControlsCopy();
             bool overridden = SaveSlotArgument.TryRead(Environment.GetCommandLineArgs(), out string requestedSlot);
             string slot = overridden ? requestedSlot : _saveSlot;
             string slotSource = overridden ? SaveSlotArgument.Flag + " argument" : "scene";
@@ -152,6 +164,23 @@ namespace MoonProject.App
             _continue?.Dispose();
             _quitToTitle?.Dispose();
             _input?.Dispose();
+#if UNITY_EDITOR
+            if (_controlsCopy != null)
+            {
+                Destroy(_controlsCopy);
+            }
+#endif
+        }
+
+        private void UseTestRunControlsCopy()
+        {
+#if UNITY_EDITOR
+            if (UnityEditor.SessionState.GetBool(TestRunCopiesControlsKey, false))
+            {
+                _controlsCopy = Instantiate(_inputActions);
+                _inputActions = _controlsCopy;
+            }
+#endif
         }
 
         private void OnContinueRequested(ContinueRequested request)
