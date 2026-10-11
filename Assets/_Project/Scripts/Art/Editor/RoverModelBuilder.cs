@@ -75,6 +75,14 @@ namespace MoonProject.Art.Editor
 
         public static readonly Vector3 PartSocket = new Vector3(0.27f, RoverMeshes.LidTop + 0.005f, 0.32f);
 
+        /// <summary>
+        /// Where Cell Pack II's battery spine stands (M3-20, the back slot): along the lid's right edge, outboard of
+        /// the blueprint tube and ahead of the antenna, the only stretch of lid the folded wing leaves free. +Y up.
+        /// </summary>
+        public const string SpineSocketName = "SpineSocket";
+
+        public static readonly Vector3 SpineSocket = new Vector3(0.385f, RoverMeshes.LidTop, -0.2f);
+
         // 07 weathered as itself, just old (VISION ruling 11): no mismatched panels, rust low down and at the bolts,
         // dust on the lid and lower body; its skins stand off by a hair so Bell's fresh "07" sits over all of them.
         // 07's head: tired paint and dust on the hood, no rust; it is off the ground.
@@ -171,6 +179,7 @@ namespace MoonProject.Art.Editor
             root.Add(new ModelNode("DrumSocket_R", DrumSocket));
             root.Add(new ModelNode(TubeSocketName, TubeSocket, Place.Rotation(new Vector3(0f, 90f, 0f))));
             root.Add(new ModelNode(PartSocketName, PartSocket));
+            root.Add(new ModelNode(SpineSocketName, SpineSocket));
             return root;
         }
 

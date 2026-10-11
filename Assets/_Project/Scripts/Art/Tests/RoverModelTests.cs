@@ -20,13 +20,13 @@ namespace MoonProject.Art.Tests
             "Neck/Head/Weather_Paint", "Neck/Head/Weather_Dust",
             "SolarWing", "SolarWing/CellFilled", "Antenna", "Antenna/AntennaTip", "Antenna/Pennant",
             "HeadlampSocket", "CargoSocket", "DustSocket_L", "DustSocket_R", "CoilSocket", "DrumSocket_L",
-            "DrumSocket_R", "TubeSocket", "PartSocket",
+            "DrumSocket_R", "TubeSocket", "PartSocket", "SpineSocket",
         };
 
         private static readonly string[] EmptyNodes =
         {
             "TetherOrigin", "HeadlampSocket", "CargoSocket", "DustSocket_L", "DustSocket_R", "CoilSocket",
-            "DrumSocket_L", "DrumSocket_R", "TubeSocket", "PartSocket",
+            "DrumSocket_L", "DrumSocket_R", "TubeSocket", "PartSocket", "SpineSocket",
         };
 
         /// <summary>The battery light bar's segments (docs/features/M3-20).</summary>

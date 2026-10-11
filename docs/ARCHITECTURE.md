@@ -162,6 +162,8 @@ RoverModel additions:
   DrumSocket_L, DrumSocket_R                 empties on the flanks, +X outward
   TubeSocket                                 empty on the lid right of the wing, +X fore and aft (the BlueprintTube)
   PartSocket                                 empty on the lid right of the neck, ahead of the tube, +Y up (a story part)
+  SpineSocket                                empty on the lid's right edge, outboard of the tube, +Y up: Cell Pack II's
+                                             Kit_BatterySpine (two cream cells on a rail, brass bands; M3-20)
   SolarWing/CellFilled                       the replacement cell, hidden until Tilly's gift
   Body/Decal07Fresh                          a freshly stencilled "07", hidden until Bell's gift (the faded one hides then)
   Antenna/Pennant                            small radio pennant, hidden until Bell's gift
