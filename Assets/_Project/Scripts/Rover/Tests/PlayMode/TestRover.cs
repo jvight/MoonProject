@@ -122,6 +122,9 @@ namespace MoonProject.Rover.PlayModeTests
 
         public Transform CargoRack { get; private set; }
 
+        /// <summary>The stand-in Kit_TapeDeck on DeckSocket (left flank).</summary>
+        public Transform TapeDeck { get; private set; }
+
         /// <summary>The tower story part stand-ins on TubeSocket, in <see cref="StoryParts"/> order.</summary>
         public Transform[] StoryPartNodes { get; private set; }
 
@@ -288,6 +291,10 @@ namespace MoonProject.Rover.PlayModeTests
             Transform spineSocket = Node(RoverModelNodes.SpineSocket, model, new Vector3(0.55f, 1.05f, -0.2f));
             Transform spine = Node("Kit_BatterySpine", spineSocket, Vector3.zero);
             Shape(PrimitiveType.Cube, spine, new Vector3(0f, 0.06f, 0f), new Vector3(0.1f, 0.12f, 0.42f), material);
+            Transform deckSocket = Node(RoverModelNodes.DeckSocket, model, new Vector3(-0.55f, 0.85f, -0.45f));
+            deckSocket.localRotation = Quaternion.Euler(0f, 180f, 0f);
+            Transform deck = Node("Kit_TapeDeck", deckSocket, Vector3.zero);
+            Shape(PrimitiveType.Cube, deck, new Vector3(0.05f, 0f, 0f), new Vector3(0.07f, 0.13f, 0.27f), material);
             Transform cell = Shape(PrimitiveType.Cube, wing, new Vector3(0.1f, 0.02f, -0.1f),
                 new Vector3(0.15f, 0.01f, 0.15f), material);
             cell.name = RoverModelNodes.CellFilled;
@@ -331,7 +338,7 @@ namespace MoonProject.Rover.PlayModeTests
             Assign(rig, ("_tuning", rigTuning), ("_chassis", chassis), ("_bogieLeft", bogieLeft),
                 ("_bogieRight", bogieRight), ("_antenna", antenna));
             Assign(kit, ("_tuning", rigTuning), ("_headlamp", headlamp), ("_lampBar", lampBar), ("_cargoRack", rack),
-                ("_spine", spine),
+                ("_spine", spine), ("_tapeDeck", deck),
                 ("_relicSeat", seat), ("_solarCell", cell), ("_freshSerial", serial), ("_pennant", pennant),
                 ("_tube", tube));
             AssignArray(kit, "_lamps", lamps);
@@ -393,6 +400,7 @@ namespace MoonProject.Rover.PlayModeTests
                 Drums = drums,
                 DrumGlows = drumGlows,
                 CargoRack = rack,
+                TapeDeck = deck,
                 StoryPartNodes = parts,
                 RelicSeat = seat,
                 CellFilled = cell,

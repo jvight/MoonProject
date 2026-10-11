@@ -187,6 +187,46 @@ namespace MoonProject.Rover.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator TheTapeDeck_SettlesOnTheFlankWithAGiftsMoment_OrIsRestoredSilently()
+        {
+            Spawn();
+            var restored = new List<RoverKitRestored>();
+            _rover.Context.Events.Subscribe<RoverKitRestored>(restored.Add);
+            yield return null;
+            Assert.IsFalse(_rover.TapeDeck.gameObject.activeSelf, "No deck before Tilly's glint is picked up.");
+
+            _rover.Context.Events.Publish(new TapeDeckFound(_rover.Controller.Position, false));
+            Assert.AreEqual(1, _installing.Count, "The gift's soft moment begins (M3-24 C).");
+            Assert.AreEqual(RoverKitPiece.TapeDeck, _installing[0].Piece);
+            Assert.IsTrue(_installing[0].Gift);
+            yield return Wait(3f);
+            Assert.IsTrue(_rover.TapeDeck.gameObject.activeSelf, "The deck is on 07's flank.");
+            Assert.AreEqual(1, _fitted.Count, "RoverKitFitted(TapeDeck) gates the music.");
+            Assert.AreEqual(RoverKitPiece.TapeDeck, _fitted[0].Piece);
+            Assert.IsTrue(_fitted[0].Gift);
+            Assert.IsEmpty(restored, "A live fit is not a restore.");
+
+            _rover.Context.Events.Publish(new TapeDeckFound(_rover.Controller.Position, true));
+            Assert.IsEmpty(restored, "A deck already on 07 is not restored twice.");
+        }
+
+        [UnityTest]
+        public IEnumerator ALoadedGamesTapeDeck_IsThereAtOnce_AndAnnouncedRestored()
+        {
+            Spawn();
+            var restored = new List<RoverKitRestored>();
+            _rover.Context.Events.Subscribe<RoverKitRestored>(restored.Add);
+            _rover.Context.Events.Publish(new TapeDeckFound(_rover.Controller.Position, true));
+            yield return null;
+            yield return null;
+            Assert.IsTrue(_rover.TapeDeck.gameObject.activeSelf, "There from the first frame.");
+            Assert.IsEmpty(_installing, "No moment replayed on load.");
+            Assert.IsEmpty(_fitted);
+            Assert.AreEqual(1, restored.Count);
+            Assert.AreEqual(RoverKitPiece.TapeDeck, restored[0].Piece);
+        }
+
+        [UnityTest]
         public IEnumerator BoostCoils_GiveAGentleExtraCruise_AndTheDrumsGlowWithIt()
         {
             Spawn();
