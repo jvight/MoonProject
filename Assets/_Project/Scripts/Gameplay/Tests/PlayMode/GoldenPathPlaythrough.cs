@@ -215,6 +215,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// A drive whose line passes this close (m) to the lander's centre goes round it, by a point this far out.
         /// </summary>
         private const float LanderKeepOut = 9f;
+
+        /// <summary>Home by radio-hop, 07 rolls this far (m) out from the dock, away from the tower, to look out.</summary>
+        private const float LookOutDistance = 10f;
         private const float LanderDetour = 13f;
 
         /// <summary>Height (m) over 07 of the review frame taken when a wait times out.</summary>
@@ -2150,8 +2153,8 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// Bell is stitched: back to the terminus relay's lit pad and hop home; Bell walks home by herself and greets 07
-        /// there.
+        /// Bell is stitched: back to the terminus relay's lit pad and hop home; 07 rolls out to look over the basin, its
+        /// back to the tower and Bell's corner, and Bell, unwatched, makes her own way home and greets 07 there.
         /// </summary>
         private IEnumerator HomeFromTheTerminus()
         {
@@ -2159,6 +2162,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             Friend bell = _gameplay.Friends.Find(BellId);
             int greetings = CountGreetings(BellId);
             yield return HopBetween(WorldAnchorIds.RelayPrefix + 3, StationReach.HomeId);
+            Vector3 dock = Flat(_rover.Position);
+            Vector3 away = Flat(dock - _gameplay.Tower.PadCentre).normalized;
+            yield return DriveTo(dock + away * LookOutDistance, WaypointArrive, 0.5f, 30f, "a look over the basin");
             yield return Until(() => bell.IsHome, _gameplay.Friends.BellTuning.WakeDuration + 60f,
                 "Bell walks home by the exit on her own");
             yield return Until(() => CountGreetings(BellId) > greetings, _gameplay.Friends.BellTuning.WakeDuration + 6f,
