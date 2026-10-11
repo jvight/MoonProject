@@ -24,9 +24,14 @@ account) can continue without the old conversation.
   contracts, lab-systems' Core renames, the hatch sounds, **battery milestone A** (BatteryTuning.asset at interim 8
   cells / 400 m; spec 4 / 120 with the reshaped golden path is milestone B and a 0.5 ship blocker), the fixture and
   timing-test fixes.
-- **Pending land:** lab-build (tip 2e700885+, dock now on 07's spawn, DockSpawnTests) and lab-systems land TOGETHER
-  (`land --batch lab-build lab-systems`) once lab-systems reports a full box_check. Then ResetSettings for
-  WorldSettings (lab-build's LabLighting block + battery's ChargerPools), RunBuilders World + Main Scene, verify.
+- **M3-19 LANDED and pushed (f1ac7fb2, ~19:10):** lab-build + lab-systems together (the habitat lander, belly lift,
+  lab stations, reader decode and hand-off, ring camera, dock on 07's spawn), WorldSettings written out. Both lab
+  sessions are done. Leftovers (polish backlog): lab wall linings, reading lamps' restore, outdoor ambience ducking
+  inside, DOF in the station focus view, the save floor with the 0.5.0 bump (release step), box_check's PlayMode should
+  exclude the Playthrough category (it ran it via --assembly and hit 40 min).
+- **Running sessions (chips the owner clicked):** `goals` (M3-21) and, if clicked, `opening polish` (box/opening: the
+  headlamp pool cut along terrain chunk z=0 under Forward+, the dock inside the lander's long shadow, O1-O14 re-walk on
+  the new home, the opening leftovers, a before/after contact sheet).
 - **battery milestone B** (stopped for 2026-10-11): the lid-edge light bar for the flank lamps (they don't read from
   the chase camera), the reshaped route (decision sent: dock between trips, relay.2 lit on the first chasm visit and
   its cabinet's Cell Pack II tube, Cell Pack II before the leap, relay.3 and a hop home after Bell), Cell Pack II and
