@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using MoonProject.Core;
+using MoonProject.Core.Events;
 
 namespace MoonProject.Rover
 {
@@ -8,8 +9,9 @@ namespace MoonProject.Rover
     /// 07's battery on its flanks (docs/features/M3-20 "How 07 shows it"): a strip of small amber lamps along the
     /// orange stripe on each side, eight sockets built once and shown per capacity (four at the start, six with Cell
     /// Pack II), lit by <see cref="FlankLampStrip"/> from <see cref="IRoverBattery"/> and eased so a cell fills and
-    /// empties softly. A scene without Gameplay has no battery: the strip stays hidden there. Allocation-free per
-    /// frame.
+    /// empties softly. In the opening the lamps stay dark until O5's flicker, then light one by one
+    /// (<see cref="FlankLampLit"/>, a quiet tick each). A scene without Gameplay has no battery: the strip stays hidden
+    /// there. Allocation-free per frame.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class RoverFlankLamps : MonoBehaviour
@@ -26,6 +28,10 @@ namespace MoonProject.Rover
         [SerializeField] private Renderer[] _glasses = Array.Empty<Renderer>();
 
         private BatteryLink _battery;
+        private EventBus _events;
+        private IDisposable _wake;
+        private float _wakeStart = float.NegativeInfinity;
+        private int _wakeLit = RoverModelNodes.FlankLampCount;
         private MaterialPropertyBlock _block;
         private float[] _levels = Array.Empty<float>();
         private int _shownCells = -1;
@@ -56,6 +62,8 @@ namespace MoonProject.Rover
             }
 
             _battery = new BatteryLink(context);
+            _events = context.Events;
+            _wake = _events.Subscribe<RoverWakeBeatReached>(OnWakeBeat);
             _block = new MaterialPropertyBlock();
             _levels = new float[RoverModelNodes.FlankLampCount];
             ShowCells(0);
@@ -73,13 +81,59 @@ namespace MoonProject.Rover
             ShowCells(battery.Cells);
             FlankLampSettings settings = _tuning.FlankLamps;
             float time = Time.time;
+            StepWake(settings, time);
             for (int i = 0; i < _shownCells; i++)
             {
-                float target = FlankLampStrip.Level(settings, i, battery.Charge, battery.IsLowPower, time);
+                float target = i < _wakeLit
+                    ? FlankLampStrip.Level(settings, i, battery.Charge, battery.IsLowPower, time)
+                    : 0f;
                 _levels[i] = Smoothing.Damp(_levels[i], target, settings.HalfLife, deltaTime);
                 Apply(i, _levels[i]);
                 Apply(i + RoverModelNodes.FlankLampCount, _levels[i]);
             }
+        }
+
+        /// <summary>After O5's flicker the lamps light one by one, each with a tick, up to the battery's cells.</summary>
+        private void StepWake(FlankLampSettings settings, float time)
+        {
+            if (_wakeLit >= _shownCells || time < _wakeStart)
+            {
+                return;
+            }
+
+            int due = Mathf.Min(_shownCells, Mathf.FloorToInt((time - _wakeStart) / settings.WakeInterval) + 1);
+            while (_wakeLit < due)
+            {
+                _events.Publish(new FlankLampLit(_wakeLit, _lamps[RoverModelNodes.FlankLampCount + _wakeLit].position));
+                _wakeLit++;
+            }
+        }
+
+        /// <summary>
+        /// The opening's beats: dark from the push into the lens, lit one by one from O5's flicker (or, when a
+        /// hurried opening skips it, from the blink); the short wake lights them at once.
+        /// </summary>
+        private void OnWakeBeat(RoverWakeBeatReached reached)
+        {
+            switch (reached.Beat)
+            {
+                case WakeBeat.PushedIn:
+                    _wakeLit = 0;
+                    _wakeStart = float.PositiveInfinity;
+                    break;
+                case WakeBeat.Flicker:
+                case WakeBeat.Blinked:
+                    _wakeStart = Mathf.Min(_wakeStart, Time.time);
+                    break;
+                case WakeBeat.Stirred:
+                    _wakeLit = RoverModelNodes.FlankLampCount;
+                    break;
+            }
+        }
+
+        private void OnDestroy()
+        {
+            _wake?.Dispose();
         }
 
         /// <summary>Shows one socket per cell on each flank (the rest stay hidden).</summary>

@@ -35,11 +35,16 @@ namespace MoonProject.Rover
         [Range(0.05f, 1f)]
         [SerializeField] private float _crawlHeadlamp = 0.35f;
 
+        [Tooltip("Seconds between the lamps lighting one by one as 07 wakes in the opening (after O5's flicker).")]
+        [Range(0.05f, 2f)]
+        [SerializeField] private float _wakeInterval = 0.4f;
+
         public float LitGlow => _litGlow;
         public float BreathPeriod => _breathPeriod;
         public float BreathDepth => _breathDepth;
         public float ReserveGlow => _reserveGlow;
         public float HalfLife => _halfLife;
         public float CrawlHeadlamp => _crawlHeadlamp;
+        public float WakeInterval => _wakeInterval;
     }
 }
