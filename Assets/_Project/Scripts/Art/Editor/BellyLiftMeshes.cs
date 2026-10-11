@@ -56,8 +56,12 @@ namespace MoonProject.Art.Editor
         private const int RimLampCount = 8;
         private const float PadRingRadius = 1.2f;
 
-        private const int HatchRimLamps = 12;
-        private const float HatchRimRadius = 2.38f;
+        // The hatch rim: a ring of lamp glass hung on short rods round the shaft's mouth, low enough under the belly
+        // that it shows past the stage's edge from behind 07 on the apron, framing the dark hatch above the platform.
+        private const float HatchRimRadius = 2.12f;
+        private const float HatchRimTube = 0.05f;
+        private const float HatchRimDrop = 0.32f;
+        private const int HatchRimHangers = 8;
 
         private static readonly Vector3 BellyLampAt = new Vector3(0f, LanderMeshes.StageBottom - 0.2f, 2.75f);
 
@@ -93,7 +97,7 @@ namespace MoonProject.Art.Editor
         /// <summary>
         /// The static frame (appended to the lander's hull): the ring of ground stops the platform rests on, the four
         /// guide posts up toward the belly with their hazard collars, the winch posts and sheaves beside the shaft's
-        /// top in the cabin floor and the belly lamp's housing.
+        /// top in the cabin floor, the hatch rim's hangers and the belly lamp's housing.
         /// </summary>
         public static void Frame(LowPolyMeshBuilder b)
         {
@@ -126,6 +130,14 @@ namespace MoonProject.Art.Editor
                 b.Box(At(side * (PostX - 0.06f), SheaveY + 0.04f, 0f), new Vector3(0.18f, 0.08f, 0.16f),
                     PaletteSwatch.Metal, 0.01f);
                 b.Prism(At(new Vector3(side * CableX, SheaveY, 0f), AlongZ), 0.07f, 0.06f, 8, PaletteSwatch.Metal);
+            }
+
+            for (int i = 0; i < HatchRimHangers; i++)
+            {
+                Vector3 at = Rotation(new Vector3(0f, (i + 0.5f) * 360f / HatchRimHangers, 0f)) * Vector3.forward
+                    * HatchRimRadius;
+                RecipeKit.Rod(b, at + Vector3.up * (LanderMeshes.StageBottom - HatchRimDrop + HatchRimTube),
+                    at + Vector3.up * LanderMeshes.StageBottom, 0.015f, 4, PaletteSwatch.Charcoal);
             }
 
             b.Box(At(BellyLampAt + Vector3.up * 0.09f), new Vector3(0.42f, 0.16f, 0.3f), PaletteSwatch.Charcoal, 0.03f);
@@ -246,19 +258,13 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
-        /// The hatch rim's lamp glasses round the shaft's mouth on the stage's underside (lander space).
+        /// The hatch rim's lamp glass (lander space): one ring round the shaft's mouth, hung under the stage.
         /// </summary>
         public static LowPolyMeshBuilder HatchRim()
         {
-            var b = new LowPolyMeshBuilder(200);
-            for (int i = 0; i < HatchRimLamps; i++)
-            {
-                float yaw = (i + 0.5f) * 360f / HatchRimLamps;
-                Vector3 at = Rotation(new Vector3(0f, yaw, 0f)) * Vector3.forward * HatchRimRadius
-                    + Vector3.up * (LanderMeshes.StageBottom - 0.03f);
-                b.Prism(At(at), 0.06f, 0.04f, 8, PaletteSwatch.LampGlass);
-            }
-
+            var b = new LowPolyMeshBuilder(300);
+            b.Torus(At(0f, LanderMeshes.StageBottom - HatchRimDrop, 0f), HatchRimRadius, HatchRimTube, 32, 4,
+                PaletteSwatch.LampGlass);
             return b;
         }
 
