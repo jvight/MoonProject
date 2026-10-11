@@ -7,7 +7,8 @@ namespace MoonProject.UI
     /// <summary>
     /// Remembers, per action, how many times its prompt was shown and how many times the player did it. A prompt is
     /// retired for good once it was shown the shared number of times or done as often as its entry says (design
-    /// ruling 6: only the first few times). The Look up hint, shown once per save, and the HUD verbs met so far
+    /// ruling 6: only the first few times). The Look up hint and the opening's first prompts ("Look up", "Drive"),
+    /// each shown once per save, and the HUD verbs met so far
     /// (<see cref="HudVerb"/>: each HUD piece shows only once its verb is met) are remembered here too. Saved.
     /// </summary>
     internal sealed class PromptLedger
@@ -78,6 +79,22 @@ namespace MoonProject.UI
             LookUpHinted = true;
         }
 
+        /// <summary>True once the opening's first prompt has taught "Look up" in this save.</summary>
+        public bool LookTaught { get; private set; }
+
+        /// <summary>True once the opening's first prompt has taught "Drive" in this save.</summary>
+        public bool DriveTaught { get; private set; }
+
+        public void RecordLookTaught()
+        {
+            LookTaught = true;
+        }
+
+        public void RecordDriveTaught()
+        {
+            DriveTaught = true;
+        }
+
         public void RecordUsed(InteractionKind kind)
         {
             if (kind != InteractionKind.None)
@@ -112,6 +129,7 @@ namespace MoonProject.UI
             return new PromptsSaveData
             {
                 kinds = kinds.ToArray(), lookUpHinted = LookUpHinted, metVerbs = met.ToArray(),
+                lookTaught = LookTaught, driveTaught = DriveTaught,
             };
         }
 
@@ -122,6 +140,8 @@ namespace MoonProject.UI
             Array.Clear(_used, 0, _used.Length);
             Array.Clear(_met, 0, _met.Length);
             LookUpHinted = data != null && data.lookUpHinted;
+            LookTaught = data != null && data.lookTaught;
+            DriveTaught = data != null && data.driveTaught;
             if (data?.metVerbs != null)
             {
                 foreach (string name in data.metVerbs)

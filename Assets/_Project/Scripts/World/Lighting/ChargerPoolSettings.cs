@@ -14,7 +14,8 @@ namespace MoonProject.World
         [Tooltip("Radius (m) of the pool's light disc on the pad (the ring is 2 m; the glow spills a little past it).")]
         [Range(1f, 6f)] [SerializeField] private float _radius = 2.8f;
 
-        [Tooltip("Height (m) of the disc above the pad's centre, clear of the ground's facets.")]
+        [Tooltip("Height (m) of the pool's centre above the pad's centre: the middle of the height band it lights " +
+            "(Art's pool is projected onto the ground, so it needs no clearance from the facets).")]
         [Range(0f, 0.5f)] [SerializeField] private float _lift = 0.06f;
 
         [Tooltip("Glow of a lit mast's pool (linear multiplier of the disc's authored warmth).")]

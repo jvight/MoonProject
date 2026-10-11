@@ -26,6 +26,9 @@ namespace MoonProject.Art.Editor
 
         /// <summary>The warm light-decal disc's additive material (LightPoolBuilder, M3-18 V3).</summary>
         public const string LightPoolMaterial = PaletteFolder + "/M_LightPool.mat";
+
+        /// <summary>07's lens glass ring (LofiLensGlass): it shows only Earth's reflection (cutscenes O10).</summary>
+        public const string LensGlassMaterial = PaletteFolder + "/M_LensGlass.mat";
         public const string RoverFolder = Root + "/Rover";
         public const string RockFolder = Root + "/Rocks";
         public const string BaseFolder = Root + "/Base";
@@ -48,5 +51,8 @@ namespace MoonProject.Art.Editor
 
         /// <summary>The additive pool of warm light on the ground (M3-18 V3).</summary>
         public const string LightPoolShader = "Assets/_Project/Shaders/Art/LofiLightPool.shader";
+
+        /// <summary>The additive glass of 07's lens: Earth's reflection and a faint edge sheen.</summary>
+        public const string LensGlassShader = "Assets/_Project/Shaders/Art/LofiLensGlass.shader";
     }
 }

@@ -25,6 +25,7 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
+    - _Band: 0.12
     - _Falloff: 2
     m_Colors:
     - _BaseColor: {r: 0.4437841, g: 0.30605894, b: 0.103644736, a: 0.22}

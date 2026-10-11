@@ -51,6 +51,14 @@
             "text": "Look up"
         },
         {
+            "key": "ui.hint.drive",
+            "text": "Drive"
+        },
+        {
+            "key": "glyph.keyboard.wasd",
+            "text": "WASD"
+        },
+        {
             "key": "glyph.mouse.move",
             "text": "Mouse"
         },

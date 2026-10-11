@@ -130,6 +130,7 @@ namespace MoonProject.Rover.PlayModeTests
                 (OpeningPhase.GazePeak, 0.8f, "o08_peak"),
                 (OpeningPhase.GazeEarth, 0.85f, "o09_earth"),
                 (OpeningPhase.PullOut, 0.55f, "o10_pull_out"),
+                (OpeningPhase.PullOut, 0.9f, "o10b_lens_glass"),
                 (OpeningPhase.BlinkShot, 0.2f, "o11_blink"),
                 (OpeningPhase.OverShoulder, 0.9f, "o12_over_shoulder"),
                 (OpeningPhase.ChaseEase, 0.95f, "o13_chase"),

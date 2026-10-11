@@ -3,7 +3,10 @@ using UnityEngine;
 
 namespace MoonProject.UI
 {
-    /// <summary>The HUD stepping aside while 07 stargazes, and the one-time "Look up" hint before it.</summary>
+    /// <summary>
+    /// The HUD stepping aside while 07 stargazes, the one-time "Look up" hint before it, and the opening's first
+    /// prompt (cutscenes O14), which shows in the same chip.
+    /// </summary>
     [Serializable]
     public sealed class StargazeSettings
     {
@@ -22,6 +25,20 @@ namespace MoonProject.UI
         [Range(1f, 20f)]
         [SerializeField] private float _hintHoldSeconds = 6f;
 
+        [Tooltip("Seconds 07 rests in the opening's chase frame (no look or drive input) before its first prompt, " +
+            "\"Look up\" or \"Drive\", fades in (cutscenes O14: +3 s still).")]
+        [Range(0f, 10f)]
+        [SerializeField] private float _firstPromptRestSeconds = 3f;
+
+        [Tooltip("Seconds the first prompt stays at most; doing its verb sends it sooner.")]
+        [Range(1f, 20f)]
+        [SerializeField] private float _firstPromptHoldSeconds = 6f;
+
+        [Tooltip("Stick deflection (0..1) that counts as moving the look or driving for the first prompt; any mouse " +
+            "movement counts as looking.")]
+        [Range(0.05f, 1f)]
+        [SerializeField] private float _firstPromptStick = 0.2f;
+
         public RevealSettings Hud => _hud;
 
         public RevealSettings Hint => _hint;
@@ -29,5 +46,11 @@ namespace MoonProject.UI
         public float HintDelay => _hintDelay;
 
         public float HintHoldSeconds => _hintHoldSeconds;
+
+        public float FirstPromptRestSeconds => _firstPromptRestSeconds;
+
+        public float FirstPromptHoldSeconds => _firstPromptHoldSeconds;
+
+        public float FirstPromptStick => _firstPromptStick;
     }
 }

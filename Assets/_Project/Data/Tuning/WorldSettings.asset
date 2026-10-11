@@ -390,7 +390,7 @@ MonoBehaviour:
       _anchor: DockAnchor
       _offset: {x: 0, y: -0.02, z: 0.8}
       _range: 5
-      _intensity: 1
+      _intensity: 0.5
       _disc: 1
     - _wakesWith: 2
       _anchor: Lander
