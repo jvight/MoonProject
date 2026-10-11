@@ -5,12 +5,14 @@ namespace MoonProject.Core
     /// <summary>
     /// What 07's eye does to the picture while the camera looks through it (docs/design/cutscenes.md §1). Rover fills
     /// one each frame of the opening and hands it to <see cref="ILensView"/>; World turns it into the lid mask, the
-    /// focus, the flicker, the warm tint and the dust speck.
+    /// focus, the flicker, the warm tint, the dust speck and the boot readout.
     /// </summary>
     public readonly struct LensViewState
     {
-        public LensViewState(float lid01, float focusDistance, float flicker01, float warmth01, Vector2 speckOffset)
+        public LensViewState(float lid01, float focusDistance, float flicker01, float warmth01, Vector2 speckOffset,
+            float readout01)
         {
+            Readout01 = readout01;
             Lid01 = lid01;
             FocusDistance = focusDistance;
             Flicker01 = flicker01;
@@ -38,5 +40,11 @@ namespace MoonProject.Core
         /// sharp only while the lens focuses very near; beyond the edges it is gone.
         /// </summary>
         public Vector2 SpeckOffset { get; }
+
+        /// <summary>
+        /// How much of 07's boot readout shows in the lens (O5, GDD v3 §8: "Earth signal · detected / Uplink ·
+        /// offline / Begin recovery"), 0..1, faint and warm, fading with the flicker.
+        /// </summary>
+        public float Readout01 { get; }
     }
 }

@@ -13,6 +13,9 @@ namespace MoonProject.World.Editor
     {
         public const string ShaderPath = "Assets/_Project/Shaders/World/LofiLensView.shader";
 
+        /// <summary>The UI's own type, read here for 07's boot readout.</summary>
+        public const string ReadoutFontPath = "Assets/_Project/UI/Fonts/BeVietnamPro-Regular.ttf";
+
         public int Order => 210;
 
         public void Contribute(SceneBuildContext context)
@@ -21,6 +24,7 @@ namespace MoonProject.World.Editor
             var serialized = new SerializedObject(lens);
             Assign(serialized, "_settings", context.LoadAsset<WorldSettings>(WorldPaths.Settings));
             Assign(serialized, "_shader", context.LoadAsset<Shader>(ShaderPath));
+            Assign(serialized, "_readoutFont", context.LoadAsset<Font>(ReadoutFontPath));
             serialized.ApplyModifiedPropertiesWithoutUndo();
             context.AddSystem(lens);
         }

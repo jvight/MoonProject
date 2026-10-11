@@ -124,6 +124,7 @@ namespace MoonProject.Rover.PlayModeTests
                 (OpeningPhase.LidHalf, 0.8f, "o03_lid_half"),
                 (OpeningPhase.Hunt, 0.35f, "o04_hunt_near_speck"),
                 (OpeningPhase.Flicker, 0.3f, "o05_flicker"),
+                (OpeningPhase.Flicker, 0.7f, "o05_boot_readout"),
                 (OpeningPhase.GazeHome, 0.7f, "o06_home"),
                 (OpeningPhase.GazePilot, 0.8f, "o07_pilot"),
                 (OpeningPhase.GazePeak, 0.8f, "o08_peak"),

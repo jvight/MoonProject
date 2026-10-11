@@ -433,7 +433,8 @@ namespace MoonProject.Rover
             if (phase == OpeningPhase.PushIn || phase == OpeningPhase.PullOut)
             {
                 float toLens = Vector3.Distance(_lensCamera.transform.position, _roverRig.TetherOrigin.position);
-                state = new LensViewState(state.Lid01, toLens, state.Flicker01, state.Warmth01, state.SpeckOffset);
+                state = new LensViewState(state.Lid01, toLens, state.Flicker01, state.Warmth01, state.SpeckOffset,
+                    state.Readout01);
             }
 
             _lens.Apply(state);

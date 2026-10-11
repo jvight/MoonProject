@@ -277,6 +277,43 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
+        public void BootReadout_ShowsForAboutTwoSecondsFromTheFlicker_AndNeverWhenHurried()
+        {
+            _script.BeginFull(false);
+            float first = -1f;
+            float last = -1f;
+            float t = 0f;
+            while (_script.IsRunning)
+            {
+                StepOnce();
+                t += Frame;
+                if (_script.Readout01 > 0f)
+                {
+                    Assert.IsTrue(_script.Phase == OpeningPhase.Flicker || _script.Phase == OpeningPhase.GazeHome,
+                        "the readout belongs to the flicker and the first look");
+                    first = first < 0f ? t : first;
+                    last = t;
+                }
+            }
+
+            Assert.Greater(first, 0f, "the readout shows");
+            Assert.AreEqual(_tuning.Opening.ReadoutSeconds, last - first, 0.1f);
+
+            _script.BeginFull(false);
+            while (_script.Phase != OpeningPhase.Flicker)
+            {
+                StepOnce();
+            }
+
+            StepOnce(true);
+            for (float s = 0f; s < 3f; s += Frame)
+            {
+                StepOnce();
+                Assert.AreEqual(0f, _script.Readout01, "a hurried wake skips the readout");
+            }
+        }
+
+        [Test]
         public void TheBlinkTiltsTheHead_AndTheTiltEasesBackOut()
         {
             _script.BeginFull(false);
