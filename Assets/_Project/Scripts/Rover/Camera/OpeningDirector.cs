@@ -179,19 +179,21 @@ namespace MoonProject.Rover
         }
 
         /// <summary>
-        /// New Game over a save, after the confirm: the camera moves to the fresh frame and pushes into the closed
-        /// lens; App puts the save away and reloads under the black (<see cref="WakeBeat.PushedIn"/>). Over a fresh
-        /// title App starts the session itself, which has begun the opening already.
+        /// New Game that App answers with a reload (over a save, from the title or from play): the camera moves to
+        /// the lens shot and pushes into the closed lens; App puts the save away and reloads under the black
+        /// (<see cref="WakeBeat.PushedIn"/>). Over a fresh title App starts the session itself right after this, and
+        /// that begins the opening instead.
         /// </summary>
         private void OnNewGameRequested(NewGameRequested request)
         {
-            if (!_inTitle || !_titleHasSave || _script.IsRunning)
+            bool freshTitle = _inTitle && !_titleHasSave;
+            if (_flow == null || !_flow.ShowsTitle || freshTitle || _script.Phase == OpeningPhase.PushIn)
             {
                 return;
             }
 
+            _script.Stop();
             _rig.ReleaseTitleFrame();
-            _rig.BeginWakeOpening(true);
             BeginFull(true);
         }
 

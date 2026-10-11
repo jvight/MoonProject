@@ -48,6 +48,11 @@ namespace MoonProject.App
                  "straight into play on the save. Test runs in the editor always boot straight into play.")]
         [SerializeField] private bool _showTitle;
 
+        [Tooltip("New Game over a save: the longest (s) the reload waits for the camera to push into 07's closed lens "
+                 + "(WakeBeat.PushedIn) before it reloads anyway.")]
+        [Min(0.5f)]
+        [SerializeField] private float _pushedInTimeout = 6f;
+
         private readonly GameFlow _flow = new GameFlow();
         private InputReader _input;
         private SaveService _save;
@@ -55,6 +60,8 @@ namespace MoonProject.App
         private IDisposable _newGame;
         private IDisposable _continue;
         private IDisposable _quitToTitle;
+        private IDisposable _wakeBeat;
+        private readonly PushedInGate _pushedIn = new PushedInGate();
         private bool _reloading;
 #if UNITY_EDITOR
         private InputActionAsset _controlsCopy;
@@ -131,6 +138,7 @@ namespace MoonProject.App
             _newGame = Context.Events.Subscribe<NewGameRequested>(OnNewGameRequested);
             _continue = Context.Events.Subscribe<ContinueRequested>(OnContinueRequested);
             _quitToTitle = Context.Events.Subscribe<QuitToTitleRequested>(OnQuitToTitleRequested);
+            _wakeBeat = Context.Events.Subscribe<RoverWakeBeatReached>(OnWakeBeat);
         }
 
         private void Start()
@@ -161,6 +169,7 @@ namespace MoonProject.App
         private void OnDestroy()
         {
             _newGame?.Dispose();
+            _wakeBeat?.Dispose();
             _continue?.Dispose();
             _quitToTitle?.Dispose();
             _input?.Dispose();
@@ -195,7 +204,8 @@ namespace MoonProject.App
         /// <summary>
         /// Over a world with no save the title is already a fresh game, so play begins here. Over a save, puts the save
         /// away (it refuses every later save, so nothing torn down writes the old progress back), notes that the next
-        /// boot starts fresh, and reloads this scene: every system, the context and this bootstrap are rebuilt.
+        /// boot starts fresh, and reloads this scene once the camera has pushed into 07's closed lens (O1's black): every
+        /// system, the context and this bootstrap are rebuilt.
         /// </summary>
         private void OnNewGameRequested(NewGameRequested request)
         {
@@ -219,6 +229,32 @@ namespace MoonProject.App
             _reloading = true;
             _save.PutAway();
             _intent.Arm();
+            _pushedIn.Arm();
+        }
+
+        /// <summary>The camera is inside 07's closed lens: the new game's reload hides in O1's black.</summary>
+        private void OnWakeBeat(RoverWakeBeatReached reached)
+        {
+            if (_pushedIn.Notify(reached.Beat))
+            {
+                ReloadForNewGame();
+            }
+        }
+
+        private void Update()
+        {
+            if (!_pushedIn.Step(Time.unscaledDeltaTime, _pushedInTimeout))
+            {
+                return;
+            }
+
+            Debug.LogError($"{nameof(GameBootstrap)}: New Game waited {_pushedInTimeout} s for the camera to push " +
+                           "into 07's lens (WakeBeat.PushedIn) and reloads without it.", this);
+            ReloadForNewGame();
+        }
+
+        private void ReloadForNewGame()
+        {
             SceneManager.LoadScene(gameObject.scene.buildIndex, LoadSceneMode.Single);
         }
 
