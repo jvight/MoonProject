@@ -91,24 +91,36 @@
             "text": "Một ánh đèn bên kia vực sâu. Bây giờ thì chưa qua được."
         },
         {
+            "key": "next.bay.wake",
+            "text": "Khoang xe còn ngủ. Tầng thứ hai của tháp sẽ đánh thức nó."
+        },
+        {
             "key": "next.bay",
             "text": "Khoang xe đã có điện. Bàn xoay đang chờ."
         },
         {
-            "key": "next.leap",
-            "text": "Vực sâu đang chờ. Một cú nhảy tích đủ lực sẽ đưa 07 qua."
+            "key": "next.power.part",
+            "text": "Tháp cần linh kiện cuối cùng."
         },
         {
-            "key": "next.relay",
-            "text": "Một cột anten tối, đang chờ được thắp sáng."
+            "key": "next.power.carried",
+            "text": "Linh kiện cuối cùng của tháp đang theo 07. Cổng nạp đang chờ."
         },
         {
-            "key": "next.chart",
-            "text": "Tầng thứ ba của tháp sẽ đánh thức tấm bản đồ của phi hành đoàn."
+            "key": "next.power.build",
+            "text": "Linh kiện cuối đã vào. Giờ tháp cần vật liệu."
         },
         {
-            "key": "next.chart.look",
-            "text": "Bản đồ đã thức. Lên trên mà xem."
+            "key": "next.link.relay.0",
+            "text": "Trạm trên gò vẫn còn tối."
+        },
+        {
+            "key": "next.link.relay.1",
+            "text": "Trạm vai vành hố vẫn còn tối."
+        },
+        {
+            "key": "next.link",
+            "text": "Những trạm còn tối dẫn về phía Đỉnh núi."
         },
         {
             "key": "notyet.tower",

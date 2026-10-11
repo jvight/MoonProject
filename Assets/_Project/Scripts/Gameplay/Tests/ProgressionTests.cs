@@ -79,7 +79,7 @@ namespace MoonProject.Gameplay.Tests
             var opened = new List<DockEveningOpened>();
             _events.Subscribe<DockEveningOpened>(opened.Add);
             var dock = new Vector3(1f, 0f, 2f);
-            using (var evening = new DockEvening(_events, 4f))
+            using (var evening = new DockEvening(_events, 4f, 2f))
             {
                 _events.Publish(new RoverDockChanged(true, dock, Quaternion.identity));
                 Assert.IsFalse(evening.Tick(0f));

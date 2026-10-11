@@ -344,13 +344,16 @@ namespace MoonProject.Gameplay.Tests
             string[] kits = { "rover.hover_jump", "rover.cargo_cradle", "rover.boost_coils" };
             var tubes = new[]
             {
+                BlueprintTube.AtAnchor("rover.hover_jump", "canyon.lip", 3f),
                 new BlueprintTube("rover.cargo_cradle", "site.garage"),
                 new BlueprintTube("rover.boost_coils", "site.drill"),
             };
-            using (var board = new Blueprints(_events, kits, "rover.hover_jump", tubes,
+            using (var board = new Blueprints(_events, kits, tubes,
                        relic => relic == "rubber_duck" ? "site.garage" : relic == "teapot" ? "site.lander" : null))
             {
-                Assert.IsTrue(board.IsPinned("rover.hover_jump"), "Kenji left Hover-Jump's sheet pinned");
+                Assert.IsFalse(board.IsPinned("rover.hover_jump"), "no sheet is pinned from the start (M3-21)");
+                Assert.IsFalse(board.AnyDecoded);
+                Assert.IsTrue(board.IsWaiting("rover.hover_jump"), "its tube waits at the chasm's near lip");
                 Assert.IsFalse(board.IsPinned("rover.cargo_cradle"));
                 Assert.IsTrue(board.IsPinned("radio_tower"), "the tower is no kit of the board");
 
@@ -382,9 +385,19 @@ namespace MoonProject.Gameplay.Tests
                 Assert.AreEqual("rover.cargo_cradle", board.NextToDraw());
                 board.MarkDrawn("rover.cargo_cradle");
                 Assert.IsNull(board.NextToDraw());
-                Assert.IsTrue(board.IsDrawn("rover.hover_jump"), "Kenji's own sheet hangs from the start");
+                Assert.IsFalse(board.IsDrawn("rover.hover_jump"), "no sheet hangs from the start");
                 Assert.IsFalse(board.IsPinned("rover.boost_coils"));
-                CollectionAssert.AreEqual(new[] { "rover.cargo_cradle" }, board.Capture().found);
+
+                board.PickUp("rover.hover_jump", "canyon.lip", Vector3.up);
+                board.PickUp("rover.hover_jump", "canyon.lip", Vector3.up);
+                Assert.AreEqual(2, found.Count, "07 drove through the lip's tube, once");
+                Assert.AreEqual("canyon.lip", found[1].SiteId);
+                Assert.IsFalse(board.IsWaiting("rover.hover_jump"));
+                Assert.AreEqual("rover.hover_jump", board.Take());
+                board.Decode("rover.hover_jump");
+                Assert.IsTrue(board.IsDecoded("rover.hover_jump"));
+                CollectionAssert.AreEqual(new[] { "rover.hover_jump", "rover.cargo_cradle" }, board.Capture().found,
+                    "saved in the tubes' order");
                 CollectionAssert.AreEqual(new[] { "rover.cargo_cradle" }, board.Capture().drawn);
                 Assert.Throws<InvalidOperationException>(() => board.Decode("rover.boost_coils"), "not in the reader");
 
@@ -396,15 +409,22 @@ namespace MoonProject.Gameplay.Tests
                 Assert.IsFalse(board.IsDrawn("rover.boost_coils"), "decoded before the bay woke: still to draw");
                 Assert.IsFalse(board.IsPinned("rover.cargo_cradle"), "a load replaces the board");
                 Assert.IsTrue(board.IsCarrying, "and puts the carried tube back on 07");
-                Assert.IsTrue(board.IsPinned("rover.hover_jump"));
+                Assert.IsFalse(board.IsPinned("rover.hover_jump"), "not in the save: its tube waits again");
+                Assert.IsTrue(board.IsWaiting("rover.hover_jump"));
 
                 board.Restore(new BlueprintsSaveData { reading = new[] { "rover.cargo_cradle" } });
                 Assert.AreEqual("rover.cargo_cradle", board.Reading, "a tube saved in the reader stays there");
                 Assert.IsFalse(board.IsCarrying);
             }
 
-            Assert.Throws<ArgumentException>(() => new Blueprints(_events, kits, "rover.hover_jump",
-                new[] { new BlueprintTube("rover.hover_jump", "site.garage") }, _ => null), "a tube for the start kit");
+            Assert.Throws<ArgumentException>(() => new Blueprints(_events, kits,
+                new[]
+                {
+                    new BlueprintTube("rover.hover_jump", "site.garage"),
+                    BlueprintTube.AtAnchor("rover.hover_jump", "canyon.lip", 3f),
+                }, _ => null), "one tube per kit");
+            Assert.Throws<ArgumentException>(() => new Blueprints(_events, kits,
+                new[] { new BlueprintTube("radio_tower", "site.garage") }, _ => null), "the tower is no kit");
         }
 
         [Test]
@@ -418,7 +438,7 @@ namespace MoonProject.Gameplay.Tests
                 new BlueprintTube("rover.cargo_cradle", "site.garage"),
                 new BlueprintTube("rover.boost_coils", "site.drill"),
             };
-            using (var board = new Blueprints(_events, kits, "rover.hover_jump", tubes, _ => null))
+            using (var board = new Blueprints(_events, kits, tubes, _ => null))
             {
                 board.Announce();
                 board.Restore(new BlueprintsSaveData { carried = new[] { "rover.cargo_cradle", "rover.boost_coils" } });

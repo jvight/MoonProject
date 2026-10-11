@@ -760,12 +760,19 @@ namespace MoonProject.Core.Events
     /// </summary>
     public readonly struct DockEveningOpened
     {
-        public DockEveningOpened(Vector3 dockPosition)
+        public DockEveningOpened(Vector3 dockPosition, float towerHold = 0f)
         {
             DockPosition = dockPosition;
+            TowerHold = towerHold;
         }
 
         public Vector3 DockPosition { get; }
+
+        /// <summary>
+        /// Seconds the wide shot rests on the tower beyond its usual hold: above zero on the first evening after a
+        /// recovery row completed (docs/features/M3-21 §2); the tower's sweep waits as long.
+        /// </summary>
+        public float TowerHold { get; }
     }
 
     /// <summary>
@@ -784,7 +791,10 @@ namespace MoonProject.Core.Events
 
         public string KitId { get; }
 
-        /// <summary>The salvage site whose heart held the tube ("site.garage", ...).</summary>
+        /// <summary>
+        /// The salvage site whose heart held the tube ("site.garage", ...), or the world anchor it lay at
+        /// ("canyon.lip").
+        /// </summary>
         public string SiteId { get; }
 
         public Vector3 Position { get; }

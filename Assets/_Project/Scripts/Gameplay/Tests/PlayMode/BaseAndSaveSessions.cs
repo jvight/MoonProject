@@ -372,6 +372,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             IUpgradeShop shop = _fixture.Bootstrap.Context.Get<IUpgradeShop>();
             PadLook look = _fixture.WorkshopTuning.PadLook;
             WorkshopTuning tuning = _fixture.WorkshopTuning;
+            _fixture.Decode(HoverJump);
             Assert.AreSame(_fixture.HoverJumpUpgrade, bay.Definition, "the bay's first offer");
             Assert.IsFalse(bay.Awake, "asleep until the tower's second level powers it (M3-16)");
             Assert.AreEqual(0f, bay.LampLevel, 1e-3f, "its work lamps are dark");
@@ -441,8 +442,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsTrue(_fixture.Rover.Has(RoverAbility.HoverJump), "07 can leap now");
             Assert.Greater(bay.PadLevel, look.Occupied, "the purchase flares the pad");
             Assert.AreSame(_fixture.HoverJumpUpgrade, bay.Definition, "no other blueprint yet: it rests on Hover-Jump");
-            _fixture.Gameplay.Blueprints.Restore(
-                new BlueprintsSaveData { found = new[] { _fixture.CargoCradleUpgrade.Id } });
+            _fixture.Decode(HoverJump, _fixture.CargoCradleUpgrade.Id);
             Assert.AreSame(_fixture.CargoCradleUpgrade, bay.Definition, "the Cargo Cradle's sheet pinned, it offers it");
             Assert.IsTrue(_fixture.Gameplay.Hints.TryGet(InteractionKind.Upgrade, out hint));
             Assert.IsFalse(hint.Ready, "4 metal it does not have yet");

@@ -91,24 +91,36 @@
             "text": "A light across the chasm. Too far to cross, for now."
         },
         {
+            "key": "next.bay.wake",
+            "text": "The bay sleeps. The tower's second level would wake it."
+        },
+        {
             "key": "next.bay",
             "text": "The bay has power. The turntable is waiting."
         },
         {
-            "key": "next.leap",
-            "text": "The chasm waits. A charged leap could clear it."
+            "key": "next.power.part",
+            "text": "The tower needs its last part."
         },
         {
-            "key": "next.relay",
-            "text": "A dark mast, waiting to be lit."
+            "key": "next.power.carried",
+            "text": "The tower's last part rides with 07. The port is waiting."
         },
         {
-            "key": "next.chart",
-            "text": "The tower's third level would wake the crew's chart."
+            "key": "next.power.build",
+            "text": "The last part is in. Now the tower needs materials."
         },
         {
-            "key": "next.chart.look",
-            "text": "The chart is awake. Ride up and look."
+            "key": "next.link.relay.0",
+            "text": "The mound mast is still dark."
+        },
+        {
+            "key": "next.link.relay.1",
+            "text": "The shoulder mast is still dark."
+        },
+        {
+            "key": "next.link",
+            "text": "Dark masts lead toward the Peak."
         },
         {
             "key": "notyet.tower",

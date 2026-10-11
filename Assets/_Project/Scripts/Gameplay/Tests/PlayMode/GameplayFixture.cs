@@ -245,6 +245,15 @@ namespace MoonProject.Gameplay.PlayModeTests
             Gameplay.TowerPartField.Sync();
         }
 
+        /// <summary>
+        /// The lab's reader has decoded <paramref name="kits"/>' blueprints, and only those (no sheet is pinned from the
+        /// start, docs/features/M3-21 §4): the bay can build them.
+        /// </summary>
+        public void Decode(params string[] kits)
+        {
+            Gameplay.Blueprints.Restore(new BlueprintsSaveData { found = kits });
+        }
+
         /// <summary>Puts materials in 07's stock, as salvage would.</summary>
         public void GiveMaterials(int metal, int wiring, int optics)
         {
@@ -362,6 +371,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 Template("Part_Transformer", new Vector3(0.6f, 0.5f, 0.45f)),
                 Template("Part_RelaySpare", new Vector3(0.4f, 0.3f, 0.5f)),
             });
+            visuals.PopulateTube(Template("BlueprintTube", new Vector3(0.7f, 0.14f, 0.14f)));
             var root = new GameObject("[Gameplay]");
             root.SetActive(false);
             Gameplay = root.AddComponent<GameplaySystem>();

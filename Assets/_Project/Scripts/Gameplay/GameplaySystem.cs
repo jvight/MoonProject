@@ -19,7 +19,8 @@ namespace MoonProject.Gameplay
     /// <see cref="IFriendRoster"/>, <see cref="IFriendStatuses"/>, <see cref="IRadioProgram"/>,
     /// <see cref="IStationReach"/>, <see cref="IRadioHop"/>, <see cref="IRelayStatus"/>, the workshop as
     /// <see cref="IRoverBay"/>, 07's battery as <see cref="IRoverBattery"/> and its beam work as
-    /// <see cref="IBeamStatus"/>) and the save sections,
+    /// <see cref="IBeamStatus"/>, the tech tree as <see cref="ITechTree"/> and the recovery panel's rows as
+    /// <see cref="IRecoveryProgress"/>, docs/features/M3-21) and the save sections,
     /// announces the radio's signal radius and, once the save is loaded, the radio program, and owns the shared glow
     /// meshes. The radio-hop moves 07 through Core's <see cref="IRoverPlacement"/> when the Rover domain registers it;
     /// Core's <see cref="IRoverCargoSeat"/> (where a relic rides in the Cargo Cradle) is required at boot.
@@ -80,6 +81,15 @@ namespace MoonProject.Gameplay
 
         /// <summary>The components in the world: waiting, flying into 07, fed to the tower's port.</summary>
         public TowerPartField TowerPartField { get; private set; }
+
+        /// <summary>The blueprint tubes waiting on the ground at world anchors (docs/features/M3-21).</summary>
+        public GroundTubes GroundTubes { get; private set; }
+
+        /// <summary>What 07 and the station know and have built (docs/features/M3-21).</summary>
+        public TechTree Tech { get; private set; }
+
+        /// <summary>The four recovery targets' lamps (docs/features/M3-21).</summary>
+        public RecoveryProgress Recovery { get; private set; }
 
         public SalvageField Salvage => _salvage;
 
@@ -221,7 +231,7 @@ namespace MoonProject.Gameplay
                 !_shelf.Initialize(Radio, _cassettes.Catalog, _friends.BellTuning) ||
                 !_relays.Initialize(services, Upgrades, _tower, _tether, _friends.Tuning, Placement(context)) ||
                 !_progression.Initialize(services, Power, _home, _workshop, _sonar, _friends, _relays,
-                    Upgrades, _lift) ||
+                    Upgrades, _lift, _tower, TowerParts) ||
                 !_plotter.Initialize(services, Blueprints, _workshop, _progression.Tuning, Upgrades) ||
                 !_battery.Initialize(services, _relays.Reach, _tether, _home, abilities, _friends, _sonar.Tuning))
 
@@ -253,7 +263,8 @@ namespace MoonProject.Gameplay
             }
 
             TowerPartField = NewTowerPartField(services);
-            if (TowerPartField == null)
+            GroundTubes = TowerPartField != null ? NewGroundTubes(services) : null;
+            if (GroundTubes == null || !NewGoals(context.Events))
             {
                 enabled = false;
                 return;
@@ -280,6 +291,8 @@ namespace MoonProject.Gameplay
             context.Register<IComponentGate>(TowerParts);
             context.Register<IRoverBattery>(_battery.Model);
             context.Register<IBeamStatus>(services.Beam);
+            context.Register<ITechTree>(Tech);
+            context.Register<IRecoveryProgress>(Recovery);
             Upgrades.PublishSignals();
             RegisterSaveSections(save);
         }
@@ -355,9 +368,53 @@ namespace MoonProject.Gameplay
             }
         }
 
+        /// <summary>The tubes waiting on the ground, or null (logged) when a tube's anchor is missing.</summary>
+        private GroundTubes NewGroundTubes(GameplayServices services)
+        {
+            try
+            {
+                return new GroundTubes(Blueprints, Upgrades, _progression.Tuning.Tubes, transform, services,
+                    _friends.Tuning, _progression.Tuning);
+            }
+            catch (InvalidOperationException exception)
+            {
+                Debug.LogError($"{nameof(GameplaySystem)}: {exception.Message}", this);
+                return null;
+            }
+        }
+
+        /// <summary>The tech tree and the recovery rows; false (logged) when their content is broken.</summary>
+        private bool NewGoals(EventBus events)
+        {
+            foreach (TechKit kit in _progression.Tuning.TechKits)
+            {
+                if (Upgrades.Find(kit.KitId) == null || !_workshop.Sells(Upgrades.Find(kit.KitId)))
+                {
+                    Debug.LogError($"{nameof(GameplaySystem)}: tech kit '{kit.KitId}' ({kit.Node}) is no kit the " +
+                                   "bay fits.", this);
+                    return false;
+                }
+            }
+
+            try
+            {
+                Tech = new TechTree(events, () => _tower.ShownLevel, () => _relays.LitMasts, Blueprints.IsDecoded,
+                    Upgrades.LevelOf, _progression.Tuning.TechKits);
+                Recovery = new RecoveryProgress(events, () => _tower.ShownLevel, _tower.Definition.MaxLevel,
+                    () => _relays.LitChainMasts, _relays.ChainMastCount, _progression.Tuning.RecoveryLamps);
+                return true;
+            }
+            catch (ArgumentException exception)
+            {
+                Debug.LogError($"{nameof(GameplaySystem)}: {exception.Message}", this);
+                return false;
+            }
+        }
+
         private void RestoreBlueprints(BlueprintsSaveData data)
         {
             Blueprints.Restore(data);
+            GroundTubes.Sync();
             _lift.RestoreReader();
             _plotter.SyncSheets();
         }
@@ -376,8 +433,7 @@ namespace MoonProject.Gameplay
 
             try
             {
-                return new Blueprints(events, kits, _progression.Tuning.FirstKit, _progression.Tuning.Tubes,
-                    SiteOfRelic);
+                return new Blueprints(events, kits, _progression.Tuning.Tubes, SiteOfRelic);
             }
             catch (ArgumentException exception)
             {
@@ -404,6 +460,11 @@ namespace MoonProject.Gameplay
         {
             foreach (BlueprintTube tube in _progression.Tuning.Tubes)
             {
+                if (tube.IsAtAnchor)
+                {
+                    continue;
+                }
+
                 bool found = false;
                 foreach (SalvageSite site in _salvage.Sites)
                 {
@@ -426,8 +487,9 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// The save is loaded (Start runs after it): Audio and UI start from the real radio program, and Rover puts the
-        /// carried blueprint tubes and components on 07's back.
+        /// The save is loaded (Start runs after it): Audio and UI start from the real radio program, Rover puts the
+        /// carried blueprint tubes and components on 07's back, and the tech board, the porthole and the recovery
+        /// panel show what is known at once.
         /// </summary>
         private void Start()
         {
@@ -435,12 +497,19 @@ namespace MoonProject.Gameplay
             Power.Announce();
             Blueprints.Announce();
             TowerParts.Announce();
+            GroundTubes.Sync();
+            Tech.Announce();
+            Recovery.Announce();
         }
 
         private void Update()
         {
+            float now = Time.time;
             Power.Show(_tower.ShownLevel);
-            TowerPartField.Step(Time.time);
+            TowerPartField.Step(now);
+            GroundTubes.Step(now);
+            Tech.Refresh();
+            Recovery.Refresh();
         }
 
         private void RestoreRadio(RadioSaveData data)
@@ -553,6 +622,7 @@ namespace MoonProject.Gameplay
             _saveTokens.Clear();
             Blueprints?.Dispose();
             TowerPartField?.Dispose();
+            GroundTubes?.Dispose();
             _meshes?.Dispose();
         }
     }

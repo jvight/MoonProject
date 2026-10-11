@@ -66,6 +66,10 @@ namespace MoonProject.Gameplay
         [Tooltip("Art's tower components (Generated/Art/Pickups/Part_*), each named as the part's id.")]
         [SerializeField] private GameObject[] _components = Array.Empty<GameObject>();
 
+        [Tooltip("Art's blueprint tube (Generated/Art/Pickups/BlueprintTube.prefab): a tube waiting on the ground at " +
+                 "a world anchor (docs/features/M3-21).")]
+        [SerializeField] private GameObject _tube;
+
         public Material SonarRing => _sonarRing;
         public Material SiteRing => _siteRing;
         public Material SitePillar => _sitePillar;
@@ -82,6 +86,7 @@ namespace MoonProject.Gameplay
         public Material Spark => _spark;
         public Material HomeHalo => _homeHalo;
         public Material LinkPulse => _linkPulse;
+        public GameObject Tube => _tube;
 
         /// <summary>Art's station pad (StationPad_&lt;cm&gt;) whose radius is nearest <paramref name="radius"/>.</summary>
         public GameObject PadFor(float radius)
@@ -132,6 +137,7 @@ namespace MoonProject.Gameplay
                   Array.IndexOf(_pads, null) >= 0 ? "Art's station pads are missing (run Gameplay/Materials)"
                 : _components == null || Array.IndexOf(_components, null) >= 0
                     ? "Art's tower components are missing (run Gameplay/Materials)"
+                : _tube == null ? "Art's blueprint tube is missing (run Gameplay/Materials)"
                 : null;
         }
 
@@ -144,6 +150,11 @@ namespace MoonProject.Gameplay
         internal void PopulateComponents(GameObject[] parts)
         {
             _components = parts;
+        }
+
+        internal void PopulateTube(GameObject tube)
+        {
+            _tube = tube;
         }
 
         internal void Populate(Material sonarRing, Material siteRing, Material sitePillar, Material tractorBeam,

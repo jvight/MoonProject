@@ -62,6 +62,15 @@ namespace MoonProject.Gameplay.Editor
             return parts;
         }
 
+        /// <summary>Art's blueprint tube, for a tube waiting on the ground at a world anchor.</summary>
+        private static GameObject TubeModel()
+        {
+            string path = ArtPaths.PickupFolder + "/" + SiteModelBuilder.BlueprintTubeName + ".prefab";
+            var tube = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            return tube != null ? tube
+                : throw new InvalidOperationException($"{BuilderPath}: Art's blueprint tube {path} is missing.");
+        }
+
         [MoonBuilder(BuilderPath, BuilderOrder)]
         private static void Build()
         {
@@ -81,6 +90,7 @@ namespace MoonProject.Gameplay.Editor
                 Write(shader, GlowRole.LinkPulse));
             visuals.PopulatePads(Pads(), BaseModelBuilder.PadRadii);
             visuals.PopulateComponents(ComponentModels());
+            visuals.PopulateTube(TubeModel());
             GeneratedAssets.CreateOrReplace(visuals, GameplayAssetPaths.Visuals);
             AssetDatabase.SaveAssets();
             Debug.Log($"{BuilderPath}: wrote {Enum.GetValues(typeof(GlowRole)).Length + 2} materials and " +

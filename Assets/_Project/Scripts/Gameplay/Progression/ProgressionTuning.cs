@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using MoonProject.Core;
 
 namespace MoonProject.Gameplay
 {
@@ -51,8 +52,8 @@ namespace MoonProject.Gameplay
         [Tooltip("The friend brought home over the chasm (step 6).")]
         [SerializeField] private string _leapFriend = "bell";
 
-        [Tooltip("The kit fitted in the bay first (step 5); its blueprint is pinned on Kenji's board from the start.")]
-        [SerializeField] private string _firstKit = "rover.hover_jump";
+        [Tooltip("The kit that leaps the chasm (Hover-Jump): 07 looks across from the lip only while it has none (P2).")]
+        [SerializeField] private string _leapKit = "rover.hover_jump";
 
         [Header("The chasm before the bay (P2)")]
         [Tooltip("07 has looked across the chasm once it comes this many metres (horizontal) from the lip without " +
@@ -70,6 +71,10 @@ namespace MoonProject.Gameplay
                  "sweep raises the next signal pillar.")]
         [Range(0.5f, 15f)] [SerializeField] private float _eveningSweepDelay = 4.5f;
 
+        [Tooltip("Seconds the first evening after a recovery row completes holds longer on the tower before its " +
+                 "sweep (docs/features/M3-21 §2).")]
+        [Range(0f, 6f)] [SerializeField] private float _eveningCompletionHold = 2f;
+
         [Tooltip("Brightness of the pillar the evening's sweep raises on the horizon.")]
         [Range(0.1f, 2f)] [SerializeField] private float _eveningPillarBrightness = 0.7f;
 
@@ -84,13 +89,28 @@ namespace MoonProject.Gameplay
         [Range(0, 40)] [SerializeField] private int _letterCount = 10;
 
         [Header("Blueprints")]
-        [Tooltip("Where the other kits' blueprint tubes lie: each in a salvage site's heart, found with its relic.")]
+        [Tooltip("Where the kits' blueprint tubes lie: Hover-Jump's on the ground at the chasm's near lip (M3-21), " +
+                 "the others each in a salvage site's heart, found with its relic.")]
         [SerializeField] private BlueprintTube[] _tubes =
         {
+            BlueprintTube.AtAnchor("rover.hover_jump", WorldAnchorIds.CanyonLip, 6f),
             new BlueprintTube("rover.cargo_cradle", "site.garage"),
             new BlueprintTube("rover.warm_headlamp", "site.kestrel"),
             new BlueprintTube("rover.boost_coils", "site.drill"),
         };
+
+        [Header("Tech tree and recovery panel (M3-21)")]
+        [Tooltip("The tech board's kit pins and the bay's upgrade that builds each; a kit node left out stays unknown.")]
+        [SerializeField] private TechKit[] _techKits =
+        {
+            new TechKit(TechNodeId.HoverJump, "rover.hover_jump"),
+            new TechKit(TechNodeId.CargoCradle, "rover.cargo_cradle"),
+            new TechKit(TechNodeId.WarmHeadlamp, "rover.warm_headlamp"),
+            new TechKit(TechNodeId.CapacitorDrums, "rover.boost_coils"),
+        };
+
+        [Tooltip("The recovery panel's lamps no built thing lights yet: the Peak's foot, the Dish, the Answer.")]
+        [SerializeField] private RecoveryLamps _recoveryLamps = new RecoveryLamps(1, 4, 1);
 
         [Header("The tower's components (P1)")]
         [Tooltip("One part per tower level, needed besides materials: the coil in the depot's heart (L1), the " +
@@ -157,6 +177,8 @@ namespace MoonProject.Gameplay
 
         public float EveningPillarBrightness => _eveningPillarBrightness;
 
+        public float EveningCompletionHold => _eveningCompletionHold;
+
         public float ReaderFeedSeconds => _readerFeedSeconds;
 
         public float ReaderDecodeSeconds => _readerDecodeSeconds;
@@ -179,9 +201,13 @@ namespace MoonProject.Gameplay
 
         public string LeapFriend => _leapFriend;
 
-        public string FirstKit => _firstKit;
+        public string LeapKit => _leapKit;
 
         public IReadOnlyList<BlueprintTube> Tubes => _tubes;
+
+        public IReadOnlyList<TechKit> TechKits => _techKits;
+
+        public RecoveryLamps RecoveryLamps => _recoveryLamps;
 
         public IReadOnlyList<TowerPart> TowerParts => _towerParts;
 
