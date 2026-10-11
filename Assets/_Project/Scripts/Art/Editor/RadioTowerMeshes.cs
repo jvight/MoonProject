@@ -47,11 +47,14 @@ namespace MoonProject.Art.Editor
         private const float MastTop = 11.4f;
         private const float TowerTop = 14.2f;
 
-        // L1's guy wires: where they leave the pole, how far out they are staked, and their yaws (never across the
-        // service port in front).
+        // L1's guy wires: where they leave the pole, and the plinth corners they are bolted to (the stage keeps to
+        // its plinth's footprint; the front left corner stays clear of the service box).
         private const float GuyHeight = PoleTop - 1.7f;
-        private const float GuyReach = 2.4f;
-        private static readonly float[] GuyYaws = { 60f, 180f, 300f };
+        private const float GuyInset = 0.06f;
+        private static readonly Vector2[] GuyCorners =
+        {
+            new Vector2(-1f, -1f), new Vector2(1f, -1f), new Vector2(1f, 0.85f),
+        };
 
         private static readonly Vector3 PoleFoot = new Vector3(0f, PlinthHeight, -0.3f);
 
@@ -166,9 +169,9 @@ namespace MoonProject.Art.Editor
             if (RequireLevel(level) == 1)
             {
                 Weathering.Collar(b, At(PoleFoot + Vector3.up * 0.08f), 0.075f, 0.14f);
-                foreach (float yaw in GuyYaws)
+                foreach (Vector2 corner in GuyCorners)
                 {
-                    Weathering.Collar(b, At(GuyStake(yaw) + Vector3.up * 0.05f), 0.06f, 0.08f);
+                    Weathering.Collar(b, At(GuyStake(corner) + Vector3.up * 0.04f), 0.05f, 0.06f);
                 }
 
                 return b;
@@ -242,7 +245,7 @@ namespace MoonProject.Art.Editor
 
         /// <summary>
         /// L1: a tall cobbled pole, spliced from two lengths with collars, a cable wound down its foot, three guy wires
-        /// staked into the dust, a small dish near the top, a crossbar and one bulb.
+        /// bolted to the plinth's corners, a small dish near the top, a crossbar and one bulb.
         /// </summary>
         private static void Pole(LowPolyMeshBuilder b)
         {
@@ -268,12 +271,11 @@ namespace MoonProject.Art.Editor
 
             Vector3 collar = new Vector3(0f, GuyHeight, foot.z);
             b.Torus(At(collar), 0.12f, 0.03f, 8, 3, PaletteSwatch.Metal);
-            foreach (float yaw in GuyYaws)
+            foreach (Vector2 corner in GuyCorners)
             {
-                Vector3 stake = GuyStake(yaw);
+                Vector3 stake = GuyStake(corner);
                 RecipeKit.Rod(b, collar, stake + Vector3.up * 0.06f, 0.008f, 4, PaletteSwatch.Charcoal);
-                b.Box(At(stake + Vector3.up * 0.04f, new Vector3(0f, yaw, 0f)), new Vector3(0.12f, 0.08f, 0.12f),
-                    PaletteSwatch.Metal, 0.01f);
+                b.Box(At(stake + Vector3.up * 0.04f), new Vector3(0.1f, 0.08f, 0.1f), PaletteSwatch.Metal, 0.01f);
             }
 
             Dish(b, foot + new Vector3(0f, PoleTop - 1.05f, 0.12f), new Vector3(0f, 0f, 0f), 0.45f);
@@ -288,10 +290,11 @@ namespace MoonProject.Art.Editor
             b.Frustum(At(top + Vector3.up * 0.2f), 0.14f, 0.05f, 0.09f, 8, PaletteSwatch.Charcoal);
         }
 
-        /// <summary>Where a guy wire of the L1 pole is staked into the dust.</summary>
-        private static Vector3 GuyStake(float yaw)
+        /// <summary>Where a guy wire of the L1 pole is bolted: on the plinth's top, near the given corner.</summary>
+        private static Vector3 GuyStake(Vector2 corner)
         {
-            return PoleFoot + Rotation(new Vector3(0f, yaw, 0f)) * Vector3.forward * GuyReach + Vector3.down * PlinthHeight;
+            float half = PlinthSize * 0.5f - GuyInset;
+            return new Vector3(corner.x * half, PlinthHeight, corner.y * half);
         }
 
         /// <summary>L2: a four-leg lattice mast with a dish platform, a medium dish, lamps and a whip.</summary>
@@ -332,7 +335,9 @@ namespace MoonProject.Art.Editor
                 0.016f, 5, PaletteSwatch.Metal);
         }
 
-        /// <summary>The lattice's half-spread at height <paramref name="y"/> on a stage topping out at <paramref name="top"/>.</summary>
+        /// <summary>
+        /// The lattice's half-spread at height <paramref name="y"/> on a stage topping out at <paramref name="top"/>.
+        /// </summary>
         private static float LatticeHalf(float y, float top, float bottomHalf, float topHalf)
         {
             return Mathf.Lerp(bottomHalf, topHalf, (y - PlinthHeight) / (top - PlinthHeight));

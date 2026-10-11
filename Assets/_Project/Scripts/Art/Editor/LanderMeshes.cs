@@ -27,9 +27,11 @@ namespace MoonProject.Art.Editor
         /// <summary>The stage's top and the cabin floor's surface (the lift's top stop).</summary>
         public const float FloorY = StageBottom + 1f;
 
-        public const float StageRadius = 3.8f;
+        public const float StageRadius = 4.05f;
 
-        /// <summary>The cabin's inside, across its flats and floor to ceiling: the turntable plus a ring of stations.</summary>
+        /// <summary>
+        /// The cabin's inside, across its flats and floor to ceiling: the turntable plus a ring of stations.
+        /// </summary>
         public const float CabinInnerApothem = 2.8f;
 
         public const float CabinInnerHeight = 2.5f;
@@ -43,21 +45,29 @@ namespace MoonProject.Art.Editor
 
         public const float RoofRise = 0.7f;
 
-        /// <summary>The lander's height to its roof (the tower must stand 1.25 times taller, M3-19 refinement 4).</summary>
+        /// <summary>
+        /// The lander's height to its roof (the tower must stand 1.25 times taller, M3-19 refinement 4).
+        /// </summary>
         public const float RoofTop = CabinTop + RoofRise;
 
-        /// <summary>The shaft the platform rises through, across its corners (an octagon round the 1.7 m platform).</summary>
+        /// <summary>
+        /// The shaft the platform rises through, across its corners (an octagon round the 1.7 m platform).
+        /// </summary>
         public const float ShaftRadius = 1.95f;
 
         public const float FootRadius = 6f;
 
-        /// <summary>Yaw of the leg the crew's ladder climbs (the front-left), and of the wall it carries on up.</summary>
+        /// <summary>
+        /// Yaw of the leg the crew's ladder climbs (the front-left), and of the wall it carries on up.
+        /// </summary>
         public const float LadderYaw = -45f;
 
         // The ladder leans on the stage beside the leg, not through its strut and braces.
         private const float LadderBeside = 0.6f;
 
-        /// <summary>Yaw of the cabin face with the big porthole, over the survey chart: toward the Peak from home.</summary>
+        /// <summary>
+        /// Yaw of the cabin face with the big porthole, over the survey chart: toward the Peak from home.
+        /// </summary>
         public const float BigPortholeYaw = -135f;
 
         public const float BigPortholeRadius = 0.6f;
@@ -155,7 +165,9 @@ namespace MoonProject.Art.Editor
             return b;
         }
 
-        /// <summary>The big porthole's glass over the survey chart: dark until the lab's lamps light it from inside.</summary>
+        /// <summary>
+        /// The big porthole's glass over the survey chart: dark until the lab's lamps light it from inside.
+        /// </summary>
         public static LowPolyMeshBuilder BigPorthole()
         {
             var b = new LowPolyMeshBuilder(60);
@@ -175,11 +187,13 @@ namespace MoonProject.Art.Editor
             return face.MultiplyPoint3x4(new Vector3(-Mathf.Sin(angle), Mathf.Cos(angle), 0f) * PortholeLampRing);
         }
 
-        /// <summary>One porthole lamp's glass, centred on its socket and facing out of the big porthole's face.</summary>
+        /// <summary>
+        /// One porthole lamp's glass, centred on its socket and facing out of the big porthole's face.
+        /// </summary>
         public static LowPolyMeshBuilder PortholeLampGlass()
         {
             var b = new LowPolyMeshBuilder(40);
-            b.Prism(Matrix4x4.Rotate(Rotation(new Vector3(0f, BigPortholeYaw, 0f))) * Matrix4x4.Rotate(Rotation(AlongZ)),
+            b.Prism(Matrix4x4.Rotate(Rotation(new Vector3(0f, BigPortholeYaw, 0f)) * Rotation(AlongZ)),
                 PortholeLampRadius, 0.035f, 6, PaletteSwatch.LampGlass);
             return b;
         }
@@ -424,7 +438,7 @@ namespace MoonProject.Art.Editor
             for (int side = -1; side <= 1; side += 2)
             {
                 Vector3 thruster = Rotation(new Vector3(0f, side * 90f, 0f)) * Vector3.forward * (CabinApothem + 0.12f);
-                RcsQuad(b, thruster + Vector3.up * (BandY - 0.45f) + Vector3.forward * 0.6f, side * 90f);
+                RcsQuad(b, thruster + Vector3.up * (BandY - 0.45f) + Vector3.back * 0.75f, side * 90f);
             }
 
             OctagonRing(b, StageRadius - 0.02f, CabinRadius, FloorY - 0.01f, FloorY + 0.02f, PaletteSwatch.Metal,
@@ -508,8 +522,8 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
-        /// The crew's ladder: up beside the front-left leg from its footpad to the stage's ledge, then up the cabin wall and
-        /// over the roof's edge to the hatch. A remnant: 07 rides the lift.
+        /// The crew's ladder: up beside the front-left leg from its footpad to the stage's ledge, then up the cabin
+        /// wall and over the roof's edge to the hatch. A remnant: 07 rides the lift.
         /// </summary>
         private static void Ladder(LowPolyMeshBuilder b)
         {
@@ -566,7 +580,9 @@ namespace MoonProject.Art.Editor
             RecipeKit.Rod(b, wall, lamp + Vector3.up * 0.15f, 0.025f, 5, PaletteSwatch.Charcoal);
         }
 
-        /// <summary>Tilly's perch on the stage's ledge: a padded landing disc on a post, its rim in 07's orange.</summary>
+        /// <summary>
+        /// Tilly's perch on the stage's ledge: a padded landing disc on a post, its rim in 07's orange.
+        /// </summary>
         private static void Perch(LowPolyMeshBuilder b)
         {
             var foot = new Vector3(TillyPerch.x, FloorY + 0.02f, TillyPerch.z);
@@ -583,7 +599,9 @@ namespace MoonProject.Art.Editor
             b.Lathe(At(pad), cushion, 12, PaletteSwatch.Honey);
         }
 
-        /// <summary>Where the HOME sign's post stands in the dust beside 07's dock (the HomeSign node's pivot).</summary>
+        /// <summary>
+        /// Where the HOME sign's post stands in the dust beside 07's dock (the HomeSign node's pivot).
+        /// </summary>
         public static readonly Vector3 HomeSignFoot = new Vector3(0.95f, 0f, 8.1f);
 
         /// <summary>The HOME sign leaning with the years: back and to the side (the node's built rotation).</summary>
@@ -608,7 +626,9 @@ namespace MoonProject.Art.Editor
             return b;
         }
 
-        /// <summary>Leg <paramref name="index"/>'s hip on the stage, its foot on the ground and the knee its braces meet.</summary>
+        /// <summary>
+        /// Leg <paramref name="index"/>'s hip on the stage, its foot on the ground and the knee its braces meet.
+        /// </summary>
         public static void LegPoints(int index, out Vector3 hip, out Vector3 foot, out Vector3 knee)
         {
             Vector3 direction = Rotation(new Vector3(0f, 45f + index * 90f, 0f)) * Vector3.forward;
@@ -658,14 +678,18 @@ namespace MoonProject.Art.Editor
             b.Prism(At(0f, y, 0f), radius, height, Sides, swatch, false);
         }
 
-        /// <summary>A frame on the octagon face facing <paramref name="yaw"/>, <paramref name="distance"/> out.</summary>
+        /// <summary>
+        /// A frame on the octagon face facing <paramref name="yaw"/>, <paramref name="distance"/> out.
+        /// </summary>
         private static Matrix4x4 Face(float yaw, float distance)
         {
             Vector3 normal = Rotation(new Vector3(0f, yaw, 0f)) * Vector3.forward;
             return SiteKit.Face(normal * distance, normal, Vector3.up);
         }
 
-        /// <summary>A point frame on that face, <paramref name="x"/> along it and at height <paramref name="y"/>.</summary>
+        /// <summary>
+        /// A point frame on that face, <paramref name="x"/> along it and at height <paramref name="y"/>.
+        /// </summary>
         private static Matrix4x4 OnFace(float yaw, float distance, float x, float y)
         {
             return Face(yaw, distance) * At(x, y, 0f);

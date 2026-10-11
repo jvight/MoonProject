@@ -91,7 +91,8 @@ namespace MoonProject.Art.Tests
         public void RingRail_RidesUnderTheCeiling_AndTheCameraNeverMeetsAnything()
         {
             ModelNode rail = _lab.GetDescendant(BaseModelBuilder.RingRailName);
-            Assert.AreEqual(0f, new Vector2(rail.LocalPosition.x, rail.LocalPosition.z).magnitude, 1e-4f, "on the axis");
+            var axis = new Vector2(rail.LocalPosition.x, rail.LocalPosition.z);
+            Assert.AreEqual(0f, axis.magnitude, 1e-4f, "on the axis");
             Bounds room = _lab.Mesh.Geometry.Bounds;
             Assert.Less(rail.LocalPosition.y, room.max.y, "under the ceiling");
             Assert.Greater(rail.LocalPosition.y, 2f, "over 07's head");

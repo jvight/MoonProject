@@ -41,7 +41,8 @@ namespace MoonProject.Art.Editor
         public static Vector3 ReaderHood => new Vector3(0f, FloorY + ReaderTop + 0.12f, WallZ + 0.1f);
 
         /// <summary>The reader's reel hub on its front, below the slot toward the board's side.</summary>
-        public static Vector3 ReaderReel => new Vector3(-0.18f, TapeHeight + ReelRadius + FloorY, WallZ + ReaderDepth + 0.03f);
+        public static Vector3 ReaderReel =>
+            new Vector3(-0.18f, TapeHeight + ReelRadius + FloorY, WallZ + ReaderDepth + 0.03f);
 
         /// <summary>Where the tape leaves the reel: it runs from here along -X toward the board.</summary>
         public static Vector3 TapeStart => new Vector3(ReaderReel.x, TapeHeight + FloorY, ReaderReel.z + 0.02f);
@@ -57,7 +58,9 @@ namespace MoonProject.Art.Editor
         private const float PanelTop = 2.2f;
         private const int BoardColumns = 3;
 
-        /// <summary>The recovery panel's rows, in <c>RecoveryTarget</c> order, with their names and lamp sockets.</summary>
+        /// <summary>
+        /// The recovery panel's rows, in <c>RecoveryTarget</c> order, with their names and lamp sockets.
+        /// </summary>
         public static readonly string[] RowNames = { "Power", "Link", "Dish", "Answer" };
 
         public static readonly int[] RowLamps = { 3, 8, 4, 1 };
@@ -66,7 +69,9 @@ namespace MoonProject.Art.Editor
 
         private static readonly string[] RowLabels = { "POWER", "LINK", "DISH", "ANSWER" };
 
-        /// <summary>Tech nodes on the board in 0.5 (one pin, sheet and lamp each, in <c>TechNodeId</c> order).</summary>
+        /// <summary>
+        /// Tech nodes on the board in 0.5 (one pin, sheet and lamp each, in <c>TechNodeId</c> order).
+        /// </summary>
         public const int NodeCount = 9;
 
         // The keepsake shelf: one shelf of deep cubbies at lens height.
@@ -138,7 +143,9 @@ namespace MoonProject.Art.Editor
             return b;
         }
 
-        /// <summary>The reel (reel space: its hub at the origin, spinning about Z): two flanges and the wound paper.</summary>
+        /// <summary>
+        /// The reel (reel space: its hub at the origin, spinning about Z): two flanges and the wound paper.
+        /// </summary>
         public static LowPolyMeshBuilder Reel()
         {
             var b = new LowPolyMeshBuilder(200);
@@ -265,7 +272,9 @@ namespace MoonProject.Art.Editor
             return b;
         }
 
-        /// <summary>Where node <paramref name="node"/>'s pin is on the board (three columns, read left to right as 07 looks).</summary>
+        /// <summary>
+        /// Where node <paramref name="node"/>'s pin is on the board (three columns, read left to right as 07 looks).
+        /// </summary>
         public static Vector3 PinPosition(int node)
         {
             int column = node % BoardColumns;
@@ -290,20 +299,26 @@ namespace MoonProject.Art.Editor
             return new Vector3(0f, FloorY + PanelTop - 0.12f - row * 0.075f, WallZ + 0.071f);
         }
 
-        /// <summary>Lamp <paramref name="lamp"/> of row <paramref name="row"/> (station space), in reading order.</summary>
+        /// <summary>
+        /// Lamp <paramref name="lamp"/> of row <paramref name="row"/> (station space), in reading order.
+        /// </summary>
         public static Vector3 RowLampPosition(int row, int lamp)
         {
             return RowOrigin(row) + new Vector3(0.32f - lamp * 0.11f, 0f, 0.002f);
         }
 
-        /// <summary>The board's node lamps, the panel's row lamps and the Link row's larger last lamp: the Peak's foot.</summary>
+        /// <summary>
+        /// The board's node lamps, the panel's row lamps and the Link row's larger last lamp: the Peak's foot.
+        /// </summary>
         public const float NodeLampRadius = 0.025f;
 
         public const float RowLampRadius = 0.022f;
 
         public const float PeakLampRadius = 0.034f;
 
-        /// <summary>Whether lamp <paramref name="lamp"/> of row <paramref name="row"/> is the Link row's last, the Peak's foot.</summary>
+        /// <summary>
+        /// Whether lamp <paramref name="lamp"/> of row <paramref name="row"/> is the Link row's last, the Peak's foot.
+        /// </summary>
         public static bool IsPeakLamp(int row, int lamp)
         {
             return row == LinkRow && lamp == RowLamps[row] - 1;
@@ -341,7 +356,8 @@ namespace MoonProject.Art.Editor
                     float cubbyX = KeepsakeSlot(slot).x;
                     if (c > 0)
                     {
-                        b.Box(At(cubbyX + (CubbyWidth + Divider) * 0.5f, (bottom + top) * 0.5f, back + CubbyDepth * 0.5f),
+                        float between = cubbyX + (CubbyWidth + Divider) * 0.5f;
+                        b.Box(At(between, (bottom + top) * 0.5f, back + CubbyDepth * 0.5f),
                             new Vector3(Divider, top - bottom, CubbyDepth), PaletteSwatch.Wood);
                     }
 

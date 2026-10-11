@@ -10,7 +10,8 @@ namespace MoonProject.Art.Tests
     /// What was built for 07 at the habitat lander (M3-14, M3-19; VISION rulings 12 and 14): the charging dock 07
     /// rests on with its nose at the contacts, and the belly lift that carries it up through the floor hatch into the
     /// crew's lab, jammed on its stops. Contract nodes, clearances for 07 at rest and along the lift's whole travel
-    /// and turning on the turntable at the top, dark glows and repeatable builds.
+    /// and turning on the turntable at the top (the paths as cylinders through the shaft), dark glows and repeatable
+    /// builds.
     /// </summary>
     public sealed class LanderPorchTests
     {
@@ -28,8 +29,9 @@ namespace MoonProject.Art.Tests
         // The belly clears 07 (about 2 m tall with its head up) with headroom to spare (M3-19 §3).
         private const float Headroom = 0.4f;
 
-        private static readonly float[] Travel = { 0f, 0.25f, 0.5f, 0.75f, 1f };
-        private static readonly float[] Turns = { 0f, 45f, 90f, 135f, 180f, 225f, 270f, 315f };
+        // The platform and 07 keep at least this far from anything fixed on their way up the shaft and turning at
+        // the top (the platform's path is a cylinder as wide as its widest part, 07's as wide as it turns).
+        private const float PathClearance = 0.015f;
 
         private ModelNode _lander;
         private ModelNode _lift;
@@ -167,25 +169,28 @@ namespace MoonProject.Art.Tests
         public void Lift_Carries07_ClearOfTheLander_AllTheWay_AndTurnsAtTheTop()
         {
             ModelNode platform = _lift.GetDescendant(BaseModelBuilder.PlatformName);
-            Matrix4x4 spot = platform.GetDescendant(BaseModelBuilder.RoverSpotName).LocalMatrix;
-            List<Vector3> deck = Solid(platform, "\u0000", Matrix4x4.identity);
+            List<Vector3> deck = Solid(platform, string.Empty, Matrix4x4.identity);
+            float deckRadius = deck.Max(Flat);
+            float deckBelow = -deck.Min(p => p.y);
+            float down = _lift.GetDescendant(BaseModelBuilder.PlatformDownName).LocalPosition.y;
+            float up = _lift.GetDescendant(BaseModelBuilder.PlatformUpName).LocalPosition.y;
+            float deckAbove = deck.Max(p => p.y);
+            float roverRadius = _rover.Max(Flat);
+            float roverTop = _rover.Max(p => p.y);
+            Assert.Less(roverRadius, deckRadius, "07 turns within the turntable's own circle");
             List<Vector3> fixedParts = Fixed();
-            Vector3 bottom = _lift.GetDescendant(BaseModelBuilder.PlatformDownName).LocalPosition;
-            Vector3 top = _lift.GetDescendant(BaseModelBuilder.PlatformUpName).LocalPosition;
-            foreach (float t in Travel)
+            for (int i = 0; i < fixedParts.Count; i += 3)
             {
-                Matrix4x4 at = Matrix4x4.Translate(Vector3.Lerp(bottom, top, t));
-                List<Vector3> carried = Posed(_rover, at * spot * Matrix4x4.Translate(Vector3.up * Rest));
-                AssertClear(Posed(deck, at * Matrix4x4.Translate(Vector3.up * Rest)), fixedParts,
-                    $"the platform at {t:P0} of its travel, resting on its stops at the bottom");
-                AssertClear(carried, fixedParts, $"07 on the lift at {t:P0} of its travel");
-            }
-
-            foreach (float turn in Turns)
-            {
-                Matrix4x4 at = Matrix4x4.Translate(top) * Matrix4x4.Rotate(Quaternion.Euler(0f, turn, 0f));
-                AssertClear(Posed(_rover, at * spot * Matrix4x4.Translate(Vector3.up * Rest)), fixedParts,
-                    $"07 on the turntable turned {turn} degrees");
+                foreach (Vector3 q in Samples(fixedParts[i], fixedParts[i + 1], fixedParts[i + 2]))
+                {
+                    float r = Flat(q);
+                    bool inDeckPath = r < deckRadius + PathClearance && q.y > down - deckBelow + Rest * 0.5f
+                                      && q.y < up + deckAbove + PathClearance;
+                    bool inRoverPath = r < roverRadius + PathClearance && q.y > down
+                                       && q.y < up + roverTop + PathClearance;
+                    Assert.IsFalse(inDeckPath, $"{q} stands in the platform's way up the shaft");
+                    Assert.IsFalse(inRoverPath, $"{q} stands in 07's way up the shaft or round the turntable");
+                }
             }
         }
 
@@ -298,6 +303,23 @@ namespace MoonProject.Art.Tests
             {
                 triangles.Add(pose.MultiplyPoint3x4(p));
             }
+        }
+
+        private static float Flat(Vector3 p)
+        {
+            return new Vector2(p.x, p.z).magnitude;
+        }
+
+        /// <summary>A triangle's corners, its edges' midpoints and its centre.</summary>
+        private static IEnumerable<Vector3> Samples(Vector3 a, Vector3 b, Vector3 c)
+        {
+            yield return a;
+            yield return b;
+            yield return c;
+            yield return (a + b) * 0.5f;
+            yield return (b + c) * 0.5f;
+            yield return (c + a) * 0.5f;
+            yield return (a + b + c) / 3f;
         }
 
         private static List<Vector3> Posed(List<Vector3> points, Matrix4x4 pose)

@@ -258,7 +258,9 @@ namespace MoonProject.Art.Editor
 
         public static int ReadingLampCount => LabStationMeshes.Crew.Length;
 
-        /// <summary>The recovery panel's rows (RecoveryTarget order), as Row_&lt;name&gt; with this many lamp sockets.</summary>
+        /// <summary>
+        /// The recovery panel's rows (RecoveryTarget order), as Row_&lt;name&gt; with this many lamp sockets.
+        /// </summary>
         public static string RecoveryRowName(int row)
         {
             return RowPrefix + LabStationMeshes.RowNames[row];
@@ -285,7 +287,9 @@ namespace MoonProject.Art.Editor
             throw new System.ArgumentOutOfRangeException(nameof(slot), slot, "No such keepsake slot.");
         }
 
-        /// <summary>The big porthole's glass (BigPorthole, a glow) and its lamp ring (PortholeLamps/Lamp_n, n from 0).</summary>
+        /// <summary>
+        /// The big porthole's glass (BigPorthole, a glow) and its lamp ring (PortholeLamps/Lamp_n, n from 0).
+        /// </summary>
         public const string BigPortholeName = "BigPorthole";
 
         public const string PortholeLampsName = "PortholeLamps";
@@ -513,7 +517,8 @@ namespace MoonProject.Art.Editor
             lift.Add(new ModelNode(HatchRimName, Vector3.zero, Quaternion.identity,
                 new ModelMesh(prefix + "_" + HatchRimName, BellyLiftMeshes.HatchRim()), ModelMaterial.PaletteGlowOff));
             lift.Add(new ModelNode(BellyLampName, Vector3.zero, Quaternion.identity,
-                new ModelMesh(prefix + "_" + BellyLampName, BellyLiftMeshes.BellyLamp()), ModelMaterial.PaletteGlowOff));
+                new ModelMesh(prefix + "_" + BellyLampName, BellyLiftMeshes.BellyLamp()),
+                ModelMaterial.PaletteGlowOff));
             var cable = new ModelMesh(prefix + "_Cable", BellyLiftMeshes.Cable());
             lift.Add(new ModelNode(CableLeftName, BellyLiftMeshes.CableTop(-1), cable));
             lift.Add(new ModelNode(CableRightName, BellyLiftMeshes.CableTop(1), Quaternion.identity, cable,
@@ -652,7 +657,9 @@ namespace MoonProject.Art.Editor
             }
         }
 
-        /// <summary>The hand-off pulse's path and the glass beads it lights (see <see cref="HandOffPathName"/>).</summary>
+        /// <summary>
+        /// The hand-off pulse's path and the glass beads it lights (see <see cref="HandOffPathName"/>).
+        /// </summary>
         private static void AddHandOff(ModelNode lander)
         {
             ModelNode path = lander.Add(new ModelNode(HandOffPathName, Vector3.zero));
