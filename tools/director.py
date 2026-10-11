@@ -69,8 +69,9 @@ WORKTREE_LOCK = Path("Logs") / "director.lock"
 SPARE_WORKTREE = ROOT.parent / "MoonProject-wt" / "landtest"
 MAX_SHARDS = 3
 BOX_PREFIX = "box/"
+# Feature slices span several domains (an alternation inside the builder regex), as in tools/box_check.py.
 BUILDER_DOMAINS = {"art": "Art", "world": "World", "rover": "Rover", "gameplay": "Gameplay", "audio": "Audio",
-                   "ui": "UI"}
+                   "ui": "UI", "map": "World|Gameplay|UI", "opening": "World|Rover|Audio"}
 SCHEMA_TYPE = re.compile(r"(Tuning|Settings)\.cs$")
 EDITOR_IDLE_POLLS = 5
 EDITOR_POLL_SECONDS = 2
