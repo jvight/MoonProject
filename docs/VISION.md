@@ -4,24 +4,34 @@
 > The original pitch lives in `GDD.md`; this document is how we execute it.
 
 ## The one-sentence promise
-**A tiny warm rover, alone on a dreaming moon, collecting lost memories of Earth to the sound of a crackling lofi radio — and you never once feel stressed.**
+**A small, tired rover wakes on a dark moon, rebuilds itself and its station piece by piece, and pushes its battery's
+reach a little farther every night until it can call Earth, and you never once feel stressed.**
+
+> Since 2026-10-11 the game's design is `docs/design/gdd-v3.md` (approved by the owner). Two founding decisions:
+> **progression first** (07's growth: upgrade, unlock, craft new tech, go farther; the crew's memories are seasoning)
+> and **the battery is fuel** (07 returns to charge; upgrades extend its range), kept gentle by ruling 15.
 
 The player should exhale in the first 10 seconds and still be smiling after an hour.
 
 ## Feel pillars (use these to settle every argument)
 
-1. **Weightless calm.** Nothing snaps, pops or jerks. Everything eases in and out, floats a little too long,
+1. **Grow, and go farther.** Every trip leaves 07 or home more capable, and every upgrade opens a place, a tool or
+   more range. You can see how far you've come: on 07, at home and on the chart (rulings 11 and 15).
+2. **Weightless calm.** Nothing snaps, pops or jerks. Everything eases in and out, floats a little too long,
    and settles with a soft overshoot. Low gravity is the core sensation — bounces are a reward, not a hazard.
-2. **Warmth in the cold.** The world is cool (indigo, lavender, slate). Everything that means *safety, home,
+   The battery is range, never a threat: an empty battery means a slow, quiet crawl home with a friend's light
+   ahead, never loss and never failure.
+3. **Free to roam, gently curious.** A few main recovery targets give the game its direction and show their progress
+   at home; nothing else is listed. Everything else (sites, finds, friends, secrets) is found by roaming, in any order.
+   The world invites, never demands: glints on the horizon, the sonar's rising pitch, a blinking light on the distant
+   peak. No timers, no quest log, no fail states, no punishment. The battery measures driving and work, never minutes.
+4. **Warmth in the cold.** The world is cool (indigo, lavender, slate). Everything that means *safety, home,
    friend* is warm (amber, peach, honey). Light is the language of comfort: the rover's lamp, the base glow,
-   the radio tower's halo.
-3. **Every touch sings.** Every interaction makes a sound, and every tonal sound is in the same key
-   (D major pentatonic: D E F# A B) so the world harmonises with the radio. Collecting things in a row climbs
-   a melody.
-4. **Chunky, readable, handmade.** Low-poly, flat-shaded, big shapes, few colours per object, no texture noise.
-   Silhouette first. If it reads at 50 m, it is right.
-5. **Gentle curiosity.** The world invites, never demands. Glints on the horizon, the sonar's rising pitch,
-   a blinking light on the distant peak. No timers, no quest log, no fail states, no punishment.
+   the radio tower's halo. Chargers, home and friends are the warm lights.
+5. **Every touch sings, and every piece reads.** Every interaction makes a sound, and every tonal sound is in the same
+   key (D major pentatonic: D E F# A B) so the world harmonises with the radio. Collecting things in a row climbs a
+   melody. Chunky, readable, handmade: low-poly, flat-shaded, big shapes, few colours per object, no texture noise.
+   Silhouette first: every kit piece and structure reads at 30 m, and 07's single gentle lens never changes.
 6. **Alone, and at peace (the owner's first priority for look and sound).** The player must *feel* how small 07
    is and how far everything else is, and find that quiet beautiful rather than sad. Every frame and every mix is
    judged against it.
@@ -42,7 +52,7 @@ The player should exhale in the first 10 seconds and still be smiling after an h
      light vignette and very fine grain. Nothing sharp, nothing harsh, nothing busy.
 
 ## Anti-goals (never ship these)
-- Health, oxygen, fuel, damage, enemies, failure screens, timers.
+- Health, oxygen, damage, enemies, failure screens, timers. 07's battery is its range, never a threat (ruling 15).
 - Pop-in, hard cuts, camera snaps, instant teleports (fade or ease instead).
 - Walls of UI. Prefer diegetic feedback (lights, sounds, the rover's own gauges) over HUD.
 - Realistic textures, PBR grime, noisy normal maps.
@@ -102,7 +112,8 @@ Each ruling removes friction the original pitch would have caused. Boxes impleme
    volumes, look sensitivity, invert Y and quit.
 7. **Never stuck.** If 07 is wedged or not progressing for a few seconds while the player is trying to move, it is
    automatically lifted on a soft arc to the nearest open, drivable spot and set down — no prompt, no penalty, no
-   teleport flash.
+   teleport flash. Never stranded: at empty, 07 crawls slowly and quietly to the nearest charger, Tilly's lamp leading
+   it, losing nothing.
 8. **The first look is the hook** (owner, 2026-10-11).
    - A new game opens in darkness on the radio's crackle, then through 07's own eye as it opens: the lid lifts in
      stages, the lens hunts for focus, and 07 looks around at the sleeping home, the tower's pilot blink, The Peak's
@@ -140,6 +151,23 @@ Each ruling removes friction the original pitch would have caused. Boxes impleme
     for a rover: Kenji's Rover Bay with gantry arms that fit kit, hoppers 07 feeds with its beam, service ports at
     rover height, a cable lift, a charging dock. No human action is ever implied: no pressing buttons, carrying,
     climbing or using a workbench. Every interaction must answer "how does 07 physically do this?" on screen.
+15. **The battery is range, never a threat** (owner, 2026-10-11; `docs/design/gdd-v3.md` §3, spec M3-20).
+    - No death, no loss, no failure screen. Whatever 07 carries stays with it.
+    - A verb in progress always completes: a cut, stitch, dig, feed or tow that starts on the last charge finishes on
+      the reserve, and the crawl starts after. A leap that can't be paid for never charges: the coils fizzle softly at
+      the lip. A leap never fails mid-air.
+    - Never stranded: at empty, 07 drops into a quiet low-power crawl that never runs out (Kenji's sealed reserve
+      cell), and once Tilly is home she flies out by herself and leads with her lamp.
+    - Never far from a charger: no point on a trip is more than 300 m from one (the dock, a lit mast's pad, later a
+      built pylon), so the longest crawl takes about two minutes.
+    - Standing still never drains. In light, the repaired solar cell trickles back up to one cell, never more: you can
+      always get home, but waiting is never a strategy.
+    - Warnings are gentle and early, with no red and no alarm, and a spoken hint names only home or a charger the
+      player has lit.
+    - A crawl is a pillar-6 moment: the camera eases wider, the radio thins, and the charger's pillar sits ahead.
+16. **A few main targets, everything else free** (owner, 2026-10-11; spec M3-21). The game's only directed part is
+    four recovery targets on the lab's recovery panel: Power, Link, Dish, Answer. Sites, finds, kits, friends, tapes,
+    logs and secrets are found by roaming in any order, and there is no list of them anywhere.
 
 ## World concept
 The playable space is the floor of a **vast ancient crater basin** (~600 m across for the vertical slice).
@@ -151,8 +179,9 @@ visible from the very first frame. That is the endgame, and the player will look
 The sky is a deep indigo-to-violet gradient with a dense starfield, a faint milky-way band, and the occasional
 slow shooting star.
 
-**Home base** is an abandoned lander in the centre of the basin: warm windows, a radio tower, museum shelves.
-Driving back towards its glow should feel like coming home on a winter night.
+**Home base** is an abandoned habitat lander in the centre of the basin: the crew's lab inside (reached by the belly
+lift), Kenji's Rover Bay and the radio tower beside it, 07's charging dock in front. Driving back towards its glow
+should feel like coming home on a winter night.
 
 ## Palette (art bible — exact swatches live in code, `MoonProject.Art.PaletteSwatch`)
 | Role | Hex | Notes |

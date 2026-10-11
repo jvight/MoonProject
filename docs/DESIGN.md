@@ -3,30 +3,37 @@
 > Owner: Director (game designer). This document defines what the full game is beyond the vertical slice.
 > `docs/VISION.md` sets the feel and the rulings; this sets the structure. Music is seasoning, never the main hook:
 > every reason to return below works with the sound off.
+>
+> **Since 2026-10-11 the detailed design is `docs/design/gdd-v3.md`** (approved by the owner): progression first, the
+> battery as range, four main recovery targets with everything else free, structures on build pads, the lander as the
+> crew's lab, and a 32-node tech tree. Where this file and GDD v3 differ, GDD v3 wins. The sections below were updated
+> to it on 2026-10-11 (GDD v3 §10); older sections not named there stand as written.
 
 ## The fantasy
-**A tired old rover restores a forgotten lunar outpost, brings its lost family of machines back to life, and
-finally gets an answer from Earth.** The player is not saving the world — they are making one small place warm again.
+**A tired old rover rebuilds itself and a forgotten lunar outpost, pushes its battery's reach a little farther every
+night, and finally gets an answer from Earth.** The player is not saving the world — they are making one small place
+warm again, and one small rover capable again.
 
 ## Why people come back (in order of strength)
-1. **A home that visibly changes every session.** Each outing ends with something new at the base: a relic on the
-   shelf, a repaired friend waiting by the porch, a lamp that wasn't lit before, a sprouting plant. Coming home is the
-   payoff, and the base is never the same twice.
-2. **Friends to bring back.** The outpost's other machines lie broken across the moon. Repairing them is the spine of
-   the game: each friend has a personality, a small idle life at the base, greets 07 on arrival, and grants a gentle
-   ability. Players return for *them*.
-3. **A mystery told in fragments.** Why is 07 alone? Relic memories, crew logs and radio fragments slowly reveal the
-   crew who left "until after the storm" — and what happened to them. Each answer reveals a better question.
-4. **A moon that opens up.** Rover upgrades unlock new terrain (metroidvania-lite): every upgrade turns a "can't
-   reach that" into "now I can", and the map is seeded with visible-but-unreachable promises (glints on ledges, a
-   light deep in a canyon, a dark crater).
-5. **Gentle surprises between sessions.** The moon drifts while you're away — a meteor shower leaves fresh glinting
+1. **07 and home grow.** Every trip leaves 07 or home more capable: a kit fitted in Kenji's Rover Bay, a bigger cell, a
+   tower level, a mast lit, later a structure on a pad. Each shows (ruling 11), so a screenshot from hour five looks
+   clearly different from minute one.
+2. **The moon opens with range and tools.** The battery is 07's range (ruling 15). Masts, pylons and cell packs push the
+   frontier out, and kits open gated regions (metroidvania-lite): every upgrade turns "can't reach that" into "now I
+   can", and the map is seeded with visible-but-unreachable promises (glints on ledges, a light deep in a canyon, a
+   dark crater, the Peak's red light).
+3. **The freedom to roam.** Only four main recovery targets are directed (Power, Link, Dish, Answer). Sites, finds,
+   friends, tapes and secrets are found in any order, and the two mid regions can be done in either order.
+4. **Friends to bring back.** The outpost's other machines lie broken across the moon. Each has a personality, a small
+   idle life at the base, greets 07 on arrival, and helps in ways that save time and battery (Tilly leads a crawl
+   home with her lamp).
+5. **The crew's story, as seasoning.** Masts' letters, logs and keepsakes slowly tell why 07 is alone and what
+   happened to the crew. They lie in site hearts beside the tech finds; they are never the reason a trip is needed.
+6. **Gentle surprises between sessions.** The moon drifts while you're away — a meteor shower leaves fresh glinting
    scrap, a new faint signal appears, a moon-weather event is "on tonight". Never punishing, never time-limited, no
-   streaks, no fear of missing out: it just makes "let me check on the moon" a pleasant habit.
-6. **Self-expression.** Paint, stickers and little accessories for 07 (a knitted scarf, a flag on the antenna), base
-   decorations placed on snap points, and a photo mode. Cozy players love to make things theirs.
-7. **Completion with clear progress.** Museum sets, friend roster, cassette shelf, map discovery — every collection
-   shows progress at the base, never in a spreadsheet menu.
+   streaks, no fear of missing out.
+7. **Self-expression and completion.** Paint, stickers and accessories for 07, a photo mode, and collections that show
+   their progress at the base, never in a spreadsheet menu.
 
 ## The loops
 | Scale | Loop | Status |
@@ -34,7 +41,7 @@ finally gets an answer from Earth.** The player is not saving the world — they
 | Seconds | drive → spot a wreck → salvage with the beam (salvage melody) → sonar → the site's relic → home | M2 ✅, salvage replaces the scrap field in M3-13 |
 | Session (15–30 min) | pick a wreck or signal on the horizon → expedition → bring materials and a memory home → craft in Kenji's Rover Bay → 07 and the base visibly change | M2 slice, deepened in M3 |
 | Hours | restore the outpost: radio tower · workshop (rover upgrades) · museum sets · friends · biodome | M3–M4 |
-| Arc | climb The Peak → repair the great dish → broadcast → Earth answers | M4 |
+| Arc | the four main recovery targets: Power → Link → Dish → Answer (GDD v3 §8, spec M3-21) | 0.5–0.8 |
 | After | free roam, completion, cosmetics, photo mode, moon-weather events | M4–M5 |
 
 ## Story (told, never explained)
@@ -68,8 +75,10 @@ Each friend: a small set of idle behaviours, a greeting when 07 returns, a react
 | Craft kit | 07 drives into **Kenji's Rover Bay**. Its beam feeds materials into the bay's hopper, and the bay's gantry arms fit the part onto 07 |
 | Upgrade the radio tower | 07 parks at the tower's rover-height service port, feeds the hopper, and its beam stitches the new section while the tower raises it |
 | Turn Bell's dial | 07's beam taps the dial's knob; Bell turns it with a wiggle |
-| Go up to the lander deck | the cable lift beside the crew's ladder |
-| Rest and charge | the charging dock at the base, not a doormat |
+| Go into the lab | the belly lift under the lander carries 07 up through a floor hatch onto a turntable (M3-19) |
+| Decode a find | 07's beam feeds the tube into the lab's reader slot at lens height (M3-19) |
+| Charge | park on the dock at home or on a lit mast's 4 m pad; the cells fill by themselves (M3-20) |
+| Build a structure (0.6) | park at a build pad, the beam feeds the sealed crate's hopper, the frame unfolds and 07 stitches it (M3-22) |
 
 ### Workshop — rover upgrades (traversal + comfort), crafted from materials in Kenji's Rover Bay
 Hover-Jump (charged leap over chasms) · Magnetic Treads (climb steep crater walls) · Cargo Cradle (carry 3 relics,
@@ -113,7 +122,7 @@ one.
   its lights.
 - **Rule.** An upgrade that doesn't change what the player sees isn't finished (VISION ruling 11).
 
-### Station reach — the relay network (the second progression axis)
+### Station reach — the relay network and the battery (the second progression axis)
 Lumen Station was a radio-relay outpost, and the storm left its chain of relay masts dark across the moon. Restoring
 them is how the station's reach grows, so that "home" spreads outward step by step.
 - **Reach.** The radio tower (L1→L3) sets the home circle. Each repaired relay mast (scrap + one relay part found
@@ -127,24 +136,29 @@ them is how the station's reach grows, so that "home" spreads outward step by st
   - friends work fully;
   - **radio-hop**: at any lit mast, Interact to hop to the base or to any other lit mast. A calm static-and-tune
     transition, no loading drama.
-- **Outside reach.** Everything still works and nothing bad happens. It is only quieter, with static on the radio and
-  no map. The frontier feels lonely; lighting it is the reward. **There is never a battery, fuel or range limit that
-  forces 07 home.** That would be a hidden timer and would break rulings 1 and 7.
-- **Two axes.** Rover upgrades answer "can I get there?" (terrain). The station's reach answers "is it home yet?"
-  (comfort, knowledge, travel). Every region needs both: a rover upgrade to enter it, and a relay to make it home.
-- **Long-term scrap sink.** Masts cost escalating scrap, which keeps collecting meaningful after the workshop is
-  bought out.
-- **The arc.** The chain leads to The Peak. The final broadcast needs the network linked from the base to the great
-  dish, so every mast lit is a visible step toward the ending.
+- **Range is 07's battery** (ruling 15, spec M3-20). Every lit mast has a 4 m charge pad and every built pylon (0.6+)
+  is a charger, so lighting the network and building pylons is how range grows. Cell packs and efficient hubs grow it
+  on 07's side. Outside reach 07 runs on its battery; it is quieter there, with static on the radio and no inked map.
+  At empty 07 never strands: it crawls home slowly, with Tilly's lamp ahead.
+- **Two axes.** Rover upgrades answer "can I get there?" (terrain and range). The station's reach answers "is it home
+  yet?" (charging, comfort, knowledge, travel). Every region needs both: a rover upgrade to enter it, and a mast or
+  pylon to make it home.
+- **Long-term scrap sink.** Masts cost escalating scrap, and from 0.6 so do repeated pylons.
+- **The arc.** The chain leads to The Peak. The Link target (M3-21) is a chain of lit masts from home to the Peak's
+  foot, by either mid region's route; the final broadcast needs it, so every mast lit is a visible step toward the
+  ending.
 
-### Regions (one basin today → five areas)
-| Region | Mood | Gate | Holds |
-|---|---|---|---|
-| Crater basin (home) | lavender dunes, the base | — | onboarding relics, Tilly |
-| Whispering Canyon | narrow, echoing, blue | Hover-Jump | Bell, a crew log cache |
-| Rim Terraces | high, windless, Earth-view | Magnetic Treads | Atlas, cassette shelf finds |
-| The Shadowed Crater | dark, bioluminescent | Warm Headlamp | Moss, the seed |
-| The Peak | the great dish | all + Atlas | the ending |
+### Regions (one basin today, five areas in the end; GDD v3 §5)
+Gates are real and seen first, with a one-way exit (ruling 10). Order is the player's: within a region anything goes,
+and the two mid regions can be done in either order.
+
+| Region | Mood | Gate | Masts and pylon pads | Tier and friend |
+|---|---|---|---|---|
+| Crater basin (home) | lavender dunes, the base | range: masts and Cell Pack II (the Kestrel is the first range gate) | mound, shoulder, canyon mouth; a pylon pad at Kestrel's rim (0.6) | T1; Tilly |
+| Whispering Canyon | narrow, echoing, blue | Hover-Jump | the terminus | T1; Bell |
+| Rim Terraces | high, windless, Earth-view | Magnetic Treads | a terrace mast; 2 pylon pads on the ledges | Alloy, Circuitry; Atlas |
+| The Shadowed Crater | dark, bioluminescent | Floodlights | a crater mast; 2 pylon pads on the floor | Crystal, Alloy, Circuitry; Moss |
+| The Peak road | the great dish | Anchor Line + Long Leap + Atlas (the rockfall) | the Peak's foot mast; 2 road-camp pylon pads | Superconductor; the dish |
 
 ### Collections
 - **Museum**: 24 relics in 4 crew sets of 6; completing a set lights that crew member's window in the lander and
@@ -159,8 +173,8 @@ overcharged and fast), **Earthrise** (a calm photo moment). Events last the sess
 
 ### A base built for 07, waking from decades of neglect (owner priority, 2026-10-08)
 - **Rover-first architecture.** The crew built Lumen Station around a rover:
-  - a cable lift (a winch platform) beside the lander's human ladder, up to the hatch deck, used by M3-07 to reach
-    the hand-drawn map inside;
+  - a belly lift (a round winch platform) under the lander, up through a floor hatch into the crew's lab, where the
+    reader, the tech board and Ines's survey chart are (M3-19);
   - ramps onto every pad;
   - 07's charging and docking cradle instead of a doormat;
   - rover-height junction boxes and dials.
@@ -177,9 +191,13 @@ overcharged and fast), **Earthrise** (a calm photo moment). Events last the sess
 - **The same arc on 07.** It starts with rust spots, a faded stripe and dust on its top faces; repairs and gifts
   clean and repaint it piece by piece (see "Visible progression").
 
-### Base life & decoration
-The base gains lights, plants, friends' corners and player-placed decorations on snap points (lanterns, pennants,
-a little bench facing Earth). Base "warmth" is visible from far away — the glow grows across the basin.
+### Base life, structures and decoration
+- **Structures on build pads (0.6+, spec M3-22).** The player builds operational structures, but only on predefined
+  pads: a Field Charge Pylon, the Fabricator, the Bay Wing, later the Solar Array, the Materials Store and the Drone
+  Hangar. A pad is a rover-height plinth with a sealed crate Kenji pre-packed; 07 feeds it and stitches the frame.
+  Never free placement. Home has 5 pads around its three masses (lander, bay, tower), each with lit ground around it.
+- **Decoration.** The base also gains lights, plants, friends' corners and decorations on snap points (lanterns,
+  pennants, a little bench facing Earth). Base "warmth" is visible from far away — the glow grows across the basin.
 
 ### 07 customisation & photo mode
 Paint schemes, stickers and accessories found or earned (sets, events, friends' gifts); photo mode with gentle

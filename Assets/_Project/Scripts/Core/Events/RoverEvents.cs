@@ -92,6 +92,22 @@ namespace MoonProject.Core.Events
     {
     }
 
+    /// <summary>
+    /// A leap was asked for but the battery can't pay for it (<see cref="IRoverBattery.CanLeap"/> false,
+    /// docs/features/M3-20): the coils never charge, they fizzle softly at <see cref="Position"/> and 07 glances at its
+    /// flank lamps. Published by Rover once per refused press.
+    /// </summary>
+    public readonly struct RoverLeapRefused
+    {
+        public RoverLeapRefused(Vector3 position)
+        {
+            Position = position;
+        }
+
+        /// <summary>Where 07 stood (the coils under its belly).</summary>
+        public Vector3 Position { get; }
+    }
+
     /// <summary>A piece of 07's visible kit or a friend's gift on 07 (docs/features/M3-11, VISION ruling 11).</summary>
     public enum RoverKitPiece
     {

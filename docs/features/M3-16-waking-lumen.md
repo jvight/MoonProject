@@ -7,6 +7,11 @@
 > base. It absorbs M3-15 §2 (the lift) and §4 (pads). Rulings 11, 12 and 14 and pillar 6 apply.
 >
 > **Approved by the owner on 2026-10-09:** this is the core of 0.5; a fresh game opens fully dark (only the dock and 07's eye are lit); kits unlock through blueprints found in salvage sites.
+>
+> **Amended 2026-10-11 by GDD v3** (`docs/design/gdd-v3.md` §10): this power spine is the first main target, Power
+> (M3-21). The lift, the shelf and the board change with M3-19 (the lab under the belly lift), the battery's first
+> lessons slot into steps 3–4 and the chasm (M3-20), and the P1 story parts are renamed components. Where this spec
+> and M3-19, M3-20 or M3-21 differ, those win.
 
 ## Three rules
 1. **Asleep until woken.** The whole base is there from the first frame: it is home, and you should see it. But every
@@ -40,7 +45,7 @@ to whatever just woke.
 ## Each place and its one job
 | Place | Its job | At the start | Wakes at |
 |---|---|---|---|
-| **Charging dock** | where 07 rests: resting saves the day, and later plays a tape | glowing faintly | always |
+| **Charging dock** | where 07 charges; a rest here keeps the day (GDD v3, M3-20) | glowing faintly | always |
 | **Lander (home)** | the crew's home and the heart of 07's world; its windows show how alive home is | dark windows | step 2 |
 | **Memory shelf** | the crew's things, each a story | dark, empty | first relic (step 4) |
 | **Tape rack and Bell's radio** | music and the crew's voices | absent | Bell home (step 6) |
