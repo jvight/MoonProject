@@ -497,6 +497,11 @@ sidebar group and title it "MoonProject · <box>". Its prompt must stand alone:
   - Restate open items in the next message after each land, and ask for a one-line acknowledgement.
 - **Reset tuning before you rebuild the scene.** Run ResetSettings or the re-serialise first, then `refresh
   --scene`, so the scene wires what the new settings declare (e.g. home lighting's pools).
+- **land --batch runs no tests.** It gates on compile_check, the builders and the scene build only. Before landing a
+  change early (a Core rename, a contract), ask for the box's `box_check` block with its tests: 2026-10-11 the lift
+  rename added two `LiftCue` values without sounds and main failed Audio's EditMode until the hatch sounds landed.
+- **Verify needs shards under load.** One PlayMode shard took over 40 min while three slices ran Unity and timed out
+  (2026-10-11); use the default `--parallel` (2 shards) or `--shards 3`.
 - **Read captures yourself.** Judge feel and visuals on the captures, not on the numbers alone. The owner judges the
   game by screenshots.
 
