@@ -452,7 +452,7 @@
         },
         {
             "key": "glyph.lab.turn.pad",
-            "text": "←  →"
+            "text": "LS"
         },
         {
             "key": "glyph.lab.look",
@@ -460,7 +460,7 @@
         },
         {
             "key": "glyph.lab.look.pad",
-            "text": "↑"
+            "text": "LS"
         },
         {
             "key": "glyph.lab.down",
@@ -468,7 +468,7 @@
         },
         {
             "key": "glyph.lab.down.pad",
-            "text": "↓"
+            "text": "LS"
         },
         {
             "key": "ui.lab.turn",

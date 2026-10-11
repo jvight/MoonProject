@@ -12,19 +12,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 16d101f8fbdc375408875467cac921b8, type: 3}
   m_Name: LiftTuning
   m_EditorClassIdentifier: 
-  _feedMetal: 2
-  _feedWiring: 2
-  _feedDelay: 1
-  _feedPadDistance: 2.4
+  _callRadius: 16
+  _stitchDelay: 1
   _stitchSeconds: 3.5
-  _lampGlow: 2.5
-  _creakRadius: 5
-  _creakRearm: 3
+  _padGlow: 2
+  _padEase: 0.5
   _platformRadius: 1
-  _boardDelay: 1.5
-  _rideSeconds: 6
-  _settleSeconds: 0.8
-  _lookoutGazeDistance: 80
+  _boardDelay: 1
+  _rideSeconds: 4
+  _settleSeconds: 0.6
+  _hatchSeconds: 1.2
+  _riderOffset: {x: 1.15, y: 0.7, z: 0}
+  _riderBoardSeconds: 1
+  _turnSecondsPerQuarter: 1.1
+  _turnMinSeconds: 0.6
+  _commandPress: 0.6
+  _commandRelease: 0.3
+  _autoTurnDelay: 0.6
+  _chartBreath: 1.5
   _ladderLookSeconds: 2.5
+  _ladderLookHeight: 6
   _liftLookSeconds: 2
   _gazePriority: 6
