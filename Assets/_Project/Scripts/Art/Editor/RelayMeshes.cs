@@ -35,6 +35,26 @@ namespace MoonProject.Art.Editor
         public static readonly Vector3 BeamPoint = new Vector3(0f, 1.12f, BoxFront + 0.01f);
 
         private const float FootingTop = 0.3f;
+
+        // The charge ring: 4 m across, painted in worn segments, with a low rounded ramp lip just outside the paint.
+        private const float RingRadius = 2f;
+        private const int RingSegments = 22;
+        private const int RingWearEvery = 7;
+        private const int RingWearAt = 3;
+        private const float RingSegmentLength = 0.5f;
+        private const float RingPaintWidth = 0.14f;
+        private const float RingPaintHeight = 0.012f;
+        private const float RingLipOffset = 0.14f;
+        private const float RingLipRadius = 0.07f;
+        private const float RingLipFlatten = 0.4f;
+        private const int RingLipSides = 28;
+        private const float DustCapHeight = 0.035f;
+        private const int DustLumps = 3;
+
+        // The service cabinet: rover height, beside the footing, its door facing the pad and swinging to the left.
+        private const float CabinetDoorOpen = 105f;
+        private static readonly Vector3 CabinetCentre = new Vector3(1.75f, 0f, -2.8f);
+        private static readonly Vector3 CabinetSize = new Vector3(0.9f, 1.1f, 0.45f);
         private const float FootingDepth = 0.6f;
         private const float FootingHalf = 0.95f;
         private const float BoxFront = -2.2f + FootingHalf;
@@ -78,6 +98,7 @@ namespace MoonProject.Art.Editor
                 new Vector3(FootingHalf * 2f, FootingTop + FootingDepth, FootingHalf * 2f), PaletteSwatch.Metal, 0.05f);
             b.Box(At(0f, FootingTop + 0.02f, MastFoot.z), new Vector3(1.3f, 0.04f, 1.3f), PaletteSwatch.Charcoal);
             JunctionBox(b, broken);
+            ServiceCabinet(b, !broken);
             for (int i = 0; i < 3; i++)
             {
                 Vector3 stake = GuyStake(i);
@@ -100,6 +121,69 @@ namespace MoonProject.Art.Editor
             }
 
             return b;
+        }
+
+        /// <summary>
+        /// The 4 m charge ring on the pad (docs/features/M3-20 "Chargers"): a worn painted ring with a low rounded
+        /// ramp lip, flat enough to drive on. While the mast is dormant a cap of settled dust covers it, the ring's
+        /// lip still showing at the edge: "this was a charger", from 50 m.
+        /// </summary>
+        public static LowPolyMeshBuilder ChargeRing(bool dusty)
+        {
+            var b = new LowPolyMeshBuilder(dusty ? 900 : 700);
+            for (int i = 0; i < RingSegments; i++)
+            {
+                if (i % RingWearEvery == RingWearAt)
+                {
+                    continue;
+                }
+
+                float angle = (i + 0.5f) * 360f / RingSegments;
+                Vector3 at = Quaternion.Euler(0f, angle, 0f) * new Vector3(0f, RingPaintHeight, RingRadius);
+                b.Box(At(at, new Vector3(0f, angle, 0f)), new Vector3(RingSegmentLength, 0.006f, RingPaintWidth),
+                    PaletteSwatch.WarmAccent);
+            }
+
+            b.Torus(At(Vector3.zero, Vector3.zero, new Vector3(1f, RingLipFlatten, 1f)), RingRadius + RingLipOffset,
+                RingLipRadius, RingLipSides, 4, PaletteSwatch.Metal);
+            if (dusty)
+            {
+                b.Prism(At(0f, DustCapHeight * 0.5f, 0f), RingRadius + RingPaintWidth, DustCapHeight, RingLipSides,
+                    PaletteSwatch.CakedDust);
+                for (int i = 0; i < DustLumps; i++)
+                {
+                    float angle = i * 360f / DustLumps + 20f;
+                    Vector3 at = Quaternion.Euler(0f, angle, 0f) * new Vector3(0f, DustCapHeight, 0.6f + 0.35f * i);
+                    b.Icosphere(At(at, Vector3.zero, new Vector3(1f, 0.2f, 1f)), 0.28f, 1, PaletteSwatch.CakedDust);
+                }
+            }
+
+            return b;
+        }
+
+        /// <summary>
+        /// The mast's rover-height service cabinet beside its footing, facing the pad (docs/features/M3-20): shut on a
+        /// dormant mast, its door swung wide once the mast is restored (relay.2's keeps the Cell Pack II tube).
+        /// </summary>
+        private static void ServiceCabinet(LowPolyMeshBuilder b, bool open)
+        {
+            b.Box(At(CabinetCentre + Vector3.up * CabinetSize.y * 0.5f), CabinetSize, PaletteSwatch.Metal, 0.03f);
+            b.Box(At(CabinetCentre + new Vector3(0f, CabinetSize.y + 0.03f, 0f)),
+                new Vector3(CabinetSize.x + 0.08f, 0.06f, CabinetSize.z + 0.08f), PaletteSwatch.Charcoal, 0.02f);
+            float front = CabinetCentre.z + CabinetSize.z * 0.5f;
+            var hinge = new Vector3(CabinetCentre.x - CabinetSize.x * 0.5f, 0f, front);
+            var door = new Vector3(CabinetSize.x - 0.06f, CabinetSize.y - 0.1f, 0.03f);
+            if (open)
+            {
+                b.Box(At(new Vector3(CabinetCentre.x, CabinetSize.y * 0.5f, front - 0.01f)),
+                    new Vector3(door.x - 0.04f, door.y - 0.04f, 0.02f), PaletteSwatch.Charcoal);
+            }
+
+            Matrix4x4 swing = At(hinge + Vector3.up * CabinetSize.y * 0.5f,
+                new Vector3(0f, open ? -CabinetDoorOpen : 0f, 0f));
+            b.Box(swing * At(door.x * 0.5f + 0.03f, 0f, door.z * 0.5f), door, PaletteSwatch.Sage, 0.01f);
+            b.Box(swing * At(door.x - 0.06f, 0.05f, door.z + 0.015f), new Vector3(0.03f, 0.14f, 0.03f),
+                PaletteSwatch.Charcoal);
         }
 
         /// <summary>The mast from its foot (origin) to the lantern's cap; the lamp glass is the Lamp node.</summary>

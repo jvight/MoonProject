@@ -260,13 +260,16 @@ box at its foot and guy wires. Meshes only, `M_LowPoly`. It must read as a silho
 (taper, cross braces, dish, lamp housing), never a thin lattice that vanishes at distance.
 ```
 Generated/Art/Relay/RelayMast.prefab  (restored pose; root at the pad centre on the ground, +Z = toward home, +Y up)
-  Base                 footing plinth + junction box (static)
+  Base                 footing plinth + junction box + rover-height service cabinet (door shut when broken,
+                       open when restored; relay.2's keeps the Cell Pack II tube) (static)
   Mast                 pivot at the mast foot; the broken pose leans it about local X/Z
     Dish               relay dish near the top, pivot at its mount; yaw about local Y to aim home
     Lamp               lamp housing at the top, own glow renderer on M_LowPolyGlowOff (WarmLamp, HDR): dark until
                        lit via MaterialPropertyBlock (SetVector, linear, see "Glow modulation")
   PartSocket           empty on the junction box front, +Z out: the relay part slots in here
   BeamPoint            empty on the junction box: 07's repair beam target
+  ChargeRing           the 4 m charge ring on the pad (M3-20): worn painted ring + low ramp lip, flat (< 0.1 m),
+                       no collider; the broken variant's carries a settled dust cap (dormant charger)
 Generated/Art/Relay/RelayMast_Broken.prefab  same node names; Mast leaning 12–15° with the dish hanging, Lamp on
   M_LowPolyGlowOff (dark), slack guy wires
 Generated/Art/Relay/Part_RelayModule.prefab  0.27–0.36 m pickup, centre-of-mass pivot, warm amber accents
