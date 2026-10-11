@@ -20,8 +20,17 @@ account) can continue without the old conversation.
     `RoverLeapRefused`), tech tree and goals (`TechNodeId`, `TechNodeState`, `ITechTree`, `RecoveryTarget`,
     `IRecoveryProgress`, `ProgressEvents.cs`), the lab (`ILabInterior`, `LabStation`, `LabEvents.cs`);
   - tools: box_check and land know the slices `battery`, `lab-build`, `lab-systems`, `goals`.
-- **`verify --parallel --shards 1 --push` started on 4fe6a83e** at ~11:20 (2 Unitys, leaving a batch slot for the
-  slices). origin/main was 57fb8c1f. Log: the Director's scratchpad `verify1.log`.
+- **Verified and pushed 0364a6d8 (~15:30):** origin/main went 57fb8c1f → ff16a246 → 0364a6d8. It holds the specs and
+  contracts, lab-systems' Core renames, the hatch sounds, **battery milestone A** (BatteryTuning.asset at interim 8
+  cells / 400 m; spec 4 / 120 with the reshaped golden path is milestone B and a 0.5 ship blocker), the fixture and
+  timing-test fixes.
+- **Pending land:** lab-build (tip 2e700885+, dock now on 07's spawn, DockSpawnTests) and lab-systems land TOGETHER
+  (`land --batch lab-build lab-systems`) once lab-systems reports a full box_check. Then ResetSettings for
+  WorldSettings (lab-build's LabLighting block + battery's ChargerPools), RunBuilders World + Main Scene, verify.
+- **battery milestone B** (stopped for 2026-10-11): the lid-edge light bar for the flank lamps (they don't read from
+  the chase camera), the reshaped route (decision sent: dock between trips, relay.2 lit on the first chasm visit and
+  its cabinet's Cell Pack II tube, Cell Pack II before the leap, relay.3 and a hop home after Bell), Cell Pack II and
+  the spine, the mast ring art; tests that aren't about the battery must not crawl at spec tuning.
 - **Owner decision (2026-10-11): M3-22 (build pads, structures) is 0.6.** 0.5 = battery, chargers, crawl, Cell Pack
   II, the lab (M3-19), the recovery panel and tech tree (M3-21). No structures, no T2.
 - **Dispatched as chips (fresh feature-slice sessions; the owner clicks them):**
@@ -502,6 +511,14 @@ sidebar group and title it "MoonProject · <box>". Its prompt must stand alone:
   rename added two `LiftCue` values without sounds and main failed Audio's EditMode until the hatch sounds landed.
 - **Verify needs shards under load.** One PlayMode shard took over 40 min while three slices ran Unity and timed out
   (2026-10-11); use the default `--parallel` (2 shards) or `--shards 3`.
+- **A new tuning type and its asset in one land lose the asset's values.** The box never commits the script's
+  .meta, so the land worktree gives the script a new GUID, the asset loads as missing and `EnsureExists` recreates it
+  at C# defaults (2026-10-11: BatteryTuning's interim 8 cells / 400 m came back as 4 / 120 and 43 tests crawled).
+  After such a land, diff the box's asset against main's and write the values back.
+- **Only a full box_check block lands.** `--fast` skips PlayMode; battery's EditMode-only block hid 41 Gameplay
+  PlayMode failures (the test fixture didn't wire the new BatteryField).
+- **Fixtures' copies of Main are never versioned** (`.gitignore`): a land once committed five of them as outputs, and
+  the fixtures' cleanup then left every verification worktree dirty.
 - **Read captures yourself.** Judge feel and visuals on the captures, not on the numbers alone. The owner judges the
   game by screenshots.
 
