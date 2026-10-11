@@ -39,7 +39,7 @@ MAIN_SCENE_BUILDER = "Main Scene"
 RUN_BUILDERS = "MoonProject.Editor.Automation.BuildAutomation.RunBuilders"
 # Feature slices span several domains (an alternation inside the builder regex).
 BUILDER_DOMAINS = {"art": "Art", "world": "World", "rover": "Rover", "gameplay": "Gameplay", "audio": "Audio",
-                   "ui": "UI", "map": "World|Gameplay|UI", "opening": "World|Rover|Audio",
+                   "ui": "UI", "map": "World|Gameplay|UI", "opening": "Art|World|Rover|UI|Audio",
                    "battery": "Art|World|Rover|Gameplay|UI|Audio", "lab-build": "Art|World",
                    "lab-systems": "Art|World|Gameplay|Rover|UI|Audio", "goals": "Gameplay|UI|Audio"}
 # Targeted EditMode tests per box; the full PlayMode suite and the Playthrough are the Director's.
@@ -48,7 +48,8 @@ DEFAULT_TESTS = {"art": "MoonProject.Art.Tests", "world": "MoonProject.World.Tes
                  "audio": "MoonProject.Audio.Tests", "ui": "MoonProject.UI.Tests",
                  "foundation": "MoonProject.Editor.Tests", "director": "MoonProject.Tests.EditMode",
                  "map": "MoonProject.World.Tests;MoonProject.Gameplay.Tests;MoonProject.UI.Tests",
-                 "opening": "MoonProject.Rover.Tests;MoonProject.World.Tests;MoonProject.Audio.Tests",
+                 "opening": "MoonProject.Rover.Tests;MoonProject.World.Tests;MoonProject.Audio.Tests;MoonProject.Art.Tests;"
+                            "MoonProject.UI.Tests",
                  "battery": "MoonProject.Gameplay.Tests;MoonProject.Rover.Tests;MoonProject.Art.Tests;"
                             "MoonProject.World.Tests;MoonProject.UI.Tests;MoonProject.Audio.Tests",
                  "lab-build": "MoonProject.Art.Tests;MoonProject.World.Tests",
@@ -60,7 +61,7 @@ DEFAULT_PLAYMODE = {"world": "MoonProject.World.PlayModeTests", "rover": "MoonPr
                     "gameplay": "MoonProject.Gameplay.PlayModeTests", "audio": "MoonProject.Audio.PlayModeTests",
                     "ui": "MoonProject.UI.PlayModeTests", "foundation": "MoonProject.Tests.PlayMode",
                     "map": "MoonProject.Gameplay.PlayModeTests;MoonProject.UI.PlayModeTests",
-                    "opening": "MoonProject.Rover.PlayModeTests",
+                    "opening": "MoonProject.Rover.PlayModeTests;MoonProject.UI.PlayModeTests",
                     "battery": "MoonProject.Gameplay.PlayModeTests;MoonProject.Rover.PlayModeTests",
                     "lab-build": "MoonProject.World.PlayModeTests",
                     "lab-systems": "MoonProject.Gameplay.PlayModeTests;MoonProject.Rover.PlayModeTests",
