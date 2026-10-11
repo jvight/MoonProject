@@ -2015,6 +2015,61 @@ def dock_full(_variant, gen):
     return _mono_reverb(filters.lowpass(mix, 5000.0), room=0.6, damping=0.6, wet=0.25, dry=1.0)
 
 
+# --------------------------------------------------------------------------------------------------- the battery
+
+BATTERY_CELL_NOTES = ("D5", "E5", "F#5", "A5", "B5", "D6", "E6", "F#6")
+
+
+def battery_cell(variant, _gen):
+    """A cell filling at a charger (M3-20): a small warm chime on the next note of D E F# A B, then up an octave,
+    short and soft so a whole charge is a gentle rising run; also the lamps lighting one by one as 07 wakes."""
+    freq = note_freq(BATTERY_CELL_NOTES[variant])
+    n = samples(1.3)
+    chime = (instruments.partial(n, freq, 1.0, 0.004, 0.9)
+             + instruments.partial(n, freq, 0.35, 0.004, 0.8, detune_cents=4.0)
+             + instruments.partial(n, 2.0 * freq, 0.1, 0.003, 0.35)
+             + instruments.partial(n, 3.0 * freq, 0.03, 0.002, 0.18))
+    return _mono_reverb(filters.lowpass(chime, 5200.0), room=0.4, damping=0.6, wet=0.2, dry=1.0)
+
+
+def battery_low(_variant, _gen):
+    """The Low warning (30%): one soft falling two-note, A4 then F#4, a round slow-attack bell - a gentle
+    'getting low', never an alarm."""
+    mix = np.zeros(samples(2.2))
+    place(mix, instruments.soft_bell(note_freq("A4"), 1.4, decay=1.0, attack=0.04), 0, 0.8)
+    place(mix, instruments.soft_bell(note_freq("F#4"), 1.8, decay=1.3, attack=0.05), samples(0.42), 0.75)
+    return _mono_reverb(filters.lowpass(mix, 3800.0), room=0.55, damping=0.65, wet=0.24, dry=1.0)
+
+
+def battery_sigh(_variant, gen):
+    """The battery empties (0%): a soft power-down sigh - a warm D4 hum gliding down to A2 as it fades, under a
+    breath of air - then 07 crawls on its sealed reserve."""
+    n = samples(2.0)
+    glide = osc.glide(n, note_freq("D4"), note_freq("A2"), time_constant=0.55)
+    hum = osc.additive(n, glide, [(1, 1.0), (2, 0.3), (3, 0.08)])
+    hum *= envelope.segments(n, [(0.0, 0.0), (0.06, 1.0), (0.7, 0.55), (1.9, 0.0)], shape="smooth")
+    breath = filters.bandpass(noise.pink(n, gen), 700.0, 0.7)
+    breath *= envelope.segments(n, [(0.0, 0.0), (0.12, 1.0), (1.2, 0.0)], shape="smooth")
+    breath = breath / max(float(np.std(breath)), 1e-9) * 0.03
+    return _mono_reverb(filters.lowpass(0.4 * hum + breath, 2400.0), room=0.5, damping=0.7, wet=0.2, dry=1.0)
+
+
+def leap_fizzle(_variant, gen):
+    """A leap the battery can't pay for: the coils fizzle softly under the belly - a short sparse crackle and a
+    tiny falling D4 buzz that never becomes a boing."""
+    n = samples(0.7)
+    crackle = np.zeros(n)
+    for pos in noise.event_times(n, gen, 55.0, jitter=0.7):
+        crackle[int(pos)] += gen.uniform(0.2, 1.0)
+    crackle = filters.bandpass(crackle, 2200.0, 1.2) + 0.5 * filters.bandpass(crackle, 1100.0, 1.0)
+    crackle *= envelope.segments(n, [(0.0, 1.0), (0.45, 0.25), (0.7, 0.0)], shape="smooth")
+    crackle = crackle / max(float(np.max(np.abs(crackle))), 1e-9) * 0.2
+    buzz = osc.additive(n, osc.glide(n, note_freq("D4"), note_freq("A3"), time_constant=0.12),
+                        [(1, 1.0), (2, 0.35), (3, 0.15)])
+    buzz *= envelope.ar(n, 0.01, 0.35)
+    return filters.lowpass(crackle + 0.18 * buzz, 4200.0)
+
+
 def dock_release(_variant, gen):
     """Leaving the dock: a tiny release, the contacts parting with a soft click and a breath of air."""
     n = samples(0.25)
@@ -2432,6 +2487,16 @@ CUES = (
         notes="Charging: a very soft warm hum on D3 + octave, breathing slowly."),
     Cue("dock_full", "oneshot_3d", dock_full, volume=(0.5, 0.5), fade_out=0.2, milestone="M3", tonal=True,
         notes="Charged: soft bell on D5 with A5 blooming above it."),
+    Cue("battery_cell", "oneshot_3d", battery_cell, variants=len(BATTERY_CELL_NOTES),
+        variant_labels=tuple(note.replace("#", "s") for note in BATTERY_CELL_NOTES), volume=(0.45, 0.45),
+        fade_out=0.2, milestone="M3", tonal=True,
+        notes="A cell filling (and a flank lamp waking): a small warm chime, D5 E5 F#5 A5 B5 then up an octave."),
+    Cue("battery_low", "oneshot_3d", battery_low, volume=(0.5, 0.5), fade_out=0.25, milestone="M3", tonal=True,
+        notes="The Low warning (30%): one soft falling two-note A4 -> F#4, round bells, never an alarm."),
+    Cue("battery_sigh", "oneshot_3d", battery_sigh, volume=(0.5, 0.5), fade_out=0.25, milestone="M3",
+        notes="The battery empties: a soft power-down sigh, D4 gliding to A2 under a breath of air."),
+    Cue("leap_fizzle", "oneshot_3d", leap_fizzle, volume=(0.4, 0.4), fade_out=0.1, milestone="M3",
+        notes="A leap the battery can't pay for: the coils fizzle softly under the belly, a crackle and a small buzz."),
     Cue("dock_release", "tick_3d", dock_release, volume=(0.5, 0.5), fade_out=0.03, milestone="M3",
         notes="Leaving the dock: contacts parting, a soft click and a breath of air."),
     Cue("bell_knob_tap", "tick_3d", bell_knob_tap, volume=(0.55, 0.55), fade_out=0.02, milestone="M3",

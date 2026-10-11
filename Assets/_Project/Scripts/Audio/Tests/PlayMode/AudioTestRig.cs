@@ -81,6 +81,7 @@ namespace MoonProject.Audio.PlayModeTests
             Salvage.Wire(Load<SalvageAudioTuning>("SalvageAudioTuning.asset"));
             Stations = Child(audioRoot, "StationAudio").AddComponent<StationAudio>();
             Stations.Wire(Load<StationAudioTuning>("StationAudioTuning.asset"));
+            Battery = Child(audioRoot, "BatteryAudio").AddComponent<BatteryAudio>();
             RoverAudio.Wire(Load<RoverAudioTuning>("RoverAudioTuning.asset"));
             Gameplay.Wire(Load<GameplayAudioTuning>("GameplayAudioTuning.asset"));
             Ui.Wire(Load<UiAudioTuning>("UiAudioTuning.asset"));
@@ -90,6 +91,7 @@ namespace MoonProject.Audio.PlayModeTests
             Director.Wire(Load<AudioLibrary>("AudioLibrary.asset"), Load<AudioMixTuning>("AudioMixTuning.asset"),
                 RoverAudio, Jump, Gameplay, Friends, Ui, Radio, Ambience, Canyon, Soundscape, SmallSounds, Relays,
                 Salvage, Stations);
+            Director.WireBattery(Battery);
             audioRoot.SetActive(true);
 
             Bootstrap = Track(BootstrapHarness.Create(controls, Rover, Director));
@@ -108,6 +110,8 @@ namespace MoonProject.Audio.PlayModeTests
         public FriendAudio Friends { get; }
 
         public JumpAudio Jump { get; }
+
+        public BatteryAudio Battery { get; }
 
         public RadioStation Radio { get; }
 
