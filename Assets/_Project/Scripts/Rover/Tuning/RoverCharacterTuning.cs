@@ -11,6 +11,9 @@ namespace MoonProject.Rover
     [CreateAssetMenu(fileName = "RoverCharacterTuning", menuName = "MoonProject/Rover/Rover Character Tuning")]
     public sealed class RoverCharacterTuning : ScriptableObject
     {
+        /// <summary>Shortest short pulse plus gap of the call sign (s): slower than 3 blinks per second.</summary>
+        private const float MinCallSignSlot = 0.34f;
+
         [Header("Gaze")]
         [Tooltip("How far (deg) the neck can turn either way.")]
         [Range(0f, 170f)]
@@ -419,13 +422,27 @@ namespace MoonProject.Rover
         [SerializeField] private float _oofSquashKick = 0.6f;
 
         [Header("Antenna tip")]
-        [Tooltip("Seconds between blinks of the antenna tip.")]
-        [Range(0.5f, 10f)]
-        [SerializeField] private float _tipBlinkPeriod = 2.8f;
+        [Tooltip("Seconds between the starts of the antenna's call sign (three short, one long) while 07 rests "
+            + "(cutscenes §1.5).")]
+        [Range(4f, 30f)]
+        [SerializeField] private float _callSignPeriod = 12f;
 
-        [Tooltip("Seconds the antenna tip glow takes to swell and fade in each blink.")]
-        [Range(0.05f, 3f)]
-        [SerializeField] private float _tipBlinkDuration = 0.6f;
+        [Tooltip("Seconds each short pulse of the call sign glows.")]
+        [Range(0.1f, 0.6f)]
+        [SerializeField] private float _callSignShort = 0.22f;
+
+        [Tooltip("Seconds the long pulse of the call sign glows.")]
+        [Range(0.3f, 2f)]
+        [SerializeField] private float _callSignLong = 0.8f;
+
+        [Tooltip("Seconds of dark after each short pulse. Short pulse + gap stays above 1/3 s: nothing blinks at 3 Hz "
+            + "or faster.")]
+        [Range(0.12f, 0.6f)]
+        [SerializeField] private float _callSignGap = 0.22f;
+
+        [Tooltip("Seconds each pulse takes to swell and to fade: soft edges, never a hard flash.")]
+        [Range(0.01f, 0.2f)]
+        [SerializeField] private float _callSignEdge = 0.06f;
 
         [Tooltip("Antenna tip emission between blinks (linear fraction of authored).")]
         [Range(0f, 1f)]
@@ -631,9 +648,16 @@ namespace MoonProject.Rover
 
         public float OofSquashKick => _oofSquashKick;
 
-        public float TipBlinkPeriod => _tipBlinkPeriod;
+        public float CallSignPeriod => _callSignPeriod;
 
-        public float TipBlinkDuration => Mathf.Min(_tipBlinkDuration, _tipBlinkPeriod);
+        public float CallSignShort => _callSignShort;
+
+        public float CallSignLong => _callSignLong;
+
+        /// <summary>Gap after each short pulse, never so short that a short pulse and its gap last under 1/3 s.</summary>
+        public float CallSignGap => Mathf.Max(_callSignGap, MinCallSignSlot - _callSignShort);
+
+        public float CallSignEdge => _callSignEdge;
 
         public float TipRestGlow => _tipRestGlow;
 

@@ -12,6 +12,9 @@ namespace MoonProject.Rover
     /// <item>Asleep -> Waking: after the delay, or on player input (<see cref="WokenByPlayer"/>).</item>
     /// <item>Waking -> Awake: when the slow sequence completes, or when the hurried fade has finished.</item>
     /// </list>
+    /// With a title in the game the wake is not its own: it is held asleep while the title is up, and the opening (or
+    /// the short wake) drives it beat by beat (<see cref="Hold"/>, <see cref="BeginScripted"/>,
+    /// <see cref="SetScriptedSleep"/>, <see cref="FinishScripted"/>).
     /// </summary>
     public sealed class WakeUpSequence
     {
@@ -24,6 +27,9 @@ namespace MoonProject.Rover
         private float _settled;
         private float _progress;
         private bool _hurried;
+        private bool _held;
+        private bool _scripted;
+        private bool _scriptBegan;
 
         public WakeUpSequence(RoverCharacterTuning tuning, bool startAsleep)
         {
@@ -43,12 +49,73 @@ namespace MoonProject.Rover
         /// <summary>True when the player's input woke 07 before it woke on its own.</summary>
         public bool WokenByPlayer { get; private set; }
 
+        /// <summary>True while a script drives the wake.</summary>
+        public bool IsScripted => _scripted;
+
+        /// <summary>Keeps 07 asleep: neither the settle delay nor the player's input wakes it until a script begins.</summary>
+        public void Hold()
+        {
+            _held = Phase == WakePhase.Asleep;
+        }
+
+        /// <summary>
+        /// A script takes the wake over. From asleep, the next <see cref="Step"/> reports
+        /// <see cref="MoodTransition.BeganWaking"/> (the radio crackles on); <see cref="Sleep"/> then follows
+        /// <see cref="SetScriptedSleep"/>.
+        /// </summary>
+        public void BeginScripted()
+        {
+            _held = false;
+            _scripted = true;
+            if (Phase == WakePhase.Asleep)
+            {
+                Phase = WakePhase.Waking;
+                _scriptBegan = true;
+            }
+        }
+
+        /// <summary>The script's sleep this frame (1 fast asleep .. 0 awake); ignored without a script.</summary>
+        public void SetScriptedSleep(float sleep)
+        {
+            if (_scripted)
+            {
+                Sleep = Mathf.Clamp01(sleep);
+            }
+        }
+
+        /// <summary>The script is done: 07 is awake, quietly (the script did its own blink).</summary>
+        public void FinishScripted()
+        {
+            if (!_scripted)
+            {
+                return;
+            }
+
+            _scripted = false;
+            _scriptBegan = false;
+            Sleep = 0f;
+            EarthLook = 0f;
+            Phase = WakePhase.Awake;
+        }
+
         /// <summary>Advances the sequence; returns the transition that happened this frame, if any.</summary>
         public MoodTransition Step(bool playerActive, float deltaTime)
         {
+            if (_scripted)
+            {
+                bool began = _scriptBegan;
+                _scriptBegan = false;
+                return began ? MoodTransition.BeganWaking : MoodTransition.None;
+            }
+
             switch (Phase)
             {
                 case WakePhase.Asleep:
+                    if (_held)
+                    {
+                        return MoodTransition.None;
+                    }
+
                     _settled += Mathf.Min(deltaTime, MaxSettleStep);
                     if (!playerActive && _settled < _tuning.WakeDelay)
                     {

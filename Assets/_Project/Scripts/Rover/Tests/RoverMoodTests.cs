@@ -250,11 +250,11 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
-        public void AntennaTip_BlinksBetweenRestAndPeakGlow()
+        public void AntennaTip_BlinksTheCallSignBetweenRestAndPeakGlow()
         {
             float low = float.MaxValue;
             float high = 0f;
-            for (float t = 0f; t < 2f * _tuning.TipBlinkPeriod; t += Frame)
+            for (float t = 0f; t < 2f * _tuning.CallSignPeriod; t += Frame)
             {
                 _mood.Step(0f, 0f, Frame);
                 low = Mathf.Min(low, _mood.TipGlow);
