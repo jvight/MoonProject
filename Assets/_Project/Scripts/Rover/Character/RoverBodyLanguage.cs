@@ -139,6 +139,12 @@ namespace MoonProject.Rover
             _mood.Wake.Hold();
         }
 
+        /// <summary>No title in this game (fixtures, test runs): 07 wakes on its own, as it always did.</summary>
+        public void WakeOnItsOwn()
+        {
+            _mood.Wake.Release();
+        }
+
         /// <summary>The opening or the short wake takes 07's wake over (RoverAwoke follows on the next frame).</summary>
         public void BeginWake()
         {

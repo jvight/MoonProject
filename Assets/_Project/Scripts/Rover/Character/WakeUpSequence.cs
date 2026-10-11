@@ -58,6 +58,12 @@ namespace MoonProject.Rover
             _held = Phase == WakePhase.Asleep;
         }
 
+        /// <summary>Lets go of <see cref="Hold"/>: 07 wakes on its own again (settle delay or the player).</summary>
+        public void Release()
+        {
+            _held = false;
+        }
+
         /// <summary>
         /// A script takes the wake over. From asleep, the next <see cref="Step"/> reports
         /// <see cref="MoodTransition.BeganWaking"/> (the radio crackles on); <see cref="Sleep"/> then follows

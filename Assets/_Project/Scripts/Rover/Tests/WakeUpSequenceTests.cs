@@ -181,6 +181,16 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
+        public void Released_WakesOnItsOwnAgain()
+        {
+            var wake = new WakeUpSequence(_tuning, true);
+            wake.Hold();
+            wake.Release();
+
+            Assert.AreEqual(MoodTransition.BeganWaking, Run(wake, _tuning.WakeDelay + Frame, false));
+        }
+
+        [Test]
         public void Scripted_BeginsOnce_FollowsTheScriptsSleep_AndFinishesQuietly()
         {
             var wake = new WakeUpSequence(_tuning, true);

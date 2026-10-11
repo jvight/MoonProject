@@ -178,7 +178,7 @@ namespace MoonProject.Rover.PlayModeTests
         {
             yield return Boot(false);
             Assert.IsFalse(_context.Get<IGameFlow>().ShowsTitle, "the first boot has no title");
-            Assert.AreEqual(0, Count(WakeBeat.Crackle), "without a title a fresh session plays the short wake");
+            Assert.AreEqual(0, _beats.Count, "without a title 07 wakes on its own: no opening, no short wake");
             Assert.IsTrue(_context.Get<ISaveService>().SaveNow(), "a save is on disk");
             Dispose();
 

@@ -18,8 +18,9 @@ namespace MoonProject.Rover
     /// with the gaze, the picture goes through <see cref="ILensView"/>, and 07's head follows; then the camera leaves
     /// the lens toward the rig's lens shot (or straight to the chase frame when hurried) and the rig carries on.</item>
     /// <item>A loaded game plays the short wake: the title's frame eases back to the chase frame while 07's lid opens
-    /// with one blink and it glances at Earth. So does a fresh session in a game without a title
-    /// (<see cref="IGameFlow.ShowsTitle"/> off: dev fixtures and test runs that drive 07 from the first frame).</item>
+    /// with one blink and it glances at Earth.</item>
+    /// <item>In a game without a title (<see cref="IGameFlow.ShowsTitle"/> off: dev fixtures and test runs that drive
+    /// 07 from the first frame) a session plays neither: 07 wakes on its own as it always did.</item>
     /// </list>
     /// Publishes <see cref="RoverWakeBeatReached"/> for every beat and holds 07 still (<see cref="IRoverRig"/>) only
     /// while the script says control is held. Pause freezes it. Without an <see cref="IGameFlow"/> (fixtures that drive
@@ -164,7 +165,13 @@ namespace MoonProject.Rover
         {
             bool fromLensShot = _inTitle && _rig.Opening.IsHeld;
             _inTitle = false;
-            if (started.FreshGame && _flow != null && _flow.ShowsTitle)
+            if (_flow == null || !_flow.ShowsTitle)
+            {
+                _body.WakeOnItsOwn();
+                return;
+            }
+
+            if (started.FreshGame)
             {
                 BeginFull(fromLensShot);
                 return;
