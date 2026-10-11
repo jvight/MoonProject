@@ -228,6 +228,11 @@ namespace MoonProject.Rover.Tests
                 StepOnce();
             }
 
+            while (_script.Gaze.AngleTo(HomeTarget.x, HomeTarget.y) > _tuning.Opening.SeenAngle)
+            {
+                StepOnce();
+            }
+
             float waited = 0f;
             while (waited < 3f)
             {
