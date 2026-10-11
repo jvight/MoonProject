@@ -41,5 +41,7 @@ namespace MoonProject.Gameplay
         public const int LiftVersion = 1;
         public const string TowerParts = "gameplay.towerparts";
         public const int TowerPartsVersion = 1;
+        public const string Map = "gameplay.map";
+        public const int MapVersion = 1;
     }
 }
