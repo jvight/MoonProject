@@ -1185,6 +1185,20 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// Reel the relic in close, pull it straight out from the wreck and round it, wide, to its home side; then home
         /// to the apron in front of the belly lift.
         /// </summary>
+        /// <summary>The towed relic is still on the tether; if not, where and how it let go.</summary>
+        private void AssertTowHolds(string where)
+        {
+            if (_events.TetherReleased.Count == 0)
+            {
+                return;
+            }
+
+            TetherReleased released = _events.TetherReleased[0].Value;
+            Assert.Fail($"the tether holds all the way home, but it let go {where} " +
+                        $"({(released.Snapped ? "snapped" : "released")} at {released.Position}, 07 at " +
+                        $"{_rover.Position})");
+        }
+
         private IEnumerator TowHome(SalvageSite site, Relic relic)
         {
             Begin();
@@ -1203,13 +1217,14 @@ namespace MoonProject.Gameplay.PlayModeTests
             float distance = SurfaceRules.HorizontalDistance(_rover.Position, stand);
             yield return DriveTo(_context.Get<IWorldLayout>().BasePosition, PadArrival, 0.8f, 60f,
                 "the base pad, clear of the lander");
+            AssertTowHolds("on the way to the base pad");
             yield return Reel(1f, ReelSeconds);
             _pilot.GoTo(stand, 2.5f, 0.6f);
             float deadline = Time.time + 90f;
             bool captured = false;
             while ((!_pilot.Arrived || lift.Phase != LiftPhase.Called) && Time.time < deadline)
             {
-                Assert.AreEqual(0, _events.TetherReleased.Count, "the tether holds all the way home");
+                AssertTowHolds("on the last stretch to the belly lift");
                 if (!captured && _pilot.Distance < distance * 0.5f)
                 {
                     Capture("04-towing-home");
