@@ -345,6 +345,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             var logs = Child<LogCacheField>(root, "LogCaches");
             var signals = Child<BellSignalField>(root, "BellSignals");
             var relays = Child<RelayField>(root, "Relays");
+            var battery = Child<BatteryField>(root, "Battery");
             var progression = Child<BaseProgression>(root, "Progression");
             var plotter = Child<BlueprintPlotter>(root, "Plotter");
             Lift = Child<LiftStation>(root, "CrewLift");
@@ -365,6 +366,8 @@ namespace MoonProject.Gameplay.PlayModeTests
                     RadioTowerUpgrade, HoverJumpUpgrade, CargoCradleUpgrade, WarmHeadlampUpgrade, BoostCoilsUpgrade,
                 }, salvage, relics, sonar, excavation, tether, home, cradle, tower, workshop, friends, cassettes, logs,
                 signals, shelf, relays, progression, plotter, Lift);
+            battery.Wire(Asset<BatteryTuning>());
+            Gameplay.WireBattery(battery);
             root.SetActive(true);
 
             Bootstrap = BootstrapHarness.Create(_controls, SaveSlot, World, Rover, Gameplay);
