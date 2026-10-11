@@ -434,6 +434,31 @@ MonoBehaviour:
       _range: 7.5
       _intensity: 2.6
       _disc: 0
+  _labLighting:
+    _bellyLampGlow: 3
+    _hatchRimGlow: 2.6
+    _cabinLampGlow: 2.4
+    _portholeGlow: 0.9
+    _tableThroughPorthole: 0.5
+    _portholeLampGlow: 3.2
+    _boardLampGlow: 2
+    _recoveryLampGlow: 2.2
+    _rowPulseSwell: 0.8
+    _rowPulseSeconds: 1.6
+    _readingLampBase: 0.6
+    _readingLampPerKeepsake: 0.7
+    _lampWarmUp: 1.8
+    _tableGlow: 1.4
+    _tableLookBoost: 0.8
+    _tableLookEase: 1.2
+    _chartRadius: 320
+    _penTravel: 0.45
+    _handOffBeadGlow: 3
+    _handOffWidth: 0.06
+    _handOffAfterglow: 1.2
+    _handOffLightIntensity: 1.6
+    _handOffLightRange: 2.2
+    _handOffLightColour: {r: 1, g: 0.70980394, b: 0.2784314, a: 1}
   _postProcessing:
     _bloomThreshold: 1.25
     _bloomIntensity: 1.1
@@ -522,4 +547,15 @@ MonoBehaviour:
     _focalLength: 60
     _aperture: 1.6
     _nearestFocus: 0.1
+    _readoutColor: {r: 1, g: 0.86, b: 0.62, a: 1}
+    _readoutOpacity: 0.55
+    _readoutLineHeight: 0.026
+    _readoutCorner: {x: 0.07, y: 0.9}
+    _readoutDistance: 0.5
     _volumePriority: 90
+  _chargerPools:
+    _radius: 2.8
+    _lift: 0.06
+    _litGlow: 0.9
+    _chargingGlow: 1.5
+    _ease: 0.9
