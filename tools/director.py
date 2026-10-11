@@ -524,7 +524,8 @@ def verify(args):
             fail(f"{path} is not at {sha[:7]}")
     shards = shard(playmode_assemblies(VERIFY_WORKTREE), last_playmode_seconds(VERIFY_WORKTREE), len(pool))
     playmode = [(f"playmode {' '.join(a.removeprefix('MoonProject.') for a in names)}",
-                 batch + ["playmode"] + [arg for name in names for arg in ("--assembly", name)]) for names in shards]
+                 batch + ["playmode"] + [arg for name in names for arg in ("--assembly", name)]
+                 + ["--category", "!Playthrough"]) for names in shards]
     playthrough = [("playthrough", batch + ["playmode", "--category", "Playthrough", "--timeout",
                                             str(PLAYTHROUGH_TIMEOUT)])]
     out_dir = ROOT / "Logs" / "director"
