@@ -15,7 +15,16 @@ namespace MoonProject.Gameplay.Lift
         [Range(3f, 40f)]
         [SerializeField] private float _callRadius = 16f;
 
-        [Tooltip("Seconds 07 rests on the jammed platform's lit pad before its beam reaches for the cable.")]
+        [Tooltip("How far (m) out from the platform's centre, toward the dock, 07 rests to stitch the jammed cable " +
+                 "(just off the platform's edge, facing it).")]
+        [Range(1f, 8f)]
+        [SerializeField] private float _stitchStandOff = 2.8f;
+
+        [Tooltip("How close (m) to that spot 07 must rest to stitch.")]
+        [Range(0.3f, 3f)]
+        [SerializeField] private float _stitchRadius = 1f;
+
+        [Tooltip("Seconds 07 rests by the jammed platform before its beam reaches for the cable.")]
         [Range(0.2f, 5f)]
         [SerializeField] private float _stitchDelay = 1f;
 
@@ -106,6 +115,10 @@ namespace MoonProject.Gameplay.Lift
         [SerializeField] private int _gazePriority = 6;
 
         public float CallRadius => _callRadius;
+
+        public float StitchStandOff => _stitchStandOff;
+
+        public float StitchRadius => _stitchRadius;
 
         public float StitchDelay => _stitchDelay;
 

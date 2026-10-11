@@ -31,6 +31,11 @@ namespace MoonProject.Gameplay.Editor
         private const int LampSockets = 4;
         private const string KeepsakeSlotPrefix = "Slot_";
         private const string WeatherDustName = "Weather_Dust";
+
+        /// <summary>The belly lift's drive-on ramps: how many round its rim, how steep (deg) and how thick (m).</summary>
+        private const int DeckRampSegments = 16;
+        private const float DeckRampSlope = 14f;
+        private const float DeckRampThickness = 0.12f;
         private const int TowerStages = 3;
         private const int CassetteSlots = 8;
         private const string CassetteShelfAnchor = "CassetteShelfAnchor";
@@ -333,7 +338,9 @@ namespace MoonProject.Gameplay.Editor
             }
 
             platform.gameObject.layer = Layers.Prop;
+            Transform down = Child(belly, BaseModelBuilder.PlatformDownName);
             AddDeckCollider(platform, deck.sharedMesh.bounds);
+            AddDeckRamps(platform, deck.sharedMesh.bounds, down.localPosition.y);
             var body = platform.gameObject.AddComponent<Rigidbody>();
             body.isKinematic = true;
             body.interpolation = RigidbodyInterpolation.Interpolate;
@@ -345,8 +352,7 @@ namespace MoonProject.Gameplay.Editor
                 stations[i] = Station(lab, (LabStation)i);
             }
 
-            station.Wire(tuning, looks, platform, body, Child(belly, BaseModelBuilder.PlatformDownName),
-                Child(belly, BaseModelBuilder.PlatformUpName), BaseModelBuilder.BellyPlatformLevel,
+            station.Wire(tuning, looks, platform, body, down, Child(belly, BaseModelBuilder.PlatformUpName), BaseModelBuilder.BellyPlatformLevel,
                 Child(platform, BaseModelBuilder.RoverSpotName), Renderer(Child(platform, BaseModelBuilder.PadGlowName)),
                 Child(platform, WeatherDustName), Child(belly, BaseModelBuilder.HatchLeafLeftName),
                 Child(belly, BaseModelBuilder.HatchLeafRightName), BaseModelBuilder.HatchLeafTravel,
@@ -373,6 +379,37 @@ namespace MoonProject.Gameplay.Editor
             var slab = platform.gameObject.AddComponent<BoxCollider>();
             slab.center = new Vector3(mesh.center.x, -depth * 0.5f, mesh.center.z);
             slab.size = new Vector3(mesh.size.x, depth, mesh.size.z);
+        }
+
+        /// <summary>
+        /// A ring of gentle ramps round the platform's rim, from the ground up to its top (<paramref name="rise"/> m on
+        /// its stops), so 07 drives on from any side. They are invisible and ride with the platform, which the
+        /// turntable turns; up in the lab only the held 07 touches them.
+        /// </summary>
+        private static void AddDeckRamps(Transform platform, Bounds mesh, float rise)
+        {
+            if (rise <= 0f)
+            {
+                return;
+            }
+
+            float radius = Mathf.Max(mesh.extents.x, mesh.extents.z);
+            float slope = DeckRampSlope * Mathf.Deg2Rad;
+            float run = rise / Mathf.Tan(slope);
+            float length = Mathf.Sqrt(rise * rise + run * run);
+            float width = 2f * (radius + run) * Mathf.Tan(Mathf.PI / DeckRampSegments);
+            for (int i = 0; i < DeckRampSegments; i++)
+            {
+                var ramp = new GameObject("DeckRamp_" + i).transform;
+                ramp.SetParent(platform, false);
+                ramp.gameObject.layer = Layers.Prop;
+                Quaternion round = Quaternion.Euler(0f, 360f * i / DeckRampSegments, 0f);
+                ramp.localRotation = round * Quaternion.Euler(DeckRampSlope, 0f, 0f);
+                Vector3 middle = round * new Vector3(0f, -rise * 0.5f, radius + run * 0.5f);
+                ramp.localPosition = middle - ramp.localRotation * Vector3.up * (DeckRampThickness * 0.5f);
+                var incline = ramp.gameObject.AddComponent<BoxCollider>();
+                incline.size = new Vector3(width, DeckRampThickness, length);
+            }
         }
 
         private static T Part<T>(SceneBuildContext context, GameObject host, string name) where T : Component

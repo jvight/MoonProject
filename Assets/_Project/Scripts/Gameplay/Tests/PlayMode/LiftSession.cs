@@ -148,14 +148,15 @@ namespace MoonProject.Gameplay.PlayModeTests
             Capture("lift-0-called", lift);
 
             yield return DriveTo(lift.RideSpot - lift.RideHeading * LineUp, BoardRadius, "the apron before the lift");
-            yield return DriveTo(lift.RideSpot, BoardRadius, "the jammed platform");
-            float bottom = _rover.Position.y;
-            yield return WaitFor(lift, LiftPhase.Stitching, "Resting on the lit pad, 07 stitches the cable.");
+            yield return DriveTo(lift.StitchSpot, BoardRadius, "the spot by the jammed platform");
+            yield return WaitFor(lift, LiftPhase.Stitching, "Resting by the lit platform, 07 stitches the cable.");
             yield return WaitFor(lift, LiftPhase.Ready, "The stitch levels the platform.");
             Assert.IsTrue(lift.Capture().restored, "Restored is saved.");
             Capture("lift-1-restored", lift);
 
-            yield return WaitFor(lift, LiftPhase.Rising, "A breath later the platform rises by itself.");
+            yield return DriveTo(lift.RideSpot, BoardRadius, "up its ramp onto the platform");
+            float bottom = _rover.Position.y;
+            yield return WaitFor(lift, LiftPhase.Rising, "Resting on the platform, it rises by itself.");
             yield return new WaitForSeconds(lift.Tuning.RideSeconds * 0.35f);
             Capture("lift-2-ride-outside", lift);
             yield return new WaitForSeconds(lift.Tuning.RideSeconds * 0.35f);

@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: LiftTuning
   m_EditorClassIdentifier: 
   _callRadius: 16
+  _stitchStandOff: 2.8
+  _stitchRadius: 1
   _stitchDelay: 1
   _stitchSeconds: 3.5
   _padGlow: 2

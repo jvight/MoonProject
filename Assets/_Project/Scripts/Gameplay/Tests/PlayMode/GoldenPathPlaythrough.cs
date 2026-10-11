@@ -31,32 +31,30 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// 07 hands the coil to the port, then crafts level 1 from the depot's materials through the UI's hold. Then Tilly
     /// (M3-02): find her with a ping, gather her three parts, repair her, drive home with her, be greeted, and let her
     /// spot a salvage site on the next trip. Dig Kenji's duck out of the garage's heart, which holds the Cargo Cradle's
-    /// blueprint, and tow it home, where the jammed belly lift asks for its stitch (M3-19): stitch it from its pad, ride
-    /// up with the duck beside 07, let the lab's reader decode the Cradle's tube (its hand-off pulse waits at the
+    /// blueprint, and tow it home, where the jammed belly lift asks for its stitch (M3-19): stitch it from beside it,
+    /// ride up with the duck beside 07, let the lab's reader decode the Cradle's tube (its hand-off pulse waits at the
     /// sleeping bay) and place the duck on the keepsake shelf: the first memory (step 4), then ride down facing out.
-    /// Tilly spots Bell's light across the chasm (P2): drive to
-    /// the lip, look across with no way over, then back to the garage, where the transformer now shows. Find the Rover
-    /// Bay still asleep (no pad, no prompt, a "not yet" answer to a ping), hand in the transformer and craft tower
-    /// level 2 to wake it (its plotter draws the Cradle's waiting sheet), find that holding Jump does nothing yet, craft
-    /// Hover-Jump in the bay through the same hold and the Cargo Cradle from its new blueprint, dig the walkman from the
-    /// garage, lift it into the rack with the tether button, drive home, ride the lift up and set it down on the
-    /// keepsake shelf from the rack, and take the first leap.
-    /// Then Bell (M3-04/05): drive up the mouth lane, leap the chasm, find her lying at the
-    /// terminus with Ro's log cache and her tape, gather her three parts from the alcoves, repair her (the tape slides
-    /// in, her dial wakes, she stands), drive home by the one-way exit while she makes her own way, be greeted by her,
-    /// turn her dial through every station, and follow her first signal to the basin tape onto her rack. Then the
-    /// relay network (M3-06): pick up the mound relay's part, restore it at its foot with materials and watch it come
-    /// online, pick up the relay spare on its pad (level 3's part), drive out past the tower's reach and find home
-    /// still reaching 07 there, then radio-hop home from the mast's pad and back, and rest on the dock: the dock's
-    /// evening opens, the places home can see blink seen on the crew's map, and the tower's sweep raises the next
-    /// pillar (P6). Inside the canyon 07 drives a line found over drivable ground (the same planner Bell walks by). The
-    /// base wakes step by step (M3-16, M3-19 §7): it opens fully dark, power comes back with each tower level, no
-    /// station is usable before its step, and the soft "next" line follows steps 0-8. Step 8: with the rest of the
-    /// basin's salvage stood in, hand the relay spare to the tower and craft level 3, which wakes the lab's survey
-    /// chart; ride up, where the map opens by itself and the chart pen inks what 07 has visited in reach, come away
-    /// and ride down: 0.5's wake-up, end to end. Every step is timed
-    /// (Logs/gameplay-captures/playthrough.md) and captured, with review frames of every M3-05 placement; any error
-    /// or exception in the log fails it. Slow: run on demand with --category Playthrough.
+    /// Tilly spots Bell's light across the chasm (P2): drive to the lip, look across with no way over, then back to the
+    /// garage, where the transformer now shows. Find the Rover Bay still asleep (no pad, no prompt, a "not yet" answer
+    /// to a ping), hand in the transformer and craft tower level 2 to wake it (its plotter draws the Cradle's waiting
+    /// sheet), find that holding Jump does nothing yet, craft Hover-Jump in the bay through the same hold and the Cargo
+    /// Cradle from its new blueprint, dig the walkman from the garage, lift it into the rack with the tether button,
+    /// drive home, ride the lift up and set it down on the keepsake shelf from the rack, and take the first leap. Then
+    /// Bell (M3-04/05): drive up the mouth lane, leap the chasm, find her lying at the terminus with Ro's log cache and
+    /// her tape, gather her three parts from the alcoves, repair her (the tape slides in, her dial wakes, she stands),
+    /// drive home by the one-way exit while she makes her own way, be greeted by her, turn her dial through every
+    /// station, and follow her first signal to the basin tape onto her rack. Then the relay network (M3-06): pick up
+    /// the mound relay's part, restore it at its foot with materials and watch it come online, pick up the relay spare
+    /// on its pad (level 3's part), drive out past the tower's reach and find home still reaching 07 there, then
+    /// radio-hop home from the mast's pad and back, and rest on the dock: the dock's evening opens, the places home can
+    /// see blink seen on the crew's map, and the tower's sweep raises the next pillar (P6). Inside the canyon 07 drives
+    /// a line found over drivable ground (the same planner Bell walks by). The base wakes step by step (M3-16, M3-19
+    /// §7): it opens fully dark, power comes back with each tower level, no station is usable before its step, and the
+    /// soft "next" line follows steps 0-8. Step 8: with the rest of the basin's salvage stood in, hand the relay spare
+    /// to the tower and craft level 3, which wakes the lab's survey chart; ride up, where the map opens by itself and
+    /// the chart pen inks what 07 has visited in reach, come away and ride down: 0.5's wake-up, end to end. Every step
+    /// is timed (Logs/gameplay-captures/playthrough.md) and captured, with review frames of every M3-05 placement; any
+    /// error or exception in the log fails it. Slow: run on demand with --category Playthrough.
     /// </summary>
     [Explicit("Slow end-to-end playthrough of the real Main scene; run on demand with --category Playthrough.")]
     [Category("Playthrough")]
@@ -789,8 +787,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// Home with the duck in tow and the Cradle's tube on its back, the jammed belly lift asked for its stitch: onto
-        /// its lit pad, the duck still in tow, and rest while 07's beam stitches the cable and the platform levels.
+        /// Home with the duck in tow and the Cradle's tube on its back, the jammed belly lift asked for its stitch: to
+        /// the spot just off its lit platform, the duck still in tow, and rest while 07's beam stitches the cable and
+        /// the platform levels.
         /// </summary>
         private IEnumerator StitchTheLift()
         {
@@ -798,19 +797,19 @@ namespace MoonProject.Gameplay.PlayModeTests
             LiftStation lift = _gameplay.Lift;
             Assert.AreEqual(LiftPhase.Called, lift.Phase, "home with finds for the lab: the lift asks for the stitch");
             yield return ExpectStep(ProgressionKeys.NextLiftStitch, "the lift is stuck: stitch the cable");
-            yield return DriveOntoTheLift("the jammed platform's lit pad");
+            yield return DriveTo(Flat(lift.StitchSpot), 1f, 0.5f, 60f, "the spot by the jammed platform");
             yield return Until(() => lift.Phase >= LiftPhase.Ready, LiftPhaseTimeout,
-                "resting on the pad, 07 stitches the cable and the platform eases level");
+                "resting by it, 07 stitches the cable and the platform eases level");
             Assert.IsTrue(lift.Capture().restored, "the restored lift is saved");
             Capture("05-lift-stitched");
-            End("Stitch the belly lift", "from its lit pad, the duck still in tow");
+            End("Stitch the belly lift", "from beside its lit platform, the duck still in tow");
         }
 
         /// <summary>
-        /// The first ride: a breath after the stitch the platform carries 07 up into the lab with the duck beside it.
-        /// The turntable turns to the reader, which takes the Cradle's tube and decodes it (its hand-off pulse runs to
-        /// the bay, still asleep), then to the keepsake shelf, where the press places the duck: the first memory. Back
-        /// brings the platform down, turned so 07 drives out toward the dock.
+        /// The first ride: up the ramp onto the restored platform, which carries 07 up into the lab with the duck
+        /// beside it. The turntable turns to the reader, which takes the Cradle's tube and decodes it (its hand-off
+        /// pulse runs to the bay, still asleep), then to the keepsake shelf, where the press places the duck: the first
+        /// memory. Back brings the platform down, turned so 07 drives out toward the dock.
         /// </summary>
         private IEnumerator RideUpWithTheFirstFinds(Relic duck)
         {
@@ -821,8 +820,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             using IDisposable finds = _context.Events.Subscribe<FindDecoded>(find =>
                 decoded += find.KitId == CargoCradle ? 1 : 0);
             using IDisposable pulses = _context.Events.Subscribe<DecodeHandOff>(_ => handOffs++);
+            yield return DriveTo(Flat(lift.RideSpot), BoardRadius, 0.35f, 30f, "up its ramp onto the platform");
             yield return Until(() => lift.Phase == LiftPhase.Inside, LiftPhaseTimeout,
-                "a breath after the stitch, the platform carries 07 up into the lab");
+                "resting on the platform, it carries 07 up into the lab");
             Assert.AreSame(duck, lift.Rider, "the towed duck rode up beside 07");
             Assert.IsNull(_gameplay.Tether.Towed, "the tether let it go aboard");
             yield return ExpectStep(ProgressionKeys.NextLiftRide, "up in the lab, the duck waits to be placed");
@@ -840,7 +840,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             End("Ride up with the first finds", "the tube decoded at the reader, the duck on the keepsake shelf");
         }
 
-        /// <summary>Back the stick, as a player does, and wait for the platform to settle down, 07 facing out.</summary>
+        /// <summary>Back the stick, as a player does, and wait for the platform to settle down, 07 facing
+        /// out.</summary>
         private IEnumerator RideDown(string capture)
         {
             LiftStation lift = _gameplay.Lift;

@@ -635,7 +635,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator BlueprintTube_RidesHome_IsDeliveredToThePlotter_WhichDrawsItsSheet_ThenItIsPinned()
+        public IEnumerator BlueprintTube_RidesHome_TheLabsReaderDecodesIt_ThePlotterDrawsIt_AndALoadKeepsIt()
         {
             string slot = BootstrapHarness.NewTestSlot();
             _fixture = GameplayFixture.Boot(_controls, slot);
@@ -655,15 +655,21 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsTrue(board.IsCarrying, "the garage's tube rides home on 07");
             Assert.IsFalse(board.IsPinned(cradle));
 
-            _fixture.Rover.Place(_fixture.Gameplay.Workshop.PadCentre, 0f);
-            yield return new WaitForSeconds(0.3f);
-            Assert.IsTrue(board.IsCarrying, "the plotter sleeps in the dark bay: nothing is delivered");
             _fixture.PowerTo(2);
-            yield return Waits.Until(() => plotter.Drawing, 2f);
-            Assert.IsTrue(plotter.Drawing, "awake, the plotter takes the tube and draws");
-            Assert.IsTrue(board.IsPinned(cradle), "pinned on delivery");
-            Assert.AreEqual(1, _fixture.Events.BlueprintDelivered.Count);
+            _fixture.Rover.Place(_fixture.Gameplay.Workshop.PadCentre, 0f);
+            yield return new WaitForSeconds(0.5f);
+            Assert.IsTrue(board.IsCarrying, "the plotter in the awake bay takes no tube: the lab's reader does");
+            Assert.IsFalse(plotter.Drawing);
+
+            yield return _fixture.RideIntoTheLab();
+            ProgressionTuning tuning = _fixture.ProgressionTuning;
+            yield return Waits.Until(() => board.IsPinned(cradle),
+                tuning.ReaderFeedSeconds + tuning.ReaderDecodeSeconds + 1f);
+            Assert.IsTrue(board.IsPinned(cradle), "the reader decoded it: pinned");
+            Assert.AreEqual(1, _fixture.Events.BlueprintDelivered.Count, "the reader took it");
             Assert.AreEqual(cradle, _fixture.Events.BlueprintDelivered[0].Value.KitId);
+            yield return Waits.Until(() => plotter.Drawing, tuning.HandOffSeconds + 1f);
+            Assert.IsTrue(plotter.Drawing, "the hand-off reached the awake bay: the plotter draws");
             Assert.IsFalse(plotter.ShowsSheet(cradle), "the sheet is still on the bed");
             yield return Waits.Until(() => !plotter.Drawing, _fixture.ProgressionTuning.PlotterDrawSeconds + 2f);
             Assert.IsTrue(plotter.ShowsSheet(cradle), "drawn, it hangs on Kenji's pegboard");
