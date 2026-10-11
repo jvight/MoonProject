@@ -216,6 +216,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// </summary>
         private const float LanderKeepOut = 9f;
 
+        /// <summary>The garage's cuts on the first trip out to it; the rest wait for the next charge.</summary>
+        private const int GarageFirstCuts = 3;
+
         /// <summary>
         /// A long tow reels its relic in this far (m) out from home, on open ground, so it follows 07's own line past
         /// the Rover Bay and the lander instead of swinging wide into them.
@@ -381,7 +384,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return TillySpotsOnTheNextTrip(garage);
             Relic duck = RelicIn(garage, Duck);
             Relic walkman = RelicIn(garage, Walkman);
-            yield return SalvageTheGarage(garage);
+            yield return SalvageTheGarage(garage, GarageFirstCuts, "the garage's first cuts");
+            Lesson("the garage's first trip", 0.25f, 0.4f);
+            yield return ChargeAtTheDock("between the garage's cuts");
+            yield return SalvageTheGarage(garage, int.MaxValue, "the garage's last cuts");
             Lesson("the garage's last cut", 0.25f, 0.4f);
             yield return ChargeAtTheDock("between the garage's cuts and its heart");
             yield return Excavate(garage, duck);
@@ -629,7 +635,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         private IEnumerator SalvageTheDepot(SalvageSite site)
         {
             Begin();
-            yield return CutPieces(site, "02");
+            yield return CutPieces(site, "02", int.MaxValue);
             int cuts = _cuts;
             Assert.IsTrue(site.IsPickedClean, "every piece of the depot is salvaged");
             Assert.IsTrue(site.Root.Find("Skeleton").gameObject.activeSelf, "its weathered skeleton stays");
@@ -652,16 +658,21 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// Cuts every piece of <paramref name="site"/> the beam can cut (drag pieces wait for the tether), capturing
         /// the first cut as <paramref name="capture"/>; the cuts started are left in <see cref="_cuts"/>.
         /// </summary>
-        private IEnumerator CutPieces(SalvageSite site, string capture)
+        private IEnumerator CutPieces(SalvageSite site, string capture, int most)
         {
             SalvageField salvage = _gameplay.Salvage;
             int started = _events.SalvageCutStarted.Count;
             int cuts = started;
             bool captured = false;
-            for (int pass = 0; pass < 2 && !site.IsPickedClean; pass++)
+            for (int pass = 0; pass < 2 && !site.IsPickedClean && cuts - started < most; pass++)
             {
                 foreach (SalvagePiece piece in InSweepOrder(site))
                 {
+                    if (cuts - started >= most)
+                    {
+                        break;
+                    }
+
                     yield return FacePiece(site, piece);
                     float settle = Time.time + AimSettle;
                     while (salvage.Candidate == null && Time.time < settle)
@@ -744,15 +755,18 @@ namespace MoonProject.Gameplay.PlayModeTests
             return swept;
         }
 
-        /// <summary>The garage on the way to the duck: its wiring pays the tower's second level (M3-16 P9).</summary>
-        private IEnumerator SalvageTheGarage(SalvageSite site)
+        /// <summary>
+        /// The garage on the way to the duck: its wiring pays the tower's second level (M3-16 P9). Up to
+        /// <paramref name="most"/> cuts a trip, so each trip out from the dock and back fits a charge.
+        /// </summary>
+        private IEnumerator SalvageTheGarage(SalvageSite site, int most, string what)
         {
             Begin();
             yield return DriveToSite(site);
-            yield return CutPieces(site, "11");
+            yield return CutPieces(site, "11", most);
             IMaterialStock stock = _gameplay.Materials;
-            End($"Salvage {site.Id}", $"{_cuts} cuts; stock metal {stock.Metal}, wiring {stock.Wiring}, " +
-                                      $"optics {stock.Optics}");
+            End($"Salvage {site.Id}: {what}", $"{_cuts} cuts; stock metal {stock.Metal}, wiring " +
+                                             $"{stock.Wiring}, optics {stock.Optics}");
         }
 
         /// <summary>Circles the wreck to the piece's side, lines up in front of its cut and eases in.</summary>
