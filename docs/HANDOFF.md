@@ -48,6 +48,19 @@ account) can continue without the old conversation.
   - resting with large contexts: gameplay, rover, art, ui, world, tools. Start fresh sessions for new features rather
     than reviving them;
   - design: game design, story & flow.
+- **The map slice's generic half landed (M3-07).** MapKnowledge and its save, the MapSheet, ISightline,
+  MapSystem.OpenLook/CloseLook, the UI view, and 42 keys of Ines's notes.
+  - Still to wire, with M3-19's lab:
+    - the trigger (OpenLook/CloseLook in the cabin);
+    - P6's evening pillar must call MapKnowledge.MarkSeen;
+    - art: drive LightTable, LightTableGlow and the ChartPen from MapLookStarted/Ended and MapInkCued;
+    - rover: the pose and lens toward the look;
+    - audio: pencil hiss, pentatonic pen scratch, table hum;
+    - world: the table glow through IHomeLights.
+  - The deck-hatch flow was removed; ISightline waits for a lookout.
+- **Tuning not yet written out** (the editor's MCP was down): RoverCameraTuning's OpeningSettings additions and
+  WorldSettings.LensView. They are new fields only, so their defaults apply; re-serialise them when the editor is
+  reachable.
 - **Cron guard is session-only:** recreate the token and stall guard in a new Director session (see §6 and §8).
 
 ## 0. Current state on the new account (2026-10-11 ~00:50)
