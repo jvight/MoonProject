@@ -63,7 +63,8 @@ namespace MoonProject.Gameplay.Editor
             var cargoCradle = context.LoadAsset<UpgradeDefinition>(GameplayAssetPaths.CargoCradleUpgrade);
             var warmHeadlamp = context.LoadAsset<UpgradeDefinition>(GameplayAssetPaths.WarmHeadlampUpgrade);
             var boostCoils = context.LoadAsset<UpgradeDefinition>(GameplayAssetPaths.BoostCoilsUpgrade);
-            UpgradeDefinition[] benchKit = { hoverJump, cargoCradle, warmHeadlamp, boostCoils };
+            var cellPack = context.LoadAsset<UpgradeDefinition>(GameplayAssetPaths.CellPackUpgrade);
+            UpgradeDefinition[] benchKit = { hoverJump, cargoCradle, warmHeadlamp, boostCoils, cellPack };
             var friendTuning = context.LoadAsset<FriendTuning>(GameplayAssetPaths.FriendTuning);
             var friendCatalog = context.LoadAsset<FriendCatalog>(GameplayAssetPaths.FriendCatalog);
             var cassetteTuning = context.LoadAsset<CassetteTuning>(GameplayAssetPaths.CassetteTuning);
@@ -210,7 +211,8 @@ namespace MoonProject.Gameplay.Editor
             progression.Wire(progressionTuning, PlaceSpots(dock, lander, lift, towerAnchor, bay, cassetteShelf));
             WireLift(liftStation, liftTuning, towerTuning, belly, lab, dock);
             gameplay.Wire(visuals, glintTuning,
-                new[] { radioTower, hoverJump, cargoCradle, warmHeadlamp, boostCoils }, salvage, relics, sonar,
+                new[] { radioTower, hoverJump, cargoCradle, warmHeadlamp, boostCoils, cellPack }, salvage, relics,
+                sonar,
                 excavation, tether, home, cradle, tower, workshop, friends, cassettes, logs, signals, tapeRack, relays,
                 progression, plotter, liftStation);
             battery.Wire(batteryTuning);

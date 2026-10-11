@@ -11,8 +11,10 @@ namespace MoonProject.Art.Tests
     {
         private const float PadRadius = 3f;
 
-        // The pad's front stays open (07 parks and radio-hops arrive there); only the back edge holds the mast.
+        // The pad's front stays open (07 parks and radio-hops arrive there); only the back edge holds the mast. The
+        // charge ring's paint, lip and dust cap lie flat on it, drivable, below this height.
         private const float PadFrontEdge = -1.2f;
+        private const float FlatOnThePad = 0.1f;
         private const float ParkedHeight = 2.5f;
 
         // The default camera's vertical field of view and the reference screen height.
@@ -32,6 +34,7 @@ namespace MoonProject.Art.Tests
                 { "Lamp", "Mast" },
                 { "PartSocket", mast.Name },
                 { "BeamPoint", mast.Name },
+                { "ChargeRing", mast.Name },
             };
             var parents = new Dictionary<string, string>();
             Collect(mast, parents);
@@ -97,7 +100,7 @@ namespace MoonProject.Art.Tests
         {
             foreach (Vector3 p in MeshChecks.Points(RelayModelBuilder.CreateMast(broken), Matrix4x4.identity))
             {
-                bool onPad = Flat(p) < PadRadius && p.z > PadFrontEdge && p.y < ParkedHeight;
+                bool onPad = Flat(p) < PadRadius && p.z > PadFrontEdge && p.y < ParkedHeight && p.y > FlatOnThePad;
                 Assert.IsFalse(onPad, $"{p} stands on the open front of the pad");
             }
         }

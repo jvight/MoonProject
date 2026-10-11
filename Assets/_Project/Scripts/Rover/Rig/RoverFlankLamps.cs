@@ -6,8 +6,8 @@ using MoonProject.Core.Events;
 namespace MoonProject.Rover
 {
     /// <summary>
-    /// 07's battery on its flanks (docs/features/M3-20 "How 07 shows it"): a strip of small amber lamps along the
-    /// orange stripe on each side, eight sockets built once and shown per capacity (four at the start, six with Cell
+    /// 07's battery on its back (docs/features/M3-20 "How 07 shows it"): a short segmented warm light bar along the
+    /// lid's rear-top edge, eight segments built once and shown per capacity (four at the start, six with Cell
     /// Pack II), lit by <see cref="FlankLampStrip"/> from <see cref="IRoverBattery"/> and eased so a cell fills and
     /// empties softly. 07 sleeps under the title with its lamps dark; in the opening they stay dark until O5's flicker,
     /// then light one by one (<see cref="FlankLampLit"/>, a quiet tick each), and the short wake lights them at once. A
@@ -21,10 +21,10 @@ namespace MoonProject.Rover
         [Tooltip("Rig tuning (its Flank Lamps settings).")]
         [SerializeField] private RoverRigTuning _tuning;
 
-        [Tooltip("RoverModel 'FlankLamp_L0..7' then 'FlankLamp_R0..7': each lamp's housing, shown per capacity.")]
+        [Tooltip("RoverModel 'BatteryLamp_0..7': each light-bar segment's tray, shown per capacity.")]
         [SerializeField] private Transform[] _lamps = Array.Empty<Transform>();
 
-        [Tooltip("RoverModel 'FlankGlass_L0..7' then 'FlankGlass_R0..7': each lamp's glass, its own glow renderer.")]
+        [Tooltip("RoverModel 'BatteryGlass_0..7': each segment's glass, its own glow renderer.")]
         [SerializeField] private Renderer[] _glasses = Array.Empty<Renderer>();
 
         private BatteryLink _battery;
@@ -37,19 +37,17 @@ namespace MoonProject.Rover
         private float[] _levels = Array.Empty<float>();
         private int _shownCells = -1;
 
-        /// <summary>The middle of the right strip, where 07 glances when its leap is refused.</summary>
-        public Vector3 GlancePoint => _lamps.Length > 0
-            ? _lamps[_lamps.Length - RoverModelNodes.FlankLampCount / 2].position
-            : transform.position;
+        /// <summary>The middle of the bar, where 07 glances when its leap is refused.</summary>
+        public Vector3 GlancePoint => _lamps.Length > 0 ? _lamps[_lamps.Length / 2].position : transform.position;
 
         public bool Initialize(GameContext context)
         {
-            int sockets = 2 * RoverModelNodes.FlankLampCount;
+            int sockets = RoverModelNodes.FlankLampCount;
             if (_tuning == null || _lamps == null || _glasses == null || _lamps.Length != sockets ||
                 _glasses.Length != sockets)
             {
                 Debug.LogError($"{nameof(RoverFlankLamps)}: needs RoverRigTuning and {sockets} lamps and glasses " +
-                               "(RoverModel 'FlankLamp_*' / 'FlankGlass_*'; run Art/Rover then Rover/Rover).", this);
+                               "(RoverModel 'BatteryLamp_*' / 'BatteryGlass_*'; run Art/Rover then Rover/Rover).", this);
                 return false;
             }
 
@@ -57,7 +55,7 @@ namespace MoonProject.Rover
             {
                 if (_lamps[i] == null || _glasses[i] == null)
                 {
-                    Debug.LogError($"{nameof(RoverFlankLamps)}: flank lamp {i} is missing.", this);
+                    Debug.LogError($"{nameof(RoverFlankLamps)}: battery lamp {i} is missing.", this);
                     return false;
                 }
             }
@@ -91,7 +89,6 @@ namespace MoonProject.Rover
                     : 0f;
                 _levels[i] = Smoothing.Damp(_levels[i], target, settings.HalfLife, deltaTime);
                 Apply(i, _levels[i]);
-                Apply(i + RoverModelNodes.FlankLampCount, _levels[i]);
             }
         }
 
@@ -106,7 +103,7 @@ namespace MoonProject.Rover
             int due = Mathf.Min(_shownCells, Mathf.FloorToInt((time - _wakeStart) / settings.WakeInterval) + 1);
             while (_wakeLit < due)
             {
-                _events.Publish(new FlankLampLit(_wakeLit, _lamps[RoverModelNodes.FlankLampCount + _wakeLit].position));
+                _events.Publish(new FlankLampLit(_wakeLit, _lamps[_wakeLit].position));
                 _wakeLit++;
             }
         }
@@ -148,7 +145,7 @@ namespace MoonProject.Rover
             _title?.Dispose();
         }
 
-        /// <summary>Shows one socket per cell on each flank (the rest stay hidden).</summary>
+        /// <summary>Shows one segment per cell (the rest stay hidden).</summary>
         private void ShowCells(int cells)
         {
             cells = Mathf.Clamp(cells, 0, RoverModelNodes.FlankLampCount);
@@ -160,9 +157,7 @@ namespace MoonProject.Rover
             _shownCells = cells;
             for (int i = 0; i < RoverModelNodes.FlankLampCount; i++)
             {
-                bool shown = i < cells;
-                _lamps[i].gameObject.SetActive(shown);
-                _lamps[i + RoverModelNodes.FlankLampCount].gameObject.SetActive(shown);
+                _lamps[i].gameObject.SetActive(i < cells);
             }
         }
 

@@ -51,6 +51,10 @@ MonoBehaviour:
     _siteId: site.drill
     _anchorId: 
     _setback: 0
+  - _kitId: rover.cell_pack
+    _siteId: relay.2
+    _anchorId: 
+    _setback: 0
   _techKits:
   - _node: 4
     _kitId: rover.hover_jump
@@ -60,6 +64,8 @@ MonoBehaviour:
     _kitId: rover.warm_headlamp
   - _node: 7
     _kitId: rover.boost_coils
+  - _node: 8
+    _kitId: rover.cell_pack
   _recoveryLamps:
     _peakFoot: 1
     _dish: 4

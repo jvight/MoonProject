@@ -162,13 +162,15 @@ RoverModel additions:
   DrumSocket_L, DrumSocket_R                 empties on the flanks, +X outward
   TubeSocket                                 empty on the lid right of the wing, +X fore and aft (the BlueprintTube)
   PartSocket                                 empty on the lid right of the neck, ahead of the tube, +Y up (a story part)
+  SpineSocket                                empty on the lid's right edge, outboard of the tube, +Y up: Cell Pack II's
+                                             Kit_BatterySpine (two cream cells on a rail, brass bands; M3-20)
   SolarWing/CellFilled                       the replacement cell, hidden until Tilly's gift
   Body/Decal07Fresh                          a freshly stencilled "07", hidden until Bell's gift (the faded one hides then)
   Antenna/Pennant                            small radio pennant, hidden until Bell's gift
-  Body/FlankLamp_L0..7, Body/FlankLamp_R0..7 the battery's lamp sockets (M3-20), one per cell, front to back along
-                                             each lid edge above the stripe, facing up, a little out and back
-    FlankGlass_<side><i>                     each lamp's glass: own glow renderer on M_LowPolyGlowOff (LampGlass),
-                                             lit by Rover per cell; sockets past the battery's capacity stay hidden
+  Body/BatteryLamp_0..7                      the battery's light bar (M3-20): one segment per cell, left to right
+                                             along the lid's rear-top edge, facing up and tipped back
+    BatteryGlass_<i>                         each segment's glass: own glow renderer on M_LowPolyGlowOff (LampGlass),
+                                             lit by Rover per cell; segments past the battery's capacity stay hidden
 ```
 
 Renaming or re-pivoting any node is a contract change: coordinate through the Director.
@@ -258,13 +260,16 @@ box at its foot and guy wires. Meshes only, `M_LowPoly`. It must read as a silho
 (taper, cross braces, dish, lamp housing), never a thin lattice that vanishes at distance.
 ```
 Generated/Art/Relay/RelayMast.prefab  (restored pose; root at the pad centre on the ground, +Z = toward home, +Y up)
-  Base                 footing plinth + junction box (static)
+  Base                 footing plinth + junction box + rover-height service cabinet (door shut when broken,
+                       open when restored; relay.2's keeps the Cell Pack II tube) (static)
   Mast                 pivot at the mast foot; the broken pose leans it about local X/Z
     Dish               relay dish near the top, pivot at its mount; yaw about local Y to aim home
     Lamp               lamp housing at the top, own glow renderer on M_LowPolyGlowOff (WarmLamp, HDR): dark until
                        lit via MaterialPropertyBlock (SetVector, linear, see "Glow modulation")
   PartSocket           empty on the junction box front, +Z out: the relay part slots in here
   BeamPoint            empty on the junction box: 07's repair beam target
+  ChargeRing           the 4 m charge ring on the pad (M3-20): worn painted ring + low ramp lip, flat (< 0.1 m),
+                       no collider; the broken variant's carries a settled dust cap (dormant charger)
 Generated/Art/Relay/RelayMast_Broken.prefab  same node names; Mast leaning 12–15° with the dish hanging, Lamp on
   M_LowPolyGlowOff (dark), slack guy wires
 Generated/Art/Relay/Part_RelayModule.prefab  0.27–0.36 m pickup, centre-of-mass pivot, warm amber accents

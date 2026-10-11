@@ -1285,6 +1285,18 @@
         {
             "key": "battery.low.mast",
             "text": "Pin đang yếu dần. {0} có thể nạp đầy lại."
+        },
+        {
+            "key": "upgrade.rover.cell_pack.name",
+            "text": "Bộ pin II"
+        },
+        {
+            "key": "upgrade.rover.cell_pack.1.title",
+            "text": "Xương sống pin"
+        },
+        {
+            "key": "upgrade.rover.cell_pack.1.effect",
+            "text": "Thêm hai ô pin trên lưng 07: sáu ngọn đèn sáng, và phía xa của lòng chảo trong tầm với."
         }
     ]
 }

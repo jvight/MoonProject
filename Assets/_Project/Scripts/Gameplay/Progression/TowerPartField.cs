@@ -9,11 +9,12 @@ namespace MoonProject.Gameplay
     /// <summary>
     /// The tower's components in the world (docs/features/M3-16 P1), Art's Part_* models. A part in a site's heart
     /// eases into view once the heart is revealed (the depot's last cut; the garage's transformer only once 07 has
-    /// looked across the chasm, P2); the relay spare on the pad of the first mast
-    /// 07 restores. Waiting, a part hovers, bobs, turns and glints like a friend's part; driven through, it is drawn
-    /// into 07 and rides home on its back (<see cref="TowerParts.PickUp"/>; Rover shows it). Parked on the tower's
-    /// pad, 07 hands each carried part to the port, lowest level first: it leaves 07's back
-    /// (<see cref="TowerParts.Deliver"/>) and glides on a soft arc into the hopper while 07 watches it go.
+    /// looked across the chasm, P2); the relay spare on the pad of the first mast 07 restores, once the tower's next
+    /// level is its own (07 charges on that pad long before, M3-20). Waiting, a part hovers, bobs, turns and glints
+    /// like a friend's part; driven through, it is drawn into 07 and rides home on its back (<see
+    /// cref="TowerParts.PickUp"/>; Rover shows it). Parked on the tower's pad, 07 hands each carried part to the port,
+    /// lowest level first: it leaves 07's back (<see cref="TowerParts.Deliver"/>) and glides on a soft arc into the
+    /// hopper while 07 watches it go.
     /// </summary>
     public sealed class TowerPartField : IDisposable
     {
@@ -279,7 +280,8 @@ namespace MoonProject.Gameplay
                 return site.HeartRevealed && (!part.AfterTheChasm || _chasmSeen());
             }
 
-            for (int node = 0; node < _reach.NodeCount; node++)
+            bool needed = _tower.ShownLevel + 1 >= part.TowerLevel;
+            for (int node = 0; needed && node < _reach.NodeCount; node++)
             {
                 if (node != StationReach.Home && _reach.IsLit(node))
                 {

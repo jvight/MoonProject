@@ -73,6 +73,7 @@ MonoBehaviour:
       _showLampBar: 180
       _showDrums: 90
       _showRack: 0
+      _showSpine: 180
       _showCoils: 90
     _giftDelay: 0.9
     _giftFrequency: 1.4

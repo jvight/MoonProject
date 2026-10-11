@@ -33,6 +33,9 @@ namespace MoonProject.Rover
                 case RoverKitPiece.CargoRack:
                     ability = RoverAbility.CargoCradle;
                     return true;
+                case RoverKitPiece.BatterySpine:
+                    ability = RoverAbility.CellPack;
+                    return true;
                 default:
                     ability = RoverAbility.HoverJump;
                     return false;

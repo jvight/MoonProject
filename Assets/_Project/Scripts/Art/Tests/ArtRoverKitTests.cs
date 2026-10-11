@@ -78,13 +78,13 @@ namespace MoonProject.Art.Tests
         private static readonly Dictionary<string, int> ChaseBudget = new Dictionary<string, int>
         {
             { RoverKitBuilder.LampBarName, 2200 }, { RoverKitBuilder.CapacitorDrumName, 3500 },
-            { RoverKitBuilder.CargoRackName, 2200 },
+            { RoverKitBuilder.CargoRackName, 2200 }, { RoverKitBuilder.BatterySpineName, 600 },
         };
 
         private static readonly Dictionary<string, int> FarBudget = new Dictionary<string, int>
         {
             { RoverKitBuilder.LampBarName, 150 }, { RoverKitBuilder.CapacitorDrumName, 200 },
-            { RoverKitBuilder.CargoRackName, 40 },
+            { RoverKitBuilder.CargoRackName, 40 }, { RoverKitBuilder.BatterySpineName, 20 },
         };
 
         private ModelNode _rover;
@@ -106,6 +106,8 @@ namespace MoonProject.Art.Tests
                 new KitPiece(RoverKitBuilder.CapacitorDrumName + " R",
                     Fit(RoverKitBuilder.CreateCapacitorDrum(), "DrumSocket_R")),
                 new KitPiece(RoverKitBuilder.CargoRackName, Fit(RoverKitBuilder.CreateCargoRack(), "CargoSocket")),
+                new KitPiece(RoverKitBuilder.BatterySpineName,
+                    Fit(RoverKitBuilder.CreateBatterySpine(), "SpineSocket")),
             };
 
             // 07 with every kit piece's frame but none of their glow renderers: what a glass or band is seen past.
@@ -114,7 +116,7 @@ namespace MoonProject.Art.Tests
             {
                 (RoverKitBuilder.CreateLampBar(), "HeadlampSocket"), (RoverKitBuilder.CreateCapacitorDrum(),
                     "DrumSocket_L"), (RoverKitBuilder.CreateCapacitorDrum(), "DrumSocket_R"),
-                (RoverKitBuilder.CreateCargoRack(), "CargoSocket"),
+                (RoverKitBuilder.CreateCargoRack(), "CargoSocket"), (RoverKitBuilder.CreateBatterySpine(), "SpineSocket"),
             })
             {
                 Matrix4x4 world = SilhouetteCamera.WorldOf(_rover, socket);

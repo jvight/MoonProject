@@ -31,7 +31,7 @@ namespace MoonProject.Rover
     [DisallowMultipleComponent]
     public sealed class RoverKit : MonoBehaviour, IRoverCargoSeat
     {
-        private const int PieceCount = 6;
+        private const int PieceCount = 7;
         private const int DrumCount = 2;
 
         /// <summary>Glow changes smaller than this are not worth a new property block.</summary>
@@ -62,6 +62,9 @@ namespace MoonProject.Rover
 
         [Tooltip("Art's Kit_CargoRack under CargoSocket (inactive until the Cargo Cradle is owned).")]
         [SerializeField] private Transform _cargoRack;
+
+        [Tooltip("Art's Kit_BatterySpine under SpineSocket (inactive until Cell Pack II is owned).")]
+        [SerializeField] private Transform _spine;
 
         [Tooltip("The rack's RelicSeat, where a carried relic rests (+Y up).")]
         [SerializeField] private Transform _relicSeat;
@@ -114,6 +117,7 @@ namespace MoonProject.Rover
         private Vector3 _lampBarScale;
         private Vector3[] _drumScale;
         private Vector3 _rackScale;
+        private Vector3 _spineScale;
         private Vector3 _cellScale;
         private Vector3 _serialScale;
         private Vector3 _pennantScale;
@@ -215,8 +219,8 @@ namespace MoonProject.Rover
         {
             bool ok = Require(_tuning != null, "RoverRigTuning is not assigned.")
                 & Require(_headlamp != null, "Headlamp light is not assigned.")
-                & Require(_lampBar != null && _cargoRack != null && _relicSeat != null,
-                    "Lamp bar, cargo rack or its RelicSeat is not assigned.")
+                & Require(_lampBar != null && _cargoRack != null && _relicSeat != null && _spine != null,
+                    "Lamp bar, cargo rack, its RelicSeat or the battery spine is not assigned.")
                 & Require(_tube != null, "The BlueprintTube on TubeSocket is not assigned.")
                 & Require(StoryPartsWired(), "A tower story part on TubeSocket is not assigned (Part_TowerCoil...).")
                 & Require(_solarCell != null && _freshSerial != null && _pennant != null,
@@ -323,6 +327,7 @@ namespace MoonProject.Rover
             }
 
             _rackScale = _cargoRack.localScale;
+            _spineScale = _spine.localScale;
             _cellScale = _solarCell.localScale;
             _serialScale = _freshSerial.localScale;
             _pennantScale = _pennant.localScale;
@@ -353,6 +358,7 @@ namespace MoonProject.Rover
             }
 
             _cargoRack.gameObject.SetActive(false);
+            _spine.gameObject.SetActive(false);
             _solarCell.gameObject.SetActive(false);
             _freshSerial.gameObject.SetActive(false);
             _pennant.gameObject.SetActive(false);
@@ -588,6 +594,9 @@ namespace MoonProject.Rover
                 case RoverKitPiece.CargoRack:
                     _parts[0] = _cargoRack;
                     return 1;
+                case RoverKitPiece.BatterySpine:
+                    _parts[0] = _spine;
+                    return 1;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(piece), piece,
                         "Only crafted kit is fitted in the bay.");
@@ -646,6 +655,7 @@ namespace MoonProject.Rover
             }
 
             Place(_cargoRack, _fits[(int)RoverKitPiece.CargoRack], _rackScale);
+            Place(_spine, _fits[(int)RoverKitPiece.BatterySpine], _spineScale);
             Place(_solarCell, _fits[(int)RoverKitPiece.SolarCell], _cellScale);
             KitFit paint = _fits[(int)RoverKitPiece.FreshPaint];
             Place(_freshSerial, paint, _serialScale);

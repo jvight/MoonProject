@@ -120,6 +120,7 @@ namespace MoonProject.Gameplay
             _subscriptions.Add(_events.Subscribe<RoverPlaced>(OnPlaced));
             _subscriptions.Add(_events.Subscribe<BatteryWarned>(OnWarned));
             _subscriptions.Add(_events.Subscribe<ChargingChanged>(OnChargingChanged));
+            _subscriptions.Add(_events.Subscribe<RoverKitFitted>(OnKitFitted));
             _initialized = true;
             return true;
         }
@@ -304,6 +305,15 @@ namespace MoonProject.Gameplay
             if (Model.FullCells == Model.Cells)
             {
                 _save.SaveNow();
+            }
+        }
+
+        /// <summary>Cell Pack II's spine is on 07: two more cells, arriving full (the install moment's rise).</summary>
+        private void OnKitFitted(RoverKitFitted fitted)
+        {
+            if (fitted.Piece == RoverKitPiece.BatterySpine)
+            {
+                Model.GrowTo(_tuning.CellPackCells);
             }
         }
 

@@ -128,6 +128,9 @@ namespace MoonProject.Core.Events
 
         /// <summary>Bell's gift: the "07" freshly stencilled and a radio pennant on the antenna.</summary>
         FreshPaint = 5,
+
+        /// <summary>Cell Pack II's battery spine on the back (docs/features/M3-20): two more cells.</summary>
+        BatterySpine = 6,
     }
 
     /// <summary>

@@ -15,6 +15,7 @@ namespace MoonProject.Rover.Editor
         /// <summary>The art box's lens glass ring (cutscenes O10), mounted on RoverModel 'Eye'. Required.</summary>
         public const string LensGlass = "Assets/_Project/Generated/Art/Rover/LensGlass.prefab";
         public const string KitCapacitorDrum = "Assets/_Project/Generated/Art/Rover/Kit_CapacitorDrum.prefab";
+        public const string KitBatterySpine = "Assets/_Project/Generated/Art/Rover/Kit_BatterySpine.prefab";
         public const string KitCargoRack = "Assets/_Project/Generated/Art/Rover/Kit_CargoRack.prefab";
         public const string BlueprintTube = "Assets/_Project/Generated/Art/Pickups/BlueprintTube.prefab";
 

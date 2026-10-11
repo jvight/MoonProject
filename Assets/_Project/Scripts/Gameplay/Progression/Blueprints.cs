@@ -9,7 +9,8 @@ namespace MoonProject.Gameplay
     /// <summary>
     /// The crew's blueprints (docs/features/M3-16 "Blueprints", M3-19 §5, M3-21 §4): the bay's kits are buildable only
     /// once their tube is decoded. A kit's tube lies in a salvage site's heart and is found with the heart's relic
-    /// (<see cref="RelicSurfaced"/>), or waits on the ground at a world anchor until 07 drives through it
+    /// (<see cref="RelicSurfaced"/>), or in a relay mast's service cabinet, found as the restored mast straightens
+    /// (<see cref="RelayCued"/>), or waits on the ground at a world anchor until 07 drives through it
     /// (<see cref="PickUp"/>); either way <see cref="BlueprintFound"/> is published. The tube rides home on 07's back
     /// and up the belly lift to the lab's reader, which takes it (<see cref="Take"/>, publishing
     /// <see cref="BlueprintDelivered"/>) and decodes it (<see cref="Decode"/>, publishing <see cref="FindDecoded"/>):
@@ -28,9 +29,14 @@ namespace MoonProject.Gameplay
         private readonly List<string> _tubeKits = new List<string>();
         private readonly Func<string, string> _siteOfRelic;
         private readonly IDisposable _surfaced;
+        private readonly IDisposable _restored;
 
         /// <param name="kits">Every kit the bay builds.</param>
-        /// <param name="tubes">Where the kits' tubes lie, one tube per kit.</param>
+        /// <param name="tubes">
+        /// Where the kits' tubes lie, one tube per kit: a salvage site (found as its heart's relic surfaces), a relay mast
+        /// (found in its service cabinet as the restored mast straightens, <see cref="RelayCued"/>, linked home or not)
+        /// or a world anchor.
+        /// </param>
         /// <param name="siteOfRelic">The salvage site whose heart held a relic (by relic id), or null.</param>
         public Blueprints(EventBus events, IEnumerable<string> kits, IEnumerable<BlueprintTube> tubes,
             Func<string, string> siteOfRelic)
@@ -56,6 +62,7 @@ namespace MoonProject.Gameplay
             }
 
             _surfaced = events.Subscribe<RelicSurfaced>(OnSurfaced);
+            _restored = events.Subscribe<RelayCued>(OnRelayCued);
         }
 
         public bool IsPinned(string upgradeId)
@@ -220,6 +227,7 @@ namespace MoonProject.Gameplay
         public void Dispose()
         {
             _surfaced.Dispose();
+            _restored.Dispose();
         }
 
         /// <summary>The tubes' kits among <paramref name="kits"/>, in the tubes' order.</summary>
@@ -250,14 +258,28 @@ namespace MoonProject.Gameplay
 
         private void OnSurfaced(RelicSurfaced surfaced)
         {
-            string site = _siteOfRelic(surfaced.RelicId);
+            Find(_siteOfRelic(surfaced.RelicId), surfaced.Position);
+        }
+
+        /// <summary>A restored mast straightens: its service cabinet swings open on the tube it kept.</summary>
+        private void OnRelayCued(RelayCued cued)
+        {
+            if (cued.Cue == RelayCue.Straightened)
+            {
+                Find(cued.RelayId, cued.Position);
+            }
+        }
+
+        /// <summary>The tube kept at <paramref name="site"/>, if any and not yet found, rides home on 07's back.</summary>
+        private void Find(string site, Vector3 position)
+        {
             if (site == null || !_kitAtSite.TryGetValue(site, out string kit) || !IsWaiting(kit))
             {
                 return;
             }
 
             _carried.Add(kit);
-            _events.Publish(new BlueprintFound(kit, site, surfaced.Position));
+            _events.Publish(new BlueprintFound(kit, site, position));
         }
     }
 }

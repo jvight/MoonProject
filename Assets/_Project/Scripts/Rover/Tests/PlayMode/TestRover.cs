@@ -285,6 +285,9 @@ namespace MoonProject.Rover.PlayModeTests
             Transform rack = Node("Kit_CargoRack", cargo, Vector3.zero);
             Shape(PrimitiveType.Cube, rack, new Vector3(0f, 0.02f, SeatBack), new Vector3(0.7f, 0.04f, 0.5f), material);
             Transform seat = Node(RoverModelNodes.RelicSeat, rack, new Vector3(0f, SeatHeight, SeatBack));
+            Transform spineSocket = Node(RoverModelNodes.SpineSocket, model, new Vector3(0.55f, 1.05f, -0.2f));
+            Transform spine = Node("Kit_BatterySpine", spineSocket, Vector3.zero);
+            Shape(PrimitiveType.Cube, spine, new Vector3(0f, 0.06f, 0f), new Vector3(0.1f, 0.12f, 0.42f), material);
             Transform cell = Shape(PrimitiveType.Cube, wing, new Vector3(0.1f, 0.02f, -0.1f),
                 new Vector3(0.15f, 0.01f, 0.15f), material);
             cell.name = RoverModelNodes.CellFilled;
@@ -304,18 +307,15 @@ namespace MoonProject.Rover.PlayModeTests
                 parts[i] = Shape(PrimitiveType.Cube, tubeSocket, Vector3.zero, Vector3.one * 0.2f, material);
                 parts[i].name = StoryParts[i];
             }
-            int flankCount = RoverModelNodes.FlankLampCount;
-            var flankLamps = new Transform[2 * flankCount];
-            var flankGlasses = new Renderer[2 * flankCount];
+            var flankLamps = new Transform[RoverModelNodes.FlankLampCount];
+            var flankGlasses = new Renderer[RoverModelNodes.FlankLampCount];
             for (int i = 0; i < flankLamps.Length; i++)
             {
-                bool right = i >= flankCount;
-                int socket = i % flankCount;
-                var at = new Vector3(right ? 0.66f : -0.66f, 0.8f, 0.5f - socket * FlankLampSpacing);
-                flankLamps[i] = Node(RoverModelNodes.FlankLamp(right, socket), bodyNode, at);
-                Transform glass = Shape(PrimitiveType.Sphere, flankLamps[i], Vector3.zero, Vector3.one * 0.05f,
+                var at = new Vector3(0.55f, 1.08f, -0.05f - i * FlankLampSpacing);
+                flankLamps[i] = Node(RoverModelNodes.FlankLamp(i), bodyNode, at);
+                Transform glass = Shape(PrimitiveType.Cube, flankLamps[i], Vector3.zero, new Vector3(0.04f, 0.01f, 0.05f),
                     material);
-                glass.name = RoverModelNodes.FlankGlass(right, socket);
+                glass.name = RoverModelNodes.FlankGlass(i);
                 flankGlasses[i] = glass.GetComponent<MeshRenderer>();
             }
 
@@ -331,6 +331,7 @@ namespace MoonProject.Rover.PlayModeTests
             Assign(rig, ("_tuning", rigTuning), ("_chassis", chassis), ("_bogieLeft", bogieLeft),
                 ("_bogieRight", bogieRight), ("_antenna", antenna));
             Assign(kit, ("_tuning", rigTuning), ("_headlamp", headlamp), ("_lampBar", lampBar), ("_cargoRack", rack),
+                ("_spine", spine),
                 ("_relicSeat", seat), ("_solarCell", cell), ("_freshSerial", serial), ("_pennant", pennant),
                 ("_tube", tube));
             AssignArray(kit, "_lamps", lamps);

@@ -39,8 +39,12 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float RingApproachThrottle = 0.3f;
         private const float ChargeTimeout = 5f;
         private const float LampSettle = 1f;
-        private const int CaptureWidth = 1280;
-        private const int CaptureHeight = 720;
+        private const int CaptureWidth = 1920;
+        private const int CaptureHeight = 1080;
+
+        /// <summary>The 30 m frame: from behind and above 07, as far as the spec's readability check.</summary>
+        private const float FarDistance = 30f;
+        private const float FarHeight = 8f;
 
         // The tower at its third level, relay.0 restored (lit by the tower's reach) and Tilly home and welcomed
         // (FriendState.Awake = 3), in Core's envelope and Gameplay's section formats.
@@ -130,6 +134,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 yield return Until(() => battery.FullCells == battery.Cells, ChargeTimeout, "the ring fills the cells");
                 yield return new WaitForSeconds(LampSettle);
                 Capture("charged-at-the-mound-mast");
+                CaptureFromAfar("charged-from-30m");
             }
 
             Assert.IsEmpty(_problems, "no errors or exceptions in the log");
@@ -204,6 +209,22 @@ namespace MoonProject.Gameplay.PlayModeTests
         {
             FrameCapture.SavePng(_context.Get<IViewCamera>().Camera, CaptureWidth, CaptureHeight,
                 Path.Combine(GameplayFixture.CaptureFolder, name + ".png"));
+        }
+
+        /// <summary>A frame from <see cref="FarDistance"/> behind 07 through a camera with the view camera's lens.</summary>
+        private void CaptureFromAfar(string name)
+        {
+            Camera view = _context.Get<IViewCamera>().Camera;
+            var host = new GameObject("FarCamera");
+            Camera far = host.AddComponent<Camera>();
+            far.CopyFrom(view);
+            Vector3 back = -(_rover.Rotation * Vector3.forward);
+            back.y = 0f;
+            Vector3 at = _rover.Position + back.normalized * FarDistance + Vector3.up * FarHeight;
+            host.transform.SetPositionAndRotation(at, Quaternion.LookRotation(_rover.Position - at));
+            FrameCapture.SavePng(far, CaptureWidth, CaptureHeight,
+                Path.Combine(GameplayFixture.CaptureFolder, name + ".png"));
+            Object.Destroy(host);
         }
 
         private static IEnumerator Until(Func<bool> condition, float timeout, string what)

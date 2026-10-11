@@ -66,6 +66,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const string Tower = "radio_tower";
         private const string HoverJump = "rover.hover_jump";
         private const string CargoCradle = "rover.cargo_cradle";
+        private const string CellPack = "rover.cell_pack";
         private const string TillyId = "tilly";
         private const string BellId = "bell";
         private const string AfterDark = "after_dark_1";
@@ -89,9 +90,6 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>Canyon waypoints count as reached this close (m); the last one is driven to a stop.</summary>
         private const float WaypointArrive = 3f;
         private const float CanyonThrottle = 0.7f;
-
-        /// <summary>Metres past the exit anchor, down its step, onto the basin floor.</summary>
-        private const float BelowExit = 14f;
 
         /// <summary>Seconds between two turns of Bell's dial (the needle settles in between).</summary>
         private const float DialPause = 1.5f;
@@ -153,7 +151,6 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float HopJump = 3f;
         private const float ApproachOffset = 3f;
         private const float RetreatDistance = 16f;
-        private const float ReelFrom = 12f;
 
         /// <summary>Seconds 07 may take to creep up on the surfaced relic and latch on.</summary>
         private const float LatchTimeout = 40f;
@@ -218,6 +215,18 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// A drive whose line passes this close (m) to the lander's centre goes round it, by a point this far out.
         /// </summary>
         private const float LanderKeepOut = 9f;
+
+        /// <summary>The garage's cuts on the first trip out to it; the rest wait for the next charge.</summary>
+        private const int GarageFirstCuts = 3;
+
+        /// <summary>
+        /// A long tow reels its relic in this far (m) out from home, on open ground, so it follows 07's own line past
+        /// the Rover Bay and the lander instead of swinging wide into them.
+        /// </summary>
+        private const float TowReelIn = 25f;
+
+        /// <summary>Home by radio-hop, 07 rolls this far (m) out from the dock, away from the tower, to look out.</summary>
+        private const float LookOutDistance = 10f;
         private const float LanderDetour = 13f;
 
         /// <summary>Height (m) over 07 of the review frame taken when a wait times out.</summary>
@@ -227,12 +236,12 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float PadArrival = 5f;
 
         /// <summary>
-        /// Seconds the golden path may take: steps 0-8 end to end measured 1323 s on 2026-10-11 (P1's parts, P2's
-        /// chasm and garage return, P6's evening, the lab's stitch and three rides with the reader, the keepsake shelf
-        /// and the chart, and step 8's level 3), plus about 30 s for M3-21's ride up to decode Hover-Jump's tube, with
-        /// the same ~8% margin the path has always had.
+        /// Seconds the golden path may take: steps 0-8 end to end measured 1461 s on 2026-10-12 at the battery's spec
+        /// tuning (M3-20's charger-to-charger route: docks between trips, the garage's cuts over two trips, the mound,
+        /// mouth and terminus masts and their rings, Cell Pack II, the radio-hops), with the same ~8% margin the path
+        /// has always had.
         /// </summary>
-        private const float TotalBudget = 1460f;
+        private const float TotalBudget = 1580f;
 
         /// <summary>Close enough (m) to a part resting on a mast's pad to draw it in.</summary>
         private const float PartArrive = 1.5f;
@@ -299,6 +308,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         private int _crawls;
         private float _stepMetres;
         private float _stepBeam;
+        private float _stepLowest;
         private int _cuts;
         private float _awokeAt = -1f;
         private float _stepStart;
@@ -362,6 +372,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsFalse(depot.AnswersSonar, "picked clean and its coil taken: the depot falls silent");
             yield return BuyTowerLevel(1);
             yield return ExpectStep(ProgressionKeys.NextSignal, "home is powered: the tower hears Tilly");
+            yield return ChargeAtTheDock("before Tilly's crater");
             yield return FindTilly();
             yield return GatherTillyParts();
             yield return RepairTilly();
@@ -369,12 +380,16 @@ namespace MoonProject.Gameplay.PlayModeTests
             Lesson("home after Tilly's parts", 0.2f, 0.35f);
             yield return ChargeAtTheDock("the dock charges");
             yield return ExpectStep(ProgressionKeys.NextRelic, "Tilly is home: the first memory comes next");
-            yield return TillySpotsOnTheNextTrip();
             SalvageSite garage = _gameplay.Salvage.Find(WorldAnchorIds.SitePrefix + "garage");
+            yield return TillySpotsOnTheNextTrip(garage);
             Relic duck = RelicIn(garage, Duck);
             Relic walkman = RelicIn(garage, Walkman);
-            yield return SalvageTheGarage(garage);
+            yield return SalvageTheGarage(garage, GarageFirstCuts, "the garage's first cuts");
+            Lesson("the garage's first trip", 0.25f, 0.4f);
+            yield return ChargeAtTheDock("between the garage's cuts");
+            yield return SalvageTheGarage(garage, int.MaxValue, "the garage's last cuts");
             Lesson("the garage's last cut", 0.25f, 0.4f);
+            yield return ChargeAtTheDock("between the garage's cuts and its heart");
             yield return Excavate(garage, duck);
             Assert.IsTrue(LogFound("kenji_1"), "Kenji's log tin by his bench opens while 07 digs");
             Assert.IsTrue(_gameplay.Blueprints.IsCarrying, "the garage's heart held the Cradle's blueprint tube");
@@ -385,44 +400,56 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return TowHome(garage, duck);
             yield return StitchTheLift();
             yield return RideUpWithTheFirstFinds(duck);
-            yield return ChargeAtTheDock("before the canyon");
+            yield return ChargeAtTheDock("before the mound relay");
             yield return ExpectStep(ProgressionKeys.NextChasm, "the first memory is home: Tilly sees Bell's light");
             AssertNotYetPastTheChasm();
-            yield return DriveToTheCanyon();
-            yield return LookAcrossTheChasm();
-            Lesson("the chasm lip", 0.3f, 0.45f);
-            yield return PickUpTheLipTube();
-            yield return ExpectStep(ProgressionKeys.NextBayWake, "the chasm is seen: the bay waits for the tower");
-            yield return BackToTheGarageForTheTransformer(garage);
-            yield return TheBaySleepsUntilTheTowerWakesIt();
-            yield return BuyTowerLevel(2);
-            yield return ExpectStep(ProgressionKeys.NextBay, "the bay has power: the turntable is waiting");
-            yield return ChargeAtTheDock("home with the transformer");
-            yield return RideUpToDecodeHoverJump();
-            yield return BuyHoverJumpAtTheBench();
-            yield return ExpectStep(ProgressionKeys.NextPowerPart, "a kit is fitted: only the targets speak now");
-            yield return CraftTheCargoCradle();
-            yield return Excavate(garage, walkman);
-            yield return StowInTheCradle(walkman);
-            yield return CarryHomeInTheCradle(garage, walkman);
-            yield return ChargeAtTheDock("before the leap");
-            yield return FirstLeap();
-            yield return DriveToTheCanyon();
-            yield return LeapTheChasm();
-            yield return FindBell();
-            yield return GatherBellsParts();
-            yield return RepairBell();
-            yield return HomeByTheExit();
-            yield return ChargeAtTheDock("home from the canyon");
-            yield return TurnBellsDial();
-            yield return FollowBellsSignal();
-            yield return ExpectStep(ProgressionKeys.NextPowerPart, "Bell is home: the tower still needs its last part");
-            Assert.IsTrue(_gameplay.TowerParts.NeedsPart(Tower, 3), "level 3 waits for the relay spare");
+            yield return StandInSalvage();
             Assert.AreEqual(0, _gameplay.Recovery.LitLamps(RecoveryTarget.Link), "no chain mast is lit yet");
             yield return RestoreTheMoundRelay();
             yield return Until(() => _gameplay.Recovery.LitLamps(RecoveryTarget.Link) == 1, 2f,
                 "the mound mast lights the Link row's first lamp: Link begins");
             Assert.AreEqual(TechNodeState.Built, _gameplay.Tech.StateOf(TechNodeId.RelayNetwork));
+            yield return ChargeOnTheRing(0);
+            yield return ToTheRunUp();
+            yield return LookAcrossTheChasm();
+            Lesson("the chasm lip", 0.3f, 0.45f);
+            yield return PickUpTheLipTube();
+            yield return ExpectStep(ProgressionKeys.NextBayWake, "the chasm is seen: the bay waits for the tower");
+            yield return RestoreTheMouthRelay();
+            yield return ChargeOnTheRing(2);
+            yield return HopFrom(WorldAnchorIds.RelayPrefix + 2, StationReach.HomeId);
+            yield return RideUpToDecodeTheTubes();
+            yield return ChargeAtTheDock("home from the mouth relay");
+            yield return BackToTheGarageForTheTransformer(garage);
+            yield return TheBaySleepsUntilTheTowerWakesIt();
+            yield return BuyTowerLevel(2);
+            yield return ExpectStep(ProgressionKeys.NextBay, "the bay has power: the turntable is waiting");
+            yield return ChargeAtTheDock("home with the transformer");
+            yield return BuyHoverJumpAtTheBench();
+            yield return ExpectStep(ProgressionKeys.NextPowerPart, "a kit is fitted: only the targets speak now");
+            yield return CraftTheCargoCradle();
+            yield return CraftTheCellPack();
+            yield return Excavate(garage, walkman);
+            yield return StowInTheCradle(walkman);
+            yield return CarryHomeInTheCradle(garage, walkman);
+            yield return ChargeAtTheDock("before the leap");
+            yield return FirstLeap();
+            yield return HopFrom(StationReach.HomeId, WorldAnchorIds.RelayPrefix + 2);
+            yield return ChargeOnTheRing(2);
+            yield return ToTheRunUp();
+            yield return LeapTheChasm();
+            yield return FindBell();
+            yield return RestoreTheTerminusRelay();
+            yield return ChargeOnTheRing(3);
+            yield return GatherBellsParts();
+            yield return RepairBell();
+            yield return HomeFromTheTerminus();
+            yield return ChargeAtTheDock("home from the canyon");
+            yield return TurnBellsDial();
+            yield return FollowBellsSignal();
+            yield return ExpectStep(ProgressionKeys.NextPowerPart, "Bell is home: the tower still needs its last part");
+            Assert.IsTrue(_gameplay.TowerParts.NeedsPart(Tower, 3), "level 3 waits for the relay spare");
+            yield return ToTheMoundRelay();
             Assert.IsFalse(_gameplay.Power.HasReached(BasePowerStage.Chart), "the chart stays dark before its step");
             yield return PickUpTheRelaySpare();
             yield return DriveOutInReach();
@@ -446,7 +473,8 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         /// <summary>
         /// What each step asks of the battery (docs/features/M3-20 §3): metres on the ground and seconds of beam work,
-        /// counted every frame for the report's tuning columns (a radio-hop's jump is not driving).
+        /// counted every frame for the report's tuning columns (a radio-hop's jump is not driving), and the lowest charge
+        /// within the step (a charger later in it hides a dip from its end charge).
         /// </summary>
         private IEnumerator TrackTheBattery(IBeamStatus beam)
         {
@@ -459,6 +487,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 last = now;
                 _stepMetres += _rover.IsGrounded && metres < HopJump ? metres : 0f;
                 _stepBeam += beam.Working ? Time.deltaTime : 0f;
+                _stepLowest = Mathf.Min(_stepLowest, _gameplay.Battery.Model.Charge01);
             }
         }
 
@@ -606,7 +635,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         private IEnumerator SalvageTheDepot(SalvageSite site)
         {
             Begin();
-            yield return CutPieces(site, "02");
+            yield return CutPieces(site, "02", int.MaxValue);
             int cuts = _cuts;
             Assert.IsTrue(site.IsPickedClean, "every piece of the depot is salvaged");
             Assert.IsTrue(site.Root.Find("Skeleton").gameObject.activeSelf, "its weathered skeleton stays");
@@ -629,19 +658,19 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// Cuts every piece of <paramref name="site"/> the beam can cut (drag pieces wait for the tether), capturing
         /// the first cut as <paramref name="capture"/>; the cuts started are left in <see cref="_cuts"/>.
         /// </summary>
-        private IEnumerator CutPieces(SalvageSite site, string capture)
+        private IEnumerator CutPieces(SalvageSite site, string capture, int most)
         {
             SalvageField salvage = _gameplay.Salvage;
             int started = _events.SalvageCutStarted.Count;
             int cuts = started;
             bool captured = false;
-            for (int pass = 0; pass < 2 && !site.IsPickedClean; pass++)
+            for (int pass = 0; pass < 2 && !site.IsPickedClean && cuts - started < most; pass++)
             {
-                foreach (SalvagePiece piece in site.Pieces)
+                foreach (SalvagePiece piece in InSweepOrder(site))
                 {
-                    if (!piece.IsCuttable)
+                    if (cuts - started >= most)
                     {
-                        continue;
+                        break;
                     }
 
                     yield return FacePiece(site, piece);
@@ -683,15 +712,61 @@ namespace MoonProject.Gameplay.PlayModeTests
             _cuts = cuts - started;
         }
 
-        /// <summary>The garage on the way to the duck: its wiring pays the tower's second level (M3-16 P9).</summary>
-        private IEnumerator SalvageTheGarage(SalvageSite site)
+        /// <summary>
+        /// The wreck's cuttable pieces in the order one sweep round it reaches them from where 07 stands, turning the
+        /// shorter way, as a player works round a wreck rather than criss-crossing it.
+        /// </summary>
+        private List<SalvagePiece> InSweepOrder(SalvageSite site)
+        {
+            Vector3 centre = Flat(site.Position);
+            float here = Bearing(_rover.Position - centre);
+            var pieces = new List<SalvagePiece>();
+            var offsets = new List<float>();
+            float lowest = 360f;
+            float highest = 0f;
+            foreach (SalvagePiece piece in site.Pieces)
+            {
+                if (!piece.IsCuttable)
+                {
+                    continue;
+                }
+
+                float offset = Mathf.Repeat(Bearing(piece.CutPosition - centre) - here, 360f);
+                pieces.Add(piece);
+                offsets.Add(offset);
+                lowest = Mathf.Min(lowest, offset);
+                highest = Mathf.Max(highest, offset);
+            }
+
+            bool clockwise = highest <= 360f - lowest;
+            var order = new List<int>();
+            for (int i = 0; i < pieces.Count; i++)
+            {
+                order.Add(i);
+            }
+
+            order.Sort((a, b) => clockwise ? offsets[a].CompareTo(offsets[b]) : offsets[b].CompareTo(offsets[a]));
+            var swept = new List<SalvagePiece>();
+            foreach (int i in order)
+            {
+                swept.Add(pieces[i]);
+            }
+
+            return swept;
+        }
+
+        /// <summary>
+        /// The garage on the way to the duck: its wiring pays the tower's second level (M3-16 P9). Up to
+        /// <paramref name="most"/> cuts a trip, so each trip out from the dock and back fits a charge.
+        /// </summary>
+        private IEnumerator SalvageTheGarage(SalvageSite site, int most, string what)
         {
             Begin();
             yield return DriveToSite(site);
-            yield return CutPieces(site, "11");
+            yield return CutPieces(site, "11", most);
             IMaterialStock stock = _gameplay.Materials;
-            End($"Salvage {site.Id}", $"{_cuts} cuts; stock metal {stock.Metal}, wiring {stock.Wiring}, " +
-                                      $"optics {stock.Optics}");
+            End($"Salvage {site.Id}: {what}", $"{_cuts} cuts; stock metal {stock.Metal}, wiring " +
+                                             $"{stock.Wiring}, optics {stock.Optics}");
         }
 
         /// <summary>Circles the wreck to the piece's side, lines up in front of its cut and eases in.</summary>
@@ -872,27 +947,30 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// Home with the bay awake: up the belly lift with Hover-Jump's tube on 07's back. The turntable turns to the
-        /// reader, which decodes it and sends the hand-off pulse to the bay; then back down (M3-19 §5, M3-21 §4).
+        /// Home from the mouth relay by radio-hop: up the belly lift with Hover-Jump's tube from the lip and Cell Pack
+        /// II's from relay.2's cabinet on 07's back. The turntable turns to the reader, which decodes one, then the
+        /// other, sending each hand-off pulse to the bay (still asleep); then back down (M3-19 §5, M3-20, M3-21 §4).
         /// </summary>
-        private IEnumerator RideUpToDecodeHoverJump()
+        private IEnumerator RideUpToDecodeTheTubes()
         {
             Begin();
             LiftStation lift = _gameplay.Lift;
             int decoded = 0;
             using IDisposable finds = _context.Events.Subscribe<FindDecoded>(find =>
-                decoded += find.KitId == HoverJump ? 1 : 0);
-            yield return DriveOntoTheLift("the belly lift's platform, the tube on 07's back");
+                decoded += find.KitId == HoverJump || find.KitId == CellPack ? 1 : 0);
+            yield return DriveOntoTheLift("the belly lift's platform, the tubes on 07's back");
             yield return Until(() => lift.Phase == LiftPhase.Inside, LiftPhaseTimeout,
                 "resting on the platform carries 07 up into the lab");
-            yield return Until(() => decoded > 0, LabTurnTimeout + ReaderTimeout,
-                "the turntable turns to the reader, whose beam feeds Hover-Jump's tube in to decode");
+            yield return Until(() => decoded > 1, LabTurnTimeout + 2f * ReaderTimeout,
+                "the turntable turns to the reader, whose beam feeds both tubes in to decode, one after the other");
             Assert.IsTrue(_gameplay.Blueprints.IsPinned(HoverJump), "decoded: the bay can build Hover-Jump");
+            Assert.IsTrue(_gameplay.Blueprints.IsPinned(CellPack), "decoded: the bay can build Cell Pack II");
             yield return null;
             Assert.AreEqual(TechNodeState.Decoded, _gameplay.Tech.StateOf(TechNodeId.HoverJump),
                 "its sheet is on the tech board");
+            Assert.AreEqual(TechNodeState.Decoded, _gameplay.Tech.StateOf(TechNodeId.CellPackII));
             yield return RideDown("08c-down-from-the-reader");
-            End("Ride up to decode Hover-Jump's tube", "the reader decoded it; the hand-off ran to the bay");
+            End("Ride up to decode the two tubes", "the reader decoded both; the hand-offs ran to the bay");
         }
 
         /// <summary>Having seen the chasm, back to the garage: Tilly spots the transformer (P1, L2).</summary>
@@ -1168,6 +1246,20 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// Reel the relic in close, pull it straight out from the wreck and round it, wide, to its home side; then home
         /// to the apron in front of the belly lift.
         /// </summary>
+        /// <summary>The towed relic is still on the tether; if not, where and how it let go.</summary>
+        private void AssertTowHolds(string where)
+        {
+            if (_events.TetherReleased.Count == 0)
+            {
+                return;
+            }
+
+            TetherReleased released = _events.TetherReleased[0].Value;
+            Assert.Fail($"the tether holds all the way home, but it let go {where} " +
+                        $"({(released.Snapped ? "snapped" : "released")} at {released.Position}, 07 at " +
+                        $"{_rover.Position})");
+        }
+
         private IEnumerator TowHome(SalvageSite site, Relic relic)
         {
             Begin();
@@ -1184,19 +1276,19 @@ namespace MoonProject.Gameplay.PlayModeTests
             LiftStation lift = _gameplay.Lift;
             Vector3 stand = Flat(lift.RideSpot - Flat(lift.RideHeading).normalized * LiftLineUp);
             float distance = SurfaceRules.HorizontalDistance(_rover.Position, stand);
-            yield return DriveTo(_context.Get<IWorldLayout>().BasePosition, PadArrival, 0.8f, 60f,
-                "the base pad, clear of the lander");
+            Vector3 basePad = _context.Get<IWorldLayout>().BasePosition;
+            Vector3 outside = Flat(basePad) + Flat(_rover.Position - basePad).normalized * TowReelIn;
+            yield return DriveTo(outside, WaypointArrive, 0.8f, 60f, "open ground just out from home");
+            AssertTowHolds("on the long tow across the basin");
+            yield return Reel(1f, ReelSeconds);
+            yield return DriveTo(basePad, PadArrival, 0.6f, 60f, "the base pad, clear of the lander");
+            AssertTowHolds("on the way to the base pad");
             _pilot.GoTo(stand, 2.5f, 0.6f);
             float deadline = Time.time + 90f;
             bool captured = false;
             while ((!_pilot.Arrived || lift.Phase != LiftPhase.Called) && Time.time < deadline)
             {
-                Assert.AreEqual(0, _events.TetherReleased.Count, "the tether holds all the way home");
-                if (_pilot.Distance < ReelFrom)
-                {
-                    Set(_mouse.scroll, new Vector2(0f, 1f));
-                }
-
+                AssertTowHolds("on the last stretch to the belly lift");
                 if (!captured && _pilot.Distance < distance * 0.5f)
                 {
                     Capture("04-towing-home");
@@ -1482,24 +1574,24 @@ namespace MoonProject.Gameplay.PlayModeTests
             End($"Drive home with Tilly ({distance:F0} m)", $"she stayed within {farthest:F0} m of 07, then greeted");
         }
 
-        private IEnumerator TillySpotsOnTheNextTrip()
+        /// <summary>
+        /// Out toward the garage, the route's next trip: Tilly spots it on the way, unless it already shows on the
+        /// sonar (a ping, or Tilly on the way home, can find it first on the reshaped basin).
+        /// </summary>
+        private IEnumerator TillySpotsOnTheNextTrip(SalvageSite undiscovered)
         {
             Begin();
-            SalvageSite undiscovered = null;
             Vector3 home = _context.Get<IWorldLayout>().BasePosition;
-            var abilities = _context.Get<IRoverAbilities>();
-            foreach (SalvageSite site in _gameplay.Salvage.Sites)
+            Assert.IsNotNull(undiscovered, "the garage stands out on the basin");
+            Assert.IsTrue(undiscovered.AnswersSonar, "the garage answers the sonar");
+            Assert.IsTrue(undiscovered.Gate.IsOpen(_context.Get<IRoverAbilities>()), "the garage is open to 07");
+            if (undiscovered.Discovered)
             {
-                bool hidden = site.AnswersSonar && !site.Discovered && site.Gate.IsOpen(abilities);
-                if (hidden && (undiscovered == null ||
-                               SurfaceRules.HorizontalDistance(site.Position, home) <
-                               SurfaceRules.HorizontalDistance(undiscovered.Position, home)))
-                {
-                    undiscovered = site;
-                }
+                End("Next trip: the garage is already on the sonar",
+                    Spotted(undiscovered) ? "Tilly spotted it on the way home" : "a ping reached it");
+                yield break;
             }
 
-            Assert.IsNotNull(undiscovered, "a salvage site is still waiting to be found");
             Vector3 toSite = undiscovered.Position - home;
             toSite.y = 0f;
             Vector3 stand = undiscovered.Position - toSite.normalized * SpotStandOff;
@@ -1765,20 +1857,6 @@ namespace MoonProject.Gameplay.PlayModeTests
             End("First Hover-Jump on the base pad", $"strength {strength:F2}, apex {apex:F1} m, hang {hang:F1} s");
         }
 
-        private IEnumerator DriveToTheCanyon()
-        {
-            Begin();
-            WorldAnchor lip = Anchor(WorldAnchorIds.CanyonLip);
-            Vector3 runStart = lip.Position - lip.Forward * RunUp;
-            yield return DriveTo(_context.Get<IWorldLayout>().BasePosition, PadArrival, 0.8f, 60f, "the base pad");
-            Review(_context.Get<IWorldLayout>().BasePosition + Vector3.up * 3f, lip.Position + Vector3.up * 2f,
-                "16-toward-the-canyon");
-            float distance = SurfaceRules.HorizontalDistance(_rover.Position, runStart);
-            yield return DriveTo(runStart, 2f, 1f, 90f, "the run-up on the mouth lane");
-            Capture("16b-at-the-run-up");
-            End($"Drive to the canyon ({distance:F0} m)", "up the mouth lane to the run-up");
-        }
-
         private IEnumerator LeapTheChasm()
         {
             Begin();
@@ -1913,31 +1991,6 @@ namespace MoonProject.Gameplay.PlayModeTests
                                $"{sequence.Duration - sequence.StitchEnd:F1} s");
         }
 
-        private IEnumerator HomeByTheExit()
-        {
-            Begin();
-            Friend bell = _gameplay.Friends.Find(BellId);
-            WorldAnchor exit = Anchor(WorldAnchorIds.CanyonExit);
-            float travelled = 0f;
-            yield return DriveAlong(exit.Position, "the top of the way out", value => travelled = value);
-            Vector3 below = exit.Position + exit.Forward * BelowExit;
-            yield return DriveTo(new Vector3(below.x, 0f, below.z), 2f, 0.6f, 30f, "the basin, down the exit step");
-            Vector3 home = _context.Get<IWorldLayout>().BasePosition;
-            travelled += SurfaceRules.HorizontalDistance(_rover.Position, home);
-            int greetings = CountGreetings(BellId);
-            yield return DriveTo(home, PadArrival, 1f, 120f, "home");
-            Assert.IsTrue(bell.IsHome, "Bell got home before 07, unseen");
-            Assert.Less(Vector3.Distance(bell.Position, _gameplay.Friends.Find(BellId).Home.position), 0.01f,
-                "in her corner by the radio tower");
-            yield return Until(() => CountGreetings(BellId) > greetings, _gameplay.Friends.BellTuning.WakeDuration + 6f,
-                "she wakes and greets 07 home");
-            Assert.IsTrue(Ticker("ticker.bell.home"), "Bell got home before you");
-            Transform corner = bell.Home;
-            Review(corner.position + corner.forward * 4.5f + corner.right * 1.5f + Vector3.up * 1.8f,
-                corner.position + Vector3.up * 0.8f, "25-bell-home");
-            End($"Drive home by the exit ({travelled:F0} m)", "Bell was already home, and greeted 07");
-        }
-
         private IEnumerator TurnBellsDial()
         {
             Begin();
@@ -2016,6 +2069,211 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// takes (still in the stock from the depot), a hold of Interact at its foot, and the whole beat until it comes
         /// online.
         /// </summary>
+        /// <summary>
+        /// The basin's other salvage, not driven (the drill, the Kestrel's trail): what the masts out to the
+        /// canyon (M3-06's escalating recipes) and Cell Pack II take, on top of the depot and the garage, as a player
+        /// gathers it between trips.
+        /// </summary>
+        private IEnumerator StandInSalvage()
+        {
+            Begin();
+            RelayTuning tuning = _gameplay.Relays.Tuning;
+            Recipe pack = _gameplay.Upgrades.Find(CellPack).Levels[0].Recipe;
+            Recipe need = tuning.CostAfter(0).Plus(tuning.CostAfter(1)).Plus(tuning.CostAfter(2)).Plus(pack);
+            _gameplay.Materials.Add(SalvageMaterial.Metal, need.Metal);
+            _gameplay.Materials.Add(SalvageMaterial.Wiring, need.Wiring);
+            _gameplay.Materials.Add(SalvageMaterial.Optics, need.Optics);
+            yield return null;
+            End("The drill's and the Kestrel's salvage (not driven)", $"{need} for three masts and Cell Pack II");
+        }
+
+        /// <summary>
+        /// Onto a lit mast's 4 m charge ring at walking pace, and rest until the cells (and drums) are full
+        /// (docs/features/M3-20 "Chargers").
+        /// </summary>
+        private IEnumerator ChargeOnTheRing(int index)
+        {
+            Begin();
+            RelayMast mast = _gameplay.Relays.Masts[index];
+            BatteryModel battery = _gameplay.Battery.Model;
+            float before = battery.Charge01;
+            yield return DriveTo(Flat(mast.Anchor.Position), PadArrive, 0.35f, 60f, mast.Id + "'s charge ring");
+            yield return Until(() => _rover.Speed < StopSpeed, 6f, "07 stops on the ring");
+            yield return Until(() => battery.FullCells == battery.Cells && !battery.IsCharging,
+                _gameplay.Battery.Tuning.MastFill + 3f, "the ring fills the cells");
+            End($"Charge on {mast.Id}'s ring", string.Format(CultureInfo.InvariantCulture, "{0:P0} -> {1:P0}",
+                before, battery.Charge01));
+        }
+
+        /// <summary>From wherever 07 is (a mast's pad by the mouth) up the mouth lane to the chasm's run-up.</summary>
+        private IEnumerator ToTheRunUp()
+        {
+            Begin();
+            WorldAnchor lip = Anchor(WorldAnchorIds.CanyonLip);
+            Vector3 runStart = lip.Position - lip.Forward * RunUp;
+            float distance = SurfaceRules.HorizontalDistance(_rover.Position, runStart);
+            yield return DriveTo(runStart, 2f, 1f, 90f, "the run-up on the mouth lane");
+            Capture("16b-at-the-run-up");
+            End($"To the chasm's run-up ({distance:F0} m)", "up the mouth lane");
+        }
+
+        /// <summary>A radio-hop from node <paramref name="from"/>'s pad (home or a lit mast) to node <paramref name="to"/>.</summary>
+        private IEnumerator HopFrom(string from, string to)
+        {
+            Begin();
+            yield return HopBetween(from, to);
+            End($"Radio-hop from {from} to {to}", "a free hop between lit pads");
+        }
+
+        private IEnumerator HopBetween(string from, string to)
+        {
+            if (from == StationReach.HomeId)
+            {
+                ChargingDock dock = _gameplay.Home.Dock;
+                Vector3 facing = Flat(dock.Rotation * Vector3.forward).normalized;
+                yield return DriveTo(Flat(dock.Position) - facing * DockApproach, 1.5f, 0.6f, 60f,
+                    "the front of the charging dock, home's hop pad");
+                yield return DriveTo(Flat(dock.Position), DockParkRadius, 0.35f, 30f, "the charging dock");
+            }
+            else
+            {
+                StationReach reach = _gameplay.Relays.Reach;
+                yield return DriveTo(Flat(reach.Position(reach.IndexOf(from))), PadArrive, 0.5f, 90f,
+                    from + "'s pad");
+            }
+
+            yield return Hop(_context.Get<IRadioHop>(), to);
+        }
+
+        /// <summary>
+        /// relay.2 by the canyon's mouth, the second mast: its part, the stitch, and as it straightens its service
+        /// cabinet swings open on Cell Pack II's blueprint tube (docs/features/M3-20 §6).
+        /// </summary>
+        private IEnumerator RestoreTheMouthRelay()
+        {
+            int found = _events.BlueprintFound.Count;
+            yield return RestoreRelay(2, "the mouth relay");
+            yield return Until(() => _events.BlueprintFound.Count > found, 4f,
+                "the mast's cabinet gives Cell Pack II's tube");
+            Assert.AreEqual(CellPack, _events.BlueprintFound[_events.BlueprintFound.Count - 1].Value.KitId);
+        }
+
+        /// <summary>relay.3 at the terminus, beside Bell's wall: a charger at the canyon's far end.</summary>
+        private IEnumerator RestoreTheTerminusRelay()
+        {
+            yield return RestoreRelay(3, "the terminus relay");
+        }
+
+        /// <summary>A mast's part, then the stitch at its foot; done once it comes online, linked home.</summary>
+        private IEnumerator RestoreRelay(int index, string name)
+        {
+            RelayField relays = _gameplay.Relays;
+            RelayMast mast = relays.Masts[index];
+            Recipe recipe = relays.NextCost;
+            Assert.IsTrue(_gameplay.Materials.Has(recipe), $"the stock covers {name}");
+            Begin();
+            int online = _events.RelayRestored.Count;
+            float partAway = SurfaceRules.HorizontalDistance(mast.PartRest, mast.Anchor.Position);
+            yield return DriveTo(Flat(mast.PartRest), 1.5f, 0.7f, 120f, name + "'s part");
+            yield return Until(() => mast.PartState == RelayPartState.Held, 8f, "the relay part flies into 07");
+            yield return AroundToTheFront(mast, name);
+            Vector3 foot = mast.Broken.PartSocket.position + mast.Anchor.Forward * RelayFoot;
+            yield return DriveTo(Flat(foot), 1.2f, 0.5f, 60f, name + "'s foot");
+            yield return Until(() => _gameplay.Hints.TryGet(InteractionKind.Restore, out InteractionHint hint) &&
+                                     hint.Ready, 4f, "the restore prompt is ready");
+            Press(_keyboard.eKey);
+            yield return Until(() => mast.Restoring, 4f, "holding Interact begins the restoration");
+            Release(_keyboard.eKey);
+            RelayBeat beat = RelayBeat.For(relays.Tuning);
+            yield return Until(() => _events.RelayRestored.Count > online, beat.Duration + 2f,
+                name + " comes online, linked home");
+            Assert.AreEqual(mast.Id, _events.RelayRestored[_events.RelayRestored.Count - 1].Value.RelayId);
+            End($"Restore {name} ({mast.Id})", $"recipe {recipe}, its part {partAway:F0} m from the mast");
+        }
+
+        /// <summary>
+        /// From behind a mast (its part lay there), 07 swings out to the mast's side, on its own side of it, and on round
+        /// to the front of the pad, clear of the footing, the cabinet and the guy wires.
+        /// </summary>
+        private IEnumerator AroundToTheFront(RelayMast mast, string name)
+        {
+            Vector3 forward = Flat(mast.Anchor.Forward).normalized;
+            Vector3 fromMast = Flat(_rover.Position - mast.Anchor.Position);
+            if (Vector3.Dot(fromMast, forward) >= RelayFoot)
+            {
+                yield break;
+            }
+
+            Vector3 side = Vector3.Cross(Vector3.up, forward);
+            side *= Vector3.Dot(fromMast, side) < 0f ? -1f : 1f;
+            yield return DriveTo(Flat(mast.Anchor.Position + side * RelayAside), WaypointArrive, CanyonThrottle, 60f,
+                "the side of " + name);
+            yield return DriveTo(Flat(mast.Anchor.Position + (side + forward) * RelayAside * 0.5f), WaypointArrive,
+                CanyonThrottle, 60f, "the front of " + name + "'s pad");
+        }
+
+        /// <summary>
+        /// Back into the bay for Cell Pack II: the spine set on 07's back, two more lamps lit; the turntable shows it
+        /// turned to the open front, and 07 drives straight out.
+        /// </summary>
+        private IEnumerator CraftTheCellPack()
+        {
+            Begin();
+            Workshop bench = _gameplay.Workshop;
+            BatteryModel battery = _gameplay.Battery.Model;
+            yield return Until(() => _gameplay.Blueprints.IsDrawn(CellPack),
+                2f * _gameplay.Progression.Tuning.PlotterDrawSeconds + 3f, "the plotter draws Cell Pack II's sheet");
+            yield return DriveIntoTheBay(bench);
+            yield return Until(() => bench.Occupied, 3f, "07 is parked on the bay's turntable");
+            Assert.AreEqual(CellPack, _gameplay.Shop.StationUpgrade.Id, "the bay offers Cell Pack II");
+            int purchases = _events.UpgradePurchased.Count;
+            Press(_keyboard.eKey);
+            yield return Until(() => _events.UpgradePurchased.Count > purchases, 15f, "holding confirm crafts it");
+            Release(_keyboard.eKey);
+            Assert.IsTrue(_context.Get<IRoverAbilities>().Has(RoverAbility.CellPack));
+            yield return Until(() => Fitted(CellPack), BayFitTimeout, "an arm sets the battery spine on 07");
+            Assert.AreEqual(_gameplay.Battery.Tuning.CellPackCells, battery.Cells, "two more cells, arriving full");
+            yield return new WaitForSeconds(1.5f);
+            Vector3 back = -Flat(_rover.Rotation * Vector3.forward).normalized;
+            Review(_rover.Position + back * 5f + Vector3.up * 2.5f, _rover.Position + Vector3.up, "13h-battery-spine");
+            yield return Until(() => !bench.Feeding, 3f, "the bay has fitted the spine");
+            Assert.Greater(Vector3.Dot(Flat(_rover.Rotation * Vector3.forward).normalized,
+                Flat(bench.BayForward).normalized), 0.9f, "the turntable leaves 07 facing out of the open front");
+            yield return DriveTo(Flat(bench.PadCentre) + Flat(bench.BayForward).normalized * BayApproach, 1.5f,
+                BayThrottle, 20f, "out of the bay's open front");
+            End("Craft Cell Pack II in the bay", $"{battery.Cells} cells, {battery.Charge01:P0}");
+        }
+
+        /// <summary>
+        /// Bell is stitched: back to the terminus relay's lit pad and hop home; 07 rolls out to look over the basin, its
+        /// back to the tower and Bell's corner, and Bell, unwatched, makes her own way home and greets 07 there.
+        /// </summary>
+        private IEnumerator HomeFromTheTerminus()
+        {
+            Begin();
+            Friend bell = _gameplay.Friends.Find(BellId);
+            int greetings = CountGreetings(BellId);
+            yield return HopBetween(WorldAnchorIds.RelayPrefix + 3, StationReach.HomeId);
+            Vector3 dock = Flat(_rover.Position);
+            Vector3 away = Flat(dock - _gameplay.Tower.PadCentre).normalized;
+            yield return DriveTo(dock + away * LookOutDistance, WaypointArrive, 0.5f, 30f, "a look over the basin");
+            yield return Until(() => bell.IsHome, _gameplay.Friends.BellTuning.WakeDuration + 60f,
+                "Bell walks home by the exit on her own");
+            yield return Until(() => CountGreetings(BellId) > greetings, _gameplay.Friends.BellTuning.WakeDuration + 6f,
+                "she greets 07 home");
+            End("Home from the terminus by radio-hop", "Bell walked home by herself and greeted 07");
+        }
+
+        /// <summary>Out to the mound relay's pad, where level 3's relay spare waits (it lit early on the way out).</summary>
+        private IEnumerator ToTheMoundRelay()
+        {
+            Begin();
+            RelayMast mast = _gameplay.Relays.Masts[0];
+            yield return DriveTo(Flat(mast.Anchor.Position + mast.Anchor.Forward * RelayFoot), WaypointArrive,
+                CanyonThrottle, 90f, "the front of the mound relay's pad");
+            End("Out to the mound relay", "its spare waits on the pad");
+        }
+
         private IEnumerator RestoreTheMoundRelay()
         {
             RelayField relays = _gameplay.Relays;
@@ -2550,6 +2808,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             _stepStart = Time.time;
             _stepMetres = 0f;
             _stepBeam = 0f;
+            _stepLowest = _gameplay != null ? _gameplay.Battery.Model.Charge01 : 1f;
         }
 
         private void End(string step, string notes)
@@ -2558,8 +2817,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             float charge = _gameplay != null ? _gameplay.Battery.Model.Charge01 : 1f;
             _steps.Add((step, seconds, notes, new Vector3(charge, _stepMetres, _stepBeam)));
             Debug.Log(string.Format(CultureInfo.InvariantCulture,
-                "[playthrough] {0}: {1:F1} s ({2}); charge {3:P0}, {4:F0} m on the ground, {5:F1} s of beam", step,
-                seconds, notes, charge, _stepMetres, _stepBeam));
+                "[playthrough] {0}: {1:F1} s ({2}); charge {3:P0} (lowest {6:P0}), {4:F0} m on the ground, {5:F1} s " +
+                "of beam", step, seconds, notes, charge, _stepMetres, _stepBeam, Mathf.Min(_stepLowest, charge)));
         }
 
         private void Capture(string name)

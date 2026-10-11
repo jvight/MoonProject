@@ -9,5 +9,8 @@ namespace MoonProject.Core
         WideSonar = 3,
         WarmHeadlamp = 4,
         BoostCoils = 5,
+
+        /// <summary>Cell Pack II: two more cells (4 to 6) and the battery spine on 07's back (docs/features/M3-20).</summary>
+        CellPack = 6,
     }
 }

@@ -17,6 +17,7 @@ namespace MoonProject.Art.Editor
         public const string LampBarName = "Kit_LampBar";
         public const string CapacitorDrumName = "Kit_CapacitorDrum";
         public const string CargoRackName = "Kit_CargoRack";
+        public const string BatterySpineName = "Kit_BatterySpine";
         public const string LampPrefix = "Lamp_";
         public const string DrumGlowName = "Glow";
         public const string RelicSeatName = "RelicSeat";
@@ -29,6 +30,7 @@ namespace MoonProject.Art.Editor
             ModelPrefabWriter.Write(CreateLampBar(), ArtPaths.RoverFolder, material, glowOff);
             ModelPrefabWriter.Write(CreateCapacitorDrum(), ArtPaths.RoverFolder, material, glowOff);
             ModelPrefabWriter.Write(CreateCargoRack(), ArtPaths.RoverFolder, material);
+            ModelPrefabWriter.Write(CreateBatterySpine(), ArtPaths.RoverFolder, material);
             AssetDatabase.SaveAssets();
         }
 
@@ -53,6 +55,13 @@ namespace MoonProject.Art.Editor
             root.Add(new ModelNode(DrumGlowName, RoverKitMeshes.DrumCentre, Quaternion.identity,
                 new ModelMesh(CapacitorDrumName + "_Glow", RoverKitMeshes.DrumGlow()), ModelMaterial.PaletteGlowOff));
             return root;
+        }
+
+        /// <summary>Cell Pack II's battery spine on SpineSocket (M3-20): two cream cells on a rail, brass bands.</summary>
+        public static ModelNode CreateBatterySpine()
+        {
+            return new ModelNode(BatterySpineName, Vector3.zero,
+                new ModelMesh(BatterySpineName, RoverSpineMeshes.Spine()));
         }
 
         public static ModelNode CreateCargoRack()

@@ -134,6 +134,8 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         public UpgradeDefinition BoostCoilsUpgrade { get; private set; }
 
+        public UpgradeDefinition CellPackUpgrade { get; private set; }
+
         public FriendTuning FriendTuning { get; private set; }
 
         public FriendDefinition Tilly { get; private set; }
@@ -338,6 +340,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             CargoCradleUpgrade = RoverKit("rover.cargo_cradle", new Recipe(4, 0, 0), RoverAbility.CargoCradle);
             WarmHeadlampUpgrade = RoverKit("rover.warm_headlamp", new Recipe(1, 0, 3), RoverAbility.WarmHeadlamp);
             BoostCoilsUpgrade = RoverKit("rover.boost_coils", new Recipe(1, 2, 1), RoverAbility.BoostCoils);
+            CellPackUpgrade = RoverKit("rover.cell_pack", new Recipe(3, 0, 2), RoverAbility.CellPack);
 
             var relicCatalog = Asset<RelicCatalog>();
             var definitions = new RelicDefinition[RelicIds.Length];
@@ -408,6 +411,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Gameplay.Wire(visuals, GlintTuning, new[]
                 {
                     RadioTowerUpgrade, HoverJumpUpgrade, CargoCradleUpgrade, WarmHeadlampUpgrade, BoostCoilsUpgrade,
+                    CellPackUpgrade,
                 }, salvage, relics, sonar, excavation, tether, home, cradle, tower, workshop, friends, cassettes, logs,
                 signals, shelf, relays, progression, plotter, Lift);
             battery.Wire(Asset<BatteryTuning>());
@@ -566,8 +570,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             Transform sign = Named(Block(bay, new Vector3(0f, 4.02f, 1.92f), new Vector3(0.8f, 0.42f, 0.04f)),
                 "BaySign");
             workshop.Wire(WorkshopTuning,
-                new[] { HoverJumpUpgrade, CargoCradleUpgrade, WarmHeadlampUpgrade, BoostCoilsUpgrade }, bay,
-                turntable, mouth, lamps, sign.GetComponent<Renderer>(), sockets);
+                new[] { HoverJumpUpgrade, CargoCradleUpgrade, WarmHeadlampUpgrade, BoostCoilsUpgrade, CellPackUpgrade },
+                bay, turntable, mouth, lamps, sign.GetComponent<Renderer>(), sockets);
             workshop.WireArms(armYaws, uppers, lowers, tips, floorLift, floorTip);
             Transform plotterRoot = Node("Plotter", bay, new Vector3(-2.2f, 0f, -1.2f));
             Transform carriage = Node("PenCarriage", plotterRoot, new Vector3(0f, 0.9f, 0f));
@@ -577,7 +581,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Transform lamp = Block(plotterRoot, new Vector3(0.6f, 1f, 0.17f), new Vector3(0.05f, 0.05f, 0.05f));
             lamp.name = "PlotterLamp";
             Transform board = Node("Blueprints", bay, new Vector3(-2.2f, 1.6f, -1.6f));
-            foreach (string ability in new[] { "HoverJump", "CargoCradle", "WarmHeadlamp", "BoostCoils" })
+            foreach (string ability in new[] { "HoverJump", "CargoCradle", "WarmHeadlamp", "BoostCoils", "CellPack" })
             {
                 Block(board, Vector3.zero, new Vector3(0.3f, 0.4f, 0.01f)).name = "Blueprint_" + ability;
             }

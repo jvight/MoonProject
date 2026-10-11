@@ -20,17 +20,17 @@ namespace MoonProject.Art.Tests
             "Neck/Head/Weather_Paint", "Neck/Head/Weather_Dust",
             "SolarWing", "SolarWing/CellFilled", "Antenna", "Antenna/AntennaTip", "Antenna/Pennant",
             "HeadlampSocket", "CargoSocket", "DustSocket_L", "DustSocket_R", "CoilSocket", "DrumSocket_L",
-            "DrumSocket_R", "TubeSocket", "PartSocket",
+            "DrumSocket_R", "TubeSocket", "PartSocket", "SpineSocket",
         };
 
         private static readonly string[] EmptyNodes =
         {
             "TetherOrigin", "HeadlampSocket", "CargoSocket", "DustSocket_L", "DustSocket_R", "CoilSocket",
-            "DrumSocket_L", "DrumSocket_R", "TubeSocket", "PartSocket",
+            "DrumSocket_L", "DrumSocket_R", "TubeSocket", "PartSocket", "SpineSocket",
         };
 
-        /// <summary>Battery lamp sockets per flank (docs/features/M3-20).</summary>
-        private const int FlankLamps = 8;
+        /// <summary>The battery light bar's segments (docs/features/M3-20).</summary>
+        private const int BatteryLamps = 8;
 
         private ModelNode _rover;
 
@@ -46,14 +46,10 @@ namespace MoonProject.Art.Tests
             var paths = new List<string>();
             CollectPaths(_rover, string.Empty, paths);
             var contract = new List<string>(ContractPaths);
-            foreach (string flank in new[] { "L", "R" })
+            for (int i = 0; i < BatteryLamps; i++)
             {
-                for (int i = 0; i < FlankLamps; i++)
-                {
-                    string lamp = "Body/FlankLamp_" + flank + i;
-                    contract.Add(lamp);
-                    contract.Add(lamp + "/FlankGlass_" + flank + i);
-                }
+                contract.Add("Body/BatteryLamp_" + i);
+                contract.Add("Body/BatteryLamp_" + i + "/BatteryGlass_" + i);
             }
 
             Assert.AreEqual(RoverModelBuilder.ModelName, _rover.Name);
@@ -61,28 +57,25 @@ namespace MoonProject.Art.Tests
         }
 
         [Test]
-        public void FlankLamps_LineTheLidEdges_FrontToBack_FacingTheChaseCamera_WithGlowingGlasses()
+        public void TheBatteryBar_RunsAcrossTheLidsRearEdge_FacingTheChaseCamera_WithGlowingGlasses()
         {
-            foreach (string flank in new[] { "L", "R" })
+            float previousX = float.MinValue;
+            for (int i = 0; i < BatteryLamps; i++)
             {
-                float previousZ = float.MaxValue;
-                for (int i = 0; i < FlankLamps; i++)
-                {
-                    ModelNode lamp = _rover.GetDescendant("FlankLamp_" + flank + i);
-                    ModelNode glass = _rover.GetDescendant("FlankGlass_" + flank + i);
-                    Vector3 at = lamp.LocalPosition;
-                    Assert.AreEqual(flank == "R", at.x > 0f, $"{lamp.Name} side");
-                    Assert.That(at.y, Is.InRange(0.9f, 1f), $"{lamp.Name} sits on the lid, above the stripe");
-                    Assert.Less(at.z, previousZ, $"{lamp.Name} runs front to back");
-                    Vector3 facing = lamp.LocalRotation * Vector3.right;
-                    Assert.Greater(facing.y, 0.8f, $"{lamp.Name} faces up, where the chase camera looks down");
-                    Assert.Greater(facing.x * Mathf.Sign(at.x), 0.2f, $"{lamp.Name} leans out of its flank");
-                    Assert.Less(facing.z, -0.05f, $"{lamp.Name} leans back toward the chase camera");
-                    Assert.AreEqual(ModelMaterial.Palette, lamp.Material);
-                    Assert.AreEqual(ModelMaterial.PaletteGlowOff, glass.Material, glass.Name);
-                    CollectionAssert.AreEqual(new[] { PaletteSwatch.LampGlass }, Swatches(glass.Mesh.Geometry));
-                    previousZ = at.z;
-                }
+                ModelNode segment = _rover.GetDescendant("BatteryLamp_" + i);
+                ModelNode glass = _rover.GetDescendant("BatteryGlass_" + i);
+                Vector3 at = segment.LocalPosition;
+                Vector3 facing = segment.LocalRotation * Vector3.up;
+                Assert.Greater(at.x, previousX, $"{segment.Name} runs left to right");
+                Assert.Less(Mathf.Abs(at.x), 0.3f, $"{segment.Name} stays on the straight of the rear edge");
+                Assert.That(at.y, Is.InRange(0.9f, 1f), $"{segment.Name} sits on the lid");
+                Assert.Less(at.z, -0.56f, $"{segment.Name} sits behind the folded wing's end, on the rear edge");
+                Assert.Greater(facing.y, 0.5f, $"{segment.Name} faces up, where the chase camera looks down");
+                Assert.Less(facing.z, -0.7f, $"{segment.Name} tips well back toward the chase camera");
+                Assert.AreEqual(ModelMaterial.Palette, segment.Material);
+                Assert.AreEqual(ModelMaterial.PaletteGlowOff, glass.Material, glass.Name);
+                CollectionAssert.AreEqual(new[] { PaletteSwatch.LampGlass }, Swatches(glass.Mesh.Geometry));
+                previousX = at.x;
             }
         }
 

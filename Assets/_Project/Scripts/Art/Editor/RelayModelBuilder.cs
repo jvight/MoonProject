@@ -51,6 +51,8 @@ namespace MoonProject.Art.Editor
                 new ModelMesh(MastName + "_Lamp", RelayMeshes.Lamp()), ModelMaterial.PaletteGlowOff));
             root.Add(new ModelNode("PartSocket", RelayMeshes.PartSocket));
             root.Add(new ModelNode("BeamPoint", RelayMeshes.BeamPoint));
+            root.Add(new ModelNode("ChargeRing", Vector3.zero,
+                new ModelMesh(variant + "_ChargeRing", RelayMeshes.ChargeRing(broken))));
             return root;
         }
 

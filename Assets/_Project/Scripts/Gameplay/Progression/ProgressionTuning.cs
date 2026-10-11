@@ -90,6 +90,7 @@ namespace MoonProject.Gameplay
 
         [Header("Blueprints")]
         [Tooltip("Where the kits' blueprint tubes lie: Hover-Jump's on the ground at the chasm's near lip (M3-21), " +
+                 "Cell Pack II's in relay.2's service cabinet, which opens as the mast comes back to life (M3-20), " +
                  "the others each in a salvage site's heart, found with its relic.")]
         [SerializeField] private BlueprintTube[] _tubes =
         {
@@ -97,6 +98,7 @@ namespace MoonProject.Gameplay
             new BlueprintTube("rover.cargo_cradle", "site.garage"),
             new BlueprintTube("rover.warm_headlamp", "site.kestrel"),
             new BlueprintTube("rover.boost_coils", "site.drill"),
+            new BlueprintTube("rover.cell_pack", "relay.2"),
         };
 
         [Header("Tech tree and recovery panel (M3-21)")]
@@ -107,6 +109,7 @@ namespace MoonProject.Gameplay
             new TechKit(TechNodeId.CargoCradle, "rover.cargo_cradle"),
             new TechKit(TechNodeId.WarmHeadlamp, "rover.warm_headlamp"),
             new TechKit(TechNodeId.CapacitorDrums, "rover.boost_coils"),
+            new TechKit(TechNodeId.CellPackII, "rover.cell_pack"),
         };
 
         [Tooltip("The recovery panel's lamps no built thing lights yet: the Peak's foot, the Dish, the Answer.")]
