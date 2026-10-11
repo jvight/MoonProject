@@ -27,7 +27,13 @@ account) can continue without the old conversation.
   the exact edits to VISION, DESIGN, M3-16, M3-06, M3-11, cutscenes and ROADMAP.
 - **0.5 scope:** the battery, chargers, the crawl with Tilly's lead, Cell Pack II, the lab (M3-19) and the recovery
   panel. Structures and T2 are not in 0.5.
-- Story & flow offers to write the boot readout into cutscenes O5.
+- **The opening slice landed** (O1–O14, the lens view, the title camera and push-in, the short wake, the call sign,
+  the wake sounds). The opening session is now doing: O10's swing, the owner-approved boot readout in O5, and
+  pause ducking.
+  - Still to dispatch: art's lens glass ring (it reflects Earth during the pull-out); UI's O14 prompt rule ("Look
+    up" or "Drive") from WakeBeat.ChaseFrame; the save's station playing softly on the title.
+  - Backlog: World's MoonSurfaceTests.Sampling_IsFastEnoughForBootTimeMeshing flakes under load (a 2.0 s
+    wall-clock limit).
 - **Next for the Director:**
   1. Land the approved GDD v3.
   2. Rewrite VISION and DESIGN where GDD v3 §10 says so.
