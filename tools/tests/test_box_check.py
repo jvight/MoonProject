@@ -80,7 +80,8 @@ class TrialMergeAbortTests(unittest.TestCase):
         self.run_git(root, "checkout", "-q", "-b", "box")
         self.run_git(root, "checkout", "-q", "main")
         (root / "b.txt").write_text("b", encoding="utf-8")
-        self.run_git(root, "add", "b.txt")
+        (root / "a.txt").write_text("a from main", encoding="utf-8")
+        self.run_git(root, "add", "a.txt", "b.txt")
         self.run_git(root, "commit", "-q", "-m", "b")
         self.run_git(root, "checkout", "-q", "box")
         return root
@@ -93,6 +94,16 @@ class TrialMergeAbortTests(unittest.TestCase):
             self.assertEqual(box_check.abort_trial_merge(root), "")
             self.assertFalse(box_check.merge_in_progress(root))
             self.assertFalse((root / "b.txt").exists(), "main's files are gone again")
+            self.assertEqual(box_check.git(root, "status", "--porcelain"), "")
+
+    def test_a_merge_touched_file_rewritten_by_the_builders_does_not_keep_the_merge_alive(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self.repo(tmp)
+            self.assertEqual(box_check.trial_merge(root), "")
+            (root / "a.txt").write_text("rewritten by a batch Unity", encoding="utf-8")
+            self.assertEqual(box_check.abort_trial_merge(root), "")
+            self.assertFalse(box_check.merge_in_progress(root))
+            self.assertEqual((root / "a.txt").read_text(encoding="utf-8"), "a")
             self.assertEqual(box_check.git(root, "status", "--porcelain"), "")
 
     def test_nothing_to_abort_is_fine(self):
