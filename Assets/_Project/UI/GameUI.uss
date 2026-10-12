@@ -667,6 +667,11 @@ Label {
     align-items: center;
 }
 
+/* A place's name is white Exo 2 over a short amber underline, as in the mockup */
+.place-card .name-tag__name {
+    color: var(--glass-hi);
+}
+
 /* A short amber underline beneath a place's name, as in the mockup */
 .place-card__rule {
     width: 96px;
