@@ -98,6 +98,34 @@ namespace MoonProject.Audio.PlayModeTests
             Assert.AreEqual(plays, _rig.Director.PlayCount);
         }
 
+        [Test]
+        public void ABigHaul_RollsOnSoftly_AndItsLastUnitAlwaysTicks()
+        {
+            int plays = _rig.Director.PlayCount;
+            const int units = 30;
+            for (int i = 0; i < units; i++)
+            {
+                _rig.Events.Publish(new StockCountTicked(SalvageMaterial.Metal, i, units - 1 - i));
+            }
+
+            int ticks = _rig.Director.PlayCount - plays;
+            Assert.AreEqual(2, ticks, "within one frame: the first unit and the last one");
+            StringAssert.StartsWith("count_tick", LastClip);
+        }
+
+        [Test]
+        public void EachWindowStep_ClicksOnce()
+        {
+            int plays = _rig.Director.PlayCount;
+            for (int step = 1; step <= 4; step++)
+            {
+                _rig.Events.Publish(new HomeWindowLit(step, 4));
+            }
+
+            Assert.AreEqual(plays + 4, _rig.Director.PlayCount);
+            Assert.AreEqual("window_click", LastClip);
+        }
+
         [UnityTest]
         public IEnumerator AChirp_PublishesEachSyllable_InOrder()
         {

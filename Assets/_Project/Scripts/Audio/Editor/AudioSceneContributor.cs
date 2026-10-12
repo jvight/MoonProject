@@ -44,7 +44,7 @@ namespace MoonProject.Audio.Editor
             var radio = context.CreateChild("RadioStation", root).AddComponent<RadioStation>();
             var voice = context.CreateChild("RadioVoice", root).AddComponent<RadioVoice>();
             var feel = context.CreateChild("FeelAudio", root).AddComponent<FeelAudio>();
-            var chirps = context.CreateChild("ChirpVoice", root).AddComponent<ChirpVoice>();
+            var chirps = context.CreateChild("RoverChirpAudio", root).AddComponent<RoverChirpAudio>();
             var feelTuning = context.LoadAsset<FeelAudioTuning>(AudioAssetPaths.FeelTuning);
             var ambience = context.CreateChild("AmbienceBed", root).AddComponent<AmbienceBed>();
             var canyon = context.CreateChild("CanyonAmbience", root).AddComponent<CanyonAmbience>();

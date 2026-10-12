@@ -18,17 +18,22 @@ namespace MoonProject.Audio
     /// drop (Cancel);</item>
     /// <item>the first hour's small moments: a tech node lighting, the decode's cable ticks, a component found, the
     /// drums' boost whine and release, a relic strapped into the cradle, a new step's page tick, one save tick per
-    /// burst, and the dock evening's swell.</item>
+    /// burst, the dock evening's swell, the stock count rolling up (one rising tick per unit, rate-capped and topping
+    /// out on the highest note for a big haul) and home's windows waking (one warm click per step, rising).</item>
     /// </list>
     /// Initialised by <see cref="AudioDirector"/>.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class FeelAudio : MonoBehaviour
     {
-        private const int SubscriptionCount = 9;
+        private const int SubscriptionCount = 11;
         private const int ChargeFresh = 0;
         private const int ChargeResume = 1;
         private const float SilentVolume = 0.001f;
+        private const float SemitonesPerOctave = 12f;
+
+        /// <summary>D major pentatonic above the root, in semitones: the windows' clicks climb it.</summary>
+        private static readonly float[] PentatonicSemitones = { 0f, 2f, 4f, 7f, 9f, 12f };
 
         [Tooltip("Assets/_Project/Data/Audio/FeelAudioTuning.asset.")]
         [SerializeField] private FeelAudioTuning _tuning;
@@ -62,6 +67,10 @@ namespace MoonProject.Audio
         private CueHandle _pageTick;
         private CueHandle _saveTick;
         private CueHandle _eveningSwell;
+        private CueHandle _countTick;
+        private CueHandle _windowClick;
+        private int _countNotes;
+        private float _sinceCount = float.MaxValue;
         private int _nodeVariants;
 
         /// <summary>The cut's sizzle level now (0 when the beam is off).</summary>
@@ -99,11 +108,13 @@ namespace MoonProject.Audio
             _pageTick = director.Resolve(AudioCueIds.PageTick);
             _saveTick = director.Resolve(AudioCueIds.SaveTick);
             _eveningSwell = director.Resolve(AudioCueIds.DockEveningSwell);
+            _countTick = director.Resolve(AudioCueIds.CountTick);
+            _windowClick = director.Resolve(AudioCueIds.WindowClick);
             if (!(_charge.IsValid && _cancel.IsValid && _ignite.IsValid && sizzle.IsValid && _crack.IsValid &&
                   _strap.IsValid && _wallsRise.IsValid && _clamp.IsValid && _wallsSettle.IsValid &&
                   _wallsDrop.IsValid && _nodeLight.IsValid && _cableTicks.IsValid && _found.IsValid &&
                   boost.IsValid && _boostRelease.IsValid && _pageTick.IsValid && _saveTick.IsValid &&
-                  _eveningSwell.IsValid))
+                  _eveningSwell.IsValid && _countTick.IsValid && _windowClick.IsValid))
             {
                 enabled = false;
                 return;
@@ -112,6 +123,7 @@ namespace MoonProject.Audio
             _director = director;
             _rover = context.Get<IRoverState>();
             _nodeVariants = director.Library.GetCue(_nodeLight).ClipCount;
+            _countNotes = director.Library.GetCue(_countTick).ClipCount;
             _sizzleSource = director.CreateLoopSource(transform, "CutSizzle", sizzle, 1f);
             _sizzleCueVolume = director.Library.GetCue(sizzle).VolumeMax;
             _boostSource = director.CreateLoopSource(transform, "BoostWhine", boost, 1f);
@@ -127,6 +139,8 @@ namespace MoonProject.Audio
             _subscriptions[6] = events.Subscribe<NextStepChanged>(OnNextStepChanged);
             _subscriptions[7] = events.Subscribe<GameSaved>(OnGameSaved);
             _subscriptions[8] = events.Subscribe<DockEveningOpened>(OnDockEveningOpened);
+            _subscriptions[9] = events.Subscribe<StockCountTicked>(OnStockCountTicked);
+            _subscriptions[10] = events.Subscribe<HomeWindowLit>(OnHomeWindowLit);
         }
 
         private void Update()
@@ -138,6 +152,7 @@ namespace MoonProject.Audio
 
             float dt = Time.deltaTime;
             _sinceSave += Time.unscaledDeltaTime;
+            _sinceCount += Time.unscaledDeltaTime;
             float world = _director.Buses.Effective(AudioBus.Sfx) * _director.WorldGain;
             float sizzle = _sizzle.Step(_sizzleTarget, dt, _tuning.SizzleEase);
             Loop(_sizzleSource, sizzle * _sizzleCueVolume * world);
@@ -285,6 +300,28 @@ namespace MoonProject.Audio
             }
 
             _sinceSave = 0f;
+        }
+
+        /// <summary>
+        /// One rising tick per unit; past the top note it stays there, and ticks closer than the tuning's interval are
+        /// skipped, except the roll's last, so a big haul rolls on softly.
+        /// </summary>
+        private void OnStockCountTicked(StockCountTicked ticked)
+        {
+            if (ticked.Remaining > 0 && _sinceCount < _tuning.CountTickInterval)
+            {
+                return;
+            }
+
+            _sinceCount = 0f;
+            _director.PlayVariant2D(_countTick, Mathf.Clamp(ticked.Index, 0, _countNotes - 1));
+        }
+
+        /// <summary>A warm click per step of home's windows waking, a pentatonic step higher each time.</summary>
+        private void OnHomeWindowLit(HomeWindowLit lit)
+        {
+            int step = Mathf.Clamp(lit.Step - 1, 0, PentatonicSemitones.Length - 1);
+            _director.Play2D(_windowClick, 1f, Mathf.Pow(2f, PentatonicSemitones[step] / SemitonesPerOctave));
         }
 
         private void OnDockEveningOpened(DockEveningOpened opened)

@@ -13,7 +13,7 @@ namespace MoonProject.Audio
     /// Zero allocation per frame. Initialised by <see cref="AudioDirector"/>.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class ChirpVoice : MonoBehaviour
+    public sealed class RoverChirpAudio : MonoBehaviour
     {
         private const uint SeedSalt = 0x3C6EF372u;
 
@@ -51,7 +51,7 @@ namespace MoonProject.Audio
         {
             if (_tuning == null || _bank == null)
             {
-                Debug.LogError($"{nameof(ChirpVoice)}: the feel tuning or the chirp bank is not assigned.", this);
+                Debug.LogError($"{nameof(RoverChirpAudio)}: the feel tuning or the chirp bank is not assigned.", this);
                 enabled = false;
                 return;
             }
@@ -59,7 +59,7 @@ namespace MoonProject.Audio
             string problem = _bank.FindProblem();
             if (problem != null)
             {
-                Debug.LogError($"{nameof(ChirpVoice)}: {problem}.", this);
+                Debug.LogError($"{nameof(RoverChirpAudio)}: {problem}.", this);
                 enabled = false;
                 return;
             }

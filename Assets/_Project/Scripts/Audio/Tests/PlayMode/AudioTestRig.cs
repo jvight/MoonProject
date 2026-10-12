@@ -86,7 +86,7 @@ namespace MoonProject.Audio.PlayModeTests
             FeelTuning = Track(ScriptableObject.CreateInstance<FeelAudioTuning>());
             Feel = Child(audioRoot, "FeelAudio").AddComponent<FeelAudio>();
             Feel.Wire(FeelTuning);
-            Chirps = Child(audioRoot, "ChirpVoice").AddComponent<ChirpVoice>();
+            Chirps = Child(audioRoot, "RoverChirpAudio").AddComponent<RoverChirpAudio>();
             Chirps.Wire(FeelTuning, Load<ChirpBank>("ChirpBank.asset"));
             Ambience = Child(audioRoot, "AmbienceBed").AddComponent<AmbienceBed>();
             Canyon = Child(audioRoot, "CanyonAmbience").AddComponent<CanyonAmbience>();
@@ -146,7 +146,7 @@ namespace MoonProject.Audio.PlayModeTests
 
         public FeelAudio Feel { get; }
 
-        public ChirpVoice Chirps { get; }
+        public RoverChirpAudio Chirps { get; }
 
         public AmbienceBed Ambience { get; }
 

@@ -34,6 +34,10 @@ namespace MoonProject.Audio
         [Min(0f)] [SerializeField] private float _chirpHoldSeconds = 3f;
 
         [Header("The first hour's small moments (polish-pass section 1.1)")]
+        [Tooltip("Shortest time (s) between two stock count ticks: a big haul rolls on without a rattle (its last " +
+            "unit always ticks).")]
+        [Min(0f)] [SerializeField] private float _countTickInterval = 0.07f;
+
         [Tooltip("Shortest time (s) between two save ticks: one tick per burst of saves.")]
         [Min(0f)] [SerializeField] private float _saveTickInterval = 3f;
 
@@ -50,6 +54,7 @@ namespace MoonProject.Audio
         public float ChirpVolume => _chirpVolume;
         public float ChirpUnderRadio => _chirpUnderRadio;
         public float ChirpHoldSeconds => _chirpHoldSeconds;
+        public float CountTickInterval => _countTickInterval;
         public float SaveTickInterval => _saveTickInterval;
         public float BoostEase => _boostEase;
         public float BoostVolume => _boostVolume;

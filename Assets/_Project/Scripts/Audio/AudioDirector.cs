@@ -55,7 +55,7 @@ namespace MoonProject.Audio
         [SerializeField] private FeelAudio _feel;
 
         [Tooltip("07's machine voice: the chirps and their syllables.")]
-        [SerializeField] private ChirpVoice _chirps;
+        [SerializeField] private RoverChirpAudio _chirps;
 
         [Tooltip("The lunar ambience bed.")]
         [SerializeField] private AmbienceBed _ambience;
@@ -322,7 +322,7 @@ namespace MoonProject.Audio
         }
 
         /// <summary>The 0.5.2 feel beats and 07's machine voice (docs/design/feel-pass.md).</summary>
-        internal void WireFeel(FeelAudio feel, ChirpVoice chirps)
+        internal void WireFeel(FeelAudio feel, RoverChirpAudio chirps)
         {
             _feel = feel;
             _chirps = chirps;

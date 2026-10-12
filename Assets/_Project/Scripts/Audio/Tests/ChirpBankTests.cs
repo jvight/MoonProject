@@ -10,7 +10,7 @@ namespace MoonProject.Audio.Tests
     /// 07's machine voice (feel-pass section 7.2): the bank's syllable data, the variant picking and the rules that
     /// keep a chirp off a voice line.
     /// </summary>
-    public sealed class ChirpTests
+    public sealed class ChirpBankTests
     {
         private const float Frame = 1f / 60f;
         private const float Hold = 3f;
