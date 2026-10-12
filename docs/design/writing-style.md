@@ -61,6 +61,7 @@ If a line tells the player what to do, it is functional, even when a character c
 | the chasm | vực |
 | Rim Terraces | Bậc thềm vành hố |
 | the Peak | Đỉnh núi |
+| Shadowed Crater | Hố Tối |
 | the basin | lòng chảo |
 | Relay, by name only, never a number: Mound Relay, Shoulder Relay, Canyon Mouth Relay, Terminus Relay | trạm tiếp sóng: Trạm trên gò, Trạm vai vành hố, Trạm miệng hẻm, Trạm cuối hẻm |
 | the great dish | chảo ăng-ten lớn |
@@ -69,6 +70,10 @@ If a line tells the player what to do, it is functional, even when a character c
 | en | vi |
 |---|---|
 | Metal / Wiring / Optics | Kim loại / Dây điện / Thấu kính |
+| Circuit Chips, Orange Glass Beads, Ilmenite, Water Ice, Rare Earths | Chip mạch, Hạt thủy tinh cam, Ilmenit, Băng nước, Đất hiếm |
+| Glass, Alloy, Coolant, Crystal, Superconductor | Thủy tinh, Hợp kim, Chất làm mát, Tinh thể, Siêu dẫn |
+| Smelter, Ice Still, Core Drill, Thermal Cutter | Lò luyện, Tháp chưng băng, Máy khoan lõi, Máy cắt nhiệt |
+| hold (07's), home storage, shelf, socket | khoang hàng, kho ở nhà, kệ, ổ |
 | component; Tower Coil (always this name), transformer, relay spare part | linh kiện; cuộn dây tháp, bộ biến áp, linh kiện trạm tiếp sóng |
 | Circuit Chips (material, M3-27) | Chip mạch |
 | Orange Glass Beads (material, M3-27) | Hạt thủy tinh cam |

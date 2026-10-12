@@ -140,15 +140,15 @@
         },
         {
             "key": "pickup.part_transformer",
-            "text": "transformer"
+            "text": "Transformer"
         },
         {
             "key": "pickup.part_relayspare",
-            "text": "relay spare part"
+            "text": "Relay spare part"
         },
         {
             "key": "pickup.relay_part",
-            "text": "relay part"
+            "text": "Relay part"
         },
         {
             "key": "pickup.tilly.rotor",
@@ -176,7 +176,7 @@
         },
         {
             "key": "pickup.blueprint_tube",
-            "text": "blueprint tube"
+            "text": "Blueprint tube"
         },
         {
             "key": "next.signal",
@@ -1801,6 +1801,198 @@
         {
             "key": "ui.settings.text_size",
             "text": "Text size"
+        },
+        {
+            "key": "material.metal.job",
+            "text": "Frames, hulls and most builds."
+        },
+        {
+            "key": "material.metal.source",
+            "text": "Cut from wrecks. The Supply Depot has the most."
+        },
+        {
+            "key": "material.wiring.job",
+            "text": "Power: the tower, relays and kits."
+        },
+        {
+            "key": "material.wiring.source",
+            "text": "Cut from wrecks. The Drill Rig has the most."
+        },
+        {
+            "key": "material.optics.job",
+            "text": "Lenses, lamps and sensors."
+        },
+        {
+            "key": "material.optics.source",
+            "text": "Cut from wrecks. Kestrel-3 has the most."
+        },
+        {
+            "key": "material.circuit_chips.job",
+            "text": "Electronics: the lab's Reader II, drones, superconductor."
+        },
+        {
+            "key": "material.circuit_chips.source",
+            "text": "Cut from sealed hulls. Needs the Thermal Cutter."
+        },
+        {
+            "key": "material.orange_beads.job",
+            "text": "Melted into glass at the Smelter."
+        },
+        {
+            "key": "material.orange_beads.source",
+            "text": "Dug from the orange patches at the basin's old vents."
+        },
+        {
+            "key": "material.ilmenite.job",
+            "text": "Smelted into alloy."
+        },
+        {
+            "key": "material.ilmenite.source",
+            "text": "Drilled from the dark rock bands on the Rim Terraces. Needs the Core Drill."
+        },
+        {
+            "key": "material.water_ice.job",
+            "text": "Turned into coolant and crystal."
+        },
+        {
+            "key": "material.water_ice.source",
+            "text": "Drilled in the Shadowed Crater's dark floor. Needs Floodlights to see it."
+        },
+        {
+            "key": "material.rare_earths.job",
+            "text": "Made into superconductor."
+        },
+        {
+            "key": "material.rare_earths.source",
+            "text": "Drilled on the road to the Peak."
+        },
+        {
+            "key": "material.glass.job",
+            "text": "Panes, dishes and solar wings."
+        },
+        {
+            "key": "material.glass.source",
+            "text": "Made at the Smelter from orange beads."
+        },
+        {
+            "key": "material.alloy.job",
+            "text": "Strong parts: treads, cutter ribs, shelves."
+        },
+        {
+            "key": "material.alloy.source",
+            "text": "Made at the Smelter from ilmenite."
+        },
+        {
+            "key": "material.coolant.job",
+            "text": "Keeps hot tools cool: the Thermal Cutter, the Power Core."
+        },
+        {
+            "key": "material.coolant.source",
+            "text": "Made from water ice at the Ice Still."
+        },
+        {
+            "key": "material.crystal.job",
+            "text": "Solar wings and drones."
+        },
+        {
+            "key": "material.crystal.source",
+            "text": "Grown from water ice in Moss's biodome."
+        },
+        {
+            "key": "material.superconductor.job",
+            "text": "The great dish, the Star Tracker, the Anchor Line."
+        },
+        {
+            "key": "material.superconductor.source",
+            "text": "Made at Smelter II from rare earths and circuit chips."
+        },
+        {
+            "key": "ticker.cargo.full",
+            "text": "07's hold is full. The rest waits here: come back for it."
+        },
+        {
+            "key": "ticker.cargo.home_full",
+            "text": "Home storage is full. Build a shelf at a free socket."
+        },
+        {
+            "key": "crate.depot.note",
+            "text": "Spares for the next rotation. Don't let Ines take the good wire. — Kenji"
+        },
+        {
+            "key": "crate.kestrel.note",
+            "text": "Lenses off the old relay. Handle them like records. — Ro"
+        },
+        {
+            "key": "crate.drill.note",
+            "text": "Wire for the drill's next season. Labelled, counted, twice. — I. Kalani"
+        },
+        {
+            "key": "crate.garage.note",
+            "text": "For 07, next time it breaks. It will. — Kenji"
+        },
+        {
+            "key": "crate.lander.note",
+            "text": "Seed trays went up top. This is everything else. — Theo"
+        },
+        {
+            "key": "kit.focus_lens.name",
+            "text": "Focus Lens"
+        },
+        {
+            "key": "kit.side_bins.name",
+            "text": "Side Bins"
+        },
+        {
+            "key": "pickup.part_relaymodule",
+            "text": "Relay module"
+        },
+        {
+            "key": "pickup.part_tillyrotor",
+            "text": "Tilly's rotor"
+        },
+        {
+            "key": "pickup.part_tillylens",
+            "text": "Tilly's lens"
+        },
+        {
+            "key": "pickup.part_tillycell",
+            "text": "Tilly's cell"
+        },
+        {
+            "key": "pickup.part_bellcone",
+            "text": "Bell's speaker cone"
+        },
+        {
+            "key": "pickup.part_bellknob",
+            "text": "Bell's dial knob"
+        },
+        {
+            "key": "pickup.part_bellvalve",
+            "text": "Bell's valve"
+        },
+        {
+            "key": "upgrade.rover.focus_lens.name",
+            "text": "Focus Lens"
+        },
+        {
+            "key": "upgrade.rover.focus_lens.1.title",
+            "text": "A focusing lens on the beam"
+        },
+        {
+            "key": "upgrade.rover.focus_lens.1.effect",
+            "text": "The cutter charges faster and cuts 30% quicker, using 15% less battery."
+        },
+        {
+            "key": "upgrade.rover.side_bins.name",
+            "text": "Side Bins"
+        },
+        {
+            "key": "upgrade.rover.side_bins.1.title",
+            "text": "Two bins on 07's flanks"
+        },
+        {
+            "key": "upgrade.rover.side_bins.1.effect",
+            "text": "Four more slots in 07's hold, so it carries more home each trip."
         }
     ]
 }

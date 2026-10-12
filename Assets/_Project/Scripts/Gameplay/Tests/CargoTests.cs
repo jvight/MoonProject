@@ -139,6 +139,14 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
+        public void ACratesNote_IsKeyedByItsSite()
+        {
+            Assert.AreEqual("crate.depot.note", CrewCrateKeys.Note("site.depot"));
+            Assert.AreEqual("crate.lander.note", CrewCrateKeys.Note("lander"));
+            Assert.Throws<ArgumentException>(() => CrewCrateKeys.Note(string.Empty));
+        }
+
+        [Test]
         public void TheCatalog_KnowsEachMaterialsStackAndKeys()
         {
             Assert.AreEqual(Enum.GetValues(typeof(SalvageMaterial)).Length, SalvageMaterials.Count);

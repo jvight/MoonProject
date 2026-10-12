@@ -58,6 +58,8 @@ namespace MoonProject.Rover
                 events.Subscribe<RoverKitFitted>(OnKitFitted),
                 events.Subscribe<LowPowerChanged>(OnLowPowerChanged),
                 events.Subscribe<RoverBoostChanged>(OnBoostChanged),
+                events.Subscribe<CargoChanged>(cargo => _body?.SetLoadSag(
+                    CargoLoad.Sag(cargo.UsedSlots, cargo.SlotCount, _motion.SagPerQuarter), _motion.SagHalfLife)),
                 events.Subscribe<StockCountTicked>(tick =>
                 {
                     if (_cut.Ticks(tick.Index))

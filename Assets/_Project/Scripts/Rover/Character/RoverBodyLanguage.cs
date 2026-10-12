@@ -72,6 +72,7 @@ namespace MoonProject.Rover
         private bool _cutting;
         private RoverVoice _voice;
         private ChirpPose _chirpPose;
+        private readonly CargoLoad _cargo = new CargoLoad();
         private float _sigh;
 
         private RoverMood _mood;
@@ -151,6 +152,7 @@ namespace MoonProject.Rover
                 events.Subscribe<RoverChirpSyllable>(OnChirpSyllable),
                 events.Subscribe<BasePowerChanged>(OnBasePowerChanged),
                 events.Subscribe<FriendSpotted>(spotted => Glance(spotted.Position)),
+                events.Subscribe<CargoChanged>(OnCargoChanged),
                 events.Subscribe<SonarPinged>(OnListened),
             };
             _initialized = true;
@@ -609,6 +611,15 @@ namespace MoonProject.Rover
             if (syllable.Mood == ChirpMood.Happy)
             {
                 _rig.KickHeave(chirp.HappyBounce);
+            }
+        }
+
+        /// <summary>The hold has just filled: 07 glances back once at its load (M3-25).</summary>
+        private void OnCargoChanged(CargoChanged cargo)
+        {
+            if (_cargo.BecameFull(cargo.UsedSlots, cargo.SlotCount))
+            {
+                Glance(_rover.CargoSocket.position);
             }
         }
 
