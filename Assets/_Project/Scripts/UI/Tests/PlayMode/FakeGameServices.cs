@@ -15,7 +15,7 @@ namespace MoonProject.UI.PlayModeTests
     public sealed class FakeGameServices : MonoBehaviour, IGameSystem, IViewCamera, IAudioSettings, ILookSettings, IFeelSettings,
         IMaterialStock, ITetherAim, IInteractionHints, IUpgradeShop, IRoverState, IFriendStatuses, IRadioProgram,
         IRadioHop, IRelayStatus, ISalvageStatus, IBlueprintBoard, IRoverBattery, IBeamStatus, ITechTree,
-        IRecoveryProgress
+        IRecoveryProgress, IWorldLayout, IRoverAbilities
     {
         private readonly TechNodeState[] _techStates = new TechNodeState[Enum.GetValues(typeof(TechNodeId)).Length];
         private readonly int[] _litLamps = new int[Enum.GetValues(typeof(RecoveryTarget)).Length];
@@ -69,6 +69,26 @@ namespace MoonProject.UI.PlayModeTests
         public bool AnnouncesPurchases { get; set; } = true;
 
         public bool RumbleEnabled { get; set; } = true;
+
+        /// <summary>Where home is, for the home meter (the test's origin unless set).</summary>
+        public Vector3 BasePosition { get; set; }
+
+        public Vector3 PeakPosition { get; set; } = new Vector3(0f, 200f, 2000f);
+
+        public Vector3 EarthDirection { get; set; } = Vector3.up;
+
+        /// <summary>The abilities 07 has, for the ability slots.</summary>
+        public HashSet<RoverAbility> Abilities { get; } = new HashSet<RoverAbility>();
+
+        public bool Has(RoverAbility ability)
+        {
+            return Abilities.Contains(ability);
+        }
+
+        public void Grant(RoverAbility ability)
+        {
+            Abilities.Add(ability);
+        }
 
         public float RumbleStrength { get; set; } = 1f;
 
@@ -225,6 +245,8 @@ namespace MoonProject.UI.PlayModeTests
             context.Register<IBeamStatus>(this);
             context.Register<ITechTree>(this);
             context.Register<IRecoveryProgress>(this);
+            context.Register<IWorldLayout>(this);
+            context.Register<IRoverAbilities>(this);
         }
 
         public int KnownCount

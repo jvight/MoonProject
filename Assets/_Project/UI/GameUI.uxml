@@ -65,6 +65,15 @@
                 </ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement name="hud-frame" class="safe-frame" picking-mode="Ignore">
+                <ui:VisualElement name="home-meter" class="home-meter" picking-mode="Ignore">
+                    <ui:VisualElement name="home-meter-arc" class="home-meter__arc" picking-mode="Ignore" />
+                    <ui:VisualElement class="home-meter__row" picking-mode="Ignore">
+                        <ui:Label name="home-meter-value" class="home-meter__value" picking-mode="Ignore" />
+                        <ui:Label class="home-meter__unit loc" text="ui.meter.unit" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                    <ui:Label name="home-meter-key" class="home-meter__key" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <ui:VisualElement name="ability-slots" class="ability-slots" picking-mode="Ignore" />
                 <ui:VisualElement name="kit-title" class="kit-title" picking-mode="Ignore">
                     <ui:VisualElement class="name-tag" picking-mode="Ignore">
                         <ui:VisualElement name="kit-title-shadow" class="soft-shadow soft-shadow--name" />

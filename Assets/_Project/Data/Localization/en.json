@@ -51,6 +51,46 @@
             "text": "power"
         },
         {
+            "key": "ui.meter.home",
+            "text": "home · {0}"
+        },
+        {
+            "key": "ui.meter.unit",
+            "text": "m"
+        },
+        {
+            "key": "ui.compass.n",
+            "text": "N"
+        },
+        {
+            "key": "ui.compass.ne",
+            "text": "NE"
+        },
+        {
+            "key": "ui.compass.e",
+            "text": "E"
+        },
+        {
+            "key": "ui.compass.se",
+            "text": "SE"
+        },
+        {
+            "key": "ui.compass.s",
+            "text": "S"
+        },
+        {
+            "key": "ui.compass.sw",
+            "text": "SW"
+        },
+        {
+            "key": "ui.compass.w",
+            "text": "W"
+        },
+        {
+            "key": "ui.compass.nw",
+            "text": "NW"
+        },
+        {
             "key": "ui.hint.look_up",
             "text": "Look up"
         },

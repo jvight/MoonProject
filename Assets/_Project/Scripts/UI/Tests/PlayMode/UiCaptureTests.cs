@@ -1279,7 +1279,7 @@ namespace MoonProject.UI.PlayModeTests
             ui.Initialize(new UiServices(context.Events, context.Input, fakes, fakes, context.Get<IAudioSettings>(),
                 context.Get<ILookSettings>(), context.Get<IFeelSettings>(), save, fakes, fakes, fakes, fakes, fakes, fakes, fakes, fakes, fakes,
                 fakes, context.Get<IGameFlow>(), new SettingsFile(SaveService.DefaultDirectory, _slot), fakes, fakes,
-                fakes, fakes));
+                fakes, fakes, context.Get<IWorldLayout>(), fakes));
             save.Load();
             return ui;
         }

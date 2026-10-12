@@ -51,6 +51,46 @@
             "text": "pin"
         },
         {
+            "key": "ui.meter.home",
+            "text": "nhà · {0}"
+        },
+        {
+            "key": "ui.meter.unit",
+            "text": "m"
+        },
+        {
+            "key": "ui.compass.n",
+            "text": "B"
+        },
+        {
+            "key": "ui.compass.ne",
+            "text": "ĐB"
+        },
+        {
+            "key": "ui.compass.e",
+            "text": "Đ"
+        },
+        {
+            "key": "ui.compass.se",
+            "text": "ĐN"
+        },
+        {
+            "key": "ui.compass.s",
+            "text": "N"
+        },
+        {
+            "key": "ui.compass.sw",
+            "text": "TN"
+        },
+        {
+            "key": "ui.compass.w",
+            "text": "T"
+        },
+        {
+            "key": "ui.compass.nw",
+            "text": "TB"
+        },
+        {
             "key": "ui.hint.look_up",
             "text": "Ngước nhìn lên"
         },

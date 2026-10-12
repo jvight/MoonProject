@@ -74,6 +74,8 @@ namespace MoonProject.UI
         private NextStepLine _nextStep;
         private NextLineView _nextLine;
         private BatteryDial _batteryDial;
+        private HomeMeter _homeMeter;
+        private AbilitySlots _abilitySlots;
         private bool _cellRowRevealed;
         private PlaceCard _placeCard;
         private SaveTick _saveTick;
@@ -168,6 +170,10 @@ namespace MoonProject.UI
         internal NextLineView NextLine => _nextLine;
 
         internal BatteryDial BatteryDial => _batteryDial;
+
+        internal HomeMeter HomeMeter => _homeMeter;
+
+        internal AbilitySlots AbilitySlots => _abilitySlots;
 
         internal VerbList Verbs => _verbs;
 
@@ -395,6 +401,9 @@ namespace MoonProject.UI
             _nextStep = new NextStepLine(_tuning.Guidance);
             _nextLine = new NextLineView(_layout, _tuning.Guidance, _localization);
             _batteryDial = new BatteryDial(_layout, _tuning.Battery, services.Battery, services.Beam);
+            _homeMeter = new HomeMeter(_layout, _tuning.HomeMeter, services.Rover, services.World, _localization);
+            _abilitySlots = new AbilitySlots(_layout, _tuning.AbilitySlots, services.Abilities, services.Tether,
+                services.Rover);
             _saveTick = new SaveTick(_layout, _tuning.SaveTick);
             _placeCard = new PlaceCard(_layout, _tuning.Guidance, _localization, services.Events);
             _reticle = new TetherReticle(_layout.Reticle, _layout.ReticleRest, _layout.ReticleHover, _tuning.Reticle);
@@ -574,7 +583,11 @@ namespace MoonProject.UI
             _nextLine.Tick(deltaTime, _nextStep, !paused && _awake && !_card.IsVisible &&
                                                  !_tower.IsVisible && !_stargaze.IsVeiled &&
                                                  !_placeCard.IsVisible);
-            _batteryDial.Tick(deltaTime, _cellRowRevealed, !paused && _awake && !_stargaze.IsVeiled && !onMap);
+            bool hudOpen = !paused && _awake && !_stargaze.IsVeiled && !onMap;
+            _batteryDial.Tick(deltaTime, _cellRowRevealed, hudOpen);
+            _homeMeter.Tick(deltaTime, hudOpen && !_card.IsVisible);
+            _abilitySlots.Tick(deltaTime, hudOpen && !_card.IsVisible && !_tower.IsVisible && !_dial.IsBusy &&
+                                          !_hopList.IsBusy && !_lookUpChip.IsVisible);
         }
 
         /// <summary>The cell row exists from the first time the charge dropped below its reveal share.</summary>
@@ -892,6 +905,7 @@ namespace MoonProject.UI
             _prompt.Relocalize();
             _card.Relocalize();
             _ticker.Relocalize();
+            _homeMeter.Relocalize();
             _lookUpChip.Relocalize();
             _nextLine.Relocalize();
             _placeCard.Relocalize();

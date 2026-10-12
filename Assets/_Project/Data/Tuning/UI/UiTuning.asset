@@ -395,3 +395,27 @@ MonoBehaviour:
       _springDamping: 0.8
     _holdSeconds: 1
     _burstSeconds: 2
+  _homeMeter:
+    _reveal:
+      _fadeIn: 0.6
+      _fadeOut: 0.8
+      _slide: -6
+      _scaleFrom: 0.97
+      _springFrequency: 1.2
+      _springDamping: 0.8
+    _nearMetres: 40
+    _fullArcMetres: 800
+    _stepMetres: 5
+    _maxShownMetres: 9995
+    _easeRate: 4
+  _abilitySlots:
+    _reveal:
+      _fadeIn: 0.5
+      _fadeOut: 0.9
+      _slide: 8
+      _scaleFrom: 0.96
+      _springFrequency: 1.2
+      _springDamping: 0.8
+    _earnedSeconds: 8
+    _stillSpeed: 0.3
+    _stillSeconds: 1.5

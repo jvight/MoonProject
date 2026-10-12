@@ -16,7 +16,8 @@ namespace MoonProject.UI
             ILookSettings look, IFeelSettings feel, ISaveService save, IMaterialStock materials, ITetherAim tether, IInteractionHints hints,
             IUpgradeShop shop, IBlueprintBoard board, IFriendStatuses friends, IRadioProgram radio, IRadioHop hop,
             IRelayStatus relays, ISalvageStatus salvage, IGameFlow flow, ISettingsFile settings, IRoverBattery battery,
-            IBeamStatus beam, ITechTree tech, IRecoveryProgress recovery)
+            IBeamStatus beam, ITechTree tech, IRecoveryProgress recovery, IWorldLayout world,
+            IRoverAbilities abilities)
         {
             Events = events ?? throw new ArgumentNullException(nameof(events));
             Input = input ?? throw new ArgumentNullException(nameof(input));
@@ -42,6 +43,8 @@ namespace MoonProject.UI
             Tech = tech ?? throw new ArgumentNullException(nameof(tech));
             Recovery = recovery ?? throw new ArgumentNullException(nameof(recovery));
             Beam = beam ?? throw new ArgumentNullException(nameof(beam));
+            World = world ?? throw new ArgumentNullException(nameof(world));
+            Abilities = abilities ?? throw new ArgumentNullException(nameof(abilities));
         }
 
         public EventBus Events { get; }
@@ -80,6 +83,12 @@ namespace MoonProject.UI
 
         public ISalvageStatus Salvage { get; }
 
+        /// <summary>Where home is (the home meter).</summary>
+        public IWorldLayout World { get; }
+
+        /// <summary>What 07 has earned (the ability slots).</summary>
+        public IRoverAbilities Abilities { get; }
+
         public IGameFlow Flow { get; }
 
         public ISettingsFile Settings { get; }
@@ -113,7 +122,8 @@ namespace MoonProject.UI
                 context.Get<IUpgradeShop>(), context.Get<IBlueprintBoard>(), context.Get<IFriendStatuses>(), context.Get<IRadioProgram>(),
                 context.Get<IRadioHop>(), context.Get<IRelayStatus>(), context.Get<ISalvageStatus>(),
                 context.Get<IGameFlow>(), context.Get<ISettingsFile>(), context.Get<IRoverBattery>(),
-                context.Get<IBeamStatus>(), context.Get<ITechTree>(), context.Get<IRecoveryProgress>());
+                context.Get<IBeamStatus>(), context.Get<ITechTree>(), context.Get<IRecoveryProgress>(),
+                context.Get<IWorldLayout>(), context.Get<IRoverAbilities>());
         }
     }
 }

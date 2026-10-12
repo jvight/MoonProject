@@ -19,6 +19,11 @@ namespace MoonProject.UI
 
             NextLine = Require<VisualElement>("next-line");
             BatteryDial = Require<VisualElement>("battery-dial");
+            HomeMeter = Require<VisualElement>("home-meter");
+            HomeMeterArc = Require<VisualElement>("home-meter-arc");
+            HomeMeterValue = Require<Label>("home-meter-value");
+            HomeMeterKey = Require<Label>("home-meter-key");
+            AbilitySlots = Require<VisualElement>("ability-slots");
             BatteryDialFace = Require<VisualElement>("battery-dial-face");
             BatteryDialRing = Require<VisualElement>("battery-dial-ring");
             BatteryDialValue = Require<Label>("battery-dial-value");
@@ -195,6 +200,18 @@ namespace MoonProject.UI
         public VisualElement BatteryDial { get; }
 
         public VisualElement BatteryDialFace { get; }
+
+        /// <summary>The distance home at the top centre: its arc, the metres and the bearing line.</summary>
+        public VisualElement HomeMeter { get; }
+
+        public VisualElement HomeMeterArc { get; }
+
+        public Label HomeMeterValue { get; }
+
+        public Label HomeMeterKey { get; }
+
+        /// <summary>07's abilities as round glass bubbles at the bottom centre (filled from code).</summary>
+        public VisualElement AbilitySlots { get; }
 
         public VisualElement BatteryDialRing { get; }
 

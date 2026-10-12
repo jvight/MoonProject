@@ -502,8 +502,91 @@ Label {
     position: absolute;
     left: 0;
     right: 0;
-    top: 8px;
+    top: 124px;
     align-items: center;
+}
+
+/* The distance home at the top centre, over the next line (Moonlight Glass, Subnautica's depth gauge) */
+.home-meter {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 4px;
+    align-items: center;
+}
+
+.home-meter__arc {
+    width: 250px;
+    height: 60px;
+    --track-color: var(--moon-track);
+    --fill-color: var(--glass-sel);
+    --tick-color: var(--glass-rim);
+    --ring-width: 3;
+}
+
+.home-meter__row {
+    flex-direction: row;
+    align-items: flex-end;
+    margin-top: -30px;
+}
+
+.home-meter__value {
+    font-size: 46px;
+    color: var(--glass-hi);
+    text-shadow: 0 0 14px var(--glass-rim-glow);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/Exo2-SemiBold.asset");
+}
+
+.home-meter__unit {
+    margin-left: 3px;
+    margin-bottom: 8px;
+    font-size: 22px;
+    color: var(--glass-hi);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/Exo2-SemiBold.asset");
+}
+
+.home-meter__key {
+    font-size: 18px;
+    letter-spacing: 2px;
+    color: var(--moon-text-dim);
+}
+
+/* 07's abilities at the bottom centre: round glass bubbles, a padlock until earned, an amber ring in use or new */
+.ability-slots {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 18px;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+
+.ability-slot {
+    width: 62px;
+    height: 62px;
+    margin: 0 7px;
+    justify-content: center;
+    align-items: center;
+    background-image: url("project://database/Assets/_Project/Generated/UI/Glass/GlassBubble.png");
+}
+
+.ability-slot__icon {
+    width: 26px;
+    height: 26px;
+    --icon-color: var(--glass-hi);
+}
+
+.ability-slot--locked {
+    opacity: 0.38;
+}
+
+.ability-slot--on {
+    width: 72px;
+    height: 72px;
+    border-width: 3px;
+    border-radius: 36px;
+    border-color: var(--glass-sel);
 }
 
 .next-line__text {
