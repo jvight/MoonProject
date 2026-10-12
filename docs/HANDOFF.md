@@ -4,7 +4,20 @@ Read this, then `CLAUDE.md`, then `docs/VISION.md`, `docs/DESIGN.md`, `docs/ARCH
 It records how the project is run, where it stands, and what comes next, so a new Director session (on any
 account) can continue without the old conversation.
 
-## 000. LATEST (2026-10-12 ~05:20)
+## 0000. LATEST (2026-10-12 ~07:00): 0.5.1 "Clarity" in progress
+- The owner played 0.5.0: UI clipped on 21:9, loose ground pieces odd, purpose/crafting/tower unclear, lines not
+  understood, music should be earned, Space's sonar unclear, tether given from the start, charging too fast, UI hard
+  to read, the camera's auto-recenter makes players dizzy.
+- Specs: `docs/features/M3-24-clarity.md` and the owner-approved `docs/design/first-hour-v2.md` (§7.1 tasks per slice).
+- Running slices (chips): `ui-fit` (Sonnet high), `clarity` (Opus medium), `voice` (Opus medium; must ask the owner
+  before downloading any TTS engine), `first-hour design` (Opus high; adding a §camera section: auto-recenter rules,
+  a Gentle camera option — after the owner approves it, dispatch a rover slice for the camera).
+- **Director to do:** §7.2 of first-hour-v2.md (VISION/GDD/M3-16/M3-20/M3-21/ARCHITECTURE text edits); land the three
+  slices (full box_check + Playthrough), verify --parallel --push, then build 0.5.1 for the owner.
+- Cron guard v3 (50% hard limit) runs in the current Director session only; this session's context is ~92% full:
+  start a fresh Director session from this handoff.
+
+## 000. (2026-10-12 ~05:20)
 - **0.5.0 released for review:** origin/main = 13faaec7 (verified: compile, EditMode, both PlayMode shards, the
   Playthrough at spec battery tuning, 1457 s, no crawl). Build `D:/Project/MoonProject/Builds/Lunarion-0.5.0-20261011-13faaec7.zip`
   (smoke test passed). Save floor 0.5.0: older saves are put away to `.old-<stamp>.json`.
