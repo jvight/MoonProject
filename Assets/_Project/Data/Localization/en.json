@@ -123,6 +123,66 @@
             "text": "You have the Tower Coil. Park on the radio tower's pad to repair it."
         },
         {
+            "key": "next.tower.part",
+            "text": "The Tower Coil is at the Supply Depot. Drive close and press E to pick it up."
+        },
+        {
+            "key": "next.tower.pad",
+            "text": "Bring the Tower Coil to the radio tower and park on its pad."
+        },
+        {
+            "key": "next.tower.hold",
+            "text": "Hold E on the pad to repair the radio tower."
+        },
+        {
+            "key": "hint.pickup",
+            "text": "Pick up"
+        },
+        {
+            "key": "pickup.Part_TowerCoil",
+            "text": "Tower Coil"
+        },
+        {
+            "key": "pickup.Part_Transformer",
+            "text": "transformer"
+        },
+        {
+            "key": "pickup.Part_RelaySpare",
+            "text": "relay spare part"
+        },
+        {
+            "key": "pickup.relay_part",
+            "text": "relay part"
+        },
+        {
+            "key": "pickup.tilly.rotor",
+            "text": "Tilly's rotor"
+        },
+        {
+            "key": "pickup.tilly.lens",
+            "text": "Tilly's lens"
+        },
+        {
+            "key": "pickup.tilly.cell",
+            "text": "Tilly's power cell"
+        },
+        {
+            "key": "pickup.bell.knob",
+            "text": "Bell's tuning knob"
+        },
+        {
+            "key": "pickup.bell.cone",
+            "text": "Bell's speaker cone"
+        },
+        {
+            "key": "pickup.bell.valve",
+            "text": "Bell's radio valve"
+        },
+        {
+            "key": "pickup.blueprint_tube",
+            "text": "blueprint tube"
+        },
+        {
             "key": "next.signal",
             "text": "A faint signal past the dune. Ping, then follow it."
         },
@@ -820,7 +880,7 @@
         },
         {
             "key": "ticker.relay.online",
-            "text": "Relay online: 07 can charge here and hop home."
+            "text": "{0} online: 07 can charge here and hop home."
         },
         {
             "key": "ticker.relay.waiting",
