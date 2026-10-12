@@ -86,6 +86,9 @@ namespace MoonProject.UI.PlayModeTests
 
         public string SaveSlot { get; }
 
+        /// <summary>The texture the UI renders into (a rig booted with a frame size), else null.</summary>
+        public RenderTexture Frame => _frame;
+
         public Camera Camera => _camera.GetComponent<Camera>();
 
         /// <summary>
