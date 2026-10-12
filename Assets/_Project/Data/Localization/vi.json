@@ -123,6 +123,66 @@
             "text": "Đã có cuộn dây tháp. Đỗ lên bệ của tháp radio để sửa tháp."
         },
         {
+            "key": "next.tower.part",
+            "text": "Cuộn dây tháp ở Kho tiếp tế. Lại gần và nhấn E để nhặt."
+        },
+        {
+            "key": "next.tower.pad",
+            "text": "Mang cuộn dây tháp về tháp radio và đỗ lên bệ."
+        },
+        {
+            "key": "next.tower.hold",
+            "text": "Giữ E trên bệ để sửa tháp radio."
+        },
+        {
+            "key": "hint.pickup",
+            "text": "Nhặt"
+        },
+        {
+            "key": "pickup.Part_TowerCoil",
+            "text": "cuộn dây tháp"
+        },
+        {
+            "key": "pickup.Part_Transformer",
+            "text": "bộ biến áp"
+        },
+        {
+            "key": "pickup.Part_RelaySpare",
+            "text": "linh kiện trạm tiếp sóng"
+        },
+        {
+            "key": "pickup.relay_part",
+            "text": "linh kiện trạm tiếp sóng"
+        },
+        {
+            "key": "pickup.tilly.rotor",
+            "text": "cánh quạt của Tilly"
+        },
+        {
+            "key": "pickup.tilly.lens",
+            "text": "ống kính của Tilly"
+        },
+        {
+            "key": "pickup.tilly.cell",
+            "text": "pin của Tilly"
+        },
+        {
+            "key": "pickup.bell.knob",
+            "text": "núm dò đài của Bell"
+        },
+        {
+            "key": "pickup.bell.cone",
+            "text": "màng loa của Bell"
+        },
+        {
+            "key": "pickup.bell.valve",
+            "text": "đèn điện tử của Bell"
+        },
+        {
+            "key": "pickup.blueprint_tube",
+            "text": "ống bản vẽ"
+        },
+        {
             "key": "next.signal",
             "text": "Có tín hiệu yếu sau đụn cát. Dò sóng rồi lần theo."
         },
@@ -864,7 +924,7 @@
         },
         {
             "key": "ticker.relay.online",
-            "text": "Trạm tiếp sóng đã hoạt động: 07 sạc được ở đây và nhảy sóng về nhà."
+            "text": "{0} đã hoạt động: 07 sạc được ở đây và nhảy sóng về nhà."
         },
         {
             "key": "ticker.relay.waiting",

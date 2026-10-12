@@ -59,7 +59,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return new WaitForSeconds(0.5f);
             Release(_mouse.rightButton);
             Assert.IsFalse(duck.IsTethered, "no tether before Kenji's port");
-            Assert.AreEqual(TetherAimState.Idle, gameplay.Tether.State, "nothing to hold with");
+            Assert.AreEqual(TetherAimState.Asleep, gameplay.Tether.State, "nothing to hold with: no reticle, no icon");
             Assert.AreEqual(1, lines.FindAll(key => key == ProgressionKeys.NotYetTether).Count,
                 "the keepsake says once where the tether can be found again");
 

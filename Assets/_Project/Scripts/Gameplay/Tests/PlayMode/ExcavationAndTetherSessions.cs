@@ -213,6 +213,36 @@ namespace MoonProject.Gameplay.PlayModeTests
             Release(_mouse.rightButton);
         }
 
+        [UnityTest]
+        public IEnumerator Tether_BeforeTheGaragePort_NeitherAimsNorHighlightsNorLatches()
+        {
+            _fixture = GameplayFixture.Boot(_controls, tether: false);
+            yield return null;
+            var beats = new List<FeelBeat>();
+            using var listening = _fixture.Bootstrap.Context.Events.Subscribe<FeelBeat>(beat =>
+            {
+                if (beat.Kind == FeelKind.Tether)
+                {
+                    beats.Add(beat);
+                }
+            });
+            Relic duck = LooseRelicAt(new Vector3(1f, 0.6f, 9f));
+            TetherSystem tether = _fixture.Gameplay.Tether;
+            yield return new WaitForSeconds(1f);
+
+            Vector3 camera = _fixture.Rover.Camera.transform.position;
+            _fixture.Rover.Aim(camera, duck.transform.position);
+            Press(_mouse.rightButton, queueEventOnly: true);
+            yield return new WaitForSeconds(1f);
+            Assert.AreEqual(TetherAimState.Asleep, tether.State, "the UI hides the reticle and the icon");
+            Assert.IsNull(tether.Hovered, "no highlight");
+            Assert.Less(duck.HaloLevel, 0.05f);
+            Assert.AreEqual(0, _fixture.Events.TetherAttached.Count, "no beam");
+            Assert.AreEqual(0, beats.Count);
+            Release(_mouse.rightButton, queueEventOnly: true);
+            yield return null;
+        }
+
         private Relic LooseRelicAt(Vector3 position)
         {
             Relic duck = _fixture.FindRelic(Duck);

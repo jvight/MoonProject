@@ -285,6 +285,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsFalse(hint.Ready, "the prompt waits for the coil");
 
             _fixture.Rover.Place(field.RestPosition(0), 0f);
+            yield return PickupPress.Take(this, _fixture.Gameplay, 2f, "the coil");
             yield return Waits.Until(() => found.Count > 0, 5f);
             Assert.AreEqual("Part_TowerCoil", found[0].PartId);
             Assert.AreEqual(1, found[0].TowerLevel);

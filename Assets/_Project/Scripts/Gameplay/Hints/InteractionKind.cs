@@ -52,5 +52,11 @@ namespace MoonProject.Gameplay
         /// The Cargo Cradle is on 07 and empty and a loose relic is highlighted: press Tether to lift it into the rack.
         /// </summary>
         Stow = 12,
+
+        /// <summary>
+        /// A part waits within reach (a tower part, a friend's part, a relay spare, a blueprint tube): press Excavate to
+        /// lift it onto 07's back. The hint's <see cref="InteractionHint.NounKey"/> names the part.
+        /// </summary>
+        PickUp = 13,
     }
 }

@@ -58,6 +58,7 @@ namespace MoonProject.Gameplay
         private UpgradeService _upgrades;
         private MaterialStock _materials;
         private TowerParts _parts;
+        private TowerOnline _online;
         private IDisposable _purchases;
         private EmissionGlow[] _lights = Array.Empty<EmissionGlow>();
         private Quaternion[] _hatchRest = Array.Empty<Quaternion>();
@@ -93,6 +94,15 @@ namespace MoonProject.Gameplay
 
         /// <summary>The level the tower shows (follows the moment's stage swap and loads).</summary>
         public int ShownLevel { get; private set; }
+
+        /// <summary>
+        /// The level whose power has reached home: it follows <see cref="ShownLevel"/> on the online sequence's first
+        /// Follow (feel-pass §8.2), so the cable, the windows and the radio answer on their beat; at once on a load.
+        /// </summary>
+        public int PoweredLevel { get; private set; }
+
+        /// <summary>The coming-online sequence (tests and debugging views).</summary>
+        public TowerOnline Online => _online;
 
         /// <summary>Current beacon brightness (tests and debugging views).</summary>
         public float BeaconLevel => _beaconGlow != null ? _beaconGlow.Intensity : 0f;
@@ -189,6 +199,7 @@ namespace MoonProject.Gameplay
             }
 
             _parts = parts ?? throw new ArgumentNullException(nameof(parts));
+            _online = new TowerOnline(services.Events, _tuning);
 
             string problem = WiringProblem(upgrades);
             if (problem != null)
@@ -252,6 +263,7 @@ namespace MoonProject.Gameplay
         internal void ShowLevel(int level)
         {
             ShownLevel = level;
+            PoweredLevel = level;
             int stage = TowerStageSwap.StageFor(level, _stages.Length);
             for (int i = 0; i < _stages.Length; i++)
             {
@@ -311,6 +323,7 @@ namespace MoonProject.Gameplay
             _rig.SetGazeTarget(this, mouth, GazePriorities.Focus);
             Hold(true);
             _events.Publish(new StationCued(StationCue.FeedStarted, _crafting, mouth));
+            _online.Anticipate(mouth);
         }
 
         /// <summary>The level's stage swap, beacon flare and signal bloom begin (07's beam starts stitching).</summary>
@@ -320,8 +333,8 @@ namespace MoonProject.Gameplay
             _toStage = TowerStageSwap.StageFor(_craftingLevel, _stages.Length);
             ShownLevel = _craftingLevel;
             _swapStart = now;
-            _bloomStart = now + _tuning.FlareDuration;
             _bloomRadius = _definition.SignalRadiusAt(_craftingLevel);
+            _online.Begin(BeaconPosition, now);
         }
 
         private void Update()
@@ -334,6 +347,16 @@ namespace MoonProject.Gameplay
             float now = Time.time;
             float deltaTime = Time.deltaTime;
             StepMoment(now, deltaTime);
+            _online.Step(now, out bool powered, out bool ring);
+            if (powered)
+            {
+                PoweredLevel = ShownLevel;
+            }
+
+            if (ring)
+            {
+                _bloomStart = now;
+            }
             float flare = StepSwap(now - _swapStart);
             UpdateBeacon(now, flare);
             int level = _upgrades.LevelOf(_definition.Id);
@@ -487,7 +510,10 @@ namespace MoonProject.Gameplay
             float unit = Mathf.Max(0.01f, _tuning.BeaconGlowAt(1));
             _beaconLight.intensity = _tuning.BeaconLightIntensity * glow / unit;
             _beaconLight.enabled = glow > GlowRenderer.VisibleThreshold;
-            float lights = ShownLevel <= 0 ? _tuning.UnpoweredGlow : _tuning.PoweredGlow;
+            // While the tower comes online its lamps climb with the Acts, ring by ring.
+            float lights = ShownLevel <= 0 ? _tuning.UnpoweredGlow
+                : _online.Running ? Mathf.Lerp(_tuning.UnpoweredGlow, _tuning.PoweredGlow, _online.Climb)
+                : _tuning.PoweredGlow;
             _lights[stage].Apply(lights + flare);
         }
 

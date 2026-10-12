@@ -6,11 +6,12 @@ namespace MoonProject.Gameplay
     /// would happen right now if the player acted.</summary>
     public readonly struct InteractionHint
     {
-        public InteractionHint(InteractionKind kind, Vector3 position, bool ready)
+        public InteractionHint(InteractionKind kind, Vector3 position, bool ready, string nounKey = null)
         {
             Kind = kind;
             Position = position;
             Ready = ready;
+            NounKey = nounKey;
         }
 
         public InteractionKind Kind { get; }
@@ -21,6 +22,9 @@ namespace MoonProject.Gameplay
         /// False when the action is there but waiting (sonar cooling down, not enough materials for the next level).
         /// </summary>
         public bool Ready { get; }
+
+        /// <summary>The string key of what the verb acts on (the part's name for a pickup), or null.</summary>
+        public string NounKey { get; }
 
         public static InteractionHint None => new InteractionHint(InteractionKind.None, Vector3.zero, false);
     }

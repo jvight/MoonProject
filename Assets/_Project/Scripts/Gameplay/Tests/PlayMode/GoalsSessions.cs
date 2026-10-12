@@ -30,6 +30,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         public override void Setup()
         {
             base.Setup();
+            InputSystem.AddDevice<Keyboard>();
             _controls = BootstrapHarness.LoadControlsCopy();
         }
 
@@ -100,6 +101,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             TowerPartField parts = gameplay.TowerPartField;
             yield return Waits.Until(() => parts.IsResting(SparePart), 4f);
             _fixture.Rover.Place(parts.RestPosition(SparePart), 0f);
+            yield return PickupPress.Take(this, gameplay, 2f, "the relay spare");
             yield return Waits.Until(() => gameplay.TowerParts.StateOf(SparePart) == TowerPartState.Carried, 8f);
             yield return null;
             Assert.AreEqual(ProgressionKeys.NextPowerCarried, progression.NextStep);

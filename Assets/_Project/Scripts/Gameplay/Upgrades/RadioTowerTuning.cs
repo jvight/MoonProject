@@ -93,6 +93,25 @@ namespace MoonProject.Gameplay
                  "The upgrade flare adds up to 1 on top.")]
         [Range(0f, 4f)] [SerializeField] private float _poweredGlow = 1f;
 
+        [Header("Coming online (feel-pass §8.2)")]
+        [Tooltip("Seconds of the online sequence's Anticipate, as the parts go into the hopper.")]
+        [Range(0.3f, 3f)] [SerializeField] private float _onlineAnticipateSeconds = 1.2f;
+
+        [Tooltip("Seconds between the four Acts as power climbs the tower ring by ring (from the stitch).")]
+        [Range(0.1f, 1f)] [SerializeField] private float _onlineRingSeconds = 0.4f;
+
+        [Tooltip("Seconds from the stitch to the Impact: the beacon flares and starts to turn.")]
+        [Range(0.5f, 4f)] [SerializeField] private float _onlineImpactAt = 1.6f;
+
+        [Tooltip("Seconds from the stitch to Follow 0: power reaches home (cable, windows, radio).")]
+        [Range(0.5f, 6f)] [SerializeField] private float _onlinePowerAt = 2.2f;
+
+        [Tooltip("Seconds from the stitch to Follow 1: the reach ring rolls out.")]
+        [Range(0.5f, 8f)] [SerializeField] private float _onlineRingAt = 3.4f;
+
+        [Tooltip("Seconds from the stitch to the Reward (the card of what the level gave).")]
+        [Range(0.5f, 10f)] [SerializeField] private float _onlineRewardAt = 4.6f;
+
         [Header("Upgrade moment")]
         [Tooltip("Seconds the beacon flares before the new stage appears (07's beam is stitching by then).")]
         [Range(0.1f, 3f)] [SerializeField] private float _flareDuration = 0.7f;
@@ -142,6 +161,12 @@ namespace MoonProject.Gameplay
         public float BeaconLightIntensity => _beaconLightIntensity;
         public float UnpoweredGlow => _unpoweredGlow;
         public float PoweredGlow => _poweredGlow;
+        public float OnlineAnticipateSeconds => _onlineAnticipateSeconds;
+        public float OnlineRingSeconds => _onlineRingSeconds;
+        public float OnlineImpactAt => _onlineImpactAt;
+        public float OnlinePowerAt => _onlinePowerAt;
+        public float OnlineRingAt => _onlineRingAt;
+        public float OnlineRewardAt => _onlineRewardAt;
         public float FlareDuration => _flareDuration;
         public float FlareGlow => _flareGlow;
         public float GrowDuration => _growDuration;

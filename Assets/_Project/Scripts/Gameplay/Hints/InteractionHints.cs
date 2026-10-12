@@ -11,7 +11,7 @@ namespace MoonProject.Gameplay
     {
         private static readonly InteractionKind[] Priority =
         {
-            InteractionKind.Deposit, InteractionKind.Repair, InteractionKind.Restore, InteractionKind.Tune,
+            InteractionKind.PickUp, InteractionKind.Deposit, InteractionKind.Repair, InteractionKind.Restore, InteractionKind.Tune,
             InteractionKind.Hop, InteractionKind.Upgrade, InteractionKind.Salvage, InteractionKind.Excavate,
             InteractionKind.Stow, InteractionKind.Tether, InteractionKind.Reel,
         };
@@ -27,14 +27,17 @@ namespace MoonProject.Gameplay
         private readonly FriendField _friends;
         private readonly RelayField _relays;
         private readonly BeamWork _beam;
+        private readonly PickupReach _pickups;
 
         /// <param name="beam">
         /// 07's beam work: while new work sleeps (the crawl, docs/features/M3-20) a beam verb's hint shows as not ready.
         /// </param>
         public InteractionHints(ExcavationSystem excavation,
             SalvageField salvage, TetherSystem tether, CargoCradle cradle, HomeBase home, IUpgradeStation[] stations,
-            UpgradeService upgrades, IComponentGate parts, FriendField friends, RelayField relays, BeamWork beam)
+            UpgradeService upgrades, IComponentGate parts, FriendField friends, RelayField relays, BeamWork beam,
+            PickupReach pickups)
         {
+            _pickups = pickups ?? throw new ArgumentNullException(nameof(pickups));
             _excavation = excavation != null ? excavation : throw new ArgumentNullException(nameof(excavation));
             _salvage = salvage != null ? salvage : throw new ArgumentNullException(nameof(salvage));
             _tether = tether != null ? tether : throw new ArgumentNullException(nameof(tether));
@@ -82,6 +85,10 @@ namespace MoonProject.Gameplay
                             _excavation.Lifting != null || _beam.MayStart)
                         : InteractionHint.None;
                     return candidate != null;
+                case InteractionKind.PickUp:
+                    bool waiting = _pickups.TryGet(Time.frameCount, out Vector3 part, out string noun);
+                    hint = waiting ? new InteractionHint(kind, part, true, noun) : InteractionHint.None;
+                    return waiting;
                 case InteractionKind.Salvage:
                     SalvagePiece piece = _salvage.Cutting ?? _salvage.Candidate;
                     hint = piece != null

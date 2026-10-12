@@ -57,7 +57,8 @@ namespace MoonProject.Gameplay
         private bool _gazing;
         private bool _initialized;
 
-        public TetherAimState State => _towed != null ? TetherAimState.Towing
+        public TetherAimState State => !_initialized || !_abilities.Has(RoverAbility.Tether) ? TetherAimState.Asleep
+            : _towed != null ? TetherAimState.Towing
             : _hovered != null ? TetherAimState.Hovering
             : TetherAimState.Idle;
 

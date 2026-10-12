@@ -5,7 +5,7 @@ namespace MoonProject.Gameplay
 {
     /// <summary>
     /// Where a kit's blueprint tube lies (docs/features/M3-16 "Blueprints", M3-21 §4): in a salvage site's heart, found
-    /// with the heart's relic, or on the ground at a world anchor, found by driving through it.
+    /// with the heart's relic, or on the ground at a world anchor, picked up with a press of E beside it.
     /// </summary>
     [Serializable]
     public struct BlueprintTube
