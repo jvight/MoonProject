@@ -24,9 +24,7 @@ namespace MoonProject.Audio
         public const string RadioCarrier = "radio_carrier";
         public const string PortArm = "port_arm";
         public const string TetherRingWake = "tether_ring_wake";
-        public const string CutCharge = "cut_charge";
         public const string CutCancel = "cut_cancel";
-        public const string CutIgnite = "cut_ignite";
         public const string CutSizzle = "cut_sizzle";
         public const string CutCrack = "cut_crack";
         public const string StrapTuk = "strap_tuk";
@@ -43,6 +41,16 @@ namespace MoonProject.Audio
         public const string SaveTick = "save_tick";
         public const string CountTick = "count_tick";
         public const string TowerHumRise = "tower_hum_rise";
+        public const string ChargeLamp = "charge_lamp";
+        public const string ChargeInhale = "charge_inhale";
+        public const string ChargeLowD = "charge_low_d";
+        public const string CutIgniteTier = "cut_ignite_tier";
+        public const string CutUndertone = "cut_undertone";
+        public const string SegmentSlide = "segment_slide";
+        public const string CargoTok = "cargo_tok";
+        public const string ShelfChord = "shelf_chord";
+        public const string CrateLatch = "crate_latch";
+        public const string TillyFetch = "tilly_fetch";
         public const string PickupLift = "pickup_lift";
         public const string PickupClunk = "pickup_clunk";
         public const string TowerRing = "tower_ring";

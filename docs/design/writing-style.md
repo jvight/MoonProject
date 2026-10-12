@@ -70,6 +70,16 @@ If a line tells the player what to do, it is functional, even when a character c
 |---|---|
 | Metal / Wiring / Optics | Kim loại / Dây điện / Thấu kính |
 | component; Tower Coil (always this name), transformer, relay spare part | linh kiện; cuộn dây tháp, bộ biến áp, linh kiện trạm tiếp sóng |
+| Circuit Chips (material, M3-27) | Chip mạch |
+| Orange Glass Beads (material, M3-27) | Hạt thủy tinh cam |
+| Ilmenite (material, M3-27) | Ilmenit |
+| Water Ice (material, M3-27) | Băng nước |
+| Rare Earths (material, M3-27) | Đất hiếm |
+| Glass (material, M3-27) | Thủy tinh |
+| Alloy (material, M3-27) | Hợp kim |
+| Coolant (material, M3-27) | Chất làm mát |
+| Crystal (material, M3-27) | Tinh thể |
+| Superconductor (material, M3-27) | Siêu dẫn |
 | blueprint; the reader | bản vẽ; máy đọc |
 | keepsake | kỷ vật |
 | crew log; repair log | nhật ký phi hành đoàn; nhật ký sửa chữa |

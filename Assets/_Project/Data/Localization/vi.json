@@ -971,6 +971,46 @@
             "text": "Thấu kính"
         },
         {
+            "key": "material.circuit_chips",
+            "text": "Chip mạch"
+        },
+        {
+            "key": "material.orange_beads",
+            "text": "Hạt thủy tinh cam"
+        },
+        {
+            "key": "material.ilmenite",
+            "text": "Ilmenit"
+        },
+        {
+            "key": "material.water_ice",
+            "text": "Băng nước"
+        },
+        {
+            "key": "material.rare_earths",
+            "text": "Đất hiếm"
+        },
+        {
+            "key": "material.glass",
+            "text": "Thủy tinh"
+        },
+        {
+            "key": "material.alloy",
+            "text": "Hợp kim"
+        },
+        {
+            "key": "material.coolant",
+            "text": "Chất làm mát"
+        },
+        {
+            "key": "material.crystal",
+            "text": "Tinh thể"
+        },
+        {
+            "key": "material.superconductor",
+            "text": "Siêu dẫn"
+        },
+        {
             "key": "site.depot.name",
             "text": "Kho tiếp tế"
         },
