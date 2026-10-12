@@ -257,7 +257,7 @@ namespace MoonProject.UI.Tests
             Assert.IsTrue(list.RowRoot(1).ClassListContains(BayList.SelectedClass), "the pick is lit");
             Assert.IsFalse(list.RowRoot(0).ClassListContains(BayList.SelectedClass));
             MaterialSlots cradle = list.RowRecipe(0);
-            Assert.AreEqual("3", cradle.Text(SalvageMaterial.Metal));
+            Assert.AreEqual("3 / 3", cradle.Text(SalvageMaterial.Metal), "a bay row reads have / need");
             Assert.IsFalse(cradle.Root(SalvageMaterial.Metal).ClassListContains(MaterialSlots.ShortClass),
                 "enough metal for the cradle");
             Assert.AreEqual(DisplayStyle.None, cradle.Root(SalvageMaterial.Optics).style.display.value);

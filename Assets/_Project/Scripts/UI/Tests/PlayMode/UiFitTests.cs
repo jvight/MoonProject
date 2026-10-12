@@ -29,6 +29,7 @@ namespace MoonProject.UI.PlayModeTests
         private const float PlaceTolerance = 0.01f;
         private const float WideAspect = 16f / 9f;
         private const float NeverIdleSeconds = 1e6f;
+        private const int BigTextPresses = 2;
 
         private readonly List<string> _problems = new List<string>();
         private string _slot;
@@ -55,6 +56,17 @@ namespace MoonProject.UI.PlayModeTests
         [UnityTest]
         public IEnumerator EveryScreenShape_KeepsEveryShownPanelOnScreen_AndApart()
         {
+            yield return Fit(0);
+        }
+
+        [UnityTest]
+        public IEnumerator EveryScreenShape_AtOneAndAHalfTimesTheText_StillFits()
+        {
+            yield return Fit(BigTextPresses);
+        }
+
+        private IEnumerator Fit(int textSizePresses)
+        {
             Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
             ScreenShape first = ScreenShapes.All[0];
             _rig = UiTestRig.Boot(_controls, _slot, first.Width, first.Height);
@@ -69,6 +81,20 @@ namespace MoonProject.UI.PlayModeTests
 
             events.Publish(new TitleShown(true));
             yield return Seconds(1f);
+            if (textSizePresses > 0)
+            {
+                Submit(layout.SettingsButton);
+                yield return Seconds(0.6f);
+                for (int i = 0; i < textSizePresses; i++)
+                {
+                    Submit(layout.TextSizeButton);
+                    yield return null;
+                }
+
+                Submit(layout.SettingsBackButton);
+                yield return Seconds(0.8f);
+            }
+
             var wordmarkPlaces = new List<float>();
             foreach (ScreenShape shape in ScreenShapes.All)
             {
@@ -121,7 +147,7 @@ namespace MoonProject.UI.PlayModeTests
                 yield return Seconds(Settle);
                 yield return Check(shape, "hud", (label, found) =>
                 {
-                    ScreenFit.CheckApart(layout.BatteryArc, layout.NextLine, label, found);
+                    ScreenFit.CheckApart(layout.CellRow, layout.NextLine, label, found);
                     ScreenFit.CheckApart(layout.NextLine, layout.Ticker, label, found);
                     ScreenFit.CheckApart(layout.Ticker, layout.MaterialsChip, label, found);
                 });
@@ -159,7 +185,8 @@ namespace MoonProject.UI.PlayModeTests
                 yield return Check(shape, "lab", null);
             }
 
-            Assert.IsEmpty(_problems, "the UI fits every screen shape:\n" + string.Join("\n", _problems));
+            Assert.IsEmpty(_problems, "the UI fits every screen shape at " + (textSizePresses > 0 ? "150" : "100") +
+                                      "% text:\n" + string.Join("\n", _problems));
         }
 
         /// <summary>

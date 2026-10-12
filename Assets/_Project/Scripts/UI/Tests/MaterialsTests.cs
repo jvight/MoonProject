@@ -133,8 +133,10 @@ namespace MoonProject.UI.Tests
 
             view.Show(new Recipe(6, 4, 0), stock);
             MaterialSlots slots = view.Slots;
-            Assert.AreEqual("6", slots.Text(SalvageMaterial.Metal));
-            Assert.AreEqual("4", slots.Text(SalvageMaterial.Wiring));
+            Assert.AreEqual("2 / 6", slots.Text(SalvageMaterial.Metal), "have / need");
+            Assert.AreEqual("9 / 4", slots.Text(SalvageMaterial.Wiring));
+            Assert.AreEqual("metal", slots.Word(SalvageMaterial.Metal), "each row names its material");
+            Assert.AreEqual("wiring", slots.Word(SalvageMaterial.Wiring));
             Assert.IsTrue(slots.Root(SalvageMaterial.Metal).ClassListContains(MaterialSlots.ShortClass));
             Assert.IsFalse(slots.Root(SalvageMaterial.Wiring).ClassListContains(MaterialSlots.ShortClass));
             Assert.AreEqual(DisplayStyle.None, slots.Root(SalvageMaterial.Optics).style.display.value);

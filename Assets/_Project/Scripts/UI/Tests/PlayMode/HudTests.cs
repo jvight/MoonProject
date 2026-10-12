@@ -253,7 +253,7 @@ namespace MoonProject.UI.PlayModeTests
             Release(keyboard.eKey);
             yield return Seconds(0.3f);
             Assert.AreEqual("Raise the mast", _rig.Ui.Layout.TowerTitle.text, "the next level is offered");
-            Assert.AreEqual(Text(UiKeys.TowerHold), _rig.Ui.Layout.TowerHoldWord.text);
+            Assert.AreEqual(string.Empty, _rig.Ui.Layout.TowerHoldWord.text, "the hold is the ring, never a word");
             Assert.IsTrue(recipe.Root(SalvageMaterial.Metal).ClassListContains(MaterialSlots.ShortClass),
                 "what 07 is short of reads dimmed");
             Assert.IsTrue(recipe.Root(SalvageMaterial.Optics).ClassListContains(MaterialSlots.ShortClass));
@@ -426,7 +426,7 @@ namespace MoonProject.UI.PlayModeTests
             LogAssert.Expect(LogType.Error, new Regex("never showed its work"));
             yield return Seconds(ShortCueWait + 0.5f);
             Assert.IsFalse(_rig.Ui.Tower.IsWorking, "the panel does not wait forever");
-            Assert.AreEqual(Text(UiKeys.TowerHold), _rig.Ui.Layout.TowerHoldWord.text, "it offers the next level");
+            Assert.AreEqual(string.Empty, _rig.Ui.Layout.TowerHoldWord.text, "it offers the next level");
         }
 
         [UnityTest]
