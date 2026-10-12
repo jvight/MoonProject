@@ -1551,7 +1551,6 @@ namespace MoonProject.Gameplay.PlayModeTests
         {
             Begin();
             Workshop bay = _gameplay.Workshop;
-            int answers = _events.StationNotYet.Count;
             yield return DriveTo(_context.Get<IWorldLayout>().BasePosition, PadArrival, 0.8f, 90f,
                 "the base pad, clear of the lander");
             Vector3 entrance = Flat(bay.PadCentre) + Flat(bay.BayForward).normalized * BayApproach;
@@ -1560,8 +1559,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsFalse(_gameplay.Shop.IsAtStation, "no panel");
             Assert.IsFalse(_gameplay.Hints.TryGet(InteractionKind.Upgrade, out _), "no prompt");
             Assert.AreEqual(PurchaseResult.NotAtStation, _gameplay.Shop.Purchase(CargoCradle), "nothing to buy");
-            yield return Until(() => AnsweredNotYet(answers, ProgressionKeys.NotYetBay), 2f,
-                "the sleeping bay answers 'not yet' as 07 comes near");
+            yield return Until(() => AnsweredNotYet(0, ProgressionKeys.NotYetBay), 2f,
+                "the sleeping bay has answered 'not yet' as 07 came near (once a session)");
             End("The Rover Bay sleeps until the tower wakes it", "no pad, no prompt, a soft 'not yet'");
         }
 
