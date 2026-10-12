@@ -676,7 +676,7 @@
         },
         {
             "key": "ui.card.log_caption",
-            "text": "From {0}'s memory"
+            "text": "Repair log: {0}"
         },
         {
             "key": "friend.tilly.name",
@@ -728,7 +728,7 @@
         },
         {
             "key": "ticker.bell.signal",
-            "text": "Bell's picking something up. Her light points the way."
+            "text": "Bell has picked up a signal. Follow her light."
         },
         {
             "key": "ticker.bell.found_0",
@@ -820,11 +820,11 @@
         },
         {
             "key": "ticker.relay.online",
-            "text": "Relay {0} online. Lumen Station can hear a little farther."
+            "text": "Relays online: {0}. The station reaches a little farther."
         },
         {
             "key": "ticker.relay.waiting",
-            "text": "Relay repaired. It listens for a lit neighbour."
+            "text": "Relay repaired. It comes online when a neighbouring relay is lit."
         },
         {
             "key": "hop.node.home",
@@ -1112,7 +1112,7 @@
         },
         {
             "key": "map.state.heart_waiting",
-            "text": "Something still waits in its heart."
+            "text": "Something is still inside."
         },
         {
             "key": "map.state.picked_clean",
@@ -1120,11 +1120,11 @@
         },
         {
             "key": "map.state.mast_dark",
-            "text": "Dark. Waiting to be lit."
+            "text": "Offline. Needs repair."
         },
         {
             "key": "map.state.mast_lit",
-            "text": "Lit. Home reaches this far."
+            "text": "Online. Inside the station's reach."
         },
         {
             "key": "map.place.lander.name",
@@ -1280,7 +1280,7 @@
         },
         {
             "key": "map.region.terraces.name",
-            "text": "The terraces"
+            "text": "Rim Terraces"
         },
         {
             "key": "map.region.terraces.note",

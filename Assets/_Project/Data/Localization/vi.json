@@ -676,7 +676,7 @@
         },
         {
             "key": "ui.card.log_caption",
-            "text": "Từ ký ức của {0}"
+            "text": "Nhật ký sửa chữa: {0}"
         },
         {
             "key": "friend.tilly.name",
@@ -728,7 +728,7 @@
         },
         {
             "key": "ticker.bell.signal",
-            "text": "Bell đang bắt được gì đó. Ánh đèn của cô ấy chỉ đường."
+            "text": "Bell bắt được tín hiệu. Hãy đi theo ánh đèn của cô ấy."
         },
         {
             "key": "ticker.bell.found_0",
@@ -752,11 +752,11 @@
         },
         {
             "key": "radio.channel.tape_deck",
-            "text": "Đầu băng"
+            "text": "Máy phát băng"
         },
         {
             "key": "radio.channel.quiet_hours",
-            "text": "Giờ tĩnh lặng"
+            "text": "Giờ yên tĩnh"
         },
         {
             "key": "ui.pause.cassettes",
@@ -768,7 +768,7 @@
         },
         {
             "key": "ui.card.liner_caption",
-            "text": "Lời Ro ghi trên vỏ băng"
+            "text": "Ghi chú của Ro trên vỏ băng"
         },
         {
             "key": "ui.card.tape_count",
@@ -780,7 +780,7 @@
         },
         {
             "key": "ui.station.workshop",
-            "text": "Khoang xe của Kenji"
+            "text": "Xưởng xe của Kenji"
         },
         {
             "key": "ticker.radio.now_playing",
@@ -820,15 +820,15 @@
         },
         {
             "key": "ticker.relay.online",
-            "text": "Trạm tiếp sóng {0} đã bật. Lumen Station nghe xa thêm được một chút."
+            "text": "Trạm tiếp sóng đang hoạt động: {0}. Trạm phủ sóng xa thêm một chút."
         },
         {
             "key": "ticker.relay.waiting",
-            "text": "Trạm tiếp sóng đã sửa xong. Nó đang lắng nghe một trạm sáng gần đó."
+            "text": "Đã sửa trạm tiếp sóng. Trạm sẽ hoạt động khi trạm bên cạnh có điện."
         },
         {
             "key": "hop.node.home",
-            "text": "Lumen Station"
+            "text": "Trạm Lumen"
         },
         {
             "key": "hop.node.relay.0",
@@ -1112,7 +1112,7 @@
         },
         {
             "key": "map.state.heart_waiting",
-            "text": "Trong lòng nó vẫn còn thứ gì đang chờ."
+            "text": "Bên trong vẫn còn đồ."
         },
         {
             "key": "map.state.picked_clean",
@@ -1120,11 +1120,11 @@
         },
         {
             "key": "map.state.mast_dark",
-            "text": "Còn tối. Đang chờ được thắp."
+            "text": "Đang tắt. Cần sửa."
         },
         {
             "key": "map.state.mast_lit",
-            "text": "Đã sáng. Nhà vươn tới tận đây."
+            "text": "Đang hoạt động. Trong tầm phủ sóng."
         },
         {
             "key": "map.place.lander.name",
