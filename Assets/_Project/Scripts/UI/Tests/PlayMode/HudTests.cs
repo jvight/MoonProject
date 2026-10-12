@@ -103,6 +103,20 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator PickUpPrompt_NamesThePart_AfterTheVerb()
+        {
+            InputSystem.AddDevice<Keyboard>();
+            Boot();
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            const string noun = "pickup.part_towercoil";
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.PickUp, new Vector3(0f, 0f, 3f), true, noun);
+            yield return Seconds(1.5f);
+            Assert.IsTrue(_rig.Ui.Prompt.IsVisible);
+            Assert.AreEqual(Text("hint.pickup") + " " + Text(noun), _rig.Ui.Layout.PromptWord.text);
+            Assert.AreEqual("E", _rig.Ui.Layout.PromptGlyphLabel.text);
+        }
+
+        [UnityTest]
         public IEnumerator Reticle_ShowsOnlyWhileAiming_AndBrightensOnAHoveredTarget()
         {
             Mouse mouse = InputSystem.AddDevice<Mouse>();
@@ -111,10 +125,11 @@ namespace MoonProject.UI.PlayModeTests
             yield return Seconds(0.5f);
             Assert.IsFalse(_rig.Ui.Reticle.IsVisible, "no permanent crosshair");
 
+            _rig.Fakes.TetherState = TetherAimState.Asleep;
             Press(mouse.rightButton);
             yield return Seconds(0.5f);
-            Assert.IsFalse(_rig.Ui.Reticle.IsVisible, "without the tether ability there is nothing to aim");
-            _rig.Fakes.Grant(RoverAbility.Tether);
+            Assert.IsFalse(_rig.Ui.Reticle.IsVisible, "while the tether sleeps there is nothing to aim");
+            _rig.Fakes.TetherState = TetherAimState.Idle;
             yield return Seconds(0.5f);
             Assert.IsTrue(_rig.Ui.Reticle.IsVisible, "holding the tether with nothing in the cone");
             Assert.IsFalse(_rig.Ui.Reticle.IsHighlighted);

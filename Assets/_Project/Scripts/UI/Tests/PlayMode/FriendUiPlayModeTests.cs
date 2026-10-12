@@ -83,6 +83,8 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual("Repair", _rig.Ui.Layout.PromptWord.text);
             Assert.AreEqual("E", _rig.Ui.Layout.PromptGlyphLabel.text);
             Assert.IsTrue(_rig.Ui.FriendReadout.IsVisible);
+            StringAssert.Contains(_rig.Ui.Localization.Get(UiKeys.FriendName("tilly")), _rig.Ui.Layout.FriendPartsLabel.text,
+                "the pips say whose parts they are and how many");
             Rect readout = _rig.Ui.Layout.FriendReadout.worldBound;
             Rect prompt = _rig.Ui.Layout.Prompt.worldBound;
             Assert.LessOrEqual(readout.yMax, prompt.yMin + 1f, "the full pips rest on top of the prompt, not under it");

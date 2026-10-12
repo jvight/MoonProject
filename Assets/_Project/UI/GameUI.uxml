@@ -10,7 +10,10 @@
                 <ui:VisualElement name="friend-center" class="world-anchor__center" picking-mode="Ignore">
                     <ui:VisualElement name="friend-readout" class="friend-readout" picking-mode="Ignore">
                         <ui:VisualElement name="friend-readout-shadow" class="soft-shadow soft-shadow--chip" />
-                        <ui:VisualElement name="friend-pips" class="chip friend-pips" />
+                        <ui:VisualElement class="chip friend-chip">
+                            <ui:Label name="friend-parts-label" class="friend-chip__label" picking-mode="Ignore" />
+                            <ui:VisualElement name="friend-pips" class="friend-pips" picking-mode="Ignore" />
+                        </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>

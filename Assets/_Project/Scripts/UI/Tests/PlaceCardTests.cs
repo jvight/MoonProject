@@ -22,7 +22,7 @@ namespace MoonProject.UI.Tests
 
         private static readonly string[] Lines =
         {
-            "next.wake", "next.salvage", "next.tower", "next.signal", "next.relic", "next.lift.stitch",
+            "next.wake", "next.salvage", "next.tower.pad", "next.signal", "next.relic", "next.lift.stitch",
             "next.lift.ride", "next.chasm", "next.bay.wake", "next.bay", "next.power.part", "next.power.carried",
             "next.power.build", "next.link.relay.0", "next.link.relay.1", "next.link", "notyet.bay",
             "notyet.chart", "ui.lab.turn", "ui.lab.look", "ui.lab.down", "glyph.lab.turn", "glyph.lab.turn.pad",

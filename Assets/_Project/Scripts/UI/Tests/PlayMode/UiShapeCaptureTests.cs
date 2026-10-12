@@ -77,7 +77,7 @@ namespace MoonProject.UI.PlayModeTests
             fakes.Fade = 0f;
             yield return new WaitForSecondsRealtime(_tuning.Title.Reveal.FadeOut + 1f);
 
-            context.Events.Publish(new NextStepChanged("next.tower"));
+            context.Events.Publish(new NextStepChanged("next.tower.pad"));
             context.Events.Publish(new PlaceFirstApproached("place.tower"));
             yield return new WaitForSecondsRealtime(_tuning.Guidance.Place.FadeIn + 0.5f);
             foreach (ScreenShape shape in ScreenShapes.All)

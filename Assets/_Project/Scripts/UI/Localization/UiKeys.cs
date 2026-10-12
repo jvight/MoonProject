@@ -43,6 +43,7 @@ namespace MoonProject.UI
         public const string RecipeNeed = "ui.recipe.need";
         public const string RecipeRow = "ui.recipe.row";
         public const string RewardTitle = "ui.reward.title";
+        public const string FriendParts = "ui.friend.parts";
         public const string StationOffline = "ui.station.offline";
         public const string BayPick = "ui.bay.pick";
 

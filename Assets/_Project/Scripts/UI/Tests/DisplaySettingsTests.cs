@@ -132,7 +132,7 @@ namespace MoonProject.UI.Tests
 
         private static PlayerSettings Make(FakeSettingsServices services, FakeDisplayControl display)
         {
-            ILocalization localization = TestTables.Localization(new EventBus(), "next.tower", "x", "y");
+            ILocalization localization = TestTables.Localization(new EventBus(), "next.tower.pad", "x", "y");
             return new PlayerSettings(services, services, services, display, localization, new PauseSettings());
         }
     }
