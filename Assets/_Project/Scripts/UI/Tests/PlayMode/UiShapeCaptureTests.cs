@@ -105,9 +105,9 @@ namespace MoonProject.UI.PlayModeTests
                     () => fakes.SetMaterials(gain, gain + 1, gain + 2), (shot, found) =>
                     {
                         ScreenFit.CheckApart(layout.BatteryDial, layout.NextLine, shot, found);
-                        ScreenFit.CheckApart(layout.NextLine, layout.MaterialsChip, shot, found);
+                        ScreenFit.CheckApart(layout.NextLine, layout.PickupFeed, shot, found);
                         ScreenFit.CheckApart(layout.HomeMeter, layout.NextLine, shot, found);
-                        ScreenFit.CheckApart(layout.AbilitySlots, layout.MaterialsChip, shot, found);
+                        ScreenFit.CheckApart(layout.BatteryDial, layout.PickupFeed, shot, found);
                     });
             }
 

@@ -73,12 +73,17 @@
                     </ui:VisualElement>
                     <ui:Label name="home-meter-key" class="home-meter__key" picking-mode="Ignore" />
                 </ui:VisualElement>
-                <ui:VisualElement name="ability-slots" class="ability-slots" picking-mode="Ignore" />
                 <ui:VisualElement name="kit-title" class="kit-title" picking-mode="Ignore">
                     <ui:VisualElement class="name-tag" picking-mode="Ignore">
                         <ui:VisualElement name="kit-title-shadow" class="soft-shadow soft-shadow--name" />
                         <ui:Label name="kit-title-name" class="name-tag__name" picking-mode="Ignore" />
                         <ui:VisualElement name="kit-title-rule" class="kit-title__rule" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement class="reward-anchor" picking-mode="Ignore">
+                    <ui:VisualElement name="reward-card" class="reward-card" picking-mode="Ignore">
+                        <ui:Label name="reward-card-title" class="reward-card__title" picking-mode="Ignore" />
+                        <ui:VisualElement name="reward-card-lines" class="reward-card__lines" picking-mode="Ignore" />
                     </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:VisualElement name="battery-dial" class="battery-dial" picking-mode="Ignore">
@@ -118,10 +123,7 @@
                     <ui:Label name="recipe-card-part" class="recipe-card__line" picking-mode="Ignore" />
                     <ui:Label name="recipe-card-where" class="recipe-card__where" picking-mode="Ignore" />
                 </ui:VisualElement>
-                <ui:VisualElement name="materials-chip" class="materials-chip" picking-mode="Ignore">
-                    <ui:VisualElement name="materials-chip-shadow" class="soft-shadow soft-shadow--chip" />
-                    <ui:VisualElement name="materials-chip-items" class="chip materials-chip__body" />
-                </ui:VisualElement>
+                <ui:VisualElement name="pickup-feed" class="pickup-feed" picking-mode="Ignore" />
                 <ui:VisualElement name="ticker" class="ticker" picking-mode="Ignore">
                     <ui:VisualElement name="ticker-line" class="ticker__line" picking-mode="Ignore">
                         <ui:VisualElement name="ticker-lamp" class="ticker__lamp">
@@ -182,6 +184,7 @@
                             <ui:VisualElement class="tower-panel__station">
                                 <ui:VisualElement class="tower-panel__lamp" />
                                 <ui:Label name="tower-name" class="caption tower-panel__name" />
+                                <ui:Label name="tower-state" class="caption caption--quiet tower-panel__state" />
                             </ui:VisualElement>
                             <ui:Label name="tower-level" class="caption caption--quiet" />
                         </ui:VisualElement>
@@ -279,7 +282,6 @@
                                             <ui:Label name="pause-relays-count" class="pause__cassettes-count" />
                                         </ui:VisualElement>
                                     </ui:VisualElement>
-                                    <ui:VisualElement name="pause-materials" class="chip chip--inline pause__materials" />
                                 </ui:VisualElement>
                                 <ui:VisualElement class="pause__pages">
                                     <ui:VisualElement name="page-main" class="pause__page">
@@ -288,6 +290,8 @@
                                                    text="ui.title.new_game" />
                                         <ui:Button name="button-settings" class="menu-button loc"
                                                    text="ui.pause.settings" />
+                                        <ui:Button name="button-credits" class="menu-button loc"
+                                                   text="ui.title.credits" />
                                         <ui:Button name="button-quit-to-title" class="menu-button loc"
                                                    text="ui.pause.quit_to_title" />
                                         <ui:Button name="button-quit" class="menu-button loc" text="ui.pause.quit" />
@@ -319,7 +323,18 @@
                         <ui:VisualElement name="pause-settings" class="pause__settings" picking-mode="Ignore">
                             <ui:VisualElement name="pause-settings-shadow" class="soft-shadow soft-shadow--panel" />
                             <ui:VisualElement name="pause-settings-body" class="panel pause__panel pause__panel--settings">
-                                <ui:Label class="section-label section-label--first loc" text="ui.settings.sound" />
+                                <ui:VisualElement name="settings-tabs" class="settings-tabs" picking-mode="Ignore">
+                                    <ui:VisualElement class="settings-tab-wrap settings-tab-wrap--on" picking-mode="Ignore">
+                                        <ui:Button name="button-tab-sound" class="settings-tab settings-tab--on loc" text="ui.settings.sound" />
+                                    </ui:VisualElement>
+                                    <ui:VisualElement class="settings-tab-wrap" picking-mode="Ignore">
+                                        <ui:Button name="button-tab-camera" class="settings-tab loc" text="ui.settings.tab_camera" />
+                                    </ui:VisualElement>
+                                    <ui:VisualElement class="settings-tab-wrap" picking-mode="Ignore">
+                                        <ui:Button name="button-tab-display" class="settings-tab loc" text="ui.settings.tab_display" />
+                                    </ui:VisualElement>
+                                </ui:VisualElement>
+                                <ui:VisualElement name="settings-page-sound" class="settings-page">
                                 <ui:VisualElement class="setting-row">
                                     <ui:Label class="setting-row__label loc" text="ui.settings.master" />
                                     <ui:SliderInt name="slider-master" class="setting-row__slider" />
@@ -336,7 +351,8 @@
                                     <ui:Label class="setting-row__label loc" text="ui.settings.ambience" />
                                     <ui:SliderInt name="slider-ambience" class="setting-row__slider" />
                                 </ui:VisualElement>
-                                <ui:Label class="section-label loc" text="ui.settings.camera" />
+                                </ui:VisualElement>
+                                <ui:VisualElement name="settings-page-camera" class="settings-page">
                                 <ui:VisualElement class="setting-row">
                                     <ui:Label class="setting-row__label loc" text="ui.settings.look_speed" />
                                     <ui:SliderInt name="slider-look" class="setting-row__slider" />
@@ -362,6 +378,30 @@
                                     <ui:Label class="setting-row__label loc" text="ui.settings.guidance" />
                                     <ui:Toggle name="toggle-guidance" class="setting-row__toggle" />
                                 </ui:VisualElement>
+                                </ui:VisualElement>
+                                <ui:VisualElement name="settings-page-display" class="settings-page">
+                                <ui:VisualElement class="setting-row">
+                                    <ui:Label class="setting-row__label loc" text="ui.display.resolution" />
+                                    <ui:Button name="button-resolution-prev" class="menu-button menu-button--compact cycle__arrow loc" text="ui.display.prev" />
+                                    <ui:Label name="resolution-value" class="cycle__value" />
+                                    <ui:Button name="button-resolution-next" class="menu-button menu-button--compact cycle__arrow loc" text="ui.display.next" />
+                                </ui:VisualElement>
+                                <ui:VisualElement class="setting-row">
+                                    <ui:Label class="setting-row__label loc" text="ui.display.mode" />
+                                    <ui:Button name="button-mode-prev" class="menu-button menu-button--compact cycle__arrow loc" text="ui.display.prev" />
+                                    <ui:Label name="mode-value" class="cycle__value" />
+                                    <ui:Button name="button-mode-next" class="menu-button menu-button--compact cycle__arrow loc" text="ui.display.next" />
+                                </ui:VisualElement>
+                                <ui:VisualElement class="setting-row">
+                                    <ui:Label class="setting-row__label loc" text="ui.display.vsync" />
+                                    <ui:Toggle name="toggle-vsync" class="setting-row__toggle" />
+                                </ui:VisualElement>
+                                <ui:VisualElement name="row-fps" class="setting-row">
+                                    <ui:Label class="setting-row__label loc" text="ui.display.fps_cap" />
+                                    <ui:Button name="button-fps-prev" class="menu-button menu-button--compact cycle__arrow loc" text="ui.display.prev" />
+                                    <ui:Label name="fps-value" class="cycle__value" />
+                                    <ui:Button name="button-fps-next" class="menu-button menu-button--compact cycle__arrow loc" text="ui.display.next" />
+                                </ui:VisualElement>
                                 <ui:VisualElement class="setting-row">
                                     <ui:Label class="setting-row__label loc" text="ui.settings.text_size" />
                                     <ui:Button name="button-text-size" class="menu-button menu-button--compact" />
@@ -370,11 +410,21 @@
                                     <ui:Label class="setting-row__label loc" text="ui.settings.language" />
                                     <ui:Button name="button-language" class="menu-button menu-button--compact" />
                                 </ui:VisualElement>
+                                </ui:VisualElement>
                                 <ui:Button name="button-settings-back" class="menu-button menu-button--quiet loc"
                                            text="ui.settings.back" />
                             </ui:VisualElement>
                         </ui:VisualElement>
                     </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="credits" class="credits" picking-mode="Ignore">
+                <ui:VisualElement name="credits-panel" class="panel credits__panel" picking-mode="Ignore">
+                    <ui:Label name="credits-title" class="credits__title" picking-mode="Ignore" />
+                    <ui:ScrollView name="credits-scroll" class="credits__scroll" mode="Vertical"
+                                   vertical-scroller-visibility="Hidden" horizontal-scroller-visibility="Hidden" />
+                    <ui:Button name="button-credits-back" class="menu-button menu-button--quiet loc"
+                               text="ui.settings.back" />
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>

@@ -451,10 +451,6 @@
             "text": "Âm nền"
         },
         {
-            "key": "ui.settings.camera",
-            "text": "Camera"
-        },
-        {
             "key": "ui.settings.look_speed",
             "text": "Độ nhạy camera"
         },
@@ -477,6 +473,54 @@
         {
             "key": "ui.settings.language",
             "text": "Ngôn ngữ"
+        },
+        {
+            "key": "ui.settings.tab_camera",
+            "text": "Camera & cảm giác"
+        },
+        {
+            "key": "ui.settings.tab_display",
+            "text": "Hiển thị"
+        },
+        {
+            "key": "ui.display.resolution",
+            "text": "Độ phân giải"
+        },
+        {
+            "key": "ui.display.mode",
+            "text": "Chế độ cửa sổ"
+        },
+        {
+            "key": "ui.display.vsync",
+            "text": "V-Sync"
+        },
+        {
+            "key": "ui.display.fps_cap",
+            "text": "Giới hạn FPS"
+        },
+        {
+            "key": "ui.display.unlimited",
+            "text": "Không giới hạn"
+        },
+        {
+            "key": "ui.display.prev",
+            "text": "‹"
+        },
+        {
+            "key": "ui.display.next",
+            "text": "›"
+        },
+        {
+            "key": "ui.display.mode.borderless",
+            "text": "Toàn màn hình không viền"
+        },
+        {
+            "key": "ui.display.mode.exclusive",
+            "text": "Toàn màn hình"
+        },
+        {
+            "key": "ui.display.mode.windowed",
+            "text": "Cửa sổ"
         },
         {
             "key": "ui.settings.back",
@@ -991,6 +1035,34 @@
             "text": "Cần trục vớt thêm {0} {1}"
         },
         {
+            "key": "ui.recipe.row",
+            "text": "{0} (có {1})"
+        },
+        {
+            "key": "ui.reward.title",
+            "text": "{0} · Cấp {1}"
+        },
+        {
+            "key": "ui.reward.light_on",
+            "text": "Nhà đã có điện"
+        },
+        {
+            "key": "ui.reward.light_up",
+            "text": "Nhà sáng hơn"
+        },
+        {
+            "key": "ui.reward.radio_on",
+            "text": "Radio bắt được tín hiệu"
+        },
+        {
+            "key": "ui.reward.reach",
+            "text": "Đi xa hơn {0} m"
+        },
+        {
+            "key": "ui.station.offline",
+            "text": "đang tắt"
+        },
+        {
             "key": "ui.recipecard.needs",
             "text": "CẦN"
         },
@@ -1413,6 +1485,74 @@
         {
             "key": "ui.title.quit",
             "text": "Thoát"
+        },
+        {
+            "key": "ui.title.credits",
+            "text": "Ghi công"
+        },
+        {
+            "key": "ui.credits.title",
+            "text": "Ghi công"
+        },
+        {
+            "key": "ui.credits.version",
+            "text": "Phiên bản {0}"
+        },
+        {
+            "key": "ui.credits.game",
+            "text": "Lunarion"
+        },
+        {
+            "key": "ui.credits.made_by",
+            "text": "Thực hiện bởi jvight"
+        },
+        {
+            "key": "ui.credits.fonts",
+            "text": "Phông chữ"
+        },
+        {
+            "key": "ui.credits.voice",
+            "text": "Giọng nói"
+        },
+        {
+            "key": "ui.credits.voice_station",
+            "text": "Giọng của trạm được tổng hợp bằng mô hình Piper huấn luyện trên LibriTTS-R"
+        },
+        {
+            "key": "ui.credits.voice_ro",
+            "text": "Giọng của Ro được tổng hợp bằng mô hình Piper huấn luyện trên các bản đọc LibriVox của Cori Samuel"
+        },
+        {
+            "key": "ui.credits.public_domain",
+            "text": "Phạm vi công cộng"
+        },
+        {
+            "key": "ui.credits.voice_engine",
+            "text": "Bộ máy giọng nói: sherpa-onnx"
+        },
+        {
+            "key": "ui.credits.music",
+            "text": "Âm nhạc và âm thanh"
+        },
+        {
+            "key": "ui.credits.music_in_house",
+            "text": "Tự làm, bằng mã nguồn."
+        },
+        {
+            "key": "ui.credits.engine",
+            "text": "Công cụ"
+        },
+        {
+            "key": "ui.credits.made_with_unity",
+            "text": "Làm bằng Unity"
+        },
+        {
+            "key": "ui.credits.licences",
+            "text": "Giấy phép"
+        },
+        {
+            "key": "ui.credits.licences_folder",
+            "text": "Toàn văn các giấy phép nằm trong thư mục Licenses cạnh trò chơi."
         },
         {
             "key": "ui.title.new_game_question",

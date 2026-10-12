@@ -31,6 +31,10 @@ namespace MoonProject.UI
         private const float MoveEpsilon = 0.1f;
         private const string TitleClass = "pause--title";
         private const string SettingsOpenClass = "pause--settings-open";
+        private const string TabOnClass = "settings-tab--on";
+        private const string TabSkinOnClass = "settings-tab-wrap--on";
+        private const string TabFocusClass = "settings-tab-wrap--focus";
+        private const string IdleRowClass = "setting-row--idle";
 
         private readonly UiLayout _layout;
         private readonly PauseSettings _settings;
@@ -40,11 +44,9 @@ namespace MoonProject.UI
         private readonly InputReader _input;
         private readonly EventBus _events;
         private readonly SettingsStore _settingsStore;
-        private readonly IMaterialStock _materials;
         private readonly IRadioProgram _radio;
         private readonly IRelayStatus _relays;
         private readonly IGameFlow _flow;
-        private readonly MaterialSlots _stock;
         private readonly CursorPolicy _cursor;
         private readonly Action _quit;
         private readonly PauseClock _clock;
@@ -58,6 +60,11 @@ namespace MoonProject.UI
         private readonly Reveal _titleScreen;
         private readonly Reveal _curtain;
         private readonly Button[] _languageButtons;
+        private readonly CreditsView _credits;
+        private readonly VisualElement[] _settingsPages;
+        private readonly Button[] _settingsTabs;
+        private int _settingsTab;
+        private readonly IntText _fpsNumbers;
         private readonly PausePages _pages = new PausePages();
         private readonly string[] _lookTexts;
         private Focusable _pendingFocus;
@@ -72,9 +79,21 @@ namespace MoonProject.UI
 
         public PauseMenu(UiLayout layout, PauseSettings settings, TitleSettings title, PlayerSettings player,
             ILocalization localization, InputReader input, EventBus events, SettingsStore settingsStore,
-            IMaterialStock materials,
-            IRadioProgram radio, IRelayStatus relays, IGameFlow flow, IntText numbers, CursorPolicy cursor, Action quit)
+            IRadioProgram radio, IRelayStatus relays, IGameFlow flow, IntText numbers, CursorPolicy cursor, Action quit,
+            CreditsView credits)
         {
+            _credits = credits ?? throw new ArgumentNullException(nameof(credits));
+            _settingsPages = new[] { layout.PageSound, layout.PageCamera, layout.PageDisplay };
+            _settingsTabs = new[] { layout.TabSound, layout.TabCamera, layout.TabDisplay };
+            foreach (Button tab in _settingsTabs)
+            {
+                VisualElement skin = tab.parent;
+                new TabPainter(skin);
+                tab.RegisterCallback<FocusInEvent>(_ => skin.AddToClassList(TabFocusClass));
+                tab.RegisterCallback<FocusOutEvent>(_ => skin.RemoveFromClassList(TabFocusClass));
+            }
+
+            _fpsNumbers = numbers ?? throw new ArgumentNullException(nameof(numbers));
             _layout = layout ?? throw new ArgumentNullException(nameof(layout));
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _title = title ?? throw new ArgumentNullException(nameof(title));
@@ -83,11 +102,9 @@ namespace MoonProject.UI
             _input = input ?? throw new ArgumentNullException(nameof(input));
             _events = events ?? throw new ArgumentNullException(nameof(events));
             _settingsStore = settingsStore ?? throw new ArgumentNullException(nameof(settingsStore));
-            _materials = materials ?? throw new ArgumentNullException(nameof(materials));
             _radio = radio ?? throw new ArgumentNullException(nameof(radio));
             _relays = relays ?? throw new ArgumentNullException(nameof(relays));
             _flow = flow ?? throw new ArgumentNullException(nameof(flow));
-            _stock = new MaterialSlots(layout.PauseMaterials, numbers, false);
             _cursor = cursor ?? throw new ArgumentNullException(nameof(cursor));
             _quit = quit ?? throw new ArgumentNullException(nameof(quit));
             _clock = new PauseClock(settings);
@@ -129,7 +146,12 @@ namespace MoonProject.UI
         public bool IsOpen { get; private set; }
 
         /// <summary>How much of the menu blur the world takes now (0..1): all of it paused, less on the title.</summary>
-        public float Openness => _pages.IsTitle ? _main.Visibility * _title.BackdropWeight : _veil.Visibility;
+        public float Openness => _pages.IsTitle
+            ? Mathf.Max(_main.Visibility, _credits.Visibility) * _title.BackdropWeight
+            : _veil.Visibility;
+
+        /// <summary>True while the credits are open (from the title's Credits entry until Back).</summary>
+        public bool IsShowingCredits => _credits.IsOpen;
 
         /// <summary>True while the menu is the title's (from <see cref="OpenTitle"/> until Continue or New Game).</summary>
         public bool IsTitle => IsOpen && _pages.IsTitle;
@@ -173,7 +195,6 @@ namespace MoonProject.UI
             _clock.Pause();
             _input.Disable();
             _cursor.Menu();
-            WriteMaterials();
             WriteCassettes();
             WriteRelays();
             _veil.Show();
@@ -212,7 +233,11 @@ namespace MoonProject.UI
                 return;
             }
 
-            if (_resting)
+            if (_credits.IsOpen)
+            {
+                CloseCredits();
+            }
+            else if (_resting)
             {
                 Rest(false);
             }
@@ -282,6 +307,7 @@ namespace MoonProject.UI
             _languagePage.Tick(unscaledDeltaTime);
             _titleScreen.Tick(unscaledDeltaTime);
             _curtain.Tick(unscaledDeltaTime);
+            _credits.Tick(unscaledDeltaTime);
             ShiftForSettings();
             _layout.Pause.EnableInClassList(SettingsOpenClass, _settingsPanel.Target);
             CenterSettings();
@@ -314,9 +340,11 @@ namespace MoonProject.UI
         public void Relocalize()
         {
             _layout.LanguageButton.text = _localization.GetLanguageName(_localization.Language);
+            WriteDisplay();
             WriteMode();
             WriteCassettes();
             WriteRelays();
+            _credits.Relocalize();
         }
 
         /// <summary>Restores normal game speed immediately (the UI is going away mid-pause).</summary>
@@ -333,12 +361,24 @@ namespace MoonProject.UI
             _layout.NewGameKeepButton.clicked += OnKeepGoingClicked;
             _layout.NewGameConfirmButton.clicked += OnNewGameConfirmed;
             _layout.QuitToTitleButton.clicked += OnQuitToTitleClicked;
+            _layout.CreditsButton.clicked += OnCreditsClicked;
+            _layout.CreditsBack.clicked += OnCreditsBackClicked;
             _layout.QuitButton.clicked += OnQuitClicked;
             _layout.QuitStayButton.clicked += OnStayClicked;
             _layout.QuitConfirmButton.clicked += OnQuitConfirmed;
             _layout.SettingsBackButton.clicked += OnSettingsBackClicked;
             _layout.LanguageButton.clicked += OnLanguageClicked;
             _layout.TextSizeButton.clicked += OnTextSizeClicked;
+            _layout.TabSound.clicked += () => SelectTab(0);
+            _layout.TabCamera.clicked += () => SelectTab(1);
+            _layout.TabDisplay.clicked += () => SelectTab(2);
+            _layout.ResolutionPrev.clicked += () => StepDisplay(Step.Resolution, -1);
+            _layout.ResolutionNext.clicked += () => StepDisplay(Step.Resolution, 1);
+            _layout.ModePrev.clicked += () => StepDisplay(Step.Mode, -1);
+            _layout.ModeNext.clicked += () => StepDisplay(Step.Mode, 1);
+            _layout.FpsPrev.clicked += () => StepDisplay(Step.FpsCap, -1);
+            _layout.FpsNext.clicked += () => StepDisplay(Step.FpsCap, 1);
+            _layout.VSyncToggle.RegisterValueChangedCallback(OnVSyncChanged);
             _layout.Pause.RegisterCallback<FocusInEvent>(OnFocusIn);
             _layout.Pause.RegisterCallback<PointerDownEvent>(OnPointerDown, TrickleDown.TrickleDown);
 
@@ -372,16 +412,6 @@ namespace MoonProject.UI
             {
                 _layout.PauseCassettesCount.text = string.Format(_localization.Get(UiKeys.PauseCassettes), owned,
                     _radio.TotalTapeCount);
-            }
-        }
-
-        /// <summary>The stock summary in the header: every material's icon and count.</summary>
-        private void WriteMaterials()
-        {
-            for (int i = 0; i < Materials.Count; i++)
-            {
-                SalvageMaterial material = Materials.At(i);
-                _stock.SetCount(material, Materials.Of(_materials, material));
             }
         }
 
@@ -422,6 +452,8 @@ namespace MoonProject.UI
             _layout.RumbleSlider.SetValueWithoutNotify(_player.GetRumbleStep());
             _layout.GuidanceToggle.SetValueWithoutNotify(_player.Guidance);
             _layout.TextSizeButton.text = _player.TextSizeLabel;
+            WriteDisplay();
+            SelectTab(0);
             _settingsPanel.Show();
             if (_pages.IsTitle)
             {
@@ -429,6 +461,70 @@ namespace MoonProject.UI
             }
 
             _pendingFocus = _layout.MasterSlider;
+        }
+
+        /// <summary>Shows one of the settings' pages (0 Sound, 1 Camera and feel, 2 Display) and marks its tab.</summary>
+        internal void SelectTab(int tab)
+        {
+            _settingsTab = tab;
+            for (int i = 0; i < _settingsPages.Length; i++)
+            {
+                Display(_settingsPages[i], i == tab);
+                _settingsTabs[i].EnableInClassList(TabOnClass, i == tab);
+                _settingsTabs[i].parent.EnableInClassList(TabSkinOnClass, i == tab);
+            }
+        }
+
+        /// <summary>The page now shown (tests and captures).</summary>
+        public int SettingsTab => _settingsTab;
+
+        private enum Step
+        {
+            Resolution,
+            Mode,
+            FpsCap,
+        }
+
+        private void StepDisplay(Step what, int direction)
+        {
+            if (!IsOpen || !_settingsPanel.Target)
+            {
+                return;
+            }
+
+            switch (what)
+            {
+                case Step.Resolution:
+                    _player.StepResolution(direction);
+                    break;
+                case Step.Mode:
+                    _player.StepWindowMode(direction);
+                    break;
+                default:
+                    _player.StepFpsCap(direction);
+                    break;
+            }
+
+            WriteDisplay();
+            Cue(UiCueKind.Confirm);
+        }
+
+        private void OnVSyncChanged(ChangeEvent<bool> evt)
+        {
+            _player.VSync = evt.newValue;
+            WriteDisplay();
+            Cue(UiCueKind.Confirm);
+        }
+
+        /// <summary>Writes the Display page's values (allocation-free: cached labels and numbers).</summary>
+        private void WriteDisplay()
+        {
+            _layout.ResolutionValue.text = _player.ResolutionLabels[_player.ResolutionIndex];
+            _layout.ModeValue.text = _localization.Get(UiKeys.DisplayModeName(_player.WindowMode));
+            _layout.VSyncToggle.SetValueWithoutNotify(_player.VSync);
+            int cap = _player.FpsCap;
+            _layout.FpsValue.text = cap > 0 ? _fpsNumbers.Get(cap) : _localization.Get(UiKeys.DisplayUnlimited);
+            _layout.FpsRow.EnableInClassList(IdleRowClass, _player.VSync);
         }
 
         private void CloseSettings()
@@ -607,6 +703,11 @@ namespace MoonProject.UI
 
         private Focusable DefaultFocus()
         {
+            if (_credits.IsOpen)
+            {
+                return _layout.CreditsBack;
+            }
+
             if (_settingsPanel.Target)
             {
                 return _layout.MasterSlider;
@@ -686,6 +787,45 @@ namespace MoonProject.UI
                 Cue(UiCueKind.Confirm);
                 Draw(Leaving.Quit);
             }
+        }
+
+        /// <summary>The title's Credits entry: the credits come up over the title and its menu steps aside.</summary>
+        private void OnCreditsClicked()
+        {
+            if (!IsOpen || !_pages.IsTitle || _pages.Current != PausePage.Main || _leaving != Leaving.None ||
+                _credits.IsOpen)
+            {
+                return;
+            }
+
+            if (_settingsPanel.Target)
+            {
+                CloseSettings();
+            }
+
+            _credits.Open();
+            _main.Hide();
+            _titleScreen.Snap(false);
+            _pendingFocus = _layout.CreditsBack;
+            Cue(UiCueKind.Confirm);
+        }
+
+        private void OnCreditsBackClicked()
+        {
+            if (_credits.IsOpen)
+            {
+                CloseCredits();
+            }
+        }
+
+        private void CloseCredits()
+        {
+            _credits.Close();
+            Blur();
+            _main.Show();
+            _titleScreen.Show();
+            _pendingFocus = _layout.CreditsButton;
+            Cue(UiCueKind.Back);
         }
 
         /// <summary>Quit to title: saved, then the dark, then App reloads into the title.</summary>
@@ -798,6 +938,7 @@ namespace MoonProject.UI
             Display(_layout.ResumeButton, !title || _pages.HasSave);
             Display(_layout.NewGameButton, title);
             Display(_layout.QuitToTitleButton, !title && _flow.ShowsTitle);
+            Display(_layout.CreditsButton, title);
         }
 
         private static void Display(VisualElement element, bool shown)
@@ -827,6 +968,12 @@ namespace MoonProject.UI
         {
             if (!IsTitle || _leaving != Leaving.None)
             {
+                return;
+            }
+
+            if (_credits.IsOpen)
+            {
+                _untouched = 0f;
                 return;
             }
 

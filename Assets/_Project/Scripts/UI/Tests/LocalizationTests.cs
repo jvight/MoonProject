@@ -90,7 +90,7 @@ namespace MoonProject.UI.Tests
         {
             var services = new FakeSettingsServices();
             var pause = new PauseSettings();
-            var settings = new PlayerSettings(services, services, services, _localization, pause);
+            var settings = new PlayerSettings(services, services, services, new FakeDisplayControl(), _localization, pause);
             settings.SetVolumeStep(AudioBus.Music, 3);
             settings.SetLookStep(6);
             settings.InvertY = true;
@@ -104,7 +104,7 @@ namespace MoonProject.UI.Tests
             var otherServices = new FakeSettingsServices();
             var otherLocalization = new LocalizationService(new EventBus(),
                 new[] { StringTable.Parse(English, "en"), StringTable.Parse(Vietnamese, "vi") });
-            var restored = new PlayerSettings(otherServices, otherServices, otherServices, otherLocalization, pause);
+            var restored = new PlayerSettings(otherServices, otherServices, otherServices, new FakeDisplayControl(), otherLocalization, pause);
             restored.Restore(JsonUtility.FromJson<SettingsSaveData>(json));
             Assert.AreEqual(0.3f, otherServices.GetVolume(AudioBus.Music), 1e-5f);
             Assert.AreEqual(1f, otherServices.GetVolume(AudioBus.Master), 1e-5f);
@@ -120,7 +120,7 @@ namespace MoonProject.UI.Tests
         public void PlayerSettings_KeepsTheLanguage_WhenTheSavedOneIsGone()
         {
             var services = new FakeSettingsServices();
-            var settings = new PlayerSettings(services, services, services, _localization, new PauseSettings());
+            var settings = new PlayerSettings(services, services, services, new FakeDisplayControl(), _localization, new PauseSettings());
             LogAssert.Expect(LogType.Warning, new Regex("'fr' is not available"));
             settings.Restore(new SettingsSaveData { language = "fr" });
             Assert.AreEqual("en", _localization.Language);
@@ -130,7 +130,7 @@ namespace MoonProject.UI.Tests
         public void PlayerSettings_CyclesLanguages_BackToThePrimary()
         {
             var services = new FakeSettingsServices();
-            var settings = new PlayerSettings(services, services, services, _localization, new PauseSettings());
+            var settings = new PlayerSettings(services, services, services, new FakeDisplayControl(), _localization, new PauseSettings());
             settings.NextLanguage();
             settings.NextLanguage();
             Assert.AreEqual("en", _localization.Language);

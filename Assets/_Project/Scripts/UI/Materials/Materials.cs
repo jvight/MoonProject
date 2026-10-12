@@ -1,11 +1,10 @@
 using System;
 using MoonProject.Core;
-using MoonProject.Gameplay;
 
 namespace MoonProject.UI
 {
     /// <summary>
-    /// The three salvage materials as the UI walks them: always Metal, Wiring, Optics, the order every chip, recipe and
+    /// The three salvage materials as the UI walks them: always Metal, Wiring, Optics, the order every row, recipe and
     /// summary shows them in. Allocation-free.
     /// </summary>
     internal static class Materials
@@ -26,22 +25,6 @@ namespace MoonProject.UI
                     return SalvageMaterial.Optics;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(index), index, "There are three materials.");
-            }
-        }
-
-        /// <summary>How much of <paramref name="material"/> the stock holds.</summary>
-        public static int Of(IMaterialStock stock, SalvageMaterial material)
-        {
-            switch (material)
-            {
-                case SalvageMaterial.Metal:
-                    return stock.Metal;
-                case SalvageMaterial.Wiring:
-                    return stock.Wiring;
-                case SalvageMaterial.Optics:
-                    return stock.Optics;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(material), material, "Unknown salvage material.");
             }
         }
 

@@ -22,6 +22,7 @@ namespace MoonProject.UI
         private readonly bool _keepOnScreen;
         private Vector2 _screen;
         private Vector2 _written = new Vector2(float.NaN, float.NaN);
+        private float _writtenLift;
 
         /// <param name="anchor">The zero-size element to move.</param>
         /// <param name="view">The player's camera.</param>
@@ -39,6 +40,12 @@ namespace MoonProject.UI
             _followHalfLife = followHalfLife;
             _keepOnScreen = keepOnScreen;
         }
+
+        /// <summary>Where the anchor sits in the panel before its <see cref="Lift"/> (panel units).</summary>
+        public Vector2 Screen => _screen;
+
+        /// <summary>Pixels the anchor rides above its point (negative: below), for content that must clear a card.</summary>
+        public float Lift { get; set; }
 
         /// <summary>
         /// Moves the anchor towards <paramref name="worldPoint"/> (straight there when <paramref name="snap"/>).
@@ -62,10 +69,12 @@ namespace MoonProject.UI
             }
 
             _screen = snap ? target : ScreenAnchor.Follow(_screen, target, _followHalfLife, deltaTime);
-            if (float.IsNaN(_written.x) || (_screen - _written).sqrMagnitude > MoveEpsilon * MoveEpsilon)
+            if (float.IsNaN(_written.x) || (_screen - _written).sqrMagnitude > MoveEpsilon * MoveEpsilon ||
+                Mathf.Abs(Lift - _writtenLift) > MoveEpsilon)
             {
-                _anchor.style.translate = new StyleTranslate(new Translate(_screen.x, _screen.y));
+                _anchor.style.translate = new StyleTranslate(new Translate(_screen.x, _screen.y - Lift));
                 _written = _screen;
+                _writtenLift = Lift;
             }
 
             return true;
