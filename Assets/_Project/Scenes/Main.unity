@@ -7271,6 +7271,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _visuals: {fileID: 11400000, guid: d0041afc7955acf48be4dd7cf5c09747, type: 2}
   _glints: {fileID: 11400000, guid: a0a01ae3c65f3f34f91727943ba07a2e, type: 2}
+  _cutterTuning: {fileID: 11400000, guid: f6afbe3ccb78e1745921d4125fc1a80b, type: 2}
   _upgradeDefinitions:
   - {fileID: 11400000, guid: 214663e3648dfcd4597adf2528a8d867, type: 2}
   - {fileID: 11400000, guid: 78d4cc86a6a8e6e449566b365dd36d31, type: 2}
