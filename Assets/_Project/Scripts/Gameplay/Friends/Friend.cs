@@ -30,8 +30,10 @@ namespace MoonProject.Gameplay
             PartFlying = new bool[count];
             PartSpotted = new bool[count];
             PartDug = new float[count];
+            PartNouns = new string[count];
             for (int i = 0; i < count; i++)
             {
+                PartNouns[i] = PickupReach.NounKey(definition.Id + "." + definition.Parts[i].Id);
                 PartRest[i] = parts[i].position;
                 PartScale[i] = parts[i].localScale;
             }
@@ -89,6 +91,9 @@ namespace MoonProject.Gameplay
         internal float[] PartFlightDuration { get; }
 
         internal bool[] PartFlying { get; }
+
+        /// <summary>Each part's name key, for the pickup prompt.</summary>
+        internal string[] PartNouns { get; }
 
         internal bool[] PartSpotted { get; }
 

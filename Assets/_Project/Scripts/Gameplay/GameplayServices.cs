@@ -68,5 +68,8 @@ namespace MoonProject.Gameplay
 
         /// <summary>Every pickup glint's veil: hidden while the title is up, eased back in as play begins.</summary>
         public GlintVeil GlintVeil { get; } = new GlintVeil();
+
+        /// <summary>The press that picks a waiting part up, shared by every field with parts on the ground.</summary>
+        public PickupReach Pickups { get; } = new PickupReach();
     }
 }

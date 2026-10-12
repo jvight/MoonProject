@@ -265,6 +265,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         private IEnumerator Gather(RelayMast mast)
         {
             _fixture.Rover.Place(Flat(mast.PartRest), 0f);
+            yield return PickupPress.Take(this, _fixture.Gameplay, 2f, $"{mast.Id}'s part");
             yield return new WaitForSeconds(_fixture.FriendTuning.PartFlightDuration + 1f);
             Assert.AreEqual(RelayPartState.Held, mast.PartState, $"{mast.Id}'s part is drawn in");
         }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using MoonProject.Core;
+using MoonProject.Core.Input;
 using MoonProject.Core.Save;
 using Object = UnityEngine.Object;
 
@@ -10,11 +11,14 @@ namespace MoonProject.Gameplay
     /// <summary>
     /// The blueprint tubes waiting on the ground at world anchors (docs/features/M3-21 §4: Hover-Jump's at the chasm's
     /// near lip), Art's BlueprintTube model. While its kit is neither found nor fitted, a tube rests a few metres back
-    /// from its anchor, hovering, turning and glinting like a component; driven through, it is drawn into 07 and rides
+    /// from its anchor, hovering, turning and glinting like a component; a press of E beside it draws it into 07 and it rides
     /// home on its back (<see cref="Blueprints.PickUp"/>; Rover shows it), and the game saves.
     /// </summary>
     public sealed class GroundTubes : IDisposable
     {
+        /// <summary>A tube's name key for the pickup prompt.</summary>
+        private static readonly string TubeNoun = PickupReach.NounKey("blueprint_tube");
+
         private enum Phase
         {
             Gone,
@@ -30,6 +34,9 @@ namespace MoonProject.Gameplay
         private readonly IRoverRig _rig;
         private readonly IViewCamera _view;
         private readonly ISaveService _save;
+        private readonly EventBus _events;
+        private readonly InputReader _input;
+        private readonly PickupReach _pickups;
         private readonly PickupGlints _glints;
         private readonly BlueprintTube[] _tubes;
         private readonly Transform[] _models;
@@ -54,6 +61,9 @@ namespace MoonProject.Gameplay
             }
 
             _rover = services.Rover;
+            _events = services.Events;
+            _input = services.Input;
+            _pickups = services.Pickups;
             _rig = services.Rig;
             _view = services.View;
             _save = services.Save;
@@ -162,13 +172,15 @@ namespace MoonProject.Gameplay
                     model.SetPositionAndRotation(at, Quaternion.Euler(0f, now * _friends.PartSpin, 0f));
                     model.localScale = _scales[i] * Ease.OutCubic(appear);
                     _glints.Add(_rest[i], i);
-                    if ((at - _rover.Position).sqrMagnitude <= _friends.PartMagnetRadius * _friends.PartMagnetRadius)
+                    if (_pickups.Offer(Time.frameCount, _input.ExcavateHeld, PickupReach.Tubes, i, at,
+                            _rover.Position, _friends.PartReachRadius, TubeNoun))
                     {
                         _phases[i] = Phase.Flying;
                         _from[i] = at;
                         _since[i] = now;
                         _flight[i] = PickupFlight.Duration(Vector3.Distance(at, _rig.CargoSocket.position),
                             _friends.PartFlightDuration, _friends.PartFlightPerMetre);
+                        PickupReach.Lifted(_events, at, _flight[i]);
                     }
 
                     break;
@@ -180,6 +192,7 @@ namespace MoonProject.Gameplay
                         model.gameObject.SetActive(false);
                         model.localScale = _scales[i];
                         _blueprints.PickUp(_tubes[i].KitId, _tubes[i].AnchorId, _from[i]);
+                        PickupReach.Landed(_events, _rig.CargoSocket.position);
                         _save.SaveNow();
                         break;
                     }

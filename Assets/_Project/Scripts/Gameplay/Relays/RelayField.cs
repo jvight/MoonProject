@@ -12,7 +12,7 @@ namespace MoonProject.Gameplay
     /// <summary>
     /// The station's relay network (docs/features/M3-06). A dark, leaning mast stands on each of the World's
     /// <c>relay.&lt;n&gt;</c> anchors with its one relay part glinting amber nearby (<see cref="RelayPartPlanner"/>);
-    /// driving through the part draws it in like a friend's part. With the part held, holding Interact at the mast's
+    /// a press of E beside the part draws it in like a friend's part. With the part held, holding Interact at the mast's
     /// foot spends the next escalating recipe and plays the restoration (<see cref="RelayBeat"/>): 07's beam
     /// stitches while the part glides into the junction box, the mast straightens with a creak and its lamp warms. A
     /// mast that links home (<see cref="StationReach"/>) comes online: a pulse of light runs along the ground toward
@@ -36,6 +36,9 @@ namespace MoonProject.Gameplay
         /// <summary>Degrees between the idle headings of the masts' parts (so they never turn in step).</summary>
         private const float PartHeadingStep = 137f;
 
+        /// <summary>A mast's spare part's name key for the pickup prompt.</summary>
+        private static readonly string RelayPartNoun = PickupReach.NounKey("relay_part");
+
         [Tooltip("Relay tuning (Assets/_Project/Data/Tuning/Gameplay/RelayTuning.asset).")]
         [SerializeField] private RelayTuning _tuning;
 
@@ -52,6 +55,7 @@ namespace MoonProject.Gameplay
         private RelayMast[] _chain = Array.Empty<RelayMast>();
         private EventBus _events;
         private InputReader _input;
+        private PickupReach _pickups;
         private BeamWork _beamWork;
         private IRoverState _rover;
         private IRoverRig _rig;
@@ -188,6 +192,7 @@ namespace MoonProject.Gameplay
 
             _events = services.Events;
             _input = services.Input;
+            _pickups = services.Pickups;
             _beamWork = services.Beam;
             _rover = services.Rover;
             _rig = services.Rig;
@@ -450,7 +455,7 @@ namespace MoonProject.Gameplay
             StepGaze();
         }
 
-        /// <summary>The part bobs and glints at rest; driven through, it is drawn into 07 and held.</summary>
+        /// <summary>The part bobs and glints at rest; a press of E beside it draws it into 07 to be held.</summary>
         private void StepPart(RelayMast mast, int index, float now, float deltaTime)
         {
             Transform part = mast.Part;
@@ -463,14 +468,15 @@ namespace MoonProject.Gameplay
                     part.SetPositionAndRotation(rest,
                         Quaternion.Euler(0f, now * _friends.PartSpin + index * PartHeadingStep, 0f));
                     _glints.Add(mast.PartRest, index);
-                    if ((rest - _rover.Position).sqrMagnitude <=
-                        _friends.PartMagnetRadius * _friends.PartMagnetRadius)
+                    if (_pickups.Offer(Time.frameCount, _input.ExcavateHeld, PickupReach.Relays, index, rest,
+                            _rover.Position, _friends.PartReachRadius, RelayPartNoun))
                     {
                         mast.PartState = RelayPartState.Flying;
                         mast.FlightStart = rest;
                         mast.FlightTime = 0f;
                         mast.FlightDuration = PickupFlight.Duration(Vector3.Distance(rest, socket),
                             _friends.PartFlightDuration, _friends.PartFlightPerMetre);
+                        PickupReach.Lifted(_events, rest, mast.FlightDuration);
                     }
 
                     break;
@@ -483,6 +489,7 @@ namespace MoonProject.Gameplay
                         part.gameObject.SetActive(false);
                         part.localScale = mast.PartScale;
                         _events.Publish(new RelayCued(RelayCue.PartCollected, mast.Id, socket));
+                        PickupReach.Landed(_events, socket);
                         _save.SaveNow();
                         break;
                     }

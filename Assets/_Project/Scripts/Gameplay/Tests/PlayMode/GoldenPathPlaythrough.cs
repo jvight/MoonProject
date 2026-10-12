@@ -954,7 +954,7 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         /// <summary>
         /// The tower's component <paramref name="index"/> waits in <paramref name="site"/>'s open heart: round the
-        /// wreck to open ground beside it and ease up until it spirals into 07 (P1).
+        /// wreck to open ground beside it, ease up and press E: it spirals into 07 (P1).
         /// </summary>
         private IEnumerator PickUpPartInTheHeart(SalvageSite site, int index)
         {
@@ -969,13 +969,14 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return CircleTo(site, Flat(rest + outward * CutLineUp), 0f);
             yield return DriveTo(Flat(rest + outward * CutLineUp), 2f, 0.6f, 40f, $"a line-up facing {part}");
             yield return DriveTo(park, 1f, 0.35f, 30f, $"{part} in the heart");
+            yield return PickupPress.Take(this, _gameplay, 4f, part);
             yield return Until(() => _gameplay.TowerParts.StateOf(index) == TowerPartState.Carried, 8f,
                 $"{part} spirals into 07");
             Capture("03-part-" + part);
             End($"Pick up {part} in the heart of {site.Id}", "it rides home on 07's back");
         }
 
-        /// <summary>The relay spare waits on the first lit mast's pad: drive over it (P1, level 3).</summary>
+        /// <summary>The relay spare waits on the first lit mast's pad: drive up to it and press E (P1, level 3).</summary>
         private IEnumerator PickUpTheRelaySpare()
         {
             Begin();
@@ -986,6 +987,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             if (_gameplay.TowerParts.StateOf(SparePart) == TowerPartState.Waiting)
             {
                 yield return DriveTo(Flat(field.RestPosition(SparePart)), PartArrive, 0.5f, 60f, "the relay spare");
+                yield return PickupPress.Take(this, _gameplay, 4f, "the relay spare");
             }
 
             yield return Until(() => _gameplay.TowerParts.StateOf(SparePart) == TowerPartState.Carried, 8f,
@@ -1050,6 +1052,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             {
                 yield return DriveTo(Flat(tubes.RestPosition(HoverJump)), PartArrive, 0.4f, 30f,
                     "Hover-Jump's tube at the lip");
+                yield return PickupPress.Take(this, _gameplay, 4f, "Hover-Jump's tube");
             }
 
             yield return Until(() => !_gameplay.Blueprints.IsWaiting(HoverJump), 8f, "the tube spirals into 07");
@@ -1617,6 +1620,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                     yield return DigTillysLastPart();
                 }
 
+                yield return PickupPress.Take(this, _gameplay, 4f, "one of Tilly's parts");
                 yield return Until(() => tilly.Progress.Collected > before, 6f, "the part drifts into 07");
             }
 
@@ -2077,6 +2081,7 @@ namespace MoonProject.Gameplay.PlayModeTests
 
                 int before = bell.Progress.Collected;
                 yield return DriveAlong(part, "one of Bell's parts", value => travelled += value);
+                yield return PickupPress.Take(this, _gameplay, 4f, "one of Bell's parts");
                 yield return Until(() => bell.Progress.Collected > before, 6f, "the part drifts into 07");
             }
 
@@ -2303,6 +2308,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             int online = _events.RelayRestored.Count;
             float partAway = SurfaceRules.HorizontalDistance(mast.PartRest, mast.Anchor.Position);
             yield return DriveTo(Flat(mast.PartRest), 1.5f, 0.7f, 120f, name + "'s part");
+            yield return PickupPress.Take(this, _gameplay, 4f, "the relay part");
             yield return Until(() => mast.PartState == RelayPartState.Held, 8f, "the relay part flies into 07");
             yield return AroundToTheFront(mast, name);
             Vector3 foot = mast.Broken.PartSocket.position + mast.Anchor.Forward * RelayFoot;
@@ -2414,6 +2420,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Review(pad + mast.Anchor.Forward * 16f + Vector3.up * 2.5f, pad + Vector3.up * 5f, "30-relay-dark");
             float partAway = SurfaceRules.HorizontalDistance(mast.PartRest, pad);
             yield return DriveTo(Flat(mast.PartRest), 1.5f, 0.7f, 120f, "the mound relay's part");
+            yield return PickupPress.Take(this, _gameplay, 4f, "the relay part");
             yield return Until(() => mast.PartState == RelayPartState.Held, 8f, "the relay part flies into 07");
             Vector3 foot = mast.Broken.PartSocket.position + mast.Anchor.Forward * RelayFoot;
             yield return DriveTo(Flat(foot), 1.2f, 0.5f, 60f, "the mound relay's foot");
