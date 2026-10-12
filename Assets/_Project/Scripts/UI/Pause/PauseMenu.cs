@@ -509,11 +509,15 @@ namespace MoonProject.UI
             _settingsStore.SaveIfChanged();
         }
 
+        /// <summary>
+        /// The pause menu slides left to keep menu and settings centred together. The title's menu is anchored low and
+        /// left over the world and its settings open beside it, so it never moves (it would leave the screen).
+        /// </summary>
         private void ShiftForSettings()
         {
             IResolvedStyle panel = _layout.PauseSettings.resolvedStyle;
             float width = panel.width + panel.marginLeft;
-            float shift = float.IsNaN(width) || _settingsPanel.IsHidden
+            float shift = _pages.IsTitle || float.IsNaN(width) || _settingsPanel.IsHidden
                 ? 0f
                 : -0.5f * width * _settingsPanel.Visibility;
             if (!float.IsNaN(_writtenShift) && Mathf.Abs(shift - _writtenShift) < MoveEpsilon)
