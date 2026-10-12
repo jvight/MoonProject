@@ -55,5 +55,12 @@ namespace MoonProject.Core
         /// A structure comes online: each radio tower level-up now, build pads in 0.6 (feel-pass §8.2).
         /// </summary>
         Build = 15,
+
+        /// <summary>
+        /// 07's hold (M3-25 §5): Anticipate the hatch opening (Seconds = its lead), Act one crate onto the belt at the
+        /// dock (Strength = the unload's progress), Impact a bundle bumping the closed hatch when the hold is full,
+        /// Cancel the belt stopping because home is full, Reward the last crate on the shelves.
+        /// </summary>
+        Cargo = 16,
     }
 }
