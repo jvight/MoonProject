@@ -15,6 +15,7 @@ namespace MoonProject.Art.Editor
         private const float StrapX = 0.09f;
         private const float StrapWidth = 0.035f;
         private const float StrapProud = 0.015f;
+        private const float StrapThickness = 0.008f;
 
         /// <summary>Metal: three bent plates stacked and strapped, flat and rectangular.</summary>
         public static LowPolyMeshBuilder MetalBundle()
@@ -36,17 +37,17 @@ namespace MoonProject.Art.Editor
             var b = new LowPolyMeshBuilder(400);
             for (int i = 0; i < 3; i++)
             {
-                b.Torus(At(new Vector3(0.004f * i, 0.025f + i * 0.042f, 0f), new Vector3(0f, i * 25f, 0f)), 0.11f,
+                b.Torus(At(new Vector3(0.004f * i, 0.025f + i * 0.042f, 0f), new Vector3(0f, i * 25f, 0f)), 0.13f,
                     0.022f, 12, 4, PaletteSwatch.WarmAccent);
             }
 
-            Straps(b, 0.15f, 0.27f);
+            Straps(b, 0.15f, 0.31f);
             b.Box(At(new Vector3(StrapX, 0.16f, 0.05f), new Vector3(0f, 20f, 0f)), new Vector3(0.05f, 0.012f, 0.04f),
                 PaletteSwatch.Sage);
             return b;
         }
 
-        /// <summary>Optics: four violet cells in thin metal frames, stacked and strapped, one cracked.</summary>
+        /// <summary>Optics: four violet cells on thin metal rails, stacked and strapped, one cracked.</summary>
         public static LowPolyMeshBuilder OpticsBundle()
         {
             var b = new LowPolyMeshBuilder(300);
@@ -55,7 +56,10 @@ namespace MoonProject.Art.Editor
                 var at = new Vector3(0.004f * (i % 2), 0.012f + i * 0.026f, 0f);
                 Matrix4x4 tile = At(at, new Vector3(0f, i * 3f, 0f));
                 b.Box(tile, new Vector3(0.28f, 0.016f, 0.2f), PaletteSwatch.SkyHorizon);
-                b.Box(tile, new Vector3(0.3f, 0.012f, 0.22f), PaletteSwatch.Metal);
+                for (int side = -1; side <= 1; side += 2)
+                {
+                    b.Box(tile * At(side * 0.146f, 0f, 0f), new Vector3(0.012f, 0.02f, 0.21f), PaletteSwatch.Metal);
+                }
             }
 
             b.Box(At(new Vector3(0.03f, 0.098f, 0.02f), new Vector3(0f, 35f, 0f)), new Vector3(0.008f, 0.004f, 0.14f),
@@ -69,10 +73,21 @@ namespace MoonProject.Art.Editor
         /// </summary>
         private static void Straps(LowPolyMeshBuilder b, float height, float depth)
         {
+            float top = height + StrapProud * 0.5f;
+            float half = (depth + StrapProud) * 0.5f;
             foreach (float x in new[] { -StrapX, StrapX })
             {
-                b.Box(At(x, height * 0.5f, 0f), new Vector3(StrapWidth, height + StrapProud, depth + StrapProud),
-                    PaletteSwatch.Charcoal);
+                foreach (float y in new[] { -StrapProud * 0.5f, top })
+                {
+                    b.Box(At(x, y, 0f), new Vector3(StrapWidth, StrapThickness, depth + StrapProud),
+                        PaletteSwatch.Charcoal);
+                }
+
+                foreach (float z in new[] { -half, half })
+                {
+                    b.Box(At(x, height * 0.5f, z), new Vector3(StrapWidth, height + StrapProud, StrapThickness),
+                        PaletteSwatch.Charcoal);
+                }
             }
         }
 
