@@ -794,6 +794,12 @@ namespace MoonProject.Gameplay.Tests
 
             public SaveLoadResult LoadResult => SaveLoadResult.NoSave;
 
+            public event Action Saved
+            {
+                add { }
+                remove { }
+            }
+
             public IDisposable Register(ISaveSection section)
             {
                 throw new NotSupportedException("The shop never registers sections.");
