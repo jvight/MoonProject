@@ -32,8 +32,14 @@ namespace MoonProject.Gameplay
         /// <summary>Step 1: ping, cut the supply depot.</summary>
         public const string NextSalvage = "next.salvage";
 
-        /// <summary>Step 2: feed and stitch the tower's first level.</summary>
-        public const string NextTower = "next.tower";
+        /// <summary>Step 2, the coil still out there: bring the tower its coil (the supply depot's heart).</summary>
+        public const string NextTowerPart = "next.tower.part";
+
+        /// <summary>Step 2, the coil on 07's back: park on the tower's pad, where it goes into the port.</summary>
+        public const string NextTowerPad = "next.tower.pad";
+
+        /// <summary>Step 2, the coil in the port: hold E on the pad to repair the tower.</summary>
+        public const string NextTowerHold = "next.tower.hold";
 
         /// <summary>Step 3: follow the faint signal, stitch Tilly.</summary>
         public const string NextSignal = "next.signal";

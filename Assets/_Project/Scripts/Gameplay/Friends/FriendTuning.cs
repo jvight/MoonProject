@@ -65,8 +65,8 @@ namespace MoonProject.Gameplay
         [Tooltip("Idle turn (degrees per second) of a waiting part.")]
         [Range(0f, 180f)] [SerializeField] private float _partSpin = 30f;
 
-        [Tooltip("A part within this many metres of 07 drifts in (close: a soft, deliberate pickup).")]
-        [Range(1f, 15f)] [SerializeField] private float _partMagnetRadius = 4.5f;
+        [Tooltip("Within this many metres of 07 a waiting part offers its pickup prompt; a press of E lifts it in.")]
+        [Range(1f, 15f)] [SerializeField] private float _partReachRadius = 4.5f;
 
         [Tooltip("The friend whose last part lies half under the dust, so the beam's dig is learned on it " +
                  "(first-hour v2 §4).")]
@@ -338,7 +338,7 @@ namespace MoonProject.Gameplay
         public float PartBob => _partBob;
         public float PartBobFrequency => _partBobFrequency;
         public float PartSpin => _partSpin;
-        public float PartMagnetRadius => _partMagnetRadius;
+        public float PartReachRadius => _partReachRadius;
 
         public string BuriedPartFriend => _buriedPartFriend;
 

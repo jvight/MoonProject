@@ -30,7 +30,7 @@ MonoBehaviour:
   _partBob: 0.1
   _partBobFrequency: 0.3
   _partSpin: 30
-  _partMagnetRadius: 4.5
+  _partReachRadius: 4.5
   _partFlightDuration: 1
   _partFlightPerMetre: 0.08
   _partFlightLift: 1.3

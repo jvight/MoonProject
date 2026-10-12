@@ -163,7 +163,7 @@ namespace MoonProject.Gameplay
             Func<bool> tillyAwake = () => signal.Progress.State == FriendState.Awake;
             _steps.Add(ProgressionKeys.NextWake, () => _towerSeen || _salvaged || homeLit());
             _steps.Add(ProgressionKeys.NextSalvage, () => homeLit() || CoilOut(components));
-            _steps.Add(ProgressionKeys.NextTower, homeLit);
+            _steps.Add(() => TowerLine(components, tower), homeLit);
             _steps.Add(ProgressionKeys.NextSignal,
                 () => tillyAwake() || signal.Progress.Collected >= signal.Progress.PartCount - 1);
             _steps.Add(ProgressionKeys.NextDig, () => tillyAwake() || signal.Progress.AllPartsGathered);
@@ -323,6 +323,17 @@ namespace MoonProject.Gameplay
         private bool CoilOut(TowerParts components)
         {
             return components.StateOf(0) != TowerPartState.Waiting || (_parts != null && _parts.IsResting(0));
+        }
+
+        /// <summary>
+        /// The tower step's exact sub-step (feel-pass §8.2): bring the coil while it is still out there, park on the
+        /// tower's pad while 07 carries it, hold E once it is in the port.
+        /// </summary>
+        private static string TowerLine(TowerParts components, RadioTower tower)
+        {
+            return !components.NeedsPart(tower.Definition.Id, 1) ? ProgressionKeys.NextTowerHold
+                : components.StateOf(0) == TowerPartState.Carried ? ProgressionKeys.NextTowerPad
+                : ProgressionKeys.NextTowerPart;
         }
 
         /// <summary>Tilly spots Bell's light once the first memory is home; 07 looks across from the lip once.</summary>

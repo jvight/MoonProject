@@ -11,5 +11,11 @@ namespace MoonProject.Gameplay
 
         /// <summary>A relic or drag piece is on the tether.</summary>
         Towing = 2,
+
+        /// <summary>
+        /// No tether yet (Kenji's garage port fits the ring, first-hour v2 §3): no aim, no reticle, no icon, whatever
+        /// the button does.
+        /// </summary>
+        Asleep = 3,
     }
 }

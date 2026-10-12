@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using MoonProject.Core;
+using MoonProject.Core.Input;
 using MoonProject.Core.Save;
 using Object = UnityEngine.Object;
 
@@ -11,7 +12,7 @@ namespace MoonProject.Gameplay
     /// eases into view once the heart is revealed (the depot's last cut; the garage's transformer only once 07 has
     /// looked across the chasm, P2); the relay spare on the pad of the first mast 07 restores, once the tower's next
     /// level is its own (07 charges on that pad long before, M3-20). Waiting, a part hovers, bobs, turns and glints
-    /// like a friend's part; driven through, it is drawn into 07 and rides home on its back (<see
+    /// like a friend's part; a press of E beside it (<see cref="PickupReach"/>) draws it into 07 to ride home (<see
     /// cref="TowerParts.PickUp"/>; Rover shows it). Parked on the tower's pad, 07 hands each carried part to the port,
     /// lowest level first: it leaves 07's back (<see cref="TowerParts.Deliver"/>) and glides on a soft arc into the
     /// hopper while 07 watches it go.
@@ -40,6 +41,10 @@ namespace MoonProject.Gameplay
         private readonly ITerrainQuery _terrain;
         private readonly IViewCamera _view;
         private readonly ISaveService _save;
+        private readonly EventBus _events;
+        private readonly InputReader _input;
+        private readonly PickupReach _pickups;
+        private readonly string[] _nouns;
         private readonly PickupGlints _glints;
         private readonly Transform[] _models;
         private readonly Vector3[] _scales;
@@ -70,7 +75,11 @@ namespace MoonProject.Gameplay
             _terrain = services.Terrain;
             _view = services.View;
             _save = services.Save;
+            _events = services.Events;
+            _input = services.Input;
+            _pickups = services.Pickups;
             int count = parts.Count;
+            _nouns = new string[count];
             _sites = new SalvageSite[count];
             _models = new Transform[count];
             _scales = new Vector3[count];
@@ -82,6 +91,7 @@ namespace MoonProject.Gameplay
             for (int i = 0; i < count; i++)
             {
                 TowerPart part = parts.PartAt(i);
+                _nouns[i] = PickupReach.NounKey(part.PartId);
                 if (part.Source == TowerPartSource.SiteHeart)
                 {
                     _sites[i] = salvage.Find(part.SiteId) ?? throw new InvalidOperationException(
@@ -184,13 +194,15 @@ namespace MoonProject.Gameplay
                     model.SetPositionAndRotation(at, Quaternion.Euler(0f, heading, 0f));
                     model.localScale = _scales[i] * Ease.OutCubic(appear);
                     _glints.Add(_rest[i], i);
-                    if ((at - _rover.Position).sqrMagnitude <= _friends.PartMagnetRadius * _friends.PartMagnetRadius)
+                    if (_pickups.Offer(Time.frameCount, _input.ExcavateHeld, PickupReach.TowerParts, i, at,
+                            _rover.Position, _friends.PartReachRadius, _nouns[i]))
                     {
                         _phases[i] = Phase.Flying;
                         _from[i] = at;
                         _since[i] = now;
                         _flight[i] = PickupFlight.Duration(Vector3.Distance(at, _rig.CargoSocket.position),
                             _friends.PartFlightDuration, _friends.PartFlightPerMetre);
+                        PickupReach.Lifted(_events, at, _flight[i]);
                     }
 
                     break;
@@ -202,6 +214,7 @@ namespace MoonProject.Gameplay
                         model.gameObject.SetActive(false);
                         model.localScale = _scales[i];
                         _parts.PickUp(i, _from[i]);
+                        PickupReach.Landed(_events, _rig.CargoSocket.position);
                         _save.SaveNow();
                         break;
                     }

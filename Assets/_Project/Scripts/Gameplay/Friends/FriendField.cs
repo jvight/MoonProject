@@ -11,7 +11,7 @@ namespace MoonProject.Gameplay
     /// <summary>
     /// The outpost's lost machines (docs/features/M3-02-friends-tilly.md, M3-05). Each friend lies broken at its site
     /// (planned on the basin floor, or at the World's anchors) with its missing parts around it, glinting amber.
-    /// Driving through a part draws it in (softly, amber) and lights a lamp on the friend
+    /// A press of E beside a part (<see cref="PickupReach"/>) draws it in (softly, amber) and lights a lamp on the friend
     /// (<see cref="FriendPartCollected"/>); an item its repair also needs (Bell's cassette) lights the next lamp as
     /// soon as 07 holds it (<see cref="IHeldItems"/>). With everything gathered, holding Interact near it starts a
     /// calm repair that always plays out: 07 holds still while its beam reaches the friend
@@ -53,6 +53,7 @@ namespace MoonProject.Gameplay
         private readonly List<Friend> _friends = new List<Friend>();
         private EventBus _events;
         private InputReader _input;
+        private PickupReach _pickups;
         private BeamWork _beamWork;
         private IRoverState _rover;
         private IRoverRig _rig;
@@ -173,6 +174,7 @@ namespace MoonProject.Gameplay
 
             _events = services.Events;
             _input = services.Input;
+            _pickups = services.Pickups;
             _beamWork = services.Beam;
             _rover = services.Rover;
             _rig = services.Rig;
@@ -606,7 +608,6 @@ namespace MoonProject.Gameplay
         {
             Vector3 socket = _rig.CargoSocket.position;
             Vector3 rover = _rover.Position;
-            float magnetSq = _tuning.PartMagnetRadius * _tuning.PartMagnetRadius;
             float bobOmega = 2f * Mathf.PI * _tuning.PartBobFrequency;
             for (int p = 0; p < friend.Parts.Length; p++)
             {
@@ -628,13 +629,16 @@ namespace MoonProject.Gameplay
                     piece.SetPositionAndRotation(rest,
                         Quaternion.Euler(0f, now * _tuning.PartSpin + p * PartHeadingStep, 0f));
                     _glints.Add(friend.PartRest[p], p);
-                    if ((rest - rover).sqrMagnitude <= magnetSq)
+                    if (_pickups.Offer(Time.frameCount, _input.ExcavateHeld, PickupReach.Friends,
+                            friend.Index * FriendProgress.MaxParts + p, rest, rover, _tuning.PartReachRadius,
+                            friend.PartNouns[p]))
                     {
                         friend.PartFlying[p] = true;
                         friend.PartStart[p] = rest;
                         friend.PartFlightTime[p] = 0f;
                         friend.PartFlightDuration[p] = PickupFlight.Duration(Vector3.Distance(rest, socket),
                             _tuning.PartFlightDuration, _tuning.PartFlightPerMetre);
+                        PickupReach.Lifted(_events, rest, friend.PartFlightDuration[p]);
                     }
 
                     continue;
@@ -644,6 +648,7 @@ namespace MoonProject.Gameplay
                 float progress = friend.PartFlightTime[p] / friend.PartFlightDuration[p];
                 if (progress >= 1f)
                 {
+                    PickupReach.Landed(_events, socket);
                     Collect(friend, p);
                     continue;
                 }

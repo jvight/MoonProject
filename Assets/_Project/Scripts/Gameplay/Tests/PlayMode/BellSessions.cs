@@ -72,6 +72,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             for (int part = 0; part < 3; part++)
             {
                 _fixture.Rover.Place(Flat(bell.PartRest[part]), 0f);
+                yield return PickupPress.Take(this, _fixture.Gameplay, 2f, $"Bell's part {part}");
                 yield return new WaitForSeconds(_fixture.FriendTuning.PartFlightDuration + 1f);
             }
 
