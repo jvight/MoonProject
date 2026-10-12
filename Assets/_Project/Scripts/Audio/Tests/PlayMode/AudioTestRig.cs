@@ -83,6 +83,11 @@ namespace MoonProject.Audio.PlayModeTests
                 new VoiceLine(VoiceKey, "ro", Track(Tone(VoiceKey, 220f, VoiceSeconds))),
             });
             Voice.Wire(Load<RadioTuning>("RadioTuning.asset"), voices);
+            FeelTuning = Track(ScriptableObject.CreateInstance<FeelAudioTuning>());
+            Feel = Child(audioRoot, "FeelAudio").AddComponent<FeelAudio>();
+            Feel.Wire(FeelTuning);
+            Chirps = Child(audioRoot, "ChirpVoice").AddComponent<ChirpVoice>();
+            Chirps.Wire(FeelTuning, Load<ChirpBank>("ChirpBank.asset"));
             Ambience = Child(audioRoot, "AmbienceBed").AddComponent<AmbienceBed>();
             Canyon = Child(audioRoot, "CanyonAmbience").AddComponent<CanyonAmbience>();
             Canyon.Wire(Load<CanyonAudioTuning>("CanyonAudioTuning.asset"));
@@ -111,6 +116,7 @@ namespace MoonProject.Audio.PlayModeTests
                 Salvage, Stations, Lab);
             Director.WireBattery(Battery);
             Director.WireVoice(Voice);
+            Director.WireFeel(Feel, Chirps);
             audioRoot.SetActive(true);
 
             Bootstrap = Track(BootstrapHarness.Create(controls, Rover, Director));
@@ -135,6 +141,12 @@ namespace MoonProject.Audio.PlayModeTests
         public RadioStation Radio { get; }
 
         public RadioVoice Voice { get; }
+
+        public FeelAudioTuning FeelTuning { get; }
+
+        public FeelAudio Feel { get; }
+
+        public ChirpVoice Chirps { get; }
 
         public AmbienceBed Ambience { get; }
 

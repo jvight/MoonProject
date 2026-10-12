@@ -163,7 +163,7 @@ namespace MoonProject.Audio.PlayModeTests
             Assert.AreEqual(0f, crunch.volume, 1e-4f);
             Assert.IsTrue(_rig.Radio.MusicStarted, "the radio keeps playing");
             Assert.Less(radioFilter.cutoffFrequency, 8000f, "warmer, as if listening in the cabin");
-            Assert.Greater(LoudestDeckVolume(), music, "a touch closer");
+            Assert.Less(LoudestDeckVolume(), music, "the radio steps back under the pause menu");
             Assert.IsTrue(ambience.isPlaying);
             Assert.Greater(ambience.volume, 0f);
 

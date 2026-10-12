@@ -122,8 +122,8 @@ namespace MoonProject.Audio
         [Tooltip("Low-pass (Hz) the radio eases to while paused: a subtly closer, warmer set (22 kHz = unchanged).")]
         [Range(2000f, 22000f)] [SerializeField] private float _cabinCutoff = 7000f;
 
-        [Tooltip("Music volume scale while paused (a touch closer; 1.12 is about +1 dB).")]
-        [Range(1f, 1.5f)] [SerializeField] private float _cabinMusicGain = 1.12f;
+        [Tooltip("Music volume scale while paused: the radio steps back under the pause menu (0.7 is about -3 dB).")]
+        [Range(0f, 1.5f)] [SerializeField] private float _cabinMusicGain = 0.7f;
 
         [Tooltip("Static volume scale while paused (the cabin shelters the set a little).")]
         [Range(0f, 1f)] [SerializeField] private float _cabinStaticGain = 0.7f;
@@ -189,6 +189,13 @@ namespace MoonProject.Audio
 
         [Tooltip("Time constant (s) of the move from the deck's soft level to the station's when Bell's dial opens.")]
         [Min(0.01f)] [SerializeField] private float _deckBlendTime = 1.5f;
+
+        [Header("The dock evening (polish-pass section 1.1)")]
+        [Tooltip("Gain on the radio's music under the dock evening's swell (0.7 is about -3 dB).")]
+        [Range(0f, 1f)] [SerializeField] private float _eveningDuckGain = 0.7f;
+
+        [Tooltip("Seconds the radio stays ducked under the swell before it comes back.")]
+        [Min(0f)] [SerializeField] private float _eveningDuckSeconds = 3.5f;
 
         [Header("Voices (Ro's recordings, the automated station; tools/voice)")]
         [Tooltip("Level of a voiced recording on the Sfx bus.")]
@@ -259,5 +266,7 @@ namespace MoonProject.Audio
         public float VoiceVolume => _voiceVolume;
         public float VoiceMusicDuck => _voiceMusicDuck;
         public float VoiceDuckTime => _voiceDuckTime;
+        public float EveningDuckGain => _eveningDuckGain;
+        public float EveningDuckSeconds => _eveningDuckSeconds;
     }
 }

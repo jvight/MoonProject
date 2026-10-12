@@ -12,8 +12,8 @@ namespace MoonProject.Audio
         private const float MinSpan = 0.01f;
 
         [Header("Listening (first-hour v2: 07 listens when it rests)")]
-        [Tooltip("Level of the listening ring's kalimba note (the old ping, 6 dB softer: 0.5). It sounds at most once " +
-            "per stop, because 07 listens at most once per stop.")]
+        [Tooltip("Level of the listening ring's kalimba note (the old ping, 6 dB softer: 0.5). It sounds at most " +
+            "once per stop, because 07 listens at most once per stop.")]
         [Range(0f, 1f)] [SerializeField] private float _listenVolume = 0.5f;
 
         [Header("Relic answer")]
