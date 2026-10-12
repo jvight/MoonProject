@@ -136,6 +136,12 @@ namespace MoonProject.Core.Events
         /// The old tape deck Tilly spotted, on 07's left flank (docs/features/M3-24 C): it plays the first tape softly.
         /// </summary>
         TapeDeck = 7,
+
+        /// <summary>
+        /// Kenji's spare tether ring round the beam's emitter, fitted at his garage port (docs/design/first-hour-v2.md
+        /// §3): faintly cyan at rest, bright while the tether holds.
+        /// </summary>
+        TetherRing = 8,
     }
 
     /// <summary>
