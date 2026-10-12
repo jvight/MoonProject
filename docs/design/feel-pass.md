@@ -359,3 +359,39 @@ The Core contract (Director):
 | The dock lock sequence: four wall meshes with lamp strips (Art/Editor/ChargingDockMeshes, BaseModelBuilder), their motion, the strip lamps per cell, the full sweep, the drive-off drop, Dock beats | gameplay (feature slice: Gameplay/Base + those Art builders) | after the Dig follow-up |
 | 07's chirp decisions (moods, cooldowns, priorities, never over voice), the eye/antenna/head sync on `RoverChirpSyllable`, the dock dip and the full "sigh" | rover | now; test with scripted syllables |
 | The chirp bank (8 moods × 4 variants, offline synth, the syllable data), playback publishing `RoverChirpSyllable`, the ducking, the dock sounds (wall rise ticks, clunk, lock spark, the full chord) | audio (the voice session, after it lands) | after 0.5.1 |
+
+## 8. Owner review of 0.5.2 (2026-10-12): the words, and the tower's payoff
+The owner says the UI effects are better, but:
+- the language makes no sense: "Đánh thức cột anten cũ", "the tower is asleep", "power the tired antenna and home
+  wakes up";
+- the tower repair task is unclear;
+- **when the tower is repaired, nothing happens.**
+
+### 8.1 Writing rules (all player-facing text, en and vi)
+- **Functional text is plain:** objectives, cards, prompts, recipe cards, settings and tutorials.
+  - Say what it is, what to do, and why, in that order.
+  - Use the verb the player performs: "Sửa tháp radio", not "Đánh thức cột anten".
+- **Machines are not people,** except 07 and the friends, who have characters. Don't write "asleep", "tired" or "wakes
+  up" for the tower, the dock or the lander. Write "offline", "no power", "online", "has power".
+- **One name per thing,** everywhere: "Radio Tower / Tháp radio", never also "antenna" or "cột anten".
+- **Vietnamese is written natively, not translated word for word.** Short and natural, like a well-made Vietnamese
+  game.
+- **Poetry belongs only to the voices:** Ro's letters and recordings, and the radio. That is the story's tone.
+- **Recipe rows show need first, then have:** e.g. "Kim loại 1 (có 5) ✓". A raw "5/1" reads as a fraction.
+
+### 8.2 The tower comes online (FeelKind.Build at the tower, every level-up)
+Gameplay publishes it when an upgrade of the radio tower completes. Each piece answers the beat.
+
+| Phase | What happens | Owner |
+|---|---|---|
+| **Anticipate** (Seconds ≈ 1.2) | The parts visibly go in at the hopper (each one drops in with a clunk). A low hum rises. The camera eases to frame the tower with 07 in the foreground. | gameplay (parts), audio (hum), rover (camera moment) |
+| **Act** ×4 (strength 0.25 → 1) | Power climbs the tower: its lamps light bottom to top, one ring per step. A pentatonic step per ring. | gameplay or world (the tower's lamps), audio |
+| **Impact** | The beacon on top flares and starts its slow turn. A deep soft "thoom" plus a D-major chord. 07 chirps **Happy**. Rumble 0.3. | world (beacon), audio, rover |
+| **Follow** strength 0 | Light races along the cable from the tower to home (clarity's cable preview, now for real), then the home windows step on, then the radio crackles and music fades in. | world, audio |
+| **Follow** strength 1 | The reach ring rolls out (existing) and the camera eases back. | world, rover |
+| **Reward** | A card says what the player got: e.g. "Tháp radio · Cấp 1: nhà đã có điện · radio bắt được tín hiệu · đi xa hơn 150 m". | ui |
+
+- **Before the repair:**
+  - the next-step line and the recipe card name the exact steps (bring the parts, park on the tower's pad, hold E);
+  - the tower shows its state: dark lamps, plus a small "offline" plaque light.
+- **Never lock the player for long:** the sequence takes about 6 s and any drive input skips the camera part.
