@@ -15,7 +15,7 @@ namespace MoonProject.Core
         /// <summary>Units of <paramref name="material"/> one slot holds (4 for salvage bundles, 6 for ores).</summary>
         int StackSize(SalvageMaterial material);
 
-        /// <summary>The localization key of its name ("material.metal.name").</summary>
+        /// <summary>The localization key of its name ("material.metal").</summary>
         string NameKey(SalvageMaterial material);
 
         /// <summary>The localization key of what it is for, one plain line.</summary>

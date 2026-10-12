@@ -17,12 +17,12 @@ namespace MoonProject.Gameplay.Editor
     {
         public static readonly RelicRecipe[] All =
         {
-            new RelicRecipe("cassette_player", 6f, 3, "garage", new Vector2(0f, -1.3f)),
-            new RelicRecipe("rubber_duck", 3f, 5, "garage", Vector2.zero),
-            new RelicRecipe("golden_record", 5f, 0, "kestrel", Vector2.zero),
-            new RelicRecipe("astronaut_boot", 9f, 1, "drill", Vector2.zero),
-            new RelicRecipe("teapot", 7f, 4, "lander", Vector2.zero),
-            new RelicRecipe("garden_gnome", 14f, 2, "garage", new Vector2(1.2f, 0f)),
+            new RelicRecipe("cassette_player", "ro", 6f, 3, "garage", new Vector2(0f, -1.3f)),
+            new RelicRecipe("rubber_duck", "kenji", 3f, 5, "garage", Vector2.zero),
+            new RelicRecipe("golden_record", "ro", 5f, 0, "kestrel", Vector2.zero),
+            new RelicRecipe("astronaut_boot", "ines", 9f, 1, "drill", Vector2.zero),
+            new RelicRecipe("teapot", "theo", 7f, 4, "lander", Vector2.zero),
+            new RelicRecipe("garden_gnome", "theo", 14f, 2, "garage", new Vector2(1.2f, 0f)),
         };
     }
 }

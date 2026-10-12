@@ -39,7 +39,9 @@ namespace MoonProject.Gameplay.Tests
                 _order.Add(nameof(SignalRadiusChanged));
                 _radii.Add(evt.Radius);
             });
-            _stock = new MaterialStock(_events);
+            MaterialCatalog catalog = CargoFixtures.Catalog();
+            _created.Add(catalog);
+            _stock = CargoFixtures.Stock(_events, catalog);
             _abilities = new TestAbilities();
             _tower = Create<UpgradeDefinition>();
             _tower.Populate("radio_tower", UpgradeStationKind.RadioTower, 60f, new[]
@@ -690,17 +692,17 @@ namespace MoonProject.Gameplay.Tests
         {
             if (metal > 0)
             {
-                _stock.Add(SalvageMaterial.Metal, metal);
+                _stock.Deliver(SalvageMaterial.Metal, metal);
             }
 
             if (wiring > 0)
             {
-                _stock.Add(SalvageMaterial.Wiring, wiring);
+                _stock.Deliver(SalvageMaterial.Wiring, wiring);
             }
 
             if (optics > 0)
             {
-                _stock.Add(SalvageMaterial.Optics, optics);
+                _stock.Deliver(SalvageMaterial.Optics, optics);
             }
         }
 

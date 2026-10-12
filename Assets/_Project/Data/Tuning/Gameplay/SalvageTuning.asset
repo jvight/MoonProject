@@ -23,17 +23,21 @@ MonoBehaviour:
   _haloEase: 0.15
   _engageSpeed: 1.2
   _engageHysteresis: 1.5
-  _chargeSeconds: 0.65
-  _resumeChargeSeconds: 0.3
   _cutSteps: 5
-  _cutSecondsPerUnit: 1
-  _cutSeconds: {x: 2, y: 4}
-  _smallVolume: 1
-  _mediumVolume: 3
-  _smallYield: 2
-  _mediumYield: 3
-  _largeYield: 4
-  _dragYield: 4
+  _segmentSlideSeconds: 0.25
+  _sizes:
+  - _segments: 1
+    _segmentSeconds: 1.2
+    _units: 2
+  - _segments: 1
+    _segmentSeconds: 2.5
+    _units: 3
+  - _segments: 2
+    _segmentSeconds: 2.5
+    _units: 5
+  - _segments: 3
+    _segmentSeconds: 3.5
+    _units: 8
   _dragClearance: 3
   _dragMass: 14
   _dragLinearDamping: 0.6

@@ -41,6 +41,12 @@ namespace MoonProject.Gameplay.PlayModeTests
             "depot", "garage", "kestrel", "drill", "lander", "garage",
         };
 
+        /// <summary>Units in each stand-in crew crate (as the economy's).</summary>
+        public const int CrateUnits = 6;
+
+        /// <summary>Whose belongings each relic is, as in the content builder.</summary>
+        private static readonly string[] RelicCrews = { "ro", "kenji", "ro", "ines", "theo", "theo" };
+
         private static readonly string[] SiteNames = { "depot", "kestrel", "drill", "garage", "lander" };
 
         /// <summary>The stand-in lab's floor (m above the ground), its stations' lens height and distance from the axis.
@@ -97,6 +103,8 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         public ProgressionTuning ProgressionTuning { get; private set; }
 
+        public CargoTuning CargoTuning { get; private set; }
+
         public SonarTuning SonarTuning { get; private set; }
 
         public RelicTuning RelicTuning { get; private set; }
@@ -127,6 +135,10 @@ namespace MoonProject.Gameplay.PlayModeTests
         public UpgradeDefinition BoostCoilsUpgrade { get; private set; }
 
         public UpgradeDefinition CellPackUpgrade { get; private set; }
+
+        public UpgradeDefinition FocusLensUpgrade { get; private set; }
+
+        public UpgradeDefinition SideBinsUpgrade { get; private set; }
 
         public FriendTuning FriendTuning { get; private set; }
 
@@ -257,22 +269,22 @@ namespace MoonProject.Gameplay.PlayModeTests
             Gameplay.Blueprints.Restore(new BlueprintsSaveData { found = kits });
         }
 
-        /// <summary>Puts materials in 07's stock, as salvage would.</summary>
+        /// <summary>Puts materials on home's shelves, as a trip home would.</summary>
         public void GiveMaterials(int metal, int wiring, int optics)
         {
             if (metal > 0)
             {
-                Gameplay.Materials.Add(SalvageMaterial.Metal, metal);
+                Gameplay.Materials.Deliver(SalvageMaterial.Metal, metal);
             }
 
             if (wiring > 0)
             {
-                Gameplay.Materials.Add(SalvageMaterial.Wiring, wiring);
+                Gameplay.Materials.Deliver(SalvageMaterial.Wiring, wiring);
             }
 
             if (optics > 0)
             {
-                Gameplay.Materials.Add(SalvageMaterial.Optics, optics);
+                Gameplay.Materials.Deliver(SalvageMaterial.Optics, optics);
             }
         }
 
@@ -342,6 +354,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             WarmHeadlampUpgrade = RoverKit("rover.warm_headlamp", new Recipe(1, 0, 3), RoverAbility.WarmHeadlamp);
             BoostCoilsUpgrade = RoverKit("rover.boost_coils", new Recipe(1, 2, 1), RoverAbility.BoostCoils);
             CellPackUpgrade = RoverKit("rover.cell_pack", new Recipe(3, 0, 2), RoverAbility.CellPack);
+            FocusLensUpgrade = RoverKit("rover.focus_lens", new Recipe(0, 1, 3), RoverAbility.FocusLens);
+            SideBinsUpgrade = RoverKit("rover.side_bins", new Recipe(3, 1, 0), RoverAbility.SideBins);
 
             var relicCatalog = Asset<RelicCatalog>();
             var definitions = new RelicDefinition[RelicIds.Length];
@@ -351,7 +365,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 definitions[i].Populate(RelicIds[i], RelicMasses[i],
                     Template("Relic_" + RelicIds[i], RelicSizes[i]), i,
                     WorldAnchorIds.SitePrefix + RelicSites[i], i == RelicIds.Length - 1 ? new Vector2(1.2f, 0f)
-                        : Vector2.zero);
+                        : Vector2.zero, RelicCrews[i]);
             }
 
             relicCatalog.Populate(definitions);
@@ -415,11 +429,20 @@ namespace MoonProject.Gameplay.PlayModeTests
             Gameplay.Wire(visuals, GlintTuning, new[]
                 {
                     RadioTowerUpgrade, HoverJumpUpgrade, CargoCradleUpgrade, WarmHeadlampUpgrade, BoostCoilsUpgrade,
-                    CellPackUpgrade,
+                    CellPackUpgrade, FocusLensUpgrade, SideBinsUpgrade,
                 }, salvage, relics, sonar, excavation, tether, home, cradle, tower, workshop, friends, cassettes, logs,
                 signals, shelf, relays, progression, plotter, Lift);
             battery.Wire(Asset<BatteryTuning>());
             Gameplay.WireBattery(battery);
+            var materials = Asset<MaterialCatalog>();
+            materials.Populate(new[]
+            {
+                new MaterialEntry(SalvageMaterial.Metal, "metal", MaterialFamily.Salvage, 4, true),
+                new MaterialEntry(SalvageMaterial.Wiring, "wiring", MaterialFamily.Salvage, 4, true),
+                new MaterialEntry(SalvageMaterial.Optics, "optics", MaterialFamily.Salvage, 4, true),
+            });
+            CargoTuning = Asset<CargoTuning>();
+            Gameplay.WireCargo(materials, CargoTuning);
             Gameplay.WireCutter(Asset<CutterTuning>());
             root.SetActive(true);
 
@@ -465,6 +488,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             float[] heights = { 3.78f, 6.55f, 10f };
             var stages = new GameObject[3];
             var lights = new Renderer[3];
+            var rings = new Renderer[3 * (TowerOnline.Rings - 1)];
+            var offline = new Renderer[3];
             var beacons = new Transform[3];
             var hoppers = new Transform[3];
             var hatches = new Transform[3];
@@ -474,6 +499,17 @@ namespace MoonProject.Gameplay.PlayModeTests
                 Block(stage, new Vector3(0f, heights[i] * 0.5f, 0f), new Vector3(0.6f, heights[i], 0.6f));
                 lights[i] = Block(stage, new Vector3(0f, heights[i] * 0.8f, 0.35f), new Vector3(0.3f, 0.3f, 0.05f))
                     .GetComponent<Renderer>();
+                lights[i].name = "Lights";
+                for (int ring = 1; ring < TowerOnline.Rings; ring++)
+                {
+                    rings[i * (TowerOnline.Rings - 1) + ring - 1] = Named(Block(lights[i].transform,
+                        new Vector3(0f, ring, 0f), Vector3.one), "Ring_" + ring).GetComponent<Renderer>();
+                }
+
+                Transform plaque = Named(Block(stage, new Vector3(0.4f, 0.8f, 0.9f), new Vector3(0.3f, 0.2f, 0.02f)),
+                    "OfflinePlaque");
+                offline[i] = Named(Block(plaque, new Vector3(0f, 0f, 0.6f), new Vector3(0.2f, 0.2f, 0.5f)),
+                    "OfflineLamp").GetComponent<Renderer>();
                 beacons[i] = Node("BeaconSocket", stage, new Vector3(0f, heights[i], 0f));
                 hoppers[i] = Node("HopperMouth", stage, new Vector3(0.5f, 1.12f, 1.25f));
                 hoppers[i].localRotation = Quaternion.Euler(-40f, 0f, 0f);
@@ -518,7 +554,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             home.WireDockLock(walls, strips, rims);
-            tower.Wire(TowerTuning, RadioTowerUpgrade, anchor, stages, lights, beacons, hoppers, hatches);
+            WireShelves(home, lander);
+            tower.Wire(TowerTuning, RadioTowerUpgrade, anchor, stages, lights, rings, offline, beacons, hoppers,
+                hatches);
             Transform bay = Node("WorkshopAnchor", lander, new Vector3(12.5f, 0f, -2f));
             BuildBay(bay, workshop, plotter);
             TillyPerch = Node("FriendSocket_tilly", lander, new Vector3(-1.6f, 3.3f, 0.9f));
@@ -597,7 +635,11 @@ namespace MoonProject.Gameplay.PlayModeTests
             Transform sign = Named(Block(bay, new Vector3(0f, 4.02f, 1.92f), new Vector3(0.8f, 0.42f, 0.04f)),
                 "BaySign");
             workshop.Wire(WorkshopTuning,
-                new[] { HoverJumpUpgrade, CargoCradleUpgrade, WarmHeadlampUpgrade, BoostCoilsUpgrade, CellPackUpgrade },
+                new[]
+                {
+                    HoverJumpUpgrade, CargoCradleUpgrade, WarmHeadlampUpgrade, BoostCoilsUpgrade, CellPackUpgrade,
+                    FocusLensUpgrade, SideBinsUpgrade,
+                },
                 bay, turntable, mouth, lamps, sign.GetComponent<Renderer>(), sockets);
             workshop.WireArms(armYaws, uppers, lowers, tips, floorLift, floorTip);
             Transform plotterRoot = Node("Plotter", bay, new Vector3(-2.2f, 0f, -1.2f));
@@ -608,7 +650,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             Transform lamp = Block(plotterRoot, new Vector3(0.6f, 1f, 0.17f), new Vector3(0.05f, 0.05f, 0.05f));
             lamp.name = "PlotterLamp";
             Transform board = Node("Blueprints", bay, new Vector3(-2.2f, 1.6f, -1.6f));
-            foreach (string ability in new[] { "HoverJump", "CargoCradle", "WarmHeadlamp", "BoostCoils", "CellPack" })
+            foreach (string ability in new[]
+                     {
+                         "HoverJump", "CargoCradle", "WarmHeadlamp", "BoostCoils", "CellPack", "FocusLens", "SideBins",
+                     })
             {
                 Block(board, Vector3.zero, new Vector3(0.3f, 0.4f, 0.01f)).name = "Blueprint_" + ability;
             }
@@ -639,13 +684,29 @@ namespace MoonProject.Gameplay.PlayModeTests
                 GameObject model = SiteModel(name, name == "depot");
                 sites[i] = new SalvageSiteEntry(WorldAnchorIds.SitePrefix + name, model,
                     name == "lander" ? new AbilityGate(true, RoverAbility.HoverJump) : AbilityGate.Open, false, 1,
-                    SalvageCutLines.Across(model));
+                    SalvageCutLines.Across(model), SmallPieces(model),
+                    new SupplyCrate("kenji", SalvageMaterial.Metal, CrateUnits));
             }
 
             var catalog = Asset<SalvageCatalog>();
             catalog.Populate(sites, Template("Material_Metal", Vector3.one * 0.35f),
                 Template("Material_Wiring", Vector3.one * 0.35f), Template("Material_Optics", Vector3.one * 0.35f));
             field.Wire(SalvageTuning, catalog);
+        }
+
+        /// <summary>Every piece of a stand-in wreck is small (one short segment, the small yield).</summary>
+        private static PieceSizeEntry[] SmallPieces(GameObject model)
+        {
+            var sizes = new List<PieceSize>();
+            foreach (Transform node in model.transform)
+            {
+                if (SalvagePieceName.TryParsePiece(node.name, out _, out _, out _))
+                {
+                    sizes.Add(PieceSize.Small);
+                }
+            }
+
+            return SalvageSizes.Deal(model, sizes);
         }
 
         /// <summary>
@@ -669,6 +730,11 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             Node("Heart", root.transform, Vector3.zero);
+            Transform crate = Named(Block(root.transform, new Vector3(0f, 0.3f, 2.4f), new Vector3(0.8f, 0.6f, 0.6f)),
+                "CrewCrate");
+            Transform lid = Named(Block(crate, new Vector3(0f, 0.35f, 0f), new Vector3(0.82f, 0.1f, 0.62f)), "Lid");
+            Node("CutPoint", lid, new Vector3(0f, 0f, -0.32f)).localRotation = Quaternion.Euler(0f, 180f, 0f);
+            Named(Block(lid, new Vector3(0f, 0f, -0.31f), new Vector3(0.7f, 0.02f, 0.02f)), "Seal");
             return root;
         }
 
@@ -792,6 +858,41 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
 
             return root;
+        }
+
+        /// <summary>
+        /// Four stand-in supply shelves behind the lander (Art's Lander/Shelves/Shelf_1..4: a lamp, twelve slots of
+        /// three crate seats) and a crate per salvage material, as the scene contributor wires them.
+        /// </summary>
+        private void WireShelves(HomeBase home, Transform lander)
+        {
+            const int racks = 4;
+            const int slots = 12;
+            var shelves = new Transform[racks];
+            var lamps = new Renderer[racks];
+            var seats = new Transform[racks * slots * HomeShelves.Seats];
+            for (int r = 0; r < racks; r++)
+            {
+                shelves[r] = Node("Shelf_" + (r + 1), lander, new Vector3(-4f + 2.6f * r, 0f, -3.5f));
+                lamps[r] = Named(Block(shelves[r], new Vector3(0f, 1.3f, 0f), new Vector3(0.1f, 0.1f, 0.1f)),
+                    "Lamp").GetComponent<Renderer>();
+                for (int s = 0; s < slots; s++)
+                {
+                    Transform slot = Node("Slot_" + s.ToString("00", System.Globalization.CultureInfo.InvariantCulture),
+                        shelves[r], new Vector3(-0.9f + 0.36f * (s % 6), 0.3f + 0.5f * (s / 6), 0f));
+                    for (int k = 0; k < HomeShelves.Seats; k++)
+                    {
+                        seats[(r * slots + s) * HomeShelves.Seats + k] =
+                            Node("Stack_" + k, slot, new Vector3(0f, 0.12f * k, 0f));
+                    }
+                }
+            }
+
+            var crates = new GameObject[SalvageMaterials.Count];
+            crates[(int)SalvageMaterial.Metal] = Template("ShelfCrate_Metal", Vector3.one * 0.3f);
+            crates[(int)SalvageMaterial.Wiring] = Template("ShelfCrate_Wiring", Vector3.one * 0.3f);
+            crates[(int)SalvageMaterial.Optics] = Template("ShelfCrate_Optics", Vector3.one * 0.3f);
+            home.WireShelves(shelves, lamps, seats, crates);
         }
 
         private static Transform Named(Transform node, string name)
