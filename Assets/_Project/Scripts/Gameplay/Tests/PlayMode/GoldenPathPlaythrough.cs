@@ -289,14 +289,21 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>The share of the battery 07 must still have at the dock after the garage's one trip (§4).</summary>
         private const float OneTripArrival = 0.25f;
 
-        /// <summary>Metres above the ground the straight way to a line-up is checked for anything solid.</summary>
-        private const float WayCheckHeight = 0.6f;
+        /// <summary>Metres above the ground the straight way to a line-up is checked for anything solid (wreck, prop or
+        /// a rise of the ground).</summary>
+        private const float WayCheckHeight = 1.2f;
+
+        /// <summary>Half 07's width and a margin: the straight way must be this wide.</summary>
+        private const float WayCheckRadius = 0.9f;
 
         /// <summary>Metres from the tower's pad that count as having driven to the tower.</summary>
         private const float TowerVisit = 5f;
 
         /// <summary>Metres from the port pad's middle 07 parks within.</summary>
         private const float PortPark = 1f;
+
+        /// <summary>Metres 07 backs out from the port's pad before it turns, clear of the garage's walls.</summary>
+        private const float PortBackOut = 5f;
 
         private static readonly string ReportPath = Path.Combine(GameplayFixture.CaptureFolder, "playthrough.md");
 
@@ -585,6 +592,12 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return Until(() => fitted == 1, 6f, "the ring is on 07's eye");
             Assert.IsTrue(_context.Get<IRoverAbilities>().Has(RoverAbility.Tether), "07 can hold things again");
             Capture("12c-the-tether-ring");
+            Witness(_rover.Position, "12c-the-tether-ring-closeup");
+            _pilot.Reverse = BayThrottle;
+            yield return Until(() => SurfaceRules.HorizontalDistance(_rover.Position, port.PadCentre) > PortBackOut,
+                6f, "07 backs out of Kenji's bay the way it came in");
+            _pilot.Reverse = 0f;
+            yield return Until(() => _rover.Speed < StopSpeed, 6f, "07 stops outside the port");
             End("Kenji's port fits the tether ring", "the tether wakes");
         }
 
@@ -892,9 +905,10 @@ namespace MoonProject.Gameplay.PlayModeTests
         private bool StraightWayIsOpen(Vector3 target)
         {
             Vector3 from = _rover.Position + Vector3.up * WayCheckHeight;
-            Vector3 to = new Vector3(target.x, from.y, target.z);
-            int solid = ~(Layers.GroundMask | Layers.RoverMask | Layers.RelicMask | Layers.PickupMask);
-            return !Physics.Linecast(from, to, solid, QueryTriggerInteraction.Ignore);
+            Vector3 way = new Vector3(target.x, from.y, target.z) - from;
+            int solid = ~(Layers.RoverMask | Layers.RelicMask | Layers.PickupMask);
+            return !Physics.SphereCast(from, WayCheckRadius, way.normalized, out _, way.magnitude, solid,
+                QueryTriggerInteraction.Ignore);
         }
 
         private static float Bearing(Vector3 direction)
