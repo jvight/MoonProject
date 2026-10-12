@@ -96,11 +96,6 @@ namespace MoonProject.World.Tests
             expected.Add(WorldAnchorIds.PlaceAntennaFarm);
             expected.Add(WorldAnchorIds.RegionPeak);
             expected.Add(WorldAnchorIds.RegionTerraces);
-            foreach (string site in SalvageSiteTests.Sites)
-            {
-                expected.Add(WorldAnchorIds.CratePrefix + site);
-            }
-
             expected.Add(WorldAnchorIds.PlaceOrangeVent);
             expected.Add(WorldAnchorIds.PlaceIlmeniteBand);
             expected.Add(WorldAnchorIds.PlaceShadowedCrater);

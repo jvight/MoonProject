@@ -64,12 +64,6 @@ namespace MoonProject.Core
         public const string RegionTerraces = "region.terraces";
 
         /// <summary>
-        /// Prefix of the crew's sealed supply crates (M3-25 T4), one per salvage site beside its heart:
-        /// <c>crate.</c> + the site's name (depot, kestrel, drill, garage, lander). Forward faces on from home.
-        /// </summary>
-        public const string CratePrefix = "crate.";
-
-        /// <summary>
         /// The basin's old vent and its field of orange glass beads (M3-27, Apollo 17's orange soil): seen from 0.5,
         /// dug in 0.6. The radius covers the bead field.
         /// </summary>
