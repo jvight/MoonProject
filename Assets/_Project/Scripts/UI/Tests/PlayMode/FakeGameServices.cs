@@ -119,6 +119,8 @@ namespace MoonProject.UI.PlayModeTests
 
         public bool InvertY { get; set; }
 
+        public bool GentleCamera { get; set; }
+
         public bool IsAtStation => StationUpgrade != null;
 
         public UpgradeDefinition StationUpgrade

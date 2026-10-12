@@ -60,6 +60,8 @@ namespace MoonProject.UI.PlayModeTests
         private readonly GameObject _services;
         private readonly GameObject _ui;
         private readonly List<UpgradeDefinition> _upgrades = new List<UpgradeDefinition>();
+        private PanelSettings _framedPanel;
+        private RenderTexture _frame;
 
         private UiTestRig(GameObject camera, GameObject services, GameObject ui, UiTuning tuning,
             GameBootstrap bootstrap, string saveSlot)
@@ -86,7 +88,13 @@ namespace MoonProject.UI.PlayModeTests
 
         public Camera Camera => _camera.GetComponent<Camera>();
 
-        public static UiTestRig Boot(InputActionAsset controls, string saveSlot)
+        /// <summary>
+        /// Boots the UI. With a <paramref name="frameWidth"/> and <paramref name="frameHeight"/> it renders into a
+        /// texture of that size instead of the screen, so a test can lay the UI out for any screen shape
+        /// (<see cref="Reframe"/> changes it later).
+        /// </summary>
+        public static UiTestRig Boot(InputActionAsset controls, string saveSlot, int frameWidth = 0,
+            int frameHeight = 0)
         {
 #if UNITY_EDITOR
             var camera = new GameObject("TestViewCamera");
@@ -104,7 +112,18 @@ namespace MoonProject.UI.PlayModeTests
             var ui = new GameObject("GameUI");
             ui.SetActive(false);
             var document = ui.AddComponent<UIDocument>();
-            document.panelSettings = Load<PanelSettings>(PanelSettingsPath);
+            PanelSettings framedPanel = null;
+            RenderTexture frame = null;
+            PanelSettings panel = Load<PanelSettings>(PanelSettingsPath);
+            if (frameWidth > 0 && frameHeight > 0)
+            {
+                frame = NewFrame(frameWidth, frameHeight);
+                framedPanel = Object.Instantiate(panel);
+                framedPanel.targetTexture = frame;
+                panel = framedPanel;
+            }
+
+            document.panelSettings = panel;
             document.visualTreeAsset = Load<VisualTreeAsset>(UxmlPath);
             var system = ui.AddComponent<UISystem>();
             system.Wire(document, tuning, Load<RelicCatalog>(CatalogPath),
@@ -114,7 +133,11 @@ namespace MoonProject.UI.PlayModeTests
             ui.SetActive(true);
 
             GameBootstrap bootstrap = BootstrapHarness.Create(controls, saveSlot, fakes, system);
-            return new UiTestRig(camera, services, ui, tuning, bootstrap, saveSlot);
+            return new UiTestRig(camera, services, ui, tuning, bootstrap, saveSlot)
+            {
+                _framedPanel = framedPanel,
+                _frame = frame,
+            };
 #else
             throw new NotSupportedException("UiTestRig loads assets through the editor's AssetDatabase.");
 #endif
@@ -221,9 +244,25 @@ namespace MoonProject.UI.PlayModeTests
             File.Delete(settings.BackupPath);
         }
 
+        /// <summary>Lays the UI out for another screen shape. Only for a rig booted with a frame size.</summary>
+        public void Reframe(int width, int height)
+        {
+            if (_framedPanel == null)
+            {
+                throw new InvalidOperationException("Reframe needs a rig booted with a frame size.");
+            }
+
+            RenderTexture previous = _frame;
+            _frame = NewFrame(width, height);
+            _framedPanel.targetTexture = _frame;
+            ReleaseFrame(previous);
+        }
+
         public void Dispose()
         {
             Object.DestroyImmediate(_ui);
+            Object.DestroyImmediate(_framedPanel);
+            ReleaseFrame(_frame);
             Object.DestroyImmediate(Bootstrap.gameObject);
             Object.DestroyImmediate(_services);
             Object.DestroyImmediate(_camera);
@@ -234,6 +273,24 @@ namespace MoonProject.UI.PlayModeTests
             }
 
             Time.timeScale = 1f;
+        }
+
+        private static RenderTexture NewFrame(int width, int height)
+        {
+            var frame = new RenderTexture(width, height, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
+            frame.Create();
+            return frame;
+        }
+
+        private static void ReleaseFrame(RenderTexture frame)
+        {
+            if (frame == null)
+            {
+                return;
+            }
+
+            frame.Release();
+            Object.DestroyImmediate(frame);
         }
 
 #if UNITY_EDITOR

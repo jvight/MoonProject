@@ -20,6 +20,15 @@
     bottom: 0;
 }
 
+/* A safe frame fills the screen until SafeFrame insets it (an ultra-wide screen, a device's unsafe edges) */
+.safe-frame {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
 .moon-root {
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/BeVietnamPro-Regular.asset");
 }
@@ -322,6 +331,12 @@ Label {
 
 .pause--title .pause__stack {
     width: 340px;
+}
+
+/* The title's menu sits low, so its settings open beside it and grow upward from its foot, never off the bottom */
+.pause--title .pause__settings {
+    top: auto;
+    bottom: 0;
 }
 
 .pause--title .pause__question,

@@ -35,7 +35,7 @@ namespace MoonProject.UI.PlayModeTests
     /// </summary>
     [Category("UiCapture")]
     [Explicit("Renders the full Main scene; run with --category UiCapture.")]
-    public sealed class UiCaptureTests : InputTestFixture
+    public sealed partial class UiCaptureTests : InputTestFixture
     {
         private const string MainScene = "Assets/_Project/Scenes/Main.unity";
         private const int Width = 1600;

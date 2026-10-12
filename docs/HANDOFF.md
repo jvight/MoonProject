@@ -12,7 +12,12 @@ account) can continue without the old conversation.
 - Running slices (chips): `ui-fit` (Sonnet high), `clarity` (Opus medium), `voice` (Opus medium; must ask the owner
   before downloading any TTS engine), `first-hour design` (Opus high; adding a §camera section: auto-recenter rules,
   a Gentle camera option — after the owner approves it, dispatch a rover slice for the camera).
-- **Director to do:** §7.2 of first-hour-v2.md (VISION/GDD/M3-16/M3-20/M3-21/ARCHITECTURE text edits); land the three
+- **Landed:** ui-fit A (screen shapes, 5420b220). **Ready:** voice @ 102de0ba (box_check PASS; English voices only,
+  sherpa-onnx + Piper at D:/Tools/sherpa-onnx; land it AFTER clarity, it carries clarity's Core commits; the credit line
+  "Station voice synthesised with a Piper model trained on LibriTTS-R (CC BY 4.0)." must reach the credits screen;
+  owner to listen to Assets/_Project/Audio/Music/Voice/letter_mast_5.wav and letter_mast_1.wav). **Running:** clarity
+  (first-hour §8.1 tasks 1-10), ui-fit (§8.1 legibility tasks). **Camera landed** (first-hour §7); optional follow-up on box/camera: the rendered-heading drift (~17°).
+- **Director to do:** §8.2 of first-hour-v2.md (VISION/GDD/M3-16/M3-20/M3-21/ARCHITECTURE text edits); land the three
   slices (full box_check + Playthrough), verify --parallel --push, then build 0.5.1 for the owner.
 - Cron guard v3 (50% hard limit) runs in the current Director session only; this session's context is ~92% full:
   start a fresh Director session from this handoff.

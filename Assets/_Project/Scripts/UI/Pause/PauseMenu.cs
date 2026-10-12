@@ -115,7 +115,7 @@ namespace MoonProject.UI
             new RelayIconPainter(layout.PauseRelayIcon);
 
             _lookTexts = new string[player.LookStepCount + 1];
-            for (int step = player.MinLookStep; step <= player.LookStepCount; step++)
+            for (int step = player.GentleLookStep; step <= player.LookStepCount; step++)
             {
                 _lookTexts[step] = player.LookValue(step).ToString("0.##") + "×";
             }
@@ -348,6 +348,7 @@ namespace MoonProject.UI
             look.fill = true;
             look.RegisterValueChangedCallback(OnLookChanged);
             _layout.InvertToggle.RegisterValueChangedCallback(OnInvertChanged);
+            _layout.GentleCameraToggle.RegisterValueChangedCallback(OnGentleCameraChanged);
             _layout.GuidanceToggle.RegisterValueChangedCallback(OnGuidanceChanged);
         }
 
@@ -403,10 +404,9 @@ namespace MoonProject.UI
             _layout.MusicSlider.SetValueWithoutNotify(_player.GetVolumeStep(AudioBus.Music));
             _layout.SfxSlider.SetValueWithoutNotify(_player.GetVolumeStep(AudioBus.Sfx));
             _layout.AmbienceSlider.SetValueWithoutNotify(_player.GetVolumeStep(AudioBus.Ambience));
-            int look = _player.GetLookStep();
-            _layout.LookSlider.SetValueWithoutNotify(look);
-            _layout.LookValue.text = _lookTexts[look];
+            ShowLookStep();
             _layout.InvertToggle.SetValueWithoutNotify(_player.InvertY);
+            _layout.GentleCameraToggle.SetValueWithoutNotify(_player.GentleCamera);
             _layout.GuidanceToggle.SetValueWithoutNotify(_player.Guidance);
             _settingsPanel.Show();
             _pendingFocus = _layout.MasterSlider;
@@ -509,11 +509,15 @@ namespace MoonProject.UI
             _settingsStore.SaveIfChanged();
         }
 
+        /// <summary>
+        /// The pause menu slides left to keep menu and settings centred together. The title's menu is anchored low and
+        /// left over the world and its settings open beside it, so it never moves (it would leave the screen).
+        /// </summary>
         private void ShiftForSettings()
         {
             IResolvedStyle panel = _layout.PauseSettings.resolvedStyle;
             float width = panel.width + panel.marginLeft;
-            float shift = float.IsNaN(width) || _settingsPanel.IsHidden
+            float shift = _pages.IsTitle || float.IsNaN(width) || _settingsPanel.IsHidden
                 ? 0f
                 : -0.5f * width * _settingsPanel.Visibility;
             if (!float.IsNaN(_writtenShift) && Mathf.Abs(shift - _writtenShift) < MoveEpsilon)
@@ -868,6 +872,22 @@ namespace MoonProject.UI
         {
             _player.InvertY = evt.newValue;
             Cue(UiCueKind.Confirm);
+        }
+
+        /// <summary>The Gentle camera also moves the look slider's floor, so the slider follows it.</summary>
+        private void OnGentleCameraChanged(ChangeEvent<bool> evt)
+        {
+            _player.GentleCamera = evt.newValue;
+            ShowLookStep();
+            Cue(UiCueKind.Confirm);
+        }
+
+        private void ShowLookStep()
+        {
+            int look = _player.GetLookStep();
+            _layout.LookSlider.lowValue = _player.MinLookStep;
+            _layout.LookSlider.SetValueWithoutNotify(look);
+            _layout.LookValue.text = _lookTexts[look];
         }
 
         private void OnGuidanceChanged(ChangeEvent<bool> evt)

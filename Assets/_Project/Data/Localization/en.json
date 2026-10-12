@@ -355,6 +355,10 @@
             "text": "Invert look"
         },
         {
+            "key": "ui.settings.gentle_camera",
+            "text": "Gentle camera"
+        },
+        {
             "key": "ui.settings.language",
             "text": "Language"
         },
@@ -519,6 +523,10 @@
             "text": "RMB"
         },
         {
+            "key": "glyph.mouse.middlebutton",
+            "text": "MMB"
+        },
+        {
             "key": "glyph.mouse.scroll",
             "text": "Scroll"
         },
@@ -561,6 +569,10 @@
         {
             "key": "glyph.gamepad.rightstick",
             "text": "RS"
+        },
+        {
+            "key": "glyph.gamepad.rightstickpress",
+            "text": "R3"
         },
         {
             "key": "glyph.gamepad.dpad",

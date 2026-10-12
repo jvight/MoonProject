@@ -274,6 +274,7 @@ namespace MoonProject.Rover
         {
             if (_lookSettings != null)
             {
+                _look.GentleCamera = _lookSettings.GentleCamera;
                 _look.Sensitivity = _lookSettings.Sensitivity;
                 _look.InvertY = _lookSettings.InvertY;
             }

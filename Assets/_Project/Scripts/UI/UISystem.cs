@@ -372,6 +372,7 @@ namespace MoonProject.UI
             UiServices services = _services;
             _layout = new UiLayout(root);
             new WordmarkPainter(_layout.TitleWordmark, _wordmark);
+            new SafeFrame(_layout, _tuning.Safe);
             _staticText = new StaticTextLocalizer(root, _localization);
             _hud = new Reveal(_layout.Hud, _tuning.Pause.Hud);
             _hud.Snap(true);

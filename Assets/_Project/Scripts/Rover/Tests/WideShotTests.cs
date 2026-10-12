@@ -206,5 +206,25 @@ namespace MoonProject.Rover.Tests
 
             return largest;
         }
+
+        [Test]
+        public void MinBlend_SlowsAQuickHandBack()
+        {
+            OpenFully();
+            _wide.MinBlend = _settings.HandBackSeconds + 0.4f;
+            _wide.HandBack();
+            Run(_settings.HandBackSeconds);
+            Assert.Greater(_wide.Weight, 0.06f, "Not yet home at the tuned hand-back time.");
+            Run(0.4f);
+            Assert.Less(_wide.Weight, 0.06f, "All but home at the floor.");
+        }
+
+        [Test]
+        public void BreathRate_SlowsTheBreathing()
+        {
+            _wide.BreathRate = 0.5f;
+            OpenFully();
+            Assert.AreEqual(1.5f * _settings.OpenSeconds, _wide.BreathSeconds, 0.05f);
+        }
     }
 }

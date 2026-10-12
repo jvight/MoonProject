@@ -45,20 +45,29 @@ MonoBehaviour:
   _stargazeBeginShare: 0.6
   _stargazeHoldShare: 0.3
   _stargazeMaxSpeed: 0.3
-  _recenterDelay: 3
-  _recenterRampTime: 1.5
-  _recenterHalfLife: 0.9
-  _recenterMinSpeed: 0.5
+  _recenterDelay: 5
+  _stickRecenterDelay: 4
+  _recenterMinSpeed: 2
+  _recenterDriveSeconds: 1
+  _recenterDeadzone: 25
+  _recenterRampTime: 2
+  _recenterFadeOut: 0.5
+  _recenterMaxRate: 30
+  _recenterEaseAngle: 20
+  _recenterPitchRate: 10
+  _recenterButtonSeconds: 0.8
+  _followHalfLife: 0.27
+  _followMaxRate: 45
   _downhillLift: 10
   _downhillFullAngle: 20
   _liftHalfLife: 0.7
   _baseFov: 52
-  _speedFovBoost: 6
+  _speedFovBoost: 3
   _fovHalfLife: 0.6
   _nearClip: 0.3
   _farClip: 3200
   _bumpPerImpact: 0.18
-  _maxBumpKick: 0.9
+  _maxBumpKick: 0.6
   _bumpFrequency: 1.4
   _bumpDamping: 0.8
   _crawlPullBack: 0.22
@@ -199,6 +208,11 @@ MonoBehaviour:
     _subjectDistance: 6
   _momentCancelEaseOut: 0.6
   _momentBlendHalfLife: 0.3
+  _minShotBlend: 1.2
+  _gentleMinShotBlend: 2
+  _gentleLeapPullBack: 0.5
+  _gentleBreathRate: 0.5
+  _gentleMinSensitivity: 0.15
   _opening:
     _crackleSeconds: 3
     _lidCrackSeconds: 2.5
@@ -368,7 +382,6 @@ MonoBehaviour:
   _eveningHoldSeconds: 11
   _eveningFillHoldMax: 16
   _positionDamping: {x: 1.1, y: 0.9, z: 1.3}
-  _yawDamping: 1.8
   _aimDamping: {x: 0.6, y: 0.5}
   _screenPosition: {x: 0, y: 0.1}
   _cameraRadius: 0.45
