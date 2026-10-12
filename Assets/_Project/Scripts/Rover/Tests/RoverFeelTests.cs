@@ -169,6 +169,19 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
+        public void TheTowerComingOnline_Rumbles03()
+        {
+            Beat(FeelPhase.Anticipate, kind: FeelKind.Build);
+            Run(Frame);
+            Assert.AreEqual(0f, _motors.Low, "The approach is quiet.");
+            Beat(FeelPhase.Impact, kind: FeelKind.Build);
+            Run(Frame);
+            Assert.AreEqual(0.3f, _motors.Low, Tolerance);
+            Run(0.2f);
+            Assert.AreEqual(0f, _motors.Low, Tolerance, "For ~120 ms.");
+        }
+
+        [Test]
         public void OnlyTheLastFollow_TheFold_Pulses()
         {
             Beat(FeelPhase.Follow, 0f);

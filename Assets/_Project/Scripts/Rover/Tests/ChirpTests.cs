@@ -75,6 +75,8 @@ namespace MoonProject.Rover.Tests
                 (() => _events.Publish(new RoverKitFitted(RoverKitPiece.SolarCell, true, string.Empty)),
                     ChirpMood.Happy),
                 (() => _events.Publish(new FindDecoded("cargo_cradle")), ChirpMood.Affirm),
+                (() => _events.Publish(new FeelBeat(FeelKind.Build, FeelPhase.Impact, Vector3.zero, Vector3.up, 1f,
+                    0f)), ChirpMood.Happy),
                 (() => _events.Publish(new BatteryWarned(BatteryWarning.Low, Vector3.zero)), ChirpMood.Worried),
                 (() => _events.Publish(new LowPowerChanged(true, false)), ChirpMood.Tired),
                 (() => _events.Publish(new SiteAnswered("site.depot", Vector3.zero, 10f, true)), ChirpMood.Curious),
