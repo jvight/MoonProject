@@ -9,8 +9,9 @@ namespace MoonProject.World
     /// Shows a reach growing (polish wave 1): a warm ring rolls out over the ground when the tower's clear-signal
     /// radius grows (<see cref="SignalRadiusChanged"/>, from home), a relay mast lights (<see cref="RelayRestored"/>,
     /// from the mast) or a new cell pack fits (<see cref="BatteryChanged"/> with more cells, from 07). Loads and the
-    /// first report of each are silent. LofiTerrain draws the ring from two shader globals; thin: the timing lives in
-    /// <see cref="ReachRing"/>.
+    /// first report of each are silent. During the tower's build beat (feel-pass §8.2) the tower's ring waits for the
+    /// beat's Follow (strength 1), or a timeout. LofiTerrain draws the ring from two shader globals; thin: the timing
+    /// lives in <see cref="ReachRing"/>.
     /// </summary>
     public sealed class ReachRingSystem : MonoBehaviour, IGameSystem
     {
@@ -28,6 +29,15 @@ namespace MoonProject.World
         private float _signalRadius = -1f;
         private int _cells = -1;
         private bool _showing;
+        private IDisposable _feel;
+        private bool _buildPending;
+        private float _buildAt = float.NegativeInfinity;
+        private bool _ringHeld;
+        private Vector3 _heldCentre;
+        private float _heldReach;
+
+        // A Follow above this strength is the reach ring's cue (strength 0 is the cable race's).
+        private const float RingFollowStrength = 0.5f;
 
         public void Initialize(GameContext context)
         {
@@ -43,6 +53,7 @@ namespace MoonProject.World
             _signal = context.Events.Subscribe<SignalRadiusChanged>(OnSignalRadius);
             _relay = context.Events.Subscribe<RelayRestored>(OnRelayRestored);
             _battery = context.Events.Subscribe<BatteryChanged>(OnBatteryChanged);
+            _feel = context.Events.Subscribe<FeelBeat>(OnFeelBeat);
             Hide();
         }
 
@@ -51,6 +62,11 @@ namespace MoonProject.World
             if (_ring == null)
             {
                 return;
+            }
+
+            if (_ringHeld && Time.time - _buildAt > _settings.HomeLighting.BuildHoldTimeout)
+            {
+                StartHeld();
             }
 
             if (!_ring.Sample(Time.time, out float radius, out float strength))
@@ -75,9 +91,48 @@ namespace MoonProject.World
         {
             bool grew = _signalRadius >= 0f && change.Radius > _signalRadius;
             _signalRadius = change.Radius;
-            if (grew && _context.TryGet(out IWorldLayout layout))
+            if (!grew || !_context.TryGet(out IWorldLayout layout))
             {
-                _ring.Start(layout.BasePosition, change.Radius, Time.time);
+                return;
+            }
+
+            if (_buildPending)
+            {
+                _ringHeld = true;
+                _heldCentre = layout.BasePosition;
+                _heldReach = change.Radius;
+                return;
+            }
+
+            _ring.Start(layout.BasePosition, change.Radius, Time.time);
+        }
+
+        private void OnFeelBeat(FeelBeat beat)
+        {
+            if (beat.Kind != FeelKind.Build)
+            {
+                return;
+            }
+
+            if (beat.Phase == FeelPhase.Anticipate)
+            {
+                _buildPending = true;
+                _buildAt = Time.time;
+            }
+            else if ((beat.Phase == FeelPhase.Follow && beat.Strength > RingFollowStrength)
+                     || beat.Phase == FeelPhase.Cancel)
+            {
+                StartHeld();
+            }
+        }
+
+        private void StartHeld()
+        {
+            _buildPending = false;
+            if (_ringHeld)
+            {
+                _ringHeld = false;
+                _ring.Start(_heldCentre, _heldReach, Time.time);
             }
         }
 
@@ -108,6 +163,7 @@ namespace MoonProject.World
             _signal?.Dispose();
             _relay?.Dispose();
             _battery?.Dispose();
+            _feel?.Dispose();
             if (_ring != null)
             {
                 Hide();

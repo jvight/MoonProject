@@ -80,6 +80,36 @@ namespace MoonProject.World
         [Range(0f, 2f)]
         [SerializeField] private float _pilotMinAngle = 0.4f;
 
+        [Header("The tower comes online (feel-pass §8.2)")]
+        [Tooltip("Seconds a new power stage waits for the tower's build beat to reach its Follow before it applies " +
+            "anyway (the beat takes about 6 s).")]
+        [Range(1f, 20f)]
+        [SerializeField] private float _buildHoldTimeout = 8f;
+
+        [Tooltip("How near the tower's top light (metres) a Build beat must happen to be the tower's.")]
+        [Range(1f, 60f)]
+        [SerializeField] private float _towerBeatRadius = 20f;
+
+        [Tooltip("How much brighter the top light flares on the beat's Impact (times its intensity).")]
+        [Range(0f, 8f)]
+        [SerializeField] private float _beaconFlareGain = 3f;
+
+        [Tooltip("Seconds the flare takes to rise and settle.")]
+        [Range(0.2f, 4f)]
+        [SerializeField] private float _beaconFlareSeconds = 1.4f;
+
+        [Tooltip("Seconds of one slow turn of the top light once the tower is online.")]
+        [Range(2f, 30f)]
+        [SerializeField] private float _beaconTurnPeriod = 7f;
+
+        [Tooltip("Share of the top light that sweeps with the turn (0 = steady, 1 = dark when facing away).")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _beaconSweep = 0.55f;
+
+        [Tooltip("How narrow the turning beam is (a power of its facing).")]
+        [Range(1f, 16f)]
+        [SerializeField] private float _beaconSweepSharpness = 4f;
+
         [Tooltip("Halo intensity of the pilot light at the top of a blink (LofiBeaconHalo _Intensity).")]
         [Range(0f, 4f)]
         [SerializeField] private float _pilotIntensity = 1.4f;
@@ -133,6 +163,13 @@ namespace MoonProject.World
         public float PilotPeriod => _pilotPeriod;
         public float PilotSharpness => _pilotSharpness;
         public float PilotIntensity => _pilotIntensity;
+        public float BuildHoldTimeout => _buildHoldTimeout;
+        public float TowerBeatRadius => _towerBeatRadius;
+        public float BeaconFlareGain => _beaconFlareGain;
+        public float BeaconFlareSeconds => _beaconFlareSeconds;
+        public float BeaconTurnPeriod => _beaconTurnPeriod;
+        public float BeaconSweep => _beaconSweep;
+        public float BeaconSweepSharpness => _beaconSweepSharpness;
         public float PilotRadius => _pilotRadius;
         public float TopLightLevel => _topLightLevel;
         public float PilotMinAngle => _pilotMinAngle;

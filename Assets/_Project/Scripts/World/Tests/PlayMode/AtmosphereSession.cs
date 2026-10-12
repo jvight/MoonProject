@@ -86,6 +86,13 @@ namespace MoonProject.World.PlayModeTests
         // The whole base awake (the owner's frame is the woken base at night): power stepped to the Lift, settled.
         private const float LiftSettleSeconds = 8f;
 
+        // The tower's build beat as Gameplay publishes it (feel-pass §8.2), and the flare seen just after Impact.
+        private const string TowerPilotName = "TowerPilot";
+        private const float TowerAnticipateSeconds = 1.2f;
+        private const int TowerActSteps = 4;
+        private const float TowerActSeconds = 0.25f;
+        private const float TowerFlareCaptureSeconds = 0.25f;
+
         // The reach ring (polish wave 1): the tower's reach grows from a token radius to this, seen mid roll-out.
         private const float RingBaselineRadius = 1f;
         private const float RingReach = 70f;
@@ -262,7 +269,22 @@ namespace MoonProject.World.PlayModeTests
             Assert.AreEqual(0f, context.Get<IHomeLights>().Level(HomeLight.Windows), "a fresh game starts asleep");
             Capture(view, "wake-0-asleep");
 
+            // The tower comes online the way Gameplay plays it (feel-pass §8.2): the stage arrives with the build
+            // beat, the top light flares on Impact, and the cable race and the windows follow its Follow (0).
+            Vector3 tower = FindNamed(TowerPilotName).position;
+            Publish(context, FeelPhase.Anticipate, tower, 0f, TowerAnticipateSeconds);
             context.Events.Publish(new BasePowerChanged(BasePowerStage.Home, false));
+            yield return new WaitForSeconds(TowerAnticipateSeconds);
+            for (int step = 1; step <= TowerActSteps; step++)
+            {
+                Publish(context, FeelPhase.Act, tower, (float)step / TowerActSteps, 0f);
+                yield return new WaitForSeconds(TowerActSeconds);
+            }
+
+            Publish(context, FeelPhase.Impact, tower, 1f, 0f);
+            yield return new WaitForSeconds(TowerFlareCaptureSeconds);
+            Capture(view, "wake-0b-tower-flare");
+            Publish(context, FeelPhase.Follow, tower, 0f, 0f);
             foreach ((float wait, string name) in WakeFrames)
             {
                 yield return new WaitForSeconds(wait);
@@ -270,7 +292,12 @@ namespace MoonProject.World.PlayModeTests
             }
 
             Assert.AreEqual(1f, context.Get<IHomeLights>().Level(HomeLight.Halo), "home has settled");
+            Publish(context, FeelPhase.Follow, tower, 1f, 0f);
+            Publish(context, FeelPhase.Anticipate, tower, 0f, TowerAnticipateSeconds);
             context.Events.Publish(new BasePowerChanged(BasePowerStage.Chart, false));
+            Publish(context, FeelPhase.Impact, tower, 1f, 0f);
+            Publish(context, FeelPhase.Follow, tower, 0f, 0f);
+            Publish(context, FeelPhase.Follow, tower, 1f, 0f);
             yield return new WaitForSeconds(LiftSettleSeconds);
             Capture(view, "wake-4-lift");
             context.Events.Publish(new SignalRadiusChanged(RingBaselineRadius));
@@ -278,6 +305,27 @@ namespace MoonProject.World.PlayModeTests
             yield return new WaitForSeconds(RingCaptureSeconds);
             Capture(view, "wake-5-reach-ring");
             Assert.IsEmpty(_problems, "errors in the log:\n" + string.Join("\n", _problems));
+        }
+
+        private static void Publish(GameContext context, FeelPhase phase, Vector3 tower, float strength, float seconds)
+        {
+            context.Events.Publish(new FeelBeat(FeelKind.Build, phase, tower, Vector3.up, strength, seconds));
+        }
+
+        private static Transform FindNamed(string name)
+        {
+            foreach (GameObject root in SceneManager.GetSceneByPath(CanyonSessionScene.ScenePath).GetRootGameObjects())
+            {
+                foreach (Transform node in root.GetComponentsInChildren<Transform>(true))
+                {
+                    if (node.name == name)
+                    {
+                        return node;
+                    }
+                }
+            }
+
+            throw new InvalidOperationException($"The scene has no '{name}'.");
         }
 
         private static void Capture(Camera view, string name)

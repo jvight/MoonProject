@@ -64,6 +64,9 @@ namespace MoonProject.World
         private float _gradeApplied = -1f;
         private GameContext _context;
         private int _windowStepsLit;
+        private TowerBuildBeat _build;
+        private IDisposable _feelBeat;
+        private IViewCamera _view;
         private float[] _poolsApplied;
 
         public void Initialize(GameContext context)
@@ -85,7 +88,9 @@ namespace MoonProject.World
             _poolsApplied = Unapplied(_pools.Length);
             SetUpPools();
             _context = context;
+            _build = new TowerBuildBeat(_settings.HomeLighting);
             _powerChanged = context.Events.Subscribe<BasePowerChanged>(OnPowerChanged);
+            _feelBeat = context.Events.Subscribe<FeelBeat>(OnFeelBeat);
             _placeApproached = context.Events.Subscribe<PlaceFirstApproached>(OnPlaceApproached);
             context.Register<IHomeLights>(this);
         }
@@ -103,15 +108,23 @@ namespace MoonProject.World
             }
 
             float time = Time.time;
+            if (_build.TryRelease(time, out BasePowerStage released))
+            {
+                // The beat's Follow: the light races along the cable to home, then the windows step on.
+                _stages.SetStage(released, false, time);
+            }
+
             ApplyCable(BasePowerStage.Home, _homeCable, _homeApplied, time);
             ApplyCable(BasePowerStage.Bay, _bayCable, _bayApplied, time);
             ApplyCable(BasePowerStage.Chart, _chartCable, _chartApplied, time);
 
             HomeLightingSettings tuning = _settings.HomeLighting;
             float pilot = _stages.PilotLevel(time);
-            _pilot.enabled = pilot > 0f;
             _block.Clear();
-            _block.SetFloat(IntensityId, pilot * tuning.PilotIntensity);
+            float flare = _build.Flare(time);
+            _pilot.enabled = pilot > 0f || flare > 0f;
+            float glow = pilot * _build.Sweep(ToViewer(), time) + flare * tuning.BeaconFlareGain;
+            _block.SetFloat(IntensityId, glow * tuning.PilotIntensity);
             _block.SetFloat(RadiusId, tuning.PilotRadius);
             _block.SetFloat(MinAngleTanId, Mathf.Tan(tuning.PilotMinAngle * Mathf.Deg2Rad));
             _block.SetFloat(MinAngleFromId, tuning.PilotHaloFrom);
@@ -212,8 +225,34 @@ namespace MoonProject.World
             _windowStepsLit = lit;
         }
 
+        private void OnFeelBeat(FeelBeat beat)
+        {
+            float near = _settings.HomeLighting.TowerBeatRadius;
+            if (beat.Kind == FeelKind.Build && (beat.Position - _pilot.transform.position).sqrMagnitude <= near * near)
+            {
+                _build.Beat(beat.Phase, beat.Strength, Time.time);
+            }
+        }
+
+        /// <summary>Horizontal direction from the top light to the view camera (for the turn's sweep).</summary>
+        private Vector3 ToViewer()
+        {
+            if (_view == null && _context.TryGet(out IViewCamera view))
+            {
+                _view = view;
+            }
+
+            Camera camera = _view != null ? _view.Camera : null;
+            return camera != null ? camera.transform.position - _pilot.transform.position : Vector3.zero;
+        }
+
         private void OnPowerChanged(BasePowerChanged change)
         {
+            if (!_build.Arrive(change.Stage, change.Restored, Time.time))
+            {
+                return;
+            }
+
             _stages.SetStage(change.Stage, change.Restored, Time.time);
             if (change.Restored)
             {
@@ -234,6 +273,7 @@ namespace MoonProject.World
         {
             _powerChanged?.Dispose();
             _placeApproached?.Dispose();
+            _feelBeat?.Dispose();
         }
 
         private static float[] Unapplied(int count)
