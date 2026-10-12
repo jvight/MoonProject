@@ -137,6 +137,10 @@ namespace MoonProject.Rover
         [Header("Visible kit and gifts")]
         [SerializeField] private KitSettings _kit = new KitSettings();
 
+        [Header("Feel: the cut (docs/design/feel-pass.md)")]
+        [Tooltip("07's chassis and the gamepad rumble answering the cut's and the dig's beats.")]
+        [SerializeField] private CutFeelSettings _cutFeel = new CutFeelSettings();
+
         [Header("Flank lamps (the battery)")]
         [Tooltip("The amber lamps along the stripe, one per cell (docs/features/M3-20).")]
         [SerializeField] private FlankLampSettings _flankLamps = new FlankLampSettings();
@@ -243,6 +247,8 @@ namespace MoonProject.Rover
         public KitSettings Kit => _kit;
 
         public FlankLampSettings FlankLamps => _flankLamps;
+
+        public CutFeelSettings CutFeel => _cutFeel;
 
         public float TubeHalfLife => _tubeHalfLife;
 

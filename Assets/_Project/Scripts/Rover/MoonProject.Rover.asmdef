@@ -3,6 +3,7 @@
     "rootNamespace": "MoonProject.Rover",
     "references": [
         "MoonProject.Core",
+        "Unity.InputSystem",
         "Unity.Cinemachine"
     ],
     "includePlatforms": [],

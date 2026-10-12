@@ -44,6 +44,7 @@ namespace MoonProject.Rover
         private Vector3 _chassisRestPosition;
         private Quaternion _chassisRestRotation;
         private Quaternion _antennaRestRotation;
+        private ImpactNudge _nudge;
         private Quaternion _bogieLeftRestRotation;
         private Quaternion _bogieRightRestRotation;
         private Vector3 _lastPosition;
@@ -247,11 +248,25 @@ namespace MoonProject.Rover
             }
         }
 
+        /// <summary>The rig's tuning (the feel kit reads its cut settings).</summary>
+        public RoverRigTuning Tuning => _tuning;
+
+        /// <summary>
+        /// The feel kit's chassis response (<see cref="ImpactNudge"/>: recoil, dips, leans), added on top of the
+        /// springs' pose; null leaves the chassis to the springs alone.
+        /// </summary>
+        public void SetNudge(ImpactNudge nudge)
+        {
+            _nudge = nudge;
+        }
+
         private void ApplyChassis()
         {
             Vector3 pivot = Vector3.up * _tuning.LeanPivotHeight;
-            Quaternion lean = GroundPlaneFit.Tilt(_jelly.Pitch, _jelly.Roll);
-            _chassis.localPosition = _chassisRestPosition + pivot - lean * pivot + Vector3.up * _jelly.Heave;
+            float nudgePitch = _nudge != null ? _nudge.Pitch : 0f;
+            Vector3 nudge = _nudge != null ? new Vector3(0f, _nudge.Heave, _nudge.Surge) : Vector3.zero;
+            Quaternion lean = GroundPlaneFit.Tilt(_jelly.Pitch - nudgePitch, _jelly.Roll);
+            _chassis.localPosition = _chassisRestPosition + pivot - lean * pivot + Vector3.up * _jelly.Heave + nudge;
             _chassis.localRotation = lean * _chassisRestRotation;
         }
 

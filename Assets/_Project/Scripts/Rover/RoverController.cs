@@ -73,6 +73,7 @@ namespace MoonProject.Rover
         private BoostDrive _boost;
         private BatteryLink _battery;
         private IDisposable _dockChanges;
+        private RoverFeel _feel;
         private bool _docked;
         private bool _cradled;
         private Vector3 _cradleBody;
@@ -325,9 +326,18 @@ namespace MoonProject.Rover
             context.Register<IRoverStillness>(_stillness);
             context.Register<IRoverPlacement>(this);
             context.Register<IRoverCargoSeat>(_kit);
+            var feelPreferences = new FeelPreferences();
+            context.Register<IFeelSettings>(feelPreferences);
             _dockChanges = _events.Subscribe<RoverDockChanged>(OnDockChanged);
 
             bool visualsReady = _visualRig.Initialize(this);
+            if (visualsReady)
+            {
+                _feel = new RoverFeel(_events, _visualRig.Tuning.CutFeel, feelPreferences, new GamepadRumbleMotors(),
+                    _visualRig);
+                _visualRig.SetNudge(_feel.Nudge);
+            }
+
             bool kitReady = _kit.Initialize(context, this, _visualRig);
             bool effectsReady = _wheelFx.Initialize(context, this);
             bool coilsReady = _hoverCoils.Initialize(context, this);
@@ -546,6 +556,7 @@ namespace MoonProject.Rover
             _stuck.Reset();
             _stillness.Reset();
 
+            _feel?.Nudge.Reset();
             _visualRig.Snap(normal);
             _wheelFx.Break();
             _lampMotes.Carry(lens, facing);
@@ -840,6 +851,7 @@ namespace MoonProject.Rover
 
             float deltaTime = Time.deltaTime;
             _stillness.Step(SampleStillness(), deltaTime);
+            _feel.Tick(deltaTime, Time.time);
             _visualRig.Tick(deltaTime);
             _kit.Tick(deltaTime);
             _wheelFx.Tick();
@@ -856,9 +868,21 @@ namespace MoonProject.Rover
             return new StillnessSample(_landing.IsGrounded, Speed, drive, _input.LookDelta, _input.LookRate, engaged);
         }
 
+        /// <summary>Rumble never runs while the game window is away.</summary>
+        private void OnApplicationFocus(bool hasFocus)
+        {
+            _feel?.SetFocused(hasFocus);
+        }
+
+        private void OnApplicationQuit()
+        {
+            _feel?.Silence();
+        }
+
         private void OnDestroy()
         {
             _dockChanges?.Dispose();
+            _feel?.Dispose();
         }
     }
 }
