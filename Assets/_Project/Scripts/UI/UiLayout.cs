@@ -38,6 +38,7 @@ namespace MoonProject.UI
             RewardCard = Require<VisualElement>("reward-card");
             Cargo = Require<VisualElement>("cargo");
             UnlockCard = Require<VisualElement>("unlock-card");
+            CrateNote = Require<VisualElement>("crate-note");
             RewardTitle = Require<Label>("reward-card-title");
             RewardLines = Require<VisualElement>("reward-card-lines");
             TowerState = Require<Label>("tower-state");
@@ -267,6 +268,9 @@ namespace MoonProject.UI
 
         /// <summary>The card that says what a newly fitted kit lets 07 do.</summary>
         public VisualElement UnlockCard { get; }
+
+        /// <summary>The card with a crew crate's packing note.</summary>
+        public VisualElement CrateNote { get; }
 
         public Label RewardTitle { get; }
 

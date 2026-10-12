@@ -100,6 +100,12 @@
                         </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>
+                <ui:VisualElement class="crate-anchor" picking-mode="Ignore">
+                    <ui:VisualElement name="crate-note" class="crate-note" picking-mode="Ignore">
+                        <ui:Label name="crate-note-caption" class="crate-note__caption" picking-mode="Ignore" />
+                        <ui:Label name="crate-note-text" class="crate-note__text" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
                 <ui:VisualElement name="battery-dial" class="battery-dial" picking-mode="Ignore">
                     <ui:VisualElement name="battery-dial-face" class="battery-dial__face" picking-mode="Ignore">
                         <ui:VisualElement name="battery-dial-ring" class="battery-dial__ring" picking-mode="Ignore" />

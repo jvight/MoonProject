@@ -105,7 +105,7 @@ namespace MoonProject.UI.Tests
                          UiKeys.TowerPurchased, UiKeys.LogCaption, UiKeys.CrewLogCaption, UiKeys.LinerCaption,
                          UiKeys.TapeCount, UiKeys.PauseCassettes, UiKeys.PauseRelays, UiKeys.RecipeNeed,
                          UiKeys.RecipeRow, UiKeys.RewardTitle, UiKeys.StationOffline, UiKeys.FriendParts,
-                         UiKeys.CargoWaiting, UiKeys.CargoShelfCost, UiKeys.CargoCostPart, UiKeys.CargoShelf, UiKeys.CargoShelfFree, UiKeys.CargoSummary,
+                         UiKeys.CrateCaption, UiKeys.CargoWaiting, UiKeys.CargoShelfCost, UiKeys.CargoCostPart, UiKeys.CargoShelf, UiKeys.CargoShelfFree, UiKeys.CargoSummary,
                          UiKeys.CanDecoded,
                          UiKeys.BayPick, UiKeys.BayFitted,
                      })
@@ -117,6 +117,11 @@ namespace MoonProject.UI.Tests
             {
                 Assert.IsTrue(_english.TryGet(UiKeys.RadioChannelName(channel), out _),
                     UiKeys.RadioChannelName(channel));
+            }
+
+            foreach (string site in new[] { "depot", "kestrel", "drill", "garage", "lander" })
+            {
+                Assert.IsTrue(_english.TryGet(CrewCrateKeys.Note(site), out _), CrewCrateKeys.Note(site));
             }
 
             for (int i = 0; i < AbilityTable.Count; i++)

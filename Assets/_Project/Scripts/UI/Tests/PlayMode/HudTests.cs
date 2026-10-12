@@ -200,6 +200,25 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator CrateNote_ShowsThePackingNote_RestsToReadIt_AndLeavesByItself()
+        {
+            InputSystem.AddDevice<Keyboard>();
+            Boot();
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            yield return Seconds(0.3f);
+            Events.Publish(new CrewCrateOpened("site.depot", "kenji", SalvageMaterial.Metal, 3, Vector3.zero));
+            yield return Seconds(_rig.Tuning.CrateNote.Reveal.FadeIn + 0.5f);
+            CrateNote note = _rig.Ui.CrateNote;
+            Assert.IsTrue(note.IsVisible);
+            Assert.AreEqual(Text("crate.depot.note"), note.Text, "the note as Kenji wrote it");
+            Assert.AreEqual(1f, Time.timeScale, "it never pauses the game");
+            Assert.IsFalse(_rig.Ui.Pause.IsOpen);
+            yield return Seconds(_rig.Tuning.CrateNote.HoldSeconds(note.Text.Length) +
+                                 _rig.Tuning.CrateNote.Reveal.FadeOut + 0.5f);
+            Assert.IsFalse(note.IsVisible, "it closes itself");
+        }
+
+        [UnityTest]
         public IEnumerator BuildPrompt_SaysBuild_ForAShelfSocket()
         {
             InputSystem.AddDevice<Keyboard>();

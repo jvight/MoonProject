@@ -826,6 +826,17 @@ namespace MoonProject.UI.PlayModeTests
             fakes.SetUnits(SalvageMaterial.WaterIce, 7);
             yield return new WaitForSecondsRealtime(_tuning.PickupFeed.MaxCountSeconds * 0.5f + 0.4f);
             yield return Capture(camera, folder, "98_pickup_lunar");
+
+            Transform view = camera.transform;
+            fakes.PrimaryHint = new InteractionHint(InteractionKind.Build,
+                view.position + Vector3.ProjectOnPlane(view.forward, Vector3.up).normalized * 6f + Vector3.down * 1.2f,
+                true);
+            yield return new WaitForSecondsRealtime(_tuning.Prompts.Reveal.FadeIn + 1.5f);
+            yield return Capture(camera, folder, "99_build_prompt");
+            fakes.PrimaryHint = InteractionHint.None;
+            context.Events.Publish(new CrewCrateOpened("site.depot", "kenji", SalvageMaterial.Metal, 3, Vector3.zero));
+            yield return new WaitForSecondsRealtime(_tuning.CrateNote.Reveal.FadeIn + 1f);
+            yield return Capture(camera, folder, "100_crate_note");
 #else
             Assert.Ignore("Captures need the editor.");
             yield break;

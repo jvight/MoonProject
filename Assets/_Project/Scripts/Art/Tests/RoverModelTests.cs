@@ -49,7 +49,7 @@ namespace MoonProject.Art.Tests
         private const float CradleFront = -0.658f;
         private const float CradleRailTop = 0.522f;
         private const float TailLampInnerEdge = 0.246f;
-        private const float WindowHalfHeight = 0.056f;
+        private const float WindowHalfHeight = 0.0665f;
 
         private ModelNode _rover;
 
@@ -214,6 +214,8 @@ namespace MoonProject.Art.Tests
             Assert.Greater(hatch.LocalPosition.y + window.LocalPosition.y - WindowHalfHeight, CradleRailTop,
                 "the window shows above the cradle's lower rail");
             Assert.AreEqual(RoverModelBuilder.HatchCrates, window.Children.Count);
+            Assert.IsTrue(MeshChecks.Swatches(window.Mesh.Geometry).All(Palette.IsEmissive),
+                "the hold glows behind the crates, so full and empty read apart");
             Bounds hold = window.Mesh.Geometry.Bounds;
             for (int i = 0; i < RoverModelBuilder.HatchCrates; i++)
             {

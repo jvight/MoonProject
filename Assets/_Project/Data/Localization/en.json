@@ -1175,6 +1175,10 @@
             "text": "{0} {1}"
         },
         {
+            "key": "ui.crate.caption",
+            "text": "From the crate"
+        },
+        {
             "key": "ui.reward.title",
             "text": "{0} · Level {1}"
         },
