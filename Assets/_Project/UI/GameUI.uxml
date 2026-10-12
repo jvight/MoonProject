@@ -309,6 +309,10 @@
                                     <ui:Toggle name="toggle-invert" class="setting-row__toggle" />
                                 </ui:VisualElement>
                                 <ui:VisualElement class="setting-row">
+                                    <ui:Label class="setting-row__label loc" text="ui.settings.gentle_camera" />
+                                    <ui:Toggle name="toggle-gentle-camera" class="setting-row__toggle" />
+                                </ui:VisualElement>
+                                <ui:VisualElement class="setting-row">
                                     <ui:Label class="setting-row__label loc" text="ui.settings.guidance" />
                                     <ui:Toggle name="toggle-guidance" class="setting-row__toggle" />
                                 </ui:VisualElement>

@@ -90,5 +90,26 @@ namespace MoonProject.Rover.Tests
             Assert.Less(normal, 0f, "Mouse up lowers the orbit elevation, so the view tilts up.");
             Assert.AreEqual(-normal, inverted, 1e-5f);
         }
+
+        [Test]
+        public void GentleCamera_LowersTheSensitivityFloor()
+        {
+            _look.Sensitivity = 0.01f;
+            Assert.AreEqual(_tuning.MinSensitivity, _look.Sensitivity);
+            _look.GentleCamera = true;
+            Assert.AreEqual(_tuning.GentleMinSensitivity, _look.Sensitivity);
+            Assert.Less(_tuning.GentleMinSensitivity, _tuning.MinSensitivity);
+        }
+
+        [Test]
+        public void GentleCamera_ALowChoiceReadsAsTheUsualFloorWhileOff_WhicheverIsSetFirst()
+        {
+            _look.Sensitivity = _tuning.GentleMinSensitivity;
+            Assert.AreEqual(_tuning.MinSensitivity, _look.Sensitivity);
+            Assert.AreEqual(_tuning.MinSensitivity * _tuning.MouseSensitivity,
+                _look.OrbitDegrees(Vector2.right, Vector2.zero, Frame).x, 1e-6f);
+            _look.GentleCamera = true;
+            Assert.AreEqual(_tuning.GentleMinSensitivity, _look.Sensitivity);
+        }
     }
 }

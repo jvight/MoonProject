@@ -45,6 +45,10 @@ namespace MoonProject.UI
         [Range(0.05f, 1f)]
         [SerializeField] private float _lookMin = 0.25f;
 
+        [Tooltip("Look speed multiplier offered one step below the lowest while the Gentle camera is on.")]
+        [Range(0.05f, 1f)]
+        [SerializeField] private float _gentleLookMin = 0.15f;
+
         [Tooltip("Highest look speed multiplier offered.")]
         [Range(1f, 5f)]
         [SerializeField] private float _lookMax = 3f;
@@ -68,6 +72,8 @@ namespace MoonProject.UI
         public float LookStep => _lookStep;
 
         public float LookMin => _lookMin;
+
+        public float GentleLookMin => Mathf.Min(_gentleLookMin, _lookMin);
 
         public float LookMax => _lookMax;
     }

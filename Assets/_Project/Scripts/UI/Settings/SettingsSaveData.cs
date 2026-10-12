@@ -16,6 +16,9 @@ namespace MoonProject.UI
         public float lookSensitivity = 1f;
         public bool invertY;
 
+        /// <summary>The Gentle camera (off in saves written before it existed).</summary>
+        public bool gentleCamera;
+
         /// <summary>The Guidance setting switched off (stored inverted so older saves keep it on).</summary>
         public bool guidanceOff;
 

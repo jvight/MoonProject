@@ -12,8 +12,8 @@ namespace MoonProject.Rover
     /// <item>Once open, any end of the rest (drive or look input, 07 moving) or anything busy cues
     /// <see cref="WideShotCue.HandBack"/>; held time leaves an open frame alone.</item>
     /// <item><see cref="Weight"/> follows a critically damped spring: slow toward the wide frame (settling over the
-    /// open time), quick back (the hand-back time). The spring keeps its velocity when the target flips, so a
-    /// hand-back mid-opening turns round smoothly instead of jerking.</item>
+    /// open time), quicker back (the hand-back time), never faster than <see cref="MinBlend"/>. The spring keeps its
+    /// velocity when the target flips, so a hand-back mid-opening turns round smoothly instead of jerking.</item>
     /// </list>
     /// </summary>
     public sealed class WideShot
@@ -32,6 +32,12 @@ namespace MoonProject.Rover
         {
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
         }
+
+        /// <summary>Shortest the drift out or the hand-back takes to settle (s), whatever the settings say.</summary>
+        public float MinBlend { get; set; }
+
+        /// <summary>Speed of the slow breathing (1 = as tuned; the Gentle camera slows it).</summary>
+        public float BreathRate { get; set; } = 1f;
 
         /// <summary>True from <see cref="Open"/> until <see cref="HandBack"/>: the frame is opening or open.</summary>
         public bool IsOpen { get; private set; }
@@ -77,10 +83,10 @@ namespace MoonProject.Rover
             bool quiet = resting && !held && _holdBack <= 0f;
             _quiet = quiet ? Mathf.Min(_quiet + step, stillSeconds) : 0f;
 
-            float settle = IsOpen ? _settings.OpenSeconds : _settings.HandBackSeconds;
+            float settle = Mathf.Max(IsOpen ? _settings.OpenSeconds : _settings.HandBackSeconds, MinBlend);
             _weight.Step(IsOpen ? 1f : 0f, Frequency(settle), CriticalDamping, step);
             _weight.Clamp(0f, 1f);
-            BreathSeconds += step;
+            BreathSeconds += step * BreathRate;
             if (IsOpen)
             {
                 return resting ? WideShotCue.None : WideShotCue.HandBack;

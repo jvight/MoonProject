@@ -11,6 +11,7 @@ namespace MoonProject.Rover
     /// <see cref="Release"/> (e.g. while the excavation beam is on).</item>
     /// <item><see cref="Cancel"/> (any look input) eases out from the current weight over the cancel time.</item>
     /// </list>
+    /// Every ease in or out lasts at least <see cref="MinBlend"/> (the comfort floor, longer for the Gentle camera).
     /// The camera rig blends its framing by <see cref="Weight"/>; at 0 it is exactly the normal chase camera.
     /// </summary>
     public sealed class CameraMoment
@@ -32,6 +33,9 @@ namespace MoonProject.Rover
         private bool _held;
 
         public float Weight { get; private set; }
+
+        /// <summary>Shortest ease in or out (s), whatever the settings or a cancel ask for.</summary>
+        public float MinBlend { get; set; }
 
         public bool IsActive => _phase != Phase.Idle;
 
@@ -84,7 +88,7 @@ namespace MoonProject.Rover
         public void Cancel(float easeOut)
         {
             _held = false;
-            if (_phase == Phase.Idle || (_phase == Phase.EasingOut && _outDuration <= easeOut))
+            if (_phase == Phase.Idle || (_phase == Phase.EasingOut && _outDuration <= Mathf.Max(easeOut, MinBlend)))
             {
                 return;
             }
@@ -103,7 +107,7 @@ namespace MoonProject.Rover
             switch (_phase)
             {
                 case Phase.EasingIn:
-                    float t = _elapsed / Settings.EaseIn;
+                    float t = _elapsed / Mathf.Max(Settings.EaseIn, MinBlend);
                     Weight = Mathf.Lerp(_from, 1f, Smoothing.SmoothStep(0f, 1f, t));
                     if (t >= 1f)
                     {
@@ -139,7 +143,7 @@ namespace MoonProject.Rover
         {
             _from = Weight;
             _elapsed = 0f;
-            _outDuration = Mathf.Max(duration, Epsilon);
+            _outDuration = Mathf.Max(duration, MinBlend, Epsilon);
             _phase = Phase.EasingOut;
         }
 
