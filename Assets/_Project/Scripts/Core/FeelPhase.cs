@@ -21,7 +21,11 @@ namespace MoonProject.Core
         /// <summary>The decisive moment: the piece breaks, the wheels touch down, the clamp closes.</summary>
         Impact = 2,
 
-        /// <summary>The follow-through after the impact: the tumble, the fold, the settle.</summary>
+        /// <summary>
+        /// The follow-through after the impact: the tumble, the fold, the settle. A verb with several follow beats
+        /// sends <see cref="Events.FeelBeat.Strength"/> 0 on the first and 1 on the last (the cut: 0 at the tumble,
+        /// 1 at the fold), so listeners can answer only the one they care about.
+        /// </summary>
         Follow = 3,
 
         /// <summary>The payoff lands: the bundle is received, the cell is full, the node lights.</summary>

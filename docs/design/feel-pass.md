@@ -292,7 +292,7 @@ lift; kit install; low battery. Mostly **rover** (body, rumble) and **art** (deb
   - `Act` once at ignition (strength 0), then once per cut step (strength = progress), which drives the sustained
     rumble and sizzle.
   - `Cancel` on release: it keeps progress mid-cut.
-  - `Impact` at the crack, `Follow` at the tumble and at the fold, and `Reward` with `Kind = Collect` when the bundle
+  - `Impact` at the crack, `Follow` at the tumble (strength 0) and at the fold (strength 1), and `Reward` with `Kind = Collect` when the bundle
     is received.
 - **Where the kit's runtime lives.** The Art assembly is a mesh library with no runtime components. So:
   - The runtime VFX pieces (ChargeUp motes, IgnitionFlash, VacuumDebris, LightPulse pool, HeatSeam strip driver,
