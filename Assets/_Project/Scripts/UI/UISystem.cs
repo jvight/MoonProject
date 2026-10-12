@@ -288,7 +288,8 @@ namespace MoonProject.UI
             _numbers = new IntText(CachedNumbers);
             _ledger = new PromptLedger(_tuning.Prompts);
             _director = new PromptDirector(_tuning.Prompts, _ledger);
-            _player = new PlayerSettings(services.Audio, services.Look, _localization, _tuning.Pause);
+            _player = new PlayerSettings(services.Audio, services.Look, services.Feel, _localization,
+                _tuning.Pause);
             _cursor = new CursorPolicy();
             _glyphs = new GlyphLabels(services.Input, _localization);
             _tickerLines = new TickerQueue(_tuning.Ticker, new TickerText(_localization));
@@ -307,6 +308,7 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<RelicStowed>(OnRelicStowed));
             _tokens.Add(events.Subscribe<RoverAwoke>(OnRoverAwoke));
             _tokens.Add(events.Subscribe<TitleShown>(OnTitleShown));
+            _tokens.Add(events.Subscribe<FeelBeat>(OnFeelBeat));
             _tokens.Add(events.Subscribe<StargazingChanged>(OnStargazingChanged));
             _tokens.Add(events.Subscribe<NextStepChanged>(OnNextStepChanged));
             _tokens.Add(events.Subscribe<PlaceFirstApproached>(OnPlaceFirstApproached));
@@ -391,7 +393,7 @@ namespace MoonProject.UI
             _reticle = new TetherReticle(_layout.Reticle, _layout.ReticleRest, _layout.ReticleHover, _tuning.Reticle);
             _prompt = new ContextPrompt(_layout, _tuning.Prompts, _director, services.View, _glyphs, _localization,
                 services.Events);
-            _chip = new MaterialsChip(_layout, _tuning.MaterialsChip, _numbers);
+            _chip = new MaterialsChip(_layout, _tuning.MaterialsChip, _numbers, services.Events);
             IMaterialStock stock = services.Materials;
             _chip.Change(stock.Metal, stock.Wiring, stock.Optics);
             _salvageRing = new SalvageRing(_layout, _tuning.Salvage, _tuning.Prompts, services.Salvage, services.View);
@@ -639,6 +641,14 @@ namespace MoonProject.UI
 
             _titleWaiting = true;
             _titleHasSave = shown.HasSave;
+        }
+
+        private void OnFeelBeat(FeelBeat beat)
+        {
+            if (_bound)
+            {
+                _salvageRing.OnBeat(beat);
+            }
         }
 
         private void OnStargazingChanged(StargazingChanged changed)

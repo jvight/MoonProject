@@ -315,6 +315,14 @@
                                     <ui:Toggle name="toggle-invert" class="setting-row__toggle" />
                                 </ui:VisualElement>
                                 <ui:VisualElement class="setting-row">
+                                    <ui:Label class="setting-row__label loc" text="ui.settings.rumble" />
+                                    <ui:Toggle name="toggle-rumble" class="setting-row__toggle" />
+                                </ui:VisualElement>
+                                <ui:VisualElement class="setting-row">
+                                    <ui:Label class="setting-row__label loc" text="ui.settings.rumble_strength" />
+                                    <ui:SliderInt name="slider-rumble" class="setting-row__slider" />
+                                </ui:VisualElement>
+                                <ui:VisualElement class="setting-row">
                                     <ui:Label class="setting-row__label loc" text="ui.settings.gentle_camera" />
                                     <ui:Toggle name="toggle-gentle-camera" class="setting-row__toggle" />
                                 </ui:VisualElement>

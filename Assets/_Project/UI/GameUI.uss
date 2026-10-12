@@ -655,6 +655,7 @@ Label {
     background-color: var(--moon-glass);
     --track-color: var(--moon-track);
     --fill-color: var(--moon-warm-lamp);
+    --charge-color: var(--moon-cream);
     --ring-width: 3.5;
 }
 

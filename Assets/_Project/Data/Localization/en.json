@@ -319,6 +319,14 @@
             "text": "Invert look"
         },
         {
+            "key": "ui.settings.rumble",
+            "text": "Rumble"
+        },
+        {
+            "key": "ui.settings.rumble_strength",
+            "text": "Rumble strength"
+        },
+        {
             "key": "ui.settings.gentle_camera",
             "text": "Gentle camera"
         },

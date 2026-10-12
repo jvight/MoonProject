@@ -319,6 +319,14 @@
             "text": "Đảo trục dọc"
         },
         {
+            "key": "ui.settings.rumble",
+            "text": "Rung tay cầm"
+        },
+        {
+            "key": "ui.settings.rumble_strength",
+            "text": "Độ rung"
+        },
+        {
             "key": "ui.settings.gentle_camera",
             "text": "Camera dịu nhẹ"
         },

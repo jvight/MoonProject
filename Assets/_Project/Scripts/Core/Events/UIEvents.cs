@@ -117,4 +117,31 @@ namespace MoonProject.Core.Events
 
         public UiCueKind Kind { get; }
     }
+
+    /// <summary>
+    /// One unit of the materials count rolled up on the HUD chip (docs/design/feel-pass.md §4, CountTick): published by
+    /// the UI once per unit as the stock counts up, so Audio can play a rising pentatonic tick and Rover a short
+    /// rumble. Gains only: a spend counts down quietly.
+    /// </summary>
+    public readonly struct StockCountTicked
+    {
+        public StockCountTicked(SalvageMaterial material, int index, int remaining)
+        {
+            Material = material;
+            Index = index;
+            Remaining = remaining;
+        }
+
+        /// <summary>The material whose count ticked.</summary>
+        public SalvageMaterial Material { get; }
+
+        /// <summary>
+        /// Which unit of this roll it is, from 0: it keeps climbing while a second collect extends the roll, and starts
+        /// again after the count has rested. A rising pitch follows it.
+        /// </summary>
+        public int Index { get; }
+
+        /// <summary>How many units are still to come after this one (0 on the roll's last tick).</summary>
+        public int Remaining { get; }
+    }
 }

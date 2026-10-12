@@ -163,6 +163,8 @@ namespace MoonProject.UI
             LookValue = Require<Label>("look-value");
             InvertToggle = Require<Toggle>("toggle-invert");
             GentleCameraToggle = Require<Toggle>("toggle-gentle-camera");
+            RumbleToggle = Require<Toggle>("toggle-rumble");
+            RumbleSlider = Require<SliderInt>("slider-rumble");
             GuidanceToggle = Require<Toggle>("toggle-guidance");
             LanguageButton = Require<Button>("button-language");
             TextSizeButton = Require<Button>("button-text-size");
@@ -452,6 +454,10 @@ namespace MoonProject.UI
         public Toggle InvertToggle { get; }
 
         public Toggle GentleCameraToggle { get; }
+
+        public Toggle RumbleToggle { get; }
+
+        public SliderInt RumbleSlider { get; }
 
         public Toggle GuidanceToggle { get; }
 

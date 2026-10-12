@@ -352,6 +352,12 @@ namespace MoonProject.UI
             look.RegisterValueChangedCallback(OnLookChanged);
             _layout.InvertToggle.RegisterValueChangedCallback(OnInvertChanged);
             _layout.GentleCameraToggle.RegisterValueChangedCallback(OnGentleCameraChanged);
+            _layout.RumbleToggle.RegisterValueChangedCallback(OnRumbleChanged);
+            SliderInt rumble = _layout.RumbleSlider;
+            rumble.lowValue = 0;
+            rumble.highValue = _player.VolumeSteps;
+            rumble.fill = true;
+            rumble.RegisterValueChangedCallback(OnRumbleStrengthChanged);
             _layout.GuidanceToggle.RegisterValueChangedCallback(OnGuidanceChanged);
         }
 
@@ -410,6 +416,8 @@ namespace MoonProject.UI
             ShowLookStep();
             _layout.InvertToggle.SetValueWithoutNotify(_player.InvertY);
             _layout.GentleCameraToggle.SetValueWithoutNotify(_player.GentleCamera);
+            _layout.RumbleToggle.SetValueWithoutNotify(_player.Rumble);
+            _layout.RumbleSlider.SetValueWithoutNotify(_player.GetRumbleStep());
             _layout.GuidanceToggle.SetValueWithoutNotify(_player.Guidance);
             _layout.TextSizeButton.text = _player.TextSizeLabel;
             _settingsPanel.Show();
@@ -932,6 +940,18 @@ namespace MoonProject.UI
         {
             _player.InvertY = evt.newValue;
             Cue(UiCueKind.Confirm);
+        }
+
+        private void OnRumbleChanged(ChangeEvent<bool> evt)
+        {
+            _player.Rumble = evt.newValue;
+            Cue(UiCueKind.Confirm);
+        }
+
+        private void OnRumbleStrengthChanged(ChangeEvent<int> evt)
+        {
+            _player.SetRumbleStep(evt.newValue);
+            Cue(UiCueKind.SliderStep);
         }
 
         /// <summary>The Gentle camera also moves the look slider's floor, so the slider follows it.</summary>

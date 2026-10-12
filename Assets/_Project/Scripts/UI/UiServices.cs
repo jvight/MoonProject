@@ -13,7 +13,7 @@ namespace MoonProject.UI
     internal sealed class UiServices
     {
         public UiServices(EventBus events, InputReader input, IViewCamera view, IRoverState rover, IAudioSettings audio,
-            ILookSettings look, ISaveService save, IMaterialStock materials, ITetherAim tether, IInteractionHints hints,
+            ILookSettings look, IFeelSettings feel, ISaveService save, IMaterialStock materials, ITetherAim tether, IInteractionHints hints,
             IUpgradeShop shop, IBlueprintBoard board, IFriendStatuses friends, IRadioProgram radio, IRadioHop hop,
             IRelayStatus relays, ISalvageStatus salvage, IGameFlow flow, ISettingsFile settings, IRoverBattery battery,
             IBeamStatus beam, ITechTree tech, IRecoveryProgress recovery)
@@ -24,6 +24,7 @@ namespace MoonProject.UI
             Rover = rover ?? throw new ArgumentNullException(nameof(rover));
             Audio = audio ?? throw new ArgumentNullException(nameof(audio));
             Look = look ?? throw new ArgumentNullException(nameof(look));
+            Feel = feel ?? throw new ArgumentNullException(nameof(feel));
             Save = save ?? throw new ArgumentNullException(nameof(save));
             Materials = materials ?? throw new ArgumentNullException(nameof(materials));
             Tether = tether ?? throw new ArgumentNullException(nameof(tether));
@@ -54,6 +55,8 @@ namespace MoonProject.UI
         public IAudioSettings Audio { get; }
 
         public ILookSettings Look { get; }
+
+        public IFeelSettings Feel { get; }
 
         public ISaveService Save { get; }
 
@@ -104,7 +107,8 @@ namespace MoonProject.UI
             }
 
             return new UiServices(context.Events, context.Input, context.Get<IViewCamera>(), context.Get<IRoverState>(),
-                context.Get<IAudioSettings>(), context.Get<ILookSettings>(), context.Get<ISaveService>(),
+                context.Get<IAudioSettings>(), context.Get<ILookSettings>(), context.Get<IFeelSettings>(),
+                context.Get<ISaveService>(),
                 context.Get<IMaterialStock>(), context.Get<ITetherAim>(), context.Get<IInteractionHints>(),
                 context.Get<IUpgradeShop>(), context.Get<IBlueprintBoard>(), context.Get<IFriendStatuses>(), context.Get<IRadioProgram>(),
                 context.Get<IRadioHop>(), context.Get<IRelayStatus>(), context.Get<ISalvageStatus>(),

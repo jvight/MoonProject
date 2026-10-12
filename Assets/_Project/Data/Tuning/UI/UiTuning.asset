@@ -161,10 +161,11 @@ MonoBehaviour:
       _scaleFrom: 0.92
       _springFrequency: 1.8
       _springDamping: 0.6
-    _secondsPerUnit: 0.12
-    _minCountSeconds: 0.4
+    _stepSeconds: 0.08
     _maxCountSeconds: 1.4
     _lingerSeconds: 3
+    _tickPulseSeconds: 0.14
+    _tickPulseScale: 0.08
     _pulseSeconds: 1.2
     _pulseScale: 0.16
     _glowOpacity: 0.35
@@ -298,6 +299,8 @@ MonoBehaviour:
       _springDamping: 0.7
     _siteNameHoldSeconds: 3
     _siteNameLiftMetres: 6
+    _chargeEmptySeconds: 0.2
+    _chargeHandoffSeconds: 0.35
   _stargaze:
     _hud:
       _fadeIn: 0.8

@@ -589,6 +589,96 @@ namespace MoonProject.UI.PlayModeTests
         /// A place's card the first time 07 comes near, then the soft next line once 07 rests. Rerun on its own:
         /// <c>python tools/unity_batch.py tests --platform playmode --filter CaptureGuidance</c>.
         /// </summary>
+        /// <summary>
+        /// The feel pass's UI (docs/design/feel-pass.md): the stock count rolling up a unit at a time with a tick event
+        /// per unit (a second collect carries the roll on), and the hold ring's charge arc filling on a cut's
+        /// Anticipate beat, then handing over to the progress fill at ignition. Captures 70-73. Rerun with
+        /// --filter CaptureFeelPass.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator CaptureFeelPass_TheRollAndTheChargingRing()
+        {
+#if UNITY_EDITOR
+            yield return LoadMain();
+            GameContext context = FindBootstrap().Context;
+            Camera camera = context.Get<IViewCamera>().Camera;
+            UISystem ui = BuildUi(context, out FakeGameServices fakes, out _);
+            yield return null;
+            string folder = Path.GetFullPath(OutputFolder);
+            Directory.CreateDirectory(folder);
+            context.Events.Publish(new RoverAwoke(Vector3.zero, false));
+            yield return new WaitForSecondsRealtime(0.5f);
+
+            var ticks = new List<StockCountTicked>();
+            using (context.Events.Subscribe<StockCountTicked>(ticks.Add))
+            {
+                fakes.SetMaterials(2, 0, 0);
+                yield return new WaitForSecondsRealtime(_tuning.MaterialsChip.LingerSeconds * 0.3f);
+                Assert.AreEqual(2, ui.Chip.Shown(SalvageMaterial.Metal));
+                ticks.Clear();
+
+                fakes.SetMaterials(8, 0, 0);
+                yield return new WaitForSecondsRealtime(_tuning.MaterialsChip.StepSeconds * 2.5f);
+                int midway = ui.Chip.Shown(SalvageMaterial.Metal);
+                Assert.That(midway, Is.InRange(3, 7), "the count is rolling, not jumping");
+                yield return Capture(camera, folder, "70_stock_rolling");
+                fakes.SetMaterials(10, 0, 0);
+                yield return new WaitForSecondsRealtime(_tuning.MaterialsChip.StepSeconds * 12f);
+                Assert.AreEqual(10, ui.Chip.Shown(SalvageMaterial.Metal));
+                yield return Capture(camera, folder, "71_stock_rolled");
+
+                Assert.AreEqual(8, ticks.Count, "a tick for each of the eight units from 2 to 10");
+                for (int i = 0; i < ticks.Count; i++)
+                {
+                    Assert.AreEqual(i, ticks[i].Index, "the index keeps climbing through a second collect");
+                    Assert.AreEqual(ticks.Count - 1 - i, ticks[i].Remaining);
+                }
+            }
+
+            if (!context.Get<IWorldAnchors>().TryGet(DepotSite, out MoonProject.Core.WorldAnchor depot))
+            {
+                throw new InvalidOperationException($"The world has no '{DepotSite}' anchor.");
+            }
+
+            Camera siteCamera = SiteCamera(depot, camera);
+            Vector3 cut = depot.Position + Vector3.up * CutHeight;
+            fakes.Camera = siteCamera;
+            fakes.HasTarget = true;
+            fakes.CutPoint = cut;
+            fakes.Material = SalvageMaterial.Wiring;
+            context.Events.Publish(new FeelBeat(FeelKind.Cut, FeelPhase.Anticipate, cut, Vector3.up, 0f, 0.65f,
+                SalvageMaterial.Wiring));
+            yield return new WaitForSecondsRealtime(0.4f);
+            Assert.That(ui.SalvageRing.Charge, Is.InRange(0.2f, 0.95f), "the charge segment is filling");
+            Assert.IsTrue(ui.SalvageRing.IsVisible, "the ring is up for the charge, before any progress");
+            yield return Capture(siteCamera, folder, "72_ring_charging");
+
+            yield return new WaitForSecondsRealtime(0.35f);
+            Assert.AreEqual(1f, ui.SalvageRing.Charge, 1e-3f, "full by the end of the beat");
+            fakes.IsCutting = true;
+            fakes.CutProgress = 0.3f;
+            context.Events.Publish(new FeelBeat(FeelKind.Cut, FeelPhase.Act, cut, Vector3.up, 0f, 0f,
+                SalvageMaterial.Wiring));
+            yield return new WaitForSecondsRealtime(_tuning.Salvage.ChargeHandoffSeconds * 0.4f);
+            Assert.AreEqual(0.3f, ui.SalvageRing.Progress, 0.02f, "the progress fill follows from ignition");
+            yield return Capture(siteCamera, folder, "73_ring_ignited");
+            yield return new WaitForSecondsRealtime(_tuning.Salvage.ChargeHandoffSeconds);
+            Assert.AreEqual(0f, ui.SalvageRing.Charge, "the charge has handed over");
+
+            fakes.IsCutting = false;
+            context.Events.Publish(new FeelBeat(FeelKind.Cut, FeelPhase.Cancel, cut, Vector3.up, 0.3f, 0f,
+                SalvageMaterial.Wiring));
+            yield return new WaitForSecondsRealtime(0.3f);
+            Assert.AreEqual(0.3f, ui.SalvageRing.Progress, 0.02f, "releasing keeps the progress, still on the ring");
+            Assert.IsTrue(ui.SalvageRing.IsVisible);
+            fakes.HasTarget = false;
+            fakes.CutProgress = 0f;
+#else
+            Assert.Ignore("Captures need the editor.");
+            yield break;
+#endif
+        }
+
         [UnityTest]
         public IEnumerator CaptureGuidance()
         {
@@ -1124,7 +1214,7 @@ namespace MoonProject.UI.PlayModeTests
             _slot = BootstrapHarness.NewTestSlot();
             save = new SaveService(SaveService.DefaultDirectory, _slot);
             ui.Initialize(new UiServices(context.Events, context.Input, fakes, fakes, context.Get<IAudioSettings>(),
-                context.Get<ILookSettings>(), save, fakes, fakes, fakes, fakes, fakes, fakes, fakes, fakes, fakes,
+                context.Get<ILookSettings>(), context.Get<IFeelSettings>(), save, fakes, fakes, fakes, fakes, fakes, fakes, fakes, fakes, fakes,
                 fakes, context.Get<IGameFlow>(), new SettingsFile(SaveService.DefaultDirectory, _slot), fakes, fakes,
                 fakes, fakes));
             save.Load();
