@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace MoonProject.UI
 {
@@ -13,10 +14,12 @@ namespace MoonProject.UI
         [SerializeField] private TitleSettings _title = new TitleSettings();
         [SerializeField] private PromptSettings _prompts = new PromptSettings();
         [SerializeField] private ReticleSettings _reticle = new ReticleSettings();
-        [SerializeField] private MaterialsChipSettings _materialsChip = new MaterialsChipSettings();
+        [FormerlySerializedAs("_materialsChip")]
+        [SerializeField] private PickupFeedSettings _pickupFeed = new PickupFeedSettings();
         [SerializeField] private MemoryCardSettings _memoryCard = new MemoryCardSettings();
         [SerializeField] private TowerPanelSettings _towerPanel = new TowerPanelSettings();
         [SerializeField] private KitTitleSettings _kitTitle = new KitTitleSettings();
+        [SerializeField] private RewardCardSettings _rewardCard = new RewardCardSettings();
         [SerializeField] private FriendUiSettings _friends = new FriendUiSettings();
         [SerializeField] private TickerSettings _ticker = new TickerSettings();
         [SerializeField] private DialReadoutSettings _dialReadout = new DialReadoutSettings();
@@ -28,7 +31,6 @@ namespace MoonProject.UI
         [SerializeField] private SaveTickSettings _saveTick = new SaveTickSettings();
         [SerializeField] private HomeMeterSettings _homeMeter = new HomeMeterSettings();
         [SerializeField] private CreditsSettings _credits = new CreditsSettings();
-        [SerializeField] private AbilitySlotsSettings _abilitySlots = new AbilitySlotsSettings();
         [SerializeField] private LabHudSettings _lab = new LabHudSettings();
         [SerializeField] private CellRowSettings _battery = new CellRowSettings();
         [SerializeField] private SafeFrameSettings _safe = new SafeFrameSettings();
@@ -41,13 +43,15 @@ namespace MoonProject.UI
 
         public ReticleSettings Reticle => _reticle;
 
-        public MaterialsChipSettings MaterialsChip => _materialsChip;
+        public PickupFeedSettings PickupFeed => _pickupFeed;
 
         public MemoryCardSettings MemoryCard => _memoryCard;
 
         public TowerPanelSettings TowerPanel => _towerPanel;
 
         public KitTitleSettings KitTitle => _kitTitle;
+
+        public RewardCardSettings RewardCard => _rewardCard;
 
         public FriendUiSettings Friends => _friends;
 
@@ -71,8 +75,6 @@ namespace MoonProject.UI
 
         public CreditsSettings Credits => _credits;
 
-        public AbilitySlotsSettings AbilitySlots => _abilitySlots;
-
         public LabHudSettings Lab => _lab;
 
         public CellRowSettings Battery => _battery;
@@ -82,12 +84,12 @@ namespace MoonProject.UI
         /// <summary>Null when the tuning is usable, else the first problem.</summary>
         public string Validate()
         {
-            if (_pause == null || _title == null || _prompts == null || _reticle == null || _materialsChip == null ||
+            if (_pause == null || _title == null || _prompts == null || _reticle == null || _pickupFeed == null ||
                 _memoryCard == null || _towerPanel == null || _kitTitle == null || _friends == null ||
                 _ticker == null || _dialReadout == null || _relays == null || _salvage == null ||
                 _stargaze == null || _guidance == null || _backdrop == null || _battery == null || _lab == null ||
                 _safe == null || _saveTick == null || _homeMeter == null || _credits == null ||
-                _abilitySlots == null)
+                _rewardCard == null)
             {
                 return "a settings section is missing";
             }

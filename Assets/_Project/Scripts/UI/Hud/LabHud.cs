@@ -28,6 +28,14 @@ namespace MoonProject.UI
         private static readonly string[] Verbs = { "turn", "look", "down" };
         private static readonly HudVerb[] Learned = { HudVerb.LabTurn, HudVerb.LabLook, HudVerb.LabDown };
 
+        // The way to push the stick for each prompt, drawn beside its "LS" (the fonts have no arrows).
+        private static readonly ArrowDirection[][] Pushes =
+        {
+            new[] { ArrowDirection.Left, ArrowDirection.Right },
+            new[] { ArrowDirection.Up },
+            new[] { ArrowDirection.Down },
+        };
+
         private readonly LabHudSettings _settings;
         private readonly ILocalization _localization;
         private readonly PromptLedger _ledger;
@@ -40,6 +48,7 @@ namespace MoonProject.UI
         private readonly Label _placeWord;
         private readonly Reveal[] _chips = new Reveal[3];
         private readonly Label[] _glyphs = new Label[3];
+        private readonly VisualElement[] _arrows = new VisualElement[3];
         private readonly Label[] _words = new Label[3];
         private readonly string[] _glyphTexts = new string[6];
         private InputDeviceKind _device = InputDeviceKind.KeyboardMouse;
@@ -71,8 +80,10 @@ namespace MoonProject.UI
             _placeWord = Require<Label>(root, "lab-place-word");
             for (int i = 0; i < Verbs.Length; i++)
             {
-                _chips[i] = new Reveal(Require<VisualElement>(root, "lab-" + Verbs[i]), settings.Chip);
+                VisualElement chip = Require<VisualElement>(root, "lab-" + Verbs[i]);
+                _chips[i] = new Reveal(chip, settings.Chip);
                 _chips[i].Snap(false);
+                _arrows[i] = BuildArrows(chip, Pushes[i]);
                 _glyphs[i] = Require<Label>(root, "lab-" + Verbs[i] + "-glyph");
                 _words[i] = Require<Label>(root, "lab-" + Verbs[i] + "-word");
             }
@@ -191,7 +202,26 @@ namespace MoonProject.UI
             for (int i = 0; i < _glyphs.Length; i++)
             {
                 _glyphs[i].text = _glyphTexts[i * 2 + pad];
+                _arrows[i].style.display = pad == 1 ? DisplayStyle.Flex : DisplayStyle.None;
             }
+        }
+
+        /// <summary>The arrows of one prompt, built after its glyph; they show only for the gamepad's stick.</summary>
+        private static VisualElement BuildArrows(VisualElement chip, ArrowDirection[] directions)
+        {
+            var arrows = new VisualElement { pickingMode = PickingMode.Ignore };
+            arrows.AddToClassList("lab-arrows");
+            arrows.style.display = DisplayStyle.None;
+            for (int i = 0; i < directions.Length; i++)
+            {
+                var arrow = new VisualElement { pickingMode = PickingMode.Ignore };
+                arrow.AddToClassList("lab-arrow");
+                new ArrowPainter(arrow, directions[i]);
+                arrows.Add(arrow);
+            }
+
+            chip.Insert(1, arrows);
+            return arrows;
         }
 
         private static T Require<T>(VisualElement root, string name) where T : VisualElement

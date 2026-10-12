@@ -242,6 +242,7 @@ namespace MoonProject.UI.Tests
             var uxml = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(UiAssetPaths.Uxml);
             Assert.IsNotNull(uxml, UiAssetPaths.Uxml);
             LocalizationService localization = TestTables.Localization(new EventBus(),
+                UiKeys.RecipeRow, "{0} (have {1})", "{0} (có {1})",
                 UiKeys.UpgradeName(_hover.Id), "Hover-Jump", "Nhảy lơ lửng",
                 UiKeys.UpgradeEffect(_hover.Id, 1), "Hop over rocks.", "Nhảy qua đá.",
                 UiKeys.UpgradeName(_cradle.Id), "Cargo Cradle", "Giỏ hàng",
@@ -267,7 +268,7 @@ namespace MoonProject.UI.Tests
             Assert.IsTrue(list.RowRoot(1).ClassListContains(BayList.SelectedClass), "the pick is lit");
             Assert.IsFalse(list.RowRoot(0).ClassListContains(BayList.SelectedClass));
             MaterialSlots cradle = list.RowRecipe(0);
-            Assert.AreEqual("3 / 3", cradle.Text(SalvageMaterial.Metal), "a bay row reads have / need");
+            Assert.AreEqual("3 (have 3)", cradle.Text(SalvageMaterial.Metal), "a bay row reads need, then have");
             Assert.IsFalse(cradle.Root(SalvageMaterial.Metal).ClassListContains(MaterialSlots.ShortClass),
                 "enough metal for the cradle");
             Assert.AreEqual(DisplayStyle.None, cradle.Root(SalvageMaterial.Optics).style.display.value);

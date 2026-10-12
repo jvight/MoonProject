@@ -995,6 +995,34 @@
             "text": "{0} more {1} to salvage"
         },
         {
+            "key": "ui.recipe.row",
+            "text": "{0} (have {1})"
+        },
+        {
+            "key": "ui.reward.title",
+            "text": "{0} · Level {1}"
+        },
+        {
+            "key": "ui.reward.light_on",
+            "text": "Home has power"
+        },
+        {
+            "key": "ui.reward.light_up",
+            "text": "Home glows brighter"
+        },
+        {
+            "key": "ui.reward.radio_on",
+            "text": "The radio picks up signals"
+        },
+        {
+            "key": "ui.reward.reach",
+            "text": "Go {0} m farther"
+        },
+        {
+            "key": "ui.station.offline",
+            "text": "offline"
+        },
+        {
             "key": "ui.recipecard.needs",
             "text": "NEEDS"
         },

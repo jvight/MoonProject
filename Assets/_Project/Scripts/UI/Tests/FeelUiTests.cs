@@ -14,12 +14,12 @@ namespace MoonProject.UI.Tests
     {
         private const float Frame = 1f / 60f;
 
-        private MaterialsChipSettings _settings;
+        private PickupFeedSettings _settings;
 
         [SetUp]
         public void SetUp()
         {
-            _settings = new MaterialsChipSettings();
+            _settings = new PickupFeedSettings();
         }
 
         [Test]
@@ -120,7 +120,7 @@ namespace MoonProject.UI.Tests
             Assert.AreEqual(1, tally.Rolled(SalvageMaterial.Metal));
             Assert.AreEqual(1, tally.Remaining(SalvageMaterial.Metal), "one unit still to come");
             tally.Step(Frame);
-            Assert.Greater(tally.TickPulse(SalvageMaterial.Metal), 0f, "the chip pulses with the unit");
+            Assert.Greater(tally.TickPulse(SalvageMaterial.Metal), 0f, "the row pulses with the unit");
             Assert.AreEqual(0f, tally.TickPulse(SalvageMaterial.Wiring), "only the material that ticked");
 
             tally.Snap(5, 0, 0);

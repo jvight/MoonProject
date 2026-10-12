@@ -5,17 +5,17 @@ namespace MoonProject.UI
 {
     /// <summary>
     /// A number that rolls towards its target one unit at a time (docs/design/feel-pass.md R7: counters count, never
-    /// jump): a unit every <see cref="MaterialsChipSettings.StepSeconds"/>, the first at once, none ever skipped. A
-    /// big change quickens the step so the whole roll stays within <see cref="MaterialsChipSettings.MaxCountSeconds"/>,
+    /// jump): a unit every <see cref="PickupFeedSettings.StepSeconds"/>, the first at once, none ever skipped. A
+    /// big change quickens the step so the whole roll stays within <see cref="PickupFeedSettings.MaxCountSeconds"/>,
     /// and a new target mid-roll carries on from the number on screen.
     /// </summary>
     internal sealed class CountUp
     {
-        private readonly MaterialsChipSettings _settings;
+        private readonly PickupFeedSettings _settings;
         private float _stepSeconds;
         private float _clock;
 
-        public CountUp(MaterialsChipSettings settings)
+        public CountUp(PickupFeedSettings settings)
         {
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
         }

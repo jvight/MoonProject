@@ -23,7 +23,6 @@ namespace MoonProject.UI
             HomeMeterArc = Require<VisualElement>("home-meter-arc");
             HomeMeterValue = Require<Label>("home-meter-value");
             HomeMeterKey = Require<Label>("home-meter-key");
-            AbilitySlots = Require<VisualElement>("ability-slots");
             BatteryDialFace = Require<VisualElement>("battery-dial-face");
             BatteryDialRing = Require<VisualElement>("battery-dial-ring");
             BatteryDialValue = Require<Label>("battery-dial-value");
@@ -36,6 +35,10 @@ namespace MoonProject.UI
             KitTitle = Require<VisualElement>("kit-title");
             KitTitleName = Require<Label>("kit-title-name");
             KitTitleShadow = Require<VisualElement>("kit-title-shadow");
+            RewardCard = Require<VisualElement>("reward-card");
+            RewardTitle = Require<Label>("reward-card-title");
+            RewardLines = Require<VisualElement>("reward-card-lines");
+            TowerState = Require<Label>("tower-state");
 
             Reticle = Require<VisualElement>("reticle");
             ReticleRest = Require<VisualElement>("reticle-rest");
@@ -57,9 +60,7 @@ namespace MoonProject.UI
             FriendNameShadow = Require<VisualElement>("friend-name-shadow");
             FriendNameText = Require<Label>("friend-name-text");
 
-            MaterialsChip = Require<VisualElement>("materials-chip");
-            MaterialsChipShadow = Require<VisualElement>("materials-chip-shadow");
-            MaterialsChipItems = Require<VisualElement>("materials-chip-items");
+            PickupFeed = Require<VisualElement>("pickup-feed");
 
             SalvageRingAnchor = Require<VisualElement>("salvage-ring-anchor");
             SalvageRing = Require<VisualElement>("salvage-ring");
@@ -80,6 +81,7 @@ namespace MoonProject.UI
             MemoryCardClose = Require<Label>("memory-card-close");
 
             TowerPanel = Require<VisualElement>("tower-panel");
+            RecipeCardRoot = Require<VisualElement>("recipe-card");
             TowerPanelShadow = Require<VisualElement>("tower-panel-shadow");
             TowerName = Require<Label>("tower-name");
             TowerLevel = Require<Label>("tower-level");
@@ -136,7 +138,6 @@ namespace MoonProject.UI
             PauseStack = Require<VisualElement>("pause-stack");
             PauseMain = Require<VisualElement>("pause-main");
             PauseMainShadow = Require<VisualElement>("pause-main-shadow");
-            PauseMaterials = Require<VisualElement>("pause-materials");
             PauseCan = Require<VisualElement>("pause-can");
             PauseCanRows = Require<VisualElement>("pause-can-rows");
             PauseCassettes = Require<VisualElement>("pause-cassettes");
@@ -233,8 +234,6 @@ namespace MoonProject.UI
         public Label HomeMeterKey { get; }
 
         /// <summary>07's abilities as round glass bubbles at the bottom centre (filled from code).</summary>
-        public VisualElement AbilitySlots { get; }
-
         public VisualElement BatteryDialRing { get; }
 
         public Label BatteryDialValue { get; }
@@ -256,6 +255,16 @@ namespace MoonProject.UI
         public Label KitTitleName { get; }
 
         public VisualElement KitTitleShadow { get; }
+
+        /// <summary>The card that says what a tower level gave: its box, its title and the column of its lines.</summary>
+        public VisualElement RewardCard { get; }
+
+        public Label RewardTitle { get; }
+
+        public VisualElement RewardLines { get; }
+
+        /// <summary>The tower card's state word ("offline" until the tower is built).</summary>
+        public Label TowerState { get; }
 
         public VisualElement Reticle { get; }
 
@@ -291,11 +300,8 @@ namespace MoonProject.UI
 
         public Label FriendNameText { get; }
 
-        public VisualElement MaterialsChip { get; }
-
-        public VisualElement MaterialsChipShadow { get; }
-
-        public VisualElement MaterialsChipItems { get; }
+        /// <summary>The column the pickup feed's rows are built into.</summary>
+        public VisualElement PickupFeed { get; }
 
         public VisualElement SalvageRingAnchor { get; }
 
@@ -330,6 +336,9 @@ namespace MoonProject.UI
         public Label MemoryCardClose { get; }
 
         public VisualElement TowerPanel { get; }
+
+        /// <summary>The recipe card's box (the prompt keeps clear of it).</summary>
+        public VisualElement RecipeCardRoot { get; }
 
         public VisualElement TowerPanelShadow { get; }
 
@@ -429,8 +438,6 @@ namespace MoonProject.UI
         public VisualElement PauseMain { get; }
 
         public VisualElement PauseMainShadow { get; }
-
-        public VisualElement PauseMaterials { get; }
 
         /// <summary>"07 can": the verbs learned so far, on the pause page (docs/design/first-hour-v2 6.5).</summary>
         public VisualElement PauseCan { get; }

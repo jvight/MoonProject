@@ -4,20 +4,20 @@ using UnityEngine.UIElements;
 namespace MoonProject.UI
 {
     /// <summary>
-    /// A small check mark drawn as two soft strokes, sized to its element (Be Vietnam Pro has no check glyph). USS:
-    /// --tick-color.
+    /// A check mark, painted because the fonts have no ✓ (a recipe row's "this one is covered"). Its colour comes from
+    /// USS (--check-color) and its stroke scales with the element.
     /// </summary>
     internal sealed class CheckPainter : StylePainter
     {
-        private const float StrokeWidth = 0.14f;
+        private const float StrokeShare = 0.16f;
         private static readonly Vector2 Start = new Vector2(0.12f, 0.54f);
         private static readonly Vector2 Elbow = new Vector2(0.4f, 0.8f);
         private static readonly Vector2 End = new Vector2(0.9f, 0.2f);
 
-        private static readonly CustomStyleProperty<Color> TickColorProperty =
-            new CustomStyleProperty<Color>("--tick-color");
+        private static readonly CustomStyleProperty<Color> CheckColorProperty =
+            new CustomStyleProperty<Color>("--check-color");
 
-        private Color _tickColor = Color.clear;
+        private Color _color = Color.clear;
 
         public CheckPainter(VisualElement element) : base(element)
         {
@@ -25,7 +25,7 @@ namespace MoonProject.UI
 
         protected override void ReadStyle(ICustomStyle style)
         {
-            style.TryGetValue(TickColorProperty, out _tickColor);
+            style.TryGetValue(CheckColorProperty, out _color);
         }
 
         protected override void Paint(MeshGenerationContext context)
@@ -37,21 +37,17 @@ namespace MoonProject.UI
                 return;
             }
 
+            Vector2 origin = rect.center - new Vector2(size, size) * 0.5f;
             Painter2D painter = context.painter2D;
-            painter.lineWidth = size * StrokeWidth;
+            painter.lineWidth = size * StrokeShare;
             painter.lineCap = LineCap.Round;
             painter.lineJoin = LineJoin.Round;
-            painter.strokeColor = _tickColor;
+            painter.strokeColor = _color;
             painter.BeginPath();
-            painter.MoveTo(At(rect, size, Start));
-            painter.LineTo(At(rect, size, Elbow));
-            painter.LineTo(At(rect, size, End));
+            painter.MoveTo(origin + Start * size);
+            painter.LineTo(origin + Elbow * size);
+            painter.LineTo(origin + End * size);
             painter.Stroke();
-        }
-
-        private static Vector2 At(Rect rect, float size, Vector2 unit)
-        {
-            return new Vector2(rect.center.x + (unit.x - 0.5f) * size, rect.center.y + (unit.y - 0.5f) * size);
         }
     }
 }

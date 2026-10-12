@@ -41,6 +41,9 @@ namespace MoonProject.UI
         /// <summary>Art's prefix on a component's model name (Part_TowerCoil), left out of its keys.</summary>
         private const string ComponentModelPrefix = "Part_";
         public const string RecipeNeed = "ui.recipe.need";
+        public const string RecipeRow = "ui.recipe.row";
+        public const string RewardTitle = "ui.reward.title";
+        public const string StationOffline = "ui.station.offline";
         public const string BayPick = "ui.bay.pick";
 
         /// <summary>"hint.excavate": the one word of the prompt teaching <paramref name="kind"/>.</summary>
@@ -104,6 +107,24 @@ namespace MoonProject.UI
         }
 
         /// <summary>"ui.station.workshop": the name of the place an upgrade is sold.</summary>
+        /// <summary>"ui.reward.light_on": the words of one line of the tower's reward card.</summary>
+        public static string RewardLine(RewardLineKind kind)
+        {
+            switch (kind)
+            {
+                case RewardLineKind.LightOn:
+                    return "ui.reward.light_on";
+                case RewardLineKind.LightUp:
+                    return "ui.reward.light_up";
+                case RewardLineKind.RadioOn:
+                    return "ui.reward.radio_on";
+                case RewardLineKind.Reach:
+                    return "ui.reward.reach";
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(kind), kind, "This reward line has no key.");
+            }
+        }
+
         public static string StationName(UpgradeStationKind station)
         {
             switch (station)

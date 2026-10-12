@@ -995,6 +995,34 @@
             "text": "Cần trục vớt thêm {0} {1}"
         },
         {
+            "key": "ui.recipe.row",
+            "text": "{0} (có {1})"
+        },
+        {
+            "key": "ui.reward.title",
+            "text": "{0} · Cấp {1}"
+        },
+        {
+            "key": "ui.reward.light_on",
+            "text": "Nhà đã có điện"
+        },
+        {
+            "key": "ui.reward.light_up",
+            "text": "Nhà sáng hơn"
+        },
+        {
+            "key": "ui.reward.radio_on",
+            "text": "Radio bắt được tín hiệu"
+        },
+        {
+            "key": "ui.reward.reach",
+            "text": "Đi xa hơn {0} m"
+        },
+        {
+            "key": "ui.station.offline",
+            "text": "đang tắt"
+        },
+        {
             "key": "ui.recipecard.needs",
             "text": "CẦN"
         },

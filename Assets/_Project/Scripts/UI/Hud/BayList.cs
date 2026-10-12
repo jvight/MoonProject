@@ -175,7 +175,7 @@ namespace MoonProject.UI
             root.Add(line);
             root.Add(effect);
             _container.Add(root);
-            return new Row(root, name, effect, new MaterialSlots(recipe, _numbers, false, null, true));
+            return new Row(root, name, effect, new MaterialSlots(recipe, _numbers, _localization, true, false));
         }
 
         private sealed class Row

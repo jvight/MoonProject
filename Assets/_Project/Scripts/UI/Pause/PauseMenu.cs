@@ -44,11 +44,9 @@ namespace MoonProject.UI
         private readonly InputReader _input;
         private readonly EventBus _events;
         private readonly SettingsStore _settingsStore;
-        private readonly IMaterialStock _materials;
         private readonly IRadioProgram _radio;
         private readonly IRelayStatus _relays;
         private readonly IGameFlow _flow;
-        private readonly MaterialSlots _stock;
         private readonly CursorPolicy _cursor;
         private readonly Action _quit;
         private readonly PauseClock _clock;
@@ -81,7 +79,6 @@ namespace MoonProject.UI
 
         public PauseMenu(UiLayout layout, PauseSettings settings, TitleSettings title, PlayerSettings player,
             ILocalization localization, InputReader input, EventBus events, SettingsStore settingsStore,
-            IMaterialStock materials,
             IRadioProgram radio, IRelayStatus relays, IGameFlow flow, IntText numbers, CursorPolicy cursor, Action quit,
             CreditsView credits)
         {
@@ -105,11 +102,9 @@ namespace MoonProject.UI
             _input = input ?? throw new ArgumentNullException(nameof(input));
             _events = events ?? throw new ArgumentNullException(nameof(events));
             _settingsStore = settingsStore ?? throw new ArgumentNullException(nameof(settingsStore));
-            _materials = materials ?? throw new ArgumentNullException(nameof(materials));
             _radio = radio ?? throw new ArgumentNullException(nameof(radio));
             _relays = relays ?? throw new ArgumentNullException(nameof(relays));
             _flow = flow ?? throw new ArgumentNullException(nameof(flow));
-            _stock = new MaterialSlots(layout.PauseMaterials, numbers, false);
             _cursor = cursor ?? throw new ArgumentNullException(nameof(cursor));
             _quit = quit ?? throw new ArgumentNullException(nameof(quit));
             _clock = new PauseClock(settings);
@@ -200,7 +195,6 @@ namespace MoonProject.UI
             _clock.Pause();
             _input.Disable();
             _cursor.Menu();
-            WriteMaterials();
             WriteCassettes();
             WriteRelays();
             _veil.Show();
@@ -418,16 +412,6 @@ namespace MoonProject.UI
             {
                 _layout.PauseCassettesCount.text = string.Format(_localization.Get(UiKeys.PauseCassettes), owned,
                     _radio.TotalTapeCount);
-            }
-        }
-
-        /// <summary>The stock summary in the header: every material's icon and count.</summary>
-        private void WriteMaterials()
-        {
-            for (int i = 0; i < Materials.Count; i++)
-            {
-                SalvageMaterial material = Materials.At(i);
-                _stock.SetCount(material, Materials.Of(_materials, material));
             }
         }
 

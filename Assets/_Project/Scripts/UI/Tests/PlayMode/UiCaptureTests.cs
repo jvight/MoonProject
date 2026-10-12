@@ -174,6 +174,7 @@ namespace MoonProject.UI.PlayModeTests
             yield return Capture(camera, folder, "02_prompt_dig");
 
             fakes.PrimaryHint = InteractionHint.None;
+            fakes.Grant(RoverAbility.Tether);
             fakes.TetherState = TetherAimState.Hovering;
             yield return new WaitForSecondsRealtime(1f);
             yield return Capture(camera, folder, "03_reticle_hover");
@@ -181,9 +182,9 @@ namespace MoonProject.UI.PlayModeTests
 
             fakes.SetMaterials(4, 2, 1);
             fakes.SetMaterials(7, 2, 3);
-            yield return new WaitForSecondsRealtime(_tuning.MaterialsChip.PulseSeconds * 0.5f);
-            yield return Capture(camera, folder, "04_materials_chip_gain");
-            yield return new WaitForSecondsRealtime(_tuning.MaterialsChip.PulseSeconds);
+            yield return new WaitForSecondsRealtime(_tuning.PickupFeed.MaxCountSeconds * 0.5f);
+            yield return Capture(camera, folder, "04_pickup_feed_gain");
+            yield return new WaitForSecondsRealtime(_tuning.PickupFeed.MaxCountSeconds);
 
             context.Events.Publish(new RelicDeposited("cassette_player", Vector3.zero, 3));
             yield return new WaitForSecondsRealtime(_tuning.MemoryCard.AppearDelay +
@@ -615,18 +616,18 @@ namespace MoonProject.UI.PlayModeTests
             using (context.Events.Subscribe<StockCountTicked>(ticks.Add))
             {
                 fakes.SetMaterials(2, 0, 0);
-                yield return new WaitForSecondsRealtime(_tuning.MaterialsChip.LingerSeconds * 0.3f);
-                Assert.AreEqual(2, ui.Chip.Shown(SalvageMaterial.Metal));
+                yield return new WaitForSecondsRealtime(_tuning.PickupFeed.LingerSeconds * 0.3f);
+                Assert.AreEqual(2, ui.Pickups.Shown(SalvageMaterial.Metal));
                 ticks.Clear();
 
                 fakes.SetMaterials(8, 0, 0);
-                yield return new WaitForSecondsRealtime(_tuning.MaterialsChip.StepSeconds * 2.5f);
-                int midway = ui.Chip.Shown(SalvageMaterial.Metal);
+                yield return new WaitForSecondsRealtime(_tuning.PickupFeed.StepSeconds * 2.5f);
+                int midway = ui.Pickups.Shown(SalvageMaterial.Metal);
                 Assert.That(midway, Is.InRange(3, 7), "the count is rolling, not jumping");
                 yield return Capture(camera, folder, "70_stock_rolling");
                 fakes.SetMaterials(10, 0, 0);
-                yield return new WaitForSecondsRealtime(_tuning.MaterialsChip.StepSeconds * 12f);
-                Assert.AreEqual(10, ui.Chip.Shown(SalvageMaterial.Metal));
+                yield return new WaitForSecondsRealtime(_tuning.PickupFeed.StepSeconds * 12f);
+                Assert.AreEqual(10, ui.Pickups.Shown(SalvageMaterial.Metal));
                 yield return Capture(camera, folder, "71_stock_rolled");
 
                 // The scene's own UI answers the same stock event, so each tick arrives once per UI: count units.

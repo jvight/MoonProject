@@ -16,54 +16,49 @@ namespace MoonProject.UI.Tests
     {
         private const float Frame = 1f / 60f;
 
-        private MaterialsChipSettings _settings;
+        private PickupFeedSettings _settings;
 
         [SetUp]
         public void SetUp()
         {
-            _settings = new MaterialsChipSettings();
+            _settings = new PickupFeedSettings();
         }
 
         [Test]
-        public void ALoadedStock_IsTakenAsItIs_WithoutAGlow()
+        public void ALoadedStock_IsTakenAsItIs_WithNothingToCount()
         {
             var tally = new MaterialTally(_settings);
             tally.Snap(5, 3, 1);
             Assert.AreEqual(5, tally.Shown(SalvageMaterial.Metal));
             Assert.AreEqual(3, tally.Shown(SalvageMaterial.Wiring));
             Assert.AreEqual(1, tally.Shown(SalvageMaterial.Optics));
-            Assert.IsTrue(tally.IsSettled);
-            Assert.IsFalse(tally.IsGlowing);
+            Assert.IsTrue(tally.IsCountSettled(SalvageMaterial.Metal));
+            Assert.IsTrue(tally.IsCountSettled(SalvageMaterial.Wiring));
         }
 
         [Test]
-        public void AGain_CountsUpEased_AndOnlyThatMaterialGlows_ThenSettles()
+        public void AGain_CountsUpOneUnitAtATime_AndOnlyThatMaterialCounts_ThenSettles()
         {
             var tally = new MaterialTally(_settings);
             tally.Snap(5, 3, 1);
             Assert.IsTrue(tally.Apply(5, 9, 1));
             tally.Step(Frame);
             Assert.Less(tally.Shown(SalvageMaterial.Wiring), 9, "it counts rather than jumps");
-            Assert.Greater(tally.Glow(SalvageMaterial.Wiring), 0f, "the wiring that grew glows");
-            Assert.AreEqual(0f, tally.Glow(SalvageMaterial.Metal), "the others stay calm");
-            Assert.AreEqual(0f, tally.Glow(SalvageMaterial.Optics));
+            Assert.IsFalse(tally.IsCountSettled(SalvageMaterial.Wiring));
+            Assert.IsTrue(tally.IsCountSettled(SalvageMaterial.Metal), "the others stay where they were");
+            Assert.IsTrue(tally.IsCountSettled(SalvageMaterial.Optics));
 
-            float peak = 0f;
-            for (float t = 0f; t < _settings.PulseSeconds + 0.5f; t += Frame)
+            for (float t = 0f; t < _settings.MaxCountSeconds + 0.5f; t += Frame)
             {
                 tally.Step(Frame);
-                peak = Mathf.Max(peak, tally.Glow(SalvageMaterial.Wiring));
             }
 
-            Assert.Greater(peak, 0.95f, "a soft swell to full");
             Assert.AreEqual(9, tally.Shown(SalvageMaterial.Wiring));
-            Assert.AreEqual(0f, tally.Glow(SalvageMaterial.Wiring), "and a settle back to calm");
-            Assert.IsTrue(tally.IsSettled);
-            Assert.IsFalse(tally.IsGlowing);
+            Assert.IsTrue(tally.IsCountSettled(SalvageMaterial.Wiring));
         }
 
         [Test]
-        public void ASpend_CountsDown_WithoutAGlow()
+        public void ASpend_CountsDown_WithoutAPulse()
         {
             var tally = new MaterialTally(_settings);
             tally.Snap(10, 6, 2);
@@ -71,7 +66,7 @@ namespace MoonProject.UI.Tests
             for (float t = 0f; t < _settings.MaxCountSeconds + 0.2f; t += Frame)
             {
                 tally.Step(Frame);
-                Assert.IsFalse(tally.IsGlowing, "crafting spends quietly");
+                Assert.AreEqual(0f, tally.TickPulse(SalvageMaterial.Metal), "crafting spends quietly");
             }
 
             Assert.AreEqual(0, tally.Shown(SalvageMaterial.Metal));
@@ -83,7 +78,7 @@ namespace MoonProject.UI.Tests
             var tally = new MaterialTally(_settings);
             tally.Snap(2, 2, 2);
             Assert.IsFalse(tally.Apply(2, 2, 2));
-            Assert.IsFalse(tally.IsGlowing);
+            Assert.AreEqual(2, tally.Target(SalvageMaterial.Metal));
         }
 
         [Test]
@@ -124,6 +119,7 @@ namespace MoonProject.UI.Tests
             Assert.IsNotNull(uxml, UiAssetPaths.Uxml);
             LocalizationService localization = TestTables.Localization(new EventBus(),
                 UiKeys.RecipeNeed, "{0} more {1} to salvage", "Cần trục vớt thêm {0} {1}",
+                UiKeys.RecipeRow, "{0} (have {1})", "{0} (có {1})",
                 UiKeys.MaterialName(SalvageMaterial.Metal), "metal", "kim loại",
                 UiKeys.MaterialName(SalvageMaterial.Wiring), "wiring", "dây điện",
                 UiKeys.MaterialName(SalvageMaterial.Optics), "optics", "quang học");
@@ -133,8 +129,8 @@ namespace MoonProject.UI.Tests
 
             view.Show(new Recipe(6, 4, 0), stock);
             MaterialSlots slots = view.Slots;
-            Assert.AreEqual("2 / 6", slots.Text(SalvageMaterial.Metal), "have / need");
-            Assert.AreEqual("9 / 4", slots.Text(SalvageMaterial.Wiring));
+            Assert.AreEqual("6 (have 2)", slots.Text(SalvageMaterial.Metal), "the need first, then what 07 has");
+            Assert.AreEqual("4 (have 9)", slots.Text(SalvageMaterial.Wiring));
             Assert.AreEqual("metal", slots.Word(SalvageMaterial.Metal), "each row names its material");
             Assert.AreEqual("wiring", slots.Word(SalvageMaterial.Wiring));
             Assert.IsTrue(slots.Root(SalvageMaterial.Metal).ClassListContains(MaterialSlots.ShortClass));
@@ -175,7 +171,7 @@ namespace MoonProject.UI.Tests
 
             public int Of(SalvageMaterial material)
             {
-                return Materials.Of(this, material);
+                return material == SalvageMaterial.Metal ? Metal : material == SalvageMaterial.Wiring ? Wiring : Optics;
             }
 
             public bool Has(Recipe recipe)

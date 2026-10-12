@@ -327,6 +327,9 @@ namespace MoonProject.UI
                 int level = offer.CurrentLevel + 1;
                 DressFor(upgrade.Station);
                 _layout.TowerName.text = _localization.Get(UiKeys.StationName(upgrade.Station));
+                bool offline = upgrade.Station == UpgradeStationKind.RadioTower && offer.CurrentLevel == 0;
+                _layout.TowerState.style.display = offline ? DisplayStyle.Flex : DisplayStyle.None;
+                _layout.TowerState.text = _localization.Get(UiKeys.StationOffline);
                 if (!listed)
                 {
                     _layout.TowerLevel.text = offer.MaxLevel > 1
