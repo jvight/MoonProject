@@ -5,9 +5,9 @@ at most three of these at once (feel-pass R10): e.g. the crack = cut_crack + the
 
 | Beat | Cue | Category | Target LUFS | Volume | Effective (dB) |
 |---|---|---|---|---|---|
-| The cut: charge | `cut_charge` | oneshot_3d | -18 | 0.60 | -22.4 |
+| The cut: charge run, per lamp | `charge_lamp` | oneshot_3d | -18 | 0.55 | -23.2 |
 | The cut: cancel | `cut_cancel` | oneshot_3d | -18 | 0.50 | -24.0 |
-| The cut: ignition | `cut_ignite` | oneshot_3d | -18 | 0.65 | -21.7 |
+| The cut: ignition per tier | `cut_ignite_tier` | oneshot_3d | -18 | 0.65 | -21.7 |
 | The cut: sizzle (loop, x progress) | `cut_sizzle` | loop_3d | -22 | 0.50 | -28.0 |
 | The cut: crack | `cut_crack` | oneshot_3d | -18 | 0.70 | -21.1 |
 | Fold / relic stowed | `strap_tuk` | tick_3d | -26 | 0.70 | -29.1 |
