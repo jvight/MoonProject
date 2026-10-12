@@ -54,11 +54,11 @@ namespace MoonProject.World
         [SerializeField] private float _ventSpread = 1.6f;
 
         [Tooltip("Tint the bead patches multiply the dust by at full strength: a warm volcanic orange.")]
-        [SerializeField] private Color _ventTint = new Color(1f, 0.62f, 0.38f, 1f);
+        [SerializeField] private Color _ventTint = new Color(1f, 0.85f, 0.45f, 1f);
 
         [Tooltip("Strength of the patches at the vent (0..1); they fade toward the field's edge.")]
         [Range(0f, 1f)]
-        [SerializeField] private float _ventStrength = 0.85f;
+        [SerializeField] private float _ventStrength = 0.75f;
 
         [Tooltip("Distance (metres) where the field starts to fade, and where it is gone: readable across the basin.")]
         [SerializeField] private Vector2 _ventFade = new Vector2(160f, 380f);
