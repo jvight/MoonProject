@@ -197,6 +197,18 @@ namespace MoonProject.UI.PlayModeTests
             yield return Seconds(_rig.Tuning.RewardCard.HoldSeconds + _rig.Tuning.RewardCard.Reveal.FadeOut);
             yield return Seconds(1f);
 
+            events.Publish(new CrewCrateOpened("site.garage", "kenji", SalvageMaterial.Wiring, 2, Vector3.zero));
+            yield return Seconds(_rig.Tuning.CrateNote.Reveal.FadeIn + 1f);
+            foreach (ScreenShape shape in ScreenShapes.All)
+            {
+                yield return Reframe(shape);
+                yield return Check(shape, "crate note", (label, found) =>
+                    ScreenFit.CheckApart(layout.CrateNote, layout.NextLine, label, found));
+            }
+
+            yield return Seconds(_rig.Tuning.CrateNote.HoldSeconds(120) + _rig.Tuning.CrateNote.Reveal.FadeOut);
+            yield return Seconds(1f);
+
             _rig.Fakes.Hold.Set(14, new MaterialSlot(SalvageMaterial.Metal, 4, 4),
                 new MaterialSlot(SalvageMaterial.Ilmenite, 3, 6));
             _rig.Fakes.Hold.WaitingBundles = 2;

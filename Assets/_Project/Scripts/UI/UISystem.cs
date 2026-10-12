@@ -95,6 +95,7 @@ namespace MoonProject.UI
         private RewardCard _rewardCard;
         private CargoScreen _cargo;
         private UnlockCard _unlockCard;
+        private CrateNote _crateNote;
         private TickerQueue _tickerLines;
         private int _tickerStartsAnnounced;
         private EventBus _events;
@@ -169,6 +170,8 @@ namespace MoonProject.UI
         internal CargoScreen Cargo => _cargo;
 
         internal UnlockCard UnlockCard => _unlockCard;
+
+        internal CrateNote CrateNote => _crateNote;
 
 
         internal FriendReadout FriendReadout => _friendReadout;
@@ -350,6 +353,7 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<CargoChanged>(_ => _cargo?.MarkDirty()));
             _tokens.Add(events.Subscribe<HomeStorageChanged>(_ => _cargo?.MarkDirty()));
             _tokens.Add(events.Subscribe<ShelfBuilt>(_ => _cargo?.MarkDirty()));
+            _tokens.Add(events.Subscribe<CrewCrateOpened>(OnCrewCrateOpened));
             _tokens.Add(events.Subscribe<GameSaved>(OnGameSaved));
             _tokens.Add(events.Subscribe<StationNotYet>(OnStationNotYet));
             _tokens.Add(events.Subscribe<StargazingChanged>(OnStargazingChanged));
@@ -468,6 +472,7 @@ namespace MoonProject.UI
             _cargo = new CargoScreen(_layout, _tuning.Cargo, _localization, services.Hold, services.Home,
                 services.Abilities, services.Tech, _glyphs, _numbers, _cargoTuning);
             _unlockCard = new UnlockCard(_layout, _tuning.UnlockCard, _localization, _glyphs);
+            _crateNote = new CrateNote(_layout, _tuning.CrateNote, _localization);
             _pause = new PauseMenu(_layout, _tuning.Pause, _tuning.Title, _player, _localization, services.Input,
                 services.Events, _settings, services.Radio, services.Relays, services.Flow,
                 _numbers, _cursor, Quit,
@@ -571,6 +576,7 @@ namespace MoonProject.UI
                 _services.Tether.State == TetherAimState.Towing, _glyphs.For(RoverAction.Excavate, device), device);
             _kitTitle.Tick(hudTime, !_placeCard.IsVisible);
             _rewardCard.Tick(hudTime, !_placeCard.IsVisible && !_kitTitle.IsVisible && !_card.IsVisible);
+            _crateNote.Tick(hudTime, !_card.IsVisible && !_rewardCard.IsVisible && !_unlockCard.IsVisible && !onMap);
             _unlockCard.Tick(hudTime, !_placeCard.IsVisible && !_kitTitle.IsVisible && !_kitTitle.IsWaiting &&
                                       !_card.IsVisible && !_rewardCard.IsVisible && !_rewardCard.IsWaiting && !onMap,
                 device);
@@ -781,6 +787,14 @@ namespace MoonProject.UI
             {
                 _salvageRing.OnBeat(beat);
                 _rewardCard.OnBeat(beat);
+            }
+        }
+
+        private void OnCrewCrateOpened(CrewCrateOpened opened)
+        {
+            if (_bound)
+            {
+                _crateNote.Opened(opened.SiteId);
             }
         }
 
@@ -1040,6 +1054,7 @@ namespace MoonProject.UI
             _rewardCard.Relocalize();
             _cargo.Relocalize();
             _unlockCard.Relocalize();
+            _crateNote.Relocalize();
             _relayTag.Relocalize();
             _siteName.Relocalize();
             _pause.Relocalize();

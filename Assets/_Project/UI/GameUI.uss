@@ -838,6 +838,41 @@ Label {
     color: var(--glass-hi);
 }
 
+/* A crew crate's packing note: a calm glass card low and centred, under 07, never in the way of driving */
+
+.crate-anchor {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 5%;
+    align-items: center;
+}
+
+.crate-note {
+    min-width: 380px;
+    max-width: 680px;
+    padding: 16px 30px 18px 30px;
+    background-image: url("project://database/Assets/_Project/Generated/UI/Glass/GlassPanel.png");
+    -unity-slice-left: 56;
+    -unity-slice-right: 56;
+    -unity-slice-top: 56;
+    -unity-slice-bottom: 56;
+    -unity-slice-scale: 0.5;
+}
+
+.crate-note__caption {
+    margin-bottom: 6px;
+    font-size: 17px;
+    letter-spacing: 3px;
+    color: var(--glass-sel);
+}
+
+.crate-note__text {
+    font-size: 24px;
+    white-space: normal;
+    color: var(--glass-hi);
+}
+
 .kit-title__rule {
     width: 64px;
     height: 2px;
