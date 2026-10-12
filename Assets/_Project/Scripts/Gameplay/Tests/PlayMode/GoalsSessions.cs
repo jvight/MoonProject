@@ -48,6 +48,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             GameplaySystem gameplay = _fixture.Gameplay;
             Assert.IsFalse(_fixture.Rover.Has(RoverAbility.Tether), "no tether before Kenji's port, in any order");
             Assert.IsFalse(gameplay.Port.RingFitted);
+            gameplay.Port.Restore(new GaragePortSaveData { ringFitted = true, placeSeen = true });
+            gameplay.Port.Announce();
+            Assert.IsTrue(_fixture.Rover.Has(RoverAbility.Tether), "the port's ring wakes the tether");
             BaseProgression progression = gameplay.Progression;
             var lines = new List<string>();
             using var listening = _fixture.Bootstrap.Context.Events.Subscribe<NextStepChanged>(changed =>

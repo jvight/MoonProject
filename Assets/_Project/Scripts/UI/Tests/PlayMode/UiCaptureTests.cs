@@ -230,7 +230,7 @@ namespace MoonProject.UI.PlayModeTests
             fakes.Camera = camera;
             yield return new WaitForSecondsRealtime(_tuning.Friends.NameHoldSeconds + 2f);
 
-            context.Events.Publish(new TickerLine(UiTestRig.SignalLine, "140"));
+            context.Events.Publish(new TickerLine(UiTestRig.SignalLine));
             yield return new WaitForSecondsRealtime(TickerEntrance());
             yield return Capture(camera, folder, "18_ticker");
             context.Events.Publish(new CrewLogFound(UiTestRig.FirstLog, Vector3.zero));
@@ -475,7 +475,7 @@ namespace MoonProject.UI.PlayModeTests
             yield return new WaitForSecondsRealtime(1f);
 
             Reframe(NarrowWidth, NarrowHeight);
-            context.Events.Publish(new TickerLine(UiTestRig.SignalLine, "205"));
+            context.Events.Publish(new TickerLine(UiTestRig.SignalLine));
             fakes.AtStation = true;
             yield return new WaitForSecondsRealtime(TickerEntrance() + 0.5f);
             yield return Capture(camera, folder, "27_narrow_ticker_and_tower_vi");
