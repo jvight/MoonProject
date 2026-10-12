@@ -20,9 +20,9 @@ namespace MoonProject.Gameplay.Editor
     /// the TowerAnchor at the socket every tower stage carries, so stage swaps never move it; the cassette shelf stands
     /// the same way on the stages' CassetteShelfAnchor. Only the first stage is saved showing, as a fresh game starts.
     /// The base is stood beside the pad here for the editor view and re-seated on the real ground at boot; the salvage
-    /// sites (Art's wrecks on the World's site anchors, the relics in their hearts) and Kestrel-3's trail bits, the
-    /// friends, cassettes, log caches and the relay masts (Art's RelayMast and RelayMast_Broken on the World's relay
-    /// anchors, with their relay parts) are placed from the World's surface and anchors at boot (the editor previews
+    /// sites (Art's wrecks on the World's site anchors, the relics in their hearts), the friends, cassettes, log
+    /// caches and the relay masts (Art's RelayMast and RelayMast_Broken on the World's relay anchors, with their
+    /// relay parts) are placed from the World's surface and anchors at boot (the editor previews
     /// the wrecks and masts: <see cref="GameplayEditPreview"/>). Fails loudly when a required asset or prefab node is
     /// missing.
     /// </summary>

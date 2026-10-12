@@ -34,16 +34,25 @@ namespace MoonProject.Audio.PlayModeTests
 
         public const string TapeB = "slow_orbit";
 
+        /// <summary>The one voiced ticker line in the rig's voice library.</summary>
+        public const string VoiceKey = "test.voice.line";
+
+        /// <summary>Length of the rig's voiced recording.</summary>
+        public const int VoiceSeconds = 2;
+
         private const string DataFolder = "Assets/_Project/Data/Audio/";
         private const int SampleRate = 48000;
 
         private readonly List<Object> _created = new List<Object>();
 
-        public AudioTestRig(int trackSeconds = LongTrackSeconds)
+        /// <param name="stationUnlocked">True (most tests): Bell's dial is open, so the station plays as soon as
+        /// 07 wakes. False: a fresh game's radio, whose music is still to be earned (M3-24).</param>
+        public AudioTestRig(int trackSeconds = LongTrackSeconds, bool stationUnlocked = true)
         {
             InputActionAsset controls = Track(BootstrapHarness.LoadControlsCopy());
             Track(new GameObject("Listener", typeof(AudioListener)));
             Rover = Track(new GameObject("FakeRover")).AddComponent<FakeRoverSystem>();
+            Rover.Program.DialUnlocked = stationUnlocked;
 
             var playlist = Track(ScriptableObject.CreateInstance<RadioPlaylist>());
             playlist.Populate(new[]
@@ -67,6 +76,13 @@ namespace MoonProject.Audio.PlayModeTests
             Friends = Child(audioRoot, "FriendAudio").AddComponent<FriendAudio>();
             Jump = Child(audioRoot, "JumpAudio").AddComponent<JumpAudio>();
             Radio = Child(audioRoot, "RadioStation").AddComponent<RadioStation>();
+            Voice = Child(audioRoot, "RadioVoice").AddComponent<RadioVoice>();
+            var voices = Track(ScriptableObject.CreateInstance<VoiceLibrary>());
+            voices.Populate(new[]
+            {
+                new VoiceLine(VoiceKey, "ro", Track(Tone(VoiceKey, 220f, VoiceSeconds))),
+            });
+            Voice.Wire(Load<RadioTuning>("RadioTuning.asset"), voices);
             Ambience = Child(audioRoot, "AmbienceBed").AddComponent<AmbienceBed>();
             Canyon = Child(audioRoot, "CanyonAmbience").AddComponent<CanyonAmbience>();
             Canyon.Wire(Load<CanyonAudioTuning>("CanyonAudioTuning.asset"));
@@ -94,6 +110,7 @@ namespace MoonProject.Audio.PlayModeTests
                 RoverAudio, Jump, Gameplay, Friends, Ui, Radio, Ambience, Canyon, Soundscape, SmallSounds, Relays,
                 Salvage, Stations, Lab);
             Director.WireBattery(Battery);
+            Director.WireVoice(Voice);
             audioRoot.SetActive(true);
 
             Bootstrap = Track(BootstrapHarness.Create(controls, Rover, Director));
@@ -116,6 +133,8 @@ namespace MoonProject.Audio.PlayModeTests
         public BatteryAudio Battery { get; }
 
         public RadioStation Radio { get; }
+
+        public RadioVoice Voice { get; }
 
         public AmbienceBed Ambience { get; }
 

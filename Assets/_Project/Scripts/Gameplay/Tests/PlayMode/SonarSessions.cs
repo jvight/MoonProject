@@ -11,7 +11,10 @@ using Object = UnityEngine.Object;
 
 namespace MoonProject.Gameplay.PlayModeTests
 {
-    /// <summary>Scripted sessions for the sonar, on the real components behind fakes.</summary>
+    /// <summary>
+    /// Scripted sessions for 07's listening (first-hour v2 §3), on the real components behind fakes: no button, it
+    /// listens once rested from tower level 1 on, and again only after a drive to somewhere new.
+    /// </summary>
     public sealed class SonarSessions : InputTestFixture
     {
         private InputActionAsset _controls;
@@ -33,13 +36,16 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator Ping_RollsARing_AndSitesAnswerNearestFirst()
+        public IEnumerator Listen_RollsARing_AndSitesAnswerNearestFirst()
         {
             _fixture = GameplayFixture.Boot(_controls);
             yield return null;
             SonarSystem sonar = _fixture.Gameplay.Sonar;
             SonarTuning tuning = _fixture.SonarTuning;
-            Assert.IsTrue(sonar.IsReady);
+            Press(_keyboard.spaceKey, queueEventOnly: true);
+            yield return new WaitForSeconds(tuning.RestSeconds + 0.5f);
+            Release(_keyboard.spaceKey);
+            Assert.IsEmpty(_fixture.Events.SonarPinged, "before the tower wakes 07 never listens, and space is no ping");
 
             var distances = new List<float>();
             foreach (SalvageSite site in _fixture.Gameplay.Salvage.Sites)
@@ -54,11 +60,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             distances.Sort();
             Assert.GreaterOrEqual(distances.Count, 2, "the depot and the near sites hear the first ping");
 
-            yield return Tap();
-            Assert.AreEqual(1, _fixture.Events.SonarPinged.Count, "space pings at once");
+            yield return Listen();
+            Assert.AreEqual(1, _fixture.Events.SonarPinged.Count, "07 has rested: at tower level 1 it listens");
             float pingTime = _fixture.Events.SonarPinged[0].Time;
             Assert.AreEqual(tuning.Range, _fixture.Events.SonarPinged[0].Value.Range);
-            Assert.IsFalse(sonar.IsReady, "then the calm cooldown runs");
 
             _fixture.Rover.Aim(new Vector3(0f, 26f, -40f), new Vector3(0f, 0f, 45f));
             yield return new WaitForSeconds(0.6f);
@@ -69,6 +74,7 @@ namespace MoonProject.Gameplay.PlayModeTests
 
             yield return new WaitForSeconds(tuning.RingDuration + tuning.AnswerLag);
             List<EventRecorder.Timed<SiteAnswered>> answers = _fixture.Events.SiteAnswered;
+            Assert.AreEqual(1, _fixture.Events.SonarPinged.Count, "sitting still never listens again");
             Assert.AreEqual(distances.Count, answers.Count, "every site in range answers once");
             Assert.IsEmpty(_fixture.Events.RelicAnswered, "a relic in a site's heart lets its site answer for it");
             for (int i = 0; i < answers.Count; i++)
@@ -143,7 +149,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsFalse(depot.AnswersSonar, "nothing left to find there");
             Assert.IsTrue(walkman.AnswersSonar, "the loose relic answers itself");
 
-            yield return Tap();
+            yield return Listen();
             yield return new WaitForSeconds(_fixture.SonarTuning.RingDuration + _fixture.SonarTuning.AnswerLag);
             foreach (EventRecorder.Timed<SiteAnswered> answer in _fixture.Events.SiteAnswered)
             {
@@ -167,7 +173,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             SiteMarker ahead = sonar.Markers[firstSite + _fixture.FindSite("depot").Index];
             SiteMarker behind = sonar.Markers[firstSite + _fixture.FindSite("garage").Index];
 
-            yield return Tap();
+            yield return Listen();
             yield return new WaitForSeconds(tuning.PillarLifetime + tuning.RingDuration + tuning.AnswerLag + 0.5f);
             Assert.IsFalse(behind.PillarStanding(Time.time), "the pillar behind 07 bows out on time");
             Assert.IsTrue(ahead.PillarStanding(Time.time), "the one 07 heads for, in the headlamp, stands longer");
@@ -176,39 +182,64 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator EarlyPress_IsRemembered_AndFiresWhenTheCooldownEnds()
+        public IEnumerator FirstListen_SaysItsLineOnce_AndOnlyANewPlaceListensAgain()
         {
             _fixture = GameplayFixture.Boot(_controls);
             yield return null;
             SonarTuning tuning = _fixture.SonarTuning;
+            yield return Listen();
+            Assert.AreEqual(1, FirstListenLines(), "the first listen says what listening is");
 
-            yield return Tap();
-            float first = _fixture.Events.SonarPinged[0].Time;
-            yield return new WaitForSeconds(0.5f);
-            yield return Tap();
-            yield return new WaitForSeconds(tuning.Cooldown);
-            Assert.AreEqual(1, _fixture.Events.SonarPinged.Count, "a press far too early is ignored, not queued");
-            Assert.IsTrue(_fixture.Gameplay.Sonar.IsReady);
+            var near = new Vector3(0f, 0f, tuning.ListenSpacing * 0.5f);
+            yield return Drive(Vector3.zero, near);
+            yield return new WaitForSeconds(tuning.RestSeconds + 1f);
+            Assert.AreEqual(1, _fixture.Events.SonarPinged.Count, "not far enough from the last listen");
 
-            yield return Tap();
-            Assert.AreEqual(2, _fixture.Events.SonarPinged.Count);
-            float second = _fixture.Events.SonarPinged[1].Time;
-            Assert.GreaterOrEqual(second - first, tuning.Cooldown);
-
-            yield return new WaitForSeconds(tuning.Cooldown - tuning.InputBuffer * 0.5f);
-            yield return Tap();
-            Assert.AreEqual(2, _fixture.Events.SonarPinged.Count, "not yet: the cooldown is still running");
-            yield return new WaitForSeconds(tuning.InputBuffer);
-            Assert.AreEqual(3, _fixture.Events.SonarPinged.Count, "a press just before the cooldown ends is kept");
-            Assert.AreEqual(second + tuning.Cooldown, _fixture.Events.SonarPinged[2].Time, 0.05f,
-                "and fires as soon as the sonar is ready");
+            var far = new Vector3(0f, 0f, tuning.ListenSpacing * 1.2f);
+            yield return Drive(near, far);
+            yield return new WaitForSeconds(tuning.RestSeconds * 0.5f);
+            Assert.AreEqual(1, _fixture.Events.SonarPinged.Count, "a new place waits for the rest");
+            yield return Waits.Until(() => _fixture.Events.SonarPinged.Count > 1, tuning.RestSeconds + 1f);
+            Assert.AreEqual(2, _fixture.Events.SonarPinged.Count, "a new place listens once");
+            Assert.AreEqual(far.z, _fixture.Events.SonarPinged[1].Value.Origin.z, 0.01f, "from where 07 rests");
+            Assert.AreEqual(1, FirstListenLines(), "the line is said only once");
         }
 
-        private IEnumerator Tap()
+        /// <summary>Brings the tower to level 1 (if it is not yet) and waits until 07, resting, listens.</summary>
+        private IEnumerator Listen()
         {
-            Press(_keyboard.spaceKey, queueEventOnly: true);
+            int before = _fixture.Events.SonarPinged.Count;
+            _fixture.PowerTo(1);
+            yield return Waits.Until(() => _fixture.Events.SonarPinged.Count > before,
+                _fixture.SonarTuning.RestSeconds + 1f);
+            Assert.Greater(_fixture.Events.SonarPinged.Count, before, "07 listens once it has rested at level 1");
+        }
+
+        /// <summary>Drives 07 from <paramref name="from"/> to <paramref name="to"/> at a walking pace, then stops.</summary>
+        private IEnumerator Drive(Vector3 from, Vector3 to)
+        {
+            const float speed = 6f;
+            float seconds = Vector3.Distance(from, to) / speed;
+            float began = Time.time;
+            while (Time.time - began < seconds)
+            {
+                _fixture.Rover.MoveTo(Vector3.Lerp(from, to, (Time.time - began) / seconds), 0f);
+                yield return null;
+            }
+
+            _fixture.Rover.MoveTo(to, 0f);
             yield return null;
-            Release(_keyboard.spaceKey);
+        }
+
+        private int FirstListenLines()
+        {
+            int lines = 0;
+            foreach (EventRecorder.Timed<TickerLine> line in _fixture.Events.TickerLine)
+            {
+                lines += line.Value.Key == ProgressionKeys.FirstListen ? 1 : 0;
+            }
+
+            return lines;
         }
     }
 }

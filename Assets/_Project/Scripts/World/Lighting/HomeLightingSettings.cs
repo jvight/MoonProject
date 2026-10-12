@@ -31,6 +31,28 @@ namespace MoonProject.World
         [Range(0.05f, 2f)]
         [SerializeField] private float _cableSegmentFade = 0.35f;
 
+        [Header("The tower's power preview (M3-24 B)")]
+        [Tooltip("Seconds the preview's slow light takes to run one dark cable from the tower's foot to its end, the " +
+            "first time 07 comes near the tower: it shows what each level will power.")]
+        [Range(0.5f, 8f)]
+        [SerializeField] private float _previewTravel = 2.6f;
+
+        [Tooltip("Seconds between the preview's runs: the lander's cable first, then the bay's, then the chart's.")]
+        [Range(0f, 4f)]
+        [SerializeField] private float _previewStagger = 1.3f;
+
+        [Tooltip("Seconds a cable segment takes to brighten as the preview's light reaches it.")]
+        [Range(0.05f, 2f)]
+        [SerializeField] private float _previewRise = 0.3f;
+
+        [Tooltip("Seconds a segment's preview glow lingers before it is dark again: a soft trail behind the light.")]
+        [Range(0.1f, 4f)]
+        [SerializeField] private float _previewTail = 1.4f;
+
+        [Tooltip("Peak glow of the preview (0..1 of a powered cable): a promise, softer than real power.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _previewPeak = 0.75f;
+
         [Tooltip("Seconds between blinks of the tower's pilot light while the base is asleep. Slow: a heartbeat " +
             "saying something here still waits.")]
         [Range(1f, 10f)]
@@ -92,6 +114,11 @@ namespace MoonProject.World
         public float WakeFade => _wakeFade;
         public float CableTravel => _cableTravel;
         public float CableSegmentFade => _cableSegmentFade;
+        public float PreviewTravel => _previewTravel;
+        public float PreviewStagger => _previewStagger;
+        public float PreviewRise => _previewRise;
+        public float PreviewTail => _previewTail;
+        public float PreviewPeak => _previewPeak;
         public float PilotPeriod => _pilotPeriod;
         public float PilotSharpness => _pilotSharpness;
         public float PilotIntensity => _pilotIntensity;

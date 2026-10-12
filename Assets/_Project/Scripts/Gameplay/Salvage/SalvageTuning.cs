@@ -4,8 +4,8 @@ namespace MoonProject.Gameplay
 {
     /// <summary>
     /// Salvage (docs/features/M3-13): how generously 07 aims at a piece, how long the beam cuts, how much each piece
-    /// is worth, how a drag piece is pulled clear, how a cut piece breaks off and folds into 07, and how the loose
-    /// trail bits are drawn in. Created by the Gameplay/Tuning builder; runtime code only reads it.
+    /// is worth, how a drag piece is pulled clear, and how a cut piece breaks off and folds into 07. Created by the
+    /// Gameplay/Tuning builder; runtime code only reads it.
     /// </summary>
     public sealed class SalvageTuning : ScriptableObject
     {
@@ -110,9 +110,6 @@ namespace MoonProject.Gameplay
         [Tooltip("Units a drag piece yields (it is pulled clear before it can be cut).")]
         [Range(1, 10)] [SerializeField] private int _dragYield = 4;
 
-        [Tooltip("Units a loose trail bit yields.")]
-        [Range(1, 10)] [SerializeField] private int _trailYield = 1;
-
         [Header("Drag pieces")]
         [Tooltip("A drag piece pulled this many metres (horizontal) from where it hung lets go of the tether and " +
                  "becomes cuttable.")]
@@ -188,10 +185,7 @@ namespace MoonProject.Gameplay
         [Range(5f, 60f)] [SerializeField] private float _shudderFrequency = 30f;
 
         [Header("Into 07")]
-        [Tooltip("Loose trail bits within this many metres of 07 lift off and spiral into it.")]
-        [Range(1f, 20f)] [SerializeField] private float _magnetRadius = 5.5f;
-
-        [Tooltip("Flight time (s) of a bundle or bit right next to 07.")]
+        [Tooltip("Flight time (s) of a bundle right next to 07.")]
         [Range(0.1f, 3f)] [SerializeField] private float _flightDuration = 0.7f;
 
         [Tooltip("Extra flight time (s) per metre of distance.")]
@@ -212,25 +206,15 @@ namespace MoonProject.Gameplay
         [Tooltip("Scale of a bundle as it reaches the cargo socket (it folds in).")]
         [Range(0.05f, 1f)] [SerializeField] private float _arrivalScale = 0.3f;
 
-        [Tooltip("Minimum seconds between two arrivals: a run of bits plays as an arpeggio, never a chord.")]
+        [Tooltip("Minimum seconds between two arrivals: a run of bundles plays as an arpeggio, never a chord.")]
         [Range(0f, 0.5f)] [SerializeField] private float _minArrivalInterval = 0.12f;
 
-        [Tooltip("Seconds within which the next piece salvaged at the same site (or along the trail) climbs one " +
+        [Tooltip("Seconds within which the next piece salvaged at the same site climbs one " +
                  "step of the salvage melody: long enough to drive round a wreck to its next piece.")]
         [Range(1f, 90f)] [SerializeField] private float _chainWindow = 40f;
 
-        [Header("Loose trail bits")]
-        [Tooltip("How deep (share of its height) a trail bit lies in the dust.")]
-        [Range(0f, 0.8f)] [SerializeField] private float _trailSink = 0.3f;
-
-        [Tooltip("Resting tilt (degrees) of a trail bit, so none lies perfectly flat.")]
-        [Range(0f, 30f)] [SerializeField] private float _trailTilt = 12f;
-
-        [Tooltip("07 glances at the nearest loose trail bit within this many metres.")]
-        [Range(0f, 40f)] [SerializeField] private float _glanceRadius = 12f;
-
         [Header("Arrival flash")]
-        [Tooltip("Pooled flashes (enough for a run of trail bits).")]
+        [Tooltip("Pooled flashes (enough for a run of bundles arriving together).")]
         [Range(1, 16)] [SerializeField] private int _flashPoolSize = 4;
 
         [Tooltip("Seconds a flash lasts.")]
@@ -279,7 +263,6 @@ namespace MoonProject.Gameplay
         public int MediumYield => _mediumYield;
         public int LargeYield => _largeYield;
         public int DragYield => _dragYield;
-        public int TrailYield => _trailYield;
         public float DragClearance => _dragClearance;
         public float DragMass => _dragMass;
         public float DragLinearDamping => _dragLinearDamping;
@@ -309,7 +292,6 @@ namespace MoonProject.Gameplay
         public float BreakDuration => _crackSeconds + _tumbleSeconds + _foldSeconds + _tieSeconds;
         public float BreakPop => _breakPop;
         public float BreakTumble => _breakTumble;
-        public float MagnetRadius => _magnetRadius;
         public float FlightDuration => _flightDuration;
         public float FlightPerMetre => _flightPerMetre;
         public float FlightLift => _flightLift;
@@ -319,9 +301,6 @@ namespace MoonProject.Gameplay
         public float ArrivalScale => _arrivalScale;
         public float MinArrivalInterval => _minArrivalInterval;
         public float ChainWindow => _chainWindow;
-        public float TrailSink => _trailSink;
-        public float TrailTilt => _trailTilt;
-        public float GlanceRadius => _glanceRadius;
         public int FlashPoolSize => _flashPoolSize;
         public float FlashDuration => _flashDuration;
         public Vector2 FlashRadius => _flashRadius;

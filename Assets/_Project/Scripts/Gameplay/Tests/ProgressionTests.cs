@@ -7,8 +7,8 @@ using MoonProject.Core.Events;
 namespace MoonProject.Gameplay.Tests
 {
     /// <summary>
-    /// The base's wake-up (docs/features/M3-16): sleeping stations answer the sonar "not yet" when the ring reaches
-    /// them, the "next" line follows the first step not yet done, and each place greets 07 once, one at a time.
+    /// The base's wake-up (docs/features/M3-16): sleeping stations say "not yet" when 07 first comes near them, the
+    /// "next" line follows the first step not yet done, and each place greets 07 once, one at a time.
     /// </summary>
     public sealed class ProgressionTests
     {
@@ -16,7 +16,6 @@ namespace MoonProject.Gameplay.Tests
         private readonly List<string> _lines = new List<string>();
         private readonly List<string> _places = new List<string>();
         private EventBus _events;
-        private SonarTuning _sonar;
 
         [SetUp]
         public void SetUp()
@@ -28,13 +27,6 @@ namespace MoonProject.Gameplay.Tests
             _events.Subscribe<StationNotYet>(_notYet.Add);
             _events.Subscribe<NextStepChanged>(e => _lines.Add(e.LineKey));
             _events.Subscribe<PlaceFirstApproached>(e => _places.Add(e.PlaceId));
-            _sonar = ScriptableObject.CreateInstance<SonarTuning>();
-        }
-
-        [TearDown]
-        public void TearDown()
-        {
-            Object.DestroyImmediate(_sonar);
         }
 
         [Test]
@@ -116,30 +108,26 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void ASleepingStation_AnswersNotYet_WhenTheRingReachesIt_AndAWokenOneStaysQuiet()
+        public void ASleepingStation_SaysNotYet_OnceWhen07ComesNear_AndAWokenOneStaysQuiet()
         {
-            bool bayAsleep = true;
-            using (var answers = new DormantAnswers(_events, _sonar))
-            {
-                answers.Add(ProgressionKeys.NotYetBay, new Vector3(10f, 0f, 0f), () => bayAsleep);
-                answers.Add(ProgressionKeys.NotYetTower, new Vector3(0f, 0f, 20f), () => false);
-                answers.Add(ProgressionKeys.NotYetChart, new Vector3(_sonar.Range * 2f, 0f, 0f), () => true);
+            var answers = new DormantAnswers(_events);
+            answers.Add(ProgressionKeys.NotYetBay, new Vector3(10f, 0f, 0f), 6f, () => true);
+            answers.Add(ProgressionKeys.NotYetTower, new Vector3(0f, 0f, 20f), 6f, () => false);
 
-                _events.Publish(new SonarPinged(Vector3.zero, _sonar.Range));
-                answers.Tick(0f);
-                Assert.IsEmpty(_notYet, "the ring has not reached it yet");
-                answers.Tick(_sonar.RingDuration + _sonar.AnswerLag + 0.01f);
+            answers.Tick(Vector3.zero);
+            Assert.IsEmpty(_notYet, "07 is not near either yet");
 
-                Assert.AreEqual(1, _notYet.Count, "only the sleeping bay in range answers");
-                Assert.AreEqual(ProgressionKeys.NotYetBay, _notYet[0].ReasonKey);
-                Assert.AreEqual(10f, _notYet[0].Distance, 1e-4f);
+            answers.Tick(new Vector3(5f, 3f, 0f));
+            Assert.AreEqual(1, _notYet.Count, "the sleeping bay answers as 07 comes within its radius");
+            Assert.AreEqual(ProgressionKeys.NotYetBay, _notYet[0].ReasonKey);
+            Assert.AreEqual(5f, _notYet[0].Distance, 1e-4f, "measured on the ground plane");
 
-                bayAsleep = false;
-                _events.Publish(new SonarPinged(Vector3.zero, _sonar.Range));
-                answers.Tick(10f);
-                answers.Tick(20f);
-                Assert.AreEqual(1, _notYet.Count, "once awake it answers no more");
-            }
+            answers.Tick(Vector3.zero);
+            answers.Tick(new Vector3(9f, 0f, 0f));
+            Assert.AreEqual(1, _notYet.Count, "once per session, not each time 07 passes");
+
+            answers.Tick(new Vector3(0f, 0f, 18f));
+            Assert.AreEqual(1, _notYet.Count, "an awake tower says nothing");
         }
 
         [Test]

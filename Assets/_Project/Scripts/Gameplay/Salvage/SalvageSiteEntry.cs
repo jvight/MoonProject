@@ -24,17 +24,23 @@ namespace MoonProject.Gameplay
                  "(docs/features/M3-16 P10, the supply depot).")]
         [SerializeField] private bool _heartUnderPieces;
 
+        [Tooltip("Each of its pieces yields this many times its size's units: a site of few, rich seams (Kenji's " +
+                 "garage, first-hour v2 §4: one trip, the 2x economy kept).")]
+        [Range(1, 4)]
+        [SerializeField] private int _yieldScale = 1;
+
         [Tooltip("Each piece's seam (docs/design/feel-pass.md §3.2): the content builder writes one across its face; " +
                  "Art may author better ones.")]
         [SerializeField] private PieceCutLine[] _cutLines = Array.Empty<PieceCutLine>();
 
         public SalvageSiteEntry(string anchorId, GameObject prefab, AbilityGate gate, bool heartUnderPieces,
-            PieceCutLine[] cutLines)
+            int yieldScale, PieceCutLine[] cutLines)
         {
             _anchorId = anchorId;
             _prefab = prefab;
             _gate = gate ?? throw new ArgumentNullException(nameof(gate));
             _heartUnderPieces = heartUnderPieces;
+            _yieldScale = yieldScale;
             _cutLines = cutLines ?? throw new ArgumentNullException(nameof(cutLines));
         }
 
@@ -46,6 +52,8 @@ namespace MoonProject.Gameplay
         public AbilityGate Gate => _gate;
 
         public bool HeartUnderPieces => _heartUnderPieces;
+
+        public int YieldScale => _yieldScale;
 
         /// <summary>The seam of piece <paramref name="number"/>, if the entry has a valid one.</summary>
         public bool TryGetCutLine(int number, out Vector3[] points)

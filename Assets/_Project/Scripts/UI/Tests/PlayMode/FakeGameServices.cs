@@ -15,7 +15,7 @@ namespace MoonProject.UI.PlayModeTests
     public sealed class FakeGameServices : MonoBehaviour, IGameSystem, IViewCamera, IAudioSettings, ILookSettings,
         IMaterialStock, ITetherAim, IInteractionHints, IUpgradeShop, IRoverState, IFriendStatuses, IRadioProgram,
         IRadioHop, IRelayStatus, ISalvageStatus, IBlueprintBoard, IRoverBattery, IBeamStatus, ITechTree,
-        IRecoveryProgress
+        IRecoveryProgress, IRecipeLook
     {
         private readonly TechNodeState[] _techStates = new TechNodeState[Enum.GetValues(typeof(TechNodeId)).Length];
         private readonly int[] _litLamps = new int[Enum.GetValues(typeof(RecoveryTarget)).Length];
@@ -34,6 +34,11 @@ namespace MoonProject.UI.PlayModeTests
         public FriendDefinition Friend { get; set; }
 
         public FriendStatus TillyStatus { get; set; }
+
+        /// <summary>The recipe the view rests on (<see cref="IRecipeLook"/>), set by a test.</summary>
+        public string Looked { get; set; }
+
+        public bool IsSheet { get; set; }
 
         public Vector3 Position { get; set; }
 
@@ -225,6 +230,7 @@ namespace MoonProject.UI.PlayModeTests
             context.Register<IInteractionHints>(this);
             context.Register<IUpgradeShop>(this);
             context.Register<IBlueprintBoard>(this);
+            context.Register<IRecipeLook>(this);
             context.Register<IRoverState>(this);
             context.Register<IFriendStatuses>(this);
             context.Register<IRadioProgram>(this);

@@ -76,8 +76,8 @@ namespace MoonProject.Gameplay
                     continue;
                 }
 
-                string problem = AddPiece(built, entry, node, number, material, drag, parent, terrain, tuning,
-                    catalog, halo, dragMaterial, wreck, drags);
+                string problem = AddPiece(built, entry, node, number, material, drag, entry.YieldScale, parent,
+                    terrain, tuning, catalog, halo, dragMaterial, wreck, drags);
                 if (problem != null)
                 {
                     return problem;
@@ -104,9 +104,9 @@ namespace MoonProject.Gameplay
         }
 
         private static string AddPiece(SalvageSite site, SalvageSiteEntry entry, Transform node, int number,
-            SalvageMaterial material, bool drag, Transform parent, ITerrainQuery terrain, SalvageTuning tuning,
-            SalvageCatalog catalog, Material halo, PhysicsMaterial dragMaterial, List<Collider> wreck,
-            List<SalvageDrag> drags)
+            SalvageMaterial material, bool drag, int yieldScale, Transform parent, ITerrainQuery terrain,
+            SalvageTuning tuning, SalvageCatalog catalog, Material halo, PhysicsMaterial dragMaterial,
+            List<Collider> wreck, List<SalvageDrag> drags)
         {
             if (site.Find(number) != null)
             {
@@ -132,7 +132,7 @@ namespace MoonProject.Gameplay
 
             Mesh mesh = filter.sharedMesh;
             Bounds bounds = mesh.bounds;
-            int units = SalvageYield.Units(Vector3.Scale(bounds.size, node.localScale), drag, tuning);
+            int units = yieldScale * SalvageYield.Units(Vector3.Scale(bounds.size, node.localScale), drag, tuning);
             Collider solid = drag ? null : MakeSolid(node);
             if (solid != null)
             {

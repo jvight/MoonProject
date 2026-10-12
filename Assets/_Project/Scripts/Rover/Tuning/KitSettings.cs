@@ -77,6 +77,14 @@ namespace MoonProject.Rover
         [Range(0f, 1f)]
         [SerializeField] private float _drumIdleGlow = 0.05f;
 
+        [Tooltip("Glow (linear) of the tether ring's band at rest: none, so the ring reads as warm brass.")]
+        [Range(0f, 2f)]
+        [SerializeField] private float _ringRestGlow;
+
+        [Tooltip("Glow (linear) of the tether ring's band while the tether holds something.")]
+        [Range(0f, 4f)]
+        [SerializeField] private float _ringHoldGlow = 1.4f;
+
         public float FitGrowFrequency => _fitGrowFrequency;
 
         public BayFitSettings Bay => _bay;
@@ -108,5 +116,9 @@ namespace MoonProject.Rover
         public float DrumGlow => _drumGlow;
 
         public float DrumIdleGlow => _drumIdleGlow;
+
+        public float RingRestGlow => _ringRestGlow;
+
+        public float RingHoldGlow => _ringHoldGlow;
     }
 }

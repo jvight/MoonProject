@@ -1487,3 +1487,89 @@ Label {
     color: var(--moon-text);
     opacity: 0.75;
 }
+
+/*
+ * The recipe card (M3-24 B): looking at the tower's hopper or a board sheet, a quiet card right of centre, no
+ * plate: the next level's name and title, needs and have in material icons, the component still missing, and where
+ * it is built, all on the floating names' soft shadow.
+ */
+
+.recipe-card {
+    position: absolute;
+    right: 7%;
+    top: 34%;
+    width: 26%;
+    padding: 10px 14px;
+}
+
+.recipe-card__title {
+    font-size: 24px;
+    letter-spacing: 3px;
+    color: var(--moon-cream);
+    text-shadow: 0 2px 12px var(--moon-shadow);
+}
+
+.recipe-card__level {
+    margin-bottom: 8px;
+    font-size: 17px;
+    color: var(--moon-text);
+    text-shadow: 0 2px 12px var(--moon-shadow);
+}
+
+.recipe-card__row {
+    flex-direction: row;
+    align-items: center;
+    margin: 3px 0;
+}
+
+.recipe-card__word {
+    width: 72px;
+    font-size: 15px;
+    letter-spacing: 2px;
+    color: var(--moon-text);
+    text-shadow: 0 2px 12px var(--moon-shadow);
+}
+
+.recipe-card__line {
+    margin-top: 4px;
+    font-size: 16px;
+    color: var(--moon-cream);
+    white-space: normal;
+    text-shadow: 0 2px 12px var(--moon-shadow);
+}
+
+.recipe-card__where {
+    margin-top: 8px;
+    font-size: 16px;
+    color: var(--moon-warm-lamp);
+    white-space: normal;
+    text-shadow: 0 2px 12px var(--moon-shadow);
+}
+
+/*
+ * The protocol readout (M3-24 B): the same panel in 07's lens at the end of the opening, high on the left over the
+ * dark sky. Power, the first target, reads brightest with its first need under it; the others wait, quieter.
+ */
+
+.protocol-readout {
+    top: 16%;
+}
+
+.protocol-readout__title {
+    color: var(--moon-warm-lamp);
+}
+
+.protocol-readout__row {
+    opacity: 0.6;
+}
+
+.protocol-readout__row--first {
+    opacity: 1;
+}
+
+.protocol-readout__need {
+    margin: 0 0 6px 18px;
+    font-size: 18px;
+    color: var(--moon-warm-lamp);
+    text-shadow: 0 2px 12px var(--moon-shadow);
+}

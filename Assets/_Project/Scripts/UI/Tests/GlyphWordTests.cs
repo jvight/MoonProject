@@ -47,16 +47,14 @@ namespace MoonProject.UI.Tests
             Object.DestroyImmediate(_asset);
         }
 
-        [TestCase(RoverAction.Ping, InputDeviceKind.KeyboardMouse, "Space")]
         [TestCase(RoverAction.Excavate, InputDeviceKind.KeyboardMouse, "E")]
         [TestCase(RoverAction.Tether, InputDeviceKind.KeyboardMouse, "RMB")]
         [TestCase(RoverAction.Winch, InputDeviceKind.KeyboardMouse, "Scroll")]
-        [TestCase(RoverAction.Ping, InputDeviceKind.Gamepad, "A")]
         [TestCase(RoverAction.Excavate, InputDeviceKind.Gamepad, "X")]
         [TestCase(RoverAction.Tether, InputDeviceKind.Gamepad, "LT")]
         [TestCase(RoverAction.Winch, InputDeviceKind.Gamepad, "D-Pad")]
-        [TestCase(RoverAction.Jump, InputDeviceKind.KeyboardMouse, "Shift")]
-        [TestCase(RoverAction.Jump, InputDeviceKind.Gamepad, "RB")]
+        [TestCase(RoverAction.Jump, InputDeviceKind.KeyboardMouse, "Space")]
+        [TestCase(RoverAction.Jump, InputDeviceKind.Gamepad, "A")]
         public void English_Keycaps(RoverAction action, InputDeviceKind device, string expected)
         {
             Assert.AreEqual(expected, _glyphs.For(action, device));
@@ -76,9 +74,9 @@ namespace MoonProject.UI.Tests
             _localization.SetLanguage("vi");
             _glyphs.Clear();
             Assert.AreEqual("Chuột phải", _glyphs.For(RoverAction.Tether, InputDeviceKind.KeyboardMouse));
-            Assert.AreEqual("Phím cách", _glyphs.For(RoverAction.Ping, InputDeviceKind.KeyboardMouse));
+            Assert.AreEqual("Phím cách", _glyphs.For(RoverAction.Jump, InputDeviceKind.KeyboardMouse));
             Assert.AreEqual("E", _glyphs.For(RoverAction.Excavate, InputDeviceKind.KeyboardMouse), "letters stay");
-            Assert.AreEqual("A", _glyphs.For(RoverAction.Ping, InputDeviceKind.Gamepad), "face names stay");
+            Assert.AreEqual("A", _glyphs.For(RoverAction.Jump, InputDeviceKind.Gamepad), "face names stay");
         }
 
         [Test]

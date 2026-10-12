@@ -43,7 +43,7 @@ namespace MoonProject.Art.Editor
             switch (id)
             {
                 case "cassette_player":
-                    geometry = RelicMeshes.CassettePlayer();
+                    geometry = RoverDeckMeshes.Deck();
                     break;
                 case "rubber_duck":
                     geometry = RelicMeshes.RubberDuck();
@@ -70,7 +70,8 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
-        /// The relic's largest dimension in metres: a cassette player 0.25, a bath duck 0.2, the golden record 0.4,
+        /// The relic's largest dimension in metres: Ro's mixtape deck 0.27 (the tape deck later fitted on 07,
+        /// first-hour v2 §3), a bath duck 0.2, the golden record 0.4,
         /// a suit boot 0.4, a teapot 0.35, a garden gnome 0.5.
         /// </summary>
         public static float TrueSize(string id)
@@ -78,7 +79,7 @@ namespace MoonProject.Art.Editor
             switch (id)
             {
                 case "cassette_player":
-                    return 0.25f;
+                    return 0.27f;
                 case "rubber_duck":
                     return 0.2f;
                 case "golden_record":

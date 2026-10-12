@@ -44,7 +44,6 @@ MonoBehaviour:
   _mediumYield: 3
   _largeYield: 4
   _dragYield: 4
-  _trailYield: 1
   _dragClearance: 3
   _dragMass: 14
   _dragLinearDamping: 0.6
@@ -68,7 +67,6 @@ MonoBehaviour:
   _shudderAmplitude: 0.01
   _shudderSeconds: 0.15
   _shudderFrequency: 30
-  _magnetRadius: 5.5
   _flightDuration: 0.7
   _flightPerMetre: 0.06
   _flightLift: 0.9
@@ -78,9 +76,6 @@ MonoBehaviour:
   _arrivalScale: 0.3
   _minArrivalInterval: 0.12
   _chainWindow: 40
-  _trailSink: 0.3
-  _trailTilt: 12
-  _glanceRadius: 12
   _flashPoolSize: 4
   _flashDuration: 0.45
   _flashRadius: {x: 0.12, y: 0.5}

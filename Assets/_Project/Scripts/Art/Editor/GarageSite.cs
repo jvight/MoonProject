@@ -45,8 +45,9 @@ namespace MoonProject.Art.Editor
             SiteKit.Drift(b, new Vector3(1.3f, 0f, 5.7f), 2.6f, 2f, 0.7f, 30f, 63);
             SiteKit.Drift(b, new Vector3(-2.7f, 0f, -0.9f), 1.5f, 1f, 0.4f, 60f, 64);
 
-            // M3-16 P9: wiring its signature, every piece cut (the golden path never drags here): Wiring L, Wiring M,
-            // Metal L (the fallen roof), Metal M, Optics S = (7, 7, 2); the skylight stays as scenery.
+            // First-hour v2 §4: the garage is one trip, three rich seams round Kenji's port (Gameplay doubles their
+            // units): Metal L (the fallen roof), Wiring L (the charging post), Optics S (the spare headlamp)
+            // = (4, 4, 2); the rocker arm, the hanging coil and the skylight stay as scenery.
             FallenRoof(site);
             RockerArm(site);
             ChargingPost(site);
@@ -238,6 +239,7 @@ namespace MoonProject.Art.Editor
             b.Prism(At(boss, AlongX), 0.15f, 0.26f, 8, PaletteSwatch.Charcoal);
             b.Prism(At(low, AlongX), 0.17f, 0.2f, 8, PaletteSwatch.Metal);
             b.Prism(At(high, AlongX), 0.17f, 0.2f, 8, PaletteSwatch.Metal);
+            site.Settle(piece);
         }
 
         /// <summary>The charging post at the door: a sage head, a thick copper lead coiled on its hook.</summary>
@@ -297,6 +299,7 @@ namespace MoonProject.Art.Editor
             SiteKit.Cable(b, new[] { centre + new Vector3(0.2f, -0.25f, 0f), centre + new Vector3(0.3f, -0.8f, -0.1f) },
                 0.04f, PaletteSwatch.WarmAccent);
             piece.Resize(1.6f);
+            site.Settle(piece);
         }
 
         /// <summary>

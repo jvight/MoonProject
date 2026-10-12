@@ -10,7 +10,7 @@ namespace MoonProject.Gameplay
     /// <summary>
     /// 07's battery in the world (docs/features/M3-20, VISION ruling 15): each frame it measures what 07 did (metres
     /// on the ground and the slope under them, a tow, the boost, beam work), finds the charger 07 stands on (the dock,
-    /// or a lit relay mast's 4 m ring at walking pace) and steps <see cref="BatteryModel"/>, which other domains read
+    /// or a lit relay mast's 4 m ring, once stopped) and steps <see cref="BatteryModel"/>, which other domains read
     /// as
     /// <see cref="IRoverBattery"/>. Leaps are paid as they happen. While 07 crawls, new beam work sleeps. The Low
     /// warning raises the nearest charger's pillar (lit or dormant: a dormant mast's pillar is the "masts charge"
@@ -242,23 +242,19 @@ namespace MoonProject.Gameplay
                 OnCharger = charger != NoCharger,
                 Charger = charger == Dock ? ChargerKind.Dock : ChargerKind.Mast,
                 ChargerPosition = charger != NoCharger ? ChargerPosition(charger) : Vector3.zero,
+                Position = position,
                 NearestLitCharger = _nearestLit,
             };
         }
 
         /// <summary>
-        /// The charger 07 charges on now: the dock while docked, else a lit mast's ring at walking pace.
+        /// The charger 07 is on now: the dock while docked, else a lit mast's ring (the model waits for a stop).
         /// </summary>
         private int ChargerUnder(Vector3 position)
         {
             if (_docked)
             {
                 return Dock;
-            }
-
-            if (_rover.Speed > _tuning.RingMaxSpeed)
-            {
-                return NoCharger;
             }
 
             float ring = _tuning.RingRadius * _tuning.RingRadius;
