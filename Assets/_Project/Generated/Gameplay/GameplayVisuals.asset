@@ -40,3 +40,4 @@ MonoBehaviour:
   - {fileID: 1487543907107486613, guid: bcee7385b8b911344b262ebb5912cfe9, type: 3}
   - {fileID: 9012445354524032910, guid: 933e6346ec9a2db43a474ca1764a4a44, type: 3}
   _tube: {fileID: 6406814405049052317, guid: 05d82a220aa0cad4baaa68355080287b, type: 3}
+  _garagePort: {fileID: 7185882727046098272, guid: 1d34e56cd553dd5418963ef7e6f21fd2, type: 3}
