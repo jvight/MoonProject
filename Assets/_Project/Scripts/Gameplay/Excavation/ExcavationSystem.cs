@@ -248,7 +248,8 @@ namespace MoonProject.Gameplay
         {
             Vector3 hop = Vector3.up * _tuning.SurfaceHop + new Vector3(_rover.Velocity.x, 0f, _rover.Velocity.z);
             relic.Surface(hop, Vector3.up * (_tuning.SurfaceSpin * Mathf.Deg2Rad));
-            _events.Publish(new FeelBeat(FeelKind.Dig, FeelPhase.Follow, relic.transform.position, Vector3.up, 1f,
+            // The dig's only Follow is the relic's hop out, a first Follow (strength 0), not a fold.
+            _events.Publish(new FeelBeat(FeelKind.Dig, FeelPhase.Follow, relic.transform.position, Vector3.up, 0f,
                 0f));
             _lifting = null;
             _events.Publish(new ExcavationStopped(relic.Site.Position, true));
