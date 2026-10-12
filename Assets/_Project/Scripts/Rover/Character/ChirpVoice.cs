@@ -5,7 +5,8 @@ namespace MoonProject.Rover
 {
     /// <summary>
     /// Whether 07 may chirp now (docs/design/feel-pass.md §7.2): one chirp at a time, a global cooldown after any
-    /// chirp, and a cooldown per mood (shorter for Affirm). Plain logic; times are the caller's clock in seconds.
+    /// chirp but Affirm (a short acknowledgement that only keeps its own shorter cooldown, so an install's Proud
+    /// right after the seat's Affirm is never lost), and a cooldown per mood. Plain logic; times are the caller's clock in seconds.
     /// </summary>
     public sealed class ChirpVoice
     {
@@ -47,7 +48,11 @@ namespace MoonProject.Rover
                 return false;
             }
 
-            _last = now;
+            if (mood != ChirpMood.Affirm)
+            {
+                _last = now;
+            }
+
             _lastByMood[index] = now;
             _soundingUntil = now + _settings.PhraseSeconds;
             return true;

@@ -106,12 +106,25 @@ namespace MoonProject.Rover.Tests
         public void Cooldowns_Global6_PerMood30_Affirm3()
         {
             var voice = new ChirpVoice(_settings);
-            Assert.IsTrue(voice.TryChirp(ChirpMood.Affirm, 0f));
-            Assert.IsFalse(voice.TryChirp(ChirpMood.Happy, 5f), "Global cooldown.");
-            Assert.IsTrue(voice.TryChirp(ChirpMood.Happy, 6.5f));
-            Assert.IsTrue(voice.TryChirp(ChirpMood.Affirm, 13f), "Affirm's own cooldown is short.");
+            Assert.IsTrue(voice.TryChirp(ChirpMood.Happy, 0f));
+            Assert.IsFalse(voice.TryChirp(ChirpMood.Worried, 5f), "Global cooldown.");
+            Assert.IsFalse(voice.TryChirp(ChirpMood.Affirm, 5f), "Affirm respects others' cooldown too.");
+            Assert.IsTrue(voice.TryChirp(ChirpMood.Worried, 6.5f));
+            Assert.IsTrue(voice.TryChirp(ChirpMood.Affirm, 13f));
+            Assert.IsFalse(voice.TryChirp(ChirpMood.Affirm, 15f), "Affirm's own 3 s.");
             Assert.IsFalse(voice.TryChirp(ChirpMood.Happy, 20f), "Happy waits 30 s.");
             Assert.IsTrue(voice.TryChirp(ChirpMood.Happy, 37f));
+        }
+
+        [Test]
+        public void TheSeatsAffirm_NeverCostsThePowerOnsProud()
+        {
+            _events.Publish(new FeelBeat(FeelKind.Install, FeelPhase.Impact, Vector3.zero, Vector3.up, 1f, 0f));
+            _now += 2f;
+            _events.Publish(new FeelBeat(FeelKind.Install, FeelPhase.Reward, Vector3.zero, Vector3.up, 1f, 0f));
+            Assert.AreEqual(2, _chirps.Count);
+            Assert.AreEqual(ChirpMood.Affirm, _chirps[0].Mood);
+            Assert.AreEqual(ChirpMood.Proud, _chirps[1].Mood, "Proud 2 s after the seat still sounds.");
         }
 
         [Test]
