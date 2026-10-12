@@ -184,7 +184,7 @@ namespace MoonProject.Gameplay.Tests
             {
                 new PieceCutLine(1, new[] { Vector3.zero, Vector3.right }),
                 new PieceCutLine(2, new[] { Vector3.zero }),
-            }, new[] { new PieceSizeEntry(1, PieceSize.Large) });
+            }, new[] { new PieceSizeEntry(1, PieceSize.Large) }, new SupplyCrate("ro", SalvageMaterial.Metal, 6));
             Assert.IsTrue(entry.TryGetSize(1, out PieceSize size));
             Assert.AreEqual(PieceSize.Large, size);
             Assert.IsFalse(entry.TryGetSize(2, out _));

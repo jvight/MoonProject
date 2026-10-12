@@ -44,6 +44,18 @@ namespace MoonProject.Gameplay
         [Tooltip("The keepsake shelf's cubbies (Slot_0..n), in order.")]
         [SerializeField] private Transform[] _slots = Array.Empty<Transform>();
 
+        [Tooltip("The supply shelves under the belly ring (Lander/Shelves/Shelf_1..4), built-in ones first.")]
+        [SerializeField] private Transform[] _shelfRacks = Array.Empty<Transform>();
+
+        [Tooltip("Each supply shelf's rack lamp (Shelf_n/Lamp).")]
+        [SerializeField] private Renderer[] _shelfLamps = Array.Empty<Renderer>();
+
+        [Tooltip("Every supply shelf's crate seats, shelf by shelf, slot by slot (Slot_00/Stack_0..2, ...).")]
+        [SerializeField] private Transform[] _shelfSeats = Array.Empty<Transform>();
+
+        [Tooltip("Art's ShelfCrate_<Material> prefabs, by material value (empty where a material has none).")]
+        [SerializeField] private GameObject[] _shelfCrates = Array.Empty<GameObject>();
+
         [Tooltip("The lander's DockAnchor: where 07 rests on the charging dock (its pivot, facing the lander).")]
         [SerializeField] private Transform _dockAnchor;
 
@@ -142,6 +154,30 @@ namespace MoonProject.Gameplay
             _dockAnchor = dockAnchor;
             _dockGlow = dockGlow;
         }
+
+        /// <summary>The supply shelves (docs/features/M3-25 §3.1): racks, lamps, crate seats and crate prefabs.</summary>
+        internal void WireShelves(Transform[] racks, Renderer[] lamps, Transform[] seats, GameObject[] crates)
+        {
+            _shelfRacks = racks;
+            _shelfLamps = lamps;
+            _shelfSeats = seats;
+            _shelfCrates = crates;
+        }
+
+        /// <summary>The supply shelves' racks, built-in ones first.</summary>
+        public Transform[] ShelfRacks => _shelfRacks;
+
+        public Renderer[] ShelfLamps => _shelfLamps;
+
+        /// <summary>The crate seats of rack <paramref name="rack"/>, slot by slot.</summary>
+        public Transform[] ShelfSeats(int rack, int seatsPerRack)
+        {
+            var seats = new Transform[seatsPerRack];
+            Array.Copy(_shelfSeats, rack * seatsPerRack, seats, 0, seatsPerRack);
+            return seats;
+        }
+
+        public GameObject[] ShelfCrates => _shelfCrates;
 
         /// <summary>The dock lock's walls, their strips and the rim lamp rings (feel-pass §7.1).</summary>
         internal void WireDockLock(Transform[] walls, Renderer[] strips, Renderer[] rims)

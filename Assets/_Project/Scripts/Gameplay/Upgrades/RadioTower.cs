@@ -41,6 +41,12 @@ namespace MoonProject.Gameplay
         [Tooltip("Each stage's 'Lights' glow renderer, in order.")]
         [SerializeField] private Renderer[] _stageLights = Array.Empty<Renderer>();
 
+        [Tooltip("Each stage's upper light rings (Lights/Ring_1..3), stage by stage: they light bottom to top.")]
+        [SerializeField] private Renderer[] _ringLights = Array.Empty<Renderer>();
+
+        [Tooltip("Each stage's offline plaque lamp (OfflinePlaque/OfflineLamp), lit until the tower is repaired.")]
+        [SerializeField] private Renderer[] _offlineLamps = Array.Empty<Renderer>();
+
         [Tooltip("Each stage's BeaconSocket, in order.")]
         [SerializeField] private Transform[] _beaconSockets = Array.Empty<Transform>();
 
@@ -61,6 +67,8 @@ namespace MoonProject.Gameplay
         private TowerOnline _online;
         private IDisposable _purchases;
         private EmissionGlow[] _lights = Array.Empty<EmissionGlow>();
+        private EmissionGlow[] _rings = Array.Empty<EmissionGlow>();
+        private EmissionGlow[] _offline = Array.Empty<EmissionGlow>();
         private Quaternion[] _hatchRest = Array.Empty<Quaternion>();
         private Transform _beacon;
         private GlowRenderer _beaconGlow;
@@ -177,9 +185,11 @@ namespace MoonProject.Gameplay
         }
 
         internal void Wire(RadioTowerTuning tuning, UpgradeDefinition definition, Transform anchor,
-            GameObject[] stages, Renderer[] stageLights, Transform[] beaconSockets, Transform[] hopperMouths,
-            Transform[] hatches)
+            GameObject[] stages, Renderer[] stageLights, Renderer[] ringLights, Renderer[] offlineLamps,
+            Transform[] beaconSockets, Transform[] hopperMouths, Transform[] hatches)
         {
+            _ringLights = ringLights;
+            _offlineLamps = offlineLamps;
             _tuning = tuning;
             _definition = definition;
             _anchor = anchor;
@@ -217,11 +227,19 @@ namespace MoonProject.Gameplay
             _upgrades = upgrades;
             _materials = services.Materials;
             _lights = new EmissionGlow[_stageLights.Length];
+            _rings = new EmissionGlow[_ringLights.Length];
+            _offline = new EmissionGlow[_offlineLamps.Length];
             _hatchRest = new Quaternion[_hatches.Length];
             for (int i = 0; i < _lights.Length; i++)
             {
                 _lights[i] = new EmissionGlow(_stageLights[i]);
+                _offline[i] = new EmissionGlow(_offlineLamps[i]);
                 _hatchRest[i] = _hatches[i].localRotation;
+            }
+
+            for (int i = 0; i < _rings.Length; i++)
+            {
+                _rings[i] = new EmissionGlow(_ringLights[i]);
             }
 
             BuildBeacon(services);
@@ -250,6 +268,10 @@ namespace MoonProject.Gameplay
                 : upgrades == null || upgrades.Find(_definition.Id) == null
                     ? $"'{_definition.Id}' is not one of the GameplaySystem's upgrades."
                 : _anchor == null ? "the tower anchor is not assigned."
+                : _ringLights.Length != _stages.Length * (TowerOnline.Rings - 1) ||
+                  _offlineLamps.Length != _stages.Length || Array.IndexOf(_ringLights, null) >= 0 ||
+                  Array.IndexOf(_offlineLamps, null) >= 0
+                    ? "each stage needs its light rings (Lights/Ring_1..3) and its offline plaque lamp."
                 : _stages.Length == 0 || _stages.Length != _stageLights.Length ||
                   _stages.Length != _beaconSockets.Length || _stages.Length != _hopperMouths.Length ||
                   _stages.Length != _hatches.Length
@@ -510,11 +532,25 @@ namespace MoonProject.Gameplay
             float unit = Mathf.Max(0.01f, _tuning.BeaconGlowAt(1));
             _beaconLight.intensity = _tuning.BeaconLightIntensity * glow / unit;
             _beaconLight.enabled = glow > GlowRenderer.VisibleThreshold;
-            // While the tower comes online its lamps climb with the Acts, ring by ring.
-            float lights = ShownLevel <= 0 ? _tuning.UnpoweredGlow
-                : _online.Running ? Mathf.Lerp(_tuning.UnpoweredGlow, _tuning.PoweredGlow, _online.Climb)
-                : _tuning.PoweredGlow;
-            _lights[stage].Apply(lights + flare);
+            // While the tower comes online its lamps climb with the Acts, ring by ring from the bottom (feel-pass
+            // §8.2); offline, its plaque lamp says so.
+            _lights[stage].Apply(RingGlow(0) + flare);
+            for (int ring = 1; ring < TowerOnline.Rings; ring++)
+            {
+                _rings[stage * (TowerOnline.Rings - 1) + ring - 1].Apply(RingGlow(ring) + flare);
+            }
+
+            for (int i = 0; i < _offline.Length; i++)
+            {
+                _offline[i].Apply(i == stage && ShownLevel <= 0 ? _tuning.OfflineLampGlow : 0f);
+            }
+        }
+
+        /// <summary>Ring <paramref name="ring"/>'s glow: lit once power has climbed to it.</summary>
+        private float RingGlow(int ring)
+        {
+            bool lit = ShownLevel > 0 && (!_online.Running || _online.Climb >= (ring + 1f) / TowerOnline.Rings);
+            return lit ? _tuning.PoweredGlow : _tuning.UnpoweredGlow;
         }
 
         private void UpdateBloom(float now)

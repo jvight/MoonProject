@@ -37,9 +37,13 @@ namespace MoonProject.Gameplay
                  "pieces, biggest to biggest.")]
         [SerializeField] private PieceSizeEntry[] _sizes = Array.Empty<PieceSizeEntry>();
 
+        [Tooltip("The crew supply crate beside its heart (docs/features/M3-25 T4): whose hand and what stack.")]
+        [SerializeField] private SupplyCrate _crate;
+
         public SalvageSiteEntry(string anchorId, GameObject prefab, AbilityGate gate, bool heartUnderPieces,
-            int yieldScale, PieceCutLine[] cutLines, PieceSizeEntry[] sizes)
+            int yieldScale, PieceCutLine[] cutLines, PieceSizeEntry[] sizes, SupplyCrate crate)
         {
+            _crate = crate;
             _sizes = sizes ?? throw new ArgumentNullException(nameof(sizes));
             _anchorId = anchorId;
             _prefab = prefab;
@@ -59,6 +63,8 @@ namespace MoonProject.Gameplay
         public bool HeartUnderPieces => _heartUnderPieces;
 
         public int YieldScale => _yieldScale;
+
+        public SupplyCrate Crate => _crate;
 
         /// <summary>The seam of piece <paramref name="number"/>, if the entry has a valid one.</summary>
         public bool TryGetCutLine(int number, out Vector3[] points)

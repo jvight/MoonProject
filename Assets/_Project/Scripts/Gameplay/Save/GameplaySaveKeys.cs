@@ -10,6 +10,10 @@ namespace MoonProject.Gameplay
         public const string Materials = "gameplay.wallet";
         public const int MaterialsVersion = 3;
 
+        /// <summary>The crew supply crates already cut open (docs/features/M3-25 T4).</summary>
+        public const string Crates = "gameplay.crates";
+        public const int CratesVersion = 1;
+
         public const string Relics = "gameplay.relics";
         public const int RelicsVersion = 1;
 

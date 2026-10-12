@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using UnityEngine;
 using MoonProject.Art.Editor;
 using MoonProject.Core;
@@ -138,6 +139,8 @@ namespace MoonProject.Gameplay.Editor
             Transform towerAnchor = Child(lander, "TowerAnchor");
             var stages = new GameObject[TowerStages];
             var stageLights = new Renderer[TowerStages];
+            var ringLights = new Renderer[TowerStages * (TowerOnline.Rings - 1)];
+            var offlineLamps = new Renderer[TowerStages];
             var beacons = new Transform[TowerStages];
             var hoppers = new Transform[TowerStages];
             var hatches = new Transform[TowerStages];
@@ -146,6 +149,15 @@ namespace MoonProject.Gameplay.Editor
                 stages[i] = context.InstantiatePrefab(GameplayAssetPaths.RadioTowerStage(i + 1), towerAnchor);
                 MakeSolid(stages[i].transform);
                 stageLights[i] = Glow(stages[i].transform);
+                Transform lights = Child(stages[i].transform, BaseModelBuilder.TowerLightsName);
+                for (int ring = 1; ring < TowerOnline.Rings; ring++)
+                {
+                    ringLights[i * (TowerOnline.Rings - 1) + ring - 1] = Renderer(Child(lights,
+                        BaseModelBuilder.TowerLightRingPrefix + ring.ToString(CultureInfo.InvariantCulture)));
+                }
+
+                offlineLamps[i] = Renderer(Child(Child(stages[i].transform, BaseModelBuilder.OfflinePlaqueName),
+                    BaseModelBuilder.OfflineLampName));
                 beacons[i] = Child(stages[i].transform, "BeaconSocket");
                 hoppers[i] = Child(stages[i].transform, "HopperMouth");
                 hatches[i] = Child(stages[i].transform, "ServiceHatch");
@@ -192,7 +204,9 @@ namespace MoonProject.Gameplay.Editor
                 Children(lander, "LampSocket_", LampSockets), keepsakes, Cubbies(keepsakes, relicCatalog),
                 Child(lander, "DockAnchor"), Renderer(Child(lander, "DockGlow")));
             WireDockLock(home, Child(lander, "DockGlow"));
-            tower.Wire(towerTuning, radioTower, towerAnchor, stages, stageLights, beacons, hoppers, hatches);
+            WireShelves(context, home, Child(lander, BaseModelBuilder.ShelvesName), cargoTuning);
+            tower.Wire(towerTuning, radioTower, towerAnchor, stages, stageLights, ringLights, offlineLamps, beacons,
+                hoppers, hatches);
             workshop.Wire(workshopTuning, benchKit, bay, Child(bay, "Turntable"), Child(bay, "HopperMouth"), bayLamps,
                 Renderer(Child(bay, "BaySign")), weldSockets);
             workshop.WireArms(armYaws, armUppers, armLowers, armTips, floorLift, Child(floorLift, "FloorTip"));
@@ -472,6 +486,54 @@ namespace MoonProject.Gameplay.Editor
             }
 
             home.WireDockLock(walls, strips, rims);
+        }
+
+        /// <summary>
+        /// Home's supply shelves (docs/features/M3-25 §3.1): Art's Lander/Shelves/Shelf_1..n with their lamps and
+        /// Slot_00../Stack_0.. seats, and a ShelfCrate_&lt;Material&gt; per material Art makes one for.
+        /// </summary>
+        private static void WireShelves(SceneBuildContext context, HomeBase home, Transform shelves,
+            CargoTuning cargo)
+        {
+            int count = cargo.BuiltInShelves + cargo.ShelfSockets;
+            if (count != BaseModelBuilder.ShelfCount || cargo.ShelfSlots != BaseModelBuilder.ShelfSlots ||
+                HomeShelves.Seats != BaseModelBuilder.ShelfStackHeight)
+            {
+                throw new InvalidOperationException(
+                    $"Gameplay scene build: CargoTuning's {count} shelves of {cargo.ShelfSlots} slots " +
+                    $"({HomeShelves.Seats} crates high) do not match Art's {BaseModelBuilder.ShelfCount} of " +
+                    $"{BaseModelBuilder.ShelfSlots} ({BaseModelBuilder.ShelfStackHeight} high).");
+            }
+
+            var racks = new Transform[count];
+            var lamps = new Renderer[count];
+            var seats = new Transform[count * cargo.ShelfSlots * HomeShelves.Seats];
+            for (int i = 0; i < count; i++)
+            {
+                racks[i] = Child(shelves,
+                    BaseModelBuilder.ShelfPrefix + (i + 1).ToString(CultureInfo.InvariantCulture));
+                lamps[i] = Renderer(Child(racks[i], BaseModelBuilder.ShelfLampName));
+                for (int s = 0; s < cargo.ShelfSlots; s++)
+                {
+                    Transform slot = Child(racks[i],
+                        BaseModelBuilder.ShelfSlotPrefix + s.ToString("00", CultureInfo.InvariantCulture));
+                    for (int k = 0; k < HomeShelves.Seats; k++)
+                    {
+                        seats[(i * cargo.ShelfSlots + s) * HomeShelves.Seats + k] = Child(slot,
+                            BaseModelBuilder.ShelfStackPrefix + k.ToString(CultureInfo.InvariantCulture));
+                    }
+                }
+            }
+
+            var crates = new GameObject[SalvageMaterials.Count];
+            foreach (string material in BaseModelBuilder.ShelfMaterials)
+            {
+                var value = (SalvageMaterial)Enum.Parse(typeof(SalvageMaterial), material);
+                crates[(int)value] = context.LoadAsset<GameObject>(GameplayAssetPaths.ArtBaseFolder + "/" +
+                    BaseModelBuilder.ShelfCratePrefix + material + ".prefab");
+            }
+
+            home.WireShelves(racks, lamps, seats, crates);
         }
 
         private static Transform[] Children(Transform parent, string prefix, int count)

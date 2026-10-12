@@ -64,12 +64,6 @@ namespace MoonProject.Gameplay.Editor
             };
         }
 
-        /// <summary>
-        /// The supply shelves built on the belly ring's free sockets, in socket order (M3-25 §3.1): shelf 3, then
-        /// shelf 4, almost all metal.
-        /// </summary>
-        public static IReadOnlyList<Recipe> Shelves { get; } = new[] { new Recipe(3, 0, 0), new Recipe(4, 1, 0) };
-
         /// <summary>The salvage sites in catalog order (Art's Site_&lt;name&gt; on site.&lt;name&gt;).</summary>
         public static IReadOnlyList<string> SiteNames { get; } = new[]
         {

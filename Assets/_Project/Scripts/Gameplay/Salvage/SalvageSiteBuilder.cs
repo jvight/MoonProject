@@ -20,6 +20,9 @@ namespace MoonProject.Gameplay
         private const string HaloName = "Halo";
         private const string LandmarkName = "Landmark";
         private const string LandmarkPilotName = "LandmarkPilot";
+        private const string CrateName = "CrewCrate";
+        private const string LidName = "Lid";
+        private const string SealName = "Seal";
 
         /// <summary>
         /// Builds the site under <paramref name="parent"/> and adds its pieces and drag bodies to the lists. Null when
@@ -52,6 +55,18 @@ namespace MoonProject.Gameplay
 
             var built = new SalvageSite(index, entry.AnchorId, root, anchor.Radius, heart.position, entry.Gate,
                 new ComboCounter(tuning.ChainWindow), entry.HeartUnderPieces);
+            Transform crate = Child(root, CrateName);
+            Transform lid = crate != null ? Child(crate, LidName) : null;
+            Transform cut = lid != null ? Child(lid, CutPointName) : null;
+            Transform seal = lid != null ? Child(lid, SealName) : null;
+            Renderer sealGlow = seal != null ? seal.GetComponent<Renderer>() : null;
+            if (cut == null || sealGlow == null)
+            {
+                return $"the prefab has no '{CrateName}/{LidName}' with its '{CutPointName}' and '{SealName}' glow " +
+                       "(the crew's supply crate, M3-25 T4)";
+            }
+
+            built.Crate = new CrewCrate(built, entry.Crate, crate, lid, cut, sealGlow);
             Transform landmark = Child(root, LandmarkName);
             if (landmark != null)
             {

@@ -264,7 +264,8 @@ namespace MoonProject.Gameplay.Editor
                 GameObject prefab = LoadArt(GameplayAssetPaths.SitePrefab(names[i]));
                 sites[i] = new SalvageSiteEntry(SalvageEconomy.SiteId(names[i]), prefab, gate,
                     names[i] == SalvageEconomy.HeartUnderPiecesSite, SalvageEconomy.YieldScale(names[i]),
-                    SalvageCutLines.Across(prefab), SalvageSizes.Deal(prefab, SalvageEconomy.PieceClasses(names[i])));
+                    SalvageCutLines.Across(prefab), SalvageSizes.Deal(prefab, SalvageEconomy.PieceClasses(names[i])),
+                    SalvageEconomy.Crate(names[i]));
             }
 
             var catalog = ScriptableObject.CreateInstance<SalvageCatalog>();

@@ -29,6 +29,24 @@ namespace MoonProject.Gameplay
         [Tooltip("Free sockets round the belly ring where more shelves can be built.")]
         [Range(0, 4)] [SerializeField] private int _shelfSockets = 2;
 
+        [Tooltip("What each free socket's shelf takes, in socket order (M3-25 §3.1: shelf 3, then shelf 4).")]
+        [SerializeField] private Recipe[] _shelfCosts = { new Recipe(3, 0, 0), new Recipe(4, 1, 0) };
+
+        [Tooltip("Metres from a free socket within which 07 can build its shelf.")]
+        [Range(1f, 6f)] [SerializeField] private float _socketRadius = 2.5f;
+
+        [Tooltip("Seconds 07 holds E at a socket to build its shelf.")]
+        [Range(0.3f, 4f)] [SerializeField] private float _buildHoldSeconds = 1.5f;
+
+        [Tooltip("Seconds a new shelf takes to unfold from its crate.")]
+        [Range(0.3f, 4f)] [SerializeField] private float _unfoldSeconds = 1.2f;
+
+        [Tooltip("Crates a full slot shows, stacked (fewer as it empties).")]
+        [Range(1, 3)] [SerializeField] private int _cratesPerSlot = 3;
+
+        [Tooltip("Glow of a built shelf's rack lamp once the tower powers home.")]
+        [Range(0f, 4f)] [SerializeField] private float _rackLampGlow = 1f;
+
         [Header("Unloading at the dock (§3.2)")]
         [Tooltip("Seconds from the dock locking to the hatch opening and the first crate moving.")]
         [Range(0.1f, 2f)] [SerializeField] private float _unloadLeadSeconds = 0.5f;
@@ -74,12 +92,44 @@ namespace MoonProject.Gameplay
         [Tooltip("Metres over the ground Tilly flies while fetching.")]
         [Range(1f, 10f)] [SerializeField] private float _fetchHeight = 4f;
 
+        [Header("The crew's supply crates (T4)")]
+        [Tooltip("How big the crate's one cut is (its seal): a short, snappy cut.")]
+        [SerializeField] private PieceSize _crateCut = PieceSize.Small;
+
+        [Tooltip("Metres the lid lifts once the seal is cut.")]
+        [Range(0f, 1f)] [SerializeField] private float _lidLift = 0.3f;
+
+        [Tooltip("Degrees the lid tips back as it lifts.")]
+        [Range(0f, 90f)] [SerializeField] private float _lidTilt = 35f;
+
+        [Tooltip("Seconds the lid takes to lift.")]
+        [Range(0.2f, 3f)] [SerializeField] private float _lidSeconds = 0.8f;
+
+        [Tooltip("Glow of a sealed crate's seam (dark once cut).")]
+        [Range(0f, 4f)] [SerializeField] private float _sealGlow = 1f;
+
+        public PieceSize CrateCut => _crateCut;
+        public float LidLift => _lidLift;
+        public float LidTilt => _lidTilt;
+        public float LidSeconds => _lidSeconds;
+        public float SealGlow => _sealGlow;
         public int HoldSlots => _holdSlots;
         public int CradleSlots => _cradleSlots;
         public int SideBinSlots => _sideBinSlots;
         public int ShelfSlots => _shelfSlots;
         public int BuiltInShelves => _builtInShelves;
         public int ShelfSockets => _shelfSockets;
+        public float SocketRadius => _socketRadius;
+        public float BuildHoldSeconds => _buildHoldSeconds;
+        public float UnfoldSeconds => _unfoldSeconds;
+        public int CratesPerSlot => _cratesPerSlot;
+        public float RackLampGlow => _rackLampGlow;
+
+        /// <summary>What free socket <paramref name="socket"/>'s shelf takes (0 = the first free socket).</summary>
+        public Recipe ShelfCost(int socket)
+        {
+            return _shelfCosts[Mathf.Clamp(socket, 0, _shelfCosts.Length - 1)];
+        }
         public float UnloadLeadSeconds => _unloadLeadSeconds;
         public float UnloadStepSeconds => _unloadStepSeconds;
         public float BundleSettleDistance => _bundleSettleDistance;
