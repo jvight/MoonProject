@@ -47,6 +47,10 @@
             "text": "07"
         },
         {
+            "key": "ui.battery.power",
+            "text": "pin"
+        },
+        {
             "key": "ui.hint.look_up",
             "text": "Ngước nhìn lên"
         },

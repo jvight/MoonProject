@@ -262,12 +262,21 @@ Label {
 }
 
 .materials-chip .material-icon {
-    width: 24px;
-    height: 24px;
+    width: 22px;
+    height: 22px;
 }
 
 .materials-chip .material-slot__count {
-    font-size: 22px;
+    margin-left: 0;
+    font-size: 20px;
+    color: var(--glass-hi);
+    -unity-text-align: middle-center;
+}
+
+.materials-chip .material-slot__glow {
+    left: 25px;
+    top: 10px;
+    margin-top: 0;
 }
 
 /* A recipe, one row per material (docs/design/first-hour-v2 6.5): icon, name, have / need. A met need is cream; a
@@ -507,38 +516,49 @@ Label {
 
 /* 07's cells (docs/design/first-hour-v2 6.4): a small row of pills on a glass plate, top left, one pill per cell */
 
-.cell-row {
+/*
+ * The dial cluster at the bottom left (Moonlight Glass, like Subnautica's vitals): the big battery dial, and the
+ * materials as three small glass dials around its lower left (see .materials-chip). Both share one 242x211 box.
+ */
+.battery-dial {
     position: absolute;
-    left: 0;
-    top: 0;
+    left: 100px;
+    bottom: 69px;
+    width: 142px;
+    height: 142px;
 }
 
-.cell-row__plate {
-    flex-direction: row;
+.battery-dial__face {
+    flex-grow: 1;
+    justify-content: center;
     align-items: center;
-    padding: 9px 12px;
-    border-radius: 16px;
-    border-width: 1px;
-    border-color: var(--moon-glass-edge);
-    background-color: var(--moon-plate);
+    background-image: url("project://database/Assets/_Project/Generated/UI/Glass/GlassDial.png");
 }
 
-.cell-row__pill {
-    width: 14px;
-    height: 30px;
-    margin: 0 3px;
-    border-radius: 7px;
-    border-width: 2px;
+.battery-dial__ring {
+    position: absolute;
+    left: 13px;
+    top: 13px;
+    right: 13px;
+    bottom: 13px;
+    --track-color: var(--moon-track);
+    --fill-color: var(--glass-ring);
+    --low-color: var(--glass-sel);
+    --ring-width: 7;
 }
 
-.cell-row__pill--full {
-    border-color: var(--moon-warm-lamp);
-    background-color: var(--moon-warm-lamp);
+.battery-dial__value {
+    font-size: 38px;
+    color: var(--glass-hi);
+    -unity-text-align: middle-center;
 }
 
-.cell-row__pill--empty {
-    border-color: var(--moon-text-faint);
-    background-color: rgba(0, 0, 0, 0);
+.battery-dial__word {
+    margin-top: -4px;
+    font-size: 18px;
+    letter-spacing: 2px;
+    color: var(--moon-text-dim);
+    -unity-text-align: middle-center;
 }
 
 /* Every line sits on a glass plate (docs/design/first-hour-v2 6.2): the next line, the ticker, a place's card */
@@ -685,16 +705,51 @@ Label {
     background-color: var(--moon-warm-lamp);
 }
 
-/* Materials chip: the stock, drifting in only when it changes */
+/* Materials: three small glass dials around the battery dial's lower left, drifting in only when the stock changes */
 
 .materials-chip {
     position: absolute;
-    top: 0;
-    right: 0;
+    left: 0;
+    bottom: 0;
+    width: 242px;
+    height: 211px;
 }
 
 .materials-chip__body {
-    padding: 8px 12px 8px 8px;
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    padding: 0;
+    border-width: 0;
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.materials-chip .material-slot {
+    position: absolute;
+    width: 66px;
+    height: 66px;
+    margin: 0;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-image: url("project://database/Assets/_Project/Generated/UI/Glass/GlassBubble.png");
+}
+
+.materials-chip .material-slot--metal {
+    left: 0;
+    bottom: 138px;
+}
+
+.materials-chip .material-slot--wiring {
+    left: 25px;
+    bottom: 63px;
+}
+
+.materials-chip .material-slot--optics {
+    left: 88px;
+    bottom: 6px;
 }
 
 /* Salvage: the hold ring centred on a piece's cut point, and a site's name over it */

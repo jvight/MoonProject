@@ -73,7 +73,7 @@ namespace MoonProject.UI
         private LookUpChip _lookUpChip;
         private NextStepLine _nextStep;
         private NextLineView _nextLine;
-        private CellRow _cellRow;
+        private BatteryDial _batteryDial;
         private bool _cellRowRevealed;
         private PlaceCard _placeCard;
         private SaveTick _saveTick;
@@ -167,7 +167,7 @@ namespace MoonProject.UI
 
         internal NextLineView NextLine => _nextLine;
 
-        internal CellRow CellRow => _cellRow;
+        internal BatteryDial BatteryDial => _batteryDial;
 
         internal VerbList Verbs => _verbs;
 
@@ -394,7 +394,7 @@ namespace MoonProject.UI
             _lookUpChip = new LookUpChip(_layout, _tuning.Stargaze, _localization);
             _nextStep = new NextStepLine(_tuning.Guidance);
             _nextLine = new NextLineView(_layout, _tuning.Guidance, _localization);
-            _cellRow = new CellRow(_layout, _tuning.Battery, services.Battery, services.Beam);
+            _batteryDial = new BatteryDial(_layout, _tuning.Battery, services.Battery, services.Beam);
             _saveTick = new SaveTick(_layout, _tuning.SaveTick);
             _placeCard = new PlaceCard(_layout, _tuning.Guidance, _localization, services.Events);
             _reticle = new TetherReticle(_layout.Reticle, _layout.ReticleRest, _layout.ReticleHover, _tuning.Reticle);
@@ -574,7 +574,7 @@ namespace MoonProject.UI
             _nextLine.Tick(deltaTime, _nextStep, !paused && _awake && !_card.IsVisible &&
                                                  !_tower.IsVisible && !_stargaze.IsVeiled &&
                                                  !_placeCard.IsVisible);
-            _cellRow.Tick(deltaTime, _cellRowRevealed, !paused && _awake && !_stargaze.IsVeiled && !onMap);
+            _batteryDial.Tick(deltaTime, _cellRowRevealed, !paused && _awake && !_stargaze.IsVeiled && !onMap);
         }
 
         /// <summary>The cell row exists from the first time the charge dropped below its reveal share.</summary>

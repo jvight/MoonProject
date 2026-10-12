@@ -147,7 +147,7 @@ namespace MoonProject.UI.PlayModeTests
                 yield return Seconds(Settle);
                 yield return Check(shape, "hud", (label, found) =>
                 {
-                    ScreenFit.CheckApart(layout.CellRow, layout.NextLine, label, found);
+                    ScreenFit.CheckApart(layout.BatteryDial, layout.NextLine, label, found);
                     ScreenFit.CheckApart(layout.NextLine, layout.Ticker, label, found);
                     ScreenFit.CheckApart(layout.Ticker, layout.MaterialsChip, label, found);
                 });

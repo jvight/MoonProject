@@ -72,8 +72,12 @@
                         <ui:VisualElement name="kit-title-rule" class="kit-title__rule" picking-mode="Ignore" />
                     </ui:VisualElement>
                 </ui:VisualElement>
-                <ui:VisualElement name="cell-row" class="cell-row" picking-mode="Ignore">
-                    <ui:VisualElement name="cell-row-plate" class="cell-row__plate" picking-mode="Ignore" />
+                <ui:VisualElement name="battery-dial" class="battery-dial" picking-mode="Ignore">
+                    <ui:VisualElement name="battery-dial-face" class="battery-dial__face" picking-mode="Ignore">
+                        <ui:VisualElement name="battery-dial-ring" class="battery-dial__ring" picking-mode="Ignore" />
+                        <ui:Label name="battery-dial-value" class="battery-dial__value" picking-mode="Ignore" />
+                        <ui:Label class="battery-dial__word loc" text="ui.battery.power" picking-mode="Ignore" />
+                    </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:VisualElement class="next-line" picking-mode="Ignore">
                     <ui:VisualElement name="next-line" class="name-tag" picking-mode="Ignore">

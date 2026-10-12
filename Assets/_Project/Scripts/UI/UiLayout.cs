@@ -18,8 +18,10 @@ namespace MoonProject.UI
             LabHud = Require<VisualElement>("lab-hud");
 
             NextLine = Require<VisualElement>("next-line");
-            CellRow = Require<VisualElement>("cell-row");
-            CellRowPlate = Require<VisualElement>("cell-row-plate");
+            BatteryDial = Require<VisualElement>("battery-dial");
+            BatteryDialFace = Require<VisualElement>("battery-dial-face");
+            BatteryDialRing = Require<VisualElement>("battery-dial-ring");
+            BatteryDialValue = Require<Label>("battery-dial-value");
             NextLineShadow = Require<VisualElement>("next-line-shadow");
             NextLineText = Require<Label>("next-line-text");
             PlaceCard = Require<VisualElement>("place-card");
@@ -189,11 +191,14 @@ namespace MoonProject.UI
 
         public VisualElement NextLine { get; }
 
-        /// <summary>07's cells, a row of pills at the top left (docs/design/first-hour-v2 6.4).</summary>
-        public VisualElement CellRow { get; }
+        /// <summary>The battery dial at the bottom left: its glass face, the cells' ring and the percentage.</summary>
+        public VisualElement BatteryDial { get; }
 
-        /// <summary>The row's glass plate: the pills are built into it, and it dims while the beam works.</summary>
-        public VisualElement CellRowPlate { get; }
+        public VisualElement BatteryDialFace { get; }
+
+        public VisualElement BatteryDialRing { get; }
+
+        public Label BatteryDialValue { get; }
 
         public VisualElement NextLineShadow { get; }
 

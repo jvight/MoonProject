@@ -102,7 +102,7 @@ namespace MoonProject.UI.PlayModeTests
                 yield return ShapeShot(camera, folder, shape, "hud", problems,
                     () => fakes.SetMaterials(gain, gain + 1, gain + 2), (shot, found) =>
                     {
-                        ScreenFit.CheckApart(layout.CellRow, layout.NextLine, shot, found);
+                        ScreenFit.CheckApart(layout.BatteryDial, layout.NextLine, shot, found);
                         ScreenFit.CheckApart(layout.NextLine, layout.MaterialsChip, shot, found);
                     });
             }
@@ -133,7 +133,7 @@ namespace MoonProject.UI.PlayModeTests
                 yield return ShapeShot(camera, folder, shape, "ticker", problems,
                     () => context.Events.Publish(new TickerLine(UiTestRig.HomeLine)), (shot, found) =>
                     {
-                        ScreenFit.CheckApart(layout.CellRow, layout.NextLine, shot, found);
+                        ScreenFit.CheckApart(layout.BatteryDial, layout.NextLine, shot, found);
                         ScreenFit.CheckApart(layout.NextLine, layout.Ticker, shot, found);
                     });
             }
