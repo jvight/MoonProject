@@ -101,10 +101,10 @@ namespace MoonProject.Gameplay
             _frame = frame;
         }
 
-        /// <summary>The name key of a part for the prompt's noun (built once, never per frame).</summary>
+        /// <summary>The name key of a part for the prompt's noun, lower-case (built once, never per frame).</summary>
         public static string NounKey(string partId)
         {
-            return NounPrefix + partId;
+            return NounPrefix + partId.ToLowerInvariant();
         }
 
         /// <summary>The part leaves the ground for 07's back: the pickup's Act at the part, lasting its flight.</summary>

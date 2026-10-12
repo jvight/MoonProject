@@ -566,6 +566,60 @@
       "notes": "07's machine voice, greeting (feel-pass 7.2); syllables in chirp_syllables.json."
     },
     {
+      "id": "pickup_lift",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/pickup_lift.wav"
+      ],
+      "variantLabels": [
+        "pickup_lift"
+      ],
+      "sha256": [
+        "9b81ec46190ca9fc929f77af249f3f6364cf71669e02ded9293deba3b43e3789"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "07 lifting a part (Collect Act): a soft servo whirr rising A2 -> D3."
+    },
+    {
+      "id": "pickup_clunk",
+      "category": "tick_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/pickup_clunk.wav"
+      ],
+      "variantLabels": [
+        "pickup_clunk"
+      ],
+      "sha256": [
+        "7df32384f21b3f4877a03c67e5f53c43ea9b5887cc9d420807204fb16c060f9b"
+      ],
+      "volumeMin": 0.8,
+      "volumeMax": 0.8,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -26.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "The part seating on 07's back (Collect Impact): a solid little clunk on D."
+    },
+    {
       "id": "tower_hum_rise",
       "category": "oneshot_3d",
       "milestone": "M3",

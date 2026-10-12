@@ -139,15 +139,15 @@
             "text": "Nhặt"
         },
         {
-            "key": "pickup.Part_TowerCoil",
+            "key": "pickup.part_towercoil",
             "text": "cuộn dây tháp"
         },
         {
-            "key": "pickup.Part_Transformer",
+            "key": "pickup.part_transformer",
             "text": "bộ biến áp"
         },
         {
-            "key": "pickup.Part_RelaySpare",
+            "key": "pickup.part_relayspare",
             "text": "linh kiện trạm tiếp sóng"
         },
         {

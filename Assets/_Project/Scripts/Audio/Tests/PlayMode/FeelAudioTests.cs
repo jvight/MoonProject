@@ -103,6 +103,18 @@ namespace MoonProject.Audio.PlayModeTests
         }
 
         [Test]
+        public void APart_LiftsThenClunks_AndTheBundlesRewardStaysTheMelodys()
+        {
+            Beat(FeelKind.Collect, FeelPhase.Act);
+            Assert.AreEqual("pickup_lift", LastClip);
+            Beat(FeelKind.Collect, FeelPhase.Impact);
+            Assert.AreEqual("pickup_clunk", LastClip);
+            int plays = _rig.Director.PlayCount;
+            Beat(FeelKind.Collect, FeelPhase.Reward);
+            Assert.AreEqual(plays, _rig.Director.PlayCount, "FeelAudio adds nothing to the bundle's reward");
+        }
+
+        [Test]
         public void SavesInABurst_TickOnce()
         {
             int plays = _rig.Director.PlayCount;

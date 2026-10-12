@@ -313,8 +313,10 @@ namespace MoonProject.Core.Events
     /// </summary>
     public readonly struct MaterialSalvaged
     {
-        public MaterialSalvaged(SalvageMaterial material, int amount, Vector3 position, string siteId, int comboStep)
+        public MaterialSalvaged(SalvageMaterial material, int amount, Vector3 position, string siteId, int comboStep,
+            MaterialSource source = MaterialSource.Cut)
         {
+            Source = source;
             Material = material;
             Amount = amount;
             Position = position;
@@ -333,6 +335,9 @@ namespace MoonProject.Core.Events
 
         /// <summary>0 for the first piece in a chain, then 1, 2, ... (resets after a pause).</summary>
         public int ComboStep { get; }
+
+        /// <summary>How it was gained (M3-27): a cut, a dig, a drill, refining or a crew crate.</summary>
+        public MaterialSource Source { get; }
     }
 
     /// <summary>07's material stock changed (salvage, a craft, load). Carries the new totals.</summary>
