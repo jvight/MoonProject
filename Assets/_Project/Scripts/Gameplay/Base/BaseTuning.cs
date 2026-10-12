@@ -142,7 +142,7 @@ namespace MoonProject.Gameplay
         [Range(0.1f, 2f)] [SerializeField] private float _fullSweepSeconds = 0.7f;
 
         [Tooltip("Glow of a wall's strip where its cells are charged.")]
-        [Range(0f, 4f)] [SerializeField] private float _stripLit = 2.4f;
+        [Range(0f, 4f)] [SerializeField] private float _stripLit = 3.2f;
 
         [Tooltip("Glow of a raised wall's strip where its cells are not charged yet.")]
         [Range(0f, 1f)] [SerializeField] private float _stripUnlit = 0.12f;

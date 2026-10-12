@@ -15,8 +15,6 @@ namespace MoonProject.Gameplay
     /// </summary>
     public sealed class ChargingDock : IDisposable
     {
-        /// <summary>Wall index (0 front, 1 right, 2 back, 3 left) whose band lights first.</summary>
-        private const int RingStart = 2;
 
         private readonly Transform _anchor;
         private readonly EmissionGlow _glow;
@@ -143,6 +141,18 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
+        /// How lit segment <paramref name="segment"/> of a wall's band is at ring fill <paramref name="fill"/>: the
+        /// centre segment fills first, then the side ones together, so the light grows outward from the middle.
+        /// </summary>
+        private static float SegmentFill(int segment, float fill)
+        {
+            float lit = fill * DockLock.SegmentsPerWall;
+            return segment == DockLock.CentreSegment
+                ? Mathf.Clamp01(lit)
+                : Mathf.Clamp01((lit - 1f) / (DockLock.SegmentsPerWall - 1));
+        }
+
+        /// <summary>
         /// The save tick (polish-pass §1.2): the dock lamp blinks twice when the game saves; a burst of saves within
         /// the tuned window reads as one tick. <paramref name="age"/> is the seconds since the tick began.
         /// </summary>
@@ -169,12 +179,10 @@ namespace MoonProject.Gameplay
                                           (1f - height);
                 for (int s = 0; s < DockLock.SegmentsPerWall; s++)
                 {
-                    // The ring fills from the back wall, the one nearest the chase camera behind 07, round.
-                    int ring = (i + RingStart) % DockLock.Walls * DockLock.SegmentsPerWall + s;
+                    // One ring-shaped progress bar: every wall shows the fill at once, from its centre outward.
                     int segment = i * DockLock.SegmentsPerWall + s;
                     float target = height <= 0f ? 0f
-                        : _lock.SegmentLit(ring) ? _tuning.StripLit
-                        : _tuning.StripUnlit;
+                        : Mathf.Lerp(_tuning.StripUnlit, _tuning.StripLit, SegmentFill(s, _lock.RingFill));
                     _stripLevels[segment] = Damp.Toward(_stripLevels[segment], target, _tuning.StripEase, deltaTime);
                     _strips[segment].Apply(tint, _stripLevels[segment]);
                 }

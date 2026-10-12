@@ -51,7 +51,7 @@ MonoBehaviour:
   _wallDropSeconds: 0.25
   _wallSink: 0.42
   _fullSweepSeconds: 0.7
-  _stripLit: 2.4
+  _stripLit: 3.2
   _stripUnlit: 0.12
   _stripEase: 0.15
   _stripCharging: {r: 0.12, g: 1.6, b: 14, a: 1}

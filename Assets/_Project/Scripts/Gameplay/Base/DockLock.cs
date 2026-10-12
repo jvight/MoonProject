@@ -33,6 +33,9 @@ namespace MoonProject.Gameplay
         /// <summary>Segments round the whole ring.</summary>
         public const int Segments = Walls * SegmentsPerWall;
 
+        /// <summary>The middle segment of a wall's band, which lights first.</summary>
+        public const int CentreSegment = SegmentsPerWall / 2;
+
         private enum Stage
         {
             Open,
@@ -86,13 +89,10 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// True when band segment <paramref name="segment"/> (wall by wall round the ring) is lit: each whole charged
-        /// cell lights its equal block of segments.
+        /// How far the ring has filled, 0..1: the whole charged cells over the battery's cells. Every wall's band shows
+        /// it at once, growing from the wall's centre outward.
         /// </summary>
-        public bool SegmentLit(int segment)
-        {
-            return segment < _litCells * Segments / Mathf.Max(1, _cells);
-        }
+        public float RingFill => (float)_litCells / Mathf.Max(1, _cells);
 
         /// <summary>Rim ring <paramref name="ring"/>'s share of the roll-on chase, 0..1.</summary>
         public float RimLevel(int ring)
