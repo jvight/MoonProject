@@ -128,7 +128,15 @@ namespace MoonProject.Rover
                         return rest;
                     }
 
-                    return since < _settings.FlareSeconds ? charged * (1f + _settings.Flare) : charged;
+                    float light = _settings.LightSeconds;
+                    float peak = charged * (1f + _settings.Flare);
+                    if (since < light)
+                    {
+                        return Mathf.Lerp(rest, peak, Smoothing.SmoothStep(0f, 1f, since / light));
+                    }
+
+                    float settle = Smoothing.SmoothStep(0f, 1f, (since - light) / _settings.FlareSeconds);
+                    return Mathf.Lerp(peak, charged, settle);
                 case State.Charged:
                     float lift = (_spike > 0f ? _settings.IgnitionSpike : 0f) + (_pulse > 0f ? _settings.StepPulse : 0f);
                     return charged * (1f + lift);

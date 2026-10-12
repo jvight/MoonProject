@@ -51,6 +51,20 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
+        public void EachLamp_EasesUpInItsOwnStep_ThenSettlesCharged()
+        {
+            var run = new ChargeRunLights(_settings, 5);
+            run.Begin(0.65f, 0f);
+            float onset = ChargeRunLights.Onset(0, 5, 0.65f, 0f);
+            run.Step(onset + 0.5f * _settings.LightSeconds);
+            float peak = _settings.ChargedGlow * (1f + _settings.Flare);
+            Assert.That(run.Glow(0), Is.GreaterThan(_settings.RestGlow).And.LessThan(peak), "Easing up, no hard flash.");
+            Assert.AreEqual(_settings.RestGlow, run.Glow(1), "The next lamp waits its turn.");
+            run.Step(0.5f * _settings.LightSeconds + _settings.FlareSeconds);
+            Assert.AreEqual(_settings.ChargedGlow, run.Glow(0), 1e-3f, "The flare settles to the charged glow.");
+        }
+
+        [Test]
         public void TheBreak_FadesTheLamps()
         {
             var run = new ChargeRunLights(_settings, 5);

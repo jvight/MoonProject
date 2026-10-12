@@ -22,19 +22,24 @@ namespace MoonProject.Rover
 
         [Tooltip("A lamp's glow at rest, before any run (dim, a little dusty).")]
         [Range(0f, 2f)]
-        [SerializeField] private float _restGlow = 0.15f;
+        [SerializeField] private float _restGlow = 0.3f;
 
         [Tooltip("A lamp's glow once the run has passed it (charged).")]
         [Range(0f, 8f)]
-        [SerializeField] private float _chargedGlow = 1.6f;
+        [SerializeField] private float _chargedGlow = 4f;
 
-        [Tooltip("The flare as the run reaches a lamp (+60%).")]
+        [Tooltip("The flare as the run reaches a lamp (+80%), easing back to the charged glow, never a hard flash.")]
         [Range(0f, 2f)]
-        [SerializeField] private float _flare = 0.6f;
+        [SerializeField] private float _flare = 0.8f;
 
-        [Tooltip("Seconds a lamp's flare lasts.")]
+        [Tooltip("Seconds a lamp's flare takes to ease back to the charged glow.")]
         [Range(0.02f, 0.5f)]
-        [SerializeField] private float _flareSeconds = 0.08f;
+        [SerializeField] private float _flareSeconds = 0.12f;
+
+        [Tooltip("Seconds a lamp takes to ease up from rest to its flare as the run reaches it: each lamp lights in "
+            + "its own clear step.")]
+        [Range(0.01f, 0.3f)]
+        [SerializeField] private float _lightSeconds = 0.06f;
 
         [Tooltip("Every lamp spikes once at ignition (share of the charged glow).")]
         [Range(0f, 3f)]
@@ -94,6 +99,8 @@ namespace MoonProject.Rover
         public float Flare => _flare;
 
         public float FlareSeconds => _flareSeconds;
+
+        public float LightSeconds => _lightSeconds;
 
         public float IgnitionSpike => _ignitionSpike;
 
