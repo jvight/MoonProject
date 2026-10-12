@@ -71,8 +71,8 @@ namespace MoonProject.Art.Tests
 
             List<ModelNode> pieces = Pieces(site);
             int landmarks = SiteLandmarkMeshes.HasLandmark(id) ? 1 : 0;
-            Assert.AreEqual(site.Children.Count - 2 - landmarks, pieces.Count,
-                "only Skeleton, Salvage_*, Heart and the landmark");
+            Assert.AreEqual(site.Children.Count - 3 - landmarks, pieces.Count,
+                "only Skeleton, Salvage_*, Heart, CrewCrate and the landmark");
             Assert.That(pieces.Count, Is.InRange(MinPieces, MaxPieces));
             Assert.LessOrEqual(pieces.Count(IsDrag), 1, "at most one drag piece");
             for (int i = 0; i < pieces.Count; i++)
@@ -88,6 +88,28 @@ namespace MoonProject.Art.Tests
             }
 
             MeshChecks.AssertWellFormed(skeleton.Mesh.Geometry);
+        }
+
+        [TestCaseSource(nameof(Ids))]
+        public void CrewCrate_StandsBesideTheHeart_ItsLidOneCutAway(string id)
+        {
+            ModelNode site = SiteModelBuilder.CreateSite(id);
+            ModelNode heart = site.Children.Single(n => n.Name == SiteModelBuilder.HeartName);
+            ModelNode crate = site.Children.Single(n => n.Name == SiteModelBuilder.CrewCrateName);
+            Assert.AreEqual(0f, crate.LocalPosition.y, 1e-4f, "it stands on the ground");
+            Assert.AreEqual(heart.LocalPosition.x, crate.LocalPosition.x, 1.5f, "on the heart's side of the site");
+            Bounds body = crate.Mesh.Geometry.Bounds;
+            body.center += crate.LocalPosition;
+            Assert.Greater(body.min.z, SiteModelBuilder.Footprint(site).max.z, "in the open, clear of the wreck");
+            ModelNode lid = crate.Children.Single();
+            Assert.AreEqual(SiteModelBuilder.CrewCrateLidName, lid.Name);
+            ModelNode cut = lid.Children.Single();
+            Assert.AreEqual(SiteModelBuilder.CutPointName, cut.Name);
+            Assert.IsNull(cut.Mesh, "the seal's CutPoint is an empty");
+            Assert.Greater(Vector3.Dot(cut.LocalRotation * Vector3.forward, Vector3.forward), 0.99f,
+                "its +Z leaves the front seal");
+            MeshChecks.AssertWellFormed(crate.Mesh.Geometry);
+            MeshChecks.AssertWellFormed(lid.Mesh.Geometry);
         }
 
         [TestCaseSource(nameof(Ids))]

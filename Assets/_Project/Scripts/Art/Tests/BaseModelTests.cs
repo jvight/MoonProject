@@ -270,6 +270,40 @@ namespace MoonProject.Art.Tests
         }
 
 
+        [Test]
+        public void Shelves_StandUnderTheBelly_OneColumnPerMaterial_EachWithADarkLamp()
+        {
+            ModelNode shelves = BaseModelBuilder.CreateLander().GetDescendant(BaseModelBuilder.ShelvesName);
+            Assert.AreEqual(BaseModelBuilder.ShelfCount, shelves.Children.Count);
+            int crates = BaseModelBuilder.ShelfMaterials.Count * BaseModelBuilder.ShelfTiers;
+            foreach (ModelNode shelf in shelves.Children)
+            {
+                StringAssert.StartsWith(BaseModelBuilder.ShelfPrefix, shelf.Name);
+                Bounds rack = shelf.Mesh.Geometry.Bounds;
+                Assert.Less(rack.max.y, BaseModelBuilder.LanderBellyHeight, $"{shelf.Name} fits under the belly");
+                float radius = new Vector2(shelf.LocalPosition.x, shelf.LocalPosition.z).magnitude;
+                Assert.That(radius, Is.InRange(2.4f, 3.6f), $"{shelf.Name} is on the belly ring, clear of the lift");
+                Assert.Greater(Mathf.Abs(shelf.LocalPosition.x), Mathf.Abs(shelf.LocalPosition.z),
+                    $"{shelf.Name} keeps out of the lift's lane on Z");
+                ModelNode lamp = shelf.GetDescendant(BaseModelBuilder.ShelfLampName);
+                Assert.AreEqual(ModelMaterial.PaletteGlowOff, lamp.Material, $"{shelf.Name}'s lamp starts dark");
+                AssertGlowsOnly(lamp);
+                Assert.AreEqual(crates + 1, shelf.Children.Count, $"{shelf.Name}: its lamp and every crate slot");
+                foreach (string material in BaseModelBuilder.ShelfMaterials)
+                {
+                    for (int tier = 0; tier < BaseModelBuilder.ShelfTiers; tier++)
+                    {
+                        ModelNode crate = shelf.GetDescendant($"{BaseModelBuilder.ShelfCratePrefix}{material}_{tier}");
+                        Assert.IsNotNull(crate, $"{shelf.Name} has {material} tier {tier}");
+                        Bounds box = crate.Mesh.Geometry.Bounds;
+                        box.center += crate.LocalPosition;
+                        Assert.IsTrue(rack.Contains(box.min) && rack.Contains(box.max - Vector3.up * 0.05f),
+                            $"{shelf.Name}/{crate.Name} sits inside its rack");
+                    }
+                }
+            }
+        }
+
         /// <summary>
         /// The stage's lamps light ring by ring as power climbs (feel-pass §8.2): Lights is ring 0, Ring_1..3 sit
         /// higher and higher, each a glow renderer; the offline plaque's lamp starts dark.

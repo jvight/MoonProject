@@ -25,6 +25,18 @@ namespace MoonProject.Art.Editor
         public const string LandmarkName = "Landmark";
         public const string LandmarkPilotName = "LandmarkPilot";
 
+        /// <summary>
+        /// The crew's supply crate (M3-25 T4), one per site beside its heart: <c>CrewCrate</c> (the sealed body, which stays
+        /// as an empty prop) and its <c>Lid</c>, whose <c>CutPoint</c> sits on the front seal; one cut lifts the lid off.
+        /// </summary>
+        public const string CrewCrateName = "CrewCrate";
+
+        public const string CrewCrateLidName = "Lid";
+
+        // Off to the heart's right and out in front of the wreck, so the crate stands in the open where 07 arrives.
+        private const float CrewCrateBesideHeart = 0.9f;
+        private const float CrewCrateClearOfWreck = 0.8f;
+
 
         /// <summary>The site ids of the contract (site.&lt;id&gt; anchors, Site_&lt;id&gt; prefabs).</summary>
         public static IReadOnlyList<string> Ids => new[] { "depot", "kestrel", "drill", "garage", "lander" };
@@ -109,6 +121,8 @@ namespace MoonProject.Art.Editor
             }
 
             root.Add(new ModelNode(HeartName, recipe.Heart));
+            AddCrewCrate(root, name, new Vector3(recipe.Heart.x + CrewCrateBesideHeart, 0f,
+                Footprint(root).max.z + CrewCrateClearOfWreck));
             if (SiteLandmarkMeshes.HasLandmark(id))
             {
                 (Vector3 foot, float yaw) = SiteLandmarkMeshes.Placement(id);
@@ -121,6 +135,32 @@ namespace MoonProject.Art.Editor
             }
 
             return root;
+        }
+
+        /// <summary>The ground the site's wreck covers: its skeleton and every piece where it hangs.</summary>
+        public static Bounds Footprint(ModelNode site)
+        {
+            Bounds footprint = site.Children[0].Mesh.Geometry.Bounds;
+            foreach (ModelNode node in site.Children)
+            {
+                if (node.Mesh != null && node.Name.StartsWith("Salvage_", StringComparison.Ordinal))
+                {
+                    Bounds piece = node.Mesh.Geometry.Bounds;
+                    piece.center += node.LocalPosition;
+                    footprint.Encapsulate(piece);
+                }
+            }
+
+            return footprint;
+        }
+
+        private static void AddCrewCrate(ModelNode root, string name, Vector3 foot)
+        {
+            ModelNode crate = root.Add(new ModelNode(CrewCrateName, foot,
+                new ModelMesh(name + "_" + CrewCrateName, SupplyShelfMeshes.CrewCrateFrame())));
+            ModelNode lid = crate.Add(new ModelNode(CrewCrateLidName, SupplyShelfMeshes.LidSeat,
+                new ModelMesh(name + "_" + CrewCrateName + CrewCrateLidName, SupplyShelfMeshes.CrewCrateLid())));
+            lid.Add(new ModelNode(CutPointName, SupplyShelfMeshes.SealPoint, Facing(Vector3.forward)));
         }
 
         public static ModelNode CreateBundle(SalvagePieceMaterial material)

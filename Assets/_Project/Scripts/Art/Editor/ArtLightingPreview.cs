@@ -21,7 +21,7 @@ namespace MoonProject.Art.Editor
     /// python tools/unity_batch.py exec --method MoonProject.Art.Editor.ArtLightingPreview.Capture
     ///     [--arg scene=rover|base|towers|relics|shadow|grit|friends|workshop|bell|bellbroken|pickups|bellcorner|
     ///                  warmpoints|relaysbroken|relayslit|sites|sitesclean|salvagebits|kit|kitmain|home|homeclean|
-    ///                  builtfor07|wake_dark|wake_home|wake_bay|wake_chart|wake_pads|lab_dark|lab_lit]
+    ///                  builtfor07|shelves|wake_dark|wake_home|wake_bay|wake_chart|wake_pads|lab_dark|lab_lit]
     /// </code>
     /// (default rover; a ';'-separated list captures several scenes in one run)
     /// rover: 07 at rest (half-lidded, head lowered, wing ajar) with its headlamp. base: the habitat lander and the
@@ -204,6 +204,10 @@ namespace MoonProject.Art.Editor
                     case "towers":
                         NightSetting(material, temporary, 90f, 12f);
                         poses = TowersScene(temporary);
+                        break;
+                    case "shelves":
+                        NightSetting(material, temporary, 90f, 12f);
+                        poses = ShelvesScene(temporary);
                         break;
                     case "relics":
                         NightSetting(material, temporary, 40f, 8f);
@@ -407,6 +411,32 @@ namespace MoonProject.Art.Editor
                 Pose("far55m", new[] { 8f, 8f, 55f }, new[] { 0f, 4f, 0f }, 30f),
                 Pose("plaque", new[] { plaque.x + 0.6f, plaque.y + 0.5f, plaque.z + 2.2f },
                     new[] { plaque.x, plaque.y, plaque.z }, 35f));
+        }
+
+        private static CameraPoseSet ShelvesScene(TemporaryObjects temporary)
+        {
+            Transform lander = Instantiate(BaseModelBuilder.LanderName, temporary).transform;
+            Transform shelves = Descendant(lander, BaseModelBuilder.ShelvesName);
+            foreach (Transform shelf in shelves)
+            {
+                SetGlow(shelf, BaseModelBuilder.ShelfLampName, new[] { string.Empty }, 1f);
+                Light lamp = NewLight("ShelfLamp", LightType.Point, Palette.Get(PaletteSwatch.WarmLamp), 1.2f);
+                lamp.transform.position = Descendant(shelf, BaseModelBuilder.ShelfLampName).position;
+                lamp.range = 3f;
+                temporary.Add(lamp.gameObject);
+            }
+
+            GameObject site = Instantiate(SiteModelBuilder.SiteName("depot"), temporary, ArtPaths.SitesFolder);
+            site.transform.position = new Vector3(-20f, 0f, 0f);
+            Vector3 crate = Descendant(site.transform, SiteModelBuilder.CrewCrateName).position;
+            Vector3 dock = lander.TransformPoint(ChargingDockMeshes.Anchor);
+            return Poses(
+                Pose("from_dock", new[] { dock.x, dock.y + 1.6f, dock.z }, new[] { 0f, 1.2f, 0f }, 45f),
+                Pose("east_shelves", new[] { 7.5f, 1.6f, 1.5f }, new[] { 3f, 0.8f, 0f }, 50f),
+                Pose("west_shelves", new[] { -7.5f, 1.6f, -1.5f }, new[] { -3f, 0.8f, 0f }, 50f),
+                Pose("crew_crate", new[] { crate.x + 1.6f, crate.y + 1.4f, crate.z + 2.4f },
+                    new[] { crate.x, crate.y + 0.3f, crate.z }, 45f),
+                Pose("crate_site", new[] { -20f + 6f, 4f, 10f }, new[] { crate.x, 0.5f, crate.z }, 50f));
         }
 
         private static CameraPoseSet RelicsScene(TemporaryObjects temporary)

@@ -515,8 +515,65 @@ namespace MoonProject.Art.Editor
             AddBigPorthole(lander);
             AddLab(lander);
             AddHandOff(lander);
+            AddShelves(lander);
             Weathering.Weather(lander, LanderName, hull, LanderWeather, LanderMeshes.Rust(), LanderMeshes.Drifts());
             return lander;
+        }
+
+        /// <summary>
+        /// Home's supply shelves (M3-25 §3.1, T2): <c>Shelves/Shelf_1..4</c>, open racks on the belly ring between the lift's
+        /// guides and the legs, fronts facing out; 1-2 stand from the start, gameplay shows 3-4 once 07 builds them. Each
+        /// holds <c>Crate_&lt;Material&gt;_&lt;tier&gt;</c> stacks, one column per material in its colour (gameplay shows
+        /// as many as home holds), and a <c>Lamp</c> (M_LowPolyGlowOff) gameplay warms at night.
+        /// </summary>
+        public const string ShelvesName = "Shelves";
+
+        public const string ShelfPrefix = "Shelf_";
+        public const string ShelfCratePrefix = "Crate_";
+        public const string ShelfLampName = "Lamp";
+        public const int ShelfCount = 4;
+        public const int ShelfTiers = SupplyShelfMeshes.Tiers;
+
+        /// <summary>The underside of the lander's stage, which the shelves stand under.</summary>
+        public const float LanderBellyHeight = LanderMeshes.StageBottom;
+
+        /// <summary>The materials of a shelf's columns, left to right from the front.</summary>
+        public static IReadOnlyList<string> ShelfMaterials => SupplyShelfMeshes.CrateMaterials;
+
+        // Shelf n's yaw round the belly: 1-2 face the dock's side, 3-4 the far side, all clear of the lift's lane on Z.
+        private static readonly float[] ShelfYaws = { 75f, -75f, 105f, -105f };
+        private const float ShelfRadius = 3.25f;
+
+        private static void AddShelves(ModelNode lander)
+        {
+            string prefix = LanderName + "_" + ShelvesName;
+            ModelNode shelves = lander.Add(new ModelNode(ShelvesName, Vector3.zero));
+            var rack = new ModelMesh(prefix + "_Rack", SupplyShelfMeshes.Rack());
+            var glass = new ModelMesh(prefix + "_Lamp", SupplyShelfMeshes.LampGlass());
+            var crates = new ModelMesh[ShelfMaterials.Count];
+            for (int m = 0; m < crates.Length; m++)
+            {
+                crates[m] = new ModelMesh(prefix + "_Crate" + ShelfMaterials[m],
+                    SupplyShelfMeshes.Crate(ShelfMaterials[m]));
+            }
+
+            for (int i = 0; i < ShelfCount; i++)
+            {
+                Quaternion facing = Place.Rotation(new Vector3(0f, ShelfYaws[i], 0f));
+                ModelNode shelf = shelves.Add(new ModelNode(
+                    ShelfPrefix + (i + 1).ToString(CultureInfo.InvariantCulture),
+                    facing * Vector3.forward * ShelfRadius, facing, rack));
+                shelf.Add(new ModelNode(ShelfLampName, SupplyShelfMeshes.Lamp, Quaternion.identity, glass,
+                    ModelMaterial.PaletteGlowOff));
+                for (int slot = 0; slot < SupplyShelfMeshes.Slots; slot++)
+                {
+                    int column = slot % SupplyShelfMeshes.Columns;
+                    int tier = slot / SupplyShelfMeshes.Columns;
+                    shelf.Add(new ModelNode(
+                        ShelfCratePrefix + ShelfMaterials[column] + "_" + tier.ToString(CultureInfo.InvariantCulture),
+                        SupplyShelfMeshes.Slot(slot), Quaternion.identity, crates[column]));
+                }
+            }
         }
 
         /// <summary>
