@@ -40,6 +40,29 @@ namespace MoonProject.World
         [Range(0f, 20f)]
         [SerializeField] private float _dishSpread = 6.5f;
 
+        [Header("Orange vent (M3-27)")]
+        [Tooltip("Soft orange patches in the old vent's bead field (Apollo 17's orange soil), gathered round the vent.")]
+        [Range(0, 80)]
+        [SerializeField] private int _ventPatches = 26;
+
+        [Tooltip("Radius range of one patch, metres (x = min, y = max).")]
+        [SerializeField] private Vector2 _ventPatchRadius = new Vector2(1.2f, 3.6f);
+
+        [Tooltip("How far the patches spread from the vent, as a share of its anchor radius: thick at the vent, " +
+            "thinning out.")]
+        [Range(0.5f, 3f)]
+        [SerializeField] private float _ventSpread = 1.6f;
+
+        [Tooltip("Tint the bead patches multiply the dust by at full strength: a warm volcanic orange.")]
+        [SerializeField] private Color _ventTint = new Color(1f, 0.62f, 0.38f, 1f);
+
+        [Tooltip("Strength of the patches at the vent (0..1); they fade toward the field's edge.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _ventStrength = 0.85f;
+
+        [Tooltip("Distance (metres) where the field starts to fade, and where it is gone: readable across the basin.")]
+        [SerializeField] private Vector2 _ventFade = new Vector2(160f, 380f);
+
         public float RouteBearing => _routeBearing;
         public float[] RoutePostDistances => _routePostDistances;
         public float RoutePostSide => _routePostSide;
@@ -47,5 +70,11 @@ namespace MoonProject.World
         public float BridgeLampGlow => _bridgeLampGlow;
         public float BridgeSide => _bridgeSide;
         public float DishSpread => _dishSpread;
+        public int VentPatches => _ventPatches;
+        public Vector2 VentPatchRadius => _ventPatchRadius;
+        public float VentSpread => _ventSpread;
+        public Color VentTint => _ventTint;
+        public float VentStrength => _ventStrength;
+        public Vector2 VentFade => _ventFade;
     }
 }
