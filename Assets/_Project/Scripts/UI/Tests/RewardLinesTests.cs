@@ -10,18 +10,18 @@ namespace MoonProject.UI.Tests
         [Test]
         public void TheFirstLevel_GivesPower_TheRadio_AndTheReach()
         {
-            int count = RewardLines.Compose(0f, 150f, 1f, 1.6f, _lines);
+            int count = RewardLines.Compose(100f, 150f, true, 1f, 1.6f, _lines);
             Assert.AreEqual(3, count);
             Assert.AreEqual(RewardLineKind.LightOn, _lines[0].Kind);
             Assert.AreEqual(RewardLineKind.RadioOn, _lines[1].Kind);
             Assert.AreEqual(RewardLineKind.Reach, _lines[2].Kind);
-            Assert.AreEqual(150, _lines[2].Number);
+            Assert.AreEqual(50, _lines[2].Number, "the reach is the gain over what it was");
         }
 
         [Test]
         public void ALaterLevel_BrightensHome_AndExtendsTheReachByTheDifference()
         {
-            int count = RewardLines.Compose(150f, 400f, 1.6f, 2.2f, _lines);
+            int count = RewardLines.Compose(150f, 400f, false, 1.6f, 2.2f, _lines);
             Assert.AreEqual(2, count);
             Assert.AreEqual(RewardLineKind.LightUp, _lines[0].Kind);
             Assert.AreEqual(RewardLineKind.Reach, _lines[1].Kind);
@@ -31,7 +31,7 @@ namespace MoonProject.UI.Tests
         [Test]
         public void ALevelThatChangesNothingTheTowerGives_HasNoLines()
         {
-            Assert.AreEqual(0, RewardLines.Compose(150f, 150f, 1.6f, 1.6f, _lines));
+            Assert.AreEqual(0, RewardLines.Compose(150f, 150f, false, 1.6f, 1.6f, _lines));
         }
 
         [Test]

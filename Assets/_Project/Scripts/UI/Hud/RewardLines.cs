@@ -11,7 +11,7 @@ namespace MoonProject.UI
         /// <summary>Home's lamps burn brighter than before.</summary>
         LightUp = 1,
 
-        /// <summary>The radio picks up the station for the first time.</summary>
+        /// <summary>The radio picks up the station: the first level of the upgrade to touch the radio.</summary>
         RadioOn = 2,
 
         /// <summary>The clear radio range grows: <see cref="RewardLine.Number"/> metres farther.</summary>
@@ -44,10 +44,11 @@ namespace MoonProject.UI
         /// <summary>
         /// Fills <paramref name="into"/> with the lines for a level that took the radio's clear radius from
         /// <paramref name="radiusBefore"/> to <paramref name="radiusAfter"/> metres and home's light boost from
-        /// <paramref name="boostBefore"/> to <paramref name="boostAfter"/> (1 = unlit); returns how many.
+        /// <paramref name="boostBefore"/> to <paramref name="boostAfter"/> (1 = unlit); <paramref name="wakesRadio"/>
+        /// is true when this is the first level of its upgrade to touch the radio. Returns how many lines.
         /// </summary>
-        public static int Compose(float radiusBefore, float radiusAfter, float boostBefore, float boostAfter,
-            RewardLine[] into)
+        public static int Compose(float radiusBefore, float radiusAfter, bool wakesRadio, float boostBefore,
+            float boostAfter, RewardLine[] into)
         {
             int count = 0;
             if (boostAfter > boostBefore)
@@ -55,13 +56,13 @@ namespace MoonProject.UI
                 into[count++] = new RewardLine(boostBefore <= 1f ? RewardLineKind.LightOn : RewardLineKind.LightUp, 0);
             }
 
+            if (wakesRadio)
+            {
+                into[count++] = new RewardLine(RewardLineKind.RadioOn, 0);
+            }
+
             if (radiusAfter > radiusBefore)
             {
-                if (radiusBefore <= 0f)
-                {
-                    into[count++] = new RewardLine(RewardLineKind.RadioOn, 0);
-                }
-
                 into[count++] = new RewardLine(RewardLineKind.Reach, Mathf.RoundToInt(radiusAfter - radiusBefore));
             }
 

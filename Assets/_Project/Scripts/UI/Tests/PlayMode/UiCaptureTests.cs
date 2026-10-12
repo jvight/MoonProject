@@ -857,6 +857,27 @@ namespace MoonProject.UI.PlayModeTests
             fakes.Looked = null;
             fakes.IsSheet = false;
             fakes.Bay = null;
+
+            // A prompt whose point sits under the recipe card rests on top of it, never over its words.
+            fakes.Looked = _tower.Id;
+            fakes.PrimaryHint = new InteractionHint(InteractionKind.Deposit,
+                camera.ViewportToWorldPoint(new Vector3(0.8f, 0.55f, 10f)), true);
+            yield return new WaitForSecondsRealtime(_tuning.Guidance.Recipe.FadeIn + 2.5f);
+            Assert.IsTrue(ui.Prompt.IsVisible && ui.RecipeCard.IsVisible);
+            Assert.IsFalse(ui.Layout.Prompt.worldBound.Overlaps(ui.Layout.RecipeCardRoot.worldBound),
+                "the prompt keeps off the recipe card");
+            yield return Capture(camera, folder, "49e_recipe_card_with_prompt");
+            fakes.PrimaryHint = InteractionHint.None;
+            fakes.Looked = null;
+            yield return new WaitForSecondsRealtime(_tuning.Guidance.Recipe.FadeOut + 0.5f);
+
+            // The tower's reward card, from the upgrade's own data.
+            context.Events.Publish(new UpgradePurchased(_tower.Id, 1));
+            context.Events.Publish(new FeelBeat(FeelKind.Build, FeelPhase.Reward, Vector3.zero, Vector3.up, 1f, 0f));
+            yield return new WaitForSecondsRealtime(_tuning.RewardCard.Reveal.FadeIn + 1f);
+            Assert.IsTrue(ui.RewardCard.IsVisible);
+            Assert.Greater(ui.RewardCard.LineCount, 0, "the card says what the level gave");
+            yield return Capture(camera, folder, "49f_reward_card");
 #else
             Assert.Ignore("Captures need the editor.");
             yield break;

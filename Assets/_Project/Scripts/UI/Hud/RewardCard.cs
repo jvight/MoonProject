@@ -148,7 +148,8 @@ namespace MoonProject.UI
             _title.text = string.Format(_localization.Get(UiKeys.RewardTitle),
                 _localization.Get(UiKeys.UpgradeName(_boughtId)), _boughtLevel);
             _count = RewardLines.Compose(upgrade.SignalRadiusAt(_boughtLevel - 1), upgrade.SignalRadiusAt(_boughtLevel),
-                upgrade.LightBoostAt(_boughtLevel - 1), upgrade.LightBoostAt(_boughtLevel), _lines);
+                WakesRadio(upgrade, _boughtLevel), upgrade.LightBoostAt(_boughtLevel - 1),
+                upgrade.LightBoostAt(_boughtLevel), _lines);
             for (int i = 0; i < RewardLines.Max; i++)
             {
                 bool used = i < _count;
@@ -157,6 +158,25 @@ namespace MoonProject.UI
                 {
                     _texts[i].text = string.Format(_localization.Get(UiKeys.RewardLine(_lines[i].Kind)),
                         _lines[i].Number);
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>True when <paramref name="level"/> is the first level of the upgrade to set a radio radius.</summary>
+        private static bool WakesRadio(UpgradeDefinition upgrade, int level)
+        {
+            if (upgrade.Levels[level - 1].SignalRadius <= 0f)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < level - 1; i++)
+            {
+                if (upgrade.Levels[i].SignalRadius > 0f)
+                {
+                    return false;
                 }
             }
 
