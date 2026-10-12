@@ -198,12 +198,15 @@ namespace MoonProject.Audio
         [Min(0f)] [SerializeField] private float _eveningDuckSeconds = 3.5f;
 
         [Header("The tower comes online (feel-pass section 8.2)")]
-        [Tooltip("Gain on the whole set (music, carrier, static) while the tower powers up, so the hum, the rings and " +
-            "the thoom are heard alone.")]
+        [Tooltip("Gain on the whole set (music, carrier, static) while the tower powers up, so the hum, the rings " +
+            "and the thoom are heard alone.")]
         [Range(0f, 1f)] [SerializeField] private float _buildDuckGain = 0.15f;
 
         [Tooltip("Time constant (s) of the set stepping back as the tower powers up.")]
         [Min(0.01f)] [SerializeField] private float _buildDuckTime = 0.4f;
+
+        [Tooltip("Longest the set stays stepped back (s) if the tower's sequence never reaches its Follow.")]
+        [Min(0.1f)] [SerializeField] private float _buildDuckMaxSeconds = 10f;
 
         [Tooltip("Time constant (s) of the set coming back in after the radio's crackle at Follow.")]
         [Min(0.01f)] [SerializeField] private float _buildReturnTime = 1.5f;
@@ -281,6 +284,7 @@ namespace MoonProject.Audio
         public float BuildDuckGain => _buildDuckGain;
         public float BuildDuckTime => _buildDuckTime;
         public float BuildReturnTime => _buildReturnTime;
+        public float BuildDuckMaxSeconds => _buildDuckMaxSeconds;
         public float EveningDuckSeconds => _eveningDuckSeconds;
     }
 }

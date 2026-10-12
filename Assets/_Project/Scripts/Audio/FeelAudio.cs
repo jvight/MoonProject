@@ -17,15 +17,14 @@ namespace MoonProject.Audio
     /// crack (Impact); a strap tuk at the fold (Follow 1). The beam's singing climb and the collect melody stay
     /// <see cref="SalvageAudio"/>'s;</item>
     /// <item>cargo and storage (M3-25): a tok on the full hold's lid, a rising note per crate on the dock's belt (Kind
-    /// Cargo Act) and its bump (Impact), a warm chord for a shelf built, a crew crate's latch and note, Tilly's
-    /// fetch;</item>
+    /// Cargo Act) and its bump (Impact), a crew crate's latch and note, Tilly's fetch;</item>
     /// <item>the dock (Kind Dock): the walls rising (Anticipate), the clamp (Impact), the walls settling (Reward; the
     /// full chord and the per-cell notes are <see cref="StationAudio"/>'s and <see cref="BatteryAudio"/>'s), the quick
     /// drop (Cancel);</item>
-    /// <item>the tower coming online (Kind Build): a rising hum (Anticipate; the parts' clunks are the hopper's,
-    /// <see cref="StationAudio"/>), one pentatonic bell per lamp ring (Act, strength 0.25 .. 1), the beacon's thoom and
-    /// D major chord (Impact); the radio steps back for it and comes in again at Follow 0 (<see cref="RadioStation"/>);
-    /// </item>
+    /// <item>the tower coming online (Kind Build, a chain that starts with Anticipate): a rising hum (the parts' clunks
+    /// are the hopper's, <see cref="StationAudio"/>), one pentatonic bell per lamp ring (Act, strength 0.25 .. 1), the
+    /// beacon's thoom and D major chord (Impact); the radio steps back and comes in again at Follow 0
+    /// (<see cref="RadioStation"/>). A lone Build Impact is a shelf built: its warm chord;</item>
     /// <item>picking a part up (Kind Collect): a soft servo lift (Act) and a solid little clunk on 07's back
     /// (Impact); the bundle's Reward melody step stays <see cref="SalvageAudio"/>'s;</item>
     /// <item>the first hour's small moments: a tech node lighting, the decode's cable ticks, a component found, the
@@ -38,7 +37,7 @@ namespace MoonProject.Audio
     [DisallowMultipleComponent]
     public sealed class FeelAudio : MonoBehaviour
     {
-        private const int SubscriptionCount = 15;
+        private const int SubscriptionCount = 14;
         private const float SegmentFollow = 0.5f;
         private const float SilentVolume = 0.001f;
         private const float SemitonesPerOctave = 12f;
@@ -58,6 +57,7 @@ namespace MoonProject.Audio
         private AudioSource _undertoneSource;
         private float _undertoneCueVolume;
         private int _segment;
+        private bool _towerChain;
         private int _lampNotes;
         private int _segmentNotes;
         private CueHandle _lamp;
@@ -198,9 +198,8 @@ namespace MoonProject.Audio
             _subscriptions[9] = events.Subscribe<StockCountTicked>(OnStockCountTicked);
             _subscriptions[10] = events.Subscribe<HomeWindowLit>(OnHomeWindowLit);
             _subscriptions[11] = events.Subscribe<CargoOverflowed>(OnCargoOverflowed);
-            _subscriptions[12] = events.Subscribe<ShelfBuilt>(OnShelfBuilt);
-            _subscriptions[13] = events.Subscribe<CrewCrateOpened>(OnCrewCrateOpened);
-            _subscriptions[14] = events.Subscribe<BundleFetched>(OnBundleFetched);
+            _subscriptions[12] = events.Subscribe<CrewCrateOpened>(OnCrewCrateOpened);
+            _subscriptions[13] = events.Subscribe<BundleFetched>(OnBundleFetched);
         }
 
         private void Update()
@@ -284,14 +283,30 @@ namespace MoonProject.Audio
             switch (beat.Phase)
             {
                 case FeelPhase.Anticipate:
+                    _towerChain = true;
                     _director.PlayAt(_towerHum, beat.Position);
                     break;
                 case FeelPhase.Act:
-                    int ring = Mathf.Clamp(Mathf.CeilToInt(beat.Strength * _ringNotes) - 1, 0, _ringNotes - 1);
-                    _director.PlayVariantAt(_towerRing, ring, beat.Position);
+                    if (_towerChain)
+                    {
+                        int ring = Mathf.Clamp(Mathf.CeilToInt(beat.Strength * _ringNotes) - 1, 0, _ringNotes - 1);
+                        _director.PlayVariantAt(_towerRing, ring, beat.Position);
+                    }
+
                     break;
                 case FeelPhase.Impact:
-                    _director.PlayAt(_towerThoom, beat.Position);
+                    if (_towerChain)
+                    {
+                        _director.PlayAt(_towerThoom, beat.Position);
+                    }
+                    else
+                    {
+                        _director.Play2D(_shelfChord);
+                    }
+
+                    break;
+                case FeelPhase.Reward:
+                    _towerChain = false;
                     break;
             }
         }
@@ -367,11 +382,6 @@ namespace MoonProject.Audio
         private void OnCargoOverflowed(CargoOverflowed overflowed)
         {
             _director.PlayAt(_cargoTok, overflowed.Position);
-        }
-
-        private void OnShelfBuilt(ShelfBuilt built)
-        {
-            _director.Play2D(_shelfChord);
         }
 
         private void OnCrewCrateOpened(CrewCrateOpened opened)

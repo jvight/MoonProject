@@ -143,8 +143,10 @@ namespace MoonProject.Audio.PlayModeTests
             Assert.AreEqual("count_tick_01", LastClip, "the first crate on the belt");
             Beat(FeelKind.Cargo, FeelPhase.Act, 1f);
             Assert.AreEqual("count_tick_06", LastClip, "the last one, highest");
-            _rig.Events.Publish(new ShelfBuilt(0, 1));
-            Assert.AreEqual("shelf_chord", LastClip);
+            Beat(FeelKind.Build, FeelPhase.Impact);
+            Assert.AreEqual("shelf_chord", LastClip, "a lone Build Impact is a shelf built");
+            Beat(FeelKind.Build, FeelPhase.Act, 0.5f);
+            Assert.AreEqual("shelf_chord", LastClip, "no tower ring outside the tower's chain");
             _rig.Events.Publish(new CrewCrateOpened("site", "ro", SalvageMaterial.Metal, 3, Point));
             Assert.AreEqual("crate_latch", LastClip);
             _rig.Events.Publish(new BundleFetched(SalvageMaterial.Metal, 2));
