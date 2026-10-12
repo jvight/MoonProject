@@ -70,8 +70,9 @@ namespace MoonProject.Gameplay.Editor
         }
 
         /// <summary>
-        /// Kenji's bench sells rover kit, offered in this order (docs/features/M3-03, M3-11): Hover-Jump, then the
-        /// Cargo Cradle, the Warm Headlamp and the Boost Coils, one level each, crafted from the
+        /// Kenji's bench sells rover kit, offered in this order (docs/features/M3-03, M3-11, M3-20, M3-26, M3-25):
+        /// Hover-Jump, then the Cargo Cradle, the Warm Headlamp, the Boost Coils, Cell Pack II, the Focus Lens and the
+        /// Side Bins, one level each, crafted from the
         /// <see cref="SalvageEconomy"/> recipes. Each grants its rover ability; the Rover domain shows its kit on 07.
         /// Their texts live in the localization tables (upgrade.rover.&lt;ability&gt;.*).
         /// </summary>
@@ -87,6 +88,10 @@ namespace MoonProject.Gameplay.Editor
                 GameplayAssetPaths.BoostCoilsUpgrade);
             RoverKit("rover.cell_pack", SalvageEconomy.CellPack, RoverAbility.CellPack,
                 GameplayAssetPaths.CellPackUpgrade);
+            RoverKit("rover.focus_lens", SalvageEconomy.FocusLens, RoverAbility.FocusLens,
+                GameplayAssetPaths.FocusLensUpgrade);
+            RoverKit("rover.side_bins", SalvageEconomy.SideBins, RoverAbility.SideBins,
+                GameplayAssetPaths.SideBinsUpgrade);
         }
 
         private static void RoverKit(string id, Recipe recipe, RoverAbility ability, string path)
@@ -259,7 +264,7 @@ namespace MoonProject.Gameplay.Editor
                 GameObject prefab = LoadArt(GameplayAssetPaths.SitePrefab(names[i]));
                 sites[i] = new SalvageSiteEntry(SalvageEconomy.SiteId(names[i]), prefab, gate,
                     names[i] == SalvageEconomy.HeartUnderPiecesSite, SalvageEconomy.YieldScale(names[i]),
-                    SalvageCutLines.Across(prefab));
+                    SalvageCutLines.Across(prefab), SalvageSizes.Deal(prefab, SalvageEconomy.PieceClasses(names[i])));
             }
 
             var catalog = ScriptableObject.CreateInstance<SalvageCatalog>();

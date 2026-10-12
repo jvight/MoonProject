@@ -35,6 +35,7 @@ namespace MoonProject.Gameplay.Editor
             EnsureExists<LiftTuning>(GameplayAssetPaths.LiftTuning);
             EnsureExists<BatteryTuning>(GameplayAssetPaths.BatteryTuning);
             EnsureExists<CargoTuning>(GameplayAssetPaths.CargoTuning);
+            EnsureExists<CutterTuning>(GameplayAssetPaths.CutterTuning);
         }
 
         private static void EnsureExists<T>(string path) where T : ScriptableObject

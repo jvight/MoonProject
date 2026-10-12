@@ -41,6 +41,9 @@ namespace MoonProject.Gameplay
         [Tooltip("07's hold and home's shelves (Assets/_Project/Data/Tuning/Gameplay/CargoTuning.asset).")]
         [SerializeField] private CargoTuning _cargo;
 
+        [Tooltip("07's cutter tiers (Assets/_Project/Data/Tuning/Gameplay/CutterTuning.asset).")]
+        [SerializeField] private CutterTuning _cutterTuning;
+
         [Tooltip("Every upgrade crafted from materials (Assets/_Project/Data/Content/Upgrades).")]
         [SerializeField] private UpgradeDefinition[] _upgradeDefinitions = Array.Empty<UpgradeDefinition>();
 
@@ -71,6 +74,9 @@ namespace MoonProject.Gameplay
         private IRoverRig _rig;
 
         public MaterialStock Materials { get; private set; }
+
+        /// <summary>07's cutter as its fitted kits make it (docs/features/M3-26).</summary>
+        public Cutter Cutter { get; private set; }
 
         /// <summary>Bundles waiting in the world because 07's hold was full (docs/features/M3-25 §2.3).</summary>
         public CargoBundles Bundles { get; private set; }
@@ -190,10 +196,11 @@ namespace MoonProject.Gameplay
             _battery = battery;
         }
 
-        internal void WireCargo(MaterialCatalog catalog, CargoTuning cargo)
+        internal void WireCargo(MaterialCatalog catalog, CargoTuning cargo, CutterTuning cutter)
         {
             _materialCatalog = catalog;
             _cargo = cargo;
+            _cutterTuning = cutter;
         }
 
         public void Initialize(GameContext context)
@@ -252,7 +259,8 @@ namespace MoonProject.Gameplay
             }
 
             Vector3 lander = HomeBase.LanderSpot(services.Terrain, services.Layout.BasePosition, _home.Tuning);
-            if (!_salvage.Initialize(services) || !_relics.Initialize(services, _salvage) ||
+            Cutter = new Cutter(context.Events, abilities, _cutterTuning);
+            if (!_salvage.Initialize(services, Cutter) || !_relics.Initialize(services, _salvage) ||
                 !_excavation.Initialize(services, _relics, _salvage) ||
                 !_tether.Initialize(services, _relics, _salvage, abilities) ||
                 !_home.Initialize(services, _relics, Upgrades, lights, _lift) ||
@@ -323,6 +331,7 @@ namespace MoonProject.Gameplay
                 stations, Upgrades, TowerParts, _friends, _relays, services.Beam, services.Pickups);
             context.Register<IMaterialStock>(Materials);
             context.Register<IMaterialCatalog>(_materialCatalog);
+            context.Register<ICutter>(Cutter);
             context.Register<ICargoHold>(Materials.Hold);
             context.Register<IHomeStorage>(Materials.Home);
             context.Register<ISalvageStatus>(_salvage);
@@ -583,6 +592,7 @@ namespace MoonProject.Gameplay
                 Materials.Hold.SetSlotCount(holdSlots);
             }
 
+            Cutter.Step();
             Bundles.Step(now, Time.deltaTime);
             Unload.Step(_home.Dock.Docked, _rig.CargoSocket.position, now);
             if (Unload.DockedNow)
@@ -719,6 +729,7 @@ namespace MoonProject.Gameplay
                 : _materialCatalog == null ? "MaterialCatalog is not assigned (run Gameplay/Content)."
                 : _materialCatalog.Validate() != null ? "MaterialCatalog: " + _materialCatalog.Validate() + "."
                 : _cargo == null ? "CargoTuning is not assigned."
+                : _cutterTuning == null ? "CutterTuning is not assigned."
                 : _upgradeDefinitions == null || _upgradeDefinitions.Length == 0 ? "no upgrade definitions."
                 : _salvage == null ? "SalvageField is not assigned."
                 : _relics == null ? "RelicField is not assigned."

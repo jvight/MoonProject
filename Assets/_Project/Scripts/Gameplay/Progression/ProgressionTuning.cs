@@ -98,6 +98,7 @@ namespace MoonProject.Gameplay
         [Header("Blueprints")]
         [Tooltip("Where the kits' blueprint tubes lie: Hover-Jump's on the ground at the chasm's near lip (M3-21), " +
                  "Cell Pack II's in relay.2's service cabinet, which opens as the mast comes back to life (M3-20), " +
+                 "the Focus Lens's by the Kestrel's cockpit (M3-26), the Side Bins' in the lander's heart (M3-25), " +
                  "the others each in a salvage site's heart, found with its relic.")]
         [SerializeField] private BlueprintTube[] _tubes =
         {
@@ -106,6 +107,8 @@ namespace MoonProject.Gameplay
             new BlueprintTube("rover.warm_headlamp", "site.kestrel"),
             new BlueprintTube("rover.boost_coils", "site.drill"),
             new BlueprintTube("rover.cell_pack", "relay.2"),
+            BlueprintTube.AtAnchor("rover.focus_lens", "site.kestrel", 12f),
+            new BlueprintTube("rover.side_bins", "site.lander"),
         };
 
         [Header("Kenji's garage port (first-hour v2 §3)")]
@@ -167,6 +170,8 @@ namespace MoonProject.Gameplay
             new TechKit(TechNodeId.WarmHeadlamp, "rover.warm_headlamp"),
             new TechKit(TechNodeId.CapacitorDrums, "rover.boost_coils"),
             new TechKit(TechNodeId.CellPackII, "rover.cell_pack"),
+            new TechKit(TechNodeId.FocusLens, "rover.focus_lens"),
+            new TechKit(TechNodeId.SideBins, "rover.side_bins"),
         };
 
         [Tooltip("The recovery panel's lamps no built thing lights yet: the Peak's foot, the Dish, the Answer.")]

@@ -129,7 +129,7 @@ namespace MoonProject.Core.Events
         /// <summary>The site whose heart it sat beside ("site.depot", ...).</summary>
         public string SiteId { get; }
 
-        /// <summary>Whose crate and note it is ("kenji", ...); the note's key is "crate.&lt;crewId&gt;.note".</summary>
+        /// <summary>Whose hand packed it ("kenji", ...); its packing note's key is "crate.&lt;site&gt;.note".</summary>
         public string CrewId { get; }
 
         public SalvageMaterial Material { get; }

@@ -130,6 +130,10 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         public UpgradeDefinition CellPackUpgrade { get; private set; }
 
+        public UpgradeDefinition FocusLensUpgrade { get; private set; }
+
+        public UpgradeDefinition SideBinsUpgrade { get; private set; }
+
         public FriendTuning FriendTuning { get; private set; }
 
         public FriendDefinition Tilly { get; private set; }
@@ -344,6 +348,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             WarmHeadlampUpgrade = RoverKit("rover.warm_headlamp", new Recipe(1, 0, 3), RoverAbility.WarmHeadlamp);
             BoostCoilsUpgrade = RoverKit("rover.boost_coils", new Recipe(1, 2, 1), RoverAbility.BoostCoils);
             CellPackUpgrade = RoverKit("rover.cell_pack", new Recipe(3, 0, 2), RoverAbility.CellPack);
+            FocusLensUpgrade = RoverKit("rover.focus_lens", new Recipe(0, 1, 3), RoverAbility.FocusLens);
+            SideBinsUpgrade = RoverKit("rover.side_bins", new Recipe(3, 1, 0), RoverAbility.SideBins);
 
             var relicCatalog = Asset<RelicCatalog>();
             var definitions = new RelicDefinition[RelicIds.Length];
@@ -417,7 +423,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Gameplay.Wire(visuals, GlintTuning, new[]
                 {
                     RadioTowerUpgrade, HoverJumpUpgrade, CargoCradleUpgrade, WarmHeadlampUpgrade, BoostCoilsUpgrade,
-                    CellPackUpgrade,
+                    CellPackUpgrade, FocusLensUpgrade, SideBinsUpgrade,
                 }, salvage, relics, sonar, excavation, tether, home, cradle, tower, workshop, friends, cassettes, logs,
                 signals, shelf, relays, progression, plotter, Lift);
             battery.Wire(Asset<BatteryTuning>());
@@ -430,7 +436,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 new MaterialEntry(SalvageMaterial.Optics, "optics", MaterialFamily.Salvage, 4, true),
             });
             CargoTuning = Asset<CargoTuning>();
-            Gameplay.WireCargo(materials, CargoTuning);
+            Gameplay.WireCargo(materials, CargoTuning, Asset<CutterTuning>());
             root.SetActive(true);
 
             Bootstrap = BootstrapHarness.Create(_controls, SaveSlot, World, Rover, Gameplay);
@@ -607,7 +613,11 @@ namespace MoonProject.Gameplay.PlayModeTests
             Transform sign = Named(Block(bay, new Vector3(0f, 4.02f, 1.92f), new Vector3(0.8f, 0.42f, 0.04f)),
                 "BaySign");
             workshop.Wire(WorkshopTuning,
-                new[] { HoverJumpUpgrade, CargoCradleUpgrade, WarmHeadlampUpgrade, BoostCoilsUpgrade, CellPackUpgrade },
+                new[]
+                {
+                    HoverJumpUpgrade, CargoCradleUpgrade, WarmHeadlampUpgrade, BoostCoilsUpgrade, CellPackUpgrade,
+                    FocusLensUpgrade, SideBinsUpgrade,
+                },
                 bay, turntable, mouth, lamps, sign.GetComponent<Renderer>(), sockets);
             workshop.WireArms(armYaws, uppers, lowers, tips, floorLift, floorTip);
             Transform plotterRoot = Node("Plotter", bay, new Vector3(-2.2f, 0f, -1.2f));
@@ -649,13 +659,28 @@ namespace MoonProject.Gameplay.PlayModeTests
                 GameObject model = SiteModel(name, name == "depot");
                 sites[i] = new SalvageSiteEntry(WorldAnchorIds.SitePrefix + name, model,
                     name == "lander" ? new AbilityGate(true, RoverAbility.HoverJump) : AbilityGate.Open, false, 1,
-                    SalvageCutLines.Across(model));
+                    SalvageCutLines.Across(model), SmallPieces(model));
             }
 
             var catalog = Asset<SalvageCatalog>();
             catalog.Populate(sites, Template("Material_Metal", Vector3.one * 0.35f),
                 Template("Material_Wiring", Vector3.one * 0.35f), Template("Material_Optics", Vector3.one * 0.35f));
             field.Wire(SalvageTuning, catalog);
+        }
+
+        /// <summary>Every piece of a stand-in wreck is small (one short segment, the small yield).</summary>
+        private static PieceSizeEntry[] SmallPieces(GameObject model)
+        {
+            var sizes = new List<PieceSize>();
+            foreach (Transform node in model.transform)
+            {
+                if (SalvagePieceName.TryParsePiece(node.name, out _, out _, out _))
+                {
+                    sizes.Add(PieceSize.Small);
+                }
+            }
+
+            return SalvageSizes.Deal(model, sizes);
         }
 
         /// <summary>

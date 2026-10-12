@@ -4,7 +4,7 @@ namespace MoonProject.Gameplay
 {
     /// <summary>
     /// Cargo and storage (docs/features/M3-25): the slots of 07's hold and home's shelves, the dock's unload, waiting
-    /// bundles, Tilly's fetch and the crew's supply crates. Pure data.
+    /// bundles and Tilly's fetch. Pure data.
     /// </summary>
     [CreateAssetMenu(menuName = "MoonProject/Gameplay/Cargo Tuning", fileName = "CargoTuning")]
     public sealed class CargoTuning : ScriptableObject
@@ -74,10 +74,6 @@ namespace MoonProject.Gameplay
         [Tooltip("Metres over the ground Tilly flies while fetching.")]
         [Range(1f, 10f)] [SerializeField] private float _fetchHeight = 4f;
 
-        [Header("The crew's supply crates (T4)")]
-        [Tooltip("Units of the site's signature material in each crate.")]
-        [Range(1, 12)] [SerializeField] private int _crateUnits = 6;
-
         public int HoldSlots => _holdSlots;
         public int CradleSlots => _cradleSlots;
         public int SideBinSlots => _sideBinSlots;
@@ -98,7 +94,6 @@ namespace MoonProject.Gameplay
         public string FetchFriend => _fetchFriend;
         public float FetchHang => _fetchHang;
         public float FetchArrive => _fetchArrive;
-        public int CrateUnits => _crateUnits;
 
         /// <summary>Every shelf's slots, the built-in ones first, then the sockets.</summary>
         public int[] ShelfLayout()

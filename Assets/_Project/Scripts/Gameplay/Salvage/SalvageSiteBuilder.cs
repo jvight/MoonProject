@@ -130,9 +130,14 @@ namespace MoonProject.Gameplay
                        "in the catalog (run Gameplay/Content)";
             }
 
+            if (!entry.TryGetSize(number, out PieceSize size))
+            {
+                return $"'{node.name}' has no size class in the catalog (run Gameplay/Content)";
+            }
+
             Mesh mesh = filter.sharedMesh;
             Bounds bounds = mesh.bounds;
-            int units = yieldScale * SalvageYield.Units(Vector3.Scale(bounds.size, node.localScale), drag, tuning);
+            int units = SalvageYield.Units(size, yieldScale, tuning);
             Collider solid = drag ? null : MakeSolid(node);
             if (solid != null)
             {
@@ -150,7 +155,8 @@ namespace MoonProject.Gameplay
             SetLayer(bundle.transform, Layers.Pickup);
             bundle.SetActive(false);
 
-            var piece = new SalvagePiece(site, number, material, drag, units, SalvageYield.CutSeconds(units, tuning),
+            var piece = new SalvagePiece(site, number, material, drag, size, units, tuning.Size(size).Segments,
+                SalvageYield.CutSeconds(size, 1f, tuning),
                 node, bounds.center, cutPoint, cutLine, solid, new GlowRenderer(haloRenderer), bundle.transform);
             if (drag)
             {

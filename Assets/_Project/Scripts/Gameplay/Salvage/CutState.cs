@@ -11,7 +11,8 @@ namespace MoonProject.Gameplay
     /// and the battery draws (<see cref="Draws"/>), the progress climbing in steps; letting go then pauses with the
     /// progress kept, and the next hold resumes. The cut breaks through at full progress. Each beat is published as a
     /// <see cref="FeelBeat"/> of its kind (<see cref="FeelKind.Cut"/>, or <see cref="FeelKind.Dig"/> for the
-    /// excavation beam): Anticipate on engaging (Seconds = the charge), Act at ignition (strength 0) and at each step
+    /// excavation beam): Anticipate on engaging (Seconds = the charge, Strength = where the charge run starts: 0 fresh,
+    /// part-way on a resume, docs/features/M3-26 §2.2), Act at ignition (strength 0) and at each step
     /// (strength = progress), Cancel on letting go, Impact at the break. A new hold may start the moment the last one
     /// ends, whatever its piece is still doing: it never locks the player.
     /// </summary>
@@ -19,8 +20,8 @@ namespace MoonProject.Gameplay
     {
         private readonly EventBus _events;
         private readonly FeelKind _kind;
-        private readonly float _chargeSeconds;
-        private readonly float _resumeChargeSeconds;
+        private float _chargeSeconds;
+        private float _resumeChargeSeconds;
         private readonly int _steps;
         private float _chargeLeft;
         private SalvageMaterial _material;
@@ -38,6 +39,20 @@ namespace MoonProject.Gameplay
         }
 
         public CutPhase Phase { get; private set; }
+
+        /// <summary>
+        /// Where a resumed charge run starts, 0..1: the run keeps the fresh run's pace, so it starts as far along as
+        /// the shorter charge saves.
+        /// </summary>
+        public float ResumeStart =>
+            _chargeSeconds > 0f ? Mathf.Clamp01(1f - _resumeChargeSeconds / _chargeSeconds) : 0f;
+
+        /// <summary>The cutter's tier sets the next charges (docs/features/M3-26 §3).</summary>
+        public void Tune(float chargeSeconds, float resumeChargeSeconds)
+        {
+            _chargeSeconds = chargeSeconds;
+            _resumeChargeSeconds = resumeChargeSeconds;
+        }
 
         /// <summary>True while the beam is lit and cutting: the only time it draws on the battery.</summary>
         public bool Draws => Phase == CutPhase.Cutting;
@@ -72,7 +87,7 @@ namespace MoonProject.Gameplay
             _chargeLeft = ChargeSeconds;
             ChargeProgress = 0f;
             Phase = CutPhase.Charging;
-            Publish(FeelPhase.Anticipate, point, normal, progress, ChargeSeconds);
+            Publish(FeelPhase.Anticipate, point, normal, progress > 0f ? ResumeStart : 0f, ChargeSeconds);
         }
 
         /// <summary>The hold lets go before the break: a charge-up cancels, a cut pauses, the progress kept.</summary>

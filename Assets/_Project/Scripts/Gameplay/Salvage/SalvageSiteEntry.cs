@@ -33,9 +33,14 @@ namespace MoonProject.Gameplay
                  "Art may author better ones.")]
         [SerializeField] private PieceCutLine[] _cutLines = Array.Empty<PieceCutLine>();
 
+        [Tooltip("Each piece's size (docs/features/M3-26 §4.2): the content builder deals the site's classes to its " +
+                 "pieces, biggest to biggest.")]
+        [SerializeField] private PieceSizeEntry[] _sizes = Array.Empty<PieceSizeEntry>();
+
         public SalvageSiteEntry(string anchorId, GameObject prefab, AbilityGate gate, bool heartUnderPieces,
-            int yieldScale, PieceCutLine[] cutLines)
+            int yieldScale, PieceCutLine[] cutLines, PieceSizeEntry[] sizes)
         {
+            _sizes = sizes ?? throw new ArgumentNullException(nameof(sizes));
             _anchorId = anchorId;
             _prefab = prefab;
             _gate = gate ?? throw new ArgumentNullException(nameof(gate));
@@ -68,6 +73,22 @@ namespace MoonProject.Gameplay
             }
 
             points = null;
+            return false;
+        }
+
+        /// <summary>The size of piece <paramref name="number"/>, if the entry has one.</summary>
+        public bool TryGetSize(int number, out PieceSize size)
+        {
+            for (int i = 0; i < _sizes.Length; i++)
+            {
+                if (_sizes[i].Number == number)
+                {
+                    size = _sizes[i].Size;
+                    return true;
+                }
+            }
+
+            size = PieceSize.Small;
             return false;
         }
 

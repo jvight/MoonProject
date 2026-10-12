@@ -246,6 +246,18 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>Close enough (m) to a part resting on a mast's pad to draw it in.</summary>
         private const float PartArrive = 1.5f;
 
+        /// <summary>M3-26 §4.3: the first cut ever, press to crack (s).</summary>
+        private const float FirstCut = 1.9f;
+
+        /// <summary>M3-26 §4.3: nothing in the first half hour takes longer to cut, press to crack (s).</summary>
+        private const float FirstHalfHourCut = 3.2f;
+
+        /// <summary>The first half hour of play (s).</summary>
+        private const float FirstHalfHour = 1800f;
+
+        /// <summary>Room for 07 easing to a stop as the beam asks it to, before the charge starts (s).</summary>
+        private const float EaseToStop = 0.6f;
+
         /// <summary>07 stops this far (m) back from the chasm's lip, well inside where it looks across.</summary>
         private const float LipStandOff = 8f;
 
@@ -337,6 +349,8 @@ namespace MoonProject.Gameplay.PlayModeTests
         private float _stepLowest;
         private int _cuts;
         private float _awokeAt = -1f;
+        private float _firstCut = -1f;
+        private float _slowestEarlyCut;
         private float _stepStart;
 
         public override void Setup()
@@ -749,7 +763,27 @@ namespace MoonProject.Gameplay.PlayModeTests
             Review(site.Position - Flat(site.Root.forward) * 16f + Vector3.up * 6f, site.Position + Vector3.up,
                 "02d-depot-picked-clean");
             End("Salvage the depot", $"{site.Pieces.Count} pieces in {cuts} cuts, melody up to step {topStep}; " +
-                                     $"stock metal {stock.Metal}, wiring {stock.Wiring}, optics {stock.Optics}");
+                                     $"stock metal {stock.Metal}, wiring {stock.Wiring}, optics {stock.Optics}; " +
+                                     $"first cut {_firstCut:F2} s, slowest so far {_slowestEarlyCut:F2} s");
+        }
+
+        /// <summary>
+        /// M3-26 §4.3, measured: the first cut ever about 1.9 s from press to crack, and nothing in the first half hour
+        /// over about 3.2 s (each with a little room for 07 easing to a stop as the beam asks it to).
+        /// </summary>
+        private void TimeTheCut(float took)
+        {
+            if (_firstCut < 0f)
+            {
+                _firstCut = took;
+                Assert.LessOrEqual(took, FirstCut + EaseToStop, "the first cut ever is snappy");
+            }
+
+            if (Time.time - _awokeAt <= FirstHalfHour)
+            {
+                _slowestEarlyCut = Mathf.Max(_slowestEarlyCut, took);
+                Assert.LessOrEqual(took, FirstHalfHourCut + EaseToStop, "nothing in the first half hour drags");
+            }
         }
 
         /// <summary>
@@ -786,6 +820,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                     int salvaged = _events.MaterialSalvaged.Count;
                     int completed = CompletedCuts();
                     float cutSeconds = salvage.Candidate.CutSeconds;
+                    float pressed = Time.time;
                     Press(_keyboard.eKey);
                     yield return Until(() => _events.SalvageCutStarted.Count > cuts, 6f, "the beam starts cutting");
                     Assert.IsTrue(_rover.IsHeldStill, "07 is asked to hold still while it cuts");
@@ -800,6 +835,7 @@ namespace MoonProject.Gameplay.PlayModeTests
 
                     yield return Until(() => CompletedCuts() > completed, cutSeconds + 4f, "the beam cuts it free");
                     Release(_keyboard.eKey);
+                    TimeTheCut(Time.time - pressed);
                     yield return Until(() => _events.MaterialSalvaged.Count > salvaged, 6f,
                         "the piece comes away and folds into 07");
                     cuts = _events.SalvageCutStarted.Count;
