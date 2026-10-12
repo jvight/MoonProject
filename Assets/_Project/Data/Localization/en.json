@@ -24,11 +24,11 @@
         },
         {
             "key": "ui.pause.quit_question",
-            "text": "Rest here for now?"
+            "text": "Quit for now?"
         },
         {
             "key": "ui.pause.quit_aside",
-            "text": "07 will keep watch until you return."
+            "text": "07 will wait here until you return."
         },
         {
             "key": "ui.pause.quit_stay",
@@ -40,7 +40,7 @@
         },
         {
             "key": "ui.journey.put_away",
-            "text": "An older journey was put away."
+            "text": "An older save was kept separately."
         },
         {
             "key": "ui.save_tick.word",
@@ -376,7 +376,7 @@
         },
         {
             "key": "ui.settings.master",
-            "text": "Everything"
+            "text": "Master"
         },
         {
             "key": "ui.settings.music",
@@ -396,7 +396,7 @@
         },
         {
             "key": "ui.settings.look_speed",
-            "text": "Look speed"
+            "text": "Look sensitivity"
         },
         {
             "key": "ui.settings.invert_look",
@@ -1316,19 +1316,19 @@
         },
         {
             "key": "ui.title.new_game_question",
-            "text": "Put this moon away and start again?"
+            "text": "Start a new game?"
         },
         {
             "key": "ui.title.new_game_aside",
-            "text": "Your old moon is kept."
+            "text": "Your current save is kept, not deleted."
         },
         {
             "key": "ui.title.new_game_keep",
-            "text": "Keep this moon"
+            "text": "Keep playing"
         },
         {
             "key": "ui.title.new_game_confirm",
-            "text": "Start again"
+            "text": "Start new"
         },
         {
             "key": "ui.pause.quit_to_title",

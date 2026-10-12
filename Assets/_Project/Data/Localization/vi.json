@@ -8,7 +8,7 @@
         },
         {
             "key": "ui.pause.subheading",
-            "text": "Radio vẫn khẽ ngân nga."
+            "text": "Radio vẫn đang phát."
         },
         {
             "key": "ui.pause.resume",
@@ -24,11 +24,11 @@
         },
         {
             "key": "ui.pause.quit_question",
-            "text": "Nghỉ chân ở đây nhé?"
+            "text": "Thoát game?"
         },
         {
             "key": "ui.pause.quit_aside",
-            "text": "07 sẽ ngồi đợi ở đây cho đến khi bạn trở lại."
+            "text": "07 sẽ đợi ở đây đến khi bạn quay lại."
         },
         {
             "key": "ui.pause.quit_stay",
@@ -40,7 +40,7 @@
         },
         {
             "key": "ui.journey.put_away",
-            "text": "Một hành trình cũ đã được cất đi."
+            "text": "Bản lưu cũ đã được cất riêng."
         },
         {
             "key": "ui.save_tick.word",
@@ -376,7 +376,7 @@
         },
         {
             "key": "ui.settings.master",
-            "text": "Tất cả"
+            "text": "Tổng"
         },
         {
             "key": "ui.settings.music",
@@ -392,11 +392,11 @@
         },
         {
             "key": "ui.settings.camera",
-            "text": "Góc nhìn"
+            "text": "Camera"
         },
         {
             "key": "ui.settings.look_speed",
-            "text": "Tốc độ xoay"
+            "text": "Độ nhạy camera"
         },
         {
             "key": "ui.settings.invert_look",
@@ -412,7 +412,7 @@
         },
         {
             "key": "ui.settings.gentle_camera",
-            "text": "Camera dịu nhẹ"
+            "text": "Giảm hiệu ứng camera"
         },
         {
             "key": "ui.settings.language",
@@ -1304,7 +1304,7 @@
         },
         {
             "key": "ui.title.new_game",
-            "text": "Trò chơi mới"
+            "text": "Chơi mới"
         },
         {
             "key": "ui.title.settings",
@@ -1316,19 +1316,19 @@
         },
         {
             "key": "ui.title.new_game_question",
-            "text": "Cất mặt trăng này đi và bắt đầu lại?"
+            "text": "Bắt đầu chơi mới?"
         },
         {
             "key": "ui.title.new_game_aside",
-            "text": "Mặt trăng cũ vẫn được giữ nguyên."
+            "text": "Bản lưu hiện tại vẫn được giữ lại."
         },
         {
             "key": "ui.title.new_game_keep",
-            "text": "Giữ mặt trăng này"
+            "text": "Chơi tiếp"
         },
         {
             "key": "ui.title.new_game_confirm",
-            "text": "Bắt đầu lại"
+            "text": "Chơi mới"
         },
         {
             "key": "ui.pause.quit_to_title",
