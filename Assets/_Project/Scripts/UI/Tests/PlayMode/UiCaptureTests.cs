@@ -707,6 +707,41 @@ namespace MoonProject.UI.PlayModeTests
 #endif
         }
 
+        /// <summary>
+        /// Polish wave 1: the save tick after a GameSaved, and a sleeping station's not-yet line on the ticker. Captures
+        /// 80 and 81. Rerun with --filter CapturePolishWave1.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator CapturePolishWave1_TheSaveTickAndTheNotYetLine()
+        {
+#if UNITY_EDITOR
+            yield return LoadMain();
+            GameContext context = FindBootstrap().Context;
+            Camera camera = context.Get<IViewCamera>().Camera;
+            UISystem ui = BuildUi(context, out _, out _);
+            yield return null;
+            string folder = Path.GetFullPath(OutputFolder);
+            Directory.CreateDirectory(folder);
+            context.Events.Publish(new RoverAwoke(Vector3.zero, false));
+            yield return new WaitForSecondsRealtime(0.5f);
+
+            context.Events.Publish(new GameSaved());
+            yield return new WaitForSecondsRealtime(_tuning.SaveTick.Reveal.FadeIn + 0.2f);
+            Assert.IsTrue(ui.SaveTick.IsVisible, "the tick is up after a save");
+            yield return Capture(camera, folder, "80_save_tick");
+            yield return new WaitForSecondsRealtime(_tuning.SaveTick.HoldSeconds + _tuning.SaveTick.Reveal.FadeOut + 0.5f);
+            Assert.IsFalse(ui.SaveTick.IsVisible, "and gone a moment later");
+
+            context.Events.Publish(new StationNotYet("notyet.tower", Vector3.zero, 10f));
+            yield return new WaitForSecondsRealtime(TickerEntrance());
+            Assert.IsTrue(ui.Ticker.IsVisible, "the sleeper's line is on the ticker");
+            yield return Capture(camera, folder, "81_not_yet_ticker");
+#else
+            Assert.Ignore("Captures need the editor.");
+            yield break;
+#endif
+        }
+
         [UnityTest]
         public IEnumerator CaptureGuidance()
         {
