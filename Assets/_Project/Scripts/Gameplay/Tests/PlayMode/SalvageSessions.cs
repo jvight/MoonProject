@@ -15,8 +15,7 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// Scripted sessions for salvage (docs/features/M3-13) on the real components behind fakes: cutting a piece with
     /// the beam (progress kept when the hold lets go, ruling 4), the piece folding into the stock with the site's
     /// melody, a drag piece tethered clear and then cut, a lost drag piece floating back beside its site (ruling 1),
-    /// the hold shared with the dig at a site's heart, Kestrel-3's trail bits drawn in by driving through, and a
-    /// picked-clean site that stays empty after a reboot.
+    /// the hold shared with the dig at a site's heart, and a picked-clean site that stays empty after a reboot.
     /// </summary>
     public sealed class SalvageSessions : InputTestFixture
     {
@@ -260,55 +259,6 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return Waits.Until(() => _fixture.Events.SalvageCutStarted.Count > 0, PressTimeout);
             Assert.AreEqual(0, _fixture.Events.ExcavationStarted.Count, "one hold, one job");
             Release(_keyboard.eKey);
-        }
-
-        [UnityTest]
-        public IEnumerator TrailBits_FoldInto07_AsItDrivesThrough()
-        {
-            _fixture = GameplayFixture.Boot(_controls);
-            yield return null;
-            SalvageField salvage = _fixture.Gameplay.Salvage;
-            Assert.AreEqual(5, salvage.TrailCount);
-            _fixture.Rover.Place(new Vector3(-40f, 0f, 40f), 0f);
-            yield return null;
-            yield return null;
-            Assert.AreEqual(5, salvage.Glints.Drawn, "the trail glints from afar");
-            _fixture.Capture("31-salvage-trail");
-
-            Vector3 from = salvage.TrailBitPosition(0);
-            Vector3 to = salvage.TrailBitPosition(salvage.TrailCount - 1);
-            float yaw = Mathf.Atan2(to.x - from.x, to.z - from.z) * Mathf.Rad2Deg;
-            float began = Time.time;
-            const float driveSeconds = 10f;
-            while (Time.time - began < driveSeconds)
-            {
-                float t = (Time.time - began) / driveSeconds;
-                Vector3 point = Vector3.Lerp(from, to, t);
-                _fixture.Rover.MoveTo(new Vector3(point.x, 0f, point.z), yaw);
-                yield return null;
-            }
-
-            yield return new WaitForSeconds(2f);
-            Assert.AreEqual(5, _fixture.Events.MaterialSalvaged.Count, "every bit folds in");
-            int metal = 0;
-            int wiring = 0;
-            int optics = 0;
-            for (int i = 0; i < 5; i++)
-            {
-                MaterialSalvaged bit = _fixture.Events.MaterialSalvaged[i].Value;
-                Assert.AreEqual(WorldAnchorIds.KestrelTrail, bit.SiteId);
-                Assert.AreEqual(_fixture.SalvageTuning.TrailYield, bit.Amount);
-                Assert.AreEqual(i, bit.ComboStep, "a run of bits climbs the melody");
-                metal += bit.Material == SalvageMaterial.Metal ? bit.Amount : 0;
-                wiring += bit.Material == SalvageMaterial.Wiring ? bit.Amount : 0;
-                optics += bit.Material == SalvageMaterial.Optics ? bit.Amount : 0;
-                Assert.IsFalse(salvage.IsTrailBitWaiting(i));
-            }
-
-            Assert.AreEqual(metal, _fixture.Gameplay.Materials.Metal);
-            Assert.AreEqual(wiring, _fixture.Gameplay.Materials.Wiring);
-            Assert.AreEqual(optics, _fixture.Gameplay.Materials.Optics);
-            Assert.AreEqual(0, salvage.Glints.Drawn, "no glints left");
         }
 
         [UnityTest]

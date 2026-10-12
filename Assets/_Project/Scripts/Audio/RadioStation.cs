@@ -22,14 +22,18 @@ namespace MoonProject.Audio
     /// set fades towards near-silence, it thins in Whispering Canyon and pulls back when 07 is still (the
     /// <see cref="Soundscape"/>'s mix). <see cref="SignalRadiusChanged"/> widens home's clear zone. A radio-hop
     /// (<see cref="RadioHopStarted"/>) eases the set into static as the screen fades, holds through the dark and
-    /// resolves into the target node's clarity as the view eases in (<see cref="RadioHop"/>). Initialised by
+    /// resolves into the target node's clarity as the view eases in (<see cref="RadioHop"/>). Music is earned
+    /// (<see cref="RadioGate"/>, docs/features/M3-24): a fresh game hears only static, which tower level 1 clears into
+    /// the Earth signal's carrier (no music); 07's tape deck (<see cref="RoverKitPiece.TapeDeck"/>) plays the first
+    /// tape softly on repeat, eased in at the fit and rounded like an old cassette; Bell's dial brings the station
+    /// with a dial turn. A voiced recording ducks the music (<see cref="RadioVoice"/>). Initialised by
     /// <see cref="AudioDirector"/>.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class RadioStation : MonoBehaviour
     {
         private const float MinPitch = 0.01f;
-        private const int SubscriptionCount = 11;
+        private const int SubscriptionCount = 14;
 
         [Tooltip("Assets/_Project/Data/Audio/RadioTuning.asset.")]
         [SerializeField] private RadioTuning _tuning;
@@ -51,6 +55,9 @@ namespace MoonProject.Audio
         private readonly EasedValue _staticPresence = new EasedValue(1f);
         private readonly TitleRadio _title = new TitleRadio();
         private readonly RadioHop _hop = new RadioHop();
+        private readonly RadioGate _gate = new RadioGate();
+        private readonly EasedValue _deckShare = new EasedValue(0f);
+        private readonly EasedValue _carrierPresence = new EasedValue(0f);
         private readonly IDisposable[] _subscriptions = new IDisposable[SubscriptionCount];
         private readonly Dictionary<string, RadioTrack> _tapeTracks = new Dictionary<string, RadioTrack>(
             StringComparer.Ordinal);
@@ -68,10 +75,13 @@ namespace MoonProject.Audio
         private int _poolCount;
         private AudioSource _static;
         private AudioSource _swish;
+        private AudioSource _carrier;
+        private RadioVoice _voice;
         private CueHandle _hopOut;
         private CueHandle _hopIn;
         private float _staticCueVolume;
         private float _swishCueVolume;
+        private float _carrierCueVolume;
 
         /// <summary>True once 07 has started waking and the radio has come on.</summary>
         public bool IsOn => _wake.IsAwake;
@@ -92,6 +102,12 @@ namespace MoonProject.Audio
                 return false;
             }
         }
+
+        /// <summary>What the radio may play yet (static, 07's deck, or the station).</summary>
+        public RadioGateStage GateStage => _gate.Stage;
+
+        /// <summary>The Earth signal's carrier level, 0 (not heard) .. 1 (fully in).</summary>
+        public float CarrierPresence => _carrierPresence.Value;
 
         /// <summary>The station heard (Lumen After Dark until Bell's dial is unlocked).</summary>
         public RadioChannel Station => _model != null ? _model.Station : RadioChannel.LumenAfterDark;
@@ -152,15 +168,17 @@ namespace MoonProject.Audio
 
             CueHandle staticCue = director.Resolve(AudioCueIds.RadioStatic);
             CueHandle swishCue = director.Resolve(AudioCueIds.RadioTune);
+            CueHandle carrierCue = director.Resolve(AudioCueIds.RadioCarrier);
             _hopOut = director.Resolve(AudioCueIds.RadioHopOut);
             _hopIn = director.Resolve(AudioCueIds.RadioHopIn);
-            if (!staticCue.IsValid || !swishCue.IsValid || !_hopOut.IsValid || !_hopIn.IsValid)
+            if (!staticCue.IsValid || !swishCue.IsValid || !carrierCue.IsValid || !_hopOut.IsValid || !_hopIn.IsValid)
             {
                 enabled = false;
                 return;
             }
 
             _director = director;
+            _voice = director.Voice;
             _soundscape = director.Soundscape;
             _events = context.Events;
             _listener = context.Get<IRoverState>();
@@ -182,9 +200,12 @@ namespace MoonProject.Audio
             _swish = director.CreateLoopSource(transform, "TuningSwish", swishCue, 0f);
             _swish.loop = false;
             _swishCueVolume = director.Library.GetCue(swishCue).VolumeMax;
+            _carrier = director.CreateLoopSource(transform, "Carrier", carrierCue, 0f);
+            _carrierCueVolume = director.Library.GetCue(carrierCue).VolumeMax;
 
             _model = new RadioProgramModel(_program.TotalTapeCount);
             _model.Apply(_program, false, out _);
+            _gate.SetDialUnlocked(_model.DialUnlocked);
             RebuildPool();
             _staticPresence.Snap(StaticPresenceTarget());
             _subscriptions[0] = context.Events.Subscribe<SignalRadiusChanged>(OnSignalRadiusChanged);
@@ -198,6 +219,9 @@ namespace MoonProject.Audio
             _subscriptions[8] = context.Events.Subscribe<TitleShown>(OnTitleShown);
             _subscriptions[9] = context.Events.Subscribe<SessionStarted>(OnSessionStarted);
             _subscriptions[10] = context.Events.Subscribe<NewGameRequested>(OnNewGameRequested);
+            _subscriptions[11] = context.Events.Subscribe<RoverKitFitted>(OnRoverKitFitted);
+            _subscriptions[12] = context.Events.Subscribe<RoverKitRestored>(OnRoverKitRestored);
+            _subscriptions[13] = context.Events.Subscribe<BasePowerChanged>(OnBasePowerChanged);
         }
 
         internal void Wire(RadioTuning tuning, RadioPlaylist playlist, RadioTapeLibrary tapes)
@@ -239,11 +263,15 @@ namespace MoonProject.Audio
             float cabin = _director.CabinBlend;
             float title = _title.Step(dt, _tuning.TitleRiseTime, _tuning.TitleFallTime);
             float level = _director.Buses.Effective(AudioBus.Music) * _wake.Power * title;
-            float music = mix.MusicVolume * level * _wake.MusicGain * Mathf.Lerp(1f, _tuning.CabinMusicGain, cabin) *
-                          _soundscape.RadioGain * _soundscape.StargazeMusicGain *
-                          Mathf.Lerp(1f, _tuning.HopMusicGain, hop);
+            float deckTarget = _gate.Stage == RadioGateStage.Deck ? 1f : 0f;
+            float deckShare = _deckShare.Step(deckTarget, dt, _tuning.DeckBlendTime);
+            float music = Mathf.Lerp(mix.MusicVolume, _tuning.DeckMusicGain, deckShare) * level * _wake.MusicGain *
+                          Mathf.Lerp(1f, _tuning.CabinMusicGain, cabin) * _soundscape.RadioGain *
+                          _soundscape.StargazeMusicGain * Mathf.Lerp(1f, _tuning.HopMusicGain, hop) *
+                          _voice.MusicDuck;
             float cabinCutoff = _tuning.MaxCutoff * Mathf.Pow(_tuning.CabinCutoff / _tuning.MaxCutoff, cabin);
-            float cutoff = _soundscape.RadioCutoff(Mathf.Min(mix.CutoffHz, cabinCutoff));
+            float band = Mathf.Lerp(mix.CutoffHz, _tuning.DeckCutoff, deckShare);
+            float cutoff = _soundscape.RadioCutoff(Mathf.Min(band, cabinCutoff));
             cutoff *= Mathf.Pow(Mathf.Min(1f, _tuning.HopCutoff / cutoff), hop);
             for (int i = 0; i < _decks.Length; i++)
             {
@@ -260,23 +288,38 @@ namespace MoonProject.Audio
             }
 
             float presence = _staticPresence.Step(StaticPresenceTarget(), dt, _tuning.QuietStaticFade);
-            float staticVolume = (mix.StaticVolume + _tuning.WakeStaticBoost * _wake.CrackleBoost) * presence
+            bool uncleared = _gate.Stage == RadioGateStage.Static && !_gate.CarrierClear;
+            float floor = uncleared ? _tuning.UnclearedStaticFloor : 0f;
+            float staticVolume = (Mathf.Max(mix.StaticVolume, floor) + _tuning.WakeStaticBoost * _wake.CrackleBoost) *
+                                 presence
                                  + _tuning.TuneStaticBoost * _mixer.Swell + _tuning.HopStaticBoost * hop;
             _static.volume = Mathf.Clamp01(staticVolume) * _staticCueVolume * level * _soundscape.RadioGain *
                              Mathf.Lerp(1f, _tuning.CabinStaticGain, cabin);
             _swish.volume = _tuning.TuneSwishVolume * _swishCueVolume * level * _soundscape.RadioGain;
+            float carrier = _carrierPresence.Step(_gate.CarrierHeard ? 1f : 0f, dt, _tuning.CarrierFadeTime);
+            _carrier.volume = carrier * _tuning.CarrierVolume * _carrierCueVolume * mix.MusicVolume * level *
+                              _soundscape.RadioGain * Mathf.Lerp(1f, _tuning.CabinStaticGain, cabin) *
+                              _voice.MusicDuck;
         }
 
         private float StaticPresenceTarget()
         {
-            return _model.Station == RadioChannel.QuietHours ? _tuning.QuietStaticGain : 1f;
+            if (_gate.CarrierHeard)
+            {
+                return _tuning.CarrierStaticGain;
+            }
+
+            return _gate.Stage == RadioGateStage.Station && _model.Station == RadioChannel.QuietHours
+                ? _tuning.QuietStaticGain
+                : 1f;
         }
 
         /// <summary>On Lumen After Dark, moves to the next track a moment before this one ends.</summary>
         private void AdvanceShow(float pitch)
         {
             int live = _mixer.Live;
-            if (live < 0 || _mixer.StartPending || _model.Station != RadioChannel.LumenAfterDark ||
+            if (live < 0 || _mixer.StartPending || _gate.Stage != RadioGateStage.Station ||
+                _model.Station != RadioChannel.LumenAfterDark ||
                 _decks[live].loop || !_decks[live].isPlaying)
             {
                 return;
@@ -294,15 +337,19 @@ namespace MoonProject.Audio
         private void OnRadioProgramChanged(RadioProgramChanged changed)
         {
             RadioProgramUpdate update = _model.Apply(_program, _wake.MusicStarted, out bool announce);
+            bool opened = _gate.SetDialUnlocked(_model.DialUnlocked);
             if ((update & RadioProgramUpdate.Pool) != 0)
             {
                 RebuildPool();
             }
 
-            if ((update & RadioProgramUpdate.Station) == 0)
+            if (((update & RadioProgramUpdate.Station) == 0 && !opened) || _gate.Stage != RadioGateStage.Station)
             {
                 return;
             }
+
+            // Bell's dial bringing the station in is heard as a dial turn, like any change of station.
+            announce |= opened;
 
             if (!_wake.MusicStarted)
             {
@@ -335,6 +382,14 @@ namespace MoonProject.Audio
 
         private bool HasMusic()
         {
+            switch (_gate.Stage)
+            {
+                case RadioGateStage.Static:
+                    return false;
+                case RadioGateStage.Deck:
+                    return _playlist.Count > 0;
+            }
+
             switch (_model.Station)
             {
                 case RadioChannel.LumenAfterDark:
@@ -351,7 +406,17 @@ namespace MoonProject.Audio
         {
             RadioTrack track;
             bool loop;
-            if (_model.Station == RadioChannel.TapeDeck)
+            if (_gate.Stage == RadioGateStage.Static)
+            {
+                return;
+            }
+
+            if (_gate.Stage == RadioGateStage.Deck)
+            {
+                track = _playlist.GetTrack(0);
+                loop = true;
+            }
+            else if (_model.Station == RadioChannel.TapeDeck)
             {
                 track = FindTape(_model.SelectedTape);
                 loop = true;
@@ -379,7 +444,8 @@ namespace MoonProject.Audio
             source.volume = 0f;
             source.Play();
             _deckTracks[deck] = track;
-            if (_model.Station == RadioChannel.LumenAfterDark && _nowPlaying.TryAnnounce(track.Id, out string titleKey))
+            if (_gate.Stage == RadioGateStage.Station && _model.Station == RadioChannel.LumenAfterDark &&
+                _nowPlaying.TryAnnounce(track.Id, out string titleKey))
             {
                 _events.Publish(new TickerLine(NowPlayingLog.TickerKey, titleKey, true));
             }
@@ -422,7 +488,8 @@ namespace MoonProject.Audio
 
             _shuffler.Resize(_poolCount);
             int live = _mixer.Live;
-            if (live >= 0 && _model.Station == RadioChannel.LumenAfterDark && _decks[live] != null)
+            if (live >= 0 && _gate.Stage == RadioGateStage.Station && _model.Station == RadioChannel.LumenAfterDark &&
+                _decks[live] != null)
             {
                 // A lone track loops; once a tape joins the show it moves on to the next track again.
                 _decks[live].loop = _poolCount == 1;
@@ -495,8 +562,7 @@ namespace MoonProject.Audio
 
             _title.ShowOverSave(_tuning.TitleGain);
             _wake.Begin(0f, _tuning.TitleMusicFade, _tuning.WakePowerTime);
-            _static.volume = 0f;
-            _static.Play();
+            StartBeds();
         }
 
         private void OnSessionStarted(SessionStarted started)
@@ -550,12 +616,66 @@ namespace MoonProject.Audio
 
             _wake.Begin(byPlayer ? _tuning.PlayerWakeMusicDelay : _tuning.WakeMusicDelay,
                 byPlayer ? _tuning.PlayerWakeMusicFade : _tuning.WakeMusicFade, _tuning.WakePowerTime);
-            _static.volume = 0f;
-            _static.Play();
+            StartBeds();
             if (_model.Station != RadioChannel.QuietHours)
             {
                 // Waking on Quiet Hours stays quiet: no dial swish, and the wake crackle is held down with the static.
                 _swish.Play();
+            }
+        }
+
+        /// <summary>The static and the carrier loop from the moment the set comes on; levels do the rest.</summary>
+        private void StartBeds()
+        {
+            _static.volume = 0f;
+            _static.Play();
+            _carrier.volume = 0f;
+            _carrier.Play();
+        }
+
+        /// <summary>07's tape deck is fitted: the first tape eases in softly, without a dial swish.</summary>
+        private void OnRoverKitFitted(RoverKitFitted fitted)
+        {
+            if (fitted.Piece == RoverKitPiece.TapeDeck && _gate.FitDeck())
+            {
+                OnGateOpened(_tuning.DeckFitFade);
+            }
+        }
+
+        /// <summary>A loaded game's deck is already on 07: its tape simply plays.</summary>
+        private void OnRoverKitRestored(RoverKitRestored restored)
+        {
+            if (restored.Piece == RoverKitPiece.TapeDeck && _gate.FitDeck())
+            {
+                OnGateOpened(_tuning.SilentSwitchFade);
+            }
+        }
+
+        private void OnGateOpened(float fadeIn)
+        {
+            if (!_wake.MusicStarted)
+            {
+                // Before the radio comes on (a load, the title): the wake-up starts whatever the gate allows.
+                _deckShare.Snap(_gate.Stage == RadioGateStage.Deck ? 1f : 0f);
+                _staticPresence.Snap(StaticPresenceTarget());
+                return;
+            }
+
+            _mixer.Change(HasMusic(), _tuning.SilentSwitchFade, 0f, fadeIn, 0f);
+        }
+
+        /// <summary>Tower level 1 clears the static into the Earth signal's carrier (no music).</summary>
+        private void OnBasePowerChanged(BasePowerChanged change)
+        {
+            if (change.Stage < BasePowerStage.Home || !_gate.ClearCarrier())
+            {
+                return;
+            }
+
+            if (change.Restored || !_wake.IsAwake)
+            {
+                _carrierPresence.Snap(_gate.CarrierHeard ? 1f : 0f);
+                _staticPresence.Snap(StaticPresenceTarget());
             }
         }
 

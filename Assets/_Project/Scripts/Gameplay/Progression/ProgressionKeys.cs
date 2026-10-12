@@ -17,6 +17,15 @@ namespace MoonProject.Gameplay
         public const string PlaceLab = "place.lab";
         public const string PlaceRack = "place.rack";
 
+        /// <summary>Kenji's garage service port (first-hour v2 §3): it fits 07's spare parts.</summary>
+        public const string PlaceGaragePort = "place.garage_port";
+
+        /// <summary>The ticker line as the port fits the tether ring.</summary>
+        public const string TickerTetherBack = "ticker.tether.back";
+
+        /// <summary>Before the ring, said once near a loose keepsake: the tether is gone, Kenji kept a spare.</summary>
+        public const string NotYetTether = "notyet.tether";
+
         /// <summary>Step 0: drive, look.</summary>
         public const string NextWake = "next.wake";
 
@@ -28,6 +37,18 @@ namespace MoonProject.Gameplay
 
         /// <summary>Step 3: follow the faint signal, stitch Tilly.</summary>
         public const string NextSignal = "next.signal";
+
+        /// <summary>Step 3b: Tilly's last part lies under the dust; dig it.</summary>
+        public const string NextDig = "next.dig";
+
+        /// <summary>Step 3c: all her parts are here; repair her.</summary>
+        public const string NextFriendRepair = "next.friend.repair";
+
+        /// <summary>Step 3d: the tower's sweep named Kenji's garage; something of 07's is there.</summary>
+        public const string NextGarage = "next.garage";
+
+        /// <summary>Step 3e: the garage's port is open; park on its pad for the spare.</summary>
+        public const string NextPort = "next.port";
 
         /// <summary>Step 4: dig the first relic and tow it home.</summary>
         public const string NextRelic = "next.relic";
@@ -75,6 +96,9 @@ namespace MoonProject.Gameplay
 
         /// <summary>The survey chart, looked at before the tower's third level.</summary>
         public const string NotYetChart = "notyet.chart";
+
+        /// <summary>The ticker line of 07's first listen ever (first-hour v2 §3), once per save.</summary>
+        public const string FirstListen = "ticker.listen.first";
 
         /// <summary>
         /// True for an empty line or one about a recovery target (Power or Link), the only lines after the teaching

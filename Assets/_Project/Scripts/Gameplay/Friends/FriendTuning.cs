@@ -65,8 +65,21 @@ namespace MoonProject.Gameplay
         [Tooltip("Idle turn (degrees per second) of a waiting part.")]
         [Range(0f, 180f)] [SerializeField] private float _partSpin = 30f;
 
-        [Tooltip("A part within this many metres of 07 drifts in (close: softer than the salvage trail).")]
+        [Tooltip("A part within this many metres of 07 drifts in (close: a soft, deliberate pickup).")]
         [Range(1f, 15f)] [SerializeField] private float _partMagnetRadius = 4.5f;
+
+        [Tooltip("The friend whose last part lies half under the dust, so the beam's dig is learned on it " +
+                 "(first-hour v2 §4).")]
+        [SerializeField] private string _buriedPartFriend = "tilly";
+
+        [Tooltip("Metres the buried part sits under its rest point before it is dug: half under the dust.")]
+        [Range(0f, 1f)] [SerializeField] private float _buriedPartSink = 0.22f;
+
+        [Tooltip("Metres from the buried part within which holding the beam digs it.")]
+        [Range(1f, 10f)] [SerializeField] private float _partDigRadius = 5f;
+
+        [Tooltip("Seconds of holding the beam that dig the buried part free; it rises as it is dug.")]
+        [Range(0.3f, 8f)] [SerializeField] private float _partDigSeconds = 2.4f;
 
         [Tooltip("Flight time (s) of a part right next to 07.")]
         [Range(0.2f, 4f)] [SerializeField] private float _partFlightDuration = 1f;
@@ -326,6 +339,14 @@ namespace MoonProject.Gameplay
         public float PartBobFrequency => _partBobFrequency;
         public float PartSpin => _partSpin;
         public float PartMagnetRadius => _partMagnetRadius;
+
+        public string BuriedPartFriend => _buriedPartFriend;
+
+        public float BuriedPartSink => _buriedPartSink;
+
+        public float PartDigRadius => _partDigRadius;
+
+        public float PartDigSeconds => _partDigSeconds;
         public float PartFlightDuration => _partFlightDuration;
         public float PartFlightPerMetre => _partFlightPerMetre;
         public float PartFlightLift => _partFlightLift;

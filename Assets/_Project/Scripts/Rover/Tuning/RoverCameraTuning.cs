@@ -391,6 +391,11 @@ namespace MoonProject.Rover
         [Range(3f, 30f)]
         [SerializeField] private float _eveningHoldSeconds = 11f;
 
+        [Tooltip("Longest (s) the evening shot stays open while 07 charges on the dock: it holds at least as long " +
+                 "as the fill, up to this; a longer fill goes on, visible on the lamps, back in the chase frame.")]
+        [Range(3f, 60f)]
+        [SerializeField] private float _eveningFillHoldMax = 16f;
+
         [Header("Cinemachine damping")]
         [Tooltip("Orbital follow position damping (x, y, z): high = floaty drone.")]
         [SerializeField] private Vector3 _positionDamping = new Vector3(1.1f, 0.9f, 1.3f);
@@ -599,6 +604,8 @@ namespace MoonProject.Rover
         public WideShotSettings EveningShot => _eveningShot;
 
         public float EveningHoldSeconds => _eveningHoldSeconds;
+
+        public float EveningFillHoldMax => _eveningFillHoldMax;
 
         public float HeldShotClearance => _heldShotClearance;
 

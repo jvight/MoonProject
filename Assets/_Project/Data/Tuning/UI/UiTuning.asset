@@ -80,11 +80,6 @@ MonoBehaviour:
       _springFrequency: 1.6
       _springDamping: 0.55
     _entries:
-    - _kind: 1
-      _action: 0
-      _dwellSeconds: 6
-      _liftMetres: 1.9
-      _usesToRetire: 2
     - _kind: 2
       _action: 1
       _dwellSeconds: 0.5

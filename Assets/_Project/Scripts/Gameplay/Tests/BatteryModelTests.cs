@@ -289,16 +289,25 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [TestCase(ChargerKind.Dock, 4f)]
-        [TestCase(ChargerKind.Mast, 3f)]
-        public void A_Charger_FillsAnEmptyBattery_InItsTime_OneRisingCellAtATime(ChargerKind charger, float seconds)
+        [TestCase(ChargerKind.Mast, 5f)]
+        public void A_Charger_FillsCellByCell_AtItsSecondsPerCell_OneRisingNoteEach(ChargerKind charger,
+            float secondsPerCell)
         {
             Empty();
             _cells.Clear();
             _lowPower.Clear();
             var position = new Vector3(3f, 0f, 4f);
             var step = new BatteryStep { OnCharger = true, Charger = charger, ChargerPosition = position };
+            float hold = _tuning.ChargeStopHold;
 
-            Step(step, seconds - 0.1f);
+            Step(step, hold + secondsPerCell - 0.1f);
+            Assert.AreEqual(0, _battery.FullCells, "the first cell is not full yet");
+            Assert.IsTrue(_battery.IsCharging);
+
+            Step(step, 0.2f);
+            Assert.AreEqual(1, _battery.FullCells, "one cell per its seconds");
+
+            Step(step, 3f * secondsPerCell - 0.2f);
             Assert.Less(_battery.Charge, 4f);
             Assert.IsTrue(_battery.IsCharging);
 
@@ -322,26 +331,80 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void ChargingTime_StaysTheSame_WithMoreCells()
+        public void TheChargerDefaults_AreFourSecondsADockCell_FiveAMastCell_AndAHalfSecondStop()
+        {
+            Assert.AreEqual(4f, _tuning.DockSecondsPerCell);
+            Assert.AreEqual(5f, _tuning.MastSecondsPerCell);
+            Assert.AreEqual(0.3f, _tuning.ChargeStopSpeed);
+            Assert.AreEqual(0.5f, _tuning.ChargeStopHold);
+        }
+
+        [Test]
+        public void MoreCells_TakeLonger_SixEmptyCellsFillInTwentyFourSecondsAtTheDock()
         {
             _battery.GrowTo(6);
             Empty();
-            Step(new BatteryStep { OnCharger = true, Charger = ChargerKind.Dock }, 4.05f);
+            var step = new BatteryStep { OnCharger = true, Charger = ChargerKind.Dock };
 
+            Step(step, _tuning.ChargeStopHold + 24f - 0.1f);
+            Assert.Less(_battery.Charge, 6f);
+            Assert.IsTrue(_battery.IsCharging);
+
+            Step(step, 0.2f);
             Assert.AreEqual(6f, _battery.Charge, 1e-5f);
+        }
+
+        [Test]
+        public void Charging_StartsOnlyOnceStopped_AtOrUnderPointThreeMetresPerSecond_ForHalfASecond()
+        {
+            Drive(240f, 0f);
+            Step(new BatteryStep { OnCharger = true, Charger = ChargerKind.Dock, Speed = 0.5f }, 5f);
+            Assert.IsFalse(_battery.IsCharging, "rolling over the dock is no stop");
+            Assert.AreEqual(0, _charging.Count);
+
+            var stopped = new BatteryStep { OnCharger = true, Charger = ChargerKind.Dock, Speed = 0.3f };
+            Step(stopped, 0.4f);
+            Step(new BatteryStep { OnCharger = true, Charger = ChargerKind.Dock, Speed = 0.31f }, Dt);
+            Step(stopped, 0.4f);
+            Assert.IsFalse(_battery.IsCharging, "a moment over the stop speed starts the wait again");
+            Assert.AreEqual(2f, _battery.Charge, Tolerance);
+
+            Step(stopped, 0.15f);
+            Assert.IsTrue(_battery.IsCharging, "half a second stopped");
+            Assert.AreEqual(1, _charging.Count);
+            Assert.IsTrue(_charging[0].Charging);
         }
 
         [Test]
         public void DrivingOff_StopsTheCharge()
         {
             Drive(240f, 0f);
-            Step(new BatteryStep { OnCharger = true, Charger = ChargerKind.Mast }, 0.5f);
+            Step(new BatteryStep { OnCharger = true, Charger = ChargerKind.Mast }, 1f);
             Step(new BatteryStep(), Dt);
 
             Assert.IsFalse(_battery.IsCharging);
             Assert.AreEqual(2, _charging.Count);
             Assert.IsFalse(_charging[1].Charging);
             Assert.AreEqual(ChargerKind.Mast, _charging[1].Charger);
+        }
+
+        [Test]
+        public void Leaving_KeepsThePartOfACellAlreadyFilled_AndTheNextChargeGoesOnFromIt()
+        {
+            Drive(240f, 0f);
+            var dock = new BatteryStep { OnCharger = true, Charger = ChargerKind.Dock };
+            Step(dock, _tuning.ChargeStopHold + 2f);
+            float kept = _battery.Charge;
+            Assert.AreEqual(2.5f, kept, 0.02f, "half a cell in 2 s");
+            Assert.AreEqual(1, _charging.Count);
+
+            Step(new BatteryStep { Still = true }, 30f);
+            Assert.IsFalse(_battery.IsCharging);
+            Assert.AreEqual(kept, _battery.Charge, "nothing resets the half cell");
+
+            Step(dock, _tuning.ChargeStopHold + 2.5f);
+            Assert.AreEqual(3.125f, _battery.Charge, 0.02f, "the next charge goes on from the half cell");
+            Assert.AreEqual(3, _battery.FullCells);
         }
 
         [Test]
@@ -364,7 +427,7 @@ namespace MoonProject.Gameplay.Tests
         [Test]
         public void TheWarnings_FireOncePerDischarge_AtThirtyAndFifteenPercent()
         {
-            var lit = new Vector3(10f, 0f, 20f);
+            var lit = new Vector3(30f, 0f, 40f);
             Drive(335f, 0f, lit: lit);
             Assert.AreEqual(0, _warnings.Count, "1.2 cells left is 30%: not below it yet");
 
@@ -385,13 +448,62 @@ namespace MoonProject.Gameplay.Tests
         [Test]
         public void Charging_ReArmsTheWarnings()
         {
-            Drive(420f, 0f);
+            var lit = new Vector3(30f, 0f, 40f);
+            Drive(420f, 0f, lit: lit);
             Assert.AreEqual(2, _warnings.Count);
 
-            Step(new BatteryStep { OnCharger = true, Charger = ChargerKind.Dock }, 5f);
-            Drive(420f, 0f);
+            Step(new BatteryStep { OnCharger = true, Charger = ChargerKind.Dock }, 20f);
+            Drive(420f, 0f, lit: lit);
 
             Assert.AreEqual(4, _warnings.Count);
+        }
+
+        [TestCase(200f, 1)]
+        [TestCase(170f, 0)]
+        public void TheLowWarning_ComesEarly_WhenTheRangeLeftIsUnderOneAndAHalfTimesTheWay(float distance,
+            int expected)
+        {
+            Assert.AreEqual(1.5f, _tuning.LowRangeMargin);
+            Assert.AreEqual(1.2f, _tuning.LowRouteFactor);
+            var lit = new Vector3(distance, 0f, 0f);
+            Drive(150f, 0f, lit: lit);
+
+            Assert.AreEqual(expected, _warnings.Count,
+                "2.75 cells left is 330 m: under 1.5 x 1.2 x 200 m = 360 m, over 1.5 x 1.2 x 170 m = 306 m");
+            if (expected > 0)
+            {
+                Assert.AreEqual(BatteryWarning.Low, _warnings[0].Warning, "at about 70%: the distance spoke first");
+                Assert.AreEqual(lit, _warnings[0].NearestLitCharger);
+            }
+        }
+
+        [Test]
+        public void TheLowWarning_NeverPlaysWithinFortyMetresOfALitCharger_AndWaitsUntil07IsFarther()
+        {
+            Assert.AreEqual(40f, _tuning.LowChargerClearance);
+            Drive(400f, 0f, lit: new Vector3(39f, 0f, 0f));
+            Assert.AreEqual(0, _warnings.Count, "17% beside a lit mast: no Low warning");
+
+            Drive(1f, 0f, lit: new Vector3(41f, 0f, 0f));
+            Assert.AreEqual(1, _warnings.Count);
+            Assert.AreEqual(BatteryWarning.Low, _warnings[0].Warning);
+        }
+
+        [Test]
+        public void TheLowWarning_NeverPlaysOnACharger_AndAChargeLeftUnderThirtyPercentKeepsItDue()
+        {
+            Drive(390f, 0f, lit: new Vector3(20f, 0f, 0f));
+            Assert.AreEqual(0, _warnings.Count, "under 30%, but near the lit charger");
+
+            var far = new Vector3(0f, 0f, 300f);
+            var charger = new BatteryStep { OnCharger = true, Charger = ChargerKind.Mast, NearestLitCharger = far };
+            Step(charger, _tuning.ChargeStopHold + 0.5f);
+            Assert.IsTrue(_battery.IsCharging);
+            Assert.AreEqual(0, _warnings.Count, "never on a charger or while charging");
+
+            Step(new BatteryStep { NearestLitCharger = far }, Dt);
+            Assert.AreEqual(1, _warnings.Count, "left under 30%, the warning is still due");
+            Assert.AreEqual(BatteryWarning.Low, _warnings[0].Warning);
         }
 
         [Test]
@@ -401,7 +513,7 @@ namespace MoonProject.Gameplay.Tests
             Assert.AreEqual(0, _arcs.Count);
 
             Drive(10f, 0f);
-            Step(new BatteryStep { OnCharger = true, Charger = ChargerKind.Dock }, 5f);
+            Step(new BatteryStep { OnCharger = true, Charger = ChargerKind.Dock }, 20f);
             Drive(200f, 0f);
 
             Assert.AreEqual(1, _arcs.Count);

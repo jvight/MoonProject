@@ -33,10 +33,10 @@ namespace MoonProject.UI.Tests
             Object.DestroyImmediate(_asset);
         }
 
-        [TestCase(RoverAction.Ping, InputDeviceKind.KeyboardMouse, "Space")]
+        [TestCase(RoverAction.Jump, InputDeviceKind.KeyboardMouse, "Space")]
         [TestCase(RoverAction.Excavate, InputDeviceKind.KeyboardMouse, "E")]
         [TestCase(RoverAction.Tether, InputDeviceKind.KeyboardMouse, "RMB")]
-        [TestCase(RoverAction.Ping, InputDeviceKind.Gamepad, "A")]
+        [TestCase(RoverAction.Jump, InputDeviceKind.Gamepad, "A")]
         [TestCase(RoverAction.Excavate, InputDeviceKind.Gamepad, "X")]
         [TestCase(RoverAction.Tether, InputDeviceKind.Gamepad, "LT")]
         public void SingleBindings_GiveShortKeyNames(RoverAction action, InputDeviceKind device, string expected)
@@ -58,10 +58,10 @@ namespace MoonProject.UI.Tests
             Assert.AreEqual(expected, _reader.Menu.GetCancelLabel(device));
         }
 
-        [TestCase(RoverAction.Ping, InputDeviceKind.KeyboardMouse, "keyboard.space")]
+        [TestCase(RoverAction.Jump, InputDeviceKind.KeyboardMouse, "keyboard.space")]
         [TestCase(RoverAction.Tether, InputDeviceKind.KeyboardMouse, "mouse.rightbutton")]
         [TestCase(RoverAction.Winch, InputDeviceKind.KeyboardMouse, "mouse.scroll")]
-        [TestCase(RoverAction.Ping, InputDeviceKind.Gamepad, "gamepad.buttonsouth")]
+        [TestCase(RoverAction.Jump, InputDeviceKind.Gamepad, "gamepad.buttonsouth")]
         [TestCase(RoverAction.Winch, InputDeviceKind.Gamepad, "gamepad.dpad")]
         public void Controls_HaveStableIds(RoverAction action, InputDeviceKind device, string expected)
         {

@@ -17,6 +17,7 @@ namespace MoonProject.Gameplay
     /// fitted and empty, the press lifts an aimed relic into the rack instead (<see cref="CargoCradle"/>); facing the
     /// lab's keepsake shelf it places the relic that rode up the belly lift, or the one in the rack, and the belly lift
     /// takes a towed relic aboard (<see cref="HandOver"/>). 07 looks at what it aims at and fixes on what it tows.
+    /// Asleep until Kenji's garage port fits 07's spare ring (<see cref="RoverAbility.Tether"/>, first-hour v2 §3).
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class TetherSystem : MonoBehaviour, ITetherAim
@@ -28,6 +29,7 @@ namespace MoonProject.Gameplay
 
         private EventBus _events;
         private InputReader _input;
+        private IRoverAbilities _abilities;
         private IRoverState _rover;
         private IRoverRig _rig;
         private IViewCamera _view;
@@ -86,8 +88,10 @@ namespace MoonProject.Gameplay
             _tuning = tuning;
         }
 
-        internal bool Initialize(GameplayServices services, RelicField relics, SalvageField salvage)
+        internal bool Initialize(GameplayServices services, RelicField relics, SalvageField salvage,
+            IRoverAbilities abilities)
         {
+            _abilities = abilities ?? throw new ArgumentNullException(nameof(abilities));
             if (_tuning == null)
             {
                 Debug.LogError($"{nameof(TetherSystem)}: TetherTuning is not assigned.", this);
@@ -163,6 +167,16 @@ namespace MoonProject.Gameplay
         {
             if (!_initialized)
             {
+                return;
+            }
+
+            // Asleep until Kenji's garage port fits the spare ring (first-hour v2 §3): nothing to hold with.
+            if (!_abilities.Has(RoverAbility.Tether))
+            {
+                _armed = false;
+                _wasHeld = _input.TetherHeld;
+                SetHovered(null);
+                DrawBeam(Time.deltaTime);
                 return;
             }
 

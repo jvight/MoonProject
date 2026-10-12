@@ -80,6 +80,8 @@ namespace MoonProject.UI
         private PlaceCard _placeCard;
         private SaveTick _saveTick;
         private readonly NotYetLines _notYet = new NotYetLines();
+        private ProtocolReadout _protocol;
+        private RecipeCard _recipeCard;
         private TetherReticle _reticle;
         private ContextPrompt _prompt;
         private MaterialsChip _chip;
@@ -87,6 +89,8 @@ namespace MoonProject.UI
         private SiteNameTag _siteName;
         private MemoryCard _card;
         private TickerQueue _tickerLines;
+        private int _tickerStartsAnnounced;
+        private EventBus _events;
         private RadioTicker _ticker;
         private DialReadout _dial;
         private HopList _hopList;
@@ -159,6 +163,10 @@ namespace MoonProject.UI
         internal FriendNameTag FriendName => _friendName;
 
         internal PlaceCard PlaceCard => _placeCard;
+
+        internal ProtocolReadout Protocol => _protocol;
+
+        internal RecipeCard RecipeCard => _recipeCard;
 
         internal LookUpChip LookUp => _lookUpChip;
 
@@ -313,6 +321,7 @@ namespace MoonProject.UI
                 UiSaveKeys.PromptsVersion, _ledger.Capture, _ledger.Restore)));
 
             EventBus events = services.Events;
+            _events = events;
             _tokens.Add(events.Subscribe<MaterialsChanged>(OnMaterialsChanged));
             _tokens.Add(events.Subscribe<RelicDeposited>(OnRelicDeposited));
             _tokens.Add(events.Subscribe<RelicStowed>(OnRelicStowed));
@@ -333,7 +342,6 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<BlueprintDelivered>(OnBlueprintDelivered));
             _tokens.Add(events.Subscribe<RoverWideShotChanged>(OnWideShotChanged));
             _tokens.Add(events.Subscribe<RoverWakeBeatReached>(OnWakeBeat));
-            _tokens.Add(events.Subscribe<SonarPinged>(OnSonarPinged));
             _tokens.Add(events.Subscribe<SiteAnswered>(OnSiteAnswered));
             _tokens.Add(events.Subscribe<ExcavationStarted>(OnExcavationStarted));
             _tokens.Add(events.Subscribe<ExcavationStopped>(OnExcavationStopped));
@@ -342,6 +350,7 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<FriendRepairStarted>(OnFriendRepairStarted));
             _tokens.Add(events.Subscribe<FriendRepaired>(OnFriendRepaired));
             _tokens.Add(events.Subscribe<TickerLine>(OnTickerLine));
+            _tokens.Add(events.Subscribe<VoiceLineStarted>(OnVoiceLineStarted));
             _tokens.Add(events.Subscribe<CrewLogFound>(OnCrewLogFound));
             _tokens.Add(events.Subscribe<CassetteCollected>(OnCassetteCollected));
             _tokens.Add(events.Subscribe<RadioProgramChanged>(OnRadioProgramChanged));
@@ -406,6 +415,9 @@ namespace MoonProject.UI
                 services.Rover);
             _saveTick = new SaveTick(_layout, _tuning.SaveTick);
             _placeCard = new PlaceCard(_layout, _tuning.Guidance, _localization, services.Events);
+            _protocol = new ProtocolReadout(_layout.Hud, _tuning.Guidance, _localization, services.Recovery);
+            _recipeCard = new RecipeCard(_layout.Hud, _tuning.Guidance.Recipe, _localization, _numbers, services.Shop,
+                services.Materials, services.RecipeLook);
             _reticle = new TetherReticle(_layout.Reticle, _layout.ReticleRest, _layout.ReticleHover, _tuning.Reticle);
             _prompt = new ContextPrompt(_layout, _tuning.Prompts, _director, services.View, _glyphs, _localization,
                 services.Events);
@@ -565,8 +577,18 @@ namespace MoonProject.UI
                               !hopping && !_placeCard.IsVisible && !_siteName.IsVisible && !_lookUpChip.IsVisible &&
                               !_kitTitle.IsVisible;
             _ticker.Tick(hudTime, tickerOpen);
+            if (_tickerLines.Starts != _tickerStartsAnnounced)
+            {
+                _tickerStartsAnnounced = _tickerLines.Starts;
+                _events.Publish(new TickerLineShown(_tickerLines.Line.Key));
+            }
             _hopFade.Tick(deltaTime);
-            bool hintOpen = !_placeCard.IsVisible && !_card.IsVisible && !_tower.IsVisible && !_kitTitle.IsVisible &&
+            _protocol.Tick(hudTime);
+            // Its own zone (right of centre): it stands beside a place card, so the tower's card never hides it.
+            _recipeCard.Tick(hudTime, !paused && _awake && !_protocol.IsVisible && !_card.IsVisible &&
+                                      !_tower.IsVisible && !_kitTitle.IsVisible && !_stargaze.IsVeiled);
+            bool hintOpen = !_protocol.IsVisible && !_placeCard.IsVisible && !_card.IsVisible && !_tower.IsVisible &&
+                            !_kitTitle.IsVisible &&
                             !_dial.IsBusy && !_hopList.IsBusy && !_prompt.IsVisible && !_siteName.IsVisible &&
                             !_ticker.IsVisible;
             float stick = _tuning.Stargaze.FirstPromptStick * _tuning.Stargaze.FirstPromptStick;
@@ -577,12 +599,12 @@ namespace MoonProject.UI
                 : _lookUpHint.WantsShown ? HintWord.LookUp : HintWord.None;
             _lookUpChip.Tick(deltaTime, paused ? HintWord.None : hint, device);
             _nextStep.Tick(hudTime, _services.Rover.Speed, _player.Guidance);
-            _placeCard.Tick(hudTime, _awake && !_kitTitle.IsVisible && !_card.IsVisible &&
+            _placeCard.Tick(hudTime, _awake && !_protocol.IsVisible && !_kitTitle.IsVisible && !_card.IsVisible &&
                                      !_prompt.IsVisible && !_ticker.IsVisible && !_siteName.IsVisible &&
                                      !_lookUpChip.IsVisible);
             _nextLine.Tick(deltaTime, _nextStep, !paused && _awake && !_card.IsVisible &&
                                                  !_tower.IsVisible && !_stargaze.IsVeiled &&
-                                                 !_placeCard.IsVisible);
+                                                 !_placeCard.IsVisible && !_protocol.IsVisible);
             bool hudOpen = !paused && _awake && !_stargaze.IsVeiled && !onMap;
             _batteryDial.Tick(deltaTime, _cellRowRevealed, hudOpen);
             _homeMeter.Tick(deltaTime, hudOpen && !_card.IsVisible);
@@ -758,9 +780,15 @@ namespace MoonProject.UI
             if (reached.Beat == WakeBeat.Crackle)
             {
                 _firstPrompt.OpeningBegan();
+                _protocol.OpeningBegan();
+            }
+            else if (reached.Beat == WakeBeat.GazeEarth)
+            {
+                _protocol.Cue();
             }
             else if (reached.Beat == WakeBeat.ChaseFrame)
             {
+                _protocol.Cue();
                 _firstPrompt.ChaseFrameReached();
             }
         }
@@ -771,11 +799,6 @@ namespace MoonProject.UI
             {
                 _lookUpHint.SetWide(changed.Wide);
             }
-        }
-
-        private void OnSonarPinged(SonarPinged pinged)
-        {
-            _director.NotifyUsed(InteractionKind.Ping);
         }
 
         private void OnExcavationStarted(ExcavationStarted started)
@@ -862,6 +885,13 @@ namespace MoonProject.UI
             _tickerLines.Enqueue(line);
         }
 
+        /// <summary>The ticker's line is a recording's subtitle: it stays up until the voice has finished.</summary>
+        private void OnVoiceLineStarted(VoiceLineStarted started)
+        {
+            _tickerLines.HoldAtLeast(started.Key, started.Seconds + _tuning.Ticker.VoiceTailSeconds);
+        }
+
+        /// <summary>A sleeping station's "not yet": the ticker says what wakes it (Audio plays the tone).</summary>
         private void OnTetherAttached(TetherAttached attached)
         {
             _director.NotifyUsed(InteractionKind.Tether);
@@ -909,6 +939,8 @@ namespace MoonProject.UI
             _lookUpChip.Relocalize();
             _nextLine.Relocalize();
             _placeCard.Relocalize();
+            _protocol.Relocalize();
+            _recipeCard.Relocalize();
             _labHud.Relocalize();
             _board.Relocalize();
             _dial.Relocalize();

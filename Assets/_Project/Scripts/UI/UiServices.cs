@@ -16,8 +16,8 @@ namespace MoonProject.UI
             ILookSettings look, IFeelSettings feel, ISaveService save, IMaterialStock materials, ITetherAim tether, IInteractionHints hints,
             IUpgradeShop shop, IBlueprintBoard board, IFriendStatuses friends, IRadioProgram radio, IRadioHop hop,
             IRelayStatus relays, ISalvageStatus salvage, IGameFlow flow, ISettingsFile settings, IRoverBattery battery,
-            IBeamStatus beam, ITechTree tech, IRecoveryProgress recovery, IWorldLayout world,
-            IRoverAbilities abilities)
+            IBeamStatus beam, ITechTree tech, IRecoveryProgress recovery, IRecipeLook recipeLook,
+            IWorldLayout world, IRoverAbilities abilities)
         {
             Events = events ?? throw new ArgumentNullException(nameof(events));
             Input = input ?? throw new ArgumentNullException(nameof(input));
@@ -42,6 +42,7 @@ namespace MoonProject.UI
             Battery = battery ?? throw new ArgumentNullException(nameof(battery));
             Tech = tech ?? throw new ArgumentNullException(nameof(tech));
             Recovery = recovery ?? throw new ArgumentNullException(nameof(recovery));
+            RecipeLook = recipeLook ?? throw new ArgumentNullException(nameof(recipeLook));
             Beam = beam ?? throw new ArgumentNullException(nameof(beam));
             World = world ?? throw new ArgumentNullException(nameof(world));
             Abilities = abilities ?? throw new ArgumentNullException(nameof(abilities));
@@ -105,6 +106,9 @@ namespace MoonProject.UI
         /// <summary>The four recovery targets' lamps: the recovery panel's labels.</summary>
         public IRecoveryProgress Recovery { get; }
 
+        /// <summary>The recipe 07's view rests on (docs/features/M3-24 B).</summary>
+        public IRecipeLook RecipeLook { get; }
+
         /// <summary>
         /// Resolves every service; a missing one throws (a system is missing from the bootstrap order).
         /// </summary>
@@ -123,7 +127,7 @@ namespace MoonProject.UI
                 context.Get<IRadioHop>(), context.Get<IRelayStatus>(), context.Get<ISalvageStatus>(),
                 context.Get<IGameFlow>(), context.Get<ISettingsFile>(), context.Get<IRoverBattery>(),
                 context.Get<IBeamStatus>(), context.Get<ITechTree>(), context.Get<IRecoveryProgress>(),
-                context.Get<IWorldLayout>(), context.Get<IRoverAbilities>());
+                context.Get<IRecipeLook>(), context.Get<IWorldLayout>(), context.Get<IRoverAbilities>());
         }
     }
 }

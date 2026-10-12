@@ -24,7 +24,12 @@ namespace MoonProject.UI
         {
             _input = input ?? throw new ArgumentNullException(nameof(input));
             _localization = localization ?? throw new ArgumentNullException(nameof(localization));
-            int actions = Enum.GetValues(typeof(RoverAction)).Length;
+            int actions = 0;
+            foreach (RoverAction action in Enum.GetValues(typeof(RoverAction)))
+            {
+                actions = Math.Max(actions, (int)action + 1);
+            }
+
             _devices = Enum.GetValues(typeof(InputDeviceKind)).Length;
             _actions = new string[actions * _devices];
             _cancel = new string[_devices];

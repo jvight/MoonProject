@@ -48,6 +48,9 @@ namespace MoonProject.Audio
         [Tooltip("The radio station (music, static, clarity).")]
         [SerializeField] private RadioStation _radio;
 
+        [Tooltip("Voiced recordings on the radio (Ro's letters, the automated station).")]
+        [SerializeField] private RadioVoice _voice;
+
         [Tooltip("The lunar ambience bed.")]
         [SerializeField] private AmbienceBed _ambience;
 
@@ -86,6 +89,9 @@ namespace MoonProject.Audio
         public AudioBusMixer Buses => _buses;
 
         public AudioLibrary Library => _library;
+
+        /// <summary>The radio's voiced recordings (the music ducks under them).</summary>
+        internal RadioVoice Voice => _voice;
 
         public bool IsInitialized { get; private set; }
 
@@ -162,6 +168,7 @@ namespace MoonProject.Audio
             _friends.Initialize(context, this);
             _ui.Initialize(context, this);
             _canyon.Initialize(context, this);
+            _voice.Initialize(context, this);
             _radio.Initialize(context, this);
             _soundscape.Initialize(context, this, _radio, _canyon, _mixTuning.AmbienceFadeIn);
             _ambience.Initialize(this, _soundscape, _mixTuning.AmbienceFadeIn);
@@ -295,6 +302,12 @@ namespace MoonProject.Audio
         internal void WireBattery(BatteryAudio battery)
         {
             _battery = battery;
+        }
+
+        /// <summary>The radio's voiced recordings (docs/features/M3-24 C).</summary>
+        internal void WireVoice(RadioVoice voice)
+        {
+            _voice = voice;
         }
 
         internal void Wire(AudioLibrary library, AudioMixTuning mixTuning, RoverAudio roverAudio,
@@ -447,6 +460,7 @@ namespace MoonProject.Audio
             ok &= Require(_friends, nameof(_friends));
             ok &= Require(_jump, nameof(_jump));
             ok &= Require(_radio, nameof(_radio));
+            ok &= Require(_voice, nameof(_voice));
             ok &= Require(_ambience, nameof(_ambience));
             ok &= Require(_canyon, nameof(_canyon));
             ok &= Require(_soundscape, nameof(_soundscape));

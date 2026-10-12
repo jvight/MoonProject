@@ -9,11 +9,13 @@ namespace MoonProject.UI
     /// The first time 07 comes near a place (docs/features/M3-16 "Each place and its one job"), its name and its one
     /// job drift in high on screen on the floating names' soft shadow, rest, and fade away. Each place once; places
     /// met while a card is up wait their turn, and a card waits while the screen is busy (a kit title, a story card).
-    /// A blueprint found in a wreck gets the same quiet card: the kit's name over "Blueprint found".
+    /// A blueprint found in a wreck gets the same quiet card: the kit's name over "Blueprint found". The radio tower's
+    /// card waits a few seconds while its cables preview what it powers (docs/features/M3-24 B).
     /// </summary>
     internal sealed class PlaceCard
     {
         private const string Prefix = "place.";
+        private const string TowerPlace = "place.tower";
 
         private readonly UiLayout _layout;
         private readonly GuidanceSettings _settings;
@@ -22,8 +24,10 @@ namespace MoonProject.UI
         private readonly Reveal _reveal;
         private readonly Queue<string> _waiting = new Queue<string>();
         private readonly Queue<string> _waitingLines = new Queue<string>();
+        private readonly Queue<float> _readyAt = new Queue<float>();
         private readonly HashSet<string> _seen = new HashSet<string>(StringComparer.Ordinal);
         private float _rest;
+        private float _clock;
         private string _lineKey;
 
         public PlaceCard(UiLayout layout, GuidanceSettings settings, ILocalization localization, EventBus events)
@@ -58,6 +62,7 @@ namespace MoonProject.UI
             {
                 _waiting.Enqueue(KeyBase(placeId) + ".name");
                 _waitingLines.Enqueue(KeyBase(placeId) + ".job");
+                _readyAt.Enqueue(_clock + (KeyBase(placeId) == TowerPlace ? _settings.TowerCardDelay : 0f));
             }
         }
 
@@ -68,6 +73,7 @@ namespace MoonProject.UI
             {
                 _waiting.Enqueue(UiKeys.UpgradeName(kitId));
                 _waitingLines.Enqueue(UiKeys.BlueprintFound);
+                _readyAt.Enqueue(_clock);
             }
         }
 
@@ -83,10 +89,12 @@ namespace MoonProject.UI
         /// <param name="open">False while something else holds the screen: a waiting card does not start.</param>
         public void Tick(float deltaTime, bool open)
         {
-            if (Current == null && open && _waiting.Count > 0)
+            _clock += deltaTime;
+            if (Current == null && open && _waiting.Count > 0 && _clock >= _readyAt.Peek())
             {
                 Current = _waiting.Dequeue();
                 _lineKey = _waitingLines.Dequeue();
+                _readyAt.Dequeue();
                 Write();
                 _rest = _settings.PlaceHoldSeconds;
                 _reveal.Show();

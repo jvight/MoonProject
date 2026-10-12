@@ -1,5 +1,4 @@
 using System;
-using System.Globalization;
 using UnityEngine;
 using MoonProject.Core;
 using MoonProject.Core.Events;
@@ -10,10 +9,10 @@ namespace MoonProject.Gameplay
     /// Bell's signals once she is home (docs/features/M3-05 "Bell's signals"), as a pure state machine. When they start
     /// (each session with Bell home, or her first homecoming) she keeps pointing at the target saved last time if it
     /// is still waiting and reachable, and otherwise picks one (<see cref="BellSignalPicker"/>):
-    /// <see cref="BellSignalPicked"/> and the ticker line "bearing {0}" from home. When that target is found she
-    /// publishes <see cref="BellSignalFound"/> and one of her three kind lines in turn, then picks the next. One target
-    /// at a time, it never expires, and when nothing reachable is left she rests until something is (a new ability
-    /// opens a region). Allocation-free per step; the ticker text allocates only when a signal is picked.
+    /// <see cref="BellSignalPicked"/> and her ticker line (no numbers: her pillar points the way, first-hour v2 §8).
+    /// When that target is found she publishes <see cref="BellSignalFound"/> and one of her three kind lines in turn,
+    /// then picks the next. One target at a time, it never expires, and when nothing reachable is left she rests until
+    /// something is (a new ability opens a region). Allocation-free per step.
     /// </summary>
     public sealed class BellSignals
     {
@@ -25,7 +24,6 @@ namespace MoonProject.Gameplay
         /// <summary>Bell's "found" lines, said in turn.</summary>
         public const int FoundLines = 3;
 
-        private const float FullCircle = 360f;
 
         private readonly EventBus _events;
         private readonly ISignalTargets _targets;
@@ -51,16 +49,6 @@ namespace MoonProject.Gameplay
 
         /// <summary>Where the current target is (valid while <see cref="Current"/> is not -1).</summary>
         public Vector3 TargetPosition => Current >= 0 ? _targets.Get(Current).Position : Vector3.zero;
-
-        /// <summary>
-        /// Whole degrees (0..359, clockwise from +Z) from <paramref name="home"/> to <paramref name="target"/>.
-        /// </summary>
-        public static int BearingFrom(Vector3 home, Vector3 target)
-        {
-            Vector3 direction = target - home;
-            int bearing = Mathf.RoundToInt(Mathf.Repeat(SurfaceRules.Bearing(direction), FullCircle));
-            return bearing % (int)FullCircle;
-        }
 
         /// <summary>Bell starts listening (idempotent): she resumes her saved signal or picks one.</summary>
         public void Start()
@@ -164,8 +152,7 @@ namespace MoonProject.Gameplay
             _savedKind = target.Kind;
             _savedId = target.Id;
             _events.Publish(new BellSignalPicked(target.Kind, target.Position));
-            string bearing = BearingFrom(_home, target.Position).ToString(CultureInfo.InvariantCulture);
-            _events.Publish(new TickerLine(PickedLine, bearing));
+            _events.Publish(new TickerLine(PickedLine));
         }
 
         private static string FoundLine(int found)

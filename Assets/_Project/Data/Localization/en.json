@@ -112,31 +112,47 @@
         },
         {
             "key": "next.wake",
-            "text": "Something out there might answer a ping."
+            "text": "Power first. The radio tower is asleep."
         },
         {
             "key": "next.salvage",
-            "text": "The old depot still has metal worth cutting."
+            "text": "It needs metal, wiring, optics and a coil. The old depot has some."
         },
         {
             "key": "next.tower",
-            "text": "The tower needs metal."
+            "text": "The coil. The tower is waiting."
         },
         {
             "key": "next.signal",
-            "text": "A faint signal. Someone is out there."
+            "text": "A faint signal, out past the dune. Someone is out there."
+        },
+        {
+            "key": "next.dig",
+            "text": "Her last part is under the dust."
+        },
+        {
+            "key": "next.friend.repair",
+            "text": "All her parts are here. Repair her."
+        },
+        {
+            "key": "next.garage",
+            "text": "Kenji's garage. Something of 07's might still be there."
+        },
+        {
+            "key": "next.port",
+            "text": "Kenji's old service port. It still has a spare."
         },
         {
             "key": "next.relic",
-            "text": "Something glints out there. Home has room for it."
+            "text": "Home has room for it."
         },
         {
             "key": "next.lift.stitch",
-            "text": "The lift is stuck: stitch the cable."
+            "text": "The lift is stuck. Repair its cable."
         },
         {
             "key": "next.lift.ride",
-            "text": "Rest on the lift. The lab has a shelf for it."
+            "text": "Rest on the lift. The lab is up there."
         },
         {
             "key": "next.chasm",
@@ -193,6 +209,10 @@
         {
             "key": "recovery.answer.name",
             "text": "Answer Earth"
+        },
+        {
+            "key": "protocol.power.need",
+            "text": "› the radio tower"
         },
         {
             "key": "ui.board.known",
@@ -263,12 +283,20 @@
             "text": "Dark. It wakes with the tower."
         },
         {
+            "key": "notyet.tether",
+            "text": "07's tether is gone. Kenji kept a spare in his garage."
+        },
+        {
+            "key": "ticker.listen.first",
+            "text": "07 listens when it rests. What still holds something answers."
+        },
+        {
             "key": "place.dock.name",
             "text": "Charging Dock"
         },
         {
             "key": "place.dock.job",
-            "text": "Where 07 charges. A rest here keeps the day."
+            "text": "Park here to charge. A rest here saves the day."
         },
         {
             "key": "place.lander.name",
@@ -276,7 +304,7 @@
         },
         {
             "key": "place.lander.job",
-            "text": "The crew's home. Its windows light as it wakes."
+            "text": "The crew's home. The tower's power lights its windows."
         },
         {
             "key": "place.tower.name",
@@ -284,7 +312,7 @@
         },
         {
             "key": "place.tower.job",
-            "text": "The heart of home: power and signals."
+            "text": "The station's heart: each level powers more of home."
         },
         {
             "key": "place.bay.name",
@@ -292,7 +320,7 @@
         },
         {
             "key": "place.bay.job",
-            "text": "Where new kit is fitted to 07."
+            "text": "Park on the turntable: the arms fit new kit on 07."
         },
         {
             "key": "place.ladder.name",
@@ -308,7 +336,7 @@
         },
         {
             "key": "place.lift.job",
-            "text": "The crew's lift: up into the lab."
+            "text": "Rest on the platform to ride up into the lab."
         },
         {
             "key": "place.lab.name",
@@ -316,7 +344,7 @@
         },
         {
             "key": "place.lab.job",
-            "text": "The crew's lab: finds become know-how."
+            "text": "Bring finds up here: the reader turns them into blueprints."
         },
         {
             "key": "place.rack.name",
@@ -324,7 +352,15 @@
         },
         {
             "key": "place.rack.job",
-            "text": "Music, and the crew's voices."
+            "text": "Tapes you find play here: music and the crew's voices."
+        },
+        {
+            "key": "place.garage_port.name",
+            "text": "Kenji's Garage Port"
+        },
+        {
+            "key": "place.garage_port.job",
+            "text": "Fits 07's spare parts. Park on its pad."
         },
         {
             "key": "ui.blueprint.found",
@@ -401,10 +437,6 @@
         {
             "key": "ui.tower.purchased",
             "text": "The signal grows"
-        },
-        {
-            "key": "hint.ping",
-            "text": "Ping"
         },
         {
             "key": "hint.excavate",
@@ -640,7 +672,7 @@
         },
         {
             "key": "hint.repair",
-            "text": "Mend"
+            "text": "Repair"
         },
         {
             "key": "ui.card.log_caption",
@@ -696,7 +728,7 @@
         },
         {
             "key": "ticker.bell.signal",
-            "text": "Bell's picking something up… bearing {0}°."
+            "text": "Bell's picking something up. Her light points the way."
         },
         {
             "key": "ticker.bell.found_0",
@@ -780,7 +812,7 @@
         },
         {
             "key": "hint.restore",
-            "text": "Restore"
+            "text": "Repair"
         },
         {
             "key": "hint.hop",
@@ -792,7 +824,7 @@
         },
         {
             "key": "ticker.relay.waiting",
-            "text": "Relay restored. It listens for a lit neighbour."
+            "text": "Relay repaired. It listens for a lit neighbour."
         },
         {
             "key": "hop.node.home",
@@ -859,6 +891,18 @@
             "text": "{0} more {1} to salvage"
         },
         {
+            "key": "ui.recipecard.needs",
+            "text": "NEEDS"
+        },
+        {
+            "key": "ui.recipecard.tower",
+            "text": "Park on the tower's pad and feed its hopper."
+        },
+        {
+            "key": "ui.recipecard.blueprint",
+            "text": "Blueprint decoded. Park on the bay's turntable to build it."
+        },
+        {
             "key": "upgrade.rover.cargo_cradle.name",
             "text": "Cargo Cradle"
         },
@@ -905,6 +949,14 @@
         {
             "key": "kit.fresh_paint.name",
             "text": "A fresh coat from Bell"
+        },
+        {
+            "key": "kit.tape_deck.name",
+            "text": "Ro's old tape deck"
+        },
+        {
+            "key": "kit.tether_ring.name",
+            "text": "Kenji's spare tether ring"
         },
         {
             "key": "ui.bay.fitted",
@@ -1361,6 +1413,10 @@
         {
             "key": "upgrade.rover.cell_pack.1.effect",
             "text": "Two more cells on 07's back: six lamps lit, and the far side of the basin in reach."
+        },
+        {
+            "key": "ticker.tether.back",
+            "text": "07 can hold things again."
         },
         {
             "key": "ui.pause.can",
