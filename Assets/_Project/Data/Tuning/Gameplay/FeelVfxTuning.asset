@@ -1,0 +1,84 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d30406fa92d69654d9404f288381acc7, type: 3}
+  m_Name: FeelVfxTuning
+  m_EditorClassIdentifier: 
+  _moteCount: 18
+  _moteRadius: 0.6
+  _moteSize: 0.05
+  _moteStreak: 0.05
+  _moteSwirl: 0.3
+  _moteEase: 2.4
+  _moteDisperseSeconds: 0.2
+  _moteColor: {r: 0.75, g: 1, b: 1, a: 1}
+  _beadSize: 0.04
+  _beadHalo: 4
+  _beadHaloAlpha: 0.45
+  _lensGlow: 0.16
+  _lensGlowAlpha: 0.6
+  _emitterLight: 1.5
+  _emitterRange: 1.2
+  _flashRadius: 0.3
+  _flashSeconds: 0.06
+  _flashLight: 2.5
+  _flashDecaySeconds: 0.18
+  _flashRange: 3
+  _coreWidth: 0.02
+  _sheathWidth: 0.06
+  _shimmer: 0.12
+  _shimmerRate: 9
+  _extendSeconds: 0.08
+  _retractSeconds: 0.12
+  _cutLight: 1.12
+  _cutRange: 3.5
+  _cutFlicker: 0.1
+  _cutFlickerRate: 12
+  _cutFadeSeconds: 0.2
+  _cutLightColor: {r: 1, g: 0.72, b: 0.42, a: 1}
+  _seamOrangeSeconds: 1
+  _seamRedSeconds: 3
+  _seamDarkSeconds: 6
+  _seamWidth: 0.04
+  _seamLift: 0.004
+  _gravity: 1.62
+  _sparkSpeed: {x: 1.5, y: 4}
+  _sparkRate: {x: 10, y: 24}
+  _sparkSpread: 35
+  _restitution: 0.3
+  _beadLifetime: {x: 1.5, y: 2.5}
+  _sparkMaxFlight: 2.5
+  _debrisSize: {x: 0.018, y: 0.03}
+  _sparkStreak: 0.04
+  _sparkColor: {r: 1, g: 0.8, b: 0.5, a: 1}
+  _beadCoolColor: {r: 0.6, g: 0.08, b: 0.02, a: 1}
+  _ventSparks: 6
+  _tumbleBeads: {x: 2, y: 4}
+  _pools: {x: 64, y: 24, z: 24}
+  _dustPool: 48
+  _dustColor: {r: 0.6, g: 0.58, b: 0.7, a: 0.55}
+  _dustSize: 0.12
+  _ringRadius: 1.1
+  _dustSpeed: {x: 0.6, y: 1.8}
+  _dustRise: 0.45
+  _dustSettleSeconds: 1.2
+  _ringDust: 28
+  _leapRingShare: 0.6
+  _tetherDust: 10
+  _coilFlash: {x: 0.5, y: 1.8}
+  _alignLight: 0.9
+  _sweepLength: 0.6
+  _sweepSeconds: 0.6
+  _crackFlashSeconds: 0.08
+  _crackSpike: 2
+  _emitterFadeSeconds: 0.4
+  _tiePop: 1.12
+  _tieSeconds: 0.2

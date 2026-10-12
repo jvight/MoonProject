@@ -27,6 +27,10 @@ MonoBehaviour:
   _spark: {fileID: 2100000, guid: 94b2acb381f20094e847454e82d34847, type: 2}
   _homeHalo: {fileID: 2100000, guid: 4b4c8a73f5f09384b9c46bf0b8f06413, type: 2}
   _linkPulse: {fileID: 2100000, guid: 4a167f2be8259a14bbe1c2ad51b5c191, type: 2}
+  _feelSprite: {fileID: 2100000, guid: b4c44f742bcf6564ca4dd45507055cac, type: 2}
+  _beamCore: {fileID: 2100000, guid: 720b32587f94a294da7f41ca4e161b7c, type: 2}
+  _beamSheath: {fileID: 2100000, guid: 726f17e4a2c27ae48abe27ca48c6bc30, type: 2}
+  _heatSeam: {fileID: 2100000, guid: 3663c4749be107848bfb7c3ebc2cc9e7, type: 2}
   _pads:
   - {fileID: 4787985358432548162, guid: 0390a58189554f54d99131facf350145, type: 3}
   - {fileID: 1990579749909035574, guid: 5879b7d5f8068624e825ae290690d7da, type: 3}
