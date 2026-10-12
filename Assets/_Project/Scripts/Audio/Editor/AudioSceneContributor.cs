@@ -43,6 +43,9 @@ namespace MoonProject.Audio.Editor
             var ui = context.CreateChild("UiAudio", root).AddComponent<UiAudio>();
             var radio = context.CreateChild("RadioStation", root).AddComponent<RadioStation>();
             var voice = context.CreateChild("RadioVoice", root).AddComponent<RadioVoice>();
+            var feel = context.CreateChild("FeelAudio", root).AddComponent<FeelAudio>();
+            var chirps = context.CreateChild("RoverChirpAudio", root).AddComponent<RoverChirpAudio>();
+            var feelTuning = context.LoadAsset<FeelAudioTuning>(AudioAssetPaths.FeelTuning);
             var ambience = context.CreateChild("AmbienceBed", root).AddComponent<AmbienceBed>();
             var canyon = context.CreateChild("CanyonAmbience", root).AddComponent<CanyonAmbience>();
             var soundscape = context.CreateChild("Soundscape", root).AddComponent<Soundscape>();
@@ -60,6 +63,8 @@ namespace MoonProject.Audio.Editor
             jump.Wire(jumpTuning);
             radio.Wire(radioTuning, playlist, tapes);
             voice.Wire(radioTuning, context.LoadAsset<VoiceLibrary>(AudioAssetPaths.Voices));
+            feel.Wire(feelTuning);
+            chirps.Wire(feelTuning, context.LoadAsset<ChirpBank>(AudioAssetPaths.Chirps));
             canyon.Wire(canyonTuning);
             soundscape.Wire(soundscapeTuning);
             smallSounds.Wire(soundscapeTuning);
@@ -71,6 +76,7 @@ namespace MoonProject.Audio.Editor
                 smallSounds, relays, salvage, stations, lab);
             director.WireBattery(battery);
             director.WireVoice(voice);
+            director.WireFeel(feel, chirps);
             context.AddSystem(director);
         }
     }

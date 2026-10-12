@@ -24,6 +24,7 @@ namespace MoonProject.Audio.Editor
             EnsureExists<FriendAudioTuning>(AudioAssetPaths.FriendTuning);
             EnsureExists<JumpAudioTuning>(AudioAssetPaths.JumpTuning);
             EnsureExists<RadioTuning>(AudioAssetPaths.RadioTuning);
+            EnsureExists<FeelAudioTuning>(AudioAssetPaths.FeelTuning);
             EnsureExists<CanyonAudioTuning>(AudioAssetPaths.CanyonTuning);
             EnsureExists<SoundscapeTuning>(AudioAssetPaths.SoundscapeTuning);
             EnsureExists<RelayAudioTuning>(AudioAssetPaths.RelayTuning);

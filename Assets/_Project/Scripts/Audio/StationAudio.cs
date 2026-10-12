@@ -132,7 +132,8 @@ namespace MoonProject.Audio
             if (!feed.IsValid || !servo.IsValid || !turn.IsValid || !stitch.IsValid || !charge.IsValid ||
                 !_sigh.IsValid || !_weld.IsValid || !_chime.IsValid || !_dockConnect.IsValid || !_dockFull.IsValid ||
                 !_dockRelease.IsValid || !_wake.IsValid || !_notYet.IsValid || !liftRide.IsValid ||
-                !_found.IsValid || !_portArm.IsValid || !_ringWake.IsValid || !TryResolveBeats(director) || !TryResolveLiftBeats(director) ||
+                !_found.IsValid || !_portArm.IsValid || !_ringWake.IsValid || !TryResolveBeats(director) ||
+                !TryResolveLiftBeats(director) ||
                 !TryResolveWakes(director.Library.GetCue(_wake)))
             {
                 enabled = false;
@@ -295,7 +296,7 @@ namespace MoonProject.Audio
             }
         }
 
-        /// <summary>The pieces Kenji's garage port fits (first-hour v2 section 3); the bay's arms fit the rest.</summary>
+        /// <summary>The pieces Kenji's garage port fits (first-hour v2 section 3); the bay's arms the rest.</summary>
         private static bool AtGaragePort(RoverKitPiece piece)
         {
             return piece == RoverKitPiece.TetherRing || piece == RoverKitPiece.TapeDeck;

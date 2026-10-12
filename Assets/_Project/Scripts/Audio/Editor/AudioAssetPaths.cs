@@ -11,6 +11,8 @@ namespace MoonProject.Audio.Editor
         public const string Playlist = DataFolder + "/RadioPlaylist.asset";
         public const string Tapes = DataFolder + "/RadioTapes.asset";
         public const string Voices = DataFolder + "/VoiceLibrary.asset";
+        public const string FeelTuning = DataFolder + "/FeelAudioTuning.asset";
+        public const string Chirps = DataFolder + "/ChirpBank.asset";
         public const string MixTuning = DataFolder + "/AudioMixTuning.asset";
         public const string RoverTuning = DataFolder + "/RoverAudioTuning.asset";
         public const string RadioTuning = DataFolder + "/RadioTuning.asset";
@@ -38,6 +40,9 @@ namespace MoonProject.Audio.Editor
 
         /// <summary>The voiced radio lines rendered by tools/voice/build_voice.py.</summary>
         public const string VoiceManifest = "tools/voice/voice_manifest.json";
+
+        /// <summary>07's chirp syllables, written by tools/audio/build_chirp_data.py.</summary>
+        public const string ChirpData = "tools/audio/chirp_syllables.json";
 
         public static string ProjectFile(string relativePath)
         {

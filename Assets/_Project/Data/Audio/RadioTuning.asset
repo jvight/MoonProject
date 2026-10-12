@@ -47,7 +47,7 @@ MonoBehaviour:
   _hopMusicGain: 0.15
   _hopCutoff: 700
   _cabinCutoff: 7000
-  _cabinMusicGain: 1.12
+  _cabinMusicGain: 0.7
   _cabinStaticGain: 0.7
   _wakeMusicDelay: 1.6
   _wakeMusicFade: 4

@@ -18,6 +18,8 @@ from synth.fm import operator, two_op
 from synth.loop import periodic
 from synth.pluck import karplus_strong
 
+import feel_cues as feel
+
 
 @dataclass(frozen=True)
 class Category:
@@ -2443,6 +2445,62 @@ def hm_chirp(_variant, gen):
 
 
 CUES = (
+    # 0.5.2 "Satisfying" (docs/design/feel-pass.md, polish-pass.md 1.1): recipes in feel_cues.py.
+    Cue("cut_charge", "oneshot_3d", feel.cut_charge, variants=2, variant_labels=feel.CUT_CHARGE_LABELS,
+        volume=(0.6, 0.6), milestone="M3", notes="The emitter charging: glassy D E F# A over 0.65 s (fresh) or F# A "
+                                                 "over 0.3 s (resume), over a low chassis inhale."),
+    Cue("cut_cancel", "oneshot_3d", feel.cut_cancel, volume=(0.5, 0.5), milestone="M3",
+        notes="A charge let go: a soft falling A -> F#."),
+    Cue("cut_ignite", "oneshot_3d", feel.cut_ignite, volume=(0.65, 0.65), milestone="M3",
+        notes="Ignition: a zing on D6 plus a felt 60 Hz chassis thump."),
+    Cue("cut_sizzle", "loop_3d", feel.cut_sizzle, loop=True, file_stem="cut_sizzle_loop", volume=(0.5, 0.5),
+        milestone="M3", notes="The beam through 07's body: a low-passed sizzle, level by cut progress. 3 s seamless."),
+    Cue("cut_crack", "oneshot_3d", feel.cut_crack, volume=(0.7, 0.7), milestone="M3",
+        notes="The piece breaks free: a soft high B pluck plus a felt thud."),
+    Cue("strap_tuk", "tick_3d", feel.strap_tuk, volume=(0.7, 0.7), milestone="M3",
+        notes="A strap cinching: the bundle's fold, a relic stowed in the cradle. A muted tuk on E."),
+    Cue("dock_walls_rise", "oneshot_3d", feel.dock_walls_rise, volume=(0.6, 0.6), milestone="M3",
+        notes="The dock's walls rising, staggered: soft ticks D A D A over a short servo push."),
+    Cue("dock_clamp", "oneshot_3d", feel.dock_clamp, volume=(0.65, 0.65), milestone="M3",
+        notes="The clamp closing on 07: a felt clunk and a 100 ms connection crackle."),
+    Cue("dock_walls_settle", "tick_3d", feel.dock_walls_settle, volume=(0.55, 0.55), milestone="M3",
+        notes="Full: the walls lowering and settling, two soft ticks on A and D."),
+    Cue("dock_walls_drop", "tick_3d", feel.dock_walls_drop, volume=(0.5, 0.5), milestone="M3",
+        notes="Driving off early: the walls drop at once, a quick soft fall."),
+    Cue("chirp_affirm", "oneshot_3d", feel.CHIRP_RENDERS["affirm"], variants=feel.CHIRP_VARIANTS, volume=(0.55, 0.55),
+        milestone="M3", notes="07's machine voice, affirm (feel-pass 7.2); syllables in chirp_syllables.json."),
+    Cue("chirp_happy", "oneshot_3d", feel.CHIRP_RENDERS["happy"], variants=feel.CHIRP_VARIANTS, volume=(0.55, 0.55),
+        milestone="M3", notes="07's machine voice, happy (feel-pass 7.2); syllables in chirp_syllables.json."),
+    Cue("chirp_proud", "oneshot_3d", feel.CHIRP_RENDERS["proud"], variants=feel.CHIRP_VARIANTS, volume=(0.55, 0.55),
+        milestone="M3", notes="07's machine voice, proud (feel-pass 7.2); syllables in chirp_syllables.json."),
+    Cue("chirp_curious", "oneshot_3d", feel.CHIRP_RENDERS["curious"], variants=feel.CHIRP_VARIANTS, volume=(0.55, 0.55),
+        milestone="M3", notes="07's machine voice, curious (feel-pass 7.2); syllables in chirp_syllables.json."),
+    Cue("chirp_worried", "oneshot_3d", feel.CHIRP_RENDERS["worried"], variants=feel.CHIRP_VARIANTS, volume=(0.55, 0.55),
+        milestone="M3", notes="07's machine voice, worried (feel-pass 7.2); syllables in chirp_syllables.json."),
+    Cue("chirp_tired", "oneshot_3d", feel.CHIRP_RENDERS["tired"], variants=feel.CHIRP_VARIANTS, volume=(0.55, 0.55),
+        milestone="M3", notes="07's machine voice, tired (feel-pass 7.2); syllables in chirp_syllables.json."),
+    Cue("chirp_relieved", "oneshot_3d", feel.CHIRP_RENDERS["relieved"], variants=feel.CHIRP_VARIANTS, volume=(0.55, 0.55),
+        milestone="M3", notes="07's machine voice, relieved (feel-pass 7.2); syllables in chirp_syllables.json."),
+    Cue("chirp_greeting", "oneshot_3d", feel.CHIRP_RENDERS["greeting"], variants=feel.CHIRP_VARIANTS, volume=(0.55, 0.55),
+        milestone="M3", notes="07's machine voice, greeting (feel-pass 7.2); syllables in chirp_syllables.json."),
+    Cue("node_light", "stinger_2d", feel.node_light, variants=len(feel.NODE_LIGHT_NOTES), volume=(0.55, 0.55),
+        milestone="M3", tonal=True, notes="A tech node lighting: a bloom pop and one pentatonic step by branch."),
+    Cue("cable_ticks", "ui_2d", feel.cable_ticks, volume=(0.5, 0.5), milestone="M3",
+        notes="The decode's lamp pulse travelling down the cable to the plotter: tick-tick-tick on A."),
+    Cue("component_found", "oneshot_3d", feel.component_found, volume=(0.6, 0.6), milestone="M3", tonal=True,
+        notes="A component lifting free: a two-note found, E -> A."),
+    Cue("boost_whine", "loop_3d", feel.boost_whine, loop=True, file_stem="boost_whine_loop", volume=(0.45, 0.45),
+        milestone="M3", notes="The capacitor drums boosting: a soft whine on A. 2 s seamless."),
+    Cue("boost_release", "tick_3d", feel.boost_release, volume=(0.6, 0.6), milestone="M3",
+        notes="The drums emptying: a felt fff and a tick on D."),
+    Cue("page_tick", "tick_2d", feel.page_tick, volume=(0.5, 0.5), milestone="M3",
+        notes="A new step's line: a breath-quiet page-turn tick."),
+    Cue("save_tick", "tick_2d", feel.save_tick, volume=(0.4, 0.4), milestone="M3",
+        notes="The game saved: a tiny soft tick on D, once per burst."),
+    Cue("count_tick", "tick_2d", feel.count_tick, variants=len(feel.COUNT_TICK_NOTES), volume=(0.45, 0.45),
+        milestone="M3", notes="The stock counter rolling one unit: a rising pentatonic tick."),
+    Cue("window_click", "tick_3d", feel.window_click, volume=(0.6, 0.6), milestone="M3",
+        notes="A home window lighting: one warm click from outside."),
     Cue("asleep_static", "radio_2d", asleep_static, loop=True, file_stem="asleep_static_loop", volume=(0.6, 0.6),
         milestone="M3", notes="The radio asleep, out of tune (title, 07's opening): narrow-band hiss, a faint "
                               "wandering A5 whistle, odd crackle pops. 8 s seamless."),

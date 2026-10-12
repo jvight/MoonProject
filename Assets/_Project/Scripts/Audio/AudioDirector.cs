@@ -51,6 +51,12 @@ namespace MoonProject.Audio
         [Tooltip("Voiced recordings on the radio (Ro's letters, the automated station).")]
         [SerializeField] private RadioVoice _voice;
 
+        [Tooltip("The 0.5.2 feel beats: the cut, the dock's lock, the first hour's small moments.")]
+        [SerializeField] private FeelAudio _feel;
+
+        [Tooltip("07's machine voice: the chirps and their syllables.")]
+        [SerializeField] private RoverChirpAudio _chirps;
+
         [Tooltip("The lunar ambience bed.")]
         [SerializeField] private AmbienceBed _ambience;
 
@@ -92,6 +98,9 @@ namespace MoonProject.Audio
 
         /// <summary>The radio's voiced recordings (the music ducks under them).</summary>
         internal RadioVoice Voice => _voice;
+
+        /// <summary>The base radio (the chirps sit under its music).</summary>
+        internal RadioStation Radio => _radio;
 
         public bool IsInitialized { get; private set; }
 
@@ -170,6 +179,8 @@ namespace MoonProject.Audio
             _canyon.Initialize(context, this);
             _voice.Initialize(context, this);
             _radio.Initialize(context, this);
+            _feel.Initialize(context, this);
+            _chirps.Initialize(context, this);
             _soundscape.Initialize(context, this, _radio, _canyon, _mixTuning.AmbienceFadeIn);
             _ambience.Initialize(this, _soundscape, _mixTuning.AmbienceFadeIn);
             _smallSounds.Initialize(context, this, _soundscape);
@@ -308,6 +319,13 @@ namespace MoonProject.Audio
         internal void WireVoice(RadioVoice voice)
         {
             _voice = voice;
+        }
+
+        /// <summary>The 0.5.2 feel beats and 07's machine voice (docs/design/feel-pass.md).</summary>
+        internal void WireFeel(FeelAudio feel, RoverChirpAudio chirps)
+        {
+            _feel = feel;
+            _chirps = chirps;
         }
 
         internal void Wire(AudioLibrary library, AudioMixTuning mixTuning, RoverAudio roverAudio,
@@ -461,6 +479,8 @@ namespace MoonProject.Audio
             ok &= Require(_jump, nameof(_jump));
             ok &= Require(_radio, nameof(_radio));
             ok &= Require(_voice, nameof(_voice));
+            ok &= Require(_feel, nameof(_feel));
+            ok &= Require(_chirps, nameof(_chirps));
             ok &= Require(_ambience, nameof(_ambience));
             ok &= Require(_canyon, nameof(_canyon));
             ok &= Require(_soundscape, nameof(_soundscape));

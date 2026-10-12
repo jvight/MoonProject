@@ -33,7 +33,7 @@ namespace MoonProject.Audio
     public sealed class RadioStation : MonoBehaviour
     {
         private const float MinPitch = 0.01f;
-        private const int SubscriptionCount = 14;
+        private const int SubscriptionCount = 15;
 
         [Tooltip("Assets/_Project/Data/Audio/RadioTuning.asset.")]
         [SerializeField] private RadioTuning _tuning;
@@ -58,6 +58,8 @@ namespace MoonProject.Audio
         private readonly RadioGate _gate = new RadioGate();
         private readonly EasedValue _deckShare = new EasedValue(0f);
         private readonly EasedValue _carrierPresence = new EasedValue(0f);
+        private readonly EasedValue _eveningDuck = new EasedValue(1f);
+        private float _eveningLeft;
         private readonly IDisposable[] _subscriptions = new IDisposable[SubscriptionCount];
         private readonly Dictionary<string, RadioTrack> _tapeTracks = new Dictionary<string, RadioTrack>(
             StringComparer.Ordinal);
@@ -222,6 +224,7 @@ namespace MoonProject.Audio
             _subscriptions[11] = context.Events.Subscribe<RoverKitFitted>(OnRoverKitFitted);
             _subscriptions[12] = context.Events.Subscribe<RoverKitRestored>(OnRoverKitRestored);
             _subscriptions[13] = context.Events.Subscribe<BasePowerChanged>(OnBasePowerChanged);
+            _subscriptions[14] = context.Events.Subscribe<DockEveningOpened>(OnDockEveningOpened);
         }
 
         internal void Wire(RadioTuning tuning, RadioPlaylist playlist, RadioTapeLibrary tapes)
@@ -268,7 +271,7 @@ namespace MoonProject.Audio
             float music = Mathf.Lerp(mix.MusicVolume, _tuning.DeckMusicGain, deckShare) * level * _wake.MusicGain *
                           Mathf.Lerp(1f, _tuning.CabinMusicGain, cabin) * _soundscape.RadioGain *
                           _soundscape.StargazeMusicGain * Mathf.Lerp(1f, _tuning.HopMusicGain, hop) *
-                          _voice.MusicDuck;
+                          _voice.MusicDuck * EveningDuck(dt);
             float cabinCutoff = _tuning.MaxCutoff * Mathf.Pow(_tuning.CabinCutoff / _tuning.MaxCutoff, cabin);
             float band = Mathf.Lerp(mix.CutoffHz, _tuning.DeckCutoff, deckShare);
             float cutoff = _soundscape.RadioCutoff(Mathf.Min(band, cabinCutoff));
@@ -662,6 +665,19 @@ namespace MoonProject.Audio
             }
 
             _mixer.Change(HasMusic(), _tuning.SilentSwitchFade, 0f, fadeIn, 0f);
+        }
+
+        /// <summary>The dock evening's swell: the music steps back about 3 dB under it for a moment.</summary>
+        private void OnDockEveningOpened(DockEveningOpened opened)
+        {
+            _eveningLeft = _tuning.EveningDuckSeconds;
+        }
+
+        private float EveningDuck(float deltaTime)
+        {
+            _eveningLeft = Mathf.Max(0f, _eveningLeft - deltaTime);
+            float target = _eveningLeft > 0f ? _tuning.EveningDuckGain : 1f;
+            return _eveningDuck.Step(target, deltaTime, _tuning.VoiceDuckTime);
         }
 
         /// <summary>Tower level 1 clears the static into the Earth signal's carrier (no music).</summary>
