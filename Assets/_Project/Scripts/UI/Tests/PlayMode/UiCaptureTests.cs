@@ -38,6 +38,7 @@ namespace MoonProject.UI.PlayModeTests
     public sealed partial class UiCaptureTests : InputTestFixture
     {
         private const string MainScene = "Assets/_Project/Scenes/Main.unity";
+        private CargoTuning _cargoTuning;
         private const int Width = 1600;
         private const int Height = 900;
         private const int NarrowWidth = 1200;
@@ -110,6 +111,7 @@ namespace MoonProject.UI.PlayModeTests
             Object.DestroyImmediate(_relicStandIn);
             Object.DestroyImmediate(_earthCamera);
             Object.DestroyImmediate(_tower);
+            Object.DestroyImmediate(_cargoTuning);
             foreach (UpgradeDefinition kit in _bayKit)
             {
                 Object.DestroyImmediate(kit);
@@ -1446,6 +1448,7 @@ namespace MoonProject.UI.PlayModeTests
             _tuning = Object.Instantiate(AssetDatabase.LoadAssetAtPath<UiTuning>(UiTestRig.TuningPath));
             _tuning.Prompts.AddMissingDefaults();
 
+            _cargoTuning = ScriptableObject.CreateInstance<CargoTuning>();
             _uiHost = new GameObject("CaptureUI");
             _uiHost.SetActive(false);
             var document = _uiHost.AddComponent<UIDocument>();
@@ -1458,7 +1461,7 @@ namespace MoonProject.UI.PlayModeTests
                     AssetDatabase.LoadAssetAtPath<TextAsset>(UiTestRig.EnglishPath),
                     AssetDatabase.LoadAssetAtPath<TextAsset>(UiTestRig.VietnamesePath),
                 }, AssetDatabase.LoadAssetAtPath<WordmarkShape>(UiTestRig.WordmarkPath),
-                AssetDatabase.LoadAssetAtPath<TextAsset>(UiTestRig.CreditsPath));
+                AssetDatabase.LoadAssetAtPath<TextAsset>(UiTestRig.CreditsPath), _cargoTuning);
             ui.QuitAction = () => { };
             _uiHost.SetActive(true);
 

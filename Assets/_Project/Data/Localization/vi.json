@@ -1155,6 +1155,26 @@
             "text": "Chùm cắt hẹp và mạnh hơn."
         },
         {
+            "key": "hint.build",
+            "text": "Chế tạo"
+        },
+        {
+            "key": "tech.focus_lens.name",
+            "text": "Thấu kính hội tụ"
+        },
+        {
+            "key": "tech.side_bins.name",
+            "text": "Thùng hông"
+        },
+        {
+            "key": "ui.cargo.shelf_cost",
+            "text": "Cần: {0}"
+        },
+        {
+            "key": "ui.cargo.cost_part",
+            "text": "{0} {1}"
+        },
+        {
             "key": "ui.reward.title",
             "text": "{0} · Cấp {1}"
         },

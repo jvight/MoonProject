@@ -105,7 +105,7 @@ namespace MoonProject.UI.Tests
                          UiKeys.TowerPurchased, UiKeys.LogCaption, UiKeys.CrewLogCaption, UiKeys.LinerCaption,
                          UiKeys.TapeCount, UiKeys.PauseCassettes, UiKeys.PauseRelays, UiKeys.RecipeNeed,
                          UiKeys.RecipeRow, UiKeys.RewardTitle, UiKeys.StationOffline, UiKeys.FriendParts,
-                         UiKeys.CargoWaiting, UiKeys.CargoShelf, UiKeys.CargoShelfFree, UiKeys.CargoSummary,
+                         UiKeys.CargoWaiting, UiKeys.CargoShelfCost, UiKeys.CargoCostPart, UiKeys.CargoShelf, UiKeys.CargoShelfFree, UiKeys.CargoSummary,
                          UiKeys.CanDecoded,
                          UiKeys.BayPick, UiKeys.BayFitted,
                      })

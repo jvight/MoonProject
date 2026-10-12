@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using MoonProject.Core;
 using MoonProject.Core.Input;
+using MoonProject.Gameplay;
 
 namespace MoonProject.UI
 {
@@ -37,6 +38,7 @@ namespace MoonProject.UI
         private readonly ITechTree _tech;
         private readonly GlyphLabels _glyphs;
         private readonly IntText _numbers;
+        private readonly CargoTuning _tuning;
         private readonly Reveal _reveal;
         private readonly VisualElement _panel;
         private readonly Button[] _tabs;
@@ -64,7 +66,7 @@ namespace MoonProject.UI
 
         public CargoScreen(UiLayout layout, CargoScreenSettings settings, ILocalization localization,
             ICargoHold hold, IHomeStorage home, IRoverAbilities abilities, ITechTree tech, GlyphLabels glyphs,
-            IntText numbers)
+            IntText numbers, CargoTuning tuning)
         {
             if (layout == null)
             {
@@ -79,6 +81,7 @@ namespace MoonProject.UI
             _tech = tech ?? throw new ArgumentNullException(nameof(tech));
             _glyphs = glyphs ?? throw new ArgumentNullException(nameof(glyphs));
             _numbers = numbers ?? throw new ArgumentNullException(nameof(numbers));
+            _tuning = tuning != null ? tuning : throw new ArgumentNullException(nameof(tuning));
             VisualElement root = layout.Cargo;
             _reveal = new Reveal(root, settings.Reveal);
             _reveal.Snap(false);
@@ -131,6 +134,12 @@ namespace MoonProject.UI
 
         /// <summary>Home's shelves as built on screen: built and free sockets together (tests and captures).</summary>
         public int ShelfBlockCount => _shelfBlocks.Count;
+
+        /// <summary>The cost line on free socket <paramref name="shelf"/>'s pencil box (tests and captures).</summary>
+        public string ShelfCostText(int shelf)
+        {
+            return _shelfBlocks[shelf].Cost.text;
+        }
 
         /// <summary>How many rows of the "07 can" page are shown (tests and captures).</summary>
         public int CanRowCount
@@ -402,12 +411,41 @@ namespace MoonProject.UI
                     var text = new Label(_localization.Get(UiKeys.CargoShelfFree)) { pickingMode = PickingMode.Ignore };
                     text.AddToClassList("cargo__pencil-text");
                     pencil.Add(text);
+                    var cost = new Label(CostLine(_tuning.ShelfCost(i - _tuning.BuiltInShelves)))
+                    {
+                        pickingMode = PickingMode.Ignore,
+                    };
+                    cost.AddToClassList("cargo__pencil-text");
+                    cost.AddToClassList("cargo__pencil-cost");
+                    pencil.Add(cost);
+                    block.Cost = cost;
                     root.Add(pencil);
                 }
 
                 _shelves.Add(root);
                 _shelfBlocks.Add(block);
             }
+        }
+
+        /// <summary>"Cost: 4 Metal, 1 Wiring": what a shelf takes, in the materials' names.</summary>
+        private string CostLine(Recipe cost)
+        {
+            string parts = string.Empty;
+            for (int i = 0; i < Materials.RecipeCount; i++)
+            {
+                SalvageMaterial material = Materials.At(i);
+                int need = cost.Of(material);
+                if (need <= 0)
+                {
+                    continue;
+                }
+
+                string part = string.Format(_localization.Get(UiKeys.CargoCostPart), need,
+                    _localization.Get(UiKeys.MaterialName(material)));
+                parts = parts.Length == 0 ? part : string.Concat(parts, ", ", part);
+            }
+
+            return string.Format(_localization.Get(UiKeys.CargoShelfCost), parts);
         }
 
         private string ShelfName(int number)
@@ -570,6 +608,7 @@ namespace MoonProject.UI
             public VisualElement Root;
             public VisualElement Grid;
             public List<Cell> Cells;
+            public Label Cost;
         }
 
         private sealed class CanRow

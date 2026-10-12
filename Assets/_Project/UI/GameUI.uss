@@ -2235,6 +2235,11 @@ Label {
     color: var(--moon-text-dim);
 }
 
+.cargo__pencil-cost {
+    margin-top: 8px;
+    color: var(--glass-sel);
+}
+
 .cargo__can {
     min-width: 560px;
 }

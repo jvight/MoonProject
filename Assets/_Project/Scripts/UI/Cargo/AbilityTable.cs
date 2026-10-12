@@ -56,8 +56,8 @@ namespace MoonProject.UI
             Row(RoverAbility.CellPack, null, TechNodeId.CellPackII),
             Row(RoverAbility.WideSonar),
             Row(RoverAbility.MagneticTreads),
-            Row(RoverAbility.SideBins),
-            Row(RoverAbility.FocusLens),
+            Row(RoverAbility.SideBins, null, TechNodeId.SideBins),
+            Row(RoverAbility.FocusLens, null, TechNodeId.FocusLens),
         };
 
         /// <summary>How many abilities the page can list.</summary>

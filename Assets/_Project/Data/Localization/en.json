@@ -1155,6 +1155,26 @@
             "text": "A tighter cutting beam."
         },
         {
+            "key": "hint.build",
+            "text": "Build"
+        },
+        {
+            "key": "tech.focus_lens.name",
+            "text": "Focus Lens"
+        },
+        {
+            "key": "tech.side_bins.name",
+            "text": "Side Bins"
+        },
+        {
+            "key": "ui.cargo.shelf_cost",
+            "text": "Cost: {0}"
+        },
+        {
+            "key": "ui.cargo.cost_part",
+            "text": "{0} {1}"
+        },
+        {
             "key": "ui.reward.title",
             "text": "{0} · Level {1}"
         },

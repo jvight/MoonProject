@@ -123,6 +123,13 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual(4, cargo.ShelfBlockCount, "two built shelves and two free sockets");
             StringAssert.Contains("3", cargo.WaitingText);
             Assert.AreEqual(string.Format(Text(UiKeys.CargoSummary), 3, 8, 1, 24), cargo.SummaryText);
+            string metal = Text(UiKeys.MaterialName(SalvageMaterial.Metal));
+            string wiring = Text(UiKeys.MaterialName(SalvageMaterial.Wiring));
+            Assert.AreEqual(string.Format(Text(UiKeys.CargoShelfCost),
+                string.Format(Text(UiKeys.CargoCostPart), 3, metal)), cargo.ShelfCostText(2),
+                "the first free socket says what its shelf takes");
+            Assert.AreEqual(string.Format(Text(UiKeys.CargoShelfCost), string.Format(Text(UiKeys.CargoCostPart), 4, metal) +
+                ", " + string.Format(Text(UiKeys.CargoCostPart), 1, wiring)), cargo.ShelfCostText(3));
 
             yield return Tap(keyboard.tabKey);
             yield return Seconds(0.6f);
@@ -190,6 +197,19 @@ namespace MoonProject.UI.PlayModeTests
             Assert.IsTrue(_rig.Ui.Pickups.IsShowing(SalvageMaterial.Ilmenite));
             Assert.AreEqual(Text(UiKeys.MaterialName(SalvageMaterial.Ilmenite)),
                 _rig.Ui.Pickups.NameText(SalvageMaterial.Ilmenite));
+        }
+
+        [UnityTest]
+        public IEnumerator BuildPrompt_SaysBuild_ForAShelfSocket()
+        {
+            InputSystem.AddDevice<Keyboard>();
+            Boot();
+            Events.Publish(new RoverAwoke(Vector3.zero, false));
+            _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Build, new Vector3(0f, 0f, 4f), true);
+            yield return Seconds(1.5f);
+            Assert.IsTrue(_rig.Ui.Prompt.IsVisible);
+            Assert.AreEqual(Text("hint.build"), _rig.Ui.Layout.PromptWord.text);
+            Assert.AreEqual("E", _rig.Ui.Layout.PromptGlyphLabel.text);
         }
 
         [UnityTest]
