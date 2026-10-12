@@ -46,6 +46,10 @@ namespace MoonProject.World
         [Tooltip("Art's landmark kit (Generated/Art/Landmarks): route posts, the chasm bridge, the dish frames.")]
         [SerializeField] private LandmarkPrefabs _landmarkPrefabs = new LandmarkPrefabs();
 
+        [Tooltip("Material of the orange vent's bead field (Generated/World/M_VentBeads, the rover's track shader " +
+            "tinted orange).")]
+        [SerializeField] private Material _ventBeadMaterial;
+
         [Tooltip("The beacon on The Peak; placed on the summit and breathed by the beacon settings.")]
         [SerializeField] private PeakBeacon _peakBeacon;
 
@@ -65,6 +69,7 @@ namespace MoonProject.World
         private GameObject _generatedRoot;
         private Mesh _earthMesh;
         private Mesh _tracksMesh;
+        private Mesh _ventMesh;
 
         public MoonSurface Surface { get; private set; }
 
@@ -147,6 +152,7 @@ namespace MoonProject.World
                 scatterSettings, _settings.Mesh.ChunkSize, _pebbleRocks, _boulderRocks, _paletteMaterial, hideFlags);
             BuildEarth(hideFlags);
             BuildWornTracks(hideFlags);
+            BuildVentField(hideFlags);
             LandmarkPlacer.Build(_generatedRoot.transform, surface, Anchors, _settings.Landmarks, _settings.Seed,
                 _landmarkPrefabs, hideFlags);
             _peakBeacon.transform.position = Layout.PeakPosition;
@@ -169,6 +175,22 @@ namespace MoonProject.World
             earth.AddComponent<MeshFilter>().sharedMesh = _earthMesh;
             var meshRenderer = earth.AddComponent<MeshRenderer>();
             meshRenderer.sharedMaterial = _earthMaterial;
+            meshRenderer.shadowCastingMode = ShadowCastingMode.Off;
+            meshRenderer.receiveShadows = false;
+            meshRenderer.lightProbeUsage = LightProbeUsage.Off;
+            meshRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+        }
+
+        /// <summary>The old vent's orange bead field (M3-27), pressed into the ground.</summary>
+        private void BuildVentField(HideFlags hideFlags)
+        {
+            _ventMesh = LandmarkPlacer.BuildVentField(Surface, Anchors, _settings.Landmarks, _settings.Seed);
+            _ventMesh.hideFlags = hideFlags;
+            var field = new GameObject("VentBeads") { hideFlags = hideFlags };
+            field.transform.SetParent(_generatedRoot.transform, false);
+            field.AddComponent<MeshFilter>().sharedMesh = _ventMesh;
+            var meshRenderer = field.AddComponent<MeshRenderer>();
+            meshRenderer.sharedMaterial = _ventBeadMaterial;
             meshRenderer.shadowCastingMode = ShadowCastingMode.Off;
             meshRenderer.receiveShadows = false;
             meshRenderer.lightProbeUsage = LightProbeUsage.Off;
@@ -227,6 +249,13 @@ namespace MoonProject.World
             {
                 Release(_tracksMesh);
             }
+
+            if (_ventMesh != null)
+            {
+                Release(_ventMesh);
+            }
+
+            _ventMesh = null;
 
             _tracksMesh = null;
 
@@ -292,9 +321,9 @@ namespace MoonProject.World
             }
 
             if (_groundMaterial == null || _paletteMaterial == null || _earthMaterial == null
-                || _groundMarkMaterial == null)
+                || _groundMarkMaterial == null || _ventBeadMaterial == null)
             {
-                return "Ground Material, Palette Material, Earth Material and Ground Mark Material must be assigned.";
+                return "Ground, Palette, Earth, Ground Mark and Vent Bead materials must be assigned.";
             }
 
             string rocks = RockProblem(_pebbleRocks, "Pebble Rocks") ?? RockProblem(_boulderRocks, "Boulder Rocks")

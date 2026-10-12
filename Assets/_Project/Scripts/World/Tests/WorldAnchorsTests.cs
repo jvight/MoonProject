@@ -96,6 +96,9 @@ namespace MoonProject.World.Tests
             expected.Add(WorldAnchorIds.PlaceAntennaFarm);
             expected.Add(WorldAnchorIds.RegionPeak);
             expected.Add(WorldAnchorIds.RegionTerraces);
+            expected.Add(WorldAnchorIds.PlaceOrangeVent);
+            expected.Add(WorldAnchorIds.PlaceIlmeniteBand);
+            expected.Add(WorldAnchorIds.PlaceShadowedCrater);
 
             Assert.AreEqual(expected.Count, _anchors.Count);
             var seen = new HashSet<string>();

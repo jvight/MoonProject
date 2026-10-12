@@ -24,6 +24,7 @@ namespace MoonProject.World.PlayModeTests
         private const string SettingsPath = "Assets/_Project/Data/Tuning/WorldSettings.asset";
         private const string GroundMaterialPath = "Assets/_Project/Generated/World/M_Ground.mat";
         private const string GroundMarkMaterialPath = "Assets/_Project/Generated/World/M_GroundMarks.mat";
+        private const string VentBeadMaterialPath = "Assets/_Project/Generated/World/M_VentBeads.mat";
         private const string LandmarkFolder = "Assets/_Project/Generated/Art/Landmarks/";
         private static readonly string[] DishFrames = { "DishFrame_0", "DishFrame_1", "DishFrame_2" };
         private const string PaletteMaterialPath = "Assets/_Project/Generated/Art/Palette/M_LowPoly.mat";
@@ -69,6 +70,7 @@ namespace MoonProject.World.PlayModeTests
             serialized.FindProperty("_earthMaterial").objectReferenceValue = Load<Material>(EarthMaterialPath);
             serialized.FindProperty("_groundMarkMaterial").objectReferenceValue =
                 Load<Material>(GroundMarkMaterialPath);
+            serialized.FindProperty("_ventBeadMaterial").objectReferenceValue = Load<Material>(VentBeadMaterialPath);
             AssignLandmark(serialized, "_routePost", "RoutePost");
             AssignLandmark(serialized, "_bridgeNear", "ChasmBridge_Near");
             AssignLandmark(serialized, "_bridgeFar", "ChasmBridge_Far");
