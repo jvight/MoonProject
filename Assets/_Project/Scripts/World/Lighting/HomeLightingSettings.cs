@@ -33,11 +33,33 @@ namespace MoonProject.World
         [Tooltip("Seconds power takes to travel a ground cable from the tower to what it wakes, segment by segment; " +
             "that place's warm points start waking when it arrives.")]
         [Range(0.1f, 6f)]
-        [SerializeField] private float _cableTravel = 1.5f;
+        [SerializeField] private float _cableTravel = 1.2f;
 
         [Tooltip("Seconds each cable segment takes to ease from dark to lit.")]
         [Range(0.05f, 2f)]
-        [SerializeField] private float _cableSegmentFade = 0.35f;
+        [SerializeField] private float _cableSegmentFade = 0.12f;
+
+        [Tooltip("Glow of a cable bead as the power pulse passes it (linear glow multiplier): unmistakable from the " +
+            "chase camera.")]
+        [Range(1f, 10f)]
+        [SerializeField] private float _cablePulsePeak = 4f;
+
+        [Tooltip("Seconds a bead takes to settle from the pulse's flare to its steady glow.")]
+        [Range(0.1f, 3f)]
+        [SerializeField] private float _cablePulseSeconds = 0.6f;
+
+        [Tooltip("Steady glow of a powered cable (linear glow multiplier): soft, so home reads as connected.")]
+        [Range(0f, 2f)]
+        [SerializeField] private float _cableSteady = 0.45f;
+
+        [Tooltip("Intensity of the warm light riding the power pulse along the cable: it lights the ground as it " +
+            "races home.")]
+        [Range(0f, 20f)]
+        [SerializeField] private float _cablePulseLight = 6f;
+
+        [Tooltip("Range of the light riding the pulse, metres.")]
+        [Range(0.5f, 15f)]
+        [SerializeField] private float _cablePulseLightRange = 4f;
 
         [Header("The tower's power preview (M3-24 B)")]
         [Tooltip("Seconds the preview's slow light takes to run one dark cable from the tower's foot to its end, the " +
@@ -79,6 +101,40 @@ namespace MoonProject.World
             "never shrinks below a readable warm dot at 300 m.")]
         [Range(0f, 2f)]
         [SerializeField] private float _pilotMinAngle = 0.4f;
+
+        [Header("The tower comes online (feel-pass §8.2)")]
+        [Tooltip("Seconds a new power stage waits for the tower's build beat to reach its Follow before it applies " +
+            "anyway (the beat takes about 6 s).")]
+        [Range(1f, 20f)]
+        [SerializeField] private float _buildHoldTimeout = 8f;
+
+        [Tooltip("How near the tower's top light (metres) a Build beat must happen to be the tower's.")]
+        [Range(1f, 60f)]
+        [SerializeField] private float _towerBeatRadius = 20f;
+
+        [Tooltip("How much brighter the top light flares on the beat's Impact (times its intensity).")]
+        [Range(0f, 8f)]
+        [SerializeField] private float _beaconFlareGain = 3f;
+
+        [Tooltip("How much wider the top light's glow grows at the flare's peak (times its radius).")]
+        [Range(0f, 10f)]
+        [SerializeField] private float _beaconFlareGrow = 4f;
+
+        [Tooltip("Seconds the flare takes to rise and settle.")]
+        [Range(0.2f, 4f)]
+        [SerializeField] private float _beaconFlareSeconds = 1.4f;
+
+        [Tooltip("Seconds of one slow turn of the top light once the tower is online.")]
+        [Range(2f, 30f)]
+        [SerializeField] private float _beaconTurnPeriod = 7f;
+
+        [Tooltip("Share of the top light that sweeps with the turn (0 = steady, 1 = dark when facing away).")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _beaconSweep = 0.55f;
+
+        [Tooltip("How narrow the turning beam is (a power of its facing).")]
+        [Range(1f, 16f)]
+        [SerializeField] private float _beaconSweepSharpness = 4f;
 
         [Tooltip("Halo intensity of the pilot light at the top of a blink (LofiBeaconHalo _Intensity).")]
         [Range(0f, 4f)]
@@ -124,6 +180,11 @@ namespace MoonProject.World
         public int WindowSteps => _windowSteps;
         public float WindowStepEase => _windowStepEase;
         public float CableTravel => _cableTravel;
+        public float CablePulsePeak => _cablePulsePeak;
+        public float CablePulseSeconds => _cablePulseSeconds;
+        public float CableSteady => _cableSteady;
+        public float CablePulseLight => _cablePulseLight;
+        public float CablePulseLightRange => _cablePulseLightRange;
         public float CableSegmentFade => _cableSegmentFade;
         public float PreviewTravel => _previewTravel;
         public float PreviewStagger => _previewStagger;
@@ -133,6 +194,14 @@ namespace MoonProject.World
         public float PilotPeriod => _pilotPeriod;
         public float PilotSharpness => _pilotSharpness;
         public float PilotIntensity => _pilotIntensity;
+        public float BuildHoldTimeout => _buildHoldTimeout;
+        public float TowerBeatRadius => _towerBeatRadius;
+        public float BeaconFlareGain => _beaconFlareGain;
+        public float BeaconFlareSeconds => _beaconFlareSeconds;
+        public float BeaconFlareGrow => _beaconFlareGrow;
+        public float BeaconTurnPeriod => _beaconTurnPeriod;
+        public float BeaconSweep => _beaconSweep;
+        public float BeaconSweepSharpness => _beaconSweepSharpness;
         public float PilotRadius => _pilotRadius;
         public float TopLightLevel => _topLightLevel;
         public float PilotMinAngle => _pilotMinAngle;

@@ -167,14 +167,18 @@ namespace MoonProject.World.Tests
             const int Segments = 6;
             _stages.SetStage(BasePowerStage.Home, false, Start);
             float halfway = Start + _settings.CableTravel * 0.5f;
-            Assert.AreEqual(1f, _stages.CableLevel(BasePowerStage.Home, 0, Segments, halfway), Tolerance,
-                "the tower end is lit by halfway");
+            Assert.Greater(_stages.CableLevel(BasePowerStage.Home, 0, Segments, halfway), _settings.CableSteady,
+                "the pulse has passed the tower end, which still glows above its steady light");
+            float atPeak = Start + _settings.CableSegmentFade;
+            Assert.AreEqual(_settings.CablePulsePeak, _stages.CableLevel(BasePowerStage.Home, 0, Segments, atPeak),
+                Tolerance, "each bead flares as the pulse passes");
             Assert.AreEqual(0f, _stages.CableLevel(BasePowerStage.Home, Segments - 1, Segments, halfway),
                 "the far end waits");
             Assert.AreEqual(0f, _stages.Level(HomeLight.Windows, halfway), "windows wait for the cable");
             Assert.AreEqual(0f, _stages.CableLevel(BasePowerStage.Bay, 0, Segments, halfway), "the bay cable sleeps");
-            float arrived = Start + _settings.CableTravel + _settings.CableSegmentFade;
-            Assert.AreEqual(1f, _stages.CableLevel(BasePowerStage.Home, Segments - 1, Segments, arrived), Tolerance);
+            float settled = Start + _settings.CableTravel + _settings.CableSegmentFade + _settings.CablePulseSeconds;
+            Assert.AreEqual(_settings.CableSteady, _stages.CableLevel(BasePowerStage.Home, Segments - 1, Segments,
+                settled), Tolerance, "then the cable settles to a steady soft glow");
         }
 
         [Test]
@@ -196,7 +200,8 @@ namespace MoonProject.World.Tests
                 Assert.AreEqual(1f, _stages.Level(light, Start), light.ToString());
             }
 
-            Assert.AreEqual(1f, _stages.CableLevel(BasePowerStage.Chart, 3, 4, Start), "cables are lit at once");
+            Assert.AreEqual(_settings.CableSteady, _stages.CableLevel(BasePowerStage.Chart, 3, 4, Start),
+                "cables are lit at once, steady");
         }
 
         [Test]
