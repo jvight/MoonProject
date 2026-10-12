@@ -26,6 +26,8 @@ namespace MoonProject.Gameplay.Feel.Tests
         private const int StepsPerFrame = 20;
         private const int ControlBytes = 4096;
         private const int ControlCount = 16;
+        private const float BeadLifetime = 30f;
+        private const int Seed = 7;
 
         private readonly List<Object> _created = new List<Object>();
 
@@ -43,6 +45,7 @@ namespace MoonProject.Gameplay.Feel.Tests
         [UnityTest]
         public IEnumerator FullPools_StepWithoutAllocating()
         {
+            UnityEngine.Random.InitState(Seed);
             FeelVfxTuning tuning = Tuning();
             var events = new EventBus();
             var anchors = new Anchors(Make("Emitter", new Vector3(0f, 1.2f, 0f)),
@@ -122,6 +125,9 @@ namespace MoonProject.Gameplay.Feel.Tests
             _created.Add(tuning);
             Set(tuning, "_moteCount", tuning.MotePool);
             Set(tuning, "_sparkRate", new Vector2(400f, 400f));
+
+            // Beads outlive the test, so once filled the bead pool stays full whatever the timing.
+            Set(tuning, "_beadLifetime", new Vector2(BeadLifetime, BeadLifetime));
             return tuning;
         }
 
