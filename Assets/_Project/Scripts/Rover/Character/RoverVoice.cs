@@ -12,7 +12,8 @@ namespace MoonProject.Rover
     /// <list type="bullet">
     /// <item>the dock locks: Affirm, or Relieved when 07 arrived at or under the tuned share; the dock full:
     /// Happy;</item>
-    /// <item>a kit piece fitted: Proud; a friend repaired: Happy; a friend greeting 07: Greeting;</item>
+    /// <item>an install seating: Affirm, powering on: Proud; a friend's gift: Happy; a find decoded: Affirm; a
+    /// friend repaired: Happy; a friend greeting 07: Greeting; a mast filling a nearly empty battery: Relieved;</item>
     /// <item>the battery's Low warning, or 07 being recovered: Worried; the battery empty: Tired;</item>
     /// <item>the first answer of each friend, site or relic while listening, and a new place: Curious;</item>
     /// <item>home's windows lighting as the base wakes: Happy; a component lifting free: Curious the first time
@@ -45,7 +46,15 @@ namespace MoonProject.Rover
                 events.Subscribe<BatteryWarned>(OnBatteryWarned),
                 events.Subscribe<LowPowerChanged>(OnLowPowerChanged),
                 events.Subscribe<RoverRecovering>(_ => Say(ChirpMood.Worried, Gentle)),
-                events.Subscribe<RoverKitFitted>(_ => Say(ChirpMood.Proud, Gentle)),
+                events.Subscribe<RoverKitFitted>(fitted =>
+                {
+                    if (fitted.Gift)
+                    {
+                        Say(ChirpMood.Happy, Gentle);
+                    }
+                }),
+                events.Subscribe<FindDecoded>(_ => Say(ChirpMood.Affirm, Gentle)),
+                events.Subscribe<ChargingChanged>(OnChargingChanged),
                 events.Subscribe<FriendRepaired>(_ => Say(ChirpMood.Happy, Gentle)),
                 events.Subscribe<FriendGreeted>(_ => Say(ChirpMood.Greeting, Gentle)),
                 events.Subscribe<FriendAnswered>(answer => FirstAnswer("friend." + answer.FriendId)),
@@ -68,6 +77,12 @@ namespace MoonProject.Rover
 
         private void OnFeelBeat(FeelBeat beat)
         {
+            if (beat.Kind == FeelKind.Install)
+            {
+                OnInstallBeat(beat);
+                return;
+            }
+
             if (beat.Kind != FeelKind.Dock)
             {
                 return;
@@ -88,6 +103,28 @@ namespace MoonProject.Rover
             else if (beat.Phase == FeelPhase.Reward)
             {
                 Say(ChirpMood.Happy, 1f);
+            }
+        }
+
+        private void OnInstallBeat(FeelBeat beat)
+        {
+            if (beat.Phase == FeelPhase.Impact)
+            {
+                Say(ChirpMood.Affirm, Gentle);
+            }
+            else if (beat.Phase == FeelPhase.Reward)
+            {
+                Say(ChirpMood.Proud, 1f);
+            }
+        }
+
+        /// <summary>A mast starts filling a nearly empty battery: phew.</summary>
+        private void OnChargingChanged(ChargingChanged charging)
+        {
+            float below = _settings.RelievedBelow;
+            if (charging.Charging && charging.Charger == ChargerKind.Mast && _charge <= below)
+            {
+                Say(ChirpMood.Relieved, below > 0f ? 1f - _charge / below : 1f);
             }
         }
 

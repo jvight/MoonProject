@@ -53,6 +53,13 @@ namespace MoonProject.Rover.Tests
             _events.Publish(new BatteryChanged(0, 8, false, false));
             Dock(FeelPhase.Impact);
             Assert.AreEqual(ChirpMood.Relieved, Last, "Arriving at <= 15%: phew.");
+
+            _now += 10f;
+            _events.Publish(new ChargingChanged(true, ChargerKind.Mast, Vector3.zero));
+            Assert.AreEqual(2, _chirps.Count, "Relieved waits its own 30 s.");
+            _now += 60f;
+            _events.Publish(new ChargingChanged(true, ChargerKind.Mast, Vector3.zero));
+            Assert.AreEqual(ChirpMood.Relieved, Last, "A mast filling a nearly empty battery: phew.");
         }
 
         [Test]
@@ -61,8 +68,13 @@ namespace MoonProject.Rover.Tests
             var cases = new (System.Action publish, ChirpMood mood)[]
             {
                 (() => Dock(FeelPhase.Reward), ChirpMood.Happy),
-                (() => _events.Publish(new RoverKitFitted(RoverKitPiece.LampBar, false, "warm_headlamp")),
-                    ChirpMood.Proud),
+                (() => _events.Publish(new FeelBeat(FeelKind.Install, FeelPhase.Impact, Vector3.zero, Vector3.up, 1f,
+                    0f)), ChirpMood.Affirm),
+                (() => _events.Publish(new FeelBeat(FeelKind.Install, FeelPhase.Reward, Vector3.zero, Vector3.up, 1f,
+                    0f)), ChirpMood.Proud),
+                (() => _events.Publish(new RoverKitFitted(RoverKitPiece.SolarCell, true, string.Empty)),
+                    ChirpMood.Happy),
+                (() => _events.Publish(new FindDecoded("cargo_cradle")), ChirpMood.Affirm),
                 (() => _events.Publish(new BatteryWarned(BatteryWarning.Low, Vector3.zero)), ChirpMood.Worried),
                 (() => _events.Publish(new LowPowerChanged(true, false)), ChirpMood.Tired),
                 (() => _events.Publish(new SiteAnswered("site.depot", Vector3.zero, 10f, true)), ChirpMood.Curious),

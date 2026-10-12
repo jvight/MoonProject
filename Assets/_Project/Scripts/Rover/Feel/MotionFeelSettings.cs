@@ -72,9 +72,6 @@ namespace MoonProject.Rover
         [SerializeField] private float _hardLanding = 6f;
 
         [Header("Install")]
-        [Tooltip("The piece seats: 07 dips 1.5 cm.")]
-        [SerializeField] private NudgeSettings _seatDip = new NudgeSettings(0.015f, 0f, 3f, 0.6f);
-
         [Tooltip("The piece seats: 0.2 for 100 ms.")]
         [SerializeField] private RumbleProfile _seatRumble = new RumbleProfile(0.2f, 0.2f, 0.15f, 0.15f, 0.1f, false);
 
@@ -122,8 +119,6 @@ namespace MoonProject.Rover
         }
 
         public float HardLanding => _hardLanding;
-
-        public NudgeSettings SeatDip => _seatDip;
 
         public RumbleProfile SeatRumble => _seatRumble;
 

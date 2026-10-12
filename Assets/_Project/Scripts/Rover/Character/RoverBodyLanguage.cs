@@ -397,6 +397,8 @@ namespace MoonProject.Rover
             {
                 _proudPending = false;
                 PerkUp(_tuning.KitProudPerk);
+                _events.Publish(new FeelBeat(FeelKind.Install, FeelPhase.Reward, _rover.Position, Vector3.up, 1f,
+                    0f));
             }
 
             if (_glanceEnds >= 0f && Time.time >= _glanceEnds)
