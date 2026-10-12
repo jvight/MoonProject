@@ -47,34 +47,38 @@ Every number is a `[Tooltip]` + `[Range]`/`[Min]` field. Defaults:
 | Beam work: cut, dig, stitch, feed | **1 cell per 60 s** of active beam | a site's work stays ≈ 0.4–0.6 cell |
 | Full leap / tap hop | **¼ cell / ¹⁄₂₀ cell**, scaled by `RoverJumped.Strength` | paid at the leap; the drums pay first |
 | Boost | **driving cost ×2** while boosting | the drums pay first |
-| Sonar ping | 0 | never discourage pinging (ruling 3) |
+| Listening | 0 | 07 listens by itself when it rests (ruling 3) |
 | Standing still, menus, pause | 0 | rule 6 |
 | Crawl speed / with Tilly | **0.35 / 0.55** of cruise | `IRoverBattery.DriveCap01`, eased over ~1.5 s |
 | Tilly's lead delay | **5 s** of crawl | |
 | Crawl exit margin | **0.25 cell** | leaving the crawl needs this much charge, so it never flickers |
 | Solar trickle | **1 cell per 180 s**, up to **1 cell** | only with Tilly's gift fitted and 07 still for ≥ 3 s (§5) |
-| Dock fill / mast fill | **~4 s / ~3 s** for a full battery | |
+| Dock fill / mast fill | **4 s / 5 s per cell** | owner decision 3 (`docs/design/first-hour-v2.md` §5): from empty, 4 cells take 16 s / 20 s and a usual 2–3 cells 8–12 s / 10–15 s |
+| Charging starts | **only when stopped:** ≤ **0.3 m/s** for **0.5 s** on the dock or the ring | charging reads as a stop, never a drive-through; driving off is free at any moment and keeps the filled part of a cell |
 | Warning thresholds | **50% / 30% / 15%** | §7 |
+| Low by distance | range left under **1.5×** the way to the nearest lit charger (straight line ×1.2); never within **40 m** of a lit charger, never while charging | fires together with the 30% rule, whichever comes first (§7) |
 
 **Lights cost nothing in 0.5.** GDD v3 lists "+20% while the lamp bar or floodlights are on in the dark". In 0.5 the
 lamp bar is a comfort kit, and charging for it would punish fitting it. The Director defers the lights cost to 0.7,
 when Floodlights land with the dark crater.
 
 ## 4. Chargers
-- **The dock at home.** Docked (`RoverDockChanged` true), the cells fill in ~4 s with one rising note per cell. When
-  the dock's evening plays (`DockEveningOpened`), the fill happens inside its wide shot, so the evening is "home
-  fills 07 up". Docking keeps the day as today. The dock's job line becomes "Where 07 charges. A rest here keeps the
-  day."
+- **The dock at home.** Docked (`RoverDockChanged` true) and stopped (≤ 0.3 m/s for 0.5 s), the cells fill at 4 s per
+  cell with one rising note per cell. When the dock's evening plays (`DockEveningOpened`), the fill happens inside its
+  wide shot, which holds at least as long as the fill, up to 16 s; if the fill runs longer, the camera returns to the
+  chase frame and the fill goes on, visible on the lamps. So the evening is "home fills 07 up". Docking keeps the day
+  as today. The dock's job line becomes "Where 07 charges. A rest here keeps the day."
 - **Every lit relay mast has a 4 m charge pad**: a worn painted ring with a low ramp lip, at the mast's foot.
   - The relay anchor already reserves a flat pad of 3 m radius, which holds the 4 m ring. World keeps it.
   - Dormant: the ring is dust-capped, a promise that reads at 50 m ("this was a charger").
   - Lit: the mast's lamp pours a warm pool onto the ring, visible from 200 m at night (M3-18 V3).
-  - 07 charges once it stands on the ring at walking pace or slower; the cells fill in ~3 s.
+  - 07 charges only once it is stopped on the ring (≤ 0.3 m/s for 0.5 s), never when driving through; the cells fill
+    at 5 s per cell.
   - **relay.2:** the ring sits on the home side of the mast, never on the chasm's run-up line.
   - A radio-hop lands 07 on the destination mast's ring, so it arrives charging.
 - **Charging feedback:** `ChargingChanged` true → 07 perks up (head lift, brighter eye, an antenna wiggle); each cell
   that fills plays the next note of D E F# A B (then up an octave); the charger's pool warms. `ChargingChanged` false
-  when full or when 07 drives off.
+  when full or when 07 drives off, which is free at any moment: the filled part of a cell is kept.
 - **The 300 m rule.** No point on 0.5's golden path is more than **300 m** from a charger that is lit by then, so the
   longest crawl is ≤ ~130 s (≤ ~85 s with Tilly). Off the path (for example the canyon before relay.2 is lit) the
   worst crawl must stay ≤ ~150 s with Tilly. World reports the reach table (§10) and the Director checks it.
@@ -111,10 +115,12 @@ These come from the tuning above on the built basin; they are acceptance checks,
 | Charge | What happens |
 |---|---|
 | 50% | the lamps show half; nothing else |
-| 30% (`Low`) | one soft falling two-note (A → F#); the eye dims a little; the nearest charger's pillar rises for 20 s (lit or dormant: a dormant mast's pillar is the "masts charge" promise); a ticker line naming **home or a lit charger only**: "Charge is getting low. The dock can top you up." / "… The mound mast can top you up." |
+| 30% (`Low`), or when the range left is under 1.5× the way to the nearest lit charger, whichever comes first | one soft falling two-note (A → F#); the eye dims a little; the nearest charger's pillar rises for 20 s (lit or dormant: a dormant mast's pillar is the "masts charge" promise); a ticker line naming **home or a lit charger only**: "Charge is getting low. The dock can top you up." / "… The mound mast can top you up." |
 | 15% (`VeryLow`) | 07 glances toward the nearest lit charger |
 | 0% | a soft power-down sigh; the crawl begins (§2 rule 4) |
 
+- The distance rule exists because a percentage doesn't know where home is: the way is the straight line ×1.2. It never
+  fires within 40 m of a lit charger and never while charging.
 - Each fires at most once per discharge (re-armed by charging).
 - The 30% line is shown the **first three times** only (remembered in the save, as context prompts are, ruling 6);
   after that the sound, the eye and the pillar carry it.
@@ -127,15 +133,19 @@ These come from the tuning above on the built basin; they are acceptance checks,
   and Power Core each add one longer lamp at the strip's end (0.7–0.8).
 - **The opening:** the four flank lamps light one by one as 07 wakes (after O5's flicker), with four quiet ticks.
 - **Body language:** below 30% the eye dims a little and the wing droops; a charge perks 07 up.
-- **The HUD arc (UI):** a thin segmented arc around the compass, one segment per cell. It reveals itself the first
-  time 07 drops below 70%, hides while the cells are full, and hides while 07 works the beam (the flank lamps carry
-  it then).
+- **The cell row (UI, `docs/design/first-hour-v2.md` §6.4):** at the top-left, one pill per cell (at most 8) on a small
+  glass plate, each 14 × 30 px with a 6 px gap at 1080p; the later long lamps are 30 px wide pills. It mirrors the
+  flank lamps exactly: same count, and the same breathing for the cell being drawn.
+  - A full cell is amber, the cell in use breathes and an empty cell is a 20% cream outline. At Low the last lit pill
+    breathes slowly. Never red.
+  - It reveals itself the first time 07 drops below 70%. After that it shows while 07 is not full, while it charges and
+    for 4 s after full. While the beam works it dims to 50%; it no longer hides.
 - **The calm crawl (Rover + Audio):** the camera eases wider and a touch lower over ~3 s; the radio thins (as if a
   little farther from home); motes hang in 07's dimmed lamp; the charger's pillar sits ahead in frame where the
   camera allows. Wheels hum lower. Coming out of the crawl reverses it all, eased.
 
 ## 9. Save
-The charge, capacity, drums, the warnings' shown count and "the arc has revealed itself" are saved in Gameplay's
+The charge, capacity, drums, the warnings' shown count and "the cell row has revealed itself" are saved in Gameplay's
 section with defaults (full, 4 cells), so older 0.5 saves load full. A game loaded during a crawl resumes the crawl
 (`LowPowerChanged` restored). Raising the content floor is not needed for this spec alone.
 
@@ -156,7 +166,7 @@ section with defaults (full, 4 cells), so older 0.5 saves load full. A game load
 | rover | `DriveCap01` on the drive, the leap refusal, boost asleep while crawling, the flank lamp strip, the opening's lamp wake, the eye and wing at low charge, the perk on charging, the calm crawl camera and motes, the battery spine piece |
 | art | the 8-socket lamp strip on 07's stripe, the battery spine piece (back slot, cream enamel and brass, ≤ 25% taller with every 0.5 kit on), the 4 m mast charge ring (dormant dust cap, lit state), relay.2's service cabinet |
 | world | the lit pad's warm pool under each mast lamp, the reach table (each 0.5 site heart, friend spot and mast → metres to the dock and to the nearest mast pad) |
-| ui | the HUD arc, the battery line keys and Cell Pack II's names and lines (en + vi) |
+| ui | the cell row, the battery line keys and Cell Pack II's names and lines (en + vi) |
 | audio | the cell notes, the warning two-note, the power-down sigh, the leap fizzle, the charging hum, the crawl's thinner radio |
 
 ## 12. Acceptance

@@ -21,7 +21,8 @@ giờ thấy căng thẳng.
 6. **Cô đơn mà bình yên.**
 
 ## 2. Vòng lặp chính
-- **Vài giây:** thấy ánh sáng → dò sóng → lái tới → dùng tia làm việc → nhặt được đồ. Đèn pin bên hông 07 tắt bớt dần.
+- **Vài giây:** thấy ánh sáng → dừng lại, 07 lắng nghe → vật trả lời → lái tới → dùng tia làm việc → nhặt được đồ.
+  Đèn pin bên hông 07 tắt bớt dần.
 - **Một chuyến (5–15 phút):** xem tầm pin và trạm sạc trên bản đồ → ra ngoài → trục vớt vật liệu cùng "món chính" của
   xác tàu (bản vẽ hoặc linh kiện) → ghé cột sạc → về nhà, giải mã ở phòng lab, chế tạo ở trạm sửa xe → buổi tối ở đế
   sạc: pin đầy, một ánh sáng mới ở chân trời.
@@ -53,17 +54,20 @@ giờ thấy căng thẳng.
 - dùng tia khoảng 60 giây là hết một ô;
 - kéo đồ chỉ tốn như lái xe thêm một phần tư;
 - nhảy tốn một phần tư ô;
-- dò sóng gần như miễn phí.
+- lắng nghe không tốn pin: 07 tự lắng nghe khi dừng nghỉ.
 
 **Trạm sạc:**
-- đế sạc ở nhà (đầy pin trong khoảng 4 giây);
-- mọi cột tiếp sóng đã thắp, mỗi cột có một bệ sạc rộng 4 m;
+- đế sạc ở nhà (4 giây mỗi ô, thường 2–3 ô là 8–12 giây; chỉ sạc khi 07 đã dừng hẳn, lái đi lúc nào cũng được và phần
+  đã sạc vẫn giữ);
+- mọi cột tiếp sóng đã thắp, mỗi cột có một bệ sạc rộng 4 m (5 giây mỗi ô, cũng chỉ sạc khi đã dừng hẳn);
 - từ 0.6, các **cột sạc dã chiến** do người chơi tự xây.
 
 **Nhìn thấy pin:**
 - một dãy tối đa 8 đèn nhỏ màu hổ phách dọc thân 07;
 - khi pin yếu, mắt 07 mờ đi và cánh pin rũ xuống;
-- trên màn hình có một vòng nhỏ quanh la bàn, và vòng này tự ẩn khi 07 đang làm việc.
+- trên màn hình có một hàng ô pin ở góc trên bên trái, mỗi ô một viên nhỏ trên nền kính mờ (tối đa 8), khớp với dãy đèn
+  bên hông. Hàng này hiện lần đầu khi pin xuống dưới 70%, sau đó hiện khi pin chưa đầy, khi đang sạc và 4 giây sau khi
+  đầy; khi 07 dùng tia, hàng mờ đi còn 50% chứ không ẩn.
 
 **Tầm đi:**
 - 0.5: khoảng 140 m lúc đầu, rồi 220 m từ bất kỳ trạm sạc nào;
@@ -94,7 +98,7 @@ Thêm vào đó là linh kiện có tên riêng, và máy chế tạo làm lại
 **32 món nâng cấp trong 6 nhánh:**
 - **Di chuyển:** nhảy xa, bánh từ tính leo vách, lướt;
 - **Tia:** giỏ chở, kéo vật nặng, cắt vỏ kín, tời neo;
-- **Cảm biến:** đèn pha, sonar rộng, đèn pha mạnh, ống ngắm sao;
+- **Cảm biến:** đèn pha, sonar rộng (tầm lắng nghe gấp đôi), đèn pha mạnh, ống ngắm sao;
 - **Năng lượng & tầm đi:** trống tụ điện, bộ pin II và III, bánh tiết kiệm điện, cánh pin đôi, gói pin mở rộng, lõi
   năng lượng;
 - **Bạn bè:** trinh sát cho Tilly, bộ chở hàng cho Atlas, hai drone em gái;
@@ -104,7 +108,9 @@ Thêm vào đó là linh kiện có tên riêng, và máy chế tạo làm lại
 **07 gọn gàng mà lột xác:** đồ lắp lên 07 chia vào 6 vị trí (mũi, nóc, lưng, hai bên hông, đuôi, bánh). Mỗi vị trí chỉ
 hiện một món; món sau thay thế hoặc nhập vào món trước, ví dụ đèn pha mạnh thay giàn đèn cũ, các bộ pin gộp thành một
 "xương sống pin" trên lưng. Cánh pin và cánh lướt gập lại khi chạy. 07 đi từ tàu thăm dò mệt mỏi thành rover thám hiểm
-vững chãi, gương mặt một mắt không bao giờ đổi.
+vững chãi, gương mặt một mắt không bao giờ đổi. Ngoài các vị trí còn hai bộ phận nhỏ, không chiếm vị trí nào, cho
+thấy những chức năng đầu tiên của 07: **đèn đầu ăng-ten** (sáng xanh lơ khi tháp radio lên cấp 1, nhấc lên và nháy khi
+07 lắng nghe) và **vòng tether** quanh đầu phát tia (lắp ở cổng bảo trì garage của Kenji).
 
 ## 5. Khám phá, các vùng và thứ tự
 **Mỗi vùng mở bằng một công nghệ:**
@@ -196,7 +202,8 @@ Cần cho mục tiêu chính chỉ có máy chế tạo và một cột sạc tr
 - **0.7 (~90 phút), đường thứ hai:** đèn pha mạnh; hố tối; Moss; hai cánh pin; cắt vỏ kín; giàn pin mặt trời; kho vật
   liệu.
 - **0.8 (~60 phút), Sửa chảo và Trả lời:** cột cuối ở chân núi; tời neo; lõi năng lượng; đường lên đỉnh; phát sóng.
-- **1.0:** tự do hoàn toàn thứ tự hai vùng giữa; đánh bóng, cài đặt, tay cầm, chụp ảnh, phòng sơn, sự kiện.
+- **1.0:** tự do hoàn toàn thứ tự hai vùng giữa; đánh bóng, cài đặt (riêng "Gentle camera" đã ra từ 0.5.1), tay cầm,
+  chụp ảnh, phòng sơn, sự kiện.
 - **Tổng:** cốt truyện chính khoảng 5,5 giờ, chơi trọn khoảng 9–10 giờ.
 
 ## 10. Giữ / Đổi / Bỏ so với những gì đã làm
@@ -246,7 +253,7 @@ bốn bài học. Chúng áp dụng từ 0.6; **phạm vi 0.5 giữ nguyên**.
 
 | # | Bài học | Ở game mình | Bản |
 |---|---|---|---|
-| A1 | **Mảnh bản vẽ**: quét 2–4 mảnh rải trong một bãi mới học được bản vẽ, nên mỗi bãi được khám kỹ và cảm giác "sắp xong" kéo người chơi đi tiếp. | Từ 0.6, bản vẽ của một bộ đồ chia thành 2–4 mảnh trong một bãi (hoặc một vùng với bộ lớn). 07 quét từng mảnh bằng ống kính (động tác sonar và nhìn sẵn có, không thêm nút). Máy đọc trong lab hiện băng giấy dang dở (1/3, 2/3) và giải mã khi đủ bộ; ghim trên bảng hiện số mảnh. Ống bản vẽ đơn của 0.5 giữ nguyên. | 0.6 |
+| A1 | **Mảnh bản vẽ**: quét 2–4 mảnh rải trong một bãi mới học được bản vẽ, nên mỗi bãi được khám kỹ và cảm giác "sắp xong" kéo người chơi đi tiếp. | Từ 0.6, bản vẽ của một bộ đồ chia thành 2–4 mảnh trong một bãi (hoặc một vùng với bộ lớn). 07 quét từng mảnh bằng cách nhìn vào nó khi đứng yên (trong vòng 10 m, đứng yên 1,5 giây; vẫn không thêm nút). Máy đọc trong lab hiện băng giấy dang dở (1/3, 2/3) và giải mã khi đủ bộ; ghim trên bảng hiện số mảnh. Ống bản vẽ đơn của 0.5 giữ nguyên. | 0.6 |
 | A2 | **Một xác tàu lớn thấy từ đầu, quay lại nhiều lần theo công cụ mới** (như Aurora). | **Kestrel-3 thành "Aurora" của mình.** 0.5: vỏ ngoài và lõi Warm Headlamp (đã có). 0.6: một cửa kín hiện ra và có tên trên bản đồ, như lời hứa. 0.7: Thermal Cutter mở khoang kín (Circuitry, lõi dữ liệu cho Lab Reader II, một nhật ký phi hành đoàn). 0.8: lõi tàu giữ phần cuối của Power Cell, nên chuyến leo Đỉnh núi bắt đầu từ xác tàu đầu tiên người chơi từng thấy. | 0.6–0.8 |
 | A3 | **Radio dẫn đường mềm**: bắt được tín hiệu là có một nơi để tới, không cần danh sách nhiệm vụ. | Khi radio, Bell hay một cột vừa thắp bắt được tín hiệu, bút vẽ của Kenji vẽ một vết chì lên bản đồ khảo sát (dấu chéo, vòng tròn, một dòng ghi chú nét chữ Ines), và cột sáng của nơi đó dâng lên một lần. Không mũi tên, không dấu trên HUD; đồ tầng 2 vẫn không được gọi tên (luật 16): vết chì là một nơi, không phải một việc. | 0.6 |
 | A4 | **Cú ngoặt cảm xúc giữa game** (như tàu Sunbeam). | Giữa mục tiêu Link, mạng lưới mới sửa một nửa bắt được Trái Đất trong vài giây: tiếng rè, một đoạn nhạc hiệu đài của Ro, một giọng nói quá mờ để nghe rõ, rồi mất. Bảng phục hồi trong lab thắp đèn đầu của hàng Dish như một dấu hỏi. Buồn nhưng ấm (trụ cột 6): "sửa chảo" từ một việc thành một mong ước. Không đe doạ, không đếm giờ. | 0.7 |
@@ -300,5 +307,9 @@ giờ đổi. Mới trong lần này:
 - **Survey Scanner** (0.6, cần cho việc quét mảnh bản vẽ A1): một trục gập mảnh trên **khe cổ** mới, bên cạnh đầu,
   không bao giờ che ống kính. Khi 07 quét, trục mở ra và một quạt sáng mảnh lướt qua mảnh vỡ. Bản vẽ của nó tìm thấy
   trong lòng hố ở 0.6.
+- **Đèn đầu ăng-ten** (tháp radio cấp 1, 0.5.1): đầu cây ăng-ten roi sáng xanh lơ khi tháp lần đầu nói với 07. Khi 07
+  dừng nghỉ và lắng nghe, ăng-ten nhấc lên và đầu ăng-ten nháy.
+- **Vòng tether** (cổng bảo trì garage của Kenji, 0.5.1): một vòng đồng thau quanh đầu phát tia, xanh lơ nhạt khi nghỉ
+  và sáng rõ khi 07 đang giữ vật gì. Tether không hoạt động cho đến khi vòng được lắp.
 - Các bộ khác giữ khe cũ (mục 4.4). Mọi chức năng sau này (Star Tracker, Anchor Line…) phải nêu bộ phận của nó trước
   khi làm.
