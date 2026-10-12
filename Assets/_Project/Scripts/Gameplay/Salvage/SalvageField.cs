@@ -639,15 +639,29 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// Salvage folds into 07: a flash, the event, the Collect reward beat, the stock, and a save once nothing else
-        /// flies.
+        /// Salvage folds into 07's hold: a flash, the event, the Collect reward beat and the stock for what fits. What
+        /// does not fit bumps the closed hatch (a Cargo Impact) and is left to wait beside 07 (M3-25 §2.3,
+        /// <see cref="CargoOverflowed"/>). The game saves once nothing else flies.
         /// </summary>
         private void Arrive(SalvageMaterial material, int units, Vector3 socket, string siteId, int comboStep)
         {
-            _flashes.Spawn(socket);
-            _events.Publish(new MaterialSalvaged(material, units, socket, siteId, comboStep));
-            _events.Publish(new FeelBeat(FeelKind.Collect, FeelPhase.Reward, socket, Vector3.up, 1f, 0f, material));
-            _stock.Add(material, units);
+            int fitted = Math.Min(units, _stock.Hold.FreeUnits(material));
+            int left = units - fitted;
+            if (fitted > 0)
+            {
+                _flashes.Spawn(socket);
+                _events.Publish(new MaterialSalvaged(material, fitted, socket, siteId, comboStep));
+                _events.Publish(new FeelBeat(FeelKind.Collect, FeelPhase.Reward, socket, Vector3.up, 1f, 0f,
+                    material));
+                _stock.Collect(material, fitted);
+            }
+
+            if (left > 0)
+            {
+                _events.Publish(new FeelBeat(FeelKind.Cargo, FeelPhase.Impact, socket, Vector3.up, 1f, 0f, material));
+                _events.Publish(new CargoOverflowed(material, left, socket));
+            }
+
             _inFlight--;
             if (_inFlight == 0)
             {

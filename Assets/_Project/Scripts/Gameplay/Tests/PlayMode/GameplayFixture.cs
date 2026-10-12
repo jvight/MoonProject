@@ -97,6 +97,8 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         public ProgressionTuning ProgressionTuning { get; private set; }
 
+        public CargoTuning CargoTuning { get; private set; }
+
         public SonarTuning SonarTuning { get; private set; }
 
         public RelicTuning RelicTuning { get; private set; }
@@ -257,22 +259,22 @@ namespace MoonProject.Gameplay.PlayModeTests
             Gameplay.Blueprints.Restore(new BlueprintsSaveData { found = kits });
         }
 
-        /// <summary>Puts materials in 07's stock, as salvage would.</summary>
+        /// <summary>Puts materials on home's shelves, as a trip home would.</summary>
         public void GiveMaterials(int metal, int wiring, int optics)
         {
             if (metal > 0)
             {
-                Gameplay.Materials.Add(SalvageMaterial.Metal, metal);
+                Gameplay.Materials.Deliver(SalvageMaterial.Metal, metal);
             }
 
             if (wiring > 0)
             {
-                Gameplay.Materials.Add(SalvageMaterial.Wiring, wiring);
+                Gameplay.Materials.Deliver(SalvageMaterial.Wiring, wiring);
             }
 
             if (optics > 0)
             {
-                Gameplay.Materials.Add(SalvageMaterial.Optics, optics);
+                Gameplay.Materials.Deliver(SalvageMaterial.Optics, optics);
             }
         }
 
@@ -420,6 +422,15 @@ namespace MoonProject.Gameplay.PlayModeTests
                 signals, shelf, relays, progression, plotter, Lift);
             battery.Wire(Asset<BatteryTuning>());
             Gameplay.WireBattery(battery);
+            var materials = Asset<MaterialCatalog>();
+            materials.Populate(new[]
+            {
+                new MaterialEntry(SalvageMaterial.Metal, "metal", MaterialFamily.Salvage, 4, true),
+                new MaterialEntry(SalvageMaterial.Wiring, "wiring", MaterialFamily.Salvage, 4, true),
+                new MaterialEntry(SalvageMaterial.Optics, "optics", MaterialFamily.Salvage, 4, true),
+            });
+            CargoTuning = Asset<CargoTuning>();
+            Gameplay.WireCargo(materials, CargoTuning);
             root.SetActive(true);
 
             Bootstrap = BootstrapHarness.Create(_controls, SaveSlot, World, Rover, Gameplay);

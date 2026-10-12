@@ -78,6 +78,8 @@ namespace MoonProject.Gameplay.Editor
             var progressionTuning = context.LoadAsset<ProgressionTuning>(GameplayAssetPaths.ProgressionTuning);
             var liftTuning = context.LoadAsset<LiftTuning>(GameplayAssetPaths.LiftTuning);
             var batteryTuning = context.LoadAsset<BatteryTuning>(GameplayAssetPaths.BatteryTuning);
+            var cargoTuning = context.LoadAsset<CargoTuning>(GameplayAssetPaths.CargoTuning);
+            var materialCatalog = context.LoadAsset<MaterialCatalog>(GameplayAssetPaths.MaterialCatalog);
             var salvageCatalog = context.LoadAsset<SalvageCatalog>(GameplayAssetPaths.SalvageCatalog);
             var relayMast = context.LoadAsset<GameObject>(GameplayAssetPaths.RelayMast);
             var relayMastBroken = context.LoadAsset<GameObject>(GameplayAssetPaths.RelayMastBroken);
@@ -86,6 +88,7 @@ namespace MoonProject.Gameplay.Editor
             RequireRelayRig(relayMastBroken);
             Require(visuals.Validate(), nameof(GameplayVisuals));
             Require(salvageCatalog.Validate(), nameof(SalvageCatalog));
+            Require(materialCatalog.Validate(), nameof(MaterialCatalog));
             Require(relicCatalog.Validate(), nameof(RelicCatalog));
             Require(radioTower.Validate(), nameof(UpgradeDefinition));
             foreach (UpgradeDefinition kit in benchKit)
@@ -218,6 +221,7 @@ namespace MoonProject.Gameplay.Editor
                 progression, plotter, liftStation);
             battery.Wire(batteryTuning);
             gameplay.WireBattery(battery);
+            gameplay.WireCargo(materialCatalog, cargoTuning);
             context.AddSystem(gameplay);
         }
 

@@ -1136,9 +1136,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             IMaterialStock stock = _gameplay.Materials;
             var topUp = new Recipe(Mathf.Max(0, need.Metal - stock.Metal), Mathf.Max(0, need.Wiring - stock.Wiring),
                 Mathf.Max(0, need.Optics - stock.Optics));
-            _gameplay.Materials.Add(SalvageMaterial.Metal, topUp.Metal);
-            _gameplay.Materials.Add(SalvageMaterial.Wiring, topUp.Wiring);
-            _gameplay.Materials.Add(SalvageMaterial.Optics, topUp.Optics);
+            _gameplay.Materials.Deliver(SalvageMaterial.Metal, topUp.Metal);
+            _gameplay.Materials.Deliver(SalvageMaterial.Wiring, topUp.Wiring);
+            _gameplay.Materials.Deliver(SalvageMaterial.Optics, topUp.Optics);
             yield return null;
             End("The rest of the basin's salvage (not driven)", $"topped up by {topUp} to {need}");
         }
@@ -2211,9 +2211,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             RelayTuning tuning = _gameplay.Relays.Tuning;
             Recipe pack = _gameplay.Upgrades.Find(CellPack).Levels[0].Recipe;
             Recipe need = tuning.CostAfter(0).Plus(tuning.CostAfter(1)).Plus(tuning.CostAfter(2)).Plus(pack);
-            _gameplay.Materials.Add(SalvageMaterial.Metal, need.Metal);
-            _gameplay.Materials.Add(SalvageMaterial.Wiring, need.Wiring);
-            _gameplay.Materials.Add(SalvageMaterial.Optics, need.Optics);
+            _gameplay.Materials.Deliver(SalvageMaterial.Metal, need.Metal);
+            _gameplay.Materials.Deliver(SalvageMaterial.Wiring, need.Wiring);
+            _gameplay.Materials.Deliver(SalvageMaterial.Optics, need.Optics);
             yield return null;
             End("The drill's and the Kestrel's salvage (not driven)", $"{need} for three masts and Cell Pack II");
         }

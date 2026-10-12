@@ -35,6 +35,12 @@ namespace MoonProject.Gameplay
         [Tooltip("How pickups glint from afar (Assets/_Project/Data/Tuning/Gameplay/GlintTuning.asset).")]
         [SerializeField] private GlintTuning _glints;
 
+        [Tooltip("What each material is (Assets/_Project/Data/Content/MaterialCatalog.asset).")]
+        [SerializeField] private MaterialCatalog _materialCatalog;
+
+        [Tooltip("07's hold and home's shelves (Assets/_Project/Data/Tuning/Gameplay/CargoTuning.asset).")]
+        [SerializeField] private CargoTuning _cargo;
+
         [Tooltip("Every upgrade crafted from materials (Assets/_Project/Data/Content/Upgrades).")]
         [SerializeField] private UpgradeDefinition[] _upgradeDefinitions = Array.Empty<UpgradeDefinition>();
 
@@ -61,8 +67,19 @@ namespace MoonProject.Gameplay
         private readonly List<IDisposable> _saveTokens = new List<IDisposable>();
         private readonly List<IDisposable> _flowTokens = new List<IDisposable>();
         private GlowMeshSet _meshes;
+        private IRoverAbilities _abilities;
+        private IRoverRig _rig;
 
         public MaterialStock Materials { get; private set; }
+
+        /// <summary>Bundles waiting in the world because 07's hold was full (docs/features/M3-25 §2.3).</summary>
+        public CargoBundles Bundles { get; private set; }
+
+        /// <summary>The dock's unload onto home's shelves (M3-25 §3.2).</summary>
+        public DockUnload Unload { get; private set; }
+
+        /// <summary>Tilly fetching waiting bundles inside the station's reach (M3-25 T3).</summary>
+        public TillyFetch Fetch { get; private set; }
 
         public UpgradeService Upgrades { get; private set; }
 
@@ -173,6 +190,12 @@ namespace MoonProject.Gameplay
             _battery = battery;
         }
 
+        internal void WireCargo(MaterialCatalog catalog, CargoTuning cargo)
+        {
+            _materialCatalog = catalog;
+            _cargo = cargo;
+        }
+
         public void Initialize(GameContext context)
         {
             if (context == null)
@@ -205,7 +228,9 @@ namespace MoonProject.Gameplay
             }
 
             _meshes = new GlowMeshSet();
-            Materials = new MaterialStock(context.Events);
+            var hold = new CargoHold(context.Events, _materialCatalog, _cargo.HoldSlots);
+            var storage = new HomeStorage(context.Events, _materialCatalog, _cargo.ShelfLayout(), _cargo.BuiltInShelves);
+            Materials = new MaterialStock(context.Events, hold, storage);
             var save = context.Get<ISaveService>();
             var services = new GameplayServices(context.Events, context.Input, context.Get<ITerrainQuery>(),
                 context.Get<IWorldLayout>(), context.Get<IWorldAnchors>(), context.Get<IRoverState>(),
@@ -214,6 +239,7 @@ namespace MoonProject.Gameplay
             _flowTokens.Add(context.Events.Subscribe<TitleShown>(_ => veil.Hide()));
             _flowTokens.Add(context.Events.Subscribe<SessionStarted>(_ => veil.Show(Time.time)));
             var abilities = context.Get<IRoverAbilities>();
+            _abilities = abilities;
             Upgrades = new UpgradeService(context.Events, Materials, abilities, _upgradeDefinitions);
             Radio = new RadioProgram(context.Events, _cassettes.Catalog.Ids());
             Power = new BasePower(context.Events);
@@ -274,6 +300,12 @@ namespace MoonProject.Gameplay
                 return;
             }
 
+            if (!NewCargo(services))
+            {
+                enabled = false;
+                return;
+            }
+
             TowerPartField = NewTowerPartField(services);
             GroundTubes = TowerPartField != null ? NewGroundTubes(services) : null;
             Port = GroundTubes != null ? NewPort(services, abilities) : null;
@@ -290,6 +322,9 @@ namespace MoonProject.Gameplay
             Hints = new InteractionHints(_excavation, _salvage, _tether, _cradle, _home,
                 stations, Upgrades, TowerParts, _friends, _relays, services.Beam, services.Pickups);
             context.Register<IMaterialStock>(Materials);
+            context.Register<IMaterialCatalog>(_materialCatalog);
+            context.Register<ICargoHold>(Materials.Hold);
+            context.Register<IHomeStorage>(Materials.Home);
             context.Register<ISalvageStatus>(_salvage);
             context.Register<ITetherAim>(_tether);
             context.Register<IUpgradeShop>(Shop);
@@ -318,7 +353,7 @@ namespace MoonProject.Gameplay
         private void RegisterSaveSections(ISaveService save)
         {
             _saveTokens.Add(save.Register(new SaveSection<MaterialsSaveData>(GameplaySaveKeys.Materials,
-                GameplaySaveKeys.MaterialsVersion, Materials.Capture, Materials.Restore,
+                GameplaySaveKeys.MaterialsVersion, CaptureMaterials, RestoreMaterials,
                 MaterialsSaveMigrations.Migrate)));
             _saveTokens.Add(save.Register(new SaveSection<SalvageSaveData>(GameplaySaveKeys.Salvage,
                 GameplaySaveKeys.SalvageVersion, _salvage.Capture, _salvage.Restore)));
@@ -541,12 +576,70 @@ namespace MoonProject.Gameplay
         {
             float now = Time.time;
             Power.Show(_tower.PoweredLevel);
+            Materials.Home.SetPowered(_tower.PoweredLevel > 0);
+            int holdSlots = HoldSlots();
+            if (holdSlots > Materials.Hold.SlotCount)
+            {
+                Materials.Hold.SetSlotCount(holdSlots);
+            }
+
+            Bundles.Step(now, Time.deltaTime);
+            Unload.Step(_home.Dock.Docked, _rig.CargoSocket.position, now);
+            if (Unload.DockedNow)
+            {
+                Bundles.NewTrip();
+            }
+
+            Fetch.Step(now);
             TowerPartField.Step(now);
             GroundTubes.Step(now);
             Port.Step(Time.deltaTime);
             RecipeLook.Step();
             Tech.Refresh();
             Recovery.Refresh();
+        }
+
+        /// <summary>Where every material is, the bundles waiting in the world included (M3-25 §6).</summary>
+        private MaterialsSaveData CaptureMaterials()
+        {
+            MaterialsSaveData data = Materials.Capture();
+            data.waiting = Bundles.Capture();
+            return data;
+        }
+
+        private void RestoreMaterials(MaterialsSaveData data)
+        {
+            Materials.Restore(data);
+            Bundles.Restore(data.waiting);
+        }
+
+        /// <summary>
+        /// The world side of cargo (M3-25): bundles that wait, the dock's unload and Tilly's fetch to home's shelves
+        /// beside the lift. False (logged) when the fetching friend is missing.
+        /// </summary>
+        private bool NewCargo(GameplayServices services)
+        {
+            Friend fetcher = _friends.Find(_cargo.FetchFriend);
+            if (fetcher == null)
+            {
+                Debug.LogError($"{nameof(GameplaySystem)}: no friend '{_cargo.FetchFriend}' to fetch waiting bundles " +
+                               "(CargoTuning's fetch friend).", this);
+                return false;
+            }
+
+            Bundles = new CargoBundles(transform, services, _salvage.Catalog, _materialCatalog, _cargo, _friends.Tuning);
+            Unload = new DockUnload(services.Events, Materials, _cargo, services.Save);
+            LiftStation lift = _lift;
+            Fetch = new TillyFetch(Bundles, _relays.Reach, fetcher, _cargo, () => lift.RideSpot);
+            _rig = services.Rig;
+            return true;
+        }
+
+        /// <summary>07's hold as its fitted kits make it (M3-25 §2.2): kits only ever add slots.</summary>
+        private int HoldSlots()
+        {
+            return _cargo.HoldSlots + (_abilities.Has(RoverAbility.CargoCradle) ? _cargo.CradleSlots : 0) +
+                   (_abilities.Has(RoverAbility.SideBins) ? _cargo.SideBinSlots : 0);
         }
 
         private void RestoreRadio(RadioSaveData data)
@@ -623,6 +716,9 @@ namespace MoonProject.Gameplay
             }
 
             return _glints == null ? "GlintTuning is not assigned."
+                : _materialCatalog == null ? "MaterialCatalog is not assigned (run Gameplay/Content)."
+                : _materialCatalog.Validate() != null ? "MaterialCatalog: " + _materialCatalog.Validate() + "."
+                : _cargo == null ? "CargoTuning is not assigned."
                 : _upgradeDefinitions == null || _upgradeDefinitions.Length == 0 ? "no upgrade definitions."
                 : _salvage == null ? "SalvageField is not assigned."
                 : _relics == null ? "RelicField is not assigned."
@@ -666,6 +762,7 @@ namespace MoonProject.Gameplay
             Blueprints?.Dispose();
             TowerPartField?.Dispose();
             GroundTubes?.Dispose();
+            Bundles?.Dispose();
             Port?.Dispose();
             _meshes?.Dispose();
         }
