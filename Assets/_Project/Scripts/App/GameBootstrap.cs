@@ -104,6 +104,7 @@ namespace MoonProject.App
             }
 
             Context.Register<ISaveService>(_save);
+            _save.Saved += PublishSaved;
             Context.Register<ISettingsFile>(new SettingsFile(SaveService.DefaultDirectory, slot));
             Context.Register<IGameFlow>(_flow);
             _intent = new BootIntent(SaveService.DefaultDirectory, slot);
@@ -169,6 +170,11 @@ namespace MoonProject.App
 
         private void OnDestroy()
         {
+            if (_save != null)
+            {
+                _save.Saved -= PublishSaved;
+            }
+
             _newGame?.Dispose();
             _wakeBeat?.Dispose();
             _continue?.Dispose();
@@ -180,6 +186,11 @@ namespace MoonProject.App
                 Destroy(_controlsCopy);
             }
 #endif
+        }
+
+        private void PublishSaved()
+        {
+            Context.Events.Publish(new GameSaved());
         }
 
         private void UseTestRunControlsCopy()

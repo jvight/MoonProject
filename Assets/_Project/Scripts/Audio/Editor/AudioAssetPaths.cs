@@ -10,6 +10,7 @@ namespace MoonProject.Audio.Editor
         public const string Library = DataFolder + "/AudioLibrary.asset";
         public const string Playlist = DataFolder + "/RadioPlaylist.asset";
         public const string Tapes = DataFolder + "/RadioTapes.asset";
+        public const string Voices = DataFolder + "/VoiceLibrary.asset";
         public const string MixTuning = DataFolder + "/AudioMixTuning.asset";
         public const string RoverTuning = DataFolder + "/RoverAudioTuning.asset";
         public const string RadioTuning = DataFolder + "/RadioTuning.asset";
@@ -34,6 +35,9 @@ namespace MoonProject.Audio.Editor
 
         /// <summary>Friends' music-box jingles, written by the music box (project-relative).</summary>
         public const string MusicJingles = "tools/music/jingles.json";
+
+        /// <summary>The voiced radio lines rendered by tools/voice/build_voice.py.</summary>
+        public const string VoiceManifest = "tools/voice/voice_manifest.json";
 
         public static string ProjectFile(string relativePath)
         {

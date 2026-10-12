@@ -88,6 +88,22 @@
                         <ui:Label name="place-card-job" class="place-card__job" picking-mode="Ignore" />
                     </ui:VisualElement>
                 </ui:VisualElement>
+                <ui:VisualElement name="protocol" class="recovery-board protocol-readout" picking-mode="Ignore">
+                    <ui:Label name="protocol-title" class="recovery-board__title protocol-readout__title" picking-mode="Ignore" />
+                    <ui:VisualElement name="protocol-rows" class="recovery-board__rows" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <ui:VisualElement name="recipe-card" class="recipe-card" picking-mode="Ignore">
+                    <ui:VisualElement name="recipe-card-shadow" class="soft-shadow soft-shadow--name" />
+                    <ui:Label name="recipe-card-title" class="recipe-card__title" picking-mode="Ignore" />
+                    <ui:Label name="recipe-card-level" class="recipe-card__level" picking-mode="Ignore" />
+                    <ui:VisualElement class="recipe-card__row" picking-mode="Ignore">
+                        <ui:Label name="recipe-card-needs-word" class="recipe-card__word" picking-mode="Ignore" />
+                        <ui:VisualElement name="recipe-card-needs" class="recipe" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                    <ui:Label name="recipe-card-short" class="recipe__need recipe-card__line" picking-mode="Ignore" />
+                    <ui:Label name="recipe-card-part" class="recipe-card__line" picking-mode="Ignore" />
+                    <ui:Label name="recipe-card-where" class="recipe-card__where" picking-mode="Ignore" />
+                </ui:VisualElement>
                 <ui:VisualElement name="materials-chip" class="materials-chip" picking-mode="Ignore">
                     <ui:VisualElement name="materials-chip-shadow" class="soft-shadow soft-shadow--chip" />
                     <ui:VisualElement name="materials-chip-items" class="chip materials-chip__body" />

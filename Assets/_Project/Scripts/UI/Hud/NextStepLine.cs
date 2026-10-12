@@ -1,11 +1,13 @@
 using System;
+using MoonProject.Gameplay;
 
 namespace MoonProject.UI
 {
     /// <summary>
-    /// The soft "next" line's rule (docs/features/M3-16 "Gentle guidance"): Gameplay names the current step's
-    /// invitation; it shows only after a long while on the same step without progress, and then only once 07 has
-    /// been still a moment, never while driving, and not at all with Guidance switched off or no step to suggest.
+    /// The soft "next" line's rule (docs/features/M3-16 "Gentle guidance", M3-24 B): Gameplay names the current step's
+    /// invitation. A teaching step's line shows as soon as 07 has been still a moment, since a new player needs it
+    /// at once; a recovery target's need waits a long while on the same step without progress first (P8). Never
+    /// while driving, and not at all with Guidance switched off or no step to suggest.
     /// </summary>
     internal sealed class NextStepLine
     {
@@ -41,8 +43,8 @@ namespace MoonProject.UI
         {
             _onStep += deltaTime;
             _still = speed < _settings.StillSpeed ? _still + deltaTime : 0f;
-            WantsShown = guidance && Key.Length > 0 && _onStep >= _settings.StepPatienceSeconds &&
-                         _still >= _settings.StillSeconds;
+            float patience = ProgressionKeys.SpeaksOfTargets(Key) ? _settings.StepPatienceSeconds : 0f;
+            WantsShown = guidance && Key.Length > 0 && _onStep >= patience && _still >= _settings.StillSeconds;
         }
     }
 }

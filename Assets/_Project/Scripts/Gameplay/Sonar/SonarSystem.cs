@@ -2,14 +2,15 @@ using System;
 using UnityEngine;
 using MoonProject.Core;
 using MoonProject.Core.Events;
-using MoonProject.Core.Input;
 
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// The sonar ping. A press (remembered briefly if the calm cooldown is still running) publishes
-    /// <see cref="SonarPinged"/> and rolls a ring over the ground; every salvage site with something left to find (a
-    /// piece to cut or a relic in its heart) answers when the ring has touched it (closer ones sooner and brighter),
+    /// 07's listening, the sonar with no button (docs/design/first-hour-v2.md §3). From tower level 1 on, once 07 has
+    /// rested a moment after driving somewhere new (<see cref="ListenGate"/>), it listens: <see cref="SonarPinged"/>
+    /// is published (the antenna lifts, the kalimba sounds) and a ring rolls over the ground; every salvage site with
+    /// something left to find (a piece to cut or a relic in its heart) answers when the ring has touched it (closer
+    /// ones sooner and brighter),
     /// publishing <see cref="SiteAnswered"/> and raising a light pillar on the horizon that stands for a while. A relic
     /// lying loose out in the world answers on its own (<see cref="RelicAnswered"/>), and a broken friend with its
     /// broken chirp (<see cref="FriendAnswered"/>) and a warm pillar. 07 turns to the nearest answer, then keeps
@@ -22,8 +23,9 @@ namespace MoonProject.Gameplay
         [Tooltip("Sonar tuning (Assets/_Project/Data/Tuning/Gameplay/SonarTuning.asset).")]
         [SerializeField] private SonarTuning _tuning;
 
+        private readonly ListenGate _gate = new ListenGate();
         private EventBus _events;
-        private InputReader _input;
+        private IBasePower _power;
         private IRoverState _rover;
         private IRoverRig _rig;
         private RelicField _relics;
@@ -33,19 +35,11 @@ namespace MoonProject.Gameplay
         private SonarSchedule _schedule;
         private SonarRing[] _rings = Array.Empty<SonarRing>();
         private SiteMarker[] _markers = Array.Empty<SiteMarker>();
-        private float _cooldownLeft;
-        private bool _queued;
         private bool _firstAnswerPending;
         private float _gazeUntil = float.NegativeInfinity;
         private float _nextGlance;
         private bool _gazing;
         private bool _initialized;
-
-        /// <summary>True when a press would ping right away.</summary>
-        public bool IsReady => _initialized && _cooldownLeft <= 0f;
-
-        /// <summary>Seconds until the next ping is possible.</summary>
-        public float CooldownRemaining => Mathf.Max(0f, _cooldownLeft);
 
         public SonarTuning Tuning => _tuning;
 
@@ -61,7 +55,7 @@ namespace MoonProject.Gameplay
         }
 
         internal bool Initialize(GameplayServices services, RelicField relics, FriendField friends,
-            SalvageField salvage, IRoverAbilities abilities)
+            SalvageField salvage, IRoverAbilities abilities, IBasePower power)
         {
             if (_tuning == null)
             {
@@ -71,7 +65,7 @@ namespace MoonProject.Gameplay
             }
 
             _events = services.Events;
-            _input = services.Input;
+            _power = power ?? throw new ArgumentNullException(nameof(power));
             _rover = services.Rover;
             _rig = services.Rig;
             _relics = relics ?? throw new ArgumentNullException(nameof(relics));
@@ -130,15 +124,10 @@ namespace MoonProject.Gameplay
             }
 
             float now = Time.time;
-            if (_input.PingPressed && _cooldownLeft <= _tuning.InputBuffer)
+            if (_gate.Tick(_power.HasReached(BasePowerStage.Home), _rover.Position, _rover.Speed, Time.deltaTime,
+                    _tuning))
             {
-                _queued = true;
-            }
-
-            _cooldownLeft -= Time.deltaTime;
-            if (_queued && _cooldownLeft <= 0f)
-            {
-                Ping(now);
+                Listen(now);
             }
 
             while (_schedule.TryPop(now, out int relic, out float distance))
@@ -217,10 +206,8 @@ namespace MoonProject.Gameplay
             }
         }
 
-        private void Ping(float now)
+        private void Listen(float now)
         {
-            _queued = false;
-            _cooldownLeft = _tuning.Cooldown;
             Vector3 origin = _rover.Position;
             _events.Publish(new SonarPinged(origin, _tuning.Range));
             OldestRing().Begin(origin, now);
@@ -270,7 +257,7 @@ namespace MoonProject.Gameplay
 
         /// <summary>
         /// A spotter friend found salvage site <paramref name="siteIndex"/>: it shows on the sonar (a softer pillar and
-        /// its breathing ring) without a ping.
+        /// its breathing ring) without a listen.
         /// </summary>
         internal void RevealSite(int siteIndex, float brightness)
         {
@@ -328,7 +315,7 @@ namespace MoonProject.Gameplay
 
         /// <summary>
         /// A spotter friend saw friend <paramref name="friendIndex"/>'s light from afar (M3-16 P2): its warm pillar
-        /// rises without a ping, and rises again (a pulse) each time this is called.
+        /// rises without a listen, and rises again (a pulse) each time this is called.
         /// </summary>
         internal void RevealFriend(int friendIndex, float brightness)
         {
@@ -382,7 +369,7 @@ namespace MoonProject.Gameplay
             _markers[index].Answer(position, _tuning.BrightnessAt(distance), now);
             if (_firstAnswerPending)
             {
-                // Answers arrive nearest first, so the first one of a ping is the closest.
+                // Answers arrive nearest first, so the first one of a listen is the closest.
                 _firstAnswerPending = false;
                 _rig.SetGazeTarget(this, _markers[index].Position, GazePriorities.Interest);
                 _gazing = true;

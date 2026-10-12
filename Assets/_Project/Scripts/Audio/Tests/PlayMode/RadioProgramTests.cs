@@ -9,8 +9,8 @@ using MoonProject.Core.Events;
 
 namespace MoonProject.Audio.PlayModeTests
 {
-    /// <summary>The radio following <see cref="IRadioProgram"/>: Bell's dial, the Tape Deck, Quiet Hours and the
-    /// tapes joining Lumen After Dark.</summary>
+    /// <summary>The radio following <see cref="IRadioProgram"/> once Bell's dial is open: the Tape Deck, Quiet Hours
+    /// and the tapes joining Lumen After Dark (before the dial: <see cref="RadioGateAudioTests"/>).</summary>
     public sealed class RadioProgramTests
     {
         private AudioTestRig _rig;
@@ -31,21 +31,6 @@ namespace MoonProject.Audio.PlayModeTests
         private FakeRadioProgram Program => _rig.Program;
 
         private AudioSource Swish => AudioTestRig.FindChildSource(_rig.Radio.transform, "TuningSwish");
-
-        [UnityTest]
-        public IEnumerator BeforeBellIsRepaired_TheDialIsIgnored_ButANewTapeJoinsTheShow()
-        {
-            yield return WakeAndWaitForMusic();
-            Program.Channel = RadioChannel.QuietHours;
-            Program.Own(AudioTestRig.TapeA);
-            _rig.ProgramChanged();
-
-            Assert.AreEqual(RadioChannel.LumenAfterDark, _rig.Radio.Station);
-            Assert.AreEqual(3, _rig.Radio.ShufflePoolCount, "two base tracks and the new tape");
-            yield return new WaitForSecondsRealtime(1f);
-            Assert.IsTrue(_rig.Radio.MusicStarted, "the music plays on");
-            Assert.IsFalse(LiveDeck().loop, "with more than one track the show moves on");
-        }
 
         [UnityTest]
         public IEnumerator TurningTheDial_ToTheTapeDeck_SwishesBellCrackles_AndTheTapeLoops()

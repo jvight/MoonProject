@@ -99,22 +99,38 @@ namespace MoonProject.Gameplay
         [Range(0f, 1f)] [SerializeField] private float _stillSpeed = 0.2f;
 
         [Header("Chargers")]
-        [Tooltip("Seconds the dock takes to fill an empty battery, whatever its size.")]
-        [Range(0.5f, 15f)] [SerializeField] private float _dockFill = 4f;
+        [Tooltip("Seconds the dock takes to fill one cell (4 cells from empty: 4x this). Each cell is one lamp and " +
+                 "one note, so the fill reads cell by cell.")]
+        [Range(0.5f, 15f)] [SerializeField] private float _dockSecondsPerCell = 4f;
 
-        [Tooltip("Seconds a lit mast's pad takes to fill an empty battery, whatever its size.")]
-        [Range(0.5f, 15f)] [SerializeField] private float _mastFill = 3f;
+        [Tooltip("Seconds a lit mast's ring takes to fill one cell; slower than the dock, so home is the best " +
+                 "charger.")]
+        [Range(0.5f, 15f)] [SerializeField] private float _mastSecondsPerCell = 5f;
 
         [Tooltip("Radius (m) of a mast's charge ring (the 4 m painted ring on the relay pad).")]
         [Range(0.5f, 3f)] [SerializeField] private float _ringRadius = 2f;
 
-        [Tooltip("Walking pace (m/s): 07 charges on a ring at this speed or slower.")]
-        [Range(0.1f, 4f)] [SerializeField] private float _ringMaxSpeed = 1.3f;
+        [Tooltip("Ground speed (m/s) at or under which 07 counts as stopped on a charger: charging reads as a stop, " +
+                 "never a drive-through.")]
+        [Range(0f, 1f)] [SerializeField] private float _chargeStopSpeed = 0.3f;
+
+        [Tooltip("Seconds 07 must stay stopped on the dock or a ring before charging starts.")]
+        [Range(0f, 3f)] [SerializeField] private float _chargeStopHold = 0.5f;
 
         [Header("Warnings (gentle, early, no red)")]
         [Tooltip("Charge (share of capacity) below which the Low warning plays once per discharge: the two-note, " +
                  "the eye dims, the nearest charger's pillar, a ticker line.")]
         [Range(0.05f, 0.9f)] [SerializeField] private float _lowThreshold = 0.3f;
+
+        [Tooltip("The Low warning also plays when the range left is under this many times the way to the nearest " +
+                 "lit charger, whichever comes first: a percentage doesn't know where home is.")]
+        [Range(1f, 3f)] [SerializeField] private float _lowRangeMargin = 1.5f;
+
+        [Tooltip("The way to the nearest lit charger is its straight-line distance times this (the ground winds).")]
+        [Range(1f, 2f)] [SerializeField] private float _lowRouteFactor = 1.2f;
+
+        [Tooltip("Metres from a lit charger inside which the Low warning never plays (it waits until 07 is farther).")]
+        [Range(0f, 150f)] [SerializeField] private float _lowChargerClearance = 40f;
 
         [Tooltip("Charge (share of capacity) below which 07 glances toward the nearest lit charger, once per " +
                  "discharge.")]
@@ -156,11 +172,15 @@ namespace MoonProject.Gameplay
         public float TrickleCap => _trickleCap;
         public float TrickleStill => _trickleStill;
         public float StillSpeed => _stillSpeed;
-        public float DockFill => _dockFill;
-        public float MastFill => _mastFill;
+        public float DockSecondsPerCell => _dockSecondsPerCell;
+        public float MastSecondsPerCell => _mastSecondsPerCell;
         public float RingRadius => _ringRadius;
-        public float RingMaxSpeed => _ringMaxSpeed;
+        public float ChargeStopSpeed => _chargeStopSpeed;
+        public float ChargeStopHold => _chargeStopHold;
         public float LowThreshold => _lowThreshold;
+        public float LowRangeMargin => _lowRangeMargin;
+        public float LowRouteFactor => _lowRouteFactor;
+        public float LowChargerClearance => _lowChargerClearance;
         public float VeryLowThreshold => _veryLowThreshold;
         public float ArcReveal => _arcReveal;
         public int LowLines => _lowLines;

@@ -242,7 +242,7 @@ namespace MoonProject.Rover
         [SerializeField] private float _snapSigh = 0.8f;
 
         [Header("Gameplay reactions")]
-        [Tooltip("Perk-up strength for a single salvaged piece or trail bit.")]
+        [Tooltip("Perk-up strength for a single salvaged piece.")]
         [Range(0f, 1f)]
         [FormerlySerializedAs("_scrapPerk")]
         [SerializeField] private float _salvagePerk = 0.18f;
@@ -466,6 +466,10 @@ namespace MoonProject.Rover
         [Range(0f, 3f)]
         [SerializeField] private float _tipPeakGlow = 0.55f;
 
+        [Header("Listening (first-hour v2 §3)")]
+        [Tooltip("The antenna once 07 can listen: the cyan tip from tower level 1, the lift and blink of a listen.")]
+        [SerializeField] private AntennaListenSettings _listening = new AntennaListenSettings();
+
         public float NeckYawLimit => _neckYawLimit;
 
         public float HeadPitchUpLimit => _headPitchUpLimit;
@@ -682,5 +686,7 @@ namespace MoonProject.Rover
         public CutFocusSettings CutFocus => _cutFocus;
 
         public ChirpSettings Chirp => _chirp;
+
+        public AntennaListenSettings Listening => _listening;
     }
 }

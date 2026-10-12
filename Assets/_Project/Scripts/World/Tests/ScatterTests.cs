@@ -142,7 +142,7 @@ namespace MoonProject.World.Tests
         [Test]
         public void Kestrel_KeepsItsScorchedCraterAndFurrowClearOfRocks()
         {
-            // M3-13: the debris trail is gameplay's to dress; no rock competes with it or blocks its driving line.
+            // M3-13: the furrow is kept clear for driving; no rock competes with it or blocks its driving line.
             foreach (ScatterInstance rock in _plan)
             {
                 Assert.LessOrEqual(_surface.Sample(rock.Position.x, rock.Position.z).Scorch, _settings.ScorchClear,

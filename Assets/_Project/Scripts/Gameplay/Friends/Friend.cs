@@ -29,6 +29,7 @@ namespace MoonProject.Gameplay
             PartFlightDuration = new float[count];
             PartFlying = new bool[count];
             PartSpotted = new bool[count];
+            PartDug = new float[count];
             for (int i = 0; i < count; i++)
             {
                 PartRest[i] = parts[i].position;
@@ -69,6 +70,15 @@ namespace MoonProject.Gameplay
         internal Transform[] Parts { get; }
 
         internal Vector3[] PartRest { get; }
+
+        /// <summary>
+        /// The part that lies half under the dust (first-hour v2 §4: it teaches dig), or -1 when every part lies in
+        /// the open.
+        /// </summary>
+        internal int BuriedPart { get; set; } = -1;
+
+        /// <summary>Seconds of digging each part has had (only the buried one is ever dug).</summary>
+        internal float[] PartDug { get; }
 
         internal Vector3[] PartStart { get; }
 

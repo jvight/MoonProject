@@ -45,6 +45,8 @@ namespace MoonProject.Rover
         private Quaternion _chassisRestRotation;
         private Quaternion _antennaRestRotation;
         private ImpactNudge _nudge;
+        private Vector3 _antennaRestPosition;
+        private float _antennaLift;
         private Quaternion _bogieLeftRestRotation;
         private Quaternion _bogieRightRestRotation;
         private Vector3 _lastPosition;
@@ -125,6 +127,7 @@ namespace MoonProject.Rover
             _chassisRestPosition = _chassis.localPosition;
             _chassisRestRotation = _chassis.localRotation;
             _antennaRestRotation = _antenna.localRotation;
+            _antennaRestPosition = _antenna.localPosition;
             _bogieLeftRestRotation = _bogieLeft.localRotation;
             _bogieRightRestRotation = _bogieRight.localRotation;
         }
@@ -157,6 +160,12 @@ namespace MoonProject.Rover
         public void KickAntenna(float degreesPerSecond)
         {
             _jelly.KickAntenna(degreesPerSecond);
+        }
+
+        /// <summary>Raises the antenna <paramref name="metres"/> along its own axis (07 listening); 0 rests it.</summary>
+        public void SetAntennaLift(float metres)
+        {
+            _antennaLift = metres;
         }
 
         /// <summary>An extra chassis squash (m/s downward when negative), e.g. a hard-landing "oof".</summary>
@@ -206,6 +215,7 @@ namespace MoonProject.Rover
             ApplyBogies();
             _antenna.localRotation =
                 GroundPlaneFit.Tilt(_jelly.AntennaPitch, _jelly.AntennaRoll) * _antennaRestRotation;
+            _antenna.localPosition = _antennaRestPosition + _antennaRestRotation * Vector3.up * _antennaLift;
         }
 
         private int CastWheels(Quaternion heading)

@@ -1804,6 +1804,42 @@ def bay_weld(_variant, gen):
     return filters.lowpass(filters.lowpass(mix, 4500.0), 4500.0)
 
 
+PORT_ARM_S = 1.8
+
+
+def port_arm(_variant, gen):
+    """Kenji's garage port (first-hour v2 section 3): the folded arm wakes and reaches for 07 - a patient servo whirr
+    rising a fifth (A2 to E3) as it unfolds, a gear flutter through it, and a soft latch click as it settles."""
+    n = samples(PORT_ARM_S)
+    rise = osc.glide(n, note_freq("A2"), note_freq("E3"), time_constant=0.5)
+    motor = osc.additive(n, rise, [(1, 1.0), (2, 0.35), (3, 0.12)])
+    whirr = filters.bandpass(noise.pink_filter(noise.white(n, gen)), 420.0, 2.0)
+    whirr = whirr / max(float(np.std(whirr)), 1e-9) * (0.8 + 0.2 * osc.sine(n, 22.0))
+    body = envelope.segments(n, [(0.0, 0.0), (0.15, 1.0), (1.35, 0.8), (1.55, 0.0)], shape="smooth")
+    mix = (0.06 * motor + 0.05 * whirr) * body
+    click_n = samples(0.12)
+    click = filters.bandpass(noise.white(click_n, gen), 2200.0, 1.5) * envelope.ar(click_n, 0.001, 0.03)
+    place(mix, 0.25 * click, samples(1.5))
+    return filters.highpass(filters.lowpass(mix, 3200.0), 60.0)
+
+
+TETHER_RING_WAKE_S = 3.0
+
+
+def tether_ring_wake(_variant, gen):
+    """The tether ring's first hum once the port has fitted it: the tether's warm D3/A3/D4 energy swelling in out of
+    nothing, holding a breath with a gentle vibrato, then settling to silence - the verb coming back to 07."""
+    n = samples(TETHER_RING_WAKE_S)
+    vibrato = osc.sine(n, 4.5)
+    tone = np.zeros(n)
+    for note, amp in (("D3", 1.0), ("A3", 0.55), ("D4", 0.32)):
+        f = note_freq(note)
+        tone += amp * operator(n, f, modulation=vibrato, index=0.004 * f / 4.5)
+    shape = envelope.segments(n, [(0.0, 0.0), (0.9, 1.0), (1.7, 0.85), (3.0, 0.0)], shape="smooth")
+    fizz = filters.bandpass(noise.white(n, gen), 1800.0, 3.0) * shape
+    return filters.highpass(filters.lowpass(0.12 * tone * shape + 0.006 * fizz, 3000.0), 60.0)
+
+
 def bay_fitted_chime(_variant, gen):
     """'Fitted - for you, 07': a resolved two-note chime, A4 settling onto D5, felt-soft, after a breath."""
     n = samples(2.2)
@@ -2008,11 +2044,20 @@ def dock_charge_hum(_variant, gen):
     return periodic(0.3 * hum, lambda x: filters.highpass(filters.lowpass(x, 2000.0), 80.0))
 
 
+DOCK_FULL_CHORD = (("D4", 0.0, 0.8), ("F#4", 0.07, 0.55), ("A4", 0.14, 0.6), ("D5", 0.24, 0.7))
+
+
 def dock_full(_variant, gen):
-    """Charged: a gentle 'full' tone - a soft bell on D5 with its fifth A5 blooming above it."""
-    mix = instruments.soft_bell(note_freq("D5"), 2.4, decay=1.6, attack=0.04)
-    place(mix, 0.45 * instruments.soft_bell(note_freq("A5"), 2.2, decay=1.4, attack=0.05), samples(0.18))
-    return _mono_reverb(filters.lowpass(mix, 5000.0), room=0.6, damping=0.6, wet=0.25, dry=1.0)
+    """Charged (first-hour v2 section 5): the full resolved chord D F# A D', rolled softly from the bottom like a hand
+    on a felt piano, over a warm D3 pad that lets go slowly. The rising cell notes end here."""
+    n = samples(4.0)
+    mix = np.zeros(n)
+    for note, delay, amp in DOCK_FULL_CHORD:
+        bell = instruments.soft_bell(note_freq(note), 3.2, decay=2.0, attack=0.05)
+        place(mix, amp * bell, samples(delay))
+    pad = instruments.soft_pad(note_freq("D3"), 3.4, 0.5, 2.0, hold=0.3)
+    place(mix, 0.12 * pad, 0)
+    return _mono_reverb(filters.lowpass(mix, 4800.0), room=0.6, damping=0.6, wet=0.25, dry=1.0)
 
 
 # --------------------------------------------------------------------------------------------------- the battery
@@ -2267,6 +2312,25 @@ def asleep_static(_variant, gen):
     return periodic(mix, lambda x: filters.highpass(filters.lowpass(x, 4200.0), 260.0))
 
 
+CARRIER_LOOP_S = 8.0
+
+
+def radio_carrier(_variant, gen):
+    """The Earth signal's carrier once tower level 1 clears the static (M3-24): no music and no words, just a steady
+    soft tone on D4 with its fifth A4 far beneath, breathing very slowly, over a thin trace of the old band's hiss.
+    The sound of something still transmitting. 8 s seamless."""
+    n = samples(CARRIER_LOOP_S)
+    loop_hz = 1.0 / CARRIER_LOOP_S
+    tone = (osc.sine(n, loop_freq(note_freq("D4"), n))
+            + 0.18 * osc.sine(n, loop_freq(note_freq("A4"), n))
+            + 0.08 * osc.sine(n, loop_freq(note_freq("D5"), n)))
+    tone *= envelope.lfo(n, loop_hz, 0.12, 0.88) * envelope.lfo(n, 3.0 * loop_hz, 0.05, 0.95, phase=0.3)
+    hiss = periodic(noise.white(n, gen), lambda x: filters.bandpass(noise.pink_filter(x), 1300.0, 0.6),
+                    warmup=samples(0.5))
+    hiss = hiss / max(float(np.std(hiss)), 1e-9)
+    return periodic(0.05 * tone + 0.03 * hiss, lambda x: filters.highpass(filters.lowpass(x, 3600.0), 200.0))
+
+
 GHOST_CHORD_LABELS = ("faint", "clearer", "long")
 GHOST_CHORD_NOTES = ("D3", "A3", "E4")
 GHOST_CHORD_BAR_S = 3.0
@@ -2408,6 +2472,13 @@ CUES = (
         notes="Soft rubbery stick-slip creak + quiet spring tone; no resonance above ~1.2 kHz (never squeaky)."),
     Cue("landing_thump", "oneshot_3d", landing_thump, variants=3, volume=(0.85, 1.0), pitch=(0.95, 1.05),
         fade_out=0.08, notes="Soft whump (98->47 Hz glide) + body + slow dust hiss; runtime scales by impact."),
+    Cue("port_arm", "oneshot_3d", port_arm, volume=(0.8, 0.8), milestone="M3",
+        notes="Kenji's garage port: the folded arm unfolds towards 07 (servo whirr rising A2 to E3, latch click)."),
+    Cue("tether_ring_wake", "oneshot_3d", tether_ring_wake, volume=(0.8, 0.8), milestone="M3", tonal=True,
+        notes="The tether ring's first hum after the port fits it: D3/A3/D4 swelling in, held, settling."),
+    Cue("radio_carrier", "radio_2d", radio_carrier, loop=True, file_stem="radio_carrier_loop", tonal=True,
+        milestone="M3", notes="The Earth signal's carrier after tower L1 (M3-24): a steady soft D4 tone with a faint "
+                              "A4, breathing slowly over a trace of hiss. 8 s seamless; no music."),
     Cue("radio_static", "radio_2d", radio_static, loop=True, file_stem="radio_static_loop",
         notes="Warm AM/vinyl static, 6 s seamless stereo; volume rises as radio clarity falls."),
     Cue("radio_tune", "radio_fx_2d", radio_tune, fade_out=0.1,

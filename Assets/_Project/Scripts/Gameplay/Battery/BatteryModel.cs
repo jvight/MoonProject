@@ -14,9 +14,12 @@ namespace MoonProject.Gameplay
     /// <item>A verb in progress always completes: at empty, beam work in progress runs on the reserve, and the crawl
     /// starts once it is done. The crawl caps the drive, never runs out, and ends on a charger or once the charge
     /// passes the exit margin. After a few seconds of crawl Tilly (once home) leads and the cap rises.</item>
-    /// <item>Chargers fill the battery and the drums in a fixed time whatever the capacity; the repaired solar cell
-    /// trickles a still 07 back up to one cell, never more.</item>
-    /// <item>The Low and VeryLow warnings fire once per discharge and re-arm while a charger fills past them.</item>
+    /// <item>A charger starts only once 07 has stopped on it for a moment, then fills cell by cell at its tuned
+    /// seconds per cell (the drums at the same rate). Leaving is free at any moment and keeps the part of a cell
+    /// already filled. The repaired solar cell trickles a still 07 back up to one cell, never more.</item>
+    /// <item>The Low warning fires below its share, or once the range left is short of the way to the nearest lit
+    /// charger, whichever comes first, but never near a lit charger, on a charger or while charging. Low and VeryLow
+    /// fire once per discharge and re-arm while a charger fills past them.</item>
     /// </list>
     /// Publishes <see cref="BatteryChanged"/> on cell boundaries only, <see cref="LowPowerChanged"/>,
     /// <see cref="ChargingChanged"/>, <see cref="BatteryWarned"/> and <see cref="BatteryArcRevealed"/>.
@@ -38,6 +41,7 @@ namespace MoonProject.Gameplay
         private readonly EventBus _events;
         private float _slopeMultiplier = 1f;
         private float _stillTime;
+        private float _chargerStopTime;
         private float _crawlTime;
         private bool _lowArmed;
         private bool _veryLowArmed;
@@ -158,7 +162,7 @@ namespace MoonProject.Gameplay
             StepCharger(step, deltaTime);
             StepTrickle(step, deltaTime);
             StepCrawl(step, deltaTime);
-            StepWarnings(step.NearestLitCharger);
+            StepWarnings(step.OnCharger, step.Position, step.NearestLitCharger);
             PublishCells();
         }
 
@@ -190,6 +194,7 @@ namespace MoonProject.Gameplay
             ArcRevealed = data.arcRevealed;
             LowLinesShown = Mathf.Max(0, data.lowLinesShown);
             IsCharging = false;
+            _chargerStopTime = 0f;
             FriendLeads = false;
             _crawlTime = 0f;
             DriveCap01 = IsLowPower ? _tuning.CrawlCap : 1f;
@@ -270,12 +275,15 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// A charger fills the cells and the drums in its fixed time; charging starts once 07 is on it with room to
-        /// fill and stops when full or when 07 leaves.
+        /// A charger fills the cells, and the drums at the same rate, at its seconds per cell; charging starts once 07
+        /// has stopped on it (at or under the stop speed for the stop hold) with room to fill, and ends when full or
+        /// when 07 leaves, keeping whatever part of a cell is filled.
         /// </summary>
         private void StepCharger(in BatteryStep step, float deltaTime)
         {
-            if (step.OnCharger && !IsCharging && NeedsCharge())
+            bool stopped = step.OnCharger && step.Speed <= _tuning.ChargeStopSpeed;
+            _chargerStopTime = stopped ? _chargerStopTime + deltaTime : 0f;
+            if (stopped && !IsCharging && _chargerStopTime >= _tuning.ChargeStopHold && NeedsCharge())
             {
                 IsCharging = true;
                 Charger = step.Charger;
@@ -285,9 +293,12 @@ namespace MoonProject.Gameplay
 
             if (IsCharging && step.OnCharger)
             {
-                float fill = deltaTime / (Charger == ChargerKind.Dock ? _tuning.DockFill : _tuning.MastFill);
-                Charge = Mathf.Min(Cells, Charge + Cells * fill);
-                Drums = DrumsFitted ? Mathf.Min(_tuning.DrumCells, Drums + _tuning.DrumCells * fill) : 0f;
+                float secondsPerCell = Charger == ChargerKind.Dock
+                    ? _tuning.DockSecondsPerCell
+                    : _tuning.MastSecondsPerCell;
+                float fill = deltaTime / secondsPerCell;
+                Charge = Charge + fill >= Cells - CellEpsilon ? Cells : Charge + fill;
+                Drums = DrumsFitted ? Mathf.Min(_tuning.DrumCells, Drums + fill) : 0f;
                 Rearm();
             }
 
@@ -330,10 +341,10 @@ namespace MoonProject.Gameplay
             DriveCap01 = Damp.Toward(DriveCap01, cap, _tuning.CapEase, deltaTime);
         }
 
-        private void StepWarnings(Vector3 nearestLitCharger)
+        private void StepWarnings(bool onCharger, Vector3 position, Vector3 nearestLitCharger)
         {
             float share = Charge01;
-            if (_lowArmed && share < _tuning.LowThreshold)
+            if (_lowArmed && !IsCharging && !onCharger && RunningLow(share, position, nearestLitCharger))
             {
                 _lowArmed = false;
                 _events.Publish(new BatteryWarned(BatteryWarning.Low, nearestLitCharger));
@@ -350,6 +361,23 @@ namespace MoonProject.Gameplay
                 ArcRevealed = true;
                 _events.Publish(new BatteryArcRevealed(false));
             }
+        }
+
+        /// <summary>
+        /// Below the Low share, or with less range left (flat cruise metres) than the margin times the way to the
+        /// nearest lit charger; never while that charger is near.
+        /// </summary>
+        private bool RunningLow(float share, Vector3 position, Vector3 nearestLitCharger)
+        {
+            float distance = Mathf.Sqrt(SurfaceRules.HorizontalDistanceSquared(position, nearestLitCharger));
+            if (distance <= _tuning.LowChargerClearance)
+            {
+                return false;
+            }
+
+            float range = Charge * _tuning.MetresPerCell;
+            float way = distance * _tuning.LowRouteFactor;
+            return share < _tuning.LowThreshold || range < way * _tuning.LowRangeMargin;
         }
 
         /// <summary>Each warning is armed while the charge sits at or above its threshold.</summary>

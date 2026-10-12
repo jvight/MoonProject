@@ -20,7 +20,9 @@ namespace MoonProject.Rover
     /// antenna wiggle); a friend's gift gets a softer one as it settles; with Tilly's cell in its wing the wing settles
     /// open wider. Its battery shows in it too (docs/features/M3-20): at low charge the eye dims a little, the head
     /// bows and the wing stays flatter, quieter still while it crawls on the reserve; a charger perks it up; a
-    /// refused leap gets a glance at its flank lamps and the VeryLow warning a look toward the nearest lit charger.
+    /// refused leap gets a glance at its flank lamps and the VeryLow warning a look toward the nearest lit charger. From
+    /// tower level 1 its antenna tip lights cyan, and each time 07 listens the antenna lifts and the tip blinks
+    /// (<see cref="AntennaListen"/>).
     /// Needs <see cref="IWorldLayout"/>, so it must be initialised after the World systems.
     /// </summary>
     [DefaultExecutionOrder(10)]
@@ -74,6 +76,7 @@ namespace MoonProject.Rover
 
         private RoverMood _mood;
         private LookAround _lookAround;
+        private AntennaListen _listen;
         private IWorldLayout _world;
         private GameContext _context;
         private ISkyGaze _sky;
@@ -109,6 +112,7 @@ namespace MoonProject.Rover
             _world = context.Get<IWorldLayout>();
             _mood = new RoverMood(_tuning, MoodSeed, _tuning.SleepOnBoot);
             _lookAround = new LookAround(_tuning);
+            _listen = new AntennaListen(_tuning.Listening);
             _glowBlock = new MaterialPropertyBlock();
             _battery = new BatteryLink(context);
             _neckRest = _neck.localRotation;
@@ -147,6 +151,7 @@ namespace MoonProject.Rover
                 events.Subscribe<RoverChirpSyllable>(OnChirpSyllable),
                 events.Subscribe<BasePowerChanged>(OnBasePowerChanged),
                 events.Subscribe<FriendSpotted>(spotted => Glance(spotted.Position)),
+                events.Subscribe<SonarPinged>(OnListened),
             };
             _initialized = true;
             Apply(0f);
@@ -356,6 +361,26 @@ namespace MoonProject.Rover
             PerkUp(_tuning.HopArrivalPerk);
         }
 
+        /// <summary>
+        /// From tower level 1 07 can listen: its antenna tip lights cyan (at once on a load). As home's windows light
+        /// (not on a load) 07 also lifts its head, perks up and glances home.
+        /// </summary>
+        private void OnBasePowerChanged(BasePowerChanged changed)
+        {
+            _listen.SetAwake(changed.Stage >= BasePowerStage.Home, changed.Restored);
+            if (!changed.Restored && changed.Stage != BasePowerStage.Asleep)
+            {
+                PerkUp(_tuning.KitProudPerk);
+                Glance(_world.BasePosition);
+            }
+        }
+
+        /// <summary>07 listens: the antenna lifts and its tip blinks.</summary>
+        private void OnListened(SonarPinged listened)
+        {
+            _listen.Listen();
+        }
+
         private void OnLanded(RoverLanded landed)
         {
             float oof = _mood.OofStrength(landed.ImpactSpeed);
@@ -412,6 +437,8 @@ namespace MoonProject.Rover
             _chirpPose.Step(deltaTime);
             _sigh = Smoothing.Damp(_sigh, 0f, _tuning.Chirp.SighHalfLife, deltaTime);
             _headNudge.Step(deltaTime);
+            _listen.Step(deltaTime);
+            _rig.SetAntennaLift(_listen.Lift);
             _lookAround.Step(deltaTime);
             float sky = SkyLift();
             StepGaze(sky, deltaTime);
@@ -509,7 +536,7 @@ namespace MoonProject.Rover
                 * Mathf.Lerp(1f, _tuning.CutFocus.EyeGlow, _cutFocus) * _chirpPose.EyeGlow
                 * (1f + _sigh * _tuning.Chirp.SighEye);
             SetGlow(_eyeRenderer, eyeGlow);
-            SetGlow(_antennaTipRenderer, _mood.TipGlow);
+            SetGlow(_antennaTipRenderer, _listen.TipEmission(_mood.TipGlow));
             _eyeLight.intensity = _tuning.EyeLightIntensity * eyeGlow;
         }
 
@@ -578,16 +605,6 @@ namespace MoonProject.Rover
             }
         }
 
-        /// <summary>Home's windows light as the base wakes: 07 lifts its head and perks up.</summary>
-        private void OnBasePowerChanged(BasePowerChanged power)
-        {
-            if (!power.Restored && power.Stage != BasePowerStage.Asleep)
-            {
-                PerkUp(_tuning.KitProudPerk);
-                Glance(_world.BasePosition);
-            }
-        }
-
         private void EndCutFocus()
         {
             _cutting = false;
@@ -596,7 +613,12 @@ namespace MoonProject.Rover
 
         private void SetGlow(Renderer target, float intensity)
         {
-            _glowBlock.SetVector(EmissionColorId, new Vector4(intensity, intensity, intensity, 1f));
+            SetGlow(target, new Color(intensity, intensity, intensity, 1f));
+        }
+
+        private void SetGlow(Renderer target, Color emission)
+        {
+            _glowBlock.SetVector(EmissionColorId, emission);
             target.SetPropertyBlock(_glowBlock);
         }
 

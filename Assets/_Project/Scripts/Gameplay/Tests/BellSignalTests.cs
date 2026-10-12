@@ -67,19 +67,6 @@ namespace MoonProject.Gameplay.Tests
         }
 
         [Test]
-        public void Bearing_IsWholeDegreesClockwiseFromNorth()
-        {
-            Assert.AreEqual(0, BellSignals.BearingFrom(Vector3.zero, new Vector3(0f, 0f, 10f)));
-            Assert.AreEqual(90, BellSignals.BearingFrom(Vector3.zero, new Vector3(10f, 0f, 0f)));
-            Assert.AreEqual(180, BellSignals.BearingFrom(Vector3.zero, new Vector3(0f, 0f, -10f)));
-            Assert.AreEqual(270, BellSignals.BearingFrom(Vector3.zero, new Vector3(-10f, 0f, 0f)));
-            Assert.AreEqual(354, BellSignals.BearingFrom(Vector3.zero, new Vector3(-1.05f, 0f, 10f)));
-            Assert.AreEqual(0, BellSignals.BearingFrom(Vector3.zero, new Vector3(-0.01f, 0f, 10f)), "never 360");
-            Assert.AreEqual(140, BellSignals.BearingFrom(new Vector3(5f, 2f, 5f),
-                new Vector3(5f + Mathf.Sin(140f * Mathf.Deg2Rad), 0f, 5f + Mathf.Cos(140f * Mathf.Deg2Rad))));
-        }
-
-        [Test]
         public void Signals_PointAtOneThing_SayWhenItIsFound_AndMoveOn()
         {
             var targets = new FakeTargets();
@@ -99,8 +86,7 @@ namespace MoonProject.Gameplay.Tests
             Assert.AreEqual(BellSignalTarget.Cassette, _picked[0].Target);
             Assert.AreEqual(new Vector3(100f, 0f, 0f), _picked[0].Position);
             Assert.AreEqual(BellSignals.PickedLine, _ticker[0].Key);
-            Assert.AreEqual("90", _ticker[0].Argument, "bearing from home");
-            Assert.IsFalse(_ticker[0].ArgumentIsKey, "a plain number");
+            Assert.AreEqual(string.Empty, _ticker[0].Argument, "no bearing: her pillar points the way");
 
             for (int frame = 0; frame < 100; frame++)
             {
@@ -117,7 +103,7 @@ namespace MoonProject.Gameplay.Tests
             Assert.AreEqual(BellSignals.FoundLine0, _ticker[1].Key);
             Assert.AreEqual(2, _picked.Count, "and she picks the next");
             Assert.AreEqual(BellSignalTarget.CrewLog, _picked[1].Target);
-            Assert.AreEqual("180", _ticker[2].Argument);
+            Assert.AreEqual(BellSignals.PickedLine, _ticker[2].Key);
 
             targets.Find("ro_1").Waiting = false;
             bell.Step();
@@ -142,7 +128,7 @@ namespace MoonProject.Gameplay.Tests
             targets.Find("slow_orbit").Reachable = true;
             bell.Step();
             Assert.AreEqual(4, bell.Current, "a new ability opens a way: she points again");
-            Assert.AreEqual("0", _ticker[_ticker.Count - 1].Argument);
+            Assert.AreEqual(BellSignals.PickedLine, _ticker[_ticker.Count - 1].Key);
         }
 
         [Test]

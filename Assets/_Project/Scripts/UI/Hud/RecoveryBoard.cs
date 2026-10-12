@@ -13,18 +13,11 @@ namespace MoonProject.UI
     /// </summary>
     internal sealed class RecoveryBoard
     {
-        private const string LampClass = "recovery-board__lamp";
-        private const string LitClass = "recovery-board__lamp--lit";
         private const string NodeClass = "recovery-board__node";
         private const string DecodedClass = "recovery-board__node--decoded";
         private const string TitleKey = "ui.recovery.title";
         private const string KnownKey = "ui.board.known";
         private const string NameSuffix = ".name";
-
-        private static readonly string[] TargetKeys =
-        {
-            "recovery.power", "recovery.link", "recovery.dish", "recovery.answer",
-        };
 
         private static readonly string[] NodeKeys =
         {
@@ -34,12 +27,10 @@ namespace MoonProject.UI
 
         private readonly ILocalization _localization;
         private readonly ITechTree _tech;
-        private readonly IRecoveryProgress _recovery;
         private readonly Reveal _root;
         private readonly Label _title;
         private readonly Label _known;
-        private readonly Label[] _targets;
-        private readonly VisualElement[][] _lamps;
+        private readonly RecoveryRows _rows;
         private readonly Label[] _nodes;
         private bool _looking;
         private bool _dirty = true;
@@ -56,42 +47,18 @@ namespace MoonProject.UI
             VisualElement root = Require<VisualElement>(labHud, "lab-board");
             _localization = localization ?? throw new ArgumentNullException(nameof(localization));
             _tech = tech ?? throw new ArgumentNullException(nameof(tech));
-            _recovery = recovery ?? throw new ArgumentNullException(nameof(recovery));
             _root = new Reveal(root, reveal);
             _root.Snap(false);
             _title = Require<Label>(root, "lab-board-title");
             _known = Require<Label>(root, "lab-board-known");
-            VisualElement rows = Require<VisualElement>(root, "lab-board-rows");
             VisualElement nodes = Require<VisualElement>(root, "lab-board-nodes");
-            int targets = Enum.GetValues(typeof(RecoveryTarget)).Length;
-            if (targets != TargetKeys.Length || Enum.GetValues(typeof(TechNodeId)).Length != NodeKeys.Length)
+            if (Enum.GetValues(typeof(TechNodeId)).Length != NodeKeys.Length)
             {
-                throw new InvalidOperationException("The board's labels do not match Core's targets or tech nodes.");
+                throw new InvalidOperationException("The board's labels do not match Core's tech nodes.");
             }
 
-            _targets = new Label[targets];
-            _lamps = new VisualElement[targets][];
-            for (int i = 0; i < targets; i++)
-            {
-                var row = new VisualElement { pickingMode = PickingMode.Ignore };
-                row.AddToClassList("recovery-board__row");
-                _targets[i] = new Label { pickingMode = PickingMode.Ignore };
-                _targets[i].AddToClassList("recovery-board__target");
-                row.Add(_targets[i]);
-                var lamps = new VisualElement { pickingMode = PickingMode.Ignore };
-                lamps.AddToClassList("recovery-board__lamps");
-                _lamps[i] = new VisualElement[_recovery.Lamps((RecoveryTarget)i)];
-                for (int lamp = 0; lamp < _lamps[i].Length; lamp++)
-                {
-                    _lamps[i][lamp] = new VisualElement { pickingMode = PickingMode.Ignore };
-                    _lamps[i][lamp].AddToClassList(LampClass);
-                    lamps.Add(_lamps[i][lamp]);
-                }
-
-                row.Add(lamps);
-                rows.Add(row);
-            }
-
+            _rows = new RecoveryRows(Require<VisualElement>(root, "lab-board-rows"), localization,
+                recovery ?? throw new ArgumentNullException(nameof(recovery)));
             _nodes = new Label[NodeKeys.Length];
             for (int i = 0; i < _nodes.Length; i++)
             {
@@ -137,10 +104,7 @@ namespace MoonProject.UI
         {
             _title.text = _localization.Get(TitleKey);
             _known.text = _localization.Get(KnownKey);
-            for (int i = 0; i < _targets.Length; i++)
-            {
-                _targets[i].text = _localization.Get(TargetKeys[i] + NameSuffix);
-            }
+            _rows.Relocalize();
 
             for (int i = 0; i < _nodes.Length; i++)
             {
@@ -150,15 +114,7 @@ namespace MoonProject.UI
 
         private void Write()
         {
-            for (int i = 0; i < _lamps.Length; i++)
-            {
-                int lit = _recovery.LitLamps((RecoveryTarget)i);
-                for (int lamp = 0; lamp < _lamps[i].Length; lamp++)
-                {
-                    _lamps[i][lamp].EnableInClassList(LitClass, lamp < lit);
-                }
-            }
-
+            _rows.Write();
             for (int i = 0; i < _nodes.Length; i++)
             {
                 TechNodeState state = _tech.StateOf((TechNodeId)i);
