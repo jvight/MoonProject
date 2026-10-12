@@ -6935,6 +6935,7 @@ MonoBehaviour:
     - {fileID: 3199159636312175029, guid: eec13148ce5aa01469eb6dd5a5138422, type: 3}
     - {fileID: 672067429377264459, guid: b5e3e2a0ac277364394546b0eb3706d3, type: 3}
     - {fileID: 6434243330529093039, guid: 8fea22ce5c38a7643bfa58e0efbe68b9, type: 3}
+  _ventBeadMaterial: {fileID: 2100000, guid: d7f06c7c79c204349b22b2e2b6b2d4ee, type: 2}
   _peakBeacon: {fileID: 2522665144052418063}
   _earthlight: {fileID: 3339212068541551884}
   _fillLight: {fileID: 4575894151075447720}

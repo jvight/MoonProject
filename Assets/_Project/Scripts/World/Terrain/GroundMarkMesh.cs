@@ -76,6 +76,31 @@ namespace MoonProject.World
             Quad(a, a + 1, a + 3, a + 2);
         }
 
+        /// <summary>
+        /// A soft round patch: a fan whose rim follows <paramref name="groundHeight"/>, feathered from its centre (u
+        /// 0.5) to nothing at its rim (u 0).
+        /// </summary>
+        public void AddDisc(Vector3 centre, float radius, float strength, int segments, float lift,
+            Func<float, float, float> groundHeight)
+        {
+            Color32 color = Strength(strength);
+            int middle = _positions.Count;
+            Add(new Vector3(centre.x, groundHeight(centre.x, centre.z) + lift, centre.z), new Vector2(0.5f, 0f), color);
+            for (int i = 0; i <= segments; i++)
+            {
+                float angle = i * Mathf.PI * 2f / segments;
+                float x = centre.x + Mathf.Cos(angle) * radius;
+                float z = centre.z + Mathf.Sin(angle) * radius;
+                Add(new Vector3(x, groundHeight(x, z) + lift, z), new Vector2(0f, 1f), color);
+                if (i > 0)
+                {
+                    _triangles.Add(middle);
+                    _triangles.Add(middle + i + 1);
+                    _triangles.Add(middle + i);
+                }
+            }
+        }
+
         public Mesh ToMesh(string name)
         {
             var mesh = new Mesh { name = name };
