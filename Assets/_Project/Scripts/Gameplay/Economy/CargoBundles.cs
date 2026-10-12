@@ -5,6 +5,7 @@ using MoonProject.Core;
 using MoonProject.Core.Events;
 using MoonProject.Core.Input;
 using MoonProject.Core.Save;
+using MoonProject.Gameplay.Map;
 using Object = UnityEngine.Object;
 
 namespace MoonProject.Gameplay
@@ -17,7 +18,7 @@ namespace MoonProject.Gameplay
     /// (<see cref="TillyFetch"/>). Once per trip the line says the hold is full. Steady state allocates nothing; a new
     /// bundle instantiates its model.
     /// </summary>
-    public sealed class CargoBundles : IDisposable
+    public sealed class CargoBundles : IWaitingBundles, IDisposable
     {
         /// <summary>The once-per-trip line when a bundle has to wait.</summary>
         public const string TickerFull = "ticker.cargo.full";
@@ -79,6 +80,13 @@ namespace MoonProject.Gameplay
 
         /// <summary>Bundles waiting in the world (carried by Tilly included).</summary>
         public int Count => _bundles.Count;
+
+        /// <summary>Where bundle <paramref name="index"/> is: where it rests, or under Tilly while she carries it.</summary>
+        public Vector3 Position(int index)
+        {
+            Bundle bundle = _bundles[index];
+            return bundle.Phase == Phase.Waiting || bundle.Phase == Phase.Settling ? bundle.Rest : bundle.Model.position;
+        }
 
         /// <summary>Where bundle <paramref name="index"/> rests (tests and debugging views).</summary>
         public Vector3 RestPosition(int index)

@@ -81,6 +81,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(2, bundles.Count, "both wait beside 07");
             Assert.IsTrue(bundles.IsWaiting(0));
             Assert.AreEqual(2, stock.Hold.WaitingBundles);
+            var chart = _fixture.Bootstrap.Context.Get<MoonProject.Gameplay.Map.IWaitingBundles>();
+            Assert.AreEqual(2, chart.Count, "a pencil crate on the chart for each");
+            Assert.AreEqual(bundles.RestPosition(1), chart.Position(1));
             Assert.AreEqual(1, _fixture.Events.TickerLine.FindAll(line => line.Value.Key == CargoBundles.TickerFull)
                 .Count, "the line once a trip");
             Assert.IsFalse(gameplay.Hints.TryGet(InteractionKind.PickUp, out _), "no room: no prompt");

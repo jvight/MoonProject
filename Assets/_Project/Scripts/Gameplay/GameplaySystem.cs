@@ -314,6 +314,8 @@ namespace MoonProject.Gameplay
                 return;
             }
 
+            context.Register<Map.IWaitingBundles>(Bundles);
+
             TowerPartField = NewTowerPartField(services);
             GroundTubes = TowerPartField != null ? NewGroundTubes(services) : null;
             Port = GroundTubes != null ? NewPort(services, abilities) : null;
