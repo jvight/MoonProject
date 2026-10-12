@@ -36,6 +36,8 @@ namespace MoonProject.UI
             KitTitleName = Require<Label>("kit-title-name");
             KitTitleShadow = Require<VisualElement>("kit-title-shadow");
             RewardCard = Require<VisualElement>("reward-card");
+            Cargo = Require<VisualElement>("cargo");
+            UnlockCard = Require<VisualElement>("unlock-card");
             RewardTitle = Require<Label>("reward-card-title");
             RewardLines = Require<VisualElement>("reward-card-lines");
             TowerState = Require<Label>("tower-state");
@@ -259,6 +261,12 @@ namespace MoonProject.UI
 
         /// <summary>The card that says what a tower level gave: its box, its title and the column of its lines.</summary>
         public VisualElement RewardCard { get; }
+
+        /// <summary>The cargo screen's root (Tab / View): its parts are found beneath it by name.</summary>
+        public VisualElement Cargo { get; }
+
+        /// <summary>The card that says what a newly fitted kit lets 07 do.</summary>
+        public VisualElement UnlockCard { get; }
 
         public Label RewardTitle { get; }
 

@@ -229,6 +229,56 @@ Label {
     --icon-detail: var(--moon-warm-lamp);
 }
 
+.material-icon--circuit_chips {
+    --icon-color: rgb(63, 174, 122);
+    --icon-detail: rgb(191, 238, 218);
+}
+
+.material-icon--orange_beads {
+    --icon-color: rgb(255, 154, 60);
+    --icon-detail: rgb(255, 217, 168);
+}
+
+.material-icon--ilmenite {
+    --icon-color: rgb(110, 120, 146);
+    --icon-detail: rgb(190, 198, 218);
+}
+
+.material-icon--water_ice {
+    --icon-color: rgb(159, 217, 255);
+    --icon-detail: rgb(255, 255, 255);
+}
+
+.material-icon--rare_earths {
+    --icon-color: rgb(200, 139, 255);
+    --icon-detail: rgb(239, 217, 255);
+}
+
+.material-icon--glass {
+    --icon-color: rgb(255, 207, 122);
+    --icon-detail: rgb(255, 241, 207);
+}
+
+.material-icon--alloy {
+    --icon-color: rgb(140, 168, 212);
+    --icon-detail: rgb(222, 234, 255);
+}
+
+.material-icon--coolant {
+    --icon-color: rgb(94, 230, 214);
+    --icon-detail: rgb(214, 255, 249);
+}
+
+.material-icon--crystal {
+    --icon-color: rgb(255, 127, 192);
+    --icon-detail: rgb(255, 214, 236);
+}
+
+.material-icon--superconductor {
+    --icon-color: rgb(255, 228, 94);
+    --icon-detail: rgb(255, 246, 184);
+}
+
 .material-icon--optics {
     --icon-color: var(--moon-sky-horizon);
     --icon-detail: var(--moon-metal);
@@ -743,6 +793,49 @@ Label {
     font-size: 22px;
     color: var(--glass-hi);
     white-space: normal;
+}
+
+/* The unlock card: a kit has just been fitted; its key, its word and one line of what it lets 07 do */
+
+.unlock-anchor {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 20%;
+    align-items: center;
+}
+
+.unlock-card {
+    flex-direction: row;
+    align-items: center;
+    min-width: 440px;
+    max-width: 700px;
+    padding: 18px 32px 18px 26px;
+    background-image: url("project://database/Assets/_Project/Generated/UI/Glass/GlassPanel.png");
+    -unity-slice-left: 56;
+    -unity-slice-right: 56;
+    -unity-slice-top: 56;
+    -unity-slice-bottom: 56;
+    -unity-slice-scale: 0.5;
+}
+
+.unlock-card__text {
+    margin-left: 22px;
+    flex-shrink: 1;
+}
+
+.unlock-card__verb {
+    font-size: 28px;
+    letter-spacing: 2px;
+    color: var(--glass-hi);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/Exo2-SemiBold.asset");
+}
+
+.unlock-card__line {
+    margin-top: 4px;
+    font-size: 21px;
+    white-space: normal;
+    color: var(--glass-hi);
 }
 
 .kit-title__rule {
@@ -2002,4 +2095,190 @@ Label {
     font-size: 18px;
     color: var(--glass-sel);
     text-shadow: 0 2px 12px var(--moon-shadow);
+}
+
+/*
+ * The cargo screen (M3-25 §2.4, Tab / View): 07's hold on the left, home's shelves on the right, and a "07 can" page;
+ * Moonlight Glass over the blur. Cell sizes are written by CargoScreen to fit the screen.
+ */
+
+.cargo {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    justify-content: center;
+    align-items: center;
+}
+
+.cargo__panel {
+    max-width: 96%;
+    max-height: 94%;
+    padding: 22px 34px 20px 34px;
+    background-image: url("project://database/Assets/_Project/Generated/UI/Glass/GlassPanel.png");
+    -unity-slice-left: 56;
+    -unity-slice-right: 56;
+    -unity-slice-top: 56;
+    -unity-slice-bottom: 56;
+    -unity-slice-scale: 0.5;
+}
+
+.cargo__tabs {
+    flex-direction: row;
+    justify-content: center;
+    margin-bottom: 14px;
+}
+
+.cargo__tabs .settings-tab-wrap {
+    flex-grow: 0;
+    flex-basis: auto;
+    width: 220px;
+}
+
+.cargo .settings-tab:focus {
+    color: var(--glass-sel-text);
+}
+
+.cargo .settings-tab-wrap:focus-within {
+    --tab-color: var(--glass-sel);
+    --tab-edge: var(--glass-sel);
+}
+
+.cargo__page {
+    min-width: 320px;
+}
+
+.cargo__page--columns {
+    flex-direction: row;
+    align-items: flex-start;
+}
+
+.cargo__column--home {
+    margin-left: 42px;
+}
+
+.cargo__heading {
+    margin-bottom: 10px;
+    font-size: 24px;
+    letter-spacing: 2px;
+    color: var(--glass-hi);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/Exo2-SemiBold.asset");
+}
+
+.cargo__note {
+    margin-bottom: 8px;
+    font-size: 19px;
+    color: var(--glass-sel);
+}
+
+.cargo__grid {
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.cargo__shelves {
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.cargo__shelf {
+    margin: 0 22px 12px 0;
+}
+
+.cargo__shelf-name {
+    margin-bottom: 6px;
+    font-size: 18px;
+    letter-spacing: 1px;
+    color: var(--moon-text-dim);
+}
+
+.cargo__cell {
+    margin: 0 6px 6px 0;
+    justify-content: center;
+    align-items: center;
+    border-width: 1.5px;
+    border-radius: 10px;
+    border-color: var(--glass-rim);
+    background-color: var(--glass-btn);
+}
+
+.cargo__cell--empty {
+    border-color: var(--moon-track);
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.cargo__cell--empty .material-icon,
+.cargo__cell--empty .cargo__units {
+    display: none;
+}
+
+.cargo__cell .material-icon {
+    width: 55%;
+    height: 55%;
+}
+
+.cargo__units {
+    position: absolute;
+    right: 5px;
+    bottom: 2px;
+    font-size: 13px;
+    color: var(--glass-hi);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/Exo2-SemiBold.asset");
+}
+
+/* A shelf not built yet: a pencil outline that says so */
+.cargo__pencil {
+    padding: 14px 18px;
+    max-width: 330px;
+    border-width: 1.5px;
+    border-radius: 12px;
+    border-color: var(--moon-track);
+}
+
+.cargo__pencil-text {
+    font-size: 18px;
+    white-space: normal;
+    color: var(--moon-text-dim);
+}
+
+.cargo__can {
+    min-width: 560px;
+}
+
+.can-row {
+    flex-direction: row;
+    align-items: center;
+    padding: 8px 4px;
+}
+
+.can-row__glyph {
+    width: 74px;
+    align-items: center;
+}
+
+.can-row__verb {
+    width: 190px;
+    font-size: 22px;
+    color: var(--glass-hi);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/Exo2-SemiBold.asset");
+}
+
+.can-row__line {
+    flex-shrink: 1;
+    font-size: 19px;
+    white-space: normal;
+    color: var(--glass-hi);
+}
+
+.can-row--pencil .can-row__verb,
+.can-row--pencil .can-row__line {
+    color: var(--moon-text-dim);
+}
+
+.cargo__summary {
+    margin-top: 12px;
+    font-size: 19px;
+    color: var(--moon-text-dim);
+    -unity-text-align: middle-center;
 }

@@ -29,7 +29,7 @@ namespace MoonProject.UI
         {
             get
             {
-                for (int i = 0; i < Materials.Count; i++)
+                for (int i = 0; i < Materials.RecipeCount; i++)
                 {
                     if (IsShort(Materials.At(i)))
                     {
@@ -56,7 +56,7 @@ namespace MoonProject.UI
         /// </summary>
         public bool TryGetNeed(out SalvageMaterial material, out int missing)
         {
-            for (int i = 0; i < Materials.Count; i++)
+            for (int i = 0; i < Materials.RecipeCount; i++)
             {
                 SalvageMaterial candidate = Materials.At(i);
                 if (IsShort(candidate))

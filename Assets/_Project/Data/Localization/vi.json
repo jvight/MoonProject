@@ -1039,6 +1039,122 @@
             "text": "Bộ phận của {0}: {1}/{2}"
         },
         {
+            "key": "ui.cargo.tab_cargo",
+            "text": "Hàng hóa"
+        },
+        {
+            "key": "ui.cargo.tab_can",
+            "text": "07 làm được"
+        },
+        {
+            "key": "ui.cargo.hold",
+            "text": "Khoang hàng của 07"
+        },
+        {
+            "key": "ui.cargo.home",
+            "text": "Kệ ở nhà"
+        },
+        {
+            "key": "ui.cargo.waiting",
+            "text": "{0} gói đang chờ"
+        },
+        {
+            "key": "ui.cargo.shelf",
+            "text": "Kệ {0}"
+        },
+        {
+            "key": "ui.cargo.shelf_free",
+            "text": "Ổ trống. Đỗ vào đây để dựng kệ."
+        },
+        {
+            "key": "ui.cargo.summary",
+            "text": "07: {0}/{1} ô · Nhà: {2}/{3} ô"
+        },
+        {
+            "key": "ui.can.decoded",
+            "text": "Đã giải mã. Hãy chế tạo ở xưởng xe."
+        },
+        {
+            "key": "ui.can.tether.verb",
+            "text": "Nâng"
+        },
+        {
+            "key": "ui.can.tether.line",
+            "text": "Giữ để nâng vật đang sáng xanh, rồi lái để kéo nó."
+        },
+        {
+            "key": "ui.can.hover_jump.verb",
+            "text": "Bật nhảy"
+        },
+        {
+            "key": "ui.can.hover_jump.line",
+            "text": "Nhảy qua đá và vượt khe hở."
+        },
+        {
+            "key": "ui.can.cargo_cradle.verb",
+            "text": "Giỏ chở đồ"
+        },
+        {
+            "key": "ui.can.cargo_cradle.line",
+            "text": "Chở kỷ vật trên lưng 07."
+        },
+        {
+            "key": "ui.can.warm_headlamp.verb",
+            "text": "Đèn pha ấm"
+        },
+        {
+            "key": "ui.can.warm_headlamp.line",
+            "text": "Chiếu sáng mặt đất phía trước khi trời tối."
+        },
+        {
+            "key": "ui.can.boost_coils.verb",
+            "text": "Bộ tăng tốc"
+        },
+        {
+            "key": "ui.can.boost_coils.line",
+            "text": "Chạy nhanh hơn và giữ thêm một chút điện."
+        },
+        {
+            "key": "ui.can.cell_pack.verb",
+            "text": "Bộ pin II"
+        },
+        {
+            "key": "ui.can.cell_pack.line",
+            "text": "Bốn ô pin thành sáu: 07 đi được xa hơn."
+        },
+        {
+            "key": "ui.can.wide_sonar.verb",
+            "text": "Sonar rộng"
+        },
+        {
+            "key": "ui.can.wide_sonar.line",
+            "text": "Sóng sonar vươn xa hơn."
+        },
+        {
+            "key": "ui.can.magnetic_treads.verb",
+            "text": "Bánh từ tính"
+        },
+        {
+            "key": "ui.can.magnetic_treads.line",
+            "text": "Bánh bám chắc trên dốc."
+        },
+        {
+            "key": "ui.can.side_bins.verb",
+            "text": "Thùng hông"
+        },
+        {
+            "key": "ui.can.side_bins.line",
+            "text": "Thêm bốn ô trong khoang hàng của 07."
+        },
+        {
+            "key": "ui.can.focus_lens.verb",
+            "text": "Thấu kính hội tụ"
+        },
+        {
+            "key": "ui.can.focus_lens.line",
+            "text": "Chùm cắt hẹp và mạnh hơn."
+        },
+        {
             "key": "ui.reward.title",
             "text": "{0} · Cấp {1}"
         },
