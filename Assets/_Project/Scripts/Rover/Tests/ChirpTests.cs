@@ -94,6 +94,21 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
+        public void TheFirstRealCut_AfterAnUpgrade_IsHappy_Once()
+        {
+            _events.Publish(new CutterTierChanged(1, false));
+            _events.Publish(new FeelBeat(FeelKind.Cut, FeelPhase.Impact, Vector3.zero, Vector3.up, 1f, 0f));
+            Assert.AreEqual(ChirpMood.Happy, Last);
+            _now += 60f;
+            _events.Publish(new FeelBeat(FeelKind.Cut, FeelPhase.Impact, Vector3.zero, Vector3.up, 1f, 0f));
+            Assert.AreEqual(1, _chirps.Count, "Only the first cut after it.");
+            _events.Publish(new CutterTierChanged(2, true));
+            _now += 60f;
+            _events.Publish(new FeelBeat(FeelKind.Cut, FeelPhase.Impact, Vector3.zero, Vector3.up, 1f, 0f));
+            Assert.AreEqual(1, _chirps.Count, "A loaded tier is no upgrade.");
+        }
+
+        [Test]
         public void LoadedState_AndRepeatAnswers_StayQuiet()
         {
             _events.Publish(new LowPowerChanged(true, true));

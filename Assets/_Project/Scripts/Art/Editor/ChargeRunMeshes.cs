@@ -16,12 +16,12 @@ namespace MoonProject.Art.Editor
         /// <summary>Where the lens's glass sits in its ring (lens space).</summary>
         public static readonly Vector3 LensSeat = new Vector3(0f, 0f, LensZ);
 
-        private const float ConduitBezel = 0.022f;
-        private const float ConduitGlass = 0.013f;
-        private const float BrowBezel = 0.024f;
-        private const float BrowGlass = 0.015f;
-        private const float BezelHeight = 0.01f;
-        private static readonly Vector3 GlassSeat = new Vector3(0f, 0.006f, 0f);
+        private const float ConduitBezel = 0.034f;
+        private const float ConduitGlass = 0.022f;
+        private const float BrowBezel = 0.026f;
+        private const float BrowGlass = 0.018f;
+        private const float BezelHeight = 0.014f;
+        private static readonly Vector3 GlassSeat = new Vector3(0f, 0.01f, 0f);
 
         // The clip ring hugs the eye's rim; the lens floats on three spokes in front of the eye's own glass.
         private const float ClipRadius = 0.165f;
@@ -30,39 +30,36 @@ namespace MoonProject.Art.Editor
         private const float LensZ = 0.026f;
         private static readonly float[] SpokeDegrees = { 90f, 210f, 330f };
 
-        /// <summary>A tier-0 conduit lamp's bezel: low, flush and a little dusty.</summary>
-        public static LowPolyMeshBuilder ConduitBezelMesh()
+        /// <summary>
+        /// A charge-run lamp's bezel, <paramref name="scale"/> times the base size, raised on a
+        /// <paramref name="pedestal"/> when it must clear what's around it: tier 0's low and a little dusty, the Focus
+        /// Lens's (<paramref name="lens"/>) a little proud and in clean metal.
+        /// </summary>
+        public static LowPolyMeshBuilder Bezel(bool lens, float scale, float pedestal)
         {
-            var b = new LowPolyMeshBuilder(60);
-            b.Frustum(At(0f, BezelHeight * 0.5f - 0.002f, 0f), ConduitBezel, ConduitBezel * 0.8f, BezelHeight, 8,
-                Paint.WithCaps(PaletteSwatch.Charcoal, PaletteSwatch.CakedDust));
+            var b = new LowPolyMeshBuilder(80);
+            float radius = (lens ? BrowBezel : ConduitBezel) * scale;
+            float height = (lens ? BezelHeight + 0.004f : BezelHeight) * scale;
+            if (pedestal > 0f)
+            {
+                b.Prism(At(0f, pedestal * 0.5f, 0f), radius * 0.55f, pedestal, 8, PaletteSwatch.Charcoal);
+            }
+
+            b.Frustum(At(0f, pedestal + height * 0.5f - 0.002f, 0f), radius, radius * (lens ? 0.85f : 0.8f), height, 8,
+                lens ? (Paint)PaletteSwatch.Metal : Paint.WithCaps(PaletteSwatch.Charcoal, PaletteSwatch.CakedDust));
             return b;
         }
 
-        /// <summary>A Focus Lens lamp's bezel: a little proud of the surface, clean metal.</summary>
-        public static LowPolyMeshBuilder BrowBezelMesh()
-        {
-            var b = new LowPolyMeshBuilder(60);
-            b.Frustum(At(0f, BezelHeight * 0.5f, 0f), BrowBezel, BrowBezel * 0.85f, BezelHeight + 0.004f, 8,
-                PaletteSwatch.Metal);
-            return b;
-        }
-
-        /// <summary>The conduit lamp's glass (lamp space, seated in its bezel): a dusty little dome.</summary>
-        public static LowPolyMeshBuilder ConduitGlassMesh()
+        /// <summary>
+        /// The lamp's glass, seated in its <see cref="Bezel"/> of the same size: tier 0's a dusty little dome, the
+        /// Focus Lens's bigger and rounder, so the tier-1 run reads brighter.
+        /// </summary>
+        public static LowPolyMeshBuilder Glass(bool lens, float scale, float pedestal)
         {
             var b = new LowPolyMeshBuilder(40);
-            b.Icosphere(At(GlassSeat, Quaternion.identity, new Vector3(1f, 0.6f, 1f)), ConduitGlass, 0,
-                PaletteSwatch.EyeGlass);
-            return b;
-        }
-
-        /// <summary>A Focus Lens lamp's glass: bigger and rounder, so the tier-1 run reads brighter.</summary>
-        public static LowPolyMeshBuilder BrowGlassMesh()
-        {
-            var b = new LowPolyMeshBuilder(90);
-            b.Icosphere(At(GlassSeat, Quaternion.identity, new Vector3(1f, 0.75f, 1f)), BrowGlass, 0,
-                PaletteSwatch.EyeGlass);
+            Vector3 seat = (GlassSeat * scale) + Vector3.up * pedestal;
+            b.Icosphere(At(seat, Quaternion.identity, new Vector3(1f, lens ? 0.75f : 0.6f, 1f)),
+                (lens ? BrowGlass : ConduitGlass) * scale, 0, PaletteSwatch.EyeGlass);
             return b;
         }
 

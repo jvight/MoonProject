@@ -56,6 +56,19 @@ namespace MoonProject.Rover
         [Tooltip("The amber flank lamps along the stripe: 07's battery (docs/features/M3-20).")]
         [SerializeField] private RoverFlankLamps _flankLamps;
 
+        [Tooltip("The charge run's rows per cutter tier (RoverModel's ChargeRun_{tier} with its ChargeLamp_0.. nodes, "
+            + "M3-26 §2); art's model carries them from the cutter-lamps pass on.")]
+        [SerializeField] private ChargeRunRow[] _chargeRows = new ChargeRunRow[0];
+
+        [Tooltip("Art's Focus Lens on Neck/Head/Eye/LensSocket, shown from its cutter tier on (M3-26).")]
+        [SerializeField] private GameObject _focusLens;
+
+        [Tooltip("The Focus Lens's Glass child, glowing with the charge run.")]
+        [SerializeField] private Renderer _focusLensGlass;
+
+        [Tooltip("Art's two Kit_SideBin on BinSocket_L and BinSocket_R, shown once 07 has the Side Bins.")]
+        [SerializeField] private GameObject[] _sideBins = new GameObject[0];
+
         [Tooltip("RoverModel 'TetherOrigin' (lens centre of 07's eye, +Z = gaze).")]
         [SerializeField] private Transform _tetherOrigin;
 
@@ -74,6 +87,8 @@ namespace MoonProject.Rover
         private BatteryLink _battery;
         private IDisposable _dockChanges;
         private RoverFeel _feel;
+        private ChargeRunLamps _chargeRun;
+        private GameContext _context;
         private bool _docked;
         private bool _cradled;
         private Vector3 _cradleBody;
@@ -285,6 +300,13 @@ namespace MoonProject.Rover
         public void Grant(RoverAbility ability)
         {
             _abilities |= AbilityBit(ability);
+            if (ability == RoverAbility.SideBins)
+            {
+                foreach (GameObject bin in _sideBins)
+                {
+                    bin.SetActive(true);
+                }
+            }
         }
 
         private static int AbilityBit(RoverAbility ability)
@@ -306,6 +328,7 @@ namespace MoonProject.Rover
                 return;
             }
 
+            _context = context;
             _input = context.Input;
             _events = context.Events;
             _landing = new LandingDetector(_tuning.Landing);
@@ -337,6 +360,11 @@ namespace MoonProject.Rover
                 _feel = new RoverFeel(_events, feel.CutFeel, feel.DockFeel, feel.MotionFeel, feelPreferences,
                     new GamepadRumbleMotors(), _visualRig);
                 _visualRig.SetNudge(_feel.Nudge);
+                if (_chargeRows.Length > 0)
+                {
+                    _chargeRun = new ChargeRunLamps(_events, feel.ChargeRun, _chargeRows, CutterChargeSeconds,
+                        _tetherOrigin, _focusLens, _focusLensGlass);
+                }
             }
 
             bool kitReady = _kit.Initialize(context, this, _visualRig);
@@ -369,6 +397,15 @@ namespace MoonProject.Rover
             ok &= Require(_hoverCoils != null, "RoverHoverCoils is not assigned.");
             ok &= Require(_lampMotes != null, "RoverLampMotes is not assigned.");
             ok &= Require(_flankLamps != null, "RoverFlankLamps is not assigned.");
+            ok &= Require(_sideBins.Length == 2 && _sideBins[0] != null && _sideBins[1] != null,
+                "The two side bins (BinSocket_L, BinSocket_R) are not assigned.");
+            ok &= Require(_chargeRows.Length == 0 || (_focusLens != null && _focusLensGlass != null),
+                "The Focus Lens or its Glass is not assigned (art's cutter kit).");
+            foreach (ChargeRunRow row in _chargeRows)
+            {
+                ok &= Require(row != null && row.IsWired, "A charge-run row has no root or a missing lamp.");
+            }
+
             ok &= Require(_tetherOrigin != null && _cargoSocket != null, "TetherOrigin/CargoSocket are not assigned.");
             if (_body != null)
             {
@@ -853,6 +890,7 @@ namespace MoonProject.Rover
             float deltaTime = Time.deltaTime;
             _stillness.Step(SampleStillness(), deltaTime);
             _feel.Tick(deltaTime, Time.time, Speed, _visualRig.RootPosition);
+            _chargeRun?.Tick(deltaTime);
             _visualRig.Tick(deltaTime);
             _kit.Tick(deltaTime);
             _wheelFx.Tick();
@@ -870,6 +908,12 @@ namespace MoonProject.Rover
         }
 
         /// <summary>Rumble never runs while the game window is away.</summary>
+        /// <summary>The cutter's fresh charge length now (ICutter): the bay's test cut runs at it.</summary>
+        private float CutterChargeSeconds()
+        {
+            return _context.Get<ICutter>().ChargeSeconds;
+        }
+
         private void OnApplicationFocus(bool hasFocus)
         {
             _feel?.SetFocused(hasFocus);
@@ -884,6 +928,7 @@ namespace MoonProject.Rover
         {
             _dockChanges?.Dispose();
             _feel?.Dispose();
+            _chargeRun?.Dispose();
         }
     }
 }

@@ -440,6 +440,8 @@ namespace MoonProject.Art.Editor
             Vector3 above = eye + eyeNode.forward * 0.7f - eyeNode.right * 0.6f + Vector3.up * 0.75f;
             Vector3 behind = charged.position - charged.forward * 1.5f + charged.right * 0.7f + Vector3.up * 1.9f;
             return Poses(
+                ChasePose("run_chase", charged.position, charged.rotation, ChaseDistance, 0f),
+                ChasePose("run_chase_near", charged.position, charged.rotation, ChaseDistance * 0.4f, 0f),
                 Pose("run_back", new[] { behind.x, behind.y, behind.z },
                     new[] { charged.position.x, 1.05f, charged.position.z }, 45f),
                 Pose("lens_close", new[] { front.x, front.y, front.z }, new[] { eye.x, eye.y, eye.z }, 35f),

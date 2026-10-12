@@ -39,6 +39,11 @@ namespace MoonProject.Rover.PlayModeTests
         private const float TubeSocketY = 1.1f;
         private const float TubeSocketZ = -0.6f;
 
+        /// <summary>The side bins' stand-in sockets on the front flanks.</summary>
+        private const float SideBinX = 0.5f;
+        private const float SideBinY = 0.9f;
+        private const float SideBinZ = 0.35f;
+
         /// <summary>Art's tower story part names (stand-ins on TubeSocket).</summary>
         public static readonly string[] StoryParts = { "Part_TowerCoil", "Part_Transformer", "Part_RelaySpare" };
 
@@ -371,6 +376,16 @@ namespace MoonProject.Rover.PlayModeTests
                 ("_wheelFx", fx), ("_hoverCoils", hoverCoils), ("_lampMotes", lampMotes), ("_kit", kit),
                 ("_flankLamps", flank),
                 ("_tetherOrigin", tetherOrigin), ("_cargoSocket", cargo));
+            var sideBins = new Object[2];
+            for (int i = 0; i < sideBins.Length; i++)
+            {
+                Transform bin = Node(i == 0 ? RoverModelNodes.BinSocketLeft : RoverModelNodes.BinSocketRight, model,
+                    new Vector3(i == 0 ? -SideBinX : SideBinX, SideBinY, SideBinZ));
+                bin.gameObject.SetActive(false);
+                sideBins[i] = bin.gameObject;
+            }
+
+            AssignArray(controller, "_sideBins", sideBins);
             Assign(body, ("_tuning", characterTuning), ("_rover", controller), ("_rig", rig), ("_neck", neck),
                 ("_head", head), ("_eyelid", eyelid), ("_solarWing", wing),
                 ("_eyeRenderer", eye.GetComponent<MeshRenderer>()),

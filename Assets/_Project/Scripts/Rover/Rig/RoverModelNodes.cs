@@ -44,6 +44,14 @@ namespace MoonProject.Rover
         public const string DrumSocketRight = "DrumSocket_R";
         public const string TubeSocket = "TubeSocket";
 
+        /// <summary>On the eye: where the Focus Lens kit mounts (M3-26).</summary>
+        public const string LensSocket = "LensSocket";
+
+        /// <summary>The front flanks above the front wheels: where the side bins mount (RoverAbility.SideBins).</summary>
+        public const string BinSocketLeft = "BinSocket_L";
+
+        public const string BinSocketRight = "BinSocket_R";
+
         /// <summary>Where Cell Pack II's battery spine stands on the lid's right edge (docs/features/M3-20).</summary>
         public const string SpineSocket = "SpineSocket";
 
