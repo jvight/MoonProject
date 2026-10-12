@@ -14,7 +14,9 @@ namespace MoonProject.Audio
     /// turntable rumbles while it turns 07 (both read from <see cref="IRoverBay"/>'s transforms, so they follow
     /// wherever the Rover drives them);</item>
     /// <item>a crafted piece set on 07 (<see cref="RoverKitFitted"/>) is welded at the nearest arm tip, then a
-    /// resolved chime: done for 07;</item>
+    /// resolved chime: done for 07; at Kenji's garage port (the tether ring, the tape deck) the folded arm unfolds as
+    /// the install begins (<see cref="RoverKitInstalling"/>), the weld sparks on 07 itself, and the tether ring hums
+    /// for the first time;</item>
     /// <item>the radio tower's hatch opens, the beam's stitching rises with the new section, the hatch shuts;</item>
     /// <item>the charging dock clunks as 07 settles on it and leaving it is a tiny release
     /// (<see cref="RoverDockChanged"/>); any charger (the dock, a lit mast's ring) hums very softly while it fills the
@@ -34,7 +36,7 @@ namespace MoonProject.Audio
     [DisallowMultipleComponent]
     public sealed class StationAudio : MonoBehaviour
     {
-        private const int SubscriptionCount = 9;
+        private const int SubscriptionCount = 10;
         private const uint DropSeedSalt = 0x68E31DA4u;
         private const float CentsPerSemitone = 100f;
         private const float CentsPerOctave = 1200f;
@@ -53,6 +55,8 @@ namespace MoonProject.Audio
         private CueHandle _notYet;
         private CueHandle[] _liftBeats = Array.Empty<CueHandle>();
         private CueHandle _found;
+        private CueHandle _portArm;
+        private CueHandle _ringWake;
         private AudioSource _liftLoop;
         private float _liftCueVolume;
         private AudioDirector _director;
@@ -123,10 +127,12 @@ namespace MoonProject.Audio
             _notYet = director.Resolve(AudioCueIds.StationNotYet);
             CueHandle liftRide = director.Resolve(AudioCueIds.LiftRide);
             _found = director.Resolve(AudioCueIds.BlueprintFound);
+            _portArm = director.Resolve(AudioCueIds.PortArm);
+            _ringWake = director.Resolve(AudioCueIds.TetherRingWake);
             if (!feed.IsValid || !servo.IsValid || !turn.IsValid || !stitch.IsValid || !charge.IsValid ||
                 !_sigh.IsValid || !_weld.IsValid || !_chime.IsValid || !_dockConnect.IsValid || !_dockFull.IsValid ||
                 !_dockRelease.IsValid || !_wake.IsValid || !_notYet.IsValid || !liftRide.IsValid ||
-                !_found.IsValid || !TryResolveBeats(director) || !TryResolveLiftBeats(director) ||
+                !_found.IsValid || !_portArm.IsValid || !_ringWake.IsValid || !TryResolveBeats(director) || !TryResolveLiftBeats(director) ||
                 !TryResolveWakes(director.Library.GetCue(_wake)))
             {
                 enabled = false;
@@ -165,6 +171,7 @@ namespace MoonProject.Audio
             _subscriptions[6] = events.Subscribe<BlueprintFound>(OnBlueprintFound);
             _subscriptions[7] = events.Subscribe<ChargingChanged>(OnChargingChanged);
             _subscriptions[8] = events.Subscribe<BatteryChanged>(OnBatteryChanged);
+            _subscriptions[9] = events.Subscribe<RoverKitInstalling>(OnKitInstalling);
         }
 
         internal void Wire(StationAudioTuning tuning)
@@ -270,8 +277,28 @@ namespace MoonProject.Audio
                 return;
             }
 
-            _director.PlayAt(_weld, NearestTip(_rover.Position));
+            bool atPort = AtGaragePort(fitted.Piece);
+            _director.PlayAt(_weld, atPort ? _rover.Position : NearestTip(_rover.Position));
             _director.Play2D(_chime);
+            if (fitted.Piece == RoverKitPiece.TetherRing)
+            {
+                _director.PlayAt(_ringWake, _rover.Position);
+            }
+        }
+
+        /// <summary>Kenji's garage port begins an install: its folded arm unfolds towards 07.</summary>
+        private void OnKitInstalling(RoverKitInstalling installing)
+        {
+            if (!installing.Gift && AtGaragePort(installing.Piece))
+            {
+                _director.PlayAt(_portArm, _rover.Position);
+            }
+        }
+
+        /// <summary>The pieces Kenji's garage port fits (first-hour v2 section 3); the bay's arms fit the rest.</summary>
+        private static bool AtGaragePort(RoverKitPiece piece)
+        {
+            return piece == RoverKitPiece.TetherRing || piece == RoverKitPiece.TapeDeck;
         }
 
         private void OnDockChanged(RoverDockChanged changed)

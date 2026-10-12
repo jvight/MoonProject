@@ -211,7 +211,7 @@ namespace MoonProject.Audio
 
         private void OnSonarPinged(SonarPinged ping)
         {
-            _director.PlayAt(_sonarPing, ping.Origin);
+            _director.PlayAt(_sonarPing, ping.Origin, _tuning.ListenVolume);
         }
 
         private void OnRelicAnswered(RelicAnswered answer)
