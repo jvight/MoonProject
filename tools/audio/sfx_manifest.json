@@ -5,6 +5,837 @@
   "audioRoot": "Assets/_Project/Audio",
   "cues": [
     {
+      "id": "cut_charge",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/cut_charge_fresh.wav",
+        "Assets/_Project/Audio/SFX/cut_charge_resume.wav"
+      ],
+      "variantLabels": [
+        "fresh",
+        "resume"
+      ],
+      "sha256": [
+        "a69b4d51e9e0ff8f7a9920603c2253192b3a4ec4ad5ff3db9c2f84c417072f10",
+        "ccb047d6e5709c2de7149635f958df839ac152957b289bf71ed878ae670912f0"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "The emitter charging: glassy D E F# A over 0.65 s (fresh) or F# A over 0.3 s (resume), over a low chassis inhale."
+    },
+    {
+      "id": "cut_cancel",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/cut_cancel.wav"
+      ],
+      "variantLabels": [
+        "cut_cancel"
+      ],
+      "sha256": [
+        "c56b6d63a59a284674b55dc3594459ef31f622d344a0f891415074805a9c4e6e"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "A charge let go: a soft falling A -> F#."
+    },
+    {
+      "id": "cut_ignite",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/cut_ignite.wav"
+      ],
+      "variantLabels": [
+        "cut_ignite"
+      ],
+      "sha256": [
+        "50552f9f322782bb8d58a3482b2a2f1b9124bcb4e62f43f3f75a967ce60c9361"
+      ],
+      "volumeMin": 0.65,
+      "volumeMax": 0.65,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "Ignition: a zing on D6 plus a felt 60 Hz chassis thump."
+    },
+    {
+      "id": "cut_sizzle",
+      "category": "loop_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/SFX/cut_sizzle_loop.wav"
+      ],
+      "variantLabels": [
+        "cut_sizzle"
+      ],
+      "sha256": [
+        "13459ab38d02bf8d9213c82620be0f1a79faf3b678bca8a86f8a6d96202aa43c"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "The beam through 07's body: a low-passed sizzle, level by cut progress. 3 s seamless."
+    },
+    {
+      "id": "cut_crack",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/cut_crack.wav"
+      ],
+      "variantLabels": [
+        "cut_crack"
+      ],
+      "sha256": [
+        "2e865103c7133bce38c74b4f05f01faa53953013845a1ed9bf3056c4c96d2f23"
+      ],
+      "volumeMin": 0.7,
+      "volumeMax": 0.7,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "The piece breaks free: a soft high B pluck plus a felt thud."
+    },
+    {
+      "id": "strap_tuk",
+      "category": "tick_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/strap_tuk.wav"
+      ],
+      "variantLabels": [
+        "strap_tuk"
+      ],
+      "sha256": [
+        "86f6dfa95654758eccf9040d064f27cee94e4d6819840d371cf7cf685bc63262"
+      ],
+      "volumeMin": 0.7,
+      "volumeMax": 0.7,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -26.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "A strap cinching: the bundle's fold, a relic stowed in the cradle. A muted tuk on E."
+    },
+    {
+      "id": "dock_walls_rise",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/dock_walls_rise.wav"
+      ],
+      "variantLabels": [
+        "dock_walls_rise"
+      ],
+      "sha256": [
+        "3c403d43c458858c8d2c272691530df3718945a54c54e09e51ff60b4334d42ad"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "The dock's walls rising, staggered: soft ticks D A D A over a short servo push."
+    },
+    {
+      "id": "dock_clamp",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/dock_clamp.wav"
+      ],
+      "variantLabels": [
+        "dock_clamp"
+      ],
+      "sha256": [
+        "5e27ddadc837cec65bf938fe963b693cf580128b9d8a9c83d5293bd4113c31f7"
+      ],
+      "volumeMin": 0.65,
+      "volumeMax": 0.65,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "The clamp closing on 07: a felt clunk and a 100 ms connection crackle."
+    },
+    {
+      "id": "dock_walls_settle",
+      "category": "tick_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/dock_walls_settle.wav"
+      ],
+      "variantLabels": [
+        "dock_walls_settle"
+      ],
+      "sha256": [
+        "92d13c49cf2e55dc788540e101659e0b3e1c830720b86819c3a5ef07fd1022ad"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -26.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "Full: the walls lowering and settling, two soft ticks on A and D."
+    },
+    {
+      "id": "dock_walls_drop",
+      "category": "tick_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/dock_walls_drop.wav"
+      ],
+      "variantLabels": [
+        "dock_walls_drop"
+      ],
+      "sha256": [
+        "b3845787f2c5f8ef555fd25ffaf6f66df0e17c387932e409614733b01d5b3d88"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -26.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "Driving off early: the walls drop at once, a quick soft fall."
+    },
+    {
+      "id": "chirp_affirm",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/chirp_affirm_01.wav",
+        "Assets/_Project/Audio/SFX/chirp_affirm_02.wav",
+        "Assets/_Project/Audio/SFX/chirp_affirm_03.wav",
+        "Assets/_Project/Audio/SFX/chirp_affirm_04.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02",
+        "03",
+        "04"
+      ],
+      "sha256": [
+        "ed8bca0cff200bbfa845d952cd32abdaa9a26c3f3e910d4522a8522a8b1dc4f5",
+        "d96b43634e121ed6f948185d0c081588f5914c2347d51051d055b40f4409a7fa",
+        "d4d52b5797c14bde868811a6276ab2be10090210c39c445b5096e1f6a16262ec",
+        "1e4fb3bd03320fcd0b2cfed40d7a90ae53302b064fde9c24f43d39785340a24e"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "07's machine voice, affirm (feel-pass 7.2); syllables in chirp_syllables.json."
+    },
+    {
+      "id": "chirp_happy",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/chirp_happy_01.wav",
+        "Assets/_Project/Audio/SFX/chirp_happy_02.wav",
+        "Assets/_Project/Audio/SFX/chirp_happy_03.wav",
+        "Assets/_Project/Audio/SFX/chirp_happy_04.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02",
+        "03",
+        "04"
+      ],
+      "sha256": [
+        "5429c7bdf19c114d768f2af338a213bdb54b8c4c5c8416dcbcc7346e86460249",
+        "c99934468807e0ac23826b5835552fbac8f6cf7b57f5022598ed1e3b7022fbc8",
+        "a4fee6dab9e02873ec6b31542cf557159bdf6f25683665599319a9210231d5b5",
+        "3976239556bfc5c5cdb627578a6f95514c56757710107aa075517cf25acde58b"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "07's machine voice, happy (feel-pass 7.2); syllables in chirp_syllables.json."
+    },
+    {
+      "id": "chirp_proud",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/chirp_proud_01.wav",
+        "Assets/_Project/Audio/SFX/chirp_proud_02.wav",
+        "Assets/_Project/Audio/SFX/chirp_proud_03.wav",
+        "Assets/_Project/Audio/SFX/chirp_proud_04.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02",
+        "03",
+        "04"
+      ],
+      "sha256": [
+        "c752b1bd488aacb330ffca08faa520360fa8add1634738541094ddf5ad7543de",
+        "05316fcaca4bba00bc071b3c9f136da09586957511e927bfa8a236bdd04326b6",
+        "25cd88e5c4e5f5f805cd17a666294a9d4b288738eeed5385218e29fd5d6267c5",
+        "4a0010d1b95559a743c515a763e42af8dcad2d0596f0d3aed9a81a7576326629"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "07's machine voice, proud (feel-pass 7.2); syllables in chirp_syllables.json."
+    },
+    {
+      "id": "chirp_curious",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/chirp_curious_01.wav",
+        "Assets/_Project/Audio/SFX/chirp_curious_02.wav",
+        "Assets/_Project/Audio/SFX/chirp_curious_03.wav",
+        "Assets/_Project/Audio/SFX/chirp_curious_04.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02",
+        "03",
+        "04"
+      ],
+      "sha256": [
+        "19bea323889620fa01793494463b6a22d35677b302ff395f04380294e467a815",
+        "6f6cd56f1ba6b27e9b90edce7c6d74853c0dd9ad65f877d92fd5a10a297cf9db",
+        "a3a2aa2c1e08a9b91dedbc3afd572e9ce6780ab6b901b25642cac1422b3fc35f",
+        "6b53ac7453790a45c56138634e511fe728328242b59a75199e5be6fff0461e20"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "07's machine voice, curious (feel-pass 7.2); syllables in chirp_syllables.json."
+    },
+    {
+      "id": "chirp_worried",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/chirp_worried_01.wav",
+        "Assets/_Project/Audio/SFX/chirp_worried_02.wav",
+        "Assets/_Project/Audio/SFX/chirp_worried_03.wav",
+        "Assets/_Project/Audio/SFX/chirp_worried_04.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02",
+        "03",
+        "04"
+      ],
+      "sha256": [
+        "aee9ae6162f27b43101474f7cb6bb99701885e74818d736cdd17d0bad21ae9ed",
+        "5f01ecbbd79344c7b84e5ff3b1fcea80f5fbe34aead09fcb942b360c577dd437",
+        "a619fb85378c3db3d695bd944eac44cabf663873dd8eae02bb07c1a3b70eeda3",
+        "168fc0c443e5ee798a03794363636341031c013b2213a0fdebbbfa586cc6dec4"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "07's machine voice, worried (feel-pass 7.2); syllables in chirp_syllables.json."
+    },
+    {
+      "id": "chirp_tired",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/chirp_tired_01.wav",
+        "Assets/_Project/Audio/SFX/chirp_tired_02.wav",
+        "Assets/_Project/Audio/SFX/chirp_tired_03.wav",
+        "Assets/_Project/Audio/SFX/chirp_tired_04.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02",
+        "03",
+        "04"
+      ],
+      "sha256": [
+        "81d394969b0eae36416d585cf4074a6d29a796002b853b8d19c9f6d29ad00358",
+        "0ee70db3d1f1da4441b168ad630a6803b8ae66b13874e7d329e6c1007d3c988b",
+        "b29c8f81c841023e74f44b2967caf5e42913a7d51dec6ec5e2d984707b26fc55",
+        "3df5192502aeed6645d137a9086cc5ee2efc7b32a405e7c2dada035b4e51026e"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "07's machine voice, tired (feel-pass 7.2); syllables in chirp_syllables.json."
+    },
+    {
+      "id": "chirp_relieved",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/chirp_relieved_01.wav",
+        "Assets/_Project/Audio/SFX/chirp_relieved_02.wav",
+        "Assets/_Project/Audio/SFX/chirp_relieved_03.wav",
+        "Assets/_Project/Audio/SFX/chirp_relieved_04.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02",
+        "03",
+        "04"
+      ],
+      "sha256": [
+        "ef9ba5d1bf23d6cf8c8d87ccc28bd0a7a3d1c69f5c19a5f7ee173ca6efc8c869",
+        "4c4bcc7304b4fb68db692e8b3040f233e065a21c490c6571a2030fc7d6b7d269",
+        "012a7c4970283fe4ad8906ee6840fe78bac9787ae353e14e291e9f7388f56503",
+        "687e46116c1539e2d8d6d342f1ef7fdc87a7a69459a25d1a2471cc5541eb7b46"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "07's machine voice, relieved (feel-pass 7.2); syllables in chirp_syllables.json."
+    },
+    {
+      "id": "chirp_greeting",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/chirp_greeting_01.wav",
+        "Assets/_Project/Audio/SFX/chirp_greeting_02.wav",
+        "Assets/_Project/Audio/SFX/chirp_greeting_03.wav",
+        "Assets/_Project/Audio/SFX/chirp_greeting_04.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02",
+        "03",
+        "04"
+      ],
+      "sha256": [
+        "220aa64feb89ad3146a84d1a2f48794d472324f74998dd854be014ad062a915c",
+        "e9beda51379d78b6ddc1dd7f530bc3522c2b774be9c74fbf04cab59ded0dff23",
+        "89c037dbd0cda45f1538304bf5fbb04cda03c0d750d48f39410c0acef4fa9ebe",
+        "b5936132641670444e1cde6f2e278af548810dc224ea4241f8513e5d9f0449f2"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "07's machine voice, greeting (feel-pass 7.2); syllables in chirp_syllables.json."
+    },
+    {
+      "id": "node_light",
+      "category": "stinger_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/node_light_01.wav",
+        "Assets/_Project/Audio/SFX/2D/node_light_02.wav",
+        "Assets/_Project/Audio/SFX/2D/node_light_03.wav",
+        "Assets/_Project/Audio/SFX/2D/node_light_04.wav",
+        "Assets/_Project/Audio/SFX/2D/node_light_05.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02",
+        "03",
+        "04",
+        "05"
+      ],
+      "sha256": [
+        "ed0868bf0adb85f669183c0fbcc9aa3055ee0e4d754833bd2ad11aa454dd02ac",
+        "55a4eba4a268aa287adedf9301ea83d44345b7c5647124cf034a84f112e768ea",
+        "b8cb1ba43abe7c7c973724028d7f82f8932e6170373d76ee01753183a29e2869",
+        "fed05535d93caa22ac5ce4060555fa5c0ce41a1c053e121acb2a932ac77b3b54",
+        "de93cf9c849c54fd792febda38609c51020dee7750156ce55cada67cc3c441aa"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -20.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "A tech node lighting: a bloom pop and one pentatonic step by branch."
+    },
+    {
+      "id": "cable_ticks",
+      "category": "ui_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/cable_ticks.wav"
+      ],
+      "variantLabels": [
+        "cable_ticks"
+      ],
+      "sha256": [
+        "0ee381a962d0cd408e6a06cfd21c1ee8359427f38c8b8afbdcda54dc77f3641d"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "The decode's lamp pulse travelling down the cable to the plotter: tick-tick-tick on A."
+    },
+    {
+      "id": "component_found",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/component_found.wav"
+      ],
+      "variantLabels": [
+        "component_found"
+      ],
+      "sha256": [
+        "152e32328b952e0c7ffe48b1d5b6042512678a258049015f40a6fc97990fdef8"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "A component lifting free: a two-note found, E -> A."
+    },
+    {
+      "id": "boost_whine",
+      "category": "loop_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/SFX/boost_whine_loop.wav"
+      ],
+      "variantLabels": [
+        "boost_whine"
+      ],
+      "sha256": [
+        "63172fd4a589210b55691e097a4cda26213ad390d13b7b7135ff317c8a01842e"
+      ],
+      "volumeMin": 0.45,
+      "volumeMax": 0.45,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "The capacitor drums boosting: a soft whine on A. 2 s seamless."
+    },
+    {
+      "id": "boost_release",
+      "category": "tick_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/boost_release.wav"
+      ],
+      "variantLabels": [
+        "boost_release"
+      ],
+      "sha256": [
+        "5b55a23b0bb7bf3d58e0e00e9d93ecd2de4ff31758d89a174b1ae810452811da"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -26.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "The drums emptying: a felt fff and a tick on D."
+    },
+    {
+      "id": "page_tick",
+      "category": "tick_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/page_tick.wav"
+      ],
+      "variantLabels": [
+        "page_tick"
+      ],
+      "sha256": [
+        "fb2f8f92138dc63de54770ef0baa24395fee81eb69195da4a93d21eca9a45019"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -28.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "A new step's line: a breath-quiet page-turn tick."
+    },
+    {
+      "id": "save_tick",
+      "category": "tick_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/save_tick.wav"
+      ],
+      "variantLabels": [
+        "save_tick"
+      ],
+      "sha256": [
+        "b7ff9527c604f3588b365c1fea5f150e889934bb32717178a6ba55a11ceaab2d"
+      ],
+      "volumeMin": 0.4,
+      "volumeMax": 0.4,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -28.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "The game saved: a tiny soft tick on D, once per burst."
+    },
+    {
+      "id": "count_tick",
+      "category": "tick_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/count_tick_01.wav",
+        "Assets/_Project/Audio/SFX/2D/count_tick_02.wav",
+        "Assets/_Project/Audio/SFX/2D/count_tick_03.wav",
+        "Assets/_Project/Audio/SFX/2D/count_tick_04.wav",
+        "Assets/_Project/Audio/SFX/2D/count_tick_05.wav",
+        "Assets/_Project/Audio/SFX/2D/count_tick_06.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02",
+        "03",
+        "04",
+        "05",
+        "06"
+      ],
+      "sha256": [
+        "6d2c47eca8a980e87673d869cec1a8b1afe036527160dbf58ec7a8452a1bea1a",
+        "71b4566e765363716196f0e3390763a328a6f3ddfc267e10ecf23607ea306e61",
+        "6466aec949691ab033115656057e5d40413b76e04ce45a2acff53b2ca6628233",
+        "76692be4a0adf4c18f664f50e4fa9813d86da90421dcbb1f31d6a2e4ebcc9142",
+        "3ba0216f7bc3abb18cf856a71d0aeab6eb80ea17bac4039b5b07ac270e7cfe36",
+        "0d8e71b0241c8ece3a4ebb77053fe527045e7b177828344d1f940c6032e5d80f"
+      ],
+      "volumeMin": 0.45,
+      "volumeMax": 0.45,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -28.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "The stock counter rolling one unit: a rising pentatonic tick."
+    },
+    {
+      "id": "window_click",
+      "category": "tick_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/window_click.wav"
+      ],
+      "variantLabels": [
+        "window_click"
+      ],
+      "sha256": [
+        "966cd2c6e77f9ccde933a94e2eaf7657398653bd4e29b98d0d4244c8da3bbf3e"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -26.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "A home window lighting: one warm click from outside."
+    },
+    {
       "id": "asleep_static",
       "category": "radio_2d",
       "milestone": "M3",

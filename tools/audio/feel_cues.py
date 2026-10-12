@@ -1,0 +1,336 @@
+"""0.5.2 "Satisfying" cue recipes (docs/design/feel-pass.md, polish-pass.md section 1.1): the cut's beats, the dock's
+lock, 07's machine voice and the first hour's silent events. Every pitch is D major pentatonic; peaks stay at
+mezzo-piano and each beat has at most three layers (feel-pass R10). In vacuum, sound is what 07's chassis feels
+(R11): low, close and muffled. Imported by cues.py, which lists the cues.
+"""
+import math
+
+import numpy as np
+
+from synth import envelope, filters, instruments, noise, osc
+from synth.core import SAMPLE_RATE, loop_freq, note_freq, place, samples
+from synth.loop import periodic
+
+# ------------------------------------------------------------------------------------------------------- the cut
+
+CUT_CHARGE_LABELS = ("fresh", "resume")
+CUT_CHARGE_NOTES = {"fresh": ("D5", "E5", "F#5", "A5"), "resume": ("F#5", "A5")}
+CUT_CHARGE_SECONDS = {"fresh": 0.65, "resume": 0.3}
+
+
+def _glass(freq: float, seconds: float) -> np.ndarray:
+    return instruments.glass_chime(freq, seconds, decay=0.5) * 0.5
+
+
+def _chassis_thump(seconds: float, hz: float = 60.0) -> np.ndarray:
+    """A felt low thump through 07's body: a short sine drop, low-passed hard."""
+    n = samples(seconds)
+    body = osc.sine(n, osc.glide(n, hz * 1.4, hz, time_constant=0.02)) * envelope.ar(n, 0.004, seconds * 0.8)
+    return filters.lowpass(body, 180.0)
+
+
+def cut_charge(variant, _gen):
+    """The emitter charging (feel-pass section 3.1): a soft glassy arpeggio spread over the charge (D E F# A over
+    0.65 s fresh; F# A over 0.3 s on a resume, the seam still warm) over a low chassis 'inhale' hum."""
+    label = CUT_CHARGE_LABELS[variant]
+    notes = CUT_CHARGE_NOTES[label]
+    span = CUT_CHARGE_SECONDS[label]
+    n = samples(span + 0.6)
+    mix = np.zeros(n)
+    for index, note in enumerate(notes):
+        place(mix, _glass(note_freq(note), 0.6) * (0.6 + 0.12 * index), samples(span * index / len(notes)))
+    inhale_n = samples(span + 0.15)
+    inhale = osc.additive(inhale_n, note_freq("D2"), [(1, 1.0), (2, 0.3)])
+    inhale *= envelope.segments(inhale_n, [(0.0, 0.0), (span, 1.0), (span + 0.15, 0.0)], shape="smooth")
+    place(mix, 0.25 * filters.lowpass(inhale, 220.0), 0)
+    return filters.lowpass(mix, 6000.0)
+
+
+def cut_cancel(_variant, _gen):
+    """A charge let go: a soft falling A -> F#, glassy and small."""
+    n = samples(0.7)
+    mix = np.zeros(n)
+    place(mix, 0.55 * _glass(note_freq("A5"), 0.5), 0)
+    place(mix, 0.45 * _glass(note_freq("F#5"), 0.5), samples(0.12))
+    return filters.lowpass(mix, 5000.0)
+
+
+def cut_ignite(_variant, gen):
+    """Ignition: a bright 'zing' on D6 that settles in 0.3 s, plus a felt ~60 Hz thump through the chassis."""
+    n = samples(0.6)
+    zing = osc.sine(n, osc.glide(n, note_freq("D6") * 1.03, note_freq("D6"), time_constant=0.03))
+    zing *= envelope.ar(n, 0.002, 0.35)
+    sheen = filters.bandpass(noise.white(n, gen), 3000.0, 2.0) * envelope.ar(n, 0.001, 0.08)
+    mix = 0.35 * zing + 0.05 * sheen
+    place(mix, 0.4 * _chassis_thump(0.12), 0)
+    return filters.lowpass(mix, 7000.0)
+
+
+CUT_SIZZLE_LOOP_S = 3.0
+
+
+def cut_sizzle(_variant, gen):
+    """The beam heard through 07's body while it cuts: a low-passed, close sizzle with a slow shimmer. Seamless."""
+    n = samples(CUT_SIZZLE_LOOP_S)
+    hiss = periodic(noise.white(n, gen), lambda x: filters.lowpass(filters.highpass(noise.pink_filter(x), 300.0),
+                                                                   1400.0))
+    hiss = hiss / max(float(np.std(hiss)), 1e-9)
+    shimmer = envelope.lfo(n, 6.0 / CUT_SIZZLE_LOOP_S, 0.2, 0.8)
+    return 0.12 * hiss * shimmer
+
+
+def cut_crack(_variant, gen):
+    """The piece breaking free: a soft high B pluck and a felt thud through the wreck and the chassis."""
+    n = samples(1.2)
+    pluck = instruments.kalimba(note_freq("B5"), 1.0, gen, decay=0.6)
+    mix = np.zeros(n)
+    place(mix, 0.5 * pluck, 0)
+    place(mix, 0.9 * _chassis_thump(0.18, 52.0), 0)
+    return filters.lowpass(mix, 5500.0)
+
+
+def strap_tuk(_variant, gen):
+    """A strap cinching a bundle (the cut's fold, a relic stowed in the cradle): a short muted 'tuk' on E."""
+    n = samples(0.35)
+    tone = osc.sine(n, osc.glide(n, note_freq("E4") * 1.08, note_freq("E4"), time_constant=0.01))
+    tone *= envelope.ar(n, 0.002, 0.08)
+    slap = filters.bandpass(noise.white(n, gen), 900.0, 1.4) * envelope.ar(n, 0.001, 0.03)
+    return filters.lowpass(0.6 * tone + 0.12 * slap, 2500.0)
+
+
+# ------------------------------------------------------------------------------------------------------- the dock
+
+def _tick(gen, freq: float, seconds: float = 0.12) -> np.ndarray:
+    return instruments.wood_tick(freq, seconds, gen, decay=0.04)
+
+
+def dock_walls_rise(_variant, gen):
+    """The dock's four low walls rising, staggered 60 ms: soft mechanical ticks on D-A-D-A over a short servo push."""
+    n = samples(1.0)
+    mix = np.zeros(n)
+    for index, note in enumerate(("D4", "A4", "D5", "A4")):
+        place(mix, 0.45 * _tick(gen, note_freq(note)), samples(0.06 * index + 0.38))
+    push_n = samples(0.5)
+    push = filters.bandpass(noise.pink_filter(noise.white(push_n, gen)), 380.0, 1.8)
+    push = push / max(float(np.std(push)), 1e-9) * envelope.segments(
+        push_n, [(0.0, 0.0), (0.1, 1.0), (0.4, 0.6), (0.5, 0.0)], shape="smooth")
+    place(mix, 0.05 * push, 0)
+    return filters.lowpass(mix, 4000.0)
+
+
+def dock_clamp(_variant, gen):
+    """The clamp closing on 07: a soft clunk felt through the chassis and a 100 ms connection crackle."""
+    n = samples(0.6)
+    mix = 0.9 * np.concatenate((_chassis_thump(0.16, 70.0), np.zeros(n - samples(0.16))))
+    crackle = filters.bandpass(noise.white(samples(0.1), gen), 2600.0, 1.2)
+    crackle *= envelope.ar(samples(0.1), 0.002, 0.06) * (gen.random(samples(0.1)) > 0.85)
+    place(mix, 0.5 * crackle, samples(0.05))
+    clunk = osc.sine(samples(0.2), note_freq("D3")) * envelope.ar(samples(0.2), 0.002, 0.1)
+    place(mix, 0.3 * clunk, 0)
+    return filters.lowpass(mix, 4500.0)
+
+
+def dock_walls_settle(_variant, gen):
+    """Full: the walls lowering, staggered (600 ms), and settling with two soft ticks on A and D."""
+    n = samples(1.2)
+    mix = np.zeros(n)
+    sink_n = samples(0.6)
+    sink = filters.bandpass(noise.pink_filter(noise.white(sink_n, gen)), 300.0, 1.8)
+    sink = sink / max(float(np.std(sink)), 1e-9) * envelope.segments(
+        sink_n, [(0.0, 0.0), (0.15, 0.7), (0.6, 0.0)], shape="smooth")
+    place(mix, 0.04 * sink, 0)
+    place(mix, 0.35 * _tick(gen, note_freq("A3")), samples(0.62))
+    place(mix, 0.3 * _tick(gen, note_freq("D3")), samples(0.72))
+    return filters.lowpass(mix, 3500.0)
+
+
+def dock_walls_drop(_variant, gen):
+    """Driving off early: the walls drop at once, a quick soft fall and one low tick."""
+    n = samples(0.5)
+    fall = filters.bandpass(noise.pink_filter(noise.white(n, gen)), 260.0, 1.5)
+    fall = fall / max(float(np.std(fall)), 1e-9) * envelope.segments(
+        n, [(0.0, 0.0), (0.04, 0.6), (0.25, 0.0)], shape="smooth")
+    mix = 0.04 * fall
+    place(mix, 0.3 * _tick(gen, note_freq("D3")), samples(0.24))
+    return filters.lowpass(mix, 3000.0)
+
+
+# ------------------------------------------------------------------------------------------- 07 speaks machine
+# Each mood is a list of syllables (note, seconds, bend_semitones at the end). Variants move the contour along the
+# pentatonic scale or stretch it, so every variant stays in D major pentatonic.
+
+PENTA = ("D4", "E4", "F#4", "A4", "B4", "D5", "E5", "F#5", "A5", "B5", "D6", "E6")
+CHIRP_MOODS = ("affirm", "happy", "proud", "curious", "worried", "tired", "relieved", "greeting")
+CHIRP_VARIANTS = 4
+CHIRP_GAP_S = 0.03
+CHIRP_LOW_HZ = note_freq("D4")
+CHIRP_HIGH_HZ = note_freq("E6")
+CHIRP_CONTOURS = {
+    "affirm": (("A5", 0.10, 0.0), ("D6", 0.12, 0.0)),
+    "happy": (("F#5", 0.10, 0.0), ("A5", 0.09, 0.0), ("B5", 0.09, 0.0), ("D6", 0.20, 0.0)),
+    "proud": (("D5", 0.12, 0.0), ("E5", 0.12, 0.0), ("F#5", 0.12, 0.0), ("A5", 0.14, 0.0), ("D6", 0.24, 0.0)),
+    "curious": (("D5", 0.13, 0.0), ("F#5", 0.13, 0.0), ("A5", 0.18, 2.0)),
+    "worried": (("B5", 0.18, 0.0), ("F#5", 0.24, -0.5)),
+    "tired": (("A5", 0.30, 0.0), ("D5", 0.55, -1.0)),
+    "relieved": (("F#5", 0.18, 0.0), ("D5", 0.22, 0.0), ("A5", 0.24, 0.0)),
+    "greeting": (("D5", 0.13, 0.0), ("A5", 0.18, 0.0)),
+}
+CHIRP_WOBBLE = {"worried": 35.0, "tired": 20.0}
+
+
+def _shift(note: str, steps: int) -> str:
+    return PENTA[max(0, min(len(PENTA) - 1, PENTA.index(note) + steps))]
+
+
+def chirp_syllables(mood: str, variant: int) -> list:
+    """``[(onset_s, freq_hz, seconds, bend)]`` for one variant: 0 as written, 1 one step up, 2 slower and one step
+    down, 3 a touch quicker with the last note held."""
+    steps = (0, 1, -1, 0)[variant]
+    stretch = (1.0, 0.95, 1.15, 0.9)[variant]
+    syllables = []
+    onset = 0.0
+    contour = CHIRP_CONTOURS[mood]
+    for index, (note, seconds, bend) in enumerate(contour):
+        length = seconds * stretch * (1.3 if variant == 3 and index == len(contour) - 1 else 1.0)
+        syllables.append((round(onset, 4), note_freq(_shift(note, steps)), round(length, 4), bend))
+        onset += length + CHIRP_GAP_S * stretch
+    return syllables
+
+
+def chirp_pitch(freq: float) -> float:
+    """0 .. 1 where a syllable sits between D4 and E6 (log), for 07's eye and antenna."""
+    return float(np.clip(math.log(freq / CHIRP_LOW_HZ) / math.log(CHIRP_HIGH_HZ / CHIRP_LOW_HZ), 0.0, 1.0))
+
+
+def _chirp(mood: str, variant: int) -> np.ndarray:
+    syllables = chirp_syllables(mood, variant)
+    total = syllables[-1][0] + syllables[-1][2] + 0.15
+    n = samples(total)
+    freq = np.full(n, syllables[0][1])
+    gate = np.zeros(n)
+    previous = syllables[0][1]
+    for onset, hz, seconds, bend in syllables:
+        start, count = samples(onset), samples(seconds)
+        glide_n = min(count, samples(0.045))
+        segment = np.full(count, hz)
+        segment[:glide_n] = osc.glide(glide_n, previous, hz, time_constant=0.012)
+        if bend:
+            tail = samples(min(seconds, 0.12))
+            segment[-tail:] *= 2.0 ** (np.linspace(0.0, bend, tail) / 12.0)
+        freq[start:start + count] = segment
+        freq[start + count:] = segment[-1]
+        gate[start:start + count] = envelope.segments(count, [(0.0, 0.0), (0.008, 1.0), (seconds - 0.03, 0.85),
+                                                             (seconds, 0.0)], shape="smooth")
+        previous = segment[-1]
+    wobble_cents = CHIRP_WOBBLE.get(mood, 8.0)
+    t = np.arange(n) / SAMPLE_RATE
+    freq = freq * 2.0 ** (wobble_cents * np.sin(2.0 * math.pi * 6.5 * t) / 1200.0)
+    tone = 0.7 * osc.sine(n, freq) + 0.18 * osc.square(n, freq)
+    return filters.lowpass(filters.lowpass(tone * gate, 2600.0), 3200.0) * 0.5
+
+
+def _chirp_render(mood: str):
+    def render(variant, _gen):
+        return _chirp(mood, variant)
+
+    render.__doc__ = f"07's machine voice, mood {mood} (feel-pass section 7.2): sine and square through a soft " \
+                     "low-pass, 30-60 ms glides, a slight wobble."
+    return render
+
+
+CHIRP_RENDERS = {mood: _chirp_render(mood) for mood in CHIRP_MOODS}
+
+
+def chirp_bank_data() -> dict:
+    """The syllable data the game reads (tools/audio/chirp_syllables.json)."""
+    moods = []
+    for mood in CHIRP_MOODS:
+        variants = []
+        for variant in range(CHIRP_VARIANTS):
+            syllables = chirp_syllables(mood, variant)
+            variants.append({"onsets": [s[0] for s in syllables],
+                             "pitches": [round(chirp_pitch(s[1]), 4) for s in syllables],
+                             "lengths": [s[2] for s in syllables]})
+        moods.append({"mood": mood, "cue": f"chirp_{mood}", "variants": variants})
+    return {"version": 1, "moods": moods}
+
+
+# ------------------------------------------------------------------------------------- the first hour's silences
+
+NODE_LIGHT_NOTES = ("D5", "E5", "F#5", "A5", "B5")
+
+
+def node_light(variant, gen):
+    """A tech node lighting in the lab: a soft bloom pop and one pentatonic step (by branch)."""
+    n = samples(1.4)
+    mix = np.zeros(n)
+    place(mix, 0.5 * instruments.soft_bell(note_freq(NODE_LIGHT_NOTES[variant]), 1.3, decay=0.9), samples(0.04))
+    pop = filters.bandpass(noise.white(samples(0.06), gen), 1200.0, 1.0) * envelope.ar(samples(0.06), 0.002, 0.03)
+    place(mix, 0.15 * pop, 0)
+    return filters.lowpass(mix, 5000.0)
+
+
+def cable_ticks(_variant, gen):
+    """The lamp pulse running down the cable to the plotter: a travelling 'tick-tick-tick' on A, slowing as it lands."""
+    n = samples(1.8)
+    mix = np.zeros(n)
+    times = (0.0, 0.22, 0.42, 0.6, 0.78, 0.98, 1.22)
+    for index, at in enumerate(times):
+        place(mix, (0.22 + 0.03 * index) * _tick(gen, note_freq("A5"), 0.08), samples(at))
+    return filters.lowpass(mix, 4500.0)
+
+
+def component_found(_variant, gen):
+    """A component lifting free of its wreck: a two-note 'found', E -> A."""
+    n = samples(1.6)
+    mix = np.zeros(n)
+    place(mix, 0.5 * instruments.kalimba(note_freq("E5"), 1.0, gen, decay=0.8), 0)
+    place(mix, 0.6 * instruments.kalimba(note_freq("A5"), 1.3, gen, decay=1.1), samples(0.16))
+    return filters.lowpass(mix, 5500.0)
+
+
+BOOST_LOOP_S = 2.0
+
+
+def boost_whine(_variant, _gen):
+    """The capacitor drums boosting: a soft rising-feeling whine on A with a slow shimmer. Seamless."""
+    n = samples(BOOST_LOOP_S)
+    a = loop_freq(note_freq("A4"), n)
+    tone = osc.additive(n, a, [(1, 1.0), (2, 0.25), (4, 0.08)]) * envelope.lfo(n, 4.0 / BOOST_LOOP_S, 0.15, 0.85)
+    return periodic(0.12 * tone, lambda x: filters.lowpass(x, 2500.0))
+
+
+def boost_release(_variant, gen):
+    """The drums emptying: a short 'fff' of air-less release (felt, not heard) and a tick on D."""
+    n = samples(0.6)
+    fff = filters.bandpass(noise.white(n, gen), 1500.0, 0.8) * envelope.ar(n, 0.01, 0.25)
+    mix = 0.06 * fff
+    place(mix, 0.3 * _tick(gen, note_freq("D5"), 0.1), samples(0.3))
+    return filters.lowpass(mix, 4000.0)
+
+
+def page_tick(_variant, gen):
+    """A new step's line showing: a breath-quiet page-turn tick."""
+    n = samples(0.2)
+    paper = filters.bandpass(noise.white(n, gen), 2400.0, 0.9) * envelope.ar(n, 0.004, 0.05)
+    return filters.lowpass(0.08 * paper + 0.15 * _tick(gen, note_freq("A5"), 0.2), 5000.0)
+
+
+def save_tick(_variant, gen):
+    """The game saved: a tiny soft tick on D."""
+    return filters.lowpass(0.25 * _tick(gen, note_freq("D6"), 0.15), 5000.0)
+
+
+COUNT_TICK_NOTES = ("D5", "E5", "F#5", "A5", "B5", "D6")
+
+
+def count_tick(variant, gen):
+    """The stock counter rolling one unit (feel-pass CountTick): a soft rising pentatonic tick."""
+    return filters.lowpass(0.25 * _tick(gen, note_freq(COUNT_TICK_NOTES[variant]), 0.15), 5000.0)
+
+
+def window_click(_variant, gen):
+    """A home window lighting: one warm click, heard from outside."""
+    n = samples(0.3)
+    click = filters.bandpass(noise.white(n, gen), 1100.0, 1.2) * envelope.ar(n, 0.001, 0.03)
+    return filters.lowpass(0.12 * click + 0.2 * _tick(gen, note_freq("D4"), 0.3), 2500.0)
