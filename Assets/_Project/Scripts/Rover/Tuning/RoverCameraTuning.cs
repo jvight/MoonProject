@@ -395,6 +395,16 @@ namespace MoonProject.Rover
         [Tooltip("Orbital follow position damping (x, y, z): high = floaty drone.")]
         [SerializeField] private Vector3 _positionDamping = new Vector3(1.1f, 0.9f, 1.3f);
 
+        [Tooltip("Share of the position and aim damping kept while the player holds a view of their own (not following "
+            + "07): the camera then keeps up with 07, so 07 stays put on screen and the view's heading holds while "
+            + "07 drives and turns under it.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _freeLookDampingShare = 0.15f;
+
+        [Tooltip("Half-life (s) of the damping easing between following 07 and a view of the player's own.")]
+        [Range(0.05f, 3f)]
+        [SerializeField] private float _freeLookDampingHalfLife = 0.4f;
+
         [Tooltip("Rotation composer damping (horizontal, vertical).")]
         [SerializeField] private Vector2 _aimDamping = new Vector2(0.6f, 0.5f);
 
@@ -595,6 +605,10 @@ namespace MoonProject.Rover
         public float HeldShotYawStep => _heldShotYawStep;
 
         public Vector3 PositionDamping => _positionDamping;
+
+        public float FreeLookDampingShare => _freeLookDampingShare;
+
+        public float FreeLookDampingHalfLife => _freeLookDampingHalfLife;
 
         public Vector2 AimDamping => _aimDamping;
 
