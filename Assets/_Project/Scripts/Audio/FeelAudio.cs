@@ -16,6 +16,10 @@ namespace MoonProject.Audio
     /// <item>the dock (Kind Dock): the walls rising (Anticipate), the clamp (Impact), the walls settling (Reward; the
     /// full chord and the per-cell notes are <see cref="StationAudio"/>'s and <see cref="BatteryAudio"/>'s), the quick
     /// drop (Cancel);</item>
+    /// <item>the tower coming online (Kind Build): a rising hum (Anticipate; the parts' clunks are the hopper's,
+    /// <see cref="StationAudio"/>), one pentatonic bell per lamp ring (Act, strength 0.25 .. 1), the beacon's thoom and
+    /// D major chord (Impact); the radio steps back for it and comes in again at Follow 0 (<see cref="RadioStation"/>);
+    /// </item>
     /// <item>the first hour's small moments: a tech node lighting, the decode's cable ticks, a component found, the
     /// drums' boost whine and release, a relic strapped into the cradle, a new step's page tick, one save tick per
     /// burst, the dock evening's swell, the stock count rolling up (one rising tick per unit, rate-capped and topping
@@ -68,6 +72,10 @@ namespace MoonProject.Audio
         private CueHandle _saveTick;
         private CueHandle _eveningSwell;
         private CueHandle _countTick;
+        private CueHandle _towerHum;
+        private CueHandle _towerRing;
+        private CueHandle _towerThoom;
+        private int _ringNotes;
         private CueHandle _windowClick;
         private int _countNotes;
         private float _sinceCount = float.MaxValue;
@@ -110,11 +118,15 @@ namespace MoonProject.Audio
             _eveningSwell = director.Resolve(AudioCueIds.DockEveningSwell);
             _countTick = director.Resolve(AudioCueIds.CountTick);
             _windowClick = director.Resolve(AudioCueIds.WindowClick);
+            _towerHum = director.Resolve(AudioCueIds.TowerHumRise);
+            _towerRing = director.Resolve(AudioCueIds.TowerRing);
+            _towerThoom = director.Resolve(AudioCueIds.TowerThoom);
             if (!(_charge.IsValid && _cancel.IsValid && _ignite.IsValid && sizzle.IsValid && _crack.IsValid &&
                   _strap.IsValid && _wallsRise.IsValid && _clamp.IsValid && _wallsSettle.IsValid &&
                   _wallsDrop.IsValid && _nodeLight.IsValid && _cableTicks.IsValid && _found.IsValid &&
                   boost.IsValid && _boostRelease.IsValid && _pageTick.IsValid && _saveTick.IsValid &&
-                  _eveningSwell.IsValid && _countTick.IsValid && _windowClick.IsValid))
+                  _eveningSwell.IsValid && _countTick.IsValid && _windowClick.IsValid &&
+                  _towerHum.IsValid && _towerRing.IsValid && _towerThoom.IsValid))
             {
                 enabled = false;
                 return;
@@ -124,6 +136,7 @@ namespace MoonProject.Audio
             _rover = context.Get<IRoverState>();
             _nodeVariants = director.Library.GetCue(_nodeLight).ClipCount;
             _countNotes = director.Library.GetCue(_countTick).ClipCount;
+            _ringNotes = director.Library.GetCue(_towerRing).ClipCount;
             _sizzleSource = director.CreateLoopSource(transform, "CutSizzle", sizzle, 1f);
             _sizzleCueVolume = director.Library.GetCue(sizzle).VolumeMax;
             _boostSource = director.CreateLoopSource(transform, "BoostWhine", boost, 1f);
@@ -185,6 +198,27 @@ namespace MoonProject.Audio
                     break;
                 case FeelKind.Dock:
                     OnDockBeat(beat);
+                    break;
+                case FeelKind.Build:
+                    OnBuildBeat(beat);
+                    break;
+            }
+        }
+
+        /// <summary>The tower comes online (feel-pass 8.2); Follow and Reward are the radio's and the UI's.</summary>
+        private void OnBuildBeat(FeelBeat beat)
+        {
+            switch (beat.Phase)
+            {
+                case FeelPhase.Anticipate:
+                    _director.PlayAt(_towerHum, beat.Position);
+                    break;
+                case FeelPhase.Act:
+                    int ring = Mathf.Clamp(Mathf.CeilToInt(beat.Strength * _ringNotes) - 1, 0, _ringNotes - 1);
+                    _director.PlayVariantAt(_towerRing, ring, beat.Position);
+                    break;
+                case FeelPhase.Impact:
+                    _director.PlayAt(_towerThoom, beat.Position);
                     break;
             }
         }

@@ -566,6 +566,96 @@
       "notes": "07's machine voice, greeting (feel-pass 7.2); syllables in chirp_syllables.json."
     },
     {
+      "id": "tower_hum_rise",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/tower_hum_rise.wav"
+      ],
+      "variantLabels": [
+        "tower_hum_rise"
+      ],
+      "sha256": [
+        "e43c8b564d79ba233b3404751d2bdefc0256a3d9d730870b010d8543ecbaec76"
+      ],
+      "volumeMin": 0.7,
+      "volumeMax": 0.7,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "The tower taking its parts (Build Anticipate): a low D2 -> A2 hum rising over ~1.2 s."
+    },
+    {
+      "id": "tower_ring",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/tower_ring_01.wav",
+        "Assets/_Project/Audio/SFX/tower_ring_02.wav",
+        "Assets/_Project/Audio/SFX/tower_ring_03.wav",
+        "Assets/_Project/Audio/SFX/tower_ring_04.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02",
+        "03",
+        "04"
+      ],
+      "sha256": [
+        "002ed62a46ec91aab31931e7e2c0d811e7557e2e061ee24a2efcdf8259ce0c1d",
+        "043709afe163491be80e5fa4e1314ab4abee4a921028c03d0fe032dded13b061",
+        "8600cff27943713d083fc432a2ac5d3d8089ff6c746f500e75dffbeb23a3c8a0",
+        "01cb218b08fc675b8844ff3877ee92b6ceebced36e79799ddf163ec5974ab6bd"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "A tower lamp ring lighting (Build Act x4): D E F# A, bottom to top."
+    },
+    {
+      "id": "tower_thoom",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/tower_thoom.wav"
+      ],
+      "variantLabels": [
+        "tower_thoom"
+      ],
+      "sha256": [
+        "af2a4b66499d7225a6e7fa85e1dd5458c419e06d0e13069ae8695754f6b4f680"
+      ],
+      "volumeMin": 0.75,
+      "volumeMax": 0.75,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "The beacon flares (Build Impact): a deep soft thoom and a D major chord."
+    },
+    {
       "id": "node_light",
       "category": "stinger_2d",
       "milestone": "M3",
