@@ -628,7 +628,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             Transform lamp = Block(plotterRoot, new Vector3(0.6f, 1f, 0.17f), new Vector3(0.05f, 0.05f, 0.05f));
             lamp.name = "PlotterLamp";
             Transform board = Node("Blueprints", bay, new Vector3(-2.2f, 1.6f, -1.6f));
-            foreach (string ability in new[] { "HoverJump", "CargoCradle", "WarmHeadlamp", "BoostCoils", "CellPack" })
+            foreach (string ability in new[]
+                     {
+                         "HoverJump", "CargoCradle", "WarmHeadlamp", "BoostCoils", "CellPack", "FocusLens", "SideBins",
+                     })
             {
                 Block(board, Vector3.zero, new Vector3(0.3f, 0.4f, 0.01f)).name = "Blueprint_" + ability;
             }

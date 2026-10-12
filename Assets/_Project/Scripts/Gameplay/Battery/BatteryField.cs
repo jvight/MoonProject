@@ -19,7 +19,7 @@ namespace MoonProject.Gameplay
     /// the nearest lit charger until 07 charges. A finished charge keeps the day (saves). Allocation-free per frame.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class BatteryField : MonoBehaviour
+    public sealed class BatteryField : MonoBehaviour, IChargerReach
     {
         private const string LowDockLine = "battery.low.dock";
         private const string LowMastLine = "battery.low.mast";
@@ -49,6 +49,7 @@ namespace MoonProject.Gameplay
         private Friend _leader;
         private DroneBody _leaderBody;
         private Vector3 _nearestLit;
+        private int _nearestLitNode = Dock;
         private string[] _nodeNames = Array.Empty<string>();
         private Vector3 _lastPosition;
         private float _pillarUntil;
@@ -65,6 +66,28 @@ namespace MoonProject.Gameplay
         public BatteryModel Model { get; private set; }
 
         public BatteryTuning Tuning => _tuning;
+
+        /// <summary>The dock counts from the start: home always charges 07 (docs/design/first-hour-qa.md #8).</summary>
+        public bool HasCharger => _initialized;
+
+        public Vector3 NearestPosition => _nearestLit;
+
+        public string NearestNameKey => _nodeNames[_nearestLitNode];
+
+        public float DistanceToNearest => Mathf.Sqrt(SurfaceRules.HorizontalDistanceSquared(_rover.Position, _nearestLit));
+
+        /// <summary>
+        /// The share of a full battery the way to the nearest lit charger takes, with the Low warning's margins (its
+        /// route factor and range margin), so the dial's tick and the warning agree.
+        /// </summary>
+        public float ChargeToReach
+        {
+            get
+            {
+                float metres = DistanceToNearest * _tuning.LowRouteFactor * _tuning.LowRangeMargin;
+                return Mathf.Clamp01(metres / (_tuning.MetresPerCell * Mathf.Max(1, Model.Cells)));
+            }
+        }
 
         /// <summary>The Low warning's pillar stands (or is still rising).</summary>
         public bool PillarShown => _pillar != null && _pillar.Shown;
@@ -225,7 +248,8 @@ namespace MoonProject.Gameplay
             _lastPosition = position;
 
             int charger = ChargerUnder(position);
-            _nearestLit = ChargerPosition(NearestCharger(position, true));
+            _nearestLitNode = NearestCharger(position, true);
+            _nearestLit = ChargerPosition(_nearestLitNode);
             bool friendHome = _leader.Progress.State == FriendState.Awake;
             return new BatteryStep
             {

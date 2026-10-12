@@ -352,6 +352,7 @@ namespace MoonProject.Gameplay
             context.Register<IComponentGate>(TowerParts);
             _home.Dock.Connect(_battery.Model);
             context.Register<IRoverBattery>(_battery.Model);
+            context.Register<IChargerReach>(_battery);
             context.Register<IBeamStatus>(services.Beam);
             context.Register<ITechTree>(Tech);
             context.Register<IRecoveryProgress>(Recovery);
