@@ -5,36 +5,6 @@
   "audioRoot": "Assets/_Project/Audio",
   "cues": [
     {
-      "id": "cut_charge",
-      "category": "oneshot_3d",
-      "milestone": "M3",
-      "bus": "Sfx",
-      "spatial": true,
-      "loop": false,
-      "files": [
-        "Assets/_Project/Audio/SFX/cut_charge_fresh.wav",
-        "Assets/_Project/Audio/SFX/cut_charge_resume.wav"
-      ],
-      "variantLabels": [
-        "fresh",
-        "resume"
-      ],
-      "sha256": [
-        "a69b4d51e9e0ff8f7a9920603c2253192b3a4ec4ad5ff3db9c2f84c417072f10",
-        "ccb047d6e5709c2de7149635f958df839ac152957b289bf71ed878ae670912f0"
-      ],
-      "volumeMin": 0.6,
-      "volumeMax": 0.6,
-      "pitchMin": 1.0,
-      "pitchMax": 1.0,
-      "targetLufs": -18.0,
-      "loudnessMode": "momentary",
-      "hfCutoffHz": 8000.0,
-      "hfMaxDb": -30.0,
-      "tonal": false,
-      "notes": "The emitter charging: glassy D E F# A over 0.65 s (fresh) or F# A over 0.3 s (resume), over a low chassis inhale."
-    },
-    {
       "id": "cut_cancel",
       "category": "oneshot_3d",
       "milestone": "M3",
@@ -60,33 +30,6 @@
       "hfMaxDb": -30.0,
       "tonal": false,
       "notes": "A charge let go: a soft falling A -> F#."
-    },
-    {
-      "id": "cut_ignite",
-      "category": "oneshot_3d",
-      "milestone": "M3",
-      "bus": "Sfx",
-      "spatial": true,
-      "loop": false,
-      "files": [
-        "Assets/_Project/Audio/SFX/cut_ignite.wav"
-      ],
-      "variantLabels": [
-        "cut_ignite"
-      ],
-      "sha256": [
-        "50552f9f322782bb8d58a3482b2a2f1b9124bcb4e62f43f3f75a967ce60c9361"
-      ],
-      "volumeMin": 0.65,
-      "volumeMax": 0.65,
-      "pitchMin": 1.0,
-      "pitchMax": 1.0,
-      "targetLufs": -18.0,
-      "loudnessMode": "momentary",
-      "hfCutoffHz": 8000.0,
-      "hfMaxDb": -30.0,
-      "tonal": false,
-      "notes": "Ignition: a zing on D6 plus a felt 60 Hz chassis thump."
     },
     {
       "id": "cut_sizzle",
@@ -771,6 +714,114 @@
       "hfMaxDb": -30.0,
       "tonal": false,
       "notes": "The beam moving to the next cut line: a tick and a slide onto the next step."
+    },
+    {
+      "id": "cargo_tok",
+      "category": "tick_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/cargo_tok.wav"
+      ],
+      "variantLabels": [
+        "cargo_tok"
+      ],
+      "sha256": [
+        "d86d2af3366d3216afde536dcce5549de8412197f7d14250e996c8760866ecaf"
+      ],
+      "volumeMin": 0.7,
+      "volumeMax": 0.7,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -26.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "The cargo hold full (M3-25): a soft tok on the lid."
+    },
+    {
+      "id": "shelf_chord",
+      "category": "stinger_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/shelf_chord.wav"
+      ],
+      "variantLabels": [
+        "shelf_chord"
+      ],
+      "sha256": [
+        "9f36c1e1291051e79e2ab6a97c61c6cd264f6eab6a70fbb98358c61183a97706"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -20.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "A shelf built at home (M3-25): a warm D major chord."
+    },
+    {
+      "id": "crate_latch",
+      "category": "tick_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/crate_latch.wav"
+      ],
+      "variantLabels": [
+        "crate_latch"
+      ],
+      "sha256": [
+        "96374287ca3add33e80fb886551095b1170f029a974bd7d1e1249f301f29449c"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -26.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "A crew supply crate opened (M3-25): a latch and a soft paper rustle for the note."
+    },
+    {
+      "id": "tilly_fetch",
+      "category": "stinger_2d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": false,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/2D/tilly_fetch.wav"
+      ],
+      "variantLabels": [
+        "tilly_fetch"
+      ],
+      "sha256": [
+        "d5f83dd3eda2583f7955edb05556a0495365f47365a8dff9b58887046867ed1d"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -20.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "Tilly fetching a bundle from the shelves (M3-25): a soft drag and her A5 -> D6 'got it'."
     },
     {
       "id": "pickup_lift",

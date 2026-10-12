@@ -9,10 +9,16 @@ namespace MoonProject.Audio
     /// The 0.5.2 feel beats in sound (docs/design/feel-pass.md, polish-pass.md section 1.1), at most three layers per
     /// beat and mezzo-piano peaks:
     /// <list type="bullet">
-    /// <item>the cut and the dig (<see cref="FeelBeat"/>): a glassy charge arpeggio over <c>Seconds</c> (two notes on a
-    /// resume) and a falling A-F# on Cancel; ignition's zing and chassis thump (Act, strength 0); the sizzle through
-    /// 07's body following progress (later Acts); the crack (Impact); a strap tuk at the fold (Follow, strength 1).
-    /// The beam's singing climb and the collect melody stay <see cref="SalvageAudio"/>'s;</item>
+    /// <item>the cut and the dig (<see cref="FeelBeat"/>, docs/features/M3-26): the charge run, one pentatonic note
+    /// per lamp of <see cref="ICutter.LampCount"/> easing in over <c>Seconds</c> from <c>Strength</c> x the count
+    /// (<see cref="ChargeRun"/>), over a low inhale (plus a sustained low D at the top tier), and a falling A-F# on
+    /// Cancel; ignition's zing and thump, brighter per tier (Act, strength 0); the sizzle through 07's body following
+    /// progress, with a deeper undertone per tier (later Acts); the tick-slide onto the next cut line (Follow 0.5); the
+    /// crack (Impact); a strap tuk at the fold (Follow 1). The beam's singing climb and the collect melody stay
+    /// <see cref="SalvageAudio"/>'s;</item>
+    /// <item>cargo and storage (M3-25): a tok on the full hold's lid, a rising note per crate on the dock's belt (Kind
+    /// Cargo Act) and its bump (Impact), a warm chord for a shelf built, a crew crate's latch and note, Tilly's
+    /// fetch;</item>
     /// <item>the dock (Kind Dock): the walls rising (Anticipate), the clamp (Impact), the walls settling (Reward; the
     /// full chord and the per-cell notes are <see cref="StationAudio"/>'s and <see cref="BatteryAudio"/>'s), the quick
     /// drop (Cancel);</item>
@@ -32,9 +38,8 @@ namespace MoonProject.Audio
     [DisallowMultipleComponent]
     public sealed class FeelAudio : MonoBehaviour
     {
-        private const int SubscriptionCount = 11;
-        private const int ChargeFresh = 0;
-        private const int ChargeResume = 1;
+        private const int SubscriptionCount = 15;
+        private const float SegmentFollow = 0.5f;
         private const float SilentVolume = 0.001f;
         private const float SemitonesPerOctave = 12f;
 
@@ -47,6 +52,22 @@ namespace MoonProject.Audio
         private readonly IDisposable[] _subscriptions = new IDisposable[SubscriptionCount];
         private readonly EasedValue _sizzle = new EasedValue(0f);
         private readonly EasedValue _boost = new EasedValue(0f);
+        private readonly ChargeRun _run = new ChargeRun();
+        private ICutter _cutter;
+        private Vector3 _runAt;
+        private AudioSource _undertoneSource;
+        private float _undertoneCueVolume;
+        private int _segment;
+        private int _lampNotes;
+        private int _segmentNotes;
+        private CueHandle _lamp;
+        private CueHandle _inhale;
+        private CueHandle _lowD;
+        private CueHandle _segmentSlide;
+        private CueHandle _cargoTok;
+        private CueHandle _shelfChord;
+        private CueHandle _crateLatch;
+        private CueHandle _tillyFetch;
         private AudioDirector _director;
         private IRoverState _rover;
         private AudioSource _sizzleSource;
@@ -57,7 +78,6 @@ namespace MoonProject.Audio
         private bool _boosting;
         private float _sinceSave = float.MaxValue;
         private string _lastStep = string.Empty;
-        private CueHandle _charge;
         private CueHandle _cancel;
         private CueHandle _ignite;
         private CueHandle _crack;
@@ -102,9 +122,17 @@ namespace MoonProject.Audio
                 return;
             }
 
-            _charge = director.Resolve(AudioCueIds.CutCharge);
+            _lamp = director.Resolve(AudioCueIds.ChargeLamp);
+            _inhale = director.Resolve(AudioCueIds.ChargeInhale);
+            _lowD = director.Resolve(AudioCueIds.ChargeLowD);
+            CueHandle undertone = director.Resolve(AudioCueIds.CutUndertone);
+            _segmentSlide = director.Resolve(AudioCueIds.SegmentSlide);
+            _cargoTok = director.Resolve(AudioCueIds.CargoTok);
+            _shelfChord = director.Resolve(AudioCueIds.ShelfChord);
+            _crateLatch = director.Resolve(AudioCueIds.CrateLatch);
+            _tillyFetch = director.Resolve(AudioCueIds.TillyFetch);
             _cancel = director.Resolve(AudioCueIds.CutCancel);
-            _ignite = director.Resolve(AudioCueIds.CutIgnite);
+            _ignite = director.Resolve(AudioCueIds.CutIgniteTier);
             CueHandle sizzle = director.Resolve(AudioCueIds.CutSizzle);
             _crack = director.Resolve(AudioCueIds.CutCrack);
             _strap = director.Resolve(AudioCueIds.StrapTuk);
@@ -127,7 +155,9 @@ namespace MoonProject.Audio
             _towerThoom = director.Resolve(AudioCueIds.TowerThoom);
             _pickupLift = director.Resolve(AudioCueIds.PickupLift);
             _pickupClunk = director.Resolve(AudioCueIds.PickupClunk);
-            if (!(_charge.IsValid && _cancel.IsValid && _ignite.IsValid && sizzle.IsValid && _crack.IsValid &&
+            if (!(_lamp.IsValid && _inhale.IsValid && _lowD.IsValid && undertone.IsValid && _segmentSlide.IsValid &&
+                  _cargoTok.IsValid && _shelfChord.IsValid && _crateLatch.IsValid && _tillyFetch.IsValid &&
+                  _cancel.IsValid && _ignite.IsValid && sizzle.IsValid && _crack.IsValid &&
                   _strap.IsValid && _wallsRise.IsValid && _clamp.IsValid && _wallsSettle.IsValid &&
                   _wallsDrop.IsValid && _nodeLight.IsValid && _cableTicks.IsValid && _found.IsValid &&
                   boost.IsValid && _boostRelease.IsValid && _pageTick.IsValid && _saveTick.IsValid &&
@@ -141,6 +171,12 @@ namespace MoonProject.Audio
 
             _director = director;
             _rover = context.Get<IRoverState>();
+            _cutter = context.Get<ICutter>();
+            AudioLibrary library = director.Library;
+            _lampNotes = library.GetCue(_lamp).ClipCount;
+            _segmentNotes = library.GetCue(_segmentSlide).ClipCount;
+            _undertoneSource = director.CreateLoopSource(transform, "CutUndertone", undertone, 1f);
+            _undertoneCueVolume = library.GetCue(undertone).VolumeMax;
             _nodeVariants = director.Library.GetCue(_nodeLight).ClipCount;
             _countNotes = director.Library.GetCue(_countTick).ClipCount;
             _ringNotes = director.Library.GetCue(_towerRing).ClipCount;
@@ -161,6 +197,10 @@ namespace MoonProject.Audio
             _subscriptions[8] = events.Subscribe<DockEveningOpened>(OnDockEveningOpened);
             _subscriptions[9] = events.Subscribe<StockCountTicked>(OnStockCountTicked);
             _subscriptions[10] = events.Subscribe<HomeWindowLit>(OnHomeWindowLit);
+            _subscriptions[11] = events.Subscribe<CargoOverflowed>(OnCargoOverflowed);
+            _subscriptions[12] = events.Subscribe<ShelfBuilt>(OnShelfBuilt);
+            _subscriptions[13] = events.Subscribe<CrewCrateOpened>(OnCrewCrateOpened);
+            _subscriptions[14] = events.Subscribe<BundleFetched>(OnBundleFetched);
         }
 
         private void Update()
@@ -176,6 +216,13 @@ namespace MoonProject.Audio
             float world = _director.Buses.Effective(AudioBus.Sfx) * _director.WorldGain;
             float sizzle = _sizzle.Step(_sizzleTarget, dt, _tuning.SizzleEase);
             Loop(_sizzleSource, sizzle * _sizzleCueVolume * world);
+            _undertoneSource.transform.position = _sizzleSource.transform.position;
+            Loop(_undertoneSource, sizzle * _tuning.UndertoneAt(_cutter.Tier) * _undertoneCueVolume * world);
+            _run.Advance(dt);
+            while (_run.TryNext(out int lamp))
+            {
+                _director.PlayVariantAt(_lamp, Mathf.Min(lamp, _lampNotes - 1), _runAt);
+            }
             float boost = _boost.Step(_boosting ? 1f : 0f, dt, _tuning.BoostEase);
             _boostSource.transform.position = _rover.Position;
             Loop(_boostSource, boost * _tuning.BoostVolume * _boostCueVolume * world);
@@ -211,6 +258,9 @@ namespace MoonProject.Audio
                     break;
                 case FeelKind.Collect:
                     OnCollectBeat(beat);
+                    break;
+                case FeelKind.Cargo:
+                    OnCargoBeat(beat);
                     break;
             }
         }
@@ -251,10 +301,18 @@ namespace MoonProject.Audio
             switch (beat.Phase)
             {
                 case FeelPhase.Anticipate:
-                    int variant = beat.Seconds >= _tuning.FreshChargeSeconds ? ChargeFresh : ChargeResume;
-                    _director.PlayVariantAt(_charge, variant, beat.Position);
+                    _runAt = beat.Position;
+                    _segment = 0;
+                    _run.Begin(_cutter.LampCount, beat.Seconds, beat.Strength);
+                    _director.PlayAt(_inhale, beat.Position);
+                    if (_cutter.Tier >= _tuning.LowDFromTier)
+                    {
+                        _director.PlayAt(_lowD, beat.Position);
+                    }
+
                     break;
                 case FeelPhase.Cancel:
+                    _run.Stop();
                     _sizzleTarget = 0f;
                     _director.PlayAt(_cancel, beat.Position);
                     break;
@@ -263,7 +321,9 @@ namespace MoonProject.Audio
                     _sizzleTarget = Mathf.Lerp(_tuning.SizzleMin, _tuning.SizzleMax, beat.Strength);
                     if (beat.Strength <= 0f)
                     {
-                        _director.PlayAt(_ignite, beat.Position);
+                        _run.Stop();
+                        int tiers = _director.Library.GetCue(_ignite).ClipCount;
+                        _director.PlayVariantAt(_ignite, Mathf.Clamp(_cutter.Tier, 0, tiers - 1), beat.Position);
                     }
 
                     break;
@@ -276,9 +336,52 @@ namespace MoonProject.Audio
                     {
                         _director.PlayAt(_strap, beat.Position);
                     }
+                    else if (Mathf.Approximately(beat.Strength, SegmentFollow))
+                    {
+                        _segment = Mathf.Min(_segment + 1, _segmentNotes - 1);
+                        _director.PlayVariantAt(_segmentSlide, _segment, beat.Position);
+                    }
 
                     break;
             }
+        }
+
+        /// <summary>The dock unloading the hold (M3-25): a rising note per crate on the belt, the bump.</summary>
+        private void OnCargoBeat(FeelBeat beat)
+        {
+            switch (beat.Phase)
+            {
+                case FeelPhase.Act:
+                    int note = Mathf.Clamp(Mathf.RoundToInt(beat.Strength * (_countNotes - 1)), 0, _countNotes - 1);
+                    _director.PlayVariantAt(_countTick, note, beat.Position);
+                    break;
+                case FeelPhase.Impact:
+                    _director.PlayAt(_pickupClunk, beat.Position);
+                    break;
+                case FeelPhase.Cancel:
+                    _director.PlayAt(_cancel, beat.Position);
+                    break;
+            }
+        }
+
+        private void OnCargoOverflowed(CargoOverflowed overflowed)
+        {
+            _director.PlayAt(_cargoTok, overflowed.Position);
+        }
+
+        private void OnShelfBuilt(ShelfBuilt built)
+        {
+            _director.Play2D(_shelfChord);
+        }
+
+        private void OnCrewCrateOpened(CrewCrateOpened opened)
+        {
+            _director.PlayAt(_crateLatch, opened.Position);
+        }
+
+        private void OnBundleFetched(BundleFetched fetched)
+        {
+            _director.Play2D(_tillyFetch);
         }
 
         private void OnDockBeat(FeelBeat beat)

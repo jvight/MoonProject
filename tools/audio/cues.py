@@ -2446,13 +2446,8 @@ def hm_chirp(_variant, gen):
 
 CUES = (
     # 0.5.2 "Satisfying" (docs/design/feel-pass.md, polish-pass.md 1.1): recipes in feel_cues.py.
-    Cue("cut_charge", "oneshot_3d", feel.cut_charge, variants=2, variant_labels=feel.CUT_CHARGE_LABELS,
-        volume=(0.6, 0.6), milestone="M3", notes="The emitter charging: glassy D E F# A over 0.65 s (fresh) or F# A "
-                                                 "over 0.3 s (resume), over a low chassis inhale."),
     Cue("cut_cancel", "oneshot_3d", feel.cut_cancel, volume=(0.5, 0.5), milestone="M3",
         notes="A charge let go: a soft falling A -> F#."),
-    Cue("cut_ignite", "oneshot_3d", feel.cut_ignite, volume=(0.65, 0.65), milestone="M3",
-        notes="Ignition: a zing on D6 plus a felt 60 Hz chassis thump."),
     Cue("cut_sizzle", "loop_3d", feel.cut_sizzle, loop=True, file_stem="cut_sizzle_loop", volume=(0.5, 0.5),
         milestone="M3", notes="The beam through 07's body: a low-passed sizzle, level by cut progress. 3 s seamless."),
     Cue("cut_crack", "oneshot_3d", feel.cut_crack, volume=(0.7, 0.7), milestone="M3",
@@ -2496,6 +2491,14 @@ CUES = (
         milestone="M3", notes="The beam's deeper hum for higher tiers: D2 + A2, level by tier. 4 s seamless."),
     Cue("segment_slide", "oneshot_3d", feel.segment_slide, variants=len(feel.SEGMENT_NOTES), volume=(0.5, 0.5),
         milestone="M3", notes="The beam moving to the next cut line: a tick and a slide onto the next step."),
+    Cue("cargo_tok", "tick_3d", feel.cargo_tok, volume=(0.7, 0.7), milestone="M3",
+        notes="The cargo hold full (M3-25): a soft tok on the lid."),
+    Cue("shelf_chord", "stinger_2d", feel.shelf_chord, volume=(0.55, 0.55), milestone="M3",
+        notes="A shelf built at home (M3-25): a warm D major chord."),
+    Cue("crate_latch", "tick_3d", feel.crate_latch, volume=(0.6, 0.6), milestone="M3",
+        notes="A crew supply crate opened (M3-25): a latch and a soft paper rustle for the note."),
+    Cue("tilly_fetch", "stinger_2d", feel.tilly_fetch, volume=(0.5, 0.5), milestone="M3",
+        notes="Tilly fetching a bundle from the shelves (M3-25): a soft drag and her A5 -> D6 'got it'."),
     Cue("pickup_lift", "oneshot_3d", feel.pickup_lift, volume=(0.6, 0.6), milestone="M3",
         notes="07 lifting a part (Collect Act): a soft servo whirr rising A2 -> D3."),
     Cue("pickup_clunk", "tick_3d", feel.pickup_clunk, volume=(0.8, 0.8), milestone="M3",

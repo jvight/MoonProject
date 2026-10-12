@@ -13,11 +13,6 @@ from synth.loop import periodic
 
 # ------------------------------------------------------------------------------------------------------- the cut
 
-CUT_CHARGE_LABELS = ("fresh", "resume")
-CUT_CHARGE_NOTES = {"fresh": ("D5", "E5", "F#5", "A5"), "resume": ("F#5", "A5")}
-CUT_CHARGE_SECONDS = {"fresh": 0.65, "resume": 0.3}
-
-
 def _glass(freq: float, seconds: float) -> np.ndarray:
     return instruments.glass_chime(freq, seconds, decay=0.5) * 0.5
 
@@ -29,23 +24,6 @@ def _chassis_thump(seconds: float, hz: float = 60.0) -> np.ndarray:
     return filters.lowpass(body, 180.0)
 
 
-def cut_charge(variant, _gen):
-    """The emitter charging (feel-pass section 3.1): a soft glassy arpeggio spread over the charge (D E F# A over
-    0.65 s fresh; F# A over 0.3 s on a resume, the seam still warm) over a low chassis 'inhale' hum."""
-    label = CUT_CHARGE_LABELS[variant]
-    notes = CUT_CHARGE_NOTES[label]
-    span = CUT_CHARGE_SECONDS[label]
-    n = samples(span + 0.6)
-    mix = np.zeros(n)
-    for index, note in enumerate(notes):
-        place(mix, _glass(note_freq(note), 0.6) * (0.6 + 0.12 * index), samples(span * index / len(notes)))
-    inhale_n = samples(span + 0.15)
-    inhale = osc.additive(inhale_n, note_freq("D2"), [(1, 1.0), (2, 0.3)])
-    inhale *= envelope.segments(inhale_n, [(0.0, 0.0), (span, 1.0), (span + 0.15, 0.0)], shape="smooth")
-    place(mix, 0.25 * filters.lowpass(inhale, 220.0), 0)
-    return filters.lowpass(mix, 6000.0)
-
-
 def cut_cancel(_variant, _gen):
     """A charge let go: a soft falling A -> F#, glassy and small."""
     n = samples(0.7)
@@ -53,17 +31,6 @@ def cut_cancel(_variant, _gen):
     place(mix, 0.55 * _glass(note_freq("A5"), 0.5), 0)
     place(mix, 0.45 * _glass(note_freq("F#5"), 0.5), samples(0.12))
     return filters.lowpass(mix, 5000.0)
-
-
-def cut_ignite(_variant, gen):
-    """Ignition: a bright 'zing' on D6 that settles in 0.3 s, plus a felt ~60 Hz thump through the chassis."""
-    n = samples(0.6)
-    zing = osc.sine(n, osc.glide(n, note_freq("D6") * 1.03, note_freq("D6"), time_constant=0.03))
-    zing *= envelope.ar(n, 0.002, 0.35)
-    sheen = filters.bandpass(noise.white(n, gen), 3000.0, 2.0) * envelope.ar(n, 0.001, 0.08)
-    mix = 0.35 * zing + 0.05 * sheen
-    place(mix, 0.4 * _chassis_thump(0.12), 0)
-    return filters.lowpass(mix, 7000.0)
 
 
 CUT_SIZZLE_LOOP_S = 3.0
@@ -458,3 +425,51 @@ def segment_slide(variant, gen):
     mix = 0.3 * slide
     place(mix, 0.2 * _tick(gen, target, 0.1), 0)
     return filters.lowpass(mix, 5000.0)
+
+
+# ------------------------------------------------------------------------------------------ M3-25: cargo and storage
+
+def cargo_tok(_variant, gen):
+    """The cargo hold is full: a soft 'tok' on its lid, a wooden knock on A3, felt more than heard."""
+    n = samples(0.3)
+    knock = _tick(gen, note_freq("A3"), 0.3)
+    thump = np.concatenate((_chassis_thump(0.08, 110.0), np.zeros(n - samples(0.08))))
+    return filters.lowpass(0.45 * knock + 0.4 * thump, 3000.0)
+
+
+def shelf_chord(_variant, _gen):
+    """A shelf built at home: a warm D major chord (D3 F#3 A3 D4) on felt bells over a soft pad, settling slowly."""
+    n = samples(3.0)
+    mix = np.zeros(n)
+    for index, note in enumerate(("D3", "F#3", "A3", "D4")):
+        place(mix, 0.25 * instruments.soft_bell(note_freq(note), 2.6, decay=1.8, attack=0.05), samples(0.05 * index))
+    place(mix, 0.1 * instruments.soft_pad(note_freq("D3"), 2.6, 0.4, 1.6, hold=0.3), 0)
+    return filters.lowpass(mix, 4000.0)
+
+
+def crate_latch(_variant, gen):
+    """A crew supply crate opened: a latch click and spring, then a soft paper rustle as the note is found."""
+    n = samples(1.2)
+    mix = np.zeros(n)
+    place(mix, 0.4 * _tick(gen, note_freq("E4"), 0.15), 0)
+    place(mix, 0.3 * _tick(gen, note_freq("B4"), 0.12), samples(0.06))
+    rustle_n = samples(0.6)
+    rustle = filters.lowpass(filters.bandpass(noise.white(rustle_n, gen), 2400.0, 0.9), 4500.0)
+    rustle *= envelope.segments(rustle_n, [(0.0, 0.0), (0.1, 1.0), (0.35, 0.5), (0.6, 0.0)], shape="smooth")
+    rustle *= 0.6 + 0.4 * (gen.random(rustle_n) > 0.7)
+    place(mix, 0.05 * rustle, samples(0.45))
+    return filters.lowpass(filters.lowpass(mix, 5000.0), 5000.0)
+
+
+def tilly_fetch(_variant, gen):
+    """Tilly fetching a bundle from the shelves: her two-note kalimba 'got it', A5 up to D6, over a soft drag."""
+    n = samples(1.3)
+    mix = np.zeros(n)
+    drag_n = samples(0.4)
+    drag = filters.bandpass(noise.pink_filter(noise.white(drag_n, gen)), 600.0, 1.2)
+    drag = drag / max(float(np.std(drag)), 1e-9) * envelope.segments(
+        drag_n, [(0.0, 0.0), (0.1, 1.0), (0.4, 0.0)], shape="smooth")
+    place(mix, 0.03 * drag, 0)
+    place(mix, 0.45 * instruments.kalimba(note_freq("A5"), 0.8, gen, decay=0.7), samples(0.3))
+    place(mix, 0.5 * instruments.kalimba(note_freq("D6"), 0.9, gen, decay=0.9), samples(0.45))
+    return filters.lowpass(mix, 6000.0)
