@@ -370,6 +370,8 @@ namespace MoonProject.Gameplay
                 bundle.Flight = PickupFlight.Duration(Vector3.Distance(at, _rig.CargoSocket.position),
                     _friends.PartFlightDuration, _friends.PartFlightPerMetre);
                 PickupReach.Lifted(_events, at, bundle.Flight);
+                _events.Publish(new FeelBeat(FeelKind.Collect, FeelPhase.Anticipate, at, Vector3.up, 1f, bundle.Flight,
+                    bundle.Material));
             }
         }
 
@@ -389,10 +391,16 @@ namespace MoonProject.Gameplay
 
             int left = _stock.Collect(bundle.Material, bundle.Units);
             int taken = bundle.Units - left;
-            PickupReach.Landed(_events, socket);
             if (taken > 0)
             {
+                _events.Publish(new FeelBeat(FeelKind.Collect, FeelPhase.Reward, socket, Vector3.up, 1f, 0f,
+                    bundle.Material));
                 _events.Publish(new CargoPickupTaken(bundle.Material, taken));
+            }
+            else
+            {
+                _events.Publish(new FeelBeat(FeelKind.Cargo, FeelPhase.Impact, socket, Vector3.up, 1f, 0f,
+                    bundle.Material));
             }
 
             if (left > 0)
