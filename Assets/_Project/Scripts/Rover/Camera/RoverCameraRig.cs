@@ -80,6 +80,7 @@ namespace MoonProject.Rover
         private bool _paused;
         private bool _crawling;
         private float _crawl;
+        private float _freeLook;
         private float _momentYaw;
         private float _momentLift;
         private float _momentPullBack;
@@ -364,7 +365,30 @@ namespace MoonProject.Rover
 
             _bumpSpring.Step(0f, _tuning.BumpFrequency, _tuning.BumpDamping, deltaTime);
             _crawl = Smoothing.Damp(_crawl, _crawling ? 1f : 0f, _tuning.CrawlHalfLife, deltaTime);
+            StepFreeLookDamping(deltaTime);
             ApplyOrbit();
+        }
+
+        /// <summary>
+        /// A view of the player's own keeps up with 07 (light position and aim damping), so 07 stays put on screen
+        /// and the rendered heading holds while 07 drives and turns under it; the floaty lag comes back as the camera
+        /// follows 07 again. Eased both ways, so the switch never jolts.
+        /// </summary>
+        private void StepFreeLookDamping(float deltaTime)
+        {
+            float target = _orbitState.IsFollowing ? 0f : 1f;
+            float previous = _freeLook;
+            _freeLook = Smoothing.Damp(_freeLook, target, _tuning.FreeLookDampingHalfLife, deltaTime);
+            if (Mathf.Approximately(previous, _freeLook))
+            {
+                return;
+            }
+
+            float share = Mathf.Lerp(1f, _tuning.FreeLookDampingShare, _freeLook);
+            TrackerSettings tracker = _orbit.TrackerSettings;
+            tracker.PositionDamping = _tuning.PositionDamping * share;
+            _orbit.TrackerSettings = tracker;
+            _composer.Damping = _tuning.AimDamping * share;
         }
 
         /// <summary>
