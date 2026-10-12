@@ -442,6 +442,23 @@ namespace MoonProject.Art.Editor
             return b;
         }
 
+        private const float BrowLowDegrees = 52f;
+        private const float BrowHighDegrees = 160f;
+        private const float BrowBackOuter = 0.2f;
+
+        /// <summary>
+        /// A point on the brow's outer curve on the head's centreline, <paramref name="degrees"/> up round the eye's
+        /// axis from its front, and the turn that stands a lamp there (+Y out of the brow), in head space.
+        /// </summary>
+        public static Vector3 BrowPoint(float degrees, out Quaternion outward)
+        {
+            float t = Mathf.InverseLerp(BrowLowDegrees, BrowHighDegrees, degrees);
+            float radius = Mathf.Lerp(BrowOuter, BrowBackOuter, t);
+            var normal = new Vector3(0f, Mathf.Sin(degrees * Mathf.Deg2Rad), Mathf.Cos(degrees * Mathf.Deg2Rad));
+            outward = Quaternion.FromToRotation(Vector3.up, normal);
+            return EyeCentre + normal * radius;
+        }
+
         /// <summary>
         /// The brow, in head space: a solid forehead around the eye's axis whose outer surface rolls forward from
         /// inside the head top down to just above the lens (tapering so it sinks into the head behind), extruded
@@ -450,20 +467,17 @@ namespace MoonProject.Art.Editor
         private static MeshRange Brow(LowPolyMeshBuilder b)
         {
             const int steps = 7;
-            const float lowDegrees = 52f;
-            const float highDegrees = 160f;
-            const float backOuter = 0.2f;
             var polygon = new Vector2[steps + 3];
             for (int i = 0; i <= steps; i++)
             {
                 float t = (float)i / steps;
-                float angle = Mathf.Lerp(lowDegrees, highDegrees, t) * Mathf.Deg2Rad;
-                float radius = Mathf.Lerp(BrowOuter, backOuter, t);
+                float angle = Mathf.Lerp(BrowLowDegrees, BrowHighDegrees, t) * Mathf.Deg2Rad;
+                float radius = Mathf.Lerp(BrowOuter, BrowBackOuter, t);
                 polygon[i] = new Vector2(-radius * Mathf.Cos(angle), radius * Mathf.Sin(angle));
             }
 
-            polygon[steps + 1] = RecipeKit.Polar(highDegrees, 0.12f);
-            polygon[steps + 2] = RecipeKit.Polar(lowDegrees + 8f, BrowInner);
+            polygon[steps + 1] = RecipeKit.Polar(BrowHighDegrees, 0.12f);
+            polygon[steps + 2] = RecipeKit.Polar(BrowLowDegrees + 8f, BrowInner);
             return b.Extrude(At(EyeCentre) * Matrix4x4.Rotate(Rotation(new Vector3(0f, 90f, 0f))), polygon, 0.62f,
                 PaletteSwatch.Enamel);
         }

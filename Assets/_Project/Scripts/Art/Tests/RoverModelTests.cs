@@ -17,7 +17,8 @@ namespace MoonProject.Art.Tests
             "Wheel_ML/Weather_Dust", "Wheel_MR", "Wheel_MR/Weather_Dust", "Wheel_RL", "Wheel_RL/Weather_Dust",
             "Wheel_RR", "Wheel_RR/Weather_Dust",
             "Neck", "Neck/Head", "Neck/Head/Eye", "Neck/Head/Eye/TetherOrigin", "Neck/Head/RingSocket", "Neck/Head/Eyelid",
-            "Neck/Head/Weather_Paint", "Neck/Head/Weather_Dust",
+            "Neck/Head/Weather_Paint", "Neck/Head/Weather_Dust", "Neck/Head/Eye/LensSocket",
+            "Neck/Head/BrowLampSocket_0", "Neck/Head/BrowLampSocket_1",
             "SolarWing", "SolarWing/CellFilled", "Antenna", "Antenna/AntennaTip", "Antenna/Pennant",
             "HeadlampSocket", "CargoSocket", "DustSocket_L", "DustSocket_R", "CoilSocket", "DrumSocket_L",
             "DrumSocket_R", "TubeSocket", "PartSocket", "SpineSocket", "DeckSocket",
@@ -27,6 +28,7 @@ namespace MoonProject.Art.Tests
         {
             "TetherOrigin", "HeadlampSocket", "CargoSocket", "DustSocket_L", "DustSocket_R", "CoilSocket",
             "DrumSocket_L", "DrumSocket_R", "TubeSocket", "PartSocket", "SpineSocket", "DeckSocket", "RingSocket",
+            "LensSocket", "BrowLampSocket_0", "BrowLampSocket_1",
         };
 
         /// <summary>The battery light bar's segments (docs/features/M3-20).</summary>
@@ -115,6 +117,54 @@ namespace MoonProject.Art.Tests
             Assert.AreEqual(Quaternion.identity, _rover.GetDescendant("TetherOrigin").LocalRotation);
             Assert.AreEqual(0f, _rover.GetDescendant("DustSocket_L").LocalPosition.y, 1e-5f);
             Assert.AreEqual(-RoverModelBuilder.WheelBase, _rover.GetDescendant("DustSocket_R").LocalPosition.z, 1e-5f);
+        }
+
+        [Test]
+        public void ChargeRun_TheBrowPairStandsOnTheBrowOverTheEye_AndTheLensSitsOnTheTether()
+        {
+            ModelNode eye = _rover.GetDescendant("Eye");
+            Assert.AreEqual(_rover.GetDescendant("TetherOrigin").LocalPosition,
+                _rover.GetDescendant(RoverModelBuilder.LensSocketName).LocalPosition, "the lens is on the beam's mouth");
+            Bounds head = _rover.GetDescendant("Head").Mesh.Geometry.Bounds;
+            float last = float.MaxValue;
+            for (int i = 0; i < RoverModelBuilder.BrowLampCount; i++)
+            {
+                ModelNode socket = _rover.GetDescendant(RoverModelBuilder.BrowLampSocketPrefix + i);
+                Vector3 up = socket.LocalRotation * Vector3.up;
+                Assert.AreEqual(0f, socket.LocalPosition.x, 1e-5f, "on the centreline (P3)");
+                Assert.Greater(socket.LocalPosition.y, eye.LocalPosition.y + 0.15f, $"brow lamp {i} is over the eye");
+                Assert.Greater(up.y, 0f, $"brow lamp {i} faces up and out");
+                Assert.Less(socket.LocalPosition.z, last, "the pair runs back from the eye");
+                Assert.LessOrEqual(socket.LocalPosition.y, head.max.y + 0.01f, $"brow lamp {i} sits on the head");
+                last = socket.LocalPosition.z;
+            }
+        }
+
+        [Test]
+        public void ChargeRunParts_GlowOnlyThroughTheirGlass()
+        {
+            var parts = new[]
+            {
+                RoverModelBuilder.CreateChargeLamp(false), RoverModelBuilder.CreateChargeLamp(true),
+                RoverModelBuilder.CreateFocusLens(),
+            };
+            foreach (ModelNode part in parts)
+            {
+                ModelNode glass = part.GetDescendant(RoverModelBuilder.ChargeGlassName);
+                Assert.IsNotNull(glass, $"{part.Name} has its glass");
+                Assert.AreEqual(ModelMaterial.PaletteGlowOff, glass.Material, $"{part.Name}'s glass starts dark");
+                for (int t = 0; t < glass.Mesh.Geometry.TriangleCount; t++)
+                {
+                    Assert.AreEqual(PaletteSwatch.EyeGlass, MeshChecks.SwatchOf(glass.Mesh.Geometry, t),
+                        $"{part.Name}'s glass glows the cutter's cyan");
+                }
+
+                MeshChecks.AssertWellFormed(part.Mesh.Geometry);
+                MeshChecks.AssertWellFormed(glass.Mesh.Geometry);
+            }
+
+            Assert.Less(RoverModelBuilder.CreateFocusLens().Mesh.Geometry.Bounds.extents.x, 0.19f,
+                "the lens clips inside the eye's rim");
         }
 
         [Test]

@@ -21,7 +21,7 @@ namespace MoonProject.Art.Editor
     /// python tools/unity_batch.py exec --method MoonProject.Art.Editor.ArtLightingPreview.Capture
     ///     [--arg scene=rover|base|towers|relics|shadow|grit|friends|workshop|bell|bellbroken|pickups|bellcorner|
     ///                  warmpoints|relaysbroken|relayslit|sites|sitesclean|salvagebits|kit|kitmain|home|homeclean|
-    ///                  builtfor07|shelves|wake_dark|wake_home|wake_bay|wake_chart|wake_pads|lab_dark|lab_lit]
+    ///                  builtfor07|shelves|focuslens|wake_dark|wake_home|wake_bay|wake_chart|wake_pads|lab_dark|lab_lit]
     /// </code>
     /// (default rover; a ';'-separated list captures several scenes in one run)
     /// rover: 07 at rest (half-lidded, head lowered, wing ajar) with its headlamp. base: the habitat lander and the
@@ -204,6 +204,10 @@ namespace MoonProject.Art.Editor
                     case "towers":
                         NightSetting(material, temporary, 90f, 12f);
                         poses = TowersScene(temporary);
+                        break;
+                    case "focuslens":
+                        NightSetting(material, temporary, 90f, 12f);
+                        poses = FocusLensScene(temporary);
                         break;
                     case "shelves":
                         NightSetting(material, temporary, 90f, 12f);
@@ -411,6 +415,55 @@ namespace MoonProject.Art.Editor
                 Pose("far55m", new[] { 8f, 8f, 55f }, new[] { 0f, 4f, 0f }, 30f),
                 Pose("plaque", new[] { plaque.x + 0.6f, plaque.y + 0.5f, plaque.z + 2.2f },
                     new[] { plaque.x, plaque.y, plaque.z }, 35f));
+        }
+
+        private static CameraPoseSet FocusLensScene(TemporaryObjects temporary)
+        {
+            Transform charged = Rover(temporary, Vector3.zero, 160f);
+            temporary.Add(charged.gameObject);
+            Mount(temporary, RoverModelBuilder.FocusLensName, Descendant(charged, RoverModelBuilder.LensSocketName));
+            for (int i = 0; i < RoverModelBuilder.BrowLampCount; i++)
+            {
+                Mount(temporary, RoverModelBuilder.BrowLampName,
+                    Descendant(charged, RoverModelBuilder.BrowLampSocketPrefix + i));
+            }
+
+            Transform lid = Descendant(charged, "SpineSocket");
+            for (int i = 0; i < 2; i++)
+            {
+                Transform lamp = Instantiate(RoverModelBuilder.ChargeLampName, temporary, ArtPaths.RoverFolder).transform;
+                lamp.SetParent(charged, false);
+                lamp.localPosition = new Vector3(0f, lid.localPosition.y, -0.3f - i * 0.16f);
+            }
+
+            foreach (Transform glass in charged.GetComponentsInChildren<Transform>())
+            {
+                if (glass.name == RoverModelBuilder.ChargeGlassName)
+                {
+                    SetGlow(glass.parent, RoverModelBuilder.ChargeGlassName, new[] { string.Empty }, 1f);
+                }
+            }
+
+            Transform dark = Rover(temporary, new Vector3(2.4f, 0f, -0.6f), 200f);
+            temporary.Add(dark.gameObject);
+            Mount(temporary, RoverModelBuilder.FocusLensName, Descendant(dark, RoverModelBuilder.LensSocketName));
+            Transform eyeNode = Descendant(charged, "Eye");
+            Vector3 eye = eyeNode.position;
+            Vector3 front = eye + eyeNode.forward * 0.9f + eyeNode.right * 0.25f + Vector3.up * 0.15f;
+            Vector3 above = eye + eyeNode.forward * 0.7f - eyeNode.right * 0.6f + Vector3.up * 0.75f;
+            return Poses(
+                Pose("lens_close", new[] { front.x, front.y, front.z }, new[] { eye.x, eye.y, eye.z }, 35f),
+                Pose("brow_three_quarter", new[] { above.x, above.y, above.z },
+                    new[] { eye.x, eye.y + 0.12f, eye.z }, 40f),
+                Pose("pair_chase", new[] { 1.2f, 2.2f, -4.5f }, new[] { 1.2f, 0.9f, 0f }, 45f));
+        }
+
+        private static void Mount(TemporaryObjects temporary, string prefab, Transform socket)
+        {
+            Transform part = Instantiate(prefab, temporary, ArtPaths.RoverFolder).transform;
+            part.SetParent(socket, false);
+            part.localPosition = Vector3.zero;
+            part.localRotation = Quaternion.identity;
         }
 
         private static CameraPoseSet ShelvesScene(TemporaryObjects temporary)
