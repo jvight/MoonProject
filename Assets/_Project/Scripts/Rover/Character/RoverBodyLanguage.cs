@@ -68,6 +68,9 @@ namespace MoonProject.Rover
         private readonly ImpactNudge _headNudge = new ImpactNudge();
         private float _cutFocus;
         private bool _cutting;
+        private RoverVoice _voice;
+        private ChirpPose _chirpPose;
+        private float _sigh;
 
         private RoverMood _mood;
         private LookAround _lookAround;
@@ -119,6 +122,8 @@ namespace MoonProject.Rover
             _eyeLight.shadows = LightShadows.None;
 
             EventBus events = context.Events;
+            _chirpPose = new ChirpPose(_tuning.Chirp);
+            _voice = new RoverVoice(events, _tuning.Chirp, () => Time.time);
             _events = events;
             _subscriptions = new[]
             {
@@ -139,6 +144,7 @@ namespace MoonProject.Rover
                 events.Subscribe<BatteryWarned>(OnBatteryWarned),
                 events.Subscribe<RoverLeapRefused>(OnLeapRefused),
                 events.Subscribe<FeelBeat>(OnFeelBeat),
+                events.Subscribe<RoverChirpSyllable>(OnChirpSyllable),
             };
             _initialized = true;
             Apply(0f);
@@ -399,6 +405,8 @@ namespace MoonProject.Rover
 
             StepBattery(deltaTime);
             _cutFocus = Smoothing.Damp(_cutFocus, _cutting ? 1f : 0f, _tuning.CutFocus.HalfLife, deltaTime);
+            _chirpPose.Step(deltaTime);
+            _sigh = Smoothing.Damp(_sigh, 0f, _tuning.Chirp.SighHalfLife, deltaTime);
             _headNudge.Step(deltaTime);
             _lookAround.Step(deltaTime);
             float sky = SkyLift();
@@ -477,22 +485,25 @@ namespace MoonProject.Rover
             float breathing = _tuning.IdleHeadBreath * _mood.Idle * (2f * _mood.Breath - 1f);
             BatteryMoodSettings battery = _tuning.Battery;
             float bow = _tired * battery.LowHeadBow + _crawl * battery.CrawlHeadBow;
-            float pitch = _pitch.Value + _mood.HeadPitchOffset + breathing - bow - _headNudge.Pitch;
+            float pitch = _pitch.Value + _mood.HeadPitchOffset + breathing - bow - _headNudge.Pitch
+                - _chirpPose.HeadDip;
 
             _neck.localRotation = _neckRest * Quaternion.AngleAxis(_yaw.Value, Vector3.up);
             _head.localRotation = _headRest * Quaternion.AngleAxis(-pitch, Vector3.right)
-                * Quaternion.AngleAxis(_wakeTilt, Vector3.forward);
+                * Quaternion.AngleAxis(_wakeTilt + _chirpPose.HeadRoll, Vector3.forward);
             _eyelid.localRotation = _eyelidRest
                 * Quaternion.AngleAxis(Mathf.Max(_mood.LidClosure, _cutFocus * _tuning.CutFocus.IrisNarrow)
                     * _tuning.EyelidClosedAngle, Vector3.right);
             float wingOpen = Mathf.Max(_mood.WingOpen * Mathf.Lerp(1f, battery.LowWingOpen, _tired),
                 sky * _tuning.StargazeWingOpen);
             _solarWing.localRotation = _wingRest
-                * Quaternion.AngleAxis(wingOpen * _tuning.WingOpenAngle, Vector3.right);
+                * Quaternion.AngleAxis(wingOpen * _tuning.WingOpenAngle + _sigh * _tuning.Chirp.SighWing,
+                    Vector3.right);
 
             float eyeGlow = _mood.EyeGlow * Mathf.Lerp(1f, _tuning.StargazeEyeGlow, sky)
                 * Mathf.Lerp(1f, battery.LowEyeGlow, _tired) * Mathf.Lerp(1f, battery.CrawlEyeGlow, _crawl)
-                * Mathf.Lerp(1f, _tuning.CutFocus.EyeGlow, _cutFocus);
+                * Mathf.Lerp(1f, _tuning.CutFocus.EyeGlow, _cutFocus) * _chirpPose.EyeGlow
+                * (1f + _sigh * _tuning.Chirp.SighEye);
             SetGlow(_eyeRenderer, eyeGlow);
             SetGlow(_antennaTipRenderer, _mood.TipGlow);
             _eyeLight.intensity = _tuning.EyeLightIntensity * eyeGlow;
@@ -506,6 +517,12 @@ namespace MoonProject.Rover
         private void OnFeelBeat(FeelBeat beat)
         {
             CutFocusSettings focus = _tuning.CutFocus;
+            if (beat.Kind == FeelKind.Dock && beat.Phase == FeelPhase.Reward)
+            {
+                _sigh = 1f;
+                return;
+            }
+
             if (beat.Kind == FeelKind.Collect && beat.Phase == FeelPhase.Reward)
             {
                 EndCutFocus();
@@ -542,6 +559,21 @@ namespace MoonProject.Rover
             }
         }
 
+        /// <summary>
+        /// Each syllable of 07's chirp pulses its eye and flicks its antenna; Happy bounces, and the phrase's mood
+        /// poses the head (<see cref="ChirpPose"/>).
+        /// </summary>
+        private void OnChirpSyllable(RoverChirpSyllable syllable)
+        {
+            ChirpSettings chirp = _tuning.Chirp;
+            _chirpPose.Syllable(syllable.Mood, syllable.Index, syllable.Count, syllable.Seconds);
+            _rig.KickAntenna(chirp.AntennaFlick);
+            if (syllable.Mood == ChirpMood.Happy)
+            {
+                _rig.KickHeave(chirp.HappyBounce);
+            }
+        }
+
         private void EndCutFocus()
         {
             _cutting = false;
@@ -565,6 +597,8 @@ namespace MoonProject.Rover
             {
                 subscription.Dispose();
             }
+
+            _voice?.Dispose();
         }
     }
 }

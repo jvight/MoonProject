@@ -372,6 +372,11 @@ namespace MoonProject.Rover
             + "nod, then following the piece.")]
         [SerializeField] private CutFocusSettings _cutFocus = new CutFocusSettings();
 
+        [Header("07 speaks machine (docs/design/feel-pass.md §7.2)")]
+        [Tooltip("When 07 chirps (cooldowns) and how its eye, antenna and head move with each syllable; the full "
+            + "dock's sigh.")]
+        [SerializeField] private ChirpSettings _chirp = new ChirpSettings();
+
         [Header("Hover-Jump")]
         [Tooltip("Lid squint (0..1) at a full Hover-Jump charge: effort.")]
         [Range(0f, 1f)]
@@ -675,5 +680,7 @@ namespace MoonProject.Rover
         public BatteryMoodSettings Battery => _battery;
 
         public CutFocusSettings CutFocus => _cutFocus;
+
+        public ChirpSettings Chirp => _chirp;
     }
 }
