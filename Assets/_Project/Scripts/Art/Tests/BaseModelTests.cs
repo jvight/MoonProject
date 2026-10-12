@@ -175,6 +175,7 @@ namespace MoonProject.Art.Tests
                 Assert.Greater(bounds.max.y, previousHeight + 2f, $"L{level} is clearly taller");
                 Assert.Greater(beacon.LocalPosition.y, bounds.max.y - 1.6f, "beacon near the top");
                 AssertGlowsOnly(tower.GetDescendant("Lights"));
+                AssertRingsClimb(tower);
                 previousHeight = bounds.max.y;
             }
 
@@ -266,6 +267,29 @@ namespace MoonProject.Art.Tests
             Assert.IsNotNull(node, $"{model.Name} needs {name}");
             Assert.IsNull(node.Mesh, $"{name} must be an empty");
             return node;
+        }
+
+
+        /// <summary>
+        /// The stage's lamps light ring by ring as power climbs (feel-pass §8.2): Lights is ring 0, Ring_1..3 sit
+        /// higher and higher, each a glow renderer; the offline plaque's lamp starts dark.
+        /// </summary>
+        private static void AssertRingsClimb(ModelNode tower)
+        {
+            ModelNode lights = tower.GetDescendant(BaseModelBuilder.TowerLightsName);
+            float below = lights.Mesh.Geometry.Bounds.max.y;
+            for (int ring = 1; ring < BaseModelBuilder.TowerLightRings; ring++)
+            {
+                ModelNode node = lights.GetDescendant(BaseModelBuilder.TowerLightRingPrefix + ring);
+                AssertGlowsOnly(node);
+                Bounds bounds = node.Mesh.Geometry.Bounds;
+                Assert.Greater(bounds.min.y, below, $"{tower.Name} ring {ring} sits above the ring under it");
+                below = bounds.max.y;
+            }
+
+            ModelNode lamp = tower.GetDescendant(BaseModelBuilder.OfflineLampName);
+            Assert.AreEqual(ModelMaterial.PaletteGlowOff, lamp.Material, "the offline lamp starts dark");
+            Assert.IsTrue(tower.Children.Contains(tower.GetDescendant(BaseModelBuilder.OfflinePlaqueName)));
         }
 
         private static void AssertGlowsOnly(ModelNode node)

@@ -842,6 +842,18 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
+        /// A tower stage's lamps (feel-pass §8.2): Lights is ring 0 (the cabinet lamp) and Lights/Ring_1..3 the rings
+        /// above it, bottom to top, so gameplay lights one ring per Act as power climbs. Each is a glow renderer on
+        /// the MaterialPropertyBlock contract. OfflinePlaque by the hopper carries OfflineLamp (M_LowPolyGlowOff),
+        /// dark until gameplay lights it while the stage is down.
+        /// </summary>
+        public const string TowerLightsName = "Lights";
+        public const string TowerLightRingPrefix = "Ring_";
+        public const int TowerLightRings = RadioTowerMeshes.LightRings;
+        public const string OfflinePlaqueName = "OfflinePlaque";
+        public const string OfflineLampName = "OfflineLamp";
+
+        /// <summary>
         /// Radio tower stage <paramref name="level"/> (1..3). Every stage has the same rover-height service port facing
         /// the upgrade pad: a HopperMouth empty (+Z out of the mouth) and a ServiceHatch door pivoted on its left hinge
         /// (swing it about local Y to open).
@@ -851,8 +863,20 @@ namespace MoonProject.Art.Editor
             string name = TowerPrefix + level.ToString(CultureInfo.InvariantCulture);
             LowPolyMeshBuilder structure = RadioTowerMeshes.Structure(level);
             var tower = new ModelNode(name, Vector3.zero, new ModelMesh(name, structure));
-            tower.Add(new ModelNode("Lights", Vector3.zero,
-                new ModelMesh(name + "_Lights", RadioTowerMeshes.Lights(level))));
+            ModelNode lights = tower.Add(new ModelNode(TowerLightsName, Vector3.zero,
+                new ModelMesh(name + "_Lights", RadioTowerMeshes.Lights(level, 0))));
+            for (int ring = 1; ring < RadioTowerMeshes.LightRings; ring++)
+            {
+                string ringName = TowerLightRingPrefix + ring.ToString(CultureInfo.InvariantCulture);
+                lights.Add(new ModelNode(ringName, Vector3.zero,
+                    new ModelMesh(name + "_Lights_" + ringName, RadioTowerMeshes.Lights(level, ring))));
+            }
+
+            ModelNode plaque = tower.Add(new ModelNode(OfflinePlaqueName, RadioTowerMeshes.OfflinePlaque,
+                new ModelMesh(name + "_" + OfflinePlaqueName, RadioTowerMeshes.OfflinePlaqueMesh())));
+            plaque.Add(new ModelNode(OfflineLampName, RadioTowerMeshes.OfflineLamp, Quaternion.identity,
+                new ModelMesh(name + "_" + OfflineLampName, RadioTowerMeshes.OfflineLampGlass()),
+                ModelMaterial.PaletteGlowOff));
             tower.Add(new ModelNode("BeaconSocket", RadioTowerMeshes.BeaconPosition(level)));
             tower.Add(new ModelNode("BellCorner", BellCorner, Place.Rotation(new Vector3(0f, BellCornerYaw, 0f))));
             tower.Add(new ModelNode("CassetteShelfAnchor", CassetteShelfAnchor,

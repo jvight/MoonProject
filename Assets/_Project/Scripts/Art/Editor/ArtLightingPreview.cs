@@ -383,19 +383,30 @@ namespace MoonProject.Art.Editor
 
         private static CameraPoseSet TowersScene(TemporaryObjects temporary)
         {
+            var towers = new Transform[3];
             for (int level = 1; level <= 3; level++)
             {
-                Instantiate(BaseModelBuilder.TowerPrefix + level, temporary).transform.position =
-                    new Vector3((level - 2) * 6f, 0f, 0f);
+                towers[level - 1] = Instantiate(BaseModelBuilder.TowerPrefix + level, temporary).transform;
+                towers[level - 1].position = new Vector3((level - 2) * 6f, 0f, 0f);
                 Light lamp = NewLight("TowerLamp", LightType.Point, Palette.Get(PaletteSwatch.WarmLamp), 2f);
                 lamp.transform.position = new Vector3((level - 2) * 6f + 1.2f, 1.6f, 1.6f);
                 lamp.range = 6f;
                 temporary.Add(lamp.gameObject);
             }
 
+            // Power climbing (feel-pass §8.2): L1 offline with its plaque lit, L2 two rings up, L3 every ring.
+            SetGlow(towers[0], BaseModelBuilder.OfflineLampName, new[] { string.Empty }, 1f);
+            SetGlow(towers[1], BaseModelBuilder.TowerLightsName, new[] { string.Empty }, 1f);
+            SetGlow(towers[1], BaseModelBuilder.TowerLightRingPrefix, new[] { "1" }, 1f);
+            SetGlow(towers[2], BaseModelBuilder.TowerLightsName, new[] { string.Empty }, 1f);
+            SetGlow(towers[2], BaseModelBuilder.TowerLightRingPrefix, new[] { "1", "2", "3" }, 1f);
+            Vector3 plaque = Descendant(towers[0], BaseModelBuilder.OfflinePlaqueName).position;
+
             return Poses(
                 Pose("near15m", new[] { 0f, 4f, 15f }, new[] { 0f, 4.5f, 0f }, 50f),
-                Pose("far55m", new[] { 8f, 8f, 55f }, new[] { 0f, 4f, 0f }, 30f));
+                Pose("far55m", new[] { 8f, 8f, 55f }, new[] { 0f, 4f, 0f }, 30f),
+                Pose("plaque", new[] { plaque.x + 0.6f, plaque.y + 0.5f, plaque.z + 2.2f },
+                    new[] { plaque.x, plaque.y, plaque.z }, 35f));
         }
 
         private static CameraPoseSet RelicsScene(TemporaryObjects temporary)
@@ -940,6 +951,7 @@ namespace MoonProject.Art.Editor
             SetGlow(lander, "DockGlow", new[] { string.Empty }, 1f);
             Transform tower = SceneObjectStartingWith(BaseModelBuilder.TowerPrefix);
             SetGlow(tower, "Lights", new[] { string.Empty }, 1f);
+            SetGlow(tower, BaseModelBuilder.TowerLightRingPrefix, new[] { "1", "2", "3" }, 1f);
             Quaternion toLift = lander.rotation * Quaternion.Euler(0f, 180f, 0f);
             Vector3 front = lander.TransformPoint(new Vector3(-1.6f, 0f, 9.2f));
             TravellingRover(temporary, front, toLift, false);
@@ -1026,7 +1038,9 @@ namespace MoonProject.Art.Editor
             SetGlow(belly, BaseModelBuilder.BellyLampName, new[] { string.Empty }, 1f);
             SetGlow(belly, BaseModelBuilder.HatchRimName, new[] { string.Empty }, 1f);
             RestoreLift(lander);
-            SetGlow(SceneObjectStartingWith(BaseModelBuilder.TowerPrefix), "Lights", new[] { string.Empty }, 1f);
+            Transform homeTower = SceneObjectStartingWith(BaseModelBuilder.TowerPrefix);
+            SetGlow(homeTower, "Lights", new[] { string.Empty }, 1f);
+            SetGlow(homeTower, BaseModelBuilder.TowerLightRingPrefix, new[] { "1", "2", "3" }, 1f);
             Transform lab = Descendant(lander, BaseModelBuilder.LabName);
             if (lit)
             {
