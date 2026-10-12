@@ -66,6 +66,12 @@ namespace MoonProject.Rover
         [Tooltip("The Focus Lens's Glass child, glowing with the charge run.")]
         [SerializeField] private Renderer _focusLensGlass;
 
+        [Tooltip("RoverModel's CargoHatch: the rear leaf on its top hinge, opening about local +X (M3-25).")]
+        [SerializeField] private Transform _cargoHatch;
+
+        [Tooltip("The hatch window's HatchCrate_0.. nodes, one per hold slot (top row L to R, then bottom).")]
+        [SerializeField] private GameObject[] _hatchCrates = new GameObject[0];
+
         [Tooltip("Art's two Kit_SideBin on BinSocket_L and BinSocket_R, shown once 07 has the Side Bins.")]
         [SerializeField] private GameObject[] _sideBins = new GameObject[0];
 
@@ -88,6 +94,7 @@ namespace MoonProject.Rover
         private IDisposable _dockChanges;
         private RoverFeel _feel;
         private ChargeRunLamps _chargeRun;
+        private CargoHatch _hatch;
         private GameContext _context;
         private bool _docked;
         private bool _cradled;
@@ -360,6 +367,7 @@ namespace MoonProject.Rover
                 _feel = new RoverFeel(_events, feel.CutFeel, feel.DockFeel, feel.MotionFeel, feelPreferences,
                     new GamepadRumbleMotors(), _visualRig);
                 _visualRig.SetNudge(_feel.Nudge);
+                _hatch = new CargoHatch(_events, feel.CargoHatch, _cargoHatch, _hatchCrates, _feel.Rumble);
                 if (_chargeRows.Length > 0)
                 {
                     _chargeRun = new ChargeRunLamps(_events, feel.ChargeRun, _chargeRows, CutterChargeSeconds,
@@ -397,6 +405,8 @@ namespace MoonProject.Rover
             ok &= Require(_hoverCoils != null, "RoverHoverCoils is not assigned.");
             ok &= Require(_lampMotes != null, "RoverLampMotes is not assigned.");
             ok &= Require(_flankLamps != null, "RoverFlankLamps is not assigned.");
+            ok &= Require(_cargoHatch != null && _hatchCrates.Length > 0 && Array.TrueForAll(_hatchCrates, c => c != null),
+                "The CargoHatch or a HatchCrate is not assigned (M3-25 hatch contract).");
             ok &= Require(_sideBins.Length == 2 && _sideBins[0] != null && _sideBins[1] != null,
                 "The two side bins (BinSocket_L, BinSocket_R) are not assigned.");
             ok &= Require(_chargeRows.Length == 0 || (_focusLens != null && _focusLensGlass != null),
@@ -595,6 +605,7 @@ namespace MoonProject.Rover
             _stillness.Reset();
 
             _feel?.Nudge.Reset();
+            _hatch?.Reset();
             _visualRig.Snap(normal);
             _wheelFx.Break();
             _lampMotes.Carry(lens, facing);
@@ -891,6 +902,7 @@ namespace MoonProject.Rover
             _stillness.Step(SampleStillness(), deltaTime);
             _feel.Tick(deltaTime, Time.time, Speed, _visualRig.RootPosition);
             _chargeRun?.Tick(deltaTime);
+            _hatch.Tick(deltaTime);
             _visualRig.Tick(deltaTime);
             _kit.Tick(deltaTime);
             _wheelFx.Tick();
@@ -929,6 +941,7 @@ namespace MoonProject.Rover
             _dockChanges?.Dispose();
             _feel?.Dispose();
             _chargeRun?.Dispose();
+            _hatch?.Dispose();
         }
     }
 }

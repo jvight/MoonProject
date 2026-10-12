@@ -87,6 +87,12 @@ namespace MoonProject.Rover.PlayModeTests
         private const float EarlyShare = 0.55f;
         private const float LateShare = 0.9f;
 
+        /// <summary>The hatch capture: five of eight slots used, a bundle's flight, and the wait before each frame.</summary>
+        private const int HatchCrates = 5;
+        private const int HoldSlots = 8;
+        private const float BundleFlight = 0.7f;
+        private const float HatchFrameSeconds = 0.8f;
+
         /// <summary>How far (m) along Earth's direction a point is projected to find Earth on screen.</summary>
         private const float EarthProbeDistance = 1000f;
 
@@ -266,6 +272,45 @@ namespace MoonProject.Rover.PlayModeTests
             _context.Events.Publish(new FeelBeat(FeelKind.Cut, FeelPhase.Cancel, cutPoint, Vector3.up, 0f, 0f));
             Directory.CreateDirectory(CaptureFolder);
             File.WriteAllText(Path.Combine(CaptureFolder, "chargerun.md"), _report.ToString());
+        }
+
+        /// <summary>
+        /// 07's cargo hatch (M3-25 T1) from the chase camera: the hold five slots full (five crates in the window),
+        /// then a bundle flying in opens the hatch just before it lands; frames of the shut window and the open hatch.
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        [PrebuildSetup(typeof(RoverSessionScene))]
+        [PostBuildCleanup(typeof(RoverSessionScene))]
+        public IEnumerator CargoHatch_IsCapturedOpen_WithCratesInTheWindow()
+        {
+            yield return Boot();
+            _report.AppendLine("# The cargo hatch (real Main scene)");
+            _report.AppendLine();
+            _report.AppendLine("| Capture | Orbit elevation (deg) | Camera above dust (m) | 07's gaze | Beat |");
+            _report.AppendLine("|---|---:|---:|---:|---|");
+            Set(_gamepad.rightStick, new Vector2(LookStick, 0f));
+            yield return Wait(StickProbeSeconds);
+            Set(_gamepad.rightStick, Vector2.zero);
+            float opening = Time.time + WakeEaseTimeout;
+            while (_cameraRig.Opening.IsActive)
+            {
+                Assert.Less(Time.time, opening, "The wake hands over first.");
+                yield return null;
+            }
+
+            yield return Wait(SettleSeconds);
+            _context.Events.Publish(new CargoChanged(HatchCrates, HoldSlots));
+            yield return Wait(HatchFrameSeconds);
+            Capture("hatch-1-crates");
+            Vector3 socket = _rover.Position + Vector3.up;
+            _context.Events.Publish(new FeelBeat(FeelKind.Collect, FeelPhase.Anticipate, socket, Vector3.up, 1f,
+                BundleFlight));
+            yield return Wait(BundleFlight + HatchFrameSeconds);
+            Capture("hatch-2-open");
+            _context.Events.Publish(new FeelBeat(FeelKind.Collect, FeelPhase.Reward, socket, Vector3.up, 1f, 0f));
+            Directory.CreateDirectory(CaptureFolder);
+            File.WriteAllText(Path.Combine(CaptureFolder, "hatch.md"), _report.ToString());
         }
 
         private IEnumerator Stargaze(string name, Vector3 ground, float yaw)

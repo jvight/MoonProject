@@ -4,44 +4,39 @@ using MoonProject.Core;
 namespace MoonProject.UI
 {
     /// <summary>
-    /// The three salvage materials as the UI walks them: always Metal, Wiring, Optics, the order every row, recipe and
-    /// summary shows them in. Allocation-free.
+    /// The materials as the UI walks them: in enum order, so Metal, Wiring and Optics come first (the order every
+    /// row, recipe and summary shows them in). Allocation-free.
     /// </summary>
     internal static class Materials
     {
-        /// <summary>How many materials there are (one slot each).</summary>
-        public const int Count = 3;
+        /// <summary>How many materials there are.</summary>
+        public const int Count = SalvageMaterials.Count;
+
+        /// <summary>
+        /// How many materials a <c>Recipe</c> can name today (the first three): recipe rows walk these.
+        /// </summary>
+        public const int RecipeCount = 3;
+
+        private const string KeyPrefix = "material.";
 
         /// <summary>The material in slot <paramref name="index"/>.</summary>
         public static SalvageMaterial At(int index)
         {
-            switch (index)
+            if (index < 0 || index >= Count)
             {
-                case 0:
-                    return SalvageMaterial.Metal;
-                case 1:
-                    return SalvageMaterial.Wiring;
-                case 2:
-                    return SalvageMaterial.Optics;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(index), index, "There are three materials.");
+                throw new ArgumentOutOfRangeException(nameof(index), index, "There is no such material.");
             }
+
+            return (SalvageMaterial)index;
         }
 
-        /// <summary>The USS modifier naming <paramref name="material"/> ("metal", "wiring", "optics").</summary>
+        /// <summary>
+        /// The USS modifier naming <paramref name="material"/> ("metal", "circuit_chips"): its name key without the
+        /// prefix. Allocates; used when an element is built or changes material.
+        /// </summary>
         public static string ClassSuffix(SalvageMaterial material)
         {
-            switch (material)
-            {
-                case SalvageMaterial.Metal:
-                    return "metal";
-                case SalvageMaterial.Wiring:
-                    return "wiring";
-                case SalvageMaterial.Optics:
-                    return "optics";
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(material), material, "Unknown salvage material.");
-            }
+            return UiKeys.MaterialName(material).Substring(KeyPrefix.Length);
         }
     }
 }

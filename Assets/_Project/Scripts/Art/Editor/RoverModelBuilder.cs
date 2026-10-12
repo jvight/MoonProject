@@ -100,6 +100,21 @@ namespace MoonProject.Art.Editor
         /// clears the tyre at the top of its travel, ahead of the drum; the left one mirrors x and turns half round so
         /// its +X points out too.
         /// </summary>
+        /// <summary>
+        /// 07's cargo hatch (M3-25 T1): <c>CargoHatch</c>, the rear leaf pivoted on its top hinge (rotate about local X,
+        /// positive lifts it out and up between the Cargo Cradle's rails), holding <c>HatchWindow</c> with
+        /// <c>HatchCrate_0..7</c>, one per hold slot (top row left to right, then the bottom row, as seen from behind);
+        /// gameplay shows a crate per filled slot.
+        /// </summary>
+        public const string CargoHatchName = "CargoHatch";
+
+        public const string HatchWindowName = "HatchWindow";
+        public const string HatchCratePrefix = "HatchCrate_";
+        public const int HatchCrates = RoverHatchMeshes.Crates;
+
+        /// <summary>The hatch's hinge, along the top of the rear face under the stripe.</summary>
+        public static readonly Vector3 CargoHatchHinge = new Vector3(0f, 0.665f, RoverMeshes.BodyBack);
+
         public static readonly Vector3 BinSocket = new Vector3(RoverMeshes.BodyHalfWidth, 0.86f, 0.4f);
 
         /// <summary>How far the middle wheels rise at the top of their suspension travel (Rover's rig).</summary>
@@ -242,6 +257,7 @@ namespace MoonProject.Art.Editor
             root.Add(new ModelNode("HeadlampSocket", HeadlampPosition,
                 Place.Rotation(new Vector3(HeadlampPitchDegrees, 0f, 0f))));
             root.Add(new ModelNode("CargoSocket", CargoPosition));
+            AddCargoHatch(body);
             root.Add(new ModelNode("DustSocket_L", new Vector3(-WheelTrack, 0f, -WheelBase)));
             root.Add(new ModelNode("DustSocket_R", new Vector3(WheelTrack, 0f, -WheelBase)));
             root.Add(new ModelNode("CoilSocket", CoilSocket));
@@ -332,6 +348,21 @@ namespace MoonProject.Art.Editor
             }
 
             return root;
+        }
+
+        private static void AddCargoHatch(ModelNode body)
+        {
+            ModelNode hatch = body.Add(new ModelNode(CargoHatchName, CargoHatchHinge,
+                new ModelMesh(ModelName + "_" + CargoHatchName, RoverHatchMeshes.Leaf())));
+            ModelNode window = hatch.Add(new ModelNode(HatchWindowName, RoverHatchMeshes.Window,
+                new ModelMesh(ModelName + "_" + HatchWindowName, RoverHatchMeshes.Hold())));
+            var wood = new ModelMesh(ModelName + "_HatchCrate", RoverHatchMeshes.CrateMesh(false));
+            var honey = new ModelMesh(ModelName + "_HatchCrateHoney", RoverHatchMeshes.CrateMesh(true));
+            for (int i = 0; i < HatchCrates; i++)
+            {
+                window.Add(new ModelNode(HatchCratePrefix + i.ToString(CultureInfo.InvariantCulture),
+                    RoverHatchMeshes.Crate(i), (i + i / 4) % 2 == 0 ? wood : honey));
+            }
         }
 
         private static void AddChargeRuns(ModelNode root, ModelNode neck, ModelNode head, ModelNode eye)

@@ -38,6 +38,7 @@ namespace MoonProject.UI.PlayModeTests
     public sealed partial class UiCaptureTests : InputTestFixture
     {
         private const string MainScene = "Assets/_Project/Scenes/Main.unity";
+        private CargoTuning _cargoTuning;
         private const int Width = 1600;
         private const int Height = 900;
         private const int NarrowWidth = 1200;
@@ -110,6 +111,7 @@ namespace MoonProject.UI.PlayModeTests
             Object.DestroyImmediate(_relicStandIn);
             Object.DestroyImmediate(_earthCamera);
             Object.DestroyImmediate(_tower);
+            Object.DestroyImmediate(_cargoTuning);
             foreach (UpgradeDefinition kit in _bayKit)
             {
                 Object.DestroyImmediate(kit);
@@ -775,6 +777,61 @@ namespace MoonProject.UI.PlayModeTests
 #endif
         }
 
+        /// <summary>
+        /// The cargo screen's two pages, the unlock card and a lunar pickup row (captures 95-98). Rerun with
+        /// --filter CaptureCargoScreen.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator CaptureCargoScreen_HoldHomeSevenCan_UnlockCard_AndALunarPickup()
+        {
+#if UNITY_EDITOR
+            yield return LoadMain();
+            GameContext context = FindBootstrap().Context;
+            Camera camera = context.Get<IViewCamera>().Camera;
+            UISystem ui = BuildUi(context, out FakeGameServices fakes, out _);
+            FreezeWorld();
+            yield return null;
+            string folder = Path.GetFullPath(OutputFolder);
+            Directory.CreateDirectory(folder);
+            context.Events.Publish(new RoverAwoke(Vector3.zero, false));
+            yield return new WaitForSecondsRealtime(0.5f);
+            fakes.Hold.Set(3, new MaterialSlot(SalvageMaterial.Metal, 4, 4), new MaterialSlot(SalvageMaterial.Metal, 2, 4),
+                new MaterialSlot(SalvageMaterial.Wiring, 3, 4), new MaterialSlot(SalvageMaterial.Optics, 1, 4),
+                new MaterialSlot(SalvageMaterial.Ilmenite, 5, 6));
+            fakes.Hold.WaitingBundles = 3;
+            fakes.Home.Lay(2, 2, 12, new MaterialSlot(SalvageMaterial.Metal, 4, 4),
+                new MaterialSlot(SalvageMaterial.Metal, 4, 4), new MaterialSlot(SalvageMaterial.Wiring, 4, 4),
+                new MaterialSlot(SalvageMaterial.Optics, 2, 4), new MaterialSlot(SalvageMaterial.OrangeBeads, 6, 6),
+                new MaterialSlot(SalvageMaterial.Glass, 3, 4), new MaterialSlot(SalvageMaterial.WaterIce, 6, 6));
+            fakes.Grant(RoverAbility.Tether);
+            fakes.Grant(RoverAbility.WideSonar);
+            fakes.SetTech(TechNodeId.HoverJump, TechNodeState.Decoded);
+            ui.Cargo.Open();
+            yield return new WaitForSecondsRealtime(_tuning.Cargo.Reveal.FadeIn + 0.6f);
+            Assert.IsTrue(ui.Cargo.IsOpen);
+            yield return Capture(camera, folder, "95_cargo_screen");
+            ui.Cargo.SelectTab(1);
+            yield return new WaitForSecondsRealtime(0.4f);
+            yield return Capture(camera, folder, "96_seven_can");
+            ui.Cargo.Close();
+            yield return new WaitForSecondsRealtime(_tuning.Cargo.Reveal.FadeOut + 0.6f);
+
+            ui.UnlockCard.Gained(RoverAbility.Tether);
+            yield return new WaitForSecondsRealtime(_tuning.UnlockCard.Reveal.FadeIn + 0.8f);
+            Assert.IsTrue(ui.UnlockCard.IsVisible);
+            yield return Capture(camera, folder, "97_unlock_card");
+            yield return new WaitForSecondsRealtime(_tuning.UnlockCard.HoldSeconds + _tuning.UnlockCard.Reveal.FadeOut);
+
+            fakes.SetUnits(SalvageMaterial.Ilmenite, 8);
+            fakes.SetUnits(SalvageMaterial.WaterIce, 7);
+            yield return new WaitForSecondsRealtime(_tuning.PickupFeed.MaxCountSeconds * 0.5f + 0.4f);
+            yield return Capture(camera, folder, "98_pickup_lunar");
+#else
+            Assert.Ignore("Captures need the editor.");
+            yield break;
+#endif
+        }
+
         /// <summary>The credits over the title (capture 90). Rerun with --filter CaptureCredits.</summary>
         [UnityTest]
         public IEnumerator CaptureCredits_OverTheTitle()
@@ -1391,6 +1448,7 @@ namespace MoonProject.UI.PlayModeTests
             _tuning = Object.Instantiate(AssetDatabase.LoadAssetAtPath<UiTuning>(UiTestRig.TuningPath));
             _tuning.Prompts.AddMissingDefaults();
 
+            _cargoTuning = ScriptableObject.CreateInstance<CargoTuning>();
             _uiHost = new GameObject("CaptureUI");
             _uiHost.SetActive(false);
             var document = _uiHost.AddComponent<UIDocument>();
@@ -1403,7 +1461,7 @@ namespace MoonProject.UI.PlayModeTests
                     AssetDatabase.LoadAssetAtPath<TextAsset>(UiTestRig.EnglishPath),
                     AssetDatabase.LoadAssetAtPath<TextAsset>(UiTestRig.VietnamesePath),
                 }, AssetDatabase.LoadAssetAtPath<WordmarkShape>(UiTestRig.WordmarkPath),
-                AssetDatabase.LoadAssetAtPath<TextAsset>(UiTestRig.CreditsPath));
+                AssetDatabase.LoadAssetAtPath<TextAsset>(UiTestRig.CreditsPath), _cargoTuning);
             ui.QuitAction = () => { };
             _uiHost.SetActive(true);
 
@@ -1412,7 +1470,7 @@ namespace MoonProject.UI.PlayModeTests
             ui.Initialize(new UiServices(context.Events, context.Input, fakes, fakes, context.Get<IAudioSettings>(),
                 context.Get<ILookSettings>(), context.Get<IFeelSettings>(), save, fakes, fakes, fakes, fakes, fakes, fakes, fakes, fakes, fakes,
                 fakes, context.Get<IGameFlow>(), new SettingsFile(SaveService.DefaultDirectory, _slot), fakes, fakes,
-                fakes, fakes, fakes, context.Get<IWorldLayout>(), fakes));
+                fakes, fakes, fakes, context.Get<IWorldLayout>(), fakes, fakes.Hold, fakes.Home, fakes.Catalog));
             save.Load();
             return ui;
         }

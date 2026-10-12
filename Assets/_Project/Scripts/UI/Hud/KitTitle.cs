@@ -47,6 +47,9 @@ namespace MoonProject.UI
         /// <summary>True while a name is on screen (or easing).</summary>
         public bool IsVisible => !_reveal.IsHidden;
 
+        /// <summary>True while a name waits its turn.</summary>
+        public bool IsWaiting => _waiting.Count > 0;
+
         /// <summary>The key of the name being shown, or null.</summary>
         public string Current { get; private set; }
 

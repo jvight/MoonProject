@@ -73,22 +73,28 @@ namespace MoonProject.UI
             return _targets[(int)material];
         }
 
-        /// <summary>Takes the amounts as they are, with no count (a loaded save).</summary>
-        public void Snap(int metal, int wiring, int optics)
+        /// <summary>Takes <paramref name="amount"/> as it is, with no count (a loaded save).</summary>
+        public void Snap(SalvageMaterial material, int amount)
         {
-            SnapOne(SalvageMaterial.Metal, metal);
-            SnapOne(SalvageMaterial.Wiring, wiring);
-            SnapOne(SalvageMaterial.Optics, optics);
+            int i = (int)material;
+            _targets[i] = amount;
+            _counts[i].Snap(amount);
+            _tickAge[i] = float.PositiveInfinity;
         }
 
-        /// <summary>New amounts: each changed material counts to its amount.</summary>
-        /// <returns>True when anything changed.</returns>
-        public bool Apply(int metal, int wiring, int optics)
+        /// <summary>A new amount: the material counts to it, one unit at a time.</summary>
+        /// <returns>True when the amount changed.</returns>
+        public bool Apply(SalvageMaterial material, int amount)
         {
-            bool metalChanged = ApplyOne(SalvageMaterial.Metal, metal);
-            bool wiringChanged = ApplyOne(SalvageMaterial.Wiring, wiring);
-            bool opticsChanged = ApplyOne(SalvageMaterial.Optics, optics);
-            return metalChanged || wiringChanged || opticsChanged;
+            int i = (int)material;
+            if (amount == _targets[i])
+            {
+                return false;
+            }
+
+            _targets[i] = amount;
+            _counts[i].SetTarget(amount);
+            return true;
         }
 
         /// <summary>Advances the counts; returns true when a shown number changed.</summary>
@@ -110,27 +116,6 @@ namespace MoonProject.UI
             }
 
             return changed;
-        }
-
-        private void SnapOne(SalvageMaterial material, int amount)
-        {
-            int i = (int)material;
-            _targets[i] = amount;
-            _counts[i].Snap(amount);
-            _tickAge[i] = float.PositiveInfinity;
-        }
-
-        private bool ApplyOne(SalvageMaterial material, int amount)
-        {
-            int i = (int)material;
-            if (amount == _targets[i])
-            {
-                return false;
-            }
-
-            _targets[i] = amount;
-            _counts[i].SetTarget(amount);
-            return true;
         }
     }
 }

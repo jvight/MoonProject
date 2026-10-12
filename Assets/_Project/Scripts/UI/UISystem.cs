@@ -39,6 +39,10 @@ namespace MoonProject.UI
         [Tooltip("Every relic (Assets/_Project/Data/Content/RelicCatalog.asset): memory cards check ids against it.")]
         [SerializeField] private RelicCatalog _relics;
 
+        [Tooltip("The shelves' build costs (Assets/_Project/Data/Tuning/Gameplay/CargoTuning.asset): the cargo screen " +
+                 "says what a free socket's shelf takes.")]
+        [SerializeField] private CargoTuning _cargoTuning;
+
         [Tooltip("String tables (Assets/_Project/Data/Localization), the primary language (en) first.")]
         [SerializeField] private TextAsset[] _stringTables = Array.Empty<TextAsset>();
 
@@ -89,6 +93,8 @@ namespace MoonProject.UI
         private SiteNameTag _siteName;
         private MemoryCard _card;
         private RewardCard _rewardCard;
+        private CargoScreen _cargo;
+        private UnlockCard _unlockCard;
         private TickerQueue _tickerLines;
         private int _tickerStartsAnnounced;
         private EventBus _events;
@@ -160,6 +166,10 @@ namespace MoonProject.UI
 
         internal RewardCard RewardCard => _rewardCard;
 
+        internal CargoScreen Cargo => _cargo;
+
+        internal UnlockCard UnlockCard => _unlockCard;
+
 
         internal FriendReadout FriendReadout => _friendReadout;
 
@@ -199,8 +209,9 @@ namespace MoonProject.UI
         internal IDisplayControl DisplayControl { get; set; } = new UnityDisplayControl();
 
         internal void Wire(UIDocument document, UiTuning tuning, RelicCatalog relics, TextAsset[] stringTables,
-            WordmarkShape wordmark, TextAsset credits)
+            WordmarkShape wordmark, TextAsset credits, CargoTuning cargoTuning)
         {
+            _cargoTuning = cargoTuning;
             _credits = credits;
             _document = document;
             _wordmark = wordmark;
@@ -287,6 +298,7 @@ namespace MoonProject.UI
                 : _tuning.Validate() != null ? "UiTuning " + _tuning.Validate() + "."
                 : _wordmark == null ? "the WordmarkShape is not assigned (run UI/Wordmark)."
                 : _credits == null ? "the credits asset is not assigned."
+                : _cargoTuning == null ? "the CargoTuning is not assigned."
                 : _wordmark.Validate() != null ? "the wordmark " + _wordmark.Validate() + "."
                 : null;
             if (problem == null)
@@ -335,6 +347,9 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<TitleShown>(OnTitleShown));
             _tokens.Add(events.Subscribe<FeelBeat>(OnFeelBeat));
             _tokens.Add(events.Subscribe<UpgradePurchased>(OnUpgradePurchased));
+            _tokens.Add(events.Subscribe<CargoChanged>(_ => _cargo?.MarkDirty()));
+            _tokens.Add(events.Subscribe<HomeStorageChanged>(_ => _cargo?.MarkDirty()));
+            _tokens.Add(events.Subscribe<ShelfBuilt>(_ => _cargo?.MarkDirty()));
             _tokens.Add(events.Subscribe<GameSaved>(OnGameSaved));
             _tokens.Add(events.Subscribe<StationNotYet>(OnStationNotYet));
             _tokens.Add(events.Subscribe<StargazingChanged>(OnStargazingChanged));
@@ -343,7 +358,11 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<LabEntered>(_ => _labHud.Enter()));
             _tokens.Add(events.Subscribe<LabLeft>(OnLabLeft));
             _tokens.Add(events.Subscribe<LabStationLooked>(OnLabStationLooked));
-            _tokens.Add(events.Subscribe<TechNodeChanged>(_ => _board?.MarkDirty()));
+            _tokens.Add(events.Subscribe<TechNodeChanged>(_ =>
+            {
+                _board?.MarkDirty();
+                _cargo?.MarkDirty();
+            }));
             _tokens.Add(events.Subscribe<RecoveryProgressChanged>(OnRecoveryProgressChanged));
             _tokens.Add(events.Subscribe<BlueprintFound>(OnBlueprintFound));
             _tokens.Add(events.Subscribe<BlueprintDelivered>(OnBlueprintDelivered));
@@ -426,9 +445,8 @@ namespace MoonProject.UI
             _reticle = new TetherReticle(_layout.Reticle, _layout.ReticleRest, _layout.ReticleHover, _tuning.Reticle);
             _prompt = new ContextPrompt(_layout, _tuning.Prompts, _director, services.View, _glyphs, _localization,
                 services.Events, new[] { _layout.RecipeCardRoot, _layout.TowerPanel });
-            _pickups = new PickupFeed(_layout, _tuning.PickupFeed, _numbers, _localization, services.Events);
-            IMaterialStock stock = services.Materials;
-            _pickups.Change(stock.Metal, stock.Wiring, stock.Optics);
+            _pickups = new PickupFeed(_layout, _tuning.PickupFeed, _numbers, _localization, services.Materials,
+                services.Catalog, services.Events);
             _salvageRing = new SalvageRing(_layout, _tuning.Salvage, _tuning.Prompts, services.Salvage, services.View);
             _siteName = new SiteNameTag(_layout, _tuning.Salvage, _tuning.Prompts, _localization, services.View);
             _card = new MemoryCard(_layout, _tuning.MemoryCard, _localization, services.Events, _relics,
@@ -447,6 +465,9 @@ namespace MoonProject.UI
                 services.Board, services.Materials, services.Hints, _numbers);
             _kitTitle = new KitTitle(_layout, _tuning.KitTitle, _localization);
             _rewardCard = new RewardCard(_layout, _tuning.RewardCard, _localization, services.Shop);
+            _cargo = new CargoScreen(_layout, _tuning.Cargo, _localization, services.Hold, services.Home,
+                services.Abilities, services.Tech, _glyphs, _numbers, _cargoTuning);
+            _unlockCard = new UnlockCard(_layout, _tuning.UnlockCard, _localization, _glyphs);
             _pause = new PauseMenu(_layout, _tuning.Pause, _tuning.Title, _player, _localization, services.Input,
                 services.Events, _settings, services.Radio, services.Relays, services.Flow,
                 _numbers, _cursor, Quit,
@@ -489,6 +510,17 @@ namespace MoonProject.UI
                     _pause.Back();
                 }
             }
+            else if (_cargo.IsOpen)
+            {
+                if (menu.CargoPressed || pausePressed || cancelPressed)
+                {
+                    CloseCargo();
+                }
+            }
+            else if (menu.CargoPressed && CanOpenCargo())
+            {
+                OpenCargo();
+            }
             else if ((pausePressed || cancelPressed) && _card.CanDismiss)
             {
                 _card.Dismiss();
@@ -498,7 +530,7 @@ namespace MoonProject.UI
                 _pause.Open();
             }
 
-            if (!_pause.IsOpen && menu.ClickPressed)
+            if (!_pause.IsOpen && !_cargo.IsOpen && menu.ClickPressed)
             {
                 _cursor.Recapture();
             }
@@ -506,8 +538,9 @@ namespace MoonProject.UI
             _pause.Tick(deltaTime);
             bool paused = _pause.IsOpen;
             _map?.Tick(deltaTime, paused);
-            bool onMap = _map != null && _map.IsOpen;
-            _backdrop.Set(Mathf.Max(_pause.Openness, _map != null ? _map.Openness : 0f));
+            _cargo.Tick(deltaTime, ScreenSize(), input.ActiveDevice);
+            bool onMap = (_map != null && _map.IsOpen) || _cargo.IsOpen;
+            _backdrop.Set(Mathf.Max(Mathf.Max(_pause.Openness, _map != null ? _map.Openness : 0f), _cargo.Openness));
             float hudTime = paused ? 0f : deltaTime;
             _hud.Set(!paused && !onMap && !_labHud.Inside);
             _hud.Tick(deltaTime);
@@ -538,6 +571,9 @@ namespace MoonProject.UI
                 _services.Tether.State == TetherAimState.Towing, _glyphs.For(RoverAction.Excavate, device), device);
             _kitTitle.Tick(hudTime, !_placeCard.IsVisible);
             _rewardCard.Tick(hudTime, !_placeCard.IsVisible && !_kitTitle.IsVisible && !_card.IsVisible);
+            _unlockCard.Tick(hudTime, !_placeCard.IsVisible && !_kitTitle.IsVisible && !_kitTitle.IsWaiting &&
+                                      !_card.IsVisible && !_rewardCard.IsVisible && !_rewardCard.IsWaiting && !onMap,
+                device);
             _pickups.Tick(deltaTime);
             bool cutting = _services.Salvage.IsCutting;
             if (cutting && !_wasCutting)
@@ -626,6 +662,35 @@ namespace MoonProject.UI
             _cellRowRevealed = true;
         }
 
+        private Vector2 ScreenSize()
+        {
+            Rect panel = _layout.Root.layout;
+            return float.IsNaN(panel.width) ? Vector2.zero : panel.size;
+        }
+
+        /// <summary>The cargo screen opens once 07 is awake, over a quiet screen (not paused, not on the title).</summary>
+        private bool CanOpenCargo()
+        {
+            return _awake && !_pause.IsOpen && !(_map != null && _map.IsOpen);
+        }
+
+        private void OpenCargo()
+        {
+            _cargo.Open();
+            _services.Input.Disable();
+            _cursor.Menu();
+            _cargo.FirstTab.Focus();
+            _events.Publish(new UiCue(UiCueKind.Confirm));
+        }
+
+        private void CloseCargo()
+        {
+            _cargo.Close();
+            _services.Input.Enable();
+            _cursor.Drive();
+            _events.Publish(new UiCue(UiCueKind.Back));
+        }
+
         private void Quit()
         {
             QuitAction();
@@ -640,7 +705,6 @@ namespace MoonProject.UI
                     _ledger.RecordMet(HudVerb.Material);
                 }
 
-                _pickups.Change(changed.Metal, changed.Wiring, changed.Optics);
             }
         }
 
@@ -891,6 +955,12 @@ namespace MoonProject.UI
             }
 
             _kitTitle.Enqueue(key);
+            if (AbilityTable.TryAbilityOf(fitted.Piece, out RoverAbility gained))
+            {
+                _unlockCard.Gained(gained);
+                _cargo.MarkDirty();
+            }
+
             if (!fitted.Gift)
             {
                 _tower.StationShowed(UpgradeStationKind.Workshop, fitted.UpgradeId);
@@ -968,6 +1038,8 @@ namespace MoonProject.UI
             _pickups.Relocalize();
             _friendReadout.Relocalize();
             _rewardCard.Relocalize();
+            _cargo.Relocalize();
+            _unlockCard.Relocalize();
             _relayTag.Relocalize();
             _siteName.Relocalize();
             _pause.Relocalize();

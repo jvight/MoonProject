@@ -635,6 +635,14 @@ namespace MoonProject.Gameplay
             piece.MotionTime = 0f;
             piece.MotionDuration = PickupFlight.Duration(Vector3.Distance(piece.MotionStart, socket),
                 _tuning.FlightDuration, _tuning.FlightPerMetre);
+
+            // 07's hatch opens for a bundle it has room for (M3-25 T1: Seconds = the flight, so Rover opens it just
+            // before); a full hold keeps it shut and the bundle bumps it (the Cargo Impact on arrival).
+            if (_stock.Hold.FreeUnits(piece.Material) > 0)
+            {
+                _events.Publish(new FeelBeat(FeelKind.Collect, FeelPhase.Anticipate, piece.MotionStart, Vector3.up,
+                    1f, piece.MotionDuration, piece.Material));
+            }
         }
 
         private void StepFlight(SalvagePiece piece, Vector3 socket, float now, float deltaTime)

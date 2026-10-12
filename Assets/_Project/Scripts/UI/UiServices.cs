@@ -17,7 +17,8 @@ namespace MoonProject.UI
             IUpgradeShop shop, IBlueprintBoard board, IFriendStatuses friends, IRadioProgram radio, IRadioHop hop,
             IRelayStatus relays, ISalvageStatus salvage, IGameFlow flow, ISettingsFile settings, IRoverBattery battery,
             IBeamStatus beam, ITechTree tech, IRecoveryProgress recovery, IRecipeLook recipeLook,
-            IWorldLayout world, IRoverAbilities abilities)
+            IWorldLayout world, IRoverAbilities abilities, ICargoHold hold, IHomeStorage home,
+            IMaterialCatalog catalog)
         {
             Events = events ?? throw new ArgumentNullException(nameof(events));
             Input = input ?? throw new ArgumentNullException(nameof(input));
@@ -46,6 +47,9 @@ namespace MoonProject.UI
             Beam = beam ?? throw new ArgumentNullException(nameof(beam));
             World = world ?? throw new ArgumentNullException(nameof(world));
             Abilities = abilities ?? throw new ArgumentNullException(nameof(abilities));
+            Hold = hold ?? throw new ArgumentNullException(nameof(hold));
+            Home = home ?? throw new ArgumentNullException(nameof(home));
+            Catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
         }
 
         public EventBus Events { get; }
@@ -90,6 +94,15 @@ namespace MoonProject.UI
         /// <summary>What 07 has earned (the ability slots).</summary>
         public IRoverAbilities Abilities { get; }
 
+        /// <summary>07's hold: the cargo screen's left grid.</summary>
+        public ICargoHold Hold { get; }
+
+        /// <summary>Home's shelves: the cargo screen's right side.</summary>
+        public IHomeStorage Home { get; }
+
+        /// <summary>What each material is called (the pickup feed and the cargo screen).</summary>
+        public IMaterialCatalog Catalog { get; }
+
         public IGameFlow Flow { get; }
 
         public ISettingsFile Settings { get; }
@@ -127,7 +140,8 @@ namespace MoonProject.UI
                 context.Get<IRadioHop>(), context.Get<IRelayStatus>(), context.Get<ISalvageStatus>(),
                 context.Get<IGameFlow>(), context.Get<ISettingsFile>(), context.Get<IRoverBattery>(),
                 context.Get<IBeamStatus>(), context.Get<ITechTree>(), context.Get<IRecoveryProgress>(),
-                context.Get<IRecipeLook>(), context.Get<IWorldLayout>(), context.Get<IRoverAbilities>());
+                context.Get<IRecipeLook>(), context.Get<IWorldLayout>(), context.Get<IRoverAbilities>(),
+                context.Get<ICargoHold>(), context.Get<IHomeStorage>(), context.Get<IMaterialCatalog>());
         }
     }
 }
