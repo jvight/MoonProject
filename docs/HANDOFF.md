@@ -4,7 +4,23 @@ Read this, then `CLAUDE.md`, then `docs/VISION.md`, `docs/DESIGN.md`, `docs/ARCH
 It records how the project is run, where it stands, and what comes next, so a new Director session (on any
 account) can continue without the old conversation.
 
-## 00000. LATEST (2026-10-12 ~09:00): 0.5.2 "Satisfying" P0 dispatched; 0.5.1 still closing
+## 000000. LATEST (2026-10-12 ~14:40): 0.5.1 verified and pushed; 0.5.2 branches ready to land
+- **0.5.1:** clarity + voice landed; version 0.5.1; `verify --parallel --push` PASS; origin/main = c179a545. The
+  build is running in MoonProject-wt/director (copy the zip to D:/Project/MoonProject/Builds). Don't land while it
+  builds: land --batch uses the same worktree.
+- **0.5.2 ready on box branches** (all box_check PASS). Land order: rover -> ui -> gameplay -> world -> art (then art's
+  swap from CutSparks) -> voice (audio), then wire count_tick and window_click, verify, build.
+  - rover f4f0f874+;
+  - ui b1083618 ("Moonlight Glass" UI, owner pick #1, Nunito Sans + Exo 2 OFL);
+  - gameplay 37dc6640+ (a dock Anticipate tweak running);
+  - world 6129cab3 (check that HomeLighting's dock tint survives in the asset);
+  - art 6459cf09;
+  - voice/audio 7d94543d.
+- The owner's UI taste: memory `ui-taste-subnautica`. Owner rule: standing sessions only (memory `standing-sessions`).
+- Lesson: never detach or check out other commits in the verify worktrees (director, director2, landtest). A test
+  run there left an untracked meta that broke `verify` (director2 must stay on director/verify2).
+
+## 00000. (2026-10-12 ~09:00): 0.5.2 "Satisfying" P0 dispatched; 0.5.1 still closing
 - **Owner rule (memory `standing-sessions`):** no new session per task. Work goes to the standing sessions (game
   design, gameplay, art, rover, ui, world, map, tools, story & flow; voice becomes **audio** after it lands). The 12
   finished slice sessions were archived with the owner's consent.
