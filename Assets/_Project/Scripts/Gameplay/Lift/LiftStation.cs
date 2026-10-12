@@ -138,6 +138,7 @@ namespace MoonProject.Gameplay.Lift
         private float _ladderLookStarted = float.NegativeInfinity;
         private LadderLook _ladderLook;
         private bool _gazing;
+        private bool _wasOnPlatform;
         private bool _holding;
         private bool _initialized;
 
@@ -360,8 +361,15 @@ namespace MoonProject.Gameplay.Lift
                 ? _commands.Step(_input.Drive, _tuning.CommandPress, _tuning.CommandRelease)
                 : LabCommand.None;
             bool down = Command(command, now);
+            bool onPlatform = OnPlatform();
+            if (onPlatform && !_wasOnPlatform && _cycle.Phase == LiftPhase.Ready)
+            {
+                Feel(FeelPhase.Anticipate, 0f, _tuning.BoardDelay);
+            }
+
+            _wasOnPlatform = onPlatform;
             var input = new LiftInput(_power.HasReached(BasePowerStage.Home), Carrying() && NearHome(),
-                AtStitchSpot(), OnPlatform(), _stillness.StillSeconds, down);
+                AtStitchSpot(), onPlatform, _stillness.StillSeconds, down);
             Play(_cycle.Step(input, deltaTime), now);
 
             bool stitching = _cycle.Phase == LiftPhase.Stitching;
@@ -468,6 +476,8 @@ namespace MoonProject.Gameplay.Lift
                     _events.Publish(new LiftCued(LiftCue.HatchOpened, HatchCentre()));
                     _events.Publish(new LiftCued(LiftCue.RideStarted, _platform.position));
                     _events.Publish(new LiftRideChanged(true, false, _platform.position));
+                    Feel(FeelPhase.Impact, 1f, 0f);
+                    Feel(FeelPhase.Follow, 0f, _tuning.RideSeconds);
                     break;
                 case LiftStep.Arrived:
                     _events.Publish(new LiftCued(LiftCue.RideStopped, _platform.position));
@@ -475,6 +485,7 @@ namespace MoonProject.Gameplay.Lift
                 case LiftStep.ReachedInside:
                     _events.Publish(new LiftRideChanged(false, true, _platform.position));
                     Enter(now);
+                    Feel(FeelPhase.Reward, 1f, 0f);
                     break;
                 case LiftStep.Descending:
                     _lab.Leave();
@@ -484,6 +495,7 @@ namespace MoonProject.Gameplay.Lift
                     _queuedTurn = 0;
                     _events.Publish(new LiftCued(LiftCue.RideStarted, _platform.position));
                     _events.Publish(new LiftRideChanged(true, false, _platform.position));
+                    Feel(FeelPhase.Act, 0f, _tuning.RideSeconds);
                     break;
                 case LiftStep.ReachedBottom:
                     _turntable.Snap(_descentFrom + _descentDelta);
@@ -492,8 +504,19 @@ namespace MoonProject.Gameplay.Lift
                     _events.Publish(new LiftCued(LiftCue.HatchClosed, HatchCentre()));
                     _events.Publish(new LiftRideChanged(false, false, _platform.position));
                     SetRiderDown();
+                    Feel(FeelPhase.Impact, 0.5f, 0f);
                     break;
             }
+        }
+
+        /// <summary>
+        /// The lift's FeelBeat (feel-pass §2.8, entering home): Anticipate as 07 settles on the platform, Impact at the
+        /// clamp, Follow for the hatch and the rise, Reward on arriving inside; leaving, Act at the descent and a
+        /// softer Impact at the bottom.
+        /// </summary>
+        private void Feel(FeelPhase phase, float strength, float seconds)
+        {
+            _events.Publish(new FeelBeat(FeelKind.Lift, phase, _platform.position, Vector3.up, strength, seconds));
         }
 
         /// <summary>
