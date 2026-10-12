@@ -10,7 +10,7 @@ namespace MoonProject.UI
     public sealed class MemoryCardSettings
     {
         [Tooltip("The card easing in and out (slow: it is a moment).")]
-        [SerializeField] private RevealSettings _reveal = new RevealSettings(1f, 0.9f, 16f, 0.97f, 0.9f, 0.75f);
+        [SerializeField] private RevealSettings _reveal = new RevealSettings(0.18f, 0.9f, 8f, 0.97f, 0.9f, 0.75f);
 
         [Tooltip("Seconds after the relic settles on the shelf before the card begins to appear.")]
         [Range(0f, 5f)]

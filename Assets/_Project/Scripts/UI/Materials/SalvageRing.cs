@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.UIElements;
 using MoonProject.Core;
+using MoonProject.Core.Events;
 using MoonProject.Gameplay;
 
 namespace MoonProject.UI
@@ -11,7 +12,10 @@ namespace MoonProject.UI
     /// (<see cref="ISalvageStatus.Progress"/>). Progress is kept when Interact lets go (ruling 4), so while 07 still
     /// aims at a half-cut piece the ring keeps showing how far it came. It appears once there is a cut to show
     /// (cutting, or progress kept) and eases away when the piece is no longer aimed at; the "E Cut" prompt teaches the
-    /// start. Inside the ring, on a small glass disc, sits the icon of the material the piece folds into.
+    /// start. Inside the ring, on a small glass disc, sits the icon of the material the piece folds into. On a cut or
+    /// dig's Anticipate beat (<see cref="FeelBeat"/>) a thin charge arc inside the ring fills over the beat's seconds
+    /// (<see cref="ChargeSegment"/>), empties on Cancel and eases away at ignition, when the progress fill takes over;
+    /// a dig, which has no cut progress, shows only the charge, at the beat's position.
     /// </summary>
     internal sealed class SalvageRing
     {
@@ -21,6 +25,8 @@ namespace MoonProject.UI
         private readonly Reveal _reveal;
         private readonly WorldAnchor _anchor;
         private readonly ProgressRingPainter _ring;
+        private readonly SalvageSettings _settings;
+        private readonly ChargeSegment _charge = new ChargeSegment();
         private readonly VisualElement[] _icons = new VisualElement[Materials.Count];
         private int _shownMaterial = -1;
 
@@ -42,6 +48,7 @@ namespace MoonProject.UI
                 throw new ArgumentNullException(nameof(anchoring));
             }
 
+            _settings = settings;
             _salvage = salvage ?? throw new ArgumentNullException(nameof(salvage));
             _reveal = new Reveal(layout.SalvageRing, settings.Ring);
             _reveal.Snap(false);
@@ -67,6 +74,31 @@ namespace MoonProject.UI
         /// <summary>The ring's fill (tests and captures).</summary>
         public float Progress => _ring.Progress;
 
+        /// <summary>The charge segment's fill (tests and captures).</summary>
+        public float Charge => _charge.Value;
+
+        /// <summary>A cut or dig's charge-up begins, ignites or is cancelled.</summary>
+        public void OnBeat(FeelBeat beat)
+        {
+            if (beat.Kind != FeelKind.Cut && beat.Kind != FeelKind.Dig)
+            {
+                return;
+            }
+
+            switch (beat.Phase)
+            {
+                case FeelPhase.Anticipate:
+                    _charge.Begin(beat.Kind, beat.Position, beat.Seconds);
+                    break;
+                case FeelPhase.Act:
+                    _charge.Ignite(_settings.ChargeHandoffSeconds);
+                    break;
+                case FeelPhase.Cancel:
+                    _charge.Cancel(_settings.ChargeEmptySeconds);
+                    break;
+            }
+        }
+
         /// <summary>The material whose icon sits in the ring (tests and captures).</summary>
         public SalvageMaterial ShownMaterial => Materials.At(_shownMaterial < 0 ? 0 : _shownMaterial);
 
@@ -75,16 +107,26 @@ namespace MoonProject.UI
         /// <param name="panelSize">Size of the UI panel.</param>
         public void Tick(float deltaTime, bool gateOpen, Vector2 panelSize)
         {
-            bool aimed = _salvage.HasTarget;
+            _charge.Step(deltaTime);
+            bool dig = _charge.IsActive && _charge.Kind == FeelKind.Dig;
+            bool aimed = _salvage.HasTarget && !dig;
             bool cut = aimed && (_salvage.IsCutting || _salvage.Progress > 0f);
-            bool onScreen = cut && _anchor.Track(_salvage.CutPoint, panelSize, deltaTime, _reveal.IsHidden);
+            bool show = cut || _charge.IsActive;
+            Vector3 point = aimed ? _salvage.CutPoint : _charge.Point;
+            bool onScreen = show && _anchor.Track(point, panelSize, deltaTime, _reveal.IsHidden);
             if (aimed)
             {
                 _ring.Progress = _salvage.Progress;
                 ShowIcon((int)_salvage.Material);
             }
+            else if (dig)
+            {
+                _ring.Progress = 0f;
+                ShowIcon(-1);
+            }
 
-            _reveal.Set(gateOpen && cut && onScreen);
+            _ring.Charge = _charge.Value;
+            _reveal.Set(gateOpen && show && onScreen);
             _reveal.Tick(deltaTime);
         }
 

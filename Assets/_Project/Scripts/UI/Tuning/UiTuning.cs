@@ -25,6 +25,9 @@ namespace MoonProject.UI
         [SerializeField] private StargazeSettings _stargaze = new StargazeSettings();
         [SerializeField] private GuidanceSettings _guidance = new GuidanceSettings();
         [SerializeField] private BackdropSettings _backdrop = new BackdropSettings();
+        [SerializeField] private SaveTickSettings _saveTick = new SaveTickSettings();
+        [SerializeField] private HomeMeterSettings _homeMeter = new HomeMeterSettings();
+        [SerializeField] private AbilitySlotsSettings _abilitySlots = new AbilitySlotsSettings();
         [SerializeField] private LabHudSettings _lab = new LabHudSettings();
         [SerializeField] private CellRowSettings _battery = new CellRowSettings();
         [SerializeField] private SafeFrameSettings _safe = new SafeFrameSettings();
@@ -61,6 +64,12 @@ namespace MoonProject.UI
 
         public BackdropSettings Backdrop => _backdrop;
 
+        public SaveTickSettings SaveTick => _saveTick;
+
+        public HomeMeterSettings HomeMeter => _homeMeter;
+
+        public AbilitySlotsSettings AbilitySlots => _abilitySlots;
+
         public LabHudSettings Lab => _lab;
 
         public CellRowSettings Battery => _battery;
@@ -74,7 +83,8 @@ namespace MoonProject.UI
                 _memoryCard == null || _towerPanel == null || _kitTitle == null || _friends == null ||
                 _ticker == null || _dialReadout == null || _relays == null || _salvage == null ||
                 _stargaze == null || _guidance == null || _backdrop == null || _battery == null || _lab == null ||
-                _safe == null)
+                _safe == null || _saveTick == null || _homeMeter == null ||
+                _abilitySlots == null)
             {
                 return "a settings section is missing";
             }

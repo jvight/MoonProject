@@ -43,6 +43,54 @@
             "text": "An older journey was put away."
         },
         {
+            "key": "ui.save_tick.word",
+            "text": "07"
+        },
+        {
+            "key": "ui.battery.power",
+            "text": "power"
+        },
+        {
+            "key": "ui.meter.home",
+            "text": "home · {0}"
+        },
+        {
+            "key": "ui.meter.unit",
+            "text": "m"
+        },
+        {
+            "key": "ui.compass.n",
+            "text": "N"
+        },
+        {
+            "key": "ui.compass.ne",
+            "text": "NE"
+        },
+        {
+            "key": "ui.compass.e",
+            "text": "E"
+        },
+        {
+            "key": "ui.compass.se",
+            "text": "SE"
+        },
+        {
+            "key": "ui.compass.s",
+            "text": "S"
+        },
+        {
+            "key": "ui.compass.sw",
+            "text": "SW"
+        },
+        {
+            "key": "ui.compass.w",
+            "text": "W"
+        },
+        {
+            "key": "ui.compass.nw",
+            "text": "NW"
+        },
+        {
             "key": "ui.hint.look_up",
             "text": "Look up"
         },
@@ -353,6 +401,14 @@
         {
             "key": "ui.settings.invert_look",
             "text": "Invert look"
+        },
+        {
+            "key": "ui.settings.rumble",
+            "text": "Rumble"
+        },
+        {
+            "key": "ui.settings.rumble_strength",
+            "text": "Rumble strength"
         },
         {
             "key": "ui.settings.gentle_camera",

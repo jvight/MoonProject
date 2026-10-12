@@ -73,9 +73,13 @@ namespace MoonProject.UI
         private LookUpChip _lookUpChip;
         private NextStepLine _nextStep;
         private NextLineView _nextLine;
-        private CellRow _cellRow;
+        private BatteryDial _batteryDial;
+        private HomeMeter _homeMeter;
+        private AbilitySlots _abilitySlots;
         private bool _cellRowRevealed;
         private PlaceCard _placeCard;
+        private SaveTick _saveTick;
+        private readonly NotYetLines _notYet = new NotYetLines();
         private ProtocolReadout _protocol;
         private RecipeCard _recipeCard;
         private TetherReticle _reticle;
@@ -131,6 +135,8 @@ namespace MoonProject.UI
 
         internal SalvageRing SalvageRing => _salvageRing;
 
+        internal SaveTick SaveTick => _saveTick;
+
         internal SiteNameTag SiteName => _siteName;
 
         internal MemoryCard Card => _card;
@@ -171,7 +177,11 @@ namespace MoonProject.UI
 
         internal NextLineView NextLine => _nextLine;
 
-        internal CellRow CellRow => _cellRow;
+        internal BatteryDial BatteryDial => _batteryDial;
+
+        internal HomeMeter HomeMeter => _homeMeter;
+
+        internal AbilitySlots AbilitySlots => _abilitySlots;
 
         internal VerbList Verbs => _verbs;
 
@@ -296,7 +306,8 @@ namespace MoonProject.UI
             _numbers = new IntText(CachedNumbers);
             _ledger = new PromptLedger(_tuning.Prompts);
             _director = new PromptDirector(_tuning.Prompts, _ledger);
-            _player = new PlayerSettings(services.Audio, services.Look, _localization, _tuning.Pause);
+            _player = new PlayerSettings(services.Audio, services.Look, services.Feel, _localization,
+                _tuning.Pause);
             _cursor = new CursorPolicy();
             _glyphs = new GlyphLabels(services.Input, _localization);
             _tickerLines = new TickerQueue(_tuning.Ticker, new TickerText(_localization));
@@ -316,6 +327,9 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<RelicStowed>(OnRelicStowed));
             _tokens.Add(events.Subscribe<RoverAwoke>(OnRoverAwoke));
             _tokens.Add(events.Subscribe<TitleShown>(OnTitleShown));
+            _tokens.Add(events.Subscribe<FeelBeat>(OnFeelBeat));
+            _tokens.Add(events.Subscribe<GameSaved>(OnGameSaved));
+            _tokens.Add(events.Subscribe<StationNotYet>(OnStationNotYet));
             _tokens.Add(events.Subscribe<StargazingChanged>(OnStargazingChanged));
             _tokens.Add(events.Subscribe<NextStepChanged>(OnNextStepChanged));
             _tokens.Add(events.Subscribe<PlaceFirstApproached>(OnPlaceFirstApproached));
@@ -337,7 +351,6 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<FriendRepaired>(OnFriendRepaired));
             _tokens.Add(events.Subscribe<TickerLine>(OnTickerLine));
             _tokens.Add(events.Subscribe<VoiceLineStarted>(OnVoiceLineStarted));
-            _tokens.Add(events.Subscribe<StationNotYet>(OnStationNotYet));
             _tokens.Add(events.Subscribe<CrewLogFound>(OnCrewLogFound));
             _tokens.Add(events.Subscribe<CassetteCollected>(OnCassetteCollected));
             _tokens.Add(events.Subscribe<RadioProgramChanged>(OnRadioProgramChanged));
@@ -396,15 +409,19 @@ namespace MoonProject.UI
             _lookUpChip = new LookUpChip(_layout, _tuning.Stargaze, _localization);
             _nextStep = new NextStepLine(_tuning.Guidance);
             _nextLine = new NextLineView(_layout, _tuning.Guidance, _localization);
-            _cellRow = new CellRow(_layout, _tuning.Battery, services.Battery, services.Beam);
-            _placeCard = new PlaceCard(_layout, _tuning.Guidance, _localization);
+            _batteryDial = new BatteryDial(_layout, _tuning.Battery, services.Battery, services.Beam);
+            _homeMeter = new HomeMeter(_layout, _tuning.HomeMeter, services.Rover, services.World, _localization);
+            _abilitySlots = new AbilitySlots(_layout, _tuning.AbilitySlots, services.Abilities, services.Tether,
+                services.Rover);
+            _saveTick = new SaveTick(_layout, _tuning.SaveTick);
+            _placeCard = new PlaceCard(_layout, _tuning.Guidance, _localization, services.Events);
             _protocol = new ProtocolReadout(_layout.Hud, _tuning.Guidance, _localization, services.Recovery);
             _recipeCard = new RecipeCard(_layout.Hud, _tuning.Guidance.Recipe, _localization, _numbers, services.Shop,
                 services.Materials, services.RecipeLook);
             _reticle = new TetherReticle(_layout.Reticle, _layout.ReticleRest, _layout.ReticleHover, _tuning.Reticle);
             _prompt = new ContextPrompt(_layout, _tuning.Prompts, _director, services.View, _glyphs, _localization,
                 services.Events);
-            _chip = new MaterialsChip(_layout, _tuning.MaterialsChip, _numbers);
+            _chip = new MaterialsChip(_layout, _tuning.MaterialsChip, _numbers, services.Events);
             IMaterialStock stock = services.Materials;
             _chip.Change(stock.Metal, stock.Wiring, stock.Optics);
             _salvageRing = new SalvageRing(_layout, _tuning.Salvage, _tuning.Prompts, services.Salvage, services.View);
@@ -487,6 +504,7 @@ namespace MoonProject.UI
             float hudTime = paused ? 0f : deltaTime;
             _hud.Set(!paused && !onMap && !_labHud.Inside);
             _hud.Tick(deltaTime);
+            _saveTick.Tick(deltaTime);
             _stargaze.Tick(deltaTime);
             if (_awake)
             {
@@ -587,7 +605,11 @@ namespace MoonProject.UI
             _nextLine.Tick(deltaTime, _nextStep, !paused && _awake && !_card.IsVisible &&
                                                  !_tower.IsVisible && !_stargaze.IsVeiled &&
                                                  !_placeCard.IsVisible && !_protocol.IsVisible);
-            _cellRow.Tick(deltaTime, _cellRowRevealed, !paused && _awake && !_stargaze.IsVeiled && !onMap);
+            bool hudOpen = !paused && _awake && !_stargaze.IsVeiled && !onMap;
+            _batteryDial.Tick(deltaTime, _cellRowRevealed, hudOpen);
+            _homeMeter.Tick(deltaTime, hudOpen && !_card.IsVisible);
+            _abilitySlots.Tick(deltaTime, hudOpen && !_card.IsVisible && !_tower.IsVisible && !_dial.IsBusy &&
+                                          !_hopList.IsBusy && !_lookUpChip.IsVisible);
         }
 
         /// <summary>The cell row exists from the first time the charge dropped below its reveal share.</summary>
@@ -662,6 +684,31 @@ namespace MoonProject.UI
 
             _titleWaiting = true;
             _titleHasSave = shown.HasSave;
+        }
+
+        private void OnGameSaved(GameSaved saved)
+        {
+            if (_bound)
+            {
+                _saveTick.Saved();
+            }
+        }
+
+        /// <summary>A sleeping station answered the sonar: its line on what wakes it goes to the ticker, once.</summary>
+        private void OnStationNotYet(StationNotYet notYet)
+        {
+            if (_notYet.ShouldSay(notYet.ReasonKey))
+            {
+                _tickerLines.Enqueue(new TickerLine(notYet.ReasonKey));
+            }
+        }
+
+        private void OnFeelBeat(FeelBeat beat)
+        {
+            if (_bound)
+            {
+                _salvageRing.OnBeat(beat);
+            }
         }
 
         private void OnStargazingChanged(StargazingChanged changed)
@@ -845,11 +892,6 @@ namespace MoonProject.UI
         }
 
         /// <summary>A sleeping station's "not yet": the ticker says what wakes it (Audio plays the tone).</summary>
-        private void OnStationNotYet(StationNotYet notYet)
-        {
-            _tickerLines.Enqueue(new TickerLine(notYet.ReasonKey));
-        }
-
         private void OnTetherAttached(TetherAttached attached)
         {
             _director.NotifyUsed(InteractionKind.Tether);
@@ -893,6 +935,7 @@ namespace MoonProject.UI
             _prompt.Relocalize();
             _card.Relocalize();
             _ticker.Relocalize();
+            _homeMeter.Relocalize();
             _lookUpChip.Relocalize();
             _nextLine.Relocalize();
             _placeCard.Relocalize();

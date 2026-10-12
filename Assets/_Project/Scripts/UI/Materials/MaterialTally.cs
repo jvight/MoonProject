@@ -7,7 +7,8 @@ namespace MoonProject.UI
     /// <summary>
     /// The materials chip's numbers (pure logic, EditMode-tested): per material, a count that eases to each new amount
     /// and, when the amount grew, a glow that swells and settles over <see cref="MaterialsChipSettings.PulseSeconds"/>.
-    /// A material that was spent counts down without a glow. Allocation-free.
+    /// Each unit of a rising count also gives a small pulse (<see cref="TickPulse"/>). A material that was spent counts
+    /// down without a glow or pulses. Allocation-free.
     /// </summary>
     internal sealed class MaterialTally
     {
@@ -15,6 +16,7 @@ namespace MoonProject.UI
         private readonly CountUp[] _counts;
         private readonly int[] _targets;
         private readonly float[] _pulseAge;
+        private readonly float[] _tickAge;
 
         public MaterialTally(MaterialsChipSettings settings)
         {
@@ -22,10 +24,12 @@ namespace MoonProject.UI
             _counts = new CountUp[Materials.Count];
             _targets = new int[Materials.Count];
             _pulseAge = new float[Materials.Count];
+            _tickAge = new float[Materials.Count];
             for (int i = 0; i < _counts.Length; i++)
             {
                 _counts[i] = new CountUp(settings);
                 _pulseAge[i] = float.PositiveInfinity;
+                _tickAge[i] = float.PositiveInfinity;
             }
         }
 
@@ -69,6 +73,32 @@ namespace MoonProject.UI
             return _counts[(int)material].Shown;
         }
 
+        /// <summary>The units <paramref name="material"/>'s count moved in the last step, signed.</summary>
+        public int Moved(SalvageMaterial material)
+        {
+            return _counts[(int)material].Moved;
+        }
+
+        /// <summary>The units <paramref name="material"/>'s count has rolled in this roll so far.</summary>
+        public int Rolled(SalvageMaterial material)
+        {
+            return _counts[(int)material].Rolled;
+        }
+
+        /// <summary>The units <paramref name="material"/>'s count still has to roll.</summary>
+        public int Remaining(SalvageMaterial material)
+        {
+            return _counts[(int)material].Remaining;
+        }
+
+        /// <summary>0..1 of the small pulse the last unit of a rising count gave <paramref name="material"/>.</summary>
+        public float TickPulse(SalvageMaterial material)
+        {
+            float age = _tickAge[(int)material];
+            float duration = _settings.TickPulseSeconds;
+            return age < duration ? Mathf.Sin(Mathf.PI * age / duration) : 0f;
+        }
+
         /// <summary>The amount <paramref name="material"/> is counting towards.</summary>
         public int Target(SalvageMaterial material)
         {
@@ -107,10 +137,20 @@ namespace MoonProject.UI
             bool changed = false;
             for (int i = 0; i < _counts.Length; i++)
             {
-                changed |= _counts[i].Step(deltaTime);
+                bool moved = _counts[i].Step(deltaTime);
+                changed |= moved;
                 if (_pulseAge[i] < _settings.PulseSeconds)
                 {
                     _pulseAge[i] += deltaTime;
+                }
+
+                if (moved && _counts[i].Moved > 0)
+                {
+                    _tickAge[i] = 0f;
+                }
+                else if (_tickAge[i] < _settings.TickPulseSeconds)
+                {
+                    _tickAge[i] += deltaTime;
                 }
             }
 
@@ -123,6 +163,7 @@ namespace MoonProject.UI
             _targets[i] = amount;
             _counts[i].Snap(amount);
             _pulseAge[i] = float.PositiveInfinity;
+            _tickAge[i] = float.PositiveInfinity;
         }
 
         private bool ApplyOne(SalvageMaterial material, int amount)

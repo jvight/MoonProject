@@ -70,14 +70,14 @@ namespace MoonProject.UI.Tests
         {
             var services = new FakeSettingsServices();
             ILocalization localization = TestTables.Localization(new EventBus(), "next.tower", "x", "y");
-            var settings = new PlayerSettings(services, services, localization, new PauseSettings());
+            var settings = new PlayerSettings(services, services, services, localization, new PauseSettings());
             Assert.IsTrue(settings.Guidance);
             settings.Restore(new SettingsSaveData());
             Assert.IsTrue(settings.Guidance, "a save from before the setting keeps it on");
 
             settings.Guidance = false;
             Assert.IsTrue(settings.IsDirty);
-            var restored = new PlayerSettings(services, services, localization, new PauseSettings());
+            var restored = new PlayerSettings(services, services, services, localization, new PauseSettings());
             restored.Restore(settings.Capture());
             Assert.IsFalse(restored.Guidance);
         }

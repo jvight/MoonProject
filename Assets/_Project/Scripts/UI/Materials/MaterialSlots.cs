@@ -206,19 +206,25 @@ namespace MoonProject.UI
             }
         }
 
-        /// <summary>Swells <paramref name="material"/>'s icon and its halo by <paramref name="glow"/> (0..1).</summary>
-        public void SetGlow(SalvageMaterial material, float glow, float scale, float opacity)
+        /// <summary>
+        /// Swells <paramref name="material"/>'s icon and its halo by <paramref name="glow"/> (0..1), and the icon a
+        /// little more by <paramref name="tick"/> (0..1, the pulse of the unit that just rolled).
+        /// </summary>
+        public void SetGlow(SalvageMaterial material, float glow, float tick, float scale, float tickScale,
+            float opacity)
         {
             Slot slot = _slots[(int)material];
-            if (slot.Glow == null || Mathf.Abs(glow - slot.WrittenGlow) < WriteEpsilon)
+            if (slot.Glow == null ||
+                (Mathf.Abs(glow - slot.WrittenGlow) < WriteEpsilon && Mathf.Abs(tick - slot.WrittenTick) < WriteEpsilon))
             {
                 return;
             }
 
-            float grown = 1f + glow * scale;
+            float grown = 1f + glow * scale + tick * tickScale;
             slot.Icon.style.scale = new StyleScale(new Scale(new Vector2(grown, grown)));
             slot.Glow.style.opacity = glow * opacity;
             slot.WrittenGlow = glow;
+            slot.WrittenTick = tick;
         }
 
         private sealed class Slot
@@ -251,6 +257,8 @@ namespace MoonProject.UI
             public bool Short { get; set; }
 
             public float WrittenGlow { get; set; } = -1f;
+
+            public float WrittenTick { get; set; } = -1f;
         }
     }
 }

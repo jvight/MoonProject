@@ -66,6 +66,13 @@ namespace MoonProject.Rover
 
         /// <summary>Owner of 07's own glances in the shared gaze requests.</summary>
         private readonly object _glanceOwner = new object();
+        private readonly object _cutOwner = new object();
+        private readonly ImpactNudge _headNudge = new ImpactNudge();
+        private float _cutFocus;
+        private bool _cutting;
+        private RoverVoice _voice;
+        private ChirpPose _chirpPose;
+        private float _sigh;
 
         private RoverMood _mood;
         private LookAround _lookAround;
@@ -119,6 +126,8 @@ namespace MoonProject.Rover
             _eyeLight.shadows = LightShadows.None;
 
             EventBus events = context.Events;
+            _chirpPose = new ChirpPose(_tuning.Chirp);
+            _voice = new RoverVoice(events, _tuning.Chirp, () => Time.time);
             _events = events;
             _subscriptions = new[]
             {
@@ -138,7 +147,10 @@ namespace MoonProject.Rover
                 events.Subscribe<ChargingChanged>(OnChargingChanged),
                 events.Subscribe<BatteryWarned>(OnBatteryWarned),
                 events.Subscribe<RoverLeapRefused>(OnLeapRefused),
+                events.Subscribe<FeelBeat>(OnFeelBeat),
+                events.Subscribe<RoverChirpSyllable>(OnChirpSyllable),
                 events.Subscribe<BasePowerChanged>(OnBasePowerChanged),
+                events.Subscribe<FriendSpotted>(spotted => Glance(spotted.Position)),
                 events.Subscribe<SonarPinged>(OnListened),
             };
             _initialized = true;
@@ -349,10 +361,18 @@ namespace MoonProject.Rover
             PerkUp(_tuning.HopArrivalPerk);
         }
 
-        /// <summary>From tower level 1 07 can listen: its antenna tip lights cyan (at once on a load).</summary>
+        /// <summary>
+        /// From tower level 1 07 can listen: its antenna tip lights cyan (at once on a load). As home's windows light
+        /// (not on a load) 07 also lifts its head, perks up and glances home.
+        /// </summary>
         private void OnBasePowerChanged(BasePowerChanged changed)
         {
             _listen.SetAwake(changed.Stage >= BasePowerStage.Home, changed.Restored);
+            if (!changed.Restored && changed.Stage != BasePowerStage.Asleep)
+            {
+                PerkUp(_tuning.KitProudPerk);
+                Glance(_world.BasePosition);
+            }
         }
 
         /// <summary>07 listens: the antenna lifts and its tip blinks.</summary>
@@ -402,6 +422,8 @@ namespace MoonProject.Rover
             {
                 _proudPending = false;
                 PerkUp(_tuning.KitProudPerk);
+                _events.Publish(new FeelBeat(FeelKind.Install, FeelPhase.Reward, _rover.Position, Vector3.up, 1f,
+                    0f));
             }
 
             if (_glanceEnds >= 0f && Time.time >= _glanceEnds)
@@ -411,6 +433,10 @@ namespace MoonProject.Rover
             }
 
             StepBattery(deltaTime);
+            _cutFocus = Smoothing.Damp(_cutFocus, _cutting ? 1f : 0f, _tuning.CutFocus.HalfLife, deltaTime);
+            _chirpPose.Step(deltaTime);
+            _sigh = Smoothing.Damp(_sigh, 0f, _tuning.Chirp.SighHalfLife, deltaTime);
+            _headNudge.Step(deltaTime);
             _listen.Step(deltaTime);
             _rig.SetAntennaLift(_listen.Lift);
             _lookAround.Step(deltaTime);
@@ -490,23 +516,99 @@ namespace MoonProject.Rover
             float breathing = _tuning.IdleHeadBreath * _mood.Idle * (2f * _mood.Breath - 1f);
             BatteryMoodSettings battery = _tuning.Battery;
             float bow = _tired * battery.LowHeadBow + _crawl * battery.CrawlHeadBow;
-            float pitch = _pitch.Value + _mood.HeadPitchOffset + breathing - bow;
+            float pitch = _pitch.Value + _mood.HeadPitchOffset + breathing - bow - _headNudge.Pitch
+                - _chirpPose.HeadDip;
 
             _neck.localRotation = _neckRest * Quaternion.AngleAxis(_yaw.Value, Vector3.up);
             _head.localRotation = _headRest * Quaternion.AngleAxis(-pitch, Vector3.right)
-                * Quaternion.AngleAxis(_wakeTilt, Vector3.forward);
+                * Quaternion.AngleAxis(_wakeTilt + _chirpPose.HeadRoll, Vector3.forward);
             _eyelid.localRotation = _eyelidRest
-                * Quaternion.AngleAxis(_mood.LidClosure * _tuning.EyelidClosedAngle, Vector3.right);
+                * Quaternion.AngleAxis(Mathf.Max(_mood.LidClosure, _cutFocus * _tuning.CutFocus.IrisNarrow)
+                    * _tuning.EyelidClosedAngle, Vector3.right);
             float wingOpen = Mathf.Max(_mood.WingOpen * Mathf.Lerp(1f, battery.LowWingOpen, _tired),
                 sky * _tuning.StargazeWingOpen);
             _solarWing.localRotation = _wingRest
-                * Quaternion.AngleAxis(wingOpen * _tuning.WingOpenAngle, Vector3.right);
+                * Quaternion.AngleAxis(wingOpen * _tuning.WingOpenAngle + _sigh * _tuning.Chirp.SighWing,
+                    Vector3.right);
 
             float eyeGlow = _mood.EyeGlow * Mathf.Lerp(1f, _tuning.StargazeEyeGlow, sky)
-                * Mathf.Lerp(1f, battery.LowEyeGlow, _tired) * Mathf.Lerp(1f, battery.CrawlEyeGlow, _crawl);
+                * Mathf.Lerp(1f, battery.LowEyeGlow, _tired) * Mathf.Lerp(1f, battery.CrawlEyeGlow, _crawl)
+                * Mathf.Lerp(1f, _tuning.CutFocus.EyeGlow, _cutFocus) * _chirpPose.EyeGlow
+                * (1f + _sigh * _tuning.Chirp.SighEye);
             SetGlow(_eyeRenderer, eyeGlow);
             SetGlow(_antennaTipRenderer, _listen.TipEmission(_mood.TipGlow));
             _eyeLight.intensity = _tuning.EyeLightIntensity * eyeGlow;
+        }
+
+        /// <summary>
+        /// The cut through 07's head (docs/design/feel-pass.md §3.1): it turns to the cut point with a narrowed,
+        /// brighter lens, nods at ignition, follows the piece as it tumbles, and lets go once the bundle is received or
+        /// the player releases. The dig is answered the same way.
+        /// </summary>
+        private void OnFeelBeat(FeelBeat beat)
+        {
+            CutFocusSettings focus = _tuning.CutFocus;
+            if (beat.Kind == FeelKind.Dock && beat.Phase == FeelPhase.Reward)
+            {
+                _sigh = 1f;
+                return;
+            }
+
+            if (beat.Kind == FeelKind.Collect && beat.Phase == FeelPhase.Reward)
+            {
+                EndCutFocus();
+                return;
+            }
+
+            if (beat.Kind != FeelKind.Cut && beat.Kind != FeelKind.Dig)
+            {
+                return;
+            }
+
+            switch (beat.Phase)
+            {
+                case FeelPhase.Anticipate:
+                    _cutting = true;
+                    _rover.Gaze.Set(_cutOwner, beat.Position, focus.GazePriority);
+                    break;
+                case FeelPhase.Act:
+                    if (beat.Strength <= 0f)
+                    {
+                        _headNudge.KickPitch(focus.Nod);
+                    }
+
+                    break;
+                case FeelPhase.Impact:
+                    _cutting = false;
+                    break;
+                case FeelPhase.Follow:
+                    _rover.Gaze.Set(_cutOwner, beat.Position, focus.GazePriority);
+                    break;
+                case FeelPhase.Cancel:
+                    EndCutFocus();
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Each syllable of 07's chirp pulses its eye and flicks its antenna; Happy bounces, and the phrase's mood
+        /// poses the head (<see cref="ChirpPose"/>).
+        /// </summary>
+        private void OnChirpSyllable(RoverChirpSyllable syllable)
+        {
+            ChirpSettings chirp = _tuning.Chirp;
+            _chirpPose.Syllable(syllable.Mood, syllable.Index, syllable.Count, syllable.Seconds);
+            _rig.KickAntenna(chirp.AntennaFlick);
+            if (syllable.Mood == ChirpMood.Happy)
+            {
+                _rig.KickHeave(chirp.HappyBounce);
+            }
+        }
+
+        private void EndCutFocus()
+        {
+            _cutting = false;
+            _rover.Gaze.Clear(_cutOwner);
         }
 
         private void SetGlow(Renderer target, float intensity)
@@ -531,6 +633,8 @@ namespace MoonProject.Rover
             {
                 subscription.Dispose();
             }
+
+            _voice?.Dispose();
         }
     }
 }

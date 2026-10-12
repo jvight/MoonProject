@@ -65,6 +65,15 @@
                 </ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement name="hud-frame" class="safe-frame" picking-mode="Ignore">
+                <ui:VisualElement name="home-meter" class="home-meter" picking-mode="Ignore">
+                    <ui:VisualElement name="home-meter-arc" class="home-meter__arc" picking-mode="Ignore" />
+                    <ui:VisualElement class="home-meter__row" picking-mode="Ignore">
+                        <ui:Label name="home-meter-value" class="home-meter__value" picking-mode="Ignore" />
+                        <ui:Label class="home-meter__unit loc" text="ui.meter.unit" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                    <ui:Label name="home-meter-key" class="home-meter__key" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <ui:VisualElement name="ability-slots" class="ability-slots" picking-mode="Ignore" />
                 <ui:VisualElement name="kit-title" class="kit-title" picking-mode="Ignore">
                     <ui:VisualElement class="name-tag" picking-mode="Ignore">
                         <ui:VisualElement name="kit-title-shadow" class="soft-shadow soft-shadow--name" />
@@ -72,8 +81,12 @@
                         <ui:VisualElement name="kit-title-rule" class="kit-title__rule" picking-mode="Ignore" />
                     </ui:VisualElement>
                 </ui:VisualElement>
-                <ui:VisualElement name="cell-row" class="cell-row" picking-mode="Ignore">
-                    <ui:VisualElement name="cell-row-plate" class="cell-row__plate" picking-mode="Ignore" />
+                <ui:VisualElement name="battery-dial" class="battery-dial" picking-mode="Ignore">
+                    <ui:VisualElement name="battery-dial-face" class="battery-dial__face" picking-mode="Ignore">
+                        <ui:VisualElement name="battery-dial-ring" class="battery-dial__ring" picking-mode="Ignore" />
+                        <ui:Label name="battery-dial-value" class="battery-dial__value" picking-mode="Ignore" />
+                        <ui:Label class="battery-dial__word loc" text="ui.battery.power" picking-mode="Ignore" />
+                    </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:VisualElement class="next-line" picking-mode="Ignore">
                     <ui:VisualElement name="next-line" class="name-tag" picking-mode="Ignore">
@@ -85,6 +98,7 @@
                     <ui:VisualElement name="place-card" class="name-tag" picking-mode="Ignore">
                         <ui:VisualElement name="place-card-shadow" class="soft-shadow soft-shadow--name" />
                         <ui:Label name="place-card-name" class="name-tag__name" picking-mode="Ignore" />
+                        <ui:VisualElement class="place-card__rule" picking-mode="Ignore" />
                         <ui:Label name="place-card-job" class="place-card__job" picking-mode="Ignore" />
                     </ui:VisualElement>
                 </ui:VisualElement>
@@ -110,7 +124,9 @@
                 </ui:VisualElement>
                 <ui:VisualElement name="ticker" class="ticker" picking-mode="Ignore">
                     <ui:VisualElement name="ticker-line" class="ticker__line" picking-mode="Ignore">
-                        <ui:VisualElement name="ticker-lamp" class="ticker__lamp" />
+                        <ui:VisualElement name="ticker-lamp" class="ticker__lamp">
+                            <ui:VisualElement name="ticker-icon" class="ticker__icon relay-icon" picking-mode="Ignore" />
+                        </ui:VisualElement>
                         <ui:Label name="ticker-text" class="ticker__text" />
                     </ui:VisualElement>
                 </ui:VisualElement>
@@ -331,6 +347,14 @@
                                     <ui:Toggle name="toggle-invert" class="setting-row__toggle" />
                                 </ui:VisualElement>
                                 <ui:VisualElement class="setting-row">
+                                    <ui:Label class="setting-row__label loc" text="ui.settings.rumble" />
+                                    <ui:Toggle name="toggle-rumble" class="setting-row__toggle" />
+                                </ui:VisualElement>
+                                <ui:VisualElement class="setting-row">
+                                    <ui:Label class="setting-row__label loc" text="ui.settings.rumble_strength" />
+                                    <ui:SliderInt name="slider-rumble" class="setting-row__slider" />
+                                </ui:VisualElement>
+                                <ui:VisualElement class="setting-row">
                                     <ui:Label class="setting-row__label loc" text="ui.settings.gentle_camera" />
                                     <ui:Toggle name="toggle-gentle-camera" class="setting-row__toggle" />
                                 </ui:VisualElement>
@@ -353,6 +377,10 @@
                     </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="save-tick" class="save-tick" picking-mode="Ignore">
+            <ui:Label class="save-tick__word loc" text="ui.save_tick.word" picking-mode="Ignore" />
+            <ui:VisualElement name="save-tick-check" class="save-tick__check" picking-mode="Ignore" />
         </ui:VisualElement>
         <ui:VisualElement name="curtain" class="curtain" picking-mode="Ignore" />
     </ui:VisualElement>

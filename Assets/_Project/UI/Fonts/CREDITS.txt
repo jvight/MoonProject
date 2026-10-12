@@ -1,0 +1,5 @@
+Lunarion UI fonts (all SIL Open Font License 1.1)
+
+- Nunito Sans: text (Regular, SemiBold, Bold). Copyright the Nunito Sans Project Authors. See OFL-NunitoSans.txt.
+- Exo 2: numbers and titles (Medium, SemiBold, Bold). Copyright the Exo 2 Project Authors. See OFL-Exo2.txt.
+- Be Vietnam Pro: the lens view's readout (World). Copyright the Be Vietnam Pro Project Authors. See OFL.txt.

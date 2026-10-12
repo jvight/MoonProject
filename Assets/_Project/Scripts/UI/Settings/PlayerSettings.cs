@@ -7,7 +7,8 @@ namespace MoonProject.UI
 {
     /// <summary>
     /// The player's preferences as the pause menu edits them, applied straight to the services that own them
-    /// (<see cref="IAudioSettings"/>, <see cref="ILookSettings"/>, <see cref="ILocalization"/>) and persisted by the
+    /// (<see cref="IAudioSettings"/>, <see cref="ILookSettings"/>, <see cref="IFeelSettings"/>,
+    /// <see cref="ILocalization"/>) and persisted by the
     /// UI's "ui.settings" save section. Slider positions are whole steps, so a gamepad reaches any value in a few
     /// presses; the Gentle camera adds one step below the lowest, standing for its lower look floor.
     /// </summary>
@@ -15,17 +16,19 @@ namespace MoonProject.UI
     {
         private readonly IAudioSettings _audio;
         private readonly ILookSettings _look;
+        private readonly IFeelSettings _feel;
         private readonly ILocalization _localization;
         private readonly PauseSettings _settings;
         private bool _guidance = true;
         private readonly string[] _textLabels;
         private int _textSize;
 
-        public PlayerSettings(IAudioSettings audio, ILookSettings look, ILocalization localization,
-            PauseSettings settings)
+        public PlayerSettings(IAudioSettings audio, ILookSettings look, IFeelSettings feel,
+            ILocalization localization, PauseSettings settings)
         {
             _audio = audio ?? throw new ArgumentNullException(nameof(audio));
             _look = look ?? throw new ArgumentNullException(nameof(look));
+            _feel = feel ?? throw new ArgumentNullException(nameof(feel));
             _localization = localization ?? throw new ArgumentNullException(nameof(localization));
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _textLabels = new string[settings.TextScales.Length];
@@ -88,6 +91,29 @@ namespace MoonProject.UI
                 _look.InvertY = value;
                 IsDirty = true;
             }
+        }
+
+        /// <summary>Gamepad rumble is on (the default).</summary>
+        public bool Rumble
+        {
+            get => _feel.RumbleEnabled;
+            set
+            {
+                _feel.RumbleEnabled = value;
+                IsDirty = true;
+            }
+        }
+
+        /// <summary>The rumble strength's slider step: 0 is none, <see cref="VolumeSteps"/> is as tuned.</summary>
+        public int GetRumbleStep()
+        {
+            return Mathf.RoundToInt(_feel.RumbleStrength * _settings.VolumeSteps);
+        }
+
+        public void SetRumbleStep(int step)
+        {
+            _feel.RumbleStrength = Mathf.Clamp(step, 0, _settings.VolumeSteps) / (float)_settings.VolumeSteps;
+            IsDirty = true;
         }
 
         public bool GentleCamera
@@ -171,6 +197,8 @@ namespace MoonProject.UI
                 lookSensitivity = _look.Sensitivity,
                 invertY = _look.InvertY,
                 gentleCamera = _look.GentleCamera,
+                rumbleOff = !_feel.RumbleEnabled,
+                rumbleStrength = _feel.RumbleStrength,
                 guidanceOff = !_guidance,
                 textScale = TextScale,
                 language = _localization.Language,
@@ -194,6 +222,8 @@ namespace MoonProject.UI
             _look.GentleCamera = data.gentleCamera;
             _look.Sensitivity = data.lookSensitivity;
             _look.InvertY = data.invertY;
+            _feel.RumbleEnabled = !data.rumbleOff;
+            _feel.RumbleStrength = Volume(data.rumbleStrength);
             _guidance = !data.guidanceOff;
             _textSize = NearestTextSize(data.textScale);
             RestoreLanguage(data.language);

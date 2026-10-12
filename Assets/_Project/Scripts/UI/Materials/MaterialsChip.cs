@@ -1,6 +1,7 @@
 using System;
 using UnityEngine.UIElements;
 using MoonProject.Core;
+using MoonProject.Core.Events;
 
 namespace MoonProject.UI
 {
@@ -9,11 +10,13 @@ namespace MoonProject.UI
     /// chip with the three material icons and counts eases in, each count eases to its new amount, the material that
     /// grew glows softly (<see cref="MaterialTally"/>), and the chip lingers a few seconds and eases out. It stays
     /// while pinned (at a station or a mast, where the stock matters). Changes before the UI's first frame are a loaded
-    /// save: they are taken as they are, with no chip.
+    /// save: they are taken as they are, with no chip. A rising count rolls one unit at a time and publishes a
+    /// <see cref="StockCountTicked"/> for each, so Audio can tick and Rover can rumble in step with the numbers.
     /// </summary>
     internal sealed class MaterialsChip
     {
         private readonly MaterialsChipSettings _settings;
+        private readonly EventBus _events;
         private readonly Reveal _reveal;
         private readonly MaterialTally _tally;
         private readonly MaterialSlots _slots;
@@ -21,7 +24,7 @@ namespace MoonProject.UI
         private bool _pinned;
         private bool _armed;
 
-        public MaterialsChip(UiLayout layout, MaterialsChipSettings settings, IntText numbers)
+        public MaterialsChip(UiLayout layout, MaterialsChipSettings settings, IntText numbers, EventBus events)
         {
             if (layout == null)
             {
@@ -29,6 +32,7 @@ namespace MoonProject.UI
             }
 
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+            _events = events ?? throw new ArgumentNullException(nameof(events));
             _reveal = new Reveal(layout.MaterialsChip, settings.Reveal);
             _reveal.Snap(false);
             _tally = new MaterialTally(settings);
@@ -91,6 +95,7 @@ namespace MoonProject.UI
             if (_tally.Step(deltaTime))
             {
                 WriteCounts();
+                PublishTicks();
             }
 
             WriteGlows();
@@ -121,12 +126,35 @@ namespace MoonProject.UI
             }
         }
 
+        /// <summary>One event per unit a rising count just rolled; a spend rolls down in silence.</summary>
+        private void PublishTicks()
+        {
+            for (int i = 0; i < Materials.Count; i++)
+            {
+                SalvageMaterial material = Materials.At(i);
+                int units = _tally.Moved(material);
+                if (units <= 0)
+                {
+                    continue;
+                }
+
+                int last = _tally.Rolled(material) - 1;
+                int remaining = _tally.Remaining(material);
+                for (int unit = 0; unit < units; unit++)
+                {
+                    int toCome = remaining + units - 1 - unit;
+                    _events.Publish(new StockCountTicked(material, last - (units - 1 - unit), toCome));
+                }
+            }
+        }
+
         private void WriteGlows()
         {
             for (int i = 0; i < Materials.Count; i++)
             {
                 SalvageMaterial material = Materials.At(i);
-                _slots.SetGlow(material, _tally.Glow(material), _settings.PulseScale, _settings.GlowOpacity);
+                _slots.SetGlow(material, _tally.Glow(material), _tally.TickPulse(material), _settings.PulseScale,
+                    _settings.TickPulseScale, _settings.GlowOpacity);
             }
         }
     }

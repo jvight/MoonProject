@@ -4,10 +4,11 @@ using MoonProject.Core;
 namespace MoonProject.UI.Tests
 {
     /// <summary>Stand-ins for the Audio and Rover settings services, clamping like the real ones.</summary>
-    internal sealed class FakeSettingsServices : IAudioSettings, ILookSettings
+    internal sealed class FakeSettingsServices : IAudioSettings, ILookSettings, IFeelSettings
     {
         private readonly float[] _volumes = { 1f, 1f, 1f, 1f };
         private float _sensitivity = 1f;
+        private float _rumbleStrength = 1f;
 
         public float Sensitivity
         {
@@ -16,6 +17,14 @@ namespace MoonProject.UI.Tests
         }
 
         public bool InvertY { get; set; }
+
+        public bool RumbleEnabled { get; set; } = true;
+
+        public float RumbleStrength
+        {
+            get => _rumbleStrength;
+            set => _rumbleStrength = Mathf.Clamp01(value);
+        }
 
         public bool GentleCamera { get; set; }
 

@@ -12,10 +12,10 @@ namespace MoonProject.UI.PlayModeTests
     /// (initialised before the UI). Tests set the tether state, the gameplay hint, the material stock, the tower offer,
     /// the radio program, the relay network, the radio-hop, the salvage cut, the battery and the beam at work.
     /// </summary>
-    public sealed class FakeGameServices : MonoBehaviour, IGameSystem, IViewCamera, IAudioSettings, ILookSettings,
+    public sealed class FakeGameServices : MonoBehaviour, IGameSystem, IViewCamera, IAudioSettings, ILookSettings, IFeelSettings,
         IMaterialStock, ITetherAim, IInteractionHints, IUpgradeShop, IRoverState, IFriendStatuses, IRadioProgram,
         IRadioHop, IRelayStatus, ISalvageStatus, IBlueprintBoard, IRoverBattery, IBeamStatus, ITechTree,
-        IRecoveryProgress, IRecipeLook
+        IRecoveryProgress, IRecipeLook, IWorldLayout, IRoverAbilities
     {
         private readonly TechNodeState[] _techStates = new TechNodeState[Enum.GetValues(typeof(TechNodeId)).Length];
         private readonly int[] _litLamps = new int[Enum.GetValues(typeof(RecoveryTarget)).Length];
@@ -72,6 +72,30 @@ namespace MoonProject.UI.PlayModeTests
         /// False in captures over the real scene: a staged purchase must not set the scene's real stations working.
         /// </summary>
         public bool AnnouncesPurchases { get; set; } = true;
+
+        public bool RumbleEnabled { get; set; } = true;
+
+        /// <summary>Where home is, for the home meter (the test's origin unless set).</summary>
+        public Vector3 BasePosition { get; set; }
+
+        public Vector3 PeakPosition { get; set; } = new Vector3(0f, 200f, 2000f);
+
+        public Vector3 EarthDirection { get; set; } = Vector3.up;
+
+        /// <summary>The abilities 07 has, for the ability slots.</summary>
+        public HashSet<RoverAbility> Abilities { get; } = new HashSet<RoverAbility>();
+
+        public bool Has(RoverAbility ability)
+        {
+            return Abilities.Contains(ability);
+        }
+
+        public void Grant(RoverAbility ability)
+        {
+            Abilities.Add(ability);
+        }
+
+        public float RumbleStrength { get; set; } = 1f;
 
         /// <summary>True while the next level waits for a component the tower has not been fed (the coil).</summary>
         public bool AwaitingPart { get; set; }
@@ -210,6 +234,7 @@ namespace MoonProject.UI.PlayModeTests
             context.Register<IViewCamera>(this);
             context.Register<IAudioSettings>(this);
             context.Register<ILookSettings>(this);
+            context.Register<IFeelSettings>(this);
             context.Register<IMaterialStock>(this);
             context.Register<ITetherAim>(this);
             context.Register<IInteractionHints>(this);
@@ -226,6 +251,8 @@ namespace MoonProject.UI.PlayModeTests
             context.Register<IBeamStatus>(this);
             context.Register<ITechTree>(this);
             context.Register<IRecoveryProgress>(this);
+            context.Register<IWorldLayout>(this);
+            context.Register<IRoverAbilities>(this);
         }
 
         public int KnownCount
