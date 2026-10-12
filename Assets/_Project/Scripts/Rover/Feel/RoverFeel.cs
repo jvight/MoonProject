@@ -132,7 +132,11 @@ namespace MoonProject.Rover
                     _nudge.KickHeave(_cut.CrackDip);
                     break;
                 case FeelPhase.Follow:
-                    _rumble.Play(_cut.Fold);
+                    if (beat.Strength >= 1f)
+                    {
+                        _rumble.Play(_cut.Fold);
+                    }
+
                     break;
             }
         }

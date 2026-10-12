@@ -89,6 +89,17 @@ namespace MoonProject.Rover.Tests
         }
 
         [Test]
+        public void OnlyTheLastFollow_TheFold_Pulses()
+        {
+            Beat(FeelPhase.Follow, 0f);
+            Run(Frame);
+            Assert.AreEqual(0f, _motors.Low, "The tumble (first Follow, strength 0) is quiet.");
+            Beat(FeelPhase.Follow, 1f);
+            Run(Frame);
+            Assert.AreEqual(0.05f, _motors.Low, Tolerance, "The fold (last Follow, strength 1) pulses.");
+        }
+
+        [Test]
         public void Releasing_FadesOffIn150Ms_AndTheLeanEasesBack()
         {
             Beat(FeelPhase.Anticipate, seconds: 0.65f);
