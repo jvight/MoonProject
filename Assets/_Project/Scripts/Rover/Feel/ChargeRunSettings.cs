@@ -28,9 +28,9 @@ namespace MoonProject.Rover
         [Range(0f, 8f)]
         [SerializeField] private float _chargedGlow = 4f;
 
-        [Tooltip("The flare as the run reaches a lamp (+80%), easing back to the charged glow, never a hard flash.")]
+        [Tooltip("The flare as the run reaches a lamp (+160%), easing back to the charged glow, never a hard flash.")]
         [Range(0f, 2f)]
-        [SerializeField] private float _flare = 0.8f;
+        [SerializeField] private float _flare = 1.6f;
 
         [Tooltip("Seconds a lamp's flare takes to ease back to the charged glow.")]
         [Range(0.02f, 0.5f)]

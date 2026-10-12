@@ -80,6 +80,13 @@ namespace MoonProject.Rover.PlayModeTests
         private const float EveningEndTimeout = 20f;
         private const float EveningEarlySeconds = 2f;
 
+        /// <summary>The charge run capture: tier 0's fresh charge, the cut point ahead of 07, and the frames' shares.</summary>
+        private const float ChargeSeconds = 0.65f;
+        private const float CutReach = 1.4f;
+        private const float CutRise = 0.6f;
+        private const float EarlyShare = 0.55f;
+        private const float LateShare = 0.9f;
+
         /// <summary>How far (m) along Earth's direction a point is projected to find Earth on screen.</summary>
         private const float EarthProbeDistance = 1000f;
 
@@ -221,6 +228,44 @@ namespace MoonProject.Rover.PlayModeTests
             Set(_gamepad.leftStick, Vector2.zero);
             Directory.CreateDirectory(CaptureFolder);
             File.WriteAllText(Path.Combine(CaptureFolder, "evening.md"), _report.ToString());
+        }
+
+        /// <summary>
+        /// The charge run (M3-26 §2) from the chase camera: 07 at home charges a cut, and frames are taken early and
+        /// late in the charge-up, as the light travels from the battery along its back to the emitter.
+        /// </summary>
+        [UnityTest]
+        [Timeout(300000)]
+        [PrebuildSetup(typeof(RoverSessionScene))]
+        [PostBuildCleanup(typeof(RoverSessionScene))]
+        public IEnumerator ChargeRun_IsCapturedMidChargeUp_FromTheChaseCamera()
+        {
+            yield return Boot();
+            _report.AppendLine("# The charge run (real Main scene)");
+            _report.AppendLine();
+            _report.AppendLine("| Capture | Orbit elevation (deg) | Camera above dust (m) | 07's gaze | Beat |");
+            _report.AppendLine("|---|---:|---:|---:|---|");
+            Set(_gamepad.rightStick, new Vector2(LookStick, 0f));
+            yield return Wait(StickProbeSeconds);
+            Set(_gamepad.rightStick, Vector2.zero);
+            float opening = Time.time + WakeEaseTimeout;
+            while (_cameraRig.Opening.IsActive)
+            {
+                Assert.Less(Time.time, opening, "The wake hands over first.");
+                yield return null;
+            }
+
+            yield return Wait(SettleSeconds);
+            Vector3 cutPoint = _rover.Position + _rover.Rotation * Vector3.forward * CutReach + Vector3.up * CutRise;
+            _context.Events.Publish(new FeelBeat(FeelKind.Cut, FeelPhase.Anticipate, cutPoint, Vector3.up, 0f,
+                ChargeSeconds));
+            yield return Wait(ChargeSeconds * EarlyShare);
+            Capture("chargerun-1-early");
+            yield return Wait(ChargeSeconds * (LateShare - EarlyShare));
+            Capture("chargerun-2-late");
+            _context.Events.Publish(new FeelBeat(FeelKind.Cut, FeelPhase.Cancel, cutPoint, Vector3.up, 0f, 0f));
+            Directory.CreateDirectory(CaptureFolder);
+            File.WriteAllText(Path.Combine(CaptureFolder, "chargerun.md"), _report.ToString());
         }
 
         private IEnumerator Stargaze(string name, Vector3 ground, float yaw)
