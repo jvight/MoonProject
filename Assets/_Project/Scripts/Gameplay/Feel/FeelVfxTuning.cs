@@ -171,6 +171,51 @@ namespace MoonProject.Gameplay
         [Tooltip("Pool sizes: sparks, beads, motes (zero GC; never exceeded).")]
         [SerializeField] private Vector3Int _pools = new Vector3Int(64, 24, 24);
 
+        [Header("Dust (leap, landing, tether)")]
+        [Tooltip("Dust puffs that may be in the air or settling at once (zero GC; never exceeded).")]
+        [Range(8, 128)] [SerializeField] private int _dustPool = 48;
+
+        [Tooltip("Dust colour (lavender regolith; the sprite material supplies its glow, so keep it dim).")]
+        [SerializeField] private Color _dustColor = new Color(0.6f, 0.58f, 0.7f, 0.55f);
+
+        [Tooltip("Size of a dust puff (m).")]
+        [Range(0.01f, 0.3f)] [SerializeField] private float _dustSize = 0.12f;
+
+        [Tooltip("Radius the ring's puffs start at round the beat's centre: just outside 07's wheels (m).")]
+        [Range(0f, 2f)] [SerializeField] private float _ringRadius = 1.1f;
+
+        [Tooltip("A ring puff's outward speed at the weakest and the strongest beat (m/s).")]
+        [SerializeField] private Vector2 _dustSpeed = new Vector2(0.6f, 1.8f);
+
+        [Tooltip("How steeply a ring puff rises as it flies out (upward share of its speed).")]
+        [Range(0f, 1.5f)] [SerializeField] private float _dustRise = 0.45f;
+
+        [Tooltip("How long a dust puff lives: it arcs, settles and fades within this (s).")]
+        [Range(0.3f, 3f)] [SerializeField] private float _dustSettleSeconds = 1.2f;
+
+        [Tooltip("Puffs in a landing ring at full strength; a leap's ring uses this times the leap share.")]
+        [Range(4, 64)] [SerializeField] private int _ringDust = 28;
+
+        [Tooltip("Share of a landing ring's puffs a leap's take-off throws.")]
+        [Range(0f, 1f)] [SerializeField] private float _leapRingShare = 0.6f;
+
+        [Tooltip("Puffs that fall off an object the tether lifts.")]
+        [Range(0, 32)] [SerializeField] private int _tetherDust = 10;
+
+        [Header("Leap coils")]
+        [Tooltip("The coil flash's size at take-off (m), and its light's peak.")]
+        [SerializeField] private Vector2 _coilFlash = new Vector2(0.5f, 1.8f);
+
+        [Header("Install")]
+        [Tooltip("The alignment light's level while a part lines up with its socket.")]
+        [Range(0f, 3f)] [SerializeField] private float _alignLight = 0.9f;
+
+        [Tooltip("How far the power-on sweep travels along the new part (m).")]
+        [Range(0.1f, 2f)] [SerializeField] private float _sweepLength = 0.6f;
+
+        [Tooltip("The power-on sweep's length in time when the beat gives none (s).")]
+        [Range(0.1f, 2f)] [SerializeField] private float _sweepSeconds = 0.6f;
+
         [Header("Crack")]
         [Tooltip("How long the seam's end flashes white at the crack (s).")]
         [Range(0.02f, 0.3f)] [SerializeField] private float _crackFlashSeconds = 0.08f;
@@ -242,6 +287,21 @@ namespace MoonProject.Gameplay
         public int SparkPool => Mathf.Max(1, _pools.x);
         public int BeadPool => Mathf.Max(1, _pools.y);
         public int MotePool => Mathf.Max(1, _pools.z);
+        public int DustPool => Mathf.Max(1, _dustPool);
+        public Color DustColor => _dustColor;
+        public float DustSize => _dustSize;
+        public float RingRadius => _ringRadius;
+        public Vector2 DustSpeed => _dustSpeed;
+        public float DustRise => _dustRise;
+        public float DustSettleSeconds => _dustSettleSeconds;
+        public int RingDust => _ringDust;
+        public float LeapRingShare => _leapRingShare;
+        public int TetherDust => _tetherDust;
+        public float CoilFlashSize => _coilFlash.x;
+        public float CoilFlashLight => _coilFlash.y;
+        public float AlignLight => _alignLight;
+        public float SweepLength => _sweepLength;
+        public float SweepSeconds => _sweepSeconds;
         public float CrackFlashSeconds => _crackFlashSeconds;
         public float CrackSpike => _crackSpike;
         public float EmitterFadeSeconds => _emitterFadeSeconds;

@@ -19,6 +19,12 @@ namespace MoonProject.Gameplay
         private const float DropKick = 0.5f;
         private const float CoolShrink = 0.4f;
 
+        // A fallen puff starts within this many seconds of its drift from the object's centre.
+        private const float DustSpread = 0.3f;
+
+        // Ring puffs are spaced evenly round the ring, each nudged by up to this share of the spacing.
+        private const float RingJitter = 0.5f;
+
         private readonly FeelVfxTuning _tuning;
         private readonly FeelSprites _sparkSprites;
         private readonly FeelSprites _beadSprites;
@@ -32,6 +38,12 @@ namespace MoonProject.Gameplay
         private readonly float[] _beadAge;
         private readonly float[] _beadLife;
         private readonly float[] _beadSize;
+        private readonly FeelSprites _dustSprites;
+        private readonly Vector3[] _dustPosition;
+        private readonly Vector3[] _dustVelocity;
+        private readonly float[] _dustAge;
+        private readonly float[] _dustGround;
+        private int _dust;
         private int _flying;
         private int _resting;
         private float _owed;
@@ -56,6 +68,42 @@ namespace MoonProject.Gameplay
             _beadAge = new float[beads];
             _beadLife = new float[beads];
             _beadSize = new float[beads];
+            int dust = tuning.DustPool;
+            _dustSprites = new FeelSprites("VacuumDust", parent, sprite, dust, false, 0f);
+            _dustPosition = new Vector3[dust];
+            _dustVelocity = new Vector3[dust];
+            _dustAge = new float[dust];
+            _dustGround = new float[dust];
+        }
+
+        /// <summary>Dust puffs in the air or settling (tests and debugging views).</summary>
+        public int Dust => _dust;
+
+        /// <summary>
+        /// A ring of dust thrown out from <paramref name="centre"/> along the ground, <paramref name="count"/> puffs at
+        /// a speed by <paramref name="strength"/> (0..1): they arc, land and settle (a leap's take-off, a landing).
+        /// </summary>
+        public void Ring(Vector3 centre, int count, float strength)
+        {
+            float speed = Mathf.Lerp(_tuning.DustSpeed.x, _tuning.DustSpeed.y, Mathf.Clamp01(strength));
+            for (int i = 0; i < count; i++)
+            {
+                float angle = (i + UnityEngine.Random.value * RingJitter) * Mathf.PI * 2f / Mathf.Max(count, 1);
+                var flat = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle));
+                Puff(centre + flat * _tuning.RingRadius, (flat + Vector3.up * _tuning.DustRise) * speed);
+            }
+        }
+
+        /// <summary>
+        /// Dust shaken off an object at <paramref name="position"/>: it falls away under lunar gravity.
+        /// </summary>
+        public void Fall(Vector3 position, int count)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                Vector3 drift = UnityEngine.Random.insideUnitSphere * _tuning.DustSpeed.x * DropKick;
+                Puff(position + drift * DustSpread, new Vector3(drift.x, -Mathf.Abs(drift.y), drift.z));
+            }
         }
 
         /// <summary>Sparks and slag in the air (tests and debugging views).</summary>
@@ -101,6 +149,7 @@ namespace MoonProject.Gameplay
         {
             StepFlying(deltaTime);
             StepResting(deltaTime);
+            StepDust(deltaTime);
             if (_sprayLevel >= 0f)
             {
                 float rate = Mathf.Lerp(_tuning.SparkRate.x, _tuning.SparkRate.y, _sprayLevel);
@@ -172,6 +221,44 @@ namespace MoonProject.Gameplay
             }
         }
 
+        private void Puff(Vector3 position, Vector3 velocity)
+        {
+            if (_dust >= _dustPosition.Length)
+            {
+                return;
+            }
+
+            int i = _dust++;
+            _dustPosition[i] = position;
+            _dustVelocity[i] = velocity;
+            _dustAge[i] = 0f;
+            _dustGround[i] = Physics.Raycast(position + Vector3.up * GroundProbe, Vector3.down, out RaycastHit hit,
+                GroundReach) ? hit.point.y : position.y - GroundReach;
+        }
+
+        private void StepDust(float deltaTime)
+        {
+            for (int i = _dust - 1; i >= 0; i--)
+            {
+                _dustAge[i] += deltaTime;
+                if (_dustAge[i] >= _tuning.DustSettleSeconds)
+                {
+                    int last = --_dust;
+                    _dustPosition[i] = _dustPosition[last];
+                    _dustVelocity[i] = _dustVelocity[last];
+                    _dustAge[i] = _dustAge[last];
+                    _dustGround[i] = _dustGround[last];
+                    continue;
+                }
+
+                if (FeelCurves.Ballistic(ref _dustPosition[i], ref _dustVelocity[i], deltaTime, _tuning.Gravity,
+                    _dustGround[i], 0f))
+                {
+                    _dustVelocity[i] = Vector3.zero;
+                }
+            }
+        }
+
         private void Rest(Vector3 position, float size)
         {
             if (_resting >= _beadPosition.Length)
@@ -234,6 +321,16 @@ namespace MoonProject.Gameplay
             }
 
             _beadSprites.End();
+            _dustSprites.Begin();
+            for (int i = 0; i < _dust; i++)
+            {
+                float settled = _dustAge[i] / _tuning.DustSettleSeconds;
+                Color color = _tuning.DustColor;
+                color.a *= 1f - settled * settled;
+                _dustSprites.Add(_dustPosition[i], _tuning.DustSize * (1f + settled), color, Vector3.zero);
+            }
+
+            _dustSprites.End();
         }
     }
 }

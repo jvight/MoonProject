@@ -6,7 +6,10 @@ using MoonProject.Core.Events;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// The cut's look, as one listener of the cut's FeelBeats (docs/design/feel-pass.md §3.1, §6): Anticipate charges
+    /// The feel kit's look, as one listener of FeelBeats: the cut, and from polish wave 1 the leap's and landing's dust
+    /// rings with the coil flash, dust falling off a tethered object, and an install's alignment light and power-on
+    /// sweep (docs/design/polish-pass.md §3.2). For the cut's FeelBeats (docs/design/feel-pass.md §3.1, §6): Anticipate
+    /// charges
     /// up at the emitter; the first Act ignites (flash, beam, cut light, sparks) and each later Act moves the hot seam
     /// and the spark rate with progress; Cancel disperses a charge or retracts the beam, leaving the seam to cool on
     /// the piece; Impact cracks; Follow drops slag off the tumbling piece, then lets its seam go as it folds. Beats
@@ -30,6 +33,7 @@ namespace MoonProject.Gameplay
         private readonly BundleTieOff _tieOff;
         private readonly LightPulse _flashLight;
         private readonly LightPulse _cutLight;
+        private readonly LightPulse _installLight;
         private readonly FeelSprites _flashSprites;
         private readonly HeatSeam[] _seams = new HeatSeam[SeamSlots];
         private readonly Vector3[] _flashAt = new Vector3[FlashSlots];
@@ -40,6 +44,10 @@ namespace MoonProject.Gameplay
         private bool _ignited;
         private bool _cutting;
         private float _progress;
+        private Vector3 _sweepFrom;
+        private Vector3 _sweepTo;
+        private float _sweepAge = float.PositiveInfinity;
+        private float _sweepSeconds;
 
         public FeelVfx(Transform parent, FeelVfxTuning tuning, GameplayVisuals visuals, EventBus events,
             IFeelAnchors anchors)
@@ -64,6 +72,7 @@ namespace MoonProject.Gameplay
             _tieOff = new BundleTieOff(tuning);
             _flashLight = new LightPulse("FlashLight", root, Color.white, tuning.FlashRange);
             _cutLight = new LightPulse("CutLight", root, tuning.CutLightColor, tuning.CutRange);
+            _installLight = new LightPulse("InstallLight", root, tuning.MoteColor, tuning.EmitterRange);
             _flashSprites = new FeelSprites("Flashes", root, visuals.FeelSprite, FlashSlots, false, 0f);
             for (int i = 0; i < SeamSlots; i++)
             {
@@ -97,11 +106,32 @@ namespace MoonProject.Gameplay
 
         public void Handle(FeelBeat beat)
         {
-            if (beat.Kind != FeelKind.Cut)
+            switch (beat.Kind)
             {
-                return;
+                case FeelKind.Cut:
+                    HandleCut(beat);
+                    break;
+                case FeelKind.Leap when beat.Phase == FeelPhase.Act:
+                    Leap(beat);
+                    break;
+                case FeelKind.Land when beat.Phase == FeelPhase.Impact:
+                    _debris.Ring(beat.Position, Mathf.RoundToInt(_tuning.RingDust * beat.Strength), beat.Strength);
+                    break;
+                case FeelKind.Tether when beat.Phase == FeelPhase.Follow:
+                    _debris.Fall(beat.Position, _tuning.TetherDust);
+                    break;
+                case FeelKind.Install when beat.Phase == FeelPhase.Anticipate:
+                    _installLight.MoveTo(beat.Position);
+                    _installLight.Ramp(_tuning.AlignLight, beat.Seconds, true);
+                    break;
+                case FeelKind.Install when beat.Phase == FeelPhase.Act:
+                    Sweep(beat);
+                    break;
             }
+        }
 
+        private void HandleCut(FeelBeat beat)
+        {
             switch (beat.Phase)
             {
                 case FeelPhase.Anticipate:
@@ -141,6 +171,7 @@ namespace MoonProject.Gameplay
             _debris.Step(deltaTime);
             _flashLight.Step(deltaTime);
             _cutLight.Step(deltaTime);
+            StepSweep(deltaTime);
             for (int i = 0; i < SeamSlots; i++)
             {
                 _seams[i].Step(deltaTime);
@@ -229,6 +260,47 @@ namespace MoonProject.Gameplay
 
             _seam.Clear();
             _seam = null;
+        }
+
+        /// <summary>The leap's take-off: a ring of dust and a flash of the coils under 07.</summary>
+        private void Leap(FeelBeat beat)
+        {
+            _debris.Ring(beat.Position, Mathf.RoundToInt(_tuning.RingDust * _tuning.LeapRingShare), beat.Strength);
+            Flash(beat.Position, _tuning.CoilFlashSize, _tuning.FlashSeconds);
+            _flashLight.MoveTo(beat.Position);
+            _flashLight.Ramp(_tuning.CoilFlashLight, 0f, false);
+            _flashLight.Ramp(0f, _tuning.FlashDecaySeconds, false);
+        }
+
+        /// <summary>
+        /// The installed part powers on: a light sweeps along it (from its socket along the beat's normal).
+        /// </summary>
+        private void Sweep(FeelBeat beat)
+        {
+            _sweepFrom = beat.Position;
+            _sweepTo = beat.Position + beat.Normal.normalized * _tuning.SweepLength;
+            _sweepSeconds = beat.Seconds > 0f ? beat.Seconds : _tuning.SweepSeconds;
+            _sweepAge = 0f;
+            _installLight.Ramp(_tuning.AlignLight * _tuning.CrackSpike, 0f, false);
+        }
+
+        private void StepSweep(float deltaTime)
+        {
+            _installLight.Step(deltaTime);
+            if (_sweepAge > _sweepSeconds)
+            {
+                return;
+            }
+
+            _sweepAge += deltaTime;
+            float t = Mathf.Clamp01(_sweepAge / _sweepSeconds);
+            Vector3 at = Vector3.Lerp(_sweepFrom, _sweepTo, t * t * (3f - 2f * t));
+            _installLight.MoveTo(at);
+            Flash(at, _tuning.FlashRadius, _tuning.FlashSeconds);
+            if (t >= 1f)
+            {
+                _installLight.Ramp(0f, _tuning.CutFadeSeconds, false);
+            }
         }
 
         private void EndBeam(float fadeSeconds)

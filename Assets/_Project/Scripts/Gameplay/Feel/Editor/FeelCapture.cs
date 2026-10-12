@@ -36,6 +36,13 @@ namespace MoonProject.Gameplay.Feel.Editor
         private const float CutHalfLength = 0.35f;
         private const float Probe = 200f;
         private const float SeamDistance = 1.3f;
+        private const float WaveSettle = 2.5f;
+        private const float LeapShot = 0.12f;
+        private const float LandShot = 0.35f;
+        private const float TetherShot = 0.5f;
+        private const float TetherLift = 1.2f;
+        private const float AlignSeconds = 0.4f;
+        private const float SweepShot = 0.3f;
         private const float ChaseDistance = 7.5f;
         private const float ChasePitch = 16f;
         private const float ChaseHeight = 1.1f;
@@ -149,8 +156,38 @@ namespace MoonProject.Gameplay.Feel.Editor
             Run(vfx, clock, Step * 4f);
             shots.Take("07_received", Wide(rover.transform.position + Vector3.up, anchors.CutPoint, rover.transform,
                 1.2f));
+            CaptureWaveOne(events, vfx, rover.transform, shots);
             vfx.Dispose();
             return shots.Written;
+        }
+
+        /// <summary>
+        /// Polish wave 1's beats (docs/design/polish-pass.md §3.2): leap, landing, tether dust, install.
+        /// </summary>
+        private static void CaptureWaveOne(EventBus events, FeelVfx vfx, Transform rover, Shots shots)
+        {
+            Vector3 feet = rover.position;
+            Run(vfx, 0f, WaveSettle);
+            Vector3 coils = Descendant(rover, "CoilSocket").position;
+            events.Publish(new FeelBeat(FeelKind.Leap, FeelPhase.Act, coils, Vector3.up, 1f, 0f));
+            Run(vfx, 0f, LeapShot);
+            shots.Take("08_leap", Wide(feet + Vector3.up, feet + rover.forward * 2f, rover, 1.2f));
+            Run(vfx, 0f, WaveSettle);
+            events.Publish(new FeelBeat(FeelKind.Land, FeelPhase.Impact, feet, Vector3.up, 1f, 0f));
+            Run(vfx, 0f, LandShot);
+            shots.Take("09_land", Wide(feet + Vector3.up, feet + rover.forward * 2f, rover, 1.2f));
+            Run(vfx, 0f, WaveSettle);
+            Vector3 lifted = feet + rover.forward * 2.2f + Vector3.up * TetherLift;
+            events.Publish(new FeelBeat(FeelKind.Tether, FeelPhase.Follow, lifted, Vector3.up, 1f, 0f));
+            Run(vfx, 0f, TetherShot);
+            shots.Take("10_tether", Wide(feet + Vector3.up, lifted, rover, 1f));
+            Vector3 socket = Descendant(rover, "CargoSocket").position;
+            events.Publish(new FeelBeat(FeelKind.Install, FeelPhase.Anticipate, socket, rover.up, 0f, AlignSeconds));
+            Run(vfx, 0f, AlignSeconds);
+            shots.Take("11_install_align", Above(socket, rover));
+            events.Publish(new FeelBeat(FeelKind.Install, FeelPhase.Act, socket, -rover.forward, 1f, SweepShot * 2f));
+            Run(vfx, 0f, SweepShot);
+            shots.Take("12_install_sweep", Above(socket, rover));
         }
 
         private static float Run(FeelVfx vfx, float clock, float seconds)
@@ -178,7 +215,15 @@ namespace MoonProject.Gameplay.Feel.Editor
             return Pose(eye, subject.position + rover.forward * 0.3f, 45f);
         }
 
-        /// <summary>The game's default chase camera behind 07 (RoverCameraTuning: 7.5 m out, 16° up, at 1.1 m).</summary>
+        /// <summary>From behind and above 07's back, onto <paramref name="subject"/>.</summary>
+        private static CameraPose Above(Vector3 subject, Transform rover)
+        {
+            return Pose(subject - rover.forward * 1.6f + rover.right * 0.6f + Vector3.up * 1.1f, subject, 45f);
+        }
+
+        /// <summary>
+        /// The game's default chase camera behind 07 (RoverCameraTuning: 7.5 m out, 16° up, at 1.1 m).
+        /// </summary>
         private static CameraPose Chase(Transform rover)
         {
             Vector3 target = rover.position + Vector3.up * ChaseHeight;
