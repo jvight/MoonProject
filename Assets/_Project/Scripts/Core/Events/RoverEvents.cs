@@ -240,6 +240,55 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
+    /// 07 wants to say something in its machine chirp (docs/design/feel-pass.md §7.2). Published by Rover, whose
+    /// character decides when 07 speaks and keeps the cooldowns; Audio voices it (or drops it, e.g. over a voice line)
+    /// and announces each syllable with <see cref="RoverChirpSyllable"/>.
+    /// </summary>
+    public readonly struct RoverChirpRequested
+    {
+        public RoverChirpRequested(ChirpMood mood, float intensity)
+        {
+            Mood = mood;
+            Intensity = Mathf.Clamp01(intensity);
+        }
+
+        public ChirpMood Mood { get; }
+
+        /// <summary>0..1: how strongly 07 feels it (may lift the phrase a step).</summary>
+        public float Intensity { get; }
+    }
+
+    /// <summary>
+    /// A syllable of 07's chirp starts sounding now (docs/design/feel-pass.md §7.2). Published by Audio at each onset,
+    /// so 07's eye, antenna and head move in time with its voice.
+    /// </summary>
+    public readonly struct RoverChirpSyllable
+    {
+        public RoverChirpSyllable(ChirpMood mood, int index, int count, float pitch, float seconds)
+        {
+            Mood = mood;
+            Index = index;
+            Count = count;
+            Pitch = Mathf.Clamp01(pitch);
+            Seconds = Mathf.Max(0f, seconds);
+        }
+
+        public ChirpMood Mood { get; }
+
+        /// <summary>This syllable's place in the phrase, from 0.</summary>
+        public int Index { get; }
+
+        /// <summary>How many syllables the phrase has.</summary>
+        public int Count { get; }
+
+        /// <summary>Where the syllable sits in 07's range, 0 (lowest) .. 1 (highest).</summary>
+        public float Pitch { get; }
+
+        /// <summary>How long the syllable lasts.</summary>
+        public float Seconds { get; }
+    }
+
+    /// <summary>
     /// 07's wake reached a beat (docs/design/cutscenes.md §1): the opening on a fresh game, the short wake on a loaded
     /// one. <see cref="Hurried"/> is true once the player's drive input has hurried the wake, so cues can be shorter.
     /// </summary>
