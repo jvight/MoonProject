@@ -20,6 +20,7 @@ namespace MoonProject.Rover
         private NudgeSettings _heaveSpring;
         private NudgeSettings _pitchSpring;
         private float _heldPitch;
+        private float _heldHeave;
 
         public float Surge => _surge.Value;
 
@@ -30,7 +31,7 @@ namespace MoonProject.Rover
         /// <summary>Whether everything is back at rest (no hold, springs settled).</summary>
         public bool IsAtRest(float tolerance)
         {
-            return _heldPitch == 0f && Mathf.Abs(_surge.Value) < tolerance && Mathf.Abs(_heave.Value) < tolerance
+            return _heldPitch == 0f && _heldHeave == 0f && Mathf.Abs(_surge.Value) < tolerance && Mathf.Abs(_heave.Value) < tolerance
                    && Mathf.Abs(_pitch.Value) < tolerance && Mathf.Abs(_surge.Velocity) < tolerance
                    && Mathf.Abs(_heave.Velocity) < tolerance && Mathf.Abs(_pitch.Velocity) < tolerance;
         }
@@ -64,16 +65,25 @@ namespace MoonProject.Rover
             _heldPitch = settings.Angle;
         }
 
+        /// <summary>Holds the chassis down by <paramref name="depth"/> (m) with the settings' spring (a crouch).</summary>
+        public void HoldHeave(NudgeSettings settings, float depth)
+        {
+            _heaveSpring = settings;
+            _heldHeave = -depth;
+        }
+
         /// <summary>Lets any hold go; everything eases back.</summary>
         public void Release()
         {
             _heldPitch = 0f;
+            _heldHeave = 0f;
         }
 
         /// <summary>Back to rest at once (07 was placed).</summary>
         public void Reset()
         {
             _heldPitch = 0f;
+            _heldHeave = 0f;
             _surge.Reset(0f);
             _heave.Reset(0f);
             _pitch.Reset(0f);
@@ -83,7 +93,7 @@ namespace MoonProject.Rover
         public void Step(float deltaTime, float pitchJitter = 0f)
         {
             Step(ref _surge, 0f, _surgeSpring, deltaTime);
-            Step(ref _heave, 0f, _heaveSpring, deltaTime);
+            Step(ref _heave, _heldHeave, _heaveSpring, deltaTime);
             Step(ref _pitch, _heldPitch + pitchJitter, _pitchSpring, deltaTime);
         }
 

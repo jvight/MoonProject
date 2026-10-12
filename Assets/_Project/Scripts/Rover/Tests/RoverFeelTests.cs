@@ -32,6 +32,7 @@ namespace MoonProject.Rover.Tests
         private FeelPreferences _preferences;
         private RoverFeel _feel;
         private float _time;
+        private float _speed;
 
         [SetUp]
         public void SetUp()
@@ -39,7 +40,8 @@ namespace MoonProject.Rover.Tests
             _events = new EventBus();
             _motors = new FakeMotors();
             _preferences = new FeelPreferences();
-            _feel = new RoverFeel(_events, new CutFeelSettings(), new DockFeelSettings(), _preferences, _motors, null);
+            _feel = new RoverFeel(_events, new CutFeelSettings(), new DockFeelSettings(), new MotionFeelSettings(),
+                _preferences, _motors, null);
             _time = 0f;
         }
 
@@ -59,7 +61,7 @@ namespace MoonProject.Rover.Tests
             for (float t = 0f; t < seconds; t += Frame)
             {
                 _time += Frame;
-                _feel.Tick(Frame, _time);
+                _feel.Tick(Frame, _time, _speed, Vector3.zero);
             }
         }
 
@@ -86,6 +88,53 @@ namespace MoonProject.Rover.Tests
             Assert.AreEqual(0.35f, _motors.Low, Tolerance, "The crack is the strongest pulse.");
             Run(0.2f);
             Assert.AreEqual(0f, _motors.Low, Tolerance, "Then quiet: the beam let go.");
+        }
+
+        [Test]
+        public void DriveStartAndStop_ArePublished_AndFelt()
+        {
+            var beats = new System.Collections.Generic.List<FeelBeat>();
+            _events.Subscribe<FeelBeat>(beats.Add);
+            _speed = 1f;
+            Run(Frame);
+            Assert.AreEqual(FeelKind.Drive, beats[0].Kind);
+            Assert.AreEqual(FeelPhase.Anticipate, beats[0].Phase, "Start.");
+            Assert.Greater(_motors.Low, 0f, "The start swell.");
+            Run(0.5f);
+            _speed = 0f;
+            Run(Frame);
+            Assert.AreEqual(FeelPhase.Impact, beats[1].Phase, "Stop.");
+            Assert.AreEqual(0.06f, _motors.Low, Tolerance, "The stop rumble.");
+        }
+
+        [Test]
+        public void TheLeap_CrouchesPerStep_KicksAtLaunch_AndLandsByImpact()
+        {
+            _events.Publish(new RoverJumpCharged(0.5f));
+            Run(0.5f);
+            Assert.AreEqual(0.04f + 0.12f * 0.5f, _motors.Low, Tolerance, "Charge rumble by step.");
+            Assert.Less(_feel.Nudge.Heave, -0.03f, "07 crouches about 4 cm at half charge.");
+            _events.Publish(new RoverJumped(1f));
+            Run(Frame);
+            Assert.AreEqual(0.25f, _motors.Low, Tolerance, "The launch kick.");
+            Run(0.3f);
+            _events.Publish(new RoverLanded(Vector3.zero, 6f, 1f));
+            Run(Frame);
+            Assert.AreEqual(0.3f, _motors.Low, Tolerance, "A hard landing rumbles hardest.");
+        }
+
+        [Test]
+        public void TheSeat_AndTheBatteryEmptying_AreFelt()
+        {
+            _events.Publish(new RoverKitFitted(RoverKitPiece.LampBar, false, "warm_headlamp"));
+            Run(Frame);
+            Assert.AreEqual(0.2f, _motors.Low, Tolerance, "The seat's clunk.");
+            Run(0.3f);
+            _events.Publish(new LowPowerChanged(true, false));
+            Run(Frame);
+            Assert.Greater(_motors.Low, 0.05f, "The power-down rumble starts at 0.06 ...");
+            Run(0.7f);
+            Assert.AreEqual(0f, _motors.Low, Tolerance, "... and decays.");
         }
 
         [Test]

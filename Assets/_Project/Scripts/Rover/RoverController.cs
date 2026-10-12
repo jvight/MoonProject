@@ -333,7 +333,8 @@ namespace MoonProject.Rover
             bool visualsReady = _visualRig.Initialize(this);
             if (visualsReady)
             {
-                _feel = new RoverFeel(_events, _visualRig.Tuning.CutFeel, _visualRig.Tuning.DockFeel, feelPreferences,
+                RoverRigTuning feel = _visualRig.Tuning;
+                _feel = new RoverFeel(_events, feel.CutFeel, feel.DockFeel, feel.MotionFeel, feelPreferences,
                     new GamepadRumbleMotors(), _visualRig);
                 _visualRig.SetNudge(_feel.Nudge);
             }
@@ -851,7 +852,7 @@ namespace MoonProject.Rover
 
             float deltaTime = Time.deltaTime;
             _stillness.Step(SampleStillness(), deltaTime);
-            _feel.Tick(deltaTime, Time.time);
+            _feel.Tick(deltaTime, Time.time, Speed, _visualRig.RootPosition);
             _visualRig.Tick(deltaTime);
             _kit.Tick(deltaTime);
             _wheelFx.Tick();
