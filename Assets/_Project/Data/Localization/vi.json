@@ -8,7 +8,7 @@
         },
         {
             "key": "ui.pause.subheading",
-            "text": "Radio vẫn khẽ ngân nga."
+            "text": "Radio vẫn đang phát."
         },
         {
             "key": "ui.pause.resume",
@@ -24,11 +24,11 @@
         },
         {
             "key": "ui.pause.quit_question",
-            "text": "Nghỉ chân ở đây nhé?"
+            "text": "Thoát game?"
         },
         {
             "key": "ui.pause.quit_aside",
-            "text": "07 sẽ ngồi đợi ở đây cho đến khi bạn trở lại."
+            "text": "07 sẽ đợi ở đây đến khi bạn quay lại."
         },
         {
             "key": "ui.pause.quit_stay",
@@ -40,7 +40,7 @@
         },
         {
             "key": "ui.journey.put_away",
-            "text": "Một hành trình cũ đã được cất đi."
+            "text": "Bản lưu cũ đã được cất riêng."
         },
         {
             "key": "ui.save_tick.word",
@@ -92,11 +92,11 @@
         },
         {
             "key": "ui.hint.look_up",
-            "text": "Ngước nhìn lên"
+            "text": "Nhìn lên"
         },
         {
             "key": "ui.hint.drive",
-            "text": "Lái đi"
+            "text": "Lái xe"
         },
         {
             "key": "glyph.keyboard.wasd",
@@ -112,87 +112,87 @@
         },
         {
             "key": "next.wake",
-            "text": "Cấp điện trước đã. Tháp radio đang ngủ."
+            "text": "Việc đầu tiên: sửa tháp radio."
         },
         {
             "key": "next.salvage",
-            "text": "Nó cần kim loại, dây điện, thấu kính và một cuộn dây. Kho cũ có những thứ đó."
+            "text": "Tháp cần kim loại, dây điện, thấu kính và một cuộn dây. Hãy trục vớt ở Kho tiếp tế."
         },
         {
             "key": "next.tower",
-            "text": "Cuộn dây đây rồi. Tháp đang chờ."
+            "text": "Đã có cuộn dây. Đỗ lên bệ của tháp radio để sửa tháp."
         },
         {
             "key": "next.signal",
-            "text": "Một tín hiệu yếu, phía sau đụn cát. Có ai đó ngoài kia."
+            "text": "Có tín hiệu yếu sau đụn cát. Dò sóng rồi lần theo."
         },
         {
             "key": "next.dig",
-            "text": "Bộ phận cuối của cô ấy nằm dưới lớp bụi."
+            "text": "Bộ phận cuối cùng nằm dưới lớp bụi. Hãy đào lên."
         },
         {
             "key": "next.friend.repair",
-            "text": "Đủ bộ phận rồi. Hãy sửa cô ấy."
+            "text": "Đã đủ bộ phận. Hãy sửa cho cô ấy."
         },
         {
             "key": "next.garage",
-            "text": "Garage của Kenji. Có thể còn thứ gì đó của 07 ở đó."
+            "text": "Đến Gara của Kenji. Ở đó có thể còn phụ tùng dự phòng cho 07."
         },
         {
             "key": "next.port",
-            "text": "Cổng bảo trì cũ của Kenji. Nó vẫn còn một cái dự phòng."
+            "text": "Cổng bảo trì ở gara vẫn dùng được. Đỗ lên bệ để lắp phụ tùng."
         },
         {
             "key": "next.relic",
-            "text": "Ở nhà còn chỗ cho nó."
+            "text": "Đào kỷ vật lên rồi kéo về nhà."
         },
         {
             "key": "next.lift.stitch",
-            "text": "Thang nâng bị kẹt. Hãy sửa dây cáp của nó."
+            "text": "Thang nâng bị kẹt. Hãy sửa dây cáp."
         },
         {
             "key": "next.lift.ride",
-            "text": "Đứng yên trên thang. Phòng thí nghiệm ở trên đó."
+            "text": "Dừng trên bệ thang nâng để lên phòng thí nghiệm."
         },
         {
             "key": "next.chasm",
-            "text": "Một ánh đèn bên kia vực sâu. Bây giờ thì chưa qua được."
+            "text": "Có ánh đèn bên kia vực. Hiện chưa qua được."
         },
         {
             "key": "next.bay.wake",
-            "text": "Khoang xe còn ngủ. Tầng thứ hai của tháp sẽ đánh thức nó."
+            "text": "Xưởng xe của Kenji chưa có điện. Hãy nâng tháp radio lên cấp 2."
         },
         {
             "key": "next.bay",
-            "text": "Khoang xe đã có điện. Bàn xoay đang chờ."
+            "text": "Xưởng xe đã có điện. Đỗ lên bàn xoay để chế tạo."
         },
         {
             "key": "next.power.part",
-            "text": "Tháp cần linh kiện cuối cùng."
+            "text": "Cấp tiếp theo của tháp còn thiếu một linh kiện."
         },
         {
             "key": "next.power.carried",
-            "text": "Linh kiện cuối cùng của tháp đang theo 07. Cổng nạp đang chờ."
+            "text": "07 đã mang linh kiện. Đỗ lên bệ của tháp để lắp."
         },
         {
             "key": "next.power.build",
-            "text": "Linh kiện cuối đã vào. Giờ tháp cần vật liệu."
+            "text": "Đã lắp linh kiện. Giờ hãy nạp vật liệu cho tháp."
         },
         {
             "key": "next.link.relay.0",
-            "text": "Trạm trên gò vẫn còn tối."
+            "text": "Trạm trên gò đang tắt. Hãy sửa trạm."
         },
         {
             "key": "next.link.relay.1",
-            "text": "Trạm vai vành hố vẫn còn tối."
+            "text": "Trạm vai vành hố đang tắt. Hãy sửa trạm."
         },
         {
             "key": "next.link",
-            "text": "Những trạm còn tối dẫn về phía Đỉnh núi."
+            "text": "Sửa các trạm tiếp sóng đang tắt trên đường tới Đỉnh núi."
         },
         {
             "key": "ui.recovery.title",
-            "text": "GIAO THỨC PHỤC HỒI LUMEN"
+            "text": "QUY TRÌNH KHÔI PHỤC LUMEN"
         },
         {
             "key": "recovery.power.name",
@@ -220,15 +220,15 @@
         },
         {
             "key": "tech.tower_l1.name",
-            "text": "Tháp, tầng 1"
+            "text": "Tháp radio cấp 1"
         },
         {
             "key": "tech.tower_l2.name",
-            "text": "Tháp, tầng 2"
+            "text": "Tháp radio cấp 2"
         },
         {
             "key": "tech.tower_l3.name",
-            "text": "Tháp, tầng 3"
+            "text": "Tháp radio cấp 3"
         },
         {
             "key": "tech.relay_network.name",
@@ -248,7 +248,7 @@
         },
         {
             "key": "tech.capacitor_drums.name",
-            "text": "Trống tụ điện"
+            "text": "Bộ tăng tốc"
         },
         {
             "key": "tech.cell_pack_2.name",
@@ -256,7 +256,7 @@
         },
         {
             "key": "ticker.recovery.power",
-            "text": "Đã có điện trở lại."
+            "text": "Trạm đã có điện."
         },
         {
             "key": "ticker.recovery.link",
@@ -264,7 +264,7 @@
         },
         {
             "key": "ticker.recovery.dish",
-            "text": "Chảo ăng-ten lớn đã lành lại."
+            "text": "Chảo ăng-ten lớn đã sửa xong."
         },
         {
             "key": "ticker.recovery.answer",
@@ -272,23 +272,23 @@
         },
         {
             "key": "notyet.tower",
-            "text": "Đang ngủ. Có kim loại và một cuộn dây là nó sẽ thức."
+            "text": "Đang tắt. Cần kim loại và một cuộn dây."
         },
         {
             "key": "notyet.bay",
-            "text": "Chưa có điện. Tháp mạnh lên thì nó sẽ thức."
+            "text": "Chưa có điện. Cần tháp radio cấp 2."
         },
         {
             "key": "notyet.chart",
-            "text": "Còn tối. Tháp mạnh lên thì nó sẽ thức."
+            "text": "Chưa có điện. Cần tháp radio cấp 3."
         },
         {
             "key": "notyet.tether",
-            "text": "Dây tether của 07 đã mất. Kenji có giữ một cái dự phòng trong garage."
+            "text": "07 không còn dây kéo. Kenji có để một cái dự phòng ở gara."
         },
         {
             "key": "ticker.listen.first",
-            "text": "07 lắng nghe khi dừng nghỉ. Thứ gì còn giữ điều gì đó sẽ trả lời."
+            "text": "Khi 07 dừng lại, nó sẽ lắng nghe. Xác tàu nào còn đồ sẽ trả lời."
         },
         {
             "key": "place.dock.name",
@@ -296,7 +296,7 @@
         },
         {
             "key": "place.dock.job",
-            "text": "Đỗ ở đây để sạc pin. Nghỉ ở đây, ngày hôm nay được lưu lại."
+            "text": "Đỗ vào đây để sạc pin. Sạc xong là game được lưu."
         },
         {
             "key": "place.lander.name",
@@ -304,7 +304,7 @@
         },
         {
             "key": "place.lander.job",
-            "text": "Nhà của phi hành đoàn. Điện từ tháp thắp sáng các ô cửa."
+            "text": "Nhà của phi hành đoàn. Cửa sổ sẽ sáng khi tháp radio có điện."
         },
         {
             "key": "place.tower.name",
@@ -312,15 +312,15 @@
         },
         {
             "key": "place.tower.job",
-            "text": "Trái tim của trạm: mỗi tầng cấp điện cho thêm một phần căn nhà."
+            "text": "Cấp điện cho trạm. Mỗi cấp đưa điện tới thêm một phần căn cứ."
         },
         {
             "key": "place.bay.name",
-            "text": "Khoang xe của Kenji"
+            "text": "Xưởng xe của Kenji"
         },
         {
             "key": "place.bay.job",
-            "text": "Đỗ lên bàn xoay: các cánh tay lắp bộ đồ mới cho 07."
+            "text": "Đỗ lên bàn xoay để cánh tay máy lắp đồ mới cho 07."
         },
         {
             "key": "place.ladder.name",
@@ -328,7 +328,7 @@
         },
         {
             "key": "place.ladder.job",
-            "text": "Thang của phi hành đoàn. Không dành cho bánh xe."
+            "text": "Thang của phi hành đoàn. Bánh xe không leo được."
         },
         {
             "key": "place.lift.name",
@@ -336,7 +336,7 @@
         },
         {
             "key": "place.lift.job",
-            "text": "Đứng yên trên bệ để lên phòng thí nghiệm."
+            "text": "Dừng trên bệ để lên phòng thí nghiệm."
         },
         {
             "key": "place.lab.name",
@@ -344,7 +344,7 @@
         },
         {
             "key": "place.lab.job",
-            "text": "Mang đồ tìm được lên đây: máy đọc biến chúng thành bản vẽ."
+            "text": "Mang đồ tìm được lên đây: máy đọc sẽ giải mã thành bản vẽ."
         },
         {
             "key": "place.rack.name",
@@ -352,15 +352,15 @@
         },
         {
             "key": "place.rack.job",
-            "text": "Băng tìm được sẽ phát ở đây: nhạc và giọng nói của phi hành đoàn."
+            "text": "Băng tìm được sẽ phát ở đây: nhạc và giọng của phi hành đoàn."
         },
         {
             "key": "place.garage_port.name",
-            "text": "Cổng bảo trì của Kenji"
+            "text": "Cổng bảo trì ở gara"
         },
         {
             "key": "place.garage_port.job",
-            "text": "Lắp phụ tùng dự phòng cho 07. Đỗ lên bệ của nó."
+            "text": "Đỗ lên bệ để lắp phụ tùng cho 07."
         },
         {
             "key": "ui.blueprint.found",
@@ -368,7 +368,7 @@
         },
         {
             "key": "ui.blueprint.delivered",
-            "text": "Máy đọc nhận ống bản vẽ."
+            "text": "Đã nạp bản vẽ vào máy đọc."
         },
         {
             "key": "ui.settings.sound",
@@ -376,7 +376,7 @@
         },
         {
             "key": "ui.settings.master",
-            "text": "Tất cả"
+            "text": "Tổng"
         },
         {
             "key": "ui.settings.music",
@@ -392,11 +392,11 @@
         },
         {
             "key": "ui.settings.camera",
-            "text": "Góc nhìn"
+            "text": "Camera"
         },
         {
             "key": "ui.settings.look_speed",
-            "text": "Tốc độ xoay"
+            "text": "Độ nhạy camera"
         },
         {
             "key": "ui.settings.invert_look",
@@ -412,7 +412,7 @@
         },
         {
             "key": "ui.settings.gentle_camera",
-            "text": "Camera dịu nhẹ"
+            "text": "Giảm hiệu ứng camera"
         },
         {
             "key": "ui.settings.language",
@@ -424,7 +424,7 @@
         },
         {
             "key": "ui.card.caption",
-            "text": "Ký ức thứ {0} trong {1}"
+            "text": "Kỷ vật {0}/{1}"
         },
         {
             "key": "ui.card.close",
@@ -436,7 +436,7 @@
         },
         {
             "key": "ui.tower.purchased",
-            "text": "Tín hiệu vươn xa hơn"
+            "text": "Đang sửa tháp…"
         },
         {
             "key": "hint.excavate",
@@ -448,11 +448,11 @@
         },
         {
             "key": "hint.deposit",
-            "text": "Đặt vào"
+            "text": "Đặt"
         },
         {
             "key": "hint.reel",
-            "text": "Cuộn dây"
+            "text": "Thu dây"
         },
         {
             "key": "upgrade.radio_tower.name",
@@ -460,39 +460,39 @@
         },
         {
             "key": "upgrade.radio_tower.1.title",
-            "text": "Đánh thức cột anten cũ"
+            "text": "Sửa tháp radio"
         },
         {
             "key": "upgrade.radio_tower.1.effect",
-            "text": "Cấp điện cho chiếc anten mỏi mệt, và nhà thức dậy: cửa sổ tàu đổ bộ lại sáng đèn."
+            "text": "Đưa điện về nhà: cửa sổ tàu đổ bộ sáng lên và radio bắt được đài."
         },
         {
             "key": "component.tower_coil.needed",
-            "text": "Tháp đang chờ cuộn dây của nó."
+            "text": "Cần một cuộn dây. Kho tiếp tế có."
         },
         {
             "key": "upgrade.radio_tower.2.title",
-            "text": "Nâng cao cột anten"
+            "text": "Nâng tháp lên cấp 2"
         },
         {
             "key": "upgrade.radio_tower.2.effect",
-            "text": "Cột cao hơn đưa điện tới khoang xe của Kenji, và radio vẫn trong trẻo dù đi xa."
+            "text": "Cấp điện cho Xưởng xe của Kenji, và radio nghe rõ ở xa hơn."
         },
         {
             "key": "component.transformer.needed",
-            "text": "Tháp đang chờ bộ biến áp."
+            "text": "Cần một bộ biến áp. Tìm ở Gara của Kenji."
         },
         {
             "key": "upgrade.radio_tower.3.title",
-            "text": "Thắp sáng cả lòng hố"
+            "text": "Nâng tháp lên cấp 3"
         },
         {
             "key": "upgrade.radio_tower.3.effect",
-            "text": "Tháp ngân nga khắp lòng hố, đánh thức thang nâng; căn nhà rực sáng như chiếc đèn lồng."
+            "text": "Cấp điện cho bản đồ trong phòng thí nghiệm, và radio rõ khắp lòng chảo."
         },
         {
             "key": "component.relay_spare.needed",
-            "text": "Tháp đang chờ một linh kiện dự phòng từ trạm tiếp sóng."
+            "text": "Cần linh kiện trạm tiếp sóng. Sửa một trạm để lấy."
         },
         {
             "key": "upgrade.rover.hover_jump.name",
@@ -504,7 +504,7 @@
         },
         {
             "key": "upgrade.rover.hover_jump.1.effect",
-            "text": "Nhún xuống rồi buông: 07 bật qua khe vực và bay bồng bềnh trên những đụn cát."
+            "text": "Giữ để tích lực, thả ra để nhảy: 07 bật qua các khe vực."
         },
         {
             "key": "relic.cassette_player.name",
@@ -676,7 +676,7 @@
         },
         {
             "key": "ui.card.log_caption",
-            "text": "Từ ký ức của {0}"
+            "text": "Nhật ký sửa chữa: {0}"
         },
         {
             "key": "friend.tilly.name",
@@ -728,7 +728,7 @@
         },
         {
             "key": "ticker.bell.signal",
-            "text": "Bell đang bắt được gì đó. Ánh đèn của cô ấy chỉ đường."
+            "text": "Bell bắt được tín hiệu. Hãy đi theo ánh đèn của cô ấy."
         },
         {
             "key": "ticker.bell.found_0",
@@ -752,11 +752,11 @@
         },
         {
             "key": "radio.channel.tape_deck",
-            "text": "Đầu băng"
+            "text": "Máy phát băng"
         },
         {
             "key": "radio.channel.quiet_hours",
-            "text": "Giờ tĩnh lặng"
+            "text": "Giờ yên tĩnh"
         },
         {
             "key": "ui.pause.cassettes",
@@ -768,7 +768,7 @@
         },
         {
             "key": "ui.card.liner_caption",
-            "text": "Lời Ro ghi trên vỏ băng"
+            "text": "Ghi chú của Ro trên vỏ băng"
         },
         {
             "key": "ui.card.tape_count",
@@ -780,7 +780,7 @@
         },
         {
             "key": "ui.station.workshop",
-            "text": "Khoang xe của Kenji"
+            "text": "Xưởng xe của Kenji"
         },
         {
             "key": "ticker.radio.now_playing",
@@ -820,15 +820,15 @@
         },
         {
             "key": "ticker.relay.online",
-            "text": "Trạm tiếp sóng {0} đã bật. Lumen Station nghe xa thêm được một chút."
+            "text": "Trạm tiếp sóng đang hoạt động: {0}. Trạm phủ sóng xa thêm một chút."
         },
         {
             "key": "ticker.relay.waiting",
-            "text": "Trạm tiếp sóng đã sửa xong. Nó đang lắng nghe một trạm sáng gần đó."
+            "text": "Đã sửa trạm tiếp sóng. Trạm sẽ hoạt động khi trạm bên cạnh có điện."
         },
         {
             "key": "hop.node.home",
-            "text": "Lumen Station"
+            "text": "Trạm Lumen"
         },
         {
             "key": "hop.node.relay.0",
@@ -896,11 +896,11 @@
         },
         {
             "key": "ui.recipecard.tower",
-            "text": "Đỗ lên bệ của tháp và nạp vào phễu."
+            "text": "Đỗ lên bệ của tháp rồi nạp vật liệu vào phễu."
         },
         {
             "key": "ui.recipecard.blueprint",
-            "text": "Bản vẽ đã giải mã. Đỗ lên bàn xoay của khoang xe để chế tạo."
+            "text": "Đã giải mã bản vẽ. Đỗ lên bàn xoay ở xưởng xe để chế tạo."
         },
         {
             "key": "upgrade.rover.cargo_cradle.name",
@@ -908,11 +908,11 @@
         },
         {
             "key": "upgrade.rover.cargo_cradle.1.title",
-            "text": "Chiếc giỏ có dây buộc"
+            "text": "Giỏ có dây buộc"
         },
         {
             "key": "upgrade.rover.cargo_cradle.1.effect",
-            "text": "Một kỷ vật được chở về nhà, nằm gọn trong giỏ trên lưng 07; dây kéo vẫn rảnh cho những mảnh trục vớt lớn."
+            "text": "Chở một kỷ vật về nhà trong giỏ trên lưng 07, dây kéo vẫn rảnh."
         },
         {
             "key": "upgrade.rover.warm_headlamp.name",
@@ -924,19 +924,19 @@
         },
         {
             "key": "upgrade.rover.warm_headlamp.1.effect",
-            "text": "Vùng sáng phía trước rộng và ấm hơn, các cột sáng sonar mà 07 đang hướng tới cũng ở lại lâu hơn một chút."
+            "text": "Đèn chiếu rộng và sáng hơn, cột sáng sonar cũng lâu tắt hơn."
         },
         {
             "key": "upgrade.rover.boost_coils.name",
-            "text": "Cuộn tăng tốc"
+            "text": "Bộ tăng tốc"
         },
         {
             "key": "upgrade.rover.boost_coils.1.title",
-            "text": "Cặp trống tụ điện"
+            "text": "Hai trống tụ điện"
         },
         {
             "key": "upgrade.rover.boost_coils.1.effect",
-            "text": "Giữ nút tiến trên đất trống, 07 ngân nga chạy nhanh hơn một chút, hai trống sáng lên. Không bao giờ là một cuộc đua."
+            "text": "Giữ nút tiến trên đất bằng để chạy nhanh hơn một chút."
         },
         {
             "key": "hint.stow",
@@ -956,7 +956,7 @@
         },
         {
             "key": "kit.tether_ring.name",
-            "text": "Vòng tether dự phòng của Kenji"
+            "text": "Vòng dây kéo dự phòng của Kenji"
         },
         {
             "key": "ui.bay.fitted",
@@ -964,7 +964,7 @@
         },
         {
             "key": "ui.bay.pick",
-            "text": "nhấn nhẹ để đổi món"
+            "text": "nhấn để xem món tiếp theo"
         },
         {
             "key": "log.kenji_1",
@@ -1112,7 +1112,7 @@
         },
         {
             "key": "map.state.heart_waiting",
-            "text": "Trong lòng nó vẫn còn thứ gì đang chờ."
+            "text": "Bên trong vẫn còn đồ."
         },
         {
             "key": "map.state.picked_clean",
@@ -1120,11 +1120,11 @@
         },
         {
             "key": "map.state.mast_dark",
-            "text": "Còn tối. Đang chờ được thắp."
+            "text": "Đang tắt. Cần sửa."
         },
         {
             "key": "map.state.mast_lit",
-            "text": "Đã sáng. Nhà vươn tới tận đây."
+            "text": "Đang hoạt động. Trong tầm phủ sóng."
         },
         {
             "key": "map.place.lander.name",
@@ -1304,7 +1304,7 @@
         },
         {
             "key": "ui.title.new_game",
-            "text": "Trò chơi mới"
+            "text": "Chơi mới"
         },
         {
             "key": "ui.title.settings",
@@ -1316,19 +1316,19 @@
         },
         {
             "key": "ui.title.new_game_question",
-            "text": "Cất mặt trăng này đi và bắt đầu lại?"
+            "text": "Bắt đầu chơi mới?"
         },
         {
             "key": "ui.title.new_game_aside",
-            "text": "Mặt trăng cũ vẫn được giữ nguyên."
+            "text": "Bản lưu hiện tại vẫn được giữ lại."
         },
         {
             "key": "ui.title.new_game_keep",
-            "text": "Giữ mặt trăng này"
+            "text": "Chơi tiếp"
         },
         {
             "key": "ui.title.new_game_confirm",
-            "text": "Bắt đầu lại"
+            "text": "Chơi mới"
         },
         {
             "key": "ui.pause.quit_to_title",
@@ -1384,11 +1384,11 @@
         },
         {
             "key": "lens.boot.signal",
-            "text": "TÍN HIỆU TRÁI ĐẤT · ĐÃ BẮT ĐƯỢC"
+            "text": "TÍN HIỆU TRÁI ĐẤT · ĐÃ NHẬN"
         },
         {
             "key": "lens.boot.uplink",
-            "text": "ĐƯỜNG TRUYỀN LÊN · NGOẠI TUYẾN"
+            "text": "ĐƯỜNG TRUYỀN · MẤT KẾT NỐI"
         },
         {
             "key": "lens.boot.recovery",
@@ -1396,11 +1396,11 @@
         },
         {
             "key": "battery.low.dock",
-            "text": "Pin đang yếu dần. Đế sạc ở nhà có thể nạp đầy lại."
+            "text": "Pin yếu. Về đế sạc ở nhà để sạc."
         },
         {
             "key": "battery.low.mast",
-            "text": "Pin đang yếu dần. {0} có thể nạp đầy lại."
+            "text": "Pin yếu. Có thể sạc ở {0}."
         },
         {
             "key": "upgrade.rover.cell_pack.name",
@@ -1408,15 +1408,15 @@
         },
         {
             "key": "upgrade.rover.cell_pack.1.title",
-            "text": "Xương sống pin"
+            "text": "Khối pin trên lưng"
         },
         {
             "key": "upgrade.rover.cell_pack.1.effect",
-            "text": "Thêm hai ô pin trên lưng 07: sáu ngọn đèn sáng, và phía xa của lòng chảo trong tầm với."
+            "text": "Thêm hai ô pin, tổng cộng sáu ô: đủ để tới phía xa của lòng chảo."
         },
         {
             "key": "ticker.tether.back",
-            "text": "07 lại có thể giữ đồ vật."
+            "text": "07 lại kéo được đồ rồi."
         },
         {
             "key": "ui.pause.can",
