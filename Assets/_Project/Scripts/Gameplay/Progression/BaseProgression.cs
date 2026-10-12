@@ -62,6 +62,7 @@ namespace MoonProject.Gameplay
         private RadioLetters _letters;
         private StepFlow _steps;
         private IDisposable _salvage;
+        private IDisposable _firstLines;
         private Vector3 _dock;
         private bool _woke;
         private bool _salvaged;
@@ -135,8 +136,26 @@ namespace MoonProject.Gameplay
 
             _answers = new DormantAnswers(services.Events, sonar.Tuning);
             Func<bool> homePowered = () => power.HasReached(BasePowerStage.Home);
-            _answers.Add(ProgressionKeys.NotYetTower, _places[TowerSpot].position, () => !homePowered());
-            _answers.Add(ProgressionKeys.NotYetBay, bay.transform.position, () => homePowered() && !bay.Awake);
+            Func<bool> towerAsleep = () => !homePowered();
+            Func<bool> bayAsleep = () => homePowered() && !bay.Awake;
+            _answers.Add(ProgressionKeys.NotYetTower, _places[TowerSpot].position, towerAsleep);
+            _answers.Add(ProgressionKeys.NotYetBay, bay.transform.position, bayAsleep);
+            Vector3 towerAt = _places[TowerSpot].position;
+            Vector3 bayAt = bay.transform.position;
+            EventBus events = services.Events;
+            // The first time 07 comes near a sleeping place, its "not yet" line is the place card's second line
+            // (polish-pass §1.1): the same StationNotYet the sonar's answer publishes, at no distance.
+            _firstLines = events.Subscribe<PlaceFirstApproached>(first =>
+            {
+                if (first.PlaceId == ProgressionKeys.PlaceTower && towerAsleep())
+                {
+                    events.Publish(new StationNotYet(ProgressionKeys.NotYetTower, towerAt, 0f));
+                }
+                else if (first.PlaceId == ProgressionKeys.PlaceBay && bayAsleep())
+                {
+                    events.Publish(new StationNotYet(ProgressionKeys.NotYetBay, bayAt, 0f));
+                }
+            });
             _salvage = services.Events.Subscribe<MaterialSalvaged>(_ => _salvaged = true);
             _evening = new DockEvening(services.Events, _tuning.EveningSweepDelay, _tuning.EveningCompletionHold);
             _letters = new RadioLetters(services.Events, _tuning.SingleLetterMasts, _tuning.LettersAfter,
@@ -371,6 +390,7 @@ namespace MoonProject.Gameplay
         private void OnDestroy()
         {
             _salvage?.Dispose();
+            _firstLines?.Dispose();
             _answers?.Dispose();
             _evening?.Dispose();
             _letters?.Dispose();
