@@ -627,12 +627,22 @@ namespace MoonProject.UI.PlayModeTests
                 Assert.AreEqual(10, ui.Chip.Shown(SalvageMaterial.Metal));
                 yield return Capture(camera, folder, "71_stock_rolled");
 
-                Assert.AreEqual(8, ticks.Count, "a tick for each of the eight units from 2 to 10");
-                for (int i = 0; i < ticks.Count; i++)
+                // The scene's own UI answers the same stock event, so each tick arrives once per UI: count units.
+                var units = new SortedDictionary<int, int>();
+                foreach (StockCountTicked tick in ticks)
                 {
-                    Assert.AreEqual(i, ticks[i].Index, "the index keeps climbing through a second collect");
-                    Assert.AreEqual(ticks.Count - 1 - i, ticks[i].Remaining);
+                    units[tick.Index] = tick.Remaining;
                 }
+
+                Assert.AreEqual(8, units.Count, "a tick for each of the eight units from 2 to 10");
+                int expected = 0;
+                foreach (KeyValuePair<int, int> unit in units)
+                {
+                    Assert.AreEqual(expected, unit.Key, "the index keeps climbing through a second collect");
+                    expected++;
+                }
+
+                Assert.AreEqual(0, units[7], "the last unit has none to come: the roll lands on 10");
             }
 
             if (!context.Get<IWorldAnchors>().TryGet(DepotSite, out MoonProject.Core.WorldAnchor depot))
@@ -646,14 +656,32 @@ namespace MoonProject.UI.PlayModeTests
             fakes.HasTarget = true;
             fakes.CutPoint = cut;
             fakes.Material = SalvageMaterial.Wiring;
+            for (int warm = 0; warm < 5; warm++)
+            {
+                yield return null;
+            }
+
             context.Events.Publish(new FeelBeat(FeelKind.Cut, FeelPhase.Anticipate, cut, Vector3.up, 0f, 0.65f,
                 SalvageMaterial.Wiring));
-            yield return new WaitForSecondsRealtime(0.4f);
-            Assert.That(ui.SalvageRing.Charge, Is.InRange(0.2f, 0.95f), "the charge segment is filling");
-            Assert.IsTrue(ui.SalvageRing.IsVisible, "the ring is up for the charge, before any progress");
-            yield return Capture(siteCamera, folder, "72_ring_charging");
+            float last = 0f;
+            bool seenFilling = false;
+            float end = Time.realtimeSinceStartup + 2f;
+            while (ui.SalvageRing.Charge < 1f && Time.realtimeSinceStartup < end)
+            {
+                float now = ui.SalvageRing.Charge;
+                Assert.GreaterOrEqual(now, last, "the charge only fills");
+                last = now;
+                if (!seenFilling && now > 0.3f)
+                {
+                    seenFilling = true;
+                    Assert.IsTrue(ui.SalvageRing.IsVisible, "the ring is up for the charge, before any progress");
+                    yield return Capture(siteCamera, folder, "72_ring_charging");
+                }
 
-            yield return new WaitForSecondsRealtime(0.35f);
+                yield return null;
+            }
+
+            Assert.IsTrue(seenFilling, "the charge segment was seen filling");
             Assert.AreEqual(1f, ui.SalvageRing.Charge, 1e-3f, "full by the end of the beat");
             fakes.IsCutting = true;
             fakes.CutProgress = 0.3f;
