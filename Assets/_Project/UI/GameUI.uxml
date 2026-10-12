@@ -288,6 +288,8 @@
                                                    text="ui.title.new_game" />
                                         <ui:Button name="button-settings" class="menu-button loc"
                                                    text="ui.pause.settings" />
+                                        <ui:Button name="button-credits" class="menu-button loc"
+                                                   text="ui.title.credits" />
                                         <ui:Button name="button-quit-to-title" class="menu-button loc"
                                                    text="ui.pause.quit_to_title" />
                                         <ui:Button name="button-quit" class="menu-button loc" text="ui.pause.quit" />
@@ -375,6 +377,15 @@
                             </ui:VisualElement>
                         </ui:VisualElement>
                     </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="credits" class="credits" picking-mode="Ignore">
+                <ui:VisualElement name="credits-panel" class="panel credits__panel" picking-mode="Ignore">
+                    <ui:Label name="credits-title" class="credits__title" picking-mode="Ignore" />
+                    <ui:ScrollView name="credits-scroll" class="credits__scroll" mode="Vertical"
+                                   vertical-scroller-visibility="Hidden" horizontal-scroller-visibility="Hidden" />
+                    <ui:Button name="button-credits-back" class="menu-button menu-button--quiet loc"
+                               text="ui.settings.back" />
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>

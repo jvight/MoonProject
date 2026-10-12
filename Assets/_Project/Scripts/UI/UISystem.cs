@@ -50,6 +50,7 @@ namespace MoonProject.UI
 
         [Tooltip("The title's Lunarion wordmark (Generated/UI/Wordmark.asset, built by UI/Wordmark).")]
         [SerializeField] private WordmarkShape _wordmark;
+        [SerializeField] private TextAsset _credits;
 
         private readonly List<IDisposable> _tokens = new List<IDisposable>();
         private readonly JourneyNotice _journey = new JourneyNotice();
@@ -195,8 +196,9 @@ namespace MoonProject.UI
         internal Action QuitAction { get; set; } = Application.Quit;
 
         internal void Wire(UIDocument document, UiTuning tuning, RelicCatalog relics, TextAsset[] stringTables,
-            WordmarkShape wordmark)
+            WordmarkShape wordmark, TextAsset credits)
         {
+            _credits = credits;
             _document = document;
             _wordmark = wordmark;
             _tuning = tuning;
@@ -281,6 +283,7 @@ namespace MoonProject.UI
                 : Array.IndexOf(_stringTables, null) >= 0 ? "a string table slot is empty."
                 : _tuning.Validate() != null ? "UiTuning " + _tuning.Validate() + "."
                 : _wordmark == null ? "the WordmarkShape is not assigned (run UI/Wordmark)."
+                : _credits == null ? "the credits asset is not assigned."
                 : _wordmark.Validate() != null ? "the wordmark " + _wordmark.Validate() + "."
                 : null;
             if (problem == null)
@@ -443,7 +446,8 @@ namespace MoonProject.UI
             _kitTitle = new KitTitle(_layout, _tuning.KitTitle, _localization);
             _pause = new PauseMenu(_layout, _tuning.Pause, _tuning.Title, _player, _localization, services.Input,
                 services.Events, _settings, services.Materials, services.Radio, services.Relays, services.Flow,
-                _numbers, _cursor, Quit);
+                _numbers, _cursor, Quit,
+                new CreditsView(_layout, _tuning.Credits, _localization, _credits.text));
             _verbs = new VerbList(_layout, _tuning.Prompts, _ledger, _glyphs, _localization);
             _textScale = new TextScale(_document.panelSettings);
             _backdrop = new BackdropBlur(transform, _tuning.Backdrop);

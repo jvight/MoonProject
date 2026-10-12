@@ -58,6 +58,7 @@ namespace MoonProject.UI
         private readonly Reveal _titleScreen;
         private readonly Reveal _curtain;
         private readonly Button[] _languageButtons;
+        private readonly CreditsView _credits;
         private readonly PausePages _pages = new PausePages();
         private readonly string[] _lookTexts;
         private Focusable _pendingFocus;
@@ -73,8 +74,10 @@ namespace MoonProject.UI
         public PauseMenu(UiLayout layout, PauseSettings settings, TitleSettings title, PlayerSettings player,
             ILocalization localization, InputReader input, EventBus events, SettingsStore settingsStore,
             IMaterialStock materials,
-            IRadioProgram radio, IRelayStatus relays, IGameFlow flow, IntText numbers, CursorPolicy cursor, Action quit)
+            IRadioProgram radio, IRelayStatus relays, IGameFlow flow, IntText numbers, CursorPolicy cursor, Action quit,
+            CreditsView credits)
         {
+            _credits = credits ?? throw new ArgumentNullException(nameof(credits));
             _layout = layout ?? throw new ArgumentNullException(nameof(layout));
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _title = title ?? throw new ArgumentNullException(nameof(title));
@@ -129,7 +132,12 @@ namespace MoonProject.UI
         public bool IsOpen { get; private set; }
 
         /// <summary>How much of the menu blur the world takes now (0..1): all of it paused, less on the title.</summary>
-        public float Openness => _pages.IsTitle ? _main.Visibility * _title.BackdropWeight : _veil.Visibility;
+        public float Openness => _pages.IsTitle
+            ? Mathf.Max(_main.Visibility, _credits.Visibility) * _title.BackdropWeight
+            : _veil.Visibility;
+
+        /// <summary>True while the credits are open (from the title's Credits entry until Back).</summary>
+        public bool IsShowingCredits => _credits.IsOpen;
 
         /// <summary>True while the menu is the title's (from <see cref="OpenTitle"/> until Continue or New Game).</summary>
         public bool IsTitle => IsOpen && _pages.IsTitle;
@@ -212,7 +220,11 @@ namespace MoonProject.UI
                 return;
             }
 
-            if (_resting)
+            if (_credits.IsOpen)
+            {
+                CloseCredits();
+            }
+            else if (_resting)
             {
                 Rest(false);
             }
@@ -282,6 +294,7 @@ namespace MoonProject.UI
             _languagePage.Tick(unscaledDeltaTime);
             _titleScreen.Tick(unscaledDeltaTime);
             _curtain.Tick(unscaledDeltaTime);
+            _credits.Tick(unscaledDeltaTime);
             ShiftForSettings();
             _layout.Pause.EnableInClassList(SettingsOpenClass, _settingsPanel.Target);
             CenterSettings();
@@ -317,6 +330,7 @@ namespace MoonProject.UI
             WriteMode();
             WriteCassettes();
             WriteRelays();
+            _credits.Relocalize();
         }
 
         /// <summary>Restores normal game speed immediately (the UI is going away mid-pause).</summary>
@@ -333,6 +347,8 @@ namespace MoonProject.UI
             _layout.NewGameKeepButton.clicked += OnKeepGoingClicked;
             _layout.NewGameConfirmButton.clicked += OnNewGameConfirmed;
             _layout.QuitToTitleButton.clicked += OnQuitToTitleClicked;
+            _layout.CreditsButton.clicked += OnCreditsClicked;
+            _layout.CreditsBack.clicked += OnCreditsBackClicked;
             _layout.QuitButton.clicked += OnQuitClicked;
             _layout.QuitStayButton.clicked += OnStayClicked;
             _layout.QuitConfirmButton.clicked += OnQuitConfirmed;
@@ -607,6 +623,11 @@ namespace MoonProject.UI
 
         private Focusable DefaultFocus()
         {
+            if (_credits.IsOpen)
+            {
+                return _layout.CreditsBack;
+            }
+
             if (_settingsPanel.Target)
             {
                 return _layout.MasterSlider;
@@ -689,6 +710,45 @@ namespace MoonProject.UI
         }
 
         /// <summary>Quit to title: saved, then the dark, then App reloads into the title.</summary>
+        /// <summary>The title's Credits entry: the credits come up over the title and its menu steps aside.</summary>
+        private void OnCreditsClicked()
+        {
+            if (!IsOpen || !_pages.IsTitle || _pages.Current != PausePage.Main || _leaving != Leaving.None ||
+                _credits.IsOpen)
+            {
+                return;
+            }
+
+            if (_settingsPanel.Target)
+            {
+                CloseSettings();
+            }
+
+            _credits.Open();
+            _main.Hide();
+            _titleScreen.Snap(false);
+            _pendingFocus = _layout.CreditsBack;
+            Cue(UiCueKind.Confirm);
+        }
+
+        private void OnCreditsBackClicked()
+        {
+            if (_credits.IsOpen)
+            {
+                CloseCredits();
+            }
+        }
+
+        private void CloseCredits()
+        {
+            _credits.Close();
+            Blur();
+            _main.Show();
+            _titleScreen.Show();
+            _pendingFocus = _layout.CreditsButton;
+            Cue(UiCueKind.Back);
+        }
+
         private void OnQuitToTitleClicked()
         {
             if (IsOpen && !_pages.IsTitle && _pages.Current == PausePage.Main && _leaving == Leaving.None)
@@ -798,6 +858,7 @@ namespace MoonProject.UI
             Display(_layout.ResumeButton, !title || _pages.HasSave);
             Display(_layout.NewGameButton, title);
             Display(_layout.QuitToTitleButton, !title && _flow.ShowsTitle);
+            Display(_layout.CreditsButton, title);
         }
 
         private static void Display(VisualElement element, bool shown)
@@ -827,6 +888,12 @@ namespace MoonProject.UI
         {
             if (!IsTitle || _leaving != Leaving.None)
             {
+                return;
+            }
+
+            if (_credits.IsOpen)
+            {
+                _untouched = 0f;
                 return;
             }
 

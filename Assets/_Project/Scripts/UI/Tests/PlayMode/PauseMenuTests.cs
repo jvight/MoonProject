@@ -375,6 +375,38 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator Title_Credits_OpenOnTheirOwn_DriftSlowly_ScrollByKey_AndBackReturnsToTheMenu()
+        {
+            Boot(BootstrapHarness.NewTestSlot());
+            yield return null;
+            _rig.Bootstrap.Context.Events.Publish(new TitleShown(true));
+            yield return new WaitForSecondsRealtime(Settle);
+            UiLayout layout = _rig.Ui.Layout;
+            Assert.AreEqual(DisplayStyle.Flex, layout.CreditsButton.resolvedStyle.display, "the title offers Credits");
+
+            Submit(layout.CreditsButton);
+            yield return new WaitForSecondsRealtime(Settle);
+            Assert.IsTrue(_rig.Ui.Pause.IsShowingCredits);
+            Assert.AreSame(layout.CreditsBack, Focused(), "Back has focus: the gamepad can leave");
+            StringAssert.Contains("Version", ((Label)layout.CreditsScroll.contentContainer[1]).text);
+            Assert.AreEqual("Lunarion", ((Label)layout.CreditsScroll.contentContainer[0]).text);
+
+            float start = layout.CreditsScroll.scrollOffset.y;
+            yield return new WaitForSecondsRealtime(1.5f);
+            Assert.Greater(layout.CreditsScroll.scrollOffset.y, start, "the credits drift up by themselves");
+
+            float before = layout.CreditsScroll.scrollOffset.y;
+            yield return Navigate(NavigationMoveEvent.Direction.Down);
+            Assert.Greater(layout.CreditsScroll.scrollOffset.y, before + 50f, "Down scrolls them a step");
+
+            _rig.Ui.Pause.Back();
+            yield return new WaitForSecondsRealtime(Settle);
+            Assert.IsFalse(_rig.Ui.Pause.IsShowingCredits);
+            Assert.IsTrue(_rig.Ui.Pause.IsTitle, "Back returns to the title's menu, not the game");
+            Assert.AreSame(layout.CreditsButton, Focused(), "focus returns to the Credits entry");
+        }
+
+        [UnityTest]
         public IEnumerator Title_RestsWhenUntouched_AndAnyStepBringsItBack()
         {
             Keyboard keyboard = InputSystem.AddDevice<Keyboard>();

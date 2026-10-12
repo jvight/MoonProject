@@ -27,6 +27,8 @@ namespace MoonProject.UI
         public const string PauseSettings = "ui.pause.settings";
         public const string PauseQuit = "ui.pause.quit";
         public const string TitleContinue = "ui.title.continue";
+        public const string CreditsTitle = "ui.credits.title";
+        public const string CreditsVersion = "ui.credits.version";
         public const string TitleSettings = "ui.title.settings";
         public const string TitleQuit = "ui.title.quit";
         public const string JourneyPutAway = "ui.journey.put_away";

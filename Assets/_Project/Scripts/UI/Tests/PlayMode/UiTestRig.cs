@@ -37,6 +37,7 @@ namespace MoonProject.UI.PlayModeTests
         public const string HeadlampUpgradePath =
             "Assets/_Project/Data/Content/Upgrades/Upgrade_rover_warm_headlamp.asset";
         public const string TillyPath = "Assets/_Project/Data/Content/Friends/Friend_tilly.asset";
+        public const string CreditsPath = "Assets/_Project/UI/Credits/credits.json";
         public const string EnglishPath = "Assets/_Project/Data/Localization/en.json";
         public const string VietnamesePath = "Assets/_Project/Data/Localization/vi.json";
 
@@ -131,7 +132,7 @@ namespace MoonProject.UI.PlayModeTests
             var system = ui.AddComponent<UISystem>();
             system.Wire(document, tuning, Load<RelicCatalog>(CatalogPath),
                 new[] { Load<TextAsset>(EnglishPath), Load<TextAsset>(VietnamesePath) },
-                Load<WordmarkShape>(WordmarkPath));
+                Load<WordmarkShape>(WordmarkPath), Load<TextAsset>(CreditsPath));
             system.QuitAction = () => { };
             ui.SetActive(true);
 
@@ -317,6 +318,7 @@ namespace MoonProject.UI.PlayModeTests
             serialized.FindProperty("_title._reveal._fadeOut").floatValue = 0.1f;
             serialized.FindProperty("_title._curtain._fadeIn").floatValue = 0.1f;
             serialized.FindProperty("_title._curtain._fadeOut").floatValue = 0.1f;
+            serialized.FindProperty("_credits._startDelaySeconds").floatValue = 0.2f;
             serialized.FindProperty("_prompts._startDelay").floatValue = 0f;
             serialized.FindProperty("_memoryCard._appearDelay").floatValue = 0.1f;
             serialized.FindProperty("_memoryCard._reveal._fadeIn").floatValue = 0.2f;

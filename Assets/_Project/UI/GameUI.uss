@@ -462,6 +462,77 @@ Label {
     --tick-color: var(--moon-cream);
 }
 
+/* The credits: a centred glass panel over the title, its text drifting up slowly */
+.credits {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    justify-content: center;
+    align-items: center;
+}
+
+.credits__panel {
+    width: 46%;
+    min-width: 520px;
+    height: 76%;
+    padding: 24px 32px 20px 32px;
+}
+
+.credits__title {
+    margin-bottom: 14px;
+    font-size: 30px;
+    letter-spacing: 4px;
+    color: var(--glass-hi);
+    -unity-text-align: middle-center;
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/Exo2-SemiBold.asset");
+}
+
+.credits__scroll {
+    flex-grow: 1;
+    margin-bottom: 12px;
+}
+
+.credits__heading {
+    margin-top: 30px;
+    margin-bottom: 8px;
+    font-size: 24px;
+    letter-spacing: 3px;
+    color: var(--glass-sel);
+    -unity-text-align: middle-center;
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/Exo2-Bold.asset");
+}
+
+.credits__version {
+    margin-bottom: 14px;
+    font-size: 18px;
+    color: var(--moon-text-dim);
+    -unity-text-align: middle-center;
+}
+
+.credits__name {
+    margin-top: 10px;
+    font-size: 22px;
+    color: var(--glass-hi);
+    white-space: normal;
+    -unity-text-align: middle-center;
+}
+
+.credits__detail {
+    font-size: 18px;
+    color: var(--glass-ring);
+    white-space: normal;
+    -unity-text-align: middle-center;
+}
+
+.credits__note {
+    font-size: 18px;
+    color: var(--moon-text-dim);
+    white-space: normal;
+    -unity-text-align: middle-center;
+}
+
 .curtain {
     position: absolute;
     left: 0;

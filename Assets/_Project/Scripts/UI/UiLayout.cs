@@ -160,6 +160,11 @@ namespace MoonProject.UI
             TitleWordmark = Require<VisualElement>("title-wordmark");
             Curtain = Require<VisualElement>("curtain");
             SaveTick = Require<VisualElement>("save-tick");
+            CreditsButton = Require<Button>("button-credits");
+            Credits = Require<VisualElement>("credits");
+            CreditsTitle = Require<Label>("credits-title");
+            CreditsScroll = Require<ScrollView>("credits-scroll");
+            CreditsBack = Require<Button>("button-credits-back");
             SaveTickCheck = Require<VisualElement>("save-tick-check");
             NewGameKeepButton = Require<Button>("button-new-game-keep");
             NewGameConfirmButton = Require<Button>("button-new-game-confirm");
@@ -463,6 +468,18 @@ namespace MoonProject.UI
         public VisualElement SaveTick { get; }
 
         public VisualElement SaveTickCheck { get; }
+
+        /// <summary>The title's Credits entry.</summary>
+        public Button CreditsButton { get; }
+
+        /// <summary>The credits panel's overlay, its title, its scrolling text and its Back button.</summary>
+        public VisualElement Credits { get; }
+
+        public Label CreditsTitle { get; }
+
+        public ScrollView CreditsScroll { get; }
+
+        public Button CreditsBack { get; }
 
         public Button NewGameKeepButton { get; }
 

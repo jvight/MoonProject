@@ -743,6 +743,33 @@ namespace MoonProject.UI.PlayModeTests
 #endif
         }
 
+        /// <summary>The credits over the title (capture 90). Rerun with --filter CaptureCredits.</summary>
+        [UnityTest]
+        public IEnumerator CaptureCredits_OverTheTitle()
+        {
+#if UNITY_EDITOR
+            yield return LoadMain();
+            GameContext context = FindBootstrap().Context;
+            Camera camera = context.Get<IViewCamera>().Camera;
+            UISystem ui = BuildUi(context, out _, out _);
+            yield return null;
+            string folder = Path.GetFullPath(OutputFolder);
+            Directory.CreateDirectory(folder);
+            context.Events.Publish(new TitleShown(true));
+            yield return new WaitForSecondsRealtime(_tuning.Title.Curtain.FadeOut + _tuning.Title.Reveal.FadeIn + 0.5f);
+            Submit(ui.Layout.CreditsButton);
+            yield return new WaitForSecondsRealtime(_tuning.Credits.Reveal.FadeIn + 0.5f);
+            Assert.IsTrue(ui.Pause.IsShowingCredits);
+            yield return Capture(camera, folder, "90_credits_top");
+            ui.Layout.CreditsScroll.scrollOffset = new Vector2(0f, 700f);
+            yield return new WaitForSecondsRealtime(0.4f);
+            yield return Capture(camera, folder, "91_credits_fonts_and_voice");
+#else
+            Assert.Ignore("Captures need the editor.");
+            yield break;
+#endif
+        }
+
         [UnityTest]
         public IEnumerator CaptureGuidance()
         {
@@ -1302,7 +1329,8 @@ namespace MoonProject.UI.PlayModeTests
                 {
                     AssetDatabase.LoadAssetAtPath<TextAsset>(UiTestRig.EnglishPath),
                     AssetDatabase.LoadAssetAtPath<TextAsset>(UiTestRig.VietnamesePath),
-                }, AssetDatabase.LoadAssetAtPath<WordmarkShape>(UiTestRig.WordmarkPath));
+                }, AssetDatabase.LoadAssetAtPath<WordmarkShape>(UiTestRig.WordmarkPath),
+                AssetDatabase.LoadAssetAtPath<TextAsset>(UiTestRig.CreditsPath));
             ui.QuitAction = () => { };
             _uiHost.SetActive(true);
 
