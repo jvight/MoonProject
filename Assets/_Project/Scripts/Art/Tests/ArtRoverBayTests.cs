@@ -63,7 +63,8 @@ namespace MoonProject.Art.Tests
                 "Turntable", "FloorArm", "FloorArm/FloorLift", "FloorArm/FloorLift/FloorTip", "HopperMouth",
                 "Blueprints", "Blueprints/Blueprint_HoverJump", "Blueprints/Blueprint_CargoCradle",
                 "Blueprints/Blueprint_WarmHeadlamp", "Blueprints/Blueprint_BoostCoils",
-                "Blueprints/Blueprint_CellPack", "Plotter",
+                "Blueprints/Blueprint_CellPack", "Blueprints/Blueprint_FocusLens", "Blueprints/Blueprint_SideBins",
+                "Plotter",
                 "Plotter/PenCarriage", "Plotter/PenCarriage/PenHead", "Plotter/PlotterSheet", "Plotter/PlotterLamp",
                 "Shutter", "BaySign", "Lamp_0", "Lamp_1",
             };
@@ -267,8 +268,8 @@ namespace MoonProject.Art.Tests
         {
             ModelNode board = _bay.GetDescendant(BaseModelBuilder.BlueprintsName);
             Assert.IsNull(board.Mesh, "the sheets' node is an empty: their cord and pegs are on Kenji's bench");
-            Assert.AreEqual(5, board.Children.Count,
-                "one sheet per 0.5 kit, Cell Pack II's too (Wider Sonar waits for 0.7)");
+            Assert.AreEqual(7, board.Children.Count,
+                "one sheet per 0.5 kit, Cell Pack II's, the Focus Lens's and the side bins' too (Wider Sonar waits)");
             foreach (ModelNode sheet in board.Children)
             {
                 Assert.AreEqual(sheet.Name == "Blueprint_HoverJump", sheet.Active, $"{sheet.Name}: found or not yet");

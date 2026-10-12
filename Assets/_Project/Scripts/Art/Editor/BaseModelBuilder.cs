@@ -306,8 +306,8 @@ namespace MoonProject.Art.Editor
         /// <summary>
         /// Kenji's blueprints (M3-16 P7): RoverBay/Blueprints, the cord of pegs along his bench's pegboard, holds one
         /// sheet per kit, Blueprint_&lt;RoverAbility name&gt; (HoverJump, CargoCradle, WarmHeadlamp, BoostCoils,
-        /// CellPack). Only Hover-Jump's hangs there at the start (Kenji left it); Gameplay shows each other one once the
-        /// plotter has drawn it.
+        /// CellPack, FocusLens, SideBins). Only Hover-Jump's hangs there at the start (Kenji left it); Gameplay shows
+        /// each other one once the plotter has drawn it.
         /// </summary>
         public const string BlueprintsName = "Blueprints";
 
