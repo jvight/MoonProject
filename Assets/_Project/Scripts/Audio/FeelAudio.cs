@@ -20,6 +20,8 @@ namespace MoonProject.Audio
     /// <see cref="StationAudio"/>), one pentatonic bell per lamp ring (Act, strength 0.25 .. 1), the beacon's thoom and
     /// D major chord (Impact); the radio steps back for it and comes in again at Follow 0 (<see cref="RadioStation"/>);
     /// </item>
+    /// <item>picking a part up (Kind Collect): a soft servo lift (Act) and a solid little clunk on 07's back
+    /// (Impact); the bundle's Reward melody step stays <see cref="SalvageAudio"/>'s;</item>
     /// <item>the first hour's small moments: a tech node lighting, the decode's cable ticks, a component found, the
     /// drums' boost whine and release, a relic strapped into the cradle, a new step's page tick, one save tick per
     /// burst, the dock evening's swell, the stock count rolling up (one rising tick per unit, rate-capped and topping
@@ -76,6 +78,8 @@ namespace MoonProject.Audio
         private CueHandle _towerRing;
         private CueHandle _towerThoom;
         private int _ringNotes;
+        private CueHandle _pickupLift;
+        private CueHandle _pickupClunk;
         private CueHandle _windowClick;
         private int _countNotes;
         private float _sinceCount = float.MaxValue;
@@ -121,12 +125,15 @@ namespace MoonProject.Audio
             _towerHum = director.Resolve(AudioCueIds.TowerHumRise);
             _towerRing = director.Resolve(AudioCueIds.TowerRing);
             _towerThoom = director.Resolve(AudioCueIds.TowerThoom);
+            _pickupLift = director.Resolve(AudioCueIds.PickupLift);
+            _pickupClunk = director.Resolve(AudioCueIds.PickupClunk);
             if (!(_charge.IsValid && _cancel.IsValid && _ignite.IsValid && sizzle.IsValid && _crack.IsValid &&
                   _strap.IsValid && _wallsRise.IsValid && _clamp.IsValid && _wallsSettle.IsValid &&
                   _wallsDrop.IsValid && _nodeLight.IsValid && _cableTicks.IsValid && _found.IsValid &&
                   boost.IsValid && _boostRelease.IsValid && _pageTick.IsValid && _saveTick.IsValid &&
                   _eveningSwell.IsValid && _countTick.IsValid && _windowClick.IsValid &&
-                  _towerHum.IsValid && _towerRing.IsValid && _towerThoom.IsValid))
+                  _towerHum.IsValid && _towerRing.IsValid && _towerThoom.IsValid &&
+                  _pickupLift.IsValid && _pickupClunk.IsValid))
             {
                 enabled = false;
                 return;
@@ -202,6 +209,22 @@ namespace MoonProject.Audio
                 case FeelKind.Build:
                     OnBuildBeat(beat);
                     break;
+                case FeelKind.Collect:
+                    OnCollectBeat(beat);
+                    break;
+            }
+        }
+
+        /// <summary>A part picked up with E: the lift, then the clunk on 07's back (Reward: the melody).</summary>
+        private void OnCollectBeat(FeelBeat beat)
+        {
+            if (beat.Phase == FeelPhase.Act)
+            {
+                _director.PlayAt(_pickupLift, beat.Position);
+            }
+            else if (beat.Phase == FeelPhase.Impact)
+            {
+                _director.PlayAt(_pickupClunk, beat.Position);
             }
         }
 

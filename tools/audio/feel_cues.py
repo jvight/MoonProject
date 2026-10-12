@@ -367,3 +367,25 @@ def tower_thoom(_variant, _gen):
         place(mix, 0.22 * instruments.soft_bell(note_freq(note), 3.0, decay=2.2, attack=0.06), samples(0.03 * index))
     place(mix, 0.1 * instruments.soft_pad(note_freq("D3"), 3.0, 0.4, 1.8, hold=0.4), 0)
     return filters.lowpass(mix, 4500.0)
+
+
+# ----------------------------------------------------------------------------------------- picking a part up (E)
+
+def pickup_lift(_variant, gen):
+    """07's arm lifting a part: a soft, short servo whirr rising a fourth (A2 to D3), close and muffled."""
+    n = samples(0.7)
+    rise = osc.glide(n, note_freq("A2"), note_freq("D3"), time_constant=0.2)
+    motor = osc.additive(n, rise, [(1, 1.0), (2, 0.35), (3, 0.1)])
+    whirr = filters.bandpass(noise.pink_filter(noise.white(n, gen)), 450.0, 2.0)
+    whirr = whirr / max(float(np.std(whirr)), 1e-9)
+    shape = envelope.segments(n, [(0.0, 0.0), (0.08, 1.0), (0.5, 0.8), (0.7, 0.0)], shape="smooth")
+    return filters.lowpass((0.07 * motor + 0.035 * whirr) * shape, 2500.0)
+
+
+def pickup_clunk(_variant, gen):
+    """The part seating on 07's back: a solid little clunk on D, felt through the chassis."""
+    n = samples(0.45)
+    mix = 0.7 * np.concatenate((_chassis_thump(0.12, 85.0), np.zeros(n - samples(0.12))))
+    knock = osc.sine(n, note_freq("D4")) * envelope.ar(n, 0.002, 0.07)
+    tick = filters.bandpass(noise.white(n, gen), 1800.0, 1.5) * envelope.ar(n, 0.001, 0.02)
+    return filters.lowpass(mix + 0.3 * knock + 0.08 * tick, 4000.0)

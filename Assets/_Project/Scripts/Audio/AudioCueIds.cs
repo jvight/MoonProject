@@ -43,6 +43,8 @@ namespace MoonProject.Audio
         public const string SaveTick = "save_tick";
         public const string CountTick = "count_tick";
         public const string TowerHumRise = "tower_hum_rise";
+        public const string PickupLift = "pickup_lift";
+        public const string PickupClunk = "pickup_clunk";
         public const string TowerRing = "tower_ring";
         public const string TowerThoom = "tower_thoom";
         public const string WindowClick = "window_click";
