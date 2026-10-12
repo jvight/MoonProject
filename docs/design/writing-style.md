@@ -41,12 +41,13 @@ If a line tells the player what to do, it is functional, even when a character c
 ### Places
 | en | vi |
 |---|---|
-| Lumen Station | Trạm Lumen (in letters' call sign: "Lumen Station") |
-| Charging Dock | Đế sạc |
+| Home (wherever the player is: hop list, meter, hints) | Nhà |
+| Lumen Station (only in letters' call sign) | Lumen Station |
+| Charging Dock (short: the Dock) | Đế sạc |
 | Radio Tower | Tháp radio |
 | The Lander | Tàu đổ bộ |
-| Crew's Lab | Phòng thí nghiệm |
-| Crew's Lift | Thang nâng |
+| Crew's Lab (short: the Lab) | Phòng thí nghiệm |
+| Crew's Lift (short: the Lift) | Thang nâng |
 | Kenji's Rover Bay | Xưởng xe của Kenji (short: xưởng xe) |
 | turntable / pad / hopper | bàn xoay / bệ / phễu |
 | Tape Rack | Kệ băng |
@@ -61,14 +62,14 @@ If a line tells the player what to do, it is functional, even when a character c
 | Rim Terraces | Bậc thềm vành hố |
 | the Peak | Đỉnh núi |
 | the basin | lòng chảo |
-| relay (Mound relay, Rim shoulder relay, Canyon mouth relay, Terminus relay) | trạm tiếp sóng (Trạm trên gò, Trạm vai vành hố, Trạm miệng hẻm, Trạm cuối hẻm) |
+| Relay, by name only, never a number: Mound Relay, Shoulder Relay, Canyon Mouth Relay, Terminus Relay | trạm tiếp sóng: Trạm trên gò, Trạm vai vành hố, Trạm miệng hẻm, Trạm cuối hẻm |
 | the great dish | chảo ăng-ten lớn |
 
 ### Things
 | en | vi |
 |---|---|
 | Metal / Wiring / Optics | Kim loại / Dây điện / Thấu kính |
-| component; coil, transformer, relay spare part | linh kiện; cuộn dây, bộ biến áp, linh kiện trạm tiếp sóng |
+| component; Tower Coil (always this name), transformer, relay spare part | linh kiện; cuộn dây tháp, bộ biến áp, linh kiện trạm tiếp sóng |
 | blueprint; the reader | bản vẽ; máy đọc |
 | keepsake | kỷ vật |
 | crew log; repair log | nhật ký phi hành đoàn; nhật ký sửa chữa |
@@ -90,7 +91,7 @@ If a line tells the player what to do, it is functional, even when a character c
 | en | vi |
 |---|---|
 | offline / online / no power / has power | đang tắt / đang hoạt động / chưa có điện / đã có điện |
-| repair, upgrade to level N | sửa, nâng lên cấp N |
+| repair; build level N (the tower card); Radio Tower level N powers X | sửa; xây cấp N; tháp radio cấp N cấp điện cho X |
 | salvage, cut, dig, tow, place, stow, reel in | trục vớt, cắt, đào, kéo, đặt, cất vào giỏ, thu dây |
 | park on, feed, build, fit | đỗ lên, nạp, chế tạo, lắp |
 | charge | sạc |

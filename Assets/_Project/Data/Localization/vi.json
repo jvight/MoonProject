@@ -116,11 +116,11 @@
         },
         {
             "key": "next.salvage",
-            "text": "Tháp cần kim loại, dây điện, thấu kính và một cuộn dây. Hãy trục vớt ở Kho tiếp tế."
+            "text": "Tháp cần kim loại, dây điện, thấu kính và cuộn dây tháp. Hãy trục vớt ở Kho tiếp tế."
         },
         {
             "key": "next.tower",
-            "text": "Đã có cuộn dây. Đỗ lên bệ của tháp radio để sửa tháp."
+            "text": "Đã có cuộn dây tháp. Đỗ lên bệ của tháp radio để sửa tháp."
         },
         {
             "key": "next.signal",
@@ -152,7 +152,7 @@
         },
         {
             "key": "next.lift.ride",
-            "text": "Dừng trên bệ thang nâng để lên phòng thí nghiệm."
+            "text": "Đỗ lên bệ thang nâng để lên phòng thí nghiệm."
         },
         {
             "key": "next.chasm",
@@ -160,11 +160,11 @@
         },
         {
             "key": "next.bay.wake",
-            "text": "Xưởng xe của Kenji chưa có điện. Hãy nâng tháp radio lên cấp 2."
+            "text": "Xưởng xe chưa có điện. Tháp radio cấp 2 sẽ cấp điện cho xưởng."
         },
         {
             "key": "next.bay",
-            "text": "Xưởng xe đã có điện. Đỗ lên bàn xoay để chế tạo."
+            "text": "Xưởng xe đã có điện. Đỗ lên bàn xoay để chế tạo đồ cho 07."
         },
         {
             "key": "next.power.part",
@@ -272,15 +272,15 @@
         },
         {
             "key": "notyet.tower",
-            "text": "Đang tắt. Cần kim loại và một cuộn dây."
+            "text": "Đang tắt. Cần cuộn dây tháp và vật liệu: xem thẻ của tháp."
         },
         {
             "key": "notyet.bay",
-            "text": "Chưa có điện. Cần tháp radio cấp 2."
+            "text": "Chưa có điện. Tháp radio cấp 2 sẽ cấp điện cho xưởng xe."
         },
         {
             "key": "notyet.chart",
-            "text": "Chưa có điện. Cần tháp radio cấp 3."
+            "text": "Chưa có điện. Tháp radio cấp 3 sẽ cấp điện cho bản đồ."
         },
         {
             "key": "notyet.tether",
@@ -288,7 +288,7 @@
         },
         {
             "key": "ticker.listen.first",
-            "text": "Khi 07 dừng lại, nó sẽ lắng nghe. Xác tàu nào còn đồ sẽ trả lời."
+            "text": "Khi 07 dừng lại, nó sẽ lắng nghe. Xác tàu nào còn đồ sẽ đáp lại bằng một ánh sáng."
         },
         {
             "key": "place.dock.name",
@@ -460,7 +460,7 @@
         },
         {
             "key": "upgrade.radio_tower.1.title",
-            "text": "Sửa tháp radio"
+            "text": "Xây cấp 1"
         },
         {
             "key": "upgrade.radio_tower.1.effect",
@@ -468,11 +468,11 @@
         },
         {
             "key": "component.tower_coil.needed",
-            "text": "Cần một cuộn dây. Kho tiếp tế có."
+            "text": "Cần cuộn dây tháp. Nó ở Kho tiếp tế."
         },
         {
             "key": "upgrade.radio_tower.2.title",
-            "text": "Nâng tháp lên cấp 2"
+            "text": "Xây cấp 2"
         },
         {
             "key": "upgrade.radio_tower.2.effect",
@@ -484,7 +484,7 @@
         },
         {
             "key": "upgrade.radio_tower.3.title",
-            "text": "Nâng tháp lên cấp 3"
+            "text": "Xây cấp 3"
         },
         {
             "key": "upgrade.radio_tower.3.effect",
@@ -820,15 +820,15 @@
         },
         {
             "key": "ticker.relay.online",
-            "text": "Trạm tiếp sóng đang hoạt động: {0}. Trạm phủ sóng xa thêm một chút."
+            "text": "Trạm tiếp sóng đã hoạt động: 07 sạc được ở đây và nhảy sóng về nhà."
         },
         {
             "key": "ticker.relay.waiting",
-            "text": "Đã sửa trạm tiếp sóng. Trạm sẽ hoạt động khi trạm bên cạnh có điện."
+            "text": "Trạm này cần một trạm có điện ở gần. Hãy sửa trạm gần nhà hơn trước."
         },
         {
             "key": "hop.node.home",
-            "text": "Trạm Lumen"
+            "text": "Nhà"
         },
         {
             "key": "hop.node.relay.0",
