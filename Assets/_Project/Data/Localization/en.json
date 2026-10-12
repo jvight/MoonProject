@@ -927,6 +927,46 @@
             "text": "Optics"
         },
         {
+            "key": "material.circuit_chips",
+            "text": "Circuit Chips"
+        },
+        {
+            "key": "material.orange_beads",
+            "text": "Orange Glass Beads"
+        },
+        {
+            "key": "material.ilmenite",
+            "text": "Ilmenite"
+        },
+        {
+            "key": "material.water_ice",
+            "text": "Water Ice"
+        },
+        {
+            "key": "material.rare_earths",
+            "text": "Rare Earths"
+        },
+        {
+            "key": "material.glass",
+            "text": "Glass"
+        },
+        {
+            "key": "material.alloy",
+            "text": "Alloy"
+        },
+        {
+            "key": "material.coolant",
+            "text": "Coolant"
+        },
+        {
+            "key": "material.crystal",
+            "text": "Crystal"
+        },
+        {
+            "key": "material.superconductor",
+            "text": "Superconductor"
+        },
+        {
             "key": "site.depot.name",
             "text": "Supply Depot"
         },
