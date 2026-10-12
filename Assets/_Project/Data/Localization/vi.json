@@ -1833,6 +1833,30 @@
         {
             "key": "pickup.part_bellvalve",
             "text": "Bóng đèn điện tử của Bell"
+        },
+        {
+            "key": "upgrade.rover.focus_lens.name",
+            "text": "Thấu kính hội tụ"
+        },
+        {
+            "key": "upgrade.rover.focus_lens.1.title",
+            "text": "Thấu kính hội tụ cho tia cắt"
+        },
+        {
+            "key": "upgrade.rover.focus_lens.1.effect",
+            "text": "Máy cắt tích điện nhanh hơn, cắt nhanh hơn 30% và tốn ít pin hơn 15%."
+        },
+        {
+            "key": "upgrade.rover.side_bins.name",
+            "text": "Thùng hông"
+        },
+        {
+            "key": "upgrade.rover.side_bins.1.title",
+            "text": "Hai thùng hai bên hông 07"
+        },
+        {
+            "key": "upgrade.rover.side_bins.1.effect",
+            "text": "Thêm bốn ô trong khoang hàng của 07, mỗi chuyến chở về được nhiều hơn."
         }
     ]
 }

@@ -1833,6 +1833,30 @@
         {
             "key": "pickup.part_bellvalve",
             "text": "Bell's valve"
+        },
+        {
+            "key": "upgrade.rover.focus_lens.name",
+            "text": "Focus Lens"
+        },
+        {
+            "key": "upgrade.rover.focus_lens.1.title",
+            "text": "A focusing lens on the beam"
+        },
+        {
+            "key": "upgrade.rover.focus_lens.1.effect",
+            "text": "The cutter charges faster and cuts 30% quicker, using 15% less battery."
+        },
+        {
+            "key": "upgrade.rover.side_bins.name",
+            "text": "Side Bins"
+        },
+        {
+            "key": "upgrade.rover.side_bins.1.title",
+            "text": "Two bins on 07's flanks"
+        },
+        {
+            "key": "upgrade.rover.side_bins.1.effect",
+            "text": "Four more slots in 07's hold, so it carries more home each trip."
         }
     ]
 }
