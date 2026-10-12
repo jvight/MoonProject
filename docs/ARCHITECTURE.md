@@ -5,6 +5,10 @@
 ## Engine baseline
 - **Unity 6000.0.78f1 (LTS)**, URP 17.0, Windows standalone (PC first; gamepad + keyboard/mouse).
 - **Input System only** (`activeInputHandler` = Input System Package). No `UnityEngine.Input`, no `OnGUI`.
+- **Input map** (`Data/Input/Controls.inputactions`, read through `Core/Input/InputReader`): Drive (WASD or arrows,
+  left stick), Look (mouse, right stick), Excavate (E, gamepad West: the beam), Tether (right mouse, left trigger),
+  Winch (scroll, d-pad), Jump (the leap: Space, gamepad South) and Recenter (the camera: middle mouse, right stick
+  click). There is no Ping action: 07 listens by itself when it rests.
 - **Cinemachine 3.x** (`Unity.Cinemachine` namespace) for every camera.
 - **UI Toolkit** for UI (UXML/USS are text — reviewable and merge-friendly). No uGUI canvases.
 - Physics: PhysX, fixed timestep 0.02 s, global gravity **(0, -1.62, 0)** (lunar). Systems needing a
@@ -76,6 +80,10 @@ Assembly references use **names**, not GUIDs (tools/compile_check.py relies on i
   (`MaterialSalvaged`, `RoverLanded`, `RelicSurfaced`).
 - `Subscribe` returns an `IDisposable`; subscribers dispose in `OnDestroy`/`OnDisable`.
 - Publishing is allocation-free for struct events.
+- **Feel beats.** `Core/Events/FeelEvents.cs` holds `FeelBeat` (kind, phase, position, normal, strength, seconds,
+  material), with `FeelKind` and `FeelPhase` in `Core/`. Whoever owns a verb's state publishes its beats; VFX, 07's
+  body, audio, rumble and UI each subscribe once (`docs/design/feel-pass.md` §4). `IFeelSettings` (rumble on/off and
+  strength) is registered by Rover and persisted by UI.
 
 ## Tuning & content data
 - Every gameplay/feel number lives in a ScriptableObject tuning asset (`RoverTuning`, `TetherTuning`, ...)
@@ -98,7 +106,7 @@ Assembly references use **names**, not GUIDs (tools/compile_check.py relies on i
 | 6 | Ground | terrain chunks, base floors |
 | 7 | Rover | rover physics sphere + body colliders |
 | 8 | Relic | excavated/tetherable relics |
-| 9 | Pickup | loose salvage bits, friend parts, cassettes (trigger-only interactions) |
+| 9 | Pickup | material bundles, friend parts, cassettes (trigger-only interactions) |
 | 10 | Prop | rocks, structures |
 | 11 | Trigger | volumes (snap points, signal radius, zones) |
 
@@ -289,10 +297,8 @@ Generated/Art/Sites/Site_<id>.prefab   id: depot | kestrel | drill | garage | la
     CutPoint                  empty where 07's beam aims and sparks (+Z out of the cut face)
   Salvage_<n>_<Material>_Drag optional big piece (0–1 per site) that must be tethered clear before cutting
   Heart                       empty in a sheltered spot inside the wreck: the site's crew relic rests here
-Generated/Art/Pickups/Material_Metal|Wiring|Optics.prefab   0.30–0.40 m bundles, centre-of-mass pivot (fold-in and
-                                       loose trail bits)
-Generated/Art/Sites/Debris_<Material>_<n>.prefab            4–6 small loose wreck bits for the Kestrel trail,
-                                       centre-of-mass pivot, each worth one bundle
+Generated/Art/Pickups/Material_Metal|Wiring|Optics.prefab   0.30–0.40 m bundles, centre-of-mass pivot (a cut piece
+                                       folds into one)
 ```
 - **Footprints.** Site footprints (World): depot 10 m, kestrel 8 m crater floor, drill 9 m, garage 10 m, lander 9 m.
   Nothing tall in a 3 m lane on the approach side (−Z).

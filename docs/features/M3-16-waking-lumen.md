@@ -16,8 +16,8 @@
 ## Three rules
 1. **Asleep until woken.** The whole base is there from the first frame: it is home, and you should see it. But every
    machine is dormant: dark, silent, no prompt, no pad lamps.
-   - A dormant thing answers the sonar with a soft low "not yet" tone and one line saying what wakes it, e.g. "Kenji's
-     Rover Bay: no power. The tower feeds it."
+   - The first time 07 comes near, a dormant thing gives a soft low "not yet" tone and one line on screen saying what
+     wakes it, e.g. "Kenji's Rover Bay: no power. The tower feeds it."
    - Each wakes in its own moment: light, sound, one ticker line and the camera's brief attention.
 2. **One new thing at a time.** Each step teaches one verb or opens one place. Prompts appear the first time a verb
    is needed and never before. The HUD only shows what has been learned: materials appear with the first material.
@@ -33,10 +33,10 @@ to whatever just woke.
 | # | Step | What wakes or opens | Verb taught | What the player learns |
 |---|---|---|---|---|
 | 0 | **Waking** (0–3 min) | 07 wakes on its charging dock, seen first through its own eye; the dock, 07's eye and the tower's pilot are the only warm lights | drive, look | "Home. 07 rests here." Everything else is asleep. |
-| 1 | **First salvage** (3–8) | the supply depot beside home answers the ping | sonar ping, beam cut | materials come from the wrecks of the old base |
-| 2 | **The tower wakes** (8–15) | tower L1 (port hopper, stitch). Power returns home: lander windows light one by one, porch lamps, the HOME sign straightens, the radio crackles | feed a hopper, stitch | the tower is the heart; feeding it wakes things |
-| 3 | **A faint signal** (15–22) | the tower hears Tilly; her signal pillar rises | follow a signal, stitch a friend | friends come home and help |
-| 4 | **First memory** (22–32) | Tilly spots a glint; the memory shelf at home wakes when the first relic arrives | dig, tow, place | home keeps the crew's memories |
+| 1 | **First salvage** (3–7) | the supply depot beside home: its cut seams glint cyan, the only cyan on screen | beam cut | materials come from the wrecks of the old base |
+| 2 | **The tower wakes** (7–10) | tower L1 (port hopper, repair). Power returns home: lander windows light one by one, porch lamps, the HOME sign straightens, the radio crackles, and 07's antenna tip lights cyan | feed a hopper, repair | the tower is the heart; feeding it wakes things |
+| 3 | **A faint signal** (10–17) | the tower's first sweep raises Tilly's pillar; 07 listens when it rests; her last part lies half under the dust | follow a pillar, listen, dig, repair a friend | friends come home and help |
+| 4 | **First memory** (17–30) | Tilly spots the garage's glints. Its last cut opens Kenji's garage port, which fits 07's spare tether ring and then the tape deck. A keepsake rides home on the tether, and the memory shelf wakes when the first relic arrives | cut, lift, place, tow | the tether is earned where a spare waits; home keeps the crew's memories |
 | 5 | **Kenji's Rover Bay** (32–45) | tower L2 powers the bay: shutter rolls up, the "07" sign flickers on, the arms wake | park on the turntable, choose a kit | 07 grows by fitting kits in the bay |
 | 6 | **Over the chasm** (45–65) | Hover-Jump opens the canyon; Bell, the dial, cassettes | charged leap | upgrades open the moon |
 | 7 | **Reach** (65–90) | relay masts carry the tower's signal; radio-hop between lit masts | restore a mast, hop | the network is the second axis |
@@ -52,6 +52,7 @@ to whatever just woke.
 | **Radio tower** | the heart: power and signals | dark broken stub with a lit port hopper | step 2 |
 | **Kenji's Rover Bay** | fits kits on 07 | shutter down, sign dark | step 5 |
 | **Kenji's blueprint board** (the old human bench) | the kits the bay can build: one pinned sheet per kit. 07 scans blueprints found in wrecks and they appear here. Answers "does the bench still do anything" | one sheet (Hover-Jump), others empty pins | step 5; sheets found from step 1 on |
+| **Kenji's Garage Port** | fits 07's spare parts: the tether ring first, then the tape deck | a dusty rover-height bay under the garage roof, shut and dark | step 4 (the garage's last cut) |
 | **Crew's ladder** | a remnant: the crew climbed it, 07 cannot. The first time near, 07 looks up it, then at the lift: "The crew's ladder. Not made for wheels." | always | never |
 | **Crew's lift** | carries 07 to the lander deck lookout (and the map in 0.5) | visibly jammed: tilted platform, one cable snapped | step 8 |
 | **Relay masts** | carry the signal; hop points | broken, dark | step 7 |
@@ -119,7 +120,7 @@ The Director adopted all ten proposals. The step table above stands, with these 
 - **`PlaceFirstApproached(placeId)`:** Gameplay publishes it once per save per place. UI shows the place's name and
   its job line. Place ids:
   - `place.dock`, `place.lander`, `place.shelf`, `place.tower`, `place.bay`, `place.board`, `place.ladder`,
-    `place.lift`, `place.rack`;
+    `place.lift`, `place.rack`, `place.garage_port`;
   - localization keys `place.<id>.name` and `place.<id>.job`.
 - **Dormant visuals.** Art builds both states into its prefabs: an awake child and a dormant child, or a component
   with a `SetAwake(bool, bool instant)`. Gameplay switches them from `IBasePower`. World lights home's warm points
@@ -128,7 +129,7 @@ The Director adopted all ten proposals. The step table above stands, with these 
 ## Split
 | Box | Delivers |
 |---|---|
-| gameplay | dormant/awake state per station and power stages from tower levels; step flow and the "next" line source; blueprints and the board; sonar "not yet" answers; lift station and ride |
+| gameplay | dormant/awake state per station and power stages from tower levels; step flow and the "next" line source; blueprints and the board; the "not yet" approach lines; lift station and ride |
 | art | dormant looks (bay shutter, dark windows, dark tower stub, tilted HOME sign), ground power cables that light, blueprint board and tubes, jammed and restored lift, pads |
 | world | home's lighting stages: only the dock and 07's eye warm at the start |
 | rover | wake on the dock, the ladder look, riding the lift, the deck lookout shot |
