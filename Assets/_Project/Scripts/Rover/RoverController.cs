@@ -333,8 +333,8 @@ namespace MoonProject.Rover
             bool visualsReady = _visualRig.Initialize(this);
             if (visualsReady)
             {
-                _feel = new RoverFeel(_events, _visualRig.Tuning.CutFeel, feelPreferences, new GamepadRumbleMotors(),
-                    _visualRig);
+                _feel = new RoverFeel(_events, _visualRig.Tuning.CutFeel, _visualRig.Tuning.DockFeel, feelPreferences,
+                    new GamepadRumbleMotors(), _visualRig);
                 _visualRig.SetNudge(_feel.Nudge);
             }
 

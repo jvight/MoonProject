@@ -10,7 +10,8 @@ namespace MoonProject.Rover
     /// </summary>
     public sealed class RumbleMixer
     {
-        /// <summary>The motors never run harder than this, whatever the profiles and strength (owner, 2026-10-12).</summary>
+        /// <summary>The motors never run harder than this, whatever the profiles and strength (owner,
+        /// 2026-10-12).</summary>
         public const float HardCap = 0.35f;
 
         private const int Voices = 2;
@@ -85,7 +86,8 @@ namespace MoonProject.Rover
             }
         }
 
-        /// <summary>Takes everything down to silence over <paramref name="seconds"/>; a new profile ends the fade.</summary>
+        /// <summary>Takes everything down to silence over <paramref name="seconds"/>; a new profile ends the
+        /// fade.</summary>
         public void FadeOut(float seconds)
         {
             if (seconds <= 0f)

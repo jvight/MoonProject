@@ -56,7 +56,8 @@ namespace MoonProject.Rover
             _pitch.AddVelocity(sign * Velocity(settings.Angle, settings));
         }
 
-        /// <summary>Leans to a steady pitch (+ forward) with the settings' spring until <see cref="Release"/>.</summary>
+        /// <summary>Leans to a steady pitch (+ forward) with the settings' spring until <see
+        /// cref="Release"/>.</summary>
         public void Hold(NudgeSettings settings)
         {
             _pitchSpring = settings;

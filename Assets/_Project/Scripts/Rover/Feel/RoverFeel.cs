@@ -9,13 +9,15 @@ namespace MoonProject.Rover
     /// 07's chassis and the gamepad answering the feel beats (docs/design/feel-pass.md §3.1, §4): the cut's (and the
     /// dig's) lean, recoil, steadying micro-motions, crack dip and received rear dip on <see cref="ImpactNudge"/>, and
     /// its rumble through <see cref="RumbleMixer"/>, under the player's <see cref="IFeelSettings"/>. Rumble stops at
-    /// once on pause, focus loss and without a gamepad. Zero allocations per frame.
+    /// once on pause, focus loss and without a gamepad. The dock's clunk dips 07 and rumbles (§7.1). Zero allocations
+    /// per frame.
     /// </summary>
     public sealed class RoverFeel : IDisposable
     {
         private const int NoVoice = -1;
 
         private readonly CutFeelSettings _cut;
+        private readonly DockFeelSettings _dock;
         private readonly IFeelSettings _preferences;
         private readonly IRumbleMotors _motors;
         private readonly RoverVisualRig _body;
@@ -28,10 +30,11 @@ namespace MoonProject.Rover
         private bool _paused;
         private bool _focused = true;
 
-        public RoverFeel(EventBus events, CutFeelSettings cut, IFeelSettings preferences, IRumbleMotors motors,
-            RoverVisualRig body)
+        public RoverFeel(EventBus events, CutFeelSettings cut, DockFeelSettings dock, IFeelSettings preferences,
+            IRumbleMotors motors, RoverVisualRig body)
         {
             _cut = cut ?? throw new ArgumentNullException(nameof(cut));
+            _dock = dock ?? throw new ArgumentNullException(nameof(dock));
             _preferences = preferences ?? throw new ArgumentNullException(nameof(preferences));
             _motors = motors ?? throw new ArgumentNullException(nameof(motors));
             _body = body;
@@ -103,6 +106,13 @@ namespace MoonProject.Rover
                 return;
             }
 
+            if (beat.Kind == FeelKind.Dock && beat.Phase == FeelPhase.Impact)
+            {
+                _rumble.Play(_dock.LockRumble);
+                _nudge.KickHeave(_dock.LockDip);
+                return;
+            }
+
             if (beat.Kind != FeelKind.Cut && beat.Kind != FeelKind.Dig)
             {
                 return;
@@ -141,7 +151,8 @@ namespace MoonProject.Rover
             }
         }
 
-        /// <summary>Ignition (strength 0, the first Act) kicks and settles to the sustain; each cut step retunes it.</summary>
+        /// <summary>Ignition (strength 0, the first Act) kicks and settles to the sustain; each cut step retunes
+        /// it.</summary>
         private void Act(float progress)
         {
             if (!_sustaining)

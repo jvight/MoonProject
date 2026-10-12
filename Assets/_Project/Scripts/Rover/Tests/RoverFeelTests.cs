@@ -39,7 +39,7 @@ namespace MoonProject.Rover.Tests
             _events = new EventBus();
             _motors = new FakeMotors();
             _preferences = new FeelPreferences();
-            _feel = new RoverFeel(_events, new CutFeelSettings(), _preferences, _motors, null);
+            _feel = new RoverFeel(_events, new CutFeelSettings(), new DockFeelSettings(), _preferences, _motors, null);
             _time = 0f;
         }
 
@@ -86,6 +86,17 @@ namespace MoonProject.Rover.Tests
             Assert.AreEqual(0.35f, _motors.Low, Tolerance, "The crack is the strongest pulse.");
             Run(0.2f);
             Assert.AreEqual(0f, _motors.Low, Tolerance, "Then quiet: the beam let go.");
+        }
+
+        [Test]
+        public void TheDockLock_Dips07_AndRumbles015For80Ms()
+        {
+            Beat(FeelPhase.Impact, kind: FeelKind.Dock);
+            Run(Frame);
+            Assert.AreEqual(0.15f, _motors.Low, Tolerance);
+            Run(0.1f);
+            Assert.AreEqual(0f, _motors.Low, Tolerance, "Over after 80 ms.");
+            Assert.Less(_feel.Nudge.Heave, -0.005f, "07 dips into the clamp.");
         }
 
         [Test]

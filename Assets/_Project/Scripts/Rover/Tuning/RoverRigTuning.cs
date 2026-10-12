@@ -141,6 +141,9 @@ namespace MoonProject.Rover
         [Tooltip("07's chassis and the gamepad rumble answering the cut's and the dig's beats.")]
         [SerializeField] private CutFeelSettings _cutFeel = new CutFeelSettings();
 
+        [Tooltip("07's side of the dock locking it in: the dip and rumble at the clunk (feel-pass §7.1).")]
+        [SerializeField] private DockFeelSettings _dockFeel = new DockFeelSettings();
+
         [Header("Flank lamps (the battery)")]
         [Tooltip("The amber lamps along the stripe, one per cell (docs/features/M3-20).")]
         [SerializeField] private FlankLampSettings _flankLamps = new FlankLampSettings();
@@ -249,6 +252,8 @@ namespace MoonProject.Rover
         public FlankLampSettings FlankLamps => _flankLamps;
 
         public CutFeelSettings CutFeel => _cutFeel;
+
+        public DockFeelSettings DockFeel => _dockFeel;
 
         public float TubeHalfLife => _tubeHalfLife;
 
