@@ -43,6 +43,10 @@
             "text": "Một hành trình cũ đã được cất đi."
         },
         {
+            "key": "ui.save_tick.word",
+            "text": "07"
+        },
+        {
             "key": "ui.hint.look_up",
             "text": "Ngước nhìn lên"
         },

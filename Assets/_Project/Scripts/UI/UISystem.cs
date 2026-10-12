@@ -76,6 +76,8 @@ namespace MoonProject.UI
         private CellRow _cellRow;
         private bool _cellRowRevealed;
         private PlaceCard _placeCard;
+        private SaveTick _saveTick;
+        private readonly NotYetLines _notYet = new NotYetLines();
         private TetherReticle _reticle;
         private ContextPrompt _prompt;
         private MaterialsChip _chip;
@@ -126,6 +128,8 @@ namespace MoonProject.UI
         internal MaterialsChip Chip => _chip;
 
         internal SalvageRing SalvageRing => _salvageRing;
+
+        internal SaveTick SaveTick => _saveTick;
 
         internal SiteNameTag SiteName => _siteName;
 
@@ -309,6 +313,8 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<RoverAwoke>(OnRoverAwoke));
             _tokens.Add(events.Subscribe<TitleShown>(OnTitleShown));
             _tokens.Add(events.Subscribe<FeelBeat>(OnFeelBeat));
+            _tokens.Add(events.Subscribe<GameSaved>(OnGameSaved));
+            _tokens.Add(events.Subscribe<StationNotYet>(OnStationNotYet));
             _tokens.Add(events.Subscribe<StargazingChanged>(OnStargazingChanged));
             _tokens.Add(events.Subscribe<NextStepChanged>(OnNextStepChanged));
             _tokens.Add(events.Subscribe<PlaceFirstApproached>(OnPlaceFirstApproached));
@@ -389,6 +395,7 @@ namespace MoonProject.UI
             _nextStep = new NextStepLine(_tuning.Guidance);
             _nextLine = new NextLineView(_layout, _tuning.Guidance, _localization);
             _cellRow = new CellRow(_layout, _tuning.Battery, services.Battery, services.Beam);
+            _saveTick = new SaveTick(_layout, _tuning.SaveTick);
             _placeCard = new PlaceCard(_layout, _tuning.Guidance, _localization, services.Events);
             _reticle = new TetherReticle(_layout.Reticle, _layout.ReticleRest, _layout.ReticleHover, _tuning.Reticle);
             _prompt = new ContextPrompt(_layout, _tuning.Prompts, _director, services.View, _glyphs, _localization,
@@ -476,6 +483,7 @@ namespace MoonProject.UI
             float hudTime = paused ? 0f : deltaTime;
             _hud.Set(!paused && !onMap && !_labHud.Inside);
             _hud.Tick(deltaTime);
+            _saveTick.Tick(deltaTime);
             _stargaze.Tick(deltaTime);
             if (_awake)
             {
@@ -641,6 +649,23 @@ namespace MoonProject.UI
 
             _titleWaiting = true;
             _titleHasSave = shown.HasSave;
+        }
+
+        private void OnGameSaved(GameSaved saved)
+        {
+            if (_bound)
+            {
+                _saveTick.Saved();
+            }
+        }
+
+        /// <summary>A sleeping station answered the sonar: its line on what wakes it goes to the ticker, once.</summary>
+        private void OnStationNotYet(StationNotYet notYet)
+        {
+            if (_notYet.ShouldSay(notYet.ReasonKey))
+            {
+                _tickerLines.Enqueue(new TickerLine(notYet.ReasonKey));
+            }
         }
 
         private void OnFeelBeat(FeelBeat beat)

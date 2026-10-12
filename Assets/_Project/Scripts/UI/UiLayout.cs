@@ -151,6 +151,8 @@ namespace MoonProject.UI
             TitleScreen = Require<VisualElement>("title-screen");
             TitleWordmark = Require<VisualElement>("title-wordmark");
             Curtain = Require<VisualElement>("curtain");
+            SaveTick = Require<VisualElement>("save-tick");
+            SaveTickCheck = Require<VisualElement>("save-tick-check");
             NewGameKeepButton = Require<Button>("button-new-game-keep");
             NewGameConfirmButton = Require<Button>("button-new-game-confirm");
             PauseSettings = Require<VisualElement>("pause-settings");
@@ -430,6 +432,11 @@ namespace MoonProject.UI
 
         /// <summary>A soft dark over everything, drawn before the scene reloads (New Game, Quit to title, Quit).</summary>
         public VisualElement Curtain { get; }
+
+        /// <summary>The save tick: a tiny "07" and a check mark in the corner.</summary>
+        public VisualElement SaveTick { get; }
+
+        public VisualElement SaveTickCheck { get; }
 
         public Button NewGameKeepButton { get; }
 

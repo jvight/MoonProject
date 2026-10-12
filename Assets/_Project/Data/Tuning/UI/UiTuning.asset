@@ -385,3 +385,12 @@ MonoBehaviour:
       _scaleFrom: 0.97
       _springFrequency: 1.2
       _springDamping: 0.7
+  _saveTick:
+    _reveal:
+      _fadeIn: 0.25
+      _fadeOut: 0.7
+      _slide: 6
+      _scaleFrom: 0.96
+      _springFrequency: 1.2
+      _springDamping: 0.8
+    _holdSeconds: 1

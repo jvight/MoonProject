@@ -43,6 +43,10 @@
             "text": "An older journey was put away."
         },
         {
+            "key": "ui.save_tick.word",
+            "text": "07"
+        },
+        {
             "key": "ui.hint.look_up",
             "text": "Look up"
         },

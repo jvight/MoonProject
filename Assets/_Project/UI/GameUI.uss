@@ -410,6 +410,29 @@ Label {
     white-space: normal;
 }
 
+/* The save tick: a tiny cream "07" and check mark in the bottom corner, only for a moment after a real save */
+.save-tick {
+    position: absolute;
+    right: 34px;
+    bottom: 30px;
+    flex-direction: row;
+    align-items: center;
+}
+
+.save-tick__word {
+    font-size: 18px;
+    letter-spacing: 2px;
+    color: var(--moon-text);
+    text-shadow: 0 2px 10px var(--moon-shadow);
+}
+
+.save-tick__check {
+    width: 20px;
+    height: 20px;
+    margin-left: 8px;
+    --tick-color: var(--moon-cream);
+}
+
 .curtain {
     position: absolute;
     left: 0;

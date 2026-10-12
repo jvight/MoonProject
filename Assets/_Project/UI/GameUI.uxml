@@ -346,6 +346,10 @@
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
+        <ui:VisualElement name="save-tick" class="save-tick" picking-mode="Ignore">
+            <ui:Label class="save-tick__word loc" text="ui.save_tick.word" picking-mode="Ignore" />
+            <ui:VisualElement name="save-tick-check" class="save-tick__check" picking-mode="Ignore" />
+        </ui:VisualElement>
         <ui:VisualElement name="curtain" class="curtain" picking-mode="Ignore" />
     </ui:VisualElement>
 </ui:UXML>
