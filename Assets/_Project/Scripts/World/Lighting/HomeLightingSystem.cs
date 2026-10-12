@@ -65,6 +65,7 @@ namespace MoonProject.World
         private GameContext _context;
         private int _windowStepsLit;
         private TowerBuildBeat _build;
+        private Light _pulseLight;
         private IDisposable _feelBeat;
         private IViewCamera _view;
         private float[] _poolsApplied;
@@ -89,6 +90,7 @@ namespace MoonProject.World
             SetUpPools();
             _context = context;
             _build = new TowerBuildBeat(_settings.HomeLighting);
+            _pulseLight = CreatePulseLight(_settings.HomeLighting);
             _powerChanged = context.Events.Subscribe<BasePowerChanged>(OnPowerChanged);
             _feelBeat = context.Events.Subscribe<FeelBeat>(OnFeelBeat);
             _placeApproached = context.Events.Subscribe<PlaceFirstApproached>(OnPlaceApproached);
@@ -114,6 +116,7 @@ namespace MoonProject.World
                 _stages.SetStage(released, false, time);
             }
 
+            ApplyPulseLight(time);
             ApplyCable(BasePowerStage.Home, _homeCable, _homeApplied, time);
             ApplyCable(BasePowerStage.Bay, _bayCable, _bayApplied, time);
             ApplyCable(BasePowerStage.Chart, _chartCable, _chartApplied, time);
@@ -223,6 +226,48 @@ namespace MoonProject.World
             }
 
             _windowStepsLit = lit;
+        }
+
+        private Light CreatePulseLight(HomeLightingSettings tuning)
+        {
+            var host = new GameObject("CablePulseLight");
+            host.transform.SetParent(transform, false);
+            var light = host.AddComponent<Light>();
+            light.type = LightType.Point;
+            light.color = tuning.PoolColor;
+            light.range = tuning.CablePulseLightRange;
+            light.shadows = LightShadows.None;
+            light.enabled = false;
+            return light;
+        }
+
+        /// <summary>A warm light rides the power pulse along the waking stage's cable beads, tower to home.</summary>
+        private void ApplyPulseLight(float time)
+        {
+            Renderer[] beads = null;
+            bool racing = _stages.CablePulse(time, out BasePowerStage stage, out float progress);
+            if (racing)
+            {
+                beads = stage == BasePowerStage.Home ? _homeCable : stage == BasePowerStage.Bay ? _bayCable
+                    : stage == BasePowerStage.Chart ? _chartCable : null;
+            }
+
+            if (beads == null || beads.Length == 0)
+            {
+                _pulseLight.enabled = false;
+                return;
+            }
+
+            float along = Mathf.Clamp01(progress) * (beads.Length - 1);
+            int from = Mathf.Min(Mathf.FloorToInt(along), beads.Length - 1);
+            int to = Mathf.Min(from + 1, beads.Length - 1);
+            _pulseLight.transform.position = Vector3.Lerp(beads[from].bounds.center, beads[to].bounds.center,
+                along - from);
+            float fade = 1f - Mathf.SmoothStep(0f, 1f, progress - 1f > 0f
+                ? (progress - 1f) * _settings.HomeLighting.CableTravel / _settings.HomeLighting.CablePulseSeconds
+                : 0f);
+            _pulseLight.intensity = _settings.HomeLighting.CablePulseLight * fade;
+            _pulseLight.enabled = fade > 0f;
         }
 
         private void OnFeelBeat(FeelBeat beat)

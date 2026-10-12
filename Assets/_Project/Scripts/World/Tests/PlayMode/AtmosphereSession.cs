@@ -88,6 +88,12 @@ namespace MoonProject.World.PlayModeTests
 
         // The tower's build beat as Gameplay publishes it (feel-pass §8.2), and the flare seen just after Impact.
         private const string TowerPilotName = "TowerPilot";
+
+        // The cable frame: home's power cable seen from the chase camera's distance and height.
+        private const string CableFrame = "wake-1-cable";
+        private const string HomeCableName = "PowerCable_Home";
+        private const float CableChaseDistance = 10f;
+        private const float CableChaseHeight = 3.5f;
         private const float TowerAnticipateSeconds = 1.2f;
         private const int TowerActSteps = 4;
         private const float TowerActSeconds = 0.25f;
@@ -288,6 +294,12 @@ namespace MoonProject.World.PlayModeTests
             foreach ((float wait, string name) in WakeFrames)
             {
                 yield return new WaitForSeconds(wait);
+                if (name == CableFrame)
+                {
+                    CaptureCable(view, name);
+                    continue;
+                }
+
                 Capture(view, name);
             }
 
@@ -326,6 +338,45 @@ namespace MoonProject.World.PlayModeTests
             }
 
             throw new InvalidOperationException($"The scene has no '{name}'.");
+        }
+
+        /// <summary>
+        /// The power pulse on home's cable, from the chase distance: behind the cable along the game camera's heading,
+        /// at the chase camera's height, looking at the middle of its glass beads.
+        /// </summary>
+        private static void CaptureCable(Camera view, string name)
+        {
+            var beads = new Bounds();
+            bool any = false;
+            foreach (Renderer bead in FindNamed(HomeCableName).GetComponentsInChildren<Renderer>())
+            {
+                if (any)
+                {
+                    beads.Encapsulate(bead.bounds);
+                }
+                else
+                {
+                    beads = bead.bounds;
+                    any = true;
+                }
+            }
+
+            Vector3 heading = Vector3.ProjectOnPlane(view.transform.forward, Vector3.up).normalized;
+            Vector3 eye = beads.center - heading * CableChaseDistance + Vector3.up * CableChaseHeight;
+            var host = new GameObject("CableReviewCamera");
+            try
+            {
+                var camera = host.AddComponent<Camera>();
+                camera.CopyFrom(view);
+                camera.enabled = false;
+                CopyPipelineSettings(view, camera);
+                camera.transform.SetPositionAndRotation(eye, Quaternion.LookRotation(beads.center - eye));
+                FrameCapture.SavePng(camera, CaptureWidth, CaptureHeight, Path.Combine(CaptureFolder, name + ".png"));
+            }
+            finally
+            {
+                Object.Destroy(host);
+            }
         }
 
         private static void Capture(Camera view, string name)

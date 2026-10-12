@@ -122,13 +122,36 @@ namespace MoonProject.World
                 return 0f;
             }
 
+            float steady = _settings.CableSteady;
             if (stage != _wakingStage)
             {
-                return 1f;
+                return steady;
             }
 
-            float arrives = _settings.CableTravel * segment / Mathf.Max(1, count);
-            return Mathf.SmoothStep(0f, 1f, (time - _wokeAt - arrives) / _settings.CableSegmentFade);
+            // A bright pulse races from the tower to home: each bead flares as it passes, then settles to a steady
+            // soft glow that shows home is connected.
+            float since = time - _wokeAt - _settings.CableTravel * segment / Mathf.Max(1, count);
+            if (since <= 0f)
+            {
+                return 0f;
+            }
+
+            float rise = Mathf.SmoothStep(0f, 1f, since / _settings.CableSegmentFade);
+            float settle = (since - _settings.CableSegmentFade) / _settings.CablePulseSeconds;
+            float flare = 1f - Mathf.SmoothStep(0f, 1f, settle);
+            return rise * (steady + (_settings.CablePulsePeak - steady) * flare);
+        }
+
+        /// <summary>
+        /// Where the power pulse is on the cable of the stage now waking: <paramref name="progress"/> runs 0 at the
+        /// tower to 1 at home over the cable travel; false when no pulse is travelling (or it has faded at home).
+        /// </summary>
+        public bool CablePulse(float time, out BasePowerStage stage, out float progress)
+        {
+            stage = _wakingStage;
+            progress = (time - _wokeAt) / _settings.CableTravel;
+            float fadeShare = _settings.CablePulseSeconds / _settings.CableTravel;
+            return _wakingStage != BasePowerStage.Asleep && progress >= 0f && progress < 1f + fadeShare;
         }
 
         /// <summary>

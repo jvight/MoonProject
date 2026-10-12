@@ -33,11 +33,33 @@ namespace MoonProject.World
         [Tooltip("Seconds power takes to travel a ground cable from the tower to what it wakes, segment by segment; " +
             "that place's warm points start waking when it arrives.")]
         [Range(0.1f, 6f)]
-        [SerializeField] private float _cableTravel = 1.5f;
+        [SerializeField] private float _cableTravel = 1.2f;
 
         [Tooltip("Seconds each cable segment takes to ease from dark to lit.")]
         [Range(0.05f, 2f)]
-        [SerializeField] private float _cableSegmentFade = 0.35f;
+        [SerializeField] private float _cableSegmentFade = 0.12f;
+
+        [Tooltip("Glow of a cable bead as the power pulse passes it (linear glow multiplier): unmistakable from the " +
+            "chase camera.")]
+        [Range(1f, 10f)]
+        [SerializeField] private float _cablePulsePeak = 4f;
+
+        [Tooltip("Seconds a bead takes to settle from the pulse's flare to its steady glow.")]
+        [Range(0.1f, 3f)]
+        [SerializeField] private float _cablePulseSeconds = 0.6f;
+
+        [Tooltip("Steady glow of a powered cable (linear glow multiplier): soft, so home reads as connected.")]
+        [Range(0f, 2f)]
+        [SerializeField] private float _cableSteady = 0.45f;
+
+        [Tooltip("Intensity of the warm light riding the power pulse along the cable: it lights the ground as it " +
+            "races home.")]
+        [Range(0f, 20f)]
+        [SerializeField] private float _cablePulseLight = 6f;
+
+        [Tooltip("Range of the light riding the pulse, metres.")]
+        [Range(0.5f, 15f)]
+        [SerializeField] private float _cablePulseLightRange = 4f;
 
         [Header("The tower's power preview (M3-24 B)")]
         [Tooltip("Seconds the preview's slow light takes to run one dark cable from the tower's foot to its end, the " +
@@ -158,6 +180,11 @@ namespace MoonProject.World
         public int WindowSteps => _windowSteps;
         public float WindowStepEase => _windowStepEase;
         public float CableTravel => _cableTravel;
+        public float CablePulsePeak => _cablePulsePeak;
+        public float CablePulseSeconds => _cablePulseSeconds;
+        public float CableSteady => _cableSteady;
+        public float CablePulseLight => _cablePulseLight;
+        public float CablePulseLightRange => _cablePulseLightRange;
         public float CableSegmentFade => _cableSegmentFade;
         public float PreviewTravel => _previewTravel;
         public float PreviewStagger => _previewStagger;
