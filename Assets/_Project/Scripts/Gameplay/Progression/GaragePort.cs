@@ -11,8 +11,8 @@ namespace MoonProject.Gameplay
     /// Kenji's garage service port (docs/design/first-hour-v2.md §3), Art's GaragePort standing in the garage behind its
     /// painted "07" pad. The garage's last cut opens it: its place card, its pad lit. Parked on the pad, 07 has its spare
     /// tether ring fitted round its eye (<see cref="PortFitting"/>; the Tether ability, asleep until then). Then Ro's
-    /// tape deck, dug up beside the port and brought to it on the tether (towed to its tray, or held while 07 parks on
-    /// the pad), is taken off the tether, glides onto the tray and is fitted on 07's flank. Before the ring, a loose keepsake near 07 gives one line, once: the tether is gone and
+    /// tape deck, dug up beside the port and brought to it on the tether (towed to its tray, or held while 07 rests
+    /// by the port), is taken off the tether, glides onto the tray and is fitted on 07's flank. Before the ring, a loose keepsake near 07 gives one line, once: the tether is gone and
     /// Kenji kept a spare. A save that already used the tether (a keepsake home, or the Cargo Cradle) has the ring.
     /// </summary>
     public sealed class GaragePort : IDisposable
@@ -43,6 +43,7 @@ namespace MoonProject.Gameplay
         private Quaternion _glideFromRotation;
         private float _glide;
         private float _parked;
+        private float _restingNear;
         private bool _ringFitted;
         private bool _placeSeen;
         private bool _tetherHinted;
@@ -144,6 +145,8 @@ namespace MoonProject.Gameplay
 
             bool parked = toPad <= _tuning.PortPadRadius && _rover.Speed <= _tuning.PortParkSpeed;
             _parked = parked ? _parked + deltaTime : 0f;
+            bool restingNear = toPad <= _tuning.PortClaimRadius && _rover.Speed <= _tuning.PortParkSpeed;
+            _restingNear = restingNear ? _restingNear + deltaTime : 0f;
             if (open && !_ringFitted && _parked >= _tuning.PortParkSeconds)
             {
                 FitTheRing();
@@ -186,7 +189,7 @@ namespace MoonProject.Gameplay
             {
                 case DeckPhase.Waiting:
                     bool atTray = Vector3.Distance(_deck.transform.position, _tray.position) <= _tuning.PortTrayRadius;
-                    if (_ringFitted && _deck.IsTethered && (atTray || _parked >= _tuning.PortParkSeconds))
+                    if (_ringFitted && _deck.IsTethered && (atTray || _restingNear >= _tuning.PortParkSeconds))
                     {
                         _deck.Claim();
                         _deckPhase = DeckPhase.Claimed;

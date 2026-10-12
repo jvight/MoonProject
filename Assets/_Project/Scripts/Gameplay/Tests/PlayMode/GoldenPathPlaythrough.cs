@@ -586,8 +586,8 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// Ro's tape deck, dug up beside the port and held on the tether: parked on the pad, the port takes it onto its
-        /// tray and fits it on 07's flank; the first tape plays.
+        /// Ro's tape deck, dug up beside the port and held on the tether: resting by the port, 07 has it taken onto the
+        /// tray and fitted on its flank; the first tape plays.
         /// </summary>
         private IEnumerator FitTheTapeDeck()
         {
@@ -596,7 +596,8 @@ namespace MoonProject.Gameplay.PlayModeTests
             int fitted = 0;
             using IDisposable fits = _context.Events.Subscribe<RoverKitFitted>(fit =>
                 fitted += fit.Piece == RoverKitPiece.TapeDeck ? 1 : 0);
-            yield return DriveTo(Flat(port.PadCentre), PortPark, 0.35f, 40f, "Kenji's port pad, the deck in tow");
+            _pilot.Target = null;
+            yield return Until(() => _rover.Speed < StopSpeed, 6f, "07 rests by the port, the deck on its tether");
             yield return Until(() => port.DeckFitted, 10f, "the port takes the deck onto its tray and fits it");
             Release(_mouse.rightButton);
             yield return Until(() => fitted == 1, 6f, "the deck is on 07's flank");
