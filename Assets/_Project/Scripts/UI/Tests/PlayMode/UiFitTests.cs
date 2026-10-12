@@ -154,6 +154,27 @@ namespace MoonProject.UI.PlayModeTests
             }
 
             _rig.Fakes.PrimaryHint = InteractionHint.None;
+            _rig.Fakes.Upgrade = _rig.TestTower();
+            _rig.Fakes.AtStation = true;
+            yield return Seconds(2f);
+            foreach (ScreenShape shape in ScreenShapes.All)
+            {
+                yield return Reframe(shape);
+                yield return Check(shape, "tower card", null);
+            }
+
+            _rig.Fakes.AtStation = false;
+            yield return Seconds(1f);
+            events.Publish(new RelicDeposited("rubber_duck", Vector3.zero, 4));
+            yield return Seconds(2f);
+            foreach (ScreenShape shape in ScreenShapes.All)
+            {
+                yield return Reframe(shape);
+                yield return Check(shape, "memory card", null);
+            }
+
+            _rig.Ui.Card.Dismiss();
+            yield return Seconds(1.5f);
             yield return Tap(keyboard.escapeKey);
             yield return Seconds(1f);
             foreach (ScreenShape shape in ScreenShapes.All)
