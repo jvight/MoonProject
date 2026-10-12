@@ -306,8 +306,8 @@ namespace MoonProject.Art.Editor
         /// <summary>
         /// Kenji's blueprints (M3-16 P7): RoverBay/Blueprints, the cord of pegs along his bench's pegboard, holds one
         /// sheet per kit, Blueprint_&lt;RoverAbility name&gt; (HoverJump, CargoCradle, WarmHeadlamp, BoostCoils,
-        /// CellPack). Only Hover-Jump's hangs there at the start (Kenji left it); Gameplay shows each other one once the
-        /// plotter has drawn it.
+        /// CellPack, FocusLens, SideBins). Only Hover-Jump's hangs there at the start (Kenji left it); Gameplay shows
+        /// each other one once the plotter has drawn it.
         /// </summary>
         public const string BlueprintsName = "Blueprints";
 
@@ -432,6 +432,11 @@ namespace MoonProject.Art.Editor
                 ModelPrefabWriter.Write(CreateStationPad(i), ArtPaths.BaseFolder, material, glowOff);
             }
 
+            foreach (string crate in ShelfMaterials)
+            {
+                ModelPrefabWriter.Write(CreateShelfCrate(crate), ArtPaths.BaseFolder, material);
+            }
+
             AssetDatabase.SaveAssets();
         }
 
@@ -515,8 +520,71 @@ namespace MoonProject.Art.Editor
             AddBigPorthole(lander);
             AddLab(lander);
             AddHandOff(lander);
+            AddShelves(lander);
             Weathering.Weather(lander, LanderName, hull, LanderWeather, LanderMeshes.Rust(), LanderMeshes.Drifts());
             return lander;
+        }
+
+        /// <summary>
+        /// Home's supply shelves (M3-25 §3.1, T2): <c>Shelves/Shelf_1..4</c>, open racks on the belly ring between the lift's
+        /// guides and the legs, fronts facing out; 1-2 stand from the start, gameplay shows 3-4 once 07 builds them. Each
+        /// has 12 slots <c>Slot_00..Slot_11</c> (left to right from the front, bottom board first), each with
+        /// <c>Stack_0..2</c> where gameplay seats up to three <c>ShelfCrate_&lt;Material&gt;</c> (Base), one material
+        /// per slot; and a <c>Lamp</c> (M_LowPolyGlowOff) gameplay warms at night.
+        /// </summary>
+        public const string ShelvesName = "Shelves";
+
+        public const string ShelfPrefix = "Shelf_";
+        public const string ShelfSlotPrefix = "Slot_";
+        public const string ShelfStackPrefix = "Stack_";
+        public const string ShelfCratePrefix = "ShelfCrate_";
+        public const string ShelfLampName = "Lamp";
+        public const int ShelfCount = 4;
+        public const int ShelfSlots = SupplyShelfMeshes.Slots;
+        public const int ShelfStackHeight = SupplyShelfMeshes.StackHeight;
+
+        /// <summary>The underside of the lander's stage, which the shelves stand under.</summary>
+        public const float LanderBellyHeight = LanderMeshes.StageBottom;
+
+        /// <summary>The materials with a shelf crate so far (M3-27's others come with their bundles).</summary>
+        public static IReadOnlyList<string> ShelfMaterials => SupplyShelfMeshes.CrateMaterials;
+
+        // Shelf n's yaw round the belly: 1-2 face the dock's side, 3-4 the far side, all clear of the lift's lane on Z.
+        private static readonly float[] ShelfYaws = { 75f, -75f, 105f, -105f };
+        private const float ShelfRadius = 3.25f;
+
+        /// <summary>A stack's crate in <paramref name="material"/>'s colour, its pivot at its bottom centre.</summary>
+        public static ModelNode CreateShelfCrate(string material)
+        {
+            string name = ShelfCratePrefix + material;
+            return new ModelNode(name, Vector3.zero, new ModelMesh(name, SupplyShelfMeshes.Crate(material)));
+        }
+
+        private static void AddShelves(ModelNode lander)
+        {
+            string prefix = LanderName + "_" + ShelvesName;
+            ModelNode shelves = lander.Add(new ModelNode(ShelvesName, Vector3.zero));
+            var rack = new ModelMesh(prefix + "_Rack", SupplyShelfMeshes.Rack());
+            var glass = new ModelMesh(prefix + "_Lamp", SupplyShelfMeshes.LampGlass());
+            for (int i = 0; i < ShelfCount; i++)
+            {
+                Quaternion facing = Place.Rotation(new Vector3(0f, ShelfYaws[i], 0f));
+                ModelNode shelf = shelves.Add(new ModelNode(
+                    ShelfPrefix + (i + 1).ToString(CultureInfo.InvariantCulture),
+                    facing * Vector3.forward * ShelfRadius, facing, rack));
+                shelf.Add(new ModelNode(ShelfLampName, SupplyShelfMeshes.Lamp, Quaternion.identity, glass,
+                    ModelMaterial.PaletteGlowOff));
+                for (int slot = 0; slot < ShelfSlots; slot++)
+                {
+                    ModelNode anchor = shelf.Add(new ModelNode(
+                        ShelfSlotPrefix + slot.ToString("00", CultureInfo.InvariantCulture), SupplyShelfMeshes.Slot(slot)));
+                    for (int level = 0; level < ShelfStackHeight; level++)
+                    {
+                        anchor.Add(new ModelNode(ShelfStackPrefix + level.ToString(CultureInfo.InvariantCulture),
+                            Vector3.up * SupplyShelfMeshes.StackPitch * level));
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -842,6 +910,18 @@ namespace MoonProject.Art.Editor
         }
 
         /// <summary>
+        /// A tower stage's lamps (feel-pass §8.2): Lights is ring 0 (the cabinet lamp) and Lights/Ring_1..3 the rings
+        /// above it, bottom to top, so gameplay lights one ring per Act as power climbs. Each is a glow renderer on
+        /// the MaterialPropertyBlock contract. OfflinePlaque by the hopper carries OfflineLamp (M_LowPolyGlowOff),
+        /// dark until gameplay lights it while the stage is down.
+        /// </summary>
+        public const string TowerLightsName = "Lights";
+        public const string TowerLightRingPrefix = "Ring_";
+        public const int TowerLightRings = RadioTowerMeshes.LightRings;
+        public const string OfflinePlaqueName = "OfflinePlaque";
+        public const string OfflineLampName = "OfflineLamp";
+
+        /// <summary>
         /// Radio tower stage <paramref name="level"/> (1..3). Every stage has the same rover-height service port facing
         /// the upgrade pad: a HopperMouth empty (+Z out of the mouth) and a ServiceHatch door pivoted on its left hinge
         /// (swing it about local Y to open).
@@ -851,8 +931,15 @@ namespace MoonProject.Art.Editor
             string name = TowerPrefix + level.ToString(CultureInfo.InvariantCulture);
             LowPolyMeshBuilder structure = RadioTowerMeshes.Structure(level);
             var tower = new ModelNode(name, Vector3.zero, new ModelMesh(name, structure));
-            tower.Add(new ModelNode("Lights", Vector3.zero,
-                new ModelMesh(name + "_Lights", RadioTowerMeshes.Lights(level))));
+            ModelNode lights = tower.Add(new ModelNode(TowerLightsName, Vector3.zero,
+                new ModelMesh(name + "_Lights", RadioTowerMeshes.Lights(level, 0))));
+            for (int ring = 1; ring < RadioTowerMeshes.LightRings; ring++)
+            {
+                string ringName = TowerLightRingPrefix + ring.ToString(CultureInfo.InvariantCulture);
+                lights.Add(new ModelNode(ringName, Vector3.zero,
+                    new ModelMesh(name + "_Lights_" + ringName, RadioTowerMeshes.Lights(level, ring))));
+            }
+
             tower.Add(new ModelNode("BeaconSocket", RadioTowerMeshes.BeaconPosition(level)));
             tower.Add(new ModelNode("BellCorner", BellCorner, Place.Rotation(new Vector3(0f, BellCornerYaw, 0f))));
             tower.Add(new ModelNode("CassetteShelfAnchor", CassetteShelfAnchor,
@@ -862,6 +949,11 @@ namespace MoonProject.Art.Editor
             tower.Add(new ModelNode("ServiceHatch", RadioTowerMeshes.ServiceHatchHinge, Quaternion.identity,
                 new ModelMesh("RadioTower_ServiceHatch",
                     ServiceKit.Hatch(RadioTowerMeshes.ServiceHatchWidth, RadioTowerMeshes.ServiceHatchHeight))));
+            ModelNode plaque = tower.Add(new ModelNode(OfflinePlaqueName, RadioTowerMeshes.OfflinePlaque,
+                new ModelMesh(name + "_" + OfflinePlaqueName, RadioTowerMeshes.OfflinePlaqueMesh())));
+            plaque.Add(new ModelNode(OfflineLampName, RadioTowerMeshes.OfflineLamp, Quaternion.identity,
+                new ModelMesh(name + "_" + OfflineLampName, RadioTowerMeshes.OfflineLampGlass()),
+                ModelMaterial.PaletteGlowOff));
             Weathering.Weather(tower, name, structure, TowerWeather(level), RadioTowerMeshes.Rust(level),
                 RadioTowerMeshes.Drifts());
             return tower;

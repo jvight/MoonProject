@@ -127,7 +127,7 @@ namespace MoonProject.Art.Tests
                 "Windows", "TowerAnchor", "LampSocket_0", "LampSocket_1", "LampSocket_2", "LampSocket_3",
                 "FriendSocket_tilly", "WorkshopAnchor", "DockAnchor", "DockGlow", "HomeSign", "PowerCable_Home",
                 "PowerCable_Bay", "PowerCable_Chart", "BellyLift", "BigPorthole", "PortholeLamps", "Lab",
-                "HandOffPath", "HandOffCable", "Weather_Paint", "Weather_Rust", "Weather_Dust",
+                "HandOffPath", "HandOffCable", "Shelves", "Weather_Paint", "Weather_Rust", "Weather_Dust",
             };
 
             CollectionAssert.AreEqual(expected, lander.Children.Select(child => child.Name).ToArray());
