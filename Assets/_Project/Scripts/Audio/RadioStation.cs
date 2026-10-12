@@ -61,6 +61,7 @@ namespace MoonProject.Audio
         private readonly EasedValue _eveningDuck = new EasedValue(1f);
         private readonly EasedValue _buildDuck = new EasedValue(1f);
         private bool _building;
+        private float _buildLeft;
         private float _eveningLeft;
         private readonly IDisposable[] _subscriptions = new IDisposable[SubscriptionCount];
         private readonly Dictionary<string, RadioTrack> _tapeTracks = new Dictionary<string, RadioTrack>(
@@ -268,6 +269,8 @@ namespace MoonProject.Audio
 
             float cabin = _director.CabinBlend;
             float title = _title.Step(dt, _tuning.TitleRiseTime, _tuning.TitleFallTime);
+            _buildLeft -= dt;
+            _building &= _buildLeft > 0f;
             float build = _buildDuck.Step(_building ? _tuning.BuildDuckGain : 1f, dt,
                 _building ? _tuning.BuildDuckTime : _tuning.BuildReturnTime);
             float level = _director.Buses.Effective(AudioBus.Music) * _wake.Power * title * build;
@@ -686,6 +689,7 @@ namespace MoonProject.Audio
             if (beat.Phase == FeelPhase.Anticipate)
             {
                 _building = true;
+                _buildLeft = _tuning.BuildDuckMaxSeconds;
             }
             else if (beat.Phase == FeelPhase.Follow && beat.Strength <= 0f && _building)
             {
