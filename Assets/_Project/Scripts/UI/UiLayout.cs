@@ -93,6 +93,7 @@ namespace MoonProject.UI
             Ticker = Require<VisualElement>("ticker");
             TickerLamp = Require<VisualElement>("ticker-lamp");
             TickerText = Require<Label>("ticker-text");
+            TickerIcon = Require<VisualElement>("ticker-icon");
             TickerLine = Require<VisualElement>("ticker-line");
 
             LookHint = Require<VisualElement>("look-hint");
@@ -323,6 +324,9 @@ namespace MoonProject.UI
         public VisualElement TickerLamp { get; }
 
         public Label TickerText { get; }
+
+        /// <summary>The radio icon in the ticker toast's round glass bubble.</summary>
+        public VisualElement TickerIcon { get; }
 
         public VisualElement TickerLine { get; }
 

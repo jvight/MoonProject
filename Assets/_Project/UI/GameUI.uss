@@ -90,19 +90,21 @@ Label {
     --shadow-spread: 18;
 }
 
+/* Glass panels carry their own soft rim glow (UI/Glass), so their shadow layer stays empty */
 .soft-shadow--panel {
-    --shadow-radius: 20;
-    --shadow-spread: 34;
-    --shadow-offset: 12;
+    display: none;
 }
 
 /* Glass panels and chips */
 
+/* Moonlight Glass: the blue glass gradient, rim and glows are one 9-sliced texture drawn at 2x */
 .panel {
-    background-color: var(--moon-glass);
-    border-radius: 20px;
-    border-width: 1px;
-    border-color: var(--moon-glass-edge);
+    background-image: url("project://database/Assets/_Project/Generated/UI/Glass/GlassPanel.png");
+    -unity-slice-left: 56;
+    -unity-slice-right: 56;
+    -unity-slice-top: 56;
+    -unity-slice-bottom: 56;
+    -unity-slice-scale: 0.5;
     padding: 22px 26px 20px 26px;
 }
 
@@ -119,6 +121,23 @@ Label {
 .chip__word {
     font-size: 26px;
     color: var(--moon-text);
+}
+
+/* The prompt (Moonlight Glass): the key's round bubble, then the action on its own glass pill */
+.prompt .chip {
+    padding: 0;
+    border-width: 0;
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.prompt .chip__word {
+    padding: 4px 20px 6px 20px;
+    border-radius: 22px;
+    border-width: 1px;
+    border-color: var(--glass-rim);
+    background-color: var(--moon-glass);
+    color: var(--glass-hi);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/NunitoSans-Bold.asset");
 }
 
 .chip__number {
@@ -146,29 +165,30 @@ Label {
 
 /* Glyphs: a key cap for keys and mouse buttons, a round button for gamepads */
 
+/* A key or button: a round glass bubble with a bright rim and the key in white Exo 2 (Moonlight Glass) */
 .glyph {
-    min-width: 40px;
-    height: 40px;
-    padding: 0 11px;
+    min-width: 44px;
+    height: 44px;
+    padding: 0 12px;
     margin-right: 10px;
-    border-radius: 10px;
-    border-width: 1px;
-    border-color: var(--moon-amber-edge);
-    background-color: var(--moon-amber-soft);
+    border-radius: 22px;
+    border-width: 2px;
+    border-color: var(--glass-rim);
+    background-color: var(--glass-bubble);
     justify-content: center;
     align-items: center;
 }
 
 .glyph--pad {
-    min-width: 40px;
-    width: 40px;
+    min-width: 44px;
+    width: 44px;
     padding: 0;
-    border-radius: 20px;
+    border-radius: 22px;
 }
 
 .glyph__label {
-    font-size: 18px;
-    color: var(--moon-warm-lamp);
+    font-size: 20px;
+    color: var(--glass-hi);
     -unity-text-align: middle-center;
 }
 
@@ -523,13 +543,16 @@ Label {
 
 /* Every line sits on a glass plate (docs/design/first-hour-v2 6.2): the next line, the ticker, a place's card */
 
+/* Moonlight Glass: each plate is the glass pill (UI/Glass, 2x) */
 .next-line .name-tag,
 .place-card .name-tag {
-    padding: 10px 22px;
-    border-radius: 16px;
-    border-width: 1px;
-    border-color: var(--moon-glass-edge);
-    background-color: var(--moon-plate);
+    padding: 12px 30px 14px 30px;
+    background-image: url("project://database/Assets/_Project/Generated/UI/Glass/GlassPill.png");
+    -unity-slice-left: 72;
+    -unity-slice-right: 72;
+    -unity-slice-top: 72;
+    -unity-slice-bottom: 72;
+    -unity-slice-scale: 0.5;
 }
 
 /* A place's card, the first time 07 comes near: its name and its one job, below where kit titles rest */
@@ -540,6 +563,15 @@ Label {
     right: 0;
     top: 22%;
     align-items: center;
+}
+
+/* A short amber underline beneath a place's name, as in the mockup */
+.place-card__rule {
+    width: 96px;
+    height: 4px;
+    margin-top: 6px;
+    border-radius: 2px;
+    background-color: var(--glass-sel);
 }
 
 .place-card__job {
@@ -707,43 +739,52 @@ Label {
     align-items: center;
 }
 
-/* Radio ticker: one soft line in the bottom band, below every panel and below the prompts' screen margin */
+/* Radio ticker: a glass toast on the right with a round icon bubble, like Subnautica's hints (Moonlight Glass) */
 
 .ticker {
     position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    align-items: center;
+    right: 2.5%;
+    top: 38%;
+    align-items: flex-end;
 }
 
 .ticker__line {
     flex-direction: row;
     align-items: center;
-    max-width: 72%;
-    padding: 10px 22px 10px 18px;
-    border-radius: 16px;
-    background-color: var(--moon-plate);
-    border-width: 1px;
-    border-color: var(--moon-glass-edge);
+    max-width: 460px;
+    padding: 14px 26px 14px 16px;
+    background-image: url("project://database/Assets/_Project/Generated/UI/Glass/GlassPill.png");
+    -unity-slice-left: 72;
+    -unity-slice-right: 72;
+    -unity-slice-top: 72;
+    -unity-slice-bottom: 72;
+    -unity-slice-scale: 0.5;
 }
 
 .ticker__lamp {
     flex-shrink: 0;
-    width: 7px;
-    height: 7px;
-    margin-right: 12px;
-    border-radius: 4px;
-    background-color: var(--moon-warm-lamp);
+    width: 52px;
+    height: 52px;
+    margin-right: 14px;
+    justify-content: center;
+    align-items: center;
+    background-image: url("project://database/Assets/_Project/Generated/UI/Glass/GlassBubble.png");
+}
+
+.ticker__icon {
+    width: 24px;
+    height: 24px;
+    --icon-color: var(--glass-hi);
+    --mast-color: var(--glass-rim);
 }
 
 .ticker__text {
     flex-shrink: 1;
-    font-size: 26px;
-    letter-spacing: 0.4px;
-    color: var(--moon-text-dim);
+    font-size: 24px;
+    letter-spacing: 0.2px;
+    color: var(--moon-text);
     white-space: normal;
-    -unity-text-align: middle-center;
+    -unity-text-align: middle-left;
 }
 
 /* Dial readout: the station Bell's dial was just turned to, just above the ticker's band */
@@ -1207,16 +1248,22 @@ Label {
     padding: 28px 28px 22px 28px;
 }
 
+/* The menu's title bar: a band of brighter glass across the panel's top, the heading in Exo 2 capitals */
 .pause__header {
     flex-direction: row;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 20px;
-    padding-left: 8px;
+    margin: -16px -20px 18px -20px;
+    padding: 12px 28px 12px 28px;
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    background-color: var(--glass-bar);
 }
 
 .pause__heading {
-    font-size: 36px;
+    font-size: 30px;
+    letter-spacing: 4px;
+    color: var(--glass-hi);
 }
 
 .pause__subheading {
@@ -1288,20 +1335,21 @@ Label {
 }
 
 .pause .menu-button {
-    height: 54px;
-    margin: 4px 0;
+    height: 50px;
+    margin: 5px 0;
     padding: 0 18px;
-    border-radius: 15px;
+    border-radius: 13px;
     border-width: 1px;
-    border-color: rgba(0, 0, 0, 0);
-    background-color: rgba(0, 0, 0, 0);
-    color: var(--moon-text);
+    border-color: var(--glass-rim);
+    background-color: var(--glass-btn);
+    color: var(--glass-hi);
     font-size: 22px;
-    -unity-text-align: middle-left;
+    -unity-text-align: middle-center;
 }
 
 .pause .menu-button--quiet {
-    color: var(--moon-text-dim);
+    color: var(--moon-text);
+    background-color: var(--moon-glass);
 }
 
 .pause .menu-button--compact {
@@ -1311,8 +1359,8 @@ Label {
     padding: 0 14px;
     font-size: 18px;
     border-radius: 12px;
-    border-color: var(--moon-glass-edge);
-    background-color: var(--moon-cream-glow);
+    border-color: var(--glass-rim);
+    background-color: var(--glass-btn);
     -unity-text-align: middle-center;
 }
 
@@ -1327,28 +1375,29 @@ Label {
 }
 
 .pause .menu-button:hover {
-    background-color: var(--moon-cream-glow);
+    background-color: var(--glass-bar);
 }
 
 /* Focus swells 4% over 120 ms; a press dips to 98% in 60 ms and comes back over 140 (feel-pass 2.12) */
 .pause .menu-button {
-    transform-origin: 0% 50%;
+    transform-origin: 50% 50%;
     transition-property: scale, background-color;
     transition-duration: 0.14s, 0.14s;
     transition-timing-function: ease-out;
 }
 
+/* Selection is an amber fill with dark text and a warm glow, as in the mockup */
 .pause .menu-button:focus {
-    background-color: var(--moon-amber-soft);
-    border-color: var(--moon-amber-edge);
-    color: var(--moon-warm-lamp);
+    background-color: var(--glass-sel);
+    border-color: var(--glass-sel);
+    color: var(--glass-sel-text);
     scale: 1.04 1.04;
     transition-duration: 0.12s, 0.12s;
 }
 
 .pause .menu-button:active {
-    background-color: var(--moon-amber-edge);
-    color: var(--moon-cream);
+    background-color: var(--glass-sel);
+    color: var(--glass-sel-text);
     scale: 0.98 0.98;
     transition-duration: 0.06s, 0.06s;
 }
@@ -1392,8 +1441,8 @@ Label {
 }
 
 .pause .unity-base-slider__tracker {
-    height: 6px;
-    margin-top: -3px;
+    height: 5px;
+    margin-top: -2px;
     border-width: 0;
     border-radius: 3px;
     background-color: var(--moon-track);
@@ -1401,16 +1450,17 @@ Label {
 
 .pause .unity-base-slider__fill {
     border-radius: 3px;
-    background-color: var(--moon-amber-edge);
+    background-color: var(--glass-ring);
 }
 
 .pause .unity-base-slider__dragger {
-    width: 20px;
-    height: 20px;
-    margin-top: -10px;
-    border-width: 0;
-    border-radius: 10px;
-    background-color: var(--moon-cream);
+    width: 22px;
+    height: 22px;
+    margin-top: -11px;
+    border-width: 2px;
+    border-radius: 11px;
+    border-color: var(--glass-rim-glow);
+    background-color: var(--glass-hi);
 }
 
 .pause .unity-base-slider__dragger-border {
@@ -1418,28 +1468,31 @@ Label {
 }
 
 .pause .unity-base-slider:focus .unity-base-slider__dragger {
-    background-color: var(--moon-warm-lamp);
+    border-color: var(--glass-sel);
+    background-color: var(--glass-sel);
 }
 
 .pause .unity-base-slider:focus .unity-base-slider__fill {
-    background-color: var(--moon-warm-lamp);
+    background-color: var(--glass-sel);
 }
 
 .pause .unity-toggle__checkmark {
-    width: 24px;
-    height: 24px;
+    width: 26px;
+    height: 26px;
     border-width: 1px;
     border-radius: 7px;
-    border-color: var(--moon-glass-edge);
-    background-color: var(--moon-track);
+    border-color: var(--glass-rim);
+    background-color: var(--moon-glass);
+    -unity-background-image-tint-color: var(--glass-sel-text);
 }
 
 .pause .unity-toggle:focus .unity-toggle__checkmark {
-    border-color: var(--moon-amber-edge);
+    border-color: var(--glass-sel);
+    border-width: 2px;
 }
 
 .pause .unity-toggle:checked .unity-toggle__checkmark {
-    background-color: var(--moon-warm-lamp);
+    background-color: var(--glass-ring);
 }
 
 /* The crew's lab (M3-19): the HUD steps aside; the lab's place line and its few first-time prompts, low and centred */

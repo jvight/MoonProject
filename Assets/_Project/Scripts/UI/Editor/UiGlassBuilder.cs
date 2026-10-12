@@ -17,7 +17,7 @@ namespace MoonProject.UI.Editor
         public const int BuilderOrder = 604;
 
         // Everything in pixels of the 2x texture.
-        private const int Glow = 20;
+        private const int Glow = 12;
         private const float Rim = 3f;
         private const float InnerGlow = 26f;
 

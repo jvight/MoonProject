@@ -33,6 +33,7 @@ namespace MoonProject.UI
 
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _queue = queue ?? throw new ArgumentNullException(nameof(queue));
+            new RelayIconPainter(layout.TickerIcon);
             _reveal = new Reveal(layout.Ticker, settings.Reveal);
             _reveal.Snap(false);
             _text = layout.TickerText;
