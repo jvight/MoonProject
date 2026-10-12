@@ -626,7 +626,7 @@ Label {
     --track-color: var(--moon-track);
     --fill-color: var(--glass-ring);
     --low-color: var(--glass-sel);
-    --ring-width: 7;
+    --ring-width: 9;
 }
 
 .battery-dial__value {

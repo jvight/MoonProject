@@ -10,7 +10,8 @@ namespace MoonProject.UI
     /// </summary>
     internal sealed class CellRingPainter : StylePainter
     {
-        private const float GapDegrees = 7f;
+        // Wide enough that four or six cells stay countable at 720p.
+        private const float GapDegrees = 18f;
         private const float RepaintEpsilon = 0.004f;
 
         private static readonly CustomStyleProperty<Color> TrackColorProperty =
