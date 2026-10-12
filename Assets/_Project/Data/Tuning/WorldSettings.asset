@@ -390,51 +390,59 @@ MonoBehaviour:
     - _wakesWith: 0
       _anchor: DockAnchor
       _offset: {x: 0, y: -0.02, z: 0.8}
-      _range: 5
-      _intensity: 0.5
+      _range: 3.5
+      _intensity: 0.38
       _disc: 1
+      _tint: {r: 0.7, g: 0.95, b: 1.35, a: 1}
     - _wakesWith: 2
       _anchor: Lander
       _offset: {x: 0, y: 2.2, z: 5.6}
       _range: 9
       _intensity: 4
       _disc: 0
+      _tint: {r: 1, g: 1, b: 1, a: 1}
     - _wakesWith: 1
       _anchor: Lander
       _offset: {x: 0, y: 2.9, z: 0}
       _range: 10
       _intensity: 3
       _disc: 0
+      _tint: {r: 1, g: 1, b: 1, a: 1}
     - _wakesWith: 4
       _anchor: RoverBay
       _offset: {x: 0, y: 0.03, z: 4}
       _range: 7
       _intensity: 1
       _disc: 1
+      _tint: {r: 1, g: 1, b: 1, a: 1}
     - _wakesWith: 5
       _anchor: BellyLift
       _offset: {x: 0, y: 2.25, z: 1.2}
       _range: 5.5
       _intensity: 3.5
       _disc: 0
+      _tint: {r: 1, g: 1, b: 1, a: 1}
     - _wakesWith: 6
       _anchor: Lab
       _offset: {x: 0, y: 1.9, z: 0}
       _range: 4.5
       _intensity: 2.2
       _disc: 0
+      _tint: {r: 1, g: 1, b: 1, a: 1}
     - _wakesWith: 7
       _anchor: BigPorthole
       _offset: {x: -3.3, y: 3.1, z: -3.3}
       _range: 6
       _intensity: 1.6
       _disc: 0
+      _tint: {r: 1, g: 1, b: 1, a: 1}
     - _wakesWith: 2
       _anchor: TowerAnchor
       _offset: {x: 0, y: 2.6, z: 2.2}
       _range: 7.5
       _intensity: 2.6
       _disc: 0
+      _tint: {r: 1, g: 1, b: 1, a: 1}
   _labLighting:
     _bellyLampGlow: 3
     _hatchRimGlow: 2.6
