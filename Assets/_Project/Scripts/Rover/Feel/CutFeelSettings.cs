@@ -42,9 +42,17 @@ namespace MoonProject.Rover
         [Tooltip("The fold into a bundle (0.05 for 40 ms).")]
         [SerializeField] private RumbleProfile _fold = new RumbleProfile(0.05f, 0.05f, 0.05f, 0.05f, 0.04f, false);
 
-        [Tooltip("The bundle received (and, once UI counts units, each unit): 0.05 tick.")]
+        [Tooltip("Each unit the stock count rolls up (UI's StockCountTicked): a 0.05 tick.")]
         [SerializeField] private RumbleProfile _receivedTick =
             new RumbleProfile(0.05f, 0.05f, 0.05f, 0.05f, 0.04f, false);
+
+        [Tooltip("From this unit of a roll on, only some units tick, so a big haul never buzzes continuously.")]
+        [Range(1, 30)]
+        [SerializeField] private int _tickThinFrom = 6;
+
+        [Tooltip("Past the thinning point, one unit in this many ticks.")]
+        [Range(1, 6)]
+        [SerializeField] private int _tickThinEvery = 2;
 
         [Header("Body")]
         [Tooltip("Charge-up: 07 leans slightly into the line (deg forward, held while cutting).")]
@@ -92,6 +100,12 @@ namespace MoonProject.Rover
         public RumbleProfile Fold => _fold;
 
         public RumbleProfile ReceivedTick => _receivedTick;
+
+        /// <summary>Whether unit <paramref name="index"/> (from 0) of a stock roll ticks the gamepad.</summary>
+        public bool Ticks(int index)
+        {
+            return index < _tickThinFrom || (index - _tickThinFrom) % _tickThinEvery == 0;
+        }
 
         public NudgeSettings Lean => _lean;
 

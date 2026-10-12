@@ -58,6 +58,13 @@ namespace MoonProject.Rover
                 events.Subscribe<RoverKitFitted>(OnKitFitted),
                 events.Subscribe<LowPowerChanged>(OnLowPowerChanged),
                 events.Subscribe<RoverBoostChanged>(OnBoostChanged),
+                events.Subscribe<StockCountTicked>(tick =>
+                {
+                    if (_cut.Ticks(tick.Index))
+                    {
+                        _rumble.Play(_cut.ReceivedTick);
+                    }
+                }),
             };
         }
 
@@ -141,7 +148,6 @@ namespace MoonProject.Rover
 
             if (beat.Kind == FeelKind.Collect && beat.Phase == FeelPhase.Reward)
             {
-                _rumble.Play(_cut.ReceivedTick);
                 _nudge.KickPitch(_cut.RearDip, -1f);
                 if (_body != null)
                 {
