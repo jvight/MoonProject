@@ -24,5 +24,24 @@ namespace MoonProject.Gameplay
 
         /// <summary>What the piece folds into.</summary>
         SalvageMaterial Material { get; }
+
+        /// <summary>The emitter is charging up before ignition (docs/design/feel-pass.md §3.1).</summary>
+        bool IsBeamCharging { get; }
+
+        /// <summary>How far the charge-up has come, 0..1 (0 when not charging): the hold ring's first segment.</summary>
+        float BeamChargeProgress { get; }
+
+        /// <summary>Where the seam is hot: as far along the piece's cut line as its cut has come (world).</summary>
+        Vector3 HotPoint { get; }
+
+        /// <summary>The cut face's normal there (world, unit length; up for a loose piece).</summary>
+        Vector3 CutNormal { get; }
+
+        /// <summary>Points in the piece's cut line (2 to 5; 0 with no target).</summary>
+        int CutLineCount { get; }
+
+        /// <summary>The cut line's point <paramref name="index"/> in the world (0 .. <see cref="CutLineCount"/> - 1).
+        /// </summary>
+        Vector3 CutLinePoint(int index);
     }
 }

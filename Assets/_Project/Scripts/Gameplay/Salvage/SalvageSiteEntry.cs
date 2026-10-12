@@ -24,12 +24,18 @@ namespace MoonProject.Gameplay
                  "(docs/features/M3-16 P10, the supply depot).")]
         [SerializeField] private bool _heartUnderPieces;
 
-        public SalvageSiteEntry(string anchorId, GameObject prefab, AbilityGate gate, bool heartUnderPieces)
+        [Tooltip("Each piece's seam (docs/design/feel-pass.md §3.2): the content builder writes one across its face; " +
+                 "Art may author better ones.")]
+        [SerializeField] private PieceCutLine[] _cutLines = Array.Empty<PieceCutLine>();
+
+        public SalvageSiteEntry(string anchorId, GameObject prefab, AbilityGate gate, bool heartUnderPieces,
+            PieceCutLine[] cutLines)
         {
             _anchorId = anchorId;
             _prefab = prefab;
             _gate = gate ?? throw new ArgumentNullException(nameof(gate));
             _heartUnderPieces = heartUnderPieces;
+            _cutLines = cutLines ?? throw new ArgumentNullException(nameof(cutLines));
         }
 
         /// <summary>The site's id everywhere (saves, events, relic definitions): its anchor id.</summary>
@@ -40,6 +46,22 @@ namespace MoonProject.Gameplay
         public AbilityGate Gate => _gate;
 
         public bool HeartUnderPieces => _heartUnderPieces;
+
+        /// <summary>The seam of piece <paramref name="number"/>, if the entry has a valid one.</summary>
+        public bool TryGetCutLine(int number, out Vector3[] points)
+        {
+            for (int i = 0; i < _cutLines.Length; i++)
+            {
+                if (_cutLines[i].Number == number && _cutLines[i].IsValid)
+                {
+                    points = _cutLines[i].Points;
+                    return true;
+                }
+            }
+
+            points = null;
+            return false;
+        }
 
         /// <summary>Null when the entry is complete, else what is wrong with it.</summary>
         public string Validate()

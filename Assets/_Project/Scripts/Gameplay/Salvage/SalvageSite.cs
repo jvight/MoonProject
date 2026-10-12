@@ -17,6 +17,10 @@ namespace MoonProject.Gameplay
         private readonly bool _heartUnderPieces;
         private EmissionGlow _pilotGlow;
         private LandmarkPilotLevel _pilot;
+        private Vector3 _shudderRest;
+        private float _shudderLeft;
+        private float _shudderDuration;
+        private float _shudderTime;
 
         internal SalvageSite(int index, string id, Transform root, float radius, Vector3 heart, AbilityGate gate,
             ComboCounter combo, bool heartUnderPieces)
@@ -187,6 +191,40 @@ namespace MoonProject.Gameplay
             {
                 _pilotGlow.Apply(_pilot.Step(HeartFound, deltaTime));
             }
+        }
+
+        /// <summary>A piece cracks free: the wreck shudders for <paramref name="seconds"/> (feel-pass §3.1).</summary>
+        internal void Shudder(float seconds)
+        {
+            if (_shudderLeft <= 0f)
+            {
+                _shudderRest = Root.position;
+            }
+
+            _shudderDuration = seconds;
+            _shudderLeft = seconds;
+            _shudderTime = 0f;
+        }
+
+        /// <summary>The shudder's side-to-side shake, fading out, then the wreck back where it stands.</summary>
+        internal void StepShudder(float deltaTime, float amplitude, float frequency)
+        {
+            if (_shudderLeft <= 0f)
+            {
+                return;
+            }
+
+            _shudderLeft -= deltaTime;
+            _shudderTime += deltaTime;
+            if (_shudderLeft <= 0f)
+            {
+                Root.position = _shudderRest;
+                return;
+            }
+
+            float fade = _shudderLeft / _shudderDuration;
+            float shake = Mathf.Sin(_shudderTime * frequency * 2f * Mathf.PI);
+            Root.position = _shudderRest + Root.right * (amplitude * fade * shake);
         }
 
         /// <summary>Shows the settled pilot at once (after a load).</summary>

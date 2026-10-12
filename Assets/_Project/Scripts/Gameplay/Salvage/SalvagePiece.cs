@@ -13,9 +13,10 @@ namespace MoonProject.Gameplay
     public sealed class SalvagePiece
     {
         internal SalvagePiece(SalvageSite site, int number, SalvageMaterial material, bool drag, int units,
-            float cutSeconds, Transform body, Vector3 localCentre, Transform cutPoint, Collider wreckCollider,
-            GlowRenderer halo, Transform bundle)
+            float cutSeconds, Transform body, Vector3 localCentre, Transform cutPoint, Vector3[] cutLine,
+            Collider wreckCollider, GlowRenderer halo, Transform bundle)
         {
+            CutLine = cutLine ?? throw new ArgumentNullException(nameof(cutLine));
             Site = site ?? throw new ArgumentNullException(nameof(site));
             Number = number;
             Material = material;
@@ -106,5 +107,17 @@ namespace MoonProject.Gameplay
 
         /// <summary>The way sparks fly from the cut.</summary>
         internal Vector3 CutNormal => State == SalvagePieceState.Loose ? Vector3.up : CutPoint.forward;
+
+        /// <summary>The seam's points in the CutPoint's local space (docs/design/feel-pass.md §3.2).</summary>
+        internal Vector3[] CutLine { get; }
+
+        /// <summary>Where the seam is hot: as far along the cut line as the cut has come, in the world.</summary>
+        internal Vector3 HotPoint => CutPoint.TransformPoint(SalvageCutLines.PointAt(CutLine, Progress));
+
+        /// <summary>The cut line's point <paramref name="index"/> in the world.</summary>
+        internal Vector3 CutLinePoint(int index)
+        {
+            return CutPoint.TransformPoint(CutLine[index]);
+        }
     }
 }

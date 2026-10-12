@@ -30,6 +30,9 @@ namespace MoonProject.Gameplay
         /// <summary>Half-angle (degrees) inside which a relic's heart competes with the pieces for the hold.</summary>
         private const float HeartCone = 90f;
 
+        /// <summary>The Moon's surface gravity (m/s²): a freed piece tumbles under it (feel-pass R11).</summary>
+        private const float LunarGravity = 1.62f;
+
         [Tooltip("Salvage tuning (Assets/_Project/Data/Tuning/Gameplay/SalvageTuning.asset).")]
         [SerializeField] private SalvageTuning _tuning;
 
@@ -55,6 +58,7 @@ namespace MoonProject.Gameplay
         private GlowFlashPool _flashes;
         private PickupCadence _cadence;
         private SalvagePiece _cutting;
+        private CutState _cut;
         private Vector3 _beamTarget;
         private Vector3 _beamNormal = Vector3.up;
         private int _inFlight;
@@ -89,7 +93,24 @@ namespace MoonProject.Gameplay
 
         public Vector3 CutPoint => Aimed != null ? Aimed.CutPosition : Vector3.zero;
 
-        public bool IsCutting => _cutting != null;
+        public bool IsCutting => _cutting != null && _cut.Phase == CutPhase.Cutting;
+
+        /// <summary>The emitter is charging up on the piece before ignition (feel-pass §3.1).</summary>
+        public bool IsBeamCharging => _cutting != null && _cut.Phase == CutPhase.Charging;
+
+        /// <summary>How far the charge-up has come, 0..1 (0 when not charging).</summary>
+        public float BeamChargeProgress => IsBeamCharging ? _cut.ChargeProgress : 0f;
+
+        public Vector3 HotPoint => Aimed != null ? Aimed.HotPoint : Vector3.zero;
+
+        public Vector3 CutNormal => Aimed != null ? Aimed.CutNormal : Vector3.up;
+
+        public int CutLineCount => Aimed != null ? Aimed.CutLine.Length : 0;
+
+        public Vector3 CutLinePoint(int index)
+        {
+            return Aimed.CutLinePoint(index);
+        }
 
         public float Progress => Aimed != null ? Aimed.Progress : 0f;
 
@@ -138,6 +159,7 @@ namespace MoonProject.Gameplay
             _view = services.View;
             _save = services.Save;
             _stock = services.Materials;
+            _cut = new CutState(_events, _tuning.ChargeSeconds, _tuning.ResumeChargeSeconds, _tuning.CutSteps);
             _dragMaterial = new PhysicsMaterial("SalvageDrag")
             {
                 bounciness = _tuning.DragBounciness,
@@ -395,6 +417,7 @@ namespace MoonProject.Gameplay
             for (int i = 0; i < _sites.Count; i++)
             {
                 _sites[i].StepPilot(deltaTime);
+                _sites[i].StepShudder(deltaTime, _tuning.ShudderAmplitude, _tuning.ShudderFrequency);
             }
         }
 
@@ -417,8 +440,13 @@ namespace MoonProject.Gameplay
 
             if (_cutting != null)
             {
+                // The battery draws only from ignition on: a charge-up costs nothing.
+                bool draws = _cut.Draws;
                 StepCut(_cutting, deltaTime);
-                _beamWork.Work(deltaTime);
+                if (draws)
+                {
+                    _beamWork.Work(deltaTime);
+                }
             }
 
             UpdateBeam(now, deltaTime);
@@ -476,17 +504,27 @@ namespace MoonProject.Gameplay
             return picked;
         }
 
+        /// <summary>07 holds the beam on a piece: the emitter charges up (shorter on a part-cut piece).</summary>
         private void StartCut(SalvagePiece piece)
         {
             _cutting = piece;
-            _events.Publish(new SalvageCutStarted(piece.CutPosition, piece.Material));
+            _cut.Engage(piece.Progress, piece.Material, piece.HotPoint, piece.CutNormal);
         }
 
+        /// <summary>The hold lets go: a charge-up cancels, a lit cut pauses with its progress kept.</summary>
         /// <param name="announce">False when the scene is being torn down: listeners may already be gone.</param>
         private void StopCut(bool announce)
         {
+            SalvagePiece piece = _cutting;
+            bool lit = _cut.Draws;
             _cutting = null;
-            if (announce)
+            if (!announce)
+            {
+                return;
+            }
+
+            _cut.Release(piece.Progress, piece.HotPoint, piece.CutNormal);
+            if (lit)
             {
                 _events.Publish(new SalvageCutStopped(false));
             }
@@ -494,8 +532,16 @@ namespace MoonProject.Gameplay
 
         private void StepCut(SalvagePiece piece, float deltaTime)
         {
-            piece.Progress = Mathf.Min(1f, piece.Progress + deltaTime / Mathf.Max(0.01f, piece.CutSeconds));
-            if (piece.Progress < 1f)
+            float progress = piece.Progress;
+            bool broke = _cut.Step(deltaTime, piece.CutSeconds, ref progress, piece.HotPoint, piece.CutNormal,
+                out bool ignited);
+            piece.Progress = progress;
+            if (ignited)
+            {
+                _events.Publish(new SalvageCutStarted(piece.CutPosition, piece.Material));
+            }
+
+            if (!broke)
             {
                 return;
             }
@@ -519,6 +565,7 @@ namespace MoonProject.Gameplay
                 piece.WreckCollider.enabled = false;
             }
 
+            piece.Site.Shudder(_tuning.ShudderSeconds);
             piece.State = SalvagePieceState.Breaking;
             piece.MotionStart = piece.Body.position;
             piece.MotionStartRotation = piece.Body.rotation;
@@ -570,23 +617,46 @@ namespace MoonProject.Gameplay
             piece.Halo.Apply(piece.HaloLevel);
         }
 
-        /// <summary>The piece eases out of its cut face, tumbling a little, and folds down into its bundle.</summary>
+        /// <summary>
+        /// After the crack the piece pops out of its cut face and tumbles slowly, rising and settling a little under
+        /// the Moon's gravity; then it folds into a bundle of its material, which ties off with a small pop
+        /// (feel-pass §3.1). Follow beats mark the tumble and the fold.
+        /// </summary>
         private void StepBreak(SalvagePiece piece, Vector3 socket, float deltaTime)
         {
+            float before = piece.MotionTime;
             piece.MotionTime += deltaTime;
-            float progress = Mathf.Clamp01(piece.MotionTime / piece.MotionDuration);
+            float t = piece.MotionTime;
+            float tumbleStart = _tuning.CrackSeconds;
+            float foldStart = tumbleStart + _tuning.TumbleSeconds;
+            float tieStart = foldStart + _tuning.FoldSeconds;
             Vector3 normal = piece.BreakNormal;
+            if (before < tumbleStart && t >= tumbleStart)
+            {
+                Follow(piece, 0f);
+            }
+
+            if (before < foldStart && t >= foldStart)
+            {
+                Follow(piece, 1f);
+            }
+
+            float tumble = Mathf.Clamp01((t - tumbleStart) / _tuning.TumbleSeconds);
+            float airborne = tumble * _tuning.TumbleSeconds;
+            float launch = Mathf.Sqrt(2f * LunarGravity * _tuning.TumbleRise);
+            float rise = Mathf.Max(0f, launch * airborne - 0.5f * LunarGravity * airborne * airborne);
             Vector3 axis = Vector3.Cross(Vector3.up, normal);
             axis = axis.sqrMagnitude > 1e-6f ? axis.normalized : Vector3.right;
-            Vector3 position = piece.MotionStart + normal * (_tuning.BreakPop * Ease.OutCubic(progress));
-            Quaternion rotation = Quaternion.AngleAxis(_tuning.BreakTumble * Ease.OutCubic(progress), axis) *
-                                  piece.MotionStartRotation;
-            float fold = Ease.InOutSine(progress);
+            Vector3 position = piece.MotionStart + normal * (_tuning.BreakPop * Ease.OutCubic(tumble)) +
+                               Vector3.up * rise;
+            Quaternion rotation = Quaternion.AngleAxis(_tuning.BreakTumble * tumble, axis) * piece.MotionStartRotation;
+            float fold = Ease.InOutSine(Mathf.Clamp01((t - foldStart) / _tuning.FoldSeconds));
+            float tie = 1f + (_tuning.TiePop - 1f) * Ease.Hump(Mathf.Clamp01((t - tieStart) / _tuning.TieSeconds));
             piece.Body.SetPositionAndRotation(position, rotation);
             piece.Body.localScale = piece.BodyScale * (1f - fold);
             piece.Bundle.SetPositionAndRotation(piece.Body.TransformPoint(piece.LocalCentre), rotation);
-            piece.Bundle.localScale = piece.BundleScale * fold;
-            if (progress < 1f)
+            piece.Bundle.localScale = piece.BundleScale * (fold * tie);
+            if (t < piece.MotionDuration)
             {
                 return;
             }
@@ -621,11 +691,22 @@ namespace MoonProject.Gameplay
                                       Mathf.Lerp(1f, _tuning.ArrivalScale, Ease.InOutSine(Mathf.Clamp01(progress)));
         }
 
-        /// <summary>Salvage folds into 07: a flash, the event, the stock, and a save once nothing else flies.</summary>
+        /// <summary>A Follow beat of the cut at the piece (the tumble, then the fold).</summary>
+        private void Follow(SalvagePiece piece, float strength)
+        {
+            _events.Publish(new FeelBeat(FeelKind.Cut, FeelPhase.Follow, piece.Body.position, piece.BreakNormal,
+                strength, 0f, piece.Material));
+        }
+
+        /// <summary>
+        /// Salvage folds into 07: a flash, the event, the Collect reward beat, the stock, and a save once nothing else
+        /// flies.
+        /// </summary>
         private void Arrive(SalvageMaterial material, int units, Vector3 socket, string siteId, int comboStep)
         {
             _flashes.Spawn(socket);
             _events.Publish(new MaterialSalvaged(material, units, socket, siteId, comboStep));
+            _events.Publish(new FeelBeat(FeelKind.Collect, FeelPhase.Reward, socket, Vector3.up, 1f, 0f, material));
             _stock.Add(material, units);
             _inFlight--;
             if (_inFlight == 0)
@@ -651,9 +732,9 @@ namespace MoonProject.Gameplay
                 _beamNormal = target.CutNormal;
             }
 
-            _beam.Step(_cutting != null, target != null || _beam.Level > 0f, _rig.TetherOrigin.position, _beamTarget,
+            _beam.Step(IsCutting, target != null || _beam.Level > 0f, _rig.TetherOrigin.position, _beamTarget,
                 now, deltaTime);
-            _sparks.Emit(_beamTarget, _beamNormal, _cutting != null ? _beam.Level : 0f);
+            _sparks.Emit(_beamTarget, _beamNormal, IsCutting ? _beam.Level : 0f);
         }
 
         private void UpdateGaze(bool wantsBeam)

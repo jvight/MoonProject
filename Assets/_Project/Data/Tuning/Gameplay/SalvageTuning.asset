@@ -23,6 +23,9 @@ MonoBehaviour:
   _haloEase: 0.15
   _engageSpeed: 1.2
   _engageHysteresis: 1.5
+  _chargeSeconds: 0.65
+  _resumeChargeSeconds: 0.3
+  _cutSteps: 5
   _cutSecondsPerUnit: 1
   _cutSeconds: {x: 2, y: 4}
   _beamSweepRate: 0.9
@@ -54,9 +57,17 @@ MonoBehaviour:
   _returnHover: 1.2
   _returnDuration: 3
   _returnPerMetre: 0.02
-  _breakDuration: 0.7
+  _crackSeconds: 0.12
+  _tumbleSeconds: 1.2
+  _tumbleRise: 0.5
   _breakPop: 0.45
   _breakTumble: 35
+  _foldSeconds: 0.6
+  _tieSeconds: 0.2
+  _tiePop: 1.12
+  _shudderAmplitude: 0.01
+  _shudderSeconds: 0.15
+  _shudderFrequency: 30
   _magnetRadius: 5.5
   _flightDuration: 0.7
   _flightPerMetre: 0.06

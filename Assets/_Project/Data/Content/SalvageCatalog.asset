@@ -19,30 +19,165 @@ MonoBehaviour:
       _gated: 0
       _ability: 0
     _heartUnderPieces: 1
+    _cutLines:
+    - _number: 0
+      _points:
+      - {x: -0.35884166, y: 0, z: 0}
+      - {x: 0, y: 0, z: 0}
+      - {x: 0.4091577, y: 0, z: 0}
+    - _number: 1
+      _points:
+      - {x: -0.8915839, y: 0, z: 0}
+      - {x: 0, y: 0, z: 0}
+      - {x: 0.7109887, y: 0, z: 0}
+    - _number: 2
+      _points:
+      - {x: -0.17500004, y: 0, z: 0}
+      - {x: 0, y: 0, z: 0}
+      - {x: 0.175, y: 0, z: 0}
+    - _number: 3
+      _points:
+      - {x: -0.12600027, y: 0, z: 0}
+      - {x: 0, y: 0, z: 0}
+      - {x: 0.994, y: 0, z: 0}
   - _anchorId: site.kestrel
     _prefab: {fileID: 6452073641338690709, guid: 0382be6e5dabbda49989eee33d564b49, type: 3}
     _gate:
       _gated: 0
       _ability: 0
     _heartUnderPieces: 0
+    _cutLines:
+    - _number: 0
+      _points:
+      - {x: -0.5348652, y: 0, z: 0}
+      - {x: 0, y: 0, z: 0}
+      - {x: 1.4946442, y: 0, z: 0}
+    - _number: 1
+      _points:
+      - {x: -0.9426507, y: 0, z: 0}
+      - {x: 0, y: 0, z: 0}
+      - {x: 0.46429935, y: 0, z: 0}
+    - _number: 2
+      _points:
+      - {x: -0.42299688, y: 0, z: 0}
+      - {x: 0, y: 0, z: 0}
+      - {x: 0.42299694, y: 0, z: 0}
+    - _number: 3
+      _points:
+      - {x: -0.32945395, y: 0, z: 0}
+      - {x: 0, y: 0, z: 0}
+      - {x: 0.5073206, y: 0, z: 0}
+    - _number: 4
+      _points:
+      - {x: -0.13594528, y: 0, z: 0}
+      - {x: 0, y: 0, z: 0}
+      - {x: 0.4101032, y: 0, z: 0}
   - _anchorId: site.drill
     _prefab: {fileID: 4663772846675265821, guid: 2703d9d50f921874a8ee09e301212165, type: 3}
     _gate:
       _gated: 0
       _ability: 0
     _heartUnderPieces: 0
+    _cutLines:
+    - _number: 0
+      _points:
+      - {x: -0.7241579, y: 0, z: 0}
+      - {x: 0, y: 0, z: 0}
+      - {x: 0.61729103, y: 0, z: 0}
+    - _number: 1
+      _points:
+      - {x: -0.39317217, y: 0, z: 0}
+      - {x: 0, y: 0, z: 0}
+      - {x: 1.033075, y: 0, z: 0}
+    - _number: 2
+      _points:
+      - {x: -0.33758187, y: 0, z: 0}
+      - {x: 0, y: 0, z: 0}
+      - {x: 0.70592254, y: 0, z: 0}
+    - _number: 3
+      _points:
+      - {x: -0.3852189, y: 0, z: 0}
+      - {x: 0, y: 0, z: 0}
+      - {x: 0.96254516, y: 0, z: 0}
+    - _number: 4
+      _points:
+      - {x: -0.4226896, y: 0, z: 0}
+      - {x: 0, y: 0, z: 0}
+      - {x: 0.47079483, y: 0, z: 0}
   - _anchorId: site.garage
     _prefab: {fileID: 541481811713480840, guid: 8c3a57a9fff9e7e41a594c7f5d505c3f, type: 3}
     _gate:
       _gated: 0
       _ability: 0
     _heartUnderPieces: 0
+    _cutLines:
+    - _number: 0
+      _points:
+      - {x: -0.4281338, y: 0, z: 0}
+      - {x: 0, y: 0, z: 0}
+      - {x: 1.6513942, y: 0, z: 0}
+    - _number: 1
+      _points:
+      - {x: -0.557829, y: 0, z: 0}
+      - {x: 0, y: 0, z: 0}
+      - {x: 0.56279135, y: 0, z: 0}
+    - _number: 2
+      _points:
+      - {x: -0.35274372, y: 0, z: 0}
+      - {x: 0, y: 0, z: 0}
+      - {x: 0.76697266, y: 0, z: 0}
+    - _number: 3
+      _points:
+      - {x: -0.24401453, y: 0, z: 0}
+      - {x: 0, y: 0, z: 0}
+      - {x: 0.24978185, y: 0, z: 0}
+    - _number: 4
+      _points:
+      - {x: -0.4345117, y: 0, z: 0}
+      - {x: 0, y: 0, z: 0}
+      - {x: 0.42231598, y: 0, z: 0}
   - _anchorId: site.lander
     _prefab: {fileID: 2727997806974874189, guid: dfc50462b5908d5479e12c5d0ef9b1b0, type: 3}
     _gate:
       _gated: 1
       _ability: 0
     _heartUnderPieces: 0
+    _cutLines:
+    - _number: 0
+      _points:
+      - {x: -0.4213962, y: 0, z: 0}
+      - {x: 0, y: 0, z: 0}
+      - {x: 0.57174456, y: 0, z: 0}
+    - _number: 1
+      _points:
+      - {x: -0.38737494, y: 0, z: 0}
+      - {x: 0, y: 0, z: 0}
+      - {x: 1.4089017, y: 0, z: 0}
+    - _number: 2
+      _points:
+      - {x: -0.21700013, y: 0, z: 0}
+      - {x: 0, y: 0, z: 0}
+      - {x: 0.21700008, y: 0, z: 0}
+    - _number: 3
+      _points:
+      - {x: -0.25344864, y: 0, z: 0}
+      - {x: 0, y: 0, z: 0}
+      - {x: 0.3395131, y: 0, z: 0}
+    - _number: 4
+      _points:
+      - {x: -0.64970064, y: 0, z: 0}
+      - {x: 0, y: 0, z: 0}
+      - {x: 0.55778635, y: 0, z: 0}
+    - _number: 5
+      _points:
+      - {x: -0.80040073, y: 0, z: 0}
+      - {x: 0, y: 0, z: 0}
+      - {x: 0.7633626, y: 0, z: 0}
+    - _number: 6
+      _points:
+      - {x: -1.3257834, y: 0, z: 0}
+      - {x: 0, y: 0, z: 0}
+      - {x: 0.7557445, y: 0, z: 0}
   _metalBundle: {fileID: 8960714290519639283, guid: 26e27ff987c8ae2478a4f6090ec487d1, type: 3}
   _wiringBundle: {fileID: 8133406963958762877, guid: 20853bd915ffc68498705589c043faee, type: 3}
   _opticsBundle: {fileID: 7272007056206292504, guid: 0c943ef936aaa0d4c8382df341cfd7c4, type: 3}
