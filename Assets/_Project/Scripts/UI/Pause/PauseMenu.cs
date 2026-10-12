@@ -805,7 +805,6 @@ namespace MoonProject.UI
             }
         }
 
-        /// <summary>Quit to title: saved, then the dark, then App reloads into the title.</summary>
         /// <summary>The title's Credits entry: the credits come up over the title and its menu steps aside.</summary>
         private void OnCreditsClicked()
         {
@@ -845,6 +844,7 @@ namespace MoonProject.UI
             Cue(UiCueKind.Back);
         }
 
+        /// <summary>Quit to title: saved, then the dark, then App reloads into the title.</summary>
         private void OnQuitToTitleClicked()
         {
             if (IsOpen && !_pages.IsTitle && _pages.Current == PausePage.Main && _leaving == Leaving.None)

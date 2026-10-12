@@ -42,6 +42,7 @@ namespace MoonProject.UI.PlayModeTests
         private const int Height = 900;
         private const int NarrowWidth = 1200;
         private const int NarrowHeight = 960;
+        private const float WaitLimitSeconds = 30f;
         private const string OutputFolder = "Logs/ui-captures";
         private const float FriendShotDistance = 7f;
         private const float FriendShotHeight = 2.4f;
@@ -720,6 +721,7 @@ namespace MoonProject.UI.PlayModeTests
             GameContext context = FindBootstrap().Context;
             Camera camera = context.Get<IViewCamera>().Camera;
             UISystem ui = BuildUi(context, out _, out _);
+            FreezeWorld();
             yield return null;
             string folder = Path.GetFullPath(OutputFolder);
             Directory.CreateDirectory(folder);
@@ -734,7 +736,8 @@ namespace MoonProject.UI.PlayModeTests
             Assert.IsFalse(ui.SaveTick.IsVisible, "and gone a moment later");
 
             context.Events.Publish(new StationNotYet("notyet.tower", Vector3.zero, 10f));
-            yield return new WaitForSecondsRealtime(TickerEntrance());
+            yield return Until(() => ui.Ticker.IsVisible, WaitLimitSeconds);
+            yield return new WaitForSecondsRealtime(_tuning.Ticker.Reveal.FadeIn + 0.3f);
             Assert.IsTrue(ui.Ticker.IsVisible, "the sleeper's line is on the ticker");
             yield return Capture(camera, folder, "81_not_yet_ticker");
 #else
@@ -874,6 +877,7 @@ namespace MoonProject.UI.PlayModeTests
             GameContext context = FindBootstrap().Context;
             Camera camera = context.Get<IViewCamera>().Camera;
             UISystem ui = BuildUi(context, out FakeGameServices fakes, out _);
+            FreezeWorld();
             TuneQuickPatience();
             yield return null;
             string folder = Path.GetFullPath(OutputFolder);
@@ -958,6 +962,25 @@ namespace MoonProject.UI.PlayModeTests
             var serialized = new SerializedObject(_tuning);
             serialized.FindProperty("_guidance._stepPatienceSeconds").floatValue = 1f;
             serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        /// <summary>
+        /// Holds the live world still: its own sonar, home and rover would answer over the scripted moments, and the
+        /// UI runs on unscaled time. Restored in <see cref="TearDown"/>.
+        /// </summary>
+        private static void FreezeWorld()
+        {
+            Time.timeScale = 0f;
+        }
+
+        /// <summary>Waits until <paramref name="condition"/> holds, for at most <paramref name="seconds"/>.</summary>
+        private static IEnumerator Until(Func<bool> condition, float seconds)
+        {
+            float end = Time.realtimeSinceStartup + seconds;
+            while (Time.realtimeSinceStartup < end && !condition())
+            {
+                yield return null;
+            }
         }
 
         /// <summary>Waits <paramref name="seconds"/>, noting every frame where more than one voice speaks.</summary>
