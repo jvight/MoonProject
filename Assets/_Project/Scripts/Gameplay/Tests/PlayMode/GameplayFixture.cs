@@ -368,6 +368,9 @@ namespace MoonProject.Gameplay.PlayModeTests
                 GlowMaterial(shader, GlowRole.HomeHalo), GlowMaterial(shader, GlowRole.LinkPulse));
 
             visuals.PopulatePads(new[] { Pad(1.6f), Pad(2.4f), Pad(3f) }, new[] { 1.6f, 2.4f, 3f });
+            visuals.PopulateFeel(GlowMaterial(shader, GlowRole.Spark), GlowMaterial(shader, GlowRole.TetherBeam),
+                GlowMaterial(shader, GlowRole.WarmGlow), GlowMaterial(shader, GlowRole.WarmRing),
+                Asset<FeelVfxTuning>());
             visuals.PopulateComponents(new[]
             {
                 Template("Part_TowerCoil", new Vector3(0.5f, 0.6f, 0.5f)),
