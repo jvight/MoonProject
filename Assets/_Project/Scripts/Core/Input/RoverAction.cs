@@ -10,5 +10,6 @@ namespace MoonProject.Core.Input
         Tether = 2,
         Winch = 3,
         Jump = 4,
+        Recenter = 5,
     }
 }

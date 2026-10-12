@@ -22,6 +22,7 @@ namespace MoonProject.Core.Input
         private readonly InputAction _tether;
         private readonly InputAction _winch;
         private readonly InputAction _jump;
+        private readonly InputAction _recenter;
         private readonly Action<InputAction.CallbackContext> _onPerformed;
 
         /// <param name="actions">The Controls asset. Missing maps/actions throw immediately (wiring bug).</param>
@@ -41,6 +42,7 @@ namespace MoonProject.Core.Input
             _tether = _roverMap.FindAction("Tether", throwIfNotFound: true);
             _winch = _roverMap.FindAction("Winch", throwIfNotFound: true);
             _jump = _roverMap.FindAction("Jump", throwIfNotFound: true);
+            _recenter = _roverMap.FindAction("Recenter", throwIfNotFound: true);
             Menu = new MenuInput(actions.FindActionMap(MenuInput.MapName, throwIfNotFound: true));
 
             _onPerformed = OnPerformed;
@@ -76,6 +78,9 @@ namespace MoonProject.Core.Input
         public bool JumpPressed => _jump.WasPressedThisFrame();
 
         public bool JumpReleased => _jump.WasReleasedThisFrame();
+
+        /// <summary>The camera's recenter button (middle mouse, the right stick's click) went down this frame.</summary>
+        public bool RecenterPressed => _recenter.WasPressedThisFrame();
 
         /// <summary>
         /// The "UI" map: pause, back, menu focus and cursor recapture. Enabled and disabled by the UI.
@@ -146,6 +151,8 @@ namespace MoonProject.Core.Input
                     return _winch;
                 case RoverAction.Jump:
                     return _jump;
+                case RoverAction.Recenter:
+                    return _recenter;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(action), action, "Unknown rover action.");
             }
