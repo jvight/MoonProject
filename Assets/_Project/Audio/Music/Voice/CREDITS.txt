@@ -1,6 +1,0 @@
-Lunarion - recorded voices (tools/voice)
-
-Station voice synthesised with a Piper model trained on LibriTTS-R (CC BY 4.0).
-  LibriTTS-R: Koizumi et al., 2023, https://www.openslr.org/141/ - https://creativecommons.org/licenses/by/4.0/
-Ro's voice synthesised with a Piper model trained on Cori Samuel's LibriVox readings (public domain).
-Speech engine: sherpa-onnx (Apache-2.0), https://github.com/k2-fsa/sherpa-onnx

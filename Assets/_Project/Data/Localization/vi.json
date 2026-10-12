@@ -1315,6 +1315,74 @@
             "text": "Thoát"
         },
         {
+            "key": "ui.title.credits",
+            "text": "Ghi công"
+        },
+        {
+            "key": "ui.credits.title",
+            "text": "Ghi công"
+        },
+        {
+            "key": "ui.credits.version",
+            "text": "Phiên bản {0}"
+        },
+        {
+            "key": "ui.credits.game",
+            "text": "Lunarion"
+        },
+        {
+            "key": "ui.credits.made_by",
+            "text": "Thực hiện bởi jvight"
+        },
+        {
+            "key": "ui.credits.fonts",
+            "text": "Phông chữ"
+        },
+        {
+            "key": "ui.credits.voice",
+            "text": "Giọng nói"
+        },
+        {
+            "key": "ui.credits.voice_station",
+            "text": "Giọng của trạm được tổng hợp bằng mô hình Piper huấn luyện trên LibriTTS-R"
+        },
+        {
+            "key": "ui.credits.voice_ro",
+            "text": "Giọng của Ro được tổng hợp bằng mô hình Piper huấn luyện trên các bản đọc LibriVox của Cori Samuel"
+        },
+        {
+            "key": "ui.credits.public_domain",
+            "text": "Phạm vi công cộng"
+        },
+        {
+            "key": "ui.credits.voice_engine",
+            "text": "Bộ máy giọng nói: sherpa-onnx"
+        },
+        {
+            "key": "ui.credits.music",
+            "text": "Âm nhạc và âm thanh"
+        },
+        {
+            "key": "ui.credits.music_in_house",
+            "text": "Tự làm, bằng mã nguồn."
+        },
+        {
+            "key": "ui.credits.engine",
+            "text": "Công cụ"
+        },
+        {
+            "key": "ui.credits.made_with_unity",
+            "text": "Làm bằng Unity"
+        },
+        {
+            "key": "ui.credits.licences",
+            "text": "Giấy phép"
+        },
+        {
+            "key": "ui.credits.licences_folder",
+            "text": "Toàn văn các giấy phép nằm trong thư mục Licenses cạnh trò chơi."
+        },
+        {
             "key": "ui.title.new_game_question",
             "text": "Cất mặt trăng này đi và bắt đầu lại?"
         },

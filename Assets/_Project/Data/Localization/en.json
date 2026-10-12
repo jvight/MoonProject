@@ -1315,6 +1315,74 @@
             "text": "Quit"
         },
         {
+            "key": "ui.title.credits",
+            "text": "Credits"
+        },
+        {
+            "key": "ui.credits.title",
+            "text": "Credits"
+        },
+        {
+            "key": "ui.credits.version",
+            "text": "Version {0}"
+        },
+        {
+            "key": "ui.credits.game",
+            "text": "Lunarion"
+        },
+        {
+            "key": "ui.credits.made_by",
+            "text": "Made by jvight"
+        },
+        {
+            "key": "ui.credits.fonts",
+            "text": "Fonts"
+        },
+        {
+            "key": "ui.credits.voice",
+            "text": "Voice"
+        },
+        {
+            "key": "ui.credits.voice_station",
+            "text": "Station voice synthesised with a Piper model trained on LibriTTS-R"
+        },
+        {
+            "key": "ui.credits.voice_ro",
+            "text": "Ro's voice synthesised with a Piper model trained on Cori Samuel's LibriVox readings"
+        },
+        {
+            "key": "ui.credits.public_domain",
+            "text": "Public domain"
+        },
+        {
+            "key": "ui.credits.voice_engine",
+            "text": "Speech engine: sherpa-onnx"
+        },
+        {
+            "key": "ui.credits.music",
+            "text": "Music and sound"
+        },
+        {
+            "key": "ui.credits.music_in_house",
+            "text": "Made in-house, in code."
+        },
+        {
+            "key": "ui.credits.engine",
+            "text": "Engine"
+        },
+        {
+            "key": "ui.credits.made_with_unity",
+            "text": "Made with Unity"
+        },
+        {
+            "key": "ui.credits.licences",
+            "text": "Licences"
+        },
+        {
+            "key": "ui.credits.licences_folder",
+            "text": "The full licence texts are in the Licenses folder next to the game."
+        },
+        {
             "key": "ui.title.new_game_question",
             "text": "Put this moon away and start again?"
         },
