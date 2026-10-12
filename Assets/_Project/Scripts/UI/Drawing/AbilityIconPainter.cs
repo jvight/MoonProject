@@ -4,8 +4,9 @@ using UnityEngine.UIElements;
 namespace MoonProject.UI
 {
     /// <summary>
-    /// An ability slot's line icon, drawn as soft strokes in a unit square sized to its element: the tether's hook,
-    /// the sonar's arcs, the leap's arrow, the cradle's basket, the headlamp's rays, the coils' bolt, or a padlock.
+    /// An ability slot's pictogram, drawn as soft strokes in a unit square sized to its element: the tether's ring with
+    /// its line hanging down, the listening mast with two arcs, the leap's double chevron over the ground, the cradle's
+    /// basket, the headlamp's rays, the coils' bolt, or a padlock. Never a letter.
     /// USS: --icon-color.
     /// </summary>
     internal sealed class AbilityIconPainter : StylePainter
@@ -57,20 +58,19 @@ namespace MoonProject.UI
             switch (_icon)
             {
                 case AbilityIcon.Tether:
-                    Line(p, 0.5f, 0.08f, 0.5f, 0.55f);
-                    p.BeginPath();
-                    p.Arc(At(0.38f, 0.62f), _size * 0.12f, Angle.Degrees(0f), Angle.Degrees(180f));
-                    p.Stroke();
-                    Line(p, 0.26f, 0.62f, 0.26f, 0.52f);
+                    Arc(p, 0.5f, 0.28f, 0.17f, 0f, 360f);
+                    Line(p, 0.5f, 0.45f, 0.5f, 0.9f);
                     break;
                 case AbilityIcon.Listen:
-                    Arc(p, 0.5f, 0.82f, 0.18f, 225f, 315f);
-                    Arc(p, 0.5f, 0.82f, 0.38f, 230f, 310f);
-                    Arc(p, 0.5f, 0.82f, 0.58f, 235f, 305f);
+                    Line(p, 0.34f, 0.18f, 0.34f, 0.9f);
+                    Line(p, 0.18f, 0.9f, 0.5f, 0.9f);
+                    Arc(p, 0.34f, 0.3f, 0.2f, -55f, 55f);
+                    Arc(p, 0.34f, 0.3f, 0.38f, -50f, 50f);
                     break;
                 case AbilityIcon.Leap:
-                    Line(p, 0.5f, 0.85f, 0.5f, 0.2f);
-                    Polyline(p, 0.26f, 0.42f, 0.5f, 0.18f, 0.74f, 0.42f);
+                    Polyline(p, 0.24f, 0.48f, 0.5f, 0.24f, 0.76f, 0.48f);
+                    Polyline(p, 0.24f, 0.7f, 0.5f, 0.46f, 0.76f, 0.7f);
+                    Line(p, 0.18f, 0.88f, 0.82f, 0.88f);
                     break;
                 case AbilityIcon.Cradle:
                     Polyline(p, 0.14f, 0.38f, 0.26f, 0.8f, 0.74f, 0.8f, 0.86f, 0.38f);
