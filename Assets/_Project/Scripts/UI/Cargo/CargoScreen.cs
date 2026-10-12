@@ -55,6 +55,8 @@ namespace MoonProject.UI
         private int _tab;
         private bool _dirty = true;
         private float _cell;
+        private float _shrink = 1f;
+        private Vector2 _fittedFor;
         private float _writtenCell = -1f;
         private int _writtenSummary = -1;
         private int _writtenHomeShape = -1;
@@ -258,6 +260,19 @@ namespace MoonProject.UI
                 _dirty = true;
             }
 
+            if (panelSize != _fittedFor)
+            {
+                _fittedFor = panelSize;
+                _shrink = 1f;
+            }
+
+            float height = _panel.resolvedStyle.height;
+            if (!float.IsNaN(height) && panelSize.y > 0f && height > panelSize.y * _settings.HeightShare &&
+                _cell > _settings.MinCell + 0.5f)
+            {
+                _shrink *= _settings.ShrinkStep;
+            }
+
             float cell = FitCell(panelSize);
             if (Mathf.Abs(cell - _writtenCell) > 0.5f)
             {
@@ -283,7 +298,7 @@ namespace MoonProject.UI
             float cells = HoldSlotsAcross + 2 * ShelfSlotsAcross;
             float gaps = cells * CellGap + ColumnGap + ShelfGap;
             float cell = (panelSize.x * _settings.WidthShare - gaps) / cells;
-            return Mathf.Clamp(cell, _settings.MinCell, _settings.MaxCell);
+            return Mathf.Clamp(cell * _shrink, _settings.MinCell, _settings.MaxCell);
         }
 
         private void Refresh()

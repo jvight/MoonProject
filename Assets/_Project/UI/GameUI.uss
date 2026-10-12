@@ -2114,7 +2114,6 @@ Label {
 
 .cargo__panel {
     max-width: 96%;
-    max-height: 94%;
     padding: 22px 34px 20px 34px;
     background-image: url("project://database/Assets/_Project/Generated/UI/Glass/GlassPanel.png");
     -unity-slice-left: 56;

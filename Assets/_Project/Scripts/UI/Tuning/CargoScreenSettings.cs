@@ -22,6 +22,14 @@ namespace MoonProject.UI
         [Range(0.5f, 1f)]
         [SerializeField] private float _widthShare = 0.82f;
 
+        [Tooltip("Share of the panel's height the screen may use; the cells shrink until it fits.")]
+        [Range(0.6f, 1f)]
+        [SerializeField] private float _heightShare = 0.94f;
+
+        [Tooltip("How much the cells shrink in one step while the screen is too tall (0.92 = 8 % smaller).")]
+        [Range(0.5f, 0.99f)]
+        [SerializeField] private float _shrinkStep = 0.92f;
+
         public RevealSettings Reveal => _reveal;
 
         public float MaxCell => _maxCell;
@@ -29,5 +37,9 @@ namespace MoonProject.UI
         public float MinCell => _minCell;
 
         public float WidthShare => _widthShare;
+
+        public float HeightShare => _heightShare;
+
+        public float ShrinkStep => _shrinkStep;
     }
 }
