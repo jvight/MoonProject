@@ -15,7 +15,8 @@ namespace MoonProject.UI
     /// count settles and fades away. More of the same material while its row is up adds to its "+N". A few rows are
     /// shared by every material (<see cref="PickupFeedSettings.MaxRows"/>): a new one takes a free row, or the row that
     /// has rested longest. The stock is read each frame, so a load is taken as it is, with no row, and moving units
-    /// from the hold to home's shelves (the total does not change) shows nothing. Each unit rolled publishes a
+    /// from the hold to home's shelves (the total does not change) shows nothing. Only the materials the catalog
+    /// describes in this version are read. Each unit rolled publishes a
     /// <see cref="StockCountTicked"/>, so Audio can tick and Rover can rumble in step.
     /// </summary>
     internal sealed class PickupFeed
@@ -124,7 +125,10 @@ namespace MoonProject.UI
                 for (int i = 0; i < Materials.Count; i++)
                 {
                     SalvageMaterial material = Materials.At(i);
-                    _tally.Snap(material, _stock.Of(material));
+                    if (_catalog.Contains(material))
+                    {
+                        _tally.Snap(material, _stock.Of(material));
+                    }
                 }
 
                 _armed = true;
@@ -134,6 +138,11 @@ namespace MoonProject.UI
                 for (int i = 0; i < Materials.Count; i++)
                 {
                     SalvageMaterial material = Materials.At(i);
+                    if (!_catalog.Contains(material))
+                    {
+                        continue;
+                    }
+
                     int amount = _stock.Of(material);
                     if (amount != _tally.Target(material))
                     {

@@ -327,7 +327,7 @@ namespace MoonProject.UI
         private void RefreshHome()
         {
             int shelves = _home.ShelfCount;
-            int shape = shelves;
+            int shape = shelves * 1000 + Mathf.RoundToInt(_cell);
             for (int i = 0; i < shelves; i++)
             {
                 shape = shape * 31 + (_home.GetShelf(i).Built ? _home.GetShelf(i).SlotCount + 1 : 0);
@@ -351,6 +351,8 @@ namespace MoonProject.UI
                 Fill(block.Cells, _home, shelf.FirstSlot, shelf.SlotCount);
                 block.Grid.style.width = ShelfSlotsAcross * (_cell + CellGap);
             }
+
+            _shelves.style.width = 2 * (ShelfSlotsAcross * (_cell + CellGap) + ShelfGap);
         }
 
         private void BuildShelves(int shelves)
@@ -380,6 +382,8 @@ namespace MoonProject.UI
                 {
                     var pencil = new VisualElement { pickingMode = PickingMode.Ignore };
                     pencil.AddToClassList("cargo__pencil");
+                    pencil.style.width = ShelfSlotsAcross * (_cell + CellGap) - CellGap;
+                    pencil.style.height = 2 * (_cell + CellGap) - CellGap;
                     var text = new Label(_localization.Get(UiKeys.CargoShelfFree)) { pickingMode = PickingMode.Ignore };
                     text.AddToClassList("cargo__pencil-text");
                     pencil.Add(text);
@@ -498,7 +502,7 @@ namespace MoonProject.UI
                 row.Root.EnableInClassList("can-row--pencil", sheet);
                 row.Verb.text = _localization.Get(ability.VerbKey);
                 row.Line.text = _localization.Get(sheet ? UiKeys.CanDecoded : ability.LineKey);
-                row.Glyph.style.display = ability.HasAction && has ? DisplayStyle.Flex : DisplayStyle.None;
+                row.Glyph.style.visibility = ability.HasAction && has ? Visibility.Visible : Visibility.Hidden;
                 if (ability.HasAction)
                 {
                     row.GlyphView.Set(_glyphs.For(ability.Action, _device), _device);

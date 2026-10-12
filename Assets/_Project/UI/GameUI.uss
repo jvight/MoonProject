@@ -2140,11 +2140,6 @@ Label {
     color: var(--glass-sel-text);
 }
 
-.cargo .settings-tab-wrap:focus-within {
-    --tab-color: var(--glass-sel);
-    --tab-edge: var(--glass-sel);
-}
-
 .cargo__page {
     min-width: 320px;
 }
@@ -2230,7 +2225,6 @@ Label {
 /* A shelf not built yet: a pencil outline that says so */
 .cargo__pencil {
     padding: 14px 18px;
-    max-width: 330px;
     border-width: 1.5px;
     border-radius: 12px;
     border-color: var(--moon-track);
