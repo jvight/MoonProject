@@ -155,10 +155,6 @@ namespace MoonProject.Gameplay
                 : _components == null || Array.IndexOf(_components, null) >= 0
                     ? "Art's tower components are missing (run Gameplay/Materials)"
                 : _tube == null ? "Art's blueprint tube is missing (run Gameplay/Materials)"
-                : _feelSprite == null ? "feel sprite material is missing"
-                : _beamCore == null ? "beam core material is missing"
-                : _beamSheath == null ? "beam sheath material is missing"
-                : _heatSeam == null ? "heat seam material is missing"
                 : null;
         }
 
