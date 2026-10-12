@@ -491,6 +491,10 @@
             "text": "Chuột phải"
         },
         {
+            "key": "glyph.mouse.middlebutton",
+            "text": "Chuột giữa"
+        },
+        {
             "key": "glyph.mouse.scroll",
             "text": "Con lăn"
         },
@@ -533,6 +537,10 @@
         {
             "key": "glyph.gamepad.rightstick",
             "text": "RS"
+        },
+        {
+            "key": "glyph.gamepad.rightstickpress",
+            "text": "R3"
         },
         {
             "key": "glyph.gamepad.dpad",
