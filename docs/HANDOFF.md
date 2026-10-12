@@ -4,7 +4,25 @@ Read this, then `CLAUDE.md`, then `docs/VISION.md`, `docs/DESIGN.md`, `docs/ARCH
 It records how the project is run, where it stands, and what comes next, so a new Director session (on any
 account) can continue without the old conversation.
 
-## 0000. LATEST (2026-10-12 ~07:00): 0.5.1 "Clarity" in progress
+## 00000. LATEST (2026-10-12 ~09:00): 0.5.2 "Satisfying" P0 dispatched; 0.5.1 still closing
+- **Owner rule (memory `standing-sessions`):** no new session per task. Work goes to the standing sessions (game
+  design, gameplay, art, rover, ui, world, map, tools, story & flow; voice becomes **audio** after it lands). The 12
+  finished slice sessions were archived with the owner's consent.
+- **0.5.2 feel pass:** `docs/design/feel-pass.md` (game design session). The owner approved P0 (the cut + collection:
+  charge-up, ignition, hot seam, vacuum debris, crack, tumble, fold, count roll) and rumble on by default (cap 0.35).
+  The Core contract is on main 745f5c0d: `FeelBeat`/`FeelKind`/`FeelPhase`/`IFeelSettings` (§6 says who publishes
+  what).
+- **Running on P0:**
+  - gameplay (box/gameplay): the cut state and beats;
+  - art (box/art): the VFX in `Gameplay/Feel/` and the swap from CutSparks after gameplay lands;
+  - rover (box/rover): body nudges, camera lean, RumblePlayer, IFeelSettings;
+  - ui (box/ui, Sonnet): CountTick roll + event, the ring's charge segment, rumble settings.
+  - Audio starts after voice lands.
+  - Land order: gameplay -> rover/ui -> art (swap) -> audio.
+- **0.5.1 still to close:** clarity (running), then voice, then §8.2 doc edits, verify --parallel --push and a 0.5.1
+  build.
+
+## 0000. (2026-10-12 ~07:00): 0.5.1 "Clarity" in progress
 - The owner played 0.5.0: UI clipped on 21:9, loose ground pieces odd, purpose/crafting/tower unclear, lines not
   understood, music should be earned, Space's sonar unclear, tether given from the start, charging too fast, UI hard
   to read, the camera's auto-recenter makes players dizzy.
