@@ -45,6 +45,9 @@ namespace MoonProject.Rover
         private Quaternion _chassisRestRotation;
         private Quaternion _antennaRestRotation;
         private ImpactNudge _nudge;
+        private float _sag;
+        private float _sagTarget;
+        private float _sagHalfLife = 1f;
         private Vector3 _antennaRestPosition;
         private float _antennaLift;
         private Quaternion _bogieLeftRestRotation;
@@ -209,6 +212,7 @@ namespace MoonProject.Rover
             transform.SetPositionAndRotation(position, rotation);
 
             _jelly.Step(_rover.LocalAcceleration, _rover.JumpCharge, deltaTime);
+            _sag = Smoothing.Damp(_sag, _sagTarget, _sagHalfLife, deltaTime);
             ApplyChassis();
             StepSuspension(deltaTime);
             ApplyWheels(travelled, deltaTime);
@@ -270,11 +274,19 @@ namespace MoonProject.Rover
             _nudge = nudge;
         }
 
+        /// <summary>The cargo's weight: the chassis settles <paramref name="metres"/> lower over the half-life.</summary>
+        public void SetLoadSag(float metres, float halfLife)
+        {
+            _sagTarget = metres;
+            _sagHalfLife = halfLife;
+        }
+
         private void ApplyChassis()
         {
             Vector3 pivot = Vector3.up * _tuning.LeanPivotHeight;
             float nudgePitch = _nudge != null ? _nudge.Pitch : 0f;
-            Vector3 nudge = _nudge != null ? new Vector3(0f, _nudge.Heave, _nudge.Surge) : Vector3.zero;
+            Vector3 nudge = (_nudge != null ? new Vector3(0f, _nudge.Heave, _nudge.Surge) : Vector3.zero)
+                + Vector3.down * _sag;
             Quaternion lean = GroundPlaneFit.Tilt(_jelly.Pitch - nudgePitch, _jelly.Roll);
             _chassis.localPosition = _chassisRestPosition + pivot - lean * pivot + Vector3.up * _jelly.Heave + nudge;
             _chassis.localRotation = lean * _chassisRestRotation;

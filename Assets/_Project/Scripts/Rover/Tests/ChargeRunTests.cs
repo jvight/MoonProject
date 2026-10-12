@@ -1,9 +1,12 @@
 using NUnit.Framework;
+using UnityEngine;
+using MoonProject.Core;
+using MoonProject.Core.Events;
 using MoonProject.Rover;
 
 namespace MoonProject.Rover.Tests
 {
-    /// <summary>The charge run (M3-26 §2.2): timing, resume, ignition, drain and fade.</summary>
+    /// <summary>The charge run (M3-26 §2): timing, resume, ignition, drain, fade, the tier rows; the cargo load.</summary>
     public sealed class ChargeRunTests
     {
         private readonly ChargeRunSettings _settings = new ChargeRunSettings();
@@ -59,6 +62,65 @@ namespace MoonProject.Rover.Tests
             Assert.That(run.Glow(2), Is.InRange(_settings.RestGlow, _settings.ChargedGlow));
             run.Step(_settings.FadeSeconds);
             Assert.AreEqual(_settings.RestGlow, run.Glow(2));
+        }
+
+        [Test]
+        public void TheCutterTier_ShowsItsRow_InItsColour()
+        {
+            var events = new EventBus();
+            var roots = new GameObject[3];
+            var rows = new ChargeRunRow[3];
+            int[] counts = { 5, 7, 9 };
+            for (int tier = 0; tier < 3; tier++)
+            {
+                roots[tier] = new GameObject(ChargeRunLamps.RowName(tier));
+                var lamps = new Renderer[counts[tier]];
+                for (int i = 0; i < lamps.Length; i++)
+                {
+                    var lamp = new GameObject(ChargeRunLamps.SocketName(i));
+                    lamp.transform.SetParent(roots[tier].transform);
+                    lamps[i] = lamp.AddComponent<MeshRenderer>();
+                }
+
+                rows[tier] = Row(roots[tier], lamps);
+            }
+
+            var driver = new ChargeRunLamps(events, _settings, rows);
+            Assert.AreEqual(5, driver.Run.Count);
+            Assert.IsTrue(roots[0].activeSelf && !roots[1].activeSelf && !roots[2].activeSelf);
+            events.Publish(new CutterTierChanged(2, false));
+            Assert.AreEqual(9, driver.Run.Count, "Tier 2: nine lit edges.");
+            Assert.IsTrue(roots[2].activeSelf && !roots[0].activeSelf);
+            events.Publish(new CutterTierChanged(3, false));
+            Assert.AreEqual(2, driver.Tier, "Beyond the rows art has built: the highest one.");
+            driver.Dispose();
+            foreach (GameObject root in roots)
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void TheHold_SagsPerQuarter_AndGlancesBackOnceWhenItFills()
+        {
+            Assert.AreEqual(0f, CargoLoad.Sag(1, 8, 0.01f), "Under a quarter: no sag.");
+            Assert.AreEqual(0.02f, CargoLoad.Sag(4, 8, 0.01f), 1e-6f);
+            Assert.AreEqual(0.04f, CargoLoad.Sag(8, 8, 0.01f), 1e-6f);
+            var load = new CargoLoad();
+            Assert.IsFalse(load.BecameFull(8, 8), "A loaded full hold: no glance.");
+            Assert.IsFalse(load.BecameFull(5, 8));
+            Assert.IsTrue(load.BecameFull(8, 8), "It just filled.");
+            Assert.IsFalse(load.BecameFull(8, 8), "Once.");
+        }
+
+        private static ChargeRunRow Row(GameObject root, Renderer[] lamps)
+        {
+            var row = new ChargeRunRow();
+            typeof(ChargeRunRow).GetField("_root", System.Reflection.BindingFlags.NonPublic
+                | System.Reflection.BindingFlags.Instance).SetValue(row, root);
+            typeof(ChargeRunRow).GetField("_lamps", System.Reflection.BindingFlags.NonPublic
+                | System.Reflection.BindingFlags.Instance).SetValue(row, lamps);
+            return row;
         }
     }
 }
