@@ -4,7 +4,31 @@ Read this, then `CLAUDE.md`, then `docs/VISION.md`, `docs/DESIGN.md`, `docs/ARCH
 It records how the project is run, where it stands, and what comes next, so a new Director session (on any
 account) can continue without the old conversation.
 
-## 000000. LATEST (2026-10-12 ~14:40): 0.5.1 verified and pushed; 0.5.2 branches ready to land
+## 0000000. LATEST (2026-10-12 ~17:00): 0.5.2 released for the owner's play-through
+- **origin/main = a1263860, verified** (compile, EditMode, both PlayMode shards, the Playthrough). Builds:
+  - `Builds/Lunarion-0.5.1-20261012-c179a545.zip`;
+  - `Builds/Lunarion-0.5.2-20261012-a1263860.zip` (smoke PASS).
+- **What 0.5.2 has:**
+  - the feel pass P0: the cut's charge-up, ignition, heat seam, vacuum debris, crack, tumble, fold, count roll, and the
+    cut work framing;
+  - polish wave 1: the dock lock, 07's machine chirps, drive/leap/install/low-power body beats, rumble, the reach
+    ring, window steps, the save tick, pause blur, and the silent events voiced;
+  - the Moonlight Glass UI (Subnautica grammar, owner pick #1).
+- **Next:** the owner plays 0.5.2. Every moment they name becomes a polish-pass row (waves 2-3: settings pages,
+  transitions, hitch profiling, credits screen, P2 verbs). Then 0.6 build pads (M3-22) reuse the feel kit.
+- **Deferred (wave 2):**
+  - the install sweep along the part's surface (needs the part's renderers via Core);
+  - per-window lighting (HomeBase has one Windows renderer);
+  - turn roll and terrain rumble;
+  - Relieved on Tilly's arrival (no event);
+  - a credits screen (CREDITS.txt files exist in UI/Fonts and Audio/Music/Voice);
+  - pause tabs with the map/cassette pages;
+  - Colab ideas (owner asked): an emotive TTS for Ro's recordings (Chatterbox, MIT) and Stable Audio Open for
+    ambience. Check licences first.
+- Lesson: a box that edits another domain's folder must run that domain's tests (art's swap broke 44 Gameplay
+  PlayMode sessions); box_check now gives art the Gameplay builders and tests.
+
+## 000000. (2026-10-12 ~14:40): 0.5.1 verified and pushed; 0.5.2 branches ready to land
 - **0.5.1:** clarity + voice landed; version 0.5.1; `verify --parallel --push` PASS; origin/main = c179a545. The
   build is running in MoonProject-wt/director (copy the zip to D:/Project/MoonProject/Builds). Don't land while it
   builds: land --batch uses the same worktree.
