@@ -13,8 +13,8 @@ namespace MoonProject.Art.Editor
     /// pieces pivoted at their attach points (each with a <c>CutPoint</c> whose +Z leaves the cut face) and the
     /// <c>Heart</c> where the site's relic rests, and (M3-18 L1) the depot's, Kestrel's, drill's and garage's tall
     /// <c>Landmark</c> with its <c>LandmarkPilot</c> lamp (M_LowPolyGlowOff: dark until gameplay lights it once the
-    /// heart is found); the Kestrel trail's loose <c>Debris_&lt;Material&gt;_&lt;n&gt;</c> bits beside them; and the
-    /// three material bundles <c>Material_&lt;Material&gt;</c> in Generated/Art/Pickups. Meshes only, M_LowPoly.
+    /// heart is found); and the three material bundles <c>Material_&lt;Material&gt;</c> in Generated/Art/Pickups.
+    /// Meshes only, M_LowPoly.
     /// </summary>
     public static class SiteModelBuilder
     {
@@ -29,12 +29,6 @@ namespace MoonProject.Art.Editor
         /// <summary>The site ids of the contract (site.&lt;id&gt; anchors, Site_&lt;id&gt; prefabs).</summary>
         public static IReadOnlyList<string> Ids => new[] { "depot", "kestrel", "drill", "garage", "lander" };
 
-        /// <summary>The Kestrel trail's loose bits; each is worth one bundle of its material.</summary>
-        public static IReadOnlyList<string> DebrisNames => new[]
-        {
-            "Debris_Metal_0", "Debris_Metal_1", "Debris_Wiring_0", "Debris_Optics_0", "Debris_Optics_1",
-        };
-
         [MoonBuilder("Art/Sites", 190)]
         public static void Build()
         {
@@ -44,11 +38,6 @@ namespace MoonProject.Art.Editor
             {
                 ModelPrefabWriter.Write(GroundOcclusion.Ground(CreateSite(id)), ArtPaths.SitesFolder, material,
                     glowOff);
-            }
-
-            foreach (string name in DebrisNames)
-            {
-                ModelPrefabWriter.Write(CreateDebris(name), ArtPaths.SitesFolder, material);
             }
 
             foreach (SalvagePieceMaterial bundle in Enum.GetValues(typeof(SalvagePieceMaterial)))
@@ -164,33 +153,6 @@ namespace MoonProject.Art.Editor
         {
             return new ModelNode(BlueprintTubeName, Vector3.zero,
                 new ModelMesh(BlueprintTubeName, BlueprintMeshes.Tube()));
-        }
-
-        public static ModelNode CreateDebris(string name)
-        {
-            LowPolyMeshBuilder geometry;
-            switch (name)
-            {
-                case "Debris_Metal_0":
-                    geometry = SalvageBitMeshes.FoilShard();
-                    break;
-                case "Debris_Metal_1":
-                    geometry = SalvageBitMeshes.StrutChunk();
-                    break;
-                case "Debris_Wiring_0":
-                    geometry = SalvageBitMeshes.HarnessClump();
-                    break;
-                case "Debris_Optics_0":
-                    geometry = SalvageBitMeshes.CellTile();
-                    break;
-                case "Debris_Optics_1":
-                    geometry = SalvageBitMeshes.LensHousing();
-                    break;
-                default:
-                    throw new ArgumentException($"Unknown debris '{name}'.", nameof(name));
-            }
-
-            return new ModelNode(name, Vector3.zero, new ModelMesh(name, RecipeKit.CentredOnMass(geometry)));
         }
 
         private static SiteRecipe Recipe(string id)

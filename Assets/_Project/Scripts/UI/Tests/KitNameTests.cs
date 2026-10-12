@@ -40,5 +40,16 @@ namespace MoonProject.UI.Tests
             Assert.IsFalse(KitNames.TryTitle(new RoverKitFitted(RoverKitPiece.HoverCoils, true, string.Empty), out _),
                 "no friend gives the hover coils");
         }
+
+        [Test]
+        public void KenjisPortPieces_HaveTheirOwnTitles()
+        {
+            Assert.IsTrue(KitNames.TryTitle(new RoverKitFitted(RoverKitPiece.TetherRing, false, string.Empty),
+                out string ring));
+            Assert.AreEqual("kit.tether_ring.name", ring);
+            Assert.IsTrue(KitNames.TryTitle(new RoverKitFitted(RoverKitPiece.TapeDeck, false, string.Empty),
+                out string deck));
+            Assert.AreEqual("kit.tape_deck.name", deck);
+        }
     }
 }

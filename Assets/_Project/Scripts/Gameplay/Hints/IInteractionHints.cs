@@ -9,7 +9,7 @@ namespace MoonProject.Gameplay
     {
         /// <summary>
         /// The most relevant action now, in this order: Deposit, Repair, Restore, Tune, Hop, Upgrade, Salvage,
-        /// Excavate, Stow, Tether, Reel, Ping
+        /// Excavate, Stow, Tether, Reel
         /// (<see cref="InteractionKind.None"/> before the game is running).
         /// </summary>
         InteractionHint Primary { get; }

@@ -49,11 +49,12 @@ namespace MoonProject.Gameplay.PlayModeTests
             Vector3 site = tilly.Site.Position;
             _fixture.Rover.Place(Toward(site, Vector3.zero, 20f), Yaw(site, Vector3.zero) + 180f);
             yield return null;
-            Press(_keyboard.spaceKey, queueEventOnly: true);
-            yield return null;
-            Release(_keyboard.spaceKey);
+            _fixture.PowerTo(1);
+            yield return Waits.Until(() => _fixture.Events.SonarPinged.Count > 0,
+                _fixture.SonarTuning.RestSeconds + 1f);
+            Assert.AreEqual(1, _fixture.Events.SonarPinged.Count, "07 rests at tower level 1 and listens");
             yield return new WaitForSeconds(1.5f);
-            Assert.AreEqual(1, _fixture.Events.FriendAnswered.Count, "a broken chirp answers the ping");
+            Assert.AreEqual(1, _fixture.Events.FriendAnswered.Count, "a broken chirp answers the listen");
             Assert.AreEqual(TillyId, _fixture.Events.FriendAnswered[0].Value.FriendId);
             Assert.IsTrue(tilly.Progress.Discovered);
             _fixture.Rover.Aim(site + new Vector3(-4f, 2.5f, -4f), site);
@@ -63,6 +64,17 @@ namespace MoonProject.Gameplay.PlayModeTests
             {
                 Vector3 spot = tilly.PartRest[part];
                 _fixture.Rover.Place(new Vector3(spot.x, 0f, spot.z), 0f);
+                if (part == tilly.BuriedPart)
+                {
+                    yield return new WaitForSeconds(1f);
+                    Assert.AreEqual(part, _fixture.Events.FriendPartCollected.Count,
+                        "her last part lies half under the dust: driving over it is not enough");
+                    Assert.IsTrue(_fixture.Gameplay.Hints.TryGet(InteractionKind.Excavate, out _), "a Dig prompt");
+                    Press(_keyboard.eKey);
+                    yield return new WaitForSeconds(_fixture.FriendTuning.PartDigSeconds + 0.3f);
+                    Release(_keyboard.eKey);
+                }
+
                 yield return new WaitForSeconds(_fixture.FriendTuning.PartFlightDuration + 1f);
                 Assert.AreEqual(part + 1, _fixture.Events.FriendPartCollected.Count, $"part {part} gathered");
                 FriendPartCollected collected = _fixture.Events.FriendPartCollected[part].Value;
@@ -174,6 +186,17 @@ namespace MoonProject.Gameplay.PlayModeTests
             {
                 Vector3 spot = tilly.PartRest[part];
                 _fixture.Rover.Place(new Vector3(spot.x, 0f, spot.z), 0f);
+                if (part == tilly.BuriedPart)
+                {
+                    yield return new WaitForSeconds(1f);
+                    Assert.AreEqual(part, _fixture.Events.FriendPartCollected.Count,
+                        "her last part lies half under the dust: driving over it is not enough");
+                    Assert.IsTrue(_fixture.Gameplay.Hints.TryGet(InteractionKind.Excavate, out _), "a Dig prompt");
+                    Press(_keyboard.eKey);
+                    yield return new WaitForSeconds(_fixture.FriendTuning.PartDigSeconds + 0.3f);
+                    Release(_keyboard.eKey);
+                }
+
                 yield return new WaitForSeconds(_fixture.FriendTuning.PartFlightDuration + 1f);
             }
 

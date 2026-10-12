@@ -196,15 +196,15 @@ namespace MoonProject.UI.Tests
         [Test]
         public void Ledger_RoundTripsThroughItsSaveData_ByKindName()
         {
-            _ledger.RecordShown(InteractionKind.Ping);
-            _ledger.RecordShown(InteractionKind.Ping);
+            _ledger.RecordShown(InteractionKind.Tether);
+            _ledger.RecordShown(InteractionKind.Tether);
             _ledger.RecordUsed(InteractionKind.Deposit);
             string json = JsonUtility.ToJson(_ledger.Capture());
-            StringAssert.Contains("\"Ping\"", json, "saved by name, not by enum number");
+            StringAssert.Contains("\"Tether\"", json, "saved by name, not by enum number");
 
             var restored = new PromptLedger(_settings);
             restored.Restore(JsonUtility.FromJson<PromptsSaveData>(json));
-            Assert.AreEqual(2, restored.Shown(InteractionKind.Ping));
+            Assert.AreEqual(2, restored.Shown(InteractionKind.Tether));
             Assert.AreEqual(1, restored.Used(InteractionKind.Deposit));
             Assert.AreEqual(0, restored.Shown(InteractionKind.Excavate));
         }
@@ -216,7 +216,7 @@ namespace MoonProject.UI.Tests
             {
                 kinds = new[]
                 {
-                    new PromptCountData { kind = "Hoverjump", shown = 3, used = 1 },
+                    new PromptCountData { kind = "Ping", shown = 3, used = 1 },
                     new PromptCountData { kind = "Reel", shown = 1, used = 0 },
                 },
             };
@@ -232,8 +232,7 @@ namespace MoonProject.UI.Tests
             Assert.IsNull(_settings.Find(InteractionKind.Upgrade), "the tower panel teaches the upgrade itself");
             InteractionKind[] taught =
             {
-                InteractionKind.Ping, InteractionKind.Excavate, InteractionKind.Tether, InteractionKind.Deposit,
-                InteractionKind.Reel,
+                InteractionKind.Excavate, InteractionKind.Tether, InteractionKind.Deposit, InteractionKind.Reel,
             };
             foreach (InteractionKind kind in taught)
             {

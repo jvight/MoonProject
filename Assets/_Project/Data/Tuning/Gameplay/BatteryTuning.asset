@@ -37,11 +37,15 @@ MonoBehaviour:
   _trickleCap: 1
   _trickleStill: 3
   _stillSpeed: 0.2
-  _dockFill: 4
-  _mastFill: 3
+  _dockSecondsPerCell: 4
+  _mastSecondsPerCell: 5
   _ringRadius: 2
-  _ringMaxSpeed: 1.3
+  _chargeStopSpeed: 0.3
+  _chargeStopHold: 0.5
   _lowThreshold: 0.3
+  _lowRangeMargin: 1.5
+  _lowRouteFactor: 1.2
+  _lowChargerClearance: 40
   _veryLowThreshold: 0.15
   _arcReveal: 0.7
   _lowLines: 3

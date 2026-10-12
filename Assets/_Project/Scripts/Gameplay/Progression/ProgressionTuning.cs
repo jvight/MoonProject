@@ -78,6 +78,13 @@ namespace MoonProject.Gameplay
         [Tooltip("Brightness of the pillar the evening's sweep raises on the horizon.")]
         [Range(0.1f, 2f)] [SerializeField] private float _eveningPillarBrightness = 0.7f;
 
+        [Tooltip("Seconds after tower level 1 wakes home before its first sweep raises the faint signal's pillar " +
+                 "(first-hour v2 §4).")]
+        [Range(0f, 10f)] [SerializeField] private float _towerSweepDelay = 3f;
+
+        [Tooltip("Brightness of the faint signal's pillar the tower's first sweep raises.")]
+        [Range(0.1f, 2f)] [SerializeField] private float _towerSweepBrightness = 0.8f;
+
         [Header("The masts' letters (radio-letters text)")]
         [Tooltip("The first this many lit masts play one letter each (the relay's official messages)...")]
         [Range(0, 12)] [SerializeField] private int _singleLetterMasts = 4;
@@ -100,6 +107,56 @@ namespace MoonProject.Gameplay
             new BlueprintTube("rover.boost_coils", "site.drill"),
             new BlueprintTube("rover.cell_pack", "relay.2"),
         };
+
+        [Header("Kenji's garage port (first-hour v2 §3)")]
+        [Tooltip("The salvage site the port stands in: its last cut opens the port.")]
+        [SerializeField] private string _portSite = "site.garage";
+
+        [Tooltip("Where Art's GaragePort stands, in the site's own space (behind the garage's painted 07 pad).")]
+        [SerializeField] private Vector3 _portLocal = new Vector3(0f, 0.12f, 3.3f);
+
+        [Tooltip("The port's turn (deg) in the site's space: 180 faces the pad and the door.")]
+        [Range(-180f, 180f)] [SerializeField] private float _portYaw = 180f;
+
+        [Tooltip("The middle of the port's pad, in the site's own space (Art's painted 07 pad).")]
+        [SerializeField] private Vector3 _portPadLocal = new Vector3(0f, 0.12f, 1.5f);
+
+        [Tooltip("Metres from the pad's middle within which 07 counts as on the pad.")]
+        [Range(0.5f, 4f)] [SerializeField] private float _portPadRadius = 1.4f;
+
+        [Tooltip("Speed (m/s) under which 07 counts as parked on the pad.")]
+        [Range(0.05f, 1f)] [SerializeField] private float _portParkSpeed = 0.3f;
+
+        [Tooltip("Seconds 07 stays parked on the pad before the port's arm fits the tether ring.")]
+        [Range(0f, 4f)] [SerializeField] private float _portParkSeconds = 1f;
+
+        [Tooltip("Metres from the pad within which the open port's place card shows, once.")]
+        [Range(2f, 30f)] [SerializeField] private float _portPlaceRadius = 9f;
+
+        [Tooltip("Metres from the pad within which 07, resting with the tape deck on its tether, has the port take it.")]
+        [Range(1f, 20f)] [SerializeField] private float _portClaimRadius = 12f;
+
+        [Tooltip("Metres from the tray within which a towed tape deck is taken off the tether.")]
+        [Range(0.5f, 4f)] [SerializeField] private float _portTrayRadius = 1.8f;
+
+        [Tooltip("Seconds the tape deck glides from the tether onto the tray before the arm fits it.")]
+        [Range(0.2f, 4f)] [SerializeField] private float _portTrayGlideSeconds = 1.2f;
+
+        [Tooltip("The relic that is Ro's tape deck (it is fitted on 07, never shelved).")]
+        [SerializeField] private string _portDeckRelic = "cassette_player";
+
+        [Tooltip("Before the ring, a loose keepsake within this many metres of 07 says the tether is gone, once.")]
+        [Range(2f, 20f)] [SerializeField] private float _portTetherHintRadius = 7f;
+
+        [Header("Recipe cards (M3-24 B)")]
+        [Tooltip("Metres from the camera within which a hopper or a board sheet shows its recipe card when looked at.")]
+        [Range(2f, 40f)] [SerializeField] private float _recipeLookDistance = 18f;
+
+        [Tooltip("Degrees off the view's centre within which a hopper or a sheet counts as looked at.")]
+        [Range(1f, 30f)] [SerializeField] private float _recipeLookAngle = 9f;
+
+        [Tooltip("The card already shown holds until the view is this many times the angle away (no edge flicker).")]
+        [Range(1f, 3f)] [SerializeField] private float _recipeLookHold = 1.6f;
 
         [Header("Tech tree and recovery panel (M3-21)")]
         [Tooltip("The tech board's kit pins and the bay's upgrade that builds each; a kit node left out stays unknown.")]
@@ -180,6 +237,10 @@ namespace MoonProject.Gameplay
 
         public float EveningPillarBrightness => _eveningPillarBrightness;
 
+        public float TowerSweepDelay => _towerSweepDelay;
+
+        public float TowerSweepBrightness => _towerSweepBrightness;
+
         public float EveningCompletionHold => _eveningCompletionHold;
 
         public float ReaderFeedSeconds => _readerFeedSeconds;
@@ -207,6 +268,38 @@ namespace MoonProject.Gameplay
         public string LeapKit => _leapKit;
 
         public IReadOnlyList<BlueprintTube> Tubes => _tubes;
+
+        public string PortSite => _portSite;
+
+        public Vector3 PortLocal => _portLocal;
+
+        public float PortYaw => _portYaw;
+
+        public Vector3 PortPadLocal => _portPadLocal;
+
+        public float PortPadRadius => _portPadRadius;
+
+        public float PortParkSpeed => _portParkSpeed;
+
+        public float PortParkSeconds => _portParkSeconds;
+
+        public float PortPlaceRadius => _portPlaceRadius;
+
+        public float PortTrayRadius => _portTrayRadius;
+
+        public float PortClaimRadius => _portClaimRadius;
+
+        public float PortTrayGlideSeconds => _portTrayGlideSeconds;
+
+        public string PortDeckRelic => _portDeckRelic;
+
+        public float PortTetherHintRadius => _portTetherHintRadius;
+
+        public float RecipeLookDistance => _recipeLookDistance;
+
+        public float RecipeLookAngle => _recipeLookAngle;
+
+        public float RecipeLookHold => _recipeLookHold;
 
         public IReadOnlyList<TechKit> TechKits => _techKits;
 

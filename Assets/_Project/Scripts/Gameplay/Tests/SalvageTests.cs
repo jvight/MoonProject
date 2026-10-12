@@ -51,11 +51,6 @@ namespace MoonProject.Gameplay.Tests
             {
                 Assert.IsFalse(SalvagePieceName.TryParsePiece(name, out _, out _, out _), name);
             }
-
-            Assert.IsTrue(SalvagePieceName.TryParseDebris("Debris_Optics_1", out material));
-            Assert.AreEqual(SalvageMaterial.Optics, material);
-            Assert.IsFalse(SalvagePieceName.TryParseDebris("Debris_Optics", out _));
-            Assert.IsFalse(SalvagePieceName.TryParseDebris("Salvage_0_Metal", out _));
         }
 
         [Test]
@@ -97,7 +92,6 @@ namespace MoonProject.Gameplay.Tests
                         },
                     },
                 },
-                trail = new[] { 2 },
             };
 
             SalvageSaveData copy = JsonUtility.FromJson<SalvageSaveData>(JsonUtility.ToJson(data));
@@ -107,14 +101,13 @@ namespace MoonProject.Gameplay.Tests
             Assert.AreEqual(0.4f, copy.sites[0].pieces[0].progress, 1e-6f);
             Assert.IsTrue(copy.sites[0].pieces[1].loose);
             Assert.AreEqual(new Vector3(1f, 2f, 3f), copy.sites[0].pieces[1].position);
-            CollectionAssert.AreEqual(new[] { 2 }, copy.trail);
         }
 
         [Test]
         public void Sites_GiveAboutTwiceWhatStepsZeroToEightNeed_EachLeaningOnItsSignature()
         {
             var tuning = Create<SalvageTuning>();
-            Recipe yield = Trail(tuning);
+            var yield = new Recipe(0, 0, 0);
             foreach (string name in SalvageEconomy.SiteNames)
             {
                 Recipe site = SiteYield(name, tuning);
@@ -162,7 +155,7 @@ namespace MoonProject.Gameplay.Tests
             stock = Spend(stock, SalvageEconomy.HoverJump, "Hover-Jump");
             stock = Spend(stock, SalvageEconomy.CargoCradle, "the Cargo Cradle");
             stock = Spend(stock, relays.CostAfter(0), "the first relay mast (step 7)");
-            stock = stock.Plus(CutYield("kestrel", tuning)).Plus(Trail(tuning));
+            stock = stock.Plus(CutYield("kestrel", tuning));
             Spend(stock, SalvageEconomy.RadioTower[2], "tower L3 after the Kestrel (step 8)");
         }
 
@@ -214,20 +207,6 @@ namespace MoonProject.Gameplay.Tests
             }
         }
 
-        private static Recipe Trail(SalvageTuning tuning)
-        {
-            var units = new int[3];
-            foreach (string bit in SalvageEconomy.TrailBits)
-            {
-                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(GameplayAssetPaths.DebrisPrefab(bit));
-                Assert.IsNotNull(prefab, bit);
-                Assert.IsTrue(SalvagePieceName.TryParseDebris(bit, out SalvageMaterial material), bit);
-                units[(int)material] += tuning.TrailYield;
-            }
-
-            return new Recipe(units[0], units[1], units[2]);
-        }
-
         private static int Pieces(string name)
         {
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(GameplayAssetPaths.SitePrefab(name));
@@ -270,11 +249,13 @@ namespace MoonProject.Gameplay.Tests
                 Assert.IsNotNull(node.Find("CutPoint"), $"{name}/{node.name} has its cut point");
                 Mesh mesh = node.GetComponent<MeshFilter>().sharedMesh;
                 Vector3 size = Vector3.Scale(mesh.bounds.size, node.localScale);
-                yield[(int)material] += drag && !drags ? 0 : SalvageYield.Units(size, drag, tuning);
+                yield[(int)material] += drag && !drags
+                    ? 0
+                    : SalvageEconomy.YieldScale(name) * SalvageYield.Units(size, drag, tuning);
                 pieces++;
             }
 
-            Assert.That(pieces, Is.InRange(4, 8), $"{name}: 4 to 8 salvage points");
+            Assert.That(pieces, Is.InRange(3, 8), $"{name}: 3 to 8 salvage points (the garage's three rich seams)");
             return new Recipe(yield[0], yield[1], yield[2]);
         }
 

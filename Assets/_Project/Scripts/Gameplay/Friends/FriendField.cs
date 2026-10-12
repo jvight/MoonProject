@@ -29,6 +29,9 @@ namespace MoonProject.Gameplay
         /// <summary>Degrees between the idle headings of a friend's parts (so they never turn in step).</summary>
         private const float PartHeadingStep = 120f;
 
+        /// <summary>Degrees the buried part leans while half under the dust, easing upright as it is dug.</summary>
+        private const float BuriedTilt = 28f;
+
         /// <summary>A part spins this many times faster in flight than at rest.</summary>
         private const float PartFlightSpin = 4f;
 
@@ -79,6 +82,12 @@ namespace MoonProject.Gameplay
 
         /// <summary>The broken friend 07 could repair right now (every part gathered, within reach), or null.</summary>
         public Friend RepairCandidate { get; private set; }
+
+        /// <summary>True while 07 is near a friend's buried part: the beam would dig it.</summary>
+        public bool HasDigCandidate { get; private set; }
+
+        /// <summary>Where the buried part 07 is near lies (valid while <see cref="HasDigCandidate"/>).</summary>
+        public Vector3 DigCandidate { get; private set; }
 
         /// <summary>0..1 how far Interact has been held toward starting a repair.</summary>
         public float RepairHold => _tuning != null && _tuning.RepairHold > 0f ? _holdTime / _tuning.RepairHold : 0f;
@@ -444,6 +453,10 @@ namespace MoonProject.Gameplay
             }
 
             var friend = new Friend(definition, index, site, progress, parts, _homes[index], body);
+            if (definition.Id == _tuning.BuriedPartFriend && parts.Length > 0)
+            {
+                friend.BuriedPart = parts.Length - 1;
+            }
             if (definition.AbilityId == FriendDefinition.RadioDialAbility)
             {
                 DialFriend = friend;
@@ -562,6 +575,7 @@ namespace MoonProject.Gameplay
             float deltaTime = Time.deltaTime;
             _glints.Begin(_view.Camera.transform.position, now);
             RepairCandidate = null;
+            HasDigCandidate = false;
             Friend repairing = null;
             for (int i = 0; i < _friends.Count; i++)
             {
@@ -602,6 +616,12 @@ namespace MoonProject.Gameplay
                 }
 
                 Transform piece = friend.Parts[p];
+                if (p == friend.BuriedPart && friend.PartDug[p] < _tuning.PartDigSeconds)
+                {
+                    StepBuried(friend, p, piece, rover, deltaTime);
+                    continue;
+                }
+
                 if (!friend.PartFlying[p])
                 {
                     Vector3 rest = friend.PartRest[p] + Vector3.up * (Mathf.Sin(now * bobOmega + p) * _tuning.PartBob);
@@ -687,6 +707,31 @@ namespace MoonProject.Gameplay
                     deltaTime);
                 friend.Body.SetLamp(lamp, friend.LampLevels[lamp]);
             }
+        }
+
+        /// <summary>
+        /// The buried part sits half under the dust, glinting; holding the beam near it digs it up, rising as it goes,
+        /// and once free it is collected like the others.
+        /// </summary>
+        private void StepBuried(Friend friend, int p, Transform piece, Vector3 rover, float deltaTime)
+        {
+            Vector3 rest = friend.PartRest[p];
+            float reach = _tuning.PartDigRadius;
+            bool near = (rest - rover).sqrMagnitude <= reach * reach;
+            if (near)
+            {
+                HasDigCandidate = true;
+                DigCandidate = rest;
+                if (_input.ExcavateHeld && _beamWork.MayStart)
+                {
+                    friend.PartDug[p] += deltaTime;
+                }
+            }
+
+            float dug = Mathf.Clamp01(friend.PartDug[p] / _tuning.PartDigSeconds);
+            piece.SetPositionAndRotation(rest + Vector3.down * (_tuning.BuriedPartSink * (1f - Ease.OutCubic(dug))),
+                Quaternion.Euler(0f, p * PartHeadingStep, BuriedTilt * (1f - dug)));
+            _glints.Add(rest, p);
         }
 
         private void StepRepairInput(float deltaTime)

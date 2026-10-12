@@ -25,6 +25,10 @@ namespace MoonProject.Rover.Editor
     ///           Kit_CargoRack (nested prefab, inactive until 07 owns the Cargo Cradle)
     ///         SpineSocket
     ///           Kit_BatterySpine (nested prefab, inactive until 07 owns Cell Pack II)
+    ///         Neck/Head/RingSocket
+    ///           Kit_TetherRing (nested prefab, inactive until Kenji's garage port fits it)
+    ///         DeckSocket
+    ///           Kit_TapeDeck (nested prefab, inactive until 07 has picked up Tilly's tape deck)
     ///         TubeSocket
     ///           BlueprintTube (nested prefab, inactive until 07 carries a scanned blueprint)
     ///           Part_TowerCoil, Part_Transformer, Part_RelaySpare (nested prefabs, one shown while 07 carries it)
@@ -81,6 +85,8 @@ namespace MoonProject.Rover.Editor
             var drum = BuildWiring.Require<GameObject>(RoverAssetPaths.KitCapacitorDrum, "the Art box's kit builder");
             var rack = BuildWiring.Require<GameObject>(RoverAssetPaths.KitCargoRack, "the Art box's kit builder");
             var spine = BuildWiring.Require<GameObject>(RoverAssetPaths.KitBatterySpine, "the Art box's kit builder");
+            var deck = BuildWiring.Require<GameObject>(RoverAssetPaths.KitTapeDeck, "the Art box's kit builder");
+            var ring = BuildWiring.Require<GameObject>(RoverAssetPaths.KitTetherRing, "the Art box's kit builder");
             var tube = BuildWiring.Require<GameObject>(RoverAssetPaths.BlueprintTube, "the Art box's pickup builder");
             var parts = new GameObject[RoverAssetPaths.StoryParts.Length];
             for (int i = 0; i < parts.Length; i++)
@@ -140,7 +146,7 @@ namespace MoonProject.Rover.Editor
             BuildWiring.AssignArray(rig, "_wheels", wheels);
             Transform coilSocket = BuildWiring.Node(m, RoverModelNodes.CoilSocket);
             RoverHoverCoils hoverCoils = BuildHoverCoils(scratch, visual, coilSocket, coils, rigTuning);
-            RoverKit kit = BuildKit(scratch, visual, m, headlamp, rigTuning, lampBar, drum, rack, spine, tube,
+            RoverKit kit = BuildKit(scratch, visual, m, headlamp, rigTuning, lampBar, drum, rack, spine, deck, ring, tube,
                 parts);
 
             RoverFlankLamps flankLamps = BuildFlankLamps(visual, m, rigTuning);
@@ -281,7 +287,8 @@ namespace MoonProject.Rover.Editor
         /// </summary>
         private static RoverKit BuildKit(BuilderScratchScene scratch, GameObject host, Transform model, Light headlamp,
             RoverRigTuning tuning, GameObject lampBarPrefab, GameObject drumPrefab, GameObject rackPrefab,
-            GameObject spinePrefab, GameObject tubePrefab, GameObject[] partPrefabs)
+            GameObject spinePrefab, GameObject deckPrefab, GameObject ringPrefab, GameObject tubePrefab,
+            GameObject[] partPrefabs)
         {
             Transform lampBar = Mount(scratch, lampBarPrefab, BuildWiring.Node(model, RoverModelNodes.HeadlampSocket));
             var lamps = new Object[RoverModelNodes.KitLampCount];
@@ -294,6 +301,8 @@ namespace MoonProject.Rover.Editor
             Transform drumRight = Mount(scratch, drumPrefab, BuildWiring.Node(model, RoverModelNodes.DrumSocketRight));
             Transform rack = Mount(scratch, rackPrefab, BuildWiring.Node(model, RoverModelNodes.CargoSocket));
             Transform spine = Mount(scratch, spinePrefab, BuildWiring.Node(model, RoverModelNodes.SpineSocket));
+            Transform deck = Mount(scratch, deckPrefab, BuildWiring.Node(model, RoverModelNodes.DeckSocket));
+            Transform ring = Mount(scratch, ringPrefab, BuildWiring.Node(model, RoverModelNodes.RingSocket));
             Transform tubeSocket = BuildWiring.Node(model, RoverModelNodes.TubeSocket);
             Transform tube = Mount(scratch, tubePrefab, tubeSocket);
             var parts = new Object[partPrefabs.Length];
@@ -311,6 +320,9 @@ namespace MoonProject.Rover.Editor
                 ("_lampBar", lampBar),
                 ("_cargoRack", rack),
                 ("_spine", spine),
+                ("_tapeDeck", deck),
+                ("_tetherRing", ring),
+                ("_ringGlow", BuildWiring.NodeComponent<MeshRenderer>(ring, RoverModelNodes.RingGlow)),
                 ("_relicSeat", BuildWiring.Node(rack, RoverModelNodes.RelicSeat)),
                 ("_solarCell", BuildWiring.Node(model, RoverModelNodes.CellFilled)),
                 ("_freshSerial", BuildWiring.Node(model, RoverModelNodes.Decal07Fresh)),

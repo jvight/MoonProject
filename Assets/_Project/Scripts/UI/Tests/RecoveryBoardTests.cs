@@ -56,6 +56,41 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
+        public void TheProtocolReadout_ShowsOncePerFullOpening_PowerFirstWithItsNeed_ThenFades()
+        {
+            var uxml = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(UiAssetPaths.Uxml);
+            var layout = new UiLayout(uxml.Instantiate());
+            ILocalization localization = new LocalizationService(new EventBus(), RealTables());
+            var settings = new GuidanceSettings();
+            var readout = new ProtocolReadout(layout.Hud, settings, localization, new Game());
+            VisualElement root = layout.Hud.Q("protocol");
+            readout.Cue();
+            ReadoutTicks(readout, 1f);
+            Assert.IsFalse(readout.IsVisible, "never without a full opening (the short wake)");
+
+            readout.OpeningBegan();
+            readout.Cue();
+            ReadoutTicks(readout, settings.Protocol.FadeIn + 0.5f);
+            Assert.IsTrue(readout.IsVisible);
+            Assert.AreEqual(1f, root.style.opacity.value, 1e-3f);
+            Assert.AreEqual("LUMEN RECOVERY PROTOCOL", root.Q<Label>("protocol-title").text);
+            VisualElement rows = root.Q("protocol-rows");
+            Assert.AreEqual("Power the station", rows[0].Q<Label>(className: "recovery-board__target").text,
+                "Power first");
+            Assert.AreEqual("› the radio tower", ((Label)rows[1]).text, "its first need right under it");
+            Assert.IsTrue(rows[0].ClassListContains("protocol-readout__row--first"));
+            Assert.AreEqual(4, root.Query(className: "recovery-board__row").ToList().Count, "the four targets");
+
+            float onScreen = settings.Protocol.FadeIn + settings.ProtocolHoldSeconds + settings.Protocol.FadeOut;
+            Assert.That(onScreen, Is.InRange(3f, 5.5f), "about 4 s on screen");
+            ReadoutTicks(readout, settings.ProtocolHoldSeconds + settings.Protocol.FadeOut + 0.5f);
+            Assert.IsFalse(readout.IsVisible, "it fades by itself");
+            readout.Cue();
+            ReadoutTicks(readout, 1f);
+            Assert.IsFalse(readout.IsVisible, "once: the chase frame does not show it again");
+        }
+
+        [Test]
         public void ComponentsTargetsAndNodes_HaveTheirLines_InEveryLanguage()
         {
             Assert.AreEqual("component.tower_coil.needed", UiKeys.ComponentNeeded("Part_TowerCoil"));
@@ -104,6 +139,14 @@ namespace MoonProject.UI.Tests
             }
 
             return tables;
+        }
+
+        private static void ReadoutTicks(ProtocolReadout readout, float seconds)
+        {
+            for (float t = 0f; t < seconds; t += Step)
+            {
+                readout.Tick(Step);
+            }
         }
 
         private static void Ticks(RecoveryBoard board, float seconds, bool shown)

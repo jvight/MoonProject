@@ -308,8 +308,8 @@ namespace MoonProject.Core.Events
     }
 
     /// <summary>
-    /// Salvage reached 07 (a cut piece or a loose trail bit folded into its cargo). <see cref="ComboStep"/> climbs while
-    /// pieces chain at one site, for the salvage melody.
+    /// Salvage reached 07 (a cut piece folded into its cargo). <see cref="ComboStep"/> climbs while pieces chain at
+    /// one site, for the salvage melody.
     /// </summary>
     public readonly struct MaterialSalvaged
     {
@@ -328,7 +328,7 @@ namespace MoonProject.Core.Events
 
         public Vector3 Position { get; }
 
-        /// <summary>The site it came from ("site.kestrel", ...), or "trail.kestrel" for a loose trail bit.</summary>
+        /// <summary>The site it came from ("site.kestrel", ...).</summary>
         public string SiteId { get; }
 
         /// <summary>0 for the first piece in a chain, then 1, 2, ... (resets after a pause).</summary>
@@ -726,6 +726,28 @@ namespace MoonProject.Core.Events
         public int TowerLevel { get; }
 
         /// <summary>Where 07 picked it up.</summary>
+        public Vector3 Position { get; }
+
+        public bool Restored { get; }
+    }
+
+    /// <summary>
+    /// Kenji's garage port fits <see cref="Piece"/> on 07 (docs/design/first-hour-v2.md §3): the tether ring, then the
+    /// tape deck 07 set on its tray. Its arm reaches from <see cref="Position"/>; Rover plays the install moment and
+    /// publishes <see cref="RoverKitFitted"/>. Restored is true when a loaded game already has the piece (once, after
+    /// the save is applied): it is on 07 at once.
+    /// </summary>
+    public readonly struct PortFitting
+    {
+        public PortFitting(RoverKitPiece piece, Vector3 position, bool restored)
+        {
+            Piece = piece;
+            Position = position;
+            Restored = restored;
+        }
+
+        public RoverKitPiece Piece { get; }
+
         public Vector3 Position { get; }
 
         public bool Restored { get; }

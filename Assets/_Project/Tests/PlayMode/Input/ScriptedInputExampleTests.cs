@@ -73,9 +73,9 @@ namespace MoonProject.Tests.PlayMode.Input
 
             Press(gamepad.buttonSouth, queueEventOnly: true);
             yield return null;
-            Assert.IsTrue(input.PingPressed, "south button pings in the frame it is pressed");
+            Assert.IsTrue(input.JumpPressed, "the south button leaps in the frame it is pressed");
             yield return null;
-            Assert.IsFalse(input.PingPressed, "a press is reported for one frame only");
+            Assert.IsFalse(input.JumpPressed, "a press is reported for one frame only");
             Release(gamepad.buttonSouth);
 
             Press(gamepad.leftTrigger);
