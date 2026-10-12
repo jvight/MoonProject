@@ -18,5 +18,16 @@ namespace MoonProject.Core
         /// (docs/design/first-hour-v2.md §3). Asleep until then.
         /// </summary>
         Tether = 7,
+
+        /// <summary>
+        /// The Side Bins (docs/features/M3-25 §2.2): two low panniers between the wheels, four more slots in the hold.
+        /// </summary>
+        SideBins = 8,
+
+        /// <summary>
+        /// The Focus Lens (docs/features/M3-26 §3): a ringed lens on the emitter; cutter tier 1, a shorter charge, a
+        /// quicker and cheaper cut.
+        /// </summary>
+        FocusLens = 9,
     }
 }

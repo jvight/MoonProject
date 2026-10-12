@@ -78,6 +78,7 @@ namespace MoonProject.Gameplay.Editor
             var progressionTuning = context.LoadAsset<ProgressionTuning>(GameplayAssetPaths.ProgressionTuning);
             var liftTuning = context.LoadAsset<LiftTuning>(GameplayAssetPaths.LiftTuning);
             var batteryTuning = context.LoadAsset<BatteryTuning>(GameplayAssetPaths.BatteryTuning);
+            var cutterTuning = context.LoadAsset<CutterTuning>(GameplayAssetPaths.CutterTuning);
             var salvageCatalog = context.LoadAsset<SalvageCatalog>(GameplayAssetPaths.SalvageCatalog);
             var relayMast = context.LoadAsset<GameObject>(GameplayAssetPaths.RelayMast);
             var relayMastBroken = context.LoadAsset<GameObject>(GameplayAssetPaths.RelayMastBroken);
@@ -218,6 +219,7 @@ namespace MoonProject.Gameplay.Editor
                 progression, plotter, liftStation);
             battery.Wire(batteryTuning);
             gameplay.WireBattery(battery);
+            gameplay.WireCutter(cutterTuning);
             context.AddSystem(gameplay);
         }
 
