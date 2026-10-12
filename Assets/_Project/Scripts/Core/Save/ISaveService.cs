@@ -30,6 +30,12 @@ namespace MoonProject.Core.Save
         bool SaveNow();
 
         /// <summary>
+        /// Raised after each successful <see cref="SaveNow"/>, once the file is on disk. GameBootstrap turns it into
+        /// <see cref="Events.GameSaved"/> so the world and the HUD can show a small sign that progress is safe.
+        /// </summary>
+        event Action Saved;
+
+        /// <summary>
         /// Starts over: moves the save (and its backup) to &lt;slot&gt;.old-&lt;utc stamp&gt;.json, never deleting it,
         /// forgets the loaded progress and refuses every later save, so the session being torn down cannot write the
         /// old progress back. Returns the archived save's path, or null when there was nothing on disk.
