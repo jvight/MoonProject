@@ -356,6 +356,60 @@
       "notes": "Soft whump (98->47 Hz glide) + body + slow dust hiss; runtime scales by impact."
     },
     {
+      "id": "port_arm",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/port_arm.wav"
+      ],
+      "variantLabels": [
+        "port_arm"
+      ],
+      "sha256": [
+        "d33281e07d402d8d52b5026a66d26bc06af70b5679c5d5ec981c2e40eac571c9"
+      ],
+      "volumeMin": 0.8,
+      "volumeMax": 0.8,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "Kenji's garage port: the folded arm unfolds towards 07 (servo whirr rising A2 to E3, latch click)."
+    },
+    {
+      "id": "tether_ring_wake",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/tether_ring_wake.wav"
+      ],
+      "variantLabels": [
+        "tether_ring_wake"
+      ],
+      "sha256": [
+        "b8dd2145d12df96884252e0709db843b2454cffbcefc7ee8e4bda4fc8b7d8de9"
+      ],
+      "volumeMin": 0.8,
+      "volumeMax": 0.8,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "The tether ring's first hum after the port fits it: D3/A3/D4 swelling in, held, settling."
+    },
+    {
       "id": "radio_carrier",
       "category": "radio_2d",
       "milestone": "M3",
@@ -3615,7 +3669,7 @@
         "dock_full"
       ],
       "sha256": [
-        "9af25b36a785d8f310909ba0559a9c08858e8606bd6020ff666189b492bd07b8"
+        "8386afac52d877095d0d255cea11ac8075eb02283e99d25277aa98357c33cc98"
       ],
       "volumeMin": 0.5,
       "volumeMax": 0.5,
