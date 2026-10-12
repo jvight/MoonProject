@@ -10,6 +10,16 @@ namespace MoonProject.Rover
     [Serializable]
     public sealed class ChargeRunSettings
     {
+        [Tooltip("The run's colour per cutter tier (M3-26 §2.1): dim cyan, a cleaner cyan, the ribs' bright edge, then "
+            + "a white-hot core with an amber edge. Warm machinery, never red.")]
+        [SerializeField] private Color[] _tierColours =
+        {
+            new Color(0.35f, 0.75f, 0.8f),
+            new Color(0.45f, 0.9f, 1f),
+            new Color(0.75f, 0.97f, 1f),
+            new Color(1f, 0.85f, 0.6f),
+        };
+
         [Tooltip("A lamp's glow at rest, before any run (dim, a little dusty).")]
         [Range(0f, 2f)]
         [SerializeField] private float _restGlow = 0.15f;
@@ -49,6 +59,14 @@ namespace MoonProject.Rover
         [Tooltip("Seconds the lamps take to fade as the emitter vents at the break.")]
         [Range(0.05f, 2f)]
         [SerializeField] private float _fadeSeconds = 0.4f;
+
+        /// <summary>The run's colour at cutter tier <paramref name="tier"/> (the highest tuned one beyond it).</summary>
+        public Color TierColour(int tier)
+        {
+            return _tierColours.Length == 0
+                ? Color.white
+                : _tierColours[Mathf.Clamp(tier, 0, _tierColours.Length - 1)];
+        }
 
         public float RestGlow => _restGlow;
 

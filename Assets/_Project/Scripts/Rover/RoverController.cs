@@ -56,9 +56,9 @@ namespace MoonProject.Rover
         [Tooltip("The amber flank lamps along the stripe: 07's battery (docs/features/M3-20).")]
         [SerializeField] private RoverFlankLamps _flankLamps;
 
-        [Tooltip("The charge run's lamp renderers on RoverModel's ChargeLamp_0.. nodes, battery first (M3-26 §2); art's "
-            + "model carries them from the cutter-lamps pass on.")]
-        [SerializeField] private Renderer[] _chargeLamps = new Renderer[0];
+        [Tooltip("The charge run's rows per cutter tier (RoverModel's ChargeRun_{tier} with its ChargeLamp_0.. nodes, "
+            + "M3-26 §2); art's model carries them from the cutter-lamps pass on.")]
+        [SerializeField] private ChargeRunRow[] _chargeRows = new ChargeRunRow[0];
 
         [Tooltip("RoverModel 'TetherOrigin' (lens centre of 07's eye, +Z = gaze).")]
         [SerializeField] private Transform _tetherOrigin;
@@ -342,9 +342,9 @@ namespace MoonProject.Rover
                 _feel = new RoverFeel(_events, feel.CutFeel, feel.DockFeel, feel.MotionFeel, feelPreferences,
                     new GamepadRumbleMotors(), _visualRig);
                 _visualRig.SetNudge(_feel.Nudge);
-                if (_chargeLamps.Length > 0)
+                if (_chargeRows.Length > 0)
                 {
-                    _chargeRun = new ChargeRunLamps(_events, feel.ChargeRun, _chargeLamps);
+                    _chargeRun = new ChargeRunLamps(_events, feel.ChargeRun, _chargeRows);
                 }
             }
 
@@ -378,6 +378,11 @@ namespace MoonProject.Rover
             ok &= Require(_hoverCoils != null, "RoverHoverCoils is not assigned.");
             ok &= Require(_lampMotes != null, "RoverLampMotes is not assigned.");
             ok &= Require(_flankLamps != null, "RoverFlankLamps is not assigned.");
+            foreach (ChargeRunRow row in _chargeRows)
+            {
+                ok &= Require(row != null && row.IsWired, "A charge-run row has no root or a missing lamp.");
+            }
+
             ok &= Require(_tetherOrigin != null && _cargoSocket != null, "TetherOrigin/CargoSocket are not assigned.");
             if (_body != null)
             {

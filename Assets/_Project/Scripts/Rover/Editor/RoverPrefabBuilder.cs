@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEditor;
 using MoonProject.Art;
 using MoonProject.Core;
 using MoonProject.Editor.Builders;
@@ -165,7 +166,7 @@ namespace MoonProject.Rover.Editor
                 ("_kit", kit),
                 ("_tetherOrigin", BuildWiring.Node(m, RoverModelNodes.TetherOrigin)),
                 ("_cargoSocket", BuildWiring.Node(m, RoverModelNodes.CargoSocket)));
-            BuildWiring.AssignArray(controller, "_chargeLamps", ChargeLamps(m));
+            AssignChargeRows(controller, m);
 
             BuildWiring.Assign(bodyLanguage,
                 ("_tuning", characterTuning),
@@ -341,33 +342,58 @@ namespace MoonProject.Rover.Editor
         }
 
         /// <summary>
-        /// The charge run's lamps (M3-26 §2): the renderers on RoverModel's ChargeLamp_0, ChargeLamp_1, ... nodes in
-        /// order from the battery, as far as they run. The model carries none until art's cutter-lamps pass.
+        /// The charge run's rows (M3-26 §2): RoverModel's ChargeRun_0, ChargeRun_1, ... nodes as far as they run, each
+        /// with the renderers on its ChargeLamp_0, ChargeLamp_1, ... nodes in order from the battery. The model carries
+        /// none until art's cutter-lamps pass.
         /// </summary>
-        private static Object[] ChargeLamps(Transform model)
+        private static void AssignChargeRows(RoverController controller, Transform model)
         {
-            var lamps = new System.Collections.Generic.List<Object>();
             Transform[] nodes = model.GetComponentsInChildren<Transform>(true);
-            for (int i = 0; ; i++)
+            var serialized = new SerializedObject(controller);
+            SerializedProperty rows = serialized.FindProperty("_chargeRows");
+            rows.arraySize = 0;
+            for (int tier = 0; ; tier++)
             {
-                string name = ChargeRunLamps.SocketName(i);
-                Renderer lamp = null;
-                foreach (Transform node in nodes)
+                Transform row = Find(nodes, ChargeRunLamps.RowName(tier));
+                if (row == null)
                 {
-                    if (node.name == name)
+                    break;
+                }
+
+                Transform[] lampNodes = row.GetComponentsInChildren<Transform>(true);
+                rows.arraySize = tier + 1;
+                SerializedProperty entry = rows.GetArrayElementAtIndex(tier);
+                entry.FindPropertyRelative("_root").objectReferenceValue = row.gameObject;
+                SerializedProperty lamps = entry.FindPropertyRelative("_lamps");
+                lamps.arraySize = 0;
+                for (int i = 0; ; i++)
+                {
+                    Transform lamp = Find(lampNodes, ChargeRunLamps.SocketName(i));
+                    Renderer glass = lamp != null ? lamp.GetComponentInChildren<Renderer>(true) : null;
+                    if (glass == null)
                     {
-                        lamp = node.GetComponentInChildren<Renderer>(true);
                         break;
                     }
-                }
 
-                if (lamp == null)
-                {
-                    return lamps.ToArray();
+                    lamps.arraySize = i + 1;
+                    lamps.GetArrayElementAtIndex(i).objectReferenceValue = glass;
                 }
-
-                lamps.Add(lamp);
             }
+
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static Transform Find(Transform[] nodes, string name)
+        {
+            foreach (Transform node in nodes)
+            {
+                if (node.name == name)
+                {
+                    return node;
+                }
+            }
+
+            return null;
         }
 
         /// <summary>A kit prefab on <paramref name="socket"/> with identity, hidden until 07 owns it.</summary>

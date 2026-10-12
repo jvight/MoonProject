@@ -8,7 +8,9 @@ namespace MoonProject.Rover
     /// <summary>
     /// Drives the charge run's lamps on 07's back (docs/features/M3-26 §2) from the cut's and the dig's feel beats:
     /// Anticipate runs them over its Seconds from its Strength (0 fresh, >0 a resume), the first Act ignites them,
-    /// each later Act pulses them, Cancel drains them and Impact fades them. Art's socket contract: RoverModel nodes
+    /// each later Act pulses them, Cancel drains them and Impact fades them. The cutter's tier
+    /// (<see cref="CutterTierChanged"/>) picks the row shown and its colour; the tier's faster charge arrives as a
+    /// shorter Anticipate. Art's socket contract: RoverModel nodes <c>ChargeRun_{tier}</c>, each holding
     /// <c>ChargeLamp_0</c> (at the battery) to <c>ChargeLamp_N-1</c> (the emitter ring), each with a renderer whose
     /// material has an emission colour. Zero allocations per frame.
     /// </summary>
@@ -16,46 +18,76 @@ namespace MoonProject.Rover
     {
         private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
 
-        private readonly Renderer[] _lamps;
-        private readonly ChargeRun _run;
+        private readonly ChargeRunRow[] _rows;
+        private readonly ChargeRunSettings _settings;
         private readonly MaterialPropertyBlock _block = new MaterialPropertyBlock();
         private readonly IDisposable _beats;
+        private readonly IDisposable _tiers;
+        private ChargeRunRow _row;
+        private ChargeRun _run;
+        private Color _colour;
         private bool _ignited;
 
-        /// <summary>The RoverModel node name of lamp <paramref name="index"/> (0 at the battery).</summary>
+        /// <summary>The RoverModel node name of tier <paramref name="tier"/>'s row.</summary>
+        public static string RowName(int tier)
+        {
+            return "ChargeRun_" + tier;
+        }
+
+        /// <summary>The node name of lamp <paramref name="index"/> in a row (0 at the battery).</summary>
         public static string SocketName(int index)
         {
             return "ChargeLamp_" + index;
         }
 
-        public ChargeRunLamps(EventBus events, ChargeRunSettings settings, Renderer[] lamps)
+        public ChargeRunLamps(EventBus events, ChargeRunSettings settings, ChargeRunRow[] rows)
         {
-            if (lamps == null || lamps.Length == 0)
+            if (rows == null || rows.Length == 0)
             {
-                throw new ArgumentException("The charge run needs at least one lamp renderer.", nameof(lamps));
+                throw new ArgumentException("The charge run needs at least one row.", nameof(rows));
             }
 
-            _lamps = lamps;
-            _run = new ChargeRun(settings, lamps.Length);
+            _rows = rows;
+            _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _beats = events.Subscribe<FeelBeat>(OnBeat);
+            _tiers = events.Subscribe<CutterTierChanged>(changed => ShowTier(changed.Tier));
+            ShowTier(0);
         }
 
         public ChargeRun Run => _run;
 
+        public int Tier { get; private set; }
+
         public void Tick(float deltaTime)
         {
             _run.Step(deltaTime);
-            for (int i = 0; i < _lamps.Length; i++)
+            Renderer[] lamps = _row.Lamps;
+            for (int i = 0; i < lamps.Length; i++)
             {
-                float glow = _run.Glow(i);
-                _block.SetColor(EmissionColorId, new Color(glow, glow, glow, 1f));
-                _lamps[i].SetPropertyBlock(_block);
+                _block.SetColor(EmissionColorId, _colour * _run.Glow(i));
+                lamps[i].SetPropertyBlock(_block);
             }
         }
 
         public void Dispose()
         {
             _beats.Dispose();
+            _tiers.Dispose();
+        }
+
+        /// <summary>Shows tier <paramref name="tier"/>'s row (the highest built one when art has fewer) in its colour.</summary>
+        private void ShowTier(int tier)
+        {
+            Tier = Mathf.Clamp(tier, 0, _rows.Length - 1);
+            for (int i = 0; i < _rows.Length; i++)
+            {
+                _rows[i].Root.SetActive(i == Tier);
+            }
+
+            _row = _rows[Tier];
+            _run = new ChargeRun(_settings, _row.Lamps.Length);
+            _colour = _settings.TierColour(Tier);
+            _ignited = false;
         }
 
         private void OnBeat(FeelBeat beat)
