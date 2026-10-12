@@ -11,6 +11,9 @@ namespace MoonProject.UI.Editor
     {
         public const string SourceFolder = "Assets/_Project/UI";
         public const string Uxml = SourceFolder + "/GameUI.uxml";
+
+        /// <summary>The credits (one source of truth) and the full licence texts beside it.</summary>
+        public const string Credits = SourceFolder + "/Credits/credits.json";
         public const string FontFolder = SourceFolder + "/Fonts";
 
         public const string TuningFolder = "Assets/_Project/Data/Tuning/UI";

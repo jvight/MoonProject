@@ -10,9 +10,12 @@ namespace MoonProject.Audio
     public sealed class FeelAudioTuning : ScriptableObject
     {
         [Header("The cut (feel-pass section 3.1)")]
-        [Tooltip("Charge at least this long (s) plays the fresh four-note arpeggio; shorter ones (a resume) the " +
-            "two-note.")]
-        [Range(0.1f, 1f)] [SerializeField] private float _freshChargeSeconds = 0.45f;
+        [Tooltip("The beam's deeper undertone at cutter tiers 1, 2 and 3, as a share of its level (tier 0 has none: " +
+            "the singing tone alone).")]
+        [SerializeField] private Vector3 _undertoneByTier = new Vector3(0.35f, 0.6f, 0.9f);
+
+        [Tooltip("The cutter tier from which the charge run gets its sustained low D (M3-26 section 5).")]
+        [Range(0, 3)] [SerializeField] private int _lowDFromTier = 3;
 
         [Tooltip("Level of the sizzle through 07's body at full cut progress.")]
         [Range(0f, 1f)] [SerializeField] private float _sizzleMax = 0.8f;
@@ -47,7 +50,24 @@ namespace MoonProject.Audio
         [Tooltip("Level of the drums' boost whine.")]
         [Range(0f, 1f)] [SerializeField] private float _boostVolume = 0.7f;
 
-        public float FreshChargeSeconds => _freshChargeSeconds;
+        public int LowDFromTier => _lowDFromTier;
+
+        /// <summary>The undertone's level at cutter tier <paramref name="tier"/> (0 at tier 0).</summary>
+        public float UndertoneAt(int tier)
+        {
+            switch (tier)
+            {
+                case 0:
+                    return 0f;
+                case 1:
+                    return Mathf.Clamp01(_undertoneByTier.x);
+                case 2:
+                    return Mathf.Clamp01(_undertoneByTier.y);
+                default:
+                    return Mathf.Clamp01(_undertoneByTier.z);
+            }
+        }
+
         public float SizzleMax => _sizzleMax;
         public float SizzleMin => Mathf.Min(_sizzleMin, _sizzleMax);
         public float SizzleEase => _sizzleEase;

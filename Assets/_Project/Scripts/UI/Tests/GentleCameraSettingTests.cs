@@ -15,7 +15,7 @@ namespace MoonProject.UI.Tests
             var services = new FakeSettingsServices();
             ILocalization localization = TestTables.Localization(new EventBus(), "next.tower", "x", "y");
             var pause = new PauseSettings();
-            var settings = new PlayerSettings(services, services, services, localization, pause);
+            var settings = new PlayerSettings(services, services, services, new FakeDisplayControl(), localization, pause);
             settings.Restore(new SettingsSaveData());
             Assert.IsFalse(settings.GentleCamera, "a save from before the setting keeps it off");
             int usual = settings.MinLookStep;
@@ -29,7 +29,7 @@ namespace MoonProject.UI.Tests
             Assert.Less(pause.GentleLookMin, settings.LookValue(usual));
 
             var other = new FakeSettingsServices();
-            var restored = new PlayerSettings(other, other, other, localization, pause);
+            var restored = new PlayerSettings(other, other, other, new FakeDisplayControl(), localization, pause);
             restored.Restore(settings.Capture());
             Assert.IsTrue(restored.GentleCamera);
             Assert.AreEqual(pause.GentleLookMin, other.Sensitivity, 1e-5f, "the low look survives the reload");

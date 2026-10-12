@@ -18,7 +18,9 @@ namespace MoonProject.UI.Tests
     /// </summary>
     public sealed class StringTableContentTests
     {
-        private static readonly Regex KeyPattern = new Regex(@"^[a-z0-9_]+(\.[a-z0-9_]+)+$");
+        // A part's noun is keyed by its model id, as Gameplay asks for it ("pickup.Part_TowerCoil").
+        private static readonly Regex KeyPattern =
+            new Regex(@"^([a-z0-9_]+(\.[a-z0-9_]+)+|pickup\.Part_[A-Za-z0-9]+)$");
         private static readonly Regex Placeholder = new Regex(@"\{\d+\}");
 
         private StringTable[] _tables;
@@ -104,6 +106,7 @@ namespace MoonProject.UI.Tests
                          UiKeys.CardCaption, UiKeys.CardClose, UiKeys.TowerLevel,
                          UiKeys.TowerPurchased, UiKeys.LogCaption, UiKeys.CrewLogCaption, UiKeys.LinerCaption,
                          UiKeys.TapeCount, UiKeys.PauseCassettes, UiKeys.PauseRelays, UiKeys.RecipeNeed,
+                         UiKeys.RecipeRow, UiKeys.RewardTitle, UiKeys.StationOffline,
                          UiKeys.BayPick, UiKeys.BayFitted,
                      })
             {
@@ -116,9 +119,15 @@ namespace MoonProject.UI.Tests
                     UiKeys.RadioChannelName(channel));
             }
 
-            foreach (SalvageMaterial material in Enum.GetValues(typeof(SalvageMaterial)))
+            foreach (RewardLineKind kind in Enum.GetValues(typeof(RewardLineKind)))
             {
-                Assert.IsTrue(_english.TryGet(UiKeys.MaterialName(material), out _), UiKeys.MaterialName(material));
+                Assert.IsTrue(_english.TryGet(UiKeys.RewardLine(kind), out _), UiKeys.RewardLine(kind));
+            }
+
+            for (int i = 0; i < Materials.Count; i++)
+            {
+                string key = UiKeys.MaterialName(Materials.At(i));
+                Assert.IsTrue(_english.TryGet(key, out _), key);
             }
 
             foreach (UpgradeStationKind station in Enum.GetValues(typeof(UpgradeStationKind)))

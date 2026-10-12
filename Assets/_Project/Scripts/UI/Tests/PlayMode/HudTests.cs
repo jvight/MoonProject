@@ -113,6 +113,9 @@ namespace MoonProject.UI.PlayModeTests
 
             Press(mouse.rightButton);
             yield return Seconds(0.5f);
+            Assert.IsFalse(_rig.Ui.Reticle.IsVisible, "without the tether ability there is nothing to aim");
+            _rig.Fakes.Grant(RoverAbility.Tether);
+            yield return Seconds(0.5f);
             Assert.IsTrue(_rig.Ui.Reticle.IsVisible, "holding the tether with nothing in the cone");
             Assert.IsFalse(_rig.Ui.Reticle.IsHighlighted);
 
@@ -132,27 +135,37 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator MaterialsChip_DriftsInOnAGain_ThatMaterialGlows_CountsUp_AndLeaves()
+        public IEnumerator PickupFeed_SlidesInOnAGain_RollsThePlusAndTheTotal_StacksTheMaterials_AndLeaves()
         {
             Boot();
+            PickupFeed feed = _rig.Ui.Pickups;
             _rig.Fakes.SetMaterials(5, 2, 1);
             yield return Seconds(0.3f);
-            Assert.IsFalse(_rig.Ui.Chip.IsVisible, "the stock a save loads with shows nothing");
-            Assert.AreEqual("5", _rig.Ui.Chip.Slots.Text(SalvageMaterial.Metal), "but is taken as it is");
+            Assert.IsFalse(feed.IsVisible, "the stock a save loads with shows nothing");
 
             _rig.Fakes.SetMaterials(5, 6, 1);
             yield return Seconds(0.15f);
-            Assert.IsTrue(_rig.Ui.Chip.IsVisible);
-            Assert.Greater(_rig.Ui.Chip.Glow(SalvageMaterial.Wiring), 0f, "the wiring that grew glows");
-            Assert.AreEqual(0f, _rig.Ui.Chip.Glow(SalvageMaterial.Metal), "the others stay calm");
-            Assert.Less(_rig.Ui.Chip.Shown(SalvageMaterial.Wiring), 6, "it counts rather than jumps");
-            yield return Seconds(_rig.Tuning.MaterialsChip.PulseSeconds + 0.3f);
-            Assert.AreEqual("6", _rig.Ui.Chip.Slots.Text(SalvageMaterial.Wiring));
-            Assert.AreEqual(0f, _rig.Ui.Chip.Glow(SalvageMaterial.Wiring), "the glow settles");
+            Assert.IsTrue(feed.IsShowing(SalvageMaterial.Wiring));
+            Assert.IsFalse(feed.IsShowing(SalvageMaterial.Metal), "only the material that grew has a row");
+            Assert.Less(feed.Shown(SalvageMaterial.Wiring), 6, "it counts rather than jumps");
+            yield return Seconds(_rig.Tuning.PickupFeed.MaxCountSeconds + 0.3f);
+            Assert.AreEqual("4", feed.GainText(SalvageMaterial.Wiring), "four more than the row opened on");
+            Assert.AreEqual("6", feed.TotalText(SalvageMaterial.Wiring), "and the new total");
+            Assert.AreEqual(Text(UiKeys.MaterialName(SalvageMaterial.Wiring)), feed.NameText(SalvageMaterial.Wiring));
 
-            yield return Seconds(_rig.Tuning.MaterialsChip.LingerSeconds +
-                                 _rig.Tuning.MaterialsChip.Reveal.FadeOut + 0.3f);
-            Assert.IsFalse(_rig.Ui.Chip.IsVisible, "then it leaves the screen to the moon");
+            _rig.Fakes.SetMaterials(5, 8, 1);
+            yield return Seconds(_rig.Tuning.PickupFeed.MaxCountSeconds + 0.3f);
+            Assert.AreEqual("6", feed.GainText(SalvageMaterial.Wiring), "more of it adds to the row that is up");
+            Assert.AreEqual("8", feed.TotalText(SalvageMaterial.Wiring));
+
+            _rig.Fakes.SetMaterials(6, 8, 2);
+            yield return Seconds(0.3f);
+            Assert.IsTrue(feed.IsShowing(SalvageMaterial.Metal) && feed.IsShowing(SalvageMaterial.Wiring) &&
+                          feed.IsShowing(SalvageMaterial.Optics), "the three materials stack, three rows at most");
+
+            yield return Seconds(_rig.Tuning.PickupFeed.MaxCountSeconds + _rig.Tuning.PickupFeed.LingerSeconds +
+                                 _rig.Tuning.PickupFeed.Reveal.FadeOut + 0.5f);
+            Assert.IsFalse(feed.IsVisible, "then the rows leave the screen to the moon");
         }
 
         [UnityTest]
@@ -167,7 +180,7 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual("rubber_duck", _rig.Ui.Card.Current);
             Assert.AreEqual("Senior Debugging Consultant", _rig.Ui.Layout.MemoryCardName.text);
             StringAssert.StartsWith("Kenji explained", _rig.Ui.Layout.MemoryCardText.text);
-            Assert.AreEqual("Memory 2 of 6", _rig.Ui.Layout.MemoryCardCaption.text);
+            Assert.AreEqual(string.Format(Text(UiKeys.CardCaption), 2, 6), _rig.Ui.Layout.MemoryCardCaption.text);
             Assert.AreEqual("Esc", _rig.Ui.Layout.MemoryCardGlyphLabel.text);
             Assert.IsTrue(_rig.Bootstrap.Context.Input.Enabled, "the card never blocks driving");
 
@@ -196,7 +209,6 @@ namespace MoonProject.UI.PlayModeTests
             yield return null;
             Assert.AreEqual(0, _rig.Fakes.Purchases, "nothing is bought without the coil");
             Assert.IsFalse(_rig.Ui.Tower.IsWorking);
-            Assert.AreEqual("The tower is waiting for its coil.", _rig.Ui.Layout.TowerHoldWord.text);
             Assert.AreEqual(Text(UiKeys.ComponentNeeded("Part_TowerCoil")), _rig.Ui.Layout.TowerHoldWord.text);
 
             _rig.Fakes.AwaitingPart = false;
@@ -218,17 +230,17 @@ namespace MoonProject.UI.PlayModeTests
             yield return Seconds(2f);
             Assert.IsTrue(_rig.Ui.Tower.IsVisible);
             Assert.AreEqual(0, _rig.Fakes.Purchases, "arriving with the button already held buys nothing");
-            Assert.AreEqual("Wake the old mast", _rig.Ui.Layout.TowerTitle.text);
+            Assert.AreEqual(Text(UiKeys.UpgradeTitle("radio_tower", 1)), _rig.Ui.Layout.TowerTitle.text);
             Assert.AreEqual("Level 1 of 3", _rig.Ui.Layout.TowerLevel.text);
             MaterialSlots recipe = _rig.Ui.Tower.Recipe.Slots;
-            StringAssert.EndsWith(" / 2", recipe.Text(SalvageMaterial.Metal), "have / need");
-            StringAssert.EndsWith(" / 1", recipe.Text(SalvageMaterial.Wiring));
+            Assert.AreEqual(string.Format(Text(UiKeys.RecipeRow), 2, _rig.Fakes.Metal),
+                recipe.Text(SalvageMaterial.Metal), "the need first, then what 07 has");
+            Assert.AreEqual(string.Format(Text(UiKeys.RecipeRow), 1, _rig.Fakes.Wiring),
+                recipe.Text(SalvageMaterial.Wiring));
             Assert.AreEqual(DisplayStyle.None, recipe.Root(SalvageMaterial.Optics).resolvedStyle.display,
                 "a material the recipe does not use is left out");
             Assert.IsFalse(recipe.Root(SalvageMaterial.Metal).ClassListContains(MaterialSlots.ShortClass));
             Assert.AreEqual(DisplayStyle.None, _rig.Ui.Layout.TowerNeed.resolvedStyle.display, "nothing is short");
-            Assert.AreEqual("3", _rig.Ui.Chip.Slots.Text(SalvageMaterial.Metal), "the pinned chip shows the stock");
-            Assert.IsTrue(_rig.Ui.Chip.IsVisible, "the stock stays in view at the pad");
 
             Release(keyboard.eKey);
             yield return Seconds(0.2f);
@@ -255,7 +267,8 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual(1, _rig.Fakes.Purchases, "one purchase per hold");
             Release(keyboard.eKey);
             yield return Seconds(0.3f);
-            Assert.AreEqual("Raise the mast", _rig.Ui.Layout.TowerTitle.text, "the next level is offered");
+            Assert.AreEqual(Text(UiKeys.UpgradeTitle("radio_tower", 2)), _rig.Ui.Layout.TowerTitle.text,
+                "the next level is offered");
             Assert.AreEqual(string.Empty, _rig.Ui.Layout.TowerHoldWord.text, "the hold is the ring, never a word");
             Assert.IsTrue(recipe.Root(SalvageMaterial.Metal).ClassListContains(MaterialSlots.ShortClass),
                 "what 07 is short of reads dimmed");
@@ -478,7 +491,8 @@ namespace MoonProject.UI.PlayModeTests
             yield return Seconds(1.5f);
             Assert.IsTrue(_rig.Ui.RelayTag.IsVisible, "holding the part at the mast: its recipe shows");
             MaterialSlots recipe = _rig.Ui.RelayTag.Recipe.Slots;
-            Assert.AreEqual("2 / 6", recipe.Text(SalvageMaterial.Metal), "have / need");
+            Assert.AreEqual(string.Format(Text(UiKeys.RecipeRow), 6, 2), recipe.Text(SalvageMaterial.Metal),
+                "the need first, then what 07 has");
             Assert.IsTrue(recipe.Root(SalvageMaterial.Metal).ClassListContains(MaterialSlots.ShortClass),
                 "short of metal: it reads dimmed");
             Assert.IsFalse(recipe.Root(SalvageMaterial.Wiring).ClassListContains(MaterialSlots.ShortClass),

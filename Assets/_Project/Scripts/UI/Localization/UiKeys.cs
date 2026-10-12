@@ -27,6 +27,9 @@ namespace MoonProject.UI
         public const string PauseSettings = "ui.pause.settings";
         public const string PauseQuit = "ui.pause.quit";
         public const string TitleContinue = "ui.title.continue";
+        public const string DisplayUnlimited = "ui.display.unlimited";
+        public const string CreditsTitle = "ui.credits.title";
+        public const string CreditsVersion = "ui.credits.version";
         public const string TitleSettings = "ui.title.settings";
         public const string TitleQuit = "ui.title.quit";
         public const string JourneyPutAway = "ui.journey.put_away";
@@ -38,6 +41,9 @@ namespace MoonProject.UI
         /// <summary>Art's prefix on a component's model name (Part_TowerCoil), left out of its keys.</summary>
         private const string ComponentModelPrefix = "Part_";
         public const string RecipeNeed = "ui.recipe.need";
+        public const string RecipeRow = "ui.recipe.row";
+        public const string RewardTitle = "ui.reward.title";
+        public const string StationOffline = "ui.station.offline";
         public const string BayPick = "ui.bay.pick";
 
         /// <summary>"hint.excavate": the one word of the prompt teaching <paramref name="kind"/>.</summary>
@@ -101,6 +107,24 @@ namespace MoonProject.UI
         }
 
         /// <summary>"ui.station.workshop": the name of the place an upgrade is sold.</summary>
+        /// <summary>"ui.reward.light_on": the words of one line of the tower's reward card.</summary>
+        public static string RewardLine(RewardLineKind kind)
+        {
+            switch (kind)
+            {
+                case RewardLineKind.LightOn:
+                    return "ui.reward.light_on";
+                case RewardLineKind.LightUp:
+                    return "ui.reward.light_up";
+                case RewardLineKind.RadioOn:
+                    return "ui.reward.radio_on";
+                case RewardLineKind.Reach:
+                    return "ui.reward.reach";
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(kind), kind, "This reward line has no key.");
+            }
+        }
+
         public static string StationName(UpgradeStationKind station)
         {
             switch (station)
@@ -131,7 +155,7 @@ namespace MoonProject.UI
             }
         }
 
-        /// <summary>"material.wiring": a salvage material's name.</summary>
+        /// <summary>"material.wiring": a material's name (salvage, lunar or refined; docs/features/M3-27).</summary>
         public static string MaterialName(SalvageMaterial material)
         {
             switch (material)
@@ -142,6 +166,26 @@ namespace MoonProject.UI
                     return "material.wiring";
                 case SalvageMaterial.Optics:
                     return "material.optics";
+                case SalvageMaterial.CircuitChips:
+                    return "material.circuit_chips";
+                case SalvageMaterial.OrangeBeads:
+                    return "material.orange_beads";
+                case SalvageMaterial.Ilmenite:
+                    return "material.ilmenite";
+                case SalvageMaterial.WaterIce:
+                    return "material.water_ice";
+                case SalvageMaterial.RareEarths:
+                    return "material.rare_earths";
+                case SalvageMaterial.Glass:
+                    return "material.glass";
+                case SalvageMaterial.Alloy:
+                    return "material.alloy";
+                case SalvageMaterial.Coolant:
+                    return "material.coolant";
+                case SalvageMaterial.Crystal:
+                    return "material.crystal";
+                case SalvageMaterial.Superconductor:
+                    return "material.superconductor";
                 default:
                     throw new ArgumentOutOfRangeException(nameof(material), material, "This material has no name key.");
             }
@@ -177,6 +221,20 @@ namespace MoonProject.UI
         public static string SiteName(string siteId)
         {
             return siteId + ".name";
+        }
+
+        /// <summary>"ui.display.mode.borderless": how the window sits on the screen, in words.</summary>
+        public static string DisplayModeName(DisplayMode mode)
+        {
+            switch (mode)
+            {
+                case DisplayMode.Exclusive:
+                    return "ui.display.mode.exclusive";
+                case DisplayMode.Windowed:
+                    return "ui.display.mode.windowed";
+                default:
+                    return "ui.display.mode.borderless";
+            }
         }
 
         public static string UpgradeName(string upgradeId)

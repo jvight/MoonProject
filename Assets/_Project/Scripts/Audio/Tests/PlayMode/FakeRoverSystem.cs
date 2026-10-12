@@ -16,6 +16,9 @@ namespace MoonProject.Audio.PlayModeTests
     {
         private Transform _tetherOrigin;
 
+        /// <summary>The cutter tests change (tier, lamps).</summary>
+        public FakeCutter Cutter { get; } = new FakeCutter();
+
         public FakeFriend Tilly { get; } = new FakeFriend("tilly");
 
         public FakeFriend Bell { get; } = new FakeFriend("bell");
@@ -102,6 +105,7 @@ namespace MoonProject.Audio.PlayModeTests
             context.Register<IStationReach>(Reach);
             Bay = new FakeRoverBay(transform);
             context.Register<IRoverBay>(Bay);
+            context.Register<ICutter>(Cutter);
         }
     }
 }

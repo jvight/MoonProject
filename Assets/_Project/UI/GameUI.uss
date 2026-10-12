@@ -146,12 +146,6 @@ Label {
     min-width: 24px;
 }
 
-.chip--inline {
-    background-color: var(--moon-cream-glow);
-    border-width: 0;
-    padding: 6px 14px 6px 10px;
-}
-
 .caption {
     font-size: 18px;
     letter-spacing: 1px;
@@ -247,40 +241,8 @@ Label {
     color: var(--moon-text);
 }
 
-.material-slot__glow {
-    position: absolute;
-    left: 3px;
-    top: 50%;
-    width: 16px;
-    height: 16px;
-    margin-top: -8px;
-    --shadow-color: var(--moon-cream);
-    --shadow-offset: 0;
-    --shadow-layers: 8;
-    --shadow-radius: 8;
-    --shadow-spread: 16;
-}
-
-.materials-chip .material-icon {
-    width: 22px;
-    height: 22px;
-}
-
-.materials-chip .material-slot__count {
-    margin-left: 0;
-    font-size: 20px;
-    color: var(--glass-hi);
-    -unity-text-align: middle-center;
-}
-
-.materials-chip .material-slot__glow {
-    left: 25px;
-    top: 10px;
-    margin-top: 0;
-}
-
-/* A recipe, one row per material (docs/design/first-hour-v2 6.5): icon, name, have / need. A met need is cream; a
-   short one is dim amber with a hollow pip. One quiet need line under them. */
+/* A recipe, one row per material (docs/design/first-hour-v2 6.5): icon, name, the need and what 07 has, a check once
+   it is covered; a short one reads dim. One quiet need line under them. */
 
 .recipe {
     flex-direction: column;
@@ -304,23 +266,21 @@ Label {
 }
 
 .recipe .material-slot__count {
-    min-width: 72px;
     margin-left: 6px;
     font-size: 22px;
+    white-space: nowrap;
 }
 
-.material-slot__pip {
-    display: none;
-    width: 12px;
-    height: 12px;
+/* A covered material wears a painted check (the fonts have none); a short one reads dim, with no check */
+.material-slot__check {
+    width: 18px;
+    height: 18px;
     margin-left: 8px;
-    border-width: 2px;
-    border-radius: 6px;
-    border-color: var(--moon-warm-lamp);
+    --check-color: var(--moon-warm-lamp);
 }
 
-.material-slot--short .material-slot__pip {
-    display: flex;
+.material-slot--short .material-slot__check {
+    display: none;
 }
 
 .material-slot--short .material-icon {
@@ -329,7 +289,7 @@ Label {
 
 .material-slot--short .material-slot__count,
 .material-slot--short .material-slot__word {
-    color: var(--moon-warm-lamp);
+    color: var(--moon-text-dim);
 }
 
 /* A bay row's cost stays on its line: icon and have / need, no names */
@@ -462,6 +422,77 @@ Label {
     --tick-color: var(--moon-cream);
 }
 
+/* The credits: a centred glass panel over the title, its text drifting up slowly */
+.credits {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    justify-content: center;
+    align-items: center;
+}
+
+.credits__panel {
+    width: 46%;
+    min-width: 520px;
+    height: 76%;
+    padding: 24px 32px 20px 32px;
+}
+
+.credits__title {
+    margin-bottom: 14px;
+    font-size: 30px;
+    letter-spacing: 4px;
+    color: var(--glass-hi);
+    -unity-text-align: middle-center;
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/Exo2-SemiBold.asset");
+}
+
+.credits__scroll {
+    flex-grow: 1;
+    margin-bottom: 12px;
+}
+
+.credits__heading {
+    margin-top: 30px;
+    margin-bottom: 8px;
+    font-size: 24px;
+    letter-spacing: 3px;
+    color: var(--glass-sel);
+    -unity-text-align: middle-center;
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/Exo2-Bold.asset");
+}
+
+.credits__version {
+    margin-bottom: 14px;
+    font-size: 18px;
+    color: var(--moon-text-dim);
+    -unity-text-align: middle-center;
+}
+
+.credits__name {
+    margin-top: 10px;
+    font-size: 22px;
+    color: var(--glass-hi);
+    white-space: normal;
+    -unity-text-align: middle-center;
+}
+
+.credits__detail {
+    font-size: 18px;
+    color: var(--glass-ring);
+    white-space: normal;
+    -unity-text-align: middle-center;
+}
+
+.credits__note {
+    font-size: 18px;
+    color: var(--moon-text-dim);
+    white-space: normal;
+    -unity-text-align: middle-center;
+}
+
 .curtain {
     position: absolute;
     left: 0;
@@ -551,43 +582,6 @@ Label {
     color: var(--moon-text-dim);
 }
 
-/* 07's abilities at the bottom centre: round glass bubbles, a padlock until earned, an amber ring in use or new */
-.ability-slots {
-    position: absolute;
-    left: 50%;
-    bottom: 18px;
-    translate: -50% 0;
-    flex-direction: row;
-    align-items: center;
-}
-
-.ability-slot {
-    width: 62px;
-    height: 62px;
-    margin: 0 7px;
-    justify-content: center;
-    align-items: center;
-    background-image: url("project://database/Assets/_Project/Generated/UI/Glass/GlassBubble.png");
-}
-
-.ability-slot__icon {
-    width: 26px;
-    height: 26px;
-    --icon-color: var(--glass-hi);
-}
-
-.ability-slot--locked {
-    opacity: 0.38;
-}
-
-.ability-slot--on {
-    width: 72px;
-    height: 72px;
-    border-width: 3px;
-    border-radius: 36px;
-    border-color: var(--glass-sel);
-}
-
 .next-line__text {
     font-size: 26px;
     letter-spacing: 1px;
@@ -598,10 +592,7 @@ Label {
 
 /* 07's cells (docs/design/first-hour-v2 6.4): a small row of pills on a glass plate, top left, one pill per cell */
 
-/*
- * The dial cluster at the bottom left (Moonlight Glass, like Subnautica's vitals): the big battery dial, and the
- * materials as three small glass dials around its lower left (see .materials-chip). Both share one 242x211 box.
- */
+/* The battery dial at the bottom left (Moonlight Glass, like Subnautica's vitals) */
 .battery-dial {
     position: absolute;
     left: 100px;
@@ -699,6 +690,61 @@ Label {
     align-items: center;
 }
 
+/* The tower's reward card (feel-pass 8.2): glass in the upper third, a title and a few short lines of what it gave */
+
+.reward-anchor {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 20%;
+    align-items: center;
+}
+
+.reward-card {
+    min-width: 440px;
+    max-width: 640px;
+    padding: 20px 34px 22px 34px;
+    background-image: url("project://database/Assets/_Project/Generated/UI/Glass/GlassPanel.png");
+    -unity-slice-left: 56;
+    -unity-slice-right: 56;
+    -unity-slice-top: 56;
+    -unity-slice-bottom: 56;
+    -unity-slice-scale: 0.5;
+}
+
+.reward-card__title {
+    margin-bottom: 12px;
+    font-size: 28px;
+    letter-spacing: 3px;
+    color: var(--glass-hi);
+    -unity-text-align: middle-center;
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/Exo2-SemiBold.asset");
+}
+
+.reward-card__lines {
+    align-items: flex-start;
+}
+
+.reward-card__row {
+    flex-direction: row;
+    align-items: center;
+    margin: 4px 0;
+}
+
+.reward-card__lamp {
+    width: 8px;
+    height: 8px;
+    margin-right: 14px;
+    border-radius: 4px;
+    background-color: var(--moon-warm-accent);
+}
+
+.reward-card__line {
+    font-size: 22px;
+    color: var(--glass-hi);
+    white-space: normal;
+}
+
 .kit-title__rule {
     width: 64px;
     height: 2px;
@@ -792,56 +838,66 @@ Label {
     background-color: var(--moon-warm-lamp);
 }
 
-/* Materials: three small glass dials around the battery dial's lower left, drifting in only when the stock changes */
+/*
+ * The pickup feed (Subnautica's pickup notices): small glass rows at the left, one per material that just grew, each
+ * with its icon, name, a "+N" and the new total. A row slides in from the left (PickupFeedSettings.SlideDistance).
+ */
 
-.materials-chip {
+.pickup-feed {
     position: absolute;
     left: 0;
-    bottom: 0;
-    width: 242px;
-    height: 211px;
+    top: 36%;
+    align-items: flex-start;
 }
 
-/* The dials carry their own glass and glow: the chip's shadow layer stays empty */
-.materials-chip .soft-shadow {
-    display: none;
+.pickup-row {
+    margin-bottom: 8px;
 }
 
-.materials-chip__body {
-    position: absolute;
-    left: 0;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    padding: 0;
-    border-width: 0;
-    background-color: rgba(0, 0, 0, 0);
-}
-
-.materials-chip .material-slot {
-    position: absolute;
-    width: 66px;
-    height: 66px;
-    margin: 0;
-    flex-direction: column;
-    justify-content: center;
+.pickup-row__body {
+    flex-direction: row;
     align-items: center;
-    background-image: url("project://database/Assets/_Project/Generated/UI/Glass/GlassBubble.png");
+    min-width: 280px;
+    padding: 9px 22px 9px 18px;
+    background-image: url("project://database/Assets/_Project/Generated/UI/Glass/GlassPill.png");
+    -unity-slice-left: 72;
+    -unity-slice-right: 72;
+    -unity-slice-top: 72;
+    -unity-slice-bottom: 72;
+    -unity-slice-scale: 0.5;
 }
 
-.materials-chip .material-slot--metal {
-    left: 0;
-    bottom: 138px;
+.pickup-row .material-icon {
+    width: 26px;
+    height: 26px;
+    margin-right: 12px;
 }
 
-.materials-chip .material-slot--wiring {
-    left: 25px;
-    bottom: 63px;
+.pickup-row__name {
+    flex-grow: 1;
+    margin-right: 16px;
+    font-size: 20px;
+    color: var(--glass-hi);
 }
 
-.materials-chip .material-slot--optics {
-    left: 88px;
-    bottom: 6px;
+.pickup-row__plus,
+.pickup-row__gain {
+    font-size: 24px;
+    color: var(--glass-sel);
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/Exo2-Bold.asset");
+}
+
+.pickup-row__gain {
+    min-width: 34px;
+    margin-right: 18px;
+}
+
+.pickup-row__total {
+    min-width: 36px;
+    font-size: 22px;
+    color: var(--moon-text-dim);
+    -unity-text-align: middle-right;
+    -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/Exo2-SemiBold.asset");
 }
 
 /* Salvage: the hold ring centred on a piece's cut point, and a site's name over it */
@@ -1203,6 +1259,12 @@ Label {
     align-items: center;
 }
 
+.tower-panel__state {
+    margin-left: 12px;
+    letter-spacing: 2px;
+    color: var(--moon-warm-lamp);
+}
+
 .tower-panel__lamp {
     width: 8px;
     height: 8px;
@@ -1270,8 +1332,8 @@ Label {
 }
 
 .bay-row--selected {
-    background-color: var(--moon-cream-glow);
-    border-color: var(--moon-glass-edge);
+    background-color: var(--glass-bar);
+    border-color: var(--glass-rim);
 }
 
 .bay-row__line {
@@ -1549,6 +1611,81 @@ Label {
     transition-duration: 0.06s, 0.06s;
 }
 
+/* The settings' tabs: skewed glass (Subnautica's tab buttons), the selected one edged in amber */
+.settings-tabs {
+    flex-direction: row;
+    align-items: stretch;
+    margin: 0 8px 14px 8px;
+}
+
+/* Each tab's skewed glass is painted on its wrapper, beneath the button, so the label is always drawn on top */
+.settings-tab-wrap {
+    flex-grow: 1;
+    flex-basis: 0;
+    min-width: 0;
+    min-height: 40px;
+    margin: 0 3px;
+    --tab-color: var(--glass-deep);
+    --tab-edge: var(--moon-track);
+    --tab-edge-width: 1.5;
+}
+
+.settings-tab-wrap--on {
+    --tab-color: var(--glass-bar);
+    --tab-edge: var(--glass-sel);
+    --tab-edge-width: 3;
+}
+
+.settings-tab-wrap--focus {
+    --tab-color: var(--glass-sel);
+    --tab-edge: var(--glass-sel);
+    scale: 1.04 1.04;
+}
+
+.settings-tab {
+    flex-grow: 1;
+    min-width: 0;
+    min-height: 40px;
+    margin: 0;
+    padding: 2px 16px;
+    white-space: normal;
+    border-width: 0;
+    background-color: rgba(0, 0, 0, 0);
+    color: var(--glass-hi);
+    font-size: 18px;
+    -unity-text-align: middle-center;
+}
+
+.pause .settings-tab:focus {
+    color: var(--glass-sel-text);
+}
+
+.settings-page {
+    min-height: 240px;
+}
+
+/* A choice stepped by a pair of arrows round its current value (resolution, window mode, FPS limit) */
+.cycle__arrow {
+    flex-grow: 0;
+    flex-shrink: 0;
+    min-width: 38px;
+    margin: 0 2px;
+    padding: 0;
+}
+
+.cycle__value {
+    flex-grow: 1;
+    flex-shrink: 1;
+    font-size: 18px;
+    white-space: normal;
+    color: var(--glass-hi);
+    -unity-text-align: middle-center;
+}
+
+.setting-row--idle {
+    opacity: 0.5;
+}
+
 .section-label {
     font-size: 18px;
     letter-spacing: 2px;
@@ -1657,6 +1794,19 @@ Label {
     justify-content: center;
 }
 
+.lab-arrows {
+    flex-direction: row;
+    align-items: center;
+    margin: 0 6px 0 2px;
+}
+
+.lab-arrow {
+    width: 14px;
+    height: 14px;
+    margin: 0 2px;
+    --arrow-color: var(--glass-hi);
+}
+
 .lab-prompts__chip {
     margin: 0 10px;
 }
@@ -1749,6 +1899,7 @@ Label {
     right: 7%;
     top: 34%;
     width: 26%;
+    min-width: 360px;
     padding: 18px 22px 16px 22px;
     background-image: url("project://database/Assets/_Project/Generated/UI/Glass/GlassPanel.png");
     -unity-slice-left: 56;
@@ -1778,13 +1929,11 @@ Label {
 }
 
 .recipe-card__row {
-    flex-direction: row;
-    align-items: center;
     margin: 3px 0;
 }
 
 .recipe-card__word {
-    width: 72px;
+    margin-bottom: 4px;
     font-size: 15px;
     letter-spacing: 2px;
     color: var(--moon-text);

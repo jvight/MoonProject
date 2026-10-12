@@ -51,6 +51,13 @@ MonoBehaviour:
     _freezeSeconds: 0.3
     _resumeSeconds: 0.45
     _volumeSteps: 10
+    _fpsCaps:
+    - 30
+    - 60
+    - 120
+    - 144
+    - 0
+    _defaultFpsCap: 60
     _lookStep: 0.25
     _lookMin: 0.25
     _lookMax: 3
@@ -414,3 +421,15 @@ MonoBehaviour:
     _earnedSeconds: 8
     _stillSpeed: 0.3
     _stillSeconds: 1.5
+  _credits:
+    _reveal:
+      _fadeIn: 0.5
+      _fadeOut: 0.4
+      _slide: 12
+      _scaleFrom: 0.97
+      _springFrequency: 1.4
+      _springDamping: 0.75
+    _scrollSpeed: 34
+    _startDelaySeconds: 2
+    _resumeAfterSeconds: 5
+    _lineStepPixels: 110

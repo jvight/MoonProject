@@ -329,7 +329,7 @@ namespace MoonProject.UI.PlayModeTests
             yield return new WaitForSecondsRealtime(Settle);
             Assert.IsTrue(_rig.Ui.Pause.IsAskingNewGame);
             Assert.AreSame(layout.NewGameKeepButton, Focused(), "the safe answer has focus");
-            Assert.AreEqual("Put this moon away and start again?",
+            Assert.AreEqual(_rig.Bootstrap.Context.Get<ILocalization>().Get("ui.title.new_game_question"),
                 layout.PageNewGame.Q<Label>(className: "pause__question").text);
             _rig.Ui.Pause.Back();
             yield return new WaitForSecondsRealtime(Settle);
@@ -367,11 +367,101 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual("vi", _rig.Bootstrap.Context.Get<ILocalization>().Language);
             Assert.AreEqual(DisplayStyle.None, layout.ResumeButton.resolvedStyle.display, "nothing to continue");
             Assert.AreSame(layout.NewGameButton, Focused(), "New Game is the default with no save");
-            Assert.AreEqual("Trò chơi mới", layout.NewGameButton.text);
+            Assert.AreEqual(_rig.Bootstrap.Context.Get<ILocalization>().Get("ui.title.new_game"), layout.NewGameButton.text);
 
             Submit(layout.NewGameButton);
             Assert.AreEqual(1, asked, "no question and no dark: the world behind the title is already fresh");
             Assert.IsFalse(_rig.Ui.Pause.IsOpen);
+        }
+
+        [UnityTest]
+        public IEnumerator Title_Credits_OpenOnTheirOwn_DriftSlowly_ScrollByKey_AndBackReturnsToTheMenu()
+        {
+            Boot(BootstrapHarness.NewTestSlot());
+            yield return null;
+            _rig.Bootstrap.Context.Events.Publish(new TitleShown(true));
+            yield return new WaitForSecondsRealtime(Settle);
+            UiLayout layout = _rig.Ui.Layout;
+            Assert.AreEqual(DisplayStyle.Flex, layout.CreditsButton.resolvedStyle.display, "the title offers Credits");
+
+            Submit(layout.CreditsButton);
+            yield return new WaitForSecondsRealtime(Settle);
+            Assert.IsTrue(_rig.Ui.Pause.IsShowingCredits);
+            Assert.AreSame(layout.CreditsBack, Focused(), "Back has focus: the gamepad can leave");
+            StringAssert.Contains("Version", ((Label)layout.CreditsScroll.contentContainer[1]).text);
+            Assert.AreEqual("Lunarion", ((Label)layout.CreditsScroll.contentContainer[0]).text);
+
+            float start = layout.CreditsScroll.scrollOffset.y;
+            yield return new WaitForSecondsRealtime(1.5f);
+            Assert.Greater(layout.CreditsScroll.scrollOffset.y, start, "the credits drift up by themselves");
+
+            float before = layout.CreditsScroll.scrollOffset.y;
+            yield return Navigate(NavigationMoveEvent.Direction.Down);
+            Assert.Greater(layout.CreditsScroll.scrollOffset.y, before + 50f, "Down scrolls them a step");
+
+            _rig.Ui.Pause.Back();
+            yield return new WaitForSecondsRealtime(Settle);
+            Assert.IsFalse(_rig.Ui.Pause.IsShowingCredits);
+            Assert.IsTrue(_rig.Ui.Pause.IsTitle, "Back returns to the title's menu, not the game");
+            Assert.AreSame(layout.CreditsButton, Focused(), "focus returns to the Credits entry");
+        }
+
+        [UnityTest]
+        public IEnumerator Settings_HaveThreeTabs_OnePageEach_AndTheDisplayPageStepsItsChoices()
+        {
+            Boot(BootstrapHarness.NewTestSlot());
+            yield return null;
+            _rig.Bootstrap.Context.Events.Publish(new TitleShown(true));
+            yield return new WaitForSecondsRealtime(Settle);
+            UiLayout layout = _rig.Ui.Layout;
+            Submit(layout.SettingsButton);
+            yield return new WaitForSecondsRealtime(Settle);
+            Assert.AreEqual(0, _rig.Ui.Pause.SettingsTab, "Sound first");
+            Assert.AreEqual(DisplayStyle.Flex, layout.PageSound.resolvedStyle.display);
+            Assert.AreEqual(DisplayStyle.None, layout.PageCamera.resolvedStyle.display);
+            Assert.AreEqual(DisplayStyle.None, layout.PageDisplay.resolvedStyle.display);
+            Assert.AreSame(layout.MasterSlider, Focused(), "focus goes into the Sound page");
+
+            Submit(layout.TabCamera);
+            yield return null;
+            Assert.AreEqual(DisplayStyle.Flex, layout.PageCamera.resolvedStyle.display);
+            Assert.AreEqual(DisplayStyle.None, layout.PageSound.resolvedStyle.display);
+            Assert.IsTrue(layout.TabCamera.ClassListContains("settings-tab--on"));
+            Assert.IsFalse(layout.TabSound.ClassListContains("settings-tab--on"));
+
+            Submit(layout.TabDisplay);
+            yield return null;
+            Assert.AreEqual(DisplayStyle.Flex, layout.PageDisplay.resolvedStyle.display);
+            string resolution = layout.ResolutionValue.text;
+            StringAssert.Contains("×", resolution);
+            Submit(layout.ResolutionNext);
+            Assert.AreNotEqual(resolution, layout.ResolutionValue.text, "the arrows step the resolution");
+            Submit(layout.ResolutionPrev);
+            Assert.AreEqual(resolution, layout.ResolutionValue.text, "and back");
+
+            ILocalization words = _rig.Bootstrap.Context.Get<ILocalization>();
+            Assert.AreEqual(words.Get(UiKeys.DisplayModeName(DisplayMode.Borderless)), layout.ModeValue.text,
+                "borderless is the default mode");
+            Submit(layout.ModeNext);
+            Assert.AreEqual(words.Get(UiKeys.DisplayModeName(DisplayMode.Exclusive)), layout.ModeValue.text);
+            Submit(layout.ModeNext);
+            Assert.AreEqual(words.Get(UiKeys.DisplayModeName(DisplayMode.Windowed)), layout.ModeValue.text);
+
+            Assert.IsTrue(layout.VSyncToggle.value, "V-Sync is on by default");
+            Assert.IsTrue(layout.FpsRow.ClassListContains("setting-row--idle"), "the FPS limit rests while V-Sync paces");
+            layout.VSyncToggle.value = false;
+            Assert.IsFalse(layout.FpsRow.ClassListContains("setting-row--idle"));
+            Submit(layout.FpsNext);
+            Assert.AreEqual("120", layout.FpsValue.text, "30, 60, then 120");
+            Submit(layout.FpsNext);
+            Submit(layout.FpsNext);
+            Assert.AreEqual(words.Get(UiKeys.DisplayUnlimited), layout.FpsValue.text);
+
+            _rig.Ui.Pause.Back();
+            yield return new WaitForSecondsRealtime(Settle);
+            Submit(layout.SettingsButton);
+            yield return new WaitForSecondsRealtime(Settle);
+            Assert.AreEqual(0, _rig.Ui.Pause.SettingsTab, "the settings open on Sound again");
         }
 
         [UnityTest]

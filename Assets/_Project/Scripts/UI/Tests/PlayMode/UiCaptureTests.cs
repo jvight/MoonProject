@@ -42,6 +42,7 @@ namespace MoonProject.UI.PlayModeTests
         private const int Height = 900;
         private const int NarrowWidth = 1200;
         private const int NarrowHeight = 960;
+        private const float WaitLimitSeconds = 30f;
         private const string OutputFolder = "Logs/ui-captures";
         private const float FriendShotDistance = 7f;
         private const float FriendShotHeight = 2.4f;
@@ -173,6 +174,7 @@ namespace MoonProject.UI.PlayModeTests
             yield return Capture(camera, folder, "02_prompt_dig");
 
             fakes.PrimaryHint = InteractionHint.None;
+            fakes.Grant(RoverAbility.Tether);
             fakes.TetherState = TetherAimState.Hovering;
             yield return new WaitForSecondsRealtime(1f);
             yield return Capture(camera, folder, "03_reticle_hover");
@@ -180,9 +182,9 @@ namespace MoonProject.UI.PlayModeTests
 
             fakes.SetMaterials(4, 2, 1);
             fakes.SetMaterials(7, 2, 3);
-            yield return new WaitForSecondsRealtime(_tuning.MaterialsChip.PulseSeconds * 0.5f);
-            yield return Capture(camera, folder, "04_materials_chip_gain");
-            yield return new WaitForSecondsRealtime(_tuning.MaterialsChip.PulseSeconds);
+            yield return new WaitForSecondsRealtime(_tuning.PickupFeed.MaxCountSeconds * 0.5f);
+            yield return Capture(camera, folder, "04_pickup_feed_gain");
+            yield return new WaitForSecondsRealtime(_tuning.PickupFeed.MaxCountSeconds);
 
             context.Events.Publish(new RelicDeposited("cassette_player", Vector3.zero, 3));
             yield return new WaitForSecondsRealtime(_tuning.MemoryCard.AppearDelay +
@@ -614,18 +616,18 @@ namespace MoonProject.UI.PlayModeTests
             using (context.Events.Subscribe<StockCountTicked>(ticks.Add))
             {
                 fakes.SetMaterials(2, 0, 0);
-                yield return new WaitForSecondsRealtime(_tuning.MaterialsChip.LingerSeconds * 0.3f);
-                Assert.AreEqual(2, ui.Chip.Shown(SalvageMaterial.Metal));
+                yield return new WaitForSecondsRealtime(_tuning.PickupFeed.LingerSeconds * 0.3f);
+                Assert.AreEqual(2, ui.Pickups.Shown(SalvageMaterial.Metal));
                 ticks.Clear();
 
                 fakes.SetMaterials(8, 0, 0);
-                yield return new WaitForSecondsRealtime(_tuning.MaterialsChip.StepSeconds * 2.5f);
-                int midway = ui.Chip.Shown(SalvageMaterial.Metal);
+                yield return new WaitForSecondsRealtime(_tuning.PickupFeed.StepSeconds * 2.5f);
+                int midway = ui.Pickups.Shown(SalvageMaterial.Metal);
                 Assert.That(midway, Is.InRange(3, 7), "the count is rolling, not jumping");
                 yield return Capture(camera, folder, "70_stock_rolling");
                 fakes.SetMaterials(10, 0, 0);
-                yield return new WaitForSecondsRealtime(_tuning.MaterialsChip.StepSeconds * 12f);
-                Assert.AreEqual(10, ui.Chip.Shown(SalvageMaterial.Metal));
+                yield return new WaitForSecondsRealtime(_tuning.PickupFeed.StepSeconds * 12f);
+                Assert.AreEqual(10, ui.Pickups.Shown(SalvageMaterial.Metal));
                 yield return Capture(camera, folder, "71_stock_rolled");
 
                 // The scene's own UI answers the same stock event, so each tick arrives once per UI: count units.
@@ -720,6 +722,7 @@ namespace MoonProject.UI.PlayModeTests
             GameContext context = FindBootstrap().Context;
             Camera camera = context.Get<IViewCamera>().Camera;
             UISystem ui = BuildUi(context, out _, out _);
+            FreezeWorld();
             yield return null;
             string folder = Path.GetFullPath(OutputFolder);
             Directory.CreateDirectory(folder);
@@ -734,9 +737,66 @@ namespace MoonProject.UI.PlayModeTests
             Assert.IsFalse(ui.SaveTick.IsVisible, "and gone a moment later");
 
             context.Events.Publish(new StationNotYet("notyet.tower", Vector3.zero, 10f));
-            yield return new WaitForSecondsRealtime(TickerEntrance());
+            yield return Until(() => ui.Ticker.IsVisible, WaitLimitSeconds);
+            yield return new WaitForSecondsRealtime(_tuning.Ticker.Reveal.FadeIn + 0.3f);
             Assert.IsTrue(ui.Ticker.IsVisible, "the sleeper's line is on the ticker");
             yield return Capture(camera, folder, "81_not_yet_ticker");
+#else
+            Assert.Ignore("Captures need the editor.");
+            yield break;
+#endif
+        }
+
+        /// <summary>The settings' three tabs over the title (captures 92-94). Rerun with --filter CaptureSettingsTabs.</summary>
+        [UnityTest]
+        public IEnumerator CaptureSettingsTabs_SoundCameraDisplay()
+        {
+#if UNITY_EDITOR
+            yield return LoadMain();
+            GameContext context = FindBootstrap().Context;
+            Camera camera = context.Get<IViewCamera>().Camera;
+            UISystem ui = BuildUi(context, out _, out _);
+            yield return null;
+            string folder = Path.GetFullPath(OutputFolder);
+            Directory.CreateDirectory(folder);
+            context.Events.Publish(new TitleShown(true));
+            yield return new WaitForSecondsRealtime(_tuning.Title.Curtain.FadeOut + _tuning.Title.Reveal.FadeIn + 0.5f);
+            Submit(ui.Layout.SettingsButton);
+            yield return new WaitForSecondsRealtime(_tuning.Pause.SettingsPanel.FadeIn + 0.5f);
+            yield return Capture(camera, folder, "92_settings_sound");
+            Submit(ui.Layout.TabCamera);
+            yield return new WaitForSecondsRealtime(0.3f);
+            yield return Capture(camera, folder, "93_settings_camera");
+            Submit(ui.Layout.TabDisplay);
+            yield return new WaitForSecondsRealtime(0.3f);
+            yield return Capture(camera, folder, "94_settings_display");
+#else
+            Assert.Ignore("Captures need the editor.");
+            yield break;
+#endif
+        }
+
+        /// <summary>The credits over the title (capture 90). Rerun with --filter CaptureCredits.</summary>
+        [UnityTest]
+        public IEnumerator CaptureCredits_OverTheTitle()
+        {
+#if UNITY_EDITOR
+            yield return LoadMain();
+            GameContext context = FindBootstrap().Context;
+            Camera camera = context.Get<IViewCamera>().Camera;
+            UISystem ui = BuildUi(context, out _, out _);
+            yield return null;
+            string folder = Path.GetFullPath(OutputFolder);
+            Directory.CreateDirectory(folder);
+            context.Events.Publish(new TitleShown(true));
+            yield return new WaitForSecondsRealtime(_tuning.Title.Curtain.FadeOut + _tuning.Title.Reveal.FadeIn + 0.5f);
+            Submit(ui.Layout.CreditsButton);
+            yield return new WaitForSecondsRealtime(_tuning.Credits.Reveal.FadeIn + 0.5f);
+            Assert.IsTrue(ui.Pause.IsShowingCredits);
+            yield return Capture(camera, folder, "90_credits_top");
+            ui.Layout.CreditsScroll.scrollOffset = new Vector2(0f, 700f);
+            yield return new WaitForSecondsRealtime(0.4f);
+            yield return Capture(camera, folder, "91_credits_fonts_and_voice");
 #else
             Assert.Ignore("Captures need the editor.");
             yield break;
@@ -797,6 +857,27 @@ namespace MoonProject.UI.PlayModeTests
             fakes.Looked = null;
             fakes.IsSheet = false;
             fakes.Bay = null;
+
+            // A prompt whose point sits under the recipe card rests on top of it, never over its words.
+            fakes.Looked = _tower.Id;
+            fakes.PrimaryHint = new InteractionHint(InteractionKind.Deposit,
+                camera.ViewportToWorldPoint(new Vector3(0.8f, 0.55f, 10f)), true);
+            yield return new WaitForSecondsRealtime(_tuning.Guidance.Recipe.FadeIn + 2.5f);
+            Assert.IsTrue(ui.Prompt.IsVisible && ui.RecipeCard.IsVisible);
+            Assert.IsFalse(ui.Layout.Prompt.worldBound.Overlaps(ui.Layout.RecipeCardRoot.worldBound),
+                "the prompt keeps off the recipe card");
+            yield return Capture(camera, folder, "49e_recipe_card_with_prompt");
+            fakes.PrimaryHint = InteractionHint.None;
+            fakes.Looked = null;
+            yield return new WaitForSecondsRealtime(_tuning.Guidance.Recipe.FadeOut + 0.5f);
+
+            // The tower's reward card, from the upgrade's own data.
+            context.Events.Publish(new UpgradePurchased(_tower.Id, 1));
+            context.Events.Publish(new FeelBeat(FeelKind.Build, FeelPhase.Reward, Vector3.zero, Vector3.up, 1f, 0f));
+            yield return new WaitForSecondsRealtime(_tuning.RewardCard.Reveal.FadeIn + 1f);
+            Assert.IsTrue(ui.RewardCard.IsVisible);
+            Assert.Greater(ui.RewardCard.LineCount, 0, "the card says what the level gave");
+            yield return Capture(camera, folder, "49f_reward_card");
 #else
             Assert.Ignore("Captures need the editor.");
             yield break;
@@ -818,6 +899,7 @@ namespace MoonProject.UI.PlayModeTests
             GameContext context = FindBootstrap().Context;
             Camera camera = context.Get<IViewCamera>().Camera;
             UISystem ui = BuildUi(context, out FakeGameServices fakes, out _);
+            FreezeWorld();
             TuneQuickPatience();
             yield return null;
             string folder = Path.GetFullPath(OutputFolder);
@@ -902,6 +984,25 @@ namespace MoonProject.UI.PlayModeTests
             var serialized = new SerializedObject(_tuning);
             serialized.FindProperty("_guidance._stepPatienceSeconds").floatValue = 1f;
             serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        /// <summary>
+        /// Holds the live world still: its own sonar, home and rover would answer over the scripted moments, and the
+        /// UI runs on unscaled time. Restored in <see cref="TearDown"/>.
+        /// </summary>
+        private static void FreezeWorld()
+        {
+            Time.timeScale = 0f;
+        }
+
+        /// <summary>Waits until <paramref name="condition"/> holds, for at most <paramref name="seconds"/>.</summary>
+        private static IEnumerator Until(Func<bool> condition, float seconds)
+        {
+            float end = Time.realtimeSinceStartup + seconds;
+            while (Time.realtimeSinceStartup < end && !condition())
+            {
+                yield return null;
+            }
         }
 
         /// <summary>Waits <paramref name="seconds"/>, noting every frame where more than one voice speaks.</summary>
@@ -1302,7 +1403,8 @@ namespace MoonProject.UI.PlayModeTests
                 {
                     AssetDatabase.LoadAssetAtPath<TextAsset>(UiTestRig.EnglishPath),
                     AssetDatabase.LoadAssetAtPath<TextAsset>(UiTestRig.VietnamesePath),
-                }, AssetDatabase.LoadAssetAtPath<WordmarkShape>(UiTestRig.WordmarkPath));
+                }, AssetDatabase.LoadAssetAtPath<WordmarkShape>(UiTestRig.WordmarkPath),
+                AssetDatabase.LoadAssetAtPath<TextAsset>(UiTestRig.CreditsPath));
             ui.QuitAction = () => { };
             _uiHost.SetActive(true);
 

@@ -13,11 +13,6 @@ from synth.loop import periodic
 
 # ------------------------------------------------------------------------------------------------------- the cut
 
-CUT_CHARGE_LABELS = ("fresh", "resume")
-CUT_CHARGE_NOTES = {"fresh": ("D5", "E5", "F#5", "A5"), "resume": ("F#5", "A5")}
-CUT_CHARGE_SECONDS = {"fresh": 0.65, "resume": 0.3}
-
-
 def _glass(freq: float, seconds: float) -> np.ndarray:
     return instruments.glass_chime(freq, seconds, decay=0.5) * 0.5
 
@@ -29,23 +24,6 @@ def _chassis_thump(seconds: float, hz: float = 60.0) -> np.ndarray:
     return filters.lowpass(body, 180.0)
 
 
-def cut_charge(variant, _gen):
-    """The emitter charging (feel-pass section 3.1): a soft glassy arpeggio spread over the charge (D E F# A over
-    0.65 s fresh; F# A over 0.3 s on a resume, the seam still warm) over a low chassis 'inhale' hum."""
-    label = CUT_CHARGE_LABELS[variant]
-    notes = CUT_CHARGE_NOTES[label]
-    span = CUT_CHARGE_SECONDS[label]
-    n = samples(span + 0.6)
-    mix = np.zeros(n)
-    for index, note in enumerate(notes):
-        place(mix, _glass(note_freq(note), 0.6) * (0.6 + 0.12 * index), samples(span * index / len(notes)))
-    inhale_n = samples(span + 0.15)
-    inhale = osc.additive(inhale_n, note_freq("D2"), [(1, 1.0), (2, 0.3)])
-    inhale *= envelope.segments(inhale_n, [(0.0, 0.0), (span, 1.0), (span + 0.15, 0.0)], shape="smooth")
-    place(mix, 0.25 * filters.lowpass(inhale, 220.0), 0)
-    return filters.lowpass(mix, 6000.0)
-
-
 def cut_cancel(_variant, _gen):
     """A charge let go: a soft falling A -> F#, glassy and small."""
     n = samples(0.7)
@@ -53,17 +31,6 @@ def cut_cancel(_variant, _gen):
     place(mix, 0.55 * _glass(note_freq("A5"), 0.5), 0)
     place(mix, 0.45 * _glass(note_freq("F#5"), 0.5), samples(0.12))
     return filters.lowpass(mix, 5000.0)
-
-
-def cut_ignite(_variant, gen):
-    """Ignition: a bright 'zing' on D6 that settles in 0.3 s, plus a felt ~60 Hz thump through the chassis."""
-    n = samples(0.6)
-    zing = osc.sine(n, osc.glide(n, note_freq("D6") * 1.03, note_freq("D6"), time_constant=0.03))
-    zing *= envelope.ar(n, 0.002, 0.35)
-    sheen = filters.bandpass(noise.white(n, gen), 3000.0, 2.0) * envelope.ar(n, 0.001, 0.08)
-    mix = 0.35 * zing + 0.05 * sheen
-    place(mix, 0.4 * _chassis_thump(0.12), 0)
-    return filters.lowpass(mix, 7000.0)
 
 
 CUT_SIZZLE_LOOP_S = 3.0
@@ -389,3 +356,120 @@ def pickup_clunk(_variant, gen):
     knock = osc.sine(n, note_freq("D4")) * envelope.ar(n, 0.002, 0.07)
     tick = filters.bandpass(noise.white(n, gen), 1800.0, 1.5) * envelope.ar(n, 0.001, 0.02)
     return filters.lowpass(mix + 0.3 * knock + 0.08 * tick, 4000.0)
+
+
+# ----------------------------------------------------------------------------- M3-26: the charge run and the tiers
+
+CHARGE_LAMP_NOTES = ("D5", "E5", "F#5", "A5", "B5", "D6", "E6", "F#6", "A6")
+CUTTER_TIER_LABELS = ("tier0", "tier1", "tier2", "tier3")
+SEGMENT_NOTES = ("D5", "E5", "F#5", "A5", "B5")
+
+
+def charge_lamp(variant, _gen):
+    """One lamp of the charge run lighting on 07's back (M3-26 section 2): a short glassy note, the next pentatonic
+    step from the battery to the emitter."""
+    n = samples(0.55)
+    mix = np.zeros(n)
+    place(mix, 0.55 * _glass(note_freq(CHARGE_LAMP_NOTES[variant]), 0.5), 0)
+    return filters.lowpass(mix, 6500.0)
+
+
+def charge_inhale(_variant, _gen):
+    """The run's low chassis 'inhale' under the lamps: a D2 hum swelling over 0.7 s, then letting go."""
+    n = samples(0.9)
+    hum = osc.additive(n, note_freq("D2"), [(1, 1.0), (2, 0.3)])
+    hum *= envelope.segments(n, [(0.0, 0.0), (0.7, 1.0), (0.9, 0.0)], shape="smooth")
+    return filters.lowpass(0.3 * hum, 220.0)
+
+
+def charge_low_d(_variant, _gen):
+    """Tier 3's sustained low D under the run: a warm D2/D3 pad, felt through the deck."""
+    pad = instruments.soft_pad(note_freq("D2"), 1.2, 0.3, 0.6, hold=0.3)
+    pad += 0.5 * instruments.soft_pad(note_freq("D3"), 1.2, 0.3, 0.6, hold=0.3)
+    return filters.lowpass(0.2 * pad, 500.0)
+
+
+def cut_ignite_tier(variant, gen):
+    """Ignition per cutter tier (M3-26 section 5): the zing on D6 gets brighter and hotter with each tier (more
+    upper partials and a touch more sheen), and the chassis thump a little deeper."""
+    n = samples(0.6)
+    bright = 1.0 + 0.4 * variant
+    d6 = osc.glide(n, note_freq("D6") * 1.03, note_freq("D6"), time_constant=0.03)
+    zing = osc.sine(n, d6) + 0.12 * variant * osc.sine(n, 2.0 * d6) + 0.05 * variant * osc.sine(n, 3.0 * d6)
+    zing *= envelope.ar(n, 0.002, 0.3 + 0.05 * variant)
+    sheen = filters.bandpass(noise.white(n, gen), 3000.0 + 600.0 * variant, 2.0) * envelope.ar(n, 0.001, 0.08)
+    mix = 0.3 * zing + 0.04 * bright * sheen
+    place(mix, 0.4 * _chassis_thump(0.12, 62.0 - 4.0 * variant), 0)
+    return filters.lowpass(mix, 6000.0 + 1200.0 * variant)
+
+
+CUT_UNDERTONE_LOOP_S = 4.0
+
+
+def cut_undertone(_variant, _gen):
+    """The beam's deeper hum for the higher tiers: a warm D2 with its fifth, breathing slowly. Seamless; the
+    runtime sets its level by tier (silent at tier 0)."""
+    n = samples(CUT_UNDERTONE_LOOP_S)
+    tone = osc.additive(n, loop_freq(note_freq("D2"), n), [(1, 1.0), (2, 0.35)])
+    tone += 0.3 * osc.sine(n, loop_freq(note_freq("A2"), n))
+    tone *= envelope.lfo(n, 2.0 / CUT_UNDERTONE_LOOP_S, 0.15, 0.85)
+    return periodic(0.15 * tone, lambda x: filters.lowpass(x, 400.0))
+
+
+def segment_slide(variant, gen):
+    """The beam moving to a piece's next cut line: a soft tick and a short upward slide onto the next pentatonic
+    step, so a big plate reads as several small victories."""
+    n = samples(0.6)
+    target = note_freq(SEGMENT_NOTES[variant])
+    slide = osc.sine(n, osc.glide(n, target * 0.94, target, time_constant=0.04)) * envelope.ar(n, 0.005, 0.3)
+    mix = 0.3 * slide
+    place(mix, 0.2 * _tick(gen, target, 0.1), 0)
+    return filters.lowpass(mix, 5000.0)
+
+
+# ------------------------------------------------------------------------------------------ M3-25: cargo and storage
+
+def cargo_tok(_variant, gen):
+    """The cargo hold is full: a soft 'tok' on its lid, a wooden knock on A3, felt more than heard."""
+    n = samples(0.3)
+    knock = _tick(gen, note_freq("A3"), 0.3)
+    thump = np.concatenate((_chassis_thump(0.08, 110.0), np.zeros(n - samples(0.08))))
+    return filters.lowpass(0.45 * knock + 0.4 * thump, 3000.0)
+
+
+def shelf_chord(_variant, _gen):
+    """A shelf built at home: a warm D major chord (D3 F#3 A3 D4) on felt bells over a soft pad, settling slowly."""
+    n = samples(3.0)
+    mix = np.zeros(n)
+    for index, note in enumerate(("D3", "F#3", "A3", "D4")):
+        place(mix, 0.25 * instruments.soft_bell(note_freq(note), 2.6, decay=1.8, attack=0.05), samples(0.05 * index))
+    place(mix, 0.1 * instruments.soft_pad(note_freq("D3"), 2.6, 0.4, 1.6, hold=0.3), 0)
+    return filters.lowpass(mix, 4000.0)
+
+
+def crate_latch(_variant, gen):
+    """A crew supply crate opened: a latch click and spring, then a soft paper rustle as the note is found."""
+    n = samples(1.2)
+    mix = np.zeros(n)
+    place(mix, 0.4 * _tick(gen, note_freq("E4"), 0.15), 0)
+    place(mix, 0.3 * _tick(gen, note_freq("B4"), 0.12), samples(0.06))
+    rustle_n = samples(0.6)
+    rustle = filters.lowpass(filters.bandpass(noise.white(rustle_n, gen), 2400.0, 0.9), 4500.0)
+    rustle *= envelope.segments(rustle_n, [(0.0, 0.0), (0.1, 1.0), (0.35, 0.5), (0.6, 0.0)], shape="smooth")
+    rustle *= 0.6 + 0.4 * (gen.random(rustle_n) > 0.7)
+    place(mix, 0.05 * rustle, samples(0.45))
+    return filters.lowpass(filters.lowpass(mix, 5000.0), 5000.0)
+
+
+def tilly_fetch(_variant, gen):
+    """Tilly fetching a bundle from the shelves: her two-note kalimba 'got it', A5 up to D6, over a soft drag."""
+    n = samples(1.3)
+    mix = np.zeros(n)
+    drag_n = samples(0.4)
+    drag = filters.bandpass(noise.pink_filter(noise.white(drag_n, gen)), 600.0, 1.2)
+    drag = drag / max(float(np.std(drag)), 1e-9) * envelope.segments(
+        drag_n, [(0.0, 0.0), (0.1, 1.0), (0.4, 0.0)], shape="smooth")
+    place(mix, 0.03 * drag, 0)
+    place(mix, 0.45 * instruments.kalimba(note_freq("A5"), 0.8, gen, decay=0.7), samples(0.3))
+    place(mix, 0.5 * instruments.kalimba(note_freq("D6"), 0.9, gen, decay=0.9), samples(0.45))
+    return filters.lowpass(mix, 6000.0)

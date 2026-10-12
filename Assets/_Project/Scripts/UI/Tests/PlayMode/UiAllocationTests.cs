@@ -7,6 +7,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.TestTools;
 using UnityEngine.TestTools.Constraints;
 using Unity.Profiling;
+using MoonProject.Core;
 using MoonProject.Core.Events;
 using MoonProject.Gameplay;
 using MoonProject.Testing;
@@ -63,6 +64,7 @@ namespace MoonProject.UI.PlayModeTests
             InputSystem.AddDevice<Keyboard>();
             _rig = UiTestRig.Boot(_controls, _slot);
             _rig.Bootstrap.Context.Events.Publish(new RoverAwoke(Vector3.zero, false));
+            _rig.Fakes.Grant(RoverAbility.Tether);
             _rig.Fakes.TetherState = TetherAimState.Hovering;
             _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Excavate, new Vector3(0f, 0f, 10f), true);
             _rig.Fakes.Position = new Vector3(0f, 0f, 2f);
@@ -85,7 +87,7 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator TowerPanelWithThePinnedChip_DoesNotAllocate()
+        public IEnumerator TowerPanel_DoesNotAllocate()
         {
             InputSystem.AddDevice<Keyboard>();
             _rig = UiTestRig.Boot(_controls, _slot);
@@ -93,8 +95,8 @@ namespace MoonProject.UI.PlayModeTests
             _rig.Fakes.SetMaterials(1, 1, 0);
             _rig.Fakes.AtStation = true;
             yield return new WaitForSecondsRealtime(2f);
-            Assert.IsTrue(_rig.Ui.Tower.IsVisible && _rig.Ui.Chip.IsVisible);
-            yield return Measure(Bind(_rig.Ui, "Update"), "tower panel with the pinned chip");
+            Assert.IsTrue(_rig.Ui.Tower.IsVisible);
+            yield return Measure(Bind(_rig.Ui, "Update"), "tower panel");
         }
 
         [UnityTest]
@@ -106,7 +108,7 @@ namespace MoonProject.UI.PlayModeTests
             _rig.Fakes.SetMaterials(4, 3, 0);
             _rig.Fakes.AtStation = true;
             yield return new WaitForSecondsRealtime(2f);
-            Assert.IsTrue(_rig.Ui.Tower.IsVisible && _rig.Ui.Tower.IsChoosing && _rig.Ui.Chip.IsVisible);
+            Assert.IsTrue(_rig.Ui.Tower.IsVisible && _rig.Ui.Tower.IsChoosing);
 
             Action update = Bind(_rig.Ui, "Update");
             Action picking = () =>
@@ -199,7 +201,7 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator SalvageRingFilling_UnderTheMaterialsChip_DoesNotAllocate()
+        public IEnumerator SalvageRingFilling_OverThePickupFeed_DoesNotAllocate()
         {
             InputSystem.AddDevice<Keyboard>();
             _rig = UiTestRig.Boot(_controls, _slot);
@@ -211,7 +213,7 @@ namespace MoonProject.UI.PlayModeTests
             yield return new WaitForSecondsRealtime(1f);
             _rig.Fakes.SetMaterials(3, 12, 1);
             yield return new WaitForSecondsRealtime(0.2f);
-            Assert.IsTrue(_rig.Ui.SalvageRing.IsVisible && _rig.Ui.Chip.IsVisible);
+            Assert.IsTrue(_rig.Ui.SalvageRing.IsVisible && _rig.Ui.Pickups.IsVisible);
 
             Action update = Bind(_rig.Ui, "Update");
             Action frame = () =>
@@ -220,7 +222,7 @@ namespace MoonProject.UI.PlayModeTests
                 _rig.Fakes.CutProgress = (_step % 100) * 0.01f;
                 update();
             };
-            yield return Measure(frame, "salvage ring filling under the materials chip");
+            yield return Measure(frame, "salvage ring filling over the pickup feed");
         }
 
         private static IEnumerator Measure(Action frame, string label)

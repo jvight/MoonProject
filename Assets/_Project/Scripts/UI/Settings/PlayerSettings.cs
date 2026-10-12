@@ -8,7 +8,7 @@ namespace MoonProject.UI
     /// <summary>
     /// The player's preferences as the pause menu edits them, applied straight to the services that own them
     /// (<see cref="IAudioSettings"/>, <see cref="ILookSettings"/>, <see cref="IFeelSettings"/>,
-    /// <see cref="ILocalization"/>) and persisted by the
+    /// <see cref="ILocalization"/>, and the screen through <see cref="IDisplayControl"/>) and persisted by the
     /// UI's "ui.settings" save section. Slider positions are whole steps, so a gamepad reaches any value in a few
     /// presses; the Gentle camera adds one step below the lowest, standing for its lower look floor.
     /// </summary>
@@ -17,20 +17,41 @@ namespace MoonProject.UI
         private readonly IAudioSettings _audio;
         private readonly ILookSettings _look;
         private readonly IFeelSettings _feel;
+        private readonly IDisplayControl _display;
+        private readonly string[] _resolutionLabels;
+        private int _resolution;
+        private DisplayMode _mode = DisplayMode.Borderless;
+        private bool _vSync = true;
+        private int _fpsCap;
         private readonly ILocalization _localization;
         private readonly PauseSettings _settings;
+        private const int ModeCount = 3;
         private bool _guidance = true;
         private readonly string[] _textLabels;
         private int _textSize;
 
-        public PlayerSettings(IAudioSettings audio, ILookSettings look, IFeelSettings feel,
+        public PlayerSettings(IAudioSettings audio, ILookSettings look, IFeelSettings feel, IDisplayControl display,
             ILocalization localization, PauseSettings settings)
         {
             _audio = audio ?? throw new ArgumentNullException(nameof(audio));
             _look = look ?? throw new ArgumentNullException(nameof(look));
             _feel = feel ?? throw new ArgumentNullException(nameof(feel));
+            _display = display ?? throw new ArgumentNullException(nameof(display));
             _localization = localization ?? throw new ArgumentNullException(nameof(localization));
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+            if (display.Resolutions.Count == 0)
+            {
+                throw new ArgumentException("The screen offers no resolution.", nameof(display));
+            }
+
+            _resolutionLabels = new string[display.Resolutions.Count];
+            for (int i = 0; i < _resolutionLabels.Length; i++)
+            {
+                _resolutionLabels[i] = display.Resolutions[i].x + " × " + display.Resolutions[i].y;
+            }
+
+            _resolution = DisplayChoices.IndexOf(display.Resolutions, display.Native);
+            _fpsCap = Math.Max(0, Array.IndexOf(settings.FpsCaps, settings.DefaultFpsCap));
             _textLabels = new string[settings.TextScales.Length];
             for (int i = 0; i < _textLabels.Length; i++)
             {
@@ -91,6 +112,63 @@ namespace MoonProject.UI
                 _look.InvertY = value;
                 IsDirty = true;
             }
+        }
+
+        /// <summary>The resolutions the monitor offers, written "1920 × 1080", largest first.</summary>
+        public string[] ResolutionLabels => _resolutionLabels;
+
+        public int ResolutionIndex => _resolution;
+
+        public DisplayMode WindowMode => _mode;
+
+        public bool VSync
+        {
+            get => _vSync;
+            set
+            {
+                _vSync = value;
+                ChangedDisplay();
+            }
+        }
+
+        /// <summary>Index into <see cref="PauseSettings.FpsCaps"/> of the limit held while V-Sync is off.</summary>
+        public int FpsCapIndex => _fpsCap;
+
+        /// <summary>The frames per second held while V-Sync is off; 0 is unlimited.</summary>
+        public int FpsCap => _settings.FpsCaps[_fpsCap];
+
+        public int FpsCapCount => _settings.FpsCaps.Length;
+
+        /// <summary>Steps the resolution (wrapping) and applies it at once.</summary>
+        public void StepResolution(int direction)
+        {
+            _resolution = DisplayChoices.Step(_resolution, direction, _resolutionLabels.Length);
+            ChangedDisplay();
+        }
+
+        public void StepWindowMode(int direction)
+        {
+            _mode = (DisplayMode)DisplayChoices.Step((int)_mode, direction, ModeCount);
+            ChangedDisplay();
+        }
+
+        public void StepFpsCap(int direction)
+        {
+            _fpsCap = DisplayChoices.Step(_fpsCap, direction, _settings.FpsCaps.Length);
+            ChangedDisplay();
+        }
+
+        /// <summary>Applies the display choices as they stand (the boot, once the settings file is read).</summary>
+        public void ApplyDisplay()
+        {
+            Vector2Int size = _display.Resolutions[_resolution];
+            _display.Apply(new DisplayState(size.x, size.y, _mode, _vSync, FpsCap));
+        }
+
+        private void ChangedDisplay()
+        {
+            ApplyDisplay();
+            IsDirty = true;
         }
 
         /// <summary>Gamepad rumble is on (the default).</summary>
@@ -199,6 +277,11 @@ namespace MoonProject.UI
                 gentleCamera = _look.GentleCamera,
                 rumbleOff = !_feel.RumbleEnabled,
                 rumbleStrength = _feel.RumbleStrength,
+                resolutionWidth = _display.Resolutions[_resolution].x,
+                resolutionHeight = _display.Resolutions[_resolution].y,
+                windowMode = (int)_mode,
+                vsyncOff = !_vSync,
+                fpsCap = FpsCap,
                 guidanceOff = !_guidance,
                 textScale = TextScale,
                 language = _localization.Language,
@@ -225,9 +308,26 @@ namespace MoonProject.UI
             _feel.RumbleEnabled = !data.rumbleOff;
             _feel.RumbleStrength = Volume(data.rumbleStrength);
             _guidance = !data.guidanceOff;
+            RestoreDisplay(data);
             _textSize = NearestTextSize(data.textScale);
             RestoreLanguage(data.language);
             IsDirty = false;
+        }
+
+        /// <summary>
+        /// Takes the saved choices and applies them. A size the monitor no longer offers (or none, in older files) is
+        /// the desktop's own; an unknown mode is borderless; a limit not on the list is the default one.
+        /// </summary>
+        private void RestoreDisplay(SettingsSaveData data)
+        {
+            _resolution = data.resolutionWidth > 0 && data.resolutionHeight > 0
+                ? DisplayChoices.IndexOf(_display.Resolutions, new Vector2Int(data.resolutionWidth, data.resolutionHeight))
+                : DisplayChoices.IndexOf(_display.Resolutions, _display.Native);
+            _mode = data.windowMode >= 0 && data.windowMode < ModeCount ? (DisplayMode)data.windowMode : DisplayMode.Borderless;
+            _vSync = !data.vsyncOff;
+            int cap = Array.IndexOf(_settings.FpsCaps, data.fpsCap);
+            _fpsCap = cap >= 0 ? cap : Math.Max(0, Array.IndexOf(_settings.FpsCaps, _settings.DefaultFpsCap));
+            ApplyDisplay();
         }
 
         private void RestoreLanguage(string language)

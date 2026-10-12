@@ -20,6 +20,11 @@ namespace MoonProject.UI.PlayModeTests
         private const float RequiredContrast = 7f;
         private const float FontFloor = 18f;
         private const float PlateSamplePixels = 6f;
+
+        // A glass plate's rim and glow fill its first pixels; the glass itself starts beyond them.
+        private const float GlassSamplePixels = 20f;
+
+        private const float BesideTextPixels = 6f;
         private const float BigTextScale = 1.5f;
         private const int BigTextPresses = 2;
 
@@ -212,7 +217,8 @@ namespace MoonProject.UI.PlayModeTests
         private string MeasureContrast(string shot, TextElement text, Color32[] ui, float scale)
         {
             VisualElement plate = text;
-            while (plate != null && plate.resolvedStyle.backgroundColor.a < 0.3f)
+            while (plate != null && plate.resolvedStyle.backgroundColor.a < 0.3f &&
+                   plate.resolvedStyle.backgroundImage.texture == null)
             {
                 plate = plate.parent;
             }
@@ -240,9 +246,18 @@ namespace MoonProject.UI.PlayModeTests
             }
 
             Rect rim = plate.worldBound;
-            int rimX = Mathf.FloorToInt(rim.xMin * scale + PlateSamplePixels);
-            int rimY = Mathf.FloorToInt(rim.center.y * scale);
-            Color32 background = Contrast.Over(ui[PixelIndex(rimX, rimY)], Contrast.BrightestDune);
+            float inset = plate.resolvedStyle.backgroundImage.texture != null ? GlassSamplePixels : PlateSamplePixels;
+            // The backdrop is read just left of the text and just above it, inside the plate and clear of its rim; the
+            // darker of the two is the plate itself, where the other may be an icon or a lamp that sits beside the text.
+            float sampleX = Mathf.Clamp(box.xMin - BesideTextPixels, rim.xMin + inset, box.xMin - 1f);
+            float sampleY = Mathf.Clamp(box.yMin - BesideTextPixels, rim.yMin + inset, box.yMin);
+            Color32 beside = Contrast.Over(
+                ui[PixelIndex(Mathf.FloorToInt(sampleX * scale), Mathf.FloorToInt(box.center.y * scale))],
+                Contrast.BrightestDune);
+            Color32 above = Contrast.Over(
+                ui[PixelIndex(Mathf.FloorToInt(box.center.x * scale), Mathf.FloorToInt(sampleY * scale))],
+                Contrast.BrightestDune);
+            Color32 background = Contrast.Luminance(beside) < Contrast.Luminance(above) ? beside : above;
             float ratio = Contrast.Ratio(brightest, background);
             Debug.Log($"[ui-contrast] {shot} '{text.text}' {ratio:0.0}:1 (text {brightest.r},{brightest.g}," +
                       $"{brightest.b} on plate {background.r},{background.g},{background.b})");
