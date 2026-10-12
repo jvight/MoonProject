@@ -283,6 +283,8 @@ namespace MoonProject.Gameplay
                 return;
             }
 
+            _progression.ConnectFinds(Port, TowerPartField);
+
             Shop = new UpgradeShop(Upgrades, stations, save, Blueprints, TowerParts);
             RecipeLook = new RecipeLook(services.View, Shop, _tower, _plotter, Blueprints.Kits, _progression.Tuning);
             Hints = new InteractionHints(_excavation, _salvage, _tether, _cradle, _home,

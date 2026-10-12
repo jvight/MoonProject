@@ -43,9 +43,11 @@ namespace MoonProject.Gameplay.PlayModeTests
         [UnityTest]
         public IEnumerator PastTheTeachingSteps_ADifferentOrder_ReachesPower3_WithTheLineOnTheTargetsOnly()
         {
-            _fixture = GameplayFixture.Boot(_controls);
+            _fixture = GameplayFixture.Boot(_controls, tether: false);
             yield return null;
             GameplaySystem gameplay = _fixture.Gameplay;
+            Assert.IsFalse(_fixture.Rover.Has(RoverAbility.Tether), "no tether before Kenji's port, in any order");
+            Assert.IsFalse(gameplay.Port.RingFitted);
             BaseProgression progression = gameplay.Progression;
             var lines = new List<string>();
             using var listening = _fixture.Bootstrap.Context.Events.Subscribe<NextStepChanged>(changed =>

@@ -64,6 +64,17 @@ namespace MoonProject.Gameplay.PlayModeTests
             {
                 Vector3 spot = tilly.PartRest[part];
                 _fixture.Rover.Place(new Vector3(spot.x, 0f, spot.z), 0f);
+                if (part == tilly.BuriedPart)
+                {
+                    yield return new WaitForSeconds(1f);
+                    Assert.AreEqual(part, _fixture.Events.FriendPartCollected.Count,
+                        "her last part lies half under the dust: driving over it is not enough");
+                    Assert.IsTrue(_fixture.Gameplay.Hints.TryGet(InteractionKind.Excavate, out _), "a Dig prompt");
+                    Press(_keyboard.eKey);
+                    yield return new WaitForSeconds(_fixture.FriendTuning.PartDigSeconds + 0.3f);
+                    Release(_keyboard.eKey);
+                }
+
                 yield return new WaitForSeconds(_fixture.FriendTuning.PartFlightDuration + 1f);
                 Assert.AreEqual(part + 1, _fixture.Events.FriendPartCollected.Count, $"part {part} gathered");
                 FriendPartCollected collected = _fixture.Events.FriendPartCollected[part].Value;
@@ -175,6 +186,17 @@ namespace MoonProject.Gameplay.PlayModeTests
             {
                 Vector3 spot = tilly.PartRest[part];
                 _fixture.Rover.Place(new Vector3(spot.x, 0f, spot.z), 0f);
+                if (part == tilly.BuriedPart)
+                {
+                    yield return new WaitForSeconds(1f);
+                    Assert.AreEqual(part, _fixture.Events.FriendPartCollected.Count,
+                        "her last part lies half under the dust: driving over it is not enough");
+                    Assert.IsTrue(_fixture.Gameplay.Hints.TryGet(InteractionKind.Excavate, out _), "a Dig prompt");
+                    Press(_keyboard.eKey);
+                    yield return new WaitForSeconds(_fixture.FriendTuning.PartDigSeconds + 0.3f);
+                    Release(_keyboard.eKey);
+                }
+
                 yield return new WaitForSeconds(_fixture.FriendTuning.PartFlightDuration + 1f);
             }
 

@@ -78,6 +78,13 @@ namespace MoonProject.Gameplay
         [Tooltip("Brightness of the pillar the evening's sweep raises on the horizon.")]
         [Range(0.1f, 2f)] [SerializeField] private float _eveningPillarBrightness = 0.7f;
 
+        [Tooltip("Seconds after tower level 1 wakes home before its first sweep raises the faint signal's pillar " +
+                 "(first-hour v2 §4).")]
+        [Range(0f, 10f)] [SerializeField] private float _towerSweepDelay = 3f;
+
+        [Tooltip("Brightness of the faint signal's pillar the tower's first sweep raises.")]
+        [Range(0.1f, 2f)] [SerializeField] private float _towerSweepBrightness = 0.8f;
+
         [Header("The masts' letters (radio-letters text)")]
         [Tooltip("The first this many lit masts play one letter each (the relay's official messages)...")]
         [Range(0, 12)] [SerializeField] private int _singleLetterMasts = 4;
@@ -226,6 +233,10 @@ namespace MoonProject.Gameplay
         public int LetterCount => _letterCount;
 
         public float EveningPillarBrightness => _eveningPillarBrightness;
+
+        public float TowerSweepDelay => _towerSweepDelay;
+
+        public float TowerSweepBrightness => _towerSweepBrightness;
 
         public float EveningCompletionHold => _eveningCompletionHold;
 

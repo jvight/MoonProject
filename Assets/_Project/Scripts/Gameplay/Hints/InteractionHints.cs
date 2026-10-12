@@ -71,6 +71,12 @@ namespace MoonProject.Gameplay
             {
                 case InteractionKind.Excavate:
                     Relic candidate = _excavation.Candidate;
+                    if (candidate == null && _friends.HasDigCandidate)
+                    {
+                        hint = new InteractionHint(kind, _friends.DigCandidate, _beam.MayStart);
+                        return true;
+                    }
+
                     hint = candidate != null
                         ? new InteractionHint(kind, candidate.Site.Position,
                             _excavation.Lifting != null || _beam.MayStart)

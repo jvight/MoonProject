@@ -26,20 +26,23 @@ namespace MoonProject.Gameplay.PlayModeTests
     /// <summary>
     /// The golden path through the real game, as a regression and a pacing measurement: the built Main scene (on its
     /// own save slot) boots, 07 wakes, and a calm autopilot holds the wheel while the real input actions do the rest.
-    /// Salvage (M3-13): drive to the supply depot, ping (the site answers), cut it piece by piece with the beam until
-    /// it is picked clean, and pick up the tower's coil its last cut revealed in its heart (M3-16 P1); on the tower pad
-    /// 07 hands the coil to the port, then crafts level 1 from the depot's materials through the UI's hold. Then Tilly
-    /// (M3-02): find her with a ping, gather her three parts, repair her, drive home with her, be greeted, and let her
-    /// spot a salvage site on the next trip. Dig Kenji's duck out of the garage's heart, which holds the Cargo Cradle's
+    /// First-hour v2 §4: drive first to the sleeping tower (power first), then to the supply depot, cut it piece by
+    /// piece with the beam until it is picked clean, and pick up the tower's coil its last cut revealed in its heart
+    /// (M3-16 P1); on the tower pad 07 hands the coil to the port, then crafts level 1 from the depot's materials
+    /// through the UI's hold. The tower's first sweep raises Tilly's pillar; 07 listens when it rests. Then Tilly
+    /// (M3-02): gather her parts (the last one dug from the dust), repair her, drive home with her, be greeted, and let
+    /// her spot Kenji's garage on the next trip, the tether still asleep. Cut the garage's three seams in one trip; its
+    /// port fits the tether ring, then Ro's tape deck dug beside it and held on the tether, and 07 is home with at least
+    /// a quarter of its charge. Dig Kenji's duck out of the garage's heart, which holds the Cargo Cradle's
     /// blueprint, and tow it home, where the jammed belly lift asks for its stitch (M3-19): stitch it from beside it,
     /// ride up with the duck beside 07, let the lab's reader decode the Cradle's tube (its hand-off pulse waits at the
     /// sleeping bay) and place the duck on the keepsake shelf: the first memory (step 4), then ride down facing out.
     /// Tilly spots Bell's light across the chasm (P2): drive to the lip, look across with no way over, pick up
     /// Hover-Jump's blueprint tube waiting there (M3-21), then back to the garage, where the transformer now shows.
-    /// Find the Rover Bay still asleep (no pad, no prompt, a "not yet" answer to a ping), hand in the transformer and
+    /// Find the Rover Bay still asleep (no pad, no prompt, a "not yet" answer on approach), hand in the transformer and
     /// craft tower level 2 to wake it (its plotter draws the Cradle's waiting sheet), ride up for the reader to decode
     /// Hover-Jump's tube, find that holding Jump does nothing yet, craft Hover-Jump in the bay through the same hold
-    /// and the Cargo Cradle from its new blueprint, dig the walkman from the garage, lift it into the rack with the
+    /// and the Cargo Cradle from its new blueprint, dig the gnome from the garage, lift it into the rack with the
     /// tether button, drive home, ride the lift up and set it down on the keepsake shelf from the rack, and take the
     /// first leap. Then Bell (M3-04/05): drive up the mouth lane, leap the chasm, find her lying at the terminus with
     /// Ro's log cache and her tape, gather her three parts from the alcoves, repair her (the tape slides in, her dial
@@ -216,9 +219,6 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// </summary>
         private const float LanderKeepOut = 9f;
 
-        /// <summary>The garage's cuts on the first trip out to it; the rest wait for the next charge.</summary>
-        private const int GarageFirstCuts = 3;
-
         /// <summary>
         /// A long tow reels its relic in this far (m) out from home, on open ground, so it follows 07's own line past
         /// the Rover Bay and the lander instead of swinging wide into them.
@@ -280,7 +280,20 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float FacesOut = 0.9f;
 
         private const float KeySeconds = 0.25f;
-        private const string Walkman = "cassette_player";
+        /// <summary>Ro's tape deck: the relic Kenji's port fits on 07's flank (first-hour v2 §3).</summary>
+        private const string Deck = "cassette_player";
+
+        /// <summary>The keepsake carried home in the Cargo Cradle once it is built.</summary>
+        private const string Gnome = "garden_gnome";
+
+        /// <summary>The share of the battery 07 must still have at the dock after the garage's one trip (§4).</summary>
+        private const float OneTripArrival = 0.25f;
+
+        /// <summary>Metres from the tower's pad that count as having driven to the tower.</summary>
+        private const float TowerVisit = 5f;
+
+        /// <summary>Metres from the port pad's middle 07 parks within.</summary>
+        private const float PortPark = 1f;
 
         private static readonly string ReportPath = Path.Combine(GameplayFixture.CaptureFolder, "playthrough.md");
 
@@ -352,18 +365,19 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return Boot();
             yield return WakeUp();
             AssertAsleep();
-            yield return ExpectStep(ProgressionKeys.NextWake, "07 has just woken on its dock");
+            yield return ExpectStep(ProgressionKeys.NextWake, "07 has just woken on its dock: power first");
+            yield return DriveToTheTower();
+            yield return ExpectStep(ProgressionKeys.NextSalvage, "the tower says what it needs; the depot has some");
 
             SalvageSite depot = _gameplay.Salvage.Find(WorldAnchorIds.SitePrefix + "depot");
             Assert.IsNotNull(depot, "the supply depot stands near home");
             Assert.IsEmpty(depot.Relics, "the depot's heart holds the tower's coil, not a memory (P1)");
             yield return DriveToSite(depot);
-            yield return ExpectStep(ProgressionKeys.NextSalvage, "out on the basin: salvage comes next");
             Assert.IsFalse(depot.HeartRevealed, "the depot's heart lies under its pieces (P10)");
             Assert.IsFalse(_gameplay.TowerPartField.IsResting(CoilPart), "no coil before the heart is open");
             yield return SalvageTheDepot(depot);
             Assert.IsTrue(depot.HeartRevealed, "the last cut reveals it");
-            yield return ExpectStep(ProgressionKeys.NextTower, "materials in the stock: the tower needs them");
+            yield return ExpectStep(ProgressionKeys.NextTower, "the coil glows in the open heart: the tower waits");
             Assert.IsTrue(_gameplay.Materials.Has(_gameplay.Upgrades.Find(Tower).Levels[0].Recipe),
                 "the depot's materials cover level 1...");
             Assert.IsTrue(_gameplay.TowerParts.NeedsPart(Tower, 1), "...but power is earned by a find (P1)");
@@ -371,6 +385,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.IsFalse(depot.AnswersSonar, "picked clean and its coil taken: the depot falls silent");
             yield return BuyTowerLevel(1);
             yield return ExpectStep(ProgressionKeys.NextSignal, "home is powered: the tower hears Tilly");
+            yield return TheSweepRaisesTillysPillar();
             yield return ChargeAtTheDock("before Tilly's crater");
             yield return FindTilly();
             yield return GatherTillyParts();
@@ -378,17 +393,21 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return DriveHomeWithTilly();
             Lesson("home after Tilly's parts", 0.2f, 0.35f);
             yield return ChargeAtTheDock("the dock charges");
-            yield return ExpectStep(ProgressionKeys.NextRelic, "Tilly is home: the first memory comes next");
+            yield return ExpectStep(ProgressionKeys.NextGarage, "Tilly is home: Kenji's garage comes next");
+            AssertTetherAsleep();
             SalvageSite garage = _gameplay.Salvage.Find(WorldAnchorIds.SitePrefix + "garage");
             yield return TillySpotsOnTheNextTrip(garage);
             Relic duck = RelicIn(garage, Duck);
-            Relic walkman = RelicIn(garage, Walkman);
-            yield return SalvageTheGarage(garage, GarageFirstCuts, "the garage's first cuts");
-            Lesson("the garage's first trip", 0.25f, 0.4f);
-            yield return ChargeAtTheDock("between the garage's cuts");
-            yield return SalvageTheGarage(garage, int.MaxValue, "the garage's last cuts");
-            Lesson("the garage's last cut", 0.25f, 0.4f);
-            yield return ChargeAtTheDock("between the garage's cuts and its heart");
+            Relic deck = RelicIn(garage, Deck);
+            Relic gnome = RelicIn(garage, Gnome);
+            yield return SalvageTheGarage(garage, int.MaxValue, "the garage's three seams, one trip");
+            yield return ExpectStep(ProgressionKeys.NextPort, "the last cut opened Kenji's port");
+            yield return FitTheTetherRing();
+            yield return Excavate(garage, deck);
+            yield return LatchTether(deck);
+            yield return FitTheTapeDeck();
+            Lesson("the garage in one trip", 0.25f, 0.4f);
+            yield return ChargeAtTheDock("home from the garage in one trip", OneTripArrival);
             yield return Excavate(garage, duck);
             Assert.IsTrue(LogFound("kenji_1"), "Kenji's log tin by his bench opens while 07 digs");
             Assert.IsTrue(_gameplay.Blueprints.IsCarrying, "the garage's heart held the Cradle's blueprint tube");
@@ -428,9 +447,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             yield return ExpectStep(ProgressionKeys.NextPowerPart, "a kit is fitted: only the targets speak now");
             yield return CraftTheCargoCradle();
             yield return CraftTheCellPack();
-            yield return Excavate(garage, walkman);
-            yield return StowInTheCradle(walkman);
-            yield return CarryHomeInTheCradle(garage, walkman);
+            yield return Excavate(garage, gnome);
+            yield return StowInTheCradle(gnome);
+            yield return CarryHomeInTheCradle(garage, gnome);
             yield return ChargeAtTheDock("before the leap");
             yield return FirstLeap();
             yield return HopFrom(StationReach.HomeId, WorldAnchorIds.RelayPrefix + 2);
@@ -514,16 +533,88 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// Home from a trip: drive onto the charging dock, rest while it fills the cells (each a rising note), and
         /// leave as soon as they are full, before the evening's sweep (the dock's evening still opens with news).
         /// </summary>
-        private IEnumerator ChargeAtTheDock(string why)
+        /// <summary>
+        /// Power first (first-hour v2 §4): 07 drives from the dock to the sleeping tower, whose card and recipe say what
+        /// it needs; the next line moves on to the depot.
+        /// </summary>
+        private IEnumerator DriveToTheTower()
+        {
+            Begin();
+            RadioTower tower = _gameplay.Tower;
+            yield return DriveTo(Flat(tower.PadCentre), TowerVisit, 0.6f, 60f, "the sleeping radio tower");
+            yield return Until(() => _gameplay.Progression.NextStep != ProgressionKeys.NextWake, 3f,
+                "near the tower, the wake line gives way");
+            End("Drive to the radio tower", "power first: the tower is asleep");
+        }
+
+        /// <summary>Tower level 1's first sweep raises Tilly's pillar a moment later (first-hour v2 §4).</summary>
+        private IEnumerator TheSweepRaisesTillysPillar()
+        {
+            Begin();
+            Friend tilly = _gameplay.Friends.Find(TillyId);
+            yield return Until(() => tilly.Progress.Discovered,
+                _gameplay.Progression.Tuning.TowerSweepDelay + 3f, "the tower's sweep raises Tilly's pillar");
+            End("The tower's first sweep", "a faint signal out past the dune");
+        }
+
+        /// <summary>Before Kenji's port, holding the tether does nothing: the ring is gone (first-hour v2 §3).</summary>
+        private void AssertTetherAsleep()
+        {
+            Assert.IsFalse(_context.Get<IRoverAbilities>().Has(RoverAbility.Tether), "no tether before the port");
+            Assert.AreEqual(0, _events.TetherAttached.Count, "the tether never latched before the ring");
+            Assert.AreEqual(TetherAimState.Idle, _gameplay.Tether.State, "nothing to hold with");
+        }
+
+        /// <summary>
+        /// The garage's last cut opened Kenji's port: park on its pad and its arm fits the spare tether ring round 07's
+        /// eye; the tether wakes.
+        /// </summary>
+        private IEnumerator FitTheTetherRing()
+        {
+            Begin();
+            GaragePort port = _gameplay.Port;
+            Assert.IsTrue(port.IsOpen, "the last cut opened the port");
+            int fitted = 0;
+            using IDisposable fits = _context.Events.Subscribe<RoverKitFitted>(fit =>
+                fitted += fit.Piece == RoverKitPiece.TetherRing ? 1 : 0);
+            yield return DriveTo(Flat(port.PadCentre), PortPark, 0.35f, 40f, "Kenji's port pad");
+            yield return Until(() => port.RingFitted, 6f, "parked on the pad, the arm fits the ring");
+            yield return Until(() => fitted == 1, 6f, "the ring is on 07's eye");
+            Assert.IsTrue(_context.Get<IRoverAbilities>().Has(RoverAbility.Tether), "07 can hold things again");
+            Capture("12c-the-tether-ring");
+            End("Kenji's port fits the tether ring", "the tether wakes");
+        }
+
+        /// <summary>
+        /// Ro's tape deck, dug up beside the port and held on the tether: parked on the pad, the port takes it onto its
+        /// tray and fits it on 07's flank; the first tape plays.
+        /// </summary>
+        private IEnumerator FitTheTapeDeck()
+        {
+            Begin();
+            GaragePort port = _gameplay.Port;
+            int fitted = 0;
+            using IDisposable fits = _context.Events.Subscribe<RoverKitFitted>(fit =>
+                fitted += fit.Piece == RoverKitPiece.TapeDeck ? 1 : 0);
+            yield return DriveTo(Flat(port.PadCentre), PortPark, 0.35f, 40f, "Kenji's port pad, the deck in tow");
+            yield return Until(() => port.DeckFitted, 10f, "the port takes the deck onto its tray and fits it");
+            Release(_mouse.rightButton);
+            yield return Until(() => fitted == 1, 6f, "the deck is on 07's flank");
+            Capture("12d-the-tape-deck");
+            End("Kenji's port fits Ro's tape deck", "the first music, earned");
+        }
+
+        private IEnumerator ChargeAtTheDock(string why, float leastOnArrival = 0f)
         {
             Begin();
             BatteryModel battery = _gameplay.Battery.Model;
-            float before = battery.Charge01;
             ChargingDock dock = _gameplay.Home.Dock;
             Vector3 facing = Flat(dock.Rotation * Vector3.forward).normalized;
             yield return DriveTo(Flat(dock.Position) - facing * DockApproach, 1.5f, 0.6f, 60f,
                 "the front of the charging dock");
             yield return DriveTo(Flat(dock.Position), DockParkRadius, 0.35f, 30f, "the charging dock");
+            float before = battery.Charge01;
+            Assert.GreaterOrEqual(before, leastOnArrival, $"07 reaches the dock with charge to spare ({why})");
             yield return Until(() => dock.Docked, _gameplay.Home.Tuning.DockDelay + 3f, "07 rests on the dock");
             float docked = Time.time;
             yield return Until(() => battery.FullCells == battery.Cells && !battery.IsCharging,
@@ -1208,6 +1299,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         private IEnumerator LatchTether(Relic relic)
         {
             Begin();
+            int latched = _events.TetherAttached.Count;
             Vector3 back = Flat(_rover.Position - relic.transform.position).normalized;
             yield return DriveTo(Flat(relic.transform.position + back * RetreatDistance), 3f, 0.6f, 40f,
                 "a spot to turn back and aim from");
@@ -1224,7 +1316,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 $"the tether latches onto the relic ({relic.State}, " +
                 $"{Vector3.Distance(relic.transform.position, _rover.Position):F1} m from 07)");
             Assert.AreSame(relic, _gameplay.Tether.Towed);
-            Assert.AreEqual(1, _events.TetherAttached.Count);
+            Assert.AreEqual(latched + 1, _events.TetherAttached.Count);
             End("Turn back and latch the tether", $"latched at {_gameplay.Tether.Length:F1} m");
         }
 
@@ -1484,6 +1576,11 @@ namespace MoonProject.Gameplay.PlayModeTests
                 travelled += SurfaceRules.HorizontalDistance(_rover.Position, part);
                 int before = tilly.Progress.Collected;
                 yield return DriveTo(new Vector3(part.x, 0f, part.z), 1.5f, 0.8f, 60f, "one of Tilly's parts");
+                if (next == tilly.BuriedPart)
+                {
+                    yield return DigTillysLastPart();
+                }
+
                 yield return Until(() => tilly.Progress.Collected > before, 6f, "the part drifts into 07");
             }
 
@@ -1493,6 +1590,22 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(total, last.Total);
             Assert.IsTrue(tilly.Progress.CanRepair);
             End("Gather Tilly's parts", $"{total} parts over {travelled:F0} m of driving");
+        }
+
+        /// <summary>
+        /// Her last part lies half under the dust (first-hour v2 §4): driving over it is not enough; the line says so,
+        /// the Dig prompt shows, and holding the beam digs it free.
+        /// </summary>
+        private IEnumerator DigTillysLastPart()
+        {
+            yield return Until(() => _gameplay.Progression.NextStep == ProgressionKeys.NextDig, 3f,
+                "the line: her last part is under the dust");
+            _pilot.Target = null;
+            yield return Until(() => _rover.Speed < StopSpeed, 6f, "07 stops by the buried part");
+            yield return Until(() => _gameplay.Hints.TryGet(InteractionKind.Excavate, out _), 3f, "the Dig prompt");
+            Press(_keyboard.eKey);
+            yield return new WaitForSeconds(_gameplay.Friends.Tuning.PartDigSeconds + 0.5f);
+            Release(_keyboard.eKey);
         }
 
         private IEnumerator RepairTilly()
@@ -1686,7 +1799,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>
-        /// The walkman hopped out in front of 07: back out, turn and creep up on it with the tether button held, which
+        /// The gnome hopped out in front of 07: back out, turn and creep up on it with the tether button held, which
         /// lifts it gently into the rack instead of towing it.
         /// </summary>
         private IEnumerator StowInTheCradle(Relic relic)
@@ -1754,7 +1867,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 seat.Position + seat.Rotation * Vector3.up * relic.RestHeight), 0.01f, "seated in the rack");
             yield return DriveOntoTheLift("the belly lift's platform");
             yield return Until(() => lift.Phase == LiftPhase.Inside, LiftPhaseTimeout,
-                "resting on the platform carries 07 up into the lab, the walkman in the rack");
+                "resting on the platform carries 07 up into the lab, the gnome in the rack");
             yield return Until(() => cradle.CanUnload, LabTurnTimeout,
                 "the turntable turns to the keepsake shelf: the rack is in reach of it");
             Assert.IsTrue(_gameplay.Hints.TryGet(InteractionKind.Deposit, out _), "the Deposit prompt is offered");
@@ -1767,7 +1880,7 @@ namespace MoonProject.Gameplay.PlayModeTests
             Assert.AreEqual(RelicState.Displayed, relic.State);
             Assert.IsNull(cradle.Carried, "the rack is empty again");
             yield return new WaitForSeconds(1f);
-            Capture("13g-walkman-on-the-shelf");
+            Capture("13g-gnome-on-the-shelf");
             yield return RideDown("13h-down-again");
             End($"Carry it home in the Cargo Cradle and up the lift ({distance:F0} m)",
                 $"{_events.RelicDeposited[deposits].Value.DisplayedCount} memories on display");

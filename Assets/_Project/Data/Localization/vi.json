@@ -64,23 +64,39 @@
         },
         {
             "key": "next.wake",
-            "text": "Ngoài kia có lẽ có gì đó sẽ đáp lại tiếng dò."
+            "text": "Cấp điện trước đã. Tháp radio đang ngủ."
         },
         {
             "key": "next.salvage",
-            "text": "Kho cũ vẫn còn kim loại đáng để cắt."
+            "text": "Nó cần kim loại, dây điện, thấu kính và một cuộn dây. Kho cũ có những thứ đó."
         },
         {
             "key": "next.tower",
-            "text": "Tháp cần kim loại."
+            "text": "Cuộn dây đây rồi. Tháp đang chờ."
         },
         {
             "key": "next.signal",
-            "text": "Một tín hiệu yếu. Có ai đó ngoài kia."
+            "text": "Một tín hiệu yếu, phía sau đụn cát. Có ai đó ngoài kia."
+        },
+        {
+            "key": "next.dig",
+            "text": "Bộ phận cuối của cô ấy nằm dưới lớp bụi."
+        },
+        {
+            "key": "next.friend.repair",
+            "text": "Đủ bộ phận rồi. Hãy sửa cô ấy."
+        },
+        {
+            "key": "next.garage",
+            "text": "Garage của Kenji. Có thể còn thứ gì đó của 07 ở đó."
+        },
+        {
+            "key": "next.port",
+            "text": "Cổng bảo trì cũ của Kenji. Nó vẫn còn một cái dự phòng."
         },
         {
             "key": "next.relic",
-            "text": "Có gì đó lấp lánh ngoài kia. Ở nhà còn chỗ cho nó."
+            "text": "Ở nhà còn chỗ cho nó."
         },
         {
             "key": "next.lift.stitch",
@@ -88,7 +104,7 @@
         },
         {
             "key": "next.lift.ride",
-            "text": "Đứng yên trên thang. Phòng thí nghiệm có kệ cho nó."
+            "text": "Đứng yên trên thang. Phòng thí nghiệm ở trên đó."
         },
         {
             "key": "next.chasm",

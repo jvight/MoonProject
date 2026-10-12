@@ -31,9 +31,9 @@ namespace MoonProject.Gameplay
         };
 
         private const int TowerSpot = 4;
-        private const int StepTower = 2;
-        private const int StepLiftStitch = 5;
-        private const int StepBay = 8;
+        private const int StepTower = 0;
+        private const int StepLiftStitch = 9;
+        private const int StepBay = 12;
 
         [Tooltip("The wake-up's tuning (Assets/_Project/Data/Tuning/Gameplay/ProgressionTuning.asset).")]
         [SerializeField] private ProgressionTuning _tuning;
@@ -68,6 +68,12 @@ namespace MoonProject.Gameplay
         private bool _woke;
         private bool _salvaged;
         private bool _listened;
+        private bool _towerSeen;
+        private GaragePort _port;
+        private TowerPartField _parts;
+        private int _signalIndex;
+        private float _sweepAt = float.PositiveInfinity;
+        private IDisposable _powered;
         private bool _initialized;
 
         public ProgressionTuning Tuning => _tuning;
@@ -149,10 +155,21 @@ namespace MoonProject.Gameplay
             _letters = new RadioLetters(services.Events, _tuning.SingleLetterMasts, _tuning.LettersAfter,
                 _tuning.LetterCount);
 
-            _steps.Add(ProgressionKeys.NextWake, () => _woke);
-            _steps.Add(ProgressionKeys.NextSalvage, () => _salvaged || power.HasReached(BasePowerStage.Home));
-            _steps.Add(ProgressionKeys.NextTower, () => power.HasReached(BasePowerStage.Home));
-            _steps.Add(ProgressionKeys.NextSignal, () => signal.Progress.State == FriendState.Awake);
+            _signalIndex = IndexOf(friends, signal);
+            _powered = events.Subscribe<BasePowerChanged>(OnPowerChanged);
+
+            // First-hour v2 §4: one thing at a time, each line shown as soon as 07 stops.
+            Func<bool> homeLit = () => power.HasReached(BasePowerStage.Home);
+            Func<bool> tillyAwake = () => signal.Progress.State == FriendState.Awake;
+            _steps.Add(ProgressionKeys.NextWake, () => _towerSeen || _salvaged || homeLit());
+            _steps.Add(ProgressionKeys.NextSalvage, () => homeLit() || CoilOut(components));
+            _steps.Add(ProgressionKeys.NextTower, homeLit);
+            _steps.Add(ProgressionKeys.NextSignal,
+                () => tillyAwake() || signal.Progress.Collected >= signal.Progress.PartCount - 1);
+            _steps.Add(ProgressionKeys.NextDig, () => tillyAwake() || signal.Progress.AllPartsGathered);
+            _steps.Add(ProgressionKeys.NextFriendRepair, tillyAwake);
+            _steps.Add(ProgressionKeys.NextGarage, () => _port != null && (_port.IsOpen || _port.RingFitted));
+            _steps.Add(ProgressionKeys.NextPort, () => _port != null && _port.RingFitted);
             _steps.Add(ProgressionKeys.NextRelic, () => lift.Phase >= LiftPhase.Called || home.DisplayedCount > 0);
             _steps.Add(ProgressionKeys.NextLiftStitch, () => lift.Phase >= LiftPhase.Ready || home.DisplayedCount > 0);
             _steps.Add(ProgressionKeys.NextLiftRide, () => home.DisplayedCount > 0);
@@ -228,6 +245,13 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>The map system connects the survey chart once it is up (step 8's look waits on it).</summary>
+        /// <summary>The pieces made after the wake-up: Kenji's garage port and the tower's components in the world.</summary>
+        internal void ConnectFinds(GaragePort port, TowerPartField parts)
+        {
+            _port = port ?? throw new ArgumentNullException(nameof(port));
+            _parts = parts ?? throw new ArgumentNullException(nameof(parts));
+        }
+
         internal void ConnectChart(ISurveyChart chart)
         {
             _chart = chart ?? throw new ArgumentNullException(nameof(chart));
@@ -261,6 +285,16 @@ namespace MoonProject.Gameplay
             float now = Time.time;
             Vector3 rover = _rover.Position;
             _woke |= SurfaceRules.HorizontalDistance(rover, _dock) > _tuning.WakeDistance;
+            _towerSeen |= SurfaceRules.HorizontalDistance(rover, _places[TowerSpot].position) <=
+                          _tuning.RadiusOf(ProgressionKeys.PlaceTower);
+            if (now >= _sweepAt)
+            {
+                _sweepAt = float.PositiveInfinity;
+                if (_signal.Progress.State == FriendState.Dormant)
+                {
+                    _sonar.RevealFriend(_signalIndex, _tuning.TowerSweepBrightness);
+                }
+            }
             _approaches.Tick(rover, now);
             _answers.Tick(rover);
             StepChasm(rover, now);
@@ -271,6 +305,24 @@ namespace MoonProject.Gameplay
             }
 
             _steps.Tick();
+        }
+
+        /// <summary>
+        /// Tower level 1 wakes home: its first sweep rolls out a moment later and raises the faint signal's pillar
+        /// (first-hour v2 §4), never on a load.
+        /// </summary>
+        private void OnPowerChanged(BasePowerChanged changed)
+        {
+            if (!changed.Restored && changed.Stage == BasePowerStage.Home)
+            {
+                _sweepAt = Time.time + _tuning.TowerSweepDelay;
+            }
+        }
+
+        /// <summary>The depot's last cut opened its heart: the coil glows there, or 07 already has it.</summary>
+        private bool CoilOut(TowerParts components)
+        {
+            return components.StateOf(0) != TowerPartState.Waiting || (_parts != null && _parts.IsResting(0));
         }
 
         /// <summary>Tilly spots Bell's light once the first memory is home; 07 looks across from the lip once.</summary>
@@ -393,6 +445,7 @@ namespace MoonProject.Gameplay
         {
             _salvage?.Dispose();
             _listens?.Dispose();
+            _powered?.Dispose();
             _evening?.Dispose();
             _letters?.Dispose();
             if (_looking)

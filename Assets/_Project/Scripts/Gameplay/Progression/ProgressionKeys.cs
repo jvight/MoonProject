@@ -38,6 +38,18 @@ namespace MoonProject.Gameplay
         /// <summary>Step 3: follow the faint signal, stitch Tilly.</summary>
         public const string NextSignal = "next.signal";
 
+        /// <summary>Step 3b: Tilly's last part lies under the dust; dig it.</summary>
+        public const string NextDig = "next.dig";
+
+        /// <summary>Step 3c: all her parts are here; repair her.</summary>
+        public const string NextFriendRepair = "next.friend.repair";
+
+        /// <summary>Step 3d: the tower's sweep named Kenji's garage; something of 07's is there.</summary>
+        public const string NextGarage = "next.garage";
+
+        /// <summary>Step 3e: the garage's port is open; park on its pad for the spare.</summary>
+        public const string NextPort = "next.port";
+
         /// <summary>Step 4: dig the first relic and tow it home.</summary>
         public const string NextRelic = "next.relic";
 
