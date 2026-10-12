@@ -83,6 +83,9 @@ namespace MoonProject.World
         private const float VentMaxRise = 0.6f;
         private const int VentRingSamples = 12;
 
+        // Open floor between the vent's field and any other anchored place (a site's reach runs past its radius).
+        private const float VentClearance = 30f;
+
         // The ilmenite band (0.6) lies on the same terraces a little further round; the shadowed crater (0.7) is the
         // basin's biggest real crater, its anchor a small disc on its floor.
         private const float IlmeniteBearing = 238f;
@@ -170,7 +173,7 @@ namespace MoonProject.World
             Vector2 up = MoonSurface.BearingToDirection(TerracesBearing);
             anchors.Add(Make(surface, WorldAnchorIds.RegionTerraces, TerracesFoot(surface, up), up, TerracesRadius));
             AddCrates(surface, anchors);
-            Vector2 vent = VentSite(surface);
+            Vector2 vent = VentSite(surface, anchors);
             anchors.Add(Make(surface, WorldAnchorIds.PlaceOrangeVent, vent, vent, VentRadius));
             Vector2 band = MoonSurface.BearingToDirection(IlmeniteBearing);
             anchors.Add(Make(surface, WorldAnchorIds.PlaceIlmeniteBand, TerracesFoot(surface, band), band,
@@ -257,7 +260,7 @@ namespace MoonProject.World
         /// The old vent's site: the first spot from <see cref="VentBearing"/> / <see cref="VentDistance"/> outward and
         /// round whose whole bead field is drivable and level.
         /// </summary>
-        private static Vector2 VentSite(MoonSurface surface)
+        private static Vector2 VentSite(MoonSurface surface, List<WorldAnchor> placed)
         {
             for (float reach = 0f; reach <= VentSearchDistance; reach += VentSearchStep)
             {
@@ -267,7 +270,7 @@ namespace MoonProject.World
                     {
                         Vector2 spot = MoonSurface.BearingToDirection(VentBearing + turn * side)
                             * (VentDistance + reach);
-                        if (IsLevelDisc(surface, spot, VentRadius))
+                        if (IsClear(spot, placed) && IsLevelDisc(surface, spot, VentRadius))
                         {
                             return spot;
                         }
@@ -276,6 +279,20 @@ namespace MoonProject.World
             }
 
             throw new InvalidOperationException("No level, drivable spot for the orange vent's bead field.");
+        }
+
+        private static bool IsClear(Vector2 spot, List<WorldAnchor> placed)
+        {
+            foreach (WorldAnchor anchor in placed)
+            {
+                var at = new Vector2(anchor.Position.x, anchor.Position.z);
+                if (Vector2.Distance(spot, at) < anchor.Radius + VentRadius + VentClearance)
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private static bool IsLevelDisc(MoonSurface surface, Vector2 centre, float radius)
