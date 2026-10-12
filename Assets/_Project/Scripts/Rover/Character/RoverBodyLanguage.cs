@@ -145,6 +145,8 @@ namespace MoonProject.Rover
                 events.Subscribe<RoverLeapRefused>(OnLeapRefused),
                 events.Subscribe<FeelBeat>(OnFeelBeat),
                 events.Subscribe<RoverChirpSyllable>(OnChirpSyllable),
+                events.Subscribe<BasePowerChanged>(OnBasePowerChanged),
+                events.Subscribe<FriendSpotted>(spotted => Glance(spotted.Position)),
             };
             _initialized = true;
             Apply(0f);
@@ -571,6 +573,16 @@ namespace MoonProject.Rover
             if (syllable.Mood == ChirpMood.Happy)
             {
                 _rig.KickHeave(chirp.HappyBounce);
+            }
+        }
+
+        /// <summary>Home's windows light as the base wakes: 07 lifts its head and perks up.</summary>
+        private void OnBasePowerChanged(BasePowerChanged power)
+        {
+            if (!power.Restored && power.Stage != BasePowerStage.Asleep)
+            {
+                PerkUp(_tuning.KitProudPerk);
+                Glance(_world.BasePosition);
             }
         }
 

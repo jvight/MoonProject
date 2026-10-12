@@ -14,7 +14,9 @@ namespace MoonProject.Rover
     /// Happy;</item>
     /// <item>a kit piece fitted: Proud; a friend repaired: Happy; a friend greeting 07: Greeting;</item>
     /// <item>the battery's Low warning, or 07 being recovered: Worried; the battery empty: Tired;</item>
-    /// <item>the first answer of each friend, site or relic while listening, and a new place: Curious.</item>
+    /// <item>the first answer of each friend, site or relic while listening, and a new place: Curious;</item>
+    /// <item>home's windows lighting as the base wakes: Happy; a component lifting free: Curious the first time
+    /// for each part, else Affirm.</item>
     /// </list>
     /// Loaded state (restored events) never chirps.
     /// </summary>
@@ -51,6 +53,8 @@ namespace MoonProject.Rover
                 events.Subscribe<RelicAnswered>(answer => FirstAnswer(answer.RelicId)),
                 events.Subscribe<PlaceFirstApproached>(_ => Say(ChirpMood.Curious, Gentle)),
                 events.Subscribe<RoverChirpSyllable>(OnSyllable),
+                events.Subscribe<BasePowerChanged>(OnBasePowerChanged),
+                events.Subscribe<ComponentFound>(OnComponentFound),
             };
         }
 
@@ -114,6 +118,25 @@ namespace MoonProject.Rover
             {
                 Say(ChirpMood.Curious, Gentle);
             }
+        }
+
+        private void OnBasePowerChanged(BasePowerChanged power)
+        {
+            if (!power.Restored && power.Stage != BasePowerStage.Asleep)
+            {
+                Say(ChirpMood.Happy, Gentle);
+            }
+        }
+
+        private void OnComponentFound(ComponentFound found)
+        {
+            if (found.Restored)
+            {
+                return;
+            }
+
+            bool first = _answered.Add("part." + found.PartId);
+            Say(first ? ChirpMood.Curious : ChirpMood.Affirm, Gentle);
         }
 
         private void OnSyllable(RoverChirpSyllable syllable)

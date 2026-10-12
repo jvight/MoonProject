@@ -67,6 +67,9 @@ namespace MoonProject.Rover.Tests
                 (() => _events.Publish(new LowPowerChanged(true, false)), ChirpMood.Tired),
                 (() => _events.Publish(new SiteAnswered("site.depot", Vector3.zero, 10f, true)), ChirpMood.Curious),
                 (() => _events.Publish(new FriendGreeted("bell")), ChirpMood.Greeting),
+                (() => _events.Publish(new BasePowerChanged(BasePowerStage.Home, false)), ChirpMood.Happy),
+                (() => _events.Publish(new ComponentFound("coil", 1, Vector3.zero, false)), ChirpMood.Curious),
+                (() => _events.Publish(new ComponentFound("coil", 1, Vector3.zero, false)), ChirpMood.Affirm),
             };
             foreach (var (publish, mood) in cases)
             {
