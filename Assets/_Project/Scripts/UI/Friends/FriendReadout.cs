@@ -38,6 +38,7 @@ namespace MoonProject.UI
         private int _shownFriend = FriendFocus.None;
         private float _writtenRaise = -1f;
         private int _writtenCollected = -1;
+        private string[] _labels = new string[0];
 
         public FriendReadout(UiLayout layout, FriendUiSettings settings, PromptSettings anchoring,
             IFriendStatuses friends, IRoverState rover, IViewCamera view, ILocalization localization)
@@ -83,6 +84,7 @@ namespace MoonProject.UI
         public void Relocalize()
         {
             _writtenCollected = -1;
+            _labels = new string[0];
             if (_shownFriend != FriendFocus.None)
             {
                 WriteLabel(_friends.Status(_shownFriend));
@@ -137,6 +139,7 @@ namespace MoonProject.UI
             _fill.Snap(status.Collected);
             WritePips();
             _writtenCollected = -1;
+            _labels = new string[0];
             WriteLabel(status);
         }
 
@@ -149,9 +152,14 @@ namespace MoonProject.UI
             }
 
             _writtenCollected = status.Collected;
-            _label.text = string.Format(_localization.Get(UiKeys.FriendParts),
-                _localization.Get(UiKeys.FriendName(_friends.Definition(_shownFriend).Id)), status.Collected,
-                status.Total);
+            if (_labels.Length <= status.Total)
+            {
+                _labels = new string[status.Total + 1];
+            }
+
+            int count = Mathf.Clamp(status.Collected, 0, status.Total);
+            _label.text = _labels[count] ?? (_labels[count] = string.Format(_localization.Get(UiKeys.FriendParts),
+                _localization.Get(UiKeys.FriendName(_friends.Definition(_shownFriend).Id)), count, status.Total));
         }
 
         private void BuildPips(int count)
