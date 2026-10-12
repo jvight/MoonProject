@@ -93,6 +93,7 @@ namespace MoonProject.Rover.Editor
             var ring = BuildWiring.Require<GameObject>(RoverAssetPaths.KitTetherRing, "the Art box's kit builder");
             var tube = BuildWiring.Require<GameObject>(RoverAssetPaths.BlueprintTube, "the Art box's pickup builder");
             var focusLens = BuildWiring.Require<GameObject>(RoverAssetPaths.FocusLens, "the Art box's rover builder");
+            var sideBin = BuildWiring.Require<GameObject>(RoverAssetPaths.SideBin, "the Art box's kit builder");
             var parts = new GameObject[RoverAssetPaths.StoryParts.Length];
             for (int i = 0; i < parts.Length; i++)
             {
@@ -174,6 +175,11 @@ namespace MoonProject.Rover.Editor
             Transform lens = Mount(scratch, focusLens, BuildWiring.Node(m, RoverModelNodes.LensSocket));
             BuildWiring.Assign(controller, ("_focusLens", lens.gameObject),
                 ("_focusLensGlass", BuildWiring.NodeComponent<Renderer>(lens, "Glass")));
+            BuildWiring.AssignArray(controller, "_sideBins", new Object[]
+            {
+                Mount(scratch, sideBin, BuildWiring.Node(m, RoverModelNodes.BinSocketLeft)).gameObject,
+                Mount(scratch, sideBin, BuildWiring.Node(m, RoverModelNodes.BinSocketRight)).gameObject,
+            });
 
             BuildWiring.Assign(bodyLanguage,
                 ("_tuning", characterTuning),

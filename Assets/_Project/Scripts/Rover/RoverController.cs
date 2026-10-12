@@ -66,6 +66,9 @@ namespace MoonProject.Rover
         [Tooltip("The Focus Lens's Glass child, glowing with the charge run.")]
         [SerializeField] private Renderer _focusLensGlass;
 
+        [Tooltip("Art's two Kit_SideBin on BinSocket_L and BinSocket_R, shown once 07 has the Side Bins.")]
+        [SerializeField] private GameObject[] _sideBins = new GameObject[0];
+
         [Tooltip("RoverModel 'TetherOrigin' (lens centre of 07's eye, +Z = gaze).")]
         [SerializeField] private Transform _tetherOrigin;
 
@@ -297,6 +300,13 @@ namespace MoonProject.Rover
         public void Grant(RoverAbility ability)
         {
             _abilities |= AbilityBit(ability);
+            if (ability == RoverAbility.SideBins)
+            {
+                foreach (GameObject bin in _sideBins)
+                {
+                    bin.SetActive(true);
+                }
+            }
         }
 
         private static int AbilityBit(RoverAbility ability)
@@ -387,6 +397,8 @@ namespace MoonProject.Rover
             ok &= Require(_hoverCoils != null, "RoverHoverCoils is not assigned.");
             ok &= Require(_lampMotes != null, "RoverLampMotes is not assigned.");
             ok &= Require(_flankLamps != null, "RoverFlankLamps is not assigned.");
+            ok &= Require(_sideBins.Length == 2 && _sideBins[0] != null && _sideBins[1] != null,
+                "The two side bins (BinSocket_L, BinSocket_R) are not assigned.");
             ok &= Require(_chargeRows.Length == 0 || (_focusLens != null && _focusLensGlass != null),
                 "The Focus Lens or its Glass is not assigned (art's cutter kit).");
             foreach (ChargeRunRow row in _chargeRows)
@@ -899,13 +911,7 @@ namespace MoonProject.Rover
         /// <summary>The cutter's fresh charge length now (ICutter): the bay's test cut runs at it.</summary>
         private float CutterChargeSeconds()
         {
-            if (!_context.TryGet(out ICutter cutter))
-            {
-                Debug.LogError($"{nameof(RoverController)}: no ICutter is registered; the test cut cannot run.", this);
-                return 0f;
-            }
-
-            return cutter.ChargeSeconds;
+            return _context.Get<ICutter>().ChargeSeconds;
         }
 
         private void OnApplicationFocus(bool hasFocus)

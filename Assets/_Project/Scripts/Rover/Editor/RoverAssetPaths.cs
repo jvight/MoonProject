@@ -24,6 +24,9 @@ namespace MoonProject.Rover.Editor
         /// <summary>The art box's Focus Lens kit (cutter tier 1), mounted on LensSocket. Required.</summary>
         public const string FocusLens = "Assets/_Project/Generated/Art/Rover/FocusLens.prefab";
 
+        /// <summary>The art box's side bin (RoverAbility.SideBins), mounted twice. Required.</summary>
+        public const string SideBin = "Assets/_Project/Generated/Art/Rover/Kit_SideBin.prefab";
+
         /// <summary>The art box's tower story parts (M3-16 P1), each prefab named as its part's id. Required.</summary>
         public static readonly string[] StoryParts =
         {
