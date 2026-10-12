@@ -175,6 +175,42 @@ MonoBehaviour:
     _volumeMax: 1
     _pitchMin: 0.95
     _pitchMax: 1.05
+  - _id: port_arm
+    _clips:
+    - {fileID: 8300000, guid: f11b14029abb9d4408ac0c8d0e01fce4, type: 3}
+    _variantLabels:
+    - port_arm
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.8
+    _volumeMax: 0.8
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: tether_ring_wake
+    _clips:
+    - {fileID: 8300000, guid: af209ce07d58544419b550d5746818a8, type: 3}
+    _variantLabels:
+    - tether_ring_wake
+    _bus: 2
+    _spatial: 1
+    _loop: 0
+    _volumeMin: 0.8
+    _volumeMax: 0.8
+    _pitchMin: 1
+    _pitchMax: 1
+  - _id: radio_carrier
+    _clips:
+    - {fileID: 8300000, guid: 69e2addfd79eec54b9424546e76b69f9, type: 3}
+    _variantLabels:
+    - radio_carrier
+    _bus: 1
+    _spatial: 0
+    _loop: 1
+    _volumeMin: 1
+    _volumeMax: 1
+    _pitchMin: 1
+    _pitchMax: 1
   - _id: radio_static
     _clips:
     - {fileID: 8300000, guid: 131dc70b3741d01488e18a408db6c172, type: 3}
