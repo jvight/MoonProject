@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using MoonProject.Core;
 
 namespace MoonProject.Gameplay
 {
@@ -20,7 +21,9 @@ namespace MoonProject.Gameplay
 
         /// <summary>
         /// Version 1 to 2 replaced the scrap balance with salvaged materials: an old save's scrap becomes a fair
-        /// material stock (<see cref="Convert"/>), so nothing a player gathered is lost.
+        /// material stock (<see cref="Convert"/>), so nothing a player gathered is lost. Version 2 to 3 split the one
+        /// shared total into 07's hold and home's shelves (docs/features/M3-25 §6): every unit goes home, the hold
+        /// starts empty, and what the shelves cannot hold waits in overflow crates when the save loads.
         /// </summary>
         public static string Migrate(string json, int fromVersion)
         {
@@ -35,6 +38,17 @@ namespace MoonProject.Gameplay
                 return JsonUtility.ToJson(Convert(wallet.balance));
             }
 
+            if (fromVersion == 2)
+            {
+                MaterialsSaveDataV2 totals = JsonUtility.FromJson<MaterialsSaveDataV2>(json);
+                if (totals == null)
+                {
+                    throw new FormatException($"{GameplaySaveKeys.Materials} version 2 holds no data.");
+                }
+
+                return JsonUtility.ToJson(Split(totals));
+            }
+
             throw new InvalidOperationException(
                 $"{GameplaySaveKeys.Materials} has no migration from version {fromVersion} to {fromVersion + 1}.");
         }
@@ -43,10 +57,10 @@ namespace MoonProject.Gameplay
         /// The material stock worth <paramref name="scrap"/>: one unit per <see cref="ScrapPerUnit"/> scrap (rounded to
         /// the nearest unit), dealt out metal, wiring, metal, wiring, metal, wiring, optics, and again.
         /// </summary>
-        public static MaterialsSaveData Convert(int scrap)
+        public static MaterialsSaveDataV2 Convert(int scrap)
         {
             int units = Mathf.Max(0, Mathf.RoundToInt(scrap / (float)ScrapPerUnit));
-            var stock = new MaterialsSaveData();
+            var stock = new MaterialsSaveDataV2();
             for (int i = 0; i < units; i++)
             {
                 switch (DealOrder[i % DealOrder.Length])
@@ -64,6 +78,21 @@ namespace MoonProject.Gameplay
             }
 
             return stock;
+        }
+
+        /// <summary>A version 2 total, all of it home (the hold empty, the built-in shelves only).</summary>
+        public static MaterialsSaveData Split(MaterialsSaveDataV2 totals)
+        {
+            if (totals == null)
+            {
+                throw new ArgumentNullException(nameof(totals));
+            }
+
+            var home = new int[SalvageMaterials.Count];
+            home[(int)SalvageMaterial.Metal] = totals.metal;
+            home[(int)SalvageMaterial.Wiring] = totals.wiring;
+            home[(int)SalvageMaterial.Optics] = totals.optics;
+            return new MaterialsSaveData { home = home };
         }
     }
 }

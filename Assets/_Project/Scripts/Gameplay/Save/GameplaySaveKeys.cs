@@ -8,7 +8,7 @@ namespace MoonProject.Gameplay
     {
         /// <summary>07's salvaged materials; the scrap wallet's key (version 1), so an old balance migrates.</summary>
         public const string Materials = "gameplay.wallet";
-        public const int MaterialsVersion = 2;
+        public const int MaterialsVersion = 3;
 
         public const string Relics = "gameplay.relics";
         public const int RelicsVersion = 1;

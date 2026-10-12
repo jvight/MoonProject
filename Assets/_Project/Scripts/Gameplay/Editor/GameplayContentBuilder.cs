@@ -23,6 +23,7 @@ namespace MoonProject.Gameplay.Editor
         [MoonBuilder(BuilderPath, BuilderOrder)]
         private static void Build()
         {
+            BuildMaterials();
             BuildSalvage();
             BuildRelics();
             BuildRadioTower();
@@ -31,6 +32,21 @@ namespace MoonProject.Gameplay.Editor
             BuildCassettes();
             BuildLogCaches();
             AssetDatabase.SaveAssets();
+        }
+
+        /// <summary>The material catalog from the economy table (<see cref="SalvageEconomy.Materials"/>).</summary>
+        private static void BuildMaterials()
+        {
+            var catalog = ScriptableObject.CreateInstance<MaterialCatalog>();
+            catalog.Populate(SalvageEconomy.Materials());
+            string problem = catalog.Validate();
+            if (problem != null)
+            {
+                throw new InvalidOperationException($"{BuilderPath}: the material catalog is broken: {problem}.");
+            }
+
+            GeneratedAssets.CreateOrReplace(catalog, GameplayAssetPaths.MaterialCatalog);
+            Debug.Log($"{BuilderPath}: wrote {GameplayAssetPaths.MaterialCatalog}");
         }
 
         /// <summary>

@@ -28,11 +28,13 @@ namespace MoonProject.Gameplay.Editor
         public const string SalvageTuning = TuningFolder + "/SalvageTuning.asset";
         public const string ProgressionTuning = TuningFolder + "/ProgressionTuning.asset";
         public const string LiftTuning = TuningFolder + "/LiftTuning.asset";
+        public const string CargoTuning = TuningFolder + "/CargoTuning.asset";
 
         public const string ContentFolder = "Assets/_Project/Data/Content";
         public const string RelicFolder = ContentFolder + "/Relics";
         public const string RelicCatalog = ContentFolder + "/RelicCatalog.asset";
         public const string SalvageCatalog = ContentFolder + "/SalvageCatalog.asset";
+        public const string MaterialCatalog = ContentFolder + "/MaterialCatalog.asset";
         public const string UpgradeFolder = ContentFolder + "/Upgrades";
         public const string RadioTowerUpgrade = UpgradeFolder + "/Upgrade_radio_tower.asset";
         public const string HoverJumpUpgrade = UpgradeFolder + "/Upgrade_rover_hover_jump.asset";

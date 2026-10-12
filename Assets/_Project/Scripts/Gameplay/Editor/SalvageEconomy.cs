@@ -36,6 +36,33 @@ namespace MoonProject.Gameplay.Editor
             new Recipe(1, 1, 1), new Recipe(1, 3, 1), new Recipe(4, 5, 6),
         };
 
+        /// <summary>Units of a salvage bundle one slot holds (docs/features/M3-25 §2.2).</summary>
+        public const int SalvageStack = 4;
+
+        /// <summary>Units of a lunar ore one slot holds (M3-27: beads and ores pack denser than bundles).</summary>
+        public const int OreStack = 6;
+
+        /// <summary>
+        /// The materials of this version (docs/features/M3-27 §8): the three salvage materials, and the basin's orange
+        /// beads, seen in their vent field but not gathered until the dig on bead patches (0.6).
+        /// </summary>
+        public static MaterialEntry[] Materials()
+        {
+            return new[]
+            {
+                new MaterialEntry(SalvageMaterial.Metal, "metal", MaterialFamily.Salvage, SalvageStack, true),
+                new MaterialEntry(SalvageMaterial.Wiring, "wiring", MaterialFamily.Salvage, SalvageStack, true),
+                new MaterialEntry(SalvageMaterial.Optics, "optics", MaterialFamily.Salvage, SalvageStack, true),
+                new MaterialEntry(SalvageMaterial.OrangeBeads, "orange_beads", MaterialFamily.Lunar, OreStack, false),
+            };
+        }
+
+        /// <summary>
+        /// The supply shelves built on the belly ring's free sockets, in socket order (M3-25 §3.1): shelf 3, then
+        /// shelf 4, almost all metal.
+        /// </summary>
+        public static IReadOnlyList<Recipe> Shelves { get; } = new[] { new Recipe(3, 0, 0), new Recipe(4, 1, 0) };
+
         /// <summary>The salvage sites in catalog order (Art's Site_&lt;name&gt; on site.&lt;name&gt;).</summary>
         public static IReadOnlyList<string> SiteNames { get; } = new[]
         {
