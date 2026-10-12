@@ -305,6 +305,9 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>Metres 07 backs out from the port's pad before it turns, clear of the garage's walls.</summary>
         private const float PortBackOut = 5f;
 
+        /// <summary>Tether releases before the tow home began (Kenji's port took the tape deck off the tether).</summary>
+        private int _releasesBeforeTow;
+
         private static readonly string ReportPath = Path.Combine(GameplayFixture.CaptureFolder, "playthrough.md");
 
         private readonly List<(string Step, float Seconds, string Notes, Vector3 Battery)> _steps =
@@ -1360,12 +1363,12 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>The towed relic is still on the tether; if not, where and how it let go.</summary>
         private void AssertTowHolds(string where)
         {
-            if (_events.TetherReleased.Count == 0)
+            if (_events.TetherReleased.Count == _releasesBeforeTow)
             {
                 return;
             }
 
-            TetherReleased released = _events.TetherReleased[0].Value;
+            TetherReleased released = _events.TetherReleased[_releasesBeforeTow].Value;
             Assert.Fail($"the tether holds all the way home, but it let go {where} " +
                         $"({(released.Snapped ? "snapped" : "released")} at {released.Position}, 07 at " +
                         $"{_rover.Position})");
@@ -1374,6 +1377,7 @@ namespace MoonProject.Gameplay.PlayModeTests
         private IEnumerator TowHome(SalvageSite site, Relic relic)
         {
             Begin();
+            _releasesBeforeTow = _events.TetherReleased.Count;
             yield return Reel(1f, ReelSeconds);
             Assert.Less(_gameplay.Tether.Length, _gameplay.Tether.Tuning.MinLength + 0.5f, "reeled in close");
             Vector3 centre = Flat(site.Position);
@@ -1382,7 +1386,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 "open ground out from the wreck, the relic in tow");
             Vector3 toHome = Flat(_context.Get<IWorldLayout>().BasePosition - site.Position).normalized;
             yield return CircleTo(site, centre + toHome * ring, TowRingExtra);
-            Assert.AreEqual(0, _events.TetherReleased.Count, "the relic follows 07 out round the wreck");
+            Assert.AreEqual(_releasesBeforeTow, _events.TetherReleased.Count, "the relic follows 07 out round the wreck");
             yield return Reel(-1f, ReelSeconds);
             LiftStation lift = _gameplay.Lift;
             Vector3 stand = Flat(lift.RideSpot - Flat(lift.RideHeading).normalized * LiftLineUp);
