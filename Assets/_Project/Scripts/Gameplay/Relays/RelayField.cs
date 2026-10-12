@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using UnityEngine;
 using MoonProject.Core;
 using MoonProject.Core.Events;
@@ -71,7 +70,7 @@ namespace MoonProject.Gameplay
         private PickupGlints _glints;
         private StationPad[] _pads = Array.Empty<StationPad>();
         private RelayBeat _beat;
-        private string[] _counts = Array.Empty<string>();
+        private string[] _names = Array.Empty<string>();
         private RelayMast _restoring;
         private RelayMast _candidate;
         private float _holdTime;
@@ -266,12 +265,7 @@ namespace MoonProject.Gameplay
             }
 
             _hop = new RadioHop(_events, _reach, _tuning, _rover, _rig, placement, tether, hopPads, facings, labels);
-            _counts = new string[_masts.Count + 1];
-            for (int i = 0; i < _counts.Length; i++)
-            {
-                _counts[i] = i.ToString(CultureInfo.InvariantCulture);
-            }
-
+            _names = labels;
             _initialized = true;
             return true;
         }
@@ -705,7 +699,7 @@ namespace MoonProject.Gameplay
             int lit = _reach.LitMasts;
             _events.Publish(new RelayRestored(mast.Id, mast.Restored.Lamp.position, lit, _masts.Count,
                 _reach.Id(link), pulse));
-            _events.Publish(new TickerLine(TickerOnline, _counts[Mathf.Clamp(lit, 0, _counts.Length - 1)]));
+            _events.Publish(new TickerLine(TickerOnline, _names[mast.Node], argumentIsKey: true));
         }
 
         private void WarmLamp(RelayMast mast, float now, float glow)

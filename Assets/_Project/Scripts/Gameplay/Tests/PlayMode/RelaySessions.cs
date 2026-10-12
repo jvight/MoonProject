@@ -111,7 +111,8 @@ namespace MoonProject.Gameplay.PlayModeTests
                 "home's reach is the dark tower's");
             TickerLine line = LastTicker("ticker.relay.online");
             Assert.AreEqual("ticker.relay.online", line.Key, "the mast's own line, before its letter");
-            Assert.AreEqual("1", line.Argument);
+            StringAssert.StartsWith("hop.node.relay.", line.Argument, "the relay's own name");
+            Assert.IsTrue(line.ArgumentIsKey);
             CollectionAssert.AreEqual(
                 new[]
                 {
