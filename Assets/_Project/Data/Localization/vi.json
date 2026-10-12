@@ -391,10 +391,6 @@
             "text": "Âm nền"
         },
         {
-            "key": "ui.settings.camera",
-            "text": "Góc nhìn"
-        },
-        {
             "key": "ui.settings.look_speed",
             "text": "Tốc độ xoay"
         },
@@ -417,6 +413,54 @@
         {
             "key": "ui.settings.language",
             "text": "Ngôn ngữ"
+        },
+        {
+            "key": "ui.settings.tab_camera",
+            "text": "Camera & cảm giác"
+        },
+        {
+            "key": "ui.settings.tab_display",
+            "text": "Hiển thị"
+        },
+        {
+            "key": "ui.display.resolution",
+            "text": "Độ phân giải"
+        },
+        {
+            "key": "ui.display.mode",
+            "text": "Chế độ cửa sổ"
+        },
+        {
+            "key": "ui.display.vsync",
+            "text": "V-Sync"
+        },
+        {
+            "key": "ui.display.fps_cap",
+            "text": "Giới hạn FPS"
+        },
+        {
+            "key": "ui.display.unlimited",
+            "text": "Không giới hạn"
+        },
+        {
+            "key": "ui.display.prev",
+            "text": "‹"
+        },
+        {
+            "key": "ui.display.next",
+            "text": "›"
+        },
+        {
+            "key": "ui.display.mode.borderless",
+            "text": "Toàn màn hình không viền"
+        },
+        {
+            "key": "ui.display.mode.exclusive",
+            "text": "Toàn màn hình"
+        },
+        {
+            "key": "ui.display.mode.windowed",
+            "text": "Cửa sổ"
         },
         {
             "key": "ui.settings.back",

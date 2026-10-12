@@ -321,7 +321,12 @@
                         <ui:VisualElement name="pause-settings" class="pause__settings" picking-mode="Ignore">
                             <ui:VisualElement name="pause-settings-shadow" class="soft-shadow soft-shadow--panel" />
                             <ui:VisualElement name="pause-settings-body" class="panel pause__panel pause__panel--settings">
-                                <ui:Label class="section-label section-label--first loc" text="ui.settings.sound" />
+                                <ui:VisualElement name="settings-tabs" class="settings-tabs" picking-mode="Ignore">
+                                    <ui:Button name="button-tab-sound" class="settings-tab settings-tab--on loc" text="ui.settings.sound" />
+                                    <ui:Button name="button-tab-camera" class="settings-tab loc" text="ui.settings.tab_camera" />
+                                    <ui:Button name="button-tab-display" class="settings-tab loc" text="ui.settings.tab_display" />
+                                </ui:VisualElement>
+                                <ui:VisualElement name="settings-page-sound" class="settings-page">
                                 <ui:VisualElement class="setting-row">
                                     <ui:Label class="setting-row__label loc" text="ui.settings.master" />
                                     <ui:SliderInt name="slider-master" class="setting-row__slider" />
@@ -338,7 +343,8 @@
                                     <ui:Label class="setting-row__label loc" text="ui.settings.ambience" />
                                     <ui:SliderInt name="slider-ambience" class="setting-row__slider" />
                                 </ui:VisualElement>
-                                <ui:Label class="section-label loc" text="ui.settings.camera" />
+                                </ui:VisualElement>
+                                <ui:VisualElement name="settings-page-camera" class="settings-page">
                                 <ui:VisualElement class="setting-row">
                                     <ui:Label class="setting-row__label loc" text="ui.settings.look_speed" />
                                     <ui:SliderInt name="slider-look" class="setting-row__slider" />
@@ -364,6 +370,30 @@
                                     <ui:Label class="setting-row__label loc" text="ui.settings.guidance" />
                                     <ui:Toggle name="toggle-guidance" class="setting-row__toggle" />
                                 </ui:VisualElement>
+                                </ui:VisualElement>
+                                <ui:VisualElement name="settings-page-display" class="settings-page">
+                                <ui:VisualElement class="setting-row">
+                                    <ui:Label class="setting-row__label loc" text="ui.display.resolution" />
+                                    <ui:Button name="button-resolution-prev" class="menu-button menu-button--compact cycle__arrow loc" text="ui.display.prev" />
+                                    <ui:Label name="resolution-value" class="cycle__value" />
+                                    <ui:Button name="button-resolution-next" class="menu-button menu-button--compact cycle__arrow loc" text="ui.display.next" />
+                                </ui:VisualElement>
+                                <ui:VisualElement class="setting-row">
+                                    <ui:Label class="setting-row__label loc" text="ui.display.mode" />
+                                    <ui:Button name="button-mode-prev" class="menu-button menu-button--compact cycle__arrow loc" text="ui.display.prev" />
+                                    <ui:Label name="mode-value" class="cycle__value" />
+                                    <ui:Button name="button-mode-next" class="menu-button menu-button--compact cycle__arrow loc" text="ui.display.next" />
+                                </ui:VisualElement>
+                                <ui:VisualElement class="setting-row">
+                                    <ui:Label class="setting-row__label loc" text="ui.display.vsync" />
+                                    <ui:Toggle name="toggle-vsync" class="setting-row__toggle" />
+                                </ui:VisualElement>
+                                <ui:VisualElement name="row-fps" class="setting-row">
+                                    <ui:Label class="setting-row__label loc" text="ui.display.fps_cap" />
+                                    <ui:Button name="button-fps-prev" class="menu-button menu-button--compact cycle__arrow loc" text="ui.display.prev" />
+                                    <ui:Label name="fps-value" class="cycle__value" />
+                                    <ui:Button name="button-fps-next" class="menu-button menu-button--compact cycle__arrow loc" text="ui.display.next" />
+                                </ui:VisualElement>
                                 <ui:VisualElement class="setting-row">
                                     <ui:Label class="setting-row__label loc" text="ui.settings.text_size" />
                                     <ui:Button name="button-text-size" class="menu-button menu-button--compact" />
@@ -371,6 +401,7 @@
                                 <ui:VisualElement class="setting-row">
                                     <ui:Label class="setting-row__label loc" text="ui.settings.language" />
                                     <ui:Button name="button-language" class="menu-button menu-button--compact" />
+                                </ui:VisualElement>
                                 </ui:VisualElement>
                                 <ui:Button name="button-settings-back" class="menu-button menu-button--quiet loc"
                                            text="ui.settings.back" />

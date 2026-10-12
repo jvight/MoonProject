@@ -1620,6 +1620,71 @@ Label {
     transition-duration: 0.06s, 0.06s;
 }
 
+/* The settings' tabs: skewed glass (Subnautica's tab buttons), the selected one edged in amber */
+.settings-tabs {
+    flex-direction: row;
+    align-items: stretch;
+    margin: 0 8px 14px 8px;
+}
+
+.settings-tab {
+    flex-grow: 1;
+    flex-basis: 0;
+    min-width: 0;
+    min-height: 40px;
+    margin: 0 3px;
+    padding: 2px 16px;
+    white-space: normal;
+    border-width: 0;
+    background-color: rgba(0, 0, 0, 0);
+    color: var(--moon-text);
+    font-size: 18px;
+    -unity-text-align: middle-center;
+    --tab-color: var(--glass-btn);
+    --tab-edge: var(--glass-rim);
+    --tab-edge-width: 1.5;
+}
+
+.settings-tab--on {
+    color: var(--glass-hi);
+    --tab-color: var(--glass-bar);
+    --tab-edge: var(--glass-sel);
+    --tab-edge-width: 3;
+}
+
+.pause .settings-tab:focus {
+    color: var(--glass-sel-text);
+    --tab-color: var(--glass-sel);
+    --tab-edge: var(--glass-sel);
+    scale: 1.04 1.04;
+}
+
+.settings-page {
+    min-height: 240px;
+}
+
+/* A choice stepped by a pair of arrows round its current value (resolution, window mode, FPS limit) */
+.cycle__arrow {
+    flex-grow: 0;
+    flex-shrink: 0;
+    min-width: 38px;
+    margin: 0 2px;
+    padding: 0;
+}
+
+.cycle__value {
+    flex-grow: 1;
+    flex-shrink: 1;
+    font-size: 18px;
+    white-space: normal;
+    color: var(--glass-hi);
+    -unity-text-align: middle-center;
+}
+
+.setting-row--idle {
+    opacity: 0.5;
+}
+
 .section-label {
     font-size: 18px;
     letter-spacing: 2px;

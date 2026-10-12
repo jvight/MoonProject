@@ -27,6 +27,7 @@ namespace MoonProject.UI
         public const string PauseSettings = "ui.pause.settings";
         public const string PauseQuit = "ui.pause.quit";
         public const string TitleContinue = "ui.title.continue";
+        public const string DisplayUnlimited = "ui.display.unlimited";
         public const string CreditsTitle = "ui.credits.title";
         public const string CreditsVersion = "ui.credits.version";
         public const string TitleSettings = "ui.title.settings";
@@ -179,6 +180,20 @@ namespace MoonProject.UI
         public static string SiteName(string siteId)
         {
             return siteId + ".name";
+        }
+
+        /// <summary>"ui.display.mode.borderless": how the window sits on the screen, in words.</summary>
+        public static string DisplayModeName(DisplayMode mode)
+        {
+            switch (mode)
+            {
+                case DisplayMode.Exclusive:
+                    return "ui.display.mode.exclusive";
+                case DisplayMode.Windowed:
+                    return "ui.display.mode.windowed";
+                default:
+                    return "ui.display.mode.borderless";
+            }
         }
 
         public static string UpgradeName(string upgradeId)

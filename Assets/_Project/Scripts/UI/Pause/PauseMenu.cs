@@ -31,6 +31,8 @@ namespace MoonProject.UI
         private const float MoveEpsilon = 0.1f;
         private const string TitleClass = "pause--title";
         private const string SettingsOpenClass = "pause--settings-open";
+        private const string TabOnClass = "settings-tab--on";
+        private const string IdleRowClass = "setting-row--idle";
 
         private readonly UiLayout _layout;
         private readonly PauseSettings _settings;
@@ -59,6 +61,10 @@ namespace MoonProject.UI
         private readonly Reveal _curtain;
         private readonly Button[] _languageButtons;
         private readonly CreditsView _credits;
+        private readonly VisualElement[] _settingsPages;
+        private readonly Button[] _settingsTabs;
+        private int _settingsTab;
+        private readonly IntText _fpsNumbers;
         private readonly PausePages _pages = new PausePages();
         private readonly string[] _lookTexts;
         private Focusable _pendingFocus;
@@ -78,6 +84,14 @@ namespace MoonProject.UI
             CreditsView credits)
         {
             _credits = credits ?? throw new ArgumentNullException(nameof(credits));
+            _settingsPages = new[] { layout.PageSound, layout.PageCamera, layout.PageDisplay };
+            _settingsTabs = new[] { layout.TabSound, layout.TabCamera, layout.TabDisplay };
+            foreach (Button tab in _settingsTabs)
+            {
+                new TabPainter(tab);
+            }
+
+            _fpsNumbers = numbers ?? throw new ArgumentNullException(nameof(numbers));
             _layout = layout ?? throw new ArgumentNullException(nameof(layout));
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _title = title ?? throw new ArgumentNullException(nameof(title));
@@ -327,6 +341,7 @@ namespace MoonProject.UI
         public void Relocalize()
         {
             _layout.LanguageButton.text = _localization.GetLanguageName(_localization.Language);
+            WriteDisplay();
             WriteMode();
             WriteCassettes();
             WriteRelays();
@@ -355,6 +370,16 @@ namespace MoonProject.UI
             _layout.SettingsBackButton.clicked += OnSettingsBackClicked;
             _layout.LanguageButton.clicked += OnLanguageClicked;
             _layout.TextSizeButton.clicked += OnTextSizeClicked;
+            _layout.TabSound.clicked += () => SelectTab(0);
+            _layout.TabCamera.clicked += () => SelectTab(1);
+            _layout.TabDisplay.clicked += () => SelectTab(2);
+            _layout.ResolutionPrev.clicked += () => StepDisplay(Step.Resolution, -1);
+            _layout.ResolutionNext.clicked += () => StepDisplay(Step.Resolution, 1);
+            _layout.ModePrev.clicked += () => StepDisplay(Step.Mode, -1);
+            _layout.ModeNext.clicked += () => StepDisplay(Step.Mode, 1);
+            _layout.FpsPrev.clicked += () => StepDisplay(Step.FpsCap, -1);
+            _layout.FpsNext.clicked += () => StepDisplay(Step.FpsCap, 1);
+            _layout.VSyncToggle.RegisterValueChangedCallback(OnVSyncChanged);
             _layout.Pause.RegisterCallback<FocusInEvent>(OnFocusIn);
             _layout.Pause.RegisterCallback<PointerDownEvent>(OnPointerDown, TrickleDown.TrickleDown);
 
@@ -438,6 +463,8 @@ namespace MoonProject.UI
             _layout.RumbleSlider.SetValueWithoutNotify(_player.GetRumbleStep());
             _layout.GuidanceToggle.SetValueWithoutNotify(_player.Guidance);
             _layout.TextSizeButton.text = _player.TextSizeLabel;
+            WriteDisplay();
+            SelectTab(0);
             _settingsPanel.Show();
             if (_pages.IsTitle)
             {
@@ -445,6 +472,69 @@ namespace MoonProject.UI
             }
 
             _pendingFocus = _layout.MasterSlider;
+        }
+
+        /// <summary>Shows one of the settings' pages (0 Sound, 1 Camera and feel, 2 Display) and marks its tab.</summary>
+        internal void SelectTab(int tab)
+        {
+            _settingsTab = tab;
+            for (int i = 0; i < _settingsPages.Length; i++)
+            {
+                Display(_settingsPages[i], i == tab);
+                _settingsTabs[i].EnableInClassList(TabOnClass, i == tab);
+            }
+        }
+
+        /// <summary>The page now shown (tests and captures).</summary>
+        public int SettingsTab => _settingsTab;
+
+        private enum Step
+        {
+            Resolution,
+            Mode,
+            FpsCap,
+        }
+
+        private void StepDisplay(Step what, int direction)
+        {
+            if (!IsOpen || !_settingsPanel.Target)
+            {
+                return;
+            }
+
+            switch (what)
+            {
+                case Step.Resolution:
+                    _player.StepResolution(direction);
+                    break;
+                case Step.Mode:
+                    _player.StepWindowMode(direction);
+                    break;
+                default:
+                    _player.StepFpsCap(direction);
+                    break;
+            }
+
+            WriteDisplay();
+            Cue(UiCueKind.Confirm);
+        }
+
+        private void OnVSyncChanged(ChangeEvent<bool> evt)
+        {
+            _player.VSync = evt.newValue;
+            WriteDisplay();
+            Cue(UiCueKind.Confirm);
+        }
+
+        /// <summary>Writes the Display page's values (allocation-free: cached labels and numbers).</summary>
+        private void WriteDisplay()
+        {
+            _layout.ResolutionValue.text = _player.ResolutionLabels[_player.ResolutionIndex];
+            _layout.ModeValue.text = _localization.Get(UiKeys.DisplayModeName(_player.WindowMode));
+            _layout.VSyncToggle.SetValueWithoutNotify(_player.VSync);
+            int cap = _player.FpsCap;
+            _layout.FpsValue.text = cap > 0 ? _fpsNumbers.Get(cap) : _localization.Get(UiKeys.DisplayUnlimited);
+            _layout.FpsRow.EnableInClassList(IdleRowClass, _player.VSync);
         }
 
         private void CloseSettings()

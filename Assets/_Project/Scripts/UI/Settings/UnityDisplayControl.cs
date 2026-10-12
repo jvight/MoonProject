@@ -11,11 +11,20 @@ namespace MoonProject.UI
     {
         private const int MinWidth = 1024;
 
-        private readonly List<Vector2Int> _resolutions;
-        private readonly Vector2Int _native;
+        private List<Vector2Int> _resolutions;
+        private Vector2Int _native;
 
-        public UnityDisplayControl()
+        /// <summary>
+        /// The screen is read on first use, not when this is made: the UI system holds one as a field, and Unity does
+        /// not allow reading the screen while a component is being constructed.
+        /// </summary>
+        private void Load()
         {
+            if (_resolutions != null)
+            {
+                return;
+            }
+
             var offered = new List<Vector2Int>();
             foreach (Resolution resolution in Screen.resolutions)
             {
@@ -29,11 +38,29 @@ namespace MoonProject.UI
             }
 
             _resolutions = DisplayChoices.Distinct(offered, MinWidth);
+            if (_resolutions.Count == 0)
+            {
+                _resolutions.Add(_native);
+            }
         }
 
-        public IReadOnlyList<Vector2Int> Resolutions => _resolutions;
+        public IReadOnlyList<Vector2Int> Resolutions
+        {
+            get
+            {
+                Load();
+                return _resolutions;
+            }
+        }
 
-        public Vector2Int Native => _native;
+        public Vector2Int Native
+        {
+            get
+            {
+                Load();
+                return _native;
+            }
+        }
 
         public void Apply(DisplayState state)
         {

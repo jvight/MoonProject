@@ -161,6 +161,23 @@ namespace MoonProject.UI
             Curtain = Require<VisualElement>("curtain");
             SaveTick = Require<VisualElement>("save-tick");
             CreditsButton = Require<Button>("button-credits");
+            TabSound = Require<Button>("button-tab-sound");
+            TabCamera = Require<Button>("button-tab-camera");
+            TabDisplay = Require<Button>("button-tab-display");
+            PageSound = Require<VisualElement>("settings-page-sound");
+            PageCamera = Require<VisualElement>("settings-page-camera");
+            PageDisplay = Require<VisualElement>("settings-page-display");
+            ResolutionPrev = Require<Button>("button-resolution-prev");
+            ResolutionNext = Require<Button>("button-resolution-next");
+            ResolutionValue = Require<Label>("resolution-value");
+            ModePrev = Require<Button>("button-mode-prev");
+            ModeNext = Require<Button>("button-mode-next");
+            ModeValue = Require<Label>("mode-value");
+            VSyncToggle = Require<Toggle>("toggle-vsync");
+            FpsRow = Require<VisualElement>("row-fps");
+            FpsPrev = Require<Button>("button-fps-prev");
+            FpsNext = Require<Button>("button-fps-next");
+            FpsValue = Require<Label>("fps-value");
             Credits = Require<VisualElement>("credits");
             CreditsTitle = Require<Label>("credits-title");
             CreditsScroll = Require<ScrollView>("credits-scroll");
@@ -468,6 +485,43 @@ namespace MoonProject.UI
         public VisualElement SaveTick { get; }
 
         public VisualElement SaveTickCheck { get; }
+
+        /// <summary>The settings' three tabs (Sound, Camera and feel, Display) and their pages.</summary>
+        public Button TabSound { get; }
+
+        public Button TabCamera { get; }
+
+        public Button TabDisplay { get; }
+
+        public VisualElement PageSound { get; }
+
+        public VisualElement PageCamera { get; }
+
+        public VisualElement PageDisplay { get; }
+
+        /// <summary>The Display page's resolution, window mode and FPS cap, each stepped by a pair of arrows.</summary>
+        public Button ResolutionPrev { get; }
+
+        public Button ResolutionNext { get; }
+
+        public Label ResolutionValue { get; }
+
+        public Button ModePrev { get; }
+
+        public Button ModeNext { get; }
+
+        public Label ModeValue { get; }
+
+        public Toggle VSyncToggle { get; }
+
+        /// <summary>The FPS cap's row, dimmed while V-Sync (which sets the pace) is on.</summary>
+        public VisualElement FpsRow { get; }
+
+        public Button FpsPrev { get; }
+
+        public Button FpsNext { get; }
+
+        public Label FpsValue { get; }
 
         /// <summary>The title's Credits entry.</summary>
         public Button CreditsButton { get; }

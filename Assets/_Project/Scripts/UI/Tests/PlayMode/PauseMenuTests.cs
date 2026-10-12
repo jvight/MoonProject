@@ -407,6 +407,62 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         [UnityTest]
+        public IEnumerator Settings_HaveThreeTabs_OnePageEach_AndTheDisplayPageStepsItsChoices()
+        {
+            Boot(BootstrapHarness.NewTestSlot());
+            yield return null;
+            _rig.Bootstrap.Context.Events.Publish(new TitleShown(true));
+            yield return new WaitForSecondsRealtime(Settle);
+            UiLayout layout = _rig.Ui.Layout;
+            Submit(layout.SettingsButton);
+            yield return new WaitForSecondsRealtime(Settle);
+            Assert.AreEqual(0, _rig.Ui.Pause.SettingsTab, "Sound first");
+            Assert.AreEqual(DisplayStyle.Flex, layout.PageSound.resolvedStyle.display);
+            Assert.AreEqual(DisplayStyle.None, layout.PageCamera.resolvedStyle.display);
+            Assert.AreEqual(DisplayStyle.None, layout.PageDisplay.resolvedStyle.display);
+            Assert.AreSame(layout.MasterSlider, Focused(), "focus goes into the Sound page");
+
+            Submit(layout.TabCamera);
+            yield return null;
+            Assert.AreEqual(DisplayStyle.Flex, layout.PageCamera.resolvedStyle.display);
+            Assert.AreEqual(DisplayStyle.None, layout.PageSound.resolvedStyle.display);
+            Assert.IsTrue(layout.TabCamera.ClassListContains("settings-tab--on"));
+            Assert.IsFalse(layout.TabSound.ClassListContains("settings-tab--on"));
+
+            Submit(layout.TabDisplay);
+            yield return null;
+            Assert.AreEqual(DisplayStyle.Flex, layout.PageDisplay.resolvedStyle.display);
+            string resolution = layout.ResolutionValue.text;
+            StringAssert.Contains("×", resolution);
+            Submit(layout.ResolutionNext);
+            Assert.AreNotEqual(resolution, layout.ResolutionValue.text, "the arrows step the resolution");
+            Submit(layout.ResolutionPrev);
+            Assert.AreEqual(resolution, layout.ResolutionValue.text, "and back");
+
+            Assert.AreEqual("Borderless fullscreen", layout.ModeValue.text, "borderless is the default mode");
+            Submit(layout.ModeNext);
+            Assert.AreEqual("Fullscreen", layout.ModeValue.text);
+            Submit(layout.ModeNext);
+            Assert.AreEqual("Windowed", layout.ModeValue.text);
+
+            Assert.IsTrue(layout.VSyncToggle.value, "V-Sync is on by default");
+            Assert.IsTrue(layout.FpsRow.ClassListContains("setting-row--idle"), "the FPS limit rests while V-Sync paces");
+            layout.VSyncToggle.value = false;
+            Assert.IsFalse(layout.FpsRow.ClassListContains("setting-row--idle"));
+            Submit(layout.FpsNext);
+            Assert.AreEqual("120", layout.FpsValue.text, "30, 60, then 120");
+            Submit(layout.FpsNext);
+            Submit(layout.FpsNext);
+            Assert.AreEqual("Unlimited", layout.FpsValue.text);
+
+            _rig.Ui.Pause.Back();
+            yield return new WaitForSecondsRealtime(Settle);
+            Submit(layout.SettingsButton);
+            yield return new WaitForSecondsRealtime(Settle);
+            Assert.AreEqual(0, _rig.Ui.Pause.SettingsTab, "the settings open on Sound again");
+        }
+
+        [UnityTest]
         public IEnumerator Title_RestsWhenUntouched_AndAnyStepBringsItBack()
         {
             Keyboard keyboard = InputSystem.AddDevice<Keyboard>();

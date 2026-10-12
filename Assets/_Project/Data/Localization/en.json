@@ -391,10 +391,6 @@
             "text": "Ambience"
         },
         {
-            "key": "ui.settings.camera",
-            "text": "Camera"
-        },
-        {
             "key": "ui.settings.look_speed",
             "text": "Look speed"
         },
@@ -417,6 +413,54 @@
         {
             "key": "ui.settings.language",
             "text": "Language"
+        },
+        {
+            "key": "ui.settings.tab_camera",
+            "text": "Camera & feel"
+        },
+        {
+            "key": "ui.settings.tab_display",
+            "text": "Display"
+        },
+        {
+            "key": "ui.display.resolution",
+            "text": "Resolution"
+        },
+        {
+            "key": "ui.display.mode",
+            "text": "Window mode"
+        },
+        {
+            "key": "ui.display.vsync",
+            "text": "V-Sync"
+        },
+        {
+            "key": "ui.display.fps_cap",
+            "text": "FPS limit"
+        },
+        {
+            "key": "ui.display.unlimited",
+            "text": "Unlimited"
+        },
+        {
+            "key": "ui.display.prev",
+            "text": "‹"
+        },
+        {
+            "key": "ui.display.next",
+            "text": "›"
+        },
+        {
+            "key": "ui.display.mode.borderless",
+            "text": "Borderless fullscreen"
+        },
+        {
+            "key": "ui.display.mode.exclusive",
+            "text": "Fullscreen"
+        },
+        {
+            "key": "ui.display.mode.windowed",
+            "text": "Windowed"
         },
         {
             "key": "ui.settings.back",

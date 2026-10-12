@@ -743,6 +743,35 @@ namespace MoonProject.UI.PlayModeTests
 #endif
         }
 
+        /// <summary>The settings' three tabs over the title (captures 92-94). Rerun with --filter CaptureSettingsTabs.</summary>
+        [UnityTest]
+        public IEnumerator CaptureSettingsTabs_SoundCameraDisplay()
+        {
+#if UNITY_EDITOR
+            yield return LoadMain();
+            GameContext context = FindBootstrap().Context;
+            Camera camera = context.Get<IViewCamera>().Camera;
+            UISystem ui = BuildUi(context, out _, out _);
+            yield return null;
+            string folder = Path.GetFullPath(OutputFolder);
+            Directory.CreateDirectory(folder);
+            context.Events.Publish(new TitleShown(true));
+            yield return new WaitForSecondsRealtime(_tuning.Title.Curtain.FadeOut + _tuning.Title.Reveal.FadeIn + 0.5f);
+            Submit(ui.Layout.SettingsButton);
+            yield return new WaitForSecondsRealtime(_tuning.Pause.SettingsPanel.FadeIn + 0.5f);
+            yield return Capture(camera, folder, "92_settings_sound");
+            Submit(ui.Layout.TabCamera);
+            yield return new WaitForSecondsRealtime(0.3f);
+            yield return Capture(camera, folder, "93_settings_camera");
+            Submit(ui.Layout.TabDisplay);
+            yield return new WaitForSecondsRealtime(0.3f);
+            yield return Capture(camera, folder, "94_settings_display");
+#else
+            Assert.Ignore("Captures need the editor.");
+            yield break;
+#endif
+        }
+
         /// <summary>The credits over the title (capture 90). Rerun with --filter CaptureCredits.</summary>
         [UnityTest]
         public IEnumerator CaptureCredits_OverTheTitle()
