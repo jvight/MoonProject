@@ -389,3 +389,72 @@ def pickup_clunk(_variant, gen):
     knock = osc.sine(n, note_freq("D4")) * envelope.ar(n, 0.002, 0.07)
     tick = filters.bandpass(noise.white(n, gen), 1800.0, 1.5) * envelope.ar(n, 0.001, 0.02)
     return filters.lowpass(mix + 0.3 * knock + 0.08 * tick, 4000.0)
+
+
+# ----------------------------------------------------------------------------- M3-26: the charge run and the tiers
+
+CHARGE_LAMP_NOTES = ("D5", "E5", "F#5", "A5", "B5", "D6", "E6", "F#6", "A6")
+CUTTER_TIER_LABELS = ("tier0", "tier1", "tier2", "tier3")
+SEGMENT_NOTES = ("D5", "E5", "F#5", "A5", "B5")
+
+
+def charge_lamp(variant, _gen):
+    """One lamp of the charge run lighting on 07's back (M3-26 section 2): a short glassy note, the next pentatonic
+    step from the battery to the emitter."""
+    n = samples(0.55)
+    mix = np.zeros(n)
+    place(mix, 0.55 * _glass(note_freq(CHARGE_LAMP_NOTES[variant]), 0.5), 0)
+    return filters.lowpass(mix, 6500.0)
+
+
+def charge_inhale(_variant, _gen):
+    """The run's low chassis 'inhale' under the lamps: a D2 hum swelling over 0.7 s, then letting go."""
+    n = samples(0.9)
+    hum = osc.additive(n, note_freq("D2"), [(1, 1.0), (2, 0.3)])
+    hum *= envelope.segments(n, [(0.0, 0.0), (0.7, 1.0), (0.9, 0.0)], shape="smooth")
+    return filters.lowpass(0.3 * hum, 220.0)
+
+
+def charge_low_d(_variant, _gen):
+    """Tier 3's sustained low D under the run: a warm D2/D3 pad, felt through the deck."""
+    pad = instruments.soft_pad(note_freq("D2"), 1.2, 0.3, 0.6, hold=0.3)
+    pad += 0.5 * instruments.soft_pad(note_freq("D3"), 1.2, 0.3, 0.6, hold=0.3)
+    return filters.lowpass(0.2 * pad, 500.0)
+
+
+def cut_ignite_tier(variant, gen):
+    """Ignition per cutter tier (M3-26 section 5): the zing on D6 gets brighter and hotter with each tier (more
+    upper partials and a touch more sheen), and the chassis thump a little deeper."""
+    n = samples(0.6)
+    bright = 1.0 + 0.4 * variant
+    d6 = osc.glide(n, note_freq("D6") * 1.03, note_freq("D6"), time_constant=0.03)
+    zing = osc.sine(n, d6) + 0.12 * variant * osc.sine(n, 2.0 * d6) + 0.05 * variant * osc.sine(n, 3.0 * d6)
+    zing *= envelope.ar(n, 0.002, 0.3 + 0.05 * variant)
+    sheen = filters.bandpass(noise.white(n, gen), 3000.0 + 600.0 * variant, 2.0) * envelope.ar(n, 0.001, 0.08)
+    mix = 0.3 * zing + 0.04 * bright * sheen
+    place(mix, 0.4 * _chassis_thump(0.12, 62.0 - 4.0 * variant), 0)
+    return filters.lowpass(mix, 6000.0 + 1200.0 * variant)
+
+
+CUT_UNDERTONE_LOOP_S = 4.0
+
+
+def cut_undertone(_variant, _gen):
+    """The beam's deeper hum for the higher tiers: a warm D2 with its fifth, breathing slowly. Seamless; the
+    runtime sets its level by tier (silent at tier 0)."""
+    n = samples(CUT_UNDERTONE_LOOP_S)
+    tone = osc.additive(n, loop_freq(note_freq("D2"), n), [(1, 1.0), (2, 0.35)])
+    tone += 0.3 * osc.sine(n, loop_freq(note_freq("A2"), n))
+    tone *= envelope.lfo(n, 2.0 / CUT_UNDERTONE_LOOP_S, 0.15, 0.85)
+    return periodic(0.15 * tone, lambda x: filters.lowpass(x, 400.0))
+
+
+def segment_slide(variant, gen):
+    """The beam moving to a piece's next cut line: a soft tick and a short upward slide onto the next pentatonic
+    step, so a big plate reads as several small victories."""
+    n = samples(0.6)
+    target = note_freq(SEGMENT_NOTES[variant])
+    slide = osc.sine(n, osc.glide(n, target * 0.94, target, time_constant=0.04)) * envelope.ar(n, 0.005, 0.3)
+    mix = 0.3 * slide
+    place(mix, 0.2 * _tick(gen, target, 0.1), 0)
+    return filters.lowpass(mix, 5000.0)

@@ -566,6 +566,213 @@
       "notes": "07's machine voice, greeting (feel-pass 7.2); syllables in chirp_syllables.json."
     },
     {
+      "id": "charge_lamp",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/charge_lamp_01.wav",
+        "Assets/_Project/Audio/SFX/charge_lamp_02.wav",
+        "Assets/_Project/Audio/SFX/charge_lamp_03.wav",
+        "Assets/_Project/Audio/SFX/charge_lamp_04.wav",
+        "Assets/_Project/Audio/SFX/charge_lamp_05.wav",
+        "Assets/_Project/Audio/SFX/charge_lamp_06.wav",
+        "Assets/_Project/Audio/SFX/charge_lamp_07.wav",
+        "Assets/_Project/Audio/SFX/charge_lamp_08.wav",
+        "Assets/_Project/Audio/SFX/charge_lamp_09.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02",
+        "03",
+        "04",
+        "05",
+        "06",
+        "07",
+        "08",
+        "09"
+      ],
+      "sha256": [
+        "252f0af6772f74aa68ee49ed205f0c53a30012c4ff3bf3a1a23b913e4aafe07f",
+        "776ce2403397316b2d42276203c0b8efa18ce404f4dde0c4b2ed81a8aa28df8b",
+        "52e59c10920a70c51678d06b90ced94561f1e79d8d2350bf785efeee2e9b635d",
+        "75a2329e3a6cbd7c78a76447f098910d006face45a3e45bf7541e688e85aa41b",
+        "7dd2870f85c2f166d634d22237b4faacb1ac033372e69c95fe3ccd128b1226f5",
+        "b0f54fb01999ed236012ed2544c8c82f91959374a515897277932eaf51454b23",
+        "3e36dd5af51cc0508483cca6c6c079798c8ca93be88b54f3218d927cbdc7be34",
+        "fb43ed12548810accac55834ee1bf35972e1db9a9ad136e57a0deab562fc797b",
+        "6ac73db9703e7c8c56ae65cb215927207edbf418c881e620da3af35ab5baf882"
+      ],
+      "volumeMin": 0.55,
+      "volumeMax": 0.55,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": true,
+      "notes": "A charge-run lamp lighting (M3-26): the next pentatonic step, D5 up to A6."
+    },
+    {
+      "id": "charge_inhale",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/charge_inhale.wav"
+      ],
+      "variantLabels": [
+        "charge_inhale"
+      ],
+      "sha256": [
+        "2a2d81735fa1cf1d151d7652aedbc72bbca58c2de8304cc77f695c1b170f74c8"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "The charge run's low chassis inhale: a D2 hum swelling under the lamps."
+    },
+    {
+      "id": "charge_low_d",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/charge_low_d.wav"
+      ],
+      "variantLabels": [
+        "charge_low_d"
+      ],
+      "sha256": [
+        "ced135acd68eb3a1e71d61ecdcc1e3a41df754d420241840100c46f865c0821b"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "Tier 3's sustained low D under the charge run."
+    },
+    {
+      "id": "cut_ignite_tier",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/cut_ignite_tier_tier0.wav",
+        "Assets/_Project/Audio/SFX/cut_ignite_tier_tier1.wav",
+        "Assets/_Project/Audio/SFX/cut_ignite_tier_tier2.wav",
+        "Assets/_Project/Audio/SFX/cut_ignite_tier_tier3.wav"
+      ],
+      "variantLabels": [
+        "tier0",
+        "tier1",
+        "tier2",
+        "tier3"
+      ],
+      "sha256": [
+        "5ff424092e7f62b8bb39693e6fb2ac197c299b6a62e9e5c7d38a3e9eb6c1f71e",
+        "0111464cc601ffcf25058b877804e5db4965f5aabf3d097142382a227e398e26",
+        "eb50e37172417f06c1181c265c507fe7acbf52b09bc3fd5b86d47f7ef6017db4",
+        "8214c07c440064618d6ae6def72a6f56f2105cc8bb0fa932aacb64eea95b6d42"
+      ],
+      "volumeMin": 0.65,
+      "volumeMax": 0.65,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "Ignition per cutter tier: the D6 zing brighter and hotter each tier, the thump a touch deeper."
+    },
+    {
+      "id": "cut_undertone",
+      "category": "loop_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": true,
+      "files": [
+        "Assets/_Project/Audio/SFX/cut_undertone_loop.wav"
+      ],
+      "variantLabels": [
+        "cut_undertone"
+      ],
+      "sha256": [
+        "36f6e83aeca752c0ad5af0474a4cb23c709caf23985367503955682643f5dd0b"
+      ],
+      "volumeMin": 0.6,
+      "volumeMax": 0.6,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -22.0,
+      "loudnessMode": "integrated",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "The beam's deeper hum for higher tiers: D2 + A2, level by tier. 4 s seamless."
+    },
+    {
+      "id": "segment_slide",
+      "category": "oneshot_3d",
+      "milestone": "M3",
+      "bus": "Sfx",
+      "spatial": true,
+      "loop": false,
+      "files": [
+        "Assets/_Project/Audio/SFX/segment_slide_01.wav",
+        "Assets/_Project/Audio/SFX/segment_slide_02.wav",
+        "Assets/_Project/Audio/SFX/segment_slide_03.wav",
+        "Assets/_Project/Audio/SFX/segment_slide_04.wav",
+        "Assets/_Project/Audio/SFX/segment_slide_05.wav"
+      ],
+      "variantLabels": [
+        "01",
+        "02",
+        "03",
+        "04",
+        "05"
+      ],
+      "sha256": [
+        "4ed39f8a2cc2b32063bdef7e39c4b1b9ffa704f49e82eb0dbd0d03e0de0e2423",
+        "fb474143787198b926bf8b78b84cb6da70c20cc103a65d782bf8eacc68a33323",
+        "5bfa09854003f0544e872532182e49365c7a08ffc611c2e33bf398b2827a0d85",
+        "2e35bb96ccb9ab6e6189724e31b84d6d7dcc1063db90aeb8d98f93ecc7ebed99",
+        "cc1ab2651fba188024937394ad2ed23c790534fb5d662e9724bf12bc2a5cb2e1"
+      ],
+      "volumeMin": 0.5,
+      "volumeMax": 0.5,
+      "pitchMin": 1.0,
+      "pitchMax": 1.0,
+      "targetLufs": -18.0,
+      "loudnessMode": "momentary",
+      "hfCutoffHz": 8000.0,
+      "hfMaxDb": -30.0,
+      "tonal": false,
+      "notes": "The beam moving to the next cut line: a tick and a slide onto the next step."
+    },
+    {
       "id": "pickup_lift",
       "category": "oneshot_3d",
       "milestone": "M3",
