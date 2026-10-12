@@ -2556,7 +2556,15 @@ namespace MoonProject.Gameplay.PlayModeTests
         /// <summary>Salvage sites and friends there are to hear.</summary>
         private int Hearable()
         {
-            return _gameplay.Salvage.Sites.Count + _gameplay.Friends.Friends.Count;
+            int hearable = _gameplay.Friends.Friends.Count;
+            foreach (SalvageSite site in _gameplay.Salvage.Sites)
+            {
+                // A site cut clean before anything heard it (the depot, now that 07 listens instead of pinging)
+                // has nothing left to answer with.
+                hearable += site.Discovered || site.AnswersSonar ? 1 : 0;
+            }
+
+            return hearable;
         }
 
         /// <summary>Salvage sites and friends heard so far (by ping, by a spotter or by the evening's sweep).</summary>
