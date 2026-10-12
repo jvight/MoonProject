@@ -15,7 +15,6 @@ namespace MoonProject.UI
         public const string CardCaption = "ui.card.caption";
         public const string CardClose = "ui.card.close";
         public const string TowerLevel = "ui.tower.level";
-        public const string TowerHold = "ui.tower.hold";
         public const string TowerPurchased = "ui.tower.purchased";
         public const string BayFitted = "ui.bay.fitted";
         public const string LogCaption = "ui.card.log_caption";

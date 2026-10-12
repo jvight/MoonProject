@@ -18,6 +18,8 @@ namespace MoonProject.UI
         private readonly ILocalization _localization;
         private readonly PauseSettings _settings;
         private bool _guidance = true;
+        private readonly string[] _textLabels;
+        private int _textSize;
 
         public PlayerSettings(IAudioSettings audio, ILookSettings look, ILocalization localization,
             PauseSettings settings)
@@ -26,6 +28,11 @@ namespace MoonProject.UI
             _look = look ?? throw new ArgumentNullException(nameof(look));
             _localization = localization ?? throw new ArgumentNullException(nameof(localization));
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+            _textLabels = new string[settings.TextScales.Length];
+            for (int i = 0; i < _textLabels.Length; i++)
+            {
+                _textLabels[i] = Mathf.RoundToInt(settings.TextScales[i] * 100f) + "%";
+            }
         }
 
         /// <summary>True when something changed since the last <see cref="MarkSaved"/>.</summary>
@@ -104,6 +111,22 @@ namespace MoonProject.UI
             }
         }
 
+        /// <summary>The text size step: 0 is 100%, 1 is 125%, 2 is 150%.</summary>
+        public int TextSize => _textSize;
+
+        /// <summary>The text size as the Settings row words it ("125%").</summary>
+        public string TextSizeLabel => _textLabels[_textSize];
+
+        /// <summary>The text size as a multiple of the normal size.</summary>
+        public float TextScale => _settings.TextScales[_textSize];
+
+        /// <summary>Steps to the next text size, the last wrapping round to the first.</summary>
+        public void NextTextSize()
+        {
+            _textSize = (_textSize + 1) % _settings.TextScales.Length;
+            IsDirty = true;
+        }
+
         public string Language => _localization.Language;
 
         /// <summary>
@@ -149,6 +172,7 @@ namespace MoonProject.UI
                 invertY = _look.InvertY,
                 gentleCamera = _look.GentleCamera,
                 guidanceOff = !_guidance,
+                textScale = TextScale,
                 language = _localization.Language,
             };
         }
@@ -171,6 +195,7 @@ namespace MoonProject.UI
             _look.Sensitivity = data.lookSensitivity;
             _look.InvertY = data.invertY;
             _guidance = !data.guidanceOff;
+            _textSize = NearestTextSize(data.textScale);
             RestoreLanguage(data.language);
             IsDirty = false;
         }
@@ -194,6 +219,21 @@ namespace MoonProject.UI
 
             Debug.LogWarning($"{nameof(PlayerSettings)}: the saved language '{language}' is not available; keeping " +
                              $"'{_localization.Language}'.");
+        }
+
+        private int NearestTextSize(float saved)
+        {
+            int nearest = 0;
+            float[] scales = _settings.TextScales;
+            for (int i = 1; i < scales.Length; i++)
+            {
+                if (Mathf.Abs(scales[i] - saved) < Mathf.Abs(scales[nearest] - saved))
+                {
+                    nearest = i;
+                }
+            }
+
+            return nearest;
         }
 
         private static float Volume(float saved)

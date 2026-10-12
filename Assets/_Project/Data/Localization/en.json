@@ -343,10 +343,6 @@
             "text": "Level {0} of {1}"
         },
         {
-            "key": "ui.tower.hold",
-            "text": "Hold"
-        },
-        {
             "key": "ui.tower.purchased",
             "text": "The signal grows"
         },
@@ -1309,6 +1305,14 @@
         {
             "key": "upgrade.rover.cell_pack.1.effect",
             "text": "Two more cells on 07's back: six lamps lit, and the far side of the basin in reach."
+        },
+        {
+            "key": "ui.pause.can",
+            "text": "07 can"
+        },
+        {
+            "key": "ui.settings.text_size",
+            "text": "Text size"
         }
     ]
 }

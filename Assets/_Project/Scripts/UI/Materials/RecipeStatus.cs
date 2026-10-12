@@ -72,7 +72,8 @@ namespace MoonProject.UI
             return false;
         }
 
-        private int Have(SalvageMaterial material)
+        /// <summary>How many units of <paramref name="material"/> 07 has.</summary>
+        public int Have(SalvageMaterial material)
         {
             switch (material)
             {

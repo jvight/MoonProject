@@ -11,7 +11,7 @@ namespace MoonProject.UI.Tests
         [Test]
         public void ASixteenByNineScreen_NeedsNoInsets_ForAnyAspectCapAtOrAboveIt()
         {
-            FrameInsets insets = SafeFrame.Compute(1920f, 1080f, HudAspect, WholeScreen);
+            FrameInsets insets = SafeFrame.Compute(1920f, 1080f, HudAspect, WholeScreen, 0f);
 
             Assert.AreEqual(0f, insets.Left);
             Assert.AreEqual(0f, insets.Right);
@@ -22,7 +22,7 @@ namespace MoonProject.UI.Tests
         [Test]
         public void ASuperWideScreen_IsPulledInToTheCapOnBothSides()
         {
-            FrameInsets insets = SafeFrame.Compute(3840f, 1080f, HudAspect, WholeScreen);
+            FrameInsets insets = SafeFrame.Compute(3840f, 1080f, HudAspect, WholeScreen, 0f);
 
             Assert.AreEqual((3840f - 1080f * HudAspect) * 0.5f, insets.Left, 0.01f);
             Assert.AreEqual(insets.Left, insets.Right, 0.01f);
@@ -31,7 +31,7 @@ namespace MoonProject.UI.Tests
         [Test]
         public void ANarrowScreen_NeverGetsNegativeInsets()
         {
-            FrameInsets insets = SafeFrame.Compute(1440f, 1080f, 1.7778f, WholeScreen);
+            FrameInsets insets = SafeFrame.Compute(1440f, 1080f, 1.7778f, WholeScreen, 0f);
 
             Assert.AreEqual(0f, insets.Left);
             Assert.AreEqual(0f, insets.Right);
@@ -42,7 +42,7 @@ namespace MoonProject.UI.Tests
         {
             var safe = new Rect(0.05f, 0.02f, 0.9f, 0.94f);
 
-            FrameInsets insets = SafeFrame.Compute(1920f, 1080f, HudAspect, safe);
+            FrameInsets insets = SafeFrame.Compute(1920f, 1080f, HudAspect, safe, 0f);
 
             Assert.AreEqual(96f, insets.Left, 0.01f);
             Assert.AreEqual(96f, insets.Right, 0.01f);
@@ -51,9 +51,20 @@ namespace MoonProject.UI.Tests
         }
 
         [Test]
+        public void TheEdgeMargin_IsKeptClearOnEverySide()
+        {
+            FrameInsets insets = SafeFrame.Compute(1920f, 1080f, HudAspect, WholeScreen, 48f);
+
+            Assert.AreEqual(48f, insets.Left);
+            Assert.AreEqual(48f, insets.Right);
+            Assert.AreEqual(48f, insets.Top);
+            Assert.AreEqual(48f, insets.Bottom);
+        }
+
+        [Test]
         public void APanelWithNoSizeYet_GetsNoInsets()
         {
-            FrameInsets insets = SafeFrame.Compute(0f, 0f, HudAspect, WholeScreen);
+            FrameInsets insets = SafeFrame.Compute(0f, 0f, HudAspect, WholeScreen, 0f);
 
             Assert.AreEqual(0f, insets.Left);
             Assert.AreEqual(0f, insets.Top);
