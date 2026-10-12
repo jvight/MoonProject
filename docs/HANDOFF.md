@@ -4,7 +4,24 @@ Read this, then `CLAUDE.md`, then `docs/VISION.md`, `docs/DESIGN.md`, `docs/ARCH
 It records how the project is run, where it stands, and what comes next, so a new Director session (on any
 account) can continue without the old conversation.
 
-## 0000000000. LATEST (2026-10-12 ~22:50): 0.5.3 one fix from release; 0.5.4 branches ready
+## 00000000000. LATEST (2026-10-13 ~00:50): 0.5.3 released; 0.5.4 landing (art on main)
+- Director is session local_0b7c61a2 ("MoonProject Director handoff"); cron v4 = job 27877d8f (:17/:47).
+- **0.5.3 released:** ui zero-GC fix e31c8ebf landed alone (7599f185), verify PASS + pushed,
+  `Builds/Lunarion-0.5.3-20261012-7599f185.zip` (smoke PASS).
+- **0.5.4 art landed:** ae455d84 via temp branch box/art-054 + its outputs 1defabe8; verify PASS + pushed.
+- **Land queue:**
+  1. rover box/rover 4cbf90af+ (box_check PASS; brightness 3df1c7e4), plus art 7bf91871 (deck lamps out from
+     under the wing). Asked rover to merge 7bf91871, re-run box_check and send a mid-charge capture; they land
+     together.
+  2. gameplay Phase B box/gameplay 9cf6ef1f (box_check + Playthrough PASS);
+  3. ui Tab screen box/ui (asked for hint.build/Build prompt, Focus Lens + Side Bins tech nodes);
+  4. story text keys and audio cargo beats (dispatched, land after gameplay).
+- **Lesson:** `land --batch <temp-branch>` picks builders by box name; a temp name like `art-054` matches none, so
+  only Main Scene runs. Pass `--filter "^(Art|Gameplay)/"` (the real box's BUILDER_DOMAINS).
+- Open gameplay deviations for later: waiting bundles silent to sonar; crate cuts don't hold 07 still; a general
+  MaterialsChanged (0.6). From ui: a general Recipe, shelf cost display, per-slot fill tick.
+
+## 0000000000. (2026-10-12 ~22:50): 0.5.3 one fix from release; 0.5.4 branches ready
 - **main 9700010f** (version 0.5.3).
   - Verify: everything PASS (the Playthrough too, after the timeout fix ea... in GoldenPathPlaythrough: TestTimeoutMs
     1,800,000 above TotalBudget 1580 s) except UiAllocationTests.PromptFollowingAMovingPoint_DoesNotAllocate (2666 >
