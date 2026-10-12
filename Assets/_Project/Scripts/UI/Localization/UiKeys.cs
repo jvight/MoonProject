@@ -131,7 +131,7 @@ namespace MoonProject.UI
             }
         }
 
-        /// <summary>"material.wiring": a salvage material's name.</summary>
+        /// <summary>"material.wiring": a material's name (salvage, lunar or refined; docs/features/M3-27).</summary>
         public static string MaterialName(SalvageMaterial material)
         {
             switch (material)
@@ -142,6 +142,26 @@ namespace MoonProject.UI
                     return "material.wiring";
                 case SalvageMaterial.Optics:
                     return "material.optics";
+                case SalvageMaterial.CircuitChips:
+                    return "material.circuit_chips";
+                case SalvageMaterial.OrangeBeads:
+                    return "material.orange_beads";
+                case SalvageMaterial.Ilmenite:
+                    return "material.ilmenite";
+                case SalvageMaterial.WaterIce:
+                    return "material.water_ice";
+                case SalvageMaterial.RareEarths:
+                    return "material.rare_earths";
+                case SalvageMaterial.Glass:
+                    return "material.glass";
+                case SalvageMaterial.Alloy:
+                    return "material.alloy";
+                case SalvageMaterial.Coolant:
+                    return "material.coolant";
+                case SalvageMaterial.Crystal:
+                    return "material.crystal";
+                case SalvageMaterial.Superconductor:
+                    return "material.superconductor";
                 default:
                     throw new ArgumentOutOfRangeException(nameof(material), material, "This material has no name key.");
             }

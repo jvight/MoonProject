@@ -35,15 +35,25 @@ namespace MoonProject.Audio.PlayModeTests
         }
 
         [UnityTest]
-        public IEnumerator TheCut_ChargesIgnitesSizzlesCracksAndStraps()
+        public IEnumerator TheCut_RunsItsLampsIgnitesSizzlesCracksAndStraps()
         {
+            int plays = _rig.Director.PlayCount;
             Beat(FeelKind.Cut, FeelPhase.Anticipate, 0f, 0.65f);
-            Assert.AreEqual("cut_charge_fresh", LastClip, "four glassy notes over a fresh charge");
-            Beat(FeelKind.Cut, FeelPhase.Anticipate, 0f, 0.3f);
-            Assert.AreEqual("cut_charge_resume", LastClip, "two over a resume");
+            Assert.AreEqual("charge_inhale", LastClip, "the run starts with the chassis' inhale");
+            yield return new WaitForSeconds(0.9f);
+            Assert.AreEqual(plays + 1 + 5, _rig.Director.PlayCount, "one note per lamp, five at tier 0");
+            Assert.AreEqual("charge_lamp_05", LastClip, "the fifth lamp, B5, lands on the ignition");
+
+            _rig.Rover.Cutter.Tier = 3;
+            _rig.Rover.Cutter.LampCount = 9;
+            plays = _rig.Director.PlayCount;
+            Beat(FeelKind.Cut, FeelPhase.Anticipate, 0.5f, 0.3f);
+            Assert.AreEqual("charge_low_d", LastClip, "the top tier's sustained low D");
+            yield return new WaitForSeconds(0.6f);
+            Assert.AreEqual(plays + 2 + 5, _rig.Director.PlayCount, "a resume runs from the middle lamp");
 
             Beat(FeelKind.Cut, FeelPhase.Act);
-            Assert.AreEqual("cut_ignite", LastClip);
+            Assert.AreEqual("cut_ignite_tier_tier3", LastClip, "the hottest ignition at tier 3");
             yield return new WaitForSeconds(0.6f);
             float early = _rig.Feel.SizzleLevel;
             Assert.Greater(early, 0f, "the beam sizzles through 07's body");
@@ -112,6 +122,35 @@ namespace MoonProject.Audio.PlayModeTests
             int plays = _rig.Director.PlayCount;
             Beat(FeelKind.Collect, FeelPhase.Reward);
             Assert.AreEqual(plays, _rig.Director.PlayCount, "FeelAudio adds nothing to the bundle's reward");
+        }
+
+        [Test]
+        public void ASegmentChange_TicksAndSlidesUpAStep()
+        {
+            Beat(FeelKind.Cut, FeelPhase.Anticipate, 0f, 0.65f);
+            Beat(FeelKind.Cut, FeelPhase.Follow, 0.5f);
+            Assert.AreEqual("segment_slide_02", LastClip);
+            Beat(FeelKind.Cut, FeelPhase.Follow, 0.5f);
+            Assert.AreEqual("segment_slide_03", LastClip);
+        }
+
+        [Test]
+        public void CargoAndStorage_SoundTheirMoments()
+        {
+            _rig.Events.Publish(new CargoOverflowed(SalvageMaterial.Metal, 2, Point));
+            Assert.AreEqual("cargo_tok", LastClip);
+            Beat(FeelKind.Cargo, FeelPhase.Act, 0f);
+            Assert.AreEqual("count_tick_01", LastClip, "the first crate on the belt");
+            Beat(FeelKind.Cargo, FeelPhase.Act, 1f);
+            Assert.AreEqual("count_tick_06", LastClip, "the last one, highest");
+            Beat(FeelKind.Build, FeelPhase.Impact);
+            Assert.AreEqual("shelf_chord", LastClip, "a lone Build Impact is a shelf built");
+            Beat(FeelKind.Build, FeelPhase.Act, 0.5f);
+            Assert.AreEqual("shelf_chord", LastClip, "no tower ring outside the tower's chain");
+            _rig.Events.Publish(new CrewCrateOpened("site", "ro", SalvageMaterial.Metal, 3, Point));
+            Assert.AreEqual("crate_latch", LastClip);
+            _rig.Events.Publish(new BundleFetched(SalvageMaterial.Metal, 2));
+            Assert.AreEqual("tilly_fetch", LastClip);
         }
 
         [Test]
