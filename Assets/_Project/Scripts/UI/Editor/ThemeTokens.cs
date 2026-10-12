@@ -13,6 +13,20 @@ namespace MoonProject.UI.Editor
     /// </summary>
     internal static class ThemeTokens
     {
+        // Declared before Tokens: static fields initialise in order, so the table must see these set.
+        private static readonly Color32 GlassText = new Color32(230, 240, 255, 255);
+        private static readonly Color32 White = new Color32(255, 255, 255, 255);
+        private static readonly Color32 GlassFill = new Color32(40, 66, 140, 255);
+        private static readonly Color32 GlassRim = new Color32(150, 196, 255, 255);
+        private static readonly Color32 GlassRimGlow = new Color32(110, 170, 255, 255);
+        private static readonly Color32 GlassRing = new Color32(143, 208, 255, 255);
+        private static readonly Color32 GlassSelection = new Color32(255, 198, 90, 255);
+        private static readonly Color32 GlassSelectionText = new Color32(42, 26, 0, 255);
+        private static readonly Color32 GlassBar = new Color32(70, 120, 220, 255);
+        private static readonly Color32 GlassButton = new Color32(88, 140, 230, 255);
+        private static readonly Color32 GlassBubble = new Color32(64, 104, 190, 255);
+        private static readonly Color32 GlassVeil = new Color32(10, 16, 40, 255);
+
         private static readonly Token[] Tokens =
         {
             new Token("--moon-sky-top", PaletteSwatch.SkyTop, 1f),
@@ -47,19 +61,6 @@ namespace MoonProject.UI.Editor
             new Token("--glass-btn", GlassButton, 0.45f),
             new Token("--glass-bubble", GlassBubble, 0.85f),
         };
-
-        private static readonly Color32 GlassText = new Color32(230, 240, 255, 255);
-        private static readonly Color32 White = new Color32(255, 255, 255, 255);
-        private static readonly Color32 GlassFill = new Color32(40, 66, 140, 255);
-        private static readonly Color32 GlassRim = new Color32(150, 196, 255, 255);
-        private static readonly Color32 GlassRimGlow = new Color32(110, 170, 255, 255);
-        private static readonly Color32 GlassRing = new Color32(143, 208, 255, 255);
-        private static readonly Color32 GlassSelection = new Color32(255, 198, 90, 255);
-        private static readonly Color32 GlassSelectionText = new Color32(42, 26, 0, 255);
-        private static readonly Color32 GlassBar = new Color32(70, 120, 220, 255);
-        private static readonly Color32 GlassButton = new Color32(88, 140, 230, 255);
-        private static readonly Color32 GlassBubble = new Color32(64, 104, 190, 255);
-        private static readonly Color32 GlassVeil = new Color32(10, 16, 40, 255);
 
         /// <summary>The token stylesheet (deterministic text).</summary>
         public static string BuildStyleSheet()
