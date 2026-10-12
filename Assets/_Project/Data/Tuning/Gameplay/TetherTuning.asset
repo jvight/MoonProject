@@ -35,6 +35,10 @@ MonoBehaviour:
   _towLinearDamping: 0.2
   _towAngularDamping: 1.5
   _snapStretch: 5
+  _reachSeconds: 0.15
+  _liftSeconds: 0.3
+  _heavyMass: 15
+  _tensionSteps: 4
   _snapGrace: 0.8
   _snapDistance: 24
   _snapCarry: 0.15
