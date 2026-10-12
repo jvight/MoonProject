@@ -896,7 +896,7 @@ namespace MoonProject.Rover
         }
 
         /// <summary>Rumble never runs while the game window is away.</summary>
-        /// <summary>The cutter's fresh charge length now (gameplay registers ICutter); the bay's test cut runs at it.</summary>
+        /// <summary>The cutter's fresh charge length now (ICutter): the bay's test cut runs at it.</summary>
         private float CutterChargeSeconds()
         {
             if (!_context.TryGet(out ICutter cutter))

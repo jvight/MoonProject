@@ -49,7 +49,8 @@ namespace MoonProject.Rover
 
         /// <param name="chargeSeconds">The cutter's fresh charge length now (ICutter), for the bay's test cut.</param>
         /// <param name="emitter">07's beam emitter: the test cut's beats happen there.</param>
-        /// <param name="lens">The Focus Lens kit on the eye (tier 1 on); <paramref name="lensGlass"/> glows with the run.</param>
+        /// <param name="lens">The Focus Lens kit on the eye (from its tier on).</param>
+        /// <param name="lensGlass">The lens's glass, glowing with the run.</param>
         public ChargeRunLamps(EventBus events, ChargeRunSettings settings, ChargeRunRow[] rows,
             Func<float> chargeSeconds, Transform emitter, GameObject lens, Renderer lensGlass)
         {
@@ -132,7 +133,7 @@ namespace MoonProject.Rover
             }
         }
 
-        /// <summary>Shows tier <paramref name="tier"/>'s row (the highest built one when art has fewer) in its colour.</summary>
+        /// <summary>Shows tier <paramref name="tier"/>'s row (the highest built one beyond art's) in its colour.</summary>
         private void ShowTier(int tier)
         {
             Tier = Mathf.Clamp(tier, 0, _rows.Length - 1);

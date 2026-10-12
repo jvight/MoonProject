@@ -73,7 +73,7 @@ namespace MoonProject.Rover
         [Range(0.05f, 1f)]
         [SerializeField] private float _testCutBurn = 0.25f;
 
-        /// <summary>The run's colour at cutter tier <paramref name="tier"/> (the highest tuned one beyond it).</summary>
+        /// <summary>The run's colour at cutter tier <paramref name="tier"/> (the last tuned one beyond).</summary>
         public Color TierColour(int tier)
         {
             return _tierColours.Length == 0

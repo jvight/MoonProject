@@ -11,7 +11,7 @@ namespace MoonProject.Rover
     [Serializable]
     public sealed class ChargeRunRow
     {
-        [Tooltip("The row's ChargeRun_{tier} nodes (body, neck, head, eye), shown only while the cutter is at this tier.")]
+        [Tooltip("The row's ChargeRun_{tier} nodes (body, neck, head, eye), shown only at this cutter tier.")]
         [SerializeField] private GameObject[] _roots = new GameObject[0];
 
         [Tooltip("The row's lamp renderers in order, ChargeLamp_0 (the battery) first.")]

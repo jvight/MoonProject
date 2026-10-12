@@ -405,8 +405,9 @@ namespace MoonProject.Rover.Editor
                 {
                     if (lamp.Key != expected || lamp.Value == null)
                     {
-                        throw new System.InvalidOperationException($"{rowName}: {LampPrefix}{expected} is missing or has no "
-                                                            + "renderer (the charge run's lamp contract, M3-26).");
+                        throw new System.InvalidOperationException(
+                            $"{rowName}: {LampPrefix}{expected} is missing or has no renderer (the charge run's lamp "
+                            + "contract, M3-26).");
                     }
 
                     lampList.GetArrayElementAtIndex(expected++).objectReferenceValue = lamp.Value;
