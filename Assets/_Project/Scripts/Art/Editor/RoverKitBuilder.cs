@@ -20,6 +20,7 @@ namespace MoonProject.Art.Editor
         public const string BatterySpineName = "Kit_BatterySpine";
         public const string TapeDeckName = "Kit_TapeDeck";
         public const string TetherRingName = "Kit_TetherRing";
+        public const string SideBinName = "Kit_SideBin";
         public const string RingGlowName = "Glow";
         public const string LampPrefix = "Lamp_";
         public const string DrumGlowName = "Glow";
@@ -36,6 +37,7 @@ namespace MoonProject.Art.Editor
             ModelPrefabWriter.Write(CreateBatterySpine(), ArtPaths.RoverFolder, material);
             ModelPrefabWriter.Write(CreateTapeDeck(), ArtPaths.RoverFolder, material);
             ModelPrefabWriter.Write(CreateTetherRing(), ArtPaths.RoverFolder, material, glowOff);
+            ModelPrefabWriter.Write(CreateSideBin(), ArtPaths.RoverFolder, material);
             AssetDatabase.SaveAssets();
         }
 
@@ -67,6 +69,12 @@ namespace MoonProject.Art.Editor
         {
             return new ModelNode(BatterySpineName, Vector3.zero,
                 new ModelMesh(BatterySpineName, RoverSpineMeshes.Spine()));
+        }
+
+        /// <summary>A side bin (RoverAbility.SideBins) on BinSocket_L and BinSocket_R, the same prefab twice.</summary>
+        public static ModelNode CreateSideBin()
+        {
+            return new ModelNode(SideBinName, Vector3.zero, new ModelMesh(SideBinName, RoverBinMeshes.Bin()));
         }
 
         /// <summary>The old tape deck on DeckSocket (M3-24 C), also the find Tilly spots on the ground.</summary>

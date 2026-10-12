@@ -88,6 +88,13 @@ namespace MoonProject.Art.Editor
         /// </summary>
         public static readonly Vector3 DrumSocket = new Vector3(0.47f, 0.95f, -0.12f);
 
+        /// <summary>
+        /// Right side bin socket (Kit_SideBin) on the body's flank above the front wheel, high enough that the bin
+        /// clears the tyre at the top of its travel, ahead of the drum; the left one mirrors x and turns half round so
+        /// its +X points out too.
+        /// </summary>
+        public static readonly Vector3 BinSocket = new Vector3(RoverMeshes.BodyHalfWidth, 0.86f, 0.4f);
+
         /// <summary>How far the middle wheels rise at the top of their suspension travel (Rover's rig).</summary>
         public const float MiddleWheelTravel = 0.16f;
 
@@ -233,6 +240,8 @@ namespace MoonProject.Art.Editor
             root.Add(new ModelNode("CoilSocket", CoilSocket));
             root.Add(new ModelNode("DrumSocket_L", MirrorX(DrumSocket), Place.Rotation(new Vector3(0f, 180f, 0f))));
             root.Add(new ModelNode("DrumSocket_R", DrumSocket));
+            root.Add(new ModelNode("BinSocket_L", MirrorX(BinSocket), Place.Rotation(new Vector3(0f, 180f, 0f))));
+            root.Add(new ModelNode("BinSocket_R", BinSocket));
             root.Add(new ModelNode(TubeSocketName, TubeSocket, Place.Rotation(new Vector3(0f, 90f, 0f))));
             root.Add(new ModelNode(PartSocketName, PartSocket));
             root.Add(new ModelNode(SpineSocketName, SpineSocket));

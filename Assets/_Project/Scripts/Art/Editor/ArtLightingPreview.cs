@@ -1420,6 +1420,8 @@ namespace MoonProject.Art.Editor
             }
 
             Attach(rover, RoverKitBuilder.CargoRackName, "CargoSocket", temporary);
+            Attach(rover, RoverKitBuilder.SideBinName, "BinSocket_L", temporary);
+            Attach(rover, RoverKitBuilder.SideBinName, "BinSocket_R", temporary);
             Attach(rover, RoverModelBuilder.HoverCoilsName, "CoilSocket", temporary);
             foreach (string gift in new[]
             {

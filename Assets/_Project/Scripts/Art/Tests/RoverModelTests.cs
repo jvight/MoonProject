@@ -21,14 +21,14 @@ namespace MoonProject.Art.Tests
             "Neck/Head/Weather_Paint", "Neck/Head/Weather_Dust", "Neck/Head/Eye/LensSocket",
             "SolarWing", "SolarWing/CellFilled", "Antenna", "Antenna/AntennaTip", "Antenna/Pennant",
             "HeadlampSocket", "CargoSocket", "DustSocket_L", "DustSocket_R", "CoilSocket", "DrumSocket_L",
-            "DrumSocket_R", "TubeSocket", "PartSocket", "SpineSocket", "DeckSocket",
+            "DrumSocket_R", "TubeSocket", "PartSocket", "SpineSocket", "DeckSocket", "BinSocket_L", "BinSocket_R",
         };
 
         private static readonly string[] EmptyNodes =
         {
             "TetherOrigin", "HeadlampSocket", "CargoSocket", "DustSocket_L", "DustSocket_R", "CoilSocket",
             "DrumSocket_L", "DrumSocket_R", "TubeSocket", "PartSocket", "SpineSocket", "DeckSocket", "RingSocket",
-            "LensSocket",
+            "LensSocket", "BinSocket_L", "BinSocket_R",
         };
 
         // Each charge-run lamp by tier: the part its row group sits under and its index along the run.

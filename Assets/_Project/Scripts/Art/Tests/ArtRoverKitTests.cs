@@ -108,6 +108,8 @@ namespace MoonProject.Art.Tests
                 new KitPiece(RoverKitBuilder.CargoRackName, Fit(RoverKitBuilder.CreateCargoRack(), "CargoSocket")),
                 new KitPiece(RoverKitBuilder.BatterySpineName,
                     Fit(RoverKitBuilder.CreateBatterySpine(), "SpineSocket")),
+                new KitPiece(RoverKitBuilder.SideBinName + " L", Fit(RoverKitBuilder.CreateSideBin(), "BinSocket_L")),
+                new KitPiece(RoverKitBuilder.SideBinName + " R", Fit(RoverKitBuilder.CreateSideBin(), "BinSocket_R")),
             };
 
             // 07 with every kit piece's frame but none of their glow renderers: what a glass or band is seen past.
@@ -117,6 +119,7 @@ namespace MoonProject.Art.Tests
                 (RoverKitBuilder.CreateLampBar(), "HeadlampSocket"), (RoverKitBuilder.CreateCapacitorDrum(),
                     "DrumSocket_L"), (RoverKitBuilder.CreateCapacitorDrum(), "DrumSocket_R"),
                 (RoverKitBuilder.CreateCargoRack(), "CargoSocket"), (RoverKitBuilder.CreateBatterySpine(), "SpineSocket"),
+                (RoverKitBuilder.CreateSideBin(), "BinSocket_L"), (RoverKitBuilder.CreateSideBin(), "BinSocket_R"),
             })
             {
                 Matrix4x4 world = SilhouetteCamera.WorldOf(_rover, socket);
