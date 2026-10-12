@@ -75,6 +75,18 @@ Shader "MoonProject/World/LofiTerrain"
                 return output;
             }
 
+            // The reach ring (World's ReachRingSystem): xyz its centre, w its radius; rgb its warm glow, w its half
+            // width. Zero when no ring is rolling out.
+            float4 _MoonReachRing;
+            float4 _MoonReachRingColor;
+
+            half3 ReachRing(float3 positionWS)
+            {
+                float fromCentre = length(positionWS.xz - _MoonReachRing.xz);
+                half band = saturate(1.0 - abs(fromCentre - _MoonReachRing.w) / max(_MoonReachRingColor.w, 1e-3));
+                return _MoonReachRingColor.rgb * (band * band);
+            }
+
             half3 Diffuse(Light light, float3 normal)
             {
                 half attenuation = light.distanceAttenuation * light.shadowAttenuation;
@@ -114,7 +126,7 @@ Shader "MoonProject/World/LofiTerrain"
                 LIGHT_LOOP_END
                 #endif
 
-                half3 color = input.albedo * light;
+                half3 color = input.albedo * light + ReachRing(positionWS);
                 color = MoonAtmosphere(color, positionWS, input.fogFactor);
                 return half4(color, 1.0);
             }
