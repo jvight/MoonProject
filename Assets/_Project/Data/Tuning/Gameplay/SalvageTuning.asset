@@ -28,16 +28,6 @@ MonoBehaviour:
   _cutSteps: 5
   _cutSecondsPerUnit: 1
   _cutSeconds: {x: 2, y: 4}
-  _beamSweepRate: 0.9
-  _beamSweep: 0.12
-  _sparkRate: 26
-  _sparkSpeed: {x: 0.6, y: 1.8}
-  _sparkLifetime: {x: 0.35, y: 0.8}
-  _sparkSize: {x: 0.02, y: 0.05}
-  _sparkSpread: 40
-  _sparkGravity: 0.16
-  _sparkStreak: 0.12
-  _maxSparks: 48
   _smallVolume: 1
   _mediumVolume: 3
   _smallYield: 2

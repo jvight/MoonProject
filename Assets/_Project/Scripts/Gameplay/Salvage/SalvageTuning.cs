@@ -61,36 +61,6 @@ namespace MoonProject.Gameplay
         [Tooltip("...kept within this range (s): every cut is a short, calm beat.")]
         [SerializeField] private Vector2 _cutSeconds = new Vector2(2f, 4f);
 
-        [Tooltip("Sideways sweeps per second of the beam's end along the cut.")]
-        [Range(0f, 4f)] [SerializeField] private float _beamSweepRate = 0.9f;
-
-        [Tooltip("Sideways reach (m) of the beam's sweep along the cut.")]
-        [Range(0f, 1f)] [SerializeField] private float _beamSweep = 0.12f;
-
-        [Tooltip("Sparks per second at the cut while the beam works.")]
-        [Range(0f, 120f)] [SerializeField] private float _sparkRate = 26f;
-
-        [Tooltip("Spark speed (m/s, min and max).")]
-        [SerializeField] private Vector2 _sparkSpeed = new Vector2(0.6f, 1.8f);
-
-        [Tooltip("Spark life (s, min and max).")]
-        [SerializeField] private Vector2 _sparkLifetime = new Vector2(0.35f, 0.8f);
-
-        [Tooltip("Spark size (m, min and max).")]
-        [SerializeField] private Vector2 _sparkSize = new Vector2(0.02f, 0.05f);
-
-        [Tooltip("Spread (degrees) of the spark cone around the cut face's normal.")]
-        [Range(0f, 90f)] [SerializeField] private float _sparkSpread = 40f;
-
-        [Tooltip("Share of the moon's gravity the sparks feel (they drift down slowly).")]
-        [Range(0f, 1f)] [SerializeField] private float _sparkGravity = 0.16f;
-
-        [Tooltip("How long the sparks stretch along their motion.")]
-        [Range(0f, 1f)] [SerializeField] private float _sparkStreak = 0.12f;
-
-        [Tooltip("Most sparks alive at once.")]
-        [Range(4, 200)] [SerializeField] private int _maxSparks = 48;
-
         [Header("Yield (VISION ruling 5: the sites give at least twice every recipe)")]
         [Tooltip("A piece smaller than this volume (m³, its mesh bounds) yields the small amount...")]
         [Range(0.1f, 10f)] [SerializeField] private float _smallVolume = 1f;
@@ -247,16 +217,6 @@ namespace MoonProject.Gameplay
         public float EngageHysteresis => _engageHysteresis;
         public float CutSecondsPerUnit => _cutSecondsPerUnit;
         public Vector2 CutSeconds => Ordered(_cutSeconds);
-        public float BeamSweepRate => _beamSweepRate;
-        public float BeamSweep => _beamSweep;
-        public float SparkRate => _sparkRate;
-        public Vector2 SparkSpeed => Ordered(_sparkSpeed);
-        public Vector2 SparkLifetime => Ordered(_sparkLifetime);
-        public Vector2 SparkSize => Ordered(_sparkSize);
-        public float SparkSpread => _sparkSpread;
-        public float SparkGravity => _sparkGravity;
-        public float SparkStreak => _sparkStreak;
-        public int MaxSparks => _maxSparks;
         public float SmallVolume => _smallVolume;
         public float MediumVolume => Mathf.Max(_mediumVolume, _smallVolume);
         public int SmallYield => _smallYield;
