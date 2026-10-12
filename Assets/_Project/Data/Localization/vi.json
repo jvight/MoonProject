@@ -379,10 +379,6 @@
             "text": "Cấp {0}/{1}"
         },
         {
-            "key": "ui.tower.hold",
-            "text": "Giữ"
-        },
-        {
             "key": "ui.tower.purchased",
             "text": "Tín hiệu vươn xa hơn"
         },
@@ -1369,6 +1365,14 @@
         {
             "key": "ticker.tether.back",
             "text": "07 lại có thể giữ đồ vật."
+        },
+        {
+            "key": "ui.pause.can",
+            "text": "07 có thể"
+        },
+        {
+            "key": "ui.settings.text_size",
+            "text": "Cỡ chữ"
         }
     ]
 }

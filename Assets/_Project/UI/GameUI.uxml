@@ -72,7 +72,9 @@
                         <ui:VisualElement name="kit-title-rule" class="kit-title__rule" picking-mode="Ignore" />
                     </ui:VisualElement>
                 </ui:VisualElement>
-                <ui:VisualElement name="battery-arc" class="battery-arc" picking-mode="Ignore" />
+                <ui:VisualElement name="cell-row" class="cell-row" picking-mode="Ignore">
+                    <ui:VisualElement name="cell-row-plate" class="cell-row__plate" picking-mode="Ignore" />
+                </ui:VisualElement>
                 <ui:VisualElement class="next-line" picking-mode="Ignore">
                     <ui:VisualElement name="next-line" class="name-tag" picking-mode="Ignore">
                         <ui:VisualElement name="next-line-shadow" class="soft-shadow soft-shadow--name" />
@@ -296,6 +298,10 @@
                                                    text="ui.pause.quit_confirm" />
                                     </ui:VisualElement>
                                 </ui:VisualElement>
+                                <ui:VisualElement name="pause-can" class="pause__can" picking-mode="Ignore">
+                                    <ui:Label class="section-label loc" text="ui.pause.can" />
+                                    <ui:VisualElement name="pause-can-rows" class="pause__can-rows" picking-mode="Ignore" />
+                                </ui:VisualElement>
                             </ui:VisualElement>
                         </ui:VisualElement>
                         <ui:VisualElement name="pause-settings" class="pause__settings" picking-mode="Ignore">
@@ -335,6 +341,10 @@
                                 <ui:VisualElement class="setting-row">
                                     <ui:Label class="setting-row__label loc" text="ui.settings.guidance" />
                                     <ui:Toggle name="toggle-guidance" class="setting-row__toggle" />
+                                </ui:VisualElement>
+                                <ui:VisualElement class="setting-row">
+                                    <ui:Label class="setting-row__label loc" text="ui.settings.text_size" />
+                                    <ui:Button name="button-text-size" class="menu-button menu-button--compact" />
                                 </ui:VisualElement>
                                 <ui:VisualElement class="setting-row">
                                     <ui:Label class="setting-row__label loc" text="ui.settings.language" />

@@ -73,8 +73,8 @@ namespace MoonProject.UI
         private LookUpChip _lookUpChip;
         private NextStepLine _nextStep;
         private NextLineView _nextLine;
-        private BatteryArc _batteryArc;
-        private bool _arcRevealed;
+        private CellRow _cellRow;
+        private bool _cellRowRevealed;
         private PlaceCard _placeCard;
         private ProtocolReadout _protocol;
         private RecipeCard _recipeCard;
@@ -95,6 +95,9 @@ namespace MoonProject.UI
         private FriendReadout _friendReadout;
         private FriendNameTag _friendName;
         private PauseMenu _pause;
+        private VerbList _verbs;
+        private TextScale _textScale;
+        private bool _wasPaused;
         private BackdropBlur _backdrop;
         private IMapKnowledge _mapKnowledge;
         private IStationReach _mapReach;
@@ -166,7 +169,9 @@ namespace MoonProject.UI
 
         internal NextLineView NextLine => _nextLine;
 
-        internal BatteryArc BatteryArc => _batteryArc;
+        internal CellRow CellRow => _cellRow;
+
+        internal VerbList Verbs => _verbs;
 
         internal UiLayout Layout => _layout;
 
@@ -387,7 +392,7 @@ namespace MoonProject.UI
             _lookUpChip = new LookUpChip(_layout, _tuning.Stargaze, _localization);
             _nextStep = new NextStepLine(_tuning.Guidance);
             _nextLine = new NextLineView(_layout, _tuning.Guidance, _localization);
-            _batteryArc = new BatteryArc(_layout, _tuning.Battery, services.Battery, services.Beam);
+            _cellRow = new CellRow(_layout, _tuning.Battery, services.Battery, services.Beam);
             _placeCard = new PlaceCard(_layout, _tuning.Guidance, _localization);
             _protocol = new ProtocolReadout(_layout.Hud, _tuning.Guidance, _localization, services.Recovery);
             _recipeCard = new RecipeCard(_layout.Hud, _tuning.Guidance.Recipe, _localization, _numbers, services.Shop,
@@ -418,6 +423,8 @@ namespace MoonProject.UI
             _pause = new PauseMenu(_layout, _tuning.Pause, _tuning.Title, _player, _localization, services.Input,
                 services.Events, _settings, services.Materials, services.Radio, services.Relays, services.Flow,
                 _numbers, _cursor, Quit);
+            _verbs = new VerbList(_layout, _tuning.Prompts, _ledger, _glyphs, _localization);
+            _textScale = new TextScale(_document.panelSettings);
             _backdrop = new BackdropBlur(transform, _tuning.Backdrop);
             if (_mapKnowledge != null)
             {
@@ -483,6 +490,13 @@ namespace MoonProject.UI
             }
 
             InputDeviceKind device = input.ActiveDevice;
+            _textScale.Apply(_player.TextScale);
+            if (paused && !_wasPaused)
+            {
+                _verbs.Refresh(device);
+            }
+
+            _wasPaused = paused;
             _labHud.Tick(deltaTime, !paused && !onMap, input.Drive,
                 _services.Hints.TryGet(InteractionKind.Deposit, out _), _glyphs.For(RoverAction.Tether, device), device);
             _board.Tick(deltaTime, !paused);
@@ -492,7 +506,7 @@ namespace MoonProject.UI
                 !_ticker.IsVisible && !hopping && !_hopList.IsBusy && !_placeCard.IsVisible && !_prompt.IsVisible);
             _tower.Tick(hudTime, !paused, input.ExcavateHeld, input.Winch,
                 _services.Tether.State == TetherAimState.Towing, _glyphs.For(RoverAction.Excavate, device), device);
-            _kitTitle.Tick(hudTime);
+            _kitTitle.Tick(hudTime, !_placeCard.IsVisible);
             bool materialMet = _ledger.Met(HudVerb.Material) || _services.Materials.Total > 0;
             _chip.SetPinned(materialMet && (_tower.IsVisible || _relayTag.IsVisible));
             _chip.Tick(deltaTime);
@@ -564,14 +578,13 @@ namespace MoonProject.UI
             _nextLine.Tick(deltaTime, _nextStep, !paused && _awake && !_card.IsVisible &&
                                                  !_tower.IsVisible && !_stargaze.IsVeiled &&
                                                  !_placeCard.IsVisible && !_protocol.IsVisible);
-            _batteryArc.Tick(deltaTime, _arcRevealed, !paused && _awake && !_card.IsVisible && !_tower.IsVisible &&
-                                                      !_stargaze.IsVeiled && !onMap);
+            _cellRow.Tick(deltaTime, _cellRowRevealed, !paused && _awake && !_stargaze.IsVeiled && !onMap);
         }
 
-        /// <summary>The battery arc exists from the first time the charge dropped below its reveal share.</summary>
+        /// <summary>The cell row exists from the first time the charge dropped below its reveal share.</summary>
         private void OnBatteryArcRevealed(BatteryArcRevealed revealed)
         {
-            _arcRevealed = true;
+            _cellRowRevealed = true;
         }
 
         private void Quit()
@@ -861,6 +874,7 @@ namespace MoonProject.UI
 
             _glyphs.Clear();
             _staticText.Apply();
+            _verbs.Refresh(_services.Input.ActiveDevice);
             _prompt.Relocalize();
             _card.Relocalize();
             _ticker.Relocalize();
@@ -910,6 +924,7 @@ namespace MoonProject.UI
                 }
 
                 _pause.RestoreTime();
+                _textScale.Restore();
                 _hopFade.Dispose();
                 _backdrop.Dispose();
                 _map?.Dispose();

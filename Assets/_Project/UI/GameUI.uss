@@ -36,8 +36,6 @@
 .pause__heading,
 .memory-card__name,
 .tower-panel__title,
-.caption,
-.section-label,
 .chip__number,
 .name-tag__name,
 .bay-row__name,
@@ -48,10 +46,25 @@
 .hold__glyph,
 .material-slot__count {
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/BeVietnamPro-SemiBold.asset");
+    font-size: 22px;
 }
 
 .chip__word,
 .hold__word,
+.caption,
+.section-label,
+.next-line__text,
+.ticker__text,
+.place-card__job,
+.memory-card__text,
+.tower-panel__text,
+.recipe__need,
+.material-slot__word,
+.hint-row__word,
+.bay-row__effect,
+.recovery-board__node,
+.recovery-board__target,
+.verb-row__word,
 .pause .menu-button {
     -unity-font-definition: url("project://database/Assets/_Project/Generated/UI/Fonts/BeVietnamPro-Medium.asset");
 }
@@ -104,12 +117,12 @@ Label {
 }
 
 .chip__word {
-    font-size: 20px;
+    font-size: 26px;
     color: var(--moon-text);
 }
 
 .chip__number {
-    font-size: 20px;
+    font-size: 22px;
     margin-left: 8px;
     min-width: 24px;
 }
@@ -121,8 +134,8 @@ Label {
 }
 
 .caption {
-    font-size: 14px;
-    letter-spacing: 2px;
+    font-size: 18px;
+    letter-spacing: 1px;
     color: var(--moon-warm-lamp);
 }
 
@@ -134,11 +147,11 @@ Label {
 /* Glyphs: a key cap for keys and mouse buttons, a round button for gamepads */
 
 .glyph {
-    min-width: 34px;
-    height: 34px;
-    padding: 0 9px;
+    min-width: 40px;
+    height: 40px;
+    padding: 0 11px;
     margin-right: 10px;
-    border-radius: 9px;
+    border-radius: 10px;
     border-width: 1px;
     border-color: var(--moon-amber-edge);
     background-color: var(--moon-amber-soft);
@@ -147,35 +160,35 @@ Label {
 }
 
 .glyph--pad {
-    min-width: 34px;
-    width: 34px;
+    min-width: 40px;
+    width: 40px;
     padding: 0;
-    border-radius: 17px;
+    border-radius: 20px;
 }
 
 .glyph__label {
-    font-size: 15px;
+    font-size: 18px;
     color: var(--moon-warm-lamp);
     -unity-text-align: middle-center;
 }
 
 .glyph--small {
-    min-width: 26px;
-    height: 26px;
-    padding: 0 7px;
+    min-width: 30px;
+    height: 30px;
+    padding: 0 8px;
     margin-right: 8px;
-    border-radius: 7px;
+    border-radius: 8px;
 }
 
 .glyph--small.glyph--pad {
-    min-width: 26px;
-    width: 26px;
+    min-width: 30px;
+    width: 30px;
     padding: 0;
-    border-radius: 13px;
+    border-radius: 15px;
 }
 
 .glyph--small .glyph__label {
-    font-size: 12px;
+    font-size: 18px;
 }
 
 /* Salvage materials (painted, see MaterialIconPainter), in art's bundle colours: steel, copper, violet */
@@ -187,8 +200,8 @@ Label {
 }
 
 .material-icon {
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     --icon-hole-color: var(--moon-sky-top);
 }
 
@@ -229,36 +242,84 @@ Label {
 }
 
 .materials-chip .material-icon {
-    width: 22px;
-    height: 22px;
+    width: 24px;
+    height: 24px;
 }
 
 .materials-chip .material-slot__count {
-    font-size: 19px;
+    font-size: 22px;
 }
 
-/* A recipe: what it takes, the short materials dimmed, and one quiet need line */
+/* A recipe, one row per material (docs/design/first-hour-v2 6.5): icon, name, have / need. A met need is cream; a
+   short one is dim amber with a hollow pip. One quiet need line under them. */
 
 .recipe {
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.recipe .material-icon {
+    width: 24px;
+    height: 24px;
+}
+
+.recipe .material-slot {
+    margin: 3px 0;
+}
+
+.material-slot__word {
+    min-width: 92px;
+    margin-left: 10px;
+    font-size: 22px;
+    color: var(--moon-text);
+}
+
+.recipe .material-slot__count {
+    min-width: 72px;
+    margin-left: 6px;
+    font-size: 22px;
+}
+
+.material-slot__pip {
+    display: none;
+    width: 12px;
+    height: 12px;
+    margin-left: 8px;
+    border-width: 2px;
+    border-radius: 6px;
+    border-color: var(--moon-warm-lamp);
+}
+
+.material-slot--short .material-slot__pip {
+    display: flex;
+}
+
+.material-slot--short .material-icon {
+    opacity: 0.7;
+}
+
+.material-slot--short .material-slot__count,
+.material-slot--short .material-slot__word {
+    color: var(--moon-warm-lamp);
+}
+
+/* A bay row's cost stays on its line: icon and have / need, no names */
+
+.bay-row__recipe {
     flex-direction: row;
     align-items: center;
 }
 
-.recipe .material-icon {
-    width: 18px;
-    height: 18px;
+.bay-row__recipe .material-slot {
+    margin: 0 6px;
 }
 
-.material-slot--short .material-icon {
-    opacity: 0.4;
-}
-
-.material-slot--short .material-slot__count {
-    color: var(--moon-text-faint);
+.bay-row__recipe .material-slot__count {
+    min-width: 0;
 }
 
 .recipe__need {
-    font-size: 15px;
+    font-size: 18px;
     color: var(--moon-text-faint);
     white-space: normal;
 }
@@ -326,7 +387,7 @@ Label {
     justify-content: flex-end;
     align-items: flex-start;
     padding-left: 7%;
-    padding-bottom: 9%;
+    padding-bottom: 48px;
 }
 
 .pause--title .pause__stack {
@@ -371,8 +432,8 @@ Label {
 }
 
 .name-tag__name {
-    font-size: 30px;
-    letter-spacing: 4px;
+    font-size: 34px;
+    letter-spacing: 2px;
     color: var(--moon-cream);
     -unity-text-align: middle-center;
     text-shadow: 0 2px 14px var(--moon-shadow);
@@ -384,32 +445,63 @@ Label {
     position: absolute;
     left: 0;
     right: 0;
-    top: 40px;
+    top: 8px;
     align-items: center;
 }
 
 .next-line__text {
-    font-size: 19px;
+    font-size: 26px;
     letter-spacing: 1px;
     color: var(--moon-text);
     -unity-text-align: middle-center;
     text-shadow: 0 2px 12px var(--moon-shadow);
 }
 
-/* 07's battery (docs/features/M3-20): a thin segmented arc bowed over the "next" line, a warm lamp on a faint track */
+/* 07's cells (docs/design/first-hour-v2 6.4): a small row of pills on a glass plate, top left, one pill per cell */
 
-.battery-arc {
+.cell-row {
     position: absolute;
-    left: 50%;
-    top: 16px;
-    width: 172px;
-    height: 18px;
-    translate: -50% 0;
-    --track-color: var(--moon-track);
-    --fill-color: var(--moon-warm-lamp);
-    --arc-width: 3;
-    --arc-span: 44;
-    --segment-gap: 2.5;
+    left: 0;
+    top: 0;
+}
+
+.cell-row__plate {
+    flex-direction: row;
+    align-items: center;
+    padding: 9px 12px;
+    border-radius: 16px;
+    border-width: 1px;
+    border-color: var(--moon-glass-edge);
+    background-color: var(--moon-plate);
+}
+
+.cell-row__pill {
+    width: 14px;
+    height: 30px;
+    margin: 0 3px;
+    border-radius: 7px;
+    border-width: 2px;
+}
+
+.cell-row__pill--full {
+    border-color: var(--moon-warm-lamp);
+    background-color: var(--moon-warm-lamp);
+}
+
+.cell-row__pill--empty {
+    border-color: var(--moon-text-faint);
+    background-color: rgba(0, 0, 0, 0);
+}
+
+/* Every line sits on a glass plate (docs/design/first-hour-v2 6.2): the next line, the ticker, a place's card */
+
+.next-line .name-tag,
+.place-card .name-tag {
+    padding: 10px 22px;
+    border-radius: 16px;
+    border-width: 1px;
+    border-color: var(--moon-glass-edge);
+    background-color: var(--moon-plate);
 }
 
 /* A place's card, the first time 07 comes near: its name and its one job, below where kit titles rest */
@@ -418,13 +510,13 @@ Label {
     position: absolute;
     left: 0;
     right: 0;
-    top: 20%;
+    top: 22%;
     align-items: center;
 }
 
 .place-card__job {
     margin-top: 8px;
-    font-size: 19px;
+    font-size: 26px;
     color: var(--moon-text);
     -unity-text-align: middle-center;
     text-shadow: 0 2px 12px var(--moon-shadow);
@@ -436,7 +528,7 @@ Label {
     position: absolute;
     left: 0;
     right: 0;
-    top: 12%;
+    top: 22%;
     align-items: center;
 }
 
@@ -537,8 +629,8 @@ Label {
 
 .materials-chip {
     position: absolute;
-    top: 44px;
-    right: 56px;
+    top: 0;
+    right: 0;
 }
 
 .materials-chip__body {
@@ -573,7 +665,7 @@ Label {
 
 .site-name {
     font-size: 26px;
-    letter-spacing: 3px;
+    letter-spacing: 2px;
 }
 
 /* The one-time Look up hint: the prompt chip's look, low and centred, above the ticker's band */
@@ -582,7 +674,7 @@ Label {
     position: absolute;
     left: 0;
     right: 0;
-    bottom: 22%;
+    bottom: 0;
     align-items: center;
 }
 
@@ -592,7 +684,7 @@ Label {
     position: absolute;
     left: 0;
     right: 0;
-    bottom: 26px;
+    bottom: 0;
     align-items: center;
 }
 
@@ -600,9 +692,11 @@ Label {
     flex-direction: row;
     align-items: center;
     max-width: 72%;
-    padding: 7px 20px 7px 16px;
-    border-radius: 18px;
-    background-color: var(--moon-shadow);
+    padding: 10px 22px 10px 18px;
+    border-radius: 16px;
+    background-color: var(--moon-plate);
+    border-width: 1px;
+    border-color: var(--moon-glass-edge);
 }
 
 .ticker__lamp {
@@ -616,7 +710,7 @@ Label {
 
 .ticker__text {
     flex-shrink: 1;
-    font-size: 19px;
+    font-size: 26px;
     letter-spacing: 0.4px;
     color: var(--moon-text-dim);
     white-space: normal;
@@ -629,7 +723,7 @@ Label {
     position: absolute;
     left: 0;
     right: 0;
-    bottom: 84px;
+    bottom: 0;
     align-items: center;
 }
 
@@ -663,7 +757,7 @@ Label {
 }
 
 .dial-readout__station {
-    font-size: 15px;
+    font-size: 18px;
     letter-spacing: 3px;
     color: var(--moon-warm-lamp);
     -unity-text-align: middle-center;
@@ -671,7 +765,7 @@ Label {
 
 .dial-readout__tape {
     margin-top: 5px;
-    font-size: 23px;
+    font-size: 22px;
     color: var(--moon-cream);
     -unity-text-align: middle-center;
 }
@@ -682,7 +776,7 @@ Label {
     position: absolute;
     left: 0;
     right: 0;
-    bottom: 84px;
+    bottom: 0;
     align-items: center;
 }
 
@@ -713,14 +807,14 @@ Label {
 }
 
 .hop-list__glyph {
-    font-size: 12px;
+    font-size: 18px;
     color: var(--moon-warm-lamp);
     -unity-text-align: middle-center;
     display: none;
 }
 
 .hop-list__name {
-    font-size: 19px;
+    font-size: 22px;
     color: var(--moon-text-dim);
 }
 
@@ -755,7 +849,7 @@ Label {
 }
 
 .relay-tag__need {
-    font-size: 13px;
+    font-size: 18px;
     margin: 2px 0 2px 6px;
 }
 
@@ -785,9 +879,9 @@ Label {
 
 .memory-card {
     position: absolute;
-    left: 72px;
-    bottom: 104px;
-    width: 540px;
+    left: 0;
+    bottom: 24px;
+    width: 520px;
 }
 
 .memory-card__body {
@@ -840,23 +934,23 @@ Label {
 }
 
 .memory-card--liner .memory-card__name {
-    font-size: 26px;
+    font-size: 28px;
     color: var(--moon-honey);
 }
 
 .memory-card--liner .memory-card__text {
-    font-size: 19px;
+    font-size: 22px;
 }
 
 .memory-card__name {
-    font-size: 32px;
+    font-size: 28px;
     margin-top: 10px;
     margin-bottom: 10px;
     white-space: normal;
 }
 
 .memory-card__text {
-    font-size: 21px;
+    font-size: 22px;
     color: var(--moon-text-dim);
     white-space: normal;
 }
@@ -868,7 +962,7 @@ Label {
 }
 
 .hint-row__word {
-    font-size: 15px;
+    font-size: 18px;
     color: var(--moon-text-faint);
 }
 
@@ -876,9 +970,9 @@ Label {
 
 .tower-panel {
     position: absolute;
-    right: 72px;
-    bottom: 104px;
-    width: 430px;
+    right: 0;
+    bottom: 24px;
+    width: 520px;
 }
 
 .tower-panel__heading {
@@ -919,14 +1013,14 @@ Label {
 }
 
 .tower-panel__title {
-    font-size: 27px;
+    font-size: 28px;
     margin-top: 10px;
     margin-bottom: 6px;
     white-space: normal;
 }
 
 .tower-panel__text {
-    font-size: 18px;
+    font-size: 22px;
     color: var(--moon-text-dim);
     white-space: normal;
 }
@@ -965,6 +1059,7 @@ Label {
 
 .bay-row__line {
     flex-direction: row;
+    flex-wrap: wrap;
     align-items: center;
 }
 
@@ -982,8 +1077,9 @@ Label {
 
 .bay-row__name {
     flex-grow: 1;
-    flex-shrink: 1;
-    font-size: 19px;
+    flex-shrink: 0;
+    min-width: 170px;
+    font-size: 22px;
     color: var(--moon-text-dim);
 }
 
@@ -998,16 +1094,15 @@ Label {
 
 .bay-row__effect {
     margin: 3px 0 0 16px;
-    font-size: 15px;
+    font-size: 18px;
     color: var(--moon-text-faint);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    display: none;
 }
 
 .bay-row--selected .bay-row__effect {
     color: var(--moon-text-dim);
     white-space: normal;
+    display: flex;
 }
 
 .tower-panel__pick {
@@ -1031,13 +1126,13 @@ Label {
 }
 
 .hold__glyph {
-    font-size: 15px;
+    font-size: 18px;
     color: var(--moon-warm-lamp);
     -unity-text-align: middle-center;
 }
 
 .hold__word {
-    font-size: 18px;
+    font-size: 22px;
     margin-left: 12px;
 }
 
@@ -1096,7 +1191,7 @@ Label {
 }
 
 .pause__subheading {
-    font-size: 16px;
+    font-size: 18px;
     color: var(--moon-text-faint);
     margin-top: 4px;
 }
@@ -1109,7 +1204,7 @@ Label {
 
 .pause__cassettes-count {
     margin-left: 9px;
-    font-size: 15px;
+    font-size: 18px;
     color: var(--moon-text-dim);
 }
 
@@ -1121,6 +1216,33 @@ Label {
     min-height: 196px;
 }
 
+/* "07 can": the verbs learned so far, a reference and never a tutorial (docs/design/first-hour-v2 6.5) */
+
+.pause__can {
+    margin-top: 12px;
+    padding-left: 8px;
+}
+
+.pause--title .pause__can {
+    display: none;
+}
+
+.pause__can-rows {
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.verb-row {
+    flex-direction: row;
+    align-items: center;
+    margin: 0 20px 8px 0;
+}
+
+.verb-row__word {
+    font-size: 18px;
+    color: var(--moon-text);
+}
+
 .pause__question {
     font-size: 23px;
     margin-top: 6px;
@@ -1128,7 +1250,7 @@ Label {
 }
 
 .pause__aside {
-    font-size: 16px;
+    font-size: 18px;
     color: var(--moon-text-dim);
     margin-top: 4px;
     margin-bottom: 14px;
@@ -1186,7 +1308,7 @@ Label {
 }
 
 .section-label {
-    font-size: 14px;
+    font-size: 18px;
     letter-spacing: 2px;
     color: var(--moon-warm-lamp);
     margin-top: 16px;
@@ -1201,7 +1323,7 @@ Label {
 .setting-row {
     flex-direction: row;
     align-items: center;
-    height: 46px;
+    height: 40px;
     padding-left: 4px;
 }
 
@@ -1218,7 +1340,7 @@ Label {
 
 .setting-row__value {
     width: 52px;
-    font-size: 16px;
+    font-size: 18px;
     color: var(--moon-text-faint);
     -unity-text-align: middle-right;
 }
@@ -1280,7 +1402,7 @@ Label {
     position: absolute;
     left: 0;
     right: 0;
-    bottom: 12%;
+    bottom: 0;
     flex-direction: row;
     justify-content: center;
 }
@@ -1297,14 +1419,14 @@ Label {
 
 .recovery-board {
     position: absolute;
-    left: 5%;
+    left: 0;
     top: 24%;
     width: 30%;
 }
 
 .recovery-board__title {
     margin-bottom: 12px;
-    font-size: 15px;
+    font-size: 18px;
     letter-spacing: 4px;
     color: var(--moon-text);
     text-shadow: 0 2px 12px var(--moon-shadow);
@@ -1318,7 +1440,7 @@ Label {
 }
 
 .recovery-board__target {
-    font-size: 20px;
+    font-size: 22px;
     color: var(--moon-cream);
     text-shadow: 0 2px 12px var(--moon-shadow);
 }
@@ -1343,7 +1465,7 @@ Label {
 .recovery-board__known {
     margin-top: 18px;
     margin-bottom: 4px;
-    font-size: 15px;
+    font-size: 18px;
     letter-spacing: 4px;
     color: var(--moon-text);
     text-shadow: 0 2px 12px var(--moon-shadow);
@@ -1356,7 +1478,7 @@ Label {
 
 .recovery-board__node {
     margin-right: 14px;
-    font-size: 18px;
+    font-size: 22px;
     color: var(--moon-cream);
     text-shadow: 0 2px 12px var(--moon-shadow);
 }

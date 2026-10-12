@@ -379,10 +379,6 @@
             "text": "Level {0} of {1}"
         },
         {
-            "key": "ui.tower.hold",
-            "text": "Hold"
-        },
-        {
             "key": "ui.tower.purchased",
             "text": "The signal grows"
         },
@@ -1369,6 +1365,14 @@
         {
             "key": "ticker.tether.back",
             "text": "07 can hold things again."
+        },
+        {
+            "key": "ui.pause.can",
+            "text": "07 can"
+        },
+        {
+            "key": "ui.settings.text_size",
+            "text": "Text size"
         }
     ]
 }

@@ -18,7 +18,8 @@ namespace MoonProject.UI
             LabHud = Require<VisualElement>("lab-hud");
 
             NextLine = Require<VisualElement>("next-line");
-            BatteryArc = Require<VisualElement>("battery-arc");
+            CellRow = Require<VisualElement>("cell-row");
+            CellRowPlate = Require<VisualElement>("cell-row-plate");
             NextLineShadow = Require<VisualElement>("next-line-shadow");
             NextLineText = Require<Label>("next-line-text");
             PlaceCard = Require<VisualElement>("place-card");
@@ -128,6 +129,8 @@ namespace MoonProject.UI
             PauseMain = Require<VisualElement>("pause-main");
             PauseMainShadow = Require<VisualElement>("pause-main-shadow");
             PauseMaterials = Require<VisualElement>("pause-materials");
+            PauseCan = Require<VisualElement>("pause-can");
+            PauseCanRows = Require<VisualElement>("pause-can-rows");
             PauseCassettes = Require<VisualElement>("pause-cassettes");
             PauseCassetteIcon = Require<VisualElement>("pause-cassette-icon");
             PauseCassettesCount = Require<Label>("pause-cassettes-count");
@@ -162,6 +165,7 @@ namespace MoonProject.UI
             GentleCameraToggle = Require<Toggle>("toggle-gentle-camera");
             GuidanceToggle = Require<Toggle>("toggle-guidance");
             LanguageButton = Require<Button>("button-language");
+            TextSizeButton = Require<Button>("button-text-size");
             SettingsBackButton = Require<Button>("button-settings-back");
         }
 
@@ -180,8 +184,11 @@ namespace MoonProject.UI
 
         public VisualElement NextLine { get; }
 
-        /// <summary>The battery's segmented arc, high and centred above the "next" line (docs/features/M3-20).</summary>
-        public VisualElement BatteryArc { get; }
+        /// <summary>07's cells, a row of pills at the top left (docs/design/first-hour-v2 6.4).</summary>
+        public VisualElement CellRow { get; }
+
+        /// <summary>The row's glass plate: the pills are built into it, and it dims while the beam works.</summary>
+        public VisualElement CellRowPlate { get; }
 
         public VisualElement NextLineShadow { get; }
 
@@ -373,6 +380,11 @@ namespace MoonProject.UI
 
         public VisualElement PauseMaterials { get; }
 
+        /// <summary>"07 can": the verbs learned so far, on the pause page (docs/design/first-hour-v2 6.5).</summary>
+        public VisualElement PauseCan { get; }
+
+        public VisualElement PauseCanRows { get; }
+
         public VisualElement PauseCassettes { get; }
 
         public VisualElement PauseCassetteIcon { get; }
@@ -446,6 +458,9 @@ namespace MoonProject.UI
         public Button LanguageButton { get; }
 
         public Button SettingsBackButton { get; }
+
+        /// <summary>Cycles the text size: 100, 125, 150%.</summary>
+        public Button TextSizeButton { get; }
 
         private T Require<T>(string name) where T : VisualElement
         {

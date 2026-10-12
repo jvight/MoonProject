@@ -39,8 +39,10 @@ namespace MoonProject.UI
         /// The insets of a frame no wider than <paramref name="maxAspect"/> (width / height) in a panel of this size,
         /// pulled in further where the device's safe area is. <paramref name="deviceSafe"/> is the safe area as shares
         /// of the screen (x, y, width, height, from the bottom left, like <see cref="Screen.safeArea"/> / the screen).
+        /// <paramref name="margin"/> is then kept clear on every side.
         /// </summary>
-        internal static FrameInsets Compute(float width, float height, float maxAspect, Rect deviceSafe)
+        internal static FrameInsets Compute(float width, float height, float maxAspect, Rect deviceSafe,
+            float margin)
         {
             if (width <= 0f || height <= 0f)
             {
@@ -48,10 +50,10 @@ namespace MoonProject.UI
             }
 
             float side = Mathf.Max(0f, (width - height * maxAspect) * 0.5f);
-            float left = Mathf.Max(side, deviceSafe.xMin * width);
-            float right = Mathf.Max(side, (1f - deviceSafe.xMax) * width);
-            float bottom = deviceSafe.yMin * height;
-            float top = (1f - deviceSafe.yMax) * height;
+            float left = Mathf.Max(side, deviceSafe.xMin * width) + margin;
+            float right = Mathf.Max(side, (1f - deviceSafe.xMax) * width) + margin;
+            float bottom = deviceSafe.yMin * height + margin;
+            float top = (1f - deviceSafe.yMax) * height + margin;
             return new FrameInsets(left, top, right, bottom);
         }
 
@@ -70,9 +72,9 @@ namespace MoonProject.UI
 
             _written = size;
             Rect device = DeviceSafeShare();
-            Place(_hudFrame, Compute(size.x, size.y, _settings.HudAspect, device));
-            Place(_labHud, Compute(size.x, size.y, _settings.HudAspect, device));
-            Place(_menuFrame, Compute(size.x, size.y, _settings.MenuAspect, device));
+            Place(_hudFrame, Compute(size.x, size.y, _settings.HudAspect, device, _settings.EdgeMargin));
+            Place(_labHud, Compute(size.x, size.y, _settings.HudAspect, device, _settings.EdgeMargin));
+            Place(_menuFrame, Compute(size.x, size.y, _settings.MenuAspect, device, _settings.EdgeMargin));
         }
 
         private static Rect DeviceSafeShare()

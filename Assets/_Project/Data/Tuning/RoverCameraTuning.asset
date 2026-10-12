@@ -382,6 +382,8 @@ MonoBehaviour:
   _eveningHoldSeconds: 11
   _eveningFillHoldMax: 16
   _positionDamping: {x: 1.1, y: 0.9, z: 1.3}
+  _freeLookDampingShare: 0.15
+  _freeLookDampingHalfLife: 0.4
   _aimDamping: {x: 0.6, y: 0.5}
   _screenPosition: {x: 0, y: 0.1}
   _cameraRadius: 0.45

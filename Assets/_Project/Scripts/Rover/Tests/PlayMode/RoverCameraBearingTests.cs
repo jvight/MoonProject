@@ -111,6 +111,7 @@ namespace MoonProject.Rover.PlayModeTests
             Assert.GreaterOrEqual(Mathf.Abs(turned), Turn, "07 made its turn.");
             Assert.AreEqual(0f, strongestPull, "No recentering while the view is fresh from the player's hand.");
             Assert.Less(worstBearing, 2f, "07 turned under the view: its bearing held.");
+            Assert.Less(worstView, 5f, "The rendered view keeps its heading too: 07 stays put on screen.");
         }
     }
 }

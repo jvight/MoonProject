@@ -197,11 +197,11 @@ namespace MoonProject.UI.PlayModeTests
 
         public float Drums01 => 0f;
 
-        public bool IsCharging => false;
+        public bool IsCharging { get; set; }
 
         public ChargerKind Charger => ChargerKind.Dock;
 
-        /// <summary>The beam is at work (the battery arc hides).</summary>
+        /// <summary>The beam is at work (the cell row dims).</summary>
         public bool Working { get; set; }
 
         public void Initialize(GameContext context)

@@ -64,6 +64,7 @@ namespace MoonProject.UI
         private bool _pointerPressed;
         private float _resumeScale = 1f;
         private float _writtenShift = float.NaN;
+        private float _writtenTop = float.NaN;
         private Leaving _leaving;
         private float _untouched;
         private bool _resting;
@@ -281,6 +282,7 @@ namespace MoonProject.UI
             _titleScreen.Tick(unscaledDeltaTime);
             _curtain.Tick(unscaledDeltaTime);
             ShiftForSettings();
+            CenterSettings();
             if (_leaving != Leaving.None && _curtain.IsShown)
             {
                 Go();
@@ -334,6 +336,7 @@ namespace MoonProject.UI
             _layout.QuitConfirmButton.clicked += OnQuitConfirmed;
             _layout.SettingsBackButton.clicked += OnSettingsBackClicked;
             _layout.LanguageButton.clicked += OnLanguageClicked;
+            _layout.TextSizeButton.clicked += OnTextSizeClicked;
             _layout.Pause.RegisterCallback<FocusInEvent>(OnFocusIn);
             _layout.Pause.RegisterCallback<PointerDownEvent>(OnPointerDown, TrickleDown.TrickleDown);
 
@@ -408,7 +411,13 @@ namespace MoonProject.UI
             _layout.InvertToggle.SetValueWithoutNotify(_player.InvertY);
             _layout.GentleCameraToggle.SetValueWithoutNotify(_player.GentleCamera);
             _layout.GuidanceToggle.SetValueWithoutNotify(_player.Guidance);
+            _layout.TextSizeButton.text = _player.TextSizeLabel;
             _settingsPanel.Show();
+            if (_pages.IsTitle)
+            {
+                _titleScreen.Hide();
+            }
+
             _pendingFocus = _layout.MasterSlider;
         }
 
@@ -416,6 +425,11 @@ namespace MoonProject.UI
         {
             SaveIfChanged();
             _settingsPanel.Hide();
+            if (_pages.IsTitle && !_resting)
+            {
+                _titleScreen.Show();
+            }
+
             _pendingFocus = _layout.SettingsButton;
         }
 
@@ -527,6 +541,42 @@ namespace MoonProject.UI
 
             _layout.PauseStack.style.translate = new StyleTranslate(new Translate(shift, 0f));
             _writtenShift = shift;
+        }
+
+        /// <summary>
+        /// The pause menu's settings open level with the menu's middle, so a tall panel (a big text size) grows up and
+        /// down together and stays on the screen. The title's settings are anchored to the menu's foot by the style
+        /// sheet instead.
+        /// </summary>
+        private void CenterSettings()
+        {
+            float top = float.NaN;
+            if (!_pages.IsTitle)
+            {
+                float menu = _layout.PauseMain.resolvedStyle.height;
+                float panel = _layout.PauseSettings.resolvedStyle.height;
+                if (!float.IsNaN(menu) && !float.IsNaN(panel))
+                {
+                    top = 0.5f * (menu - panel);
+                }
+            }
+
+            if (float.IsNaN(top))
+            {
+                if (!float.IsNaN(_writtenTop))
+                {
+                    _layout.PauseSettings.style.top = StyleKeyword.Null;
+                    _writtenTop = float.NaN;
+                }
+
+                return;
+            }
+
+            if (float.IsNaN(_writtenTop) || Mathf.Abs(top - _writtenTop) >= MoveEpsilon)
+            {
+                _layout.PauseSettings.style.top = top;
+                _writtenTop = top;
+            }
         }
 
         /// <summary>
@@ -704,6 +754,16 @@ namespace MoonProject.UI
             if (IsOpen && _settingsPanel.Target)
             {
                 _player.NextLanguage();
+                Cue(UiCueKind.Confirm);
+            }
+        }
+
+        private void OnTextSizeClicked()
+        {
+            if (IsOpen && _settingsPanel.Target)
+            {
+                _player.NextTextSize();
+                _layout.TextSizeButton.text = _player.TextSizeLabel;
                 Cue(UiCueKind.Confirm);
             }
         }

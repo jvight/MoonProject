@@ -6,7 +6,8 @@ namespace MoonProject.UI
     /// <summary>
     /// How far the UI spreads on a wide screen (docs/features/M3-24 part A). The panel scales by the screen's height,
     /// so on a screen wider than these shapes the extra width is left to the world and the UI stays in a centred
-    /// frame of this shape, where it keeps its place against the scene the title and the HUD were composed over.
+    /// frame of this shape, where it keeps its place against the scene the title and the HUD were composed over. The
+    /// frames also keep an edge margin clear (docs/design/first-hour-v2 6.3).
     /// </summary>
     [Serializable]
     public sealed class SafeFrameSettings
@@ -21,6 +22,13 @@ namespace MoonProject.UI
         [Range(1.5f, 3.6f)]
         [SerializeField] private float _menuAspect = 1.7778f;
 
+        [Tooltip("Margin kept clear on every side at the 1080p reference (the panel scales by height), so no block " +
+                 "sits against the screen's edge: the HUD's zones start inside it.")]
+        [Range(0f, 120f)]
+        [SerializeField] private float _edgeMargin = 48f;
+
+        public float EdgeMargin => _edgeMargin;
+
         public float HudAspect => _hudAspect;
 
         public float MenuAspect => _menuAspect;
@@ -28,7 +36,8 @@ namespace MoonProject.UI
         /// <summary>Null when usable, else the first problem.</summary>
         public string Validate()
         {
-            return _hudAspect < 1f || _menuAspect < 1f ? "a safe frame's aspect is below 1:1" : null;
+            return _hudAspect < 1f || _menuAspect < 1f ? "a safe frame's aspect is below 1:1"
+                : _edgeMargin < 0f ? "the safe frame's edge margin is negative" : null;
         }
     }
 }
