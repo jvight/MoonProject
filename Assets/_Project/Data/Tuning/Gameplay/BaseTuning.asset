@@ -51,11 +51,11 @@ MonoBehaviour:
   _wallDropSeconds: 0.25
   _wallSink: 0.42
   _fullSweepSeconds: 0.7
-  _stripLit: 1.6
+  _stripLit: 2.4
   _stripUnlit: 0.12
   _stripEase: 0.15
-  _stripCharging: {r: 0.45, g: 1, b: 1.15, a: 1}
-  _stripFull: {r: 1.35, g: 0.92, b: 0.4, a: 1}
+  _stripCharging: {r: 0.12, g: 1.6, b: 14, a: 1}
+  _stripFull: {r: 1, g: 0.95, b: 0.8, a: 1}
   _rimChaseSeconds: 0.6
   _rimGlow: 1.4
   _saveBlinkSeconds: 0.6

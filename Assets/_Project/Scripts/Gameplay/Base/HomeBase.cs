@@ -53,7 +53,7 @@ namespace MoonProject.Gameplay
         [Tooltip("The dock lock's walls DockWall_0..3 (front, right, back, left), children of DockGlow.")]
         [SerializeField] private Transform[] _dockWalls = Array.Empty<Transform>();
 
-        [Tooltip("Each dock wall's Strip renderer, in the same order.")]
+        [Tooltip("The walls' lamp band segments Strip_0..2, wall by wall in the same order (12).")]
         [SerializeField] private Renderer[] _dockStrips = Array.Empty<Renderer>();
 
         [Tooltip("The dock's rim lamp rings DockRim_0..2 (outer to inner).")]
@@ -164,10 +164,10 @@ namespace MoonProject.Gameplay
                 : _windows == null ? "the lander windows are not assigned."
                 : _slots.Length == 0 ? "the keepsake shelf has no cubbies."
                 : _dockAnchor == null || _dockGlow == null ? "the lander's DockAnchor or DockGlow is not assigned."
-                : _dockWalls.Length != DockLock.Walls || _dockStrips.Length != DockLock.Walls ||
+                : _dockWalls.Length != DockLock.Walls || _dockStrips.Length != DockLock.Segments ||
                   _dockRims.Length != DockLock.RimRings || Array.IndexOf(_dockWalls, null) >= 0 ||
                   Array.IndexOf(_dockStrips, null) >= 0 || Array.IndexOf(_dockRims, null) >= 0
-                    ? "the dock lock's DockWall_0..3 with their Strips and DockRim_0..2 are not all assigned."
+                    ? "the dock lock's DockWall_0..3 with their Strip_0..2 and DockRim_0..2 are not all assigned."
                 : null;
             if (problem != null)
             {

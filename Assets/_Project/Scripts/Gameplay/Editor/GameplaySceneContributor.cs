@@ -443,10 +443,15 @@ namespace MoonProject.Gameplay.Editor
         private static void WireDockLock(HomeBase home, Transform dockGlow)
         {
             Transform[] walls = Children(dockGlow, BaseModelBuilder.DockWallPrefix, DockLock.Walls);
-            var strips = new Renderer[walls.Length];
+            var strips = new Renderer[DockLock.Segments];
             for (int i = 0; i < walls.Length; i++)
             {
-                strips[i] = Renderer(Child(walls[i], BaseModelBuilder.DockWallStripName));
+                Transform[] segments = Children(walls[i], BaseModelBuilder.DockWallStripPrefix,
+                    DockLock.SegmentsPerWall);
+                for (int s = 0; s < segments.Length; s++)
+                {
+                    strips[i * DockLock.SegmentsPerWall + s] = Renderer(segments[s]);
+                }
             }
 
             Transform[] rimNodes = Children(dockGlow, BaseModelBuilder.DockRimPrefix, DockLock.RimRings);

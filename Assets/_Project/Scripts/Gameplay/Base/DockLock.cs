@@ -27,6 +27,12 @@ namespace MoonProject.Gameplay
         /// <summary>Rings of rim lamps, outer to inner.</summary>
         public const int RimRings = 3;
 
+        /// <summary>Segments of each wall's lamp band: twelve round the ring, an equal block per cell.</summary>
+        public const int SegmentsPerWall = 3;
+
+        /// <summary>Segments round the whole ring.</summary>
+        public const int Segments = Walls * SegmentsPerWall;
+
         private enum Stage
         {
             Open,
@@ -47,6 +53,7 @@ namespace MoonProject.Gameplay
         private float _chase;
         private float _arrival;
         private int _litCells;
+        private int _cells = 1;
         private bool _wasDocked;
         private bool _rolledOn;
         private bool _bootRest = true;
@@ -76,6 +83,15 @@ namespace MoonProject.Gameplay
         public float StripFill(int wall)
         {
             return _strips[wall];
+        }
+
+        /// <summary>
+        /// True when band segment <paramref name="segment"/> (wall by wall round the ring) is lit: each whole charged
+        /// cell lights its equal block of segments.
+        /// </summary>
+        public bool SegmentLit(int segment)
+        {
+            return segment < _litCells * Segments / Mathf.Max(1, _cells);
         }
 
         /// <summary>Rim ring <paramref name="ring"/>'s share of the roll-on chase, 0..1.</summary>
@@ -253,6 +269,7 @@ namespace MoonProject.Gameplay
         /// <summary>Each whole cell lights its share of the strips, wall by wall round the pad.</summary>
         private void FillStrips(int lit, int cells)
         {
+            _cells = Mathf.Max(1, cells);
             float perWall = Mathf.Max(1, cells) / (float)Walls;
             for (int wall = 0; wall < Walls; wall++)
             {

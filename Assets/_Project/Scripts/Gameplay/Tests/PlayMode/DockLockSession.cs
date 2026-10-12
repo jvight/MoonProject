@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.IO;
 using NUnit.Framework;
 using UnityEngine;
-using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using MoonProject.App;
@@ -34,11 +33,11 @@ namespace MoonProject.Gameplay.PlayModeTests
         private const float WakeTimeout = 20f;
         private const float PhaseTimeout = 20f;
 
+        /// <summary>The walls clear 07's wheels by at least this much (m) on every side.</summary>
+        private const float WheelClearance = 0.1f;
+
         /// <summary>07 steps this far (m) off its dock, then back onto it.</summary>
         private const float StepOff = 5f;
-
-        /// <summary>The review camera stands this far (m) out from the dock, aside and up, looking at it.</summary>
-        private static readonly Vector3 ViewOffset = new Vector3(3.2f, 2.4f, -3.6f);
 
         // The tower at its first level (home powered) and 07's battery at half a cell of four, in Core's envelope
         // and Gameplay's upgrades and battery section formats (version 1 each).
@@ -89,19 +88,76 @@ namespace MoonProject.Gameplay.PlayModeTests
             _beats.Clear();
             placement.PlaceAt(dock.Position, dock.Rotation);
             yield return Until(() => lockState.Locked, "07 rests on the dock and the walls lock round it");
+            AssertWallsClearTheWheels(dock);
             Assert.AreEqual(FeelPhase.Impact, Last(FeelPhase.Impact).Phase, "the clamp");
             Assert.Greater(Last(FeelPhase.Impact).Strength, 0.6f, "07 arrived low on charge");
             var battery = _context.Get<IRoverBattery>();
             yield return Until(() => battery.Charge >= 2f, "two cells charged");
-            Review(dock, "dock-lock-mid-fill");
+            Chase("dock-lock-mid-fill");
             Assert.AreEqual(1f, lockState.StripFill(0), "the first wall's strip is lit");
             Assert.AreEqual(0f, lockState.StripFill(3), "the last one is not yet");
 
             yield return Until(() => lockState.Sweep >= 0.6f, "full: the strips sweep to gold");
-            Review(dock, "dock-lock-full-sweep");
+            Chase("dock-lock-full-sweep");
             Assert.IsTrue(_beats.Exists(beat => beat.Phase == FeelPhase.Reward), "the full Reward");
             yield return Until(() => !lockState.Raised, "then the walls lower");
             Assert.IsTrue(_beats.Exists(beat => beat.Phase == FeelPhase.Act), "an Act per cell on the way");
+        }
+
+        /// <summary>
+        /// The raised walls' inner box (dock space, from their meshes) holds 07's wheels (from the 07 mesh's Wheel_
+        /// nodes, as docked) with <see cref="WheelClearance"/> to spare on every side.
+        /// </summary>
+        private void AssertWallsClearTheWheels(ChargingDock dock)
+        {
+            Matrix4x4 toDock = Matrix4x4.TRS(dock.Position, dock.Rotation, Vector3.one).inverse;
+            var wheels = new Bounds();
+            bool any = false;
+            foreach (MeshFilter filter in ((Component)_context.Get<IRoverRig>()).GetComponentsInChildren<MeshFilter>())
+            {
+                if (filter.name.StartsWith("Wheel_", StringComparison.Ordinal) && filter.sharedMesh != null)
+                {
+                    Bounds box = InDock(filter, toDock);
+                    if (any)
+                    {
+                        wheels.Encapsulate(box);
+                    }
+                    else
+                    {
+                        wheels = box;
+                        any = true;
+                    }
+                }
+            }
+
+            Assert.IsTrue(any, "07's wheels are found");
+            Bounds front = InDock(dock.Wall(0).GetComponent<MeshFilter>(), toDock);
+            Bounds right = InDock(dock.Wall(1).GetComponent<MeshFilter>(), toDock);
+            Bounds back = InDock(dock.Wall(2).GetComponent<MeshFilter>(), toDock);
+            Bounds left = InDock(dock.Wall(3).GetComponent<MeshFilter>(), toDock);
+            string fit = $"wheels {wheels.min:F2}..{wheels.max:F2}, walls x {left.max.x:F2}..{right.min.x:F2} " +
+                         $"z {back.max.z:F2}..{front.min.z:F2}";
+            Assert.LessOrEqual(wheels.max.x + WheelClearance, right.min.x, "the right wall clears 07: " + fit);
+            Assert.GreaterOrEqual(wheels.min.x - WheelClearance, left.max.x, "the left wall clears 07: " + fit);
+            Assert.LessOrEqual(wheels.max.z + WheelClearance, front.min.z, "the front wall clears 07: " + fit);
+            Assert.GreaterOrEqual(wheels.min.z - WheelClearance, back.max.z, "the back wall clears 07: " + fit);
+        }
+
+        /// <summary>A mesh's bounds, corner by corner, in the dock's space.</summary>
+        private static Bounds InDock(MeshFilter filter, Matrix4x4 toDock)
+        {
+            Bounds local = filter.sharedMesh.bounds;
+            var box = new Bounds(toDock.MultiplyPoint3x4(filter.transform.TransformPoint(local.min)), Vector3.zero);
+            for (int corner = 0; corner < 8; corner++)
+            {
+                var point = new Vector3(
+                    (corner & 1) == 0 ? local.min.x : local.max.x,
+                    (corner & 2) == 0 ? local.min.y : local.max.y,
+                    (corner & 4) == 0 ? local.min.z : local.max.z);
+                box.Encapsulate(toDock.MultiplyPoint3x4(filter.transform.TransformPoint(point)));
+            }
+
+            return box;
         }
 
         private FeelBeat Last(FeelPhase phase)
@@ -155,30 +211,11 @@ namespace MoonProject.Gameplay.PlayModeTests
             }
         }
 
-        /// <summary>Renders the dock from a review camera with the game camera's lens and post-processing.</summary>
-        private void Review(ChargingDock dock, string name)
+        /// <summary>Captures what the game's chase camera sees now.</summary>
+        private void Chase(string name)
         {
-            Camera view = _context.Get<IViewCamera>().Camera;
-            var host = new GameObject("DockLockReviewCamera");
-            try
-            {
-                var camera = host.AddComponent<Camera>();
-                camera.CopyFrom(view);
-                camera.enabled = false;
-                UniversalAdditionalCameraData source = view.GetUniversalAdditionalCameraData();
-                UniversalAdditionalCameraData target = camera.GetUniversalAdditionalCameraData();
-                target.renderPostProcessing = source.renderPostProcessing;
-                target.antialiasing = source.antialiasing;
-                target.renderShadows = source.renderShadows;
-                Vector3 eye = dock.Position + dock.Rotation * ViewOffset;
-                host.transform.SetPositionAndRotation(eye, Quaternion.LookRotation(dock.Position - eye));
-                FrameCapture.SavePng(camera, CaptureWidth, CaptureHeight,
-                    Path.Combine(GameplayFixture.CaptureFolder, name + ".png"));
-            }
-            finally
-            {
-                Object.Destroy(host);
-            }
+            FrameCapture.SavePng(_context.Get<IViewCamera>().Camera, CaptureWidth, CaptureHeight,
+                Path.Combine(GameplayFixture.CaptureFolder, name + ".png"));
         }
     }
 }

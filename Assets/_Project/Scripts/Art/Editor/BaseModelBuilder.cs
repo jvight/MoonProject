@@ -438,8 +438,8 @@ namespace MoonProject.Art.Editor
         /// <summary>The lock's walls under DockGlow: DockWall_0..3 (front, right, back, left), each with a Strip.</summary>
         public const string DockWallPrefix = "DockWall_";
 
-        /// <summary>A dock wall's lamp strip along its top (a dark glow renderer the dock lights per cell).</summary>
-        public const string DockWallStripName = "Strip";
+        /// <summary>A dock wall's lamp band segments along its cap, Strip_0..2 (dark glow renderers lit per cell).</summary>
+        public const string DockWallStripPrefix = "Strip_";
 
         /// <summary>The rim lamp rings under DockGlow, DockRim_0 (outer) .. DockRim_2 (inner).</summary>
         public const string DockRimPrefix = "DockRim_";
@@ -458,9 +458,13 @@ namespace MoonProject.Art.Editor
                 ModelNode wall = dockGlow.Add(new ModelNode(DockWallPrefix + index,
                     ChargingDockMeshes.WallPosition(i), ChargingDockMeshes.WallRotation(i),
                     new ModelMesh(LanderName + "_" + DockWallPrefix + index, ChargingDockMeshes.Wall(i))));
-                wall.Add(new ModelNode(DockWallStripName, Vector3.zero, Quaternion.identity,
-                    new ModelMesh(LanderName + "_DockWallStrip_" + index, ChargingDockMeshes.WallStrip(i)),
-                    ModelMaterial.PaletteGlowOff));
+                for (int s = 0; s < ChargingDockMeshes.StripSegments; s++)
+                {
+                    string segment = s.ToString(CultureInfo.InvariantCulture);
+                    wall.Add(new ModelNode(DockWallStripPrefix + segment, Vector3.zero, Quaternion.identity,
+                        new ModelMesh(LanderName + "_DockWallStrip_" + index + "_" + segment,
+                            ChargingDockMeshes.WallStrip(i, s)), ModelMaterial.PaletteGlowOff));
+                }
             }
 
             for (int ring = 0; ring < ChargingDockMeshes.RimRings; ring++)

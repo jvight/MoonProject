@@ -142,7 +142,7 @@ namespace MoonProject.Gameplay
         [Range(0.1f, 2f)] [SerializeField] private float _fullSweepSeconds = 0.7f;
 
         [Tooltip("Glow of a wall's strip where its cells are charged.")]
-        [Range(0f, 4f)] [SerializeField] private float _stripLit = 1.6f;
+        [Range(0f, 4f)] [SerializeField] private float _stripLit = 2.4f;
 
         [Tooltip("Glow of a raised wall's strip where its cells are not charged yet.")]
         [Range(0f, 1f)] [SerializeField] private float _stripUnlit = 0.12f;
@@ -150,11 +150,11 @@ namespace MoonProject.Gameplay
         [Tooltip("Seconds (time constant) for a strip's glow to follow its cells.")]
         [Range(0f, 1f)] [SerializeField] private float _stripEase = 0.15f;
 
-        [Tooltip("The strips' charging tint (a linear multiplier of the lamp glass's emission).")]
-        [SerializeField] private Color _stripCharging = new Color(0.45f, 1f, 1.15f, 1f);
+        [Tooltip("The strips' charging tint (a linear multiplier of the lamp glass's warm emission: blue needs a large gain).")]
+        [SerializeField] private Color _stripCharging = new Color(0.12f, 1.6f, 14f, 1f);
 
-        [Tooltip("The strips' full tint, warm gold (a linear multiplier of the lamp glass's emission).")]
-        [SerializeField] private Color _stripFull = new Color(1.35f, 0.92f, 0.4f, 1f);
+        [Tooltip("The strips' full tint, warm gold (a linear multiplier of the lamp glass's warm emission: blue needs a large gain).")]
+        [SerializeField] private Color _stripFull = new Color(1f, 0.95f, 0.8f, 1f);
 
         [Tooltip("Seconds for the rim lamps' chase to run from the outer ring to the inner one as 07 rolls on.")]
         [Range(0.2f, 2f)] [SerializeField] private float _rimChaseSeconds = 0.6f;

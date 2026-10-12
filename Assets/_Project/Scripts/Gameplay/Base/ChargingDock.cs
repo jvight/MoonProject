@@ -15,6 +15,9 @@ namespace MoonProject.Gameplay
     /// </summary>
     public sealed class ChargingDock : IDisposable
     {
+        /// <summary>Wall index (0 front, 1 right, 2 back, 3 left) whose band lights first.</summary>
+        private const int RingStart = 2;
+
         private readonly Transform _anchor;
         private readonly EmissionGlow _glow;
         private readonly BaseTuning _tuning;
@@ -39,11 +42,11 @@ namespace MoonProject.Gameplay
         public ChargingDock(Transform anchor, Renderer glow, Transform[] walls, Renderer[] strips, Renderer[] rims,
             BaseTuning tuning, EventBus events)
         {
-            if (walls == null || walls.Length != DockLock.Walls || strips == null || strips.Length != DockLock.Walls ||
+            if (walls == null || walls.Length != DockLock.Walls || strips == null || strips.Length != DockLock.Segments ||
                 rims == null || rims.Length != DockLock.RimRings)
             {
-                throw new ArgumentException($"The dock lock needs {DockLock.Walls} walls with their strips and " +
-                                            $"{DockLock.RimRings} rim rings.");
+                throw new ArgumentException($"The dock lock needs {DockLock.Walls} walls, {DockLock.Segments} band " +
+                                            $"segments and {DockLock.RimRings} rim rings.");
             }
 
             _anchor = anchor != null ? anchor : throw new ArgumentNullException(nameof(anchor));
@@ -62,6 +65,10 @@ namespace MoonProject.Gameplay
             for (int i = 0; i < walls.Length; i++)
             {
                 _wallRest[i] = walls[i].localPosition;
+            }
+
+            for (int i = 0; i < strips.Length; i++)
+            {
                 _strips[i] = new EmissionGlow(strips[i]);
             }
 
@@ -76,6 +83,12 @@ namespace MoonProject.Gameplay
 
         /// <summary>The lock (tests and debugging views).</summary>
         public DockLock Lock => _lock;
+
+        /// <summary>Wall <paramref name="index"/> (DockWall_n: front, right, back, left), for tests.</summary>
+        public Transform Wall(int index)
+        {
+            return _walls[index];
+        }
 
         /// <summary>The battery the dock charges: the lock follows its cells. Gameplay connects it once it is up.</summary>
         public void Connect(IRoverBattery battery)
@@ -154,10 +167,17 @@ namespace MoonProject.Gameplay
                 _walls[i].localPosition = _wallRest[i] -
                                           _walls[i].parent.InverseTransformVector(Vector3.up * _tuning.WallSink) *
                                           (1f - height);
-                float target = height <= 0f ? 0f
-                    : Mathf.Lerp(_tuning.StripUnlit, _tuning.StripLit, _lock.StripFill(i));
-                _stripLevels[i] = Damp.Toward(_stripLevels[i], target, _tuning.StripEase, deltaTime);
-                _strips[i].Apply(tint, _stripLevels[i]);
+                for (int s = 0; s < DockLock.SegmentsPerWall; s++)
+                {
+                    // The ring fills from the back wall, the one nearest the chase camera behind 07, round.
+                    int ring = (i + RingStart) % DockLock.Walls * DockLock.SegmentsPerWall + s;
+                    int segment = i * DockLock.SegmentsPerWall + s;
+                    float target = height <= 0f ? 0f
+                        : _lock.SegmentLit(ring) ? _tuning.StripLit
+                        : _tuning.StripUnlit;
+                    _stripLevels[segment] = Damp.Toward(_stripLevels[segment], target, _tuning.StripEase, deltaTime);
+                    _strips[segment].Apply(tint, _stripLevels[segment]);
+                }
             }
 
             for (int ring = 0; ring < _rims.Length; ring++)
