@@ -85,7 +85,7 @@ namespace MoonProject.Rover.Tests
                 rows[tier] = Row(roots[tier], lamps);
             }
 
-            var driver = new ChargeRunLamps(events, _settings, rows, () => 0.45f, null);
+            var driver = new ChargeRunLamps(events, _settings, rows, () => 0.45f, null, null, null);
             Assert.AreEqual(5, driver.Run.Count);
             Assert.IsTrue(roots[0].activeSelf && !roots[1].activeSelf && !roots[2].activeSelf);
             events.Publish(new CutterTierChanged(2, false));
@@ -129,8 +129,8 @@ namespace MoonProject.Rover.Tests
         private static ChargeRunRow Row(GameObject root, Renderer[] lamps)
         {
             var row = new ChargeRunRow();
-            typeof(ChargeRunRow).GetField("_root", System.Reflection.BindingFlags.NonPublic
-                | System.Reflection.BindingFlags.Instance).SetValue(row, root);
+            typeof(ChargeRunRow).GetField("_roots", System.Reflection.BindingFlags.NonPublic
+                | System.Reflection.BindingFlags.Instance).SetValue(row, new[] { root });
             typeof(ChargeRunRow).GetField("_lamps", System.Reflection.BindingFlags.NonPublic
                 | System.Reflection.BindingFlags.Instance).SetValue(row, lamps);
             return row;

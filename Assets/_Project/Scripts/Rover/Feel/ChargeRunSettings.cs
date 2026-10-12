@@ -60,6 +60,10 @@ namespace MoonProject.Rover
         [Range(0.05f, 2f)]
         [SerializeField] private float _fadeSeconds = 0.4f;
 
+        [Tooltip("The cutter tier from which the Focus Lens is fitted on 07's eye.")]
+        [Range(0, 3)]
+        [SerializeField] private int _lensFromTier = 1;
+
         [Header("The bay's test cut after a cutter upgrade")]
         [Tooltip("Seconds after the upgrade before the test cut's charge run starts (the part seats first).")]
         [Range(0f, 5f)]
@@ -76,6 +80,8 @@ namespace MoonProject.Rover
                 ? Color.white
                 : _tierColours[Mathf.Clamp(tier, 0, _tierColours.Length - 1)];
         }
+
+        public int LensFromTier => _lensFromTier;
 
         public float TestCutDelay => _testCutDelay;
 

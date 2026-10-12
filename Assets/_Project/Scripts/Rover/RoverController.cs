@@ -60,6 +60,12 @@ namespace MoonProject.Rover
             + "M3-26 §2); art's model carries them from the cutter-lamps pass on.")]
         [SerializeField] private ChargeRunRow[] _chargeRows = new ChargeRunRow[0];
 
+        [Tooltip("Art's Focus Lens on Neck/Head/Eye/LensSocket, shown from its cutter tier on (M3-26).")]
+        [SerializeField] private GameObject _focusLens;
+
+        [Tooltip("The Focus Lens's Glass child, glowing with the charge run.")]
+        [SerializeField] private Renderer _focusLensGlass;
+
         [Tooltip("RoverModel 'TetherOrigin' (lens centre of 07's eye, +Z = gaze).")]
         [SerializeField] private Transform _tetherOrigin;
 
@@ -347,7 +353,7 @@ namespace MoonProject.Rover
                 if (_chargeRows.Length > 0)
                 {
                     _chargeRun = new ChargeRunLamps(_events, feel.ChargeRun, _chargeRows, CutterChargeSeconds,
-                        _tetherOrigin);
+                        _tetherOrigin, _focusLens, _focusLensGlass);
                 }
             }
 
@@ -381,6 +387,8 @@ namespace MoonProject.Rover
             ok &= Require(_hoverCoils != null, "RoverHoverCoils is not assigned.");
             ok &= Require(_lampMotes != null, "RoverLampMotes is not assigned.");
             ok &= Require(_flankLamps != null, "RoverFlankLamps is not assigned.");
+            ok &= Require(_chargeRows.Length == 0 || (_focusLens != null && _focusLensGlass != null),
+                "The Focus Lens or its Glass is not assigned (art's cutter kit).");
             foreach (ChargeRunRow row in _chargeRows)
             {
                 ok &= Require(row != null && row.IsWired, "A charge-run row has no root or a missing lamp.");

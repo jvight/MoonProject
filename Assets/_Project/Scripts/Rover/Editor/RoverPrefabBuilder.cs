@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEditor;
@@ -43,6 +44,8 @@ namespace MoonProject.Rover.Editor
     /// </summary>
     public static class RoverPrefabBuilder
     {
+        private const string LampPrefix = "ChargeLamp_";
+
         private const int DustMaxParticles = 160;
         private const int LandingMaxParticles = 240;
         private const float DustConeAngle = 30f;
@@ -89,6 +92,7 @@ namespace MoonProject.Rover.Editor
             var deck = BuildWiring.Require<GameObject>(RoverAssetPaths.KitTapeDeck, "the Art box's kit builder");
             var ring = BuildWiring.Require<GameObject>(RoverAssetPaths.KitTetherRing, "the Art box's kit builder");
             var tube = BuildWiring.Require<GameObject>(RoverAssetPaths.BlueprintTube, "the Art box's pickup builder");
+            var focusLens = BuildWiring.Require<GameObject>(RoverAssetPaths.FocusLens, "the Art box's rover builder");
             var parts = new GameObject[RoverAssetPaths.StoryParts.Length];
             for (int i = 0; i < parts.Length; i++)
             {
@@ -167,6 +171,9 @@ namespace MoonProject.Rover.Editor
                 ("_tetherOrigin", BuildWiring.Node(m, RoverModelNodes.TetherOrigin)),
                 ("_cargoSocket", BuildWiring.Node(m, RoverModelNodes.CargoSocket)));
             AssignChargeRows(controller, m);
+            Transform lens = Mount(scratch, focusLens, BuildWiring.Node(m, RoverModelNodes.LensSocket));
+            BuildWiring.Assign(controller, ("_focusLens", lens.gameObject),
+                ("_focusLensGlass", BuildWiring.NodeComponent<Renderer>(lens, "Glass")));
 
             BuildWiring.Assign(bodyLanguage,
                 ("_tuning", characterTuning),
@@ -342,9 +349,9 @@ namespace MoonProject.Rover.Editor
         }
 
         /// <summary>
-        /// The charge run's rows (M3-26 §2): RoverModel's ChargeRun_0, ChargeRun_1, ... nodes as far as they run, each
-        /// with the renderers on its ChargeLamp_0, ChargeLamp_1, ... nodes in order from the battery. The model carries
-        /// none until art's cutter-lamps pass.
+        /// The charge run's rows (M3-26 §2). A tier's lamps ride the parts they sit on, so its row is every node named
+        /// ChargeRun_{tier} (under the body, the neck, the head and the eye) and their ChargeLamp_{i} children ordered
+        /// by index; a gap in the numbering is a broken contract. Rows run from tier 0 as far as art has built them.
         /// </summary>
         private static void AssignChargeRows(RoverController controller, Transform model)
         {
@@ -354,29 +361,55 @@ namespace MoonProject.Rover.Editor
             rows.arraySize = 0;
             for (int tier = 0; ; tier++)
             {
-                Transform row = Find(nodes, ChargeRunLamps.RowName(tier));
-                if (row == null)
+                string rowName = ChargeRunLamps.RowName(tier);
+                var roots = new List<Transform>();
+                foreach (Transform node in nodes)
+                {
+                    if (node.name == rowName)
+                    {
+                        roots.Add(node);
+                    }
+                }
+
+                if (roots.Count == 0)
                 {
                     break;
                 }
 
-                Transform[] lampNodes = row.GetComponentsInChildren<Transform>(true);
+                var lamps = new SortedDictionary<int, Renderer>();
+                foreach (Transform root in roots)
+                {
+                    foreach (Transform child in root)
+                    {
+                        if (child.name.StartsWith(LampPrefix, System.StringComparison.Ordinal)
+                            && int.TryParse(child.name.Substring(LampPrefix.Length), out int index))
+                        {
+                            lamps[index] = child.GetComponent<Renderer>();
+                        }
+                    }
+                }
+
                 rows.arraySize = tier + 1;
                 SerializedProperty entry = rows.GetArrayElementAtIndex(tier);
-                entry.FindPropertyRelative("_root").objectReferenceValue = row.gameObject;
-                SerializedProperty lamps = entry.FindPropertyRelative("_lamps");
-                lamps.arraySize = 0;
-                for (int i = 0; ; i++)
+                SerializedProperty rootList = entry.FindPropertyRelative("_roots");
+                rootList.arraySize = roots.Count;
+                for (int i = 0; i < roots.Count; i++)
                 {
-                    Transform lamp = Find(lampNodes, ChargeRunLamps.SocketName(i));
-                    Renderer glass = lamp != null ? lamp.GetComponentInChildren<Renderer>(true) : null;
-                    if (glass == null)
+                    rootList.GetArrayElementAtIndex(i).objectReferenceValue = roots[i].gameObject;
+                }
+
+                SerializedProperty lampList = entry.FindPropertyRelative("_lamps");
+                lampList.arraySize = lamps.Count;
+                int expected = 0;
+                foreach (KeyValuePair<int, Renderer> lamp in lamps)
+                {
+                    if (lamp.Key != expected || lamp.Value == null)
                     {
-                        break;
+                        throw new System.InvalidOperationException($"{rowName}: {LampPrefix}{expected} is missing or has no "
+                                                            + "renderer (the charge run's lamp contract, M3-26).");
                     }
 
-                    lamps.arraySize = i + 1;
-                    lamps.GetArrayElementAtIndex(i).objectReferenceValue = glass;
+                    lampList.GetArrayElementAtIndex(expected++).objectReferenceValue = lamp.Value;
                 }
             }
 

@@ -10,9 +10,10 @@ namespace MoonProject.Rover
     /// Anticipate runs them over its Seconds from its Strength (0 fresh, >0 a resume), the first Act ignites them,
     /// each later Act pulses them, Cancel drains them and Impact fades them. The cutter's tier
     /// (<see cref="CutterTierChanged"/>) picks the row shown and its colour; the tier's faster charge arrives as a
-    /// shorter Anticipate. Art's socket contract: RoverModel nodes <c>ChargeRun_{tier}</c>, each holding
-    /// <c>ChargeLamp_0</c> (at the battery) to <c>ChargeLamp_N-1</c> (the emitter ring), each with a renderer whose
-    /// material has an emission colour. Zero allocations per frame.
+    /// shorter Anticipate. Art's contract: each tier's lamps ride the parts they sit on, in RoverModel nodes named
+    /// <c>ChargeRun_{tier}</c> under the body, the neck, the head and the eye, holding <c>ChargeLamp_{i}</c> glow
+    /// renderers numbered from the battery (0) to the emitter rim. The Focus Lens shows from its tier on and its glass
+    /// glows with the run's last lamp. Zero allocations per frame.
     /// </summary>
     public sealed class ChargeRunLamps : IDisposable
     {
@@ -26,6 +27,8 @@ namespace MoonProject.Rover
         private readonly EventBus _events;
         private readonly Func<float> _chargeSeconds;
         private readonly Transform _emitter;
+        private readonly GameObject _lens;
+        private readonly Renderer _lensGlass;
         private readonly TestCut _testCut = new TestCut();
         private ChargeRunRow _row;
         private ChargeRunLights _run;
@@ -46,8 +49,9 @@ namespace MoonProject.Rover
 
         /// <param name="chargeSeconds">The cutter's fresh charge length now (ICutter), for the bay's test cut.</param>
         /// <param name="emitter">07's beam emitter: the test cut's beats happen there.</param>
+        /// <param name="lens">The Focus Lens kit on the eye (tier 1 on); <paramref name="lensGlass"/> glows with the run.</param>
         public ChargeRunLamps(EventBus events, ChargeRunSettings settings, ChargeRunRow[] rows,
-            Func<float> chargeSeconds, Transform emitter)
+            Func<float> chargeSeconds, Transform emitter, GameObject lens, Renderer lensGlass)
         {
             if (rows == null || rows.Length == 0)
             {
@@ -59,6 +63,8 @@ namespace MoonProject.Rover
             _events = events;
             _chargeSeconds = chargeSeconds ?? throw new ArgumentNullException(nameof(chargeSeconds));
             _emitter = emitter;
+            _lens = lens;
+            _lensGlass = lensGlass;
             _beats = events.Subscribe<FeelBeat>(OnBeat);
             _tiers = events.Subscribe<CutterTierChanged>(OnTierChanged);
             ShowTier(0);
@@ -77,6 +83,12 @@ namespace MoonProject.Rover
             {
                 _block.SetColor(EmissionColorId, _colour * _run.Glow(i));
                 lamps[i].SetPropertyBlock(_block);
+            }
+
+            if (_lensGlass != null && _lens.activeSelf)
+            {
+                _block.SetColor(EmissionColorId, _colour * _run.Glow(lamps.Length - 1));
+                _lensGlass.SetPropertyBlock(_block);
             }
         }
 
@@ -126,12 +138,16 @@ namespace MoonProject.Rover
             Tier = Mathf.Clamp(tier, 0, _rows.Length - 1);
             for (int i = 0; i < _rows.Length; i++)
             {
-                _rows[i].Root.SetActive(i == Tier);
+                _rows[i].Show(i == Tier);
             }
 
             _row = _rows[Tier];
             _run = new ChargeRunLights(_settings, _row.Lamps.Length);
             _colour = _settings.TierColour(Tier);
+            if (_lens != null)
+            {
+                _lens.SetActive(Tier >= _settings.LensFromTier);
+            }
             _ignited = false;
         }
 
