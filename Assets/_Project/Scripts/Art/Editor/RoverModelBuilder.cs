@@ -46,23 +46,38 @@ namespace MoonProject.Art.Editor
         public const string HoverCoilsName = "HoverCoils";
 
         /// <summary>
-        /// The cutter's charge run (M3-26 §2.1, docs/features/M3-26-cutter-progression.md): Rover lays the lamp row
-        /// from these prefabs, each a bezel whose <c>Glass</c> child is on the glow-off material, lamp space +Y out of
-        /// the surface. <c>ChargeLamp</c> is the tier-0 conduit lamp; <c>BrowLamp</c> the Focus Lens's cleaner pair,
-        /// for <c>Head/BrowLampSocket_0..1</c> (0 nearer the eye). <c>FocusLens</c> mounts on
-        /// <c>Head/Eye/LensSocket</c> with identity: its frame, and the <c>Glass</c> the run's arrival lights.
+        /// The cutter's charge run (M3-26 §2.1, docs/features/M3-26-cutter-progression.md): one lamp row per tier,
+        /// <c>ChargeRun_&lt;tier&gt;/ChargeLamp_&lt;i&gt;</c>, i counting from the battery (0) to the emitter ring (last).
+        /// A row's lamps ride the part they sit on, so its <c>ChargeRun_&lt;tier&gt;</c> group appears under each part
+        /// it touches (the root, Neck, Neck/Head, Neck/Head/Eye) and the indices run on across them. Each lamp is its
+        /// glass on the glow-off material (drive its _EmissionColor) with a <c>Bezel</c> child. Rows 0 (5 dusty
+        /// conduit lamps: 2 on the deck in front of the solar wing, 2 on the neck's back, 1 on the eye's rim, low and facing out) and
+        /// 1 (the Focus Lens's 7: the same line in clean glass plus 2 on the brow) are built; Rover shows one row.
+        /// <c>FocusLens</c> mounts on <c>Neck/Head/Eye/LensSocket</c> with identity: its frame, and the <c>Glass</c>
+        /// the run's arrival lights.
         /// </summary>
-        public const string ChargeLampName = "ChargeLamp";
+        public const string ChargeRunPrefix = "ChargeRun_";
 
-        public const string BrowLampName = "BrowLamp";
+        public const string ChargeLampPrefix = "ChargeLamp_";
+        public const string ChargeLampBezelName = "Bezel";
         public const string FocusLensName = "FocusLens";
-        public const string ChargeGlassName = "Glass";
-        public const string BrowLampSocketPrefix = "BrowLampSocket_";
+        public const string FocusLensGlassName = "Glass";
         public const string LensSocketName = "LensSocket";
-        public const int BrowLampCount = 2;
 
-        // Where the brow pair sits round the eye's axis: just over the lens, then up on the brow's crown.
-        private static readonly float[] BrowLampDegrees = { 66f, 88f };
+        /// <summary>How many lamps each built row has, by tier.</summary>
+        public static IReadOnlyList<int> ChargeRunLamps => new[] { 5, 7 };
+
+        // The deck's pair on the centreline between the wing's hinge and the neck; the brow's pair round the eye's
+        // axis under the hood's top (the back one first, as the run climbs to the eye); the ring lamp low on the eye's
+        // rim, facing out, inside the eye's own outline.
+        private static readonly Vector3[] DeckLamps =
+        {
+            new Vector3(0f, RoverMeshes.LidTop, 0.11f), new Vector3(0f, RoverMeshes.LidTop, 0.19f),
+        };
+
+        private static readonly float[] BrowLampDegrees = { 69f, 57f };
+        private static readonly Vector3 RingLamp = new Vector3(0f, -0.145f, 0.026f);
+        private static readonly Vector3 RingLampTurn = new Vector3(90f, 0f, 0f);
 
         public static readonly Vector3 CargoPosition = new Vector3(0f, 0.48f, -0.64f);
 
@@ -153,10 +168,6 @@ namespace MoonProject.Art.Editor
                 PaletteAssetBuilder.LoadGlowOffMaterial(), PaletteAssetBuilder.LoadWeatherMaterial());
             ModelPrefabWriter.Write(CreateHoverCoils(), ArtPaths.RoverFolder, material,
                 PaletteAssetBuilder.LoadGlowOffMaterial());
-            ModelPrefabWriter.Write(CreateChargeLamp(false), ArtPaths.RoverFolder, material,
-                PaletteAssetBuilder.LoadGlowOffMaterial());
-            ModelPrefabWriter.Write(CreateChargeLamp(true), ArtPaths.RoverFolder, material,
-                PaletteAssetBuilder.LoadGlowOffMaterial());
             ModelPrefabWriter.Write(CreateFocusLens(), ArtPaths.RoverFolder, material,
                 PaletteAssetBuilder.LoadGlowOffMaterial());
             AssetDatabase.SaveAssets();
@@ -197,12 +208,7 @@ namespace MoonProject.Art.Editor
                 new ModelMesh(ModelName + "_Eye", RoverMeshes.Eye())));
             eye.Add(new ModelNode("TetherOrigin", new Vector3(0f, 0f, RoverMeshes.LensFront)));
             eye.Add(new ModelNode(LensSocketName, new Vector3(0f, 0f, RoverMeshes.LensFront)));
-            for (int i = 0; i < BrowLampCount; i++)
-            {
-                Vector3 point = RoverMeshes.BrowPoint(BrowLampDegrees[i], out Quaternion outward);
-                head.Add(new ModelNode(BrowLampSocketPrefix + i.ToString(CultureInfo.InvariantCulture), point,
-                    outward));
-            }
+            AddChargeRuns(root, neck, head, eye);
 
             head.Add(new ModelNode(RingSocketName, RingSocket, Place.Rotation(new Vector3(0f, 180f, 0f))));
             head.Add(new ModelNode("Eyelid", RoverMeshes.EyeCentre,
@@ -312,24 +318,68 @@ namespace MoonProject.Art.Editor
             return root;
         }
 
-        /// <summary>A charge-run lamp (see <see cref="ChargeLampName"/>): the conduit lamp, or the brow's cleaner one.</summary>
-        public static ModelNode CreateChargeLamp(bool brow)
+        private static void AddChargeRuns(ModelNode root, ModelNode neck, ModelNode head, ModelNode eye)
         {
-            string name = brow ? BrowLampName : ChargeLampName;
-            LowPolyMeshBuilder bezel = brow ? ChargeRunMeshes.BrowBezelMesh() : ChargeRunMeshes.ConduitBezelMesh();
-            LowPolyMeshBuilder glass = brow ? ChargeRunMeshes.BrowGlassMesh() : ChargeRunMeshes.ConduitGlassMesh();
-            var root = new ModelNode(name, Vector3.zero, new ModelMesh(name + "_Bezel", bezel));
-            root.Add(new ModelNode(ChargeGlassName, ChargeRunMeshes.GlassSeat, Quaternion.identity,
-                new ModelMesh(name + "_Glass", glass), ModelMaterial.PaletteGlowOff));
-            return root;
+            for (int tier = 0; tier < ChargeRunLamps.Count; tier++)
+            {
+                bool lens = tier > 0;
+                string prefix = ModelName + "_" + ChargeRunPrefix + tier.ToString(CultureInfo.InvariantCulture);
+                var bezel = new ModelMesh(prefix + "_Bezel",
+                    lens ? ChargeRunMeshes.BrowBezelMesh() : ChargeRunMeshes.ConduitBezelMesh());
+                var glass = new ModelMesh(prefix + "_Glass",
+                    lens ? ChargeRunMeshes.BrowGlassMesh() : ChargeRunMeshes.ConduitGlassMesh());
+                var rows = new Dictionary<ModelNode, ModelNode>();
+                int index = 0;
+                foreach (Vector3 deck in DeckLamps)
+                {
+                    AddChargeLamp(rows, root, tier, index++, deck, Quaternion.identity, bezel, glass);
+                }
+
+                for (int clamp = 0; clamp < 2; clamp++)
+                {
+                    Vector3 back = RoverMeshes.NeckLamp(clamp, out Quaternion outward);
+                    AddChargeLamp(rows, neck, tier, index++, back, outward, bezel, glass);
+                }
+
+                if (lens)
+                {
+                    foreach (float degrees in BrowLampDegrees)
+                    {
+                        Vector3 brow = RoverMeshes.BrowPoint(degrees, out Quaternion outward);
+                        AddChargeLamp(rows, head, tier, index++, brow, outward, bezel, glass);
+                    }
+                }
+
+                AddChargeLamp(rows, eye, tier, index++, RingLamp, Place.Rotation(RingLampTurn), bezel, glass);
+                if (index != ChargeRunLamps[tier])
+                {
+                    throw new InvalidOperationException(
+                        $"Charge run {tier} laid {index} lamps, not {ChargeRunLamps[tier]}.");
+                }
+            }
         }
 
-        /// <summary>The Focus Lens (see <see cref="ChargeLampName"/>), clipped into 07's eye.</summary>
+        private static void AddChargeLamp(Dictionary<ModelNode, ModelNode> rows, ModelNode part, int tier, int index,
+            Vector3 position, Quaternion rotation, ModelMesh bezel, ModelMesh glass)
+        {
+            if (!rows.TryGetValue(part, out ModelNode row))
+            {
+                row = part.Add(new ModelNode(ChargeRunPrefix + tier.ToString(CultureInfo.InvariantCulture),
+                    Vector3.zero));
+                rows.Add(part, row);
+            }
+
+            ModelNode lamp = row.Add(new ModelNode(ChargeLampPrefix + index.ToString(CultureInfo.InvariantCulture),
+                position, rotation, glass, ModelMaterial.PaletteGlowOff));
+            lamp.Add(new ModelNode(ChargeLampBezelName, Vector3.zero, Quaternion.identity, bezel));
+        }
+
+        /// <summary>The Focus Lens (see <see cref="ChargeRunPrefix"/>), clipped into 07's eye.</summary>
         public static ModelNode CreateFocusLens()
         {
             var root = new ModelNode(FocusLensName, Vector3.zero,
                 new ModelMesh(FocusLensName + "_Frame", ChargeRunMeshes.LensFrame()));
-            root.Add(new ModelNode(ChargeGlassName, ChargeRunMeshes.LensSeat, Quaternion.identity,
+            root.Add(new ModelNode(FocusLensGlassName, ChargeRunMeshes.LensSeat, Quaternion.identity,
                 new ModelMesh(FocusLensName + "_Glass", ChargeRunMeshes.LensGlass()), ModelMaterial.PaletteGlowOff));
             return root;
         }

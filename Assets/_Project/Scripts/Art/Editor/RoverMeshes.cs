@@ -275,6 +275,17 @@ namespace MoonProject.Art.Editor
         /// band under a low side light, so the neck's shadow still ties the head's shadow to the body's while the
         /// silhouette keeps its tired desk-lamp posture.
         /// </summary>
+        /// <summary>
+        /// The back of neck clamp <paramref name="index"/> (0 the lower), where a charge-run lamp sits on the
+        /// centreline just behind the fin, and the turn that stands it there (+Y out of the clamp's back), in neck space.
+        /// </summary>
+        public static Vector3 NeckLamp(int index, out Quaternion outward)
+        {
+            outward = Quaternion.Euler(-90f, 0f, 0f);
+            Vector3 onPole = Vector3.Lerp(NeckPoleBase, HeadHinge - NeckPoleTopDrop, NeckClamps[index]);
+            return onPole + new Vector3(0f, 0f, -NeckClampBack);
+        }
+
         public static LowPolyMeshBuilder Neck()
         {
             var b = new LowPolyMeshBuilder(400);
@@ -285,8 +296,8 @@ namespace MoonProject.Art.Editor
                 b.Prism(At(0f, 0.052f + i * 0.024f, 0f), radius - i * 0.002f, 0.024f, 8, PaletteSwatch.Charcoal);
             }
 
-            var poleBase = new Vector3(0f, 0.03f, 0f);
-            Vector3 poleTop = HeadHinge - new Vector3(0f, 0.03f, 0f);
+            Vector3 poleBase = NeckPoleBase;
+            Vector3 poleTop = HeadHinge - NeckPoleTopDrop;
             RecipeKit.Rod(b, poleBase, poleTop, 0.038f, 8, PaletteSwatch.Metal);
             Vector3 lean = poleTop - poleBase;
             float leanDegrees = Mathf.Atan2(lean.z, lean.y) * Mathf.Rad2Deg;
@@ -296,7 +307,7 @@ namespace MoonProject.Art.Editor
             Vector3 into = HeadHinge + new Vector3(0f, 0.04f, -0.12f);
             Cable(b, 0.026f, -0.06f, -0.095f, into + new Vector3(0.026f, 0f, 0f), PaletteSwatch.WarmAccent);
             Cable(b, -0.024f, -0.055f, -0.085f, into + new Vector3(-0.024f, -0.01f, 0.01f), PaletteSwatch.Charcoal);
-            foreach (float t in new[] { 0.38f, 0.7f })
+            foreach (float t in NeckClamps)
             {
                 Vector3 onPole = Vector3.Lerp(poleBase, poleTop, t);
                 b.Box(At(onPole + new Vector3(0f, 0f, -0.038f)), new Vector3(0.11f, 0.022f, 0.1f),
@@ -441,6 +452,12 @@ namespace MoonProject.Art.Editor
             b.Icosphere(Matrix4x4.identity, 0.024f, 1, PaletteSwatch.PilotLight);
             return b;
         }
+
+        // The neck's pole and the two clamps on it; a lamp on a clamp's back clears the fin's trailing edge.
+        private static readonly Vector3 NeckPoleBase = new Vector3(0f, 0.03f, 0f);
+        private static readonly Vector3 NeckPoleTopDrop = new Vector3(0f, 0.03f, 0f);
+        private static readonly float[] NeckClamps = { 0.38f, 0.7f };
+        private const float NeckClampBack = 0.092f;
 
         private const float BrowLowDegrees = 52f;
         private const float BrowHighDegrees = 160f;

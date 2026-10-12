@@ -5,23 +5,33 @@ namespace MoonProject.Art.Editor
 {
     /// <summary>
     /// Home's open supply shelves and the crates on them (M3-25 §3.1, T2, T4), all built for wheels (ruling 12):
-    /// rover-height racks that stand on the belly ring's sockets, one crate per stack in its material's colour so home's
-    /// stash reads from the dock, a warm lamp over each rack; and the crew's sealed supply crate, cut once to open.
+    /// rover-height racks that stand on the belly ring's sockets, slots for stacks of up to three crates, a crate per
+    /// material in its colour so home's stash reads from the dock, a warm lamp over each rack; and the crew's sealed
+    /// supply crate, cut once to open.
     /// Rack space: the origin on the ground at the rack's middle, +Z out of its open front, +Y up.
     /// </summary>
     internal static class SupplyShelfMeshes
     {
-        /// <summary>Crate stacks per rack: <see cref="Columns"/> across, <see cref="Tiers"/> high.</summary>
+        /// <summary>Slots per rack: <see cref="Columns"/> across, <see cref="Tiers"/> boards high.</summary>
         public const int Columns = 4;
 
         public const int Tiers = 3;
 
         public const int Slots = Columns * Tiers;
 
+        /// <summary>How many crates a slot stacks.</summary>
+        public const int StackHeight = 3;
+
         /// <summary>The materials a crate comes in (bundle and crate colours of M3-27); the rest come later.</summary>
         public static readonly string[] CrateMaterials = { "Metal", "Wiring", "Optics", "OrangeBeads" };
 
-        public static readonly Vector3 CrateSize = new Vector3(0.3f, 0.24f, 0.34f);
+        public static readonly Vector3 CrateSize = new Vector3(0.3f, 0.112f, 0.34f);
+
+        // The lid ridge stands this proud; the next crate up sits on the ridge's height.
+        private const float Ridge = 0.012f;
+
+        /// <summary>From one stacked crate's bottom to the next's.</summary>
+        public static float StackPitch => CrateSize.y + Ridge + 0.004f;
 
         private const float RackWidth = 1.5f;
         private const float RackDepth = 0.46f;
@@ -35,7 +45,7 @@ namespace MoonProject.Art.Editor
         private static readonly Vector3 CrewCrateSize = new Vector3(0.78f, 0.44f, 0.52f);
         private const float LidHeight = 0.1f;
 
-        /// <summary>Where slot <paramref name="index"/>'s crate stands (rack space, its bottom centre).</summary>
+        /// <summary>Where slot <paramref name="index"/>'s stack stands (rack space, its bottom centre).</summary>
         public static Vector3 Slot(int index)
         {
             int column = index % Columns;
@@ -88,8 +98,8 @@ namespace MoonProject.Art.Editor
 
         /// <summary>
         /// A stack's crate in <paramref name="material"/>'s colour (crate space: its bottom centre on the board): a
-        /// lidded box with dark corner straps, a little grab slot in front, and a ridge whose shape differs by material
-        /// so the stacks read apart without their colour too.
+        /// low lidded box with dark corner straps, a little grab slot in front, and a low lid ridge whose shape differs by
+        /// material so the stacks read apart without their colour too; three stack on a board.
         /// </summary>
         public static LowPolyMeshBuilder Crate(string material)
         {
@@ -99,27 +109,27 @@ namespace MoonProject.Art.Editor
             for (int side = -1; side <= 1; side += 2)
             {
                 b.Box(At(side * (CrateSize.x * 0.5f - 0.03f), CrateSize.y * 0.5f, 0f),
-                    new Vector3(0.025f, CrateSize.y + 0.008f, CrateSize.z + 0.008f), PaletteSwatch.Charcoal);
+                    new Vector3(0.025f, CrateSize.y, CrateSize.z + 0.008f), PaletteSwatch.Charcoal);
             }
 
-            b.Box(At(0f, CrateSize.y * 0.6f, CrateSize.z * 0.5f + 0.002f), new Vector3(0.1f, 0.03f, 0.006f),
+            b.Box(At(0f, CrateSize.y * 0.6f, CrateSize.z * 0.5f + 0.002f), new Vector3(0.1f, 0.024f, 0.006f),
                 PaletteSwatch.Charcoal);
-            float top = CrateSize.y + 0.012f;
+            float top = CrateSize.y + Ridge * 0.5f;
             switch (material)
             {
                 case "Metal":
-                    b.Box(At(0f, top, 0f), new Vector3(CrateSize.x * 0.6f, 0.024f, CrateSize.z * 0.7f), colour, 0.006f);
+                    b.Box(At(0f, top, 0f), new Vector3(CrateSize.x * 0.6f, Ridge, CrateSize.z * 0.7f), colour, 0.004f);
                     break;
                 case "Wiring":
-                    b.Torus(At(0f, top, 0f), 0.07f, 0.018f, 10, 3, colour);
+                    b.Torus(At(0f, top, 0f), 0.07f, Ridge * 0.5f, 10, 3, colour);
                     break;
                 case "Optics":
-                    b.Prism(At(0f, top, 0f), 0.08f, 0.024f, 8, colour);
+                    b.Prism(At(0f, top, 0f), 0.08f, Ridge, 8, colour);
                     break;
                 default:
                     for (int i = 0; i < 3; i++)
                     {
-                        b.Icosphere(At(-0.06f + i * 0.06f, top + 0.012f, 0.02f * (i - 1)), 0.026f, 0, colour);
+                        b.Icosphere(At(-0.06f + i * 0.06f, top, 0.02f * (i - 1)), Ridge * 0.6f, 0, colour);
                     }
 
                     break;
@@ -179,6 +189,26 @@ namespace MoonProject.Art.Editor
             SiteKit.DustCap(b, lid);
             b.Box(At(0f, LidHeight * 0.5f, CrewCrateSize.z * 0.5f + 0.014f), new Vector3(0.16f, 0.05f, 0.012f),
                 PaletteSwatch.Charcoal);
+            return b;
+        }
+
+        /// <summary>
+        /// The lid's seal (lid space): a thin glass bead all round the seam, so the crate shows it can be cut and reads
+        /// from afar at night.
+        /// </summary>
+        public static LowPolyMeshBuilder CrewCrateSeal()
+        {
+            var b = new LowPolyMeshBuilder(60);
+            const float bead = 0.014f;
+            float width = CrewCrateSize.x + 0.024f;
+            float depth = CrewCrateSize.z + 0.024f;
+            for (int side = -1; side <= 1; side += 2)
+            {
+                b.Box(At(0f, bead * 0.5f, side * depth * 0.5f), new Vector3(width, bead, bead), PaletteSwatch.LampGlass);
+                b.Box(At(side * width * 0.5f, bead * 0.5f, 0f), new Vector3(bead, bead, depth - bead),
+                    PaletteSwatch.LampGlass);
+            }
+
             return b;
         }
 

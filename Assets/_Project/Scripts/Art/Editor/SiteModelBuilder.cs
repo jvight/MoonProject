@@ -27,11 +27,13 @@ namespace MoonProject.Art.Editor
 
         /// <summary>
         /// The crew's supply crate (M3-25 T4), one per site beside its heart: <c>CrewCrate</c> (the sealed body, which stays
-        /// as an empty prop) and its <c>Lid</c>, whose <c>CutPoint</c> sits on the front seal; one cut lifts the lid off.
+        /// as an empty prop) and its <c>Lid</c>, whose <c>CutPoint</c> sits on the front seal and whose <c>Seal</c>
+        /// (M_LowPolyGlowOff) glows round the seam until the one cut lifts the lid off.
         /// </summary>
         public const string CrewCrateName = "CrewCrate";
 
         public const string CrewCrateLidName = "Lid";
+        public const string CrewCrateSealName = "Seal";
 
         // Off to the heart's right and out in front of the wreck, so the crate stands in the open where 07 arrives.
         private const float CrewCrateBesideHeart = 0.9f;
@@ -162,6 +164,9 @@ namespace MoonProject.Art.Editor
             ModelNode lid = crate.Add(new ModelNode(CrewCrateLidName, SupplyShelfMeshes.LidSeat,
                 new ModelMesh(name + "_" + CrewCrateName + CrewCrateLidName, SupplyShelfMeshes.CrewCrateLid())));
             lid.Add(new ModelNode(CutPointName, SupplyShelfMeshes.SealPoint, Facing(Vector3.forward)));
+            lid.Add(new ModelNode(CrewCrateSealName, Vector3.zero, Quaternion.identity,
+                new ModelMesh(name + "_" + CrewCrateName + CrewCrateSealName, SupplyShelfMeshes.CrewCrateSeal()),
+                ModelMaterial.PaletteGlowOff));
         }
 
         public static ModelNode CreateBundle(SalvagePieceMaterial material)

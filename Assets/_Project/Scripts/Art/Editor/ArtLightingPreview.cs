@@ -426,40 +426,45 @@ namespace MoonProject.Art.Editor
             Transform charged = Rover(temporary, Vector3.zero, 160f);
             temporary.Add(charged.gameObject);
             Mount(temporary, RoverModelBuilder.FocusLensName, Descendant(charged, RoverModelBuilder.LensSocketName));
-            for (int i = 0; i < RoverModelBuilder.BrowLampCount; i++)
-            {
-                Mount(temporary, RoverModelBuilder.BrowLampName,
-                    Descendant(charged, RoverModelBuilder.BrowLampSocketPrefix + i));
-            }
-
-            Transform lid = Descendant(charged, "SpineSocket");
-            for (int i = 0; i < 2; i++)
-            {
-                Transform lamp = Instantiate(RoverModelBuilder.ChargeLampName, temporary, ArtPaths.RoverFolder).transform;
-                lamp.SetParent(charged, false);
-                lamp.localPosition = new Vector3(0f, lid.localPosition.y, -0.3f - i * 0.16f);
-            }
-
-            foreach (Transform glass in charged.GetComponentsInChildren<Transform>())
-            {
-                if (glass.name == RoverModelBuilder.ChargeGlassName)
-                {
-                    SetGlow(glass.parent, RoverModelBuilder.ChargeGlassName, new[] { string.Empty }, 1f);
-                }
-            }
-
+            SetGlow(Descendant(charged, RoverModelBuilder.FocusLensName), RoverModelBuilder.FocusLensGlassName,
+                new[] { string.Empty }, 1f);
+            ShowChargeRun(charged, 1, 1f);
+            ShowChargeRun(Rover(temporary, new Vector3(-2.4f, 0f, -0.6f), 120f), 0, 1f);
             Transform dark = Rover(temporary, new Vector3(2.4f, 0f, -0.6f), 200f);
             temporary.Add(dark.gameObject);
             Mount(temporary, RoverModelBuilder.FocusLensName, Descendant(dark, RoverModelBuilder.LensSocketName));
+            ShowChargeRun(dark, 1, 0f);
             Transform eyeNode = Descendant(charged, "Eye");
             Vector3 eye = eyeNode.position;
             Vector3 front = eye + eyeNode.forward * 0.9f + eyeNode.right * 0.25f + Vector3.up * 0.15f;
             Vector3 above = eye + eyeNode.forward * 0.7f - eyeNode.right * 0.6f + Vector3.up * 0.75f;
+            Vector3 behind = charged.position - charged.forward * 1.5f + charged.right * 0.7f + Vector3.up * 1.9f;
             return Poses(
+                Pose("run_back", new[] { behind.x, behind.y, behind.z },
+                    new[] { charged.position.x, 1.05f, charged.position.z }, 45f),
                 Pose("lens_close", new[] { front.x, front.y, front.z }, new[] { eye.x, eye.y, eye.z }, 35f),
                 Pose("brow_three_quarter", new[] { above.x, above.y, above.z },
                     new[] { eye.x, eye.y + 0.12f, eye.z }, 40f),
                 Pose("pair_chase", new[] { 1.2f, 2.2f, -4.5f }, new[] { 1.2f, 0.9f, 0f }, 45f));
+        }
+
+        /// <summary>Shows charge-run row <paramref name="tier"/> lit at <paramref name="intensity"/>, hiding the others.</summary>
+        private static void ShowChargeRun(Transform rover, int tier, float intensity)
+        {
+            string shown = RoverModelBuilder.ChargeRunPrefix + tier;
+            var block = new MaterialPropertyBlock();
+            block.SetVector("_EmissionColor", new Vector4(intensity, intensity, intensity, 1f));
+            foreach (Transform node in rover.GetComponentsInChildren<Transform>(true))
+            {
+                if (node.name.StartsWith(RoverModelBuilder.ChargeRunPrefix, StringComparison.Ordinal))
+                {
+                    node.gameObject.SetActive(node.name == shown);
+                }
+                else if (node.parent != null && node.parent.name == shown)
+                {
+                    node.GetComponent<Renderer>().SetPropertyBlock(block);
+                }
+            }
         }
 
         private static void Mount(TemporaryObjects temporary, string prefab, Transform socket)
@@ -506,6 +511,25 @@ namespace MoonProject.Art.Editor
                 Pose("field_far30m", new[] { 6f, 5f, -20f }, new[] { 0f, 0f, 10f }, 40f));
         }
 
+        /// <summary>Stacks crates on a supply shelf the way gameplay does: one material per slot, 1-3 high.</summary>
+        private static void StockShelf(Transform shelf, TemporaryObjects temporary)
+        {
+            IReadOnlyList<string> materials = BaseModelBuilder.ShelfMaterials;
+            for (int slot = 0; slot < BaseModelBuilder.ShelfSlots; slot++)
+            {
+                string name = BaseModelBuilder.ShelfSlotPrefix +
+                              slot.ToString("00", System.Globalization.CultureInfo.InvariantCulture);
+                Transform anchor = Descendant(shelf, name);
+                int stacked = 1 + slot * 7 % BaseModelBuilder.ShelfStackHeight;
+                for (int level = 0; level < stacked; level++)
+                {
+                    Transform crate = Instantiate(BaseModelBuilder.ShelfCratePrefix + materials[slot % materials.Count],
+                        temporary).transform;
+                    crate.SetParent(anchor.GetChild(level), false);
+                }
+            }
+        }
+
         private static CameraPoseSet ShelvesScene(TemporaryObjects temporary)
         {
             Transform lander = Instantiate(BaseModelBuilder.LanderName, temporary).transform;
@@ -517,11 +541,13 @@ namespace MoonProject.Art.Editor
                 lamp.transform.position = Descendant(shelf, BaseModelBuilder.ShelfLampName).position;
                 lamp.range = 3f;
                 temporary.Add(lamp.gameObject);
+                StockShelf(shelf, temporary);
             }
 
             GameObject site = Instantiate(SiteModelBuilder.SiteName("depot"), temporary, ArtPaths.SitesFolder);
             site.transform.position = new Vector3(-20f, 0f, 0f);
             Vector3 crate = Descendant(site.transform, SiteModelBuilder.CrewCrateName).position;
+            SetGlow(site.transform, SiteModelBuilder.CrewCrateSealName, new[] { string.Empty }, 1f);
             Vector3 dock = lander.TransformPoint(ChargingDockMeshes.Anchor);
             return Poses(
                 Pose("from_dock", new[] { dock.x, dock.y + 1.6f, dock.z }, new[] { 0f, 1.2f, 0f }, 45f),

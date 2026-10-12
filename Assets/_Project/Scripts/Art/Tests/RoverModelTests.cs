@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using NUnit.Framework;
 using UnityEngine;
 using MoonProject.Art.Editor;
@@ -18,7 +19,6 @@ namespace MoonProject.Art.Tests
             "Wheel_RR", "Wheel_RR/Weather_Dust",
             "Neck", "Neck/Head", "Neck/Head/Eye", "Neck/Head/Eye/TetherOrigin", "Neck/Head/RingSocket", "Neck/Head/Eyelid",
             "Neck/Head/Weather_Paint", "Neck/Head/Weather_Dust", "Neck/Head/Eye/LensSocket",
-            "Neck/Head/BrowLampSocket_0", "Neck/Head/BrowLampSocket_1",
             "SolarWing", "SolarWing/CellFilled", "Antenna", "Antenna/AntennaTip", "Antenna/Pennant",
             "HeadlampSocket", "CargoSocket", "DustSocket_L", "DustSocket_R", "CoilSocket", "DrumSocket_L",
             "DrumSocket_R", "TubeSocket", "PartSocket", "SpineSocket", "DeckSocket",
@@ -28,7 +28,18 @@ namespace MoonProject.Art.Tests
         {
             "TetherOrigin", "HeadlampSocket", "CargoSocket", "DustSocket_L", "DustSocket_R", "CoilSocket",
             "DrumSocket_L", "DrumSocket_R", "TubeSocket", "PartSocket", "SpineSocket", "DeckSocket", "RingSocket",
-            "LensSocket", "BrowLampSocket_0", "BrowLampSocket_1",
+            "LensSocket",
+        };
+
+        // Each charge-run lamp by tier: the part its row group sits under and its index along the run.
+        private static readonly (string Part, int Index)[][] ChargeLamps =
+        {
+            new[] { ("", 0), ("", 1), ("Neck/", 2), ("Neck/", 3), ("Neck/Head/Eye/", 4) },
+            new[]
+            {
+                ("", 0), ("", 1), ("Neck/", 2), ("Neck/", 3), ("Neck/Head/", 4), ("Neck/Head/", 5),
+                ("Neck/Head/Eye/", 6),
+            },
         };
 
         /// <summary>The battery light bar's segments (docs/features/M3-20).</summary>
@@ -52,6 +63,22 @@ namespace MoonProject.Art.Tests
             {
                 contract.Add("Body/BatteryLamp_" + i);
                 contract.Add("Body/BatteryLamp_" + i + "/BatteryGlass_" + i);
+            }
+
+            for (int tier = 0; tier < ChargeLamps.Length; tier++)
+            {
+                foreach ((string part, int index) in ChargeLamps[tier])
+                {
+                    string row = part + RoverModelBuilder.ChargeRunPrefix + tier;
+                    if (!contract.Contains(row))
+                    {
+                        contract.Add(row);
+                    }
+
+                    string lamp = row + "/" + RoverModelBuilder.ChargeLampPrefix + index;
+                    contract.Add(lamp);
+                    contract.Add(lamp + "/" + RoverModelBuilder.ChargeLampBezelName);
+                }
             }
 
             Assert.AreEqual(RoverModelBuilder.ModelName, _rover.Name);
@@ -120,51 +147,45 @@ namespace MoonProject.Art.Tests
         }
 
         [Test]
-        public void ChargeRun_TheBrowPairStandsOnTheBrowOverTheEye_AndTheLensSitsOnTheTether()
+        public void ChargeRuns_ClimbFromTheDeckToTheEye_EachLampAGlassThatStartsDark()
         {
-            ModelNode eye = _rover.GetDescendant("Eye");
+            Assert.AreEqual(ChargeLamps.Length, RoverModelBuilder.ChargeRunLamps.Count);
+            for (int tier = 0; tier < ChargeLamps.Length; tier++)
+            {
+                Assert.AreEqual(ChargeLamps[tier].Length, RoverModelBuilder.ChargeRunLamps[tier]);
+                foreach ((string part, int index) in ChargeLamps[tier])
+                {
+                    string path = part + RoverModelBuilder.ChargeRunPrefix + tier + "/" +
+                                  RoverModelBuilder.ChargeLampPrefix + index;
+                    ModelNode lamp = AtPath(_rover, path);
+                    Assert.AreEqual(ModelMaterial.PaletteGlowOff, lamp.Material, $"{path} starts dark");
+                    for (int t = 0; t < lamp.Mesh.Geometry.TriangleCount; t++)
+                    {
+                        Assert.AreEqual(PaletteSwatch.EyeGlass, MeshChecks.SwatchOf(lamp.Mesh.Geometry, t),
+                            $"{path} glows the cutter's cyan");
+                    }
+
+                    Assert.AreEqual(0f, lamp.LocalPosition.x, 1e-5f, $"{path} is on the centreline (P3)");
+                    MeshChecks.AssertWellFormed(lamp.Mesh.Geometry);
+                    Assert.Greater(SilhouetteCamera.WorldOf(_rover, path).GetColumn(3).y, RoverModelBuilder.NeckBase.y - 0.01f,
+                        $"{path} rides the top of 07, where the chase camera sees it");
+                }
+            }
+
             Assert.AreEqual(_rover.GetDescendant("TetherOrigin").LocalPosition,
                 _rover.GetDescendant(RoverModelBuilder.LensSocketName).LocalPosition, "the lens is on the beam's mouth");
-            Bounds head = _rover.GetDescendant("Head").Mesh.Geometry.Bounds;
-            float last = float.MaxValue;
-            for (int i = 0; i < RoverModelBuilder.BrowLampCount; i++)
-            {
-                ModelNode socket = _rover.GetDescendant(RoverModelBuilder.BrowLampSocketPrefix + i);
-                Vector3 up = socket.LocalRotation * Vector3.up;
-                Assert.AreEqual(0f, socket.LocalPosition.x, 1e-5f, "on the centreline (P3)");
-                Assert.Greater(socket.LocalPosition.y, eye.LocalPosition.y + 0.15f, $"brow lamp {i} is over the eye");
-                Assert.Greater(up.y, 0f, $"brow lamp {i} faces up and out");
-                Assert.Less(socket.LocalPosition.z, last, "the pair runs back from the eye");
-                Assert.LessOrEqual(socket.LocalPosition.y, head.max.y + 0.01f, $"brow lamp {i} sits on the head");
-                last = socket.LocalPosition.z;
-            }
         }
 
         [Test]
-        public void ChargeRunParts_GlowOnlyThroughTheirGlass()
+        public void FocusLens_ClipsInsideTheEyesRim_AndGlowsOnlyThroughItsGlass()
         {
-            var parts = new[]
-            {
-                RoverModelBuilder.CreateChargeLamp(false), RoverModelBuilder.CreateChargeLamp(true),
-                RoverModelBuilder.CreateFocusLens(),
-            };
-            foreach (ModelNode part in parts)
-            {
-                ModelNode glass = part.GetDescendant(RoverModelBuilder.ChargeGlassName);
-                Assert.IsNotNull(glass, $"{part.Name} has its glass");
-                Assert.AreEqual(ModelMaterial.PaletteGlowOff, glass.Material, $"{part.Name}'s glass starts dark");
-                for (int t = 0; t < glass.Mesh.Geometry.TriangleCount; t++)
-                {
-                    Assert.AreEqual(PaletteSwatch.EyeGlass, MeshChecks.SwatchOf(glass.Mesh.Geometry, t),
-                        $"{part.Name}'s glass glows the cutter's cyan");
-                }
-
-                MeshChecks.AssertWellFormed(part.Mesh.Geometry);
-                MeshChecks.AssertWellFormed(glass.Mesh.Geometry);
-            }
-
-            Assert.Less(RoverModelBuilder.CreateFocusLens().Mesh.Geometry.Bounds.extents.x, 0.19f,
-                "the lens clips inside the eye's rim");
+            ModelNode lens = RoverModelBuilder.CreateFocusLens();
+            ModelNode glass = lens.GetDescendant(RoverModelBuilder.FocusLensGlassName);
+            Assert.AreEqual(ModelMaterial.PaletteGlowOff, glass.Material, "the lens's glass starts dark");
+            Assert.IsFalse(MeshChecks.Swatches(lens.Mesh.Geometry).Any(Palette.IsEmissive), "the frame doesn't glow");
+            MeshChecks.AssertWellFormed(lens.Mesh.Geometry);
+            MeshChecks.AssertWellFormed(glass.Mesh.Geometry);
+            Assert.Less(lens.Mesh.Geometry.Bounds.extents.x, 0.19f, "the lens clips inside the eye's rim");
         }
 
         [Test]
@@ -213,6 +234,17 @@ namespace MoonProject.Art.Tests
                 again.GetDescendant("Body").Mesh.Geometry.Positions);
             CollectionAssert.AreEqual(_rover.GetDescendant("Head").Mesh.Geometry.Uvs,
                 again.GetDescendant("Head").Mesh.Geometry.Uvs);
+        }
+
+        private static ModelNode AtPath(ModelNode root, string path)
+        {
+            ModelNode node = root;
+            foreach (string name in path.Split('/'))
+            {
+                node = node.Children.Single(child => child.Name == name);
+            }
+
+            return node;
         }
 
         private static void CollectPaths(ModelNode node, string prefix, List<string> paths)

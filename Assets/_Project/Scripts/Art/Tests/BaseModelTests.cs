@@ -271,11 +271,10 @@ namespace MoonProject.Art.Tests
 
 
         [Test]
-        public void Shelves_StandUnderTheBelly_OneColumnPerMaterial_EachWithADarkLamp()
+        public void Shelves_StandUnderTheBelly_TwelveSlotsOfThreeStacked_EachWithADarkLamp()
         {
             ModelNode shelves = BaseModelBuilder.CreateLander().GetDescendant(BaseModelBuilder.ShelvesName);
             Assert.AreEqual(BaseModelBuilder.ShelfCount, shelves.Children.Count);
-            int crates = BaseModelBuilder.ShelfMaterials.Count * BaseModelBuilder.ShelfTiers;
             foreach (ModelNode shelf in shelves.Children)
             {
                 StringAssert.StartsWith(BaseModelBuilder.ShelfPrefix, shelf.Name);
@@ -288,19 +287,40 @@ namespace MoonProject.Art.Tests
                 ModelNode lamp = shelf.GetDescendant(BaseModelBuilder.ShelfLampName);
                 Assert.AreEqual(ModelMaterial.PaletteGlowOff, lamp.Material, $"{shelf.Name}'s lamp starts dark");
                 AssertGlowsOnly(lamp);
-                Assert.AreEqual(crates + 1, shelf.Children.Count, $"{shelf.Name}: its lamp and every crate slot");
-                foreach (string material in BaseModelBuilder.ShelfMaterials)
+                Assert.AreEqual(BaseModelBuilder.ShelfSlots + 1, shelf.Children.Count, $"{shelf.Name}: lamp and slots");
+                for (int i = 0; i < BaseModelBuilder.ShelfSlots; i++)
                 {
-                    for (int tier = 0; tier < BaseModelBuilder.ShelfTiers; tier++)
+                    string name = BaseModelBuilder.ShelfSlotPrefix + i.ToString("00");
+                    ModelNode slot = shelf.GetDescendant(name);
+                    Assert.IsNotNull(slot, $"{shelf.Name} has {name}");
+                    Assert.IsNull(slot.Mesh, $"{shelf.Name}/{name} is an empty anchor");
+                    Assert.AreEqual(BaseModelBuilder.ShelfStackHeight, slot.Children.Count);
+                    foreach (string material in BaseModelBuilder.ShelfMaterials)
                     {
-                        ModelNode crate = shelf.GetDescendant($"{BaseModelBuilder.ShelfCratePrefix}{material}_{tier}");
-                        Assert.IsNotNull(crate, $"{shelf.Name} has {material} tier {tier}");
-                        Bounds box = crate.Mesh.Geometry.Bounds;
-                        box.center += crate.LocalPosition;
-                        Assert.IsTrue(rack.Contains(box.min) && rack.Contains(box.max - Vector3.up * 0.05f),
-                            $"{shelf.Name}/{crate.Name} sits inside its rack");
+                        Bounds crate = BaseModelBuilder.CreateShelfCrate(material).Mesh.Geometry.Bounds;
+                        ModelNode top = slot.Children[BaseModelBuilder.ShelfStackHeight - 1];
+                        crate.center += slot.LocalPosition + top.LocalPosition;
+                        Assert.IsTrue(rack.Contains(crate.min) && rack.Contains(crate.max),
+                            $"{shelf.Name}/{name}: a full stack of {material} fits its rack");
                     }
                 }
+            }
+        }
+
+        [Test]
+        public void ShelfCrates_StackOnTheirRidges_InTheirMaterialsColour()
+        {
+            foreach (string material in BaseModelBuilder.ShelfMaterials)
+            {
+                ModelNode crate = BaseModelBuilder.CreateShelfCrate(material);
+                Assert.AreEqual(BaseModelBuilder.ShelfCratePrefix + material, crate.Name);
+                CollectionAssert.IsEmpty(crate.Children);
+                LowPolyMeshBuilder box = crate.Mesh.Geometry;
+                MeshChecks.AssertWellFormed(box);
+                Assert.AreEqual(0f, box.Bounds.min.y, 1e-3f, $"{crate.Name} pivots at its bottom");
+                ModelNode slot = BaseModelBuilder.CreateLander().GetDescendant(BaseModelBuilder.ShelfSlotPrefix + "00");
+                float pitch = slot.Children[1].LocalPosition.y - slot.Children[0].LocalPosition.y;
+                Assert.That(pitch - box.Bounds.max.y, Is.InRange(0f, 0.01f), $"{crate.Name} stacks snugly");
             }
         }
 

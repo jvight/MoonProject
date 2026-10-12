@@ -103,8 +103,12 @@ namespace MoonProject.Art.Tests
             Assert.Greater(body.min.z, SiteModelBuilder.Footprint(site).max.z, "in the open, clear of the wreck");
             ModelNode lid = crate.Children.Single();
             Assert.AreEqual(SiteModelBuilder.CrewCrateLidName, lid.Name);
-            ModelNode cut = lid.Children.Single();
-            Assert.AreEqual(SiteModelBuilder.CutPointName, cut.Name);
+            Assert.AreEqual(2, lid.Children.Count, "the lid holds its CutPoint and its Seal");
+            ModelNode cut = lid.Children.Single(n => n.Name == SiteModelBuilder.CutPointName);
+            ModelNode seal = lid.Children.Single(n => n.Name == SiteModelBuilder.CrewCrateSealName);
+            Assert.AreEqual(ModelMaterial.PaletteGlowOff, seal.Material, "the seal glows only when gameplay lights it");
+            Assert.IsTrue(MeshChecks.Swatches(seal.Mesh.Geometry).All(Palette.IsEmissive), "the seal is all glass");
+            Assert.Greater(seal.Mesh.Geometry.Bounds.size.x, lid.Mesh.Geometry.Bounds.size.x, "it rings the seam");
             Assert.IsNull(cut.Mesh, "the seal's CutPoint is an empty");
             Assert.Greater(Vector3.Dot(cut.LocalRotation * Vector3.forward, Vector3.forward), 0.99f,
                 "its +Z leaves the front seal");
