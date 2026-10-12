@@ -81,7 +81,21 @@ namespace MoonProject.World
             }
 
             float delay = _settings.CableTravel + OrderInStage(light) * _settings.WakeStagger;
-            return Mathf.SmoothStep(0f, 1f, (time - _wokeAt - delay) / _settings.WakeFade);
+            if (light != HomeLight.Windows)
+            {
+                return Mathf.SmoothStep(0f, 1f, (time - _wokeAt - delay) / _settings.WakeFade);
+            }
+
+            // The windows wake one by one across the fade: each step eases up on its own.
+            int steps = _settings.WindowSteps;
+            float level = 0f;
+            for (int step = 0; step < steps; step++)
+            {
+                float at = delay + _settings.WakeFade * step / steps;
+                level += Mathf.SmoothStep(0f, 1f, (time - _wokeAt - at) / _settings.WindowStepEase);
+            }
+
+            return level / steps;
         }
 
         /// <summary>
@@ -102,6 +116,28 @@ namespace MoonProject.World
 
             float arrives = _settings.CableTravel * segment / Mathf.Max(1, count);
             return Mathf.SmoothStep(0f, 1f, (time - _wokeAt - arrives) / _settings.CableSegmentFade);
+        }
+
+        /// <summary>
+        /// How many of the windows' steps have begun lighting at <paramref name="time"/>: 0..WindowSteps. A restored
+        /// or earlier stage counts as all of them.
+        /// </summary>
+        public int WindowStepsLit(float time)
+        {
+            if (WakesWith(HomeLight.Windows) > _stage)
+            {
+                return 0;
+            }
+
+            if (_wakingStage != WakesWith(HomeLight.Windows))
+            {
+                return _settings.WindowSteps;
+            }
+
+            float since = time - _wokeAt - _settings.CableTravel
+                - OrderInStage(HomeLight.Windows) * _settings.WakeStagger;
+            int lit = Mathf.FloorToInt(since / (_settings.WakeFade / _settings.WindowSteps)) + 1;
+            return Mathf.Clamp(lit, 0, _settings.WindowSteps);
         }
 
         /// <summary>

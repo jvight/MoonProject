@@ -78,6 +78,29 @@ namespace MoonProject.World.Tests
         }
 
         [Test]
+        public void Windows_WakeInEasedSteps_OnePerWindow()
+        {
+            _stages.SetStage(BasePowerStage.Home, false, Start);
+            float first = Start + _settings.CableTravel;
+            float stepLength = _settings.WakeFade / _settings.WindowSteps;
+            Assert.AreEqual(0, _stages.WindowStepsLit(first - 0.01f), "no window before power arrives");
+            Assert.AreEqual(1, _stages.WindowStepsLit(first + 0.01f), "the first window begins as power arrives");
+            float settled = first + _settings.WindowStepEase + 0.01f;
+            Assert.AreEqual(1f / _settings.WindowSteps, _stages.Level(HomeLight.Windows, settled), Tolerance,
+                "one window lit is one warm step");
+            float easing = first + stepLength + _settings.WindowStepEase * 0.5f;
+            Assert.That(_stages.Level(HomeLight.Windows, easing),
+                Is.GreaterThan(1f / _settings.WindowSteps).And.LessThan(2f / _settings.WindowSteps),
+                "the next step eases, never snaps");
+            float done = first + _settings.WakeFade + _settings.WindowStepEase;
+            Assert.AreEqual(_settings.WindowSteps, _stages.WindowStepsLit(done));
+            Assert.AreEqual(1f, _stages.Level(HomeLight.Windows, done), Tolerance);
+
+            _stages.SetStage(BasePowerStage.Bay, true, done);
+            Assert.AreEqual(_settings.WindowSteps, _stages.WindowStepsLit(done), "a restored stage is all lit");
+        }
+
+        [Test]
         public void Grade_WarmsAStepWithEachStage_Eased()
         {
             Assert.AreEqual(0f, _stages.GradeWarmth(Start), "a sleeping base keeps the cold grade");
