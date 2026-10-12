@@ -4,7 +4,7 @@ namespace MoonProject.Gameplay
 {
     /// <summary>
     /// The feel kit's pure maths (docs/design/feel-pass.md §3.1): how hot a seam point is by age, where a charge mote
-    /// is on its curving way in, how far the beam has reached, the bundle's tie-off pop, and one vacuum-ballistic
+    /// is on its curving way in, how far the beam has reached, and one vacuum-ballistic
     /// step (lunar gravity, no drag, R11). No Unity objects, so every curve is tested in EditMode.
     /// </summary>
     public static class FeelCurves
@@ -53,15 +53,6 @@ namespace MoonProject.Gameplay
         {
             float u = 1f - Mathf.Clamp01(t);
             return 1f - u * u * u;
-        }
-
-        /// <summary>
-        /// The bundle's scale a share <paramref name="t"/> into its tie-off: 1, up to the pop, back to 1.
-        /// </summary>
-        public static float TiePop(float t, float pop)
-        {
-            float u = Mathf.Clamp01(t);
-            return 1f + (pop - 1f) * Mathf.Sin(u * Mathf.PI);
         }
 
         /// <summary>

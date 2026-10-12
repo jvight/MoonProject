@@ -73,7 +73,7 @@ namespace MoonProject.Gameplay.Feel.Editor
             var seam = new Material(Load(HeatSeamShader)) { enableInstancing = true };
             visuals.PopulateFeel(GeneratedAssets.CreateOrReplace(sprite, SpritePath),
                 GeneratedAssets.CreateOrReplace(core, CorePath), GeneratedAssets.CreateOrReplace(sheath, SheathPath),
-                GeneratedAssets.CreateOrReplace(seam, SeamPath));
+                GeneratedAssets.CreateOrReplace(seam, SeamPath), Tuning());
         }
 
         private static Material Glow(Shader shader, Color color, float intensity, float edge, float radial,
@@ -97,6 +97,13 @@ namespace MoonProject.Gameplay.Feel.Editor
             material.SetFloat("_Cull", (float)CullMode.Off);
             material.renderQueue = TransparentQueue;
             return material;
+        }
+
+        private static FeelVfxTuning Tuning()
+        {
+            var tuning = AssetDatabase.LoadAssetAtPath<FeelVfxTuning>(TuningPath);
+            return tuning != null ? tuning
+                : throw new InvalidOperationException($"Gameplay/FeelVfx: {TuningPath} is missing.");
         }
 
         private static Shader Load(string path)

@@ -51,14 +51,6 @@ namespace MoonProject.Gameplay.Feel.Tests
         }
 
         [Test]
-        public void TieOff_PopsTo112_AndSettlesBack()
-        {
-            Assert.AreEqual(1f, FeelCurves.TiePop(0f, 1.12f), 1e-5f);
-            Assert.AreEqual(1.12f, FeelCurves.TiePop(0.5f, 1.12f), 1e-4f);
-            Assert.AreEqual(1f, FeelCurves.TiePop(1f, 1.12f), 1e-4f);
-        }
-
-        [Test]
         public void Debris_FlyUnderLunarGravityWithNoDrag_AndBounceAtThreeTenths()
         {
             Vector3 position = Vector3.zero;

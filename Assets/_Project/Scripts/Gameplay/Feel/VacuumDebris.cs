@@ -109,6 +109,9 @@ namespace MoonProject.Gameplay
         /// <summary>Sparks and slag in the air (tests and debugging views).</summary>
         public int Flying => _flying;
 
+        /// <summary>Every live spark, bead and dust puff (tests and debugging views).</summary>
+        public int ParticleCount => _flying + _resting + _dust;
+
         /// <summary>Slag beads lying on the ground, cooling (tests and debugging views).</summary>
         public int Resting => _resting;
 

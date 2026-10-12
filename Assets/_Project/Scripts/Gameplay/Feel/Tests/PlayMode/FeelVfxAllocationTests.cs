@@ -50,7 +50,7 @@ namespace MoonProject.Gameplay.Feel.Tests
             GameObject ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
             ground.transform.localScale = Vector3.one * 4f;
             _created.Add(ground);
-            var vfx = new FeelVfx(Make("Host", Vector3.zero), tuning, Visuals(), events, anchors);
+            var vfx = new FeelVfx(Make("Host", Vector3.zero), tuning, Visuals(tuning), events, anchors);
 
             Publish(events, FeelPhase.Anticipate, 0f, 0.65f);
             Publish(events, FeelPhase.Act, 0f, 0f);
@@ -125,13 +125,13 @@ namespace MoonProject.Gameplay.Feel.Tests
             return tuning;
         }
 
-        private GameplayVisuals Visuals()
+        private GameplayVisuals Visuals(FeelVfxTuning tuning)
         {
             var material = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
             _created.Add(material);
             var visuals = ScriptableObject.CreateInstance<GameplayVisuals>();
             _created.Add(visuals);
-            visuals.PopulateFeel(material, material, material, material);
+            visuals.PopulateFeel(material, material, material, material, tuning);
             return visuals;
         }
 
