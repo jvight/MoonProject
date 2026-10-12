@@ -15,8 +15,12 @@ namespace MoonProject.Gameplay
         private const float FadeInShare = 0.15f;
         private const float DisperseReach = 2.5f;
 
+        // The bead, its halo and the lens glow.
+        private const int GlowSprites = 3;
+
         private readonly FeelVfxTuning _tuning;
         private readonly FeelSprites _sprites;
+        private readonly FeelSprites _glows;
         private readonly LightPulse _light;
         private readonly Vector3[] _start;
         private readonly Vector3[] _axis;
@@ -33,7 +37,8 @@ namespace MoonProject.Gameplay
         {
             _tuning = tuning != null ? tuning : throw new ArgumentNullException(nameof(tuning));
             int pool = tuning.MotePool;
-            _sprites = new FeelSprites("ChargeMotes", parent, sprite, pool + 1, false, 0f);
+            _sprites = new FeelSprites("ChargeMotes", parent, sprite, pool, true, tuning.MoteStreak);
+            _glows = new FeelSprites("ChargeGlow", parent, sprite, GlowSprites, false, 0f);
             _light = new LightPulse("EmitterLight", parent, tuning.MoteColor, tuning.EmitterRange);
             _start = new Vector3[pool];
             _axis = new Vector3[pool];
@@ -116,10 +121,14 @@ namespace MoonProject.Gameplay
                 float t = Mathf.Clamp01(_elapsed / _seconds);
                 Color color = _tuning.MoteColor;
                 color.a = Mathf.Clamp01(t / FadeInShare);
+                float ahead = Mathf.Min(t + deltaTime / _seconds, 1f);
                 for (int i = 0; i < _motes; i++)
                 {
                     _offset[i] = FeelCurves.MoteOffset(_start[i], _axis[i], t, _tuning.MoteEase, _tuning.MoteSwirl);
-                    _sprites.Add(emitter + _offset[i], _tuning.MoteSize, color, Vector3.zero);
+                    Vector3 next = FeelCurves.MoteOffset(_start[i], _axis[i], ahead, _tuning.MoteEase,
+                        _tuning.MoteSwirl);
+                    Vector3 velocity = (next - _offset[i]) / Mathf.Max(deltaTime, 1e-4f);
+                    _sprites.Add(emitter + _offset[i], _tuning.MoteSize, color, velocity);
                 }
             }
             else if (_motes > 0)
@@ -131,7 +140,7 @@ namespace MoonProject.Gameplay
                 for (int i = 0; i < _motes; i++)
                 {
                     _sprites.Add(emitter + _offset[i] * (1f + (DisperseReach - 1f) * u), _tuning.MoteSize, color,
-                        Vector3.zero);
+                        _offset[i]);
                 }
 
                 if (u >= 1f)
@@ -140,12 +149,21 @@ namespace MoonProject.Gameplay
                 }
             }
 
+            _sprites.End();
+            _glows.Begin();
             if (_bead > 0f)
             {
-                _sprites.Add(emitter, _bead, _tuning.MoteColor, Vector3.zero);
+                float charge = _bead / _tuning.BeadSize;
+                Color halo = _tuning.MoteColor;
+                halo.a = _tuning.BeadHaloAlpha * charge;
+                Color lens = _tuning.MoteColor;
+                lens.a = _tuning.LensGlowAlpha * charge;
+                _glows.Add(emitter, _tuning.LensGlow, lens, Vector3.zero);
+                _glows.Add(emitter, _bead * _tuning.BeadHalo, halo, Vector3.zero);
+                _glows.Add(emitter, _bead, _tuning.MoteColor, Vector3.zero);
             }
 
-            _sprites.End();
+            _glows.End();
         }
 
         private void GrowBead(float size, float seconds)

@@ -39,7 +39,6 @@ namespace MoonProject.Gameplay
         private HeatSeam _seam;
         private bool _ignited;
         private bool _cutting;
-        private int _follows;
         private float _progress;
 
         public FeelVfx(Transform parent, FeelVfxTuning tuning, GameplayVisuals visuals, EventBus events,
@@ -122,7 +121,7 @@ namespace MoonProject.Gameplay
                     Crack();
                     break;
                 case FeelPhase.Follow:
-                    Follow();
+                    Follow(beat.Strength);
                     break;
             }
         }
@@ -160,7 +159,6 @@ namespace MoonProject.Gameplay
         {
             _ignited = false;
             _cutting = false;
-            _follows = 0;
             _charge.Begin(beat.Seconds);
             Transform piece = _anchors.CutPiece;
             if (piece == null)
@@ -212,18 +210,17 @@ namespace MoonProject.Gameplay
             Vector3 emitter = _anchors.Emitter;
             _debris.Vent(emitter, (emitter - end).normalized + Vector3.up, _tuning.VentSparks);
             EndBeam(_tuning.EmitterFadeSeconds);
-            _follows = 0;
         }
 
-        private void Follow()
+        /// <summary>The tumble (Strength 0) drops slag off the piece; the fold (Strength 1) lets its seam go.</summary>
+        private void Follow(float strength)
         {
-            _follows++;
             if (_seam == null || _seam.Piece == null)
             {
                 return;
             }
 
-            if (_follows == 1)
+            if (strength < 1f)
             {
                 Vector2Int range = _tuning.TumbleBeads;
                 _debris.Drop(_seam.Piece.position, Vector3.zero, UnityEngine.Random.Range(range.x, range.y + 1));

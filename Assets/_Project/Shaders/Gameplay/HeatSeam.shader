@@ -6,7 +6,7 @@ Shader "MoonProject/Gameplay/HeatSeam"
 {
     Properties
     {
-        [HDR] _HotColor("Hot (just cut)", Color) = (4, 3.2, 1.8, 1)
+        [HDR] _HotColor("Hot (just cut)", Color) = (3.2, 2.56, 1.44, 1)
         [HDR] _OrangeColor("Orange (about 1 s)", Color) = (2.2, 0.9, 0.25, 1)
         [HDR] _RedColor("Dull red (about 3 s)", Color) = (0.55, 0.08, 0.03, 1)
         _CharColor("Charred (cold)", Color) = (0.05, 0.04, 0.045, 0.9)

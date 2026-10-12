@@ -27,9 +27,10 @@ namespace MoonProject.Gameplay.Feel.Editor
         // The sprites' glow over the bloom threshold, so sparks, beads and motes bloom softly (each sprite's own
         // colour dims it); the core's white-hot glow; the sheath's cyan glow and its faint shimmering bands.
         private const float SpriteIntensity = 2.2f;
-        private const float CoreIntensity = 3.2f;
-        private const float SheathIntensity = 1.3f;
+        private const float CoreIntensity = 2.6f;
+        private const float SheathIntensity = 2f;
         private const float BeamEdge = 0.5f;
+        private const float SheathEdge = 0.3f;
         private const float SheathBands = 6f;
         private const float SheathBandSpeed = 3f;
         private const float SheathBandStrength = 0.25f;
@@ -66,7 +67,7 @@ namespace MoonProject.Gameplay.Feel.Editor
             Material sprite = Glow(glow, Color.white, SpriteIntensity, 0f, 1f, 0f);
             Material core = Glow(glow, Color.white, CoreIntensity, BeamEdge, 0f, 0f);
             Color cyan = Palette.Get(PaletteSwatch.TechGlow);
-            Material sheath = Glow(glow, cyan, SheathIntensity, BeamEdge, 0f, SheathBandStrength);
+            Material sheath = Glow(glow, cyan, SheathIntensity, SheathEdge, 0f, SheathBandStrength);
             sheath.SetFloat("_BandCount", SheathBands);
             sheath.SetFloat("_BandSpeed", SheathBandSpeed);
             var seam = new Material(Load(HeatSeamShader)) { enableInstancing = true };

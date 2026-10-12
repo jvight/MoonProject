@@ -99,6 +99,8 @@ namespace MoonProject.Gameplay
 
         public void Step(float deltaTime)
         {
+            StepFlying(deltaTime);
+            StepResting(deltaTime);
             if (_sprayLevel >= 0f)
             {
                 float rate = Mathf.Lerp(_tuning.SparkRate.x, _tuning.SparkRate.y, _sprayLevel);
@@ -110,8 +112,6 @@ namespace MoonProject.Gameplay
                 }
             }
 
-            StepFlying(deltaTime);
-            StepResting(deltaTime);
             Draw();
         }
 

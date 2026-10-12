@@ -36,6 +36,10 @@ namespace MoonProject.Gameplay.Feel.Editor
         private const float CutHalfLength = 0.35f;
         private const float Probe = 200f;
         private const float SeamDistance = 1.3f;
+        private const float ChaseDistance = 7.5f;
+        private const float ChasePitch = 16f;
+        private const float ChaseHeight = 1.1f;
+        private const float ChaseFov = 52f;
         private static readonly Vector3 Spot = new Vector3(-26f, 0f, -18f);
 
         public static void Capture()
@@ -95,6 +99,7 @@ namespace MoonProject.Gameplay.Feel.Editor
             Publish(events, FeelPhase.Anticipate, anchors, 0f, ChargeSeconds);
             clock = Run(vfx, clock, ChargeSeconds * 0.7f);
             shots.Take("01_charge", Close(emitter, rover.transform));
+            shots.Take("01b_charge_chase", Chase(rover.transform));
             clock = Run(vfx, clock, ChargeSeconds * 0.3f);
             Publish(events, FeelPhase.Act, anchors, 0f, 0f);
             clock = Run(vfx, clock, Step * 2f);
@@ -171,6 +176,15 @@ namespace MoonProject.Gameplay.Feel.Editor
         {
             Vector3 eye = subject.position + rover.right * 1.1f + rover.forward * 0.8f + Vector3.up * 0.25f;
             return Pose(eye, subject.position + rover.forward * 0.3f, 45f);
+        }
+
+        /// <summary>The game's default chase camera behind 07 (RoverCameraTuning: 7.5 m out, 16° up, at 1.1 m).</summary>
+        private static CameraPose Chase(Transform rover)
+        {
+            Vector3 target = rover.position + Vector3.up * ChaseHeight;
+            float pitch = ChasePitch * Mathf.Deg2Rad;
+            Vector3 back = -rover.forward * Mathf.Cos(pitch) + Vector3.up * Mathf.Sin(pitch);
+            return Pose(target + back * ChaseDistance, target, ChaseFov);
         }
 
         /// <summary>Square onto the cut face, close enough to read the seam cooling behind the hot point.</summary>

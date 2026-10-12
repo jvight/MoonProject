@@ -19,7 +19,10 @@ namespace MoonProject.Gameplay
         [Range(0.1f, 1.5f)] [SerializeField] private float _moteRadius = 0.6f;
 
         [Tooltip("Size of a mote sprite (m).")]
-        [Range(0.005f, 0.08f)] [SerializeField] private float _moteSize = 0.025f;
+        [Range(0.005f, 0.12f)] [SerializeField] private float _moteSize = 0.05f;
+
+        [Tooltip("How long a mote's streak trails toward the emitter (seconds of its inward speed).")]
+        [Range(0f, 0.3f)] [SerializeField] private float _moteStreak = 0.05f;
 
         [Tooltip("How far a mote's path curls round the emitter on its way in (turns).")]
         [Range(0f, 1f)] [SerializeField] private float _moteSwirl = 0.3f;
@@ -35,6 +38,18 @@ namespace MoonProject.Gameplay
 
         [Tooltip("The glow bead's full diameter at the end of the charge (m).")]
         [Range(0.01f, 0.12f)] [SerializeField] private float _beadSize = 0.04f;
+
+        [Tooltip("The bead's soft halo, as a multiple of the bead's size.")]
+        [Range(1f, 8f)] [SerializeField] private float _beadHalo = 4f;
+
+        [Tooltip("The bead halo's opacity at full charge.")]
+        [Range(0f, 1f)] [SerializeField] private float _beadHaloAlpha = 0.45f;
+
+        [Tooltip("The glow over 07's lens as it warms toward cyan-white with the charge (diameter, m).")]
+        [Range(0.05f, 0.4f)] [SerializeField] private float _lensGlow = 0.16f;
+
+        [Tooltip("The lens glow's opacity at full charge.")]
+        [Range(0f, 1f)] [SerializeField] private float _lensGlowAlpha = 0.6f;
 
         [Tooltip("The emitter light's intensity at the end of the charge.")]
         [Range(0f, 4f)] [SerializeField] private float _emitterLight = 1.5f;
@@ -79,7 +94,7 @@ namespace MoonProject.Gameplay
 
         [Header("Cut light")]
         [Tooltip("The warm light at the cut while the beam works.")]
-        [Range(0f, 4f)] [SerializeField] private float _cutLight = 1.4f;
+        [Range(0f, 4f)] [SerializeField] private float _cutLight = 1.12f;
 
         [Tooltip("The cut light's range (m): it lights the wreck, the ground and 07's front.")]
         [Range(0.5f, 8f)] [SerializeField] private float _cutRange = 3.5f;
@@ -176,6 +191,11 @@ namespace MoonProject.Gameplay
         public int MoteCount => Mathf.Min(_moteCount, MotePool);
         public float MoteRadius => _moteRadius;
         public float MoteSize => _moteSize;
+        public float MoteStreak => _moteStreak;
+        public float BeadHalo => _beadHalo;
+        public float BeadHaloAlpha => _beadHaloAlpha;
+        public float LensGlow => _lensGlow;
+        public float LensGlowAlpha => _lensGlowAlpha;
         public float MoteSwirl => _moteSwirl;
         public float MoteEase => _moteEase;
         public float MoteDisperseSeconds => _moteDisperseSeconds;
