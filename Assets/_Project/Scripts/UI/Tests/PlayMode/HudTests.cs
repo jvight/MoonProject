@@ -167,7 +167,7 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual("rubber_duck", _rig.Ui.Card.Current);
             Assert.AreEqual("Senior Debugging Consultant", _rig.Ui.Layout.MemoryCardName.text);
             StringAssert.StartsWith("Kenji explained", _rig.Ui.Layout.MemoryCardText.text);
-            Assert.AreEqual("Memory 2 of 6", _rig.Ui.Layout.MemoryCardCaption.text);
+            Assert.AreEqual(string.Format(Text(UiKeys.CardCaption), 2, 6), _rig.Ui.Layout.MemoryCardCaption.text);
             Assert.AreEqual("Esc", _rig.Ui.Layout.MemoryCardGlyphLabel.text);
             Assert.IsTrue(_rig.Bootstrap.Context.Input.Enabled, "the card never blocks driving");
 
@@ -196,7 +196,6 @@ namespace MoonProject.UI.PlayModeTests
             yield return null;
             Assert.AreEqual(0, _rig.Fakes.Purchases, "nothing is bought without the coil");
             Assert.IsFalse(_rig.Ui.Tower.IsWorking);
-            Assert.AreEqual("The tower is waiting for its coil.", _rig.Ui.Layout.TowerHoldWord.text);
             Assert.AreEqual(Text(UiKeys.ComponentNeeded("Part_TowerCoil")), _rig.Ui.Layout.TowerHoldWord.text);
 
             _rig.Fakes.AwaitingPart = false;
@@ -218,7 +217,7 @@ namespace MoonProject.UI.PlayModeTests
             yield return Seconds(2f);
             Assert.IsTrue(_rig.Ui.Tower.IsVisible);
             Assert.AreEqual(0, _rig.Fakes.Purchases, "arriving with the button already held buys nothing");
-            Assert.AreEqual("Wake the old mast", _rig.Ui.Layout.TowerTitle.text);
+            Assert.AreEqual(Text(UiKeys.UpgradeTitle("radio_tower", 1)), _rig.Ui.Layout.TowerTitle.text);
             Assert.AreEqual("Level 1 of 3", _rig.Ui.Layout.TowerLevel.text);
             MaterialSlots recipe = _rig.Ui.Tower.Recipe.Slots;
             StringAssert.EndsWith(" / 2", recipe.Text(SalvageMaterial.Metal), "have / need");

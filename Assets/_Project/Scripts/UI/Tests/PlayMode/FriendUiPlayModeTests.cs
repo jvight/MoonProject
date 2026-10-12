@@ -109,7 +109,8 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual("Tilly", _rig.Ui.Layout.FriendNameText.text);
             Assert.IsTrue(_rig.Ui.Card.IsVisible);
             Assert.AreEqual("tilly", _rig.Ui.Card.Current);
-            Assert.AreEqual("From Tilly's memory", _rig.Ui.Layout.MemoryCardCaption.text);
+            Assert.AreEqual(string.Format(_rig.Ui.Localization.Get(UiKeys.LogCaption), "Tilly"),
+                _rig.Ui.Layout.MemoryCardCaption.text);
             Assert.AreEqual("Tilly", _rig.Ui.Layout.MemoryCardName.text);
             StringAssert.StartsWith("Walked the rim at sunrise", _rig.Ui.Layout.MemoryCardText.text);
 

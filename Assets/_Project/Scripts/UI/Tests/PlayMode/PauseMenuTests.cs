@@ -329,7 +329,7 @@ namespace MoonProject.UI.PlayModeTests
             yield return new WaitForSecondsRealtime(Settle);
             Assert.IsTrue(_rig.Ui.Pause.IsAskingNewGame);
             Assert.AreSame(layout.NewGameKeepButton, Focused(), "the safe answer has focus");
-            Assert.AreEqual("Put this moon away and start again?",
+            Assert.AreEqual(_rig.Bootstrap.Context.Get<ILocalization>().Get("ui.title.new_game_question"),
                 layout.PageNewGame.Q<Label>(className: "pause__question").text);
             _rig.Ui.Pause.Back();
             yield return new WaitForSecondsRealtime(Settle);
@@ -367,7 +367,7 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual("vi", _rig.Bootstrap.Context.Get<ILocalization>().Language);
             Assert.AreEqual(DisplayStyle.None, layout.ResumeButton.resolvedStyle.display, "nothing to continue");
             Assert.AreSame(layout.NewGameButton, Focused(), "New Game is the default with no save");
-            Assert.AreEqual("Trò chơi mới", layout.NewGameButton.text);
+            Assert.AreEqual(_rig.Bootstrap.Context.Get<ILocalization>().Get("ui.title.new_game"), layout.NewGameButton.text);
 
             Submit(layout.NewGameButton);
             Assert.AreEqual(1, asked, "no question and no dark: the world behind the title is already fresh");
@@ -439,11 +439,13 @@ namespace MoonProject.UI.PlayModeTests
             Submit(layout.ResolutionPrev);
             Assert.AreEqual(resolution, layout.ResolutionValue.text, "and back");
 
-            Assert.AreEqual("Borderless fullscreen", layout.ModeValue.text, "borderless is the default mode");
+            ILocalization words = _rig.Bootstrap.Context.Get<ILocalization>();
+            Assert.AreEqual(words.Get(UiKeys.DisplayModeName(DisplayMode.Borderless)), layout.ModeValue.text,
+                "borderless is the default mode");
             Submit(layout.ModeNext);
-            Assert.AreEqual("Fullscreen", layout.ModeValue.text);
+            Assert.AreEqual(words.Get(UiKeys.DisplayModeName(DisplayMode.Exclusive)), layout.ModeValue.text);
             Submit(layout.ModeNext);
-            Assert.AreEqual("Windowed", layout.ModeValue.text);
+            Assert.AreEqual(words.Get(UiKeys.DisplayModeName(DisplayMode.Windowed)), layout.ModeValue.text);
 
             Assert.IsTrue(layout.VSyncToggle.value, "V-Sync is on by default");
             Assert.IsTrue(layout.FpsRow.ClassListContains("setting-row--idle"), "the FPS limit rests while V-Sync paces");
@@ -453,7 +455,7 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual("120", layout.FpsValue.text, "30, 60, then 120");
             Submit(layout.FpsNext);
             Submit(layout.FpsNext);
-            Assert.AreEqual("Unlimited", layout.FpsValue.text);
+            Assert.AreEqual(words.Get(UiKeys.DisplayUnlimited), layout.FpsValue.text);
 
             _rig.Ui.Pause.Back();
             yield return new WaitForSecondsRealtime(Settle);
