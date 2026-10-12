@@ -19,6 +19,14 @@ account) can continue without the old conversation.
   - ui (box/ui, Sonnet): CountTick roll + event, the ring's charge segment, rumble settings.
   - Audio starts after voice lands.
   - Land order: gameplay -> rover/ui -> art (swap) -> audio.
+- **P0 tips (accepted, waiting for 0.5.1 to ship):**
+  - rover 36d6e741 (registers IFeelSettings; UI fails fast without it, so it lands first);
+  - ui 44fb5be5 (new `StockCountTicked` in UIEvents);
+  - gameplay 9bd1a780 (+ a Dig-beats follow-up running);
+  - art a4c300d0 (readability tweaks and a GC test running; the swap from CutSparks comes after gameplay lands).
+  - Land order: rover -> ui -> gameplay -> art swap -> audio.
+  - After landing: rover adds a 0.05 rumble per `StockCountTicked` unit; audio subscribes to FeelBeat and
+    StockCountTicked.
 - **0.5.1 still to close:** clarity (running), then voice, then §8.2 doc edits, verify --parallel --push and a 0.5.1
   build.
 

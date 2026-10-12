@@ -35,15 +35,16 @@ points by itself: glints, signal pillars, Bell's signals, Tilly's spotting, the 
   tower. Never a fanfare, never a pop-up.
 
 ## 3. The "next" line becomes two-tier (M3-16 "Gentle guidance", P8)
-- **Teaching steps (fixed order, ~first 30–40 min):** M3-16 steps 0–5 as built and as revised by M3-19 (wake, first
-  salvage, tower L1, Tilly's signal, the first memory and the lift, the bay at L2). Each teaches one verb, and the next
-  line invites it as today.
+- **Teaching steps (fixed order, ~first 30 min):** the list in `docs/design/first-hour-v2.md` §4 (the wake, the
+  tower, the depot's cuts, the tower's repair, Tilly's pillar and her buried part, the dock's first charge, Kenji's
+  garage and its port, the tape deck, the duck, the lab's lift). Each teaches one verb, and the next line shows at once
+  and invites it (M3-24 B).
 - **After the teaching steps, the next line speaks only of tier 1:** the current target's next need, naming only
   what the player has already seen. Power first ("The tower needs its last part."), then Link ("The mound mast is
   still dark."). Once nothing in tier 1 is reachable in this version, the line stays empty.
 - **It never names tier 2.** No line ever says "find the Kestrel", "a blueprint is in…", or "visit Bell".
-- P8 stands: the line waits ~2 min without progress, never shows while stargazing, and can be switched off in
-  Settings. The one battery line at 30% (M3-20) is separate.
+- P8 stands once the teaching steps are over: the line waits ~2 min without progress, never shows while stargazing, and
+  can be switched off in Settings. The one battery line at 30% (M3-20) is separate.
 
 ## 4. The tech tree (0.5's nine nodes)
 | Node | Kind | Unknown → Decoded | → Built |
@@ -69,8 +70,8 @@ points by itself: glints, signal pillars, Bell's signals, Tilly's spotting, the 
 - **The golden-path Playthrough** keeps one typical path, GDD v3 §9's S1–S6, and checks the tier rules on the way: the
   next line never names a tier-2 thing, the panel's Power row lights at each level, and the Link row lights at the
   mound mast.
-- **A second, short PlayMode test** takes a different order after the teaching steps (for example the garage and the
-  drill before the chasm) and checks that nothing blocks and the next line stays tier-1 only.
+- **A second, short PlayMode test** takes a different order after the teaching steps (for example the drill before
+  the chasm) and checks that nothing blocks and the next line stays tier-1 only.
 
 ## 6. Renames carried by this spec
 - **P1 story parts become components** (GDD v3 §10): the tower's coil, transformer and relay spare are "components"
@@ -98,6 +99,6 @@ points by itself: glints, signal pillars, Bell's signals, Tilly's spotting, the 
 ## 9. Acceptance
 - A tester who plays past the teaching steps can say, without help, "the tower is done; now the masts lead toward the
   Peak", and can name no other goal the game told them.
-- The next line is empty or tier-1 at every moment after step 5 (Playthrough assertion).
+- The next line is empty or tier-1 at every moment after the teaching steps (Playthrough assertion).
 - The recovery panel and the porthole lamps are right after a load (restored events, no moments replayed).
 - Two different orders after the teaching steps both reach Power 3/3 with nothing blocked.
