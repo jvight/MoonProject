@@ -93,6 +93,9 @@ namespace MoonProject.Gameplay
                  "The upgrade flare adds up to 1 on top.")]
         [Range(0f, 4f)] [SerializeField] private float _poweredGlow = 1f;
 
+        [Tooltip("Glow of the offline plaque's lamp until the tower is repaired (feel-pass §8.2).")]
+        [Range(0f, 4f)] [SerializeField] private float _offlineLampGlow = 1.2f;
+
         [Header("Coming online (feel-pass §8.2)")]
         [Tooltip("Seconds of the online sequence's Anticipate, as the parts go into the hopper.")]
         [Range(0.3f, 3f)] [SerializeField] private float _onlineAnticipateSeconds = 1.2f;
@@ -161,6 +164,7 @@ namespace MoonProject.Gameplay
         public float BeaconLightIntensity => _beaconLightIntensity;
         public float UnpoweredGlow => _unpoweredGlow;
         public float PoweredGlow => _poweredGlow;
+        public float OfflineLampGlow => _offlineLampGlow;
         public float OnlineAnticipateSeconds => _onlineAnticipateSeconds;
         public float OnlineRingSeconds => _onlineRingSeconds;
         public float OnlineImpactAt => _onlineImpactAt;

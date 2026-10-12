@@ -5,39 +5,55 @@ using MoonProject.Core.Events;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// 07's salvaged materials (<see cref="IMaterialStock"/>): salvage adds to it, crafting spends whole recipes, and
-    /// every change (a restore from a save included) publishes <see cref="MaterialsChanged"/> with the new totals.
+    /// Every material the player has (<see cref="IMaterialStock"/>): 07's <see cref="Hold"/> and home's
+    /// <see cref="Home"/> together (docs/features/M3-25 §3.3). Salvage goes into the hold, the dock moves it home,
+    /// recipes read both and spend home first, then 07. Every change of the totals (a restore included) publishes
+    /// <see cref="MaterialsChanged"/>.
     /// </summary>
     public sealed class MaterialStock : IMaterialStock
     {
+        /// <summary>The recipe materials, in the order recipes spend them.</summary>
+        private static readonly SalvageMaterial[] RecipeMaterials =
+        {
+            SalvageMaterial.Metal, SalvageMaterial.Wiring, SalvageMaterial.Optics,
+        };
+
         private readonly EventBus _events;
 
-        public MaterialStock(EventBus events)
+        public MaterialStock(EventBus events, CargoHold hold, HomeStorage home)
         {
             _events = events ?? throw new ArgumentNullException(nameof(events));
+            Hold = hold ?? throw new ArgumentNullException(nameof(hold));
+            Home = home ?? throw new ArgumentNullException(nameof(home));
         }
 
-        public int Metal { get; private set; }
+        public CargoHold Hold { get; }
 
-        public int Wiring { get; private set; }
+        public HomeStorage Home { get; }
 
-        public int Optics { get; private set; }
+        public int Metal => Of(SalvageMaterial.Metal);
 
-        public int Total => Metal + Wiring + Optics;
+        public int Wiring => Of(SalvageMaterial.Wiring);
+
+        public int Optics => Of(SalvageMaterial.Optics);
+
+        public int Total
+        {
+            get
+            {
+                int total = 0;
+                for (int m = 0; m < SalvageMaterials.Count; m++)
+                {
+                    total += Of((SalvageMaterial)m);
+                }
+
+                return total;
+            }
+        }
 
         public int Of(SalvageMaterial material)
         {
-            switch (material)
-            {
-                case SalvageMaterial.Metal:
-                    return Metal;
-                case SalvageMaterial.Wiring:
-                    return Wiring;
-                case SalvageMaterial.Optics:
-                    return Optics;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(material), material, "Unknown salvage material.");
-            }
+            return Hold.Units(material) + Home.Units(material);
         }
 
         public bool Has(Recipe recipe)
@@ -45,32 +61,61 @@ namespace MoonProject.Gameplay
             return Metal >= recipe.Metal && Wiring >= recipe.Wiring && Optics >= recipe.Optics;
         }
 
-        public void Add(SalvageMaterial material, int amount)
+        /// <summary>
+        /// A bundle reaches 07: what fits goes into the hold. Returns the units that did not fit (they wait in the
+        /// world, M3-25 §2.3).
+        /// </summary>
+        public int Collect(SalvageMaterial material, int units)
         {
-            if (amount <= 0)
+            if (units <= 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(amount), amount, "Salvage adds a positive amount.");
+                throw new ArgumentOutOfRangeException(nameof(units), units, "A bundle holds a positive amount.");
             }
 
-            switch (material)
+            int fitted = Hold.Add(material, units);
+            if (fitted > 0)
             {
-                case SalvageMaterial.Metal:
-                    Metal = checked(Metal + amount);
-                    break;
-                case SalvageMaterial.Wiring:
-                    Wiring = checked(Wiring + amount);
-                    break;
-                case SalvageMaterial.Optics:
-                    Optics = checked(Optics + amount);
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(material), material, "Unknown salvage material.");
+                Announce();
             }
 
-            Announce();
+            return units - fitted;
         }
 
-        /// <summary>Spends <paramref name="recipe"/> if the stock covers all of it; else nothing changes.</summary>
+        /// <summary>
+        /// Moves up to <paramref name="units"/> of <paramref name="material"/> from 07's hold onto home's shelves (the
+        /// dock's unload, M3-25 §3.2); returns how many moved. The totals do not change.
+        /// </summary>
+        public int MoveHome(SalvageMaterial material, int units)
+        {
+            int moving = Math.Min(Math.Min(units, Hold.Units(material)), Home.FreeUnits(material));
+            if (moving <= 0)
+            {
+                return 0;
+            }
+
+            Hold.Remove(material, moving);
+            Home.Add(material, moving);
+            return moving;
+        }
+
+        /// <summary>
+        /// Puts <paramref name="units"/> straight onto home's shelves (Tilly's fetch, M3-25 T3); returns what did not
+        /// fit, which stays where it was.
+        /// </summary>
+        public int Deliver(SalvageMaterial material, int units)
+        {
+            int fitted = Home.Add(material, units);
+            if (fitted > 0)
+            {
+                Announce();
+            }
+
+            return units - fitted;
+        }
+
+        /// <summary>
+        /// Spends <paramref name="recipe"/> if home and 07 together cover it, home first; else nothing changes.
+        /// </summary>
         public bool TrySpend(Recipe recipe)
         {
             if (recipe.IsFree)
@@ -83,18 +128,34 @@ namespace MoonProject.Gameplay
                 return false;
             }
 
-            Metal -= recipe.Metal;
-            Wiring -= recipe.Wiring;
-            Optics -= recipe.Optics;
+            for (int i = 0; i < RecipeMaterials.Length; i++)
+            {
+                SalvageMaterial material = RecipeMaterials[i];
+                int need = recipe.Of(material);
+                need -= Home.Remove(material, need);
+                Hold.Remove(material, need);
+            }
+
             Announce();
             return true;
         }
 
         public MaterialsSaveData Capture()
         {
-            return new MaterialsSaveData { metal = Metal, wiring = Wiring, optics = Optics };
+            return new MaterialsSaveData
+            {
+                hold = Hold.Capture(),
+                holdSlots = Hold.SlotCount,
+                home = Home.CaptureShelves(),
+                overflow = Home.CaptureOverflow(),
+                shelvesBuilt = Home.BuiltCount,
+            };
         }
 
+        /// <summary>
+        /// Lays a save in. The hold keeps at least its saved slots (the kits restore after), and anything that no
+        /// longer fits it goes home; home's own overflow waits in crates. Nothing is dropped.
+        /// </summary>
         public void Restore(MaterialsSaveData data)
         {
             if (data == null)
@@ -102,16 +163,47 @@ namespace MoonProject.Gameplay
                 throw new ArgumentNullException(nameof(data));
             }
 
-            if (data.metal < 0 || data.wiring < 0 || data.optics < 0)
+            int[] hold = data.hold ?? Array.Empty<int>();
+            var home = new int[SalvageMaterials.Count];
+            Copy(data.home, home, "home");
+            Home.Restore(data.shelvesBuilt, home, data.overflow ?? Array.Empty<int>());
+            Hold.Clear();
+            Hold.SetSlotCount(Math.Max(Hold.SlotCount, data.holdSlots));
+            for (int m = 0; m < hold.Length && m < SalvageMaterials.Count; m++)
             {
-                throw new FormatException(
-                    $"Saved materials ({data.metal}, {data.wiring}, {data.optics}) are negative.");
+                if (hold[m] < 0)
+                {
+                    throw new FormatException($"07's saved {(SalvageMaterial)m} is negative ({hold[m]}).");
+                }
+
+                var material = (SalvageMaterial)m;
+                int left = hold[m] - (hold[m] > 0 ? Hold.Add(material, hold[m]) : 0);
+                int shelved = left > 0 ? Home.Add(material, left) : 0;
+                if (left > shelved)
+                {
+                    Home.AddOverflow(material, left - shelved);
+                }
             }
 
-            Metal = data.metal;
-            Wiring = data.wiring;
-            Optics = data.optics;
             Announce();
+        }
+
+        private static void Copy(int[] from, int[] to, string what)
+        {
+            if (from == null)
+            {
+                return;
+            }
+
+            for (int m = 0; m < from.Length && m < to.Length; m++)
+            {
+                if (from[m] < 0)
+                {
+                    throw new FormatException($"The saved {what} {(SalvageMaterial)m} is negative ({from[m]}).");
+                }
+
+                to[m] = from[m];
+            }
         }
 
         private void Announce()

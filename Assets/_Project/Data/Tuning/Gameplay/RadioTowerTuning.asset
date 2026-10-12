@@ -38,6 +38,7 @@ MonoBehaviour:
   _beaconLightIntensity: 1.5
   _unpoweredGlow: 0.02
   _poweredGlow: 1
+  _offlineLampGlow: 1.2
   _onlineAnticipateSeconds: 1.2
   _onlineRingSeconds: 0.4
   _onlineImpactAt: 1.6

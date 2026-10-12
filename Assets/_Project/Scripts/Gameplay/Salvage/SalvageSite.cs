@@ -49,6 +49,9 @@ namespace MoonProject.Gameplay
         /// <summary>Radius (m) of the site's flat footprint (its World anchor's).</summary>
         public float Radius { get; }
 
+        /// <summary>Its crew supply crate (M3-25 T4).</summary>
+        public CrewCrate Crate { get; internal set; }
+
         /// <summary>The "Heart" node's world position: where its relics rest.</summary>
         public Vector3 Heart { get; }
 

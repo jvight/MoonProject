@@ -5,8 +5,9 @@ namespace MoonProject.Gameplay.Editor
     /// <summary>The authored data of one relic, turned into a RelicDefinition asset by the content builder.</summary>
     internal readonly struct RelicRecipe
     {
-        public RelicRecipe(string id, float mass, int answerNote, string site, Vector2 heartOffset)
+        public RelicRecipe(string id, string crew, float mass, int answerNote, string site, Vector2 heartOffset)
         {
+            Crew = crew;
             Id = id;
             Mass = mass;
             AnswerNote = answerNote;
@@ -15,6 +16,9 @@ namespace MoonProject.Gameplay.Editor
         }
 
         public string Id { get; }
+
+        /// <summary>Whose belongings it is (a crew id).</summary>
+        public string Crew { get; }
 
         public float Mass { get; }
 

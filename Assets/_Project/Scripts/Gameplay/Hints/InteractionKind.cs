@@ -58,5 +58,11 @@ namespace MoonProject.Gameplay
         /// lift it onto 07's back. The hint's <see cref="InteractionHint.NounKey"/> names the part.
         /// </summary>
         PickUp = 13,
+
+        /// <summary>
+        /// Beside a free shelf socket at home (docs/features/M3-25 §3.1): hold Excavate to build its shelf (Ready once home
+        /// and 07 cover its recipe).
+        /// </summary>
+        Build = 14,
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace MoonProject.Gameplay
@@ -45,40 +46,20 @@ namespace MoonProject.Gameplay
         [Tooltip("Once cutting, 07 may drift this many times faster before the beam lets go (no flicker).")]
         [Range(1f, 3f)] [SerializeField] private float _engageHysteresis = 1.5f;
 
-        [Tooltip("Seconds the emitter charges up before ignition on a fresh cut (feel-pass §3.1); letting go during it " +
-                 "cancels with nothing lost and no battery drawn.")]
-        [Range(0.5f, 0.8f)] [SerializeField] private float _chargeSeconds = 0.65f;
-
-        [Tooltip("Seconds of charge-up when resuming a part-cut piece: its seam is still warm.")]
-        [Range(0.1f, 0.6f)] [SerializeField] private float _resumeChargeSeconds = 0.3f;
-
         [Tooltip("Steps a cut climbs through: each one publishes an Act beat (the sustained rumble and sizzle).")]
         [Range(1, 8)] [SerializeField] private int _cutSteps = 5;
 
-        [Tooltip("Seconds of cutting per material unit the piece yields...")]
-        [Range(0.2f, 3f)] [SerializeField] private float _cutSecondsPerUnit = 1f;
+        [Tooltip("Seconds the beam slides to the next segment of a big piece, still lit, with no new charge.")]
+        [Range(0.1f, 0.6f)] [SerializeField] private float _segmentSlideSeconds = 0.25f;
 
-        [Tooltip("...kept within this range (s): every cut is a short, calm beat.")]
-        [SerializeField] private Vector2 _cutSeconds = new Vector2(2f, 4f);
-
-        [Header("Yield (VISION ruling 5: the sites give at least twice every recipe)")]
-        [Tooltip("A piece smaller than this volume (m³, its mesh bounds) yields the small amount...")]
-        [Range(0.1f, 10f)] [SerializeField] private float _smallVolume = 1f;
-
-        [Tooltip("...one smaller than this volume (m³) the medium amount, and anything bigger the large amount.")]
-        [Range(0.1f, 20f)] [SerializeField] private float _mediumVolume = 3f;
-
-        [Tooltip("Units a small piece yields.")]
-        [Range(1, 10)] [SerializeField] private int _smallYield = 2;
-
-        [Tooltip("Units a medium piece yields.")]
-        [Range(1, 10)] [SerializeField] private int _mediumYield = 3;
-
-        [Tooltip("Units a large piece yields.")]
-        [Range(1, 10)] [SerializeField] private int _largeYield = 4;
-
-        [Tooltip("Units a drag piece yields (it is pulled clear before it can be cut).")]
-        [Range(1, 10)] [SerializeField] private int _dragYield = 4;
+        [Header("Piece sizes (docs/features/M3-26 §4.1; VISION ruling 5: the sites give about twice the recipes)")]
+        [Tooltip("Small, medium, large plate and hull plate, in PieceSize order: segments, seconds per segment at " +
+                 "tier 0, units.")]
+        [SerializeField] private PieceSizeRow[] _sizes =
+        {
+            new PieceSizeRow(1, 1.2f, 2), new PieceSizeRow(1, 2.5f, 3), new PieceSizeRow(2, 2.5f, 5),
+            new PieceSizeRow(3, 3.5f, 8),
+        };
 
         [Header("Drag pieces")]
         [Tooltip("A drag piece pulled this many metres (horizontal) from where it hung lets go of the tether and " +
@@ -215,14 +196,6 @@ namespace MoonProject.Gameplay
         public float HaloEase => _haloEase;
         public float EngageSpeed => _engageSpeed;
         public float EngageHysteresis => _engageHysteresis;
-        public float CutSecondsPerUnit => _cutSecondsPerUnit;
-        public Vector2 CutSeconds => Ordered(_cutSeconds);
-        public float SmallVolume => _smallVolume;
-        public float MediumVolume => Mathf.Max(_mediumVolume, _smallVolume);
-        public int SmallYield => _smallYield;
-        public int MediumYield => _mediumYield;
-        public int LargeYield => _largeYield;
-        public int DragYield => _dragYield;
         public float DragClearance => _dragClearance;
         public float DragMass => _dragMass;
         public float DragLinearDamping => _dragLinearDamping;
@@ -235,9 +208,20 @@ namespace MoonProject.Gameplay
         public float ReturnHover => _returnHover;
         public float ReturnDuration => _returnDuration;
         public float ReturnPerMetre => _returnPerMetre;
-        public float ChargeSeconds => _chargeSeconds;
-        public float ResumeChargeSeconds => _resumeChargeSeconds;
         public int CutSteps => _cutSteps;
+        public float SegmentSlideSeconds => _segmentSlideSeconds;
+
+        /// <summary>The size table's row for <paramref name="size"/>.</summary>
+        public PieceSizeRow Size(PieceSize size)
+        {
+            int row = (int)size;
+            if (row < 0 || row >= _sizes.Length)
+            {
+                throw new ArgumentOutOfRangeException(nameof(size), size, "The size table has no row for it.");
+            }
+
+            return _sizes[row];
+        }
         public float CrackSeconds => _crackSeconds;
         public float TumbleSeconds => _tumbleSeconds;
         public float TumbleRise => _tumbleRise;
@@ -267,10 +251,5 @@ namespace MoonProject.Gameplay
         public float FlashIntensity => _flashIntensity;
         public float LandmarkGlow => _landmarkGlow;
         public float LandmarkEase => _landmarkEase;
-
-        private static Vector2 Ordered(Vector2 range)
-        {
-            return range.x <= range.y ? range : new Vector2(range.y, range.x);
-        }
     }
 }

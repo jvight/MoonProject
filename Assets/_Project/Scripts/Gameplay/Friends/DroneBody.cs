@@ -48,6 +48,10 @@ namespace MoonProject.Gameplay
         private Vector3 _liftPosition;
         private bool _lead;
         private Vector3 _leadToward;
+        private bool _fetch;
+        private Vector3 _fetchToward;
+        private float _fetchSpeed;
+        private float _fetchHeight;
         private float _liftYaw;
 
         public DroneBody(FriendTuning tuning, ITerrainQuery terrain, IRoverState rover, IViewCamera view,
@@ -226,6 +230,22 @@ namespace MoonProject.Gameplay
             _leadToward = toward;
         }
 
+        /// <summary>
+        /// Sends it on a fetch toward <paramref name="toward"/> while <paramref name="fetch"/> is true (a waiting
+        /// bundle, then home's shelves; docs/features/M3-25 T3); false lets it go back to its own life. Leading a crawl
+        /// home comes first.
+        /// </summary>
+        public void Fetch(bool fetch, Vector3 toward, float speed, float height)
+        {
+            _fetch = fetch;
+            _fetchToward = toward;
+            _fetchSpeed = speed;
+            _fetchHeight = height;
+        }
+
+        /// <summary>True while it leads 07 home, which a fetch must give way to.</summary>
+        public bool Leading => _behaviour.Current == FriendBehaviour.Mode.Leading;
+
         private FriendSenses Senses(float now)
         {
             return new FriendSenses
@@ -242,6 +262,10 @@ namespace MoonProject.Gameplay
                 InspectForward = _home.InspectForward,
                 Lead = _lead,
                 LeadToward = _leadToward,
+                Fetch = _fetch,
+                FetchToward = _fetchToward,
+                FetchSpeed = _fetchSpeed,
+                FetchHeight = _fetchHeight,
             };
         }
 
@@ -252,6 +276,7 @@ namespace MoonProject.Gameplay
                 case FriendBehaviour.Mode.Following:
                 case FriendBehaviour.Mode.Greeting:
                 case FriendBehaviour.Mode.Leading:
+                case FriendBehaviour.Mode.Fetching:
                     return FriendActivity.Following;
                 case FriendBehaviour.Mode.Spotting:
                     return FriendActivity.Spotting;
