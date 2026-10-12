@@ -49,6 +49,10 @@ namespace MoonProject.UI
         [Range(1f, 5f)]
         [SerializeField] private float _lookMax = 3f;
 
+        [Tooltip("The text sizes the Settings row steps through, as multiples of the normal size (100, 125, 150 %). " +
+                 "The whole UI scales with it; layouts wrap and never truncate.")]
+        [SerializeField] private float[] _textScales = { 1f, 1.25f, 1.5f };
+
         public RevealSettings Menu => _menu;
 
         public RevealSettings SettingsPanel => _settingsPanel;
@@ -70,5 +74,26 @@ namespace MoonProject.UI
         public float LookMin => _lookMin;
 
         public float LookMax => _lookMax;
+
+        public float[] TextScales => _textScales;
+
+        /// <summary>Null when usable, else the first problem.</summary>
+        public string Validate()
+        {
+            if (_textScales == null || _textScales.Length == 0)
+            {
+                return "no text sizes are offered";
+            }
+
+            foreach (float scale in _textScales)
+            {
+                if (scale < 1f)
+                {
+                    return "a text size is below the normal size";
+                }
+            }
+
+            return null;
+        }
     }
 }

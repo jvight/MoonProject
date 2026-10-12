@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 using MoonProject.Core;
@@ -10,7 +11,8 @@ namespace MoonProject.UI
     /// One row of the three materials, built into a container: per material a painted icon and a number, in Metal,
     /// Wiring, Optics order. The materials chip, the pause summary and every recipe use it. A material can be left out
     /// of the layout, shown dimmed (short), and given a glow behind its icon. Writes styles and text only when they
-    /// change.
+    /// change. A recipe's slots can also read "have / need" (a short material gets a hollow pip), and carry the
+    /// material's name (docs/design/first-hour-v2 6.5).
     /// </summary>
     internal sealed class MaterialSlots
     {
@@ -19,16 +21,26 @@ namespace MoonProject.UI
         public const string IconClass = "material-icon";
         public const string GlowClass = "material-slot__glow";
         public const string CountClass = "material-slot__count";
+        public const string WordClass = "material-slot__word";
+        public const string PipClass = "material-slot__pip";
+        private const string HaveNeedSeparator = " / ";
 
         private const float WriteEpsilon = 1e-3f;
+        private const int HaveCap = 999;
 
         private readonly IntText _numbers;
+        private readonly ILocalization _words;
+        private readonly bool _haveNeed;
+        private readonly Dictionary<int, string> _haveNeedTexts = new Dictionary<int, string>();
         private readonly Slot[] _slots = new Slot[Materials.Count];
 
         /// <param name="container">Where the three slots go (emptied first).</param>
         /// <param name="numbers">Cached number strings.</param>
         /// <param name="withGlow">True: each icon gets a soft halo behind it for <see cref="SetGlow"/>.</param>
-        public MaterialSlots(VisualElement container, IntText numbers, bool withGlow)
+        /// <param name="words">When given, each slot also names its material.</param>
+        /// <param name="haveNeed">True: a recipe's count reads "have / need" and a short one gets a hollow pip.</param>
+        public MaterialSlots(VisualElement container, IntText numbers, bool withGlow, ILocalization words = null,
+            bool haveNeed = false)
         {
             if (container == null)
             {
@@ -36,6 +48,8 @@ namespace MoonProject.UI
             }
 
             _numbers = numbers ?? throw new ArgumentNullException(nameof(numbers));
+            _words = words;
+            _haveNeed = haveNeed;
             container.Clear();
             for (int i = 0; i < Materials.Count; i++)
             {
@@ -60,11 +74,42 @@ namespace MoonProject.UI
                 var count = new Label { pickingMode = PickingMode.Ignore };
                 count.AddToClassList(CountClass);
                 root.Add(icon);
+                Label word = null;
+                if (words != null)
+                {
+                    word = new Label { pickingMode = PickingMode.Ignore };
+                    word.AddToClassList(WordClass);
+                    root.Add(word);
+                }
+
                 root.Add(count);
+                if (haveNeed)
+                {
+                    var pip = new VisualElement { pickingMode = PickingMode.Ignore };
+                    pip.AddToClassList(PipClass);
+                    root.Add(pip);
+                }
+
                 container.Add(root);
                 new MaterialIconPainter(icon, material);
-                _slots[i] = new Slot(root, glow, icon, count);
+                _slots[i] = new Slot(root, glow, icon, count, word);
                 SetCount(material, 0);
+            }
+
+            Relocalize();
+        }
+
+        /// <summary>Writes the materials' names again (a new language).</summary>
+        public void Relocalize()
+        {
+            if (_words == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < Materials.Count; i++)
+            {
+                _slots[i].Word.text = _words.Get(UiKeys.MaterialName(Materials.At(i)));
             }
         }
 
@@ -72,6 +117,12 @@ namespace MoonProject.UI
         public string Text(SalvageMaterial material)
         {
             return _slots[(int)material].Count.text;
+        }
+
+        /// <summary>The name written on <paramref name="material"/>'s slot (tests and captures).</summary>
+        public string Word(SalvageMaterial material)
+        {
+            return _slots[(int)material].Word.text;
         }
 
         /// <summary>The slot of <paramref name="material"/> (tests and captures).</summary>
@@ -88,6 +139,26 @@ namespace MoonProject.UI
                 slot.Count.text = _numbers.Get(value);
                 slot.Written = value;
             }
+        }
+
+        /// <summary>Reads "have / need" on <paramref name="material"/>'s slot; each pair is formatted once.</summary>
+        private void SetHaveNeed(SalvageMaterial material, int have, int need)
+        {
+            Slot slot = _slots[(int)material];
+            int key = Mathf.Clamp(have, 0, HaveCap) * (HaveCap + 1) + Mathf.Clamp(need, 0, HaveCap);
+            if (key == slot.WrittenPair)
+            {
+                return;
+            }
+
+            if (!_haveNeedTexts.TryGetValue(key, out string text))
+            {
+                text = string.Concat(_numbers.Get(have), HaveNeedSeparator, _numbers.Get(need));
+                _haveNeedTexts.Add(key, text);
+            }
+
+            slot.Count.text = text;
+            slot.WrittenPair = key;
         }
 
         /// <summary>Takes <paramref name="material"/>'s slot out of the layout (a recipe not using it).</summary>
@@ -122,7 +193,15 @@ namespace MoonProject.UI
             {
                 SalvageMaterial material = Materials.At(i);
                 SetShown(material, status.Uses(material));
-                SetCount(material, recipe.Of(material));
+                if (_haveNeed)
+                {
+                    SetHaveNeed(material, status.Have(material), recipe.Of(material));
+                }
+                else
+                {
+                    SetCount(material, recipe.Of(material));
+                }
+
                 SetShort(material, status.IsShort(material));
             }
         }
@@ -144,12 +223,13 @@ namespace MoonProject.UI
 
         private sealed class Slot
         {
-            public Slot(VisualElement root, VisualElement glow, VisualElement icon, Label count)
+            public Slot(VisualElement root, VisualElement glow, VisualElement icon, Label count, Label word)
             {
                 Root = root;
                 Glow = glow;
                 Icon = icon;
                 Count = count;
+                Word = word;
             }
 
             public VisualElement Root { get; }
@@ -159,6 +239,10 @@ namespace MoonProject.UI
             public VisualElement Icon { get; }
 
             public Label Count { get; }
+
+            public Label Word { get; }
+
+            public int WrittenPair { get; set; } = -1;
 
             public int Written { get; set; } = -1;
 

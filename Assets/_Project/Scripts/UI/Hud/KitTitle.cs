@@ -71,12 +71,13 @@ namespace MoonProject.UI
         }
 
         /// <param name="deltaTime">Unscaled seconds; pass 0 while paused so the name waits too.</param>
-        public void Tick(float deltaTime)
+        /// <param name="open">False while another block holds the upper-third zone (a place card): a name waits.</param>
+        public void Tick(float deltaTime, bool open = true)
         {
             switch (_phase)
             {
                 case Phase.Idle:
-                    if (_waiting.Count > 0)
+                    if (open && _waiting.Count > 0)
                     {
                         Current = _waiting.Dequeue();
                         _label.text = _localization.Get(Current);
@@ -87,7 +88,7 @@ namespace MoonProject.UI
                     break;
                 case Phase.Waiting:
                     _timer += deltaTime;
-                    if (_timer >= _settings.Delay)
+                    if (open && _timer >= _settings.Delay)
                     {
                         _reveal.Show();
                         _timer = 0f;
