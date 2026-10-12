@@ -148,6 +148,9 @@ namespace MoonProject.Rover
             + "the battery emptying and the boost (feel-pass §2.3, §2.4, §2.10, §2.13).")]
         [SerializeField] private MotionFeelSettings _motionFeel = new MotionFeelSettings();
 
+        [Tooltip("The charge run's lamps from the battery along 07's back to the emitter (M3-26 §2).")]
+        [SerializeField] private ChargeRunSettings _chargeRun = new ChargeRunSettings();
+
         [Header("Flank lamps (the battery)")]
         [Tooltip("The amber lamps along the stripe, one per cell (docs/features/M3-20).")]
         [SerializeField] private FlankLampSettings _flankLamps = new FlankLampSettings();
@@ -260,6 +263,8 @@ namespace MoonProject.Rover
         public DockFeelSettings DockFeel => _dockFeel;
 
         public MotionFeelSettings MotionFeel => _motionFeel;
+
+        public ChargeRunSettings ChargeRun => _chargeRun;
 
         public float TubeHalfLife => _tubeHalfLife;
 

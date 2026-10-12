@@ -165,6 +165,7 @@ namespace MoonProject.Rover.Editor
                 ("_kit", kit),
                 ("_tetherOrigin", BuildWiring.Node(m, RoverModelNodes.TetherOrigin)),
                 ("_cargoSocket", BuildWiring.Node(m, RoverModelNodes.CargoSocket)));
+            BuildWiring.AssignArray(controller, "_chargeLamps", ChargeLamps(m));
 
             BuildWiring.Assign(bodyLanguage,
                 ("_tuning", characterTuning),
@@ -337,6 +338,36 @@ namespace MoonProject.Rover.Editor
                 BuildWiring.NodeComponent<MeshRenderer>(drumRight, RoverModelNodes.DrumGlow),
             });
             return kit;
+        }
+
+        /// <summary>
+        /// The charge run's lamps (M3-26 §2): the renderers on RoverModel's ChargeLamp_0, ChargeLamp_1, ... nodes in
+        /// order from the battery, as far as they run. The model carries none until art's cutter-lamps pass.
+        /// </summary>
+        private static Object[] ChargeLamps(Transform model)
+        {
+            var lamps = new System.Collections.Generic.List<Object>();
+            Transform[] nodes = model.GetComponentsInChildren<Transform>(true);
+            for (int i = 0; ; i++)
+            {
+                string name = ChargeRunLamps.SocketName(i);
+                Renderer lamp = null;
+                foreach (Transform node in nodes)
+                {
+                    if (node.name == name)
+                    {
+                        lamp = node.GetComponentInChildren<Renderer>(true);
+                        break;
+                    }
+                }
+
+                if (lamp == null)
+                {
+                    return lamps.ToArray();
+                }
+
+                lamps.Add(lamp);
+            }
         }
 
         /// <summary>A kit prefab on <paramref name="socket"/> with identity, hidden until 07 owns it.</summary>

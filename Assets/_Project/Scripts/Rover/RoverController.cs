@@ -56,6 +56,10 @@ namespace MoonProject.Rover
         [Tooltip("The amber flank lamps along the stripe: 07's battery (docs/features/M3-20).")]
         [SerializeField] private RoverFlankLamps _flankLamps;
 
+        [Tooltip("The charge run's lamp renderers on RoverModel's ChargeLamp_0.. nodes, battery first (M3-26 §2); art's "
+            + "model carries them from the cutter-lamps pass on.")]
+        [SerializeField] private Renderer[] _chargeLamps = new Renderer[0];
+
         [Tooltip("RoverModel 'TetherOrigin' (lens centre of 07's eye, +Z = gaze).")]
         [SerializeField] private Transform _tetherOrigin;
 
@@ -74,6 +78,7 @@ namespace MoonProject.Rover
         private BatteryLink _battery;
         private IDisposable _dockChanges;
         private RoverFeel _feel;
+        private ChargeRunLamps _chargeRun;
         private bool _docked;
         private bool _cradled;
         private Vector3 _cradleBody;
@@ -337,6 +342,10 @@ namespace MoonProject.Rover
                 _feel = new RoverFeel(_events, feel.CutFeel, feel.DockFeel, feel.MotionFeel, feelPreferences,
                     new GamepadRumbleMotors(), _visualRig);
                 _visualRig.SetNudge(_feel.Nudge);
+                if (_chargeLamps.Length > 0)
+                {
+                    _chargeRun = new ChargeRunLamps(_events, feel.ChargeRun, _chargeLamps);
+                }
             }
 
             bool kitReady = _kit.Initialize(context, this, _visualRig);
@@ -853,6 +862,7 @@ namespace MoonProject.Rover
             float deltaTime = Time.deltaTime;
             _stillness.Step(SampleStillness(), deltaTime);
             _feel.Tick(deltaTime, Time.time, Speed, _visualRig.RootPosition);
+            _chargeRun?.Tick(deltaTime);
             _visualRig.Tick(deltaTime);
             _kit.Tick(deltaTime);
             _wheelFx.Tick();
@@ -884,6 +894,7 @@ namespace MoonProject.Rover
         {
             _dockChanges?.Dispose();
             _feel?.Dispose();
+            _chargeRun?.Dispose();
         }
     }
 }
