@@ -41,7 +41,8 @@ namespace MoonProject.Audio
 
                 for (int v = 0; v < mood.Variants.Length; v++)
                 {
-                    string problem = mood.Variants[v]?.FindProblem() ?? "missing";
+                    ChirpVariant variant = mood.Variants[v];
+                    string problem = variant == null ? "missing" : variant.FindProblem();
                     if (problem != null)
                     {
                         return $"chirp {(ChirpMood)m} variant {v}: {problem}";
