@@ -30,11 +30,5 @@ namespace MoonProject.Core
 
         /// <summary>Four cells become six; the battery spine on 07's back (docs/features/M3-20).</summary>
         CellPackII = 8,
-
-        /// <summary>The Focus Lens: cutter tier 1 (docs/features/M3-26).</summary>
-        FocusLens = 9,
-
-        /// <summary>The Side Bins: four more slots in 07's hold (docs/features/M3-25).</summary>
-        SideBins = 10,
     }
 }

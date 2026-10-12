@@ -74,10 +74,6 @@ MonoBehaviour:
     _kitId: rover.boost_coils
   - _node: 8
     _kitId: rover.cell_pack
-  - _node: 9
-    _kitId: rover.focus_lens
-  - _node: 10
-    _kitId: rover.side_bins
   _recoveryLamps:
     _peakFoot: 1
     _dish: 4
