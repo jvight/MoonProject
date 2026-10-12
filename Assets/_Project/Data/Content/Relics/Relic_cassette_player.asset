@@ -18,3 +18,4 @@ MonoBehaviour:
   _answerNote: 3
   _siteId: site.garage
   _heartOffset: {x: 0, y: -1.3}
+  _crewSet: ro

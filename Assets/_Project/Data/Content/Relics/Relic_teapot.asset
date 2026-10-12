@@ -18,3 +18,4 @@ MonoBehaviour:
   _answerNote: 4
   _siteId: site.lander
   _heartOffset: {x: 0, y: 0}
+  _crewSet: theo
