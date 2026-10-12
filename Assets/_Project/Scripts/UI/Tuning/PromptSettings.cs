@@ -19,7 +19,6 @@ namespace MoonProject.UI
         [Tooltip("Teachable actions. The tower upgrade is taught by its own panel, so it has no entry.")]
         [SerializeField] private PromptEntry[] _entries =
         {
-            new PromptEntry(InteractionKind.Ping, RoverAction.Ping, 6f, 1.9f),
             new PromptEntry(InteractionKind.Excavate, RoverAction.Excavate, 0.5f, 0.9f),
             new PromptEntry(InteractionKind.Tether, RoverAction.Tether, 0.4f, 0.9f),
             new PromptEntry(InteractionKind.Deposit, RoverAction.Tether, 0.25f, 1.4f),

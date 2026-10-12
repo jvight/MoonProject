@@ -71,6 +71,14 @@ namespace MoonProject.Gameplay
         /// <summary>How far through the current drawing (0..1; 0 when idle).</summary>
         public float DrawProgress { get; private set; }
 
+        /// <summary>Where <paramref name="kitId"/>'s sheet hangs, while the pegboard shows it.</summary>
+        public bool TryGetSheet(string kitId, out Vector3 position)
+        {
+            bool shown = _sheets.TryGetValue(kitId, out GameObject sheet) && sheet.activeSelf;
+            position = shown ? sheet.transform.position : Vector3.zero;
+            return shown;
+        }
+
         /// <summary>True when the pegboard shows <paramref name="kitId"/>'s sheet.</summary>
         public bool ShowsSheet(string kitId)
         {

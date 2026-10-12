@@ -5,13 +5,12 @@ namespace MoonProject.Gameplay
 {
     /// <summary>
     /// Reads the Art site contract's node names (docs/features/M3-13): a site piece is
-    /// "Salvage_&lt;n&gt;_&lt;Material&gt;" or "Salvage_&lt;n&gt;_&lt;Material&gt;_Drag", a loose trail bit is
-    /// "Debris_&lt;Material&gt;_&lt;n&gt;". Pure string work, run at initialisation and by the economy test.
+    /// "Salvage_&lt;n&gt;_&lt;Material&gt;" or "Salvage_&lt;n&gt;_&lt;Material&gt;_Drag". Pure string work, run at
+    /// initialisation and by the economy test.
     /// </summary>
     public static class SalvagePieceName
     {
         public const string PiecePrefix = "Salvage_";
-        public const string DebrisPrefix = "Debris_";
         public const string DragSuffix = "Drag";
 
         private const char Separator = '_';
@@ -49,20 +48,6 @@ namespace MoonProject.Gameplay
             }
 
             return true;
-        }
-
-        /// <summary>True for a loose trail bit's name ("Debris_Optics_1"), with its material.</summary>
-        public static bool TryParseDebris(string name, out SalvageMaterial material)
-        {
-            material = SalvageMaterial.Metal;
-            if (name == null || !name.StartsWith(DebrisPrefix, StringComparison.Ordinal))
-            {
-                return false;
-            }
-
-            string[] parts = name.Substring(DebrisPrefix.Length).Split(Separator);
-            return parts.Length == 2 && int.TryParse(parts[1], out int number) && number >= 0 &&
-                   TryParseMaterial(parts[0], out material);
         }
 
         private static bool TryParseMaterial(string text, out SalvageMaterial material)

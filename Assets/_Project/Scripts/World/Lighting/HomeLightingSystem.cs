@@ -11,10 +11,15 @@ namespace MoonProject.World
     /// whoever drives home's lamps how lit each warm point is now. It drives World's own parts of the wake itself: the
     /// glass segments of Art's ground power cables (lit from the tower outward), the tower's pilot blink while the
     /// base sleeps, the warm light pools on the ground under home's warm points and home's grade, which warms a step
-    /// with each stage. Thin: the timing lives in <see cref="HomeLightStages"/>.
+    /// with each stage. The first time 07 comes near the radio tower (<see cref="PlaceFirstApproached"/>), a slow light
+    /// previews each dark cable, showing what the tower will power (docs/features/M3-24 B). Thin: the timing lives in
+    /// <see cref="HomeLightStages"/>.
     /// </summary>
     public sealed class HomeLightingSystem : MonoBehaviour, IGameSystem, IHomeLights
     {
+        /// <summary>The radio tower's place id (docs/features/M3-16 contracts, published by Gameplay).</summary>
+        private const string TowerPlace = "place.tower";
+
         private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
         private static readonly int IntensityId = Shader.PropertyToID("_Intensity");
         private static readonly int RadiusId = Shader.PropertyToID("_Radius");
@@ -52,6 +57,7 @@ namespace MoonProject.World
         private MaterialPropertyBlock _block;
         private HomeLightStages _stages;
         private IDisposable _powerChanged;
+        private IDisposable _placeApproached;
         private float[] _homeApplied;
         private float[] _bayApplied;
         private float[] _chartApplied;
@@ -80,6 +86,7 @@ namespace MoonProject.World
             SetUpPools();
             _context = context;
             _powerChanged = context.Events.Subscribe<BasePowerChanged>(OnPowerChanged);
+            _placeApproached = context.Events.Subscribe<PlaceFirstApproached>(OnPlaceApproached);
             context.Register<IHomeLights>(this);
         }
 
@@ -215,9 +222,18 @@ namespace MoonProject.World
             }
         }
 
+        private void OnPlaceApproached(PlaceFirstApproached approached)
+        {
+            if (approached.PlaceId == TowerPlace)
+            {
+                _stages.Preview(Time.time);
+            }
+        }
+
         private void OnDestroy()
         {
             _powerChanged?.Dispose();
+            _placeApproached?.Dispose();
         }
 
         private static float[] Unapplied(int count)

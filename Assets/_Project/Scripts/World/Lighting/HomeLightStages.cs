@@ -8,7 +8,8 @@ namespace MoonProject.World
     /// Maps the base's power stage to how lit each of home's warm points is (0..1, linear glow scale). A fresh game is
     /// Asleep: only the dock glows and the tower's pilot blinks. When a stage arrives, power runs along its ground
     /// cable from the tower, then its warm points wake one by one, eased; a restored stage (on load) is applied at
-    /// once. Plain logic, allocation-free: poll every frame.
+    /// once. The first time 07 comes near the tower, a slow light previews each dark cable in turn (lander, bay, chart;
+    /// docs/features/M3-24 B) and fades. Plain logic, allocation-free: poll every frame.
     /// </summary>
     public sealed class HomeLightStages
     {
@@ -24,6 +25,7 @@ namespace MoonProject.World
         private BasePowerStage _stage = BasePowerStage.Asleep;
         private BasePowerStage _wakingStage = BasePowerStage.Asleep;
         private float _wokeAt = float.NegativeInfinity;
+        private float _previewAt = float.NegativeInfinity;
 
         public HomeLightStages(HomeLightingSettings settings)
         {
@@ -66,6 +68,12 @@ namespace MoonProject.World
             _wokeAt = wakes ? time : float.NegativeInfinity;
         }
 
+        /// <summary>07 came near the tower for the first time: its cables' preview starts at <paramref name="time"/>.</summary>
+        public void Preview(float time)
+        {
+            _previewAt = time;
+        }
+
         /// <summary>How lit <paramref name="light"/> is at <paramref name="time"/>: 0 dark, 1 fully lit.</summary>
         public float Level(HomeLight light, float time)
         {
@@ -104,6 +112,11 @@ namespace MoonProject.World
         /// </summary>
         public float CableLevel(BasePowerStage stage, int segment, int count, float time)
         {
+            return Mathf.Max(PowerLevel(stage, segment, count, time), PreviewLevel(stage, segment, count, time));
+        }
+
+        private float PowerLevel(BasePowerStage stage, int segment, int count, float time)
+        {
             if (stage > _stage)
             {
                 return 0f;
@@ -138,6 +151,26 @@ namespace MoonProject.World
                 - OrderInStage(HomeLight.Windows) * _settings.WakeStagger;
             int lit = Mathf.FloorToInt(since / (_settings.WakeFade / _settings.WindowSteps)) + 1;
             return Mathf.Clamp(lit, 0, _settings.WindowSteps);
+        }
+
+        /// <summary>
+        /// The preview's glow on a segment: it brightens as the slow light reaches it and lingers a moment behind it.
+        /// The cables run in power order (Home, Bay, Chart), one after another.
+        /// </summary>
+        private float PreviewLevel(BasePowerStage stage, int segment, int count, float time)
+        {
+            int order = (int)stage - (int)BasePowerStage.Home;
+            float arrives = _previewAt + order * _settings.PreviewStagger
+                + _settings.PreviewTravel * segment / Mathf.Max(1, count);
+            float since = time - arrives;
+            if (since <= 0f || since >= _settings.PreviewRise + _settings.PreviewTail)
+            {
+                return 0f;
+            }
+
+            float rise = Mathf.SmoothStep(0f, 1f, since / _settings.PreviewRise);
+            float fall = 1f - Mathf.SmoothStep(0f, 1f, (since - _settings.PreviewRise) / _settings.PreviewTail);
+            return _settings.PreviewPeak * Mathf.Min(rise, fall);
         }
 
         /// <summary>

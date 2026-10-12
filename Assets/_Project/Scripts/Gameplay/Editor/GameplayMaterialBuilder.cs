@@ -71,6 +71,14 @@ namespace MoonProject.Gameplay.Editor
                 : throw new InvalidOperationException($"{BuilderPath}: Art's blueprint tube {path} is missing.");
         }
 
+        private static GameObject GaragePortModel()
+        {
+            string path = ArtPaths.SitesFolder + "/" + GaragePortBuilder.PortName + ".prefab";
+            var port = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            return port != null ? port
+                : throw new InvalidOperationException($"{BuilderPath}: Art's garage port {path} is missing.");
+        }
+
         [MoonBuilder(BuilderPath, BuilderOrder)]
         private static void Build()
         {
@@ -82,8 +90,6 @@ namespace MoonProject.Gameplay.Editor
                 Write(shader, GlowRole.SitePillar), Write(shader, GlowRole.TractorBeam),
                 Write(shader, GlowRole.TetherBeam), Write(shader, GlowRole.Flash), Write(shader, GlowRole.RelicHalo),
                 Write(shader, GlowRole.Dust), Write(shader, GlowRole.WarmRing), Write(shader, GlowRole.WarmGlow),
-                GeneratedAssets.CreateOrReplace(GlintMaterials.CreateSalvage(glint),
-                    GameplayAssetPaths.SalvageGlintMaterial),
                 GeneratedAssets.CreateOrReplace(GlintMaterials.CreatePart(glint),
                     GameplayAssetPaths.PartGlintMaterial), Write(shader, GlowRole.FriendPillar),
                 Write(shader, GlowRole.Spark), Write(shader, GlowRole.HomeHalo),
@@ -91,9 +97,10 @@ namespace MoonProject.Gameplay.Editor
             visuals.PopulatePads(Pads(), BaseModelBuilder.PadRadii);
             visuals.PopulateComponents(ComponentModels());
             visuals.PopulateTube(TubeModel());
+            visuals.PopulateGaragePort(GaragePortModel());
             GeneratedAssets.CreateOrReplace(visuals, GameplayAssetPaths.Visuals);
             AssetDatabase.SaveAssets();
-            Debug.Log($"{BuilderPath}: wrote {Enum.GetValues(typeof(GlowRole)).Length + 2} materials and " +
+            Debug.Log($"{BuilderPath}: wrote {Enum.GetValues(typeof(GlowRole)).Length + 1} materials and " +
                       GameplayAssetPaths.Visuals);
         }
 

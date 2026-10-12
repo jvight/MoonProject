@@ -35,6 +35,11 @@ namespace MoonProject.Rover
         [Range(2f, 60f)]
         [SerializeField] private float _delay = 9f;
 
+        [Tooltip("Seconds of charging (07 stopped on the dock or a mast's ring) after which the frame opens, " +
+                 "sooner than the usual rest: charging is a calm stop.")]
+        [Range(0.5f, 10f)]
+        [SerializeField] private float _chargingDelay = 2f;
+
         [Tooltip("Seconds the drift out takes to all but settle (eased in and out, never a jolt).")]
         [Range(2f, 20f)]
         [SerializeField] private float _openSeconds = 8f;
@@ -165,6 +170,8 @@ namespace MoonProject.Rover
         [SerializeField] private float _breathDistancePeriod = 29f;
 
         public float Delay => _delay;
+
+        public float ChargingDelay => _chargingDelay;
 
         public float OpenSeconds => _openSeconds;
 

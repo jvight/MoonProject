@@ -17,7 +17,7 @@ namespace MoonProject.Gameplay.PlayModeTests
 {
     /// <summary>
     /// A complete gameplay stack built in test code: a flat world with canyon, relay and salvage site anchors, a fake
-    /// 07, test content (salvage site, bundle, trail bit, relic, Tilly, Bell, cassette, log cache, tape rack, relay
+    /// 07, test content (salvage site, bundle, relic, Tilly, Bell, cassette, log cache, tape rack, relay
     /// mast and relay part stand-ins in place of the Art prefabs, with the contracts' node names; default tuning;
     /// SoftGlow materials) and the real gameplay components, wired the way the scene contributor wires them and booted
     /// through GameBootstrap with a private save slot.
@@ -42,14 +42,6 @@ namespace MoonProject.Gameplay.PlayModeTests
         };
 
         private static readonly string[] SiteNames = { "depot", "kestrel", "drill", "garage", "lander" };
-
-        private static readonly string[] TrailBits =
-        {
-            "Debris_Metal_0", "Debris_Optics_0", "Debris_Wiring_0", "Debris_Metal_1", "Debris_Optics_1",
-        };
-
-        /// <summary>Metres the trail bits spread over, as in the content builder.</summary>
-        private const float TrailLength = 84f;
 
         /// <summary>The stand-in lab's floor (m above the ground), its stations' lens height and distance from the axis.
         /// </summary>
@@ -161,12 +153,21 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         public RelayTuning RelayTuning { get; private set; }
 
-        /// <summary>Builds and boots everything; 07 starts at the base facing +Z.</summary>
+        /// <summary>
+        /// Builds and boots everything; 07 starts at the base facing +Z, its tether already fitted unless
+        /// <paramref name="tether"/> is false (Kenji's garage port's own tests earn it).
+        /// </summary>
         /// <param name="cargoSeat">False boots a rover that registers no cargo seat (the boot check's test).</param>
-        public static GameplayFixture Boot(InputActionAsset controls, string saveSlot = null, bool cargoSeat = true)
+        public static GameplayFixture Boot(InputActionAsset controls, string saveSlot = null, bool cargoSeat = true,
+            bool tether = true)
         {
             var fixture = new GameplayFixture(controls, saveSlot ?? BootstrapHarness.NewTestSlot(), cargoSeat);
             fixture.Build();
+            if (tether)
+            {
+                fixture.Rover.Grant(RoverAbility.Tether);
+            }
+
             return fixture;
         }
 
@@ -362,7 +363,6 @@ namespace MoonProject.Gameplay.PlayModeTests
                 GlowMaterial(shader, GlowRole.TetherBeam), GlowMaterial(shader, GlowRole.Flash),
                 GlowMaterial(shader, GlowRole.RelicHalo), GlowMaterial(shader, GlowRole.Dust),
                 GlowMaterial(shader, GlowRole.WarmRing), GlowMaterial(shader, GlowRole.WarmGlow),
-                Track(GlintMaterials.CreateSalvage(LoadShader(GlintShaderPath))),
                 Track(GlintMaterials.CreatePart(LoadShader(GlintShaderPath))),
                 GlowMaterial(shader, GlowRole.FriendPillar), GlowMaterial(shader, GlowRole.Spark),
                 GlowMaterial(shader, GlowRole.HomeHalo), GlowMaterial(shader, GlowRole.LinkPulse));
@@ -375,6 +375,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 Template("Part_RelaySpare", new Vector3(0.4f, 0.3f, 0.5f)),
             });
             visuals.PopulateTube(Template("BlueprintTube", new Vector3(0.7f, 0.14f, 0.14f)));
+            visuals.PopulateGaragePort(PortTemplate());
             var root = new GameObject("[Gameplay]");
             root.SetActive(false);
             Gameplay = root.AddComponent<GameplaySystem>();
@@ -600,7 +601,7 @@ namespace MoonProject.Gameplay.PlayModeTests
 
         /// <summary>
         /// The five salvage sites as stand-in wrecks with the site contract's nodes (the canyon lander past the
-        /// Hover-Jump gate), the three material bundles and Kestrel-3's five trail bits, as in the content builder.
+        /// Hover-Jump gate) and the three material bundles, as in the content builder.
         /// </summary>
         private void BuildSalvage(SalvageField field)
         {
@@ -610,21 +611,12 @@ namespace MoonProject.Gameplay.PlayModeTests
             {
                 string name = SiteNames[i];
                 sites[i] = new SalvageSiteEntry(WorldAnchorIds.SitePrefix + name, SiteModel(name, name == "depot"),
-                    name == "lander" ? new AbilityGate(true, RoverAbility.HoverJump) : AbilityGate.Open, false);
-            }
-
-            var trail = new SalvageTrailBit[TrailBits.Length];
-            for (int i = 0; i < trail.Length; i++)
-            {
-                SalvagePieceName.TryParseDebris(TrailBits[i], out SalvageMaterial material);
-                trail[i] = new SalvageTrailBit(Template(TrailBits[i], Vector3.one * 0.5f), material,
-                    TrailLength * i / (trail.Length - 1));
+                    name == "lander" ? new AbilityGate(true, RoverAbility.HoverJump) : AbilityGate.Open, false, 1);
             }
 
             var catalog = Asset<SalvageCatalog>();
             catalog.Populate(sites, Template("Material_Metal", Vector3.one * 0.35f),
-                Template("Material_Wiring", Vector3.one * 0.35f), Template("Material_Optics", Vector3.one * 0.35f),
-                trail);
+                Template("Material_Wiring", Vector3.one * 0.35f), Template("Material_Optics", Vector3.one * 0.35f));
             field.Wire(SalvageTuning, catalog);
         }
 
@@ -938,6 +930,19 @@ namespace MoonProject.Gameplay.PlayModeTests
             block.transform.localPosition = localPosition;
             block.transform.localScale = size;
             return block.transform;
+        }
+
+        /// <summary>A stand-in for Art's GaragePort with its Tray and ArmTip nodes.</summary>
+        private GameObject PortTemplate()
+        {
+            GameObject port = Template("GaragePort", new Vector3(2.6f, 1.6f, 0.12f));
+            var tray = new GameObject(GameplayVisuals.PortTrayNode);
+            tray.transform.SetParent(port.transform, false);
+            tray.transform.localPosition = new Vector3(-0.85f, 0.65f, 0.45f);
+            var arm = new GameObject(GameplayVisuals.PortArmTipNode);
+            arm.transform.SetParent(port.transform, false);
+            arm.transform.localPosition = new Vector3(0.9f, 1.35f, 1.3f);
+            return port;
         }
 
         private GameObject Template(string name, Vector3 size)

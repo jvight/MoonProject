@@ -4,8 +4,8 @@ using MoonProject.Core.Events;
 namespace MoonProject.Rover
 {
     /// <summary>
-    /// Which ability brings each piece of 07's visible kit and which friend gives each gift (VISION ruling 11), and
-    /// the upgrade ids that fit kit on 07.
+    /// Which ability brings each piece of 07's visible kit, which friend gives each gift and which pieces Kenji's garage
+    /// port fits (VISION ruling 11), and the upgrade ids that fit kit on 07.
     /// </summary>
     public static class RoverKitPieces
     {
@@ -40,6 +40,15 @@ namespace MoonProject.Rover
                     ability = RoverAbility.HoverJump;
                     return false;
             }
+        }
+
+        /// <summary>
+        /// True for a piece Kenji's garage port fits (first-hour v2 §3): the tether ring and the tape deck. Neither is a
+        /// friend's gift nor bay kit; each grows in place in its own install moment.
+        /// </summary>
+        public static bool IsPortPiece(RoverKitPiece piece)
+        {
+            return piece == RoverKitPiece.TetherRing || piece == RoverKitPiece.TapeDeck;
         }
 
         /// <summary>True for an upgrade id that fits kit on 07.</summary>

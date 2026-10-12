@@ -17,9 +17,8 @@ namespace MoonProject.Gameplay
     /// <see cref="SalvageCutStopped"/>). Cut free, the piece comes away from the wreck, folds into a bundle of its
     /// material and spirals into 07: a flash, <see cref="MaterialSalvaged"/> with the site's climbing melody step, the
     /// stock grows and the game saves. Drag pieces hang on until the tether pulls them a few metres clear; then they
-    /// lie loose and the beam can cut them. When every piece is gone the skeleton stays, picked clean for good. Along
-    /// Kestrel-3's debris trail, loose bits glint and fold into 07 as it drives through (<see cref="SalvageTrail"/>).
-    /// A relic in a site's heart is dug by the excavation: whichever 07 looks at more directly, the heart or a piece,
+    /// lie loose and the beam can cut them. When every piece is gone the skeleton stays, picked clean for good.
+    /// Materials come only from the wreck sites: nothing lies loose on open ground (docs/features/M3-24). A relic in a site's heart is dug by the excavation: whichever 07 looks at more directly, the heart or a piece,
     /// is what the hold works on. A drag piece lost off the drivable floor floats back beside its site (ruling 1).
     /// It is the <see cref="ISalvageStatus"/> the UI's hold ring and the audio's beam read. Everything is built at
     /// initialisation; the frame loop allocates nothing.
@@ -33,7 +32,7 @@ namespace MoonProject.Gameplay
         [Tooltip("Salvage tuning (Assets/_Project/Data/Tuning/Gameplay/SalvageTuning.asset).")]
         [SerializeField] private SalvageTuning _tuning;
 
-        [Tooltip("The sites, bundles and trail bits (Assets/_Project/Data/Content/SalvageCatalog.asset).")]
+        [Tooltip("The sites and bundles (Assets/_Project/Data/Content/SalvageCatalog.asset).")]
         [SerializeField] private SalvageCatalog _catalog;
 
         private readonly List<SalvageSite> _sites = new List<SalvageSite>();
@@ -49,7 +48,6 @@ namespace MoonProject.Gameplay
         private MaterialStock _stock;
         private ExcavationSystem _excavation;
         private PhysicsMaterial _dragMaterial;
-        private SalvageTrail _trail;
         private RepairBeam _beam;
         private CutSparks _sparks;
         private GlowFlashPool _flashes;
@@ -60,7 +58,6 @@ namespace MoonProject.Gameplay
         private int _inFlight;
         private bool _holding;
         private bool _gazing;
-        private bool _glancing;
         private bool _initialized;
 
         public SalvageTuning Tuning => _tuning;
@@ -103,12 +100,6 @@ namespace MoonProject.Gameplay
 
         internal CutSparks Sparks => _sparks;
 
-        /// <summary>The trail bits' horizon glints (tests read how many were drawn).</summary>
-        internal PickupGlints Glints => _trail.Glints;
-
-        /// <summary>Loose bits along the Kestrel trail (taken or not).</summary>
-        public int TrailCount => _trail != null ? _trail.Count : 0;
-
         internal void Wire(SalvageTuning tuning, SalvageCatalog catalog)
         {
             _tuning = tuning;
@@ -116,8 +107,8 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>
-        /// Stands every site on its anchor and lays the trail bits. False (logged) when wiring, an anchor or a prefab
-        /// node from the site contract is missing.
+        /// Stands every site on its anchor. False (logged) when wiring, an anchor or a prefab node from the site
+        /// contract is missing.
         /// </summary>
         internal bool Initialize(GameplayServices services)
         {
@@ -168,22 +159,6 @@ namespace MoonProject.Gameplay
                 _sites.Add(site);
             }
 
-            WorldAnchor trailAnchor = default;
-            if (_catalog.Trail.Count > 0 && !services.Anchors.TryGet(WorldAnchorIds.KestrelTrail, out trailAnchor))
-            {
-                Fail($"the trail bits lie along world anchor '{WorldAnchorIds.KestrelTrail}', which the World does " +
-                     "not publish (world anchors contract).");
-                return false;
-            }
-
-            _trail = SalvageTrail.Lay(transform, _catalog.Trail, trailAnchor, services.Terrain, _tuning,
-                services.Visuals.SalvageGlint, services.Glints, services.GlintVeil, out problem);
-            if (_trail == null)
-            {
-                Fail(problem + " (salvage site contract, docs/features/M3-13).");
-                return false;
-            }
-
             _cadence = new PickupCadence(_tuning.MinArrivalInterval);
             _flashes = new GlowFlashPool(transform, services.Meshes.Sphere, services.Visuals.Flash,
                 _tuning.FlashPoolSize, _tuning.FlashDuration, _tuning.FlashRadius, _tuning.FlashIntensity);
@@ -215,23 +190,6 @@ namespace MoonProject.Gameplay
             }
 
             return null;
-        }
-
-        /// <summary>Trail bit <paramref name="index"/> still lies in the dust.</summary>
-        public bool IsTrailBitWaiting(int index)
-        {
-            return _trail.IsWaiting(index);
-        }
-
-        /// <summary>Where trail bit <paramref name="index"/> rests.</summary>
-        public Vector3 TrailBitPosition(int index)
-        {
-            return _trail.Position(index);
-        }
-
-        public SalvageMaterial TrailBitMaterial(int index)
-        {
-            return _trail.Material(index);
         }
 
         internal SalvageSaveData Capture()
@@ -295,16 +253,6 @@ namespace MoonProject.Gameplay
                 };
             }
 
-            var trail = new List<int>();
-            for (int i = 0; i < _trail.Count; i++)
-            {
-                if (_trail.IsTaken(i))
-                {
-                    trail.Add(i);
-                }
-            }
-
-            data.trail = trail.ToArray();
             return data;
         }
 
@@ -355,14 +303,6 @@ namespace MoonProject.Gameplay
             {
                 _sites[i].SnapPilot();
             }
-
-            foreach (int index in data.trail)
-            {
-                if (index >= 0 && index < _trail.Count)
-                {
-                    _trail.MarkTaken(index);
-                }
-            }
         }
 
         private void Update()
@@ -382,15 +322,6 @@ namespace MoonProject.Gameplay
 
             Vector3 socket = _rig.CargoSocket.position;
             StepPieces(socket, now, deltaTime);
-            if (_trail.Step(now, deltaTime, _rover.Position, socket, _view.Camera.transform.position, _cadence,
-                    out int arrived, out int launched))
-            {
-                Arrive(_trail.Material(arrived), _tuning.TrailYield, socket, WorldAnchorIds.KestrelTrail,
-                    _trail.Combo.Register(now));
-            }
-
-            _inFlight += launched;
-            UpdateGlance(_trail.Nearest);
             _flashes.Tick(deltaTime);
             for (int i = 0; i < _sites.Count; i++)
             {
@@ -672,21 +603,6 @@ namespace MoonProject.Gameplay
             }
         }
 
-        /// <summary>07 glances at the nearest loose trail bit (its own gaze request, under the trail).</summary>
-        private void UpdateGlance(int nearest)
-        {
-            if (nearest >= 0)
-            {
-                _rig.SetGazeTarget(_trail, _trail.Position(nearest), GazePriorities.Glance);
-                _glancing = true;
-            }
-            else if (_glancing)
-            {
-                _rig.ClearGazeTarget(_trail);
-                _glancing = false;
-            }
-        }
-
         private void SetHold(bool hold)
         {
             if (hold == _holding)
@@ -722,17 +638,10 @@ namespace MoonProject.Gameplay
                 _rig.ClearGazeTarget(this);
                 _gazing = false;
             }
-
-            if (_glancing)
-            {
-                _rig.ClearGazeTarget(_trail);
-                _glancing = false;
-            }
         }
 
         private void OnDestroy()
         {
-            _trail?.Dispose();
             if (_dragMaterial != null)
             {
                 Object.Destroy(_dragMaterial);

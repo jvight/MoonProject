@@ -25,7 +25,7 @@ namespace MoonProject.World
         [SerializeField] private float _anchorClearance = 1.5f;
 
         [Tooltip("Scorch weight (0..1) above which no rock lies: Kestrel-3's crater, its furrow and their dark " +
-            "halo stay clear for the debris gameplay lays along the trail.")]
+            "halo stay clear, an open driving line up to the wreck.")]
         [Range(0f, 1f)]
         [SerializeField] private float _scorchClear = 0.05f;
 

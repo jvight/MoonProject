@@ -3,9 +3,8 @@ using UnityEngine;
 namespace MoonProject.Gameplay
 {
     /// <summary>
-    /// How a pickup's glint reads from far away (<see cref="PickupGlints"/>): friends' parts, relay parts, tapes, crew
-    /// log caches and the loose salvage along a debris trail. Created by the Gameplay/Tuning builder; runtime code only
-    /// reads it.
+    /// How a pickup's glint reads from far away (<see cref="PickupGlints"/>): friends' parts, relay parts, tapes and
+    /// crew log caches. Created by the Gameplay/Tuning builder; runtime code only reads it.
     /// </summary>
     public sealed class GlintTuning : ScriptableObject
     {

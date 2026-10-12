@@ -80,7 +80,7 @@ namespace MoonProject.UI.PlayModeTests
             _rig.Fakes.PrimaryHint = new InteractionHint(InteractionKind.Repair, Site, true);
             yield return Seconds(1.5f);
             Assert.IsTrue(_rig.Ui.Prompt.IsVisible);
-            Assert.AreEqual("Mend", _rig.Ui.Layout.PromptWord.text);
+            Assert.AreEqual("Repair", _rig.Ui.Layout.PromptWord.text);
             Assert.AreEqual("E", _rig.Ui.Layout.PromptGlyphLabel.text);
             Assert.IsTrue(_rig.Ui.FriendReadout.IsVisible);
             Rect readout = _rig.Ui.Layout.FriendReadout.worldBound;
