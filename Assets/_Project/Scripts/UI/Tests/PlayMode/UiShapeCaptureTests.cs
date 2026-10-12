@@ -108,7 +108,26 @@ namespace MoonProject.UI.PlayModeTests
             }
 
             fakes.PrimaryHint = InteractionHint.None;
+            fakes.Upgrade = _tower;
+            fakes.AtStation = true;
+            yield return new WaitForSecondsRealtime(2f);
+            foreach (ScreenShape shape in ScreenShapes.All)
+            {
+                yield return ShapeShot(camera, folder, shape, "tower_card", problems, null, (shot, found) => { });
+            }
+
+            fakes.AtStation = false;
             yield return new WaitForSecondsRealtime(1f);
+            context.Events.Publish(new RelicDeposited("rubber_duck", Vector3.zero, 4));
+            yield return new WaitForSecondsRealtime(_tuning.MemoryCard.AppearDelay + _tuning.MemoryCard.Reveal.FadeIn +
+                                                    1f);
+            foreach (ScreenShape shape in ScreenShapes.All)
+            {
+                yield return ShapeShot(camera, folder, shape, "memory_card", problems, null, (shot, found) => { });
+            }
+
+            ui.Card.Dismiss();
+            yield return new WaitForSecondsRealtime(_tuning.MemoryCard.Reveal.FadeOut + 1f);
             foreach (ScreenShape shape in ScreenShapes.All)
             {
                 yield return ShapeShot(camera, folder, shape, "ticker", problems,

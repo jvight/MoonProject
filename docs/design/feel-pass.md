@@ -292,7 +292,7 @@ lift; kit install; low battery. Mostly **rover** (body, rumble) and **art** (deb
   - `Act` once at ignition (strength 0), then once per cut step (strength = progress), which drives the sustained
     rumble and sizzle.
   - `Cancel` on release: it keeps progress mid-cut.
-  - `Impact` at the crack, `Follow` at the tumble and at the fold, and `Reward` with `Kind = Collect` when the bundle
+  - `Impact` at the crack, `Follow` at the tumble (strength 0) and at the fold (strength 1), and `Reward` with `Kind = Collect` when the bundle
     is received.
 - **Where the kit's runtime lives.** The Art assembly is a mesh library with no runtime components. So:
   - The runtime VFX pieces (ChargeUp motes, IgnitionFlash, VacuumDebris, LightPulse pool, HeatSeam strip driver,
@@ -302,3 +302,60 @@ lift; kit install; low battery. Mostly **rover** (body, rumble) and **art** (deb
     bundle meshes per material, and the cut-line polylines in the salvage site data.
   - Art reviews every capture.
 - **Audio starts after the voice slice lands.** The voice session continues as the standing audio session.
+
+## 7. Owner additions (2026-10-12): the dock locks, and 07 speaks machine
+The owner: "everything must be extremely polished". Two examples, now P1's first two items.
+
+### 7.1 The dock locks 07 in, and lets it go when full (replaces §2.7's dock beats)
+| Beat | Target |
+|---|---|
+| **Roll-on** | The dock rim lamps chase toward the centre as 07 rolls onto the pad. |
+| **Lock** (charging starts: stopped on the pad) | Four low walls rise from slots in the dock floor, one per side. Each is ~0.35 m tall with a cyan lamp strip along its top. They rise staggered 60 ms apart, 450 ms each, ease-out with a small overshoot. Then the clamp closes with a soft "clunk" (FeelBeat Dock Impact): 07 dips 2 cm, a 100 ms connection spark, and 07 chirps **Affirm** (§7.2). If 07 arrived at ≤15%, it chirps **Relieved** instead. **Rumble:** 0.15 for 80. |
+| **Fill** | **Each cell lights one wall's lamp strip** (4 cells = 4 walls; more cells subdivide the strips), plus 07's flank lamp pops on its note. FeelBeat Dock Act per cell, strength = charge. |
+| **Full** (Reward) | The four strips sweep from cyan to warm gold, with a soft D-major chord. The walls lower, staggered, 600 ms ease-in. 07 "sighs": the wing opens 10°, the eye brightens. 07 chirps **Happy**. |
+| **Drive off early** (Cancel) | The walls drop at once (250 ms) and never block 07. They carry no colliders that touch the wheels. Partial cells are kept (existing rule). |
+| **Loaded game, docked** | The walls and lamps show the state silently. |
+
+### 7.2 07 speaks machine (a new character layer)
+07 gets a small voice. These are not words in any language. They are soft machine chirps (the owner's "tè tè"), each
+in a melody that says the mood. Think R2-D2 or BD-1, but quieter and lofi, in D major pentatonic.
+
+| Mood | When | Contour (pentatonic steps) |
+|---|---|---|
+| **Affirm** | the dock locks; a kit piece seats; a recipe completes | two short notes up, A → D′ (~240 ms) |
+| **Happy** | the battery is full at the dock; a friend is repaired | a bouncy 3–4 note rising trill that ends on a high D (~600 ms) |
+| **Proud** | a kit piece powers on (install) | a 5-note rising flourish (~800 ms) |
+| **Curious** | the first answer of a kind when listening; a new place found | a rising "question" D → F# → A with an upward bend at the end (~500 ms) |
+| **Worried** | the battery reaches Low (30%); 07 is stuck or recovering | two falling notes with a wobble, B → F# (~450 ms) |
+| **Tired** | the battery reaches 0 (the crawl starts) | a slow falling glide, A → low D, fading (~900 ms) |
+| **Relieved** | charging after a very low or empty battery; Tilly arrives to lead | "phew": F# → D, then up to A (~700 ms) |
+| **Greeting** | a friend meets 07 at home (the first time each day) | a friendly two-syllable D → A |
+
+Rules:
+- One chirp at a time.
+- A global cooldown of 6 s, and 30 s per mood (Affirm 3 s).
+- Never over a voice line or a letter: wait for it to end, or drop the chirp.
+- It ducks under the radio and peaks at mezzo-piano.
+- **The timbre is 07's own,** distinct from the friends' kalimba-like chirps: a soft sine and square blend through a
+  gentle low-pass, with 30–60 ms glides between notes and a slight wobble.
+- Four variants per mood, picked at random but never the same one twice in a row. Intensity may shift the pitch one
+  step.
+- **Body sync:**
+  - each syllable pulses the eye (+25%, 80 ms) and flicks the antenna tip;
+  - Curious tilts the head 8°, Worried dips it 4°, Happy gives a small bounce, and Tired lowers it slowly.
+
+The Core contract (Director):
+- `Core/ChirpMood.cs`.
+- `RoverChirpRequested(mood, intensity)`: published by Rover. 07's character decides when it speaks, from the events it
+  already hears.
+- `RoverChirpSyllable(mood, index, count, pitch, seconds)`: published by Audio at each syllable's onset, so Rover syncs
+  the eye and antenna.
+- Audio renders the bank offline (`tools/audio`, like the other SFX), stores each variant's syllable onsets as data, and
+  plays them with zero GC.
+
+### 7.3 Who does it
+| Task | Session | Notes |
+|---|---|---|
+| The dock lock sequence: four wall meshes with lamp strips (Art/Editor/ChargingDockMeshes, BaseModelBuilder), their motion, the strip lamps per cell, the full sweep, the drive-off drop, Dock beats | gameplay (feature slice: Gameplay/Base + those Art builders) | after the Dig follow-up |
+| 07's chirp decisions (moods, cooldowns, priorities, never over voice), the eye/antenna/head sync on `RoverChirpSyllable`, the dock dip and the full "sigh" | rover | now; test with scripted syllables |
+| The chirp bank (8 moods × 4 variants, offline synth, the syllable data), playback publishing `RoverChirpSyllable`, the ducking, the dock sounds (wall rise ticks, clunk, lock spark, the full chord) | audio (the voice session, after it lands) | after 0.5.1 |
