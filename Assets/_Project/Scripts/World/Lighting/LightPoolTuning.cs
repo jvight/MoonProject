@@ -34,9 +34,20 @@ namespace MoonProject.World
             "reads better where only the ground needs the warmth.")]
         [SerializeField] private bool _disc;
 
+        [Tooltip("Per-channel tint of a disc pool's glow (linear multiplier, white = Art's warm pool): cooler where " +
+            "the pool sits under a cyan-white lamp.")]
+        [SerializeField] private Color _tint = Color.white;
+
         public LightPoolTuning(HomeLight wakesWith, string anchor, Vector3 offset, float range, float intensity,
             bool disc)
+            : this(wakesWith, anchor, offset, range, intensity, disc, Color.white)
         {
+        }
+
+        public LightPoolTuning(HomeLight wakesWith, string anchor, Vector3 offset, float range, float intensity,
+            bool disc, Color tint)
+        {
+            _tint = tint;
             _wakesWith = wakesWith;
             _anchor = anchor;
             _offset = offset;
@@ -51,5 +62,6 @@ namespace MoonProject.World
         public float Range => _range;
         public float Intensity => _intensity;
         public bool Disc => _disc;
+        public Color Tint => _tint;
     }
 }

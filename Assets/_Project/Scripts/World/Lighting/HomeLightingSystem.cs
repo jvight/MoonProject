@@ -178,8 +178,10 @@ namespace MoonProject.World
                 if (pool.Disc)
                 {
                     float strength = level * pool.Intensity;
+                    Color tint = pool.Tint;
                     _block.Clear();
-                    _block.SetVector(EmissionColorId, new Vector4(strength, strength, strength, 1f));
+                    _block.SetVector(EmissionColorId,
+                        new Vector4(strength * tint.r, strength * tint.g, strength * tint.b, 1f));
                     _poolDiscs[i].SetPropertyBlock(_block);
                     _poolDiscs[i].enabled = level > 0f;
                     continue;
