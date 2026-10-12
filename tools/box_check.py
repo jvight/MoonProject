@@ -39,7 +39,7 @@ BUILDER_OUTPUTS = (GENERATED, MAIN_SCENE)
 MAIN_SCENE_BUILDER = "Main Scene"
 RUN_BUILDERS = "MoonProject.Editor.Automation.BuildAutomation.RunBuilders"
 # Feature slices span several domains (an alternation inside the builder regex).
-BUILDER_DOMAINS = {"art": "Art", "world": "World", "rover": "Rover", "gameplay": "Gameplay", "audio": "Audio",
+BUILDER_DOMAINS = {"art": "Art|Gameplay", "world": "World", "rover": "Rover", "gameplay": "Gameplay", "audio": "Audio",
                    "ui": "UI", "map": "World|Gameplay|UI", "opening": "Art|World|Rover|UI|Audio",
                    "battery": "Art|World|Rover|Gameplay|UI|Audio", "lab-build": "Art|World",
                    "lab-systems": "Art|World|Gameplay|Rover|UI|Audio", "goals": "Gameplay|UI|Audio",
@@ -48,7 +48,8 @@ BUILDER_DOMAINS = {"art": "Art", "world": "World", "rover": "Rover", "gameplay":
                    "ui-fit": "UI", "clarity": "Art|World|Rover|Gameplay|UI|Audio", "voice": "Audio|UI|Gameplay",
                    "camera": "Rover|UI"}
 # Targeted EditMode tests per box; the full PlayMode suite and the Playthrough are the Director's.
-DEFAULT_TESTS = {"art": "MoonProject.Art.Tests", "world": "MoonProject.World.Tests",
+DEFAULT_TESTS = {"art": "MoonProject.Art.Tests;MoonProject.Gameplay.Feel.Tests;MoonProject.Gameplay.Tests",
+                 "world": "MoonProject.World.Tests",
                  "rover": "MoonProject.Rover.Tests", "gameplay": "MoonProject.Gameplay.Tests",
                  "audio": "MoonProject.Audio.Tests", "ui": "MoonProject.UI.Tests",
                  "foundation": "MoonProject.Editor.Tests", "director": "MoonProject.Tests.EditMode",
@@ -70,8 +71,10 @@ DEFAULT_TESTS = {"art": "MoonProject.Art.Tests", "world": "MoonProject.World.Tes
                  "clarity": "MoonProject.Gameplay.Tests;MoonProject.Rover.Tests;MoonProject.Art.Tests;MoonProject.UI.Tests;"
                             "MoonProject.World.Tests;MoonProject.Audio.Tests",
                  "camera": "MoonProject.Rover.Tests;MoonProject.UI.Tests"}
-# Each box's own PlayMode assembly (art has none; the Director's full suite runs in verify).
-DEFAULT_PLAYMODE = {"world": "MoonProject.World.PlayModeTests", "rover": "MoonProject.Rover.PlayModeTests",
+# Each box's own PlayMode assemblies (art owns the feel kit in Gameplay/Feel, so it runs Gameplay's too; the
+# Director's full suite runs in verify).
+DEFAULT_PLAYMODE = {"art": "MoonProject.Gameplay.Feel.PlayModeTests;MoonProject.Gameplay.PlayModeTests",
+                    "world": "MoonProject.World.PlayModeTests", "rover": "MoonProject.Rover.PlayModeTests",
                     "gameplay": "MoonProject.Gameplay.PlayModeTests", "audio": "MoonProject.Audio.PlayModeTests",
                     "ui": "MoonProject.UI.PlayModeTests", "foundation": "MoonProject.Tests.PlayMode",
                     "map": "MoonProject.Gameplay.PlayModeTests;MoonProject.UI.PlayModeTests",
