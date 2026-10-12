@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -344,6 +345,45 @@ namespace MoonProject.Gameplay.PlayModeTests
         }
 
         /// <summary>Parks 07 in front of the piece's cut, looking at it, and lets the aim settle.</summary>
+        [UnityTest]
+        public IEnumerator ABundle_OpensTheHatchWhenThereIsRoom_AndBumpsItShutWhenFull()
+        {
+            _fixture = GameplayFixture.Boot(_controls);
+            yield return null;
+            var beats = new List<FeelBeat>();
+            using var listening = _fixture.Bootstrap.Context.Events.Subscribe<FeelBeat>(beat =>
+            {
+                if (beat.Kind == FeelKind.Collect || beat.Kind == FeelKind.Cargo)
+                {
+                    beats.Add(beat);
+                }
+            });
+            SalvagePiece metal = _fixture.FindSite("depot").Find(0);
+            metal.Progress = 0.95f;
+            yield return FaceCut(metal);
+            Press(_keyboard.eKey);
+            yield return Waits.Until(() => _fixture.Events.MaterialSalvaged.Count > 0, 6f);
+            Release(_keyboard.eKey);
+            FeelBeat open = beats.Find(beat => beat.Phase == FeelPhase.Anticipate);
+            Assert.AreEqual(FeelKind.Collect, open.Kind, "M3-25 T1: the hatch opens for the flight");
+            Assert.Greater(open.Seconds, 0f, "Seconds = the time to arrival");
+            Assert.Less(beats.FindIndex(beat => beat.Phase == FeelPhase.Anticipate),
+                beats.FindIndex(beat => beat.Kind == FeelKind.Collect && beat.Phase == FeelPhase.Reward),
+                "open, then the Reward closes it");
+
+            beats.Clear();
+            MaterialStock stock = _fixture.Gameplay.Materials;
+            stock.Collect(SalvageMaterial.Optics, stock.Hold.FreeUnits(SalvageMaterial.Optics));
+            SalvagePiece optics = _fixture.FindSite("depot").Find(2);
+            optics.Progress = 0.95f;
+            yield return FaceCut(optics);
+            Press(_keyboard.eKey);
+            yield return Waits.Until(() => beats.Exists(beat => beat.Kind == FeelKind.Cargo), 6f);
+            Release(_keyboard.eKey);
+            Assert.IsFalse(beats.Exists(beat => beat.Phase == FeelPhase.Anticipate), "a full hold keeps it shut");
+            Assert.AreEqual(FeelPhase.Impact, beats.Find(beat => beat.Kind == FeelKind.Cargo).Phase, "the bump");
+        }
+
         private IEnumerator FaceCut(SalvagePiece piece)
         {
             Vector3 cut = piece.CutPosition;
