@@ -58,3 +58,6 @@ MonoBehaviour:
   _stripFull: {r: 1.35, g: 0.92, b: 0.4, a: 1}
   _rimChaseSeconds: 0.6
   _rimGlow: 1.4
+  _saveBlinkSeconds: 0.6
+  _saveBlinkGlow: 1.2
+  _saveBurstSeconds: 2

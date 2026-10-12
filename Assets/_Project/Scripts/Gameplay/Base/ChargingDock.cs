@@ -13,7 +13,7 @@ namespace MoonProject.Gameplay
     /// (<see cref="DockLock"/>, feel-pass §7.1) raises four walls round 07 while it charges, lights their strips per
     /// cell, sweeps them to gold and lowers them when full, and chases the rim lamps as 07 rolls on.
     /// </summary>
-    public sealed class ChargingDock
+    public sealed class ChargingDock : IDisposable
     {
         private readonly Transform _anchor;
         private readonly EmissionGlow _glow;
@@ -27,6 +27,9 @@ namespace MoonProject.Gameplay
         private readonly float[] _stripLevels;
         private readonly EmissionGlow[] _rims;
         private IRoverBattery _battery;
+        private readonly IDisposable _saved;
+        private bool _blinkDue;
+        private float _blinkStart = float.NegativeInfinity;
 
         /// <param name="anchor">The lander's DockAnchor: 07's pivot at rest, facing the lander.</param>
         /// <param name="glow">The lander's DockGlow renderer.</param>
@@ -51,6 +54,7 @@ namespace MoonProject.Gameplay
             GlowLevel = tuning.DockIdleGlow;
             _glow.Apply(GlowLevel);
             _lock = new DockLock(events, tuning);
+            _saved = events.Subscribe<GameSaved>(_ => _blinkDue = true);
             _walls = walls;
             _wallRest = new Vector3[walls.Length];
             _strips = new EmissionGlow[strips.Length];
@@ -103,7 +107,13 @@ namespace MoonProject.Gameplay
                 (1f - MarkerEnvelope.Breath(now, _tuning.DockBreathPeriod));
             float target = _rest.Docked ? _tuning.DockChargingGlow * breath : _tuning.DockIdleGlow;
             GlowLevel = Damp.Toward(GlowLevel, target, _tuning.DockGlowEase, deltaTime);
-            _glow.Apply(GlowLevel);
+            if (_blinkDue && now - _blinkStart >= _tuning.SaveBurstSeconds)
+            {
+                _blinkStart = now;
+            }
+
+            _blinkDue = false;
+            _glow.Apply(GlowLevel + SaveBlink(now - _blinkStart));
             if (_battery == null)
             {
                 return;
@@ -112,6 +122,26 @@ namespace MoonProject.Gameplay
             _lock.Step(distance <= _tuning.DockRadius, _rest.Docked, _battery.Charge, _battery.Cells, _anchor.position,
                 deltaTime);
             ApplyLock(deltaTime);
+        }
+
+        public void Dispose()
+        {
+            _saved.Dispose();
+        }
+
+        /// <summary>
+        /// The save tick (polish-pass §1.2): the dock lamp blinks twice when the game saves; a burst of saves within
+        /// the tuned window reads as one tick. <paramref name="age"/> is the seconds since the tick began.
+        /// </summary>
+        private float SaveBlink(float age)
+        {
+            float length = _tuning.SaveBlinkSeconds;
+            if (age < 0f || age >= length)
+            {
+                return 0f;
+            }
+
+            return _tuning.SaveBlinkGlow * Ease.Hump(age * 2f / length % 1f);
         }
 
         /// <summary>The walls at their rise, their strips lit and tinted, the rim lamps chasing.</summary>

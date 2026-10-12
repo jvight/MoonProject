@@ -457,6 +457,7 @@ namespace MoonProject.Gameplay
         private void OnDestroy()
         {
             _halo?.Dispose();
+            _dock?.Dispose();
         }
     }
 }

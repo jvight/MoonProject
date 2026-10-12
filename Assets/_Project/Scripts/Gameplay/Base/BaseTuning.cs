@@ -162,6 +162,16 @@ namespace MoonProject.Gameplay
         [Tooltip("Glow of a rim lamp at the head of the chase.")]
         [Range(0f, 4f)] [SerializeField] private float _rimGlow = 1.4f;
 
+        [Header("Save tick (polish-pass §1.2)")]
+        [Tooltip("Seconds of the dock lamp's double blink when the game saves.")]
+        [Range(0.2f, 2f)] [SerializeField] private float _saveBlinkSeconds = 0.6f;
+
+        [Tooltip("Extra glow at the top of each blink.")]
+        [Range(0f, 4f)] [SerializeField] private float _saveBlinkGlow = 1.2f;
+
+        [Tooltip("Saves within this many seconds of a blink read as the same tick (checkpoints come in bursts).")]
+        [Range(0f, 10f)] [SerializeField] private float _saveBurstSeconds = 2f;
+
         public Vector3 LanderOffset => _landerOffset;
         public float DepositDuration => _depositDuration;
         public float DepositLift => _depositLift;
@@ -207,6 +217,9 @@ namespace MoonProject.Gameplay
         public Color StripFull => _stripFull;
         public float RimChaseSeconds => _rimChaseSeconds;
         public float RimGlow => _rimGlow;
+        public float SaveBlinkSeconds => _saveBlinkSeconds;
+        public float SaveBlinkGlow => _saveBlinkGlow;
+        public float SaveBurstSeconds => _saveBurstSeconds;
 
         /// <summary>0 while 07 is home .. 1 once it is <see cref="WarmFar"/> or more from the lander.</summary>
         public float FarnessAt(float distance)
