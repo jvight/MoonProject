@@ -1307,15 +1307,27 @@ Label {
     background-color: var(--moon-cream-glow);
 }
 
+/* Focus swells 4% over 120 ms; a press dips to 98% in 60 ms and comes back over 140 (feel-pass 2.12) */
+.pause .menu-button {
+    transform-origin: 0% 50%;
+    transition-property: scale, background-color;
+    transition-duration: 0.14s, 0.14s;
+    transition-timing-function: ease-out;
+}
+
 .pause .menu-button:focus {
     background-color: var(--moon-amber-soft);
     border-color: var(--moon-amber-edge);
     color: var(--moon-warm-lamp);
+    scale: 1.04 1.04;
+    transition-duration: 0.12s, 0.12s;
 }
 
 .pause .menu-button:active {
     background-color: var(--moon-amber-edge);
     color: var(--moon-cream);
+    scale: 0.98 0.98;
+    transition-duration: 0.06s, 0.06s;
 }
 
 .section-label {

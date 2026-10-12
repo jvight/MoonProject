@@ -389,7 +389,7 @@ namespace MoonProject.UI
             _nextStep = new NextStepLine(_tuning.Guidance);
             _nextLine = new NextLineView(_layout, _tuning.Guidance, _localization);
             _cellRow = new CellRow(_layout, _tuning.Battery, services.Battery, services.Beam);
-            _placeCard = new PlaceCard(_layout, _tuning.Guidance, _localization);
+            _placeCard = new PlaceCard(_layout, _tuning.Guidance, _localization, services.Events);
             _reticle = new TetherReticle(_layout.Reticle, _layout.ReticleRest, _layout.ReticleHover, _tuning.Reticle);
             _prompt = new ContextPrompt(_layout, _tuning.Prompts, _director, services.View, _glyphs, _localization,
                 services.Events);

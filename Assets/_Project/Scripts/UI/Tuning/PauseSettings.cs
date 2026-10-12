@@ -10,7 +10,7 @@ namespace MoonProject.UI
     public sealed class PauseSettings
     {
         [Tooltip("The menu panel easing in and out.")]
-        [SerializeField] private RevealSettings _menu = new RevealSettings(0.35f, 0.3f, 12f, 0.96f, 1.6f, 0.65f);
+        [SerializeField] private RevealSettings _menu = new RevealSettings(0.2f, 0.3f, 12f, 0.96f, 1.6f, 0.65f);
 
         [Tooltip("The settings panel easing in beside the menu.")]
         [SerializeField] private RevealSettings _settingsPanel =
@@ -20,7 +20,7 @@ namespace MoonProject.UI
         [SerializeField] private RevealSettings _page = new RevealSettings(0.18f, 0.14f, 6f, 1f, 2f, 1f);
 
         [Tooltip("The soft indigo veil dimming the world behind the menu.")]
-        [SerializeField] private RevealSettings _veil = new RevealSettings(0.35f, 0.35f, 0f, 1f, 1f, 1f);
+        [SerializeField] private RevealSettings _veil = new RevealSettings(0.25f, 0.2f, 0f, 1f, 1f, 1f);
 
         [Tooltip("The driving HUD (prompts, reticle, chip, cards) fading away while paused and back after.")]
         [SerializeField] private RevealSettings _hud = new RevealSettings(0.25f, 0.4f, 0f, 1f, 1.6f, 1f);

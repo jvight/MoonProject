@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _pause:
     _menu:
-      _fadeIn: 0.35
+      _fadeIn: 0.2
       _fadeOut: 0.3
       _slide: 12
       _scaleFrom: 0.96
@@ -35,8 +35,8 @@ MonoBehaviour:
       _springFrequency: 2
       _springDamping: 1
     _veil:
-      _fadeIn: 0.35
-      _fadeOut: 0.35
+      _fadeIn: 0.25
+      _fadeOut: 0.2
       _slide: 0
       _scaleFrom: 1
       _springFrequency: 1
@@ -171,9 +171,9 @@ MonoBehaviour:
     _glowOpacity: 0.35
   _memoryCard:
     _reveal:
-      _fadeIn: 1
+      _fadeIn: 0.18
       _fadeOut: 0.9
-      _slide: 16
+      _slide: 8
       _scaleFrom: 0.97
       _springFrequency: 0.9
       _springDamping: 0.75
