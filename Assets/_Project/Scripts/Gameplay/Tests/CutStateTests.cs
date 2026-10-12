@@ -32,7 +32,7 @@ namespace MoonProject.Gameplay.Tests
         [Test]
         public void ChargeUp_ThenIgnition_ThenStepsAndTheBreak_PublishTheBeatsInOrder()
         {
-            var cut = new CutState(_events, Charge, Resume, Steps);
+            var cut = new CutState(_events, FeelKind.Cut, Charge, Resume, Steps);
             float progress = 0f;
             cut.Engage(progress, SalvageMaterial.Wiring, Vector3.one, Vector3.up);
             Assert.AreEqual(CutPhase.Charging, cut.Phase);
@@ -79,7 +79,7 @@ namespace MoonProject.Gameplay.Tests
         [Test]
         public void LettingGoWhileCharging_Cancels_WithNothingLostOrDrawn()
         {
-            var cut = new CutState(_events, Charge, Resume, Steps);
+            var cut = new CutState(_events, FeelKind.Cut, Charge, Resume, Steps);
             float progress = 0f;
             cut.Engage(progress, SalvageMaterial.Metal, Vector3.zero, Vector3.up);
             Run(cut, ref progress, Charge * 0.5f, out _);
@@ -96,7 +96,7 @@ namespace MoonProject.Gameplay.Tests
         [Test]
         public void LettingGoMidCut_Pauses_AndTheNextHoldResumesWithTheShortCharge()
         {
-            var cut = new CutState(_events, Charge, Resume, Steps);
+            var cut = new CutState(_events, FeelKind.Cut, Charge, Resume, Steps);
             float progress = 0f;
             cut.Engage(progress, SalvageMaterial.Optics, Vector3.zero, Vector3.up);
             Run(cut, ref progress, Charge + CutSeconds * 0.4f, out _);
@@ -117,7 +117,7 @@ namespace MoonProject.Gameplay.Tests
         [Test]
         public void ABreak_LeavesTheStateFree_ForANewChargeAtOnce()
         {
-            var cut = new CutState(_events, Charge, Resume, Steps);
+            var cut = new CutState(_events, FeelKind.Cut, Charge, Resume, Steps);
             float progress = 0.99f;
             cut.Engage(progress, SalvageMaterial.Metal, Vector3.zero, Vector3.up);
             bool broke = false;
@@ -131,6 +131,31 @@ namespace MoonProject.Gameplay.Tests
             cut.Engage(next, SalvageMaterial.Wiring, Vector3.zero, Vector3.up);
             Assert.AreEqual(CutPhase.Charging, cut.Phase, "never locked: the next piece charges while this one flies");
             Assert.AreEqual(Charge, cut.ChargeSeconds, 1e-5f, "a fresh piece takes the full charge");
+        }
+
+        [Test]
+        public void Dig_ChargesIgnitesStepsAndReleases_AsDigBeatsWithNoMaterial()
+        {
+            var dig = new CutState(_events, FeelKind.Dig, Charge, Resume, Steps);
+            dig.Engage(0f, Vector3.zero, Vector3.up);
+            Assert.AreEqual(FeelKind.Dig, _beats[0].Kind);
+            Assert.AreEqual(FeelPhase.Anticipate, _beats[0].Phase);
+            Assert.IsFalse(_beats[0].HasMaterial, "a dig works no material");
+            bool ignited = false;
+            for (float t = 0f; t < Charge + Frame && !ignited; t += Frame)
+            {
+                ignited = dig.Charge(Frame, Vector3.zero, Vector3.up);
+            }
+
+            Assert.IsTrue(ignited);
+            Assert.IsTrue(dig.Draws, "the dig draws from ignition on");
+            Assert.IsFalse(dig.Advance(0f, 0.3f, Vector3.zero, Vector3.up));
+            Assert.AreEqual(FeelPhase.Act, _beats[_beats.Count - 1].Phase, "a step crossed (eased progress)");
+            Assert.AreEqual(0.3f, _beats[_beats.Count - 1].Strength, 1e-5f);
+            Assert.IsTrue(dig.Advance(0.9f, 1f, Vector3.zero, Vector3.up), "the relic's release");
+            Assert.AreEqual(FeelPhase.Impact, _beats[_beats.Count - 1].Phase);
+            Assert.AreEqual(CutPhase.Idle, dig.Phase);
+            Assert.IsFalse(dig.Advance(0f, 0.5f, Vector3.zero, Vector3.up), "nothing advances while idle");
         }
 
         [Test]

@@ -61,7 +61,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             Press(_keyboard.eKey);
             yield return null;
             yield return null;
-            Assert.AreEqual(1, _fixture.Events.ExcavationStarted.Count);
+            Assert.AreEqual(0, _fixture.Events.ExcavationStarted.Count, "the emitter charges up first (feel-pass)");
+            yield return Waits.Until(() => _fixture.Events.ExcavationStarted.Count > 0,
+                _fixture.ExcavationTuning.ChargeSeconds + 0.5f);
+            Assert.AreEqual(1, _fixture.Events.ExcavationStarted.Count, "then the beam ignites");
             Assert.AreEqual(site, _fixture.Events.ExcavationStarted[0].Value.Position);
             Assert.AreEqual(1, _fixture.Rover.HoldStillCount, "holding the beam asks 07 to hold still");
             Assert.IsTrue(_fixture.Rover.TryGetGaze(excavation, out _, out int priority));

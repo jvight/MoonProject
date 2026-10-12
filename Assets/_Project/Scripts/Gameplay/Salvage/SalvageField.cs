@@ -159,7 +159,7 @@ namespace MoonProject.Gameplay
             _view = services.View;
             _save = services.Save;
             _stock = services.Materials;
-            _cut = new CutState(_events, _tuning.ChargeSeconds, _tuning.ResumeChargeSeconds, _tuning.CutSteps);
+            _cut = new CutState(_events, FeelKind.Cut, _tuning.ChargeSeconds, _tuning.ResumeChargeSeconds, _tuning.CutSteps);
             _dragMaterial = new PhysicsMaterial("SalvageDrag")
             {
                 bounciness = _tuning.DragBounciness,
