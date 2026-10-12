@@ -44,7 +44,8 @@ namespace MoonProject.Art.Editor
             SiteKit.Drift(b, new Vector3(-2.6f, 0f, 4.7f), 1.8f, 1.6f, 0.35f, 40f, 33);
 
             // M3-16 P9, M3-24: optics its signature, and since the loose trail bits are gone (materials come only
-            // from wrecks) the foil panel and the avionics are cuts too: Optics drag, M, M, Metal S, S, Wiring S, S.
+            // from wrecks) the foil panel and the avionics are cuts too: Optics drag, M, M, Metal M, S, Wiring M, S
+            // = (5, 5, 10).
             StandingWing(site);
             FramePanel(site);
             SmallDish(site);

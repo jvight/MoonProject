@@ -299,7 +299,7 @@ namespace MoonProject.Art.Editor
                 PaletteSwatch.WarmAccent);
             SiteKit.Cable(b, new[] { centre + new Vector3(0.2f, -0.25f, 0f), centre + new Vector3(0.3f, -0.8f, -0.1f) },
                 0.04f, PaletteSwatch.WarmAccent);
-            piece.Resize(1.6f);
+            piece.Resize(2.2f);
         }
 
         /// <summary>

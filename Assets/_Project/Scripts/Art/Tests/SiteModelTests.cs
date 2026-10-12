@@ -338,7 +338,7 @@ namespace MoonProject.Art.Tests
 
         private static readonly Dictionary<string, int[]> Yields = new Dictionary<string, int[]>
         {
-            { "depot", new[] { 5, 2, 2 } }, { "garage", new[] { 4, 4, 2 } }, { "kestrel", new[] { 2, 2, 9 } },
+            { "depot", new[] { 5, 2, 2 } }, { "garage", new[] { 4, 4, 2 } }, { "kestrel", new[] { 5, 5, 10 } },
             { "drill", new[] { 7, 7, 2 } },
         };
 

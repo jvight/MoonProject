@@ -103,7 +103,7 @@ namespace MoonProject.Gameplay.Tests
             Assert.AreEqual(BellSignals.FoundLine0, _ticker[1].Key);
             Assert.AreEqual(2, _picked.Count, "and she picks the next");
             Assert.AreEqual(BellSignalTarget.CrewLog, _picked[1].Target);
-            Assert.AreEqual("180", _ticker[2].Argument);
+            Assert.AreEqual(BellSignals.PickedLine, _ticker[2].Key);
 
             targets.Find("ro_1").Waiting = false;
             bell.Step();
@@ -128,7 +128,7 @@ namespace MoonProject.Gameplay.Tests
             targets.Find("slow_orbit").Reachable = true;
             bell.Step();
             Assert.AreEqual(4, bell.Current, "a new ability opens a way: she points again");
-            Assert.AreEqual("0", _ticker[_ticker.Count - 1].Argument);
+            Assert.AreEqual(BellSignals.PickedLine, _ticker[_ticker.Count - 1].Key);
         }
 
         [Test]
