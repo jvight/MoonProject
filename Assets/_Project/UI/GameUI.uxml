@@ -322,9 +322,15 @@
                             <ui:VisualElement name="pause-settings-shadow" class="soft-shadow soft-shadow--panel" />
                             <ui:VisualElement name="pause-settings-body" class="panel pause__panel pause__panel--settings">
                                 <ui:VisualElement name="settings-tabs" class="settings-tabs" picking-mode="Ignore">
-                                    <ui:Button name="button-tab-sound" class="settings-tab settings-tab--on loc" text="ui.settings.sound" />
-                                    <ui:Button name="button-tab-camera" class="settings-tab loc" text="ui.settings.tab_camera" />
-                                    <ui:Button name="button-tab-display" class="settings-tab loc" text="ui.settings.tab_display" />
+                                    <ui:VisualElement class="settings-tab-wrap settings-tab-wrap--on" picking-mode="Ignore">
+                                        <ui:Button name="button-tab-sound" class="settings-tab settings-tab--on loc" text="ui.settings.sound" />
+                                    </ui:VisualElement>
+                                    <ui:VisualElement class="settings-tab-wrap" picking-mode="Ignore">
+                                        <ui:Button name="button-tab-camera" class="settings-tab loc" text="ui.settings.tab_camera" />
+                                    </ui:VisualElement>
+                                    <ui:VisualElement class="settings-tab-wrap" picking-mode="Ignore">
+                                        <ui:Button name="button-tab-display" class="settings-tab loc" text="ui.settings.tab_display" />
+                                    </ui:VisualElement>
                                 </ui:VisualElement>
                                 <ui:VisualElement name="settings-page-sound" class="settings-page">
                                 <ui:VisualElement class="setting-row">

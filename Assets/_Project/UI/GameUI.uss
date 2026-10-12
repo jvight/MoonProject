@@ -1341,8 +1341,8 @@ Label {
 }
 
 .bay-row--selected {
-    background-color: var(--moon-cream-glow);
-    border-color: var(--moon-glass-edge);
+    background-color: var(--glass-bar);
+    border-color: var(--glass-rim);
 }
 
 .bay-row__line {
@@ -1627,36 +1627,46 @@ Label {
     margin: 0 8px 14px 8px;
 }
 
-.settings-tab {
+/* Each tab's skewed glass is painted on its wrapper, beneath the button, so the label is always drawn on top */
+.settings-tab-wrap {
     flex-grow: 1;
     flex-basis: 0;
     min-width: 0;
     min-height: 40px;
     margin: 0 3px;
-    padding: 2px 16px;
-    white-space: normal;
-    border-width: 0;
-    background-color: rgba(0, 0, 0, 0);
-    color: var(--moon-text);
-    font-size: 18px;
-    -unity-text-align: middle-center;
-    --tab-color: var(--glass-btn);
-    --tab-edge: var(--glass-rim);
+    --tab-color: var(--glass-deep);
+    --tab-edge: var(--moon-track);
     --tab-edge-width: 1.5;
 }
 
-.settings-tab--on {
-    color: var(--glass-hi);
+.settings-tab-wrap--on {
     --tab-color: var(--glass-bar);
     --tab-edge: var(--glass-sel);
     --tab-edge-width: 3;
 }
 
-.pause .settings-tab:focus {
-    color: var(--glass-sel-text);
+.settings-tab-wrap--focus {
     --tab-color: var(--glass-sel);
     --tab-edge: var(--glass-sel);
     scale: 1.04 1.04;
+}
+
+.settings-tab {
+    flex-grow: 1;
+    min-width: 0;
+    min-height: 40px;
+    margin: 0;
+    padding: 2px 16px;
+    white-space: normal;
+    border-width: 0;
+    background-color: rgba(0, 0, 0, 0);
+    color: var(--glass-hi);
+    font-size: 18px;
+    -unity-text-align: middle-center;
+}
+
+.pause .settings-tab:focus {
+    color: var(--glass-sel-text);
 }
 
 .settings-page {

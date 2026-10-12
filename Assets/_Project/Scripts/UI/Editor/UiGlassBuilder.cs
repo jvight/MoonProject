@@ -22,15 +22,16 @@ namespace MoonProject.UI.Editor
         private const float InnerGlow = 26f;
 
         // Moonlight Glass tokens (Logs/ui-ref/moonlight-glass-mockup.html, .v1).
-        private static readonly Color GlassTop = Rgba(64, 104, 190, 0.55f);
-        private static readonly Color GlassBottom = Rgba(22, 36, 88, 0.62f);
+        // Deeper and nearly opaque, so white text keeps 7:1 even over the brightest dune (the legibility capture).
+        private static readonly Color GlassTop = Rgba(26, 46, 118, 0.93f);
+        private static readonly Color GlassBottom = Rgba(12, 21, 62, 0.95f);
         private static readonly Color RimColor = Rgba(150, 196, 255, 0.85f);
         private static readonly Color RimGlow = Rgba(110, 170, 255, 0.45f);
         private static readonly Color Inner = Rgba(140, 190, 255, 0.18f);
-        private static readonly Color BubbleLight = Rgba(110, 160, 245, 0.85f);
-        private static readonly Color BubbleDark = Rgba(30, 52, 120, 0.85f);
-        private static readonly Color DialLight = Rgba(80, 120, 210, 0.7f);
-        private static readonly Color DialDark = Rgba(16, 26, 70, 0.8f);
+        private static readonly Color BubbleLight = Rgba(58, 92, 180, 0.94f);
+        private static readonly Color BubbleDark = Rgba(22, 38, 98, 0.94f);
+        private static readonly Color DialLight = Rgba(44, 72, 156, 0.94f);
+        private static readonly Color DialDark = Rgba(14, 24, 66, 0.95f);
 
         [MoonBuilder(BuilderPath, BuilderOrder)]
         private static void Build()

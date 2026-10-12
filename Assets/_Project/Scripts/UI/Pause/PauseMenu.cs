@@ -32,6 +32,8 @@ namespace MoonProject.UI
         private const string TitleClass = "pause--title";
         private const string SettingsOpenClass = "pause--settings-open";
         private const string TabOnClass = "settings-tab--on";
+        private const string TabSkinOnClass = "settings-tab-wrap--on";
+        private const string TabFocusClass = "settings-tab-wrap--focus";
         private const string IdleRowClass = "setting-row--idle";
 
         private readonly UiLayout _layout;
@@ -88,7 +90,10 @@ namespace MoonProject.UI
             _settingsTabs = new[] { layout.TabSound, layout.TabCamera, layout.TabDisplay };
             foreach (Button tab in _settingsTabs)
             {
-                new TabPainter(tab);
+                VisualElement skin = tab.parent;
+                new TabPainter(skin);
+                tab.RegisterCallback<FocusInEvent>(_ => skin.AddToClassList(TabFocusClass));
+                tab.RegisterCallback<FocusOutEvent>(_ => skin.RemoveFromClassList(TabFocusClass));
             }
 
             _fpsNumbers = numbers ?? throw new ArgumentNullException(nameof(numbers));
@@ -482,6 +487,7 @@ namespace MoonProject.UI
             {
                 Display(_settingsPages[i], i == tab);
                 _settingsTabs[i].EnableInClassList(TabOnClass, i == tab);
+                _settingsTabs[i].parent.EnableInClassList(TabSkinOnClass, i == tab);
             }
         }
 
