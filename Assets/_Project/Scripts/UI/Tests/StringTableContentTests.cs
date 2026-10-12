@@ -124,9 +124,10 @@ namespace MoonProject.UI.Tests
                 Assert.IsTrue(_english.TryGet(UiKeys.RewardLine(kind), out _), UiKeys.RewardLine(kind));
             }
 
-            foreach (SalvageMaterial material in Enum.GetValues(typeof(SalvageMaterial)))
+            for (int i = 0; i < Materials.Count; i++)
             {
-                Assert.IsTrue(_english.TryGet(UiKeys.MaterialName(material), out _), UiKeys.MaterialName(material));
+                string key = UiKeys.MaterialName(Materials.At(i));
+                Assert.IsTrue(_english.TryGet(key, out _), key);
             }
 
             foreach (UpgradeStationKind station in Enum.GetValues(typeof(UpgradeStationKind)))
