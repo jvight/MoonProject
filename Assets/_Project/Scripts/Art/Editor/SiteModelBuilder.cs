@@ -25,6 +25,20 @@ namespace MoonProject.Art.Editor
         public const string LandmarkName = "Landmark";
         public const string LandmarkPilotName = "LandmarkPilot";
 
+        /// <summary>
+        /// The crew's supply crate (M3-25 T4), one per site beside its heart: <c>CrewCrate</c> (the sealed body, which stays
+        /// as an empty prop) and its <c>Lid</c>, whose <c>CutPoint</c> sits on the front seal and whose <c>Seal</c>
+        /// (M_LowPolyGlowOff) glows round the seam until the one cut lifts the lid off.
+        /// </summary>
+        public const string CrewCrateName = "CrewCrate";
+
+        public const string CrewCrateLidName = "Lid";
+        public const string CrewCrateSealName = "Seal";
+
+        // Off to the heart's right and out in front of the wreck, so the crate stands in the open where 07 arrives.
+        private const float CrewCrateBesideHeart = 0.9f;
+        private const float CrewCrateClearOfWreck = 0.8f;
+
 
         /// <summary>The site ids of the contract (site.&lt;id&gt; anchors, Site_&lt;id&gt; prefabs).</summary>
         public static IReadOnlyList<string> Ids => new[] { "depot", "kestrel", "drill", "garage", "lander" };
@@ -45,6 +59,7 @@ namespace MoonProject.Art.Editor
                 ModelPrefabWriter.Write(CreateBundle(bundle), ArtPaths.PickupFolder, material);
             }
 
+            ModelPrefabWriter.Write(CreateOrangeBeadsBundle(), ArtPaths.PickupFolder, material);
             ModelPrefabWriter.Write(CreateBlueprintTube(), ArtPaths.PickupFolder, material);
             foreach (string part in StoryPartNames)
             {
@@ -109,6 +124,8 @@ namespace MoonProject.Art.Editor
             }
 
             root.Add(new ModelNode(HeartName, recipe.Heart));
+            AddCrewCrate(root, name, new Vector3(recipe.Heart.x + CrewCrateBesideHeart, 0f,
+                Footprint(root).max.z + CrewCrateClearOfWreck));
             if (SiteLandmarkMeshes.HasLandmark(id))
             {
                 (Vector3 foot, float yaw) = SiteLandmarkMeshes.Placement(id);
@@ -121,6 +138,35 @@ namespace MoonProject.Art.Editor
             }
 
             return root;
+        }
+
+        /// <summary>The ground the site's wreck covers: its skeleton and every piece where it hangs.</summary>
+        public static Bounds Footprint(ModelNode site)
+        {
+            Bounds footprint = site.Children[0].Mesh.Geometry.Bounds;
+            foreach (ModelNode node in site.Children)
+            {
+                if (node.Mesh != null && node.Name.StartsWith("Salvage_", StringComparison.Ordinal))
+                {
+                    Bounds piece = node.Mesh.Geometry.Bounds;
+                    piece.center += node.LocalPosition;
+                    footprint.Encapsulate(piece);
+                }
+            }
+
+            return footprint;
+        }
+
+        private static void AddCrewCrate(ModelNode root, string name, Vector3 foot)
+        {
+            ModelNode crate = root.Add(new ModelNode(CrewCrateName, foot,
+                new ModelMesh(name + "_" + CrewCrateName, SupplyShelfMeshes.CrewCrateFrame())));
+            ModelNode lid = crate.Add(new ModelNode(CrewCrateLidName, SupplyShelfMeshes.LidSeat,
+                new ModelMesh(name + "_" + CrewCrateName + CrewCrateLidName, SupplyShelfMeshes.CrewCrateLid())));
+            lid.Add(new ModelNode(CutPointName, SupplyShelfMeshes.SealPoint, Facing(Vector3.forward)));
+            lid.Add(new ModelNode(CrewCrateSealName, Vector3.zero, Quaternion.identity,
+                new ModelMesh(name + "_" + CrewCrateName + CrewCrateSealName, SupplyShelfMeshes.CrewCrateSeal()),
+                ModelMaterial.PaletteGlowOff));
         }
 
         public static ModelNode CreateBundle(SalvagePieceMaterial material)
@@ -143,6 +189,18 @@ namespace MoonProject.Art.Editor
 
             string name = BundleName(material);
             return new ModelNode(name, Vector3.zero, new ModelMesh(name, RecipeKit.CentredOnMass(geometry)));
+        }
+
+        /// <summary>
+        /// The first lunar material's bundle (M3-27 #4), <c>Material_OrangeBeads</c> beside the salvage ones: orange
+        /// beads heaped in a round woven sack, round and orange where Wiring's coil is round and copper.
+        /// </summary>
+        public const string OrangeBeadsBundleName = "Material_OrangeBeads";
+
+        public static ModelNode CreateOrangeBeadsBundle()
+        {
+            return new ModelNode(OrangeBeadsBundleName, Vector3.zero,
+                new ModelMesh(OrangeBeadsBundleName, RecipeKit.CentredOnMass(OrangeBeadMeshes.Bundle())));
         }
 
         /// <summary>

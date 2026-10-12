@@ -71,8 +71,8 @@ namespace MoonProject.Art.Tests
 
             List<ModelNode> pieces = Pieces(site);
             int landmarks = SiteLandmarkMeshes.HasLandmark(id) ? 1 : 0;
-            Assert.AreEqual(site.Children.Count - 2 - landmarks, pieces.Count,
-                "only Skeleton, Salvage_*, Heart and the landmark");
+            Assert.AreEqual(site.Children.Count - 3 - landmarks, pieces.Count,
+                "only Skeleton, Salvage_*, Heart, CrewCrate and the landmark");
             Assert.That(pieces.Count, Is.InRange(MinPieces, MaxPieces));
             Assert.LessOrEqual(pieces.Count(IsDrag), 1, "at most one drag piece");
             for (int i = 0; i < pieces.Count; i++)
@@ -88,6 +88,32 @@ namespace MoonProject.Art.Tests
             }
 
             MeshChecks.AssertWellFormed(skeleton.Mesh.Geometry);
+        }
+
+        [TestCaseSource(nameof(Ids))]
+        public void CrewCrate_StandsBesideTheHeart_ItsLidOneCutAway(string id)
+        {
+            ModelNode site = SiteModelBuilder.CreateSite(id);
+            ModelNode heart = site.Children.Single(n => n.Name == SiteModelBuilder.HeartName);
+            ModelNode crate = site.Children.Single(n => n.Name == SiteModelBuilder.CrewCrateName);
+            Assert.AreEqual(0f, crate.LocalPosition.y, 1e-4f, "it stands on the ground");
+            Assert.AreEqual(heart.LocalPosition.x, crate.LocalPosition.x, 1.5f, "on the heart's side of the site");
+            Bounds body = crate.Mesh.Geometry.Bounds;
+            body.center += crate.LocalPosition;
+            Assert.Greater(body.min.z, SiteModelBuilder.Footprint(site).max.z, "in the open, clear of the wreck");
+            ModelNode lid = crate.Children.Single();
+            Assert.AreEqual(SiteModelBuilder.CrewCrateLidName, lid.Name);
+            Assert.AreEqual(2, lid.Children.Count, "the lid holds its CutPoint and its Seal");
+            ModelNode cut = lid.Children.Single(n => n.Name == SiteModelBuilder.CutPointName);
+            ModelNode seal = lid.Children.Single(n => n.Name == SiteModelBuilder.CrewCrateSealName);
+            Assert.AreEqual(ModelMaterial.PaletteGlowOff, seal.Material, "the seal glows only when gameplay lights it");
+            Assert.IsTrue(MeshChecks.Swatches(seal.Mesh.Geometry).All(Palette.IsEmissive), "the seal is all glass");
+            Assert.Greater(seal.Mesh.Geometry.Bounds.size.x, lid.Mesh.Geometry.Bounds.size.x, "it rings the seam");
+            Assert.IsNull(cut.Mesh, "the seal's CutPoint is an empty");
+            Assert.Greater(Vector3.Dot(cut.LocalRotation * Vector3.forward, Vector3.forward), 0.99f,
+                "its +Z leaves the front seal");
+            MeshChecks.AssertWellFormed(crate.Mesh.Geometry);
+            MeshChecks.AssertWellFormed(lid.Mesh.Geometry);
         }
 
         [TestCaseSource(nameof(Ids))]
@@ -267,6 +293,40 @@ namespace MoonProject.Art.Tests
             Assert.Less(metal.Bounds.size.y / metal.Bounds.size.x, 0.5f);
             Assert.AreEqual(1f, wiring.Bounds.size.x / wiring.Bounds.size.z, 0.2f);
             Assert.Greater(optics.Bounds.size.x / optics.Bounds.size.z, 1.25f);
+        }
+
+        [Test]
+        public void OrangeBeads_ARoundWovenSack_HeapedOrange_ApartFromWiringsCopperCoil()
+        {
+            ModelNode bundle = SiteModelBuilder.CreateOrangeBeadsBundle();
+            Assert.AreEqual(SiteModelBuilder.OrangeBeadsBundleName, bundle.Name);
+            CollectionAssert.IsEmpty(bundle.Children);
+            LowPolyMeshBuilder sack = bundle.Mesh.Geometry;
+            MeshChecks.AssertWellFormed(sack);
+            Vector3 size = sack.Bounds.size;
+            Assert.That(Mathf.Max(size.x, Mathf.Max(size.y, size.z)), Is.InRange(MinBundle, MaxBundle));
+            Assert.That(sack.VolumeCentroid().magnitude, Is.LessThan(PivotTolerance));
+            Assert.IsFalse(MeshChecks.Swatches(sack).Any(Palette.IsEmissive));
+            Assert.AreEqual(1f, size.x / size.z, 0.15f, "round in plan");
+            Assert.AreEqual(PaletteSwatch.Rust, Dominant(sack, Vector3.up), "orange beads seen from above");
+            LowPolyMeshBuilder wiring = SiteModelBuilder.CreateBundle(SalvagePieceMaterial.Wiring).Mesh.Geometry;
+            Assert.Greater(size.y, 1.3f * wiring.Bounds.size.y, "a tall sack, not a low coil");
+        }
+
+        [Test]
+        public void OrangeBeadPatches_AreLowOrangeDrifts_ThatReadFromAbove()
+        {
+            for (int i = 0; i < PropModelBuilder.OrangeBeadPatchVariants; i++)
+            {
+                ModelNode patch = PropModelBuilder.CreateOrangeBeadPatch(i);
+                StringAssert.StartsWith(PropModelBuilder.OrangeBeadPatchPrefix, patch.Name);
+                LowPolyMeshBuilder drift = patch.Mesh.Geometry;
+                MeshChecks.AssertWellFormed(drift);
+                Assert.Less(drift.Bounds.size.y, 0.4f, $"{patch.Name} hugs the ground");
+                Assert.Greater(Mathf.Min(drift.Bounds.size.x, drift.Bounds.size.z), 1f, $"{patch.Name} reads far off");
+                Assert.AreEqual(PaletteSwatch.Rust, Dominant(drift, Vector3.up), $"{patch.Name} is orange from above");
+                Assert.IsFalse(MeshChecks.Swatches(drift).Any(Palette.IsEmissive), "beads don't glow");
+            }
         }
 
         private static List<ModelNode> Pieces(ModelNode site)
