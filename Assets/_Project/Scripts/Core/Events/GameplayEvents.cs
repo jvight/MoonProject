@@ -129,11 +129,15 @@ namespace MoonProject.Core.Events
     /// <summary>A relic was placed on a museum shelf at the base.</summary>
     public readonly struct RelicDeposited
     {
-        public RelicDeposited(string relicId, Vector3 position, int displayedCount)
+        public RelicDeposited(string relicId, Vector3 position, int displayedCount, string crewSet = null,
+            int setCount = 0, int setSize = 0)
         {
             RelicId = relicId;
             Position = position;
             DisplayedCount = displayedCount;
+            CrewSet = crewSet;
+            SetCount = setCount;
+            SetSize = setSize;
         }
 
         public string RelicId { get; }
@@ -142,6 +146,15 @@ namespace MoonProject.Core.Events
 
         /// <summary>Relics on display after this deposit.</summary>
         public int DisplayedCount { get; }
+
+        /// <summary>Whose belongings it is ("ro", "kenji", "ines", "theo"), or null.</summary>
+        public string CrewSet { get; }
+
+        /// <summary>That crew member's belongings on display after this deposit.</summary>
+        public int SetCount { get; }
+
+        /// <summary>How many belongings that crew member has in this version.</summary>
+        public int SetSize { get; }
     }
 
     /// <summary>

@@ -41,6 +41,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             "depot", "garage", "kestrel", "drill", "lander", "garage",
         };
 
+        /// <summary>Whose belongings each relic is, as in the content builder.</summary>
+        private static readonly string[] RelicCrews = { "ro", "kenji", "ro", "ines", "theo", "theo" };
+
         private static readonly string[] SiteNames = { "depot", "kestrel", "drill", "garage", "lander" };
 
         /// <summary>The stand-in lab's floor (m above the ground), its stations' lens height and distance from the axis.
@@ -359,7 +362,7 @@ namespace MoonProject.Gameplay.PlayModeTests
                 definitions[i].Populate(RelicIds[i], RelicMasses[i],
                     Template("Relic_" + RelicIds[i], RelicSizes[i]), i,
                     WorldAnchorIds.SitePrefix + RelicSites[i], i == RelicIds.Length - 1 ? new Vector2(1.2f, 0f)
-                        : Vector2.zero);
+                        : Vector2.zero, RelicCrews[i]);
             }
 
             relicCatalog.Populate(definitions);

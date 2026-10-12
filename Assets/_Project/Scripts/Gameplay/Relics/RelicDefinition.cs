@@ -34,6 +34,9 @@ namespace MoonProject.Gameplay
                  "second relic sharing one heart.")]
         [SerializeField] private Vector2 _heartOffset;
 
+        [Tooltip("Whose belongings it is: a crew id (ro, kenji, ines, theo), for the memory cards by crew.")]
+        [SerializeField] private string _crewSet = string.Empty;
+
         public string Id => _id;
 
         public float Mass => _mass;
@@ -45,6 +48,8 @@ namespace MoonProject.Gameplay
         public string SiteId => _siteId;
 
         public Vector2 HeartOffset => _heartOffset;
+
+        public string CrewSet => _crewSet;
 
         /// <summary>Null when the definition is complete, else what is wrong with it.</summary>
         public string Validate()
@@ -59,14 +64,20 @@ namespace MoonProject.Gameplay
                 return $"'{_id}' has no prefab (Generated/Art/Relics/Relic_{_id}.prefab)";
             }
 
+            if (string.IsNullOrWhiteSpace(_crewSet))
+            {
+                return $"'{_id}' belongs to no crew member";
+            }
+
             return _siteId != null && _siteId.StartsWith(WorldAnchorIds.SitePrefix, StringComparison.Ordinal)
                 ? null
                 : $"'{_id}' names no salvage site ('{_siteId}')";
         }
 
         internal void Populate(string id, float mass, GameObject prefab, int answerNote, string siteId,
-            Vector2 heartOffset)
+            Vector2 heartOffset, string crewSet)
         {
+            _crewSet = crewSet;
             _id = id;
             _mass = mass;
             _prefab = prefab;

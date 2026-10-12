@@ -142,6 +142,9 @@ namespace MoonProject.Gameplay.PlayModeTests
             RelicDeposited deposited = _fixture.Events.RelicDeposited[0].Value;
             Assert.AreEqual(Duck, deposited.RelicId);
             Assert.AreEqual(1, deposited.DisplayedCount);
+            Assert.AreEqual("kenji", deposited.CrewSet, "the duck is Kenji's");
+            Assert.AreEqual(1, deposited.SetCount, "Kenji's things: 1...");
+            Assert.AreEqual(1, deposited.SetSize, "...of 1 in this version");
             Assert.AreEqual(RelicState.Displayed, duck.State);
             Assert.AreEqual(slot, duck.Slot, "it took the slot that was shown");
             Assert.AreEqual(1, home.DisplayedCount);

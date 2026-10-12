@@ -400,7 +400,9 @@ namespace MoonProject.Gameplay
             relic.SetDisplayed(slot);
             _displayAngle[index] = 0f;
             DisplayedCount++;
-            _events.Publish(new RelicDeposited(relic.Definition.Id, end, DisplayedCount));
+            string crew = relic.Definition.CrewSet;
+            _events.Publish(new RelicDeposited(relic.Definition.Id, end, DisplayedCount, crew, CrewCount(crew, true),
+                CrewCount(crew, false)));
             _save.SaveNow();
         }
 
@@ -430,6 +432,25 @@ namespace MoonProject.Gameplay
         }
 
         /// <summary>The relic waiting to be placed: the one that rode up, else the one in the cradle, or null.</summary>
+        /// <summary>
+        /// Relics of <paramref name="crew"/>'s belongings: only those on display when <paramref name="displayed"/>,
+        /// else every one this version has (the memory cards' "Ro's things: 1/2").
+        /// </summary>
+        private int CrewCount(string crew, bool displayed)
+        {
+            int count = 0;
+            for (int i = 0; i < _relics.Relics.Count; i++)
+            {
+                Relic relic = _relics.Relics[i];
+                if (relic.Definition.CrewSet == crew && (!displayed || relic.State == RelicState.Displayed))
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
         private Relic Incoming()
         {
             Relic rider = _lift.Rider;
