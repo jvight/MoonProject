@@ -125,7 +125,7 @@ namespace MoonProject.World
             _pilot.enabled = pilot > 0f || flare > 0f;
             float glow = pilot * _build.Sweep(ToViewer(), time) + flare * tuning.BeaconFlareGain;
             _block.SetFloat(IntensityId, glow * tuning.PilotIntensity);
-            _block.SetFloat(RadiusId, tuning.PilotRadius);
+            _block.SetFloat(RadiusId, tuning.PilotRadius * (1f + flare * tuning.BeaconFlareGrow));
             _block.SetFloat(MinAngleTanId, Mathf.Tan(tuning.PilotMinAngle * Mathf.Deg2Rad));
             _block.SetFloat(MinAngleFromId, tuning.PilotHaloFrom);
             _block.SetFloat(MinAngleFullId, tuning.PilotHaloFull);

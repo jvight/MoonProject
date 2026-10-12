@@ -94,6 +94,10 @@ namespace MoonProject.World
         [Range(0f, 8f)]
         [SerializeField] private float _beaconFlareGain = 3f;
 
+        [Tooltip("How much wider the top light's glow grows at the flare's peak (times its radius).")]
+        [Range(0f, 10f)]
+        [SerializeField] private float _beaconFlareGrow = 4f;
+
         [Tooltip("Seconds the flare takes to rise and settle.")]
         [Range(0.2f, 4f)]
         [SerializeField] private float _beaconFlareSeconds = 1.4f;
@@ -167,6 +171,7 @@ namespace MoonProject.World
         public float TowerBeatRadius => _towerBeatRadius;
         public float BeaconFlareGain => _beaconFlareGain;
         public float BeaconFlareSeconds => _beaconFlareSeconds;
+        public float BeaconFlareGrow => _beaconFlareGrow;
         public float BeaconTurnPeriod => _beaconTurnPeriod;
         public float BeaconSweep => _beaconSweep;
         public float BeaconSweepSharpness => _beaconSweepSharpness;
