@@ -85,6 +85,8 @@ namespace MoonProject.UI
         private SiteNameTag _siteName;
         private MemoryCard _card;
         private TickerQueue _tickerLines;
+        private int _tickerStartsAnnounced;
+        private EventBus _events;
         private RadioTicker _ticker;
         private DialReadout _dial;
         private HopList _hopList;
@@ -308,6 +310,7 @@ namespace MoonProject.UI
                 UiSaveKeys.PromptsVersion, _ledger.Capture, _ledger.Restore)));
 
             EventBus events = services.Events;
+            _events = events;
             _tokens.Add(events.Subscribe<MaterialsChanged>(OnMaterialsChanged));
             _tokens.Add(events.Subscribe<RelicDeposited>(OnRelicDeposited));
             _tokens.Add(events.Subscribe<RelicStowed>(OnRelicStowed));
@@ -333,6 +336,7 @@ namespace MoonProject.UI
             _tokens.Add(events.Subscribe<FriendRepairStarted>(OnFriendRepairStarted));
             _tokens.Add(events.Subscribe<FriendRepaired>(OnFriendRepaired));
             _tokens.Add(events.Subscribe<TickerLine>(OnTickerLine));
+            _tokens.Add(events.Subscribe<VoiceLineStarted>(OnVoiceLineStarted));
             _tokens.Add(events.Subscribe<StationNotYet>(OnStationNotYet));
             _tokens.Add(events.Subscribe<CrewLogFound>(OnCrewLogFound));
             _tokens.Add(events.Subscribe<CassetteCollected>(OnCassetteCollected));
@@ -555,6 +559,11 @@ namespace MoonProject.UI
                               !hopping && !_placeCard.IsVisible && !_siteName.IsVisible && !_lookUpChip.IsVisible &&
                               !_kitTitle.IsVisible;
             _ticker.Tick(hudTime, tickerOpen);
+            if (_tickerLines.Starts != _tickerStartsAnnounced)
+            {
+                _tickerStartsAnnounced = _tickerLines.Starts;
+                _events.Publish(new TickerLineShown(_tickerLines.Line.Key));
+            }
             _hopFade.Tick(deltaTime);
             _protocol.Tick(hudTime);
             // Its own zone (right of centre): it stands beside a place card, so the tower's card never hides it.
@@ -827,6 +836,12 @@ namespace MoonProject.UI
         private void OnTickerLine(TickerLine line)
         {
             _tickerLines.Enqueue(line);
+        }
+
+        /// <summary>The ticker's line is a recording's subtitle: it stays up until the voice has finished.</summary>
+        private void OnVoiceLineStarted(VoiceLineStarted started)
+        {
+            _tickerLines.HoldAtLeast(started.Key, started.Seconds + _tuning.Ticker.VoiceTailSeconds);
         }
 
         /// <summary>A sleeping station's "not yet": the ticker says what wakes it (Audio plays the tone).</summary>

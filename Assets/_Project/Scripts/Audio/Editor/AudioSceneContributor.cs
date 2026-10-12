@@ -42,6 +42,7 @@ namespace MoonProject.Audio.Editor
             var friends = context.CreateChild("FriendAudio", root).AddComponent<FriendAudio>();
             var ui = context.CreateChild("UiAudio", root).AddComponent<UiAudio>();
             var radio = context.CreateChild("RadioStation", root).AddComponent<RadioStation>();
+            var voice = context.CreateChild("RadioVoice", root).AddComponent<RadioVoice>();
             var ambience = context.CreateChild("AmbienceBed", root).AddComponent<AmbienceBed>();
             var canyon = context.CreateChild("CanyonAmbience", root).AddComponent<CanyonAmbience>();
             var soundscape = context.CreateChild("Soundscape", root).AddComponent<Soundscape>();
@@ -58,6 +59,7 @@ namespace MoonProject.Audio.Editor
             friends.Wire(friendTuning);
             jump.Wire(jumpTuning);
             radio.Wire(radioTuning, playlist, tapes);
+            voice.Wire(radioTuning, context.LoadAsset<VoiceLibrary>(AudioAssetPaths.Voices));
             canyon.Wire(canyonTuning);
             soundscape.Wire(soundscapeTuning);
             smallSounds.Wire(soundscapeTuning);
@@ -68,6 +70,7 @@ namespace MoonProject.Audio.Editor
             director.Wire(library, mixTuning, rover, jump, gameplay, friends, ui, radio, ambience, canyon, soundscape,
                 smallSounds, relays, salvage, stations, lab);
             director.WireBattery(battery);
+            director.WireVoice(voice);
             context.AddSystem(director);
         }
     }

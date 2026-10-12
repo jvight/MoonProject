@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "engine": {
+    "name": "sherpa-onnx",
+    "version": "1.13.8",
+    "license": "Apache-2.0",
+    "source": "https://pypi.org/project/sherpa-onnx/1.13.8/"
+  },
+  "models": {
+    "cori": {
+      "archive": "vits-piper-en_GB-cori-high.tar.bz2",
+      "archiveSha256": "42922f07738fcde2e49eed4e959635692f73b933de35a6b7c1010162ff566292",
+      "dir": "vits-piper-en_GB-cori-high",
+      "onnx": "en_GB-cori-high.onnx",
+      "onnxSha256": "006bb4db48e066f7f1be91d218db3b76617a707196271694ca6455d7bbd13842",
+      "source": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-en_GB-cori-high.tar.bz2",
+      "dataset": "Cori Samuel's LibriVox readings",
+      "license": "Public domain (LibriVox)",
+      "credit": ""
+    },
+    "libritts_r": {
+      "archive": "vits-piper-en_US-libritts_r-medium.tar.bz2",
+      "archiveSha256": "10dc268f3e371696d721486123e2705a9fc1faa113491979fde4d88dba1f1b1c",
+      "dir": "vits-piper-en_US-libritts_r-medium",
+      "onnx": "en_US-libritts_r-medium.onnx",
+      "onnxSha256": "8cce84cee4060bc3c2194bf95d33253c48dc8ff15e197b3b7a00b334ee0017f4",
+      "source": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-en_US-libritts_r-medium.tar.bz2",
+      "dataset": "LibriTTS-R (Koizumi et al., 2023)",
+      "license": "CC BY 4.0",
+      "credit": "Station voice synthesised with a Piper model trained on LibriTTS-R (CC BY 4.0)."
+    }
+  },
+  "voices": {
+    "ro": {
+      "model": "cori",
+      "speaker": 0,
+      "noiseScale": 0.5,
+      "noiseW": 0.6,
+      "lengthScale": 1.0,
+      "seed": 7,
+      "pitchSemitones": -1.0,
+      "filter": "tape"
+    },
+    "station": {
+      "model": "libritts_r",
+      "speaker": 460,
+      "noiseScale": 0.0,
+      "noiseW": 0.0,
+      "lengthScale": 1.08,
+      "seed": 7,
+      "pitchSemitones": 0.0,
+      "filter": "radio"
+    }
+  }
+}

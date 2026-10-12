@@ -101,6 +101,22 @@ namespace MoonProject.Audio.PlayModeTests
             Assert.AreEqual(plays, _rig.Director.PlayCount);
         }
 
+        [Test]
+        public void KenjisGaragePort_UnfoldsItsArm_FitsTheRing_AndTheRingHumsForTheFirstTime()
+        {
+            _rig.Events.Publish(new RoverKitInstalling(RoverKitPiece.TetherRing, false));
+            Assert.AreEqual("port_arm", LastClip, "the folded arm reaches for 07");
+
+            _rig.Events.Publish(new RoverKitFitted(RoverKitPiece.TetherRing, false, string.Empty));
+            Assert.AreEqual("tether_ring_wake", LastClip, "the ring's first hum");
+            Assert.IsTrue(RecentlyPlayed("bay_fitted_chime", 2), "the two-note rise");
+            Assert.IsTrue(RecentlyPlayed("bay_weld", 3), "sparks");
+
+            int plays = _rig.Director.PlayCount;
+            _rig.Events.Publish(new RoverKitInstalling(RoverKitPiece.HoverCoils, false));
+            Assert.AreEqual(plays, _rig.Director.PlayCount, "the bay's arms have their own sounds");
+        }
+
         [UnityTest]
         public IEnumerator TheTowerPort_OpensStitchesRisingAndShuts()
         {

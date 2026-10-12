@@ -77,6 +77,21 @@ namespace MoonProject.UI
         /// <summary>Seconds the current line rests fully visible.</summary>
         public float HoldSeconds => _hold;
 
+        /// <summary>Grows each time a line starts (not when a yielded line comes back).</summary>
+        public int Starts { get; private set; }
+
+        /// <summary>
+        /// Keeps the current line up for at least <paramref name="seconds"/> of rest when it is
+        /// <paramref name="key"/>: the line is the subtitle of a recording that long.
+        /// </summary>
+        public void HoldAtLeast(string key, float seconds)
+        {
+            if (HasLine && string.Equals(_line.Key, key, StringComparison.Ordinal))
+            {
+                _hold = Mathf.Max(_hold, seconds);
+            }
+        }
+
         /// <summary>Queues <paramref name="line"/>; a line without a key is a wiring bug and is logged.</summary>
         public void Enqueue(TickerLine line)
         {
@@ -191,6 +206,7 @@ namespace MoonProject.UI
 
         private void Start(TickerLine line)
         {
+            Starts++;
             Replace(line);
             _timer = 0f;
             _phase = Phase.Showing;

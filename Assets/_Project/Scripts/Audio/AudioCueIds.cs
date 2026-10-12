@@ -21,6 +21,9 @@ namespace MoonProject.Audio
         public const string SuspensionCreak = "suspension_creak";
         public const string LandingThump = "landing_thump";
         public const string RadioStatic = "radio_static";
+        public const string RadioCarrier = "radio_carrier";
+        public const string PortArm = "port_arm";
+        public const string TetherRingWake = "tether_ring_wake";
         public const string RadioTune = "radio_tune";
         public const string RadioDialClick = "radio_dial_click";
         public const string AmbienceBed = "ambience_bed";
