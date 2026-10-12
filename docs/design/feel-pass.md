@@ -279,3 +279,26 @@ lift; kit install; low battery. Mostly **rover** (body, rumble) and **art** (deb
 - Sound: at most three layers at once, all in key, peaks at mezzo-piano. No camera shake, and Gentle is respected.
 - Rumble never exceeds 0.35 and is off when the setting is off.
 - Zero per-frame GC with 64 sparks, 24 beads and 24 motes live. 60 fps on the target PC.
+
+## 6. Decisions (Director, 2026-10-12)
+- **The owner approved P0** (the cut and collection) to start now. P1 and P2 wait until the owner has played P0.
+- **Rumble: on by default, gentle.** The cap of 0.35 holds. Settings get "Rumble" (on/off) and "Rumble strength".
+- **The contract is on main** (the Director's Core commit):
+  - `Core/Events/FeelEvents.cs`: `FeelBeat(kind, phase, position, normal, strength, seconds[, material])`.
+  - `Core/FeelKind.cs` and `Core/FeelPhase.cs`.
+  - `Core/IFeelSettings.cs`: `RumbleEnabled`, `RumbleStrength`. Rover registers it; UI persists it.
+- **How a cut publishes its beats.** Rover and Audio see only Core, so the beats carry everything they need:
+  - `Anticipate`: `Seconds` = the charge length (0.3 s on a resume).
+  - `Act` once at ignition (strength 0), then once per cut step (strength = progress), which drives the sustained
+    rumble and sizzle.
+  - `Cancel` on release: it keeps progress mid-cut.
+  - `Impact` at the crack, `Follow` at the tumble and at the fold, and `Reward` with `Kind = Collect` when the bundle
+    is received.
+- **Where the kit's runtime lives.** The Art assembly is a mesh library with no runtime components. So:
+  - The runtime VFX pieces (ChargeUp motes, IgnitionFlash, VacuumDebris, LightPulse pool, HeatSeam strip driver,
+    bundle tie-off) live in `Gameplay/Feel/`, next to today's `CutSparks` (which VacuumDebris replaces). Gameplay
+    builds them.
+  - Art owns the look: the HeatSeam and beam core/sheath shaders and materials, the mote/spark/bead materials, the
+    bundle meshes per material, and the cut-line polylines in the salvage site data.
+  - Art reviews every capture.
+- **Audio starts after the voice slice lands.** The voice session continues as the standing audio session.
