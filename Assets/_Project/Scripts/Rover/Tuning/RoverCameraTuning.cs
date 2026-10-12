@@ -387,6 +387,16 @@ namespace MoonProject.Rover
         [Range(5f, 60f)]
         [SerializeField] private float _heldShotYawStep = 25f;
 
+        [Header("Feel: the cut (docs/design/feel-pass.md)")]
+        [Tooltip("While 07 cuts, the look target leans this share of the way toward the cut point (Gentle camera off "
+            + "only; never a shake or roll).")]
+        [Range(0f, 0.5f)]
+        [SerializeField] private float _cutLeanShare = 0.15f;
+
+        [Tooltip("Seconds the look target takes to lean in, and to ease back after the cut.")]
+        [Range(0.1f, 3f)]
+        [SerializeField] private float _cutLeanSeconds = 0.6f;
+
         [Tooltip("Seconds from the evening shot opening until it eases back (any drive or look input ends it early).")]
         [Range(3f, 30f)]
         [SerializeField] private float _eveningHoldSeconds = 11f;
@@ -603,6 +613,10 @@ namespace MoonProject.Rover
         public float HeldShotClearance => _heldShotClearance;
 
         public float HeldShotYawStep => _heldShotYawStep;
+
+        public float CutLeanShare => _cutLeanShare;
+
+        public float CutLeanSeconds => _cutLeanSeconds;
 
         public Vector3 PositionDamping => _positionDamping;
 

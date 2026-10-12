@@ -103,6 +103,9 @@ namespace MoonProject.Rover
         private readonly HeldShot _held = new HeldShot();
         private bool _onLift;
         private bool _evening;
+        private bool _cutLeaning;
+        private float _cutLean;
+        private Vector3 _cutPoint;
         private BayShot _shot;
         private bool _shotSolved;
         private bool _hasShot;
@@ -210,6 +213,7 @@ namespace MoonProject.Rover
                 context.Events.Subscribe<RelicSurfaced>(OnRelicSurfaced),
                 context.Events.Subscribe<RelayRestored>(OnRelayRestored),
                 context.Events.Subscribe<LadderLookChanged>(OnLadderLookChanged),
+                context.Events.Subscribe<FeelBeat>(OnFeelBeat),
                 context.Events.Subscribe<LiftRideChanged>(OnLiftRideChanged),
                 context.Events.Subscribe<DockEveningOpened>(OnDockEveningOpened),
                 context.Events.Subscribe<UpgradePurchased>(OnUpgradePurchased),
@@ -359,6 +363,8 @@ namespace MoonProject.Rover
             StepWideShot(deltaTime);
             StepHeldShot(viewInput, deltaTime);
             StepMomentFraming(deltaTime);
+            float lean = _cutLeaning && !_look.GentleCamera ? 1f : 0f;
+            _cutLean = Mathf.MoveTowards(_cutLean, lean, deltaTime / _tuning.CutLeanSeconds);
             PlaceTarget();
             _orbitState.Step(OrbitInput(look, recenter), deltaTime);
             StepStargaze(deltaTime);
@@ -627,6 +633,11 @@ namespace MoonProject.Rover
         private void PlaceTarget()
         {
             Vector3 point = _rover.Position + Vector3.up * _tuning.TargetHeight + _momentShift;
+            if (_cutLean > 0f)
+            {
+                point += (_cutPoint - point) * (_tuning.CutLeanShare * Smoothing.SmoothStep(0f, 1f, _cutLean));
+            }
+
             _targetYaw = RoverYaw() + _momentYaw;
             _target.SetPositionAndRotation(point, Quaternion.Euler(0f, _targetYaw, 0f));
         }
@@ -1057,6 +1068,8 @@ namespace MoonProject.Rover
             _momentLift = 0f;
             _momentPullBack = 0f;
             _momentShift = Vector3.zero;
+            _cutLeaning = false;
+            _cutLean = 0f;
             Snap();
             if (wasWide)
             {
@@ -1139,6 +1152,31 @@ namespace MoonProject.Rover
             else if (_moment.IsActive && ReferenceEquals(_moment.Settings, _tuning.LadderMoment))
             {
                 _moment.Release();
+            }
+        }
+
+        /// <summary>
+        /// While 07 cuts (or digs) the look target leans gently toward the cut point; the piece breaking free or the
+        /// player releasing eases it back (docs/design/feel-pass.md §3.1, Cam). The Gentle camera never leans.
+        /// </summary>
+        private void OnFeelBeat(FeelBeat beat)
+        {
+            if (beat.Kind != FeelKind.Cut && beat.Kind != FeelKind.Dig)
+            {
+                return;
+            }
+
+            switch (beat.Phase)
+            {
+                case FeelPhase.Anticipate:
+                case FeelPhase.Act:
+                    _cutLeaning = true;
+                    _cutPoint = beat.Position;
+                    break;
+                case FeelPhase.Impact:
+                case FeelPhase.Cancel:
+                    _cutLeaning = false;
+                    break;
             }
         }
 
