@@ -42,6 +42,9 @@ namespace MoonProject.Core.Events
 
         /// <summary>
         /// How strong the beat is, 0..1: the landing's impact, the charge reached, or how far a sustained act has come.
+        /// On <see cref="FeelPhase.Anticipate"/> it is where the charge run starts: 0 on a fresh charge, more than 0
+        /// on a resume (M3-26 §6). A <see cref="FeelKind.Cut"/> Follow of 0.5 marks the beam sliding to the next
+        /// segment.
         /// </summary>
         public float Strength { get; }
 
