@@ -367,6 +367,11 @@ namespace MoonProject.Rover
         [Tooltip("The tired look at low charge, the quieter crawl, the charging perk and the battery's glances.")]
         [SerializeField] private BatteryMoodSettings _battery = new BatteryMoodSettings();
 
+        [Header("Feel: the cut (docs/design/feel-pass.md)")]
+        [Tooltip("07's head and eye through a cut: turned to the cut point, a narrowed, brighter lens, the ignition "
+            + "nod, then following the piece.")]
+        [SerializeField] private CutFocusSettings _cutFocus = new CutFocusSettings();
+
         [Header("Hover-Jump")]
         [Tooltip("Lid squint (0..1) at a full Hover-Jump charge: effort.")]
         [Range(0f, 1f)]
@@ -668,5 +673,7 @@ namespace MoonProject.Rover
         public float TipPeakGlow => _tipPeakGlow;
 
         public BatteryMoodSettings Battery => _battery;
+
+        public CutFocusSettings CutFocus => _cutFocus;
     }
 }

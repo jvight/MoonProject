@@ -64,6 +64,10 @@ namespace MoonProject.Rover
 
         /// <summary>Owner of 07's own glances in the shared gaze requests.</summary>
         private readonly object _glanceOwner = new object();
+        private readonly object _cutOwner = new object();
+        private readonly ImpactNudge _headNudge = new ImpactNudge();
+        private float _cutFocus;
+        private bool _cutting;
 
         private RoverMood _mood;
         private LookAround _lookAround;
@@ -134,6 +138,7 @@ namespace MoonProject.Rover
                 events.Subscribe<ChargingChanged>(OnChargingChanged),
                 events.Subscribe<BatteryWarned>(OnBatteryWarned),
                 events.Subscribe<RoverLeapRefused>(OnLeapRefused),
+                events.Subscribe<FeelBeat>(OnFeelBeat),
             };
             _initialized = true;
             Apply(0f);
@@ -393,6 +398,8 @@ namespace MoonProject.Rover
             }
 
             StepBattery(deltaTime);
+            _cutFocus = Smoothing.Damp(_cutFocus, _cutting ? 1f : 0f, _tuning.CutFocus.HalfLife, deltaTime);
+            _headNudge.Step(deltaTime);
             _lookAround.Step(deltaTime);
             float sky = SkyLift();
             StepGaze(sky, deltaTime);
@@ -470,23 +477,75 @@ namespace MoonProject.Rover
             float breathing = _tuning.IdleHeadBreath * _mood.Idle * (2f * _mood.Breath - 1f);
             BatteryMoodSettings battery = _tuning.Battery;
             float bow = _tired * battery.LowHeadBow + _crawl * battery.CrawlHeadBow;
-            float pitch = _pitch.Value + _mood.HeadPitchOffset + breathing - bow;
+            float pitch = _pitch.Value + _mood.HeadPitchOffset + breathing - bow - _headNudge.Pitch;
 
             _neck.localRotation = _neckRest * Quaternion.AngleAxis(_yaw.Value, Vector3.up);
             _head.localRotation = _headRest * Quaternion.AngleAxis(-pitch, Vector3.right)
                 * Quaternion.AngleAxis(_wakeTilt, Vector3.forward);
             _eyelid.localRotation = _eyelidRest
-                * Quaternion.AngleAxis(_mood.LidClosure * _tuning.EyelidClosedAngle, Vector3.right);
+                * Quaternion.AngleAxis(Mathf.Max(_mood.LidClosure, _cutFocus * _tuning.CutFocus.IrisNarrow)
+                    * _tuning.EyelidClosedAngle, Vector3.right);
             float wingOpen = Mathf.Max(_mood.WingOpen * Mathf.Lerp(1f, battery.LowWingOpen, _tired),
                 sky * _tuning.StargazeWingOpen);
             _solarWing.localRotation = _wingRest
                 * Quaternion.AngleAxis(wingOpen * _tuning.WingOpenAngle, Vector3.right);
 
             float eyeGlow = _mood.EyeGlow * Mathf.Lerp(1f, _tuning.StargazeEyeGlow, sky)
-                * Mathf.Lerp(1f, battery.LowEyeGlow, _tired) * Mathf.Lerp(1f, battery.CrawlEyeGlow, _crawl);
+                * Mathf.Lerp(1f, battery.LowEyeGlow, _tired) * Mathf.Lerp(1f, battery.CrawlEyeGlow, _crawl)
+                * Mathf.Lerp(1f, _tuning.CutFocus.EyeGlow, _cutFocus);
             SetGlow(_eyeRenderer, eyeGlow);
             SetGlow(_antennaTipRenderer, _mood.TipGlow);
             _eyeLight.intensity = _tuning.EyeLightIntensity * eyeGlow;
+        }
+
+        /// <summary>
+        /// The cut through 07's head (docs/design/feel-pass.md §3.1): it turns to the cut point with a narrowed,
+        /// brighter lens, nods at ignition, follows the piece as it tumbles, and lets go once the bundle is received or
+        /// the player releases. The dig is answered the same way.
+        /// </summary>
+        private void OnFeelBeat(FeelBeat beat)
+        {
+            CutFocusSettings focus = _tuning.CutFocus;
+            if (beat.Kind == FeelKind.Collect && beat.Phase == FeelPhase.Reward)
+            {
+                EndCutFocus();
+                return;
+            }
+
+            if (beat.Kind != FeelKind.Cut && beat.Kind != FeelKind.Dig)
+            {
+                return;
+            }
+
+            switch (beat.Phase)
+            {
+                case FeelPhase.Anticipate:
+                    _cutting = true;
+                    _rover.Gaze.Set(_cutOwner, beat.Position, focus.GazePriority);
+                    break;
+                case FeelPhase.Act:
+                    if (beat.Strength <= 0f)
+                    {
+                        _headNudge.KickPitch(focus.Nod);
+                    }
+
+                    break;
+                case FeelPhase.Impact:
+                    _cutting = false;
+                    break;
+                case FeelPhase.Follow:
+                    _rover.Gaze.Set(_cutOwner, beat.Position, focus.GazePriority);
+                    break;
+                case FeelPhase.Cancel:
+                    EndCutFocus();
+                    break;
+            }
+        }
+
+        private void EndCutFocus()
+        {
+            _cutting = false;
+            _rover.Gaze.Clear(_cutOwner);
         }
 
         private void SetGlow(Renderer target, float intensity)
