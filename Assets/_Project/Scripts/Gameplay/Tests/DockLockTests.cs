@@ -38,12 +38,15 @@ namespace MoonProject.Gameplay.Tests
         public void RollOn_ThenDocking_RaisesTheWallsStaggered_AndClampsWithAnImpact()
         {
             DockLock dock = Rolled();
-            Assert.AreEqual(FeelPhase.Anticipate, _beats[0].Phase, "rolling onto the pad");
-            Assert.AreEqual(FeelKind.Dock, _beats[0].Kind);
+            Assert.IsEmpty(_beats, "rolling on chases the rim lamps without a beat");
             Assert.Greater(dock.RimLevel(0) + dock.RimLevel(1) + dock.RimLevel(2), 0f, "the rim lamps chase");
 
             dock.Step(true, true, 1f, 4, Vector3.zero, Frame);
             Assert.IsTrue(dock.Raised);
+            Assert.AreEqual(FeelPhase.Anticipate, _beats[0].Phase, "the walls start rising");
+            Assert.AreEqual(FeelKind.Dock, _beats[0].Kind);
+            Assert.AreEqual(3 * _tuning.WallStagger + _tuning.WallRiseSeconds, _beats[0].Seconds, 1e-4f,
+                "Seconds until the clamp");
             Run(dock, true, 1f, 4, _tuning.WallRiseSeconds * 0.5f);
             Assert.Greater(dock.WallHeight(0), dock.WallHeight(3), "the walls rise one after another");
             Run(dock, true, 1f, 4, _tuning.WallRiseSeconds + _tuning.WallStagger * 4f);

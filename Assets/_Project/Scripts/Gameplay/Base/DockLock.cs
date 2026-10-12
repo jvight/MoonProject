@@ -15,7 +15,8 @@ namespace MoonProject.Gameplay
     /// <item>Drive-off before full: the walls drop at once; nothing is lost (the battery keeps its partial cells).</item>
     /// <item>The rest 07 wakes into (a loaded game, or a fresh one on its dock) shows the state silently.</item>
     /// </list>
-    /// Each beat is a <see cref="FeelBeat"/> of <see cref="FeelKind.Dock"/>: Anticipate at roll-on, Impact at the
+    /// Each beat is a <see cref="FeelBeat"/> of <see cref="FeelKind.Dock"/>: Anticipate as the walls start rising
+    /// (Seconds = until the clamp; the rim chase on roll-on is the dock's own), Impact at the
     /// clamp (strength = how empty 07 arrived), Act per cell (strength = charge), Reward when full, Cancel on an early
     /// drive-off. Plain logic, stepped by <see cref="ChargingDock"/>.
     /// </summary>
@@ -163,6 +164,8 @@ namespace MoonProject.Gameplay
             }
 
             Enter(Stage.Locking);
+            _events.Publish(new FeelBeat(FeelKind.Dock, FeelPhase.Anticipate, dock, Vector3.up, 1f - _arrival,
+                (Walls - 1) * _tuning.WallStagger + _tuning.WallRiseSeconds));
         }
 
         private void OnUndocked(Vector3 dock)
@@ -183,8 +186,6 @@ namespace MoonProject.Gameplay
             {
                 _rolledOn = true;
                 _chase = 0f;
-                _events.Publish(new FeelBeat(FeelKind.Dock, FeelPhase.Anticipate, dock, Vector3.up, 0f,
-                    _tuning.DockDelay));
             }
 
             _chase += deltaTime;
