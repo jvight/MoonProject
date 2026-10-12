@@ -23,6 +23,9 @@ namespace MoonProject.Rover
         private DampedSpring _weight;
         private float _hold;
 
+        /// <summary>Shortest the ease out or back takes to settle (s), whatever the settings say.</summary>
+        public float MinBlend { get; set; }
+
         /// <summary>True from <see cref="Open"/> until <see cref="Close"/>: the frame is opening or open.</summary>
         public bool IsOpen { get; private set; }
 
@@ -73,7 +76,7 @@ namespace MoonProject.Rover
 
             float step = Mathf.Max(deltaTime, 0f);
             Seconds += step;
-            float settle = IsOpen ? Settings.OpenSeconds : Settings.HandBackSeconds;
+            float settle = Mathf.Max(IsOpen ? Settings.OpenSeconds : Settings.HandBackSeconds, MinBlend);
             _weight.Step(IsOpen ? 1f : 0f, WideShot.Frequency(settle), CriticalDamping, step);
             _weight.Clamp(0f, 1f);
             if (!IsOpen && _weight.Value < RestWeight)

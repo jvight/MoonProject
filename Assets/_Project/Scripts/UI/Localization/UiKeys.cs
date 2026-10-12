@@ -15,7 +15,6 @@ namespace MoonProject.UI
         public const string CardCaption = "ui.card.caption";
         public const string CardClose = "ui.card.close";
         public const string TowerLevel = "ui.tower.level";
-        public const string TowerHold = "ui.tower.hold";
         public const string TowerPurchased = "ui.tower.purchased";
         public const string BayFitted = "ui.bay.fitted";
         public const string LogCaption = "ui.card.log_caption";
@@ -161,6 +160,12 @@ namespace MoonProject.UI
                     return true;
                 case RoverKitPiece.FreshPaint:
                     key = "kit.fresh_paint.name";
+                    return true;
+                case RoverKitPiece.TapeDeck:
+                    key = "kit.tape_deck.name";
+                    return true;
+                case RoverKitPiece.TetherRing:
+                    key = "kit.tether_ring.name";
                     return true;
                 default:
                     key = null;

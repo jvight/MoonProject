@@ -16,8 +16,14 @@ namespace MoonProject.UI
         public float lookSensitivity = 1f;
         public bool invertY;
 
+        /// <summary>The Gentle camera (off in saves written before it existed).</summary>
+        public bool gentleCamera;
+
         /// <summary>The Guidance setting switched off (stored inverted so older saves keep it on).</summary>
         public bool guidanceOff;
+
+        /// <summary>The text size as a multiple of the normal size (1, 1.25, 1.5); older saves read 1.</summary>
+        public float textScale = 1f;
 
         /// <summary>Language code ("en", "vi"); empty in saves written before a language was chosen.</summary>
         public string language = string.Empty;

@@ -14,5 +14,12 @@ namespace MoonProject.Core
 
         /// <summary>True when pushing up tilts the view down. Takes effect immediately.</summary>
         bool InvertY { get; set; }
+
+        /// <summary>
+        /// The Gentle camera, for players who feel motion sick: no recentering by itself (only the recenter button),
+        /// no speed field-of-view change or landing dip, slower blends, and a lower floor for
+        /// <see cref="Sensitivity"/>. Off by default. Takes effect immediately.
+        /// </summary>
+        bool GentleCamera { get; set; }
     }
 }

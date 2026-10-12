@@ -26,6 +26,9 @@ namespace MoonProject.UI.PlayModeTests
 
         private const float ShortCueWait = 1.5f;
 
+        /// <summary>The upper third of the screen: the zone of place cards and kit titles (first-hour-v2 6.3).</summary>
+        private const float UpperThird = 1f / 3f;
+
         private string _slot;
         private InputActionAsset _controls;
         private UiTestRig _rig;
@@ -218,8 +221,8 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual("Wake the old mast", _rig.Ui.Layout.TowerTitle.text);
             Assert.AreEqual("Level 1 of 3", _rig.Ui.Layout.TowerLevel.text);
             MaterialSlots recipe = _rig.Ui.Tower.Recipe.Slots;
-            Assert.AreEqual("2", recipe.Text(SalvageMaterial.Metal));
-            Assert.AreEqual("1", recipe.Text(SalvageMaterial.Wiring));
+            StringAssert.EndsWith(" / 2", recipe.Text(SalvageMaterial.Metal), "have / need");
+            StringAssert.EndsWith(" / 1", recipe.Text(SalvageMaterial.Wiring));
             Assert.AreEqual(DisplayStyle.None, recipe.Root(SalvageMaterial.Optics).resolvedStyle.display,
                 "a material the recipe does not use is left out");
             Assert.IsFalse(recipe.Root(SalvageMaterial.Metal).ClassListContains(MaterialSlots.ShortClass));
@@ -253,7 +256,7 @@ namespace MoonProject.UI.PlayModeTests
             Release(keyboard.eKey);
             yield return Seconds(0.3f);
             Assert.AreEqual("Raise the mast", _rig.Ui.Layout.TowerTitle.text, "the next level is offered");
-            Assert.AreEqual(Text(UiKeys.TowerHold), _rig.Ui.Layout.TowerHoldWord.text);
+            Assert.AreEqual(string.Empty, _rig.Ui.Layout.TowerHoldWord.text, "the hold is the ring, never a word");
             Assert.IsTrue(recipe.Root(SalvageMaterial.Metal).ClassListContains(MaterialSlots.ShortClass),
                 "what 07 is short of reads dimmed");
             Assert.IsTrue(recipe.Root(SalvageMaterial.Optics).ClassListContains(MaterialSlots.ShortClass));
@@ -426,7 +429,7 @@ namespace MoonProject.UI.PlayModeTests
             LogAssert.Expect(LogType.Error, new Regex("never showed its work"));
             yield return Seconds(ShortCueWait + 0.5f);
             Assert.IsFalse(_rig.Ui.Tower.IsWorking, "the panel does not wait forever");
-            Assert.AreEqual(Text(UiKeys.TowerHold), _rig.Ui.Layout.TowerHoldWord.text, "it offers the next level");
+            Assert.AreEqual(string.Empty, _rig.Ui.Layout.TowerHoldWord.text, "it offers the next level");
         }
 
         [UnityTest]
@@ -449,8 +452,8 @@ namespace MoonProject.UI.PlayModeTests
             Assert.AreEqual(Text(UiKeys.UpgradeName(headlamp)), _rig.Ui.Layout.KitTitleName.text,
                 "named after the upgrade the fitted piece came from");
             Rect screen = _rig.Ui.Layout.Root.worldBound;
-            Assert.Less(_rig.Ui.Layout.KitTitle.worldBound.yMax, screen.yMin + screen.height * 0.3f,
-                "high on screen, clear of 07 in the middle of the install view");
+            Assert.Less(_rig.Ui.Layout.KitTitle.worldBound.yMax, screen.yMin + screen.height * UpperThird,
+                "in the upper third, clear of 07 in the middle of the install view");
 
             yield return Seconds(settings.HoldSeconds + settings.Reveal.FadeOut + settings.Delay +
                                  settings.Reveal.FadeIn + 0.4f);
@@ -475,7 +478,7 @@ namespace MoonProject.UI.PlayModeTests
             yield return Seconds(1.5f);
             Assert.IsTrue(_rig.Ui.RelayTag.IsVisible, "holding the part at the mast: its recipe shows");
             MaterialSlots recipe = _rig.Ui.RelayTag.Recipe.Slots;
-            Assert.AreEqual("6", recipe.Text(SalvageMaterial.Metal));
+            Assert.AreEqual("2 / 6", recipe.Text(SalvageMaterial.Metal), "have / need");
             Assert.IsTrue(recipe.Root(SalvageMaterial.Metal).ClassListContains(MaterialSlots.ShortClass),
                 "short of metal: it reads dimmed");
             Assert.IsFalse(recipe.Root(SalvageMaterial.Wiring).ClassListContains(MaterialSlots.ShortClass),
@@ -720,14 +723,14 @@ namespace MoonProject.UI.PlayModeTests
             Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
             Boot();
             yield return null;
-            Events.Publish(new TickerLine(UiTestRig.SignalLine, "140"));
+            Events.Publish(new TickerLine(UiTestRig.SignalLine));
             yield return Seconds(1.5f);
             Assert.IsFalse(_rig.Ui.Ticker.IsVisible, "the radio waits for 07 to wake");
 
             Events.Publish(new RoverAwoke(Vector3.zero, false));
             yield return Seconds(1.5f);
             Assert.IsTrue(_rig.Ui.Ticker.IsVisible, "then the line drifts in");
-            Assert.AreEqual(string.Format(Text(UiTestRig.SignalLine), "140"), _rig.Ui.Layout.TickerText.text);
+            Assert.AreEqual(Text(UiTestRig.SignalLine), _rig.Ui.Layout.TickerText.text);
             Assert.IsTrue(_rig.Bootstrap.Context.Input.Enabled, "the ticker never blocks driving");
 
             Events.Publish(new RelicDeposited("rubber_duck", Vector3.zero, 2));
@@ -742,7 +745,7 @@ namespace MoonProject.UI.PlayModeTests
             yield return Seconds(1.5f);
             Assert.IsFalse(_rig.Ui.Card.IsVisible);
             Assert.IsTrue(_rig.Ui.Ticker.IsVisible, "the line comes back after the card");
-            Assert.AreEqual(string.Format(Text(UiTestRig.SignalLine), "140"), _rig.Ui.Layout.TickerText.text,
+            Assert.AreEqual(Text(UiTestRig.SignalLine), _rig.Ui.Layout.TickerText.text,
                 "the interrupted line first, then the next");
             Assert.AreEqual(1, _rig.Ui.TickerLines.Waiting);
         }

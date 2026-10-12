@@ -9,7 +9,7 @@ namespace MoonProject.UI
     /// The player's preferences as the pause menu edits them, applied straight to the services that own them
     /// (<see cref="IAudioSettings"/>, <see cref="ILookSettings"/>, <see cref="ILocalization"/>) and persisted by the
     /// UI's "ui.settings" save section. Slider positions are whole steps, so a gamepad reaches any value in a few
-    /// presses.
+    /// presses; the Gentle camera adds one step below the lowest, standing for its lower look floor.
     /// </summary>
     internal sealed class PlayerSettings
     {
@@ -18,6 +18,8 @@ namespace MoonProject.UI
         private readonly ILocalization _localization;
         private readonly PauseSettings _settings;
         private bool _guidance = true;
+        private readonly string[] _textLabels;
+        private int _textSize;
 
         public PlayerSettings(IAudioSettings audio, ILookSettings look, ILocalization localization,
             PauseSettings settings)
@@ -26,6 +28,11 @@ namespace MoonProject.UI
             _look = look ?? throw new ArgumentNullException(nameof(look));
             _localization = localization ?? throw new ArgumentNullException(nameof(localization));
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+            _textLabels = new string[settings.TextScales.Length];
+            for (int i = 0; i < _textLabels.Length; i++)
+            {
+                _textLabels[i] = Mathf.RoundToInt(settings.TextScales[i] * 100f) + "%";
+            }
         }
 
         /// <summary>True when something changed since the last <see cref="MarkSaved"/>.</summary>
@@ -35,7 +42,13 @@ namespace MoonProject.UI
 
         public int LookStepCount => LookStepOf(_settings.LookMax);
 
-        public int MinLookStep => LookStepOf(_settings.LookMin);
+        /// <summary>The slider's lowest step now: one lower while the Gentle camera is on.</summary>
+        public int MinLookStep => _look.GentleCamera ? GentleLookStep : UsualMinLookStep;
+
+        /// <summary>The step below the usual lowest, which stands for the Gentle camera's look floor.</summary>
+        public int GentleLookStep => UsualMinLookStep - 1;
+
+        private int UsualMinLookStep => LookStepOf(_settings.LookMin);
 
         public int GetVolumeStep(AudioBus bus)
         {
@@ -50,13 +63,15 @@ namespace MoonProject.UI
 
         public int GetLookStep()
         {
-            return Mathf.Clamp(LookStepOf(_look.Sensitivity), MinLookStep, LookStepCount);
+            float sensitivity = _look.Sensitivity;
+            bool gentleFloor = sensitivity < 0.5f * (_settings.GentleLookMin + _settings.LookMin);
+            return Mathf.Clamp(gentleFloor ? GentleLookStep : LookStepOf(sensitivity), MinLookStep, LookStepCount);
         }
 
         /// <summary>The look multiplier a slider step stands for.</summary>
         public float LookValue(int step)
         {
-            return step * _settings.LookStep;
+            return step < UsualMinLookStep ? _settings.GentleLookMin : step * _settings.LookStep;
         }
 
         public void SetLookStep(int step)
@@ -75,6 +90,16 @@ namespace MoonProject.UI
             }
         }
 
+        public bool GentleCamera
+        {
+            get => _look.GentleCamera;
+            set
+            {
+                _look.GentleCamera = value;
+                IsDirty = true;
+            }
+        }
+
         /// <summary>The soft "next" line is wanted (on unless the player switched it off).</summary>
         public bool Guidance
         {
@@ -84,6 +109,22 @@ namespace MoonProject.UI
                 _guidance = value;
                 IsDirty = true;
             }
+        }
+
+        /// <summary>The text size step: 0 is 100%, 1 is 125%, 2 is 150%.</summary>
+        public int TextSize => _textSize;
+
+        /// <summary>The text size as the Settings row words it ("125%").</summary>
+        public string TextSizeLabel => _textLabels[_textSize];
+
+        /// <summary>The text size as a multiple of the normal size.</summary>
+        public float TextScale => _settings.TextScales[_textSize];
+
+        /// <summary>Steps to the next text size, the last wrapping round to the first.</summary>
+        public void NextTextSize()
+        {
+            _textSize = (_textSize + 1) % _settings.TextScales.Length;
+            IsDirty = true;
         }
 
         public string Language => _localization.Language;
@@ -129,7 +170,9 @@ namespace MoonProject.UI
                 ambience = _audio.GetVolume(AudioBus.Ambience),
                 lookSensitivity = _look.Sensitivity,
                 invertY = _look.InvertY,
+                gentleCamera = _look.GentleCamera,
                 guidanceOff = !_guidance,
+                textScale = TextScale,
                 language = _localization.Language,
             };
         }
@@ -148,9 +191,11 @@ namespace MoonProject.UI
             _audio.SetVolume(AudioBus.Music, Volume(data.music));
             _audio.SetVolume(AudioBus.Sfx, Volume(data.sfx));
             _audio.SetVolume(AudioBus.Ambience, Volume(data.ambience));
+            _look.GentleCamera = data.gentleCamera;
             _look.Sensitivity = data.lookSensitivity;
             _look.InvertY = data.invertY;
             _guidance = !data.guidanceOff;
+            _textSize = NearestTextSize(data.textScale);
             RestoreLanguage(data.language);
             IsDirty = false;
         }
@@ -174,6 +219,21 @@ namespace MoonProject.UI
 
             Debug.LogWarning($"{nameof(PlayerSettings)}: the saved language '{language}' is not available; keeping " +
                              $"'{_localization.Language}'.");
+        }
+
+        private int NearestTextSize(float saved)
+        {
+            int nearest = 0;
+            float[] scales = _settings.TextScales;
+            for (int i = 1; i < scales.Length; i++)
+            {
+                if (Mathf.Abs(scales[i] - saved) < Mathf.Abs(scales[nearest] - saved))
+                {
+                    nearest = i;
+                }
+            }
+
+            return nearest;
         }
 
         private static float Volume(float saved)

@@ -33,15 +33,6 @@
                     "initialStateCheck": true
                 },
                 {
-                    "name": "Ping",
-                    "type": "Button",
-                    "id": "bcb88634-48d1-4de2-892b-360e49853c6b",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
                     "name": "Excavate",
                     "type": "Button",
                     "id": "69cbe66c-a40b-4ac8-b12f-4803e2342e39",
@@ -72,6 +63,15 @@
                     "name": "Jump",
                     "type": "Button",
                     "id": "5acbe650-d38a-4821-90da-ec8e3a7b0649",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Recenter",
+                    "type": "Button",
+                    "id": "8a25f7ee-1874-4420-8ed7-688f8cb256e1",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
@@ -224,28 +224,6 @@
                 },
                 {
                     "name": "",
-                    "id": "96ad3a76-2efd-4e1e-ab58-1aafe7ecb27a",
-                    "path": "<Keyboard>/space",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "Keyboard&Mouse",
-                    "action": "Ping",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "8892d58b-c337-4e45-bf56-972ac155a617",
-                    "path": "<Gamepad>/buttonSouth",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "Gamepad",
-                    "action": "Ping",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
                     "id": "bb3657fc-2da5-438c-91af-fcc7f7598671",
                     "path": "<Keyboard>/e",
                     "interactions": "",
@@ -335,7 +313,7 @@
                 {
                     "name": "",
                     "id": "9f58ec81-9be2-4cd6-8a90-895b1386766b",
-                    "path": "<Keyboard>/leftShift",
+                    "path": "<Keyboard>/space",
                     "interactions": "",
                     "processors": "",
                     "groups": "Keyboard&Mouse",
@@ -346,11 +324,33 @@
                 {
                     "name": "",
                     "id": "bef204f0-906f-46d8-903d-083cb42919b5",
-                    "path": "<Gamepad>/rightShoulder",
+                    "path": "<Gamepad>/buttonSouth",
                     "interactions": "",
                     "processors": "",
                     "groups": "Gamepad",
                     "action": "Jump",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "f509abb1-8bcd-4730-a67a-17f7e0f3ef16",
+                    "path": "<Mouse>/middleButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard&Mouse",
+                    "action": "Recenter",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "9197ba78-76b6-435c-99ef-216a79a7625d",
+                    "path": "<Gamepad>/rightStickPress",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Gamepad",
+                    "action": "Recenter",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

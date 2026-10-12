@@ -48,9 +48,10 @@ namespace MoonProject.World
         [Range(0f, 360f)]
         [SerializeField] private float _garageBearing = 232f;
 
-        [Tooltip("Distance of the garage from the base, metres.")]
+        [Tooltip("Distance of the garage from the base, metres: near enough for one trip from a full battery " +
+            "(first-hour v2 §4).")]
         [Range(60f, 280f)]
-        [SerializeField] private float _garageDistance = 140f;
+        [SerializeField] private float _garageDistance = 115f;
 
         [Tooltip("Radius of the garage's flat footprint, metres.")]
         [Range(4f, 20f)]

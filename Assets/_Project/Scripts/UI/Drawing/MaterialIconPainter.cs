@@ -6,19 +6,17 @@ using MoonProject.Core;
 namespace MoonProject.UI
 {
     /// <summary>
-    /// A salvage material's icon, drawn to match art's bundles (docs/features/M3-13), sized to its element: Metal is
-    /// two riveted steel plates, Wiring a copper cable coil on a dark hub, Optics a violet solar cell in a steel
-    /// frame. USS: --icon-color (the material), --icon-detail (plates behind, the coil's inner turn, the cell's frame),
-    /// --icon-hole-color (bolts, hub, cell seams).
+    /// A salvage material's icon, drawn to match art's bundles (docs/features/M3-13) with a silhouette of its own
+    /// (docs/design/first-hour-v2 6.5), sized to its element: Metal is a hex plate with a bolt, Wiring a copper cable
+    /// coil on a dark hub, Optics a lens in a steel frame. USS: --icon-color (the material), --icon-detail (the
+    /// plate's rim, the coil's inner turn, the lens's frame and glint), --icon-hole-color (bolt, hub).
     /// </summary>
     internal sealed class MaterialIconPainter : StylePainter
     {
-        private const float PlateWidth = 0.84f;
-        private const float PlateHeight = 0.5f;
-        private const float PlateOffset = 0.16f;
-        private const float PlateRound = 0.12f;
-        private const float BoltRadius = 0.04f;
-        private const float BoltInset = 0.12f;
+        private const float HexRadius = 0.48f;
+        private const float HexRimScale = 0.72f;
+        private const float RimWidth = 0.07f;
+        private const float BoltRadius = 0.11f;
         private const float CoilOuter = 0.4f;
         private const float CoilInner = 0.27f;
         private const float CoilWidth = 0.12f;
@@ -26,11 +24,11 @@ namespace MoonProject.UI
         private const float TailWidth = 0.09f;
         private const float TailEndX = 0.5f;
         private const float TailEndY = 0.42f;
-        private const float CellWidth = 0.8f;
-        private const float CellHeight = 0.86f;
-        private const float CellRound = 0.1f;
-        private const float FrameWidth = 0.08f;
-        private const float SeamWidth = 0.05f;
+        private const int HexSides = 6;
+        private const float LensRadius = 0.4f;
+        private const float LensFrameWidth = 0.1f;
+        private const float GlintOffset = 0.14f;
+        private const float GlintRadius = 0.07f;
 
         private static readonly CustomStyleProperty<Color> IconColorProperty =
             new CustomStyleProperty<Color>("--icon-color");
@@ -70,34 +68,50 @@ namespace MoonProject.UI
             switch (_material)
             {
                 case SalvageMaterial.Metal:
-                    Plates(painter, centre, size);
+                    Hex(painter, centre, size);
                     break;
                 case SalvageMaterial.Wiring:
                     Coil(painter, centre, size);
                     break;
                 case SalvageMaterial.Optics:
-                    Cell(painter, centre, size);
+                    Lens(painter, centre, size);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(_material), _material, "Unknown salvage material.");
             }
         }
 
-        private void Plates(Painter2D painter, Vector2 centre, float size)
+        private void Hex(Painter2D painter, Vector2 centre, float size)
         {
-            var plate = new Vector2(size * PlateWidth, size * PlateHeight);
-            float offset = size * PlateOffset;
-            Fill(painter, new Rect(centre.x - plate.x * 0.5f, centre.y - plate.y * 0.5f - offset, plate.x, plate.y),
-                size * PlateRound, _detailColor);
-            var front = new Rect(centre.x - plate.x * 0.5f, centre.y - plate.y * 0.5f + offset * 0.5f, plate.x,
-                plate.y);
-            Fill(painter, front, size * PlateRound, _iconColor);
-            float inset = size * BoltInset;
-            float bolt = size * BoltRadius;
-            Shapes.Disc(painter, new Vector2(front.xMin + inset, front.yMin + inset), bolt, _holeColor);
-            Shapes.Disc(painter, new Vector2(front.xMax - inset, front.yMin + inset), bolt, _holeColor);
-            Shapes.Disc(painter, new Vector2(front.xMin + inset, front.yMax - inset), bolt, _holeColor);
-            Shapes.Disc(painter, new Vector2(front.xMax - inset, front.yMax - inset), bolt, _holeColor);
+            HexPath(painter, centre, size * HexRadius);
+            painter.fillColor = _iconColor;
+            painter.Fill();
+            painter.lineWidth = size * RimWidth;
+            painter.lineJoin = LineJoin.Round;
+            painter.strokeColor = _detailColor;
+            HexPath(painter, centre, size * HexRadius * HexRimScale);
+            painter.Stroke();
+            Shapes.Disc(painter, centre, size * BoltRadius, _holeColor);
+        }
+
+        private static void HexPath(Painter2D painter, Vector2 centre, float radius)
+        {
+            painter.BeginPath();
+            for (int i = 0; i < HexSides; i++)
+            {
+                float angle = Mathf.PI * 2f * i / HexSides;
+                var corner = new Vector2(centre.x + Mathf.Cos(angle) * radius, centre.y + Mathf.Sin(angle) * radius);
+                if (i == 0)
+                {
+                    painter.MoveTo(corner);
+                }
+                else
+                {
+                    painter.LineTo(corner);
+                }
+            }
+
+            painter.ClosePath();
         }
 
         private void Coil(Painter2D painter, Vector2 centre, float size)
@@ -114,33 +128,12 @@ namespace MoonProject.UI
             painter.Stroke();
         }
 
-        private void Cell(Painter2D painter, Vector2 centre, float size)
+        private void Lens(Painter2D painter, Vector2 centre, float size)
         {
-            var cell = new Rect(centre.x - size * CellWidth * 0.5f, centre.y - size * CellHeight * 0.5f,
-                size * CellWidth, size * CellHeight);
-            Fill(painter, cell, size * CellRound, _iconColor);
-            painter.lineWidth = size * SeamWidth;
-            painter.lineCap = LineCap.Butt;
-            painter.strokeColor = _holeColor;
-            painter.BeginPath();
-            painter.MoveTo(new Vector2(cell.center.x, cell.yMin));
-            painter.LineTo(new Vector2(cell.center.x, cell.yMax));
-            painter.MoveTo(new Vector2(cell.xMin, cell.center.y));
-            painter.LineTo(new Vector2(cell.xMax, cell.center.y));
-            painter.Stroke();
-            painter.lineWidth = size * FrameWidth;
-            painter.strokeColor = _detailColor;
-            painter.BeginPath();
-            Shapes.RoundedRect(painter, cell, size * CellRound);
-            painter.Stroke();
-        }
-
-        private static void Fill(Painter2D painter, Rect rect, float radius, Color color)
-        {
-            painter.fillColor = color;
-            painter.BeginPath();
-            Shapes.RoundedRect(painter, rect, radius);
-            painter.Fill();
+            Shapes.Disc(painter, centre, size * LensRadius, _iconColor);
+            Shapes.Ring(painter, centre, size * LensRadius, size * LensFrameWidth, _detailColor);
+            Shapes.Disc(painter, new Vector2(centre.x - size * GlintOffset, centre.y - size * GlintOffset),
+                size * GlintRadius, _detailColor);
         }
     }
 }

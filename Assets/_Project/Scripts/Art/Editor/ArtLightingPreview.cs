@@ -44,7 +44,7 @@ namespace MoonProject.Art.Editor
     /// Main.unity, dark and leaning or restored and lit, from the spawn first frame, from the base and at each pad.
     /// sites / sitesclean: the five salvage sites on World's site anchors in Main.unity, whole or picked clean to their
     /// skeletons, from the way in, the side and 30 m, Kestrel-3 from the base, the depot close. salvagebits: the three
-    /// material bundles and the Kestrel trail's loose bits on the dust beside 07. kit: 07 bare, with each crafted
+    /// material bundles on the dust beside 07. kit: 07 bare, with each crafted
     /// kit piece (lamp bar lit, drums glowing as if boosting, the cargo cradle carrying a relic), fully kitted with
     /// the friends' gifts, and "minute one versus hour five" side by side from the chase camera and at 30 m. kitmain:
     /// the same comparison in Main.unity under its own grade: minute one beside fully kitted at the spawn, travelling,
@@ -1379,7 +1379,7 @@ namespace MoonProject.Art.Editor
             return piece.transform;
         }
 
-        /// <summary>The three material bundles in a row by 07, the trail's loose bits strewn behind them.</summary>
+        /// <summary>The three material bundles in a row by 07.</summary>
         private static CameraPoseSet SalvageBitsScene(TemporaryObjects temporary)
         {
             Array materials = Enum.GetValues(typeof(SalvagePieceMaterial));
@@ -1393,19 +1393,9 @@ namespace MoonProject.Art.Editor
                     Quaternion.Euler(0f, 20f, 0f));
             }
 
-            IReadOnlyList<string> debris = SiteModelBuilder.DebrisNames;
-            for (int i = 0; i < debris.Count; i++)
-            {
-                GameObject bit = Instantiate(debris[i], temporary, ArtPaths.SitesFolder);
-                float lift = bit.transform.position.y - RendererBounds(bit).min.y;
-                bit.transform.SetPositionAndRotation(new Vector3((i - 2) * 1.2f, lift, 3.6f + (i % 2) * 0.8f),
-                    Quaternion.Euler(0f, -30f + i * 35f, 0f));
-            }
-
             temporary.Add(Rover(temporary, new Vector3(1.9f, 0f, 0.2f), -20f).gameObject);
             return Poses(
                 Pose("bundles", new[] { 0f, 0.9f, 0.2f }, new[] { 0f, 0.12f, 1.6f }, 40f),
-                Pose("debris", new[] { 0f, 2.2f, 0.4f }, new[] { 0f, 0.2f, 4f }, 45f),
                 Pose("bits_from_10m", new[] { 3f, 4f, -7f }, new[] { 0f, 0.3f, 2.5f }, 40f));
         }
 

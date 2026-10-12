@@ -103,8 +103,9 @@ Each ruling removes friction the original pitch would have caused. Boxes impleme
 2. **Generous aim.** The tether picks the best target inside a soft aim cone (~8°) with sticky hover and a visible
    highlight before you press; pixel-precise aiming is never required. Excavation works anywhere within ~5 m of a
    site, and the rover eases to a stop by itself when you hold the beam.
-3. **Pings leave a trail.** A sonar answer leaves a soft light pillar on the horizon for ~20 s and 07 keeps glancing
-   toward the nearest one, so players navigate by sight and never need to spam the ping.
+3. **Listening leaves a trail.** An answer leaves a soft light pillar on the horizon for ~20 s, 07 keeps glancing
+   toward the nearest one, and 07 listens by itself when it rests, so players navigate by sight and never need a
+   button for it.
 4. **Progress is kept.** Releasing excavation early keeps progress; a snapped tether leaves the relic right where it
    was; nothing resets.
 5. **No grind.** The basin holds at least 2× the scrap the slice's upgrades cost, and each deposited relic also
@@ -215,13 +216,14 @@ Restored things lose their dust caps, get a patch of fresh paint and light up; t
   Upgrading the radio tower widens the clear zone — the player literally *hears* progress.
 - **Rover**: soft electric hum that rises with speed, crunchy-soft dust under wheels (ASMR), springy suspension
   creaks on bounces, a gentle *whump* on landing scaled by impact.
-- **Sonar**: a kalimba ping in key; relics answer with a higher, shimmering note; closer = faster.
+- **Listening**: a soft kalimba ring in key when 07 rests; relics answer with a higher, shimmering note; closer = faster.
 - **Pickups**: glassy chime, each consecutive pickup within 2 s climbs one step of the pentatonic scale.
 - **Tether**: a warm hum with gentle wobble, a soft *pluck* when it attaches, a breathy *fwip* when it lets go.
 - Silence is a feature: ambience is sparse wind-less hush with distant, slow tones.
 
 ## Camera direction
-- Floaty drone: high positional damping, slower rotational damping, auto-recenter behind the rover after idle.
+- Floaty drone: high positional damping, slower rotational damping. The view holds its world direction; it recenters
+  slowly, only while driving forward after 5 s without look input.
 - Slight FOV widening with speed; gentle lift when going downhill; never clips into terrain.
 - Cinematic moments (relic surfacing, tower upgrade) use slow, eased blends — never cuts.
 - 07's eye is the only first-person view in the game: the opening, and the finale's answer. Everything else is the

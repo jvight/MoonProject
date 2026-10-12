@@ -37,8 +37,8 @@ namespace MoonProject.Core
         public const string SitePrefix = "site.";
 
         /// <summary>
-        /// The far (home-side) end of Kestrel-3's debris furrow; Forward is the fall line toward the crater. Loose
-        /// salvage bits lie between it and <c>site.kestrel</c>. Not a site.
+        /// The far (home-side) end of Kestrel-3's debris furrow; Forward is the fall line toward the crater. A map
+        /// place, kept clear for driving up to <c>site.kestrel</c>. Not a site.
         /// </summary>
         public const string KestrelTrail = "trail.kestrel";
 

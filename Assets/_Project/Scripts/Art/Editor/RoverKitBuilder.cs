@@ -18,6 +18,9 @@ namespace MoonProject.Art.Editor
         public const string CapacitorDrumName = "Kit_CapacitorDrum";
         public const string CargoRackName = "Kit_CargoRack";
         public const string BatterySpineName = "Kit_BatterySpine";
+        public const string TapeDeckName = "Kit_TapeDeck";
+        public const string TetherRingName = "Kit_TetherRing";
+        public const string RingGlowName = "Glow";
         public const string LampPrefix = "Lamp_";
         public const string DrumGlowName = "Glow";
         public const string RelicSeatName = "RelicSeat";
@@ -31,6 +34,8 @@ namespace MoonProject.Art.Editor
             ModelPrefabWriter.Write(CreateCapacitorDrum(), ArtPaths.RoverFolder, material, glowOff);
             ModelPrefabWriter.Write(CreateCargoRack(), ArtPaths.RoverFolder, material);
             ModelPrefabWriter.Write(CreateBatterySpine(), ArtPaths.RoverFolder, material);
+            ModelPrefabWriter.Write(CreateTapeDeck(), ArtPaths.RoverFolder, material);
+            ModelPrefabWriter.Write(CreateTetherRing(), ArtPaths.RoverFolder, material, glowOff);
             AssetDatabase.SaveAssets();
         }
 
@@ -62,6 +67,25 @@ namespace MoonProject.Art.Editor
         {
             return new ModelNode(BatterySpineName, Vector3.zero,
                 new ModelMesh(BatterySpineName, RoverSpineMeshes.Spine()));
+        }
+
+        /// <summary>The old tape deck on DeckSocket (M3-24 C), also the find Tilly spots on the ground.</summary>
+        public static ModelNode CreateTapeDeck()
+        {
+            return new ModelNode(TapeDeckName, Vector3.zero, new ModelMesh(TapeDeckName, RoverDeckMeshes.Deck()));
+        }
+
+        /// <summary>
+        /// Kenji's spare tether ring on the Eye (first-hour v2 §3): the brass bezel and its <c>Glow</c> band on the
+        /// glow-off material, which rover lights faintly at rest and brightly while the tether holds.
+        /// </summary>
+        public static ModelNode CreateTetherRing()
+        {
+            var root = new ModelNode(TetherRingName, Vector3.zero,
+                new ModelMesh(TetherRingName, RoverTetherRingMeshes.Ring()));
+            root.Add(new ModelNode(RingGlowName, Vector3.zero, Quaternion.identity,
+                new ModelMesh(TetherRingName + "_Glow", RoverTetherRingMeshes.Band()), ModelMaterial.PaletteGlowOff));
+            return root;
         }
 
         public static ModelNode CreateCargoRack()

@@ -35,7 +35,7 @@ namespace MoonProject.UI.PlayModeTests
     /// </summary>
     [Category("UiCapture")]
     [Explicit("Renders the full Main scene; run with --category UiCapture.")]
-    public sealed class UiCaptureTests : InputTestFixture
+    public sealed partial class UiCaptureTests : InputTestFixture
     {
         private const string MainScene = "Assets/_Project/Scenes/Main.unity";
         private const int Width = 1600;
@@ -230,7 +230,7 @@ namespace MoonProject.UI.PlayModeTests
             fakes.Camera = camera;
             yield return new WaitForSecondsRealtime(_tuning.Friends.NameHoldSeconds + 2f);
 
-            context.Events.Publish(new TickerLine(UiTestRig.SignalLine, "140"));
+            context.Events.Publish(new TickerLine(UiTestRig.SignalLine));
             yield return new WaitForSecondsRealtime(TickerEntrance());
             yield return Capture(camera, folder, "18_ticker");
             context.Events.Publish(new CrewLogFound(UiTestRig.FirstLog, Vector3.zero));
@@ -475,7 +475,7 @@ namespace MoonProject.UI.PlayModeTests
             yield return new WaitForSecondsRealtime(1f);
 
             Reframe(NarrowWidth, NarrowHeight);
-            context.Events.Publish(new TickerLine(UiTestRig.SignalLine, "205"));
+            context.Events.Publish(new TickerLine(UiTestRig.SignalLine));
             fakes.AtStation = true;
             yield return new WaitForSecondsRealtime(TickerEntrance() + 0.5f);
             yield return Capture(camera, folder, "27_narrow_ticker_and_tower_vi");
@@ -586,7 +586,8 @@ namespace MoonProject.UI.PlayModeTests
         }
 
         /// <summary>
-        /// A place's card the first time 07 comes near, then the soft next line once 07 rests. Rerun on its own:
+        /// A place's card the first time 07 comes near, then the soft next line once 07 rests, the opening's protocol
+        /// readout and a recipe card while looking at the tower's hopper (M3-24 B). Rerun on its own:
         /// <c>python tools/unity_batch.py tests --platform playmode --filter CaptureGuidance</c>.
         /// </summary>
         [UnityTest]
@@ -596,7 +597,7 @@ namespace MoonProject.UI.PlayModeTests
             yield return LoadMain();
             GameContext context = FindBootstrap().Context;
             Camera camera = context.Get<IViewCamera>().Camera;
-            UISystem ui = BuildUi(context, out _, out _);
+            UISystem ui = BuildUi(context, out FakeGameServices fakes, out _);
             TuneQuickPatience();
             yield return null;
             string folder = Path.GetFullPath(OutputFolder);
@@ -606,11 +607,43 @@ namespace MoonProject.UI.PlayModeTests
 
             context.Events.Publish(new NextStepChanged("next.tower"));
             context.Events.Publish(new PlaceFirstApproached("place.tower"));
-            yield return new WaitForSecondsRealtime(_tuning.Guidance.Place.FadeIn + 0.5f);
+            yield return new WaitForSecondsRealtime(_tuning.Guidance.TowerCardDelay + _tuning.Guidance.Place.FadeIn +
+                                                    0.5f);
             yield return Capture(camera, folder, "48_place_card_tower");
             yield return new WaitForSecondsRealtime(_tuning.Guidance.PlaceHoldSeconds +
                                                     _tuning.Guidance.Place.FadeOut + _tuning.Guidance.Line.FadeIn + 0.5f);
             yield return Capture(camera, folder, "49_next_line");
+
+            context.Events.Publish(new RoverWakeBeatReached(WakeBeat.Crackle, false));
+            context.Events.Publish(new RoverWakeBeatReached(WakeBeat.GazeEarth, false));
+            yield return new WaitForSecondsRealtime(_tuning.Guidance.Protocol.FadeIn + 0.5f);
+            Assert.IsTrue(ui.Protocol.IsVisible, "the protocol readout shows at Earth's gaze (M3-24 B)");
+            yield return Capture(camera, folder, "49b_protocol_readout");
+            yield return new WaitForSecondsRealtime(_tuning.Guidance.ProtocolHoldSeconds +
+                                                    _tuning.Guidance.Protocol.FadeOut + 0.5f);
+            Assert.IsFalse(ui.Protocol.IsVisible, "and fades by itself");
+
+            fakes.Upgrade = _tower;
+            fakes.AtStation = false;
+            fakes.AwaitingPart = true;
+            fakes.SetMaterials(1, 0, 0);
+            fakes.Looked = _tower.Id;
+            yield return new WaitForSecondsRealtime(_tuning.Guidance.Recipe.FadeIn + 0.5f);
+            Assert.AreEqual(_tower.Id, ui.RecipeCard.Shown, "looking at the tower's hopper shows its recipe card");
+            yield return Capture(camera, folder, "49c_recipe_card");
+            fakes.Looked = null;
+            yield return new WaitForSecondsRealtime(_tuning.Guidance.Recipe.FadeOut + 0.5f);
+            Assert.IsFalse(ui.RecipeCard.IsVisible, "looking away hides it");
+
+            fakes.Bay = _bayKit;
+            fakes.IsSheet = true;
+            fakes.Looked = _bayKit[0].Id;
+            yield return new WaitForSecondsRealtime(_tuning.Guidance.Recipe.FadeIn + 0.5f);
+            Assert.AreEqual(_bayKit[0].Id, ui.RecipeCard.Shown, "a sheet on Kenji's board shows its kit's card");
+            yield return Capture(camera, folder, "49d_recipe_card_board");
+            fakes.Looked = null;
+            fakes.IsSheet = false;
+            fakes.Bay = null;
 #else
             Assert.Ignore("Captures need the editor.");
             yield break;
@@ -650,12 +683,11 @@ namespace MoonProject.UI.PlayModeTests
             yield return Watch(ui, overlaps, _tuning.Title.Reveal.FadeOut + _tuning.Guidance.Place.FadeIn + 1.6f);
             yield return Capture(camera, folder, "61_dock_card");
 
-            fakes.PrimaryHint = new InteractionHint(InteractionKind.Ping, fakes.Position, true);
-            yield return Watch(ui, overlaps, _tuning.Guidance.PlaceHoldSeconds + _tuning.Guidance.Place.FadeOut +
-                                             _tuning.Prompts.Find(InteractionKind.Ping).DwellSeconds + 1.5f);
-            yield return Capture(camera, folder, "62_ping_prompt");
-            events.Publish(new SonarPinged());
-            fakes.PrimaryHint = InteractionHint.None;
+            yield return Watch(ui, overlaps, _tuning.Guidance.PlaceHoldSeconds + _tuning.Guidance.Place.FadeOut);
+            events.Publish(new SonarPinged(fakes.Position, 140f));
+            events.Publish(new TickerLine("ticker.listen.first"));
+            yield return Watch(ui, overlaps, 1.5f);
+            yield return Capture(camera, folder, "62_first_listen");
             if (!context.Get<IWorldAnchors>().TryGet(DepotSite, out MoonProject.Core.WorldAnchor depot))
             {
                 throw new InvalidOperationException($"The world has no '{DepotSite}' anchor.");
@@ -1126,7 +1158,7 @@ namespace MoonProject.UI.PlayModeTests
             ui.Initialize(new UiServices(context.Events, context.Input, fakes, fakes, context.Get<IAudioSettings>(),
                 context.Get<ILookSettings>(), save, fakes, fakes, fakes, fakes, fakes, fakes, fakes, fakes, fakes,
                 fakes, context.Get<IGameFlow>(), new SettingsFile(SaveService.DefaultDirectory, _slot), fakes, fakes,
-                fakes, fakes));
+                fakes, fakes, fakes));
             save.Load();
             return ui;
         }

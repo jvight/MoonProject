@@ -40,13 +40,19 @@ namespace MoonProject.Gameplay
         /// <summary>Tilly is home and awake, so she can fly out and lead a crawl.</summary>
         public bool FriendCanLead { get; set; }
 
-        /// <summary>07 stands on a working charger (docked, or on a lit mast's ring at walking pace).</summary>
+        /// <summary>
+        /// 07 is on a working charger (docked, or inside a lit mast's ring), at any speed: the model decides when
+        /// 07 has stopped long enough to charge.
+        /// </summary>
         public bool OnCharger { get; set; }
 
         public ChargerKind Charger { get; set; }
 
         /// <summary>The charger's pad centre (valid while <see cref="OnCharger"/>).</summary>
         public Vector3 ChargerPosition { get; set; }
+
+        /// <summary>07's position (the Low warning measures the way to <see cref="NearestLitCharger"/> from it).</summary>
+        public Vector3 Position { get; set; }
 
         /// <summary>The pad of the nearest charger that works now: the dock or a lit mast.</summary>
         public Vector3 NearestLitCharger { get; set; }

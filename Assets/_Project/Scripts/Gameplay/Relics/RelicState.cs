@@ -27,5 +27,13 @@ namespace MoonProject.Gameplay
         /// <summary>Riding the belly lift beside 07 up into the lab, carried on the platform (docs/features/M3-19 §4).
         /// </summary>
         Riding = 7,
+
+        /// <summary>
+        /// Let go onto Kenji's garage port tray, gliding there to be fitted on 07 (docs/design/first-hour-v2.md §3).
+        /// </summary>
+        Porting = 8,
+
+        /// <summary>Fitted on 07 by Kenji's garage port: it rides on 07 now and lies nowhere in the world.</summary>
+        Fitted = 9,
     }
 }

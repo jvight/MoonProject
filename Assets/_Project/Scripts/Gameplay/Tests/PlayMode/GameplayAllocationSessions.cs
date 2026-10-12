@@ -93,9 +93,10 @@ namespace MoonProject.Gameplay.PlayModeTests
             Press(_mouse.rightButton, queueEventOnly: true);
             yield return Waits.Until(() => gameplay.Tether.State == TetherAimState.Towing, LatchTimeout);
             Assert.AreEqual(TetherAimState.Towing, gameplay.Tether.State, "the second relic goes on the tether");
-            Press(_keyboard.spaceKey, queueEventOnly: true);
-            yield return null;
-            Release(_keyboard.spaceKey);
+            _fixture.PowerTo(1);
+            yield return Waits.Until(() => _fixture.Events.SonarPinged.Count > 0,
+                _fixture.SonarTuning.RestSeconds + 1f);
+            Assert.AreEqual(1, _fixture.Events.SonarPinged.Count, "07 rests at tower level 1 and listens");
             yield return new WaitForSeconds(3f);
             Assert.Greater(_fixture.Events.SiteAnswered.Count, 0, "pillars are standing");
             Assert.AreEqual(1, _fixture.Events.BellSignalPicked.Count, "Bell is home and listening");

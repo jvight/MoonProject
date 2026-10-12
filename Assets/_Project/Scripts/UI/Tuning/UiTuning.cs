@@ -26,7 +26,8 @@ namespace MoonProject.UI
         [SerializeField] private GuidanceSettings _guidance = new GuidanceSettings();
         [SerializeField] private BackdropSettings _backdrop = new BackdropSettings();
         [SerializeField] private LabHudSettings _lab = new LabHudSettings();
-        [SerializeField] private BatteryArcSettings _battery = new BatteryArcSettings();
+        [SerializeField] private CellRowSettings _battery = new CellRowSettings();
+        [SerializeField] private SafeFrameSettings _safe = new SafeFrameSettings();
 
         public PauseSettings Pause => _pause;
 
@@ -62,7 +63,9 @@ namespace MoonProject.UI
 
         public LabHudSettings Lab => _lab;
 
-        public BatteryArcSettings Battery => _battery;
+        public CellRowSettings Battery => _battery;
+
+        public SafeFrameSettings Safe => _safe;
 
         /// <summary>Null when the tuning is usable, else the first problem.</summary>
         public string Validate()
@@ -70,12 +73,13 @@ namespace MoonProject.UI
             if (_pause == null || _title == null || _prompts == null || _reticle == null || _materialsChip == null ||
                 _memoryCard == null || _towerPanel == null || _kitTitle == null || _friends == null ||
                 _ticker == null || _dialReadout == null || _relays == null || _salvage == null ||
-                _stargaze == null || _guidance == null || _backdrop == null || _battery == null || _lab == null)
+                _stargaze == null || _guidance == null || _backdrop == null || _battery == null || _lab == null ||
+                _safe == null)
             {
                 return "a settings section is missing";
             }
 
-            return _prompts.Validate();
+            return _prompts.Validate() ?? _safe.Validate() ?? _pause.Validate();
         }
     }
 }

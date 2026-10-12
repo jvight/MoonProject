@@ -273,6 +273,11 @@ namespace MoonProject.Gameplay.PlayModeTests
         private IEnumerator Restore(RelayMast mast)
         {
             yield return Gather(mast);
+
+            // Teleported from mast to mast, 07 never stops on a ring long enough to charge (first-hour v2 §5): these
+            // sessions are about the masts, so each restoration starts from a full battery.
+            BatteryModel battery = _fixture.Gameplay.Battery.Model;
+            battery.Restore(new BatterySaveData { cells = battery.Cells, charge = battery.Cells, arcRevealed = true });
             AtTheFoot(mast);
             yield return null;
             yield return HoldInteract(_fixture.RelayTuning.RestoreHold + 0.2f);

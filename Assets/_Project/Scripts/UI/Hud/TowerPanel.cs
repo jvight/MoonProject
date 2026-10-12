@@ -79,7 +79,7 @@ namespace MoonProject.UI
             _work = new StationWork(settings);
             _ring = new ProgressRingPainter(layout.TowerRing);
             new ShadowPainter(layout.TowerPanelShadow);
-            layout.TowerHoldWord.text = localization.Get(UiKeys.TowerHold);
+            layout.TowerHoldWord.text = string.Empty;
             _pick = new BayPick(settings);
             _list = new BayList(layout.TowerChoices, localization, numbers);
             _pickGlyph = new GlyphView(layout.TowerPickGlyph, layout.TowerPickGlyphLabel);
@@ -266,12 +266,15 @@ namespace MoonProject.UI
         private void EndWork()
         {
             _layout.TowerPanel.RemoveFromClassList(CelebrateClass);
-            _layout.TowerHoldWord.text = _localization.Get(UiKeys.TowerHold);
+            _layout.TowerHoldWord.text = string.Empty;
             _hold.Reset();
             _shownLevel = -1;
         }
 
-        /// <summary>The word beside the ring now: the hold, nothing while the station works, or its line.</summary>
+        /// <summary>
+        /// The words beside the ring now: its line, or what is missing. The hold itself is the ring filling round the
+        /// glyph and never a word (docs/design/first-hour-v2 6.5).
+        /// </summary>
         private string HoldWord()
         {
             if (_work.IsShowingLine)
@@ -284,7 +287,7 @@ namespace MoonProject.UI
                 return string.Empty;
             }
 
-            return _localization.Get(_partLine ?? UiKeys.TowerHold);
+            return _partLine == null ? string.Empty : _localization.Get(_partLine);
         }
 
         private void DressFor(UpgradeStationKind station)

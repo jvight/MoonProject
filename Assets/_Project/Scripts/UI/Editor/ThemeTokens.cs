@@ -25,6 +25,7 @@ namespace MoonProject.UI.Editor
             new Token("--moon-text-dim", PaletteSwatch.Cream, 0.74f),
             new Token("--moon-text-faint", PaletteSwatch.Cream, 0.46f),
             new Token("--moon-glass", PaletteSwatch.SkyTop, 0.84f),
+            new Token("--moon-plate", PaletteSwatch.SkyTop, 0.72f),
             new Token("--moon-glass-edge", PaletteSwatch.DustLight, 0.16f),
             new Token("--moon-veil", PaletteSwatch.SkyTop, 0.18f),
             new Token("--moon-shadow", PaletteSwatch.SkyTop, 0.5f),
