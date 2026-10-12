@@ -213,6 +213,8 @@ namespace MoonProject.Core.Save
             return LoadResult;
         }
 
+        public event Action Saved;
+
         public bool SaveNow()
         {
             if (!IsLoaded)
@@ -267,6 +269,7 @@ namespace MoonProject.Core.Save
             try
             {
                 AtomicFile.Write(FilePath, BackupPath, JsonUtility.ToJson(envelope, true));
+                Saved?.Invoke();
                 return true;
             }
             catch (Exception exception) when (exception is IOException || exception is UnauthorizedAccessException)
